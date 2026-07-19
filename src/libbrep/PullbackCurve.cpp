@@ -33,6 +33,7 @@
 #include <vector>
 #include <list>
 #include <limits>
+#include <chrono>
 #include <set>
 #include <map>
 #include <string>
@@ -48,6 +49,24 @@
 #define RANGE_HI 0.55
 #define RANGE_LO 0.45
 #define UNIVERSAL_SAMPLE_COUNT 1001
+
+namespace {
+
+/* Closest-point subdivision is a fallback search, not an acceptance
+ * tolerance.  Bound it so a singular or malformed surface cannot recurse
+ * indefinitely.  A power-of-two node budget keeps the search deterministic;
+ * callers still accept a result only after the normal model-tolerance lift
+ * check. */
+constexpr size_t kMaximumClosestPointSubdivisionNodes = 4096;
+constexpr int kMaximumClosestPointSubdivisionDepth = 32;
+thread_local size_t closest_point_subdivision_nodes = 0;
+thread_local brlcad::PullbackCancellationCallback pullback_cancellation_callback = NULL;
+thread_local void *pullback_cancellation_context = NULL;
+thread_local std::chrono::steady_clock::time_point pullback_deadline =
+    std::chrono::steady_clock::time_point::max();
+thread_local bool pullback_deadline_expired = false;
+
+}
 
 #define _DEBUG_TESTING_
 #ifdef _DEBUG_TESTING_
@@ -512,6 +531,12 @@ surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
 					       double within_distance_tol,
 					       int level)
 {
+    if (brlcad::PullbackWorkCancelled() ||
+	++closest_point_subdivision_nodes >
+	    kMaximumClosestPointSubdivisionNodes ||
+	    level > kMaximumClosestPointSubdivisionDepth)
+	return current_closest_dist;
+
     double min_distance = 0;
     double max_distance = 0;
     ON_Interval new_u_interval = u_interval;
@@ -554,14 +579,14 @@ surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
 			    } else {
 				v_split = new_v_interval.Mid();
 			    }
-			    distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, new_u_interval, u_split, new_v_interval, v_split, current_closest_dist, p2d, p3d, same_point_tol, within_distance_tol, level++);
+			    distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, new_u_interval, u_split, new_v_interval, v_split, current_closest_dist, p2d, p3d, same_point_tol, within_distance_tol, level + 1);
 			    if (distance < current_closest_dist) {
 				current_closest_dist = distance;
 				if (current_closest_dist < same_point_tol)
 				    return current_closest_dist;
 			    }
 			} else {
-			    distance = surface_GetClosestPoint3dFirstOrderByRange(surf, p, new_u_interval, new_v_interval, current_closest_dist, p2d, p3d, same_point_tol, within_distance_tol, level++);
+			    distance = surface_GetClosestPoint3dFirstOrderByRange(surf, p, new_u_interval, new_v_interval, current_closest_dist, p2d, p3d, same_point_tol, within_distance_tol, level + 1);
 			    if (distance < current_closest_dist) {
 				current_closest_dist = distance;
 				if (current_closest_dist < same_point_tol)
@@ -574,6 +599,52 @@ surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
 	}
     }
     return current_closest_dist;
+}
+
+
+void
+brlcad::SetPullbackWorkLimit(PullbackCancellationCallback cancellation_callback,
+    void *cancellation_context, uint64_t maximum_elapsed_milliseconds)
+{
+    pullback_cancellation_callback = cancellation_callback;
+    pullback_cancellation_context = cancellation_context;
+    pullback_deadline_expired = false;
+    pullback_deadline = maximum_elapsed_milliseconds ?
+	std::chrono::steady_clock::now() +
+	    std::chrono::milliseconds(maximum_elapsed_milliseconds) :
+	std::chrono::steady_clock::time_point::max();
+}
+
+
+void
+brlcad::ClearPullbackWorkLimit()
+{
+    pullback_cancellation_callback = NULL;
+    pullback_cancellation_context = NULL;
+    pullback_deadline = std::chrono::steady_clock::time_point::max();
+    pullback_deadline_expired = false;
+}
+
+
+bool
+brlcad::PullbackWorkCancelled()
+{
+    if (pullback_cancellation_callback &&
+	    pullback_cancellation_callback(pullback_cancellation_context))
+	return true;
+    if (pullback_deadline != std::chrono::steady_clock::time_point::max() &&
+	    std::chrono::steady_clock::now() >= pullback_deadline) {
+	pullback_deadline_expired = true;
+	return true;
+    }
+    return false;
+}
+
+
+bool
+brlcad::PullbackWorkDeadlineExpired()
+{
+    return pullback_deadline_expired;
 }
 
 
@@ -670,7 +741,7 @@ surface_GetClosestPoint3dFirstOrderByRange(
 		distance =
 		    surface_GetClosestPoint3dFirstOrderSubdivision(surf, p,
 								   u_range, u_range.Mid(), v_range, v_range.Mid(),
-								   current_closest_dist, p2d, p3d, same_point_tol, within_distance_tol, level++);
+								   current_closest_dist, p2d, p3d, same_point_tol, within_distance_tol, level + 1);
 		if (distance < current_closest_dist) {
 		    current_closest_dist = distance;
 		    if (current_closest_dist < same_point_tol)
@@ -820,7 +891,12 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 {
     bool rc = false;
 
+    closest_point_subdivision_nodes = 0;
+
     current_distance = DBL_MAX;
+
+    if (PullbackWorkCancelled())
+	return false;
 
     if (!surf || !m_impl->Prepare(surf, same_point_tol))
 	return rc;
@@ -839,6 +915,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 		 u_span_index++) {
 		for (int v_span_index = 1; v_span_index < v_spancnt + 1;
 		     v_span_index++) {
+		    if (PullbackWorkCancelled()) return false;
 		    ON_Interval u_interval(uspan[u_span_index - 1],
 					   uspan[u_span_index]);
 		    ON_Interval v_interval(vspan[v_span_index - 1],

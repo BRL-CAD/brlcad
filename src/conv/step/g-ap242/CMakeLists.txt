@@ -50,12 +50,14 @@ if(DEFINED ENABLE_STEP_EXPERIMENTAL)
   target_include_directories(g-ap242 BEFORE PRIVATE ${AP242_INCLUDE_DIRS})
   target_compile_definitions(g-ap242 PRIVATE AP242)
   add_dependencies(g-ap242 ${gap242_SCHEMA_TARGET})
-  set_property(
-    SOURCE
-      ${gap242_SCHEMA_OUT_DIR}/SdaiAP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF.cc
-    APPEND
-    PROPERTY COMPILE_FLAGS "/bigobj"
-  )
+  if(MSVC)
+    set_property(
+      SOURCE
+        ${gap242_SCHEMA_OUT_DIR}/SdaiAP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF.cc
+      APPEND
+      PROPERTY COMPILE_FLAGS "/bigobj"
+    )
+  endif()
 endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
 set(IGNORE_FILES ${gap242_SOURCES} CMakeLists.txt AP242.h ap242e1.exp)

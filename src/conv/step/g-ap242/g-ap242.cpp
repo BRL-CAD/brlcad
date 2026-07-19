@@ -27,6 +27,8 @@
 
 #include <iostream>
 
+#include "bu/app.h"
+#include "bu/exit.h"
 #include "bu/getopt.h"
 #include "bu/vls.h"
 #include "rt/geom.h"
@@ -175,12 +177,12 @@ main(int argc, char *argv[])
     struct rt_db_internal intern;
     rt_db_get_internal(&intern, dp, dbip, bn_mat_identity);
     RT_CK_DB_INTERNAL(&intern);
-    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
     if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
-	//(void)AP242_Add_Tree(dp, wdbp, registry, &instance_list);
+	//(void)AP242_Add_Tree(dp, registry, &instance_list);
     } else {
-	//(void)AP242_Add_Primitive(dp, wdbp, registry, &instance_list);
+	//(void)AP242_Add_Primitive(dp, registry, &instance_list);
     }
+    rt_db_free_internal(&intern);
 
     /* Write STEP file */
     if (!bu_file_exists(output_file, NULL)) {

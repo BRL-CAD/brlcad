@@ -511,6 +511,8 @@ ConvertAP214CSG(STEPWrapper &wrapper, BRLCADWrapper &database,
 		    item.output_name = item_name;
 		} else {
 		    ++wrapper.Statistics().geometry_skipped;
+		    wrapper.RecordSkippedItem(solid->STEPfile_id, "CSG_SOLID",
+			"unsupported or invalid exact CSG tree");
 		    wrapper.RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, solid->STEPfile_id,
 			"CSG_SOLID", "tree_root_expression", "unsupported or invalid exact CSG tree");
 		}

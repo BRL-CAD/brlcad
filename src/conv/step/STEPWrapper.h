@@ -83,12 +83,12 @@ public:
     void ResetOpenNURBSState();
 };
 
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
 namespace brlcad {
 namespace step {
-struct AP214LazyDiagnostic;
-class AP214LazyBatch;
-class AP214LazySession;
+struct STEPLazyDiagnostic;
+class STEPLazyBatch;
+class STEPLazySession;
 }
 }
 #endif
@@ -129,11 +129,13 @@ private:
     brlcad::step::ImportStatistics statistics;
     std::vector<brlcad::step::Diagnostic> diagnostics;
     mutable std::mutex diagnostic_mutex;
+    brlcad::step::ImportProgress progress_state;
+    mutable std::mutex progress_mutex;
     std::function<bool()> cancellation_callback;
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
-    std::unique_ptr<brlcad::step::AP214LazySession> lazy_session;
-    std::unique_ptr<brlcad::step::AP214LazyBatch> lazy_batch;
-    std::vector<std::unique_ptr<brlcad::step::AP214LazyBatch> > lazy_supplemental_batches;
+#ifdef HAVE_STEPCODE_LAZY
+    std::unique_ptr<brlcad::step::STEPLazySession> lazy_session;
+    std::unique_ptr<brlcad::step::STEPLazyBatch> lazy_batch;
+    std::vector<std::unique_ptr<brlcad::step::STEPLazyBatch> > lazy_supplemental_batches;
     std::vector<uint64_t> lazy_instance_ids;
     std::vector<uint64_t> lazy_iteration_ids;
     bool lazy_filter_active = false;
@@ -145,10 +147,10 @@ private:
     double deriveTolerance();
     void collectEntityCounts();
     InstMgrBase *referenceManager() const;
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     SDAI_Application_instance *activateLazyRoot(uint64_t id);
     void releaseLazyBatches();
-    void recordLazyDiagnostic(const brlcad::step::AP214LazyDiagnostic &source);
+    void recordLazyDiagnostic(const brlcad::step::STEPLazyDiagnostic &source);
     void synchronizeLazyDiagnostics();
 #endif
 
@@ -169,8 +171,18 @@ public:
 	const std::string &entity_type, const std::string &attribute, const std::string &message);
     void RecordRepair(int64_t entity_id, const std::string &entity_type,
 	const std::string &attribute, const std::string &message);
+    /** Preserve an entity-specific geometry failure for structured reports.
+     * This does not update geometry_skipped; callers own the coverage count. */
+    void RecordSkippedItem(int64_t entity_id, const std::string &entity_type,
+	const std::string &reason);
     void SetCancellationCallback(const std::function<bool()> &callback) { cancellation_callback = callback; }
     bool CancellationRequested() const { return cancellation_callback && cancellation_callback(); }
+    void SetProgress(const std::string &phase, uint64_t completed = 0,
+	uint64_t total = 0, int64_t current_entity_id = 0,
+	uint64_t secondary_completed = 0,
+	const std::string &secondary_label = std::string(),
+	const std::string &detail = std::string());
+    brlcad::step::ImportProgress Progress() const;
     /** Return true for an unfiltered entity or a requested representation
      * item root, recording requested roots encountered during conversion. */
     bool ShouldConvertEntity(int64_t entity_id);
@@ -186,6 +198,9 @@ public:
     SDAI_Application_instance *InstanceAt(int index);
     void SetInstanceTypes(const std::vector<std::string> &types,
 	const std::vector<uint64_t> &excluded_ids = std::vector<uint64_t>());
+    /** Restrict lazy iteration to an explicit, file-order-stable ID set.
+     * Eager sessions retain their existing full-instance iteration. */
+    void SetInstanceIds(const std::vector<uint64_t> &ids);
     void ResetInstanceTypes();
 
     /** Read-only access to the lazy Part 21 index.  These calls never

@@ -36,6 +36,18 @@ enum class DiagnosticSeverity {
     Fatal
 };
 
+/** Thread-safe progress state copied by the command-line telemetry reporter.
+ * Totals are zero when a parser or conversion phase cannot determine them. */
+struct ImportProgress {
+    std::string phase;
+    uint64_t completed = 0;
+    uint64_t total = 0;
+    uint64_t secondary_completed = 0;
+    std::string secondary_label;
+    std::string detail;
+    int64_t current_entity_id = 0;
+};
+
 struct ImportOptions {
     unsigned int requested_jobs = 1;
     unsigned int effective_jobs = 1;
@@ -151,6 +163,16 @@ struct Document {
     std::map<std::string, uint64_t> unsupported_counts;
 };
 
+/** One exact representation item which could not be written.  These records
+ * remain entity-specific even when the human-readable diagnostic stream is
+ * aggregated, so a report can be fed directly back to --entity for a focused
+ * retry. */
+struct SkippedItem {
+    int64_t entity_id = 0;
+    std::string entity_type;
+    std::string reason;
+};
+
 struct ImportStatistics {
     uint64_t input_instances = 0;
     uint64_t products = 0;
@@ -166,6 +188,9 @@ struct ImportStatistics {
     uint64_t invalid_breps = 0;
     uint64_t output_failures = 0;
     uint64_t repairs = 0;
+    std::vector<SkippedItem> skipped_items;
+    /** Records beyond the bounded skipped_items report budget. */
+    uint64_t skipped_items_omitted = 0;
     /** Requested representation-item roots encountered by a converter. */
     std::set<int64_t> selected_entity_ids_encountered;
     uint64_t lazy_indexed_instances = 0;

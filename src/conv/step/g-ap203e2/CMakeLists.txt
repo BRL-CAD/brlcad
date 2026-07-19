@@ -44,7 +44,7 @@ set(
   ${gap203e2_SCHEMA_OUT_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/..
-  ${CMAKE_CURRENT_SOURCE_DIR}/../step-g
+  ${CMAKE_CURRENT_SOURCE_DIR}/../g-step
   ${STEPCODE_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
 )

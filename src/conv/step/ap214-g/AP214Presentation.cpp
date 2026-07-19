@@ -13,6 +13,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <set>
+#include <vector>
 
 namespace {
 
@@ -259,13 +261,63 @@ extract_layer(STEPWrapper &wrapper, SDAI_Application_instance *instance)
 
 } // namespace
 
+static std::vector<uint64_t>
+selected_presentation_ids(STEPWrapper &wrapper)
+{
+    const std::set<int64_t> &roots = wrapper.ImportOptions().selected_entity_ids;
+    if (roots.empty() || !wrapper.HasLazyIndex())
+	return std::vector<uint64_t>();
+
+    /* A style is an inverse relationship: the STYLED_ITEM points at geometry,
+     * rather than being in the geometry root's forward dependency closure.
+     * Build that closure without materializing SDAI objects, then retain only
+     * presentation roots that refer to something in it.  This preserves face,
+     * edge, and solid styles for targeted conversion without loading every
+     * style in a million-instance assembly. */
+    std::set<uint64_t> closure;
+    std::vector<uint64_t> pending;
+    for (std::set<int64_t>::const_iterator root = roots.begin(); root != roots.end(); ++root) {
+	if (*root <= 0) continue;
+	const uint64_t id = static_cast<uint64_t>(*root);
+	if (closure.insert(id).second) pending.push_back(id);
+    }
+    for (size_t i = 0; i < pending.size(); ++i) {
+	const std::vector<uint64_t> references = wrapper.LazyForwardReferences(pending[i]);
+	for (std::vector<uint64_t>::const_iterator reference = references.begin();
+	     reference != references.end(); ++reference) {
+	    if (closure.insert(*reference).second) pending.push_back(*reference);
+	}
+    }
+
+    std::set<uint64_t> presentation;
+    const char *types[] = {"STYLED_ITEM", "OVER_RIDING_STYLED_ITEM",
+	"PRESENTATION_LAYER_ASSIGNMENT"};
+    for (size_t t = 0; t < sizeof(types) / sizeof(types[0]); ++t) {
+	const std::vector<uint64_t> ids = wrapper.LazyInstancesByType(types[t]);
+	for (std::vector<uint64_t>::const_iterator id = ids.begin(); id != ids.end(); ++id) {
+	    const std::vector<uint64_t> references = wrapper.LazyForwardReferences(*id);
+	    for (std::vector<uint64_t>::const_iterator reference = references.begin();
+		 reference != references.end(); ++reference) {
+		if (closure.find(*reference) == closure.end()) continue;
+		presentation.insert(*id);
+		break;
+	    }
+	}
+    }
+    return std::vector<uint64_t>(presentation.begin(), presentation.end());
+}
+
 void
 ExtractAP214Presentation(STEPWrapper &wrapper)
 {
     wrapper.Document().styles.clear();
     wrapper.Document().layers.clear();
-    wrapper.SetInstanceTypes({"STYLED_ITEM", "OVER_RIDING_STYLED_ITEM",
-	"PRESENTATION_LAYER_ASSIGNMENT"});
+    const std::vector<uint64_t> selected = selected_presentation_ids(wrapper);
+    if (!wrapper.ImportOptions().selected_entity_ids.empty() && wrapper.HasLazyIndex())
+	wrapper.SetInstanceIds(selected);
+    else
+	wrapper.SetInstanceTypes({"STYLED_ITEM", "OVER_RIDING_STYLED_ITEM",
+	    "PRESENTATION_LAYER_ASSIGNMENT"});
     for (int i = 0; i < wrapper.InstanceCount(); ++i) {
 	SDAI_Application_instance *instance = wrapper.InstanceAt(i);
 	if (!instance || instance->STEPfile_id <= 0)

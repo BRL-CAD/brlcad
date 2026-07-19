@@ -25,6 +25,8 @@
 
 #include "AP_Common.h"
 
+#include "bu/app.h"
+#include "bu/exit.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/file.h"
@@ -53,8 +55,6 @@ usage()
 int
 main(int argc, char *argv[])
 {
-    STEPentity *shape;
-    STEPentity *product;
     int ret = 0;
     int convert_tops_list = 0;
     struct directory **paths;
@@ -200,6 +200,12 @@ main(int argc, char *argv[])
     sc->application_context = (SdaiApplication_context *)sc->registry->ObjCreate("APPLICATION_CONTEXT");
     sc->instance_list->Append((STEPentity *)sc->application_context, completeSE);
     sc->application_context->application_("'configuration controlled 3D designs of mechanical parts and assemblies'");
+
+    sc->design_context = (SdaiDesign_context *)sc->registry->ObjCreate("DESIGN_CONTEXT");
+    sc->instance_list->Append((STEPentity *)sc->design_context, completeSE);
+    sc->design_context->name_("''");
+    sc->design_context->life_cycle_stage_("'design'");
+    sc->design_context->frame_of_reference_(sc->application_context);
 
     sc->solid_to_step = new std::map<struct directory *, STEPentity *>;
     sc->solid_to_step_shape = new std::map<struct directory *, STEPentity *>;

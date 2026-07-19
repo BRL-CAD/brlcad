@@ -27,6 +27,7 @@
 #include "common.h"
 
 #include "brep/defines.h"
+#include "brep/pullback.h"
 
 #include "sdai.h"
 class SDAI_Application_instance;
@@ -119,6 +120,12 @@ constexpr int kDenseLiftValidationSegments = 1024;
 /* Keep numerical solver floors comfortably above floating-point zero without
  * replacing the model-derived tolerance used for acceptance. */
 constexpr double kNumericalToleranceScale = 1024.0;
+
+/* A relocated closed-surface seam needs a real parameter-space interval that
+ * contains no sampled boundary.  Requiring one thousandth of the period keeps
+ * the seam away from sampling noise while still admitting narrow exact faces;
+ * every relocated pcurve is subsequently checked against its 3-D edge. */
+constexpr double kMinimumSafeSeamGapFraction = 1.0e-3;
 
 } // namespace
 
@@ -476,6 +483,155 @@ align_nurbs_surface_seam(std::list<PBCData *> &pullbacks, const ON_Surface *surf
 		return true;
 	    }
 	}
+    }
+    return false;
+}
+
+
+/* Move a closed NURBS seam out of an ordinary face boundary.  STEP exporters
+ * are allowed to place a face across the underlying surface seam without
+ * supplying a duplicated topological seam edge.  In that case independently
+ * wrapped pullbacks produce a full-period jump even though every 3-D edge is
+ * exact.  Choose the largest sampled boundary-free interval, change the
+ * surface seam there, and remap each sample to the new domain.  This is an
+ * exact reparameterization: no sample is accepted unless its lift is unchanged
+ * within model uncertainty. */
+static bool
+relocate_nurbs_surface_seam_away_from_boundary(
+    std::list<PBCData *> &pullbacks, const ON_Surface *surface, double tolerance)
+{
+    ON_NurbsSurface *nurbs = ON_NurbsSurface::Cast(
+	const_cast<ON_Surface *>(surface));
+    if (!nurbs || !(tolerance > 0.0) || pullbacks.empty())
+	return false;
+
+    std::set<const ON_BrepEdge *> edges;
+    for (std::list<PBCData *>::const_iterator data = pullbacks.begin();
+	 data != pullbacks.end(); ++data) {
+	if (!*data || !(*data)->edge || !edges.insert((*data)->edge).second)
+	    return false; /* A repeated edge is a topological seam, handled above. */
+    }
+
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!surface->IsClosed(direction))
+	    continue;
+	const ON_Interval old_domain = surface->Domain(direction);
+	const double period = old_domain.Length();
+	if (!(period > ON_ZERO_TOLERANCE))
+	    continue;
+
+	std::vector<double> parameters;
+	bool crosses_current_seam = false;
+	bool have_previous = false;
+	double previous = 0.0;
+	for (std::list<PBCData *>::const_iterator data = pullbacks.begin();
+	     data != pullbacks.end(); ++data) {
+	    if (!*data || !(*data)->segments)
+		continue;
+	    for (std::list<ON_2dPointArray *>::const_iterator segment =
+		    (*data)->segments->begin(); segment != (*data)->segments->end();
+		 ++segment) {
+		if (!*segment)
+		    continue;
+		for (int point = 0; point < (*segment)->Count(); ++point) {
+		    const double value = (**segment)[point][direction];
+		    if (!std::isfinite(value)) {
+			parameters.clear();
+			break;
+		    }
+		    double phase = std::fmod(value - old_domain.Min(), period);
+		    if (phase < 0.0) phase += period;
+		    parameters.push_back(phase);
+		    if (have_previous && fabs(value - previous) > 0.5 * period)
+			crosses_current_seam = true;
+		    previous = value;
+		    have_previous = true;
+		}
+		if (parameters.empty()) break;
+	    }
+	    if (parameters.empty()) break;
+	}
+	if (!crosses_current_seam || parameters.size() < 2)
+	    continue;
+
+	std::sort(parameters.begin(), parameters.end());
+	double largest_gap = -1.0;
+	double gap_start = 0.0;
+	for (size_t index = 0; index < parameters.size(); ++index) {
+	    const double next = index + 1 < parameters.size() ?
+		parameters[index + 1] : parameters[0] + period;
+	    const double gap = next - parameters[index];
+	    if (gap > largest_gap) {
+		largest_gap = gap;
+		gap_start = parameters[index];
+	    }
+	}
+	if (largest_gap < kMinimumSafeSeamGapFraction * period)
+	    continue;
+	double seam_phase = std::fmod(gap_start + 0.5 * largest_gap, period);
+	if (seam_phase < 0.0) seam_phase += period;
+	const double seam = old_domain.Min() + seam_phase;
+	const double endpoint_guard = std::max(ON_ZERO_TOLERANCE,
+	    1.0e-10 * period);
+	if (seam <= old_domain.Min() + endpoint_guard ||
+		seam >= old_domain.Max() - endpoint_guard)
+	    continue;
+
+	ON_NurbsSurface candidate(*nurbs);
+	if (!candidate.ChangeSurfaceSeam(direction, seam) || !candidate.IsValid())
+	    continue;
+	const ON_Interval new_domain = candidate.Domain(direction);
+	std::vector<ON_2dPointArray> remapped;
+	bool valid = true;
+	for (std::list<PBCData *>::const_iterator data = pullbacks.begin();
+	     valid && data != pullbacks.end(); ++data) {
+	    if (!*data || !(*data)->segments)
+		continue;
+	    for (std::list<ON_2dPointArray *>::const_iterator segment =
+		    (*data)->segments->begin(); valid && segment !=
+		    (*data)->segments->end(); ++segment) {
+		if (!*segment) {
+		    remapped.push_back(ON_2dPointArray());
+		    continue;
+		}
+		ON_2dPointArray points(**segment);
+		for (int point = 0; valid && point < points.Count(); ++point) {
+		    const ON_2dPoint original = points[point];
+		    double parameter = original[direction];
+		    while (parameter < new_domain.Min() - endpoint_guard)
+			parameter += period;
+		    while (parameter > new_domain.Max() + endpoint_guard)
+			parameter -= period;
+		    points[point][direction] = parameter;
+		    const ON_3dPoint old_lift = surface->PointAt(original.x, original.y);
+		    const ON_3dPoint new_lift = candidate.PointAt(
+			points[point].x, points[point].y);
+		    valid = old_lift.IsValid() && new_lift.IsValid() &&
+			old_lift.DistanceTo(new_lift) <= tolerance;
+		    if (point > 0 && fabs(points[point][direction] -
+			    points[point - 1][direction]) > 0.5 * period)
+			valid = false;
+		}
+		remapped.push_back(points);
+	    }
+	}
+	if (!valid)
+	    continue;
+
+	*nurbs = candidate;
+	size_t remapped_index = 0;
+	for (std::list<PBCData *>::iterator data = pullbacks.begin();
+	     data != pullbacks.end(); ++data) {
+	    if (!*data || !(*data)->segments)
+		continue;
+	    for (std::list<ON_2dPointArray *>::iterator segment =
+		    (*data)->segments->begin(); segment != (*data)->segments->end();
+		 ++segment, ++remapped_index) {
+		if (*segment && remapped_index < remapped.size())
+		    **segment = remapped[remapped_index];
+	    }
+	}
+	return true;
     }
     return false;
 }
@@ -1836,6 +1992,9 @@ FaceSurface::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
+    if (step)
+	step->SetProgress("computing exact STEP face edge bounds", 0, 0, id);
+
     // need edge bounds to determine extents for some of the infinitely
     // defined surfaces like cones/cylinders/planes
     ON_BoundingBox *bb = GetEdgeBounds(brep);
@@ -1843,21 +2002,30 @@ FaceSurface::LoadONBrep(ON_Brep *brep)
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error calculating openNURBS brep bounds." << std::endl;
 	return false;
     }
+	if (brlcad::PullbackWorkCancelled()) {
+	    delete bb;
+	    return false;
+	}
 
     face_geometry->SetCurveBounds(bb);
     delete bb;
 
+    if (step)
+	step->SetProgress("building exact STEP face surface", 0, 0, id);
     if (!face_geometry->LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
     }
 
     AddFace(brep);
+	if (brlcad::PullbackWorkCancelled()) return false;
 
     //TODO: remove debugging code
     if ((false) && (ON_id == 72)) {
 	std::cerr << "Debug:LoadONBrep for FaceSurface:" << ON_id << std::endl;
     }
+    if (step)
+	step->SetProgress("constructing exact STEP face loops", 0, 0, id);
     if (!Face::LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
@@ -1963,6 +2131,7 @@ Face::GetEdgeBounds(ON_Brep *brep)
     ON_BoundingBox *u = NULL;
     LIST_OF_FACE_BOUNDS::iterator i;
     for (i = bounds.begin(); i != bounds.end(); i++) {
+	if (brlcad::PullbackWorkCancelled()) return NULL;
 	ON_BoundingBox *bb = (*i)->GetEdgeBounds(brep);
 	if (bb != NULL) {
 	    if (u == NULL) {
@@ -1984,6 +2153,10 @@ Face::LoadONBrep(ON_Brep *brep)
     // check for outer spanning to bounds
     LIST_OF_FACE_BOUNDS::iterator i;
     for (i = bounds.begin(); i != bounds.end(); i++) {
+	if (brlcad::PullbackWorkCancelled()) return false;
+	if (step)
+	    step->SetProgress("constructing exact STEP face loop", 0, 0,
+		(*i) ? (*i)->STEPid() : id, static_cast<uint64_t>(id), "face");
 	(*i)->SetFaceIndex(ON_id);
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
@@ -2156,6 +2329,10 @@ Path::GetEdgeBounds(ON_Brep *brep)
 
     LIST_OF_ORIENTED_EDGES::iterator i;
     for (i = edge_list.begin(); i != edge_list.end(); i++) {
+	if (brlcad::PullbackWorkCancelled()) {
+	    delete u;
+	    return NULL;
+	}
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    delete u;
@@ -2184,6 +2361,7 @@ Path::LoadONBrep(ON_Brep *brep)
     }
 
     for (i = edge_list.begin(); i != edge_list.end(); i++) {
+	if (brlcad::PullbackWorkCancelled()) return false;
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
@@ -2326,6 +2504,19 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     PBCData *data = NULL;
     LIST_OF_ORIENTED_EDGES::iterator prev, next;
     for (i = edge_list.begin(); i != edge_list.end(); i++) {
+	if (brlcad::PullbackWorkCancelled()) {
+	    for (std::map<PBCData *, ON_Curve *>::iterator exact = exact_pullbacks.begin();
+		 exact != exact_pullbacks.end(); ++exact)
+		delete exact->second;
+	    while (!curve_pullback_samples.empty()) {
+		destroy_pullback_data(curve_pullback_samples.front());
+		curve_pullback_samples.pop_front();
+	    }
+	    return false;
+	}
+	if (step)
+	    step->SetProgress("constructing exact STEP trim pullback", 0, 0,
+		(*i) ? (*i)->STEPid() : id, static_cast<uint64_t>(id), "loop");
 	// grab the curve for this edge, face and surface
 	const ON_BrepEdge *edge = &brep->m_E[(*i)->GetONId()];
 	const ON_Curve *curve = edge->EdgeCurveOf();
@@ -2435,15 +2626,22 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	std::cerr << "Error: Can not resolve seam or singularity issues." << std::endl;
     }
 
-    if (step && step->ImportOptions().repair == brlcad::step::RepairMode::Safe &&
-	    align_nurbs_surface_seam(curve_pullback_samples, surface, LocalUnits::tolerance)) {
-	step->RecordRepair(id, "EDGE_LOOP", "edge_list",
-	    "aligned a periodic NURBS surface seam with its closed edge");
+    if (step && step->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
+	if (align_nurbs_surface_seam(curve_pullback_samples, surface,
+		LocalUnits::tolerance)) {
+	    step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+		"aligned a periodic NURBS surface seam with its closed edge");
+	} else if (relocate_nurbs_surface_seam_away_from_boundary(
+		curve_pullback_samples, surface, LocalUnits::tolerance)) {
+	    step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+		"relocated a closed NURBS surface seam outside the face boundary");
+	}
     }
 
     if (step && step->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
 	for (std::list<PBCData *>::iterator current = curve_pullback_samples.begin();
 	     current != curve_pullback_samples.end(); ++current) {
+	    if (brlcad::PullbackWorkCancelled()) break;
 	    PBCData *current_data = *current;
 	    if (!current_data || !current_data->edge)
 		continue;
@@ -2477,6 +2675,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	 * endpoint after its neighboring seam curve has already been constructed. */
 	for (std::list<PBCData *>::iterator current = curve_pullback_samples.begin();
 	     current != curve_pullback_samples.end(); ++current) {
+	    if (brlcad::PullbackWorkCancelled()) break;
 	    PBCData *current_data = *current;
 	    if (!current_data || !current_data->segments)
 		continue;
@@ -2506,6 +2705,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    bool seam_changed = false;
 	    for (std::list<PBCData *>::iterator current = curve_pullback_samples.begin();
 		 current != curve_pullback_samples.end(); ++current) {
+		if (brlcad::PullbackWorkCancelled()) break;
 		PBCData *current_data = *current;
 		if (!current_data || !current_data->edge)
 		    continue;
@@ -2552,6 +2752,10 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 
     cs = curve_pullback_samples.begin();
     while (cs != curve_pullback_samples.end()) {
+	if (brlcad::PullbackWorkCancelled()) {
+	    trim_construction_failed = true;
+	    break;
+	}
 	next_cs = cs;
 	next_cs++;
 	if (next_cs == curve_pullback_samples.end()) {
@@ -2566,6 +2770,10 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	ON_2dPointArray *nsamples = NULL;
 
 	while (si != data->segments->end()) {
+	    if (brlcad::PullbackWorkCancelled()) {
+		trim_construction_failed = true;
+		break;
+	    }
 	    nsi = si;
 	    nsi++;
 	    if (nsi == data->segments->end()) {
@@ -2692,6 +2900,10 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 			candidate->IsValid();
 		    for (int sample = 0; candidate_valid &&
 			    sample <= kDenseLiftValidationSegments; ++sample) {
+			if (brlcad::PullbackWorkCancelled()) {
+			    candidate_valid = false;
+			    break;
+			}
 			const double fraction = static_cast<double>(sample) /
 			    kDenseLiftValidationSegments;
 			const ON_3dPoint uv = candidate->PointAt(
@@ -2735,13 +2947,14 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		    data->order_reversed ? 0 : 1]);
 		/* Edge geometry can retain a wider proxy domain than a sub-tolerance
 		 * topological use.  Its declared STEP vertices are authoritative for
-		 * recovery of the lost pullback endpoint. */
+		 * recovery of the lost pullback endpoint on every surface, not only a
+		 * periodic one. */
 		const int start_vertex = data->edge->m_vi[data->order_reversed ? 1 : 0];
 		const int end_vertex = data->edge->m_vi[data->order_reversed ? 0 : 1];
-		if (periodic_recovery && start_vertex >= 0 &&
+		if (start_vertex >= 0 &&
 			start_vertex < brep->m_V.Count())
 		    target_start = brep->m_V[start_vertex].point;
-		if (periodic_recovery && end_vertex >= 0 &&
+		if (end_vertex >= 0 &&
 			end_vertex < brep->m_V.Count())
 		    target_end = brep->m_V[end_vertex].point;
 		ON_2dPoint pulled_start, pulled_end;
@@ -2816,6 +3029,10 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		    *rejected_fraction = 0.0;
 		    for (int sample = 0; candidate_valid &&
 			    sample <= kDenseLiftValidationSegments; ++sample) {
+			if (brlcad::PullbackWorkCancelled()) {
+			    candidate_valid = false;
+			    break;
+			}
 			const double fraction = static_cast<double>(sample) /
 			    kDenseLiftValidationSegments;
 			const ON_3dPoint uv = candidate->PointAt(
@@ -2917,6 +3134,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 			    const ON_Interval next_edge_domain = ndata->curve->Domain();
 			    for (int sample = 0;
 				    sample <= kDenseLiftValidationSegments; ++sample) {
+				if (brlcad::PullbackWorkCancelled()) return false;
 				const double fraction = static_cast<double>(sample) /
 				    kDenseLiftValidationSegments;
 				const ON_3dPoint uv = candidate->PointAt(

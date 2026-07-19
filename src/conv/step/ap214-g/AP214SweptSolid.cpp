@@ -1031,6 +1031,9 @@ ConvertAP214SweptSolids(STEPWrapper &wrapper, BRLCADWrapper &database,
 		    product->second.output_name + "_swept_item", geometry->STEPfile_id);
 	    } else {
 		++wrapper.Statistics().geometry_skipped;
+		wrapper.RecordSkippedItem(geometry->STEPfile_id, type,
+		    failure_reason.empty() ?
+		    "exact swept-area conversion failed validation" : failure_reason);
 		wrapper.RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error,
 		    geometry->STEPfile_id, type, std::string(),
 		    failure_reason.empty() ?

@@ -45,6 +45,7 @@ struct AP203_Contents {
     InstMgr *instance_list;
     STEPentity *default_context;
     SdaiApplication_context *application_context;
+    SdaiDesign_context *design_context;
     std::map<struct directory *, STEPentity *> *solid_to_step;
     std::map<struct directory *, STEPentity *> *solid_to_step_shape;
     std::map<struct directory *, STEPentity *> *solid_to_step_manifold;

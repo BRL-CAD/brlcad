@@ -32,6 +32,11 @@
 #define CLASSNAME "ToroidalSurface"
 #define ENTITYNAME "Toroidal_Surface"
 string ToroidalSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ToroidalSurface::Create);
+/* A degenerate torus has the same exact underlying elementary surface.  Its
+ * select_outer flag chooses the trimmed side and is therefore represented by
+ * the face bounds rather than a different openNURBS surface equation. */
+string ToroidalSurface::degenerate_entityname = Factory::RegisterClass(
+    "Degenerate_Toroidal_Surface", (FactoryMethod)ToroidalSurface::Create);
 
 ToroidalSurface::ToroidalSurface()
 {

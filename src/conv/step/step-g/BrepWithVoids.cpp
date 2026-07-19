@@ -26,6 +26,7 @@
 
 #include "STEPWrapper.h"
 #include "Factory.h"
+#include "brep/pullback.h"
 
 #include "BrepWithVoids.h"
 #include "OrientedClosedShell.h"
@@ -140,6 +141,7 @@ bool BrepWithVoids::LoadONBrep(ON_Brep *brep)
 
     LIST_OF_ORIENTED_CLOSED_SHELLS::iterator i;
     for (i = voids.begin(); i != voids.end(); ++i) {
+	if (brlcad::PullbackWorkCancelled()) return false;
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;

@@ -85,6 +85,17 @@ check_pullback_singularity_bridge(const ON_Surface *surf, const ON_2dPoint &p1, 
 
 namespace brlcad {
 
+    /** Install thread-local cancellation and elapsed-work limits for the
+     * current geometry job.  A zero elapsed limit disables the deadline. */
+    typedef bool (*PullbackCancellationCallback)(void *context);
+    extern BREP_EXPORT void SetPullbackWorkLimit(
+        PullbackCancellationCallback cancellation_callback,
+        void *cancellation_context,
+        uint64_t maximum_elapsed_milliseconds);
+    extern BREP_EXPORT void ClearPullbackWorkLimit();
+    extern BREP_EXPORT bool PullbackWorkCancelled();
+    extern BREP_EXPORT bool PullbackWorkDeadlineExpired();
+
     /**
      * Mutable state used by one pullback job.  Keeping span and bounding-box
      * caches here makes independent conversion jobs safe to run concurrently

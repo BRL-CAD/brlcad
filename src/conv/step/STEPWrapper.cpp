@@ -27,6 +27,7 @@
 #include <atomic>
 #include <cctype>
 #include <algorithm>
+#include <chrono>
 #include <climits>
 
 #include "brep/cdt.h"
@@ -81,8 +82,8 @@
 #  include "AP214Presentation.h"
 #  include "AP214SweptSolid.h"
 #endif
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
-#  include "AP214LazySession.h"
+#ifdef HAVE_STEPCODE_LAZY
+#  include "STEPLazySession.h"
 #endif
 
 namespace {
@@ -116,6 +117,43 @@ constexpr int kBoundaryParameterSearchSegments = 256;
  * equivalence checks.  Keep this distinct from model-space uncertainty. */
 constexpr double kNumericalToleranceScale = 1024.0;
 
+/* Keep reports useful for targeted retries without allowing a corrupt file to
+ * grow JSON output without bound.  The total omitted count remains exact. */
+constexpr size_t kMaximumReportedSkippedItems = 4096;
+
+/* Updating the telemetry snapshot requires a short mutex acquisition.  Once
+ * per 256 scanned entities keeps progress current without adding measurable
+ * synchronization overhead to million-instance product-graph walks. */
+constexpr int kProgressUpdateStride = 256;
+
+/* A single invalid item must not monopolize an import indefinitely.  Thirty
+ * seconds flags an exact solid as an investigation case before it consumes a
+ * full minute; a shell surface model gets two minutes because one AP item may
+ * intentionally contain many disconnected shells.  These are elapsed-work
+ * ceilings, not acceptance tolerances. */
+constexpr uint64_t kMaximumExactPullbackMilliseconds = 30000;
+constexpr uint64_t kMaximumSurfaceModelPullbackMilliseconds = 120000;
+
+class PullbackWorkScope {
+public:
+    PullbackWorkScope(STEPWrapper *source, uint64_t maximum_elapsed_milliseconds)
+	: wrapper(source)
+    {
+	brlcad::SetPullbackWorkLimit(CancellationRequested, wrapper,
+	    maximum_elapsed_milliseconds);
+    }
+    ~PullbackWorkScope() { brlcad::ClearPullbackWorkLimit(); }
+    bool DeadlineExpired() const { return brlcad::PullbackWorkDeadlineExpired(); }
+
+private:
+    static bool CancellationRequested(void *context)
+    {
+	STEPWrapper *source = static_cast<STEPWrapper *>(context);
+	return source && source->CancellationRequested();
+    }
+    STEPWrapper *wrapper;
+};
+
 }
 
 STEPWrapper::STEPWrapper()
@@ -129,7 +167,7 @@ STEPWrapper::STEPWrapper()
 STEPWrapper::~STEPWrapper()
 {
     ClearEntityCache();
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     releaseLazyBatches();
     lazy_session.reset();
 #endif
@@ -181,7 +219,7 @@ STEPDetachedEntityArena::ResetOpenNURBSState()
 int
 STEPWrapper::InstanceCount() const
 {
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     if (lazy_session)
 	return static_cast<int>(lazy_filter_active ? lazy_iteration_ids.size() : lazy_instance_ids.size());
 #endif
@@ -193,7 +231,7 @@ SDAI_Application_instance *
 STEPWrapper::InstanceAt(int index)
 {
     if (index < 0 || index >= InstanceCount()) return NULL;
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     if (lazy_session) {
 	const std::vector<uint64_t> &ids = lazy_filter_active ? lazy_iteration_ids : lazy_instance_ids;
 	return activateLazyRoot(ids[static_cast<size_t>(index)]);
@@ -207,7 +245,7 @@ void
 STEPWrapper::SetInstanceTypes(const std::vector<std::string> &types,
     const std::vector<uint64_t> &excluded_ids)
 {
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     if (!lazy_session) return;
     releaseLazyBatches();
     std::set<uint64_t> selected;
@@ -232,9 +270,30 @@ STEPWrapper::SetInstanceTypes(const std::vector<std::string> &types,
 
 
 void
+STEPWrapper::SetInstanceIds(const std::vector<uint64_t> &ids)
+{
+#ifdef HAVE_STEPCODE_LAZY
+    if (!lazy_session) return;
+    releaseLazyBatches();
+    const std::set<uint64_t> selected(ids.begin(), ids.end());
+    lazy_iteration_ids.clear();
+    lazy_iteration_ids.reserve(selected.size());
+    for (std::vector<uint64_t>::const_iterator id = lazy_instance_ids.begin();
+	 id != lazy_instance_ids.end(); ++id) {
+	if (selected.find(*id) != selected.end())
+	    lazy_iteration_ids.push_back(*id);
+    }
+    lazy_filter_active = true;
+#else
+    (void)ids;
+#endif
+}
+
+
+void
 STEPWrapper::ResetInstanceTypes()
 {
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     if (!lazy_session) return;
     releaseLazyBatches();
     lazy_iteration_ids.clear();
@@ -246,7 +305,7 @@ STEPWrapper::ResetInstanceTypes()
 bool
 STEPWrapper::HasLazyIndex() const
 {
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     return lazy_session.get() != NULL;
 #else
     return false;
@@ -257,7 +316,7 @@ STEPWrapper::HasLazyIndex() const
 std::vector<uint64_t>
 STEPWrapper::LazyInstancesByType(const std::string &type) const
 {
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     return lazy_session ? lazy_session->InstancesByType(type) : std::vector<uint64_t>();
 #else
     (void)type;
@@ -269,7 +328,7 @@ STEPWrapper::LazyInstancesByType(const std::string &type) const
 std::string
 STEPWrapper::LazyTypeName(uint64_t id) const
 {
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     return lazy_session ? lazy_session->TypeName(id) : std::string();
 #else
     (void)id;
@@ -281,7 +340,7 @@ STEPWrapper::LazyTypeName(uint64_t id) const
 std::vector<uint64_t>
 STEPWrapper::LazyForwardReferences(uint64_t id) const
 {
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     return lazy_session ? lazy_session->ForwardReferences(id) : std::vector<uint64_t>();
 #else
     (void)id;
@@ -293,7 +352,7 @@ STEPWrapper::LazyForwardReferences(uint64_t id) const
 std::vector<uint64_t>
 STEPWrapper::LazyReverseReferences(uint64_t id) const
 {
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     return lazy_session ? lazy_session->ReverseReferences(id) : std::vector<uint64_t>();
 #else
     (void)id;
@@ -305,7 +364,7 @@ STEPWrapper::LazyReverseReferences(uint64_t id) const
 InstMgrBase *
 STEPWrapper::referenceManager() const
 {
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     if (lazy_session) return lazy_session->ReferenceManager();
 #endif
     return instance_list;
@@ -328,10 +387,10 @@ diagnostic_less(const brlcad::step::Diagnostic &left,
 }
 
 
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
 static void
 update_lazy_statistics(brlcad::step::ImportStatistics &statistics,
-    const brlcad::step::AP214LazyStatistics &cache)
+    const brlcad::step::STEPLazyStatistics &cache)
 {
     statistics.lazy_indexed_instances = cache.instances_scanned;
     statistics.lazy_current_loaded_instances = cache.instances_loaded;
@@ -351,7 +410,7 @@ update_lazy_statistics(brlcad::step::ImportStatistics &statistics,
 }
 
 void
-STEPWrapper::recordLazyDiagnostic(const brlcad::step::AP214LazyDiagnostic &source)
+STEPWrapper::recordLazyDiagnostic(const brlcad::step::STEPLazyDiagnostic &source)
 {
     std::lock_guard<std::mutex> guard(diagnostic_mutex);
     brlcad::step::DiagnosticSeverity severity = brlcad::step::DiagnosticSeverity::Information;
@@ -389,9 +448,9 @@ void
 STEPWrapper::synchronizeLazyDiagnostics()
 {
     if (!lazy_session) return;
-    const std::vector<brlcad::step::AP214LazyDiagnostic> &source =
+    const std::vector<brlcad::step::STEPLazyDiagnostic> &source =
 	lazy_session->Diagnostics();
-    for (std::vector<brlcad::step::AP214LazyDiagnostic>::const_iterator diagnostic =
+    for (std::vector<brlcad::step::STEPLazyDiagnostic>::const_iterator diagnostic =
 	     source.begin(); diagnostic != source.end(); ++diagnostic)
 	recordLazyDiagnostic(*diagnostic);
 }
@@ -403,7 +462,7 @@ STEPWrapper::releaseLazyBatches()
     ClearEntityCache();
     lazy_supplemental_batches.clear();
     lazy_batch.reset();
-    const brlcad::step::AP214LazyStatistics cache = lazy_session->Statistics();
+    const brlcad::step::STEPLazyStatistics cache = lazy_session->Statistics();
     update_lazy_statistics(statistics, cache);
     synchronizeLazyDiagnostics();
 }
@@ -413,9 +472,9 @@ SDAI_Application_instance *
 STEPWrapper::activateLazyRoot(uint64_t id)
 {
     releaseLazyBatches();
-    lazy_batch.reset(new brlcad::step::AP214LazyBatch(lazy_session->LoadBatch(id)));
+    lazy_batch.reset(new brlcad::step::STEPLazyBatch(lazy_session->LoadBatch(id)));
     if (!lazy_batch->Valid()) return NULL;
-    const brlcad::step::AP214LazyStatistics cache = lazy_session->Statistics();
+    const brlcad::step::STEPLazyStatistics cache = lazy_session->Statistics();
     update_lazy_statistics(statistics, cache);
     return lazy_batch->Get(id);
 }
@@ -466,7 +525,7 @@ STEPWrapper::DetachEntityCache()
 void
 STEPWrapper::ReleaseSourceData()
 {
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     if (lazy_session) {
 	releaseLazyBatches();
 	return;
@@ -500,6 +559,30 @@ STEPWrapper::ResetOpenNURBSState()
 	if (*i)
 	    (*i)->ResetONState();
     }
+}
+
+
+void
+STEPWrapper::SetProgress(const std::string &phase, uint64_t completed,
+    uint64_t total, int64_t current_entity_id, uint64_t secondary_completed,
+    const std::string &secondary_label, const std::string &detail)
+{
+    std::lock_guard<std::mutex> guard(progress_mutex);
+    progress_state.phase = phase;
+    progress_state.completed = completed;
+    progress_state.total = total;
+    progress_state.current_entity_id = current_entity_id;
+    progress_state.secondary_completed = secondary_completed;
+    progress_state.secondary_label = secondary_label;
+    progress_state.detail = detail;
+}
+
+
+brlcad::step::ImportProgress
+STEPWrapper::Progress() const
+{
+    std::lock_guard<std::mutex> guard(progress_mutex);
+    return progress_state;
 }
 
 
@@ -572,14 +655,21 @@ STEPWrapper::collectEntityCounts()
 	    type.compare(0, 5, "TEXT_") == 0 || type.find("TOLERANCE") != std::string::npos)
 	    ++document.unsupported_counts[type];
     };
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     if (lazy_session) {
+	uint64_t completed = 0;
 	for (std::vector<uint64_t>::const_iterator id = lazy_instance_ids.begin();
 	     id != lazy_instance_ids.end(); ++id) {
 	    std::string type = lazy_session->TypeName(*id);
 	    if (type.empty()) type = "COMPLEX_ENTITY";
 	    record_type(type);
+	    ++completed;
+	    if ((completed & 0x3fff) == 0)
+		SetProgress("counting STEP entity types", completed,
+		    statistics.input_instances, static_cast<int64_t>(*id));
 	}
+	SetProgress("counting STEP entity types", completed,
+	    statistics.input_instances);
 	return;
     }
 #endif
@@ -587,7 +677,12 @@ STEPWrapper::collectEntityCounts()
 	SDAI_Application_instance *instance = InstanceAt(i);
 	if (!instance || !instance->EntityName()) continue;
 	record_type(instance->EntityName());
+	if ((i & 0x3fff) == 0)
+	    SetProgress("counting STEP entity types", static_cast<uint64_t>(i),
+		statistics.input_instances, instance->STEPfile_id);
     }
+	SetProgress("counting STEP entity types", statistics.input_instances,
+	    statistics.input_instances);
 }
 
 
@@ -598,7 +693,7 @@ STEPWrapper::deriveTolerance()
 	return import_options.absolute_tolerance_mm;
 
     double result = 0.0;
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     if (lazy_session) {
 	const std::vector<uint64_t> uncertainty_ids =
 	    lazy_session->InstancesByType("GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT");
@@ -2039,6 +2134,10 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 				break;
 			    }
 			}
+			const std::string periodic_shift_detail =
+			    rejected_periodic_shift_distance < DBL_MAX ?
+			    std::to_string(rejected_periodic_shift_distance) :
+			    std::string("unavailable");
 			rejection = "adaptive exact-edge pullback made no parameter progress at " +
 			    std::to_string(normalized_parameters[segment]) + ":" +
 			    std::to_string(normalized_parameters[segment + 1]) +
@@ -2060,12 +2159,15 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 			    std::to_string(surface->IsSingular(1) ? 1 : 0) +
 			    std::to_string(surface->IsSingular(2) ? 1 : 0) +
 			    std::to_string(surface->IsSingular(3) ? 1 : 0) +
-			    ", periodic shift distance " +
-			    std::to_string(rejected_periodic_shift_distance) + ")";
+			    ", periodic shift distance " + periodic_shift_detail + ")";
 			valid = false;
 			break;
 		    }
 		    if (static_cast<size_t>(points.Count()) >= maximum_points) {
+			const std::string periodic_shift_detail =
+			    rejected_periodic_shift_distance < DBL_MAX ?
+			    std::to_string(rejected_periodic_shift_distance) :
+			    std::string("unavailable");
 			rejection = "adaptive exact-edge pullback sample budget exceeded at " +
 			    std::to_string(normalized_parameters[segment]) + ":" +
 			    std::to_string(normalized_parameters[segment + 1]) +
@@ -2073,8 +2175,7 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 			    std::to_string(points[segment].y) + " -> " +
 			    std::to_string(points[segment + 1].x) + ":" +
 			    std::to_string(points[segment + 1].y) +
-			    ", periodic shift distance " +
-			    std::to_string(rejected_periodic_shift_distance) + ")";
+			    ", periodic shift distance " + periodic_shift_detail + ")";
 			valid = false;
 			break;
 		    }
@@ -6840,6 +6941,89 @@ repair_final_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 
 
 static void
+repair_face_bound_classification(ON_Brep *brep, STEPWrapper *wrapper,
+	int entity_id, const std::string &entity_type)
+{
+    if (!brep || !wrapper || wrapper->ImportOptions().repair != brlcad::step::RepairMode::Safe)
+	return;
+
+    /* FACE_BOUND is the base type and does not itself say inner or outer.
+     * Conforming files use FACE_OUTER_BOUND for exactly one member, but some
+     * production exporters emit either only FACE_BOUND or more than one
+     * FACE_OUTER_BOUND.  Recover or correct the classification only when it
+     * is unambiguous: a face has one loop, or openNURBS computes exactly one
+     * outer loop from the completed pcurves.  No curve or topology is changed. */
+    if (wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
+	for (int fi = 0; fi < brep->m_F.Count(); ++fi) {
+	    ON_BrepFace &face = brep->m_F[fi];
+	    int outer_count = 0;
+	    bool classification_complete = true;
+	    for (int fli = 0; fli < face.m_li.Count(); ++fli) {
+		const int li = face.m_li[fli];
+		if (li < 0 || li >= brep->m_L.Count()) {
+		    classification_complete = false;
+		    continue;
+		}
+		const ON_BrepLoop::TYPE type = brep->m_L[li].m_type;
+		if (type == ON_BrepLoop::outer)
+		    ++outer_count;
+		else if (type != ON_BrepLoop::inner && type != ON_BrepLoop::slit)
+		    classification_complete = false;
+	    }
+	    if (face.m_li.Count() == 0)
+		continue;
+	    if (outer_count == 1 && classification_complete) {
+		const int first_li = face.m_li[0];
+		if (first_li >= 0 && first_li < brep->m_L.Count() &&
+			brep->m_L[first_li].m_type == ON_BrepLoop::outer)
+		    continue;
+		brep->SortFaceLoops(face);
+		wrapper->RecordRepair(entity_id, entity_type, "face_bound",
+		    "restored the outer FACE_BOUND loop to the first face-loop position");
+		continue;
+	    }
+
+	    if (outer_count == 0 && face.m_li.Count() == 1) {
+		const int li = face.m_li[0];
+		if (li < 0 || li >= brep->m_L.Count()) continue;
+		brep->m_L[li].m_type = ON_BrepLoop::outer;
+		wrapper->RecordRepair(entity_id, entity_type, "face_bound",
+		    "classified the only FACE_BOUND loop as the outer boundary");
+		continue;
+	    }
+
+	    std::vector<ON_BrepLoop::TYPE> computed;
+	    computed.reserve(face.m_li.Count());
+	    int computed_outer_count = 0;
+	    for (int fli = 0; fli < face.m_li.Count(); ++fli) {
+		const int li = face.m_li[fli];
+		const ON_BrepLoop::TYPE type = li >= 0 && li < brep->m_L.Count() ?
+		    brep->ComputeLoopType(brep->m_L[li]) : ON_BrepLoop::unknown;
+		computed.push_back(type);
+		if (type == ON_BrepLoop::outer) ++computed_outer_count;
+	    }
+	    if (computed_outer_count != 1)
+		continue;
+	    for (int fli = 0; fli < face.m_li.Count(); ++fli) {
+		const int li = face.m_li[fli];
+		if (li >= 0 && li < brep->m_L.Count() &&
+			(computed[fli] == ON_BrepLoop::outer ||
+			 computed[fli] == ON_BrepLoop::inner))
+		    brep->m_L[li].m_type = computed[fli];
+	    }
+	    brep->SortFaceLoops(face);
+	    wrapper->RecordRepair(entity_id, entity_type, "face_bound",
+		outer_count == 0 ?
+		"classified untyped FACE_BOUND loops from their exact pcurves" :
+		outer_count > 1 ?
+		"corrected multiple FACE_OUTER_BOUND loops from their exact pcurves" :
+		"completed FACE_BOUND loop classification from exact pcurves");
+	}
+    }
+}
+
+
+static void
 repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 	int entity_id, const std::string &entity_type,
 	bool allow_surface_alignment = false)
@@ -6855,6 +7039,8 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
     std::unique_ptr<ON_Brep> retry_source;
     if (!allow_surface_alignment)
 	retry_source.reset(new ON_Brep(*brep));
+
+    repair_face_bound_classification(brep, wrapper, entity_id, entity_type);
 
     std::vector<ON_BrepLoop::TYPE> expected_loop_types;
     expected_loop_types.reserve(brep->m_L.Count());
@@ -7070,15 +7256,30 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 	if (loop_orientation_changed) {
 	    brep->SetTolerancesBoxesAndFlags(false, false, false, false,
 		true, true, true, true);
-	    for (int fi = 0; fi < brep->m_F.Count(); ++fi)
-		brep->SortFaceLoops(brep->m_F[fi]);
 	}
+	/* The refresh above may still report an unknown loop type on a periodic
+	 * face even after FlipLoop established the requested winding.  Preserve
+	 * the authoritative FACE_OUTER_BOUND/FACE_BOUND classification (or the
+	 * unambiguous pre-repair classification recovered above); derived loop
+	 * flags are not allowed to erase it. */
+	for (int li = 0; li < brep->m_L.Count() &&
+		static_cast<size_t>(li) < expected_loop_types.size(); ++li) {
+	    const ON_BrepLoop::TYPE expected = expected_loop_types[li];
+	    if (expected == ON_BrepLoop::outer || expected == ON_BrepLoop::inner)
+		brep->m_L[li].m_type = expected;
+	}
+	for (int fi = 0; fi < brep->m_F.Count(); ++fi)
+	    brep->SortFaceLoops(brep->m_F[fi]);
 	/* FlipLoop reverses every pcurve in a restored loop.  Perform the final
 	 * closed-edge tangent check only after those reversals, and then refresh
 	 * the derived trim state once more. */
 	repair_final_closed_trim_orientations(brep, wrapper, entity_id, entity_type);
+	/* The completed STEP face-bound graph is authoritative when an exporter
+	 * omitted FACE_OUTER_BOUND.  The final closed-edge tangent pass does not
+	 * reverse pcurves, so refreshing loop types here would only discard the
+	 * unambiguous bound classification restored above. */
 	brep->SetTolerancesBoxesAndFlags(false, false, false, false,
-	    true, true, true, true);
+	    true, true, false, true);
 	if (!allow_surface_alignment && retry_source) {
 	    ON_wString validation_messages;
 	    ON_TextLog validation_log(validation_messages);
@@ -7478,8 +7679,8 @@ exact_brep_solid_type(SolidModel *solid)
 }
 
 
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
-struct LazyAP214Occurrence {
+#ifdef HAVE_STEPCODE_LAZY
+struct LazySTEPOccurrence {
     uint64_t entity_id = 0;
     uint64_t relationship_id = 0;
     uint64_t parent_representation_id = 0;
@@ -7491,7 +7692,7 @@ struct LazyAP214Occurrence {
 };
 
 
-struct LazyAP214ExactGraph {
+struct LazySTEPExactGraph {
     std::map<uint64_t, uint64_t> representation_product;
     std::map<uint64_t, std::vector<uint64_t> > representation_solids;
     std::map<uint64_t, uint64_t> representation_context;
@@ -7499,7 +7700,7 @@ struct LazyAP214ExactGraph {
     std::set<uint64_t> handled_sdrs;
     std::set<uint64_t> handled_relationships;
     std::set<uint64_t> handled_cdsrs;
-    std::vector<LazyAP214Occurrence> occurrences;
+    std::vector<LazySTEPOccurrence> occurrences;
 };
 
 
@@ -7556,10 +7757,10 @@ private:
 };
 
 
-static LazyAP214ExactGraph
-build_lazy_ap214_exact_graph(STEPWrapper *wrapper)
+static LazySTEPExactGraph
+build_lazy_exact_graph(STEPWrapper *wrapper)
 {
-    LazyAP214ExactGraph graph;
+    LazySTEPExactGraph graph;
     if (!wrapper || !wrapper->HasLazyIndex())
 	return graph;
 
@@ -7774,7 +7975,7 @@ build_lazy_ap214_exact_graph(STEPWrapper *wrapper)
 	if (!parent_product || !child_product) continue;
 	const uint64_t rep1_product = graph.representation_product[relation_representations[0]];
 	const uint64_t rep2_product = graph.representation_product[relation_representations[1]];
-	LazyAP214Occurrence occurrence;
+	LazySTEPOccurrence occurrence;
 	occurrence.entity_id = *cdsr;
 	occurrence.relationship_id = relationship;
 	occurrence.parent_product_id = parent_product;
@@ -7831,7 +8032,7 @@ record_brep_result(STEPWrapper *wrapper, BrepWriteStatus status, int entity_id,
 	    break;
 	case BREP_NOT_SOLID:
 	    ++stats.invalid_breps;
-	    message = "closed AP214 BREP did not validate as a solid";
+	    message = "closed STEP BREP did not validate as a solid";
 	    break;
 	case BREP_OUTPUT_FAILED:
 	    ++stats.output_failures;
@@ -7841,6 +8042,7 @@ record_brep_result(STEPWrapper *wrapper, BrepWriteStatus status, int entity_id,
 	    message = "unknown BREP conversion failure";
 	    break;
     }
+    wrapper->RecordSkippedItem(entity_id, entity_type, message);
     wrapper->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, entity_id,
 	entity_type, std::string(), message);
 }
@@ -7871,6 +8073,7 @@ struct DetachedBrepJob {
     double tolerance = 1.0e-6;
     bool faceted = false;
     bool ready = false;
+    uint64_t remaining_work_milliseconds = kMaximumExactPullbackMilliseconds;
     bool has_style = false;
     brlcad::step::Style style;
     SolidModel *solid = NULL;
@@ -7952,8 +8155,19 @@ materialize_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
     if (!wrapper || job.entity_id <= 0)
 	return;
 
+    const std::chrono::steady_clock::time_point started =
+	std::chrono::steady_clock::now();
+    PullbackWorkScope item_work(wrapper, kMaximumExactPullbackMilliseconds);
+
+	/* Keep this phase separate from topology detachment and pullback.  Large
+	 * dependency closures can otherwise make a long materialization look like
+	 * an expensive curve-on-surface solve in the periodic telemetry. */
+    wrapper->SetProgress("materializing STEP dependency closure", 0, 0,
+	job.entity_id, 0, std::string(), job.entity_type);
     SDAI_Application_instance *source = wrapper->getEntity(job.entity_id);
     if (source) {
+	wrapper->SetProgress("detaching exact STEP topology", 0, 0,
+	    job.entity_id, 0, std::string(), job.entity_type);
 	RepresentationItem *item = dynamic_cast<RepresentationItem *>(
 	    Factory::CreateObject(wrapper, source));
 	job.solid = exact_brep_solid(item);
@@ -7963,9 +8177,25 @@ materialize_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    job.faceted = dynamic_cast<FacetedBrep *>(job.solid) != NULL;
 	}
     }
+    brlcad::PullbackWorkCancelled();
+    if (item_work.DeadlineExpired()) {
+	job.validation_message =
+	    "dependency materialization exceeded the 30-second per-item work budget";
+	wrapper->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Warning,
+	    job.entity_id, job.entity_type, "dependency_closure", job.validation_message);
+	job.solid = NULL;
+	wrapper->ReleaseSourceData();
+	job.status = BREP_CONVERSION_FAILED;
+	return;
+    }
     job.entity_arena = wrapper->DetachEntityCache();
     wrapper->ReleaseSourceData();
     job.ready = job.solid != NULL && job.entity_arena != NULL;
+    const uint64_t elapsed = static_cast<uint64_t>(
+	std::chrono::duration_cast<std::chrono::milliseconds>(
+	    std::chrono::steady_clock::now() - started).count());
+    job.remaining_work_milliseconds = elapsed < kMaximumExactPullbackMilliseconds ?
+	kMaximumExactPullbackMilliseconds - elapsed : 1;
 }
 
 
@@ -7977,6 +8207,11 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	return;
     }
 
+	/* LoadONBrep includes exact curve-on-surface construction. */
+    wrapper->SetProgress("building exact BREP and pullbacks", 0, 0,
+	job.entity_id, 0, std::string(), job.entity_type);
+    PullbackWorkScope pullback_work(wrapper, job.remaining_work_milliseconds);
+
     LocalUnits::length = job.length_factor;
     LocalUnits::planeangle = job.planeangle_factor;
     LocalUnits::solidangle = job.solidangle_factor;
@@ -7984,7 +8219,16 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 
     job.entity_arena->ResetOpenNURBSState();
     job.brep.reset(new ON_Brep());
-    if (!job.solid->LoadONBrep(job.brep.get())) {
+    const bool loaded = job.solid->LoadONBrep(job.brep.get());
+    if (pullback_work.DeadlineExpired()) {
+	job.validation_message = "exact pullback exceeded the 30-second per-item work budget";
+	wrapper->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Warning,
+	    job.entity_id, job.entity_type, "trim_pcurve", job.validation_message);
+	job.brep.reset();
+	job.status = BREP_CONVERSION_FAILED;
+	return;
+    }
+    if (!loaded) {
 	job.brep.reset();
 	job.status = BREP_CONVERSION_FAILED;
 	return;
@@ -8004,11 +8248,13 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
     const bool needs_post_repair_topology = !job.brep->IsValid(&preliminary_log);
     if (needs_post_repair_topology &&
 	    wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
-	bool post_repair_topology_changed = false;
 	const size_t post_repair_splits = finalize_brep_topology(job.brep.get(), true,
-	    wrapper, job.entity_id, job.entity_type, &post_repair_topology_changed);
+	    wrapper, job.entity_id, job.entity_type);
 	keyhole_splits += post_repair_splits;
-	if (!job.faceted && post_repair_topology_changed)
+	/* Even when no loop was split, topology finalization refreshes derived
+	 * openNURBS flags.  Reapply the proven STEP bound classification before
+	 * validation so an invalid duplicate FACE_OUTER_BOUND repair is not lost. */
+	if (!job.faceted)
 	    repair_closed_trim_orientations(job.brep.get(), wrapper, job.entity_id,
 		job.entity_type);
     }
@@ -8016,9 +8262,29 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	wrapper->RecordRepair(job.entity_id, job.entity_type, "edge_loop",
 	    "normalized a zero-area seam bridge into valid closed trim topology");
 
+    /* ON_Brep::IsValid() refreshes loop-derived state while diagnosing a
+     * candidate.  Restore any unambiguous STEP bound classification after
+     * the preliminary check and immediately before authoritative validation. */
+    if (!job.faceted &&
+	    wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe)
+	repair_face_bound_classification(job.brep.get(), wrapper, job.entity_id,
+	    job.entity_type);
+
     ON_wString validation_messages;
     ON_TextLog validation_log(validation_messages);
-    if (!job.brep->IsValid(&validation_log)) {
+    bool structurally_valid = job.brep->IsValid(&validation_log);
+    if (!structurally_valid && !job.faceted &&
+	    wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
+	/* Some openNURBS validity checks normalize derived loop flags before
+	 * reporting a later face.  A single bounded retry restores only the
+	 * classification proven above; it does not alter geometry or topology. */
+	repair_face_bound_classification(job.brep.get(), wrapper, job.entity_id,
+	    job.entity_type);
+	validation_messages = ON_wString();
+	ON_TextLog repaired_validation_log(validation_messages);
+	structurally_valid = job.brep->IsValid(&repaired_validation_log);
+    }
+    if (!structurally_valid) {
 	ON_String text(validation_messages);
 	job.validation_message = text.Array();
 	std::ostringstream joins;
@@ -8390,9 +8656,21 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 
     const size_t batch_limit = std::max<size_t>(1,
 	static_cast<size_t>(wrapper->ImportOptions().effective_jobs));
+    wrapper->SetProgress("converting exact geometry", 0,
+	static_cast<uint64_t>(jobs.size()), jobs.empty() ? 0 : jobs.front()->entity_id,
+	wrapper->Statistics().geometry_written, "written");
     for (size_t begin = 0; begin < jobs.size(); begin += batch_limit) {
 	if (wrapper->CancellationRequested()) return;
 	const size_t end = std::min(jobs.size(), begin + batch_limit);
+	std::ostringstream active_entities;
+	active_entities << "batch=";
+	for (size_t index = begin; index < end; ++index) {
+	    if (index != begin) active_entities << ',';
+	    active_entities << '#' << jobs[index]->entity_id;
+	}
+	wrapper->SetProgress("converting exact geometry", static_cast<uint64_t>(begin),
+	    static_cast<uint64_t>(jobs.size()), jobs[begin]->entity_id,
+	    wrapper->Statistics().geometry_written, "written", active_entities.str());
 	std::vector<DetachedBrepJob *> batch;
 	batch.reserve(end - begin);
 	for (size_t index = begin; index < end; ++index) {
@@ -8411,11 +8689,14 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 	    jobs[index]->entity_arena.reset();
 	    jobs[index]->solid = NULL;
 	}
+	wrapper->SetProgress("converting exact geometry", static_cast<uint64_t>(end),
+	    static_cast<uint64_t>(jobs.size()), 0,
+	    wrapper->Statistics().geometry_written, "written");
     }
 }
 
 
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
 struct LazyRepresentationUnits {
     double length = 1000.0;
     double planeangle = 1.0;
@@ -8424,7 +8705,7 @@ struct LazyRepresentationUnits {
 
 
 static LazyRepresentationUnits
-lazy_representation_units(STEPWrapper *wrapper, const LazyAP214ExactGraph &graph,
+lazy_representation_units(STEPWrapper *wrapper, const LazySTEPExactGraph &graph,
     uint64_t representation_id)
 {
     LazyRepresentationUnits result;
@@ -8481,7 +8762,7 @@ lazy_representation_matrix(STEPWrapper *wrapper, uint64_t representation_id,
 
 
 static bool
-lazy_occurrence_matrix(STEPWrapper *wrapper, const LazyAP214Occurrence &occurrence,
+lazy_occurrence_matrix(STEPWrapper *wrapper, const LazySTEPOccurrence &occurrence,
     double length_factor, mat_t matrix)
 {
     MAT_IDN(matrix);
@@ -8531,7 +8812,7 @@ lazy_occurrence_matrix(STEPWrapper *wrapper, const LazyAP214Occurrence &occurren
 
 
 static void
-index_lazy_exact_graph(const LazyAP214ExactGraph &graph, STEPWrapper *wrapper,
+index_lazy_exact_graph(const LazySTEPExactGraph &graph, STEPWrapper *wrapper,
     BRLCADWrapper *database, MAP_OF_ENTITY_ID_TO_PRODUCT_NAME &id2name_map,
     MAP_OF_ENTITY_ID_TO_PRODUCT_ID &id2productid_map)
 {
@@ -8596,11 +8877,11 @@ index_lazy_exact_graph(const LazyAP214ExactGraph &graph, STEPWrapper *wrapper,
 
 
 static void
-convert_lazy_occurrences(const LazyAP214ExactGraph &graph, STEPWrapper *wrapper,
+convert_lazy_occurrences(const LazySTEPExactGraph &graph, STEPWrapper *wrapper,
     BRLCADWrapper *database, int dry_run,
     MAP_OF_ENTITY_ID_TO_PRODUCT_NAME &id2name_map)
 {
-    for (std::vector<LazyAP214Occurrence>::const_iterator source = graph.occurrences.begin();
+    for (std::vector<LazySTEPOccurrence>::const_iterator source = graph.occurrences.begin();
 	 source != graph.occurrences.end(); ++source) {
 	if (wrapper->CancellationRequested()) return;
 	if (source->entity_id > static_cast<uint64_t>(INT_MAX) ||
@@ -8634,7 +8915,7 @@ convert_lazy_occurrences(const LazyAP214ExactGraph &graph, STEPWrapper *wrapper,
 
 
 static void
-convert_lazy_exact_graph(const LazyAP214ExactGraph &graph, STEPWrapper *wrapper,
+convert_lazy_exact_graph(const LazySTEPExactGraph &graph, STEPWrapper *wrapper,
     BRLCADWrapper *database, int dry_run,
     MAP_OF_ENTITY_ID_TO_PRODUCT_NAME &id2name_map,
     MAP_OF_ENTITY_ID_TO_PRODUCT_ID &process_map)
@@ -8695,6 +8976,69 @@ convert_lazy_exact_graph(const LazyAP214ExactGraph &graph, STEPWrapper *wrapper,
     wrapper->ReleaseSourceData();
     write_detached_brep_jobs(jobs, wrapper, database, dry_run, process_map);
 }
+
+
+static bool
+lazy_selection_contains_only_exact_roots(STEPWrapper *wrapper)
+{
+    if (!wrapper || !wrapper->HasLazyIndex() ||
+	wrapper->ImportOptions().selected_entity_ids.empty())
+	return false;
+    static const std::set<std::string> exact_types = {
+	"MANIFOLD_SOLID_BREP", "BREP_WITH_VOIDS", "FACETED_BREP", "SOLID_REPLICA"
+    };
+    for (std::set<int64_t>::const_iterator id =
+	    wrapper->ImportOptions().selected_entity_ids.begin();
+	 id != wrapper->ImportOptions().selected_entity_ids.end(); ++id) {
+	if (*id <= 0 || exact_types.find(wrapper->LazyTypeName(
+		static_cast<uint64_t>(*id))) == exact_types.end())
+	    return false;
+    }
+    return true;
+}
+
+
+static void
+convert_lazy_selected_exact_roots(const LazySTEPExactGraph &graph,
+    STEPWrapper *wrapper, BRLCADWrapper *database, int dry_run,
+    MAP_OF_ENTITY_ID_TO_PRODUCT_ID &process_map)
+{
+    std::vector<std::unique_ptr<DetachedBrepJob> > jobs;
+    for (std::set<int64_t>::const_iterator selected =
+	    wrapper->ImportOptions().selected_entity_ids.begin();
+	 selected != wrapper->ImportOptions().selected_entity_ids.end(); ++selected) {
+	if (*selected <= 0 || *selected > INT_MAX) continue;
+	const uint64_t source_id = static_cast<uint64_t>(*selected);
+	uint64_t representation_id = 0;
+	for (std::map<uint64_t, std::vector<uint64_t> >::const_iterator represented =
+		graph.representation_solids.begin();
+	     represented != graph.representation_solids.end() && !representation_id;
+	     ++represented) {
+	    if (std::find(represented->second.begin(), represented->second.end(),
+		    source_id) != represented->second.end())
+		representation_id = represented->first;
+	}
+	const LazyRepresentationUnits units = lazy_representation_units(wrapper, graph,
+	    representation_id);
+	const int entity_id = static_cast<int>(*selected);
+	int product_id = 0;
+	std::map<uint64_t, uint64_t>::const_iterator product =
+	    graph.representation_product.find(representation_id);
+	if (product != graph.representation_product.end() && product->second <= INT_MAX)
+	    product_id = static_cast<int>(product->second);
+	mat_t identity;
+	MAT_IDN(identity);
+	const brlcad::step::Style *style = style_for_item(wrapper, entity_id);
+	std::unique_ptr<DetachedBrepJob> job = detach_brep_job_data(entity_id,
+	    wrapper->LazyTypeName(source_id), std::string(),
+	    database->StableBRLCADName("step_item", entity_id), product_id,
+	    units.length, units.planeangle, units.solidangle, identity, style);
+	wrapper->ShouldConvertEntity(entity_id);
+	jobs.push_back(std::move(job));
+    }
+    wrapper->ReleaseSourceData();
+    write_detached_brep_jobs(jobs, wrapper, database, dry_run, process_map);
+}
 #endif
 
 static BrepWriteStatus
@@ -8711,8 +9055,21 @@ convert_WritePlateBrep(
 	LocalUnits::planeangle = representation->GetPlaneAngleConversionFactor();
 	LocalUnits::solidangle = representation->GetSolidAngleConversionFactor();
     }
+    PullbackWorkScope pullback_work(wrapper, kMaximumSurfaceModelPullbackMilliseconds);
     wrapper->ResetOpenNURBSState();
     ON_Brep *onBrep = sBrep->GetONBrep();
+
+    if (wrapper->CancellationRequested()) {
+	delete onBrep;
+	return BREP_CONVERSION_FAILED;
+    }
+    if (pullback_work.DeadlineExpired()) {
+	wrapper->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Warning,
+	    sBrep->GetId(), "SHELL_BASED_SURFACE_MODEL", "trim_pcurve",
+	    "surface-model pullback exceeded the two-minute per-item work budget");
+	delete onBrep;
+	return BREP_CONVERSION_FAILED;
+    }
     if (!onBrep)
 	return BREP_CONVERSION_FAILED;
 
@@ -9069,6 +9426,15 @@ convert_representation_geometry(Representation *representation, int product_id,
 
 bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 {
+#ifdef HAVE_STEPCODE_LAZY
+    struct LazyBatchCleanup {
+	STEPWrapper *wrapper;
+	~LazyBatchCleanup()
+	{
+	    if (wrapper) wrapper->ReleaseSourceData();
+	}
+    } lazy_batch_cleanup = {this};
+#endif
     MAP_OF_PRODUCT_NAME_TO_ENTITY_ID name2id_map;
     MAP_OF_ENTITY_ID_TO_PRODUCT_NAME id2name_map;
     MAP_OF_ENTITY_ID_TO_PRODUCT_ID id2productid_map;
@@ -9084,6 +9450,8 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
     statistics.geometry_attempted = 0;
     statistics.geometry_written = 0;
     statistics.geometry_skipped = 0;
+    statistics.skipped_items.clear();
+    statistics.skipped_items_omitted = 0;
     statistics.invalid_breps = 0;
     statistics.output_failures = 0;
     statistics.styles_extracted = 0;
@@ -9093,18 +9461,41 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
     document.products.clear();
     document.representations.clear();
     document.occurrences.clear();
+    SetProgress("counting STEP entity types", 0, statistics.input_instances);
     collectEntityCounts();
 #ifdef AP214e3
+    SetProgress("extracting AP214 styles and metadata");
     ExtractAP214Presentation(*this);
+    if (HasLazyIndex() &&
+	(!LazyInstancesByType("DESIGN_CONTEXT").empty() ||
+	 !LazyInstancesByType("MECHANICAL_CONTEXT").empty())) {
+	RecordDiagnostic(brlcad::step::DiagnosticSeverity::Warning, 0, "FILE_SCHEMA",
+	    std::string(),
+	    "AP214 file uses legacy AP203 DESIGN_CONTEXT/MECHANICAL_CONTEXT names; "
+	    "imported as their attribute-compatible AP214 parent contexts");
+    }
 #endif
     statistics.tolerance_mm = deriveTolerance();
     LocalUnits::tolerance = statistics.tolerance_mm;
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
-    const LazyAP214ExactGraph lazy_exact_graph = build_lazy_ap214_exact_graph(this);
+#ifdef HAVE_STEPCODE_LAZY
+    const LazySTEPExactGraph lazy_exact_graph = build_lazy_exact_graph(this);
     const std::vector<uint64_t> lazy_handled_sdrs = lazy_ids(lazy_exact_graph.handled_sdrs);
     const std::vector<uint64_t> lazy_handled_relationships =
 	lazy_ids(lazy_exact_graph.handled_relationships);
     const std::vector<uint64_t> lazy_handled_cdsrs = lazy_ids(lazy_exact_graph.handled_cdsrs);
+
+    /* A focused exact-root request is a diagnostic/conversion job, not a
+     * request to rebuild every unrelated product and relationship in a large
+     * assembly.  The zero-copy graph above supplies its units; load only the
+     * selected dependency closures and write the roots in entity order. */
+    if (lazy_selection_contains_only_exact_roots(this)) {
+	convert_lazy_selected_exact_roots(lazy_exact_graph, this, dotg, dry_run,
+	    process_map);
+	statistics.products = static_cast<uint64_t>(document.products.size());
+	statistics.occurrences = static_cast<uint64_t>(document.occurrences.size());
+	return statistics.output_failures == 0 &&
+	    (!import_options.strict || statistics.geometry_skipped == 0);
+    }
 #else
     const std::vector<uint64_t> lazy_handled_sdrs;
     const std::vector<uint64_t> lazy_handled_relationships;
@@ -9116,8 +9507,13 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	"PRODUCT_DEFINITION_WITH_ASSOCIATED_DOCUMENTS", "SHAPE_DEFINITION_REPRESENTATION",
 	"MANIFOLD_SURFACE_SHAPE_REPRESENTATION", "GEOMETRIC_SET"}, lazy_handled_sdrs);
     int num_ents = InstanceCount();
+    SetProgress("indexing product and representation structure", 0,
+	static_cast<uint64_t>(num_ents));
     for (int i = 0; i < num_ents; i++) {
 	if (CancellationRequested()) return false;
+	if (i % kProgressUpdateStride == 0)
+	    SetProgress("indexing product and representation structure",
+		static_cast<uint64_t>(i), static_cast<uint64_t>(num_ents));
 	SDAI_Application_instance *sse = InstanceAt(i);
 	if (sse == NULL) {
 	    continue;
@@ -9321,7 +9717,9 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    ClearEntityCache();
 	}
     }
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+    SetProgress("product and representation structure indexed",
+	static_cast<uint64_t>(num_ents), static_cast<uint64_t>(num_ents));
+#ifdef HAVE_STEPCODE_LAZY
     index_lazy_exact_graph(lazy_exact_graph, this, dotg, id2name_map,
 	id2productid_map);
 #endif
@@ -9329,7 +9727,9 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
     /* Product and representation identity must be established before
      * represented properties and make-from material links are detached into
      * the schema-neutral document. */
+    SetProgress("extracting AP214 metadata");
     ExtractAP214Metadata(*this);
+    SetProgress("converting AP214 CSG and swept solids");
     ConvertAP214CSG(*this, *dot_g, lazy_handled_sdrs);
     ConvertAP214SweptSolids(*this, *dot_g, lazy_handled_sdrs);
 #endif
@@ -9357,8 +9757,13 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	"REPRESENTATION_RELATIONSHIP", "REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION"},
 	lazy_handled_relationships);
     num_ents = InstanceCount();
+    SetProgress("indexing representation relationships", 0,
+	static_cast<uint64_t>(num_ents));
     for (int i = 0; i < num_ents; i++) {
 	if (CancellationRequested()) return false;
+	if (i % kProgressUpdateStride == 0)
+	    SetProgress("indexing representation relationships",
+		static_cast<uint64_t>(i), static_cast<uint64_t>(num_ents));
 	SDAI_Application_instance *sse = InstanceAt(i);
 	if (sse == NULL) {
 	    continue;
@@ -9463,8 +9868,13 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	"REPRESENTATION_RELATIONSHIP", "REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION"},
 	lazy_handled_relationships);
     num_ents = InstanceCount();
+    SetProgress("indexing surface-model relationships", 0,
+	static_cast<uint64_t>(num_ents));
     for (int i = 0; i < num_ents; i++) {
 	if (CancellationRequested()) return false;
+	if (i % kProgressUpdateStride == 0)
+	    SetProgress("indexing surface-model relationships",
+		static_cast<uint64_t>(i), static_cast<uint64_t>(num_ents));
 	SDAI_Application_instance *sse = InstanceAt(i);
 	if (sse == NULL) {
 	    continue;
@@ -9542,13 +9952,19 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	std::cerr << std::endl << "     Generating BRL-CAD hierarchy." << std::endl;
     }
 
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
+    SetProgress("building assembly occurrences");
     convert_lazy_occurrences(lazy_exact_graph, this, dotg, dry_run, id2name_map);
 #endif
     SetInstanceTypes({"CONTEXT_DEPENDENT_SHAPE_REPRESENTATION"}, lazy_handled_cdsrs);
     num_ents = InstanceCount();
+    SetProgress("building assembly occurrences", 0,
+	static_cast<uint64_t>(num_ents));
     for (int i = 0; i < num_ents; i++) {
 	if (CancellationRequested()) return false;
+	if (i % kProgressUpdateStride == 0)
+	    SetProgress("building assembly occurrences", static_cast<uint64_t>(i),
+		static_cast<uint64_t>(num_ents));
 	SDAI_Application_instance *sse = InstanceAt(i);
 	if (sse == NULL) {
 	    continue;
@@ -9650,54 +10066,28 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    }
 	}
     }
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     convert_lazy_exact_graph(lazy_exact_graph, this, dotg, dry_run,
 	id2name_map, process_map);
 #endif
-    SetInstanceTypes({"SHELL_BASED_SURFACE_MODEL", "SHAPE_DEFINITION_REPRESENTATION"},
-	lazy_handled_sdrs);
+    /* Convert exact solid and wire representations before potentially large,
+     * monolithic shell-based surface models.  This lets bounded solid jobs
+     * make deterministic output progress even when a supplemental plate model
+     * needs expensive serial pullback work. */
+    SetInstanceTypes({"SHAPE_DEFINITION_REPRESENTATION"}, lazy_handled_sdrs);
     num_ents = InstanceCount();
+    SetProgress("converting exact representation items", 0,
+	static_cast<uint64_t>(num_ents), 0, statistics.geometry_written, "written");
     for (int i = 0; i < num_ents; i++) {
 	if (CancellationRequested()) return false;
+	if (i % kProgressUpdateStride == 0)
+	    SetProgress("converting exact representation items",
+		static_cast<uint64_t>(i), static_cast<uint64_t>(num_ents), 0,
+		statistics.geometry_written, "written");
 	SDAI_Application_instance *sse = InstanceAt(i);
 	if (sse == NULL) {
 	    continue;
 	}
-	std::string name = sse->EntityName();
-	std::transform(name.begin(), name.end(), name.begin(), (int(*)(int))std::tolower);
-
-	/* Plate mode solid */
-	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shell_based_surface_model))) {
-	    ShellBasedSurfaceModel *gr = dynamic_cast<ShellBasedSurfaceModel *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
-	    if (gr) {
-		int id = gr->GetId();
-		if (!ShouldConvertEntity(id)) {
-		    ClearEntityCache();
-		    continue;
-		}
-		name = id2name_map[id];
-		ShapeRepresentation *surface_representation = NULL;
-		MAP_OF_ENTITY_ID_TO_PRODUCT_ID::const_iterator sri = shell2representation_map.find(id);
-		if (sri != shell2representation_map.end()) {
-		    SDAI_Application_instance *representation_entity = getEntity(sri->second);
-		    if (representation_entity)
-			surface_representation = dynamic_cast<ShapeRepresentation *>(
-			    Factory::CreateObject(this, representation_entity));
-		}
-		BrepWriteStatus status = convert_WritePlateBrep(gr, surface_representation,
-		    this, dot_g, &name, dry_run);
-		record_brep_result(this, status, id, "SHELL_BASED_SURFACE_MODEL");
-		MAP_OF_ENTITY_ID_TO_PRODUCT_ID::iterator pit = id2productid_map.find(id);
-		if (status == BREP_WRITE_SUCCESS && !dry_run && pit != id2productid_map.end()) {
-		    std::string comb = id2name_map[pit->second];
-		    mat_t mat;
-		    MAT_IDN(mat);
-		    dotg->AddMember(comb, name, mat);
-		}
-	    }
-	    ClearEntityCache();
-	}
-
 	/* Shape Definition Representation */
 	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shape_definition_representation))) {
 	    ShapeDefinitionRepresentation *sdr = dynamic_cast<ShapeDefinitionRepresentation *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
@@ -9763,49 +10153,113 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    }
 	}
     }
+
+    /* Relationship-backed exact BREPs are the common AP203 assembly form.
+     * Convert them before monolithic supplemental surface models so useful
+     * solid output is not blocked by one expensive shell pullback. */
     SetInstanceTypes({"SHAPE_REPRESENTATION_RELATIONSHIP",
 	"REPRESENTATION_RELATIONSHIP", "REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION"},
 	lazy_handled_relationships);
     num_ents = InstanceCount();
+    SetProgress("converting relationship-backed exact geometry", 0,
+	static_cast<uint64_t>(num_ents), 0, statistics.geometry_written, "written");
     for (int i = 0; i < num_ents; i++) {
 	if (CancellationRequested()) return false;
-	/* Shape Representation Relationship */
+	if (i % kProgressUpdateStride == 0)
+	    SetProgress("converting relationship-backed exact geometry",
+		static_cast<uint64_t>(i), static_cast<uint64_t>(num_ents), 0,
+		statistics.geometry_written, "written");
 	SDAI_Application_instance *sse = InstanceAt(i);
-	if (sse == NULL) {
+	if (!sse || sse->STEPfile_id <= 0 ||
+		!sse->IsA(SCHEMA_NAMESPACE::e_shape_representation_relationship))
 	    continue;
+	ShapeRepresentationRelationship *srr = dynamic_cast<ShapeRepresentationRelationship *>(
+	    Factory::CreateObject(this, sse));
+	if (!srr) continue;
+	ShapeRepresentation *aSR = dynamic_cast<ShapeRepresentation *>(
+	    srr->GetRepresentationRelationshipRep_1());
+	AdvancedBrepShapeRepresentation *aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(
+	    srr->GetRepresentationRelationshipRep_2());
+	if (!aBrep) {
+	    aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(
+		srr->GetRepresentationRelationshipRep_1());
+	    aSR = dynamic_cast<ShapeRepresentation *>(
+		srr->GetRepresentationRelationshipRep_2());
 	}
-	std::string name = sse->EntityName();
-	std::transform(name.begin(), name.end(), name.begin(), (int(*)(int))std::tolower);
-
-
-	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shape_representation_relationship))) {
-	    ShapeRepresentationRelationship *srr = dynamic_cast<ShapeRepresentationRelationship *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
-	    if (srr) {
-		ShapeRepresentation *aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
-		AdvancedBrepShapeRepresentation *aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
-		if (!aBrep) { //try rep_1
-		    aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
-		    aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
-		}
-		if ((aSR) && (aBrep)) {
-		    int sr_id = aSR->GetId();
-		    MAP_OF_ENTITY_ID_TO_PRODUCT_ID::iterator it = id2productid_map.find(sr_id);
-		    if (it != id2productid_map.end()) { // product found
-			int product_id = (*it).second;
-			convert_representation_geometry(aBrep, product_id, this, dotg, dry_run,
-			    id2name_map, process_map);
-		    }/**/
-		}
-		ClearEntityCache();
-	    }
+	if (aSR && aBrep) {
+	    MAP_OF_ENTITY_ID_TO_PRODUCT_ID::iterator product =
+		id2productid_map.find(aSR->GetId());
+	    if (product != id2productid_map.end())
+		convert_representation_geometry(aBrep, product->second, this, dotg,
+		    dry_run, id2name_map, process_map);
 	}
+	ClearEntityCache();
     }
 
+    SetInstanceTypes({"SHELL_BASED_SURFACE_MODEL"});
+    num_ents = InstanceCount();
+    SetProgress("converting shell-based surface models", 0,
+	static_cast<uint64_t>(num_ents), 0, statistics.geometry_written, "written");
+    for (int i = 0; i < num_ents; ++i) {
+	if (CancellationRequested()) return false;
+	SDAI_Application_instance *sse = InstanceAt(i);
+	if (!sse || sse->STEPfile_id <= 0 ||
+		!sse->IsA(SCHEMA_NAMESPACE::e_shell_based_surface_model))
+	    continue;
+	ShellBasedSurfaceModel *surface_model = dynamic_cast<ShellBasedSurfaceModel *>(
+	    Factory::CreateObject(this, sse));
+	if (!surface_model) {
+	    RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error,
+		sse->STEPfile_id, "SHELL_BASED_SURFACE_MODEL", std::string(),
+		"entity materialization failed");
+	    ClearEntityCache();
+	    continue;
+	}
+	const int surface_id = surface_model->GetId();
+	SetProgress("converting shell-based surface models", static_cast<uint64_t>(i),
+	    static_cast<uint64_t>(num_ents), surface_id,
+	    statistics.geometry_written, "written");
+	if (!ShouldConvertEntity(surface_id)) {
+	    ClearEntityCache();
+	    continue;
+	}
+	std::string surface_name = id2name_map[surface_id];
+	if (surface_name.empty())
+	    surface_name = dotg->StableBRLCADName(surface_model->Name(), surface_id);
+	ShapeRepresentation *surface_representation = NULL;
+	MAP_OF_ENTITY_ID_TO_PRODUCT_ID::const_iterator representation =
+	    shell2representation_map.find(surface_id);
+	if (representation != shell2representation_map.end()) {
+	    SDAI_Application_instance *representation_entity =
+		getEntity(representation->second);
+	    if (representation_entity)
+		surface_representation = dynamic_cast<ShapeRepresentation *>(
+		    Factory::CreateObject(this, representation_entity));
+	}
+	const BrepWriteStatus status = convert_WritePlateBrep(surface_model,
+	    surface_representation, this, dot_g, &surface_name, dry_run);
+	record_brep_result(this, status, surface_id, "SHELL_BASED_SURFACE_MODEL");
+	MAP_OF_ENTITY_ID_TO_PRODUCT_ID::iterator product =
+	    id2productid_map.find(surface_id);
+	if (status == BREP_WRITE_SUCCESS && !dry_run &&
+		product != id2productid_map.end()) {
+	    mat_t identity;
+	    MAT_IDN(identity);
+	    dotg->AddMember(id2name_map[product->second], surface_name, identity);
+	}
+	ClearEntityCache();
+    }
+
+    SetProgress("writing BRL-CAD hierarchy", statistics.geometry_written,
+	statistics.geometry_attempted, 0, statistics.geometry_skipped, "skipped");
     if (!dry_run && !dotg->WriteCombs()) {
 	++statistics.output_failures;
 	RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, 0, "BRLCAD_DATABASE",
 	    std::string(), "failed writing one or more hierarchy combinations");
     }
+
+    SetProgress("conversion complete", statistics.geometry_attempted,
+	statistics.geometry_attempted, 0, statistics.geometry_written, "written");
 
     if (summary_log_file) {
 	ofstream step_log;
@@ -9832,7 +10286,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    else
 		step_log << "UNKNOWN_STATUS\n";
 	};
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
 	if (HasLazyIndex()) {
 	    for (std::vector<uint64_t>::const_iterator id = lazy_instance_ids.begin();
 		 id != lazy_instance_ids.end(); ++id) {
@@ -9865,14 +10319,33 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    statistics.selected_entity_ids_encountered.end()) continue;
 	++statistics.geometry_attempted;
 	++statistics.geometry_skipped;
+	RecordSkippedItem(*requested, "ENTITY_SELECTION",
+	    "selected entity was not found as a supported representation-item root");
 	RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, *requested,
 	    "ENTITY_SELECTION", std::string(),
 	    "selected entity was not found as a supported representation-item root");
     }
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     releaseLazyBatches();
 #endif
     return statistics.output_failures == 0 && (!import_options.strict || statistics.geometry_skipped == 0);
+}
+
+
+void
+STEPWrapper::RecordSkippedItem(int64_t entity_id, const std::string &entity_type,
+    const std::string &reason)
+{
+    std::lock_guard<std::mutex> lock(diagnostic_mutex);
+    if (statistics.skipped_items.size() >= kMaximumReportedSkippedItems) {
+	++statistics.skipped_items_omitted;
+	return;
+    }
+    brlcad::step::SkippedItem item;
+    item.entity_id = entity_id;
+    item.entity_type = entity_type;
+    item.reason = reason;
+    statistics.skipped_items.push_back(item);
 }
 
 
@@ -9881,17 +10354,17 @@ STEPWrapper::getEntity(int STEPid)
 {
     if (STEPid <= 0)
 	return NULL;
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+#ifdef HAVE_STEPCODE_LAZY
     if (lazy_session) {
 	SDAI_Application_instance *instance = lazy_batch ? lazy_batch->Get(STEPid) : NULL;
 	if (instance) return instance;
-	for (std::vector<std::unique_ptr<brlcad::step::AP214LazyBatch> >::const_iterator batch =
+	for (std::vector<std::unique_ptr<brlcad::step::STEPLazyBatch> >::const_iterator batch =
 		 lazy_supplemental_batches.begin(); batch != lazy_supplemental_batches.end(); ++batch) {
 	    instance = (*batch)->Get(STEPid);
 	    if (instance) return instance;
 	}
-	std::unique_ptr<brlcad::step::AP214LazyBatch> supplemental(
-	    new brlcad::step::AP214LazyBatch(lazy_session->LoadBatch(static_cast<uint64_t>(STEPid))));
+	std::unique_ptr<brlcad::step::STEPLazyBatch> supplemental(
+	    new brlcad::step::STEPLazyBatch(lazy_session->LoadBatch(static_cast<uint64_t>(STEPid))));
 	instance = supplemental->Get(STEPid);
 	if (instance) lazy_supplemental_batches.push_back(std::move(supplemental));
 	return instance;
@@ -10692,18 +11165,21 @@ STEPWrapper::getStringAttribute(SDAI_Application_instance *sse, const char *name
 bool
 STEPWrapper::load(std::string &step_file)
 {
-#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+    SetProgress("reading and indexing STEP file");
+#ifdef HAVE_STEPCODE_LAZY
     stepfile = step_file;
-    lazy_session.reset(new brlcad::step::AP214LazySession);
-    lazy_session->SetProgressCallback([this](const brlcad::step::AP214LazyProgress &progress) {
+    lazy_session.reset(new brlcad::step::STEPLazySession);
+    lazy_session->SetProgressCallback([this](const brlcad::step::STEPLazyProgress &progress) {
+	SetProgress("reading and indexing STEP file", progress.offset,
+	    progress.file_size, 0, progress.instances_scanned, "instances");
 	if (verbose && progress.file_size)
 	    std::cerr << "STEP lazy index: " << progress.instances_scanned << " instances, "
 		<< progress.offset << '/' << progress.file_size << " bytes\n";
     });
     lazy_session->SetCancellationCallback([this]() {
-	return CancellationRequested();
+	return CancellationRequested() || brlcad::PullbackWorkCancelled();
     });
-    lazy_session->SetDiagnosticCallback([this](const brlcad::step::AP214LazyDiagnostic &source) {
+    lazy_session->SetDiagnosticCallback([this](const brlcad::step::STEPLazyDiagnostic &source) {
 	recordLazyDiagnostic(source);
     });
     if (!lazy_session->Open(stepfile)) {
@@ -10713,7 +11189,7 @@ STEPWrapper::load(std::string &step_file)
 	return false;
     }
     lazy_instance_ids = lazy_session->AllInstances();
-    const brlcad::step::AP214LazyStatistics cache = lazy_session->Statistics();
+    const brlcad::step::STEPLazyStatistics cache = lazy_session->Statistics();
     statistics.input_instances = cache.instances_scanned;
     update_lazy_statistics(statistics, cache);
     synchronizeLazyDiagnostics();
@@ -10723,6 +11199,8 @@ STEPWrapper::load(std::string &step_file)
 	    "STEP lazy index did not retain every DATA instance");
 	return false;
     }
+    SetProgress("STEP index complete", statistics.input_instances,
+	statistics.input_instances, 0, statistics.input_instances, "instances");
     return true;
 #else
     registry = new Registry(SchemaInit);
@@ -10753,6 +11231,8 @@ STEPWrapper::load(std::string &step_file)
 	    std::string(), e.what());
 	return false;
     }
+    SetProgress("STEP read complete", statistics.input_instances,
+	statistics.input_instances, 0, statistics.input_instances, "instances");
     return true;
 #endif
 
@@ -10933,6 +11413,33 @@ STEPWrapper::printEntityAggregate(STEPaggregate *sa, int level)
 void
 STEPWrapper::printLoadStatistics()
 {
+#ifdef HAVE_STEPCODE_LAZY
+    if (lazy_session) {
+	std::map<std::string, uint64_t> type_counts;
+	for (std::vector<uint64_t>::const_iterator id = lazy_instance_ids.begin();
+	     id != lazy_instance_ids.end(); ++id) {
+	    std::string type = lazy_session->TypeName(*id);
+	    if (type.empty()) type = "COMPLEX_ENTITY";
+	    ++type_counts[type];
+	}
+	std::cout << "Indexed " << lazy_instance_ids.size() << " instances from ";
+	if (BU_STR_EQUAL(stepfile.c_str(), "-"))
+	    std::cout << "standard input" << std::endl;
+	else
+	    std::cout << "STEP file \"" << stepfile << "\"" << std::endl;
+	if (verbose) {
+	    for (std::map<std::string, uint64_t>::const_iterator type = type_counts.begin();
+		 type != type_counts.end(); ++type)
+		std::cout << '\t' << type->first << " " << type->second << std::endl;
+	}
+	const brlcad::step::STEPLazyStatistics cache = lazy_session->Statistics();
+	std::cout << "Lazy index contains " << type_counts.size()
+	    << " entity types; loaded=" << cache.instances_loaded
+	    << ", pinned=" << cache.instances_pinned
+	    << ", source-cache-bytes=" << cache.resident_source_bytes << std::endl;
+	return;
+    }
+#endif
     int num_ents = instance_list->InstanceCount();
     int num_schma_ents = registry->GetEntityCnt();
 

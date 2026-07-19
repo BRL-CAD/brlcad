@@ -239,6 +239,10 @@ set(
   VolumeUnit.cpp
   step-g.cpp
 )
+
+if(STEPCODE_LAZY_FOUND)
+  list(APPEND stepg_SOURCES ../STEPLazySession.cpp)
+endif()
 cmakefiles(${stepg_SOURCES})
 
 set(
@@ -484,6 +488,10 @@ if(BRLCAD_ENABLE_STEP)
     OPENNURBS::OPENNURBS
   )
 
+  if(STEPCODE_LAZY_FOUND)
+    list(APPEND stepg_LIBS ${STEPCODE_LAZY_LIBRARY})
+  endif()
+
   set(
     AP203_INCLUDE_DIRS
     ${CMAKE_CURRENT_BINARY_DIR}
@@ -517,6 +525,18 @@ if(BRLCAD_ENABLE_STEP)
   add_dependencies(step-g ${stepg_SCHEMA_TARGET})
   set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")
   target_compile_definitions(step-g PRIVATE AP203 SC_SCHEMA_DLL_EXPORTS)
+  if(STEPCODE_LAZY_FOUND)
+    target_compile_definitions(step-g PRIVATE HAVE_STEPCODE_LAZY)
+    brlcad_add_test(
+      NAME ap203_lazy_positional
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_direct_manifold.stp
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_direct_manifold.g
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_lazy_positional.cmake
+    )
+  endif()
 
   if(HIDE_INTERNAL_SYMBOLS)
     set(
@@ -536,6 +556,8 @@ endif(BRLCAD_ENABLE_STEP)
 cmakefiles(
   CMakeLists.txt
   ap203.exp
+  tests/ap203_direct_manifold.stp
+  tests/ap203_lazy_positional.cmake
 )
 
 # Local Variables:

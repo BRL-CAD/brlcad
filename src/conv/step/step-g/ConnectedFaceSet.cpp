@@ -25,6 +25,7 @@
  */
 #include "STEPWrapper.h"
 #include "Factory.h"
+#include "brep/pullback.h"
 
 #include "ConnectedFaceSet.h"
 #include "AdvancedFace.h"
@@ -154,10 +155,18 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
     }
 
     LIST_OF_FACES::iterator i;
+    uint64_t completed_faces = 0;
+    const uint64_t total_faces = static_cast<uint64_t>(cfs_faces.size());
 #ifdef _DEBUG_TESTING_
     int facecnt = 0;
 #endif
     for (i = cfs_faces.begin(); i != cfs_faces.end(); ++i) {
+	if (brlcad::PullbackWorkCancelled()) return false;
+	if (step) {
+	    step->SetProgress("building exact BREP faces", completed_faces,
+		total_faces, (*i) ? (*i)->STEPid() : id,
+		static_cast<uint64_t>(id), "shell");
+	}
 #ifdef _DEBUG_TESTING_
 	if (facecnt != _face_cnt_) {
 	    facecnt++;
@@ -169,10 +178,14 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}
+	++completed_faces;
 #ifdef _DEBUG_TESTING_
 	facecnt++;
 #endif
     }
+	if (step)
+	    step->SetProgress("building exact BREP faces", completed_faces,
+		total_faces, id, static_cast<uint64_t>(id), "shell");
     return true;
 }
 

@@ -1,0 +1,12 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('AP214 legacy context compatibility fixture'),'2;1');
+FILE_NAME('ap214_legacy_contexts.stp','2026-07-18T00:00:00',('BRL-CAD'),('BRL-CAD'),'','','');
+FILE_SCHEMA(('AUTOMOTIVE_DESIGN'));
+ENDSEC;
+DATA;
+#1=APPLICATION_CONTEXT('automotive design');
+#2=DESIGN_CONTEXT('detailed design',#1,'design');
+#3=MECHANICAL_CONTEXT('NONE',#1,'mechanical');
+ENDSEC;
+END-ISO-10303-21;

@@ -167,7 +167,7 @@ conv_tree(struct directory **d, int depth, int UNUSED(parent_branch), struct dir
 #endif
 	    bu_vls_sprintf(&comb_shape_name, "'%s-", (*d)->d_namep);
 	    if (left) {
-		bu_vls_printf(&comb_shape_name, left->d_namep);
+		bu_vls_printf(&comb_shape_name, "%s", left->d_namep);
 	    } else {
 		bu_vls_printf(&comb_shape_name, "boolean_result");
 	    }
@@ -183,7 +183,7 @@ conv_tree(struct directory **d, int depth, int UNUSED(parent_branch), struct dir
 		    break;
 	    }
 	    if (right) {
-		bu_vls_printf(&comb_shape_name, right->d_namep);
+		bu_vls_printf(&comb_shape_name, "%s", right->d_namep);
 		bu_vls_printf(&comb_shape_name, "'");
 	    } else {
 		bu_vls_printf(&comb_shape_name, "boolean_result'");
@@ -228,9 +228,9 @@ conv_tree(struct directory **d, int depth, int UNUSED(parent_branch), struct dir
 			RT_CK_DB_INTERNAL(&intern);
 			struct rt_comb_internal *comb = (struct rt_comb_internal *)(intern.idb_ptr);
 			RT_CK_COMB(comb);
-			if (comb->tree == NULL) {
+		    if (comb->tree == NULL) {
 			    /* Probably should return empty object... */
-			    return NULL;
+			    return 0;
 			} else {
 #ifdef AP214_DEBUG
 			    if (depth > 0) bu_log("%*s", depth, "");
@@ -305,7 +305,7 @@ conv_tree(struct directory **d, int depth, int UNUSED(parent_branch), struct dir
 }
 
 
-void
+STEPentity *
 Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 {
     size_t i = 0;
@@ -323,57 +323,63 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
      * combs - we generate that *after* these results have been vetted) */
 
     const char *no_nonsub_region_below_region_search = "-type region -below -type region ! -bool -";
-    struct bu_ptbl *problem_regions;
-    BU_ALLOC(problem_regions, struct bu_ptbl);
-    (void)db_search(problem_regions, no_nonsub_region_below_region_search, 1, &dp, wdbp, DB_SEARCH_TREE);
-    if (BU_PTBL_LEN(problem_regions) > 0) {
+    struct bu_ptbl problem_regions = BU_PTBL_INIT_ZERO;
+    (void)db_search(&problem_regions, DB_SEARCH_TREE,
+	no_nonsub_region_below_region_search, 1, &dp, wdbp->dbip,
+	NULL, NULL, NULL);
+    if (BU_PTBL_LEN(&problem_regions) > 0) {
 	bu_log("Error - found nested regions within the .g file: \n");
-	for (i = 0; i < BU_PTBL_LEN(problem_regions); i++) {
-	    struct db_full_path *dfp = (struct db_full_path *)BU_PTBL_GET(problem_regions, i);
+	for (i = 0; i < BU_PTBL_LEN(&problem_regions); i++) {
+	    struct db_full_path *dfp = (struct db_full_path *)BU_PTBL_GET(&problem_regions, i);
 	    bu_log("   %s\n", db_path_to_string(dfp));
 	}
-	db_free_search_tbl(problem_regions);
+	db_search_free(&problem_regions);
 	bu_exit(1, "problem regions");
     } else {
-	db_free_search_tbl(problem_regions);
+	db_search_free(&problem_regions);
     }
 
     /* Look for any assembly objects with problems - probably should break this out for reporting purposes... */
-    struct bu_ptbl *invalid_assemblies;
-    BU_ALLOC(invalid_assemblies, struct bu_ptbl);
+    struct bu_ptbl invalid_assemblies = BU_PTBL_INIT_ZERO;
     const char *invalid_assembly_under_region =      "-above -type region ! -type region -below -type region";
-    (void)db_search(invalid_assemblies, invalid_assembly_under_region, 1, &dp, wdbp, DB_SEARCH_TREE);
+    (void)db_search(&invalid_assemblies, DB_SEARCH_TREE, invalid_assembly_under_region,
+	1, &dp, wdbp->dbip, NULL, NULL, NULL);
     const char *invalid_assembly_includes_non_comb = "-above -type region ! -type region -above=1 -type shape";
-    (void)db_search(invalid_assemblies, invalid_assembly_includes_non_comb, 1, &dp, wdbp, DB_SEARCH_TREE);
+    (void)db_search(&invalid_assemblies, DB_SEARCH_TREE, invalid_assembly_includes_non_comb,
+	1, &dp, wdbp->dbip, NULL, NULL, NULL);
     const char *invalid_assembly_below_subtract =    "-above -type region ! -type region -above=1 -bool -";
-    (void)db_search(invalid_assemblies, invalid_assembly_below_subtract, 1, &dp, wdbp, DB_SEARCH_TREE);
+    (void)db_search(&invalid_assemblies, DB_SEARCH_TREE, invalid_assembly_below_subtract,
+	1, &dp, wdbp->dbip, NULL, NULL, NULL);
     const char *invalid_assembly_below_intersect =   "-above -type region ! -type region -above=1 -bool +";
-    (void)db_search(invalid_assemblies, invalid_assembly_below_intersect, 1, &dp, wdbp, DB_SEARCH_TREE);
+    (void)db_search(&invalid_assemblies, DB_SEARCH_TREE, invalid_assembly_below_intersect,
+	1, &dp, wdbp->dbip, NULL, NULL, NULL);
     const char *invalid_assembly_above_subtract =    "-above -type region ! -type region -below -bool -";
-    (void)db_search(invalid_assemblies, invalid_assembly_above_subtract, 1, &dp, wdbp, DB_SEARCH_TREE);
+    (void)db_search(&invalid_assemblies, DB_SEARCH_TREE, invalid_assembly_above_subtract,
+	1, &dp, wdbp->dbip, NULL, NULL, NULL);
     const char *invalid_assembly_above_intersect =   "-above -type region ! -type region -below -bool +";
-    (void)db_search(invalid_assemblies, invalid_assembly_above_intersect, 1, &dp, wdbp, DB_SEARCH_TREE);
-    if (BU_PTBL_LEN(invalid_assemblies) > 0) {
+    (void)db_search(&invalid_assemblies, DB_SEARCH_TREE, invalid_assembly_above_intersect,
+	1, &dp, wdbp->dbip, NULL, NULL, NULL);
+    if (BU_PTBL_LEN(&invalid_assemblies) > 0) {
 	bu_log("Error - found invalid assemblies within the .g file: \n");
-	for (i = 0; i < BU_PTBL_LEN(problem_regions); i++) {
-	    struct db_full_path *dfp = (struct db_full_path *)BU_PTBL_GET(invalid_assemblies, i);
+	for (i = 0; i < BU_PTBL_LEN(&invalid_assemblies); i++) {
+	    struct db_full_path *dfp = (struct db_full_path *)BU_PTBL_GET(&invalid_assemblies, i);
 	    bu_log("   %s\n", db_path_to_string(dfp));
 	}
-	db_free_search_tbl(invalid_assemblies);
+	db_search_free(&invalid_assemblies);
 	bu_exit(1, "problem assemblies");
     } else {
-	db_free_search_tbl(invalid_assemblies);
+	db_search_free(&invalid_assemblies);
     }
 
     /* Get the list of region objects */
     const char *region_search = "-type region";
-    struct bu_ptbl *regions;
-    BU_ALLOC(regions, struct bu_ptbl);
-    (void)db_search(regions, region_search, 1, &dp, wdbp, DB_SEARCH_RETURN_UNIQ_DP);
+    struct bu_ptbl regions = BU_PTBL_INIT_ZERO;
+    (void)db_search(&regions, DB_SEARCH_RETURN_UNIQ_DP, region_search,
+	1, &dp, wdbp->dbip, NULL, NULL, NULL);
 
-    if (BU_PTBL_LEN(regions) > 0) {
-	for (i = 0; i < BU_PTBL_LEN(regions); i++) {
-	    struct directory *rdp = (struct directory *)BU_PTBL_GET(regions, i);
+    if (BU_PTBL_LEN(&regions) > 0) {
+	for (i = 0; i < BU_PTBL_LEN(&regions); i++) {
+	    struct directory *rdp = (struct directory *)BU_PTBL_GET(&regions, i);
 	    if (sc->comb_to_step->find(rdp) != sc->comb_to_step->end()) {
 		bu_log("Region object %s already exists - skipping\n", rdp->d_namep);
 	    } else {
@@ -398,13 +404,16 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 	    }
 	}
     }
+    db_search_free(&regions);
 
     /* Get the list of assembly objects */
     const char *assembly_search = "-type comb ! -below -type region ! -type region";
-    struct bu_ptbl *assemblies;
-    BU_ALLOC(assemblies, struct bu_ptbl);
-    (void)db_search(assemblies, assembly_search, 1, &dp, wdbp, DB_SEARCH_RETURN_UNIQ_DP);
+    struct bu_ptbl assemblies = BU_PTBL_INIT_ZERO;
+    (void)db_search(&assemblies, DB_SEARCH_RETURN_UNIQ_DP, assembly_search,
+	1, &dp, wdbp->dbip, NULL, NULL, NULL);
+    db_search_free(&assemblies);
 
+    return NULL;
 }
 
 // Local Variables:

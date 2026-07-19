@@ -15,6 +15,7 @@
 #include "BRLCADWrapper.h"
 #include "STEPString.h"
 #include "STEPWrapper.h"
+#include "STEPProgressReporter.h"
 
 #include "bu/app.h"
 #include "bu/file.h"
@@ -465,6 +466,16 @@ write_report(const std::string &path, const std::string &input, const std::strin
 	    << ",\"geometry_attempted\":" << stats.geometry_attempted
 	    << ",\"geometry_written\":" << stats.geometry_written
 	    << ",\"geometry_skipped\":" << stats.geometry_skipped << '}'
+	    << ",\n  \"skipped_items\":[";
+	for (size_t i = 0; i < stats.skipped_items.size(); ++i) {
+	    if (i) out << ',';
+	    const brlcad::step::SkippedItem &item = stats.skipped_items[i];
+	    out << "{\"entity_id\":" << item.entity_id
+		<< ",\"entity_type\":\"" << brlcad::step::json_escape(item.entity_type)
+		<< "\",\"reason\":\"" << brlcad::step::json_escape(item.reason) << "\"}";
+	}
+	out << "]"
+	    << ",\n  \"skipped_items_omitted\":" << stats.skipped_items_omitted
 	    << ",\n  \"validation\":{\"invalid_breps\":" << stats.invalid_breps
 	    << ",\"output_failures\":" << stats.output_failures
 	    << ",\"repairs\":" << stats.repairs
@@ -657,6 +668,7 @@ main(int argc, const char *argv[])
 	bu_log("WARNING: accepting legacy AUTOMOTIVE_DESIGN_CC2 schema identifier\n");
 
     STEPWrapper wrapper;
+    STEPProgressReporter progress_reporter(wrapper);
     wrapper.dry_run = dry_run;
     wrapper.summary_log_file = summary_name;
     wrapper.Verbose(verbose != 0);

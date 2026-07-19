@@ -54,11 +54,13 @@ if(DEFINED ENABLE_STEP_EXPERIMENTAL)
   target_include_directories(g-ap214 BEFORE PRIVATE ${AP214_INCLUDE_DIRS})
   target_compile_definitions(g-ap214 PRIVATE AP214e3)
   add_dependencies(g-ap214 ${gap214_SCHEMA_TARGET})
-  set_property(
-    SOURCE ${gap214_SCHEMA_OUT_DIR}/SdaiAUTOMOTIVE_DESIGN.cc
-    APPEND
-    PROPERTY COMPILE_FLAGS "/bigobj"
-  )
+  if(MSVC)
+    set_property(
+      SOURCE ${gap214_SCHEMA_OUT_DIR}/SdaiAUTOMOTIVE_DESIGN.cc
+      APPEND
+      PROPERTY COMPILE_FLAGS "/bigobj"
+    )
+  endif()
 endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
 set(IGNORE_FILES ${gap214_SOURCES} CMakeLists.txt AP214e3.h ap214e3.exp)

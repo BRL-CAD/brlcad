@@ -1,4 +1,4 @@
-/*             A P 2 1 4 L A Z Y S E S S I O N . C P P
+/*                     S T E P L A Z Y S E S S I O N . C P P
  * BRL-CAD
  *
  * Copyright (c) 2026 United States Government as represented by
@@ -11,7 +11,7 @@
 
 #include "common.h"
 
-#include "AP214LazySession.h"
+#include "STEPLazySession.h"
 
 #include <schema.h>
 
@@ -38,10 +38,10 @@ copy_ids(const View &view)
     return result;
 }
 
-AP214LazyDiagnostic
+STEPLazyDiagnostic
 copy_diagnostic(const LazyDiagnostic &source)
 {
-    AP214LazyDiagnostic result;
+    STEPLazyDiagnostic result;
     result.severity = static_cast<int>(source.severity);
     result.entity_id = static_cast<uint64_t>(source.entity);
     result.entity_type = source.type;
@@ -54,7 +54,7 @@ copy_diagnostic(const LazyDiagnostic &source)
 }
 
 std::string
-diagnostic_key(const AP214LazyDiagnostic &diagnostic)
+diagnostic_key(const STEPLazyDiagnostic &diagnostic)
 {
     std::ostringstream key;
     key << diagnostic.entity_type << '#' << diagnostic.entity_id << ':'
@@ -64,7 +64,7 @@ diagnostic_key(const AP214LazyDiagnostic &diagnostic)
 
 } // namespace
 
-class AP214LazyBatch::Impl {
+class STEPLazyBatch::Impl {
 public:
     explicit Impl(LazyInstanceBatch &&source)
 	: batch(std::move(source)), roots(copy_ids(batch.roots())), instances(copy_ids(batch.instances()))
@@ -76,50 +76,57 @@ public:
     std::vector<uint64_t> instances;
 };
 
-AP214LazyBatch::AP214LazyBatch() = default;
-AP214LazyBatch::~AP214LazyBatch() = default;
-AP214LazyBatch::AP214LazyBatch(std::unique_ptr<Impl> implementation) : impl(std::move(implementation)) {}
-AP214LazyBatch::AP214LazyBatch(AP214LazyBatch &&other) noexcept = default;
-AP214LazyBatch &AP214LazyBatch::operator=(AP214LazyBatch &&other) noexcept = default;
+STEPLazyBatch::STEPLazyBatch() = default;
+STEPLazyBatch::~STEPLazyBatch() = default;
+STEPLazyBatch::STEPLazyBatch(std::unique_ptr<Impl> implementation) : impl(std::move(implementation)) {}
+STEPLazyBatch::STEPLazyBatch(STEPLazyBatch &&other) noexcept = default;
+STEPLazyBatch &STEPLazyBatch::operator=(STEPLazyBatch &&other) noexcept = default;
 
 bool
-AP214LazyBatch::Valid() const
+STEPLazyBatch::Valid() const
 {
     return impl && impl->batch.valid();
 }
 
 void
-AP214LazyBatch::Release()
+STEPLazyBatch::Release()
 {
     if (impl) impl->batch.release();
 }
 
 const std::vector<uint64_t> &
-AP214LazyBatch::Roots() const
+STEPLazyBatch::Roots() const
 {
     static const std::vector<uint64_t> empty;
     return impl ? impl->roots : empty;
 }
 
 const std::vector<uint64_t> &
-AP214LazyBatch::Instances() const
+STEPLazyBatch::Instances() const
 {
     static const std::vector<uint64_t> empty;
     return impl ? impl->instances : empty;
 }
 
 SDAI_Application_instance *
-AP214LazyBatch::Get(uint64_t id) const
+STEPLazyBatch::Get(uint64_t id) const
 {
     return impl ? impl->batch.get(static_cast<instanceID>(id)) : NULL;
 }
 
-class AP214LazySession::Impl {
+class STEPLazySession::Impl {
 public:
     Impl()
 	: registry(new Registry(SchemaInit)), manager(new lazyInstMgr)
     {
 	manager->setRegistry(registry.get());
+	/* A few mixed AP203/AP214 exporters emit these no-attribute AP203
+	 * convenience subtypes while declaring AUTOMOTIVE_DESIGN.  Preserve the
+	 * raw indexed keyword, but construct its exact AP214 parent object. */
+#ifdef AP214e3
+	manager->setMaterializationTypeAlias("DESIGN_CONTEXT", "PRODUCT_DEFINITION_CONTEXT");
+	manager->setMaterializationTypeAlias("MECHANICAL_CONTEXT", "PRODUCT_CONTEXT");
+#endif
 	install_callbacks();
     }
 
@@ -134,7 +141,7 @@ public:
     {
 	manager->setProgressCallback([this](const LazyScanProgress &source) {
 	    if (!progress_callback) return;
-	    AP214LazyProgress progress;
+	    STEPLazyProgress progress;
 	    progress.offset = static_cast<uint64_t>(source.offset);
 	    progress.file_size = static_cast<uint64_t>(source.fileSize);
 	    progress.instances_scanned = source.instancesScanned;
@@ -144,7 +151,7 @@ public:
 	    return cancellation_callback ? cancellation_callback() : false;
 	});
 	manager->setDiagnosticCallback([this](const LazyDiagnostic &source) {
-	    const AP214LazyDiagnostic diagnostic = copy_diagnostic(source);
+	    const STEPLazyDiagnostic diagnostic = copy_diagnostic(source);
 	    diagnostics.push_back(diagnostic);
 	    if (diagnostic_callback) diagnostic_callback(diagnostic);
 	});
@@ -152,35 +159,35 @@ public:
 
     std::unique_ptr<Registry> registry;
     std::unique_ptr<lazyInstMgr> manager;
-    mutable std::vector<AP214LazyDiagnostic> diagnostics;
+    mutable std::vector<STEPLazyDiagnostic> diagnostics;
     ProgressCallback progress_callback;
     CancellationCallback cancellation_callback;
     DiagnosticCallback diagnostic_callback;
 };
 
-AP214LazySession::AP214LazySession() : impl(new Impl) {}
-AP214LazySession::~AP214LazySession() = default;
+STEPLazySession::STEPLazySession() : impl(new Impl) {}
+STEPLazySession::~STEPLazySession() = default;
 
 bool
-AP214LazySession::Open(const std::string &path)
+STEPLazySession::Open(const std::string &path)
 {
     return impl && impl->manager->openFile(path);
 }
 
 std::vector<uint64_t>
-AP214LazySession::AllInstances() const
+STEPLazySession::AllInstances() const
 {
     return impl ? copy_ids(impl->manager->allInstances()) : std::vector<uint64_t>();
 }
 
 std::vector<uint64_t>
-AP214LazySession::InstancesByType(const std::string &type) const
+STEPLazySession::InstancesByType(const std::string &type) const
 {
     return impl ? copy_ids(impl->manager->instancesByType(type)) : std::vector<uint64_t>();
 }
 
 std::string
-AP214LazySession::TypeName(uint64_t id) const
+STEPLazySession::TypeName(uint64_t id) const
 {
     if (!impl) return std::string();
     const char *name = impl->manager->typeFromFile(static_cast<instanceID>(id));
@@ -188,41 +195,41 @@ AP214LazySession::TypeName(uint64_t id) const
 }
 
 std::vector<uint64_t>
-AP214LazySession::ForwardReferences(uint64_t id) const
+STEPLazySession::ForwardReferences(uint64_t id) const
 {
     return impl ? copy_ids(impl->manager->forwardReferences(static_cast<instanceID>(id))) :
 	std::vector<uint64_t>();
 }
 
 std::vector<uint64_t>
-AP214LazySession::ReverseReferences(uint64_t id) const
+STEPLazySession::ReverseReferences(uint64_t id) const
 {
     return impl ? copy_ids(impl->manager->reverseReferences(static_cast<instanceID>(id))) :
 	std::vector<uint64_t>();
 }
 
-AP214LazyBatch
-AP214LazySession::LoadBatch(uint64_t root)
+STEPLazyBatch
+STEPLazySession::LoadBatch(uint64_t root)
 {
-    return AP214LazyBatch(std::unique_ptr<AP214LazyBatch::Impl>(
-	new AP214LazyBatch::Impl(impl->manager->loadBatch(static_cast<instanceID>(root)))));
+    return STEPLazyBatch(std::unique_ptr<STEPLazyBatch::Impl>(
+	new STEPLazyBatch::Impl(impl->manager->loadBatch(static_cast<instanceID>(root)))));
 }
 
-AP214LazyBatch
-AP214LazySession::LoadBatch(const std::vector<uint64_t> &roots)
+STEPLazyBatch
+STEPLazySession::LoadBatch(const std::vector<uint64_t> &roots)
 {
     std::vector<instanceID> converted;
     converted.reserve(roots.size());
     for (std::vector<uint64_t>::const_iterator root = roots.begin(); root != roots.end(); ++root)
 	converted.push_back(static_cast<instanceID>(*root));
-    return AP214LazyBatch(std::unique_ptr<AP214LazyBatch::Impl>(
-	new AP214LazyBatch::Impl(impl->manager->loadBatch(converted))));
+    return STEPLazyBatch(std::unique_ptr<STEPLazyBatch::Impl>(
+	new STEPLazyBatch::Impl(impl->manager->loadBatch(converted))));
 }
 
-AP214LazyStatistics
-AP214LazySession::Statistics() const
+STEPLazyStatistics
+STEPLazySession::Statistics() const
 {
-    AP214LazyStatistics result;
+    STEPLazyStatistics result;
     if (!impl) return result;
     const LazyCacheStatistics source = impl->manager->cacheStatistics();
     result.instances_scanned = source.instancesScanned;
@@ -241,11 +248,11 @@ AP214LazySession::Statistics() const
     return result;
 }
 
-const std::vector<AP214LazyDiagnostic> &
-AP214LazySession::Diagnostics() const
+const std::vector<STEPLazyDiagnostic> &
+STEPLazySession::Diagnostics() const
 {
     if (impl) {
-	for (std::vector<AP214LazyDiagnostic>::iterator diagnostic = impl->diagnostics.begin();
+	for (std::vector<STEPLazyDiagnostic>::iterator diagnostic = impl->diagnostics.begin();
 	     diagnostic != impl->diagnostics.end(); ++diagnostic) {
 	    const uint64_t occurrences = impl->manager->diagnosticCount(
 		diagnostic_key(*diagnostic));
@@ -257,25 +264,25 @@ AP214LazySession::Diagnostics() const
 }
 
 InstMgrBase *
-AP214LazySession::ReferenceManager() const
+STEPLazySession::ReferenceManager() const
 {
     return impl ? impl->manager->getAdapter() : NULL;
 }
 
 void
-AP214LazySession::SetProgressCallback(const ProgressCallback &callback)
+STEPLazySession::SetProgressCallback(const ProgressCallback &callback)
 {
     impl->progress_callback = callback;
 }
 
 void
-AP214LazySession::SetCancellationCallback(const CancellationCallback &callback)
+STEPLazySession::SetCancellationCallback(const CancellationCallback &callback)
 {
     impl->cancellation_callback = callback;
 }
 
 void
-AP214LazySession::SetDiagnosticCallback(const DiagnosticCallback &callback)
+STEPLazySession::SetDiagnosticCallback(const DiagnosticCallback &callback)
 {
     impl->diagnostic_callback = callback;
 }

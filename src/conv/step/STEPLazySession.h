@@ -1,4 +1,4 @@
-/*               A P 2 1 4 L A Z Y S E S S I O N . H
+/*                       S T E P L A Z Y S E S S I O N . H
  * BRL-CAD
  *
  * Copyright (c) 2026 United States Government as represented by
@@ -9,8 +9,8 @@
  * version 2.1 as published by the Free Software Foundation.
  */
 
-#ifndef CONV_STEP_AP214_G_AP214LAZYSESSION_H
-#define CONV_STEP_AP214_G_AP214LAZYSESSION_H
+#ifndef CONV_STEP_STEPLAZYSESSION_H
+#define CONV_STEP_STEPLAZYSESSION_H
 
 #include "common.h"
 
@@ -26,13 +26,13 @@ class InstMgrBase;
 namespace brlcad {
 namespace step {
 
-struct AP214LazyProgress {
+struct STEPLazyProgress {
     uint64_t offset = 0;
     uint64_t file_size = 0;
     uint64_t instances_scanned = 0;
 };
 
-struct AP214LazyDiagnostic {
+struct STEPLazyDiagnostic {
     int severity = 0;
     uint64_t entity_id = 0;
     std::string entity_type;
@@ -43,7 +43,7 @@ struct AP214LazyDiagnostic {
     uint64_t occurrences = 0;
 };
 
-struct AP214LazyStatistics {
+struct STEPLazyStatistics {
     uint64_t instances_scanned = 0;
     uint64_t instances_loaded = 0;
     uint64_t instances_pinned = 0;
@@ -61,15 +61,15 @@ struct AP214LazyStatistics {
     bool cancelled = false;
 };
 
-class AP214LazyBatch {
+class STEPLazyBatch {
 public:
-    AP214LazyBatch();
-    ~AP214LazyBatch();
-    AP214LazyBatch(AP214LazyBatch &&other) noexcept;
-    AP214LazyBatch &operator=(AP214LazyBatch &&other) noexcept;
+    STEPLazyBatch();
+    ~STEPLazyBatch();
+    STEPLazyBatch(STEPLazyBatch &&other) noexcept;
+    STEPLazyBatch &operator=(STEPLazyBatch &&other) noexcept;
 
-    AP214LazyBatch(const AP214LazyBatch &) = delete;
-    AP214LazyBatch &operator=(const AP214LazyBatch &) = delete;
+    STEPLazyBatch(const STEPLazyBatch &) = delete;
+    STEPLazyBatch &operator=(const STEPLazyBatch &) = delete;
 
     bool Valid() const;
     void Release();
@@ -79,29 +79,31 @@ public:
 
 private:
     class Impl;
-    explicit AP214LazyBatch(std::unique_ptr<Impl> implementation);
+    explicit STEPLazyBatch(std::unique_ptr<Impl> implementation);
     std::unique_ptr<Impl> impl;
 
-    friend class AP214LazySession;
+    friend class STEPLazySession;
 };
 
-/** AP214-specific owner for STEPcode's lazy index and generated registry.
+/** Schema-neutral owner for STEPcode's lazy index and the target's generated
+ * registry.  The same implementation is compiled independently against the
+ * AP203 and AP214 generated schemas.
  *
  * A batch and every SDAI pointer obtained from it are valid only while the
  * session and batch are alive.  Callers must detach ordinary immutable data
  * before releasing a batch or handing work to another thread.
  */
-class AP214LazySession {
+class STEPLazySession {
 public:
-    using ProgressCallback = std::function<void(const AP214LazyProgress &)>;
+    using ProgressCallback = std::function<void(const STEPLazyProgress &)>;
     using CancellationCallback = std::function<bool()>;
-    using DiagnosticCallback = std::function<void(const AP214LazyDiagnostic &)>;
+    using DiagnosticCallback = std::function<void(const STEPLazyDiagnostic &)>;
 
-    AP214LazySession();
-    ~AP214LazySession();
+    STEPLazySession();
+    ~STEPLazySession();
 
-    AP214LazySession(const AP214LazySession &) = delete;
-    AP214LazySession &operator=(const AP214LazySession &) = delete;
+    STEPLazySession(const STEPLazySession &) = delete;
+    STEPLazySession &operator=(const STEPLazySession &) = delete;
 
     bool Open(const std::string &path);
     std::vector<uint64_t> AllInstances() const;
@@ -109,10 +111,10 @@ public:
     std::string TypeName(uint64_t id) const;
     std::vector<uint64_t> ForwardReferences(uint64_t id) const;
     std::vector<uint64_t> ReverseReferences(uint64_t id) const;
-    AP214LazyBatch LoadBatch(uint64_t root);
-    AP214LazyBatch LoadBatch(const std::vector<uint64_t> &roots);
-    AP214LazyStatistics Statistics() const;
-    const std::vector<AP214LazyDiagnostic> &Diagnostics() const;
+    STEPLazyBatch LoadBatch(uint64_t root);
+    STEPLazyBatch LoadBatch(const std::vector<uint64_t> &roots);
+    STEPLazyStatistics Statistics() const;
+    const std::vector<STEPLazyDiagnostic> &Diagnostics() const;
     InstMgrBase *ReferenceManager() const;
 
     void SetProgressCallback(const ProgressCallback &callback);
@@ -127,4 +129,4 @@ private:
 } // namespace step
 } // namespace brlcad
 
-#endif /* CONV_STEP_AP214_G_AP214LAZYSESSION_H */
+#endif /* CONV_STEP_STEPLAZYSESSION_H */

@@ -25,6 +25,8 @@
 
 #include "AP_Common.h"
 
+#include "bu/app.h"
+#include "bu/exit.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/file.h"
@@ -51,8 +53,6 @@ usage()
 int
 main(int argc, char *argv[])
 {
-    STEPentity *shape;
-    STEPentity *product;
     int ret = 0;
     int convert_tops_list = 0;
     struct directory **paths;

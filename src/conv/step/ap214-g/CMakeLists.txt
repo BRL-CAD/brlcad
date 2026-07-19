@@ -255,7 +255,7 @@ set(
 )
 
 if(STEPCODE_LAZY_FOUND)
-  list(APPEND ap214g_SOURCES AP214LazySession.cpp)
+  list(APPEND ap214g_SOURCES ../STEPLazySession.cpp)
   list(APPEND ap214g_LIBS ${STEPCODE_LAZY_LIBRARY})
 endif()
 
@@ -301,7 +301,7 @@ if(BRLCAD_ENABLE_STEP)
   if(STEPCODE_LAZY_FOUND)
     brlcad_addexec(
       ap214_lazy_session_test
-      "tests/ap214_lazy_session_test.cpp;AP214LazySession.cpp"
+      "tests/ap214_lazy_session_test.cpp;../STEPLazySession.cpp"
       "ap214_schema_bindings;${STEPCODE_LAZY_LIBRARY};${STEPCODE_EDITOR_LIBRARY};${STEPCODE_DAI_LIBRARY};${STEPCODE_CORE_LIBRARY};${STEPCODE_UTILS_LIBRARY}"
       TEST
     )
@@ -313,6 +313,7 @@ if(BRLCAD_ENABLE_STEP)
       COMMAND ap214_lazy_session_test
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_direct_manifold.stp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_lazy_diagnostics.stp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_legacy_contexts.stp
     )
   endif()
   brlcad_add_test(
@@ -650,8 +651,8 @@ cmakefiles(
   ${ap214g_SOURCES}
   AP214Adapter.h
   AP214CSG.h
-  AP214LazySession.cpp
-  AP214LazySession.h
+  ../STEPLazySession.cpp
+  ../STEPLazySession.h
   AP214Metadata.h
   AP214Presentation.h
   AP214SweptSolid.h

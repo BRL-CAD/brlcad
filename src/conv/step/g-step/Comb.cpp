@@ -89,7 +89,13 @@ Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPe
     // SHAPE_DEFINITION_REPRESENTATION
     SdaiShape_definition_representation *shape_def_rep = (SdaiShape_definition_representation*)sc->registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");
     sc->instance_list->Append((STEPentity *)shape_def_rep, completeSE);
+#ifdef AP203e2
+    SdaiRepresented_definition *represented_definition =
+	new SdaiRepresented_definition(static_cast<SdaiProperty_definition *>(pshape));
+    shape_def_rep->definition_(represented_definition);
+#else
     shape_def_rep->definition_(pshape);
+#endif
 
     // SHAPE_REPRESENTATION
     SdaiShape_representation* shape_rep = (SdaiShape_representation *)Add_Shape_Representation(sc, (SdaiRepresentation_context *) context);

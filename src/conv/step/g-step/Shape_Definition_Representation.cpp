@@ -57,7 +57,13 @@ Add_Shape_Definition_Representation(struct directory *dp, AP203_Contents *sc, Sd
     sc->instance_list->Append((STEPentity *)prod_def_shape, completeSE);
     prod_def_shape->name_("''");
     prod_def_shape->description_("''");
+#ifdef AP203e2
+    SdaiRepresented_definition *represented_definition =
+	new SdaiRepresented_definition(static_cast<SdaiProperty_definition *>(prod_def_shape));
+    shape_def_rep->definition_(represented_definition);
+#else
     shape_def_rep->definition_(prod_def_shape);
+#endif
 
     // PRODUCT_DEFINITION
     SdaiProduct_definition *prod_def = (SdaiProduct_definition *)sc->registry->ObjCreate("PRODUCT_DEFINITION");
