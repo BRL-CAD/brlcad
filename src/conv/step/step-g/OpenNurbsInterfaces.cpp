@@ -119,6 +119,13 @@ namespace {
  * a request to approximate the edge with 1024 segments. */
 constexpr int kDenseLiftValidationSegments = 1024;
 
+/* If dense validation finds a missed bow between already projected UV
+ * samples, refine only that exceptional polyline.  These are work ceilings,
+ * not approximation settings: every inserted point and the completed curve
+ * are still checked against the exact 3-D STEP edge. */
+constexpr int kMaximumAdjustedPolylineRefinementDepth = 12;
+constexpr size_t kMaximumAdjustedPolylineSamples = 16384;
+
 /* Keep numerical solver floors comfortably above floating-point zero without
  * replacing the model-derived tolerance used for acceptance. */
 constexpr double kNumericalToleranceScale = 1024.0;
@@ -507,6 +514,157 @@ refine_surface_point_seeded(const ON_Surface *surface, const ON_3dPoint &target,
     if (final_distance)
 	*final_distance = best_distance;
     return best_distance <= tolerance;
+}
+
+
+static bool
+refine_adjusted_pullback_polyline(PBCData *data,
+    const ON_2dPointArray &samples, const ON_3dPoint &failing_uv,
+    double tolerance_limit,
+    ON_Curve **result, double *measured_tolerance)
+{
+    if (result) *result = NULL;
+    if (measured_tolerance) *measured_tolerance = 0.0;
+    if (!data || !data->surf || !data->curve || samples.Count() < 2 ||
+	!result || !(tolerance_limit > 0.0))
+	return false;
+
+    CurveDistanceEvaluator edge_distance(data->curve);
+    if (!edge_distance.IsValid()) return false;
+    int interval = 0;
+    double interval_distance = DBL_MAX;
+    const ON_3dPoint failure_point(failing_uv.x, failing_uv.y, 0.0);
+    for (int candidate = 0; candidate < samples.Count() - 1; ++candidate) {
+	const ON_3dPoint first(samples[candidate].x, samples[candidate].y, 0.0);
+	const ON_3dPoint second(samples[candidate + 1].x,
+	    samples[candidate + 1].y, 0.0);
+	ON_Line chord(first, second);
+	double chord_parameter = 0.0;
+	chord.ClosestPointTo(failure_point, &chord_parameter);
+	chord_parameter = std::max(0.0, std::min(1.0, chord_parameter));
+	const double distance = failure_point.DistanceTo(
+	    chord.PointAt(chord_parameter));
+	if (distance < interval_distance) {
+	    interval_distance = distance;
+	    interval = candidate;
+	}
+    }
+    const ON_3dPoint endpoint_lifts[2] = {
+	data->surf->PointAt(samples[interval].x, samples[interval].y),
+	data->surf->PointAt(samples[interval + 1].x, samples[interval + 1].y)
+    };
+    double parameters[2] = {0.0, 0.0};
+    double accepted_tolerance = std::max(LocalUnits::tolerance,
+	data->tolerance);
+    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+	double distance = DBL_MAX;
+	if (!edge_distance.ClosestParameter(endpoint_lifts[endpoint],
+		&parameters[endpoint], &distance) ||
+		distance > tolerance_limit)
+	    return false;
+	accepted_tolerance = std::max(accepted_tolerance,
+	    distance * kMeasuredToleranceSafetyFactor);
+    }
+    if (accepted_tolerance > tolerance_limit) return false;
+
+    ON_3dPointArray refined;
+    refined.Reserve(std::min(static_cast<size_t>(samples.Count()) + 16,
+	kMaximumAdjustedPolylineSamples));
+    for (int sample = 0; sample <= interval; ++sample)
+	refined.Append(ON_3dPoint(samples[sample].x, samples[sample].y, 0.0));
+    bool valid = true;
+    std::function<void(const ON_2dPoint &, double, const ON_2dPoint &,
+	double, int)> refine_interval;
+    refine_interval = [data, tolerance_limit, &edge_distance, &refined,
+	&accepted_tolerance, &valid, &refine_interval](const ON_2dPoint &uv0,
+	double parameter0, const ON_2dPoint &uv1, double parameter1, int depth) {
+	if (!valid) return;
+	if (brlcad::PullbackWorkCancelled() ||
+		static_cast<size_t>(refined.Count()) >=
+		    kMaximumAdjustedPolylineSamples) {
+	    valid = false;
+	    return;
+	}
+	const ON_2dPoint chord_midpoint(0.5 * (uv0.x + uv1.x),
+	    0.5 * (uv0.y + uv1.y));
+	const ON_3dPoint chord_lift = data->surf->PointAt(
+	    chord_midpoint.x, chord_midpoint.y);
+	const double chord_error = edge_distance.DistanceTo(chord_lift,
+	    accepted_tolerance);
+	if (chord_error <= accepted_tolerance) {
+	    refined.Append(ON_3dPoint(uv1.x, uv1.y, 0.0));
+	    return;
+	}
+	if (depth >= kMaximumAdjustedPolylineRefinementDepth) {
+	    valid = false;
+	    return;
+	}
+
+	/* The UV and 3-D curves have independent parameterizations.  Bracket the
+	 * source parameters from the two exact endpoint loci, then project their
+	 * midpoint onto the surface.  Acceptance remains a curve-locus test. */
+	const double midpoint_parameter = 0.5 * (parameter0 + parameter1);
+	const ON_3dPoint target = data->curve->PointAt(midpoint_parameter);
+	ON_3dPoint midpoint_uv(chord_midpoint.x, chord_midpoint.y, 0.0);
+	double projection_distance = DBL_MAX;
+	bool projected = refine_surface_point_seeded(data->surf, target,
+	    tolerance_limit, midpoint_uv, &projection_distance);
+	if (!projected) {
+	    if (!data->context)
+		data->context = std::make_shared<brlcad::PullbackContext>();
+	    ON_2dPoint projected_uv(midpoint_uv.x, midpoint_uv.y);
+	    ON_3dPoint projected_lift;
+	    projected = data->context->SurfaceClosestPoint(data->surf, target,
+		projected_uv, projected_lift, projection_distance, 0,
+		tolerance_limit, tolerance_limit);
+	    if (projected)
+		midpoint_uv.Set(projected_uv.x, projected_uv.y, 0.0);
+	}
+	if (!projected || projection_distance > tolerance_limit) {
+	    valid = false;
+	    return;
+	}
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!data->surf->IsClosed(direction)) continue;
+	    const double period = data->surf->Domain(direction).Length();
+	    if (period > ON_ZERO_TOLERANCE)
+		midpoint_uv[direction] += round((chord_midpoint[direction] -
+		    midpoint_uv[direction]) / period) * period;
+	}
+	const ON_3dPoint midpoint_lift = data->surf->PointAt(
+	    midpoint_uv.x, midpoint_uv.y);
+	const double midpoint_locus_error = edge_distance.DistanceTo(
+	    midpoint_lift, tolerance_limit);
+	if (!midpoint_lift.IsValid() || midpoint_locus_error > tolerance_limit) {
+	    valid = false;
+	    return;
+	}
+	accepted_tolerance = std::max(accepted_tolerance,
+	    midpoint_locus_error * kMeasuredToleranceSafetyFactor);
+	if (accepted_tolerance > tolerance_limit) {
+	    valid = false;
+	    return;
+	}
+	refine_interval(uv0, parameter0,
+	    ON_2dPoint(midpoint_uv.x, midpoint_uv.y), midpoint_parameter,
+	    depth + 1);
+	refine_interval(ON_2dPoint(midpoint_uv.x, midpoint_uv.y),
+	    midpoint_parameter, uv1, parameter1, depth + 1);
+    };
+
+    refine_interval(samples[interval], parameters[0], samples[interval + 1],
+	parameters[1], 0);
+    for (int sample = interval + 2; valid && sample < samples.Count(); ++sample)
+	refined.Append(ON_3dPoint(samples[sample].x, samples[sample].y, 0.0));
+    ON_PolylineCurve *polyline = valid && refined.Count() >= 2 ?
+	new ON_PolylineCurve(refined) : NULL;
+    if (!polyline || !polyline->ChangeDimension(2) || !polyline->IsValid()) {
+	delete polyline;
+	return false;
+    }
+    *result = polyline;
+    if (measured_tolerance) *measured_tolerance = accepted_tolerance;
+    return true;
 }
 
 
@@ -4199,6 +4357,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		std::cerr << "Debug:LoadONTrimmingCurves for Path:" << trimCurve << std::endl;
 	    }
 	    ON_Curve *c2d = NULL;
+	    bool used_polyline_fallback = false;
 	    /* A short exact boundary can collapse to one pullback sample when its
 	     * length is below the asserted model uncertainty.  Do not silently
 	     * omit that topology edge.  Leave c2d unset so the bounded adjacent-
@@ -4219,7 +4378,6 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		}
 	    }
 	    bool regenerated = false;
-	    bool used_polyline_fallback = false;
 	    if (!c2d && step && step->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
 		c2d = closed_edge_iso_line(data, *samples, LocalUnits::tolerance);
 		if (c2d && (c2d->PointAtStart().DistanceTo((*samples)[0]) >
@@ -4672,46 +4830,68 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		samples->Append(ON_2dPoint(recovered_end.x, recovered_end.y));
 	    }
 	    if (c2d && data->tolerance_adjusted) {
-		const ON_Interval pcurve_domain = c2d->Domain();
-		const CurveDistanceEvaluator edge_distance(data->curve);
 		double maximum_lift_error = 0.0;
 		double maximum_error_fraction = 0.0;
 		ON_3dPoint maximum_error_uv = ON_3dPoint::UnsetPoint;
-		bool lift_valid = pcurve_domain.IsIncreasing() &&
-		    edge_distance.IsValid();
-		for (int sample = 0; lift_valid &&
-			sample <= kDenseLiftValidationSegments; ++sample) {
-		    if (brlcad::PullbackWorkCancelled()) {
-			lift_valid = false;
-			break;
-		    }
-		    const double fraction = static_cast<double>(sample) /
-			kDenseLiftValidationSegments;
-		    const ON_3dPoint uv = c2d->PointAt(
-			pcurve_domain.ParameterAt(fraction));
-		    const ON_3dPoint lifted = data->surf->PointAt(uv.x, uv.y);
-		    /* Regenerated UV curves (especially polylines and seam fragments)
-		     * do not inherit the 3-D spline's parameterization.  Prove their
-		     * geometric locus against the closest point on the original edge;
-		     * loop closure and declared vertices independently prove coverage
-		     * and orientation. */
-		    const double error = lifted.IsValid() ?
-			edge_distance.DistanceTo(lifted, data->tolerance) : DBL_MAX;
-		    if (error > maximum_lift_error) {
-			maximum_lift_error = error;
-			maximum_error_fraction = fraction;
-			maximum_error_uv = uv;
-		    }
-		}
 		const double adjustment_limit = maximum_verified_edge_tolerance(
 		    data->curve, data->declared_tolerance, item_scale);
-		if (lift_valid && maximum_lift_error > data->tolerance) {
-		    const double dense_tolerance = maximum_lift_error *
-			kMeasuredToleranceSafetyFactor;
-		    if (dense_tolerance <= adjustment_limit)
-			data->tolerance = dense_tolerance;
-		    else
-			lift_valid = false;
+		const auto validate_locus = [&](ON_Curve *candidate) {
+		    maximum_lift_error = 0.0;
+		    maximum_error_fraction = 0.0;
+		    maximum_error_uv = ON_3dPoint::UnsetPoint;
+		    if (!candidate) return false;
+		    const ON_Interval pcurve_domain = candidate->Domain();
+		    CurveDistanceEvaluator edge_distance(data->curve);
+		    bool valid = pcurve_domain.IsIncreasing() && edge_distance.IsValid();
+		    for (int sample = 0; valid &&
+			    sample <= kDenseLiftValidationSegments; ++sample) {
+			if (brlcad::PullbackWorkCancelled()) {
+			    valid = false;
+			    break;
+			}
+			const double fraction = static_cast<double>(sample) /
+			    kDenseLiftValidationSegments;
+			const ON_3dPoint uv = candidate->PointAt(
+			    pcurve_domain.ParameterAt(fraction));
+			const ON_3dPoint lifted = data->surf->PointAt(uv.x, uv.y);
+			/* A UV curve has its own parameterization.  Validate its 3-D
+			 * geometric locus against the closest exact source-curve point. */
+			const double error = lifted.IsValid() ?
+			    edge_distance.DistanceTo(lifted, data->tolerance) : DBL_MAX;
+			if (error > maximum_lift_error) {
+			    maximum_lift_error = error;
+			    maximum_error_fraction = fraction;
+			    maximum_error_uv = uv;
+			}
+		    }
+		    if (valid && maximum_lift_error > data->tolerance) {
+			const double dense_tolerance = maximum_lift_error *
+			    kMeasuredToleranceSafetyFactor;
+			if (dense_tolerance <= adjustment_limit)
+			    data->tolerance = dense_tolerance;
+			else
+			    valid = false;
+		    }
+		    return valid;
+		};
+
+		bool lift_valid = validate_locus(c2d);
+		if (!lift_valid && !brlcad::PullbackWorkCancelled() &&
+			used_polyline_fallback && samples && samples->Count() >= 2) {
+		    ON_Curve *refined = NULL;
+		    double measured_tolerance = 0.0;
+		    if (refine_adjusted_pullback_polyline(data, *samples,
+			    maximum_error_uv, adjustment_limit, &refined,
+			    &measured_tolerance)) {
+			delete c2d;
+			c2d = refined;
+			data->tolerance = std::max(data->tolerance,
+			    measured_tolerance);
+			lift_valid = validate_locus(c2d);
+			if (lift_valid && step)
+			    step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+				"adaptively refined a closed-surface pcurve after dense locus validation");
+		    }
 		}
 		if (!lift_valid) {
 		    const bool cancelled = brlcad::PullbackWorkCancelled();
@@ -4762,12 +4942,20 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 			reason << "trim validation was cancelled for STEP edge #"
 			    << edge_id << " after its per-item work budget expired";
 		    } else if (data->failure_reason == PullbackFailureReason::SurfaceDistanceExceeded) {
-			reason << "source curve/surface separation "
-			    << data->maximum_projection_distance
-			    << " exceeds model tolerance " << LocalUnits::tolerance
-			    << " for STEP edge #" << edge_id << " ("
-			    << data->rejected_projection_samples << '/'
-			    << data->projection_samples << " projection samples rejected)";
+			if (data->rejected_projection_samples == 0) {
+			    reason << "constructed pcurve lift deviated from STEP edge #"
+				<< edge_id << " by "
+				<< data->maximum_projection_distance
+				<< " after dense curve-locus validation";
+			} else {
+			    reason << "source curve/surface separation "
+				<< data->maximum_projection_distance
+				<< " exceeds model tolerance " << LocalUnits::tolerance
+				<< " for STEP edge #" << edge_id << " ("
+				<< data->rejected_projection_samples << '/'
+				<< data->projection_samples
+				<< " projection samples rejected)";
+			}
 		    } else {
 			reason << "could not construct an exact trim for STEP edge #"
 			    << edge_id << " from "

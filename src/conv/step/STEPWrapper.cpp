@@ -103,6 +103,18 @@ namespace {
  * tolerance or a value prescribed by STEP/openNURBS. */
 constexpr int kDenseValidationSegments = 1024;
 
+/* Surface derivatives at a collapsed NURBS pole can reverse arbitrarily close
+ * to an otherwise exact edge endpoint.  Direction is therefore proven only
+ * outside one interval of the minimum 64-segment regeneration mesh.  The
+ * endpoint and every candidate chord remain subject to dense 3-D edge-locus
+ * validation; this guard excludes only the ill-conditioned tangent test. */
+constexpr double kEndpointDirectionGuardFraction = 1.0 / 64.0;
+
+/* A relocated surface seam needs a genuinely boundary-free interval.  This
+ * fraction avoids choosing a cut in numerical noise while remaining far
+ * smaller than any interval used to interpolate a replacement pcurve. */
+constexpr double kMinimumSeamRelocationGapFraction = 1.0e-3;
+
 /* Adaptive pullback may add one UV vertex per validation segment.  The extra
  * endpoint makes the point budget correspond exactly to the dense segment
  * budget and prevents one pathological seam from dominating import time. */
@@ -192,6 +204,17 @@ public:
 		candidate << directory << "/step-import-" << bu_pid() << '-'
 		    << (first_suffix + attempt) << ".g";
 		if (!bu_file_exists(candidate.str().c_str(), NULL)) {
+		    /* Directory mode checks can report writable for a path that a
+		     * container policy or network filesystem rejects at open time.
+		     * Probe the actual candidate before committing to this location so
+		     * BU_DIR_TEMP remains a functional fallback. */
+		    std::ofstream probe(candidate.str().c_str(),
+			std::ios::out | std::ios::binary | std::ios::trunc);
+		    if (!probe.is_open())
+			continue;
+		    probe.close();
+		    if (!bu_file_delete(candidate.str().c_str()))
+			continue;
 		    path = candidate.str();
 		    return true;
 		}
@@ -2406,7 +2429,7 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 		    }
 		}
 	    }
-	    if (edge_driven && !required_endpoint && points.Count() > 0) {
+	    if (edge_driven && points.Count() > 0) {
 		const ON_3dPoint previous_uv = points[points.Count() - 1];
 		const double edge_parameter = edge->Domain().ParameterAt(
 		    trim.m_bRev3d ? 1.0 - normalized : normalized);
@@ -2420,6 +2443,11 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 			uv[direction]) / period) * period;
 		    const ON_3dPoint shifted_lift = surface->PointAt(
 			shifted_uv.x, shifted_uv.y);
+		    /* A required loop endpoint is authoritative as a 3-D locus, not as
+		     * a particular periodic image.  Prefer its lift-equivalent image
+		     * adjacent to the regenerated interior; the subsequent bounded
+		     * loop pass translates the neighboring complete pcurve to the same
+		     * image and revalidates it. */
 		    if (shifted_lift.IsValid() && shifted_lift.DistanceTo(edge_point) <=
 			    tolerance)
 			uv = shifted_uv;
@@ -2992,6 +3020,9 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 			normalized_parameters[segment + 1])) !=
 			singular_parameter_connectors.end())
 		    continue;
+		if (normalized <= kEndpointDirectionGuardFraction ||
+			normalized >= 1.0 - kEndpointDirectionGuardFraction)
+		    continue;
 		ON_3dVector lifted_tangent = uv_tangent.x * du + uv_tangent.y * dv;
 		if (!edge_driven) {
 		    ON_3dPoint source_uv, source_lift;
@@ -3084,6 +3115,11 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 		valid = false;
 		break;
 	    }
+	    /* At a collapsed surface boundary the endpoint lift is exact, but its
+	     * differential is not unique.  Interior samples above already prove
+	     * traversal direction outside the guarded pole neighborhood. */
+	    if (surface->IsAtSingularity(uv.x, uv.y, false))
+		continue;
 	    ON_3dVector lifted_tangent = uv_tangent.x * du + uv_tangent.y * dv;
 	    ON_3dVector edge_tangent = edge->TangentAt(
 		edge->Domain()[trim.m_bRev3d ? 1 - end : end]);
@@ -3495,6 +3531,275 @@ align_closed_surface_seam_from_trim_pair(ON_Brep *brep,
 	return true;
     }
     return false;
+}
+
+
+static bool
+relocate_ordinary_closed_nurbs_loop_seam(ON_Brep *brep, int loop_index,
+	int direction, double tolerance, std::string *failure_reason)
+{
+    if (failure_reason)
+	failure_reason->clear();
+    if (!brep || loop_index < 0 || loop_index >= brep->m_L.Count() ||
+	(direction != 0 && direction != 1) || !(tolerance > 0.0))
+	return false;
+    ON_BrepLoop &source_loop = brep->m_L[loop_index];
+    ON_BrepFace *source_face = source_loop.Face();
+    ON_NurbsSurface *surface = source_face ? ON_NurbsSurface::Cast(
+	const_cast<ON_Surface *>(source_face->SurfaceOf())) : NULL;
+    if (!surface || !surface->IsClosed(direction)) {
+	if (failure_reason)
+	    *failure_reason = "the loop surface is not a closed NURBS surface";
+	return false;
+    }
+    const int surface_index = source_face->m_si;
+    const ON_Interval old_domain = surface->Domain(direction);
+    const double period = old_domain.Length();
+    if (!(period > ON_ZERO_TOLERANCE))
+	return false;
+
+    std::vector<double> phases;
+    for (int fi = 0; fi < brep->m_F.Count(); ++fi) {
+	const ON_BrepFace &face = brep->m_F[fi];
+	if (face.m_si != surface_index)
+	    continue;
+	for (int fli = 0; fli < face.LoopCount(); ++fli) {
+	    const ON_BrepLoop *loop = face.Loop(fli);
+	    if (!loop)
+		continue;
+	    for (int lti = 0; lti < loop->TrimCount(); ++lti) {
+		const ON_BrepTrim *trim = loop->Trim(lti);
+		if (!trim || !trim->TrimCurveOf())
+		    return false;
+		const int samples = std::min(256,
+		    std::max(32, trim->SpanCount() * 4));
+		const ON_Interval trim_domain = trim->Domain();
+		for (int sample = 0; sample <= samples; ++sample) {
+		    const ON_3dPoint uv = trim->PointAt(trim_domain.ParameterAt(
+			static_cast<double>(sample) / samples));
+		    if (!uv.IsValid())
+			return false;
+		    double phase = fmod(uv[direction] - old_domain.Min(), period);
+		    if (phase < 0.0)
+			phase += period;
+		    phases.push_back(phase);
+		}
+	    }
+	}
+    }
+    if (phases.size() < 2)
+	return false;
+    std::sort(phases.begin(), phases.end());
+    double largest_gap = -1.0;
+    double gap_start = 0.0;
+    for (size_t index = 0; index < phases.size(); ++index) {
+	const double next = index + 1 < phases.size() ? phases[index + 1] :
+	    phases[0] + period;
+	const double gap = next - phases[index];
+	if (gap > largest_gap) {
+	    largest_gap = gap;
+	    gap_start = phases[index];
+	}
+    }
+    if (largest_gap < kMinimumSeamRelocationGapFraction * period) {
+	if (failure_reason)
+	    *failure_reason = "the affected boundary has no empty seam interval";
+	return false;
+    }
+    double seam_phase = fmod(gap_start + 0.5 * largest_gap, period);
+    if (seam_phase < 0.0)
+	seam_phase += period;
+    const double seam = old_domain.Min() + seam_phase;
+    const double parameter_guard = std::max(ON_ZERO_TOLERANCE,
+	period * 1.0e-10);
+    if (seam <= old_domain.Min() + parameter_guard ||
+	    seam >= old_domain.Max() - parameter_guard)
+	return false;
+
+    ON_NurbsSurface candidate(*surface);
+    if (!candidate.ChangeSurfaceSeam(direction, seam) || !candidate.IsValid()) {
+	if (failure_reason)
+	    *failure_reason = "openNURBS rejected the boundary-free seam";
+	return false;
+    }
+    const ON_Interval candidate_domain = candidate.Domain(direction);
+    struct Replacement {
+	int trim_index;
+	ON_Curve *original;
+	ON_Curve *seed;
+	ON_Surface::ISO iso;
+	ON_BrepTrim::TYPE type;
+    };
+    std::vector<Replacement> replacements;
+    bool valid = true;
+    for (int fi = 0; valid && fi < brep->m_F.Count(); ++fi) {
+	const ON_BrepFace &face = brep->m_F[fi];
+	if (face.m_si != surface_index)
+	    continue;
+	for (int fli = 0; valid && fli < face.LoopCount(); ++fli) {
+	    const ON_BrepLoop *loop = face.Loop(fli);
+	    if (!loop)
+		continue;
+	    for (int lti = 0; valid && lti < loop->TrimCount(); ++lti) {
+		const ON_BrepTrim *trim = loop->Trim(lti);
+		ON_Curve *source = trim ? trim->DuplicateCurve() : NULL;
+		ON_BoundingBox box;
+		if (!trim || !trim->Edge() || !source || !source->GetBoundingBox(box)) {
+		    delete source;
+		    valid = false;
+		    break;
+		}
+		const double center = 0.5 *
+		    (box.m_min[direction] + box.m_max[direction]);
+		const double base_shift = round((candidate_domain.Mid() - center) /
+		    period) * period;
+		ON_Curve *seed = NULL;
+		const int candidate_images[3] = {0, -1, 1};
+		for (int image_index = 0; !seed && image_index < 3; ++image_index) {
+		    const int image = candidate_images[image_index];
+		    ON_Curve *curve = source->DuplicateCurve();
+		    ON_Xform shift(ON_Xform::IdentityTransformation);
+		    shift.m_xform[direction][3] = base_shift + image * period;
+		    const bool in_domain = curve && curve->Transform(shift) &&
+			curve->ChangeDimension(2) && curve->IsValid();
+		    if (in_domain)
+			seed = curve;
+		    else
+			delete curve;
+		}
+		if (!seed) {
+		    delete source;
+		    valid = false;
+		    if (failure_reason)
+			*failure_reason = "a pcurve could not be seeded inside the relocated surface domain";
+		    break;
+		}
+		replacements.push_back({trim->m_trim_index, source, seed,
+		    trim->m_iso, trim->m_type});
+	    }
+	}
+    }
+    if (!valid) {
+	for (std::vector<Replacement>::iterator replacement = replacements.begin();
+		replacement != replacements.end(); ++replacement)
+	{
+	    delete replacement->original;
+	    delete replacement->seed;
+	}
+	return false;
+    }
+
+    std::vector<int> curve_indices(replacements.size(), -1);
+    for (size_t index = 0; index < replacements.size(); ++index) {
+	curve_indices[index] = brep->AddTrimCurve(replacements[index].seed);
+	if (curve_indices[index] < 0)
+	    return false;
+	replacements[index].seed = NULL;
+    }
+    const ON_NurbsSurface original_surface(*surface);
+    *surface = candidate;
+    for (size_t index = 0; index < replacements.size(); ++index) {
+	if (!brep->SetTrimCurve(brep->m_T[replacements[index].trim_index],
+		curve_indices[index]))
+	    return false;
+	brep->SetTrimIsoFlags(brep->m_T[replacements[index].trim_index]);
+    }
+    bool regenerated = true;
+    std::string regeneration_failure;
+    for (size_t index = 0; regenerated && index < replacements.size(); ++index) {
+	ON_BrepTrim &trim = brep->m_T[replacements[index].trim_index];
+	ON_BrepEdge *edge = trim.Edge();
+	ON_NurbsCurve edge_nurbs;
+	const double trim_tolerance = edge ? std::max(tolerance,
+	    std::max(edge->m_tolerance,
+		std::max(trim.m_tolerance[0], trim.m_tolerance[1]))) : tolerance;
+	regenerated = edge && edge->GetNurbForm(edge_nurbs) &&
+	    regenerate_trim_polyline(brep, trim, surface, edge_nurbs,
+		trim_tolerance, &regeneration_failure, NULL, NULL, NULL, true);
+    }
+    if (!regenerated) {
+	/* Restore the pre-relocation surface and pcurves.  Newly added candidate
+	 * curves remain unreferenced and are compacted with the BREP later. */
+	*surface = original_surface;
+	if (failure_reason)
+	    *failure_reason = "exact-edge regeneration on the relocated surface failed: " +
+		regeneration_failure;
+	for (size_t index = 0; index < replacements.size(); ++index) {
+	    const int original_index = brep->AddTrimCurve(replacements[index].original);
+	    if (original_index >= 0) {
+		replacements[index].original = NULL;
+		brep->SetTrimCurve(brep->m_T[replacements[index].trim_index],
+		    original_index);
+		brep->m_T[replacements[index].trim_index].m_iso = replacements[index].iso;
+		brep->m_T[replacements[index].trim_index].m_type = replacements[index].type;
+	    }
+	    delete replacements[index].original;
+	}
+	return false;
+    }
+    for (size_t index = 0; index < replacements.size(); ++index)
+	delete replacements[index].original;
+    return true;
+}
+
+
+static size_t
+repair_ordinary_closed_nurbs_seam_crossings(ON_Brep *brep,
+	STEPWrapper *wrapper, int entity_id, const std::string &entity_type)
+{
+    if (!brep || !wrapper || !(LocalUnits::tolerance > 0.0))
+	return 0;
+    size_t repaired = 0;
+    std::set<int> repaired_surfaces;
+    for (int li = 0; li < brep->m_L.Count(); ++li) {
+	ON_BrepLoop &loop = brep->m_L[li];
+	ON_BrepFace *face = loop.Face();
+	const ON_Surface *surface = face ? face->SurfaceOf() : NULL;
+	if (!surface || repaired_surfaces.find(face->m_si) != repaired_surfaces.end())
+	    continue;
+	for (int lti = 0; lti < loop.TrimCount(); ++lti) {
+	    const ON_BrepTrim *current = loop.Trim(lti);
+	    const ON_BrepTrim *next = loop.Trim((lti + 1) % loop.TrimCount());
+	    if (!current || !next || current->m_type == ON_BrepTrim::seam ||
+		    next->m_type == ON_BrepTrim::seam ||
+		    current->m_vi[1] < 0 || current->m_vi[1] != next->m_vi[0] ||
+		    current->m_vi[1] >= brep->m_V.Count())
+		continue;
+	    const ON_3dPoint end = current->PointAtEnd();
+	    const ON_3dPoint start = next->PointAtStart();
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (!surface->IsClosed(direction))
+		    continue;
+		const double period = surface->Domain(direction).Length();
+		const double guard = std::max(ON_ZERO_TOLERANCE, period * 1.0e-8);
+		if (!(period > ON_ZERO_TOLERANCE) ||
+			fabs(fabs(end[direction] - start[direction]) - period) > guard)
+		    continue;
+		const ON_3dPoint end_lift = surface->PointAt(end.x, end.y);
+		const ON_3dPoint start_lift = surface->PointAt(start.x, start.y);
+		const ON_3dPoint &vertex = brep->m_V[current->m_vi[1]].point;
+		if (end_lift.IsValid() && start_lift.IsValid() &&
+			end_lift.DistanceTo(vertex) <= LocalUnits::tolerance &&
+			start_lift.DistanceTo(vertex) <= LocalUnits::tolerance)
+		    continue;
+		std::string failure;
+		if (relocate_ordinary_closed_nurbs_loop_seam(brep, li, direction,
+			LocalUnits::tolerance, &failure)) {
+		    repaired_surfaces.insert(face->m_si);
+		    ++repaired;
+		    wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
+			"relocated a closed NURBS surface seam outside an ordinary face boundary");
+		} else if (wrapper->Verbose() && !failure.empty()) {
+		    std::cerr << entity_type << " #" << entity_id << ": loop " << li
+			<< " ordinary seam relocation rejected: " << failure << std::endl;
+		}
+		break;
+	    }
+	    if (repaired_surfaces.find(face->m_si) != repaired_surfaces.end())
+		break;
+	}
+    }
+    return repaired;
 }
 
 
@@ -8036,6 +8341,9 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 	allow_surface_alignment, &aligned_surface_loops);
     repair_adjacent_trim_vertices(brep, wrapper, entity_id, entity_type);
     repair_invalid_open_pcurves(brep, wrapper, entity_id, entity_type);
+    if (repair_ordinary_closed_nurbs_seam_crossings(brep, wrapper, entity_id,
+	    entity_type))
+	repair_invalid_open_pcurves(brep, wrapper, entity_id, entity_type);
     repair_paired_seam_boundaries(brep, wrapper, entity_id, entity_type,
 	&aligned_surface_loops);
     repair_missing_singular_trims(brep, wrapper, entity_id, entity_type);
@@ -8237,9 +8545,13 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 		(loop.m_type != ON_BrepLoop::outer && loop.m_type != ON_BrepLoop::inner) ||
 		expected == loop.m_type)
 		continue;
-	    brep->FlipLoop(loop);
-	    loop_orientation_changed = true;
-	    wrapper->RecordRepair(entity_id, entity_type, "loop_orientation",
+	brep->FlipLoop(loop);
+	loop_orientation_changed = true;
+	if (wrapper->Verbose())
+	    std::cerr << entity_type << " #" << entity_id << ": restored loop "
+		<< li << "/STEP" << loop.m_loop_user.i
+		<< " to its declared face-bound orientation" << std::endl;
+	wrapper->RecordRepair(entity_id, entity_type, "loop_orientation",
 		"restored a loop orientation changed by exact pcurve regeneration");
 	}
 	if (loop_orientation_changed) {
@@ -9329,8 +9641,12 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	job.status = BREP_CONVERSION_FAILED;
 	return;
     }
-    size_t keyhole_splits = finalize_brep_topology(job.brep.get(),
-	wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe,
+    /* A valid periodic band can initially place both uses of its seam edge on
+     * one parameter branch.  At that point it resembles a zero-area keyhole,
+     * but the exact seam-pair repair below will move the uses to opposite
+     * surface boundaries.  Refresh and classify first; normalize keyholes only
+     * if the completed pcurve repair still leaves invalid topology. */
+    size_t keyhole_splits = finalize_brep_topology(job.brep.get(), false,
 	wrapper, job.entity_id, job.entity_type);
     if (work_expired("topology finalization"))
 	return;
@@ -9371,7 +9687,7 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
     }
     for (size_t split = 0; split < keyhole_splits; ++split)
 	wrapper->RecordRepair(job.entity_id, job.entity_type, "edge_loop",
-	    "normalized a zero-area seam bridge into valid closed trim topology");
+	    "split a zero-area keyhole bridge into closed trim loops");
 
     /* ON_Brep::IsValid() refreshes loop-derived state while diagnosing a
      * candidate.  Restore any unambiguous STEP bound classification after
@@ -9767,19 +10083,6 @@ write_detached_brep_geometry(DetachedBrepJob &job, BRLCADWrapper *database,
 
 
 static void
-write_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper,
-    BRLCADWrapper *dotg, int dry_run, MAP_OF_ENTITY_ID_TO_PRODUCT_ID &process_map)
-{
-    if (job.status == BREP_WRITE_SUCCESS &&
-	!write_detached_brep_geometry(job, dotg, dry_run))
-	job.status = BREP_OUTPUT_FAILED;
-    if (job.status == BREP_WRITE_SUCCESS && job.has_style)
-	++wrapper->Statistics().styles_applied;
-    record_detached_brep_job(job, wrapper, dotg, dry_run, process_map);
-}
-
-
-static void
 commit_spooled_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper,
     BRLCADWrapper *spool, BRLCADWrapper *dotg, int dry_run,
     MAP_OF_ENTITY_ID_TO_PRODUCT_ID &process_map)
@@ -9817,25 +10120,6 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
     const unsigned int worker_count = std::max(1U, std::min(
 	concurrency,
 	static_cast<unsigned int>(jobs.size())));
-    if (concurrency == 1) {
-	for (size_t index = 0; index < jobs.size() &&
-		!wrapper->CancellationRequested(); ++index) {
-	    materialize_detached_brep_job(*jobs[index], wrapper);
-	    convert_detached_brep_job(*jobs[index], wrapper);
-	    write_detached_brep_job(*jobs[index], wrapper, dotg, dry_run,
-		process_map);
-	    jobs[index]->brep.reset();
-	    jobs[index]->entity_arena.reset();
-	    jobs[index]->solid = NULL;
-	    jobs[index]->surface_model = NULL;
-	    jobs[index]->face_set = NULL;
-	    wrapper->SetProgress("converting exact geometry",
-		static_cast<uint64_t>(index + 1),
-		static_cast<uint64_t>(jobs.size()), 0,
-		wrapper->Statistics().geometry_written, "written");
-	}
-	return;
-    }
 
     TemporaryGeometrySpool spool_file;
     BRLCADWrapper spool;
