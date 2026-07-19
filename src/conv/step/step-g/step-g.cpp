@@ -107,9 +107,15 @@ print_diagnostics(const STEPWrapper &step, bool verbose)
 
     std::map<std::string, uint64_t> aggregated;
     for (const brlcad::step::Diagnostic &diagnostic : step.Diagnostics()) {
+	std::string message = diagnostic.message;
+	if (diagnostic.severity == brlcad::step::DiagnosticSeverity::Warning &&
+		(message.find("source curve/surface separation exceeds declared tolerance ") == 0 ||
+		 message.find("source edge geometry separation exceeds declared tolerance ") == 0))
+	    message = "source edge/surface geometry exceeded the declared tolerance; "
+		"adjusted affected OpenNURBS edge tolerances after dense validation";
 	std::string key = std::string(severity_name(diagnostic.severity)) + ": " +
 	    diagnostic.entity_type + (diagnostic.entity_type.empty() ? "" : ": ") +
-	    diagnostic.message;
+	    message;
 	aggregated[key] += diagnostic.repeat_count;
     }
     for (const auto &entry : aggregated)
@@ -130,6 +136,28 @@ print_lazy_statistics(const STEPWrapper &step)
     if (stats.lazy_cache_bytes_available)
 	std::cerr << ", peak-source-bytes=" << stats.lazy_cache_byte_high_water;
     std::cerr << std::endl;
+}
+
+void
+print_skipped_items(const STEPWrapper &step, bool verbose)
+{
+    const brlcad::step::ImportStatistics &stats = step.Statistics();
+    const uint64_t total = static_cast<uint64_t>(stats.skipped_items.size()) +
+	stats.skipped_items_omitted;
+    if (!total)
+	return;
+
+    std::cerr << "Skipped STEP roots (" << total << "):";
+    for (const brlcad::step::SkippedItem &item : stats.skipped_items)
+	std::cerr << " #" << item.entity_id << '(' << item.entity_type << ')';
+    if (stats.skipped_items_omitted)
+	std::cerr << " ... " << stats.skipped_items_omitted << " omitted";
+    std::cerr << std::endl;
+    if (!verbose)
+	return;
+    for (const brlcad::step::SkippedItem &item : stats.skipped_items)
+	std::cerr << "  #" << item.entity_id << ' ' << item.entity_type << ": "
+	    << item.reason << std::endl;
 }
 
 }
@@ -232,6 +260,7 @@ main(int argc, const char *argv[])
     static OutputFile ofile = {NULL, false};
     static bool verbose = false;
     static int dry_run = 0;
+    static int exact = 0;
     static int help = 0;
     static int jobs = 1;
     static char *summary_log_file = (char *)NULL;
@@ -242,6 +271,7 @@ main(int argc, const char *argv[])
 	{"?", "", "",           NULL,        &help,             ""},
 	{"D", "dry-run", "",    NULL,        &dry_run,          "validate without writing a database"},
 	{"v", "verbose", "",    NULL,        &verbose,          "report entity-level diagnostics"},
+	{"", "exact", "",       NULL,        &exact,            "strictly enforce the declared model tolerance"},
 	{"f", "force", "",      NULL,        &ofile.overwrite,  "overwrite a positional or -o output"},
 	{"O", "output-overwrite", "FILE", parse_opt_O, &ofile, "output file (overwrite)"},
 	{"o", "output", "FILE", bu_opt_str,  &ofile.filename,   "output file"},
@@ -312,6 +342,7 @@ main(int argc, const char *argv[])
     step->SetCancellationCallback([]() { return caught_signal != 0; });
     brlcad::step::ImportOptions import_options;
     import_options.dry_run = dry_run != 0;
+    import_options.exact = exact != 0;
     import_options.verbose = verbose;
     import_options.requested_jobs = static_cast<unsigned int>(jobs);
     import_options.effective_jobs = static_cast<unsigned int>(jobs);
@@ -378,6 +409,7 @@ main(int argc, const char *argv[])
 		else
 		    std::cerr << "conversion interrupted" << std::endl;
 		print_diagnostics(*step, verbose);
+		print_skipped_items(*step, verbose);
 		print_lazy_statistics(*step);
 	    } else {
 		std::cerr << "ERROR: unable to open temporary BRL-CAD output for [" << oflnm << "]" << std::endl;

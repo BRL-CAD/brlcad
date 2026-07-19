@@ -47,6 +47,13 @@ namespace brlcad {
 class PullbackContext;
 }
 
+enum class PullbackFailureReason {
+    None,
+    Cancelled,
+    ProjectionFailed,
+    SurfaceDistanceExceeded
+};
+
 typedef struct pbc_data {
     double tolerance;
     double flatness;
@@ -58,6 +65,22 @@ typedef struct pbc_data {
     bool order_reversed;
     /** Job-local closest-point cache.  It never owns STEP or geometry data. */
     std::shared_ptr<brlcad::PullbackContext> context;
+    /** Typed result from the bounded point-projection stage. */
+    PullbackFailureReason failure_reason = PullbackFailureReason::None;
+    size_t projection_samples = 0;
+    size_t rejected_projection_samples = 0;
+    /** Rejected samples for which the closest-point solver found no finite
+     * candidate.  These are solver failures, not evidence that the source
+     * curve lies outside its declared surface tolerance. */
+    size_t failed_projection_samples = 0;
+    /** Closed-curve seam transitions for which the local root finder did not
+     * locate an exact split.  Callers may defer these to loop-level seam
+     * resolution, but must report the aggregate rather than printing inside
+     * this low-level numerical routine. */
+    size_t failed_seam_crossing_searches = 0;
+    double maximum_projection_distance = 0.0;
+    bool tolerance_adjusted = false;
+    double declared_tolerance = 0.0;
 } PBCData;
 
 extern BREP_EXPORT int IsAtSingularity(const ON_Surface *surf, double u, double v, double tol = 1e-6);

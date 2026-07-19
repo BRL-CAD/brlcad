@@ -138,9 +138,8 @@ GlobalUnitAssignedContext::GetSolidAngleConversionFactor()
 	}
 	SolidAngleConversionBasedUnit *cb = dynamic_cast<SolidAngleConversionBasedUnit *>(*i);
 	if (cb != NULL) {
-	    //found conversion based length unit
-	    std::cerr << "found SI length unit" << std::endl;
-	    return 1.0;
+	    // found conversion based solid angle unit
+	    return cb->GetSolidAngleConversionFactor();
 	}
 	SolidAngleContextDependentUnit *cd = dynamic_cast<SolidAngleContextDependentUnit *>(*i);
 	if (cd != NULL) {

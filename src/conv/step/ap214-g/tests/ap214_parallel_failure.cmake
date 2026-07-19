@@ -21,7 +21,7 @@ foreach(expected
     "\"geometry_attempted\":2"
     "\"geometry_written\":1"
     "\"geometry_skipped\":1"
-    "closed AP214 BREP did not validate as a solid")
+    "closed STEP BREP did not validate as a solid")
   string(FIND "${report_text}" "${expected}" found)
   if(found EQUAL -1)
     message(FATAL_ERROR "parallel failure report does not contain ${expected}:\n${report_text}")

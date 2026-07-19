@@ -94,7 +94,8 @@ bool
 AdvancedFace::LoadONBrep(ON_Brep *brep)
 {
     if (!brep || !FaceSurface::LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	if (step && step->Verbose())
+	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
     }
     return true;

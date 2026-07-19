@@ -84,8 +84,13 @@ MeasureWithUnit::GetPlaneAngleConversionFactor()
     double mfactor = 0.0;
     SiUnit *si = dynamic_cast<SiUnit *>(unit_component);
     if (si != NULL) {
-	//found SI length unit
+	// found SI plane angle unit
 	sifactor = si->GetPlaneAngleConversionFactor();
+	} else {
+	ConversionBasedUnit *conversion = dynamic_cast<ConversionBasedUnit *>(
+	    unit_component);
+	if (conversion != NULL)
+	    sifactor = conversion->GetPlaneAngleConversionFactor();
     }
     mfactor = value_component.GetPlaneAngleMeasure();
 
@@ -99,8 +104,13 @@ MeasureWithUnit::GetSolidAngleConversionFactor()
     double mfactor = 0.0;
     SiUnit *si = dynamic_cast<SiUnit *>(unit_component);
     if (si != NULL) {
-	//found SI length unit
+	// found SI solid angle unit
 	sifactor = si->GetSolidAngleConversionFactor();
+	} else {
+	ConversionBasedUnit *conversion = dynamic_cast<ConversionBasedUnit *>(
+	    unit_component);
+	if (conversion != NULL)
+	    sifactor = conversion->GetSolidAngleConversionFactor();
     }
     mfactor = value_component.GetSolidAngleMeasure();
 

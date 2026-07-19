@@ -102,6 +102,9 @@ public:
     std::string GetBRLCADName(std::string &name);
     std::string StableBRLCADName(const std::string &name, int64_t step_id);
     bool SetAttribute(const std::string &object, const std::string &key, const std::string &value);
+    /** Copy one already-serialized object from another open BRL-CAD database
+     * without importing and re-exporting its geometry. */
+    bool CopyObjectFrom(BRLCADWrapper &source, const std::string &object);
     static void getRandomColor(unsigned char *rgb);
     struct db_i * GetDBIP();
     bool Close();

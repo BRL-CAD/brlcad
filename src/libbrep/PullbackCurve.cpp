@@ -34,6 +34,7 @@
 #include <list>
 #include <limits>
 #include <chrono>
+#include <functional>
 #include <set>
 #include <map>
 #include <string>
@@ -59,12 +60,29 @@ namespace {
  * check. */
 constexpr size_t kMaximumClosestPointSubdivisionNodes = 4096;
 constexpr int kMaximumClosestPointSubdivisionDepth = 32;
+/* A collapsed periodic pullback is retried only after the ordinary adaptive
+ * path has failed.  1024 bounded parameter intervals make each Newton seed
+ * local even on the large analytic cylinders seen in assembly-scale files;
+ * every recovered sample must still meet the caller's lift tolerance. */
+constexpr size_t kPeriodicRecoverySegments = 1024;
+/* STEP spline domains commonly contain a nominal zero such as -8.88e-16.
+ * Require more than 1024 scaled machine epsilons on both sides before
+ * splitting a periodic pullback at zero; otherwise the split creates a
+ * one-sample, zero-length trim fragment. */
+constexpr double kParameterZeroSplitEpsilonScale = 1024.0;
+/* A UV chord on a curved surface can lift away from its exact 3-D edge even
+ * when both endpoints project correctly.  Refine such intervals at their
+ * exact curve midpoint, with explicit depth and sample ceilings.  The caller
+ * subsequently performs its independent dense locus validation. */
+constexpr int kMaximumAdaptivePullbackDepth = 12;
+constexpr size_t kMaximumAdaptivePullbackSamples = 16384;
 thread_local size_t closest_point_subdivision_nodes = 0;
 thread_local brlcad::PullbackCancellationCallback pullback_cancellation_callback = NULL;
 thread_local void *pullback_cancellation_context = NULL;
 thread_local std::chrono::steady_clock::time_point pullback_deadline =
     std::chrono::steady_clock::time_point::max();
 thread_local bool pullback_deadline_expired = false;
+thread_local std::string pullback_seam_failure;
 
 }
 
@@ -1895,6 +1913,87 @@ pullback_closest_point(PBCData &data, const ON_3dPoint &point,
 }
 
 
+/* Consecutive samples of one edge are close in both curve parameter and UV.
+ * Refine from the previous UV before falling back to the global surface-box
+ * search.  This is both faster and avoids losing legal points on a periodic
+ * seam when a very large analytic surface makes its bounding boxes too coarse
+ * to provide a useful unseeded estimate. */
+static bool
+pullback_closest_point_seeded(PBCData &data, const ON_3dPoint &point,
+    const ON_2dPoint &seed, ON_2dPoint &surface_point,
+    ON_3dPoint &lifted_point, double &distance, double tolerance)
+{
+    if (!data.surf || !point.IsValid() || !seed.IsValid() ||
+	!(tolerance > 0.0))
+	return false;
+
+    ON_2dPoint uv(seed);
+    distance = DBL_MAX;
+    for (int iteration = 0; iteration < 32; ++iteration) {
+	if (brlcad::PullbackWorkCancelled()) return false;
+	ON_3dPoint lift;
+	ON_3dVector du, dv;
+	if (!data.surf->Ev1Der(uv.x, uv.y, lift, du, dv))
+	    break;
+	const ON_3dVector residual = point - lift;
+	const double current_distance = residual.Length();
+	if (current_distance < distance) {
+	    distance = current_distance;
+	    surface_point = uv;
+	    lifted_point = lift;
+	}
+	if (current_distance <= tolerance)
+	    return true;
+
+	const double a = du * du;
+	const double b = du * dv;
+	const double c = dv * dv;
+	const double r0 = du * residual;
+	const double r1 = dv * residual;
+	const double metric_scale = std::max(1.0, std::max(a, c));
+	const double damping = DBL_EPSILON * metric_scale * 64.0;
+	const double aa = a + damping;
+	const double cc = c + damping;
+	const double determinant = aa * cc - b * b;
+	if (fabs(determinant) <= DBL_EPSILON * metric_scale * metric_scale)
+	    break;
+	double delta[2] = {(cc * r0 - b * r1) / determinant,
+	    (aa * r1 - b * r0) / determinant};
+	double trust_scale = 1.0;
+	for (int direction = 0; direction < 2; ++direction) {
+	    const double maximum_step = 0.125 * data.surf->Domain(direction).Length();
+	    if (maximum_step > ON_ZERO_TOLERANCE &&
+		    fabs(delta[direction]) > maximum_step)
+		trust_scale = std::min(trust_scale,
+		    maximum_step / fabs(delta[direction]));
+	}
+
+	bool improved = false;
+	for (int reduction = 0; reduction < 12; ++reduction) {
+	    const double scale = trust_scale * std::ldexp(1.0, -reduction);
+	    ON_2dPoint candidate(uv.x + scale * delta[0],
+		uv.y + scale * delta[1]);
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (data.surf->IsClosed(direction)) continue;
+		const ON_Interval domain = data.surf->Domain(direction);
+		candidate[direction] = std::max(domain.Min(),
+		    std::min(domain.Max(), candidate[direction]));
+	    }
+	    const ON_3dPoint candidate_lift = data.surf->PointAt(
+		candidate.x, candidate.y);
+	    if (!candidate_lift.IsValid() ||
+		    candidate_lift.DistanceTo(point) >= current_distance)
+		continue;
+	    uv = candidate;
+	    improved = true;
+	    break;
+	}
+	if (!improved) break;
+    }
+    return distance <= tolerance;
+}
+
+
 bool trim_GetClosestPoint3dFirstOrder(
     const ON_BrepTrim& trim,
     const ON_3dPoint& p,
@@ -2663,49 +2762,170 @@ pullback_samples(PBCData* data,
     } else {
 	samplesperknotinterval = 18 * degree;
     }
-    ON_2dPoint pt;
-    ON_3dPoint p = ON_3dPoint::UnsetPoint;
-    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
-    double distance;
-    for (int i = istart; i <= istop; i++) {
-	if (i <= numKnots / 2) {
-	    if (i > 0) {
-		double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
-		for (int j = 1; j < samplesperknotinterval; j++) {
-		    p = curve->PointAt(knots[i - 1] + j * delta);
-		    p3d = ON_3dPoint::UnsetPoint;
-		    if (pullback_closest_point(*data, p, pt, p3d, distance, 0,
-			    same_point_tol, within_distance_tol)) {
-			samples->Append(pt);
-		    }
-		}
-	    }
-	    p = curve->PointAt(knots[i]);
-	    p3d = ON_3dPoint::UnsetPoint;
-	    if (pullback_closest_point(*data, p, pt, p3d, distance, 0,
-		    same_point_tol, within_distance_tol)) {
-		samples->Append(pt);
-	    }
-	} else {
-	    if (i > 0) {
-		double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
-		for (int j = 1; j < samplesperknotinterval; j++) {
-		    p = curve->PointAt(knots[i - 1] + j * delta);
-		    p3d = ON_3dPoint::UnsetPoint;
-		    if (pullback_closest_point(*data, p, pt, p3d, distance, 0,
-			    same_point_tol, within_distance_tol)) {
-			samples->Append(pt);
-		    }
-		}
-		p = curve->PointAt(knots[i]);
-		p3d = ON_3dPoint::UnsetPoint;
-		if (pullback_closest_point(*data, p, pt, p3d, distance, 0,
-			same_point_tol, within_distance_tol)) {
-		    samples->Append(pt);
-		}
-	    }
+    /* Project one parameter globally, then walk away from that anchor in both
+     * directions using the adjacent UV as a Newton seed.  The former code ran
+     * the expensive global surface-tree subdivision independently for every
+     * point and could retain a single isolated success on a perfectly valid
+     * spline boundary.  Each seeded result is still accepted only when its
+     * 3-D lift satisfies within_distance_tol; the global search remains the
+     * fallback whenever the local solve does not converge. */
+    std::vector<double> parameters;
+    for (int i = istart; i <= istop; ++i) {
+	if (i == istart) {
+	    parameters.push_back(knots[i]);
+	    continue;
+	}
+	const double delta = (knots[i] - knots[i - 1]) /
+	    static_cast<double>(samplesperknotinterval);
+	for (int j = 1; j < samplesperknotinterval; ++j)
+	    parameters.push_back(knots[i - 1] + j * delta);
+	parameters.push_back(knots[i]);
+    }
+
+    std::vector<ON_2dPoint> projected(parameters.size(),
+	ON_2dPoint::UnsetPoint);
+    std::vector<bool> valid(parameters.size(), false);
+    std::vector<double> projection_distances(parameters.size(), DBL_MAX);
+    data->failure_reason = PullbackFailureReason::None;
+    data->projection_samples = parameters.size();
+    data->rejected_projection_samples = 0;
+    data->failed_projection_samples = 0;
+    data->maximum_projection_distance = 0.0;
+    size_t anchor = parameters.size();
+    for (size_t i = 0; i < parameters.size(); ++i) {
+	if (brlcad::PullbackWorkCancelled()) break;
+	const ON_3dPoint target = curve->PointAt(parameters[i]);
+	ON_3dPoint lift = ON_3dPoint::UnsetPoint;
+	double &distance = projection_distances[i];
+	valid[i] = pullback_closest_point(*data, target, projected[i], lift,
+	    distance, 0, same_point_tol, within_distance_tol) &&
+	    distance <= within_distance_tol;
+	if (valid[i]) {
+	    anchor = i;
+	    break;
 	}
     }
+
+    const auto project_from_seed = [data, curve, &parameters, &projected,
+	&valid, &projection_distances, same_point_tol,
+	within_distance_tol](size_t index,
+	    const ON_2dPoint &seed) {
+	if (brlcad::PullbackWorkCancelled()) return false;
+	const ON_3dPoint target = curve->PointAt(parameters[index]);
+	ON_3dPoint lift = ON_3dPoint::UnsetPoint;
+	double &distance = projection_distances[index];
+	bool success = pullback_closest_point_seeded(*data, target, seed,
+	    projected[index], lift, distance, within_distance_tol);
+	if (!success)
+	    success = pullback_closest_point(*data, target, projected[index],
+		lift, distance, 0, same_point_tol, within_distance_tol);
+	valid[index] = success && distance <= within_distance_tol;
+	return static_cast<bool>(valid[index]);
+    };
+
+    if (anchor < parameters.size()) {
+	ON_2dPoint seed = projected[anchor];
+	for (size_t i = anchor + 1; i < parameters.size(); ++i) {
+	    if (project_from_seed(i, seed)) seed = projected[i];
+	}
+	seed = projected[anchor];
+	for (size_t i = anchor; i > 0; --i) {
+	    if (project_from_seed(i - 1, seed)) seed = projected[i - 1];
+	}
+    }
+
+    /* Endpoint-only projection is insufficient for a UV polyline on a curved
+     * surface: the lifted UV chord may bow away from the exact 3-D edge.  On
+     * open surfaces, adaptively insert the exact curve midpoint whenever that
+     * chord fails the same lift tolerance.  Periodic surfaces retain their
+     * dedicated seam-aware refinement path below. */
+    const bool all_projected = std::find(valid.begin(), valid.end(), false) ==
+	valid.end();
+    if (all_projected && !data->surf->IsClosed(0) &&
+	    !data->surf->IsClosed(1) && parameters.size() > 1) {
+	std::vector<ON_2dPoint> refined;
+	refined.reserve(projected.size());
+	refined.push_back(projected.front());
+	bool refinement_valid = true;
+	std::function<void(double, const ON_2dPoint &, double,
+	    const ON_2dPoint &, int)> refine_interval;
+	refine_interval = [data, curve, same_point_tol, within_distance_tol,
+	    &refined, &refinement_valid, &refine_interval](double t0,
+	    const ON_2dPoint &uv0, double t1, const ON_2dPoint &uv1, int depth) {
+	    if (!refinement_valid) return;
+	    if (brlcad::PullbackWorkCancelled() ||
+		    refined.size() >= kMaximumAdaptivePullbackSamples) {
+		refinement_valid = false;
+		return;
+	    }
+	    const double midpoint_parameter = 0.5 * (t0 + t1);
+	    const ON_3dPoint target = curve->PointAt(midpoint_parameter);
+	    const ON_2dPoint chord_midpoint(0.5 * (uv0.x + uv1.x),
+		0.5 * (uv0.y + uv1.y));
+	    const ON_3dPoint chord_lift = data->surf->PointAt(
+		chord_midpoint.x, chord_midpoint.y);
+	    const double chord_error = target.IsValid() && chord_lift.IsValid() ?
+		target.DistanceTo(chord_lift) : DBL_MAX;
+	    if (chord_error <= within_distance_tol ||
+		    depth >= kMaximumAdaptivePullbackDepth) {
+		refined.push_back(uv1);
+		return;
+	    }
+
+	    ON_2dPoint midpoint_uv = ON_2dPoint::UnsetPoint;
+	    ON_3dPoint midpoint_lift = ON_3dPoint::UnsetPoint;
+	    double midpoint_distance = DBL_MAX;
+	    ++data->projection_samples;
+	    bool projected_midpoint = pullback_closest_point_seeded(*data, target,
+		chord_midpoint, midpoint_uv, midpoint_lift, midpoint_distance,
+		within_distance_tol);
+	    if (!projected_midpoint)
+		projected_midpoint = pullback_closest_point(*data, target,
+		    midpoint_uv, midpoint_lift, midpoint_distance, 0,
+		    same_point_tol, within_distance_tol);
+	    if (!projected_midpoint || midpoint_distance > within_distance_tol) {
+		++data->rejected_projection_samples;
+		if (!std::isfinite(midpoint_distance) || midpoint_distance >= DBL_MAX)
+		    ++data->failed_projection_samples;
+		else
+		    data->maximum_projection_distance = std::max(
+			data->maximum_projection_distance, midpoint_distance);
+		refinement_valid = false;
+		return;
+	    }
+	    refine_interval(t0, uv0, midpoint_parameter, midpoint_uv, depth + 1);
+	    refine_interval(midpoint_parameter, midpoint_uv, t1, uv1, depth + 1);
+	};
+	for (size_t interval = 1; refinement_valid &&
+		interval < parameters.size(); ++interval)
+	    refine_interval(parameters[interval - 1], projected[interval - 1],
+		parameters[interval], projected[interval], 0);
+	if (refinement_valid)
+	    projected.swap(refined);
+    }
+
+    for (size_t i = 0; i < projected.size(); ++i) {
+	if (all_projected || valid[i]) {
+	    samples->Append(projected[i]);
+	    continue;
+	}
+	++data->rejected_projection_samples;
+	if (!std::isfinite(projection_distances[i]) ||
+		projection_distances[i] >= DBL_MAX)
+	    ++data->failed_projection_samples;
+	else
+	    data->maximum_projection_distance = std::max(
+		data->maximum_projection_distance, projection_distances[i]);
+    }
+    if (brlcad::PullbackWorkCancelled())
+	data->failure_reason = PullbackFailureReason::Cancelled;
+    else if (data->failed_projection_samples)
+	data->failure_reason = PullbackFailureReason::ProjectionFailed;
+    else if (data->rejected_projection_samples &&
+	data->maximum_projection_distance > within_distance_tol)
+	data->failure_reason = PullbackFailureReason::SurfaceDistanceExceeded;
+    else if (data->rejected_projection_samples)
+	data->failure_reason = PullbackFailureReason::ProjectionFailed;
     delete[] knots;
     return samples;
 }
@@ -3212,6 +3432,13 @@ pullback_samples_from_closed_surface(PBCData* data,
 
     ON_2dPoint pt;
     ON_2dPoint prev_pt;
+    bool have_previous = false;
+    std::vector<double> sample_parameters;
+    data->failure_reason = PullbackFailureReason::None;
+    data->projection_samples = 0;
+    data->rejected_projection_samples = 0;
+    data->failed_projection_samples = 0;
+    data->maximum_projection_distance = 0.0;
     double prev_t = knots[istart];
     double offset = 0.0;
     double delta;
@@ -3222,6 +3449,9 @@ pullback_samples_from_closed_surface(PBCData* data,
 		continue;
 
 	    double curr_t = knots[i]+j*delta;
+	    if (sample_parameters.empty() ||
+		    !NEAR_EQUAL(curr_t, sample_parameters.back(), DBL_EPSILON))
+		sample_parameters.push_back(curr_t);
 	    if (curr_t < (s-t)/2.0) {
 		offset = PBC_FROM_OFFSET;
 	    } else {
@@ -3229,17 +3459,23 @@ pullback_samples_from_closed_surface(PBCData* data,
 	    }
 	    ON_3dPoint p = curve->PointAt(curr_t);
 	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
-	    double distance;
-	    if (pullback_closest_point(*data, p, pt, p3d, distance, 0,
-		    same_point_tol, within_distance_tol)) {
+	    double distance = DBL_MAX;
+	    ++data->projection_samples;
+	    bool pulled = have_previous && pullback_closest_point_seeded(*data,
+		p, prev_pt, pt, p3d, distance, within_distance_tol);
+	    if (!pulled)
+		pulled = pullback_closest_point(*data, p, pt, p3d, distance, 0,
+		    same_point_tol, within_distance_tol);
+	    if (pulled) {
 		if (IsAtSeam(surf, pt, PBC_SEAM_TOL) > 0) {
 		    ForceToClosestSeam(surf, pt, PBC_SEAM_TOL);
 		}
-		if ((i == istart) && (j == 0)) {
+		if (!have_previous) {
 		    // first point just append and set reference in prev_pt
 		    samples->Append(pt);
 		    prev_pt = pt;
 		    prev_t = curr_t;
+		    have_previous = true;
 		    continue;
 		}
 		int udir= 0;
@@ -3285,7 +3521,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 			    samples->Append(to);
 			    prev_pt = to;
 			} else {
-			    std::cout << "Can not find seam crossing...." << std::endl;
+			    ++data->failed_seam_crossing_searches;
 			}
 		    }
 		}
@@ -3293,7 +3529,96 @@ pullback_samples_from_closed_surface(PBCData* data,
 
 		prev_pt = pt;
 		prev_t = curr_t;
+	    } else {
+		++data->rejected_projection_samples;
+		if (!std::isfinite(distance) || distance >= DBL_MAX)
+		    ++data->failed_projection_samples;
+		else
+		    data->maximum_projection_distance = std::max(
+			data->maximum_projection_distance, distance);
 	    }
+	}
+    }
+
+    if (brlcad::PullbackWorkCancelled())
+	data->failure_reason = PullbackFailureReason::Cancelled;
+    else if (data->failed_projection_samples)
+	data->failure_reason = PullbackFailureReason::ProjectionFailed;
+    else if (data->rejected_projection_samples &&
+	data->maximum_projection_distance > within_distance_tol)
+	data->failure_reason = PullbackFailureReason::SurfaceDistanceExceeded;
+    else if (data->rejected_projection_samples)
+	data->failure_reason = PullbackFailureReason::ProjectionFailed;
+
+    /* If the unseeded closed-surface search found only one usable point, it
+     * may have found that anchor late in curve order.  Recover both parameter
+     * directions from the anchor.  Every point must pass the same strict
+     * closest-point distance used above; otherwise retain the original
+     * collapsed result so the caller can reject or repair it explicitly. */
+    if (samples->Count() < 2 && have_previous && sample_parameters.size() > 1 &&
+	!brlcad::PullbackWorkCancelled()) {
+	size_t anchor = 0;
+	double anchor_delta = DBL_MAX;
+	for (size_t i = 0; i < sample_parameters.size(); ++i) {
+	    const double candidate_delta = fabs(sample_parameters[i] - prev_t);
+	    if (candidate_delta < anchor_delta) {
+		anchor = i;
+		anchor_delta = candidate_delta;
+	    }
+	}
+	std::vector<ON_2dPoint> recovered(sample_parameters.size(),
+	    ON_2dPoint::UnsetPoint);
+	std::vector<bool> valid(sample_parameters.size(), false);
+	recovered[anchor] = prev_pt;
+	valid[anchor] = true;
+	const auto recover = [data, &curve, &sample_parameters, &recovered,
+		&valid, same_point_tol, within_distance_tol](size_t index,
+		    const ON_2dPoint &seed) {
+	    if (brlcad::PullbackWorkCancelled()) return false;
+	    const ON_3dPoint target = curve->PointAt(sample_parameters[index]);
+	    ON_3dPoint lift = ON_3dPoint::UnsetPoint;
+	    double recovered_distance = DBL_MAX;
+	    bool projected = pullback_closest_point_seeded(*data, target, seed,
+		recovered[index], lift, recovered_distance, within_distance_tol);
+	    if (!projected)
+		projected = pullback_closest_point(*data, target, recovered[index],
+		    lift, recovered_distance, 0, same_point_tol,
+		    within_distance_tol);
+	    valid[index] = projected && recovered_distance <= within_distance_tol;
+	    return static_cast<bool>(valid[index]);
+	};
+	bool recovered_all = true;
+	for (size_t i = anchor + 1; i < sample_parameters.size(); ++i) {
+	    if (!recover(i, recovered[i - 1])) {
+		recovered_all = false;
+		break;
+	    }
+	}
+	for (size_t i = anchor; recovered_all && i > 0; --i) {
+	    if (!recover(i - 1, recovered[i])) {
+		recovered_all = false;
+		break;
+	    }
+	}
+	if (recovered_all) {
+	    for (size_t i = 1; i < recovered.size(); ++i) {
+		for (int direction = 0; direction < 2; ++direction) {
+		    if (!surf->IsClosed(direction)) continue;
+		    const double period = surf->Domain(direction).Length();
+		    if (period > ON_ZERO_TOLERANCE)
+			recovered[i][direction] += round((recovered[i - 1][direction] -
+			    recovered[i][direction]) / period) * period;
+		}
+	    }
+	    samples->Empty();
+	    for (std::vector<ON_2dPoint>::const_iterator point = recovered.begin();
+		 point != recovered.end(); ++point)
+		samples->Append(*point);
+	} else if (!brlcad::PullbackWorkCancelled()) {
+	    /* Low-level numerical routines must not bypass the converter's
+	     * structured diagnostic stream.  The caller supplies entity context
+	     * and aggregates this exact count. */
+	    ++data->failed_seam_crossing_searches;
 	}
     }
     delete [] knots;
@@ -3350,12 +3675,24 @@ pullback_samples(const ON_Surface* surf,
     data->surf = surf;
     data->surftree = NULL;
     data->segments = new std::list<ON_2dPointArray *>();
+    data->failure_reason = PullbackFailureReason::None;
+    data->projection_samples = 0;
+    data->rejected_projection_samples = 0;
+    data->failed_projection_samples = 0;
+    data->maximum_projection_distance = 0.0;
+    data->tolerance_adjusted = false;
+    data->declared_tolerance = tolerance;
 
     double tmin, tmax;
     data->curve->GetDomain(&tmin, &tmax);
 
     if (surf->IsClosed(0) || surf->IsClosed(1)) {
-	if ((tmin < 0.0) && (tmax > 0.0)) {
+	const double parameter_scale = std::max(1.0,
+	    std::max(fabs(tmin), fabs(tmax)));
+	const double zero_split_tolerance = DBL_EPSILON *
+	    kParameterZeroSplitEpsilonScale * parameter_scale;
+	if ((tmin < -zero_split_tolerance) &&
+		(tmax > zero_split_tolerance)) {
 	    ON_2dPoint uv = ON_2dPoint::UnsetPoint;
 	    ON_3dPoint p = curve->PointAt(0.0);
 	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
@@ -3379,9 +3716,15 @@ pullback_samples(const ON_Surface* surf,
 		    }
 		}
 	    } else {
-		std::cerr << "pullback_samples:Error: cannot evaluate curve at parameter 0.0" << std::endl;
-		delete data;
-		return NULL;
+		/* Parameter zero is used only to decide whether a split belongs on a
+		 * periodic seam.  Failing the strict distance test there must not
+		 * discard the whole diagnostic result: sample the unsplit curve so the
+		 * caller can distinguish solver failure from a bounded source
+		 * curve/surface mismatch and, in non-exact mode, adjust that edge. */
+		ON_2dPointArray *samples = pullback_samples(data, tmin, tmax,
+		    same_point_tol, within_distance_tol);
+		if (samples != NULL)
+		    data->segments->push_back(samples);
 	    }
 	} else {
 	    pullback_samples_from_closed_surface(data, tmin, tmax, same_point_tol, within_distance_tol);
@@ -3887,7 +4230,7 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 bool
 resolve_seam_segment_from_prev(const ON_Surface *surface, ON_2dPointArray &segment, ON_2dPoint *prev = NULL)
 {
-    bool complete = false;
+    bool complete = prev != NULL;
     double umin, umax, umid;
     double vmin, vmax, vmid;
 
@@ -3897,6 +4240,7 @@ resolve_seam_segment_from_prev(const ON_Surface *surface, ON_2dPointArray &segme
     vmid = (vmin + vmax) / 2.0;
 
     for (int i = 0; i < segment.Count(); i++) {
+	if (brlcad::PullbackWorkCancelled()) return false;
 	int singularity = IsAtSingularity(surface, segment[i], PBC_SEAM_TOL);
 	int seam = IsAtSeam(surface, segment[i], PBC_SEAM_TOL);
 	if ((seam > 0)) {
@@ -3963,6 +4307,7 @@ resolve_seam_segment_from_next(const ON_Surface *surface, ON_2dPointArray &segme
     if (next != NULL) {
 	complete = true;
 	for (int i = segment.Count() - 1; i >= 0; i--) {
+	    if (brlcad::PullbackWorkCancelled()) return false;
 	    int singularity = IsAtSingularity(surface, segment[i], PBC_SEAM_TOL);
 	    int seam = IsAtSeam(surface, segment[i], PBC_SEAM_TOL);
 
@@ -4027,6 +4372,7 @@ resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment, bool &
     vmid = (vmin + vmax) / 2.0;
 
     for (int i = 0; i < segment.Count(); i++) {
+	if (brlcad::PullbackWorkCancelled()) return false;
 	int singularity = IsAtSingularity(surface, segment[i], PBC_SEAM_TOL);
 	int seam = IsAtSeam(surface, segment[i], PBC_SEAM_TOL);
 
@@ -4078,6 +4424,7 @@ resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment, bool &
     if ((!complete) && (prev != NULL)) {
 	complete = true;
 	for (int i = segment.Count() - 2; i >= 0; i--) {
+	    if (brlcad::PullbackWorkCancelled()) return false;
 	    int singularity = IsAtSingularity(surface, segment[i], PBC_SEAM_TOL);
 	    int seam = IsAtSeam(surface, segment[i], PBC_SEAM_TOL);
 	    if ((seam > 0)) {
@@ -4142,8 +4489,12 @@ number_of_seam_crossings(std::list<PBCData*> &pbcs)
     cs = pbcs.begin();
     while (cs != pbcs.end()) {
 	PBCData *data = (*cs);
-	if (!data || !data->surf)
+	if (!data || !data->surf) {
+	    ++cs;
 	    continue;
+	}
+	if (brlcad::PullbackWorkCancelled())
+	    return rc;
 
 	const ON_Surface *surf = data->surf;
 	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
@@ -4356,8 +4707,12 @@ extend_over_seam_crossings(std::list<PBCData*> &pbcs)
     cs = pbcs.begin();
     while (cs != pbcs.end()) {
 	PBCData *data = (*cs);
-	if (!data || !data->surf)
+	if (!data || !data->surf) {
+	    ++cs;
 	    continue;
+	}
+	if (brlcad::PullbackWorkCancelled())
+	    return false;
 
 	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	while (si != data->segments->end()) {
@@ -4389,108 +4744,121 @@ extend_over_seam_crossings(std::list<PBCData*> &pbcs)
 bool
 resolve_pullback_seams(std::list<PBCData*> &pbcs)
 {
-    std::list<PBCData*>::iterator cs;
-
-    ///// Loop through and fix any seam ambiguities
-    ON_2dPoint *prev = NULL;
-    ON_2dPoint *next = NULL;
+    struct SeamSegment {
+	PBCData *data;
+	ON_2dPointArray *samples;
+    };
+    std::vector<SeamSegment> segments;
+    pullback_seam_failure.clear();
     bool u_resolved = false;
     bool v_resolved = false;
-    cs = pbcs.begin();
-    while (cs != pbcs.end()) {
-	PBCData *data = (*cs);
-	if (!data || !data->surf)
-	    continue;
 
-	const ON_Surface *surf = data->surf;
-	double umin, umax;
-	double vmin, vmax;
-	surf->GetDomain(0, &umin, &umax);
-	surf->GetDomain(1, &vmin, &vmax);
-
-	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
-	while (si != data->segments->end()) {
-	    ON_2dPointArray *samples = (*si);
-	    if (resolve_seam_segment(surf, *samples, u_resolved, v_resolved)) {
-		// Found a starting point
-		//1) walk back up with resolved next point
-		next = (*samples).First();
-		std::list<PBCData*>::reverse_iterator rcs(cs);
-		rcs--;
-		std::list<ON_2dPointArray *>::reverse_iterator rsi(si);
-		while (rcs != pbcs.rend()) {
-		    PBCData *rdata = (*rcs);
-		    while (rsi != rdata->segments->rend()) {
-			ON_2dPointArray *rsamples = (*rsi);
-			// first try and resolve on own merits
-			if (!resolve_seam_segment(surf, *rsamples, u_resolved, v_resolved)) {
-			    resolve_seam_segment_from_next(surf, *rsamples, next);
-			}
-			next = (*rsamples).First();
-			rsi++;
-		    }
-		    rcs++;
-		    if (rcs != pbcs.rend()) {
-			rdata = (*rcs);
-			rsi = rdata->segments->rbegin();
-		    }
-		}
-
-		//2) walk rest of way down with resolved prev point
-		if (samples->Count() > 1)
-		    prev = &(*samples)[samples->Count() - 1];
-		else
-		    prev = NULL;
-		si++;
-		std::list<PBCData*>::iterator current(cs);
-		while (cs != pbcs.end()) {
-		    while (si != data->segments->end()) {
-			samples = (*si);
-			// first try and resolve on own merits
-			if (!resolve_seam_segment(surf, *samples, u_resolved, v_resolved)) {
-			    resolve_seam_segment_from_prev(surf, *samples, prev);
-			}
-			if (samples->Count() > 1)
-			    prev = &(*samples)[samples->Count() - 1];
-			else
-			    prev = NULL;
-			si++;
-		    }
-		    cs++;
-		    if (cs != pbcs.end()) {
-			data = (*cs);
-			si = data->segments->begin();
-		    }
-		}
-		// make sure to wrap back around with previous
-		cs = pbcs.begin();
-		data = (*cs);
-		si = data->segments->begin();
-		while ((cs != pbcs.end()) && (cs != current)) {
-		    while (si != data->segments->end()) {
-			samples = (*si);
-			// first try and resolve on own merits
-			if (!resolve_seam_segment(surf, *samples, u_resolved, v_resolved)) {
-			    resolve_seam_segment_from_prev(surf, *samples, prev);
-			}
-			if (samples->Count() > 1)
-			    prev = &(*samples)[samples->Count() - 1];
-			else
-			    prev = NULL;
-			si++;
-		    }
-		    cs++;
-		    if (cs != pbcs.end()) {
-			data = (*cs);
-			si = data->segments->begin();
-		    }
-		}
-	    }
-	    if (si != data->segments->end())
-		si++;
+    /* Flatten the circular loop first.  The historical nested iterator walk
+     * did not advance if one segment consisted entirely of ambiguous seam
+     * points, which made a legal cylinder boundary spin forever.  A segment
+     * with an unambiguous point anchors the periodic branch; neighboring
+     * segments are then resolved from their exact predecessor/successor.
+     * This changes only the UV image, not the sampled 3-D curve or tolerance. */
+    for (std::list<PBCData *>::iterator data_it = pbcs.begin();
+	 data_it != pbcs.end(); ++data_it) {
+	if (brlcad::PullbackWorkCancelled()) {
+	    pullback_seam_failure = "seam resolution was cancelled";
+	    return false;
 	}
-	if (cs != pbcs.end())
-	    cs++;
+	PBCData *data = *data_it;
+	if (!data || !data->surf || !data->segments) {
+	    pullback_seam_failure = "seam resolution received incomplete pullback data";
+	    return false;
+	}
+	for (std::list<ON_2dPointArray *>::iterator segment_it =
+		data->segments->begin(); segment_it != data->segments->end();
+		++segment_it) {
+	    if (!*segment_it) {
+		pullback_seam_failure = "seam resolution received a null UV segment";
+		return false;
+	    }
+	    /* An empty seam-split fragment carries no points to disambiguate.
+	     * Leave it in its PBCData: the caller's bounded absent-pcurve repair
+	     * uses the adjacent exact endpoints to regenerate that trim. */
+	    if ((*segment_it)->Count() == 0)
+		continue;
+	    SeamSegment segment = {data, *segment_it};
+	    segments.push_back(segment);
+	}
+    }
+    if (segments.empty()) {
+	pullback_seam_failure = "seam resolution received no UV segments";
+	return false;
+    }
+
+    size_t anchor = segments.size();
+    for (size_t i = 0; i < segments.size(); ++i) {
+	if (brlcad::PullbackWorkCancelled()) {
+	    pullback_seam_failure = "seam resolution was cancelled while finding an anchor";
+	    return false;
+	}
+	if (resolve_seam_segment(segments[i].data->surf, *segments[i].samples,
+		u_resolved, v_resolved)) {
+	    anchor = i;
+	    break;
+	}
+    }
+    if (anchor == segments.size()) {
+	/* A periodic boundary may lie wholly on a seam (notably an
+	 * inner loop on a torus), leaving no off-seam point from which to choose
+	 * a periodic image.  Seed the choice from the first supplied UV point and
+	 * propagate that side around the loop.  Domain endpoints on a periodic
+	 * surface have identical 3-D lift, so this is an exact reparameterization.
+	 * Singular endpoints do not make this ambiguous: every parameter value on
+	 * a collapsed boundary lifts to the same 3-D pole, while the noncollapsed
+	 * seam samples retain the selected side.  The caller's dense edge-lift and
+	 * loop validation still has to prove the resulting pcurve before output. */
+	if (brlcad::PullbackWorkCancelled()) {
+	    pullback_seam_failure = "seam resolution was cancelled before periodic anchoring";
+	    return false;
+	}
+	ON_2dPoint *seed = segments.front().samples->First();
+	if (!seed || !resolve_seam_segment_from_prev(
+		segments.front().data->surf, *segments.front().samples, seed)) {
+	    pullback_seam_failure = "the supplied periodic seam seed did not resolve its UV segment";
+	    return false;
+	}
+	anchor = 0;
+    }
+
+    ON_2dPoint *next = segments[anchor].samples->First();
+    for (size_t i = anchor; i > 0; --i) {
+	if (brlcad::PullbackWorkCancelled()) {
+	    pullback_seam_failure = "seam resolution was cancelled during reverse propagation";
+	    return false;
+	}
+	SeamSegment &segment = segments[i - 1];
+	if (!resolve_seam_segment(segment.data->surf, *segment.samples,
+		u_resolved, v_resolved) &&
+		!resolve_seam_segment_from_next(segment.data->surf,
+		    *segment.samples, next)) {
+	    pullback_seam_failure = "a UV seam segment could not be resolved from its successor";
+	    return false;
+	}
+	next = segment.samples->First();
+    }
+
+    ON_2dPoint *prev = &(*segments[anchor].samples)[
+	segments[anchor].samples->Count() - 1];
+    for (size_t offset = 1; offset < segments.size(); ++offset) {
+	if (brlcad::PullbackWorkCancelled()) {
+	    pullback_seam_failure = "seam resolution was cancelled during forward propagation";
+	    return false;
+	}
+	SeamSegment &segment = segments[(anchor + offset) % segments.size()];
+	if (!resolve_seam_segment(segment.data->surf, *segment.samples,
+		u_resolved, v_resolved) &&
+		!resolve_seam_segment_from_prev(segment.data->surf,
+		    *segment.samples, prev)) {
+	    pullback_seam_failure = "a UV seam segment could not be resolved from its predecessor";
+	    return false;
+	}
+	prev = &(*segment.samples)[segment.samples->Count() - 1];
     }
     return true;
 }
@@ -4520,11 +4888,15 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 	checkcnt++;
 	//std::cerr << "Checkcnt - " << checkcnt << std::endl;
 	while (cs != pbcs.end()) {
+	    if (brlcad::PullbackWorkCancelled())
+		return false;
 	    int singularity;
 	    prev = NULL;
 	    PBCData *data = (*cs);
-	    if (!data || !data->surf)
+	    if (!data || !data->surf) {
+		++cs;
 		continue;
+	    }
 
 	    const ON_Surface *surf = data->surf;
 	    std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
@@ -4613,6 +4985,111 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 }
 
 
+static bool
+recover_collapsed_periodic_pullback(PBCData *data)
+{
+    if (!data || !data->surf || !data->curve || !data->segments ||
+	(!data->surf->IsClosed(0) && !data->surf->IsClosed(1)) ||
+	!(data->tolerance > 0.0))
+	return false;
+
+    ON_2dPoint seed = ON_2dPoint::UnsetPoint;
+    size_t sample_count = 0;
+    for (std::list<ON_2dPointArray *>::const_iterator segment =
+	    data->segments->begin(); segment != data->segments->end(); ++segment) {
+	if (!*segment) return false;
+	for (int point = 0; point < (*segment)->Count(); ++point) {
+	    seed = (**segment)[point];
+	    ++sample_count;
+	}
+    }
+    if (sample_count != 1 || !seed.IsValid())
+	return false;
+
+    const ON_Interval curve_domain = data->curve->Domain();
+    const ON_3dPoint seed_lift = data->surf->PointAt(seed.x, seed.y);
+    if (!curve_domain.IsIncreasing() || !seed_lift.IsValid())
+	return false;
+
+    size_t anchor = 0;
+    double anchor_distance = DBL_MAX;
+    for (size_t sample = 0; sample <= kPeriodicRecoverySegments; ++sample) {
+	if (brlcad::PullbackWorkCancelled()) return false;
+	const double fraction = static_cast<double>(sample) /
+	    kPeriodicRecoverySegments;
+	const double distance = data->curve->PointAt(
+	    curve_domain.ParameterAt(fraction)).DistanceTo(seed_lift);
+	if (distance < anchor_distance) {
+	    anchor = sample;
+	    anchor_distance = distance;
+	}
+    }
+
+    std::vector<ON_2dPoint> recovered(kPeriodicRecoverySegments + 1,
+	ON_2dPoint::UnsetPoint);
+    recovered[anchor] = seed;
+	double failed_distance = DBL_MAX;
+    const auto recover = [data, &recovered, &curve_domain,
+	&failed_distance](size_t sample,
+	    const ON_2dPoint &previous) {
+	const double fraction = static_cast<double>(sample) /
+	    kPeriodicRecoverySegments;
+	const ON_3dPoint target = data->curve->PointAt(
+	    curve_domain.ParameterAt(fraction));
+	ON_3dPoint lift = ON_3dPoint::UnsetPoint;
+	double distance = DBL_MAX;
+	bool projected = pullback_closest_point_seeded(*data, target, previous,
+	    recovered[sample], lift, distance, data->tolerance);
+	if (!projected)
+	    projected = pullback_closest_point(*data, target, recovered[sample],
+		lift, distance, 0, data->tolerance, data->tolerance);
+	failed_distance = distance;
+	return projected && distance <= data->tolerance;
+    };
+    for (size_t sample = anchor + 1; sample <= kPeriodicRecoverySegments;
+	 ++sample) {
+	if (!recover(sample, recovered[sample - 1])) {
+	    bu_log("Collapsed periodic pullback forward recovery failed at %zu/%zu "
+		"(closest distance %.17g, tolerance %.17g, anchor %zu, anchor distance %.17g)\n",
+		sample, kPeriodicRecoverySegments, failed_distance, data->tolerance,
+		anchor, anchor_distance);
+	    return false;
+	}
+    }
+    for (size_t sample = anchor; sample > 0; --sample) {
+	if (!recover(sample - 1, recovered[sample])) {
+	    bu_log("Collapsed periodic pullback reverse recovery failed at %zu/%zu "
+		"(closest distance %.17g, tolerance %.17g, anchor %zu, anchor distance %.17g)\n",
+		sample - 1, kPeriodicRecoverySegments, failed_distance, data->tolerance,
+		anchor, anchor_distance);
+	    return false;
+	}
+    }
+
+    for (size_t sample = 1; sample < recovered.size(); ++sample) {
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!data->surf->IsClosed(direction)) continue;
+	    const double period = data->surf->Domain(direction).Length();
+	    if (period > ON_ZERO_TOLERANCE)
+		recovered[sample][direction] += round((recovered[sample - 1][direction] -
+		    recovered[sample][direction]) / period) * period;
+	}
+    }
+
+    while (!data->segments->empty()) {
+	delete data->segments->front();
+	data->segments->pop_front();
+    }
+    ON_2dPointArray *samples = new ON_2dPointArray();
+    samples->Reserve(static_cast<int>(recovered.size()));
+    for (std::vector<ON_2dPoint>::const_iterator point = recovered.begin();
+	 point != recovered.end(); ++point)
+	samples->Append(*point);
+    data->segments->push_back(samples);
+    return true;
+}
+
+
 void
 remove_consecutive_intersegment_duplicates(std::list<PBCData*> &pbcs)
 {
@@ -4623,6 +5100,7 @@ remove_consecutive_intersegment_duplicates(std::list<PBCData*> &pbcs)
 	while (si != data->segments->end()) {
 	    ON_2dPointArray *samples = (*si);
 	    if (samples->Count() == 0) {
+		delete samples;
 		si = data->segments->erase(si);
 	    } else {
 		for (int i = 0; i < samples->Count() - 1; i++) {
@@ -4676,7 +5154,10 @@ check_pullback_data(std::list<PBCData*> &pbcs)
 	    return false;
 	}
 	if (!resolve_pullback_seams(pbcs)) {
-	    std::cerr << "Error: Can not resolve seam ambiguities." << std::endl;
+	    std::cerr << "Error: Can not resolve seam ambiguities";
+	    if (!pullback_seam_failure.empty())
+		std::cerr << ": " << pullback_seam_failure;
+	    std::cerr << "." << std::endl;
 	    return false;
 	}
 	if (!extend_over_seam_crossings(pbcs)) {
@@ -4687,6 +5168,11 @@ check_pullback_data(std::list<PBCData*> &pbcs)
 
     // consecutive duplicates within segment will cause problems in curve fit
     remove_consecutive_intersegment_duplicates(pbcs);
+	for (std::list<PBCData *>::iterator data = pbcs.begin();
+	     data != pbcs.end(); ++data) {
+	    if (brlcad::PullbackWorkCancelled()) return false;
+	    recover_collapsed_periodic_pullback(*data);
+	}
 
     return true;
 }

@@ -20,7 +20,7 @@ foreach(expected
     "\"geometry_skipped\":0"
     "\"invalid_breps\":0"
     "regenerated a collapsed seam from exact adjacent endpoints"
-    "reused an exact paired collapsed seam pcurve"
+    "regenerated paired seam pcurves from the exact edge"
     "restored a loop orientation changed by exact pcurve regeneration")
   string(FIND "${report_text}" "${expected}" found)
   if(found EQUAL -1)

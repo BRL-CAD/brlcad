@@ -163,9 +163,9 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
     for (i = cfs_faces.begin(); i != cfs_faces.end(); ++i) {
 	if (brlcad::PullbackWorkCancelled()) return false;
 	if (step) {
-	    step->SetProgress("building exact BREP faces", completed_faces,
-		total_faces, (*i) ? (*i)->STEPid() : id,
-		static_cast<uint64_t>(id), "shell");
+	    step->SetProgressDetail("building exact BREP faces",
+		(*i) ? (*i)->STEPid() : id, completed_faces, total_faces,
+		"faces", "shell=#" + std::to_string(id));
 	}
 #ifdef _DEBUG_TESTING_
 	if (facecnt != _face_cnt_) {
@@ -175,17 +175,19 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
 	}
 #endif
 	if (!(*i)->LoadONBrep(brep)) {
-	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	    if (step && step->Verbose())
+		std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}
 	++completed_faces;
 #ifdef _DEBUG_TESTING_
 	facecnt++;
 #endif
-    }
+	}
 	if (step)
-	    step->SetProgress("building exact BREP faces", completed_faces,
-		total_faces, id, static_cast<uint64_t>(id), "shell");
+	    step->SetProgressDetail("building exact BREP faces", id,
+		completed_faces, total_faces, "faces",
+		"shell=#" + std::to_string(id));
     return true;
 }
 

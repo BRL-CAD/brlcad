@@ -182,6 +182,18 @@ public:
 	uint64_t secondary_completed = 0,
 	const std::string &secondary_label = std::string(),
 	const std::string &detail = std::string());
+    /** Update the active worker/entity detail without discarding the outer
+     * completed/total item count. */
+    void SetProgressDetail(const std::string &phase, int64_t current_entity_id,
+	uint64_t secondary_completed = 0, uint64_t secondary_total = 0,
+	const std::string &secondary_label = std::string(),
+	const std::string &detail = std::string());
+    /** Publish a consistent snapshot of the bounded detached-geometry
+     * scheduler.  A zero capacity clears scheduler-specific telemetry. */
+    void SetGeometrySchedulerProgress(uint64_t queued, uint64_t active,
+	uint64_t ready, uint64_t materializing, uint64_t in_flight,
+	uint64_t runnable_capacity, uint64_t ready_bytes,
+	uint64_t ready_byte_budget);
     brlcad::step::ImportProgress Progress() const;
     /** Return true for an unfiltered entity or a requested representation
      * item root, recording requested roots encountered during conversion. */

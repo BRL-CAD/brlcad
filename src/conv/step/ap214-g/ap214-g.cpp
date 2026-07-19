@@ -216,6 +216,7 @@ usage(const char *program)
 	<< "  -j, --jobs N        bounded geometry worker count\n"
 	<< "      --abs-tol MM    override output-space tolerance\n"
 	<< "      --repair MODE   none or safe (default safe)\n"
+	<< "      --exact         strictly enforce the declared model tolerance\n"
 	<< "      --strict        reject a partial import\n"
 	<< "      --report FILE   write a structured JSON report\n";
 }
@@ -435,7 +436,8 @@ write_report(const std::string &path, const std::string &input, const std::strin
 	out << ",\n  \"options\":{\"requested_jobs\":" << options.requested_jobs
 	    << ",\"effective_jobs\":" << options.effective_jobs
 	    << ",\"repair\":\"" << (options.repair == brlcad::step::RepairMode::Safe ? "safe" : "none")
-	    << "\",\"strict\":" << (options.strict ? "true" : "false")
+	    << "\",\"exact\":" << (options.exact ? "true" : "false")
+	    << ",\"strict\":" << (options.strict ? "true" : "false")
 	    << ",\"dry_run\":" << (options.dry_run ? "true" : "false")
 	    << ",\"selected_entity_ids\":[";
 	bool first_selected = true;
@@ -446,7 +448,9 @@ write_report(const std::string &path, const std::string &input, const std::strin
 	    out << *selected;
 	}
 	out << "]}";
-	out << ",\n  \"coverage\":{\"entity_counts\":";
+	out << ",\n  \"coverage\":{\"entity_counts_complete\":"
+	    << (document.entity_counts_complete ? "true" : "false")
+	    << ",\"entity_counts\":";
 	write_count_map(out, document.entity_counts);
 	out << ",\"unsupported_counts\":";
 	write_count_map(out, document.unsupported_counts);
@@ -520,17 +524,24 @@ write_report(const std::string &path, const std::string &input, const std::strin
 	     * complete entity-level records above. */
 	    std::map<std::string, brlcad::step::Diagnostic> aggregated;
 	    for (const brlcad::step::Diagnostic &diagnostic : diagnostics) {
+		std::string summary_message = diagnostic.message;
+		if (diagnostic.severity == brlcad::step::DiagnosticSeverity::Warning &&
+			(summary_message.find("source curve/surface separation exceeds declared tolerance ") == 0 ||
+			 summary_message.find("source edge geometry separation exceeds declared tolerance ") == 0))
+		    summary_message = "source edge/surface geometry exceeded the declared tolerance; "
+			"adjusted affected OpenNURBS edge tolerances after dense validation";
 		std::string key = std::to_string(static_cast<int>(diagnostic.severity));
 		key.push_back('\0');
 		key += diagnostic.entity_type;
 		key.push_back('\0');
 		key += diagnostic.attribute;
 		key.push_back('\0');
-		key += diagnostic.message;
+		key += summary_message;
 		std::map<std::string, brlcad::step::Diagnostic>::iterator found =
 		    aggregated.find(key);
 		if (found == aggregated.end()) {
 		    brlcad::step::Diagnostic summary = diagnostic;
+		    summary.message = summary_message;
 		    summary.entity_id = 0;
 		    summary.file_offset = 0;
 		    summary.line = 0;
@@ -569,8 +580,14 @@ print_diagnostics(const STEPWrapper &wrapper, bool verbose)
 
     std::map<std::string, uint64_t> aggregated;
     for (const auto &diagnostic : wrapper.Diagnostics()) {
+	std::string message = diagnostic.message;
+	if (diagnostic.severity == brlcad::step::DiagnosticSeverity::Warning &&
+		(message.find("source curve/surface separation exceeds declared tolerance ") == 0 ||
+		 message.find("source edge geometry separation exceeds declared tolerance ") == 0))
+	    message = "source edge/surface geometry exceeded the declared tolerance; "
+		"adjusted affected OpenNURBS edge tolerances after dense validation";
 	std::string key = std::string(severity_name(diagnostic.severity)) + ": " +
-	    diagnostic.entity_type + (diagnostic.entity_type.empty() ? "" : ": ") + diagnostic.message;
+	    diagnostic.entity_type + (diagnostic.entity_type.empty() ? "" : ": ") + message;
 	aggregated[key] += diagnostic.repeat_count;
     }
     for (const auto &message : aggregated)
@@ -589,6 +606,7 @@ main(int argc, const char *argv[])
     static OutputFile output;
     static int dry_run = 0;
     static int verbose = 0;
+    static int exact = 0;
     static int strict = 0;
     static int help = 0;
     static int jobs = 1;
@@ -610,6 +628,7 @@ main(int argc, const char *argv[])
 	{"j", "jobs", "N", bu_opt_int, &jobs, "geometry workers"},
 	{"", "abs-tol", "MM", bu_opt_fastf_t, &absolute_tolerance, "absolute tolerance"},
 	{"", "repair", "MODE", bu_opt_str, &repair_name, "none or safe"},
+	{"", "exact", "", NULL, &exact, "strictly enforce declared tolerance"},
 	{"", "strict", "", NULL, &strict, "reject partial output"},
 	{"", "report", "FILE", bu_opt_str, &report_name, "JSON report"},
 	BU_OPT_DESC_NULL
@@ -678,6 +697,7 @@ main(int argc, const char *argv[])
     import_options.effective_jobs = static_cast<unsigned int>(jobs);
     import_options.absolute_tolerance_mm = absolute_tolerance;
     import_options.repair = repair;
+    import_options.exact = exact != 0;
     import_options.strict = strict != 0;
     import_options.verbose = verbose != 0;
     import_options.dry_run = dry_run != 0;

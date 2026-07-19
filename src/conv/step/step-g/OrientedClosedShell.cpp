@@ -130,13 +130,21 @@ bool OrientedClosedShell::LoadONBrep(ON_Brep *brep)
     }
 
     if (!closed_shell_element->LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	if (step && step->Verbose())
+	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
     }
 
     ON_id = closed_shell_element->GetONId();
 
     return true;
+}
+
+
+size_t
+OrientedClosedShell::FaceCount() const
+{
+    return closed_shell_element ? closed_shell_element->FaceCount() : 0;
 }
 
 // Local Variables:

@@ -462,6 +462,30 @@ BRLCADWrapper::getRandomColor(unsigned char *rgb)
 }
 
 
+static void
+getStableEntityColor(unsigned char *rgb, int64_t step_id)
+{
+    if (step_id <= 0) {
+	BRLCADWrapper::getRandomColor(rgb);
+	return;
+    }
+    /* Preserve the historical pleasant saturation/value while deriving hue
+     * from source identity.  Completion-order spooling must not make an
+     * otherwise deterministic database assign different fallback colors. */
+    uint64_t hash = 1469598103934665603ULL;
+    uint64_t value = static_cast<uint64_t>(step_id);
+    for (size_t byte = 0; byte < sizeof(value); ++byte) {
+	hash ^= value & 0xffU;
+	hash *= 1099511628211ULL;
+	value >>= 8;
+    }
+    fastf_t hsv[3] = {
+	static_cast<fastf_t>(hash % 360U), 0.5, 0.95
+    };
+    bu_hsv_to_rgb(hsv, rgb);
+}
+
+
 bool
 BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep, mat_t &mat, bool is_region,
 	int64_t step_id, const std::string &original_name, const brlcad::step::Style *style)
@@ -485,7 +509,7 @@ BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep, mat_t &mat, bool is_re
 	    rgb[i] = static_cast<unsigned char>(component * 255.0 + 0.5);
 	}
     } else {
-	BRLCADWrapper::getRandomColor(rgb);
+	getStableEntityColor(rgb, step_id);
     }
 
     std::string shader_args;
@@ -572,7 +596,7 @@ BRLCADWrapper::WriteBot(std::string name, size_t num_vertices, size_t num_faces,
 	    rgb[i] = static_cast<unsigned char>(component * 255.0 + 0.5);
 	}
     } else {
-	BRLCADWrapper::getRandomColor(rgb);
+	getStableEntityColor(rgb, step_id);
     }
 
     std::string shader_args;
@@ -646,6 +670,32 @@ BRLCADWrapper::SetAttribute(const std::string &object, const std::string &key, c
     if (db_lookup(outfp->dbip, object.c_str(), LOOKUP_QUIET) == RT_DIR_NULL)
 	return false;
     return db5_update_attribute(object.c_str(), key.c_str(), value.c_str(), outfp->dbip) == 0;
+}
+
+
+bool
+BRLCADWrapper::CopyObjectFrom(BRLCADWrapper &source, const std::string &object)
+{
+    if (dry_run)
+	return true;
+    if (!outfp)
+	return false;
+    struct db_i *source_dbip = source.dbip;
+    if (!source_dbip && source.outfp)
+	source_dbip = source.outfp->dbip;
+    if (!source_dbip)
+	return false;
+    struct directory *source_dp = db_lookup(source_dbip, object.c_str(), LOOKUP_QUIET);
+    if (source_dp == RT_DIR_NULL)
+	return false;
+
+    struct bu_external external;
+    if (db_get_external(&external, source_dp, source_dbip) < 0)
+	return false;
+    const int result = wdb_export_external(outfp, &external, object.c_str(),
+	source_dp->d_flags, source_dp->d_minor_type);
+    bu_free_external(&external);
+    return result >= 0;
 }
 
 struct db_i *
