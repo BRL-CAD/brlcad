@@ -1589,7 +1589,7 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
 
   # Set up dependencies for both regress and check
   if(NOT "${depends_list}" STREQUAL "")
-    add_dependencies(regress ${depends_list})
+    add_dependencies(regress-run ${depends_list})
     add_dependencies(check ${depends_list})
   endif(NOT "${depends_list}" STREQUAL "")
 

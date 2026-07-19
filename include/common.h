@@ -101,6 +101,8 @@ double rint(double x);
 #ifndef THREADLOCAL
 #  if defined(__cplusplus) && __cplusplus >= 201103L
 #    define THREADLOCAL thread_local // C++11 or newer: thread_local is standard
+#  elif defined(_MSC_VER)
+#    define THREADLOCAL __declspec(thread) // MSVC C/C++ thread local storage
 #  elif !defined(__cplusplus) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
 #    define THREADLOCAL thread_local // C23: thread_local is standard
 #  elif !defined(__cplusplus) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
