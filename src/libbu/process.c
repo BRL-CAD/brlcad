@@ -422,6 +422,10 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	_exit(16);
     }
 
+    /* Set the child's process group from both sides of fork so it is ready
+     * before an immediate timeout attempts group-directed termination. */
+    (void)setpgid((pid_t)pid, (pid_t)pid);
+
     (void)close(pipe_in[0]);
     (void)close(pipe_out[1]);
     (void)close(pipe_err[1]);
@@ -657,6 +661,9 @@ bu_process_func(struct bu_process_func_info *info, bu_process_func_t func, void 
 	_exit(ret);
     }
 
+    /* Avoid racing the child's setpgid call if the timeout is very short. */
+    (void)setpgid((pid_t)pid, (pid_t)pid);
+
     if (capture_out) {
 	close(pipe_out[1]);
 	fd_out = pipe_out[0];
@@ -800,6 +807,9 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 	if (rpid == -1 || rpid == 0) {
 		/* timed-out */
 		bu_pid_terminate((*pinfo)->pid);
+		/* Reap the direct child before releasing its process record. */
+		while (waitpid((pid_t)(*pinfo)->pid, &retcode, 0) == -1 && errno == EINTR)
+		    ;
 		rc = 0;	// process concluded, albeit forcibly
 	} else {
 		if (WIFEXITED(retcode))		    // normal exit
