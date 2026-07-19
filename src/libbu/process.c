@@ -829,8 +829,20 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 	    rc = ERROR_PROCESS_ABORTED;
 	} else if (retcode == STILL_ACTIVE) {
 	    /* timed out */
-	    bu_pid_terminate((*pinfo)->pid);
-	    rc = 0;
+	    /* Preserve process-tree cleanup, then wait for the original child to
+	     * signal before releasing its handle.  Otherwise descendants may
+	     * survive with inherited stdout/stderr handles and keep a test runner
+	     * waiting for EOF. */
+	    (void)bu_pid_terminate((*pinfo)->pid);
+	    if (WaitForSingleObject((*pinfo)->hProcess, 5000) == WAIT_OBJECT_0) {
+		rc = 0;
+	    } else if (TerminateProcess((*pinfo)->hProcess,
+		    BU_MSVC_ABORT_EXIT)) {
+		(void)WaitForSingleObject((*pinfo)->hProcess, INFINITE);
+		rc = 0;
+	    } else {
+		rc = -1;
+	    }
 	} else {
 	    rc = (int)retcode;
 	}

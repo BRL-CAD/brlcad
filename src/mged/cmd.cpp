@@ -2693,9 +2693,9 @@ cmd_shaded_mode(ClientData clientData,
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	/* skip past -a */
+	/* Remove -a while retaining the command name at argv[0]. */
+	argv[1] = argv[2];
 	--argc;
-	++argv;
     }
 
     ret = run_ged_async(s, [&]() -> int { return ged_exec(s->gedp, argc, (const char **)argv); });

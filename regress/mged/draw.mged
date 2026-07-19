@@ -10,4 +10,9 @@ who
 erase draw.c
 erase draw_sph1.s
 
+if {[catch {shaded_mode -a 2} msg]} {
+    puts stderr "shaded_mode -a failed: $msg"
+    exit 1
+}
+
 puts "*** 'draw' testing completed ***"

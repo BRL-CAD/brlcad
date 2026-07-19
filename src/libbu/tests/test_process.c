@@ -351,6 +351,7 @@ test_create_timeout(const char* cmd)
     const char* run_av[3] = {cmd, "timeout", NULL};
 
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+    int child_pid = bu_process_pid(p);
 
     int64_t start_time = bu_gettime();
     if (bu_process_wait_n(&p, 1)) {
@@ -362,6 +363,11 @@ test_create_timeout(const char* cmd)
      * but bu_subprocess 'timeout' sleep time is 10000ms */
     if ((bu_gettime() - start_time) > BU_SEC2USEC(.2)) {
 	fprintf(stderr, "bu_process_test[\"create_timeout\"] - took too long\n");
+	return PROCESS_FAIL;
+    }
+
+    if (bu_pid_alive(child_pid)) {
+	fprintf(stderr, "bu_process_test[\"create_timeout\"] - timed-out subprocess is still alive\n");
 	return PROCESS_FAIL;
     }
 
