@@ -1282,7 +1282,11 @@ remove_adjacent_zero_area_slit(ON_Brep *brep, int loop_index)
 	}
 	const int first_index = first->m_trim_index;
 	const int second_index = second->m_trim_index;
-	brep->DeleteTrim(brep->m_T[first_index], true);
+	/* Both trims use the same edge.  Leave the edge in place while removing
+	 * the first trim, then let the final trim removal delete the now-unused
+	 * edge.  DeleteTrim only marks topology; Compact performs the remap after
+	 * both original trim indices have been consumed. */
+	brep->DeleteTrim(brep->m_T[first_index], false);
 	brep->DeleteTrim(brep->m_T[second_index], true);
 	return brep->Compact();
     }
@@ -2031,6 +2035,151 @@ refresh_brep_flags_preserving_singular_isos(ON_Brep *brep,
 }
 
 
+/* OpenNURBS' derived-flag refresh assumes every topology array reference is
+ * in range and reciprocal.  A half-built exact item must be rejected before
+ * calling it: SetTrimIsoFlags() indexes face loops and loop trims without
+ * bounds checks, so treating IsValid() as the first structural guard is too
+ * late.  This is deliberately a proof-only preflight; it never repairs or
+ * removes source topology. */
+static bool
+brep_topology_references_are_safe(const ON_Brep *brep, std::string *failure)
+{
+    if (failure)
+	failure->clear();
+    const auto reject = [failure](const std::string &message) {
+	if (failure)
+	    *failure = message;
+	return false;
+    };
+    if (!brep)
+	return reject("null BREP");
+
+    for (int fi = 0; fi < brep->m_F.Count(); ++fi) {
+	const ON_BrepFace &face = brep->m_F[fi];
+	if (face.m_face_index != fi)
+	    return reject("face F" + std::to_string(fi) +
+		" has inconsistent self index " +
+		std::to_string(face.m_face_index));
+	if (face.m_si < 0 || face.m_si >= brep->m_S.Count() ||
+		!brep->m_S[face.m_si])
+	    return reject("face F" + std::to_string(fi) +
+		" references invalid surface " + std::to_string(face.m_si));
+	if (face.ProxySurface() != brep->m_S[face.m_si])
+	    return reject("face F" + std::to_string(fi) +
+		" has a surface proxy inconsistent with surface " +
+		std::to_string(face.m_si));
+	for (int fli = 0; fli < face.m_li.Count(); ++fli) {
+	    const int li = face.m_li[fli];
+	    if (li < 0 || li >= brep->m_L.Count())
+		return reject("face F" + std::to_string(fi) +
+		    " references invalid loop " + std::to_string(li));
+	    if (brep->m_L[li].m_fi != fi)
+		return reject("face F" + std::to_string(fi) + " loop L" +
+		    std::to_string(li) + " points to face F" +
+		    std::to_string(brep->m_L[li].m_fi));
+	}
+    }
+
+    for (int li = 0; li < brep->m_L.Count(); ++li) {
+	const ON_BrepLoop &loop = brep->m_L[li];
+	if (loop.m_loop_index != li)
+	    return reject("loop L" + std::to_string(li) +
+		" has inconsistent self index " +
+		std::to_string(loop.m_loop_index));
+	if (loop.m_fi < 0 || loop.m_fi >= brep->m_F.Count())
+	    return reject("loop L" + std::to_string(li) +
+		" references invalid face " + std::to_string(loop.m_fi));
+	for (int lti = 0; lti < loop.m_ti.Count(); ++lti) {
+	    const int ti = loop.m_ti[lti];
+	    if (ti < 0 || ti >= brep->m_T.Count())
+		return reject("loop L" + std::to_string(li) +
+		    " references invalid trim " + std::to_string(ti));
+	    if (brep->m_T[ti].m_li != li)
+		return reject("loop L" + std::to_string(li) + " trim T" +
+		    std::to_string(ti) + " points to loop L" +
+		    std::to_string(brep->m_T[ti].m_li));
+	}
+    }
+
+    for (int ti = 0; ti < brep->m_T.Count(); ++ti) {
+	const ON_BrepTrim &trim = brep->m_T[ti];
+	if (trim.m_trim_index != ti)
+	    return reject("trim T" + std::to_string(ti) +
+		" has inconsistent self index " +
+		std::to_string(trim.m_trim_index));
+	if (trim.m_li < 0 || trim.m_li >= brep->m_L.Count())
+	    return reject("trim T" + std::to_string(ti) +
+		" references invalid loop " + std::to_string(trim.m_li));
+	if (trim.m_type != ON_BrepTrim::ptonsrf &&
+		(trim.m_c2i < 0 || trim.m_c2i >= brep->m_C2.Count() ||
+		 !brep->m_C2[trim.m_c2i]))
+	    return reject("trim T" + std::to_string(ti) +
+		" references invalid 2-D curve " + std::to_string(trim.m_c2i));
+	for (int end = 0; end < 2; ++end) {
+	    if (trim.m_vi[end] < 0 || trim.m_vi[end] >= brep->m_V.Count())
+		return reject("trim T" + std::to_string(ti) +
+		    " references invalid vertex " +
+		    std::to_string(trim.m_vi[end]));
+	}
+	const bool edge_free = trim.m_type == ON_BrepTrim::singular ||
+	    trim.m_type == ON_BrepTrim::ptonsrf;
+	if (!edge_free && (trim.m_ei < 0 || trim.m_ei >= brep->m_E.Count()))
+	    return reject("trim T" + std::to_string(ti) +
+		" references invalid edge " + std::to_string(trim.m_ei));
+	if (trim.m_ei >= brep->m_E.Count())
+	    return reject("trim T" + std::to_string(ti) +
+		" references out-of-range edge " + std::to_string(trim.m_ei));
+    }
+
+    for (int ei = 0; ei < brep->m_E.Count(); ++ei) {
+	const ON_BrepEdge &edge = brep->m_E[ei];
+	if (edge.m_edge_index != ei)
+	    return reject("edge E" + std::to_string(ei) +
+		" has inconsistent self index " +
+		std::to_string(edge.m_edge_index));
+	if (edge.m_c3i < 0 || edge.m_c3i >= brep->m_C3.Count() ||
+		!brep->m_C3[edge.m_c3i])
+	    return reject("edge E" + std::to_string(ei) +
+		" references invalid 3-D curve " + std::to_string(edge.m_c3i));
+	for (int end = 0; end < 2; ++end) {
+	    if (edge.m_vi[end] < 0 || edge.m_vi[end] >= brep->m_V.Count())
+		return reject("edge E" + std::to_string(ei) +
+		    " references invalid vertex " +
+		    std::to_string(edge.m_vi[end]));
+	}
+	for (int eti = 0; eti < edge.m_ti.Count(); ++eti) {
+	    const int ti = edge.m_ti[eti];
+	    if (ti < 0 || ti >= brep->m_T.Count())
+		return reject("edge E" + std::to_string(ei) +
+		    " references invalid trim " + std::to_string(ti));
+	    if (brep->m_T[ti].m_ei != ei)
+		return reject("edge E" + std::to_string(ei) + " trim T" +
+		    std::to_string(ti) + " points to edge E" +
+		    std::to_string(brep->m_T[ti].m_ei));
+	}
+    }
+
+    for (int vi = 0; vi < brep->m_V.Count(); ++vi) {
+	const ON_BrepVertex &vertex = brep->m_V[vi];
+	if (vertex.m_vertex_index != vi)
+	    return reject("vertex V" + std::to_string(vi) +
+		" has inconsistent self index " +
+		std::to_string(vertex.m_vertex_index));
+	for (int vei = 0; vei < vertex.m_ei.Count(); ++vei) {
+	    const int ei = vertex.m_ei[vei];
+	    if (ei < 0 || ei >= brep->m_E.Count())
+		return reject("vertex V" + std::to_string(vi) +
+		    " references invalid edge " + std::to_string(ei));
+	    const ON_BrepEdge &edge = brep->m_E[ei];
+	    if (edge.m_vi[0] != vi && edge.m_vi[1] != vi)
+		return reject("vertex V" + std::to_string(vi) + " edge E" +
+		    std::to_string(ei) + " has different endpoint vertices");
+	}
+    }
+    return true;
+}
+
+
 static size_t
 finalize_brep_topology(ON_Brep *brep, bool normalize_keyholes,
 	STEPWrapper *wrapper, int entity_id, const std::string &entity_type,
@@ -2313,7 +2462,7 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 	std::string *failure_reason, PeriodicPullbackCrossing *periodic_crossing = NULL,
 	const ON_3dPoint *required_start = NULL,
 	const ON_3dPoint *required_end = NULL,
-	bool prefer_edge_driven = false)
+	bool prefer_edge_driven = false, STEPWrapper *wrapper = NULL)
 {
     if (failure_reason)
 	failure_reason->clear();
@@ -2340,6 +2489,11 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 	normalized_parameters.reserve(segment_count + 3);
 	bool valid = true;
 	for (int sample = 0; sample <= segment_count; ++sample) {
+	    if (brlcad::PullbackWorkCancelled()) {
+		if (failure_reason)
+		    *failure_reason = "regenerated-pcurve sampling was cancelled";
+		return false;
+	    }
 	    const double normalized = static_cast<double>(sample) /
 		static_cast<double>(segment_count);
 	    const ON_3dPoint *required_endpoint = sample == 0 ? required_start :
@@ -2588,11 +2742,23 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 	std::set<std::pair<double, double> > singular_parameter_connectors;
 	if (edge_driven) {
 	    const size_t maximum_points = kMaximumAdaptivePullbackPoints;
-	    bool refined = true;
-	    while (valid && refined) {
-		refined = false;
-		for (int segment = 0; valid && segment + 1 < points.Count(); ++segment) {
-		    bool split_segment = false;
+	    /* Inserting a midpoint changes only the interval being split.  Advance
+	     * monotonically after an interval passes; after a split, retain the
+	     * current index to prove its left child and then its right child.  A
+	     * restart from segment zero (even with an ordered cache of validated
+	     * intervals) makes a 4096-point refinement quadratic in both scans and
+	     * tree lookups.  No acceptance test changes: every resulting interval
+	     * still passes the same three quarter-point lift checks and the complete
+	     * candidate still receives the dense validation below. */
+	    int segment = 0;
+	    while (valid && segment + 1 < points.Count()) {
+		if (brlcad::PullbackWorkCancelled()) {
+		    if (failure_reason)
+			*failure_reason =
+			    "adaptive exact-edge pullback was cancelled";
+		    return false;
+		}
+		bool split_segment = false;
 		    for (int sub = 1; sub <= 3; ++sub) {
 			const double fraction = static_cast<double>(sub) / 4.0;
 			const double normalized = (1.0 - fraction) *
@@ -2610,8 +2776,10 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 			    break;
 			}
 		    }
-		    if (!split_segment)
+		    if (!split_segment) {
+			++segment;
 			continue;
+		    }
 		    bool collapsed_periodic_branch = false;
 		    double rejected_periodic_shift_distance = DBL_MAX;
 		    const double second_normalized =
@@ -2661,8 +2829,10 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 			}
 		    }
 		    if (collapsed_periodic_branch) {
-			refined = true;
-			break;
+			/* Recheck this interval after selecting the nearer exact
+			 * periodic image.  Its following interval has not yet been
+			 * visited, so no accepted prefix is invalidated. */
+			continue;
 		    }
 		    const double parameter_midpoint = 0.5 *
 			(normalized_parameters[segment] +
@@ -2701,6 +2871,12 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 			for (std::vector<double>::const_iterator fixed_candidate =
 				fixed_candidates.begin(); fixed_candidate !=
 				fixed_candidates.end(); ++fixed_candidate) {
+			    if (brlcad::PullbackWorkCancelled()) {
+				if (failure_reason)
+				    *failure_reason =
+					"singular connector search was cancelled";
+				return false;
+			    }
 			    ON_3dPoint connector_start = points[segment];
 			    ON_3dPoint connector_end = points[segment + 1];
 			    connector_start[fixed_direction] =
@@ -2712,9 +2888,16 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 				continue;
 			    bool exact_connector = true;
 			for (int connector_sample = 0;
-				    exact_connector &&
-				    connector_sample <= kDenseValidationSegments;
-				    ++connector_sample) {
+				exact_connector &&
+				connector_sample <= kDenseValidationSegments;
+				++connector_sample) {
+				if ((connector_sample & 63) == 0 &&
+					brlcad::PullbackWorkCancelled()) {
+				    if (failure_reason)
+					*failure_reason =
+					    "singular connector validation was cancelled";
+				    return false;
+				}
 				const double fraction = static_cast<double>(connector_sample) /
 				    kDenseValidationSegments;
 				const double normalized = (1.0 - fraction) *
@@ -2753,6 +2936,8 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 			    singular_parameter_connectors.insert(std::make_pair(
 				normalized_parameters[segment],
 				normalized_parameters[segment + 1]));
+			    /* The complete connector was densely proven above. */
+			    ++segment;
 			    continue;
 			}
 			if (periodic_crossing && !periodic_crossing->detected) {
@@ -2861,9 +3046,7 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 		    points.Insert(segment + 1, uv);
 		    normalized_parameters.insert(normalized_parameters.begin() +
 			segment + 1, normalized);
-		    refined = true;
-		    break;
-		}
+		    /* Prove the newly created left child before advancing. */
 	    }
 	    if (!valid) {
 		if (failure_reason)
@@ -2982,7 +3165,57 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 	/* Validate both geometry and direction at every new vertex and at interior
 	 * points of every segment.  Comparison with the original lift bounds the
 	 * repair itself; comparison with the edge verifies that no narrow invalid
-	 * source deviation can hide exactly at a sampling vertex. */
+	 * source deviation can hide exactly at a sampling vertex.  Surface and
+	 * curve evaluation dominates this proof and each sample is independent, so
+	 * let an otherwise idle geometry helper evaluate samples in parallel.  All
+	 * acceptance decisions remain in deterministic parameter order below. */
+	struct DenseValidationSample {
+	    double normalized = 0.0;
+	    ON_3dPoint candidate_uv = ON_3dPoint::UnsetPoint;
+	    ON_3dPoint candidate_lift = ON_3dPoint::UnsetPoint;
+	    ON_3dPoint original_lift = ON_3dPoint::UnsetPoint;
+	    ON_3dPoint edge_point = ON_3dPoint::UnsetPoint;
+	    ON_3dVector du = ON_3dVector::UnsetVector;
+	    ON_3dVector dv = ON_3dVector::UnsetVector;
+	    bool evaluated = false;
+	};
+	const size_t dense_sample_count =
+	    static_cast<size_t>(candidate_segment_count) * 4;
+	std::vector<DenseValidationSample> dense_samples(dense_sample_count);
+	const auto evaluate_dense_sample = [&](size_t dense_index) {
+	    if (brlcad::PullbackWorkCancelled())
+		return;
+	    const int segment = static_cast<int>(dense_index / 4);
+	    const int sub = static_cast<int>(dense_index % 4);
+	    const double fraction = static_cast<double>(sub) / 4.0;
+	    DenseValidationSample &sample = dense_samples[dense_index];
+	    sample.normalized = (1.0 - fraction) *
+		normalized_parameters[segment] + fraction *
+		normalized_parameters[segment + 1];
+	    sample.candidate_uv = (1.0 - fraction) * points[segment] +
+		fraction * points[segment + 1];
+	    if (!surface->Ev1Der(sample.candidate_uv.x, sample.candidate_uv.y,
+		    sample.candidate_lift, sample.du, sample.dv))
+		return;
+	    const ON_3dPoint original_uv = trim.PointAt(
+		trim_domain.ParameterAt(sample.normalized));
+	    sample.original_lift = surface->PointAt(original_uv.x, original_uv.y);
+	    sample.edge_point = edge->PointAt(edge->Domain().ParameterAt(
+		trim.m_bRev3d ? 1.0 - sample.normalized : sample.normalized));
+	    sample.evaluated = sample.candidate_lift.IsValid() &&
+		sample.original_lift.IsValid() && sample.edge_point.IsValid();
+	};
+	if (wrapper)
+	    wrapper->ParallelForGeometry(dense_sample_count, evaluate_dense_sample);
+	else
+	    for (size_t dense_index = 0; dense_index < dense_sample_count;
+		    ++dense_index)
+		evaluate_dense_sample(dense_index);
+	if (brlcad::PullbackWorkCancelled()) {
+	    if (failure_reason)
+		*failure_reason = "dense regenerated-pcurve validation was cancelled";
+	    return false;
+	}
 	for (int segment = 0; valid && segment < candidate_segment_count; ++segment) {
 	    const ON_3dVector uv_tangent = points[segment + 1] - points[segment];
 	    if (uv_tangent.Length() <= ON_ZERO_TOLERANCE) {
@@ -2991,27 +3224,22 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 		break;
 	    }
 	    for (int sub = 0; sub <= 3; ++sub) {
-		const double fraction = static_cast<double>(sub) / 4.0;
-		const double normalized = (1.0 - fraction) *
-		    normalized_parameters[segment] + fraction *
-		    normalized_parameters[segment + 1];
-		const ON_3dPoint candidate_uv = (1.0 - fraction) * points[segment] +
-		    fraction * points[segment + 1];
-		const ON_3dPoint original_uv = trim.PointAt(
-		    trim_domain.ParameterAt(normalized));
-		ON_3dPoint candidate_lift, original_lift;
-		ON_3dVector du, dv;
-		if (!surface->Ev1Der(candidate_uv.x, candidate_uv.y,
-			candidate_lift, du, dv)) {
+		const DenseValidationSample &sample = dense_samples[
+		    static_cast<size_t>(segment) * 4 + sub];
+		const double normalized = sample.normalized;
+		const ON_3dPoint &candidate_uv = sample.candidate_uv;
+		const ON_3dPoint &candidate_lift = sample.candidate_lift;
+		const ON_3dPoint &original_lift = sample.original_lift;
+		const ON_3dVector &du = sample.du;
+		const ON_3dVector &dv = sample.dv;
+		if (!sample.evaluated) {
 		    rejection = "surface lift failed";
 		    valid = false;
 		    break;
 		}
-		original_lift = surface->PointAt(original_uv.x, original_uv.y);
-		const double source_lift_distance = original_lift.IsValid() ?
-		    candidate_lift.DistanceTo(original_lift) : DBL_MAX;
-		if (!original_lift.IsValid() ||
-			(!edge_driven && source_lift_distance > tolerance)) {
+		const double source_lift_distance =
+		    candidate_lift.DistanceTo(original_lift);
+		if (!edge_driven && source_lift_distance > tolerance) {
 		    rejection = "regenerated lift exceeded source pcurve tolerance"
 			" (distance " + std::to_string(source_lift_distance) +
 			", tolerance " + std::to_string(tolerance) +
@@ -3027,7 +3255,7 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 		double edge_distance = DBL_MAX;
 		edge_parameter = edge->Domain().ParameterAt(
 		    trim.m_bRev3d ? 1.0 - normalized : normalized);
-		edge_distance = candidate_lift.DistanceTo(edge->PointAt(edge_parameter));
+		edge_distance = candidate_lift.DistanceTo(sample.edge_point);
 		bool edge_proxy_parameter = true;
 		/* A trim and its 3-D edge describe the same directed locus, but are not
 		 * required to advance at the same normalized parameter speed.  The
@@ -6750,7 +6978,7 @@ repair_invalid_open_pcurves(ON_Brep *brep, STEPWrapper *wrapper,
 	std::string failure;
 	bool regenerated = regenerate_trim_polyline(brep, trim, surface,
 	    edge_nurbs, LocalUnits::tolerance, &failure, NULL,
-	    required_endpoint[0], required_endpoint[1]);
+	    required_endpoint[0], required_endpoint[1], false, wrapper);
 	const ON_Curve *candidate = regenerated ? trim.TrimCurveOf() : NULL;
 	bool boundary_iso = trim.m_iso == ON_Surface::W_iso ||
 	    trim.m_iso == ON_Surface::S_iso || trim.m_iso == ON_Surface::E_iso ||
@@ -7043,10 +7271,11 @@ repair_missing_singular_trims(ON_Brep *brep, STEPWrapper *wrapper,
 			    }
 			}
 			if (exact_surface) {
-			    const int surface_index = brep->AddSurface(candidate);
-			    if (surface_index >= 0) {
-				face->m_si = surface_index;
-				surface = candidate;
+				    const int surface_index = brep->AddSurface(candidate);
+				    if (surface_index >= 0) {
+					face->m_si = surface_index;
+					face->SetProxySurface(candidate);
+					surface = candidate;
 				candidate = NULL;
 				ON_3dPoint start = first_end;
 				ON_3dPoint end = second_start;
@@ -7764,7 +7993,8 @@ regenerate_periodic_loop_chains(ON_Brep *brep, STEPWrapper *wrapper,
 		&loop_start : NULL;
 	    regenerated = trim && edge && edge_nurbs.IsValid() &&
 		regenerate_trim_polyline(brep, *trim, surface, edge_nurbs,
-		    tolerance, &failure, NULL, &required_start, required_end, true);
+		    tolerance, &failure, NULL, &required_start, required_end, true,
+		    wrapper);
 	    if (regenerated)
 		required_start = trim->PointAtEnd();
 	}
@@ -8091,9 +8321,10 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		    }
 		    const bool seeded = movable_edge &&
 			movable_edge->GetNurbForm(movable_edge_nurbs) &&
-			regenerate_trim_polyline(brep, *movable, surface,
+		    regenerate_trim_polyline(brep, *movable, surface,
 			    movable_edge_nurbs, LocalUnits::tolerance,
-			    &seeded_failure, NULL, required_start, required_end);
+			    &seeded_failure, NULL, required_start, required_end,
+			    false, wrapper);
 		    const ON_3dPoint seeded_join = seeded ?
 			(movable == previous ? movable->PointAtEnd() :
 			 movable->PointAtStart()) : ON_3dPoint::UnsetPoint;
@@ -8521,7 +8752,8 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			    if (invalid_edge && invalid_edge->GetNurbForm(edge_nurbs))
 				regenerated = regenerate_trim_polyline(brep, *invalid_trim,
 				    surface, edge_nurbs, LocalUnits::tolerance,
-				    &regeneration_failure);
+				    &regeneration_failure, NULL, NULL, NULL, false,
+				    wrapper);
 			}
 			if (regenerated) {
 			    wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
@@ -8803,7 +9035,7 @@ repair_final_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 	if (edge.GetNurbForm(edge_nurbs) &&
 		regenerate_trim_polyline(brep, trim, surface, edge_nurbs,
 		    LocalUnits::tolerance, &regeneration_failure, NULL,
-		    required_start, required_end, true)) {
+		    required_start, required_end, true, wrapper)) {
 	    closed_trim_endpoint_alignments(trim, edge, surface, alignment);
 	    const bool regenerated_alignment_valid[2] = {
 		closed_trim_endpoint_alignment_is_valid(alignment[0]),
@@ -9033,6 +9265,11 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 	if (brlcad::PullbackWorkCancelled()) return;
     }
 
+    /* A surface-alignment retry starts from the completed bounded repairs.
+     * Relocating a periodic seam translates pcurves without changing their
+     * 3-D lifts or tangent direction, so the dense closed-edge orientation
+     * proof remains valid and must not be repeated. */
+    if (!allow_surface_alignment) {
     report_stage("validating exact closed-edge trim orientations");
     for (int ti = 0; ti < brep->m_T.Count(); ++ti) {
 	if ((ti & 63) == 0 && brlcad::PullbackWorkCancelled())
@@ -9082,18 +9319,14 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 		trim.m_bRev3d ? 1.0 - normalized : normalized);
 	    double edge_distance = lifted_point.DistanceTo(
 		edge_nurbs.PointAt(edge_parameter));
-	    if (edge_distance > LocalUnits::tolerance) {
-		double closest_parameter = 0.0;
-		if (!ON_NurbsCurve_GetClosestPoint(&closest_parameter, &edge_nurbs,
-			lifted_point))
-		    continue;
-		const double closest_distance = lifted_point.DistanceTo(
-		    edge_nurbs.PointAt(closest_parameter));
-		if (closest_distance < edge_distance) {
-		    edge_parameter = closest_parameter;
-		    edge_distance = closest_distance;
-		}
-	    }
+	    /* This pass only gathers evidence for changing orientation.  A global
+	     * NURBS closest-point solve here used to run as many as fifteen times
+	     * per closed trim and has no bounded/cancellable openNURBS interface.
+	     * When the directed STEP correspondence is outside tolerance, treating
+	     * the sample as inconclusive is both safer and substantially cheaper:
+	     * endpoint proof and the densely validated regeneration path below
+	     * remain available, while an unrelated closest locus cannot be used as
+	     * evidence for reversing an edge use. */
 	    if (edge_distance > LocalUnits::tolerance)
 		continue;
 	    ON_3dVector edge_tangent = edge_nurbs.TangentAt(edge_parameter);
@@ -9171,13 +9404,6 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 		     * when both direct witnesses fail. */
 		    valid_reversal = std::min(lifted.DistanceTo(forward),
 			lifted.DistanceTo(reverse)) <= LocalUnits::tolerance;
-		    if (!valid_reversal) {
-			double edge_parameter = 0.0;
-			valid_reversal = ON_NurbsCurve_GetClosestPoint(
-			    &edge_parameter, &edge_nurbs, lifted) &&
-			    lifted.DistanceTo(edge_nurbs.PointAt(edge_parameter)) <=
-				LocalUnits::tolerance;
-		    }
 		}
 	    }
 	    if (valid_reversal) {
@@ -9203,10 +9429,20 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 		"corrected a closed-edge trim orientation proven at both endpoints");
 	    continue;
 	}
+	/* A tangent at a collapsed pole can oppose the well-conditioned interior
+	 * solely because the surface derivative is singular there.  Do not launch
+	 * the expensive dense regeneration when at least five interior samples all
+	 * prove the existing orientation.  Regeneration remains mandatory for a
+	 * negative endpoint accompanied by mixed, opposing, or insufficient
+	 * interior evidence. */
+	const bool interior_proves_current_orientation =
+	    matching_samples >= 5 && opposing_samples == 0;
 	std::string regeneration_failure;
 	if ((negative_endpoint_alignment[0] || negative_endpoint_alignment[1]) &&
+		!interior_proves_current_orientation &&
 		regenerate_trim_polyline(brep, trim, surface, edge_nurbs,
-		    LocalUnits::tolerance, &regeneration_failure)) {
+		    LocalUnits::tolerance, &regeneration_failure, NULL, NULL, NULL,
+		    false, wrapper)) {
 	    wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
 		"regenerated a closed-edge pcurve with consistent endpoint tangents");
 	    continue;
@@ -9237,6 +9473,7 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 	    wrapper->RecordRepair(entity_id, entity_type, "trim_orientation",
 		"corrected closed-edge trim orientation");
 	}
+    }
     }
 
     /* Closed-edge regeneration above can replace a pcurve after the ordinary
@@ -9326,7 +9563,9 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 	/* FlipLoop reverses every pcurve in a restored loop.  Perform the final
 	 * closed-edge tangent check only after those reversals, and then refresh
 	 * the derived trim state once more. */
-	repair_final_closed_trim_orientations(brep, wrapper, entity_id, entity_type);
+	if (!allow_surface_alignment)
+	    repair_final_closed_trim_orientations(brep, wrapper, entity_id,
+		entity_type);
 	if (brlcad::PullbackWorkCancelled()) return;
 	/* The completed STEP face-bound graph is authoritative when an exporter
 	 * omitted FACE_OUTER_BOUND.  The final closed-edge tangent pass does not
@@ -9381,7 +9620,9 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 		    return;
 		}
 		std::unique_ptr<ON_Brep> bounded_repairs(new ON_Brep(*brep));
-		*brep = *retry_source;
+		/* Apply seam relocation to the already completed bounded repairs.
+		 * Restarting from retry_source repeated every dense regeneration and
+		 * routinely exhausted an item's budget before validation. */
 		repair_closed_trim_orientations(brep, wrapper, entity_id,
 		    entity_type, true);
 		ON_wString aligned_messages;
@@ -10395,6 +10636,16 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	job.status = BREP_CONVERSION_FAILED;
 	return;
     }
+    std::string unsafe_topology;
+    if (!brep_topology_references_are_safe(job.brep.get(), &unsafe_topology)) {
+	job.validation_message = "unsafe OpenNURBS topology before derived-flag "
+	    "refresh: " + unsafe_topology;
+	wrapper->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error,
+	    job.entity_id, job.entity_type, "topology", job.validation_message);
+	job.brep.reset();
+	job.status = BREP_CONVERSION_FAILED;
+	return;
+    }
     /* A valid periodic band can initially place both uses of its seam edge on
      * one parameter branch.  At that point it resembles a zero-area keyhole,
      * but the exact seam-pair repair below will move the uses to opposite
@@ -10425,16 +10676,21 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	return;
     if (needs_post_repair_topology &&
 	    wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
+	bool topology_changed = false;
 	const size_t post_repair_splits = finalize_brep_topology(job.brep.get(), true,
-	    wrapper, job.entity_id, job.entity_type);
+	    wrapper, job.entity_id, job.entity_type, &topology_changed);
 	keyhole_splits += post_repair_splits;
 	if (work_expired("post-repair topology finalization"))
 	    return;
-	/* Even when no loop was split, topology finalization refreshes derived
-	 * openNURBS flags.  Reapply the proven STEP bound classification before
-	 * validation so an invalid duplicate FACE_OUTER_BOUND repair is not lost. */
-	if (!job.faceted)
+	/* Re-run geometric trim repair only if keyhole/slit normalization actually
+	 * changed topology.  A flags-only refresh leaves every repaired pcurve and
+	 * edge use intact; repeating the complete dense regeneration pass is both
+	 * redundant and capable of consuming the entire per-item budget. */
+	if (!job.faceted && topology_changed)
 	    repair_closed_trim_orientations(job.brep.get(), wrapper, job.entity_id,
+		job.entity_type);
+	else if (!job.faceted)
+	    repair_face_bound_classification(job.brep.get(), wrapper, job.entity_id,
 		job.entity_type);
 	if (work_expired("post-repair trim orientation repair"))
 	    return;
