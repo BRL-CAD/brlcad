@@ -338,11 +338,13 @@ function(setup_bext_dir)
     execute_process(
       COMMAND ${GIT_EXEC} clone https://github.com/BRL-CAD/bext.git
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
     )
     message("BRL-CAD bext checkout command: ${GIT_EXEC} -c advice.detachedHead=false checkout ${BEXT_SHA1}")
     execute_process(
       COMMAND ${GIT_EXEC} -c advice.detachedHead=false checkout ${BEXT_SHA1}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bext
+      COMMAND_ERROR_IS_FATAL ANY
     )
 
     # Configure process will need to clean up bext
@@ -378,9 +380,12 @@ function(brlcad_ext_setup)
   if(NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
     message(FATAL_ERROR "bext directory ${BRLCAD_EXT_SOURCE_DIR} is not present")
   endif(NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
-  if(NOT EXISTS "${BRLCAD_EXT_SOURCE_DIR}/dependencies.dot")
+  if(
+    NOT EXISTS "${BRLCAD_EXT_SOURCE_DIR}/CMakeLists.txt"
+    OR NOT EXISTS "${BRLCAD_EXT_SOURCE_DIR}/CMake/BextDependencyInventory.cmake"
+  )
     message(FATAL_ERROR "Invalid bext directory: ${BRLCAD_EXT_SOURCE_DIR}")
-  endif(NOT EXISTS "${BRLCAD_EXT_SOURCE_DIR}/dependencies.dot")
+  endif()
 
   # We do allow the user to specify a build dir to be reused, however
   # this is unpredictable and may cause unexpected results depending
