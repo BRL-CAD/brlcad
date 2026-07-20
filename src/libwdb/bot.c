@@ -105,10 +105,12 @@ mk_bot_w_normals_and_uvs(
     for (i=0; i<num_faces*3; i++)
 	bot->faces[i] = faces[i];
 
-    if (mode == RT_BOT_PLATE) {
+    if (mode == RT_BOT_PLATE || mode == RT_BOT_PLATE_NOCOS) {
 	bot->thickness = (fastf_t *)bu_calloc(num_faces, sizeof(fastf_t), "bot->thickness");
-	for (i=0; i<num_faces; i++)
-	    bot->thickness[i] = thickness[i];
+	if (thickness != NULL) {
+	    for (i=0; i<num_faces; i++)
+		bot->thickness[i] = thickness[i];
+	}
 	bot->face_mode = bu_bitv_dup(face_mode);
     } else {
 	bot->thickness = (fastf_t *)NULL;
