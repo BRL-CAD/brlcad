@@ -1738,16 +1738,20 @@ split_keyhole_loop(ON_Brep *brep, int loop_index, std::string *failure_reason)
     loop->m_fi = face_index;
     new_loop->m_fi = face_index;
     if (insert_outside_singular) {
-	brep->NewSingularTrim(
+	ON_BrepTrim &singular_trim = brep->NewSingularTrim(
 	    brep->m_V[outside_singular.vertex], *loop,
 	    outside_singular.iso, outside_singular_c2);
+	singular_trim.m_tolerance[0] = LocalUnits::tolerance;
+	singular_trim.m_tolerance[1] = LocalUnits::tolerance;
 	loop = &brep->m_L[loop_index];
 	new_loop = &brep->m_L[new_loop_index];
     }
     if (insert_inside_singular) {
-	brep->NewSingularTrim(
+	ON_BrepTrim &singular_trim = brep->NewSingularTrim(
 	    brep->m_V[inside_singular_vertex], *new_loop,
 	    inside_singular.iso, inside_singular_c2);
+	singular_trim.m_tolerance[0] = LocalUnits::tolerance;
+	singular_trim.m_tolerance[1] = LocalUnits::tolerance;
 	loop = &brep->m_L[loop_index];
 	new_loop = &brep->m_L[new_loop_index];
     }
@@ -1935,7 +1939,10 @@ refresh_brep_flags_preserving_singular_isos(ON_Brep *brep,
     if (!brep)
 	return;
 
-    /* Recover a missing boundary flag only from the singular trim itself:
+    std::vector<ON_Surface::ISO> proven_singular_isos(
+	brep->m_T.Count(), ON_Surface::not_iso);
+
+    /* Recover or re-prove a boundary flag only from the singular trim itself:
      * its complete 2-D locus must be constant on one domain boundary, vary
      * along that boundary, and densely lift to its one topology vertex. */
     for (int ti = 0; ti < brep->m_T.Count(); ++ti) {
@@ -1943,10 +1950,6 @@ refresh_brep_flags_preserving_singular_isos(ON_Brep *brep,
 	    return;
 	ON_BrepTrim &trim = brep->m_T[ti];
 	if (trim.m_type != ON_BrepTrim::singular ||
-		trim.m_iso == ON_Surface::S_iso ||
-		trim.m_iso == ON_Surface::E_iso ||
-		trim.m_iso == ON_Surface::N_iso ||
-		trim.m_iso == ON_Surface::W_iso ||
 		trim.m_li < 0 || trim.m_li >= brep->m_L.Count() ||
 		trim.m_vi[0] < 0 || trim.m_vi[0] >= brep->m_V.Count())
 	    continue;
@@ -1957,6 +1960,8 @@ refresh_brep_flags_preserving_singular_isos(ON_Brep *brep,
 	    continue;
 	const ON_3dPoint vertex = brep->m_V[trim.m_vi[0]].point;
 	ON_Surface::ISO recovered = ON_Surface::not_iso;
+	int recovered_fixed_direction = -1;
+	double recovered_boundary = 0.0;
 	for (int fixed_direction = 0; fixed_direction < 2; ++fixed_direction) {
 	    const ON_Interval fixed_domain = surface->Domain(fixed_direction);
 	    const ON_Interval varying_domain = surface->Domain(1 - fixed_direction);
@@ -1998,29 +2003,102 @@ refresh_brep_flags_preserving_singular_isos(ON_Brep *brep,
 		    break;
 		}
 		recovered = candidate;
+		recovered_fixed_direction = fixed_direction;
+		recovered_boundary = boundary;
+		}
+	    }
+	/* A singular trim created on a proven collapsed side can subsequently sit
+	 * just outside OpenNURBS' very small parameter-boundary window after exact
+	 * seam and domain normalization.  Use its existing side only as a proposal:
+	 * both the supplied locus and the exact snapped boundary must densely lift
+	 * to the same topology vertex before accepting it. */
+	if (recovered == ON_Surface::not_iso &&
+		(trim.m_iso == ON_Surface::W_iso ||
+		 trim.m_iso == ON_Surface::S_iso ||
+		 trim.m_iso == ON_Surface::E_iso ||
+		 trim.m_iso == ON_Surface::N_iso)) {
+	    const bool fixed_u = trim.m_iso == ON_Surface::W_iso ||
+		trim.m_iso == ON_Surface::E_iso;
+	    const int fixed_direction = fixed_u ? 0 : 1;
+	    const int side = (trim.m_iso == ON_Surface::E_iso ||
+		trim.m_iso == ON_Surface::N_iso) ? 1 : 0;
+	    const ON_Interval fixed_domain = surface->Domain(fixed_direction);
+	    ON_3dPoint start = trim.PointAtStart();
+	    ON_3dPoint end = trim.PointAtEnd();
+	    start[fixed_direction] = fixed_domain[side];
+	    end[fixed_direction] = fixed_domain[side];
+	    ON_LineCurve boundary_candidate(start, end);
+	    bool exact = fixed_domain.IsIncreasing() &&
+		boundary_candidate.ChangeDimension(2) &&
+		boundary_candidate.SetDomain(trim_domain.Min(), trim_domain.Max()) &&
+		boundary_candidate.IsValid() &&
+		surface->IsIsoparametric(boundary_candidate, &trim_domain) == trim.m_iso;
+	    for (int sample = 0; exact && sample <= kDenseValidationSegments;
+		    sample++) {
+		const double parameter = trim_domain.ParameterAt(
+		    static_cast<double>(sample) / kDenseValidationSegments);
+		const ON_3dPoint original_uv = trim.PointAt(parameter);
+		const ON_3dPoint boundary_uv = boundary_candidate.PointAt(parameter);
+		const ON_3dPoint original_lift = surface->PointAt(
+		    original_uv.x, original_uv.y);
+		const ON_3dPoint boundary_lift = surface->PointAt(
+		    boundary_uv.x, boundary_uv.y);
+		exact = original_lift.IsValid() && boundary_lift.IsValid() &&
+		    original_lift.DistanceTo(vertex) <= LocalUnits::tolerance &&
+		    boundary_lift.DistanceTo(vertex) <= LocalUnits::tolerance;
+	    }
+	    if (exact) {
+		recovered = trim.m_iso;
+		recovered_fixed_direction = fixed_direction;
+		recovered_boundary = fixed_domain[side];
 	    }
 	}
-	if (recovered != ON_Surface::not_iso)
+	if (recovered != ON_Surface::not_iso) {
 	    trim.m_iso = recovered;
+	    proven_singular_isos[ti] = recovered;
+	    /* A pcurve can be within our scale-aware parameter epsilon of a
+	     * collapsed side while still missing OpenNURBS' stricter boundary
+	     * classification.  Merely restoring the side flag then makes the trim
+	     * self-inconsistent.  Once the complete source locus has been proven to
+	     * lift to the one singular vertex, replace it with the exact boundary
+	     * line between the same endpoints.  This changes no 3-D geometry and
+	     * lets the subsequent derived-flag refresh independently recover the
+	     * same W/S/E/N classification. */
+	    const ON_Curve *trim_curve = trim.TrimCurveOf();
+	    if (recovered_fixed_direction >= 0 && trim_curve &&
+		    surface->IsIsoparametric(*trim_curve, &trim_domain) != recovered) {
+		ON_3dPoint start = trim.PointAtStart();
+		ON_3dPoint end = trim.PointAtEnd();
+		start[recovered_fixed_direction] = recovered_boundary;
+		end[recovered_fixed_direction] = recovered_boundary;
+		std::unique_ptr<ON_LineCurve> boundary_curve(
+		    new ON_LineCurve(start, end));
+		bool exact = boundary_curve->ChangeDimension(2) &&
+		    boundary_curve->SetDomain(trim_domain.Min(), trim_domain.Max()) &&
+		    boundary_curve->IsValid() &&
+		    surface->IsIsoparametric(*boundary_curve, &trim_domain) == recovered;
+		for (int sample = 0; exact && sample <= kDenseValidationSegments;
+			sample++) {
+		    const ON_3dPoint uv = boundary_curve->PointAt(
+			trim_domain.ParameterAt(static_cast<double>(sample) /
+			    kDenseValidationSegments));
+		    const ON_3dPoint lift = surface->PointAt(uv.x, uv.y);
+		    exact = lift.IsValid() &&
+			lift.DistanceTo(vertex) <= LocalUnits::tolerance;
+		}
+		if (exact) {
+		    const int c2_index = brep->AddTrimCurve(boundary_curve.release());
+		    if (c2_index >= 0)
+			(void)brep->SetTrimCurve(trim, c2_index);
+		}
+	    }
+	}
     }
 
     /* NewSingularTrim receives a boundary ISO only after its caller has
      * proved the complete pcurve lies on a collapsed surface side.  The
      * generic flag refresh cannot infer a direction from every degenerate
      * curve and may replace that boundary with not_iso. */
-    std::vector<ON_Surface::ISO> proven_singular_isos(
-	brep->m_T.Count(), ON_Surface::not_iso);
-    for (int ti = 0; ti < brep->m_T.Count(); ++ti) {
-	if (brlcad::PullbackWorkCancelled())
-	    return;
-	const ON_BrepTrim &trim = brep->m_T[ti];
-	if (trim.m_type == ON_BrepTrim::singular &&
-		(trim.m_iso == ON_Surface::S_iso ||
-		 trim.m_iso == ON_Surface::E_iso ||
-		 trim.m_iso == ON_Surface::N_iso ||
-		 trim.m_iso == ON_Surface::W_iso))
-	    proven_singular_isos[ti] = trim.m_iso;
-    }
     if (brlcad::PullbackWorkCancelled())
 	return;
     brep->SetTolerancesBoxesAndFlags(false, false, false, false,
@@ -5598,6 +5676,8 @@ repair_seam_pair_from_exact_edge(ON_Brep *brep, STEPWrapper *wrapper,
 		const int singular_index = brep->NewSingularTrim(
 		    brep->m_V[first->m_vi[1]], loop, singular_iso,
 		    c2_index).m_trim_index;
+		brep->m_T[singular_index].m_tolerance[0] = LocalUnits::tolerance;
+		brep->m_T[singular_index].m_tolerance[1] = LocalUnits::tolerance;
 		loop.m_ti.SetCount(0);
 		for (int offset = 0; offset < original_count; ++offset) {
 		    loop.m_ti.Append(original_trims[offset]);
@@ -5694,6 +5774,10 @@ repair_seam_pair_from_exact_edge(ON_Brep *brep, STEPWrapper *wrapper,
 			const int second_singular = brep->NewSingularTrim(
 			    brep->m_V[vertex_index[1]], loop, singular_iso[1],
 			    second_c2).m_trim_index;
+			brep->m_T[first_singular].m_tolerance[0] = LocalUnits::tolerance;
+			brep->m_T[first_singular].m_tolerance[1] = LocalUnits::tolerance;
+			brep->m_T[second_singular].m_tolerance[0] = LocalUnits::tolerance;
+			brep->m_T[second_singular].m_tolerance[1] = LocalUnits::tolerance;
 			loop.m_ti.SetCount(0);
 			loop.m_ti.Append(first_index);
 			loop.m_ti.Append(first_singular);
@@ -7422,6 +7506,8 @@ repair_missing_singular_trims(ON_Brep *brep, STEPWrapper *wrapper,
 		    continue;
 		const int singular_index = brep->NewSingularTrim(
 		    brep->m_V[vertex_index], loop, singular_iso, c2_index).m_trim_index;
+		brep->m_T[singular_index].m_tolerance[0] = LocalUnits::tolerance;
+		brep->m_T[singular_index].m_tolerance[1] = LocalUnits::tolerance;
 		loop.m_ti.SetCount(0);
 		for (int offset = 0; offset < original_count; ++offset) {
 		    loop.m_ti.Append(original_trims[offset]);
@@ -10032,6 +10118,8 @@ struct LazySTEPOccurrence {
 struct LazySTEPExactGraph {
     std::map<uint64_t, uint64_t> representation_product;
     std::map<uint64_t, std::vector<uint64_t> > representation_solids;
+    std::map<uint64_t, std::vector<uint64_t> > representation_surface_models;
+    std::map<uint64_t, std::vector<uint64_t> > representation_geometric_sets;
     std::map<uint64_t, uint64_t> representation_context;
     std::set<uint64_t> handled_representations;
     std::set<uint64_t> handled_sdrs;
@@ -10108,6 +10196,8 @@ build_lazy_exact_graph(STEPWrapper *wrapper)
     std::set<uint64_t> representations;
     std::set<uint64_t> contexts;
     std::set<uint64_t> exact_solids;
+    std::set<uint64_t> surface_models;
+    std::set<uint64_t> geometric_sets;
     std::set<uint64_t> axes;
     std::set<uint64_t> relationships;
     std::set<uint64_t> transforming_relationships;
@@ -10130,6 +10220,8 @@ build_lazy_exact_graph(STEPWrapper *wrapper)
 	"GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT", "PARAMETRIC_REPRESENTATION_CONTEXT"});
     lazy_add_type_ids(wrapper, exact_solids, {"MANIFOLD_SOLID_BREP",
 	"BREP_WITH_VOIDS", "FACETED_BREP", "SOLID_REPLICA"});
+    lazy_add_type_ids(wrapper, surface_models, {"SHELL_BASED_SURFACE_MODEL"});
+    lazy_add_type_ids(wrapper, geometric_sets, {"GEOMETRIC_SET"});
     lazy_add_type_ids(wrapper, axes, {"AXIS2_PLACEMENT_2D", "AXIS2_PLACEMENT_3D"});
     lazy_add_type_ids(wrapper, relationships, {"SHAPE_REPRESENTATION_RELATIONSHIP",
 	"REPRESENTATION_RELATIONSHIP", "REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION"});
@@ -10212,18 +10304,38 @@ build_lazy_exact_graph(STEPWrapper *wrapper)
 	    graph.representation_product[*representation] = product->second;
     }
 
-    std::map<uint64_t, bool> component_has_exact;
-    std::map<uint64_t, bool> component_safe;
+    /* Decide whether a representation's supported geometry can be routed
+     * entirely from the zero-copy index.  This is deliberately a
+     * per-representation decision, not a component-wide one.  A common STEP
+     * layout relates a small product placement to separate advanced-BREP,
+     * manifold-surface, and bounded-surface representations.  Treating the
+     * unsupported bounded-surface sibling as making the entire relationship
+     * component unsafe forces materialization of every face in the other two
+     * representations merely to rediscover their product identity. */
     for (std::set<uint64_t>::const_iterator representation = representations.begin();
 	 representation != representations.end(); ++representation) {
 	const uint64_t component = components.find(*representation);
-	if (component_safe.find(component) == component_safe.end()) component_safe[component] = true;
+	bool has_lazy_geometry = false;
+	bool lazy_safe = true;
 	const std::vector<uint64_t> references = wrapper->LazyForwardReferences(*representation);
 	for (std::vector<uint64_t>::const_iterator reference = references.begin();
 	     reference != references.end(); ++reference) {
 	    if (exact_solids.find(*reference) != exact_solids.end()) {
 		graph.representation_solids[*representation].push_back(*reference);
-		component_has_exact[component] = true;
+		has_lazy_geometry = true;
+		continue;
+	    }
+	    if (surface_models.find(*reference) != surface_models.end()) {
+		graph.representation_surface_models[*representation].push_back(*reference);
+		has_lazy_geometry = true;
+		continue;
+	    }
+	    if (geometric_sets.find(*reference) != geometric_sets.end()) {
+		/* Geometric sets still use their schema adapter for bounded
+		 * surfaces and wires.  Index their ownership and name here, but do
+		 * not claim their containing representation is fully lazy. */
+		graph.representation_geometric_sets[*representation].push_back(*reference);
+		lazy_safe = false;
 		continue;
 	    }
 	    if (contexts.find(*reference) != contexts.end()) {
@@ -10233,35 +10345,38 @@ build_lazy_exact_graph(STEPWrapper *wrapper)
 		continue;
 	    }
 	    if (axes.find(*reference) != axes.end()) continue;
-	    component_safe[component] = false;
+	    lazy_safe = false;
 	}
-    }
-
-    std::set<uint64_t> safe_exact_components;
-    for (std::map<uint64_t, bool>::const_iterator component = component_has_exact.begin();
-	 component != component_has_exact.end(); ++component) {
-	if (component->second && component_safe[component->first] &&
-	    conflicting_components.find(component->first) == conflicting_components.end())
-	    safe_exact_components.insert(component->first);
-    }
-    for (std::set<uint64_t>::const_iterator representation = representations.begin();
-	 representation != representations.end(); ++representation) {
-	if (safe_exact_components.find(components.find(*representation)) !=
-		safe_exact_components.end())
+	if (has_lazy_geometry && lazy_safe &&
+	    graph.representation_product.find(*representation) !=
+		graph.representation_product.end() &&
+	    conflicting_components.find(component) == conflicting_components.end())
 	    graph.handled_representations.insert(*representation);
     }
     for (std::map<uint64_t, uint64_t>::const_iterator link = sdr_representation.begin();
 	 link != sdr_representation.end(); ++link) {
-	if (safe_exact_components.find(components.find(link->second)) != safe_exact_components.end())
+	if (graph.handled_representations.find(link->second) !=
+		graph.handled_representations.end())
 	    graph.handled_sdrs.insert(link->first);
     }
     for (std::set<uint64_t>::const_iterator relationship = relationships.begin();
 	 relationship != relationships.end(); ++relationship) {
 	if (transforming_relationships.find(*relationship) != transforming_relationships.end())
 	    continue;
-	const uint64_t representation = lazy_reference_in_set(wrapper, *relationship, representations);
-	if (representation && safe_exact_components.find(components.find(representation)) !=
-		safe_exact_components.end())
+	bool has_handled_representation = false;
+	bool has_conflict = false;
+	const std::vector<uint64_t> references = wrapper->LazyForwardReferences(*relationship);
+	for (std::vector<uint64_t>::const_iterator reference = references.begin();
+	     reference != references.end(); ++reference) {
+	    if (representations.find(*reference) == representations.end()) continue;
+	    if (conflicting_components.find(components.find(*reference)) !=
+		    conflicting_components.end())
+		has_conflict = true;
+	    if (graph.handled_representations.find(*reference) !=
+		    graph.handled_representations.end())
+		has_handled_representation = true;
+	}
+	if (has_handled_representation && !has_conflict)
 	    graph.handled_relationships.insert(*relationship);
     }
 
@@ -11479,7 +11594,8 @@ lazy_occurrence_matrix(STEPWrapper *wrapper, const LazySTEPOccurrence &occurrenc
 static void
 index_lazy_exact_graph(const LazySTEPExactGraph &graph, STEPWrapper *wrapper,
     BRLCADWrapper *database, MAP_OF_ENTITY_ID_TO_PRODUCT_NAME &id2name_map,
-    MAP_OF_ENTITY_ID_TO_PRODUCT_ID &id2productid_map)
+    MAP_OF_ENTITY_ID_TO_PRODUCT_ID &id2productid_map,
+    MAP_OF_ENTITY_ID_TO_PRODUCT_ID &shell2representation_map)
 {
     if (!wrapper || !database) return;
     for (std::map<uint64_t, uint64_t>::const_iterator mapping =
@@ -11537,6 +11653,71 @@ index_lazy_exact_graph(const LazySTEPExactGraph &graph, STEPWrapper *wrapper,
 	    item.type = wrapper->LazyTypeName(*solid);
 	    item.output_name = id2name_map[solid_id];
 	}
+    }
+
+    for (std::map<uint64_t, std::vector<uint64_t> >::const_iterator represented =
+	 graph.representation_surface_models.begin();
+	 represented != graph.representation_surface_models.end(); ++represented) {
+	if (graph.handled_representations.find(represented->first) ==
+	    graph.handled_representations.end()) continue;
+	std::map<uint64_t, uint64_t>::const_iterator product_mapping =
+	    graph.representation_product.find(represented->first);
+	if (product_mapping == graph.representation_product.end() ||
+	    product_mapping->second > static_cast<uint64_t>(INT_MAX) ||
+	    represented->first > static_cast<uint64_t>(INT_MAX)) continue;
+	const int product_id = static_cast<int>(product_mapping->second);
+	const int representation_id = static_cast<int>(represented->first);
+	for (std::vector<uint64_t>::const_iterator model = represented->second.begin();
+	     model != represented->second.end(); ++model) {
+	    if (*model > static_cast<uint64_t>(INT_MAX)) continue;
+	    const int model_id = static_cast<int>(*model);
+	    if (id2name_map[model_id].empty())
+		id2name_map[model_id] = database->StableBRLCADName(
+		    id2name_map[product_id] + "_item", model_id);
+	    id2productid_map[model_id] = product_id;
+	    shell2representation_map[model_id] = representation_id;
+	    brlcad::step::Representation &item = wrapper->Document().representations[model_id];
+	    item.entity_id = model_id;
+	    item.product_id = product_id;
+	    item.type = "SHELL_BASED_SURFACE_MODEL";
+	    item.output_name = id2name_map[model_id];
+	}
+    }
+
+    /* Geometric sets still materialize only when their existing bounded-
+     * surface/wire adapter converts them.  Their names and ownership do not
+     * require loading the set's complete element closure. */
+    for (std::map<uint64_t, std::vector<uint64_t> >::const_iterator represented =
+	 graph.representation_geometric_sets.begin();
+	 represented != graph.representation_geometric_sets.end(); ++represented) {
+	std::map<uint64_t, uint64_t>::const_iterator product_mapping =
+	    graph.representation_product.find(represented->first);
+	const int product_id = product_mapping != graph.representation_product.end() &&
+	    product_mapping->second <= static_cast<uint64_t>(INT_MAX) ?
+	    static_cast<int>(product_mapping->second) : 0;
+	for (std::vector<uint64_t>::const_iterator set = represented->second.begin();
+	     set != represented->second.end(); ++set) {
+	    if (*set > static_cast<uint64_t>(INT_MAX)) continue;
+	    const int set_id = static_cast<int>(*set);
+	    if (id2name_map[set_id].empty())
+		id2name_map[set_id] = database->StableBRLCADName(product_id > 0 ?
+		    id2name_map[product_id] + "_item" : "GeometricSet", set_id);
+	    if (product_id > 0) id2productid_map[set_id] = product_id;
+	    brlcad::step::Representation &item = wrapper->Document().representations[set_id];
+	    item.entity_id = set_id;
+	    item.product_id = product_id;
+	    item.type = "GEOMETRIC_SET";
+	    item.output_name = id2name_map[set_id];
+	}
+    }
+    const std::vector<uint64_t> geometric_sets =
+	wrapper->LazyInstancesByType("GEOMETRIC_SET");
+    for (std::vector<uint64_t>::const_iterator set = geometric_sets.begin();
+	 set != geometric_sets.end(); ++set) {
+	if (*set > static_cast<uint64_t>(INT_MAX)) continue;
+	const int set_id = static_cast<int>(*set);
+	if (id2name_map[set_id].empty())
+	    id2name_map[set_id] = database->StableBRLCADName("GeometricSet", set_id);
     }
 }
 
@@ -12185,6 +12366,11 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
     const std::vector<uint64_t> lazy_handled_relationships =
 	lazy_ids(lazy_exact_graph.handled_relationships);
     const std::vector<uint64_t> lazy_handled_cdsrs = lazy_ids(lazy_exact_graph.handled_cdsrs);
+    std::set<uint64_t> lazy_handled_structure_set = lazy_exact_graph.handled_sdrs;
+    lazy_handled_structure_set.insert(lazy_exact_graph.handled_representations.begin(),
+	lazy_exact_graph.handled_representations.end());
+    const std::vector<uint64_t> lazy_handled_structure =
+	lazy_ids(lazy_handled_structure_set);
 
     /* A focused exact-root request is a diagnostic/conversion job, not a
      * request to rebuild every unrelated product and relationship in a large
@@ -12210,12 +12396,19 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
     const std::vector<uint64_t> lazy_handled_sdrs;
     const std::vector<uint64_t> lazy_handled_relationships;
     const std::vector<uint64_t> lazy_handled_cdsrs;
+    const std::vector<uint64_t> lazy_handled_structure;
 #endif
 
-    SetInstanceTypes({"PRODUCT", "PRODUCT_DEFINITION_FORMATION",
+    std::vector<std::string> product_structure_types = {"PRODUCT",
+	"PRODUCT_DEFINITION_FORMATION",
 	"PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE", "PRODUCT_DEFINITION",
 	"PRODUCT_DEFINITION_WITH_ASSOCIATED_DOCUMENTS", "SHAPE_DEFINITION_REPRESENTATION",
-	"MANIFOLD_SURFACE_SHAPE_REPRESENTATION", "GEOMETRIC_SET"}, lazy_handled_sdrs);
+	"MANIFOLD_SURFACE_SHAPE_REPRESENTATION"};
+    /* The lazy graph supplies geometric-set identity and ownership without
+     * loading every member curve or surface.  Eager parsing still needs the
+     * legacy naming pass. */
+    if (!HasLazyIndex()) product_structure_types.push_back("GEOMETRIC_SET");
+    SetInstanceTypes(product_structure_types, lazy_handled_structure);
     int num_ents = InstanceCount();
     SetProgress("indexing product and representation structure", 0,
 	static_cast<uint64_t>(num_ents));
@@ -12431,7 +12624,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	static_cast<uint64_t>(num_ents), static_cast<uint64_t>(num_ents));
 #ifdef HAVE_STEPCODE_LAZY
     index_lazy_exact_graph(lazy_exact_graph, this, dotg, id2name_map,
-	id2productid_map);
+	id2productid_map, shell2representation_map);
 #endif
 #ifdef AP214e3
     /* Product and representation identity must be established before

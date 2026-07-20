@@ -36,6 +36,7 @@ class SDAI_Application_instance;
 #include "brep.h"
 
 #include <map>
+#include <set>
 #include <sstream>
 #include <vector>
 #include "nmg.h"
@@ -2066,19 +2067,36 @@ split_periodic_pullback_at_native_seams(PBCData *data, double tolerance,
  * ordinary seam crossing as multiple trims on the complete source edge gives
  * every fragment the same endpoint vertices and makes loop topology invalid. */
 static bool
-merge_ordinary_periodic_pullback_fragments(PBCData *data, double tolerance)
+merge_ordinary_periodic_pullback_fragments(PBCData *data, double tolerance,
+	std::string *failure = NULL)
 {
+    if (failure) failure->clear();
     if (!data || !data->segments || data->segments->size() < 2 ||
-	    !data->surf || !(tolerance > 0.0))
+	    !data->surf || !(tolerance > 0.0)) {
+	if (failure) *failure = "incomplete periodic fragment data";
 	return false;
+	}
 
     std::unique_ptr<ON_2dPointArray> merged(new ON_2dPointArray());
     const double lift_tolerance = std::max(ON_ZERO_TOLERANCE *
 	kNumericalToleranceScale, tolerance * 1.0e-8);
+    const double join_tolerance = std::max(tolerance, data->tolerance);
+    const CurveDistanceEvaluator source_distance(data->curve);
+    if (!source_distance.IsValid()) {
+	if (failure) *failure = "the source STEP curve could not be evaluated";
+	return false;
+    }
     for (std::list<ON_2dPointArray *>::const_iterator segment =
 	    data->segments->begin(); segment != data->segments->end(); ++segment) {
-	if (!*segment || (*segment)->Count() < 2)
+	/* A parameter-zero split can leave a one-sample fragment when zero is
+	 * only a few floating-point parameter units from an edge endpoint.  That
+	 * point still identifies the original STEP edge endpoint and must take
+	 * part in the periodic-branch merge.  The completed merged path is
+	 * required to contain at least two points below. */
+	if (!*segment || (*segment)->Count() < 1) {
+	    if (failure) *failure = "a periodic fragment contained no samples";
 	    return false;
+	}
 	ON_2dPointArray shifted(**segment);
 	if (merged->Count() > 0) {
 	    const ON_2dPoint previous = (*merged)[merged->Count() - 1];
@@ -2101,14 +2119,43 @@ merge_ordinary_periodic_pullback_fragments(PBCData *data, double tolerance)
 		const ON_3dPoint shifted_lift = data->surf->PointAt(
 		    shifted[point].x, shifted[point].y);
 		if (!original_lift.IsValid() || !shifted_lift.IsValid() ||
-			original_lift.DistanceTo(shifted_lift) > lift_tolerance)
+			original_lift.DistanceTo(shifted_lift) > lift_tolerance) {
+		    if (failure) *failure =
+			"integer-period translation changed a fragment's 3-D lift";
 		    return false;
+		}
 	    }
 	    const double parameter_tolerance = std::max(ON_ZERO_TOLERANCE,
 		std::max(data->surf->Domain(0).Length(),
 		    data->surf->Domain(1).Length()) * 1.0e-10);
-	    if (previous.DistanceTo(shifted[0]) > parameter_tolerance)
-		return false;
+	    if (previous.DistanceTo(shifted[0]) > parameter_tolerance) {
+		const ON_3dPoint previous_lift = data->surf->PointAt(
+		    previous.x, previous.y);
+		const ON_3dPoint first_lift = data->surf->PointAt(
+		    shifted[0].x, shifted[0].y);
+		const bool same_edge_point = previous_lift.IsValid() &&
+		    first_lift.IsValid() &&
+		    previous_lift.DistanceTo(first_lift) <= join_tolerance &&
+		    source_distance.DistanceTo(previous_lift, join_tolerance) <=
+			join_tolerance &&
+		    source_distance.DistanceTo(first_lift, join_tolerance) <=
+			join_tolerance;
+		if (!same_edge_point) {
+		    if (failure) {
+			std::ostringstream reason;
+			reason << "adjacent periodic fragments did not share a "
+			    "validated edge endpoint (" << previous.x << ':'
+			    << previous.y << " versus " << shifted[0].x << ':'
+			    << shifted[0].y << ')';
+			*failure = reason.str();
+		    }
+		    return false;
+		}
+		/* This is an internal representation split, not a STEP topology
+		 * vertex.  Select the already retained endpoint so the rejoined UV
+		 * path is continuous. */
+		shifted[0] = previous;
+	    }
 	}
 	const int first_point = merged->Count() > 0 ? 1 : 0;
 	for (int point = first_point; point < shifted.Count(); ++point) {
@@ -2117,8 +2164,10 @@ merge_ordinary_periodic_pullback_fragments(PBCData *data, double tolerance)
 		merged->Append(shifted[point]);
 	}
     }
-    if (merged->Count() < 2)
+    if (merged->Count() < 2) {
+	if (failure) *failure = "the merged periodic path had fewer than two samples";
 	return false;
+	}
 
     while (!data->segments->empty()) {
 	delete data->segments->front();
@@ -4317,15 +4366,21 @@ insert_periodic_pole_cut(ON_Brep *brep, ON_BrepLoop &loop,
     ON_BrepEdge &seam_edge = brep->NewEdge(
 	brep->m_V[boundary_trim.m_vi[1]], pole_vertex, seam_curve_index,
 	NULL, tolerance);
-    ON_BrepTrim &first_seam = brep->NewTrim(seam_edge, false, loop,
-	first_trim_index);
+    /* NewTrim/NewSingularTrim may grow m_T.  Retain indices until all three
+     * trims exist; references obtained before a later append can be invalidated
+     * and leave required tolerance/ISO fields at OpenNURBS sentinel values. */
+    const int first_seam_index = brep->NewTrim(seam_edge, false, loop,
+	first_trim_index).m_trim_index;
     const ON_Surface::ISO singular_iso = singular_direction == 0 ?
 	(singular_side == 0 ? ON_Surface::W_iso : ON_Surface::E_iso) :
 	(singular_side == 0 ? ON_Surface::S_iso : ON_Surface::N_iso);
-    ON_BrepTrim &singular_trim = brep->NewSingularTrim(pole_vertex, loop,
-	singular_iso, singular_trim_index);
-    ON_BrepTrim &second_seam = brep->NewTrim(seam_edge, true, loop,
-	second_trim_index);
+    const int pole_trim_index = brep->NewSingularTrim(pole_vertex, loop,
+	singular_iso, singular_trim_index).m_trim_index;
+    const int second_seam_index = brep->NewTrim(seam_edge, true, loop,
+	second_trim_index).m_trim_index;
+    ON_BrepTrim &first_seam = brep->m_T[first_seam_index];
+    ON_BrepTrim &singular_trim = brep->m_T[pole_trim_index];
+    ON_BrepTrim &second_seam = brep->m_T[second_seam_index];
 
     const ON_Interval seam_domain = surface->Domain(seam_direction);
     const bool first_is_min = fabs(boundary_end[seam_direction] -
@@ -4354,6 +4409,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     LIST_OF_ORIENTED_EDGES::iterator i;
     list<PBCData *> curve_pullback_samples;
     std::map<PBCData *, ON_Curve *> exact_pullbacks;
+    std::set<PBCData *> rejoined_periodic_pullbacks;
 
     if (!brep) {
 	/* nothing to do */
@@ -4923,19 +4979,34 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	}
 	for (std::list<PBCData *>::iterator current = curve_pullback_samples.begin();
 	     current != curve_pullback_samples.end(); ++current) {
-	    size_t seam_splits = 0;
-	    if (!split_periodic_pullback_at_native_seams(*current,
-		    LocalUnits::tolerance, &seam_splits))
+	    if (!*current || !(*current)->segments)
 		continue;
+	    size_t seam_splits = 0;
+	    const bool split_at_native_seam =
+		split_periodic_pullback_at_native_seams(*current,
+		    LocalUnits::tolerance, &seam_splits);
 	    const bool singular_split = pullback_requires_singular_topology_split(
 		*current, std::max(LocalUnits::tolerance, (*current)->tolerance));
-	    if (!singular_split && merge_ordinary_periodic_pullback_fragments(
-		    *current, LocalUnits::tolerance)) {
+	    /* pullback_samples may already have split an open curve at parameter
+	     * zero before this native-domain pass.  Rejoin all ordinary fragment
+	     * lists, not only lists split by the call immediately above. */
+	    std::string fragment_merge_failure;
+	    if (!singular_split && (*current)->segments->size() > 1 &&
+		    merge_ordinary_periodic_pullback_fragments(*current,
+			LocalUnits::tolerance, &fragment_merge_failure)) {
 		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
 		    "rejoined an ordinary periodic seam crossing into one exact edge use");
+		rejoined_periodic_pullbacks.insert(*current);
 		continue;
 	    }
-	    for (size_t split = 0; split < seam_splits; ++split)
+	    if (!singular_split && (*current)->segments->size() > 1 && step &&
+		    step->Verbose() && !fragment_merge_failure.empty())
+		std::cerr << "EDGE_LOOP #" << id << ": STEP edge #"
+		    << ((*current)->edge ? (*current)->edge->m_edge_user.i : -1)
+		    << " periodic-fragment merge rejected: "
+		    << fragment_merge_failure << std::endl;
+	    for (size_t split = 0;
+		    split_at_native_seam && split < seam_splits; ++split)
 		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
 		    "split a periodic pcurve at a proven surface singularity");
 	}
@@ -4998,6 +5069,15 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	}
 	data = (*cs);
 	const bool split_at_singularity = singular_topology_splits[data];
+	if (!split_at_singularity && data->segments &&
+		data->segments->size() > 1) {
+	    if (step)
+		step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error,
+		    id, "EDGE_LOOP", "edge_list",
+		    "ordinary periodic fragments could not be rejoined into one STEP edge use");
+	    trim_construction_failed = true;
+	    break;
+	}
 	list<ON_2dPointArray *>::iterator si;
 	si = data->segments->begin();
 	PBCData *ndata = (*next_cs);
@@ -5140,10 +5220,21 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    if (!c2d && samples && samples->Count() < 2 && step &&
 		step->ImportOptions().repair == brlcad::step::RepairMode::Safe &&
 		data->edge && data->curve) {
-		/* The second use of a collapsed seam is the same exact STEP edge in
+		/* The second STEP use of a collapsed seam is the same exact edge in
 		 * reverse.  Reuse the first validated pcurve instead of asking a
 		 * closest-point solver to distinguish endpoints whose separation is
-		 * smaller than the model uncertainty. */
+		 * smaller than the model uncertainty.  A second fragment of the current
+		 * PBCData is not another topology use and must never enter this path. */
+		bool have_prior_edge_use = false;
+		for (std::list<PBCData *>::const_iterator prior =
+			curve_pullback_samples.begin(); prior != cs; ++prior) {
+		    if (*prior && (*prior)->edge && data->edge &&
+			    (*prior)->edge->m_edge_index == data->edge->m_edge_index) {
+			have_prior_edge_use = true;
+			break;
+		    }
+		}
+		if (have_prior_edge_use) {
 		for (int lti = 0; lti < loop->TrimCount() && !c2d; ++lti) {
 		    const ON_BrepTrim *paired_trim = loop->Trim(lti);
 		    if (!paired_trim || paired_trim->m_ei != data->edge->m_edge_index ||
@@ -5186,6 +5277,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		    c2d = candidate;
 		    step->RecordRepair(id, "EDGE_LOOP", "edge_list",
 			"reused an exact paired collapsed seam pcurve");
+		}
 		}
 	    }
 	    if (!c2d && step && step->ImportOptions().repair ==
@@ -5496,6 +5588,46 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		samples->Empty();
 		samples->Append(ON_2dPoint(recovered_start.x, recovered_start.y));
 		samples->Append(ON_2dPoint(recovered_end.x, recovered_end.y));
+	    }
+	    if (c2d && rejoined_periodic_pullbacks.find(data) !=
+		    rejoined_periodic_pullbacks.end()) {
+		/* The merge above proves its internal endpoint snap, and this final
+		 * parameterization-independent locus check proves the curve fitter did
+		 * not overshoot between the retained exact samples. */
+		const CurveDistanceEvaluator source_distance(data->curve);
+		const ON_Interval pcurve_domain = c2d->Domain();
+		const double acceptance_tolerance = std::max(LocalUnits::tolerance,
+		    data->tolerance);
+		bool lift_valid = source_distance.IsValid() &&
+		    pcurve_domain.IsIncreasing();
+		double maximum_lift_error = 0.0;
+		for (int sample = 0; lift_valid &&
+			sample <= kDenseLiftValidationSegments; ++sample) {
+		    if (brlcad::PullbackWorkCancelled()) {
+			lift_valid = false;
+			data->failure_reason = PullbackFailureReason::Cancelled;
+			break;
+		    }
+		    const double fraction = static_cast<double>(sample) /
+			kDenseLiftValidationSegments;
+		    const ON_3dPoint uv = c2d->PointAt(
+			pcurve_domain.ParameterAt(fraction));
+		    const ON_3dPoint lifted = data->surf->PointAt(uv.x, uv.y);
+		    const double error = lifted.IsValid() ?
+			source_distance.DistanceTo(lifted, acceptance_tolerance) :
+			DBL_MAX;
+		    maximum_lift_error = std::max(maximum_lift_error, error);
+		    if (error > acceptance_tolerance)
+			lift_valid = false;
+		}
+		if (!lift_valid) {
+		    delete c2d;
+		    c2d = NULL;
+		    if (data->failure_reason != PullbackFailureReason::Cancelled)
+			data->failure_reason =
+			    PullbackFailureReason::SurfaceDistanceExceeded;
+		    data->maximum_projection_distance = maximum_lift_error;
+		}
 	    }
 	    if (c2d && data->tolerance_adjusted) {
 		double maximum_lift_error = 0.0;
@@ -7208,8 +7340,10 @@ VertexLoop::LoadONBrep(ON_Brep *brep)
     int trimCurve = brep->m_C2.Count();
     brep->m_C2.Append(c2d);
 
-    (void)brep->NewSingularTrim(brep->m_V[loop_vertex->GetONId()], loop, iso, trimCurve);
-    /* FIXME: do something with this trim */
+    ON_BrepTrim &trim = brep->NewSingularTrim(
+	brep->m_V[loop_vertex->GetONId()], loop, iso, trimCurve);
+    trim.m_tolerance[0] = LocalUnits::tolerance;
+    trim.m_tolerance[1] = LocalUnits::tolerance;
 
     return true;
 }

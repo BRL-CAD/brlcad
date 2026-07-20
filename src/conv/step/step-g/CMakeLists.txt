@@ -536,6 +536,24 @@ if(BRLCAD_ENABLE_STEP)
         -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_direct_manifold.g
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_lazy_positional.cmake
     )
+    brlcad_add_test(
+      NAME ap203_lazy_relationships
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_direct_manifold.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_lazy_relationships.json
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_lazy_relationships.cmake
+    )
+    brlcad_add_test(
+      NAME ap203_periodic_zero_split
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_periodic_zero_split.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_periodic_zero_split.json
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_periodic_zero_split.cmake
+    )
   endif()
 
   if(HIDE_INTERNAL_SYMBOLS)
@@ -558,6 +576,9 @@ cmakefiles(
   ap203.exp
   tests/ap203_direct_manifold.stp
   tests/ap203_lazy_positional.cmake
+  tests/ap203_lazy_relationships.cmake
+  tests/ap203_periodic_zero_split.cmake
+  tests/ap203_periodic_zero_split.stp
 )
 
 # Local Variables:
