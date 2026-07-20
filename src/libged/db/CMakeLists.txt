@@ -1,7 +1,7 @@
 set(PLUGIN_LIBS libged libbu)
 
-ged_plugin_library(ged-find
-  find.c
+ged_plugin_library(ged-db
+  db.c
   LIBS ${PLUGIN_LIBS}
 )
 

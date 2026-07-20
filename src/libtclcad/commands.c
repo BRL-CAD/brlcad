@@ -590,6 +590,7 @@ static struct to_cmdtab ged_cmds[] = {
     {"copymat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_copymat},
     {"cpi",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_cpi},
     {"d",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec_d},
+    {"db",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_db},
     {"dbconcat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_dbconcat},
     {"dbfind",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_dbfind},
     {"dbip",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_dbip}, // TODO - this needs to go away

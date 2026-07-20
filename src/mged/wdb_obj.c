@@ -1909,6 +1909,23 @@ static struct bu_cmdtab wdb_cmds[] = {
 };
 
 
+int
+mged_wdb_db_cmd(struct rt_wdb *wdbp, int argc, const char **argv)
+{
+    if (!wdbp || argc < 2 || !argv)
+	return BRLCAD_ERROR | GED_UNKNOWN;
+
+    if (BU_STR_EQUAL(argv[1], "make_bb"))
+	return wdb_make_bb_cmd(wdbp, argc - 1, argv + 1);
+    if (BU_STR_EQUAL(argv[1], "observer"))
+	return wdb_observer_cmd(wdbp, argc - 1, argv + 1);
+    if (BU_STR_EQUAL(argv[1], "rt_gettrees"))
+	return wdb_rt_gettrees_cmd(wdbp, argc - 1, argv + 1);
+
+    return BRLCAD_ERROR | GED_UNKNOWN;
+}
+
+
 /* used to suppress bu_log() output */
 static int
 do_nothing(void *UNUSED(nada1), void *UNUSED(nada2))

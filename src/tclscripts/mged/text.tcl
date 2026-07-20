@@ -1749,10 +1749,10 @@ proc tab_expansion { line } {
     if { $len > 1 } {
 	# already have complete command, so do object expansion
 
-	# check if we have an open db
-	set dbCommand [info command db]
-	if { [string length $dbCommand] == 0 } {
-	    # no db command means no db is open, cannot expand
+	# The libged db dispatcher exists even when no database is open, so test
+	# an operation that requires a database rather than command existence.
+	if {[catch {db version}]} {
+	    # no open database means object expansion is unavailable
 	    return [list $line {}]
 	}
 

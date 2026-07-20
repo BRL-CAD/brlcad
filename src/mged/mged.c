@@ -2235,14 +2235,17 @@ mged_finish(struct mged_state *s, int exitcode)
     bu_log_delete_hook(gui_output, (void *)s);
     mged_output_cleanup();
 
-    /* Delete Tcl database commands while their C backing objects are still
-     * valid.  Their command delete callbacks participate in closing cloned
-     * database references. */
+    /* Delete the in-memory Tcl database object while its C backing object is
+     * still valid.  Its delete callback closes a cloned database reference.
+     * The libged-backed db command is not a database object and remains valid
+     * until the interpreter itself is deleted.
+     */
     if (s->interp) {
 	Tcl_Preserve((ClientData)s->interp);
+	if (s->wdbp)
+	    bu_observer_free(&s->wdbp->wdb_observers);
 	/* Rename only commands that still exist, and log unexpected failures
 	 * instead of letting Tcl errors interrupt staged shutdown. */
-	mged_rename_tcl_cmd(s->interp, MGED_DB_NAME);
 	mged_rename_tcl_cmd(s->interp, ".inmem");
 	Tcl_Release((ClientData)s->interp);
     }

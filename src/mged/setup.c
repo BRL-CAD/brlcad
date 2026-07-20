@@ -53,6 +53,7 @@ extern int mged_pre_opendb_clbk(int ac, const char **av, void *gedp, void *ctx);
 extern int mged_post_opendb_clbk(int ac, const char **av, void *gedp, void *ctx);
 extern int mged_pre_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 extern int mged_post_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
+extern int mged_db_during_clbk(int ac, const char **av, void *gedp, void *ctx);
 
 /* Defined in cmd.cpp */
 extern int mged_search_pre_clbk(int ac, const char **av, void *gedp, void *s);
@@ -142,7 +143,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "cpi", f_copy_inv, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "d", cmd_ged_erase_wrapper, ged_exec_d, NULL},
     {MGED_CMD_MAGIC, "data_lines", cmd_ged_view_wrapper, ged_exec_data_lines, NULL},
-    {MGED_CMD_MAGIC, "db", cmd_stub, GED_FUNC_PTR_NULL, NULL},
+    {MGED_CMD_MAGIC, "db", cmd_ged_plain_wrapper, ged_exec_db, NULL},
     {MGED_CMD_MAGIC, "db_glob", cmd_ged_plain_wrapper, ged_exec_db_glob, NULL},
     {MGED_CMD_MAGIC, "dbconcat", cmd_ged_plain_wrapper, ged_exec_dbconcat, NULL},
     {MGED_CMD_MAGIC, "dbfind", cmd_ged_info_wrapper, ged_exec_dbfind, NULL},
@@ -192,7 +193,6 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "facetize_old", cmd_ged_plain_wrapper, ged_exec_facetize_old, NULL},
     {MGED_CMD_MAGIC, "fb2pix", cmd_ged_dm_wrapper, ged_exec_fb2pix, NULL},
     {MGED_CMD_MAGIC, "fbclear", cmd_ged_dm_wrapper, ged_exec_fbclear, NULL},
-    {MGED_CMD_MAGIC, "find", cmd_ged_info_wrapper, ged_exec_find, NULL},
     {MGED_CMD_MAGIC, "find_arb_edge", cmd_ged_plain_wrapper, ged_exec_find_arb_edge, NULL},
     {MGED_CMD_MAGIC, "find_bot_edge", cmd_ged_plain_wrapper, ged_exec_find_bot_edge, NULL},
     {MGED_CMD_MAGIC, "find_bot_pnt", cmd_ged_plain_wrapper, ged_exec_find_bot_pnt, NULL},
@@ -626,6 +626,7 @@ mged_setup(struct mged_state *s)
     ged_clbk_set(s->gedp, "opendb", BU_CLBK_POST, &mged_post_opendb_clbk, (void *)&mged_global_db_ctx);
     ged_clbk_set(s->gedp, "closedb", BU_CLBK_PRE, &mged_pre_closedb_clbk, (void *)&mged_global_db_ctx);
     ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, &mged_post_closedb_clbk, (void *)&mged_global_db_ctx);
+    ged_clbk_set(s->gedp, "db", BU_CLBK_DURING, &mged_db_during_clbk, (void *)s);
 
     // Register during-execution callback function for search command
     ged_clbk_set(s->gedp, "search", BU_CLBK_PRE,    &mged_search_pre_clbk,      (void *)s);

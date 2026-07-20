@@ -2742,28 +2742,6 @@ cmd_ps(ClientData clientData,
 }
 
 
-int
-cmd_stub(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
-{
-    struct cmdtab *ctp = (struct cmdtab *)clientData;
-    MGED_CK_CMD(ctp);
-    struct mged_state *s = ctp->s;
-
-    CHECK_DBI_NULL;
-
-    if (argc != 1) {
-        struct bu_vls vls;
-        bu_vls_init(&vls);
-        bu_vls_printf(&vls, "helplib_alias wdb_%s %s", argv[0], argv[0]);
-        Tcl_Eval((Tcl_Interp *)s->wdbp->wdb_interp, bu_vls_addr(&vls));
-        bu_vls_free(&vls);
-        return TCL_ERROR;
-    }
-
-    Tcl_AppendResult((Tcl_Interp *)s->wdbp->wdb_interp, "%s: no database is currently opened!", argv[0], (char *)NULL);
-    return TCL_ERROR;
-}
-
 /**
  * Stuff a string to stdout while leaving the current command-line
  * alone

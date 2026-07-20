@@ -34,6 +34,7 @@
 /* private */
 #include "./cmd.h"
 #include "./mged.h"
+#include "./mged_wdb.h"
 
 /* defined in chgmodel.c */
 extern void set_localunit_TclVar(struct mged_state *s);
@@ -149,9 +150,11 @@ _post_opendb_failed(struct mged_state *s, struct ged *gedp, struct mged_opendb_c
 }
 
 int
-mged_pre_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *UNUSED(gedp), void *ctx)
+mged_pre_opendb_clbk(int ac, const char **argv, void *UNUSED(gedp), void *ctx)
 {
     struct mged_opendb_ctx *mctx = (struct mged_opendb_ctx *)ctx;
+    mctx->argc = ac;
+    mctx->argv = argv;
     mctx->force_create = 0;
     mctx->no_create = 1;
     mctx->created_new_db = 0;
@@ -187,9 +190,6 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
     if (s->dbip->dbi_read_only)
 	bu_vls_printf(gedp->ged_result_str, "%s: READ ONLY\n", s->dbip->dbi_filename);
 
-    /* increment use count for gedp db instance */
-    (void)db_clone_dbi(s->dbip, NULL);
-
     /* Provide LIBWDB C access to the on-disk database */
     if ((s->wdbp = wdb_dbopen(s->dbip, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
 	Tcl_AppendResult(mctx->interpreter, "wdb_dbopen() failed?\n", (char *)NULL);
@@ -198,7 +198,7 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
 	return BRLCAD_OK;
     }
 
-    /* increment use count for tcl db instance */
+    /* The .inmem Tcl object closes one database reference when deleted. */
     (void)db_clone_dbi(s->dbip, NULL);
 
     /* Establish LIBWDB TCL access to both disk and in-memory databases */
@@ -211,14 +211,6 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
 
     /* append to list of rt_wdb's */
     BU_LIST_APPEND(&rtg_headwdb.l, &s->wdbp->l);
-
-    /* This creates a "db" command object */
-
-    /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand((Tcl_Interp *)s->wdbp->wdb_interp, MGED_DB_NAME, (Tcl_CmdProc *)wdb_cmd, (ClientData)s->wdbp, wdb_deleteProc);
-
-    /* Return new function name as result */
-    Tcl_AppendResult((Tcl_Interp *)s->wdbp->wdb_interp, MGED_DB_NAME, (char *)NULL);
 
     /* This creates the ".inmem" in-memory geometry container and sets
      * up the GUI.
@@ -302,11 +294,48 @@ int
 mged_pre_closedb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *UNUSED(gedp), void *ctx)
 {
     struct mged_opendb_ctx *mctx = (struct mged_opendb_ctx *)ctx;
+    struct mged_state *s = mctx->s;
 
-    /* Close the Tcl database objects */
-    Tcl_Eval(mctx->interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
+    /* The libged db command is permanent.  Only .inmem is still a Tcl
+     * database object with a reference-closing delete callback.
+     */
+    if (s->wdbp)
+	bu_observer_free(&s->wdbp->wdb_observers);
+    (void)Tcl_DeleteCommand(mctx->interpreter, MGED_INMEM_NAME);
 
     return BRLCAD_OK;
+}
+
+
+int
+mged_db_during_clbk(int argc, const char **argv, void *u1, void *u2)
+{
+    struct ged *gedp = (struct ged *)u1;
+    struct mged_state *s = (struct mged_state *)u2;
+
+    if (!gedp || !s || argc < 2 || !argv)
+	return BRLCAD_ERROR | GED_UNKNOWN;
+
+    int mged_cmd = BU_STR_EQUAL(argv[1], "make_bb") ||
+	BU_STR_EQUAL(argv[1], "observer") ||
+	BU_STR_EQUAL(argv[1], "rt_gettrees");
+    if (!mged_cmd) {
+	bu_vls_printf(gedp->ged_result_str, "db: unknown subcommand '%s'", argv[1]);
+	return BRLCAD_ERROR | GED_UNKNOWN;
+    }
+
+    if (!s->wdbp) {
+	bu_vls_printf(gedp->ged_result_str, "db %s: no database is currently open", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    Tcl_ResetResult(s->interp);
+    int ret = mged_wdb_db_cmd(s->wdbp, argc, argv);
+    const char *tresult = Tcl_GetStringResult(s->interp);
+    if (tresult && tresult[0])
+	bu_vls_strcpy(gedp->ged_result_str, tresult);
+
+    return ret;
 }
 
 int

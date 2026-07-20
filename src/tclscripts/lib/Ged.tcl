@@ -195,6 +195,7 @@ package provide cadwidgets::Ged 1.0
 	method data_pick {args}
 	method data_scale_mode {args}
 	method data_vZ {args}
+	method db {args}
 	method dbconcat {args}
 	method dbfind {args}
 	method dbip {args}
@@ -1566,6 +1567,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::data_vZ {args} {
     eval $mGed data_vZ $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::db {args} {
+    eval $mGed db $args
 }
 
 ::itcl::body cadwidgets::Ged::dbconcat {args} {
@@ -6240,6 +6245,7 @@ package provide cadwidgets::Ged 1.0
     $help add copymat		{{a/b c/d}	{copy matrix from one combination's arc to another's}}
     $help add cp		{{from to} {copy [duplicate] object}}
     $help add cpi		{{from to}	{copy cylinder and position at end of original cylinder}}
+    $help add db		{{subcommand [args]} {dispatch a database-oriented libged subcommand}}
     $help add dbconcat		{{[-L] [-O] [-t] [-u] [-c] [-s|-p] file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
     $help add dbfind		{{[-s] <objects>} {find all references to objects}}
     $help add dbip		{{} {get dbip}}

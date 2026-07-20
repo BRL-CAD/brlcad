@@ -16,6 +16,12 @@ removed at any time.
 
 == 7.44
 
+libged commands
+
+	find, dbfind -> db find
+	version, dbversion -> db version
+	[deprecated 7.44]
+
 include/icv/io.h
 
 	The following libicv APIs preserve legacy behavior but are
