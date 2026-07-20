@@ -85,19 +85,19 @@ By default, only the "top level" objects in any search are used as starting poin
 |Search using top level objects in database as starting points, return list of matching full paths.
 |.
 |Search using top level objects in database as starting points, return list of all matching objects (default).
-||
+|\|
 |Iterate over all objects in the database without doing a tree walk, return list of all matching objects.
-||/
+|\|/
 |Search using every object in the database as a starting point, return list of matching full paths.
-||.
+|\|.
 |Search using every object in the database as a starting point, return list of all matching objects.
 |/objname
 |Use object _objname_ as the starting point, return list of matching full paths.
 |objname
 |Use object _objname_ as the starting point, return list of all matching objects.
-||/objname
+|\|/objname
 |Use every object below _objname_ as starting points, return list of matching full paths.
-||objname
+|\|objname
 |Use every object below _objname_ as starting points, return list of all matching objects.
 |===
 
