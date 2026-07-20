@@ -126,6 +126,12 @@ constexpr int kDenseLiftValidationSegments = 1024;
 constexpr int kMaximumAdjustedPolylineRefinementDepth = 12;
 constexpr size_t kMaximumAdjustedPolylineSamples = 16384;
 
+/* STEP pcurves at a periodic join can differ by a few measured microradians
+ * even when their lifted 3-D endpoints and topology vertex coincide.  This
+ * scale-relative bound only recognizes and snaps parameters already proven
+ * coincident in model space; it is never used to accept geometric error. */
+constexpr double kPeriodicParameterSnapFraction = 1.0e-5;
+
 /* Keep numerical solver floors comfortably above floating-point zero without
  * replacing the model-derived tolerance used for acceptance. */
 constexpr double kNumericalToleranceScale = 1024.0;
@@ -911,6 +917,302 @@ align_nurbs_surface_seam(std::list<PBCData *> &pullbacks, const ON_Surface *surf
 }
 
 
+/* A loop that winds around a surface pole cannot be made into a closed
+ * Euclidean UV polygon by moving the seam away from its boundary: every seam
+ * connecting the two poles must cross the loop.  Put the surface seam exactly
+ * at the already proven full-period topology join.  Trim construction can
+ * then encode the required zero-area pole cut with two uses of one seam edge
+ * and a singular trim. */
+static bool
+align_surface_seam_with_periodic_loop_cut(
+    std::list<PBCData *> &pullbacks, ON_Brep *brep, ON_BrepFace *face,
+    const ON_Surface *&surface, double tolerance, std::string *failure = NULL)
+{
+    if (failure)
+	failure->clear();
+    if (!brep || !face || !surface || !(tolerance > 0.0) || pullbacks.empty())
+	return false;
+
+    ON_NurbsSurface *nurbs = ON_NurbsSurface::Cast(
+	const_cast<ON_Surface *>(surface));
+    ON_RevSurface *revolution = ON_RevSurface::Cast(
+	const_cast<ON_Surface *>(surface));
+    if (!nurbs && !revolution)
+	return false;
+
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!surface->IsClosed(direction))
+	    continue;
+	const ON_Interval domain = surface->Domain(direction);
+	const double period = domain.Length();
+	if (!(period > ON_ZERO_TOLERANCE))
+	    continue;
+	const int singular_direction = 1 - direction;
+	const bool has_singular_side = singular_direction == 0 ?
+	    (surface->IsSingular(3) || surface->IsSingular(1)) :
+	    (surface->IsSingular(0) || surface->IsSingular(2));
+	if (!has_singular_side)
+	    continue;
+
+	/* Only a nonzero net winding requires a pole cut.  Ordinary edges can
+	 * cross the native seam and create one-period local jumps while the loop
+	 * as a whole remains contractible; those must stay ordinary edges. */
+	double unwrapped_travel = 0.0;
+	for (std::list<PBCData *>::const_iterator data = pullbacks.begin();
+		data != pullbacks.end(); ++data) {
+	    if (!*data || !(*data)->segments || (*data)->segments->empty() ||
+		    !(*data)->segments->front() || !(*data)->segments->back() ||
+		    (*data)->segments->front()->Count() == 0 ||
+		    (*data)->segments->back()->Count() == 0)
+		continue;
+	    const ON_2dPointArray *last_segment = (*data)->segments->back();
+	    double edge_travel =
+		(*last_segment)[last_segment->Count() - 1][direction] -
+		(*(*data)->segments->front())[0][direction];
+	    edge_travel -= round(edge_travel / period) * period;
+	    unwrapped_travel += edge_travel;
+	}
+	const double winding = unwrapped_travel / period;
+	if (fabs(winding) < 0.5 ||
+		fabs(winding - round(winding)) > kPeriodicParameterSnapFraction) {
+	    if (failure && fabs(winding) > 0.1) {
+		std::ostringstream reason;
+		reason << "the measured periodic loop winding was " << winding
+		    << " rather than a nonzero integer";
+		*failure = reason.str();
+	    }
+	    continue;
+	}
+	if (failure) {
+	    std::ostringstream reason;
+	    reason << "the loop winds " << round(winding)
+		<< " times but no exact full-period topology join was found";
+	    *failure = reason.str();
+	}
+
+	PBCData *previous = pullbacks.back();
+	for (std::list<PBCData *>::iterator current = pullbacks.begin();
+		current != pullbacks.end(); ++current) {
+	    if (!previous || !previous->segments || previous->segments->empty() ||
+		    !previous->segments->back() ||
+		    previous->segments->back()->Count() == 0 || !*current ||
+		    !(*current)->segments || (*current)->segments->empty() ||
+		    !(*current)->segments->front() ||
+		    (*current)->segments->front()->Count() == 0) {
+		previous = *current;
+		continue;
+	    }
+	    const ON_2dPointArray *previous_segment = previous->segments->back();
+	    const ON_2dPoint previous_end =
+		(*previous_segment)[previous_segment->Count() - 1];
+	    const ON_2dPoint current_start = (*(*current)->segments->front())[0];
+	    const double gap = fabs(current_start[direction] -
+		previous_end[direction]);
+	    if (fabs(gap - period) > kPeriodicParameterSnapFraction *
+		    std::max(1.0, period)) {
+		previous = *current;
+		continue;
+	    }
+	    const ON_3dPoint previous_lift = surface->PointAt(
+		previous_end.x, previous_end.y);
+	    const ON_3dPoint current_lift = surface->PointAt(
+		current_start.x, current_start.y);
+	    if (!previous_lift.IsValid() || !current_lift.IsValid() ||
+		    previous_lift.DistanceTo(current_lift) > tolerance) {
+		previous = *current;
+		continue;
+	    }
+
+	    const double lower = std::min(previous_end[direction],
+		current_start[direction]);
+	    double seam = std::max(previous_end[direction],
+		current_start[direction]);
+	    while (seam < domain.Min()) seam += period;
+	    while (seam > domain.Max()) seam -= period;
+	    if (!domain.Includes(seam)) {
+		previous = *current;
+		continue;
+	    }
+	    /* Reparameterization shifts must be exact integral periods.  Source
+	     * pcurve endpoints can disagree by a few measured microradians even
+	     * when their 3-D lifts and topology vertex are coincident; snap those
+	     * endpoints below, but never bake that source discrepancy into the
+	     * surface parameterization itself. */
+	    const double shift = round((seam - lower) / period) * period;
+	    std::unique_ptr<ON_Surface> candidate;
+	    if (nurbs) {
+		std::unique_ptr<ON_NurbsSurface> nurbs_candidate(
+		    new ON_NurbsSurface(*nurbs));
+		if (!nurbs_candidate->ChangeSurfaceSeam(direction, seam) ||
+			!nurbs_candidate->IsValid()) {
+		    if (failure)
+			*failure = "openNURBS rejected the NURBS pole-cut seam";
+		    previous = *current;
+		    continue;
+		}
+		candidate.reset(nurbs_candidate.release());
+	    } else {
+		const int angle_direction = revolution->m_bTransposed ? 1 : 0;
+		if (direction != angle_direction ||
+			fabs(revolution->m_angle.Length() - ON_2PI) >
+			ON_ZERO_TOLERANCE) {
+		    if (failure)
+			*failure = "the revolution surface angle direction or span was incompatible";
+		    previous = *current;
+		    continue;
+		}
+		std::unique_ptr<ON_RevSurface> revolution_candidate(
+		    new ON_RevSurface(*revolution));
+		const double angle = revolution->m_angle.ParameterAt(
+		    domain.NormalizedParameterAt(seam));
+		revolution_candidate->m_angle.Set(angle, angle + ON_2PI);
+		revolution_candidate->m_t.Set(seam, seam + period);
+		if (!revolution_candidate->IsValid()) {
+		    if (failure)
+			*failure = "openNURBS rejected the revolution pole-cut seam";
+		    previous = *current;
+		    continue;
+		}
+		candidate.reset(revolution_candidate.release());
+	    }
+
+	    bool valid = true;
+	    for (std::list<PBCData *>::const_iterator data = pullbacks.begin();
+		    valid && data != pullbacks.end(); ++data) {
+		if (!*data || !(*data)->segments)
+		    continue;
+		for (std::list<ON_2dPointArray *>::const_iterator segment =
+			(*data)->segments->begin(); valid && segment !=
+			(*data)->segments->end(); ++segment) {
+		    if (!*segment)
+			continue;
+		    for (int point = 0; point < (*segment)->Count(); ++point) {
+			const ON_2dPoint original = (**segment)[point];
+			ON_2dPoint normalized = original;
+			while (normalized[direction] < domain.Min())
+			    normalized[direction] += period;
+			while (normalized[direction] > domain.Max())
+			    normalized[direction] -= period;
+			ON_2dPoint shifted = original;
+			shifted[direction] += shift;
+			const ON_3dPoint old_lift = surface->PointAt(
+			    normalized.x, normalized.y);
+			const ON_3dPoint new_lift = candidate->PointAt(
+			    shifted.x, shifted.y);
+			const double lift_error = old_lift.IsValid() &&
+			    new_lift.IsValid() ? old_lift.DistanceTo(new_lift) :
+			    DBL_MAX;
+			if (lift_error > tolerance) {
+			    if (failure) {
+				std::ostringstream reason;
+				reason << "the pole-cut seam reparameterization changed a sampled lift by "
+				    << lift_error << " at " << original.x << ':'
+				    << original.y << " (normalized " << normalized.x
+				    << ':' << normalized.y << ", shifted " << shifted.x
+				    << ':' << shifted.y << ", seam " << seam
+				    << ", shift " << shift << ')';
+				*failure = reason.str();
+			    }
+			    valid = false;
+			    break;
+			}
+		    }
+		}
+	    }
+	    if (!valid) {
+		previous = *current;
+		continue;
+	    }
+
+	    ON_Surface *replacement = candidate.release();
+	    const int replacement_index = brep->AddSurface(replacement);
+	    if (replacement_index < 0) {
+		delete replacement;
+		if (failure)
+		    *failure = "the BREP rejected the pole-cut surface reparameterization";
+		return false;
+	    }
+	    face->m_si = replacement_index;
+	    face->SetProxySurface(replacement);
+	    surface = replacement;
+	    for (std::list<PBCData *>::iterator data = pullbacks.begin();
+		    data != pullbacks.end(); ++data) {
+		if (!*data || !(*data)->segments)
+		    continue;
+		(*data)->surf = replacement;
+		(*data)->surftree = NULL;
+		for (std::list<ON_2dPointArray *>::iterator segment =
+			(*data)->segments->begin(); segment !=
+			(*data)->segments->end(); ++segment) {
+		    if (!*segment)
+			continue;
+		    const ON_Interval replacement_domain =
+			replacement->Domain(direction);
+		    const double endpoint_tolerance = kPeriodicParameterSnapFraction *
+			std::max(1.0, replacement_domain.Length());
+		    for (int point = 0; point < (*segment)->Count(); ++point) {
+			(**segment)[point][direction] += shift;
+			if (fabs((**segment)[point][direction] -
+				replacement_domain.Min()) <= endpoint_tolerance)
+			    (**segment)[point][direction] = replacement_domain.Min();
+			else if (fabs((**segment)[point][direction] -
+				replacement_domain.Max()) <= endpoint_tolerance)
+			    (**segment)[point][direction] = replacement_domain.Max();
+		    }
+		}
+	    }
+
+	    /* The new seam makes the selected previous/current topology join the
+	     * sole full-period cut.  Rebranch the remaining cyclic chain from that
+	     * current edge forward so every other adjacent pcurve is continuous.
+	     * Applying one uniform shift above preserves geometry but can merely
+	     * move the discontinuity to another edge, causing trim repair to
+	     * oscillate forever between two equivalent branches.  Every adjustment
+	     * here is an exact integral period on the private closed surface. */
+	    std::list<PBCData *>::iterator chain = current;
+	    PBCData *chain_previous = NULL;
+	    for (size_t position = 0; position < pullbacks.size(); ++position) {
+		PBCData *chain_data = *chain;
+		if (chain_previous && chain_previous->segments &&
+			!chain_previous->segments->empty() &&
+			chain_previous->segments->back() &&
+			chain_previous->segments->back()->Count() > 0 && chain_data &&
+			chain_data->segments && !chain_data->segments->empty() &&
+			chain_data->segments->front() &&
+			chain_data->segments->front()->Count() > 0) {
+		    const ON_2dPointArray *chain_previous_segment =
+			chain_previous->segments->back();
+		    const double chain_previous_end =
+			(*chain_previous_segment)[chain_previous_segment->Count() - 1][direction];
+		    const double chain_start =
+			(*chain_data->segments->front())[0][direction];
+		    const double branch_shift = round(
+			(chain_previous_end - chain_start) / period) * period;
+		    if (fabs(branch_shift) > ON_ZERO_TOLERANCE) {
+			for (std::list<ON_2dPointArray *>::iterator segment =
+				chain_data->segments->begin(); segment !=
+				chain_data->segments->end(); ++segment) {
+			    if (!*segment)
+				continue;
+			    for (int point = 0; point < (*segment)->Count(); ++point)
+				(**segment)[point][direction] += branch_shift;
+			}
+		    }
+		}
+		chain_previous = chain_data;
+		++chain;
+		if (chain == pullbacks.end())
+		    chain = pullbacks.begin();
+	    }
+	    previous->periodic_pole_cut_after = true;
+	    (*current)->periodic_pole_cut_before = true;
+	    return true;
+	}
+    }
+    return false;
+}
+
+
 /* Move a closed NURBS seam out of an ordinary face boundary.  STEP exporters
  * are allowed to place a face across the underlying surface seam without
  * supplying a duplicated topological seam edge.  In that case independently
@@ -920,20 +1222,26 @@ align_nurbs_surface_seam(std::list<PBCData *> &pullbacks, const ON_Surface *surf
  * exact reparameterization: no sample is accepted unless its lift is unchanged
  * within model uncertainty. */
 static bool
-relocate_nurbs_surface_seam_away_from_boundary(
-    std::list<PBCData *> &pullbacks, const ON_Surface *surface, double tolerance,
-    std::string *failure = NULL)
+relocate_surface_seam_away_from_boundary(
+    std::list<PBCData *> &pullbacks, ON_Brep *brep, ON_BrepFace *face,
+    const ON_Surface *&surface, double tolerance, std::string *failure = NULL)
 {
     if (failure)
 	failure->clear();
-    ON_NurbsSurface *nurbs = ON_NurbsSurface::Cast(
-	const_cast<ON_Surface *>(surface));
-    if (!nurbs || !(tolerance > 0.0) || pullbacks.empty()) {
+
+    const ON_NurbsSurface *nurbs = ON_NurbsSurface::Cast(surface);
+    if (!brep || !face || !surface || !nurbs ||
+	    !(tolerance > 0.0) || pullbacks.empty()) {
 	if (failure)
-	    *failure = !nurbs ? "the closed surface is not an ON_NurbsSurface" :
-		"the pullback set or tolerance is empty";
+	    *failure = !brep || !face || !surface ?
+		"the BREP face or surface is unavailable" :
+		(!nurbs ?
+		"ordinary seam relocation requires a native NURBS surface" :
+		"the pullback set or tolerance is empty");
 	return false;
     }
+
+    const ON_NurbsSurface &source_nurbs = *nurbs;
 
     std::set<const ON_BrepEdge *> edges;
     for (std::list<PBCData *>::const_iterator data = pullbacks.begin();
@@ -954,9 +1262,6 @@ relocate_nurbs_surface_seam_away_from_boundary(
 	    continue;
 
 	std::vector<double> parameters;
-	bool crosses_current_seam = false;
-	bool have_previous = false;
-	double previous = 0.0;
 	for (std::list<PBCData *>::const_iterator data = pullbacks.begin();
 	     data != pullbacks.end(); ++data) {
 	    if (!*data || !(*data)->segments)
@@ -975,15 +1280,42 @@ relocate_nurbs_surface_seam_away_from_boundary(
 		    double phase = std::fmod(value - old_domain.Min(), period);
 		    if (phase < 0.0) phase += period;
 		    parameters.push_back(phase);
-		    if (have_previous && fabs(value - previous) > 0.5 * period)
-			crosses_current_seam = true;
-		    previous = value;
-		    have_previous = true;
 		}
 		if (parameters.empty()) break;
 	    }
 	    if (parameters.empty()) break;
 	}
+	/* Relocation is needed only when adjacent topological edges select
+	 * opposite copies of the same periodic point.  A jump between samples
+	 * inside one edge is an ordinary seam crossing and is handled by the
+	 * bounded split/rejoin path without changing the face surface. */
+	bool crosses_current_seam = false;
+	bool have_first_start = false;
+	double first_start = 0.0;
+	bool have_previous_end = false;
+	double previous_end = 0.0;
+	for (std::list<PBCData *>::const_iterator data = pullbacks.begin();
+	     data != pullbacks.end(); ++data) {
+	    if (!*data || !(*data)->segments || (*data)->segments->empty() ||
+		    !(*data)->segments->front() || !(*data)->segments->back() ||
+		    (*data)->segments->front()->Count() == 0 ||
+		    (*data)->segments->back()->Count() == 0)
+		continue;
+	    const double start = (*(*data)->segments->front())[0][direction];
+	    const ON_2dPointArray *last_segment = (*data)->segments->back();
+	    const double end = (*last_segment)[last_segment->Count() - 1][direction];
+	    if (!have_first_start) {
+		first_start = start;
+		have_first_start = true;
+	    }
+	    if (have_previous_end && fabs(start - previous_end) > 0.5 * period)
+		crosses_current_seam = true;
+	    previous_end = end;
+	    have_previous_end = true;
+	}
+	if (have_previous_end && have_first_start &&
+		fabs(first_start - previous_end) > 0.5 * period)
+	    crosses_current_seam = true;
 	if (!crosses_current_seam || parameters.size() < 2) {
 	    if (failure && failure->empty())
 		*failure = "no sampled boundary crosses the current surface seam";
@@ -1019,15 +1351,35 @@ relocate_nurbs_surface_seam_away_from_boundary(
 	    continue;
 	}
 
-	ON_NurbsSurface candidate(*nurbs);
-	if (!candidate.ChangeSurfaceSeam(direction, seam) || !candidate.IsValid()) {
+	double nurbs_seam_u = direction == 0 ? seam :
+	    surface->Domain(0).Mid();
+	double nurbs_seam_v = direction == 1 ? seam :
+	    surface->Domain(1).Mid();
+	if (!nurbs && !surface->GetNurbFormParameterFromSurfaceParameter(
+		nurbs_seam_u, nurbs_seam_v, &nurbs_seam_u, &nurbs_seam_v)) {
+	    if (failure)
+		*failure = "the candidate seam could not be mapped to the rational surface";
+	    continue;
+	}
+	const double nurbs_seam = direction == 0 ? nurbs_seam_u : nurbs_seam_v;
+	ON_NurbsSurface candidate(source_nurbs);
+	if (!candidate.Domain(direction).Includes(nurbs_seam) ||
+		!candidate.ChangeSurfaceSeam(direction, nurbs_seam) ||
+		!candidate.IsValid()) {
 	    if (failure)
 		*failure = "openNURBS rejected the candidate surface seam change";
 	    continue;
 	}
 	const ON_Interval new_domain = candidate.Domain(direction);
+	const double new_period = new_domain.Length();
+	if (!(new_period > ON_ZERO_TOLERANCE)) {
+	    if (failure)
+		*failure = "the relocated rational surface has no periodic domain";
+	    continue;
+	}
 	std::vector<ON_2dPointArray> remapped;
 	bool valid = true;
+	std::string invalid_detail;
 	for (std::list<PBCData *>::const_iterator data = pullbacks.begin();
 	     valid && data != pullbacks.end(); ++data) {
 	    if (!*data || !(*data)->segments)
@@ -1042,36 +1394,86 @@ relocate_nurbs_surface_seam_away_from_boundary(
 		ON_2dPointArray points(**segment);
 		for (int point = 0; valid && point < points.Count(); ++point) {
 		    const ON_2dPoint original = points[point];
-		    double parameter = original[direction];
+		    ON_2dPoint surface_parameter = original;
+		    for (int closed_direction = 0; closed_direction < 2;
+			    ++closed_direction) {
+			if (!surface->IsClosed(closed_direction))
+			    continue;
+			const ON_Interval domain = surface->Domain(closed_direction);
+			const double domain_period = domain.Length();
+			while (surface_parameter[closed_direction] < domain.Min())
+			    surface_parameter[closed_direction] += domain_period;
+			while (surface_parameter[closed_direction] > domain.Max())
+			    surface_parameter[closed_direction] -= domain_period;
+		    }
+		    ON_2dPoint mapped = surface_parameter;
+		    if (!nurbs && !surface->GetNurbFormParameterFromSurfaceParameter(
+			    surface_parameter.x, surface_parameter.y,
+			    &mapped.x, &mapped.y)) {
+			valid = false;
+			break;
+		    }
+		    double parameter = mapped[direction];
 		    while (parameter < new_domain.Min() - endpoint_guard)
-			parameter += period;
+			parameter += new_period;
 		    while (parameter > new_domain.Max() + endpoint_guard)
-			parameter -= period;
-		    points[point][direction] = parameter;
-		    const ON_3dPoint old_lift = surface->PointAt(original.x, original.y);
+			parameter -= new_period;
+		    mapped[direction] = parameter;
+		    points[point] = mapped;
+		    const ON_3dPoint old_lift = surface->PointAt(
+			surface_parameter.x, surface_parameter.y);
 		    const ON_3dPoint new_lift = candidate.PointAt(
 			points[point].x, points[point].y);
-		    valid = old_lift.IsValid() && new_lift.IsValid() &&
-			old_lift.DistanceTo(new_lift) <= tolerance;
-		    if (point > 0 && fabs(points[point][direction] -
-			    points[point - 1][direction]) > 0.5 * period)
+		    const double lift_error = old_lift.IsValid() && new_lift.IsValid() ?
+			old_lift.DistanceTo(new_lift) : DBL_MAX;
+		    valid = lift_error <= tolerance;
+		    if (!valid) {
+			std::ostringstream detail;
+			detail << " (lift error " << lift_error << " at "
+			    << original.x << ':' << original.y << " -> "
+			    << points[point].x << ':' << points[point].y << ')';
+			invalid_detail = detail.str();
+		    }
+		    if (valid && point > 0 && fabs(points[point][direction] -
+			    points[point - 1][direction]) > 0.5 * new_period) {
 			valid = false;
+			std::ostringstream detail;
+			detail << " (mapped segment retained a periodic jump from "
+			    << points[point - 1][direction] << " to "
+			    << points[point][direction] << ')';
+			invalid_detail = detail.str();
+		    }
 		}
 		remapped.push_back(points);
 	    }
 	}
 	if (!valid) {
 	    if (failure)
-		*failure = "the candidate seam did not preserve every sampled 3-D lift";
+		*failure = "the candidate seam did not preserve every sampled 3-D lift" +
+		    invalid_detail;
 	    continue;
 	}
 
-	*nurbs = candidate;
+	/* Give this face a private surface.  Mutating the original in place would
+	 * invalidate trims on any previously completed face sharing that surface. */
+	ON_NurbsSurface *replacement = new ON_NurbsSurface(candidate);
+	const int replacement_index = brep->AddSurface(replacement);
+	if (replacement_index < 0) {
+	    delete replacement;
+	    if (failure)
+		*failure = "the BREP rejected the relocated rational surface";
+	    continue;
+	}
+	face->m_si = replacement_index;
+	face->SetProxySurface(replacement);
+	surface = replacement;
 	size_t remapped_index = 0;
 	for (std::list<PBCData *>::iterator data = pullbacks.begin();
 	     data != pullbacks.end(); ++data) {
 	    if (!*data || !(*data)->segments)
 		continue;
+	    (*data)->surf = replacement;
+	    (*data)->surftree = NULL;
 	    for (std::list<ON_2dPointArray *>::iterator segment =
 		    (*data)->segments->begin(); segment != (*data)->segments->end();
 		 ++segment, ++remapped_index) {
@@ -1657,6 +2059,76 @@ split_periodic_pullback_at_native_seams(PBCData *data, double tolerance,
 }
 
 
+/* Native-domain seam fragments of one ordinary STEP edge are not separate
+ * topology uses.  Rejoin them on one unwrapped periodic branch so openNURBS
+ * receives one trim with the original edge's two vertices.  Only a proven
+ * surface-singularity split may create real subedges; representing an
+ * ordinary seam crossing as multiple trims on the complete source edge gives
+ * every fragment the same endpoint vertices and makes loop topology invalid. */
+static bool
+merge_ordinary_periodic_pullback_fragments(PBCData *data, double tolerance)
+{
+    if (!data || !data->segments || data->segments->size() < 2 ||
+	    !data->surf || !(tolerance > 0.0))
+	return false;
+
+    std::unique_ptr<ON_2dPointArray> merged(new ON_2dPointArray());
+    const double lift_tolerance = std::max(ON_ZERO_TOLERANCE *
+	kNumericalToleranceScale, tolerance * 1.0e-8);
+    for (std::list<ON_2dPointArray *>::const_iterator segment =
+	    data->segments->begin(); segment != data->segments->end(); ++segment) {
+	if (!*segment || (*segment)->Count() < 2)
+	    return false;
+	ON_2dPointArray shifted(**segment);
+	if (merged->Count() > 0) {
+	    const ON_2dPoint previous = (*merged)[merged->Count() - 1];
+	    const ON_2dPoint first = shifted[0];
+	    double translation[2] = {0.0, 0.0};
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (!data->surf->IsClosed(direction))
+		    continue;
+		const double period = data->surf->Domain(direction).Length();
+		if (period > ON_ZERO_TOLERANCE)
+		    translation[direction] = round((previous[direction] -
+			first[direction]) / period) * period;
+	    }
+	    for (int point = 0; point < shifted.Count(); ++point) {
+		const ON_2dPoint original = shifted[point];
+		shifted[point].x += translation[0];
+		shifted[point].y += translation[1];
+		const ON_3dPoint original_lift = data->surf->PointAt(
+		    original.x, original.y);
+		const ON_3dPoint shifted_lift = data->surf->PointAt(
+		    shifted[point].x, shifted[point].y);
+		if (!original_lift.IsValid() || !shifted_lift.IsValid() ||
+			original_lift.DistanceTo(shifted_lift) > lift_tolerance)
+		    return false;
+	    }
+	    const double parameter_tolerance = std::max(ON_ZERO_TOLERANCE,
+		std::max(data->surf->Domain(0).Length(),
+		    data->surf->Domain(1).Length()) * 1.0e-10);
+	    if (previous.DistanceTo(shifted[0]) > parameter_tolerance)
+		return false;
+	}
+	const int first_point = merged->Count() > 0 ? 1 : 0;
+	for (int point = first_point; point < shifted.Count(); ++point) {
+	    if (merged->Count() == 0 || shifted[point].DistanceTo(
+		    (*merged)[merged->Count() - 1]) > ON_ZERO_TOLERANCE)
+		merged->Append(shifted[point]);
+	}
+    }
+    if (merged->Count() < 2)
+	return false;
+
+    while (!data->segments->empty()) {
+	delete data->segments->front();
+	data->segments->pop_front();
+    }
+    data->segments->push_back(merged.release());
+    return true;
+}
+
+
 static bool
 snap_seam_pullback_pair(std::list<PBCData *> &pullbacks, PBCData *first, PBCData *second,
 	ON_BrepLoop::TYPE expected_loop_type, double tolerance)
@@ -1878,6 +2350,9 @@ snap_pullback_loop_endpoints(std::list<PBCData *> &pullbacks, const ON_Brep *bre
 	SegmentRef &next = segments[(i + 1) % segments.size()];
 	ON_2dPoint *end = current.samples->At(current.samples->Count() - 1);
 	ON_2dPoint *start = next.samples->At(0);
+	if (current.data != next.data && current.data->periodic_pole_cut_after &&
+		next.data->periodic_pole_cut_before)
+	    continue;
 	if (!end || !start || end->DistanceTo(*start) <= ON_ZERO_TOLERANCE ||
 	    current.data->surf != next.data->surf)
 	    continue;
@@ -3717,6 +4192,162 @@ Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
 bool _debug_print_ = false;
 #endif
 
+
+/* Insert the standard exact BREP representation for a face boundary that
+ * winds around a surface pole.  The two trims of the new seam edge have
+ * opposite 3-D orientation and therefore add no geometric boundary; the
+ * singular trim connects their UV endpoints across the collapsed pole. */
+static bool
+insert_periodic_pole_cut(ON_Brep *brep, ON_BrepLoop &loop,
+    const ON_Surface *surface, const ON_BrepTrim &boundary_trim,
+    const ON_2dPoint &boundary_end, const ON_2dPoint &boundary_start,
+    double tolerance)
+{
+    if (!brep || !surface || !(tolerance > 0.0) ||
+	    boundary_trim.m_vi[1] < 0 ||
+	    boundary_trim.m_vi[1] >= brep->m_V.Count())
+	return false;
+
+    int seam_direction = -1;
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!surface->IsClosed(direction))
+	    continue;
+	const ON_Interval domain = surface->Domain(direction);
+	const double period = domain.Length();
+	const double gap = fabs(boundary_start[direction] -
+	    boundary_end[direction]);
+	const double parameter_tolerance = kPeriodicParameterSnapFraction *
+	    std::max(1.0, period);
+	const bool endpoints_are_seam_sides =
+	    (fabs(boundary_end[direction] - domain.Min()) <= parameter_tolerance &&
+	     fabs(boundary_start[direction] - domain.Max()) <= parameter_tolerance) ||
+	    (fabs(boundary_end[direction] - domain.Max()) <= parameter_tolerance &&
+	     fabs(boundary_start[direction] - domain.Min()) <= parameter_tolerance);
+	if (fabs(gap - period) <= parameter_tolerance && endpoints_are_seam_sides) {
+	    seam_direction = direction;
+	    break;
+	}
+    }
+    if (seam_direction < 0)
+	return false;
+
+    const int singular_direction = 1 - seam_direction;
+    const ON_Interval singular_domain = surface->Domain(singular_direction);
+    const double boundary_parameter = 0.5 *
+	(boundary_end[singular_direction] + boundary_start[singular_direction]);
+    int singular_side = -1;
+    if (singular_direction == 0) {
+	if (surface->IsSingular(3)) singular_side = 0; /* west */
+	if (surface->IsSingular(1) && (singular_side < 0 ||
+		fabs(boundary_parameter - singular_domain.Max()) <
+		fabs(boundary_parameter - singular_domain.Min())))
+	    singular_side = 1; /* east */
+    } else {
+	if (surface->IsSingular(0)) singular_side = 0; /* south */
+	if (surface->IsSingular(2) && (singular_side < 0 ||
+		fabs(boundary_parameter - singular_domain.Max()) <
+		fabs(boundary_parameter - singular_domain.Min())))
+	    singular_side = 1; /* north */
+    }
+    if (singular_side < 0)
+	return false;
+
+    ON_2dPoint first_pole = boundary_end;
+    ON_2dPoint second_pole = boundary_start;
+    first_pole[singular_direction] = singular_domain[singular_side];
+    second_pole[singular_direction] = singular_domain[singular_side];
+    const ON_3dPoint boundary_lift = surface->PointAt(
+	boundary_end.x, boundary_end.y);
+    const ON_3dPoint start_lift = surface->PointAt(
+	boundary_start.x, boundary_start.y);
+    const ON_3dPoint first_pole_lift = surface->PointAt(
+	first_pole.x, first_pole.y);
+    const ON_3dPoint second_pole_lift = surface->PointAt(
+	second_pole.x, second_pole.y);
+    const ON_BrepVertex &boundary_vertex =
+	brep->m_V[boundary_trim.m_vi[1]];
+    if (!boundary_lift.IsValid() || !start_lift.IsValid() ||
+	    !first_pole_lift.IsValid() || !second_pole_lift.IsValid() ||
+	    boundary_lift.DistanceTo(start_lift) > tolerance ||
+	    boundary_lift.DistanceTo(boundary_vertex.Point()) > tolerance ||
+	    first_pole_lift.DistanceTo(second_pole_lift) > tolerance)
+	return false;
+
+    std::unique_ptr<ON_Curve> seam_curve(surface->IsoCurve(
+	singular_direction, boundary_end[seam_direction]));
+    const ON_Interval seam_subdomain(
+	std::min(boundary_end[singular_direction],
+	    singular_domain[singular_side]),
+	std::max(boundary_end[singular_direction],
+	    singular_domain[singular_side]));
+    if (!seam_curve || !seam_subdomain.IsIncreasing() ||
+	    !seam_curve->Trim(seam_subdomain) || !seam_curve->IsValid())
+	return false;
+    if (seam_curve->PointAtStart().DistanceTo(boundary_lift) >
+	    seam_curve->PointAtEnd().DistanceTo(boundary_lift) &&
+	    !seam_curve->Reverse())
+	return false;
+    if (seam_curve->PointAtStart().DistanceTo(boundary_lift) > tolerance ||
+	    seam_curve->PointAtEnd().DistanceTo(first_pole_lift) > tolerance)
+	return false;
+
+    std::unique_ptr<ON_LineCurve> first_trim_curve(
+	new ON_LineCurve(boundary_end, first_pole));
+    std::unique_ptr<ON_LineCurve> singular_trim_curve(
+	new ON_LineCurve(first_pole, second_pole));
+    std::unique_ptr<ON_LineCurve> second_trim_curve(
+	new ON_LineCurve(second_pole, boundary_start));
+    if (!first_trim_curve->ChangeDimension(2) ||
+	    !singular_trim_curve->ChangeDimension(2) ||
+	    !second_trim_curve->ChangeDimension(2) ||
+	    !first_trim_curve->IsValid() || !singular_trim_curve->IsValid() ||
+	    !second_trim_curve->IsValid())
+	return false;
+
+    const int seam_curve_index = brep->AddEdgeCurve(seam_curve.release());
+    const int first_trim_index = brep->AddTrimCurve(first_trim_curve.release());
+    const int singular_trim_index = brep->AddTrimCurve(
+	singular_trim_curve.release());
+    const int second_trim_index = brep->AddTrimCurve(second_trim_curve.release());
+    if (seam_curve_index < 0 || first_trim_index < 0 ||
+	    singular_trim_index < 0 || second_trim_index < 0)
+	return false;
+
+    ON_BrepVertex &pole_vertex = brep->NewVertex(first_pole_lift, tolerance);
+    ON_BrepEdge &seam_edge = brep->NewEdge(
+	brep->m_V[boundary_trim.m_vi[1]], pole_vertex, seam_curve_index,
+	NULL, tolerance);
+    ON_BrepTrim &first_seam = brep->NewTrim(seam_edge, false, loop,
+	first_trim_index);
+    const ON_Surface::ISO singular_iso = singular_direction == 0 ?
+	(singular_side == 0 ? ON_Surface::W_iso : ON_Surface::E_iso) :
+	(singular_side == 0 ? ON_Surface::S_iso : ON_Surface::N_iso);
+    ON_BrepTrim &singular_trim = brep->NewSingularTrim(pole_vertex, loop,
+	singular_iso, singular_trim_index);
+    ON_BrepTrim &second_seam = brep->NewTrim(seam_edge, true, loop,
+	second_trim_index);
+
+    const ON_Interval seam_domain = surface->Domain(seam_direction);
+    const bool first_is_min = fabs(boundary_end[seam_direction] -
+	seam_domain.Min()) <= fabs(boundary_end[seam_direction] -
+	seam_domain.Max());
+    first_seam.m_type = ON_BrepTrim::seam;
+    second_seam.m_type = ON_BrepTrim::seam;
+    first_seam.m_iso = seam_direction == 0 ?
+	(first_is_min ? ON_Surface::W_iso : ON_Surface::E_iso) :
+	(first_is_min ? ON_Surface::S_iso : ON_Surface::N_iso);
+    second_seam.m_iso = seam_direction == 0 ?
+	(first_is_min ? ON_Surface::E_iso : ON_Surface::W_iso) :
+	(first_is_min ? ON_Surface::N_iso : ON_Surface::S_iso);
+    singular_trim.m_iso = singular_iso;
+    first_seam.m_tolerance[0] = first_seam.m_tolerance[1] = tolerance;
+    second_seam.m_tolerance[0] = second_seam.m_tolerance[1] = tolerance;
+    singular_trim.m_tolerance[0] = singular_trim.m_tolerance[1] = tolerance;
+    seam_edge.m_tolerance = tolerance;
+    return true;
+}
+
+
 bool
 Path::LoadONTrimmingCurves(ON_Brep *brep)
 {
@@ -4137,22 +4768,45 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
 		    "translated an exact pcurve onto the native periodic surface domain");
 	}
-	if (align_nurbs_surface_seam(curve_pullback_samples, surface,
+	std::string pole_cut_failure;
+	const bool aligned_pole_cut = align_surface_seam_with_periodic_loop_cut(
+	    curve_pullback_samples, brep, face, surface, LocalUnits::tolerance,
+	    &pole_cut_failure);
+	if (aligned_pole_cut) {
+	    for (std::map<PBCData *, ON_Curve *>::iterator exact =
+		    exact_pullbacks.begin(); exact != exact_pullbacks.end(); ++exact)
+		delete exact->second;
+	    exact_pullbacks.clear();
+	    step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+		"aligned a closed surface seam with an exact pole cut");
+	} else if (align_nurbs_surface_seam(curve_pullback_samples, surface,
 		LocalUnits::tolerance)) {
 	    step->RecordRepair(id, "EDGE_LOOP", "edge_list",
 		"aligned a periodic NURBS surface seam with its closed edge");
 	} else {
 	    std::string relocation_failure;
-	    if (relocate_nurbs_surface_seam_away_from_boundary(
-		    curve_pullback_samples, surface, LocalUnits::tolerance,
+	    if (relocate_surface_seam_away_from_boundary(
+		    curve_pullback_samples, brep, face, surface,
+		    LocalUnits::tolerance,
 		    &relocation_failure)) {
+	    /* Exact pcurve objects were expressed in the original surface
+	     * parameterization.  The remapped samples are fully lift-validated;
+	     * rebuild curves from them rather than reusing stale parameter curves. */
+	    for (std::map<PBCData *, ON_Curve *>::iterator exact =
+		    exact_pullbacks.begin(); exact != exact_pullbacks.end(); ++exact)
+		delete exact->second;
+	    exact_pullbacks.clear();
 	    step->RecordRepair(id, "EDGE_LOOP", "edge_list",
-		"relocated a closed NURBS surface seam outside the face boundary");
+		"relocated a closed rational surface seam outside the face boundary");
 	    } else if (step->Verbose() && !relocation_failure.empty()) {
 		std::cerr << "EDGE_LOOP #" << id
 		    << ": periodic surface seam relocation rejected: "
 		    << relocation_failure << std::endl;
 	    }
+	    if (step->Verbose() && !pole_cut_failure.empty())
+		std::cerr << "EDGE_LOOP #" << id
+		    << ": periodic pole-cut alignment rejected: "
+		    << pole_cut_failure << std::endl;
 	}
     }
 
@@ -4273,9 +4927,17 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    if (!split_periodic_pullback_at_native_seams(*current,
 		    LocalUnits::tolerance, &seam_splits))
 		continue;
+	    const bool singular_split = pullback_requires_singular_topology_split(
+		*current, std::max(LocalUnits::tolerance, (*current)->tolerance));
+	    if (!singular_split && merge_ordinary_periodic_pullback_fragments(
+		    *current, LocalUnits::tolerance)) {
+		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+		    "rejoined an ordinary periodic seam crossing into one exact edge use");
+		continue;
+	    }
 	    for (size_t split = 0; split < seam_splits; ++split)
 		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
-		    "split a periodic pcurve at the native surface seam");
+		    "split a periodic pcurve at a proven surface singularity");
 	}
     }
     log_adjusted_endpoints("after endpoint repair", curve_pullback_samples);
@@ -4298,8 +4960,14 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	if (singular_split)
 	    possible_subedges += static_cast<int>((*current)->segments->size());
     }
-    if (possible_subedges > 0) {
-	brep->m_E.Reserve(brep->m_E.Count() + possible_subedges);
+    const bool surface_has_pole = surface &&
+	(surface->IsSingular(0) || surface->IsSingular(1) ||
+	 surface->IsSingular(2) || surface->IsSingular(3));
+    const int possible_pole_cuts = surface_has_pole ?
+	static_cast<int>(curve_pullback_samples.size()) : 0;
+    if (possible_subedges > 0 || possible_pole_cuts > 0) {
+	brep->m_E.Reserve(brep->m_E.Count() + possible_subedges +
+	    possible_pole_cuts);
 	for (std::map<PBCData *, int>::const_iterator source =
 		source_edge_indices.begin(); source != source_edge_indices.end(); ++source) {
 	    if (source->second >= 0 && source->second < brep->m_E.Count())
@@ -5022,7 +5690,14 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		// endpoints don't connect
 		int is;
 		const ON_Surface *surf = data->surf;
-		if ((is = check_pullback_singularity_bridge(surf, end_current, start_next)) >= 0) {
+		const bool selected_pole_cut = data->periodic_pole_cut_after &&
+		    ndata && ndata->periodic_pole_cut_before;
+		if (selected_pole_cut && insert_periodic_pole_cut(brep, *loop, surf, trim,
+			end_current, start_next, LocalUnits::tolerance)) {
+		    if (step)
+			step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+			    "inserted an exact paired seam cut to a surface pole");
+		} else if ((is = check_pullback_singularity_bridge(surf, end_current, start_next)) >= 0) {
 		    // insert trim
 		    // insert singular trim along
 		    // 0 = south, 1 = east, 2 = north, 3 = west

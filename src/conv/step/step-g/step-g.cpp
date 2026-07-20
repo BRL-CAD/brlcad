@@ -37,6 +37,10 @@
 #include <sstream>
 #include <string>
 
+#ifndef _WIN32
+#  include <sys/resource.h>
+#endif
+
 #include "bu/app.h"
 #include "bu/time.h"
 #include "bu/file.h"
@@ -75,6 +79,22 @@ int
 signal_exit_status()
 {
     return caught_signal ? 128 + static_cast<int>(caught_signal) : 0;
+}
+
+size_t
+peak_rss_bytes()
+{
+#ifndef _WIN32
+    struct rusage usage_info;
+    if (getrusage(RUSAGE_SELF, &usage_info) != 0) return 0;
+#  ifdef __APPLE__
+    return static_cast<size_t>(usage_info.ru_maxrss);
+#  else
+    return static_cast<size_t>(usage_info.ru_maxrss) * 1024U;
+#  endif
+#else
+    return 0;
+#endif
 }
 
 const char *
@@ -174,6 +194,21 @@ write_count_map(std::ostream &out, const std::map<std::string, uint64_t> &values
     out << '}';
 }
 
+void
+write_report_diagnostic(std::ostream &out,
+    const brlcad::step::Diagnostic &diagnostic, bool aggregated)
+{
+    out << "{\"severity\":\"" << severity_name(diagnostic.severity)
+	<< "\",\"entity_id\":" << diagnostic.entity_id
+	<< ",\"entity_type\":\"" << brlcad::step::json_escape(diagnostic.entity_type)
+	<< "\",\"file_offset\":" << diagnostic.file_offset
+	<< ",\"line\":" << diagnostic.line
+	<< ",\"attribute\":\"" << brlcad::step::json_escape(diagnostic.attribute)
+	<< "\",\"message\":\"" << brlcad::step::json_escape(diagnostic.message)
+	<< "\",\"count\":" << diagnostic.repeat_count
+	<< ",\"aggregated\":" << (aggregated ? "true" : "false") << '}';
+}
+
 bool
 write_report(const std::string &path, const std::string &input,
     const std::string &output, const STEPWrapper &step, int exit_status)
@@ -193,7 +228,17 @@ write_report(const std::string &path, const std::string &input,
 	<< ",\"repair\":\"" << (options.repair == brlcad::step::RepairMode::Safe ?
 	    "safe" : "none") << "\",\"exact\":" << (options.exact ? "true" : "false")
 	<< ",\"strict\":" << (options.strict ? "true" : "false")
-	<< ",\"dry_run\":" << (options.dry_run ? "true" : "false") << '}'
+	<< ",\"dry_run\":" << (options.dry_run ? "true" : "false")
+	<< ",\"selected_entity_ids\":[";
+    bool first_selected = true;
+    for (std::set<int64_t>::const_iterator selected =
+	    options.selected_entity_ids.begin(); selected !=
+	    options.selected_entity_ids.end(); ++selected) {
+	if (!first_selected) out << ',';
+	first_selected = false;
+	out << *selected;
+    }
+    out << "]}"
 	<< ",\n  \"coverage\":{\"entity_counts\":";
     write_count_map(out, document.entity_counts);
     out << ",\"unsupported_counts\":";
@@ -223,23 +268,64 @@ write_report(const std::string &path, const std::string &input,
 	<< stats.lazy_indexed_instances << ",\"high_water_instances\":"
 	<< stats.lazy_loaded_instances << ",\"current_loaded_instances\":"
 	<< stats.lazy_current_loaded_instances << ",\"pinned_instances\":"
-	<< stats.lazy_pinned_instances << ",\"materializations\":"
+	<< stats.lazy_pinned_instances << ",\"hits\":" << stats.lazy_cache_hits
+	<< ",\"misses\":" << stats.lazy_cache_misses
+	<< ",\"materializations\":"
 	<< stats.lazy_materializations << ",\"evictions\":" << stats.lazy_evictions
-	<< ",\"high_water_bytes\":";
+	<< ",\"active_batches\":" << stats.lazy_active_batches
+	<< ",\"data_sections\":" << stats.lazy_data_sections
+	<< ",\"bytes\":";
+    if (stats.lazy_cache_bytes_available) out << stats.lazy_cache_bytes;
+    else out << "null";
+    out << ",\"high_water_bytes\":";
     if (stats.lazy_cache_bytes_available) out << stats.lazy_cache_byte_high_water;
     else out << "null";
     out << '}' << ",\n  \"peak_rss_bytes\":" << stats.peak_rss_bytes
 	<< ",\n  \"diagnostics\":[";
-    bool first_diagnostic = true;
-    for (const brlcad::step::Diagnostic &diagnostic : step.Diagnostics()) {
-	if (!first_diagnostic) out << ',';
-	first_diagnostic = false;
-	out << "{\"severity\":\"" << severity_name(diagnostic.severity)
-	    << "\",\"entity_id\":" << diagnostic.entity_id
-	    << ",\"entity_type\":\"" << brlcad::step::json_escape(diagnostic.entity_type)
-	    << "\",\"attribute\":\"" << brlcad::step::json_escape(diagnostic.attribute)
-	    << "\",\"message\":\"" << brlcad::step::json_escape(diagnostic.message)
-	    << "\",\"count\":" << diagnostic.repeat_count << '}';
+    const std::vector<brlcad::step::Diagnostic> &diagnostics = step.Diagnostics();
+    if (options.verbose) {
+	for (size_t i = 0; i < diagnostics.size(); ++i) {
+	    if (i) out << ',';
+	    write_report_diagnostic(out, diagnostics[i], false);
+	}
+    } else {
+	/* Keep routine reports bounded on large assemblies.  Entity location is
+	 * deliberately omitted from the aggregation key; the summed count still
+	 * records every occurrence, while -v retains exact entity records. */
+	std::map<std::string, brlcad::step::Diagnostic> aggregated;
+	for (const brlcad::step::Diagnostic &diagnostic : diagnostics) {
+	    std::string summary_message = diagnostic.message;
+	    if (diagnostic.severity == brlcad::step::DiagnosticSeverity::Warning &&
+		    (summary_message.find("source curve/surface separation exceeds declared tolerance ") == 0 ||
+		     summary_message.find("source edge geometry separation exceeds declared tolerance ") == 0))
+		summary_message = "source edge/surface geometry exceeded the declared tolerance; "
+		    "adjusted affected OpenNURBS edge tolerances after dense validation";
+	    std::string key = std::to_string(static_cast<int>(diagnostic.severity));
+	    key.push_back('\0');
+	    key += diagnostic.entity_type;
+	    key.push_back('\0');
+	    key += diagnostic.attribute;
+	    key.push_back('\0');
+	    key += summary_message;
+	    std::map<std::string, brlcad::step::Diagnostic>::iterator found =
+		aggregated.find(key);
+	    if (found == aggregated.end()) {
+		brlcad::step::Diagnostic summary = diagnostic;
+		summary.message = summary_message;
+		summary.entity_id = 0;
+		summary.file_offset = 0;
+		summary.line = 0;
+		aggregated.insert(std::make_pair(key, summary));
+	    } else {
+		found->second.repeat_count += diagnostic.repeat_count;
+	    }
+	}
+	bool first = true;
+	for (const auto &entry : aggregated) {
+	    if (!first) out << ',';
+	    first = false;
+	    write_report_diagnostic(out, entry.second, true);
+	}
     }
     out << "]\n}\n";
     return static_cast<bool>(out);
@@ -320,13 +406,14 @@ int
 main(int argc, const char *argv[])
 {
     int ret = 0;
-    int64_t elapsedtime;
+    int64_t convert_started = 0;
+    int64_t convert_elapsed = 0;
 
     bu_setprogname(argv[0]);
     std::signal(SIGINT, record_signal);
     std::signal(SIGTERM, record_signal);
 
-    elapsedtime = bu_gettime();
+    const int64_t load_started = bu_gettime();
 
     /*
      * You have to initialize the schema before you do anything else.
@@ -460,10 +547,11 @@ main(int argc, const char *argv[])
 
 	step->printLoadStatistics();
 
-	elapsedtime = bu_gettime() - elapsedtime;
+	const int64_t load_elapsed = bu_gettime() - load_started;
+	step->Statistics().load_time_us = load_elapsed;
 	{
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
-	    int seconds = elapsedtime / 1000000;
+	    int seconds = load_elapsed / 1000000;
 	    int minutes = seconds / 60;
 	    int hours = minutes / 60;
 
@@ -474,7 +562,7 @@ main(int argc, const char *argv[])
 	    std::cerr << bu_vls_addr(&vls) << std::endl;
 	    bu_vls_free(&vls);
 	}
-	elapsedtime = bu_gettime();
+	convert_started = bu_gettime();
 
 	BRLCADWrapper *dotg  = new BRLCADWrapper();
 	if (!dotg) {
@@ -526,8 +614,13 @@ main(int argc, const char *argv[])
 	    delete dotg;
 	}
     } else {
+	step->Statistics().load_time_us = bu_gettime() - load_started;
 	ret = signal_exit_status() ? signal_exit_status() : 2;
     }
+    if (convert_started)
+	convert_elapsed = bu_gettime() - convert_started;
+    step->Statistics().convert_time_us = convert_elapsed;
+    step->Statistics().peak_rss_bytes = peak_rss_bytes();
     progress_reporter.reset();
     const std::string report_path = report_name ? report_name : "";
     if (!write_report(report_path, iflnm, oflnm, *step, ret)) {
@@ -537,10 +630,9 @@ main(int argc, const char *argv[])
     }
     delete step;
 
-    elapsedtime = bu_gettime() - elapsedtime;
     {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
-	int seconds = elapsedtime / 1000000;
+	int seconds = convert_elapsed / 1000000;
 	int minutes = seconds / 60;
 	int hours = minutes / 60;
 

@@ -81,6 +81,11 @@ typedef struct pbc_data {
     double maximum_projection_distance = 0.0;
     bool tolerance_adjusted = false;
     double declared_tolerance = 0.0;
+    /** Loop-level proof selected this edge boundary as the unique periodic
+     * cut to a surface pole.  Endpoint closure must preserve this pair until
+     * the exact seam-edge and singular trims are emitted. */
+    bool periodic_pole_cut_before = false;
+    bool periodic_pole_cut_after = false;
 } PBCData;
 
 extern BREP_EXPORT int IsAtSingularity(const ON_Surface *surf, double u, double v, double tol = 1e-6);

@@ -73,7 +73,8 @@ private:
 		if (progress.total) {
 		    const double percent = 100.0 * static_cast<double>(progress.completed) /
 			static_cast<double>(progress.total);
-		    message << ' ' << progress.completed << '/' << progress.total
+		    message << (progress.geometry_runnable_capacity ? " committed=" : " ")
+			<< progress.completed << '/' << progress.total
 			<< " (" << std::fixed << std::setprecision(1) << percent << "%)";
 		} else if (progress.completed) {
 		    message << " completed=" << progress.completed;
@@ -110,6 +111,9 @@ private:
 		    const uint64_t runnable = progress.geometry_workers_active +
 			progress.geometry_jobs_queued +
 			progress.geometry_jobs_materializing;
+		    message << " converted=" << progress.geometry_jobs_finished;
+		    if (progress.total)
+			message << '/' << progress.total;
 		    message << " scheduler={active="
 			<< progress.geometry_workers_active
 			<< ",helpers=" << progress.geometry_helpers_active
