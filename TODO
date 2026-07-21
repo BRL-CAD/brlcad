@@ -18,8 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* release notes, release bullet review
-
 * check mann commands with mged availability, either defer publishing
   unavailable or make available
 
