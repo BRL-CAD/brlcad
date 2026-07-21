@@ -36,6 +36,7 @@ extern "C" {
 #include <math.h>
 #include <time.h>
 #include <string.h>
+#include <signal.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -107,6 +108,23 @@ static int MGED_SEM_LOG = -1;
 
 }
 
+/* Wake event the worker posts to break the main thread out of Tcl_DoOneEvent.
+ * It carries no payload pointing into the run_ged_async frame,
+ * so it is safe to service even if a later Tcl_DoOneEvent runs it after the
+ * loop has already exited via 'done'. anonymous namespace is not technically
+ * required right now, but safely avoids potential collision in the future. */
+namespace { struct WakeEvent { Tcl_Event event; }; }
+
+/* No-op wake proc */
+static int
+wake_proc(Tcl_Event* UNUSED(evPtr), int UNUSED(mask))
+{
+    /* MUST return 1 so Tcl_ServiceEvent frees the event (ckfree);
+     * returning 0 would restore the proc and requeue it forever.  Do NOT free the
+     * event here -- Tcl owns it. */
+    return 1;
+}
+
 /* Internal C++ async helper.
  *
  * In GUI (non-classic, interactive) mode: runs 'func' in a std::thread while
@@ -132,35 +150,50 @@ run_ged_async(struct mged_state *s, std::function<int()> func)
     if (s->classic_mged || !s->interactive)
 	return func();
 
+    Tcl_ThreadId main_tid = Tcl_GetCurrentThread();
     std::atomic<bool> done{false};
     std::atomic<int>  result{0};
 
     s->cmd_running = 1;
 
+    /* must suppress SIGINT for the duration of the worker pump. Otherwise,
+     * SIGINT would longjmp to the outer frame, skipping worker.join(). SIG_IGN
+     * is just for this window and is be restored after .join()
+     * TODO/FIXME: this should be replaced with an intentional interrupt flag
+     * that can cooperate with callers for graceful handling
+     */
+    void (*prev_sigint)(int) = signal(SIGINT, SIG_IGN);
+
     std::thread worker([&]() {
 	result.store(func(), std::memory_order_release);
 	done.store(true, std::memory_order_release);
+	/* MUST allocate with ckalloc (NOT bu_malloc): Tcl_ServiceEvent
+	 * frees this block via ckfree after wake_proc returns 1 */
+	WakeEvent *ev = (WakeEvent *)ckalloc(sizeof(WakeEvent));
+	ev->event.proc = wake_proc;
+	Tcl_ThreadQueueEvent(main_tid, (Tcl_Event *)ev, TCL_QUEUE_TAIL);
+	Tcl_ThreadAlert(main_tid);
     });
 
-    /* Pump the Tcl event loop while the worker runs.
-     * TCL_DONT_WAIT means we never block waiting for an event, so we can
-     * check 'done' and sleep briefly to avoid a busy-loop.  The log-drain
-     * timer installed by mged_start_log_drain_timer() fires during these
-     * Tcl_DoOneEvent calls, streaming intermediate bu_log output to the
-     * command prompt as it arrives. */
+    /* Block until woken. The worker's queued wake event is the primary wakeup
+     * (Tcl services the event queue before it ever blocks, so there is no
+     * lost-wakeup race); log_drain_callback timer is the liveness backstop and
+     * continues to stream intermediate bu_log output to the command prompt */
     while (!done.load(std::memory_order_acquire) && !mged_shutting_down(s)) {
-	Tcl_DoOneEvent(TCL_ALL_EVENTS | TCL_DONT_WAIT);
+	Tcl_DoOneEvent(TCL_ALL_EVENTS);
 	mged_pr_output(s->interp);
-	bu_snooze(10000); /* 10 ms — keeps CPU low while staying responsive */
     }
 
     worker.join();
+
+    /* Restore the caller's SIGINT */
+    (void)signal(SIGINT, prev_sigint);
 
     /* Join establishes that neither the command nor any worker-side cleanup
      * can append more output before the final drain. */
     mged_pr_output(s->interp);
     s->cmd_running = 0;
-    return result.load();
+    return result.load(std::memory_order_acquire);
 }
 
 
