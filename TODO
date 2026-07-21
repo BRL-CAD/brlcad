@@ -23,8 +23,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * compilation testing, distcheck-full and bext builds
 
-* manual not working (mged -> help -> manual)
-
 * rename the remove command (update rm docs and code printings)
 
 * jepr is 2-20x slower, check search command
