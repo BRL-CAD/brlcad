@@ -13,6 +13,25 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.44.0                                     ---
 ----------------------------------------------------------------------
 
+This release expands geometry processing, conversion, and rendering
+capabilities including a new proximity search 'near' command, ARB
+repair, BoT exterior extraction, Cauchy-Crofton validation in lint,
+and more reliable facetization pipeline.  Ray tracers now auto-select
+a default object or report available top-levels when none is named.
+Rendering advancements include perspective edge rendering, timing heat
+maps, PNTS ray tracing, and faster opaque and lighting-heavy renders.
+
+GCV adds preliminary import support for VTK ASCII, X3D BREP/NURBS, and
+JT import support, while OBJ preserves material colors.  Procedural
+tools now generate shells, gears, lattices, terrain, propellers,
+wings, trees, and parameterized tires with tread presets.
+
+MGED gains full-text doc searching and more robust command I/O; gist
+1-page reports are more informative; and ICV adds richer reporting,
+animation, comparison, and image metadata features.  DocBook
+documentation was converted to AsciiDoc, adding over 140 manual pages
+and extensively improving existing docs.
+
 * improved as2g importing speed for large inputs - Cliff Yapp
 * gist pages now include file size in header - Sean Morrison
 * added preliminary support for mirroring brep objects - Sean Morrison
