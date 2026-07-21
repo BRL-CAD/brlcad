@@ -741,16 +741,6 @@ Older Bugs
   lookup and put calls.
 
 
-Annoyances
-----------
-
-* matrix edits on objects in mged require you to select a primitive
-  for a coordinate system reference.  this can be counterintuitive and
-  confusing.
-
-* there are frequently modality errors when entering edit mode as
-  control and middle mouse rebind to model edit instead of view edit.
-
 ---
 Bugs should be reported to the bug tracker on the project website at
 http://sourceforge.net/tracker/?atid=640802&group_id=105292
