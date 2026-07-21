@@ -88,21 +88,36 @@ and extensively improving existing docs.
 * fixed potential DSP corner case rendering crash - Cliff Yapp
 * fixed multithreaded crashing with noise-using shaders - Cliff Yapp
 * corrected the exposed region count report in rtarea - Cliff Yapp
+* fixed submodel paths relative to parent databases - Sean Morrison
 * fixed icv support for RLE image format - Cliff Yapp
 * added similarity grouping identification mode to gdiff - Cliff Yapp
+* added preliminary JT mesh import support to gcv - Sean Morrison
 * improved gcv asc v5 reader to handle brep input - Cliff Yapp
 * improved DSP primitive's default facetize behavior - Cliff Yapp
+* fixed gcv appending to existing databases - Sean Morrison
 * improved NMG->bot conv speed for all triangle case - Cliff Yapp
 * added SPSR meshing support to the pnts command - Cliff Yapp
+* rt tools auto-select an object when none is given - Sean Morrison
+* added metadata-aware image diff & nirt analysis - Cliff Yapp
+* added basic PNTS point-cloud ray tracing - Sean Morrison
 * improved nirt behavior in Windows bash consoles - Cliff Yapp
 * updated geogram dependency to v1.9.6 - Cliff Yapp
+* added g2asc/asc2g support for PNTS, DSP, and EBM - Sean Morrison
 * updated gct mesh decimation dependency to mmesh - Cliff Yapp
+* added procedural wing, propeller & tree generators - Cliff Yapp
+* added ISO tire dimensions & named tread presets - Cliff Yapp
+* added specimen, terrain, & voxelize proc-db tools - Sean Morrison
+* added gear, helicoil, lattice, loftwing proc-db - Sean Morrison
+* added authenticated IPC/TLS to fbserv & remrt/rtsrv - Cliff Yapp
+* improved rtwizard concurrency & remrt on Windows - Cliff Yapp
 * added simplification control options to bot extrude - Cliff Yapp
+* added bot exterior subcommand - Cliff Yapp
 * updated Manifold dependency to v3.2.1 - Cliff Yapp
 * updated SPSR dependency to v18.74 - Cliff Yapp
 * fixed 'search -type sph' not returning sph's - Chris McGregor
 * fixed gist crashing with bad/unknown units - Chris McGregor
 * add gist '-d' to allow user-specified density file - Chris McGregor
+* added Cauchy-Crofton area/volume & lint validation - Cliff Yapp
 
 
 ----------------------------------------------------------------------
