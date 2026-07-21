@@ -22,6 +22,26 @@ check_cxx_flag("wd4800") # implicit conversions to bool
 # Also quell a GCC warning for similar reasons.
 check_cxx_flag("Wno-ignored-qualifiers")
 
+# GCC enables assignment-level variable tracking implicitly for optimized
+# builds with debug information.  Large exp2cxx translation units exceed its
+# internal tracking limit, so GCC discards that work and compiles them again
+# without it.  With LTO enabled the same discarded work can recur while
+# linking.  Debugging STEPcode-generated bindings does not benefit enough to
+# justify that cost, so test the standard negative option and apply it to C++
+# compilation and linking in this STEPcode-based subtree only.
+check_cxx_flag(
+  "fno-var-tracking-assignments"
+  VARS STEPCODE_SCHEMA_NO_VAR_TRACKING_ASSIGNMENTS_FLAG
+)
+if(STEPCODE_SCHEMA_NO_VAR_TRACKING_ASSIGNMENTS_FLAG)
+  add_compile_options(
+    "$<$<COMPILE_LANGUAGE:CXX>:${STEPCODE_SCHEMA_NO_VAR_TRACKING_ASSIGNMENTS_FLAG}>"
+  )
+  add_link_options(
+    "$<$<LINK_LANGUAGE:CXX>:${STEPCODE_SCHEMA_NO_VAR_TRACKING_ASSIGNMENTS_FLAG}>"
+  )
+endif()
+
 function(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   if(BRLCAD_ENABLE_STEP)
     # This Schema determines which version of STEP the command will support
@@ -48,7 +68,6 @@ function(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
       ${_schema_out_dir}/compstructs.cc
       ${_schema_out_dir}/schema.cc
     )
-
     # For the subdirectory add_custom_command definitions, need the generated
     # headers as well.
     set(

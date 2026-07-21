@@ -4322,9 +4322,18 @@ exact_isoparametric_line_pullback(const ON_Surface *surface,
 		reverse_error = std::max(reverse_error,
 		    target.DistanceTo(reverse_lift));
 	    } else if (source_distance.IsValid()) {
-		forward_error = std::max(forward_error,
-		    source_distance.DistanceTo(forward_lift,
-			maximum_tolerance));
+		/* STEP edge and surface isocurve parameterizations commonly agree.
+		 * Their direct normalized correspondence is an exact membership
+		 * witness and avoids a global closest-locus search at every one of
+		 * the 1025 dense validation samples.  A differently parameterized
+		 * but geometrically identical edge simply falls through to the
+		 * parameterization-independent search, preserving the established
+		 * acceptance behavior and tolerance. */
+		const double direct_error = target.DistanceTo(forward_lift);
+		const double locus_error = direct_error <= maximum_tolerance ?
+		    direct_error : source_distance.DistanceTo(forward_lift,
+			maximum_tolerance);
+		forward_error = std::max(forward_error, locus_error);
 		reverse_error = forward_error;
 	    } else {
 		forward_error = DBL_MAX;

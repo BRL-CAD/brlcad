@@ -563,6 +563,17 @@ if(BRLCAD_ENABLE_STEP)
         -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band.json
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band.cmake
     )
+    brlcad_add_test(
+      NAME ap203_nist_mbe_pmi_6
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DMGED=$<TARGET_FILE:mged>
+        -DINPUT=${CMAKE_SOURCE_DIR}/db/nist/NIST_MBE_PMI_6.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_nist_mbe_pmi_6.json
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_nist_mbe_pmi_6.g
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_nist_mbe_pmi_6.cmake
+    )
   endif()
 
   if(HIDE_INTERNAL_SYMBOLS)
@@ -586,6 +597,7 @@ cmakefiles(
   tests/ap203_direct_manifold.stp
   tests/ap203_lazy_positional.cmake
   tests/ap203_lazy_relationships.cmake
+  tests/ap203_nist_mbe_pmi_6.cmake
   tests/ap203_periodic_zero_split.cmake
   tests/ap203_periodic_zero_split.stp
   tests/ap203_toroidal_band.cmake
