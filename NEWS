@@ -32,6 +32,7 @@ animation, comparison, and image metadata features.  DocBook
 documentation was converted to AsciiDoc, adding over 220 manual pages
 and extensively improving existing docs.
 
+* fixed search -exec multithreaded output - Cliff Yapp, Chris McGregor
 * improved as2g importing speed for large inputs - Cliff Yapp
 * gist pages now include file size in header - Sean Morrison
 * added preliminary support for mirroring brep objects - Sean Morrison
@@ -125,7 +126,7 @@ and extensively improving existing docs.
 * updated rkcommon dependency from v1.13.0 to v1.15.2 - Sean Morrison
 * updated LIEF dependency from v0.15.1 to v0.17.6 - Cliff Yapp
 * updated Qt dependency from v6.10.2 to v6.11.1 - Cliff Yapp
-
+* added Bullet dependency v3.27 - Cliff Yapp
 
 
 ----------------------------------------------------------------------
