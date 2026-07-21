@@ -73,6 +73,36 @@ proc search_exec_alias_query {path} {
     return 1
 }
 
+# Regression support for a "search -exec that creates a matching child"
+# infinite loop.  A proc that wraps each matched comb (comb -w) inserts a new
+# non-region comb named <name>.c as a child of the comb being walked.  If the
+# search traversal descends into objects created during its own -exec run, the
+# wrap recurses without bound.
+#
+# search_exec_loopguard is the -exec target. It exercises the 'infinite walk'
+# problem with a database-backed counter as a poormans exit condition (must
+# be created externally and called sxl_loop_meta)
+proc search_exec_loopguard {path} {
+    set calls [attr get sxl_loop_meta gcount]
+    incr calls
+    attr set sxl_loop_meta gcount $calls
+    # Safety valve: stop creating children so a buggy walk terminates.
+    if {$calls > 25} {
+	return 1
+    }
+    comb -w [file tail $path]
+    return 1
+}
+
+# Fail the run if search -exec descended into combs it created
+proc search_exec_loop_check {} {
+    set calls [attr get sxl_loop_meta gcount]
+    if {$calls != 1} {
+	set ::search_exec_precheck_error \
+	    "search -exec descended into self-created combs ($calls wrap invocations; expected 1) - infinite-loop regression"
+    }
+}
+
 proc search_exec_verify {} {
     if {$::search_exec_precheck_error ne ""} {
 	error "FAIL $::search_exec_precheck_error"

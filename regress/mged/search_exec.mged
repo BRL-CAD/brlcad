@@ -50,6 +50,15 @@ search /all.g/component/power.train/r7 -maxdepth 0 -exec ::search_exec_test::nes
 search /all.g/component/power.train/r8 -maxdepth 0 -exec search_exec_alias_query "{}" ";"
 search /all.g/component/power.train/r5 -maxdepth 0 -exec search_exec_alias ";"
 
+# test a search -exec that creates a new comb must not descend into what it just created
+in sxl_loop_sph sph 0 0 0 1
+comb sxl_loop_top u sxl_loop_sph
+# sxl_loop_meta is used to track loop iterations (see search_exec_loopguard)
+in sxl_loop_meta sph 0 0 0 1
+attr set sxl_loop_meta gcount 0
+search sxl_loop_top -type comb -not -type r -exec search_exec_loopguard "{}" ";"
+search_exec_loop_check
+
 search_exec_verify
 
 puts "*** search -exec sourced Tcl state testing completed ***"

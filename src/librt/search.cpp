@@ -230,6 +230,18 @@ struct leaf_info_t {
 };
 
 
+/*
+ * leaf_info_t except we must copy the name (rather than a reference) so it
+ * stays valid after the comb internal is release and across any database
+ * mutations. See traverse_paths() for why this is important.
+ */
+struct captured_child_t {
+    std::string name;
+    int bool_op;
+    int c_inst;
+};
+
+
 /**
  * Identity equality for bu_h128_t.
  *
@@ -840,98 +852,104 @@ traverse_paths(struct traversal_ctx_t *ctx, struct directory **paths, int path_c
 	    continue;
 	}
 
-	evaluate_path(ctx, path, node.below_passes);
-
-	/* A cyclic edge is a valid finite search occurrence, but its subtree
-	 * must not be expanded.  This matches the full-path walker. */
-	if (node.cyclic) {
-	    db_free_full_path(path);
-	    BU_PUT(path, struct db_full_path);
-	    continue;
-	}
-
-	if (ctx->has_maxdepth && node.depth >= ctx->maxdepth) {
-	    db_free_full_path(path);
-	    BU_PUT(path, struct db_full_path);
-	    continue;
-	}
+	/*
+	 * Snapshot this comb's child list BEFORE running the node's action.
+	 *
+	 * evaluate_path() may invoke a -exec callback that mutates the
+	 * database - for example a Tcl proc that "wraps" the matched comb,
+	 * inserting a brand new child into the very comb we are about to
+	 * descend into. Reading the child list after the action would follow
+	 * those freshly-created objects; recursing without bound and never 
+	 * terminating. Capturing the children first gives GNU find semantics:
+	 * the action cannot change the set of objects this search traverses.
+	 *
+	 * Names are resolved to directory pointers after the action (below),
+	 * so anything the action deletes is skipped rather than left dangling.
+	 */
+	std::vector<captured_child_t> children;
+	uint64_t child_below_passes = node.below_passes;
+	int expand = 0;
 
 	dp = DB_FULL_PATH_CUR_DIR(path);
-	if (!dp || !(dp->d_flags & RT_DIR_COMB)) {
-	    db_free_full_path(path);
-	    BU_PUT(path, struct db_full_path);
-	    continue;
-	}
+	if (!node.cyclic &&
+	    !(ctx->has_maxdepth && node.depth >= ctx->maxdepth) &&
+	    dp && (dp->d_flags & RT_DIR_COMB)) {
 
-	/* Expand children */
-	{
 	    struct rt_db_internal intern;
 	    struct rt_comb_internal *comb = NULL;
 
 	    RT_DB_INTERNAL_INIT(&intern);
-	    if (rt_db_get_internal(&intern, dp, ctx->dbip, (fastf_t *)NULL) < 0) {
-		db_free_full_path(path);
-		BU_PUT(path, struct db_full_path);
-		continue;
-	    }
-
-	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    if (comb && comb->tree) {
-		std::vector<leaf_info_t> leaves;
-		std::vector<int> c_inst;
-		uint64_t child_below_passes = below_child_passes(ctx->dbip,
-			ctx->below_nodes, path, node.below_passes, ctx->flags, NULL);
-
-		collect_tree_leaves(comb->tree, OP_UNION, leaves);
-		if (UNLIKELY(ctx->dbip->i->dbi_use_comb_instance_ids)) {
+	    if (rt_db_get_internal(&intern, dp, ctx->dbip, (fastf_t *)NULL) >= 0) {
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		if (comb && comb->tree) {
+		    std::vector<leaf_info_t> leaves;
 		    std::unordered_map<std::string, int> c_inst_map;
-		    c_inst.resize(leaves.size());
-		    for (size_t li = 0; li < leaves.size(); li++)
-			c_inst[li] = c_inst_map[std::string(leaves[li].name)]++;
-		}
 
-		/* Push in reverse tree order so the LIFO work list evaluates the
-		 * leftmost child first, matching the recursive walker. */
-		for (size_t li = leaves.size(); li-- > 0;) {
-		    struct directory *child_dp = NULL;
-		    struct db_full_path *child_path = NULL;
-		    const char *lname = leaves[li].name;
-		    int cyclic = 0;
+		    child_below_passes = below_child_passes(ctx->dbip,
+			    ctx->below_nodes, path, node.below_passes, ctx->flags, NULL);
 
-		    child_dp = db_lookup(ctx->dbip, lname, LOOKUP_QUIET);
-		    if (!child_dp)
-			continue;
-
-		    if (!(ctx->flags & DB_SEARCH_HIDDEN) && (child_dp->d_flags & RT_DIR_HIDDEN))
-			continue;
-
-		    BU_ALLOC(child_path, struct db_full_path);
-		    db_full_path_init(child_path);
-		    db_dup_full_path(child_path, path);
-		    db_add_node_to_full_path(child_path, child_dp);
-		    DB_FULL_PATH_SET_CUR_BOOL(child_path, leaves[li].bool_op);
-
-		    if (UNLIKELY(ctx->dbip->i->dbi_use_comb_instance_ids)) {
-			DB_FULL_PATH_SET_CUR_COMB_INST(child_path, c_inst[li]);
+		    collect_tree_leaves(comb->tree, OP_UNION, leaves);
+		    children.reserve(leaves.size());
+		    for (size_t li = 0; li < leaves.size(); li++) {
+			captured_child_t cc;
+			cc.name = leaves[li].name;
+			cc.bool_op = leaves[li].bool_op;
+			cc.c_inst = 0;
+			if (UNLIKELY(ctx->dbip->i->dbi_use_comb_instance_ids))
+			    cc.c_inst = c_inst_map[cc.name]++;
+			children.push_back(cc);
 		    }
-
-		    if (db_full_path_cyclic(child_path, NULL, 0)) {
-			char *path_string = db_path_to_string(child_path);
-			bu_log("WARNING: not traversing cyclic path %s\n", path_string);
-			bu_free(path_string, "free path str");
-			cyclic = 1;
-		    }
-
-		    path_node_t child_node;
-		    child_node.path = child_path;
-		    child_node.below_passes = child_below_passes;
-		    child_node.depth = node.depth + 1;
-		    child_node.cyclic = cyclic;
-		    work.push_back(child_node);
+		    expand = 1;
 		}
+		rt_db_free_internal(&intern);
 	    }
+	}
 
-	    rt_db_free_internal(&intern);
+	/* Evaluate the node.  A -exec action, if any, runs here and may alter
+	 * the database - but never the pre-captured child list above. */
+	evaluate_path(ctx, path, node.below_passes);
+
+	/* Push the snapshotted children.  Resolve each name now so that any
+	 * object removed by the action is simply skipped. */
+	if (expand) {
+	    /* Push in reverse tree order so the LIFO work list evaluates the
+	     * leftmost child first, matching the recursive walker. */
+	    for (size_t li = children.size(); li-- > 0;) {
+		struct directory *child_dp = NULL;
+		struct db_full_path *child_path = NULL;
+		int cyclic = 0;
+
+		child_dp = db_lookup(ctx->dbip, children[li].name.c_str(), LOOKUP_QUIET);
+		if (!child_dp)
+		    continue;
+
+		if (!(ctx->flags & DB_SEARCH_HIDDEN) && (child_dp->d_flags & RT_DIR_HIDDEN))
+		    continue;
+
+		BU_ALLOC(child_path, struct db_full_path);
+		db_full_path_init(child_path);
+		db_dup_full_path(child_path, path);
+		db_add_node_to_full_path(child_path, child_dp);
+		DB_FULL_PATH_SET_CUR_BOOL(child_path, children[li].bool_op);
+
+		if (UNLIKELY(ctx->dbip->i->dbi_use_comb_instance_ids)) {
+		    DB_FULL_PATH_SET_CUR_COMB_INST(child_path, children[li].c_inst);
+		}
+
+		if (db_full_path_cyclic(child_path, NULL, 0)) {
+		    char *path_string = db_path_to_string(child_path);
+		    bu_log("WARNING: not traversing cyclic path %s\n", path_string);
+		    bu_free(path_string, "free path str");
+		    cyclic = 1;
+		}
+
+		path_node_t child_node;
+		child_node.path = child_path;
+		child_node.below_passes = child_below_passes;
+		child_node.depth = node.depth + 1;
+		child_node.cyclic = cyclic;
+		work.push_back(child_node);
+	    }
 	}
 
 	db_free_full_path(path);
