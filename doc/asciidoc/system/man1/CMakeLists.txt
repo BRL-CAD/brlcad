@@ -47,6 +47,7 @@ set(
   coil.adoc
   comgeom-g.adoc
   conv-vg2g.adoc
+  csg-g.adoc
   cv.adoc
   d-a.adoc
   d-bw.adoc
@@ -110,6 +111,7 @@ set(
   g-off.adoc
   g-ply.adoc
   g-raw.adoc
+  g-scad.adoc
   g-shell-rect.adoc
   g-step.adoc
   g-stl.adoc
