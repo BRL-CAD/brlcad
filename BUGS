@@ -730,12 +730,6 @@ Recent Bugs
 * bot-bldxf fails in db_walk_tree(), interface may have changed
 
 
-Older Bugs
-----------
-
-* X11 framebuffer often fails to display on certain middle bit depth
-  displays. (e.g. 15 or 16 bit depth)
-
 ---
 Bugs should be reported to the bug tracker on the project website at
 http://sourceforge.net/tracker/?atid=640802&group_id=105292
