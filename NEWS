@@ -29,7 +29,7 @@ wings, trees, and parameterized tires with tread presets.
 MGED gains full-text doc searching and more robust command I/O; gist
 1-page reports are more informative; and ICV adds richer reporting,
 animation, comparison, and image metadata features.  DocBook
-documentation was converted to AsciiDoc, adding over 140 manual pages
+documentation was converted to AsciiDoc, adding over 220 manual pages
 and extensively improving existing docs.
 
 * improved as2g importing speed for large inputs - Cliff Yapp
