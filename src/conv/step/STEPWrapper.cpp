@@ -4358,7 +4358,13 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 			    boundary_end_3d.y);
 			const ON_2dPoint boundary_start(boundary_start_3d.x,
 			    boundary_start_3d.y);
-			if (step_insert_periodic_pole_cut(brep, loop, surface,
+			/* A full-period boundary on a multi-loop spherical face may
+			 * be one side of an annular band.  Do not turn it into an
+			 * OpenNURBS pole-cut seam before the other face bounds have
+			 * been classified and paired below; OpenNURBS rejects a seam
+			 * installed in the source FACE_BOUND inner loop. */
+			if (face.m_li.Count() == 1 &&
+				step_insert_periodic_pole_cut(brep, loop, surface,
 				*trim, boundary_end, boundary_start,
 				topology_tolerance)) {
 			    wrapper->RecordRepair(entity_id, entity_type,
@@ -10683,8 +10689,18 @@ repair_missing_singular_trims(ON_Brep *brep, STEPWrapper *wrapper,
 		const int vertex_index = first->m_vi[1];
 		const ON_3dPoint vertex = brep->m_V[vertex_index].point;
 		double collapse_tolerance = LocalUnits::tolerance;
+		double measured_collapse_distance = 0.0;
+		double collapse_adjustment_limit = LocalUnits::tolerance;
 		bool measured_tolerance_adjustment = false;
 		if (!surface->IsSingular(surface_side)) {
+		    /* Only a supplied NURBS boundary can be geometrically collapsed
+		     * without advertising ON_Surface::IsSingular().  Applying this
+		     * inference to a long analytic cylinder lets an item-scale allowance
+		     * misclassify its complete circular boundary as one vertex.  Analytic
+		     * surfaces must expose a real singular side (or take the proven cone
+		     * restriction path above). */
+		    if (!ON_NurbsSurface::Cast(surface))
+			continue;
 		    const int fixed_direction =
 			(surface_side == 1 || surface_side == 3) ? 0 : 1;
 		    const int varying_direction = 1 - fixed_direction;
@@ -10717,6 +10733,8 @@ repair_missing_singular_trims(ON_Brep *brep, STEPWrapper *wrapper,
 			const double adjustment_limit = std::max(
 			    LocalUnits::tolerance, surface_scale *
 			    kCollapsedBoundaryMaximumRelativeMismatch);
+			measured_collapse_distance = measured_boundary_distance;
+			collapse_adjustment_limit = adjustment_limit;
 			const double adjusted = measured_boundary_distance *
 			    kRegenerationToleranceSafety;
 			if (wrapper->ImportOptions().exact ||
@@ -10768,11 +10786,20 @@ repair_missing_singular_trims(ON_Brep *brep, STEPWrapper *wrapper,
 				brep->m_E[adjusted_trim.m_ei].m_tolerance,
 				collapse_tolerance);
 		    }
+		    std::string diagnostic =
+			"source boundary asserted as one topology vertex exceeded the "
+			"declared tolerance; used a densely measured OpenNURBS tolerance";
+		    if (wrapper->Verbose()) {
+			std::ostringstream detail;
+			detail << diagnostic << "; measured boundary distance "
+			    << measured_collapse_distance << ", effective tolerance "
+			    << collapse_tolerance << ", bounded repair limit "
+			    << collapse_adjustment_limit;
+			diagnostic = detail.str();
+		    }
 		    wrapper->RecordDiagnostic(
 			brlcad::step::DiagnosticSeverity::Warning, entity_id,
-			entity_type, "edge_loop",
-			"source boundary asserted as one topology vertex exceeded the "
-			"declared tolerance; used a densely measured OpenNURBS tolerance");
+			entity_type, "edge_loop", diagnostic);
 		    wrapper->RecordRepair(entity_id, entity_type, "edge_loop",
 			"adjusted one source-collapsed boundary tolerance after dense validation");
 		}

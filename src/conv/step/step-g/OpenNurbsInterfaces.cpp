@@ -706,12 +706,16 @@ short_curve_pullback_resolution(const ON_Curve *curve, double model_tolerance)
 
 static bool
 refine_surface_point_seeded(const ON_Surface *surface, const ON_3dPoint &target,
-	double tolerance, ON_3dPoint &uv, double *final_distance)
+	double convergence_tolerance, ON_3dPoint &uv, double *final_distance,
+	double acceptance_tolerance = 0.0)
 {
     if (final_distance)
 	*final_distance = DBL_MAX;
-    if (!surface || !target.IsValid() || !uv.IsValid() || !(tolerance > 0.0))
+    if (!surface || !target.IsValid() || !uv.IsValid() ||
+	    !(convergence_tolerance > 0.0))
 	return false;
+    if (!(acceptance_tolerance > 0.0))
+	acceptance_tolerance = convergence_tolerance;
 
     double best_distance = DBL_MAX;
     for (int iteration = 0; iteration < 32; ++iteration) {
@@ -721,7 +725,7 @@ refine_surface_point_seeded(const ON_Surface *surface, const ON_3dPoint &target,
 	    break;
 	const ON_3dVector residual = target - point;
 	best_distance = residual.Length();
-	if (best_distance <= tolerance)
+	if (best_distance <= convergence_tolerance)
 	    break;
 	const double a = du * du;
 	const double b = du * dv;
@@ -772,7 +776,7 @@ refine_surface_point_seeded(const ON_Surface *surface, const ON_3dPoint &target,
     }
     if (final_distance)
 	*final_distance = best_distance;
-    return best_distance <= tolerance;
+    return best_distance <= acceptance_tolerance;
 }
 
 
@@ -1219,7 +1223,8 @@ align_nurbs_surface_seam(std::list<PBCData *> &pullbacks, const ON_Surface *surf
 static bool
 align_surface_seam_with_periodic_loop_cut(
     std::list<PBCData *> &pullbacks, ON_Brep *brep, ON_BrepFace *face,
-    const ON_Surface *&surface, double tolerance, std::string *failure = NULL)
+    const ON_Surface *&surface, double tolerance, STEPWrapper *step = NULL,
+    int loop_id = 0, std::string *failure = NULL)
 {
     if (failure)
 	failure->clear();
@@ -1247,25 +1252,60 @@ align_surface_seam_with_periodic_loop_cut(
 	if (!has_singular_side)
 	    continue;
 
-	/* Only a nonzero net winding requires a pole cut.  Ordinary edges can
-	 * cross the native seam and create one-period local jumps while the loop
-	 * as a whole remains contractible; those must stay ordinary edges. */
+	/* Only a nonzero net winding requires a pole cut.  Measure directed travel
+	 * over the validated sample chain rather than subtracting a rounded period
+	 * from each edge's two endpoints.  Endpoint-only normalization reverses an
+	 * exact half-period edge (round(-0.5) is -1), and it erases the intentional
+	 * full-period travel of a closed circular edge.  Consecutive dense samples
+	 * are locally unambiguous: normalize only their individual seam jumps, then
+	 * accumulate them.  This distinguishes a periodic band from a pole cap
+	 * without relying on the curve's parameterization or edge partitioning. */
 	double unwrapped_travel = 0.0;
 	for (std::list<PBCData *>::const_iterator data = pullbacks.begin();
 		data != pullbacks.end(); ++data) {
-	    if (!*data || !(*data)->segments || (*data)->segments->empty() ||
-		    !(*data)->segments->front() || !(*data)->segments->back() ||
-		    (*data)->segments->front()->Count() == 0 ||
-		    (*data)->segments->back()->Count() == 0)
+	    if (!*data || !(*data)->segments || (*data)->segments->empty())
 		continue;
-	    const ON_2dPointArray *last_segment = (*data)->segments->back();
-	    double edge_travel =
-		(*last_segment)[last_segment->Count() - 1][direction] -
-		(*(*data)->segments->front())[0][direction];
-	    edge_travel -= round(edge_travel / period) * period;
+	    double edge_travel = 0.0;
+	    double previous_parameter = ON_UNSET_VALUE;
+	    bool have_previous = false;
+	    const double half_period_guard = kPeriodicParameterSnapFraction *
+		std::max(1.0, period);
+	    for (std::list<ON_2dPointArray *>::const_iterator segment =
+		    (*data)->segments->begin(); segment != (*data)->segments->end();
+		    ++segment) {
+		if (!*segment)
+		    continue;
+		for (int point = 0; point < (*segment)->Count(); ++point) {
+		    const double parameter = (**segment)[point][direction];
+		    if (have_previous) {
+			double delta = parameter - previous_parameter;
+			/* A sparse exact semicircle can have only its endpoints.  Its
+			 * signed half-period travel is already authoritative; choosing
+			 * either periodic image would reverse that direction. */
+			if (fabs(fabs(delta) - 0.5 * period) > half_period_guard)
+			    delta -= round(delta / period) * period;
+			edge_travel += delta;
+		    }
+		    previous_parameter = parameter;
+		    have_previous = true;
+		}
+	    }
+	    const bool topologically_closed_edge = (*data)->edge &&
+		(*data)->edge->m_vi[0] >= 0 &&
+		(*data)->edge->m_vi[0] == (*data)->edge->m_vi[1];
+	    if (step && step->Verbose() && topologically_closed_edge &&
+		fabs(edge_travel / period) >= 0.5)
+		std::cerr << "EDGE_LOOP #" << loop_id
+		    << ": closed STEP edge #" << (*data)->edge->m_edge_user.i
+		    << " contributes " << edge_travel / period
+		    << " directed periodic turns"
+		    << std::endl;
 	    unwrapped_travel += edge_travel;
 	}
 	const double winding = unwrapped_travel / period;
+	if (step && step->Verbose() && fabs(winding) >= 0.1)
+	    std::cerr << "EDGE_LOOP #" << loop_id
+		<< ": measured periodic loop winding " << winding << std::endl;
 	if (fabs(winding) < 0.5 ||
 		fabs(winding - round(winding)) > kPeriodicParameterSnapFraction) {
 	    if (failure && fabs(winding) > 0.1) {
@@ -2175,6 +2215,14 @@ refined_fragment_polyline(PBCData *data, const ON_2dPointArray &samples,
 
     if (!data->context)
 	data->context = std::make_shared<brlcad::PullbackContext>();
+    /* Geometric acceptance remains the model-derived tolerance, but using
+     * that same value as the closest-point convergence threshold collapses a
+     * real edge whenever the entire feature is shorter than the file
+     * uncertainty.  Resolve the UV path at a feature-relative scale and then
+     * validate its lift independently against the unchanged acceptance
+     * tolerance. */
+    const double projection_tolerance = short_curve_pullback_resolution(
+	data->curve, tolerance);
     ON_3dPointArray points;
     points.Reserve(kDenseLiftValidationSegments + 1);
     ON_3dPoint previous(samples[0].x, samples[0].y, 0.0);
@@ -2202,11 +2250,12 @@ refined_fragment_polyline(PBCData *data, const ON_2dPointArray &samples,
 	    if (sample == 0)
 		uv.Set(samples[0].x, samples[0].y, 0.0);
 	    projected = refine_surface_point_seeded(data->surf, target,
-		tolerance, uv, &distance);
+		projection_tolerance, uv, &distance, tolerance);
 	    if (!projected) {
 		ON_2dPoint projected_uv(uv.x, uv.y);
 		projected = data->context->SurfaceClosestPoint(data->surf, target,
-		    projected_uv, lift, distance, 0, tolerance, tolerance);
+		    projected_uv, lift, distance, 0, projection_tolerance,
+		    tolerance);
 		if (projected)
 		    uv.Set(projected_uv.x, projected_uv.y, 0.0);
 	    }
@@ -2743,8 +2792,28 @@ split_periodic_pullback_at_native_seams(PBCData *data, double tolerance,
 		(**segment)[point], tolerance);
 	    int u_direction = 0;
 	    int v_direction = 0;
-	    if (!ConsecutivePointsCrossClosedSeam(data->surf, native, previous,
-		    u_direction, v_direction, tolerance)) {
+	    bool crosses_seam = ConsecutivePointsCrossClosedSeam(data->surf,
+		native, previous, u_direction, v_direction, tolerance);
+	    /* ConsecutivePointsCrossClosedSeam deliberately suppresses a crossing
+	     * when either sample is already on the seam.  That is useful to avoid
+	     * duplicate splits in generic sampling, but here it can leave one
+	     * native-domain jump in an otherwise continuous STEP pullback when the
+	     * sampler happens to land exactly on the boundary.  Recover only the
+	     * unambiguous greater-than-half-period jump; both seam images are still
+	     * source-locus validated below before the split is accepted. */
+	    if (!crosses_seam) {
+		if (data->surf->IsClosed(0) && fabs(native.x - previous.x) >
+			0.5 * data->surf->Domain(0).Length()) {
+		    u_direction = native.x < previous.x ? 1 : 2;
+		    crosses_seam = true;
+		}
+		if (data->surf->IsClosed(1) && fabs(native.y - previous.y) >
+			0.5 * data->surf->Domain(1).Length()) {
+		    v_direction = native.y < previous.y ? 2 : 1;
+		    crosses_seam = true;
+		}
+	    }
+	    if (!crosses_seam) {
 		current->Append(native);
 		previous = native;
 		continue;
@@ -2769,14 +2838,47 @@ split_periodic_pullback_at_native_seams(PBCData *data, double tolerance,
 	    double seam_parameter = 0.0;
 	    ON_2dPoint from = ON_2dPoint::UnsetPoint;
 	    ON_2dPoint to = ON_2dPoint::UnsetPoint;
-	    if (!Find3DCurveSeamCrossing(*data, previous_parameter,
-		    native_parameter, 0.0, seam_parameter, from, to, tolerance,
-		    data->tolerance, data->tolerance)) {
+	    const int previous_seam = IsAtSeam(data->surf, previous,
+		tolerance);
+	    const int native_seam = IsAtSeam(data->surf, native, tolerance);
+	    const auto is_crossed_seam = [u_direction, v_direction](int seam) {
+		return (u_direction && (seam == 1 || seam == 3)) ||
+		    (v_direction && (seam == 2 || seam == 3));
+	    };
+	    const int seam_hint = u_direction && v_direction ? 3 :
+		(u_direction ? 1 : 2);
+	    bool found_crossing = false;
+	    if (is_crossed_seam(previous_seam)) {
+		from = to = previous;
+		SwapUVSeamPoint(data->surf, to, seam_hint);
+		seam_parameter = previous_parameter;
+		found_crossing = true;
+	    } else if (is_crossed_seam(native_seam)) {
+		from = to = native;
+		SwapUVSeamPoint(data->surf, from, seam_hint);
+		seam_parameter = native_parameter;
+		found_crossing = true;
+	    } else {
+		found_crossing = Find3DCurveSeamCrossing(*data,
+		    previous_parameter, native_parameter, 0.0, seam_parameter,
+		    from, to, tolerance, data->tolerance, data->tolerance);
+	    }
+	    if (!found_crossing) {
 		valid = false;
 		break;
 	    }
 	    ForceToClosestSeam(data->surf, from, tolerance);
 	    ForceToClosestSeam(data->surf, to, tolerance);
+	    const ON_3dPoint from_lift = data->surf->PointAt(from.x, from.y);
+	    const ON_3dPoint to_lift = data->surf->PointAt(to.x, to.y);
+	    if (!from_lift.IsValid() || !to_lift.IsValid() ||
+		    source_distance.DistanceTo(from_lift, data->tolerance) >
+			data->tolerance ||
+		    source_distance.DistanceTo(to_lift, data->tolerance) >
+			data->tolerance) {
+		valid = false;
+		break;
+	    }
 	    if (current->Count() == 0 || current->Last()->DistanceTo(from) >
 		    ON_ZERO_TOLERANCE)
 		current->Append(from);
@@ -3617,6 +3719,50 @@ snap_pullback_loop_endpoints(std::list<PBCData *> &pullbacks, const ON_Brep *bre
 	    if (end->DistanceTo(*start) <= ON_ZERO_TOLERANCE)
 		continue;
 	}
+
+	/* A compact STEP face on a singly-periodic surface can leave its
+	 * topological cut implicit.  In that representation, two distinct
+	 * boundary edges meet at the same 3-D vertex while their pcurves end on
+	 * adjacent parameter images exactly one period apart.  If translating the
+	 * complete following pcurve onto the preceding image was not possible
+	 * above, changing only its endpoint would bend an otherwise exact
+	 * isoparametric edge through a complete revolution and erase the loop's
+	 * authoritative winding.  Preserve this proven cut for the face-level
+	 * periodic-band repair, which splits the exact 3-D boundary at the native
+	 * surface seam and installs the two required OpenNURBS seam uses.
+	 *
+	 * Require distinct STEP edges, an asserted shared vertex, exact endpoint
+	 * lifts, one and only one full-period coordinate jump, and continuity in
+	 * the other parameter direction.  Ordinary numerical endpoint gaps still
+	 * proceed to the bounded common-point repair below. */
+	bool implicit_periodic_cut = false;
+	if (current.data != next.data && current.data->edge != next.data->edge &&
+		shared_vertex >= 0 &&
+		lifted_end.DistanceTo(brep->m_V[shared_vertex].point) <=
+		    shared_endpoint_tolerance &&
+		lifted_start.DistanceTo(brep->m_V[shared_vertex].point) <=
+		    shared_endpoint_tolerance) {
+	    int full_period_directions = 0;
+	    bool other_direction_continuous = true;
+	    for (int direction = 0; direction < 2; ++direction) {
+		const double delta = (*end)[direction] - (*start)[direction];
+		const ON_Interval domain = current.data->surf->Domain(direction);
+		const double parameter_guard = std::max(ON_ZERO_TOLERANCE,
+		    kPeriodicParameterSnapFraction *
+		    std::max(1.0, domain.Length()));
+		if (current.data->surf->IsClosed(direction) &&
+			domain.IsIncreasing() &&
+			fabs(fabs(delta) - domain.Length()) <= parameter_guard) {
+		    ++full_period_directions;
+		} else if (fabs(delta) > parameter_guard) {
+		    other_direction_continuous = false;
+		}
+	    }
+	    implicit_periodic_cut = full_period_directions == 1 &&
+		other_direction_continuous;
+	}
+	if (implicit_periodic_cut)
+	    continue;
 	ON_2dPoint common = *end;
 	const bool end_is_pinned_seam = is_pinned_seam_endpoint(current.data, *end);
 	const bool start_is_pinned_seam = is_pinned_seam_endpoint(next.data, *start);
@@ -4358,10 +4504,21 @@ exact_isoparametric_line_pullback(const ON_Surface *surface,
 	const double length_error = source_length_valid ?
 	    fabs(candidate_length - source_length) : candidate_length;
 	closest_candidate_error = std::min(closest_candidate_error, error);
-	if (error <= maximum_tolerance &&
-		(length_error < best_length_error - ON_ZERO_TOLERANCE ||
+	/* Direct point-to-point validation proves coverage for a linear edge, so
+	 * select its surface branch by geometric error before comparing length.
+	 * Otherwise a long generator on a small periodic surface can prefer an
+	 * equally long but offset branch merely because its sampled length rounds
+	 * more closely.  Non-linear closed loci retain length-first ranking: their
+	 * parameterization-independent distance could otherwise collapse a full
+	 * circle to its shared endpoint. */
+	const bool better_candidate = linear_curve ?
+	    (error < best_error - ON_ZERO_TOLERANCE ||
+		(fabs(error - best_error) <= ON_ZERO_TOLERANCE &&
+		    length_error < best_length_error)) :
+	    (length_error < best_length_error - ON_ZERO_TOLERANCE ||
 		(fabs(length_error - best_length_error) <= ON_ZERO_TOLERANCE &&
-		    error < best_error))) {
+		    error < best_error));
+	if (error <= maximum_tolerance && better_candidate) {
 	    delete pcurve;
 	    pcurve = line;
 	    best_error = error;
@@ -5501,6 +5658,22 @@ Face::LoadONBrep(ON_Brep *brep)
     // direction perhaps offer input option possibly
     // check for outer spanning to bounds
     LIST_OF_FACE_BOUNDS::iterator i;
+    /* Register every STEP face bound before constructing any of its trimming
+     * curves.  Periodic-loop repair needs to distinguish a genuinely
+     * single-bound spherical cap from the first bound of a multi-loop face;
+     * processing and registering one loop at a time made that distinction
+     * depend incorrectly on source aggregate order. */
+    for (i = bounds.begin(); i != bounds.end(); i++) {
+	if (brlcad::PullbackWorkCancelled()) return false;
+	(*i)->SetFaceIndex(ON_id);
+	if (!(*i)->CreateONLoop(brep)) {
+	    if (step && step->Verbose())
+		std::cerr << "Error: " << entityname
+		    << "::LoadONBrep() - Error registering openNURBS face loop."
+		    << std::endl;
+	    return false;
+	}
+    }
     for (i = bounds.begin(); i != bounds.end(); i++) {
 	if (brlcad::PullbackWorkCancelled()) return false;
 	if (step)
@@ -5545,12 +5718,10 @@ FaceBound::GetEdgeBounds(ON_Brep *brep)
 
 
 bool
-FaceBound::LoadONBrep(ON_Brep *brep)
+FaceBound::CreateONLoop(ON_Brep *brep)
 {
-    if (!brep) {
-	/* nothing to do */
+    if (!brep || ON_face_index < 0 || ON_face_index >= brep->m_F.Count())
 	return false;
-    }
 
     if (ON_id < 0) {
 	enum ON_BrepLoop::TYPE btype;
@@ -5562,6 +5733,16 @@ FaceBound::LoadONBrep(ON_Brep *brep)
 	ON_BrepLoop &loop = brep->NewLoop(btype, brep->m_F[ON_face_index]);
 	ON_id = loop.m_loop_index;
     }
+    return true;
+}
+
+
+bool
+FaceBound::LoadONBrep(ON_Brep *brep)
+{
+    if (!CreateONLoop(brep))
+	return false;
+
     bound->SetLoopIndex(ON_id);
     if (!bound->LoadONBrep(brep)) {
 	if (step && step->Verbose())
@@ -6105,11 +6286,13 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	if ((false) && (id == 34193)) {
 	    std::cerr << "Debug:LoadONTrimmingCurves for Path:" << id << std::endl;
 	}
-	double planar_tolerance_limit = LocalUnits::tolerance;
-	if (step && !step->ImportOptions().exact &&
-		step->ImportOptions().repair == brlcad::step::RepairMode::Safe)
-	    planar_tolerance_limit = maximum_verified_edge_tolerance(curve,
-		LocalUnits::tolerance, item_scale);
+	/* Candidate generation must first establish the local surface branch.
+	 * Even a small rounding allowance can select a different periodic image
+	 * where a long generator lies on a small cylinder.  Keep this initial
+	 * search strictly at the declared tolerance.  Safe mode measures any real
+	 * source mismatch in the bounded retry below after branch identity is
+	 * known. */
+	const double planar_tolerance_limit = LocalUnits::tolerance;
 	edge_data = exact_planar_pullback(surface, curve, LocalUnits::tolerance,
 	    planar_tolerance_limit, &result.exact_curve);
 	if (!edge_data)
@@ -6552,9 +6735,16 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		    "translated an exact pcurve onto the native periodic surface domain");
 	}
 	std::string pole_cut_failure;
-	const bool aligned_pole_cut = align_surface_seam_with_periodic_loop_cut(
-	    curve_pullback_samples, brep, face, surface, LocalUnits::tolerance,
-	    &pole_cut_failure);
+	/* A pole cut is a valid Euclidean-UV representation of a spherical cap
+	 * only when the STEP face has one outer bound.  Multi-bound periodic faces
+	 * are reconstructed as exact bands after all loops are available; adding
+	 * the cut while materializing an individual inner bound creates an invalid
+	 * OpenNURBS inner seam. */
+	const bool aligned_pole_cut = face->m_li.Count() == 1 &&
+	    loop->m_type == ON_BrepLoop::outer &&
+	    align_surface_seam_with_periodic_loop_cut(curve_pullback_samples,
+		brep, face, surface, LocalUnits::tolerance, step, id,
+		&pole_cut_failure);
 	if (aligned_pole_cut) {
 	    for (std::map<PBCData *, ON_Curve *>::iterator exact =
 		    exact_pullbacks.begin(); exact != exact_pullbacks.end(); ++exact)
@@ -9431,8 +9621,49 @@ ToroidalSurface::LoadONBrep(ON_Brep *brep)
 
     ON_Plane p(origin, xaxis, yaxis);
 
-    const double major = major_radius * LocalUnits::length;
-    const double minor = minor_radius * LocalUnits::length;
+    const double source_major = major_radius * LocalUnits::length;
+    const double source_minor = minor_radius * LocalUnits::length;
+    double major = source_major;
+    double minor = source_minor;
+    const auto normalize_positive_radius = [this](double source,
+	const char *attribute, double *radius) {
+	if (!radius || source > 0.0)
+	    return radius != NULL;
+	const bool safe_repair = step && !step->ImportOptions().exact &&
+	    step->ImportOptions().repair == brlcad::step::RepairMode::Safe;
+	if (!(source < 0.0) || !safe_repair) {
+	    if (step) {
+		std::ostringstream message;
+		message << attribute << "=" << source
+		    << " violates the AP positive_length_measure constraint";
+		step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error,
+		    id, "TOROIDAL_SURFACE", attribute, message.str());
+	    }
+	    return false;
+	}
+	/* Changing the sign of either torus radius is an exact
+	 * reparameterization of the complete torus locus.  Some exporters use a
+	 * negative major radius to select the other sheet of a spindle torus,
+	 * despite the AP schema's positive_length_measure declaration.  Its raw
+	 * parameterization is discontinuous at otherwise shared topology edges;
+	 * use the schema-valid magnitude in safe mode and let the completed-shell
+	 * orientation checks establish the face sense. */
+	*radius = fabs(source);
+	if (step) {
+	    std::ostringstream message;
+	    message << attribute << "=" << source
+		<< " violates positive_length_measure; using the exact, "
+		   "schema-valid radius magnitude " << *radius;
+	    step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Warning,
+		id, "TOROIDAL_SURFACE", attribute, message.str());
+	    step->RecordRepair(id, "TOROIDAL_SURFACE", attribute,
+		"normalized a negative torus radius by exact locus-preserving reparameterization");
+	}
+	return true;
+    };
+    if (!normalize_positive_radius(source_major, "major_radius", &major) ||
+	    !normalize_positive_radius(source_minor, "minor_radius", &minor))
+	return false;
     ON_Surface *surface = NULL;
 
     // Creates a torus parallel to the plane

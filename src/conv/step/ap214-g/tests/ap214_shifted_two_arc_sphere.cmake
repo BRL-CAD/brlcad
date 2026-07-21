@@ -19,8 +19,8 @@ foreach(expected
     "\"geometry_written\":1"
     "\"geometry_skipped\":0"
     "\"invalid_breps\":0"
-    "split an open STEP boundary edge at an exact OpenNURBS periodic seam"
-    "inserted an exact pole cut for a multi-edge full-period boundary")
+    "aligned a closed surface seam with an exact pole cut"
+    "inserted an exact paired seam cut to a surface pole")
   string(FIND "${report_text}" "${expected}" found)
   if(found EQUAL -1)
     message(FATAL_ERROR "report does not contain ${expected}:\n${report_text}")
@@ -35,9 +35,9 @@ execute_process(
 set(brep_text "${brep_output}\n${brep_error}")
 if(NOT brep_text MATCHES "Valid: YES, Solid: YES" OR
    NOT brep_text MATCHES "faces:[ ]+2" OR
-   NOT brep_text MATCHES "edges:[ ]+5" OR
-   NOT brep_text MATCHES "vertices:[ ]+5" OR
-   NOT brep_text MATCHES "trims:[ ]+12")
+   NOT brep_text MATCHES "edges:[ ]+4" OR
+   NOT brep_text MATCHES "vertices:[ ]+4" OR
+   NOT brep_text MATCHES "trims:[ ]+10")
   message(FATAL_ERROR "shifted two-arc sphere BREP validation failed\n${brep_text}")
 endif()
 

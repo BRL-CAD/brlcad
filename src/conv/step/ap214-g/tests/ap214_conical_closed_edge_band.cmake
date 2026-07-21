@@ -18,38 +18,28 @@ foreach(expected
     "\"geometry_attempted\":1"
     "\"geometry_written\":1"
     "\"geometry_skipped\":0"
-    "\"invalid_breps\":0"
-    "inserted an exact OpenNURBS seam for an implicit periodic STEP face band")
+    "\"invalid_breps\":0")
   string(FIND "${report_text}" "${expected}" found)
   if(found EQUAL -1)
     message(FATAL_ERROR "report does not contain ${expected}:\n${report_text}")
   endif()
 endforeach()
+foreach(unexpected
+    "aligned a closed surface seam with an exact pole cut"
+    "inserted an exact paired seam cut to a surface pole")
+  string(FIND "${report_text}" "${unexpected}" found)
+  if(NOT found EQUAL -1)
+    message(FATAL_ERROR "zero-winding conical band was incorrectly treated as a pole cap (${unexpected}):\n${report_text}")
+  endif()
+endforeach()
 
 execute_process(
-  COMMAND "${MGED}" -c "${OUTPUT}" brep Notched_Periodic_Band_item.s info
+  COMMAND "${MGED}" -c "${OUTPUT}" brep Conical_Closed_Edge_Band_item.s info
   OUTPUT_VARIABLE brep_output
   ERROR_VARIABLE brep_error
 )
 set(brep_text "${brep_output}\n${brep_error}")
 if(NOT brep_text MATCHES "Valid: YES, Solid: NO" OR
    NOT brep_text MATCHES "faces:[ ]+1")
-  message(FATAL_ERROR "notched periodic band BREP validation failed\n${brep_text}")
-endif()
-
-set(none_report "${REPORT}.none")
-file(REMOVE "${none_report}")
-execute_process(
-  COMMAND "${AP214_G}" -D --repair none --report "${none_report}" "${INPUT}"
-  RESULT_VARIABLE none_result
-  OUTPUT_VARIABLE none_output
-  ERROR_VARIABLE none_error
-)
-if(NOT none_result EQUAL 3)
-  message(FATAL_ERROR "unrepaired notched band returned ${none_result}, expected 3\n${none_output}\n${none_error}")
-endif()
-file(READ "${none_report}" none_text)
-if(NOT none_text MATCHES "\"geometry_skipped\":1" OR
-   NOT none_text MATCHES "\"repairs\":0")
-  message(FATAL_ERROR "--repair none did not retain the failed exact conversion:\n${none_text}")
+  message(FATAL_ERROR "conical closed-edge band BREP validation failed\n${brep_text}")
 endif()

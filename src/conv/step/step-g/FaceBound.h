@@ -65,6 +65,7 @@ public:
     }
     ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    bool CreateONLoop(ON_Brep *brep);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
     bool Oriented();

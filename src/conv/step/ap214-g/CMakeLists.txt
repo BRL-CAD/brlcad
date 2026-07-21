@@ -455,6 +455,28 @@ if(BRLCAD_ENABLE_STEP)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_periodic_torus.cmake
   )
   brlcad_add_test(
+    NAME ap214_sub_tolerance_torus_seam
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_sub_tolerance_torus_seam.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_sub_tolerance_torus_seam.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_sub_tolerance_torus_seam.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_sub_tolerance_torus_seam.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_negative_spindle_torus
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_negative_spindle_torus.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_negative_spindle_torus.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_negative_spindle_torus.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_negative_spindle_torus.cmake
+  )
+  brlcad_add_test(
     NAME ap214_collapsed_torus_seam
     COMMAND
       ${CMAKE_COMMAND}
@@ -486,6 +508,39 @@ if(BRLCAD_ENABLE_STEP)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_notched_periodic_band.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_notched_periodic_band.g
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_notched_periodic_band.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_conical_closed_edge_band
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_conical_closed_edge_band.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_conical_closed_edge_band.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_conical_closed_edge_band.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_conical_closed_edge_band.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_segmented_cylinder_band
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_segmented_cylinder_band.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_segmented_cylinder_band.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_segmented_cylinder_band.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_segmented_cylinder_band.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_spherical_band_inner_first
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_spherical_band_inner_first.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_spherical_band_inner_first.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_spherical_band_inner_first.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_spherical_band_inner_first.cmake
   )
   brlcad_add_test(
     NAME ap214_two_arc_sphere
@@ -699,6 +754,10 @@ cmakefiles(
   tests/ap214_csg_invalid.stp
   tests/ap214_composite_curve.cmake
   tests/ap214_composite_curve.stp
+  tests/ap214_conical_closed_edge_band.cmake
+  tests/ap214_conical_closed_edge_band.stp
+  tests/ap214_segmented_cylinder_band.cmake
+  tests/ap214_segmented_cylinder_band.stp
   tests/ap214_collapsed_torus_seam.cmake
   tests/ap214_collapsed_torus_seam.stp
   tests/ap214_direct_manifold.cmake
@@ -721,6 +780,10 @@ cmakefiles(
   tests/ap214_mapped_items.stp
   tests/ap214_notched_periodic_band.cmake
   tests/ap214_notched_periodic_band.stp
+  tests/ap214_negative_spindle_torus.cmake
+  tests/ap214_negative_spindle_torus.stp
+  tests/ap214_spherical_band_inner_first.cmake
+  tests/ap214_spherical_band_inner_first.stp
   tests/ap214_parallel_determinism.cmake
   tests/ap214_parallel_failure.cmake
   tests/ap214_parallel_failure.stp
@@ -739,6 +802,8 @@ cmakefiles(
   tests/ap214_solid_replica_cycle.cmake
   tests/ap214_solid_replica_cycle.stp
   tests/ap214_short_cylinder_seam.cmake
+  tests/ap214_sub_tolerance_torus_seam.cmake
+  tests/ap214_sub_tolerance_torus_seam.stp
   tests/ap214_short_cylinder_seam.stp
   tests/ap214_shifted_two_arc_sphere.cmake
   tests/ap214_shifted_two_arc_sphere.stp

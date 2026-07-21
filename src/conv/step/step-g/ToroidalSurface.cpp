@@ -86,7 +86,8 @@ bool
 ToroidalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
-    id = sse->STEPfile_id;
+    const int source_id = sse->STEPfile_id;
+    id = source_id;
 
     if (!ElementarySurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
@@ -100,6 +101,11 @@ ToroidalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     major_radius = step->getRealAttribute(sse, "major_radius");
     minor_radius = step->getRealAttribute(sse, "minor_radius");
+
+    /* Base-class loaders may inspect STEPcode supertype views whose synthetic
+     * instances do not carry the Part 21 identifier.  Diagnostics and repair
+     * records belong to the concrete TOROIDAL_SURFACE instance. */
+    id = source_id;
 
     sw->entity_status[id] = STEP_LOADED;
 
