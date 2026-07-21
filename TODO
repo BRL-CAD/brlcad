@@ -25,21 +25,21 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * search -exec 
 
-* DEFERRED mouse sweep rect
-
 * manual not working (mged -> help -> manual)
 
-* DEFERRED apropos (view command
-
 * rename the remove command (update rm docs and code printings)
-
-* DEFFERED design comb command, need -o
 
 * jepr is 2-20x slower, check search command
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* DEFERRED mouse sweep rect
+
+* DEFERRED apropos (view command
+
+* DEFFERED design comb command, need -o
 
 * fix ARB8 promotion to BoT, so calls between prep and shot don't get
   inconsistent data (soltab needs to match).
