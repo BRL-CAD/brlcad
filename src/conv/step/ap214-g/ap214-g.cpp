@@ -21,6 +21,7 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/opt.h"
+#include "bu/parallel.h"
 #include "bu/process.h"
 #include "bu/time.h"
 #include "bu/vls.h"
@@ -45,6 +46,20 @@
 #endif
 
 namespace {
+
+/* Exact STEP geometry conversion is memory-heavier than ordinary libbu
+ * parallel loops.  Use the available CPUs by default, but cap automatic
+ * concurrency at the eight-worker configuration exercised by the importer
+ * memory gates.  -j remains an explicit override, including -j 1 for fully
+ * serial diagnostic runs. */
+constexpr size_t kMaximumAutomaticGeometryJobs = 8;
+
+int
+default_geometry_jobs()
+{
+    return static_cast<int>(std::max<size_t>(1,
+	std::min(bu_avail_cpus(), kMaximumAutomaticGeometryJobs)));
+}
 
 volatile std::sig_atomic_t caught_signal = 0;
 
@@ -213,7 +228,7 @@ usage(const char *program)
 	<< "  -v                  report entity-level diagnostics\n"
 	<< "  -S FILE             write the legacy entity summary\n"
 	<< "  -e, --entity IDS    convert only listed representation-item IDs (repeatable)\n"
-	<< "  -j, --jobs N        bounded geometry worker count\n"
+	<< "  -j, --jobs N        bounded geometry worker count (default: up to 8 CPUs)\n"
 	<< "      --abs-tol MM    override output-space tolerance\n"
 	<< "      --repair MODE   none or safe (default safe)\n"
 	<< "      --exact         strictly enforce the declared model tolerance\n"
@@ -609,7 +624,7 @@ main(int argc, const char *argv[])
     static int exact = 0;
     static int strict = 0;
     static int help = 0;
-    static int jobs = 1;
+    static int jobs = default_geometry_jobs();
     static fastf_t absolute_tolerance = 0.0;
     static char *repair_name = NULL;
     static char *report_name = NULL;
@@ -625,7 +640,7 @@ main(int argc, const char *argv[])
 	{"S", "", "FILE", bu_opt_str, &summary_name, "legacy summary file"},
 	{"e", "entity", "ID[,ID...]", parse_entity_ids, &selected_entity_ids,
 	    "representation-item entity IDs"},
-	{"j", "jobs", "N", bu_opt_int, &jobs, "geometry workers"},
+	{"j", "jobs", "N", bu_opt_int, &jobs, "geometry workers (default: up to 8 CPUs)"},
 	{"", "abs-tol", "MM", bu_opt_fastf_t, &absolute_tolerance, "absolute tolerance"},
 	{"", "repair", "MODE", bu_opt_str, &repair_name, "none or safe"},
 	{"", "exact", "", NULL, &exact, "strictly enforce declared tolerance"},

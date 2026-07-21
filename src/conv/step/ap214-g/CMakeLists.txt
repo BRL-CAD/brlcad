@@ -477,6 +477,39 @@ if(BRLCAD_ENABLE_STEP)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_short_cylinder_seam.cmake
   )
   brlcad_add_test(
+    NAME ap214_notched_periodic_band
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_notched_periodic_band.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_notched_periodic_band.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_notched_periodic_band.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_notched_periodic_band.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_two_arc_sphere
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_two_arc_sphere.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_two_arc_sphere.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_two_arc_sphere.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_two_arc_sphere.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_shifted_two_arc_sphere
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_shifted_two_arc_sphere.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_shifted_two_arc_sphere.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_shifted_two_arc_sphere.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_shifted_two_arc_sphere.cmake
+  )
+  brlcad_add_test(
     NAME ap214_faceted_brep
     COMMAND
       ${CMAKE_COMMAND}
@@ -686,6 +719,8 @@ cmakefiles(
   tests/ap214_faceted_brep.stp
   tests/ap214_mapped_items.cmake
   tests/ap214_mapped_items.stp
+  tests/ap214_notched_periodic_band.cmake
+  tests/ap214_notched_periodic_band.stp
   tests/ap214_parallel_determinism.cmake
   tests/ap214_parallel_failure.cmake
   tests/ap214_parallel_failure.stp
@@ -705,6 +740,10 @@ cmakefiles(
   tests/ap214_solid_replica_cycle.stp
   tests/ap214_short_cylinder_seam.cmake
   tests/ap214_short_cylinder_seam.stp
+  tests/ap214_shifted_two_arc_sphere.cmake
+  tests/ap214_shifted_two_arc_sphere.stp
+  tests/ap214_two_arc_sphere.cmake
+  tests/ap214_two_arc_sphere.stp
   tests/ap214_import_test.cpp
   tests/ap214_lazy_session_test.cpp
   tests/ap214_style_layer.stp

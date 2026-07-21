@@ -85,6 +85,14 @@ constexpr double kParameterZeroSplitEpsilonScale = 1024.0;
  * subsequently performs its independent dense locus validation. */
 constexpr int kMaximumAdaptivePullbackDepth = 12;
 constexpr size_t kMaximumAdaptivePullbackSamples = 16384;
+/* A seam-crossing search brackets one scalar curve parameter.  Sixty-four
+ * interval refinements exceed the mantissa resolution of a double even when
+ * the distance-weighted step is not a perfect bisection.  The previous
+ * unbounded loop could approach an analytic seam asymptotically without ever
+ * satisfying IsAtSeam(), consuming the enclosing item's entire work budget.
+ * This is only a search ceiling; a result is accepted under the unchanged UV
+ * seam and model-space lift tolerances. */
+constexpr int kMaximumSeamCrossingIterations = 64;
 thread_local size_t closest_point_subdivision_nodes = 0;
 thread_local brlcad::PullbackCancellationCallback pullback_cancellation_callback = NULL;
 thread_local void *pullback_cancellation_context = NULL;
@@ -701,18 +709,41 @@ brlcad::PullbackWorkRemainingMilliseconds()
 static bool
 surface_closest_point_seeded(const ON_Surface *surf, const ON_3dPoint &point,
     const ON_2dPoint &seed, ON_2dPoint &surface_point,
-    ON_3dPoint &lifted_point, double &distance, double tolerance)
+    ON_3dPoint &lifted_point, double &distance, double tolerance,
+    const bool *cached_closed = NULL,
+    const ON_Interval *cached_domains = NULL,
+    double refinement_tolerance = 0.0)
 {
     if (!surf || !point.IsValid() || !seed.IsValid() || !(tolerance > 0.0))
 	return false;
 
+    /* ON_NurbsSurface::IsClosed() constructs and compares full boundary
+     * curves; it is not a constant-time flag lookup.  This solver used to
+     * repeat that work in every line-search reduction (up to 48*12 times for
+     * one point).  Surface closure and domains are immutable for the job, so
+     * evaluate them once per seeded solve. */
+    const bool closed[2] = {
+	cached_closed ? cached_closed[0] : surf->IsClosed(0),
+	cached_closed ? cached_closed[1] : surf->IsClosed(1)
+    };
+    const ON_Interval domains[2] = {
+	cached_domains ? cached_domains[0] : surf->Domain(0),
+	cached_domains ? cached_domains[1] : surf->Domain(1)
+    };
+    const double maximum_steps[2] = {
+	0.125 * domains[0].Length(), 0.125 * domains[1].Length()
+    };
+    const double convergence_tolerance = refinement_tolerance > 0.0 ?
+	std::min(tolerance, refinement_tolerance) : tolerance;
     ON_2dPoint uv(seed);
+    int evaluation_hint[2] = {0, 0};
     double best_distance = DBL_MAX;
     for (int iteration = 0; iteration < 48; ++iteration) {
 	if (brlcad::PullbackWorkCancelled()) break;
 	ON_3dPoint lift;
 	ON_3dVector du, dv;
-	if (!surf->Ev1Der(uv.x, uv.y, lift, du, dv) || !lift.IsValid())
+	if (!surf->Ev1Der(uv.x, uv.y, lift, du, dv, 0,
+		evaluation_hint) || !lift.IsValid())
 	    break;
 	const ON_3dVector residual = point - lift;
 	const double current_distance = residual.Length();
@@ -721,7 +752,7 @@ surface_closest_point_seeded(const ON_Surface *surf, const ON_3dPoint &point,
 	    surface_point = uv;
 	    lifted_point = lift;
 	}
-	if (current_distance <= tolerance) {
+	if (current_distance <= convergence_tolerance) {
 	    distance = current_distance;
 	    return true;
 	}
@@ -743,7 +774,7 @@ surface_closest_point_seeded(const ON_Surface *surf, const ON_3dPoint &point,
 	    (aa * r1 - b * r0) / determinant};
 	double trust_scale = 1.0;
 	for (int direction = 0; direction < 2; ++direction) {
-	    const double maximum_step = 0.125 * surf->Domain(direction).Length();
+	    const double maximum_step = maximum_steps[direction];
 	    if (maximum_step > ON_ZERO_TOLERANCE &&
 		    fabs(delta[direction]) > maximum_step)
 		trust_scale = std::min(trust_scale,
@@ -756,14 +787,13 @@ surface_closest_point_seeded(const ON_Surface *surf, const ON_3dPoint &point,
 	    ON_2dPoint candidate(uv.x + scale * delta[0],
 		uv.y + scale * delta[1]);
 	    for (int direction = 0; direction < 2; ++direction) {
-		if (surf->IsClosed(direction)) continue;
-		const ON_Interval domain = surf->Domain(direction);
-		candidate[direction] = std::max(domain.Min(),
-		    std::min(domain.Max(), candidate[direction]));
+		if (closed[direction]) continue;
+		candidate[direction] = std::max(domains[direction].Min(),
+		    std::min(domains[direction].Max(), candidate[direction]));
 	    }
-	    const ON_3dPoint candidate_lift = surf->PointAt(
-		candidate.x, candidate.y);
-	    if (!candidate_lift.IsValid() ||
+	    ON_3dPoint candidate_lift = ON_3dPoint::UnsetPoint;
+	    if (!surf->EvPoint(candidate.x, candidate.y, candidate_lift, 0,
+		    evaluation_hint) || !candidate_lift.IsValid() ||
 		    candidate_lift.DistanceTo(point) >= current_distance)
 		continue;
 	    uv = candidate;
@@ -784,7 +814,8 @@ surface_closest_point_seeded(const ON_Surface *surf, const ON_3dPoint &point,
 static bool
 surface_closest_point_multiseed(const ON_Surface *surf,
     const ON_3dPoint &point, ON_2dPoint &surface_point,
-    ON_3dPoint &lifted_point, double &distance, double tolerance)
+    ON_3dPoint &lifted_point, double &distance, double tolerance,
+    double refinement_tolerance = 0.0)
 {
     struct Candidate {
 	double distance;
@@ -794,6 +825,11 @@ surface_closest_point_multiseed(const ON_Surface *surf,
     if (!surf || !point.IsValid() || !(tolerance > 0.0))
 	return false;
 
+    const double convergence_tolerance = refinement_tolerance > 0.0 ?
+	std::min(tolerance, refinement_tolerance) : tolerance;
+
+    const bool closed[2] = {surf->IsClosed(0), surf->IsClosed(1)};
+    const ON_Interval domains[2] = {surf->Domain(0), surf->Domain(1)};
     std::vector<double> spans[2];
     for (int direction = 0; direction < 2; ++direction) {
 	const int count = surf->SpanCount(direction);
@@ -838,7 +874,7 @@ surface_closest_point_multiseed(const ON_Surface *surf,
 			surface_point = ON_2dPoint(up, vp);
 			lifted_point = lift;
 		    }
-		    if (candidate_distance <= tolerance) return true;
+		    if (candidate_distance <= convergence_tolerance) return true;
 		    candidates.push_back({candidate_distance,
 			ON_2dPoint(up, vp)});
 		}
@@ -846,25 +882,39 @@ surface_closest_point_multiseed(const ON_Surface *surf,
 	}
     }
 
-    std::sort(candidates.begin(), candidates.end(),
-	[](const Candidate &left, const Candidate &right) {
-	    return left.distance < right.distance;
-	});
     const size_t seed_count = std::min(candidates.size(),
 	kMaximumClosestPointFallbackSeeds);
+    const auto candidate_less = [](const Candidate &left,
+	const Candidate &right) {
+	if (left.distance < right.distance) return true;
+	if (right.distance < left.distance) return false;
+	if (left.uv.x < right.uv.x) return true;
+	if (right.uv.x < left.uv.x) return false;
+	return left.uv.y < right.uv.y;
+    };
+    /* Only the nearest bounded seed set is refined.  Sorting every sample on
+     * a large multi-span surface was O(n log n) work whose tail was discarded
+     * immediately.  Select the same deterministic nearest 32 in linear time,
+     * then order just that prefix. */
+    if (seed_count < candidates.size())
+	std::nth_element(candidates.begin(), candidates.begin() + seed_count,
+	    candidates.end(), candidate_less);
+    std::sort(candidates.begin(), candidates.begin() + seed_count,
+	candidate_less);
     for (size_t seed = 0; seed < seed_count; ++seed) {
 	ON_2dPoint candidate_uv = ON_2dPoint::UnsetPoint;
 	ON_3dPoint candidate_lift = ON_3dPoint::UnsetPoint;
 	double candidate_distance = DBL_MAX;
 	const bool accepted = surface_closest_point_seeded(surf, point,
 	    candidates[seed].uv, candidate_uv, candidate_lift,
-	    candidate_distance, tolerance);
+	    candidate_distance, tolerance, closed, domains,
+	    convergence_tolerance);
 	if (candidate_distance < distance) {
 	    distance = candidate_distance;
 	    surface_point = candidate_uv;
 	    lifted_point = candidate_lift;
 	}
-	if (accepted) return true;
+	if (accepted && candidate_distance <= convergence_tolerance) return true;
     }
     return distance <= tolerance;
 }
@@ -988,7 +1038,6 @@ surface_GetClosestPoint3dFirstOrderByRange(
 
 struct brlcad::PullbackContext::Impl {
     const ON_Surface *surface = NULL;
-    double same_point_tolerance = ON_DBL_QNAN;
     int u_span_count = 0;
     int v_span_count = 0;
     int u_mid_index = 0;
@@ -997,10 +1046,9 @@ struct brlcad::PullbackContext::Impl {
     std::vector<double> v_spans;
     std::vector<std::vector<ON_BoundingBox> > boxes;
 
-    bool Prepare(const ON_Surface *candidate, double same_point_tol)
+    bool Prepare(const ON_Surface *candidate, double UNUSED(same_point_tol))
     {
-	if (candidate == surface &&
-	    NEAR_EQUAL(same_point_tol, same_point_tolerance, DBL_EPSILON))
+	if (candidate == surface)
 	    return true;
 
 	surface = NULL;
@@ -1023,10 +1071,14 @@ struct brlcad::PullbackContext::Impl {
 	    !candidate->GetSpanVector(1, v_spans.data()))
 	    return false;
 
-	const double u_mid = candidate->Domain(0).Mid();
+	const ON_Interval u_domain = candidate->Domain(0);
+	const double u_mid = u_domain.Mid();
+	const double u_parameter_tolerance = DBL_EPSILON * 64.0 *
+	    std::max(1.0, std::max(fabs(u_domain.Min()),
+		fabs(u_domain.Max())));
 	u_mid_index = u_span_count / 2;
 	for (int span = 0; span < u_span_count + 1; ++span) {
-	    if (NEAR_EQUAL(u_spans[span], u_mid, same_point_tol)) {
+	    if (NEAR_EQUAL(u_spans[span], u_mid, u_parameter_tolerance)) {
 		u_mid_index = span;
 		break;
 	    }
@@ -1044,10 +1096,14 @@ struct brlcad::PullbackContext::Impl {
 	    }
 	}
 
-	const double v_mid = candidate->Domain(1).Mid();
+	const ON_Interval v_domain = candidate->Domain(1);
+	const double v_mid = v_domain.Mid();
+	const double v_parameter_tolerance = DBL_EPSILON * 64.0 *
+	    std::max(1.0, std::max(fabs(v_domain.Min()),
+		fabs(v_domain.Max())));
 	v_mid_index = v_span_count / 2;
 	for (int span = 0; span < v_span_count + 1; ++span) {
-	    if (NEAR_EQUAL(v_spans[span], v_mid, same_point_tol)) {
+	    if (NEAR_EQUAL(v_spans[span], v_mid, v_parameter_tolerance)) {
 		v_mid_index = span;
 		break;
 	    }
@@ -1079,7 +1135,6 @@ struct brlcad::PullbackContext::Impl {
 	}
 
 	surface = candidate;
-	same_point_tolerance = same_point_tol;
 	return true;
     }
 };
@@ -1124,7 +1179,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 	return false;
     if (!m_impl->Prepare(surf, same_point_tol))
 	return surface_closest_point_multiseed(surf, p, p2d, p3d,
-	    current_distance, within_distance_tol);
+	    current_distance, within_distance_tol, same_point_tol);
 
     const int u_spancnt = m_impl->u_span_count;
     const int v_spancnt = m_impl->v_span_count;
@@ -2070,7 +2125,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 cleanup:
     if (!rc && !PullbackWorkCancelled())
 	rc = surface_closest_point_multiseed(surf, p, p2d, p3d,
-	    current_distance, within_distance_tol);
+	    current_distance, within_distance_tol, same_point_tol);
     return rc;
 }
 
@@ -2134,7 +2189,10 @@ pullback_closest_point_seeded(PBCData &data, const ON_3dPoint &point,
     ON_3dPoint &lifted_point, double &distance, double tolerance)
 {
     return surface_closest_point_seeded(data.surf, point, seed,
-	surface_point, lifted_point, distance, tolerance);
+	surface_point, lifted_point, distance, tolerance,
+	data.surface_parameterization_cached ? data.surface_closed : NULL,
+	data.surface_parameterization_cached ? data.surface_domain : NULL,
+	data.declared_tolerance);
 }
 
 
@@ -2914,16 +2972,21 @@ pullback_samples(PBCData* data,
      * 3-D lift satisfies within_distance_tol; the global search remains the
      * fallback whenever the local solve does not converge. */
     std::vector<double> parameters;
+    std::vector<bool> span_boundaries;
     for (int i = istart; i <= istop; ++i) {
 	if (i == istart) {
 	    parameters.push_back(knots[i]);
+	    span_boundaries.push_back(true);
 	    continue;
 	}
 	const double delta = (knots[i] - knots[i - 1]) /
 	    static_cast<double>(samplesperknotinterval);
-	for (int j = 1; j < samplesperknotinterval; ++j)
+	for (int j = 1; j < samplesperknotinterval; ++j) {
 	    parameters.push_back(knots[i - 1] + j * delta);
+	    span_boundaries.push_back(false);
+	}
 	parameters.push_back(knots[i]);
+	span_boundaries.push_back(true);
     }
 
     std::vector<ON_2dPoint> projected(parameters.size(),
@@ -2936,19 +2999,34 @@ pullback_samples(PBCData* data,
     data->failed_projection_samples = 0;
     data->maximum_projection_distance = 0.0;
     size_t anchor = parameters.size();
+    size_t fallback_anchor = parameters.size();
+    double fallback_distance = DBL_MAX;
     for (size_t i = 0; i < parameters.size(); ++i) {
+	if (!span_boundaries[i]) continue;
 	if (brlcad::PullbackWorkCancelled()) break;
 	const ON_3dPoint target = curve->PointAt(parameters[i]);
 	ON_3dPoint lift = ON_3dPoint::UnsetPoint;
 	double &distance = projection_distances[i];
-	valid[i] = pullback_closest_point(*data, target, projected[i], lift,
-	    distance, 0, same_point_tol, within_distance_tol) &&
+	pullback_closest_point(*data, target,
+	    projected[i], lift, distance, 0, same_point_tol,
+	    same_point_tol);
+	valid[i] = projected[i].IsValid() && std::isfinite(distance) &&
 	    distance <= within_distance_tol;
-	if (valid[i]) {
+	if (valid[i] && distance <= same_point_tol) {
 	    anchor = i;
 	    break;
 	}
+	/* If no knot boundary satisfies the active tolerance, start continuity
+	 * from the globally closest finite boundary candidate.  Selecting the
+	 * first finite result can choose a nearby sheet of a folded surface and
+	 * greatly overstate the source mismatch. */
+	if (projected[i].IsValid() && std::isfinite(distance) &&
+		distance < fallback_distance) {
+	    fallback_anchor = i;
+	    fallback_distance = distance;
+	}
     }
+    if (anchor == parameters.size()) anchor = fallback_anchor;
 
     const auto project_from_seed = [data, curve, &parameters, &projected,
 	&valid, &projection_distances, same_point_tol,
@@ -2958,13 +3036,20 @@ pullback_samples(PBCData* data,
 	const ON_3dPoint target = curve->PointAt(parameters[index]);
 	ON_3dPoint lift = ON_3dPoint::UnsetPoint;
 	double &distance = projection_distances[index];
-	bool success = pullback_closest_point_seeded(*data, target, seed,
-	    projected[index], lift, distance, within_distance_tol);
-	if (!success)
-	    success = pullback_closest_point(*data, target, projected[index],
-		lift, distance, 0, same_point_tol, within_distance_tol);
-	valid[index] = success && distance <= within_distance_tol;
-	return static_cast<bool>(valid[index]);
+	pullback_closest_point_seeded(*data, target, seed, projected[index],
+	    lift, distance, same_point_tol);
+	bool have_candidate = projected[index].IsValid() &&
+	    std::isfinite(distance) && distance < DBL_MAX;
+	if (!have_candidate || distance > within_distance_tol) {
+	    projected[index] = ON_2dPoint::UnsetPoint;
+	    distance = DBL_MAX;
+	    pullback_closest_point(*data, target, projected[index], lift,
+		distance, 0, same_point_tol, same_point_tol);
+	    have_candidate = projected[index].IsValid() &&
+		std::isfinite(distance) && distance < DBL_MAX;
+	}
+	valid[index] = have_candidate && distance <= within_distance_tol;
+	return have_candidate;
     };
 
     if (anchor < parameters.size()) {
@@ -3020,13 +3105,17 @@ pullback_samples(PBCData* data,
 	    ON_3dPoint midpoint_lift = ON_3dPoint::UnsetPoint;
 	    double midpoint_distance = DBL_MAX;
 	    ++data->projection_samples;
-	    bool projected_midpoint = pullback_closest_point_seeded(*data, target,
+	    pullback_closest_point_seeded(*data, target,
 		chord_midpoint, midpoint_uv, midpoint_lift, midpoint_distance,
-		within_distance_tol);
-	    if (!projected_midpoint)
-		projected_midpoint = pullback_closest_point(*data, target,
-		    midpoint_uv, midpoint_lift, midpoint_distance, 0,
-		    same_point_tol, within_distance_tol);
+		same_point_tol);
+	    bool projected_midpoint = midpoint_uv.IsValid() &&
+		std::isfinite(midpoint_distance) && midpoint_distance < DBL_MAX;
+	    if (!projected_midpoint) {
+		pullback_closest_point(*data, target, midpoint_uv, midpoint_lift,
+		    midpoint_distance, 0, same_point_tol, same_point_tol);
+		projected_midpoint = midpoint_uv.IsValid() &&
+		    std::isfinite(midpoint_distance) && midpoint_distance < DBL_MAX;
+	    }
 	    if (!projected_midpoint || midpoint_distance > within_distance_tol) {
 		++data->rejected_projection_samples;
 		if (!std::isfinite(midpoint_distance) || midpoint_distance >= DBL_MAX)
@@ -3037,6 +3126,9 @@ pullback_samples(PBCData* data,
 		refinement_valid = false;
 		return;
 	    }
+	    if (std::isfinite(midpoint_distance) && midpoint_distance < DBL_MAX)
+		data->maximum_projection_distance = std::max(
+		    data->maximum_projection_distance, midpoint_distance);
 	    refine_interval(t0, uv0, midpoint_parameter, midpoint_uv, depth + 1);
 	    refine_interval(midpoint_parameter, midpoint_uv, t1, uv1, depth + 1);
 	};
@@ -3049,6 +3141,10 @@ pullback_samples(PBCData* data,
     }
 
     for (size_t i = 0; i < projected.size(); ++i) {
+	if (std::isfinite(projection_distances[i]) &&
+		projection_distances[i] < DBL_MAX)
+	    data->maximum_projection_distance = std::max(
+		data->maximum_projection_distance, projection_distances[i]);
 	if (all_projected || valid[i]) {
 	    samples->Append(projected[i]);
 	    continue;
@@ -3377,11 +3473,24 @@ Find3DCurveSeamCrossing(PBCData &data, double t0, double t1, double UNUSED(offse
 		    SwapUVSeamPoint(surf, from);
 		} else { // crosses the seam somewhere in between the two points
 		    bool seam_not_found = true;
-		    while(seam_not_found) {
+		    for (int iteration = 0; seam_not_found &&
+			    iteration < kMaximumSeamCrossingIterations; ++iteration) {
+			if (brlcad::PullbackWorkCancelled()) {
+			    rc = false;
+			    break;
+			}
 			double d0 = DistToNearestClosedSeam(surf, p0_2d);
 			double d1 = DistToNearestClosedSeam(surf, p1_2d);
 			if ((d0 > 0.0) && (d1 > 0.0)) {
 			    double t = t0 + (t1 - t0)*(d0/(d0+d1));
+			    const double parameter_guard = DBL_EPSILON * std::max(1.0,
+				std::max(fabs(t0), fabs(t1)));
+			    if (fabs(t - t0) <= parameter_guard ||
+				    fabs(t - t1) <= parameter_guard) {
+				seam_not_found = false;
+				rc = false;
+				continue;
+			    }
 			    int seam;
 			    ON_3dPoint p_3d = data.curve->PointAt(t);
 			    double distance;
@@ -3422,6 +3531,8 @@ Find3DCurveSeamCrossing(PBCData &data, double t0, double t1, double UNUSED(offse
 			    rc = false;
 			}
 		    }
+		    if (seam_not_found)
+			rc = false;
 		}
 	    } else {
 		rc = false;
@@ -3578,14 +3689,105 @@ pullback_samples_from_closed_surface(PBCData* data,
     ON_2dPoint prev_pt;
     bool have_previous = false;
     std::vector<double> sample_parameters;
+    std::vector<bool> span_boundaries;
+    double delta;
+    for (size_t i = istart; i < istop; ++i) {
+	delta = (knots[i + 1] - knots[i]) /
+	    static_cast<double>(samplesperknotinterval);
+	for (size_t j = 0; j <= samplesperknotinterval; ++j) {
+	    if (j == samplesperknotinterval && i < istop - 1) continue;
+	    const double parameter = knots[i] + j * delta;
+	    if (!sample_parameters.empty() && NEAR_EQUAL(parameter,
+		    sample_parameters.back(), DBL_EPSILON))
+		continue;
+	    sample_parameters.push_back(parameter);
+	    span_boundaries.push_back(j == 0 || j == samplesperknotinterval);
+	}
+    }
+
+    std::vector<ON_2dPoint> projected(sample_parameters.size(),
+	ON_2dPoint::UnsetPoint);
+    std::vector<double> projection_distances(sample_parameters.size(),
+	DBL_MAX);
+    std::vector<bool> valid(sample_parameters.size(), false);
     data->failure_reason = PullbackFailureReason::None;
-    data->projection_samples = 0;
+    data->projection_samples = sample_parameters.size();
     data->rejected_projection_samples = 0;
     data->failed_projection_samples = 0;
     data->maximum_projection_distance = 0.0;
+
+    /* Establish the surface sheet at a globally checked knot boundary before
+     * following local UV continuity.  Endpoints are tested first because
+     * STEP topology normally constrains them most strongly; if none satisfies
+     * the active tolerance, the closest finite boundary candidate is still a
+     * deterministic seed for measuring the source mismatch. */
+    std::vector<size_t> anchor_candidates;
+    if (!sample_parameters.empty()) anchor_candidates.push_back(0);
+    if (sample_parameters.size() > 1)
+	anchor_candidates.push_back(sample_parameters.size() - 1);
+    for (size_t i = 1; i + 1 < sample_parameters.size(); ++i) {
+	if (span_boundaries[i]) anchor_candidates.push_back(i);
+    }
+    size_t anchor = sample_parameters.size();
+    double anchor_distance = DBL_MAX;
+    for (std::vector<size_t>::const_iterator candidate =
+	    anchor_candidates.begin(); candidate != anchor_candidates.end();
+	    ++candidate) {
+	if (brlcad::PullbackWorkCancelled()) break;
+	const size_t index = *candidate;
+	ON_3dPoint lift = ON_3dPoint::UnsetPoint;
+	pullback_closest_point(*data, curve->PointAt(sample_parameters[index]),
+	    projected[index], lift, projection_distances[index], 0,
+	    same_point_tol, same_point_tol);
+	const double distance = projection_distances[index];
+	if (!projected[index].IsValid() || !std::isfinite(distance) ||
+		distance >= anchor_distance)
+	    continue;
+	anchor = index;
+	anchor_distance = distance;
+	if (distance <= same_point_tol) break;
+    }
+
+    const auto project_from_seed = [data, curve, &sample_parameters,
+	&projected, &projection_distances, &valid, same_point_tol,
+	within_distance_tol](size_t index, const ON_2dPoint &seed) {
+	if (brlcad::PullbackWorkCancelled()) return false;
+	ON_3dPoint lift = ON_3dPoint::UnsetPoint;
+	double &distance = projection_distances[index];
+	projected[index] = ON_2dPoint::UnsetPoint;
+	distance = DBL_MAX;
+	pullback_closest_point_seeded(*data,
+	    curve->PointAt(sample_parameters[index]), seed, projected[index],
+	    lift, distance, same_point_tol);
+	bool have_candidate = projected[index].IsValid() &&
+	    std::isfinite(distance) && distance < DBL_MAX;
+	if (!have_candidate || distance > within_distance_tol) {
+	    projected[index] = ON_2dPoint::UnsetPoint;
+	    distance = DBL_MAX;
+	    pullback_closest_point(*data,
+		curve->PointAt(sample_parameters[index]), projected[index], lift,
+		distance, 0, same_point_tol, same_point_tol);
+	    have_candidate = projected[index].IsValid() &&
+		std::isfinite(distance) && distance < DBL_MAX;
+	}
+	valid[index] = have_candidate && distance <= within_distance_tol;
+	return have_candidate;
+    };
+    if (anchor < sample_parameters.size()) {
+	valid[anchor] = anchor_distance <= within_distance_tol;
+	ON_2dPoint seed = projected[anchor];
+	for (size_t i = anchor + 1; i < sample_parameters.size(); ++i) {
+	    if (project_from_seed(i, seed)) seed = projected[i];
+	}
+	seed = projected[anchor];
+	for (size_t i = anchor; i > 0; --i) {
+	    if (project_from_seed(i - 1, seed)) seed = projected[i - 1];
+	}
+    }
+
     double prev_t = knots[istart];
     double offset = 0.0;
-    double delta;
+    size_t sample_index = 0;
     for (size_t i=istart; i<istop; i++) {
 	delta = (knots[i+1] - knots[i])/(double)samplesperknotinterval;
 	for (size_t j=0; j<=samplesperknotinterval; j++) {
@@ -3593,23 +3795,20 @@ pullback_samples_from_closed_surface(PBCData* data,
 		continue;
 
 	    double curr_t = knots[i]+j*delta;
-	    if (sample_parameters.empty() ||
-		    !NEAR_EQUAL(curr_t, sample_parameters.back(), DBL_EPSILON))
-		sample_parameters.push_back(curr_t);
+	    if (sample_index >= sample_parameters.size()) continue;
+	    curr_t = sample_parameters[sample_index];
 	    if (curr_t < (s-t)/2.0) {
 		offset = PBC_FROM_OFFSET;
 	    } else {
 		offset = -PBC_FROM_OFFSET;
 	    }
-	    ON_3dPoint p = curve->PointAt(curr_t);
-	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
-	    double distance = DBL_MAX;
-	    ++data->projection_samples;
-	    bool pulled = have_previous && pullback_closest_point_seeded(*data,
-		p, prev_pt, pt, p3d, distance, within_distance_tol);
-	    if (!pulled)
-		pulled = pullback_closest_point(*data, p, pt, p3d, distance, 0,
-		    same_point_tol, within_distance_tol);
+	    pt = projected[sample_index];
+	    const double distance = projection_distances[sample_index];
+	    const bool pulled = valid[sample_index];
+	    ++sample_index;
+	    if (std::isfinite(distance) && distance < DBL_MAX)
+		data->maximum_projection_distance = std::max(
+		    data->maximum_projection_distance, distance);
 	    if (pulled) {
 		if (IsAtSeam(surf, pt, PBC_SEAM_TOL) > 0) {
 		    ForceToClosestSeam(surf, pt, PBC_SEAM_TOL);
@@ -3701,44 +3900,52 @@ pullback_samples_from_closed_surface(PBCData* data,
      * collapsed result so the caller can reject or repair it explicitly. */
     if (samples->Count() < 2 && have_previous && sample_parameters.size() > 1 &&
 	!brlcad::PullbackWorkCancelled()) {
-	size_t anchor = 0;
+	size_t recovery_anchor = 0;
 	double anchor_delta = DBL_MAX;
 	for (size_t i = 0; i < sample_parameters.size(); ++i) {
 	    const double candidate_delta = fabs(sample_parameters[i] - prev_t);
 	    if (candidate_delta < anchor_delta) {
-		anchor = i;
+		recovery_anchor = i;
 		anchor_delta = candidate_delta;
 	    }
 	}
 	std::vector<ON_2dPoint> recovered(sample_parameters.size(),
 	    ON_2dPoint::UnsetPoint);
-	std::vector<bool> valid(sample_parameters.size(), false);
-	recovered[anchor] = prev_pt;
-	valid[anchor] = true;
+	std::vector<bool> recovery_valid(sample_parameters.size(), false);
+	recovered[recovery_anchor] = prev_pt;
+	recovery_valid[recovery_anchor] = true;
 	const auto recover = [data, &curve, &sample_parameters, &recovered,
-		&valid, same_point_tol, within_distance_tol](size_t index,
+		&recovery_valid, same_point_tol, within_distance_tol](size_t index,
 		    const ON_2dPoint &seed) {
 	    if (brlcad::PullbackWorkCancelled()) return false;
 	    const ON_3dPoint target = curve->PointAt(sample_parameters[index]);
 	    ON_3dPoint lift = ON_3dPoint::UnsetPoint;
 	    double recovered_distance = DBL_MAX;
-	    bool projected = pullback_closest_point_seeded(*data, target, seed,
-		recovered[index], lift, recovered_distance, within_distance_tol);
-	    if (!projected)
-		projected = pullback_closest_point(*data, target, recovered[index],
-		    lift, recovered_distance, 0, same_point_tol,
-		    within_distance_tol);
-	    valid[index] = projected && recovered_distance <= within_distance_tol;
-	    return static_cast<bool>(valid[index]);
+	    pullback_closest_point_seeded(*data, target, seed,
+		recovered[index], lift, recovered_distance, same_point_tol);
+	    bool recovery_projected = recovered[index].IsValid() &&
+		std::isfinite(recovered_distance) &&
+		recovered_distance <= within_distance_tol;
+	    if (!recovery_projected) {
+		recovered[index] = ON_2dPoint::UnsetPoint;
+		recovered_distance = DBL_MAX;
+		pullback_closest_point(*data, target, recovered[index], lift,
+		    recovered_distance, 0, same_point_tol, same_point_tol);
+		recovery_projected = recovered[index].IsValid() &&
+		    std::isfinite(recovered_distance) &&
+		    recovered_distance <= within_distance_tol;
+	    }
+	    recovery_valid[index] = recovery_projected;
+	    return static_cast<bool>(recovery_valid[index]);
 	};
 	bool recovered_all = true;
-	for (size_t i = anchor + 1; i < sample_parameters.size(); ++i) {
+	for (size_t i = recovery_anchor + 1; i < sample_parameters.size(); ++i) {
 	    if (!recover(i, recovered[i - 1])) {
 		recovered_all = false;
 		break;
 	    }
 	}
-	for (size_t i = anchor; recovered_all && i > 0; --i) {
+	for (size_t i = recovery_anchor; recovered_all && i > 0; --i) {
 	    if (!recover(i - 1, recovered[i])) {
 		recovered_all = false;
 		break;
@@ -3807,7 +4014,8 @@ pullback_samples(const ON_Surface* surf,
 		 double tolerance,
 		 double flatness,
 		 double same_point_tol,
-		 double within_distance_tol)
+		 double within_distance_tol,
+		 const std::shared_ptr<brlcad::PullbackContext> &context)
 {
     if (!surf)
 	return NULL;
@@ -3817,6 +4025,12 @@ pullback_samples(const ON_Surface* surf,
     data->flatness = flatness;
     data->curve = curve;
     data->surf = surf;
+    data->surface_closed[0] = surf->IsClosed(0);
+    data->surface_closed[1] = surf->IsClosed(1);
+    data->surface_domain[0] = surf->Domain(0);
+    data->surface_domain[1] = surf->Domain(1);
+    data->surface_parameterization_cached = true;
+    data->context = context;
     data->surftree = NULL;
     data->segments = new std::list<ON_2dPointArray *>();
     data->failure_reason = PullbackFailureReason::None;
@@ -3830,7 +4044,7 @@ pullback_samples(const ON_Surface* surf,
     double tmin, tmax;
     data->curve->GetDomain(&tmin, &tmax);
 
-    if (surf->IsClosed(0) || surf->IsClosed(1)) {
+    if (data->surface_closed[0] || data->surface_closed[1]) {
 	const double parameter_scale = std::max(1.0,
 	    std::max(fabs(tmin), fabs(tmax)));
 	const double zero_split_tolerance = DBL_EPSILON *
@@ -3840,10 +4054,12 @@ pullback_samples(const ON_Surface* surf,
 	    ON_2dPoint uv = ON_2dPoint::UnsetPoint;
 	    ON_3dPoint p = curve->PointAt(0.0);
 	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
-	    double distance;
+	    double distance = DBL_MAX;
 	    int quadrant = 0; // optional - 0 = default, 1 from NE quadrant, 2 from NW quadrant, 3 from SW quadrant, 4 from SE quadrant
-	    if (pullback_closest_point(*data, p, uv, p3d, distance, quadrant,
-		    same_point_tol, within_distance_tol)) {
+	    pullback_closest_point(*data, p, uv, p3d, distance, quadrant,
+		same_point_tol, same_point_tol);
+	    if (uv.IsValid() && std::isfinite(distance) &&
+		distance <= within_distance_tol) {
 		if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
 		    ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0, same_point_tol, within_distance_tol);
 		    ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax, same_point_tol, within_distance_tol);
@@ -4371,6 +4587,26 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 #endif
 
 
+/* At a collapsed surface boundary the parameter in every closed transverse
+ * direction is geometrically arbitrary.  Preserve the neighboring branch so
+ * seam resolution can propagate through the pole instead of discarding its
+ * only anchor.  The caller still validates the completed lift against the
+ * exact edge. */
+static bool
+resolve_singular_closed_branch(const ON_Surface *surface,
+    ON_2dPoint &sample, const ON_2dPoint *neighbor)
+{
+    if (!surface || !neighbor) return false;
+    bool resolved = false;
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!surface->IsClosed(direction)) continue;
+	sample[direction] = (*neighbor)[direction];
+	resolved = true;
+    }
+    return resolved;
+}
+
+
 bool
 resolve_seam_segment_from_prev(const ON_Surface *surface, ON_2dPointArray &segment, ON_2dPoint *prev = NULL)
 {
@@ -4426,6 +4662,8 @@ resolve_seam_segment_from_prev(const ON_Surface *surface, ON_2dPointArray &segme
 	    }
 	} else {
 	    if (singularity < 0) {
+		prev = &segment[i];
+	    } else if (resolve_singular_closed_branch(surface, segment[i], prev)) {
 		prev = &segment[i];
 	    } else {
 		prev = NULL;
@@ -4491,6 +4729,8 @@ resolve_seam_segment_from_next(const ON_Surface *surface, ON_2dPointArray &segme
 		}
 	    } else {
 		if (singularity < 0) {
+		    next = &segment[i];
+		} else if (resolve_singular_closed_branch(surface, segment[i], next)) {
 		    next = &segment[i];
 		} else {
 		    next = NULL;
@@ -4560,6 +4800,8 @@ resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment, bool &
 	} else {
 	    if (singularity < 0) {
 		prev = &segment[i];
+	    } else if (resolve_singular_closed_branch(surface, segment[i], prev)) {
+		prev = &segment[i];
 	    } else {
 		prev = NULL;
 	    }
@@ -4610,6 +4852,8 @@ resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment, bool &
 		}
 	    } else {
 		if (singularity < 0) {
+		    prev = &segment[i];
+		} else if (resolve_singular_closed_branch(surface, segment[i], prev)) {
 		    prev = &segment[i];
 		} else {
 		    prev = NULL;

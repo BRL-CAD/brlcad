@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <iostream>
 #include <cerrno>
 #include <csignal>
@@ -46,6 +47,7 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/opt.h"
+#include "bu/parallel.h"
 #include "bu/process.h"
 #include "bu/vls.h"
 
@@ -66,6 +68,19 @@
 #include "schema.h"
 
 namespace {
+
+/* Match ap214-g's bounded automatic concurrency.  Exact BREP jobs can retain
+ * substantial detached topology, so an unbounded hardware-concurrency default
+ * is inappropriate on large hosts; users may still select another value with
+ * -j. */
+constexpr size_t kMaximumAutomaticGeometryJobs = 8;
+
+int
+default_geometry_jobs()
+{
+    return static_cast<int>(std::max<size_t>(1,
+	std::min(bu_avail_cpus(), kMaximumAutomaticGeometryJobs)));
+}
 
 volatile std::sig_atomic_t caught_signal = 0;
 
@@ -435,7 +450,7 @@ main(int argc, const char *argv[])
     static int exact = 0;
     static int strict = 0;
     static int help = 0;
-    static int jobs = 1;
+    static int jobs = default_geometry_jobs();
     static fastf_t absolute_tolerance = 0.0;
     static char *repair_name = NULL;
     static char *report_name = NULL;
@@ -458,7 +473,8 @@ main(int argc, const char *argv[])
 	{"S", "summary", "FILE", bu_opt_str, &summary_log_file, "legacy entity summary"},
 	{"e", "entity", "ID[,ID...]", parse_entity_ids, &selected_entity_ids,
 	    "convert only listed representation-item IDs (repeatable)"},
-	{"j", "jobs", "N", bu_opt_int, &jobs, "bounded geometry worker count"},
+	{"j", "jobs", "N", bu_opt_int, &jobs,
+	    "bounded geometry worker count (default: up to 8 CPUs)"},
 	BU_OPT_DESC_NULL
     };
 

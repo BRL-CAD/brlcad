@@ -19,9 +19,7 @@ foreach(expected
     "\"geometry_written\":1"
     "\"geometry_skipped\":0"
     "\"invalid_breps\":0"
-    "regenerated a collapsed seam from exact adjacent endpoints"
-    "regenerated paired seam pcurves from the exact edge"
-    "corrected a face orientation from closed-shell edge-use constraints")
+    "inserted an exact pole cut for a multi-edge full-period boundary")
   string(FIND "${report_text}" "${expected}" found)
   if(found EQUAL -1)
     message(FATAL_ERROR "report does not contain ${expected}:\n${report_text}")
@@ -29,17 +27,17 @@ foreach(expected
 endforeach()
 
 execute_process(
-  COMMAND "${MGED}" -c "${OUTPUT}" brep Short_Cylinder_Seam_item.s info
+  COMMAND "${MGED}" -c "${OUTPUT}" brep Two_Arc_Sphere_item.s info
   OUTPUT_VARIABLE brep_output
   ERROR_VARIABLE brep_error
 )
 set(brep_text "${brep_output}\n${brep_error}")
 if(NOT brep_text MATCHES "Valid: YES, Solid: YES" OR
-   NOT brep_text MATCHES "faces:[ ]+3" OR
-   NOT brep_text MATCHES "edges:[ ]+3" OR
-   NOT brep_text MATCHES "vertices:[ ]+2" OR
-   NOT brep_text MATCHES "trims:[ ]+6")
-  message(FATAL_ERROR "short cylinder seam BREP validation failed\n${brep_text}")
+   NOT brep_text MATCHES "faces:[ ]+2" OR
+   NOT brep_text MATCHES "edges:[ ]+4" OR
+   NOT brep_text MATCHES "vertices:[ ]+4" OR
+   NOT brep_text MATCHES "trims:[ ]+10")
+  message(FATAL_ERROR "two-arc sphere BREP validation failed\n${brep_text}")
 endif()
 
 set(none_report "${REPORT}.none")
@@ -51,7 +49,7 @@ execute_process(
   ERROR_VARIABLE none_error
 )
 if(NOT none_result EQUAL 3)
-  message(FATAL_ERROR "unrepaired short seam returned ${none_result}, expected 3\n${none_output}\n${none_error}")
+  message(FATAL_ERROR "unrepaired two-arc sphere returned ${none_result}, expected 3\n${none_output}\n${none_error}")
 endif()
 file(READ "${none_report}" none_text)
 if(NOT none_text MATCHES "\"geometry_skipped\":1" OR

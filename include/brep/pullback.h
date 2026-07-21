@@ -59,6 +59,12 @@ typedef struct pbc_data {
     double flatness;
     const ON_Curve *curve;
     const ON_Surface *surf;
+    /** Immutable surface parameterization facts cached for the numerical job.
+     * ON_NurbsSurface::IsClosed() constructs and compares boundary curves, so
+     * it must not be repeated for every projected sample. */
+    bool surface_parameterization_cached = false;
+    bool surface_closed[2] = {false, false};
+    ON_Interval surface_domain[2];
     brlcad::SurfaceTree *surftree;
     std::list<ON_2dPointArray *> *segments;
     const ON_BrepEdge *edge;
@@ -104,7 +110,13 @@ extern BREP_EXPORT bool surface_GetClosestPoint3dFirstOrder(const ON_Surface *su
 extern BREP_EXPORT bool trim_GetClosestPoint3dFirstOrder(const ON_BrepTrim& trim,const ON_3dPoint& p,ON_2dPoint& p2d,double& t,double& distance,const ON_Interval* interval,double same_point_tol=BREP_SAME_POINT_TOLERANCE,double within_distance_tol=BREP_EDGE_MISS_TOLERANCE);
 extern BREP_EXPORT bool ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt,const ON_2dPoint &prev_pt, int &udir, int &vdir,double tol = 1e-6);
 
-extern BREP_EXPORT PBCData *pullback_samples(const ON_Surface *surf,const ON_Curve *curve,double tolerance = 1.0e-6,double flatness = 1.0e-3,double same_point_tol=BREP_SAME_POINT_TOLERANCE,double within_distance_tol=BREP_EDGE_MISS_TOLERANCE);
+extern BREP_EXPORT PBCData *pullback_samples(const ON_Surface *surf,
+        const ON_Curve *curve, double tolerance = 1.0e-6,
+        double flatness = 1.0e-3,
+        double same_point_tol = BREP_SAME_POINT_TOLERANCE,
+        double within_distance_tol = BREP_EDGE_MISS_TOLERANCE,
+        const std::shared_ptr<brlcad::PullbackContext> &context =
+            std::shared_ptr<brlcad::PullbackContext>());
 
 extern BREP_EXPORT bool check_pullback_data(std::list<PBCData *> &pbcs);
 

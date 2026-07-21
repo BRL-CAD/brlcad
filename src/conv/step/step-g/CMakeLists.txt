@@ -554,6 +554,15 @@ if(BRLCAD_ENABLE_STEP)
         -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_periodic_zero_split.json
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_periodic_zero_split.cmake
     )
+    brlcad_add_test(
+      NAME ap203_toroidal_band
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band.json
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band.cmake
+    )
   endif()
 
   if(HIDE_INTERNAL_SYMBOLS)
@@ -579,6 +588,8 @@ cmakefiles(
   tests/ap203_lazy_relationships.cmake
   tests/ap203_periodic_zero_split.cmake
   tests/ap203_periodic_zero_split.stp
+  tests/ap203_toroidal_band.cmake
+  tests/ap203_toroidal_band.stp
 )
 
 # Local Variables:
