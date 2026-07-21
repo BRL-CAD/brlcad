@@ -101,7 +101,6 @@ and extensively improving existing docs.
 * added metadata-aware image diff & nirt analysis - Cliff Yapp
 * added basic PNTS point-cloud ray tracing - Sean Morrison
 * improved nirt behavior in Windows bash consoles - Cliff Yapp
-* updated geogram dependency to v1.9.6 - Cliff Yapp
 * added g2asc/asc2g support for PNTS, DSP, and EBM - Sean Morrison
 * updated gct mesh decimation dependency to mmesh - Cliff Yapp
 * added procedural wing, propeller & tree generators - Cliff Yapp
@@ -112,12 +111,21 @@ and extensively improving existing docs.
 * improved rtwizard concurrency & remrt on Windows - Cliff Yapp
 * added simplification control options to bot extrude - Cliff Yapp
 * added bot exterior subcommand - Cliff Yapp
-* updated Manifold dependency to v3.2.1 - Cliff Yapp
-* updated SPSR dependency to v18.74 - Cliff Yapp
 * fixed 'search -type sph' not returning sph's - Chris McGregor
 * fixed gist crashing with bad/unknown units - Chris McGregor
 * add gist '-d' to allow user-specified density file - Chris McGregor
 * added Cauchy-Crofton area/volume & lint validation - Cliff Yapp
+* updated geogram dependency from v1.9.0 to v1.9.6 - Cliff Yapp
+* updated Manifold dependency from v2.5.1 to v3.2.1 - Cliff Yapp
+* updated SPSR dependency from v16.10 to v18.74 - Cliff Yapp
+* updated Embree dependency from v4.3.2 to v4.4.1 - Sean Morrison
+* updated ISPC dependency from v1.24.0 to v1.30.0 - Sean Morrison
+* updated oneTBB dependency from v2021.12.0 to v2023.0.0 - Sean Morrison
+* updated OSPRay dependency from v3.1.0 to v3.2.0 - Sean Morrison
+* updated rkcommon dependency from v1.13.0 to v1.15.2 - Sean Morrison
+* updated LIEF dependency from v0.15.1 to v0.17.6 - Cliff Yapp
+* updated Qt dependency from v6.10.2 to v6.11.1 - Cliff Yapp
+
 
 
 ----------------------------------------------------------------------
