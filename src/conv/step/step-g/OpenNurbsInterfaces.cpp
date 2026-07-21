@@ -6003,10 +6003,13 @@ step_insert_periodic_pole_cut(ON_Brep *brep, ON_BrepLoop &loop,
     const ON_BrepFace *face = loop.Face();
     /* A one-loop face has an unambiguous outer boundary even when a producer
      * encoded it with the FACE_BOUND base type and its derived loop flag has
-     * not been refreshed yet.  A multi-loop face must instead use the exact
-     * face-band construction; routing one of its inner loops through the pole
-     * creates an invalid same-loop seam. */
-    if (!face || face->m_li.Count() != 1)
+     * not been refreshed yet.  A multi-loop spherical cap may also have an
+     * intrinsic full-period outer boundary plus ordinary inner loops (holes).
+     * In that case the source/validated outer classification is authoritative
+     * and the holes remain untouched.  Never route an inner loop through the
+     * pole: that creates an invalid same-loop seam. */
+    if (!face || (face->m_li.Count() != 1 &&
+	    loop.m_type != ON_BrepLoop::outer))
 	return false;
 
     int seam_direction = -1;

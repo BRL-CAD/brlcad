@@ -290,6 +290,55 @@ getEdgePoints(ON_BrepTrim &trim,
 
     }
 
+    /* Boundary points shared by two faces must be taken from their common
+     * 3-D BREP edge, not independently from the two surface lifts.  Valid
+     * trims may differ from that edge by their asserted edge tolerance; using
+     * the lifts directly opens a visible crack in the fast shaded-display
+     * mesh.  A trim and its edge are not required to use identical parameter
+     * domains, so verify the normalized correspondence at every sample before
+     * changing any point.  If it is not valid for the entire trim, leave the
+     * trim on the existing general path rather than producing a mixture of
+     * surface and edge points. */
+    const ON_BrepEdge *edge = trim.Edge();
+    const ON_Curve *edge_curve = edge ? edge->EdgeCurveOf() : NULL;
+    const ON_Interval edge_domain = edge_curve ? edge_curve->Domain() :
+	ON_Interval::EmptyInterval;
+    const double edge_tolerance = edge ? std::max(tol->dist,
+	edge->m_tolerance) : tol->dist;
+
+    bool edge_parameterization_matches = edge_curve && range.IsIncreasing() &&
+	edge_domain.IsIncreasing();
+    if (edge_parameterization_matches) {
+	for (std::map<double, BrepTrimPoint *>::iterator sample =
+		param_points->begin(); sample != param_points->end(); ++sample) {
+	    BrepTrimPoint *point = sample->second;
+	    if (!point || !point->p3d) {
+		edge_parameterization_matches = false;
+		break;
+	    }
+	    double fraction = range.NormalizedParameterAt(point->t);
+	    if (trim.m_bRev3d)
+		fraction = 1.0 - fraction;
+	    const ON_3dPoint edge_point = edge_curve->PointAt(
+		edge_domain.ParameterAt(fraction));
+	    if (!edge_point.IsValid() ||
+		    edge_point.DistanceTo(*point->p3d) > edge_tolerance) {
+		edge_parameterization_matches = false;
+		break;
+	    }
+	}
+    }
+    if (edge_parameterization_matches) {
+	for (std::map<double, BrepTrimPoint *>::iterator sample =
+		param_points->begin(); sample != param_points->end(); ++sample) {
+	    BrepTrimPoint *point = sample->second;
+	    double fraction = range.NormalizedParameterAt(point->t);
+	    if (trim.m_bRev3d)
+		fraction = 1.0 - fraction;
+	    *point->p3d = edge_curve->PointAt(edge_domain.ParameterAt(fraction));
+	}
+    }
+
     return param_points;
 }
 
@@ -2387,4 +2436,3 @@ brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, in
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

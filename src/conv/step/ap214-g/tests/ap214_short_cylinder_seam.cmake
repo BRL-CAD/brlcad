@@ -21,7 +21,7 @@ foreach(expected
     "\"invalid_breps\":0"
     "regenerated a collapsed seam from exact adjacent endpoints"
     "regenerated paired seam pcurves from the exact edge"
-    "corrected a face orientation from closed-shell edge-use constraints")
+    "corrected a demonstrably inconsistent STEP loop orientation from closed-shell edge-use constraints")
   string(FIND "${report_text}" "${expected}" found)
   if(found EQUAL -1)
     message(FATAL_ERROR "report does not contain ${expected}:\n${report_text}")

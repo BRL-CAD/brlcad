@@ -36,11 +36,13 @@
 #endif
 
 /* system headers */
+#include <chrono>
 #include <list>
 #include <functional>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <thread>
 #include <vector>
 
 /* interface headers */
@@ -131,6 +133,19 @@ private:
     std::vector<brlcad::step::Diagnostic> diagnostics;
     mutable std::mutex diagnostic_mutex;
     brlcad::step::ImportProgress progress_state;
+    struct ActiveGeometryJobProgress {
+	std::chrono::steady_clock::time_point started;
+	int64_t root_entity_id = 0;
+	int64_t current_entity_id = 0;
+	std::string entity_type;
+	std::string phase;
+	uint64_t secondary_completed = 0;
+	uint64_t secondary_total = 0;
+	std::string secondary_label;
+	std::string detail;
+    };
+    std::map<std::thread::id, ActiveGeometryJobProgress>
+	active_geometry_job_progress;
     mutable std::mutex progress_mutex;
     std::function<bool()> cancellation_callback;
     std::unique_ptr<GeometryExecutor> geometry_executor;
@@ -202,7 +217,8 @@ public:
      * work can only occupy otherwise-idle -j slots. */
     void ConfigureGeometryExecutor(unsigned int concurrency);
     void StopGeometryExecutor();
-    void GeometryWorkerStarted();
+    void GeometryWorkerStarted(int64_t entity_id,
+	const std::string &entity_type);
     void GeometryWorkerFinished();
     void ParallelForGeometry(size_t count,
 	const std::function<void(size_t)> &task);

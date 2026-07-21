@@ -569,6 +569,7 @@ if(BRLCAD_ENABLE_STEP)
         ${CMAKE_COMMAND}
         -DSTEP_G=$<TARGET_FILE:step-g>
         -DMGED=$<TARGET_FILE:mged>
+        -DRT=$<TARGET_FILE:rt>
         -DINPUT=${CMAKE_SOURCE_DIR}/db/nist/NIST_MBE_PMI_6.stp
         -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_nist_mbe_pmi_6.json
         -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_nist_mbe_pmi_6.g

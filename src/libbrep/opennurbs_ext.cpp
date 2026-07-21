@@ -33,7 +33,6 @@
 
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/parallel.h"
 #include "brep/defines.h"
 #include "brep/curvetree.h"
 #include "brep/surfacetree.h"
@@ -1128,12 +1127,20 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max) const
 
 //--------------------------------------------------------------------------------
 // SurfaceTree
+struct SurfaceSplitCache {
+    const ON_Surface *surface = NULL;
+    ON_Interval domain[2];
+    std::vector<double> spans[2];
+};
+
+
 SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthLimit, double within_distance_tol) :
     m_ctree(NULL),
     m_removeTrimmed(removeTrimmed),
     m_face(face),
     m_root(NULL),
-    m_f_queue(new std::queue<ON_Plane *>)
+    m_f_queue(new std::queue<ON_Plane *>),
+    m_split_cache(new SurfaceSplitCache)
 {
     // build the surface bounding volume hierarchy
     const ON_Surface* surf = face->SurfaceOf();
@@ -1216,6 +1223,7 @@ SurfaceTree::~SurfaceTree()
     delete m_ctree;
     delete m_root;
     delete m_f_queue;
+    delete m_split_cache;
 }
 
 
@@ -1487,41 +1495,27 @@ initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_Interval& u
 }
 
 
-// Cache surface information as file static to ensure initialization once;
-static const ON_Surface *prev_surf[MAX_PSW] = {NULL};
-static ON_Interval dom[MAX_PSW][2];
-static int span_cnt[MAX_PSW][2] = {{0, 0}};
-static double *span[MAX_PSW][2] = {{NULL, NULL}};
-
 bool
-hasSplit(const ON_Surface *surf, const int dir, const ON_Interval& interval, double &split)
+SurfaceTree::hasSplit(const ON_Surface *surf, const int dir,
+    const ON_Interval& interval, double &split) const
 {
-    int p = bu_parallel_id();
-    if (surf == NULL) {
-	// clean up statics and return
-	prev_surf[p] = NULL;
-	for(int i=0; i<2; i++) {
-	    span_cnt[p][i] = 0;
-	    if (span[p][i])
-		bu_free(span[p][i], "surface span vector");
-	    span[p][i] = NULL;
-	    dom[p][i] = ON_Interval::EmptyInterval;
-	}
-
+    if (!surf || !m_split_cache)
 	return false;
-    }
-    if (prev_surf[p] != surf) {
-	// load new surf info
-	for(int i=0; i<2; i++) {
-	    dom[p][i] = surf->Domain(i);
-	    span_cnt[p][i] = surf->SpanCount(i);
-	    if (span[p][i])
-		bu_free(span[p][i], "surface span vector");
-	    span[p][i] = (double *)bu_malloc((unsigned)(span_cnt[p][i]+1) * sizeof(double), "surface span vector");
-	    surf->GetSpanVector(i, span[p][i]);
-	}
 
-	prev_surf[p] = surf;
+    /* Keep knot data with the tree that consumes it.  The old file-static
+     * cache was keyed by bu_parallel_id(), which is not unique for the C++
+     * worker threads used by the STEP converters.  It also retained dangling
+     * surface pointers after a tree was destroyed, so allocator address reuse
+     * could select stale knot data while processing a later solid. */
+    SurfaceSplitCache &cache = *m_split_cache;
+    if (cache.surface != surf) {
+	for(int i=0; i<2; i++) {
+	    cache.domain[i] = surf->Domain(i);
+	    const int span_count = surf->SpanCount(i);
+	    cache.spans[i].resize((size_t)span_count + 1);
+	    surf->GetSpanVector(i, cache.spans[i].data());
+	}
+	cache.surface = surf;
     }
 
     // find direction split based on setting of 'dir'
@@ -1529,28 +1523,29 @@ hasSplit(const ON_Surface *surf, const int dir, const ON_Interval& interval, dou
     // first, if closed in 'dir' check to see if it extends over seam and use that as split
     if (surf->IsClosed(dir)) {
 	bool testOpen = true;
-	if (interval.Includes(dom[p][dir].m_t[0], testOpen)) { //crosses lower boundary
-	    split = dom[p][dir].m_t[0];
+	if (interval.Includes(cache.domain[dir].m_t[0], testOpen)) { //crosses lower boundary
+	    split = cache.domain[dir].m_t[0];
 	    return true;
-	} else if (interval.Includes(dom[p][dir].m_t[1], testOpen)) { //crosses upper boundary
-	    split = dom[p][dir].m_t[1];
+	} else if (interval.Includes(cache.domain[dir].m_t[1], testOpen)) { //crosses upper boundary
+	    split = cache.domain[dir].m_t[1];
 	    return true;
 	}
     }
 
     // next lets see if we have a knots in interval, if so split on middle knot
-    if (span_cnt[p][dir] > 1) {
+    const int span_count = (int)cache.spans[dir].size() - 1;
+    if (span_count > 1) {
 	int sum = 0;
 	int cnt = 0;
-	for(int i=0; i<span_cnt[p][dir]+1; i++) {
+	for(int i=0; i<span_count+1; i++) {
 	    bool testOpen = true;
-	    if (interval.Includes((span[p][dir])[i], testOpen)) { //crosses lower boundary
+	    if (interval.Includes(cache.spans[dir][i], testOpen)) { //crosses lower boundary
 		sum = sum + i;
 		cnt++;
 	    }
 	}
 	if (cnt > 0) {
-	    split = (span[p][dir])[sum/cnt];
+	    split = cache.spans[dir][sum/cnt];
 	    return true;
 	}
     }
