@@ -32,6 +32,7 @@ animation, comparison, and image metadata features.  DocBook
 documentation was converted to AsciiDoc, adding over 220 manual pages
 and extensively improving existing docs.
 
+* fixed search -exec infinite looping with creations - Chris McGregor
 * fixed NOCOS mode plate mode bot creation - Meghna45-code
 * fixed search -exec multithreaded output - Cliff Yapp, Chris McGregor
 * improved as2g importing speed for large inputs - Cliff Yapp
