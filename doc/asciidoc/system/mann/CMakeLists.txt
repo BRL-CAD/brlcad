@@ -305,7 +305,6 @@ set(
   reid.adoc
   release.adoc
   relos.adoc
-  remove.adoc
   remat.adoc
   rfarb.adoc
   rm.adoc
