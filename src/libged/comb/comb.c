@@ -552,30 +552,73 @@ comb_decimate_memfree:
 }
 
 
-static int
-comb_remove_members(struct ged *gedp, int argc, const char *argv[])
+enum comb_command {
+    COMB_COMMAND_NONE = 0,
+    COMB_COMMAND_RM,
+    COMB_COMMAND_WRAP,
+    COMB_COMMAND_FLATTEN,
+    COMB_COMMAND_LIFT,
+    COMB_COMMAND_REGION,
+    COMB_COMMAND_UNREGION,
+    COMB_COMMAND_DECIMATE
+};
+
+
+static enum comb_command
+comb_command_id(const char *command)
 {
-    struct directory *dp;
+    if (BU_STR_EQUAL(command, "rm"))
+	return COMB_COMMAND_RM;
+    if (BU_STR_EQUAL(command, "wrap"))
+	return COMB_COMMAND_WRAP;
+    if (BU_STR_EQUAL(command, "flatten"))
+	return COMB_COMMAND_FLATTEN;
+    if (BU_STR_EQUAL(command, "lift"))
+	return COMB_COMMAND_LIFT;
+    if (BU_STR_EQUAL(command, "region"))
+	return COMB_COMMAND_REGION;
+    if (BU_STR_EQUAL(command, "unregion"))
+	return COMB_COMMAND_UNREGION;
+    if (BU_STR_EQUAL(command, "decimate"))
+	return COMB_COMMAND_DECIMATE;
+
+    return COMB_COMMAND_NONE;
+}
+
+
+static const char *
+comb_command_name(enum comb_command command)
+{
+    switch (command) {
+	case COMB_COMMAND_RM:
+	    return "rm";
+	case COMB_COMMAND_WRAP:
+	    return "wrap";
+	case COMB_COMMAND_FLATTEN:
+	    return "flatten";
+	case COMB_COMMAND_LIFT:
+	    return "lift";
+	case COMB_COMMAND_REGION:
+	    return "region";
+	case COMB_COMMAND_UNREGION:
+	    return "unregion";
+	case COMB_COMMAND_DECIMATE:
+	    return "decimate";
+	case COMB_COMMAND_NONE:
+	    break;
+    }
+
+    return "unknown";
+}
+
+
+static int
+comb_remove_members(struct ged *gedp, struct directory *dp, int argc, const char *argv[])
+{
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     int ret = BRLCAD_OK;
     int i;
-    const char *comb_name;
-
-    if (argc < 5) {
-	bu_vls_printf(gedp->ged_result_str,
-		"Usage: %s rm -C|--comb combination member(s)", argv[0]);
-	return BRLCAD_ERROR;
-    }
-
-    comb_name = argv[3];
-    if ((dp = db_lookup(gedp->dbip, comb_name, LOOKUP_NOISY)) == RT_DIR_NULL)
-	return BRLCAD_ERROR;
-
-    if ((dp->d_flags & RT_DIR_COMB) == 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a combination", argv[0], dp->d_namep);
-	return BRLCAD_ERROR;
-    }
 
     if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
@@ -585,7 +628,7 @@ comb_remove_members(struct ged *gedp, int argc, const char *argv[])
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
-    for (i = 4; i < argc; i++) {
+    for (i = 0; i < argc; i++) {
 	if (db_tree_rm_dbleaf(&(comb->tree), argv[i], 0) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[i]);
 	    ret = BRLCAD_ERROR;
@@ -603,26 +646,19 @@ comb_remove_members(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	return BRLCAD_ERROR;
     }
-
-    db_update_nref(gedp->dbip);
     return ret;
 }
 
 
 static int
-comb_subcommand(struct ged *gedp, int argc, const char *argv[])
+comb_execute_command(struct ged *gedp, enum comb_command command, const char *comb_name, int argc, const char *argv[])
 {
-    const char *subcommand = argv[1];
-    const char *comb_name = argv[3];
     struct directory *dp;
     int ret;
 
-    if (BU_STR_EQUAL(subcommand, "rm"))
-	return comb_remove_members(gedp, argc, argv);
 
-    if (argc != 4) {
-	bu_vls_printf(gedp->ged_result_str,
-		"Usage: %s %s -C|--comb combination", argv[0], subcommand);
+    if (!comb_name) {
+	bu_vls_printf(gedp->ged_result_str, "comb: no combination specified\n");
 	return BRLCAD_ERROR;
     }
 
@@ -632,16 +668,63 @@ comb_subcommand(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    if (command == COMB_COMMAND_RM) {
+	if (argc < 1) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: comb combination rm member(s)");
+	    return BRLCAD_ERROR;
+	}
+	GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+	ret = comb_remove_members(gedp, dp, argc, argv);
+	db_update_nref(gedp->dbip);
+	return ret;
+    }
+
+    if (argc != 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: comb combination %s", comb_command_name(command));
+	return BRLCAD_ERROR;
+    }
+
+    if (command == COMB_COMMAND_REGION)
+	return region_flag_set(gedp, dp);
+    if (command == COMB_COMMAND_UNREGION)
+	return region_flag_clear(gedp, dp);
+
     db_update_nref(gedp->dbip);
-    if (BU_STR_EQUAL(subcommand, "wrap"))
+    if (command == COMB_COMMAND_WRAP)
 	ret = comb_wrap(gedp, dp);
-    else if (BU_STR_EQUAL(subcommand, "flatten"))
+    else if (command == COMB_COMMAND_FLATTEN)
 	ret = comb_flatten(gedp, dp);
-    else
+    else if (command == COMB_COMMAND_LIFT)
 	ret = comb_lift_region(gedp, dp);
+    else
+	ret = comb_decimate(gedp, dp);
 
     if (ret == BRLCAD_OK)
 	db_update_nref(gedp->dbip);
+    return ret;
+}
+
+
+int ged_comb_core(struct ged *gedp, int argc, const char *argv[]);
+
+
+static int
+comb_execute_selector_first_operator(struct ged *gedp, int argc, const char *argv[])
+{
+    const int legacy_argc = argc - 1;
+    const char **legacy_argv;
+    int i;
+    int ret;
+
+    legacy_argv = (const char **)bu_calloc((size_t)legacy_argc, sizeof(*legacy_argv), "comb legacy argv");
+    legacy_argv[0] = argv[0];
+    legacy_argv[1] = argv[3];
+    legacy_argv[2] = argv[1];
+    for (i = 4; i < argc; i++)
+	legacy_argv[i - 1] = argv[i];
+
+    ret = ged_comb_core(gedp, legacy_argc, legacy_argv);
+    bu_free((void *)legacy_argv, "comb legacy argv");
     return ret;
 }
 
@@ -663,8 +746,9 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
     int alter_existing = 1;
     static const char *usage =
 	"[-c|-r] [-w|-f|-l] [-d] [-S] comb_name [<operation object>]\n"
-	"       comb rm -C|--comb combination member(s)\n"
-	"       comb {wrap|flatten|lift} -C|--comb combination";
+	"       comb combination command [arguments]\n"
+	"       comb command -C|--comb combination [arguments]";
+    enum comb_command command;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -675,13 +759,27 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 
     cmd_name = argv[0];
 
-    if (argc >= 3 &&
-	(BU_STR_EQUAL(argv[1], "rm") || BU_STR_EQUAL(argv[1], "wrap") ||
-	 BU_STR_EQUAL(argv[1], "flatten") || BU_STR_EQUAL(argv[1], "lift")) &&
-	(BU_STR_EQUAL(argv[2], "-C") || BU_STR_EQUAL(argv[2], "--comb"))) {
-	if (BU_STR_EQUAL(argv[1], "rm"))
-	    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-	return comb_subcommand(gedp, argc, argv);
+    if (argc >= 3 && (BU_STR_EQUAL(argv[2], "-C") || BU_STR_EQUAL(argv[2], "--comb"))) {
+	command = comb_command_id(argv[1]);
+	if (command != COMB_COMMAND_NONE) {
+	    if (argc < 4) {
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		return BRLCAD_ERROR;
+	    }
+	    return comb_execute_command(gedp, command, argv[3], argc - 4, argv + 4);
+	}
+
+	if (db_str2op(argv[1]) != DB_OP_NULL) {
+	    if (argc < 4) {
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		return BRLCAD_ERROR;
+	    }
+	    return comb_execute_selector_first_operator(gedp, argc, argv);
+	}
+    }
+
+    if (argc >= 3 && (command = comb_command_id(argv[2])) != COMB_COMMAND_NONE) {
+	return comb_execute_command(gedp, command, argv[1], argc - 3, argv + 3);
     }
 
     /* must be wanting help */
