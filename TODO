@@ -2756,10 +2756,6 @@ DOCUMENTATION
 * BRL-CAD Manifesto
 	Vision & Scope
 
-* BRL-CAD Taxonomy
-	Description of the common terminology used throughout BRL-CAD,
-	conventions employed, and tool categorization.
-
 * Implementing a BRL-CAD Primitive
 	How-To for creating a new primitive in BRL-CAD that can be
 	ray-traced, tessellated, plotted, and transformed seamlessly.
