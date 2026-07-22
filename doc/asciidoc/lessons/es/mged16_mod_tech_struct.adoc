@@ -360,7 +360,7 @@ Si quisiera definir los componentes de acuerdo a la funcionalidad, debería estr
 
 image::../../lessons/images/mged16_radio_structure_3.png[]
 
-Para llevar a cabo esta reestructuración de acuerdo a la funcionalidad, cree una combinación de montaje llamada electronics.c para mantener estos componentes agrupados. Tipee entonces: *g electronics.c board.r knob.r button.r[Enter]* Por supuesto, ahora tenemos que quitar board.r, knob.r y button.r de la combinación de ensamble radio.c de modo que cuando electronics.c se agrega a radio.c, no tenga el mando y el botón incluido dos veces en el modelo. Para ello, utilice el comando rm (remove > borrar): *rm radio.c board.r knob.r button.r[Enter]* y agrupe ambas combinaciones: *g radio.c electronics.c[Enter]*
+Para llevar a cabo esta reestructuración de acuerdo a la funcionalidad, cree una combinación de montaje llamada electronics.c para mantener estos componentes agrupados. Tipee entonces: *g electronics.c board.r knob.r button.r[Enter]* Por supuesto, ahora tenemos que quitar board.r, knob.r y button.r de la combinación de ensamble radio.c de modo que cuando electronics.c se agrega a radio.c, no tenga el mando y el botón incluido dos veces en el modelo. Para ello, utilice el comando de eliminación de miembros de combinación: *comb radio.c rm board.r knob.r button.r[Enter]* y agrupe ambas combinaciones: *g radio.c electronics.c[Enter]*
 
 Ahora el árbol de radio.c debería ser:
 
