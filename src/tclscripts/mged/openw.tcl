@@ -262,6 +262,19 @@ if {[namespace exists ::tk]} {
     set ::tk::Priv(cad_dialog) .mged_dialog
 }
 
+proc mged_open_manual {parent screen} {
+    global mged_browser
+    global mged_html_dir
+
+    set manual_path [file join $mged_html_dir index.html]
+    if {[file readable $manual_path] &&
+	![catch {exec -- $mged_browser $manual_path &}]} {
+	return
+    }
+
+    ia_man $parent $screen
+}
+
 proc gui { args } {
     global tmp_hoc
     global mged_gui
@@ -2023,15 +2036,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	manual page browser with ranked results." }
 	    { see_also "apropos man" } }
 
-    if {$::tcl_platform(os) == "Windows NT"} {
-	set web_cmd "exec \$mged_browser \$mged_html_dir/index.html &"
-    } elseif {$::tcl_platform(os) == "Darwin"} {
-	set web_cmd "exec \$mged_browser \$mged_html_dir/index.html"
-    } else {
-	set web_cmd "exec \$mged_browser -display $screen \$mged_html_dir/index.html 2> /dev/null &"
-    }
-
-    .$id.menubar.help add command -label "Manual" -underline 0 -command $web_cmd
+    .$id.menubar.help add command -label "Manual" -underline 0\
+	-command "mged_open_manual .$id $screen"
     hoc_register_menu_data "Help" "Manual" "Manual"\
 	{ { summary "Start a tool for browsing the online MGED manual.
 	The web browser that gets started is dependent, first, on the
