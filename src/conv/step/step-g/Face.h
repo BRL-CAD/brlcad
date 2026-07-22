@@ -30,6 +30,7 @@
 #include "common.h"
 
 #include <list>
+#include <vector>
 
 #include "TopologicalRepresentationItem.h"
 
@@ -51,15 +52,27 @@ protected:
     LIST_OF_FACE_BOUNDS bounds;
 
 public:
+    struct PreparedBound {
+	FaceBound *bound = NULL;
+	int loop_index = -1;
+	std::vector<int> edge_indices;
+    };
+
     Face();
     virtual ~Face();
     Face(STEPWrapper *sw, int step_id);
     ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
+    bool GrowTopologyVertexBounds(ON_BoundingBox *bounds);
     bool GetEdgeAxisProjectionBounds(ON_Brep *brep,
 	const ON_3dPoint &origin, const ON_3dVector &axis,
 	double *minimum, double *maximum);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
+    bool PrepareONBrepLoops(ON_Brep *brep,
+	std::vector<PreparedBound> *prepared_bounds);
+    bool FinishONBrepLoops(ON_Brep *brep,
+	const std::vector<PreparedBound> &prepared_bounds,
+	double item_scale_override = 0.0);
     virtual void Print(int level);
     virtual void ReverseFace();
 

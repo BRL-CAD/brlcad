@@ -23,6 +23,10 @@ foreach(expected
     "\"geometry_attempted\":2"
     "\"geometry_written\":1"
     "\"geometry_skipped\":1"
+    "\"performance\":{\"stages\":{"
+    "\"brep_construction_pullback\":{\"calls\":2"
+    "\"face_construction_pullback\":{\"calls\":7"
+    "\"pullback\":{\"closest_point_queries\":0"
     "closed STEP BREP did not validate as a solid")
   string(FIND "${report_text}" "${expected}" found)
   if(found EQUAL -1)

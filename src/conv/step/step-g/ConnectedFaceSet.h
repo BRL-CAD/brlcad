@@ -51,6 +51,7 @@ public:
     virtual void Print(int level);
     virtual void ReverseFaceSet();
     virtual size_t FaceCount() const { return cfs_faces.size(); }
+    size_t MaximumPullbackSpanEstimate() const;
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

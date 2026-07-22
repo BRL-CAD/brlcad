@@ -51,6 +51,15 @@ public:
     void AddFace(ON_Brep *brep);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
+    /** Serially build the face surface, loops, and 3-D edge topology.  The
+     * expensive pcurve phase is deliberately deferred to FinishONBrep(). */
+    bool PrepareONBrep(ON_Brep *brep,
+	std::vector<Face::PreparedBound> *prepared_bounds);
+    /** Complete trims on an independently owned face BREP. */
+    bool FinishONBrep(ON_Brep *brep,
+	const std::vector<Face::PreparedBound> &prepared_bounds,
+	double item_scale_override = 0.0);
+    size_t PullbackSpanEstimate() const;
     virtual void Print(int level);
 
     //static methods

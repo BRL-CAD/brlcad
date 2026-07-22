@@ -6,6 +6,8 @@ set(
   ../BRLCADWrapper.cpp
   ../STEPString.cpp
   ../STEPWrapper.cpp
+  ../STEPWrapperAttributes.cpp
+  ../STEPWrapperIO.cpp
   AP214Adapter.cpp
   AP214CSG.cpp
   AP214Metadata.cpp
@@ -129,6 +131,8 @@ set(
   ../step-g/OffsetCurve3D.cpp
   ../step-g/OffsetSurface.cpp
   ../step-g/OpenNurbsInterfaces.cpp
+  ../step-g/OpenNurbsPrimitives.cpp
+  ../step-g/OpenNurbsSplines.cpp
   ../step-g/OpenShell.cpp
   ../step-g/OrientedEdge.cpp
   ../step-g/OrientedClosedShell.cpp

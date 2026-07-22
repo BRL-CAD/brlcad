@@ -197,6 +197,14 @@ BSplineSurfaceWithKnots::Print(int level)
     BSplineSurface::Print(level + 1);
 }
 
+size_t
+BSplineSurfaceWithKnots::PullbackSpanEstimate() const
+{
+    if (u_knots.size() < 2 || v_knots.size() < 2)
+	return BSplineSurface::PullbackSpanEstimate();
+    return (u_knots.size() - 1) * (v_knots.size() - 1);
+}
+
 STEPEntity *
 BSplineSurfaceWithKnots::GetInstance(STEPWrapper *sw, int id)
 {

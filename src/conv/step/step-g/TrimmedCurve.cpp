@@ -212,7 +212,7 @@ TrimmedCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool
 TrimmedCurve::LoadONBrep(ON_Brep *brep)
 {
-    if (ON_id >= 0) {
+    if (GetONId() >= 0) {
 	return true;    // already loaded
     }
 
@@ -257,7 +257,7 @@ TrimmedCurve::LoadONBrep(ON_Brep *brep)
     }
     basis_curve->LoadONBrep(brep);
 
-    ON_id = basis_curve->GetONId();
+    SetONId(basis_curve->GetONId());
 
     return true;
 }

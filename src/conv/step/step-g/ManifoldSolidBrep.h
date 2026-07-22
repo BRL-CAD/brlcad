@@ -51,6 +51,7 @@ public:
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
     virtual size_t FaceCount() const;
+    size_t MaximumPullbackSpanEstimate() const;
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

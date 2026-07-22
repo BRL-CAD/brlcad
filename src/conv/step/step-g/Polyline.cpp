@@ -151,7 +151,7 @@ Polyline::LoadONBrep(ON_Brep *brep)
 {
     if (!brep || points.size() < 2)
 	return false;
-    if (ON_id >= 0)
+    if (GetONId() >= 0)
 	return true;
 
     ON_3dPointArray vertices;
@@ -169,8 +169,8 @@ Polyline::LoadONBrep(ON_Brep *brep)
 	delete curve;
 	return false;
     }
-    ON_id = brep->AddEdgeCurve(curve);
-    return ON_id >= 0;
+    SetONId(brep->AddEdgeCurve(curve));
+    return GetONId() >= 0;
 }
 
 // Local Variables:

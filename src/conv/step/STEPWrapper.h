@@ -85,15 +85,16 @@ public:
     void ResetOpenNURBSState();
 };
 
-#ifdef HAVE_STEPCODE_LAZY
 namespace brlcad {
+struct PullbackStatistics;
+#ifdef HAVE_STEPCODE_LAZY
 namespace step {
 struct STEPLazyDiagnostic;
 class STEPLazyBatch;
 class STEPLazySession;
 }
-}
 #endif
+}
 
 typedef std::list<CartesianPoint *> LIST_OF_POINTS;
 typedef std::list<LIST_OF_POINTS *> LIST_OF_LIST_OF_POINTS;
@@ -139,6 +140,10 @@ private:
 	int64_t current_entity_id = 0;
 	std::string entity_type;
 	std::string phase;
+	int64_t item_entity_id = 0;
+	uint64_t item_completed = 0;
+	uint64_t item_total = 0;
+	std::string item_label;
 	uint64_t secondary_completed = 0;
 	uint64_t secondary_total = 0;
 	std::string secondary_label;
@@ -147,6 +152,7 @@ private:
     std::map<std::thread::id, ActiveGeometryJobProgress>
 	active_geometry_job_progress;
     mutable std::mutex progress_mutex;
+    mutable std::mutex telemetry_mutex;
     std::function<bool()> cancellation_callback;
     std::unique_ptr<GeometryExecutor> geometry_executor;
 #ifdef HAVE_STEPCODE_LAZY
@@ -212,18 +218,27 @@ public:
 	uint64_t materializing, uint64_t in_flight,
 	uint64_t runnable_capacity, uint64_t ready_bytes,
 	uint64_t ready_byte_budget);
+    void SetGeometryOverallProgress(uint64_t processed, uint64_t total);
     /** Configure a persistent helper pool shared by all exact-geometry jobs.
      * Top-level solid jobs count against the same capacity, so nested edge
      * work can only occupy otherwise-idle -j slots. */
     void ConfigureGeometryExecutor(unsigned int concurrency);
     void StopGeometryExecutor();
     void GeometryWorkerStarted(int64_t entity_id,
-	const std::string &entity_type);
-    void GeometryWorkerFinished();
+        const std::string &entity_type, bool exclusive_pullback = false);
+    void GeometryWorkerFinished(bool exclusive_pullback = false);
     void ParallelForGeometry(size_t count,
 	const std::function<void(size_t)> &task);
+    /** Snapshot helper slots not currently occupied by top-level solids or
+     * nested geometry work.  Large face batching uses this to avoid retaining
+     * standalone face BREPs when the top-level queue already saturates -j. */
+    unsigned int AvailableGeometryHelperCapacity();
     void SetGeometryHelpersActive(uint64_t active);
     brlcad::step::ImportProgress Progress() const;
+    void RecordStageTiming(const std::string &stage, int64_t entity_id,
+	const std::string &entity_type, uint64_t elapsed_us,
+	uint64_t faces = 0, uint64_t edges = 0, uint64_t trims = 0);
+    void RecordPullbackStatistics(const brlcad::PullbackStatistics &source);
     /** Return true for an unfiltered entity or a requested representation
      * item root, recording requested roots encountered during conversion. */
     bool ShouldConvertEntity(int64_t entity_id);
@@ -308,6 +323,20 @@ public:
     bool Verbose() const
     {
 	return verbose;
+    }
+
+    const std::string &SourceFile() const { return stepfile; }
+    const char *SchemaName() const
+    {
+#if defined(AP214e3)
+	return "AP214";
+#elif defined(AP203e2)
+	return "AP203e2";
+#elif defined(AP242)
+	return "AP242";
+#else
+	return "AP203";
+#endif
     }
 
     void Verbose(bool value)

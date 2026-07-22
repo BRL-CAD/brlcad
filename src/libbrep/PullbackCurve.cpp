@@ -38,6 +38,7 @@
 #include <functional>
 #include <set>
 #include <map>
+#include <mutex>
 #include <string>
 
 #include "bu/parallel.h"
@@ -712,7 +713,9 @@ surface_closest_point_seeded(const ON_Surface *surf, const ON_3dPoint &point,
     ON_3dPoint &lifted_point, double &distance, double tolerance,
     const bool *cached_closed = NULL,
     const ON_Interval *cached_domains = NULL,
-    double refinement_tolerance = 0.0)
+    double refinement_tolerance = 0.0,
+    uint64_t *completed_iterations = NULL,
+    uint64_t *line_searches = NULL)
 {
     if (!surf || !point.IsValid() || !seed.IsValid() || !(tolerance > 0.0))
 	return false;
@@ -739,6 +742,7 @@ surface_closest_point_seeded(const ON_Surface *surf, const ON_3dPoint &point,
     int evaluation_hint[2] = {0, 0};
     double best_distance = DBL_MAX;
     for (int iteration = 0; iteration < 48; ++iteration) {
+	if (completed_iterations) ++*completed_iterations;
 	if (brlcad::PullbackWorkCancelled()) break;
 	ON_3dPoint lift;
 	ON_3dVector du, dv;
@@ -783,6 +787,7 @@ surface_closest_point_seeded(const ON_Surface *surf, const ON_3dPoint &point,
 
 	bool improved = false;
 	for (int reduction = 0; reduction < 12; ++reduction) {
+	    if (line_searches) ++*line_searches;
 	    const double scale = trust_scale * std::ldexp(1.0, -reduction);
 	    ON_2dPoint candidate(uv.x + scale * delta[0],
 		uv.y + scale * delta[1]);
@@ -815,7 +820,13 @@ static bool
 surface_closest_point_multiseed(const ON_Surface *surf,
     const ON_3dPoint &point, ON_2dPoint &surface_point,
     ON_3dPoint &lifted_point, double &distance, double tolerance,
-    double refinement_tolerance = 0.0)
+    double refinement_tolerance = 0.0,
+    brlcad::PullbackStatistics *statistics = NULL,
+    const bool *cached_closed = NULL,
+    const ON_Interval *cached_domains = NULL,
+    const std::vector<double> *cached_u_spans = NULL,
+    const std::vector<double> *cached_v_spans = NULL,
+    const std::vector<std::vector<ON_BoundingBox> > *cached_boxes = NULL)
 {
     struct Candidate {
 	double distance;
@@ -825,46 +836,104 @@ surface_closest_point_multiseed(const ON_Surface *surf,
     if (!surf || !point.IsValid() || !(tolerance > 0.0))
 	return false;
 
+    const double primary_distance = distance;
     const double convergence_tolerance = refinement_tolerance > 0.0 ?
 	std::min(tolerance, refinement_tolerance) : tolerance;
+    if (statistics && std::isfinite(distance) && distance < DBL_MAX)
+	++statistics->fallback_calls_with_finite_primary;
 
-    const bool closed[2] = {surf->IsClosed(0), surf->IsClosed(1)};
-    const ON_Interval domains[2] = {surf->Domain(0), surf->Domain(1)};
-    std::vector<double> spans[2];
+    const bool closed[2] = {
+	cached_closed ? cached_closed[0] : surf->IsClosed(0),
+	cached_closed ? cached_closed[1] : surf->IsClosed(1)
+    };
+    const ON_Interval domains[2] = {
+	cached_domains ? cached_domains[0] : surf->Domain(0),
+	cached_domains ? cached_domains[1] : surf->Domain(1)
+    };
+    std::vector<double> owned_spans[2];
+    const std::vector<double> *spans[2] = {
+	cached_u_spans, cached_v_spans
+    };
     for (int direction = 0; direction < 2; ++direction) {
+	if (spans[direction] && spans[direction]->size() >= 2) continue;
 	const int count = surf->SpanCount(direction);
 	if (count > 0) {
-	    spans[direction].resize(static_cast<size_t>(count) + 1);
-	    if (!surf->GetSpanVector(direction, spans[direction].data()))
-		spans[direction].clear();
+	    owned_spans[direction].resize(static_cast<size_t>(count) + 1);
+	    if (!surf->GetSpanVector(direction,
+		    owned_spans[direction].data()))
+		owned_spans[direction].clear();
 	}
-	if (spans[direction].size() < 2) {
+	if (owned_spans[direction].size() < 2) {
 	    const ON_Interval domain = surf->Domain(direction);
 	    if (!domain.IsIncreasing()) return false;
-	    spans[direction].push_back(domain.Min());
-	    spans[direction].push_back(domain.Max());
+	    owned_spans[direction].push_back(domain.Min());
+	    owned_spans[direction].push_back(domain.Max());
 	}
+	spans[direction] = &owned_spans[direction];
+    }
+
+    const size_t u_count = spans[0]->size() - 1;
+    const size_t v_count = spans[1]->size() - 1;
+    struct SpanCandidate {
+	size_t u;
+	size_t v;
+    };
+    std::vector<SpanCandidate> span_candidates;
+    const bool finite_primary = std::isfinite(primary_distance) &&
+	primary_distance < DBL_MAX;
+    if (finite_primary && cached_boxes && cached_boxes->size() == u_count) {
+	/* The primary search produced a finite point, so its conservative span
+	 * boxes are usable.  An exact point inside the requested tolerance can
+	 * only lie in a box whose minimum distance is no larger than that
+	 * tolerance.  Restrict the expensive PointAt sampling to those spans.
+	 * This preserves the search result while avoiding a full tensor-product
+	 * surface scan for every near-solved pullback sample. */
+	for (size_t u = 0; u < u_count; ++u) {
+	    if ((*cached_boxes)[u].size() != v_count) {
+		span_candidates.clear();
+		break;
+	    }
+	    for (size_t v = 0; v < v_count; ++v) {
+		double minimum_distance = DBL_MAX;
+		double maximum_distance = DBL_MAX;
+		if (surface_GetIntervalMinMaxDistance(point,
+			(*cached_boxes)[u][v], minimum_distance,
+			maximum_distance) && minimum_distance <= tolerance)
+		    span_candidates.push_back({u, v});
+	    }
+	}
+	/* A finite primary point necessarily came from at least one accepted
+	 * box.  If none remain, the primary is already the best result justified
+	 * by the prepared conservative bounds. */
+	if (span_candidates.empty()) return distance <= tolerance;
+    }
+    if (span_candidates.empty()) {
+	span_candidates.reserve(u_count * v_count);
+	for (size_t u = 0; u < u_count; ++u)
+	    for (size_t v = 0; v < v_count; ++v)
+		span_candidates.push_back({u, v});
     }
 
     std::vector<Candidate> candidates;
-    const size_t u_count = spans[0].size() - 1;
-    const size_t v_count = spans[1].size() - 1;
-    candidates.reserve(u_count * v_count *
+    candidates.reserve(span_candidates.size() *
 	static_cast<size_t>(kClosestPointFallbackSamplesPerSpan) *
 	static_cast<size_t>(kClosestPointFallbackSamplesPerSpan));
-    for (size_t u = 0; u < u_count; ++u) {
-	for (size_t v = 0; v < v_count; ++v) {
+
+    for (const SpanCandidate &span : span_candidates) {
+	const size_t u = span.u;
+	const size_t v = span.v;
 	    for (int ui = 0; ui < kClosestPointFallbackSamplesPerSpan; ++ui) {
 		const double uf = static_cast<double>(ui) /
 		    (kClosestPointFallbackSamplesPerSpan - 1);
-		const double up = (1.0 - uf) * spans[0][u] +
-		    uf * spans[0][u + 1];
+		const double up = (1.0 - uf) * (*spans[0])[u] +
+		    uf * (*spans[0])[u + 1];
 		for (int vi = 0; vi < kClosestPointFallbackSamplesPerSpan; ++vi) {
 		    if (brlcad::PullbackWorkCancelled()) return false;
+		    if (statistics) ++statistics->fallback_samples_evaluated;
 		    const double vf = static_cast<double>(vi) /
 			(kClosestPointFallbackSamplesPerSpan - 1);
-		    const double vp = (1.0 - vf) * spans[1][v] +
-			vf * spans[1][v + 1];
+		    const double vp = (1.0 - vf) * (*spans[1])[v] +
+			vf * (*spans[1])[v + 1];
 		    const ON_3dPoint lift = surf->PointAt(up, vp);
 		    if (!lift.IsValid()) continue;
 		    const double candidate_distance = lift.DistanceTo(point);
@@ -879,11 +948,31 @@ surface_closest_point_multiseed(const ON_Surface *surf,
 			ON_2dPoint(up, vp)});
 		}
 	    }
-	}
     }
 
+    const double sampled_distance = distance;
     const size_t seed_count = std::min(candidates.size(),
 	kMaximumClosestPointFallbackSeeds);
+    const auto record_distance_improvements = [statistics, primary_distance,
+	sampled_distance](double final_distance) {
+	if (!statistics || !std::isfinite(final_distance) ||
+		final_distance >= DBL_MAX)
+	    return;
+	if (std::isfinite(primary_distance) && primary_distance < DBL_MAX &&
+		final_distance < primary_distance) {
+	    const double improvement = primary_distance - final_distance;
+	    statistics->fallback_primary_improvement_total += improvement;
+	    statistics->fallback_primary_improvement_maximum = std::max(
+		statistics->fallback_primary_improvement_maximum, improvement);
+	}
+	if (std::isfinite(sampled_distance) && sampled_distance < DBL_MAX &&
+		final_distance < sampled_distance) {
+	    const double improvement = sampled_distance - final_distance;
+	    statistics->fallback_refinement_improvement_total += improvement;
+	    statistics->fallback_refinement_improvement_maximum = std::max(
+		statistics->fallback_refinement_improvement_maximum, improvement);
+	}
+    };
     const auto candidate_less = [](const Candidate &left,
 	const Candidate &right) {
 	if (left.distance < right.distance) return true;
@@ -901,7 +990,9 @@ surface_closest_point_multiseed(const ON_Surface *surf,
 	    candidates.end(), candidate_less);
     std::sort(candidates.begin(), candidates.begin() + seed_count,
 	candidate_less);
+    size_t winning_seed = seed_count;
     for (size_t seed = 0; seed < seed_count; ++seed) {
+	if (statistics) ++statistics->fallback_seed_refinements;
 	ON_2dPoint candidate_uv = ON_2dPoint::UnsetPoint;
 	ON_3dPoint candidate_lift = ON_3dPoint::UnsetPoint;
 	double candidate_distance = DBL_MAX;
@@ -913,9 +1004,30 @@ surface_closest_point_multiseed(const ON_Surface *surf,
 	    distance = candidate_distance;
 	    surface_point = candidate_uv;
 	    lifted_point = candidate_lift;
+	    winning_seed = seed;
 	}
-	if (accepted && candidate_distance <= convergence_tolerance) return true;
+	if (accepted && candidate_distance <= convergence_tolerance) {
+	    record_distance_improvements(distance);
+	    if (statistics && winning_seed < seed_count) {
+		++statistics->fallback_refinement_improvements;
+		if (winning_seed > 0)
+		    ++statistics->fallback_late_seed_improvements;
+		statistics->maximum_winning_seed_index = std::max(
+		    statistics->maximum_winning_seed_index,
+		    static_cast<uint64_t>(winning_seed));
+	    }
+	    return true;
+	}
     }
+    if (statistics && winning_seed < seed_count) {
+	++statistics->fallback_refinement_improvements;
+	if (winning_seed > 0)
+	    ++statistics->fallback_late_seed_improvements;
+	statistics->maximum_winning_seed_index = std::max(
+	    statistics->maximum_winning_seed_index,
+	    static_cast<uint64_t>(winning_seed));
+    }
+    record_distance_improvements(distance);
     return distance <= tolerance;
 }
 
@@ -1037,104 +1149,223 @@ surface_GetClosestPoint3dFirstOrderByRange(
 
 
 struct brlcad::PullbackContext::Impl {
-    const ON_Surface *surface = NULL;
-    int u_span_count = 0;
-    int v_span_count = 0;
-    int u_mid_index = 0;
-    int v_mid_index = 0;
-    std::vector<double> u_spans;
-    std::vector<double> v_spans;
-    std::vector<std::vector<ON_BoundingBox> > boxes;
+    struct PreparedSurface {
+	struct SpanBoxNode {
+	    ON_BoundingBox box;
+	    int left = -1;
+	    int right = -1;
+	    int u = -1;
+	    int v = -1;
 
-    bool Prepare(const ON_Surface *candidate, double UNUSED(same_point_tol))
+	    bool IsLeaf() const { return u >= 0 && v >= 0; }
+	};
+
+	const ON_Surface *surface = NULL;
+	int u_span_count = 0;
+	int v_span_count = 0;
+	int u_mid_index = 0;
+	int v_mid_index = 0;
+	std::vector<double> u_spans;
+	std::vector<double> v_spans;
+	std::vector<double> fallback_u_spans;
+	std::vector<double> fallback_v_spans;
+	std::vector<std::vector<ON_BoundingBox> > boxes;
+	std::vector<SpanBoxNode> span_box_nodes;
+	int span_box_root = -1;
+	bool surface_closed[2] = {false, false};
+	ON_Interval surface_domains[2];
+    };
+
+    /* A loop's edge jobs all query the same immutable surface.  Keep the
+     * expensive span boxes in a shared lazy slot, while every context retains
+     * its own statistics and closest-point working state.  Construction is
+     * serialized once; all later reads are immutable. */
+    struct SurfaceCacheSlot {
+	std::mutex mutex;
+	bool attempted = false;
+	const ON_Surface *candidate = NULL;
+	std::shared_ptr<const PreparedSurface> prepared;
+    };
+
+    std::shared_ptr<SurfaceCacheSlot> surface_cache =
+	std::make_shared<SurfaceCacheSlot>();
+    std::shared_ptr<const PreparedSurface> prepared;
+    brlcad::PullbackStatistics statistics;
+
+    bool Prepare(const ON_Surface *candidate, double same_point_tol)
     {
-	if (candidate == surface)
+	if (prepared && candidate == prepared->surface) {
+	    ++statistics.surface_cache_hits;
 	    return true;
-
-	surface = NULL;
-	u_spans.clear();
-	v_spans.clear();
-	boxes.clear();
+	}
+	const std::chrono::steady_clock::time_point started =
+	    std::chrono::steady_clock::now();
 	if (!candidate)
 	    return false;
+
+	std::shared_ptr<SurfaceCacheSlot> slot = surface_cache;
+	std::unique_lock<std::mutex> guard(slot->mutex);
+	/* A general-purpose context may be reused for another surface.  Detach
+	 * from the inherited face cache in that case rather than disturbing jobs
+	 * which are still reading it. */
+	if (slot->attempted && slot->candidate != candidate) {
+	    guard.unlock();
+	    surface_cache = std::make_shared<SurfaceCacheSlot>();
+	    prepared.reset();
+	    return Prepare(candidate, same_point_tol);
+	}
+	if (slot->attempted) {
+	    prepared = slot->prepared;
+	    if (prepared) ++statistics.surface_cache_hits;
+	    return prepared != NULL;
+	}
+	slot->attempted = true;
+	slot->candidate = candidate;
+
+	std::shared_ptr<PreparedSurface> next =
+	    std::make_shared<PreparedSurface>();
+	next->surface = candidate;
 
 	const int original_u_span_count = candidate->SpanCount(0);
 	const int original_v_span_count = candidate->SpanCount(1);
 	if (original_u_span_count < 1 || original_v_span_count < 1)
 	    return false;
 
-	u_span_count = original_u_span_count;
-	v_span_count = original_v_span_count;
-	u_spans.resize(static_cast<size_t>(original_u_span_count) + 2);
-	v_spans.resize(static_cast<size_t>(original_v_span_count) + 2);
-	if (!candidate->GetSpanVector(0, u_spans.data()) ||
-	    !candidate->GetSpanVector(1, v_spans.data()))
+	next->u_span_count = original_u_span_count;
+	next->v_span_count = original_v_span_count;
+	next->u_spans.resize(static_cast<size_t>(original_u_span_count) + 2);
+	next->v_spans.resize(static_cast<size_t>(original_v_span_count) + 2);
+	if (!candidate->GetSpanVector(0, next->u_spans.data()) ||
+	    !candidate->GetSpanVector(1, next->v_spans.data()))
 	    return false;
+	next->fallback_u_spans.assign(next->u_spans.begin(),
+	    next->u_spans.begin() + original_u_span_count + 1);
+	next->fallback_v_spans.assign(next->v_spans.begin(),
+	    next->v_spans.begin() + original_v_span_count + 1);
+	next->surface_closed[0] = candidate->IsClosed(0);
+	next->surface_closed[1] = candidate->IsClosed(1);
+	next->surface_domains[0] = candidate->Domain(0);
+	next->surface_domains[1] = candidate->Domain(1);
 
-	const ON_Interval u_domain = candidate->Domain(0);
+	const ON_Interval u_domain = next->surface_domains[0];
 	const double u_mid = u_domain.Mid();
 	const double u_parameter_tolerance = DBL_EPSILON * 64.0 *
 	    std::max(1.0, std::max(fabs(u_domain.Min()),
 		fabs(u_domain.Max())));
-	u_mid_index = u_span_count / 2;
-	for (int span = 0; span < u_span_count + 1; ++span) {
-	    if (NEAR_EQUAL(u_spans[span], u_mid, u_parameter_tolerance)) {
-		u_mid_index = span;
+	next->u_mid_index = next->u_span_count / 2;
+	for (int span = 0; span < next->u_span_count + 1; ++span) {
+	    if (NEAR_EQUAL(next->u_spans[span], u_mid, u_parameter_tolerance)) {
+		next->u_mid_index = span;
 		break;
 	    }
-	    if (u_spans[span] > u_mid) {
-		for (span = u_span_count + 1; span > 0; --span) {
-		    if (u_spans[span - 1] < u_mid) {
-			u_spans[span] = u_mid;
-			u_mid_index = span;
-			++u_span_count;
+	    if (next->u_spans[span] > u_mid) {
+		for (span = next->u_span_count + 1; span > 0; --span) {
+		    if (next->u_spans[span - 1] < u_mid) {
+			next->u_spans[span] = u_mid;
+			next->u_mid_index = span;
+			++next->u_span_count;
 			break;
 		    }
-		    u_spans[span] = u_spans[span - 1];
+		    next->u_spans[span] = next->u_spans[span - 1];
 		}
 		break;
 	    }
 	}
 
-	const ON_Interval v_domain = candidate->Domain(1);
+	const ON_Interval v_domain = next->surface_domains[1];
 	const double v_mid = v_domain.Mid();
 	const double v_parameter_tolerance = DBL_EPSILON * 64.0 *
 	    std::max(1.0, std::max(fabs(v_domain.Min()),
 		fabs(v_domain.Max())));
-	v_mid_index = v_span_count / 2;
-	for (int span = 0; span < v_span_count + 1; ++span) {
-	    if (NEAR_EQUAL(v_spans[span], v_mid, v_parameter_tolerance)) {
-		v_mid_index = span;
+	next->v_mid_index = next->v_span_count / 2;
+	for (int span = 0; span < next->v_span_count + 1; ++span) {
+	    if (NEAR_EQUAL(next->v_spans[span], v_mid, v_parameter_tolerance)) {
+		next->v_mid_index = span;
 		break;
 	    }
-	    if (v_spans[span] > v_mid) {
-		for (span = v_span_count + 1; span > 0; --span) {
-		    if (v_spans[span - 1] < v_mid) {
-			v_spans[span] = v_mid;
-			v_mid_index = span;
-			++v_span_count;
+	    if (next->v_spans[span] > v_mid) {
+		for (span = next->v_span_count + 1; span > 0; --span) {
+		    if (next->v_spans[span - 1] < v_mid) {
+			next->v_spans[span] = v_mid;
+			next->v_mid_index = span;
+			++next->v_span_count;
 			break;
 		    }
-		    v_spans[span] = v_spans[span - 1];
+		    next->v_spans[span] = next->v_spans[span - 1];
 		}
 		break;
 	    }
 	}
 
-	boxes.resize(static_cast<size_t>(u_span_count));
-	for (int u = 0; u < u_span_count; ++u)
-	    boxes[u].resize(static_cast<size_t>(v_span_count));
-	for (int u = 1; u < u_span_count + 1; ++u) {
-	    for (int v = 1; v < v_span_count + 1; ++v) {
-		const ON_Interval u_interval(u_spans[u - 1], u_spans[u]);
-		const ON_Interval v_interval(v_spans[v - 1], v_spans[v]);
+	next->boxes.resize(static_cast<size_t>(next->u_span_count));
+	for (int u = 0; u < next->u_span_count; ++u)
+	    next->boxes[u].resize(static_cast<size_t>(next->v_span_count));
+	for (int u = 1; u < next->u_span_count + 1; ++u) {
+	    for (int v = 1; v < next->v_span_count + 1; ++v) {
+		const ON_Interval u_interval(next->u_spans[u - 1],
+		    next->u_spans[u]);
+		const ON_Interval v_interval(next->v_spans[v - 1],
+		    next->v_spans[v]);
 		if (!surface_GetBoundingBox(candidate, u_interval, v_interval,
-			boxes[u - 1][v - 1], false))
+			next->boxes[u - 1][v - 1], false))
 		    return false;
 	    }
 	}
 
-	surface = candidate;
+	/* The legacy closest-point path linearly tested every span box for every
+	 * projected sample.  A trimmed STEP surface can contain tens of thousands
+	 * of spans, while only a handful of their conservative boxes can contain a
+	 * particular in-tolerance point.  Build an immutable parameter-coherent
+	 * bounding hierarchy once with the rest of the surface cache. */
+	const size_t span_count = static_cast<size_t>(next->u_span_count) *
+	    static_cast<size_t>(next->v_span_count);
+	next->span_box_nodes.reserve(2 * span_count);
+	std::function<int(int, int, int, int)> build_span_box_tree =
+	    [&next, &build_span_box_tree](int u_begin, int u_end,
+		int v_begin, int v_end) -> int {
+	    const int node_index = static_cast<int>(next->span_box_nodes.size());
+	    next->span_box_nodes.push_back(PreparedSurface::SpanBoxNode());
+	    if (u_end - u_begin == 1 && v_end - v_begin == 1) {
+		PreparedSurface::SpanBoxNode &leaf =
+		    next->span_box_nodes[static_cast<size_t>(node_index)];
+		leaf.u = u_begin;
+		leaf.v = v_begin;
+		leaf.box = next->boxes[static_cast<size_t>(u_begin)]
+		    [static_cast<size_t>(v_begin)];
+		return node_index;
+	    }
+
+	    int left = -1;
+	    int right = -1;
+	    if (u_end - u_begin >= v_end - v_begin && u_end - u_begin > 1) {
+		const int middle = u_begin + (u_end - u_begin) / 2;
+		left = build_span_box_tree(u_begin, middle, v_begin, v_end);
+		right = build_span_box_tree(middle, u_end, v_begin, v_end);
+	    } else {
+		const int middle = v_begin + (v_end - v_begin) / 2;
+		left = build_span_box_tree(u_begin, u_end, v_begin, middle);
+		right = build_span_box_tree(u_begin, u_end, middle, v_end);
+	    }
+	    PreparedSurface::SpanBoxNode &node =
+		next->span_box_nodes[static_cast<size_t>(node_index)];
+	    node.left = left;
+	    node.right = right;
+	    node.box = next->span_box_nodes[static_cast<size_t>(left)].box;
+	    node.box.Union(next->span_box_nodes[static_cast<size_t>(right)].box);
+	    return node_index;
+	};
+	next->span_box_root = build_span_box_tree(0, next->u_span_count, 0,
+	    next->v_span_count);
+
+	slot->prepared = next;
+	prepared = next;
+	++statistics.surfaces_prepared;
+	statistics.span_boxes_built +=
+	    static_cast<uint64_t>(next->u_span_count) *
+	    static_cast<uint64_t>(next->v_span_count);
+	statistics.preparation_us += static_cast<uint64_t>(
+	    std::chrono::duration_cast<std::chrono::microseconds>(
+		std::chrono::steady_clock::now() - started).count());
 	return true;
     }
 };
@@ -1147,6 +1378,66 @@ brlcad::PullbackContext::PullbackContext()
 
 
 brlcad::PullbackContext::~PullbackContext() = default;
+
+
+brlcad::PullbackStatistics
+brlcad::PullbackContext::Statistics() const
+{
+    return m_impl ? m_impl->statistics : brlcad::PullbackStatistics();
+}
+
+
+std::shared_ptr<brlcad::PullbackContext>
+brlcad::PullbackContext::ForkWithSharedSurfaceCache() const
+{
+    std::shared_ptr<PullbackContext> fork = std::make_shared<PullbackContext>();
+    if (m_impl && fork->m_impl)
+	fork->m_impl->surface_cache = m_impl->surface_cache;
+    return fork;
+}
+
+
+bool
+brlcad::PullbackContext::SurfaceClosestPointFromSeed(
+    const ON_Surface *surf,
+    const ON_3dPoint& point,
+    const ON_2dPoint& seed,
+    ON_2dPoint& surface_point,
+    ON_3dPoint& lifted_point,
+    double& distance,
+    double tolerance,
+    const bool *cached_closed,
+    const ON_Interval *cached_domains,
+    double refinement_tolerance)
+{
+    const std::chrono::steady_clock::time_point started =
+	std::chrono::steady_clock::now();
+    ++m_impl->statistics.continuity_seed_searches;
+    uint64_t completed_iterations = 0;
+    uint64_t line_searches = 0;
+    const bool result = surface_closest_point_seeded(surf, point, seed,
+	surface_point, lifted_point, distance, tolerance, cached_closed,
+	cached_domains, refinement_tolerance, &completed_iterations,
+	&line_searches);
+    m_impl->statistics.continuity_seed_us += static_cast<uint64_t>(
+	std::chrono::duration_cast<std::chrono::microseconds>(
+	    std::chrono::steady_clock::now() - started).count());
+    if (result)
+	++m_impl->statistics.continuity_seed_successes;
+    else
+	++m_impl->statistics.continuity_seed_failures;
+    if (surface_point.IsValid() && std::isfinite(distance) &&
+	    distance < DBL_MAX)
+	++m_impl->statistics.continuity_seed_finite_candidates;
+    m_impl->statistics.continuity_seed_iterations += completed_iterations;
+    m_impl->statistics.continuity_seed_line_searches += line_searches;
+    m_impl->statistics.maximum_continuity_seed_iterations = std::max(
+	m_impl->statistics.maximum_continuity_seed_iterations,
+	completed_iterations);
+    m_impl->statistics.maximum_continuity_seed_line_searches = std::max(
+	m_impl->statistics.maximum_continuity_seed_line_searches, line_searches);
+    return result;
+}
 
 
 bool
@@ -1167,6 +1458,10 @@ brlcad::PullbackContext::SurfaceClosestPoint(
     )
 {
     bool rc = false;
+    const std::chrono::steady_clock::time_point primary_started =
+	std::chrono::steady_clock::now();
+
+    ++m_impl->statistics.closest_point_queries;
 
     closest_point_subdivision_nodes = 0;
 
@@ -1177,46 +1472,90 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 
     if (!surf)
 	return false;
-    if (!m_impl->Prepare(surf, same_point_tol))
-	return surface_closest_point_multiseed(surf, p, p2d, p3d,
-	    current_distance, within_distance_tol, same_point_tol);
+    if (!m_impl->Prepare(surf, same_point_tol)) {
+	m_impl->statistics.primary_search_us += static_cast<uint64_t>(
+	    std::chrono::duration_cast<std::chrono::microseconds>(
+		std::chrono::steady_clock::now() - primary_started).count());
+	++m_impl->statistics.multiseed_fallbacks;
+	const std::chrono::steady_clock::time_point fallback_started =
+	    std::chrono::steady_clock::now();
+	const bool fallback_result = surface_closest_point_multiseed(surf, p,
+	    p2d, p3d, current_distance, within_distance_tol, same_point_tol,
+	    &m_impl->statistics);
+	m_impl->statistics.multiseed_us += static_cast<uint64_t>(
+	    std::chrono::duration_cast<std::chrono::microseconds>(
+		std::chrono::steady_clock::now() - fallback_started).count());
+	if (fallback_result)
+	    ++m_impl->statistics.multiseed_successes;
+	else
+	    ++m_impl->statistics.multiseed_failures;
+	return fallback_result;
+    }
 
-    const int u_spancnt = m_impl->u_span_count;
-    const int v_spancnt = m_impl->v_span_count;
-    const int umid_index = m_impl->u_mid_index;
-    const int vmid_index = m_impl->v_mid_index;
-    const std::vector<double> &uspan = m_impl->u_spans;
-    const std::vector<double> &vspan = m_impl->v_spans;
-    const std::vector<std::vector<ON_BoundingBox> > &bbox = m_impl->boxes;
+    const std::shared_ptr<const Impl::PreparedSurface> preparation =
+	m_impl->prepared;
+    if (!preparation) return false;
+    const int u_spancnt = preparation->u_span_count;
+    const int v_spancnt = preparation->v_span_count;
+    const int umid_index = preparation->u_mid_index;
+    const int vmid_index = preparation->v_mid_index;
+    const std::vector<double> &uspan = preparation->u_spans;
+    const std::vector<double> &vspan = preparation->v_spans;
+    const std::vector<std::vector<ON_BoundingBox> > &bbox = preparation->boxes;
 
     {
 	if (quadrant == 0) {
-	    for (int u_span_index = 1; u_span_index < u_spancnt + 1;
-		 u_span_index++) {
-		for (int v_span_index = 1; v_span_index < v_spancnt + 1;
-		     v_span_index++) {
-		    if (PullbackWorkCancelled()) return false;
-		    ON_Interval u_interval(uspan[u_span_index - 1],
-					   uspan[u_span_index]);
-		    ON_Interval v_interval(vspan[v_span_index - 1],
-					   vspan[v_span_index]);
-		    double min_distance, max_distance;
-
-		    int level = 1;
-		    if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
-			if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
-			    /////////////////////////////////////////
-			    // Could check normals and CV angles here
-			    /////////////////////////////////////////
-			    double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
-			    if (distance < current_distance) {
-				current_distance = distance;
-				if (current_distance < same_point_tol) {
-				    rc = true;
-				    goto cleanup;
-				}
-			    }
-			}
+	    struct CandidateSpan {
+		int u;
+		int v;
+		double minimum_distance;
+	    };
+	    std::vector<CandidateSpan> candidates;
+	    std::vector<int> pending;
+	    if (preparation->span_box_root >= 0)
+		pending.push_back(preparation->span_box_root);
+	    while (!pending.empty()) {
+		if (PullbackWorkCancelled()) return false;
+		const int node_index = pending.back();
+		pending.pop_back();
+		const Impl::PreparedSurface::SpanBoxNode &node =
+		    preparation->span_box_nodes[static_cast<size_t>(node_index)];
+		++m_impl->statistics.span_boxes_tested;
+		const double minimum_distance = node.box.MinimumDistanceTo(p);
+		if (!NEAR_ZERO(minimum_distance, within_distance_tol)) continue;
+		if (node.IsLeaf()) {
+		    candidates.push_back({node.u, node.v, minimum_distance});
+		    continue;
+		}
+		/* Push right first so left is visited first.  The final sort below
+		 * exactly restores the historical U-major span order. */
+		if (node.right >= 0) pending.push_back(node.right);
+		if (node.left >= 0) pending.push_back(node.left);
+	    }
+	    std::sort(candidates.begin(), candidates.end(),
+		[](const CandidateSpan &left, const CandidateSpan &right) {
+		    if (left.u != right.u) return left.u < right.u;
+		    return left.v < right.v;
+		});
+	    for (const CandidateSpan &candidate : candidates) {
+		if (candidate.minimum_distance >= current_distance) continue;
+		const int u_span_index = candidate.u + 1;
+		const int v_span_index = candidate.v + 1;
+		const ON_Interval u_interval(uspan[u_span_index - 1],
+		    uspan[u_span_index]);
+		const ON_Interval v_interval(vspan[v_span_index - 1],
+		    vspan[v_span_index]);
+		int level = 1;
+		const double distance =
+		    surface_GetClosestPoint3dFirstOrderSubdivision(surf, p,
+			u_interval, u_interval.Mid(), v_interval,
+			v_interval.Mid(), current_distance, p2d, p3d,
+			same_point_tol, within_distance_tol, level++);
+		if (distance < current_distance) {
+		    current_distance = distance;
+		    if (current_distance < same_point_tol) {
+			rc = true;
+			goto cleanup;
 		    }
 		}
 	    }
@@ -1236,6 +1575,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1263,6 +1603,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1290,6 +1631,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1317,6 +1659,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1345,6 +1688,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1372,6 +1716,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1399,6 +1744,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1426,6 +1772,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1460,6 +1807,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1487,6 +1835,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1514,6 +1863,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1541,6 +1891,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1569,6 +1920,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1596,6 +1948,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1623,6 +1976,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1650,6 +2004,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1684,6 +2039,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1711,6 +2067,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1738,6 +2095,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1765,6 +2123,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1793,6 +2152,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1820,6 +2180,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1847,6 +2208,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1874,6 +2236,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1908,6 +2271,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1935,6 +2299,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1962,6 +2327,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -1989,6 +2355,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -2017,6 +2384,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -2044,6 +2412,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -2071,6 +2440,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -2098,6 +2468,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 			double min_distance, max_distance;
 
 			int level = 1;
+			++m_impl->statistics.span_boxes_tested;
 			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
 			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
@@ -2123,9 +2494,33 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 	}
     }
 cleanup:
-    if (!rc && !PullbackWorkCancelled())
+
+    m_impl->statistics.primary_search_us += static_cast<uint64_t>(
+	std::chrono::duration_cast<std::chrono::microseconds>(
+	    std::chrono::steady_clock::now() - primary_started).count());
+    if (rc) ++m_impl->statistics.primary_search_successes;
+
+    if (!rc && !PullbackWorkCancelled()) {
+	++m_impl->statistics.multiseed_fallbacks;
+	const std::chrono::steady_clock::time_point fallback_started =
+	    std::chrono::steady_clock::now();
 	rc = surface_closest_point_multiseed(surf, p, p2d, p3d,
-	    current_distance, within_distance_tol, same_point_tol);
+	    current_distance, within_distance_tol, same_point_tol,
+	    &m_impl->statistics, preparation->surface_closed,
+	    preparation->surface_domains, &preparation->u_spans,
+	    &preparation->v_spans, &preparation->boxes);
+	m_impl->statistics.multiseed_us += static_cast<uint64_t>(
+	    std::chrono::duration_cast<std::chrono::microseconds>(
+		std::chrono::steady_clock::now() - fallback_started).count());
+	if (rc)
+	    ++m_impl->statistics.multiseed_successes;
+	else
+	    ++m_impl->statistics.multiseed_failures;
+    }
+    m_impl->statistics.subdivision_nodes += closest_point_subdivision_nodes;
+    m_impl->statistics.maximum_subdivision_nodes = std::max(
+	m_impl->statistics.maximum_subdivision_nodes,
+	static_cast<uint64_t>(closest_point_subdivision_nodes));
     return rc;
 }
 
@@ -2188,7 +2583,9 @@ pullback_closest_point_seeded(PBCData &data, const ON_3dPoint &point,
     const ON_2dPoint &seed, ON_2dPoint &surface_point,
     ON_3dPoint &lifted_point, double &distance, double tolerance)
 {
-    return surface_closest_point_seeded(data.surf, point, seed,
+    if (!data.context)
+	data.context = std::make_shared<brlcad::PullbackContext>();
+    return data.context->SurfaceClosestPointFromSeed(data.surf, point, seed,
 	surface_point, lifted_point, distance, tolerance,
 	data.surface_parameterization_cached ? data.surface_closed : NULL,
 	data.surface_parameterization_cached ? data.surface_domain : NULL,
@@ -3024,6 +3421,15 @@ pullback_samples(PBCData* data,
 		distance < fallback_distance) {
 	    fallback_anchor = i;
 	    fallback_distance = distance;
+	    /* An open surface has no equivalent periodic parameter sheet.  One
+	     * globally checked finite boundary point is sufficient to establish
+	     * the continuity seed even when source curve/surface separation is
+	     * larger than the strict first-pass tolerance.  The full sample walk
+	     * still measures and rejects that separation before any safe retry. */
+	    if (!data->surface_closed[0] && !data->surface_closed[1]) {
+		anchor = i;
+		break;
+	    }
 	}
     }
     if (anchor == parameters.size()) anchor = fallback_anchor;
@@ -3040,6 +3446,14 @@ pullback_samples(PBCData* data,
 	    lift, distance, same_point_tol);
 	bool have_candidate = projected[index].IsValid() &&
 	    std::isfinite(distance) && distance < DBL_MAX;
+	/* An open NURBS surface can still fold over itself and have several local
+	 * closest-point basins.  Retain the continuity fast path only while its
+	 * measured distance is inside the caller-authorized projection bound;
+	 * otherwise a global span search must disambiguate the branch.  Safe-mode
+	 * callers which have already established a scale-bounded mismatch ceiling
+	 * pass that wider bound here, so ordinary source mismatch does not repeat
+	 * the expensive global search merely because it exceeds the declared file
+	 * uncertainty. */
 	if (!have_candidate || distance > within_distance_tol) {
 	    projected[index] = ON_2dPoint::UnsetPoint;
 	    distance = DBL_MAX;
@@ -5547,35 +5961,28 @@ check_pullback_data(std::list<PBCData*> &pbcs)
     bool closed = is_closed(surf);
 
     if (singular) {
-	if (!resolve_pullback_singularities(pbcs)) {
-	    std::cerr << "Error: Can not resolve singular ambiguities." << std::endl;
-	}
+	/* The caller owns entity-aware diagnostics.  Preserve the historical
+	 * best-effort continuation here without emitting an untraceable stderr
+	 * message that lacks the STEP loop and edge identifiers. */
+	resolve_pullback_singularities(pbcs);
     }
 
     if (closed) {
 	// check for same 3D curve use
 	if (!check_for_points_on_same_seam(pbcs)) {
-	    std::cerr << "Error: Can not extend pullback at shared 3D curve seam." << std::endl;
 	    return false;
 	}
 	// check for same 3D curve use
 	if (!extend_pullback_at_shared_3D_curve_seam(pbcs)) {
-	    std::cerr << "Error: Can not extend pullback at shared 3D curve seam." << std::endl;
 	    return false;
 	}
 	if (!shift_single_curve_loop_straddled_over_seam(pbcs)) {
-	    std::cerr << "Error: Can not resolve seam ambiguities." << std::endl;
 	    return false;
 	}
 	if (!resolve_pullback_seams(pbcs)) {
-	    std::cerr << "Error: Can not resolve seam ambiguities";
-	    if (!pullback_seam_failure.empty())
-		std::cerr << ": " << pullback_seam_failure;
-	    std::cerr << "." << std::endl;
 	    return false;
 	}
 	if (!extend_over_seam_crossings(pbcs)) {
-	    std::cerr << "Error: Can not resolve seam ambiguities." << std::endl;
 	    return false;
 	}
     }

@@ -125,7 +125,7 @@ OrientedClosedShell::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 
 bool OrientedClosedShell::LoadONBrep(ON_Brep *brep)
 {
-    if (ON_id >= 0) {
+    if (GetONId() >= 0) {
 	return true;    //already loaded
     }
 
@@ -135,7 +135,7 @@ bool OrientedClosedShell::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    ON_id = closed_shell_element->GetONId();
+    SetONId(closed_shell_element->GetONId());
 
     return true;
 }

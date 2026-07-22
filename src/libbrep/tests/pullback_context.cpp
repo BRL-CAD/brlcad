@@ -91,6 +91,64 @@ exercise_adaptive_pullback_refinement()
 }
 
 
+static bool
+exercise_shared_surface_cache()
+{
+    ON_PlaneSurface surface(ON_xy_plane);
+    surface.SetDomain(0, -20.0, 20.0);
+    surface.SetDomain(1, -20.0, 20.0);
+    surface.SetExtents(0, surface.Domain(0));
+    surface.SetExtents(1, surface.Domain(1));
+
+    const unsigned int worker_count = 8;
+    const int queries_per_worker = 200;
+    brlcad::PullbackContext root;
+    std::vector<std::shared_ptr<brlcad::PullbackContext> > contexts;
+    contexts.reserve(worker_count);
+    for (unsigned int worker = 0; worker < worker_count; ++worker)
+	contexts.push_back(root.ForkWithSharedSurfaceCache());
+
+    std::atomic<bool> valid(true);
+    std::vector<std::thread> workers;
+    workers.reserve(worker_count);
+    for (unsigned int worker = 0; worker < worker_count; ++worker) {
+	workers.emplace_back([worker, queries_per_worker, &surface, &contexts,
+		&valid]() {
+	    for (int iteration = 0; iteration < queries_per_worker; ++iteration) {
+		const double u = -9.0 + static_cast<double>(
+		    (iteration * 17 + worker) % 180) / 10.0;
+		const double v = -8.0 + static_cast<double>(
+		    (iteration * 29 + worker) % 160) / 10.0;
+		const ON_3dPoint point = surface.PointAt(u, v);
+		ON_2dPoint uv = ON_2dPoint::UnsetPoint;
+		ON_3dPoint lifted = ON_3dPoint::UnsetPoint;
+		double distance = ON_DBL_QNAN;
+		if (!contexts[worker]->SurfaceClosestPoint(&surface, point, uv,
+			lifted, distance, 0, 1.0e-9, 1.0e-7) ||
+			uv.DistanceTo(ON_2dPoint(u, v)) > 1.0e-7 ||
+			lifted.DistanceTo(point) > 1.0e-7)
+		    valid.store(false);
+	    }
+	});
+    }
+    for (std::thread &worker : workers)
+	worker.join();
+
+    uint64_t preparations = 0;
+    uint64_t queries = 0;
+    uint64_t cache_hits = 0;
+    for (const std::shared_ptr<brlcad::PullbackContext> &context : contexts) {
+	const brlcad::PullbackStatistics stats = context->Statistics();
+	preparations += stats.surfaces_prepared;
+	queries += stats.closest_point_queries;
+	cache_hits += stats.surface_cache_hits;
+    }
+    return valid.load() && preparations == 1 &&
+	queries == worker_count * queries_per_worker &&
+	cache_hits == queries - 1;
+}
+
+
 int
 main()
 {
@@ -145,6 +203,11 @@ main()
      * original parameter/distance arrays.  Exercise that path directly so
      * bounds-checked and sanitizer builds catch cross-indexing the arrays. */
     if (!exercise_adaptive_pullback_refinement())
+	valid.store(false);
+
+    /* Related edge jobs may share immutable surface span boxes without
+     * sharing mutable closest-point state or rebuilding the cache. */
+    if (!exercise_shared_surface_cache())
 	valid.store(false);
 
     return valid.load() ? 0 : 1;

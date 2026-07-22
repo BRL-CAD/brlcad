@@ -183,8 +183,8 @@ SurfaceCurve::LoadONBrep(ON_Brep *brep)
 	return false;
 
     /* EdgeCurve consumes the wrapper's openNURBS index. */
-    ON_id = curve_3d->GetONId();
-    return ON_id >= 0;
+    SetONId(curve_3d->GetONId());
+    return GetONId() >= 0;
 }
 
 const double *

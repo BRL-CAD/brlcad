@@ -138,7 +138,7 @@ SurfaceReplica::LoadONBrep(ON_Brep *brep)
 {
     if (!brep || !parent_surface || !transformation)
 	return false;
-    if (ON_id >= 0)
+    if (GetONId() >= 0)
 	return true;
 
     ON_Xform xform;
@@ -161,8 +161,8 @@ SurfaceReplica::LoadONBrep(ON_Brep *brep)
 	delete copy;
 	return false;
     }
-    ON_id = brep->AddSurface(copy);
-    return ON_id >= 0;
+    SetONId(brep->AddSurface(copy));
+    return GetONId() >= 0;
 }
 
 

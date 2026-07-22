@@ -330,6 +330,95 @@ write_count_map(std::ostream &out, const std::map<std::string, uint64_t> &values
     out << '}';
 }
 
+void
+write_performance_telemetry(std::ostream &out,
+    const brlcad::step::ImportStatistics &stats)
+{
+    out << "{\"stages\":{";
+    bool first = true;
+    for (const auto &entry : stats.stage_timings) {
+	if (!first) out << ',';
+	first = false;
+	out << '\"' << brlcad::step::json_escape(entry.first) << "\":{"
+	    << "\"calls\":" << entry.second.calls
+	    << ",\"total_us\":" << entry.second.total_us
+	    << ",\"maximum_us\":" << entry.second.maximum_us
+	    << ",\"maximum_entity_id\":" << entry.second.maximum_entity_id << '}';
+    }
+    std::vector<brlcad::step::ItemTiming> slow = stats.slow_item_timings;
+    std::sort(slow.begin(), slow.end(), [](const brlcad::step::ItemTiming &left,
+	const brlcad::step::ItemTiming &right) {
+	if (left.entity_id != right.entity_id) return left.entity_id < right.entity_id;
+	if (left.stage != right.stage) return left.stage < right.stage;
+	return left.elapsed_us < right.elapsed_us;
+    });
+    out << "},\"slow_items\":[";
+    for (size_t i = 0; i < slow.size(); ++i) {
+	if (i) out << ',';
+	out << "{\"entity_id\":" << slow[i].entity_id
+	    << ",\"entity_type\":\"" << brlcad::step::json_escape(slow[i].entity_type)
+	    << "\",\"stage\":\"" << brlcad::step::json_escape(slow[i].stage)
+	    << "\",\"elapsed_us\":" << slow[i].elapsed_us
+	    << ",\"faces\":" << slow[i].faces << ",\"edges\":"
+	    << slow[i].edges << ",\"trims\":" << slow[i].trims << '}';
+    }
+    out << "],\"slow_items_omitted\":" << stats.slow_item_timings_omitted
+	<< ",\"pullback\":{\"closest_point_queries\":"
+	<< stats.pullback_closest_point_queries
+	<< ",\"surfaces_prepared\":" << stats.pullback_surfaces_prepared
+	<< ",\"surface_cache_hits\":" << stats.pullback_surface_cache_hits
+	<< ",\"span_boxes_built\":" << stats.pullback_span_boxes_built
+	<< ",\"span_boxes_tested\":" << stats.pullback_span_boxes_tested
+	<< ",\"primary_search_successes\":"
+	<< stats.pullback_primary_search_successes
+	<< ",\"continuity_seed_searches\":"
+	<< stats.pullback_continuity_seed_searches
+	<< ",\"continuity_seed_successes\":"
+	<< stats.pullback_continuity_seed_successes
+	<< ",\"continuity_seed_failures\":"
+	<< stats.pullback_continuity_seed_failures
+	<< ",\"continuity_seed_finite_candidates\":"
+	<< stats.pullback_continuity_seed_finite_candidates
+	<< ",\"continuity_seed_iterations\":"
+	<< stats.pullback_continuity_seed_iterations
+	<< ",\"continuity_seed_line_searches\":"
+	<< stats.pullback_continuity_seed_line_searches
+	<< ",\"maximum_continuity_seed_iterations\":"
+	<< stats.pullback_maximum_continuity_seed_iterations
+	<< ",\"maximum_continuity_seed_line_searches\":"
+	<< stats.pullback_maximum_continuity_seed_line_searches
+	<< ",\"multiseed_fallbacks\":" << stats.pullback_multiseed_fallbacks
+	<< ",\"multiseed_successes\":" << stats.pullback_multiseed_successes
+	<< ",\"multiseed_failures\":" << stats.pullback_multiseed_failures
+	<< ",\"fallback_calls_with_finite_primary\":"
+	<< stats.pullback_fallback_calls_with_finite_primary
+	<< ",\"fallback_samples_evaluated\":"
+	<< stats.pullback_fallback_samples_evaluated
+	<< ",\"fallback_seed_refinements\":"
+	<< stats.pullback_fallback_seed_refinements
+	<< ",\"fallback_refinement_improvements\":"
+	<< stats.pullback_fallback_refinement_improvements
+	<< ",\"fallback_late_seed_improvements\":"
+	<< stats.pullback_fallback_late_seed_improvements
+	<< ",\"maximum_winning_seed_index\":"
+	<< stats.pullback_maximum_winning_seed_index
+	<< ",\"subdivision_nodes\":" << stats.pullback_subdivision_nodes
+	<< ",\"maximum_subdivision_nodes\":"
+	<< stats.pullback_maximum_subdivision_nodes
+	<< ",\"preparation_us\":" << stats.pullback_preparation_us
+	<< ",\"primary_search_us\":" << stats.pullback_primary_search_us
+	<< ",\"continuity_seed_us\":" << stats.pullback_continuity_seed_us
+	<< ",\"multiseed_us\":" << stats.pullback_multiseed_us
+	<< ",\"fallback_primary_improvement_total\":"
+	<< stats.pullback_fallback_primary_improvement_total
+	<< ",\"fallback_primary_improvement_maximum\":"
+	<< stats.pullback_fallback_primary_improvement_maximum
+	<< ",\"fallback_refinement_improvement_total\":"
+	<< stats.pullback_fallback_refinement_improvement_total
+	<< ",\"fallback_refinement_improvement_maximum\":"
+	<< stats.pullback_fallback_refinement_improvement_maximum << "}}";
+}
+
 std::string
 property_key(const brlcad::step::MetadataProperty &property)
 {
@@ -501,6 +590,9 @@ write_report(const std::string &path, const std::string &input, const std::strin
 	    << ",\"tolerance_mm\":" << stats.tolerance_mm << '}'
 	    << ",\n  \"timings_us\":{\"load\":" << stats.load_time_us
 	    << ",\"convert\":" << stats.convert_time_us << '}'
+	    << ",\n  \"performance\":";
+	write_performance_telemetry(out, stats);
+	out
 	    << ",\n  \"stepcode_cache\":{\"indexed_instances\":" << stats.lazy_indexed_instances
 	    << ",\"loaded_instances\":" << stats.lazy_current_loaded_instances
 	    << ",\"high_water_instances\":" << stats.lazy_loaded_instances
@@ -533,9 +625,9 @@ write_report(const std::string &path, const std::string &input, const std::strin
 		write_report_diagnostic(out, diagnostics[i], false);
 	    }
 	} else {
-	    /* Keep the default report bounded on large assemblies.  The key omits
-	     * entity location deliberately, grouping by diagnostic type while the
-	     * summed count still records every occurrence exactly.  -v retains the
+	    /* Keep the default report bounded on large assemblies.  Group by
+	     * diagnostic type, retain the first entity as a traceable
+	     * representative, and sum every occurrence exactly.  -v retains the
 	     * complete entity-level records above. */
 	    std::map<std::string, brlcad::step::Diagnostic> aggregated;
 	    for (const brlcad::step::Diagnostic &diagnostic : diagnostics) {
@@ -557,9 +649,6 @@ write_report(const std::string &path, const std::string &input, const std::strin
 		if (found == aggregated.end()) {
 		    brlcad::step::Diagnostic summary = diagnostic;
 		    summary.message = summary_message;
-		    summary.entity_id = 0;
-		    summary.file_offset = 0;
-		    summary.line = 0;
 		    aggregated.insert(std::make_pair(key, summary));
 		} else {
 		    found->second.repeat_count += diagnostic.repeat_count;
@@ -593,7 +682,11 @@ print_diagnostics(const STEPWrapper &wrapper, bool verbose)
 	return;
     }
 
-    std::map<std::string, uint64_t> aggregated;
+    struct DiagnosticSummary {
+	uint64_t count = 0;
+	int64_t representative_entity_id = 0;
+    };
+    std::map<std::string, DiagnosticSummary> aggregated;
     for (const auto &diagnostic : wrapper.Diagnostics()) {
 	std::string message = diagnostic.message;
 	if (diagnostic.severity == brlcad::step::DiagnosticSeverity::Warning &&
@@ -603,10 +696,20 @@ print_diagnostics(const STEPWrapper &wrapper, bool verbose)
 		"adjusted affected OpenNURBS edge tolerances after dense validation";
 	std::string key = std::string(severity_name(diagnostic.severity)) + ": " +
 	    diagnostic.entity_type + (diagnostic.entity_type.empty() ? "" : ": ") + message;
-	aggregated[key] += diagnostic.repeat_count;
+	DiagnosticSummary &summary = aggregated[key];
+	if (!summary.representative_entity_id && diagnostic.entity_id > 0)
+	    summary.representative_entity_id = diagnostic.entity_id;
+	summary.count += diagnostic.repeat_count;
     }
-    for (const auto &message : aggregated)
-	bu_log("%s (count=%llu)\n", message.first.c_str(), static_cast<unsigned long long>(message.second));
+    for (const auto &message : aggregated) {
+	if (message.second.representative_entity_id > 0)
+	    bu_log("%s [representative=#%lld] (count=%llu)\n", message.first.c_str(),
+		static_cast<long long>(message.second.representative_entity_id),
+		static_cast<unsigned long long>(message.second.count));
+	else
+	    bu_log("%s (count=%llu)\n", message.first.c_str(),
+		static_cast<unsigned long long>(message.second.count));
+    }
 }
 
 } // namespace

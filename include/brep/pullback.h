@@ -45,6 +45,42 @@ extern "C++" {
 
 namespace brlcad {
 class PullbackContext;
+
+struct PullbackStatistics {
+    uint64_t closest_point_queries = 0;
+    uint64_t surfaces_prepared = 0;
+    uint64_t surface_cache_hits = 0;
+    uint64_t span_boxes_built = 0;
+    uint64_t span_boxes_tested = 0;
+    uint64_t primary_search_successes = 0;
+    uint64_t continuity_seed_searches = 0;
+    uint64_t continuity_seed_successes = 0;
+    uint64_t continuity_seed_failures = 0;
+    uint64_t continuity_seed_finite_candidates = 0;
+    uint64_t continuity_seed_iterations = 0;
+    uint64_t continuity_seed_line_searches = 0;
+    uint64_t maximum_continuity_seed_iterations = 0;
+    uint64_t maximum_continuity_seed_line_searches = 0;
+    uint64_t multiseed_fallbacks = 0;
+    uint64_t multiseed_successes = 0;
+    uint64_t multiseed_failures = 0;
+    uint64_t fallback_calls_with_finite_primary = 0;
+    uint64_t fallback_samples_evaluated = 0;
+    uint64_t fallback_seed_refinements = 0;
+    uint64_t fallback_refinement_improvements = 0;
+    uint64_t fallback_late_seed_improvements = 0;
+    uint64_t maximum_winning_seed_index = 0;
+    uint64_t subdivision_nodes = 0;
+    uint64_t maximum_subdivision_nodes = 0;
+    uint64_t preparation_us = 0;
+    uint64_t primary_search_us = 0;
+    uint64_t continuity_seed_us = 0;
+    uint64_t multiseed_us = 0;
+    double fallback_primary_improvement_total = 0.0;
+    double fallback_primary_improvement_maximum = 0.0;
+    double fallback_refinement_improvement_total = 0.0;
+    double fallback_refinement_improvement_maximum = 0.0;
+};
 }
 
 enum class PullbackFailureReason {
@@ -150,9 +186,9 @@ namespace brlcad {
     extern BREP_EXPORT uint64_t PullbackWorkRemainingMilliseconds();
 
     /**
-     * Mutable state used by one pullback job.  Keeping span and bounding-box
-     * caches here makes independent conversion jobs safe to run concurrently
-     * and bounds the cache lifetime to the job that owns it.
+     * Mutable state used by one pullback job.  Solver state and statistics are
+     * private; immutable span/bounding-box preparation may be shared explicitly
+     * by related jobs and remains bounded by their context lifetimes.
      */
     class BREP_EXPORT PullbackContext {
     public:
@@ -170,6 +206,30 @@ namespace brlcad {
                                  int quadrant = 0,
                                  double same_point_tol = BREP_SAME_POINT_TOLERANCE,
                                  double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
+
+        /** Refine a closest point from a known adjacent UV.  This is the
+         * continuity fast path used between successive samples of one edge;
+         * the caller remains responsible for applying its lift tolerance. */
+        bool SurfaceClosestPointFromSeed(const ON_Surface *surf,
+                                         const ON_3dPoint& point,
+                                         const ON_2dPoint& seed,
+                                         ON_2dPoint& surface_point,
+                                         ON_3dPoint& lifted_point,
+                                         double& distance,
+                                         double tolerance,
+                                         const bool *cached_closed = NULL,
+                                         const ON_Interval *cached_domains = NULL,
+                                         double refinement_tolerance = 0.0);
+
+        PullbackStatistics Statistics() const;
+
+        /**
+         * Create an independent pullback job which shares only this context's
+         * lazily constructed, immutable surface-search cache.  Closest-point
+         * state and statistics remain private to the returned context, so the
+         * jobs may run concurrently on the same read-only surface.
+         */
+        std::shared_ptr<PullbackContext> ForkWithSharedSurfaceCache() const;
 
     private:
         struct Impl;

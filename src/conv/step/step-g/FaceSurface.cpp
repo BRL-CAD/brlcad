@@ -30,6 +30,7 @@
 #include "FaceSurface.h"
 #include "QuasiUniformSurface.h"
 #include "FaceOuterBound.h"
+#include "Surface.h"
 
 #define CLASSNAME "FaceSurface"
 #define ENTITYNAME "Face_Surface"
@@ -121,6 +122,12 @@ FaceSurface::Print(int level)
     std::cout << "Inherited Attributes:" << std::endl;
     Face::Print(level + 1);
     GeometricRepresentationItem::Print(level + 1);
+}
+
+size_t
+FaceSurface::PullbackSpanEstimate() const
+{
+    return face_geometry ? face_geometry->PullbackSpanEstimate() : 1;
 }
 
 STEPEntity *

@@ -125,7 +125,14 @@ VertexPoint::LoadONBrep(ON_Brep *brep)
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
     }
-    ON_id = vertex_geometry->GetONId();
+    SetONId(vertex_geometry->GetONId());
+    /* Preserve the topological STEP identity independently of the Cartesian
+     * point identity.  Face-batched conversion uses this non-serialized field
+     * to prove and stitch shared vertices after independently materialized
+     * face jobs have released their STEPcode arenas. */
+    const int vertex_id = GetONId();
+    if (brep && vertex_id >= 0 && vertex_id < brep->m_V.Count())
+	brep->m_V[vertex_id].m_vertex_user.i = id;
     return true;
 }
 

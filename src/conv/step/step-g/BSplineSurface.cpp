@@ -29,6 +29,8 @@
 #include "CartesianPoint.h"
 #include "BSplineSurface.h"
 
+#include <algorithm>
+
 #define CLASSNAME "BSplineSurface"
 #define ENTITYNAME "B_Spline_Surface"
 string BSplineSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)BSplineSurface::Create);
@@ -173,6 +175,20 @@ BSplineSurface::Print(int level)
     TAB(level);
     std::cout << "Inherited Attributes:" << std::endl;
     BoundedSurface::Print(level + 1);
+}
+
+size_t
+BSplineSurface::PullbackSpanEstimate() const
+{
+    if (!control_points_list || control_points_list->empty()) return 1;
+    const size_t u_points = control_points_list->size();
+    const LIST_OF_POINTS *first_row = control_points_list->front();
+    const size_t v_points = first_row ? first_row->size() : 0;
+    const size_t u_spans = u_points > static_cast<size_t>(std::max(0, u_degree)) ?
+	u_points - static_cast<size_t>(std::max(0, u_degree)) : 1;
+    const size_t v_spans = v_points > static_cast<size_t>(std::max(0, v_degree)) ?
+	v_points - static_cast<size_t>(std::max(0, v_degree)) : 1;
+    return std::max<size_t>(1, u_spans) * std::max<size_t>(1, v_spans);
 }
 
 STEPEntity *

@@ -32,6 +32,13 @@ bool step_curve_locus_contains_points(const ON_Curve *curve,
     std::size_t *rejected_index = NULL,
     double *rejected_distance = NULL);
 
+/** Stitch independently constructed STEP faces using authoritative source
+ * vertex/edge identities.  Edges are combined only after their endpoints and
+ * both complete curve loci pass bounded dense validation; this deliberately
+ * leaves unequal seam fragments for the whole-solid reconciliation pass. */
+bool step_stitch_face_breps(ON_Brep *brep, double tolerance,
+    std::string *failure_reason = NULL);
+
 bool step_insert_periodic_pole_cut(ON_Brep *brep, ON_BrepLoop &loop,
     const ON_Surface *surface, const ON_BrepTrim &boundary_trim,
     const ON_2dPoint &boundary_end, const ON_2dPoint &boundary_start,

@@ -27,6 +27,10 @@
 #include "STEPEntity.h"
 #include "Factory.h"
 
+namespace {
+thread_local STEPEntity::ONStateMap *active_on_state = NULL;
+}
+
 
 STEPEntity::STEPEntity()
 {
@@ -38,6 +42,49 @@ STEPEntity::STEPEntity()
 
 STEPEntity::~STEPEntity()
 {
+}
+
+
+STEPEntity::ONStateScope::ONStateScope(ONStateMap *state)
+    : previous(active_on_state)
+{
+    active_on_state = state;
+}
+
+
+STEPEntity::ONStateScope::~ONStateScope()
+{
+    active_on_state = previous;
+}
+
+
+int
+STEPEntity::GetONId() const
+{
+    if (!active_on_state)
+	return ON_id;
+    ONStateMap::const_iterator found = active_on_state->find(this);
+    return found == active_on_state->end() ? -1 : found->second;
+}
+
+
+void
+STEPEntity::SetONId(int on_id)
+{
+    if (active_on_state)
+	(*active_on_state)[this] = on_id;
+    else
+	ON_id = on_id;
+}
+
+
+void
+STEPEntity::ResetONState()
+{
+    if (active_on_state)
+	active_on_state->erase(this);
+    else
+	ON_id = -1;
 }
 
 

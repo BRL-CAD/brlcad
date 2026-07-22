@@ -30,6 +30,8 @@
 #include "common.h"
 
 #include <list>
+#include <memory>
+#include <vector>
 
 #include "TopologicalRepresentationItem.h"
 
@@ -39,6 +41,7 @@ class ON_Brep;
 class ON_3dPoint;
 class ON_3dVector;
 class OrientedEdge;
+namespace brlcad { class PullbackContext; }
 typedef list<OrientedEdge *> LIST_OF_ORIENTED_EDGES;
 
 typedef struct trim_curve2d {
@@ -68,12 +71,25 @@ public:
     virtual ~Path();
     Path(STEPWrapper *sw, int step_id);
     virtual ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
+    bool GrowTopologyVertexBounds(ON_BoundingBox *bounds);
     bool GetEdgeAxisProjectionBounds(ON_Brep *brep,
 	const ON_3dPoint &origin, const ON_3dVector &axis,
 	double *minimum, double *maximum);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
+    /** Load the immutable 3-D edge topology needed by a later trim job and
+     * retain its destination-BREP edge indices.  Face batching calls this
+     * serially because some STEP curve adapters cache endpoint information. */
+    bool PrepareONBrepEdges(ON_Brep *brep, std::vector<int> *edge_indices);
     bool LoadONTrimmingCurves(ON_Brep *brep);
+    /** Construct this path's trims using caller-owned topology indices.  This
+     * form is safe for an independently owned face BREP and does not consult
+     * mutable destination indices cached on shared STEP entities. */
+    bool LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
+	const std::vector<int> &edge_indices,
+	double item_scale_override = 0.0,
+	std::shared_ptr<brlcad::PullbackContext> surface_cache =
+	    std::shared_ptr<brlcad::PullbackContext>());
     virtual void Print(int level);
     void SetPathIndex(int index) {
 	ON_path_index = index;

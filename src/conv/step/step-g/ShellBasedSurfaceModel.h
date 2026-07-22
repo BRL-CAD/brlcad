@@ -52,6 +52,7 @@ public:
     ON_Brep *GetONBrep();
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
+    size_t MaximumPullbackSpanEstimate() const;
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

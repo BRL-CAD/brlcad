@@ -153,7 +153,7 @@ CurveReplica::LoadONBrep(ON_Brep *brep)
 {
     if (!brep || !parent_curve || !transformation || !transformation->LocalOrigin())
 	return false;
-    if (ON_id >= 0)
+    if (GetONId() >= 0)
 	return true;
     if (!parent_curve->LoadONBrep(brep))
 	return false;
@@ -170,8 +170,8 @@ CurveReplica::LoadONBrep(ON_Brep *brep)
 	delete copy;
 	return false;
     }
-    ON_id = brep->AddEdgeCurve(copy);
-    return ON_id >= 0;
+    SetONId(brep->AddEdgeCurve(copy));
+    return GetONId() >= 0;
 }
 
 // Local Variables:

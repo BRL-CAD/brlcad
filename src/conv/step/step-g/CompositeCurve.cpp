@@ -156,7 +156,7 @@ CompositeCurve::LoadONBrep(ON_Brep *brep)
 {
     if (!brep || segments.empty())
 	return false;
-    if (ON_id >= 0)
+    if (GetONId() >= 0)
 	return true;
 
     ON_PolyCurve *curve = new ON_PolyCurve();
@@ -185,8 +185,8 @@ CompositeCurve::LoadONBrep(ON_Brep *brep)
 	delete curve;
 	return false;
     }
-    ON_id = brep->AddEdgeCurve(curve);
-    return ON_id >= 0;
+    SetONId(brep->AddEdgeCurve(curve));
+    return GetONId() >= 0;
 }
 
 // Local Variables:

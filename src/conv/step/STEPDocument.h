@@ -47,6 +47,18 @@ struct ImportProgress {
     std::string secondary_label;
     std::string detail;
     int64_t current_entity_id = 0;
+    /** Cumulative geometry-object progress across every conversion batch.
+     * The total may grow while a legacy representation walk discovers later
+     * surface-model jobs, but it never shrinks. */
+    uint64_t geometry_items_processed = 0;
+    uint64_t geometry_items_total = 0;
+    /** Nested context for the oldest active exact-geometry job. */
+    int64_t geometry_root_entity_id = 0;
+    int64_t geometry_item_entity_id = 0;
+    uint64_t geometry_item_completed = 0;
+    uint64_t geometry_item_total = 0;
+    std::string geometry_item_label;
+    int64_t geometry_subentity_id = 0;
     /** Geometry-pipeline occupancy.  Capacity is zero outside the detached
      * conversion pipeline, allowing reporters to omit these fields. */
     uint64_t geometry_jobs_queued = 0;
@@ -194,6 +206,25 @@ struct SkippedItem {
     std::string reason;
 };
 
+/** Aggregated elapsed time for a measured import stage. */
+struct StageTiming {
+    uint64_t calls = 0;
+    uint64_t total_us = 0;
+    uint64_t maximum_us = 0;
+    int64_t maximum_entity_id = 0;
+};
+
+/** Bounded per-item timing retained for slow-item diagnosis. */
+struct ItemTiming {
+    int64_t entity_id = 0;
+    std::string entity_type;
+    std::string stage;
+    uint64_t elapsed_us = 0;
+    uint64_t faces = 0;
+    uint64_t edges = 0;
+    uint64_t trims = 0;
+};
+
 struct ImportStatistics {
     uint64_t input_instances = 0;
     uint64_t products = 0;
@@ -209,6 +240,42 @@ struct ImportStatistics {
     uint64_t invalid_breps = 0;
     uint64_t output_failures = 0;
     uint64_t repairs = 0;
+    uint64_t pullback_closest_point_queries = 0;
+    uint64_t pullback_surfaces_prepared = 0;
+    uint64_t pullback_surface_cache_hits = 0;
+    uint64_t pullback_span_boxes_built = 0;
+    uint64_t pullback_span_boxes_tested = 0;
+    uint64_t pullback_primary_search_successes = 0;
+    uint64_t pullback_continuity_seed_searches = 0;
+    uint64_t pullback_continuity_seed_successes = 0;
+    uint64_t pullback_continuity_seed_failures = 0;
+    uint64_t pullback_continuity_seed_finite_candidates = 0;
+    uint64_t pullback_continuity_seed_iterations = 0;
+    uint64_t pullback_continuity_seed_line_searches = 0;
+    uint64_t pullback_maximum_continuity_seed_iterations = 0;
+    uint64_t pullback_maximum_continuity_seed_line_searches = 0;
+    uint64_t pullback_multiseed_fallbacks = 0;
+    uint64_t pullback_multiseed_successes = 0;
+    uint64_t pullback_multiseed_failures = 0;
+    uint64_t pullback_fallback_calls_with_finite_primary = 0;
+    uint64_t pullback_fallback_samples_evaluated = 0;
+    uint64_t pullback_fallback_seed_refinements = 0;
+    uint64_t pullback_fallback_refinement_improvements = 0;
+    uint64_t pullback_fallback_late_seed_improvements = 0;
+    uint64_t pullback_maximum_winning_seed_index = 0;
+    uint64_t pullback_subdivision_nodes = 0;
+    uint64_t pullback_maximum_subdivision_nodes = 0;
+    uint64_t pullback_preparation_us = 0;
+    uint64_t pullback_primary_search_us = 0;
+    uint64_t pullback_continuity_seed_us = 0;
+    uint64_t pullback_multiseed_us = 0;
+    double pullback_fallback_primary_improvement_total = 0.0;
+    double pullback_fallback_primary_improvement_maximum = 0.0;
+    double pullback_fallback_refinement_improvement_total = 0.0;
+    double pullback_fallback_refinement_improvement_maximum = 0.0;
+    std::map<std::string, StageTiming> stage_timings;
+    std::vector<ItemTiming> slow_item_timings;
+    uint64_t slow_item_timings_omitted = 0;
     std::vector<SkippedItem> skipped_items;
     /** Records beyond the bounded skipped_items report budget. */
     uint64_t skipped_items_omitted = 0;

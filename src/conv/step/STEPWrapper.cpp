@@ -71,6 +71,7 @@
 #include "LocalUnits.h"
 #include "FacetedBrep.h"
 #include "Face.h"
+#include "FaceSurface.h"
 #include "MappedItem.h"
 #include "ManifoldSolidBrep.h"
 #include "ManifoldSurfaceShapeRepresentation.h"
@@ -238,6 +239,12 @@ constexpr double kNumericalToleranceScale = 1024.0;
  * grow JSON output without bound.  The total omitted count remains exact. */
 constexpr size_t kMaximumReportedSkippedItems = 4096;
 
+/* Retain entity-specific stage timings above one second.  Aggregate timing is
+ * recorded for every call; this bounded detail list exists to identify the
+ * smaller set of jobs worth a focused --entity retry. */
+constexpr uint64_t kSlowStageTimingMicroseconds = 1000000;
+constexpr size_t kMaximumSlowItemTimings = 4096;
+
 /* Updating the telemetry snapshot requires a short mutex acquisition.  Once
  * per 256 scanned entities keeps progress current without adding measurable
  * synchronization overhead to million-instance product-graph walks. */
@@ -326,17 +333,25 @@ constexpr uint64_t kMaximumExactPullbackMilliseconds = 60000;
  * add 500 ms per face to a 60-second complex-item overhead allowance, with a
  * 15-minute absolute ceiling.  The fixed allowance covers dependency
  * materialization, final topology validation, and bounded contention while
- * other top-level geometry workers occupy the shared helper pool.  Items at
- * or below 200 faces retain the one-minute investigation budget.
+ * the dynamic scheduler transfers workers from other roots to nested
+ * face/edge groups.  Items at or below 64 faces retain the one-minute
+ * investigation budget; larger items have enough independently countable
+ * topology to justify the reported complexity exception.
  * Crossing one minute is therefore limited to an explicitly reported,
  * measured-topology complexity exception; the ceiling still prevents a
  * malformed giant item from monopolizing an import indefinitely. */
 constexpr uint64_t kMaximumComplexExactPullbackMilliseconds = 15 * 60 * 1000;
 constexpr uint64_t kComplexExactOverheadMilliseconds = 60 * 1000;
 constexpr uint64_t kExactPullbackMillisecondsPerFace = 500;
-constexpr size_t kComplexExactSolidFaceThreshold = 200;
+constexpr size_t kComplexExactSolidFaceThreshold = 64;
 constexpr uint64_t kMaximumSurfaceModelPullbackMilliseconds = 120000;
-
+/* A surface with thousands of tensor-product spans makes each global
+ * closest-point query materially different from ordinary analytic and small
+ * spline faces.  The CRM problem face has 34,277 spans; reserving the machine
+ * only above this power-of-two preflight threshold preserves AP214 assembly
+ * throughput while ensuring those measured outliers receive nested workers
+ * before their item clock starts. */
+constexpr size_t kExclusivePullbackSurfaceSpanThreshold = 4096;
 class PullbackWorkScope {
 public:
     PullbackWorkScope(STEPWrapper *source, uint64_t maximum_elapsed_milliseconds)
@@ -362,9 +377,15 @@ private:
 struct STEPWrapper::GeometryExecutor {
     struct Group {
 	Group(const std::function<void(size_t)> &caller,
-	    const std::function<void(size_t)> &helper, size_t task_count)
-	    : caller_task(caller), helper_task(helper), count(task_count)
+	    const std::function<void(size_t)> &helper, size_t task_count,
+	    uint64_t remaining_milliseconds, uint64_t creation_order)
+	    : caller_task(caller), helper_task(helper), count(task_count),
+	      order(creation_order)
 	{
+	    deadline = remaining_milliseconds == UINT64_MAX ?
+		std::chrono::steady_clock::time_point::max() :
+		std::chrono::steady_clock::now() +
+		std::chrono::milliseconds(remaining_milliseconds);
 	}
 
 	bool Claim(size_t &index)
@@ -401,10 +422,12 @@ struct STEPWrapper::GeometryExecutor {
 
 	std::function<void(size_t)> caller_task;
 	std::function<void(size_t)> helper_task;
+	std::chrono::steady_clock::time_point deadline;
 	size_t count = 0;
 	size_t next = 0;
 	size_t running = 0;
 	std::exception_ptr exception;
+	uint64_t order = 0;
 	std::mutex lock;
 	std::condition_variable finished;
     };
@@ -435,40 +458,56 @@ struct STEPWrapper::GeometryExecutor {
 	if (wrapper) wrapper->SetGeometryHelpersActive(0);
     }
 
-    void WorkerStarted()
+    void WorkerStarted(bool exclusive_pullback)
     {
 	std::unique_lock<std::mutex> guard(lock);
-	/* A helper may have borrowed a slot while the materializer was still
-	 * filling the top-level queue.  Wait for that bounded helper task to
-	 * return the slot before admitting another solid worker, keeping total
-	 * geometry CPU occupancy at or below -j even during ramp-up. */
-	changed.wait(guard, [this]() {
-	    return stopping || top_level_workers + active_helpers < capacity;
+	if (exclusive_pullback) ++exclusive_waiters;
+	/* Admit roots freely while no nested work exists.  As soon as any active
+	 * root publishes face/edge tasks, stop replacing completed root workers;
+	 * their slots transfer to the helper pool until the nested queue drains.
+	 * This keeps all CPUs useful without starting more wall-clock item
+	 * deadlines than the machine can service. */
+	changed.wait(guard, [this, exclusive_pullback]() {
+	    RemoveCompletedGroupsLocked();
+	    if (stopping) return true;
+	    if (exclusive_pullback)
+		return !exclusive_root_active && top_level_workers == 0 &&
+		    active_helpers == 0 && groups.empty();
+	    return !exclusive_root_active && exclusive_waiters == 0 &&
+		groups.empty() && top_level_workers + active_helpers < capacity;
 	});
-	if (!stopping) ++top_level_workers;
+	if (exclusive_pullback && exclusive_waiters) --exclusive_waiters;
+	if (!stopping) {
+	    ++top_level_workers;
+	    if (exclusive_pullback) exclusive_root_active = true;
+	}
 	guard.unlock();
 	changed.notify_all();
     }
 
-    void WorkerFinished()
+    void WorkerFinished(bool exclusive_pullback)
     {
 	{
 	    std::lock_guard<std::mutex> guard(lock);
 	    if (top_level_workers) --top_level_workers;
+	    if (exclusive_pullback) exclusive_root_active = false;
 	}
 	changed.notify_all();
     }
 
     void ParallelFor(size_t count, const std::function<void(size_t)> &caller_task,
-	const std::function<void(size_t)> &helper_task)
+	const std::function<void(size_t)> &helper_task,
+	uint64_t remaining_milliseconds)
     {
 	if (count < 2 || capacity < 2) {
 	    for (size_t index = 0; index < count; ++index) caller_task(index);
 	    return;
 	}
-	std::shared_ptr<Group> group(new Group(caller_task, helper_task, count));
+	std::shared_ptr<Group> group;
 	{
 	    std::lock_guard<std::mutex> guard(lock);
+	    group.reset(new Group(caller_task, helper_task, count,
+		remaining_milliseconds, next_group_order++));
 	    groups.push_back(group);
 	}
 	changed.notify_all();
@@ -482,6 +521,14 @@ struct STEPWrapper::GeometryExecutor {
 	    }
 	}
 	group->Wait();
+	changed.notify_all();
+    }
+
+    unsigned int AvailableHelperCapacity()
+    {
+	std::lock_guard<std::mutex> guard(lock);
+	const unsigned int occupied = top_level_workers + active_helpers;
+	return occupied < capacity ? capacity - occupied : 0;
     }
 
 private:
@@ -512,8 +559,20 @@ private:
 			break;
 		    changed.wait(guard);
 		}
-		group = groups.front();
-		groups.pop_front();
+		/* A wall-clock item budget must measure geometric work rather than
+		 * starvation behind unrelated nested groups.  Give helpers to the
+		 * earliest absolute deadline first; creation order makes equal and
+		 * unlimited deadlines deterministic. */
+		std::deque<std::shared_ptr<Group> >::iterator selected =
+		    std::min_element(groups.begin(), groups.end(),
+			[](const std::shared_ptr<Group> &left,
+			   const std::shared_ptr<Group> &right) {
+			    if (left->deadline != right->deadline)
+				return left->deadline < right->deadline;
+			    return left->order < right->order;
+			});
+		group = *selected;
+		groups.erase(selected);
 		if (!group || !group->Claim(index)) continue;
 		if (group->HasUnclaimed()) groups.push_back(group);
 		++active_helpers;
@@ -545,6 +604,9 @@ private:
     std::vector<std::thread> helpers;
     unsigned int top_level_workers = 0;
     unsigned int active_helpers = 0;
+	unsigned int exclusive_waiters = 0;
+	bool exclusive_root_active = false;
+	uint64_t next_group_order = 0;
     bool stopping = false;
 };
 
@@ -599,9 +661,9 @@ STEPWrapper::StopGeometryExecutor()
 
 void
 STEPWrapper::GeometryWorkerStarted(int64_t entity_id,
-    const std::string &entity_type)
+    const std::string &entity_type, bool exclusive_pullback)
 {
-    if (geometry_executor) geometry_executor->WorkerStarted();
+    if (geometry_executor) geometry_executor->WorkerStarted(exclusive_pullback);
     std::lock_guard<std::mutex> guard(progress_mutex);
     ActiveGeometryJobProgress &job =
 	active_geometry_job_progress[std::this_thread::get_id()];
@@ -615,13 +677,13 @@ STEPWrapper::GeometryWorkerStarted(int64_t entity_id,
 
 
 void
-STEPWrapper::GeometryWorkerFinished()
+STEPWrapper::GeometryWorkerFinished(bool exclusive_pullback)
 {
     {
 	std::lock_guard<std::mutex> guard(progress_mutex);
 	active_geometry_job_progress.erase(std::this_thread::get_id());
     }
-    if (geometry_executor) geometry_executor->WorkerFinished();
+    if (geometry_executor) geometry_executor->WorkerFinished(exclusive_pullback);
 }
 
 
@@ -656,7 +718,14 @@ STEPWrapper::ParallelForGeometry(size_t count,
 	}
 	brlcad::ClearPullbackWorkLimit();
     };
-    geometry_executor->ParallelFor(count, task, helper_task);
+    geometry_executor->ParallelFor(count, task, helper_task, remaining);
+}
+
+
+unsigned int
+STEPWrapper::AvailableGeometryHelperCapacity()
+{
+    return geometry_executor ? geometry_executor->AvailableHelperCapacity() : 0;
 }
 
 
@@ -1090,10 +1159,21 @@ STEPWrapper::SetProgressDetail(const std::string &phase,
 	active_geometry_job_progress.find(std::this_thread::get_id());
     if (active != active_geometry_job_progress.end()) {
 	active->second.phase = phase;
-	active->second.current_entity_id = current_entity_id;
-	active->second.secondary_completed = secondary_completed;
-	active->second.secondary_total = secondary_total;
-	active->second.secondary_label = secondary_label;
+	/* A face counter is the stable outer item context.  Nested pullback,
+	 * seam, and loop calls may update the operation detail without erasing
+	 * which face out of the complete solid is being processed. */
+	if (secondary_label == "faces" && secondary_total) {
+	    active->second.item_entity_id = current_entity_id;
+	    active->second.item_completed = secondary_completed;
+	    active->second.item_total = secondary_total;
+	    active->second.item_label = secondary_label;
+	} else {
+	    if (current_entity_id > 0)
+		active->second.current_entity_id = current_entity_id;
+	    active->second.secondary_completed = secondary_completed;
+	    active->second.secondary_total = secondary_total;
+	    active->second.secondary_label = secondary_label;
+	}
 	active->second.detail = detail;
     }
 }
@@ -1117,6 +1197,17 @@ STEPWrapper::SetGeometrySchedulerProgress(uint64_t queued, uint64_t active,
     progress_state.geometry_runnable_capacity = runnable_capacity;
     progress_state.geometry_ready_bytes = ready_bytes;
     progress_state.geometry_ready_byte_budget = ready_byte_budget;
+}
+
+
+void
+STEPWrapper::SetGeometryOverallProgress(uint64_t processed, uint64_t total)
+{
+    std::lock_guard<std::mutex> guard(progress_mutex);
+    progress_state.geometry_items_processed = std::max(
+	progress_state.geometry_items_processed, processed);
+    progress_state.geometry_items_total = std::max(
+	progress_state.geometry_items_total, total);
 }
 
 
@@ -1147,6 +1238,12 @@ STEPWrapper::Progress() const
     const ActiveGeometryJobProgress &job = oldest->second;
     snapshot.phase = job.phase;
     snapshot.current_entity_id = job.root_entity_id;
+    snapshot.geometry_root_entity_id = job.root_entity_id;
+    snapshot.geometry_item_entity_id = job.item_entity_id;
+    snapshot.geometry_item_completed = job.item_completed;
+    snapshot.geometry_item_total = job.item_total;
+    snapshot.geometry_item_label = job.item_label;
+    snapshot.geometry_subentity_id = job.current_entity_id;
     snapshot.secondary_completed = job.secondary_completed;
     snapshot.secondary_total = job.secondary_total;
     snapshot.secondary_label = job.secondary_label;
@@ -1166,6 +1263,103 @@ STEPWrapper::Progress() const
 	<< "oldest-active=" << active_seconds << 's';
     snapshot.detail = detail.str();
     return snapshot;
+}
+
+
+void
+STEPWrapper::RecordStageTiming(const std::string &stage, int64_t entity_id,
+    const std::string &entity_type, uint64_t elapsed_us, uint64_t faces,
+    uint64_t edges, uint64_t trims)
+{
+    if (stage.empty()) return;
+    std::lock_guard<std::mutex> guard(telemetry_mutex);
+    brlcad::step::StageTiming &timing = statistics.stage_timings[stage];
+    ++timing.calls;
+    timing.total_us += elapsed_us;
+    if (elapsed_us > timing.maximum_us) {
+	timing.maximum_us = elapsed_us;
+	timing.maximum_entity_id = entity_id;
+    }
+    if (elapsed_us < kSlowStageTimingMicroseconds) return;
+    if (statistics.slow_item_timings.size() >= kMaximumSlowItemTimings) {
+	++statistics.slow_item_timings_omitted;
+	return;
+    }
+    brlcad::step::ItemTiming item;
+    item.entity_id = entity_id;
+    item.entity_type = entity_type;
+    item.stage = stage;
+    item.elapsed_us = elapsed_us;
+    item.faces = faces;
+    item.edges = edges;
+    item.trims = trims;
+    statistics.slow_item_timings.push_back(item);
+}
+
+
+void
+STEPWrapper::RecordPullbackStatistics(const brlcad::PullbackStatistics &source)
+{
+    std::lock_guard<std::mutex> guard(telemetry_mutex);
+    statistics.pullback_closest_point_queries += source.closest_point_queries;
+    statistics.pullback_surfaces_prepared += source.surfaces_prepared;
+    statistics.pullback_surface_cache_hits += source.surface_cache_hits;
+    statistics.pullback_span_boxes_built += source.span_boxes_built;
+    statistics.pullback_span_boxes_tested += source.span_boxes_tested;
+    statistics.pullback_primary_search_successes +=
+	source.primary_search_successes;
+    statistics.pullback_continuity_seed_searches +=
+	source.continuity_seed_searches;
+    statistics.pullback_continuity_seed_successes +=
+	source.continuity_seed_successes;
+    statistics.pullback_continuity_seed_failures +=
+	source.continuity_seed_failures;
+    statistics.pullback_continuity_seed_finite_candidates +=
+	source.continuity_seed_finite_candidates;
+    statistics.pullback_continuity_seed_iterations +=
+	source.continuity_seed_iterations;
+    statistics.pullback_continuity_seed_line_searches +=
+	source.continuity_seed_line_searches;
+    statistics.pullback_maximum_continuity_seed_iterations = std::max(
+	statistics.pullback_maximum_continuity_seed_iterations,
+	source.maximum_continuity_seed_iterations);
+    statistics.pullback_maximum_continuity_seed_line_searches = std::max(
+	statistics.pullback_maximum_continuity_seed_line_searches,
+	source.maximum_continuity_seed_line_searches);
+    statistics.pullback_multiseed_fallbacks += source.multiseed_fallbacks;
+    statistics.pullback_multiseed_successes += source.multiseed_successes;
+    statistics.pullback_multiseed_failures += source.multiseed_failures;
+    statistics.pullback_fallback_calls_with_finite_primary +=
+	source.fallback_calls_with_finite_primary;
+    statistics.pullback_fallback_samples_evaluated +=
+	source.fallback_samples_evaluated;
+    statistics.pullback_fallback_seed_refinements +=
+	source.fallback_seed_refinements;
+    statistics.pullback_fallback_refinement_improvements +=
+	source.fallback_refinement_improvements;
+    statistics.pullback_fallback_late_seed_improvements +=
+	source.fallback_late_seed_improvements;
+    statistics.pullback_maximum_winning_seed_index = std::max(
+	statistics.pullback_maximum_winning_seed_index,
+	source.maximum_winning_seed_index);
+    statistics.pullback_subdivision_nodes += source.subdivision_nodes;
+    statistics.pullback_maximum_subdivision_nodes = std::max(
+	statistics.pullback_maximum_subdivision_nodes,
+	source.maximum_subdivision_nodes);
+    statistics.pullback_preparation_us += source.preparation_us;
+    statistics.pullback_primary_search_us += source.primary_search_us;
+    statistics.pullback_continuity_seed_us += source.continuity_seed_us;
+    statistics.pullback_multiseed_us += source.multiseed_us;
+    statistics.pullback_fallback_primary_improvement_total +=
+	source.fallback_primary_improvement_total;
+    statistics.pullback_fallback_primary_improvement_maximum = std::max(
+	statistics.pullback_fallback_primary_improvement_maximum,
+	source.fallback_primary_improvement_maximum);
+    statistics.pullback_fallback_refinement_improvement_total +=
+	source.fallback_refinement_improvement_total;
+    statistics.pullback_fallback_refinement_improvement_maximum = std::max(
+	statistics.pullback_fallback_refinement_improvement_maximum,
+	source.fallback_refinement_improvement_maximum);
 }
 
 
@@ -6202,10 +6396,15 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 	wrapper->RecordRepair(entity_id, entity_type, "edge_loop",
 	    "inserted an exact OpenNURBS seam for an implicit periodic STEP face band");
 	}
-    if (wrapper->Verbose()) {
-	const long long elapsed_microseconds =
+    const long long elapsed_microseconds =
 	    std::chrono::duration_cast<std::chrono::microseconds>(
 		std::chrono::steady_clock::now() - pass_started).count();
+    wrapper->RecordStageTiming("periodic_band_repair", entity_id,
+	entity_type, static_cast<uint64_t>(std::max<long long>(0,
+	    elapsed_microseconds)), static_cast<uint64_t>(brep->m_F.Count()),
+	static_cast<uint64_t>(brep->m_E.Count()),
+	static_cast<uint64_t>(brep->m_T.Count()));
+    if (wrapper->Verbose()) {
 	std::cerr << entity_type << " #" << entity_id
 	    << ": periodic-band pass telemetry elapsed="
 	    << elapsed_microseconds / 1000.0 << "ms faces="
@@ -13834,6 +14033,7 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 	return false;
     };
     std::set<int> attempted_edge_regeneration;
+    std::set<int> measured_singular_join_trims;
     std::set<int> translated_trim_indices;
     std::map<int, std::set<std::vector<double> > > seen_loop_states;
 
@@ -13938,6 +14138,33 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		    continue;
 		}
 
+		/* A trim approaching a collapsed surface boundary can expose a
+		 * source edge/surface separation only in the final few dense
+		 * samples.  Before editing either endpoint, measure the immutable
+		 * ordinary STEP edge against the complete surface.  Normal safe mode
+		 * may then reflect a small, scale-bounded source discrepancy in this
+		 * one edge/trim tolerance; --exact leaves the declared uncertainty
+		 * unchanged.  This proof is deliberately performed once per affected
+		 * trim and does not validate an endpoint edit merely because it is
+		 * nearby. */
+		if ((previous->m_type == ON_BrepTrim::singular) !=
+			(next->m_type == ON_BrepTrim::singular)) {
+		    ON_BrepTrim *ordinary = previous->m_type ==
+			ON_BrepTrim::singular ? next : previous;
+		    ON_BrepEdge *ordinary_edge = ordinary ? ordinary->Edge() : NULL;
+		    ON_NurbsCurve ordinary_nurbs;
+		    if (ordinary && ordinary_edge &&
+			    measured_singular_join_trims.insert(
+				ordinary->m_trim_index).second &&
+			    ordinary_edge->GetNurbForm(ordinary_nurbs)) {
+			join_tolerance = std::max(join_tolerance,
+			    verified_regeneration_tolerance(*ordinary,
+				*ordinary_edge, surface, ordinary_nurbs,
+				join_tolerance, brep, wrapper, entity_id,
+				entity_type));
+		    }
+		}
+
 		/* Adjacent ordinary trims can be returned on different periodic
 		 * images of the same closed surface, including doubly periodic tori.
 		 * Move the complete following pcurve by integral surface periods
@@ -14020,7 +14247,9 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		 * non-seam pcurve by integral closed-surface periods.  This preserves
 		 * its shape and edge correspondence, unlike bending only its endpoint. */
 		if ((previous->m_type == ON_BrepTrim::seam) !=
-			(next->m_type == ON_BrepTrim::seam)) {
+			(next->m_type == ON_BrepTrim::seam) &&
+			previous->m_type != ON_BrepTrim::singular &&
+			next->m_type != ON_BrepTrim::singular) {
 		    ON_BrepTrim *movable = previous->m_type == ON_BrepTrim::seam ?
 			next : previous;
 		    const ON_3dPoint seam_join = movable == previous ? next_uv :
@@ -14238,6 +14467,66 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			    << " at " << common.x << ':' << common.y << " vertex distance="
 			    << common_lift.DistanceTo(vertex) << std::endl;
 		    continue;
+		}
+
+		/* A seam fragment ending at a collapsed boundary must approach the
+		 * pole on the limiting parameter branch selected by its adjacent
+		 * singular trim.  Editing only the seam endpoint can bend a supplied
+		 * spline through an invalid edge locus.  Reconstruct the complete
+		 * seam fragment from its immutable 3-D STEP edge with both loop
+		 * endpoints fixed, and install it only after the ordinary dense
+		 * pullback validation succeeds. */
+		if ((previous->m_type == ON_BrepTrim::singular) !=
+			(next->m_type == ON_BrepTrim::singular) &&
+			((previous->m_type == ON_BrepTrim::seam) !=
+			 (next->m_type == ON_BrepTrim::seam))) {
+		    ON_BrepTrim *seam = previous->m_type == ON_BrepTrim::seam ?
+			previous : next;
+		    ON_BrepEdge *seam_edge = seam ? seam->Edge() : NULL;
+		    ON_NurbsCurve seam_nurbs;
+		    const ON_3dPoint seam_other = seam == previous ?
+			seam->PointAtStart() : seam->PointAtEnd();
+		    const ON_3dPoint *required_start = seam == previous ?
+			&seam_other : &common;
+		    const ON_3dPoint *required_end = seam == previous ?
+			&common : &seam_other;
+		    ON_Curve *regenerated_curve = NULL;
+		    std::string regeneration_failure;
+		    const bool regenerated = seam_edge &&
+			seam_edge->GetNurbForm(seam_nurbs) &&
+			regenerate_trim_polyline(brep, *seam, surface,
+			    seam_nurbs, join_tolerance, &regeneration_failure,
+			    NULL, required_start, required_end, true, wrapper,
+			    true, &regenerated_curve);
+		    const ON_3dPoint regenerated_join = regenerated_curve ?
+			(seam == previous ? regenerated_curve->PointAtEnd() :
+			 regenerated_curve->PointAtStart()) :
+			ON_3dPoint::UnsetPoint;
+		    if (regenerated && regenerated_curve &&
+			    regenerated_join.DistanceTo(common) <=
+				ON_ZERO_TOLERANCE) {
+			const int c2_index = brep->AddTrimCurve(regenerated_curve);
+			if (c2_index >= 0 && brep->SetTrimCurve(*seam,
+				c2_index)) {
+			    brep->SetTrimIsoFlags(*seam);
+			    wrapper->RecordRepair(entity_id, entity_type,
+				"trim_pcurve",
+				"regenerated a seam fragment from an exact surface-pole endpoint");
+			    changed = true;
+			    loop_changed = true;
+			    continue;
+			}
+			if (c2_index < 0)
+			    delete regenerated_curve;
+		    } else {
+			delete regenerated_curve;
+		    }
+		    if (wrapper->Verbose())
+			std::cerr << entity_type << " #" << entity_id << ": loop "
+			    << li << " pole-seeded seam regeneration for trim "
+			    << (seam ? seam->m_trim_index : -1) << " rejected: "
+			    << (regeneration_failure.empty() ? "endpoint mismatch" :
+				regeneration_failure) << std::endl;
 		}
 
 		bool change_previous = previous_uv.DistanceTo(common) >
@@ -15642,13 +15931,30 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 	    source != tracked_same_loop_seam_sources.end(); ++source)
 	tracked_source_signatures[*source] = source_topology_signature(*source);
     std::string previous_stage("initial topology");
+    std::chrono::steady_clock::time_point repair_stage_started =
+	std::chrono::steady_clock::now();
+    bool repair_stage_active = false;
     std::map<std::string, double> previous_directed_endpoint_mismatches;
     bool have_directed_endpoint_audit = false;
     const auto report_stage = [wrapper, entity_id, &entity_type,
 	brep, &previous_directed_endpoint_mismatches,
 	&have_directed_endpoint_audit,
 	&tracked_same_loop_seam_sources, &tracked_source_signatures,
-	&source_topology_signature, &previous_stage](const char *phase) {
+	&source_topology_signature, &previous_stage, &repair_stage_started,
+	&repair_stage_active](const char *phase) {
+	const std::chrono::steady_clock::time_point now =
+	    std::chrono::steady_clock::now();
+	if (repair_stage_active) {
+	    wrapper->RecordStageTiming("trim_orientation/" + previous_stage,
+		entity_id, entity_type, static_cast<uint64_t>(
+		    std::chrono::duration_cast<std::chrono::microseconds>(
+			now - repair_stage_started).count()),
+		static_cast<uint64_t>(brep->m_F.Count()),
+		static_cast<uint64_t>(brep->m_E.Count()),
+		static_cast<uint64_t>(brep->m_T.Count()));
+	}
+	repair_stage_started = now;
+	repair_stage_active = true;
 	if (wrapper->Verbose()) {
 	    std::map<std::string, double> current_mismatches;
 	    std::map<std::pair<int, int>, int> source_use_ordinals;
@@ -16725,6 +17031,18 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 			<< ": periodic surface seam retry remained invalid; "
 			<< "retaining the bounded pcurve repairs" << std::endl;
 	    }
+	}
+	if (repair_stage_active) {
+	    const std::chrono::steady_clock::time_point now =
+		std::chrono::steady_clock::now();
+	    wrapper->RecordStageTiming("trim_orientation/" + previous_stage,
+		entity_id, entity_type, static_cast<uint64_t>(
+		    std::chrono::duration_cast<std::chrono::microseconds>(
+			now - repair_stage_started).count()),
+		static_cast<uint64_t>(brep->m_F.Count()),
+		static_cast<uint64_t>(brep->m_E.Count()),
+		static_cast<uint64_t>(brep->m_T.Count()));
+	    repair_stage_active = false;
 	}
 	if (wrapper->Verbose()) {
 	    int pspace_gap_diagnostics = 0;
@@ -17826,6 +18144,7 @@ struct DetachedBrepJob {
     uint64_t remaining_work_milliseconds = kMaximumExactPullbackMilliseconds;
     uint64_t work_budget_milliseconds = kMaximumExactPullbackMilliseconds;
     size_t topology_face_count = 0;
+    size_t maximum_pullback_span_estimate = 1;
     bool has_style = false;
     brlcad::step::Style style;
     SolidModel *solid = NULL;
@@ -17923,6 +18242,18 @@ materialize_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 
     const std::chrono::steady_clock::time_point started =
 	std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point stage_started = started;
+    const auto finish_stage = [&job, wrapper, &stage_started](
+	const std::string &stage) {
+	const std::chrono::steady_clock::time_point now =
+	    std::chrono::steady_clock::now();
+	const uint64_t elapsed_us = static_cast<uint64_t>(
+	    std::chrono::duration_cast<std::chrono::microseconds>(
+		now - stage_started).count());
+	wrapper->RecordStageTiming(stage, job.entity_id, job.entity_type,
+	    elapsed_us, static_cast<uint64_t>(job.topology_face_count));
+	stage_started = now;
+    };
     PullbackWorkScope item_work(wrapper, kMaximumExactPullbackMilliseconds);
 
 	/* Keep this phase separate from topology detachment and pullback.  Large
@@ -17931,6 +18262,7 @@ materialize_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
     wrapper->SetProgressDetail("materializing STEP dependency closure",
 	job.entity_id, 0, 0, std::string(), job.entity_type);
     SDAI_Application_instance *source = wrapper->getEntity(job.entity_id);
+    finish_stage("dependency_materialization");
     if (source) {
 	wrapper->SetProgressDetail("detaching exact STEP topology",
 	    job.entity_id, 0, 0, std::string(), job.entity_type);
@@ -17947,6 +18279,8 @@ materialize_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    ManifoldSolidBrep *manifold = dynamic_cast<ManifoldSolidBrep *>(job.solid);
 	    if (manifold) {
 		job.topology_face_count = manifold->FaceCount();
+		job.maximum_pullback_span_estimate =
+		    manifold->MaximumPullbackSpanEstimate();
 		if (job.topology_face_count > kComplexExactSolidFaceThreshold) {
 		    job.work_budget_milliseconds = std::min(
 			kMaximumComplexExactPullbackMilliseconds,
@@ -17966,10 +18300,14 @@ materialize_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    if (job.original_name.empty())
 		job.original_name = job.surface_model->Name();
 	    job.entity_type = "SHELL_BASED_SURFACE_MODEL";
+	    job.maximum_pullback_span_estimate =
+		job.surface_model->MaximumPullbackSpanEstimate();
 	    job.work_budget_milliseconds =
 		kMaximumSurfaceModelPullbackMilliseconds;
 	} else if (job.face_set) {
 	    job.topology_face_count = job.face_set->FaceCount();
+	    job.maximum_pullback_span_estimate =
+		job.face_set->MaximumPullbackSpanEstimate();
 	    if (job.entity_type.empty())
 		job.entity_type = wrapper->LazyTypeName(job.entity_id);
 	    if (job.topology_face_count > kComplexExactSolidFaceThreshold) {
@@ -17981,10 +18319,15 @@ materialize_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    }
 	} else if (job.face) {
 	    job.topology_face_count = 1;
+	    FaceSurface *surface_face = dynamic_cast<FaceSurface *>(job.face);
+	    if (surface_face)
+		job.maximum_pullback_span_estimate =
+		    surface_face->PullbackSpanEstimate();
 	    if (job.entity_type.empty())
 		job.entity_type = wrapper->LazyTypeName(job.entity_id);
 	}
     }
+    finish_stage("topology_detach");
     brlcad::PullbackWorkCancelled();
     if (item_work.DeadlineExpired()) {
 	job.validation_message = "dependency materialization exceeded the " +
@@ -18002,6 +18345,7 @@ materialize_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
     }
     job.entity_arena = wrapper->DetachEntityCache();
     wrapper->ReleaseSourceData();
+    finish_stage("source_release");
     job.ready = (job.solid != NULL || job.surface_model != NULL ||
 	job.face_set != NULL || job.face != NULL) &&
 	job.entity_arena != NULL;
@@ -18047,6 +18391,27 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
     LocalUnits::solidangle = job.solidangle_factor;
     LocalUnits::tolerance = job.tolerance;
 
+    std::chrono::steady_clock::time_point stage_started =
+	std::chrono::steady_clock::now();
+    const auto finish_stage = [&job, wrapper, &stage_started](
+	const std::string &stage) {
+	const std::chrono::steady_clock::time_point now =
+	    std::chrono::steady_clock::now();
+	const uint64_t elapsed_us = static_cast<uint64_t>(
+	    std::chrono::duration_cast<std::chrono::microseconds>(
+		now - stage_started).count());
+	const uint64_t faces = job.brep ?
+	    static_cast<uint64_t>(job.brep->m_F.Count()) :
+	    static_cast<uint64_t>(job.topology_face_count);
+	const uint64_t edges = job.brep ?
+	    static_cast<uint64_t>(job.brep->m_E.Count()) : 0;
+	const uint64_t trims = job.brep ?
+	    static_cast<uint64_t>(job.brep->m_T.Count()) : 0;
+	wrapper->RecordStageTiming(stage, job.entity_id, job.entity_type,
+	    elapsed_us, faces, edges, trims);
+	stage_started = now;
+    };
+
     job.entity_arena->ResetOpenNURBSState();
     bool loaded = false;
     if (job.surface_model) {
@@ -18058,6 +18423,7 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    (job.face ? job.face->LoadONBrep(job.brep.get()) :
 	    job.solid->LoadONBrep(job.brep.get()));
     }
+    finish_stage("brep_construction_pullback");
     if (work_expired("BREP construction"))
 	return;
     if (!loaded) {
@@ -18075,6 +18441,7 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	job.status = BREP_CONVERSION_FAILED;
 	return;
     }
+    finish_stage("topology_reference_audit");
     /* A valid periodic band can initially place both uses of its seam edge on
      * one parameter branch.  At that point it resembles a zero-area keyhole,
      * but the exact seam-pair repair below will move the uses to opposite
@@ -18082,6 +18449,7 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
      * if the completed pcurve repair still leaves invalid topology. */
     size_t keyhole_splits = finalize_brep_topology(job.brep.get(), false,
 	wrapper, job.entity_id, job.entity_type);
+    finish_stage("topology_initial_finalize");
     if (work_expired("topology finalization"))
 	return;
     if (!job.faceted) {
@@ -18089,6 +18457,7 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    job.entity_id, 0, 0, std::string(), job.entity_type);
 	repair_closed_trim_orientations(job.brep.get(), wrapper, job.entity_id,
 	    job.entity_type);
+	finish_stage("trim_orientation_repair");
 	if (work_expired("trim orientation repair"))
 	    return;
     }
@@ -18101,6 +18470,7 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
     wrapper->SetProgressDetail("prevalidating exact OpenNURBS structure",
 	job.entity_id, 0, 0, std::string(), job.entity_type);
     const bool needs_post_repair_topology = !job.brep->IsValid(&preliminary_log);
+    finish_stage("opennurbs_prevalidation");
     if (work_expired("preliminary OpenNURBS validation"))
 	return;
     if (needs_post_repair_topology &&
@@ -18108,6 +18478,7 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	bool topology_changed = false;
 	const size_t post_repair_splits = finalize_brep_topology(job.brep.get(), true,
 	    wrapper, job.entity_id, job.entity_type, &topology_changed);
+	finish_stage("topology_post_repair_finalize");
 	keyhole_splits += post_repair_splits;
 	if (work_expired("post-repair topology finalization"))
 	    return;
@@ -18121,6 +18492,7 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	else if (!job.faceted)
 	    repair_face_bound_classification(job.brep.get(), wrapper, job.entity_id,
 		job.entity_type);
+	finish_stage("post_repair_trim_orientation");
 	if (work_expired("post-repair trim orientation repair"))
 	    return;
     }
@@ -18166,6 +18538,7 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	if (work_expired("topological keyhole normalization retry"))
 	    return;
     }
+    finish_stage("opennurbs_structural_validation");
     if (!structurally_valid) {
 	ON_String text(validation_messages);
 	job.validation_message = text.Array();
@@ -18668,8 +19041,10 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    }
 	}
 	job.status = BREP_NOT_SOLID;
+	finish_stage("brep_solidness_validation");
 	return;
     }
+    finish_stage("brep_solidness_validation");
 
     if (!job.faceted) {
 	job.status = BREP_WRITE_SUCCESS;
@@ -19908,6 +20283,9 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
     wrapper->SetProgress("converting exact geometry", 0,
 	static_cast<uint64_t>(jobs.size()), jobs.empty() ? 0 : jobs.front()->entity_id,
 	wrapper->Statistics().geometry_written, "written");
+    const uint64_t geometry_base = wrapper->Statistics().geometry_attempted;
+    wrapper->SetGeometryOverallProgress(geometry_base,
+	geometry_base + static_cast<uint64_t>(jobs.size()));
 
     const unsigned int concurrency = std::max(1U,
 	wrapper->ImportOptions().effective_jobs);
@@ -19958,6 +20336,9 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 	    static_cast<uint64_t>(observed_in_flight),
 	    static_cast<uint64_t>(runnable_capacity), ready_bytes,
 	    kMaximumReadyGeometryBytes);
+	wrapper->SetGeometryOverallProgress(
+	    geometry_base + static_cast<uint64_t>(finished_jobs),
+	    geometry_base + static_cast<uint64_t>(jobs.size()));
     };
     const auto worker = [&]() {
 	for (;;) {
@@ -19974,8 +20355,19 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 		++active_workers;
 		publish_scheduler_locked();
 	    }
+	    const bool exclusive_pullback =
+		jobs[index]->maximum_pullback_span_estimate >=
+		kExclusivePullbackSurfaceSpanThreshold;
 	    wrapper->GeometryWorkerStarted(jobs[index]->entity_id,
-		jobs[index]->entity_type);
+		jobs[index]->entity_type, exclusive_pullback);
+	    if (exclusive_pullback)
+		wrapper->RecordDiagnostic(
+		    brlcad::step::DiagnosticSeverity::Information,
+		    jobs[index]->entity_id, jobs[index]->entity_type,
+		    "scheduler", "reserved nested geometry workers for a surface "
+		    "with an estimated " +
+		    std::to_string(jobs[index]->maximum_pullback_span_estimate) +
+		    " tensor-product spans");
 	    try {
 		convert_detached_brep_job(*jobs[index], wrapper);
 	    } catch (...) {
@@ -19983,7 +20375,7 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 		jobs[index]->validation_message =
 		    "exception while validating detached OpenNURBS geometry";
 	    }
-	    wrapper->GeometryWorkerFinished();
+	    wrapper->GeometryWorkerFinished(exclusive_pullback);
 	    /* Conversion has copied all accepted curves, surfaces, topology, and
 	     * metadata into the job result.  Do not retain a STEP dependency arena
 	     * merely because a lower-ID result has not reached the database yet. */
@@ -20036,9 +20428,18 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 	}
 	if (ready_index < jobs.size()) {
 	    DetachedBrepJob &job = *jobs[ready_index];
+	    const std::chrono::steady_clock::time_point spool_started =
+		std::chrono::steady_clock::now();
 	    if (job.status == BREP_WRITE_SUCCESS &&
 		!write_detached_brep_geometry(job, &spool, dry_run))
 		job.status = BREP_OUTPUT_FAILED;
+	    wrapper->RecordStageTiming("spool_write", job.entity_id,
+		job.entity_type, static_cast<uint64_t>(
+		    std::chrono::duration_cast<std::chrono::microseconds>(
+			std::chrono::steady_clock::now() - spool_started).count()),
+		job.brep ? static_cast<uint64_t>(job.brep->m_F.Count()) : 0,
+		job.brep ? static_cast<uint64_t>(job.brep->m_E.Count()) : 0,
+		job.brep ? static_cast<uint64_t>(job.brep->m_T.Count()) : 0);
 	    job.brep.reset();
 	    job.bot_vertices.clear();
 	    job.bot_vertices.shrink_to_fit();
@@ -20067,8 +20468,16 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 	    head_spooled = spooled[next_commit] != 0;
 	}
 	if (head_spooled) {
+	    const std::chrono::steady_clock::time_point commit_started =
+		std::chrono::steady_clock::now();
 	    commit_spooled_brep_job(*jobs[next_commit], wrapper, &spool, dotg,
 		dry_run, process_map);
+	    wrapper->RecordStageTiming("database_commit",
+		jobs[next_commit]->entity_id, jobs[next_commit]->entity_type,
+		static_cast<uint64_t>(
+		    std::chrono::duration_cast<std::chrono::microseconds>(
+			std::chrono::steady_clock::now() - commit_started).count()),
+		static_cast<uint64_t>(jobs[next_commit]->topology_face_count));
 	    {
 		std::lock_guard<std::mutex> lock(queue_mutex);
 		if (spooled_waiting)
@@ -20138,6 +20547,8 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
     wrapper->StopGeometryExecutor();
     spool.Close();
     wrapper->SetGeometrySchedulerProgress(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    wrapper->SetGeometryOverallProgress(wrapper->Statistics().geometry_attempted,
+	wrapper->Statistics().geometry_attempted);
 }
 
 
@@ -20430,6 +20841,8 @@ convert_lazy_occurrences(const LazySTEPExactGraph &graph, STEPWrapper *wrapper,
 }
 
 
+#endif
+
 static void
 ensure_product_combinations(STEPWrapper *wrapper, BRLCADWrapper *database,
     int dry_run, const MAP_OF_ENTITY_ID_TO_PRODUCT_NAME &id2name_map)
@@ -20472,6 +20885,54 @@ ensure_product_combinations(STEPWrapper *wrapper, BRLCADWrapper *database,
 	    database->SetCombinationAttribute(output_name, "step:definition_description",
 		product.definition_description);
     }
+}
+
+
+#ifdef HAVE_STEPCODE_LAZY
+static uint64_t
+lazy_indexed_surface_geometry_job_count(STEPWrapper *wrapper)
+{
+    if (!wrapper || !wrapper->HasLazyIndex()) return 0;
+    const std::set<int64_t> &selected =
+	wrapper->ImportOptions().selected_entity_ids;
+    uint64_t count = 0;
+    const std::vector<uint64_t> surface_ids =
+	wrapper->LazyInstancesByType("SHELL_BASED_SURFACE_MODEL");
+    for (std::vector<uint64_t>::const_iterator surface_id =
+	    surface_ids.begin(); surface_id != surface_ids.end(); ++surface_id) {
+	if (*surface_id > static_cast<uint64_t>(INT_MAX)) continue;
+	const bool selected_model = selected.empty() || selected.find(
+	    static_cast<int64_t>(*surface_id)) != selected.end();
+	const std::vector<uint64_t> boundaries =
+	    wrapper->LazyForwardReferences(*surface_id);
+	bool selected_boundary = false;
+	if (!selected_model) {
+	    for (std::vector<uint64_t>::const_iterator boundary =
+		    boundaries.begin(); boundary != boundaries.end(); ++boundary) {
+		if (*boundary <= static_cast<uint64_t>(INT64_MAX) &&
+			selected.find(static_cast<int64_t>(*boundary)) !=
+			selected.end()) {
+		    selected_boundary = true;
+		    break;
+		}
+	    }
+	}
+	if (!selected_model && !selected_boundary) continue;
+	uint64_t model_jobs = 0;
+	for (std::vector<uint64_t>::const_iterator boundary =
+		boundaries.begin(); boundary != boundaries.end(); ++boundary) {
+	    const std::string type = wrapper->LazyTypeName(*boundary);
+	    if (*boundary <= static_cast<uint64_t>(INT_MAX) &&
+		    (type == "CLOSED_SHELL" || type == "OPEN_SHELL") &&
+		    (selected_model || selected.find(
+			static_cast<int64_t>(*boundary)) != selected.end()))
+		++model_jobs;
+	}
+	/* A selected malformed model with no shell boundary is still one unit of
+	 * conversion work: it is attempted, diagnosed, and skipped below. */
+	count += model_jobs ? model_jobs : 1;
+    }
+    return count;
 }
 
 
@@ -20535,6 +20996,14 @@ convert_lazy_exact_graph(const LazySTEPExactGraph &graph, STEPWrapper *wrapper,
 	}
     }
     wrapper->ReleaseSourceData();
+    /* The lazy exact-solid and supplemental surface passes use separate
+     * bounded job vectors.  Publish their combined finalized denominator
+     * before the first worker starts so the user-facing processed/total count
+     * does not grow when the second pass begins. */
+    const uint64_t geometry_base = wrapper->Statistics().geometry_attempted;
+    wrapper->SetGeometryOverallProgress(geometry_base,
+	geometry_base + static_cast<uint64_t>(jobs.size()) +
+	    lazy_indexed_surface_geometry_job_count(wrapper));
     write_detached_brep_jobs(jobs, wrapper, database, dry_run, process_map);
 }
 
@@ -21096,9 +21565,50 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
     statistics.styles_applied = 0;
     statistics.layers_extracted = 0;
     statistics.selected_entity_ids_encountered.clear();
+    statistics.stage_timings.clear();
+    statistics.slow_item_timings.clear();
+    statistics.slow_item_timings_omitted = 0;
+    statistics.pullback_closest_point_queries = 0;
+    statistics.pullback_surfaces_prepared = 0;
+    statistics.pullback_surface_cache_hits = 0;
+    statistics.pullback_span_boxes_built = 0;
+    statistics.pullback_span_boxes_tested = 0;
+    statistics.pullback_primary_search_successes = 0;
+    statistics.pullback_continuity_seed_searches = 0;
+    statistics.pullback_continuity_seed_successes = 0;
+    statistics.pullback_continuity_seed_failures = 0;
+    statistics.pullback_continuity_seed_finite_candidates = 0;
+    statistics.pullback_continuity_seed_iterations = 0;
+    statistics.pullback_continuity_seed_line_searches = 0;
+    statistics.pullback_maximum_continuity_seed_iterations = 0;
+    statistics.pullback_maximum_continuity_seed_line_searches = 0;
+    statistics.pullback_multiseed_fallbacks = 0;
+    statistics.pullback_multiseed_successes = 0;
+    statistics.pullback_multiseed_failures = 0;
+    statistics.pullback_fallback_calls_with_finite_primary = 0;
+    statistics.pullback_fallback_samples_evaluated = 0;
+    statistics.pullback_fallback_seed_refinements = 0;
+    statistics.pullback_fallback_refinement_improvements = 0;
+    statistics.pullback_fallback_late_seed_improvements = 0;
+    statistics.pullback_maximum_winning_seed_index = 0;
+    statistics.pullback_subdivision_nodes = 0;
+    statistics.pullback_maximum_subdivision_nodes = 0;
+    statistics.pullback_preparation_us = 0;
+    statistics.pullback_primary_search_us = 0;
+    statistics.pullback_continuity_seed_us = 0;
+    statistics.pullback_multiseed_us = 0;
+    statistics.pullback_fallback_primary_improvement_total = 0.0;
+    statistics.pullback_fallback_primary_improvement_maximum = 0.0;
+    statistics.pullback_fallback_refinement_improvement_total = 0.0;
+    statistics.pullback_fallback_refinement_improvement_maximum = 0.0;
     document.products.clear();
     document.representations.clear();
     document.occurrences.clear();
+    {
+	std::lock_guard<std::mutex> guard(progress_mutex);
+	progress_state = brlcad::step::ImportProgress();
+	active_geometry_job_progress.clear();
+    }
     SetProgress("counting STEP entity types", 0, statistics.input_instances);
     collectEntityCounts();
 #ifdef AP214e3
@@ -22170,819 +22680,6 @@ STEPWrapper::RecordSkippedItem(int64_t entity_id, const std::string &entity_type
 }
 
 
-SDAI_Application_instance *
-STEPWrapper::getEntity(int STEPid)
-{
-    if (STEPid <= 0)
-	return NULL;
-#ifdef HAVE_STEPCODE_LAZY
-    if (lazy_session) {
-	SDAI_Application_instance *instance = lazy_batch ? lazy_batch->Get(STEPid) : NULL;
-	if (instance) return instance;
-	for (std::vector<std::unique_ptr<brlcad::step::STEPLazyBatch> >::const_iterator batch =
-		 lazy_supplemental_batches.begin(); batch != lazy_supplemental_batches.end(); ++batch) {
-	    instance = (*batch)->Get(STEPid);
-	    if (instance) return instance;
-	}
-	std::unique_ptr<brlcad::step::STEPLazyBatch> supplemental(
-	    new brlcad::step::STEPLazyBatch(lazy_session->LoadBatch(static_cast<uint64_t>(STEPid))));
-	instance = supplemental->Get(STEPid);
-	if (instance) lazy_supplemental_batches.push_back(std::move(supplemental));
-	return instance;
-    }
-#endif
-    if (!instance_list) return NULL;
-    MgrNode *node = instance_list->FindFileId(STEPid);
-    return node ? node->GetSTEPentity() : NULL;
-}
-
-
-SDAI_Application_instance *
-STEPWrapper::getEntity(int STEPid, const char *name)
-{
-    SDAI_Application_instance *se = getEntity(STEPid);
-
-    if (se && se->IsComplex()) {
-	se = getSuperType(STEPid, name);
-    }
-    return se;
-}
-
-
-SDAI_Application_instance *
-STEPWrapper::getEntity(SDAI_Application_instance *sse, const char *name)
-{
-    if (sse && sse->IsComplex()) {
-	sse = getSuperType(sse, name);
-    }
-    return sse;
-}
-
-
-STEPattribute *
-STEPWrapper::getAttribute(int STEPid, const char *name)
-{
-    STEPattribute *retValue = NULL;
-    SDAI_Application_instance *sse = getEntity(STEPid);
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-	if (attrname.compare(name) == 0) {
-	    retValue = attr;
-	    break;
-	}
-    }
-
-    return retValue;
-}
-
-
-LIST_OF_STRINGS *
-STEPWrapper::getAttributes(int STEPid)
-{
-    LIST_OF_STRINGS *l = new LIST_OF_STRINGS;
-    SDAI_Application_instance *sse = getEntity(STEPid);
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string name = attr->Name();
-
-	l->push_back(name);
-    }
-
-    return l;
-}
-
-
-Boolean
-STEPWrapper::getBooleanAttribute(int STEPid, const char *name)
-{
-    Boolean retValue = BUnset;
-    SDAI_Application_instance *sse = getEntity(STEPid);
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = (Boolean)(*attr->ptr.e).asInt();
-	    if (retValue > BUnset) {
-		retValue = BUnset;
-	    }
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
-int
-STEPWrapper::getEnumAttribute(int STEPid, const char *name)
-{
-    int retValue = 0;
-    SDAI_Application_instance *sse = getEntity(STEPid);
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = (*attr->ptr.e).asInt();
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
-Logical
-STEPWrapper::getLogicalAttribute(int STEPid, const char *name)
-{
-    Logical retValue = LUnknown;
-    SDAI_Application_instance *sse = getEntity(STEPid);
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = (Logical)(*attr->ptr.e).asInt();
-	    if (retValue > LUnknown) {
-		retValue = LUnknown;
-	    }
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
-std::string
-STEPWrapper::getLogicalString(Logical v)
-{
-    std::string retValue = "Unknown";
-
-    switch (v) {
-	case LFalse:
-	    retValue = "LFalse";
-	    break;
-	case LTrue:
-	    retValue = "LTrue";
-	    break;
-	case LUnset:
-	    retValue = "LUnset";
-	    break;
-	case LUnknown:
-	    retValue = "LUnknown";
-	    break;
-    }
-    return retValue;
-}
-
-
-std::string
-STEPWrapper::getBooleanString(Boolean v)
-{
-    std::string retValue = "Unknown";
-
-    switch (v) {
-	case BFalse:
-	    retValue = "BFalse";
-	    break;
-	case BTrue:
-	    retValue = "BTrue";
-	    break;
-	case BUnset:
-	    retValue = "BUnset";
-	    break;
-    }
-    return retValue;
-}
-
-
-SDAI_Application_instance *
-STEPWrapper::getEntityAttribute(int STEPid, const char *name)
-{
-    SDAI_Application_instance *retValue = NULL;
-    SDAI_Application_instance *sse = getEntity(STEPid);
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = (SDAI_Application_instance *)*attr->ptr.c;
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
-int
-STEPWrapper::getIntegerAttribute(int STEPid, const char *name)
-{
-    int retValue = 0;
-    SDAI_Application_instance *sse = getEntity(STEPid);
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = *attr->ptr.i;
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
-double
-STEPWrapper::getRealAttribute(int STEPid, const char *name)
-{
-    double retValue = 0.0;
-    SDAI_Application_instance *sse = getEntity(STEPid);
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = *attr->ptr.r;
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
-LIST_OF_ENTITIES *
-STEPWrapper::getListOfEntities(int STEPid, const char *name)
-{
-    LIST_OF_ENTITIES *l = new LIST_OF_ENTITIES;
-
-    SDAI_Application_instance *sse = getEntity(STEPid);
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrval;
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    STEPaggregate *sa = (STEPaggregate *)attr->ptr.a;
-
-	    EntityNode *sn = (EntityNode *)sa->GetHead();
-	    SDAI_Application_instance *se;
-	    while (sn != NULL) {
-		se = (SDAI_Application_instance *)sn->node;
-
-		l->push_back(se);
-		sn = (EntityNode *)sn->NextNode();
-	    }
-	    break;
-	}
-    }
-
-    return l;
-}
-
-
-LIST_OF_LIST_OF_POINTS *
-STEPWrapper::getListOfListOfPoints(int STEPid, const char *attrName)
-{
-    LIST_OF_LIST_OF_POINTS *l = new LIST_OF_LIST_OF_POINTS;
-
-    SDAI_Application_instance *sse = getEntity(STEPid);
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrval;
-	std::string name = attr->Name();
-
-	if (name.compare(attrName) == 0) {
-	    ErrorDescriptor errdesc;
-
-	    //std::cout << attr->asStr(attrval) << std::endl;
-	    //std::cout << attr->TypeName() << std::endl;
-
-
-	    GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
-
-	    STEPnode *sn = (STEPnode *)gp->GetHead();
-	    //EntityAggregate *ag = new EntityAggregate();
-
-
-	    const char *eaStr;
-
-	    LIST_OF_POINTS *points;
-	    while (sn != NULL) {
-		//sn->STEPwrite(std::cout);
-		//std::cout << std::endl;
-		eaStr = sn->asStr(attrval);
-		points = parseListOfPointEntities(eaStr);
-		l->push_back(points);
-		sn = (STEPnode *)sn->NextNode();
-	    }
-	    break;
-	}
-    }
-
-    return l;
-}
-
-
-MAP_OF_SUPERTYPES *
-STEPWrapper::getMapOfSuperTypes(int STEPid)
-{
-    MAP_OF_SUPERTYPES *m = new MAP_OF_SUPERTYPES;
-    SDAI_Application_instance *sse = getEntity(STEPid);
-
-    if (sse->IsComplex()) {
-	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
-	while (sc) {
-	    (*m)[sc->EntityName()] = sc;
-	    sc = sc->sc;
-	}
-    }
-
-    return m;
-}
-
-
-void
-STEPWrapper::getSuperTypes(int STEPid, MAP_OF_SUPERTYPES &m)
-{
-    SDAI_Application_instance *sse = getEntity(STEPid);
-
-    if (sse->IsComplex()) {
-	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
-	while (sc) {
-	    m[sc->EntityName()] = sc;
-	    sc = sc->sc;
-	}
-    }
-}
-
-
-SDAI_Application_instance *
-STEPWrapper::getSuperType(int STEPid, const char *name)
-{
-    SDAI_Application_instance *sse = getEntity(STEPid);
-
-    if (sse->IsComplex()) {
-	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
-	while (sc) {
-	    std::string ename = sc->EntityName();
-
-	    if (ename.compare(name) == 0) {
-		return sc;
-	    }
-	    sc = sc->sc;
-	}
-    }
-    return NULL;
-}
-
-
-std::string
-STEPWrapper::getStringAttribute(int STEPid, const char *name)
-{
-    SDAI_Application_instance *sse = getEntity(STEPid);
-    return getStringAttribute(sse, name);
-}
-
-
-STEPattribute *
-STEPWrapper::getAttribute(SDAI_Application_instance *sse, const char *name)
-{
-    STEPattribute *retValue = NULL;
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-	if (attrname.compare(name) == 0) {
-	    retValue = attr;
-	    break;
-	}
-    }
-
-    return retValue;
-}
-
-
-LIST_OF_STRINGS *
-STEPWrapper::getAttributes(SDAI_Application_instance *sse)
-{
-    LIST_OF_STRINGS *l = new LIST_OF_STRINGS;
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string name = attr->Name();
-
-	l->push_back(name);
-    }
-
-    return l;
-}
-
-
-Boolean
-STEPWrapper::getBooleanAttribute(SDAI_Application_instance *sse, const char *name)
-{
-    Boolean retValue = BUnset;
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = (Boolean)(*attr->ptr.e).asInt();
-	    if (retValue > BUnset) {
-		retValue = BUnset;
-	    }
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
-int
-STEPWrapper::getEnumAttribute(SDAI_Application_instance *sse, const char *name)
-{
-    int retValue = 0;
-    std::string attrval;
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = (*attr->ptr.e).asInt();
-	    //std::cout << "debug enum: " << (*attr->ptr.e).asStr(attrval) << std::endl;
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
-SDAI_Application_instance *
-STEPWrapper::getEntityAttribute(SDAI_Application_instance *sse, const char *name)
-{
-    SDAI_Application_instance *retValue = NULL;
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attr->Nullable() && attr->is_null() && !attr->IsDerived()) {
-	    continue;
-	}
-	if (attrname.compare(name) == 0) {
-	    std::string attrval;
-	    //std::cout << "attr:" << name << ":" << attr->TypeName() << ":" << attr->Name() << std::endl;
-	    //std::cout << "attr:" << attr->asStr(attrval) << std::endl;
-	    retValue = (SDAI_Application_instance *)*attr->ptr.c;
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
-Logical
-STEPWrapper::getLogicalAttribute(SDAI_Application_instance *sse, const char *name)
-{
-    Logical retValue = LUnknown;
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = (Logical)(*attr->ptr.e).asInt();
-	    if (retValue > LUnknown) {
-		retValue = LUnknown;
-	    }
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
-int
-STEPWrapper::getIntegerAttribute(SDAI_Application_instance *sse, const char *name)
-{
-    int retValue = 0;
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = *attr->ptr.i;
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
-double
-STEPWrapper::getRealAttribute(SDAI_Application_instance *sse, const char *name)
-{
-    double retValue = 0.0;
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = *attr->ptr.r;
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
-SDAI_Select *
-STEPWrapper::getSelectAttribute(SDAI_Application_instance *sse, const char *name)
-{
-    SDAI_Select *retValue = NULL;
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = (SDAI_Select *)attr->ptr.sh;
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
-LIST_OF_ENTITIES *
-STEPWrapper::getListOfEntities(SDAI_Application_instance *sse, const char *name)
-{
-    LIST_OF_ENTITIES *l = new LIST_OF_ENTITIES;
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrval;
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    STEPaggregate *sa = (STEPaggregate *)attr->ptr.a;
-
-	    EntityNode *sn = (EntityNode *)sa->GetHead();
-	    SDAI_Application_instance *se;
-	    while (sn != NULL) {
-		se = (SDAI_Application_instance *)sn->node;
-
-		l->push_back(se);
-		sn = (EntityNode *)sn->NextNode();
-	    }
-	    break;
-	}
-    }
-
-    return l;
-}
-
-
-LIST_OF_SELECTS *
-STEPWrapper::getListOfSelects(SDAI_Application_instance *sse, const char *name)
-{
-    LIST_OF_SELECTS *l = new LIST_OF_SELECTS;
-    std::string attrval;
-
-    sse->ResetAttributes();
-    STEPattribute *attr;
-
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-
-	    SelectAggregate *sa = (SelectAggregate *)attr->ptr.a;
-	    SelectNode *sn = (SelectNode *)sa->GetHead();
-	    while (sn) {
-		l->push_back(sn->node);
-		sn = (SelectNode *)sn->NextNode();
-	    }
-	    break;
-	}
-    }
-
-    return l;
-}
-
-
-LIST_OF_LIST_OF_PATCHES *
-STEPWrapper::getListOfListOfPatches(SDAI_Application_instance *sse, const char *attrName)
-{
-    LIST_OF_LIST_OF_PATCHES *l = new LIST_OF_LIST_OF_PATCHES;
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrval;
-	std::string name = attr->Name();
-
-	if (name.compare(attrName) == 0) {
-	    ErrorDescriptor errdesc;
-
-	    //std::cout << attr->asStr(attrval) << std::endl;
-	    //std::cout << attr->TypeName() << std::endl;
-
-
-	    GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
-
-	    STEPnode *sn = (STEPnode *)gp->GetHead();
-	    //EntityAggregate *ag = new EntityAggregate();
-
-
-	    const char *eaStr;
-
-	    LIST_OF_PATCHES *patches;
-	    while (sn != NULL) {
-		//sn->STEPwrite(std::cout);
-		//std::cout << std::endl;
-		eaStr = sn->asStr(attrval);
-		patches = parseListOfPatchEntities(eaStr);
-		l->push_back(patches);
-		sn = (STEPnode *)sn->NextNode();
-	    }
-	    break;
-	}
-    }
-
-    return l;
-}
-
-
-LIST_OF_LIST_OF_POINTS *
-STEPWrapper::getListOfListOfPoints(SDAI_Application_instance *sse, const char *attrName)
-{
-    LIST_OF_LIST_OF_POINTS *l = new LIST_OF_LIST_OF_POINTS;
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrval;
-	std::string name = attr->Name();
-
-	if (name.compare(attrName) == 0) {
-	    ErrorDescriptor errdesc;
-
-	    //std::cout << attr->asStr(attrval) << std::endl;
-	    //std::cout << attr->TypeName() << std::endl;
-
-
-	    GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
-
-	    STEPnode *sn = (STEPnode *)gp->GetHead();
-	    //EntityAggregate *ag = new EntityAggregate();
-
-
-	    const char *eaStr;
-
-	    LIST_OF_POINTS *points;
-	    while (sn != NULL) {
-		//sn->STEPwrite(std::cout);
-		//std::cout << std::endl;
-		eaStr = sn->asStr(attrval);
-		points = parseListOfPointEntities(eaStr);
-		l->push_back(points);
-		sn = (STEPnode *)sn->NextNode();
-	    }
-	    break;
-	}
-    }
-
-    return l;
-}
-
-
-MAP_OF_SUPERTYPES *
-STEPWrapper::getMapOfSuperTypes(SDAI_Application_instance *sse)
-{
-    MAP_OF_SUPERTYPES *m = new MAP_OF_SUPERTYPES;
-
-    if (sse->IsComplex()) {
-	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
-	while (sc) {
-	    (*m)[sc->EntityName()] = sc;
-	    sc = sc->sc;
-	}
-    }
-
-    return m;
-}
-
-
-void
-STEPWrapper::getSuperTypes(SDAI_Application_instance *sse, MAP_OF_SUPERTYPES &m)
-{
-    if (sse->IsComplex()) {
-	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
-	while (sc) {
-	    m[sc->EntityName()] = sc;
-	    sc = sc->sc;
-	}
-    }
-}
-
-
-SDAI_Application_instance *
-STEPWrapper::getSuperType(SDAI_Application_instance *sse, const char *name)
-{
-    if (sse->IsComplex()) {
-	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
-	while (sc) {
-	    std::string ename = sc->EntityName();
-
-	    if (ename.compare(name) == 0) {
-		return sc;
-	    }
-	    sc = sc->sc;
-	}
-    }
-    return NULL;
-}
-
-
-std::string
-STEPWrapper::getStringAttribute(SDAI_Application_instance *sse, const char *name)
-{
-    std::string retValue = "";
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrval;
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    const char *str = attr->asStr(attrval);
-	    if (str != NULL) {
-		retValue = str;
-	    }
-	    break;
-	}
-    }
-    return retValue;
-}
-
-
 bool
 STEPWrapper::load(std::string &step_file)
 {
@@ -23054,311 +22751,6 @@ STEPWrapper::load(std::string &step_file)
     return true;
 #endif
 
-}
-
-
-LIST_OF_REALS *
-STEPWrapper::parseListOfReals(const char *in)
-{
-    LIST_OF_REALS *l = new LIST_OF_REALS;
-    ErrorDescriptor errdesc;
-    RealAggregate *ra = new RealAggregate();
-
-    //ra->StrToVal(in, &errdesc, SDAI_Real, instance_list, 0);
-    ra->StrToVal(in, &errdesc, SCHEMA_NAMESPACE::t_parameter_value, referenceManager(), 0);
-    RealNode *rn = (RealNode *)ra->GetHead();
-    while (rn != NULL) {
-	l->push_back(rn->value);
-	rn = (RealNode *)rn->NextNode();
-    }
-    /*
-      EntityNode *sn = (EntityNode *)ra->GetHead();
-
-      SDAI_Application_instance *sse;
-      while (sn != NULL) {
-      sse = (SDAI_Application_instance *)sn->node;
-      CartesianPoint *aCP = new CartesianPoint(this, sse->STEPfile_id);
-      if (aCP->Load(this, sse)) {
-      l->push_back(aCP);
-      } else {
-      std::cout << "Error loading Real list." << std::endl;
-      }
-      sn = (EntityNode *)sn->NextNode();
-      }*/
-    delete ra;
-
-    return l;
-}
-
-
-LIST_OF_POINTS *
-STEPWrapper::parseListOfPointEntities(const char *in)
-{
-    LIST_OF_POINTS *l = new LIST_OF_POINTS;
-    ErrorDescriptor errdesc;
-    EntityAggregate *ag = new EntityAggregate();
-
-    ag->StrToVal(in, &errdesc, SCHEMA_NAMESPACE::e_cartesian_point, referenceManager(), 0);
-    EntityNode *sn = (EntityNode *)ag->GetHead();
-
-    SDAI_Application_instance *sse;
-    while (sn != NULL) {
-	sse = (SDAI_Application_instance *)sn->node;
-	CartesianPoint *aCP = dynamic_cast<CartesianPoint *>(Factory::CreateObject(this,sse));
-	if (aCP != NULL) {
-	    l->push_back(aCP);
-	} else {
-	    std::cout << "Error loading CartesianPoint." << std::endl;
-	}
-	sn = (EntityNode *)sn->NextNode();
-    }
-    delete ag;
-
-    return l;
-}
-
-
-LIST_OF_PATCHES *
-STEPWrapper::parseListOfPatchEntities(const char *in)
-{
-    LIST_OF_PATCHES *l = new LIST_OF_PATCHES;
-    ErrorDescriptor errdesc;
-    EntityAggregate *ag = new EntityAggregate();
-
-    ag->StrToVal(in, &errdesc, SCHEMA_NAMESPACE::e_cartesian_point, referenceManager(), 0);
-    EntityNode *sn = (EntityNode *)ag->GetHead();
-
-    SDAI_Application_instance *sse;
-    while (sn != NULL) {
-	sse = (SDAI_Application_instance *)sn->node;
-	SurfacePatch *aCP = dynamic_cast<SurfacePatch *>(Factory::CreateObject(this,sse));
-	if (aCP != NULL) {
-	    l->push_back(aCP);
-	} else {
-	    std::cout << "Error loading SurfacePatch." << std::endl;
-	}
-	sn = (EntityNode *)sn->NextNode();
-    }
-    delete ag;
-
-    return l;
-}
-
-
-void
-STEPWrapper::printEntity(SDAI_Application_instance *se, int level)
-{
-    for (int i = 0; i < level; i++) {
-	std::cout << "    ";
-    }
-    std::cout << "Entity:" << se->EntityName() << "(" << se->STEPfile_id << ")" << std::endl;
-    for (int i = 0; i < level; i++) {
-	std::cout << "    ";
-    }
-    std::cout << "Description:" << se->eDesc->Description() << std::endl;
-    for (int i = 0; i < level; i++) {
-	std::cout << "    ";
-    }
-    std::cout << "Entity Type:" << se->eDesc->Type() << std::endl;
-    for (int i = 0; i < level; i++) {
-	std::cout << "    ";
-    }
-    std::cout << "Attributes:" << std::endl;
-
-    STEPattribute *attr;
-    se->ResetAttributes();
-    while ((attr = se->NextAttribute()) != NULL) {
-	std::string attrval;
-
-	for (int i = 0; i <= level; i++) {
-	    std::cout << "    ";
-	}
-	std::cout << attr->Name() << ": " << attr->asStr(attrval) << " TypeName: " << attr->TypeName() << " Type: " << attr->Type() << std::endl;
-	if (attr->Type() == 256) {
-	    if (attr->IsDerived()) {
-		for (int i = 0; i <= level; i++) {
-		    std::cout << "    ";
-		}
-		std::cout << "        ********* DERIVED *********" << std::endl;
-	    } else {
-		printEntity(*(attr->ptr.c), level + 2);
-	    }
-	} else if ((attr->Type() == SET_TYPE) || (attr->Type() == LIST_TYPE)) {
-	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
-
-	    // std::cout << "aggr:" << sa->asStr(attrval) << "  BaseType:" << attr->BaseType() << std::endl;
-
-	    if (attr->BaseType() == ENTITY_TYPE) {
-		printEntityAggregate(sa, level + 2);
-	    }
-	}
-
-    }
-    //std::cout << std::endl << std::endl;
-}
-
-
-void
-STEPWrapper::printEntityAggregate(STEPaggregate *sa, int level)
-{
-    std::string strVal;
-
-    for (int i = 0; i < level; i++) {
-	std::cout << "    ";
-    }
-    std::cout << "Aggregate:" << sa->asStr(strVal) << std::endl;
-
-    EntityNode *sn = (EntityNode *)sa->GetHead();
-    SDAI_Application_instance *sse;
-    while (sn != NULL) {
-	sse = (SDAI_Application_instance *)sn->node;
-
-	if (((sse->eDesc->Type() == SET_TYPE) || (sse->eDesc->Type() == LIST_TYPE)) && (sse->eDesc->BaseType() == ENTITY_TYPE)) {
-	    printEntityAggregate((STEPaggregate *)sse, level + 2);
-	} else if (sse->eDesc->Type() == ENTITY_TYPE) {
-	    printEntity(sse, level + 2);
-	} else {
-	    std::cout << "Instance Type not handled:" << std::endl;
-	}
-	//std::cout << "sn - " << sn->asStr(attrval) << std::endl;
-
-	sn = (EntityNode *)sn->NextNode();
-    }
-    //std::cout << std::endl << std::endl;
-}
-
-
-void
-STEPWrapper::printLoadStatistics()
-{
-#ifdef HAVE_STEPCODE_LAZY
-    if (lazy_session) {
-	std::map<std::string, uint64_t> type_counts;
-	if (verbose) {
-	    for (std::vector<uint64_t>::const_iterator id = lazy_instance_ids.begin();
-		 id != lazy_instance_ids.end(); ++id) {
-		std::string type = lazy_session->TypeName(*id);
-		if (type.empty()) type = "COMPLEX_ENTITY";
-		++type_counts[type];
-	    }
-	}
-	std::cout << "Indexed " << lazy_instance_ids.size() << " instances from ";
-	if (BU_STR_EQUAL(stepfile.c_str(), "-"))
-	    std::cout << "standard input" << std::endl;
-	else
-	    std::cout << "STEP file \"" << stepfile << "\"" << std::endl;
-	if (verbose) {
-	    for (std::map<std::string, uint64_t>::const_iterator type = type_counts.begin();
-		 type != type_counts.end(); ++type)
-		std::cout << '\t' << type->first << " " << type->second << std::endl;
-	}
-	const brlcad::step::STEPLazyStatistics cache = lazy_session->Statistics();
-	std::cout << "Lazy index";
-	if (verbose) std::cout << " contains " << type_counts.size() << " entity types";
-	std::cout << "; loaded=" << cache.instances_loaded
-	    << ", pinned=" << cache.instances_pinned
-	    << ", source-cache-bytes=" << cache.resident_source_bytes << std::endl;
-	return;
-    }
-#endif
-    int num_ents = instance_list->InstanceCount();
-    int num_schma_ents = registry->GetEntityCnt();
-
-    // "Reset" the Schema and Entity hash tables... this sets things up
-    // so we can walk through the table using registry->NextEntity()
-
-    registry->ResetSchemas();
-    registry->ResetEntities();
-
-    // Print out what schema we're running through.
-
-    const SchemaDescriptor *schema = registry->NextSchema();
-
-    // "Loop" through the schema, building one of each entity type.
-
-    const EntityDescriptor *ent;   // needs to be declared const...
-    std::string filler = ".....................................................................";
-    std::cout << "Loaded " << num_ents << " instances from ";
-    if (BU_STR_EQUAL(stepfile.c_str(), "-")) {
-	std::cout << "standard input" << std::endl;
-    } else {
-	std::cout << "STEP file \"" << stepfile << "\"" << std::endl;
-    }
-
-    int numEntitiesUsed = 0;
-    for (int i = 0; i < num_schma_ents; i++) {
-	ent = registry->NextEntity();
-
-	int entCount = instance_list->EntityKeywordCount(ent->Name());
-	// fix below with boost string formatter when available
-	if (entCount > 0) {
-	    std::cout << "\t" << ent->Name() << filler.substr(0, filler.length() - ((std::string)ent->Name()).length()) << entCount << std::endl;
-	    numEntitiesUsed++;
-	}
-    }
-    std::cout << "Used " << numEntitiesUsed << " entities of the available " << num_schma_ents << " in schema \"" << schema->Name() << std::endl;
-}
-
-
-const char *
-STEPWrapper::getBaseType(int type)
-{
-    const char *retValue = NULL;
-
-    switch (type) {
-	case sdaiINSTANCE:
-	    retValue = "sdaiINSTANCE";
-	    break;
-	case sdaiSELECT: // The name of a select is never written DAS 1/31/97
-	    retValue = "sdaiSELECT";
-	    break;
-	case sdaiNUMBER:
-	    retValue = "sdaiNUMBER";
-	    break;
-	case sdaiREAL:
-	    retValue = "sdaiREAL";
-	    break;
-	case sdaiINTEGER:
-	    retValue = "sdaiINTEGER";
-	    break;
-	case sdaiSTRING:
-	    retValue = "sdaiSTRING";
-	    break;
-	case sdaiBOOLEAN:
-	    retValue = "sdaiBOOLEAN";
-	    break;
-	case sdaiLOGICAL:
-	    retValue = "sdaiLOGICAL";
-	    break;
-	case sdaiBINARY:
-	    retValue = "sdaiBINARY";
-	    break;
-	case sdaiENUMERATION:
-	    retValue = "sdaiENUMERATION";
-	    break;
-	case sdaiAGGR:
-	    retValue = "sdaiAGGR";
-	    break;
-	case ARRAY_TYPE:
-	    retValue = "ARRAY_TYPE";
-	    break;
-	case BAG_TYPE:
-	    retValue = "BAG_TYPE";
-	    break;
-	case SET_TYPE:
-	    retValue = "SET_TYPE";
-	    break;
-	case LIST_TYPE:
-	    retValue = "LIST_TYPE";
-	    break;
-	case REFERENCE_TYPE: // this should never happen? DAS
-	    retValue = "REFERENCE_TYPE";
-	    break;
-	default:
-	    retValue = "Unknown";
-	    break;
-    }
-    return retValue;
 }
 
 

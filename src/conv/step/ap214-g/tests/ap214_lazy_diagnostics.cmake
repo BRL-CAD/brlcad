@@ -12,14 +12,17 @@ execute_process(
 if(NOT import_result EQUAL 3)
   message(FATAL_ERROR "malformed diagnostic fixture returned ${import_result}, expected 3\n${import_output}\n${import_error}")
 endif()
-if(NOT import_error MATCHES "reference to missing instance #99 \\(count=2\\)")
-  message(FATAL_ERROR "bounded text diagnostic lacks exact count\n${import_error}")
+if(NOT import_error MATCHES
+    "reference to missing instance #99 \\[representative=#1\\] \\(count=2\\)")
+  message(FATAL_ERROR
+    "bounded text diagnostic lacks a representative entity or exact count\n${import_error}")
 endif()
 
 file(READ "${REPORT}" report_text)
 if(NOT report_text MATCHES
-    "\"entity_id\":0,\"entity_type\":\"REPRESENTATION_RELATIONSHIP\",\"file_offset\":0,\"line\":0,\"attribute\":\"\",\"message\":\"reference to missing instance #99\",\"count\":2,\"aggregated\":true")
-  message(FATAL_ERROR "default structured report is not bounded with an exact count:\n${report_text}")
+    "\"entity_id\":1,\"entity_type\":\"REPRESENTATION_RELATIONSHIP\",\"file_offset\":[1-9][0-9]*,\"line\":[0-9]+,\"attribute\":\"\",\"message\":\"reference to missing instance #99\",\"count\":2,\"aggregated\":true")
+  message(FATAL_ERROR
+    "default structured report lacks a representative source context or exact count:\n${report_text}")
 endif()
 
 set(verbose_report "${REPORT}.verbose")

@@ -10,6 +10,8 @@ set(
   ../BRLCADWrapper.cpp
   ../STEPString.cpp
   ../STEPWrapper.cpp
+  ../STEPWrapperAttributes.cpp
+  ../STEPWrapperIO.cpp
   AdvancedBrepShapeRepresentation.cpp
   AdvancedFace.cpp
   AmountOfSubstanceContextDependentUnit.cpp
@@ -127,6 +129,8 @@ set(
   OffsetCurve3D.cpp
   OffsetSurface.cpp
   OpenNurbsInterfaces.cpp
+  OpenNurbsPrimitives.cpp
+  OpenNurbsSplines.cpp
   OpenShell.cpp
   OrientedClosedShell.cpp
   OrientedEdge.cpp
@@ -574,6 +578,15 @@ if(BRLCAD_ENABLE_STEP)
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_closed_nurbs_interval.cmake
     )
     brlcad_add_test(
+      NAME ap203_bounded_parent_curve
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bounded_parent_curve.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_bounded_parent_curve.json
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bounded_parent_curve.cmake
+    )
+    brlcad_add_test(
       NAME ap203_nist_mbe_pmi_6
       COMMAND
         ${CMAKE_COMMAND}
@@ -605,6 +618,8 @@ endif(BRLCAD_ENABLE_STEP)
 
 cmakefiles(
   CMakeLists.txt
+  tests/ap203_bounded_parent_curve.cmake
+  tests/ap203_bounded_parent_curve.stp
   ap203.exp
   tests/ap203_closed_nurbs_interval.cmake
   tests/ap203_closed_nurbs_interval.stp

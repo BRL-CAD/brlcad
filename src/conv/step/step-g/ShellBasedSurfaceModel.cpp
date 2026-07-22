@@ -30,6 +30,8 @@
 #include "ClosedShell.h"
 #include "OpenShell.h"
 
+#include <algorithm>
+
 #define CLASSNAME "ShellBasedSurfaceModel"
 #define ENTITYNAME "Shell_Based_Surface_Model"
 string ShellBasedSurfaceModel::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ShellBasedSurfaceModel::Create);
@@ -117,6 +119,19 @@ ShellBasedSurfaceModel::Print(int level)
     }
 
     GeometricRepresentationItem::Print(level + 1);
+}
+
+size_t
+ShellBasedSurfaceModel::MaximumPullbackSpanEstimate() const
+{
+    size_t maximum = 1;
+    for (LIST_OF_SHELL_BOUNDARIES::const_iterator boundary =
+	    sbsm_boundary.begin(); boundary != sbsm_boundary.end(); ++boundary) {
+	if (*boundary)
+	    maximum = std::max(maximum,
+		(*boundary)->MaximumPullbackSpanEstimate());
+    }
+    return maximum;
 }
 
 STEPEntity *

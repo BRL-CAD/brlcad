@@ -137,6 +137,12 @@ ManifoldSolidBrep::FaceCount() const
     return outer ? outer->FaceCount() : 0;
 }
 
+size_t
+ManifoldSolidBrep::MaximumPullbackSpanEstimate() const
+{
+    return outer ? outer->MaximumPullbackSpanEstimate() : 1;
+}
+
 
 // Local Variables:
 // tab-width: 8

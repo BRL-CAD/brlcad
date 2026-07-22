@@ -4,26 +4,26 @@ endif()
 
 file(REMOVE "${REPORT}")
 execute_process(
-  COMMAND "${STEP_G}" -D --report "${REPORT}" "${INPUT}"
+  COMMAND "${STEP_G}" -D --exact --report "${REPORT}" "${INPUT}"
   RESULT_VARIABLE result
-  OUTPUT_VARIABLE stdout
-  ERROR_VARIABLE stderr
+  OUTPUT_VARIABLE output
+  ERROR_VARIABLE error
   TIMEOUT 60
 )
 if(NOT result EQUAL 0)
   message(FATAL_ERROR
-    "periodic parameter-zero import failed (${result})\n${stdout}\n${stderr}")
+    "bounded parent curve import failed (${result})\n${output}\n${error}")
 endif()
 
-file(READ "${REPORT}" report_text)
+file(READ "${REPORT}" report)
 foreach(expected
     "\"geometry_attempted\":1"
     "\"geometry_written\":1"
     "\"geometry_skipped\":0"
     "\"invalid_breps\":0"
-    "reconstructed a rejoined periodic pcurve from the complete exact STEP edge")
-  string(FIND "${report_text}" "${expected}" found)
+    "\"repairs\":0")
+  string(FIND "${report}" "${expected}" found)
   if(found EQUAL -1)
-    message(FATAL_ERROR "report does not contain ${expected}:\n${report_text}")
+    message(FATAL_ERROR "report does not contain ${expected}:\n${report}")
   endif()
 endforeach()
