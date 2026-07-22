@@ -62,12 +62,13 @@
 
 /* Sequence starts after BRLCAD_ERROR, to be compatible with
  * BU return codes */
-#define GED_HELP     0x0002 /**< invalid specification, result contains usage */
-#define GED_MORE     0x0004 /**< incomplete specification, can specify again interactively */
-#define GED_QUIET    0x0008 /**< don't set or modify the result string */
-#define GED_UNKNOWN  0x0010 /**< argv[0] was not a known command */
-#define GED_EXIT     0x0020 /**< command is requesting a clean application shutdown */
-#define GED_OVERRIDE 0x0040 /**< used to indicate settings have been overridden */
+#define GED_HELP        0x0002 /**< invalid specification, result contains usage */
+#define GED_MORE        0x0004 /**< incomplete specification, can specify again interactively */
+#define GED_QUIET       0x0008 /**< don't set or modify the result string */
+#define GED_UNKNOWN     0x0010 /**< argv[0] was not a known command */
+#define GED_EXIT        0x0020 /**< command is requesting a clean application shutdown */
+#define GED_OVERRIDE    0x0040 /**< used to indicate settings have been overridden */
+#define GED_INTERRUPTED 0x0080 /**< command stopped early at user request */
 
 /* Check the internal GED magic */
 #define GED_CK_MAGIC(_p) BU_CKMAG(_p->i, GED_MAGIC, "ged")
@@ -396,6 +397,26 @@ GED_EXPORT extern void ged_close(struct ged *gedp);
  * objects; ged_close() also calls it as a final safeguard.
  */
 GED_EXPORT extern void ged_subprocesses_terminate(struct ged *gedp);
+
+/* "interrupt" API
+ * An interrupt source calls ged_interrupt_request() to ask the currently
+ * running command to stop (request is async-signal-safe and may be called
+ * from a signal handler).
+ *
+ * Cancellation is cooperative: the flag is ONLY observed by commands that 
+ * poll it (via ged_interrupt_pending() or the GED_CHECK_INTERRUPT() macro);
+ * untaught commands run to completion - this API will not forcibly kill a
+ * thread or process.
+ *
+ * ged_exec() should handle the flag clears and will & GED_INTERRUPTED
+ * into the result code (read via ged_results_ret(gedp->ged_results))
+ */
+GED_EXPORT extern void ged_interrupt_request(struct ged *gedp);
+GED_EXPORT extern int  ged_interrupt_pending(struct ged *gedp);
+GED_EXPORT extern void ged_interrupt_clear(struct ged *gedp);
+/* convenience macro for checking interrupt requested. if set -> goto label */
+#define GED_CHECK_INTERRUPT(_gedp, _label) \
+    do { if (ged_interrupt_pending(_gedp)) goto _label; } while (0)
 
 
 /**

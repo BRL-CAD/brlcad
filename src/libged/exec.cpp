@@ -32,6 +32,27 @@
 
 extern "C" void libged_init(void);
 
+extern "C" void
+ged_interrupt_request(struct ged *gedp)
+{
+    /* must stay async-signal-safe: nothing but a store */
+    if (gedp && gedp->i)
+	gedp->i->interrupt_requested = 1;
+}
+
+extern "C" int
+ged_interrupt_pending(struct ged *gedp)
+{
+    return (gedp && gedp->i) ? (int)gedp->i->interrupt_requested : 0;
+}
+
+extern "C" void
+ged_interrupt_clear(struct ged *gedp)
+{
+    if (gedp && gedp->i)
+	gedp->i->interrupt_requested = 0;
+}
+
 extern "C" int
 ged_exec(struct ged *gedp, int argc, const char *argv[])
 {
@@ -82,6 +103,12 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 
     GED_CK_MAGIC(gedp);
     Ged_Internal *gedip = gedp->i->i;
+
+    /* clear interrupt flag BEFORE command is pushed onto the exec stack. otherwise
+     * nested/recursive commands could do weird things */
+    if (gedip->exec_stack.empty())
+	ged_interrupt_clear(gedp);
+
     gedip->exec_stack.push(cmdname);
     gedip->cmd_recursion_depth_cnt[cmdname]++;
 
@@ -135,6 +162,10 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 
     gedip->cmd_recursion_depth_cnt[cmdname]--;
     gedip->exec_stack.pop();
+
+    if (ged_interrupt_pending(gedp))
+	gedp->ged_results->ret |= GED_INTERRUPTED;
+
     return gedp->ged_results->ret;
 }
 

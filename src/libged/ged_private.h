@@ -28,6 +28,7 @@
 
 #include "common.h"
 
+#include <signal.h>
 #include <time.h>
 
 #include "bu/avs.h"
@@ -143,6 +144,9 @@ struct ged_impl {
     Ged_Internal *i;
 
     struct ged_drawable *ged_gdp;
+
+    /* volatile sig_atomic_t so the store is async-signal-safe */
+    volatile sig_atomic_t interrupt_requested;
 };
 
 __BEGIN_DECLS
