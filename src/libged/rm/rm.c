@@ -32,11 +32,11 @@
  * expanded against the database via db_path_glob.
  *
  * Path operands of the form "comb/child" remove only that parent-child
- * instance from the combination tree (analogous to the legacy "remove" command).
+ * instance from the combination tree (analogous to "comb rm --comb").
  * Use "comb/child@N" to remove the Nth same-name child instance.
  *
- * Note: the legacy "remove comb child..." command is still available as the
- * "remove" command in src/libged/remove/remove.c.
+ * Batch removal of direct combination members is available through
+ * "comb rm --comb combination child...".
  */
 
 #include "common.h"
@@ -330,7 +330,7 @@ _rm_check_legacy_form(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str,
 	    "rm: ambiguous request: '%s' is a combination followed by bare object names.\n"
 	    "rm: no objects were deleted.\n"
-	    "rm: to remove members from the combination, use: remove %s\n"
+	    "rm: to remove members from the combination, use: comb rm --comb %s\n"
 	    "rm: or use explicit paths such as: rm %s/%s\n"
 	    "rm: to force object deletion for this command, use: rm -f %s\n",
 	    argv[0], bu_vls_cstr(&legacy_args), argv[0], argv[1],
