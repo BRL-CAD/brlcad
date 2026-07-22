@@ -157,6 +157,13 @@ RT_EXPORT extern int rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal 
 RT_EXPORT extern int rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verbose, double mm2local);
 
 /**
+ * Return to @p labels (separated by @p sep, defaulting to space if NULL)
+ * the set of type labels accepted by rt_obj_make(); sorted alphabetically.
+ * Caller's responsibility to free bu_vls.
+ */
+RT_EXPORT extern void rt_obj_make_labels(struct bu_vls *labels, const char *sep);
+
+/**
  * create a 'default' object of the type named by @p label, scaled by
  * @p scale and positioned at @p origin.
  *
