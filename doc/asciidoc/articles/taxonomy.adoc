@@ -1,0 +1,317 @@
+= BRL-CAD Taxonomy and Conventions
+BRL-CAD Development Team <devs@brlcad.org>
+:doctype: article
+:toc:
+:toclevels: 3
+
+[[purpose]]
+This guide overviews the common vocabulary used in BRL-CAD
+documentation, models, and tools.  It distinguishes the formal
+database terms from the shorter modeling terms commonly seen in MGED
+and in existing models.  It is a guide to communication and
+organization; it does not impose a database naming scheme.
+
+[[model]]
+== Model and database vocabulary
+
+A BRL-CAD geometry database, normally a `.g` file, stores named
+*objects*.  An object is typically a primitive solid, a combination,
+or other database record.  In formal terms the geometric object
+relationships form a *directed acyclic graph* (DAG): primitive solids
+are its leaves, combinations are internal nodes, and the objects not
+referenced by any other object are its tops.  Documentation often says
+“tree” because one path through the DAG is tree-shaped.  A single
+object may be referenced along more than one path, so “DAG” is the
+more precise term.
+
+.A simple model hierarchy; `bore.s` is intentionally shared.
+[source]
+----
+all.g/                         group (assembly)
+  u housing.r/R                region (part)
+    u shell.c/                 non-region combination
+      u outer.s                primitive solid
+      - bore.s                 primitive solid
+  u cover.r/R                  region (part)
+    u cover.s                  primitive solid
+    - bore.s                   shared primitive solid
+----
+
+The `tree` display notation shown above uses `/` for a combination and
+`/R` for a region.  The `u`, `+`, and `-` symbols identify union,
+intersection, and subtraction respectively.  They belong to the
+relationship between a combination and a member, not to the member
+object itself.
+
+[cols="1,2,3",options="header"]
+|===
+|Term
+|Also called
+|Meaning
+
+|Primitive solid
+|primitive; solid; shape
+|A leaf object that directly defines geometry, such as an `rcc`,
+`ell`, `arb8`, or `bot`.  “Solid” is the traditional term; “primitive”
+is clearer when distinguishing it from a complete modeled part.
+
+|Combination
+|comb
+|An object containing a Boolean expression whose members are
+primitives and/or other combinations.  A combination may also carry
+display and shader data.
+
+|Non-region combination
+|shape combination; component combination
+|An ordinary combination, often used to express a reusable Boolean
+shape below a region or to organize objects above regions.
+
+|Region
+|part
+|A combination specially marked as a region.  It defines a material
+component: normally one connected, homogeneous volume with one
+material assignment.  It is the level reported by ray-tracing and
+analysis tools.
+
+|Group
+|assembly; top-level assembly
+|A combination whose members are all unioned.  Groups organize parts
+and subassemblies; they need not represent a single material volume.
+
+|Top
+|top-level object
+|An object not referenced by another object.  A database may have
+several tops.  A group named `all.g` is a common, but not required,
+model entry point.
+
+|Member
+|child
+|An object directly referenced by a combination.
+
+|Arc
+|reference; edge
+|The DAG relationship from a combination to a member.  An arc carries
+its Boolean operation and may carry a 4x4 homogeneous transformation
+matrix.
+
+|Path
+|full path; instance path
+|A slash-separated sequence of objects through the DAG, such as
+`/all.g/housing.r/shell.c/outer.s`.  The path identifies an instance
+of an object, including the transforms accumulated along that route.
+|===
+
+[[csg]]
+== CSG and representation terms
+
+*Constructive solid geometry* (CSG), also called *combinatorial solid
+geometry*, builds complex volumes from simpler objects using set
+operations.  BRL-CAD uses the following notation in combination
+expressions and `tree` output:
+
+[cols="1,1,3",options="header"]
+|===
+|Operation
+|Notation
+|Result
+
+|Union
+|`u`
+|Volume in either member.
+
+|Intersection
+|`+`
+|Volume common to both members.
+
+|Difference (subtraction)
+|`-`
+|Volume in the left member that is not in the right member.
+|===
+
+CSG is BRL-CAD's principal modeling style, but BRL-CAD is a hybrid
+system.  It also supports explicit representations, including boundary
+representation (B-rep), n-manifold geometry (NMG), point clouds,
+displacement map (DSP) terrain data, Bag of Triangles (BoT) meshes,
+and more.  The word *solid* in “primitive solid” is historical
+terminology and should not be used to imply that every supported
+representation is a CSG primitive.
+
+[[conventions]]
+== Modeling conventions
+
+=== Names and suffixes
+
+BRL-CAD requires object names to be unique within a database but
+otherwise places few restrictions on a modeler's naming scheme.  The
+suffix convention below is widely used to help people and tools
+recognize an object's intended role.
+
+[cols="1,2,3",options="header"]
+|===
+|Suffix
+|Object role
+|Examples and notes
+
+|`.s`
+|Primitive solid
+|`bracket.s`, `hole.s`.  These are commonly used in Boolean
+combination recipes.
+
+|`.r`
+|Region (part)
+|`bracket.r`.  A region is a combination with region semantics, not a
+distinct database object class.
+
+|`.c`
+|Non-region combination
+|`bracket_shape.c`.  This is commonly used for a Boolean shape beneath
+a region.
+
+|No suffix or `.g`
+|Group (assembly)
+|`landing_gear` or `landing_gear.g`.  Use a descriptive assembly name
+when it helps readers navigate the model.
+|===
+
+Use concise, descriptive names and one documented scheme throughout a
+model.  Lowercase letters, digits, and underscores are portable
+choices.  Avoid spaces, shell-significant punctuation, and `/`, which
+separates elements of a path.  Names should communicate function or
+location rather than only the primitive type, except for temporary or
+test geometry.
+
+=== Coordinates, units, and transformations
+
+BRL-CAD model coordinates use a right-handed Cartesian system.  By
+convention, positive X is forward, positive Y is left, and positive Z
+is up.  Database coordinates are stored in millimeters; interactive
+tools can present and accept other units.
+
+[source]
+----
+                    +Z (up)
+                     |
+                     |
+                     o---- +X (front)
+                    /
+                   /
+          +Y (left)
+----
+
+Transformations associated with an arc create instances: the same
+object can appear at multiple locations, orientations, or scales
+through different paths.  Editing a primitive changes every instance;
+editing an arc matrix changes only the instance reached by that path.
+This distinction is central to predictable hierarchical editing.
+
+=== Materials and analysis properties
+
+Regions are the conventional place to assign material and analysis
+properties.  Common historical terms include *ident*, *region ID*,
+*component ID*, and *item* for a user-assigned integer reported to
+applications; *material code* for a user-assigned material identifier;
+and *LOS* (line-of-sight) for a percentage describing material
+solidity.  These values are application data: BRL-CAD stores and
+reports them, but their interpretation is determined by the tool or
+workflow using the model.
+
+*Attributes* are arbitrary name/value metadata that may be attached to
+any database object.  Prefer attributes for metadata that is not
+intrinsic to the CSG expression or the traditional region fields.
+
+[[tools]]
+== Tool taxonomy
+
+BRL-CAD is a suite, not a single application.  The categories below
+describe the role of a tool; a program may participate in more than
+one workflow.  Consult its manual page for its exact interface and
+supported formats.
+
+[cols="2,4",options="header"]
+|===
+|Category
+|Purpose and representative tools
+
+|Geometry editing and inspection
+|Create, modify, view, and query database objects.  `mged` is the
+traditional interactive geometry editor; `archer` is a graphical
+solid-modeling interface prototype; `ged` provides geometry-editing
+commands to applications; `gcv` supports geometry conversion and
+viewing.
+
+|Model construction and automation
+|Generate or organize geometry programmatically or from naming
+conventions.  Examples include `pipe`, `tire`, `fence`, and various
+programs written with `libwdb`.
+
+|Ray tracing and rendering
+|Render images or use rays to interrogate a model.  `rt` is the
+primary ray-tracer; related tools include `rtedge`, `rtarea`,
+`rtcheck`, and `nirt`.
+
+|Geometry analysis and validation
+|Measure, inspect, or detect issues in geometry.  Typical tools
+include `analyze`, `gqa`, `rtcheck`, `nirt`, and `bot_repair`.  An
+*overlap* or *interference* occurs when two regions occupy the same
+volume; it is usually a modeling error unless intentionally permitted
+by the application.
+
+|Geometry conversion and database maintenance
+|Move geometry between BRL-CAD and other formats, or maintain
+databases.  Names commonly reflect direction: `format-g` imports into
+a `.g` database and `g-format` exports from it, for example `stl-g`
+and `g-stl`.  `dbupgrade`, `g2asc`, and `asc2g` are database-oriented
+examples.  The `gcv` geometry converter is a multi-format tool for
+converting from/to BRL-CAD and other formats.
+
+|Image, framebuffer, and plot processing
+|Render, display, convert, and process raster or plot data.  `.pix` is
+raw three-channel color data, `.bw` is raw one-channel grayscale data,
+and `.pl` is a plot format.  `pix-*`, `*-pix`, `fb*`, and `plot3-*`
+names often indicate the data family or conversion direction.
+
+|Libraries and application development
+|Embed BRL-CAD capabilities in other software.  Important libraries
+include `librt` for geometry and ray tracing, `libwdb` for writing
+geometry databases, `libged` for editing commands, `libbu` for utility
+services, `libbn` for numerics, `libbv` for viewing, and `libfb` for
+framebuffer access.
+
+|===
+
+.Typical BRL-CAD workflow and the roles of its tool families.
+[source]
+----
+measurements or external geometry
+              |
+              v
+ import / construct / edit  -->  .g geometry database  -->  inspect / organize
+  *-g, libwdb, mged, gcv             primitives,              tree, search,
+                                  combinations, regions        attributes
+             |                              |
+             +------------------------------+
+                                            |
+                        +-------------------+-------------------+
+                        v                                       v
+               render or ray-query                     analyze / validate
+                rt, rtedge, nirt                      rtcheck, gqa, analyze
+                        |
+                        v
+         pix / framebuffer / image tools
+----
+
+[[usage]]
+== Choosing terms in new documentation
+
+Use *object* when the type does not matter.  Use *primitive solid* (or
+simply *primitive* after it is defined) for a leaf; use *combination*
+for the general Boolean container; and use *region* or *group* when
+their material or organizational semantics matter.  When discussing a
+traversal, distinguish the named object from the *path* or *instance*
+by which it is reached.
+
+Prefer *union*, *intersection*, and *subtraction* over ambiguous
+informal descriptions of Boolean operations.  Define acronyms at first
+use, especially CSG, DAG, B-rep,pace, as in `rtcheck`, and use the
+man-page form `rtcheck(1)` when pointing readers to its reference
+documentation.

@@ -19,6 +19,7 @@ set(
   procedural_geometry.adoc
   projection_shader.adoc
   renderer_showcase.adoc
+  taxonomy.adoc
   tire.adoc
 )
 
