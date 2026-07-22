@@ -379,7 +379,6 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "regions", cmd_ged_plain_wrapper, ged_exec_regions, NULL},
     {MGED_CMD_MAGIC, "reject", f_be_reject, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "release", f_release, GED_FUNC_PTR_NULL, NULL},
-    {MGED_CMD_MAGIC, "remove", cmd_ged_plain_wrapper, ged_exec_remove, NULL},
     {MGED_CMD_MAGIC, "reset", f_bv_reset, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "restore", f_bv_vrestore, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "rfarb", f_rfarb, GED_FUNC_PTR_NULL, NULL},
