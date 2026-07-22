@@ -43,12 +43,12 @@ second matching child instance.
 To protect users of the historic combination-editing syntax, *rm* rejects an
 unforced command of the form _rm comb obj ..._ when _comb_ is a combination and
 later operands are bare object names. In that case no objects are deleted. Use
-*remove comb obj ...* to remove members from the combination, use an explicit
-path such as *rm comb/obj*, or use *rm -f comb obj ...* if direct object deletion
+*comb combination rm member ...* to remove members from the combination, use
+an explicit path such as *rm comb/obj*, or use *rm -f comb obj ...* if direct object deletion
 was intended.
 
-Unlike the legacy *remove* command, *rm* also supports direct object deletion,
-dry-run reporting, and glob expansion.
+The *rm* command also supports direct object deletion, dry-run reporting, and
+glob expansion.
 
 The current implementation recognizes the following options:
 
@@ -130,7 +130,7 @@ combination contains multiple same-name members with different matrices.
 ====
 mged> **rm assembly.c bolt.s**::
 Reports an ambiguous command and leaves both _assembly.c_ and _bolt.s_ unchanged.
-Use *remove assembly.c bolt.s* or *rm assembly.c/bolt.s* for member removal.
+Use *comb assembly.c rm bolt.s* or *rm assembly.c/bolt.s* for member removal.
 
 ====
 
@@ -174,7 +174,7 @@ the database.
 [[see_also]]
 == SEE ALSO
 
-*remove*(nged), *kill*(nged), *killall*(nged), *killrefs*(nged),
+*comb*(nged), *kill*(nged), *killall*(nged), *killrefs*(nged),
 *killtree*(nged)
 
 
