@@ -174,11 +174,20 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
 	    std::cerr << "We're here." << std::endl;
 	}
 #endif
+	const int first_face_index = brep->m_F.Count();
 	if (!(*i)->LoadONBrep(brep)) {
 	    if (step && step->Verbose())
 		std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}
+	/* Retain authoritative connected-shell membership on every emitted face.
+	 * STEP exporters sometimes reuse one EDGE_CURVE across an outer and a void
+	 * shell; geometric adjacency alone is then cyclic and cannot recover the
+	 * intended two-use topological edge pairing.  ON_Brep documents
+	 * m_face_user.i for component labels and does not serialize it. */
+	for (int face_index = first_face_index;
+		face_index < brep->m_F.Count(); ++face_index)
+	    brep->m_F[face_index].m_face_user.i = id;
 	++completed_faces;
 #ifdef _DEBUG_TESTING_
 	facecnt++;

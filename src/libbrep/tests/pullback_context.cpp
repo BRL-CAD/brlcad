@@ -50,6 +50,47 @@ exercise_context(unsigned int worker)
 }
 
 
+static bool
+exercise_adaptive_pullback_refinement()
+{
+    ON_PlaneSurface surface(ON_xy_plane);
+    surface.SetDomain(0, -20.0, 20.0);
+    surface.SetDomain(1, -20.0, 20.0);
+    surface.SetExtents(0, surface.Domain(0));
+    surface.SetExtents(1, surface.Domain(1));
+
+    ON_NurbsCurve curve(3, false, 4, 4);
+    curve.SetCV(0, ON_3dPoint(-8.0, -8.0, 0.0));
+    curve.SetCV(1, ON_3dPoint(-8.0,  8.0, 0.0));
+    curve.SetCV(2, ON_3dPoint( 8.0, -8.0, 0.0));
+    curve.SetCV(3, ON_3dPoint( 8.0,  8.0, 0.0));
+    curve.MakeClampedUniformKnotVector();
+    curve.SetDomain(0.0, 1.0);
+
+    const size_t initial_samples = 3 * static_cast<size_t>(curve.Degree()) + 1;
+    PBCData *data = pullback_samples(&surface, &curve, 1.0e-6, 1.0e-3,
+	1.0e-9, 1.0e-4);
+    bool valid = data && data->segments && data->segments->size() == 1;
+    if (valid) {
+	const ON_2dPointArray *samples = data->segments->front();
+	valid = samples && static_cast<size_t>(samples->Count()) > initial_samples;
+	for (int i = 0; valid && i < samples->Count(); ++i)
+	    valid = (*samples)[i].IsValid();
+    }
+    if (data) {
+	if (data->segments) {
+	    while (!data->segments->empty()) {
+		delete data->segments->front();
+		data->segments->pop_front();
+	    }
+	    delete data->segments;
+	}
+	delete data;
+    }
+    return valid;
+}
+
+
 int
 main()
 {
@@ -99,6 +140,12 @@ main()
 	    valid.store(false);
     }
     delete closed_curve;
+
+    /* A successful open-surface refinement contains more UV samples than the
+     * original parameter/distance arrays.  Exercise that path directly so
+     * bounds-checked and sanitizer builds catch cross-indexing the arrays. */
+    if (!exercise_adaptive_pullback_refinement())
+	valid.store(false);
 
     return valid.load() ? 0 : 1;
 }

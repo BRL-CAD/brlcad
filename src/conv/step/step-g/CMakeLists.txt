@@ -564,11 +564,22 @@ if(BRLCAD_ENABLE_STEP)
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band.cmake
     )
     brlcad_add_test(
+      NAME ap203_closed_nurbs_interval
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_closed_nurbs_interval.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_closed_nurbs_interval.json
+        -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_closed_nurbs_interval_exact.json
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_closed_nurbs_interval.cmake
+    )
+    brlcad_add_test(
       NAME ap203_nist_mbe_pmi_6
       COMMAND
         ${CMAKE_COMMAND}
         -DSTEP_G=$<TARGET_FILE:step-g>
         -DMGED=$<TARGET_FILE:mged>
+        -DNIRT=$<TARGET_FILE:nirt>
         -DRT=$<TARGET_FILE:rt>
         -DINPUT=${CMAKE_SOURCE_DIR}/db/nist/NIST_MBE_PMI_6.stp
         -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_nist_mbe_pmi_6.json
@@ -595,6 +606,8 @@ endif(BRLCAD_ENABLE_STEP)
 cmakefiles(
   CMakeLists.txt
   ap203.exp
+  tests/ap203_closed_nurbs_interval.cmake
+  tests/ap203_closed_nurbs_interval.stp
   tests/ap203_direct_manifold.stp
   tests/ap203_lazy_positional.cmake
   tests/ap203_lazy_relationships.cmake

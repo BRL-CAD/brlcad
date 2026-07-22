@@ -36,6 +36,8 @@
 // forward declaration of class
 class ON_BoundingBox;
 class ON_Brep;
+class ON_3dPoint;
+class ON_3dVector;
 class OrientedEdge;
 typedef list<OrientedEdge *> LIST_OF_ORIENTED_EDGES;
 
@@ -66,6 +68,9 @@ public:
     virtual ~Path();
     Path(STEPWrapper *sw, int step_id);
     virtual ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
+    bool GetEdgeAxisProjectionBounds(ON_Brep *brep,
+	const ON_3dPoint &origin, const ON_3dVector &axis,
+	double *minimum, double *maximum);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     bool LoadONTrimmingCurves(ON_Brep *brep);

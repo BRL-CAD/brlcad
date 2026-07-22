@@ -53,6 +53,7 @@ private:
 	std::string original_name;
 	bool has_style = false;
 	brlcad::step::Style style;
+	std::map<std::string, std::string> attributes;
     };
 
     std::string filename;
@@ -92,11 +93,17 @@ public:
 	const std::string &original_name = std::string(),
 	const brlcad::step::Style *style = NULL);
     bool WriteCombs();
+    /** Schedule a combination even when it has no converted members.  Product
+     * definitions use this to remain valid assembly targets when all of their
+     * representation items are skipped. */
+    bool EnsureCombination(const std::string &combname);
     bool AddMember(const std::string &combname, const std::string &member, mat_t mat,
 	int operation = WMOP_UNION);
     bool SetCombinationProperties(const std::string &combname, bool is_region,
 	int64_t step_id = 0, const std::string &original_name = std::string(),
 	const brlcad::step::Style *style = NULL);
+    bool SetCombinationAttribute(const std::string &combname,
+	const std::string &key, const std::string &value);
     std::string ReplaceAccented( std::string &str );
     std::string CleanBRLCADName(std::string &name);
     std::string GetBRLCADName(std::string &name);

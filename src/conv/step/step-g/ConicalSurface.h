@@ -37,6 +37,9 @@ private:
 protected:
     double radius;
     double semi_angle;
+    bool curve_axis_bounds_valid;
+    double curve_axis_minimum;
+    double curve_axis_maximum;
 
 
 public:
@@ -47,6 +50,13 @@ public:
     const double *GetNormal();
     const double *GetXAxis();
     const double *GetYAxis();
+    double GetRadius() const { return radius; }
+    double GetSemiAngle() const { return semi_angle; }
+    void SetCurveAxisProjectionBounds(double minimum, double maximum) {
+	curve_axis_minimum = minimum;
+	curve_axis_maximum = maximum;
+	curve_axis_bounds_valid = minimum <= maximum;
+    }
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);

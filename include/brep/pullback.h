@@ -87,6 +87,14 @@ typedef struct pbc_data {
     double maximum_projection_distance = 0.0;
     bool tolerance_adjusted = false;
     double declared_tolerance = 0.0;
+    /** Optional caller-authorized search bound used only when periodic seam
+     * handling collapses an otherwise valid pullback to one UV sample.  The
+     * recovery still records the largest measured lift error separately, so
+     * callers can install a measured tolerance rather than this search bound.
+     * Generic callers retain strict behavior because this defaults to the
+     * ordinary pullback tolerance. */
+    double maximum_recovery_tolerance = 0.0;
+    double maximum_recovery_distance = 0.0;
     /** Loop-level proof selected this edge boundary as the unique periodic
      * cut to a surface pole.  Endpoint closure must preserve this pair until
      * the exact seam-edge and singular trims are emitted. */

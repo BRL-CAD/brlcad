@@ -543,6 +543,30 @@ if(BRLCAD_ENABLE_STEP)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_wavy_periodic_band.cmake
   )
   brlcad_add_test(
+    NAME ap214_offset_vertex_periodic_band
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_offset_vertex_periodic_band.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_offset_vertex_periodic_band.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_offset_vertex_periodic_band.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_offset_vertex_periodic_band.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_measured_vertex_tolerance_band
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_measured_vertex_tolerance_band.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_vertex_tolerance_band.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_vertex_tolerance_band.g
+      -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_vertex_tolerance_band_exact.json
+      -DEXACT_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_vertex_tolerance_band_exact.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_measured_vertex_tolerance_band.cmake
+  )
+  brlcad_add_test(
     NAME ap214_spherical_band_inner_first
     COMMAND
       ${CMAKE_COMMAND}
@@ -771,6 +795,10 @@ cmakefiles(
   tests/ap214_segmented_cylinder_band.stp
   tests/ap214_wavy_periodic_band.cmake
   tests/ap214_wavy_periodic_band.stp
+  tests/ap214_offset_vertex_periodic_band.cmake
+  tests/ap214_offset_vertex_periodic_band.stp
+  tests/ap214_measured_vertex_tolerance_band.cmake
+  tests/ap214_measured_vertex_tolerance_band.stp
   tests/ap214_collapsed_torus_seam.cmake
   tests/ap214_collapsed_torus_seam.stp
   tests/ap214_direct_manifold.cmake

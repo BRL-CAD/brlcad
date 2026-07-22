@@ -311,9 +311,27 @@ BRLCADWrapper::GetBRLCADName(std::string &name)
 }
 
 bool
+BRLCADWrapper::EnsureCombination(const std::string &combname)
+{
+    if (combname.empty())
+	return false;
+    if (heads.find(combname) != heads.end())
+	return true;
+
+    struct bu_list *head = NULL;
+    BU_ALLOC(head, struct bu_list);
+    BU_LIST_INIT(head);
+    heads[combname] = head;
+    return true;
+}
+
+
+bool
 BRLCADWrapper::AddMember(const std::string &combname, const std::string &member, mat_t mat,
 	int operation)
 {
+    if (combname.empty() || member.empty())
+	return false;
     MAP_OF_BU_LIST_HEADS::iterator i = heads.find(combname);
     if (i != heads.end()) {
 	struct bu_list *head = (*i).second;
@@ -325,8 +343,10 @@ BRLCADWrapper::AddMember(const std::string &combname, const std::string &member,
 	BU_ALLOC(head, struct bu_list);
 
 	BU_LIST_INIT(head);
-	if (mk_addmember(member.c_str(), head, mat, operation) == WMEMBER_NULL)
+	if (mk_addmember(member.c_str(), head, mat, operation) == WMEMBER_NULL) {
+	    BU_FREE(head, struct bu_list);
 	    return false;
+	}
 	heads[combname] = head;
     }
 
@@ -347,6 +367,17 @@ BRLCADWrapper::SetCombinationProperties(const std::string &combname, bool is_reg
     properties.has_style = style != NULL;
     if (style)
 	properties.style = *style;
+    return true;
+}
+
+
+bool
+BRLCADWrapper::SetCombinationAttribute(const std::string &combname,
+	const std::string &key, const std::string &value)
+{
+    if (combname.empty() || key.empty())
+	return false;
+    combination_properties[combname].attributes[key] = value;
     return true;
 }
 
@@ -437,6 +468,10 @@ BRLCADWrapper::WriteCombs()
 		    SetAttribute(combname, "step:style_source_ids", value.str());
 		}
 	    }
+	    for (std::map<std::string, std::string>::const_iterator attribute =
+		 properties->attributes.begin(); attribute != properties->attributes.end();
+		 ++attribute)
+		SetAttribute(combname, attribute->first, attribute->second);
 	}
 
 	BU_FREE(head, struct bu_list);

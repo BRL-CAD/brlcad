@@ -42,6 +42,8 @@ cmakefiles(
   asciiquack/vendor/cxxopts.hpp
   db2adoc/db2adoc.py
   db2adoc/db2adoc.xsl
+  step_corpus_run.py
+  step_corpus_summary.py
   inactvhdrs/CMakeLists.txt
   inactvhdrs/inactvhdrs.cpp
 )

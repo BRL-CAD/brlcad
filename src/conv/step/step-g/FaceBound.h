@@ -33,6 +33,8 @@
 class Loop;
 class ON_BoundingBox;
 class ON_Brep;
+class ON_3dPoint;
+class ON_3dVector;
 
 class FaceBound : public TopologicalRepresentationItem
 {
@@ -64,6 +66,9 @@ public:
 	return !inner;
     }
     ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
+    bool GetEdgeAxisProjectionBounds(ON_Brep *brep,
+	const ON_3dPoint &origin, const ON_3dVector &axis,
+	double *minimum, double *maximum);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     bool CreateONLoop(ON_Brep *brep);
     virtual bool LoadONBrep(ON_Brep *brep);

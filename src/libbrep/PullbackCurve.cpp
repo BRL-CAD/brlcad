@@ -3070,6 +3070,7 @@ pullback_samples(PBCData* data,
      * dedicated seam-aware refinement path below. */
     const bool all_projected = std::find(valid.begin(), valid.end(), false) ==
 	valid.end();
+    bool adaptively_refined = false;
     if (all_projected && !data->surf->IsClosed(0) &&
 	    !data->surf->IsClosed(1) && parameters.size() > 1) {
 	std::vector<ON_2dPoint> refined;
@@ -3136,19 +3137,30 @@ pullback_samples(PBCData* data,
 		interval < parameters.size(); ++interval)
 	    refine_interval(parameters[interval - 1], projected[interval - 1],
 		parameters[interval], projected[interval], 0);
-	if (refinement_valid)
+	if (refinement_valid) {
 	    projected.swap(refined);
+	    adaptively_refined = true;
+	}
     }
 
-    for (size_t i = 0; i < projected.size(); ++i) {
+
+    /* Adaptive refinement can insert points, so projected may now be larger
+     * than the original per-parameter diagnostic arrays.  Account for the
+     * original projections using their own extent and append the refined
+     * samples independently.  Indexing projection_distances or valid with the
+     * refined extent is an out-of-bounds read on any interval which needed a
+     * midpoint. */
+    for (size_t i = 0; i < projection_distances.size(); ++i) {
 	if (std::isfinite(projection_distances[i]) &&
 		projection_distances[i] < DBL_MAX)
 	    data->maximum_projection_distance = std::max(
 		data->maximum_projection_distance, projection_distances[i]);
-	if (all_projected || valid[i]) {
+	if (!adaptively_refined && (all_projected || valid[i])) {
 	    samples->Append(projected[i]);
 	    continue;
 	}
+	if (adaptively_refined)
+	    continue;
 	++data->rejected_projection_samples;
 	if (!std::isfinite(projection_distances[i]) ||
 		projection_distances[i] >= DBL_MAX)
@@ -3156,6 +3168,10 @@ pullback_samples(PBCData* data,
 	else
 	    data->maximum_projection_distance = std::max(
 		data->maximum_projection_distance, projection_distances[i]);
+    }
+    if (adaptively_refined) {
+	for (size_t i = 0; i < projected.size(); ++i)
+	    samples->Append(projected[i]);
     }
     if (brlcad::PullbackWorkCancelled())
 	data->failure_reason = PullbackFailureReason::Cancelled;
@@ -4040,6 +4056,8 @@ pullback_samples(const ON_Surface* surf,
     data->maximum_projection_distance = 0.0;
     data->tolerance_adjusted = false;
     data->declared_tolerance = tolerance;
+    data->maximum_recovery_tolerance = tolerance;
+    data->maximum_recovery_distance = 0.0;
 
     double tmin, tmax;
     data->curve->GetDomain(&tmin, &tmax);
@@ -5394,6 +5412,11 @@ recover_collapsed_periodic_pullback(PBCData *data)
     if (sample_count != 1 || !seed.IsValid())
 	return false;
 
+    const double recovery_tolerance = std::max(data->tolerance,
+	data->maximum_recovery_tolerance);
+    if (!(recovery_tolerance > 0.0))
+	return false;
+
     const ON_Interval curve_domain = data->curve->Domain();
     const ON_3dPoint seed_lift = data->surf->PointAt(seed.x, seed.y);
     if (!curve_domain.IsIncreasing() || !seed_lift.IsValid())
@@ -5418,7 +5441,7 @@ recover_collapsed_periodic_pullback(PBCData *data)
     recovered[anchor] = seed;
 	double failed_distance = DBL_MAX;
     const auto recover = [data, &recovered, &curve_domain,
-	&failed_distance](size_t sample,
+	recovery_tolerance, &failed_distance](size_t sample,
 	    const ON_2dPoint &previous) {
 	const double fraction = static_cast<double>(sample) /
 	    kPeriodicRecoverySegments;
@@ -5427,19 +5450,22 @@ recover_collapsed_periodic_pullback(PBCData *data)
 	ON_3dPoint lift = ON_3dPoint::UnsetPoint;
 	double distance = DBL_MAX;
 	bool projected = pullback_closest_point_seeded(*data, target, previous,
-	    recovered[sample], lift, distance, data->tolerance);
+	    recovered[sample], lift, distance, recovery_tolerance);
 	if (!projected)
 	    projected = pullback_closest_point(*data, target, recovered[sample],
-		lift, distance, 0, data->tolerance, data->tolerance);
+		lift, distance, 0, recovery_tolerance, recovery_tolerance);
 	failed_distance = distance;
-	return projected && distance <= data->tolerance;
+	if (projected && distance <= recovery_tolerance)
+	    data->maximum_recovery_distance = std::max(
+		data->maximum_recovery_distance, distance);
+	return projected && distance <= recovery_tolerance;
     };
     for (size_t sample = anchor + 1; sample <= kPeriodicRecoverySegments;
 	 ++sample) {
 	if (!recover(sample, recovered[sample - 1])) {
 	    bu_log("Collapsed periodic pullback forward recovery failed at %zu/%zu "
 		"(closest distance %.17g, tolerance %.17g, anchor %zu, anchor distance %.17g)\n",
-		sample, kPeriodicRecoverySegments, failed_distance, data->tolerance,
+		sample, kPeriodicRecoverySegments, failed_distance, recovery_tolerance,
 		anchor, anchor_distance);
 	    return false;
 	}
@@ -5448,7 +5474,7 @@ recover_collapsed_periodic_pullback(PBCData *data)
 	if (!recover(sample - 1, recovered[sample])) {
 	    bu_log("Collapsed periodic pullback reverse recovery failed at %zu/%zu "
 		"(closest distance %.17g, tolerance %.17g, anchor %zu, anchor distance %.17g)\n",
-		sample - 1, kPeriodicRecoverySegments, failed_distance, data->tolerance,
+		sample - 1, kPeriodicRecoverySegments, failed_distance, recovery_tolerance,
 		anchor, anchor_distance);
 	    return false;
 	}
