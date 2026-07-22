@@ -435,8 +435,8 @@ test_legacy_rm_comb_obj_guard(void)
     CHECK_MEMBER_COUNT(gedp, "parent_comb.c", "leaf_comb.c", 1);
     CHECK_CONTAINS(bu_vls_cstr(gedp->ged_result_str), "ambiguous request",
 	    "T9: diagnostic should call out the ambiguous legacy form");
-    CHECK_CONTAINS(bu_vls_cstr(gedp->ged_result_str), "remove parent_comb.c leaf_comb.c",
-	    "T9: diagnostic should point users at remove");
+    CHECK_CONTAINS(bu_vls_cstr(gedp->ged_result_str), "comb rm --comb parent_comb.c leaf_comb.c",
+	    "T9: diagnostic should point users at comb rm");
     CHECK_CONTAINS(bu_vls_cstr(gedp->ged_result_str), "rm parent_comb.c/leaf_comb.c",
 	    "T9: diagnostic should show explicit path syntax");
 
@@ -687,16 +687,17 @@ test_glob_delete(void)
 }
 
 
-/** T20: legacy "remove" command still works (comb-child remove) */
+/** T20: comb rm removes members without deleting the child object */
 static void
-test_legacy_remove_still_works(void)
+test_comb_rm(void)
 {
     struct ged *gedp = open_test_db();
     if (!gedp) { fprintf(stderr, "SKIP T20: open failed\n"); return; }
 
-    const char *av[] = {"remove", "parent_comb.c", "leaf_comb.c", NULL};
-    int ret = ged_exec_remove(gedp, 3, av);
-    CHECK(ret == BRLCAD_OK, "T20: legacy remove should still succeed");
+    const char *av[] = {"comb", "rm", "--comb", "parent_comb.c", "leaf_comb.c", NULL};
+    int ret = ged_exec_comb(gedp, 5, av);
+    CHECK(ret == BRLCAD_OK, "T20: comb rm should succeed");
+    CHECK_MEMBER_COUNT(gedp, "parent_comb.c", "leaf_comb.c", 0);
     /* leaf_comb.c object exists */
     CHECK_PRESENT(gedp, "leaf_comb.c");
 
@@ -704,19 +705,41 @@ test_legacy_remove_still_works(void)
 }
 
 
-/** T21: long options work */
+/** T21: short -C identifies a combination whose name is a boolean operator */
 static void
-test_long_options(void)
+test_comb_rm_operator_named_combination(void)
 {
     struct ged *gedp = open_test_db();
     if (!gedp) { fprintf(stderr, "SKIP T21: open failed\n"); return; }
 
+    const char *create[] = {"comb", "u", "u", "leaf_comb.c", NULL};
+    int ret = ged_exec_comb(gedp, 4, create);
+    CHECK(ret == BRLCAD_OK, "T21: should create combination named u");
+    CHECK_MEMBER_COUNT(gedp, "u", "leaf_comb.c", 1);
+
+    const char *remove[] = {"comb", "rm", "-C", "u", "leaf_comb.c", NULL};
+    ret = ged_exec_comb(gedp, 5, remove);
+    CHECK(ret == BRLCAD_OK, "T21: comb rm -C should remove from combination named u");
+    CHECK_MEMBER_COUNT(gedp, "u", "leaf_comb.c", 0);
+    CHECK_PRESENT(gedp, "leaf_comb.c");
+
+    ged_close(gedp);
+}
+
+
+/** T22: long options work */
+static void
+test_long_options(void)
+{
+    struct ged *gedp = open_test_db();
+    if (!gedp) { fprintf(stderr, "SKIP T22: open failed\n"); return; }
+
     const char *av[] = {"rm", "--dry-run", "--force", "standalone_prim.s", NULL};
     bu_vls_trunc(gedp->ged_result_str, 0);
     int ret = ged_exec_rm(gedp, 4, av);
-    CHECK(ret == BRLCAD_OK, "T21: rm --dry-run --force standalone_prim.s should succeed");
+    CHECK(ret == BRLCAD_OK, "T22: rm --dry-run --force standalone_prim.s should succeed");
     CHECK(strstr(bu_vls_cstr(gedp->ged_result_str), "standalone_prim.s") != NULL,
-	    "T21: long-option dry-run output should name the object");
+	    "T22: long-option dry-run output should name the object");
     CHECK_PRESENT(gedp, "standalone_prim.s");
 
     ged_close(gedp);
@@ -889,7 +912,8 @@ main(int argc, char *argv[])
     test_missing_operand_error();
     test_missing_operand_force();
     test_glob_delete();
-    test_legacy_remove_still_works();
+    test_comb_rm();
+    test_comb_rm_operator_named_combination();
     test_long_options();
 
     if (g_failures) {
