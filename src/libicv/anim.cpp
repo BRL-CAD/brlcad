@@ -110,6 +110,7 @@ extern "C" {
 	return 0;
     }
 
+}
 
     static apngmini::Frame
     icv_to_apng(const icv_image_t *img, uint32_t delay_usec)
@@ -155,6 +156,7 @@ extern "C" {
 	return f;
     }
 
+extern "C" {
     static icv_anim_format_t
     detect_anim_format(const char *filename)
     {
