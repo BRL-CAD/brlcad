@@ -29,29 +29,60 @@
 #include <string.h>
 
 
-#include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/interrupt.h"
+#include "rt/func.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
 #include "../ged_private.h"
 
 
+static void
+print_usage(struct ged *gedp, const char *cmd, struct bu_opt_desc* dtable)
+{
+    struct bu_vls types = BU_VLS_INIT_ZERO;
+    char* opts = bu_opt_describe(dtable, NULL);
+
+    rt_obj_make_labels(&types, "|");
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s [options] name <%s>\n", cmd, bu_vls_cstr(&types));
+
+    if (opts) {
+	bu_vls_printf(gedp->ged_result_str, "Options:\n%s", opts);
+	bu_free(opts, "opt help");
+    }
+
+    bu_vls_free(&types);
+}
+
+
 int
 ged_make_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int k;
-    int save_bu_optind;
     struct directory *dp;
+    const char *cmd = argv[0];
+    const char *name;
+    const char *type;
 
-    /* intentionally double for sscanf */
-    double scale = 1.0;
-    double origin[3] = {0.0, 0.0, 0.0};
+    int uac = 0;
+    int print_help = 0;
+    int list_types = 0;
+    fastf_t scale = 1.0;
+    point_t origin = VINIT_ZERO;
 
     struct rt_db_internal internal;
+    struct bu_vls omsg = BU_VLS_INIT_ZERO;
 
-    /* intentionally not included: cline */
-    static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|brep|datum|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
+    struct bu_opt_desc d[9];
+    BU_OPT(d[0], "o", "",       "x y z", &bu_opt_vect_t,  &origin,     "Origin point for the new object");
+    BU_OPT(d[1], "O", "",       "x y z", &bu_opt_vect_t,  &origin,     "");
+    BU_OPT(d[2], "s", "",       "sf",    &bu_opt_fastf_t, &scale,      "Scale factor for the new object");
+    BU_OPT(d[3], "S", "",       "sf",    &bu_opt_fastf_t, &scale,      "");
+    BU_OPT(d[4], "t", "",       "",      NULL,            &list_types, "List the primitive types that can be made");
+    BU_OPT(d[5], "T", "",       "",      NULL,            &list_types, "");
+    BU_OPT(d[6], "h", "help",   "",      NULL,            &print_help, "Print help and exit");
+    BU_OPT(d[7], "H", "",       "",      NULL,            &print_help, "");
+    BU_OPT_NULL(d[8]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -62,85 +93,61 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	print_usage(gedp, cmd, d);
 	return GED_HELP;
     }
 
-    bu_optind = 1;
-
-    /* Process arguments */
-    while ((k = bu_getopt(argc, (char * const *)argv, "hHo:O:s:S:tT?")) != -1) {
-	if (bu_optopt == '?') k='h';
-	switch (k) {
-	    case 'o':
-	    case 'O':
-		if (sscanf(bu_optarg, "%lf %lf %lf",
-			   &origin[X],
-			   &origin[Y],
-			   &origin[Z]) != 3) {
-		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return BRLCAD_ERROR;
-		}
-		break;
-	    case 's':
-	    case 'S':
-		if (sscanf(bu_optarg, "%lf", &scale) != 1) {
-		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return BRLCAD_ERROR;
-		}
-		break;
-	    case 't':
-	    case 'T':
-		if (argc == 2) {
-		    /* intentionally not included: cline */
-		    bu_vls_printf(gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot brep datum ehy ell ell1 epa eto extrude grip half hyp nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
-		    return GED_HELP;
-		}
-
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
-	    case 'h':
-	    case 'H':
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_HELP;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
-	}
-    }
-
-    argc -= bu_optind;
-
-    if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    /* Process arguments (skip the command name) */
+    argc--; argv++;
+    uac = bu_opt_parse(&omsg, argc, argv, d);
+    if (uac < 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&omsg));
+	bu_vls_free(&omsg);
 	return BRLCAD_ERROR;
     }
+    bu_vls_free(&omsg);
 
-    save_bu_optind = bu_optind;
+    if (print_help) {
+	print_usage(gedp, cmd, d);
+	return GED_HELP;
+    }
 
-    GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
+    if (list_types) {
+	rt_obj_make_labels(gedp->ged_result_str, " ");
+	return GED_HELP;
+    }
+
+    /* what remains must be exactly: name type */
+    if (uac != 2) {
+	print_usage(gedp, cmd, d);
+	return BRLCAD_ERROR;
+    }
+    name = argv[0];
+    type = argv[1];
+
+    GED_CHECK_EXISTS(gedp, name, LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "hf")) {
+    if (BU_STR_EQUAL(type, "hf")) {
 	bu_vls_printf(gedp->ged_result_str, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n");
 	return BRLCAD_ERROR;
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "pg") ||
-	       BU_STR_EQUAL(argv[bu_optind+1], "poly")) {
+    } else if (BU_STR_EQUAL(type, "pg") ||
+	       BU_STR_EQUAL(type, "poly")) {
 	bu_vls_printf(gedp->ged_result_str, "make: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.");
 	return BRLCAD_ERROR;
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "cline") ||
-	       BU_STR_EQUAL(argv[bu_optind+1], "dsp") ||
-	       BU_STR_EQUAL(argv[bu_optind+1], "ebm") ||
-	       BU_STR_EQUAL(argv[bu_optind+1], "nurb") ||
-	       BU_STR_EQUAL(argv[bu_optind+1], "spline") ||
-	       BU_STR_EQUAL(argv[bu_optind+1], "submodel") ||
-	       BU_STR_EQUAL(argv[bu_optind+1], "vol")) {
-	bu_vls_printf(gedp->ged_result_str, "make: the %s primitive is not supported by this command", argv[bu_optind+1]);
+    } else if (BU_STR_EQUAL(type, "cline") ||
+	       BU_STR_EQUAL(type, "dsp") ||
+	       BU_STR_EQUAL(type, "ebm") ||
+	       BU_STR_EQUAL(type, "nurb") ||
+	       BU_STR_EQUAL(type, "spline") ||
+	       BU_STR_EQUAL(type, "submodel") ||
+	       BU_STR_EQUAL(type, "vol")) {
+	bu_vls_printf(gedp->ged_result_str, "make: the %s primitive is not supported by this command", type);
 	return BRLCAD_ERROR;
-    } else if (rt_obj_make(argv[bu_optind+1], origin, scale, &internal) == BRLCAD_OK) {
-	bu_log("SUCCESS for type %s\n", argv[bu_optind+1]);
+    } else if (rt_obj_make(type, origin, scale, &internal) == BRLCAD_OK) {
+	bu_log("SUCCESS for type %s\n", type);
     } else {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	print_usage(gedp, cmd, d);
 	return BRLCAD_ERROR;
     }
 
@@ -148,7 +155,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
      * is this how we want to handle this, should extrude's ft_make create it's own sketch,
      * or should an extrude without a sketch be legal?
      */
-    if (BU_STR_EQUAL(argv[bu_optind+1], "extrude")) {
+    if (BU_STR_EQUAL(type, "extrude")) {
 	char *av[8];
 	char center_str[512];
 	char scale_str[128];
@@ -183,7 +190,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    GED_DB_DIRADD(gedp, dp, argv[save_bu_optind], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
+    GED_DB_DIRADD(gedp, dp, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
     GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
 
     return BRLCAD_OK;
