@@ -687,59 +687,86 @@ test_glob_delete(void)
 }
 
 
-/** T20: comb rm removes members without deleting the child object */
+/** T20: legacy comb construction syntax remains available */
 static void
-test_comb_rm(void)
+test_comb_legacy_operator_form(void)
 {
     struct ged *gedp = open_test_db();
     if (!gedp) { fprintf(stderr, "SKIP T20: open failed\n"); return; }
 
-    const char *av[] = {"comb", "rm", "--comb", "parent_comb.c", "leaf_comb.c", NULL};
-    int ret = ged_exec_comb(gedp, 5, av);
-    CHECK(ret == BRLCAD_OK, "T20: comb rm should succeed");
-    CHECK_MEMBER_COUNT(gedp, "parent_comb.c", "leaf_comb.c", 0);
-    /* leaf_comb.c object exists */
+    const char *av[] = {"comb", "rm", "u", "leaf_comb.c", NULL};
+    int ret = ged_exec_comb(gedp, 4, av);
+    CHECK(ret == BRLCAD_OK, "T20: legacy comb construction should succeed");
+    CHECK_MEMBER_COUNT(gedp, "rm", "leaf_comb.c", 1);
     CHECK_PRESENT(gedp, "leaf_comb.c");
 
     ged_close(gedp);
 }
 
 
-/** T21: short -C identifies a combination whose name is a boolean operator */
+/** T21: target-first comb command syntax removes members */
 static void
-test_comb_rm_operator_named_combination(void)
+test_comb_target_first_command_form(void)
 {
     struct ged *gedp = open_test_db();
     if (!gedp) { fprintf(stderr, "SKIP T21: open failed\n"); return; }
 
-    const char *create[] = {"comb", "u", "u", "leaf_comb.c", NULL};
-    int ret = ged_exec_comb(gedp, 4, create);
-    CHECK(ret == BRLCAD_OK, "T21: should create combination named u");
-    CHECK_MEMBER_COUNT(gedp, "u", "leaf_comb.c", 1);
-
-    const char *remove[] = {"comb", "rm", "-C", "u", "leaf_comb.c", NULL};
-    ret = ged_exec_comb(gedp, 5, remove);
-    CHECK(ret == BRLCAD_OK, "T21: comb rm -C should remove from combination named u");
-    CHECK_MEMBER_COUNT(gedp, "u", "leaf_comb.c", 0);
+    const char *av[] = {"comb", "parent_comb.c", "rm", "leaf_comb.c", NULL};
+    int ret = ged_exec_comb(gedp, 4, av);
+    CHECK(ret == BRLCAD_OK, "T21: target-first comb rm should succeed");
+    CHECK_MEMBER_COUNT(gedp, "parent_comb.c", "leaf_comb.c", 0);
     CHECK_PRESENT(gedp, "leaf_comb.c");
 
     ged_close(gedp);
 }
 
 
-/** T22: long options work */
+/** T22: selector-first comb command syntax removes members */
 static void
-test_long_options(void)
+test_comb_selector_first_command_form(void)
 {
     struct ged *gedp = open_test_db();
     if (!gedp) { fprintf(stderr, "SKIP T22: open failed\n"); return; }
 
+    const char *av[] = {"comb", "rm", "-C", "parent_comb.c", "leaf_comb.c", NULL};
+    int ret = ged_exec_comb(gedp, 5, av);
+    CHECK(ret == BRLCAD_OK, "T22: selector-first comb rm should succeed");
+    CHECK_MEMBER_COUNT(gedp, "parent_comb.c", "leaf_comb.c", 0);
+    CHECK_PRESENT(gedp, "leaf_comb.c");
+
+    ged_close(gedp);
+}
+
+
+/** T23: selector-first boolean operators normalize to legacy construction */
+static void
+test_comb_selector_first_operator_form(void)
+{
+    struct ged *gedp = open_test_db();
+    if (!gedp) { fprintf(stderr, "SKIP T23: open failed\n"); return; }
+
+    const char *av[] = {"comb", "u", "--comb", "u", "leaf_comb.c", NULL};
+    int ret = ged_exec_comb(gedp, 5, av);
+    CHECK(ret == BRLCAD_OK, "T23: selector-first union should succeed");
+    CHECK_MEMBER_COUNT(gedp, "u", "leaf_comb.c", 1);
+
+    ged_close(gedp);
+}
+
+
+/** T24: long options work */
+static void
+test_long_options(void)
+{
+    struct ged *gedp = open_test_db();
+    if (!gedp) { fprintf(stderr, "SKIP T24: open failed\n"); return; }
+
     const char *av[] = {"rm", "--dry-run", "--force", "standalone_prim.s", NULL};
     bu_vls_trunc(gedp->ged_result_str, 0);
     int ret = ged_exec_rm(gedp, 4, av);
-    CHECK(ret == BRLCAD_OK, "T22: rm --dry-run --force standalone_prim.s should succeed");
+    CHECK(ret == BRLCAD_OK, "T24: rm --dry-run --force standalone_prim.s should succeed");
     CHECK(strstr(bu_vls_cstr(gedp->ged_result_str), "standalone_prim.s") != NULL,
-	    "T22: long-option dry-run output should name the object");
+	    "T24: long-option dry-run output should name the object");
     CHECK_PRESENT(gedp, "standalone_prim.s");
 
     ged_close(gedp);
@@ -912,8 +939,10 @@ main(int argc, char *argv[])
     test_missing_operand_error();
     test_missing_operand_force();
     test_glob_delete();
-    test_comb_rm();
-    test_comb_rm_operator_named_combination();
+    test_comb_legacy_operator_form();
+    test_comb_target_first_command_form();
+    test_comb_selector_first_command_form();
+    test_comb_selector_first_operator_form();
     test_long_options();
 
     if (g_failures) {
