@@ -37,13 +37,17 @@ include/raytrace.h librt
 	nmg_model_break_e_on_v -> nmg_break_e_on_v [deprecated 7.22]
 
 include/vmath.h
-        VCOMB3, VCOMB3N, VJOIN4
-        Removed as inconsistent and unused API [deprecated 7.28]
+	VCOMB3, VCOMB3N, VJOIN4
+	Removed as inconsistent and unused API [deprecated 7.28]
 
 mged
-	rm comb obj1 obj2 comb1 ... -> new behavior: remove objects and empty combs from .g
-	original functionality replaced with rm comb/obj* comb/comb1 ... syntax [deprecated 7.26]
-	NOTE: old rm behavior is available via "remove".
+
+	rm obj.c mem1 mem2 -> new behavior: rm deletes unreferenced
+        objects from database. Removal is available via:
+		comb obj.c rm mem1 mem2
+		comb rm -C obj.c mem1 mem2
+		rm obj.c/mem1 obj.c/mem2
+        [deprecated 7.26]
 
 == 7.42.2
 
@@ -459,5 +463,4 @@ include/raytrace.h
 	rt_version -> rt_version() [private]
 include/[library].h (several)
 	[library]_version -> [library]_version() [private]
-
 
