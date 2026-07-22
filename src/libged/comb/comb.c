@@ -551,6 +551,100 @@ comb_decimate_memfree:
     return ret;
 }
 
+
+static int
+comb_remove_members(struct ged *gedp, int argc, const char *argv[])
+{
+    struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    int ret = BRLCAD_OK;
+    int i;
+    const char *comb_name;
+
+    if (argc < 5) {
+	bu_vls_printf(gedp->ged_result_str,
+		"Usage: %s rm -C|--comb combination member(s)", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    comb_name = argv[3];
+    if ((dp = db_lookup(gedp->dbip, comb_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+	return BRLCAD_ERROR;
+
+    if ((dp->d_flags & RT_DIR_COMB) == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a combination", argv[0], dp->d_namep);
+	return BRLCAD_ERROR;
+    }
+
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
+	return BRLCAD_ERROR;
+    }
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    RT_CK_COMB(comb);
+
+    for (i = 4; i < argc; i++) {
+	if (db_tree_rm_dbleaf(&(comb->tree), argv[i], 0) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[i]);
+	    ret = BRLCAD_ERROR;
+	} else {
+	    struct bu_vls path = BU_VLS_INIT_ZERO;
+
+	    bu_vls_printf(&path, "%s/%s", dp->d_namep, argv[i]);
+	    _dl_eraseAllPathsFromDisplay(gedp, bu_vls_addr(&path), 0);
+	    bu_vls_free(&path);
+	    bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[i]);
+	}
+    }
+
+    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
+	return BRLCAD_ERROR;
+    }
+
+    db_update_nref(gedp->dbip);
+    return ret;
+}
+
+
+static int
+comb_subcommand(struct ged *gedp, int argc, const char *argv[])
+{
+    const char *subcommand = argv[1];
+    const char *comb_name = argv[3];
+    struct directory *dp;
+    int ret;
+
+    if (BU_STR_EQUAL(subcommand, "rm"))
+	return comb_remove_members(gedp, argc, argv);
+
+    if (argc != 4) {
+	bu_vls_printf(gedp->ged_result_str,
+		"Usage: %s %s -C|--comb combination", argv[0], subcommand);
+	return BRLCAD_ERROR;
+    }
+
+    dp = db_lookup(gedp->dbip, comb_name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL || !(dp->d_flags & RT_DIR_COMB)) {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: %s is not a combination", comb_name);
+	return BRLCAD_ERROR;
+    }
+
+    db_update_nref(gedp->dbip);
+    if (BU_STR_EQUAL(subcommand, "wrap"))
+	ret = comb_wrap(gedp, dp);
+    else if (BU_STR_EQUAL(subcommand, "flatten"))
+	ret = comb_flatten(gedp, dp);
+    else
+	ret = comb_lift_region(gedp, dp);
+
+    if (ret == BRLCAD_OK)
+	db_update_nref(gedp->dbip);
+    return ret;
+}
+
 int
 ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -567,7 +661,10 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
     int flatten_comb = 0;
     int lift_region_comb = 0;
     int alter_existing = 1;
-    static const char *usage = "[-c|-r] [-w|-f|-l] [-d] [-S] comb_name [<operation object>]";
+    static const char *usage =
+	"[-c|-r] [-w|-f|-l] [-d] [-S] comb_name [<operation object>]\n"
+	"       comb rm -C|--comb combination member(s)\n"
+	"       comb {wrap|flatten|lift} -C|--comb combination";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -577,6 +674,15 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     cmd_name = argv[0];
+
+    if (argc >= 3 &&
+	(BU_STR_EQUAL(argv[1], "rm") || BU_STR_EQUAL(argv[1], "wrap") ||
+	 BU_STR_EQUAL(argv[1], "flatten") || BU_STR_EQUAL(argv[1], "lift")) &&
+	(BU_STR_EQUAL(argv[2], "-C") || BU_STR_EQUAL(argv[2], "--comb"))) {
+	if (BU_STR_EQUAL(argv[1], "rm"))
+	    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+	return comb_subcommand(gedp, argc, argv);
+    }
 
     /* must be wanting help */
     if (argc == 1) {
