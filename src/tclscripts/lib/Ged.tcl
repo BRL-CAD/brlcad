@@ -6409,7 +6409,7 @@ package provide cadwidgets::Ged 1.0
     $help add regdef		{{item air los mat} {get/set region defaults}}
     $help add regions		{{file object(s)} {returns an ascii summary of regions}}
     $help add rfarb		{{} {makes an arb given a point, 2 coords of 3 points, rot, fb and thickness}}
-    $help add rm		{{comb <members>} {remove members from comb}}
+    $help add rm		{{[options] <object-or-path>...} {delete database objects or remove a child path}}
     $help add rmap		{{} {returns a region ids to region(s) mapping}}
     $help add rmat		{{} {get/set the rotation matrix}}
     $help add rmater		{{file} {read material properties from a file}}
