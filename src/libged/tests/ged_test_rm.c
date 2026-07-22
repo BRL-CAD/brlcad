@@ -435,7 +435,7 @@ test_legacy_rm_comb_obj_guard(void)
     CHECK_MEMBER_COUNT(gedp, "parent_comb.c", "leaf_comb.c", 1);
     CHECK_CONTAINS(bu_vls_cstr(gedp->ged_result_str), "ambiguous request",
 	    "T9: diagnostic should call out the ambiguous legacy form");
-    CHECK_CONTAINS(bu_vls_cstr(gedp->ged_result_str), "comb rm --comb parent_comb.c leaf_comb.c",
+    CHECK_CONTAINS(bu_vls_cstr(gedp->ged_result_str), "comb parent_comb.c rm leaf_comb.c",
 	    "T9: diagnostic should point users at comb rm");
     CHECK_CONTAINS(bu_vls_cstr(gedp->ged_result_str), "rm parent_comb.c/leaf_comb.c",
 	    "T9: diagnostic should show explicit path syntax");
@@ -694,10 +694,12 @@ test_comb_legacy_operator_form(void)
     struct ged *gedp = open_test_db();
     if (!gedp) { fprintf(stderr, "SKIP T20: open failed\n"); return; }
 
-    const char *av[] = {"comb", "rm", "u", "leaf_comb.c", NULL};
-    int ret = ged_exec_comb(gedp, 4, av);
+    const char *av[] = {"comb", "-r", "rm", "u", "leaf_comb.c", NULL};
+    int ret = ged_exec_comb(gedp, 5, av);
     CHECK(ret == BRLCAD_OK, "T20: legacy comb construction should succeed");
     CHECK_MEMBER_COUNT(gedp, "rm", "leaf_comb.c", 1);
+    CHECK((db_lookup(gedp->dbip, "rm", LOOKUP_QUIET)->d_flags & RT_DIR_REGION) != 0,
+	    "T20: legacy -r should set the region flag");
     CHECK_PRESENT(gedp, "leaf_comb.c");
 
     ged_close(gedp);
