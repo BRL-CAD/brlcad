@@ -689,15 +689,32 @@ comb_execute_command(struct ged *gedp, enum comb_command command, const char *co
     if (command == COMB_COMMAND_UNREGION)
 	return region_flag_clear(gedp, dp);
 
+    if (command != COMB_COMMAND_WRAP &&
+	command != COMB_COMMAND_FLATTEN &&
+	command != COMB_COMMAND_LIFT &&
+	command != COMB_COMMAND_DECIMATE) {
+	bu_vls_printf(gedp->ged_result_str, "comb: invalid command\n");
+	return BRLCAD_ERROR;
+    }
+
     db_update_nref(gedp->dbip);
-    if (command == COMB_COMMAND_WRAP)
-	ret = comb_wrap(gedp, dp);
-    else if (command == COMB_COMMAND_FLATTEN)
-	ret = comb_flatten(gedp, dp);
-    else if (command == COMB_COMMAND_LIFT)
-	ret = comb_lift_region(gedp, dp);
-    else
-	ret = comb_decimate(gedp, dp);
+    switch (command) {
+	case COMB_COMMAND_WRAP:
+	    ret = comb_wrap(gedp, dp);
+	    break;
+	case COMB_COMMAND_FLATTEN:
+	    ret = comb_flatten(gedp, dp);
+	    break;
+	case COMB_COMMAND_LIFT:
+	    ret = comb_lift_region(gedp, dp);
+	    break;
+	case COMB_COMMAND_DECIMATE:
+	    ret = comb_decimate(gedp, dp);
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "comb: invalid command\n");
+	    return BRLCAD_ERROR;
+    }
 
     if (ret == BRLCAD_OK)
 	db_update_nref(gedp->dbip);
@@ -745,9 +762,9 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
     int lift_region_comb = 0;
     int alter_existing = 1;
     static const char *usage =
-	"[-c|-r] [-w|-f|-l] [-d] [-S] comb_name [<operation object>]\n"
-	"       comb combination command [arguments]\n"
-	"       comb command -C|--comb combination [arguments]";
+	"[options] <combination> [<operator> <member> ...]\n"
+	"       <combination> <command> [arguments ...]\n"
+	"       <command> -C|--comb <combination> [arguments ...]";
     enum comb_command command;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -778,7 +795,8 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (argc >= 3 && (command = comb_command_id(argv[2])) != COMB_COMMAND_NONE) {
+    if (argc >= 3 && argv[1][0] != '-' &&
+	(command = comb_command_id(argv[2])) != COMB_COMMAND_NONE) {
 	return comb_execute_command(gedp, command, argv[1], argc - 3, argv + 3);
     }
 
