@@ -2937,7 +2937,7 @@ On the Command Line, create rcc1.c by typing: *comb rcc1.c u rcc1.s - sph1.r - s
 
 [NOTE]
 ====
-Note that we could have achieved the same results on the Command Line by using the rm (remove) command to remove rcc1.s from base1.r and then adding rcc1.c: *rm base1.r rcc1.s[Enter]* *r base1.r u rcc1.c[Enter]*
+Note that we could have achieved the same results on the Command Line by using the rm (remove) command to remove rcc1.s from base1.r and then adding rcc1.c: *rm base1.r/rcc1.s[Enter]* *r base1.r u rcc1.c[Enter]*
 
 This would have resulted in a very similar tree as above:
 
@@ -3905,7 +3905,7 @@ image::../lessons/images/mged16_radio_structure_3.png[]
 
 
 
-To accomplish this restructuring according to functionality, create an assembly called electronics.c to hold these components together. Type: *g electronics.c board.r knob.r button.r[Enter]* Of course, we now need to remove board.r, knob.r, and button.r from the radio.c assembly so that when electronics.c is added to the radio.c assembly, we won't have the knob and button included twice in the model. To do this, use the rm (remove) command: *rm radio.c board.r knob.r button.r[Enter]* and then union in the electronics assembly: *g radio.c electronics.c[Enter]*
+To accomplish this restructuring according to functionality, create an assembly called electronics.c to hold these components together. Type: *g electronics.c board.r knob.r button.r[Enter]* Of course, we now need to remove board.r, knob.r, and button.r from the radio.c assembly so that when electronics.c is added to the radio.c assembly, we won't have the knob and button included twice in the model. To do this, use the combination-member removal command: *comb radio.c rm board.r knob.r button.r[Enter]* and then union in the electronics assembly: *g radio.c electronics.c[Enter]*
 
 Now the tree for radio.c should appear as follows:
 
