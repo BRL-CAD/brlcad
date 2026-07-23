@@ -81,9 +81,6 @@ Q_SIGNALS:
 
     private Q_SLOTS:
 	void on_finishedGetLine(const QString &strNewLine);
-
-    private:
-	QThread m_thread;
 };
 
 // Local Variables:
