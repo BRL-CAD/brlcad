@@ -18,15 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* check mann commands with mged availability, either defer publishing
-  unavailable or make available
-
-* compilation testing, distcheck-full and bext builds
-
-* rename the remove command (update rm docs and code printings)
-
-* jepr is 2-20x slower, check search command
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
