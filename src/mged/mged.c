@@ -79,6 +79,7 @@
 #include "./menu.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
+#include "./mged_interrupt.h"
 #include "./f_cmd.h" // for f_opendb
 #include "brlcad_ident.h"
 
@@ -467,6 +468,68 @@ sig3(int UNUSED(sig))
     (void)signal(SIGINT, SIG_IGN);
     longjmp(jmp_env, 1);
 }
+
+
+void
+sig_interrupt(int UNUSED(sig))
+{
+    /* if we have valid state, raise the interrupt */
+    if (MGED_STATE && MGED_STATE->gedp)
+	ged_interrupt_request(MGED_STATE->gedp);
+    /* rearm */
+    (void)signal(SIGINT, sig_interrupt);
+}
+
+
+/*
+ * "mged_interrupt" Tcl command, bound to <Escape> in the command window.
+ *
+ * Guarded: if something is running (an in-process command, or a registered
+ * subprocess such as a runaway rt) it raises the interrupt flag and returns
+ * "1" so the binding swallows the key (the heartbeat then reacts); when idle
+ * it returns "0" and does nothing, so the key falls through to the widget's
+ * normal <Escape> handling (VI reset, etc.).
+ */
+int
+cmd_mged_interrupt(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv)[])
+{
+    struct mged_state *s = (struct mged_state *)clientData;
+    int subp_len;
+    int act;
+
+    if (!s || !s->gedp) {
+	Tcl_SetResult(interp, (char *)"0", TCL_STATIC);
+	return TCL_OK;
+    }
+
+    subp_len = (int)BU_PTBL_LEN(&s->gedp->ged_subp);
+    act = mged_interrupt_should_act(s->cmd_running, subp_len);
+    if (act)
+	ged_interrupt_request(s->gedp);
+
+    Tcl_SetResult(interp, (char *)(act ? "1" : "0"), TCL_STATIC);
+    return TCL_OK;
+}
+
+
+#ifdef HAVE_WINDOWS_H
+/*
+ * Windows console Ctrl-C / Ctrl-Break handler.  Like sig_interrupt, it only
+ * raises the interrupt flag and returns TRUE to mark the event handled; the
+ * heartbeat (which polls every tick) does the rest, so no wake event is
+ * needed.
+ */
+static BOOL WINAPI
+mged_console_ctrl_handler(DWORD ctrl_type)
+{
+    if (ctrl_type == CTRL_C_EVENT || ctrl_type == CTRL_BREAK_EVENT) {
+	if (MGED_STATE && MGED_STATE->gedp)
+	    ged_interrupt_request(MGED_STATE->gedp);
+	return TRUE;
+    }
+    return FALSE;
+}
+#endif /* HAVE_WINDOWS_H */
 
 
 void
@@ -1022,7 +1085,9 @@ mged_process_char(struct mged_state *s, char ch)
 		    set_curr_dm(s, curr_cmd_list->cl_tie);
 
 		reset_Tty(fileno(stdin)); /* Backwards compatibility */
-		(void)signal(SIGINT, SIG_IGN);
+		/* Cooperative interrupt: route Ctrl-C during command
+		 * execution to the flag-setting handler */
+		(void)signal(SIGINT, sig_interrupt);
 		if (cmdline(s, &s->input_str_prefix, 1) == CMD_MORE) {
 		    /* Remove newline */
 		    bu_vls_trunc(&s->input_str_prefix,
@@ -1037,7 +1102,9 @@ mged_process_char(struct mged_state *s, char ch)
 		    /* All done; clear all strings. */
 		    bu_vls_trunc(&s->input_str_prefix, 0);
 		    bu_vls_trunc(&s->input_str, 0);
-		    (void)signal(SIGINT, SIG_IGN);
+		    /* Idle disposition for this input path: a terminal Ctrl-C
+		     * sets the flag so the heartbeat can kill a background rt. */
+		    (void)signal(SIGINT, sig_interrupt);
 		}
 		set_Cbreak(fileno(stdin)); /* Back to single-character mode */
 		clr_Echo(fileno(stdin));
@@ -1824,6 +1891,12 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    if (curr_cmd_list->cl_tie)
 		set_curr_dm(s, curr_cmd_list->cl_tie);
 
+	    /* Cooperative interrupt: route Ctrl-C during command execution to
+	     * the flag-setting handler (mirrors the cbreak path before its own
+	     * cmdline call). This is the classic/pipe/non-tty completion path,
+	     * so without it a terminal Ctrl-C in classic -c mode would be
+	     * ignored after the first command. */
+	    (void)signal(SIGINT, sig_interrupt);
 	    cmd_status = cmdline(s, &s->input_str_prefix, 1);
 	    if (cmd_status == CMD_MORE) {
 		/* Remove newline */
@@ -1835,7 +1908,9 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    } else {
 		bu_vls_trunc(&s->input_str_prefix, 0);
 		bu_vls_trunc(&s->input_str, 0);
-		(void)signal(SIGINT, SIG_IGN);
+		/* Idle disposition: keep Ctrl-C wired to the flag so the
+		 * heartbeat can still kill a background rt between commands. */
+		(void)signal(SIGINT, sig_interrupt);
 	    }
 	    pr_prompt(s);
 	    s->input_str_index = 0;
@@ -2540,6 +2615,7 @@ main(int argc, char *argv[])
     s->dpy_string = NULL;
     s->cmd_running = 0;
     s->heartbeat_timer = NULL;
+    s->interrupt_prev = 0;
     s->shutdown_state = MGED_SHUTDOWN_RUNNING;
     s->shutdown_exitcode = 0;
     s->stdin_chan = NULL;
@@ -2844,6 +2920,13 @@ main(int argc, char *argv[])
     cur_sigint = signal(SIGINT, SIG_IGN);		/* sample */
     (void)signal(SIGINT, cur_sigint);		/* restore */
 #endif /* SIGPIPE && SIGINT */
+
+#ifdef HAVE_WINDOWS_H
+    /* Cooperative interrupt: a Windows console Ctrl-C/Ctrl-Break raises the
+     * flag (the heartbeat reacts). Registered here at startup; the handler
+     * reads gedp only at event time, by which point it is open. */
+    (void)SetConsoleCtrlHandler(mged_console_ctrl_handler, TRUE);
+#endif /* HAVE_WINDOWS_H */
 
 #if defined(HAVE_PIPE) && !defined(HAVE_WINDOWS_H)
     /* fork()-based background detach: POSIX only. fork() and select() on
@@ -3303,7 +3386,9 @@ main(int argc, char *argv[])
 	Tcl_CreateChannelHandler(sd->chan, TCL_READABLE, stdin_input, sd);
 
 #ifdef SIGINT
-	(void)signal(SIGINT, SIG_IGN);
+	/* Interactive idle base disposition: a terminal Ctrl-C at an idle GUI
+	 * prompt raises the flag so the heartbeat can kill a background rt. */
+	(void)signal(SIGINT, sig_interrupt);
 #endif
 
 	bu_vls_strcpy(&s->mged_prompt, MGED_PROMPT);

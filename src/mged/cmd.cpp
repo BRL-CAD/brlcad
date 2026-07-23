@@ -67,6 +67,7 @@
 
 #include "./cmd.h"
 #include "./mged_dm.h"
+#include "./mged_interrupt.h"
 #include "./sedit.h"
 
 extern "C" void mged_finish(struct mged_state *s, int exitcode); /* in mged.c */
@@ -154,13 +155,13 @@ run_ged_async(struct mged_state *s, std::function<int()> func)
 
     s->cmd_running = 1;
 
-    /* must suppress SIGINT for the duration of the worker pump. Otherwise,
-     * SIGINT would longjmp to the outer frame, skipping worker.join(). SIG_IGN
-     * is just for this window and is be restored after .join()
-     * TODO/FIXME: this should be replaced with an intentional interrupt flag
-     * that can cooperate with callers for graceful handling
-     */
-    void (*prev_sigint)(int) = signal(SIGINT, SIG_IGN);
+    /* Route SIGINT to the cooperative interrupt handler for the duration of
+     * the worker pump. sig_interrupt only raises the ged interrupt flag (it
+     * never longjmps), so worker.join() below is always reached; a terminal
+     * Ctrl-C while an in-process command is parked here sets the flag, and the
+     * main-thread mged_heartbeat (which also fires inside this pump) reacts.
+     * This override is just for this window and is restored after .join(). */
+    void (*prev_sigint)(int) = signal(SIGINT, sig_interrupt);
 
     std::thread worker([&]() {
 	result.store(func(), std::memory_order_release);
@@ -209,10 +210,16 @@ mged_sem_log_init(void)
 	MGED_SEM_LOG = bu_semaphore_register("MGED_SEM_LOG");
 }
 
-/* Tcl timer callback: drain accumulated log output to the command prompt and
- * reschedule itself so that intermediate bu_log output produced during a long
- * ged_exec call (running in a worker thread) reaches the user in
- * near-real-time.
+/* Tcl timer callback: the single main-thread periodic service ("heartbeat").
+ * It
+ * (1) drains accumulated log output to the command prompt so intermediate
+ * bu_log output produced during a long ged_exec call (running in a worker
+ * thread) reaches the user in near-real-time, and
+ * (2) reacts to a raised interrupt flag on its rising edge by terminating
+ * any registered subprocesses. (the reaction never clears the flag - this
+ * is left to ged_exec's clear-at-entry when the next top-level command
+ * starts)
+ * (then) reschedules itself.
  */
 static void
 mged_heartbeat(ClientData clientData)
@@ -223,7 +230,24 @@ mged_heartbeat(ClientData clientData)
      * quiescence deletes the pending timer token. */
     if (mged_shutting_down(s))
 	return;
+
     mged_pr_output(s->interp);
+
+    /* Interrupt reaction (rising-edge, main thread only). */
+    if (s->gedp) {
+	int should_log = 0;
+	int pending = ged_interrupt_pending(s->gedp);
+	int subp_len = (int)BU_PTBL_LEN(&s->gedp->ged_subp);
+	if (mged_interrupt_service(s->interrupt_prev, pending, s->cmd_running, subp_len, &should_log)) {
+	    if (should_log)
+		bu_log("interrupt requested — stopping...\n");
+	    /* Broad, intentional: kill ALL registered subprocesses (rt family,
+	     * facetize children).  A no-op when ged_subp is empty. */
+	    ged_subprocesses_terminate(s->gedp);
+	}
+	s->interrupt_prev = pending;
+    }
+
     /* Reschedule: 50 ms gives good responsiveness without unnecessary CPU use. */
     s->heartbeat_timer = Tcl_CreateTimerHandler(50, mged_heartbeat, clientData);
 }

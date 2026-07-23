@@ -530,6 +530,11 @@ cmd_setup(struct mged_state *s)
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
 
+    /* the <Escape> binding in the command window calls this to raise the interrupt flag when something is
+     * running (returns 1) or fall through when idle (returns 0). */
+    (void)Tcl_CreateCommand(s->interp, "mged_interrupt", (Tcl_CmdProc *)cmd_mged_interrupt,
+			    (ClientData)s, (Tcl_CmdDeleteProc *)NULL);
+
     /* Init mged's Tcl interface to libwdb */
     Wdb_Init(s->interp);
 

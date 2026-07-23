@@ -28,6 +28,7 @@ set(
   fbserv.c
   grid.c
   history.c
+  interrupt.c
   mater.c
   menu.c
   mged.c
@@ -105,6 +106,8 @@ brlcad_addexec(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}")
 
 brlcad_addexec(cad_parea cad_parea.c libbu)
 
+add_subdirectory(tests)
+
 set(
   mged_ignore_files
   CMakeLists.txt
@@ -116,6 +119,7 @@ set(
   mged.ico
   mged.rc
   mged_dm.h
+  mged_interrupt.h
   mged_impl.h
   mged_wdb.h
   sedit.h

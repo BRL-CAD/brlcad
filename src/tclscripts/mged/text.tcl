@@ -1919,6 +1919,17 @@ proc set_text_key_bindings { id } {
     global tcl_platform
 
     set w .$id.t
+
+    # give the command-window text widget a dedicated MgedInterrupt bindtag,
+    # ordered before its own bindings, so <Escape> defers to the C-backed
+    # "mged_interrupt". If it acted, "break" swallows the key so the
+    # per-mode <Escape> (VI reset, etc.) does not also fire; when idle it
+    # returns 0 and the key falls through untouched.
+    bind MgedInterrupt <Escape> { if {[mged_interrupt]} break }
+    if {[lsearch [bindtags $w] MgedInterrupt] < 0} {
+	bindtags $w [linsert [bindtags $w] 0 MgedInterrupt]
+    }
+
     switch $mged_gui($id,edit_style) {
 	vi {
 	    vi_insert_mode $w

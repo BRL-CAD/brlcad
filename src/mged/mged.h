@@ -261,10 +261,14 @@ struct mged_state {
     /* Asynchronous ged_exec state (cmd.cpp).
      * cmd_running is set to 1 while ged_exec runs in a worker thread so
      * that re-entrant command dispatch (e.g. from stdin_input) is blocked.
-     * heartbeat_timer is the recurring Tcl timer token used to flush
-     * accumulated bu_log output to the Tcl command prompt. */
+     * heartbeat_timer is the recurring Tcl timer token for mged_heartbeat,
+     * the single main-thread periodic service that flushes accumulated
+     * bu_log output and reacts to a raised interrupt flag.
+     * interrupt_prev latches the previous pending value so the heartbeat
+     * reacts exactly once on the 0->1 rising edge. */
     int cmd_running;
     Tcl_TimerToken heartbeat_timer;
+    int interrupt_prev;
 
     /* Staged shutdown state.  Tcl callbacks request shutdown and return; the
      * outer MGED event loop performs final teardown after Tcl has unwound. */
@@ -361,6 +365,8 @@ extern void get_attached(struct mged_state *s);
 extern void (*cur_sigint)(int);	/* Current SIGINT status */
 extern void sig2(int);
 extern void sig3(int);
+extern void sig_interrupt(int);
+extern int cmd_mged_interrupt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
 
 /* mged.c */
 extern void mged_view_callback(struct bview *gvp, void *clientData);
