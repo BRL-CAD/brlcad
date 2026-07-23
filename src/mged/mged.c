@@ -2954,7 +2954,7 @@ main(int argc, char *argv[])
     MAT_IDN(view_state->vs_ModelDelta);
 
     am_mode = AMM_IDLE;
-    owner = 1;
+    mged_dm_owner = 1;
     frametime = 1;
 
     MAT_IDN(MEDIT(s)->model_changes);

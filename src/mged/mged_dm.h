@@ -416,7 +416,7 @@ __END_DECLS
 #define fbp s->mged_curr_dm->dm_fbp
 #define clients s->mged_curr_dm->dm_clients
 #define mapped s->mged_curr_dm->dm_mapped
-#define owner s->mged_curr_dm->dm_owner
+#define mged_dm_owner s->mged_curr_dm->dm_owner
 #define am_mode s->mged_curr_dm->dm_am_mode
 #define perspective_angle s->mged_curr_dm->dm_perspective_angle
 #define zclip_ptr s->mged_curr_dm->dm_zclip_ptr

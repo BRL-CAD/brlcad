@@ -732,7 +732,7 @@ dm_var_init(struct mged_state *s, struct mged_dm *target_dm)
     }
     mapped = 1;
     s->mged_curr_dm->dm_netfd = -1;
-    owner = 1;
+    mged_dm_owner = 1;
     am_mode = AMM_IDLE;
     adc_auto = 1;
     grid_auto_size = 1;
