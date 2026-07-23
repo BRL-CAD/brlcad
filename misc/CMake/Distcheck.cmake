@@ -178,15 +178,21 @@ endmacro(create_distcheck)
 # have an option to force the individual configurations to each build their own
 # copies of bext when we can't mix Debug and Release libs...
 
-create_distcheck(default_build_type "" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+# All archive sub-builds use the external dependency tree selected by the
+# parent configure.  Besides avoiding a costly rebuild for every configuration,
+# this makes the default configuration consistent with the prepared variants.
+# The automatic bext path is still exercised by ordinary configurations that do
+# not specify BRLCAD_EXT_DIR.
+create_distcheck(default_build_type "-DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
 
 if(NOT HAVE_WINDOWS_H)
-  # Most of the tests will use the bext supplied to the original parent BRL-CAD configure, but we also
-  # want to verify that the "configure driven" bext build works as well.
-  create_distcheck(debug   "-DCMAKE_BUILD_TYPE=Debug" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  create_distcheck(release "-DCMAKE_BUILD_TYPE=Release" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  create_distcheck(enableall_debug   "-DCMAKE_BUILD_TYPE=Debug -DENABLE_ALL=ON" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  create_distcheck(enableall_release "-DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  # Reuse the bext outputs produced by the parent configure.  This is a massive
+  # overall saving in time and prevents each distcheck configuration from
+  # independently rebuilding the same external dependency set.
+  create_distcheck(debug   "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(enableall_debug   "-DCMAKE_BUILD_TYPE=Debug -DENABLE_ALL=ON -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(enableall_release "-DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   create_distcheck(prepared_debug   "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   create_distcheck(prepared_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   create_distcheck(no_tcl "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR} -DBRLCAD_ENABLE_TCL=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install" distcheck_no_tcl.cmake.in)
