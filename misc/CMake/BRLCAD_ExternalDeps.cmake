@@ -1346,10 +1346,27 @@ endfunction()
     set(_brlcad_ext_binary_updated 0)
     list(LENGTH NBINARY_FILES _brlcad_ext_binary_processed)
     message("Setting rpath on new 3rd party lib and exe files...")
+
+    # The external install tree may contain shared libraries and executables
+    # without an owner-write bit (Tcl is one example).  The RPATH and string
+    # cleanup tools rewrite files in place, so make each staged copy writable
+    # before either processing path sees it.  In particular, the SONAME pass
+    # below runs later during configure and is too late to protect this pass.
+    foreach(lf ${NBINARY_FILES})
+      file(
+        CHMOD "${CMAKE_BINARY_DIR}/${lf}"
+        PERMISSIONS
+          OWNER_READ OWNER_WRITE OWNER_EXECUTE
+          GROUP_READ GROUP_EXECUTE
+          WORLD_READ WORLD_EXECUTE
+      )
+    endforeach(lf ${NBINARY_FILES})
+
     if(P_RPATH_SUPPORTS_FILE_LIST AND STRCLEAR_SUPPORTS_FILE_LIST AND NOT APPLE)
       set(_brlcad_ext_binary_files)
       foreach(lf ${NBINARY_FILES})
-        list(APPEND _brlcad_ext_binary_files "${CMAKE_BINARY_DIR}/${lf}")
+        set(_brlcad_ext_binary_file "${CMAKE_BINARY_DIR}/${lf}")
+        list(APPEND _brlcad_ext_binary_files "${_brlcad_ext_binary_file}")
       endforeach(lf ${NBINARY_FILES})
       if(_brlcad_ext_binary_files)
         set(_brlcad_ext_binary_list "${CMAKE_BINARY_DIR}/CMakeFiles/brlcad_ext_binary_postprocess.txt")
@@ -2060,7 +2077,7 @@ function(_brlcad_ensure_soname lib_path)
     # LIEF/patchelf to rewrite it.
     file(
       CHMOD "${lib_path}"
-      FILE_PERMISSIONS
+      PERMISSIONS
         OWNER_READ OWNER_WRITE OWNER_EXECUTE
         GROUP_READ GROUP_EXECUTE
         WORLD_READ WORLD_EXECUTE
