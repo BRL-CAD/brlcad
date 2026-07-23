@@ -183,7 +183,10 @@ endmacro(create_distcheck)
 # this makes the default configuration consistent with the prepared variants.
 # The automatic bext path is still exercised by ordinary configurations that do
 # not specify BRLCAD_EXT_DIR.
-create_distcheck(default_build_type "-DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+# Preserve the parent build type.  This is particularly important on Windows,
+# where the archive build reuses the parent bext tree and Debug and Release
+# binaries cannot be mixed.
+create_distcheck(default_build_type "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
 
 if(NOT HAVE_WINDOWS_H)
   # Reuse the bext outputs produced by the parent configure.  This is a massive
