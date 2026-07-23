@@ -16977,17 +16977,29 @@ retry_unique_face_bound_classification(ON_Brep *brep, STEPWrapper *wrapper,
 	    candidate_count > kMaximumFaceBoundClassificationCandidates)
 	return false;
 
-    /* ON_Brep::IsSolid() depends on manifold edge use and orientation, not
-     * loop outer/inner classification.  If the unchanged topology is open,
-     * no FACE_BOUND choice can make it a solid and candidate testing would
-     * provide no evidence for a repair. */
-    if (require_solid && !brep->IsSolid()) {
+    /* Outer/inner classification cannot repair an open or nonmanifold edge
+     * graph, so require the unchanged STEP topology to be a closed manifold.
+     * Do not require it to be oriented yet: face-orientation repair runs only
+     * after OpenNURBS structural validation, and requiring IsSolid() here
+     * creates a deadlock when one invalid FACE.wr2 label is the sole
+     * structural error. */
+    bool source_oriented = false;
+    bool source_has_boundary = true;
+    const bool source_manifold = brep->IsManifold(&source_oriented,
+	&source_has_boundary);
+    if (require_solid && (!source_manifold || source_has_boundary)) {
 	if (wrapper->Verbose())
 	    std::cerr << entity_type << " #" << entity_id
 		<< ": supplied FACE_BOUND alternatives cannot repair non-solid "
-		   "edge-use topology" << std::endl;
+		   "edge-use topology (manifold="
+		<< (source_manifold ? "yes" : "no") << ", boundary="
+		<< (source_has_boundary ? "yes" : "no") << ')' << std::endl;
 	return false;
     }
+    if (require_solid && !source_oriented && wrapper->Verbose())
+	std::cerr << entity_type << " #" << entity_id
+	    << ": testing FACE_BOUND alternatives on closed manifold topology "
+	       "before the separate face-orientation repair" << std::endl;
 
     std::vector<int> unique_outer_loops;
     unique_outer_loops.reserve(ambiguous_faces.size());
@@ -16999,11 +17011,12 @@ retry_unique_face_bound_classification(ON_Brep *brep, STEPWrapper *wrapper,
 	    return false;
 
 	/* Duplicate the target face and every face sharing one of its edges.
-	 * This preserves the target face's boundary/mated/seam trim types exactly
-	 * while keeping each candidate validation proportional to the local
-	 * topology instead of the complete solid.  Outer-loop classification on
-	 * neighboring faces is neutralized because it is irrelevant to this
-	 * independent choice. */
+	 * This preserves boundary/mated/seam trim types and the already validated
+	 * neighboring loop classifications while keeping each candidate
+	 * validation proportional to the local topology instead of the complete
+	 * solid.  Only the target face's competing loops are trial mutations:
+	 * changing a neighboring outer seam loop to inner makes that otherwise
+	 * valid context structurally invalid before the target choice is tested. */
 	std::set<int> adjacent_face_indices;
 	adjacent_face_indices.insert(ambiguous->face_index);
 	const ON_BrepFace &source_face = brep->m_F[ambiguous->face_index];
@@ -17066,9 +17079,13 @@ retry_unique_face_bound_classification(ON_Brep *brep, STEPWrapper *wrapper,
 	    local_candidate_loops.push_back(local->second);
 	}
 
-	for (int li = 0; li < local_candidate->m_L.Count(); ++li)
-	    if (local_candidate->m_L[li].m_type != ON_BrepLoop::slit)
+	ON_BrepFace &trial_face = local_candidate->m_F[local_face_index];
+	for (int fli = 0; fli < trial_face.m_li.Count(); ++fli) {
+	    const int li = trial_face.m_li[fli];
+	    if (li >= 0 && li < local_candidate->m_L.Count() &&
+		    local_candidate->m_L[li].m_type != ON_BrepLoop::slit)
 		local_candidate->m_L[li].m_type = ON_BrepLoop::inner;
+	}
 
 	size_t valid_choices = 0;
 	int selected_outer_loop = -1;
@@ -17101,10 +17118,23 @@ retry_unique_face_bound_classification(ON_Brep *brep, STEPWrapper *wrapper,
 	    std::string unsafe_topology;
 	    ON_wString validation_messages;
 	    ON_TextLog validation_log(validation_messages);
-	    if (!brep_topology_references_are_safe(local_candidate.get(),
-		    &unsafe_topology) ||
-		    !local_candidate->IsValid(&validation_log))
+	    const bool references_safe =
+		brep_topology_references_are_safe(local_candidate.get(),
+		    &unsafe_topology);
+	    const bool structurally_valid =
+		references_safe && local_candidate->IsValid(&validation_log);
+	    if (!structurally_valid) {
+		if (wrapper->Verbose()) {
+		    ON_String text(validation_messages);
+		    std::cerr << entity_type << " #" << entity_id << ": face F"
+			<< ambiguous->face_index << " FACE_BOUND choice L"
+			<< ambiguous->candidate_loops[choice]
+			<< " rejected: "
+			<< (!references_safe ? unsafe_topology : text.Array())
+			<< std::endl;
+		}
 		continue;
+	    }
 	    ++valid_choices;
 	    selected_outer_loop = ambiguous->candidate_loops[choice];
 	    if (valid_choices > 1)
@@ -17158,13 +17188,19 @@ retry_unique_face_bound_classification(ON_Brep *brep, STEPWrapper *wrapper,
     std::string unsafe_topology;
     ON_wString validation_messages;
     ON_TextLog validation_log(validation_messages);
+    bool candidate_oriented = false;
+    bool candidate_has_boundary = true;
+    const bool candidate_manifold = unique_candidate->IsManifold(
+	&candidate_oriented, &candidate_has_boundary);
     if (!brep_topology_references_are_safe(unique_candidate.get(),
 	    &unsafe_topology) ||
 	    !unique_candidate->IsValid(&validation_log) ||
-	    (require_solid && !unique_candidate->IsSolid())) {
+	    (require_solid &&
+		(!candidate_manifold || candidate_has_boundary))) {
 	wrapper->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Warning,
 	    entity_id, entity_type, "face_bound",
-	    "locally unique supplied FACE_BOUND interpretations did not form a valid complete solid; no classification repair was applied");
+	    "locally unique supplied FACE_BOUND interpretations did not form a "
+	    "valid closed manifold; no classification repair was applied");
 	return false;
     }
 
