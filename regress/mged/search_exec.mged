@@ -1,6 +1,6 @@
 puts "*** Testing search -exec with sourced Tcl state ***"
 
-source @CMAKE_CURRENT_SOURCE_DIR@/search_exec_procs.tcl
+source {@CMAKE_CURRENT_SOURCE_DIR@/search_exec_procs.tcl}
 
 set ::search_exec_precheck_error ""
 

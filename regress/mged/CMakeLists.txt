@@ -101,7 +101,7 @@ if(TARGET mged)
     file(
       WRITE
       "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}"
-      "source ${CMAKE_CURRENT_SOURCE_DIR}/regression_resources.tcl\n\n${TEST_CONTENTS}"
+      "source {${CMAKE_CURRENT_SOURCE_DIR}/regression_resources.tcl}\n\n${TEST_CONTENTS}"
     )
     distclean("${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}")
 
