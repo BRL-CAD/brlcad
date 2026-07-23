@@ -138,10 +138,13 @@ macro(
         set(TARGET_REDIRECT " >> distcheck-${TARGET_SUFFIX}.log 2>&1")
         distclean("${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}.log")
       endif(NOT CMAKE_VERBOSE_DISTCHECK)
-      set(DISTCHECK_BUILD_CMD "ninja")
-      set(DISTCHECK_INSTALL_CMD "ninja install")
-      set(DISTCHECK_REGRESS_CMD "ninja regress")
-      set(DISTCHECK_TEST_CMD "ninja test")
+      # Use CMake's generator-aware build driver rather than a bare ninja
+      # command.  On Windows Ninja is commonly supplied by Visual Studio and
+      # is not necessarily on PATH outside a developer prompt.
+      set(DISTCHECK_BUILD_CMD "\"${CMAKE_COMMAND}\" --build .")
+      set(DISTCHECK_INSTALL_CMD "\"${CMAKE_COMMAND}\" --build . --target install")
+      set(DISTCHECK_REGRESS_CMD "\"${CMAKE_COMMAND}\" --build . --target regress")
+      set(DISTCHECK_TEST_CMD "\"${CMAKE_COMMAND}\" --build . --target test")
     else("${CMAKE_GENERATOR}" MATCHES "Make")
       set(DISTCHECK_BUILD_CMD "\"${CMAKE_COMMAND}\" --build .")
       set(DISTCHECK_INSTALL_CMD "\"${CMAKE_COMMAND}\" --build . --target install")
