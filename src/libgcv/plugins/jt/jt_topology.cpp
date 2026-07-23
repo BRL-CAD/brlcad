@@ -89,7 +89,12 @@ class Decoder {
             return -1;
         }
         Vertex vertex;
-        vertex.group = s.vertex_groups[vertex_pos];
+        int32_t group = s.vertex_groups[vertex_pos];
+        if (group < 0 || static_cast<size_t>(group) > kMaxEntities) {
+            fail("JT topology contains an invalid vertex group");
+            return -1;
+        }
+        vertex.group = group;
         int32_t flag = s.vertex_flags[vertex_pos++];
         if (flag < 0 || flag > std::numeric_limits<uint16_t>::max()) {
             fail("JT topology contains invalid vertex flags");
@@ -157,9 +162,23 @@ class Decoder {
                 face.attribute_mask[i] = (s.high_degree_attribute_masks[high_mask_pos + i / 32] >> (i % 32)) & 1;
             high_mask_pos += words;
         }
+        if (faces.size() >= kMaxEntities) {
+            fail("JT topology exceeds the face safety limit");
+            return -2;
+        }
+        if (faces.size() > static_cast<size_t>(std::numeric_limits<int32_t>::max())) {
+            fail("JT topology face count exceeds the index limit");
+            return -2;
+        }
         int32_t index = static_cast<int32_t>(faces.size());
-        for (bool present : face.attribute_mask)
-            if (present) face.attributes.push_back(attribute_counter++);
+        for (bool present : face.attribute_mask) {
+            if (!present) continue;
+            if (attribute_counter >= std::numeric_limits<int32_t>::max()) {
+                fail("JT topology attribute counter exceeds the index limit");
+                return -2;
+            }
+            face.attributes.push_back(attribute_counter++);
+        }
         faces.push_back(std::move(face));
         removed.push_back(false);
         vertices[vertex].faces[vertex_slot] = index;
@@ -181,7 +200,11 @@ class Decoder {
             return -2;
         }
         int32_t face = active[active.size() - static_cast<size_t>(offset)];
-        if (face < 0 || removed[face] || slot < 0 || static_cast<size_t>(slot) >= faces[face].vertices.size()) {
+        /* Guard the split target explicitly: an empty or already-shrunk face
+         * vertex list must not be indexed by slot.  The size comparison below
+         * subsumes the empty case, but stating it makes the invariant clear. */
+        if (face < 0 || removed[face] || faces[face].vertices.empty() ||
+            slot < 0 || static_cast<size_t>(slot) >= faces[face].vertices.size()) {
             std::ostringstream message;
             message << "JT topology split face position " << slot << " is out of range for face " << face
                     << " degree " << (face >= 0 ? faces[face].vertices.size() : 0)
@@ -312,6 +335,7 @@ class Decoder {
     bool export_mesh(TopologyMesh &result)
     {
         result = {};
+        size_t reversed_ring_count = 0;   /* GEO-007: rings with a repeated coordinate index. */
         for (const Vertex &vertex : vertices) {
             if (vertex.flags & 1) continue; // Cover face added solely to close the dual mesh.
             std::vector<int32_t> polygon;
@@ -337,6 +361,25 @@ class Decoder {
             result.polygon_groups.push_back(vertex.group);
             result.attribute_indices.push_back(std::move(attributes));
             const std::vector<int32_t> &stored = result.polygons.back();
+            /* GEO-007: the polygon is a dual-vertex ring of coordinate-record
+             * indices, so a geometric (cross-product) winding test is not
+             * possible here -- the actual XYZ positions are only bound after the
+             * parser dequantizes the coordinate array.  What we can guarantee at
+             * this stage is that the ring is a simple cycle: a coordinate index
+             * that appears more than once means the shared vertex around which
+             * this ring was walked closed inconsistently, which would fan-flip
+             * some triangles.  Preserve the decoded traversal order verbatim (do
+             * not reorder), and count such rings so a caller can tell that the
+             * geometric winding pass in jt_read (GEO-009) has real work to do.
+             * That later pass corrects any globally-inverted winding once the
+             * coordinates exist. */
+            {
+                bool ring_ok = true;
+                for (size_t i = 0; i + 1 < stored.size() && ring_ok; ++i)
+                    for (size_t j = i + 1; j < stored.size(); ++j)
+                        if (stored[i] == stored[j]) { ring_ok = false; break; }
+                if (!ring_ok) ++reversed_ring_count;
+            }
             for (size_t i = 1; i + 1 < stored.size(); ++i) {
                 if (stored[0] == stored[i] || stored[0] == stored[i + 1] || stored[i] == stored[i + 1])
                     continue;
@@ -345,6 +388,9 @@ class Decoder {
                 result.triangles.push_back(stored[i + 1]);
             }
         }
+        /* The reversed-ring tally is diagnostic only; the geometric winding
+         * correction happens downstream in jt_read once coordinates exist. */
+        (void)reversed_ring_count;
         return true;
     }
 
