@@ -3382,11 +3382,21 @@ main(int argc, char *argv[])
 	     * old channel begins tearing down, so no such sync is required.
 	     * The old channel was also backed by INVALID_HANDLE_VALUE (no
 	     * console), so no I/O threads were ever successfully dispatched on
-	     * it. */
+	     * it.
+	     *
+	     * Critically, the new channel must own its OWN duplicate of the
+	     * pipe-write handle rather than the native HANDLE already owned by
+	     * CRT fd 1/2.  If Tcl were handed the CRT's handle directly, both
+	     * Tcl (on channel teardown) and the CRT (when mged_restore_stdio's
+	     * dup2 replaces the descriptor at exit) would CloseHandle the same
+	     * handle — a double close that intermittently corrupts whatever
+	     * handle Windows has since recycled into that slot, trashing the
+	     * stdout stream on quit.  mged_dup_file_channel() performs the
+	     * DuplicateHandle so ownership stays separate, matching the
+	     * discipline mged_restore_stdio() relies on. */
 	    {
 		Tcl_Channel old_out = Tcl_GetStdChannel(TCL_STDOUT);
-		Tcl_Channel wout = Tcl_MakeFileChannel(
-		    (ClientData)_get_osfhandle(fileno(stdout)), TCL_WRITABLE);
+		Tcl_Channel wout = mged_dup_file_channel(fileno(stdout), TCL_WRITABLE);
 		if (wout) {
 		    Tcl_SetChannelOption(s->interp, wout, "-blocking", "false");
 		    Tcl_SetChannelOption(s->interp, wout, "-buffering", "line");
@@ -3399,8 +3409,7 @@ main(int argc, char *argv[])
 		}
 
 		Tcl_Channel old_err = Tcl_GetStdChannel(TCL_STDERR);
-		Tcl_Channel werr = Tcl_MakeFileChannel(
-		    (ClientData)_get_osfhandle(fileno(stderr)), TCL_WRITABLE);
+		Tcl_Channel werr = mged_dup_file_channel(fileno(stderr), TCL_WRITABLE);
 		if (werr) {
 		    Tcl_SetChannelOption(s->interp, werr, "-blocking", "false");
 		    Tcl_SetChannelOption(s->interp, werr, "-buffering", "line");
