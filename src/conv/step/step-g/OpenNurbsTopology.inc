@@ -925,15 +925,26 @@ EdgeCurve::LoadONBrep(ON_Brep *brep)
 	    source_start.DistanceTo(vertex) : DBL_MAX;
 	const double end_gap = source_end.IsValid() ?
 	    source_end.DistanceTo(vertex) : DBL_MAX;
-	const double adjustment_limit = maximum_verified_edge_tolerance(
+	/* This edit reconciles a source curve endpoint with an authoritative STEP
+	 * topology vertex.  Use the dedicated vertex-mismatch ceiling, whose
+	 * dense chord-length scale handles nearly closed splines without granting
+	 * the same allowance to ordinary edge/surface locus errors. */
+	const double adjustment_limit = maximum_verified_edge_vertex_tolerance(
 	    edge.EdgeCurveOf(), LocalUnits::tolerance);
 	if (start_gap <= adjustment_limit && end_gap <= adjustment_limit) {
 	    std::unique_ptr<ON_Curve> candidate(edge.DuplicateCurve());
 	    const ON_Interval source_domain = edge.Domain();
-	    bool valid = candidate && source_domain.IsIncreasing() &&
-		candidate->SetStartPoint(vertex) && candidate->SetEndPoint(vertex) &&
-		candidate->ChangeDimension(3) && candidate->IsValid() &&
-		candidate->IsClosed();
+	    bool valid = candidate && source_domain.IsIncreasing();
+	    const bool start_set = valid && candidate->SetStartPoint(vertex);
+	    valid = valid && start_set;
+	    const bool end_set = valid && candidate->SetEndPoint(vertex);
+	    valid = valid && end_set;
+	    const bool dimension_set = valid && candidate->ChangeDimension(3);
+	    valid = valid && dimension_set;
+	    const bool curve_valid = valid && candidate->IsValid();
+	    valid = valid && curve_valid;
+	    const bool curve_closed = valid && candidate->IsClosed();
+	    valid = valid && curve_closed;
 	    double maximum_displacement = 0.0;
 	    for (int sample = 0; valid &&
 		    sample <= kDenseLiftValidationSegments; ++sample) {
@@ -967,7 +978,25 @@ EdgeCurve::LoadONBrep(ON_Brep *brep)
 		    step->RecordRepair(id, "EDGE_CURVE", "edge_geometry",
 			"closed an open spline edge at its asserted STEP topology vertex");
 		}
+	    } else if (step->Verbose()) {
+		std::cerr << "EDGE_CURVE #" << id
+		    << ": bounded closed-edge endpoint repair rejected"
+		    << " gaps=" << start_gap << '/' << end_gap
+		    << " limit=" << adjustment_limit
+		    << " start-set=" << start_set
+		    << " end-set=" << end_set
+		    << " dimension-set=" << dimension_set
+		    << " curve-valid=" << curve_valid
+		    << " curve-closed=" << curve_closed
+		    << " maximum-displacement=" << maximum_displacement
+		    << " adjusted-tolerance=" << adjusted_tolerance
+		    << std::endl;
 	    }
+	} else if (step->Verbose()) {
+	    std::cerr << "EDGE_CURVE #" << id
+		<< ": bounded closed-edge endpoint repair rejected by gaps="
+		<< start_gap << '/' << end_gap << " limit="
+		<< adjustment_limit << std::endl;
 	}
     }
 
@@ -1632,8 +1661,21 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 	    const double bounded_projection_limit = bounded_nurbs_first_pass ?
 		std::max(LocalUnits::tolerance, bounded_adjustment_limit /
 		    kMeasuredToleranceSafetyFactor) : LocalUnits::tolerance;
+	    const double feature_resolution = short_curve_pullback_resolution(
+		curve, LocalUnits::tolerance);
+	    /* Keep ordinary edges on the established model-tolerance path.  Only
+	     * when the curve itself proves that its feature scale is below that
+	     * tolerance do we tighten the numerical solve and flatness criteria.
+	     * within_distance_tol remains the independent source-geometry
+	     * acceptance bound; conflating it with convergence is what previously
+	     * collapsed real sub-tolerance edges to a single UV. */
+	    const bool sub_tolerance_feature = feature_resolution <
+		0.1 * LocalUnits::tolerance *
+		    (1.0 - 16.0 * DBL_EPSILON);
+	    const double numerical_resolution = sub_tolerance_feature ?
+		feature_resolution : LocalUnits::tolerance;
 	    edge_data = pullback_samples(surface, curve, LocalUnits::tolerance,
-		LocalUnits::tolerance, LocalUnits::tolerance,
+		numerical_resolution, numerical_resolution,
 		bounded_projection_limit, result.pullback_context);
 	    if (edge_data && bounded_nurbs_first_pass &&
 		edge_data->rejected_projection_samples == 0 &&
@@ -1652,8 +1694,8 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		const double resolution = short_curve_pullback_resolution(curve,
 		    LocalUnits::tolerance);
 		PBCData *refined = pullback_samples(surface, curve,
-		    LocalUnits::tolerance, LocalUnits::tolerance,
-		    resolution, resolution, result.pullback_context);
+		    LocalUnits::tolerance, resolution, resolution,
+		    bounded_projection_limit, result.pullback_context);
 		if (refined && pullback_sample_count(refined) >= 2) {
 		    destroy_pullback_data(edge_data);
 		    edge_data = refined;
@@ -1982,6 +2024,25 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 	    }
 	}
     }
+    if (step && !step->ImportOptions().exact &&
+	    step->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
+	std::string pole_repair_failure;
+	if (repair_near_degenerate_nurbs_boundary(curve_pullback_samples,
+		brep, face, surface, LocalUnits::tolerance, item_scale,
+		step, id, &pole_repair_failure)) {
+	    for (std::map<PBCData *, ON_Curve *>::iterator exact =
+		    exact_pullbacks.begin(); exact !=
+		    exact_pullbacks.end(); ++exact)
+		delete exact->second;
+	    exact_pullbacks.clear();
+	    step->RecordRepair(id, "EDGE_LOOP", "face_geometry",
+		"collapsed an identity-proven near-degenerate NURBS pole boundary");
+	} else if (step->Verbose() && !pole_repair_failure.empty()) {
+	    std::cerr << "EDGE_LOOP #" << id
+		<< ": near-degenerate NURBS pole repair retained source: "
+		<< pole_repair_failure << std::endl;
+	}
+    }
     const auto log_adjusted_endpoints = [this](const char *stage,
 	const std::list<PBCData *> &pullbacks) {
 	if (!step || !step->Verbose()) return;
@@ -2261,6 +2322,47 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		!pullback->segments || pullback->segments->empty() ||
 		!pullback->edge)
 	    return false;
+	/* Distinct topology vertices can bound a real curve shorter than the
+	 * declared file uncertainty.  In that case one model-tolerance ball
+	 * contains both vertices, so the generic "retained either endpoint"
+	 * test below cannot detect a seam operation which collapses the complete
+	 * curve onto their midpoint.  Preserve the ordered source-curve endpoint
+	 * correspondence at the feature-relative numerical resolution. */
+	const double feature_resolution = short_curve_pullback_resolution(
+	    pullback->curve, LocalUnits::tolerance);
+	const bool sub_tolerance_feature = feature_resolution <
+	    0.1 * LocalUnits::tolerance *
+		(1.0 - 16.0 * DBL_EPSILON);
+	if (sub_tolerance_feature) {
+	    ON_2dPointArray *first_segment = pullback->segments->front();
+	    ON_2dPointArray *last_segment = pullback->segments->back();
+	    if (!first_segment || !last_segment ||
+		    first_segment->Count() == 0 || last_segment->Count() == 0)
+		return false;
+	    const ON_2dPoint sample_endpoints[2] = {
+		(*first_segment)[0],
+		(*last_segment)[last_segment->Count() - 1]
+	    };
+	    const ON_3dPoint source_endpoints[2] = {
+		pullback->order_reversed ? pullback->curve->PointAtEnd() :
+		    pullback->curve->PointAtStart(),
+		pullback->order_reversed ? pullback->curve->PointAtStart() :
+		    pullback->curve->PointAtEnd()
+	    };
+	    const double identity_tolerance = std::max(feature_resolution,
+		pullback->maximum_projection_distance *
+		    kMeasuredToleranceSafetyFactor);
+	    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+		const ON_3dPoint lift = pullback->surf->PointAt(
+		    sample_endpoints[endpoint].x,
+		    sample_endpoints[endpoint].y);
+		if (!lift.IsValid() || !source_endpoints[endpoint].IsValid() ||
+			lift.DistanceTo(source_endpoints[endpoint]) >
+			    identity_tolerance)
+		    return false;
+	    }
+	    return true;
+	}
 	const int edge_vertices[2] = {pullback->edge->m_vi[0],
 	    pullback->edge->m_vi[1]};
 	if (edge_vertices[0] < 0 || edge_vertices[1] < 0 ||
@@ -2496,7 +2598,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		delete exact->second;
 	    exact_pullbacks.clear();
 	    step->RecordRepair(id, "EDGE_LOOP", "edge_list",
-		"relocated a closed rational surface seam to an exact full-period topology cut");
+		"relocated a closed rational surface seam away from an exact STEP boundary");
 	    } else if (step->Verbose() && !relocation_failure.empty()) {
 		std::cerr << "EDGE_LOOP #" << id
 		    << ": periodic surface seam relocation rejected: "

@@ -19,8 +19,8 @@ foreach(expected
     "\"geometry_written\":1"
     "\"geometry_skipped\":0"
     "\"invalid_breps\":0"
-    "regenerated a collapsed seam from exact adjacent endpoints"
-    "regenerated paired seam pcurves from the exact edge"
+    "normalized a restored full-period seam pair within model tolerance"
+    "regenerated closed-edge boundary pcurve within model tolerance"
     "corrected a demonstrably inconsistent STEP loop orientation from closed-shell edge-use constraints")
   string(FIND "${report_text}" "${expected}" found)
   if(found EQUAL -1)

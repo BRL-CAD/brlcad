@@ -24,7 +24,7 @@ foreach(expected
     "\"invalid_breps\":0"
     "split an exact STEP edge at a native periodic parameter discontinuity"
     "translated an exact pcurve onto the native periodic surface domain"
-    "relocated a closed NURBS surface seam outside an ordinary face boundary")
+    "relocated a closed surface seam outside an exact face boundary")
   string(FIND "${safe_report}" "${expected}" found)
   if(found EQUAL -1)
     message(FATAL_ERROR "safe report does not contain ${expected}:\n${safe_report}")

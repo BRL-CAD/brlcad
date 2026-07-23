@@ -32,6 +32,7 @@
 #include <condition_variable>
 #include <deque>
 #include <exception>
+#include <iomanip>
 
 #include "brep/cdt.h"
 #include "brep/pullback.h"
@@ -136,6 +137,13 @@ constexpr double kMinimumSeamRelocationGapFraction = 1.0e-3;
  * exact integral period and remains subject to dense lift validation. */
 constexpr double kPeriodicParameterSnapFraction = 1.0e-5;
 
+/* A surface which declares itself closed can still differ slightly under raw
+ * OpenNURBS evaluation at parameter values separated by one complete period.
+ * Safe repair may reflect a densely measured closure discrepancy in the local
+ * trim tolerance, but never by more than twice the previously established
+ * edge/vertex tolerance.  --exact does not use this allowance. */
+constexpr double kPeriodicClosureToleranceMaximumScale = 2.0;
+
 /* A seeded solve on a closed spline can converge to an extrapolated image
  * many periods from the supplied pcurve.  More than one and a half periods
  * cannot be the nearest equivalent image; retry in the native domain before
@@ -201,6 +209,15 @@ constexpr double kRegenerationMaximumRelativeMismatch = 2.0e-2;
 constexpr double kRegenerationMaximumRelativeItemMismatch = 2.0e-3;
 constexpr double kRegenerationToleranceSafety = 1.05;
 
+/* A same-vertex STEP edge asserts zero topological extent.  If its sole
+ * boundary use instead carries a short, geometrically open spline spur, safe
+ * mode may remove that contradiction only after the complete curve stays
+ * within five ten-thousandths of the finished item's diagonal.  This is four
+ * times tighter than the general item-scale edge/surface mismatch ceiling and
+ * is used only for open, single-use, zero-length topology edges; --exact and
+ * genuinely closed small features never enter the repair. */
+constexpr double kZeroLengthTopologyMaximumRelativeItemMismatch = 5.0e-4;
+
 /* Some exporters encode a surface boundary as topologically collapsed to one
  * STEP vertex even though the supplied NURBS boundary misses that vertex by
  * more than the declared uncertainty.  A singular trim is the exact
@@ -218,13 +235,6 @@ constexpr double kCollapsedBoundaryMaximumRelativeMismatch = 5.0e-3;
  * bad trim association to the source edge/surface pair. */
 constexpr int kRegenerationMeasurementSegments =
     4 * kDenseValidationSegments;
-
-/* A coherent edge-driven loop regeneration may leave a few decimal-source
- * parameter units between adjacent endpoints even though both lifts match the
- * same STEP vertex.  Retain such a candidate only below this fraction of the
- * largest surface domain; the following densely validated endpoint pass must
- * still close the join exactly.  This is not a geometric tolerance. */
-constexpr double kPeriodicRegenerationJoinParameterFraction = 1.0e-5;
 
 /* A surface boundary is a one-dimensional curve, but a seed obtained from a
  * global surface closest-point query can lie on the wrong repeated branch of
@@ -352,6 +362,14 @@ constexpr uint64_t kMaximumComplexExactPullbackMilliseconds = 15 * 60 * 1000;
 constexpr uint64_t kExactPullbackMillisecondsPerFace = 500;
 constexpr size_t kComplexExactSolidFaceThreshold = 64;
 constexpr uint64_t kMaximumSurfaceModelPullbackMilliseconds = 120000;
+/* Completed MAZ measurements show that each 1334-face detached solid can
+ * require roughly 600 MiB while exact pullbacks and repair candidates coexist.
+ * Running five such roots concurrently exceeded the 2 GiB importer gate even
+ * though each root made steady progress.  At this explicit power-of-two
+ * topology threshold, admit one root at a time and lend the remaining worker
+ * capacity to its face-level work.  Smaller roots retain ordinary root-level
+ * parallelism. */
+constexpr size_t kExclusivePullbackTopologyFaceThreshold = 1024;
 /* A surface with thousands of tensor-product spans makes each global
  * closest-point query materially different from ordinary analytic and small
  * spline faces.  The CRM problem face has 34,277 spans; reserving the machine

@@ -1030,6 +1030,26 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	job.status = BREP_CONVERSION_FAILED;
 	return;
     }
+    /* Capture the exporter-supplied FACE_OUTER_BOUND choices before topology
+     * finalization computes replacement loop types from pcurves.  A later
+     * bounded whole-solid trial must test the actual malformed STEP inputs,
+     * not derived flags left by an earlier repair pass. */
+    const std::vector<SuppliedFaceOuterBounds> supplied_outer_ambiguities =
+	supplied_face_outer_bound_ambiguities(job.brep.get());
+    if (wrapper->Verbose()) {
+	for (std::vector<SuppliedFaceOuterBounds>::const_iterator ambiguity =
+		supplied_outer_ambiguities.begin();
+		ambiguity != supplied_outer_ambiguities.end(); ++ambiguity) {
+	    std::cerr << job.entity_type << " #" << job.entity_id
+		<< ": captured supplied FACE.wr2 alternatives on F"
+		<< ambiguity->face_index << " STEP loops";
+	    for (std::vector<SuppliedOuterBoundCandidate>::const_iterator loop =
+		    ambiguity->candidates.begin();
+		    loop != ambiguity->candidates.end(); ++loop)
+		std::cerr << " #" << loop->loop_step_id;
+	    std::cerr << std::endl;
+	}
+    }
     std::string unsafe_topology;
     if (!brep_topology_references_are_safe(job.brep.get(), &unsafe_topology)) {
 	job.validation_message = "unsafe OpenNURBS topology before derived-flag "
@@ -1125,6 +1145,17 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	ON_TextLog repaired_validation_log(validation_messages);
 	structurally_valid = job.brep->IsValid(&repaired_validation_log);
 	if (work_expired("repaired OpenNURBS structural validation"))
+	    return;
+    }
+    if (!job.faceted &&
+	    (!structurally_valid || (job.is_region && !job.brep->IsSolid())) &&
+	    retry_unique_face_bound_classification(job.brep.get(), wrapper,
+		job.entity_id, job.entity_type, job.is_region,
+		supplied_outer_ambiguities)) {
+	validation_messages = ON_wString();
+	ON_TextLog face_bound_validation_log(validation_messages);
+	structurally_valid = job.brep->IsValid(&face_bound_validation_log);
+	if (work_expired("ambiguous FACE_BOUND interpretation retry"))
 	    return;
     }
     if (!structurally_valid && !job.faceted &&
@@ -1241,8 +1272,14 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	 * deliberately bounded, and a large BREP can otherwise fill that bound
 	 * with unrelated earlier closure warnings before reaching the actionable
 	 * loop. */
-	for (std::set<int>::const_iterator li = detailed_loops.begin();
-		li != detailed_loops.end(); ++li) {
+	std::vector<int> ordered_detailed_loops = rejected_loops;
+	for (std::set<int>::const_iterator sibling = detailed_loops.begin();
+		sibling != detailed_loops.end(); ++sibling)
+	    if (std::find(rejected_loops.begin(), rejected_loops.end(),
+		    *sibling) == rejected_loops.end())
+		ordered_detailed_loops.push_back(*sibling);
+	for (std::vector<int>::const_iterator li = ordered_detailed_loops.begin();
+		li != ordered_detailed_loops.end(); ++li) {
 	    if (*li < 0 || *li >= job.brep->m_L.Count())
 		continue;
 	    const ON_BrepLoop &loop = job.brep->m_L[*li];
@@ -1435,6 +1472,15 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    << " loops=" << job.brep->m_L.Count()
 	    << " trims=" << job.brep->m_T.Count()
 	    << " edges=" << job.brep->m_E.Count() << std::endl;
+    const auto one_use_edge_count = [](const ON_Brep *brep) {
+	size_t count = 0;
+	if (!brep)
+	    return count;
+	for (int ei = 0; ei < brep->m_E.Count(); ++ei)
+	    if (brep->m_E[ei].m_ti.Count() == 1)
+		++count;
+	return count;
+    };
     bool solid = job.brep->IsSolid();
     if (work_expired("BREP solidness validation"))
 	return;
@@ -1442,14 +1488,39 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
 	std::string merged_edge_details;
 	size_t merged_edge_repairs = 0;
-	for (size_t attempt = 0; attempt < 16 && !solid; ++attempt) {
+	size_t remaining_one_use_edges = one_use_edge_count(job.brep.get());
+	/* Each accepted merge consumes two one-use boundary edges and is
+	 * transactionally validated.  The initial boundary count is therefore a
+	 * topology-derived upper bound which works for both small fixtures and
+	 * large patterned solids without an arbitrary iteration limit. */
+	const size_t maximum_attempts = remaining_one_use_edges;
+	for (size_t attempt = 0;
+		attempt < maximum_attempts && remaining_one_use_edges > 0;
+		++attempt) {
+	    std::ostringstream progress_detail;
+	    progress_detail << "remaining one-use edges="
+		<< remaining_one_use_edges;
+	    wrapper->SetProgressDetail(
+		"reconciling exact periodic boundary edge pairs",
+		job.entity_id, static_cast<uint64_t>(attempt),
+		static_cast<uint64_t>(maximum_attempts), "attempts",
+		progress_detail.str());
 	    const size_t repaired = merge_one_exact_periodic_boundary_edge_pair(
 		job.brep.get(), &merged_edge_details);
 	    if (!repaired)
 		break;
 	    merged_edge_repairs += repaired;
-	    solid = job.brep->IsSolid();
+	    const size_t next_one_use_edges =
+		one_use_edge_count(job.brep.get());
+	    if (next_one_use_edges >= remaining_one_use_edges) {
+		merged_edge_details =
+		    "an accepted periodic edge merge did not reduce the one-use edge count";
+		break;
+	    }
+	    remaining_one_use_edges = next_one_use_edges;
 	}
+	if (merged_edge_repairs)
+	    solid = job.brep->IsSolid();
 	for (size_t repair = 0; repair < merged_edge_repairs; ++repair)
 	    wrapper->RecordRepair(job.entity_id, job.entity_type, "edge_topology",
 		"merged two coincident periodic STEP boundary edges into one exact seam edge");
@@ -1468,14 +1539,40 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
 	std::string split_use_failure;
 	size_t split_use_repairs = 0;
-	for (size_t attempt = 0; attempt < 16 && !solid; ++attempt) {
+	size_t remaining_one_use_edges = one_use_edge_count(job.brep.get());
+	/* A successful subdivision propagation deletes one unsplit one-use edge
+	 * and turns its exact child path into reciprocal two-use edges.  Hence the
+	 * current one-use edge count is a strict termination bound.  This replaces
+	 * the former 16-pass cap, which left large repeated solids artificially
+	 * open after only a fraction of their proven subdivisions were repaired. */
+	const size_t maximum_attempts = remaining_one_use_edges;
+	for (size_t attempt = 0;
+		attempt < maximum_attempts && remaining_one_use_edges > 0;
+		++attempt) {
+	    std::ostringstream progress_detail;
+	    progress_detail << "remaining one-use edges="
+		<< remaining_one_use_edges;
+	    wrapper->SetProgressDetail(
+		"propagating exact shared-edge subdivisions",
+		job.entity_id, static_cast<uint64_t>(attempt),
+		static_cast<uint64_t>(maximum_attempts), "attempts",
+		progress_detail.str());
 	    const size_t repaired = reconcile_pre_split_step_edge_uses(
 		job.brep.get(), &split_use_failure);
 	    if (!repaired)
 		break;
 	    split_use_repairs += repaired;
-	    solid = job.brep->IsSolid();
+	    const size_t next_one_use_edges =
+		one_use_edge_count(job.brep.get());
+	    if (next_one_use_edges >= remaining_one_use_edges) {
+		split_use_failure =
+		    "an accepted edge subdivision did not reduce the one-use edge count";
+		break;
+	    }
+	    remaining_one_use_edges = next_one_use_edges;
 	}
+	if (split_use_repairs)
+	    solid = job.brep->IsSolid();
 	for (size_t repair = 0; repair < split_use_repairs; ++repair)
 	    wrapper->RecordRepair(job.entity_id, job.entity_type, "edge_topology",
 		"propagated one exact periodic edge subdivision to its adjacent STEP face");
@@ -3333,19 +3430,34 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 		++active_workers;
 		publish_scheduler_locked();
 	    }
-	    const bool exclusive_pullback =
+	    const bool exclusive_for_memory = jobs.size() > 1 &&
+		jobs[index]->topology_face_count >=
+		    kExclusivePullbackTopologyFaceThreshold;
+	    const bool exclusive_pullback = exclusive_for_memory ||
 		jobs[index]->maximum_pullback_span_estimate >=
-		kExclusivePullbackSurfaceSpanThreshold;
+		    kExclusivePullbackSurfaceSpanThreshold;
 	    wrapper->GeometryWorkerStarted(jobs[index]->entity_id,
 		jobs[index]->entity_type, exclusive_pullback);
-	    if (exclusive_pullback)
+	    if (exclusive_pullback) {
+		std::ostringstream reason;
+		reason << "reserved nested geometry workers for a complex item";
+		if (jobs[index]->topology_face_count >=
+			kExclusivePullbackTopologyFaceThreshold)
+		    reason << " with " << jobs[index]->topology_face_count
+			<< " topology faces";
+		if (jobs[index]->maximum_pullback_span_estimate >=
+			kExclusivePullbackSurfaceSpanThreshold)
+		    reason << (jobs[index]->topology_face_count >=
+			    kExclusivePullbackTopologyFaceThreshold ?
+			    " and a surface with an estimated " :
+			    " with a surface having an estimated ")
+			<< jobs[index]->maximum_pullback_span_estimate
+			<< " tensor-product spans";
 		wrapper->RecordDiagnostic(
 		    brlcad::step::DiagnosticSeverity::Information,
 		    jobs[index]->entity_id, jobs[index]->entity_type,
-		    "scheduler", "reserved nested geometry workers for a surface "
-		    "with an estimated " +
-		    std::to_string(jobs[index]->maximum_pullback_span_estimate) +
-		    " tensor-product spans");
+		    "scheduler", reason.str());
+	    }
 	    try {
 		convert_detached_brep_job(*jobs[index], wrapper);
 	    } catch (...) {

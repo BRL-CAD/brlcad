@@ -122,6 +122,16 @@ namespace {
  * a request to approximate the edge with 1024 segments. */
 constexpr int kDenseLiftValidationSegments = 1024;
 
+/* A triangular spline patch can express its apex by omitting the collapsed
+ * parameter-boundary trim.  Require the two adjacent exact STEP edges to span
+ * at least three quarters of that boundary before considering a missing-pole
+ * repair.  Candidate surface edits receive a bounded 64-by-64 interior audit;
+ * every retained edge is then regenerated and receives the ordinary
+ * 1024-segment exact-locus validation. */
+constexpr int kDegenerateBoundarySurfaceGridSegments = 64;
+constexpr double kDegenerateBoundaryMinimumParameterSpanFraction = 0.75;
+constexpr double kDegenerateBoundaryMinimumNormalAlignment = 0.5;
+
 /* Linear span scans are cheaper for the small curves that dominate ordinary
  * models.  At 32 spans, an R-tree is shallow enough to amortize its build cost
  * while avoiding the quadratic validation behavior seen on imported curves

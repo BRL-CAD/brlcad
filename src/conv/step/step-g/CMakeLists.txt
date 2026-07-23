@@ -570,6 +570,59 @@ if(BRLCAD_ENABLE_STEP)
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band.cmake
     )
     brlcad_add_test(
+      NAME ap203_toroidal_band_profile_seam
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DMGED=$<TARGET_FILE:mged>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band_profile_seam.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band_profile_seam.json
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band_profile_seam.g
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band_profile_seam.cmake
+    )
+    brlcad_add_test(
+      NAME ap203_toroidal_band_topology_seam
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DMGED=$<TARGET_FILE:mged>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band_topology_seam.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band_topology_seam.json
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band_topology_seam.g
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band_topology_seam.cmake
+    )
+    brlcad_add_test(
+      NAME ap203_doubly_periodic_segmented_band
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DMGED=$<TARGET_FILE:mged>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_doubly_periodic_segmented_band.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_doubly_periodic_segmented_band.json
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_doubly_periodic_segmented_band.g
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_doubly_periodic_segmented_band.cmake
+    )
+    brlcad_add_test(
+      NAME ap203_torus_seam_relocation
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DMGED=$<TARGET_FILE:mged>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_torus_seam_relocation.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_torus_seam_relocation.json
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_torus_seam_relocation.g
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_torus_seam_relocation.cmake
+    )
+    brlcad_add_test(
+      NAME ap203_near_degenerate_nurbs_pole
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_near_degenerate_nurbs_pole.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_near_degenerate_nurbs_pole.json
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_near_degenerate_nurbs_pole.cmake
+    )
+    brlcad_add_test(
       NAME ap203_closed_nurbs_interval
       COMMAND
         ${CMAKE_COMMAND}
@@ -587,6 +640,17 @@ if(BRLCAD_ENABLE_STEP)
         -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_closed_curve_seam_interval.stp
         -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_closed_curve_seam_interval.json
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_closed_curve_seam_interval.cmake
+    )
+    brlcad_add_test(
+      NAME ap203_unclamped_closed_curve_knots
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DMGED=$<TARGET_FILE:mged>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_unclamped_closed_curve_knots.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_unclamped_closed_curve_knots.json
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_unclamped_closed_curve_knots.g
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_unclamped_closed_curve_knots.cmake
     )
     brlcad_add_test(
       NAME ap203_bounded_parent_curve
@@ -639,13 +703,25 @@ cmakefiles(
   tests/ap203_closed_nurbs_interval.cmake
   tests/ap203_closed_nurbs_interval.stp
   tests/ap203_direct_manifold.stp
+  tests/ap203_doubly_periodic_segmented_band.cmake
+  tests/ap203_doubly_periodic_segmented_band.stp
   tests/ap203_lazy_positional.cmake
   tests/ap203_lazy_relationships.cmake
+  tests/ap203_near_degenerate_nurbs_pole.cmake
+  tests/ap203_near_degenerate_nurbs_pole.stp
   tests/ap203_nist_mbe_pmi_6.cmake
   tests/ap203_periodic_zero_split.cmake
   tests/ap203_periodic_zero_split.stp
   tests/ap203_toroidal_band.cmake
   tests/ap203_toroidal_band.stp
+  tests/ap203_toroidal_band_profile_seam.cmake
+  tests/ap203_toroidal_band_profile_seam.stp
+  tests/ap203_toroidal_band_topology_seam.cmake
+  tests/ap203_toroidal_band_topology_seam.stp
+  tests/ap203_torus_seam_relocation.cmake
+  tests/ap203_torus_seam_relocation.stp
+  tests/ap203_unclamped_closed_curve_knots.cmake
+  tests/ap203_unclamped_closed_curve_knots.stp
 )
 
 # Local Variables:

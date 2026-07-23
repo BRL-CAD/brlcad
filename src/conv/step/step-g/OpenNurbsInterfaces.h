@@ -12,6 +12,7 @@
 #define CONV_STEP_OPENNURBSINTERFACES_H
 
 #include <cstddef>
+#include <functional>
 #include <string>
 
 class ON_Brep;
@@ -30,7 +31,10 @@ class ON_3dPoint;
 bool step_curve_locus_contains_points(const ON_Curve *curve,
     const ON_3dPoint *points, std::size_t point_count, double tolerance,
     std::size_t *rejected_index = NULL,
-    double *rejected_distance = NULL);
+    double *rejected_distance = NULL,
+    const std::function<void(std::size_t, std::size_t,
+	const std::string &)> &progress =
+	std::function<void(std::size_t, std::size_t, const std::string &)>());
 
 /** Stitch independently constructed STEP faces using authoritative source
  * vertex/edge identities.  Edges are combined only after their endpoints and

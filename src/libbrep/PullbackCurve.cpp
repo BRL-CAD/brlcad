@@ -101,6 +101,15 @@ constexpr size_t kMaximumAdaptivePullbackSamples = 16384;
  * This is only a search ceiling; a result is accepted under the unchanged UV
  * seam and model-space lift tolerances. */
 constexpr int kMaximumSeamCrossingIterations = 64;
+/* Pullback subdivision and dense validation can call the cancellation query
+ * hundreds of millions of times on a large exact face.  Reading the
+ * per-thread CPU clock at every node made budget accounting substantially
+ * more expensive than the geometry it guarded (measured at about two thirds
+ * of closest-surface time on the 1334-face MAZ roots).  Poll the clock after
+ * this many bounded inner operations instead.  The user/signal callback is
+ * still queried on every call, an expired/stalled result remains sticky, and
+ * ClearPullbackWorkLimit() performs a final exact CPU charge. */
+constexpr uint64_t kPullbackClockPollOperations = 64;
 thread_local size_t closest_point_subdivision_nodes = 0;
 thread_local brlcad::PullbackCancellationCallback pullback_cancellation_callback = NULL;
 thread_local void *pullback_cancellation_context = NULL;
@@ -112,6 +121,7 @@ thread_local std::chrono::steady_clock::time_point pullback_last_progress =
     std::chrono::steady_clock::time_point::max();
 thread_local uint64_t pullback_stall_milliseconds = 0;
 thread_local uint64_t pullback_progress_operations = 0;
+thread_local uint64_t pullback_clock_poll_operations = 0;
 thread_local bool pullback_stalled = false;
 thread_local std::string pullback_seam_failure;
 
@@ -968,6 +978,7 @@ brlcad::SetPullbackWorkLimit(PullbackCancellationCallback cancellation_callback,
     pullback_stall_milliseconds = maximum_stall_milliseconds;
     pullback_last_progress = std::chrono::steady_clock::now();
     pullback_progress_operations = 0;
+    pullback_clock_poll_operations = 0;
     pullback_stalled = false;
 }
 
@@ -987,6 +998,7 @@ brlcad::ClearPullbackWorkLimit()
     pullback_last_progress = std::chrono::steady_clock::time_point::max();
     pullback_stall_milliseconds = 0;
     pullback_progress_operations = 0;
+    pullback_clock_poll_operations = 0;
     pullback_stalled = false;
 }
 
@@ -997,6 +1009,13 @@ brlcad::PullbackWorkCancelled()
     if (pullback_cancellation_callback &&
 	    pullback_cancellation_callback(pullback_cancellation_context))
 	return true;
+    if (pullback_deadline_expired || pullback_stalled)
+	return true;
+    if (!pullback_work_budget && !pullback_stall_milliseconds)
+	return false;
+    if (++pullback_clock_poll_operations < kPullbackClockPollOperations)
+	return false;
+    pullback_clock_poll_operations = 0;
     if (pullback_work_budget && pullback_work_budget->Expired(
 	    pullback_last_cpu_nanoseconds,
 	    pullback_local_progress_nanoseconds)) {
@@ -1033,10 +1052,15 @@ void
 brlcad::PullbackWorkProgress(uint64_t operations)
 {
     if (!operations) return;
-    if (pullback_work_budget)
+    const bool charge = pullback_progress_operations >
+	UINT64_MAX - operations ||
+	pullback_progress_operations + operations >=
+	    kPullbackClockPollOperations;
+    if (pullback_work_budget && charge)
 	pullback_work_budget->Charge(pullback_last_cpu_nanoseconds,
 	    pullback_local_progress_nanoseconds);
-    pullback_progress_operations += operations;
+    pullback_progress_operations = charge ? 0 :
+	pullback_progress_operations + operations;
     pullback_last_progress = std::chrono::steady_clock::now();
 }
 
@@ -4645,8 +4669,24 @@ pullback_samples_from_closed_surface(PBCData* data,
 		data->maximum_projection_distance = std::max(
 		    data->maximum_projection_distance, distance);
 	    if (pulled) {
+		/* PBC_SEAM_TOL is only a legacy UV-space candidate window.  It
+		 * must not erase a real feature which happens to lie closer than
+		 * that absolute parameter distance to a closed seam.  Snap the
+		 * candidate only when the snapped parameter still lifts to the
+		 * authoritative 3-D curve point at the caller's numerical
+		 * convergence tolerance.  Once proven, exact boundary equality is
+		 * sufficient for the crossing logic below; nearby unsnapped points
+		 * must remain eligible to form a genuine seam crossing. */
 		if (IsAtSeam(surf, pt, PBC_SEAM_TOL) > 0) {
-		    ForceToClosestSeam(surf, pt, PBC_SEAM_TOL);
+		    ON_2dPoint snapped(pt);
+		    ForceToClosestSeam(surf, snapped, PBC_SEAM_TOL);
+		    const ON_3dPoint target = curve->PointAt(curr_t);
+		    const ON_3dPoint snapped_lift = surf->PointAt(
+			snapped.x, snapped.y);
+		    if (target.IsValid() && snapped_lift.IsValid() &&
+			    snapped_lift.DistanceTo(target) <=
+				std::max(ON_ZERO_TOLERANCE, same_point_tol))
+			pt = snapped;
 		}
 		if (!have_previous) {
 		    // first point just append and set reference in prev_pt
@@ -4658,9 +4698,12 @@ pullback_samples_from_closed_surface(PBCData* data,
 		}
 		int udir= 0;
 		int vdir= 0;
-		if (ConsecutivePointsCrossClosedSeam(surf, pt, prev_pt, udir, vdir, PBC_SEAM_TOL)) {
-		    int pt_seam = surf->IsAtSeam(pt.x, pt.y);
-		    int prev_pt_seam = surf->IsAtSeam(prev_pt.x, prev_pt.y);
+		const double exact_seam_tolerance = ON_ZERO_TOLERANCE;
+		if (ConsecutivePointsCrossClosedSeam(surf, pt, prev_pt, udir,
+			vdir, exact_seam_tolerance)) {
+		    int pt_seam = IsAtSeam(surf, pt, exact_seam_tolerance);
+		    int prev_pt_seam = IsAtSeam(surf, prev_pt,
+			exact_seam_tolerance);
 		    if (pt_seam > 0) {
 			if ((prev_pt_seam > 0) && (samples->Count() == 1)) {
 			    samples->Empty();
@@ -4670,12 +4713,16 @@ pullback_samples_from_closed_surface(PBCData* data,
 			    if (pt_seam == 3) {
 				if (prev_pt_seam == 1) {
 				    pt.x = prev_pt.x;
-				    if (ConsecutivePointsCrossClosedSeam(surf, pt, prev_pt, udir, vdir, PBC_SEAM_TOL)) {
+				    if (ConsecutivePointsCrossClosedSeam(surf, pt,
+					    prev_pt, udir, vdir,
+					    exact_seam_tolerance)) {
 					SwapUVSeamPoint(surf, pt, 2);
 				    }
 				} else if (prev_pt_seam == 2) {
 				    pt.y = prev_pt.y;
-				    if (ConsecutivePointsCrossClosedSeam(surf, pt, prev_pt, udir, vdir, PBC_SEAM_TOL)) {
+				    if (ConsecutivePointsCrossClosedSeam(surf, pt,
+					    prev_pt, udir, vdir,
+					    exact_seam_tolerance)) {
 					SwapUVSeamPoint(surf, pt, 1);
 				    }
 				}

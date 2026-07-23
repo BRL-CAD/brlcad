@@ -41,6 +41,13 @@ if(NOT measured_pcurve_fallback EQUAL -1)
   message(FATAL_ERROR
     "NIST MBE PMI 6 used the loose-pcurve fallback instead of its exact regeneration path:\n${report_text}")
 endif()
+string(FIND "${report_text}"
+  "shifted an exact pcurve onto a singular trim's periodic branch"
+  nonnative_singular_branch)
+if(NOT nonnative_singular_branch EQUAL -1)
+  message(FATAL_ERROR
+    "NIST MBE PMI 6 retained an out-of-domain spherical pcurve branch:\n${report_text}")
+endif()
 
 execute_process(
   COMMAND "${MGED}" -c "${OUTPUT}" brep Document_item.s info

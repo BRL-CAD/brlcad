@@ -1475,6 +1475,24 @@ ToroidalSurface::LoadONBrep(ON_Brep *brep)
 	    double profile_scale = fabs(minor);
 	    if (profile_scale <= ON_SQRT_EPSILON) profile_scale = 1.0;
 	    profile->SetDomain(0.0, 2.0 * ON_PI * profile_scale);
+	    /* A horn torus has one point of its circular profile on the
+	     * revolution axis.  Keeping the circle's arbitrary default seam
+	     * opposite that point leaves the surface collapse in the middle of
+	     * the profile domain; an exact boundary crossing then requires an
+	     * out-of-domain pcurve whose raw OpenNURBS evaluation is not
+	     * necessarily periodic.  Put the private profile seam at the
+	     * identity-proven axis point instead.  This is an exact
+	     * reparameterization of the same analytic locus and is valid in
+	     * --exact mode as well as normal conversion. */
+	    const double radius_scale = std::max(1.0,
+		std::max(fabs(major), fabs(minor)));
+	    const bool horn_torus = fabs(fabs(major) - fabs(minor)) <=
+		ON_ZERO_TOLERANCE * radius_scale;
+	    if (horn_torus && !profile->ChangeClosedCurveSeam(
+		    profile->Domain().Mid())) {
+		delete profile;
+		return false;
+	    }
 
 	    ON_RevSurface *revolution = ON_RevSurface::New();
 	    revolution->m_curve = profile;

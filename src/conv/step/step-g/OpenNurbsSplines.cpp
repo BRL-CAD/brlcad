@@ -20,7 +20,11 @@
 class SDAI_Application_instance;
 #include "brep.h"
 
+#include <cmath>
 #include <iostream>
+#include <memory>
+#include <sstream>
+#include <vector>
 
 #include "STEPWrapper.h"
 #include "LocalUnits.h"
@@ -48,6 +52,155 @@ class SDAI_Application_instance;
 #include "RationalQuasiUniformSurface.h"
 #include "RationalUniformSurface.h"
 #include "UniformSurface.h"
+
+namespace {
+
+/*
+ * ISO 10303 represents a B-spline curve with the conventional full knot
+ * vector, whose length is cv_count + degree + 1.  OpenNURBS stores the same
+ * vector without the first and last superfluous knots, so its KnotCount() is
+ * two smaller.  In particular, neither omitted knot is necessarily outside
+ * [0,1], and omitting an entire first or last multiplicity changes valid
+ * unclamped and periodic parameterizations.
+ */
+static bool
+set_step_curve_knots(ON_NurbsCurve *curve,
+	const LIST_OF_INTEGERS &multiplicities, const LIST_OF_REALS &values,
+	std::string *failure)
+{
+    if (failure)
+	failure->clear();
+    if (!curve) {
+	if (failure)
+	    *failure = "could not allocate the OpenNURBS curve";
+	return false;
+    }
+    if (multiplicities.empty() || multiplicities.size() != values.size()) {
+	if (failure) {
+	    std::ostringstream message;
+	    message << "knot_multiplicities has " << multiplicities.size()
+		<< " entries but knots has " << values.size();
+	    *failure = message.str();
+	}
+	return false;
+    }
+
+    const int openNURBS_count = curve->KnotCount();
+    if (openNURBS_count <= 0) {
+	if (failure)
+	    *failure = "OpenNURBS requested a non-positive knot count";
+	return false;
+    }
+    const size_t full_count = static_cast<size_t>(openNURBS_count) + 2;
+    std::vector<double> expanded;
+    expanded.reserve(full_count);
+    LIST_OF_INTEGERS::const_iterator multiplicity =
+	multiplicities.begin();
+    LIST_OF_REALS::const_iterator value = values.begin();
+    double previous = 0.0;
+    bool have_previous = false;
+    for (; multiplicity != multiplicities.end();
+	    ++multiplicity, ++value) {
+	if (*multiplicity <= 0) {
+	    if (failure) {
+		std::ostringstream message;
+		message << "knot multiplicity " << *multiplicity
+		    << " is not positive";
+		*failure = message.str();
+	    }
+	    return false;
+	}
+	if (!std::isfinite(*value) ||
+		(have_previous && !(*value > previous))) {
+	    if (failure) {
+		std::ostringstream message;
+		message << "distinct STEP knot values are not finite and "
+		    "strictly increasing at " << *value;
+		*failure = message.str();
+	    }
+	    return false;
+	}
+	have_previous = true;
+	previous = *value;
+	const size_t repeated_count = static_cast<size_t>(*multiplicity);
+	if (expanded.size() > full_count ||
+		repeated_count > full_count - expanded.size()) {
+	    if (failure) {
+		std::ostringstream message;
+		message << "expanded STEP knot count exceeds the required "
+		    << full_count;
+		*failure = message.str();
+	    }
+	    return false;
+	}
+	expanded.insert(expanded.end(), repeated_count, *value);
+    }
+    if (expanded.size() != full_count) {
+	if (failure) {
+	    std::ostringstream message;
+	    message << "expanded STEP knot count " << expanded.size()
+		<< " does not equal cv_count + degree + 1 ("
+		<< full_count << ')';
+	    *failure = message.str();
+	}
+	return false;
+    }
+
+    for (int knot_index = 0; knot_index < openNURBS_count;
+	    ++knot_index) {
+	if (!curve->SetKnot(knot_index,
+		expanded[static_cast<size_t>(knot_index) + 1])) {
+	    if (failure) {
+		std::ostringstream message;
+		message << "could not set OpenNURBS knot " << knot_index;
+		*failure = message.str();
+	    }
+	    return false;
+	}
+    }
+    return true;
+}
+
+
+static bool
+validate_step_curve(ON_NurbsCurve *curve, std::string *failure)
+{
+    if (!curve) {
+	if (failure)
+	    *failure = "could not allocate the OpenNURBS curve";
+	return false;
+    }
+    ON_wString validation_text;
+    ON_TextLog validation_log(validation_text);
+    if (curve->IsValid(&validation_log))
+	return true;
+
+    ON_String narrow_text(validation_text);
+    if (failure) {
+	*failure = "constructed OpenNURBS curve is invalid";
+	if (narrow_text.Length() > 0) {
+	    *failure += ": ";
+	    *failure += narrow_text.Array();
+	}
+    }
+    return false;
+}
+
+
+static void
+record_step_curve_failure(STEPWrapper *step, int64_t id,
+	const std::string &failure)
+{
+    if (step) {
+	step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, id,
+	    "B_SPLINE_CURVE_WITH_KNOTS", "knots", failure);
+    } else {
+	std::cerr << "B_SPLINE_CURVE_WITH_KNOTS #" << id << ": "
+	    << failure << std::endl;
+    }
+}
+
+}
 
 bool
 BezierCurve::LoadONBrep(ON_Brep *brep)
@@ -119,67 +272,44 @@ BSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	return true;
     }
 
-    int t_size = control_points_list.size();
-
-    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, false, degree + 1, t_size);
-
-    if (closed_curve == 1) {
-	LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
-	LIST_OF_REALS::iterator r = knots.begin();
-	int multiplicity = (*m);
-	double knot_value = (*r);
-
-	if ((multiplicity < degree) && (knot_value < 0.0)) {
-	    //skip fist multiplicity and knot value
-	    m++;
-	    r++;
-	}
-	int knot_index = 0;
-	while (m != knot_multiplicities.end()) {
-	    LIST_OF_INTEGERS::iterator n = m;
-	    n++;
-	    multiplicity = (*m);
-	    knot_value = (*r);
-	    if (n == knot_multiplicities.end() && (multiplicity < degree) && (knot_value > 1.0)) {
-		break;
-	    }
-	    if ((multiplicity > degree) || (n == knot_multiplicities.end())) {
-		multiplicity = degree;
-	    }
-	    for (int j = 0; j < multiplicity; j++, knot_index++) {
-		curve->SetKnot(knot_index, knot_value);
-	    }
-	    r++;
-	    m++;
-	}
-    } else {
-	// knot index (>= 0 and < Order + CV_count - 2)
-	LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
-	LIST_OF_REALS::iterator r = knots.begin();
-	int knot_index = 0;
-	while (m != knot_multiplicities.end()) {
-	    LIST_OF_INTEGERS::iterator n = m;
-	    n++;
-	    int multiplicity = (*m);
-	    double knot_value = (*r);
-	    if ((multiplicity > degree) || (n == knot_multiplicities.end())) {
-		multiplicity = degree;
-	    }
-	    for (int j = 0; j < multiplicity; j++, knot_index++) {
-		curve->SetKnot(knot_index, knot_value);
-	    }
-	    r++;
-	    m++;
-	}
+    const int t_size = static_cast<int>(control_points_list.size());
+    if (degree < 1 || t_size < degree + 1) {
+	std::ostringstream failure;
+	failure << "degree " << degree << " and control point count "
+	    << t_size << " cannot define a B-spline curve";
+	record_step_curve_failure(step, id, failure.str());
+	return false;
     }
-    LIST_OF_POINTS::iterator i;
+
+    std::unique_ptr<ON_NurbsCurve> curve(
+	ON_NurbsCurve::New(3, false, degree + 1, t_size));
+    std::string failure;
+    if (!set_step_curve_knots(curve.get(), knot_multiplicities, knots,
+	    &failure)) {
+	record_step_curve_failure(step, id, failure);
+	return false;
+    }
+
+    LIST_OF_POINTS::const_iterator i;
     int cv_index = 0;
     for (i = control_points_list.begin(); i != control_points_list.end(); ++i) {
-	curve->SetCV(cv_index, ON_3dPoint((*i)->X() * LocalUnits::length, (*i)->Y() * LocalUnits::length, (*i)->Z() * LocalUnits::length));
+	if (!*i || !curve->SetCV(cv_index,
+		ON_3dPoint((*i)->X() * LocalUnits::length,
+		    (*i)->Y() * LocalUnits::length,
+		    (*i)->Z() * LocalUnits::length))) {
+	    std::ostringstream message;
+	    message << "could not set OpenNURBS control point " << cv_index;
+	    record_step_curve_failure(step, id, message.str());
+	    return false;
+	}
 	cv_index++;
     }
 
-    SetONId(brep->AddEdgeCurve(curve));
+    if (!validate_step_curve(curve.get(), &failure)) {
+	record_step_curve_failure(step, id, failure);
+	return false;
+    }
+    SetONId(brep->AddEdgeCurve(curve.release()));
 
     return true;
 }
@@ -279,67 +409,56 @@ RationalBSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	return true;
     }
 
-    int t_size = control_points_list.size();
-
-    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, true, degree + 1, t_size);
-
-    if (closed_curve == 1) {
-	LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
-	LIST_OF_REALS::iterator r = knots.begin();
-	int multiplicity = (*m);
-	double knot_value = (*r);
-
-	if ((multiplicity < degree) && (knot_value < 0.0)) {
-	    //skip fist multiplicity and knot value
-	    m++;
-	    r++;
-	}
-	int knot_index = 0;
-	while (m != knot_multiplicities.end()) {
-	    LIST_OF_INTEGERS::iterator n = m;
-	    n++;
-	    multiplicity = (*m);
-	    knot_value = (*r);
-	    if (n == knot_multiplicities.end() && (multiplicity < degree) && (knot_value > 1.0)) {
-		break;
-	    }
-	    if ((multiplicity > degree) || (n == knot_multiplicities.end())) {
-		multiplicity = degree;
-	    }
-	    for (int j = 0; j < multiplicity; j++, knot_index++) {
-		curve->SetKnot(knot_index, knot_value);
-	    }
-	    r++;
-	    m++;
-	}
-    } else {
-	LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
-	LIST_OF_REALS::iterator r = knots.begin();
-	int knot_index = 0;
-	while (m != knot_multiplicities.end()) {
-	    int multiplicity = (*m);
-	    double knot_value = (*r);
-	    V_MIN(multiplicity, degree);
-
-	    for (int j = 0; j < multiplicity; j++, knot_index++) {
-		curve->SetKnot(knot_index, knot_value);
-	    }
-	    r++;
-	    m++;
-	}
+    const int t_size = static_cast<int>(control_points_list.size());
+    if (degree < 1 || t_size < degree + 1) {
+	std::ostringstream failure;
+	failure << "degree " << degree << " and control point count "
+	    << t_size << " cannot define a rational B-spline curve";
+	record_step_curve_failure(step, id, failure.str());
+	return false;
+    }
+    if (weights_data.size() != control_points_list.size()) {
+	std::ostringstream failure;
+	failure << "weight count " << weights_data.size()
+	    << " does not equal control point count " << t_size;
+	record_step_curve_failure(step, id, failure.str());
+	return false;
     }
 
-    LIST_OF_POINTS::iterator i;
-    LIST_OF_REALS::iterator r = weights_data.begin();
+    std::unique_ptr<ON_NurbsCurve> curve(
+	ON_NurbsCurve::New(3, true, degree + 1, t_size));
+    std::string failure;
+    if (!set_step_curve_knots(curve.get(), knot_multiplicities, knots,
+	    &failure)) {
+	record_step_curve_failure(step, id, failure);
+	return false;
+    }
+
+    LIST_OF_POINTS::const_iterator i;
+    LIST_OF_REALS::const_iterator r = weights_data.begin();
     int cv_index = 0;
     for (i = control_points_list.begin(); i != control_points_list.end(); ++i) {
 	double w = (*r);
-	curve->SetCV(cv_index, ON_4dPoint((*i)->X() * LocalUnits::length * w, (*i)->Y() * LocalUnits::length * w, (*i)->Z() * LocalUnits::length * w, w));
+	if (!*i || !std::isfinite(w) ||
+		!curve->SetCV(cv_index,
+		    ON_4dPoint((*i)->X() * LocalUnits::length * w,
+			(*i)->Y() * LocalUnits::length * w,
+			(*i)->Z() * LocalUnits::length * w, w))) {
+	    std::ostringstream message;
+	    message << "could not set rational OpenNURBS control point "
+		<< cv_index;
+	    record_step_curve_failure(step, id, message.str());
+	    return false;
+	}
 	cv_index++;
 	r++;
     }
 
-    SetONId(brep->AddEdgeCurve(curve));
+    if (!validate_step_curve(curve.get(), &failure)) {
+	record_step_curve_failure(step, id, failure);
+	return false;
+    }
+    SetONId(brep->AddEdgeCurve(curve.release()));
 
     return true;
 }

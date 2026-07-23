@@ -457,6 +457,16 @@ endfunction(find_relative_rpath)
 # in place in the build locations.
 function(rpath_build_dir_process ROOT_DIR lf)
 
+  # Bext install trees may deliberately make runtime libraries read-only.
+  # The build tree is our private staged copy, and plief must be able to
+  # replace that file when updating ELF metadata.  Do not alter the bext
+  # source/install file itself.
+  if(UNIX AND EXISTS "${ROOT_DIR}/${lf}")
+    file(CHMOD "${ROOT_DIR}/${lf}"
+      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                  GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+  endif()
+
   if(P_RPATH_EXECUTABLE)
     execute_process(
       COMMAND ${P_RPATH_EXECUTABLE} --set-rpath "${ROOT_DIR}/${LIB_DIR}" ${lf}
@@ -1264,6 +1274,13 @@ function(_brlcad_ensure_soname lib_path)
   endif()
   if(NOT _soname_tool)
     return()
+  endif()
+  # The path is a build-tree copy, but it may retain a read-only mode from the
+  # bext install tree.  SONAME insertion rewrites the ELF file.
+  if(UNIX)
+    file(CHMOD "${lib_path}"
+      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                  GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
   endif()
   # Read the existing SONAME (empty output = no SONAME).
   execute_process(

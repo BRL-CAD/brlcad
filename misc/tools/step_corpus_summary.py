@@ -21,7 +21,17 @@ from collections import Counter
 from pathlib import Path
 
 
-FORMAT = "brlcad-step-corpus-summary-v1"
+FORMAT = "brlcad-step-corpus-summary-v2"
+
+
+INCOMPLETE_PROCESS_STATUSES = {124, 130, 137, 143}
+
+
+def run_complete(item):
+    """Return whether an input reached a normal converter terminal state."""
+    if "run_complete" in item:
+        return bool(item["run_complete"])
+    return int(item.get("process_exit_status", 0)) not in INCOMPLETE_PROCESS_STATUSES
 
 
 def read_json(path):
@@ -101,12 +111,16 @@ def report_record(status_path):
         "report": report_path.name,
         "process_exit_status": status["process_exit_status"],
         "converter_exit_status": int(report.get("exit_status", status["process_exit_status"])),
+        "run_complete": status["process_exit_status"] not in
+                        INCOMPLETE_PROCESS_STATUSES,
         "elapsed_seconds": status["elapsed_seconds"],
         "geometry_attempted": attempted,
         "geometry_written": written,
         "geometry_skipped": skipped_count,
         "success_fraction": (float(written) / attempted) if attempted else 0.0,
-        "clean": attempted > 0 and written == attempted and
+        "clean": status["process_exit_status"] not in
+                 INCOMPLETE_PROCESS_STATUSES and attempted > 0 and
+                 written == attempted and
                  int(report.get("exit_status", status["process_exit_status"])) == 0,
         "invalid_breps": int(validation.get("invalid_breps") or 0),
         "output_failures": int(validation.get("output_failures") or 0),
@@ -141,19 +155,35 @@ def totals(files):
 
 
 def totals_base(files):
-    attempted = sum(item["geometry_attempted"] for item in files)
-    written = sum(item["geometry_written"] for item in files)
+    completed = [item for item in files if run_complete(item)]
+    incomplete = [item for item in files if not run_complete(item)]
+    attempted = sum(item["geometry_attempted"] for item in completed)
+    written = sum(item["geometry_written"] for item in completed)
     categories = Counter()
-    for item in files:
+    for item in completed:
         categories.update(item["failure_categories"])
     return {
         "files": len(files),
-        "clean_files": sum(1 for item in files if item["clean"]),
+        "completed_files": len(completed),
+        "inconclusive_files": len(incomplete),
+        "clean_files": sum(1 for item in completed if item["clean"]),
         "geometry_attempted": attempted,
         "geometry_written": written,
-        "geometry_skipped": sum(item["geometry_skipped"] for item in files),
+        "geometry_skipped": sum(item["geometry_skipped"] for item in completed),
         "success_fraction": (float(written) / attempted) if attempted else 0.0,
-        "elapsed_seconds": sum(item["elapsed_seconds"] for item in files),
+        "elapsed_seconds": sum(item["elapsed_seconds"] for item in completed),
+        "inconclusive_elapsed_seconds": sum(
+            item["elapsed_seconds"] for item in incomplete
+        ),
+        "observed_inconclusive_geometry_attempted": sum(
+            item["geometry_attempted"] for item in incomplete
+        ),
+        "observed_inconclusive_geometry_written": sum(
+            item["geometry_written"] for item in incomplete
+        ),
+        "observed_inconclusive_geometry_skipped": sum(
+            item["geometry_skipped"] for item in incomplete
+        ),
         "peak_file_rss_bytes": max(
             (item["peak_rss_bytes"] for item in files), default=0
         ),
@@ -166,11 +196,26 @@ def compare(current_files, previous):
         return None
     old_files = {item["input"]: item for item in previous.get("files", [])}
     changes = []
+    comparable_current = []
+    comparable_previous = []
     for current in current_files:
         old = old_files.get(current["input"])
+        if not run_complete(current):
+            changes.append({
+                "input": current["input"],
+                "change": "inconclusive",
+                "process_exit_status": current["process_exit_status"],
+            })
+            continue
         if not old:
             changes.append({"input": current["input"], "change": "new"})
             continue
+        if not run_complete(old):
+            changes.append({"input": current["input"],
+                            "change": "previous_inconclusive"})
+            continue
+        comparable_current.append(current)
+        comparable_previous.append(old)
         written_delta = current["geometry_written"] - old.get("geometry_written", 0)
         skipped_delta = current["geometry_skipped"] - old.get("geometry_skipped", 0)
         old_skips = {
@@ -191,8 +236,8 @@ def compare(current_files, previous):
                 "fixed_skips": [list(item) for item in sorted(old_skips - new_skips)],
                 "new_skips": [list(item) for item in sorted(new_skips - old_skips)],
             })
-    previous_totals = previous.get("totals") or {}
-    current_totals = totals(current_files)
+    previous_totals = totals(comparable_previous)
+    current_totals = totals(comparable_current)
     return {
         "previous_run_id": previous.get("run_id"),
         "geometry_written_delta": current_totals["geometry_written"] -
@@ -206,6 +251,10 @@ def compare(current_files, previous):
         ],
         "newly_clean_files": [
             item["input"] for item in changes if item.get("became_clean")
+        ],
+        "inconclusive_files": [
+            item["input"] for item in changes
+            if item.get("change") == "inconclusive"
         ],
         "changes": changes,
     }
@@ -225,18 +274,24 @@ def markdown(summary):
     ]
     for schema, values in sorted(total["by_schema"].items()):
         lines.append("| {} | {}/{} | {}/{} | {:.2%} |".format(
-            schema, values["clean_files"], values["files"],
+            schema, values["clean_files"], values["completed_files"],
             values["geometry_written"], values["geometry_attempted"],
             values["success_fraction"],
         ))
     lines.append("| Combined | {}/{} | {}/{} | {:.2%} |".format(
-        total["clean_files"], total["files"], total["geometry_written"],
+        total["clean_files"], total["completed_files"], total["geometry_written"],
         total["geometry_attempted"], total["success_fraction"],
     ))
-    lines.extend(["", "## Per file", "", "| Schema | Input | Written | Skipped | Seconds | Peak RSS MiB |", "|---|---|---:|---:|---:|---:|"])
+    if total["inconclusive_files"]:
+        lines.append("")
+        lines.append("Inconclusive (timed out or interrupted): {} file(s); partial geometry is excluded from totals and deltas.".format(
+            total["inconclusive_files"]
+        ))
+    lines.extend(["", "## Per file", "", "| Schema | Input | Status | Written | Skipped | Seconds | Peak RSS MiB |", "|---|---|---|---:|---:|---:|---:|"])
     for item in summary["files"]:
-        lines.append("| {} | {} | {}/{} | {} | {:.1f} | {:.1f} |".format(
+        lines.append("| {} | {} | {} | {}/{} | {} | {:.1f} | {:.1f} |".format(
             item["schema"], item["name"].replace("|", "\\|"),
+            "complete" if run_complete(item) else "inconclusive",
             item["geometry_written"], item["geometry_attempted"],
             item["geometry_skipped"], item["elapsed_seconds"],
             item["peak_rss_bytes"] / (1024.0 * 1024.0),
@@ -253,6 +308,10 @@ def markdown(summary):
         if delta["regressed_clean_files"]:
             lines.append("Regressed clean files: {}.".format(
                 ", ".join(delta["regressed_clean_files"])
+            ))
+        if delta["inconclusive_files"]:
+            lines.append("Not compared because the run was incomplete: {}.".format(
+                ", ".join(delta["inconclusive_files"])
             ))
     return "\n".join(lines) + "\n"
 
