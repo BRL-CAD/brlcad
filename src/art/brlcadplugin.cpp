@@ -102,9 +102,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#ifdef _WIN32
-#  include <malloc.h>	/* _heapchk for ARTDBG */
-#endif
 #include <unordered_map>
 #include <mutex>
 #include <thread>
@@ -119,28 +116,6 @@ namespace asf = foundation;
 namespace asr = renderer;
 
 thread_local struct BRLCAD_to_ASR brlcad_ray_info;
-
-/* crash-proof file trace: append+flush+close each call so nothing is lost to
- * buffering, worker threads, or a hard crash.  TEMPORARY debug aid. */
-static void
-art_trace(const char* msg)
-{
-    FILE* f = fopen("C:/devtools/brlcad.main/tmp_art_trace.log", "a");
-    if (f) { fprintf(f, "%s\n", msg); fflush(f); fclose(f); }
-}
-
-static void
-art_trace_heap(const char* where)
-{
-#ifdef _WIN32
-    char buf[96];
-    int r = _heapchk();
-    snprintf(buf, sizeof(buf), "%s heapchk=%s", where, (r == _HEAPOK) ? "OK" : "CORRUPT");
-    art_trace(buf);
-#else
-    (void)where;
-#endif
-}
 
 
 /* brlcad raytrace hit callback */
@@ -278,10 +253,8 @@ BrlcadObject::on_frame_begin(
     asr::OnFrameBeginRecorder& recorder,
     asf::IAbortSwitch* abort_switch)
 {
-    art_trace("on_frame_begin enter");
     if (!asr::ProceduralObject::on_frame_begin(project, parent, recorder, abort_switch))
 	return false;
-    art_trace("on_frame_begin ok");
 
     return true;
 }
@@ -291,7 +264,6 @@ BrlcadObject::on_frame_begin(
 asr::GAABB3
 BrlcadObject::compute_local_bbox() const
 {
-    art_trace("compute_local_bbox enter");
     if (!this->rtip)
 	return asr::GAABB3(asr::GVector3(0, 0, 0), asr::GVector3(0, 0, 0));
 
@@ -315,7 +287,6 @@ BrlcadObject::compute_local_bbox() const
 size_t
 BrlcadObject::get_material_slot_count() const
 {
-    art_trace_heap("get_material_slot_count");
     return 1;
 }
 
@@ -323,7 +294,6 @@ BrlcadObject::get_material_slot_count() const
 const char*
 BrlcadObject::get_material_slot(const size_t UNUSED(index)) const
 {
-    art_trace("get_material_slot");
     return "default";
 }
 
@@ -346,16 +316,10 @@ BrlcadObject::intersect(
 
     app.a_uptr = (void*)this->name->c_str();
 
-    static std::atomic<int> dbg_isect{0};
-    int dbg_n = dbg_isect++;
-    if (dbg_n == 0) art_trace("intersect-detailed first-call enter");
-
     if (rt_shootray(&app) == 0) {
-	if (dbg_n == 0) art_trace("intersect-detailed first-call done");
 	result.m_hit = false;
 	return;
     } else {
-	if (dbg_n == 0) art_trace("intersect-detailed first-call done");
 	result.m_hit = true;
 	result.m_distance = brlcad_ray_info.distance;
 
@@ -388,8 +352,6 @@ BrlcadObject::intersect(const asr::ShadingRay& ray) const
     app = ap; /* struct copy */
     /* brlcad raytracing */
     int cpu = get_id();
-    static std::atomic<int> dbg_si{0};
-    if (dbg_si++ == 0) art_trace("intersect-simple first-call enter");
     app.a_resource = &resources[cpu];
 
     const asf::Vector3d dir = asf::normalize(ray.m_dir);
