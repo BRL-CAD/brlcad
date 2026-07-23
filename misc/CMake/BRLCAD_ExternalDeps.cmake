@@ -518,7 +518,7 @@ function(brlcad_ext_batch_file_type ALL_CNT)
     # a non-exec binary (matching the per-file file_type() fallback, which
     # drops through to the noexec bucket when P_RPATH_EXECUTABLE is unset).
     set(_brlcad_ext_noexec_files ${_brlcad_ext_binary_files})
-  elseif()
+  else()
     set(_brlcad_ext_plief_classify_list "${CMAKE_BINARY_DIR}/CMakeFiles/brlcad_ext_classify_plief.txt")
     brlcad_ext_write_file_list("${_brlcad_ext_plief_classify_list}" ${_brlcad_ext_binary_files})
     execute_process(
