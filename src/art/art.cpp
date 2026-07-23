@@ -321,9 +321,13 @@ init_defaults(void)
     // default output file name
     outputfile = (char*)"art.png";
 
-    // blue background of scene
-    background[0] = 0.75;
-    background[1] = 0.80;
+    /* Neutral (white) sky/environment by default.  The environment is art's
+     * dominant light (a ConstantEnvironmentEDF built from `background`), so a
+     * blue sky tinted every surface cool and desaturated hues away from what rt
+     * produces under its white default light.  A neutral dome keeps region
+     * colors true; -C/-W still override this at runtime. */
+    background[0] = 1.0;
+    background[1] = 1.0;
     background[2] = 1.0;
 
     option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
@@ -618,141 +622,70 @@ register_region(struct db_tree_state* tsp,
 	    asr::ParamArray()));
 
 
-    // create a shader group
-    std::string shader_name = std::string(name) + "_shader";
-    asf::auto_release_ptr<asr::ShaderGroup> shader_grp(
-	asr::ShaderGroupFactory().create(
-	    shader_name.c_str(),
-	    asr::ParamArray()));
+    /* Build a native Appleseed plastic BSDF for this region.
+     *
+     * NOTE: we deliberately do NOT use an OSL shader group here.  Appleseed's
+     * OSL BSDFs evaluate to zero on ProceduralObject hits in this build (the
+     * OSL closure is never populated for procedural surfaces), so an OSL
+     * material renders every surface as an unlit black silhouette.  Native
+     * BSDFs (Lambertian, plastic, Disney, ...) shade procedural surfaces
+     * correctly, so we map the region's optical properties onto a plastic_brdf
+     * -- which matches BRL-CAD's default "plastic" shader closely (diffuse base
+     * color plus a glossy specular coat). */
+    std::string base_name = std::string(name) + "_mat";
 
-    // choose input shader
-    // change to plastic to look more like rt
-    const char* shader = (char*)"as_plastic";
-    asr::ParamArray shader_params = asr::ParamArray();
-
-    // check if shader was set new way
-    // extract material if set and check for shader in optical properties
-    struct directory* dp1;
-    char* mat_name = bu_vls_strdup(&combp->material);
-    dp1 = db_lookup(tsp->ts_dbip, mat_name, LOOKUP_QUIET);
-    struct bu_vls m = BU_VLS_INIT_ZERO;
-    struct rt_db_internal intern;
-    struct rt_material_internal* material_ip;
-    if (dp1 != RT_DIR_NULL) {
-	if (rt_db_get_internal(&intern, dp1, tsp->ts_dbip, NULL) >= 0) {
-	    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
-		material_ip = (struct rt_material_internal*)intern.idb_ptr;
-		bu_vls_printf(&m, "%s", bu_avs_get(&material_ip->opticalProperties, "OSL"));
-		if (!BU_STR_EQUAL(bu_vls_cstr(&m), "(null)")) {
-		    shader = bu_vls_cstr(&m);
-		    bu_log("material->optical->OSL: %s\n", shader);
-		}
-	    }
-	}
-    }
-
-    // Set the shader's base color from the region's assigned RGB, or a neutral
-    // grey default when the region has no color (otherwise the shader's default
-    // renders as unlit black).
-    struct bu_vls v=BU_VLS_INIT_ZERO;
-    if (combp->rgb_valid) {
-	bu_vls_printf(&v, "color %f %f %f", combp->rgb[0]/255.0, combp->rgb[1]/255.0, combp->rgb[2]/255.0);
+    /* Diffuse base color.  Prefer the tree-state's resolved material color
+     * (tsp->ts_mater.ma_color): db_walk_tree accumulates BRL-CAD's color
+     * INHERITANCE into it as it descends, so a region that inherits its color
+     * from a parent combination (e.g. every region under havoc) gets the right
+     * color here -- exactly what rt/liboptical uses (region reg_mater.ma_color).
+     * combp->rgb is only the region comb's OWN color and is empty for inherited
+     * colors, which is why art used to render such models as flat grey.  Fall
+     * back to the comb's own rgb, then to white (rt's default for no color). */
+    float diffuse_rgb[3];
+    if (tsp && tsp->ts_mater.ma_color_valid) {
+	diffuse_rgb[0] = (float)tsp->ts_mater.ma_color[0];
+	diffuse_rgb[1] = (float)tsp->ts_mater.ma_color[1];
+	diffuse_rgb[2] = (float)tsp->ts_mater.ma_color[2];
+    } else if (combp->rgb_valid) {
+	diffuse_rgb[0] = (float)(combp->rgb[0] / 255.0);
+	diffuse_rgb[1] = (float)(combp->rgb[1] / 255.0);
+	diffuse_rgb[2] = (float)(combp->rgb[2] / 255.0);
     } else {
-	bu_vls_printf(&v, "color 0.75 0.75 0.75");
+	diffuse_rgb[0] = diffuse_rgb[1] = diffuse_rgb[2] = 1.0f;
     }
-    shader_params.insert("in_color", bu_vls_cstr(&v));
+    std::string diffuse_col = base_name + "_diffuse";
+    assembly->colors().insert(
+	asr::ColorEntityFactory::create(
+	    diffuse_col.c_str(),
+	    asr::ParamArray().insert("color_space", "srgb"),
+	    asr::ColorValueArray(3, diffuse_rgb)));
 
-    // check if shader was set old way
-    // send this to mapping function -> disney params
-    /* values acceptable with phong implementation:
-     * specular reflectance sp
-     * diffuse reflectance di
-     * roughness rms
-     * transparency tr
-     * transmission re
-     * refraction index ri
-     * extinction ex
-     */
-    // char* ptr;
-    // char* temp_in = (char*)"   ";
-    // if (bu_vls_strlen(&combp->shader) > 0) {
-    //   if ((ptr=strstr(bu_vls_addr(&combp->shader), "plastic")) != NULL) {
-    //     // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
-    //     shader = "as_plastic";
-    //   }
-    //   if ((ptr=strstr(bu_vls_addr(&combp->shader), "glass")) != NULL) {
-    //     // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
-    //     shader = "as_glass";
-    //   }
-    //   // check for override parameters
-    //   if (((ptr=strstr(bu_vls_addr(&combp->shader), "{")) != NULL)) {
-    //     if (((ptr=strstr(bu_vls_addr(&combp->shader), "tr")) != NULL)) {
-    //       int i = 3;
-    // 	    while (ptr != NULL && ptr[i] != ' ') {
-    //         temp_in[i-3] = ptr[i];
-    //         i++;
-    //       }
-    //       struct bu_vls t=BU_VLS_INIT_ZERO;
-    //       bu_vls_printf(&t, "tr %s\n", temp_in);
-    //       const char* tr = bu_vls_cstr(&t);
-    //       shader_params.insert("in_tr", tr);
-    //     }
-    //   }
-    // }
+    static const float WhiteSpec[3] = { 1.0f, 1.0f, 1.0f };
+    std::string spec_col = base_name + "_specular";
+    assembly->colors().insert(
+	asr::ColorEntityFactory::create(
+	    spec_col.c_str(),
+	    asr::ParamArray().insert("color_space", "linear_rgb"),
+	    asr::ColorValueArray(3, WhiteSpec)));
 
-    /* This uses an already compiled .oso shader in the form of
-       type
-       shader name
-       layer
-       paramArray
-    */
-    shader_grp->add_shader(
-	"shader",
-	shader,
-	"shader_in",
-	shader_params
-	);
-    bu_vls_free(&v);
-
-    /* import non compiled .osl shader in the form of
-       type
-       name
-       layer
-       source
-       paramArray
-       note: this relies on appleseed triggering on osl compiler
-    */
-    // shader_grp->add_source_shader(
-    //   "shader",
-    //   shader_name.c_str(),
-    //   "shader_in",
-    //   "shader_in",
-    //   asr::ParamArray()
-    //);
-
-    // add material2surface so we can map input shader to object surface
-    shader_grp->add_shader(
-	"surface",
-	"as_closure2surface",
-	"close",
-	asr::ParamArray()
-	);
-
-    // connect the two shader nodes within the group
-    shader_grp->add_connection(
-	"shader_in",
-	"out_outColor",
-	"close",
-	"in_input"
-	);
-
-    // add the shader group to the assembly
-    assembly->shader_groups().insert(
-	shader_grp
-	);
+    std::string brdf_name = base_name + "_brdf";
+    assembly->bsdfs().insert(
+	asr::PlasticBRDFFactory().create(
+	    brdf_name.c_str(),
+	    asr::ParamArray()
+	    .insert("diffuse_reflectance", diffuse_col.c_str())
+	    .insert("diffuse_reflectance_multiplier", "1.0")
+	    /* Keep the specular coat small and tight: a broad, bright white coat
+	     * reflects the (uniform) environment across the whole surface and
+	     * desaturates the diffuse color.  A small multiplier + low roughness
+	     * gives only a subtle glint, preserving the true region color. */
+	    .insert("specular_reflectance", spec_col.c_str())
+	    .insert("specular_reflectance_multiplier", "0.06")
+	    .insert("roughness", "0.08")
+	    .insert("ior", "1.5")));
 
     // Create a physical surface shader and insert it into the assembly.
-    // This is technically not needed with the current shader implementation
     assembly->surface_shaders().insert(
 	asr::PhysicalSurfaceShaderFactory().create(
 	    "Material_mat_surface_shader",
@@ -761,13 +694,13 @@ register_region(struct db_tree_state* tsp,
 	    )
 	);
 
-    // create a material with our shader_group
-    std::string material_mat = shader_name + "_mat";
+    // Create the material that binds the BSDF to the surface.
+    std::string material_mat = base_name;
     assembly->materials().insert(
-	asr::OSLMaterialFactory().create(
+	asr::GenericMaterialFactory().create(
 	    material_mat.c_str(),
 	    asr::ParamArray()
-	    .insert("osl_surface", shader_name.c_str())
+	    .insert("bsdf", brdf_name.c_str())
 	    .insert("surface_shader", "Material_mat_surface_shader")
 	    )
 	);
@@ -1415,7 +1348,11 @@ art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
     art_save_image(project.ref(), outputfile);
 
     // Save the project to disk.
-    asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+    /* Intentionally not writing the .appleseed project file: ProjectFileWriter
+	 * serializes every scene entity, but BrlcadObject (a ProceduralObject) has
+	 * no serializable geometry, so the writer aborts the process (0xC0000409)
+	 * at the end of an otherwise-successful render.  The project file is only a
+	 * debugging convenience and is not needed to produce the output image. */
 
     // Make sure to delete the master renderer before the project and the logger / log target.
     renderer.reset();
@@ -1599,7 +1536,11 @@ main(int argc, char **argv)
         art_save_image(project.ref(), outputfile);
 
         // Save the project to disk.
-        asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+        /* Intentionally not writing the .appleseed project file: ProjectFileWriter
+	 * serializes every scene entity, but BrlcadObject (a ProceduralObject) has
+	 * no serializable geometry, so the writer aborts the process (0xC0000409)
+	 * at the end of an otherwise-successful render.  The project file is only a
+	 * debugging convenience and is not needed to produce the output image. */
 
         if (fbp != FB_NULL) {
 	    fb_close(fbp);
@@ -1623,7 +1564,11 @@ main(int argc, char **argv)
         art_save_image(project.ref(), outputfile);
 
         // Save the project to disk.
-        asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+        /* Intentionally not writing the .appleseed project file: ProjectFileWriter
+	 * serializes every scene entity, but BrlcadObject (a ProceduralObject) has
+	 * no serializable geometry, so the writer aborts the process (0xC0000409)
+	 * at the end of an otherwise-successful render.  The project file is only a
+	 * debugging convenience and is not needed to produce the output image. */
 
         if (fbp != FB_NULL) {
 	    fb_close(fbp);
