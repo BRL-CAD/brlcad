@@ -610,6 +610,7 @@ void pipe_move_pnt(struct mged_state *s, struct rt_pipe_internal *, struct wdb_p
 
 /* vparse.c */
 extern void mged_vls_struct_parse(struct mged_state *s, struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, const char *structp, int argc, const char *argv[]); /* defined in vparse.c */
+extern struct bu_structparse mged_vparse[]; /* defined in set.c */
 extern void mged_vls_struct_parse_old(struct mged_state *s, struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, char *structp, int argc, const char *argv[]);
 
 /* mater.c */

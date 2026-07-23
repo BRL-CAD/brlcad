@@ -298,7 +298,10 @@ write_remrtrc_local(const char *db_dir)
     for (; *p; p++) {
 	if (*p == '\\') *p = '/';
     }
-    fprintf(fp, "host localhost always local %s\n", bu_vls_cstr(&db_dir_fwd));
+    /* The remrt command parser tokenizes this line with
+     * bu_argv_from_string(), so retain spaces in odd-pathname build
+     * directories as part of the single directory argument. */
+    fprintf(fp, "host localhost always local \"%s\"\n", bu_vls_cstr(&db_dir_fwd));
     fclose(fp);
     bu_vls_free(&rcpath);
     bu_vls_free(&db_dir_fwd);

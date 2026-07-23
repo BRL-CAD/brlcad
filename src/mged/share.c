@@ -74,7 +74,6 @@ extern struct bu_structparse axes_vparse[];
 extern struct bu_structparse color_scheme_vparse[];
 extern struct bu_structparse grid_vparse[];
 extern struct bu_structparse rubber_band_vparse[];
-extern struct bu_structparse mged_vparse[];
 
 void free_all_resources(struct mged_dm *dlp);
 

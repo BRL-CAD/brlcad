@@ -369,6 +369,7 @@ notify_parent_done(int parent) {
 }
 
 
+#if defined(HAVE_WINDOWS_H)
 void
 mgedInvalidParameterHandler(const wchar_t* UNUSED(expression),
 			    const wchar_t* UNUSED(function),
@@ -380,6 +381,7 @@ mgedInvalidParameterHandler(const wchar_t* UNUSED(expression),
  * Windows, I think you're number one!
  */
 }
+#endif
 
 
 void
@@ -395,14 +397,6 @@ pr_beep(void)
 {
     bu_log("%c", 7);
 }
-
-
-/* so the Windows-specific calls blend in */
-#if !defined(_WIN32) || defined(__CYGWIN__)
-void _set_invalid_parameter_handler(void (*callback)(const wchar_t*, const wchar_t*, const wchar_t*, unsigned int, uintptr_t)) { if (callback) return; }
-#endif
-
-
 
 
 /*
@@ -2575,7 +2569,9 @@ main(int argc, char *argv[])
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
 
+#if defined(HAVE_WINDOWS_H)
     (void)_set_invalid_parameter_handler(mgedInvalidParameterHandler);
+#endif
 
     bu_setprogname(argv[0]);
 
