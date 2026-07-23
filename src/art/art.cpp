@@ -76,12 +76,6 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
-#ifdef _WIN32
-#  include <malloc.h>	/* _heapchk for ARTDBG */
-#  ifdef _DEBUG
-#    include <crtdbg.h>	/* debug-CRT heap validation for ARTDBG */
-#  endif
-#endif
 
 #include <cstddef>
 #include <memory>
@@ -193,17 +187,15 @@ struct ArtLight {
 };
 static std::vector<ArtLight> art_lights;
 
-static void
-art_heapchk(const char* where)
-{
-#ifdef _WIN32
-    int r = _heapchk();
-    bu_log("ARTDBG: heapchk[%s] = %d (%s)\n", where, r,
-	   (r == _HEAPOK) ? "OK" : "CORRUPT");
-#else
-    (void)where;
-#endif
-}
+/* Region names already registered this frame.  db_walk_tree() invokes
+ * register_region() once per PATH to a region, so a region shared/referenced
+ * from multiple combs is visited multiple times -- re-registering it would
+ * insert duplicate-named Appleseed entities (assembly/object/material), which
+ * asserts in appleseed's EntityMap (entitymap.cpp) / corrupts state in release.
+ * We register each unique region once. */
+#include <set>
+static std::set<std::string> art_seen_regions;
+
 //size_t light_intensity = 30.0;
 const char* global_title_file;
 asf::auto_release_ptr<asr::Project> project_ptr;
@@ -537,6 +529,12 @@ register_region(struct db_tree_state* tsp,
     const char* name;
     name = dp->d_namep;
 
+    // Register each unique region only once: db_walk_tree() revisits a region
+    // once per path to it, and re-registering inserts duplicate-named Appleseed
+    // entities (assert in EntityMap for multi-region models like toyjeep).
+    if (!art_seen_regions.insert(std::string(name)).second)
+	return 0;
+
     // Strip the objects name to get correct bounding box
     struct bu_vls path = BU_VLS_INIT_ZERO;
     db_path_to_vls(&path, pathp);
@@ -653,13 +651,16 @@ register_region(struct db_tree_state* tsp,
 	}
     }
 
-    // check for color assignment, if set add to param array
+    // Set the shader's base color from the region's assigned RGB, or a neutral
+    // grey default when the region has no color (otherwise the shader's default
+    // renders as unlit black).
     struct bu_vls v=BU_VLS_INIT_ZERO;
     if (combp->rgb_valid) {
-	bu_vls_printf(&v, "color %f %f %f\n", combp->rgb[0]/255.0, combp->rgb[1]/255.0, combp->rgb[2]/255.0);
-	const char* color = bu_vls_cstr(&v);
-	shader_params.insert("in_color", color);
+	bu_vls_printf(&v, "color %f %f %f", combp->rgb[0]/255.0, combp->rgb[1]/255.0, combp->rgb[2]/255.0);
+    } else {
+	bu_vls_printf(&v, "color 0.75 0.75 0.75");
     }
+    shader_params.insert("in_color", bu_vls_cstr(&v));
 
     // check if shader was set old way
     // send this to mapping function -> disney params
@@ -804,7 +805,6 @@ register_region(struct db_tree_state* tsp,
 	    asf::Transformd::identity());
     scene->assembly_instances().insert(assembly_instance);
 
-    art_heapchk(name);
     return 0;
 }
 
@@ -899,10 +899,14 @@ build_project(const char* file, const char* UNUSED(objects))
     project->search_paths().push_back_explicit_path("build/Debug");
     // add precompiled shaders from appleseed
     char root[MAXPATHLEN];
-    project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/appleseed", NULL));
-    project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/max", NULL));
+    const char* sp;
+    sp = bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/appleseed", NULL);
+    if (sp) project->search_paths().push_back_explicit_path(sp);
+    sp = bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/max", NULL);
+    if (sp) project->search_paths().push_back_explicit_path(sp);
     // add path for materialX converted shaders
-    project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, BU_DIR_INIT, "output/shaders", NULL));
+    sp = bu_dir(root, MAXPATHLEN, BU_DIR_INIT, "output/shaders", NULL);
+    if (sp) project->search_paths().push_back_explicit_path(sp);
 
     // Add default configurations to the project.
     project->add_default_configurations();
@@ -940,14 +944,12 @@ build_project(const char* file, const char* UNUSED(objects))
 
     /* discovered lights are collected by register_region() during the walk */
     art_lights.clear();
+    art_seen_regions.clear();
 
-    if (getenv("ART_SKIP_OBJECTS")) {
-	bu_log("ARTDBG: skipping all region registration (experiment)\n");
-    } else
     if (objc) {
 	db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
     }
-    if (!getenv("ART_SKIP_OBJECTS") && cmd_objs) {
+    if (cmd_objs) {
 
 	size_t cmdobjc = BU_PTBL_LEN(cmd_objs);
 	const char** cmdobjv = (const char**)cmd_objs->buffer;
@@ -1186,7 +1188,6 @@ build_project(const char* file, const char* UNUSED(objects))
     // Bind the scene to the project.
     project->set_scene(scene);
 
-    art_heapchk("build_project end");
     return project;
 }
 
@@ -1432,26 +1433,6 @@ main(int argc, char **argv)
     bu_setlinebuf(stdout);
     bu_setlinebuf(stderr);
 
-#if defined(_WIN32) && defined(_DEBUG)
-    /* ARTDBG (Debug builds only): make the debug CRT our diagnostic tool for
-     * the appleseed.dll render() heap corruption.  Route all CRT reports
-     * (asserts, heap-damage) to stderr instead of a modal dialog, and -- unless
-     * ART_NO_HEAPCHECK is set -- validate the entire heap on every alloc/free so
-     * corruption is caught at the operation immediately after the bad write,
-     * with the damaged block identified.  With a Debug appleseed.dll its own
-     * assert()s also fire (file/line), which may pinpoint the bug directly.
-     * CHECK_ALWAYS is slow; set ART_NO_HEAPCHECK=1 or ART_HEAPCHECK_16=1 to ease. */
-    _CrtSetReportMode(_CRT_WARN,   _CRTDBG_MODE_FILE); _CrtSetReportFile(_CRT_WARN,   _CRTDBG_FILE_STDERR);
-    _CrtSetReportMode(_CRT_ERROR,  _CRTDBG_MODE_FILE); _CrtSetReportFile(_CRT_ERROR,  _CRTDBG_FILE_STDERR);
-    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE); _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
-    if (!getenv("ART_NO_HEAPCHECK")) {
-	int dbgflags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_ALLOC_MEM_DF;
-	dbgflags |= getenv("ART_HEAPCHECK_16") ? _CRTDBG_CHECK_EVERY_16_DF : _CRTDBG_CHECK_ALWAYS_DF;
-	_CrtSetDbgFlag(dbgflags);
-	bu_log("ARTDBG: debug-CRT heap validation enabled\n");
-    }
-#endif
-
     bu_log("%s%s%s%s\n",
 	   brlcad_ident("BRL-CAD Appleseed Ray Tracing (ART)"),
 	   rt_version(),
@@ -1610,10 +1591,8 @@ main(int argc, char **argv)
 		&artcallback));
 
         // Render the frame.
-        art_heapchk("pre-render");
-        bu_log("ARTDBG: pre-render\n");
+        // Render the frame.
         renderer->render(renderer_controller);
-        bu_log("ARTDBG: post-render\n");
 
         // Save the frame to disk to the requested output path, honoring its
         // extension via libicv.
@@ -1636,10 +1615,8 @@ main(int argc, char **argv)
 		resource_search_paths));
 
         // Render the frame.
-        art_heapchk("pre-render");
-        bu_log("ARTDBG: pre-render\n");
+        // Render the frame.
         renderer->render(renderer_controller);
-        bu_log("ARTDBG: post-render\n");
 
         // Save the frame to disk to the requested output path, honoring its
         // extension via libicv.
