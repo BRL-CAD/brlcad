@@ -105,6 +105,9 @@ set_target_properties(dm_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/dm"
 function(dm_plugin_library name)
   add_library(${name} ${ARGN})
   add_dependencies(dm_plugins_sentinel ${name})
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dm/${name}.exp")
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dm/${name}.pdb")
 endfunction(dm_plugin_library name)
 
 # This target is supplied so applications wanting to run libdm

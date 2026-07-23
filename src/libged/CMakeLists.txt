@@ -229,6 +229,10 @@ function(ged_plugin_library name)
       target_compile_options(${name} PRIVATE ${GEDPL_COMPILE_OPTIONS})
     endif()
 
+    # On some platforms distclean has additional cleanup to do
+    distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/ged/${name}.exp") 
+    distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/ged/${name}.pdb") 
+
   endif()
 endfunction()
 
@@ -293,6 +297,11 @@ function(ged_subprocess_library name)
   endif()
 
   add_dependencies(ged_subprocesses_sentinel ${name})
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/ged_exec/${name}.exp") 
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/ged_exec/${name}.pdb") 
+
 endfunction(ged_subprocess_library name)
 
 # =========================================================================

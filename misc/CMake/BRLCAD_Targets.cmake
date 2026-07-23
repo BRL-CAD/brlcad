@@ -409,6 +409,11 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
       endif(E_UNITY_BUILD_CODE_BEFORE_INCLUDE)
     endif(_srcs_count GREATER_EQUAL 8)
   endif(BRLCAD_ENABLE_UNITY_BUILD)
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/${execname}.pdb")
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/${execname}.exp")
+
 endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
 
 
@@ -1222,6 +1227,12 @@ function(
       )
     endif(NOT L_NO_INSTALL)
   endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/${libname}.pdb")
+  distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/${libname}.pdb")
+  distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/${libname}.exp")
+
 endfunction(BRLCAD_ADDLIB)
 
 
@@ -1397,6 +1408,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     )
     set(${targetname}_cmake_contents "${${targetname}_cmake_contents}endforeach(filename \${CURRENT_FILE_LIST})\n")
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake" "${${targetname}_cmake_contents}")
+    distclean("${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake")
 
     # Define custom command for copying from src to bin.
     add_custom_command(

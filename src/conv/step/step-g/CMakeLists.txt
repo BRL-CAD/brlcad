@@ -509,6 +509,11 @@ if(BRLCAD_ENABLE_STEP)
       set_property(TARGET step-g APPEND PROPERTY COMPILE_DEFINITIONS "${scp}")
     endforeach(scp ${SCIMPORTS})
   endif(HIDE_INTERNAL_SYMBOLS)
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/step-g.exp") 
+  distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/step-g.lib") 
+
 endif(BRLCAD_ENABLE_STEP)
 
 cmakefiles(

@@ -81,6 +81,7 @@ if(TARGET bu_test)
   set_property(TARGET bu_test PROPERTY ENABLE_EXPORTS ON)
 endif()
 distclean("${CMAKE_CURRENT_BINARY_DIR}/bu_test.core")
+distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/bu_test.exp")
 
 # The uuid code doesn't mix with C++ compilers - make a separate
 # C-only executable for this case

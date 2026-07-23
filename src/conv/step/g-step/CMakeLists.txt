@@ -69,6 +69,11 @@ if(BRLCAD_ENABLE_STEP)
     )
     set_property(TARGET g-step APPEND PROPERTY COMPILE_DEFINITIONS "${gstep_IMPORTS}")
   endif(HIDE_INTERNAL_SYMBOLS)
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/g-step.exp")
+  distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/g-step.lib")
+
 endif(BRLCAD_ENABLE_STEP)
 
 set(

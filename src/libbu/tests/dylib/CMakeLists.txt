@@ -52,6 +52,16 @@ if(BUILD_TESTING)
   add_dependencies(bu_dylib test_plugin_1 test_plugin_2)
 
   brlcad_add_test(NAME bu_dylib COMMAND bu_dylib)
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/bu_dylib.pdb")
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/libdylib.pdb")
+  distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/libdylib.exp")
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib/test_plugin_1.exp")
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib/test_plugin_1.pdb")
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib/test_plugin_2.exp")
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib/test_plugin_2.pdb")
+
 endif(BUILD_TESTING)
 
 # Local Variables:

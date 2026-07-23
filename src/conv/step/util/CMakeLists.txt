@@ -43,6 +43,11 @@ if(BRLCAD_ENABLE_STEP)
     )
     set_property(TARGET list_elements APPEND PROPERTY COMPILE_DEFINITIONS "${list_elements_IMPORTS}")
   endif(HIDE_INTERNAL_SYMBOLS)
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/list_elements.exp") 
+  distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/list_elements.lib") 
+
 endif(BRLCAD_ENABLE_STEP)
 
 cmakefiles(

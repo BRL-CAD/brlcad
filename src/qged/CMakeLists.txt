@@ -86,6 +86,10 @@ if(BRLCAD_ENABLE_QT)
     distclean(moc_${qh}.cpp_parameters)
   endforeach(qh ${qth_names})
   distclean(${CMAKE_CURRENT_BINARY_DIR}/theme/breeze.qrc.depends)
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/qged.pdb")
+
 endif(BRLCAD_ENABLE_QT)
 
 # Core application is defined, now handle plugins

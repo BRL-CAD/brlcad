@@ -61,7 +61,11 @@ if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND TARGET libbrlcad AND BUILD_TESTING)
     TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-user-aggregate.cmake.in"
   )
   distclean(${LOG_FILE})
+
 endif(BRLCAD_ENABLE_BRLCAD_LIBRARY AND TARGET libbrlcad AND BUILD_TESTING)
+
+# On some platforms distclean has additional cleanup to do
+distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/cad_user.pdb")
 
 cmakefiles(
   CMakeLists.txt

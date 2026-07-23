@@ -52,6 +52,10 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   cmakefiles(${g_sat_srcs} shim.h)
   cmakefiles(CMakeLists.txt)
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/g-sat.pdb")
+
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
 # Local Variables:

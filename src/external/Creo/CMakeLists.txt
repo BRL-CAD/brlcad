@@ -595,6 +595,10 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   )
   cmakefiles(${creo_dist_files})
   cmakefiles(CMakeLists.txt)
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/creo-brl.pdb")
+
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
 # Produce console log of CMake variables

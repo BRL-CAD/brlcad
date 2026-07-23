@@ -82,6 +82,11 @@ if(BRLCAD_ENABLE_ADDRESS_SANITIZER AND SANITIZE_ADDRESS_FLAG)
   target_link_options(env2c PRIVATE "-fsanitize=address")
 endif(BRLCAD_ENABLE_ADDRESS_SANITIZER AND SANITIZE_ADDRESS_FLAG)
 
+if(COMMAND DISTCLEAN)
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/env2c.pdb")
+endif()
+
 if(COMMAND CMAKEFILES)
   cmakefiles(
     CMakeLists.txt

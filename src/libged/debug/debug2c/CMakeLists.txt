@@ -50,6 +50,11 @@ if(BRLCAD_OPTIMIZED AND O3_COMPILER_FLAG)
   target_compile_options(debug2c PRIVATE "-O3")
 endif()
 
+if(COMMAND DISTCLEAN)
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/debug2c.pdb")
+endif()
+
 if(COMMAND CMAKEFILES)
   cmakefiles(
     CMakeLists.txt

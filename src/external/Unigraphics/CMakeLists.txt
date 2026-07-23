@@ -59,6 +59,10 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Distcheck file list
   cmakefiles(${ug_g_srcs} conv.h log.h shim.h ug-g.1 ug_misc.h)
   cmakefiles(CMakeLists.txt)
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/ug-g.pdb")
+
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
 # Local Variables:

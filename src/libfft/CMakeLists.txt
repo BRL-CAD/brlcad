@@ -58,6 +58,11 @@ target_link_libraries(fftest libfft ${M_LIBRARY})
 cmakefiles(fftest.c)
 cmakefiles(CMakeLists.txt)
 
+# On some platforms distclean has additional cleanup to do
+distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/fftc.pdb")
+distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/ifftc.pdb")
+distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/fftest.pdb")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
