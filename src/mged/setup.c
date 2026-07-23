@@ -678,7 +678,7 @@ mged_setup(struct mged_state *s)
      * any bu_log output accumulated in the thread-safe buffer to the command
      * prompt.  This enables live streaming of intermediate output during long
      * GED commands that run in a worker thread. */
-    mged_start_log_drain_timer(s);
+    mged_start_heartbeat(s);
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);

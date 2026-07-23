@@ -261,10 +261,10 @@ struct mged_state {
     /* Asynchronous ged_exec state (cmd.cpp).
      * cmd_running is set to 1 while ged_exec runs in a worker thread so
      * that re-entrant command dispatch (e.g. from stdin_input) is blocked.
-     * log_drain_timer is the recurring Tcl timer token used to flush
+     * heartbeat_timer is the recurring Tcl timer token used to flush
      * accumulated bu_log output to the Tcl command prompt. */
     int cmd_running;
-    Tcl_TimerToken log_drain_timer;
+    Tcl_TimerToken heartbeat_timer;
 
     /* Staged shutdown state.  Tcl callbacks request shutdown and return; the
      * outer MGED event loop performs final teardown after Tcl has unwound. */
@@ -501,8 +501,8 @@ int mged_get_filename(int, const char **, void *, void*);
 int gui_output(void *clientData, void *str);
 void mged_pr_output(Tcl_Interp *interp);
 void mged_sem_log_init(void);
-void mged_start_log_drain_timer(struct mged_state *s);
-void mged_stop_log_drain_timer(struct mged_state *s);
+void mged_start_heartbeat(struct mged_state *s);
+void mged_stop_heartbeat(struct mged_state *s);
 void mged_output_cleanup(void);
 int mged_ged_exec_async(struct mged_state *s, int argc, const char *argv[]);
 

@@ -95,7 +95,7 @@ static int gui_output_hook_active = 0;
 
 /* Thread-safe buffer: bu_log output from any thread is accumulated here under
  * MGED_SEM_LOG protection.  The main thread drains it to the Tcl interp via
- * mged_pr_output(), which is called from refresh() and the log_drain timer. */
+ * mged_pr_output(), which is called from refresh() and the heartbeat timer. */
 static struct bu_vls tcl_log_str = BU_VLS_INIT_ZERO;
 
 /* Dedicated semaphore for the log buffer.
@@ -175,7 +175,7 @@ run_ged_async(struct mged_state *s, std::function<int()> func)
 
     /* Block until woken. The worker's queued wake event is the primary wakeup
      * (Tcl services the event queue before it ever blocks, so there is no
-     * lost-wakeup race); log_drain_callback timer is the liveness backstop and
+     * lost-wakeup race); the mged_heartbeat timer is the liveness backstop and
      * continues to stream intermediate bu_log output to the command prompt */
     while (!done.load(std::memory_order_acquire) && !mged_shutting_down(s)) {
 	Tcl_DoOneEvent(TCL_ALL_EVENTS);
@@ -215,7 +215,7 @@ mged_sem_log_init(void)
  * near-real-time.
  */
 static void
-log_drain_callback(ClientData clientData)
+mged_heartbeat(ClientData clientData)
 {
     struct mged_state *s = (struct mged_state *)clientData;
     MGED_CK_STATE(s);
@@ -225,38 +225,38 @@ log_drain_callback(ClientData clientData)
 	return;
     mged_pr_output(s->interp);
     /* Reschedule: 50 ms gives good responsiveness without unnecessary CPU use. */
-    s->log_drain_timer = Tcl_CreateTimerHandler(50, log_drain_callback, clientData);
+    s->heartbeat_timer = Tcl_CreateTimerHandler(50, mged_heartbeat, clientData);
 }
 
 
 /**
- * Start the recurring log-drain timer.  Call once from mged_setup().
+ * Start the recurring heartbeat timer.  Call once from mged_setup().
  */
 void
-mged_start_log_drain_timer(struct mged_state *s)
+mged_start_heartbeat(struct mged_state *s)
 {
     MGED_CK_STATE(s);
-    s->log_drain_timer = Tcl_CreateTimerHandler(50, log_drain_callback, (ClientData)s);
+    s->heartbeat_timer = Tcl_CreateTimerHandler(50, mged_heartbeat, (ClientData)s);
 }
 
 
 /**
- * Cancel the log-drain timer.  Call from mged_finish() before teardown.
+ * Cancel the heartbeat timer.  Call from mged_finish() before teardown.
  */
 void
-mged_stop_log_drain_timer(struct mged_state *s)
+mged_stop_heartbeat(struct mged_state *s)
 {
     MGED_CK_STATE(s);
-    if (s->log_drain_timer) {
-	Tcl_DeleteTimerHandler(s->log_drain_timer);
-	s->log_drain_timer = NULL;
+    if (s->heartbeat_timer) {
+	Tcl_DeleteTimerHandler(s->heartbeat_timer);
+	s->heartbeat_timer = NULL;
     }
 }
 
 
 /**
  * Release process-lifetime output buffers once no log hook or worker can use
- * them.  This is separate from mged_stop_log_drain_timer() because shutdown
+ * them.  This is separate from mged_stop_heartbeat() because shutdown
  * must first remove the bu_log hook.
  */
 void

@@ -186,7 +186,7 @@ mged_quiesce_tcl(struct mged_state *s)
 	(void)Tcl_Eval(s->interp, "catch {foreach id [after info] {after cancel $id}}");
     }
 
-    mged_stop_log_drain_timer(s);
+    mged_stop_heartbeat(s);
 
 #ifdef HAVE_TK
     /* This handler is process-global in Tk and retains s as ClientData.  It
@@ -2539,7 +2539,7 @@ main(int argc, char *argv[])
     bu_vls_init(&s->mged_prompt);
     s->dpy_string = NULL;
     s->cmd_running = 0;
-    s->log_drain_timer = NULL;
+    s->heartbeat_timer = NULL;
     s->shutdown_state = MGED_SHUTDOWN_RUNNING;
     s->shutdown_exitcode = 0;
     s->stdin_chan = NULL;
