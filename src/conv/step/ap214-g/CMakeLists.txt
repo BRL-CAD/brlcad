@@ -5,6 +5,7 @@ set(
   ap214g_SOURCES
   ../BRLCADWrapper.cpp
   ../STEPString.cpp
+  ../STEPBudget.cpp
   ../STEPWrapper.cpp
   ../STEPWrapperAttributes.cpp
   ../STEPWrapperIO.cpp
@@ -341,6 +342,15 @@ if(BRLCAD_ENABLE_STEP)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_dry_run.cmake
   )
   brlcad_add_test(
+    NAME ap214_budget_controls
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_direct_manifold.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_budget_controls.json
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_budget_controls.cmake
+  )
+  brlcad_add_test(
     NAME ap214_lazy_diagnostics
     COMMAND
       ${CMAKE_COMMAND}
@@ -492,6 +502,17 @@ if(BRLCAD_ENABLE_STEP)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_collapsed_torus_seam.cmake
   )
   brlcad_add_test(
+    NAME ap214_degenerate_torus_endpoint
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_degenerate_torus_endpoint.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_degenerate_torus_endpoint.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_degenerate_torus_endpoint.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_degenerate_torus_endpoint.cmake
+  )
+  brlcad_add_test(
     NAME ap214_short_cylinder_seam
     COMMAND
       ${CMAKE_COMMAND}
@@ -501,6 +522,17 @@ if(BRLCAD_ENABLE_STEP)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_short_cylinder_seam.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_short_cylinder_seam.g
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_short_cylinder_seam.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_duplicate_periodic_seam
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_duplicate_periodic_seam.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_duplicate_periodic_seam.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_duplicate_periodic_seam.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_duplicate_periodic_seam.cmake
   )
   brlcad_add_test(
     NAME ap214_notched_periodic_band
@@ -547,6 +579,17 @@ if(BRLCAD_ENABLE_STEP)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_wavy_periodic_band.cmake
   )
   brlcad_add_test(
+    NAME ap214_collapsed_wavy_periodic_band
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_collapsed_wavy_periodic_band.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_collapsed_wavy_periodic_band.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_collapsed_wavy_periodic_band.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_collapsed_wavy_periodic_band.cmake
+  )
+  brlcad_add_test(
     NAME ap214_offset_vertex_periodic_band
     COMMAND
       ${CMAKE_COMMAND}
@@ -556,6 +599,17 @@ if(BRLCAD_ENABLE_STEP)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_offset_vertex_periodic_band.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_offset_vertex_periodic_band.g
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_offset_vertex_periodic_band.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_periodic_edge_propagation
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_periodic_edge_propagation.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_periodic_edge_propagation.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_periodic_edge_propagation.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_periodic_edge_propagation.cmake
   )
   brlcad_add_test(
     NAME ap214_measured_vertex_tolerance_band
@@ -569,6 +623,16 @@ if(BRLCAD_ENABLE_STEP)
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_vertex_tolerance_band_exact.json
       -DEXACT_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_vertex_tolerance_band_exact.g
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_measured_vertex_tolerance_band.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_collapsed_topology_edge
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_collapsed_topology_edge.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_collapsed_topology_edge.json
+      -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_collapsed_topology_edge_exact.json
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_collapsed_topology_edge.cmake
   )
   brlcad_add_test(
     NAME ap214_spherical_band_inner_first
@@ -787,6 +851,7 @@ cmakefiles(
   ap214e3.exp
   tests/ap214_brep_with_voids.cmake
   tests/ap214_brep_with_voids.stp
+  tests/ap214_budget_controls.cmake
   tests/ap214_csg.cmake
   tests/ap214_csg.stp
   tests/ap214_csg_invalid.cmake
@@ -799,12 +864,20 @@ cmakefiles(
   tests/ap214_segmented_cylinder_band.stp
   tests/ap214_wavy_periodic_band.cmake
   tests/ap214_wavy_periodic_band.stp
+  tests/ap214_collapsed_wavy_periodic_band.cmake
+  tests/ap214_collapsed_wavy_periodic_band.stp
   tests/ap214_offset_vertex_periodic_band.cmake
   tests/ap214_offset_vertex_periodic_band.stp
+  tests/ap214_periodic_edge_propagation.cmake
+  tests/ap214_periodic_edge_propagation.stp
   tests/ap214_measured_vertex_tolerance_band.cmake
   tests/ap214_measured_vertex_tolerance_band.stp
   tests/ap214_collapsed_torus_seam.cmake
   tests/ap214_collapsed_torus_seam.stp
+  tests/ap214_collapsed_topology_edge.cmake
+  tests/ap214_collapsed_topology_edge.stp
+  tests/ap214_degenerate_torus_endpoint.cmake
+  tests/ap214_degenerate_torus_endpoint.stp
   tests/ap214_direct_manifold.cmake
   tests/ap214_direct_manifold.stp
   tests/ap214_deterministic_output.cmake
@@ -847,6 +920,8 @@ cmakefiles(
   tests/ap214_solid_replica_cycle.cmake
   tests/ap214_solid_replica_cycle.stp
   tests/ap214_short_cylinder_seam.cmake
+  tests/ap214_duplicate_periodic_seam.cmake
+  tests/ap214_duplicate_periodic_seam.stp
   tests/ap214_sub_tolerance_torus_seam.cmake
   tests/ap214_sub_tolerance_torus_seam.stp
   tests/ap214_short_cylinder_seam.stp

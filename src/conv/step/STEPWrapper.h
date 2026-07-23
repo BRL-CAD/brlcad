@@ -168,6 +168,7 @@ private:
     void printEntityAggregate(STEPaggregate *sa, int level);
     const char *getBaseType(int type);
     double deriveTolerance();
+    void configureImportBudgets();
     void collectEntityCounts();
     InstMgrBase *referenceManager() const;
 #ifdef HAVE_STEPCODE_LAZY

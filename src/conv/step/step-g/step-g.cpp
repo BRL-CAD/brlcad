@@ -82,6 +82,15 @@ default_geometry_jobs()
 	std::min(bu_avail_cpus(), kMaximumAutomaticGeometryJobs)));
 }
 
+uint64_t
+seconds_to_milliseconds(fastf_t seconds)
+{
+    if (!(seconds > 0.0)) return 0;
+    const long double milliseconds = static_cast<long double>(seconds) * 1000.0L;
+    return milliseconds >= static_cast<long double>(UINT64_MAX) ? UINT64_MAX :
+	static_cast<uint64_t>(milliseconds + 0.5L);
+}
+
 volatile std::sig_atomic_t caught_signal = 0;
 
 void
@@ -225,7 +234,20 @@ void
 write_performance_telemetry(std::ostream &out,
     const brlcad::step::ImportStatistics &stats)
 {
-    out << "{\"stages\":{";
+    out << "{\"calibration\":{\"ran\":"
+	<< (stats.budget_calibration_ran ? "true" : "false")
+	<< ",\"valid\":" << (stats.budget_calibration_valid ? "true" : "false")
+	<< ",\"queries\":" << stats.budget_calibration_queries
+	<< ",\"elapsed_us\":" << stats.budget_calibration_microseconds
+	<< ",\"parallel_workers\":"
+	<< stats.budget_calibration_parallel_workers
+	<< ",\"scalar_queries_per_second\":"
+	<< stats.budget_calibration_scalar_queries_per_second
+	<< ",\"parallel_queries_per_second\":"
+	<< stats.budget_calibration_parallel_queries_per_second
+	<< ",\"parallel_cpu_queries_per_second\":"
+	<< stats.budget_calibration_parallel_cpu_queries_per_second
+	<< "},\"stages\":{";
     bool first = true;
     for (const auto &entry : stats.stage_timings) {
 	if (!first) out << ',';
@@ -341,6 +363,15 @@ write_report(const std::string &path, const std::string &input,
 	<< "\n  \"exit_status\":" << exit_status
 	<< ",\n  \"options\":{\"requested_jobs\":" << options.requested_jobs
 	<< ",\"effective_jobs\":" << options.effective_jobs
+	<< ",\"requested_budget_scale\":" << options.budget_scale
+	<< ",\"effective_budget_scale\":" << options.effective_budget_scale
+	<< ",\"item_cpu_budgets_enabled\":"
+	<< (options.disable_item_budgets ? "false" : "true")
+	<< ",\"effective_item_cpu_budget_ms\":"
+	<< options.effective_item_budget_milliseconds
+	<< ",\"item_budget_clock\":\"critical_path_cpu\""
+	<< ",\"effective_stall_timeout_ms\":"
+	<< options.effective_stall_timeout_milliseconds
 	<< ",\"repair\":\"" << (options.repair == brlcad::step::RepairMode::Safe ?
 	    "safe" : "none") << "\",\"exact\":" << (options.exact ? "true" : "false")
 	<< ",\"strict\":" << (options.strict ? "true" : "false")
@@ -462,7 +493,9 @@ usage(const struct bu_opt_desc *options)
 
 struct OutputFile {
     char *filename;
-    bool overwrite;
+    /* bu_opt's argument-less flag handler stores an int.  Keep flag storage
+     * ABI-compatible with that handler rather than pointing it at a bool. */
+    int overwrite;
 };
 
 struct TemporaryOutput {
@@ -545,14 +578,18 @@ main(int argc, const char *argv[])
     // STEPfile sfile (registry, instance_list);
 
     // process command line arguments
-    static OutputFile ofile = {NULL, false};
-    static bool verbose = false;
+    static OutputFile ofile = {NULL, 0};
+    static int verbose = 0;
     static int dry_run = 0;
     static int exact = 0;
     static int strict = 0;
     static int help = 0;
     static int jobs = default_geometry_jobs();
     static fastf_t absolute_tolerance = 0.0;
+    static fastf_t budget_scale = 0.0;
+    static fastf_t item_budget_seconds = 0.0;
+    static fastf_t stall_timeout_seconds = 0.0;
+    static int no_item_budget = 0;
     static char *repair_name = NULL;
     static char *report_name = NULL;
     static char *summary_log_file = (char *)NULL;
@@ -566,6 +603,14 @@ main(int argc, const char *argv[])
 	{"", "exact", "",       NULL,        &exact,            "strictly enforce the declared model tolerance"},
 	{"", "strict", "",      NULL,        &strict,           "reject partial output"},
 	{"", "abs-tol", "MM",   bu_opt_fastf_t, &absolute_tolerance, "absolute output tolerance"},
+	{"", "budget-scale", "FACTOR", bu_opt_fastf_t, &budget_scale,
+	    "manual machine-speed budget scale (default: startup calibration)"},
+	{"", "item-budget", "SECONDS", bu_opt_fastf_t, &item_budget_seconds,
+	    "override the ordinary per-item CPU-work budget"},
+	{"", "no-item-budget", "", NULL, &no_item_budget,
+	    "disable CPU-work budgets; no-progress detection remains active"},
+	{"", "stall-timeout", "SECONDS", bu_opt_fastf_t, &stall_timeout_seconds,
+	    "override the no-progress cancellation interval"},
 	{"", "repair", "MODE",  bu_opt_str,  &repair_name,      "none or safe"},
 	{"", "report", "FILE",  bu_opt_str,  &report_name,      "structured JSON report"},
 	{"f", "force", "",      NULL,        &ofile.overwrite,  "overwrite a positional or -o output"},
@@ -590,7 +635,9 @@ main(int argc, const char *argv[])
 	bu_vls_free(&parse_msgs);
 	return 0;
     }
-    if (bu_vls_strlen(&parse_msgs) > 0 || jobs < 1 || absolute_tolerance < 0.0) {
+    if (bu_vls_strlen(&parse_msgs) > 0 || jobs < 1 ||
+	    absolute_tolerance < 0.0 || budget_scale < 0.0 ||
+	    item_budget_seconds < 0.0 || stall_timeout_seconds < 0.0) {
 	usage(options);
 	bu_vls_free(&parse_msgs);
 	return 2;
@@ -650,6 +697,12 @@ main(int argc, const char *argv[])
     brlcad::step::ImportOptions import_options;
     import_options.dry_run = dry_run != 0;
     import_options.absolute_tolerance_mm = absolute_tolerance;
+    import_options.budget_scale = budget_scale;
+    import_options.item_budget_milliseconds =
+	seconds_to_milliseconds(item_budget_seconds);
+    import_options.stall_timeout_milliseconds =
+	seconds_to_milliseconds(stall_timeout_seconds);
+    import_options.disable_item_budgets = no_item_budget != 0;
     import_options.repair = repair;
     import_options.exact = exact != 0;
     import_options.strict = strict != 0;

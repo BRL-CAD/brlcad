@@ -9,6 +9,7 @@ set(
   ${ap242g_express_srcs}
   ../BRLCADWrapper.cpp
   ../STEPString.cpp
+  ../STEPBudget.cpp
   ../STEPWrapper.cpp
   ../STEPWrapperAttributes.cpp
   ../STEPWrapperIO.cpp

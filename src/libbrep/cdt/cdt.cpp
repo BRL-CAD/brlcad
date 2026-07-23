@@ -26,16 +26,138 @@
  */
 
 #include "common.h"
+#include <algorithm>
 #include <iostream>
+#include <map>
 #include <numeric>
 #include <queue>
 #include <string>
+#include <utility>
+#include <vector>
 #include "bg/chull.h"
 #include "bg/tri_tri.h"
 #include "./cdt.h"
 
 #define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
+
+/* Correct triangle winding only after the complete mesh proves closed and
+ * manifold and misorientation is its sole defect.  bg_trimesh_sync establishes
+ * a consistent orientation for each connected component, but its seed may
+ * choose either of the two possible component orientations.  Preserve the
+ * OpenNURBS face orientation by selecting the result that changes the fewest
+ * source triangles in each component.  A tied component has no authoritative
+ * majority, so leave the mesh unchanged rather than guessing.
+ *
+ * This function is transactional: faces and face normals are not modified
+ * unless the candidate subsequently passes the complete solid test. */
+static int
+closed_mesh_orientation_sync(int *faces, int face_count,
+	fastf_t *vertices, int vertex_count, int *face_normals)
+{
+    if (!faces || !vertices || face_count < 4 || vertex_count < 4)
+	return -1;
+
+    struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+    const int initial_invalid = bg_trimesh_solid2(vertex_count, face_count,
+	vertices, faces, &errors);
+    if (!initial_invalid) {
+	bg_free_trimesh_solid_errors(&errors);
+	return 0;
+    }
+
+    const bool only_misoriented = errors.misoriented.count > 0 &&
+	errors.degenerate.count == 0 && errors.unmatched.count == 0 &&
+	errors.excess.count == 0;
+    bg_free_trimesh_solid_errors(&errors);
+    if (!only_misoriented)
+	return -1;
+
+    std::vector<int> original(faces, faces + 3 * face_count);
+    std::vector<int> candidate(original);
+    if (bg_trimesh_sync(candidate.data(), candidate.data(), face_count) <= 0)
+	return -1;
+
+    /* Determine the connected closed-shell components from shared edges. */
+    std::vector<std::vector<int>> adjacent((size_t)face_count);
+    std::map<std::pair<int, int>, int> first_edge_face;
+    for (int face = 0; face < face_count; ++face) {
+	for (int edge = 0; edge < 3; ++edge) {
+	    int vertex_a = original[(size_t)face * 3 + edge];
+	    int vertex_b = original[(size_t)face * 3 + (edge + 1) % 3];
+	    if (vertex_a > vertex_b)
+		std::swap(vertex_a, vertex_b);
+	    const std::pair<int, int> key(vertex_a, vertex_b);
+	    auto first = first_edge_face.find(key);
+	    if (first == first_edge_face.end()) {
+		first_edge_face[key] = face;
+		continue;
+	    }
+	    adjacent[(size_t)face].push_back(first->second);
+	    adjacent[(size_t)first->second].push_back(face);
+	}
+    }
+
+    std::vector<int> component_id((size_t)face_count, -1);
+    std::vector<std::vector<int>> components;
+    for (int seed = 0; seed < face_count; ++seed) {
+	if (component_id[(size_t)seed] >= 0)
+	    continue;
+	const int current_id = (int)components.size();
+	components.push_back(std::vector<int>());
+	std::queue<int> work;
+	work.push(seed);
+	component_id[(size_t)seed] = current_id;
+	while (!work.empty()) {
+	    const int face = work.front();
+	    work.pop();
+	    components[(size_t)current_id].push_back(face);
+	    for (int neighbor : adjacent[(size_t)face]) {
+		if (component_id[(size_t)neighbor] >= 0)
+		    continue;
+		component_id[(size_t)neighbor] = current_id;
+		work.push(neighbor);
+	    }
+	}
+    }
+
+    for (const std::vector<int> &component : components) {
+	size_t changed = 0;
+	for (int face : component) {
+	    const size_t offset = (size_t)face * 3;
+	    if (candidate[offset] != original[offset] ||
+		    candidate[offset + 1] != original[offset + 1] ||
+		    candidate[offset + 2] != original[offset + 2])
+		changed++;
+	}
+	if (changed * 2 == component.size())
+	    return -1;
+	if (changed * 2 > component.size()) {
+	    for (int face : component)
+		std::swap(candidate[(size_t)face * 3],
+		    candidate[(size_t)face * 3 + 1]);
+	}
+    }
+
+    if (bg_trimesh_solid2(vertex_count, face_count, vertices,
+	    candidate.data(), NULL) != 0)
+	return -1;
+
+    int changed_count = 0;
+    for (int face = 0; face < face_count; ++face) {
+	const size_t offset = (size_t)face * 3;
+	if (candidate[offset] == original[offset] &&
+		candidate[offset + 1] == original[offset + 1] &&
+		candidate[offset + 2] == original[offset + 2])
+	    continue;
+	changed_count++;
+	if (face_normals)
+	    std::swap(face_normals[offset], face_normals[offset + 1]);
+    }
+
+    std::copy(candidate.begin(), candidate.end(), faces);
+    return changed_count;
+}
 
 // TODO - get rid of all BN_TOL_DIST-only tolerances - if the object is
 // very small, that distance is too big (e.g. for linearity testing).
@@ -558,6 +680,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	trimesh_error_report(s_cdt, valid_fcnt, valid_vcnt, valid_faces, valid_vertices, &se);
     }
 
+    bg_free_trimesh_solid_errors(&se);
+
     bu_free(valid_faces, "faces");
     bu_free(valid_vertices, "vertices");
 
@@ -730,6 +854,20 @@ ON_Brep_CDT_Mesh(
 	}
     }
 
+    /* A complete, topologically solid BREP supplies authoritative shell
+     * orientation.  If tessellation produced an otherwise closed/manifold
+     * mesh with inconsistent triangle winding, repair that winding only when
+     * the fully synchronized candidate validates as a solid.  Partial/open
+     * meshes retain their original per-face ordering. */
+    if ((!exp_face_cnt || !exp_faces) && s_cdt->brep->IsSolid()) {
+	const int synchronized = closed_mesh_orientation_sync(*faces, *fcnt,
+	    *vertices, *vcnt, face_normals ? *face_normals : NULL);
+	if (synchronized > 0) {
+	    bu_log("%s: synchronized %d triangle orientations after complete closed-mesh validation\n",
+		s_cdt->name ? s_cdt->name : "BREP", synchronized);
+	}
+    }
+
     return 0;
 }
 
@@ -815,4 +953,3 @@ CDT_Audit(struct ON_Brep_CDT_State *s_cdt)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

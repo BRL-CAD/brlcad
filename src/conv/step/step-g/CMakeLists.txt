@@ -9,6 +9,7 @@ set(
   ${stepg_express_srcs}
   ../BRLCADWrapper.cpp
   ../STEPString.cpp
+  ../STEPBudget.cpp
   ../STEPWrapper.cpp
   ../STEPWrapperAttributes.cpp
   ../STEPWrapperIO.cpp
@@ -538,6 +539,7 @@ if(BRLCAD_ENABLE_STEP)
         -DSTEP_G=$<TARGET_FILE:step-g>
         -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_direct_manifold.stp
         -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_direct_manifold.g
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_budget_controls.json
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_lazy_positional.cmake
     )
     brlcad_add_test(
@@ -576,6 +578,15 @@ if(BRLCAD_ENABLE_STEP)
         -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_closed_nurbs_interval.json
         -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_closed_nurbs_interval_exact.json
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_closed_nurbs_interval.cmake
+    )
+    brlcad_add_test(
+      NAME ap203_closed_curve_seam_interval
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_closed_curve_seam_interval.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_closed_curve_seam_interval.json
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_closed_curve_seam_interval.cmake
     )
     brlcad_add_test(
       NAME ap203_bounded_parent_curve
@@ -618,9 +629,13 @@ endif(BRLCAD_ENABLE_STEP)
 
 cmakefiles(
   CMakeLists.txt
+  OpenNurbsPullback.inc
+  OpenNurbsTopology.inc
   tests/ap203_bounded_parent_curve.cmake
   tests/ap203_bounded_parent_curve.stp
   ap203.exp
+  tests/ap203_closed_curve_seam_interval.cmake
+  tests/ap203_closed_curve_seam_interval.stp
   tests/ap203_closed_nurbs_interval.cmake
   tests/ap203_closed_nurbs_interval.stp
   tests/ap203_direct_manifold.stp

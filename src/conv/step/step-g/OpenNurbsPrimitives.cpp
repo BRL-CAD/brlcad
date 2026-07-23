@@ -27,6 +27,7 @@ class SDAI_Application_instance;
 #include <cfloat>
 #include <cmath>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <vector>
 
@@ -499,8 +500,21 @@ Circle::LoadONBrep(ON_Brep *brep)
 
     double theta = s - t;
 
-    if (VNEAR_EQUAL(startpt, endpt, BN_TOL_DIST)) {
+    /* Geometrically close but topologically distinct vertices can define a
+     * short arc across the conic's parameter seam.  A fixed-distance test
+     * used to turn those arcs into complete circles, discarding authoritative
+     * STEP topology (DRONE #929223).  Only a one-vertex EDGE_CURVE, or an
+     * explicitly trimmed conic without topology vertices, means a complete
+     * revolution. */
+    if ((start && end && start == end) ||
+	    ((!start || !end) && VNEAR_EQUAL(startpt, endpt,
+		LocalUnits::tolerance))) {
 	theta = 2.0 * ON_PI;
+    } else if (start && end && start != end &&
+	    VNEAR_EQUAL(startpt, endpt, BN_TOL_DIST) && step) {
+	step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Information,
+	    id, "CIRCLE", "edge_vertices",
+	    "preserved a short conic arc between distinct STEP topology vertices");
     }
 
     int narcs = 1;
@@ -534,6 +548,24 @@ Circle::LoadONBrep(ON_Brep *brep)
 	ON_Line tangent2(circleP2, circleP2 + r * tangentP2);
 
 	if (intersectLines(tangent1, tangent2, isect) != 1) {
+	    /* Tangents of a very short exact arc are numerically parallel even
+	     * though the arc itself is well conditioned.  Preserve the same
+	     * analytic circle interval instead of rejecting it or inflating it
+	     * into a larger approximation. */
+	    const ON_Arc exact_arc(circle, ON_Interval(t, s));
+	    std::unique_ptr<ON_ArcCurve> exact_curve(exact_arc.IsValid() ?
+		new ON_ArcCurve(exact_arc, t, s) : NULL);
+	    if (exact_curve && exact_curve->IsValid()) {
+		SetONId(brep->AddEdgeCurve(exact_curve.release()));
+		if (step) {
+		    step->RecordDiagnostic(
+			brlcad::step::DiagnosticSeverity::Information, id,
+			"CIRCLE", "edge_geometry",
+			"used an exact analytic arc when the equivalent short "
+			"rational construction was numerically ill-conditioned");
+		}
+		return GetONId() >= 0;
+	    }
 	    if (step && step->Verbose())
 		std::cerr << entityname << " #" << id
 		    << ": Error: Control point can not be calculated." << std::endl;
@@ -704,8 +736,15 @@ Ellipse::LoadONBrep(ON_Brep *brep)
 
     double theta = s - t;
 
-    if (VNEAR_EQUAL(startpt, endpt, BN_TOL_DIST)) {
+    if ((start && end && start == end) ||
+	    ((!start || !end) && VNEAR_EQUAL(startpt, endpt,
+		LocalUnits::tolerance))) {
 	theta = 2.0 * ON_PI;
+    } else if (start && end && start != end &&
+	    VNEAR_EQUAL(startpt, endpt, BN_TOL_DIST) && step) {
+	step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Information,
+	    id, "ELLIPSE", "edge_vertices",
+	    "preserved a short conic arc between distinct STEP topology vertices");
     }
 
     int narcs = 1;

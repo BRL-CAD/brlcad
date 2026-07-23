@@ -61,6 +61,15 @@ default_geometry_jobs()
 	std::min(bu_avail_cpus(), kMaximumAutomaticGeometryJobs)));
 }
 
+uint64_t
+seconds_to_milliseconds(fastf_t seconds)
+{
+    if (!(seconds > 0.0)) return 0;
+    const long double milliseconds = static_cast<long double>(seconds) * 1000.0L;
+    return milliseconds >= static_cast<long double>(UINT64_MAX) ? UINT64_MAX :
+	static_cast<uint64_t>(milliseconds + 0.5L);
+}
+
 volatile std::sig_atomic_t caught_signal = 0;
 
 void
@@ -77,7 +86,9 @@ signal_exit_status()
 
 struct OutputFile {
     char *filename = NULL;
-    bool overwrite = false;
+    /* bu_opt's argument-less flag handler stores an int.  Keep flag storage
+     * ABI-compatible with that handler rather than pointing it at a bool. */
+    int overwrite = 0;
 };
 
 class TemporaryPath {
@@ -200,7 +211,7 @@ parse_output_overwrite(struct bu_vls *message, size_t argc, const char **argv, v
     OutputFile *output = static_cast<OutputFile *>(set_var);
     BU_OPT_CHECK_ARGV0(message, argc, argv, "-O");
     if (!output) return -1;
-    output->overwrite = true;
+    output->overwrite = 1;
     return bu_opt_str(message, argc, argv, &output->filename);
 }
 
@@ -230,6 +241,10 @@ usage(const char *program)
 	<< "  -e, --entity IDS    convert only listed representation-item IDs (repeatable)\n"
 	<< "  -j, --jobs N        bounded geometry worker count (default: up to 8 CPUs)\n"
 	<< "      --abs-tol MM    override output-space tolerance\n"
+	<< "      --budget-scale FACTOR  manual machine-speed scale (default calibrated)\n"
+	<< "      --item-budget SEC      override ordinary per-item CPU-work budget\n"
+	<< "      --no-item-budget       disable CPU budgets; retain stall detection\n"
+	<< "      --stall-timeout SEC    override the no-progress cancellation interval\n"
 	<< "      --repair MODE   none or safe (default safe)\n"
 	<< "      --exact         strictly enforce the declared model tolerance\n"
 	<< "      --strict        reject a partial import\n"
@@ -334,7 +349,20 @@ void
 write_performance_telemetry(std::ostream &out,
     const brlcad::step::ImportStatistics &stats)
 {
-    out << "{\"stages\":{";
+    out << "{\"calibration\":{\"ran\":"
+	<< (stats.budget_calibration_ran ? "true" : "false")
+	<< ",\"valid\":" << (stats.budget_calibration_valid ? "true" : "false")
+	<< ",\"queries\":" << stats.budget_calibration_queries
+	<< ",\"elapsed_us\":" << stats.budget_calibration_microseconds
+	<< ",\"parallel_workers\":"
+	<< stats.budget_calibration_parallel_workers
+	<< ",\"scalar_queries_per_second\":"
+	<< stats.budget_calibration_scalar_queries_per_second
+	<< ",\"parallel_queries_per_second\":"
+	<< stats.budget_calibration_parallel_queries_per_second
+	<< ",\"parallel_cpu_queries_per_second\":"
+	<< stats.budget_calibration_parallel_cpu_queries_per_second
+	<< "},\"stages\":{";
     bool first = true;
     for (const auto &entry : stats.stage_timings) {
 	if (!first) out << ',';
@@ -539,6 +567,15 @@ write_report(const std::string &path, const std::string &input, const std::strin
 	const brlcad::step::ImportOptions &options = wrapper->ImportOptions();
 	out << ",\n  \"options\":{\"requested_jobs\":" << options.requested_jobs
 	    << ",\"effective_jobs\":" << options.effective_jobs
+	    << ",\"requested_budget_scale\":" << options.budget_scale
+	    << ",\"effective_budget_scale\":" << options.effective_budget_scale
+	    << ",\"item_cpu_budgets_enabled\":"
+	    << (options.disable_item_budgets ? "false" : "true")
+	    << ",\"effective_item_cpu_budget_ms\":"
+	    << options.effective_item_budget_milliseconds
+	    << ",\"item_budget_clock\":\"critical_path_cpu\""
+	    << ",\"effective_stall_timeout_ms\":"
+	    << options.effective_stall_timeout_milliseconds
 	    << ",\"repair\":\"" << (options.repair == brlcad::step::RepairMode::Safe ? "safe" : "none")
 	    << "\",\"exact\":" << (options.exact ? "true" : "false")
 	    << ",\"strict\":" << (options.strict ? "true" : "false")
@@ -729,6 +766,10 @@ main(int argc, const char *argv[])
     static int help = 0;
     static int jobs = default_geometry_jobs();
     static fastf_t absolute_tolerance = 0.0;
+    static fastf_t budget_scale = 0.0;
+    static fastf_t item_budget_seconds = 0.0;
+    static fastf_t stall_timeout_seconds = 0.0;
+    static int no_item_budget = 0;
     static char *repair_name = NULL;
     static char *report_name = NULL;
     static char *summary_name = NULL;
@@ -745,6 +786,14 @@ main(int argc, const char *argv[])
 	    "representation-item entity IDs"},
 	{"j", "jobs", "N", bu_opt_int, &jobs, "geometry workers (default: up to 8 CPUs)"},
 	{"", "abs-tol", "MM", bu_opt_fastf_t, &absolute_tolerance, "absolute tolerance"},
+	{"", "budget-scale", "FACTOR", bu_opt_fastf_t, &budget_scale,
+	    "manual machine-speed budget scale"},
+	{"", "item-budget", "SECONDS", bu_opt_fastf_t, &item_budget_seconds,
+	    "ordinary per-item CPU-work budget"},
+	{"", "no-item-budget", "", NULL, &no_item_budget,
+	    "disable CPU-work budgets; retain no-progress detection"},
+	{"", "stall-timeout", "SECONDS", bu_opt_fastf_t, &stall_timeout_seconds,
+	    "no-progress cancellation interval"},
 	{"", "repair", "MODE", bu_opt_str, &repair_name, "none or safe"},
 	{"", "exact", "", NULL, &exact, "strictly enforce declared tolerance"},
 	{"", "strict", "", NULL, &strict, "reject partial output"},
@@ -762,7 +811,9 @@ main(int argc, const char *argv[])
 	usage(program);
 	return 0;
     }
-    if (argc != 1 || (!dry_run && BU_STR_EMPTY(output.filename)) || jobs < 1 || absolute_tolerance < 0.0) {
+    if (argc != 1 || (!dry_run && BU_STR_EMPTY(output.filename)) || jobs < 1 ||
+	    absolute_tolerance < 0.0 || budget_scale < 0.0 ||
+	    item_budget_seconds < 0.0 || stall_timeout_seconds < 0.0) {
 	usage(program);
 	return 2;
     }
@@ -814,6 +865,12 @@ main(int argc, const char *argv[])
     import_options.requested_jobs = static_cast<unsigned int>(jobs);
     import_options.effective_jobs = static_cast<unsigned int>(jobs);
     import_options.absolute_tolerance_mm = absolute_tolerance;
+    import_options.budget_scale = budget_scale;
+    import_options.item_budget_milliseconds =
+	seconds_to_milliseconds(item_budget_seconds);
+    import_options.stall_timeout_milliseconds =
+	seconds_to_milliseconds(stall_timeout_seconds);
+    import_options.disable_item_budgets = no_item_budget != 0;
     import_options.repair = repair;
     import_options.exact = exact != 0;
     import_options.strict = strict != 0;

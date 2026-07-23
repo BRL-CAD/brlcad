@@ -121,6 +121,11 @@ typedef struct pbc_data {
      * this low-level numerical routine. */
     size_t failed_seam_crossing_searches = 0;
     double maximum_projection_distance = 0.0;
+    /** Every stored UV was produced from a known source-curve parameter and
+     * its 3-D lift passed the active projection tolerance.  Importers may
+     * consume this proof before any seam/topology routine mutates the samples;
+     * subsequent validation must use the represented curve locus again. */
+    bool samples_source_validated = false;
     bool tolerance_adjusted = false;
     double declared_tolerance = 0.0;
     /** Optional caller-authorized search bound used only when periodic seam
@@ -169,20 +174,48 @@ check_pullback_singularity_bridge(const ON_Surface *surf, const ON_2dPoint &p1, 
 
 namespace brlcad {
 
-    /** Install thread-local cancellation and elapsed-work limits for the
-     * current geometry job.  A zero elapsed limit disables the deadline. */
+    class PullbackWorkBudget;
+    typedef std::shared_ptr<PullbackWorkBudget> PullbackWorkBudgetHandle;
+
+    /** Create a CPU-work budget shared by all threads assisting one geometry
+     * job.  The budget follows the longest sequential worker path, rather than
+     * charging time while workers are descheduled or summing genuinely
+     * parallel work.  A zero limit returns an unlimited handle. */
+    extern BREP_EXPORT PullbackWorkBudgetHandle CreatePullbackWorkBudget(
+        uint64_t maximum_work_milliseconds);
+    /** Return the calling thread's current job budget so nested helper threads
+     * can participate in the same limit. */
+    extern BREP_EXPORT PullbackWorkBudgetHandle CurrentPullbackWorkBudget();
+
+    /** Install thread-local cancellation, CPU-work, and no-progress limits for
+     * the current geometry job.  A zero work limit disables that timer. */
     typedef bool (*PullbackCancellationCallback)(void *context);
     extern BREP_EXPORT void SetPullbackWorkLimit(
         PullbackCancellationCallback cancellation_callback,
         void *cancellation_context,
-        uint64_t maximum_elapsed_milliseconds);
+        uint64_t maximum_work_milliseconds,
+        uint64_t maximum_stall_milliseconds = 0);
+    /** Join an existing job budget from a nested helper thread. */
+    extern BREP_EXPORT void SetPullbackWorkLimit(
+        PullbackCancellationCallback cancellation_callback,
+        void *cancellation_context,
+        const PullbackWorkBudgetHandle &work_budget,
+        uint64_t maximum_stall_milliseconds = 0);
     extern BREP_EXPORT void ClearPullbackWorkLimit();
     extern BREP_EXPORT bool PullbackWorkCancelled();
     extern BREP_EXPORT bool PullbackWorkDeadlineExpired();
-    /** Milliseconds remaining on the calling thread's elapsed-work budget.
+    extern BREP_EXPORT bool PullbackWorkStalled();
+    /** Record completion of one or more bounded solver operations.  This
+     * heartbeat is independent of elapsed item deadlines and therefore keeps
+     * --no-item-budget runs cancellable when an algorithm stops advancing. */
+    extern BREP_EXPORT void PullbackWorkProgress(uint64_t operations = 1);
+    /** Propagate a helper thread's stop reason to the parent geometry job. */
+    extern BREP_EXPORT void PropagatePullbackWorkStop(
+        bool deadline_expired, bool stalled);
+    /** Milliseconds remaining on the calling thread's CPU-work budget.
      * UINT64_MAX means no deadline is installed.  This permits a bounded
-     * parent conversion job to propagate its original deadline to helper
-     * threads without restarting the per-item budget. */
+     * parent conversion job to propagate its original budget to helper
+     * threads without restarting the per-item limit. */
     extern BREP_EXPORT uint64_t PullbackWorkRemainingMilliseconds();
 
     /**

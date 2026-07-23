@@ -26,6 +26,8 @@
 #include "STEPWrapper.h"
 #include "Factory.h"
 
+#include <sstream>
+
 #include "Face.h"
 #include "QuasiUniformSurface.h"
 #include "FaceOuterBound.h"
@@ -96,6 +98,24 @@ Face::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	}
 	l->clear();
 	delete l;
+    }
+    size_t outer_bound_count = 0;
+    std::ostringstream outer_bound_ids;
+    for (LIST_OF_FACE_BOUNDS::const_iterator bound = bounds.begin();
+	    bound != bounds.end(); ++bound) {
+	FaceOuterBound *outer = dynamic_cast<FaceOuterBound *>(*bound);
+	if (!outer) continue;
+	if (outer_bound_count) outer_bound_ids << ',';
+	outer_bound_ids << '#' << outer->STEPid();
+	++outer_bound_count;
+    }
+    if (outer_bound_count > 1) {
+	std::ostringstream message;
+	message << "source face violates FACE.wr2: at most one "
+	    "FACE_OUTER_BOUND is permitted, but " << outer_bound_count
+	    << " were supplied (" << outer_bound_ids.str() << ')';
+	sw->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Warning, id,
+	    "FACE", "bounds", message.str());
     }
     sw->entity_status[id] = STEP_LOADED;
     return true;

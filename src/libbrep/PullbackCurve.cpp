@@ -30,6 +30,7 @@
 
 #include <assert.h>
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <vector>
 #include <list>
@@ -40,6 +41,12 @@
 #include <map>
 #include <mutex>
 #include <string>
+
+#if defined(HAVE_WINDOWS_H)
+#  include <windows.h>
+#else
+#  include <time.h>
+#endif
 
 #include "bu/parallel.h"
 #include "brep/defines.h"
@@ -97,11 +104,167 @@ constexpr int kMaximumSeamCrossingIterations = 64;
 thread_local size_t closest_point_subdivision_nodes = 0;
 thread_local brlcad::PullbackCancellationCallback pullback_cancellation_callback = NULL;
 thread_local void *pullback_cancellation_context = NULL;
-thread_local std::chrono::steady_clock::time_point pullback_deadline =
-    std::chrono::steady_clock::time_point::max();
+thread_local brlcad::PullbackWorkBudgetHandle pullback_work_budget;
+thread_local uint64_t pullback_last_cpu_nanoseconds = 0;
+thread_local uint64_t pullback_local_progress_nanoseconds = 0;
 thread_local bool pullback_deadline_expired = false;
+thread_local std::chrono::steady_clock::time_point pullback_last_progress =
+    std::chrono::steady_clock::time_point::max();
+thread_local uint64_t pullback_stall_milliseconds = 0;
+thread_local uint64_t pullback_progress_operations = 0;
+thread_local bool pullback_stalled = false;
 thread_local std::string pullback_seam_failure;
 
+}
+
+
+namespace brlcad {
+
+class PullbackWorkBudget {
+public:
+    explicit PullbackWorkBudget(uint64_t maximum_milliseconds);
+
+    void Attach(uint64_t &last_cpu_nanoseconds,
+	uint64_t &local_progress_nanoseconds) const;
+    void Charge(uint64_t &last_cpu_nanoseconds,
+	uint64_t &local_progress_nanoseconds);
+    bool Expired(uint64_t &last_cpu_nanoseconds,
+	uint64_t &local_progress_nanoseconds);
+    uint64_t RemainingMilliseconds(uint64_t &last_cpu_nanoseconds,
+	uint64_t &local_progress_nanoseconds);
+
+private:
+    bool cpu_clock = false;
+    uint64_t maximum_nanoseconds = 0;
+    std::atomic<uint64_t> progress_nanoseconds{0};
+    std::chrono::steady_clock::time_point wall_deadline =
+	std::chrono::steady_clock::time_point::max();
+};
+
+}
+
+
+namespace {
+
+static bool
+current_thread_cpu_nanoseconds(uint64_t &nanoseconds)
+{
+#if defined(HAVE_WINDOWS_H)
+    FILETIME created, exited, kernel, user;
+    if (!GetThreadTimes(GetCurrentThread(), &created, &exited, &kernel, &user))
+	return false;
+    ULARGE_INTEGER kernel_ticks;
+    ULARGE_INTEGER user_ticks;
+    kernel_ticks.LowPart = kernel.dwLowDateTime;
+    kernel_ticks.HighPart = kernel.dwHighDateTime;
+    user_ticks.LowPart = user.dwLowDateTime;
+    user_ticks.HighPart = user.dwHighDateTime;
+    const uint64_t ticks = kernel_ticks.QuadPart + user_ticks.QuadPart;
+    if (ticks > UINT64_MAX / 100) return false;
+    nanoseconds = ticks * 100;
+    return true;
+#elif defined(CLOCK_THREAD_CPUTIME_ID)
+    struct timespec value;
+    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &value) != 0 ||
+	    value.tv_sec < 0 || value.tv_nsec < 0)
+	return false;
+    const uint64_t seconds = static_cast<uint64_t>(value.tv_sec);
+    if (seconds > UINT64_MAX / 1000000000ULL) return false;
+    nanoseconds = seconds * 1000000000ULL +
+	static_cast<uint64_t>(value.tv_nsec);
+    return true;
+#else
+    (void)nanoseconds;
+    return false;
+#endif
+}
+
+static void
+atomic_maximum(std::atomic<uint64_t> &destination, uint64_t candidate)
+{
+    uint64_t previous = destination.load(std::memory_order_relaxed);
+    while (previous < candidate && !destination.compare_exchange_weak(previous,
+	    candidate, std::memory_order_relaxed, std::memory_order_relaxed)) {
+    }
+}
+
+}
+
+
+brlcad::PullbackWorkBudget::PullbackWorkBudget(uint64_t maximum_milliseconds)
+{
+    maximum_nanoseconds = maximum_milliseconds > UINT64_MAX / 1000000ULL ?
+	UINT64_MAX : maximum_milliseconds * 1000000ULL;
+    uint64_t now = 0;
+    cpu_clock = current_thread_cpu_nanoseconds(now);
+    if (!cpu_clock) {
+	wall_deadline = std::chrono::steady_clock::now() +
+	    std::chrono::milliseconds(maximum_milliseconds);
+    }
+}
+
+
+void
+brlcad::PullbackWorkBudget::Attach(uint64_t &last_cpu_nanoseconds,
+    uint64_t &local_progress_nanoseconds) const
+{
+    local_progress_nanoseconds =
+	progress_nanoseconds.load(std::memory_order_relaxed);
+    last_cpu_nanoseconds = 0;
+    if (cpu_clock)
+	current_thread_cpu_nanoseconds(last_cpu_nanoseconds);
+}
+
+
+void
+brlcad::PullbackWorkBudget::Charge(uint64_t &last_cpu_nanoseconds,
+    uint64_t &local_progress_nanoseconds)
+{
+    if (!cpu_clock) return;
+    uint64_t now = 0;
+    if (!current_thread_cpu_nanoseconds(now)) return;
+    if (last_cpu_nanoseconds && now >= last_cpu_nanoseconds) {
+	const uint64_t elapsed = now - last_cpu_nanoseconds;
+	local_progress_nanoseconds =
+	    local_progress_nanoseconds > UINT64_MAX - elapsed ? UINT64_MAX :
+	    local_progress_nanoseconds + elapsed;
+	atomic_maximum(progress_nanoseconds, local_progress_nanoseconds);
+    }
+    last_cpu_nanoseconds = now;
+}
+
+
+bool
+brlcad::PullbackWorkBudget::Expired(uint64_t &last_cpu_nanoseconds,
+    uint64_t &local_progress_nanoseconds)
+{
+    if (!cpu_clock)
+	return std::chrono::steady_clock::now() >= wall_deadline;
+    Charge(last_cpu_nanoseconds, local_progress_nanoseconds);
+    return progress_nanoseconds.load(std::memory_order_relaxed) >=
+	maximum_nanoseconds;
+}
+
+
+uint64_t
+brlcad::PullbackWorkBudget::RemainingMilliseconds(
+    uint64_t &last_cpu_nanoseconds, uint64_t &local_progress_nanoseconds)
+{
+    if (!cpu_clock) {
+	const std::chrono::steady_clock::time_point now =
+	    std::chrono::steady_clock::now();
+	if (now >= wall_deadline) return 0;
+	const uint64_t remaining = static_cast<uint64_t>(
+	    std::chrono::duration_cast<std::chrono::milliseconds>(
+		wall_deadline - now).count());
+	return std::max<uint64_t>(1, remaining);
+    }
+    Charge(last_cpu_nanoseconds, local_progress_nanoseconds);
+    const uint64_t progress =
+	progress_nanoseconds.load(std::memory_order_relaxed);
+    if (progress >= maximum_nanoseconds) return 0;
+    return std::max<uint64_t>(1,
+	(maximum_nanoseconds - progress) / 1000000ULL);
 }
 
 #define _DEBUG_TESTING_
@@ -326,6 +489,120 @@ struct PullbackSurfaceScratch {
 
 static thread_local PullbackSurfaceScratch pullback_surface_scratch;
 
+/* Return the raw ON_NurbsSurface span containing an interior parameter.  The
+ * public span vector removes repeated knots, while ConvertSpanToBezier expects
+ * an index into the raw knot vector. */
+static bool
+nurbs_raw_span_at(const ON_NurbsSurface *surface, int direction,
+    double parameter, int &span, ON_Interval &domain)
+{
+    if (!surface || direction < 0 || direction > 1 ||
+	    !std::isfinite(parameter))
+	return false;
+    const int order = surface->Order(direction);
+    const int maximum_span = surface->CVCount(direction) - order;
+    const int knot_count = surface->KnotCount(direction);
+    if (order < 2 || maximum_span < 0 || !surface->m_knot[direction] ||
+	    knot_count < order)
+	return false;
+
+    const double *span_starts = surface->m_knot[direction] + order - 2;
+    const double *after_starts = span_starts + maximum_span + 1;
+    const double *upper = std::upper_bound(span_starts, after_starts,
+	parameter);
+    span = static_cast<int>(upper - span_starts) - 1;
+    if (span < 0) span = 0;
+    if (span > maximum_span) span = maximum_span;
+
+    /* At a repeated knot upper_bound selects the last equal start, which is
+     * normally the nonempty span to its right.  Domain-end queries may select
+     * an empty terminal interval; walk to the nearest nonempty raw span. */
+    while (span <= maximum_span &&
+	    !(surface->Knot(direction, span + order - 2) <
+	    surface->Knot(direction, span + order - 1)))
+	span++;
+    if (span > maximum_span) {
+	span = maximum_span;
+	while (span >= 0 &&
+		!(surface->Knot(direction, span + order - 2) <
+		surface->Knot(direction, span + order - 1)))
+	    span--;
+    }
+    if (span < 0)
+	return false;
+
+    domain = ON_Interval(surface->Knot(direction, span + order - 2),
+	surface->Knot(direction, span + order - 1));
+    return domain.IsIncreasing();
+}
+
+
+/* Bound a subdomain contained in one NURBS bispan without copying and
+ * trimming the complete surface.  ConvertSpanToBezier reads only the local
+ * order-by-order control net; trimming that small Bezier patch retains the
+ * same conservative convex-hull bound.  This changes search cost from being
+ * proportional to the complete control net for every span to proportional to
+ * one local bispan, which is decisive for imported surfaces with tens of
+ * thousands of spans. */
+static bool
+nurbs_single_span_bounding_box(const ON_NurbsSurface *surface,
+    const ON_Interval &u_interval, const ON_Interval &v_interval,
+    ON_BoundingBox &bbox, bool grow)
+{
+    if (!surface || !u_interval.IsIncreasing() ||
+	    !v_interval.IsIncreasing())
+	return false;
+
+    const ON_Interval requested[2] = {u_interval, v_interval};
+    int raw_span[2] = {-1, -1};
+    ON_Interval span_domain[2];
+    ON_Interval normalized[2];
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!nurbs_raw_span_at(surface, direction,
+		requested[direction].Mid(), raw_span[direction],
+		span_domain[direction]))
+	    return false;
+	const double parameter_tolerance = DBL_EPSILON * 128.0 *
+	    std::max(1.0, std::max(fabs(span_domain[direction].Min()),
+		fabs(span_domain[direction].Max())));
+	if (requested[direction].Min() <
+		span_domain[direction].Min() - parameter_tolerance ||
+		requested[direction].Max() >
+		span_domain[direction].Max() + parameter_tolerance)
+	    return false;
+	const double length = span_domain[direction].Length();
+	if (!(length > 0.0)) return false;
+	const double minimum = std::max(0.0, std::min(1.0,
+	    (requested[direction].Min() - span_domain[direction].Min()) /
+	    length));
+	const double maximum = std::max(0.0, std::min(1.0,
+	    (requested[direction].Max() - span_domain[direction].Min()) /
+	    length));
+	normalized[direction] = ON_Interval(minimum, maximum);
+	if (!normalized[direction].IsIncreasing()) return false;
+    }
+
+    ON_BezierSurface patch;
+    if (!surface->ConvertSpanToBezier(raw_span[0], raw_span[1], patch))
+	return false;
+    for (int direction = 0; direction < 2; ++direction) {
+	if (normalized[direction].Min() > 0.0 ||
+		normalized[direction].Max() < 1.0) {
+	    if (!patch.Trim(direction, normalized[direction]))
+		return false;
+	}
+    }
+
+    ON_BoundingBox local_box;
+    if (!patch.GetBoundingBox(local_box, false) || !local_box.IsValid())
+	return false;
+    if (grow && bbox.IsValid())
+	bbox.Union(local_box);
+    else
+	bbox = local_box;
+    return true;
+}
+
 bool
 surface_GetBoundingBox(
     const ON_Surface *surf,
@@ -335,6 +612,12 @@ surface_GetBoundingBox(
     bool bGrowBox
     )
 {
+    const ON_NurbsSurface *nurbs =
+	dynamic_cast<const ON_NurbsSurface *>(surf);
+    if (nurbs && nurbs_single_span_bounding_box(nurbs, u_interval,
+	    v_interval, bbox, bGrowBox))
+	return true;
+
     PullbackSurfaceScratch &scratch = pullback_surface_scratch;
 
     ON_Interval domSplits[2][2] = { { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }, { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }};
@@ -640,25 +923,71 @@ surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
 
 void
 brlcad::SetPullbackWorkLimit(PullbackCancellationCallback cancellation_callback,
-    void *cancellation_context, uint64_t maximum_elapsed_milliseconds)
+    void *cancellation_context, uint64_t maximum_work_milliseconds,
+    uint64_t maximum_stall_milliseconds)
+{
+    SetPullbackWorkLimit(cancellation_callback, cancellation_context,
+	CreatePullbackWorkBudget(maximum_work_milliseconds),
+	maximum_stall_milliseconds);
+}
+
+
+brlcad::PullbackWorkBudgetHandle
+brlcad::CreatePullbackWorkBudget(uint64_t maximum_work_milliseconds)
+{
+    return maximum_work_milliseconds ? PullbackWorkBudgetHandle(
+	new PullbackWorkBudget(maximum_work_milliseconds)) :
+	PullbackWorkBudgetHandle();
+}
+
+
+brlcad::PullbackWorkBudgetHandle
+brlcad::CurrentPullbackWorkBudget()
+{
+    if (pullback_work_budget)
+	pullback_work_budget->Charge(pullback_last_cpu_nanoseconds,
+	    pullback_local_progress_nanoseconds);
+    return pullback_work_budget;
+}
+
+
+void
+brlcad::SetPullbackWorkLimit(PullbackCancellationCallback cancellation_callback,
+    void *cancellation_context, const PullbackWorkBudgetHandle &work_budget,
+    uint64_t maximum_stall_milliseconds)
 {
     pullback_cancellation_callback = cancellation_callback;
     pullback_cancellation_context = cancellation_context;
     pullback_deadline_expired = false;
-    pullback_deadline = maximum_elapsed_milliseconds ?
-	std::chrono::steady_clock::now() +
-	    std::chrono::milliseconds(maximum_elapsed_milliseconds) :
-	std::chrono::steady_clock::time_point::max();
+    pullback_work_budget = work_budget;
+    pullback_last_cpu_nanoseconds = 0;
+    pullback_local_progress_nanoseconds = 0;
+    if (pullback_work_budget)
+	pullback_work_budget->Attach(pullback_last_cpu_nanoseconds,
+	    pullback_local_progress_nanoseconds);
+    pullback_stall_milliseconds = maximum_stall_milliseconds;
+    pullback_last_progress = std::chrono::steady_clock::now();
+    pullback_progress_operations = 0;
+    pullback_stalled = false;
 }
 
 
 void
 brlcad::ClearPullbackWorkLimit()
 {
+    if (pullback_work_budget)
+	pullback_work_budget->Charge(pullback_last_cpu_nanoseconds,
+	    pullback_local_progress_nanoseconds);
     pullback_cancellation_callback = NULL;
     pullback_cancellation_context = NULL;
-    pullback_deadline = std::chrono::steady_clock::time_point::max();
+    pullback_work_budget.reset();
+    pullback_last_cpu_nanoseconds = 0;
+    pullback_local_progress_nanoseconds = 0;
     pullback_deadline_expired = false;
+    pullback_last_progress = std::chrono::steady_clock::time_point::max();
+    pullback_stall_milliseconds = 0;
+    pullback_progress_operations = 0;
+    pullback_stalled = false;
 }
 
 
@@ -668,9 +997,18 @@ brlcad::PullbackWorkCancelled()
     if (pullback_cancellation_callback &&
 	    pullback_cancellation_callback(pullback_cancellation_context))
 	return true;
-    if (pullback_deadline != std::chrono::steady_clock::time_point::max() &&
-	    std::chrono::steady_clock::now() >= pullback_deadline) {
+    if (pullback_work_budget && pullback_work_budget->Expired(
+	    pullback_last_cpu_nanoseconds,
+	    pullback_local_progress_nanoseconds)) {
 	pullback_deadline_expired = true;
+	return true;
+    }
+    if (pullback_stall_milliseconds &&
+	    pullback_last_progress !=
+		std::chrono::steady_clock::time_point::max() &&
+	    std::chrono::steady_clock::now() - pullback_last_progress >=
+		std::chrono::milliseconds(pullback_stall_milliseconds)) {
+	pullback_stalled = true;
 	return true;
     }
     return false;
@@ -684,21 +1022,39 @@ brlcad::PullbackWorkDeadlineExpired()
 }
 
 
+bool
+brlcad::PullbackWorkStalled()
+{
+    return pullback_stalled;
+}
+
+
+void
+brlcad::PullbackWorkProgress(uint64_t operations)
+{
+    if (!operations) return;
+    if (pullback_work_budget)
+	pullback_work_budget->Charge(pullback_last_cpu_nanoseconds,
+	    pullback_local_progress_nanoseconds);
+    pullback_progress_operations += operations;
+    pullback_last_progress = std::chrono::steady_clock::now();
+}
+
+
+void
+brlcad::PropagatePullbackWorkStop(bool deadline_expired, bool stalled)
+{
+    pullback_deadline_expired = pullback_deadline_expired || deadline_expired;
+    pullback_stalled = pullback_stalled || stalled;
+}
+
+
 uint64_t
 brlcad::PullbackWorkRemainingMilliseconds()
 {
-    if (pullback_deadline == std::chrono::steady_clock::time_point::max())
-	return UINT64_MAX;
-    const std::chrono::steady_clock::time_point now =
-	std::chrono::steady_clock::now();
-    if (now >= pullback_deadline)
-	return 0;
-    const uint64_t remaining = static_cast<uint64_t>(
-	std::chrono::duration_cast<std::chrono::milliseconds>(
-	    pullback_deadline - now).count());
-    /* A positive sub-millisecond remainder must not be mistaken for the
-     * zero value which SetPullbackWorkLimit uses to disable a deadline. */
-    return std::max<uint64_t>(1, remaining);
+    return pullback_work_budget ? pullback_work_budget->RemainingMilliseconds(
+	pullback_last_cpu_nanoseconds, pullback_local_progress_nanoseconds) :
+	UINT64_MAX;
 }
 
 
@@ -738,6 +1094,38 @@ surface_closest_point_seeded(const ON_Surface *surf, const ON_3dPoint &point,
     };
     const double convergence_tolerance = refinement_tolerance > 0.0 ?
 	std::min(tolerance, refinement_tolerance) : tolerance;
+
+    /* Keep the Newton iterate on the caller's unwrapped periodic branch, but
+     * never evaluate an ON_Surface outside its declared domain.  OpenNURBS
+     * closed NURBS surfaces identify their domain boundaries; they do not
+     * promise that polynomial extrapolation by an integral domain length is
+     * the same surface.  Evaluating an unwrapped seed directly can therefore
+     * walk onto an extrapolated sheet, fail continuity, and alternate with a
+     * native-domain global fallback until one source curve appears to wind
+     * many spurious periods. */
+    const auto evaluation_point = [&closed, &domains](const ON_2dPoint &parameter_uv) {
+	ON_2dPoint evaluated(parameter_uv);
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!closed[direction]) {
+		evaluated[direction] = std::max(domains[direction].Min(),
+		    std::min(domains[direction].Max(), evaluated[direction]));
+		continue;
+	    }
+	    const double period = domains[direction].Length();
+	    if (!(period > ON_ZERO_TOLERANCE))
+		continue;
+	    if (evaluated[direction] >= domains[direction].Min() &&
+		    evaluated[direction] <= domains[direction].Max())
+		continue;
+	    double offset = fmod(evaluated[direction] -
+		domains[direction].Min(), period);
+	    if (offset < 0.0) offset += period;
+	    evaluated[direction] = domains[direction].Min() + offset;
+	    if (evaluated[direction] > domains[direction].Max())
+		evaluated[direction] = domains[direction].Max();
+	}
+	return evaluated;
+    };
     ON_2dPoint uv(seed);
     int evaluation_hint[2] = {0, 0};
     double best_distance = DBL_MAX;
@@ -746,7 +1134,8 @@ surface_closest_point_seeded(const ON_Surface *surf, const ON_3dPoint &point,
 	if (brlcad::PullbackWorkCancelled()) break;
 	ON_3dPoint lift;
 	ON_3dVector du, dv;
-	if (!surf->Ev1Der(uv.x, uv.y, lift, du, dv, 0,
+	const ON_2dPoint evaluated_uv = evaluation_point(uv);
+	if (!surf->Ev1Der(evaluated_uv.x, evaluated_uv.y, lift, du, dv, 0,
 		evaluation_hint) || !lift.IsValid())
 	    break;
 	const ON_3dVector residual = point - lift;
@@ -796,12 +1185,20 @@ surface_closest_point_seeded(const ON_Surface *surf, const ON_3dPoint &point,
 		candidate[direction] = std::max(domains[direction].Min(),
 		    std::min(domains[direction].Max(), candidate[direction]));
 	    }
+	    const ON_2dPoint evaluated_candidate = evaluation_point(candidate);
+	    int candidate_hint[2] = {evaluation_hint[0], evaluation_hint[1]};
+	    for (int direction = 0; direction < 2; ++direction)
+		if (closed[direction] && fabs(evaluated_candidate[direction] -
+			evaluated_uv[direction]) > 0.5 * domains[direction].Length())
+		    candidate_hint[direction] = 0;
 	    ON_3dPoint candidate_lift = ON_3dPoint::UnsetPoint;
-	    if (!surf->EvPoint(candidate.x, candidate.y, candidate_lift, 0,
-		    evaluation_hint) || !candidate_lift.IsValid() ||
+	    if (!surf->EvPoint(evaluated_candidate.x, evaluated_candidate.y,
+		    candidate_lift, 0, candidate_hint) || !candidate_lift.IsValid() ||
 		    candidate_lift.DistanceTo(point) >= current_distance)
 		continue;
 	    uv = candidate;
+	    evaluation_hint[0] = candidate_hint[0];
+	    evaluation_hint[1] = candidate_hint[1];
 	    improved = true;
 	    break;
 	}
@@ -1410,6 +1807,7 @@ brlcad::PullbackContext::SurfaceClosestPointFromSeed(
     const ON_Interval *cached_domains,
     double refinement_tolerance)
 {
+    PullbackWorkProgress();
     const std::chrono::steady_clock::time_point started =
 	std::chrono::steady_clock::now();
     ++m_impl->statistics.continuity_seed_searches;
@@ -1436,6 +1834,7 @@ brlcad::PullbackContext::SurfaceClosestPointFromSeed(
 	completed_iterations);
     m_impl->statistics.maximum_continuity_seed_line_searches = std::max(
 	m_impl->statistics.maximum_continuity_seed_line_searches, line_searches);
+    PullbackWorkProgress(completed_iterations ? completed_iterations : 1);
     return result;
 }
 
@@ -1457,6 +1856,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
     double within_distance_tol
     )
 {
+    PullbackWorkProgress();
     bool rc = false;
     const std::chrono::steady_clock::time_point primary_started =
 	std::chrono::steady_clock::now();
@@ -1473,6 +1873,7 @@ brlcad::PullbackContext::SurfaceClosestPoint(
     if (!surf)
 	return false;
     if (!m_impl->Prepare(surf, same_point_tol)) {
+	PullbackWorkProgress();
 	m_impl->statistics.primary_search_us += static_cast<uint64_t>(
 	    std::chrono::duration_cast<std::chrono::microseconds>(
 		std::chrono::steady_clock::now() - primary_started).count());
@@ -1489,8 +1890,10 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 	    ++m_impl->statistics.multiseed_successes;
 	else
 	    ++m_impl->statistics.multiseed_failures;
+	PullbackWorkProgress();
 	return fallback_result;
     }
+    PullbackWorkProgress();
 
     const std::shared_ptr<const Impl::PreparedSurface> preparation =
 	m_impl->prepared;
@@ -2521,6 +2924,8 @@ cleanup:
     m_impl->statistics.maximum_subdivision_nodes = std::max(
 	m_impl->statistics.maximum_subdivision_nodes,
 	static_cast<uint64_t>(closest_point_subdivision_nodes));
+    PullbackWorkProgress(closest_point_subdivision_nodes ?
+	closest_point_subdivision_nodes : 1);
     return rc;
 }
 
@@ -4402,6 +4807,68 @@ pullback_samples_from_closed_surface(PBCData* data,
 	    ++data->failed_seam_crossing_searches;
 	}
     }
+
+    /* Seam-side normalization above is allowed to exchange equivalent native
+     * boundary parameters.  On a doubly closed singular surface, however,
+     * changing one coordinate can select a different branch whose 3-D lift is
+     * no longer the source-curve endpoint.  The projected endpoint candidates
+     * still carry their original parameter correspondence, so restore an open
+     * curve's two authoritative ends whenever the seam-normalized sample lost
+     * that correspondence.  Select only an integral-period image which itself
+     * lifts to the exact source endpoint; proximity in UV space is not proof
+     * on a degenerate surface. */
+    if (!curve->IsClosed() && data->surface_closed[0] &&
+	    data->surface_closed[1] && samples->Count() >= 2 &&
+	    projected.size() == sample_parameters.size() &&
+	    !projected.empty()) {
+	const auto restore_endpoint = [data, curve, surf, samples,
+		&projected, &sample_parameters, within_distance_tol](bool start) {
+	    const size_t parameter_index = start ? 0 : projected.size() - 1;
+	    const int endpoint_sample_index = start ? 0 : samples->Count() - 1;
+	    const int neighbor_index = start ? 1 : samples->Count() - 2;
+	    const ON_3dPoint target = curve->PointAt(
+		sample_parameters[parameter_index]);
+	    const ON_2dPoint current = (*samples)[endpoint_sample_index];
+	    const ON_3dPoint current_lift = surf->PointAt(current.x, current.y);
+	    if (target.IsValid() && current_lift.IsValid() &&
+		    current_lift.DistanceTo(target) <= within_distance_tol)
+		return;
+	    const ON_2dPoint projected_endpoint = projected[parameter_index];
+	    if (!target.IsValid() || !projected_endpoint.IsValid())
+		return;
+
+	    ON_2dPoint best = ON_2dPoint::UnsetPoint;
+	    double best_score = DBL_MAX;
+	    const ON_2dPoint neighbor = (*samples)[neighbor_index];
+	    const int u_min = data->surface_closed[0] ? -1 : 0;
+	    const int u_max = data->surface_closed[0] ? 1 : 0;
+	    const int v_min = data->surface_closed[1] ? -1 : 0;
+	    const int v_max = data->surface_closed[1] ? 1 : 0;
+	    for (int u_shift = u_min; u_shift <= u_max; ++u_shift) {
+		for (int v_shift = v_min; v_shift <= v_max; ++v_shift) {
+		    ON_2dPoint candidate(projected_endpoint);
+		    if (data->surface_closed[0])
+			candidate.x += u_shift * data->surface_domain[0].Length();
+		    if (data->surface_closed[1])
+			candidate.y += v_shift * data->surface_domain[1].Length();
+		    const ON_3dPoint lift = surf->PointAt(candidate.x,
+			candidate.y);
+		    if (!lift.IsValid() || lift.DistanceTo(target) >
+			    within_distance_tol)
+			continue;
+		    const double score = candidate.DistanceTo(neighbor);
+		    if (score < best_score) {
+			best = candidate;
+			best_score = score;
+		    }
+		}
+	    }
+	    if (best.IsValid())
+		(*samples)[endpoint_sample_index] = best;
+	};
+	restore_endpoint(true);
+	restore_endpoint(false);
+    }
     delete [] knots;
 
     if (samples != NULL) {
@@ -4525,6 +4992,20 @@ pullback_samples(const ON_Surface* surf,
 	ON_2dPointArray *samples = pullback_samples(data, tmin, tmax, same_point_tol, within_distance_tol);
 	if (samples != NULL) {
 	    data->segments->push_back(samples);
+	}
+    }
+    data->samples_source_validated = data->projection_samples > 0 &&
+	data->rejected_projection_samples == 0 &&
+	std::isfinite(data->maximum_projection_distance) &&
+	data->maximum_projection_distance <= within_distance_tol &&
+	data->segments && !data->segments->empty();
+    if (data->samples_source_validated) {
+	for (std::list<ON_2dPointArray *>::const_iterator segment =
+		data->segments->begin(); segment != data->segments->end(); ++segment) {
+	    if (!*segment || (*segment)->Count() == 0) {
+		data->samples_source_validated = false;
+		break;
+	    }
 	}
     }
     return data;
@@ -5556,11 +6037,8 @@ extend_over_seam_crossings(std::list<PBCData*> &pbcs)
 }
 
 
-/*
- * run through curve loop to determine correct start/end
- * points resolving ambiguities when point lies on a seam or
- * singularity
- */
+/* Confirm that moving a candidate UV point to a singular side preserves its
+ * represented 3-D point. */
 bool
 resolve_pullback_seams(std::list<PBCData*> &pbcs)
 {
@@ -5684,29 +6162,56 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 }
 
 
-/*
- * run through curve loop to determine correct start/end
- * points resolving ambiguities when point lies on a seam or
- * singularity
- */
+/* Confirm that moving a candidate UV point to a singular side preserves its
+ * represented 3-D point. */
+static bool
+sample_lies_on_singular_side(const PBCData *data, const ON_2dPoint &point,
+	int side)
+{
+    if (!data || !data->surf)
+	return false;
+
+    const ON_Surface *surf = data->surf;
+    ON_2dPoint boundary(point);
+    switch (side) {
+	case 0:
+	    boundary.y = surf->Domain(1).Min();
+	    break;
+	case 1:
+	    boundary.x = surf->Domain(0).Max();
+	    break;
+	case 2:
+	    boundary.y = surf->Domain(1).Max();
+	    break;
+	case 3:
+	    boundary.x = surf->Domain(0).Min();
+	    break;
+	default:
+	    return false;
+    }
+    const ON_3dPoint original = surf->PointAt(point.x, point.y);
+    const ON_3dPoint projected = surf->PointAt(boundary.x, boundary.y);
+    const double tolerance = std::max(ON_ZERO_TOLERANCE, data->tolerance);
+    return original.IsValid() && projected.IsValid() &&
+	original.DistanceTo(projected) <= tolerance;
+}
+
+
 bool
 resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator cs = pbcs.begin();
 
-    ///// Loop through and fix any seam ambiguities
+    /* Run through the curve loop to resolve start/end points which genuinely
+     * lie on a surface singularity. */
     ON_2dPoint *prev = NULL;
     bool complete = false;
     int checkcnt = 0;
 
-    prev = NULL;
-    complete = false;
-    checkcnt = 0;
     while (!complete && (checkcnt < 2)) {
 	cs = pbcs.begin();
 	complete = true;
 	checkcnt++;
-	//std::cerr << "Checkcnt - " << checkcnt << std::endl;
 	while (cs != pbcs.end()) {
 	    if (brlcad::PullbackWorkCancelled())
 		return false;
@@ -5719,16 +6224,20 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 	    }
 
 	    const ON_Surface *surf = data->surf;
+	    /* PBC_SEAM_TOL is an absolute legacy UV threshold.  On a narrow
+	     * parameter domain it can classify a perfectly ordinary point near a
+	     * singular side as if it lay on the collapsed boundary.  Treat it as a
+	     * candidate detector only; the 3-D lift check above is authoritative. */
 	    std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	    while (si != data->segments->end()) {
 		ON_2dPointArray *samples = (*si);
 		for (int i = 0; i < samples->Count(); i++) {
 		    // 0 = south, 1 = east, 2 = north, 3 = west
-		    if ((singularity = IsAtSingularity(surf, (*samples)[i], PBC_SEAM_TOL)) >= 0) {
+		    singularity = IsAtSingularity(surf, (*samples)[i],
+			PBC_SEAM_TOL);
+		    if (singularity >= 0 && sample_lies_on_singular_side(data,
+			    (*samples)[i], singularity)) {
 			if (prev != NULL) {
-			    //std::cerr << " at singularity " << singularity << " but has prev" << std::endl;
-			    //std::cerr << "    prev: " << prev->x << ", " << prev->y << std::endl;
-			    //std::cerr << "    curr: " << data->samples[i].x << ", " << data->samples[i].y << std::endl;
 			    switch (singularity) {
 				case 0: //south
 				    (*samples)[i].x = prev->x;
@@ -5747,10 +6256,7 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 				    (*samples)[i].x = surf->Domain(0)[0];
 			    }
 			    prev = NULL;
-			    //std::cerr << "    curr now: " << data->samples[i].x << ", " << data->samples[i].y << std::endl;
 			} else {
-			    //std::cerr << " at singularity " << singularity << " and no prev" << std::endl;
-			    //std::cerr << "    curr: " << data->samples[i].x << ", " << data->samples[i].y << std::endl;
 			    complete = false;
 			}
 		    } else {
@@ -5758,14 +6264,13 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 		    }
 		}
 		if (!complete) {
-		    //std::cerr << "Lets work backward:" << std::endl;
 		    for (int i = samples->Count() - 2; i >= 0; i--) {
 			// 0 = south, 1 = east, 2 = north, 3 = west
-			if ((singularity = IsAtSingularity(surf, (*samples)[i], PBC_SEAM_TOL)) >= 0) {
+			singularity = IsAtSingularity(surf, (*samples)[i],
+			    PBC_SEAM_TOL);
+			if (singularity >= 0 && sample_lies_on_singular_side(data,
+				(*samples)[i], singularity)) {
 			    if (prev != NULL) {
-				//std::cerr << " at singularity " << singularity << " but has prev" << std::endl;
-				//std::cerr << "    prev: " << prev->x << ", " << prev->y << std::endl;
-				//std::cerr << "    curr: " << data->samples[i].x << ", " << data->samples[i].y << std::endl;
 				switch (singularity) {
 				    case 0: //south
 					(*samples)[i].x = prev->x;
@@ -5784,10 +6289,7 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 					(*samples)[i].x = surf->Domain(0)[0];
 				}
 				prev = NULL;
-				//std::cerr << "    curr now: " << data->samples[i].x << ", " << data->samples[i].y << std::endl;
 			    } else {
-				//std::cerr << " at singularity " << singularity << " and no prev" << std::endl;
-				//std::cerr << "    curr: " << data->samples[i].x << ", " << data->samples[i].y << std::endl;
 				complete = false;
 			    }
 			} else {
@@ -5795,9 +6297,9 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 			}
 		    }
 		}
-		si++;
+		++si;
 	    }
-	    cs++;
+	    ++cs;
 	}
     }
 

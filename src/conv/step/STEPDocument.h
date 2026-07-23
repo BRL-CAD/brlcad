@@ -78,6 +78,19 @@ struct ImportOptions {
     unsigned int requested_jobs = 1;
     unsigned int effective_jobs = 1;
     double absolute_tolerance_mm = 0.0;
+    /** Requested machine-speed multiplier.  Zero selects the deterministic
+     * startup calibration; positive values bypass calibration. */
+    double budget_scale = 0.0;
+    /** Effective multiplier and derived limits are populated by the import
+     * session before the first exact-geometry job starts. */
+    double effective_budget_scale = 1.0;
+    uint64_t item_budget_milliseconds = 0;
+    uint64_t effective_item_budget_milliseconds = 60000;
+    uint64_t stall_timeout_milliseconds = 0;
+    uint64_t effective_stall_timeout_milliseconds = 60000;
+    /** Disable CPU-work per-item deadlines while retaining the independent
+     * no-progress watchdog. */
+    bool disable_item_budgets = false;
     RepairMode repair = RepairMode::Safe;
     /** Enforce the file-declared/overridden tolerance literally.  When false,
      * a verified, bounded source curve/surface mismatch may raise the
@@ -240,6 +253,14 @@ struct ImportStatistics {
     uint64_t invalid_breps = 0;
     uint64_t output_failures = 0;
     uint64_t repairs = 0;
+    bool budget_calibration_ran = false;
+    bool budget_calibration_valid = false;
+    uint64_t budget_calibration_queries = 0;
+    uint64_t budget_calibration_microseconds = 0;
+    unsigned int budget_calibration_parallel_workers = 0;
+    double budget_calibration_scalar_queries_per_second = 0.0;
+    double budget_calibration_parallel_queries_per_second = 0.0;
+    double budget_calibration_parallel_cpu_queries_per_second = 0.0;
     uint64_t pullback_closest_point_queries = 0;
     uint64_t pullback_surfaces_prepared = 0;
     uint64_t pullback_surface_cache_hits = 0;

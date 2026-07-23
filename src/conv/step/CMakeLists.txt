@@ -166,9 +166,12 @@ cmakefiles(
   AP_Common.h
   BRLCADWrapper.h
   CMakeLists.txt
+  STEPBudget.h
   STEPDocument.h
   STEPString.cpp
   STEPString.h
+  STEPWrapperBrep.inc
+  STEPWrapperDocument.inc
   STEPWrapper.h
   ap203_elements.txt
   ap203e2_elements.txt

@@ -3,6 +3,15 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 brlcad_addexec(test_brep_ppx ppx.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_ppx COMMAND test_brep_ppx)
 
+# Replay serialized face-mesh failures without rerunning a complete BRep
+# tessellation.  mesh.cpp emits this format at the exact repair failure site,
+# making it useful both for diagnosis and for compact regression fixtures.
+brlcad_addexec(test_brep_cdt_mesh brep_cdt_mesh.cpp "libbrep" TEST)
+brlcad_add_test(
+  NAME brep_cdt_mesh_single_bad_edge
+  COMMAND test_brep_cdt_mesh "${CMAKE_CURRENT_SOURCE_DIR}/single_bad_edge.cdtmesh"
+)
+
 # Standalone CDT hole-triangulation tests: verify that bg_nested_poly_triangulate
 # produces no triangles whose centroid falls inside a hole polygon, for two
 # faces from the NIST MBE PMI sample that are known to have multiple holes.

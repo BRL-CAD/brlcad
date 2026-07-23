@@ -3824,7 +3824,77 @@ cdt_mesh_t::repair()
 
     // Now that the out-and-out problem triangles have been handled,
     // remesh near singularities to try and produce more reasonable
-    // triangles.
+    // triangles.  This is a quality refinement, not a topology repair.  Keep
+    // it transactional: process_seed_tri may have replaced several patches
+    // before a later singular seed proves unmeshable.  Returning with those
+    // partial mutations used to leak isolated triangles into an otherwise
+    // valid face mesh (notably the NIST MBE PMI 6 spherical cap).
+    boundary_edges_stale = true;
+    boundary_edges_update();
+    const bool pre_singularity_mesh_valid = problem_edges.empty();
+    std::vector<triangle_t> pre_singularity_triangle_store;
+    std::vector<size_t> pre_singularity_active_triangles;
+    decltype(v2edges) pre_singularity_v2edges;
+    decltype(v2tris) pre_singularity_v2tris;
+    decltype(edges2tris) pre_singularity_edges2tris;
+    decltype(uedges2tris) pre_singularity_uedges2tris;
+    decltype(boundary_edges) pre_singularity_boundary_edges;
+    decltype(problem_edges) pre_singularity_problem_edges;
+    if (pre_singularity_mesh_valid && has_singularities) {
+	/* Preserve the complete indexed mesh state rather than rebuilding it
+	 * through tri_add.  Coincident singularity triangles may intentionally
+	 * have the same three 3-D vertex indices but different orientations;
+	 * tri_add's duplicate filter would discard one and make rollback itself
+	 * non-transactional. */
+	pre_singularity_triangle_store = tris_vect;
+	pre_singularity_v2edges = v2edges;
+	pre_singularity_v2tris = v2tris;
+	pre_singularity_edges2tris = edges2tris;
+	pre_singularity_uedges2tris = uedges2tris;
+	pre_singularity_boundary_edges = boundary_edges;
+	pre_singularity_problem_edges = problem_edges;
+	RTree<size_t, double, 3>::Iterator snapshot_it;
+	tris_tree.GetFirst(snapshot_it);
+	while (!snapshot_it.IsNull()) {
+	    pre_singularity_active_triangles.push_back(*snapshot_it);
+	    ++snapshot_it;
+	}
+    }
+    const auto restore_pre_singularity_mesh = [&]() {
+	if (!pre_singularity_mesh_valid ||
+		pre_singularity_triangle_store.empty() ||
+		pre_singularity_active_triangles.empty())
+	    return false;
+	tris_vect = pre_singularity_triangle_store;
+	tris_tree.RemoveAll();
+	for (size_t triangle_index : pre_singularity_active_triangles) {
+	    if (triangle_index >= tris_vect.size()) return false;
+	    triangle_t &triangle = tris_vect[triangle_index];
+	    triangle.m = this;
+	    ON_3dPoint *point = pnts[triangle.v[0]];
+	    ON_BoundingBox bounds(*point, *point);
+	    for (int vertex = 1; vertex < 3; ++vertex) {
+		point = pnts[triangle.v[vertex]];
+		bounds.Set(*point, true);
+	    }
+	    const double minimum[3] = {bounds.Min().x, bounds.Min().y,
+		bounds.Min().z};
+	    const double maximum[3] = {bounds.Max().x, bounds.Max().y,
+		bounds.Max().z};
+	    tris_tree.Insert(minimum, maximum, triangle_index);
+	}
+	v2edges = pre_singularity_v2edges;
+	v2tris = pre_singularity_v2tris;
+	edges2tris = pre_singularity_edges2tris;
+	uedges2tris = pre_singularity_uedges2tris;
+	boundary_edges = pre_singularity_boundary_edges;
+	problem_edges = pre_singularity_problem_edges;
+	seed_tris.clear();
+	new_tris.clear();
+	boundary_edges_stale = false;
+	bounding_box_stale = true;
+	return true;
+    };
 
     if (has_singularities) {
 	std::vector<triangle_t> s_tris = this->singularity_triangles();
@@ -3839,6 +3909,11 @@ cdt_mesh_t::repair()
 		bool pseed = process_seed_tri(seed, false, deg, NULL);
 
 		if (!pseed || seed_tris.size() >= st_size) {
+		    if (restore_pre_singularity_mesh()) {
+			bu_log("Face %d: retained the valid pre-refinement mesh after singularity quality remeshing made no progress\n",
+			    f_id);
+			return true;
+		    }
 		    std::cerr << f_id << ":  Error - failed to process refinement seed triangle!\n";
 		    struct bu_vls fname = BU_VLS_INIT_ZERO;
 		    bu_vls_sprintf(&fname, "%d-failed_seed.plot3", f_id);
@@ -3849,7 +3924,6 @@ cdt_mesh_t::repair()
 		    serialize(bu_vls_cstr(&fname));
 		    bu_vls_free(&fname);
 		    return false;
-		    break;
 		}
 
 		st_size = seed_tris.size();
@@ -4597,13 +4671,13 @@ cdt_mesh_t::serialize(const char *fname)
 	sfile << m_it->first << "," << m_it->second << "\n";
     }
 
-    sfile << "TRIANGLES_VECT" << tris_vect.size() << "\n";
+    sfile << "TRIANGLES_VECT " << tris_vect.size() << "\n";
     std::vector<triangle_t>::iterator t_it;
     for (t_it = tris_vect.begin(); t_it != tris_vect.end(); t_it++) {
 	sfile << (*t_it).v[0] << "," << (*t_it).v[1] << "," << (*t_it).v[2] << "," << (*t_it).ind << "\n";
     }
 
-    sfile << "TRIANGLES_TREE" << tris_tree.Count() << "\n";
+    sfile << "TRIANGLES_TREE " << tris_tree.Count() << "\n";
     RTree<size_t, double, 3>::Iterator tree_it;
     size_t t_ind;
     triangle_t tri;
@@ -4679,9 +4753,11 @@ cdt_mesh_t::deserialize(const char *fname)
     if (std::getline(sfile,switch_line)) {
 	if (switch_line == std::string("V1")) {
 	    version = 1;
+	} else if (switch_line == std::string("V2")) {
+	    version = 2;
 	}
     }
-    if (version < 1 || version > 1) {
+    if (version < 1 || version > 2) {
 	std::cerr << "Invalid deserialization file - format version " << switch_line << "\n";
 	return false;
     }
@@ -4716,11 +4792,27 @@ cdt_mesh_t::deserialize(const char *fname)
     problem_edges.clear();
 
     while (std::getline(sfile,switch_line)) {
-	std::cout << switch_line << "\n";
 	size_t spos = switch_line.find_first_of(' ');
-	std::string dtype = switch_line.substr(0, spos);
-	switch_line.erase(0, spos+1);
-	long lcnt = std::stol(switch_line);
+	std::string dtype;
+	std::string count_text;
+	if (spos != std::string::npos) {
+	    dtype = switch_line.substr(0, spos);
+	    count_text = switch_line.substr(spos + 1);
+	} else if (switch_line.compare(0, 14, "TRIANGLES_VECT") == 0) {
+	    /* V2 snapshots written before the delimiter fix concatenated these
+	     * two record names and their counts.  Accept those diagnostics so
+	     * existing failure captures remain replayable. */
+	    dtype = "TRIANGLES_VECT";
+	    count_text = switch_line.substr(14);
+	} else if (switch_line.compare(0, 14, "TRIANGLES_TREE") == 0) {
+	    dtype = "TRIANGLES_TREE";
+	    count_text = switch_line.substr(14);
+	} else {
+	    std::cerr << "Malformed serialization record: " << switch_line
+		<< "\nSerialization import failed.\n";
+	    return false;
+	}
+	long lcnt = std::stol(count_text);
 
 	if (dtype == std::string("POINTS")) {
 	    for (long i = 0; i < lcnt; i++) {
@@ -4781,7 +4873,8 @@ cdt_mesh_t::deserialize(const char *fname)
 	    continue;
 	}
 
-	if (dtype == std::string("TRIANGLES_VECT")) {
+	if (dtype == std::string("TRIANGLES") ||
+		dtype == std::string("TRIANGLES_VECT")) {
 	    for (long i = 0; i < lcnt; i++) {
 		std::string tline;
 		std::getline(sfile,tline);
@@ -4796,9 +4889,17 @@ cdt_mesh_t::deserialize(const char *fname)
 		long v2 = std::stol(v2str);
 		long v3 = std::stol(v3str);
 		triangle_t tri(v1, v2, v3);
-		// The tree is loaded separately - just do the basic population
-		tri.ind = tris_vect.size();
-		tris_vect.push_back(tri);
+		if (dtype == std::string("TRIANGLES")) {
+		    /* V1 stored only active triangles.  Rebuild the spatial index and
+		     * adjacency maps through the normal insertion path. */
+		    tri.m = this;
+		    tri_add(tri);
+		} else {
+		    /* V2 stores inactive vector entries as well; its following tree
+		     * record identifies and indexes the active subset. */
+		    tri.ind = tris_vect.size();
+		    tris_vect.push_back(tri);
+		}
 	    }
 	    continue;
 	}
@@ -6199,8 +6300,7 @@ cdt_bmesh_deserialize(const char *fname, struct cdt_bmesh *m)
 {
     if (!fname || !m) return -1;
     if (!bu_file_exists(fname, NULL)) return -1;
-    m->i->fmesh.deserialize(fname);
-    return 0;
+    return m->i->fmesh.deserialize(fname) ? 0 : -1;
 }
 
 int
