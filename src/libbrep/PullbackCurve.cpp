@@ -6022,7 +6022,13 @@ shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
 				SwapUVSeamPoint(surf, prev_pt);
 				curr_point_array->Append(prev_pt);
 			    } else {
-				std::cerr << "shift_single_curve_loop_straddled_over_seam(): Error expecting to see seam in sample points" << std::endl;
+				/* The sampled pair proves a branch discontinuity but
+				 * neither endpoint is numerically on the private surface
+				 * seam.  Preserve the historical best-effort continuation;
+				 * the entity-aware STEP caller validates and reports the
+				 * resulting loop with its source IDs.  A raw libbrep stderr
+				 * message here cannot identify the responsible STEP entity
+				 * and was emitted repeatedly on otherwise repairable solids. */
 			    }
 			}
 			curr_point_array->Append(pt);

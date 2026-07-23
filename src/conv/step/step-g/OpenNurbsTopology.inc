@@ -704,11 +704,177 @@ step_edge_curve_subdomain(const ON_Curve *curve,
 
     const double parameter_guard = std::max(ON_ZERO_TOLERANCE,
 	domain.Length() * 1.0e-12);
+    /* The two ends of a closed curve domain are the same geometric point.
+     * A closest-point solve is therefore free to report domain.Max() for an
+     * EDGE_CURVE start that STEP (and the increasing traversal) expresses as
+     * domain.Min(), or domain.Min() for an end expressed as domain.Max().
+     * Normalize only these endpoint-equivalent cases before deciding whether
+     * the interval wraps.  Asking openNURBS to move a seam from domain.Max()
+     * to its already equivalent location can fail, and adding a full period
+     * would select the complementary curve segment. */
+    bool normalized_closed_endpoint = false;
+    if (curve->IsClosed()) {
+	const bool start_at_maximum =
+	    fabs(start_parameter - domain.Max()) <= parameter_guard;
+	const bool start_at_minimum =
+	    fabs(start_parameter - domain.Min()) <= parameter_guard;
+	const bool end_at_maximum =
+	    fabs(end_parameter - domain.Max()) <= parameter_guard;
+	const bool end_at_minimum =
+	    fabs(end_parameter - domain.Min()) <= parameter_guard;
+	if (start_at_maximum && !end_at_minimum) {
+	    start_parameter = domain.Min();
+	    normalized_closed_endpoint = true;
+	}
+	if (end_at_minimum && !start_at_maximum) {
+	    end_parameter = domain.Max();
+	    normalized_closed_endpoint = true;
+	}
+	/* Preserve a complete closed traversal when the topology supplies the
+	 * native minimum and maximum explicitly. */
+	if (start_at_minimum && end_at_maximum) {
+	    start_parameter = domain.Min();
+	    end_parameter = domain.Max();
+	}
+    }
     const bool direct_interval = end_parameter - start_parameter >
 	parameter_guard;
     const bool wrapped_interval = !direct_interval && curve->IsClosed() &&
 	end_parameter + domain.Length() - start_parameter > parameter_guard;
     if (!direct_interval && !wrapped_interval) {
+	/* Some exporters truncate an open NURBS domain a few decimal places
+	 * before an asserted terminal vertex.  When both topology vertices select
+	 * the same domain end, recover only an exact continuation of the terminal
+	 * polynomial span.  This is not a tangent-line approximation: openNURBS
+	 * extends the existing de Boor span, and the resulting tiny subcurve must
+	 * pass the asserted vertex at the original declared tolerance. */
+	const bool allow_exact_endpoint_extension = step &&
+	    !step->ImportOptions().exact &&
+	    step->ImportOptions().repair == brlcad::step::RepairMode::Safe &&
+	    !curve->IsClosed() && ON_NurbsCurve::Cast(curve) != NULL;
+	const bool both_at_minimum =
+	    fabs(start_parameter - domain.Min()) <= parameter_guard &&
+	    fabs(end_parameter - domain.Min()) <= parameter_guard;
+	const bool both_at_maximum =
+	    fabs(start_parameter - domain.Max()) <= parameter_guard &&
+	    fabs(end_parameter - domain.Max()) <= parameter_guard;
+	if (allow_exact_endpoint_extension &&
+		(both_at_minimum || both_at_maximum)) {
+	    const double terminal_parameter = both_at_maximum ?
+		domain.Max() : domain.Min();
+	    const ON_3dPoint terminal_point = curve->PointAt(terminal_parameter);
+	    const double start_terminal_gap = terminal_point.IsValid() ?
+		terminal_point.DistanceTo(start) : DBL_MAX;
+	    const double end_terminal_gap = terminal_point.IsValid() ?
+		terminal_point.DistanceTo(end) : DBL_MAX;
+	    const bool start_at_terminal =
+		start_terminal_gap <= LocalUnits::tolerance;
+	    const bool end_at_terminal =
+		end_terminal_gap <= LocalUnits::tolerance;
+	    const ON_3dPoint outside_vertex = start_at_terminal ? end : start;
+	    const double outside_gap = start_at_terminal ?
+		end_terminal_gap : start_terminal_gap;
+	    const ON_BoundingBox curve_bounds = curve->BoundingBox();
+	    const double curve_scale = curve_bounds.IsValid() ?
+		curve_bounds.Diagonal().Length() : 0.0;
+	    const double extension_limit = std::min(
+		curve_scale * kMaximumRelativeNurbsEndpointExtension,
+		LocalUnits::tolerance *
+		    kMaximumDeclaredNurbsEndpointExtensionFactor);
+	    ON_3dPoint derivative_point;
+	    ON_3dVector derivative;
+	    const bool derivative_valid = curve->Ev1Der(terminal_parameter,
+		derivative_point, derivative) && derivative_point.IsValid() &&
+		derivative.IsValid() &&
+		derivative.LengthSquared() >
+		    ON_ZERO_TOLERANCE * ON_ZERO_TOLERANCE;
+	    const ON_3dVector displacement = outside_vertex - terminal_point;
+	    const double parameter_delta = derivative_valid ?
+		(displacement * derivative) / derivative.LengthSquared() : 0.0;
+	    const bool outward = both_at_maximum ?
+		parameter_delta > parameter_guard :
+		parameter_delta < -parameter_guard;
+	    if (start_at_terminal != end_at_terminal && outward &&
+		    extension_limit > 0.0 && outside_gap <= extension_limit) {
+		std::unique_ptr<ON_Curve> extended(curve->DuplicateCurve());
+		const double proposed_parameter = terminal_parameter +
+		    2.0 * parameter_delta;
+		ON_Interval extended_domain = domain;
+		if (both_at_maximum)
+		    extended_domain.Set(domain.Min(), proposed_parameter);
+		else
+		    extended_domain.Set(proposed_parameter, domain.Max());
+		bool extended_valid = extended && extended_domain.IsIncreasing() &&
+		    extended->Extend(extended_domain) && extended->IsValid();
+		double outside_parameter = ON_UNSET_VALUE;
+		double continuation_error = DBL_MAX;
+		CurveDistanceEvaluator extended_distance(extended.get());
+		extended_valid = extended_valid && extended_distance.IsValid() &&
+		    extended_distance.ClosestParameter(outside_vertex,
+			&outside_parameter, &continuation_error) &&
+		    ((both_at_maximum &&
+			outside_parameter > domain.Max() + parameter_guard) ||
+		     (both_at_minimum &&
+			outside_parameter < domain.Min() - parameter_guard)) &&
+		    continuation_error <= LocalUnits::tolerance;
+		const ON_Interval continuation_interval = both_at_maximum ?
+		    ON_Interval(domain.Max(), outside_parameter) :
+		    ON_Interval(outside_parameter, domain.Min());
+		extended_valid = extended_valid &&
+		    continuation_interval.IsIncreasing() &&
+		    extended->Trim(continuation_interval) &&
+		    extended->IsValid();
+		if (extended_valid) {
+		    const double forward_gap =
+			extended->PointAtStart().DistanceTo(start) +
+			extended->PointAtEnd().DistanceTo(end);
+		    const double reverse_gap =
+			extended->PointAtStart().DistanceTo(end) +
+			extended->PointAtEnd().DistanceTo(start);
+		    if (reverse_gap < forward_gap)
+			extended_valid = extended->Reverse();
+		}
+		extended_valid = extended_valid &&
+		    extended->PointAtStart().DistanceTo(start) <=
+			LocalUnits::tolerance &&
+		    extended->PointAtEnd().DistanceTo(end) <=
+			LocalUnits::tolerance;
+		double continuation_length = 0.0;
+		ON_3dPoint previous = extended_valid ?
+		    extended->PointAtStart() : ON_3dPoint::UnsetPoint;
+		for (int sample = 1; extended_valid &&
+			sample <= kCollapsedStepEdgeValidationSegments; ++sample) {
+		    const ON_3dPoint point = extended->PointAt(
+			extended->Domain().ParameterAt(
+			    static_cast<double>(sample) /
+				kCollapsedStepEdgeValidationSegments));
+		    extended_valid = previous.IsValid() && point.IsValid() &&
+			point.DistanceTo(terminal_point) <= extension_limit;
+		    if (extended_valid)
+			continuation_length += previous.DistanceTo(point);
+		    previous = point;
+		}
+		extended_valid = extended_valid &&
+		    continuation_length <=
+			extension_limit * kMeasuredToleranceSafetyFactor;
+		if (extended_valid) {
+		    *wrapped_curve = std::move(extended);
+		    if (step) {
+			step->RecordDiagnostic(
+			    brlcad::step::DiagnosticSeverity::Warning,
+			    step_entity_id, "EDGE_CURVE", "edge_geometry",
+			    "source NURBS domain ended before an asserted STEP "
+			    "vertex; used the exact bounded continuation of its "
+			    "terminal polynomial span");
+			step->RecordRepair(step_entity_id, "EDGE_CURVE",
+			    "edge_geometry",
+			    "extended an open NURBS terminal span to its "
+			    "asserted STEP vertex");
+		    }
+		    return true;
+		}
+	    }
+	}
 	/* Some exporters retain a separate edge for a feature that collapsed
 	 * below their own uncertainty.  Removing it is safe only when both STEP
 	 * vertices and the complete vertex-bounded curve locus are densely proven
@@ -749,11 +915,44 @@ step_edge_curve_subdomain(const ON_Curve *curve,
     *subdomain = direct_interval ? ON_Interval(start_parameter, end_parameter) :
 	ON_Interval(start_parameter, end_parameter + domain.Length());
     std::unique_ptr<ON_Curve> bounded(curve->DuplicateCurve());
-    if (!bounded || (wrapped_interval &&
-	    !bounded->ChangeClosedCurveSeam(start_parameter)) ||
-	    !bounded->Trim(*subdomain) || !bounded->IsValid()) {
+    if (!bounded) {
 	if (failure) *failure =
-	    "the vertex-derived source curve interval was invalid";
+	    "could not duplicate the vertex-bounded source curve";
+	return false;
+    }
+    if (wrapped_interval &&
+	    !bounded->ChangeClosedCurveSeam(start_parameter)) {
+	if (failure) {
+	    std::ostringstream reason;
+	    reason << "could not move the closed source-curve seam to "
+		<< start_parameter << " in domain " << domain.Min() << ':'
+		<< domain.Max();
+	    *failure = reason.str();
+	}
+	return false;
+    }
+    const ON_Interval bounded_domain = bounded->Domain();
+    if (!bounded->Trim(*subdomain)) {
+	if (failure) {
+	    std::ostringstream reason;
+	    reason << "could not trim the source curve to vertex-derived "
+		"interval " << subdomain->Min() << ':' << subdomain->Max()
+		<< " from " << bounded_domain.Min() << ':'
+		<< bounded_domain.Max() << " (wrapped="
+		<< (wrapped_interval ? 1 : 0) << ')';
+	    *failure = reason.str();
+	}
+	return false;
+    }
+    if (!bounded->IsValid()) {
+	if (failure) {
+	    std::ostringstream reason;
+	    reason << "the source curve became invalid after trimming to "
+		"vertex-derived interval " << subdomain->Min() << ':'
+		<< subdomain->Max() << " from " << bounded_domain.Min() << ':'
+		<< bounded_domain.Max();
+	    *failure = reason.str();
+	}
 	return false;
     }
 
@@ -807,6 +1006,12 @@ step_edge_curve_subdomain(const ON_Curve *curve,
 		"edge tolerance while preserving the exact bounded curve interval");
 	}
     }
+    if (normalized_closed_endpoint && step) {
+	step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Information,
+	    step_entity_id, "EDGE_CURVE", "edge_geometry",
+	    "normalized an equivalent closed source-curve domain endpoint "
+	    "before selecting the exact STEP edge interval");
+    }
     return true;
 }
 
@@ -834,6 +1039,73 @@ EdgeCurve::LoadONBrep(ON_Brep *brep)
     } else {
 	start = edge_end;
 	end = edge_start;
+    }
+
+    /* A LINE has a one-to-one parameterization.  Consequently, an
+     * EDGE_CURVE whose two topology ends are the same VERTEX_POINT cannot
+     * denote a complete closed curve: both ends select the same line
+     * parameter and the edge has zero extent.  Building an ON_LineCurve from
+     * those coincident ends produces an invalid openNURBS curve before the
+     * ordinary bounded-edge repair can inspect it.
+     *
+     * In safe mode, discard this exact zero-parameter topology edge only after
+     * proving that its asserted vertex coincides with the source STEP line's
+     * anchor within the declared model uncertainty.  Merely lying somewhere
+     * on the infinite line is insufficient: production files use an offset
+     * line anchor to expose an accidentally omitted topology vertex and the
+     * intended nonzero segment.  The surrounding loop remains connected
+     * through the identical vertex.  --exact and --repair none retain the
+     * source contradiction and fail normally.  Do not generalize this test to
+     * other curve types: a same-vertex circle or closed spline intentionally
+     * represents a complete closed edge. */
+    if (start && end && start->GetONId() >= 0 &&
+	    start->GetONId() == end->GetONId() && step &&
+	    !step->ImportOptions().exact &&
+	    step->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
+	Line *source_line = dynamic_cast<Line *>(edge_geometry);
+	if (source_line) {
+	    double raw_origin[3] = {0.0, 0.0, 0.0};
+	    double raw_direction_end[3] = {0.0, 0.0, 0.0};
+	    source_line->StartPoint(raw_origin);
+	    source_line->EndPoint(raw_direction_end);
+	    const ON_3dPoint origin(
+		raw_origin[0] * LocalUnits::length,
+		raw_origin[1] * LocalUnits::length,
+		raw_origin[2] * LocalUnits::length);
+	    const ON_3dPoint direction_end(
+		raw_direction_end[0] * LocalUnits::length,
+		raw_direction_end[1] * LocalUnits::length,
+		raw_direction_end[2] * LocalUnits::length);
+	    const ON_3dPoint vertex = brep->m_V[start->GetONId()].point;
+	    const ON_3dVector direction = direction_end - origin;
+	    const double direction_squared = direction * direction;
+	    const double vertex_anchor_distance =
+		origin.IsValid() && vertex.IsValid() ?
+		origin.DistanceTo(vertex) : DBL_MAX;
+	    if (origin.IsValid() && direction_end.IsValid() &&
+		    vertex.IsValid() && std::isfinite(direction_squared) &&
+		    direction_squared > ON_ZERO_TOLERANCE * ON_ZERO_TOLERANCE &&
+		    std::isfinite(vertex_anchor_distance) &&
+		    vertex_anchor_distance <= LocalUnits::tolerance) {
+		SetONId(kCollapsedStepEdgeIndex);
+		step->RecordDiagnostic(
+		    brlcad::step::DiagnosticSeverity::Information, id,
+		    "EDGE_CURVE", "edge_geometry",
+		    "removed a same-vertex STEP line edge after proving its zero "
+		    "parameter span and source-anchor coincidence");
+		step->RecordRepair(id, "EDGE_CURVE", "edge_geometry",
+		    "removed a zero-parameter line edge at its asserted STEP vertex");
+		return true;
+	    }
+	    std::ostringstream reason;
+	    reason << "same-vertex STEP line has its source anchor "
+		<< vertex_anchor_distance << " mm from the asserted vertex; "
+		"refusing to remove a possibly intended segment or invent the "
+		"missing topology vertex";
+	    step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, id,
+		"EDGE_CURVE", "edge_geometry", reason.str());
+	    return false;
+	}
     }
     edge_geometry->Start(start);
     edge_geometry->End(end);
@@ -1482,6 +1754,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
     std::map<PBCData *, ON_Curve *> exact_pullbacks;
     std::set<PBCData *> rejoined_periodic_pullbacks;
     std::set<PBCData *> split_periodic_pullbacks;
+    std::set<PBCData *> native_full_period_pullbacks;
 
     if (!brep || loop_index < 0 || loop_index >= brep->m_L.Count() ||
 	    edge_indices.size() != edge_list.size()) {
@@ -1717,8 +1990,10 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		    step && !step->ImportOptions().exact &&
 		    step->ImportOptions().repair == brlcad::step::RepairMode::Safe &&
 		    result.edge->m_tolerance > edge_data->tolerance) {
-		const double adjustment_limit = maximum_verified_edge_tolerance(
-		    curve, LocalUnits::tolerance, item_scale);
+		const double adjustment_limit =
+		    maximum_verified_curve_surface_tolerance(curve, surface,
+			LocalUnits::tolerance, item_scale,
+			result.pullback_context.get());
 		if (result.edge->m_tolerance <= adjustment_limit) {
 		    edge_data->tolerance = result.edge->m_tolerance;
 		    edge_data->tolerance_adjusted = true;
@@ -1731,8 +2006,15 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		    edge_data->maximum_projection_distance > LocalUnits::tolerance &&
 		    edge_data->rejected_projection_samples >
 			edge_data->failed_projection_samples) {
-		const double adjustment_limit = maximum_verified_edge_tolerance(
-		    curve, LocalUnits::tolerance, item_scale);
+		bool endpoint_anchored_extension = false;
+		const double adjustment_limit =
+		    maximum_verified_curve_surface_tolerance(curve, surface,
+			LocalUnits::tolerance, item_scale,
+			result.pullback_context.get(),
+			&endpoint_anchored_extension);
+		const double ordinary_adjustment_limit =
+		    maximum_verified_edge_tolerance(curve,
+			LocalUnits::tolerance, item_scale);
 		double effective_tolerance = edge_data->maximum_projection_distance *
 		    kMeasuredToleranceSafetyFactor;
 		double measured_tolerance = effective_tolerance;
@@ -1795,6 +2077,10 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		    edge_data = accepted_adjustment;
 		    edge_data->tolerance_adjusted = true;
 		    edge_data->declared_tolerance = LocalUnits::tolerance;
+		    if (endpoint_anchored_extension &&
+			    measured_tolerance > ordinary_adjustment_limit)
+			step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+			    "used an endpoint-anchored measured tolerance for interior source curve/surface drift");
 		}
 	    }
 	    if (edge_data && edge_data->rejected_projection_samples > 0) {
@@ -1812,8 +2098,10 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 			else
 			    reason << "what could be validated within the bounded "
 				"safe-repair limit "
-				<< maximum_verified_edge_tolerance(curve,
-				    LocalUnits::tolerance, item_scale) << " (declared "
+				<< maximum_verified_curve_surface_tolerance(curve,
+				    surface, LocalUnits::tolerance, item_scale,
+				    result.pullback_context.get())
+				<< " (declared "
 				<< LocalUnits::tolerance << ')';
 			reason << " on STEP edge #" << edge_id
 			    << " (" << edge_data->rejected_projection_samples << '/'
@@ -2660,7 +2948,9 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		 segment != current_data->segments->end(); ++segment) {
 		if (!*segment || (*segment)->Count() < 2)
 		    continue;
-		if (!pullback_has_collapsed_full_period(current_data, **segment))
+		const bool visible_full_period =
+		    pullback_has_visible_full_period(current_data, **segment);
+		if (!visible_full_period)
 		    continue;
 		std::string boundary_failure;
 		ON_Curve *boundary = closed_edge_iso_line(current_data, **segment,
@@ -2681,7 +2971,19 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 			((*segment)->Count() - 1)));
 		    (*segment)->At(point)->Set(restored.x, restored.y);
 		}
-		delete boundary;
+		std::map<PBCData *, ON_Curve *>::iterator previous_exact =
+		    exact_pullbacks.find(current_data);
+		if (previous_exact != exact_pullbacks.end()) {
+		    delete previous_exact->second;
+		    exact_pullbacks.erase(previous_exact);
+		}
+		exact_pullbacks[current_data] = boundary;
+		/* The winding was already visible before reconstruction.  Preserve
+		 * it from the generic splitter, which would otherwise manufacture an
+		 * interior cut in a complete native-domain boundary.  Collapsed
+		 * pullbacks never enter this path: their established singularity and
+		 * seam recovery must retain the original topology evidence. */
+		native_full_period_pullbacks.insert(current_data);
 	    }
 	}
 	/* Collapsed closest-point results have now been restored to their proven
@@ -2808,11 +3110,31 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 	    if (!*current || !(*current)->segments)
 		continue;
 	    size_t seam_splits = 0;
-	    const bool split_at_native_seam =
-		split_periodic_pullback_at_native_seams(*current,
-		    LocalUnits::tolerance, &seam_splits);
 	    bool singular_split = pullback_requires_singular_topology_split(
 		*current, std::max(LocalUnits::tolerance, (*current)->tolerance));
+	    /* A full-period native-domain isocurve has already been densely
+	     * validated against the complete immutable STEP edge.  Do not split
+	     * it again at an interior parameter retained from an earlier private
+	     * surface seam phase; that turns one physical boundary into two
+	     * opposite uses of a partial edge and hides it from the annular-band
+	     * builder.  A proven surface singularity still requires real topology
+	     * subdivision and therefore retains the generic split path. */
+	    const bool preserve_native_full_period =
+		!singular_split && native_full_period_pullbacks.find(*current) !=
+		    native_full_period_pullbacks.end();
+	    const bool split_at_native_seam = !preserve_native_full_period &&
+		split_periodic_pullback_at_native_seams(*current,
+		    LocalUnits::tolerance, &seam_splits);
+	    /* A collapsed full-period edge has no visible singular endpoint until
+	     * the native-seam splitter restores its complete UV winding.  Recheck
+	     * after that topology-changing operation; otherwise the stale
+	     * pre-split classification routes a genuine pole cut through the
+	     * ordinary-fragment merger and erases the connector topology. */
+	    if (!singular_split && split_at_native_seam &&
+		    (*current)->segments->size() > 1)
+		singular_split = pullback_requires_singular_topology_split(
+		    *current, std::max(LocalUnits::tolerance,
+			(*current)->tolerance));
 	    /* pullback_samples may already have split an open curve at parameter
 	     * zero before this native-domain pass.  Rejoin all ordinary fragment
 	     * lists, not only lists split by the call immediately above. */
@@ -3374,8 +3696,15 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		 * vertex and interval error it actually measured; only that local value,
 		 * not the search ceiling, is installed on the affected edge and trim. */
 		if (!c2d && !step->ImportOptions().exact) {
-		    const double adjustment_limit = maximum_verified_edge_tolerance(
-			data->curve, LocalUnits::tolerance, item_scale);
+		    bool endpoint_anchored_extension = false;
+		    const double adjustment_limit =
+			maximum_verified_curve_surface_tolerance(data->curve,
+			    data->surf, LocalUnits::tolerance, item_scale,
+			    data->context.get(),
+			    &endpoint_anchored_extension);
+		    const double ordinary_adjustment_limit =
+			maximum_verified_edge_tolerance(data->curve,
+			    LocalUnits::tolerance, item_scale);
 		    if (adjustment_limit > std::max(LocalUnits::tolerance,
 			    data->tolerance)) {
 			ON_Curve *adjusted = NULL;
@@ -3414,6 +3743,11 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 				"EDGE_LOOP", "edge_list", warning.str());
 			    step->RecordRepair(id, "EDGE_LOOP", "edge_list",
 				"recorded complete pcurve interval mismatch on the affected edge");
+			    if (endpoint_anchored_extension &&
+				    evidenced_tolerance >
+					ordinary_adjustment_limit)
+				step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+				    "used an endpoint-anchored measured tolerance for interior source curve/surface drift");
 			} else {
 			    delete adjusted;
 			    if (!adjustment_failure.empty())
@@ -4174,8 +4508,10 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 			step->ImportOptions().repair == brlcad::step::RepairMode::Safe &&
 			data->failure_reason != PullbackFailureReason::Cancelled &&
 			maximum_lift_error < DBL_MAX) {
-		    const double adjustment_limit = maximum_verified_edge_tolerance(
-			data->curve, data->declared_tolerance, item_scale);
+		    const double adjustment_limit =
+			maximum_verified_curve_surface_tolerance(data->curve,
+			    data->surf, data->declared_tolerance, item_scale,
+			    data->context.get());
 		    const double adjusted_tolerance = maximum_lift_error *
 			kMeasuredToleranceSafetyFactor;
 		    if (adjusted_tolerance > acceptance_tolerance &&
@@ -4222,8 +4558,10 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		double maximum_lift_error = 0.0;
 		double maximum_error_fraction = 0.0;
 		ON_3dPoint maximum_error_uv = ON_3dPoint::UnsetPoint;
-		const double adjustment_limit = maximum_verified_edge_tolerance(
-		    data->curve, data->declared_tolerance, item_scale);
+		const double adjustment_limit =
+		    maximum_verified_curve_surface_tolerance(data->curve,
+			data->surf, data->declared_tolerance, item_scale,
+			data->context.get());
 		const auto validate_locus = [&](ON_Curve *candidate) {
 		    maximum_lift_error = 0.0;
 		    maximum_error_fraction = 0.0;
@@ -4279,7 +4617,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 			lift_valid = validate_locus(c2d);
 			if (lift_valid && step)
 			    step->RecordRepair(id, "EDGE_LOOP", "edge_list",
-				"adaptively refined a closed-surface pcurve after dense locus validation");
+				"adaptively refined a measured-tolerance pcurve after dense locus validation");
 		}
 	}
 	/* The existing pullback samples are adaptive in source-curve parameter,

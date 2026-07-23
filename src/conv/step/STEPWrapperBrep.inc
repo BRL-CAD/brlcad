@@ -25,6 +25,198 @@
 static ON_3dPoint closed_surface_point_at(const ON_Surface *surface,
     const ON_3dPoint &uv);
 
+/* Return true when one face loop is exactly a forward/reverse traversal of a
+ * single STEP edge and deleting those two uses would leave the ordinary two
+ * reciprocal shell uses on two other faces.  This is stronger than a
+ * parameter-space zero-area test: all four directed edge uses and both
+ * supplied pcurve lifts are proved before a source face may be discarded. */
+static bool
+exact_redundant_face_edge_loop(const ON_Brep *brep,
+	const ON_BrepFace &redundant_face, const ON_BrepLoop &loop,
+	std::string *failure, double *edge_mismatch)
+{
+    if (failure)
+	failure->clear();
+    if (edge_mismatch)
+	*edge_mismatch = 0.0;
+    if (!brep || loop.TrimCount() != 2)
+	return false;
+    const ON_BrepTrim *first = loop.Trim(0);
+    const ON_BrepTrim *second = loop.Trim(1);
+    const ON_Surface *surface = redundant_face.SurfaceOf();
+    if (!first || !second || !surface || first->m_ei < 0 ||
+	    first->m_ei != second->m_ei ||
+	    first->m_ei >= brep->m_E.Count() ||
+	    first->m_bRev3d == second->m_bRev3d ||
+	    first->m_vi[0] != second->m_vi[1] ||
+	    first->m_vi[1] != second->m_vi[0]) {
+	if (failure) *failure =
+	    "the two loop trims were not reciprocal uses of one edge";
+	return false;
+    }
+    const ON_BrepEdge &edge = brep->m_E[first->m_ei];
+    if (edge.m_edge_user.i <= 0 || edge.m_ti.Count() != 4) {
+	if (failure) *failure =
+	    "the candidate edge did not have exactly four source uses";
+	return false;
+    }
+
+    const ON_BrepTrim *remaining[2] = {NULL, NULL};
+    int remaining_count = 0;
+    for (int eti = 0; eti < edge.m_ti.Count(); ++eti) {
+	const int ti = edge.m_ti[eti];
+	if (ti < 0 || ti >= brep->m_T.Count())
+	    return false;
+	const ON_BrepTrim *use = &brep->m_T[ti];
+	if (use == first || use == second)
+	    continue;
+	if (remaining_count >= 2 || !use->Face() ||
+		use->Face() == &redundant_face) {
+	    if (failure) *failure =
+		"the two remaining edge uses were not on neighboring faces";
+	    return false;
+	}
+	remaining[remaining_count++] = use;
+    }
+    if (remaining_count != 2 || !remaining[0] || !remaining[1] ||
+	    remaining[0]->Face() == remaining[1]->Face()) {
+	if (failure) *failure =
+	    "the two remaining edge uses did not belong to distinct faces";
+	return false;
+    }
+    /* Removing the cancelling face must restore, not merely reduce, shell
+     * ambiguity on this edge. */
+    const bool first_effective =
+	remaining[0]->m_bRev3d ^ remaining[0]->Face()->m_bRev;
+    const bool second_effective =
+	remaining[1]->m_bRev3d ^ remaining[1]->Face()->m_bRev;
+    if (first_effective == second_effective) {
+	if (failure) *failure =
+	    "the two remaining edge uses did not have reciprocal shell senses";
+	return false;
+    }
+
+    const ON_Interval first_domain = first->Domain();
+    const ON_Interval second_domain = second->Domain();
+    const ON_Interval edge_domain = edge.Domain();
+    if (!first_domain.IsIncreasing() || !second_domain.IsIncreasing() ||
+	    !edge_domain.IsIncreasing()) {
+	if (failure) *failure =
+	    "a pcurve or edge parameter domain was invalid";
+	return false;
+    }
+    double tolerance = std::max(LocalUnits::tolerance, edge.m_tolerance);
+    tolerance = std::max(tolerance, std::max(first->m_tolerance[0],
+	first->m_tolerance[1]));
+    tolerance = std::max(tolerance, std::max(second->m_tolerance[0],
+	second->m_tolerance[1]));
+    const double parameter_tolerance = std::max(
+	ON_ZERO_TOLERANCE * kNumericalToleranceScale,
+	1.0e-10 * std::max(surface->Domain(0).Length(),
+	    surface->Domain(1).Length()));
+    double maximum_edge_mismatch = 0.0;
+    for (int sample = 0; sample <= kPcurveLocusScreeningSegments; ++sample) {
+	const double fraction = static_cast<double>(sample) /
+	    kPcurveLocusScreeningSegments;
+	const ON_3dPoint first_uv = first->PointAt(
+	    first_domain.ParameterAt(fraction));
+	const ON_3dPoint second_uv = second->PointAt(
+	    second_domain.ParameterAt(1.0 - fraction));
+	const ON_3dPoint first_lift = first_uv.IsValid() ?
+	    surface->PointAt(first_uv.x, first_uv.y) :
+	    ON_3dPoint::UnsetPoint;
+	const ON_3dPoint second_lift = second_uv.IsValid() ?
+	    surface->PointAt(second_uv.x, second_uv.y) :
+	    ON_3dPoint::UnsetPoint;
+	const ON_3dPoint first_edge_point = edge.PointAt(
+	    edge_domain.ParameterAt(first->m_bRev3d ?
+		1.0 - fraction : fraction));
+	const ON_3dPoint second_edge_point = edge.PointAt(
+	    edge_domain.ParameterAt(second->m_bRev3d ?
+		fraction : 1.0 - fraction));
+	if (!first_lift.IsValid() || !second_lift.IsValid() ||
+		!first_edge_point.IsValid() || !second_edge_point.IsValid() ||
+		first_uv.DistanceTo(second_uv) > parameter_tolerance ||
+		first_lift.DistanceTo(second_lift) > tolerance) {
+	    if (failure) {
+		std::ostringstream detail;
+		detail << "the reciprocal pcurves were not the same literal UV "
+		    "path at sample " << sample << '/'
+		    << kPcurveLocusScreeningSegments << " (parameter/lift "
+		    "distances " << first_uv.DistanceTo(second_uv) << '/'
+		    << first_lift.DistanceTo(second_lift)
+		    << ", tolerances " << parameter_tolerance << '/'
+		    << tolerance << ')';
+		*failure = detail.str();
+	    }
+	    return false;
+	}
+	maximum_edge_mismatch = std::max(maximum_edge_mismatch,
+	    std::max(first_lift.DistanceTo(first_edge_point),
+		second_lift.DistanceTo(second_edge_point)));
+    }
+    if (edge_mismatch)
+	*edge_mismatch = maximum_edge_mismatch;
+    return true;
+}
+
+
+/* Delete one source face which has no geometric area and whose every boundary
+ * is an exact cancelling use of an edge otherwise shared by the proper two
+ * neighboring faces.  The caller repeats after Compact() because indices
+ * change. */
+static bool
+remove_one_exact_redundant_zero_area_face(ON_Brep *brep,
+	STEPWrapper *wrapper, int entity_id, const std::string &entity_type)
+{
+    if (!brep)
+	return false;
+    for (int fi = 0; fi < brep->m_F.Count(); ++fi) {
+	ON_BrepFace &face = brep->m_F[fi];
+	if (face.LoopCount() < 1)
+	    continue;
+	bool redundant = true;
+	std::string failure;
+	double maximum_edge_mismatch = 0.0;
+	for (int fli = 0; redundant && fli < face.LoopCount(); ++fli) {
+	    const ON_BrepLoop *loop = face.Loop(fli);
+	    double loop_edge_mismatch = 0.0;
+	    redundant = loop &&
+		exact_redundant_face_edge_loop(brep, face, *loop, &failure,
+		    &loop_edge_mismatch);
+	    maximum_edge_mismatch = std::max(maximum_edge_mismatch,
+		loop_edge_mismatch);
+	}
+	if (!redundant) {
+	    if (wrapper && wrapper->Verbose() && !failure.empty() &&
+		    face.LoopCount() > 1) {
+		std::cerr << entity_type << " #" << entity_id
+		    << ": zero-area face candidate F" << fi
+		    << " rejected: " << failure << std::endl;
+	    }
+	    continue;
+	}
+	/* Keep all source edges: each has exactly two proven neighboring uses
+	 * after this face and its cancelling trims are deleted. */
+	if (wrapper && maximum_edge_mismatch > LocalUnits::tolerance)
+	    wrapper->RecordDiagnostic(
+		brlcad::step::DiagnosticSeverity::Warning, entity_id,
+		entity_type, "advanced_face",
+		"an exact zero-area face used reciprocal pcurves which both "
+		"missed their shared 3-D STEP edge; removed only the cancelling "
+		"face uses and retained the immutable edge");
+	brep->DeleteFace(face, false);
+	return brep->Compact();
+    }
+    return false;
+}
+
+
+static bool
+opposite_trim_curves_coincide(const ON_BrepTrim *first,
+    const ON_BrepTrim *second, double parameter_tolerance);
+
+
 static bool
 remove_adjacent_zero_area_slit(ON_Brep *brep, int loop_index)
 {
@@ -69,12 +261,21 @@ remove_adjacent_zero_area_slit(ON_Brep *brep, int loop_index)
 	const ON_Interval edge_domain = edge.Domain();
 	if (!edge_domain.IsIncreasing())
 	    return false;
+	/* A literal forward/reverse p-space pair is already a complete proof that
+	 * this inner bound encloses zero area.  Its private edge has no other
+	 * shell use and is deleted with the loop, so an exporter-supplied
+	 * edge/pcurve mismatch cannot make the cancelling bound geometrically
+	 * meaningful.  Retain the stronger directed edge/lift proof below for
+	 * periodic images whose UV coordinates do not literally coincide. */
+	const bool exact_parameter_cancellation = opposite_trim_curves_coincide(
+	    first, second, ON_ZERO_TOLERANCE * kNumericalToleranceScale);
 	double tolerance = std::max(LocalUnits::tolerance, edge.m_tolerance);
 	tolerance = std::max(tolerance, std::max(first->m_tolerance[0],
 	    first->m_tolerance[1]));
 	tolerance = std::max(tolerance, std::max(second->m_tolerance[0],
 	    second->m_tolerance[1]));
-	for (int sample = 0; sample <= kPcurveLocusScreeningSegments; ++sample) {
+	for (int sample = 0; !exact_parameter_cancellation &&
+		sample <= kPcurveLocusScreeningSegments; ++sample) {
 	    const double fraction = static_cast<double>(sample) /
 		kPcurveLocusScreeningSegments;
 	    const ON_3dPoint first_uv = first->PointAt(
@@ -288,13 +489,17 @@ periodic_loop_closure(const ON_Brep *brep, const ON_BrepLoop *loop,
     bool one_period_apart = false;
     for (int direction = 0; direction < 2; ++direction) {
 	if (!surface->IsClosed(direction)) continue;
-	const int other = 1 - direction;
 	const double period = surface->Domain(direction).Length();
 	const double period_tolerance = parameter_tolerance *
 	    std::max(1.0, fabs(period));
 	if (fabs(fabs(last_uv[direction] - first_uv[direction]) - period) <=
-		period_tolerance &&
-		fabs(last_uv[other] - first_uv[other]) <= parameter_tolerance) {
+		period_tolerance) {
+	    /* Do not reject a proven periodic closure solely because the two
+	     * independently supplied endpoints have a residual in the transverse
+	     * parameter direction.  Parameter distance is not a model-space
+	     * tolerance on a general surface.  The topology vertex and all three
+	     * model-space lift checks below remain authoritative, using only the
+	     * local tolerance established for these exact edges. */
 	    one_period_apart = true;
 	    break;
 	}
@@ -503,6 +708,7 @@ split_keyhole_loop(ON_Brep *brep, int loop_index, std::string *failure_reason)
     }
 
     if (remove_periodic_duplicate_only) {
+	const int source_loop_tag = loop->m_loop_user.i;
 	const int first_trim_index = loop->m_ti[first_offset];
 	const int second_trim_index = loop->m_ti[second_offset];
 	const int higher_trim = std::max(first_trim_index, second_trim_index);
@@ -513,10 +719,16 @@ split_keyhole_loop(ON_Brep *brep, int loop_index, std::string *failure_reason)
 	 * from the original loop.  The remaining seam pair still owns the edge. */
 	brep->DeleteTrim(brep->m_T[higher_trim], false);
 	brep->DeleteTrim(brep->m_T[lower_trim], false);
-	return brep->Compact();
+	const bool compacted = brep->Compact();
+	if (compacted && failure_reason)
+	    *failure_reason = "accepted periodic duplicate removal for STEP loop " +
+		std::to_string(source_loop_tag) + " (both exposed chains had "
+		"model-space periodic closure)";
+	return compacted;
     }
 
     const ON_BrepLoop::TYPE original_type = loop->m_type;
+    const int original_loop_source_tag = loop->m_loop_user.i;
     const int face_index = loop->m_fi;
     if (face_index < 0 || face_index >= brep->m_F.Count())
 	return false;
@@ -613,6 +825,7 @@ split_keyhole_loop(ON_Brep *brep, int loop_index, std::string *failure_reason)
     const int new_loop_index = brep->NewLoop(original_type).m_loop_index;
     loop = &brep->m_L[loop_index];
     ON_BrepLoop *new_loop = &brep->m_L[new_loop_index];
+    new_loop->m_loop_user.i = original_loop_source_tag;
     loop->m_ti.SetCount(0);
     for (std::vector<int>::const_iterator trim = outside_trims.begin();
 	 trim != outside_trims.end(); ++trim) {
@@ -734,12 +947,30 @@ split_keyhole_loop(ON_Brep *brep, int loop_index, std::string *failure_reason)
 	loop->m_type == ON_BrepLoop::inner && new_loop->m_type == ON_BrepLoop::outer) {
 	face->m_li.Insert(0, new_loop_index);
     } else if (loop->m_type == original_type && new_loop->m_type == ON_BrepLoop::outer) {
-	const int surface_index = face->m_si;
-	const bool reversed = face->m_bRev;
-	ON_BrepFace &new_face = brep->NewFace(surface_index);
-	new_face.m_bRev = reversed;
-	new_face.m_li.Append(new_loop_index);
-	brep->m_L[new_loop_index].m_fi = new_face.m_face_index;
+	const ON_Surface *source_surface = face->SurfaceOf();
+	if (source_surface &&
+		(source_surface->IsClosed(0) || source_surface->IsClosed(1))) {
+	    /* Both cycles still belong to the one authoritative STEP
+	     * ADVANCED_FACE.  Signed Euclidean UV area cannot distinguish the
+	     * outer and inner sides of a full-period cylindrical/toroidal band:
+	     * both wrapped cycles commonly classify as outer.  Moving one cycle
+	     * to a synthetic face invents two impossible single-boundary
+	     * cylindrical faces.  Retain the source association and mark the
+	     * detached cycle inner provisionally; the exact edge-winding band
+	     * repair later proves the pairing and installs explicit seam
+	     * topology before the BREP is accepted. */
+	    new_loop->m_type = ON_BrepLoop::inner;
+	    face->m_li.Append(new_loop_index);
+	} else {
+	    const int surface_index = face->m_si;
+	    const bool reversed = face->m_bRev;
+	    const int source_face_tag = face->m_face_user.i;
+	    ON_BrepFace &new_face = brep->NewFace(surface_index);
+	    new_face.m_bRev = reversed;
+	    new_face.m_face_user.i = source_face_tag;
+	    new_face.m_li.Append(new_loop_index);
+	    brep->m_L[new_loop_index].m_fi = new_face.m_face_index;
+	}
     } else {
 	/* This is the remaining valid keyhole arrangement: the original loop
 	 * becomes outer and the detached loop remains inner on the same face. */
@@ -765,7 +996,21 @@ split_keyhole_loop(ON_Brep *brep, int loop_index, std::string *failure_reason)
      * array immediately and renumbers the remaining topology references. */
     brep->DeleteTrim(brep->m_T[higher_bridge_trim], false);
     brep->DeleteTrim(brep->m_T[lower_bridge_trim], bridge_owns_edge);
-    return brep->Compact();
+    const int final_first_type = static_cast<int>(loop->m_type);
+    const int final_second_type = static_cast<int>(new_loop->m_type);
+    const int final_first_direction = brep->LoopDirection(*loop);
+    const int final_second_direction = brep->LoopDirection(*new_loop);
+    const bool compacted = brep->Compact();
+    if (compacted && failure_reason) {
+	std::ostringstream details;
+	details << "accepted keyhole split for STEP loop "
+	    << original_loop_source_tag << " periodic=" << (outside_periodic ? 1 : 0)
+	    << '/' << (inside_periodic ? 1 : 0) << " types="
+	    << final_first_type << '/' << final_second_type << " directions="
+	    << final_first_direction << '/' << final_second_direction;
+	*failure_reason = details.str();
+    }
+    return compacted;
 }
 
 
@@ -1447,6 +1692,206 @@ brep_topology_references_are_safe(const ON_Brep *brep, std::string *failure)
 	}
     }
     return true;
+}
+
+
+/* A face-local periodic repair can split the two uses of one STEP EDGE_CURVE
+ * independently.  When both faces choose the same exact split, this leaves
+ * duplicate one-use OpenNURBS edges whose internal split vertices have
+ * different OpenNURBS indices.  Rejoin one pair only when they retain the same
+ * positive STEP edge identity, their bounded 3-D loci contain the same dense
+ * samples in both directions, and corresponding endpoint identities and
+ * positions agree within their already established tolerances.  Work on a
+ * copy so a rejected vertex or edge merge cannot alter the accepted BREP. */
+static size_t
+merge_one_exact_duplicate_step_boundary_edge_pair(ON_Brep *brep,
+	std::string *details)
+{
+    if (details)
+	details->clear();
+    if (!brep || !(LocalUnits::tolerance > 0.0))
+	return 0;
+
+    const auto endpoint_tolerance = [](const ON_BrepVertex &first,
+	    const ON_BrepVertex &second, double edge_tolerance) {
+	double tolerance = edge_tolerance;
+	if (first.m_tolerance > 0.0)
+	    tolerance = std::max(tolerance, first.m_tolerance);
+	if (second.m_tolerance > 0.0)
+	    tolerance = std::max(tolerance, second.m_tolerance);
+	return tolerance;
+    };
+    const auto endpoints_match = [&endpoint_tolerance](
+	    const ON_BrepVertex &first, const ON_BrepVertex &second,
+	    double edge_tolerance) {
+	const int first_step = first.m_vertex_user.i;
+	const int second_step = second.m_vertex_user.i;
+	/* An importer-created split vertex (no positive STEP identity) must not
+	 * replace an authoritative STEP endpoint merely because they are close.
+	 * Two internal split vertices are eligible only after the complete
+	 * bounded edge loci have independently matched below. */
+	if ((first_step > 0) != (second_step > 0) ||
+		(first_step > 0 && first_step != second_step))
+	    return false;
+	return first.point.IsValid() && second.point.IsValid() &&
+	    first.point.DistanceTo(second.point) <=
+		endpoint_tolerance(first, second, edge_tolerance);
+    };
+
+    for (int first_index = 0; first_index < brep->m_E.Count();
+	    ++first_index) {
+	const ON_BrepEdge &first = brep->m_E[first_index];
+	if (first.m_edge_user.i <= 0 || first.m_ti.Count() != 1 ||
+		first.m_vi[0] < 0 || first.m_vi[1] < 0 ||
+		first.m_vi[0] >= brep->m_V.Count() ||
+		first.m_vi[1] >= brep->m_V.Count() ||
+		!first.EdgeCurveOf())
+	    continue;
+	const int first_trim_index = first.m_ti[0];
+	const ON_BrepTrim *first_trim = brep->Trim(first_trim_index);
+	if (!first_trim || first_trim->m_type != ON_BrepTrim::boundary)
+	    continue;
+	for (int second_index = first_index + 1;
+		second_index < brep->m_E.Count(); ++second_index) {
+	    const ON_BrepEdge &second = brep->m_E[second_index];
+	    if (second.m_edge_user.i != first.m_edge_user.i ||
+		    second.m_ti.Count() != 1 ||
+		    second.m_vi[0] < 0 || second.m_vi[1] < 0 ||
+		    second.m_vi[0] >= brep->m_V.Count() ||
+		    second.m_vi[1] >= brep->m_V.Count() ||
+		    !second.EdgeCurveOf())
+		continue;
+	    const int second_trim_index = second.m_ti[0];
+	    const ON_BrepTrim *second_trim = brep->Trim(second_trim_index);
+	    if (!second_trim || second_trim->m_type != ON_BrepTrim::boundary)
+		continue;
+
+	    double edge_tolerance = std::max(LocalUnits::tolerance,
+		ON_ZERO_TOLERANCE * kNumericalToleranceScale);
+	    if (first.m_tolerance > 0.0)
+		edge_tolerance = std::max(edge_tolerance, first.m_tolerance);
+	    if (second.m_tolerance > 0.0)
+		edge_tolerance = std::max(edge_tolerance, second.m_tolerance);
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (first_trim->m_tolerance[direction] > 0.0)
+		    edge_tolerance = std::max(edge_tolerance,
+			first_trim->m_tolerance[direction]);
+		if (second_trim->m_tolerance[direction] > 0.0)
+		    edge_tolerance = std::max(edge_tolerance,
+			second_trim->m_tolerance[direction]);
+	    }
+
+	    const bool direct = endpoints_match(
+		brep->m_V[first.m_vi[0]], brep->m_V[second.m_vi[0]],
+		edge_tolerance) && endpoints_match(
+		brep->m_V[first.m_vi[1]], brep->m_V[second.m_vi[1]],
+		edge_tolerance);
+	    const bool reversed = !direct && endpoints_match(
+		brep->m_V[first.m_vi[0]], brep->m_V[second.m_vi[1]],
+		edge_tolerance) && endpoints_match(
+		brep->m_V[first.m_vi[1]], brep->m_V[second.m_vi[0]],
+		edge_tolerance);
+	    if (!direct && !reversed)
+		continue;
+
+	    const ON_Interval first_domain = first.Domain();
+	    const ON_Interval second_domain = second.Domain();
+	    if (!first_domain.IsIncreasing() || !second_domain.IsIncreasing())
+		continue;
+	    ON_3dPoint first_points[kPcurveLocusScreeningSegments + 1];
+	    ON_3dPoint second_points[kPcurveLocusScreeningSegments + 1];
+	    bool valid_samples = true;
+	    for (int sample = 0;
+		    valid_samples && sample <= kPcurveLocusScreeningSegments;
+		    ++sample) {
+		const double fraction = static_cast<double>(sample) /
+		    kPcurveLocusScreeningSegments;
+		first_points[sample] = first.PointAt(
+		    first_domain.ParameterAt(fraction));
+		second_points[sample] = second.PointAt(
+		    second_domain.ParameterAt(fraction));
+		valid_samples = first_points[sample].IsValid() &&
+		    second_points[sample].IsValid();
+	    }
+	    if (!valid_samples ||
+		    !step_curve_locus_contains_points(&second, first_points,
+			kPcurveLocusScreeningSegments + 1, edge_tolerance) ||
+		    !step_curve_locus_contains_points(&first, second_points,
+			kPcurveLocusScreeningSegments + 1, edge_tolerance))
+		continue;
+
+	    std::unique_ptr<ON_Brep> candidate(new ON_Brep(*brep));
+	    ON_BrepEdge &candidate_first = candidate->m_E[first_index];
+	    ON_BrepEdge &candidate_second = candidate->m_E[second_index];
+	    if (reversed && !candidate_second.Reverse()) {
+		if (details) *details = "STEP edge #" +
+		    std::to_string(first.m_edge_user.i) +
+		    " could not reverse an exact duplicate edge";
+		continue;
+	    }
+	    bool merged_vertices = true;
+	    for (int endpoint = 0; merged_vertices && endpoint < 2; ++endpoint) {
+		const int keep_vertex = candidate_first.m_vi[endpoint];
+		const int remove_vertex = candidate_second.m_vi[endpoint];
+		if (keep_vertex == remove_vertex)
+		    continue;
+		merged_vertices = keep_vertex >= 0 && remove_vertex >= 0 &&
+		    keep_vertex < candidate->m_V.Count() &&
+		    remove_vertex < candidate->m_V.Count() &&
+		    candidate->CombineCoincidentVertices(
+			candidate->m_V[keep_vertex],
+			candidate->m_V[remove_vertex]);
+	    }
+	    if (!merged_vertices ||
+		    !candidate->CombineCoincidentEdges(candidate_first,
+			candidate_second)) {
+		if (details) *details = "STEP edge #" +
+		    std::to_string(first.m_edge_user.i) +
+		    " could not install an identity-proven duplicate edge pair";
+		continue;
+	    }
+	    const int merged_edge_index =
+		candidate->m_T[first_trim_index].m_ei;
+	    if (merged_edge_index < 0 ||
+		    merged_edge_index != candidate->m_T[second_trim_index].m_ei ||
+		    merged_edge_index >= candidate->m_E.Count() ||
+		    candidate->m_E[merged_edge_index].m_ti.Count() != 2) {
+		if (details) *details = "STEP edge #" +
+		    std::to_string(first.m_edge_user.i) +
+		    " did not produce one reciprocal two-use edge";
+		continue;
+	    }
+	    candidate->m_E[merged_edge_index].m_tolerance = edge_tolerance;
+	    if (!candidate->Compact() ||
+		    !candidate->SetTrimTypeFlags(false)) {
+		if (details) *details = "STEP edge #" +
+		    std::to_string(first.m_edge_user.i) +
+		    " could not compact an exact duplicate edge merge";
+		continue;
+	    }
+	    std::string unsafe_topology;
+	    ON_wString validation_messages;
+	    ON_TextLog validation_log(validation_messages);
+	    if (!brep_topology_references_are_safe(candidate.get(),
+		    &unsafe_topology) || !candidate->IsValid(&validation_log)) {
+		if (details) {
+		    ON_String text(validation_messages);
+		    *details = "STEP edge #" +
+			std::to_string(first.m_edge_user.i) +
+			" failed transactional duplicate-edge validation: " +
+			(!unsafe_topology.empty() ? unsafe_topology :
+			    text.Array());
+		}
+		continue;
+	    }
+	    *brep = *candidate;
+	    if (details)
+		*details = "STEP edge #" +
+		    std::to_string(first.m_edge_user.i);
+	    return 1;
+	}
+    }
+    return 0;
 }
 
 
@@ -2201,7 +2646,8 @@ static bool
 split_periodic_boundary_at_native_seam(ON_Brep *brep,
 	int target_loop_index, int target_trim_index, const ON_Surface *surface,
 	int closed_direction, double open_parameter, STEPWrapper *wrapper,
-	int entity_id, const std::string &entity_type)
+	int entity_id, const std::string &entity_type,
+	bool record_repair = true)
 {
     if (!brep || !surface || !wrapper || target_loop_index < 0 ||
 	    target_loop_index >= brep->m_L.Count() || target_trim_index < 0 ||
@@ -2334,6 +2780,27 @@ split_periodic_boundary_at_native_seam(ON_Brep *brep,
 	}
     }
     if (crossing < 1) {
+	if (wrapper->Verbose() && !projected.empty()) {
+	    double minimum_closed = projected.front().closed_parameter;
+	    double maximum_closed = minimum_closed;
+	    for (std::vector<ProjectedSample>::const_iterator sample =
+		    projected.begin(); sample != projected.end(); ++sample) {
+		minimum_closed = std::min(minimum_closed,
+		    sample->closed_parameter);
+		maximum_closed = std::max(maximum_closed,
+		    sample->closed_parameter);
+	    }
+	    std::cerr << entity_type << " #" << entity_id
+		<< ": exact native-seam split L" << target_loop_index << "/T"
+		<< target_trim_index << "/STEP edge " << original_step_edge_id
+		<< " found no direction-" << closed_direction
+		<< " seam crossing over projected range "
+		<< minimum_closed << ':' << maximum_closed << " (endpoints "
+		<< projected.front().closed_parameter << ':'
+		<< projected.back().closed_parameter << ", native domain "
+		<< closed_domain.Min() << ':' << closed_domain.Max() << ')'
+		<< std::endl;
+	}
 	rejection_stage = "locating the native periodic seam crossing";
 	return reject();
     }
@@ -3304,12 +3771,14 @@ split_periodic_boundary_at_native_seam(ON_Brep *brep,
 	*brep = *rollback;
 	return false;
     }
-    wrapper->RecordRepair(entity_id, entity_type, "edge_loop",
-	original_edge_closed ?
-	"split a closed STEP boundary edge at an exact OpenNURBS periodic seam" :
-	"split an open STEP boundary edge at an exact OpenNURBS periodic seam");
-    wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
-	"regenerated an implicit full-period boundary from exact split edge uses");
+    if (record_repair) {
+	wrapper->RecordRepair(entity_id, entity_type, "edge_loop",
+	    original_edge_closed ?
+	    "split a closed STEP boundary edge at an exact OpenNURBS periodic seam" :
+	    "split an open STEP boundary edge at an exact OpenNURBS periodic seam");
+	wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
+	    "regenerated an implicit full-period boundary from exact split edge uses");
+    }
     return true;
 }
 
@@ -3323,7 +3792,8 @@ split_periodic_boundary_at_native_seam(ON_Brep *brep,
 static bool
 split_open_periodic_boundary_crossing(ON_Brep *brep, ON_BrepFace &face,
     int loop_index, int closed_direction, double parameter_tolerance,
-    STEPWrapper *wrapper, int entity_id, const std::string &entity_type)
+    STEPWrapper *wrapper, int entity_id, const std::string &entity_type,
+    bool record_repair = true)
 {
     if (!brep || !wrapper || loop_index < 0 ||
 	    loop_index >= brep->m_L.Count() || closed_direction < 0 ||
@@ -3407,7 +3877,8 @@ split_open_periodic_boundary_crossing(ON_Brep *brep, ON_BrepFace &face,
 	const int open_direction = 1 - closed_direction;
 	const auto try_split = [brep, loop_index, target_trim_index, surface,
 		closed_direction, open_direction, wrapper, entity_id,
-		&entity_type, curve, &curve_domain, domain_guard](
+		&entity_type, curve, &curve_domain, domain_guard,
+		record_repair](
 		double crossing_parameter) {
 	    if (crossing_parameter <= curve_domain.Min() + domain_guard ||
 		    crossing_parameter >= curve_domain.Max() - domain_guard)
@@ -3416,7 +3887,8 @@ split_open_periodic_boundary_crossing(ON_Brep *brep, ON_BrepFace &face,
 	    return crossing.IsValid() &&
 		split_periodic_boundary_at_native_seam(brep, loop_index,
 		    target_trim_index, surface, closed_direction,
-		    crossing[open_direction], wrapper, entity_id, entity_type);
+		    crossing[open_direction], wrapper, entity_id, entity_type,
+		    record_repair);
 	};
 
 	double previous_parameter = curve_domain.Min();
@@ -3613,11 +4085,15 @@ regenerate_split_periodic_boundary_chain(ON_Brep *brep, ON_BrepLoop &loop,
 	if (bounds.IsValid())
 	    edge_scale = std::max(edge_scale, bounds.Diagonal().Length());
     }
+    ON_BoundingBox item_bounds;
+    const double item_scale = brep->GetBoundingBox(item_bounds, false) &&
+	item_bounds.IsValid() ? item_bounds.Diagonal().Length() : 0.0;
     const bool allow_measured_tolerance = !wrapper->ImportOptions().exact &&
 	wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe;
     const double adjustment_limit = allow_measured_tolerance ?
 	std::max(topology_tolerance,
-	    edge_scale * kRegenerationMaximumRelativeMismatch) :
+	    std::max(edge_scale * kRegenerationMaximumRelativeMismatch,
+		item_scale * kRegenerationMaximumRelativeItemMismatch)) :
 	topology_tolerance;
 
     const ON_3dPoint supplied_points[3] = {
@@ -3744,17 +4220,41 @@ regenerate_split_periodic_boundary_chain(ON_Brep *brep, ON_BrepLoop &loop,
 		    points.Append(uv);
 		    parameters.Append(trim_domain.ParameterAt(fraction));
 		}
-		const double closed_parameter_tolerance = std::max(
-		    ON_ZERO_TOLERANCE * kNumericalToleranceScale,
-		    kPeriodicParameterSnapFraction * std::max(1.0, period));
-		if (exact && fabs(previous_closed_parameter -
-			desired_endpoints[piece + 1][closed_direction]) >
-		    closed_parameter_tolerance) {
-		    failed_piece = piece;
-		    failed_sample = kPeriodicBoundaryConstructionSegments;
-		    exact = false;
-		}
+		/* The closest-point parameter at a source-mismatched seam endpoint
+		 * is not authoritative: the same exact 3-D point can be reported a
+		 * little short of either periodic image.  The endpoint above is
+		 * deliberately replaced by the topology-derived native-seam UV and
+		 * its lift is checked against the directed immutable subedge within
+		 * the bounded measured tolerance.  Requiring the discarded raw
+		 * parameter to equal that seam would reject the proven endpoint a
+		 * second time for no geometric reason. */
 		if (!exact) continue;
+		/* Projection can return the same representable UV for the last
+		 * interior edge sample and the topology-derived seam endpoint.
+		 * ON_PolylineCurve rejects that zero-length terminal segment even
+		 * though both samples have already passed the directed edge-lift
+		 * proof.  Remove only exactly coincident adjacent UV samples,
+		 * retaining the authoritative final endpoint and its parameter.
+		 * The complete retained segments are still checked at their
+		 * midpoints below. */
+		for (int point = 1; point < points.Count();) {
+		    if (points[point - 1].DistanceTo(points[point]) >
+			    ON_ZERO_TOLERANCE) {
+			++point;
+			continue;
+		    }
+		    const int remove_point =
+			point == points.Count() - 1 ? point - 1 : point;
+		    points.Remove(remove_point);
+		    parameters.Remove(remove_point);
+		    point = std::max(1, remove_point);
+		}
+		if (points.Count() < 2 || points.Count() != parameters.Count()) {
+		    exact = false;
+		    failed_piece = piece;
+		    failed_sample = -2;
+		    continue;
+		}
 		curves[piece].reset(new ON_PolylineCurve(points, parameters));
 		if (!curves[piece] || !curves[piece]->ChangeDimension(2) ||
 			!curves[piece]->IsValid()) {
@@ -3796,7 +4296,9 @@ regenerate_split_periodic_boundary_chain(ON_Brep *brep, ON_BrepLoop &loop,
 			<< winding << " rejected at piece/sample " << failed_piece
 			<< '/' << failed_sample << " lift-distance="
 			<< maximum_lift_distance << " tolerance="
-			<< topology_tolerance << std::endl;
+			<< topology_tolerance << " bounded-limit="
+			<< adjustment_limit << " edge/item-scale=" << edge_scale
+			<< '/' << item_scale << std::endl;
 		continue;
 	    }
 	    const ON_3dPoint start_lift = surface->PointAt(
@@ -3889,10 +4391,18 @@ validate_periodic_trim_translation(const ON_Surface *surface,
 	std::string *failure, double bounded_lift_tolerance = -1.0,
 	double *measured_bounded_mismatch = NULL);
 
+static double
+verified_source_pcurve_tolerance(ON_BrepTrim &trim,
+	ON_BrepEdge &edge, const ON_Surface *surface,
+	const ON_NurbsCurve &edge_nurbs, double tolerance,
+	const ON_Brep *brep, STEPWrapper *wrapper, int entity_id,
+	const std::string &entity_type);
+
 static bool
 regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 	int closed_direction, double parameter_tolerance,
-	STEPWrapper *wrapper, int entity_id, const std::string &entity_type);
+	STEPWrapper *wrapper, int entity_id, const std::string &entity_type,
+	bool record_repair = true);
 
 static bool
 relocate_closed_surface_loop_seam(ON_Brep *brep, int loop_index,
@@ -3917,7 +4427,8 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
  * is approximated or moved. */
 static size_t
 repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
-	int entity_id, const std::string &entity_type)
+	int entity_id, const std::string &entity_type,
+	const std::set<int> *only_source_loops = NULL)
 {
     if (!brep || !wrapper || wrapper->ImportOptions().repair !=
 	    brlcad::step::RepairMode::Safe)
@@ -3988,6 +4499,17 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 	const ON_Surface *surface = face.SurfaceOf();
 	if (!surface || (!surface->IsClosed(0) && !surface->IsClosed(1)))
 	    continue;
+	if (only_source_loops && !only_source_loops->empty()) {
+	    bool selected = false;
+	    for (int fli = 0; fli < face.m_li.Count() && !selected; ++fli) {
+		const int li = face.m_li[fli];
+		selected = li >= 0 && li < brep->m_L.Count() &&
+		    only_source_loops->find(brep->m_L[li].m_loop_user.i) !=
+			only_source_loops->end();
+	    }
+	    if (!selected)
+		continue;
+	}
 	++periodic_faces_visited;
 	{
 	    std::ostringstream detail;
@@ -4003,9 +4525,13 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 	/* A toroidal face is closed in both parameter directions.  When its STEP
 	 * bounds have already been split at a shared native seam, their complete
 	 * pcurve chains prove which direction winds one full period.  Use that
-	 * direction for the same exact band construction below.  Requiring two
-	 * unambiguous winding witnesses avoids guessing which complementary patch
-	 * a pair of arbitrary torus curves was intended to bound. */
+	 * direction for the same exact band construction below.  A unique witness
+	 * may select the direction, but does not authorize a topology change: the
+	 * band constructor subsequently projects the complete immutable edge chain
+	 * of the other boundary and requires a second exact full-period winding.
+	 * This admits an asymmetric pair in which one supplied boundary already
+	 * exposes its winding and the other is closed on a private periodic image,
+	 * without guessing from two arbitrary torus curves. */
 	if (surface->IsClosed(0) && surface->IsClosed(1)) {
 	    int winding_witnesses[2] = {0, 0};
 	    for (int fli = 0; fli < face.m_li.Count(); ++fli) {
@@ -4101,20 +4627,58 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 			    maximum_closed = std::max(maximum_closed, unwrapped);
 			}
 		    }
-		    const bool full_winding = valid_chain && have_sample &&
+		    const bool exact_period_travel = valid_chain && have_sample &&
 			fabs(fabs(previous_closed - first_closed) -
 			    domain.Length()) <= direction_tolerance &&
 			fabs((maximum_closed - minimum_closed) -
-			    domain.Length()) <= direction_tolerance &&
-			fabs(final_other - first_other) <= other_tolerance;
+			    domain.Length()) <= direction_tolerance;
+		    const ON_BrepTrim *closing_first = loop.Trim(0);
+		    const ON_BrepTrim *closing_last =
+			loop.Trim(loop.TrimCount() - 1);
+		    const bool model_space_closure = exact_period_travel &&
+			closing_first && closing_last &&
+			periodic_loop_closure(brep, &loop, closing_last,
+			    closing_first, direction_tolerance);
+		    const bool full_winding = exact_period_travel &&
+			(fabs(final_other - first_other) <= other_tolerance ||
+			    model_space_closure);
+		    if (wrapper->Verbose() && loop.TrimCount() == 2) {
+			const ON_BrepTrim *first_trim = loop.Trim(0);
+			const ON_BrepTrim *second_trim = loop.Trim(1);
+			const ON_BrepEdge *first_edge = first_trim ?
+			    first_trim->Edge() : NULL;
+			const ON_BrepEdge *second_edge = second_trim ?
+			    second_trim->Edge() : NULL;
+			if (first_edge && second_edge &&
+				first_edge->m_edge_user.i > 0 &&
+				first_edge->m_edge_user.i ==
+				    second_edge->m_edge_user.i)
+			    std::cerr << entity_type << " #" << entity_id
+				<< ": split-chain winding witness F" << fi
+				<< "/L" << li << "/STEP edge "
+				<< first_edge->m_edge_user.i << " direction="
+				<< direction << " valid="
+				<< (valid_chain && have_sample ? "yes" : "no")
+				<< " net/span="
+				<< (have_sample ?
+				    previous_closed - first_closed : DBL_MAX)
+				<< '/' << (have_sample ?
+				    maximum_closed - minimum_closed : DBL_MAX)
+				<< " open-residual="
+				<< (have_sample ?
+				    final_other - first_other : DBL_MAX)
+				<< " period=" << domain.Length()
+				<< " accepted=" << (full_winding ? "yes" : "no")
+				<< std::endl;
+		    }
 		    if (full_winding)
 			++winding_witnesses[direction];
 		}
 	    }
-	    if (winding_witnesses[0] >= 2 &&
+	    if (winding_witnesses[0] >= 1 &&
 		    winding_witnesses[0] > winding_witnesses[1])
 		closed_direction = 0;
-	    else if (winding_witnesses[1] >= 2 &&
+	    else if (winding_witnesses[1] >= 1 &&
 		    winding_witnesses[1] > winding_witnesses[0])
 		closed_direction = 1;
 	    else {
@@ -4157,10 +4721,18 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 	 * loop order and unwrap only integral-period images.  This is deliberately
 	 * a conservative exclusion proof: an uncertain sibling prevents a pole
 	 * cut, but can never authorize one. */
-	const auto loop_winds_full_period = [closed_direction, open_direction,
+	/* Return -1 or +1 for a proven full-period winding, zero for a proven
+	 * contractible loop, and 2 when the supplied chain is inconclusive.  The
+	 * small parameter-space test handles ordinary exact data.  Its relaxed
+	 * path is still exact in model space: it requires the established STEP
+	 * topology vertex and both periodic surface lifts to agree within their
+	 * local OpenNURBS tolerance through periodic_loop_closure().  This avoids
+	 * rejecting a real spherical-cap boundary merely because independently
+	 * regenerated pcurves differ by a few additional parameter ulps. */
+	const auto loop_periodic_winding = [brep, surface, closed_direction, open_direction,
 		&closed_domain, parameter_tolerance](const ON_BrepLoop &candidate) {
 	    if (candidate.TrimCount() < 1)
-		return false;
+		return 2;
 	    bool have_sample = false;
 	    double first_closed = 0.0;
 	    double previous_closed = 0.0;
@@ -4172,7 +4744,7 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 	    for (int lti = 0; lti < candidate.TrimCount(); ++lti) {
 		const ON_BrepTrim *candidate_trim = candidate.Trim(lti);
 		if (!candidate_trim || !candidate_trim->Domain().IsIncreasing())
-		    return false;
+		    return 2;
 		const ON_Interval trim_domain = candidate_trim->Domain();
 		for (int sample = 0; sample <= kPcurveLocusScreeningSegments;
 			sample++) {
@@ -4182,7 +4754,7 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 		    if (!point.IsValid() ||
 			    !std::isfinite(point[closed_direction]) ||
 			    !std::isfinite(point[open_direction]))
-			return false;
+			return 2;
 		    double unwrapped = point[closed_direction];
 		    if (have_sample) {
 			unwrapped += round((previous_closed - unwrapped) /
@@ -4201,21 +4773,77 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 		}
 	    }
 	    if (!have_sample)
-		return false;
+		return 2;
 	    const double net_travel = previous_closed - first_closed;
 	    const double parameter_span = maximum_closed - minimum_closed;
 	    const double open_tolerance = std::max(ON_ZERO_TOLERANCE *
 		kNumericalToleranceScale, kPeriodicParameterSnapFraction *
 		std::max(1.0, fabs(first_open)));
-	    return fabs(fabs(net_travel) - period) <= parameter_tolerance &&
+	    const int winding = net_travel < 0.0 ? -1 : 1;
+	    if (fabs(fabs(net_travel) - period) <= parameter_tolerance &&
 		fabs(parameter_span - period) <= parameter_tolerance &&
-		fabs(previous_open - first_open) <= open_tolerance;
+		fabs(previous_open - first_open) <= open_tolerance)
+		return winding;
+	    const double closure_parameter_tolerance = parameter_tolerance *
+		std::max(1.0, period);
+	    const ON_BrepTrim *first = candidate.Trim(0);
+	    const ON_BrepTrim *last = candidate.Trim(
+		candidate.TrimCount() - 1);
+	    if (fabs(fabs(net_travel) - period) <=
+		    closure_parameter_tolerance &&
+		    fabs(parameter_span - period) <=
+			closure_parameter_tolerance &&
+		    periodic_loop_closure(brep, &candidate, last, first,
+			parameter_tolerance))
+		return winding;
+	    bool topology_lift_closure = false;
+	    if (first && last && last->m_vi[1] >= 0 &&
+		    last->m_vi[1] == first->m_vi[0] &&
+		    last->m_vi[1] < brep->m_V.Count()) {
+		double topology_tolerance = LocalUnits::tolerance;
+		if (last->Edge())
+		    topology_tolerance = std::max(topology_tolerance,
+			last->Edge()->m_tolerance);
+		if (first->Edge())
+		    topology_tolerance = std::max(topology_tolerance,
+			first->Edge()->m_tolerance);
+		topology_tolerance = std::max(topology_tolerance,
+		    std::max(last->m_tolerance[0], last->m_tolerance[1]));
+		topology_tolerance = std::max(topology_tolerance,
+		    std::max(first->m_tolerance[0], first->m_tolerance[1]));
+		topology_tolerance = std::max(topology_tolerance,
+		    brep->m_V[last->m_vi[1]].m_tolerance);
+		const ON_3dPoint first_lift = closed_surface_point_at(
+		    surface, first->PointAtStart());
+		const ON_3dPoint last_lift = closed_surface_point_at(
+		    surface, last->PointAtEnd());
+		const ON_3dPoint &vertex =
+		    brep->m_V[last->m_vi[1]].point;
+		topology_lift_closure = first_lift.IsValid() &&
+		    last_lift.IsValid() &&
+		    first_lift.DistanceTo(vertex) <= topology_tolerance &&
+		    last_lift.DistanceTo(vertex) <= topology_tolerance &&
+		    first_lift.DistanceTo(last_lift) <= topology_tolerance;
+	    }
+	    if (fabs(net_travel) <= closure_parameter_tolerance &&
+		    parameter_span < period - closure_parameter_tolerance &&
+		    (fabs(previous_open - first_open) <= open_tolerance ||
+			topology_lift_closure))
+		return 0;
+	    return 2;
 	};
-	const auto exact_edge_chain_winding_seam = [brep, surface,
+	const auto loop_winds_full_period = [&loop_periodic_winding](
+		const ON_BrepLoop &candidate) {
+	    const int winding = loop_periodic_winding(candidate);
+	    return winding == -1 || winding == 1;
+	};
+	const auto exact_edge_chain_winding_seam = [brep, surface, wrapper,
+		entity_id, &entity_type,
 		closed_direction, open_direction, &closed_domain,
 		parameter_tolerance](const ON_BrepLoop &candidate,
-		double *seam_parameter) {
-	    if (!seam_parameter || candidate.TrimCount() < 2)
+		double *seam_parameter, double *seam_tolerance) {
+	    if (!seam_parameter || !seam_tolerance ||
+		    candidate.TrimCount() < 2)
 		return false;
 	    const double period = closed_domain.Length();
 	    if (!(period > ON_ZERO_TOLERANCE))
@@ -4234,18 +4862,47 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 	    double maximum_closed = -DBL_MAX;
 	    double first_open = 0.0;
 	    double previous_open = 0.0;
+	    ON_3dPoint first_lift = ON_3dPoint::UnsetPoint;
+	    ON_3dPoint final_lift = ON_3dPoint::UnsetPoint;
+	    double chain_tolerance = std::max(LocalUnits::tolerance,
+		ON_ZERO_TOLERANCE * kNumericalToleranceScale);
 	    for (int lti = 0; lti < candidate.TrimCount(); ++lti) {
 		const ON_BrepTrim *trim = candidate.Trim(lti);
 		const ON_BrepEdge *edge = trim ? trim->Edge() : NULL;
 		if (!trim || !edge || !edge->Domain().IsIncreasing() ||
-			!trim->Domain().IsIncreasing())
+			!trim->Domain().IsIncreasing()) {
+		    if (wrapper->Verbose())
+			std::cerr << entity_type << " #" << entity_id
+			    << ": exact boundary-chain seam proof L"
+			    << candidate.m_loop_index << " rejected invalid trim "
+			    << lti << std::endl;
 		    return false;
-		/* This proof authorizes a topology-preserving surface seam move.
-		 * Require the immutable edge to lie on the surface within the model's
-		 * asserted uncertainty; previously enlarged OpenNURBS tolerances are
-		 * deliberately not sufficient evidence for changing parameterization. */
-		const double proof_tolerance = std::max(LocalUnits::tolerance,
+		}
+		/* This proof authorizes only a topology-preserving private surface
+		 * reparameterization.  In safe mode an earlier dense edge/surface or
+		 * edge/vertex proof may have established that the source itself
+		 * exceeds its declared uncertainty.  Use that measured local
+		 * OpenNURBS tolerance here as well; --exact deliberately retains only
+		 * the asserted model tolerance.  The complete chain winding and common
+		 * topology vertex are independently proven below, and the seam move
+		 * transactionally revalidates every affected pcurve. */
+		double proof_tolerance = std::max(LocalUnits::tolerance,
 		    ON_ZERO_TOLERANCE * kNumericalToleranceScale);
+		if (!wrapper->ImportOptions().exact) {
+		    proof_tolerance = std::max(proof_tolerance,
+			std::max(edge->m_tolerance,
+			    std::max(trim->m_tolerance[0],
+				trim->m_tolerance[1])));
+		    if (trim->m_vi[0] >= 0 &&
+			    trim->m_vi[0] < brep->m_V.Count())
+			proof_tolerance = std::max(proof_tolerance,
+			    brep->m_V[trim->m_vi[0]].m_tolerance);
+		    if (trim->m_vi[1] >= 0 &&
+			    trim->m_vi[1] < brep->m_V.Count())
+			proof_tolerance = std::max(proof_tolerance,
+			    brep->m_V[trim->m_vi[1]].m_tolerance);
+		}
+		chain_tolerance = std::max(chain_tolerance, proof_tolerance);
 		const double solver_tolerance = std::max(
 		    ON_ZERO_TOLERANCE * kNumericalToleranceScale,
 		    proof_tolerance * 0.1);
@@ -4279,8 +4936,18 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 				lift, distance, 0, solver_tolerance,
 				proof_tolerance) &&
 			    distance <= proof_tolerance;
-		    if (!projected)
+		    if (!projected) {
+			if (wrapper->Verbose())
+			    std::cerr << entity_type << " #" << entity_id
+				<< ": exact boundary-chain seam proof L"
+				<< candidate.m_loop_index << "/T"
+				<< trim->m_trim_index << "/STEP edge "
+				<< edge->m_edge_user.i << " rejected projection "
+				<< sample << '/' << samples << " distance="
+				<< distance << " tolerance=" << proof_tolerance
+				<< std::endl;
 			return false;
+		    }
 		    double closed = uv[closed_direction];
 		    double open = uv[open_direction];
 		    if (have_sample) {
@@ -4295,10 +4962,12 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 		    } else {
 			first_closed = closed;
 			first_open = open;
+			first_lift = lift;
 			have_sample = true;
 		    }
 		    previous_closed = closed;
 		    previous_open = open;
+		    final_lift = lift;
 		    minimum_closed = std::min(minimum_closed, closed);
 		    maximum_closed = std::max(maximum_closed, closed);
 		}
@@ -4314,12 +4983,48 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 	    const double open_tolerance = std::max(parameter_tolerance,
 		kPeriodicParameterSnapFraction * std::max(1.0,
 		    surface_domains[open_direction].Length()));
-	    if (fabs(fabs(previous_closed - first_closed) - period) >
-		    parameter_tolerance ||
-		fabs((maximum_closed - minimum_closed) - period) >
-		    parameter_tolerance ||
-		fabs(open_closure) > open_tolerance)
+	    const double net_travel = previous_closed - first_closed;
+	    const double covered_span = maximum_closed - minimum_closed;
+	    bool full_period_proven =
+		fabs(fabs(net_travel) - period) <= parameter_tolerance &&
+		fabs(covered_span - period) <= parameter_tolerance &&
+		fabs(open_closure) <= open_tolerance;
+	    if (!full_period_proven) {
+		const ON_BrepTrim *first_trim = candidate.Trim(0);
+		const ON_BrepTrim *last_trim = candidate.Trim(
+		    candidate.TrimCount() - 1);
+		const int closure_vertex = first_trim ?
+		    first_trim->m_vi[0] : -1;
+		const bool closed_topology = first_trim && last_trim &&
+		    closure_vertex >= 0 && closure_vertex < brep->m_V.Count() &&
+		    last_trim->m_vi[1] == closure_vertex;
+		const ON_3dPoint topology_vertex = closed_topology ?
+		    brep->m_V[closure_vertex].point :
+		    ON_3dPoint::UnsetPoint;
+		const long long winding = llround(net_travel / period);
+		const bool single_winding = (winding == -1 || winding == 1) &&
+		    fabs(net_travel) > 0.5 * period &&
+		    fabs(net_travel) < 1.5 * period &&
+		    covered_span > 0.5 * period &&
+		    covered_span < 1.5 * period;
+		full_period_proven = closed_topology && single_winding &&
+		    first_lift.IsValid() && final_lift.IsValid() &&
+		    topology_vertex.IsValid() &&
+		    first_lift.DistanceTo(topology_vertex) <= chain_tolerance &&
+		    final_lift.DistanceTo(topology_vertex) <= chain_tolerance &&
+		    first_lift.DistanceTo(final_lift) <= chain_tolerance;
+	    }
+	    if (!full_period_proven) {
+		if (wrapper->Verbose())
+		    std::cerr << entity_type << " #" << entity_id
+			<< ": exact boundary-chain seam proof L"
+			<< candidate.m_loop_index << "/STEP"
+			<< candidate.m_loop_user.i << " rejected winding net/span="
+			<< net_travel << '/' << covered_span << " period="
+			<< period << " open=" << open_closure << " tolerance="
+			<< chain_tolerance << std::endl;
 		return false;
+	    }
 	    double native_seam = first_closed -
 		floor((first_closed - closed_domain.Min()) / period) * period;
 	    if (native_seam > closed_domain.Max())
@@ -4327,6 +5032,7 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 	    if (native_seam < closed_domain.Min())
 		native_seam += period;
 	    *seam_parameter = native_seam;
+	    *seam_tolerance = chain_tolerance;
 	    return true;
 	};
 
@@ -4335,70 +5041,45 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 	 * equivalent rectangular parameter-space loop: the physical boundary,
 	 * two opposite uses of an exact meridian seam, and a singular pole trim.
 	 * Normalize the complete edge chain to one native period first, then use
-	 * the existing densely validated pole-cut construction.  Requiring one
-	 * face loop and a proven full-period chain avoids turning an ordinary inner
-	 * loop or a partial latitude arc into an artificial pole cut. */
-    if (face.m_li.Count() == 1) {
-	const int only_loop = face.m_li[0];
-	bool have_parameter = false;
-	double first_unwrapped = 0.0;
-	double previous_unwrapped = 0.0;
-	if (only_loop >= 0 && only_loop < brep->m_L.Count()) {
-	    const ON_BrepLoop &loop = brep->m_L[only_loop];
-	    for (int lti = 0; lti < loop.TrimCount(); ++lti) {
-		const ON_BrepTrim *trim = loop.Trim(lti);
-		const ON_Curve *curve = trim ? trim->TrimCurveOf() : NULL;
-		if (!curve || !curve->Domain().IsIncreasing()) {
-		    have_parameter = false;
+	 * the existing densely validated pole-cut construction.  A cap may also
+	 * contain inner holes.  Admit that form only when exactly one outer loop
+	 * has a proven full-period winding and every sibling is independently
+	 * proven contractible; an inconclusive sibling is left for the annular-band
+	 * logic rather than authorizing a topology change. */
+	int cap_boundary_loop = -1;
+	bool cap_boundary_proven = true;
+	for (int fli = 0; fli < face.m_li.Count(); ++fli) {
+	    const int li = face.m_li[fli];
+	    if (li < 0 || li >= brep->m_L.Count()) {
+		cap_boundary_proven = false;
+		break;
+	    }
+	    const ON_BrepLoop &loop = brep->m_L[li];
+	    const int winding = loop_periodic_winding(loop);
+	    if (wrapper->Verbose() && winding != 0)
+		std::cerr << entity_type << " #" << entity_id
+		    << ": periodic cap classification F" << fi << "/L" << li
+		    << " winding=" << winding << " type=" << loop.m_type
+		    << " trims=" << loop.TrimCount() << std::endl;
+	    if (winding == -1 || winding == 1) {
+		/* Face sense may reverse the preliminary OpenNURBS loop
+		 * classification before the final orientation pass.  Exactly one
+		 * winding boundary plus only proven contractible siblings is the
+		 * invariant cap topology; the exact pole-cut constructor and final
+		 * loop classifier remain authoritative about outer/inner sense. */
+		if (cap_boundary_loop >= 0) {
+		    cap_boundary_proven = false;
 		    break;
 		}
-		const ON_Interval curve_domain = curve->Domain();
-		for (int sample = 0;
-			sample <= kBoundaryParameterSearchSegments; ++sample) {
-		    if (brlcad::PullbackWorkCancelled()) {
-			have_parameter = false;
-			break;
-		    }
-		    const ON_3dPoint point = curve->PointAt(
-			curve_domain.ParameterAt(static_cast<double>(sample) /
-			kBoundaryParameterSearchSegments));
-		    if (!point.IsValid() ||
-			    !std::isfinite(point[closed_direction])) {
-			have_parameter = false;
-			break;
-		    }
-		    double unwrapped = point[closed_direction];
-		    if (have_parameter)
-			unwrapped += round((previous_unwrapped - unwrapped) /
-			    closed_domain.Length()) * closed_domain.Length();
-		    else {
-			first_unwrapped = unwrapped;
-			have_parameter = true;
-		    }
-		    previous_unwrapped = unwrapped;
-		}
-		if (!have_parameter)
-		    break;
+		cap_boundary_loop = li;
+	    } else if (winding != 0) {
+		cap_boundary_proven = false;
+		break;
 	    }
 	}
-	const double net_winding = have_parameter ?
-	    previous_unwrapped - first_unwrapped : 0.0;
-	const bool full_period_chain = have_parameter &&
-	    fabs(fabs(net_winding) - closed_domain.Length()) <=
-	    parameter_tolerance;
-	/* A one-loop face which merely crosses the native seam is an ordinary
-	 * bounded patch, not an implicit spherical cap.  Requiring one full
-	 * pcurve winding prevents the exact-edge regeneration below from spending
-	 * the item budget trying to force a contractible loop around the surface.
-	 * Multi-loop periodic bands retain their independent exact-edge proof,
-	 * since their supplied pcurves may be the malformed data being repaired. */
-	if (!full_period_chain && wrapper->Verbose())
-	    std::cerr << entity_type << " #" << entity_id
-		<< ": one-loop full-period boundary candidate L" << only_loop
-		<< " rejected because net pcurve winding " << net_winding
-		<< " does not equal one period " << closed_domain.Length()
-		<< std::endl;
-	if (full_period_chain && regenerate_full_period_chain(only_loop,
+    if (cap_boundary_proven && cap_boundary_loop >= 0) {
+	const int only_loop = cap_boundary_loop;
+	if (regenerate_full_period_chain(only_loop,
 		closed_direction, parameter_tolerance)) {
 		ON_BrepLoop &normalized_loop = brep->m_L[only_loop];
 		ON_BrepTrim *first = normalized_loop.Trim(0);
@@ -4725,8 +5406,8 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 		const ON_3dPoint start = trim->PointAtStart();
 		const ON_3dPoint end = trim->PointAtEnd();
 		if (!start.IsValid() || !end.IsValid() ||
-			fabs(start[open_direction] - end[open_direction]) >
-			    parameter_tolerance)
+			(fabs(start[open_direction] - end[open_direction]) >
+			    parameter_tolerance && !periodic_closure))
 		    continue;
 		BoundaryCandidate candidate;
 		candidate.loop_index = li;
@@ -4788,20 +5469,53 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 			continue;
 		    const ON_3dPoint cut_end = before->PointAtEnd();
 		    const ON_3dPoint cut_start = after->PointAtStart();
-		    if (!cut_end.IsValid() || !cut_start.IsValid() ||
-			    fabs(cut_end[open_direction] -
-				cut_start[open_direction]) > parameter_tolerance)
+		    if (!cut_end.IsValid() || !cut_start.IsValid())
 			continue;
 		    const double cut_closed_gap = fabs(
 			cut_end[closed_direction] - cut_start[closed_direction]);
-		    if (cut_closed_gap > parameter_tolerance &&
-			    fabs(cut_closed_gap - period) > parameter_tolerance)
+		    const double cut_closed_residual = std::min(
+			cut_closed_gap, fabs(cut_closed_gap - period));
+		    const double cut_open_residual = fabs(
+			cut_end[open_direction] - cut_start[open_direction]);
+		    const double aligned_cut_start =
+			cut_start[closed_direction] +
+			round((cut_end[closed_direction] -
+			    cut_start[closed_direction]) / period) * period;
+		    const double cut_open_parameter = 0.5 *
+			(cut_end[open_direction] + cut_start[open_direction]);
+		    const bool exact_cut =
+			fabs(cut_end[open_direction] -
+			    cut_start[open_direction]) <= parameter_tolerance &&
+			(cut_closed_gap <= parameter_tolerance ||
+			 fabs(cut_closed_gap - period) <= parameter_tolerance);
+		    /* A declared STEP vertex can be represented by independently
+		     * supplied pcurve endpoints whose small residual exceeds a
+		     * parameter-space heuristic while both edges have already
+		     * established a tighter, model-space measured tolerance.  The
+		     * band is the only Euclidean representation of this intrinsic
+		     * winding, so permit that residual only after the endpoint,
+		     * its adjacent periodic image, and their midpoint all lift to the
+		     * shared topology vertex.  The endpoints are snapped
+		     * transactionally and densely checked below. */
+		    const bool bounded_cut = !exact_cut &&
+			proven_chain_join(before, after,
+			    cut_end[closed_direction], cut_end[open_direction],
+			    aligned_cut_start, cut_start[open_direction]);
+		    if (!exact_cut && !bounded_cut)
 			continue;
 		    const double native_image = closed_domain.Min() +
 			round((cut_start[closed_direction] - closed_domain.Min()) /
 			    period) * period;
-		    if (fabs(cut_start[closed_direction] - native_image) >
-			    parameter_tolerance)
+		    const bool exact_native_cut =
+			fabs(cut_start[closed_direction] - native_image) <=
+			    parameter_tolerance &&
+			fabs(cut_start[open_direction] - cut_open_parameter) <=
+			    parameter_tolerance;
+		    const bool bounded_native_cut = !exact_native_cut &&
+			proven_chain_join(before, after, native_image,
+			    cut_open_parameter, aligned_cut_start,
+			    cut_start[open_direction]);
+		    if (!exact_native_cut && !bounded_native_cut)
 			continue;
 
 		    for (int direction = 0; !added && direction < 2; ++direction) {
@@ -4813,7 +5527,7 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 			std::vector<int> chain_trim_indices;
 			std::vector<int> chain_period_shifts;
 			double expected_closed = target_start;
-			double expected_open = cut_start[open_direction];
+			double expected_open = cut_open_parameter;
 			ON_BrepTrim *previous_trim = NULL;
 			bool continuous_chain = true;
 			for (int offset = 0; continuous_chain &&
@@ -4838,8 +5552,11 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 				expected_closed) <= parameter_tolerance &&
 				fabs(start[open_direction] - expected_open) <=
 				    parameter_tolerance;
-			    if (!exact_join && (!previous_trim ||
-				    !proven_chain_join(previous_trim, current,
+			    const bool bounded_first_join = offset == 0 &&
+				bounded_native_cut;
+			    if (!exact_join && !bounded_first_join &&
+				    (!previous_trim ||
+				     !proven_chain_join(previous_trim, current,
 					expected_closed, expected_open, shifted_start,
 					start[open_direction]))) {
 				continuous_chain = false;
@@ -4851,11 +5568,24 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 			    expected_open = end[open_direction];
 			    previous_trim = current;
 			}
+			const bool exact_final_join =
+			    fabs(expected_closed - target_end) <=
+				parameter_tolerance &&
+			    fabs(expected_open - cut_open_parameter) <=
+				parameter_tolerance;
+			/* bounded_cut proves only the small discrepancy at this
+			 * cyclic cut.  It must not authorize the opposite winding
+			 * direction, whose final endpoint can differ from the target
+			 * by one or more complete periods. */
+			const bool bounded_final_join = bounded_cut &&
+			    fabs(expected_closed - target_end) <=
+				parameter_tolerance + cut_closed_residual +
+				    fabs(cut_start[closed_direction] -
+					native_image) &&
+			    fabs(expected_open - cut_open_parameter) <=
+				parameter_tolerance + cut_open_residual;
 			if (!continuous_chain || chain_trim_indices.empty() ||
-				fabs(expected_closed - target_end) >
-				    parameter_tolerance ||
-				fabs(expected_open - cut_start[open_direction]) >
-				    parameter_tolerance)
+				(!exact_final_join && !bounded_final_join))
 			    continue;
 			ON_BrepTrim *chain_first = brep->m_T.At(
 			    chain_trim_indices.front());
@@ -4869,8 +5599,7 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 			candidate.trim_indices.swap(chain_trim_indices);
 			candidate.period_shifts.swap(chain_period_shifts);
 			candidate.vertex_index = chain_first->m_vi[0];
-			candidate.open_parameter = 0.5 *
-			    (cut_start[open_direction] + expected_open);
+			candidate.open_parameter = cut_open_parameter;
 			candidate.open_period_shift = 0;
 			candidates.push_back(candidate);
 			added = true;
@@ -4961,17 +5690,25 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 		aligned_band_surface_seams.find(face.m_si) ==
 		    aligned_band_surface_seams.end()) {
 	    double topology_seam = std::numeric_limits<double>::quiet_NaN();
+	    double topology_seam_tolerance = LocalUnits::tolerance;
 	    if (exact_edge_chain_winding_seam(brep->m_L[other_loop],
-		    &topology_seam)) {
+		    &topology_seam, &topology_seam_tolerance)) {
 		std::string relocation_failure;
 		if (relocate_closed_surface_loop_seam(brep, other_loop,
-			closed_direction, LocalUnits::tolerance, wrapper,
+			closed_direction, topology_seam_tolerance, wrapper,
 			entity_id, entity_type, &relocation_failure,
 			topology_seam)) {
 		    aligned_band_surface_seams.insert(face.m_si);
 		    wrapper->RecordRepair(entity_id, entity_type,
 			"trim_pcurve",
 			"aligned a closed surface seam with a proven periodic boundary topology vertex");
+		    if (topology_seam_tolerance > LocalUnits::tolerance)
+			wrapper->RecordDiagnostic(
+			    brlcad::step::DiagnosticSeverity::Warning,
+			    entity_id, entity_type, "trim_pcurve",
+			    "source periodic boundary exceeded the declared "
+			    "tolerance; aligned the private surface seam using its "
+			    "densely measured local OpenNURBS tolerance");
 		    --fi;
 		    continue;
 		}
@@ -5124,6 +5861,38 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 	    report_rejection("the boundary intervals or vertices were not distinct");
 	    continue;
 	}
+	/* Exact periodic boundaries supplied as several source edges can describe
+	 * one circle whose 3-D locus is measurably separated from the associated
+	 * surface.  Earlier single-edge regeneration measures this condition, but
+	 * a valid segmented chain may never enter that path.  Measure each selected
+	 * boundary trim against its immutable 3-D STEP edge before using its local
+	 * tolerance for the native-side proof.  The shared verifier is dense,
+	 * scale-bounded, and disabled by --exact; it changes only OpenNURBS
+	 * tolerances and never moves source geometry or topology. */
+	const auto verify_boundary_source_tolerances =
+	    [brep, surface, wrapper, entity_id, &entity_type](
+		const BoundaryCandidate &boundary) {
+		for (std::vector<int>::const_iterator ti =
+			boundary.trim_indices.begin();
+			ti != boundary.trim_indices.end(); ++ti) {
+		    if (*ti < 0 || *ti >= brep->m_T.Count())
+			continue;
+		    ON_BrepTrim &trim = brep->m_T[*ti];
+		    ON_BrepEdge *edge = trim.Edge();
+		    ON_NurbsCurve edge_nurbs;
+		    if (!edge || !edge->GetNurbForm(edge_nurbs))
+			continue;
+		    const double tolerance = std::max(LocalUnits::tolerance,
+			std::max(edge->m_tolerance,
+			    std::max(trim.m_tolerance[0],
+				trim.m_tolerance[1])));
+		    (void)verified_source_pcurve_tolerance(trim, *edge, surface,
+			edge_nurbs, tolerance, brep, wrapper, entity_id,
+			entity_type);
+		}
+	    };
+	verify_boundary_source_tolerances(lower);
+	verify_boundary_source_tolerances(upper);
 	const auto boundary_tolerance = [brep](const BoundaryCandidate &boundary) {
 	    double tolerance = LocalUnits::tolerance;
 	    for (std::vector<int>::const_iterator ti =
@@ -5432,8 +6201,181 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 	    }
 	    return true;
 	};
+	std::string boundary_side_failure;
+	const auto snap_boundary_sides = [brep, surface, closed_direction,
+		closed_min, closed_max, &boundary_tolerance,
+		&snapped_band_joins,
+		&boundary_side_failure](const BoundaryCandidate &boundary) {
+	    const auto reject = [&boundary_side_failure, &boundary](
+		    const char *reason) {
+		std::ostringstream stream;
+		stream << "L" << boundary.loop_index << ": " << reason;
+		boundary_side_failure = stream.str();
+		return false;
+	    };
+	    if (boundary.trim_indices.empty() || boundary.vertex_index < 0 ||
+		    boundary.vertex_index >= brep->m_V.Count())
+		return reject("invalid boundary trim or topology vertex");
+	    const int first_index = boundary.trim_indices.front();
+	    const int last_index = boundary.trim_indices.back();
+	    if (first_index < 0 || first_index >= brep->m_T.Count() ||
+		    last_index < 0 || last_index >= brep->m_T.Count())
+		return reject("boundary trim index is outside the BREP");
+	    ON_BrepTrim &first = brep->m_T[first_index];
+	    ON_BrepTrim &last = brep->m_T[last_index];
+	    if (first.m_vi[0] != boundary.vertex_index ||
+		    last.m_vi[1] != boundary.vertex_index)
+		return reject("boundary chain does not close at its proven STEP vertex");
+
+	    const ON_3dPoint current_start = first.PointAtStart();
+	    const ON_3dPoint current_end = last.PointAtEnd();
+	    if (!current_start.IsValid() || !current_end.IsValid())
+		return reject("boundary curve has an invalid endpoint");
+	    const double increasing_cost =
+		fabs(current_start[closed_direction] - closed_min) +
+		fabs(current_end[closed_direction] - closed_max);
+	    const double decreasing_cost =
+		fabs(current_start[closed_direction] - closed_max) +
+		fabs(current_end[closed_direction] - closed_min);
+	    ON_3dPoint target_start;
+	    ON_3dPoint target_end;
+	    target_start[closed_direction] =
+		increasing_cost <= decreasing_cost ? closed_min : closed_max;
+	    target_end[closed_direction] =
+		increasing_cost <= decreasing_cost ? closed_max : closed_min;
+	    target_start[1 - closed_direction] = boundary.open_parameter;
+	    target_end[1 - closed_direction] = boundary.open_parameter;
+	    target_start.z = 0.0;
+	    target_end.z = 0.0;
+
+	    const double tolerance = boundary_tolerance(boundary);
+	    const ON_3dPoint &vertex =
+		brep->m_V[boundary.vertex_index].point;
+	    const auto endpoint_maximum_distance = [surface, &vertex](
+		    const ON_3dPoint &source, const ON_3dPoint &target) {
+		const ON_3dPoint source_lift =
+		    closed_surface_point_at(surface, source);
+		const ON_3dPoint target_lift = surface->PointAt(
+		    target.x, target.y);
+		const ON_3dPoint middle = 0.5 * (source + target);
+		const ON_3dPoint middle_lift =
+		    closed_surface_point_at(surface, middle);
+		if (!source_lift.IsValid() || !target_lift.IsValid() ||
+			!middle_lift.IsValid())
+		    return DBL_MAX;
+		return std::max(source_lift.DistanceTo(vertex),
+		    std::max(target_lift.DistanceTo(vertex),
+			middle_lift.DistanceTo(vertex)));
+	    };
+	    const double start_distance =
+		endpoint_maximum_distance(current_start, target_start);
+	    const double end_distance =
+		endpoint_maximum_distance(current_end, target_end);
+	    if (start_distance > tolerance || end_distance > tolerance) {
+		std::ostringstream reason;
+		reason << "native-side endpoint image exceeds the measured "
+		    "topology tolerance (start/end=" << start_distance << '/'
+		    << end_distance << ", tolerance=" << tolerance
+		    << ", current=" << current_start.x << ':'
+		    << current_start.y << "->" << current_end.x << ':'
+		    << current_end.y << ", target=" << target_start.x << ':'
+		    << target_start.y << "->" << target_end.x << ':'
+		    << target_end.y << ')';
+		return reject(reason.str().c_str());
+	    }
+	    const bool change_start =
+		current_start.DistanceTo(target_start) > ON_ZERO_TOLERANCE;
+	    const bool change_end =
+		current_end.DistanceTo(target_end) > ON_ZERO_TOLERANCE;
+	    /* Surface-seam relocation or full-chain regeneration may already
+	     * have placed both endpoints exactly on the native sides.  Some
+	     * valid proxy/polycurve types deliberately refuse SetStartPoint() or
+	     * SetEndPoint() even when asked to set the value they already have.
+	     * Treat the existing, independently lift-proven endpoint as complete
+	     * instead of turning that no-op into a repair failure. */
+	    if (!change_start && !change_end)
+		return true;
+
+	    struct EndpointCandidate {
+		int trim_index;
+		std::unique_ptr<ON_Curve> curve;
+	    };
+	    std::vector<EndpointCandidate> endpoint_candidates;
+	    endpoint_candidates.push_back({first_index,
+		std::unique_ptr<ON_Curve>(first.DuplicateCurve())});
+	    if (last_index != first_index)
+		endpoint_candidates.push_back({last_index,
+		    std::unique_ptr<ON_Curve>(last.DuplicateCurve())});
+	    if (!endpoint_candidates[0].curve ||
+		    (last_index != first_index &&
+		     !endpoint_candidates[1].curve))
+		return reject("could not duplicate a boundary pcurve");
+	    if (change_start &&
+		    !endpoint_candidates[0].curve->SetStartPoint(target_start))
+		return reject("could not set the first pcurve endpoint to the native side");
+	    EndpointCandidate &last_candidate = last_index == first_index ?
+		endpoint_candidates[0] : endpoint_candidates[1];
+	    if (change_end && !last_candidate.curve->SetEndPoint(target_end))
+		return reject("could not set the last pcurve endpoint to the native side");
+
+	    for (std::vector<EndpointCandidate>::iterator candidate =
+		    endpoint_candidates.begin();
+		    candidate != endpoint_candidates.end(); ++candidate) {
+		ON_BrepTrim &original = brep->m_T[candidate->trim_index];
+		if (!candidate->curve->ChangeDimension(2) ||
+			!candidate->curve->IsValid() ||
+			!original.Domain().IsIncreasing())
+		    return reject("edited boundary pcurve or parameter domain is invalid");
+		const ON_Interval domain = original.Domain();
+		const int samples = std::min(4096, std::max(64,
+		    std::max(original.SpanCount(),
+			candidate->curve->SpanCount()) * 8));
+		for (int sample = 0; sample <= samples; ++sample) {
+		    if ((sample & 63) == 0 &&
+			    brlcad::PullbackWorkCancelled())
+			return reject("boundary endpoint validation was cancelled");
+		    const double parameter = domain.ParameterAt(
+			static_cast<double>(sample) / samples);
+		    const ON_3dPoint original_uv =
+			original.PointAt(parameter);
+		    const ON_3dPoint candidate_uv =
+			candidate->curve->PointAt(parameter);
+		    const ON_3dPoint original_lift =
+			closed_surface_point_at(surface, original_uv);
+		    const ON_3dPoint candidate_lift =
+			closed_surface_point_at(surface, candidate_uv);
+		    if (!original_lift.IsValid() || !candidate_lift.IsValid() ||
+			    original_lift.DistanceTo(candidate_lift) >
+				tolerance)
+			return reject("edited boundary pcurve exceeds the measured lift tolerance");
+		}
+	    }
+	    for (std::vector<EndpointCandidate>::iterator candidate =
+		    endpoint_candidates.begin();
+		    candidate != endpoint_candidates.end(); ++candidate) {
+		ON_BrepTrim &trim = brep->m_T[candidate->trim_index];
+		const int c2 = brep->AddTrimCurve(
+		    candidate->curve.release());
+		if (c2 < 0 || !brep->SetTrimCurve(trim, c2))
+		    return reject("could not install the edited boundary pcurve");
+		brep->SetTrimIsoFlags(trim);
+	    }
+	    if (change_start)
+		++snapped_band_joins;
+	    if (change_end)
+		++snapped_band_joins;
+	    return true;
+	};
 	if (!snap_boundary_joins(lower) || !snap_boundary_joins(upper)) {
 	    report_rejection("a proven boundary join could not be closed within its measured topology tolerance");
+	    *brep = *rollback;
+	    continue;
+	}
+	if (!snap_boundary_sides(lower) || !snap_boundary_sides(upper)) {
+	    const std::string reason =
+		"a proven boundary seam endpoint could not be closed: " +
+		boundary_side_failure;
+	    report_rejection(reason.c_str());
 	    *brep = *rollback;
 	    continue;
 	}
@@ -5680,6 +6622,23 @@ finalize_brep_topology(ON_Brep *brep, bool normalize_keyholes,
     size_t keyhole_rejections = 0;
     const size_t keyhole_diagnostic_limit = 16;
     if (normalize_keyholes) {
+	bool removed_face = true;
+	while (removed_face) {
+	    if (brlcad::PullbackWorkCancelled())
+		return keyhole_splits;
+	    removed_face = remove_one_exact_redundant_zero_area_face(brep,
+		wrapper, entity_id, entity_type);
+	    if (!removed_face)
+		break;
+	    if (wrapper)
+		wrapper->RecordRepair(entity_id, entity_type, "advanced_face",
+		    "removed an exact zero-area face whose cancelling edge uses "
+		    "duplicated the two neighboring shell uses");
+	    if (topology_changed) *topology_changed = true;
+	    refresh_brep_flags_preserving_singular_isos(brep, false, wrapper,
+		entity_id, &entity_type);
+	    classify_exact_polyline_seams(brep);
+	}
 	if (wrapper)
 	    wrapper->SetProgressDetail("normalizing exact BREP keyhole loops",
 		entity_id, 0, static_cast<uint64_t>(brep->m_L.Count()), "loops",
@@ -5716,6 +6675,10 @@ finalize_brep_topology(ON_Brep *brep, bool normalize_keyholes,
 		std::string split_failure;
 		if (split_keyhole_loop(brep, li, &split_failure)) {
 		    ++keyhole_splits;
+		    if (wrapper && wrapper->Verbose() &&
+			    !split_failure.empty())
+			std::cerr << entity_type << " #" << entity_id << ": "
+			    << split_failure << std::endl;
 		    if (topology_changed) *topology_changed = true;
 		    refresh_brep_flags_preserving_singular_isos(brep, false, wrapper,
 			entity_id, &entity_type);
@@ -7531,7 +8494,8 @@ regenerate_trim_polyline(ON_Brep *brep, ON_BrepTrim &trim,
 static bool
 regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 	int closed_direction, double parameter_tolerance,
-	STEPWrapper *wrapper, int entity_id, const std::string &entity_type)
+	STEPWrapper *wrapper, int entity_id, const std::string &entity_type,
+	bool record_repair)
 {
     if (!brep || !wrapper || loop_index < 0 ||
 	    loop_index >= brep->m_L.Count())
@@ -7602,8 +8566,8 @@ regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 	if (!candidate->ChangeDimension(2) || !candidate->IsValid())
 	    return reject("translated trim pcurve was invalid");
 	const ON_Interval edge_domain = edge.Domain();
-	const ON_3dPoint required_start_lift = surface->PointAt(
-	    required_start.x, required_start.y);
+	const ON_3dPoint required_start_lift =
+	    closed_surface_point_at(surface, required_start);
 	const ON_3dPoint edge_start = edge.PointAt(
 	    edge_domain[trim.m_bRev3d ? 1 : 0]);
 	if (!required_start.IsValid() || !required_start_lift.IsValid() ||
@@ -7620,8 +8584,8 @@ regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 	    ON_ZERO_TOLERANCE;
 	bool append_connector = false;
 	if (required_end) {
-	    const ON_3dPoint required_end_lift = surface->PointAt(
-		required_end->x, required_end->y);
+	    const ON_3dPoint required_end_lift =
+		closed_surface_point_at(surface, *required_end);
 	    const ON_3dPoint edge_end = edge.PointAt(
 		edge_domain[trim.m_bRev3d ? 0 : 1]);
 	    if (!required_end->IsValid() || !required_end_lift.IsValid() ||
@@ -7682,7 +8646,8 @@ regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 		const ON_3dPoint uv = curve.PointAt(
 		    curve_domain.ParameterAt(fraction));
 		const ON_3dPoint lift = uv.IsValid() ?
-		    surface->PointAt(uv.x, uv.y) : ON_3dPoint::UnsetPoint;
+		    closed_surface_point_at(surface, uv) :
+		    ON_3dPoint::UnsetPoint;
 		const ON_3dPoint edge_point = edge.PointAt(
 		    edge_domain.ParameterAt(trim.m_bRev3d ?
 			1.0 - fraction : fraction));
@@ -7773,21 +8738,98 @@ regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 	 * branch.  Treating 0 and one full period literally prevented an exact
 	 * toroidal boundary chain from ever reaching the edge-driven proof below. */
 	ON_3dPoint aligned_source_start = source_start;
+	double open_period = 0.0;
 	if (source_surface->IsClosed(open_direction)) {
-	    const double open_period =
-		source_surface->Domain(open_direction).Length();
+	    open_period = source_surface->Domain(open_direction).Length();
 	    if (open_period > ON_ZERO_TOLERANCE)
 		aligned_source_start[open_direction] += round(
 		    (source_end[open_direction] -
 			aligned_source_start[open_direction]) / open_period) *
 		    open_period;
 	}
-	if (!source_end.IsValid() || !source_start.IsValid() ||
-		fabs(source_end[open_direction] -
-		    aligned_source_start[open_direction]) >
-		    parameter_tolerance ||
-		fabs(source_end[closed_direction] - adjacent_start) >
-		    parameter_tolerance) {
+	const double native_image = closed_domain.Min() + round(
+	    (source_start[closed_direction] - closed_domain.Min()) / period) *
+	    period;
+
+	const auto endpoint_tolerance = [brep](const ON_BrepTrim &trim,
+		int endpoint) {
+	    double tolerance = LocalUnits::tolerance;
+	    if (trim.Edge())
+		tolerance = std::max(tolerance, trim.Edge()->m_tolerance);
+	    tolerance = std::max(tolerance,
+		std::max(trim.m_tolerance[0], trim.m_tolerance[1]));
+	    const int vertex_index = trim.m_vi[endpoint];
+	    if (vertex_index >= 0 && vertex_index < brep->m_V.Count())
+		tolerance = std::max(tolerance,
+		    brep->m_V[vertex_index].m_tolerance);
+	    return tolerance;
+	};
+	const double before_tolerance = endpoint_tolerance(*source_before, 1);
+	const double after_tolerance = endpoint_tolerance(*source_after, 0);
+	const double cut_tolerance = std::max(before_tolerance, after_tolerance);
+	const ON_3dPoint &cut_vertex =
+	    brep->m_V[source_before->m_vi[1]].point;
+	const ON_3dPoint source_end_lift =
+	    closed_surface_point_at(source_surface, source_end);
+	const ON_3dPoint source_start_lift =
+	    closed_surface_point_at(source_surface, source_start);
+	ON_3dPoint native_cut_uv = aligned_source_start;
+	native_cut_uv[closed_direction] = native_image;
+	const ON_3dPoint native_cut_lift =
+	    closed_surface_point_at(source_surface, native_cut_uv);
+	const ON_BrepEdge *before_edge = source_before->Edge();
+	const ON_BrepEdge *after_edge = source_after->Edge();
+	const ON_Interval before_domain = before_edge ?
+	    before_edge->Domain() : ON_Interval::EmptyInterval;
+	const ON_Interval after_domain = after_edge ?
+	    after_edge->Domain() : ON_Interval::EmptyInterval;
+	const ON_3dPoint before_endpoint =
+	    before_edge && before_domain.IsIncreasing() ?
+	    before_edge->PointAt(before_domain[source_before->m_bRev3d ? 0 : 1]) :
+	    ON_3dPoint::UnsetPoint;
+	const ON_3dPoint after_endpoint =
+	    after_edge && after_domain.IsIncreasing() ?
+	    after_edge->PointAt(after_domain[source_after->m_bRev3d ? 1 : 0]) :
+	    ON_3dPoint::UnsetPoint;
+	const double closed_parameter_residual =
+	    fabs(source_end[closed_direction] - adjacent_start);
+	const double open_parameter_residual =
+	    fabs(source_end[open_direction] -
+		aligned_source_start[open_direction]);
+	const bool numerical_endpoint_continuity =
+	    source_end.IsValid() && source_start.IsValid() &&
+	    closed_parameter_residual <= parameter_tolerance &&
+	    open_parameter_residual <= parameter_tolerance;
+	const bool local_endpoint_topology =
+	    source_end_lift.IsValid() && source_start_lift.IsValid() &&
+	    before_endpoint.IsValid() && after_endpoint.IsValid() &&
+	    source_end_lift.DistanceTo(before_endpoint) <= before_tolerance &&
+	    before_endpoint.DistanceTo(cut_vertex) <= before_tolerance &&
+	    source_end_lift.DistanceTo(cut_vertex) <= before_tolerance &&
+	    source_start_lift.DistanceTo(after_endpoint) <= after_tolerance &&
+	    after_endpoint.DistanceTo(cut_vertex) <= after_tolerance &&
+	    source_start_lift.DistanceTo(cut_vertex) <= after_tolerance &&
+	    source_end_lift.DistanceTo(source_start_lift) <= cut_tolerance;
+	/* Some toroidal exporters terminate adjacent pcurves on opposite
+	 * parameter images of the same STEP vertex, with a small additional
+	 * source curve/surface residual.  A parameter-only test cannot distinguish
+	 * that measured corner from an unrelated UV gap.  In safe mode, admit only
+	 * a doubly-periodic corner for which both adjacent immutable edge
+	 * endpoints, both lifted pcurve endpoints, and their shared topology
+	 * vertex agree within those two edges' already-established local
+	 * tolerances.  Residuals at or beyond a half-period remain ambiguous.
+	 * --exact and --repair none deliberately retain the source rejection. */
+	const bool bounded_periodic_corner_repair =
+	    !numerical_endpoint_continuity &&
+	    !wrapper->ImportOptions().exact &&
+	    wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe &&
+	    source_surface->IsClosed(open_direction) &&
+	    closed_parameter_residual < 0.5 * period &&
+	    open_period > ON_ZERO_TOLERANCE &&
+	    open_parameter_residual < 0.5 * open_period &&
+	    local_endpoint_topology;
+	if (!numerical_endpoint_continuity &&
+		!bounded_periodic_corner_repair) {
 	    if (wrapper->Verbose())
 		std::cerr << entity_type << " #" << entity_id
 		    << ": full-period boundary L" << loop_index << " cut "
@@ -7795,32 +8837,14 @@ regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 		    << source_end.x << ':' << source_end.y << " start="
 		    << source_start.x << ':' << source_start.y << " aligned="
 		    << aligned_source_start.x << ':' << aligned_source_start.y
-		    << " tolerance=" << parameter_tolerance << std::endl;
+		    << " residuals=" << closed_parameter_residual << '/'
+		    << open_parameter_residual << " tolerance="
+		    << parameter_tolerance << " local-topology="
+		    << (local_endpoint_topology ? "yes" : "no")
+		    << " local-tolerances=" << before_tolerance << '/'
+		    << after_tolerance << std::endl;
 	    continue;
 	}
-	const double native_image = closed_domain.Min() + round(
-	    (source_start[closed_direction] - closed_domain.Min()) / period) *
-	    period;
-
-	double cut_tolerance = LocalUnits::tolerance;
-	if (source_before->Edge())
-	    cut_tolerance = std::max(cut_tolerance,
-		source_before->Edge()->m_tolerance);
-	if (source_after->Edge())
-	    cut_tolerance = std::max(cut_tolerance,
-		source_after->Edge()->m_tolerance);
-	cut_tolerance = std::max(cut_tolerance,
-	    brep->m_V[source_before->m_vi[1]].m_tolerance);
-	const ON_3dPoint &cut_vertex =
-	    brep->m_V[source_before->m_vi[1]].point;
-	const ON_3dPoint source_end_lift = source_surface->PointAt(
-	    source_end.x, source_end.y);
-	const ON_3dPoint source_start_lift = source_surface->PointAt(
-	    source_start.x, source_start.y);
-	ON_3dPoint native_cut_uv = source_start;
-	native_cut_uv[closed_direction] = native_image;
-	const ON_3dPoint native_cut_lift = source_surface->PointAt(
-	    native_cut_uv.x, native_cut_uv.y);
 	/* A supplied pcurve endpoint can miss the numerical native seam while its
 	 * STEP vertex lies on that seam within the edge's asserted tolerance.  This
 	 * occurs after an exporter approximates a periodic spline boundary: a
@@ -7851,6 +8875,35 @@ regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 	    continue;
 	}
 
+	const double periodic_corner_lift_gap =
+	    source_end_lift.DistanceTo(source_start_lift);
+	const auto record_periodic_corner_repair =
+	    [wrapper, entity_id, &entity_type, loop_index, cut,
+	    bounded_periodic_corner_repair, record_repair,
+	    closed_parameter_residual, open_parameter_residual,
+	    periodic_corner_lift_gap, cut_tolerance]() {
+		if (!bounded_periodic_corner_repair || !record_repair)
+		    return;
+		wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
+		    "aligned a doubly-periodic source corner using its shared "
+		    "STEP vertex and measured local edge tolerances");
+		if (periodic_corner_lift_gap > LocalUnits::tolerance)
+		    wrapper->RecordDiagnostic(
+			brlcad::step::DiagnosticSeverity::Warning,
+			entity_id, entity_type, "trim_pcurve",
+			"adjacent periodic pcurve endpoints exceeded the declared "
+			"model tolerance; aligned their parameter images using the "
+			"shared STEP vertex and measured local edge tolerances");
+		if (wrapper->Verbose())
+		    std::cerr << entity_type << " #" << entity_id
+			<< ": accepted tolerance-proven periodic corner for L"
+			<< loop_index << " cut " << cut << " parameter-residuals="
+			<< closed_parameter_residual << '/'
+			<< open_parameter_residual << " lift-gap="
+			<< periodic_corner_lift_gap << " topology-tolerance="
+			<< cut_tolerance << std::endl;
+	    };
+
 	for (int winding = 0; winding < 2; ++winding) {
 	    ON_BrepLoop &loop = brep->m_L[loop_index];
 	    const ON_BrepFace *face = loop.Face();
@@ -7867,10 +8920,10 @@ regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 	    ON_3dPoint required_end = required_start;
 	    required_end[closed_direction] = winding == 0 ?
 		closed_domain.Max() : closed_domain.Min();
-	    const ON_3dPoint start_lift = surface->PointAt(required_start.x,
-		required_start.y);
-	    const ON_3dPoint end_lift = surface->PointAt(required_end.x,
-		required_end.y);
+	    const ON_3dPoint start_lift =
+		closed_surface_point_at(surface, required_start);
+	    const ON_3dPoint end_lift =
+		closed_surface_point_at(surface, required_end);
 	    if (!start_lift.IsValid() || !end_lift.IsValid() ||
 		    start_lift.DistanceTo(cut_vertex) > cut_tolerance ||
 		    end_lift.DistanceTo(cut_vertex) > cut_tolerance) {
@@ -7979,6 +9032,302 @@ regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 		continue;
 	    }
 
+	    const auto native_boundary_pair = [&closed_domain, closed_direction,
+		    open_direction, parameter_tolerance](
+		    const ON_3dPoint &start, const ON_3dPoint &end) {
+		const bool forward =
+		    fabs(start[closed_direction] - closed_domain.Min()) <=
+			parameter_tolerance &&
+		    fabs(end[closed_direction] - closed_domain.Max()) <=
+			parameter_tolerance;
+		const bool reverse =
+		    fabs(start[closed_direction] - closed_domain.Max()) <=
+			parameter_tolerance &&
+		    fabs(end[closed_direction] - closed_domain.Min()) <=
+			parameter_tolerance;
+		return start.IsValid() && end.IsValid() &&
+		    (forward || reverse) &&
+		    fabs(start[open_direction] - end[open_direction]) <=
+			parameter_tolerance;
+	    };
+	    const ON_Curve *raw_first = regenerated_curves.empty() ? NULL :
+		regenerated_curves.front().get();
+	    const ON_Curve *raw_last = regenerated_curves.empty() ? NULL :
+		regenerated_curves.back().get();
+	    if (raw_first && raw_last &&
+		    !native_boundary_pair(raw_first->PointAtStart(),
+			raw_last->PointAtEnd())) {
+		/* Exact edge pullback can choose Min()->Min()-period (or the
+		 * symmetric Max()->Max()+period) when approaching the final
+		 * endpoint from the continuous interior branch.  That is the
+		 * correct winding but not the native Min()/Max() pair needed by
+		 * the explicit seam constructor.  Translate the complete chain
+		 * by one integral period only when every shifted pcurve still
+		 * densely follows its directed immutable edge. */
+		for (int turns = -2; turns <= 2; ++turns) {
+		    if (turns == 0)
+			continue;
+		    ON_3dPoint shifted_start = raw_first->PointAtStart();
+		    ON_3dPoint shifted_end = raw_last->PointAtEnd();
+		    const double shift = turns * period;
+		    shifted_start[closed_direction] += shift;
+		    shifted_end[closed_direction] += shift;
+		    if (!native_boundary_pair(shifted_start, shifted_end))
+			continue;
+		    std::vector<std::unique_ptr<ON_Curve> > shifted_curves;
+		    shifted_curves.reserve(regenerated_curves.size());
+		    bool exact_shift = true;
+		    ON_Xform translation(ON_Xform::IdentityTransformation);
+		    translation.m_xform[closed_direction][3] = shift;
+		    for (size_t offset = 0; exact_shift &&
+			    offset < regenerated_curves.size(); ++offset) {
+			const ON_BrepTrim *trim = offset <
+			    regenerated_trims.size() ?
+			    regenerated_trims[offset] : NULL;
+			const ON_BrepEdge *edge = trim ? trim->Edge() : NULL;
+			std::unique_ptr<ON_Curve> shifted(
+			    regenerated_curves[offset] ?
+			    regenerated_curves[offset]->DuplicateCurve() : NULL);
+			if (!trim || !edge || !shifted ||
+				!shifted->Transform(translation) ||
+				!shifted->ChangeDimension(2) ||
+				!shifted->IsValid()) {
+			    exact_shift = false;
+			    break;
+			}
+			double tolerance = std::max(LocalUnits::tolerance,
+			    std::max(edge->m_tolerance,
+				std::max(trim->m_tolerance[0],
+				    trim->m_tolerance[1])));
+			const ON_Interval curve_domain = shifted->Domain();
+			const ON_Interval edge_domain = edge->Domain();
+			for (int sample = 0; exact_shift &&
+				sample <= kDenseValidationSegments; ++sample) {
+			    const double fraction =
+				static_cast<double>(sample) /
+				kDenseValidationSegments;
+			    const ON_3dPoint uv = shifted->PointAt(
+				curve_domain.ParameterAt(fraction));
+			    const ON_3dPoint lift = uv.IsValid() ?
+				closed_surface_point_at(surface, uv) :
+				ON_3dPoint::UnsetPoint;
+			    const ON_3dPoint edge_point = edge->PointAt(
+				edge_domain.ParameterAt(trim->m_bRev3d ?
+				    1.0 - fraction : fraction));
+			    exact_shift = lift.IsValid() &&
+				edge_point.IsValid() &&
+				lift.DistanceTo(edge_point) <= tolerance;
+			}
+			if (exact_shift)
+			    shifted_curves.push_back(std::move(shifted));
+		    }
+		    if (!exact_shift ||
+			    shifted_curves.size() != regenerated_curves.size())
+			continue;
+		    regenerated_curves.swap(shifted_curves);
+		    if (wrapper->Verbose())
+			std::cerr << entity_type << " #" << entity_id
+			    << ": full-period boundary L" << loop_index
+			    << " canonicalized an exact " << turns
+			    << "-period chain translation" << std::endl;
+		    break;
+		}
+	    }
+
+	    /* A source edge can terminate a small measured distance from its
+	     * declared topology vertex.  Exact edge pullback then approaches the
+	     * correct native seam from one side but cannot land on it without
+	     * leaving the edge's literal locus.  This is distinct from an arbitrary
+	     * UV gap: the first boundary endpoint already selects one native side,
+	     * the opposite native endpoint and the pulled endpoint must both lift
+	     * to the same STEP vertex within the established local edge tolerance,
+	     * and the complete short connector must remain on the immutable 3-D
+	     * edge locus in the directed sense.  Preserve the source geometry and
+	     * express that measured endpoint inconsistency as OpenNURBS tolerance,
+	     * as required for other bounded source edge/vertex mismatches.  Under
+	     * --exact the local tolerance is never enlarged, so the same proof
+	     * remains strict. */
+	    bool bounded_terminal_correction = false;
+	    double terminal_correction_distance = 0.0;
+	    raw_first = regenerated_curves.empty() ? NULL :
+		regenerated_curves.front().get();
+	    raw_last = regenerated_curves.empty() ? NULL :
+		regenerated_curves.back().get();
+	    if (raw_first && raw_last &&
+		    !native_boundary_pair(raw_first->PointAtStart(),
+			raw_last->PointAtEnd()) && !regenerated_trims.empty()) {
+		const ON_3dPoint boundary_start = raw_first->PointAtStart();
+		const ON_3dPoint boundary_end = raw_last->PointAtEnd();
+		ON_3dPoint required_terminal = boundary_start;
+		bool have_native_start = false;
+		if (fabs(boundary_start[closed_direction] -
+			closed_domain.Min()) <= parameter_tolerance) {
+		    required_terminal[closed_direction] = closed_domain.Max();
+		    have_native_start = true;
+		} else if (fabs(boundary_start[closed_direction] -
+			closed_domain.Max()) <= parameter_tolerance) {
+		    required_terminal[closed_direction] = closed_domain.Min();
+		    have_native_start = true;
+		}
+		const double parameter_residual = have_native_start ?
+		    fabs(boundary_end[closed_direction] -
+			required_terminal[closed_direction]) : DBL_MAX;
+		ON_BrepTrim *terminal_trim = regenerated_trims.back();
+		ON_BrepEdge *terminal_edge = terminal_trim ?
+		    terminal_trim->Edge() : NULL;
+		double terminal_tolerance = LocalUnits::tolerance;
+		if (terminal_trim)
+		    terminal_tolerance = std::max(terminal_tolerance,
+			std::max(terminal_trim->m_tolerance[0],
+			    terminal_trim->m_tolerance[1]));
+		if (terminal_edge)
+		    terminal_tolerance = std::max(terminal_tolerance,
+			terminal_edge->m_tolerance);
+		if (terminal_trim && terminal_trim->m_vi[1] >= 0 &&
+			terminal_trim->m_vi[1] < brep->m_V.Count())
+		    terminal_tolerance = std::max(terminal_tolerance,
+			brep->m_V[terminal_trim->m_vi[1]].m_tolerance);
+		const ON_3dPoint boundary_lift = boundary_end.IsValid() ?
+		    closed_surface_point_at(surface, boundary_end) :
+		    ON_3dPoint::UnsetPoint;
+		const ON_3dPoint required_lift = required_terminal.IsValid() ?
+		    closed_surface_point_at(surface, required_terminal) :
+		    ON_3dPoint::UnsetPoint;
+		const ON_Interval terminal_edge_domain = terminal_edge ?
+		    terminal_edge->Domain() : ON_Interval::EmptyInterval;
+		const ON_3dPoint terminal_edge_endpoint =
+		    terminal_edge && terminal_edge_domain.IsIncreasing() ?
+		    terminal_edge->PointAt(terminal_edge_domain[
+			terminal_trim->m_bRev3d ? 0 : 1]) :
+		    ON_3dPoint::UnsetPoint;
+		const ON_3dPoint terminal_vertex =
+		    terminal_trim && terminal_trim->m_vi[1] >= 0 &&
+		    terminal_trim->m_vi[1] < brep->m_V.Count() ?
+		    brep->m_V[terminal_trim->m_vi[1]].point :
+		    ON_3dPoint::UnsetPoint;
+		terminal_correction_distance =
+		    boundary_lift.IsValid() && required_lift.IsValid() ?
+		    boundary_lift.DistanceTo(required_lift) : DBL_MAX;
+		const double boundary_edge_distance =
+		    boundary_lift.IsValid() && terminal_edge_endpoint.IsValid() ?
+		    boundary_lift.DistanceTo(terminal_edge_endpoint) : DBL_MAX;
+		const double required_edge_distance =
+		    required_lift.IsValid() && terminal_edge_endpoint.IsValid() ?
+		    required_lift.DistanceTo(terminal_edge_endpoint) : DBL_MAX;
+		const double boundary_vertex_distance =
+		    boundary_lift.IsValid() && terminal_vertex.IsValid() ?
+		    boundary_lift.DistanceTo(terminal_vertex) : DBL_MAX;
+		const double required_vertex_distance =
+		    required_lift.IsValid() && terminal_vertex.IsValid() ?
+		    required_lift.DistanceTo(terminal_vertex) : DBL_MAX;
+		bool exact_connector = have_native_start &&
+		    parameter_residual > parameter_tolerance &&
+		    parameter_residual < 0.5 * period &&
+		    fabs(boundary_end[open_direction] -
+			required_terminal[open_direction]) <= parameter_tolerance &&
+		    boundary_lift.IsValid() && required_lift.IsValid() &&
+		    terminal_edge_endpoint.IsValid() && terminal_vertex.IsValid() &&
+		    boundary_lift.DistanceTo(terminal_edge_endpoint) <=
+			terminal_tolerance &&
+		    required_lift.DistanceTo(terminal_edge_endpoint) <=
+			terminal_tolerance &&
+		    boundary_lift.DistanceTo(terminal_vertex) <=
+			terminal_tolerance &&
+		    required_lift.DistanceTo(terminal_vertex) <=
+			terminal_tolerance &&
+		    terminal_correction_distance <= terminal_tolerance;
+		bool connector_locus_proven = false;
+		double connector_direction_alignment = -DBL_MAX;
+		std::vector<ON_3dPoint> connector_lifts;
+		if (exact_connector) {
+		    connector_lifts.reserve(kDenseValidationSegments + 1);
+		    for (int sample = 0; sample <= kDenseValidationSegments;
+			    ++sample) {
+			const double fraction = static_cast<double>(sample) /
+			    kDenseValidationSegments;
+			const ON_3dPoint uv = (1.0 - fraction) * boundary_end +
+			    fraction * required_terminal;
+			const ON_3dPoint lift = closed_surface_point_at(surface, uv);
+			if (!lift.IsValid()) {
+			    exact_connector = false;
+			    break;
+			}
+			connector_lifts.push_back(lift);
+		    }
+		}
+		if (exact_connector) {
+		    connector_locus_proven = terminal_edge &&
+			step_curve_locus_contains_points(terminal_edge,
+			    connector_lifts.data(), connector_lifts.size(),
+			    terminal_tolerance);
+		    exact_connector = connector_locus_proven;
+		}
+		if (exact_connector) {
+		    ON_3dVector connector_direction =
+			required_lift - boundary_lift;
+		    ON_3dVector edge_direction = terminal_edge->TangentAt(
+			terminal_edge_domain[
+			    terminal_trim->m_bRev3d ? 0 : 1]);
+		    if (terminal_trim->m_bRev3d)
+			edge_direction.Reverse();
+		    const bool directions_valid = connector_direction.Unitize() &&
+			edge_direction.Unitize();
+		    if (directions_valid)
+			connector_direction_alignment =
+			    connector_direction * edge_direction;
+		    exact_connector = directions_valid &&
+			connector_direction_alignment >= 0.0;
+		}
+		std::unique_ptr<ON_PolyCurve> corrected;
+		if (exact_connector) {
+		    corrected.reset(new ON_PolyCurve());
+		    ON_Curve *prefix = raw_last->DuplicateCurve();
+		    ON_LineCurve *connector = new ON_LineCurve(boundary_end,
+			required_terminal);
+		    if (!prefix || !connector->ChangeDimension(2) ||
+			    !connector->IsValid() || !corrected->Append(prefix)) {
+			delete prefix;
+			delete connector;
+			corrected.reset();
+		    } else if (!corrected->Append(connector)) {
+			delete connector;
+			corrected.reset();
+		    } else if (!corrected->SetDomain(raw_last->Domain().Min(),
+			    raw_last->Domain().Max()) ||
+			    !corrected->ChangeDimension(2) ||
+			    !corrected->IsValid()) {
+			corrected.reset();
+		    }
+		}
+		if (corrected) {
+		    regenerated_curves.back().reset(corrected.release());
+		    bounded_terminal_correction = true;
+		    if (wrapper->Verbose())
+			std::cerr << entity_type << " #" << entity_id
+			    << ": full-period boundary L" << loop_index
+			    << " closed a tolerance-proven terminal seam residual "
+			    << parameter_residual << " (lift "
+			    << terminal_correction_distance << ", tolerance "
+			    << terminal_tolerance << ')' << std::endl;
+		} else if (wrapper->Verbose() && have_native_start &&
+			parameter_residual > parameter_tolerance &&
+			parameter_residual < 0.5 * period) {
+		    std::cerr << entity_type << " #" << entity_id
+			<< ": full-period boundary L" << loop_index
+			<< " rejected terminal seam correction residual="
+			<< parameter_residual << " lift="
+			<< terminal_correction_distance << " edge-distances="
+			<< boundary_edge_distance << '/' << required_edge_distance
+			<< " vertex-distances=" << boundary_vertex_distance << '/'
+			<< required_vertex_distance << " tolerance="
+			<< terminal_tolerance << " locus="
+			<< (connector_locus_proven ? "yes" : "no")
+			<< " direction=" << connector_direction_alignment
+			<< " curve=" << (exact_connector ? "rejected" :
+			    "not-constructed") << std::endl;
+		}
+	    }
+
 	    bool exact_chain = true;
 	    for (int offset = 0; exact_chain && offset < loop.TrimCount() - 1;
 		    ++offset) {
@@ -8007,15 +9356,8 @@ regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 	    const ON_Curve *last_curve = regenerated_curves.empty() ? NULL :
 		regenerated_curves.back().get();
 	    const bool boundary_endpoints_valid = first_curve && last_curve &&
-		fabs(first_curve->PointAtStart()[closed_direction] -
-		    (winding == 0 ? closed_domain.Min() :
-			closed_domain.Max())) <= parameter_tolerance &&
-		fabs(last_curve->PointAtEnd()[closed_direction] -
-		    (winding == 0 ? closed_domain.Max() :
-			closed_domain.Min())) <= parameter_tolerance &&
-		fabs(first_curve->PointAtStart()[open_direction] -
-		    last_curve->PointAtEnd()[open_direction]) <=
-		    parameter_tolerance;
+		native_boundary_pair(first_curve->PointAtStart(),
+		    last_curve->PointAtEnd());
 
 	    /* A segmented edge-driven boundary can retain a small interior UV
 	     * residual even though every endpoint lift matches the same STEP
@@ -8076,15 +9418,8 @@ regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 			NULL;
 		    candidate_valid = candidate_valid && candidate_first &&
 			candidate_last &&
-			fabs(candidate_first->PointAtStart()[closed_direction] -
-			    (winding == 0 ? closed_domain.Min() :
-				closed_domain.Max())) <= parameter_tolerance &&
-			fabs(candidate_last->PointAtEnd()[closed_direction] -
-			    (winding == 0 ? closed_domain.Max() :
-				closed_domain.Min())) <= parameter_tolerance &&
-			fabs(candidate_first->PointAtStart()[open_direction] -
-			    candidate_last->PointAtEnd()[open_direction]) <=
-			    parameter_tolerance;
+			native_boundary_pair(candidate_first->PointAtStart(),
+			    candidate_last->PointAtEnd());
 		    for (int lti = 0; candidate_valid &&
 			    lti < candidate_loop->TrimCount(); ++lti) {
 			const ON_BrepTrim *trim = candidate_loop->Trim(lti);
@@ -8095,26 +9430,22 @@ regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 		}
 		if (candidate_valid) {
 		    *brep = *candidate;
-		    wrapper->RecordRepair(entity_id, entity_type, "edge_loop",
-			"closed residual joins in an exact full-period boundary chain");
-		    wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
-			"unwrapped an exact full-period boundary from its 3-D STEP edge chain");
-		    if (!numerical_native_seam && geometric_native_seam)
+		    if (record_repair) {
 			wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
-			    "selected a periodic boundary cut from a tolerance-proven native seam vertex");
+			    "unwrapped an exact full-period boundary from its 3-D STEP edge chain");
+			wrapper->RecordRepair(entity_id, entity_type, "edge_loop",
+			    "closed residual joins in an exact full-period boundary chain");
+			if (!numerical_native_seam && geometric_native_seam)
+			    wrapper->RecordRepair(entity_id, entity_type,
+				"trim_pcurve",
+				"selected a periodic boundary cut from a tolerance-proven native seam vertex");
+		    }
+		    record_periodic_corner_repair();
 		    return true;
 		}
 	    }
 
-	    if (!exact_chain || !boundary_endpoints_valid ||
-		    fabs(first_curve->PointAtStart()[closed_direction] -
-			(winding == 0 ? closed_domain.Min() :
-			 closed_domain.Max())) > parameter_tolerance ||
-		    fabs(last_curve->PointAtEnd()[closed_direction] -
-			(winding == 0 ? closed_domain.Max() :
-			 closed_domain.Min())) > parameter_tolerance ||
-		    fabs(first_curve->PointAtStart()[open_direction] -
-			last_curve->PointAtEnd()[open_direction]) > parameter_tolerance) {
+	    if (!exact_chain || !boundary_endpoints_valid) {
 		if (wrapper->Verbose())
 		    std::cerr << entity_type << " #" << entity_id
 			<< ": full-period boundary L" << loop_index
@@ -8223,11 +9554,24 @@ regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 		    trim_index != ordered_trim_indices.end(); ++trim_index)
 		loop.m_ti.Append(*trim_index);
 
-	    wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
-		"unwrapped an exact full-period boundary from its 3-D STEP edge chain");
-	    if (!numerical_native_seam && geometric_native_seam) {
+	    if (record_repair)
 		wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
-		    "selected a periodic boundary cut from a tolerance-proven native seam vertex");
+		    "unwrapped an exact full-period boundary from its 3-D STEP edge chain");
+	    if (record_repair && bounded_terminal_correction) {
+		wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
+		    "closed a source endpoint residual at a periodic seam within its measured topology tolerance");
+		if (terminal_correction_distance > LocalUnits::tolerance)
+		    wrapper->RecordDiagnostic(
+			brlcad::step::DiagnosticSeverity::Warning,
+			entity_id, entity_type, "trim_pcurve",
+			"source edge endpoint missed its declared topology vertex; "
+			"closed the periodic seam within a densely measured local "
+			"OpenNURBS tolerance");
+	    }
+	    if (!numerical_native_seam && geometric_native_seam) {
+		if (record_repair)
+		    wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
+			"selected a periodic boundary cut from a tolerance-proven native seam vertex");
 		if (wrapper->Verbose())
 		    std::cerr << entity_type << " #" << entity_id
 			<< ": accepted tolerance-proven native seam for L"
@@ -8235,8 +9579,9 @@ regenerate_full_period_boundary_chain(ON_Brep *brep, int loop_index,
 			<< " cut/winding " << cut << '/' << winding
 			<< " parameter-residual="
 			<< fabs(source_start[closed_direction] - native_image)
-			<< " topology-tolerance=" << cut_tolerance << std::endl;
+		    << " topology-tolerance=" << cut_tolerance << std::endl;
 	    }
+	    record_periodic_corner_repair();
 	    return true;
 	}
     }
@@ -8959,6 +10304,33 @@ relocate_closed_surface_loop_seam(ON_Brep *brep, int loop_index,
 				candidate_parameter) / period) * period;
 			const double guard = std::max(ON_ZERO_TOLERANCE *
 			    kNumericalToleranceScale, period * 1.0e-10);
+			/* A requested topology-driven seam is allowed to coincide
+			 * with an ordinary edge endpoint.  Its first sample has two
+			 * equivalent native images; a closest-point solve commonly
+			 * reports Min() even when the edge immediately departs into
+			 * the image ending at Max().  Delay that one endpoint branch
+			 * choice until the first interior sample proves the side.
+			 * This changes only the parameter image of the same seam
+			 * point.  An interior crossing still fails the transaction
+			 * below and is left for the explicit shared-edge splitter. */
+			if (sample == 1 && points.Count() == 1) {
+			    ON_3dPoint *first = points.At(0);
+			    if (candidate_parameter <
+				    candidate_domain.Min() - guard &&
+				    first && fabs((*first)[direction] -
+					candidate_domain.Min()) <= guard) {
+				(*first)[direction] = candidate_domain.Max();
+				previous_parameter = candidate_domain.Max();
+				candidate_parameter += period;
+			    } else if (candidate_parameter >
+				    candidate_domain.Max() + guard &&
+				    first && fabs((*first)[direction] -
+					candidate_domain.Max()) <= guard) {
+				(*first)[direction] = candidate_domain.Min();
+				previous_parameter = candidate_domain.Min();
+				candidate_parameter -= period;
+			    }
+			}
 			if (candidate_parameter < candidate_domain.Min() - guard ||
 				candidate_parameter > candidate_domain.Max() + guard) {
 			    std::ostringstream detail;
@@ -9404,9 +10776,31 @@ repair_closed_surface_seam_crossings(ON_Brep *brep,
 			const ON_3dPoint start_lift = surface->PointAt(start.x, start.y);
 			const ON_3dPoint &vertex =
 			    brep->m_V[current->m_vi[1]].point;
-			crossing = !end_lift.IsValid() || !start_lift.IsValid() ||
-			    end_lift.DistanceTo(vertex) > LocalUnits::tolerance ||
-			    start_lift.DistanceTo(vertex) > LocalUnits::tolerance;
+			double join_tolerance = std::max(LocalUnits::tolerance,
+			    brep->m_V[current->m_vi[1]].m_tolerance);
+			if (current->Edge())
+			    join_tolerance = std::max(join_tolerance,
+				current->Edge()->m_tolerance);
+			if (next->Edge())
+			    join_tolerance = std::max(join_tolerance,
+				next->Edge()->m_tolerance);
+			join_tolerance = std::max(join_tolerance,
+			    std::max(current->m_tolerance[0],
+				current->m_tolerance[1]));
+			join_tolerance = std::max(join_tolerance,
+			    std::max(next->m_tolerance[0],
+				next->m_tolerance[1]));
+			/* Ordinary trims whose adjacent endpoint images differ by
+			 * exactly one surface period are a proven seam crossing only
+			 * when both literal boundary lifts already agree with their
+			 * shared STEP vertex.  Such a jump cannot form a Euclidean
+			 * OpenNURBS loop; moving the private surface seam is the exact
+			 * representation repair.  A mismatched or invalid lift must not
+			 * authorize that topology change. */
+			crossing = end_lift.IsValid() && start_lift.IsValid() &&
+			    end_lift.DistanceTo(vertex) <= join_tolerance &&
+			    start_lift.DistanceTo(vertex) <= join_tolerance &&
+			    end_lift.DistanceTo(start_lift) <= join_tolerance;
 		    }
 		if (!crossing)
 		    continue;
@@ -10143,6 +11537,40 @@ repair_seam_pair_from_exact_edge(ON_Brep *brep, STEPWrapper *wrapper,
 		repaired_seam_loops.end(), li) == repaired_seam_loops.end())
 	    repaired_seam_loops.push_back(li);
     }
+    const auto interior_iso = [](ON_Surface::ISO iso) {
+	return iso == ON_Surface::x_iso || iso == ON_Surface::y_iso;
+    };
+    const auto curve_follows_exact_edge = [](const ON_Curve &curve,
+	    const ON_BrepTrim &trim,
+	    const ON_BrepEdge &edge, const ON_Surface *surface,
+	    double tolerance) {
+	if (!surface || !(tolerance > 0.0))
+	    return false;
+	const ON_Interval trim_domain = trim.Domain();
+	const ON_Interval edge_domain = edge.Domain();
+	if (!trim_domain.IsIncreasing() || !edge_domain.IsIncreasing())
+	    return false;
+	for (int sample = 0; sample <= kDenseValidationSegments; ++sample) {
+	    const double fraction = static_cast<double>(sample) /
+		kDenseValidationSegments;
+	    const ON_3dPoint uv = curve.PointAt(
+		trim_domain.ParameterAt(fraction));
+	    const ON_3dPoint lift = surface->PointAt(uv.x, uv.y);
+	    const ON_3dPoint target = edge.PointAt(edge_domain.ParameterAt(
+		trim.m_bRev3d ? 1.0 - fraction : fraction));
+	    if (!uv.IsValid() || !lift.IsValid() || !target.IsValid() ||
+		    lift.DistanceTo(target) > tolerance)
+		return false;
+	}
+	return true;
+    };
+    const auto trim_follows_exact_edge = [&curve_follows_exact_edge](
+	    const ON_BrepTrim &trim, const ON_BrepEdge &edge,
+	    const ON_Surface *surface, double tolerance) {
+	const ON_Curve *curve = trim.TrimCurveOf();
+	return curve && curve_follows_exact_edge(*curve, trim, edge, surface,
+	    tolerance);
+    };
     for (int ei = 0; ei < brep->m_E.Count(); ++ei) {
 	ON_BrepEdge &edge = brep->m_E[ei];
 	if (edge.m_ti.Count() != 2)
@@ -10162,6 +11590,95 @@ repair_seam_pair_from_exact_edge(ON_Brep *brep, STEPWrapper *wrapper,
 	const ON_Surface *surface = loop.Face() ? loop.Face()->SurfaceOf() : NULL;
 	if (!surface)
 	    continue;
+
+	/* A repeated STEP edge can be an interior zero-area keyhole bridge, not a
+	 * periodic surface seam.  If one reciprocal use already supplies an
+	 * interior isoparametric pcurve which densely follows the immutable edge,
+	 * mirror that exact curve onto the damaged use.  Forcing both uses onto
+	 * opposite domain boundaries invents a different torus arc; retaining the
+	 * coincident forward/reverse pair lets the later keyhole normalizer remove
+	 * only the zero-area bridge and preserve both bounded face components. */
+	ON_BrepTrim *interior_source = NULL;
+	ON_BrepTrim *interior_target = NULL;
+	for (int member = 0; member < 2 && !interior_source; ++member) {
+	    ON_BrepTrim *candidate_source = member == 0 ? &first : &second;
+	    ON_BrepTrim *candidate_target = member == 0 ? &second : &first;
+	    const ON_Interval candidate_domain = candidate_source->Domain();
+	    const ON_Surface::ISO candidate_iso =
+		candidate_domain.IsIncreasing() ?
+		surface->IsIsoparametric(*candidate_source, &candidate_domain) :
+		ON_Surface::not_iso;
+	    double candidate_tolerance = std::max(LocalUnits::tolerance,
+		edge.m_tolerance);
+	    candidate_tolerance = std::max(candidate_tolerance,
+		std::max(candidate_source->m_tolerance[0],
+		    candidate_source->m_tolerance[1]));
+	    candidate_tolerance = std::max(candidate_tolerance,
+		std::max(candidate_target->m_tolerance[0],
+		    candidate_target->m_tolerance[1]));
+	    if (interior_iso(candidate_iso) &&
+		    trim_follows_exact_edge(*candidate_source, edge, surface,
+			candidate_tolerance)) {
+		interior_source = candidate_source;
+		interior_target = candidate_target;
+	    }
+	}
+	if (interior_source && interior_target) {
+	    const ON_Interval source_domain = interior_source->Domain();
+	    const ON_Surface::ISO source_iso =
+		surface->IsIsoparametric(*interior_source, &source_domain);
+	    const double parameter_tolerance =
+		ON_ZERO_TOLERANCE * kNumericalToleranceScale;
+	    bool coincident = interior_iso(source_iso) &&
+		opposite_trim_curves_coincide(&first, &second,
+		    parameter_tolerance);
+	    if (!coincident) {
+		std::unique_ptr<ON_Curve> mirrored(
+		    interior_source->DuplicateCurve());
+		const ON_Interval target_domain = interior_target->Domain();
+		bool valid = mirrored.get() != NULL &&
+		    (interior_source->m_bRev3d == interior_target->m_bRev3d ||
+			mirrored->Reverse()) &&
+		    mirrored->SetDomain(target_domain.Min(), target_domain.Max()) &&
+		    mirrored->ChangeDimension(2) && mirrored->IsValid() &&
+		    surface->IsIsoparametric(*mirrored, &target_domain) ==
+			source_iso;
+		if (valid) {
+		    double candidate_tolerance = std::max(
+			LocalUnits::tolerance, edge.m_tolerance);
+		    candidate_tolerance = std::max(candidate_tolerance,
+			std::max(interior_target->m_tolerance[0],
+			    interior_target->m_tolerance[1]));
+		    valid = curve_follows_exact_edge(*mirrored,
+			*interior_target, edge, surface, candidate_tolerance);
+		}
+		if (valid) {
+		    ON_Curve *owned = mirrored.release();
+		    const int c2_index = brep->AddTrimCurve(owned);
+		    if (c2_index < 0) {
+			delete owned;
+			valid = false;
+		    } else {
+			valid = brep->SetTrimCurve(*interior_target, c2_index);
+		    }
+		}
+		if (valid) {
+		    interior_source->m_iso = source_iso;
+		    interior_target->m_iso = source_iso;
+		    coincident = opposite_trim_curves_coincide(&first, &second,
+			parameter_tolerance);
+		}
+	    }
+	    if (coincident) {
+		if (std::find(repaired_seam_loops.begin(),
+			repaired_seam_loops.end(), first.m_li) ==
+			repaired_seam_loops.end())
+		    repaired_seam_loops.push_back(first.m_li);
+		wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
+		    "mirrored an exact interior keyhole pcurve onto its reciprocal STEP edge use");
+		continue;
+	    }
+	}
 
 	const auto is_boundary_iso = [](ON_Surface::ISO iso) {
 	    return iso == ON_Surface::W_iso || iso == ON_Surface::E_iso ||
@@ -12490,6 +14007,12 @@ verified_source_pcurve_tolerance(ON_BrepTrim &trim, ON_BrepEdge &edge,
 	double tolerance, const ON_Brep *brep, STEPWrapper *wrapper,
 	int entity_id, const std::string &entity_type);
 
+static ON_Curve *
+translated_periodic_trim_for_join(const ON_Surface *surface,
+	const ON_BrepTrim &trim, const ON_3dPoint &join, bool move_start,
+	std::string *failure, double bounded_lift_tolerance,
+	double *measured_bounded_mismatch);
+
 
 static void
 repair_invalid_open_pcurves(ON_Brep *brep, STEPWrapper *wrapper,
@@ -12751,6 +14274,146 @@ repair_invalid_open_pcurves(ON_Brep *brep, STEPWrapper *wrapper,
 		    required_endpoint[0], required_endpoint[1], true, wrapper);
 	    }
 	}
+	/* The edge-driven solver can return a pcurve on an integral-period image
+	 * different from both already validated adjacent endpoints.  Its lift is
+	 * still exact, so a later pairwise endpoint pass may try to bend the two
+	 * ends independently and turn an isocurve into a diagonal across a
+	 * periodic surface.  First move the complete regenerated pcurve by one
+	 * uniform integral-period transform and require both requested endpoints
+	 * literally.  validate_periodic_trim_translation() densely proves the
+	 * shifted curve against the immutable edge before it is installed. */
+	const auto parameter_unique_endpoint = [surface](
+		const ON_3dPoint *endpoint) {
+	    if (!endpoint || !surface)
+		return false;
+	    const ON_3dPoint native = closed_surface_native_parameter(surface,
+		*endpoint);
+	    /* A pole fixes the 3-D topology vertex but has no authoritative
+	     * longitude in parameter space.  Requiring that arbitrary coordinate
+	     * literally rejects an exact regenerated edge and can erase the
+	     * singular connector topology assembled later.  Some analytic
+	     * revolution surfaces do not advertise their apex through
+	     * IsAtSingularity(), so also use the same differential-rank proof as
+	     * regenerated endpoint validation. */
+	    if (!native.IsValid())
+		return true;
+	    if (surface->IsAtSingularity(native.x, native.y, false))
+		return false;
+	    ON_3dPoint point;
+	    ON_3dVector du, dv;
+	    if (!surface->Ev1Der(native.x, native.y, point, du, dv))
+		return true;
+	    const double a = du * du;
+	    const double b = du * dv;
+	    const double c = dv * dv;
+	    const double determinant = a * c - b * b;
+	    const double numerical_floor = ON_ZERO_TOLERANCE *
+		std::max(1.0, a * c);
+	    return fabs(determinant) > numerical_floor;
+	};
+	const auto matches_required_endpoints = [surface, &required_endpoint,
+		&parameter_unique_endpoint](const ON_Curve *curve) {
+	    if (!curve || !surface)
+		return false;
+	    double parameter_tolerance = ON_ZERO_TOLERANCE *
+		kNumericalToleranceScale;
+	    for (int direction = 0; direction < 2; ++direction)
+		parameter_tolerance = std::max(parameter_tolerance,
+		    kPeriodicParameterSnapFraction * std::max(1.0,
+			surface->Domain(direction).Length()));
+	    const ON_Interval curve_domain = curve->Domain();
+	    if (!curve_domain.IsIncreasing())
+		return false;
+	    for (int end = 0; end < 2; ++end) {
+		if (!parameter_unique_endpoint(required_endpoint[end]))
+		    continue;
+		const ON_3dPoint endpoint = curve->PointAt(curve_domain[end]);
+		if (!endpoint.IsValid() ||
+			endpoint.DistanceTo(*required_endpoint[end]) >
+			    parameter_tolerance)
+		    return false;
+	    }
+	    return true;
+	};
+	const auto has_integral_period_endpoint_mismatch = [surface,
+		&required_endpoint, &parameter_unique_endpoint](
+		const ON_Curve *curve) {
+	    if (!curve || !surface)
+		return false;
+	    const ON_Interval curve_domain = curve->Domain();
+	    if (!curve_domain.IsIncreasing())
+		return false;
+	    bool have_endpoint = false;
+	    bool have_nonzero_shift = false;
+	    for (int end = 0; end < 2; ++end) {
+		if (!parameter_unique_endpoint(required_endpoint[end]))
+		    continue;
+		have_endpoint = true;
+		const ON_3dPoint endpoint = curve->PointAt(curve_domain[end]);
+		if (!endpoint.IsValid())
+		    return false;
+		for (int direction = 0; direction < 2; ++direction) {
+		    const ON_Interval domain = surface->Domain(direction);
+		    const double parameter_tolerance = std::max(
+			ON_ZERO_TOLERANCE * kNumericalToleranceScale,
+			kPeriodicParameterSnapFraction * std::max(1.0,
+			    domain.Length()));
+		    const double delta = (*required_endpoint[end])[direction] -
+			endpoint[direction];
+		    double shift = 0.0;
+		    if (fabs(delta) > parameter_tolerance) {
+			if (!surface->IsClosed(direction) ||
+				!(domain.Length() > ON_ZERO_TOLERANCE))
+			    return false;
+			shift = round(delta / domain.Length()) * domain.Length();
+			if (fabs(delta - shift) > parameter_tolerance)
+			    return false;
+			have_nonzero_shift = have_nonzero_shift ||
+			    fabs(shift) > parameter_tolerance;
+		    }
+		}
+	    }
+	    return have_endpoint && have_nonzero_shift;
+	};
+	if (regenerated &&
+		has_integral_period_endpoint_mismatch(trim.TrimCurveOf())) {
+	    bool aligned = false;
+	    std::string alignment_failure;
+	    for (int anchor = 0; !aligned && anchor < 2; ++anchor) {
+		if (!parameter_unique_endpoint(required_endpoint[anchor]))
+		    continue;
+		double measured_mismatch = 0.0;
+		ON_Curve *translated = translated_periodic_trim_for_join(surface,
+		    trim, *required_endpoint[anchor], anchor == 0,
+		    &alignment_failure, regeneration_tolerance,
+		    &measured_mismatch);
+		if (!translated)
+		    continue;
+		if (!matches_required_endpoints(translated)) {
+		    delete translated;
+		    alignment_failure =
+			"uniform periodic translation did not satisfy both "
+			"required endpoints";
+		    continue;
+		}
+		const int translated_c2 = brep->AddTrimCurve(translated);
+		if (translated_c2 >= 0 &&
+			brep->SetTrimCurve(trim, translated_c2)) {
+		    brep->SetTrimIsoFlags(trim);
+		    aligned = true;
+		    wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
+			"translated a regenerated pcurve onto its required periodic branch");
+		} else if (translated_c2 < 0) {
+		    delete translated;
+		}
+	    }
+	    if (!aligned) {
+		regenerated = false;
+		failure = alignment_failure.empty() ?
+		    "regenerated pcurve did not honor its required periodic endpoints" :
+		    alignment_failure;
+	    }
+	}
 	/* Prefer a new pcurve driven by the exact 3-D edge.  Only when both that
 	 * bounded regeneration and the independently measured edge/surface retry
 	 * fail may safe mode retain the existing pcurve at a measured local
@@ -12966,6 +14629,277 @@ repair_missing_singular_trims(ON_Brep *brep, STEPWrapper *wrapper,
 		    }
 		};
 		int surface_side = singular_side(singular_iso);
+		const ON_Interval connector_u_domain = surface->Domain(0);
+		const ON_Interval connector_v_domain = surface->Domain(1);
+		const double connector_u_guard = std::max(ON_ZERO_TOLERANCE,
+		    connector_u_domain.Length() * 1.0e-10);
+		const double connector_v_guard = std::max(ON_ZERO_TOLERANCE,
+		    connector_v_domain.Length() * 1.0e-10);
+		const auto boundary_side = [](double value,
+			const ON_Interval &domain, double guard) {
+		    if (fabs(value - domain.Min()) <= guard)
+			return 0;
+		    if (fabs(value - domain.Max()) <= guard)
+			return 1;
+		    return -1;
+		};
+		const int first_u_side = boundary_side(first_end.x,
+		    connector_u_domain, connector_u_guard);
+		const int first_v_side = boundary_side(first_end.y,
+		    connector_v_domain, connector_v_guard);
+		const int second_u_side = boundary_side(second_start.x,
+		    connector_u_domain, connector_u_guard);
+		const int second_v_side = boundary_side(second_start.y,
+		    connector_v_domain, connector_v_guard);
+		const bool opposite_corners = surface_side < 0 &&
+		    connector_u_domain.IsIncreasing() &&
+		    connector_v_domain.IsIncreasing() &&
+		    first_u_side >= 0 && first_v_side >= 0 &&
+		    second_u_side >= 0 && second_v_side >= 0 &&
+		    first_u_side != second_u_side &&
+		    first_v_side != second_v_side;
+		if (opposite_corners && wrapper->Verbose()) {
+		    const ON_3dPoint &candidate_vertex =
+			brep->m_V[first->m_vi[1]].point;
+		    double boundary_distance[4] = {0.0, 0.0, 0.0, 0.0};
+		    bool boundary_valid[4] = {true, true, true, true};
+		    for (int side = 0; side < 4; ++side) {
+			for (int sample = 0; sample <=
+				kDenseValidationSegments; ++sample) {
+			    const double fraction = static_cast<double>(sample) /
+				kDenseValidationSegments;
+			    ON_3dPoint uv;
+			    if (side == 0)
+				uv.Set(connector_u_domain.ParameterAt(fraction),
+				    connector_v_domain.Min(), 0.0);
+			    else if (side == 1)
+				uv.Set(connector_u_domain.Max(),
+				    connector_v_domain.ParameterAt(fraction), 0.0);
+			    else if (side == 2)
+				uv.Set(connector_u_domain.ParameterAt(fraction),
+				    connector_v_domain.Max(), 0.0);
+			    else
+				uv.Set(connector_u_domain.Min(),
+				    connector_v_domain.ParameterAt(fraction), 0.0);
+			    const ON_3dPoint lift = surface->PointAt(uv.x, uv.y);
+			    if (!lift.IsValid()) {
+				boundary_valid[side] = false;
+				break;
+			    }
+			    boundary_distance[side] = std::max(
+				boundary_distance[side],
+				lift.DistanceTo(candidate_vertex));
+			}
+		    }
+		    std::cerr << entity_type << " #" << entity_id << ": loop "
+			<< li << "/STEP" << loop.m_loop_user.i
+			<< " non-isoparametric missing connector T"
+			<< first->m_trim_index << "->T" << second->m_trim_index
+			<< " uv=" << first_end.x << ':' << first_end.y << "->"
+			<< second_start.x << ':' << second_start.y
+			<< " surface singular(S/E/N/W)="
+			<< surface->IsSingular(0) << '/'
+			<< surface->IsSingular(1) << '/'
+			<< surface->IsSingular(2) << '/'
+			<< surface->IsSingular(3)
+			<< " boundary maximum vertex distances="
+			<< (boundary_valid[0] ? boundary_distance[0] : DBL_MAX)
+			<< '/' << (boundary_valid[1] ? boundary_distance[1] : DBL_MAX)
+			<< '/' << (boundary_valid[2] ? boundary_distance[2] : DBL_MAX)
+			<< '/' << (boundary_valid[3] ? boundary_distance[3] : DBL_MAX)
+			<< std::endl;
+		}
+		if (opposite_corners) {
+		    /* A rectangular surface parameterization can represent a corner
+		     * pole with two consecutive collapsed sides.  STEP then needs no
+		     * geometric edge between opposite UV corners, but OpenNURBS needs
+		     * both zero-length topology uses explicitly.  Test the two
+		     * possible native-boundary routes and accept only one whose
+		     * complete sides densely lift to the asserted vertex.
+		     *
+		     * Do not select a route which repeats an adjacent boundary trim:
+		     * that would create overlapping CDT constraints even though the
+		     * duplicate singular curves are structurally legal. */
+		    struct CollapsedCornerPath {
+			ON_3dPoint points[3];
+			ON_Surface::ISO iso[2];
+			int side[2];
+			double maximum_distance;
+			double tolerance;
+			bool adjusted;
+			bool valid;
+		    };
+		    CollapsedCornerPath paths[2] = {};
+		    paths[0].points[0] = first_end;
+		    paths[0].points[1].Set(second_start.x, first_end.y, 0.0);
+		    paths[0].points[2] = second_start;
+		    paths[0].iso[0] = first_v_side == 0 ?
+			ON_Surface::S_iso : ON_Surface::N_iso;
+		    paths[0].side[0] = first_v_side == 0 ? 0 : 2;
+		    paths[0].iso[1] = second_u_side == 0 ?
+			ON_Surface::W_iso : ON_Surface::E_iso;
+		    paths[0].side[1] = second_u_side == 0 ? 3 : 1;
+		    paths[1].points[0] = first_end;
+		    paths[1].points[1].Set(first_end.x, second_start.y, 0.0);
+		    paths[1].points[2] = second_start;
+		    paths[1].iso[0] = first_u_side == 0 ?
+			ON_Surface::W_iso : ON_Surface::E_iso;
+		    paths[1].side[0] = first_u_side == 0 ? 3 : 1;
+		    paths[1].iso[1] = second_v_side == 0 ?
+			ON_Surface::S_iso : ON_Surface::N_iso;
+		    paths[1].side[1] = second_v_side == 0 ? 0 : 2;
+
+		    ON_BoundingBox surface_bounds;
+		    const double surface_scale = surface->GetBoundingBox(
+			surface_bounds, false) && surface_bounds.IsValid() ?
+			surface_bounds.Diagonal().Length() : 0.0;
+		    const double adjustment_limit = std::max(
+			LocalUnits::tolerance, surface_scale *
+			kCollapsedBoundaryMaximumRelativeMismatch);
+		    const ON_3dPoint &vertex =
+			brep->m_V[first->m_vi[1]].point;
+		    const bool nurbs_surface = ON_NurbsSurface::Cast(surface) != NULL;
+		    int valid_paths = 0;
+		    int selected_path = -1;
+		    for (int path_index = 0; path_index < 2; ++path_index) {
+			CollapsedCornerPath &path = paths[path_index];
+			path.valid = true;
+			path.maximum_distance = 0.0;
+			path.tolerance = LocalUnits::tolerance;
+			path.adjusted = false;
+			for (int segment = 0; segment < 2; ++segment) {
+			    if (path.iso[segment] == first->m_iso ||
+				    path.iso[segment] == second->m_iso) {
+				path.valid = false;
+				break;
+			    }
+			    if (!surface->IsSingular(path.side[segment]) &&
+				    !nurbs_surface) {
+				path.valid = false;
+				break;
+			    }
+			    ON_LineCurve boundary(path.points[segment],
+				path.points[segment + 1]);
+			    const ON_Interval boundary_domain = boundary.Domain();
+			    if (!boundary.ChangeDimension(2) || !boundary.IsValid() ||
+				    surface->IsIsoparametric(boundary,
+					&boundary_domain) != path.iso[segment]) {
+				path.valid = false;
+				break;
+			    }
+			    for (int sample = 0; path.valid &&
+				    sample <= kDenseValidationSegments; ++sample) {
+				const ON_3dPoint uv = boundary.PointAt(
+				    boundary.Domain().ParameterAt(
+					static_cast<double>(sample) /
+					kDenseValidationSegments));
+				const ON_3dPoint lift =
+				    closed_surface_point_at(surface, uv);
+				if (!lift.IsValid()) {
+				    path.valid = false;
+				    break;
+				}
+				path.maximum_distance = std::max(
+				    path.maximum_distance, lift.DistanceTo(vertex));
+			    }
+			}
+			if (!path.valid)
+			    continue;
+			if (path.maximum_distance > LocalUnits::tolerance) {
+			    const double adjusted = path.maximum_distance *
+				kRegenerationToleranceSafety;
+			    if (wrapper->ImportOptions().exact ||
+				    wrapper->ImportOptions().repair !=
+					brlcad::step::RepairMode::Safe ||
+				    adjusted > adjustment_limit) {
+				path.valid = false;
+				continue;
+			    }
+			    path.tolerance = adjusted;
+			    path.adjusted = true;
+			}
+			++valid_paths;
+			selected_path = path_index;
+		    }
+		    if (valid_paths == 1 && selected_path >= 0) {
+			const CollapsedCornerPath &path = paths[selected_path];
+			const int corner_vertex_index = first->m_vi[1];
+			std::unique_ptr<ON_Brep> rollback(new ON_Brep(*brep));
+			std::vector<int> original_trims;
+			original_trims.reserve(original_count);
+			for (int offset = 0; offset < original_count; ++offset)
+			    original_trims.push_back(loop.m_ti[offset]);
+			std::unique_ptr<ON_LineCurve> first_curve(
+			    new ON_LineCurve(path.points[0], path.points[1]));
+			std::unique_ptr<ON_LineCurve> second_curve(
+			    new ON_LineCurve(path.points[1], path.points[2]));
+			bool installed = first_curve->ChangeDimension(2) &&
+			    second_curve->ChangeDimension(2) &&
+			    first_curve->IsValid() && second_curve->IsValid();
+			const int first_c2 = installed ?
+			    brep->AddTrimCurve(first_curve.release()) : -1;
+			const int second_c2 = installed ?
+			    brep->AddTrimCurve(second_curve.release()) : -1;
+			installed = first_c2 >= 0 && second_c2 >= 0;
+			int first_singular = -1;
+			int second_singular = -1;
+			if (installed) {
+			    first_singular = brep->NewSingularTrim(
+				brep->m_V[corner_vertex_index], loop, path.iso[0],
+				first_c2).m_trim_index;
+			    second_singular = brep->NewSingularTrim(
+				brep->m_V[corner_vertex_index], loop, path.iso[1],
+				second_c2).m_trim_index;
+			    installed = first_singular >= 0 &&
+				second_singular >= 0;
+			}
+			if (installed) {
+			    brep->m_T[first_singular].m_tolerance[0] =
+				path.tolerance;
+			    brep->m_T[first_singular].m_tolerance[1] =
+				path.tolerance;
+			    brep->m_T[second_singular].m_tolerance[0] =
+				path.tolerance;
+			    brep->m_T[second_singular].m_tolerance[1] =
+				path.tolerance;
+			    loop.m_ti.SetCount(0);
+			    for (int offset = 0; offset < original_count; ++offset) {
+				loop.m_ti.Append(original_trims[offset]);
+				if (offset == lti) {
+				    loop.m_ti.Append(first_singular);
+				    loop.m_ti.Append(second_singular);
+				}
+			    }
+			    if (path.adjusted) {
+				brep->m_V[corner_vertex_index].m_tolerance = std::max(
+				    brep->m_V[corner_vertex_index].m_tolerance,
+				    path.tolerance);
+				wrapper->RecordDiagnostic(
+				    brlcad::step::DiagnosticSeverity::Warning,
+				    entity_id, entity_type, "edge_loop",
+				    "two source-collapsed corner boundaries exceeded "
+				    "the declared tolerance; used a densely measured "
+				    "OpenNURBS tolerance");
+			    }
+			    wrapper->RecordRepair(entity_id, entity_type,
+				"edge_loop",
+				path.adjusted ?
+				"inserted a measured-tolerance two-side singular corner chain" :
+				"inserted an exact two-side singular corner chain");
+			    changed = true;
+			    break;
+			}
+			*brep = *rollback;
+			return;
+		    } else if (wrapper->Verbose()) {
+			std::cerr << entity_type << " #" << entity_id << ": loop "
+			    << li << "/STEP" << loop.m_loop_user.i
+			    << " rejected opposite-corner singular chain: "
+			    << valid_paths << " exact boundary routes" << std::endl;
+		    }
+		}
+		if (changed)
+		    break;
 		bool interior_connector_collapsed = false;
 		if (surface_side < 0 && first->m_vi[1] >= 0 &&
 			first->m_vi[1] < brep->m_V.Count() &&
@@ -13398,6 +15332,101 @@ repair_missing_singular_trims(ON_Brep *brep, STEPWrapper *wrapper,
 }
 
 
+/* Periodic branch normalization can make a singular connector which was
+ * needed earlier in the transaction redundant: its two ordinary neighbours
+ * now meet at the same parameter image, while the old connector winds away
+ * from and back to that image along a collapsed surface side.  OpenNURBS
+ * correctly rejects such a singular trim because its pcurve is closed.
+ *
+ * Remove only a zero-topology connector whose exposed neighbours already
+ * meet numerically and whose literal surface images still agree with the
+ * shared topology vertex.  This does not discard a STEP edge (singular trims
+ * have none), and it cannot erase a required pole-side span because any
+ * distinct neighbouring parameter images fail the exposed-join test. */
+static size_t
+remove_redundant_closed_singular_trims(ON_Brep *brep, STEPWrapper *wrapper,
+	int entity_id, const std::string &entity_type)
+{
+    if (!brep || !wrapper || !(LocalUnits::tolerance > 0.0))
+	return 0;
+
+    size_t removed = 0;
+    const int repair_budget = brep->m_T.Count();
+    for (int repair = 0; repair < repair_budget; ++repair) {
+	bool changed = false;
+	for (int li = 0; li < brep->m_L.Count() && !changed; ++li) {
+	    ON_BrepLoop &loop = brep->m_L[li];
+	    const ON_BrepFace *face = loop.Face();
+	    const ON_Surface *surface = face ? face->SurfaceOf() : NULL;
+	    const int trim_count = loop.TrimCount();
+	    if (!surface || trim_count < 2)
+		continue;
+	    for (int lti = 0; lti < trim_count; ++lti) {
+		ON_BrepTrim *trim = loop.Trim(lti);
+		const ON_Curve *curve = trim ? trim->TrimCurveOf() : NULL;
+		if (!trim || !curve || trim->m_type != ON_BrepTrim::singular ||
+			trim->m_ei >= 0 || trim->m_vi[0] < 0 ||
+			trim->m_vi[0] != trim->m_vi[1] ||
+			trim->m_vi[0] >= brep->m_V.Count() ||
+			!curve->IsClosed())
+		    continue;
+		ON_BrepTrim *previous = loop.Trim(
+		    (lti + trim_count - 1) % trim_count);
+		ON_BrepTrim *next = loop.Trim((lti + 1) % trim_count);
+		if (!previous || !next || previous == trim || next == trim ||
+			previous->m_vi[1] != trim->m_vi[0] ||
+			next->m_vi[0] != trim->m_vi[1] ||
+			previous->m_vi[1] != next->m_vi[0])
+		    continue;
+		const ON_3dPoint previous_uv = previous->PointAtEnd();
+		const ON_3dPoint next_uv = next->PointAtStart();
+		if (!previous_uv.IsValid() || !next_uv.IsValid() ||
+			previous_uv.DistanceTo(next_uv) > ON_ZERO_TOLERANCE)
+		    continue;
+		const ON_3dPoint previous_lift =
+		    surface->PointAt(previous_uv.x, previous_uv.y);
+		const ON_3dPoint next_lift =
+		    surface->PointAt(next_uv.x, next_uv.y);
+		const ON_3dPoint &vertex =
+		    brep->m_V[trim->m_vi[0]].point;
+		double tolerance = std::max(LocalUnits::tolerance,
+		    brep->m_V[trim->m_vi[0]].m_tolerance);
+		tolerance = std::max(tolerance,
+		    std::max(previous->m_tolerance[0],
+			previous->m_tolerance[1]));
+		tolerance = std::max(tolerance,
+		    std::max(next->m_tolerance[0], next->m_tolerance[1]));
+		if (previous->Edge())
+		    tolerance = std::max(tolerance,
+			previous->Edge()->m_tolerance);
+		if (next->Edge())
+		    tolerance = std::max(tolerance,
+			next->Edge()->m_tolerance);
+		if (!previous_lift.IsValid() || !next_lift.IsValid() ||
+			previous_lift.DistanceTo(vertex) > tolerance ||
+			next_lift.DistanceTo(vertex) > tolerance ||
+			previous_lift.DistanceTo(next_lift) > tolerance)
+		    continue;
+
+		const int trim_index = trim->m_trim_index;
+		brep->DeleteTrim(brep->m_T[trim_index], true);
+		if (!brep->Compact())
+		    return removed;
+		wrapper->RecordRepair(entity_id, entity_type, "edge_loop",
+		    "removed a redundant closed singular connector after exact "
+		    "periodic branch closure");
+		++removed;
+		changed = true;
+		break;
+	    }
+	}
+	if (!changed)
+	    break;
+    }
+    return removed;
+}
+
+
 static bool
 validate_periodic_trim_translation(const ON_Surface *surface,
 	const ON_BrepTrim &original, const ON_Curve &candidate,
@@ -13801,6 +15830,19 @@ translated_periodic_trim_for_join(const ON_Surface *surface,
 	    continue;
 	}
 	if (!surface->IsClosed(axis) || !(period > ON_ZERO_TOLERANCE)) {
+	    /* A whole-period shift in the closed coordinate can be accompanied
+	     * by a small residual in the transverse, open coordinate.  Safe mode
+	     * reaches this helper only after both endpoints and their shared STEP
+	     * vertex have passed the bounded model-space join proof.  Preserve
+	     * that transverse coordinate here and let the ordinary endpoint
+	     * transaction reconcile it after the exact integral shift.  The final
+	     * residual lift check below remains authoritative; exact mode supplies
+	     * no bounded tolerance and retains the strict rejection. */
+	    if (bounded_lift_tolerance > 0.0) {
+		translation[axis] = 0.0;
+		bounded_parameter_residual = true;
+		continue;
+	    }
 	    if (failure)
 		*failure = "the endpoint difference was not on a closed surface direction";
 	    return NULL;
@@ -13977,6 +16019,7 @@ verified_regeneration_tolerance(ON_BrepTrim &trim,
 	const std::string &entity_type)
 {
     if (!surface || !wrapper || wrapper->ImportOptions().exact ||
+	    wrapper->ImportOptions().repair != brlcad::step::RepairMode::Safe ||
 	    !(tolerance > 0.0))
 	return tolerance;
 
@@ -14277,7 +16320,7 @@ repair_exact_periodic_loop_branches(ON_Brep *brep, STEPWrapper *wrapper,
 static size_t
 regenerate_periodic_loop_chains(ON_Brep *brep, STEPWrapper *wrapper,
 	int entity_id, const std::string &entity_type, int only_loop = -1,
-	bool record_repair = true)
+	bool record_repair = true, bool prefer_cyclic_start_image = false)
 {
     if (!brep || !wrapper || !(LocalUnits::tolerance > 0.0))
 	return 0;
@@ -14403,6 +16446,32 @@ regenerate_periodic_loop_chains(ON_Brep *brep, STEPWrapper *wrapper,
 	    normalize_closed_surface_parameter(surface, first_edge->PointAt(
 		first_edge->Domain()[first->m_bRev3d ? 1 : 0]),
 		first_tolerance, loop_start);
+	if (prefer_cyclic_start_image && first && first_edge &&
+		loop_start.IsValid()) {
+	    const ON_BrepTrim *last = loop.Trim(loop.TrimCount() - 1);
+	    const ON_3dPoint last_end = last ? last->PointAtEnd() :
+		ON_3dPoint::UnsetPoint;
+	    const ON_3dPoint edge_start = first_edge->PointAt(
+		first_edge->Domain()[first->m_bRev3d ? 1 : 0]);
+	    if (last_end.IsValid() && edge_start.IsValid()) {
+		for (int direction = 0; direction < 2; ++direction) {
+		    if (!surface->IsClosed(direction))
+			continue;
+		    const double period = surface->Domain(direction).Length();
+		    if (!(period > ON_ZERO_TOLERANCE))
+			continue;
+		    ON_3dPoint shifted = loop_start;
+		    shifted[direction] += round((last_end[direction] -
+			shifted[direction]) / period) * period;
+		    const ON_3dPoint shifted_lift =
+			closed_surface_point_at(surface, shifted);
+		    if (shifted_lift.IsValid() &&
+			    shifted_lift.DistanceTo(edge_start) <=
+				first_tolerance)
+			loop_start = shifted;
+		}
+	    }
+	}
 
 	bool regenerated = first && first_edge && loop_start.IsValid();
 	ON_3dPoint required_start = loop_start;
@@ -14434,7 +16503,7 @@ regenerate_periodic_loop_chains(ON_Brep *brep, STEPWrapper *wrapper,
 	    regenerated = trim && edge && edge_nurbs.IsValid() &&
 		regenerate_trim_polyline(brep, *trim, surface, edge_nurbs,
 		    tolerance, &failure, NULL, &required_start, required_end, true,
-		    wrapper, has_paired_edge_use);
+		    wrapper, has_paired_edge_use || prefer_cyclic_start_image);
 	    if (regenerated)
 		required_start = trim->PointAtEnd();
 	}
@@ -14446,6 +16515,22 @@ regenerate_periodic_loop_chains(ON_Brep *brep, STEPWrapper *wrapper,
 		next->PointAtStart()) : DBL_MAX;
 	    if (previous && next && gap <= ON_ZERO_TOLERANCE)
 		continue;
+	    if (prefer_cyclic_start_image && wrapper && wrapper->Verbose() &&
+		    previous && next) {
+		const ON_3dPoint previous_end = previous->PointAtEnd();
+		const ON_3dPoint next_start = next->PointAtStart();
+		const ON_BrepEdge *previous_edge = previous->Edge();
+		const ON_BrepEdge *next_edge = next->Edge();
+		std::cerr << entity_type << " #" << entity_id << ": loop " << li
+		    << " regenerated cyclic join " << lti << '/'
+		    << (lti + 1) % loop.TrimCount() << " remained open by "
+		    << gap << " at " << previous_end.x << ':' << previous_end.y
+		    << " -> " << next_start.x << ':' << next_start.y
+		    << " (STEP edges "
+		    << (previous_edge ? previous_edge->m_edge_user.i : 0) << '/'
+		    << (next_edge ? next_edge->m_edge_user.i : 0) << ')'
+		    << std::endl;
+	    }
 	    bool topology_proves_join = false;
 	    if (previous && next && previous->m_vi[1] >= 0 &&
 		    previous->m_vi[1] == next->m_vi[0] &&
@@ -14712,9 +16797,13 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 	return candidate.release();
     };
     std::set<int> attempted_edge_regeneration;
-    std::set<int> measured_singular_join_trims;
+    std::set<int> measured_join_trims;
+    std::set<int> measured_source_join_trims;
     std::set<int> translated_trim_indices;
     std::map<int, std::set<std::vector<double> > > seen_loop_states;
+    ON_BoundingBox item_bounds;
+    const double item_scale = brep->GetBoundingBox(item_bounds, false) &&
+	item_bounds.IsValid() ? item_bounds.Diagonal().Length() : 0.0;
 
     const auto loop_endpoint_state = [](const ON_BrepLoop &loop) {
 	std::vector<double> state;
@@ -14804,6 +16893,78 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		const ON_3dPoint previous_lift = surface->PointAt(
 		    previous_uv.x, previous_uv.y);
 		const ON_3dPoint next_lift = surface->PointAt(next_uv.x, next_uv.y);
+		/* If an exporter asserted that an exact 3-D edge lies on this
+		 * surface but the closest surface locus genuinely misses the shared
+		 * topology vertex, the declared uncertainty is not an achievable
+		 * OpenNURBS tolerance for this one association.  Safe mode may use a
+		 * larger local tolerance only after measuring the complete immutable
+		 * edge against the surface and applying the ordinary scale bounds.
+		 * This proof is needed for ordinary joins as well as pole joins:
+		 * rejecting the endpoint before measuring it leaves a repairable loop
+		 * open.  --exact and --repair none never enter this path. */
+		if (!wrapper->ImportOptions().exact &&
+			wrapper->ImportOptions().repair ==
+			    brlcad::step::RepairMode::Safe &&
+			previous_lift.IsValid() && next_lift.IsValid() &&
+			(previous_lift.DistanceTo(vertex) > join_tolerance ||
+			 next_lift.DistanceTo(vertex) > join_tolerance)) {
+		    ON_BrepTrim *join_trims[2] = {previous, next};
+		    for (int join_side = 0; join_side < 2; ++join_side) {
+			ON_BrepTrim *join_trim = join_trims[join_side];
+			ON_BrepEdge *join_edge = join_trim ?
+			    join_trim->Edge() : NULL;
+			ON_NurbsCurve join_edge_nurbs;
+			if (!join_trim || !join_edge ||
+				!measured_join_trims.insert(
+				    join_trim->m_trim_index).second ||
+				!join_edge->GetNurbForm(join_edge_nurbs))
+			    continue;
+			join_tolerance = std::max(join_tolerance,
+			    verified_regeneration_tolerance(*join_trim,
+				*join_edge, surface, join_edge_nurbs,
+				join_tolerance, brep, wrapper, entity_id,
+				entity_type));
+		    }
+		}
+		/* The exact 3-D edge may lie on the surface even though the
+		 * exporter's supplied pcurve follows that association with a small,
+		 * scale-bounded offset.  In that case the surface-regeneration
+		 * measurement above correctly returns no larger tolerance, but
+		 * rejecting the join before measuring the existing pcurve prevents
+		 * the later transactional endpoint repair from running.  Measure the
+		 * complete pcurve/edge association once per trim and use its bounded
+		 * safe-mode tolerance only to admit the candidate construction below.
+		 * The candidate still has to pass dense edge, lift, and shared-vertex
+		 * validation; --exact bypasses this path. */
+		if (!wrapper->ImportOptions().exact &&
+			wrapper->ImportOptions().repair ==
+			    brlcad::step::RepairMode::Safe &&
+			previous_lift.IsValid() && next_lift.IsValid() &&
+			(previous_lift.DistanceTo(vertex) > join_tolerance ||
+			 next_lift.DistanceTo(vertex) > join_tolerance)) {
+		    ON_BrepTrim *join_trims[2] = {previous, next};
+		    for (int join_side = 0; join_side < 2; ++join_side) {
+			ON_BrepTrim *join_trim = join_trims[join_side];
+			ON_BrepEdge *join_edge = join_trim ?
+			    join_trim->Edge() : NULL;
+			ON_NurbsCurve join_edge_nurbs;
+			if (!join_trim || !join_edge ||
+				!measured_source_join_trims.insert(
+				    join_trim->m_trim_index).second ||
+				!join_edge->GetNurbForm(join_edge_nurbs))
+			    continue;
+			const double existing_tolerance = std::max(
+			    LocalUnits::tolerance,
+			    std::max(join_edge->m_tolerance,
+				std::max(join_trim->m_tolerance[0],
+				    join_trim->m_tolerance[1])));
+			join_tolerance = std::max(join_tolerance,
+			    verified_source_pcurve_tolerance(*join_trim,
+				*join_edge, surface, join_edge_nurbs,
+				existing_tolerance, brep, wrapper, entity_id,
+				entity_type));
+		    }
+		}
 		if (!previous_lift.IsValid() || !next_lift.IsValid() ||
 			previous_lift.DistanceTo(vertex) > join_tolerance ||
 			next_lift.DistanceTo(vertex) > join_tolerance) {
@@ -14824,6 +16985,73 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		    continue;
 		}
 
+		/* A full-period UV gap at a collapsed surface boundary is not an
+		 * ordinary branch mismatch.  It is the parameter-space span of a
+		 * required singular connector.  Snapping either neighboring pcurve
+		 * across that gap can collapse a short, distinct-vertex STEP edge
+		 * into a closed c2 curve, which OpenNURBS correctly rejects.
+		 *
+		 * Preserve the gap only after both endpoint lifts have passed the
+		 * shared topology-vertex proof above and the surface differential
+		 * independently proves a singular point at both periodic images.
+		 * repair_missing_singular_trims() materializes the connector; ordinary
+		 * closed-surface seams, whose differential has full rank, continue
+		 * through the normal branch solver. */
+		const auto singular_parameter = [surface](const ON_3dPoint &uv) {
+		    const ON_3dPoint native =
+			closed_surface_native_parameter(surface, uv);
+		    if (!native.IsValid())
+			return false;
+		    if (surface->IsAtSingularity(native.x, native.y, false))
+			return true;
+		    ON_3dPoint point;
+		    ON_3dVector du, dv;
+		    if (!surface->Ev1Der(native.x, native.y, point, du, dv))
+			return false;
+		    const double a = du * du;
+		    const double b = du * dv;
+		    const double c = dv * dv;
+		    const double determinant = a * c - b * b;
+		    const double numerical_floor = ON_ZERO_TOLERANCE *
+			std::max(1.0, a * c);
+		    return fabs(determinant) <= numerical_floor;
+		};
+		bool required_singular_connector = false;
+		for (int direction = 0; direction < 2; ++direction) {
+		    if (!surface->IsClosed(direction))
+			continue;
+		    const double period = surface->Domain(direction).Length();
+		    if (!(period > ON_ZERO_TOLERANCE))
+			continue;
+		    const double delta =
+			previous_uv[direction] - next_uv[direction];
+		    const double turns = round(delta / period);
+		    const double parameter_tolerance = std::max(
+			ON_ZERO_TOLERANCE * kNumericalToleranceScale,
+			period * kPeriodicParameterSnapFraction);
+		    if (fabs(turns) < 0.5 ||
+			    fabs(delta - turns * period) >
+				parameter_tolerance)
+			continue;
+		    required_singular_connector =
+			singular_parameter(previous_uv) &&
+			singular_parameter(next_uv);
+		    if (required_singular_connector)
+			break;
+		}
+		if (required_singular_connector &&
+			previous->m_type != ON_BrepTrim::singular &&
+			next->m_type != ON_BrepTrim::singular) {
+		    if (wrapper->Verbose())
+			std::cerr << entity_type << " #" << entity_id << ": loop "
+			    << li << "/STEP" << loop.m_loop_user.i
+			    << " retained full-period pole gap between trims "
+			    << previous->m_trim_index << '/'
+			    << next->m_trim_index
+			    << " for an exact singular connector" << std::endl;
+		    continue;
+		}
+
 		/* A trim approaching a collapsed surface boundary can expose a
 		 * source edge/surface separation only in the final few dense
 		 * samples.  Before editing either endpoint, measure the immutable
@@ -14840,7 +17068,7 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		    ON_BrepEdge *ordinary_edge = ordinary ? ordinary->Edge() : NULL;
 		    ON_NurbsCurve ordinary_nurbs;
 		    if (ordinary && ordinary_edge &&
-			    measured_singular_join_trims.insert(
+			    measured_join_trims.insert(
 				ordinary->m_trim_index).second &&
 			    ordinary_edge->GetNurbForm(ordinary_nurbs)) {
 			join_tolerance = std::max(join_tolerance,
@@ -14871,12 +17099,34 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			previous_edge->m_edge_user.i ==
 			    next_edge->m_edge_user.i) {
 		    std::string translation_failure;
-		    const double bounded_lift_tolerance =
-			!wrapper->ImportOptions().exact &&
+		    double bounded_lift_tolerance = -1.0;
+		    if (!wrapper->ImportOptions().exact &&
 			wrapper->ImportOptions().repair ==
-			    brlcad::step::RepairMode::Safe ?
-			join_tolerance *
-			    kPeriodicClosureToleranceMaximumScale : -1.0;
+			    brlcad::step::RepairMode::Safe) {
+			bounded_lift_tolerance = join_tolerance *
+			    kPeriodicClosureToleranceMaximumScale;
+			/* Some exporters mark a fitted NURBS surface closed even
+			 * though raw OpenNURBS evaluation at its two domain sides
+			 * differs by more than twice the declared uncertainty.  A
+			 * whole-period pcurve translation is still usable when both
+			 * its surface lift and immutable 3-D edge association pass
+			 * the same local-feature/item-scale bounds used by exact
+			 * pullback regeneration.  The dense validator below measures
+			 * every accepted translation; this is only its rejection
+			 * ceiling, not the installed tolerance. */
+			if (next_edge) {
+			    const ON_BoundingBox edge_bounds =
+				next_edge->BoundingBox();
+			    const double edge_scale = edge_bounds.IsValid() ?
+				edge_bounds.Diagonal().Length() : 0.0;
+			    bounded_lift_tolerance = std::max(
+				bounded_lift_tolerance,
+				std::max(edge_scale *
+				    kRegenerationMaximumRelativeMismatch,
+				    item_scale *
+				    kRegenerationMaximumRelativeItemMismatch));
+			}
+		    }
 		    double measured_bounded_mismatch = 0.0;
 		    ON_Curve *translated = translated_trim_indices.find(
 			next->m_trim_index) == translated_trim_indices.end() ?
@@ -14964,20 +17214,77 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			previous->m_type != ON_BrepTrim::singular &&
 			next->m_type != ON_BrepTrim::singular) {
 		    std::string translation_failure;
-		    const double bounded_lift_tolerance =
-			!wrapper->ImportOptions().exact &&
+		    double bounded_lift_tolerance = -1.0;
+		    if (!wrapper->ImportOptions().exact &&
 			wrapper->ImportOptions().repair ==
-			    brlcad::step::RepairMode::Safe ?
-			join_tolerance : -1.0;
+			    brlcad::step::RepairMode::Safe) {
+			bounded_lift_tolerance = join_tolerance *
+			    kPeriodicClosureToleranceMaximumScale;
+			if (next_edge) {
+			    const ON_BoundingBox edge_bounds =
+				next_edge->BoundingBox();
+			    const double edge_scale = edge_bounds.IsValid() ?
+				edge_bounds.Diagonal().Length() : 0.0;
+			    bounded_lift_tolerance = std::max(
+				bounded_lift_tolerance,
+				std::max(edge_scale *
+				    kRegenerationMaximumRelativeMismatch,
+				    item_scale *
+				    kRegenerationMaximumRelativeItemMismatch));
+			}
+		    }
+		    double measured_bounded_mismatch = 0.0;
 		    ON_Curve *translated = translated_trim_indices.find(
 			next->m_trim_index) == translated_trim_indices.end() ?
 			translated_periodic_trim_for_join(surface, *next,
 			    previous_uv, true, &translation_failure,
-			    bounded_lift_tolerance) : NULL;
+			    bounded_lift_tolerance,
+			    &measured_bounded_mismatch) : NULL;
+		    double adjusted_tolerance = join_tolerance;
+		    if (translated && measured_bounded_mismatch >
+			    join_tolerance) {
+			adjusted_tolerance = measured_bounded_mismatch *
+			    kRegenerationToleranceSafety;
+			if (adjusted_tolerance > bounded_lift_tolerance) {
+			    std::ostringstream reason;
+			    reason << "measured closed-surface drift "
+				<< std::setprecision(17)
+				<< measured_bounded_mismatch
+				<< " required tolerance " << adjusted_tolerance
+				<< " beyond bounded limit "
+				<< bounded_lift_tolerance;
+			    translation_failure = reason.str();
+			    delete translated;
+			    translated = NULL;
+			}
+		    }
 		    if (translated) {
 			const int c2_index = brep->AddTrimCurve(translated);
 			if (c2_index >= 0 && brep->SetTrimCurve(*next, c2_index)) {
 			    brep->SetTrimIsoFlags(*next);
+			    if (adjusted_tolerance > join_tolerance) {
+				if (next_edge)
+				    next_edge->m_tolerance = std::max(
+					next_edge->m_tolerance,
+					adjusted_tolerance);
+				next->m_tolerance[0] = std::max(
+				    next->m_tolerance[0], adjusted_tolerance);
+				next->m_tolerance[1] = std::max(
+				    next->m_tolerance[1], adjusted_tolerance);
+				join_tolerance = adjusted_tolerance;
+				if (record_changes) {
+				    wrapper->RecordDiagnostic(
+					brlcad::step::DiagnosticSeverity::Warning,
+					entity_id, entity_type, "trim_pcurve",
+					"closed-surface period drift exceeded the declared "
+					"tolerance; used a densely measured local "
+					"OpenNURBS tolerance");
+				    wrapper->RecordRepair(entity_id, entity_type,
+					"trim_pcurve",
+					"adjusted one periodic pcurve tolerance to "
+					"measured closed-surface drift");
+				}
+			    }
 			    record_repair("trim_pcurve",
 				"translated an exact pcurve onto its adjacent periodic branch");
 			    translated_trim_indices.insert(next->m_trim_index);
@@ -14988,12 +17295,80 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			if (c2_index < 0)
 			    delete translated;
 		    }
+		    /* A surface can report a closed parameter direction without
+		     * providing literal periodic evaluation outside its native
+		     * domain.  In that case a whole-period translation correctly
+		     * aligns this endpoint but changes the interior lift, so the
+		     * dense translation proof above rejects it.  Re-pull the exact
+		     * bounded edge with both endpoint images constrained instead:
+		     * this permits the pcurve to follow the surface's native branch
+		     * between two lift-equivalent images without moving either the
+		     * STEP edge or the surface. */
+		    bool integral_period_gap = false;
+		    for (int direction = 0; direction < 2; ++direction) {
+			if (!surface->IsClosed(direction))
+			    continue;
+			const double period =
+			    surface->Domain(direction).Length();
+			if (!(period > ON_ZERO_TOLERANCE))
+			    continue;
+			const double delta =
+			    previous_uv[direction] - next_uv[direction];
+			const double turns = round(delta / period);
+			const double parameter_tolerance = std::max(
+			    ON_ZERO_TOLERANCE * kNumericalToleranceScale,
+			    period * kPeriodicParameterSnapFraction);
+			if (fabs(turns) >= 0.5 &&
+				fabs(delta - turns * period) <=
+				    parameter_tolerance) {
+			    integral_period_gap = true;
+			    break;
+			}
+		    }
+		    std::string constrained_failure;
+		    ON_Curve *constrained_curve = NULL;
+		    ON_NurbsCurve next_edge_nurbs;
+		    const ON_3dPoint required_end = next->PointAtEnd();
+		    const bool constrained = !translated &&
+			integral_period_gap && next_edge &&
+			next_edge->GetNurbForm(next_edge_nurbs) &&
+			regenerate_trim_polyline(brep, *next, surface,
+			    next_edge_nurbs, join_tolerance,
+			    &constrained_failure, NULL, &previous_uv,
+			    &required_end, true, wrapper, true,
+			    &constrained_curve);
+		    if (constrained && constrained_curve) {
+			const int c2_index =
+			    brep->AddTrimCurve(constrained_curve);
+			if (c2_index >= 0 &&
+				brep->SetTrimCurve(*next, c2_index)) {
+			    brep->SetTrimIsoFlags(*next);
+			    record_repair("trim_pcurve",
+				"regenerated an exact pcurve between lift-equivalent "
+				"periodic endpoint images");
+			    translated_trim_indices.insert(next->m_trim_index);
+			    changed = true;
+			    loop_changed = true;
+			    continue;
+			}
+			if (c2_index < 0)
+			    delete constrained_curve;
+		    } else {
+			delete constrained_curve;
+		    }
 		    if (!translated && wrapper->Verbose() &&
-			    !translation_failure.empty())
+			    (!translation_failure.empty() ||
+			     !constrained_failure.empty()))
 			std::cerr << entity_type << " #" << entity_id << ": loop "
 			    << li << " periodic ordinary join "
 			    << previous->m_trim_index << '/' << next->m_trim_index
-			    << " was not translated: " << translation_failure
+			    << " was not translated: "
+			    << (translation_failure.empty() ?
+				"no integral translation candidate" :
+				translation_failure)
+			    << (constrained_failure.empty() ? "" :
+				"; constrained exact-edge pullback: " +
+				    constrained_failure)
 			    << std::endl;
 		}
 
@@ -15417,7 +17792,8 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		    continue;
 		}
 
-		const auto validates = [brep, surface, join_tolerance, wrapper](
+		const auto validates = [brep, surface, &join_tolerance, wrapper,
+		    &boundary_parameter](
 		    const ON_BrepTrim &original,
 		    const ON_Curve &candidate, std::string *failure) {
 		    if (failure)
@@ -15442,16 +17818,50 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			    *failure = "original or candidate parameter domain was invalid";
 			return false;
 		    }
-		    if (original.m_type == ON_BrepTrim::seam ||
-			    original.m_type == ON_BrepTrim::singular) {
+		    if (original.m_type == ON_BrepTrim::seam) {
 			const ON_Surface::ISO derived = surface->IsIsoparametric(
 			    candidate, &candidate_domain);
 			if (derived != original.m_iso) {
 			    if (failure)
-				*failure = original.m_type == ON_BrepTrim::seam ?
-				    "seam iso classification changed" :
-				    "singular boundary iso classification changed";
+				*failure = "seam iso classification changed";
 			    return false;
+			}
+		    } else if (original.m_type == ON_BrepTrim::singular) {
+			/* IsIsoparametric() is deliberately geometric.  On a
+			 * collapsed surface side it may report not_iso (or the
+			 * other direction) even when every UV lies exactly on the
+			 * required native boundary.  For singular topology the
+			 * fixed boundary coordinate is the authoritative
+			 * parameter-space proof; the dense model-space loop below
+			 * independently requires every lift to remain at the STEP
+			 * vertex. */
+			int fixed_axis = -1;
+			double fixed_parameter = ON_UNSET_VALUE;
+			if (!boundary_parameter(surface, original.m_iso,
+				&fixed_axis, &fixed_parameter)) {
+			    if (failure)
+				*failure =
+				    "singular trim had no native boundary ISO";
+			    return false;
+			}
+			const double parameter_tolerance =
+			    ON_ZERO_TOLERANCE * kNumericalToleranceScale *
+			    std::max(1.0, fabs(fixed_parameter));
+			const int boundary_samples = std::min(4096,
+			    std::max(64, candidate.SpanCount() * 8));
+			for (int sample = 0; sample <= boundary_samples; ++sample) {
+			    const ON_3dPoint uv = candidate.PointAt(
+				candidate_domain.ParameterAt(
+				    static_cast<double>(sample) /
+				    boundary_samples));
+			    if (!uv.IsValid() ||
+				    fabs(uv[fixed_axis] - fixed_parameter) >
+					parameter_tolerance) {
+				if (failure)
+				    *failure =
+					"singular pcurve left its native boundary";
+				return false;
+			    }
 			}
 		    }
 		    ON_NurbsCurve edge_nurbs;
@@ -15577,6 +17987,135 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 				*failure = "singular trim lift left its vertex";
 			    return false;
 			}
+		    }
+		    return true;
+		};
+		/* A shared STEP vertex can be farther apart on its two independently
+		 * supplied edge/surface associations than either edge's local
+		 * tolerance, while both associations remain inside the already
+		 * proven join tolerance.  An endpoint-local candidate then needs a
+		 * correspondingly local OpenNURBS trim tolerance for the short
+		 * transition into that common UV.  Measure the complete candidate;
+		 * retain the exact 3-D edge and surface; and authorize only a
+		 * scale-bounded tolerance no larger than the join proof. */
+		const auto verified_endpoint_candidate_tolerance =
+		    [brep, surface, wrapper, entity_id, &entity_type, item_scale,
+		     record_changes](
+			ON_BrepTrim &trim, const ON_Curve &candidate,
+			double candidate_join_tolerance) {
+		    if (wrapper->ImportOptions().exact ||
+			    wrapper->ImportOptions().repair !=
+				brlcad::step::RepairMode::Safe ||
+			    !(candidate_join_tolerance > 0.0))
+			return false;
+		    ON_BrepEdge *edge = trim.Edge();
+		    ON_NurbsCurve edge_nurbs;
+		    if (!edge || !edge->GetNurbForm(edge_nurbs))
+			return false;
+		    const ON_Interval trim_domain = trim.Domain();
+		    const ON_Interval candidate_domain = candidate.Domain();
+		    const ON_Interval edge_domain = edge_nurbs.Domain();
+		    if (!trim_domain.IsIncreasing() ||
+			    !candidate_domain.IsIncreasing() ||
+			    !edge_domain.IsIncreasing())
+			return false;
+
+		    const double existing_tolerance = std::max(
+			LocalUnits::tolerance,
+			std::max(edge->m_tolerance,
+			    std::max(trim.m_tolerance[0],
+				trim.m_tolerance[1])));
+		    const ON_BoundingBox edge_bounds = edge_nurbs.BoundingBox();
+		    const double edge_scale = edge_bounds.IsValid() ?
+			edge_bounds.Diagonal().Length() : 0.0;
+		    const double scale_limit = std::max(existing_tolerance,
+			std::max(edge_scale *
+				kRegenerationMaximumRelativeMismatch,
+			    item_scale *
+				kRegenerationMaximumRelativeItemMismatch));
+		    const double allowed_tolerance =
+			std::min(candidate_join_tolerance, scale_limit);
+		    if (!(allowed_tolerance > existing_tolerance))
+			return false;
+
+		    const int validation_spans = std::max(trim.SpanCount(),
+			candidate.SpanCount());
+		    const int samples = std::min(4096,
+			std::max(64, validation_spans * 8));
+		    double measured = 0.0;
+		    for (int sample = 0; sample <= samples; ++sample) {
+			if ((sample & 63) == 0 &&
+				brlcad::PullbackWorkCancelled())
+			    return false;
+			const double fraction =
+			    static_cast<double>(sample) / samples;
+			const ON_3dPoint source_uv = trim.PointAt(
+			    trim_domain.ParameterAt(fraction));
+			const ON_3dPoint candidate_uv = candidate.PointAt(
+			    candidate_domain.ParameterAt(fraction));
+			const ON_3dPoint source_lift =
+			    closed_surface_point_at(surface, source_uv);
+			const ON_3dPoint candidate_lift =
+			    closed_surface_point_at(surface, candidate_uv);
+			if (!source_lift.IsValid() || !candidate_lift.IsValid() ||
+				source_lift.DistanceTo(candidate_lift) >
+				    candidate_join_tolerance)
+			    return false;
+			const ON_3dPoint corresponding = edge_nurbs.PointAt(
+			    edge_domain.ParameterAt(trim.m_bRev3d ?
+				1.0 - fraction : fraction));
+			if (!corresponding.IsValid())
+			    return false;
+			double distance =
+			    candidate_lift.DistanceTo(corresponding);
+			if (distance > std::max(existing_tolerance, measured) &&
+				sample > 0 && sample < samples) {
+			    double edge_parameter = 0.0;
+			    if (!ON_NurbsCurve_GetClosestPoint(&edge_parameter,
+				    &edge_nurbs, candidate_lift))
+				return false;
+			    distance = std::min(distance,
+				candidate_lift.DistanceTo(
+				    edge_nurbs.PointAt(edge_parameter)));
+			}
+			measured = std::max(measured, distance);
+			if (measured * kRegenerationToleranceSafety >
+				allowed_tolerance)
+			    return false;
+		    }
+		    if (!(measured > existing_tolerance))
+			return false;
+		    const double adjusted =
+			measured * kRegenerationToleranceSafety;
+		    if (!(adjusted <= allowed_tolerance))
+			return false;
+
+		    edge->m_tolerance =
+			std::max(edge->m_tolerance, adjusted);
+		    trim.m_tolerance[0] =
+			std::max(trim.m_tolerance[0], adjusted);
+		    trim.m_tolerance[1] =
+			std::max(trim.m_tolerance[1], adjusted);
+		    if (wrapper->Verbose())
+			std::cerr << entity_type << " #" << entity_id << ": trim "
+			    << trim.m_trim_index << "/STEP edge "
+			    << edge->m_edge_user.i
+			    << " endpoint-local candidate mismatch=" << measured
+			    << " existing tolerance=" << existing_tolerance
+			    << " adjusted tolerance=" << adjusted
+			    << " join/scale bounds=" << candidate_join_tolerance << '/'
+			    << scale_limit << std::endl;
+		    if (record_changes) {
+			wrapper->RecordDiagnostic(
+			    brlcad::step::DiagnosticSeverity::Warning,
+			    entity_id, entity_type, "trim_pcurve",
+			    "independent edge/surface associations at a shared "
+			    "STEP vertex exceeded one trim tolerance; used a "
+			    "densely measured endpoint-local OpenNURBS tolerance");
+			wrapper->RecordRepair(entity_id, entity_type,
+			    "trim_pcurve",
+			    "adjusted one endpoint-local trim tolerance after "
+			    "complete candidate validation");
 		    }
 		    return true;
 		};
@@ -15787,24 +18326,112 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			 * uncertainty.  Regenerate that non-seam pcurve from the edge,
 			 * retaining its shared endpoints, and retry this join on the next
 			 * bounded pass. */
-			ON_BrepTrim *invalid_trim = NULL;
-			if (!previous_valid && previous->m_type != ON_BrepTrim::seam &&
-				previous_failure.compare(0, 13, "edge distance") == 0)
-			    invalid_trim = previous;
-			else if (!next_valid && next->m_type != ON_BrepTrim::seam &&
-				next_failure.compare(0, 13, "edge distance") == 0)
-			    invalid_trim = next;
+			const auto edge_distance_failure = [](const std::string &failure) {
+			    return failure.find("edge distance") !=
+				std::string::npos ||
+				failure.find("directed edge endpoint distance") !=
+				    std::string::npos;
+			};
+			std::vector<ON_BrepTrim *> invalid_trims;
+			if (!previous_valid &&
+				previous->m_type != ON_BrepTrim::seam &&
+				edge_distance_failure(previous_failure))
+			    invalid_trims.push_back(previous);
+			if (!next_valid && next->m_type != ON_BrepTrim::seam &&
+				edge_distance_failure(next_failure))
+			    invalid_trims.push_back(next);
 			bool regenerated = false;
+			ON_BrepTrim *regenerated_trim = NULL;
 			std::string regeneration_failure;
-			if (invalid_trim && attempted_edge_regeneration.insert(
-				invalid_trim->m_trim_index).second) {
-			    const ON_BrepEdge *invalid_edge = invalid_trim->Edge();
+			for (std::vector<ON_BrepTrim *>::iterator invalid =
+				invalid_trims.begin();
+				!regenerated && invalid != invalid_trims.end();
+				++invalid) {
+			    ON_BrepTrim *invalid_trim = *invalid;
+			    if (!attempted_edge_regeneration.insert(
+				    invalid_trim->m_trim_index).second)
+				continue;
+			    ON_BrepEdge *invalid_edge = invalid_trim->Edge();
 			    ON_NurbsCurve edge_nurbs;
-			    if (invalid_edge && invalid_edge->GetNurbForm(edge_nurbs))
-				regenerated = regenerate_trim_polyline(brep, *invalid_trim,
-				    surface, edge_nurbs, LocalUnits::tolerance,
-				    &regeneration_failure, NULL, NULL, NULL, false,
-				    wrapper);
+			    double regeneration_tolerance =
+				LocalUnits::tolerance;
+			    if (invalid_edge)
+				regeneration_tolerance = std::max(
+				    regeneration_tolerance,
+				    invalid_edge->m_tolerance);
+			    regeneration_tolerance = std::max(
+				regeneration_tolerance,
+				std::max(invalid_trim->m_tolerance[0],
+				    invalid_trim->m_tolerance[1]));
+			    if (invalid_edge &&
+				    invalid_edge->GetNurbForm(edge_nurbs)) {
+				/* Regenerating from the supplied pcurve without fixing
+				 * the failed join can faithfully reproduce the same bad
+				 * endpoint and report success.  Preserve the trim's
+				 * already-connected opposite endpoint, constrain this
+				 * endpoint to the loop's validated common UV, and drive
+				 * the interior from the immutable 3-D STEP edge.  The
+				 * pullback helper is transactional: it installs nothing
+				 * unless the complete candidate satisfies its dense
+				 * surface/edge validation. */
+				ON_3dPoint required_start =
+				    invalid_trim->PointAtStart();
+				ON_3dPoint required_end =
+				    invalid_trim->PointAtEnd();
+				if (invalid_trim == previous)
+				    required_end = common;
+				else if (invalid_trim == next)
+				    required_start = common;
+				ON_Curve *regenerated_curve = NULL;
+				const bool generated = regenerate_trim_polyline(brep,
+				    *invalid_trim,
+				    surface, edge_nurbs, regeneration_tolerance,
+				    &regeneration_failure, NULL, &required_start,
+				    &required_end, true, wrapper, true,
+				    &regenerated_curve);
+				/* The pullback helper's adaptive proof is optimized for
+				 * its sampled polyline.  Endpoint reconciliation applies
+				 * the stricter final loop validator, including its dense
+				 * near-end edge-locus check.  Validate before installation
+				 * so a source-driven fallback cannot replace the trim and
+				 * then leave the same join open. */
+				std::string candidate_failure;
+				const ON_3dPoint generated_join =
+				    regenerated_curve ?
+				    (invalid_trim == previous ?
+					regenerated_curve->PointAtEnd() :
+					regenerated_curve->PointAtStart()) :
+				    ON_3dPoint::UnsetPoint;
+				const bool honored_join = generated_join.IsValid() &&
+				    generated_join.DistanceTo(common) <=
+					ON_ZERO_TOLERANCE;
+				if (generated && regenerated_curve &&
+					honored_join &&
+					validates(*invalid_trim, *regenerated_curve,
+					    &candidate_failure)) {
+				    const int c2_index =
+					brep->AddTrimCurve(regenerated_curve);
+				    if (c2_index >= 0 &&
+					    brep->SetTrimCurve(*invalid_trim,
+						c2_index)) {
+					brep->SetTrimIsoFlags(*invalid_trim);
+					regenerated = true;
+					regenerated_trim = invalid_trim;
+				    } else if (c2_index < 0) {
+					delete regenerated_curve;
+				    }
+				} else {
+				    delete regenerated_curve;
+				    if (generated && !honored_join)
+					candidate_failure =
+					    "regenerated curve did not honor the "
+					    "required loop endpoint";
+				    if (!candidate_failure.empty())
+					regeneration_failure =
+					    "final endpoint validation: " +
+					    candidate_failure;
+				}
+			    }
 			}
 			if (regenerated) {
 			    record_repair("trim_pcurve",
@@ -15812,28 +18439,116 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			    if (wrapper->Verbose())
 				std::cerr << entity_type << " #" << entity_id << ": loop "
 				    << li << " regenerated trim "
-				    << invalid_trim->m_trim_index
-				    << " from its exact edge before endpoint repair" << std::endl;
+				    << regenerated_trim->m_trim_index
+				    << "/STEP edge "
+				    << (regenerated_trim->Edge() ?
+					regenerated_trim->Edge()->m_edge_user.i : 0)
+				    << " from its exact edge before endpoint repair; join="
+				    << (regenerated_trim == previous ?
+					regenerated_trim->PointAtEnd().x :
+					regenerated_trim->PointAtStart().x)
+				    << ':'
+				    << (regenerated_trim == previous ?
+					regenerated_trim->PointAtEnd().y :
+					regenerated_trim->PointAtStart().y)
+				    << " required=" << common.x << ':' << common.y
+				    << std::endl;
 			    delete previous_candidate;
 			    delete next_candidate;
 			    changed = true;
 			    loop_changed = true;
 			    continue;
 			}
-			if (wrapper->Verbose())
-			    std::cerr << entity_type << " #" << entity_id << ": loop "
-				<< li << " endpoint candidate "
-				<< previous->m_trim_index << '/' << next->m_trim_index
-				<< " rejected: previous="
-				<< (previous_valid ? "valid" : previous_failure)
-				<< ", next="
-				<< (next_valid ? "valid" : next_failure)
-				<< (regeneration_failure.empty() ? "" :
-				    ", exact-edge regeneration=" + regeneration_failure)
-				<< std::endl;
-			delete previous_candidate;
-			delete next_candidate;
-			continue;
+			/* Exact pullback has now failed for every invalid side.  The
+			 * existing pcurve may still be the exporter's best available
+			 * association when the asserted edge and surface do not agree.
+			 * Measure that complete association densely, apply only the
+			 * scale-bounded local tolerance in safe mode, and revalidate the
+			 * endpoint candidate.  This is not a license to hide a wrong
+			 * branch: a candidate needing more than the measured existing
+			 * source association remains rejected. */
+			bool measured_source_tolerance = false;
+			for (std::vector<ON_BrepTrim *>::iterator invalid =
+				invalid_trims.begin(); invalid != invalid_trims.end();
+				++invalid) {
+			    ON_BrepTrim *invalid_trim = *invalid;
+			    ON_BrepEdge *invalid_edge = invalid_trim->Edge();
+			    ON_NurbsCurve edge_nurbs;
+			    if (!invalid_edge ||
+				    !invalid_edge->GetNurbForm(edge_nurbs))
+				continue;
+			    const double existing_tolerance = std::max(
+				LocalUnits::tolerance,
+				std::max(invalid_edge->m_tolerance,
+				    std::max(invalid_trim->m_tolerance[0],
+					invalid_trim->m_tolerance[1])));
+			    const double verified_tolerance =
+				verified_source_pcurve_tolerance(*invalid_trim,
+				    *invalid_edge, surface, edge_nurbs,
+				    existing_tolerance, brep, wrapper, entity_id,
+				    entity_type);
+			    if (verified_tolerance > existing_tolerance) {
+				join_tolerance = std::max(join_tolerance,
+				    verified_tolerance);
+				measured_source_tolerance = true;
+			    }
+			}
+			if (measured_source_tolerance) {
+			    previous_failure.clear();
+			    next_failure.clear();
+			    previous_valid = !change_previous ||
+				(previous_candidate && validates(*previous,
+				    *previous_candidate, &previous_failure));
+			    next_valid = !change_next ||
+				(next_candidate && validates(*next,
+				    *next_candidate, &next_failure));
+			    localized = previous_valid && next_valid;
+			}
+			/* Exact-edge regeneration and the existing-source
+			 * measurement can both be insufficient when the discrepancy is
+			 * confined to reconciling two valid associations at their
+			 * shared topology vertex.  Measure the already constructed
+			 * endpoint-local candidate itself, bounded by the complete join
+			 * proof, then rerun the ordinary dense validator. */
+			bool measured_candidate_tolerance = false;
+			if (!localized && !previous_valid && previous_candidate)
+			    measured_candidate_tolerance =
+				verified_endpoint_candidate_tolerance(*previous,
+				    *previous_candidate, join_tolerance) ||
+				measured_candidate_tolerance;
+			if (!localized && !next_valid && next_candidate)
+			    measured_candidate_tolerance =
+				verified_endpoint_candidate_tolerance(*next,
+				    *next_candidate, join_tolerance) ||
+				measured_candidate_tolerance;
+			if (measured_candidate_tolerance) {
+			    previous_failure.clear();
+			    next_failure.clear();
+			    previous_valid = !change_previous ||
+				(previous_candidate && validates(*previous,
+				    *previous_candidate, &previous_failure));
+			    next_valid = !change_next ||
+				(next_candidate && validates(*next,
+				    *next_candidate, &next_failure));
+			    localized = previous_valid && next_valid;
+			}
+			if (!localized) {
+			    if (wrapper->Verbose())
+				std::cerr << entity_type << " #" << entity_id << ": loop "
+				    << li << " endpoint candidate "
+				    << previous->m_trim_index << '/' << next->m_trim_index
+				    << " rejected: previous="
+				    << (previous_valid ? "valid" : previous_failure)
+				    << ", next="
+				    << (next_valid ? "valid" : next_failure)
+				    << (regeneration_failure.empty() ? "" :
+					", exact-edge regeneration=" +
+					    regeneration_failure)
+				    << std::endl;
+			    delete previous_candidate;
+			    delete next_candidate;
+			    continue;
+			}
 		    }
 		}
 		const int previous_c2 = previous_candidate ?
@@ -16058,6 +18773,15 @@ repair_paired_seam_loop_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		    if (!endpoint_set || !adjacent_candidate->ChangeDimension(2) ||
 			!adjacent_candidate->IsValid()) {
 			rejection_reason = "an adjacent endpoint candidate was invalid";
+			complete = false;
+			break;
+		    }
+		    if (loop_adjacent[side]->m_vi[0] !=
+			    loop_adjacent[side]->m_vi[1] &&
+			    adjacent_candidate->IsClosed()) {
+			rejection_reason =
+			    "an adjacent endpoint candidate closed between "
+			    "distinct STEP topology vertices";
 			complete = false;
 			break;
 		    }
@@ -17915,6 +20639,15 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
     repair_adjacent_trim_endpoints(brep, wrapper, entity_id, entity_type);
     if (brlcad::PullbackWorkCancelled()) return;
 
+    /* A required pole connector can become a closed, zero-topology winding
+     * after the final coherent branch solve brings its ordinary neighbours to
+     * the same parameter image.  Remove that now-redundant connector before
+     * OpenNURBS validates every trim in the array. */
+    report_stage("removing redundant exact singular connectors");
+    remove_redundant_closed_singular_trims(brep, wrapper, entity_id,
+	entity_type);
+    if (brlcad::PullbackWorkCancelled()) return;
+
     /* Pairwise endpoint sweeps can oscillate when independently supplied
      * periodic boundary edges disagree within a previously measured source
      * tolerance.  Close both uses of their shared seam transactionally after
@@ -18760,6 +21493,13 @@ struct TopologicalKeyholeSplit {
     int original_loop = -1;
     int detached_loop = -1;
     int face = -1;
+    int face_source_tag = 0;
+    int original_marker = 0;
+    int detached_marker = 0;
+    int original_source_tag = 0;
+    int detached_source_tag = 0;
+    std::vector<int> original_edge_tags;
+    std::vector<int> detached_edge_tags;
 };
 
 
@@ -18780,10 +21520,6 @@ split_topological_keyhole_candidate(ON_Brep *brep,
     if (!brep || !split)
 	return false;
 
-    const auto boundary_iso = [](ON_Surface::ISO iso) {
-	return iso == ON_Surface::W_iso || iso == ON_Surface::E_iso ||
-	    iso == ON_Surface::S_iso || iso == ON_Surface::N_iso;
-    };
     for (int li = 0; li < brep->m_L.Count(); ++li) {
 	ON_BrepLoop *loop = &brep->m_L[li];
 	ON_BrepFace *face = loop->Face();
@@ -18797,7 +21533,7 @@ split_topological_keyhole_candidate(ON_Brep *brep,
 	for (int first_offset = 0; first_offset < trim_count; ++first_offset) {
 	    ON_BrepTrim *first = loop->Trim(first_offset);
 	    if (!first || first->m_type != ON_BrepTrim::seam ||
-		    boundary_iso(first->m_iso) || first->m_ei < 0 ||
+		    first->m_ei < 0 ||
 		    first->m_ei >= brep->m_E.Count())
 		continue;
 	    const ON_BrepEdge &edge = brep->m_E[first->m_ei];
@@ -18812,6 +21548,94 @@ split_topological_keyhole_candidate(ON_Brep *brep,
 			second->m_ei != first->m_ei ||
 			second->m_bRev3d == first->m_bRev3d)
 		    continue;
+		/* A damaged pair often has one member misclassified on a native
+		 * boundary and the reciprocal member left as an interior seam, but
+		 * both members can also be incorrectly projected onto nominal W/E
+		 * boundaries.  Pair discovery must therefore be symmetric in loop
+		 * order and ISO classification.  The independent endpoint and
+		 * neighboring-lift proof below—not the cached ISO flags—excludes a
+		 * healthy periodic-band connector. */
+		const ON_Surface *surface = face->SurfaceOf();
+		if (!surface)
+		    continue;
+		const auto endpoint_misses_topology = [brep, surface](
+			const ON_BrepTrim &trim, int endpoint) {
+		    const int vertex_index = trim.m_vi[endpoint];
+		    if (vertex_index < 0 || vertex_index >= brep->m_V.Count())
+			return true;
+		    double tolerance = LocalUnits::tolerance;
+		    const ON_BrepEdge *trim_edge = trim.Edge();
+		    if (trim_edge)
+			tolerance = std::max(tolerance,
+			    trim_edge->m_tolerance);
+		    tolerance = std::max(tolerance,
+			std::max(trim.m_tolerance[0], trim.m_tolerance[1]));
+		    tolerance = std::max(tolerance,
+			brep->m_V[vertex_index].m_tolerance);
+		    const ON_3dPoint uv = endpoint == 0 ?
+			trim.PointAtStart() : trim.PointAtEnd();
+		    const ON_3dPoint lift = surface->PointAt(uv.x, uv.y);
+		    return !lift.IsValid() || lift.DistanceTo(
+			brep->m_V[vertex_index].point) > tolerance;
+		};
+		const auto bridge_join_misses = [brep, loop, surface](
+			int offset) {
+		    const ON_BrepTrim *bridge = loop->Trim(offset);
+		    const ON_BrepTrim *previous = loop->Trim(
+			(offset + loop->TrimCount() - 1) % loop->TrimCount());
+		    const ON_BrepTrim *next = loop->Trim(
+			(offset + 1) % loop->TrimCount());
+		    if (!bridge || !previous || !next)
+			return true;
+		    const ON_3dPoint bridge_start = bridge->PointAtStart();
+		    const ON_3dPoint bridge_end = bridge->PointAtEnd();
+		    const ON_3dPoint previous_end = previous->PointAtEnd();
+		    const ON_3dPoint next_start = next->PointAtStart();
+		    const ON_3dPoint bridge_start_lift = surface->PointAt(
+			bridge_start.x, bridge_start.y);
+		    const ON_3dPoint bridge_end_lift = surface->PointAt(
+			bridge_end.x, bridge_end.y);
+		    const ON_3dPoint previous_lift = surface->PointAt(
+			previous_end.x, previous_end.y);
+		    const ON_3dPoint next_lift = surface->PointAt(
+			next_start.x, next_start.y);
+		    double start_tolerance = LocalUnits::tolerance;
+		    double end_tolerance = LocalUnits::tolerance;
+		    if (previous->Edge())
+			start_tolerance = std::max(start_tolerance,
+			    previous->Edge()->m_tolerance);
+		    if (next->Edge())
+			end_tolerance = std::max(end_tolerance,
+			    next->Edge()->m_tolerance);
+		    if (bridge->m_vi[0] >= 0 &&
+			    bridge->m_vi[0] < brep->m_V.Count())
+			start_tolerance = std::max(start_tolerance,
+			    brep->m_V[bridge->m_vi[0]].m_tolerance);
+		    if (bridge->m_vi[1] >= 0 &&
+			    bridge->m_vi[1] < brep->m_V.Count())
+			end_tolerance = std::max(end_tolerance,
+			    brep->m_V[bridge->m_vi[1]].m_tolerance);
+		    return !bridge_start_lift.IsValid() ||
+			!bridge_end_lift.IsValid() || !previous_lift.IsValid() ||
+			!next_lift.IsValid() ||
+			bridge_start_lift.DistanceTo(previous_lift) >
+			    start_tolerance ||
+			bridge_end_lift.DistanceTo(next_lift) > end_tolerance;
+		};
+		/* A healthy repeated edge may be the zero-area connector between
+		 * two noncontractible boundaries of one periodic face band.
+		 * Removing it and treating both cycles as independent faces is
+		 * topologically wrong.  This late fallback is only for a bridge
+		 * whose generated pcurve demonstrably misses its own immutable
+		 * topology vertex; exact coincident bridges were already handled by
+		 * the ordinary keyhole normalizer. */
+		if (!endpoint_misses_topology(*first, 0) &&
+			!endpoint_misses_topology(*first, 1) &&
+			!endpoint_misses_topology(*second, 0) &&
+			!endpoint_misses_topology(*second, 1) &&
+			!bridge_join_misses(first_offset) &&
+			!bridge_join_misses(second_offset))
+		    continue;
 
 		std::vector<int> inside;
 		std::vector<int> outside;
@@ -18822,6 +21646,27 @@ split_topological_keyhole_candidate(ON_Brep *brep,
 		for (int offset = 0; offset < first_offset; ++offset)
 		    outside.push_back(loop->m_ti[offset]);
 		if (inside.empty() || outside.empty())
+		    continue;
+		const auto source_edge_tags = [brep](const std::vector<int> &trims) {
+		    std::vector<int> tags;
+		    for (std::vector<int>::const_iterator trim = trims.begin();
+			    trim != trims.end(); ++trim) {
+			if (*trim < 0 || *trim >= brep->m_T.Count())
+			    continue;
+			const ON_BrepEdge *source_edge =
+			    brep->m_T[*trim].Edge();
+			if (source_edge && source_edge->m_edge_user.i > 0)
+			    tags.push_back(source_edge->m_edge_user.i);
+		    }
+		    std::sort(tags.begin(), tags.end());
+		    tags.erase(std::unique(tags.begin(), tags.end()), tags.end());
+		    return tags;
+		};
+		const std::vector<int> original_edge_tags =
+		    source_edge_tags(outside);
+		const std::vector<int> detached_edge_tags =
+		    source_edge_tags(inside);
+		if (original_edge_tags.empty() || detached_edge_tags.empty())
 		    continue;
 		/* The shared edge supplies the bridge endpoints.  Each exposed chain
 		 * must already close at the same immutable topology vertex; only its
@@ -18859,6 +21704,39 @@ split_topological_keyhole_candidate(ON_Brep *brep,
 		detached->m_fi = face_index;
 		brep->m_F[face_index].m_li.Append(detached_loop_index);
 
+		/* DeleteTrim() and Compact() can renumber every loop after an
+		 * already orphaned source loop.  Array indices captured before
+		 * compaction are therefore not stable identities: using them in
+		 * the transactional validation below can find the right geometry
+		 * under the wrong face, or fail to find the detached loop at all.
+		 * Give both candidate loops temporary, collision-free negative
+		 * source tags, recover their compacted indices, then restore the
+		 * externally meaningful source tags before returning. */
+		int original_marker = -1;
+		int detached_marker = -2;
+		const auto marker_in_use = [brep](int marker) {
+		    for (int marker_loop = 0; marker_loop < brep->m_L.Count();
+			    ++marker_loop)
+			if (brep->m_L[marker_loop].m_loop_user.i == marker)
+			    return true;
+		    return false;
+		};
+		while (marker_in_use(original_marker))
+		    --original_marker;
+		detached_marker = original_marker - 1;
+		while (marker_in_use(detached_marker))
+		    --detached_marker;
+		const int original_source_tag = loop->m_loop_user.i;
+		/* Both separated cycles came from the same authoritative STEP
+		 * EDGE_LOOP.  Carry that ID on the synthetic detached cycle as
+		 * well; the two immutable edge-ID sets distinguish the cycles,
+		 * while the source-loop ID distinguishes either one from an
+		 * adjacent face using the same solid edges. */
+		const int detached_source_tag = original_source_tag;
+		const int face_source_tag = face->m_face_user.i;
+		loop->m_loop_user.i = original_marker;
+		detached->m_loop_user.i = detached_marker;
+
 		brep->m_T[first_trim_index].m_li = -1;
 		brep->m_T[second_trim_index].m_li = -1;
 		const int higher_trim = std::max(first_trim_index, second_trim_index);
@@ -18867,9 +21745,42 @@ split_topological_keyhole_candidate(ON_Brep *brep,
 		brep->DeleteTrim(brep->m_T[lower_trim], true);
 		if (!brep->Compact())
 		    return false;
-		split->original_loop = li;
-		split->detached_loop = detached_loop_index;
-		split->face = face_index;
+		int compacted_original = -1;
+		int compacted_detached = -1;
+		for (int compacted_loop = 0; compacted_loop < brep->m_L.Count();
+			++compacted_loop) {
+		    if (brep->m_L[compacted_loop].m_loop_user.i == original_marker)
+			compacted_original = compacted_loop;
+		    else if (brep->m_L[compacted_loop].m_loop_user.i ==
+			    detached_marker)
+			compacted_detached = compacted_loop;
+		}
+		if (compacted_original < 0 || compacted_detached < 0)
+		    return false;
+		const int compacted_face = brep->m_L[compacted_original].m_fi;
+		if (compacted_face < 0 || compacted_face >= brep->m_F.Count())
+		    return false;
+		/* The candidate precondition proved this face had exactly the one
+		 * source loop.  Some OpenNURBS Compact() versions retain the newly
+		 * created loop but drop its face-list entry while deleting the two
+		 * orphaned bridge trims.  Rebuild this two-loop association from the
+		 * recovered identities; no pre-existing face loop can be displaced
+		 * under the one-loop precondition above. */
+		brep->m_L[compacted_original].m_fi = compacted_face;
+		brep->m_L[compacted_detached].m_fi = compacted_face;
+		brep->m_F[compacted_face].m_li.SetCount(0);
+		brep->m_F[compacted_face].m_li.Append(compacted_original);
+		brep->m_F[compacted_face].m_li.Append(compacted_detached);
+		split->original_loop = compacted_original;
+		split->detached_loop = compacted_detached;
+		split->face = compacted_face;
+		split->face_source_tag = face_source_tag;
+		split->original_marker = original_marker;
+		split->detached_marker = detached_marker;
+		split->original_source_tag = original_source_tag;
+		split->detached_source_tag = detached_source_tag;
+		split->original_edge_tags = original_edge_tags;
+		split->detached_edge_tags = detached_edge_tags;
 		return true;
 	    }
 	}
@@ -18894,9 +21805,40 @@ retry_topological_keyhole_normalization(ON_Brep *brep, STEPWrapper *wrapper,
 	    break;
 	splits.push_back(split);
     }
+    if (!splits.empty() && wrapper->Verbose()) {
+	int reported_candidates = 0;
+	for (int ti = 0; ti < candidate->m_T.Count() &&
+		reported_candidates < 16; ++ti) {
+	    const ON_BrepTrim &trim = candidate->m_T[ti];
+	    if (trim.m_type != ON_BrepTrim::seam ||
+		    trim.m_iso == ON_Surface::W_iso ||
+		    trim.m_iso == ON_Surface::E_iso ||
+		    trim.m_iso == ON_Surface::S_iso ||
+		    trim.m_iso == ON_Surface::N_iso || trim.m_li < 0 ||
+		    trim.m_li >= candidate->m_L.Count())
+		continue;
+	    const ON_BrepLoop &loop = candidate->m_L[trim.m_li];
+	    const ON_BrepFace *face = loop.Face();
+	    std::cerr << entity_type << " #" << entity_id
+		<< ": remaining topological keyhole candidate trim " << ti
+		<< " not selected after " << splits.size() << " split(s) (loop "
+		<< trim.m_li << " type " << static_cast<int>(loop.m_type)
+		<< " trims " << loop.TrimCount() << ", face loops "
+		<< (face ? face->LoopCount() : 0) << ", edge uses "
+		<< ((trim.m_ei >= 0 && trim.m_ei < candidate->m_E.Count()) ?
+		    candidate->m_E[trim.m_ei].m_ti.Count() : 0)
+		<< ", STEP edge "
+		<< ((trim.m_ei >= 0 && trim.m_ei < candidate->m_E.Count()) ?
+		    candidate->m_E[trim.m_ei].m_edge_user.i : 0) << ')'
+		<< std::endl;
+	    ++reported_candidates;
+	}
+    }
     if (splits.empty()) {
 	if (wrapper->Verbose()) {
-	    for (int ti = 0; ti < candidate->m_T.Count(); ++ti) {
+	    int reported_candidates = 0;
+	    for (int ti = 0; ti < candidate->m_T.Count() &&
+		    reported_candidates < 16; ++ti) {
 		const ON_BrepTrim &trim = candidate->m_T[ti];
 		if (trim.m_type != ON_BrepTrim::seam ||
 			trim.m_iso == ON_Surface::W_iso ||
@@ -18914,9 +21856,12 @@ retry_topological_keyhole_normalization(ON_Brep *brep, STEPWrapper *wrapper,
 		    << loop.TrimCount() << ", face loops "
 		    << (face ? face->LoopCount() : 0) << ", edge uses "
 		    << ((trim.m_ei >= 0 && trim.m_ei < candidate->m_E.Count()) ?
-			candidate->m_E[trim.m_ei].m_ti.Count() : 0) << ')'
+			candidate->m_E[trim.m_ei].m_ti.Count() : 0)
+		    << ", STEP edge "
+		    << ((trim.m_ei >= 0 && trim.m_ei < candidate->m_E.Count()) ?
+			candidate->m_E[trim.m_ei].m_edge_user.i : 0) << ')'
 		    << std::endl;
-		break;
+		++reported_candidates;
 	    }
 	}
 	return false;
@@ -18929,14 +21874,215 @@ retry_topological_keyhole_normalization(ON_Brep *brep, STEPWrapper *wrapper,
 	return false;
     };
 
-    repair_closed_trim_orientations(candidate.get(), wrapper, entity_id,
+    /* Every later split compacts the complete BREP and can renumber loops
+     * created by every earlier split.  Resolve the temporary source tags only
+     * after the complete split phase. */
+    for (std::vector<TopologicalKeyholeSplit>::iterator split =
+	    splits.begin(); split != splits.end(); ++split) {
+	split->original_loop = -1;
+	split->detached_loop = -1;
+	for (int li = 0; li < candidate->m_L.Count(); ++li) {
+	    if (candidate->m_L[li].m_loop_user.i == split->original_marker)
+		split->original_loop = li;
+	    else if (candidate->m_L[li].m_loop_user.i ==
+		    split->detached_marker)
+		split->detached_loop = li;
+	}
+	const int resolved_face = split->original_loop >= 0 ?
+	    candidate->m_L[split->original_loop].m_fi : -1;
+	if (split->original_loop < 0 || split->detached_loop < 0 ||
+		resolved_face < 0 || resolved_face >= candidate->m_F.Count() ||
+		candidate->m_L[split->detached_loop].m_fi != resolved_face ||
+		candidate->m_F[resolved_face].m_face_user.i !=
+		    split->face_source_tag)
+	    return reject("a split loop identity was lost during compaction");
+	split->face = resolved_face;
+	candidate->m_L[split->original_loop].m_loop_user.i =
+	    split->original_source_tag;
+	candidate->m_L[split->detached_loop].m_loop_user.i =
+	    split->detached_source_tag;
+	candidate->m_L[split->original_loop].m_fi = split->face;
+	candidate->m_L[split->detached_loop].m_fi = split->face;
+	/* Each selected source face was proven to contain exactly one loop
+	 * before this split.  Re-establish its two exact post-split members after
+	 * the final global compaction, which may have discarded or failed to
+	 * renumber the newly added face-list entry. */
+	ON_BrepFace &source_face = candidate->m_F[split->face];
+	source_face.m_li.SetCount(0);
+	source_face.m_li.Append(split->original_loop);
+	source_face.m_li.Append(split->detached_loop);
+    }
+
+    /* The source candidate has already completed the ordinary bounded BREP
+     * repair.  Re-running that whole workflow after removing keyhole bridges
+     * can reinterpret the newly separated cycles as implicit periodic bands
+     * and merge them back together.  Reconcile only the exposed cyclic joins:
+     * choose coherent exact periodic images, match adjacent endpoints, then
+     * repeat the branch proof once on the resulting curves. */
+    repair_exact_periodic_loop_branches(candidate.get(), wrapper, entity_id,
+	entity_type);
+    repair_adjacent_trim_endpoints(candidate.get(), wrapper, entity_id,
+	entity_type);
+    repair_exact_periodic_loop_branches(candidate.get(), wrapper, entity_id,
 	entity_type);
     if (brlcad::PullbackWorkCancelled())
 	return reject("the item work budget expired");
+    /* Re-identify each exact component by the unique set of immutable STEP
+     * edge IDs that survived bridge removal.  This keeps the transaction
+     * independent of array-index stability if endpoint reconciliation ever
+     * gains an internal compaction step. */
+    const auto loop_edge_tags = [&candidate](int loop_index) {
+	std::vector<int> tags;
+	if (loop_index < 0 || loop_index >= candidate->m_L.Count())
+	    return tags;
+	const ON_BrepLoop &loop = candidate->m_L[loop_index];
+	for (int lti = 0; lti < loop.TrimCount(); ++lti) {
+	    const ON_BrepTrim *trim = loop.Trim(lti);
+	    const ON_BrepEdge *edge = trim ? trim->Edge() : NULL;
+	    if (edge && edge->m_edge_user.i > 0)
+		tags.push_back(edge->m_edge_user.i);
+	}
+	std::sort(tags.begin(), tags.end());
+	tags.erase(std::unique(tags.begin(), tags.end()), tags.end());
+	return tags;
+    };
+    std::set<int> resolved_loops;
+    for (std::vector<TopologicalKeyholeSplit>::iterator split =
+	    splits.begin(); split != splits.end(); ++split) {
+	split->original_loop = -1;
+	split->detached_loop = -1;
+	for (int li = 0; li < candidate->m_L.Count(); ++li) {
+	    if (resolved_loops.find(li) != resolved_loops.end())
+		continue;
+	    const ON_BrepFace *loop_face = candidate->m_L[li].Face();
+	    if (!loop_face ||
+		    loop_face->m_face_user.i != split->face_source_tag ||
+		    candidate->m_L[li].m_loop_user.i !=
+			split->original_source_tag)
+		continue;
+	    const std::vector<int> tags = loop_edge_tags(li);
+	    if (tags == split->original_edge_tags)
+		split->original_loop = li;
+	    else if (tags == split->detached_edge_tags)
+		split->detached_loop = li;
+	}
+	if (split->original_loop < 0 || split->detached_loop < 0) {
+	    if (wrapper->Verbose()) {
+		const auto print_tags = [](const std::vector<int> &tags) {
+		    std::ostringstream text;
+		    for (size_t tag = 0; tag < tags.size(); ++tag)
+			text << (tag ? "," : "") << tags[tag];
+		    return text.str();
+		};
+		std::cerr << entity_type << " #" << entity_id
+		    << ": keyhole identity expected original=["
+		    << print_tags(split->original_edge_tags) << "] detached=["
+		    << print_tags(split->detached_edge_tags) << "] candidates=";
+		int reported = 0;
+		for (int li = 0; li < candidate->m_L.Count() && reported < 12;
+			++li) {
+		    const ON_BrepFace *loop_face = candidate->m_L[li].Face();
+		    if (!loop_face ||
+			    loop_face->m_face_user.i != split->face_source_tag ||
+			    candidate->m_L[li].m_loop_user.i !=
+				split->original_source_tag)
+			continue;
+		    const std::vector<int> tags = loop_edge_tags(li);
+		    bool related = false;
+		    for (std::vector<int>::const_iterator tag = tags.begin();
+			    tag != tags.end() && !related; ++tag)
+			related = std::binary_search(
+			    split->original_edge_tags.begin(),
+			    split->original_edge_tags.end(), *tag) ||
+			    std::binary_search(split->detached_edge_tags.begin(),
+				split->detached_edge_tags.end(), *tag);
+		    if (!related)
+			continue;
+		    std::cerr << " L" << li << "=[" << print_tags(tags) << ']';
+		    ++reported;
+		}
+		std::cerr << std::endl;
+	    }
+	    return reject("a split loop identity was lost during bounded repair");
+	}
+	resolved_loops.insert(split->original_loop);
+	resolved_loops.insert(split->detached_loop);
+	candidate->m_L[split->original_loop].m_loop_user.i =
+	    split->original_source_tag;
+	candidate->m_L[split->detached_loop].m_loop_user.i =
+	    split->detached_source_tag;
+    }
     /* The repair pass has already computed the detached loop type and restored
      * the authoritative source FACE_OUTER_BOUND type.  Refreshing loop types
      * again here would erase that source classification on a periodic face. */
     refresh_brep_flags_preserving_singular_isos(candidate.get(), false);
+
+    const auto periodic_winding = [&candidate](const ON_BrepLoop &loop,
+	    const ON_Surface *surface, int direction) {
+	if (!surface || !surface->IsClosed(direction) ||
+		loop.TrimCount() < 1)
+	    return 0;
+	const ON_Interval domain = surface->Domain(direction);
+	const double period = domain.Length();
+	if (!(period > ON_ZERO_TOLERANCE))
+	    return 0;
+	const double parameter_tolerance = std::max(
+	    ON_ZERO_TOLERANCE * kNumericalToleranceScale,
+	    kPeriodicParameterSnapFraction * std::max(1.0, period));
+	const ON_BrepTrim *first_trim = loop.Trim(0);
+	const ON_BrepTrim *last_trim = loop.Trim(loop.TrimCount() - 1);
+	if (first_trim && last_trim) {
+	    const double direct_travel =
+		last_trim->PointAtEnd()[direction] -
+		first_trim->PointAtStart()[direction];
+	    const double direct_tolerance =
+		parameter_tolerance * std::max(1.0, period);
+	    if (fabs(fabs(direct_travel) - period) <= direct_tolerance &&
+		    periodic_loop_closure(candidate.get(), &loop, last_trim,
+			first_trim, parameter_tolerance))
+		return direct_travel < 0.0 ? -1 : 1;
+	}
+	bool have_sample = false;
+	double first = 0.0;
+	double previous = 0.0;
+	double minimum = DBL_MAX;
+	double maximum = -DBL_MAX;
+	for (int lti = 0; lti < loop.TrimCount(); ++lti) {
+	    const ON_BrepTrim *trim = loop.Trim(lti);
+	    if (!trim || !trim->Domain().IsIncreasing())
+		return 0;
+	    const ON_Interval trim_domain = trim->Domain();
+	    for (int sample = 0; sample <= kPcurveLocusScreeningSegments;
+		    ++sample) {
+		const ON_3dPoint uv = trim->PointAt(trim_domain.ParameterAt(
+		    static_cast<double>(sample) /
+		    kPcurveLocusScreeningSegments));
+		if (!uv.IsValid() || !std::isfinite(uv[direction]))
+		    return 0;
+		double unwrapped = uv[direction];
+		if (have_sample)
+		    unwrapped += round((previous - unwrapped) / period) * period;
+		else {
+		    first = unwrapped;
+		    have_sample = true;
+		}
+		previous = unwrapped;
+		minimum = std::min(minimum, unwrapped);
+		maximum = std::max(maximum, unwrapped);
+	    }
+	}
+	const double closure_tolerance =
+	    parameter_tolerance * std::max(1.0, period);
+	const double net = previous - first;
+	if (!have_sample ||
+		fabs(fabs(net) - period) > closure_tolerance ||
+		fabs((maximum - minimum) - period) > closure_tolerance)
+	    return 0;
+	if (!periodic_loop_closure(candidate.get(), &loop, last_trim,
+		first_trim, parameter_tolerance))
+	    return 0;
+	return net < 0.0 ? -1 : 1;
+    };
 
     for (std::vector<TopologicalKeyholeSplit>::const_iterator split =
 	    splits.begin(); split != splits.end(); ++split) {
@@ -18948,12 +22094,37 @@ retry_topological_keyhole_normalization(ON_Brep *brep, STEPWrapper *wrapper,
 	    return reject("a split topology index changed unexpectedly");
 	ON_BrepLoop &original = candidate->m_L[split->original_loop];
 	ON_BrepLoop &detached = candidate->m_L[split->detached_loop];
+	/* The original FACE_OUTER_BOUND classification remains authoritative.
+	 * The detached cycle has no independent STEP bound, so derive its type
+	 * only after its periodic joins have been reconciled above. */
+	original.m_type = ON_BrepLoop::outer;
+	const ON_Surface *split_surface = original.Face() ?
+	    original.Face()->SurfaceOf() : NULL;
+	bool paired_periodic_band = false;
+	int original_winding[2] = {0, 0};
+	int detached_winding[2] = {0, 0};
+	for (int direction = 0; split_surface && direction < 2; ++direction) {
+	    original_winding[direction] = periodic_winding(original,
+		split_surface, direction);
+	    detached_winding[direction] = periodic_winding(detached,
+		split_surface, direction);
+	    if (original_winding[direction] *
+		    detached_winding[direction] == -1) {
+		paired_periodic_band = true;
+		break;
+	    }
+	}
+	detached.m_type = paired_periodic_band ? ON_BrepLoop::inner :
+	    candidate->ComputeLoopType(detached);
 	if (wrapper->Verbose())
 	    std::cerr << entity_type << " #" << entity_id
 		<< ": topological keyhole split loops "
 		<< split->original_loop << '/' << split->detached_loop
 		<< " acquired types " << static_cast<int>(original.m_type) << '/'
-		<< static_cast<int>(detached.m_type) << std::endl;
+		<< static_cast<int>(detached.m_type) << " windings "
+		<< original_winding[0] << '/' << detached_winding[0] << ','
+		<< original_winding[1] << '/' << detached_winding[1]
+		<< std::endl;
 	if ((original.m_type != ON_BrepLoop::outer &&
 		original.m_type != ON_BrepLoop::inner) ||
 		(detached.m_type != ON_BrepLoop::outer &&
@@ -18962,19 +22133,26 @@ retry_topological_keyhole_normalization(ON_Brep *brep, STEPWrapper *wrapper,
 	if (original.m_type == ON_BrepLoop::outer &&
 		detached.m_type == ON_BrepLoop::outer) {
 	    ON_BrepFace &source_face = candidate->m_F[split->face];
-	    int detached_offset = -1;
-	    for (int fli = 0; fli < source_face.m_li.Count(); ++fli)
-		if (source_face.m_li[fli] == split->detached_loop) {
-		    detached_offset = fli;
-		    break;
-		}
-	    if (detached_offset < 0)
-		return reject("the detached loop was absent from its source face");
 	    const int surface_index = source_face.m_si;
 	    const bool reversed = source_face.m_bRev;
-	    source_face.m_li.Remove(detached_offset);
+	    const int source_face_tag = source_face.m_face_user.i;
+	    /* A bounded topology refresh may clear m_fi after Compact() has
+	     * already dropped the detached loop from the source-face list.  The
+	     * temporary source tags above, rather than those redundant array
+	     * references, are the stable proof of which exact split loop is being
+	     * moved.  Remove any stale face-list occurrence before assigning its
+	     * new face; the completed candidate must still pass whole-BREP
+	     * structural validation before it is retained. */
+	    for (int candidate_face = 0; candidate_face < candidate->m_F.Count();
+		    ++candidate_face) {
+		ON_BrepFace &listed_face = candidate->m_F[candidate_face];
+		for (int fli = listed_face.m_li.Count() - 1; fli >= 0; --fli)
+		    if (listed_face.m_li[fli] == split->detached_loop)
+			listed_face.m_li.Remove(fli);
+	    }
 	    ON_BrepFace &new_face = candidate->NewFace(surface_index);
 	    new_face.m_bRev = reversed;
+	    new_face.m_face_user.i = source_face_tag;
 	    new_face.m_li.Append(split->detached_loop);
 	    candidate->m_L[split->detached_loop].m_fi = new_face.m_face_index;
 	} else if (original.m_type != ON_BrepLoop::outer &&
@@ -18982,6 +22160,264 @@ retry_topological_keyhole_normalization(ON_Brep *brep, STEPWrapper *wrapper,
 	    return reject("neither separated boundary was an outer loop");
 	}
     }
+    /* A repeated STEP bridge can connect the two full-period boundaries of an
+     * annular face on a doubly periodic surface.  Removing the bridge exposes
+     * two model-space-closed chains which are intentionally one period open in
+     * UV; trying to close either chain as a contractible loop merely moves the
+     * period jump from one join to another.  Prove and unwrap both chains in
+     * the same closed direction as one transaction.  The established
+     * implicit-band repair can then replace the STEP bridge with the explicit
+     * complementary seam topology OpenNURBS requires.
+     *
+     * Failed direction probes do not alter either the BREP or repair counts.
+     * The immutable STEP edge-ID sets remain the stable identities if the
+     * band constructor subsequently adds or compacts topology. */
+    std::set<std::vector<int> > full_period_component_tags;
+    for (std::vector<TopologicalKeyholeSplit>::const_iterator split =
+	    splits.begin(); split != splits.end(); ++split) {
+	if (split->original_loop < 0 ||
+		split->original_loop >= candidate->m_L.Count() ||
+		split->detached_loop < 0 ||
+		split->detached_loop >= candidate->m_L.Count())
+	    continue;
+	const ON_BrepLoop &original = candidate->m_L[split->original_loop];
+	const ON_Surface *surface = original.Face() ?
+	    original.Face()->SurfaceOf() : NULL;
+	for (int direction = 0; surface && direction < 2; ++direction) {
+	    if (!surface->IsClosed(direction))
+		continue;
+	    const ON_Interval domain = surface->Domain(direction);
+	    if (!domain.IsIncreasing())
+		continue;
+	    const double parameter_tolerance = std::max(
+		ON_ZERO_TOLERANCE * kNumericalToleranceScale,
+		kPeriodicParameterSnapFraction *
+		    std::max(1.0, domain.Length()));
+	    std::unique_ptr<ON_Brep> band_candidate(new ON_Brep(*candidate));
+	    bool original_unwrapped =
+		regenerate_full_period_boundary_chain(band_candidate.get(),
+		    split->original_loop, direction, parameter_tolerance,
+		    wrapper, entity_id, entity_type, false);
+	    bool detached_unwrapped =
+		regenerate_full_period_boundary_chain(band_candidate.get(),
+		    split->detached_loop, direction, parameter_tolerance,
+		    wrapper, entity_id, entity_type, false);
+	    const bool direct_original_unwrapped = original_unwrapped;
+	    const bool direct_detached_unwrapped = detached_unwrapped;
+	    bool native_cut[2] = {false, false};
+	    int final_component_loop[2] = {
+		split->original_loop, split->detached_loop
+	    };
+	    if (!original_unwrapped || !detached_unwrapped) {
+		/* Neither chain is required to contain a STEP vertex at the
+		 * OpenNURBS native seam.  When the supplied winding proves an
+		 * interior crossing, materialize that exact 3-D subdivision and
+		 * retry the same full-period proof.  Start from the unchanged
+		 * candidate so a successful direct probe cannot influence the
+		 * other component's crossing search. */
+		band_candidate.reset(new ON_Brep(*candidate));
+		const auto trial_loop_edge_tags = [&band_candidate](int loop_index) {
+		    std::vector<int> tags;
+		    if (loop_index < 0 ||
+			    loop_index >= band_candidate->m_L.Count())
+			return tags;
+		    const ON_BrepLoop &loop =
+			band_candidate->m_L[loop_index];
+		    for (int lti = 0; lti < loop.TrimCount(); ++lti) {
+			const ON_BrepTrim *trim = loop.Trim(lti);
+			const ON_BrepEdge *edge = trim ? trim->Edge() : NULL;
+			if (edge && edge->m_edge_user.i > 0)
+			    tags.push_back(edge->m_edge_user.i);
+		    }
+		    std::sort(tags.begin(), tags.end());
+		    tags.erase(std::unique(tags.begin(), tags.end()),
+			tags.end());
+		    return tags;
+		};
+		const auto find_trial_loop = [&band_candidate,
+			&trial_loop_edge_tags, split](
+			const std::vector<int> &tags) {
+		    for (int li = 0; li < band_candidate->m_L.Count(); ++li) {
+			const ON_BrepFace *loop_face =
+			    band_candidate->m_L[li].Face();
+			if (loop_face &&
+				loop_face->m_face_user.i ==
+				    split->face_source_tag &&
+				band_candidate->m_L[li].m_loop_user.i ==
+				    split->original_source_tag &&
+				trial_loop_edge_tags(li) == tags)
+			    return li;
+		    }
+		    return -1;
+		};
+		const std::vector<int> component_tags[2] = {
+		    split->original_edge_tags, split->detached_edge_tags
+		};
+		const bool needs_native_cut[2] = {
+		    !original_unwrapped, !detached_unwrapped
+		};
+		for (int component = 0; component < 2; ++component) {
+		    if (!needs_native_cut[component])
+			continue;
+		    const int loop_index = find_trial_loop(
+			component_tags[component]);
+		    ON_BrepFace *trial_face = loop_index >= 0 &&
+			loop_index < band_candidate->m_L.Count() ?
+			band_candidate->m_L[loop_index].Face() : NULL;
+		    if (trial_face) {
+			native_cut[component] =
+			    split_open_periodic_boundary_crossing(
+			    band_candidate.get(), *trial_face, loop_index,
+			    direction, parameter_tolerance, wrapper, entity_id,
+			    entity_type, false);
+			/* Generic branch repair may have hidden the supplied
+			 * winding even though the immutable edge chain still
+			 * crosses the native seam.  Probe each exact edge
+			 * transactionally; the lower-level splitter derives the
+			 * seam height from the edge itself, and the subsequent
+			 * full-chain regeneration remains the winding proof. */
+			if (!native_cut[component]) {
+			    std::vector<int> trim_indices;
+			    const ON_BrepLoop &trial_loop =
+				band_candidate->m_L[loop_index];
+			    trim_indices.reserve(trial_loop.TrimCount());
+			    for (int lti = 0; lti < trial_loop.TrimCount();
+				    ++lti) {
+				const ON_BrepTrim *trim =
+				    trial_loop.Trim(lti);
+				if (trim)
+				    trim_indices.push_back(
+					trim->m_trim_index);
+			    }
+			    for (std::vector<int>::const_iterator trim_index =
+				    trim_indices.begin();
+				    trim_index != trim_indices.end() &&
+					!native_cut[component];
+				    ++trim_index) {
+				/* A rejected split restores a deep BREP
+				 * snapshot, invalidating the surface pointer
+				 * supplied to that attempt. */
+				ON_BrepFace *probe_face = loop_index >= 0 &&
+				    loop_index < band_candidate->m_L.Count() ?
+				    band_candidate->m_L[loop_index].Face() :
+				    NULL;
+				const ON_Surface *probe_surface =
+				    probe_face ? probe_face->SurfaceOf() : NULL;
+				if (probe_surface)
+				    native_cut[component] =
+					split_periodic_boundary_at_native_seam(
+					    band_candidate.get(), loop_index,
+					    *trim_index, probe_surface, direction,
+					    std::numeric_limits<double>::quiet_NaN(),
+					    wrapper, entity_id, entity_type,
+					    false);
+			    }
+			}
+		    }
+		}
+		const int trial_original =
+		    find_trial_loop(split->original_edge_tags);
+		const int trial_detached =
+		    find_trial_loop(split->detached_edge_tags);
+		original_unwrapped = trial_original >= 0 &&
+		    regenerate_full_period_boundary_chain(
+			band_candidate.get(), trial_original, direction,
+			parameter_tolerance, wrapper, entity_id, entity_type,
+			false);
+		/* The first regeneration changes only pcurves and cyclic trim
+		 * order, so immutable edge-set identity remains valid. */
+		const int refreshed_detached =
+		    find_trial_loop(split->detached_edge_tags);
+		final_component_loop[0] = trial_original;
+		final_component_loop[1] = refreshed_detached;
+		detached_unwrapped = trial_detached >= 0 &&
+		    refreshed_detached >= 0 &&
+		    regenerate_full_period_boundary_chain(
+			band_candidate.get(), refreshed_detached, direction,
+			parameter_tolerance, wrapper, entity_id, entity_type,
+			false);
+	    }
+	    if (wrapper->Verbose())
+		std::cerr << entity_type << " #" << entity_id
+		    << ": topological keyhole full-period probe direction "
+		    << direction << " direct="
+		    << (direct_original_unwrapped ? "yes" : "no") << '/'
+		    << (direct_detached_unwrapped ? "yes" : "no")
+		    << " native-cuts=" << (native_cut[0] ? "yes" : "no")
+		    << '/' << (native_cut[1] ? "yes" : "no")
+		    << " final-loops=" << final_component_loop[0] << '/'
+		    << final_component_loop[1] << " unwrapped="
+		    << (original_unwrapped ? "yes" : "no") << '/'
+		    << (detached_unwrapped ? "yes" : "no") << std::endl;
+	    if (!original_unwrapped || !detached_unwrapped)
+		continue;
+	    *candidate = *band_candidate;
+	    full_period_component_tags.insert(split->original_edge_tags);
+	    full_period_component_tags.insert(split->detached_edge_tags);
+	    wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
+		"unwrapped an exact full-period boundary from its 3-D STEP edge chain");
+	    wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
+		"unwrapped an exact full-period boundary from its 3-D STEP edge chain");
+	    if (wrapper->Verbose())
+		std::cerr << entity_type << " #" << entity_id
+		    << ": topological keyhole components "
+		    << split->original_loop << '/' << split->detached_loop
+		    << " proved a paired full-period boundary in direction "
+		    << direction << std::endl;
+	    break;
+	}
+    }
+    if (!full_period_component_tags.empty()) {
+	std::set<int> split_source_loops;
+	for (std::vector<TopologicalKeyholeSplit>::const_iterator split =
+		splits.begin(); split != splits.end(); ++split)
+	    split_source_loops.insert(split->original_source_tag);
+	repair_implicit_periodic_face_bands(candidate.get(), wrapper, entity_id,
+	    entity_type, &split_source_loops);
+    }
+
+    /* Contractible components still use ordinary cyclic branch
+     * regeneration.  Re-resolve by immutable source-edge identity because the
+     * full-period band constructor may have inserted or compacted loops. */
+    for (std::vector<TopologicalKeyholeSplit>::const_iterator split =
+	    splits.begin(); split != splits.end(); ++split) {
+	const std::vector<int> component_tags[2] = {
+	    split->original_edge_tags, split->detached_edge_tags
+	};
+	for (int component = 0; component < 2; ++component) {
+	    if (full_period_component_tags.find(component_tags[component]) !=
+		    full_period_component_tags.end())
+		continue;
+	    int loop_index = -1;
+	    for (int li = 0; li < candidate->m_L.Count(); ++li) {
+		const ON_BrepFace *loop_face = candidate->m_L[li].Face();
+		if (loop_face &&
+			loop_face->m_face_user.i == split->face_source_tag &&
+			candidate->m_L[li].m_loop_user.i ==
+			    split->original_source_tag &&
+			loop_edge_tags(li) == component_tags[component]) {
+		    loop_index = li;
+		    break;
+		}
+	    }
+	    if (loop_index >= 0)
+		regenerate_periodic_loop_chains(candidate.get(), wrapper,
+		    entity_id, entity_type, loop_index, true, true);
+	}
+    }
+    repair_invalid_open_pcurves(candidate.get(), wrapper, entity_id,
+	entity_type);
+    if (repair_closed_surface_seam_crossings(candidate.get(), wrapper,
+	    entity_id, entity_type))
+	repair_invalid_open_pcurves(candidate.get(), wrapper, entity_id,
+	    entity_type);
+    if (full_period_component_tags.empty())
+	repair_implicit_periodic_face_bands(candidate.get(), wrapper, entity_id,
+	    entity_type);
+    repair_exact_periodic_loop_branches(candidate.get(), wrapper, entity_id,
+	entity_type);
+    repair_adjacent_trim_endpoints(candidate.get(), wrapper, entity_id,
+	entity_type);
     for (int fi = 0; fi < candidate->m_F.Count(); ++fi)
 	candidate->SortFaceLoops(candidate->m_F[fi]);
     refresh_brep_flags_preserving_singular_isos(candidate.get(), false);
@@ -18996,6 +22432,64 @@ retry_topological_keyhole_normalization(ON_Brep *brep, STEPWrapper *wrapper,
 	    std::cerr << entity_type << " #" << entity_id
 		<< ": topological keyhole normalization retry rejected:\n"
 		<< text.Array();
+	    int reported_joins = 0;
+	    for (int li = 0; li < candidate->m_L.Count() &&
+		    reported_joins < 12; ++li) {
+		const ON_BrepLoop &loop = candidate->m_L[li];
+		for (int lti = 0; lti < loop.TrimCount() &&
+			reported_joins < 12; ++lti) {
+		    const ON_BrepTrim *previous = loop.Trim(lti);
+		    const ON_BrepTrim *next = loop.Trim(
+			(lti + 1) % loop.TrimCount());
+		    if (!previous || !next)
+			continue;
+		    const ON_3dPoint previous_end =
+			previous->PointAtEnd();
+		    const ON_3dPoint next_start =
+			next->PointAtStart();
+		    const double gap =
+			previous_end.DistanceTo(next_start);
+		    if (gap <= ON_ZERO_TOLERANCE)
+			continue;
+		    const ON_BrepEdge *previous_edge =
+			previous->Edge();
+		    const ON_BrepEdge *next_edge = next->Edge();
+		    const ON_BrepFace *face = loop.Face();
+		    const ON_Surface *surface = face ?
+			face->SurfaceOf() : NULL;
+		    std::cerr << entity_type << " #" << entity_id
+			<< ": topological retry residual join L" << li
+			<< "/STEP" << loop.m_loop_user.i << "/T"
+			<< previous->m_trim_index << "/STEP edge "
+			<< (previous_edge ?
+			    previous_edge->m_edge_user.i : 0) << " -> T"
+			<< next->m_trim_index << "/STEP edge "
+			<< (next_edge ? next_edge->m_edge_user.i : 0)
+			<< " gap=" << gap << " at " << previous_end.x << ':'
+			<< previous_end.y << " -> " << next_start.x << ':'
+			<< next_start.y << " loop-type="
+			<< static_cast<int>(loop.m_type) << " trims="
+			<< loop.TrimCount() << " face="
+			<< (face ? face->m_face_index : -1) << " face-loops="
+			<< (face ? face->LoopCount() : 0);
+		    if (surface)
+			std::cerr << " domains=" << surface->Domain(0).Min()
+			    << ':' << surface->Domain(0).Max() << ','
+			    << surface->Domain(1).Min() << ':'
+			    << surface->Domain(1).Max() << " closed="
+			    << (surface->IsClosed(0) ? 1 : 0)
+			    << (surface->IsClosed(1) ? 1 : 0)
+			    << " singular="
+			    << (surface->IsSingular(0) ? 1 : 0)
+			    << (surface->IsSingular(1) ? 1 : 0)
+			    << (surface->IsSingular(2) ? 1 : 0)
+			    << (surface->IsSingular(3) ? 1 : 0) << " surface="
+			    << (surface->ClassId() ?
+				surface->ClassId()->ClassName() : "unknown");
+		    std::cerr << std::endl;
+		    ++reported_joins;
+		}
+	    }
 	}
 	return reject("the structurally complete separated BREP remained invalid");
     }

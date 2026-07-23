@@ -22,9 +22,8 @@ foreach(expected
     "\"geometry_written\":1"
     "\"geometry_skipped\":0"
     "\"invalid_breps\":0"
-    "split an exact STEP edge at a native periodic parameter discontinuity"
     "translated an exact pcurve onto the native periodic surface domain"
-    "relocated a closed surface seam outside an exact face boundary")
+    "relocated a closed rational surface seam away from an exact STEP boundary")
   string(FIND "${safe_report}" "${expected}" found)
   if(found EQUAL -1)
     message(FATAL_ERROR "safe report does not contain ${expected}:\n${safe_report}")

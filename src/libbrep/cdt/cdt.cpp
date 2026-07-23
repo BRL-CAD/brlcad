@@ -41,6 +41,37 @@
 #define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
 
+/* cpolyedge_t containers historically used the default pointer comparator.
+ * That is adequate for membership, but it must not determine the order of
+ * geometry-changing operations: allocator layout can then change the order in
+ * which singular trims are subdivided and, consequently, the final surface
+ * sampling.  Every singular segment has an authoritative STEP trim index,
+ * parameter interval, and pair of face-local topology vertices, which together
+ * provide a stable processing order. */
+static bool
+singular_edge_process_less(const cpolyedge_t *a, const cpolyedge_t *b)
+{
+    if (a == b)
+	return false;
+    if (!a)
+	return true;
+    if (!b)
+	return false;
+    if (a->trim_ind != b->trim_ind)
+	return a->trim_ind < b->trim_ind;
+    if (a->trim_start < b->trim_start)
+	return true;
+    if (b->trim_start < a->trim_start)
+	return false;
+    if (a->trim_end < b->trim_end)
+	return true;
+    if (b->trim_end < a->trim_end)
+	return false;
+    if (a->v2d[0] != b->v2d[0])
+	return a->v2d[0] < b->v2d[0];
+    return a->v2d[1] < b->v2d[1];
+}
+
 /* Correct triangle winding only after the complete mesh proves closed and
  * manifold and misorientation is its sole defect.  bg_trimesh_sync establishes
  * a consistent orientation for each connected component, but its seed may
@@ -615,8 +646,12 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    int cnt = 0;
 	    wq = &w1;
 	    nq = &w2;
-	    nq->push(*(s_cdt->unsplit_singular_edges.begin()));
-	    s_cdt->unsplit_singular_edges.erase(s_cdt->unsplit_singular_edges.begin());
+	    std::set<cpolyedge_t *>::iterator first =
+		std::min_element(s_cdt->unsplit_singular_edges.begin(),
+			s_cdt->unsplit_singular_edges.end(),
+			singular_edge_process_less);
+	    nq->push(*first);
+	    s_cdt->unsplit_singular_edges.erase(first);
 	    while (cnt < 6) {
 		cnt = 0;
 		tmpq = wq;
@@ -626,8 +661,12 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		    cpolyedge_t *ce = wq->front();
 		    wq->pop();
 		    std::set<cpolyedge_t *> nedges = split_singular_seg(s_cdt, ce, 0);
-		    std::set<cpolyedge_t *>::iterator n_it;
-		    for (n_it = nedges.begin(); n_it != nedges.end(); n_it++) {
+		    std::vector<cpolyedge_t *> ordered_edges(nedges.begin(),
+			    nedges.end());
+		    std::sort(ordered_edges.begin(), ordered_edges.end(),
+			    singular_edge_process_less);
+		    for (std::vector<cpolyedge_t *>::const_iterator n_it =
+			    ordered_edges.begin(); n_it != ordered_edges.end(); ++n_it) {
 			nq->push(*n_it);
 			cnt++;
 		    }

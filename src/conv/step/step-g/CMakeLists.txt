@@ -592,6 +592,18 @@ if(BRLCAD_ENABLE_STEP)
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band_topology_seam.cmake
     )
     brlcad_add_test(
+      NAME ap203_measured_periodic_band_seam
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DMGED=$<TARGET_FILE:mged>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_measured_periodic_band_seam.stp
+        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_measured_periodic_band_seam.json
+        -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_measured_periodic_band_seam_exact.json
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_measured_periodic_band_seam.g
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_measured_periodic_band_seam.cmake
+    )
+    brlcad_add_test(
       NAME ap203_doubly_periodic_segmented_band
       COMMAND
         ${CMAKE_COMMAND}
@@ -707,6 +719,8 @@ cmakefiles(
   tests/ap203_doubly_periodic_segmented_band.stp
   tests/ap203_lazy_positional.cmake
   tests/ap203_lazy_relationships.cmake
+  tests/ap203_measured_periodic_band_seam.cmake
+  tests/ap203_measured_periodic_band_seam.stp
   tests/ap203_near_degenerate_nurbs_pole.cmake
   tests/ap203_near_degenerate_nurbs_pole.stp
   tests/ap203_nist_mbe_pmi_6.cmake

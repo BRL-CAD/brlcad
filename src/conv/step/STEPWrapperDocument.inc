@@ -1486,6 +1486,54 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	return;
     if (!solid && !wrapper->ImportOptions().exact &&
 	    wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
+	std::string duplicate_edge_details;
+	size_t duplicate_edge_repairs = 0;
+	size_t remaining_one_use_edges = one_use_edge_count(job.brep.get());
+	const size_t maximum_attempts = remaining_one_use_edges;
+	for (size_t attempt = 0;
+		attempt < maximum_attempts && remaining_one_use_edges > 0;
+		++attempt) {
+	    std::ostringstream progress_detail;
+	    progress_detail << "remaining one-use edges="
+		<< remaining_one_use_edges;
+	    wrapper->SetProgressDetail(
+		"rejoining exact duplicate STEP edge fragments",
+		job.entity_id, static_cast<uint64_t>(attempt),
+		static_cast<uint64_t>(maximum_attempts), "attempts",
+		progress_detail.str());
+	    const size_t repaired =
+		merge_one_exact_duplicate_step_boundary_edge_pair(
+		    job.brep.get(), &duplicate_edge_details);
+	    if (!repaired)
+		break;
+	    duplicate_edge_repairs += repaired;
+	    const size_t next_one_use_edges =
+		one_use_edge_count(job.brep.get());
+	    if (next_one_use_edges >= remaining_one_use_edges) {
+		duplicate_edge_details =
+		    "an accepted duplicate edge merge did not reduce the one-use edge count";
+		break;
+	    }
+	    remaining_one_use_edges = next_one_use_edges;
+	}
+	if (duplicate_edge_repairs)
+	    solid = job.brep->IsSolid();
+	for (size_t repair = 0; repair < duplicate_edge_repairs; ++repair)
+	    wrapper->RecordRepair(job.entity_id, job.entity_type, "edge_topology",
+		"rejoined two independently split uses of one exact STEP edge");
+	if (wrapper->Verbose() && duplicate_edge_repairs)
+	    std::cerr << job.entity_type << " #" << job.entity_id
+		<< ": rejoined exact duplicate STEP edge pair "
+		<< duplicate_edge_details << std::endl;
+	else if (wrapper->Verbose() && !duplicate_edge_details.empty())
+	    std::cerr << job.entity_type << " #" << job.entity_id
+		<< ": duplicate STEP edge-pair reconciliation rejected: "
+		<< duplicate_edge_details << std::endl;
+	if (work_expired("duplicate STEP edge-fragment reconciliation"))
+	    return;
+    }
+    if (!solid && !wrapper->ImportOptions().exact &&
+	    wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
 	std::string merged_edge_details;
 	size_t merged_edge_repairs = 0;
 	size_t remaining_one_use_edges = one_use_edge_count(job.brep.get());
@@ -1830,11 +1878,13 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
  * with four or more trims as non-manifold.  When the ordinary two-use edges
  * independently partition those trims into exact pairs, give each shell
  * component its own topological edge while duplicating the unchanged 3-D
- * curve.  Authoritative CLOSED_SHELL labels select the components; the
- * ordinary two-use adjacency graph is a fallback for older callers without
- * labels.  This is transactional and cannot guess a pairing: every use must
- * belong to a distinct, proven two-use component and the completed BREP must
- * remain structurally valid. */
+ * curve.  Authoritative CLOSED_SHELL labels prevent pairing uses across
+ * shells, while the ordinary two-use adjacency graph refines each label.
+ * The refinement matters for exporters which place multiple otherwise
+ * disjoint manifold components in one nominal CLOSED_SHELL and reuse one
+ * EDGE_CURVE between them.  This is transactional and cannot guess a pairing:
+ * every use must belong to a distinct, proven two-use component and the
+ * completed BREP must remain structurally valid. */
 static size_t
 split_reused_edges_by_shell_component(ON_Brep *brep, std::string *failure)
 {
@@ -1887,7 +1937,7 @@ split_reused_edges_by_shell_component(ON_Brep *brep, std::string *failure)
 	const ON_BrepEdge &edge = brep->m_E[ei];
 	if (edge.m_ti.Count() <= 2)
 	    continue;
-	std::map<int, std::vector<int> > by_component;
+	std::map<std::pair<int, int>, std::vector<int> > by_component;
 	bool complete = true;
 	for (int use = 0; use < edge.m_ti.Count(); ++use) {
 	    const ON_BrepTrim *trim = brep->Trim(edge.m_ti[use]);
@@ -1897,9 +1947,10 @@ split_reused_edges_by_shell_component(ON_Brep *brep, std::string *failure)
 		complete = false;
 		break;
 	    }
-	    const int shell_component = face->m_face_user.i > 0 ?
-		face->m_face_user.i : -(find_root(face->m_face_index) + 1);
-	    by_component[shell_component].push_back(
+	    const int shell_label = face->m_face_user.i > 0 ?
+		face->m_face_user.i : 0;
+	    const int adjacency_component = find_root(face->m_face_index);
+	    by_component[std::make_pair(shell_label, adjacency_component)].push_back(
 		trim->m_trim_index);
 	}
 	if (!complete || by_component.size() < 2) {
@@ -1915,7 +1966,7 @@ split_reused_edges_by_shell_component(ON_Brep *brep, std::string *failure)
 	}
 	SplitPlan plan;
 	plan.edge_index = ei;
-	for (std::map<int, std::vector<int> >::const_iterator group =
+	for (std::map<std::pair<int, int>, std::vector<int> >::const_iterator group =
 		by_component.begin(); group != by_component.end(); ++group) {
 	    if (group->second.size() != 2) {
 		complete = false;

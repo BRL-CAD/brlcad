@@ -5,6 +5,12 @@ endif()
 
 set(ray_output_file "${OUTPUT}.nist6-cap.pix")
 set(bot_object "Document_item.bot")
+# Before the CDT boundary start was selected by topological vertex ID, changing
+# only the requested output name changed heap layout and could detach one or two
+# triangles from face 26.  Keep the formerly failing longer name as an
+# allocation-layout topology probe.  Different valid triangulations may use
+# different triangle counts, but neither may detach geometry.
+set(bot_object_variant "Document_item.botxyz")
 get_filename_component(test_work_dir "${OUTPUT}" DIRECTORY)
 file(REMOVE "${REPORT}" "${OUTPUT}" "${ray_output_file}")
 execute_process(
@@ -25,10 +31,15 @@ foreach(expected
     "\"geometry_written\":1"
     "\"geometry_skipped\":0"
     "\"invalid_breps\":0"
-    "\"message\":\"inserted an exact singular trim at a surface pole\",\"count\":8"
-    "\"message\":\"retargeted an existing singular trim to close the exact pole boundary\",\"count\":2"
+    # The completed topology has fourteen singular trims.  Four arrive from
+    # the initial exact pcurves and ten are inserted after the complete loop
+    # context is available.  Earlier pullback classified two of those ten as
+    # singular immediately and the finalizer retargeted them; the current
+    # workflow deliberately leaves them ordinary until their neighbouring
+    # pole boundaries prove which singular branch is required.
+    "\"message\":\"inserted an exact singular trim at a surface pole\",\"count\":10"
     "\"message\":\"selected the exact singular-pole branch matching the STEP face bound\",\"count\":2"
-    "\"message\":\"regenerated an isoparametric pcurve from the exact edge\",\"count\":16")
+    "\"message\":\"regenerated an isoparametric pcurve from the exact edge\",\"count\":14")
   string(FIND "${report_text}" "${expected}" found)
   if(found EQUAL -1)
     message(FATAL_ERROR "report does not contain ${expected}:\n${report_text}")
@@ -61,7 +72,8 @@ if(NOT brep_result EQUAL 0 OR
     NOT brep_text MATCHES "Valid: YES, Solid: YES" OR
     NOT brep_text MATCHES "faces:[ ]+152" OR
     NOT brep_text MATCHES "edges:[ ]+456" OR
-    NOT brep_text MATCHES "vertices:[ ]+324")
+    NOT brep_text MATCHES "vertices:[ ]+324" OR
+    NOT brep_text MATCHES "trims:[ ]+926")
   message(FATAL_ERROR "NIST MBE PMI 6 BREP validation failed\n${brep_text}")
 endif()
 
@@ -138,6 +150,49 @@ if(NOT bot_split_result EQUAL 0 OR
     NOT bot_split_text MATCHES "fully connected topologically")
   message(FATAL_ERROR
     "NIST MBE PMI 6 shaded mesh contains a disconnected component\n${bot_split_text}")
+endif()
+
+execute_process(
+  COMMAND "${MGED}" -c "${OUTPUT}"
+    "brep Document_item.s bot ${bot_object_variant}"
+  WORKING_DIRECTORY "${test_work_dir}"
+  RESULT_VARIABLE variant_bot_result
+  OUTPUT_VARIABLE variant_bot_output
+  ERROR_VARIABLE variant_bot_error
+  TIMEOUT 30
+)
+set(variant_bot_text "${variant_bot_output}\n${variant_bot_error}")
+if(NOT variant_bot_result EQUAL 0)
+  message(FATAL_ERROR
+    "NIST MBE PMI 6 alternate-name shaded mesh failed\n${variant_bot_text}")
+endif()
+execute_process(
+  COMMAND "${MGED}" -c "${OUTPUT}" "bot get faces ${bot_object_variant}"
+  RESULT_VARIABLE variant_info_result
+  OUTPUT_VARIABLE variant_info_output
+  ERROR_VARIABLE variant_info_error
+  TIMEOUT 30
+)
+string(STRIP "${variant_info_output}" variant_face_count)
+if(NOT variant_info_result EQUAL 0 OR
+    variant_face_count LESS 1)
+  message(FATAL_ERROR
+    "NIST MBE PMI 6 alternate-name shaded mesh was not written\n"
+    "${variant_info_output}\n${variant_info_error}")
+endif()
+execute_process(
+  COMMAND "${MGED}" -c "${OUTPUT}" "bot split ${bot_object_variant}"
+  RESULT_VARIABLE variant_split_result
+  OUTPUT_VARIABLE variant_split_output
+  ERROR_VARIABLE variant_split_error
+  TIMEOUT 30
+)
+set(variant_split_text "${variant_split_output}\n${variant_split_error}")
+if(NOT variant_split_result EQUAL 0 OR
+    NOT variant_split_text MATCHES "fully connected topologically")
+  message(FATAL_ERROR
+    "NIST MBE PMI 6 alternate-name shaded mesh contains a disconnected "
+    "component\n${variant_split_text}")
 endif()
 
 # This deterministic ray enters the lower spherical cap which used to select

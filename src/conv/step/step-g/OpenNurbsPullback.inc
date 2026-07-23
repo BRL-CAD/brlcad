@@ -38,6 +38,54 @@ maximum_verified_edge_tolerance(const ON_Curve *curve,
 
 
 static double
+maximum_verified_curve_surface_tolerance(const ON_Curve *curve,
+    const ON_Surface *surface, double declared_tolerance,
+    double item_scale = 0.0, brlcad::PullbackContext *context = NULL,
+    bool *used_endpoint_anchored_extension = NULL)
+{
+    if (used_endpoint_anchored_extension)
+	*used_endpoint_anchored_extension = false;
+    double limit = maximum_verified_edge_tolerance(curve,
+	declared_tolerance, item_scale);
+    if (curve && surface && context && item_scale > 0.0 &&
+	    declared_tolerance > 0.0 && curve->Domain().IsIncreasing()) {
+	const ON_3dPoint endpoints[2] = {
+	    curve->PointAtStart(), curve->PointAtEnd()
+	};
+	bool endpoints_anchored = true;
+	for (int endpoint = 0; endpoint < 2 && endpoints_anchored; ++endpoint) {
+	    ON_2dPoint uv;
+	    ON_3dPoint lift;
+	    double distance = DBL_MAX;
+	    endpoints_anchored = endpoints[endpoint].IsValid() &&
+		context->SurfaceClosestPoint(surface, endpoints[endpoint], uv,
+		    lift, distance, 0, declared_tolerance,
+		    declared_tolerance) &&
+		uv.IsValid() && lift.IsValid() && std::isfinite(distance) &&
+		distance <= declared_tolerance &&
+		endpoints[endpoint].DistanceTo(lift) <= declared_tolerance;
+	}
+	const double endpoint_anchored_limit = item_scale *
+	    kMaximumRelativeEndpointAnchoredItemMismatch;
+	if (endpoints_anchored && endpoint_anchored_limit > limit) {
+	    limit = endpoint_anchored_limit;
+	    if (used_endpoint_anchored_extension)
+		*used_endpoint_anchored_extension = true;
+	}
+    }
+    const ON_NurbsSurface *nurbs = ON_NurbsSurface::Cast(surface);
+    if (!curve || !nurbs || surface->IsClosed(0) || surface->IsClosed(1))
+	return limit;
+    const ON_BoundingBox bounds = curve->BoundingBox();
+    const double scale = bounds.IsValid() ? bounds.Diagonal().Length() : 0.0;
+    const double open_nurbs_limit = std::max(
+	scale * kMaximumRelativeOpenNurbsEdgeMismatch,
+	item_scale * kMaximumRelativeOpenNurbsItemMismatch);
+    return std::max(limit, open_nurbs_limit);
+}
+
+
+static double
 maximum_verified_edge_vertex_tolerance(const ON_Curve *curve,
     double declared_tolerance)
 {
@@ -2295,12 +2343,12 @@ align_surface_seam_with_periodic_loop_cut(
 
 /* Move a closed NURBS or full-revolution seam to an exact STEP topology cut.
  * Prefer a closed STEP edge whose densely validated pullback winds exactly one
- * surface period.  A doubly-periodic face with only unique edge uses can also
- * prove that its ordinary boundary crosses the current seam and select a
- * boundary-free interval.  Repeated edges retain the stronger topology-cut
- * requirement because they may be an explicit OpenNURBS seam pair once the
- * complete solid topology is known.  No sample is accepted unless its 3-D
- * lift remains unchanged within model uncertainty. */
+ * surface period.  A NURBS face, or a doubly-periodic revolution face, with
+ * only unique edge uses can also prove that its ordinary boundary crosses the
+ * current seam and select a boundary-free interval.  Repeated edges retain the
+ * stronger topology-cut requirement because they may be an explicit OpenNURBS
+ * seam pair once the complete solid topology is known.  No sample is accepted
+ * unless its 3-D lift remains unchanged within model uncertainty. */
 static bool
 relocate_surface_seam_away_from_boundary(
     std::list<PBCData *> &pullbacks, ON_Brep *brep, ON_BrepFace *face,
@@ -2519,19 +2567,20 @@ relocate_surface_seam_away_from_boundary(
 
 	double seam = topology_cut;
 	if (!have_topology_cut) {
-	    /* A doubly-closed face can cross its current seam between two ordinary
-	     * STEP edges without containing a closed full-period edge.  In that
-	     * case the topology-vertex rule above has no candidate.  A face-private
-	     * seam in a sampled boundary-free interval is still exact, provided
-	     * every source edge is unique in this loop and the complete remapping
-	     * below preserves every 3-D lift.  This applies to both NURBS surfaces
-	     * and full-revolution tori: excluding the latter forces an antipodal
-	     * half-circle onto the wrong periodic branch when the face straddles the
-	     * original revolution cut.  Repeated edges remain the authoritative
-	     * indication of an explicit topological seam and are not eligible for
-	     * this fallback. */
+	    /* A NURBS face can cross its current seam between two ordinary STEP
+	     * edges without containing a closed full-period edge.  In that case the
+	     * topology-vertex rule above has no candidate.  A face-private seam in
+	     * a sampled boundary-free interval is still exact, provided every
+	     * source edge is unique in this loop and the complete remapping below
+	     * preserves every 3-D lift.  The same applies to full-revolution tori:
+	     * excluding them forces an antipodal half-circle onto the wrong
+	     * periodic branch when the face straddles the original revolution cut.
+	     * Singly-periodic analytic revolutions retain their topology-driven seam
+	     * treatment, but they do not constrain a private NURBS parameterization.
+	     * Repeated edges remain the authoritative indication of an explicit
+	     * topological seam and are not eligible for this fallback. */
 	    if ((!nurbs && !revolution) ||
-		    !surface->IsClosed(1 - direction)) {
+		    (!nurbs && !surface->IsClosed(1 - direction))) {
 		if (failure)
 		    *failure = "no closed STEP edge established a full-period topology cut";
 		continue;
@@ -4145,18 +4194,26 @@ split_periodic_pullback_at_native_seams(PBCData *data, double tolerance,
     const auto native_image_preserving_lift = [&](const ON_2dPoint &raw,
 	ON_2dPoint &native, const ON_3dPoint *authoritative_source = NULL) {
 	const ON_3dPoint raw_lift = data->surf->PointAt(raw.x, raw.y);
-	if ((!authoritative_source || !authoritative_source->IsValid()) &&
-		(!raw_lift.IsValid() || source_distance.DistanceTo(raw_lift,
-		    native_lift_tolerance) > native_lift_tolerance))
-	    return false;
-	const ON_3dPoint target = authoritative_source &&
-	    authoritative_source->IsValid() ? *authoritative_source : raw_lift;
 	native = UnwrapUVPoint(data->surf, raw, tolerance);
 	ON_3dPoint native_lift = data->surf->PointAt(native.x, native.y);
-	if (native_lift.IsValid() &&
-		native_lift.DistanceTo(target) <= native_lift_tolerance &&
-		source_distance.DistanceTo(native_lift,
-		    native_lift_tolerance) <= native_lift_tolerance)
+	const bool have_authoritative_source = authoritative_source &&
+	    authoritative_source->IsValid();
+	/* pullback_samples() follows a continuous periodic branch by adding
+	 * integral periods to native closest-point results.  OpenNURBS does not
+	 * promise that evaluating those extended parameters extrapolates
+	 * periodically, so raw_lift can be unrelated to the exact source even
+	 * though reducing raw into the native domain recovers the original
+	 * projected sample.  Prove that native image directly against the STEP
+	 * edge.  At the two topology endpoints, additionally require the
+	 * authoritative endpoint identity; all fragments are densely checked
+	 * against the bounded source interval before they are emitted. */
+	const bool native_on_source = native_lift.IsValid() &&
+	    source_distance.DistanceTo(native_lift,
+		native_lift_tolerance) <= native_lift_tolerance;
+	if (native_on_source &&
+		(!have_authoritative_source ||
+		 native_lift.DistanceTo(*authoritative_source) <=
+		    native_lift_tolerance))
 	    return true;
 
 	/* Closed OpenNURBS surfaces are not required to evaluate a parameter
@@ -4167,6 +4224,12 @@ split_periodic_pullback_at_native_seams(PBCData *data, double tolerance,
 	 * accepting parameter arithmetic as geometric equivalence.  At the two
 	 * outer samples the target is the authoritative STEP curve endpoint;
 	 * otherwise it is the already source-locus-validated raw lift. */
+	if (!have_authoritative_source &&
+		(!raw_lift.IsValid() || source_distance.DistanceTo(raw_lift,
+		    native_lift_tolerance) > native_lift_tolerance))
+	    return false;
+	const ON_3dPoint target = have_authoritative_source ?
+	    *authoritative_source : raw_lift;
 	ON_3dPoint uv(native.x, native.y, 0.0);
 	double distance = DBL_MAX;
 	bool projected = refine_surface_point_seeded(data->surf, target,
@@ -5662,9 +5725,125 @@ snap_pullback_loop_endpoints(std::list<PBCData *> &pullbacks, const ON_Brep *bre
 	    continue;
 	}
 
-	/* The two UVs are proven to represent the same topological 3-D point
-	 * within the model uncertainty.  Use the preceding trim's endpoint so
-	 * openNURBS sees an exactly closed parameter-space loop. */
+	/* A shared STEP topology vertex proves which two trims must join, but a
+	 * tolerance measured for one edge must not authorize moving the other
+	 * pcurve away from its own immutable 3-D edge.  This matters in
+	 * particular for two-edge lens loops: one edge can have a much larger
+	 * source edge/surface discrepancy than its neighbor, and blindly using
+	 * the common join tolerance can attach the neighbor to the wrong end of
+	 * its curve.
+	 *
+	 * At the beginning/end of a complete pullback require directed edge
+	 * endpoint correspondence.  Internal pullback fragments have no 3-D edge
+	 * endpoint of their own, so retain their independently validated surface
+	 * lift within that pullback's own tolerance. */
+	const bool current_is_terminal = current.data->segments &&
+	    !current.data->segments->empty() &&
+	    current.samples == current.data->segments->back();
+	const bool next_is_initial = next.data->segments &&
+	    !next.data->segments->empty() &&
+	    next.samples == next.data->segments->front();
+	const bool directed_loop_join = current.data != next.data ||
+	    (current_is_terminal && next_is_initial);
+	const auto own_locus_tolerance = [tolerance](const PBCData *data) {
+	    double result = tolerance;
+	    if (data) {
+		result = std::max(result, data->tolerance);
+		if (data->edge)
+		    result = std::max(result, data->edge->m_tolerance);
+	    }
+	    return result;
+	};
+	const auto candidate_matches_side = [&](
+		const SegmentRef &side, const ON_2dPoint &candidate,
+		bool at_start, const ON_3dPoint &original_lift,
+		double *distance, double *limit) {
+	    const double side_tolerance = own_locus_tolerance(side.data);
+	    if (limit) *limit = side_tolerance;
+	    const ON_3dPoint lift = side.data && side.data->surf ?
+		side.data->surf->PointAt(candidate.x, candidate.y) :
+		ON_3dPoint::UnsetPoint;
+	    double measured = DBL_MAX;
+	    if (lift.IsValid() && side.data && side.data->edge) {
+		if (directed_loop_join) {
+		    const ON_Interval edge_domain = side.data->edge->Domain();
+		    const int endpoint = at_start ?
+			(side.data->order_reversed ? 1 : 0) :
+			(side.data->order_reversed ? 0 : 1);
+		    const ON_3dPoint edge_point = edge_domain.IsIncreasing() ?
+			side.data->edge->PointAt(edge_domain[endpoint]) :
+			ON_3dPoint::UnsetPoint;
+		    measured = edge_point.IsValid() ?
+			lift.DistanceTo(edge_point) : DBL_MAX;
+		} else {
+		    measured = original_lift.IsValid() ?
+			lift.DistanceTo(original_lift) : DBL_MAX;
+		}
+	    }
+	    if (distance) *distance = measured;
+	    return std::isfinite(measured) && measured <= side_tolerance;
+	};
+	const auto candidate_preserves_both_edges = [&](const ON_2dPoint &candidate,
+		double *current_distance, double *current_limit,
+		double *next_distance, double *next_limit) {
+	    const ON_3dPoint lift = current.data->surf->PointAt(
+		candidate.x, candidate.y);
+	    if (!lift.IsValid())
+		return false;
+	    if (shared_vertex >= 0 &&
+		    lift.DistanceTo(brep->m_V[shared_vertex].point) >
+			shared_endpoint_tolerance)
+		return false;
+	    return candidate_matches_side(current, candidate, false, lifted_end,
+			current_distance, current_limit) &&
+		candidate_matches_side(next, candidate, true, lifted_start,
+			next_distance, next_limit);
+	};
+	double current_distance = DBL_MAX;
+	double current_limit = own_locus_tolerance(current.data);
+	double next_distance = DBL_MAX;
+	double next_limit = own_locus_tolerance(next.data);
+	if (!candidate_preserves_both_edges(common, &current_distance,
+		&current_limit, &next_distance, &next_limit)) {
+	    /* The following endpoint can be the only common point that satisfies
+	     * both directed edges.  Try that existing source endpoint before
+	     * rejecting the repair; never synthesize a midpoint under the looser
+	     * neighbor's tolerance. */
+	    const ON_2dPoint alternate = *start;
+	    double alternate_current_distance = DBL_MAX;
+	    double alternate_current_limit = current_limit;
+	    double alternate_next_distance = DBL_MAX;
+	    double alternate_next_limit = next_limit;
+	    if (alternate.DistanceTo(common) > ON_ZERO_TOLERANCE &&
+		    candidate_preserves_both_edges(alternate,
+			&alternate_current_distance, &alternate_current_limit,
+			&alternate_next_distance, &alternate_next_limit)) {
+		common = alternate;
+		current_distance = alternate_current_distance;
+		current_limit = alternate_current_limit;
+		next_distance = alternate_next_distance;
+		next_limit = alternate_next_limit;
+	    } else {
+		if (periodic_rejection) {
+		    std::ostringstream reason;
+		    reason << "STEP edge #"
+			<< (current.data->edge ?
+			    current.data->edge->m_edge_user.i : 0)
+			<< "/#" << (next.data->edge ?
+			    next.data->edge->m_edge_user.i : 0)
+			<< " common endpoint missed directed edge loci by "
+			<< current_distance << '/' << next_distance
+			<< " (limits " << current_limit << '/' << next_limit << ')';
+		    if (!periodic_rejection->empty())
+			*periodic_rejection += "; ";
+		    *periodic_rejection += reason.str();
+		}
+		continue;
+	    }
+	}
+
+	/* The two UVs are proven to represent the same topological 3-D point and
+	 * the common UV independently satisfies both directed 3-D edges. */
 	*end = common;
 	*start = common;
 	++changed;
@@ -5673,8 +5852,16 @@ snap_pullback_loop_endpoints(std::list<PBCData *> &pullbacks, const ON_Brep *bre
 }
 
 
+/* Select a closed-edge pullback which already visibly represents one complete
+ * isoparametric surface boundary.  Its adaptive samples can cross the private
+ * OpenNURBS seam at the curve's arbitrary parameter origin even though the
+ * exact boundary itself is simply native-min to native-max.
+ *
+ * This is only a cheap candidate screen.  closed_edge_iso_line() performs the
+ * complete directed 3-D edge/surface validation before any samples are
+ * replaced, so a non-isoparametric closed curve cannot be accepted here. */
 static bool
-pullback_has_collapsed_full_period(const PBCData *data,
+pullback_has_visible_full_period(const PBCData *data,
 	const ON_2dPointArray &samples)
 {
     if (!data || !data->edge || !data->surf || samples.Count() < 2 ||
@@ -5689,24 +5876,18 @@ pullback_has_collapsed_full_period(const PBCData *data,
 	maximum.x = std::max(maximum.x, samples[sample].x);
 	maximum.y = std::max(maximum.y, samples[sample].y);
     }
-
-    for (int fixed_direction = 0; fixed_direction < 2; ++fixed_direction) {
-	const int varying_direction = 1 - fixed_direction;
-	if (!data->surf->IsClosed(varying_direction))
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!data->surf->IsClosed(direction))
 	    continue;
-	const ON_Interval fixed_domain = data->surf->Domain(fixed_direction);
-	const ON_Interval varying_domain = data->surf->Domain(varying_direction);
-	if (!fixed_domain.IsIncreasing() || !varying_domain.IsIncreasing())
+	const ON_Interval domain = data->surf->Domain(direction);
+	if (!domain.IsIncreasing())
 	    continue;
-	const double fixed_limit = std::max(ON_ZERO_TOLERANCE *
-	    kNumericalToleranceScale, fixed_domain.Length() *
-	    kCollapsedFullPeriodMaximumRelativeSpan);
-	const double varying_limit = std::max(ON_ZERO_TOLERANCE *
-	    kNumericalToleranceScale, varying_domain.Length() *
-	    kCollapsedFullPeriodMaximumRelativeSpan);
-	if (maximum[fixed_direction] - minimum[fixed_direction] <= fixed_limit &&
-		maximum[varying_direction] - minimum[varying_direction] <=
-		    varying_limit)
+	const double period = domain.Length();
+	const double span_tolerance = std::max(
+	    ON_ZERO_TOLERANCE * kNumericalToleranceScale,
+	    kPeriodicParameterSnapFraction * std::max(1.0, period));
+	if (fabs((maximum[direction] - minimum[direction]) - period) <=
+		span_tolerance)
 	    return true;
     }
     return false;

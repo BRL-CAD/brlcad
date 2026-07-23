@@ -174,7 +174,6 @@ constexpr double kClosedIsoCandidateLiftGateToleranceMultiplier = 4.0;
  * of each native parameter domain distinguishes that collapsed cloud from an
  * already usable closed-edge path without acting as a geometric tolerance;
  * the reconstructed candidate is still densely validated in model space. */
-constexpr double kCollapsedFullPeriodMaximumRelativeSpan = 1.0e-4;
 /* A relocated periodic seam must lie in an interval containing no sampled
  * boundary data.  Require that empty interval to span at least one thousandth
  * of the complete parameter period so the new seam is not numerically
@@ -237,6 +236,24 @@ constexpr double kMinimumSeamCoverageFraction = 0.8;
  * unchanged and dense lift validation still applies. */
 constexpr double kMaximumRelativeEdgeMismatch = 1.0e-2;
 constexpr double kMaximumRelativeItemMismatch = 1.0e-3;
+/* An explicitly associated boundary curve whose two exact endpoints both lie
+ * on the supplied surface at the declared uncertainty has stronger evidence
+ * of modeling intent than an arbitrary nearby curve.  In safe mode, complete
+ * dense projection may reflect interior approximation drift up to one eighth
+ * of one percent of the item scale.  This is only a 25 percent extension of
+ * the ordinary item-relative ceiling, is unavailable unless both endpoint
+ * anchors pass independently, and never moves either source object. */
+constexpr double kMaximumRelativeEndpointAnchoredItemMismatch = 1.25e-3;
+/* An open, non-periodic NURBS surface has no equivalent wrapped parameter
+ * branch.  After strict projection has identified a continuous closest locus,
+ * safe mode may measure a slightly wider source curve/surface disagreement:
+ * at most two percent of the bounded edge or two tenths of one percent of the
+ * complete item.  This second ceiling is deliberately unavailable to planes,
+ * analytic/periodic surfaces, vertices, and --exact.  It does not move either
+ * source object; the candidate must still pass complete 1024-segment
+ * curve-locus validation and whole-BREP validation. */
+constexpr double kMaximumRelativeOpenNurbsEdgeMismatch = 2.0e-2;
+constexpr double kMaximumRelativeOpenNurbsItemMismatch = 2.0e-3;
 /* An explicit EDGE_CURVE reference supplies stronger identity than geometric
  * adjacency alone.  Safe mode may retain measured vertex drift up to 35
  * percent of the exact bounded curve length, after closest-point and endpoint
@@ -246,6 +263,15 @@ constexpr double kMaximumRelativeItemMismatch = 1.0e-3;
  * demonstrably broken loops.  Later edge/surface and whole-BREP validation
  * remain mandatory. */
 constexpr double kMaximumRelativeEdgeVertexMismatch = 3.5e-1;
+/* A bounded EDGE_CURVE can name two vertices just beyond one end of an open
+ * NURBS curve even though the terminal polynomial span continues through the
+ * missing point.  Safe repair may use that exact continuation only when the
+ * omitted tail is no more than two tenths of one percent of the complete curve
+ * scale and no more than eight declared uncertainties.  The extended span must
+ * hit the asserted vertex at the declared tolerance; --exact never extends
+ * source domains. */
+constexpr double kMaximumRelativeNurbsEndpointExtension = 2.0e-3;
+constexpr double kMaximumDeclaredNurbsEndpointExtensionFactor = 8.0;
 /* A declared uncertainty rounded below the source data's measured separation
  * needs an absolute-tolerance allowance even when the affected feature is
  * shorter than that uncertainty.  Safe mode may reflect at most twice the

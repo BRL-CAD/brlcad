@@ -506,6 +506,7 @@ class cpolygon_t
 	cpolyedge_t *add_edge(const struct uedge2d_t &e);
 	void remove_edge(const struct uedge2d_t &e);
 	std::set<cpolyedge_t *> replace_edges(std::set<uedge_t> &new_edges, std::set<uedge_t> &old_edges);
+	cpolyedge_t *first_edge() const;
 
 	/* Means to update the point array if we're incrementally building. orig_index should
 	 * identify the same point in the parent's index, so cdt() knows what triangles to

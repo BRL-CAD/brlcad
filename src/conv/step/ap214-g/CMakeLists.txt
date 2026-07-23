@@ -579,6 +579,17 @@ if(BRLCAD_ENABLE_STEP)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_wavy_periodic_band.cmake
   )
   brlcad_add_test(
+    NAME ap214_nurbs_native_seam
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_nurbs_native_seam.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_nurbs_native_seam.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_nurbs_native_seam.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_nurbs_native_seam.cmake
+  )
+  brlcad_add_test(
     NAME ap214_collapsed_wavy_periodic_band
     COMMAND
       ${CMAKE_COMMAND}
@@ -625,6 +636,44 @@ if(BRLCAD_ENABLE_STEP)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_measured_vertex_tolerance_band.cmake
   )
   brlcad_add_test(
+    NAME ap214_measured_periodic_closure_band
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_measured_periodic_closure_band.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_periodic_closure_band.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_periodic_closure_band.g
+      -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_periodic_closure_band_exact.json
+      -DEXACT_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_periodic_closure_band_exact.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_measured_periodic_closure_band.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_open_nurbs_measured_mismatch
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_open_nurbs_measured_mismatch.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_open_nurbs_measured_mismatch.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_open_nurbs_measured_mismatch.g
+      -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_open_nurbs_measured_mismatch_exact.json
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_open_nurbs_measured_mismatch.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_endpoint_anchored_surface_tolerance
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_endpoint_anchored_surface_tolerance.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_endpoint_anchored_surface_tolerance.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_endpoint_anchored_surface_tolerance.g
+      -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_endpoint_anchored_surface_tolerance_exact.json
+      -DEXACT_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_endpoint_anchored_surface_tolerance_exact.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_endpoint_anchored_surface_tolerance.cmake
+  )
+  brlcad_add_test(
     NAME ap214_collapsed_topology_edge
     COMMAND
       ${CMAKE_COMMAND}
@@ -633,6 +682,55 @@ if(BRLCAD_ENABLE_STEP)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_collapsed_topology_edge.json
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_collapsed_topology_edge_exact.json
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_collapsed_topology_edge.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_same_vertex_line_edge
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_same_vertex_line_edge.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_same_vertex_line_edge.json
+      -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_same_vertex_line_edge_exact.json
+      -DREJECT_INPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_same_vertex_line_edge_reject.stp
+      -DREJECT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_same_vertex_line_edge_reject.json
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_same_vertex_line_edge.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_closed_curve_endpoint_interval
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_closed_curve_endpoint_interval.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_closed_curve_endpoint_interval.json
+      -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_closed_curve_endpoint_interval_exact.json
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_closed_curve_endpoint_interval.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_nurbs_terminal_extension
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_nurbs_terminal_extension.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_nurbs_terminal_extension.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_nurbs_terminal_extension.g
+      -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_nurbs_terminal_extension_exact.json
+      -DREJECT_INPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_nurbs_terminal_extension_reject.stp
+      -DREJECT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_nurbs_terminal_extension_reject.json
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_nurbs_terminal_extension.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_two_side_singular_corner
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_two_side_singular_corner.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_two_side_singular_corner.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_two_side_singular_corner.g
+      -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_two_side_singular_corner_exact.json
+      -DEXACT_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_two_side_singular_corner_exact.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_two_side_singular_corner.cmake
   )
   brlcad_add_test(
     NAME ap214_spherical_band_inner_first
@@ -864,6 +962,8 @@ cmakefiles(
   tests/ap214_segmented_cylinder_band.stp
   tests/ap214_wavy_periodic_band.cmake
   tests/ap214_wavy_periodic_band.stp
+  tests/ap214_nurbs_native_seam.cmake
+  tests/ap214_nurbs_native_seam.stp
   tests/ap214_collapsed_wavy_periodic_band.cmake
   tests/ap214_collapsed_wavy_periodic_band.stp
   tests/ap214_offset_vertex_periodic_band.cmake
@@ -872,10 +972,24 @@ cmakefiles(
   tests/ap214_periodic_edge_propagation.stp
   tests/ap214_measured_vertex_tolerance_band.cmake
   tests/ap214_measured_vertex_tolerance_band.stp
+  tests/ap214_measured_periodic_closure_band.cmake
+  tests/ap214_measured_periodic_closure_band.stp
+  tests/ap214_open_nurbs_measured_mismatch.cmake
+  tests/ap214_open_nurbs_measured_mismatch.stp
+  tests/ap214_endpoint_anchored_surface_tolerance.cmake
+  tests/ap214_endpoint_anchored_surface_tolerance.stp
   tests/ap214_collapsed_torus_seam.cmake
   tests/ap214_collapsed_torus_seam.stp
   tests/ap214_collapsed_topology_edge.cmake
   tests/ap214_collapsed_topology_edge.stp
+  tests/ap214_same_vertex_line_edge.cmake
+  tests/ap214_same_vertex_line_edge.stp
+  tests/ap214_closed_curve_endpoint_interval.cmake
+  tests/ap214_closed_curve_endpoint_interval.stp
+  tests/ap214_nurbs_terminal_extension.cmake
+  tests/ap214_nurbs_terminal_extension.stp
+  tests/ap214_two_side_singular_corner.cmake
+  tests/ap214_two_side_singular_corner.stp
   tests/ap214_degenerate_torus_endpoint.cmake
   tests/ap214_degenerate_torus_endpoint.stp
   tests/ap214_direct_manifold.cmake

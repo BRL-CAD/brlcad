@@ -490,6 +490,27 @@ cpolygon_t::add_ordered_edge(const struct edge2d_t &e)
     return nedge;
 }
 
+/* Return a stable boundary-loop starting edge.  poly is a pointer set, so
+ * dereferencing begin() makes traversal order depend on allocator layout.
+ * Geometry algorithms which walk next/prev from that arbitrary entry can then
+ * assign samples or exercise bounded refinements in a different order. */
+cpolyedge_t *
+cpolygon_t::first_edge() const
+{
+    cpolyedge_t *first = NULL;
+    for (std::set<cpolyedge_t *>::const_iterator edge = poly.begin();
+	    edge != poly.end(); ++edge) {
+	cpolyedge_t *candidate = *edge;
+	if (!candidate)
+	    continue;
+	if (!first || candidate->v2d[0] < first->v2d[0] ||
+		(candidate->v2d[0] == first->v2d[0] &&
+		 candidate->v2d[1] < first->v2d[1]))
+	    first = candidate;
+    }
+    return first;
+}
+
 void
 cpolygon_t::remove_ordered_edge(const struct edge2d_t &e)
 {
@@ -5386,10 +5407,17 @@ cdt_mesh_t::lscm_reproject(cpolygon_t *polygon)
     // ── Step 1: Walk the boundary loop ───────────────────────────────────────
     // Collect exactly poly.size() unique boundary vertices (one per edge,
     // using each edge's start vertex) so LSCMParameterization receives N
-    // distinct vertices without a closing repeat.
+    // distinct vertices without a closing repeat.  polygon->poly is a set of
+    // pointers, so its begin() depends on heap layout.  The choice of starting
+    // edge rotates the convex LSCM boundary and can change the triangulation
+    // of difficult patches.  Choose the lexicographically first topological
+    // edge instead, making the result independent of allocation order and
+    // unrelated inputs such as the requested output object name.
     std::vector<int32_t> bnd_loop;
     {
-	cpolyedge_t *pe  = *polygon->poly.begin();
+	cpolyedge_t *pe = polygon->first_edge();
+	if (!pe)
+	    return false;
 	cpolyedge_t *cur = pe;
 	do {
 	    bnd_loop.push_back((int32_t)cur->v2d[0]);
