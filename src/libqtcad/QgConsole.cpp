@@ -96,7 +96,7 @@ GEDShellCompleter::updateCompletionModel(const QString& console_txt)
     QByteArray cbytes = console_txt.toLocal8Bit();
     struct ged_cmd_completion_result result = GED_CMD_COMPLETION_RESULT_NULL;
     int completion_cnt = ged_cmd_complete_result(gedp, cbytes.constData(), (size_t)cbytes.size(), &result);
-    if (completion_cnt <= 0) {
+    if (completion_cnt <= 0 || !result.completion_candidates) {
 	ged_cmd_completion_result_clear(&result);
 	return;
     }
