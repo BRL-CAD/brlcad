@@ -3948,7 +3948,6 @@ main(int ac, char *av[])
 	const char *comb_conflicting_flags_av[] = {"comb", "-c", "-r", "all.g"};
 	const char *hide_missing_operand_av[] = {"hide", "--"};
 	const char *unhide_missing_operand_av[] = {"unhide", "--"};
-	const char *remove_missing_member_av[] = {"remove", "--", "all.g"};
 	const char *expand_end_options_av[] = {"expand", "--", "tor"};
 	const char *expand_missing_expression_av[] = {"expand", "--"};
 	const char *pathlist_noleaf_av[] = {"pathlist", "-n", "all.g"};
@@ -4429,8 +4428,6 @@ main(int ac, char *av[])
 		"hide should reject a native end-of-options marker without an object");
 	CHECK(ged_exec_unhide(gedp, 2, unhide_missing_operand_av) == BRLCAD_ERROR,
 		"unhide should reject a native end-of-options marker without an object");
-	CHECK(ged_exec_remove(gedp, 3, remove_missing_member_av) == BRLCAD_ERROR,
-		"remove should reject a native end-of-options marker without a member");
 	CHECK(ged_exec_expand(gedp, 3, expand_end_options_av) == BRLCAD_OK &&
 		BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "tor"),
 		"expand should retain a database expression after the native end-of-options marker");

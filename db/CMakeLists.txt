@@ -115,7 +115,7 @@ function(G_TARGET in_model folder)
     if(NOT TARGET step-g)
       return()
     endif(NOT TARGET step-g)
-    set(CONV_ARGS "-O \"${CMAKE_BINARY_DIR}/${output_file}\" \"${CMAKE_CURRENT_SOURCE_DIR}/${in_model}\"")
+    set(CONV_ARGS "-o \"${CMAKE_BINARY_DIR}/${output_file}\" \"${CMAKE_CURRENT_SOURCE_DIR}/${in_model}\"")
     configure_file("${CMAKE_SOURCE_DIR}/db/to_g.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
     distclean("${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake")
     # Custom command to generate the output
