@@ -19,7 +19,7 @@ foreach(expected
     "\"geometry_written\":1"
     "\"geometry_skipped\":0"
     "\"invalid_breps\":0"
-    "removed an exact zero-area adjacent seam bridge"
+    "removed an exact zero-area reciprocal seam bound"
     "merged two coincident periodic STEP boundary edges into one exact seam edge")
   string(FIND "${report_text}" "${expected}" found)
   if(found EQUAL -1)

@@ -19,8 +19,8 @@ foreach(expected
     "\"geometry_written\":1"
     "\"geometry_skipped\":0"
     "\"invalid_breps\":0"
-    "split an exact STEP edge at a native periodic parameter discontinuity"
-    "propagated one exact periodic edge subdivision to its adjacent STEP face")
+    "split a closed STEP boundary edge at an exact OpenNURBS periodic seam"
+    "regenerated an implicit full-period boundary from exact split edge uses")
   string(FIND "${report_text}" "${expected}" found)
   if(found EQUAL -1)
     message(FATAL_ERROR "report does not contain ${expected}:\n${report_text}")

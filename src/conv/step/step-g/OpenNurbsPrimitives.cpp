@@ -685,7 +685,6 @@ Ellipse::LoadONBrep(ON_Brep *brep)
 
     ON_Plane plane(origin, xaxis, yaxis);
 
-    ON_3dPoint center = origin;
     double a = semi_axis_1 * LocalUnits::length;
     double b = semi_axis_2 * LocalUnits::length;
     ON_Ellipse ellipse(plane, a, b);
@@ -747,102 +746,78 @@ Ellipse::LoadONBrep(ON_Brep *brep)
 	    "preserved a short conic arc between distinct STEP topology vertices");
     }
 
-    int narcs = 1;
-    if (theta < ON_PI / 2.0) {
-	narcs = 1;
-    } else if (theta < ON_PI) {
-	narcs = 2;
-    } else if (theta < ON_PI * 3.0 / 2.0) {
-	narcs = 3;
-    } else {
-	narcs = 4;
-    }
-    double dtheta = theta / narcs;
-    ON_3dPointArray cpts(2 * narcs + 1);
-    double angle = t;
-    double W[2 * 4 + 1]; // 2 * max narcs + 1
-    ON_3dPoint Pnt[2 * 4 + 1];
-    ON_3dVector Tangent1, Tangent2;
-    ON_3dPoint P0, PX, P2, P1;
+    const auto reject = [this](const std::string &message) {
+	if (step)
+	    step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, id,
+		"ELLIPSE", "edge_geometry", message);
+	if (step && step->Verbose())
+	    std::cerr << entityname << " #" << id << ": " << message
+		<< std::endl;
+	return false;
+    };
 
-    P0 = ellipse.PointAt(angle);
-    for (int i = 0; i < narcs; i++) {
-	Tangent1 = ellipse.TangentAt(angle);
-	PX = ellipse.PointAt(angle + dtheta / 2.0);
-	// step angle
-	angle = angle + dtheta;
-	P2 = ellipse.PointAt(angle);
-	Tangent2 = ellipse.TangentAt(angle);
-	ON_Line tangent1(P0, P0 + Tangent1);
-	ON_Line tangent2(P2, P2 + Tangent2);
-	if (intersectLines(tangent1, tangent2, P1) != 1) {
-	    std::cerr << entityname << " #" << id
-		<< ": Error: Control point can not be calculated." << std::endl;
-	    return false;
-	}
-	ON_Line l1(P1, center);
-	ON_Line l2(P0, P2);
-	ON_3dPoint PM;
-	if (intersectLines(l1, l2, PM) != 1) {
-	    std::cerr << entityname << " #" << id
-		<< ": Error: Control point can not be calculated." << std::endl;
-	    return false;
-	}
-	double mx = PM.DistanceTo(PX);
-	double mp1 = PM.DistanceTo(P1);
-	double R = mx / mp1;
-	double w = R / (1 - R);
+    /* OpenNURBS already supplies the exact nine-control-point rational
+     * representation of an ellipse.  The former importer reconstructed each
+     * arc by intersecting endpoint tangents and two auxiliary lines.  Those
+     * intersections become numerically parallel on short, high-aspect-ratio
+     * ellipses even though the source conic is perfectly valid (for example,
+     * a 1209.8 by 11.5 mm production edge).  Generate the complete exact
+     * conic once, move its parameter seam to the STEP edge start, and trim
+     * that rational curve to the requested directed interval. */
+    std::unique_ptr<ON_NurbsCurve> curve(new ON_NurbsCurve());
+    if (!ellipse.IsValid() || ellipse.GetNurbForm(*curve) != 2 ||
+	    !curve->IsValid() || !curve->IsClosed())
+	return reject("could not construct the exact rational ellipse");
 
-	cpts.Append(P0);
-	Pnt[2 * i] = P0;
-	W[2 * i] = 1.0;
+    ON_Circle parameter_circle(plane, 1.0);
+    double nurbs_start = ON_UNSET_VALUE;
+    double nurbs_end = ON_UNSET_VALUE;
+    double end_angle = fmod(s, 2.0 * ON_PI);
+    if (end_angle < 0.0)
+	end_angle += 2.0 * ON_PI;
+    if (fabs(end_angle) <= ANGLE_ZERO_TOL && s > t)
+	end_angle = 2.0 * ON_PI;
+    if (!parameter_circle.GetNurbFormParameterFromRadian(t,
+	    &nurbs_start) ||
+	    !parameter_circle.GetNurbFormParameterFromRadian(end_angle,
+		&nurbs_end))
+	return reject("could not map the STEP ellipse interval to its exact "
+	    "rational parameterization");
 
-	Pnt[2 * i + 1] = P1;
-	P1 = (w) * P1; // must pre-weight before putting into NURB
-	cpts.Append(P1);
-	W[2 * i + 1] = w;
+    const ON_Interval original_domain = curve->Domain();
+    const double parameter_guard = std::max(ON_ZERO_TOLERANCE,
+	original_domain.Length() * 1.0e-12);
+    if (!original_domain.IsIncreasing() ||
+	    !curve->ChangeClosedCurveSeam(nurbs_start) ||
+	    !curve->IsValid())
+	return reject("could not move the exact ellipse seam to its STEP "
+	    "edge start");
 
-	P0 = P2;
-    }
-    cpts.Append(P2);
-    Pnt[2 * narcs] = P2;
-    W[2 * narcs] = 1.0;
-
-    int degree = 2;
-    int n = cpts.Count();
-    int p = degree;
-    int m = n + p - 1;
-    int dimension = 3;
-    double u[4 + 1]; /* max narcs + 1 */
-
-    for (int k = 0; k < narcs + 1; k++) {
-	u[k] = ((double)k) / narcs;
+    const bool complete_ellipse =
+	theta >= 2.0 * ON_PI - ANGLE_ZERO_TOL;
+    if (!complete_ellipse) {
+	const ON_Interval relocated_domain = curve->Domain();
+	while (nurbs_end <= relocated_domain.Min() + parameter_guard)
+	    nurbs_end += original_domain.Length();
+	if (nurbs_end > relocated_domain.Max() + parameter_guard ||
+		!curve->Trim(ON_Interval(relocated_domain.Min(),
+		    std::min(nurbs_end, relocated_domain.Max()))) ||
+		!curve->IsValid())
+	    return reject("could not trim the exact rational ellipse to its "
+		"STEP edge interval");
     }
 
-    ON_NurbsCurve *c = ON_NurbsCurve::New(dimension, true, degree + 1, n);
+    const double endpoint_tolerance = std::max(LocalUnits::tolerance,
+	ON_ZERO_TOLERANCE);
+    if (curve->PointAtStart().DistanceTo(ellipse.PointAt(t)) >
+	    endpoint_tolerance ||
+	    curve->PointAtEnd().DistanceTo(ellipse.PointAt(s)) >
+		endpoint_tolerance)
+	return reject("the exact rational ellipse interval did not preserve "
+	    "its directed STEP endpoints");
 
-    c->ReserveKnotCapacity(m + 1);
-    for (int i = 0; i < degree; i++) {
-	c->SetKnot(i, 0.0);
-    }
-    for (int i = 1; i < narcs; i++) {
-	double knot_value = u[i] / u[narcs];
-	c->SetKnot(degree + 2 * (i - 1), knot_value);
-	c->SetKnot(degree + 2 * (i - 1) + 1, knot_value);
-    }
-    for (int i = n - 1; i < m; i++) {
-	c->SetKnot(i, 1.0);
-    }
-    // insert the control points
-    for (int i = 0; i < n; i++) {
-	ON_3dPoint pnt = cpts[i];
-	c->SetCV(i, pnt);
-	c->SetWeight(i, W[i]);
-    }
-
-    SetONId(brep->AddEdgeCurve(c));
-
-    return true;
+    SetONId(brep->AddEdgeCurve(curve.release()));
+    return GetONId() >= 0;
 }
 
 void

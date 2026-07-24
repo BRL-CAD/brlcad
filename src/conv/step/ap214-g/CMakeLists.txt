@@ -706,6 +706,26 @@ if(BRLCAD_ENABLE_STEP)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_closed_curve_endpoint_interval.cmake
   )
   brlcad_add_test(
+    NAME ap214_closed_curve_interior_seam
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_closed_curve_interior_seam.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_closed_curve_interior_seam.json
+      -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_closed_curve_interior_seam_exact.json
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_closed_curve_interior_seam.cmake
+  )
+  brlcad_add_test(
+    NAME ap214_eccentric_ellipse_arc
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_eccentric_ellipse_arc.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_eccentric_ellipse_arc.json
+      -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_eccentric_ellipse_arc_exact.json
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_eccentric_ellipse_arc.cmake
+  )
+  brlcad_add_test(
     NAME ap214_nurbs_terminal_extension
     COMMAND
       ${CMAKE_COMMAND}
@@ -986,6 +1006,10 @@ cmakefiles(
   tests/ap214_same_vertex_line_edge.stp
   tests/ap214_closed_curve_endpoint_interval.cmake
   tests/ap214_closed_curve_endpoint_interval.stp
+  tests/ap214_closed_curve_interior_seam.cmake
+  tests/ap214_closed_curve_interior_seam.stp
+  tests/ap214_eccentric_ellipse_arc.cmake
+  tests/ap214_eccentric_ellipse_arc.stp
   tests/ap214_nurbs_terminal_extension.cmake
   tests/ap214_nurbs_terminal_extension.stp
   tests/ap214_two_side_singular_corner.cmake

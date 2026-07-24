@@ -747,7 +747,8 @@ static size_t repair_split_closed_edge_loop_orientations(ON_Brep *brep,
 	STEPWrapper *wrapper, int entity_id, const std::string &entity_type,
 	std::string *failure = NULL);
 static size_t split_reused_edges_by_shell_component(ON_Brep *brep,
-	std::string *failure = NULL);
+	std::string *failure = NULL, int *unresolved_step_edge = NULL,
+	int *unresolved_use_count = NULL);
 static size_t reconcile_pre_split_step_edge_uses(ON_Brep *brep,
 	std::string *failure = NULL);
 
@@ -1113,6 +1114,44 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 		job.entity_type);
 	finish_stage("post_repair_trim_orientation");
 	if (work_expired("post-repair trim orientation repair"))
+	    return;
+    }
+    /* Some closed-surface faces become structurally valid only after all
+     * independently authored copies of their periodic seam edge are merged.
+     * This must precede the final structural gate: the later solidness repair
+     * is unreachable while OpenNURBS still sees boundary trims on a closed
+     * surface.  The helper is whole-BREP transactional and commits only when
+     * the complete exact merge set validates. */
+    if (!job.faceted &&
+	    !wrapper->ImportOptions().exact &&
+	    wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
+	ON_wString structural_probe_messages;
+	ON_TextLog structural_probe_log(structural_probe_messages);
+	if (!job.brep->IsValid(&structural_probe_log)) {
+	    wrapper->SetProgressDetail(
+		"reconciling structurally required periodic seam edges",
+		job.entity_id, 0, 0, std::string(), job.entity_type);
+	    std::string structural_merge_details;
+	    const size_t structural_merges =
+		merge_exact_periodic_boundary_edges_for_structural_validation(
+		    job.brep.get(), &structural_merge_details);
+	    for (size_t repair = 0; repair < structural_merges; ++repair)
+		wrapper->RecordRepair(job.entity_id, job.entity_type,
+		    "edge_topology",
+		    "merged two coincident periodic STEP boundary edges into "
+		    "one exact seam edge");
+	    if (wrapper->Verbose() && structural_merges)
+		std::cerr << job.entity_type << " #" << job.entity_id
+		    << ": merged structurally required periodic boundary edge "
+		    << structural_merge_details << std::endl;
+	    else if (wrapper->Verbose() &&
+		    !structural_merge_details.empty())
+		std::cerr << job.entity_type << " #" << job.entity_id
+		    << ": structural periodic boundary edge reconciliation "
+		    << "rejected: " << structural_merge_details << std::endl;
+	}
+	finish_stage("topology_structural_periodic_edge_merge");
+	if (work_expired("structurally required periodic edge reconciliation"))
 	    return;
     }
     for (size_t split = 0; split < keyhole_splits; ++split)
@@ -1634,8 +1673,11 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
     if (!solid && !wrapper->ImportOptions().exact &&
 	    wrapper->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
 	std::string reused_edge_failure;
+	int unresolved_reused_step_edge = 0;
+	int unresolved_reused_use_count = 0;
 	const size_t reused_edge_repairs = split_reused_edges_by_shell_component(
-	    job.brep.get(), &reused_edge_failure);
+	    job.brep.get(), &reused_edge_failure, &unresolved_reused_step_edge,
+	    &unresolved_reused_use_count);
 	for (size_t repair = 0; repair < reused_edge_repairs; ++repair)
 	    wrapper->RecordRepair(job.entity_id, job.entity_type, "edge_topology",
 		"separated one STEP edge reused by distinct manifold shell components");
@@ -1645,6 +1687,11 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    std::cerr << job.entity_type << " #" << job.entity_id
 		<< ": reused-edge shell separation retained unresolved input: "
 		<< reused_edge_failure << std::endl;
+	if (unresolved_reused_step_edge > 0 && !reused_edge_failure.empty())
+	    wrapper->RecordDiagnostic(
+		brlcad::step::DiagnosticSeverity::Error,
+		unresolved_reused_step_edge, "EDGE_CURVE", "edge_topology",
+		reused_edge_failure);
 	if (work_expired("reused STEP edge shell separation"))
 	    return;
     }
@@ -1886,10 +1933,15 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
  * every use must belong to a distinct, proven two-use component and the
  * completed BREP must remain structurally valid. */
 static size_t
-split_reused_edges_by_shell_component(ON_Brep *brep, std::string *failure)
+split_reused_edges_by_shell_component(ON_Brep *brep, std::string *failure,
+	int *unresolved_step_edge, int *unresolved_use_count)
 {
     if (failure)
 	failure->clear();
+    if (unresolved_step_edge)
+	*unresolved_step_edge = 0;
+    if (unresolved_use_count)
+	*unresolved_use_count = 0;
     if (!brep || brep->m_F.Count() < 1)
 	return 0;
 
@@ -1956,11 +2008,15 @@ split_reused_edges_by_shell_component(ON_Brep *brep, std::string *failure)
 	if (!complete || by_component.size() < 2) {
 	    if (failure && failure->empty()) {
 		std::ostringstream reason;
-		reason << "STEP edge " << edge.m_edge_user.i << " has "
-		    << edge.m_ti.Count()
-		    << " uses which were not separated by authoritative shell "
-		       "membership or ordinary face adjacency";
+		reason << "STEP edge #" << edge.m_edge_user.i << " has "
+		    << edge.m_ti.Count() << " uses in one authoritative "
+		       "CLOSED_SHELL/ordinary-adjacency component; no exact "
+		       "two-use manifold pairing is provable";
 		*failure = reason.str();
+		if (unresolved_step_edge)
+		    *unresolved_step_edge = edge.m_edge_user.i;
+		if (unresolved_use_count)
+		    *unresolved_use_count = edge.m_ti.Count();
 	    }
 	    continue;
 	}
@@ -1978,9 +2034,13 @@ split_reused_edges_by_shell_component(ON_Brep *brep, std::string *failure)
 	    plans.push_back(plan);
 	else if (failure && failure->empty()) {
 	    std::ostringstream reason;
-	    reason << "STEP edge " << edge.m_edge_user.i
+	    reason << "STEP edge #" << edge.m_edge_user.i
 		<< " did not have exactly two uses in every shell component";
 	    *failure = reason.str();
+	    if (unresolved_step_edge)
+		*unresolved_step_edge = edge.m_edge_user.i;
+	    if (unresolved_use_count)
+		*unresolved_use_count = edge.m_ti.Count();
 	}
     }
     if (plans.empty())

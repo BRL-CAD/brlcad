@@ -22,7 +22,7 @@ foreach(expected
     "\"geometry_written\":1"
     "\"geometry_skipped\":0"
     "\"invalid_breps\":0"
-    "split an open STEP boundary edge at an exact OpenNURBS periodic seam"
+    "split a closed STEP boundary edge at an exact OpenNURBS periodic seam"
     "inserted an exact OpenNURBS seam for an implicit periodic STEP face band")
   string(FIND "${report_text}" "${expected}" found)
   if(found EQUAL -1)

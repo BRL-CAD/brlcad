@@ -682,8 +682,94 @@ step_edge_curve_subdomain(const ON_Curve *curve,
 
     /* A one-vertex edge intentionally represents a complete closed curve (or
      * a source-asserted almost-closed curve handled by the bounded endpoint
-     * repair below).  Two closest-point solves would select the same domain
-     * end and incorrectly collapse that edge to zero length. */
+     * repair below).  For a genuinely closed curve, the STEP vertex selects
+     * the topological start of that full traversal; it is not required to
+     * coincide with the curve's stored knot seam.  OpenNURBS does require its
+     * closed edge curve to begin and end at the edge vertex, so relocate an
+     * owned duplicate's seam to the vertex without trimming or changing the
+     * curve locus.  This is an exact representation normalization and is
+     * therefore also permitted by --exact.
+     *
+     * Do not run the ordinary two-end interval selection for a one-vertex
+     * edge: both closest-point solves would select the same parameter and
+     * incorrectly collapse the complete curve to zero length. */
+    if (same_topology_vertex && curve->IsClosed()) {
+	const CurveDistanceEvaluator evaluator(curve);
+	double vertex_parameter = ON_UNSET_VALUE;
+	double vertex_distance = DBL_MAX;
+	if (!evaluator.IsValid() ||
+		!evaluator.ClosestParameter(start, &vertex_parameter,
+		    &vertex_distance) ||
+		!domain.Includes(vertex_parameter)) {
+	    if (failure)
+		*failure = "could not locate the closed STEP edge vertex on "
+		    "the source curve";
+	    return false;
+	}
+	const bool allow_adjustment = step && !step->ImportOptions().exact &&
+	    step->ImportOptions().repair == brlcad::step::RepairMode::Safe;
+	const double accepted_limit = allow_adjustment ?
+	    maximum_verified_edge_vertex_tolerance(curve,
+		LocalUnits::tolerance) : LocalUnits::tolerance;
+	if (!std::isfinite(vertex_distance) ||
+		vertex_distance > accepted_limit) {
+	    if (failure) {
+		std::ostringstream reason;
+		reason << "closed STEP edge vertex misses the source curve by "
+		    << vertex_distance << " mm (accepted " << accepted_limit
+		    << ", declared " << LocalUnits::tolerance << ')';
+		*failure = reason.str();
+	    }
+	    return false;
+	}
+
+	std::unique_ptr<ON_Curve> relocated(curve->DuplicateCurve());
+	const double parameter_guard = std::max(ON_ZERO_TOLERANCE,
+	    domain.Length() * 1.0e-12);
+	const bool already_at_native_seam =
+	    fabs(vertex_parameter - domain.Min()) <= parameter_guard ||
+	    fabs(vertex_parameter - domain.Max()) <= parameter_guard;
+	if (!relocated ||
+		(!already_at_native_seam &&
+		    !relocated->ChangeClosedCurveSeam(vertex_parameter)) ||
+		!relocated->IsValid() || !relocated->IsClosed() ||
+		relocated->PointAtStart().DistanceTo(start) > accepted_limit ||
+		relocated->PointAtEnd().DistanceTo(start) > accepted_limit) {
+	    if (failure) {
+		std::ostringstream reason;
+		reason << "could not relocate the closed source-curve seam to "
+		    << vertex_parameter << " in domain " << domain.Min() << ':'
+		    << domain.Max();
+		*failure = reason.str();
+	    }
+	    return false;
+	}
+
+	*wrapped_curve = std::move(relocated);
+	if (vertex_distance > LocalUnits::tolerance) {
+	    *edge_tolerance = vertex_distance *
+		kMeasuredToleranceSafetyFactor;
+	    if (step) {
+		step->RecordDiagnostic(
+		    brlcad::step::DiagnosticSeverity::Warning,
+		    step_entity_id, "EDGE_CURVE", "edge_geometry",
+		    "closed source curve missed its topology vertex; used a "
+		    "measured local edge tolerance while relocating the exact "
+		    "curve seam");
+		step->RecordRepair(step_entity_id, "EDGE_CURVE",
+		    "edge_geometry",
+		    "relocated a closed source-curve seam within its measured "
+		    "STEP vertex tolerance");
+	    }
+	} else if (step && !already_at_native_seam) {
+	    step->RecordDiagnostic(
+		brlcad::step::DiagnosticSeverity::Information,
+		step_entity_id, "EDGE_CURVE", "edge_geometry",
+		"relocated the exact closed source-curve seam to its asserted "
+		"STEP topology vertex");
+	}
+	return true;
+    }
     if (same_topology_vertex)
 	return true;
 

@@ -23,7 +23,7 @@ foreach(expected
     "\"geometry_skipped\":0"
     "\"invalid_breps\":0"
     "inserted an exact OpenNURBS seam for an implicit periodic STEP face band"
-    "relocated a closed surface seam outside an exact face boundary")
+    "relocated a closed rational surface seam away from an exact STEP boundary")
   string(FIND "${report_text}" "${expected}" found)
   if(found EQUAL -1)
     message(FATAL_ERROR "report does not contain ${expected}:\n${report_text}")
