@@ -238,6 +238,44 @@ run_navigation_test()
 
 
 static bool
+run_cycle_navigation_test()
+{
+    QgConsole console(NULL);
+    TestCompleter *completer = new TestCompleter(&console);
+    console.setCompleter(completer);
+    console.setCompletionMode(BU_CMD_COMPLETE_CYCLE);
+    console.prompt("$ ");
+    console.printCommand("cmd a");
+    QPlainTextEdit *edit = console.findChild<QPlainTextEdit *>();
+    if (!edit)
+	return false;
+    edit->setFocus();
+
+    QTest::keyClick(edit, Qt::Key_Tab);
+    QApplication::processEvents();
+    if (command_text(edit) != "cmd alpha") {
+	qWarning("cycle first Tab: [%s]", command_text(edit).toLocal8Bit().constData());
+	return false;
+    }
+    QTest::keyClick(edit, Qt::Key_Tab);
+    QApplication::processEvents();
+    if (command_text(edit) != "cmd alpine") {
+	qWarning("cycle second Tab: [%s]", command_text(edit).toLocal8Bit().constData());
+	return false;
+    }
+    QTest::keyClick(edit, Qt::Key_Tab);
+    QApplication::processEvents();
+    if (command_text(edit) != "cmd alpha") {
+	qWarning("cycle wrap: [%s]", command_text(edit).toLocal8Bit().constData());
+	return false;
+    }
+    QTest::keyClick(edit, Qt::Key_Escape);
+    QApplication::processEvents();
+    return command_text(edit) == "cmd a" && edit->extraSelections().isEmpty();
+}
+
+
+static bool
 run_refinement_fallback_test(bool ambiguous, const QString &expected)
 {
     QgConsole console(NULL);
@@ -519,18 +557,20 @@ main(int argc, char **argv)
 	return 5;
     if (!run_navigation_test())
 	return 6;
-    if (!run_highlight_composition_test())
+    if (!run_cycle_navigation_test())
 	return 7;
-    if (!run_log_queue_test())
+    if (!run_highlight_composition_test())
 	return 8;
-    if (!run_ged_semantic_test(argv[1]))
+    if (!run_log_queue_test())
 	return 9;
-    if (!run_refinement_fallback_test(false, "cmd alpha3"))
+    if (!run_ged_semantic_test(argv[1]))
 	return 10;
-    if (!run_refinement_fallback_test(true, "cmd a3"))
+    if (!run_refinement_fallback_test(false, "cmd alpha3"))
 	return 11;
-    if (!run_long_completion_display_test())
+    if (!run_refinement_fallback_test(true, "cmd a3"))
 	return 12;
+    if (!run_long_completion_display_test())
+	return 13;
 
     return 0;
 }
