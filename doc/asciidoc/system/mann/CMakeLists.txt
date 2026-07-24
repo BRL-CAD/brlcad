@@ -307,7 +307,6 @@ set(
   release.adoc
   relos.adoc
   reopen.adoc
-  remove.adoc
   remat.adoc
   rfarb.adoc
   rm.adoc

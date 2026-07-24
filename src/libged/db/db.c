@@ -31,18 +31,61 @@
 
 #include <string.h>
 
-#include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
 
 #include "../ged_private.h"
 
 
 struct _ged_db_info {
     struct ged *gedp;
-    const struct bu_cmdtab *cmds;
-    struct bu_opt_desc *gopts;
+    int help;
+};
+
+struct db_find_args {
+    int all;
+    int help;
+};
+
+static const struct bu_cmd_option db_find_options[] = {
+    BU_CMD_FLAG("a", NULL, struct db_find_args, all,
+	"Include hidden combinations"),
+    BU_CMD_FLAG("h", "help", struct db_find_args, help,
+	"Print help"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand db_find_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1,
+	BU_CMD_COUNT_UNLIMITED, "Objects to search for", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema db_find_schema = {
+    "find", "List combinations that reference specified objects",
+    db_find_options, db_find_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+static const struct bu_cmd_option db_find_dispatch_options[] = {
+    BU_CMD_FLAG_UNBOUND("a", NULL, "a", "Include hidden combinations"),
+    BU_CMD_FLAG_UNBOUND("h", "help", "h", "Print help"),
+    BU_CMD_FLAG_UNBOUND("?", NULL, "?", "Print help"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema db_find_dispatch_schema = {
+    "find", "List combinations that reference specified objects",
+    db_find_dispatch_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+static const struct bu_cmd_schema db_version_schema = {
+    "version", "Report the open database format version", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+static const struct bu_cmd_option db_root_options[] = {
+    BU_CMD_FLAG("h", "help", struct _ged_db_info, help, "Print help"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema db_root_schema = {
+    "db", "Database commands", db_root_options, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
 };
 
 
@@ -97,8 +140,8 @@ _db_find_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb = (struct rt_comb_internal *)NULL;
-    int c;
-    int aflag = 0;
+    int operand_index;
+    struct db_find_args args = {0, 0};
     static const char *usage = "<objects>";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -111,23 +154,24 @@ _db_find_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "a")) != -1) {
-	switch (c) {
-	    case 'a':
-		aflag = 1;
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
-		return BRLCAD_ERROR;
-	}
+    operand_index = bu_cmd_schema_parse_complete(&db_find_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0)
+	return BRLCAD_ERROR;
+    if (args.help) {
+	char *help = bu_cmd_schema_describe(&db_find_schema);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s [-a] <objects>\n%s",
+	    argv[0], help ? help : "");
+	if (help)
+	    bu_free(help, "db find help");
+	return GED_HELP;
     }
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
     FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
 	if (!(dp->d_flags & RT_DIR_COMB) ||
-	    (!aflag && (dp->d_flags & RT_DIR_HIDDEN)))
+	    (!args.all && (dp->d_flags & RT_DIR_HIDDEN)))
 	    continue;
 
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
@@ -353,14 +397,28 @@ _db_cmd_forward(void *bs, const char *target, int argc, const char **argv)
 
 DB_FORWARD_COMMANDS(DB_DECLARE_FORWARD)
 
+#define DB_DECLARE_SCHEMA(_name, _target) \
+    static const struct bu_cmd_schema db_ ## _name ## _schema = { \
+	GED_STR(_name), "Forward a database command to libged", NULL, NULL, \
+	BU_CMD_PARSE_OPTIONS_FIRST, {NULL} \
+    };
+DB_FORWARD_COMMANDS(DB_DECLARE_SCHEMA)
 
-static const struct bu_cmdtab _db_cmds[] = {
-#define DB_TABLE_FORWARD(_name, _target) {#_name, _db_cmd_ ## _name},
-    DB_FORWARD_COMMANDS(DB_TABLE_FORWARD)
-#undef DB_TABLE_FORWARD
-    {"find", _db_cmd_find},
-    {"version", _db_cmd_version},
-    {NULL, NULL}
+
+#define DB_TREE_FORWARD(_name, _target) \
+    BU_CMD_TREE_NODE(&db_ ## _name ## _schema, NULL, NULL, \
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _db_cmd_ ## _name),
+static const struct bu_cmd_tree_node db_subcommands[] = {
+    DB_FORWARD_COMMANDS(DB_TREE_FORWARD)
+    BU_CMD_TREE_NODE(&db_find_dispatch_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _db_cmd_find),
+    BU_CMD_TREE_NODE(&db_version_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _db_cmd_version),
+    BU_CMD_TREE_NODE_NULL
+};
+#undef DB_TREE_FORWARD
+static const struct bu_cmd_tree db_tree = {
+    &db_root_schema, db_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
 };
 
 
@@ -371,61 +429,49 @@ ged_db_core(struct ged *gedp, int argc, const char *argv[])
 
     const int original_argc = argc;
     const char **original_argv = argv;
-    int help = 0;
     struct _ged_db_info gd;
     gd.gedp = gedp;
-    gd.cmds = _db_cmds;
+    gd.help = 0;
 
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     argc--;
     argv++;
 
-    struct bu_opt_desc d[2];
-    BU_OPT(d[0], "h", "help", "", NULL, &help, "Print help");
-    BU_OPT_NULL(d[1]);
-    gd.gopts = d;
-
-    const char *cmd_args = "[options] subcommand [args]";
-
-    if (!argc) {
-	_ged_subcmd_help(gedp, d, _db_cmds, "db", cmd_args, &gd, 0, NULL);
-	return GED_HELP;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "help")) {
-	if (argc > 1)
-	    _ged_subcmd_help(gedp, d, _db_cmds, "db", cmd_args, &gd, argc - 1, argv + 1);
-	else
-	    _ged_subcmd_help(gedp, d, _db_cmds, "db", cmd_args, &gd, 0, NULL);
-	return GED_HELP;
-    }
-
-    int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_db_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
-	    break;
+    if (!argc || BU_STR_EQUAL(argv[0], "help")) {
+	char *help = bu_cmd_tree_describe(&db_tree);
+	if (argc > 1 && BU_STR_EQUAL(argv[1], "find")) {
+	    if (help) bu_free(help, "db tree help");
+	    help = bu_cmd_schema_describe(&db_find_schema);
 	}
-    }
-
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    int opt_ret = bu_opt_parse(NULL, acnt, argv, d);
-
-    if (help) {
-	if (cmd_pos >= 0)
-	    _ged_subcmd_help(gedp, d, _db_cmds, "db", cmd_args, &gd, argc - cmd_pos, argv + cmd_pos);
-	else
-	    _ged_subcmd_help(gedp, d, _db_cmds, "db", cmd_args, &gd, 0, NULL);
+	if (help) {
+	    bu_vls_strcat(gedp->ged_result_str, help);
+	    bu_free(help, "db tree help");
+	}
 	return GED_HELP;
     }
 
-    if (cmd_pos >= 0 && opt_ret == 0) {
-	int ret = BRLCAD_ERROR;
-	if (bu_cmd(_db_cmds, argc - cmd_pos, argv + cmd_pos, 0, (void *)&gd, &ret) == BRLCAD_OK)
-	    return ret;
-	bu_vls_printf(gedp->ged_result_str, "db: subcommand '%s' could not be dispatched\n", argv[cmd_pos]);
-	return BRLCAD_ERROR;
+    if (BU_STR_EQUAL(argv[0], "-h") || BU_STR_EQUAL(argv[0], "--help") ||
+	BU_STR_EQUAL(argv[0], "?")) {
+	char *help = bu_cmd_tree_describe(&db_tree);
+	if (help) {
+	    bu_vls_strcat(gedp->ged_result_str, help);
+	    bu_free(help, "db tree help");
+	}
+	return GED_HELP;
+    }
+
+    int ret = BRLCAD_ERROR;
+    if (bu_cmd_tree_dispatch(&db_tree, (void *)&gd, argc, argv, &ret) == 0)
+	return ret;
+
+    if (gd.help) {
+	char *root_help = bu_cmd_tree_describe(&db_tree);
+	if (root_help) {
+	    bu_vls_strcat(gedp->ged_result_str, root_help);
+	    bu_free(root_help, "db tree help");
+	}
+	return GED_HELP;
     }
 
     bu_clbk_t clbk = NULL;
@@ -434,7 +480,11 @@ ged_db_core(struct ged *gedp, int argc, const char *argv[])
 	return ged_clbk_exec(gedp->ged_result_str, gedp, GED_CMD_RECURSION_LIMIT, clbk, original_argc, original_argv, (void *)gedp, clbk_data);
 
     bu_vls_printf(gedp->ged_result_str, "db: unknown subcommand '%s'\n", argv[0]);
-    _ged_subcmd_help(gedp, d, _db_cmds, "db", cmd_args, &gd, 0, NULL);
+    char *help = bu_cmd_tree_describe(&db_tree);
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "db tree help");
+    }
     return BRLCAD_ERROR | GED_UNKNOWN;
 }
 
@@ -442,14 +492,14 @@ ged_db_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_DB_COMMANDS(X, XID) \
-    X(db, ged_db_core, GED_CMD_DEFAULT) \
-    X(dbfind, ged_find_core, GED_CMD_DEFAULT) \
-    X(dbversion, ged_db_version_core, GED_CMD_DEFAULT) \
-    X(find, ged_find_core, GED_CMD_DEFAULT) \
-    X(version, ged_db_version_core, GED_CMD_DEFAULT) \
+    X(db, ged_db_core, GED_CMD_DEFAULT, &db_root_schema) \
+    X(dbfind, ged_find_core, GED_CMD_DEFAULT, &db_find_schema) \
+    X(dbversion, ged_db_version_core, GED_CMD_DEFAULT, &db_version_schema) \
+    X(find, ged_find_core, GED_CMD_DEFAULT, &db_find_schema) \
+    X(version, ged_db_version_core, GED_CMD_DEFAULT, &db_version_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_DB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_db", 1, GED_DB_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_DB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_db", 1, GED_DB_COMMANDS)
 
 /*
  * Local Variables:
