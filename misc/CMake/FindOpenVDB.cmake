@@ -1,5 +1,5 @@
 # Copyright Contributors to the OpenVDB Project
-# SPDX-License-Identifier: MPL-2.0
+# SPDX-License-Identifier: Apache-2.0
 #
 #[=======================================================================[.rst:
 
@@ -64,6 +64,8 @@ This will define the following variables:
   True if the OpenVDB Library has been built with log4cplus support
 ``OpenVDB_USES_IMATH_HALF``
   True if the OpenVDB Library has been built with Imath half support
+``OpenVDB_USES_DELAYED_LOADING``
+  True if the OpenVDB Library has been built with delayed-loading
 ``OpenVDB_ABI``
   Set if this module was able to determine the ABI number the located
   OpenVDB Library was built against. Unset otherwise.
@@ -107,21 +109,24 @@ may be provided to tell this module where to look.
 
 #]=======================================================================]
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.24)
 include(GNUInstallDirs)
+
 
 # Include utility functions for version information
 include(${CMAKE_CURRENT_LIST_DIR}/OpenVDBUtils.cmake)
 
-mark_as_advanced(OpenVDB_INCLUDE_DIR OpenVDB_LIBRARY)
+mark_as_advanced(
+  OpenVDB_INCLUDE_DIR
+  OpenVDB_LIBRARY
+)
 
 set(_FIND_OPENVDB_ADDITIONAL_OPTIONS "")
 if(DISABLE_CMAKE_SEARCH_PATHS)
   set(_FIND_OPENVDB_ADDITIONAL_OPTIONS NO_DEFAULT_PATH)
 endif()
 
-set(
-  _OPENVDB_COMPONENT_LIST
+set(_OPENVDB_COMPONENT_LIST
   openvdb
   openvdb_je
   pyopenvdb
@@ -213,9 +218,7 @@ unset(_IMPORT_PREFIX)
 # ------------------------------------------------------------------------
 
 set(_OPENVDB_INCLUDE_SEARCH_DIRS "")
-list(
-  APPEND
-  _OPENVDB_INCLUDE_SEARCH_DIRS
+list(APPEND _OPENVDB_INCLUDE_SEARCH_DIRS
   ${OPENVDB_INCLUDEDIR}
   ${_OPENVDB_ROOT}
   ${PC_OpenVDB_INCLUDE_DIRS}
@@ -225,7 +228,10 @@ list(
 foreach(COMPONENT ${OpenVDB_FIND_COMPONENTS})
   # Add in extra component paths
   set(_VDB_COMPONENT_SEARCH_DIRS ${_OPENVDB_INCLUDE_SEARCH_DIRS})
-  list(APPEND _VDB_COMPONENT_SEARCH_DIRS ${OPENVDB_${COMPONENT}_ROOT} ${OPENVDB_${COMPONENT}_INCLUDEDIR})
+  list(APPEND _VDB_COMPONENT_SEARCH_DIRS
+    ${OPENVDB_${COMPONENT}_ROOT}
+    ${OPENVDB_${COMPONENT}_INCLUDEDIR}
+  )
   if(_VDB_COMPONENT_SEARCH_DIRS)
     list(REMOVE_DUPLICATES _VDB_COMPONENT_SEARCH_DIRS)
   endif()
@@ -233,17 +239,15 @@ foreach(COMPONENT ${OpenVDB_FIND_COMPONENTS})
   # Look for a standard header files.
   if(${COMPONENT} STREQUAL "openvdb")
     # Look for a standard OpenVDB header file.
-    find_path(
-      OpenVDB_${COMPONENT}_INCLUDE_DIR
-      openvdb/version.h
+    find_path(OpenVDB_${COMPONENT}_INCLUDE_DIR openvdb/version.h
       ${_FIND_OPENVDB_ADDITIONAL_OPTIONS}
       PATHS ${_VDB_COMPONENT_SEARCH_DIRS}
-      PATH_SUFFIXES ${CMAKE_INSTALL_INCLUDEDIR} include
+      PATH_SUFFIXES
+        ${CMAKE_INSTALL_INCLUDEDIR}
+        include
     )
   elseif(${COMPONENT} STREQUAL "pyopenvdb")
-    find_path(
-      OpenVDB_${COMPONENT}_INCLUDE_DIR
-      pyopenvdb.h
+    find_path(OpenVDB_${COMPONENT}_INCLUDE_DIR pyopenvdb.h
       ${_FIND_OPENVDB_ADDITIONAL_OPTIONS}
       PATHS ${_VDB_COMPONENT_SEARCH_DIRS}
       PATH_SUFFIXES
@@ -254,9 +258,7 @@ foreach(COMPONENT ${OpenVDB_FIND_COMPONENTS})
     )
   elseif(${COMPONENT} STREQUAL "openvdb_ax")
     # Look for a standard OpenVDB header file.
-    find_path(
-      OpenVDB_${COMPONENT}_INCLUDE_DIR
-      compiler/Compiler.h
+    find_path(OpenVDB_${COMPONENT}_INCLUDE_DIR compiler/Compiler.h
       ${_FIND_OPENVDB_ADDITIONAL_OPTIONS}
       PATHS ${_VDB_COMPONENT_SEARCH_DIRS}
       PATH_SUFFIXES
@@ -268,30 +270,33 @@ foreach(COMPONENT ${OpenVDB_FIND_COMPONENTS})
   elseif(${COMPONENT} STREQUAL "openvdb_houdini")
     # @note  Expects both houdini_utils and openvdb_houdini folders
     #   to be located in the same place
-    find_path(
-      OpenVDB_${COMPONENT}_INCLUDE_DIR
-      openvdb_houdini/SOP_NodeVDB.h
+    find_path(OpenVDB_${COMPONENT}_INCLUDE_DIR openvdb_houdini/SOP_NodeVDB.h
       ${_FIND_OPENVDB_ADDITIONAL_OPTIONS}
       PATHS ${_VDB_COMPONENT_SEARCH_DIRS}
-      PATH_SUFFIXES ${CMAKE_INSTALL_INCLUDEDIR}/openvdb ${CMAKE_INSTALL_INCLUDEDIR} include
+      PATH_SUFFIXES
+        ${CMAKE_INSTALL_INCLUDEDIR}/openvdb
+        ${CMAKE_INSTALL_INCLUDEDIR}
+        include
     )
   elseif(${COMPONENT} STREQUAL "nanovdb")
     # Look for NanoVDB.h
-    find_path(
-      OpenVDB_${COMPONENT}_INCLUDE_DIR
-      NanoVDB.h
+    find_path(OpenVDB_${COMPONENT}_INCLUDE_DIR NanoVDB.h
       ${_FIND_OPENVDB_ADDITIONAL_OPTIONS}
       PATHS ${_VDB_COMPONENT_SEARCH_DIRS}
-      PATH_SUFFIXES ${CMAKE_INSTALL_INCLUDEDIR}/nanovdb ${CMAKE_INSTALL_INCLUDEDIR} include
+      PATH_SUFFIXES
+        ${CMAKE_INSTALL_INCLUDEDIR}/nanovdb
+        ${CMAKE_INSTALL_INCLUDEDIR}
+        include
     )
   endif()
   unset(_VDB_COMPONENT_SEARCH_DIRS)
 endforeach()
 
-set(OpenVDB_INCLUDE_DIR ${OpenVDB_openvdb_INCLUDE_DIR} CACHE PATH "The OpenVDB core include directory")
+set(OpenVDB_INCLUDE_DIR ${OpenVDB_openvdb_INCLUDE_DIR}
+  CACHE PATH "The OpenVDB core include directory")
 
 set(_OPENVDB_VERSION_HEADER "${OpenVDB_INCLUDE_DIR}/openvdb/version.h")
-openvdb_version_from_header("${_OPENVDB_VERSION_HEADER}"
+OPENVDB_VERSION_FROM_HEADER("${_OPENVDB_VERSION_HEADER}"
   VERSION OpenVDB_VERSION
   MAJOR   OpenVDB_MAJOR_VERSION
   MINOR   OpenVDB_MINOR_VERSION
@@ -316,9 +321,7 @@ set(_OPENVDB_LIBRARYDIR_SEARCH_DIRS "")
 
 # Append to _OPENVDB_LIBRARYDIR_SEARCH_DIRS in priority order
 
-list(
-  APPEND
-  _OPENVDB_LIBRARYDIR_SEARCH_DIRS
+list(APPEND _OPENVDB_LIBRARYDIR_SEARCH_DIRS
   ${OPENVDB_LIBRARYDIR}
   ${_OPENVDB_ROOT}
   ${PC_OpenVDB_LIBRARY_DIRS}
@@ -329,24 +332,26 @@ list(
 
 set(_OPENVDB_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
 
-set(
-  OPENVDB_PYTHON_PATH_SUFFIXES
+set(OPENVDB_PYTHON_PATH_SUFFIXES
   lib64/python
-  lib64/python2.7
   lib64/python3
   lib/python
-  lib/python2.7
   lib/python3
 )
 
 # Recurse through all the site-packages and dist-packages on the file system
 file(GLOB PYTHON_SITE_PACKAGES ${CMAKE_INSTALL_FULL_LIBDIR}/python**/*)
 foreach(_site_package_full_dir ${PYTHON_SITE_PACKAGES})
-  string(REPLACE ${CMAKE_INSTALL_FULL_LIBDIR} "${CMAKE_INSTALL_LIBDIR}" _site_package_dir ${_site_package_full_dir})
+  string(REPLACE ${CMAKE_INSTALL_FULL_LIBDIR} "${CMAKE_INSTALL_LIBDIR}"
+                 _site_package_dir ${_site_package_full_dir})
   list(APPEND OPENVDB_PYTHON_PATH_SUFFIXES ${_site_package_dir})
 endforeach()
 
-set(OPENVDB_LIB_PATH_SUFFIXES ${CMAKE_INSTALL_LIBDIR} lib64 lib)
+set(OPENVDB_LIB_PATH_SUFFIXES
+  ${CMAKE_INSTALL_LIBDIR}
+  lib64
+  lib
+)
 
 list(REMOVE_DUPLICATES OPENVDB_PYTHON_PATH_SUFFIXES)
 list(REMOVE_DUPLICATES OPENVDB_LIB_PATH_SUFFIXES)
@@ -370,14 +375,15 @@ foreach(COMPONENT ${OpenVDB_FIND_COMPONENTS})
 
   # Add in extra component paths
   set(_VDB_COMPONENT_SEARCH_DIRS ${_OPENVDB_LIBRARYDIR_SEARCH_DIRS})
-  list(APPEND _VDB_COMPONENT_SEARCH_DIRS ${OPENVDB_${COMPONENT}_ROOT} ${OPENVDB_${COMPONENT}_LIBRARYDIR})
+  list(APPEND _VDB_COMPONENT_SEARCH_DIRS
+    ${OPENVDB_${COMPONENT}_ROOT}
+    ${OPENVDB_${COMPONENT}_LIBRARYDIR}
+  )
 
   if(${COMPONENT} STREQUAL "pyopenvdb")
     set(_OPENVDB_ORIG_CMAKE_FIND_LIBRARY_PREFIXES ${CMAKE_FIND_LIBRARY_PREFIXES})
     set(CMAKE_FIND_LIBRARY_PREFIXES ";lib") # find non-prefixed
-    find_library(
-      OpenVDB_${COMPONENT}_LIBRARY
-      ${LIB_NAME}
+    find_library(OpenVDB_${COMPONENT}_LIBRARY ${LIB_NAME}
       ${_FIND_OPENVDB_ADDITIONAL_OPTIONS}
       PATHS ${_VDB_COMPONENT_SEARCH_DIRS}
       PATH_SUFFIXES ${OPENVDB_PYTHON_PATH_SUFFIXES}
@@ -386,10 +392,11 @@ foreach(COMPONENT ${OpenVDB_FIND_COMPONENTS})
   elseif(${COMPONENT} STREQUAL "openvdb_je")
     # alias to the result of openvdb which should be handled first
     set(OpenVDB_${COMPONENT}_LIBRARY ${OpenVDB_openvdb_LIBRARY})
+  elseif(${COMPONENT} STREQUAL "nanovdb")
+    # alias to the result of openvdb which should be handled first
+    set(OpenVDB_${COMPONENT}_LIBRARY ${OpenVDB_openvdb_LIBRARY})
   else()
-    find_library(
-      OpenVDB_${COMPONENT}_LIBRARY
-      ${LIB_NAME}
+    find_library(OpenVDB_${COMPONENT}_LIBRARY ${LIB_NAME}
       ${_FIND_OPENVDB_ADDITIONAL_OPTIONS}
       PATHS ${_VDB_COMPONENT_SEARCH_DIRS}
       PATH_SUFFIXES ${OPENVDB_LIB_PATH_SUFFIXES}
@@ -426,10 +433,11 @@ unset(_OPENVDB_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES)
 #  Cache and set OPENVDB_FOUND
 # ------------------------------------------------------------------------
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(
-  OpenVDB
+find_package_handle_standard_args(OpenVDB
   FOUND_VAR OpenVDB_FOUND
-  REQUIRED_VARS OpenVDB_INCLUDE_DIR OpenVDB_LIB_COMPONENTS
+  REQUIRED_VARS
+    OpenVDB_INCLUDE_DIR
+    OpenVDB_LIB_COMPONENTS
   VERSION_VAR OpenVDB_VERSION
   HANDLE_COMPONENTS
 )
@@ -443,13 +451,13 @@ find_package_handle_standard_args(
 
 if(NOT _OPENVDB_HAS_NEW_VERSION_HEADER)
   if(_OPENVDB_INSTALL)
-    openvdb_abi_version_from_print(
+    OPENVDB_ABI_VERSION_FROM_PRINT(
       "${_OPENVDB_INSTALL}/bin/vdb_print"
       ABI OpenVDB_ABI
     )
   else()
     # Try and find vdb_print from the include path
-    openvdb_abi_version_from_print(
+    OPENVDB_ABI_VERSION_FROM_PRINT(
       "${OpenVDB_INCLUDE_DIR}/../bin/vdb_print"
       ABI OpenVDB_ABI
     )
@@ -458,9 +466,7 @@ endif()
 
 if(NOT OpenVDB_FIND_QUIETLY)
   if(NOT OpenVDB_ABI)
-    message(
-      WARNING
-      "Unable to determine OpenVDB ABI version from OpenVDB "
+    message(WARNING "Unable to determine OpenVDB ABI version from OpenVDB "
       "installation. The library major version \"${OpenVDB_MAJOR_VERSION}\" "
       "will be inferred. If this is not correct, use "
       "add_definitions(-DOPENVDB_ABI_VERSION_NUMBER=N)"
@@ -484,48 +490,10 @@ endif()
 
 find_package(TBB REQUIRED COMPONENTS tbb)
 
-if(NOT OPENVDB_USE_STATIC_LIBS AND NOT Boost_USE_STATIC_LIBS)
-  # @note  Both of these must be set for Boost 1.70 (VFX2020) to link against
-  #        boost shared libraries (more specifically libraries built with -fPIC).
-  #        http://boost.2283326.n4.nabble.com/CMake-config-scripts-broken-in-1-70-td4708957.html
-  #        https://github.com/boostorg/boost_install/commit/160c7cb2b2c720e74463865ef0454d4c4cd9ae7c
-  set(BUILD_SHARED_LIBS ON)
-  set(Boost_USE_STATIC_LIBS OFF)
-endif()
-
-find_package(Boost REQUIRED COMPONENTS iostreams)
-
 # Add deps for pyopenvdb
-# @todo track for numpy
 
 if(pyopenvdb IN_LIST OpenVDB_FIND_COMPONENTS)
   find_package(Python REQUIRED)
-
-  # Boost python handling - try and find both python and pythonXx (version suffixed).
-  # Prioritize the version suffixed library, failing if neither exist.
-
-  find_package(Boost ${MINIMUM_BOOST_VERSION} QUIET COMPONENTS python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
-
-  if(TARGET Boost::python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
-    set(BOOST_PYTHON_LIB "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
-    message(STATUS "Found boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
-  else()
-    find_package(Boost ${MINIMUM_BOOST_VERSION} QUIET COMPONENTS python)
-    if(TARGET Boost::python)
-      set(BOOST_PYTHON_LIB "python")
-      message(
-        STATUS
-        "Found non-suffixed boost_python, assuming to be python version "
-        "\"${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}\" compatible"
-      )
-    else()
-      message(
-        FATAL_ERROR
-        "Unable to find boost_python or "
-        "boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}."
-      )
-    endif()
-  endif()
 endif()
 
 # Add deps for openvdb_ax
@@ -538,8 +506,7 @@ if(openvdb_ax IN_LIST OpenVDB_FIND_COMPONENTS)
     set(LLVM_LIBS "LLVM")
   else()
     llvm_map_components_to_libnames(_llvm_libs
-      native core executionengine support mcjit passes objcarcopts
-    )
+      native core executionengine support mcjit passes objcarcopts)
     set(LLVM_LIBS "${_llvm_libs}")
   endif()
 
@@ -555,6 +522,7 @@ set(OpenVDB_USES_BLOSC ${USE_BLOSC})
 set(OpenVDB_USES_ZLIB ${USE_ZLIB})
 set(OpenVDB_USES_LOG4CPLUS ${USE_LOG4CPLUS})
 set(OpenVDB_USES_IMATH_HALF ${USE_IMATH_HALF})
+set(OpenVDB_USES_DELAYED_LOADING ${OPENVDB_USE_DELAYED_LOADING})
 set(OpenVDB_DEFINITIONS)
 
 if(WIN32)
@@ -578,15 +546,16 @@ if(OpenVDB_ABI)
   # Newer version of OpenVDB defines this in version.h, but it is are also
   # provided here to maintain backwards compatibility with header include
   # others
-  list(APPEND OpenVDB_DEFINITIONS -DOPENVDB_ABI_VERSION_NUMBER=${OpenVDB_ABI})
+  list(APPEND OpenVDB_DEFINITIONS OPENVDB_ABI_VERSION_NUMBER=${OpenVDB_ABI})
 endif()
 
 # Configure deps
 
 if(_OPENVDB_HAS_NEW_VERSION_HEADER)
-  openvdb_get_version_define(${_OPENVDB_VERSION_HEADER} "OPENVDB_USE_IMATH_HALF" OpenVDB_USES_IMATH_HALF)
-  openvdb_get_version_define(${_OPENVDB_VERSION_HEADER} "OPENVDB_USE_BLOSC" OpenVDB_USES_BLOSC)
-  openvdb_get_version_define(${_OPENVDB_VERSION_HEADER} "OPENVDB_USE_ZLIB" OpenVDB_USES_ZLIB)
+  OPENVDB_GET_VERSION_DEFINE(${_OPENVDB_VERSION_HEADER} "OPENVDB_USE_IMATH_HALF" OpenVDB_USES_IMATH_HALF)
+  OPENVDB_GET_VERSION_DEFINE(${_OPENVDB_VERSION_HEADER} "OPENVDB_USE_BLOSC" OpenVDB_USES_BLOSC)
+  OPENVDB_GET_VERSION_DEFINE(${_OPENVDB_VERSION_HEADER} "OPENVDB_USE_ZLIB" OpenVDB_USES_ZLIB)
+  OPENVDB_GET_VERSION_DEFINE(${_OPENVDB_VERSION_HEADER} "OPENVDB_USE_DELAYED_LOADING" OpenVDB_USES_DELAYED_LOADING)
 elseif(NOT OPENVDB_USE_STATIC_LIBS)
   # Use GetPrerequisites to see which libraries this OpenVDB lib has linked to
   # which we can query for optional deps. This basically runs ldd/otoll/objdump
@@ -598,8 +567,7 @@ elseif(NOT OPENVDB_USE_STATIC_LIBS)
   set(_RECURSE_PREREQUISITES 0)
   set(_OPENVDB_PREREQUISITE_LIST)
 
-  get_prerequisites(
-    ${OpenVDB_openvdb_LIBRARY}
+  get_prerequisites(${OpenVDB_openvdb_LIBRARY}
     _OPENVDB_PREREQUISITE_LIST
     ${_EXCLUDE_SYSTEM_PREREQUISITES}
     ${_RECURSE_PREREQUISITES}
@@ -634,6 +602,11 @@ elseif(NOT OPENVDB_USE_STATIC_LIBS)
     if(NOT ${_HAS_DEP} EQUAL -1)
       set(OpenVDB_USES_IMATH_HALF ON)
     endif()
+
+    string(FIND ${PREREQUISITE} "boost_iostreams" _HAS_DEP)
+    if(NOT ${_HAS_DEP} EQUAL -1)
+      set(OpenVDB_USES_DELAYED_LOADING ON)
+    endif()
   endforeach()
 
   unset(_OPENVDB_PREREQUISITE_LIST)
@@ -652,21 +625,11 @@ if(OpenVDB_USES_LOG4CPLUS)
 endif()
 
 if(OpenVDB_USES_IMATH_HALF)
-  find_package(Imath CONFIG)
-  if(NOT TARGET Imath::Imath)
-    find_package(IlmBase REQUIRED COMPONENTS Half)
-  endif()
+  find_package(Imath REQUIRED CONFIG)
+endif()
 
-  if(WIN32)
-    # @note OPENVDB_OPENEXR_STATICLIB is old functionality and should be removed
-    if(
-      OPENEXR_USE_STATIC_LIBS
-      OR ("${ILMBASE_LIB_TYPE}" STREQUAL "STATIC_LIBRARY")
-      OR ("${IMATH_LIB_TYPE}" STREQUAL "STATIC_LIBRARY")
-    )
-      list(APPEND OpenVDB_DEFINITIONS OPENVDB_OPENEXR_STATICLIB)
-    endif()
-  endif()
+if(OpenVDB_USES_DELAYED_LOADING)
+  find_package(Boost REQUIRED COMPONENTS iostreams)
 endif()
 
 if(UNIX)
@@ -674,19 +637,19 @@ if(UNIX)
 endif()
 
 # Set deps. Note that the order here is important. If we're building against
-# Houdini 17.5 we must include IlmBase deps first to ensure the users chosen
+# Houdini we must include Imath deps first to ensure the users chosen
 # namespaced headers are correctly prioritized. Otherwise other include paths
 # from shared installs (including houdini) may pull in the wrong headers
 
-set(_OPENVDB_VISIBLE_DEPENDENCIES Boost::iostreams)
+set(_OPENVDB_VISIBLE_DEPENDENCIES "")
+
+if(OpenVDB_USES_DELAYED_LOADING)
+  list(APPEND _OPENVDB_VISIBLE_DEPENDENCIES Boost::iostreams)
+  list(APPEND OpenVDB_DEFINITIONS OPENVDB_USE_DELAYED_LOADING)
+endif()
 
 if(OpenVDB_USES_IMATH_HALF)
-  list(
-    APPEND
-    _OPENVDB_VISIBLE_DEPENDENCIES
-    $<TARGET_NAME_IF_EXISTS:IlmBase::Half>
-    $<TARGET_NAME_IF_EXISTS:Imath::Imath>
-  )
+  list(APPEND _OPENVDB_VISIBLE_DEPENDENCIES Imath::Imath)
 endif()
 
 if(OpenVDB_USES_LOG4CPLUS)
@@ -694,9 +657,13 @@ if(OpenVDB_USES_LOG4CPLUS)
   list(APPEND OpenVDB_DEFINITIONS OPENVDB_USE_LOG4CPLUS)
 endif()
 
-list(APPEND _OPENVDB_VISIBLE_DEPENDENCIES TBB::tbb)
+list(APPEND _OPENVDB_VISIBLE_DEPENDENCIES
+  TBB::tbb
+)
 if(UNIX)
-  list(APPEND _OPENVDB_VISIBLE_DEPENDENCIES Threads::Threads)
+  list(APPEND _OPENVDB_VISIBLE_DEPENDENCIES
+    Threads::Threads
+  )
 endif()
 
 set(_OPENVDB_HIDDEN_DEPENDENCIES)
@@ -735,27 +702,25 @@ if(NOT TARGET OpenVDB::openvdb)
   if(OPENVDB_USE_STATIC_LIBS)
     set(OPENVDB_openvdb_LIB_TYPE STATIC)
   elseif(UNIX)
-    get_filename_component(_OPENVDB_openvdb_EXT ${OpenVDB_openvdb_LIBRARY} EXT)
+    get_filename_component(_OPENVDB_openvdb_EXT
+      ${OpenVDB_openvdb_LIBRARY} EXT)
     if(_OPENVDB_openvdb_EXT STREQUAL ".a")
       set(OPENVDB_openvdb_LIB_TYPE STATIC)
-    elseif(_OPENVDB_openvdb_EXT STREQUAL ".so" OR _OPENVDB_openvdb_EXT STREQUAL ".dylib")
+    elseif(_OPENVDB_openvdb_EXT STREQUAL ".so" OR
+           _OPENVDB_openvdb_EXT STREQUAL ".dylib")
       set(OPENVDB_openvdb_LIB_TYPE SHARED)
     endif()
   endif()
 
   add_library(OpenVDB::openvdb ${OPENVDB_openvdb_LIB_TYPE} IMPORTED)
-  set_target_properties(
-    OpenVDB::openvdb
-    PROPERTIES
-      IMPORTED_LOCATION "${OpenVDB_openvdb_LIBRARY}"
-      INTERFACE_COMPILE_OPTIONS "${PC_OpenVDB_CFLAGS_OTHER}"
-      INTERFACE_COMPILE_DEFINITIONS "${OpenVDB_DEFINITIONS}"
-      INTERFACE_INCLUDE_DIRECTORIES "${OpenVDB_INCLUDE_DIR}"
-      IMPORTED_LINK_DEPENDENT_LIBRARIES
-        "${_OPENVDB_HIDDEN_DEPENDENCIES}" # non visible deps
-      INTERFACE_LINK_LIBRARIES
-        "${_OPENVDB_VISIBLE_DEPENDENCIES}" # visible deps (headers)
-      INTERFACE_COMPILE_FEATURES cxx_std_14
+  set_target_properties(OpenVDB::openvdb PROPERTIES
+    IMPORTED_LOCATION "${OpenVDB_openvdb_LIBRARY}"
+    INTERFACE_COMPILE_OPTIONS "${PC_OpenVDB_CFLAGS_OTHER}"
+    INTERFACE_COMPILE_DEFINITIONS "${OpenVDB_DEFINITIONS}"
+    INTERFACE_INCLUDE_DIRECTORIES "${OpenVDB_INCLUDE_DIR}"
+    IMPORTED_LINK_DEPENDENT_LIBRARIES "${_OPENVDB_HIDDEN_DEPENDENCIES}" # non visible deps
+    INTERFACE_LINK_LIBRARIES "${_OPENVDB_VISIBLE_DEPENDENCIES}" # visible deps (headers)
+    INTERFACE_COMPILE_FEATURES cxx_std_17
   )
 endif()
 
@@ -774,14 +739,12 @@ endif()
 if(OpenVDB_pyopenvdb_LIBRARY)
   if(NOT TARGET OpenVDB::pyopenvdb)
     add_library(OpenVDB::pyopenvdb MODULE IMPORTED)
-    set_target_properties(
-      OpenVDB::pyopenvdb
-      PROPERTIES
-        IMPORTED_LOCATION "${OpenVDB_pyopenvdb_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${OpenVDB_pyopenvdb_INCLUDE_DIR};${PYTHON_INCLUDE_DIR}"
-        INTERFACE_LINK_LIBRARIES "OpenVDB::openvdb;Boost::${BOOST_PYTHON_LIB};${PYTHON_LIBRARIES}"
-        INTERFACE_COMPILE_FEATURES cxx_std_14
-    )
+    set_target_properties(OpenVDB::pyopenvdb PROPERTIES
+      IMPORTED_LOCATION "${OpenVDB_pyopenvdb_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${OpenVDB_pyopenvdb_INCLUDE_DIR};${PYTHON_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES "OpenVDB::openvdb;${PYTHON_LIBRARIES}"
+      INTERFACE_COMPILE_FEATURES cxx_std_17
+   )
   endif()
 endif()
 
@@ -790,14 +753,12 @@ endif()
 if(OpenVDB_openvdb_houdini_LIBRARY)
   if(NOT TARGET OpenVDB::openvdb_houdini)
     add_library(OpenVDB::openvdb_houdini SHARED IMPORTED)
-    set_target_properties(
-      OpenVDB::openvdb_houdini
-      PROPERTIES
-        IMPORTED_LOCATION "${OpenVDB_openvdb_houdini_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${OpenVDB_openvdb_houdini_INCLUDE_DIR}"
-        INTERFACE_LINK_LIBRARIES "OpenVDB::openvdb;Houdini"
-        INTERFACE_COMPILE_FEATURES cxx_std_14
-    )
+    set_target_properties(OpenVDB::openvdb_houdini PROPERTIES
+      IMPORTED_LOCATION "${OpenVDB_openvdb_houdini_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${OpenVDB_openvdb_houdini_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES "OpenVDB::openvdb;Houdini"
+      INTERFACE_COMPILE_FEATURES cxx_std_17
+   )
   endif()
 endif()
 
@@ -808,24 +769,25 @@ if(OpenVDB_openvdb_ax_LIBRARY)
   if(OPENVDB_USE_STATIC_LIBS)
     set(OPENVDB_openvdb_ax_LIB_TYPE STATIC)
   elseif(UNIX)
-    get_filename_component(_OPENVDB_openvdb_ax_EXT ${OpenVDB_openvdb_ax_LIBRARY} EXT)
+    get_filename_component(_OPENVDB_openvdb_ax_EXT
+      ${OpenVDB_openvdb_ax_LIBRARY} EXT)
     if(_OPENVDB_openvdb_ax_EXT STREQUAL ".a")
       set(OPENVDB_openvdb_ax_LIB_TYPE STATIC)
-    elseif(_OPENVDB_openvdb_ax_EXT STREQUAL ".so" OR _OPENVDB_openvdb_ax_EXT STREQUAL ".dylib")
+    elseif(_OPENVDB_openvdb_ax_EXT STREQUAL ".so" OR
+           _OPENVDB_openvdb_ax_EXT STREQUAL ".dylib")
       set(OPENVDB_openvdb_ax_LIB_TYPE SHARED)
     endif()
   endif()
 
+
   if(NOT TARGET OpenVDB::openvdb_ax)
     add_library(OpenVDB::openvdb_ax UNKNOWN IMPORTED)
-    set_target_properties(
-      OpenVDB::openvdb_ax
-      PROPERTIES
-        IMPORTED_LOCATION "${OpenVDB_openvdb_ax_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${OpenVDB_openvdb_ax_INCLUDE_DIR}"
-        INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${LLVM_INCLUDE_DIRS}"
-        INTERFACE_LINK_LIBRARIES "OpenVDB::openvdb;${LLVM_LIBS}"
-        INTERFACE_COMPILE_FEATURES cxx_std_14
+    set_target_properties(OpenVDB::openvdb_ax PROPERTIES
+      IMPORTED_LOCATION "${OpenVDB_openvdb_ax_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${OpenVDB_openvdb_ax_INCLUDE_DIR}"
+      INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${LLVM_INCLUDE_DIRS}"
+      INTERFACE_LINK_LIBRARIES "OpenVDB::openvdb;${LLVM_LIBS}"
+      INTERFACE_COMPILE_FEATURES cxx_std_17
     )
   endif()
 endif()
@@ -835,14 +797,12 @@ endif()
 if(OpenVDB_nanovdb_LIBRARY)
   if(NOT TARGET OpenVDB::nanovdb)
     add_library(OpenVDB::nanovdb INTERFACE IMPORTED)
-    set_target_properties(
-      OpenVDB::nanovdb
-      PROPERTIES
-        IMPORTED_LOCATION "${OpenVDB_nanovdb_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${OpenVDB_nanovdb_INCLUDE_DIR}"
-        INTERFACE_LINK_LIBRARIES "OpenVDB::openvdb;"
-        INTERFACE_COMPILE_FEATURES cxx_std_14
-    )
+    set_target_properties(OpenVDB::nanovdb PROPERTIES
+      IMPORTED_LOCATION "${OpenVDB_nanovdb_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${OpenVDB_nanovdb_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES "OpenVDB::openvdb;"
+      INTERFACE_COMPILE_FEATURES cxx_std_17
+   )
   endif()
 endif()
 

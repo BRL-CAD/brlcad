@@ -17,8 +17,9 @@
 #include "rt/geom.h"
 #include "rt/db_internal.h"
 #include "wdb.h"
+#include "ged.h"
 
-#include "ged_arb.h"
+#include "./ged_arb.h"
 #include "../ged_private.h"
 
 extern "C" int
@@ -28,7 +29,7 @@ _arb_cmd_repair(void *bs, int argc, const char **argv)
     struct ged *gedp = gb->gedp;
     (void)gedp;
 
-    int ret = ged_repair(gb->gedp, argc, argv);
+    int ret = ged_exec_repair(gb->gedp, argc, argv);
     return ret;
 }
 
