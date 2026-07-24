@@ -1104,7 +1104,7 @@ endfunction()
   # These patterns are used to identify sets of files where we are
   # assuming we don't need to do post-processing to correct file paths
   # from the external install.
-  set(NOPROCESS_PATTERNS ".*/encodings/.*" ".*/include/.*" ".*/man/.*" ".*/msgs/.*")
+  set(NOPROCESS_PATTERNS "(^|/)encodings/.*" "(^|/)include/.*" "(^|/)man/.*" "(^|/)msgs/.*")
 
   # These patterns are to be excluded from ${BRLCAD_EXT_DIR}/install
   # bundling - i.e., even if present in the specified
