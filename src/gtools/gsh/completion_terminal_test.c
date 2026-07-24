@@ -108,7 +108,7 @@ main(int argc, char **argv)
     size_t display_rows = 0;
     struct winsize size;
 
-    if (argc != 2)
+    if (argc != 2 && argc != 3)
 	return 1;
 
     master = posix_openpt(O_RDWR | O_NOCTTY);
@@ -140,7 +140,10 @@ main(int argc, char **argv)
 	if (slave > STDERR_FILENO)
 	    close(slave);
 	(void)setenv("TERM", "xterm-256color", 1);
-	execl(argv[1], argv[1], (char *)NULL);
+	if (argc == 3)
+	    execl(argv[1], argv[1], "--completion-mode", argv[2], (char *)NULL);
+	else
+	    execl(argv[1], argv[1], (char *)NULL);
 	_exit(122);
     }
     close(slave);
@@ -149,6 +152,41 @@ main(int argc, char **argv)
     if (!strstr(output, "g> ")) {
 	stop_child(master, child);
 	return 7;
+    }
+
+    if (argc == 3 && !strcmp(argv[2], "off")) {
+	if (!write_bytes(master, "\t", 1)) {
+	    stop_child(master, child);
+	    return 8;
+	}
+	(void)collect_output(master, output, sizeof(output), 2000);
+	if (strstr(output, "matches)") || strstr(output, "more)")) {
+	    fprintf(stderr, "disabled completion displayed candidates: [%s]\n", output);
+	    stop_child(master, child);
+	    return 9;
+	}
+	stop_child(master, child);
+	return 0;
+    }
+
+    if (argc == 3 && !strcmp(argv[2], "prefix")) {
+	if (!write_bytes(master, "bre\t", 4)) {
+	    stop_child(master, child);
+	    return 10;
+	}
+	(void)collect_output(master, output, sizeof(output), 3000);
+	if (!strstr(output, "g> brep")) {
+	    fprintf(stderr, "prefix completion did not commit brep: [%s]\n", output);
+	    stop_child(master, child);
+	    return 11;
+	}
+	stop_child(master, child);
+	return 0;
+    }
+
+    if (argc == 3) {
+	stop_child(master, child);
+	return 12;
     }
 
     if (!write_bytes(master, "\t", 1)) {

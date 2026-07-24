@@ -29,15 +29,23 @@ main(int argc, char **argv)
     if (bu_cmd_completion_mode_from_env("BRLCAD_TEST_COMPLETION_MODE", BU_CMD_COMPLETE_OFF) != BU_CMD_COMPLETE_PREFIX) return 8;
     bu_setenv("BRLCAD_TEST_COMPLETION_MODE", "invalid", 1);
     if (bu_cmd_completion_mode_from_env("BRLCAD_TEST_COMPLETION_MODE", BU_CMD_COMPLETE_OFF) != BU_CMD_COMPLETE_CYCLE) return 9;
+    bu_setenv("BRLCAD_GSH_COMPLETION_MODE", "off", 1);
+    if (bu_cmd_completion_mode_from_env("BRLCAD_GSH_COMPLETION_MODE", BU_CMD_COMPLETE_FILTER) != BU_CMD_COMPLETE_OFF) return 10;
+    bu_setenv("BRLCAD_QGED_COMPLETION_MODE", "prefix", 1);
+    if (bu_cmd_completion_mode_from_env("BRLCAD_QGED_COMPLETION_MODE", BU_CMD_COMPLETE_FILTER) != BU_CMD_COMPLETE_PREFIX) return 11;
+    bu_setenv(BU_CMD_COMPLETION_MODE_ENV, "cycle", 1);
+    if (bu_cmd_completion_mode_from_env("BRLCAD_QGED_COMPLETION_MODE", BU_CMD_COMPLETE_OFF) != BU_CMD_COMPLETE_PREFIX) return 12;
     bu_setenv(BU_CMD_COMPLETION_MODE_ENV, "", 1);
     bu_setenv("BRLCAD_TEST_COMPLETION_MODE", "", 1);
+    bu_setenv("BRLCAD_GSH_COMPLETION_MODE", "", 1);
+    bu_setenv("BRLCAD_QGED_COMPLETION_MODE", "", 1);
 
     {
 	const char *short_candidates[] = {"beta", "alpha", "alpine"};
-	if (bu_cmd_completion_layout_create(&layout, short_candidates, 3, 12, 2) != BRLCAD_OK) return 10;
-	if (layout.summarized || layout.line_count != 2) return 11;
+	if (bu_cmd_completion_layout_create(&layout, short_candidates, 3, 12, 2) != BRLCAD_OK) return 13;
+	if (layout.summarized || layout.line_count != 2) return 14;
 	if (!BU_STR_EQUAL(layout.lines[0], "alpha   beta") ||
-	    !BU_STR_EQUAL(layout.lines[1], "alpine")) return 12;
+	    !BU_STR_EQUAL(layout.lines[1], "alpine")) return 15;
 	bu_cmd_completion_layout_clear(&layout);
     }
 

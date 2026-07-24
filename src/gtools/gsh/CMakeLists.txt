@@ -14,7 +14,20 @@ if(UNIX)
     NAME gsh_completion_terminal_display
     COMMAND gsh_completion_terminal_test $<TARGET_FILE:gsh>
   )
-  set_tests_properties(gsh_completion_terminal_display PROPERTIES TIMEOUT 20)
+  brlcad_add_test(
+    NAME gsh_completion_mode_off
+    COMMAND gsh_completion_terminal_test $<TARGET_FILE:gsh> off
+  )
+  brlcad_add_test(
+    NAME gsh_completion_mode_prefix
+    COMMAND gsh_completion_terminal_test $<TARGET_FILE:gsh> prefix
+  )
+  set_tests_properties(
+    gsh_completion_terminal_display
+    gsh_completion_mode_off
+    gsh_completion_mode_prefix
+    PROPERTIES TIMEOUT 20
+  )
 endif()
 
 cmakefiles(
