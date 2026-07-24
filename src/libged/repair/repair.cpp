@@ -23,8 +23,12 @@
 #include "../ged_private.h"
 #include "rt/functab.h"
 
+#ifdef BRLCAD_OPENVDB
+#  include "bot_openvdb.h"
+#endif
+
 static void repair_usage(struct bu_vls *log_str, const char *cmd) {
-    bu_vls_printf(log_str, "Usage: %s [-h] [-o output] object\n", cmd);
+    bu_vls_printf(log_str, "Usage: %s [-h] [-o output] [--openvdb] [--openvdb-voxel-size #] object\n", cmd);
 }
 
 extern "C" int
@@ -36,11 +40,15 @@ ged_repair(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls log_str = BU_VLS_INIT_ZERO;
     struct bu_vls out_name = BU_VLS_INIT_ZERO;
     int print_help = 0;
+    int use_openvdb = 0;
+    fastf_t openvdb_voxel_size = 0.0;
 
-    struct bu_opt_desc d[3];
+    struct bu_opt_desc d[5];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
     BU_OPT(d[1], "o", "output-name", "<name>", bu_opt_vls, &out_name, "Output object name");
-    BU_OPT_NULL(d[2]);
+    BU_OPT(d[2], "", "openvdb", "", NULL, &use_openvdb, "Use OpenVDB level-set rebuild for BoT repair");
+    BU_OPT(d[3], "", "openvdb-voxel-size", "#", bu_opt_fastf_t, &openvdb_voxel_size, "OpenVDB voxel size in model units (default: bbox diagonal/100)");
+    BU_OPT_NULL(d[4]);
 
     int original_argc = argc;
     const char **original_argv = (const char **)bu_calloc(argc + 1, sizeof(char *), "argv copy");
@@ -54,6 +62,13 @@ ged_repair(struct ged *gedp, int argc, const char *argv[])
         bu_free(original_argv, "argv copy");
         bu_vls_free(&out_name);
         return GED_HELP;
+    }
+
+    if (openvdb_voxel_size < 0.0) {
+        bu_vls_printf(gedp->ged_result_str, "{\"status\":\"error\",\"message\":\"OpenVDB voxel size must be non-negative\"}");
+        bu_free(original_argv, "argv copy");
+        bu_vls_free(&out_name);
+        return BRLCAD_ERROR;
     }
 
     for (int i = 1; i < argc; i++) {
@@ -101,7 +116,50 @@ ged_repair(struct ged *gedp, int argc, const char *argv[])
         return BRLCAD_ERROR;
     }
 
-    int ret = EDOBJ[intern.idb_type].ft_repair(&log_str, &intern, NULL, original_argc, original_argv);
+    int ret = BRLCAD_ERROR;
+
+#ifndef BRLCAD_OPENVDB
+    if (use_openvdb) {
+        bu_vls_printf(&log_str, "{\"status\":\"error\",\"message\":\"OpenVDB repair was requested, but this BRL-CAD build has no OpenVDB support\"}");
+    } else
+#endif
+    {
+        /* The standard primitive repair is preferred.  OpenVDB is a
+         * BoT-specific fallback because level-set reconstruction sacrifices
+         * some geometric fidelity in exchange for a closed manifold result. */
+        if (!use_openvdb)
+            ret = EDOBJ[intern.idb_type].ft_repair(&log_str, &intern, NULL, original_argc, original_argv);
+
+#ifdef BRLCAD_OPENVDB
+        if (use_openvdb || ret < 0) {
+            if (intern.idb_type == ID_BOT) {
+                struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;
+                if (bot && bot->mode == RT_BOT_SOLID) {
+                    struct rt_bot_internal *vdb_bot = bot_openvdb_repair(bot, openvdb_voxel_size);
+                    if (vdb_bot) {
+                        intern.idb_meth->ft_ifree(&intern);
+                        intern.idb_ptr = (void *)vdb_bot;
+                        bu_vls_trunc(&log_str, 0);
+                        bu_vls_printf(&log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired BoT using OpenVDB level-set reconstruction\"}");
+                        ret = 0;
+                    } else {
+                        bu_vls_trunc(&log_str, 0);
+                        bu_vls_printf(&log_str, "{\"status\":\"error\",\"message\":\"OpenVDB could not reconstruct a valid solid BoT\"}");
+                        ret = BRLCAD_ERROR;
+                    }
+                } else if (use_openvdb) {
+                    bu_vls_trunc(&log_str, 0);
+                    bu_vls_printf(&log_str, "{\"status\":\"error\",\"message\":\"OpenVDB repair requires a solid BoT\"}");
+                    ret = BRLCAD_ERROR;
+                }
+            } else if (use_openvdb) {
+                bu_vls_trunc(&log_str, 0);
+                bu_vls_printf(&log_str, "{\"status\":\"error\",\"message\":\"OpenVDB repair is supported only for BoTs\"}");
+                ret = BRLCAD_ERROR;
+            }
+        }
+#endif
+    }
 
     if (ret == 0) {
         struct directory *out_dp = dp;

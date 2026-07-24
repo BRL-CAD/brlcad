@@ -101,9 +101,18 @@ bot_to_sdf(struct rt_bot_internal *bot, double voxel_size)
 	    double x = bot->vertices[i * 3 + X];
 	    double y = bot->vertices[i * 3 + Y];
 	    double z = bot->vertices[i * 3 + Z];
-	    if (x < xmin) xmin = x; if (x > xmax) xmax = x;
-	    if (y < ymin) ymin = y; if (y > ymax) ymax = y;
-	    if (z < zmin) zmin = z; if (z > zmax) zmax = z;
+	    if (x < xmin)
+		xmin = x;
+	    if (x > xmax)
+		xmax = x;
+	    if (y < ymin)
+		ymin = y;
+	    if (y > ymax)
+		ymax = y;
+	    if (z < zmin)
+		zmin = z;
+	    if (z > zmax)
+		zmax = z;
 	}
 	double dx = xmax - xmin, dy = ymax - ymin, dz = zmax - zmin;
 	double diag = std::sqrt(dx*dx + dy*dy + dz*dz);

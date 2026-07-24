@@ -10,7 +10,7 @@ repair - Attempts to repair invalid data in the __name__ object.
 
 [source]
 ----
-repair [-o output_obj] {name}
+repair [-o output_obj] [--openvdb] [--openvdb-voxel-size size] {name}
 ----
 
 
@@ -21,6 +21,13 @@ Using the existing __name__ object definition, attempts to repair any flaws.
 This operation is not guaranteed to succeed for all inputs, but can sometimes
 correct "almost" valid shape parameters or otherwise improve them.  The
 specfics of how it works are primitive type dependent.
+
+For solid BoTs in builds configured with OpenVDB support, the standard repair
+is followed by an OpenVDB level-set reconstruction if it fails.  Pass
+*--openvdb* to use that reconstruction directly.  *--openvdb-voxel-size*
+controls its voxel edge length in model units; the default is one hundredth of
+the BoT bounding-box diagonal.  This method produces a closed manifold, but
+may smooth or otherwise alter the original mesh.
 
 [[examples]]
 == EXAMPLES

@@ -42,6 +42,10 @@
 #include "../tess_opts.h"
 #include "./tessellate.h"
 
+#ifdef BRLCAD_OPENVDB
+#  include "bot_openvdb.h"
+#endif
+
 static void
 rt_pnts_free(struct rt_pnts_internal *pnts)
 {
@@ -171,6 +175,20 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 		settings.strict = 0;
 		bu_vls_sprintf(method_flag, "REPAIR");
 		ret = rt_bot_repair(obot, bot, &settings);
+#ifdef BRLCAD_OPENVDB
+		// If Geogram repair failed, try the OpenVDB level-set pipeline
+		// as a fallback.  It always produces a closed manifold at the
+		// cost of some geometric fidelity.
+		if (ret != BRLCAD_OK) {
+		    /* voxel_size=0.0 triggers auto-sizing (bbox_diagonal/100) */
+		    struct rt_bot_internal *vdb_bot = bot_openvdb_repair(bot, 0.0);
+		    if (vdb_bot) {
+			*obot = vdb_bot;
+			bu_vls_sprintf(method_flag, "REPAIR_OPENVDB");
+			ret = BRLCAD_OK;
+		    }
+		}
+#endif
 	    } else {
 		// Already a valid BoT - tessellate is a no-op.
 		*obot = NULL;

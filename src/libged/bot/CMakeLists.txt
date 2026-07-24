@@ -5,8 +5,8 @@ set(BOT_LIBS libged libbg libbu manifold::manifold ${WINSOCK_LIB})
 
 
 if(BRLCAD_ENABLE_OPENVDB)
-  set(BOT_LIBS ${BOT_LIBS} ${OpenVDB_LIBRARIES} ${IlmBase_LIBRARIES} ${Tbb_LIBRARIES})
-  set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCAL_INCLUDE_DIRS} ${OpenVDB_INCLUDE_DIRS} ${Tbb_INCLUDE_DIRS} ${IlmBase_INCLUDE_DIRS})
+  brlcad_find_package(OpenVDB REQUIRED)
+  set(BOT_LIBS ${BOT_LIBS} OpenVDB::openvdb)
   set(BOT_OPENVDB_DEFS HAVE_OPENVDB_BOT_EXTERIOR BRLCAD_OPENVDB)
 endif(BRLCAD_ENABLE_OPENVDB)
 
@@ -53,6 +53,7 @@ if(BRLCAD_ENABLE_OPENVDB)
   # PLUGIN_ONLY these flags are scoped to the plugin .so and do not
   # pollute the main libged target.
   set_source_files_properties(
+    remesh.cpp
     bot_flood_exterior.cpp
     bot_openvdb.cpp
     PROPERTIES COMPILE_FLAGS "-w -fno-lto"
@@ -85,6 +86,7 @@ ged_plugin_library(ged-bot
 
 cmakefiles(
   CMakeLists.txt
+  ${BOT_SRCS}
   bot_flood_exterior.cpp
   bot_openvdb.cpp
   bot_openvdb.h
