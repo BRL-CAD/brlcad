@@ -1557,6 +1557,27 @@ else()
   add_link_options(/DEBUG)
 endif(NOT MSVC)
 
+if(BRLCAD_LINKER_FAST)
+  # If specifically requested, see if we can use a faster linker.  This is not
+  # well tested, which is why it's hidden behind a non-publicized variable
+  # rather than a proper option.  In particular, lld has a problem with lto
+  # when using gcc, which is why we try gold as a fallback.
+  include(CheckLinkerFlag)
+  check_linker_flag(CXX "-fuse-ld=lld" HAS_LLD)
+  if(HAS_LLD)
+    add_link_options(
+      "$<$<NOT:$<PLATFORM_ID:Darwin>>:-fuse-ld=lld>"
+    )
+  else()
+    check_linker_flag(CXX "-fuse-ld=gold" HAS_GOLD)
+    if(HAS_GOLD)
+      add_link_options(
+	"$<$<NOT:$<PLATFORM_ID:Darwin>>:-fuse-ld=gold>"
+      )
+    endif()
+  endif()
+endif()
+
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
