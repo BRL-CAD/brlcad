@@ -30,7 +30,7 @@
 #include <functional>
 #include <thread>
 
-extern "C" {
+#include "./mged.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -65,21 +65,21 @@ extern "C" {
 
 #include "tclcad.h"
 
-#include "./mged.h"
 #include "./cmd.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
 
-void mged_finish(struct mged_state *s, int exitcode); /* in mged.c */
-void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
-void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
-extern void init_qray(void);			/* in qray.c */
+extern "C" void mged_finish(struct mged_state *s, int exitcode); /* in mged.c */
+extern "C" void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
+extern "C" void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
+extern "C" void init_qray(void);			/* in qray.c */
 
 /* in tclsync.c */
-Tcl_Obj *BuildInterpSnapshot(Tcl_Interp *interp);
-int ReplayInterpSnapshot(Tcl_Interp *interp, Tcl_Obj *snapshot);
+extern "C" Tcl_Obj *BuildInterpSnapshot(Tcl_Interp *interp);
+extern "C" int ReplayInterpSnapshot(Tcl_Interp *interp, Tcl_Obj *snapshot);
 
 
+extern "C" {
 // FIXME: Globals
 extern int mged_default_dlist;			/* in attach.c */
 struct cmd_list head_cmd_list;
@@ -88,9 +88,8 @@ static int glob_compat_mode = 1;
 static int output_as_return = 1;
 Tk_Window tkwin = NULL;
 
-
-/* GUI output hooks use these variables to track the Tcl command which receives
- * output and whether MGED's process-global bu_log hook is installed. */
+/* GUI output hooks track the Tcl command which receives output and whether
+ * MGED's process-global bu_log hook is installed. */
 static struct bu_vls tcl_output_cmd = BU_VLS_INIT_ZERO;
 static int gui_output_hook_active = 0;
 
@@ -105,7 +104,6 @@ static struct bu_vls tcl_log_str = BU_VLS_INIT_ZERO;
  * deadlocks that would occur if Tcl callbacks triggered by mged_pr_output
  * themselves called bu_log (which also acquires BU_SEM_SYSCALL). */
 static int MGED_SEM_LOG = -1;
-
 }
 
 /* Wake event the worker posts to break the main thread out of Tcl_DoOneEvent.
@@ -196,8 +194,8 @@ run_ged_async(struct mged_state *s, std::function<int()> func)
     return result.load(std::memory_order_acquire);
 }
 
-
 extern "C" {
+
 
 /**
  * Initialise the dedicated MGED log-buffer semaphore.
@@ -356,7 +354,7 @@ mged_ged_exec_async(struct mged_state *s, int argc, const char *argv[])
     });
 }
 
-} /* extern "C" */
+
 
 #define GED_OUTPUT do { \
     mged_pr_output(interpreter);\
@@ -367,9 +365,6 @@ mged_ged_exec_async(struct mged_state *s, int argc, const char *argv[])
 /* All remaining MGED command functions require C linkage because they are
  * called through Tcl command dispatch (function pointers stored with
  * Tcl_CreateCommand) and directly by name from other .c translation units. */
-extern "C" {
-
-
 /* Tcl command "_mged_ged_exec" registered inside search_interp.
  * Bridges Tcl scripts running in the search interpreter to the GED command
  * system so that GED commands (draw, ls, attr, ...) are reachable from
@@ -776,7 +771,6 @@ cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 
     return TCL_OK;
 }
-
 
 /**
  * Wrapper for the Mged simulate command : draws argv[argc-1] after execution.
@@ -1918,9 +1912,10 @@ end:
 }
 
 
-void
-mged_print_result(struct mged_state *s, int UNUSED(status))
+int
+mged_print_result(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(ud))
 {
+    struct mged_state *s = (struct mged_state *)d;
     size_t len;
     const char *result = Tcl_GetStringResult(s->interp);
 
@@ -1933,6 +1928,93 @@ mged_print_result(struct mged_state *s, int UNUSED(status))
     }
 
     Tcl_ResetResult(s->interp);
+
+    return TCL_OK;
+}
+
+
+int
+mged_print_str(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(ud))
+{
+    struct mged_state *s = (struct mged_state *)d;
+
+    Tcl_AppendResult(s->interp, bu_vls_cstr(MEDIT(s)->log_str), (char *)NULL);
+
+    return TCL_OK;
+}
+
+int
+mged_view_update(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(ud))
+{
+    struct mged_state *s = (struct mged_state *)d;
+
+    dm_set_dirty(s->mged_curr_dm->dm_dmp, 1);
+    (void)Tcl_Eval(s->interp, "active_edit_callback");
+
+    return TCL_OK;
+}
+
+int
+mged_view_set_flag(int UNUSED(ac), const char **UNUSED(av), void *d, void *flagp)
+{
+    struct mged_state *s = (struct mged_state *)d;
+    int *flag = (int *)flagp;
+
+    view_state->vs_flag = *flag;
+
+    return TCL_OK;
+}
+
+int
+mged_get_filename(int ac, const char **av, void *d, void *sret)
+{
+    if (!ac || !av || !d || !sret)
+	return BRLCAD_ERROR;
+
+    char *str = bu_strdup(av[0]);
+    char **ret = (char **)sret;
+
+    struct mged_state *s = (struct mged_state *)d;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
+    struct bu_vls varname_vls = BU_VLS_INIT_ZERO;
+    char *dir;
+    char *fptr;
+    char *ptr1;
+    char *ptr2;
+
+    bu_vls_strcpy(&varname_vls, "mged_gui(getFileDir)");
+
+    if ((fptr=strrchr(str, '/'))) {
+	dir = (char *)bu_malloc((strlen(str)+1)*sizeof(char), "get_file_name: dir");
+	ptr1 = str;
+	ptr2 = dir;
+	while (ptr1 != fptr)
+	    *ptr2++ = *ptr1++;
+	*ptr2 = '\0';
+	Tcl_SetVar(s->interp, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
+	bu_free((void *)dir, "get_file_name: directory string");
+    }
+
+    if (dm_get_pathname(DMP)) {
+	bu_vls_printf(&cmd,
+		"getFile %s %s {{{All Files} {*}}} {Get File}",
+		bu_vls_addr(dm_get_pathname(DMP)),
+		bu_vls_addr(&varname_vls));
+    }
+    bu_vls_free(&varname_vls);
+
+    if (Tcl_Eval(s->interp, bu_vls_addr(&cmd))) {
+	(*ret) = NULL;
+	goto str_ret;
+    }
+    if (Tcl_GetStringResult(s->interp)[0] != '\0') {
+	(*ret) = bu_strdup(Tcl_GetStringResult(s->interp));
+	goto str_ret;
+    }
+str_ret:
+    bu_vls_free(&cmd);
+    bu_free(str, "str");
+    return BRLCAD_OK;
 }
 
 /**
@@ -2570,7 +2652,7 @@ cmd_tol(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
 
 
 /* defined in chgview.c */
-extern int edit_com(struct mged_state *s, int argc, const char *argv[]);
+extern "C" int edit_com(struct mged_state *s, int argc, const char *argv[]);
 
 /**
  * Run ged_blast, then update the views
@@ -3272,7 +3354,10 @@ cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 }
 
 
-} /* extern "C" -- all MGED C-linkage command functions */
+} /* extern "C" */
+
+
+
 
 
 /*
