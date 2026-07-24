@@ -48,6 +48,8 @@ struct comb_args {
 };
 
 static const struct bu_cmd_schema *comb_schema(void);
+static int comb_dispatch_modern(struct ged *gedp, int argc, const char **argv);
+static void comb_tree_show_help(struct ged *gedp);
 
 static int
 region_flag_set(struct ged *gedp, struct directory *dp) {
@@ -687,6 +689,59 @@ comb_execute_command(struct ged *gedp, enum comb_command command,
     return ret;
 }
 
+struct comb_tree_info {
+    struct ged *gedp;
+    const char *comb_name;
+};
+
+static int
+comb_tree_command(void *bs, enum comb_command command, int argc, const char **argv)
+{
+    struct comb_tree_info *info = (struct comb_tree_info *)bs;
+
+    if (argc == 2 && (BU_STR_EQUAL(argv[1], HELPFLAG) ||
+	BU_STR_EQUAL(argv[1], PURPOSEFLAG))) {
+	bu_vls_printf(info->gedp->ged_result_str,
+	    "comb %s %s\n", info->comb_name, comb_command_name(command));
+	return BRLCAD_OK;
+    }
+    return comb_execute_command(info->gedp, command, info->comb_name,
+	argc - 1, argv + 1);
+}
+
+#define COMB_COMMAND_WRAPPER(_name, _command) \
+    static int _comb_cmd_ ## _name(void *bs, int argc, const char **argv) \
+    { return comb_tree_command(bs, _command, argc, argv); }
+COMB_COMMAND_WRAPPER(rm, COMB_COMMAND_RM)
+COMB_COMMAND_WRAPPER(wrap, COMB_COMMAND_WRAP)
+COMB_COMMAND_WRAPPER(flatten, COMB_COMMAND_FLATTEN)
+COMB_COMMAND_WRAPPER(lift, COMB_COMMAND_LIFT)
+COMB_COMMAND_WRAPPER(region, COMB_COMMAND_REGION)
+COMB_COMMAND_WRAPPER(unregion, COMB_COMMAND_UNREGION)
+COMB_COMMAND_WRAPPER(decimate, COMB_COMMAND_DECIMATE)
+#undef COMB_COMMAND_WRAPPER
+
+const struct bu_cmdtab _comb_cmds[] = {
+    {"rm", _comb_cmd_rm},
+    {"wrap", _comb_cmd_wrap},
+    {"flatten", _comb_cmd_flatten},
+    {"lift", _comb_cmd_lift},
+    {"region", _comb_cmd_region},
+    {"unregion", _comb_cmd_unregion},
+    {"decimate", _comb_cmd_decimate},
+    {(char *)NULL, NULL}
+};
+
+static int
+comb_tree_execute(void *bs, int argc, const char **argv)
+{
+    int ret = BRLCAD_ERROR;
+
+    if (bu_cmd(_comb_cmds, argc, argv, 0, bs, &ret) == BRLCAD_OK)
+	return ret;
+    return BRLCAD_ERROR;
+}
+
 static int
 comb_execute_selector_first_operator(struct ged *gedp, int argc, const char *argv[])
 {
@@ -731,14 +786,15 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 	    return comb_execute_selector_first_operator(gedp, argc, argv);
     }
     if (argc >= 3 && argv[1][0] != '-') {
-	enum comb_command command = comb_command_id(argv[2]);
-	if (command != COMB_COMMAND_NONE)
-	    return comb_execute_command(gedp, command, argv[1], argc - 3, argv + 3);
+	if (comb_command_id(argv[2]) != COMB_COMMAND_NONE) {
+	    return comb_dispatch_modern(gedp, argc, argv);
+	}
     }
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	comb_tree_show_help(gedp);
+	bu_vls_printf(gedp->ged_result_str, "\nLegacy syntax: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -1058,6 +1114,128 @@ static const struct bu_cmd_schema comb_cmd_schema = {
     BU_CMD_SCHEMA_CONSTRAINTS(comb_schema_validate, comb_schema_constraints)
 };
 
+static const struct bu_cmd_option comb_tree_root_options[] = {
+    BU_CMD_FLAG_UNBOUND("h", "help", "h", "Print command help"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand comb_tree_root_operands[] = {
+    BU_CMD_OPERAND("combination", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Combination to operate on", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema comb_tree_root_schema = {
+    "comb", "Operate on a combination", comb_tree_root_options,
+    comb_tree_root_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_operand comb_tree_rm_operands[] = {
+	BU_CMD_OPERAND("member", BU_CMD_VALUE_RAW, 1,
+	BU_CMD_COUNT_UNLIMITED, "Command arguments", NULL),
+	BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema comb_tree_rm_schema = {
+    "rm", "Remove members from a combination", NULL,
+	comb_tree_rm_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+	BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+#define COMB_TREE_RAW_SCHEMA(_id, _name, _help) \
+    static const struct bu_cmd_schema _id = { \
+	_name, _help, NULL, NULL, \
+	BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
+    }
+COMB_TREE_RAW_SCHEMA(comb_tree_wrap_schema, "wrap", "Wrap a combination");
+COMB_TREE_RAW_SCHEMA(comb_tree_flatten_schema, "flatten", "Flatten a combination");
+COMB_TREE_RAW_SCHEMA(comb_tree_lift_schema, "lift", "Lift a region to a combination");
+COMB_TREE_RAW_SCHEMA(comb_tree_region_schema, "region", "Set the region flag");
+COMB_TREE_RAW_SCHEMA(comb_tree_unregion_schema, "unregion", "Clear the region flag");
+COMB_TREE_RAW_SCHEMA(comb_tree_decimate_schema, "decimate", "Decimate BoT members");
+#undef COMB_TREE_RAW_SCHEMA
+
+static const struct bu_cmd_tree_node comb_tree_subcommands[] = {
+    BU_CMD_TREE_NODE(&comb_tree_rm_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, comb_tree_execute),
+    BU_CMD_TREE_NODE(&comb_tree_wrap_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, comb_tree_execute),
+    BU_CMD_TREE_NODE(&comb_tree_flatten_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, comb_tree_execute),
+    BU_CMD_TREE_NODE(&comb_tree_lift_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, comb_tree_execute),
+    BU_CMD_TREE_NODE(&comb_tree_region_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, comb_tree_execute),
+    BU_CMD_TREE_NODE(&comb_tree_unregion_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, comb_tree_execute),
+    BU_CMD_TREE_NODE(&comb_tree_decimate_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, comb_tree_execute),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree comb_tree = {
+    &comb_tree_root_schema, comb_tree_subcommands,
+    BU_CMD_TREE_CHILD_AFTER_FIXED_OPERANDS
+};
+
+static void
+comb_tree_show_help(struct ged *gedp)
+{
+    char *help = bu_cmd_tree_describe(&comb_tree);
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "comb native tree help");
+    }
+}
+
+static int
+comb_dispatch_modern(struct ged *gedp, int argc, const char **argv)
+{
+    struct comb_tree_info info = {gedp, NULL};
+    int operand_index;
+    int child_index;
+    int root_data = 0;
+    int tree_ret = BRLCAD_ERROR;
+
+	operand_index = bu_cmd_schema_parse(&comb_tree_root_schema, &root_data,
+	gedp->ged_result_str, argc - 1, argv + 1);
+	child_index = operand_index + 1;
+	if (child_index < 0 || child_index >= argc - 1)
+	return BRLCAD_ERROR;
+	info.comb_name = argv[1];
+	if (bu_cmd_tree_dispatch(&comb_tree, &info, argc - 1 - child_index,
+	argv + 1 + child_index, &tree_ret) == BRLCAD_OK)
+	return tree_ret;
+    return BRLCAD_ERROR;
+}
+
+static int
+comb_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_tree_validate(gedp, &comb_tree, input, cursor_pos, result);
+}
+
+static int
+comb_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_tree_analyze(gedp, &comb_tree, input, analysis);
+}
+
+static char *
+comb_grammar_json(void)
+{
+    return bu_cmd_tree_describe_json(&comb_tree);
+}
+
+static int
+comb_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_cmd_tree_lint(&comb_tree, msgs);
+}
+
+static const struct ged_cmd_grammar comb_grammar = {
+    "comb", "Operate on a combination", comb_grammar_validate,
+    comb_grammar_analyze, comb_grammar_json, comb_grammar_lint
+};
+
 static const struct bu_cmd_schema *
 comb_schema(void)
 {
@@ -1065,10 +1243,10 @@ comb_schema(void)
 }
 
 #define GED_COMB_COMMANDS(X, XID) \
-    X(comb, ged_comb_core, GED_CMD_DEFAULT, &comb_cmd_schema) \
+    X(comb, ged_comb_core, GED_CMD_DEFAULT, &comb_grammar) \
 
-GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_COMB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_comb", 1, GED_COMB_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_COMB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_comb", 1, GED_COMB_COMMANDS)
 
 /*
  * Local Variables:
