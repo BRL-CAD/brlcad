@@ -4168,6 +4168,111 @@ tgc_kpt_end:
     return k;
 }
 
+int
+rt_tgc_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_tgc_internal *tip;
+    fastf_t mag_h, mag_a, mag_b, mag_c, mag_d;
+    fastf_t prod_ab, prod_cd;
+    fastf_t f;
+    vect_t work;
+    int issues = 0;
+    const char *comma = "";
+
+    RT_CK_DB_INTERNAL(ip);
+    tip = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tip);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_h = sqrt(MAGSQ(tip->h));
+    mag_a = sqrt(MAGSQ(tip->a));
+    mag_b = sqrt(MAGSQ(tip->b));
+    mag_c = sqrt(MAGSQ(tip->c));
+    mag_d = sqrt(MAGSQ(tip->d));
+    prod_ab = mag_a * mag_b;
+    prod_cd = mag_c * mag_d;
+
+    bu_vls_printf(error_msg, "[");
+
+    if (NEAR_ZERO(mag_h, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_h_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (NEAR_ZERO(mag_a, tol->dist) && NEAR_ZERO(mag_c, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_ac_vectors\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (NEAR_ZERO(mag_b, tol->dist) && NEAR_ZERO(mag_d, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_bd_vectors\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (prod_ab <= SQRT_SMALL_FASTF && prod_cd <= SQRT_SMALL_FASTF) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"both_ends_degenerate\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    VCROSS(work, tip->a, tip->b);
+    if (prod_ab > SQRT_SMALL_FASTF && mag_h > SQRT_SMALL_FASTF) {
+        f = VDOT(tip->h, work) / (prod_ab*mag_h);
+        if (NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"h_in_ab_plane\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    if (prod_ab > SQRT_SMALL_FASTF) {
+        f = VDOT(tip->a, tip->b) / prod_ab;
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"a_not_perp_b\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    if (prod_cd > SQRT_SMALL_FASTF) {
+        f = VDOT(tip->c, tip->d) / prod_cd;
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"c_not_perp_d\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    if (mag_a * mag_c > SQRT_SMALL_FASTF) {
+        f = 1.0 - VDOT(tip->a, tip->c) / (mag_a * mag_c);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"a_not_parallel_c\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    if (mag_b * mag_d > SQRT_SMALL_FASTF) {
+        f = 1.0 - VDOT(tip->b, tip->d) / (mag_b * mag_d);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"b_not_parallel_d\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    bu_vls_printf(error_msg, "]");
+
+    return issues;
+}
+
 
 /*
  * Local Variables:

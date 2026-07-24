@@ -2219,6 +2219,71 @@ rt_eto_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     return BRLCAD_OK;
 }
 
+int
+rt_eto_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_eto_internal *eto;
+    int issues = 0;
+    const char *comma = "";
+
+    RT_CK_DB_INTERNAL(ip);
+    eto = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(eto);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    bu_vls_printf(error_msg, "[");
+
+    if (MAGNITUDE(eto->eto_N) < tol->dist) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_n_vector\"}", comma);
+        comma = ",";
+        issues++;
+    } else if (!NEAR_EQUAL(MAGSQ(eto->eto_N), 1.0, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"n_not_unit_length\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (MAGNITUDE(eto->eto_C) < tol->dist) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_c_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (eto->eto_r < tol->dist) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_r_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (eto->eto_rd < tol->dist) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_rd_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (eto->eto_rd > MAGNITUDE(eto->eto_C)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"rd_greater_than_c\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (MAGNITUDE(eto->eto_N) > SQRT_SMALL_FASTF && MAGNITUDE(eto->eto_C) > SQRT_SMALL_FASTF) {
+        fastf_t f = VDOT(eto->eto_N, eto->eto_C) / MAGNITUDE(eto->eto_C);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"n_not_perp_c\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    bu_vls_printf(error_msg, "]");
+    return issues;
+}
+
 
 /** @} */
 /*

@@ -6048,6 +6048,53 @@ bot_kpt_end:
     return k;
 }
 
+
+
+int
+rt_bot_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_bot_internal *bot;
+    int issues = 0;
+    size_t i;
+    int not_solid = 0;
+
+    RT_CK_DB_INTERNAL(ip);
+    bot = (struct rt_bot_internal *)ip->idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    for (i = 0; i < bot->num_faces; i++) {
+        fastf_t curr_c[3];
+        fastf_t curr_b[6];
+        int ok = validate_bot_face(curr_c, curr_b, bot, i, tol);
+        if (!ok) {
+            issues |= 1;
+        }
+    }
+
+    /* Check manifold status if it's supposed to be a solid */
+    if (bot->mode == RT_BOT_SOLID) {
+        not_solid = bg_trimesh_solid2(bot->num_vertices, bot->num_faces, bot->vertices, bot->faces, NULL);
+        if (not_solid) {
+            issues |= 2;
+        }
+    }
+
+    if (issues && error_msg) {
+        const char *comma = "";
+        bu_vls_printf(error_msg, "[");
+        if (issues & 1) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"invalid_face\"}", comma);
+            comma = ",";
+        }
+        if (issues & 2) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"non_manifold\"}", comma);
+        }
+        bu_vls_printf(error_msg, "]");
+    }
+
+    return issues;
+}
+
 /** @} */
 /*
  * Local Variables:

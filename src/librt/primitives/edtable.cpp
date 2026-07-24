@@ -145,6 +145,16 @@ EDIT_DECLARE_INTERFACE(script);
 
 __END_DECLS
 
+extern int rt_edit_rpc_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv);
+extern int rt_edit_ell_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv);
+extern int rt_edit_tgc_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv);
+extern int rt_edit_eto_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv);
+extern int rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv);
+extern int rt_edit_ehy_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv);
+extern int rt_edit_epa_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv);
+extern int rt_edit_rhc_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv);
+extern int rt_edit_arb_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv);
+
 const struct rt_edit_functab EDOBJ[] = {
     {
 	/* 0: unused, for sanity checking. */
@@ -163,7 +173,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
 	NULL,  /* menu_item */
 	NULL,  /* edit_desc */
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -183,7 +194,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_tor_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_tor_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_tor_edit_desc)   /* edit_desc */,
-	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_tor_get_params)  /* edit_get_params */
+	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_tor_get_params)  /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -203,7 +215,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_tgc_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_tgc_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_tgc_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	EDFUNCTAB_FUNC_REPAIR_CAST(rt_edit_tgc_repair) /* repair */
     },
 
     {
@@ -223,7 +236,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_ell_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_ell_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_ell_edit_desc)   /* edit_desc */,
-	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_ell_get_params)  /* edit_get_params */
+	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_ell_get_params)  /* edit_get_params */,
+	EDFUNCTAB_FUNC_REPAIR_CAST(rt_edit_ell_repair) /* repair */
     },
 
     {
@@ -243,7 +257,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_arb_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_arb_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_arb_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	EDFUNCTAB_FUNC_REPAIR_CAST(rt_edit_arb_repair) /* repair */
     },
 
     {
@@ -263,7 +278,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_ars_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_ars_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_ars_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -283,7 +299,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_hlf_set_edit_mode), /* set edit mode */
 	NULL   /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_hlf_edit_desc)   /* edit_desc */,
-	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_hlf_get_params)  /* edit_get_params */
+	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_hlf_get_params)  /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -303,7 +320,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_rec_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_tgc_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_rec_edit_desc)   /* edit_desc */,
-	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_rec_get_params)  /* edit_get_params */
+	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_rec_get_params)  /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -323,7 +341,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
  	NULL   /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_sketch_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -343,7 +362,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_bspline_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_bspline_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_bspline_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -363,7 +383,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_sph_set_edit_mode), /* set edit mode */
 	NULL   /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_sph_edit_desc)   /* edit_desc */,
-	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_sph_get_params)  /* edit_get_params */
+	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_sph_get_params)  /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -383,7 +404,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_nmg_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_nmg_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_nmg_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -403,7 +425,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_ebm_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_ebm_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_ebm_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -423,7 +446,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_vol_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_vol_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_vol_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -443,7 +467,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_arbn_set_edit_mode), /* set edit mode */
 	NULL   /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_arbn_edit_desc)   /* edit_desc */,
-	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_arbn_get_params)  /* edit_get_params */
+	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_arbn_get_params)  /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -463,7 +488,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_pipe_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_pipe_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_pipe_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -483,7 +509,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_part_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_part_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_part_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -503,7 +530,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_rpc_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_rpc_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_rpc_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	EDFUNCTAB_FUNC_REPAIR_CAST(rt_edit_rpc_repair) /* repair */
     },
 
     {
@@ -523,7 +551,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_rhc_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_rhc_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_rhc_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	EDFUNCTAB_FUNC_REPAIR_CAST(rt_edit_rhc_repair) /* repair */
     },
 
     {
@@ -543,7 +572,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_epa_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_epa_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_epa_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	EDFUNCTAB_FUNC_REPAIR_CAST(rt_edit_epa_repair) /* repair */
     },
 
     {
@@ -563,7 +593,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_ehy_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_ehy_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_ehy_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	EDFUNCTAB_FUNC_REPAIR_CAST(rt_edit_ehy_repair) /* repair */
     },
 
     {
@@ -583,7 +614,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_eto_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_eto_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_eto_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	EDFUNCTAB_FUNC_REPAIR_CAST(rt_edit_eto_repair) /* repair */
     },
 
     {
@@ -603,7 +635,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
 	NULL   /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_sketch_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -627,7 +660,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
 	NULL   /* menu_item */,
 	NULL   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -647,7 +681,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
 	NULL   /* menu_item */,
 	NULL   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -667,7 +702,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_dsp_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_dsp_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_dsp_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -687,7 +723,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_sketch_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_sketch_menu_item)  /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_sketch_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -707,7 +744,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_extrude_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_extrude_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_extrude_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -727,7 +765,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
 	NULL   /* menu_item */,
 	NULL   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -747,7 +786,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_cline_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_cline_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_cline_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -767,7 +807,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_bot_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_bot_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_bot_edit_desc)   /* edit_desc */,
-	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_bot_get_params)   /* edit_get_params */
+	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_bot_get_params)   /* edit_get_params */,
+	EDFUNCTAB_FUNC_REPAIR_CAST(rt_edit_bot_repair) /* repair */
     },
 
     {
@@ -787,7 +828,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_comb_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_comb_menu_item)     /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_comb_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -809,7 +851,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
         NULL   /* menu_item */,
 	NULL   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -829,7 +872,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
         NULL   /* menu_item */,
 	NULL   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -851,7 +895,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
         NULL   /* menu_item */,
 	NULL   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -871,7 +916,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_superell_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_superell_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_superell_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -891,7 +937,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_metaball_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_metaball_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_metaball_edit_desc)   /* edit_desc */,
-	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_metaball_get_params)  /* edit_get_params */
+	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_metaball_get_params)  /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -912,7 +959,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_brep_set_edit_mode), /* set edit mode */
 	NULL   /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_brep_edit_desc)   /* edit_desc */,
-	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_brep_get_params)  /* edit_get_params */
+	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_brep_get_params)  /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -932,7 +980,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_hyp_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_hyp_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_hyp_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -952,7 +1001,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
         NULL   /* menu_item */,
 	NULL   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -972,7 +1022,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_revolve_set_edit_mode), /* set edit mode */
         NULL   /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_revolve_edit_desc)   /* edit_desc */,
-	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_revolve_get_params)  /* edit_get_params */
+	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_revolve_get_params)  /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -992,7 +1043,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
         NULL   /* menu_item */,
 	NULL   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -1012,7 +1064,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_annot_set_edit_mode), /* set edit mode */
         NULL   /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_annot_edit_desc)   /* edit_desc */,
-	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_annot_get_params)  /* edit_get_params */
+	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_annot_get_params)  /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -1032,7 +1085,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_hrt_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_hrt_menu_item)   /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_hrt_edit_desc)   /* edit_desc */,
-	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_hrt_get_params)   /* edit_get_params */
+	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_hrt_get_params)   /* edit_get_params */,
+	NULL /* repair */
     },
 
 
@@ -1053,7 +1107,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_datum_set_edit_mode), /* set edit mode */
         NULL   /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_datum_edit_desc)   /* edit_desc */,
-	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_datum_get_params)  /* edit_get_params */
+	EDFUNCTAB_FUNC_GET_PARAMS_CAST(rt_edit_datum_get_params)  /* edit_get_params */,
+	NULL /* repair */
     },
 
 
@@ -1074,7 +1129,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
         NULL   /* menu_item */,
 	NULL   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -1094,7 +1150,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
         NULL   /* menu_item */,
 	NULL   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     },
 
     {
@@ -1114,7 +1171,8 @@ const struct rt_edit_functab EDOBJ[] = {
 	NULL,  /* set edit mode */
         NULL   /* menu_item */,
 	NULL   /* edit_desc */,
-	NULL   /* edit_get_params */
+	NULL   /* edit_get_params */,
+	NULL /* repair */
     }
 };
 

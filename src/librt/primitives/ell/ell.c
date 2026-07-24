@@ -2195,6 +2195,77 @@ rt_ell_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip,
 
 
 /** @} */
+
+int
+rt_ell_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_ell_internal *eip;
+    fastf_t mag_a, mag_b, mag_c;
+    fastf_t f;
+    int issues = 0;
+    const char *comma = "";
+
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_a = MAGNITUDE(eip->a);
+    mag_b = MAGNITUDE(eip->b);
+    mag_c = MAGNITUDE(eip->c);
+
+    bu_vls_printf(error_msg, "[");
+
+    if (NEAR_ZERO(mag_a, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_a_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+    if (NEAR_ZERO(mag_b, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_b_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+    if (NEAR_ZERO(mag_c, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_c_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (mag_a > SQRT_SMALL_FASTF && mag_b > SQRT_SMALL_FASTF) {
+        f = VDOT(eip->a, eip->b) / (mag_a * mag_b);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"a_not_perp_b\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+    if (mag_b > SQRT_SMALL_FASTF && mag_c > SQRT_SMALL_FASTF) {
+        f = VDOT(eip->b, eip->c) / (mag_b * mag_c);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"b_not_perp_c\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+    if (mag_a > SQRT_SMALL_FASTF && mag_c > SQRT_SMALL_FASTF) {
+        f = VDOT(eip->a, eip->c) / (mag_a * mag_c);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"a_not_perp_c\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    bu_vls_printf(error_msg, "]");
+
+    return issues;
+}
+
 /*
  * Local Variables:
  * mode: C

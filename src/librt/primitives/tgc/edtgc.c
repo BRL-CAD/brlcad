@@ -28,6 +28,7 @@
 
 #include "vmath.h"
 #include "nmg.h"
+#include "bu/opt.h"
 #include "raytrace.h"
 #include "rt/db4.h"
 #include "rt/geom.h"
@@ -1251,6 +1252,120 @@ rt_edit_tgc_edit_xy(
     edit_abs_tra(s, pos_view);
 
     return 0;
+}
+
+
+
+int
+rt_edit_tgc_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv)
+{
+    struct rt_tgc_internal *tip;
+    fastf_t mag_a, mag_b, mag_c, mag_d;
+    int repaired = 0;
+    int options_json = 0;
+    int print_help = 0;
+
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
+    BU_OPT(d[1], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
+    BU_OPT_NULL(d[2]);
+
+    if (argc > 0 && argv) {
+        bu_opt_parse(NULL, argc, argv, d);
+    }
+
+    if (options_json) {
+        if (log_str) {
+            bu_vls_printf(log_str, "{\"options\":[]}");
+        }
+        return 1;
+    }
+
+    if (print_help) {
+        if (log_str) {
+            char *option_help = bu_opt_describe(d, NULL);
+            bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
+            if (option_help) bu_free(option_help, "help str");
+        }
+        return -1;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    tip = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tip);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_a = MAGNITUDE(tip->a);
+    mag_b = MAGNITUDE(tip->b);
+    mag_c = MAGNITUDE(tip->c);
+    mag_d = MAGNITUDE(tip->d);
+
+    fastf_t mag_h = MAGNITUDE(tip->h);
+
+    if (mag_h < tol->dist) {
+        vect_t cross;
+        fastf_t new_len;
+        VCROSS(cross, tip->a, tip->b);
+        if (MAGSQ(cross) > SQRT_SMALL_FASTF) {
+            new_len = (mag_a + mag_b) * 0.5;
+            if (new_len < SQRT_SMALL_FASTF) new_len = 1.0;
+            VUNITIZE(cross);
+            VSCALE(tip->h, cross, new_len);
+            repaired++;
+        } else {
+            VCROSS(cross, tip->c, tip->d);
+            if (MAGSQ(cross) > SQRT_SMALL_FASTF) {
+                new_len = (mag_c + mag_d) * 0.5;
+                if (new_len < SQRT_SMALL_FASTF) new_len = 1.0;
+                VUNITIZE(cross);
+                VSCALE(tip->h, cross, new_len);
+                repaired++;
+            } else {
+                VSET(tip->h, 0.0, 0.0, 1.0);
+                repaired++;
+            }
+        }
+    }
+
+    if (mag_a > SQRT_SMALL_FASTF && mag_b > SQRT_SMALL_FASTF) {
+        fastf_t f = VDOT(tip->a, tip->b) / (mag_a * mag_b);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            vect_t proj;
+            VSCALE(proj, tip->a, VDOT(tip->b, tip->a) / MAGSQ(tip->a));
+            VSUB2(tip->b, tip->b, proj);
+            /* Restore length */
+            VSCALE(tip->b, tip->b, mag_b / MAGNITUDE(tip->b));
+            repaired++;
+        }
+    }
+
+    if (mag_a > SQRT_SMALL_FASTF && mag_c > SQRT_SMALL_FASTF) {
+        fastf_t f = 1.0 - VDOT(tip->a, tip->c) / (mag_a * mag_c);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            fastf_t sign = (VDOT(tip->a, tip->c) >= 0.0) ? 1.0 : -1.0;
+            VSCALE(tip->c, tip->a, sign * mag_c / mag_a);
+            repaired++;
+        }
+    }
+
+    if (mag_b > SQRT_SMALL_FASTF && mag_d > SQRT_SMALL_FASTF) {
+        fastf_t f = 1.0 - VDOT(tip->b, tip->d) / (mag_b * mag_d);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            fastf_t sign = (VDOT(tip->b, tip->d) >= 0.0) ? 1.0 : -1.0;
+            VSCALE(tip->d, tip->b, sign * mag_d / mag_b);
+            repaired++;
+        }
+    }
+
+    if (repaired > 0 && log_str) {
+        bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired TGC\"}");
+    }
+
+    return repaired > 0 ? 0 : -1;
 }
 
 /*

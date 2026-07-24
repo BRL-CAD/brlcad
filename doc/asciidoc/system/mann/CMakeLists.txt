@@ -306,6 +306,7 @@ set(
   release.adoc
   relos.adoc
   remat.adoc
+  repair.adoc
   rfarb.adoc
   rm.adoc
   rmap.adoc

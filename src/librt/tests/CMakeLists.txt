@@ -125,6 +125,10 @@ brlcad_add_test(NAME rt_dsp_sa_vol_compare COMMAND rt_dsp_sa_vol_check -c)
 brlcad_addexec(rt_dsp_raytrace_check dsp_raytrace_check.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_dsp_raytrace_check COMMAND rt_dsp_raytrace_check)
 
+# in-memory test for primitives
+brlcad_addexec(rt_invalid_inmem invalid_inmem.c "librt;libbn;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_test_invalid_in_memory COMMAND rt_invalid_inmem)
+
 set(
   distcheck_files
   CMakeLists.txt
@@ -137,6 +141,7 @@ set(
   brep_boolean_tests.g
   cyclic_tests.g
   extreme_ssi_test.g
+  invalid_inmem.c
   matrix_tests.g
   nurbs_surfaces.g
   rt_datum.c
