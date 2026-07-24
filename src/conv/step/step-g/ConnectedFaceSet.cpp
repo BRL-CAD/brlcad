@@ -46,10 +46,13 @@ string ConnectedFaceSet::entityname = Factory::RegisterClass(ENTITYNAME, (Factor
 namespace {
 
 /* Measured 152- and 271-face analytic solids spend more time duplicating and
- * stitching standalone BREPs than they recover from helper work.  Reserve
- * face-level scheduling for genuinely large (512+) single solids; smaller
- * items retain edge-level helpers and top-level solid parallelism. */
-constexpr size_t kMinimumParallelFaceCount = 512;
+ * stitching standalone BREPs than they recover from helper work.  The
+ * 357-face Panzer periodic solid, however, spends 108 seconds in independent
+ * face pullbacks and benefits from helpers.  Start at 320 faces: safely above
+ * the largest measured negative case while admitting that next observed
+ * workload class.  Smaller items retain edge-level helpers and top-level
+ * solid parallelism. */
+constexpr size_t kMinimumParallelFaceCount = 320;
 /* Serial preparation touches small mutable caches on shared STEP curve and
  * surface adapters.  Retain four faces per requested worker (at least eight,
  * capped at 32) before parallel trim construction and deterministic append

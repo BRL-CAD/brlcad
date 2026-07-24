@@ -226,6 +226,8 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
     ON_3dPoint profile_end;
     double profile_parameter_start = -reach;
     double profile_parameter_end = reach;
+    double minimum_axial = DBL_MAX;
+    double maximum_axial = -DBL_MAX;
     if (cylindrical_limit) {
 	profile_start = profile_origin - reach * norm + local_radius * xaxis;
 	profile_end = profile_origin + reach * norm + local_radius * xaxis;
@@ -238,9 +240,9 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
 	 * paired seam/pole cut.  Bound the generated analytic surface at the apex
 	 * in that one-sided case; this changes only its evaluation domain, not its
 	 * locus, angle, radius, or STEP topology. */
-	double minimum_axial = curve_axis_bounds_valid ?
+	minimum_axial = curve_axis_bounds_valid ?
 	    curve_axis_minimum : DBL_MAX;
-	double maximum_axial = curve_axis_bounds_valid ?
+	maximum_axial = curve_axis_bounds_valid ?
 	    curve_axis_maximum : -DBL_MAX;
 	if (!curve_axis_bounds_valid) {
 	    /* The AABB projection is conservative and may be inconclusive for an
@@ -295,6 +297,20 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
     if (!surface->IsValid()) {
 	delete surface;
 	return false;
+    }
+    if (step && step->Verbose()) {
+	std::cerr << "CONICAL_SURFACE #" << id
+	    << ": apex=" << profile_origin.x << ',' << profile_origin.y << ','
+	    << profile_origin.z << " axis=" << norm.x << ',' << norm.y << ','
+	    << norm.z << " radial=" << xaxis.x << ',' << xaxis.y << ','
+	    << xaxis.z << " trim-axis=" << minimum_axial << ':'
+	    << maximum_axial << " reach=" << reach << " profile="
+	    << profile_start.x << ',' << profile_start.y << ','
+	    << profile_start.z << " -> " << profile_end.x << ','
+	    << profile_end.y << ',' << profile_end.z << " domains="
+	    << surface->Domain(0).Min() << ':' << surface->Domain(0).Max()
+	    << ',' << surface->Domain(1).Min() << ':'
+	    << surface->Domain(1).Max() << std::endl;
     }
 
     SetONId(brep->AddSurface(surface));

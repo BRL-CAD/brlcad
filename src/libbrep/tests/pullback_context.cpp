@@ -14,11 +14,28 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <iostream>
 #include <thread>
 #include <vector>
 
 #include "brep/pullback.h"
 #include "brep/util.h"
+
+
+static bool
+poll_until_cancelled()
+{
+    /* CPU-clock and stall checks are intentionally coalesced in the hot
+     * pullback loops.  Exercise the public query through more than one
+     * internal polling interval without coupling this test to its exact
+     * implementation constant. */
+    constexpr int maximum_poll_attempts = 128;
+    for (int attempt = 0; attempt < maximum_poll_attempts; ++attempt) {
+	if (brlcad::PullbackWorkCancelled())
+	    return true;
+    }
+    return false;
+}
 
 
 static bool
@@ -191,6 +208,66 @@ exercise_unwrapped_periodic_seed()
 
 
 static bool
+exercise_one_nappe_cone_closest_point()
+{
+    /* AP203 permits a conical face to use an arbitrary placement direction.
+     * Exercise the finite one-nappe revolution emitted by step-g for the
+     * LS3 water-pump cone.  Its two circular bounds and generator lines are
+     * exact points on the analytic surface; the closest-point index must not
+     * reject them because the generating curve begins at the apex. */
+    const ON_3dPoint placement_origin(49.696, 0.0, 0.0);
+    ON_3dVector axis(-1.0, 0.0, 0.0);
+    ON_3dVector radial(0.0, 0.87758256189, -0.479425538604);
+    if (!axis.Unitize() || !radial.Unitize())
+	return false;
+    const double radius = 6.0;
+    const double tangent = tan(0.523598775598);
+    const ON_3dPoint apex = placement_origin - (radius / tangent) * axis;
+    const double reach = 24.0;
+
+    ON_LineCurve *profile = new ON_LineCurve(apex,
+	apex + reach * axis + (reach * tangent) * radial);
+    profile->SetDomain(0.0, reach);
+    ON_RevSurface surface;
+    surface.m_curve = profile;
+    surface.m_axis = ON_Line(apex, apex + axis);
+    surface.SetAngleRadians(0.0, ON_2PI);
+    surface.m_t.Set(0.0, ON_2PI);
+    surface.m_bTransposed = false;
+    surface.BoundingBox();
+    if (!surface.IsValid())
+	return false;
+
+    const ON_3dPoint source_points[] = {
+	ON_3dPoint(42.696, -8.81220306975, 4.81412847801),
+	ON_3dPoint(39.7367078565, -10.3115951022, 5.6332500786),
+	ON_3dPoint(39.7367078565, 10.3115951022, -5.6332500786),
+	ON_3dPoint(42.696, 8.81220306975, -4.81412847801)
+    };
+    brlcad::PullbackContext context;
+    for (const ON_3dPoint &point : source_points) {
+	ON_2dPoint uv = ON_2dPoint::UnsetPoint;
+	ON_3dPoint lifted = ON_3dPoint::UnsetPoint;
+	double distance = DBL_MAX;
+	if (!context.SurfaceClosestPoint(&surface, point, uv, lifted, distance,
+		0, 1.0e-9, 1.0e-5) ||
+		lifted.DistanceTo(point) > 1.0e-5 || distance > 1.0e-5) {
+	    std::cerr << "one-nappe cone closest point failed for "
+		<< point.x << ',' << point.y << ',' << point.z
+		<< ": uv=" << uv.x << ',' << uv.y
+		<< " lift=" << lifted.x << ',' << lifted.y << ',' << lifted.z
+		<< " distance=" << distance
+		<< " domains=" << surface.Domain(0).Min() << ':'
+		<< surface.Domain(0).Max() << ',' << surface.Domain(1).Min()
+		<< ':' << surface.Domain(1).Max() << std::endl;
+	    return false;
+	}
+    }
+    return true;
+}
+
+
+static bool
 exercise_narrow_singular_domain_guard()
 {
     /* The legacy singularity detector uses an absolute 0.001 UV threshold.
@@ -319,10 +396,12 @@ main()
      * cancellation, and the caller must be able to distinguish the reason. */
     brlcad::SetPullbackWorkLimit(NULL, NULL, 0, 1);
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    if (!brlcad::PullbackWorkCancelled() ||
+    if (!poll_until_cancelled() ||
 	    !brlcad::PullbackWorkStalled() ||
-	    brlcad::PullbackWorkDeadlineExpired())
+	    brlcad::PullbackWorkDeadlineExpired()) {
+	std::cerr << "stall-only cancellation check failed" << std::endl;
 	valid.store(false);
+    }
     brlcad::ClearPullbackWorkLimit();
 
     /* A worker that is descheduled or blocked must not spend its geometry
@@ -330,8 +409,10 @@ main()
     brlcad::SetPullbackWorkLimit(NULL, NULL, 10, 0);
     std::this_thread::sleep_for(std::chrono::milliseconds(25));
     if (brlcad::PullbackWorkCancelled() ||
-	    brlcad::PullbackWorkDeadlineExpired())
+	    brlcad::PullbackWorkDeadlineExpired()) {
+	std::cerr << "sleep consumed CPU-work budget" << std::endl;
 	valid.store(false);
+    }
     volatile double work = 1.0;
     const std::chrono::steady_clock::time_point work_ceiling =
 	std::chrono::steady_clock::now() + std::chrono::seconds(2);
@@ -340,8 +421,10 @@ main()
 	for (int iteration = 1; iteration <= 10000; ++iteration)
 	    work += std::sin(work + static_cast<double>(iteration));
     }
-    if (!brlcad::PullbackWorkDeadlineExpired())
+    if (!brlcad::PullbackWorkDeadlineExpired()) {
+	std::cerr << "busy loop did not consume CPU-work budget" << std::endl;
 	valid.store(false);
+    }
     brlcad::ClearPullbackWorkLimit();
 
     /* Nested workers join one critical-path budget instead of restarting an
@@ -363,31 +446,40 @@ main()
 	brlcad::ClearPullbackWorkLimit();
     });
     budget_helper.join();
-    if (!brlcad::PullbackWorkCancelled() ||
-	    !brlcad::PullbackWorkDeadlineExpired())
+    if (!poll_until_cancelled() ||
+	    !brlcad::PullbackWorkDeadlineExpired()) {
+	std::cerr << "shared worker CPU-work budget did not expire" << std::endl;
 	valid.store(false);
+    }
     brlcad::ClearPullbackWorkLimit();
 
     /* A completed operation refreshes only the no-progress timer. */
     brlcad::SetPullbackWorkLimit(NULL, NULL, 0, 50);
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     brlcad::PullbackWorkProgress();
-    if (brlcad::PullbackWorkCancelled() || brlcad::PullbackWorkStalled())
+    if (brlcad::PullbackWorkCancelled() || brlcad::PullbackWorkStalled()) {
+	std::cerr << "progress heartbeat did not refresh stall timer" << std::endl;
 	valid.store(false);
+    }
     brlcad::ClearPullbackWorkLimit();
 
     brlcad::SetPullbackWorkLimit(NULL, NULL, 0, 50);
     brlcad::PropagatePullbackWorkStop(false, true);
     if (!brlcad::PullbackWorkStalled() ||
-	    brlcad::PullbackWorkDeadlineExpired())
+	    brlcad::PullbackWorkDeadlineExpired()) {
+	std::cerr << "propagated stall reason was not preserved" << std::endl;
 	valid.store(false);
+    }
     brlcad::ClearPullbackWorkLimit();
     std::vector<std::thread> workers;
     workers.reserve(worker_count);
     for (unsigned int worker = 0; worker < worker_count; ++worker) {
 	workers.emplace_back([worker, &valid]() {
-	    if (!exercise_context(worker))
+	    if (!exercise_context(worker)) {
+		std::cerr << "parallel plane context failed for worker " << worker
+		    << std::endl;
 		valid.store(false);
+	    }
 	});
     }
     for (std::thread &worker : workers)
@@ -403,8 +495,10 @@ main()
     ON_3dPoint lifted = ON_3dPoint::UnsetPoint;
     double distance = ON_DBL_QNAN;
     if (!surface_GetClosestPoint3dFirstOrder(&surface, ON_3dPoint(0.25, -0.5, 0.0),
-	    uv, lifted, distance, 0, 1.0e-9, 1.0e-7))
+	    uv, lifted, distance, 0, 1.0e-9, 1.0e-7)) {
+	std::cerr << "source-compatible closest-point adapter failed" << std::endl;
 	valid.store(false);
+    }
 
     /* A closed adaptive sample ring must not acquire opposing endpoint
      * tangents merely because the local cubic fitter treats it as open. */
@@ -431,26 +525,37 @@ main()
      * original parameter/distance arrays.  Exercise that path directly so
      * bounds-checked and sanitizer builds catch cross-indexing the arrays. */
     if (!exercise_adaptive_pullback_refinement())
+	std::cerr << "adaptive pullback refinement failed" << std::endl,
 	valid.store(false);
 
     /* Related edge jobs may share immutable surface span boxes without
      * sharing mutable closest-point state or rebuilding the cache. */
     if (!exercise_shared_surface_cache())
+	std::cerr << "shared surface cache failed" << std::endl,
 	valid.store(false);
 
     /* Newton continuity may retain an integral-period UV image, but a closed
      * OpenNURBS surface must always be evaluated in its declared domain. */
     if (!exercise_unwrapped_periodic_seed())
+	std::cerr << "unwrapped periodic seed failed" << std::endl,
+	valid.store(false);
+
+    /* A finite cone whose profile starts at its apex must retain conservative
+     * span bounds and converge for exact points on its ordinary nappe. */
+    if (!exercise_one_nappe_cone_closest_point())
+	std::cerr << "one-nappe cone closest-point check failed" << std::endl,
 	valid.store(false);
 
     /* UV proximity alone cannot prove that a sample lies on a singular side;
      * the proposed snap must also preserve its represented 3-D point. */
     if (!exercise_narrow_singular_domain_guard())
+	std::cerr << "narrow singular-domain guard failed" << std::endl,
 	valid.store(false);
 
     /* NURBS sub-span bounds must remain conservative while avoiding a copy of
      * the complete surface for each prepared span. */
     if (!exercise_nurbs_span_bounding_boxes())
+	std::cerr << "NURBS span bounding-box check failed" << std::endl,
 	valid.store(false);
 
     return valid.load() ? 0 : 1;

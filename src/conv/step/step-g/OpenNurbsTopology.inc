@@ -192,6 +192,16 @@ FaceSurface::PrepareONBrep(ON_Brep *brep,
 
     if (step)
 	step->SetProgressDetail("building exact STEP face surface", id);
+    /* STEP surface identity describes an unbounded analytic locus, while the
+     * OpenNURBS surface constructed here is deliberately given a finite
+     * evaluation domain derived from this face's edge bounds.  Distinct faces
+     * may legitimately reuse one STEP surface at disjoint parameter ranges.
+     * Reusing the first face's OpenNURBS index would then truncate every later
+     * face to the first domain (the LS3 pump cone has several such axial
+     * bands).  Give each face its own bounded surface instance.  Shared STEP
+     * topology identity is still retained for vertices and edges; no geometric
+     * locus is duplicated or altered by this representation-local reset. */
+    face_geometry->ResetONState();
     if (!face_geometry->LoadONBrep(brep)) {
 	if (step && step->Verbose())
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;

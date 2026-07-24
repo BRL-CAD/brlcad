@@ -557,6 +557,17 @@ if(BRLCAD_ENABLE_STEP)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_conical_closed_edge_band.cmake
   )
   brlcad_add_test(
+    NAME ap214_shared_conical_surface_bands
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DAP214_G=$<TARGET_FILE:ap214-g>
+      -DMGED=$<TARGET_FILE:mged>
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_shared_conical_surface_bands.stp
+      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_shared_conical_surface_bands.json
+      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_shared_conical_surface_bands.g
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap214_shared_conical_surface_bands.cmake
+  )
+  brlcad_add_test(
     NAME ap214_segmented_cylinder_band
     COMMAND
       ${CMAKE_COMMAND}
@@ -978,6 +989,8 @@ cmakefiles(
   tests/ap214_composite_curve.stp
   tests/ap214_conical_closed_edge_band.cmake
   tests/ap214_conical_closed_edge_band.stp
+  tests/ap214_shared_conical_surface_bands.cmake
+  tests/ap214_shared_conical_surface_bands.stp
   tests/ap214_segmented_cylinder_band.cmake
   tests/ap214_segmented_cylinder_band.stp
   tests/ap214_wavy_periodic_band.cmake
