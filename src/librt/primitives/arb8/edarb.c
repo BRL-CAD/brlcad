@@ -33,7 +33,7 @@
 #include "bg.h"
 #include "rt/geom.h"
 #include "rt/primitives/arb8.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "rt/db4.h"
 #include "rt/edit.h"
 #include "../edit_private.h"
@@ -2614,18 +2614,40 @@ rt_edit_arb_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
     struct rt_arb_internal *arb;
     struct rt_arb_internal repaired_arb;
     int ret;
-    int options_json = 0;
-    int print_help = 0;
     fastf_t ftol = -1.0;
+    static const struct bu_cmd_option options[] = {
+	BU_CMD_FLAG("h", "help", struct rt_arb_internal, magic,
+	    "Print help"),
+	BU_CMD_NUMBER("t", "tol", struct rt_arb_internal, magic, "distance",
+	    "Distance tolerance for snapping vertices"),
+	BU_CMD_FLAG("", "options-json", struct rt_arb_internal, magic,
+	    "Return JSON of supported options"),
+	BU_CMD_OPTION_NULL
+    };
+    static const struct bu_cmd_schema schema = {
+	"arb repair", "Repair and canonicalize ARB objects", options, NULL,
+	BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    };
+    int options_json = bu_cmd_schema_option_present(&schema, (size_t)argc, argv,
+	"options-json");
+    int print_help = bu_cmd_schema_option_present(&schema, (size_t)argc, argv,
+	"help");
 
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
-    BU_OPT(d[1], "t", "tol", "<#>", bu_opt_fastf_t, &ftol, "Distance tolerance for snapping vertices");
-    BU_OPT(d[2], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
-    BU_OPT_NULL(d[3]);
-
-    if (argc > 0 && argv) {
-        bu_opt_parse(NULL, argc, argv, d);
+    for (int i = 0; i < argc; i++) {
+	const char *val = NULL;
+	if (!BU_STR_EQUAL(argv[i], "-t") && !BU_STR_EQUAL(argv[i], "--tol")) {
+	    if (!strncmp(argv[i], "--tol=", 6))
+		val = argv[i] + 6;
+	    else
+		continue;
+	} else if (++i < argc) {
+	    val = argv[i];
+	}
+	if (!val || !bu_cmd_number_from_str(&ftol, val)) {
+	    if (log_str)
+		bu_vls_printf(log_str, "{\"status\":\"error\",\"message\":\"Invalid tolerance\"}");
+	    return -1;
+	}
     }
 
     if (options_json) {
@@ -2639,7 +2661,7 @@ rt_edit_arb_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
 
     if (print_help) {
         if (log_str) {
-            char *option_help = bu_opt_describe(d, NULL);
+            char *option_help = bu_cmd_schema_describe(&schema);
             bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
             if (option_help) bu_free(option_help, "help str");
         }
