@@ -1224,7 +1224,7 @@ rt_short_option(char shortopt)
 {
     size_t i;
 
-    for (i = 0; rt_options[i].canonical; i++) {
+    for (i = 0; bu_cmd_option_is_valid(&rt_options[i]); i++) {
 	if (rt_options[i].shortopt && rt_options[i].shortopt[0] == shortopt &&
 	    rt_options[i].shortopt[1] == '\0')
 	    return &rt_options[i];

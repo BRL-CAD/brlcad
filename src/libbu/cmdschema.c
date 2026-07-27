@@ -36,6 +36,23 @@ static int cmd_schema_operand_valid(const struct bu_cmd_operand *operand,
 	const char *arg);
 
 
+const char *
+bu_cmd_option_canonical(const struct bu_cmd_option *option)
+{
+    if (!option)
+	return NULL;
+    return option->canonical ? option->canonical :
+	(option->longopt ? option->longopt : option->shortopt);
+}
+
+
+int
+bu_cmd_option_is_valid(const struct bu_cmd_option *option)
+{
+    return option && (option->canonical || option->shortopt || option->longopt);
+}
+
+
 static size_t
 cmd_schema_optional_scalar_token_count(size_t available, const char **argv)
 {
@@ -701,9 +718,9 @@ cmd_schema_find_canonical(const struct bu_cmd_schema *schema, const char *canoni
     if (!schema || !schema->options || !canonical)
 	return NULL;
 
-    while (schema->options[i].canonical) {
+    while (bu_cmd_option_is_valid(&schema->options[i])) {
 	const struct bu_cmd_option *option = &schema->options[i];
-	if (!option->alias_of && BU_STR_EQUAL(option->canonical, canonical))
+	if (!option->alias_of && BU_STR_EQUAL(bu_cmd_option_canonical(option), canonical))
 	    return option;
 	i++;
     }
@@ -719,7 +736,7 @@ cmd_schema_find_option(const struct bu_cmd_schema *schema, const char *name, int
     if (!schema || !schema->options || !name)
 	return NULL;
 
-    while (schema->options[i].canonical) {
+    while (bu_cmd_option_is_valid(&schema->options[i])) {
 	const struct bu_cmd_option *option = &schema->options[i];
 	const char *spelling = longopt ? option->longopt : option->shortopt;
 	if (spelling && BU_STR_EQUAL(spelling, name)) {
@@ -738,15 +755,15 @@ cmd_schema_option_name(const struct bu_cmd_option *option)
 {
     if (!option)
 	return "option";
-    return option->longopt ? option->longopt :
-	(option->canonical ? option->canonical : "option");
+    const char *name = bu_cmd_option_canonical(option);
+    return name ? name : "option";
 }
 
 
 static int
 cmd_schema_has_options(const struct bu_cmd_schema *schema)
 {
-    return schema && schema->options && schema->options[0].canonical;
+    return schema && schema->options && bu_cmd_option_is_valid(&schema->options[0]);
 }
 
 
@@ -785,7 +802,7 @@ cmd_schema_set_value(const struct bu_cmd_option *option, void *data, const char 
     if (option->storage_offset == BU_CMD_STORAGE_NONE) {
 	if (msg)
 	    bu_vls_printf(msg, "--%s is syntax-only and has no execution storage binding\n",
-		option->longopt ? option->longopt : option->canonical);
+		cmd_schema_option_name(option));
 	return -1;
     }
 	storage = (char *)data + option->storage_offset;
@@ -794,7 +811,7 @@ cmd_schema_set_value(const struct bu_cmd_option *option, void *data, const char 
 	!cmd_schema_keyword_canonical(option->value_keywords, option->keyword_values, arg)) {
 	if (msg)
 	    bu_vls_printf(msg, "invalid keyword for --%s: %s\n",
-		option->longopt ? option->longopt : option->canonical, arg);
+		cmd_schema_option_name(option), arg);
 	return -1;
     }
     if (option->value_type != BU_CMD_VALUE_FLAG && option->validate && option->validate(msg, arg) != 0)
@@ -1054,7 +1071,7 @@ cmd_schema_apply_option_arguments(const struct bu_cmd_option *option, void *data
     if (option->storage_offset == BU_CMD_STORAGE_NONE) {
 	if (msg)
 	    bu_vls_printf(msg, "--%s is syntax-only and has no execution storage binding\n",
-		option->longopt ? option->longopt : option->canonical);
+		cmd_schema_option_name(option));
 	return -1;
     }
     storage = (char *)data + option->storage_offset;
@@ -1070,7 +1087,7 @@ cmd_schema_apply_option_arguments(const struct bu_cmd_option *option, void *data
     if (argc != 1) {
 	if (msg)
 	    bu_vls_printf(msg, "--%s requires a shape consumer for %lu arguments\n",
-		option->longopt ? option->longopt : option->canonical, (unsigned long)argc);
+		cmd_schema_option_name(option), (unsigned long)argc);
 	return -1;
     }
     return cmd_schema_set_value(option, data, argv[0], msg);
@@ -1459,7 +1476,7 @@ bu_cmd_schema_describe_selected(const struct bu_cmd_schema *schema, const char *
     if (!schema || !schema->options)
 	return NULL;
 
-    while (schema->options[i].canonical) {
+    while (bu_cmd_option_is_valid(&schema->options[i])) {
 	const struct bu_cmd_option *option = &schema->options[i];
 	struct bu_vls spellings = BU_VLS_INIT_ZERO;
 
@@ -1471,7 +1488,7 @@ bu_cmd_schema_describe_selected(const struct bu_cmd_schema *schema, const char *
 	    size_t selected_i;
 	    int found = 0;
 	    for (selected_i = 0; selected[selected_i]; selected_i++) {
-		if (BU_STR_EQUAL(option->canonical, selected[selected_i])) {
+		if (BU_STR_EQUAL(bu_cmd_option_canonical(option), selected[selected_i])) {
 		    found = 1;
 		    break;
 		}
@@ -1708,7 +1725,7 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
     cmd_schema_json_string(&out, cmd_schema_policy_name(schema->parse_policy));
     bu_vls_strcat(&out, ",\"options\":[");
     if (schema->options) {
-	while (schema->options[i].canonical) {
+	while (bu_cmd_option_is_valid(&schema->options[i])) {
 	    const struct bu_cmd_option *option = &schema->options[i];
 	    if (comma)
 		bu_vls_putc(&out, ',');
@@ -1717,7 +1734,7 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
 	    bu_vls_strcat(&out, ",\"long\":");
 	    cmd_schema_json_string(&out, option->longopt);
 	    bu_vls_strcat(&out, ",\"canonical\":");
-	    cmd_schema_json_string(&out, option->canonical);
+	    cmd_schema_json_string(&out, bu_cmd_option_canonical(option));
 	    bu_vls_strcat(&out, ",\"alias_of\":");
 	    cmd_schema_json_string(&out, option->alias_of);
 	    bu_vls_strcat(&out, ",\"argument\":");
@@ -1934,7 +1951,7 @@ cmd_schema_add_option_candidates(const struct bu_cmd_schema *schema,
 
     if (!schema || !schema->options)
 	return;
-    while (schema->options[i].canonical) {
+    while (bu_cmd_option_is_valid(&schema->options[i])) {
 	const struct bu_cmd_option *option = &schema->options[i];
 	if (!option->hidden && !option->alias_of) {
 	    if (option->shortopt && strlen(option->shortopt) == 1) {
@@ -1955,7 +1972,7 @@ cmd_schema_add_option_candidates(const struct bu_cmd_schema *schema,
     result->completion_candidates = (const char **)bu_calloc(count + 1, sizeof(char *), "command schema completion candidates");
     result->completion_count = 0;
     i = 0;
-    while (schema->options[i].canonical) {
+    while (bu_cmd_option_is_valid(&schema->options[i])) {
 	const struct bu_cmd_option *option = &schema->options[i];
 	if (!option->hidden && !option->alias_of) {
 	    if (option->shortopt && strlen(option->shortopt) == 1) {
@@ -2130,7 +2147,7 @@ bu_cmd_schema_option_present(const struct bu_cmd_schema *schema, size_t argc,
 	    option = cmd_schema_lookup_token(schema, arg);
 	    eq = strchr(arg, '=');
 	    if (option) {
-		if (BU_STR_EQUAL(option->canonical, canonical))
+		if (BU_STR_EQUAL(bu_cmd_option_canonical(option), canonical))
 		    return 1;
 		if (option->arg_requirement == BU_CMD_ARG_NONE || eq) {
 		    i++;
@@ -2147,7 +2164,7 @@ bu_cmd_schema_option_present(const struct bu_cmd_schema *schema, size_t argc,
 		for (size_t ci = 1; arg[ci]; ci++) {
 		    char short_name[2] = {arg[ci], '\0'};
 		    option = cmd_schema_find_option(schema, short_name, 0);
-		    if (option && BU_STR_EQUAL(option->canonical, canonical))
+		    if (option && BU_STR_EQUAL(bu_cmd_option_canonical(option), canonical))
 			return 1;
 		}
 		i++;

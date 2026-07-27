@@ -86,21 +86,6 @@ extern "C" const struct bu_cmd_schema ged_arb_repair_schema = {
     BU_CMD_SCHEMA_CONSTRAINTS(arb_repair_schema_validate, NULL)
 };
 
-
-static void
-arb_repair_help(struct ged *gedp)
-{
-    char *option_help = bu_cmd_schema_describe(&ged_arb_repair_schema);
-
-    bu_vls_printf(gedp->ged_result_str,
-	"Usage: arb repair [options] input_arb [input_arb ...]\n\n"
-	"Attempts to repair and canonicalize an ARB.\n\n");
-    if (option_help) {
-	bu_vls_printf(gedp->ged_result_str, "Options:\n%s\n", option_help);
-	bu_free(option_help, "ARB repair native option help");
-    }
-}
-
 extern "C" int
 _arb_cmd_repair(void *bs, int argc, const char **argv)
 {

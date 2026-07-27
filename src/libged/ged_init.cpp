@@ -461,9 +461,10 @@ ged_native_schema_lint_node(const char *path, const struct bu_cmd_schema *schema
 	failures++;
     }
     if (schema->options) {
-	for (size_t i = 0; schema->options[i].canonical; i++) {
+	for (size_t i = 0; bu_cmd_option_is_valid(&schema->options[i]); i++) {
 	    const struct bu_cmd_option *option = &schema->options[i];
-	    if (BU_STR_EMPTY(option->canonical)) {
+	    const char *option_name = bu_cmd_option_canonical(option);
+	    if (BU_STR_EMPTY(option_name)) {
 		if (msgs)
 		    bu_vls_printf(msgs, "%s: native option %lu has no canonical name\n", path, (unsigned long)i);
 		failures++;
@@ -491,9 +492,9 @@ ged_native_schema_lint_node(const char *path, const struct bu_cmd_schema *schema
 	    }
 	    if (option->alias_of && option->alias_of[0]) {
 		int target_found = 0;
-		for (size_t ci = 0; schema->options[ci].canonical; ci++) {
+		for (size_t ci = 0; bu_cmd_option_is_valid(&schema->options[ci]); ci++) {
 		    const struct bu_cmd_option *target = &schema->options[ci];
-		    if (!target->alias_of && BU_STR_EQUAL(target->canonical, option->alias_of)) {
+		    if (!target->alias_of && BU_STR_EQUAL(bu_cmd_option_canonical(target), option->alias_of)) {
 			target_found = 1;
 			break;
 		    }
@@ -501,20 +502,20 @@ ged_native_schema_lint_node(const char *path, const struct bu_cmd_schema *schema
 		if (!target_found) {
 		    if (msgs)
 			bu_vls_printf(msgs, "%s: native alias \"%s\" targets unknown option \"%s\"\n",
-			    path, option->canonical, option->alias_of);
+			    path, option_name, option->alias_of);
 		    failures++;
 		}
 	    }
 	    if (option->value_type < BU_CMD_VALUE_FLAG || option->value_type > BU_CMD_VALUE_CUSTOM) {
 		if (msgs)
 		    bu_vls_printf(msgs, "%s: native option \"%s\" has invalid value type %d\n",
-			path, option->canonical, (int)option->value_type);
+			path, option_name, (int)option->value_type);
 		failures++;
 	    }
 	    if (option->arg_requirement < BU_CMD_ARG_REQUIRED || option->arg_requirement > BU_CMD_ARG_NONE) {
 		if (msgs)
 		    bu_vls_printf(msgs, "%s: native option \"%s\" has invalid argument requirement %d\n",
-			path, option->canonical, (int)option->arg_requirement);
+			path, option_name, (int)option->arg_requirement);
 		failures++;
 	    }
 	/* Most typed values consume an argument.  The repeatable no-argument
@@ -526,7 +527,7 @@ ged_native_schema_lint_node(const char *path, const struct bu_cmd_schema *schema
 		 option->arg_requirement == BU_CMD_ARG_NONE && !option->alias_of && !option->repeat)) {
 		if (msgs)
 		    bu_vls_printf(msgs, "%s: native option \"%s\" has incompatible value and argument requirements\n",
-			path, option->canonical);
+			path, option_name);
 		failures++;
 	    }
 	    if (option->arg_shape) {
@@ -534,27 +535,27 @@ ged_native_schema_lint_node(const char *path, const struct bu_cmd_schema *schema
 		    option->arg_shape->kind > BU_CMD_ARG_SHAPE_CUSTOM) {
 		    if (msgs)
 			bu_vls_printf(msgs, "%s: native option \"%s\" has invalid argument shape %d\n",
-			    path, option->canonical, (int)option->arg_shape->kind);
+			    path, option_name, (int)option->arg_shape->kind);
 		    failures++;
 		}
 		if (option->arg_shape->max_tokens != BU_CMD_COUNT_UNLIMITED &&
 		    option->arg_shape->min_tokens > option->arg_shape->max_tokens) {
 		    if (msgs)
 			bu_vls_printf(msgs, "%s: native option \"%s\" has invalid argument token range %lu > %lu\n",
-			    path, option->canonical, (unsigned long)option->arg_shape->min_tokens,
+			    path, option_name, (unsigned long)option->arg_shape->min_tokens,
 			    (unsigned long)option->arg_shape->max_tokens);
 		    failures++;
 		}
 		if (option->arg_requirement == BU_CMD_ARG_NONE && option->arg_shape->max_tokens) {
 		    if (msgs)
 			bu_vls_printf(msgs, "%s: native flag \"%s\" declares an argument shape\n",
-			    path, option->canonical);
+			    path, option_name);
 		    failures++;
 		}
 		if (option->arg_shape->max_tokens != 1 && !option->consume) {
 		    if (msgs)
 			bu_vls_printf(msgs, "%s: native option \"%s\" needs an argument-shape consumer\n",
-			    path, option->canonical);
+			    path, option_name);
 		    failures++;
 		}
 	    }
@@ -562,11 +563,11 @@ ged_native_schema_lint_node(const char *path, const struct bu_cmd_schema *schema
 	!option->consume && !option->alias_of) {
 	if (msgs)
 	    bu_vls_printf(msgs, "%s: native custom option \"%s\" has no parser or consumer\n",
-		path, option->canonical);
+		path, option_name);
 		failures++;
 	    }
 	    failures += ged_schema_lint_provider(path, "native option", option->semantic_provider, msgs);
-	    failures += ged_native_schema_lint_keyword_values(path, "option", option->canonical,
+	    failures += ged_native_schema_lint_keyword_values(path, "option", option_name,
 		option->value_keywords, option->keyword_values, msgs);
 	}
     }

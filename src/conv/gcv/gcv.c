@@ -124,7 +124,7 @@ gcv_top_level_option(const char *arg)
     longopt = arg[1] == '-';
     name = arg + (longopt ? 2 : 1);
     name_len = strcspn(name, "=");
-    for (i = 0; gcv_options[i].canonical; i++) {
+    for (i = 0; bu_cmd_option_is_valid(&gcv_options[i]); i++) {
 	const struct bu_cmd_option *option = &gcv_options[i];
 	const char *candidate = longopt ? option->longopt : option->shortopt;
 	if (!candidate || strlen(candidate) != name_len)

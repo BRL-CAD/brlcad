@@ -1135,7 +1135,7 @@ ged_native_find_option(const struct bu_cmd_schema *schema, const char *arg)
     if (equal != std::string::npos)
 	name_storage.resize(equal);
     name = name_storage.c_str();
-    for (size_t i = 0; schema->options[i].canonical; i++) {
+    for (size_t i = 0; bu_cmd_option_is_valid(&schema->options[i]); i++) {
 	const struct bu_cmd_option *option = &schema->options[i];
 	const char *spelling = longopt ? option->longopt : option->shortopt;
 	size_t spelling_len = spelling ? strlen(spelling) : 0;
@@ -1144,9 +1144,9 @@ ged_native_find_option(const struct bu_cmd_schema *schema, const char *arg)
 	    continue;
 	if (!option->alias_of)
 	    return option;
-	for (size_t ci = 0; schema->options[ci].canonical; ci++) {
+	for (size_t ci = 0; bu_cmd_option_is_valid(&schema->options[ci]); ci++) {
 	    const struct bu_cmd_option *canonical = &schema->options[ci];
-	    if (!canonical->alias_of && BU_STR_EQUAL(canonical->canonical, option->alias_of))
+	    if (!canonical->alias_of && BU_STR_EQUAL(bu_cmd_option_canonical(canonical), option->alias_of))
 		return canonical;
 	}
 	return NULL;

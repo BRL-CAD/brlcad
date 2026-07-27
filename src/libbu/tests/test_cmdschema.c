@@ -21,6 +21,23 @@ struct test_args {
     int list_mode;
 };
 
+struct short_only_args {
+    int selected;
+};
+
+
+/* This must remain a file-scope initializer: MSVC rejects a conditional
+ * expression used to choose its canonical spelling (C2099). */
+static const struct bu_cmd_option short_only_options[] = {
+    BU_CMD_FLAG("s", NULL, struct short_only_args, selected, "Short-only flag"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_schema short_only_schema = {
+    "short-only", "Short-only option regression fixture", short_only_options, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+
 
 static size_t
 attached_only_tokens(size_t UNUSED(available), const char **UNUSED(argv))
@@ -88,10 +105,20 @@ main(int UNUSED(argc), char **UNUSED(argv))
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct bu_cmd_validate_result result = BU_CMD_VALIDATE_RESULT_NULL;
     struct test_args args = {0};
+    struct short_only_args short_only_args = {0};
     int context_calls = 0;
     const char *bare[] = {"--list"};
     const char *json[] = {"--list=json"};
     const char *invalid[] = {"--list=xml"};
+    const char *short_only[] = {"-s"};
+
+    if (!BU_STR_EQUAL(bu_cmd_option_canonical(&short_only_options[0]), "s") ||
+	bu_cmd_schema_parse(&short_only_schema, &short_only_args, &msg, 1, short_only) != 1 ||
+	!short_only_args.selected) {
+	bu_log("short-only option did not retain its canonical spelling or parse correctly\n");
+	bu_vls_free(&msg);
+	return 1;
+    }
 
     if (bu_cmd_schema_parse(&test_schema, &args, &msg, 1, bare) != 1 ||
 	args.list_mode != 1) {
