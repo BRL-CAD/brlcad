@@ -1978,6 +1978,10 @@ cmd_cmd_complete(ClientData clientData, Tcl_Interp *interpreter, int argc, const
 	return TCL_ERROR;
     if (cursor_pos < 0)
 	cursor_pos = 0;
+    int line_chars = Tcl_NumUtfChars(argv[1], -1);
+    if (cursor_pos > line_chars)
+	cursor_pos = line_chars;
+    size_t cursor_bytes = (size_t)(Tcl_UtfAtIndex(argv[1], cursor_pos) - argv[1]);
 
     if (argc == 4) {
 	if (Tcl_GetInt(interpreter, argv[3], &cycle_index) != TCL_OK)
@@ -1988,7 +1992,7 @@ cmd_cmd_complete(ClientData clientData, Tcl_Interp *interpreter, int argc, const
     if (tcl_context_status > 0)
 	completion_count = ged_cmd_complete_result(s->gedp, tcl_context.normalized.c_str(), tcl_context.normalized_cursor, &result);
     else if (tcl_context_status == 0)
-	completion_count = ged_cmd_complete_result(s->gedp, argv[1], (size_t)cursor_pos, &result);
+	completion_count = ged_cmd_complete_result(s->gedp, argv[1], cursor_bytes, &result);
     if (tcl_context_status > 0 &&
 	    result.replacement_start >= tcl_context.normalized_value_start &&
 	    result.replacement_end <= tcl_context.normalized_value_end) {
@@ -2049,6 +2053,8 @@ cmd_cmd_complete(ClientData clientData, Tcl_Interp *interpreter, int argc, const
     Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewStringObj(line.c_str(), -1));
     Tcl_ListObjAppendElement(interpreter, outer, matches);
     Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewIntObj((int)result.completion_count));
+    if (tcl_context_status <= 0)
+	new_cursor = (size_t)Tcl_NumUtfChars(line.c_str(), (int)new_cursor);
     Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewWideIntObj((Tcl_WideInt)new_cursor));
     Tcl_SetObjResult(interpreter, outer);
 

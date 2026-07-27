@@ -1960,6 +1960,12 @@ proc mged_completion_filter_keyrelease {w char keysym} {
 	set new_line [string replace $base_line $base_cursor [expr {$base_cursor - 1}] $char]
 	incr new_cursor [string length $char]
     } else {
+	# Cursor movement and other non-text edits invalidate the preview.  Leaving
+	# it active makes the next printable character get replayed at the stale
+	# completion cursor instead of the user's current insertion point.
+	if {$keysym != "Tab" && $keysym != "ISO_Left_Tab"} {
+	    mged_completion_state_clear $w
+	}
 	return
     }
 

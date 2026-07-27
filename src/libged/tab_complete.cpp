@@ -320,19 +320,24 @@ path_match(const char ***completions, struct bu_vls *prefix, struct db_i *dbip, 
 
     std::vector<struct directory *> matches;
     if (!cdp) {
-	/* No parent denotes the implicit tops collection. */
-	db_update_nref(dbip);
-	struct directory **all_paths = NULL;
-	int tops_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &all_paths);
-	if (tops_cnt > 1)
-	    bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_cmp, NULL);
-	for (int i = 0; i < tops_cnt; i++) {
-	    std::string candidate = ged_db_path_component_encode(all_paths[i]->d_namep);
+	/* A root path can begin at any directory entry, not just a top-level
+	 * object.  Restricting this to DB_LS_TOPS makes valid paths such as
+	 * /component impossible to complete. */
+	struct bu_ptbl root_paths = BU_PTBL_INIT_ZERO;
+	struct directory *root_dp;
+	FOR_ALL_DIRECTORY_START(root_dp, dbip)
+	    bu_ptbl_ins(&root_paths, (long *)root_dp);
+	FOR_ALL_DIRECTORY_END;
+	if (BU_PTBL_LEN(&root_paths) > 1)
+	    bu_sort(BU_PTBL_BASEADDR(&root_paths), BU_PTBL_LEN(&root_paths),
+		sizeof(struct directory *), alphanum_cmp, NULL);
+	for (size_t i = 0; i < BU_PTBL_LEN(&root_paths); i++) {
+	    root_dp = (struct directory *)BU_PTBL_GET(&root_paths, i);
+	    std::string candidate = ged_db_path_component_encode(root_dp->d_namep);
 	    if (candidate.compare(0, seed.size(), seed) == 0)
-		matches.push_back(all_paths[i]);
+		matches.push_back(root_dp);
 	}
-	if (all_paths)
-	    bu_free(all_paths, "free db_ls output");
+	bu_ptbl_free(&root_paths);
     } else {
 	struct rt_db_internal in;
 	if (rt_db_get_internal(&in, cdp, dbip, NULL) < 0)

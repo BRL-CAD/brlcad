@@ -2995,6 +2995,9 @@ main(int ac, char *av[])
     CHECK(completion_count > 0 && completion_result.completion_candidates[0] &&
 	completion_result.completion_candidates[0][0],
 	"search should complete at least one root database path");
+    CHECK(find_completion(completion_result.completion_candidates,
+	(int)completion_result.completion_count, "tor.r") != NULL,
+	"search root-path completion should include non-top-level objects");
     {
 	std::string root_seed(1, completion_result.completion_candidates[0][0]);
 	std::string search_root_input = "search /" + root_seed;
