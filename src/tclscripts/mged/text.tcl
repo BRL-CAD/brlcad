@@ -1957,7 +1957,11 @@ proc mged_completion_filter_keyrelease {w char keysym} {
     set new_cursor $base_cursor
 
     if {$char != "" && [string is print -strict $char]} {
-	set new_line [string replace $base_line $base_cursor [expr {$base_cursor - 1}] $char]
+	# string replace does not reliably express insertion at a cursor just past
+	# the final character.  Build the line explicitly so typing after a
+	# zero-width completion (for example, "search /" followed by "c") keeps
+	# the character.
+	set new_line "[string range $base_line 0 [expr {$base_cursor - 1}]]$char[string range $base_line $base_cursor end]"
 	incr new_cursor [string length $char]
     } else {
 	# Cursor movement and other non-text edits invalidate the preview.  Leaving
