@@ -347,9 +347,12 @@ qray_color_schema_validate(const struct bu_cmd_schema *UNUSED(schema), size_t ar
 {
     return bu_cmd_rgb_optional_validate(argc, argv, cursor_arg, result);
 }
+static const struct bu_cmd_arg_shape qray_rgb_arg_shape = {
+    BU_CMD_ARG_SHAPE_RGB, 1, 3, "packed r/g/b or three RGB channels", NULL
+};
 static const struct bu_cmd_operand qray_color_operands[] = {
     BU_CMD_OPERAND_SHAPED("color", BU_CMD_VALUE_COLOR, 0, 3, NULL,
-	"Optional packed or red, green, and blue components", NULL, &bu_cmd_rgb_arg_shape),
+	"Optional packed or red, green, and blue components", NULL, &qray_rgb_arg_shape),
     BU_CMD_OPERAND_NULL
 };
 static const char * const qray_fmt_keywords[] = {"r", "h", "p", "f", "m", "o", "g", NULL};

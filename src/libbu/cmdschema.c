@@ -107,6 +107,29 @@ const struct bu_cmd_arg_shape bu_cmd_optional_scalar_arg_shape = {
 };
 
 
+/* Standard option macros intentionally leave arg_shape NULL.  In a Windows
+ * DLL consumer, the address of exported data is not a valid C static
+ * initializer (MSVC C2099); function pointers remain safe in that context. */
+static const struct bu_cmd_arg_shape *
+cmd_schema_option_arg_shape(const struct bu_cmd_option *option)
+{
+    if (!option)
+	return NULL;
+    if (option->arg_shape)
+	return option->arg_shape;
+    if (option->consume == bu_cmd_rgb_consume)
+	return &bu_cmd_rgb_arg_shape;
+    if (option->consume == bu_cmd_color_consume)
+	return &bu_cmd_color_arg_shape;
+    if (option->consume == bu_cmd_vector3_consume)
+	return &bu_cmd_vector3_arg_shape;
+    if (option->value_type == BU_CMD_VALUE_STRING &&
+	option->arg_requirement == BU_CMD_ARG_OPTIONAL)
+	return &bu_cmd_optional_scalar_arg_shape;
+    return NULL;
+}
+
+
 int
 bu_cmd_rgb_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
@@ -951,10 +974,12 @@ cmd_schema_set_value(const struct bu_cmd_option *option, void *data, const char 
 static size_t
 cmd_schema_option_min_tokens(const struct bu_cmd_option *option)
 {
+    const struct bu_cmd_arg_shape *shape = cmd_schema_option_arg_shape(option);
+
     if (!option || option->arg_requirement == BU_CMD_ARG_NONE)
 	return 0;
-    if (option->arg_shape)
-	return option->arg_shape->min_tokens;
+    if (shape)
+	return shape->min_tokens;
     return option->arg_requirement == BU_CMD_ARG_OPTIONAL ? 0 : 1;
 }
 
@@ -962,10 +987,12 @@ cmd_schema_option_min_tokens(const struct bu_cmd_option *option)
 static size_t
 cmd_schema_option_max_tokens(const struct bu_cmd_option *option)
 {
+    const struct bu_cmd_arg_shape *shape = cmd_schema_option_arg_shape(option);
+
     if (!option || option->arg_requirement == BU_CMD_ARG_NONE)
 	return 0;
-    if (option->arg_shape)
-	return option->arg_shape->max_tokens;
+    if (shape)
+	return shape->max_tokens;
     return 1;
 }
 
@@ -980,22 +1007,23 @@ cmd_schema_option_argument_count(const struct bu_cmd_option *option,
 {
     size_t count = available;
     size_t max_tokens = cmd_schema_option_max_tokens(option);
+    const struct bu_cmd_arg_shape *shape = cmd_schema_option_arg_shape(option);
 
     if (max_tokens != BU_CMD_COUNT_UNLIMITED && count > max_tokens)
 	count = max_tokens;
-    if (option && option->arg_shape && option->arg_shape->token_count) {
-	size_t selected = option->arg_shape->token_count(count, argv);
+    if (shape && shape->token_count) {
+	size_t selected = shape->token_count(count, argv);
 	return selected <= count ? selected : 0;
     }
-    if (option && option->arg_shape && option->arg_shape->kind == BU_CMD_ARG_SHAPE_RGB) {
+    if (shape && shape->kind == BU_CMD_ARG_SHAPE_RGB) {
 	unsigned char rgb[3] = {0, 0, 0};
 	return (size_t)bu_rgb_from_argv(rgb, count, (const char * const *)argv);
     }
-    if (option && option->arg_shape && option->arg_shape->kind == BU_CMD_ARG_SHAPE_COLOR) {
+    if (shape && shape->kind == BU_CMD_ARG_SHAPE_COLOR) {
 	struct bu_color color = BU_COLOR_INIT_ZERO;
 	return (size_t)bu_cmd_color_from_argv(&color, count, (const char * const *)argv);
     }
-    if (option && option->arg_shape && option->arg_shape->kind == BU_CMD_ARG_SHAPE_VECTOR3) {
+    if (shape && shape->kind == BU_CMD_ARG_SHAPE_VECTOR3) {
 	fastf_t xyz[3] = {0.0, 0.0, 0.0};
 	return (size_t)bu_cmd_vector3_from_argv(xyz, count, (const char * const *)argv);
     }
@@ -1007,7 +1035,8 @@ static int
 cmd_schema_rgb_partial(const struct bu_cmd_option *option, size_t available,
 	const char **argv)
 {
-    if (!option || !option->arg_shape || option->arg_shape->kind != BU_CMD_ARG_SHAPE_RGB ||
+	const struct bu_cmd_arg_shape *shape = cmd_schema_option_arg_shape(option);
+    if (!shape || shape->kind != BU_CMD_ARG_SHAPE_RGB ||
 	available == 0 || available >= 3)
 	return 0;
     for (size_t i = 0; i < available; i++) {
@@ -1022,7 +1051,8 @@ static int
 cmd_schema_color_partial(const struct bu_cmd_option *option, size_t available,
 	const char **argv)
 {
-    if (!option || !option->arg_shape || option->arg_shape->kind != BU_CMD_ARG_SHAPE_COLOR ||
+	const struct bu_cmd_arg_shape *shape = cmd_schema_option_arg_shape(option);
+    if (!shape || shape->kind != BU_CMD_ARG_SHAPE_COLOR ||
 	available == 0 || available >= 3)
 	return 0;
     for (size_t i = 0; i < available; i++) {
@@ -1038,7 +1068,8 @@ static int
 cmd_schema_vector3_partial(const struct bu_cmd_option *option, size_t available,
 	const char **argv)
 {
-    if (!option || !option->arg_shape || option->arg_shape->kind != BU_CMD_ARG_SHAPE_VECTOR3 ||
+	const struct bu_cmd_arg_shape *shape = cmd_schema_option_arg_shape(option);
+    if (!shape || shape->kind != BU_CMD_ARG_SHAPE_VECTOR3 ||
 	available == 0 || available >= 3)
 	return 0;
     for (size_t i = 0; i < available; i++) {
@@ -1053,10 +1084,11 @@ cmd_schema_vector3_partial(const struct bu_cmd_option *option, size_t available,
 static int
 cmd_schema_option_attached_allowed(const struct bu_cmd_option *option)
 {
+    const struct bu_cmd_arg_shape *shape = cmd_schema_option_arg_shape(option);
     return cmd_schema_option_max_tokens(option) == 1 ||
-	(option && option->arg_shape && (option->arg_shape->kind == BU_CMD_ARG_SHAPE_RGB ||
-	    option->arg_shape->kind == BU_CMD_ARG_SHAPE_COLOR ||
-	    option->arg_shape->kind == BU_CMD_ARG_SHAPE_VECTOR3));
+	(shape && (shape->kind == BU_CMD_ARG_SHAPE_RGB ||
+	    shape->kind == BU_CMD_ARG_SHAPE_COLOR ||
+	    shape->kind == BU_CMD_ARG_SHAPE_VECTOR3));
 }
 
 
@@ -1727,6 +1759,7 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
     if (schema->options) {
 	while (bu_cmd_option_is_valid(&schema->options[i])) {
 	    const struct bu_cmd_option *option = &schema->options[i];
+	    const struct bu_cmd_arg_shape *shape = cmd_schema_option_arg_shape(option);
 	    if (comma)
 		bu_vls_putc(&out, ',');
 	    bu_vls_strcat(&out, "{\"short\":");
@@ -1742,17 +1775,17 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
 	    bu_vls_strcat(&out, ",\"argument_requirement\":");
 	    cmd_schema_json_string(&out, cmd_schema_arg_requirement_name(option->arg_requirement));
 	    bu_vls_strcat(&out, ",\"argument_shape\":");
-	    if (option->arg_shape) {
+	    if (shape) {
 		bu_vls_strcat(&out, "{\"kind\":");
-		cmd_schema_json_string(&out, cmd_schema_arg_shape_name(option->arg_shape->kind));
+		cmd_schema_json_string(&out, cmd_schema_arg_shape_name(shape->kind));
 		bu_vls_printf(&out, ",\"min_tokens\":%lu,\"max_tokens\":",
-		    (unsigned long)option->arg_shape->min_tokens);
-		if (option->arg_shape->max_tokens == BU_CMD_COUNT_UNLIMITED)
+		    (unsigned long)shape->min_tokens);
+		if (shape->max_tokens == BU_CMD_COUNT_UNLIMITED)
 		    bu_vls_strcat(&out, "null");
 		else
-		    bu_vls_printf(&out, "%lu", (unsigned long)option->arg_shape->max_tokens);
+		    bu_vls_printf(&out, "%lu", (unsigned long)shape->max_tokens);
 		bu_vls_strcat(&out, ",\"description\":");
-		cmd_schema_json_string(&out, option->arg_shape->description);
+		cmd_schema_json_string(&out, shape->description);
 		bu_vls_putc(&out, '}');
 	    } else {
 		bu_vls_strcat(&out, "null");
@@ -2473,26 +2506,26 @@ bu_cmd_schema_validate(const struct bu_cmd_schema *schema, size_t argc, const ch
 		    cursor_arg, BU_CMD_EXPECT_OPTION_ARG, option->value_type,
 		    valid ? "option argument" : "invalid option argument", option->semantic_provider);
 		cmd_schema_add_keyword_candidates(option->value_keywords, option->keyword_values,
-		    option->arg_shape, result, argv[cursor_arg]);
+		    cmd_schema_option_arg_shape(option), result, argv[cursor_arg]);
 		return 0;
 	    }
 
 	    if (consume < min_tokens) {
-		if (option->arg_shape && option->arg_shape->kind == BU_CMD_ARG_SHAPE_RGB &&
+		if (cmd_schema_option_arg_shape(option) && cmd_schema_option_arg_shape(option)->kind == BU_CMD_ARG_SHAPE_RGB &&
 		    available && !cmd_schema_rgb_partial(option, available, argv + i + 1)) {
 		    cmd_schema_set_result(result, BU_CMD_VALIDATE_INVALID, i + 1,
 			BU_CMD_EXPECT_OPTION_ARG, option->value_type, "invalid RGB color",
 			option->semantic_provider);
 		    return 0;
 		}
-		if (option->arg_shape && option->arg_shape->kind == BU_CMD_ARG_SHAPE_COLOR &&
+		if (cmd_schema_option_arg_shape(option) && cmd_schema_option_arg_shape(option)->kind == BU_CMD_ARG_SHAPE_COLOR &&
 		    available && !cmd_schema_color_partial(option, available, argv + i + 1)) {
 		    cmd_schema_set_result(result, BU_CMD_VALIDATE_INVALID, i + 1,
 			BU_CMD_EXPECT_OPTION_ARG, option->value_type, "invalid color",
 			option->semantic_provider);
 		    return 0;
 		}
-		if (option->arg_shape && option->arg_shape->kind == BU_CMD_ARG_SHAPE_VECTOR3 &&
+		if (cmd_schema_option_arg_shape(option) && cmd_schema_option_arg_shape(option)->kind == BU_CMD_ARG_SHAPE_VECTOR3 &&
 		    available && !cmd_schema_vector3_partial(option, available, argv + i + 1)) {
 		    cmd_schema_set_result(result, BU_CMD_VALIDATE_INVALID, i + 1,
 			BU_CMD_EXPECT_OPTION_ARG, option->value_type, "invalid XYZ vector",
@@ -2513,7 +2546,7 @@ bu_cmd_schema_validate(const struct bu_cmd_schema *schema, size_t argc, const ch
 		    BU_CMD_EXPECT_OPTION_ARG, option->value_type, "option argument expected",
 		    option->semantic_provider);
 		cmd_schema_add_keyword_candidates(option->value_keywords, option->keyword_values,
-		    option->arg_shape, result, "");
+		    cmd_schema_option_arg_shape(option), result, "");
 		return 0;
 	    }
 	    if (!cmd_schema_option_arguments_valid(option, consume, argv + i + 1)) {
@@ -2588,7 +2621,7 @@ validate_operand:
 		option->value_type, option->arg_requirement == BU_CMD_ARG_OPTIONAL ?
 		"optional option argument" : "option argument expected", option->semantic_provider);
 	    cmd_schema_add_keyword_candidates(option->value_keywords, option->keyword_values,
-		option->arg_shape, result, "");
+		cmd_schema_option_arg_shape(option), result, "");
 	}
 	return 0;
     }

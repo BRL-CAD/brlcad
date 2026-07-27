@@ -120,6 +120,9 @@ static const struct bu_cmd_value_keyword mirror_axis_keywords[] = {
     {"z", mirror_axis_z_aliases, "Z mirror-plane normal"},
     {NULL, NULL, NULL}
 };
+static const struct bu_cmd_arg_shape mirror_vector3_arg_shape = {
+    BU_CMD_ARG_SHAPE_VECTOR3, 1, 3, "packed x/y/z or three coordinates", NULL
+};
 static const struct bu_cmd_option mirror_schema_options[] = {
     BU_CMD_FLAG("h", NULL, struct mirror_args, help, "Print command usage"),
     BU_CMD_ALIAS_SHORT("H", "h", 1),
@@ -128,7 +131,7 @@ static const struct bu_cmd_option mirror_schema_options[] = {
     BU_CMD_ALIAS_SHORT("P", "p", 1),
     BU_CMD_OPTION_SHAPED("d", NULL, "d", struct mirror_args, direction,
 	BU_CMD_VALUE_VECTOR, "x/y/z", "Nonzero mirror-plane normal",
-	BU_CMD_ARG_REQUIRED, &bu_cmd_vector3_arg_shape, mirror_direction_consume),
+	BU_CMD_ARG_REQUIRED, &mirror_vector3_arg_shape, mirror_direction_consume),
     BU_CMD_ALIAS_SHORT("D", "d", 1),
     BU_CMD_CUSTOM_FLAG("x", NULL, "x", struct mirror_args, direction,
 	mirror_axis_x, "Mirror across the X plane"),

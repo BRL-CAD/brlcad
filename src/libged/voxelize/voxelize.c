@@ -90,10 +90,13 @@ voxelize_threshold_validate(struct bu_vls *msg, const char *arg)
 }
 
 
+static const struct bu_cmd_arg_shape voxelize_vector3_arg_shape = {
+    BU_CMD_ARG_SHAPE_VECTOR3, 1, 3, "packed x/y/z or three coordinates", NULL
+};
 static const struct bu_cmd_option voxelize_schema_options[] = {
     BU_CMD_OPTION_SHAPED("s", NULL, "s", struct voxelize_args, size,
 	BU_CMD_VALUE_VECTOR, "dx/dy/dz", "Positive voxel dimensions",
-	BU_CMD_ARG_REQUIRED, &bu_cmd_vector3_arg_shape, voxelize_size_consume),
+	BU_CMD_ARG_REQUIRED, &voxelize_vector3_arg_shape, voxelize_size_consume),
     BU_CMD_POSITIVE_INTEGER("d", NULL, struct voxelize_args, detail, "level",
 	"Positive ray-sampling detail level"),
     BU_CMD_NUMBER_VALIDATE("t", NULL, struct voxelize_args, threshold,

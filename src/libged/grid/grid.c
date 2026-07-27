@@ -327,6 +327,19 @@ static const struct bu_cmd_operand grid_integer_operands[] = {
 	"Optional base-zero integer", NULL),
     BU_CMD_OPERAND_NULL
 };
+
+/* These shapes are used by static command schemas.  Do not take the address
+ * of libbu's exported shape data here: on Windows it is an imported-data
+ * address and is not a valid C static initializer (MSVC C2099). */
+static const struct bu_cmd_arg_shape grid_anchor_arg_shape = {
+    BU_CMD_ARG_SHAPE_VECTOR3, 1, 3,
+    "packed x/y/z, x,y,z, or x;y;z; quoted x y z; or three numeric components", NULL
+};
+static const struct bu_cmd_arg_shape grid_color_arg_shape = {
+    BU_CMD_ARG_SHAPE_RGB, 1, 3,
+    "packed r/g/b, r,g,b, or r;g;b; or three RGB channels", NULL
+};
+
 static int
 grid_anchor_schema_validate(const struct bu_cmd_schema *UNUSED(schema), size_t argc,
 	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
@@ -341,12 +354,12 @@ grid_color_schema_validate(const struct bu_cmd_schema *UNUSED(schema), size_t ar
 }
 static const struct bu_cmd_operand grid_anchor_operands[] = {
     BU_CMD_OPERAND_SHAPED("anchor", BU_CMD_VALUE_VECTOR, 0, 3, NULL,
-	"Optional packed x/y/z or three finite coordinates", NULL, &bu_cmd_vector3_arg_shape),
+	"Optional packed x/y/z or three finite coordinates", NULL, &grid_anchor_arg_shape),
     BU_CMD_OPERAND_NULL
 };
 static const struct bu_cmd_operand grid_color_operands[] = {
     BU_CMD_OPERAND_SHAPED("color", BU_CMD_VALUE_COLOR, 0, 3, NULL,
-	"Optional packed r/g/b or three RGB channels", NULL, &bu_cmd_rgb_arg_shape),
+	"Optional packed r/g/b or three RGB channels", NULL, &grid_color_arg_shape),
     BU_CMD_OPERAND_NULL
 };
 #define GRID_SCHEMA(_id, _name, _help, _operands, _validation) \

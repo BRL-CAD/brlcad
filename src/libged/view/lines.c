@@ -58,10 +58,13 @@ static const struct bu_cmd_option line_root_options[] = {
 	"Work with the S version of line data"),
     BU_CMD_OPTION_NULL
 };
+static const struct bu_cmd_arg_shape line_vector3_arg_shape = {
+    BU_CMD_ARG_SHAPE_VECTOR3, 1, 3, "packed x/y/z or three coordinates", NULL
+};
 static const struct bu_cmd_operand line_xyz_operands[] = {
     BU_CMD_OPERAND_SHAPED("point", BU_CMD_VALUE_VECTOR, 0, 3, NULL,
 	"Packed XYZ point or three finite coordinates", "ged.vector",
-	&bu_cmd_vector3_arg_shape),
+	&line_vector3_arg_shape),
     BU_CMD_OPERAND_NULL
 };
 static const struct bu_cmd_schema line_create_schema = {

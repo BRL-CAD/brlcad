@@ -106,9 +106,12 @@ static const struct bu_cmd_operand axes_linewidth_operands[] = {
 	bu_cmd_positive_integer_validate, "Positive line width", NULL),
     BU_CMD_OPERAND_NULL
 };
+static const struct bu_cmd_arg_shape axes_color_arg_shape = {
+    BU_CMD_ARG_SHAPE_COLOR, 1, 3, "packed color or three RGB components", NULL
+};
 static const struct bu_cmd_operand axes_color_operands[] = {
     BU_CMD_OPERAND_SHAPED("color", BU_CMD_VALUE_RAW, 0, 3, NULL,
-	"Packed color or three RGB components", "ged.color", &bu_cmd_color_arg_shape),
+	"Packed color or three RGB components", "ged.color", &axes_color_arg_shape),
     BU_CMD_OPERAND_NULL
 };
 static const struct bu_cmd_schema axes_create_schema = {

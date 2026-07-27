@@ -635,24 +635,24 @@ BU_EXPORT extern int bu_cmd_integer_pair_optional_validate(size_t argc,
  * separate RGB components.  Use BU_CMD_RGB for strict 8-bit RGB only.
  */
 #define BU_CMD_COLOR_COMPAT(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, offsetof(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, &bu_cmd_color_arg_shape, bu_cmd_color_consume, NULL}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, offsetof(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_color_consume, NULL}
 /**
  * A standard RGB option bound to a struct bu_color field.  It accepts one
  * packed r/g/b, r,g,b, or r;g;b token, or three separate 0..255 channels.
  */
 #define BU_CMD_RGB(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, offsetof(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, &bu_cmd_rgb_arg_shape, bu_cmd_rgb_consume, NULL}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, offsetof(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_rgb_consume, NULL}
 /**
  * A standard finite XYZ vector option bound to a point_t or vect_t field.
  * It accepts packed x/y/z, x,y,z, or x;y;z input, a quoted x y z token, or
  * three separate numeric arguments.
  */
 #define BU_CMD_VECTOR3(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_VECTOR, offsetof(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, &bu_cmd_vector3_arg_shape, bu_cmd_vector3_consume, NULL}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_VECTOR, offsetof(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_vector3_consume, NULL}
 #define BU_CMD_STRING(_short, _long, _record, _field, _arg, _help) \
     {_short, _long, _long, _arg, _help, BU_CMD_VALUE_STRING, offsetof(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL}
 #define BU_CMD_OPTIONAL_STRING(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_STRING, offsetof(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_OPTIONAL, &bu_cmd_optional_scalar_arg_shape, NULL, NULL}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_STRING, offsetof(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_OPTIONAL, NULL, NULL, NULL}
 #define BU_CMD_VLS_APPEND(_short, _long, _record, _field, _arg, _help) \
     {_short, _long, _long, _arg, _help, BU_CMD_VALUE_VLS, offsetof(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL}
 #define BU_CMD_FILE(_short, _long, _record, _field, _arg, _help) \

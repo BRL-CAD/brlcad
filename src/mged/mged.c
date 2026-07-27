@@ -734,6 +734,10 @@ mged_rset_parse(struct bu_vls *UNUSED(msg), const char *arg, void *storage)
 }
 
 
+/* Keep this local: an imported-data address is not a constant initializer on MSVC. */
+static const struct bu_cmd_arg_shape mged_color_arg_shape = {
+    BU_CMD_ARG_SHAPE_COLOR, 1, 3, "packed color or three RGB components", NULL
+};
 static const struct bu_cmd_option mged_cli_options[] = {
     BU_CMD_STRING("a", "attach", struct mged_cli_overrides, attach, "type", "display manager attach target"),
     BU_CMD_STRING("d", "display", struct mged_cli_overrides, dpy_string, "string", "X display string"),
@@ -786,8 +790,8 @@ static const struct bu_cmd_option mged_cli_options[] = {
     BU_CMD_NUMBER(NULL, "grid-rv", struct mged_cli_overrides, grid_rv, "#", "vertical grid resolution"),
     BU_CMD_INTEGER(NULL, "grid-mrh", struct mged_cli_overrides, grid_mrh, "#", "horizontal major grid interval"),
     BU_CMD_INTEGER(NULL, "grid-mrv", struct mged_cli_overrides, grid_mrv, "#", "vertical major grid interval"),
-    BU_CMD_OPTION_SHAPED(NULL, "bg", "bg", struct mged_cli_overrides, bg_color, BU_CMD_VALUE_COLOR, "R G B", "background colour (0-255 per component, or #RRGGBB)", BU_CMD_ARG_REQUIRED, &bu_cmd_color_arg_shape, mged_color_consume),
-    BU_CMD_OPTION_SHAPED(NULL, "geo-color", "geo-color", struct mged_cli_overrides, geo_def_color, BU_CMD_VALUE_COLOR, "R G B", "default geometry wireframe colour", BU_CMD_ARG_REQUIRED, &bu_cmd_color_arg_shape, mged_color_consume),
+    BU_CMD_OPTION_SHAPED(NULL, "bg", "bg", struct mged_cli_overrides, bg_color, BU_CMD_VALUE_COLOR, "R G B", "background colour (0-255 per component, or #RRGGBB)", BU_CMD_ARG_REQUIRED, &mged_color_arg_shape, mged_color_consume),
+    BU_CMD_OPTION_SHAPED(NULL, "geo-color", "geo-color", struct mged_cli_overrides, geo_def_color, BU_CMD_VALUE_COLOR, "R G B", "default geometry wireframe colour", BU_CMD_ARG_REQUIRED, &mged_color_arg_shape, mged_color_consume),
     BU_CMD_OPTION_NULL
 };
 
