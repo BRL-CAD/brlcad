@@ -345,15 +345,15 @@ _view_cmd_ypr(void *bs, int argc, const char **argv)
 
 struct view_vZ_args {
     int help;
-    const char *near;
-    const char *far;
+    const char *nearp;
+    const char *farp;
 };
 
 static const struct bu_cmd_option view_vZ_options[] = {
     BU_CMD_FLAG("h", "help", struct view_vZ_args, help, "Print help"),
-    BU_CMD_OPTIONAL_STRING("N", "near", struct view_vZ_args, near, "obj",
+    BU_CMD_OPTIONAL_STRING("N", "near", struct view_vZ_args, nearp, "obj",
 	"Find the closest view-object vertex"),
-    BU_CMD_OPTIONAL_STRING("F", "far", struct view_vZ_args, far, "obj",
+    BU_CMD_OPTIONAL_STRING("F", "far", struct view_vZ_args, farp, "obj",
 	"Find the furthest view-object vertex"),
     BU_CMD_OPTION_NULL
 };
@@ -409,13 +409,13 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
     struct bu_vls calc_target = BU_VLS_INIT_ZERO;
     if (calc_near) {
 	calc_mode = 0;
-	if (args.near)
-	    bu_vls_sprintf(&calc_target, "%s", args.near);
+	if (args.nearp)
+	    bu_vls_sprintf(&calc_target, "%s", args.nearp);
     }
     if (calc_far) {
 	calc_mode = 1;
-	if (args.far)
-	    bu_vls_sprintf(&calc_target, "%s", args.far);
+	if (args.farp)
+	    bu_vls_sprintf(&calc_target, "%s", args.farp);
     }
 
     if (calc_mode != -1) {
