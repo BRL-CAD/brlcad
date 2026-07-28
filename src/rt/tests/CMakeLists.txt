@@ -71,10 +71,21 @@ foreach(tname ${RT_OPT_TESTS})
 endforeach(tname)
 brlcad_add_test(NAME rt_opt_short_only COMMAND test_rt_opt --short-only)
 
+brlcad_add_test(
+  NAME rtsil_output_file
+  COMMAND
+    "${CMAKE_COMMAND}"
+    "-DRTSIL=$<TARGET_FILE:rtsil>"
+    "-DDB=${CMAKE_BINARY_DIR}/${DATA_DIR}/db/moss.g"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rtsil_output.cmake"
+)
+
 # Housekeeping
 cmakefiles(
   CMakeLists.txt
   test_rt_opt.c
+  test_rtsil_output.cmake
   run_rt_opt_lcov.sh
   run_rt_opt_short_compare.sh
 )
