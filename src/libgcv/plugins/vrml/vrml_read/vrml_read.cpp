@@ -33,6 +33,7 @@
 #include "node.h"
 #include "parser.h"
 #include "transform_node.h"
+#include "vrml1_read.h"
 
 #include "bu/getopt.h"
 #include "gcv/api.h"
@@ -212,10 +213,9 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     type = infile.getFileType();
 
-    if (type == 1) {
-	bu_log("Does not have support for vrml version 1\n");
-	return 0;
-    }else if (type != 2) {
+    if (type == FILEUTIL_TYPE_VRML1)
+	return vrml1_read(context, gcv_options, source_path);
+    if (type != FILEUTIL_TYPE_VRML) {
 	bu_log("Can not open or identify the file type\n");
 	return 0;
     }
@@ -275,8 +275,8 @@ vrml_can_read(const char *source_path)
 {
     if (!source_path) return 0;
     FileUtil infile(source_path);
-    if (infile.getFileType() == 2) return 1;
-    return 0;
+    const int type = infile.getFileType();
+    return type == FILEUTIL_TYPE_VRML1 || type == FILEUTIL_TYPE_VRML;
 }
 
 extern "C" {
