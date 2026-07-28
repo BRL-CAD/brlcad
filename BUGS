@@ -175,11 +175,8 @@ Recent Bugs
   results in an object that cannot be deleted/renamed.  bad behavior
   presumably extends to any name with path separators.
 
-* rtsil command works if do what usage says and redirect output to
-  file, but mentions .pix when data is actually .bw; and using the -o
-  option results in a black image.  it is also inconsistent, writing a
-  black silhouette on a white background, instead of black on white
-  and missing background color options.
+* rtsil uses fixed hit and miss pixel values and does not provide
+  foreground or background color options.
 
 * If we draw any form, then trace it using rt, then change of database
   (by clicking file>open and selecting another database), badness
