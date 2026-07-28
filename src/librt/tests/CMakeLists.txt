@@ -47,6 +47,9 @@ brlcad_addexec(rt_diff diff.c "${RT_TEST_LIBS}" TEST)
 brlcad_addexec(rt_default_object default_object.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_default_object COMMAND rt_default_object)
 
+brlcad_addexec(rt_lcomb_large lcomb_large.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_lcomb_large COMMAND rt_lcomb_large)
+
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
   brlcad_addexec(rt_binary_attribute binary_attribute.c "${RT_TEST_LIBS}" TEST)
   brlcad_add_test(NAME rt_binary_attribute COMMAND rt_binary_attribute)
@@ -142,6 +145,7 @@ set(
   cyclic_tests.g
   extreme_ssi_test.g
   invalid_inmem.c
+  lcomb_large.c
   matrix_tests.g
   nurbs_surfaces.g
   rt_datum.c
