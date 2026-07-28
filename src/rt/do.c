@@ -1036,7 +1036,9 @@ do_frame(int framenumber)
 	    snprintf(framename, 256, "%s.%d", outputfile, framenumber);
 	}
 
-#ifdef HAVE_SYS_STAT_H
+	/* Raw view output is not RGB data and cannot use the RGB restart
+	 * buffer. */
+#if defined(HAVE_SYS_STAT_H) && !defined(RT_RAW_OUTPUT)
 	/*
 	 * This code allows the computation of a particular frame to a
 	 * disk file to be resumed automatically.  This is worthwhile
@@ -1099,7 +1101,7 @@ do_frame(int framenumber)
 
 	/* Ordinary case for creating output file */
 	if (outfp == NULL) {
-#ifndef RT_TXT_OUTPUT
+#if !defined(RT_TXT_OUTPUT) && !defined(RT_RAW_OUTPUT)
 	    /* FIXME: in the case of rtxray, this is wrong.  it writes
 	     * out a bw image so depth should be just 1, not 3.
 	     */
@@ -1112,7 +1114,11 @@ do_frame(int framenumber)
 		return -1;			/* Bad */
 	    }
 #else
-	    outfp = fopen(framename, "w");
+	    const char *output_mode = "w";
+#  ifdef RT_RAW_OUTPUT
+	    output_mode = "wb";
+#  endif
+	    outfp = fopen(framename, output_mode);
 	    if (outfp == NULL) {
 		perror(framename);
 		if (matflag)
