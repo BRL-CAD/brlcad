@@ -167,6 +167,7 @@ raymiss(register struct application *ap)
 C_DECL void
 application_init (void)
 {
+    option("", "-o file.bw", "Output black & white silhouette image", 0);
     option("Raytrace", "-i", "Enable incremental (progressive-style) rendering", 1);
     option("Raytrace", "-t", "Render from top to bottom (default: from bottom up)", 1);
 }
