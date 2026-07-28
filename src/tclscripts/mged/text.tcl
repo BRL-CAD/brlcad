@@ -2163,6 +2163,12 @@ proc tab_expansion { line {cursor_pos ""} {cycle_index ""} } {
 	if { $numMatches == 0  } {
 	    # no matches
 	    set newCommand $line
+	} elseif {$cycle_index != ""} {
+	    # The GUI passes a cycle index for filter and cycle modes.  Command
+	    # names use mged_cmds rather than the GED schema completion path, so
+	    # honor that index here as well.  Without this, repeated Tabs only
+	    # redisplay the command list and never advance the selected command.
+	    set newCommand [lindex $matches [expr {$cycle_index % $numMatches}]]
 	} elseif { $numMatches > 1 } {
 	    # get longest match
 	    set newCommand [get_longest_common_string $matches]
