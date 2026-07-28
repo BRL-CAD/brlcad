@@ -487,7 +487,19 @@ At this time, the FASTGEN4 writer plugin does not make use of any filter-specifi
 
 === VRML Reader
 
-At this time, the VRML reader plugin does not make use of any filter-specific options.
+The native VRML reader accepts both VRML 1.0 and VRML97/2.0 files. VRML 1.0
+imports preserve ordered property state, separator scoping, `DEF`/`USE`
+instances, transformations, material colors, analytic cube, cone, cylinder,
+and sphere geometry, and indexed polygon meshes. Concave polygons are
+triangulated, and per-face material bindings are emitted as separate colored
+regions.
+
+VRML constructs that do not have a BRL-CAD equivalent or are not
+implemented yet, including cameras, lights, textures, text, line sets,
+and point sets, are accepted but do not produce objects. External
+content referenced by `WWWInline` is not fetched during conversion.
+
+The VRML reader plugin does not make use of any filter-specific options.
 
 
 === VRML Writer
