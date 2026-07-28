@@ -1150,7 +1150,7 @@ static const struct bu_cmd_option comb_selector_options[] = {
     {"C", "comb", "comb", "combination", "Combination to operate on",
 	BU_CMD_VALUE_DB_OBJECT, BU_CMD_STORAGE_NONE, NULL, NULL,
 	"ged.db_object", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED,
-	NULL, NULL, NULL},
+	NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_OPTION_NULL
 };
 static const char * const comb_selector_required[] = {"comb", NULL};

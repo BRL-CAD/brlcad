@@ -97,8 +97,8 @@ ANALYZE_EXPORT const struct bu_cmd_schema *nirt_opt_schema(void);
  * resulting bu_opt_desc array.
  *
  * Compatibility API: new in-tree code uses nirt_opt_schema with
- * bu_cmd_schema_parse.  This adapter remains only for external callers during
- * the documented bu_opt deprecation period. */
+ * bu_cmd_schema_parse.  This parallel NIRT descriptor adapter remains for
+ * external callers; the underlying bu_opt API itself is supported. */
 DEPRECATED ANALYZE_EXPORT struct bu_opt_desc *nirt_opt_desc(struct nirt_opt_vals *o);
 
 /**

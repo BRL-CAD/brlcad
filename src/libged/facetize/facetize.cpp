@@ -547,7 +547,7 @@ static const struct bu_cmd_option facetize_options[] = {
     {NULL, "methods", "methods", "method[,method...]", "Comma-separated tessellation methods",
 	BU_CMD_VALUE_CUSTOM, offsetof(facetize_parse_args, method_options), tess_active_methods_from_str,
 	NULL, NULL, NULL, 0, 0, facetize_method_names, BU_CMD_ARG_REQUIRED,
-	&facetize_methods_shape, NULL, NULL},
+	&facetize_methods_shape, NULL, NULL, BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_CUSTOM(NULL, "method-opts", facetize_parse_args, method_options, tess_method_opts_from_str,
 	"\"METHOD option=value ...\"", "Method-specific options"),
     BU_CMD_FLAG(NULL, "no-empty", facetize_parse_args, no_empty, "Suppress empty outputs"),

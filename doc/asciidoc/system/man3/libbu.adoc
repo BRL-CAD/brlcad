@@ -88,21 +88,16 @@ cmd3
 The `bu_cmd_schema` API in `bu/cmdschema.h` describes the common,
 flat command shape in one compact, code-native table.  It is intended for
 commands whose option spelling, type, help text, and execution storage binding
-are all known by the command implementation.  It is separate from the older
-`bu_opt_desc` and `bu_opt_desc_meta` mechanism and is the replacement for
-libbu's internal command implementations.  A command uses one mechanism or
-the other and does not generate duplicate compatibility rows.  The older
-`bu_opt` API is formally deprecated and remains only as a public compatibility
-interface; new code must use `bu_cmd_schema`.
+are all known by the command implementation.  It is the full-description face
+of the option engine, adding typed operands, validation, completion metadata,
+constraints, declarative numeric ranges, and machine-readable publication.
 
-That retirement applies to the complete `bu_opt` family, including its
-`bu_opt_*` scalar, color, vector, string, and vocabulary reader callbacks.
-They are not a permanently supported helper subset.  Each semantics used by
-new code has a native
-`bu_cmd_schema` value binding, shape consumer, validator, or explicit
-command-owned conversion; callers can then move as a unit to the native API.
-The remaining descriptor entry points in NIRT and GCV are transition adapters
-for external callers and plug-ins, not the preferred implementation path.
+The established `bu_opt` API remains the succinct option-only face of the same
+engine.  Its descriptor table and `bu_opt_*` reader callbacks are appropriate
+when a caller only needs conventional option parsing and a leftover argument
+list.  Use `bu_cmd_schema` when consumers need the command's complete grammar
+or richer tooling; a command should publish one authoritative description
+rather than maintaining parallel `bu_opt` and schema tables.
 
 The API provides three views of the same schema:
 
@@ -110,7 +105,8 @@ The API provides three views of the same schema:
   structure.  The argument pointer may be null for an optionless schema,
   because there is then no storage to bind.  `bu_cmd_schema_parse_complete`
   additionally requires all positional roles to satisfy their declared
-  cardinality and scalar rules.
+  cardinality and scalar rules.  `bu_cmd_schema_parse_known` consumes only
+  recognized options for layered parsing.
 * `bu_cmd_schema_describe` produces command help, while
   `bu_cmd_schema_describe_json` produces machine-readable metadata.
 * `bu_cmd_schema_validate` performs side-effect-free incremental syntax and

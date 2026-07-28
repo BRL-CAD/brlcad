@@ -37,7 +37,7 @@ static const struct bu_cmd_option zap_schema_options[] = {
     BU_CMD_ALIAS_SHORT("?", "help", 1),
     {"V", "view", "view", "name", "Specify view to clear", BU_CMD_VALUE_STRING,
 	offsetof(struct zap_args, view), NULL, NULL, "ged.view", NULL, 0, 0, NULL,
-	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_FLAG("S", "shared", struct zap_args, shared_only, "Clear shared view objects"),
     BU_CMD_FLAG("v", "view-objs", struct zap_args, clear_view_objs,
 	"Clear view-local objects"),

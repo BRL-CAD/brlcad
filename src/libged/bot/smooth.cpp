@@ -118,18 +118,6 @@ struct bot_smooth_args {
 };
 
 static int
-bot_smooth_mode_validate(struct bu_vls *msg, const char *arg)
-{
-    int value;
-
-    if (bu_cmd_integer_from_str(&value, arg) && value >= 0 && value <= 2)
-	return 0;
-    if (msg)
-	bu_vls_printf(msg, "smoothing mode must be 0, 1, or 2: %s\n", arg ? arg : "");
-    return -1;
-}
-
-static int
 bot_smooth_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	const char **argv, size_t cursor_arg,
 	struct bu_cmd_validate_result *result)
@@ -145,10 +133,10 @@ bot_smooth_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 static const struct bu_cmd_option bot_smooth_options[] = {
     BU_CMD_FLAG("h", "help", struct bot_smooth_args, print_help,
 	"Print command help"),
-    BU_CMD_INTEGER_VALIDATE("c", "continuity", struct bot_smooth_args,
-	continuity, bot_smooth_mode_validate, "mode", "Continuity mode (0, 1, or 2)"),
-    BU_CMD_INTEGER_VALIDATE("d", "direction", struct bot_smooth_args,
-	direction, bot_smooth_mode_validate, "mode", "Smoothing direction (0, 1, or 2)"),
+    BU_CMD_INTEGER_RANGE("c", "continuity", struct bot_smooth_args,
+	continuity, 0, 2, "mode", "Continuity mode (0, 1, or 2)"),
+    BU_CMD_INTEGER_RANGE("d", "direction", struct bot_smooth_args,
+	direction, 0, 2, "mode", "Smoothing direction (0, 1, or 2)"),
     BU_CMD_NUMBER("e", "max-local-error", struct bot_smooth_args,
 	max_lerror, "error", "Maximum local error"),
     BU_CMD_NUMBER("E", "max-abs-error", struct bot_smooth_args,

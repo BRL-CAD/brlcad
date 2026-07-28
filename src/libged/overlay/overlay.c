@@ -127,7 +127,7 @@ static const struct bu_cmd_option overlay_schema_options[] = {
     BU_CMD_INTEGER("S", "square", struct overlay_args, square, "pixels", "Square image size"),
     {NULL, "format", "format", "fmt", "Framebuffer image format", BU_CMD_VALUE_CUSTOM,
 	offsetof(struct overlay_args, type), overlay_image_mime, NULL, NULL, NULL, 0, 0,
-	NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+	NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_OPTION_NULL
 };
 static const struct bu_cmd_operand overlay_schema_operands[] = {

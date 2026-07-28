@@ -2570,7 +2570,7 @@ static const struct bu_cmd_option clone_options[] = {
 	"Increment the next embedded number"),
     {NULL, "depth", "depth", "mode", "Copy depth", BU_CMD_VALUE_KEYWORD,
 	offsetof(CloneParseArgs, depth), NULL, NULL, NULL, NULL, 0, 0, NULL,
-	BU_CMD_ARG_REQUIRED, NULL, NULL, clone_depth_values},
+	BU_CMD_ARG_REQUIRED, NULL, NULL, clone_depth_values, BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_FLAG(NULL, "xpush", CloneParseArgs, xpush, "Flatten instance matrices first"),
     BU_CMD_STRING("g", "group", CloneParseArgs, group, "name", "Collect clones in a combination"),
     BU_CMD_OPTION_SHAPED("s", "subs", "subs", CloneParseArgs, subs, BU_CMD_VALUE_STRING,

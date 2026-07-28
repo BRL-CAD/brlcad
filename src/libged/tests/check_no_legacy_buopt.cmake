@@ -8,11 +8,11 @@
 # under the terms of the GNU Lesser General Public License version 2.1 as
 # published by the Free Software Foundation.
 
-# The native command-schema cutover deliberately leaves bu/opt.h available to
-# external users during its deprecation window.  It must not silently return
-# to internal command processing.  This source-level test supplements the
-# runtime schema audit: it makes a new legacy parser, descriptor, result, or
-# reader use fail immediately in CI.
+# Libged commands publish full native schemas for validation, completion, and
+# grammar introspection.  The supported bu_opt facade is intentionally not
+# sufficient for those internal command definitions.  This source-level test
+# supplements the runtime schema audit by flagging option-only tables in
+# libged command processing.
 if(NOT DEFINED SOURCE_DIR OR "${SOURCE_DIR}" STREQUAL "")
   message(FATAL_ERROR "check_no_legacy_buopt.cmake requires -DSOURCE_DIR=...")
 endif()
@@ -39,10 +39,9 @@ list(SORT source_files)
 set(violations)
 foreach(source_file IN LISTS source_files)
   file(RELATIVE_PATH relative_file "${SOURCE_DIR}" "${source_file}")
-  # The public compatibility API must remain source- and binary-compatible
-  # until its documented removal release.  Its implementation and direct
-  # regression test, plus the two external extension adapters that still
-  # expose it, are intentionally the only in-tree exceptions.
+  # The public facade remains source- and binary-compatible.  Its
+  # implementation and direct regression test, plus external extension
+  # adapters that expose it, are intentionally the in-tree exceptions.
   set(compatibility_sources
     "include/bu/opt.h"
     # The native public header documents the replacement relationship.
@@ -63,7 +62,7 @@ foreach(source_file IN LISTS source_files)
   endif()
   file(READ "${source_file}" contents)
   # bu_getopt and its bu_opt* state variables are a separate getopt-compatible
-  # API.  Match only the retired descriptor/parser API and its reader
+  # API.  Match only the descriptor/parser facade and its reader
   # callbacks, not such names as bu_optind or bu_optarg.
   string(REGEX MATCH
     "(bu_opt_(parse|describe|bool|int|long|long_hex|fastf_t|char|str|vls|color|vect_t|incr_long|lang|man_section|validate_[A-Za-z0-9_]+)|bu_opt_(desc|cmd_desc|operand_desc|validate_result|value_type_t)|BU_OPT_[A-Za-z0-9_]+)"
@@ -78,6 +77,6 @@ endforeach()
 if(violations)
   list(JOIN violations "\n  " listed)
   message(FATAL_ERROR
-    "Deprecated bu_opt API found in internal source:\n  ${listed}\n"
-    "Use bu/cmdschema.h or a native grammar adapter instead.")
+    "Option-only bu_opt API found in full-schema internal source:\n  ${listed}\n"
+    "Libged commands must publish bu/cmdschema.h or a native grammar adapter.")
 endif()

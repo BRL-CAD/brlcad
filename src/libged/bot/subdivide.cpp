@@ -117,19 +117,6 @@ struct bot_subd_args {
 };
 
 static int
-bot_subd_algorithm_validate(struct bu_vls *msg, const char *arg)
-{
-    int value;
-
-    if (bu_cmd_integer_from_str(&value, arg) && value >= 1 && value <= 5)
-	return 0;
-    if (msg)
-	bu_vls_printf(msg, "subdivision algorithm must be an integer from 1 through 5: %s\n",
-		arg ? arg : "");
-    return -1;
-}
-
-static int
 bot_subd_level_validate(struct bu_vls *msg, const char *arg)
 {
     int value;
@@ -158,8 +145,8 @@ bot_subd_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 static const struct bu_cmd_option bot_subd_options[] = {
     BU_CMD_FLAG("h", "help", struct bot_subd_args, print_help,
 	"Print command help"),
-    BU_CMD_INTEGER_VALIDATE("A", "algorithm", struct bot_subd_args, algorithm,
-	bot_subd_algorithm_validate, "number", "Subdivision algorithm (1 through 5)"),
+    BU_CMD_INTEGER_RANGE("A", "algorithm", struct bot_subd_args, algorithm,
+	1, 5, "number", "Subdivision algorithm (1 through 5)"),
     BU_CMD_INTEGER_VALIDATE("l", "level", struct bot_subd_args, level,
 	bot_subd_level_validate, "count", "Subdivision refinement iterations"),
     BU_CMD_OPTION_NULL

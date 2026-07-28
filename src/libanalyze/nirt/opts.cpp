@@ -46,7 +46,7 @@
 #include "./nirt.h"
 
 /* Native-schema readers.  They deliberately return zero on success, unlike
- * the retired bu_opt callback convention.  A NULL storage pointer is the
+ * the bu_opt callback convention.  A NULL storage pointer is the
  * side-effect-free validation path used by completion and syntax analysis. */
 static int
 nirt_cmd_arg_required(struct bu_vls *msg, const char *arg, const char *name)
@@ -408,17 +408,20 @@ static const struct bu_cmd_option nirt_options[] = {
     BU_CMD_ALIAS_SHORT("?", "help", 0),
     {"A", NULL, "A", "name", "Add an attribute to report", BU_CMD_VALUE_CUSTOM,
 	offsetof(nirt_opt_vals, attrs), nirt_attrs_from_str, NULL, NULL, NULL, 0, 0, NULL,
-	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_FLAG("M", NULL, nirt_opt_vals, read_matrix, "Read a view matrix from standard input"),
     BU_CMD_FLAG("b", NULL, nirt_opt_vals, deprecated_backout,
 	"Deprecated no-op; backing out is now the default"),
     BU_CMD_FLAG("c", NULL, nirt_opt_vals, current_center, "Shoot from the current center"),
     {"e", NULL, "e", "script", "Run a script before interacting", BU_CMD_VALUE_CUSTOM,
-	0, nirt_script_from_str, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+	0, nirt_script_from_str, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL,
+	BU_CMD_VALUE_RANGE_NONE},
     {"f", NULL, "f", "format", "Load a predefined format or script file", BU_CMD_VALUE_CUSTOM,
-	0, nirt_format_from_str, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+	0, nirt_format_from_str, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL,
+	BU_CMD_VALUE_RANGE_NONE},
     {"E", NULL, "E", NULL, "Ignore earlier -e and -f options", BU_CMD_VALUE_CUSTOM,
-	0, nirt_clear_scripts, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL},
+	0, nirt_clear_scripts, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL,
+	BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_FLAG("L", NULL, nirt_opt_vals, show_formats, "List output formatting options"),
     BU_CMD_FLAG("s", NULL, nirt_opt_vals, silent_mode, "Run in silent mode"),
     BU_CMD_FLAG("v", NULL, nirt_opt_vals, verbose_mode, "Run in verbose mode"),
@@ -448,7 +451,7 @@ static const struct bu_cmd_operand nirt_operands[] = {
 
 const struct bu_cmd_schema nirt_command_schema = {
     "nirt", "Query geometry along a ray", nirt_options, nirt_operands,
-    BU_CMD_PARSE_INTERSPERSED, NULL
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 const struct bu_cmd_schema *

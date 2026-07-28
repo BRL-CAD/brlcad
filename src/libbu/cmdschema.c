@@ -26,6 +26,8 @@
 #include "bu/str.h"
 #include "bu/units.h"
 
+#include "cmdschema_private.h"
+
 
 static const char *
 cmd_schema_keyword_canonical(const char * const *keywords,
@@ -34,6 +36,8 @@ static const struct bu_cmd_operand *cmd_schema_operand_at(
 	const struct bu_cmd_schema *schema, size_t operand_index);
 static int cmd_schema_operand_valid(const struct bu_cmd_operand *operand,
 	const char *arg);
+static int cmd_schema_range_valid(const struct bu_cmd_value_range *range,
+	bu_cmd_value_t type, const char *arg);
 
 
 const char *
@@ -850,6 +854,13 @@ cmd_schema_set_value(const struct bu_cmd_option *option, void *data, const char 
 		cmd_schema_option_name(option), arg);
 	return -1;
     }
+    if (option->value_type != BU_CMD_VALUE_FLAG &&
+	!cmd_schema_range_valid(&option->range, option->value_type, arg)) {
+	if (msg)
+	    bu_vls_printf(msg, "value for --%s is outside its legal range: %s\n",
+		cmd_schema_option_name(option), arg ? arg : "");
+	return -1;
+    }
     if (option->value_type != BU_CMD_VALUE_FLAG && option->validate && option->validate(msg, arg) != 0)
 	return -1;
 
@@ -1204,6 +1215,81 @@ cmd_schema_keyword_canonical(const char * const *keywords,
 }
 
 
+static int
+cmd_schema_range_valid(const struct bu_cmd_value_range *range,
+	bu_cmd_value_t type, const char *arg)
+{
+    if (!range || range->kind == BU_CMD_RANGE_NONE)
+	return 1;
+    if (!arg)
+	return 0;
+
+    if (range->kind == BU_CMD_RANGE_INTEGER) {
+	long value = 0;
+
+	switch (type) {
+	    case BU_CMD_VALUE_INTEGER:
+	    {
+		int ivalue;
+		if (!bu_cmd_integer_from_str(&ivalue, arg))
+		    return 0;
+		value = (long)ivalue;
+		break;
+	    }
+	    case BU_CMD_VALUE_HEX_INTEGER:
+	    {
+		unsigned int uvalue;
+		if (!bu_cmd_hex_integer_from_str(&uvalue, arg))
+		    return 0;
+#if LONG_MAX < UINT_MAX
+		if (uvalue > (unsigned int)LONG_MAX)
+		    return 0;
+#endif
+		value = (long)uvalue;
+		break;
+	    }
+	    case BU_CMD_VALUE_LONG:
+		if (!bu_cmd_long_from_str(&value, arg))
+		    return 0;
+		break;
+	    case BU_CMD_VALUE_HEX_LONG:
+		if (!bu_cmd_hex_long_from_str(&value, arg))
+		    return 0;
+		break;
+	    default:
+		return 0;
+	}
+	if (range->has_minimum &&
+	    (value < range->integer_minimum ||
+	     (!range->minimum_inclusive && value == range->integer_minimum)))
+	    return 0;
+	if (range->has_maximum &&
+	    (value > range->integer_maximum ||
+	     (!range->maximum_inclusive && value == range->integer_maximum)))
+	    return 0;
+	return 1;
+    }
+
+    if (range->kind == BU_CMD_RANGE_NUMBER) {
+	fastf_t value;
+	if (type != BU_CMD_VALUE_NUMBER ||
+	    !bu_cmd_number_from_str(&value, arg))
+	    return 0;
+	if (range->has_minimum &&
+	    (range->minimum_inclusive ? value < range->number_minimum :
+		value <= range->number_minimum))
+	    return 0;
+	if (range->has_maximum &&
+	    (range->maximum_inclusive ? value > range->number_maximum :
+		value >= range->number_maximum))
+	    return 0;
+	return 1;
+    }
+
+    return 0;
+}
+
+
 /* Syntax-time scalar checking.  This deliberately does not touch the
  * command's storage object: completion and highlighting must be side-effect
  * free.  Custom parsers receive a NULL storage pointer for this purpose. */
@@ -1291,6 +1377,7 @@ cmd_schema_value_valid(const struct bu_cmd_option *option, const char *arg)
      * constrained to its static value set. */
     return valid && (option->value_type != BU_CMD_VALUE_KEYWORD ||
 	cmd_schema_keyword_canonical(option->value_keywords, option->keyword_values, arg)) &&
+	cmd_schema_range_valid(&option->range, option->value_type, arg) &&
 	(!option->validate || option->validate(NULL, arg) == 0);
 }
 
@@ -1325,8 +1412,124 @@ cmd_schema_dash_numeric_operand_valid(const struct bu_cmd_schema *schema,
 }
 
 
+static const struct bu_cmd_parse_binding *
+cmd_schema_binding(const struct bu_cmd_schema *schema,
+	const struct bu_cmd_option *option,
+	const struct bu_cmd_parse_binding *bindings)
+{
+    ptrdiff_t index;
+
+    if (!schema || !schema->options || !option || !bindings)
+	return NULL;
+    index = option - schema->options;
+    return index >= 0 ? &bindings[index] : NULL;
+}
+
+
+static const struct bu_cmd_option *
+cmd_schema_find_legacy_name(const struct bu_cmd_schema *schema,
+	const char *name)
+{
+    if (!schema || !schema->options || !name)
+	return NULL;
+    for (size_t i = 0; bu_cmd_option_is_valid(&schema->options[i]); i++) {
+	const struct bu_cmd_option *option = &schema->options[i];
+	if ((option->shortopt && BU_STR_EQUAL(option->shortopt, name)) ||
+	    (option->longopt && BU_STR_EQUAL(option->longopt, name)))
+	    return option;
+    }
+    return NULL;
+}
+
+
+/*
+ * Decode main's original bu_opt short-option syntax.  A callback returning
+ * zero when probed makes its option flag-like, allowing it to participate in
+ * a compact cluster.  Otherwise the remainder of the same word is its
+ * attached argument.  This intentionally retains the legacy callback probe
+ * behavior, including its historical access to the real storage pointer.
+ */
+static const struct bu_cmd_option *
+cmd_schema_legacy_option(const struct bu_cmd_schema *schema, const char *arg,
+	const struct bu_cmd_parse_binding *bindings, const char **attached,
+	int *cluster)
+{
+    const struct bu_cmd_option *option;
+    const struct bu_cmd_parse_binding *binding;
+
+    if (attached)
+	*attached = NULL;
+    if (cluster)
+	*cluster = 0;
+    if (!schema || !arg || arg[0] != '-' || !arg[1] ||
+	BU_STR_EQUAL(arg, "--"))
+	return NULL;
+
+    if (arg[1] == '-') {
+	const char *name = arg + 2;
+	const char *eq = strchr(name, '=');
+	char *copy = NULL;
+
+	if (eq) {
+	    size_t len = (size_t)(eq - name);
+	    copy = (char *)bu_malloc(len + 1, "legacy long option name");
+	    memcpy(copy, name, len);
+	    copy[len] = '\0';
+	    option = cmd_schema_find_legacy_name(schema, copy);
+	    bu_free(copy, "legacy long option name");
+	    if (attached)
+		*attached = eq + 1;
+	    return option;
+	}
+	return cmd_schema_find_legacy_name(schema, name);
+    }
+
+    {
+	char short_name[2] = {arg[1], '\0'};
+	const char *remainder = arg + 2;
+	option = cmd_schema_find_legacy_name(schema, short_name);
+	if (!option || !remainder[0])
+	    return option;
+	binding = cmd_schema_binding(schema, option, bindings);
+	if (!binding)
+	    return NULL;
+
+	/* A callback decides whether the first short option is a flag in this
+	 * context.  A plain pointer-bound option without a callback is a flag. */
+	if (binding->legacy_process) {
+	    const char *probe = remainder;
+	    int used = binding->legacy_process(NULL, 1, &probe, binding->storage);
+	    if (used != 0) {
+		if (attached)
+		    *attached = remainder[0] == '=' ? remainder + 1 : remainder;
+		return option;
+	    }
+	}
+
+	for (size_t i = 1; arg[i]; i++) {
+	    const struct bu_cmd_option *flag;
+	    const struct bu_cmd_parse_binding *flag_binding;
+	    char name[2] = {arg[i], '\0'};
+	    flag = cmd_schema_find_legacy_name(schema, name);
+	    flag_binding = cmd_schema_binding(schema, flag, bindings);
+	    if (!flag || !flag_binding)
+		return NULL;
+	    if (flag_binding->legacy_process &&
+		flag_binding->legacy_process(NULL, 0, NULL,
+		    flag_binding->storage) != 0)
+		return NULL;
+	}
+	if (cluster)
+	    *cluster = 1;
+	return NULL;
+    }
+}
+
+
 int
-bu_cmd_schema_parse(const struct bu_cmd_schema *schema, void *data, struct bu_vls *msg, int argc, const char *argv[])
+_bu_cmd_schema_parse_bound(const struct bu_cmd_schema *schema, void *data,
+	struct bu_vls *msg, int argc, const char *argv[],
+	const struct bu_cmd_parse_binding *bindings, unsigned int flags)
 {
     int i = 0;
     int end_options = 0;
@@ -1336,6 +1539,10 @@ bu_cmd_schema_parse(const struct bu_cmd_schema *schema, void *data, struct bu_vl
     size_t operand_count = 0;
     const char **known_args = NULL;
     const char **operand_args = NULL;
+
+    int legacy = (flags & BU_CMD_PARSE_INTERNAL_LEGACY_SYNTAX) != 0;
+    int pass_unknown = (flags & BU_CMD_PARSE_INTERNAL_PASS_UNKNOWN) != 0;
+    int leftovers_first = (flags & BU_CMD_PARSE_INTERNAL_LEFTOVERS_FIRST) != 0;
 
     if (!schema || argc < 0 || (argc > 0 && !argv))
 	return -1;
@@ -1349,7 +1556,7 @@ bu_cmd_schema_parse(const struct bu_cmd_schema *schema, void *data, struct bu_vl
 	return argc > 0 && cmd_schema_is_end_marker(schema, argv[0], 1, 0) ? 1 : 0;
     }
 
-    if (!data)
+    if (!data && !bindings)
 	return -1;
 
     interspersed = schema->parse_policy == BU_CMD_PARSE_INTERSPERSED;
@@ -1366,13 +1573,17 @@ bu_cmd_schema_parse(const struct bu_cmd_schema *schema, void *data, struct bu_vl
 	const char *eq = NULL;
 	const struct bu_cmd_option *option = NULL;
 	int longopt = 0;
+	const struct bu_cmd_parse_binding *binding = NULL;
+	const char *legacy_attached = NULL;
+	int legacy_cluster = 0;
 
 	if (!arg) {
 	    if (msg)
 		bu_vls_printf(msg, "null command argument\n");
 	    goto done;
 	}
-	if (cmd_schema_is_end_marker(schema, arg, !end_options, operand_count)) {
+	if (!legacy &&
+	    cmd_schema_is_end_marker(schema, arg, !end_options, operand_count)) {
 	    end_options = 1;
 	    if (interspersed)
 		known_args[known_count++] = arg;
@@ -1387,6 +1598,109 @@ bu_cmd_schema_parse(const struct bu_cmd_schema *schema, void *data, struct bu_vl
 	    operand_args[operand_count++] = arg;
 	    i++;
 	    continue;
+	}
+
+	if (legacy) {
+	    option = cmd_schema_legacy_option(schema, arg, bindings,
+		&legacy_attached, &legacy_cluster);
+	    if (legacy_cluster) {
+		for (size_t ci = 1; arg[ci]; ci++) {
+		    char short_name[2] = {arg[ci], '\0'};
+		    const struct bu_cmd_option *flag =
+			cmd_schema_find_option(schema, short_name, 0);
+		    const struct bu_cmd_parse_binding *flag_binding =
+			cmd_schema_binding(schema, flag, bindings);
+		    if (flag_binding->legacy_process)
+			(void)flag_binding->legacy_process(msg, 0, NULL,
+			    flag_binding->storage);
+		    else if (flag_binding->storage)
+			*((int *)flag_binding->storage) = 1;
+		}
+		if (interspersed)
+		    known_args[known_count++] = arg;
+		i++;
+		continue;
+	    }
+	    if (!option) {
+		if (pass_unknown) {
+		    if (!interspersed) {
+			ret = i;
+			goto done;
+		    }
+		    operand_args[operand_count++] = arg;
+		    i++;
+		    continue;
+		}
+		if (msg)
+		    bu_vls_printf(msg, "unknown option: %s\n", arg);
+		goto done;
+	    }
+	    binding = cmd_schema_binding(schema, option, bindings);
+	    if (!binding)
+		goto done;
+
+	    if (!binding->legacy_process) {
+		if (legacy_attached) {
+		    if (msg)
+			bu_vls_printf(msg,
+			    "option does not take an argument: %s\n", arg);
+		    goto done;
+		}
+		if (binding->storage)
+		    *((int *)binding->storage) = 1;
+		if (interspersed)
+		    known_args[known_count++] = arg;
+		i++;
+		continue;
+	    }
+
+	    if (legacy_attached) {
+		size_t available = (size_t)(argc - i);
+		const char **legacy_argv = (const char **)bu_calloc(available,
+		    sizeof(*legacy_argv), "legacy attached option arguments");
+		int used;
+
+		legacy_argv[0] = legacy_attached;
+		for (size_t ai = 1; ai < available; ai++)
+		    legacy_argv[ai] = argv[i + (int)ai];
+		used = binding->legacy_process(msg, available, legacy_argv,
+		    binding->storage);
+		bu_free((void *)legacy_argv,
+		    "legacy attached option arguments");
+		if (used <= 0) {
+		    if (msg)
+			bu_vls_printf(msg,
+			    "invalid attached argument for option: %s\n", arg);
+		    goto done;
+		}
+		if (interspersed)
+		    known_args[known_count++] = arg;
+		if (used > (int)available)
+		    goto done;
+		if (interspersed) {
+		    for (int ai = 1; ai < used; ai++)
+			known_args[known_count++] = argv[i + ai];
+		}
+		i += used;
+		continue;
+	    }
+
+	    {
+		int used = binding->legacy_process(msg, (size_t)(argc - i - 1),
+		    argv + i + 1, binding->storage);
+		if (used < 0 || used > argc - i - 1) {
+		    if (msg)
+			bu_vls_printf(msg, "invalid argument for option: %s\n", arg);
+		    goto done;
+		}
+		if (interspersed) {
+		    known_args[known_count++] = arg;
+		    for (int ai = 0; ai < used; ai++)
+			known_args[known_count++] = argv[i + 1 + ai];
+		}
+		i += used + 1;
+		continue;
+	    }
 	}
 
 	longopt = arg[1] == '-';
@@ -1421,6 +1735,15 @@ bu_cmd_schema_parse(const struct bu_cmd_schema *schema, void *data, struct bu_vl
 	    }
 	    if (cluster < 0)
 		goto done;
+	    if (pass_unknown) {
+		if (!interspersed) {
+		    ret = i;
+		    goto done;
+		}
+		operand_args[operand_count++] = arg;
+		i++;
+		continue;
+	    }
 	    if (msg)
 		bu_vls_printf(msg, "unknown option: %s\n", arg);
 	    goto done;
@@ -1475,17 +1798,43 @@ bu_cmd_schema_parse(const struct bu_cmd_schema *schema, void *data, struct bu_vl
 
 done:
     if (ret >= 0 && interspersed) {
-	for (size_t ai = 0; ai < known_count; ai++)
-	    argv[ai] = known_args[ai];
-	for (size_t ai = 0; ai < operand_count; ai++)
-	    argv[known_count + ai] = operand_args[ai];
-	ret = (int)known_count;
+	if (leftovers_first) {
+	    for (size_t ai = 0; ai < operand_count; ai++)
+		argv[ai] = operand_args[ai];
+	    for (size_t ai = 0; ai < known_count; ai++)
+		argv[operand_count + ai] = known_args[ai];
+	    ret = (int)operand_count;
+	} else {
+	    for (size_t ai = 0; ai < known_count; ai++)
+		argv[ai] = known_args[ai];
+	    for (size_t ai = 0; ai < operand_count; ai++)
+		argv[known_count + ai] = operand_args[ai];
+	    ret = (int)known_count;
+	}
     }
     if (known_args)
 	bu_free((void *)known_args, "interspersed command option arguments");
     if (operand_args)
 	bu_free((void *)operand_args, "interspersed command operands");
     return ret;
+}
+
+
+int
+bu_cmd_schema_parse(const struct bu_cmd_schema *schema, void *data,
+	struct bu_vls *msg, int argc, const char *argv[])
+{
+    return _bu_cmd_schema_parse_bound(schema, data, msg, argc, argv, NULL,
+	BU_CMD_PARSE_INTERNAL_NONE);
+}
+
+
+int
+bu_cmd_schema_parse_known(const struct bu_cmd_schema *schema, void *data,
+	struct bu_vls *msg, int argc, const char *argv[])
+{
+    return _bu_cmd_schema_parse_bound(schema, data, msg, argc, argv, NULL,
+	BU_CMD_PARSE_INTERNAL_PASS_UNKNOWN);
 }
 
 
@@ -1649,6 +1998,38 @@ cmd_schema_json_keyword_values(struct bu_vls *out, const char * const *keywords,
 }
 
 
+static void
+cmd_schema_json_range(struct bu_vls *out,
+	const struct bu_cmd_value_range *range)
+{
+    if (!range || range->kind == BU_CMD_RANGE_NONE) {
+	bu_vls_strcat(out, "null");
+	return;
+    }
+
+    bu_vls_strcat(out, "{\"kind\":");
+    bu_cmd_json_string(out, range->kind == BU_CMD_RANGE_INTEGER ?
+	"integer" : "number");
+    bu_vls_strcat(out, ",\"minimum\":");
+    if (!range->has_minimum)
+	bu_vls_strcat(out, "null");
+    else if (range->kind == BU_CMD_RANGE_INTEGER)
+	bu_vls_printf(out, "%ld", range->integer_minimum);
+    else
+	bu_vls_printf(out, "%.17g", (double)range->number_minimum);
+    bu_vls_strcat(out, ",\"maximum\":");
+    if (!range->has_maximum)
+	bu_vls_strcat(out, "null");
+    else if (range->kind == BU_CMD_RANGE_INTEGER)
+	bu_vls_printf(out, "%ld", range->integer_maximum);
+    else
+	bu_vls_printf(out, "%.17g", (double)range->number_maximum);
+    bu_vls_printf(out, ",\"minimum_inclusive\":%s,\"maximum_inclusive\":%s}",
+	range->minimum_inclusive ? "true" : "false",
+	range->maximum_inclusive ? "true" : "false");
+}
+
+
 static const char *
 cmd_schema_value_name(bu_cmd_value_t value_type)
 {
@@ -1806,6 +2187,8 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
 	    bu_cmd_json_string(&out, option->semantic_provider);
 	    bu_vls_strcat(&out, ",");
 	    cmd_schema_json_keyword_values(&out, option->value_keywords, option->keyword_values);
+	    bu_vls_strcat(&out, ",\"range\":");
+	    cmd_schema_json_range(&out, &option->range);
 	    bu_vls_printf(&out, ",\"repeat\":%s,\"hidden\":%s,\"help\":",
 		option->repeat ? "true" : "false", option->hidden ? "true" : "false");
 	    bu_cmd_json_string(&out, option->help);
@@ -1853,6 +2236,8 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
 	    bu_cmd_json_string(&out, operand->semantic_provider);
 	    bu_vls_strcat(&out, ",");
 	    cmd_schema_json_keyword_values(&out, operand->value_keywords, operand->keyword_values);
+	    bu_vls_strcat(&out, ",\"range\":");
+	    cmd_schema_json_range(&out, &operand->range);
 	    bu_vls_putc(&out, '}');
 	    comma = 1;
 	    i++;
@@ -1860,9 +2245,9 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
     }
     bu_vls_strcat(&out, "],\"operand_groups\":[");
     comma = 0;
-    if (schema->validation.operand_groups) {
-	for (i = 0; schema->validation.operand_groups[i].name; i++) {
-	    const struct bu_cmd_operand_group *group = &schema->validation.operand_groups[i];
+    if (schema->operand_groups) {
+	for (i = 0; schema->operand_groups[i].name; i++) {
+	    const struct bu_cmd_operand_group *group = &schema->operand_groups[i];
 	    if (comma)
 		bu_vls_putc(&out, ',');
 	    bu_vls_strcat(&out, "{\"name\":");
@@ -1892,6 +2277,8 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
 		    bu_vls_strcat(&out, ",");
 		    cmd_schema_json_keyword_values(&out, role->value_keywords,
 			role->keyword_values);
+		    bu_vls_strcat(&out, ",\"range\":");
+		    cmd_schema_json_range(&out, &role->range);
 		    bu_vls_putc(&out, '}');
 		}
 	    }
@@ -2192,9 +2579,9 @@ cmd_schema_operand_at(const struct bu_cmd_schema *schema, size_t operand_index)
 	    index += operand->max_count;
 	}
     }
-    if (schema->validation.operand_groups) {
-	for (size_t gi = 0; schema->validation.operand_groups[gi].name; gi++) {
-	    const struct bu_cmd_operand_group *group = &schema->validation.operand_groups[gi];
+    if (schema->operand_groups) {
+	for (size_t gi = 0; schema->operand_groups[gi].name; gi++) {
+	    const struct bu_cmd_operand_group *group = &schema->operand_groups[gi];
 	    size_t width = 0;
 	    size_t offset;
 	    size_t capacity;
@@ -2229,13 +2616,13 @@ cmd_schema_minimum_operands(const struct bu_cmd_schema *schema)
 	for (size_t i = 0; schema->operands[i].name; i++)
 	    minimum += schema->operands[i].min_count;
     }
-    if (schema->validation.operand_groups) {
-	for (size_t gi = 0; schema->validation.operand_groups[gi].name; gi++) {
+    if (schema->operand_groups) {
+	for (size_t gi = 0; schema->operand_groups[gi].name; gi++) {
 	    size_t width = 0;
-	    if (schema->validation.operand_groups[gi].roles)
-		while (schema->validation.operand_groups[gi].roles[width].name)
+	    if (schema->operand_groups[gi].roles)
+		while (schema->operand_groups[gi].roles[width].name)
 		    width++;
-	    minimum += schema->validation.operand_groups[gi].min_count * width;
+	    minimum += schema->operand_groups[gi].min_count * width;
 	}
     }
     return minimum;
@@ -2250,7 +2637,7 @@ cmd_schema_operand_sequence_complete(const struct bu_cmd_schema *schema,
 
     if (!schema)
 	return 0;
-    if (!schema->validation.operand_groups)
+    if (!schema->operand_groups)
 	return operand_count >= cmd_schema_minimum_operands(schema);
     if (schema->operands) {
 	for (size_t i = 0; schema->operands[i].name; i++) {
@@ -2264,10 +2651,10 @@ cmd_schema_operand_sequence_complete(const struct bu_cmd_schema *schema,
     }
     if (operand_count < fixed)
 	return operand_count >= cmd_schema_minimum_operands(schema);
-    if (schema->validation.operand_groups) {
+    if (schema->operand_groups) {
 	size_t remaining = operand_count - fixed;
-	for (size_t gi = 0; schema->validation.operand_groups[gi].name; gi++) {
-	    const struct bu_cmd_operand_group *group = &schema->validation.operand_groups[gi];
+	for (size_t gi = 0; schema->operand_groups[gi].name; gi++) {
+	    const struct bu_cmd_operand_group *group = &schema->operand_groups[gi];
 	    size_t width = 0;
 	    size_t capacity;
 	    size_t consumed;
@@ -2560,6 +2947,7 @@ cmd_schema_operand_valid(const struct bu_cmd_operand *operand, const char *arg)
     option.validate = operand->validate;
     option.value_keywords = operand->value_keywords;
     option.keyword_values = operand->keyword_values;
+    option.range = operand->range;
     return cmd_schema_value_valid(&option, arg);
 }
 
@@ -3226,6 +3614,52 @@ bu_cmd_tree_describe_json(const struct bu_cmd_tree *tree)
 
 
 static int
+cmd_schema_lint_range(const struct bu_cmd_schema *schema,
+	const struct bu_cmd_value_range *range, bu_cmd_value_t type,
+	const char *kind, const char *name, struct bu_vls *msgs)
+{
+    const char *path = schema && schema->name ? schema->name : "(unnamed)";
+    int valid_type;
+
+    if (!range || range->kind == BU_CMD_RANGE_NONE)
+	return 0;
+    valid_type = range->kind == BU_CMD_RANGE_INTEGER ?
+	(type == BU_CMD_VALUE_INTEGER || type == BU_CMD_VALUE_HEX_INTEGER ||
+	 type == BU_CMD_VALUE_LONG || type == BU_CMD_VALUE_HEX_LONG) :
+	(range->kind == BU_CMD_RANGE_NUMBER && type == BU_CMD_VALUE_NUMBER);
+    if (!valid_type) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: %s \"%s\" has a range incompatible with its type\n",
+		path, kind, name ? name : "");
+	return 1;
+    }
+    if (range->kind == BU_CMD_RANGE_INTEGER && range->has_minimum &&
+	range->has_maximum &&
+	(range->integer_minimum > range->integer_maximum ||
+	 (range->integer_minimum == range->integer_maximum &&
+	  (!range->minimum_inclusive || !range->maximum_inclusive)))) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: %s \"%s\" has an empty integer range\n",
+		path, kind, name ? name : "");
+	return 1;
+    }
+    if (range->kind == BU_CMD_RANGE_NUMBER &&
+	((range->has_minimum && !isfinite((double)range->number_minimum)) ||
+	 (range->has_maximum && !isfinite((double)range->number_maximum)) ||
+	 (range->has_minimum && range->has_maximum &&
+	  (range->number_minimum > range->number_maximum ||
+	   (!(range->number_minimum < range->number_maximum) &&
+	    (!range->minimum_inclusive || !range->maximum_inclusive)))))) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: %s \"%s\" has an invalid number range\n",
+		path, kind, name ? name : "");
+	return 1;
+    }
+    return 0;
+}
+
+
+static int
 cmd_schema_lint_operand(const struct bu_cmd_schema *schema,
 	const struct bu_cmd_operand *operand, const char *kind,
 	struct bu_vls *msgs)
@@ -3263,6 +3697,8 @@ cmd_schema_lint_operand(const struct bu_cmd_schema *schema,
 	    failures++;
 	}
     }
+    failures += cmd_schema_lint_range(schema, &operand->range,
+	operand->value_type, kind, operand->name, msgs);
     return failures;
 }
 
@@ -3319,6 +3755,8 @@ bu_cmd_schema_lint(const struct bu_cmd_schema *schema, struct bu_vls *msgs)
 			path, canonical ? canonical : "");
 		failures++;
 	    }
+	    failures += cmd_schema_lint_range(schema, &option->range,
+		option->value_type, "option", canonical, msgs);
 	    if (option->alias_of) {
 		int found = 0;
 		for (size_t j = 0; bu_cmd_option_is_valid(&schema->options[j]); j++) {
@@ -3355,7 +3793,7 @@ bu_cmd_schema_lint(const struct bu_cmd_schema *schema, struct bu_vls *msgs)
 	    failures += cmd_schema_lint_operand(schema, &schema->operands[i],
 		"operand", msgs);
     }
-    if (schema->validation.operand_groups) {
+    if (schema->operand_groups) {
 	if (schema->operands) {
 	    for (size_t i = 0; schema->operands[i].name; i++) {
 		const struct bu_cmd_operand *operand = &schema->operands[i];
@@ -3370,8 +3808,8 @@ bu_cmd_schema_lint(const struct bu_cmd_schema *schema, struct bu_vls *msgs)
 		}
 	    }
 	}
-	for (size_t gi = 0; schema->validation.operand_groups[gi].name; gi++) {
-	    const struct bu_cmd_operand_group *group = &schema->validation.operand_groups[gi];
+	for (size_t gi = 0; schema->operand_groups[gi].name; gi++) {
+	    const struct bu_cmd_operand_group *group = &schema->operand_groups[gi];
 	    size_t width = 0;
 	    if (!group->name[0] || !group->roles ||
 		(group->max_count != BU_CMD_COUNT_UNLIMITED &&
@@ -3402,7 +3840,7 @@ bu_cmd_schema_lint(const struct bu_cmd_schema *schema, struct bu_vls *msgs)
 		failures++;
 	    }
 	    if (group->max_count == BU_CMD_COUNT_UNLIMITED &&
-		schema->validation.operand_groups[gi + 1].name) {
+		schema->operand_groups[gi + 1].name) {
 		if (msgs)
 		    bu_vls_printf(msgs,
 			"%s: an unlimited repeated operand group must be last\n", path);

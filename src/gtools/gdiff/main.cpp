@@ -117,7 +117,7 @@ static const struct bu_cmd_schema gdiff_schema = {
     gdiff_options,
     gdiff_operands,
     BU_CMD_PARSE_INTERSPERSED,
-    NULL
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

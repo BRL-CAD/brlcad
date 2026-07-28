@@ -486,7 +486,8 @@ static const struct bu_cmd_option bot_dump_options[] = {
 	output_file, "file", "Write to this output file"),
     {"t", NULL, "format", "format", "Select dxf, glb, gltf, obj, sat, or stl output",
 	BU_CMD_VALUE_KEYWORD, offsetof(struct bot_dump_args, format), NULL, NULL,
-	NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, bot_dump_formats},
+	NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, bot_dump_formats,
+	BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_UNITS("u", NULL, struct bot_dump_args, units, "units",
 	"Scale exported coordinates to these units"),
     BU_CMD_FLAG("F", "full-precision", struct bot_dump_args, full_precision,
@@ -500,7 +501,8 @@ static const struct bu_cmd_option bot_dump_options[] = {
     {NULL, "no-materials", "no-materials", NULL,
 	"Do not write material or color information", BU_CMD_VALUE_CUSTOM,
 	offsetof(struct bot_dump_args, material_info), bot_dump_disable_materials,
-	NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL},
+	NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL,
+	BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_OPTION_NULL
 };
 static const struct bu_cmd_operand bot_dump_operands[] = {

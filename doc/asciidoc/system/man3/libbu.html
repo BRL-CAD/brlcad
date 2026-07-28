@@ -207,7 +207,10 @@ cmd3</pre>
 <h2 id="_compact_command_schemas">Compact command schemas</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The <code>bu_cmd_schema</code> API in <code>bu/cmdschema.h</code> describes the common, flat command shape in one compact, code-native table.  It is intended for commands whose option spelling, type, help text, and execution storage binding are all known by the command implementation.  It is separate from the older <code>bu_opt_desc</code> and <code>bu_opt_desc_meta</code> mechanism; a command uses one mechanism or the other and does not generate duplicate compatibility rows.</p>
+<p>The <code>bu_cmd_schema</code> API in <code>bu/cmdschema.h</code> describes the common, flat command shape in one compact, code-native table.  It is intended for commands whose option spelling, type, help text, and execution storage binding are all known by the command implementation.  It is the full-description face of the option engine, adding typed operands, validation, completion metadata, constraints, declarative numeric ranges, and machine-readable publication.</p>
+</div>
+<div class="paragraph">
+<p>The established <code>bu_opt</code> API remains the succinct option-only face of the same engine.  Its descriptor table and <code>bu_opt_*</code> reader callbacks are appropriate when a caller only needs conventional option parsing and a leftover argument list.  Use <code>bu_cmd_schema</code> when consumers need the command's complete grammar or richer tooling; a command should publish one authoritative description rather than maintaining parallel <code>bu_opt</code> and schema tables.</p>
 </div>
 <div class="paragraph">
 <p>The API provides three views of the same schema:</p>
@@ -215,7 +218,7 @@ cmd3</pre>
 <div class="ulist">
 <ul>
 <li>
-<p><code>bu_cmd_schema_parse</code> binds command-line options to a caller-owned argument   structure.  <code>bu_cmd_schema_parse_complete</code> additionally requires all   positional roles to satisfy their declared cardinality and scalar rules.</p>
+<p><code>bu_cmd_schema_parse</code> binds command-line options to a caller-owned argument structure.  The argument pointer may be null for an optionless schema, because there is then no storage to bind.  <code>bu_cmd_schema_parse_complete</code> additionally requires all positional roles to satisfy their declared cardinality and scalar rules.  <code>bu_cmd_schema_parse_known</code> consumes only recognized options for layered parsing.</p>
 </li>
 <li>
 <p><code>bu_cmd_schema_describe</code> produces command help, while   <code>bu_cmd_schema_describe_json</code> produces machine-readable metadata.</p>

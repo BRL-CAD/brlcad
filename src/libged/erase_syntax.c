@@ -114,7 +114,8 @@ GED_EXPORT const struct bu_cmd_schema ged_erase_legacy_schema = {
 static const struct bu_cmd_option erase_new_options[] = {
     {"V", "view", "view", "name", "Specify the independent view to modify",
 	BU_CMD_VALUE_STRING, offsetof(struct ged_erase_new_args, view), NULL, NULL,
-	"ged.view", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+	"ged.view", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL,
+	BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_INTEGER("m", "mode", struct ged_erase_new_args, mode, "number",
 	"Erase objects drawn in the specified drawing mode"),
     BU_CMD_OPTION_NULL

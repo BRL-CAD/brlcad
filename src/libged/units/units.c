@@ -166,7 +166,8 @@ static const struct bu_cmd_option units_options[] = {
 
 static const struct bu_cmd_operand units_operands[] = {
     {"unit", 0, 1, "Unit name or unit expression", BU_CMD_VALUE_STRING,
-	units_value_validate, "ged.unit", NULL, units_keyword_values, NULL},
+	units_value_validate, "ged.unit", NULL, units_keyword_values, NULL,
+	BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_OPERAND_NULL
 };
 

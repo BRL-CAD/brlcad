@@ -120,7 +120,8 @@ static const struct bu_cmd_option graph_options[] = {
 	"depth", "Limit traversal depth"),
     {NULL, "root-obj", "root-obj", "object", "Specify a traversal root",
 	BU_CMD_VALUE_CUSTOM, offsetof(struct graph_args, roots), graph_root_object_parse,
-	NULL, "ged.db_object", NULL, 1, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+	NULL, "ged.db_object", NULL, 1, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL,
+	BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_FLAG(NULL, "igraph", struct graph_args, igraph_mode,
 	"Use legacy textual graph mode"),
     BU_CMD_OPTION_NULL

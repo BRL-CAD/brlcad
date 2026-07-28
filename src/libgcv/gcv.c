@@ -294,7 +294,7 @@ _gcv_filter_options_free(const struct gcv_filter *filter, void *options_data)
 
 
 /* This compatibility path is intentionally isolated for out-of-tree plugins
- * still built against the deprecated bu_opt descriptor API.  In-tree plugins
+ * still built against the older GCV bu_opt descriptor hook.  In-tree plugins
  * use _gcv_filter_schema_options_process below. */
 #if defined(_MSC_VER)
 #  pragma warning(push)
@@ -330,7 +330,7 @@ _gcv_filter_legacy_options_process(const struct gcv_filter *filter, size_t argc,
 
     if (ret_argc) {
         if (ret_argc == -1)
-            bu_log("fatal error in deprecated bu_opt_parse()\n");
+            bu_log("fatal error in bu_opt_parse()\n");
         else {
             bu_log("unknown arguments: ");
             for (i = 0; i < ret_argc - 1; ++i)

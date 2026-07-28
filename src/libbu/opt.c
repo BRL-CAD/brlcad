@@ -20,24 +20,23 @@
 
 #include "common.h"
 
-#define BU_OPT_COMPATIBILITY_BUILD 1
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h> /* for strtol */
 #include <limits.h> /* for INT_MAX */
 #include <float.h> /* for FLT_MAX */
-#include <ctype.h> /* for isspace */
 #include <errno.h> /* for errno */
 
 #include "vmath.h"
 #include "bu/color.h"
+#include "bu/cmdschema.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/opt.h"
-#include "bu/ptbl.h"
 #include "bu/str.h"
 #include "bu/vls.h"
+
+#include "cmdschema_private.h"
 
 
 static void
@@ -290,6 +289,224 @@ opt_describe_internal_ascii(const struct bu_opt_desc *ds, struct bu_opt_desc_opt
 }
 
 
+#define OPT_PLAIN    0x1
+#define OPT_REQUIRED 0x2
+#define OPT_OPTIONAL 0x4
+#define OPT_REPEAT   0x10
+
+static int
+docbook_get_opt_type(const struct bu_opt_desc *d, struct bu_opt_desc_opts *settings)
+{
+    const struct bu_opt_desc *curr = NULL;
+    int flags = OPT_PLAIN;
+    const struct bu_opt_desc *required = NULL;
+    const struct bu_opt_desc *repeated = NULL;
+    const struct bu_opt_desc *optional = NULL;
+
+    if (settings) {
+	required = settings->required;
+	repeated = settings->repeated;
+	optional = settings->optional;
+    }
+
+    if (required) {
+	int j = 0;
+	curr = &(settings->required[j]);
+	while (curr) {
+	    j++;
+	    if (d == curr) {
+		flags = flags & ~(OPT_PLAIN);
+		flags |= OPT_REQUIRED;
+		break;
+	    }
+	    curr = &(settings->required[j]);
+	}
+    }
+
+    if (!(flags & OPT_REQUIRED)) {
+	if (optional) {
+	    int j = 0;
+	    curr = &(optional[j]);
+	    while (curr) {
+		j++;
+		if (d == curr) {
+		    flags = flags & ~(OPT_PLAIN);
+		    flags |= OPT_OPTIONAL;
+		    break;
+		}
+		curr = &(optional[j]);
+	    }
+	}
+    }
+
+    if (repeated) {
+	int j = 0;
+	curr = &(repeated[j]);
+	while (curr) {
+	    j++;
+	    if (d == curr) {
+		flags |= OPT_REPEAT;
+		break;
+	    }
+	    curr = &(repeated[j]);
+	}
+    }
+
+    return flags;
+}
+
+
+static void
+docbook_print_short_opt(struct bu_vls *desc, const struct bu_opt_desc *d, int opt_type, size_t offset)
+{
+    if (!desc || !d)
+	return;
+    bu_vls_printf(desc, "%*s<arg", (int)offset, " ");
+    if (opt_type & OPT_PLAIN) {
+	bu_vls_printf(desc, " choice='plain'");
+    }
+    if (opt_type & OPT_REQUIRED) {
+	bu_vls_printf(desc, " choice='req'");
+    }
+    if (opt_type & OPT_OPTIONAL) {
+	bu_vls_printf(desc, " choice='opt'");
+    }
+    if (opt_type & OPT_REPEAT) {
+	bu_vls_printf(desc, " rep='repeat'");
+    }
+    bu_vls_printf(desc, ">-%c", d->shortopt[0]);
+    if (d->arg_helpstr && strlen(d->arg_helpstr) > 0) {
+	bu_vls_printf(desc, " <replaceable>%s</replaceable>", d->arg_helpstr);
+    }
+    bu_vls_printf(desc, "</arg>\n");
+}
+
+
+static void
+docbook_print_long_opt(struct bu_vls *desc, const struct bu_opt_desc *d, int opt_type, size_t offset)
+{
+    if (!desc || !d)
+	return;
+    bu_vls_printf(desc, "%*s<arg", (int)offset, " ");
+    if (opt_type & OPT_PLAIN) {
+	bu_vls_printf(desc, " choice='plain'");
+    }
+    if (opt_type & OPT_REQUIRED) {
+	bu_vls_printf(desc, " choice='req'");
+    }
+    if (opt_type & OPT_OPTIONAL) {
+	bu_vls_printf(desc, " choice='opt'");
+    }
+    if (opt_type & OPT_REPEAT) {
+	bu_vls_printf(desc, " rep='repeat'");
+    }
+    bu_vls_printf(desc, ">--%s", d->longopt);
+    if (d->arg_helpstr && strlen(d->arg_helpstr) > 0) {
+	bu_vls_printf(desc, " <replaceable>%s</replaceable>", d->arg_helpstr);
+    }
+    bu_vls_printf(desc, "</arg>\n");
+}
+
+
+static char *
+opt_describe_internal_docbook(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
+{
+    int opt_cnt;
+    int i = 0;
+    int j;
+    int show_all_longopts = 0;
+    char *finalized;
+    struct bu_vls description = BU_VLS_INIT_ZERO;
+    int *status;
+
+    if (!ds || opt_desc_is_null(&ds[0]))
+	return NULL;
+
+    if (settings) {
+	show_all_longopts = settings->show_all_longopts;
+    }
+
+    while (!opt_desc_is_null(&ds[i])) i++;
+    if (i == 0)
+	return NULL;
+    opt_cnt = i;
+    status = (int *)bu_calloc(opt_cnt, sizeof(int), "opt status");
+    i = 0;
+    while (i < opt_cnt) {
+	const struct bu_opt_desc *curr = NULL;
+	const struct bu_opt_desc *d = NULL;
+	curr = &(ds[i]);
+	if (!status[i]) {
+	    int opt_alias_cnt = 0;
+	    int need_group = 0;
+
+	    /* We handle all entries with the same set_var in the same
+	     * pass, so set the status flags accordingly */
+	    j = i;
+	    while (j < opt_cnt) {
+		d = &(ds[j]);
+		if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
+		    status[j] = 1;
+		    opt_alias_cnt++;
+		}
+		j++;
+	    }
+
+	    /* If we've got more than one option, make a group */
+	    if (opt_alias_cnt > 1) {
+		need_group = 1;
+	    }
+	    /* If we're showing all the opts and we've got both a short and a long, make
+	     * a group */
+	    if (show_all_longopts && !need_group) {
+		if (curr->shortopt && strlen(d->shortopt) > 0 && curr->longopt && strlen(d->longopt) > 0) {
+		    need_group = 1;
+		}
+	    }
+
+	    if (need_group)
+		bu_vls_printf(&description, "<group>\n");
+
+	    /* Go with the short option, unless there isn't one. */
+	    j = i;
+	    while (j < opt_cnt) {
+		d = &(ds[j]);
+		if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
+		    int opt_type = docbook_get_opt_type(d, settings);
+		    if (d->shortopt && strlen(d->shortopt) > 0) {
+			docbook_print_short_opt(&description, d, opt_type, need_group);
+			/* If we're supposed to, also do the longopt */
+			if (show_all_longopts && !need_group) {
+			    if (d->longopt && strlen(d->longopt) > 0) {
+				docbook_print_long_opt(&description, d, opt_type, need_group);
+			    }
+			}
+		    } else {
+			/* For d == curr we *need* to do a longopt if that's all we've got */
+			if ((d == curr || show_all_longopts) && d->longopt && strlen(d->longopt) > 0) {
+			    docbook_print_long_opt(&description, d, opt_type, need_group);
+			}
+		    }
+		}
+		j++;
+	    }
+
+	    if (need_group)
+		bu_vls_printf(&description, "</group>\n");
+	    status[i] = 1;
+
+	}
+	i++;
+	/* add an sbr if we've reached a multiple of 5 */
+	if (i%5 == 0)
+	    bu_vls_printf(&description, "<sbr/>\n");
+    }
+    finalized = bu_strdup(bu_vls_addr(&description));
+    bu_vls_free(&description);
+    return finalized;
+}
+
+
 char *
 bu_opt_describe(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
@@ -301,12 +518,9 @@ bu_opt_describe(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 	case BU_OPT_ASCII:
 	    return opt_describe_internal_ascii(ds, settings);
 	    break;
-	case BU_OPT_JSON:
-	{
-	    struct bu_opt_cmd_desc cmd = BU_OPT_CMD_DESC_NULL;
-	    cmd.options = ds;
-	    return bu_opt_describe_json(&cmd);
-	}
+	case BU_OPT_DOCBOOK:
+	    return opt_describe_internal_docbook(ds, settings);
+	    break;
 	default:
 	    break;
     }
@@ -314,1783 +528,67 @@ bu_opt_describe(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 }
 
 
-static const char *
-opt_arg_requirement_str(bu_opt_arg_requirement_t req)
-{
-    switch (req) {
-	case BU_OPT_ARG_FLAG:
-	    return "flag";
-	case BU_OPT_ARG_REQUIRED:
-	    return "required";
-	case BU_OPT_ARG_OPTIONAL:
-	    return "optional";
-	default:
-	    break;
-    }
-    return "flag";
-}
-
-
-static const char *
-opt_parse_policy_str(bu_opt_parse_policy_t policy)
-{
-    switch (policy) {
-	case BU_OPT_PARSE_OPTIONS_INTERSPERSED:
-	    return "options_interspersed";
-	case BU_OPT_PARSE_OPTIONS_BEFORE_OPERANDS:
-	    return "options_before_operands";
-	case BU_OPT_PARSE_OPTIONS_BEFORE_SUBCOMMAND:
-	    return "options_before_subcommand";
-	case BU_OPT_PARSE_STOP_AT_FIRST_OPERAND:
-	    return "stop_at_first_operand";
-	case BU_OPT_PARSE_CUSTOM_SEMANTIC:
-	    return "custom_semantic_parser";
-	default:
-	    break;
-    }
-    return "options_interspersed";
-}
-
-
-static const char *
-opt_value_shape_str(bu_opt_value_shape_t shape)
-{
-    switch (shape) {
-	case BU_OPT_SHAPE_SCALAR:
-	    return "scalar";
-	case BU_OPT_SHAPE_TOKEN_SEQUENCE:
-	    return "token_sequence";
-	case BU_OPT_SHAPE_COMMA_LIST:
-	    return "comma_list";
-	case BU_OPT_SHAPE_KEY_VALUE_LIST:
-	    return "key_value_list";
-	case BU_OPT_SHAPE_AXIS_KEYED:
-	    return "axis_keyed";
-	case BU_OPT_SHAPE_RANGE_PATTERN:
-	    return "range_pattern";
-	case BU_OPT_SHAPE_CUSTOM:
-	    return "custom";
-	default:
-	    break;
-    }
-    return "scalar";
-}
-
-
-static const char *
-opt_value_type_str(bu_opt_value_type_t type)
-{
-    switch (type) {
-	case BU_OPT_VAL_BOOL:
-	    return "bool";
-	case BU_OPT_VAL_INTEGER:
-	    return "integer";
-	case BU_OPT_VAL_NUMBER:
-	    return "number";
-	case BU_OPT_VAL_VECTOR:
-	    return "vector";
-	case BU_OPT_VAL_MATRIX:
-	    return "matrix";
-	case BU_OPT_VAL_COLOR:
-	    return "color";
-	case BU_OPT_VAL_KEYWORD:
-	    return "keyword";
-	case BU_OPT_VAL_STRING:
-	    return "string";
-	case BU_OPT_VAL_DB_OBJECT:
-	    return "db_object";
-	case BU_OPT_VAL_DB_PATH:
-	    return "db_path";
-	case BU_OPT_VAL_FILE_PATH:
-	    return "file_path";
-	case BU_OPT_VAL_RAW:
-	    return "raw";
-	case BU_OPT_VAL_UNKNOWN:
-	    return "unknown";
-	default:
-	    break;
-    }
-    return "invalid";
-}
-
-
-static const struct bu_opt_arg_shape *
-opt_default_arg_shape(void)
-{
-    static const struct bu_opt_arg_shape default_shape = BU_OPT_ARG_SHAPE_NULL;
-    return &default_shape;
-}
-
-
-static const struct bu_opt_arg_shape *
-opt_effective_arg_shape(const struct bu_opt_desc_meta *meta)
-{
-    if (meta && meta->arg_shape)
-	return meta->arg_shape;
-    return opt_default_arg_shape();
-}
-
-
-static size_t
-opt_arg_shape_min_tokens(const struct bu_opt_desc_meta *meta, bu_opt_arg_requirement_t req)
-{
-    const struct bu_opt_arg_shape *shape = opt_effective_arg_shape(meta);
-
-    if (req == BU_OPT_ARG_FLAG)
-	return 0;
-
-    if (shape && shape->min_tokens > 0)
-	return shape->min_tokens;
-
-    return (req == BU_OPT_ARG_REQUIRED) ? 1 : 0;
-}
-
-
-static size_t
-opt_arg_shape_max_tokens(const struct bu_opt_desc_meta *meta, bu_opt_arg_requirement_t req)
-{
-    const struct bu_opt_arg_shape *shape = opt_effective_arg_shape(meta);
-
-    if (req == BU_OPT_ARG_FLAG)
-	return 0;
-
-    if (shape && shape->max_tokens > 0)
-	return shape->max_tokens;
-
-    return 1;
-}
-
-
-static int
-opt_options_allowed(const struct bu_opt_cmd_desc *cmd, size_t operands, int end_options)
-{
-    bu_opt_parse_policy_t policy = BU_OPT_PARSE_OPTIONS_INTERSPERSED;
-
-    if (end_options || !cmd || !cmd->options)
-	return 0;
-
-    if (cmd)
-	policy = cmd->parse_policy;
-
-    switch (policy) {
-	case BU_OPT_PARSE_OPTIONS_INTERSPERSED:
-	    return 1;
-	case BU_OPT_PARSE_OPTIONS_BEFORE_OPERANDS:
-	case BU_OPT_PARSE_OPTIONS_BEFORE_SUBCOMMAND:
-	case BU_OPT_PARSE_STOP_AT_FIRST_OPERAND:
-	    return (operands == 0);
-	case BU_OPT_PARSE_CUSTOM_SEMANTIC:
-	    return 0;
-	default:
-	    break;
-    }
-
-    return 1;
-}
-
-
-static bu_opt_value_type_t
-opt_infer_value_type(const struct bu_opt_desc *d)
-{
-    if (!d || !d->arg_process)
-	return BU_OPT_VAL_BOOL;
-    if (d->arg_process == &bu_opt_bool)
-	return BU_OPT_VAL_BOOL;
-    if (d->arg_process == &bu_opt_int || d->arg_process == &bu_opt_long || d->arg_process == &bu_opt_long_hex)
-	return BU_OPT_VAL_INTEGER;
-    if (d->arg_process == &bu_opt_fastf_t)
-	return BU_OPT_VAL_NUMBER;
-    if (d->arg_process == &bu_opt_vect_t)
-	return BU_OPT_VAL_VECTOR;
-    if (d->arg_process == &bu_opt_color)
-	return BU_OPT_VAL_COLOR;
-    if (d->arg_process == &bu_opt_str || d->arg_process == &bu_opt_vls || d->arg_process == &bu_opt_char || d->arg_process == &bu_opt_lang)
-	return BU_OPT_VAL_STRING;
-    return BU_OPT_VAL_UNKNOWN;
-}
-
-
-static const char *
-opt_completion_str(bu_opt_value_type_t type, const char * const *keywords)
-{
-    switch (type) {
-	case BU_OPT_VAL_KEYWORD:
-	    return (keywords && keywords[0]) ? "static" : "none";
-	case BU_OPT_VAL_DB_OBJECT:
-	    return "db_object";
-	case BU_OPT_VAL_DB_PATH:
-	    return "db_path";
-	case BU_OPT_VAL_FILE_PATH:
-	    return "file";
-	default:
-	    break;
-    }
-    return "none";
-}
-
-
-static bu_opt_arg_requirement_t
-opt_infer_arg_requirement(const struct bu_opt_desc *d)
-{
-    if (!d || !d->arg_process)
-	return BU_OPT_ARG_FLAG;
-    if (d->arg_helpstr && d->arg_helpstr[0] == '[')
-	return BU_OPT_ARG_OPTIONAL;
-    return BU_OPT_ARG_REQUIRED;
-}
-
-
-static const struct bu_opt_desc_meta *
-opt_find_meta(const struct bu_opt_desc *d, const struct bu_opt_desc_meta *meta)
-{
-    size_t i = 0;
-    if (!d || !meta)
-	return NULL;
-    while (meta[i].opt) {
-	if (d->shortopt && BU_STR_EQUAL(d->shortopt, meta[i].opt))
-	    return &meta[i];
-	if (d->longopt && BU_STR_EQUAL(d->longopt, meta[i].opt))
-	    return &meta[i];
-	i++;
-    }
-    return NULL;
-}
-
-
-void
-bu_opt_validate_result_clear(struct bu_opt_validate_result *result)
-{
-    if (!result)
-	return;
-
-    if (result->completion_candidates) {
-	bu_argv_free(result->completion_count, (char **)result->completion_candidates);
-    }
-
-    result->state = BU_OPT_VALIDATE_UNKNOWN;
-    result->token_start = 0;
-    result->token_end = 0;
-    result->expected = BU_OPT_EXPECT_NONE;
-    result->hint = NULL;
-    result->completion_count = 0;
-    result->completion_candidates = NULL;
-    result->completion_type = BU_OPT_VAL_UNKNOWN;
-    result->char_start = 0;
-    result->char_end = 0;
-}
-
-
-static int
-opt_same_alias_group(const struct bu_opt_desc *a, const struct bu_opt_desc *b, const struct bu_opt_desc_meta *meta)
-{
-    const struct bu_opt_desc_meta *am = NULL;
-    const struct bu_opt_desc_meta *bm = NULL;
-
-    if (!a || !b)
-	return 0;
-    if (a == b)
-	return 1;
-
-    /* Published schemas may use shared dummy storage for options that are not
-     * aliases.  When both rows have side metadata, canonical spellings are the
-     * authoritative alias grouping key. */
-    if (meta) {
-	am = opt_find_meta(a, meta);
-	bm = opt_find_meta(b, meta);
-	if (am && bm) {
-	    if (!BU_STR_EMPTY(am->canonical) || !BU_STR_EMPTY(bm->canonical))
-		return (!BU_STR_EMPTY(am->canonical) && !BU_STR_EMPTY(bm->canonical) &&
-			BU_STR_EQUAL(am->canonical, bm->canonical));
-	    return 0;
-	}
-    }
-
-    if (!a->set_var || !b->set_var || a->set_var != b->set_var)
-	return 0;
-    if (a->arg_process != b->arg_process)
-	return 0;
-    return 1;
-}
-
-
-static void
-opt_json_string(struct bu_vls *v, const char *str)
-{
-    const unsigned char *cp = (const unsigned char *)str;
-    if (!str) {
-	bu_vls_printf(v, "\"\"");
-	return;
-    }
-    bu_vls_printf(v, "\"");
-    while (*cp) {
-	switch (*cp) {
-	    case '\"':
-		bu_vls_printf(v, "\\\"");
-		break;
-	    case '\\':
-		bu_vls_printf(v, "\\\\");
-		break;
-	    case '\b':
-		bu_vls_printf(v, "\\b");
-		break;
-	    case '\f':
-		bu_vls_printf(v, "\\f");
-		break;
-	    case '\n':
-		bu_vls_printf(v, "\\n");
-		break;
-	    case '\r':
-		bu_vls_printf(v, "\\r");
-		break;
-	    case '\t':
-		bu_vls_printf(v, "\\t");
-		break;
-	    default:
-		if (*cp < 0x20) {
-		    bu_vls_printf(v, "\\u%04X", (unsigned int)*cp);
-		} else {
-		    bu_vls_putc(v, (int)*cp);
-		}
-		break;
-	}
-	cp++;
-    }
-    bu_vls_printf(v, "\"");
-}
-
-
-static void
-opt_json_str_member(struct bu_vls *v, const char *name, const char *value)
-{
-    opt_json_string(v, name);
-    bu_vls_printf(v, ":");
-    opt_json_string(v, value);
-}
-
-
-static void
-opt_json_option(struct bu_vls *v, const struct bu_opt_desc *ds, const struct bu_opt_desc *curr, const struct bu_opt_desc_meta *meta, int *status, size_t opt_cnt)
-{
-    const struct bu_opt_desc_meta *m = opt_find_meta(curr, meta);
-    bu_opt_arg_requirement_t req = m ? m->arg_requirement : opt_infer_arg_requirement(curr);
-    bu_opt_value_type_t type = m ? m->arg_type : opt_infer_value_type(curr);
-    int repeat = m ? m->repeat : 0;
-    const char * const *keywords = m ? m->value_keywords : NULL;
-    const char *validator = m && m->semantic_validator ? m->semantic_validator : "";
-    const struct bu_opt_arg_shape *shape = opt_effective_arg_shape(m);
-    const char *canonical = m && m->canonical ? m->canonical : "";
-    const char *conflict_group = m && m->conflict_group ? m->conflict_group : "";
-    const char *requires_opt = m && m->requires_opt ? m->requires_opt : "";
-    const char *help = curr->help_string ? curr->help_string : "";
-    const char *arg_help = curr->arg_helpstr ? curr->arg_helpstr : "";
-    size_t i = 0;
-    int need_comma = 0;
-
-    bu_vls_printf(v, "{");
-    opt_json_str_member(v, "short", curr->shortopt ? curr->shortopt : "");
-    bu_vls_printf(v, ",");
-    opt_json_str_member(v, "long", curr->longopt ? curr->longopt : "");
-    bu_vls_printf(v, ",");
-    opt_json_str_member(v, "argument", opt_arg_requirement_str(req));
-    bu_vls_printf(v, ",");
-    opt_json_str_member(v, "argument_help", arg_help);
-    bu_vls_printf(v, ",");
-    opt_json_str_member(v, "argument_type", opt_value_type_str(type));
-    bu_vls_printf(v, ",\"repeat\":%s,", repeat ? "true" : "false");
-    opt_json_str_member(v, "help", help);
-    bu_vls_printf(v, ",");
-    opt_json_str_member(v, "completion", opt_completion_str(type, keywords));
-    bu_vls_printf(v, ",");
-    opt_json_str_member(v, "validator", validator);
-    bu_vls_printf(v, ",\"arg_shape\":{");
-    opt_json_str_member(v, "kind", shape ? opt_value_shape_str(shape->shape) : "scalar");
-    bu_vls_printf(v, ",\"min_tokens\":%lu,\"max_tokens\":", shape ? (unsigned long)shape->min_tokens : 0UL);
-    if (shape && shape->max_tokens == BU_OPT_COUNT_UNLIMITED)
-	bu_vls_printf(v, "null,");
-    else
-	bu_vls_printf(v, "%lu,", shape ? (unsigned long)shape->max_tokens : 0UL);
-    opt_json_str_member(v, "description", shape && shape->description ? shape->description : "");
-    bu_vls_printf(v, "},");
-    opt_json_str_member(v, "canonical", canonical);
-    bu_vls_printf(v, ",");
-    opt_json_str_member(v, "conflict_group", conflict_group);
-    bu_vls_printf(v, ",");
-    opt_json_str_member(v, "requires", requires_opt);
-    bu_vls_printf(v, ",\"hidden\":%s", (m && m->hidden) ? "true" : "false");
-    bu_vls_printf(v, ",\"keywords\":[");
-    need_comma = 0;
-    if (keywords) {
-	for (i = 0; keywords[i]; i++) {
-	    if (need_comma)
-		bu_vls_printf(v, ",");
-	    opt_json_string(v, keywords[i]);
-	    need_comma = 1;
-	}
-    }
-    bu_vls_printf(v, "],\"aliases\":[");
-    need_comma = 0;
-    for (i = 0; i < opt_cnt; i++) {
-	const struct bu_opt_desc *d = &ds[i];
-	if (!opt_same_alias_group(curr, d, meta))
-	    continue;
-	if (d->shortopt && strlen(d->shortopt) > 0) {
-	    if (need_comma)
-		bu_vls_printf(v, ",");
-	    opt_json_string(v, d->shortopt);
-	    need_comma = 1;
-	}
-	if (d->longopt && strlen(d->longopt) > 0) {
-	    if (need_comma)
-		bu_vls_printf(v, ",");
-	    opt_json_string(v, d->longopt);
-	    need_comma = 1;
-	}
-	status[i] = 1;
-    }
-    bu_vls_printf(v, "]}");
-}
-
-
-static void
-opt_json_operands(struct bu_vls *v, const struct bu_opt_operand_desc *operands)
-{
-    size_t i = 0;
-    int need_comma = 0;
-    bu_vls_printf(v, "\"operands\":[");
-    if (operands) {
-	while (operands[i].name) {
-	    if (need_comma)
-		bu_vls_printf(v, ",");
-	    bu_vls_printf(v, "{");
-	    opt_json_str_member(v, "name", operands[i].name);
-	    bu_vls_printf(v, ",");
-	    opt_json_str_member(v, "type", opt_value_type_str(operands[i].type));
-	    bu_vls_printf(v, ",\"min\":%lu,\"max\":", (unsigned long)operands[i].min_count);
-	    if (operands[i].max_count == BU_OPT_COUNT_UNLIMITED)
-		bu_vls_printf(v, "null,");
-	    else
-		bu_vls_printf(v, "%lu,", (unsigned long)operands[i].max_count);
-	    opt_json_str_member(v, "help", operands[i].help_string ? operands[i].help_string : "");
-	    bu_vls_printf(v, ",");
-	    opt_json_str_member(v, "completion", opt_completion_str(operands[i].type, operands[i].value_keywords));
-	    bu_vls_printf(v, ",");
-	    opt_json_str_member(v, "validator", operands[i].semantic_validator ? operands[i].semantic_validator : "");
-	    bu_vls_printf(v, ",\"arg_shape\":{");
-	    {
-		const struct bu_opt_arg_shape *shape = operands[i].arg_shape ? operands[i].arg_shape : opt_default_arg_shape();
-		opt_json_str_member(v, "kind", opt_value_shape_str(shape->shape));
-		bu_vls_printf(v, ",\"min_tokens\":%lu,\"max_tokens\":", (unsigned long)shape->min_tokens);
-		if (shape->max_tokens == BU_OPT_COUNT_UNLIMITED)
-		    bu_vls_printf(v, "null,");
-		else
-		    bu_vls_printf(v, "%lu,", (unsigned long)shape->max_tokens);
-		opt_json_str_member(v, "description", shape->description ? shape->description : "");
-	    }
-	    bu_vls_printf(v, "}");
-	    bu_vls_printf(v, ",\"keywords\":[");
-	    if (operands[i].value_keywords) {
-		size_t j = 0;
-		int operand_comma = 0;
-		for (j = 0; operands[i].value_keywords[j]; j++) {
-		    if (operand_comma)
-			bu_vls_printf(v, ",");
-		    opt_json_string(v, operands[i].value_keywords[j]);
-		    operand_comma = 1;
-		}
-	    }
-	    bu_vls_printf(v, "]");
-	    bu_vls_printf(v, "}");
-	    need_comma = 1;
-	    i++;
-	}
-    }
-    bu_vls_printf(v, "]");
-}
-
-
-static void
-opt_json_command(struct bu_vls *v, const struct bu_opt_cmd_desc *cmd)
-{
-    int need_comma = 0;
-    bu_vls_printf(v, "{");
-    opt_json_str_member(v, "name", cmd && cmd->name ? cmd->name : "");
-    bu_vls_printf(v, ",");
-    opt_json_str_member(v, "help", cmd && cmd->help_string ? cmd->help_string : "");
-    bu_vls_printf(v, ",");
-    opt_json_str_member(v, "parse_policy", opt_parse_policy_str(cmd ? cmd->parse_policy : BU_OPT_PARSE_OPTIONS_INTERSPERSED));
-    bu_vls_printf(v, ",\"schema_version\":%u", cmd ? cmd->schema_version : 0);
-    bu_vls_printf(v, ",\"options\":[");
-    if (cmd && cmd->options) {
-	size_t opt_cnt = 0;
-	size_t i = 0;
-	int *status = NULL;
-	while (!opt_desc_is_null(&cmd->options[opt_cnt]))
-	    opt_cnt++;
-	status = (int *)bu_calloc(opt_cnt ? opt_cnt : 1, sizeof(int), "option json status");
-	for (i = 0; i < opt_cnt; i++) {
-	    if (status[i])
-		continue;
-	    if (need_comma)
-		bu_vls_printf(v, ",");
-	    opt_json_option(v, cmd->options, &cmd->options[i], cmd->option_meta, status, opt_cnt);
-	    need_comma = 1;
-	}
-	bu_free(status, "option json status");
-    }
-    bu_vls_printf(v, "],");
-    opt_json_operands(v, cmd ? cmd->operands : NULL);
-    bu_vls_printf(v, ",\"subcommands\":[");
-    need_comma = 0;
-    if (cmd && cmd->subcommands) {
-	size_t i = 0;
-	while (cmd->subcommands[i].name) {
-	    if (need_comma)
-		bu_vls_printf(v, ",");
-	    opt_json_command(v, &cmd->subcommands[i]);
-	    need_comma = 1;
-	    i++;
-	}
-    }
-    bu_vls_printf(v, "]");
-    if (cmd && cmd->semantic_validator && cmd->semantic_validator[0]) {
-	bu_vls_printf(v, ",\"semantic_validator\":");
-	opt_json_string(v, cmd->semantic_validator);
-    }
-    bu_vls_printf(v, "}");
-}
-
-
-char *
-bu_opt_describe_json(const struct bu_opt_cmd_desc *cmd)
-{
-    char *finalized = NULL;
-    struct bu_vls json = BU_VLS_INIT_ZERO;
-
-    if (!cmd)
-	return NULL;
-
-    bu_vls_printf(&json, "{\"schema\":\"bu_opt\",\"version\":1,\"command\":");
-    opt_json_command(&json, cmd);
-    bu_vls_printf(&json, "}");
-    finalized = bu_strdup(bu_vls_addr(&json));
-    bu_vls_free(&json);
-    return finalized;
-}
-
-
-static int
-opt_token_can_be_option(const char *opt)
-{
-    if (!opt || opt[0] != '-' || BU_STR_EQUAL(opt, "-"))
-	return 0;
-    return 1;
-}
-
-
-static int
-opt_prefix_match(const char *candidate, const char *prefix)
-{
-    if (BU_STR_EMPTY(prefix))
-	return 1;
-    if (!candidate)
-	return 0;
-    return (bu_strncmp(candidate, prefix, strlen(prefix)) == 0);
-}
-
-
-static void
-opt_candidate_add(struct bu_ptbl *candidates, const char *candidate, const char *prefix)
-{
-    size_t i = 0;
-
-    if (!candidates || !candidate || !opt_prefix_match(candidate, prefix))
-	return;
-
-    for (i = 0; i < BU_PTBL_LEN(candidates); i++) {
-	const char *existing = (const char *)BU_PTBL_GET(candidates, i);
-	if (BU_STR_EQUAL(existing, candidate))
-	    return;
-    }
-
-    bu_ptbl_ins(candidates, (long *)bu_strdup(candidate));
-}
-
-
-static void
-opt_result_set_candidates(struct bu_opt_validate_result *result, struct bu_ptbl *candidates)
-{
-    size_t i = 0;
-
-    if (!result || !candidates || !BU_PTBL_LEN(candidates))
-	return;
-
-    result->completion_count = BU_PTBL_LEN(candidates);
-    result->completion_candidates = (const char **)bu_calloc(result->completion_count + 1, sizeof(char *), "completion candidates");
-    for (i = 0; i < result->completion_count; i++) {
-	result->completion_candidates[i] = (const char *)BU_PTBL_GET(candidates, i);
-    }
-}
-
-
-static void
-opt_result_free_candidates(struct bu_ptbl *candidates)
-{
-    size_t i = 0;
-
-    if (!candidates)
-	return;
-
-    for (i = 0; i < BU_PTBL_LEN(candidates); i++) {
-	char *candidate = (char *)BU_PTBL_GET(candidates, i);
-	bu_free(candidate, "completion candidate");
-    }
-    bu_ptbl_free(candidates);
-}
-
-static const struct bu_opt_desc *
-opt_find_desc(const struct bu_opt_cmd_desc *cmd, const char *name, int longopt);
-
-
-static void
-opt_collect_option_candidates(struct bu_ptbl *candidates, const struct bu_opt_cmd_desc *cmd, const char *prefix)
-{
-    size_t i = 0;
-    int want_long_only = (!BU_STR_EMPTY(prefix) && prefix[0] == '-' && prefix[1] == '-');
-
-    if (!candidates || !cmd || !cmd->options)
-	return;
-
-    while (!opt_desc_is_null(&cmd->options[i])) {
-	const struct bu_opt_desc *d = &cmd->options[i];
-	const struct bu_opt_desc_meta *m = opt_find_meta(d, cmd->option_meta);
-	if (m && m->hidden) {
-	    i++;
-	    continue;
-	}
-	int canonical_is_spelling = 0;
-	if (m && !BU_STR_EMPTY(m->canonical)) {
-	    if (m->canonical[0] == '-' && m->canonical[1] == '-')
-		canonical_is_spelling = opt_find_desc(cmd, m->canonical + 2, 1) != NULL;
-	    else if (m->canonical[0] == '-')
-		canonical_is_spelling = opt_find_desc(cmd, m->canonical + 1, 0) != NULL;
-	    else
-		canonical_is_spelling = opt_find_desc(cmd, m->canonical, 0) != NULL ||
-		    opt_find_desc(cmd, m->canonical, 1) != NULL;
-	}
-	if (canonical_is_spelling) {
-	    if (m->canonical[0] == '-') {
-		opt_candidate_add(candidates, m->canonical, prefix);
-	    } else {
-		struct bu_vls canonical = BU_VLS_INIT_ZERO;
-		if (d->shortopt && BU_STR_EQUAL(m->canonical, d->shortopt))
-		    bu_vls_printf(&canonical, "-%s", m->canonical);
-		else
-		    bu_vls_printf(&canonical, "--%s", m->canonical);
-		opt_candidate_add(candidates, bu_vls_cstr(&canonical), prefix);
-		bu_vls_free(&canonical);
-	    }
-	    i++;
-	    continue;
-	}
-	if (!want_long_only && d->shortopt && d->shortopt[0]) {
-	    struct bu_vls shortopt = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&shortopt, "-%s", d->shortopt);
-	    opt_candidate_add(candidates, bu_vls_addr(&shortopt), prefix);
-	    bu_vls_free(&shortopt);
-	}
-	if (d->longopt && d->longopt[0]) {
-	    struct bu_vls longopt = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&longopt, "--%s", d->longopt);
-	    opt_candidate_add(candidates, bu_vls_addr(&longopt), prefix);
-	    bu_vls_free(&longopt);
-	}
-	i++;
-    }
-}
-
-
-static void
-opt_collect_subcommand_candidates(struct bu_ptbl *candidates, const struct bu_opt_cmd_desc *cmd, const char *prefix)
-{
-    size_t i = 0;
-
-    if (!candidates || !cmd || !cmd->subcommands)
-	return;
-
-    while (cmd->subcommands[i].name) {
-	opt_candidate_add(candidates, cmd->subcommands[i].name, prefix);
-	i++;
-    }
-}
-
-
-static void
-opt_collect_keyword_candidates(struct bu_ptbl *candidates, const char * const *keywords, const char *prefix, const struct bu_opt_arg_shape *shape)
-{
-    size_t i = 0;
-    const char *element_prefix = prefix ? prefix : "";
-    const char *comma = NULL;
-    size_t base_len = 0;
-    int negated = 0;
-
-    if (!candidates || !keywords)
-	return;
-
-    if (shape && shape->shape == BU_OPT_SHAPE_COMMA_LIST) {
-	comma = strrchr(element_prefix, ',');
-	if (comma) {
-	    base_len = (size_t)(comma - element_prefix + 1);
-	    element_prefix = comma + 1;
-	}
-	if (element_prefix[0] == '!') {
-	    negated = 1;
-	    element_prefix++;
-	}
-    }
-
-    while (keywords[i]) {
-	if (shape && shape->shape == BU_OPT_SHAPE_COMMA_LIST) {
-	    if (BU_STR_EMPTY(element_prefix) || bu_strncmp(keywords[i], element_prefix, strlen(element_prefix)) == 0) {
-		struct bu_vls candidate = BU_VLS_INIT_ZERO;
-		if (base_len)
-		    bu_vls_strncpy(&candidate, prefix, base_len);
-		if (negated)
-		    bu_vls_putc(&candidate, '!');
-		bu_vls_strcat(&candidate, keywords[i]);
-		opt_candidate_add(candidates, bu_vls_cstr(&candidate), prefix);
-		bu_vls_free(&candidate);
-	    }
-	} else {
-	    opt_candidate_add(candidates, keywords[i], prefix);
-	}
-	i++;
-    }
-}
-
-
-static const struct bu_opt_operand_desc *
-opt_find_operand_desc(const struct bu_opt_cmd_desc *cmd, size_t operand_index)
-{
-    size_t i = 0;
-    size_t offset = 0;
-
-    if (!cmd || !cmd->operands)
-	return NULL;
-
-    while (cmd->operands[i].name) {
-	size_t max_count = cmd->operands[i].max_count;
-	if (max_count == BU_OPT_COUNT_UNLIMITED)
-	    return &cmd->operands[i];
-	if (operand_index < offset + max_count)
-	    return &cmd->operands[i];
-	offset += max_count;
-	i++;
-    }
-
-    return NULL;
-}
-
-
-static void
-opt_collect_expected_candidates(struct bu_opt_validate_result *result, const struct bu_opt_cmd_desc *active, size_t operands, int end_options, unsigned int expected, const char *prefix, const struct bu_opt_desc *arg_desc)
-{
-    struct bu_ptbl candidates = BU_PTBL_INIT_ZERO;
-    const struct bu_opt_desc_meta *arg_meta = NULL;
-    const struct bu_opt_operand_desc *operand_desc = NULL;
-
-    if (!result || !active)
-	return;
-
-    if ((expected & BU_OPT_EXPECT_OPTION_ARG) && arg_desc) {
-	arg_meta = opt_find_meta(arg_desc, active->option_meta);
-    }
-    if (expected & BU_OPT_EXPECT_OPERAND) {
-	operand_desc = opt_find_operand_desc(active, operands);
-    }
-
-    if ((expected & BU_OPT_EXPECT_OPTION) && opt_options_allowed(active, operands, end_options)) {
-	opt_collect_option_candidates(&candidates, active, prefix);
-    }
-    if ((expected & BU_OPT_EXPECT_SUBCOMMAND) && !end_options && operands == 0) {
-	opt_collect_subcommand_candidates(&candidates, active, prefix);
-    }
-    if ((expected & BU_OPT_EXPECT_OPTION_ARG) && arg_meta && arg_meta->value_keywords) {
-        opt_collect_keyword_candidates(&candidates, arg_meta->value_keywords, prefix, arg_meta->arg_shape);
-    }
-    if ((expected & BU_OPT_EXPECT_OPERAND) && operand_desc && operand_desc->type == BU_OPT_VAL_KEYWORD) {
-        opt_collect_keyword_candidates(&candidates, operand_desc->value_keywords, prefix, operand_desc->arg_shape);
-    }
-
-    opt_result_set_candidates(result, &candidates);
-    if (!result->completion_candidates) {
-	opt_result_free_candidates(&candidates);
-    } else {
-	bu_ptbl_free(&candidates);
-    }
-
-    /* set completion_type for dynamic completion hint */
-    if ((expected & BU_OPT_EXPECT_OPTION_ARG) && arg_meta) {
-	result->completion_type = arg_meta->arg_type;
-	if (arg_meta->semantic_validator)
-	    result->hint = arg_meta->semantic_validator;
-    } else if ((expected & BU_OPT_EXPECT_OPERAND) && operand_desc) {
-	result->completion_type = operand_desc->type;
-	if (operand_desc->semantic_validator)
-	    result->hint = operand_desc->semantic_validator;
-	else if (operand_desc->name)
-	    result->hint = operand_desc->name;
-    } else {
-	result->completion_type = BU_OPT_VAL_UNKNOWN;
-    }
-}
-
-
-static const struct bu_opt_desc *
-opt_find_desc(const struct bu_opt_cmd_desc *cmd, const char *name, int longopt)
-{
-    size_t i = 0;
-    if (!cmd || !cmd->options || !name)
-	return NULL;
-    while (!opt_desc_is_null(&cmd->options[i])) {
-	const struct bu_opt_desc *d = &cmd->options[i];
-	if (longopt) {
-	    if (d->longopt && BU_STR_EQUAL(name, d->longopt))
-		return d;
-	} else {
-	    if (d->shortopt && BU_STR_EQUAL(name, d->shortopt))
-		return d;
-	}
-	i++;
-    }
-    return NULL;
-}
-
-
-static const struct bu_opt_cmd_desc *
-opt_find_subcommand(const struct bu_opt_cmd_desc *cmd, const char *name)
-{
-    size_t i = 0;
-    if (!cmd || !cmd->subcommands || !name)
-	return NULL;
-    while (cmd->subcommands[i].name) {
-	if (BU_STR_EQUAL(name, cmd->subcommands[i].name))
-	    return &cmd->subcommands[i];
-	i++;
-    }
-    return NULL;
-}
-
-
-static int
-opt_operand_bounds(const struct bu_opt_cmd_desc *cmd, size_t *min_count, size_t *max_count)
-{
-    size_t i = 0;
-    if (min_count)
-	*min_count = 0;
-    if (max_count)
-	*max_count = BU_OPT_COUNT_UNLIMITED;
-    if (!cmd || !cmd->operands)
-	return 0;
-    if (max_count)
-	*max_count = 0;
-    while (cmd->operands[i].name) {
-	if (min_count)
-	    *min_count += cmd->operands[i].min_count;
-	if (max_count) {
-	    if (*max_count == BU_OPT_COUNT_UNLIMITED)
-		goto next_operand;
-	    if (cmd->operands[i].max_count == BU_OPT_COUNT_UNLIMITED)
-		*max_count = BU_OPT_COUNT_UNLIMITED;
-	    else
-		*max_count += cmd->operands[i].max_count;
-	}
-next_operand:
-	i++;
-    }
-    return 1;
-}
-
-
-static void
-opt_validate_set(struct bu_opt_validate_result *result, bu_opt_validate_state_t state, size_t start, size_t end, unsigned int expected, const char *hint)
-{
-    if (!result)
-	return;
-    result->state = state;
-    result->token_start = start;
-    result->token_end = end;
-    result->expected = expected;
-    result->hint = hint;
-}
-
-
-int
-bu_opt_validate_argv_ctx(const struct bu_opt_cmd_desc *cmd, size_t argc, const char **argv, size_t cursor_arg, void *context, struct bu_opt_validate_result *result)
-{
-    const struct bu_opt_cmd_desc *active = cmd;
-    const struct bu_opt_cmd_desc *cursor_cmd = cmd;
-    const struct bu_opt_desc *cursor_option_desc = NULL;
-    size_t i = 0;
-    size_t seen_capacity = 1;
-    size_t operands = 0;
-    size_t cursor_operands = 0;
-    size_t min_operands = 0;
-    size_t max_operands = BU_OPT_COUNT_UNLIMITED;
-    size_t used_cnt = 0;
-    const struct bu_opt_desc **seen_option_groups = NULL;
-    int end_options = 0;
-    int cursor_end_options = 0;
-    int cursor_is_operand = 0;
-
-    if (!cmd || !result)
-	return -1;
-    if (cursor_arg > argc)
-	return -1;
-    if (cmd->parse_policy == BU_OPT_PARSE_CUSTOM_SEMANTIC && cmd->custom_validate)
-	return (*cmd->custom_validate)(cmd, argc, argv, cursor_arg, context, result);
-    if (argv) {
-	for (i = 0; i < argc; i++) {
-	    if (argv[i]) {
-		seen_capacity += strlen(argv[i]);
-	    }
-	}
-    }
-    i = 0;
-
-    bu_opt_validate_result_clear(result);
-    opt_validate_set(result, BU_OPT_VALIDATE_UNKNOWN, cursor_arg, cursor_arg, BU_OPT_EXPECT_NONE, NULL);
-    opt_operand_bounds(active, &min_operands, &max_operands);
-    seen_option_groups = (const struct bu_opt_desc **)bu_calloc(seen_capacity, sizeof(struct bu_opt_desc *), "seen option groups");
-
-    while (i < argc) {
-	const char *arg = argv ? argv[i] : NULL;
-	const struct bu_opt_cmd_desc *sub = NULL;
-	if (i == cursor_arg) {
-	    cursor_cmd = active;
-	    cursor_operands = operands;
-	    cursor_end_options = end_options;
-	    cursor_option_desc = NULL;
-	    cursor_is_operand = 0;
-	}
-	if (!arg) {
-	    opt_validate_set(result, BU_OPT_VALIDATE_INVALID, i, i, BU_OPT_EXPECT_NONE, "null argument");
-	    bu_free(seen_option_groups, "seen option groups");
-	    return 0;
-	}
-	if (!end_options && BU_STR_EQUAL(arg, "--")) {
-	    end_options = 1;
-	    i++;
-	    continue;
-	}
-	sub = (!end_options && operands == 0) ? opt_find_subcommand(active, arg) : NULL;
-	if (sub) {
-	    if (sub->parse_policy == BU_OPT_PARSE_CUSTOM_SEMANTIC && sub->custom_validate && cursor_arg > i) {
-		size_t offset = i + 1;
-		int ret = (*sub->custom_validate)(sub, argc - offset, argv + offset,
-			cursor_arg - offset, context, result);
-		if (result->token_start <= argc - offset)
-		    result->token_start += offset;
-		if (result->token_end <= argc - offset)
-		    result->token_end += offset;
-		bu_free(seen_option_groups, "seen option groups");
-		return ret;
-	    }
-	    active = sub;
-	    operands = 0;
-	    used_cnt = 0;
-	    opt_operand_bounds(active, &min_operands, &max_operands);
-	    i++;
-	    continue;
-	}
-	if (opt_options_allowed(active, operands, end_options) && opt_token_can_be_option(arg)) {
-	    const struct bu_opt_desc *d = NULL;
-	    const struct bu_opt_desc_meta *m = NULL;
-	    bu_opt_arg_requirement_t req = BU_OPT_ARG_FLAG;
-	    const char *opt = arg;
-	    const char *eq = NULL;
-	    int longopt = 0;
-	    int exact_long = 0;
-	    int exact_short = 0;
-	    size_t opt_index = i;
-	    size_t min_arg_tokens = 0;
-	    size_t max_arg_tokens = 0;
-	    if (arg[1] == '-') {
-		longopt = 1;
-		opt = arg + 2;
-		d = opt_find_desc(active, opt, 1);
-		exact_long = (d != NULL);
-		eq = strchr(opt, '=');
-	    } else {
-		opt = arg + 1;
-		if (strlen(opt) > 1) {
-		    d = opt_find_desc(active, opt, 0);
-		    exact_short = (d != NULL);
-		}
-		if (!exact_short && strlen(opt) > 1)
-		    eq = opt + 1;
-	    }
-	    if (!d && eq) {
-		char *ocpy = bu_strdup(opt);
-		ocpy[eq - opt] = '\0';
-		d = opt_find_desc(active, ocpy, longopt);
-		bu_free(ocpy, "option copy");
-	    } else if (!d) {
-		d = opt_find_desc(active, opt, longopt);
-	    }
-	    if (!d) {
-		if (!longopt && strlen(opt) > 1) {
-		    size_t ci = 0;
-		    for (ci = 0; opt[ci]; ci++) {
-			char shortopt_str[2] = {0, 0};
-			const struct bu_opt_desc *grouped_desc = NULL;
-			const struct bu_opt_desc_meta *grouped_meta = NULL;
-			size_t ui = 0;
-			shortopt_str[0] = opt[ci];
-			grouped_desc = opt_find_desc(active, shortopt_str, 0);
-			if (!grouped_desc || opt_infer_arg_requirement(grouped_desc) != BU_OPT_ARG_FLAG) {
-			    opt_validate_set(result, BU_OPT_VALIDATE_INVALID, opt_index, opt_index, BU_OPT_EXPECT_OPTION, "unknown or non-flag grouped short option");
-			    opt_collect_expected_candidates(result, active, operands, end_options, BU_OPT_EXPECT_OPTION, arg, NULL);
-			    bu_free(seen_option_groups, "seen option groups");
-			    return 0;
-			}
-			grouped_meta = opt_find_meta(grouped_desc, active->option_meta);
-			if (!grouped_meta || !grouped_meta->repeat) {
-			    for (ui = 0; ui < used_cnt; ui++) {
-				if (opt_same_alias_group(seen_option_groups[ui], grouped_desc, active->option_meta)) {
-				    opt_validate_set(result, BU_OPT_VALIDATE_INVALID, opt_index, opt_index, BU_OPT_EXPECT_OPTION, "option does not repeat");
-				    opt_collect_expected_candidates(result, active, operands, end_options, BU_OPT_EXPECT_OPTION, arg, NULL);
-				    bu_free(seen_option_groups, "seen option groups");
-				    return 0;
-				}
-			    }
-			}
-			seen_option_groups[used_cnt++] = grouped_desc;
-		    }
-		    i++;
-		    continue;
-		}
-		opt_validate_set(result, BU_OPT_VALIDATE_INVALID, opt_index, opt_index, BU_OPT_EXPECT_OPTION, "unknown option");
-		opt_collect_expected_candidates(result, active, operands, end_options, BU_OPT_EXPECT_OPTION, arg, NULL);
-		bu_free(seen_option_groups, "seen option groups");
-		return 0;
-	    }
-	    m = opt_find_meta(d, active->option_meta);
-	    req = m ? m->arg_requirement : opt_infer_arg_requirement(d);
-	    min_arg_tokens = opt_arg_shape_min_tokens(m, req);
-	    max_arg_tokens = opt_arg_shape_max_tokens(m, req);
-	    if (!longopt && !exact_short && strlen(opt) > 1 && req == BU_OPT_ARG_FLAG) {
-		size_t ci = 0;
-		for (ci = 0; opt[ci]; ci++) {
-		    char shortopt_str[2] = {0, 0};
-		    const struct bu_opt_desc *grouped_desc = NULL;
-		    const struct bu_opt_desc_meta *grouped_meta = NULL;
-		    size_t ui = 0;
-		    shortopt_str[0] = opt[ci];
-		    grouped_desc = opt_find_desc(active, shortopt_str, 0);
-		    if (!grouped_desc || opt_infer_arg_requirement(grouped_desc) != BU_OPT_ARG_FLAG) {
-			opt_validate_set(result, BU_OPT_VALIDATE_INVALID, opt_index, opt_index, BU_OPT_EXPECT_OPTION, "unknown or non-flag grouped short option");
-			opt_collect_expected_candidates(result, active, operands, end_options, BU_OPT_EXPECT_OPTION, arg, NULL);
-			bu_free(seen_option_groups, "seen option groups");
-			return 0;
-		    }
-		    grouped_meta = opt_find_meta(grouped_desc, active->option_meta);
-		    if (!grouped_meta || !grouped_meta->repeat) {
-			for (ui = 0; ui < used_cnt; ui++) {
-			    if (opt_same_alias_group(seen_option_groups[ui], grouped_desc, active->option_meta)) {
-				opt_validate_set(result, BU_OPT_VALIDATE_INVALID, opt_index, opt_index, BU_OPT_EXPECT_OPTION, "option does not repeat");
-				opt_collect_expected_candidates(result, active, operands, end_options, BU_OPT_EXPECT_OPTION, arg, NULL);
-				bu_free(seen_option_groups, "seen option groups");
-				return 0;
-			    }
-			}
-		    }
-		    seen_option_groups[used_cnt++] = grouped_desc;
-		}
-		i++;
-		continue;
-	    }
-	    if (!m || !m->repeat) {
-		size_t ui = 0;
-		for (ui = 0; ui < used_cnt; ui++) {
-		    if (opt_same_alias_group(seen_option_groups[ui], d, active->option_meta)) {
-			opt_validate_set(result, BU_OPT_VALIDATE_INVALID, opt_index, opt_index, BU_OPT_EXPECT_OPTION, "option does not repeat");
-			bu_free(seen_option_groups, "seen option groups");
-			return 0;
-		    }
-		}
-	    }
-	    if (m && !BU_STR_EMPTY(m->conflict_group)) {
-		size_t ui = 0;
-		for (ui = 0; ui < used_cnt; ui++) {
-		    const struct bu_opt_desc_meta *seen_meta = opt_find_meta(seen_option_groups[ui], active->option_meta);
-		    if (seen_meta && !BU_STR_EMPTY(seen_meta->conflict_group) &&
-			    BU_STR_EQUAL(m->conflict_group, seen_meta->conflict_group) &&
-			    !opt_same_alias_group(seen_option_groups[ui], d, active->option_meta)) {
-			opt_validate_set(result, BU_OPT_VALIDATE_INVALID, opt_index, opt_index,
-				BU_OPT_EXPECT_NONE, "mutually exclusive options used together");
-			bu_free(seen_option_groups, "seen option groups");
-			return 0;
-		    }
-		}
-	    }
-	    seen_option_groups[used_cnt++] = d;
-	    if (req == BU_OPT_ARG_FLAG) {
-		if (eq && longopt && !exact_long) {
-		    opt_validate_set(result, BU_OPT_VALIDATE_INVALID, opt_index, opt_index, BU_OPT_EXPECT_NONE, "flag option does not take an argument");
-		    bu_free(seen_option_groups, "seen option groups");
-		    return 0;
-		}
-		i++;
-		continue;
-	    }
-	    if (eq) {
-		i++;
-		continue;
-	    }
-	    if (argc - i - 1 < min_arg_tokens) {
-		opt_validate_set(result, BU_OPT_VALIDATE_INCOMPLETE, opt_index, opt_index, BU_OPT_EXPECT_OPTION_ARG, "option argument expected");
-		opt_collect_expected_candidates(result, active, operands, end_options, result->expected, "", d);
-		bu_free(seen_option_groups, "seen option groups");
-		return 0;
-	    }
-	    if (i + 1 == cursor_arg) {
-		cursor_cmd = active;
-		cursor_operands = operands;
-		cursor_end_options = end_options;
-		cursor_option_desc = d;
-	    }
-	    if (req == BU_OPT_ARG_REQUIRED) {
-		size_t consume = max_arg_tokens;
-		if (consume == BU_OPT_COUNT_UNLIMITED)
-		    consume = argc - i - 1;
-		if (consume < min_arg_tokens)
-		    consume = min_arg_tokens;
-		if (consume > argc - i - 1)
-		    consume = argc - i - 1;
-		i += 1 + consume;
-		continue;
-	    }
-	    if (min_arg_tokens > 0) {
-		i += 1 + min_arg_tokens;
-	    } else if (i + 1 < argc && !opt_token_can_be_option(argv[i + 1]))
-		i += 1 + (max_arg_tokens ? 1 : 0);
-	    else
-		i++;
-	    continue;
-	}
-	if (i == cursor_arg)
-	    cursor_is_operand = 1;
-	operands++;
-	if (max_operands != BU_OPT_COUNT_UNLIMITED && operands > max_operands) {
-	    opt_validate_set(result, BU_OPT_VALIDATE_INVALID, i, i, BU_OPT_EXPECT_NONE, "too many operands");
-	    bu_free(seen_option_groups, "seen option groups");
-	    return 0;
-	}
-	i++;
-    }
-
-    /* Cursor-local expectations take precedence over diagnostics about tokens
-     * that will be required later on the command line. */
-    if (cursor_option_desc && cursor_arg < argc) {
-	opt_validate_set(result, BU_OPT_VALIDATE_VALID, cursor_arg, cursor_arg,
-		BU_OPT_EXPECT_OPTION_ARG, "option argument");
-	opt_collect_expected_candidates(result, cursor_cmd, cursor_operands,
-		cursor_end_options, result->expected, argv[cursor_arg], cursor_option_desc);
-	bu_free(seen_option_groups, "seen option groups");
-	return 0;
-    }
-
-    if (cursor_is_operand && cursor_arg < argc) {
-	unsigned int expected = BU_OPT_EXPECT_OPERAND;
-	if (!cursor_end_options && cursor_operands == 0 && cursor_cmd->subcommands)
-	    expected |= BU_OPT_EXPECT_SUBCOMMAND;
-	if (opt_options_allowed(cursor_cmd, cursor_operands, cursor_end_options))
-	    expected |= BU_OPT_EXPECT_OPTION;
-	opt_validate_set(result, (operands < min_operands) ? BU_OPT_VALIDATE_INCOMPLETE : BU_OPT_VALIDATE_VALID,
-		cursor_arg, cursor_arg, expected, "operand");
-	opt_collect_expected_candidates(result, cursor_cmd, cursor_operands,
-		cursor_end_options, result->expected, argv[cursor_arg], NULL);
-	bu_free(seen_option_groups, "seen option groups");
-	return 0;
-    }
-
-    if (operands < min_operands) {
-	unsigned int expected = BU_OPT_EXPECT_OPERAND;
-	if (!end_options)
-	    expected |= BU_OPT_EXPECT_OPTION;
-	if (!end_options && operands == 0 && active->subcommands)
-	    expected |= BU_OPT_EXPECT_SUBCOMMAND;
-	if (!opt_options_allowed(active, operands, end_options))
-	    expected &= ~BU_OPT_EXPECT_OPTION;
-	opt_validate_set(result, BU_OPT_VALIDATE_INCOMPLETE, argc, argc, expected, "operand expected");
-	opt_collect_expected_candidates(result, active, operands, end_options, expected, "", NULL);
-	bu_free(seen_option_groups, "seen option groups");
-	return 0;
-    }
-
-    opt_validate_set(result, BU_OPT_VALIDATE_VALID, cursor_arg, cursor_arg, BU_OPT_EXPECT_OPTION | BU_OPT_EXPECT_OPERAND | BU_OPT_EXPECT_SUBCOMMAND, "valid");
-    if (cursor_arg < argc) {
-	if (cursor_option_desc) {
-	    result->expected = BU_OPT_EXPECT_OPTION_ARG;
-	}
-	if (!opt_options_allowed(cursor_cmd, cursor_operands, cursor_end_options))
-	    result->expected &= ~BU_OPT_EXPECT_OPTION;
-	opt_collect_expected_candidates(result, cursor_cmd, cursor_operands, cursor_end_options, result->expected, argv[cursor_arg], cursor_option_desc);
-    } else {
-	if (!opt_options_allowed(active, operands, end_options))
-	    result->expected &= ~BU_OPT_EXPECT_OPTION;
-	opt_collect_expected_candidates(result, active, operands, end_options, result->expected, "", NULL);
-    }
-    bu_free(seen_option_groups, "seen option groups");
-    return 0;
-}
-
-
-int
-bu_opt_validate_argv(const struct bu_opt_cmd_desc *cmd, size_t argc, const char **argv, size_t cursor_arg, struct bu_opt_validate_result *result)
-{
-    return bu_opt_validate_argv_ctx(cmd, argc, argv, cursor_arg, NULL, result);
-}
-
-
-int
-bu_opt_validate_string(const struct bu_opt_cmd_desc *cmd, const char *input, size_t cursor_pos, struct bu_opt_validate_result *result)
-{
-    char *copy = NULL;
-    char **argv = NULL;
-    size_t *char_starts = NULL;
-    size_t *char_ends = NULL;
-    size_t argc = 0;
-    size_t cursor_arg = 0;
-    size_t input_len = 0;
-    size_t p = 0;
-    int in_token = 0;
-    int ret = 0;
-
-    if (!cmd || !input || !result)
-	return -1;
-
-    input_len = strlen(input);
-    copy = bu_strdup(input);
-
-    /* strip trailing whitespace so bu_argv_from_string NUL-terminates cleanly */
-    {
-	size_t len = input_len;
-	while (len > 0 && isspace((unsigned char)copy[len - 1]))
-	    copy[--len] = '\0';
-    }
-
-    argv = (char **)bu_calloc(input_len + 1, sizeof(char *), "argv array");
-    argc = bu_argv_from_string(argv, input_len, copy);
-
-    /* record byte offsets for each token - argv[i] points inside copy */
-    char_starts = (size_t *)bu_calloc(argc + 1, sizeof(size_t), "char starts");
-    char_ends   = (size_t *)bu_calloc(argc + 1, sizeof(size_t), "char ends");
-    {
-	size_t ai = 0;
-	for (ai = 0; ai < argc; ai++) {
-	    char_starts[ai] = (size_t)(argv[ai] - copy);
-	    char_ends[ai]   = char_starts[ai] + strlen(argv[ai]);
-	}
-    }
-
-    /* compute cursor_arg: count how many complete tokens are before cursor_pos
-     * (increment each time we leave a token into whitespace) */
-    for (p = 0; p < cursor_pos && input[p]; p++) {
-	if (isspace((unsigned char)input[p])) {
-	    if (in_token) {
-		cursor_arg++;
-		in_token = 0;
-	    }
-	} else {
-	    in_token = 1;
-	}
-    }
-    if (cursor_arg > argc)
-	cursor_arg = argc;
-
-    ret = bu_opt_validate_argv(cmd, argc, (const char **)argv, cursor_arg, result);
-
-    /* populate char offsets from token indices */
-    if (result->token_start < argc) {
-	result->char_start = char_starts[result->token_start];
-	result->char_end   = char_ends[result->token_end < argc ? result->token_end : argc - 1];
-    } else {
-	/* past end - point at end of string */
-	result->char_start = input_len;
-	result->char_end   = input_len;
-    }
-
-    bu_free(char_starts, "char starts");
-    bu_free(char_ends, "char ends");
-    bu_free(argv, "argv array");
-    bu_free(copy, "input copy");
-    return ret;
-}
-
-
-static int
-opt_is_flag(const char *opt, const struct bu_opt_desc *ds, const char *arg)
-{
-    int arg_offset = -1;
-    /* Find the corresponding desc, if we have one */
-    int desc_ind = 0;
-    const struct bu_opt_desc *desc = &(ds[desc_ind]);
-    while (desc && !opt_desc_is_null(desc)) {
-	if (desc->shortopt && opt[0] == desc->shortopt[0]) {
-	    if (!desc->arg_process) {
-		return 1;
-	    }
-	    break;
-	}
-	desc_ind++;
-	desc = &(ds[desc_ind]);
-    }
-
-    /* If there is an arg_process, it's up to the function - if an
-     * option without args is valid, and the potential arg after the
-     * option isn't a valid arg for this opt, opt can be a flag
-     */
-    if (desc && desc->arg_process) {
-	if (arg) {
-	    arg_offset = (*desc->arg_process)(NULL, 1, &arg, desc->set_var);
-	    if (!arg_offset) {
-		return 1;
-	    }
-	} else {
-	    arg_offset = (*desc->arg_process)(NULL, 0, NULL, desc->set_var);
-	    if (!arg_offset) {
-		return 1;
-	    }
-	}
-    }
-
-    return 0;
-}
-
-
-static int
-opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate, const struct bu_opt_desc *ds)
-{
-    size_t offset = 1;
-    const char *opt;
-    char *optcpy;
-    const char *equal_pos;
-
-    if (!eq_arg && !opt_candidate)
-	return 0;
-    if (opt_candidate[1] == '-')
-	offset++;
-    equal_pos = strchr(opt_candidate, '=');
-
-    /* If we've got a single opt, things are handled differently */
-    if (offset == 1) {
-	if (strlen(opt_candidate+offset) == 1) {
-	    optcpy = (char *)bu_calloc(2, sizeof(char), "option");
-	    optcpy[0] = (opt_candidate+offset)[0];
-	    bu_ptbl_ins(opts, (long *)optcpy);
-	    return 1;
-	} else {
-	    /* single letter opt, but the string is longer. If and
-	     * only if this single letter opt is a flag, check for
-	     * more flags. Anything that needs an argument in this
-	     * context is considered an error, and with a flag option
-	     * anything in the same argv with it that is not also a
-	     * flag constitutes an error.
-	     */
-	    opt = opt_candidate+offset;
-	    if (opt_is_flag(opt, ds, opt_candidate+offset+1)) {
-		optcpy = (char *)bu_calloc(2, sizeof(char), "option");
-		optcpy[0] = (opt)[0];
-		bu_ptbl_ins(opts, (long *)optcpy);
-		opt++;
-		while (strlen(opt) > 0) {
-		    if (opt_is_flag(opt, ds, NULL)) {
-			optcpy = (char *)bu_calloc(2, sizeof(char), "option");
-			optcpy[0] = (opt)[0];
-			bu_ptbl_ins(opts, (long *)optcpy);
-		    } else {
-			/* In a flag opt context but hit a non-flag - error. */
-			return -1;
-		    }
-		    opt++;
-		}
-	    } else {
-		/* the interpretation in this context is everything
-		 * after the first letter is arg.
-		 */
-		struct bu_vls vopt = BU_VLS_INIT_ZERO;
-		const char *varg = opt_candidate;
-		bu_vls_strncat(&vopt, opt_candidate+1, 1);
-
-		varg = opt_candidate + 2;
-
-		/* A exception is an equals sign, e.g. -s=1024 - in
-		 * that instance, the expectation might be that =
-		 * would be interpreted as an assignment.  This means
-		 * that to get the literal =1024 as an option, you
-		 * would need a space after the s, e.g.: -s =1024
-		 *
-		 * For now, commented out to favor consistent behavior
-		 * over what "looks right" - may be worth revisiting
-		 * or even an option at some point...
-		 */
-
-		if (equal_pos)
-		    varg++;
-
-		BU_ASSERT(eq_arg != NULL);
-
-		(*eq_arg) = varg;
-		opt = bu_strdup(bu_vls_addr(&vopt));
-		bu_ptbl_ins(opts, (long *)opt);
-		bu_vls_free(&vopt);
-	    }
-	}
-    } else {
-	if (equal_pos) {
-	    struct bu_vls vopt = BU_VLS_INIT_ZERO;
-	    const char *varg = opt_candidate;
-	    bu_vls_sprintf(&vopt, "%s", opt_candidate);
-	    bu_vls_trunc(&vopt, -1 * (int)strlen(equal_pos));
-	    bu_vls_nibble(&vopt, offset);
-
-	    varg = opt_candidate + bu_vls_strlen(&vopt) + 2;
-	    if (equal_pos)
-		varg++;
-
-	    (*eq_arg) = varg;
-	    opt = bu_strdup(bu_vls_addr(&vopt));
-	    bu_ptbl_ins(opts, (long *)opt);
-	    bu_vls_free(&vopt);
-	} else {
-	    opt = bu_strdup(opt_candidate+offset);
-	    bu_ptbl_ins(opts, (long *)opt);
-	}
-    }
-    return (int)BU_PTBL_LEN(opts);
-}
-
-
-/* This implements naive criteria for deciding when an argv string is
- * an option.  Right now the criteria are:
- *
- * 1.  Must have a '-' char as first character
- * 2.  Must not be ONLY the '-' char
- * 3.  Must not have white space characters present in the string.
+/*
+ * bu_opt is the compact, option-only face of the command-schema parser.
+ * Its transient schema deliberately contains no operands or semantic
+ * metadata: unrecognized words are pass-through leftovers, and bindings keep
+ * main's original direct-pointer/callback behavior.
  */
-static int
-can_be_opt(const char *opt)
-{
-    size_t i = 0;
-    if (!opt)
-	return 0;
-    if (!strlen(opt))
-	return 0;
-    if (opt[0] != '-')
-	return 0;
-    if (BU_STR_EQUAL(opt, "-"))
-	return 0;
-    for (i = 1; i < strlen(opt); i++) {
-	if (isspace(opt[i]))
-	    return 0;
-    }
-    return 1;
-}
-
-
 int
-bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct bu_opt_desc *ds)
+bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv,
+	const struct bu_opt_desc *ds)
 {
-    size_t i = 0;
-    size_t j = 0;
-    int ret_argc = 0;
-    struct bu_ptbl known_args = BU_PTBL_INIT_ZERO;
-    struct bu_ptbl unknown_args = BU_PTBL_INIT_ZERO;
+    struct bu_cmd_schema schema;
+    struct bu_cmd_option *options;
+    struct bu_cmd_parse_binding *bindings;
+    size_t count = 0;
+    int ret;
 
     if (!argv || !ds)
 	return -1;
+    while (!opt_desc_is_null(&ds[count]))
+	count++;
 
-    /* Now identify opt/arg pairs.*/
-    while (i < (size_t)argc) {
-	int desc_found = 0;
-	int desc_ind = 0;
-	int opt_cnt = 0;
-	const char *eq_arg = NULL;
-	const struct bu_opt_desc *desc = NULL;
-	struct bu_ptbl opts = BU_PTBL_INIT_ZERO;
+    options = (struct bu_cmd_option *)bu_calloc(count + 1,
+	sizeof(*options), "bu_opt schema adapter options");
+    bindings = (struct bu_cmd_parse_binding *)bu_calloc(count + 1,
+	sizeof(*bindings), "bu_opt schema adapter bindings");
 
-	/* If argv[i] isn't an option, stick the argv entry (and any
-	 * immediately following non-option entries) into the unknown
-	 * args table
-	 */
-	if (!can_be_opt(argv[i])) {
-	    bu_ptbl_ins(&unknown_args, (long *)argv[i]);
-	    i++;
-	    while (i < argc && !can_be_opt(argv[i])) {
-		bu_ptbl_ins(&unknown_args, (long *)argv[i]);
-		i++;
-	    }
-	    continue;
-	}
-
-	/* Now we're past the easy case, and whether something is an
-	 * option or an argument depends on context. argv[i] is at
-	 * least a possibility for a valid option, so the first order
-	 * of business is to determine if it is one.
-	 */
-
-	/* It may be that an = has been used instead of a space.
-	 * Handle that, and strip leading '-' characters.  Short-opt
-	 * options may be grouped onto one shared dash (e.g. rm -rf),
-	 * so opt_process can return more than one option. Also
-	 * handled here, short-opt options may not have a space
-	 * between their option and the argument.
-	 */
-	opt_cnt = opt_process(&opts, &eq_arg, argv[i], ds);
-	if (opt_cnt == -1) {
-	    /* opt_process returns -1 when grouped short flags contain an
-	     * unrecognized character (e.g. "-print" where 'p' and 'r' are
-	     * known flags but 'i' is not).  Treat the whole argument as an
-	     * unknown positional arg rather than a fatal parse error so that
-	     * command sub-arguments that happen to look like option strings
-	     * (as produced by tools such as the mged "search" command) pass
-	     * through unmolested.
-	     */
-	    for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
-		char *o = (char *)BU_PTBL_GET(&opts, j);
-		bu_free(o, "free arg cpy");
-	    }
-	    bu_ptbl_free(&opts);
-	    bu_ptbl_ins(&unknown_args, (long *)argv[i]);
-	    i++;
-	    continue;
-
-	} else if (opt_cnt == 0) {
-	    /* skip, fall through */
-	    i++;
-
-	} else if (opt_cnt > 1) {
-
-	    for (j = 0; j < (size_t)opt_cnt; j++) {
-		int* flag_var;
-		char* opt = (char*)BU_PTBL_GET(&opts, j);
-		/* Find the corresponding desc - if we're in a
-		 * multiple flag processing situation, we've already
-		 * verified that each entry has a desc.
-		 */
-		desc_ind = 0;
-		desc = &(ds[0]);
-		while (desc && !opt_desc_is_null(desc)) {
-		    if (desc->shortopt && opt[0] == desc->shortopt[0]) {
-			break;
-		    }
-		    desc_ind++;
-		    desc = &(ds[desc_ind]);
-		}
-		/* this is a flag - if we don't have an arg processing
-		 * function, try to set an int
-		 */
-		if (desc->arg_process) {
-		    (void)(*desc->arg_process)(msgs, 0, NULL, desc->set_var);
-		}
-		else {
-		    flag_var = (int*)desc->set_var;
-		    if (flag_var) {
-			*flag_var = 1;
-		    }
-		}
-	    }
-	    /* record the option in known args */
-	    bu_ptbl_ins(&known_args, (long*)argv[i]);
-	    i++;
-
-	} else {
-	    /* should be just one option */
-	    char* opt = NULL;
-	    if (BU_PTBL_LEN(&opts)) {
-		opt = (char*)BU_PTBL_GET(&opts, 0);
-	    }
-
-	    /* Find the corresponding desc, if we have one */
-	    desc = &(ds[0]);
-	    desc_ind = 0;
-	    desc_found = 0;
-	    while (!desc_found && (desc && !opt_desc_is_null(desc))) {
-		if (BU_STR_EQUAL(opt, desc->shortopt) || BU_STR_EQUAL(opt, desc->longopt)) {
-		    desc_found = 1;
-		    continue;
-		}
-		desc_ind++;
-		desc = &(ds[desc_ind]);
-	    }
-
-	    /* If we don't know what we're dealing with, keep going */
-	    if (!desc_found) {
-		/* Since the equals sign is regarded as forcing an
-		 * argument to map to a particular option (and is an
-		 * error if that option isn't supposed to have
-		 * arguments) we pass along the original option
-		 * intact. */
-		bu_ptbl_ins(&unknown_args, (long *)argv[i]);
-		i++;
-
-		/* Do the opts cleanup that would otherwise be done at the end */
-		for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
-		    char *o = (char *)BU_PTBL_GET(&opts, j);
-		    bu_free(o, "free arg cpy");
-		}
-		bu_ptbl_free(&opts);
-
-		continue;
-	    }
-
-	    /* record the option in known args - any remaining
-	     * processing is on args, if any
-	     */
-	    bu_ptbl_ins(&known_args, (long *)argv[i]);
-
-	    /* any remaining processing is on trailing args, if any */
-	    i = i + 1;
-
-	    /* If we might have args and we have a validator function,
-	     * construct the greediest possible interpretation of the
-	     * option description and run the validator to determine
-	     * the number of argv entries associated with this option
-	     * (can_be_opt is not enough if the option is number
-	     * based, since -9 may be both a valid option and a valid
-	     * argument - the validator must make the decision.  If we
-	     * do not have a validator, the best we can do is the
-	     * can_be_opt test as a terminating trigger.
-	     */
-	    if (desc->arg_process) {
-		/* Construct the greedy interpretation of the option argv */
-		int k = 0;
-		int arg_offset = 0;
-		size_t g_argc = argc - i;
-		const char *prev_opt = argv[i-1];
-		const char **g_argv = argv + i;
-		/* If we have an arg hiding in the previous option,
-		 * temporarily rework the argv array for this purpose
-		 */
-		if (eq_arg) {
-		    g_argv--;
-		    g_argv[0] = eq_arg;
-		    g_argc++;
-		}
-		arg_offset = (*desc->arg_process)(msgs, g_argc, g_argv, desc->set_var);
-		if (arg_offset == -1) {
-		    /* This isn't just an unknown option to be passed
-		     * through for possible later processing.  If the
-		     * arg_process callback returns -1, something has
-		     * gone seriously awry and a known-to-be-invalid
-		     * arg was seen.  Fail early and hard.
-		     */
-		    if (msgs) {
-			bu_vls_printf(msgs, "Invalid argument supplied to %s: %s - halting.\n", argv[i-1], argv[i]);
-		    }
-		    bu_ptbl_free(&unknown_args);
-		    bu_ptbl_free(&known_args);
-
-		    for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
-			char *o = (char *)BU_PTBL_GET(&opts, j);
-			bu_free(o, "free arg cpy");
-		    }
-		    bu_ptbl_free(&opts);
-		    return -1;
-		}
-		/* Put the original opt back and adjust the
-		 * arg_offset, if we substituted the eq_arg pointer
-		 * into the argv array
-		 */
-		if (eq_arg) {
-		    /* If the arg_process callback did nothing with
-		     * the arg, but the arg was sent to this option
-		     * with an = assignment, something is wrong - the
-		     * most likely scenario is an = assignment forced
-		     * an argument to be sent to an option that
-		     * doesn't take arguments.
-		     */
-		    if (!arg_offset) {
-			if (msgs) {
-			    bu_vls_printf(msgs, "Option %s did not successfully use the supplied argument %s - halting.\n", argv[i-1], eq_arg);
-			}
-			bu_ptbl_free(&unknown_args);
-			bu_ptbl_free(&known_args);
-			for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
-			    char *o = (char *)BU_PTBL_GET(&opts, j);
-			    bu_free(o, "free arg cpy");
-			}
-			bu_ptbl_free(&opts);
-			return -1;
-		    }
-
-		    g_argv[0] = prev_opt;
-		    if (arg_offset > 0) {
-			arg_offset--;
-		    }
-		}
-		/* If we used any of the argv entries, accumulate them
-		 * for later reordering and increment i */
-		for (k = (int)i; k < (int)(i + arg_offset); k++) {
-		    bu_ptbl_ins(&known_args, (long *)argv[k]);
-		}
-		i = i + arg_offset;
-	    } else {
-		/* no arg_process means this is a flag - try to set an int */
-		int *flag_var = (int *)desc->set_var;
-		if (flag_var)
-		    *flag_var = 1;
-
-		/* If we already got an arg from the equals mechanism
-		 * and we aren't supposed to have one, we're invalid -
-		 * halt.
-		 */
-		if (eq_arg) {
-		    if (msgs) {
-			bu_vls_printf(msgs, "Option %s does not take an argument, but %s was supplied - halting.\n", argv[i-1], eq_arg);
-		    }
-		    bu_ptbl_free(&unknown_args);
-		    bu_ptbl_free(&known_args);
-		    for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
-			char *o = (char *)BU_PTBL_GET(&opts, j);
-			bu_free(o, "free arg cpy");
-		    }
-		    bu_ptbl_free(&opts);
-		    return -1;
-		}
-	    }
-	}
-
-	for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
-	    char *o = (char *)BU_PTBL_GET(&opts, j);
-	    bu_free(o, "free arg cpy");
-	}
-	bu_ptbl_free(&opts);
+    for (size_t i = 0; i < count; i++) {
+	options[i].shortopt = ds[i].shortopt;
+	options[i].longopt = ds[i].longopt;
+	options[i].canonical = !BU_STR_EMPTY(ds[i].longopt) ?
+	    ds[i].longopt : ds[i].shortopt;
+	options[i].argument = ds[i].arg_helpstr;
+	options[i].help = ds[i].help_string;
+	options[i].value_type = ds[i].arg_process ?
+	    BU_CMD_VALUE_CUSTOM : BU_CMD_VALUE_FLAG;
+	options[i].storage_offset = BU_CMD_STORAGE_NONE;
+	options[i].arg_requirement = ds[i].arg_process ?
+	    BU_CMD_ARG_REQUIRED : BU_CMD_ARG_NONE;
+	bindings[i].storage = ds[i].set_var;
+	bindings[i].legacy_process =
+	    (bu_cmd_legacy_process_t)ds[i].arg_process;
     }
 
-    /* Rearrange argv so the unused options are ordered at the front
-     * of the array.
-     */
-    ret_argc = (int)BU_PTBL_LEN(&unknown_args);
-    if (ret_argc > 0) {
-	size_t avc = 0;
-	size_t akc = BU_PTBL_LEN(&known_args);
-	for (avc = 0; avc < (size_t)ret_argc; avc++) {
-	    argv[avc] = (const char *)BU_PTBL_GET(&unknown_args, avc);
-	}
-	/* Put the known option argv pointers at the end of the array,
-	 * in case they are still needed for memory freeing by the
-	 * caller
-	 */
-	for (avc = 0; avc < akc; avc++) {
-	    argv[avc+ret_argc] = (const char *)BU_PTBL_GET(&known_args, avc);
-	}
-    }
-    bu_ptbl_free(&unknown_args);
-    bu_ptbl_free(&known_args);
+    schema.name = "bu_opt";
+    schema.help = NULL;
+    schema.options = options;
+    schema.operands = NULL;
+    schema.parse_policy = BU_CMD_PARSE_INTERSPERSED;
+    schema.validation.custom_validate = NULL;
+    schema.validation.constraints = NULL;
+    schema.validation.context_validate = NULL;
+    schema.operand_groups = NULL;
 
-    return ret_argc;
+    ret = _bu_cmd_schema_parse_bound(&schema, NULL, msgs, (int)argc, argv,
+	bindings, BU_CMD_PARSE_INTERNAL_PASS_UNKNOWN |
+	BU_CMD_PARSE_INTERNAL_LEFTOVERS_FIRST |
+	BU_CMD_PARSE_INTERNAL_LEGACY_SYNTAX);
+
+    bu_free(bindings, "bu_opt schema adapter bindings");
+    bu_free(options, "bu_opt schema adapter options");
+    return ret;
 }
 
 
@@ -2319,9 +817,8 @@ bu_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
     /* Integer RGB is common enough to have one strict parser.  Preserve the
      * older packed float and hexadecimal forms as compatibility fallbacks. */
     consumed = bu_rgb_from_argv(rgb, argc, argv);
-    if (!consumed && bu_str_to_rgb(argv[0], rgb)) {
+    if (!consumed && bu_str_to_rgb(argv[0], rgb))
 	consumed = 1;
-    }
     if (!consumed && argc >= 3) {
 	struct bu_vls tmp_color = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&tmp_color, "%s/%s/%s", argv[0], argv[1], argv[2]);

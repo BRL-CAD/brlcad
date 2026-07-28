@@ -2134,7 +2134,8 @@ static const struct bu_cmd_option edit_options[] = {
     BU_CMD_FLAG("i", "intermediate", struct ged_edit_ctx, flag_i, "Intermediate: apply to temp buffer only (no disk write)"),
     {NULL, "list-all-prim-ops", "list-all-prim-ops", "[=json]", "List all available primitive edit operations (use =json for JSON)",
 	BU_CMD_VALUE_CUSTOM, offsetof(struct ged_edit_ctx, list_all_prim_ops), _parse_edit_list_all, NULL, NULL, NULL,
-	0, 0, NULL, BU_CMD_ARG_OPTIONAL, &edit_attached_only_arg_shape, NULL, NULL},
+	0, 0, NULL, BU_CMD_ARG_OPTIONAL, &edit_attached_only_arg_shape, NULL, NULL,
+	BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_CUSTOM("O", "option", struct ged_edit_ctx, options, _parse_ged_edit_opt, "key=value", "Pass dynamic option to edit session"),
     BU_CMD_OPTION_NULL
 };

@@ -11,6 +11,8 @@ maintained option tables.
 The native descriptions can express:
 
 - ordinary options, aliases, required or optional arguments, and conflicts;
+- declarative numeric ranges whose bounds are shared by parsing, validation,
+  linting, and machine-readable publication;
 - scalar and multi-token argument shapes, bounded repetitions, keywords, and
   repeated heterogeneous operand groups such as `(operation, object)+`;
 - typed positional operands such as database paths, files, colors, vectors,
@@ -107,6 +109,30 @@ At the lower level, `bu_cmd_schema_lint` checks one flat schema and
 The libged command-analysis and completion-corpus tests audit published JSON,
 completion replacement ranges, candidate ordering, round-trip parsing, nested
 commands, parser-owned grammars, and semantic states against representative
-databases and manual examples.  The static no-legacy check ensures internal
-commands use `bu_cmd_schema` rather than the deprecated `bu_opt` compatibility
-API.
+databases and manual examples.  The static option-table check ensures libged
+commands publish full `bu_cmd_schema` descriptions rather than using the
+option-only `bu_opt` facade internally.
+
+## Choosing between `bu_opt` and `bu_cmd_schema`
+
+`bu_opt` remains the concise public API for conventional option-only parsing.
+Its descriptor table and callback readers are translated to the same parser
+engine used by `bu_cmd_schema`, preserving the established API and argument
+behavior without maintaining a second parser.  It is a good fit when a caller
+only needs to consume options and retain the leftover arguments.
+
+Use `bu_cmd_schema` when the command also needs typed operands, subcommands,
+completion, incremental validation, linting, JSON publication, aliases,
+constraints, or declarative ranges.  For example, an inclusive integer bound
+is declared directly:
+
+```c
+BU_CMD_INTEGER_RANGE("l", "level", struct args, level,
+    1, 5, "count", "Refinement level")
+```
+
+The parser and validator both enforce the bound, the linter verifies that the
+range is compatible with the value type, and JSON consumers receive the same
+minimum and maximum.  `bu_cmd_schema_parse_known` supports layered parsers by
+consuming recognized options while leaving unknown words in the operand
+suffix.

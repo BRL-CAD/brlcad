@@ -224,7 +224,8 @@ static const struct bu_cmd_option bot_help_options[] = {
 };
 static const struct bu_cmd_operand bot_get_operands[] = {
     {"property", 1, 1, "BoT property to query", BU_CMD_VALUE_STRING,
-	bot_get_property_validate, NULL, bot_get_properties, NULL, NULL},
+	bot_get_property_validate, NULL, bot_get_properties, NULL, NULL,
+	BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
 	"BoT object", "ged.db_object"),
     BU_CMD_OPERAND_NULL

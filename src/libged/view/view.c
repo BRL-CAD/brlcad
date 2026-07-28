@@ -686,7 +686,7 @@ static const struct bu_cmd_option view_root_options[] = {
 	"Increase output detail"),
     {"V", "view", "view", "name", "Target view name", BU_CMD_VALUE_VLS,
 	offsetof(struct view_root_args, vname), NULL, NULL, "ged.view", NULL, 0,
-	0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+	0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_OPTION_NULL
 };
 GED_EXPORT const struct bu_cmd_schema ged_view_native_schema = {
@@ -1026,7 +1026,7 @@ static const struct bu_cmd_option autoview_schema_options[] = {
     BU_CMD_VALUE_UNBOUND("s", "scale", "scale", BU_CMD_VALUE_NUMBER, "number", "View scale"),
     {"V", "view", "view", "name", "Target view", BU_CMD_VALUE_STRING,
 	BU_CMD_STORAGE_NONE, NULL, NULL, "ged.view", NULL, 0, 0, NULL,
-	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_OPTION_NULL
 };
 static const struct bu_cmd_operand autoview_operands[] = {

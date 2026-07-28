@@ -20,6 +20,7 @@
 
 struct test_args {
     int list_mode;
+    int level;
 };
 
 struct short_only_args {
@@ -76,7 +77,7 @@ static const struct bu_cmd_option test_options[] = {
     {NULL, "list", "list", "[=json]", "List values, optionally as JSON",
 	BU_CMD_VALUE_CUSTOM, offsetof(struct test_args, list_mode), list_mode_parse,
 	NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_OPTIONAL,
-	&attached_only_shape, NULL, NULL},
+	&attached_only_shape, NULL, NULL, BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_OPTION_NULL
 };
 
@@ -102,6 +103,16 @@ test_context_validate(const struct bu_cmd_schema *schema, size_t argc,
 static const struct bu_cmd_schema test_schema = {
     "test", "Native command-schema regression fixture", test_options, NULL,
     BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONTEXT_VALIDATOR(test_context_validate)
+};
+
+static const struct bu_cmd_option ranged_options[] = {
+    BU_CMD_INTEGER_RANGE("l", "level", struct test_args, level, 1, 5,
+	"level", "Level from one through five"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema ranged_schema = {
+    "ranged", "Declarative numeric range fixture", ranged_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static int
@@ -166,7 +177,7 @@ main(int UNUSED(argc), char **UNUSED(argv))
 {
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct bu_cmd_validate_result result = BU_CMD_VALIDATE_RESULT_NULL;
-    struct test_args args = {0};
+    struct test_args args = {0, 0};
     struct short_only_args short_only_args = {0};
     int context_calls = 0;
     const char *bare[] = {"--list"};
@@ -179,6 +190,11 @@ main(int UNUSED(argc), char **UNUSED(argv))
     const char *group_partial[] = {"target", "u"};
     const char *group_complete[] = {"target", "u", "member"};
     const char *group_invalid[] = {"target", "q", "member"};
+    const char *range_low[] = {"--level", "0"};
+    const char *range_high[] = {"--level", "6"};
+    const char *range_valid[] = {"--level", "5"};
+    const char *range_parse_low[] = {"--level", "0"};
+    const char *known_layer[] = {"--foreign", "--level", "3", "word"};
 
     if (!BU_STR_EQUAL(bu_cmd_option_canonical(&short_only_options[0]), "s") ||
 	bu_cmd_schema_parse(&short_only_schema, &short_only_args, &msg, 1, short_only) != 1 ||
@@ -290,6 +306,48 @@ main(int UNUSED(argc), char **UNUSED(argv))
     }
     bu_cmd_validate_result_clear(&result);
 
+    if (bu_cmd_schema_validate(&ranged_schema, 2, range_low, 2, &result) != 0 ||
+	result.state != BU_CMD_VALIDATE_INVALID) {
+	bu_log("declarative integer range accepted a value below its minimum\n");
+	bu_cmd_validate_result_clear(&result);
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_cmd_validate_result_clear(&result);
+    if (bu_cmd_schema_validate(&ranged_schema, 2, range_high, 2, &result) != 0 ||
+	result.state != BU_CMD_VALIDATE_INVALID) {
+	bu_log("declarative integer range accepted a value above its maximum\n");
+	bu_cmd_validate_result_clear(&result);
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_cmd_validate_result_clear(&result);
+    args.level = 4;
+    if (bu_cmd_schema_parse(&ranged_schema, &args, &msg, 2,
+	range_parse_low) != -1 || args.level != 4) {
+	bu_log("execution parser accepted or stored an out-of-range integer\n");
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_trunc(&msg, 0);
+    if (bu_cmd_schema_parse_complete(&ranged_schema, &args, &msg, 2,
+	range_valid) != 2 || args.level != 5) {
+	bu_log("declarative integer range rejected or failed to store a valid value\n");
+	bu_vls_free(&msg);
+	return 1;
+    }
+    args.level = 0;
+    if (bu_cmd_schema_parse_known(&ranged_schema, &args, &msg, 4,
+	known_layer) != 2 || args.level != 3 ||
+	!BU_STR_EQUAL(known_layer[0], "--level") ||
+	!BU_STR_EQUAL(known_layer[1], "3") ||
+	!BU_STR_EQUAL(known_layer[2], "--foreign") ||
+	!BU_STR_EQUAL(known_layer[3], "word")) {
+	bu_log("known-option parsing did not preserve layered-parser leftovers\n");
+	bu_vls_free(&msg);
+	return 1;
+    }
+
     if (bu_cmd_schema_validate(&grouped_schema, 2, group_partial, 2, &result) != 0 ||
 	result.state != BU_CMD_VALIDATE_INCOMPLETE ||
 	result.completion_type != BU_CMD_VALUE_DB_OBJECT) {
@@ -329,8 +387,27 @@ main(int UNUSED(argc), char **UNUSED(argv))
 	}
 	bu_free(schema_json, "grouped schema JSON");
     }
+    {
+	char *schema_json = bu_cmd_schema_describe_json(&ranged_schema);
+	if (!schema_json ||
+	    !strstr(schema_json, "\"range\":{\"kind\":\"integer\"") ||
+	    !strstr(schema_json, "\"minimum\":1") ||
+	    !strstr(schema_json, "\"maximum\":5")) {
+	    bu_log("declarative numeric range is missing from schema JSON\n");
+	    if (schema_json)
+		bu_free(schema_json, "ranged schema JSON");
+	    bu_vls_free(&msg);
+	    return 1;
+	}
+	bu_free(schema_json, "ranged schema JSON");
+    }
     if (bu_cmd_schema_lint(&grouped_schema, &msg) != 0) {
 	bu_log("valid repeated operand schema failed lint: %s\n", bu_vls_addr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    if (bu_cmd_schema_lint(&ranged_schema, &msg) != 0) {
+	bu_log("valid declarative range failed lint: %s\n", bu_vls_addr(&msg));
 	bu_vls_free(&msg);
 	return 1;
     }

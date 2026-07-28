@@ -62,27 +62,14 @@ struct draw2_args {
     const char *view;
 };
 
-static int
-draw2_mode_validate(struct bu_vls *msg, const char *arg)
-{
-    int mode = -1;
-
-    if (!bu_cmd_integer_from_str(&mode, arg) || mode < 0 || mode > 5) {
-	if (msg)
-	    bu_vls_printf(msg, "draw mode must be an integer from 0 through 5");
-	return -1;
-    }
-    return 0;
-}
-
 static const struct bu_cmd_option draw2_schema_options[] = {
     BU_CMD_FLAG("h", "help", struct draw2_args, help, "Print help and exit"),
     BU_CMD_ALIAS_SHORT("?", "help", 0),
     {"m", "mode", "mode", "0..5",
 	"0=wireframe; 1=shaded BoTs; 2=shaded; 3=evaluated; 4=hidden-line; 5=points",
-	BU_CMD_VALUE_INTEGER, offsetof(struct draw2_args, mode), NULL,
-	draw2_mode_validate, "ged.draw_mode", NULL, 0, 0, NULL,
-	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+	BU_CMD_VALUE_INTEGER, offsetof(struct draw2_args, mode), NULL, NULL,
+	"ged.draw_mode", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL,
+	BU_CMD_INTEGER_RANGE_INIT(0, 5)},
     BU_CMD_FLAG(NULL, "wireframe", struct draw2_args, wireframe, "Draw using only wireframes (mode = 0)"),
     BU_CMD_FLAG(NULL, "shaded", struct draw2_args, shaded, "Shade BoTs, B-reps, and polysolids (mode = 1)"),
     BU_CMD_FLAG(NULL, "shaded-all", struct draw2_args, shaded_all, "Shade all solids, not evaluated (mode = 2)"),
@@ -99,7 +86,8 @@ static const struct bu_cmd_option draw2_schema_options[] = {
     BU_CMD_FLAG("R", "no-autoview", struct draw2_args, no_autoview, "Do not automatically fit an empty scene"),
     {"V", "view", "view", "name", "Draw on the named view",
 	BU_CMD_VALUE_STRING, offsetof(struct draw2_args, view), NULL, NULL,
-	"ged.view", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+	"ged.view", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL,
+	BU_CMD_VALUE_RANGE_NONE},
     BU_CMD_OPTION_NULL
 };
 static const struct bu_cmd_operand draw2_schema_operands[] = {

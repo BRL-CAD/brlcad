@@ -140,7 +140,7 @@ static const struct bu_cmd_schema gist_schema = {
     gist_options,
     gist_operands,
     BU_CMD_PARSE_INTERSPERSED,
-    NULL
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 bool Options::readParameters(int argc, const char **argv) {
