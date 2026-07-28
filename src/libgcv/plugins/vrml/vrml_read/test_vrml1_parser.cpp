@@ -20,6 +20,8 @@
 
 #include "common.h"
 
+#include "vmath.h"
+
 #include "vrml1_parser.h"
 
 #include "bu/app.h"
@@ -87,12 +89,12 @@ Switch { whichChild 0x1 }
 
     const vrml1::Node &material = *nodes[0]->children[0];
     const vrml1::Field *diffuse = vrml1::field(material, "diffuseColor");
-    if (!expect(diffuse && diffuse->numbers.size() == 6 && diffuse->numbers[3] == 0.0,
+    if (!expect(diffuse && diffuse->numbers.size() == 6 && NEAR_ZERO(diffuse->numbers[3], SMALL_FASTF),
 	    "material colors were not parsed")) return false;
 
     const vrml1::Node &translation = *nodes[0]->children[1];
     const vrml1::Field *vector = vrml1::field(translation, "translation");
-    if (!expect(vector && vector->numbers.size() == 3 && vector->numbers[2] == 3.0,
+    if (!expect(vector && vector->numbers.size() == 3 && NEAR_EQUAL(vector->numbers[2], 3.0, SMALL_FASTF),
 	    "translation was not parsed")) return false;
 
     const vrml1::Node &face_set = *nodes[0]->children[4];
@@ -103,7 +105,7 @@ Switch { whichChild 0x1 }
 	    "switch children were not parsed")) return false;
 
     const vrml1::Field *matrix = vrml1::field(*nodes[3], "matrix");
-    if (!expect(matrix && matrix->numbers.size() == 16 && matrix->numbers[1] == 0.5,
+    if (!expect(matrix && matrix->numbers.size() == 16 && NEAR_EQUAL(matrix->numbers[1], 0.5, SMALL_FASTF),
 	    "matrix was not parsed")) return false;
     const vrml1::Field *parts = vrml1::field(*nodes[4], "parts");
     if (!expect(parts && parts->symbol == "SIDES|BOTTOM", "bitmask was not parsed")) return false;
