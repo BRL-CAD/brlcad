@@ -126,15 +126,15 @@ static const struct bu_cmd_operand which_operands[] = {
 };
 static const struct bu_cmd_schema which_cmd_schema = {
     "which", "Find regions with specified region IDs", which_options,
-    which_operands, BU_CMD_PARSE_INTERSPERSED, {NULL}
+    which_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema whichid_cmd_schema = {
     "whichid", "Find regions with specified region IDs", which_options,
-    which_operands, BU_CMD_PARSE_INTERSPERSED, {NULL}
+    which_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema whichair_cmd_schema = {
     "whichair", "Find regions with specified air codes", which_options,
-    which_operands, BU_CMD_PARSE_INTERSPERSED, {NULL}
+    which_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

@@ -169,7 +169,7 @@ static const struct bu_cmd_operand mrot_schema_operands[] = {
 };
 static const struct bu_cmd_schema mrot_cmd_schema = {
     "mrot", "Rotate the model view", NULL, mrot_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {mrot_schema_validate}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(mrot_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema *

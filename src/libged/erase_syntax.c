@@ -107,7 +107,7 @@ static const struct bu_cmd_operand erase_legacy_operands[] = {
 GED_EXPORT const struct bu_cmd_schema ged_erase_legacy_schema = {
     "erase", "Erase database paths from the display (legacy form)",
     erase_legacy_options, erase_legacy_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    {erase_legacy_schema_validate}
+    BU_CMD_SCHEMA_CONSTRAINTS(erase_legacy_schema_validate, NULL)
 };
 
 
@@ -126,7 +126,7 @@ static const struct bu_cmd_operand erase_new_operands[] = {
 };
 GED_EXPORT const struct bu_cmd_schema ged_erase_new_schema = {
     "erase", "Erase database paths from the display (new form)",
-    erase_new_options, erase_new_operands, BU_CMD_PARSE_INTERSPERSED, {NULL}
+    erase_new_options, erase_new_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

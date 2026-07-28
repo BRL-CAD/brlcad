@@ -45,7 +45,7 @@ static const struct bu_cmd_operand match_schema_operands[] = {
 };
 static const struct bu_cmd_schema match_cmd_schema = {
     "match", "List database names matching glob expressions", NULL,
-    match_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    match_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

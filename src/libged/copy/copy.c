@@ -44,11 +44,11 @@ static const struct bu_cmd_operand copy_schema_operands[] = {
 };
 static const struct bu_cmd_schema copy_cmd_schema = {
     "copy", "Copy a database object", NULL, copy_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema cp_cmd_schema = {
     "cp", "Copy a database object", NULL, copy_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

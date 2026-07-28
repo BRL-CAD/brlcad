@@ -73,7 +73,7 @@ static const struct bu_cmd_operand killtree_schema_operands[] = {
 static const struct bu_cmd_schema killtree_cmd_schema = {
     "killtree", "Delete database object trees", killtree_schema_options,
     killtree_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

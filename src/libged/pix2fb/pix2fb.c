@@ -129,7 +129,7 @@ static const struct bu_cmd_operand pix2fb_schema_operands[] = {
 };
 static const struct bu_cmd_schema pix2fb_cmd_schema = {
     "pix2fb", "Display a PIX image in the framebuffer", pix2fb_schema_options,
-    pix2fb_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    pix2fb_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void

@@ -85,7 +85,7 @@ static const struct bu_cmd_option native_sequence_options[] = {
 
 static const struct bu_cmd_schema native_sequence_schema = {
     "native_sequence", "Native bounded sequence parser proof", native_sequence_options,
-    NULL, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    NULL, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -105,7 +105,7 @@ static const struct bu_cmd_operand native_rgb_operands[] = {
 
 static const struct bu_cmd_schema native_rgb_schema = {
     "native_rgb", "Native RGB option parser proof", native_rgb_options,
-    native_rgb_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    native_rgb_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -126,7 +126,7 @@ static const struct bu_cmd_operand native_color_operands[] = {
 
 static const struct bu_cmd_schema native_color_schema = {
     "native_color", "Native compatible color parser proof", native_color_options,
-    native_color_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    native_color_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -147,7 +147,7 @@ static const struct bu_cmd_operand native_vector3_operands[] = {
 
 static const struct bu_cmd_schema native_vector3_schema = {
     "native_vector3", "Native finite XYZ vector parser proof", native_vector3_options,
-    native_vector3_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    native_vector3_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -175,7 +175,7 @@ static const struct bu_cmd_option native_scalar_options[] = {
 
 static const struct bu_cmd_schema native_scalar_schema = {
     "native_scalar", "Native standard scalar parser proof", native_scalar_options,
-    NULL, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    NULL, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -194,7 +194,7 @@ static const struct bu_cmd_option native_vocabulary_options[] = {
 
 static const struct bu_cmd_schema native_vocabulary_schema = {
     "native_vocabulary", "Native language and manual-section parser proof",
-    native_vocabulary_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    native_vocabulary_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -216,7 +216,7 @@ static const struct bu_cmd_operand native_cluster_operands[] = {
 
 static const struct bu_cmd_schema native_cluster_schema = {
     "native_cluster", "Native compact flag-cluster proof", native_cluster_options,
-    native_cluster_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    native_cluster_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -240,7 +240,7 @@ static const struct bu_cmd_operand native_interspersed_operands[] = {
 static const struct bu_cmd_schema native_interspersed_schema = {
     "native_interspersed", "Native interspersed-option parser proof",
     native_interspersed_options, native_interspersed_operands,
-    BU_CMD_PARSE_INTERSPERSED, {NULL}
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -251,7 +251,7 @@ static const struct bu_cmd_operand native_raw_operands[] = {
 
 static const struct bu_cmd_schema native_raw_schema = {
     "native_raw", "Native optionless raw-operand proof", NULL,
-    native_raw_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    native_raw_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -275,7 +275,7 @@ static const struct bu_cmd_option native_keyword_options[] = {
 
 static const struct bu_cmd_schema native_keyword_schema = {
     "native_keyword", "Native canonical keyword proof", native_keyword_options,
-    NULL, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    NULL, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -315,16 +315,16 @@ static const struct bu_cmd_schema native_constraint_schema = {
 
 static const struct bu_cmd_schema native_tree_root_schema = {
     "native_tree", "Native command tree proof", NULL, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema native_tree_alpha_schema = {
-    "alpha", "Run alpha", NULL, NULL, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    "alpha", "Run alpha", NULL, NULL, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema native_tree_beta_schema = {
-    "beta", "Run beta", NULL, NULL, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    "beta", "Run beta", NULL, NULL, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema native_tree_group_schema = {
-    "group", "Nested command group", NULL, NULL, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    "group", "Nested command group", NULL, NULL, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_operand native_fixed_tree_root_operands[] = {
     BU_CMD_OPERAND("object", BU_CMD_VALUE_STRING, 1, 1, "Fixed parent operand", NULL),
@@ -332,7 +332,7 @@ static const struct bu_cmd_operand native_fixed_tree_root_operands[] = {
 };
 static const struct bu_cmd_schema native_fixed_tree_root_schema = {
     "native_fixed_tree", "Native fixed-operand tree proof", NULL,
-    native_fixed_tree_root_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    native_fixed_tree_root_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const char *native_tree_beta_aliases[] = {"b", NULL};
 
@@ -593,6 +593,16 @@ audit_schema_completion_roundtrips(struct ged *gedp)
 		return 0;
 	    }
 	    const struct ged_cmd_analysis_token *token = final_analysis_token(&analysis, rebuilt.size());
+	    /* A dash-leading word may be a command-owned subcommand rather
+	     * than an option.  comb's selector-first subtraction form is "-";
+	     * follow the analyzer's published role instead of inferring the
+	     * grammar solely from the first character. */
+	    if (token && token->role == GED_CMD_TOKEN_SUBCOMMAND &&
+		    token->semantic_state == GED_CMD_SEMANTIC_VALID) {
+		pending.push_back(rebuilt);
+		ged_cmd_analysis_clear(&analysis);
+		continue;
+	    }
 	    if (token && token->role == GED_CMD_TOKEN_OPERAND &&
 		    token->semantic_state != GED_CMD_SEMANTIC_INVALID) {
 		ged_cmd_analysis_clear(&analysis);
@@ -827,7 +837,7 @@ main(int ac, char *av[])
 	    "listeval", "paths", "pathsum",
 	    "which_shader", "whatid", "how", "tree",
 	    "who",
-	    "hide", "unhide", "remove", "keep",
+	    "hide", "unhide", "keep",
 	    "rm", "killtree",
 	    "d", "erase",
 	    "comb_color", "copyeval", "copymat",
@@ -3081,6 +3091,83 @@ main(int ac, char *av[])
 	CHECK(member && member->role == GED_CMD_TOKEN_OPERAND &&
 	    member->value_type == BU_CMD_VALUE_DB_OBJECT && member->semantic_state == GED_CMD_SEMANTIC_VALID,
 	    "native comb should classify and validate a member object");
+    }
+    ged_cmd_analysis_clear(&analysis);
+
+    CHECK(ged_cmd_validate(gedp, "comb all.g rm tor.r",
+	std::strlen("comb all.g rm tor.r"), &validation) == 0 &&
+	validation.state == BU_CMD_VALIDATE_VALID,
+	"comb should validate main's object-first command form");
+    ged_cmd_validate_result_clear(&validation);
+
+    CHECK(ged_cmd_validate(gedp, "comb all.g unregion",
+	std::strlen("comb all.g unregion"), &validation) == 0 &&
+	validation.state == BU_CMD_VALIDATE_VALID,
+	"comb should distinguish object-first unregion from the union operator");
+    ged_cmd_validate_result_clear(&validation);
+
+    CHECK(ged_cmd_validate(gedp, "comb rm --comb all.g tor.r",
+	std::strlen("comb rm --comb all.g tor.r"), &validation) == 0 &&
+	validation.state == BU_CMD_VALIDATE_VALID,
+	"comb should validate main's selector-first named command form");
+    ged_cmd_validate_result_clear(&validation);
+
+    CHECK(ged_cmd_validate(gedp, "comb u -C all.g tor.r",
+	std::strlen("comb u -C all.g tor.r"), &validation) == 0 &&
+	validation.state == BU_CMD_VALIDATE_VALID,
+	"comb should validate main's selector-first Boolean operator form");
+    ged_cmd_validate_result_clear(&validation);
+
+    CHECK(ged_cmd_validate(gedp, "comb u -C all.g tor.r -",
+	std::strlen("comb u -C all.g tor.r -"), &validation) == 0 &&
+	validation.state == BU_CMD_VALIDATE_INCOMPLETE,
+	"selector-first comb should require a member after each additional Boolean operator");
+    ged_cmd_validate_result_clear(&validation);
+
+    completion_count = ged_cmd_complete_result(gedp, "comb rm --comb a",
+	std::strlen("comb rm --comb a"), &completion_result);
+    CHECK(completion_result.completion_type == BU_CMD_VALUE_DB_OBJECT &&
+	find_completion(completion_result.completion_candidates,
+	(int)completion_result.completion_count, "all.g") != NULL,
+	"selector-first comb should complete the --comb target as a database object");
+    ged_cmd_completion_result_clear(&completion_result);
+
+    completion_count = ged_cmd_complete_result(gedp, "comb all.g rm t",
+	std::strlen("comb all.g rm t"), &completion_result);
+    CHECK(completion_result.completion_type == BU_CMD_VALUE_DB_OBJECT &&
+	find_completion(completion_result.completion_candidates,
+	(int)completion_result.completion_count, "tor.r") != NULL,
+	"object-first comb rm should complete member database objects");
+    ged_cmd_completion_result_clear(&completion_result);
+
+    CHECK(ged_cmd_analyze(gedp, "comb u --comb all.g tor.r", &analysis) == 0,
+	"selector-first comb analysis should succeed");
+    {
+	const char *input = "comb u --comb all.g tor.r";
+	const struct ged_cmd_analysis_token *target = token_matching(&analysis, input, "all.g");
+	const struct ged_cmd_analysis_token *member = token_matching(&analysis, input, "tor.r");
+	CHECK(target && target->role == GED_CMD_TOKEN_OPTION_ARG &&
+	    target->value_type == BU_CMD_VALUE_DB_OBJECT &&
+	    member && member->role == GED_CMD_TOKEN_OPERAND &&
+	    member->value_type == BU_CMD_VALUE_DB_OBJECT,
+	    "selector-first comb should distinguish its target option from member operands");
+    }
+    ged_cmd_analysis_clear(&analysis);
+
+    CHECK(ged_cmd_analyze(gedp,
+	"comb u --comb all.g tor.r - all.g", &analysis) == 0,
+	"selector-first repeated Boolean-group analysis should succeed");
+    {
+	const char *input = "comb u --comb all.g tor.r - all.g";
+	const struct ged_cmd_analysis_token *operation =
+	    token_matching(&analysis, input, "-");
+	const struct ged_cmd_analysis_token *member =
+	    final_analysis_token(&analysis, std::strlen(input));
+	CHECK(operation && operation->role == GED_CMD_TOKEN_OPERAND &&
+	    operation->value_type == BU_CMD_VALUE_KEYWORD &&
+	    member && member->role == GED_CMD_TOKEN_OPERAND &&
+	    member->value_type == BU_CMD_VALUE_DB_OBJECT,
+	    "repeated comb groups should publish alternating operation/object roles");
     }
     ged_cmd_analysis_clear(&analysis);
 
@@ -6596,19 +6683,6 @@ main(int ac, char *av[])
 	    object_arg && object_arg->role == GED_CMD_TOKEN_OPERAND &&
 	    object_arg->value_type == BU_CMD_VALUE_DB_OBJECT && object_arg->semantic_state == GED_CMD_SEMANTIC_VALID,
 	    "native keep should distinguish its file and database-object operands");
-    }
-    ged_cmd_analysis_clear(&analysis);
-
-    CHECK(ged_cmd_analyze(gedp, "remove all.g tor.r", &analysis) == 0,
-	"native remove analysis should succeed");
-    {
-	const struct ged_cmd_analysis_token *combination = token_matching(&analysis, "remove all.g tor.r", "all.g");
-	const struct ged_cmd_analysis_token *member = token_matching(&analysis, "remove all.g tor.r", "tor.r");
-	CHECK(combination && member && combination->role == GED_CMD_TOKEN_OPERAND &&
-	    member->role == GED_CMD_TOKEN_OPERAND &&
-	    combination->semantic_state == GED_CMD_SEMANTIC_VALID &&
-	    member->semantic_state == GED_CMD_SEMANTIC_VALID,
-	    "native remove should validate each sequential database-object role");
     }
     ged_cmd_analysis_clear(&analysis);
 

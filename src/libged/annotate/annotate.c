@@ -165,7 +165,7 @@ static const struct bu_cmd_operand annotate_schema_operands[] = {
 };
 static const struct bu_cmd_schema annotate_cmd_schema = {
     "annotate", "Create an annotation for objects", annotate_schema_options,
-    annotate_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    annotate_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

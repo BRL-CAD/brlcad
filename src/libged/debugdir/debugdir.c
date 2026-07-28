@@ -55,7 +55,7 @@ ged_debugdir_core(struct ged *gedp, int argc, const char *argv[])
 static const struct bu_cmd_schema debugdir_cmd_schema = {
     "debugdir", "Print the database directory", NULL, NULL,
     BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #define GED_DEBUGDIR_COMMANDS(X, XID) \

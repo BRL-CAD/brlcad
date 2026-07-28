@@ -3592,7 +3592,7 @@ static const struct bu_cmd_operand joint_file[] = {
 
 #define JOINT_SCHEMA(_id, _name, _help, _ops) \
     static const struct bu_cmd_schema _id##_schema = { \
-	_name, _help, NULL, _ops, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL} \
+	_name, _help, NULL, _ops, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
     }
 JOINT_SCHEMA(joint_root, "joint", "Load, inspect, solve, and move articulated joints", NULL);
 JOINT_SCHEMA(joint_help, "?", "List joint commands", joint_args);

@@ -187,7 +187,7 @@ static const struct bu_cmd_operand tra_schema_operands[] = {
 };
 static const struct bu_cmd_schema tra_cmd_schema = {
     "tra", "Translate the current view", tra_schema_options, tra_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, {tra_schema_validate}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(tra_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema *

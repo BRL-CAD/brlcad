@@ -44,7 +44,7 @@ static const struct bu_cmd_operand log_operands[] = {
 
 static const struct bu_cmd_schema log_cmd_schema = {
     "log", "Manage the libged log buffer", NULL, log_operands,
-    BU_CMD_PARSE_INTERSPERSED, {NULL}
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

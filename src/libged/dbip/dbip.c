@@ -35,13 +35,13 @@
 static const struct bu_cmd_schema dbip_cmd_schema = {
     "dbip", "Report the current database instance pointer", NULL, NULL,
     BU_CMD_PARSE_INTERSPERSED,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static const struct bu_cmd_schema get_dbip_cmd_schema = {
     "get_dbip", "Report the current database instance pointer", NULL, NULL,
     BU_CMD_PARSE_INTERSPERSED,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

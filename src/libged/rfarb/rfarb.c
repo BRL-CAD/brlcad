@@ -289,7 +289,7 @@ static const struct bu_cmd_operand rfarb_schema_operands[] = {
 };
 static const struct bu_cmd_schema rfarb_cmd_schema = {
     "rfarb", "Create an ARB from a point and plane angles", NULL,
-    rfarb_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    rfarb_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static const struct bu_cmd_schema *

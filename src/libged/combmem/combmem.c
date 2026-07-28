@@ -244,7 +244,7 @@ static const struct bu_cmd_operand combmem_schema_operands[] = {
 };
 static const struct bu_cmd_schema combmem_cmd_schema = {
     "combmem", "Inspect or replace combination members", combmem_schema_options,
-    combmem_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {combmem_schema_validate}
+    combmem_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(combmem_schema_validate, NULL)
 };
 
 

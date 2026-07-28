@@ -600,9 +600,10 @@ ged_native_schema_lint_node(const char *path, const struct bu_cmd_schema *schema
 			    path, operand->name, (int)operand->shape->kind);
 		    failures++;
 		}
-		if (operand->shape->min_tokens != 1 || operand->shape->max_tokens != 1) {
+		if (operand->shape->max_tokens != BU_CMD_COUNT_UNLIMITED &&
+		    operand->shape->min_tokens > operand->shape->max_tokens) {
 		    if (msgs)
-			bu_vls_printf(msgs, "%s: native operand \"%s\" shape must describe one token\n",
+			bu_vls_printf(msgs, "%s: native operand \"%s\" has an invalid shape range\n",
 			    path, operand->name);
 		    failures++;
 		}

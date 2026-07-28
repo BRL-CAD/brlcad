@@ -181,7 +181,7 @@ static const struct bu_cmd_operand rtwizard_schema_operands[] = {
 };
 static const struct bu_cmd_schema rtwizard_cmd_schema = {
     "rtwizard", "Launch rtwizard for the current view", NULL,
-    rtwizard_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    rtwizard_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #define GED_RTWIZARD_COMMANDS(X, XID) \

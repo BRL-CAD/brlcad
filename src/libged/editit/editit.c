@@ -104,7 +104,7 @@ editit_schema_validate(const struct bu_cmd_schema *schema, size_t argc, const ch
 
 static const struct bu_cmd_schema editit_cmd_schema = {
     "editit", "Edit a file with the configured editor", editit_schema_options,
-    editit_schema_operands, BU_CMD_PARSE_INTERSPERSED, {editit_schema_validate}
+    editit_schema_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(editit_schema_validate, NULL)
 };
 
 static void

@@ -132,7 +132,7 @@ static const struct bu_cmd_operand unhide_schema_operands[] = {
 static const struct bu_cmd_schema unhide_cmd_schema = {
     "unhide", "Reveal hidden database objects", NULL,
     unhide_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static const struct bu_cmd_schema *

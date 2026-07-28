@@ -112,7 +112,7 @@ static const struct bu_cmd_operand voxelize_schema_operands[] = {
 };
 static const struct bu_cmd_schema voxelize_cmd_schema = {
     "voxelize", "Voxelize geometry objects", voxelize_schema_options,
-    voxelize_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    voxelize_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

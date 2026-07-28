@@ -52,7 +52,7 @@ static const struct bu_cmd_operand dir2ae_operands[] = {
 
 static const struct bu_cmd_schema dir2ae_cmd_schema = {
     "dir2ae", "Convert a direction vector to azimuth/elevation",
-    dir2ae_options, dir2ae_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    dir2ae_options, dir2ae_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

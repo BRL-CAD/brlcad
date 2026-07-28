@@ -74,7 +74,7 @@ static const struct bu_cmd_operand model2view_schema_operands[] = {
     BU_CMD_OPERAND_NULL
 };
 GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(model2view, 0, 3, GED_SCHEMA_COUNT_NONE)
-static const struct bu_cmd_schema model2view_cmd_schema = {"model2view", "Query the transform or convert a model point", NULL, model2view_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {model2view_schema_validate}};
+static const struct bu_cmd_schema model2view_cmd_schema = {"model2view", "Query the transform or convert a model point", NULL, model2view_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(model2view_schema_validate, NULL)};
 
 #define GED_MODEL2VIEW_COMMANDS(X, XID) \
     X(model2view, ged_model2view_core, GED_CMD_DEFAULT, &model2view_cmd_schema) \

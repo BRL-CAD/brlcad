@@ -263,7 +263,7 @@ static const struct bu_cmd_operand bo_schema_operands[] = {
 };
 static const struct bu_cmd_schema bo_cmd_schema = {
     "bo", "Import or export uniform binary objects", bo_schema_options,
-    bo_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {bo_schema_validate}
+    bo_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(bo_schema_validate, NULL)
 };
 
 

@@ -961,11 +961,29 @@ static const struct bu_cmd_option comb_schema_options[] = {
 static const struct bu_cmd_operand comb_schema_operands[] = {
     BU_CMD_OPERAND("combination", BU_CMD_VALUE_DB_OBJECT, 1, 1,
 	"Combination to create or modify", "ged.db_object"),
-    BU_CMD_OPERAND("operation_members", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
-	"Repeated boolean-operation/member-object pairs", NULL),
     BU_CMD_OPERAND_NULL
 };
 static const char * const comb_op_keywords[] = {"u", "-", "+", NULL};
+static const char * const comb_subtract_aliases[] = {"\\", NULL};
+static const char * const comb_intersect_aliases[] = {"n", "x", NULL};
+static const struct bu_cmd_value_keyword comb_op_keyword_values[] = {
+    {"u", NULL, "Union"},
+    {"-", comb_subtract_aliases, "Subtract"},
+    {"+", comb_intersect_aliases, "Intersect"},
+    {NULL, NULL, NULL}
+};
+static const struct bu_cmd_operand comb_operation_member_roles[] = {
+    BU_CMD_OPERAND_KEYWORD_VALUES("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Boolean operation", NULL, comb_op_keyword_values),
+    BU_CMD_OPERAND("member", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Member object", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand_group comb_expression_groups[] = {
+    BU_CMD_OPERAND_GROUP("boolean_expression", comb_operation_member_roles, 0,
+	BU_CMD_COUNT_UNLIMITED, "Repeated Boolean-operation/member pairs"),
+    BU_CMD_OPERAND_GROUP_NULL
+};
 
 static void
 comb_operation_candidates(struct bu_cmd_validate_result *result, const char *prefix)
@@ -1006,9 +1024,7 @@ static int
 comb_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
     size_t operands = 0;
-    size_t previous_operands = 0;
     int set_comb = 0;
     int set_region = 0;
     int wrap = 0;
@@ -1016,12 +1032,6 @@ comb_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
     int lift_region = 0;
     int decimate = 0;
     int require_new = 0;
-    int ret = 0;
-
-    flat.validation.custom_validate = NULL;
-    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
-	return ret;
 
     set_comb = bu_cmd_schema_option_present(schema, argc, argv, "c");
     set_region = bu_cmd_schema_option_present(schema, argc, argv, "r");
@@ -1045,21 +1055,6 @@ comb_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
     if (!operands || wrap || flatten || lift_region || decimate)
 	return 0;
 
-    /* Every accepted prefix must already contain complete, valid operation
-     * tokens.  The cursor token is handled below so a user may still edit an
-     * operation prefix without the preceding pair being misclassified. */
-    for (size_t i = 0; i < cursor_arg; i++) {
-	size_t before = bu_cmd_schema_operand_count(schema, i, argv);
-	size_t after = bu_cmd_schema_operand_count(schema, i + 1, argv);
-	if (after == before || before == 0 || (before - 1) % 2)
-	    continue;
-	if (db_str2op(argv[i]) == DB_OP_NULL) {
-	    comb_validation_result(result, BU_CMD_VALIDATE_INVALID, i,
-		BU_CMD_VALUE_KEYWORD, "invalid boolean operation", NULL);
-	    return 0;
-	}
-    }
-
     if (operands == 1) {
 	if (!set_comb && !set_region && !require_new && cursor_arg >= argc) {
 	    comb_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, argc,
@@ -1068,30 +1063,6 @@ comb_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	}
 	return 0;
     }
-
-    if (cursor_arg >= argc) {
-	if ((operands - 1) % 2) {
-	    comb_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, argc,
-		BU_CMD_VALUE_DB_OBJECT, "member object expected", "ged.db_object");
-	}
-	return 0;
-    }
-
-    previous_operands = bu_cmd_schema_operand_count(schema, cursor_arg, argv);
-    if (previous_operands < 1)
-	return 0;
-    if ((previous_operands - 1) % 2 == 0) {
-	const char *operation = argv[cursor_arg];
-	bu_cmd_validate_state_t state = db_str2op(operation) != DB_OP_NULL ?
-	    BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INVALID;
-	comb_validation_result(result, state, cursor_arg, BU_CMD_VALUE_KEYWORD,
-	    state == BU_CMD_VALIDATE_VALID ? "boolean operation" : "invalid boolean operation", NULL);
-	comb_operation_candidates(result, operation);
-	return 0;
-    }
-
-    comb_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
-	BU_CMD_VALUE_DB_OBJECT, "member object", "ged.db_object");
     return 0;
 }
 
@@ -1111,11 +1082,12 @@ static const struct bu_cmd_constraint comb_schema_constraints[] = {
 static const struct bu_cmd_schema comb_cmd_schema = {
     "comb", "Create or modify combinations", comb_schema_options,
     comb_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_CONSTRAINTS(comb_schema_validate, comb_schema_constraints)
+    BU_CMD_SCHEMA_GROUPS(comb_schema_validate, comb_schema_constraints,
+	comb_expression_groups)
 };
 
 static const struct bu_cmd_option comb_tree_root_options[] = {
-    BU_CMD_FLAG_UNBOUND("h", "help", "h", "Print command help"),
+    BU_CMD_FLAG_UNBOUND("h", "help", "help", "Print command help"),
     BU_CMD_ALIAS_SHORT("?", "help", 1),
     BU_CMD_OPTION_NULL
 };
@@ -1130,8 +1102,8 @@ static const struct bu_cmd_schema comb_tree_root_schema = {
     BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_operand comb_tree_rm_operands[] = {
-	BU_CMD_OPERAND("member", BU_CMD_VALUE_RAW, 1,
-	BU_CMD_COUNT_UNLIMITED, "Command arguments", NULL),
+	BU_CMD_OPERAND("member", BU_CMD_VALUE_DB_OBJECT, 1,
+	BU_CMD_COUNT_UNLIMITED, "Members to remove", "ged.db_object"),
 	BU_CMD_OPERAND_NULL
 };
 static const struct bu_cmd_schema comb_tree_rm_schema = {
@@ -1174,6 +1146,90 @@ static const struct bu_cmd_tree comb_tree = {
     BU_CMD_TREE_CHILD_AFTER_FIXED_OPERANDS
 };
 
+static const struct bu_cmd_option comb_selector_options[] = {
+    {"C", "comb", "comb", "combination", "Combination to operate on",
+	BU_CMD_VALUE_DB_OBJECT, BU_CMD_STORAGE_NONE, NULL, NULL,
+	"ged.db_object", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED,
+	NULL, NULL, NULL},
+    BU_CMD_OPTION_NULL
+};
+static const char * const comb_selector_required[] = {"comb", NULL};
+static const struct bu_cmd_constraint comb_selector_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(comb_selector_required, 1, 1,
+	"-C or --comb is required in selector-first form"),
+    BU_CMD_CONSTRAINT_NULL
+};
+static const struct bu_cmd_operand comb_selector_rm_operands[] = {
+    BU_CMD_OPERAND("member", BU_CMD_VALUE_DB_OBJECT, 1,
+	BU_CMD_COUNT_UNLIMITED, "Members to remove", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand comb_selector_operator_operands[] = {
+    BU_CMD_OPERAND("member", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Member for the selected Boolean operator", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema comb_selector_rm_schema = {
+    "rm", "Remove members from a combination", comb_selector_options,
+    comb_selector_rm_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, comb_selector_constraints)
+};
+#define COMB_SELECTOR_ACTION_SCHEMA(_id, _name, _help) \
+    static const struct bu_cmd_schema _id = { \
+	_name, _help, comb_selector_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST, \
+	BU_CMD_SCHEMA_CONSTRAINTS(NULL, comb_selector_constraints) \
+    }
+COMB_SELECTOR_ACTION_SCHEMA(comb_selector_wrap_schema, "wrap", "Wrap a combination");
+COMB_SELECTOR_ACTION_SCHEMA(comb_selector_flatten_schema, "flatten", "Flatten a combination");
+COMB_SELECTOR_ACTION_SCHEMA(comb_selector_lift_schema, "lift", "Lift a region to a combination");
+COMB_SELECTOR_ACTION_SCHEMA(comb_selector_region_schema, "region", "Set the region flag");
+COMB_SELECTOR_ACTION_SCHEMA(comb_selector_unregion_schema, "unregion", "Clear the region flag");
+COMB_SELECTOR_ACTION_SCHEMA(comb_selector_decimate_schema, "decimate", "Decimate BoT members");
+#undef COMB_SELECTOR_ACTION_SCHEMA
+#define COMB_SELECTOR_OPERATOR_SCHEMA(_id, _name, _help) \
+    static const struct bu_cmd_schema _id = { \
+	_name, _help, comb_selector_options, comb_selector_operator_operands, \
+	BU_CMD_PARSE_OPTIONS_FIRST, \
+	BU_CMD_SCHEMA_GROUPS(NULL, comb_selector_constraints, comb_expression_groups) \
+    }
+COMB_SELECTOR_OPERATOR_SCHEMA(comb_selector_union_schema, "u", "Union members into a combination");
+COMB_SELECTOR_OPERATOR_SCHEMA(comb_selector_subtract_schema, "-", "Subtract members from a combination");
+COMB_SELECTOR_OPERATOR_SCHEMA(comb_selector_intersect_schema, "+", "Intersect members with a combination");
+#undef COMB_SELECTOR_OPERATOR_SCHEMA
+
+static const struct bu_cmd_schema comb_selector_root_schema = {
+    "comb", "Select an operation before its target combination", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_tree_node comb_selector_subcommands[] = {
+    BU_CMD_TREE_NODE(&comb_selector_rm_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&comb_selector_wrap_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&comb_selector_flatten_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&comb_selector_lift_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&comb_selector_region_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&comb_selector_unregion_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&comb_selector_decimate_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&comb_selector_union_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&comb_selector_subtract_schema, comb_subtract_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&comb_selector_intersect_schema, comb_intersect_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree comb_selector_tree = {
+    &comb_selector_root_schema, comb_selector_subcommands,
+    BU_CMD_TREE_CHILD_FIRST
+};
+
 static void
 comb_tree_show_help(struct ged *gedp)
 {
@@ -1205,30 +1261,97 @@ comb_dispatch_modern(struct ged *gedp, int argc, const char **argv)
     return BRLCAD_ERROR;
 }
 
+static const struct ged_cmd_native_form comb_native_forms[] = {
+    {"legacy", &comb_cmd_schema, NULL},
+    {"object_first", NULL, &comb_tree},
+    {"selector_first", NULL, &comb_selector_tree},
+    {NULL, NULL, NULL}
+};
+
+static int
+comb_named_command_prefix(const char *word)
+{
+    static const char * const commands[] = {
+	"rm", "wrap", "flatten", "lift", "region", "unregion", "decimate", NULL
+    };
+    size_t len = word ? strlen(word) : 0;
+
+    if (!len)
+	return 0;
+    for (size_t i = 0; commands[i]; i++)
+	if (!strncmp(commands[i], word, len))
+	    return 1;
+    return 0;
+}
+
+static int
+comb_selector_prefix(const char *word)
+{
+    size_t len = word ? strlen(word) : 0;
+
+    if (!len)
+	return 0;
+    if ((len <= strlen("-C") && !strncmp("-C", word, len)) ||
+	(len <= strlen("--comb") && !strncmp("--comb", word, len)))
+	return 1;
+    return !strncmp(word, "-C=", strlen("-C=")) ||
+	!strncmp(word, "--comb=", strlen("--comb="));
+}
+
+static int
+comb_operator_token(const char *word)
+{
+    return BU_STR_EQUAL(word, "u") || BU_STR_EQUAL(word, "-") ||
+	BU_STR_EQUAL(word, "+") || BU_STR_EQUAL(word, "\\") ||
+	BU_STR_EQUAL(word, "n") || BU_STR_EQUAL(word, "x");
+}
+
+static const struct ged_cmd_native_form *
+comb_select_native_form(const struct ged *UNUSED(gedp), size_t argc,
+	const char * const *argv)
+{
+    const char *first = argc > 1 && argv[1] ? argv[1] : "";
+    const char *second = argc > 2 && argv[2] ? argv[2] : "";
+    int first_is_selector = comb_command_id(first) != COMB_COMMAND_NONE ||
+	comb_operator_token(first);
+
+    if (first_is_selector && (argc == 2 || comb_selector_prefix(second)))
+	return &comb_native_forms[2];
+    /* A Boolean operator wins the same ambiguity resolution used by
+     * execution.  In particular, "u" is the union operator, not a prefix of
+     * the "unregion" object-first command. */
+    if (!comb_operator_token(second) && comb_named_command_prefix(second))
+	return &comb_native_forms[1];
+    return &comb_native_forms[0];
+}
+
 static int
 comb_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
 	struct ged_cmd_validate_result *result)
 {
-    return ged_cmd_tree_validate(gedp, &comb_tree, input, cursor_pos, result);
+    return ged_cmd_native_forms_validate(gedp, comb_native_forms,
+	comb_select_native_form, input, cursor_pos, result);
 }
 
 static int
 comb_grammar_analyze(struct ged *gedp, const char *input,
 	struct ged_cmd_analysis *analysis)
 {
-    return ged_cmd_tree_analyze(gedp, &comb_tree, input, analysis);
+    return ged_cmd_native_forms_analyze(gedp, comb_native_forms,
+	comb_select_native_form, input, analysis);
 }
 
 static char *
 comb_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&comb_tree);
+    return ged_cmd_native_forms_describe_json("comb",
+	"Create or operate on a combination", comb_native_forms);
 }
 
 static int
 comb_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&comb_tree, msgs);
+    return ged_cmd_native_forms_lint("comb", comb_native_forms, msgs);
 }
 
 static const struct ged_cmd_grammar comb_grammar = {

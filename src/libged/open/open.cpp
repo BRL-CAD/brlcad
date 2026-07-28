@@ -63,15 +63,15 @@ static const struct bu_cmd_operand open_operands[] = {
 
 static const struct bu_cmd_schema open_cmd_schema = {
     "open", "Open a geometry database", open_schema_options, open_operands,
-    BU_CMD_PARSE_INTERSPERSED, {NULL}
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema opendb_cmd_schema = {
     "opendb", "Open a geometry database", open_schema_options, open_operands,
-    BU_CMD_PARSE_INTERSPERSED, {NULL}
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema reopen_cmd_schema = {
     "reopen", "Reopen a geometry database", NULL, open_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

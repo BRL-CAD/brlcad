@@ -87,7 +87,7 @@ static const struct bu_cmd_operand tree_schema_operands[] = {
 };
 static const struct bu_cmd_schema tree_cmd_schema = {
     "tree", "Print database combination trees", tree_schema_options,
-    tree_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    tree_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

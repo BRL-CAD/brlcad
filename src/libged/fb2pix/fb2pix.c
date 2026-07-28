@@ -71,7 +71,7 @@ static const struct bu_cmd_operand fb2pix_schema_operands[] = {
 };
 static const struct bu_cmd_schema fb2pix_cmd_schema = {
     "fb2pix", "Write the framebuffer to a PIX file", fb2pix_schema_options,
-    fb2pix_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    fb2pix_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void

@@ -49,7 +49,7 @@ static const struct bu_cmd_option tops_options[] = {
 
 static const struct bu_cmd_schema tops_cmd_schema = {
     "tops", "List top-level database objects", tops_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

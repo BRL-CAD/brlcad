@@ -32,7 +32,7 @@
 static const struct bu_cmd_schema clear_cmd_schema = {
     "clear", "Clear the command console", NULL, NULL,
     BU_CMD_PARSE_INTERSPERSED,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 // clear is a no-op at the libged level - it's purpose is to support ged_exec

@@ -107,7 +107,7 @@ rrt_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 }
 static const struct bu_cmd_schema rrt_cmd_schema = {
     "rrt", "Run the raytracer on displayed objects", NULL, rrt_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {rrt_schema_validate}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(rrt_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema *

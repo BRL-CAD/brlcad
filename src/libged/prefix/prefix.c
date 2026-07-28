@@ -74,7 +74,7 @@ static const struct bu_cmd_operand prefix_schema_operands[] = {
 };
 static const struct bu_cmd_schema prefix_cmd_schema = {
     "prefix", "Prefix database object names and update references", NULL,
-    prefix_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    prefix_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

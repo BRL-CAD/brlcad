@@ -1902,17 +1902,18 @@ ged_cmd_native_forms_describe_json(const char *command, const char *help,
     if (!command || !forms)
 	return NULL;
     bu_vls_strcat(&out, "{\"name\":");
-    bu_vls_printf(&out, "\"%s\"", command);
+    bu_cmd_json_string(&out, command);
     bu_vls_strcat(&out, ",\"kind\":\"native_forms\",\"help\":");
-    bu_vls_printf(&out, "\"%s\"", help ? help : "");
+    bu_cmd_json_string(&out, help);
     bu_vls_strcat(&out, ",\"forms\":{");
     for (size_t i = 0; forms[i].name; i++) {
 	char *description = forms[i].tree ? bu_cmd_tree_describe_json(forms[i].tree) :
 	    bu_cmd_schema_describe_json(forms[i].schema);
 	if (i)
 	    bu_vls_putc(&out, ',');
-	bu_vls_printf(&out, "\"%s\":%s", forms[i].name,
-	    description ? description : "{}");
+	bu_cmd_json_string(&out, forms[i].name);
+	bu_vls_putc(&out, ':');
+	bu_vls_strcat(&out, description ? description : "{}");
 	if (description)
 	    bu_free(description, "native command form JSON");
     }
@@ -1950,6 +1951,8 @@ ged_cmd_native_forms_lint(const char *command, const struct ged_cmd_native_form 
 	}
 	if (form->tree)
 	    failures += bu_cmd_tree_lint(form->tree, msgs);
+	else
+	    failures += bu_cmd_schema_lint(form->schema, msgs);
     }
     return failures;
 }

@@ -358,7 +358,7 @@ static const struct bu_cmd_operand grid_anchor_operands[] = {
     BU_CMD_OPERAND_NULL
 };
 static const struct bu_cmd_operand grid_color_operands[] = {
-    BU_CMD_OPERAND_SHAPED("color", BU_CMD_VALUE_COLOR, 0, 3, NULL,
+    BU_CMD_OPERAND_SHAPED("color", BU_CMD_VALUE_RAW, 0, 3, NULL,
 	"Optional packed r/g/b or three RGB channels", NULL, &grid_color_arg_shape),
     BU_CMD_OPERAND_NULL
 };

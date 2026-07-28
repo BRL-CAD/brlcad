@@ -60,7 +60,7 @@ static const struct bu_cmd_operand red_schema_operands[] = {
 };
 static const struct bu_cmd_schema red_cmd_schema = {
     "red", "Edit a combination as text", red_schema_options,
-    red_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    red_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static const char combseparator[] = "---------- Combination Tree ----------\n";

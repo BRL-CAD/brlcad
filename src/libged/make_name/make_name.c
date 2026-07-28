@@ -160,7 +160,7 @@ make_name_schema_validate(const struct bu_cmd_schema *cmd, size_t argc, const ch
 }
 static const struct bu_cmd_schema make_name_cmd_schema = {
     "make_name", "Generate a unique object name", make_name_schema_options,
-    make_name_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {make_name_schema_validate}
+    make_name_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(make_name_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema *

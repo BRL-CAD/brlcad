@@ -53,7 +53,7 @@ static const struct bu_cmd_operand arced_schema_operands[] = {
 };
 static const struct bu_cmd_schema arced_cmd_schema = {
     "arced", "Apply an animation command to an arc", NULL,
-    arced_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    arced_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

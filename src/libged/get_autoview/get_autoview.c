@@ -42,7 +42,7 @@ static const struct bu_cmd_option get_autoview_options[] = {
 
 static const struct bu_cmd_schema get_autoview_cmd_schema = {
     "get_autoview", "Report a view enclosing displayed geometry",
-    get_autoview_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    get_autoview_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 /*

@@ -160,7 +160,7 @@ static const struct bu_cmd_operand coil_schema_operands[] = {
 };
 static const struct bu_cmd_schema coil_cmd_schema = {
     "coil", "Create coil geometry", coil_schema_options, coil_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

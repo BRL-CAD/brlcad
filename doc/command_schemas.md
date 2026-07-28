@@ -11,7 +11,8 @@ maintained option tables.
 The native descriptions can express:
 
 - ordinary options, aliases, required or optional arguments, and conflicts;
-- scalar and multi-token argument shapes, bounded repetitions, and keywords;
+- scalar and multi-token argument shapes, bounded repetitions, keywords, and
+  repeated heterogeneous operand groups such as `(operation, object)+`;
 - typed positional operands such as database paths, files, colors, vectors,
   matrices, views, and command names;
 - nested subcommands and phase-specific option policies;
@@ -19,6 +20,11 @@ The native descriptions can express:
   completion; and
 - a command-owned, side-effect-free validator when a grammar cannot be
   represented declaratively.
+
+Structural validation and declarative constraints always run before a
+command-owned validator.  The callback receives that result and may refine it;
+it does not copy the schema or recursively invoke `bu_cmd_schema_validate`.
+Context-aware validation follows the same rule after context-free validation.
 
 Commands register a schema with `GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA`
 or a grammar adapter with `GED_DECLARE_COMMAND_SET_WITH_GRAMMAR`.  Aliases
@@ -51,10 +57,10 @@ Flat schemas identify themselves as `kind: "native"`; nested descriptions use
 `kind: "native_tree"`; form selectors and parser-owned adapters identify their
 own grammar kind.  The JSON includes canonical option spellings, aliases,
 argument requirements and shapes, typed operands, cardinalities, parse policy,
-static keyword vocabularies, semantic-provider names, and subcommand
-structure.  This is the publication boundary intended for syntax highlighters,
-documentation generators, and adapters that generate an ANTLR or comparable
-static grammar.
+static keyword vocabularies, repeated operand groups, semantic-provider names,
+and subcommand structure.  This is the publication boundary intended for
+syntax highlighters, documentation generators, and adapters that generate an
+ANTLR or comparable static grammar.
 
 The JSON deliberately distinguishes static syntax from runtime semantics.
 External tools can recognize command structure and fixed vocabularies, but a
@@ -94,6 +100,9 @@ file dialog.
 passing `NULL` as the command audits the full registry.  Native schema and tree
 linting detect malformed rows, duplicate names, invalid shapes and policies,
 unresolved providers, and inconsistent alias metadata.
+
+At the lower level, `bu_cmd_schema_lint` checks one flat schema and
+`bu_cmd_tree_lint` recursively checks the root and every child schema.
 
 The libged command-analysis and completion-corpus tests audit published JSON,
 completion replacement ranges, candidate ordering, round-trip parsing, nested

@@ -2154,15 +2154,13 @@ edit_schema_context_validate(const struct bu_cmd_schema *schema, size_t argc,
 	const char **argv, size_t cursor_arg, void *context,
 	struct bu_cmd_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
     struct ged *gedp = (struct ged *)context;
     int type_id = -1;
     std::set<std::string> matches;
     std::string prefix;
 
-    flat.validation.constraint_data.context_validate = NULL;
-    if (bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result) != 0 ||
-	!argc || !((argc == 1 && cursor_arg == argc) || cursor_arg == 1))
+    (void)schema;
+    if (!argc || !((argc == 1 && cursor_arg == argc) || cursor_arg == 1))
 	return 0;
 
     type_id = _prim_type_id_from_str(argv[0]);
@@ -2727,23 +2725,23 @@ static const struct bu_cmd_operand edarb_args[] = {
 };
 static const struct bu_cmd_schema edarb_root_schema = {
     "edarb", "Apply legacy ARB edit operations", NULL, NULL,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema edarb_edgedir_schema = {
     "edgedir", "Set an ARB edge direction", NULL, edarb_args,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema edarb_extrude_schema = {
     "extrude", "Extrude an ARB face", NULL, edarb_args,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema edarb_mirror_schema = {
     "mirror", "Mirror an ARB", NULL, edarb_args,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema edarb_permute_schema = {
     "permute", "Permute ARB vertices", NULL, edarb_args,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_tree_node edarb_subcommands[] = {
     BU_CMD_TREE_NODE(&edarb_edgedir_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
@@ -2809,15 +2807,15 @@ static const struct bu_cmd_operand ptranslate_operands[] = {
 };
 static const struct bu_cmd_schema protate_cmd_schema = {
     "protate", "Rotate a primitive attribute", NULL, protate_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema pscale_cmd_schema = {
     "pscale", "Scale a primitive attribute", pedit_options, pscale_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema ptranslate_cmd_schema = {
     "ptranslate", "Translate a primitive attribute", pedit_options,
-    ptranslate_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    ptranslate_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #define GED_EDIT_COMMANDS(X, XID, NX, NXID, GX, GXID) \

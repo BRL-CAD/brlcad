@@ -757,7 +757,7 @@ static const struct bu_cmd_operand exists_schema_operands[] = {
 static const struct bu_cmd_schema exists_cmd_schema = {
     "exists", "Evaluate an object-existence expression", NULL,
     exists_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    {exists_schema_validate}
+    BU_CMD_SCHEMA_CONSTRAINTS(exists_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema *

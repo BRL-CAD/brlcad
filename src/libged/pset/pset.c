@@ -44,7 +44,7 @@ static const struct bu_cmd_operand pset_operands[] = {
 };
 static const struct bu_cmd_schema pset_cmd_schema = {
     "pset", "Set a primitive parameter", NULL, pset_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static int

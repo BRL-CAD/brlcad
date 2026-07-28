@@ -76,7 +76,7 @@ static const struct bu_cmd_operand adjust_schema_operands[] = {
 };
 static const struct bu_cmd_schema adjust_cmd_schema = {
     "adjust", "Adjust primitive attributes", NULL, adjust_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {adjust_schema_validate}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(adjust_schema_validate, NULL)
 };
 
 

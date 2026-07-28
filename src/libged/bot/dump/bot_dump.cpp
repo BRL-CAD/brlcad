@@ -459,7 +459,7 @@ bot_dump_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 
     flat.validation.custom_validate = NULL;
     if (help)
-	flat.validation.constraint_data.constraints = NULL;
+	flat.validation.constraints = NULL;
     return bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
 }
 

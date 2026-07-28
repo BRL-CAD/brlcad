@@ -71,7 +71,7 @@ static const struct bu_cmd_operand gdiff_operands[] = {
 };
 static const struct bu_cmd_schema gdiff_cmd_schema = {
     "gdiff", "Compare two geometry objects", gdiff_options, gdiff_operands,
-    BU_CMD_PARSE_INTERSPERSED, {NULL}
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void check_walk(

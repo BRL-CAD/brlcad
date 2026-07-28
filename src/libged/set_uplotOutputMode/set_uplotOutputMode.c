@@ -40,7 +40,7 @@ static const struct bu_cmd_operand set_uplotOutputMode_operands[] = {
 
 static const struct bu_cmd_schema set_uplotOutputMode_cmd_schema = {
     "set_uplotOutputMode", "Get or set the plot output mode", NULL,
-    set_uplotOutputMode_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    set_uplotOutputMode_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 /*

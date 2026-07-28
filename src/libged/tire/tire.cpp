@@ -196,7 +196,7 @@ static const struct bu_cmd_operand tire_operands[] = {
 static const struct bu_cmd_schema tire_cmd_schema_native = {
     "tire", "Generate tire and wheel geometry", tire_options, tire_operands,
     BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #undef TIRE_OPTION_ROWS

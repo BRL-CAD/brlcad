@@ -379,7 +379,7 @@ static const struct bu_cmd_operand nmg_schema_operands[] = {
     BU_CMD_OPERAND_NULL
 };
 #define NMG_SCHEMA(_id, _name, _help, _operands, _policy, _validator) \
-    static const struct bu_cmd_schema _id##_cmd_schema = {_name, _help, NULL, _operands, _policy, {_validator}}
+    static const struct bu_cmd_schema _id##_cmd_schema = {_name, _help, NULL, _operands, _policy, BU_CMD_SCHEMA_CONSTRAINTS(_validator, NULL)}
 NMG_SCHEMA(labelface, "labelface", "Label faces of displayed NMG objects", labelface_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
 NMG_SCHEMA(nmg_cmface, "nmg_cmface", "Create a manifold NMG face", nmg_cmface_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
 NMG_SCHEMA(nmg_collapse, "nmg_collapse", "Collapse short NMG edges", nmg_collapse_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
@@ -393,7 +393,7 @@ NMG_SCHEMA(nmg_simplify, "nmg_simplify", "Simplify an NMG to another primitive",
 #undef NMG_SCHEMA
 static const struct bu_cmd_schema nmg_root_schema = {
     "nmg", "Edit NMG topology or create an empty NMG", NULL,
-    nmg_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    nmg_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_tree_node nmg_subcommands[] = {
     BU_CMD_TREE_NODE(&nmg_mm_cmd_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),

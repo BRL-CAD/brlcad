@@ -96,7 +96,7 @@ static const struct bu_cmd_operand delay_operands[] = {
 static const struct bu_cmd_schema delay_cmd_schema = {
     "delay", "Pause command processing", NULL, delay_operands,
     BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

@@ -121,7 +121,7 @@ static const struct bu_cmd_operand savekey_schema_operands[] = {
 };
 static const struct bu_cmd_schema savekey_cmd_schema = {
     "savekey", "Save the current view as a keyframe", NULL,
-    savekey_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    savekey_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static const struct bu_cmd_schema *

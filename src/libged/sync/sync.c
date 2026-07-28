@@ -36,7 +36,7 @@
 static const struct bu_cmd_schema sync_cmd_schema = {
     "sync", "Synchronize the current database to disk", NULL, NULL,
     BU_CMD_PARSE_INTERSPERSED,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

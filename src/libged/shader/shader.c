@@ -37,7 +37,7 @@ static const struct bu_cmd_operand shader_schema_operands[] = {
 };
 static const struct bu_cmd_schema shader_cmd_schema = {
     "shader", "Query or set a combination shader", NULL,
-    shader_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    shader_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

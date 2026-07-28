@@ -49,11 +49,11 @@ static const struct bu_cmd_option zap_schema_options[] = {
 
 const struct bu_cmd_schema ged_Z_cmd_schema = {
     "Z", "Clear displayed geometry", zap_schema_options, NULL,
-    BU_CMD_PARSE_INTERSPERSED, {NULL}
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 const struct bu_cmd_schema ged_zap_cmd_schema = {
     "zap", "Clear displayed geometry", zap_schema_options, NULL,
-    BU_CMD_PARSE_INTERSPERSED, {NULL}
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])

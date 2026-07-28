@@ -44,7 +44,7 @@ static const struct bu_cmd_operand fracture_operands[] = {
 
 static const struct bu_cmd_schema fracture_cmd_schema = {
     "fracture", "Fracture an NMG solid", NULL, fracture_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

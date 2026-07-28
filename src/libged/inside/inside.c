@@ -93,7 +93,7 @@ static const struct bu_cmd_operand inside_schema_operands[] = {
 };
 static const struct bu_cmd_schema inside_cmd_schema = {
     "inside", "Create an inside primitive", NULL, inside_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static const struct bu_cmd_schema *

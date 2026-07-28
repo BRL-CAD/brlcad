@@ -40,7 +40,7 @@ static const struct bu_cmd_operand whatid_operands[] = {
 
 static const struct bu_cmd_schema whatid_cmd_schema = {
     "whatid", "Report a region's identifier", NULL, whatid_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

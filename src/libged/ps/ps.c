@@ -322,11 +322,11 @@ static const struct bu_cmd_operand ps_operands[] = {
 };
 static const struct bu_cmd_schema postscript_cmd_schema = {
     "postscript", "Write the current view as PostScript", ps_options,
-    ps_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    ps_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema ps_cmd_schema = {
     "ps", "Write the current view as PostScript", ps_options,
-    ps_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    ps_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 int

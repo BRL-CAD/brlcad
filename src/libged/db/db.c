@@ -62,21 +62,21 @@ static const struct bu_cmd_operand db_find_operands[] = {
 };
 static const struct bu_cmd_schema db_find_schema = {
     "find", "List combinations that reference specified objects",
-    db_find_options, db_find_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    db_find_options, db_find_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_option db_find_dispatch_options[] = {
     BU_CMD_FLAG_UNBOUND("a", NULL, "a", "Include hidden combinations"),
-    BU_CMD_FLAG_UNBOUND("h", "help", "h", "Print help"),
+    BU_CMD_FLAG_UNBOUND("h", "help", "help", "Print help"),
     BU_CMD_FLAG_UNBOUND("?", NULL, "?", "Print help"),
     BU_CMD_OPTION_NULL
 };
 static const struct bu_cmd_schema db_find_dispatch_schema = {
     "find", "List combinations that reference specified objects",
-    db_find_dispatch_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    db_find_dispatch_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema db_version_schema = {
     "version", "Report the open database format version", NULL, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_option db_root_options[] = {
     BU_CMD_FLAG("h", "help", struct _ged_db_info, help, "Print help"),
@@ -85,7 +85,7 @@ static const struct bu_cmd_option db_root_options[] = {
 };
 static const struct bu_cmd_schema db_root_schema = {
     "db", "Database commands", db_root_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -400,7 +400,7 @@ DB_FORWARD_COMMANDS(DB_DECLARE_FORWARD)
 #define DB_DECLARE_SCHEMA(_name, _target) \
     static const struct bu_cmd_schema db_ ## _name ## _schema = { \
 	GED_STR(_name), "Forward a database command to libged", NULL, NULL, \
-	BU_CMD_PARSE_OPTIONS_FIRST, {NULL} \
+	BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
     };
 DB_FORWARD_COMMANDS(DB_DECLARE_SCHEMA)
 

@@ -43,7 +43,7 @@ static const struct bu_cmd_operand get_schema_operands[] = {
 
 static const struct bu_cmd_schema get_cmd_schema = {
     "get", "Query a database object's primitive properties", NULL,
-    get_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    get_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

@@ -139,7 +139,7 @@ static const struct bu_cmd_operand oscale_schema_operands[] = {
     BU_CMD_OPERAND_NULL
 };
 GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(oscale, 2, 5, GED_SCHEMA_COUNT_NONE)
-static const struct bu_cmd_schema oscale_cmd_schema = {"oscale", "Scale an object about a keypoint", NULL, oscale_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {oscale_schema_validate}};
+static const struct bu_cmd_schema oscale_cmd_schema = {"oscale", "Scale an object about a keypoint", NULL, oscale_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(oscale_schema_validate, NULL)};
 
 #define GED_OSCALE_COMMANDS(X, XID) \
     X(oscale, ged_oscale_core, GED_CMD_DEFAULT, &oscale_cmd_schema) \

@@ -40,7 +40,7 @@ static const struct bu_cmd_operand get_type_operands[] = {
 
 static const struct bu_cmd_schema get_type_cmd_schema = {
     "get_type", "Report a database object's primitive type", NULL,
-    get_type_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    get_type_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

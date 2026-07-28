@@ -70,11 +70,11 @@ static const struct bu_cmd_operand png_schema_operands[] = {
 };
 static const struct bu_cmd_schema png_cmd_schema = {
     "png", "Render the current view to PNG", png_schema_options,
-    png_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    png_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema pngwf_cmd_schema = {
     "pngwf", "Render the current view to PNG", png_schema_options,
-    png_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    png_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void

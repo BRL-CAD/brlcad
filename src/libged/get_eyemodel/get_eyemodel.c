@@ -31,7 +31,7 @@
 
 static const struct bu_cmd_schema get_eyemodel_cmd_schema = {
     "get_eyemodel", "Report the current view eye point and orientation",
-    NULL, NULL, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    NULL, NULL, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

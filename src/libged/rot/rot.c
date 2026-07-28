@@ -190,7 +190,7 @@ static const struct bu_cmd_operand rot_schema_operands[] = {
 };
 static const struct bu_cmd_schema rot_cmd_schema = {
     "rot", "Rotate the current view", rot_schema_options, rot_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, {rot_schema_validate}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(rot_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema *

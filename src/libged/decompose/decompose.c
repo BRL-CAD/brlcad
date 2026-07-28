@@ -44,7 +44,7 @@ static const struct bu_cmd_operand decompose_operands[] = {
 
 static const struct bu_cmd_schema decompose_cmd_schema = {
     "decompose", "Decompose an NMG object", NULL, decompose_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 int

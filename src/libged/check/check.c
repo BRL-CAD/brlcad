@@ -721,7 +721,7 @@ static const struct bu_cmd_operand check_schema_operands[] = {
 #define CHECK_SCHEMA(_id, _name, _help) \
     static const struct bu_cmd_schema _id##_schema = { \
 	_name, _help, check_schema_options, check_schema_operands, \
-	BU_CMD_PARSE_INTERSPERSED, {NULL} \
+	BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
     }
 CHECK_SCHEMA(check_adj_air, "adj_air", "Find adjacent air regions with differing codes");
 CHECK_SCHEMA(check_centroid, "centroid", "Compute centroids");
@@ -736,7 +736,7 @@ CHECK_SCHEMA(check_volume, "volume", "Compute volume");
 #undef CHECK_SCHEMA
 static const struct bu_cmd_schema check_root_schema = {
     "check", "Analyze geometric and physical properties", check_schema_options,
-    NULL, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    NULL, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_tree_node check_subcommands[] = {
     BU_CMD_TREE_NODE(&check_adj_air_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),

@@ -39,7 +39,7 @@ static const struct bu_cmd_operand set_transparency_operands[] = {
 };
 static const struct bu_cmd_schema set_transparency_cmd_schema = {
     "set_transparency", "Set displayed-object transparency", NULL,
-    set_transparency_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    set_transparency_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 void

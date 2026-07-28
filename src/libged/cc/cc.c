@@ -44,7 +44,7 @@ static const struct bu_cmd_operand cc_operands[] = {
 
 static const struct bu_cmd_schema cc_cmd_schema = {
     "cc", "Create a constraint", NULL, cc_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 /*

@@ -176,7 +176,7 @@ static const struct bu_cmd_operand put_schema_operands[] = {
 };
 static const struct bu_cmd_schema put_cmd_schema = {
     "put", "Create a database primitive", NULL, put_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {put_schema_validate}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(put_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema *

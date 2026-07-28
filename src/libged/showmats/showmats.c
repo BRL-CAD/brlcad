@@ -59,7 +59,7 @@ static const struct bu_cmd_operand showmats_operands[] = {
 
 static const struct bu_cmd_schema showmats_cmd_schema = {
     "showmats", "Show accumulated matrices along a database path",
-    showmats_options, showmats_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    showmats_options, showmats_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

@@ -57,7 +57,7 @@ static const struct bu_cmd_operand lt_operands[] = {
 };
 static const struct bu_cmd_schema lt_cmd_schema = {
     "lt", "List combination children", lt_options, lt_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

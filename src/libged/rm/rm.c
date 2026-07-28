@@ -1159,7 +1159,7 @@ static const struct bu_cmd_operand rm_operands[] = {
 };
 static const struct bu_cmd_schema rm_cmd_schema = {
     "rm", "Remove database objects, paths, or matching patterns", rm_options,
-    rm_operands, BU_CMD_PARSE_INTERSPERSED, {NULL}
+    rm_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

@@ -149,7 +149,7 @@ static const struct bu_cmd_operand orotate_schema_operands[] = {
     BU_CMD_OPERAND_NULL
 };
 GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(orotate, 4, 7, GED_SCHEMA_COUNT_NONE)
-static const struct bu_cmd_schema orotate_cmd_schema = {"orotate", "Rotate an object about a keypoint", NULL, orotate_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {orotate_schema_validate}};
+static const struct bu_cmd_schema orotate_cmd_schema = {"orotate", "Rotate an object about a keypoint", NULL, orotate_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(orotate_schema_validate, NULL)};
 
 #define GED_OROTATE_COMMANDS(X, XID) \
     X(orotate, ged_orotate_core, GED_CMD_DEFAULT, &orotate_cmd_schema) \

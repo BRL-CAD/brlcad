@@ -51,7 +51,7 @@ static const struct bu_cmd_operand edmater_schema_operands[] = {
 };
 static const struct bu_cmd_schema edmater_cmd_schema = {
     "edmater", "Edit combination material properties", edmater_schema_options,
-    edmater_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    edmater_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

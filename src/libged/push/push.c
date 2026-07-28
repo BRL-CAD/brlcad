@@ -73,7 +73,7 @@ static const struct bu_cmd_operand push_operands[] = {
 };
 static const struct bu_cmd_schema push_cmd_schema = {
     "push", "Push transformations down object trees", push_options,
-    push_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    push_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

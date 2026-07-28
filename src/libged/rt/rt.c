@@ -145,7 +145,7 @@ static const struct bu_cmd_operand rt_schema_operands[] = {
 };
 #define RT_SCHEMA(_id, _name, _help) \
     static const struct bu_cmd_schema _id##_cmd_schema = { \
-	_name, _help, NULL, rt_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}}
+	_name, _help, NULL, rt_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)}
 RT_SCHEMA(rt, "rt", "Raytrace displayed geometry"); RT_SCHEMA(rtarea, "rtarea", "Raytrace area analysis"); RT_SCHEMA(rtedge, "rtedge", "Render geometry edges");
 RT_SCHEMA(rtweight, "rtweight", "Raytrace weight analysis"); RT_SCHEMA(art, "art", "Raytrace displayed geometry asynchronously");
 #undef RT_SCHEMA

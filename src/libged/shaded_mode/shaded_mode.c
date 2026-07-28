@@ -42,7 +42,7 @@ static const struct bu_cmd_operand shaded_mode_operands[] = {
 };
 static const struct bu_cmd_schema shaded_mode_cmd_schema = {
     "shaded_mode", "Query or set display shading mode", NULL,
-    shaded_mode_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    shaded_mode_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 /*

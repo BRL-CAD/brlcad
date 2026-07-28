@@ -102,7 +102,7 @@ static const struct bu_cmd_operand attr_sort_operands[] = {
 };
 #define ATTR_SCHEMA(_id, _name, _help, _ops) \
     static const struct bu_cmd_schema _id##_schema = { \
-	_name, _help, NULL, _ops, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL} \
+	_name, _help, NULL, _ops, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
     }
 ATTR_SCHEMA(attr_set, "set", "Set attribute/value pairs", attr_object_operands);
 ATTR_SCHEMA(attr_get, "get", "Get attribute values", attr_object_operands);
@@ -116,7 +116,7 @@ ATTR_SCHEMA(attr_standardize, "standardize", "Standardize attribute names", attr
 #undef ATTR_SCHEMA
 static const struct bu_cmd_schema attr_root_schema = {
     "attr", "Inspect or modify database attributes", attr_schema_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_tree_node attr_subcommands[] = {
     BU_CMD_TREE_NODE(&attr_set_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),

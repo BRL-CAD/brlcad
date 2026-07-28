@@ -118,7 +118,7 @@ static const struct bu_cmd_operand killall_schema_operands[] = {
 static const struct bu_cmd_schema killall_cmd_schema = {
     "killall", "Delete objects and all references to them", killall_schema_options,
     killall_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #define GED_KILLALL_COMMANDS(X, XID) \

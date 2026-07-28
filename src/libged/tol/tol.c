@@ -562,7 +562,7 @@ static const struct bu_cmd_operand tol_schema_operands[] = {
 };
 static const struct bu_cmd_schema tol_cmd_schema = {
     "tol", "Query or set geometric tolerances", NULL, tol_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {tol_schema_validate}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(tol_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema *

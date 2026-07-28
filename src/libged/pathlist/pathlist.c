@@ -85,7 +85,7 @@ static const struct bu_cmd_operand pathlist_schema_operands[] = {
 static const struct bu_cmd_schema pathlist_cmd_schema = {
     "pathlist", "List leaf paths below a database object",
     pathlist_schema_options, pathlist_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

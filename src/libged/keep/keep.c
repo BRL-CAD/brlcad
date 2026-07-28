@@ -60,7 +60,7 @@ static const struct bu_cmd_operand keep_schema_operands[] = {
 static const struct bu_cmd_schema keep_cmd_schema = {
     "keep", "Copy selected objects into another database", keep_schema_options,
     keep_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

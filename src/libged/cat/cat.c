@@ -41,7 +41,7 @@ static const struct bu_cmd_operand cat_schema_operands[] = {
 
 static const struct bu_cmd_schema cat_cmd_schema = {
     "cat", "Tersely describe database objects", NULL, cat_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

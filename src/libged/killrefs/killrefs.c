@@ -132,7 +132,7 @@ static const struct bu_cmd_operand killrefs_schema_operands[] = {
 static const struct bu_cmd_schema killrefs_cmd_schema = {
     "killrefs", "Remove references to database objects", killrefs_schema_options,
     killrefs_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #define GED_KILLREFS_COMMANDS(X, XID) \

@@ -328,9 +328,10 @@ struct bu_cmd_validate_result;
 /**
  * A schema-owned validator for syntax that cannot be expressed by declarative
  * constraint rows or ordinary operand cardinality.  It must be side-effect
- * free.  A callback normally copies the schema, clears custom_validate in the
- * copy, invokes bu_cmd_schema_validate for the ordinary flat rules, and then
- * applies its additional rule.
+ * free.  bu_cmd_schema_validate always applies the ordinary structural rules
+ * and declarative constraints first, then invokes this callback with their
+ * result.  The callback may refine that result without recursively invoking
+ * bu_cmd_schema_validate.
  */
 typedef int (*bu_cmd_schema_validate_t)(const struct bu_cmd_schema *schema,
 	size_t argc, const char **argv, size_t cursor_arg,
@@ -340,10 +341,9 @@ typedef int (*bu_cmd_schema_validate_t)(const struct bu_cmd_schema *schema,
  * Context-aware companion to a native schema validator.  The ordinary
  * validator remains context-free so libbu can use it everywhere; hosts such
  * as GED may supply application state for semantic rules that depend on a
- * database, view, or other live command environment.  Implementations should
- * copy the schema, clear validation.constraint_data.context_validate in the
- * copy, and delegate the flat grammar to bu_cmd_schema_validate before
- * applying context-specific rules.
+ * database, view, or other live command environment.  Ordinary and custom
+ * context-free validation has already populated result when this callback is
+ * invoked.
  */
 typedef int (*bu_cmd_schema_context_validate_t)(const struct bu_cmd_schema *schema,
 	size_t argc, const char **argv, size_t cursor_arg, void *context,
@@ -367,6 +367,22 @@ struct bu_cmd_operand {
     const char * const *value_keywords;
     const struct bu_cmd_value_keyword *keyword_values;
     const struct bu_cmd_arg_shape *shape;
+};
+
+
+/**
+ * A repeated heterogeneous positional group.  roles is a NULL-terminated
+ * sequence of scalar operand declarations, each of which must occur exactly
+ * once per group repetition.  min_count and max_count count complete group
+ * repetitions, not individual tokens.  Groups follow the schema's ordinary
+ * operands and are emitted explicitly in machine-readable descriptions.
+ */
+struct bu_cmd_operand_group {
+    const char *name;
+    const struct bu_cmd_operand *roles;
+    size_t min_count;
+    size_t max_count;
+    const char *help;
 };
 
 
@@ -402,29 +418,30 @@ struct bu_cmd_constraint {
 };
 
 
-struct bu_cmd_schema_constraint_data {
+struct bu_cmd_schema_validation {
     bu_cmd_schema_validate_t custom_validate;
     const struct bu_cmd_constraint *constraints;
     bu_cmd_schema_context_validate_t context_validate;
-};
-
-
-/**
- * The final schema slot is a callback for ordinary schemas.  A constrained
- * schema initializes the same slot with BU_CMD_SCHEMA_CONSTRAINTS, supplying
- * both an optional callback and declarative relationship rows.  The union
- * keeps pre-constraint schema initializers source-compatible.
- */
-union bu_cmd_schema_validation {
-    bu_cmd_schema_validate_t custom_validate;
-    struct bu_cmd_schema_constraint_data constraint_data;
+    const struct bu_cmd_operand_group *operand_groups;
 #ifdef __cplusplus
-    constexpr bu_cmd_schema_validation(bu_cmd_schema_validate_t validator = NULL) : custom_validate(validator) {}
+    constexpr bu_cmd_schema_validation(bu_cmd_schema_validate_t validator = NULL) :
+	custom_validate(validator), constraints(NULL), context_validate(NULL),
+	operand_groups(NULL) {}
     constexpr bu_cmd_schema_validation(bu_cmd_schema_validate_t validator,
-	const struct bu_cmd_constraint *constraint_rows) : constraint_data{validator, constraint_rows, NULL} {}
+	const struct bu_cmd_constraint *constraint_rows) :
+	custom_validate(validator), constraints(constraint_rows), context_validate(NULL),
+	operand_groups(NULL) {}
     constexpr bu_cmd_schema_validation(bu_cmd_schema_validate_t validator,
 	const struct bu_cmd_constraint *constraint_rows,
-	bu_cmd_schema_context_validate_t context_validator) : constraint_data{validator, constraint_rows, context_validator} {}
+	bu_cmd_schema_context_validate_t context_validator) :
+	custom_validate(validator), constraints(constraint_rows),
+	context_validate(context_validator), operand_groups(NULL) {}
+    constexpr bu_cmd_schema_validation(bu_cmd_schema_validate_t validator,
+	const struct bu_cmd_constraint *constraint_rows,
+	bu_cmd_schema_context_validate_t context_validator,
+	const struct bu_cmd_operand_group *groups) :
+	custom_validate(validator), constraints(constraint_rows),
+	context_validate(context_validator), operand_groups(groups) {}
 #endif
 };
 
@@ -435,7 +452,7 @@ struct bu_cmd_schema {
     const struct bu_cmd_option *options;
     const struct bu_cmd_operand *operands;
     bu_cmd_parse_policy_t parse_policy;
-    union bu_cmd_schema_validation validation;
+    struct bu_cmd_schema_validation validation;
 };
 
 
@@ -565,6 +582,8 @@ BU_EXPORT extern int bu_cmd_integer_pair_optional_validate(size_t argc,
 #define BU_CMD_OPERAND_VALIDATE(_name, _type, _min, _max, _validator, _help, _provider) {_name, _min, _max, _help, _type, _validator, _provider, NULL, NULL, NULL}
 #define BU_CMD_OPERAND_SHAPED(_name, _type, _min, _max, _validator, _help, _provider, _shape) {_name, _min, _max, _help, _type, _validator, _provider, NULL, NULL, _shape}
 #define BU_CMD_OPERAND_NULL {NULL, 0, 0, NULL, BU_CMD_VALUE_STRING, NULL, NULL, NULL, NULL, NULL}
+#define BU_CMD_OPERAND_GROUP(_name, _roles, _min, _max, _help) {_name, _roles, _min, _max, _help}
+#define BU_CMD_OPERAND_GROUP_NULL {NULL, NULL, 0, 0, NULL}
 #define BU_CMD_CONSTRAINT_OPTIONS(_options, _min, _max, _hint) {BU_CMD_CONSTRAINT_OPTION_COUNT, BU_CMD_CONDITION_ALWAYS, _options, _min, _max, _hint}
 #define BU_CMD_CONSTRAINT_OPERANDS(_condition, _options, _min, _max, _hint) {BU_CMD_CONSTRAINT_OPERAND_COUNT, _condition, _options, _min, _max, _hint}
 #define BU_CMD_CONSTRAINT_NULL {BU_CMD_CONSTRAINT_OPTION_COUNT, BU_CMD_CONDITION_ALWAYS, NULL, 0, 0, NULL}
@@ -572,9 +591,11 @@ BU_EXPORT extern int bu_cmd_integer_pair_optional_validate(size_t argc,
 #ifdef __cplusplus
 #  define BU_CMD_SCHEMA_CONSTRAINTS(_validator, _constraints) bu_cmd_schema_validation(_validator, _constraints)
 #  define BU_CMD_SCHEMA_CONTEXT_VALIDATOR(_validator) bu_cmd_schema_validation(NULL, NULL, _validator)
+#  define BU_CMD_SCHEMA_GROUPS(_validator, _constraints, _groups) bu_cmd_schema_validation(_validator, _constraints, NULL, _groups)
 #else
-#  define BU_CMD_SCHEMA_CONSTRAINTS(_validator, _constraints) {.constraint_data = {_validator, _constraints, NULL}}
-#  define BU_CMD_SCHEMA_CONTEXT_VALIDATOR(_validator) {.constraint_data = {NULL, NULL, _validator}}
+#  define BU_CMD_SCHEMA_CONSTRAINTS(_validator, _constraints) {_validator, _constraints, NULL, NULL}
+#  define BU_CMD_SCHEMA_CONTEXT_VALIDATOR(_validator) {NULL, NULL, _validator, NULL}
+#  define BU_CMD_SCHEMA_GROUPS(_validator, _constraints, _groups) {_validator, _constraints, NULL, _groups}
 #endif
 #define BU_CMD_COUNT_UNLIMITED ((size_t)-1)
 #define BU_CMD_STORAGE_NONE ((size_t)-1)
@@ -744,6 +765,13 @@ BU_EXPORT extern char *bu_cmd_schema_describe_selected(const struct bu_cmd_schem
 
 /** Build machine-readable schema metadata from a compact command schema. */
 BU_EXPORT extern char *bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema);
+
+/** Append one correctly quoted and escaped JSON string.  NULL becomes "". */
+BU_EXPORT extern void bu_cmd_json_string(struct bu_vls *out, const char *value);
+
+/** Return the number of structural errors in one flat native schema. */
+BU_EXPORT extern int bu_cmd_schema_lint(const struct bu_cmd_schema *schema,
+	struct bu_vls *msgs);
 
 /** Find a direct child by canonical spelling or an accepted alias. */
 BU_EXPORT extern const struct bu_cmd_tree_node *bu_cmd_tree_find_subcommand(

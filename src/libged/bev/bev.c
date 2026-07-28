@@ -106,7 +106,7 @@ bev_schema_validate(const struct bu_cmd_schema *schema, size_t argc, const char 
 
 static const struct bu_cmd_schema bev_cmd_schema = {
     "bev", "Evaluate a boolean expression into an NMG object", bev_schema_options,
-    bev_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {bev_schema_validate}
+    bev_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(bev_schema_validate, NULL)
 };
 
 

@@ -89,8 +89,8 @@ static const struct bu_cmd_operand orient_schema_operands[] = {
     BU_CMD_OPERAND_NULL
 };
 GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(orient, 1, 4, GED_SCHEMA_COUNT_NONE)
-static const struct bu_cmd_schema orient_cmd_schema = {"orient", "Set view orientation from a quaternion", NULL, orient_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {orient_schema_validate}};
-static const struct bu_cmd_schema orientation_cmd_schema = {"orientation", "Set view orientation from a quaternion", NULL, orient_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {orient_schema_validate}};
+static const struct bu_cmd_schema orient_cmd_schema = {"orient", "Set view orientation from a quaternion", NULL, orient_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(orient_schema_validate, NULL)};
+static const struct bu_cmd_schema orientation_cmd_schema = {"orientation", "Set view orientation from a quaternion", NULL, orient_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(orient_schema_validate, NULL)};
 
 #define GED_ORIENT_COMMANDS(X, XID) \
     X(orient, ged_orient_core, GED_CMD_DEFAULT, &orient_cmd_schema) \

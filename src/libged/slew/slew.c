@@ -208,15 +208,15 @@ static const struct bu_cmd_operand slew_schema_operands[] = {
 };
 static const struct bu_cmd_schema slew_cmd_schema = {
     "slew", "Slew the view center", NULL, slew_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {slew_schema_validate}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(slew_schema_validate, NULL)
 };
 static const struct bu_cmd_schema sv_cmd_schema = {
     "sv", "Slew the view center", NULL, slew_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {slew_schema_validate}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(slew_schema_validate, NULL)
 };
 static const struct bu_cmd_schema vslew_cmd_schema = {
     "vslew", "Slew the view center", NULL, slew_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {slew_schema_validate}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(slew_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema *

@@ -52,7 +52,7 @@ static const struct bu_cmd_operand how_operands[] = {
 
 static const struct bu_cmd_schema how_cmd_schema = {
     "how", "Report how a database object is displayed", how_options,
-    how_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    how_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static int

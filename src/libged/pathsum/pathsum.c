@@ -50,15 +50,15 @@ static const struct bu_cmd_operand pathsum_schema_operands[] = {
 static const struct bu_cmd_schema listeval_cmd_schema = {
     "listeval", "List evaluated objects along a database path",
     listeval_schema_options, pathsum_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema paths_cmd_schema = {
     "paths", "List paths matching a database path prefix", NULL,
-    pathsum_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    pathsum_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema pathsum_cmd_schema = {
     "pathsum", "Report the accumulated transform along a database path", NULL,
-    pathsum_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    pathsum_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

@@ -66,7 +66,7 @@ static const struct bu_cmd_operand expand_schema_operands[] = {
 };
 static const struct bu_cmd_schema expand_cmd_schema = {
     "expand", "Expand database object glob expressions", NULL,
-    expand_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    expand_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

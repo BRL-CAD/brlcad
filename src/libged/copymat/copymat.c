@@ -62,7 +62,7 @@ static const struct bu_cmd_operand copymat_schema_operands[] = {
 };
 static const struct bu_cmd_schema copymat_cmd_schema = {
     "copymat", "Copy a matrix between combination arcs", NULL,
-    copymat_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    copymat_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

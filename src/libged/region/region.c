@@ -227,12 +227,12 @@ static const struct bu_cmd_operand region_schema_operands[] = {
 static const struct bu_cmd_schema region_cmd_schema = {
     "region", "Create or extend a region from boolean-operation/object pairs",
     NULL, region_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    {region_schema_validate}
+    BU_CMD_SCHEMA_CONSTRAINTS(region_schema_validate, NULL)
 };
 static const struct bu_cmd_schema r_cmd_schema = {
     "r", "Create or extend a region from boolean-operation/object pairs",
     NULL, region_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    {region_schema_validate}
+    BU_CMD_SCHEMA_CONSTRAINTS(region_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema *

@@ -42,7 +42,7 @@ static const struct bu_cmd_operand copyeval_schema_operands[] = {
 };
 static const struct bu_cmd_schema copyeval_cmd_schema = {
     "copyeval", "Copy a primitive with its path transform applied", NULL,
-    copyeval_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    copyeval_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

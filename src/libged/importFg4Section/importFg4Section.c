@@ -77,7 +77,7 @@ static const struct bu_cmd_operand importfg4_schema_operands[] = {
 };
 static const struct bu_cmd_schema importfg4_cmd_schema = {
     "importFg4Section", "Import a FASTGEN4 section", NULL,
-    importfg4_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    importfg4_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static const struct bu_cmd_schema *

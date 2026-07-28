@@ -818,11 +818,11 @@ static const struct bu_cmd_operand comb_std_schema_operands[] = {
 };
 static const struct bu_cmd_schema comb_std_cmd_schema = {
     "comb_std", "Create a combination from a boolean expression", comb_std_schema_options,
-    comb_std_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {comb_std_schema_validate}
+    comb_std_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(comb_std_schema_validate, NULL)
 };
 static const struct bu_cmd_schema c_cmd_schema = {
     "c", "Create a combination from a boolean expression", comb_std_schema_options,
-    comb_std_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {comb_std_schema_validate}
+    comb_std_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(comb_std_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema *

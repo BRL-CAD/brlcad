@@ -55,7 +55,7 @@ static const struct bu_cmd_operand move_arb_face_schema_operands[] = {
 };
 static const struct bu_cmd_schema move_arb_face_cmd_schema = {
     "move_arb_face", "Move an ARB face", move_arb_face_schema_options,
-    move_arb_face_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    move_arb_face_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

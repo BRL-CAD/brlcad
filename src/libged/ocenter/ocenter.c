@@ -129,7 +129,7 @@ static const struct bu_cmd_operand ocenter_schema_operands[] = {
     BU_CMD_OPERAND_NULL
 };
 GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(ocenter, 1, 4, GED_SCHEMA_COUNT_NONE)
-static const struct bu_cmd_schema ocenter_cmd_schema = {"ocenter", "Query or set an object center", NULL, ocenter_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {ocenter_schema_validate}};
+static const struct bu_cmd_schema ocenter_cmd_schema = {"ocenter", "Query or set an object center", NULL, ocenter_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(ocenter_schema_validate, NULL)};
 
 #define GED_OCENTER_COMMANDS(X, XID) \
     X(ocenter, ged_ocenter_core, GED_CMD_DEFAULT, &ocenter_cmd_schema) \

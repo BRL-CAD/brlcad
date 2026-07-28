@@ -41,7 +41,7 @@ static const struct bu_cmd_operand edcomb_schema_operands[] = {
 };
 static const struct bu_cmd_schema edcomb_cmd_schema = {
     "edcomb", "Set combination region fields", NULL,
-    edcomb_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    edcomb_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

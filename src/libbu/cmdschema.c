@@ -790,6 +790,19 @@ cmd_schema_has_options(const struct bu_cmd_schema *schema)
 }
 
 
+/* A standalone marker is structural only while the option phase is active.
+ * Optionless schemas accept it solely as the first word.  Once an
+ * options-first schema has consumed an operand, a later "--" is an ordinary
+ * operand in every scanner, including execution parsing and validation. */
+static int
+cmd_schema_is_end_marker(const struct bu_cmd_schema *schema, const char *arg,
+	int options_allowed, size_t operand_count)
+{
+    return options_allowed && arg && BU_STR_EQUAL(arg, "--") &&
+	(cmd_schema_has_options(schema) || operand_count == 0);
+}
+
+
 static const struct bu_cmd_option *
 cmd_schema_lookup_token(const struct bu_cmd_schema *schema, const char *arg)
 {
@@ -1331,11 +1344,9 @@ bu_cmd_schema_parse(const struct bu_cmd_schema *schema, void *data, struct bu_vl
      * raw-text commands such as echo: a literal leading '-' is not an option
      * merely because it resembles one. */
     if (!cmd_schema_has_options(schema)) {
-	for (i = 0; i < argc; i++) {
-	    if (BU_STR_EQUAL(argv[i], "--"))
-		return i + 1;
-	}
-	return 0;
+	if (argc > 0 && !argv[0])
+	    return -1;
+	return argc > 0 && cmd_schema_is_end_marker(schema, argv[0], 1, 0) ? 1 : 0;
     }
 
     if (!data)
@@ -1361,7 +1372,7 @@ bu_cmd_schema_parse(const struct bu_cmd_schema *schema, void *data, struct bu_vl
 		bu_vls_printf(msg, "null command argument\n");
 	    goto done;
 	}
-	if (!end_options && BU_STR_EQUAL(arg, "--")) {
+	if (cmd_schema_is_end_marker(schema, arg, !end_options, operand_count)) {
 	    end_options = 1;
 	    if (interspersed)
 		known_args[known_count++] = arg;
@@ -1483,10 +1494,8 @@ bu_cmd_schema_parse_complete(const struct bu_cmd_schema *schema, void *data,
 	struct bu_vls *msg, int argc, const char *argv[])
 {
     struct bu_cmd_validate_result result = BU_CMD_VALIDATE_RESULT_NULL;
-    int operand_index = bu_cmd_schema_parse(schema, data, msg, argc, argv);
+    int operand_index;
 
-    if (operand_index < 0)
-	return -1;
     if (bu_cmd_schema_validate(schema, (size_t)argc, argv, (size_t)argc, &result) != 0 ||
 	result.state != BU_CMD_VALIDATE_VALID) {
 	if (msg && result.hint)
@@ -1495,7 +1504,8 @@ bu_cmd_schema_parse_complete(const struct bu_cmd_schema *schema, void *data,
 	return -1;
     }
     bu_cmd_validate_result_clear(&result);
-    return operand_index;
+    operand_index = bu_cmd_schema_parse(schema, data, msg, argc, argv);
+    return operand_index < 0 ? -1 : operand_index;
 }
 
 
@@ -1545,9 +1555,9 @@ bu_cmd_schema_describe_selected(const struct bu_cmd_schema *schema, const char *
 	i++;
     }
 
-    if (schema->validation.constraint_data.constraints) {
-	for (i = 0; schema->validation.constraint_data.constraints[i].options; i++) {
-	    const char *hint = schema->validation.constraint_data.constraints[i].hint;
+    if (schema->validation.constraints) {
+	for (i = 0; schema->validation.constraints[i].options; i++) {
+	    const char *hint = schema->validation.constraints[i].hint;
 	    if (hint && hint[0])
 		bu_vls_printf(&out, "  %-34s %s\n", "Constraint:", hint);
 	}
@@ -1566,8 +1576,8 @@ bu_cmd_schema_describe(const struct bu_cmd_schema *schema)
 }
 
 
-static void
-cmd_schema_json_string(struct bu_vls *out, const char *value)
+void
+bu_cmd_json_string(struct bu_vls *out, const char *value)
 {
     const char *p = value ? value : "";
 
@@ -1605,13 +1615,13 @@ cmd_schema_json_keyword_values(struct bu_vls *out, const char * const *keywords,
 	for (i = 0; keyword_values[i].canonical; i++) {
 	    if (i)
 		bu_vls_putc(out, ',');
-	    cmd_schema_json_string(out, keyword_values[i].canonical);
+	    bu_cmd_json_string(out, keyword_values[i].canonical);
 	}
     } else if (keywords) {
 	for (i = 0; keywords[i]; i++) {
 	    if (i)
 		bu_vls_putc(out, ',');
-	    cmd_schema_json_string(out, keywords[i]);
+	    bu_cmd_json_string(out, keywords[i]);
 	}
     }
     bu_vls_strcat(out, "],\"keyword_values\":[");
@@ -1621,17 +1631,17 @@ cmd_schema_json_keyword_values(struct bu_vls *out, const char * const *keywords,
 	    if (i)
 		bu_vls_putc(out, ',');
 	    bu_vls_strcat(out, "{\"canonical\":");
-	    cmd_schema_json_string(out, keyword->canonical);
+	    bu_cmd_json_string(out, keyword->canonical);
 	    bu_vls_strcat(out, ",\"aliases\":[");
 	    if (keyword->aliases) {
 		for (size_t ai = 0; keyword->aliases[ai]; ai++) {
 		    if (ai)
 			bu_vls_putc(out, ',');
-		    cmd_schema_json_string(out, keyword->aliases[ai]);
+		    bu_cmd_json_string(out, keyword->aliases[ai]);
 		}
 	    }
 	    bu_vls_strcat(out, "],\"description\":");
-	    cmd_schema_json_string(out, keyword->description);
+	    bu_cmd_json_string(out, keyword->description);
 	    bu_vls_putc(out, '}');
 	}
     }
@@ -1750,11 +1760,11 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
 	return NULL;
 
     bu_vls_strcat(&out, "{\"kind\":\"native\",\"name\":");
-    cmd_schema_json_string(&out, schema->name);
+    bu_cmd_json_string(&out, schema->name);
     bu_vls_strcat(&out, ",\"help\":");
-    cmd_schema_json_string(&out, schema->help);
+    bu_cmd_json_string(&out, schema->help);
     bu_vls_strcat(&out, ",\"parse_policy\":");
-    cmd_schema_json_string(&out, cmd_schema_policy_name(schema->parse_policy));
+    bu_cmd_json_string(&out, cmd_schema_policy_name(schema->parse_policy));
     bu_vls_strcat(&out, ",\"options\":[");
     if (schema->options) {
 	while (bu_cmd_option_is_valid(&schema->options[i])) {
@@ -1763,21 +1773,21 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
 	    if (comma)
 		bu_vls_putc(&out, ',');
 	    bu_vls_strcat(&out, "{\"short\":");
-	    cmd_schema_json_string(&out, option->shortopt);
+	    bu_cmd_json_string(&out, option->shortopt);
 	    bu_vls_strcat(&out, ",\"long\":");
-	    cmd_schema_json_string(&out, option->longopt);
+	    bu_cmd_json_string(&out, option->longopt);
 	    bu_vls_strcat(&out, ",\"canonical\":");
-	    cmd_schema_json_string(&out, bu_cmd_option_canonical(option));
+	    bu_cmd_json_string(&out, bu_cmd_option_canonical(option));
 	    bu_vls_strcat(&out, ",\"alias_of\":");
-	    cmd_schema_json_string(&out, option->alias_of);
+	    bu_cmd_json_string(&out, option->alias_of);
 	    bu_vls_strcat(&out, ",\"argument\":");
-	    cmd_schema_json_string(&out, option->argument);
+	    bu_cmd_json_string(&out, option->argument);
 	    bu_vls_strcat(&out, ",\"argument_requirement\":");
-	    cmd_schema_json_string(&out, cmd_schema_arg_requirement_name(option->arg_requirement));
+	    bu_cmd_json_string(&out, cmd_schema_arg_requirement_name(option->arg_requirement));
 	    bu_vls_strcat(&out, ",\"argument_shape\":");
 	    if (shape) {
 		bu_vls_strcat(&out, "{\"kind\":");
-		cmd_schema_json_string(&out, cmd_schema_arg_shape_name(shape->kind));
+		bu_cmd_json_string(&out, cmd_schema_arg_shape_name(shape->kind));
 		bu_vls_printf(&out, ",\"min_tokens\":%lu,\"max_tokens\":",
 		    (unsigned long)shape->min_tokens);
 		if (shape->max_tokens == BU_CMD_COUNT_UNLIMITED)
@@ -1785,20 +1795,20 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
 		else
 		    bu_vls_printf(&out, "%lu", (unsigned long)shape->max_tokens);
 		bu_vls_strcat(&out, ",\"description\":");
-		cmd_schema_json_string(&out, shape->description);
+		bu_cmd_json_string(&out, shape->description);
 		bu_vls_putc(&out, '}');
 	    } else {
 		bu_vls_strcat(&out, "null");
 	    }
 	    bu_vls_strcat(&out, ",\"type\":");
-	    cmd_schema_json_string(&out, cmd_schema_value_name(option->value_type));
+	    bu_cmd_json_string(&out, cmd_schema_value_name(option->value_type));
 	    bu_vls_strcat(&out, ",\"semantic_provider\":");
-	    cmd_schema_json_string(&out, option->semantic_provider);
+	    bu_cmd_json_string(&out, option->semantic_provider);
 	    bu_vls_strcat(&out, ",");
 	    cmd_schema_json_keyword_values(&out, option->value_keywords, option->keyword_values);
 	    bu_vls_printf(&out, ",\"repeat\":%s,\"hidden\":%s,\"help\":",
 		option->repeat ? "true" : "false", option->hidden ? "true" : "false");
-	    cmd_schema_json_string(&out, option->help);
+	    bu_cmd_json_string(&out, option->help);
 	    bu_vls_putc(&out, '}');
 	    comma = 1;
 	    i++;
@@ -1813,20 +1823,20 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
 	    if (comma)
 		bu_vls_putc(&out, ',');
 	    bu_vls_strcat(&out, "{\"name\":");
-	    cmd_schema_json_string(&out, operand->name);
+	    bu_cmd_json_string(&out, operand->name);
 	    bu_vls_printf(&out, ",\"min\":%lu,\"max\":", (unsigned long)operand->min_count);
 	    if (operand->max_count == BU_CMD_COUNT_UNLIMITED)
 		bu_vls_strcat(&out, "null");
 	    else
 		bu_vls_printf(&out, "%lu", (unsigned long)operand->max_count);
 	    bu_vls_strcat(&out, ",\"help\":");
-	    cmd_schema_json_string(&out, operand->help);
+	    bu_cmd_json_string(&out, operand->help);
 	    bu_vls_strcat(&out, ",\"type\":");
-	    cmd_schema_json_string(&out, cmd_schema_value_name(operand->value_type));
+	    bu_cmd_json_string(&out, cmd_schema_value_name(operand->value_type));
 	    bu_vls_strcat(&out, ",\"shape\":");
 	    if (operand->shape) {
 		bu_vls_strcat(&out, "{\"kind\":");
-		cmd_schema_json_string(&out, cmd_schema_arg_shape_name(operand->shape->kind));
+		bu_cmd_json_string(&out, cmd_schema_arg_shape_name(operand->shape->kind));
 		bu_vls_printf(&out, ",\"min_tokens\":%lu,\"max_tokens\":",
 		    (unsigned long)operand->shape->min_tokens);
 		if (operand->shape->max_tokens == BU_CMD_COUNT_UNLIMITED)
@@ -1834,13 +1844,13 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
 		else
 		    bu_vls_printf(&out, "%lu", (unsigned long)operand->shape->max_tokens);
 		bu_vls_strcat(&out, ",\"description\":");
-		cmd_schema_json_string(&out, operand->shape->description);
+		bu_cmd_json_string(&out, operand->shape->description);
 		bu_vls_putc(&out, '}');
 	    } else {
 		bu_vls_strcat(&out, "null");
 	    }
 	    bu_vls_strcat(&out, ",\"semantic_provider\":");
-	    cmd_schema_json_string(&out, operand->semantic_provider);
+	    bu_cmd_json_string(&out, operand->semantic_provider);
 	    bu_vls_strcat(&out, ",");
 	    cmd_schema_json_keyword_values(&out, operand->value_keywords, operand->keyword_values);
 	    bu_vls_putc(&out, '}');
@@ -1848,22 +1858,63 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
 	    i++;
 	}
     }
+    bu_vls_strcat(&out, "],\"operand_groups\":[");
+    comma = 0;
+    if (schema->validation.operand_groups) {
+	for (i = 0; schema->validation.operand_groups[i].name; i++) {
+	    const struct bu_cmd_operand_group *group = &schema->validation.operand_groups[i];
+	    if (comma)
+		bu_vls_putc(&out, ',');
+	    bu_vls_strcat(&out, "{\"name\":");
+	    bu_cmd_json_string(&out, group->name);
+	    bu_vls_printf(&out, ",\"min\":%lu,\"max\":",
+		(unsigned long)group->min_count);
+	    if (group->max_count == BU_CMD_COUNT_UNLIMITED)
+		bu_vls_strcat(&out, "null");
+	    else
+		bu_vls_printf(&out, "%lu", (unsigned long)group->max_count);
+	    bu_vls_strcat(&out, ",\"help\":");
+	    bu_cmd_json_string(&out, group->help);
+	    bu_vls_strcat(&out, ",\"roles\":[");
+	    if (group->roles) {
+		for (size_t ri = 0; group->roles[ri].name; ri++) {
+		    const struct bu_cmd_operand *role = &group->roles[ri];
+		    if (ri)
+			bu_vls_putc(&out, ',');
+		    bu_vls_strcat(&out, "{\"name\":");
+		    bu_cmd_json_string(&out, role->name);
+		    bu_vls_strcat(&out, ",\"help\":");
+		    bu_cmd_json_string(&out, role->help);
+		    bu_vls_strcat(&out, ",\"type\":");
+		    bu_cmd_json_string(&out, cmd_schema_value_name(role->value_type));
+		    bu_vls_strcat(&out, ",\"semantic_provider\":");
+		    bu_cmd_json_string(&out, role->semantic_provider);
+		    bu_vls_strcat(&out, ",");
+		    cmd_schema_json_keyword_values(&out, role->value_keywords,
+			role->keyword_values);
+		    bu_vls_putc(&out, '}');
+		}
+	    }
+	    bu_vls_strcat(&out, "]}");
+	    comma = 1;
+	}
+    }
     bu_vls_strcat(&out, "],\"constraints\":[");
     comma = 0;
-    if (schema->validation.constraint_data.constraints) {
-	for (i = 0; schema->validation.constraint_data.constraints[i].options; i++) {
-	    const struct bu_cmd_constraint *constraint = &schema->validation.constraint_data.constraints[i];
+    if (schema->validation.constraints) {
+	for (i = 0; schema->validation.constraints[i].options; i++) {
+	    const struct bu_cmd_constraint *constraint = &schema->validation.constraints[i];
 	    if (comma)
 		bu_vls_putc(&out, ',');
 	    bu_vls_strcat(&out, "{\"kind\":");
-	    cmd_schema_json_string(&out, cmd_schema_constraint_kind_name(constraint->kind));
+	    bu_cmd_json_string(&out, cmd_schema_constraint_kind_name(constraint->kind));
 	    bu_vls_strcat(&out, ",\"condition\":");
-	    cmd_schema_json_string(&out, cmd_schema_constraint_condition_name(constraint->condition));
+	    bu_cmd_json_string(&out, cmd_schema_constraint_condition_name(constraint->condition));
 	    bu_vls_strcat(&out, ",\"options\":[");
 	    for (size_t oi = 0; constraint->options[oi]; oi++) {
 		if (oi)
 		    bu_vls_putc(&out, ',');
-		cmd_schema_json_string(&out, constraint->options[oi]);
+		bu_cmd_json_string(&out, constraint->options[oi]);
 	    }
 	    bu_vls_printf(&out, "],\"min\":%lu,\"max\":", (unsigned long)constraint->min_count);
 	    if (constraint->max_count == BU_CMD_COUNT_UNLIMITED)
@@ -1871,7 +1922,7 @@ bu_cmd_schema_describe_json(const struct bu_cmd_schema *schema)
 	    else
 		bu_vls_printf(&out, "%lu", (unsigned long)constraint->max_count);
 	    bu_vls_strcat(&out, ",\"hint\":");
-	    cmd_schema_json_string(&out, constraint->hint);
+	    bu_cmd_json_string(&out, constraint->hint);
 	    bu_vls_putc(&out, '}');
 	    comma = 1;
 	}
@@ -2130,14 +2181,38 @@ cmd_schema_operand_at(const struct bu_cmd_schema *schema, size_t operand_index)
 {
     size_t index = 0;
 
-    if (!schema || !schema->operands)
+    if (!schema)
 	return NULL;
-    for (size_t i = 0; schema->operands[i].name; i++) {
-	const struct bu_cmd_operand *operand = &schema->operands[i];
-	if (operand->max_count == BU_CMD_COUNT_UNLIMITED ||
-	    (operand_index >= index && operand_index - index < operand->max_count))
-	    return operand;
-	index += operand->max_count;
+    if (schema->operands) {
+	for (size_t i = 0; schema->operands[i].name; i++) {
+	    const struct bu_cmd_operand *operand = &schema->operands[i];
+	    if (operand->max_count == BU_CMD_COUNT_UNLIMITED ||
+		(operand_index >= index && operand_index - index < operand->max_count))
+		return operand;
+	    index += operand->max_count;
+	}
+    }
+    if (schema->validation.operand_groups) {
+	for (size_t gi = 0; schema->validation.operand_groups[gi].name; gi++) {
+	    const struct bu_cmd_operand_group *group = &schema->validation.operand_groups[gi];
+	    size_t width = 0;
+	    size_t offset;
+	    size_t capacity;
+
+	    if (!group->roles)
+		continue;
+	    while (group->roles[width].name)
+		width++;
+	    if (!width)
+		continue;
+	    offset = operand_index >= index ? operand_index - index : 0;
+	    capacity = group->max_count == BU_CMD_COUNT_UNLIMITED ?
+		BU_CMD_COUNT_UNLIMITED : group->max_count * width;
+	    if (operand_index >= index &&
+		(capacity == BU_CMD_COUNT_UNLIMITED || offset < capacity))
+		return &group->roles[offset % width];
+	    index += capacity;
+	}
     }
     return NULL;
 }
@@ -2148,11 +2223,71 @@ cmd_schema_minimum_operands(const struct bu_cmd_schema *schema)
 {
     size_t minimum = 0;
 
-    if (!schema || !schema->operands)
+    if (!schema)
 	return 0;
-    for (size_t i = 0; schema->operands[i].name; i++)
-	minimum += schema->operands[i].min_count;
+    if (schema->operands) {
+	for (size_t i = 0; schema->operands[i].name; i++)
+	    minimum += schema->operands[i].min_count;
+    }
+    if (schema->validation.operand_groups) {
+	for (size_t gi = 0; schema->validation.operand_groups[gi].name; gi++) {
+	    size_t width = 0;
+	    if (schema->validation.operand_groups[gi].roles)
+		while (schema->validation.operand_groups[gi].roles[width].name)
+		    width++;
+	    minimum += schema->validation.operand_groups[gi].min_count * width;
+	}
+    }
     return minimum;
+}
+
+
+static int
+cmd_schema_operand_sequence_complete(const struct bu_cmd_schema *schema,
+	size_t operand_count)
+{
+    size_t fixed = 0;
+
+    if (!schema)
+	return 0;
+    if (!schema->validation.operand_groups)
+	return operand_count >= cmd_schema_minimum_operands(schema);
+    if (schema->operands) {
+	for (size_t i = 0; schema->operands[i].name; i++) {
+	    const struct bu_cmd_operand *operand = &schema->operands[i];
+	    if (operand_count < fixed + operand->min_count)
+		return 0;
+	    if (operand->max_count == BU_CMD_COUNT_UNLIMITED)
+		return 1;
+	    fixed += operand->max_count;
+	}
+    }
+    if (operand_count < fixed)
+	return operand_count >= cmd_schema_minimum_operands(schema);
+    if (schema->validation.operand_groups) {
+	size_t remaining = operand_count - fixed;
+	for (size_t gi = 0; schema->validation.operand_groups[gi].name; gi++) {
+	    const struct bu_cmd_operand_group *group = &schema->validation.operand_groups[gi];
+	    size_t width = 0;
+	    size_t capacity;
+	    size_t consumed;
+
+	    if (group->roles)
+		while (group->roles[width].name)
+		    width++;
+	    if (!width)
+		return 0;
+	    capacity = group->max_count == BU_CMD_COUNT_UNLIMITED ?
+		BU_CMD_COUNT_UNLIMITED : group->max_count * width;
+	    consumed = capacity == BU_CMD_COUNT_UNLIMITED || remaining < capacity ?
+		remaining : capacity;
+	    if (consumed < group->min_count * width || consumed % width)
+		return 0;
+	    remaining -= consumed;
+	}
+	return remaining == 0;
+    }
+    return operand_count >= cmd_schema_minimum_operands(schema);
 }
 
 
@@ -2161,7 +2296,8 @@ bu_cmd_schema_option_present(const struct bu_cmd_schema *schema, size_t argc,
 	const char **argv, const char *canonical)
 {
     size_t i = 0;
-    int options_allowed = cmd_schema_has_options(schema);
+    size_t operand_count = 0;
+    int options_allowed = 1;
 
     if (!schema || !canonical)
 	return 0;
@@ -2171,12 +2307,13 @@ bu_cmd_schema_option_present(const struct bu_cmd_schema *schema, size_t argc,
 	const char *eq = NULL;
 	if (!arg)
 	    return 0;
-	if (BU_STR_EQUAL(arg, "--")) {
+	if (cmd_schema_is_end_marker(schema, arg, options_allowed, operand_count)) {
 	    options_allowed = 0;
 	    i++;
 	    continue;
 	}
-	if (options_allowed && arg[0] == '-' && arg[1]) {
+	if (options_allowed && cmd_schema_has_options(schema) &&
+	    arg[0] == '-' && arg[1]) {
 	    option = cmd_schema_lookup_token(schema, arg);
 	    eq = strchr(arg, '=');
 	    if (option) {
@@ -2206,6 +2343,7 @@ bu_cmd_schema_option_present(const struct bu_cmd_schema *schema, size_t argc,
 	}
 	if (schema->parse_policy != BU_CMD_PARSE_INTERSPERSED)
 	    options_allowed = 0;
+	operand_count++;
 	i++;
     }
 
@@ -2219,7 +2357,7 @@ bu_cmd_schema_operand_count(const struct bu_cmd_schema *schema, size_t argc,
 {
     size_t i = 0;
     size_t count = 0;
-    int options_allowed = cmd_schema_has_options(schema);
+    int options_allowed = 1;
 
     if (!schema)
 	return 0;
@@ -2229,12 +2367,13 @@ bu_cmd_schema_operand_count(const struct bu_cmd_schema *schema, size_t argc,
 	const char *eq = NULL;
 	if (!arg)
 	    return count;
-	if (BU_STR_EQUAL(arg, "--")) {
+	if (cmd_schema_is_end_marker(schema, arg, options_allowed, count)) {
 	    options_allowed = 0;
 	    i++;
 	    continue;
 	}
-	if (options_allowed && arg[0] == '-' && arg[1]) {
+	if (options_allowed && cmd_schema_has_options(schema) &&
+	    arg[0] == '-' && arg[1]) {
 	    option = cmd_schema_lookup_token(schema, arg);
 	    eq = strchr(arg, '=');
 	    if (option) {
@@ -2360,11 +2499,11 @@ static int
 cmd_schema_apply_constraints(const struct bu_cmd_schema *schema, size_t argc,
 	const char **argv, struct bu_cmd_validate_result *result)
 {
-    if (!schema || !schema->validation.constraint_data.constraints || !result)
+    if (!schema || !schema->validation.constraints || !result)
 	return 0;
 
-    for (size_t ci = 0; schema->validation.constraint_data.constraints[ci].options; ci++) {
-	const struct bu_cmd_constraint *constraint = &schema->validation.constraint_data.constraints[ci];
+    for (size_t ci = 0; schema->validation.constraints[ci].options; ci++) {
+	const struct bu_cmd_constraint *constraint = &schema->validation.constraints[ci];
 	size_t option_count = 0;
 	size_t selected_count = 0;
 	size_t actual_count = 0;
@@ -2425,19 +2564,17 @@ cmd_schema_operand_valid(const struct bu_cmd_operand *operand, const char *arg)
 }
 
 
-int
-bu_cmd_schema_validate(const struct bu_cmd_schema *schema, size_t argc, const char **argv,
+static int
+cmd_schema_validate_structure(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv,
 	size_t cursor_arg, struct bu_cmd_validate_result *result)
 {
     size_t i = 0;
     size_t operand_count = 0;
-    int options_allowed = cmd_schema_has_options(schema);
+    int options_allowed = 1;
 
     if (!schema || !result || cursor_arg > argc)
 	return -1;
-
-    if (schema->validation.custom_validate)
-	return schema->validation.custom_validate(schema, argc, argv, cursor_arg, result);
 
     bu_cmd_validate_result_clear(result);
     while (i < cursor_arg) {
@@ -2449,12 +2586,13 @@ bu_cmd_schema_validate(const struct bu_cmd_schema *schema, size_t argc, const ch
 	}
 	/* The end marker is structural even for an optionless schema: callers use
 	 * it to make an otherwise ambiguous leading-dash operand explicit. */
-	if (BU_STR_EQUAL(arg, "--")) {
+	if (cmd_schema_is_end_marker(schema, arg, options_allowed, operand_count)) {
 	    options_allowed = 0;
 	    i++;
 	    continue;
 	}
-	if (options_allowed && arg[0] == '-' && arg[1]) {
+	if (options_allowed && cmd_schema_has_options(schema) &&
+	    arg[0] == '-' && arg[1]) {
 	    const struct bu_cmd_option *option = cmd_schema_lookup_token(schema, arg);
 	const char *eq = strchr(arg, '=');
 	size_t min_tokens = 0;
@@ -2578,9 +2716,10 @@ validate_operand:
     }
 
     if (cursor_arg < argc && argv && argv[cursor_arg] &&
-	BU_STR_EQUAL(argv[cursor_arg], "--")) {
+	cmd_schema_is_end_marker(schema, argv[cursor_arg], options_allowed,
+	    operand_count)) {
 	const struct bu_cmd_operand *operand = cmd_schema_operand_at(schema, operand_count);
-	bu_cmd_validate_state_t state = operand_count < cmd_schema_minimum_operands(schema) ?
+	bu_cmd_validate_state_t state = !cmd_schema_operand_sequence_complete(schema, operand_count) ?
 	    BU_CMD_VALIDATE_INCOMPLETE : BU_CMD_VALIDATE_VALID;
 	cmd_schema_set_result(result, state, cursor_arg,
 	    operand ? BU_CMD_EXPECT_OPERAND : BU_CMD_EXPECT_NONE,
@@ -2592,6 +2731,7 @@ validate_operand:
     }
 
     if (cursor_arg < argc && argv && argv[cursor_arg] && options_allowed &&
+	cmd_schema_has_options(schema) &&
 	argv[cursor_arg][0] == '-' && !cmd_schema_dash_numeric_operand_valid(schema,
 	    operand_count, argv[cursor_arg])) {
 	const char *current = argv[cursor_arg];
@@ -2645,20 +2785,43 @@ validate_operand:
 	return 0;
     }
 
-    bu_cmd_validate_state_t state = operand_count < cmd_schema_minimum_operands(schema) ?
+    bu_cmd_validate_state_t state = !cmd_schema_operand_sequence_complete(schema, operand_count) ?
 	BU_CMD_VALIDATE_INCOMPLETE : BU_CMD_VALIDATE_VALID;
+    int offer_options = options_allowed && cmd_schema_has_options(schema);
     cmd_schema_set_result(result, state, cursor_arg,
-	(options_allowed ? BU_CMD_EXPECT_OPTION : BU_CMD_EXPECT_NONE) |
+	(offer_options ? BU_CMD_EXPECT_OPTION : BU_CMD_EXPECT_NONE) |
 	(operand ? BU_CMD_EXPECT_OPERAND : BU_CMD_EXPECT_NONE),
 	operand ? operand->value_type : BU_CMD_VALUE_STRING,
 	operand ? operand->name : (operand_count ? "operand" : "option or operand expected"),
 	operand ? operand->semantic_provider : NULL);
-    if (options_allowed)
+    if (offer_options)
 	cmd_schema_add_option_candidates(schema, result, "");
     if (!result->completion_count && operand)
 	cmd_schema_add_keyword_candidates(operand->value_keywords, operand->keyword_values,
 	    operand->shape, result, "");
-    return cmd_schema_apply_constraints(schema, argc, argv, result);
+    return 0;
+}
+
+
+int
+bu_cmd_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg,
+	struct bu_cmd_validate_result *result)
+{
+    int ret = cmd_schema_validate_structure(schema, argc, argv, cursor_arg,
+	result);
+
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+	return ret;
+    if (cursor_arg >= argc) {
+	ret = cmd_schema_apply_constraints(schema, argc, argv, result);
+	if (ret)
+	    return ret;
+    }
+    if (schema->validation.custom_validate)
+	return schema->validation.custom_validate(schema, argc, argv, cursor_arg,
+	    result);
+    return 0;
 }
 
 
@@ -2667,12 +2830,17 @@ bu_cmd_schema_validate_ctx(const struct bu_cmd_schema *schema, size_t argc,
 	const char **argv, size_t cursor_arg, void *context,
 	struct bu_cmd_validate_result *result)
 {
+    int ret;
+
     if (!schema || !result || cursor_arg > argc)
 	return -1;
-    if (context && schema->validation.constraint_data.context_validate)
-	return schema->validation.constraint_data.context_validate(schema, argc, argv,
+    ret = bu_cmd_schema_validate(schema, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+	return ret;
+    if (context && schema->validation.context_validate)
+	return schema->validation.context_validate(schema, argc, argv,
 	    cursor_arg, context, result);
-    return bu_cmd_schema_validate(schema, argc, argv, cursor_arg, result);
+    return 0;
 }
 
 
@@ -3010,11 +3178,11 @@ cmd_tree_node_describe_json(struct bu_vls *out, const struct bu_cmd_tree_node *n
 	for (size_t i = 0; node->aliases[i]; i++) {
 	    if (i)
 		bu_vls_putc(out, ',');
-	    cmd_schema_json_string(out, node->aliases[i]);
+	    bu_cmd_json_string(out, node->aliases[i]);
 	}
     }
     bu_vls_strcat(out, "],\"child_phase\":");
-    cmd_schema_json_string(out, cmd_tree_phase_name(node->child_phase));
+    bu_cmd_json_string(out, cmd_tree_phase_name(node->child_phase));
     bu_vls_strcat(out, ",\"subcommands\":[");
     if (node->subcommands) {
 	for (size_t i = 0; node->subcommands[i].schema; i++) {
@@ -3041,7 +3209,7 @@ bu_cmd_tree_describe_json(const struct bu_cmd_tree *tree)
     bu_vls_strcat(&out, "{\"kind\":\"native_tree\",\"root\":");
     bu_vls_strcat(&out, root_json ? root_json : "{}");
     bu_vls_strcat(&out, ",\"child_phase\":");
-    cmd_schema_json_string(&out, cmd_tree_phase_name(tree->child_phase));
+    bu_cmd_json_string(&out, cmd_tree_phase_name(tree->child_phase));
     bu_vls_strcat(&out, ",\"subcommands\":[");
     if (tree->subcommands) {
 	for (size_t i = 0; tree->subcommands[i].schema; i++) {
@@ -3054,6 +3222,230 @@ bu_cmd_tree_describe_json(const struct bu_cmd_tree *tree)
     if (root_json)
 	bu_free(root_json, "native tree root schema JSON");
     return bu_vls_strdup(&out);
+}
+
+
+static int
+cmd_schema_lint_operand(const struct bu_cmd_schema *schema,
+	const struct bu_cmd_operand *operand, const char *kind,
+	struct bu_vls *msgs)
+{
+    const char *path = schema && schema->name ? schema->name : "(unnamed)";
+    int failures = 0;
+
+    if (!operand || !operand->name || !operand->name[0]) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: %s has no name\n", path, kind);
+	return 1;
+    }
+    if (operand->max_count != BU_CMD_COUNT_UNLIMITED &&
+	operand->min_count > operand->max_count) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: %s \"%s\" has an invalid count range\n",
+		path, kind, operand->name);
+	failures++;
+    }
+    if (operand->value_type < BU_CMD_VALUE_FLAG ||
+	operand->value_type > BU_CMD_VALUE_UNKNOWN) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: %s \"%s\" has an invalid value type\n",
+		path, kind, operand->name);
+	failures++;
+    }
+    if (operand->shape) {
+	if (operand->shape->kind < BU_CMD_ARG_SHAPE_SCALAR ||
+	    operand->shape->kind > BU_CMD_ARG_SHAPE_CUSTOM ||
+	    (operand->shape->max_tokens != BU_CMD_COUNT_UNLIMITED &&
+	     operand->shape->min_tokens > operand->shape->max_tokens)) {
+	    if (msgs)
+		bu_vls_printf(msgs, "%s: %s \"%s\" has an invalid shape\n",
+		    path, kind, operand->name);
+	    failures++;
+	}
+    }
+    return failures;
+}
+
+
+int
+bu_cmd_schema_lint(const struct bu_cmd_schema *schema, struct bu_vls *msgs)
+{
+    int failures = 0;
+    const char *path;
+
+    if (!schema) {
+	if (msgs)
+	    bu_vls_strcat(msgs, "null native schema\n");
+	return 1;
+    }
+    path = schema->name && schema->name[0] ? schema->name : "(unnamed)";
+    if (!schema->name || !schema->name[0]) {
+	if (msgs)
+	    bu_vls_strcat(msgs, "native schema has no name\n");
+	failures++;
+    }
+    if (schema->parse_policy < BU_CMD_PARSE_INTERSPERSED ||
+	schema->parse_policy > BU_CMD_PARSE_STOP_AT_FIRST_OPERAND) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: invalid parse policy\n", path);
+	failures++;
+    }
+    if (schema->options) {
+	for (size_t i = 0; bu_cmd_option_is_valid(&schema->options[i]); i++) {
+	    const struct bu_cmd_option *option = &schema->options[i];
+	    const char *canonical = bu_cmd_option_canonical(option);
+	    if (!canonical || !canonical[0]) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: option %lu has no canonical name\n",
+			path, (unsigned long)i);
+		failures++;
+	    }
+	    if (option->value_type < BU_CMD_VALUE_FLAG ||
+		option->value_type > BU_CMD_VALUE_CUSTOM ||
+		option->arg_requirement < BU_CMD_ARG_REQUIRED ||
+		option->arg_requirement > BU_CMD_ARG_NONE) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: option \"%s\" has invalid type metadata\n",
+			path, canonical ? canonical : "");
+		failures++;
+	    }
+	    if (option->arg_shape &&
+		(option->arg_shape->kind < BU_CMD_ARG_SHAPE_SCALAR ||
+		 option->arg_shape->kind > BU_CMD_ARG_SHAPE_CUSTOM ||
+		 (option->arg_shape->max_tokens != BU_CMD_COUNT_UNLIMITED &&
+		  option->arg_shape->min_tokens > option->arg_shape->max_tokens))) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: option \"%s\" has an invalid argument shape\n",
+			path, canonical ? canonical : "");
+		failures++;
+	    }
+	    if (option->alias_of) {
+		int found = 0;
+		for (size_t j = 0; bu_cmd_option_is_valid(&schema->options[j]); j++) {
+		    if (!schema->options[j].alias_of &&
+			BU_STR_EQUAL(bu_cmd_option_canonical(&schema->options[j]),
+			    option->alias_of)) {
+			found = 1;
+			break;
+		    }
+		}
+		if (!found) {
+		    if (msgs)
+			bu_vls_printf(msgs, "%s: option alias \"%s\" has no target\n",
+			    path, canonical ? canonical : "");
+		    failures++;
+		}
+	    }
+	    for (size_t j = 0; j < i; j++) {
+		if ((option->shortopt && schema->options[j].shortopt &&
+		     BU_STR_EQUAL(option->shortopt, schema->options[j].shortopt)) ||
+		    (option->longopt && schema->options[j].longopt &&
+		     BU_STR_EQUAL(option->longopt, schema->options[j].longopt))) {
+		    if (msgs)
+			bu_vls_printf(msgs, "%s: duplicate option spelling for \"%s\"\n",
+			    path, canonical ? canonical : "");
+		    failures++;
+		    break;
+		}
+	    }
+	}
+    }
+    if (schema->operands) {
+	for (size_t i = 0; schema->operands[i].name; i++)
+	    failures += cmd_schema_lint_operand(schema, &schema->operands[i],
+		"operand", msgs);
+    }
+    if (schema->validation.operand_groups) {
+	if (schema->operands) {
+	    for (size_t i = 0; schema->operands[i].name; i++) {
+		const struct bu_cmd_operand *operand = &schema->operands[i];
+		if (operand->min_count != operand->max_count ||
+		    operand->max_count == BU_CMD_COUNT_UNLIMITED) {
+		    if (msgs)
+			bu_vls_printf(msgs,
+			    "%s: operands before repeated groups must have fixed cardinality\n",
+			    path);
+		    failures++;
+		    break;
+		}
+	    }
+	}
+	for (size_t gi = 0; schema->validation.operand_groups[gi].name; gi++) {
+	    const struct bu_cmd_operand_group *group = &schema->validation.operand_groups[gi];
+	    size_t width = 0;
+	    if (!group->name[0] || !group->roles ||
+		(group->max_count != BU_CMD_COUNT_UNLIMITED &&
+		 group->min_count > group->max_count)) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: malformed repeated operand group\n", path);
+		failures++;
+		continue;
+	    }
+	    while (group->roles[width].name) {
+		const struct bu_cmd_operand *role = &group->roles[width];
+		failures += cmd_schema_lint_operand(schema, role, "group role", msgs);
+		if (role->min_count != 1 || role->max_count != 1 ||
+		    (role->shape && (role->shape->min_tokens != 1 ||
+			role->shape->max_tokens != 1))) {
+		    if (msgs)
+			bu_vls_printf(msgs,
+			    "%s: repeated group role \"%s\" must be one scalar token\n",
+			    path, role->name);
+		    failures++;
+		}
+		width++;
+	    }
+	    if (!width) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: repeated operand group \"%s\" is empty\n",
+			path, group->name);
+		failures++;
+	    }
+	    if (group->max_count == BU_CMD_COUNT_UNLIMITED &&
+		schema->validation.operand_groups[gi + 1].name) {
+		if (msgs)
+		    bu_vls_printf(msgs,
+			"%s: an unlimited repeated operand group must be last\n", path);
+		failures++;
+	    }
+	}
+    }
+    if (schema->validation.constraints) {
+	for (size_t ci = 0; schema->validation.constraints[ci].options; ci++) {
+	    const struct bu_cmd_constraint *constraint =
+		&schema->validation.constraints[ci];
+	    if (constraint->kind < BU_CMD_CONSTRAINT_OPTION_COUNT ||
+		constraint->kind > BU_CMD_CONSTRAINT_OPERAND_COUNT ||
+		constraint->condition < BU_CMD_CONDITION_ALWAYS ||
+		constraint->condition > BU_CMD_CONDITION_ALL_OPTIONS_PRESENT ||
+		constraint->min_count > constraint->max_count) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: malformed command constraint\n", path);
+		failures++;
+	    }
+	    for (size_t oi = 0; constraint->options[oi]; oi++) {
+		int found = 0;
+		if (schema->options) {
+		    for (size_t si = 0; bu_cmd_option_is_valid(&schema->options[si]); si++) {
+			if (!schema->options[si].alias_of &&
+			    BU_STR_EQUAL(bu_cmd_option_canonical(&schema->options[si]),
+				constraint->options[oi])) {
+			    found = 1;
+			    break;
+			}
+		    }
+		}
+		if (!found) {
+		    if (msgs)
+			bu_vls_printf(msgs,
+			    "%s: constraint references unknown option \"%s\"\n",
+			    path, constraint->options[oi]);
+		    failures++;
+		}
+	    }
+	}
+    }
+    return failures;
 }
 
 
@@ -3072,6 +3464,7 @@ cmd_tree_lint_nodes(const struct bu_cmd_tree_node *nodes, struct bu_vls *msgs,
     }
     for (size_t i = 0; nodes[i].schema; i++) {
 	const struct bu_cmd_tree_node *node = &nodes[i];
+	failures += bu_cmd_schema_lint(node->schema, msgs);
 	if (!node->schema->name || !node->schema->name[0]) {
 	    if (msgs)
 		bu_vls_strcat(msgs, "native command tree contains an unnamed child\n");
@@ -3122,6 +3515,8 @@ cmd_tree_lint_nodes(const struct bu_cmd_tree_node *nodes, struct bu_vls *msgs,
 int
 bu_cmd_tree_lint(const struct bu_cmd_tree *tree, struct bu_vls *msgs)
 {
+    int failures;
+
     if (!tree || !tree->root_schema || !tree->root_schema->name ||
 	!tree->root_schema->name[0]) {
 	if (msgs)
@@ -3161,5 +3556,7 @@ bu_cmd_tree_lint(const struct bu_cmd_tree *tree, struct bu_vls *msgs)
 	    return 1;
 	}
     }
-    return cmd_tree_lint_nodes(tree->subcommands, msgs, 0);
+    failures = bu_cmd_schema_lint(tree->root_schema, msgs);
+    failures += cmd_tree_lint_nodes(tree->subcommands, msgs, 0);
+    return failures;
 }

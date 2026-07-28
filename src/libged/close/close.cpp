@@ -37,13 +37,13 @@
 static const struct bu_cmd_schema close_cmd_schema = {
     "close", "Close the current geometry database", NULL, NULL,
     BU_CMD_PARSE_INTERSPERSED,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static const struct bu_cmd_schema closedb_cmd_schema = {
     "closedb", "Close the current geometry database", NULL, NULL,
     BU_CMD_PARSE_INTERSPERSED,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 extern "C" int

@@ -52,7 +52,7 @@ static const struct bu_cmd_operand pull_operands[] = {
 };
 static const struct bu_cmd_schema pull_cmd_schema = {
     "pull", "Pull transformations up an object tree", pull_options,
-    pull_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    pull_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

@@ -50,7 +50,7 @@ static const struct bu_cmd_operand which_shader_schema_operands[] = {
 static const struct bu_cmd_schema which_shader_cmd_schema = {
     "which_shader", "Find combinations using matching shaders",
     which_shader_schema_options, which_shader_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

@@ -83,7 +83,7 @@ struct ged_plugin_schema_manifest {
     }; \
     static const struct bu_cmd_schema id##_cmd_schema = { \
 	cmdstr, helpstr, NULL, id##_schema_operands, \
-	BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL} \
+	BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
     }
 
 /* Validator helper for parsers accepting a small set of exact positional

@@ -54,11 +54,11 @@ static const struct bu_cmd_operand instance_schema_operands[] = {
 };
 static const struct bu_cmd_schema instance_cmd_schema = {
     "instance", "Add an object instance to a combination", NULL,
-    instance_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    instance_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema i_cmd_schema = {
     "i", "Add an object instance to a combination", NULL,
-    instance_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    instance_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

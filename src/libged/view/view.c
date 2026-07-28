@@ -1049,7 +1049,7 @@ static const struct bu_cmd_operand saveview_operands[] = {
 };
 #define VIEW_SCHEMA(_id, _name, _help, _opts, _ops, _policy) \
     static const struct bu_cmd_schema _id##_cmd_schema = { \
-	_name, _help, _opts, _ops, _policy, {NULL} \
+	_name, _help, _opts, _ops, _policy, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
     }
 VIEW_SCHEMA(ae, "ae", "Query or set azimuth, elevation, and twist", view_increment_options, view_aet_operands, BU_CMD_PARSE_INTERSPERSED);
 VIEW_SCHEMA(aet, "aet", "Query or set azimuth, elevation, and twist", view_increment_options, view_aet_operands, BU_CMD_PARSE_INTERSPERSED);
@@ -1069,7 +1069,7 @@ VIEW_SCHEMA(ypr, "ypr", "Set yaw, pitch, and roll", NULL, view_xyz_operands, BU_
 
 #define VIEW_LINES_SCHEMA(_id, _name, _help) \
     static const struct bu_cmd_schema _id##_schema = { \
-	_name, _help, NULL, view_child_args, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL} \
+	_name, _help, NULL, view_child_args, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
     }
 VIEW_LINES_SCHEMA(view_lines_draw, "draw", "Query or set line drawing");
 VIEW_LINES_SCHEMA(view_lines_color, "color", "Query or set line color");
@@ -1087,11 +1087,11 @@ static const struct bu_cmd_tree_node view_lines_subcommands[] = {
 };
 static const struct bu_cmd_schema data_lines_root_schema = {
     "data_lines", "Manage transient view lines", NULL, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema sdata_lines_root_schema = {
     "sdata_lines", "Manage shared transient view lines", NULL, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_tree data_lines_tree = {
     &data_lines_root_schema, view_lines_subcommands, BU_CMD_TREE_CHILD_FIRST
@@ -1103,7 +1103,7 @@ static const char * const autoview_aliases[] = {"auto", NULL};
 static const char * const saveview_aliases[] = {"save", NULL};
 static const struct bu_cmd_schema view_func_root_schema = {
     "view_func", "Legacy view operation dispatcher", NULL, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_tree_node view_func_subcommands[] = {
     BU_CMD_TREE_NODE(&ae_cmd_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),

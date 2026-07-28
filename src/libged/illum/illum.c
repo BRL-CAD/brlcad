@@ -247,11 +247,11 @@ static const struct bu_cmd_operand labelvert_schema_operands[] = {
 };
 static const struct bu_cmd_schema illum_cmd_schema = {
     "illum", "Set object illumination", illum_schema_options, illum_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, {illum_schema_validate}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(illum_schema_validate, NULL)
 };
 static const struct bu_cmd_schema labelvert_cmd_schema = {
     "labelvert", "Label wireframe vertices", NULL, labelvert_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static const struct bu_cmd_schema *

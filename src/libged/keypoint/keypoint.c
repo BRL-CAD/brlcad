@@ -97,7 +97,7 @@ static const struct bu_cmd_operand keypoint_schema_operands[] = {
     BU_CMD_OPERAND_NULL
 };
 GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(keypoint, 0, 1, 3)
-static const struct bu_cmd_schema keypoint_cmd_schema = {"keypoint", "Query or set the view keypoint", NULL, keypoint_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {keypoint_schema_validate}};
+static const struct bu_cmd_schema keypoint_cmd_schema = {"keypoint", "Query or set the view keypoint", NULL, keypoint_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(keypoint_schema_validate, NULL)};
 
 #define GED_KEYPOINT_COMMANDS(X, XID) \
     X(keypoint, ged_keypoint_core, GED_CMD_DEFAULT, &keypoint_cmd_schema) \

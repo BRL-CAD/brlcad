@@ -2865,7 +2865,7 @@ static const struct bu_cmd_operand gqa_schema_operands[] = {
 };
 static const struct bu_cmd_schema gqa_cmd_schema = {
     "gqa", "Analyze geometric overlaps, gaps, volume, and mass", NULL,
-    gqa_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    gqa_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #define GED_GQA_COMMANDS(X, XID) \

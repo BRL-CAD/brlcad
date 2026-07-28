@@ -64,11 +64,11 @@ static const struct bu_cmd_operand list_schema_operands[] = {
 };
 static const struct bu_cmd_schema list_cmd_schema = {
     "list", "Describe database objects", list_schema_options, list_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema l_cmd_schema = {
     "l", "Describe database objects", list_schema_options, list_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

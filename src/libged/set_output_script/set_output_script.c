@@ -36,7 +36,7 @@ static const struct bu_cmd_operand set_output_script_operands[] = {
 
 static const struct bu_cmd_schema set_output_script_cmd_schema = {
     "set_output_script", "Get or set the output handler script", NULL,
-    set_output_script_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    set_output_script_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 /*

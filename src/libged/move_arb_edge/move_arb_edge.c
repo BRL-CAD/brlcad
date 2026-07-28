@@ -56,7 +56,7 @@ static const struct bu_cmd_operand move_arb_edge_schema_operands[] = {
 };
 static const struct bu_cmd_schema move_arb_edge_cmd_schema = {
     "move_arb_edge", "Move an ARB edge", move_arb_edge_schema_options,
-    move_arb_edge_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    move_arb_edge_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_operand find_arb_edge_schema_operands[] = {
     BU_CMD_OPERAND("arb", BU_CMD_VALUE_DB_PATH, 1, 1, "ARB object or path", "ged.db_path"),
@@ -67,7 +67,7 @@ static const struct bu_cmd_operand find_arb_edge_schema_operands[] = {
 };
 static const struct bu_cmd_schema find_arb_edge_cmd_schema = {
     "find_arb_edge", "Find the ARB edge nearest a view point", NULL,
-    find_arb_edge_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    find_arb_edge_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

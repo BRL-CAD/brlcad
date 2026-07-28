@@ -42,7 +42,7 @@ static const struct bu_cmd_operand comb_color_schema_operands[] = {
 };
 static const struct bu_cmd_schema comb_color_cmd_schema = {
     "comb_color", "Set a combination's RGB color", NULL,
-    comb_color_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    comb_color_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

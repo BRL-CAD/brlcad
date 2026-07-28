@@ -292,7 +292,7 @@ static const struct bu_cmd_operand solids_on_ray_schema_operands[] = {
     BU_CMD_OPERAND_NULL
 };
 GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(solids_on_ray, 0, 2, GED_SCHEMA_COUNT_NONE)
-static const struct bu_cmd_schema solids_on_ray_cmd_schema = {"solids_on_ray", "List displayed solids intersected by a view ray", NULL, solids_on_ray_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {solids_on_ray_schema_validate}};
+static const struct bu_cmd_schema solids_on_ray_cmd_schema = {"solids_on_ray", "List displayed solids intersected by a view ray", NULL, solids_on_ray_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(solids_on_ray_schema_validate, NULL)};
 
 #define GED_SOLIDS_ON_RAY_COMMANDS(X, XID) \
     X(solids_on_ray, ged_solids_on_ray_core, GED_CMD_DEFAULT, &solids_on_ray_cmd_schema) \

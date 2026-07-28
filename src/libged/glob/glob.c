@@ -54,11 +54,11 @@ static const struct bu_cmd_operand glob_schema_operands[] = {
 };
 static const struct bu_cmd_schema glob_cmd_schema = {
     "glob", "Expand a database glob expression", NULL, glob_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema db_glob_cmd_schema = {
     "db_glob", "Expand a database glob expression", NULL, glob_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

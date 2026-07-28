@@ -270,7 +270,7 @@ static const struct bu_cmd_operand dup_schema_operands[] = {
 };
 static const struct bu_cmd_schema dup_cmd_schema = {
     "dup", "Report duplicate names", NULL, dup_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static const struct bu_cmd_schema *

@@ -44,11 +44,11 @@ static const struct bu_cmd_operand group_schema_operands[] = {
 };
 static const struct bu_cmd_schema group_cmd_schema = {
     "group", "Create or extend a union group", NULL, group_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_cmd_schema g_cmd_schema = {
     "g", "Create or extend a union group", NULL, group_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

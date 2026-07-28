@@ -41,7 +41,7 @@ static const struct bu_cmd_operand rot_about_schema_operands[] = {
 };
 GED_EXPORT const struct bu_cmd_schema ged_rot_about_cmd_schema = {
     "rot_about", "Query or set the rotation pivot", NULL,
-    rot_about_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    rot_about_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

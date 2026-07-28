@@ -12,6 +12,7 @@
 #include "common.h"
 
 #include <stddef.h>
+#include <string.h>
 
 #include "bu.h"
 #include "bu/cmdschema.h"
@@ -25,6 +26,8 @@ struct short_only_args {
     int selected;
 };
 
+static int custom_calls = 0;
+
 
 /* This must remain a file-scope initializer: MSVC rejects a conditional
  * expression used to choose its canonical spelling (C2099). */
@@ -35,7 +38,7 @@ static const struct bu_cmd_option short_only_options[] = {
 
 static const struct bu_cmd_schema short_only_schema = {
     "short-only", "Short-only option regression fixture", short_only_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -83,19 +86,78 @@ test_context_validate(const struct bu_cmd_schema *schema, size_t argc,
 	const char **argv, size_t cursor_arg, void *context,
 	struct bu_cmd_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
     int *calls = (int *)context;
 
+    (void)schema;
+    (void)argc;
+    (void)argv;
+    (void)cursor_arg;
+    (void)result;
     if (calls)
 	(*calls)++;
-    flat.validation.constraint_data.context_validate = NULL;
-    return bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    return 0;
 }
 
 
 static const struct bu_cmd_schema test_schema = {
     "test", "Native command-schema regression fixture", test_options, NULL,
     BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONTEXT_VALIDATOR(test_context_validate)
+};
+
+static int
+cannot_bypass_structure(const struct bu_cmd_schema *UNUSED(schema),
+	size_t UNUSED(argc), const char **UNUSED(argv),
+	size_t UNUSED(cursor_arg), struct bu_cmd_validate_result *result)
+{
+    custom_calls++;
+    result->state = BU_CMD_VALIDATE_VALID;
+    return 0;
+}
+
+static const struct bu_cmd_option guarded_options[] = {
+    BU_CMD_FLAG_UNBOUND("v", "verbose", "verbose", "Enable verbose output"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema guarded_schema = {
+    "guarded", "Structural validation must precede callbacks", guarded_options,
+    NULL, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(cannot_bypass_structure, NULL)
+};
+
+static const struct bu_cmd_operand raw_operands[] = {
+    BU_CMD_OPERAND("words", BU_CMD_VALUE_RAW, 1, BU_CMD_COUNT_UNLIMITED,
+	"Raw words", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema raw_schema = {
+    "raw", "End-marker scanner fixture", NULL, raw_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema options_raw_schema = {
+    "options-raw", "Options-first end-marker scanner fixture",
+    short_only_options, raw_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static const char * const operation_keywords[] = {"u", "-", "+", NULL};
+static const struct bu_cmd_operand grouped_head[] = {
+    BU_CMD_OPERAND("target", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Target", "test.object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand grouped_roles[] = {
+    BU_CMD_OPERAND_KEYWORDS("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Boolean operation", NULL, operation_keywords),
+    BU_CMD_OPERAND("member", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Member", "test.object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand_group grouped_operands[] = {
+    BU_CMD_OPERAND_GROUP("expression", grouped_roles, 0, BU_CMD_COUNT_UNLIMITED,
+	"Repeated operation/member pairs"),
+    BU_CMD_OPERAND_GROUP_NULL
+};
+static const struct bu_cmd_schema grouped_schema = {
+    "grouped\"schema", "Repeated\noperand fixture", NULL, grouped_head,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_GROUPS(NULL, NULL, grouped_operands)
 };
 
 
@@ -111,6 +173,12 @@ main(int UNUSED(argc), char **UNUSED(argv))
     const char *json[] = {"--list=json"};
     const char *invalid[] = {"--list=xml"};
     const char *short_only[] = {"-s"};
+    const char *unknown[] = {"--unknown"};
+    const char *leading_marker[] = {"--", "-third"};
+    const char *late_marker[] = {"first", "--", "-third"};
+    const char *group_partial[] = {"target", "u"};
+    const char *group_complete[] = {"target", "u", "member"};
+    const char *group_invalid[] = {"target", "q", "member"};
 
     if (!BU_STR_EQUAL(bu_cmd_option_canonical(&short_only_options[0]), "s") ||
 	bu_cmd_schema_parse(&short_only_schema, &short_only_args, &msg, 1, short_only) != 1 ||
@@ -138,6 +206,15 @@ main(int UNUSED(argc), char **UNUSED(argv))
 	bu_vls_free(&msg);
 	return 1;
     }
+    if (bu_cmd_schema_validate(&test_schema, 1, bare, 1, &result) != 0 ||
+	result.state != BU_CMD_VALIDATE_VALID ||
+	(result.expected & BU_CMD_EXPECT_OPTION_ARG)) {
+	bu_log("attached-only optional option incorrectly required a separate argument\n");
+	bu_cmd_validate_result_clear(&result);
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_cmd_validate_result_clear(&result);
 
     if (bu_cmd_schema_validate(&test_schema, 0, NULL, 0, &result) != 0 ||
 	context_calls != 0) {
@@ -151,6 +228,109 @@ main(int UNUSED(argc), char **UNUSED(argv))
 	&result) != 0 || context_calls != 1) {
 	bu_log("context-aware validation did not invoke the context hook\n");
 	bu_cmd_validate_result_clear(&result);
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_cmd_validate_result_clear(&result);
+
+    if (bu_cmd_schema_validate(&guarded_schema, 1, unknown, 1, &result) != 0 ||
+	result.state != BU_CMD_VALIDATE_INVALID || custom_calls != 0) {
+	bu_log("custom validation bypassed structural option validation\n");
+	bu_cmd_validate_result_clear(&result);
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_cmd_validate_result_clear(&result);
+    if (bu_cmd_schema_validate(&guarded_schema, 0, NULL, 0, &result) != 0 ||
+	result.state != BU_CMD_VALIDATE_VALID || custom_calls != 1) {
+	bu_log("compositional custom validator was not invoked after structural validation\n");
+	bu_cmd_validate_result_clear(&result);
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_cmd_validate_result_clear(&result);
+
+    if (bu_cmd_schema_parse(&raw_schema, NULL, &msg, 2, leading_marker) != 1 ||
+	bu_cmd_schema_operand_count(&raw_schema, 2, leading_marker) != 1 ||
+	bu_cmd_schema_validate(&raw_schema, 2, leading_marker, 2, &result) != 0 ||
+	result.state != BU_CMD_VALIDATE_VALID) {
+	bu_log("leading optionless end marker was not classified consistently\n");
+	bu_cmd_validate_result_clear(&result);
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_cmd_validate_result_clear(&result);
+    if (bu_cmd_schema_parse(&raw_schema, NULL, &msg, 3, late_marker) != 0 ||
+	bu_cmd_schema_operand_count(&raw_schema, 3, late_marker) != 3 ||
+	bu_cmd_schema_validate(&raw_schema, 3, late_marker, 3, &result) != 0 ||
+	result.state != BU_CMD_VALIDATE_VALID) {
+	bu_log("late optionless end marker disagreed between parsing and validation\n");
+	bu_cmd_validate_result_clear(&result);
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_cmd_validate_result_clear(&result);
+    short_only_args.selected = 0;
+    if (bu_cmd_schema_parse_complete(&options_raw_schema, &short_only_args, &msg,
+	1, short_only) >= 0 || short_only_args.selected) {
+	bu_log("complete parsing mutated option storage before rejecting missing operands\n");
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_trunc(&msg, 0);
+    if (bu_cmd_schema_parse(&options_raw_schema, &short_only_args, &msg, 3,
+	late_marker) != 0 ||
+	bu_cmd_schema_operand_count(&options_raw_schema, 3, late_marker) != 3 ||
+	bu_cmd_schema_validate(&options_raw_schema, 3, late_marker, 3, &result) != 0 ||
+	result.state != BU_CMD_VALIDATE_VALID) {
+	bu_log("late options-first end marker disagreed between parsing and validation\n");
+	bu_cmd_validate_result_clear(&result);
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_cmd_validate_result_clear(&result);
+
+    if (bu_cmd_schema_validate(&grouped_schema, 2, group_partial, 2, &result) != 0 ||
+	result.state != BU_CMD_VALIDATE_INCOMPLETE ||
+	result.completion_type != BU_CMD_VALUE_DB_OBJECT) {
+	bu_log("partial repeated operand group was not incomplete at its member role\n");
+	bu_cmd_validate_result_clear(&result);
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_cmd_validate_result_clear(&result);
+    if (bu_cmd_schema_validate(&grouped_schema, 3, group_complete, 3, &result) != 0 ||
+	result.state != BU_CMD_VALIDATE_VALID) {
+	bu_log("complete repeated operand group was not valid\n");
+	bu_cmd_validate_result_clear(&result);
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_cmd_validate_result_clear(&result);
+    if (bu_cmd_schema_validate(&grouped_schema, 3, group_invalid, 3, &result) != 0 ||
+	result.state != BU_CMD_VALIDATE_INVALID) {
+	bu_log("repeated operand group accepted an invalid typed role\n");
+	bu_cmd_validate_result_clear(&result);
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_cmd_validate_result_clear(&result);
+
+    {
+	char *schema_json = bu_cmd_schema_describe_json(&grouped_schema);
+	if (!schema_json || !strstr(schema_json, "\"operand_groups\":[{") ||
+	    !strstr(schema_json, "grouped\\\"schema") ||
+	    !strstr(schema_json, "Repeated\\noperand fixture")) {
+	    bu_log("repeated groups or escaped strings are missing from schema JSON\n");
+	    if (schema_json)
+		bu_free(schema_json, "grouped schema JSON");
+	    bu_vls_free(&msg);
+	    return 1;
+	}
+	bu_free(schema_json, "grouped schema JSON");
+    }
+    if (bu_cmd_schema_lint(&grouped_schema, &msg) != 0) {
+	bu_log("valid repeated operand schema failed lint: %s\n", bu_vls_addr(&msg));
 	bu_vls_free(&msg);
 	return 1;
     }

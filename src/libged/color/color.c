@@ -276,7 +276,7 @@ static const struct bu_cmd_option edcolor_schema_options[] = {
 };
 static const struct bu_cmd_schema edcolor_cmd_schema = {
     "edcolor", "Edit the region color table", edcolor_schema_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void

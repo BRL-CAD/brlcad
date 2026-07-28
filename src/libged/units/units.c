@@ -217,7 +217,7 @@ units_schema_validate(const struct bu_cmd_schema *cmd, size_t argc, const char *
 
 static const struct bu_cmd_schema units_cmd_schema = {
     "units", "Get or set database units", units_options, units_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, {units_schema_validate}
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(units_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema *

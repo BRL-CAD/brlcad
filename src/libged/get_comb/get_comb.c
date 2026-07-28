@@ -40,7 +40,7 @@ static const struct bu_cmd_operand get_comb_operands[] = {
 
 static const struct bu_cmd_schema get_comb_cmd_schema = {
     "get_comb", "Return editable combination data", NULL, get_comb_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

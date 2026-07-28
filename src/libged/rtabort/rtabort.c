@@ -81,7 +81,7 @@ ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
 static const struct bu_cmd_schema rtabort_cmd_schema = {
     "rtabort", "Abort active raytrace processes", NULL, NULL,
     BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #define GED_RTABORT_COMMANDS(X, XID) \

@@ -411,12 +411,12 @@ ls_schema_validate(const struct bu_cmd_schema *cmd, size_t argc, const char **ar
 
 static const struct bu_cmd_schema ls_cmd_schema = {
     "ls", "List database objects", ls_schema_options, ls_schema_operands,
-    BU_CMD_PARSE_INTERSPERSED, {ls_schema_validate}
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(ls_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema t_cmd_schema = {
     "t", "List database objects", ls_schema_options, ls_schema_operands,
-    BU_CMD_PARSE_INTERSPERSED, {ls_schema_validate}
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(ls_schema_validate, NULL)
 };
 
 

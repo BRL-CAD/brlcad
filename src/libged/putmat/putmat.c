@@ -418,7 +418,7 @@ static const struct bu_cmd_operand putmat_schema_operands[] = {
 static const struct bu_cmd_schema putmat_cmd_schema = {
     "putmat", "Get or replace a combination arc matrix", NULL,
     putmat_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    {putmat_schema_validate}
+    BU_CMD_SCHEMA_CONSTRAINTS(putmat_schema_validate, NULL)
 };
 
 static const struct bu_cmd_schema *

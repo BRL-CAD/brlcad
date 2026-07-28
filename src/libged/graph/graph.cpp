@@ -136,6 +136,11 @@ static const struct bu_cmd_operand graph_igraph_operands[] = {
 	"Legacy graph operation", NULL, graph_igraph_keywords),
     BU_CMD_OPERAND_NULL
 };
+static const struct bu_cmd_operand graph_native_operands[] = {
+    BU_CMD_OPERAND("output_or_operation", BU_CMD_VALUE_RAW, 1, 1,
+	"SVG output file or legacy graph operation", NULL),
+    BU_CMD_OPERAND_NULL
+};
 
 static int
 graph_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
@@ -168,7 +173,7 @@ graph_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 
 static const struct bu_cmd_schema graph_cmd_schema = {
     "graph", "Generate an SVG hierarchy graph or legacy graph data",
-    graph_options, graph_svg_operands, BU_CMD_PARSE_INTERSPERSED,
+    graph_options, graph_native_operands, BU_CMD_PARSE_INTERSPERSED,
     BU_CMD_SCHEMA_CONSTRAINTS(graph_schema_validate, NULL)
 };
 

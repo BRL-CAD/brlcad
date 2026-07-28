@@ -131,7 +131,7 @@ static const struct bu_cmd_operand hide_schema_operands[] = {
 static const struct bu_cmd_schema hide_cmd_schema = {
     "hide", "Hide database objects from ordinary listings", NULL,
     hide_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    {NULL}
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static const struct bu_cmd_schema *
