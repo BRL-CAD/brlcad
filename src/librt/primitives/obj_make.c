@@ -72,8 +72,8 @@ static int
 obj_make_denied(const char *label)
 {
     static const char * const denylist[] = {
-	"cline", "dsp", "ebm", "nurb", "spline", "submodel", "joint", "comb",
-	"binunif", "constrnt", "revolve", "script", "material", "vol",
+	"binunif", "comb", "constrnt", "dsp", "ebm", "material",
+	"nurb", "revolve", "script", "spline", "submodel", "vol",
 	NULL
     };
 
