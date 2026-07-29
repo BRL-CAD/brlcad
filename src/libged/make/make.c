@@ -25,15 +25,10 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <string.h>
-
-
 #include "bu/opt.h"
 #include "bu/interrupt.h"
 #include "rt/func.h"
 #include "rt/geom.h"
-#include "wdb.h"
 
 #include "../ged_private.h"
 
@@ -128,25 +123,20 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, name, LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
+    /* TODO: get rid of legacy deprecation messages? These types are alredy on the
+     * non-makeable list and will be rejected by rt_obj_make(). Checking for them
+     * here is solely for printing and an ugly coupling */
     if (BU_STR_EQUAL(type, "hf")) {
 	bu_vls_printf(gedp->ged_result_str, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n");
 	return BRLCAD_ERROR;
-    } else if (BU_STR_EQUAL(type, "pg") ||
-	       BU_STR_EQUAL(type, "poly")) {
+    }
+    if (BU_STR_EQUAL(type, "pg") || BU_STR_EQUAL(type, "poly")) {
 	bu_vls_printf(gedp->ged_result_str, "make: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.");
 	return BRLCAD_ERROR;
-    } else if (BU_STR_EQUAL(type, "cline") ||
-	       BU_STR_EQUAL(type, "dsp") ||
-	       BU_STR_EQUAL(type, "ebm") ||
-	       BU_STR_EQUAL(type, "nurb") ||
-	       BU_STR_EQUAL(type, "spline") ||
-	       BU_STR_EQUAL(type, "submodel") ||
-	       BU_STR_EQUAL(type, "vol")) {
+    }
+
+    if (rt_obj_make(type, origin, scale, &internal) != BRLCAD_OK) {
 	bu_vls_printf(gedp->ged_result_str, "make: the %s primitive is not supported by this command", type);
-	return BRLCAD_ERROR;
-    } else if (rt_obj_make(type, origin, scale, &internal) == BRLCAD_OK) {
-	bu_log("SUCCESS for type %s\n", type);
-    } else {
 	print_usage(gedp, cmd, d);
 	return BRLCAD_ERROR;
     }
