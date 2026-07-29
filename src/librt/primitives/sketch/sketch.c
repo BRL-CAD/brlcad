@@ -178,6 +178,22 @@ rt_sketch_shot(struct soltab *stp, struct xray *rp, struct application *ap, stru
 
 
 /**
+ * Vectorized rt_sketch_shot(): a sketch is not solid geometry, so every
+ * ray in the batch misses.
+ */
+C_DECL void
+rt_sketch_vshot(struct soltab **stp, struct xray **UNUSED(rp), struct seg *segp, int n, struct application *ap)
+{
+    int i;
+    if (ap) RT_CK_APPLICATION(ap);
+    for (i = 0; i < n; i++) {
+	if (stp[i] == 0) continue;		/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* always MISS */
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 C_DECL void

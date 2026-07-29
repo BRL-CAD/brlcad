@@ -108,6 +108,22 @@ rt_datum_shot(struct soltab *UNUSED(stp), struct xray *UNUSED(rp), struct applic
 }
 
 
+/**
+ * Vectorized rt_datum_shot(): datums are not solid geometry, so every
+ * ray in the batch misses.
+ */
+C_DECL void
+rt_datum_vshot(struct soltab **stp, struct xray **UNUSED(rp), struct seg *segp, int n, struct application *ap)
+{
+    int i;
+    if (ap) RT_CK_APPLICATION(ap);
+    for (i = 0; i < n; i++) {
+	if (stp[i] == 0) continue;		/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* always MISS */
+    }
+}
+
+
 C_DECL void
 rt_datum_norm(struct hit *UNUSED(hitp), struct soltab *UNUSED(stp), struct xray *UNUSED(rp))
 {
