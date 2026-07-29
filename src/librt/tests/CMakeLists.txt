@@ -107,6 +107,10 @@ brlcad_add_test(NAME rt_boolweave COMMAND rt_boolweave)
 brlcad_addexec(rt_vshot vshot_test.cpp "${RT_TEST_LIBS}" TEST)
 brlcad_add_test(NAME rt_vshot COMMAND rt_vshot 0.1)
 
+# Primitive-generic vshot benchmark: shot*N vs vshot(N) across batch
+# sizes with coherent + incoherent rays (long-running tool, not a test)
+brlcad_addexec(rt_vshot_bench vshot_bench.cpp "${RT_TEST_LIBS}" NO_INSTALL)
+
 # Tests for primitive editing
 add_subdirectory(edit)
 
