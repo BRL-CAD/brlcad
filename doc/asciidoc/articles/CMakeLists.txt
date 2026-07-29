@@ -13,6 +13,7 @@ set(
   mged.adoc
   mgedrc.adoc
   nirt.adoc
+  object_types.adoc
   oed.adoc
   overlap_tool.adoc
   pipes.adoc
@@ -240,6 +241,57 @@ set(
   images/adrt_castle_rt_ao.png
   images/adrt_cornell_path.png
   images/adrt_cornell_phong.png
+  images/objtype_arb8.png
+  images/objtype_arb8_variety.png
+  images/objtype_arbn.png
+  images/objtype_arbn_variety.png
+  images/objtype_ars.png
+  images/objtype_bot.png
+  images/objtype_bot_variety.png
+  images/objtype_brep.png
+  images/objtype_cline.png
+  images/objtype_comb_variety.png
+  images/objtype_dsp.png
+  images/objtype_ebm.png
+  images/objtype_ehy.png
+  images/objtype_ehy_variety.png
+  images/objtype_ell.png
+  images/objtype_ell_variety.png
+  images/objtype_epa.png
+  images/objtype_epa_variety.png
+  images/objtype_eto.png
+  images/objtype_eto_variety.png
+  images/objtype_extrude.png
+  images/objtype_half.png
+  images/objtype_hrt.png
+  images/objtype_hrt_variety.png
+  images/objtype_hyp.png
+  images/objtype_hyp_variety.png
+  images/objtype_metaball.png
+  images/objtype_metaball_variety.png
+  images/objtype_nmg.png
+  images/objtype_part.png
+  images/objtype_part_variety.png
+  images/objtype_pipe.png
+  images/objtype_pipe_variety.png
+  images/objtype_pnts.png
+  images/objtype_rcc.png
+  images/objtype_rec.png
+  images/objtype_revolve.png
+  images/objtype_rhc.png
+  images/objtype_rhc_variety.png
+  images/objtype_rpc.png
+  images/objtype_rpc_variety.png
+  images/objtype_sph.png
+  images/objtype_submodel.png
+  images/objtype_superell.png
+  images/objtype_superell_variety.png
+  images/objtype_tgc.png
+  images/objtype_tgc_variety.png
+  images/objtype_tor.png
+  images/objtype_tor_variety.png
+  images/objtype_trc.png
+  images/objtype_vol.png
 )
 if(TARGET mged OR TARGET qged OR TARGET archer)
   if(BRLCAD_EXTRADOCS)
@@ -418,6 +470,9 @@ cmakefiles(
   gallery/inputs/moss64.pix
   gallery/inputs/caffeine.pdb
   gallery/inputs/mol-cube.dat
+  images/objtype_src/README.adoc
+  images/objtype_src/objtype_lib.py
+  images/objtype_src/gen_object_types.py
 )
 
 add_subdirectory(hy)
