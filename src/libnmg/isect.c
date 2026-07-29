@@ -2372,6 +2372,25 @@ nmg_isect_ray_model(struct nmg_ray_data *rd, struct bu_list *vlfree)
 	       rd->rp->r_dir[2]);
 
     NMG_CK_MODEL(rd->rd_m);
+
+    /* The global NMG hitmiss freelist head is de-initialized on the shot
+     * path (rt_clean_resource_basic() nulls re_nmgfree.forw at the end of
+     * rt_prep_parallel), so ensure it is a valid list before NMG_GET_HITMISS
+     * dereferences it -- otherwise it asserts/crashes.  (nmg_class_ray_vs_shell
+     * guards the same way.)
+     */
+    if (!BU_LIST_IS_INITIALIZED(&re_nmgfree))
+	BU_LIST_INIT(&re_nmgfree);
+
+    /* Ensure the per-ray hit/miss lists are valid list heads before any
+     * BU_LIST_INSERT into them.  No hits have been recorded yet at model
+     * entry, so (re)initializing empty lists here is always safe and makes
+     * the shot path robust regardless of how the caller set rd up. */
+    if (!BU_LIST_IS_INITIALIZED(&rd->rd_hit))
+	BU_LIST_INIT(&rd->rd_hit);
+    if (!BU_LIST_IS_INITIALIZED(&rd->rd_miss))
+	BU_LIST_INIT(&rd->rd_miss);
+
     NMG_CK_HITMISS_LISTS(rd);
 
     /* re_nmgfree is a process-global freelist used by NMG_GET_HITMISS()
