@@ -265,7 +265,7 @@ rt_pnts_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const 
     pnts_ip->count = 1;
     /* TODO: variants for more type makers */
     pnts_ip->type = RT_PNT_TYPE_PNT;
-    pnts_ip->scale = 0;
+    pnts_ip->scale = 1.0;
 
     BU_ALLOC(pnts_ip->point, struct pnt);
     headPoint = (struct pnt *)pnts_ip->point;
