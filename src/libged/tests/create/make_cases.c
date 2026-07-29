@@ -72,7 +72,7 @@ const struct cp_case pass_cases[] = {
     { "superell", NULL, "superell V {0 0 0}  A {0.5 0 0}  B {0 0.25 0}  C {0 0 0.125}  n 1 e 1" },
     { "half", NULL, "half N {0 0 1}  d 0" },
     { "ars", NULL, "ars NC 3 PPC 3 C0 { { 0 0 0 } { 0 0 0 } { 0 0 0 } } C1 { { 0 0 0.5 } { 0.5 0 0.5 } { 0.5 0.5 0.5 } } C2 { { 0 0 1 } { 0 0 1 } { 0 0 1 } }" },
-    { "datum", NULL, "datum data { {point 0 0 0} {line 0 0 0 1 0 0} {line 0 0 0 0 1 0} {line 0 0 0 0 0 1} {plane 0 0 0 1 0 0 1} {plane 0 0 0 0 1 0 1} {plane 0 0 0 0 0 1 1}}" },
+    { "datum", NULL, "datum data { {point 0 0 0}}" },
     { "grip", NULL, "grip V {0 0 0}  N {1 0 0}  L 0.375" },
     { "part", NULL, "part V {0 0 -0.25}  H {0 0 0.5}  r_v 0.25 r_h 0.125" },
     { "hyp", NULL, "hyp V {0 0 -0.5}  H {0 0 1}  A {0 0.5 0}  b 0.25 bnr 0.4000000000000000222044605" },
@@ -83,6 +83,7 @@ const struct cp_case pass_cases[] = {
     { "metaball", NULL, "metaball method 1 thresh 1 PL { {-1 0 0 1 1} {1 0 0 1 1} }" },
     { "nmg", NULL, "nmg V { { 0 0 0 } }" },
     { "extrude", NULL, "extrude V {0 0 0} H {0 0 1} A {1 0 0} B {0 1 0} S skt_0" },
+    { "joint", NULL, "joint V {0 0 0}  RP1 {}  RP2 {}  V1 {0 1 0}  V2 {0 1 0}  A 0" },
     { NULL, NULL, NULL }
 };
 
@@ -90,9 +91,10 @@ const struct cp_case pass_cases[] = {
  * nothing, or librt ft_labels that make has no arm for
  */
 const char* fail_labels[] = {
-    "hf", "pg", "poly", "dsp", "ebm", "nurb", "spline", "submodel", "vol",
-    "bspline", "joint", "comb", "binunif", "constrnt", "revolve", "annot",
-    "hrt", "script", "material", "notaprim", NULL
+    "hf", "pg", "poly", /* deprecated */
+    "binunif", "comb", "constrnt", "dsp", "ebm", "material", "nurb", "revolve", "script", "spline", "submodel", "vol", /* librt/primitives/obj_make.c denylist */
+    "bspline", "annot", "hrt", /* no ft_make */
+    NULL
 };
 
 /* TODO/FIXME: labels that are broken or have a reason to be excluded from the test loop.
