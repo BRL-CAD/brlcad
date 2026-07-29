@@ -26,10 +26,12 @@
 #include "common.h"
 
 #include <sys/stat.h>  /* for file mode info in WRMODE */
+#include <string.h>
 
 #include "bio.h"
 #include "vmath.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "icv_private.h"
 
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
