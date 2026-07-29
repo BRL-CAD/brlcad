@@ -24,6 +24,25 @@
  * EXPERIMENTAL vector version of the Ray Tracing program shot
  * coordinator.
  *
+ * rt_vshootray() is a drop-in alternative to rt_shootray().  Rather than
+ * walking the space partitioning and shooting solids one at a time, it
+ * shoots the ray against ALL solids of each type in a single batched
+ * ft_vshot() call (falling back to a per-ray stub for types that lack a
+ * vshot), then weaves the resulting segments through the normal
+ * rt_boolweave()/rt_boolfinal() pipeline and invokes a_hit()/a_miss()
+ * just like rt_shootray().  It exists to exercise and benchmark the
+ * ft_vshot() callbacks from userland.
+ *
+ * Limitations (it is EXPERIMENTAL):
+ *  - No per-solid spatial culling: every solid of every type present is
+ *    intersected on every ray that enters the model RPP.  This is a win
+ *    only when ft_vshot() is faster than N scalar shots and the scene is
+ *    dominated by solids of a few vectorized types.
+ *  - ft_vshot() returns a single (outer-span) segment per solid, so
+ *    non-convex solids that scalar-shot as multiple segments are
+ *    approximated by their outer span (the rt_tor_vshot() convention).
+ *  - Infinite solids are not special-cased: a ray that misses the model
+ *    RPP is treated as a miss.
  */
 
 #include "common.h"
@@ -35,8 +54,34 @@
 #include "librt_private.h"
 
 
+#define BACKING_DIST (-2.0)		/* mm to look behind start point */
+
+
 /**
- * Stub function which will "simulate" a call to a vector shot routine
+ * When the RT_VSHOOT_SCALAR environment variable is set, rt_vshootray()
+ * forces the per-ray scalar stub even for solid types that have an
+ * ft_vshot().  This makes it possible to compare, within the exact same
+ * (cull-free, batched) coordinator, the vectorized callbacks against the
+ * scalar shot -- isolating the ft_vshot() speedup from the coordinator's
+ * own overhead.  Checked once and cached.
+ */
+static int
+vshoot_force_scalar(void)
+{
+    static int checked = 0;
+    static int val = 0;
+    if (!checked) {
+	val = (getenv("RT_VSHOOT_SCALAR") != NULL);
+	checked = 1;
+    }
+    return val;
+}
+
+
+/**
+ * Stub used for solid types that have no ft_vshot(): emulate a vector
+ * shot by calling the scalar ft_shot() once per solid, writing the first
+ * returned segment into the caller's flat segp[] array.
  */
 static void
 vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
@@ -69,6 +114,11 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
 		BU_LIST_DEQUEUE(&(tmp_seg->l));
 		segp[i] = *tmp_seg; /* structure copy */
 		RT_FREE_SEG(tmp_seg, ap->a_resource);
+		/* discard any remaining (interior) segments */
+		while (BU_LIST_WHILE(tmp_seg, seg, &(seghead.l))) {
+		    BU_LIST_DEQUEUE(&(tmp_seg->l));
+		    RT_FREE_SEG(tmp_seg, ap->a_resource);
+		}
 	    }
 	}
     }
@@ -76,303 +126,287 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
 
 
 /**
- * Given a ray, shoot it at all the relevant parts of the model,
- * (building the HeadSeg chain), and then call rt_boolregions() to
- * build and evaluate the partition chain.  If the ray actually hit
- * anything, call the application's a_hit() routine with a pointer to
- * the partition chain, otherwise, call the application's a_miss()
- * routine.
+ * Generic flat-array ft_vshot() built on a scalar ft_shot().  See the
+ * declaration in librt_private.h.  This is the baseline (parity) vshot
+ * for primitives whose intersection core is not vectorized: it simply
+ * runs the scalar shot per ray and collapses the returned seg list to
+ * its outer span.  It captures the flat-output convention but NOT any
+ * batching win (the scalar shot still allocates its own segs), so it is
+ * expected to be ~1.0x -- a correct starting point for later
+ * optimization.
+ */
+void
+rt_vshot_via_shot(int (*shotfn)(struct soltab *, struct xray *, struct application *, struct seg *),
+		  struct soltab **stp, struct xray **rp, struct seg *segp, int n,
+		  struct application *ap)
+{
+    struct resource *resp;
+    int i;
+
+    resp = (ap && ap->a_resource) ? ap->a_resource : &rt_uniresource;
+
+    for (i = 0; i < n; i++) {
+	struct seg seghd;
+	struct seg *s;
+	fastf_t mn, mx;
+
+	if (stp[i] == 0)
+	    continue;			/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* assume MISS */
+
+	BU_LIST_INIT(&seghd.l);
+	if (!shotfn || shotfn(stp[i], rp[i], ap, &seghd) <= 0)
+	    continue;
+	if (BU_LIST_IS_EMPTY(&seghd.l))
+	    continue;
+
+	mn = INFINITY;
+	mx = -INFINITY;
+	for (BU_LIST_FOR(s, seg, &seghd.l)) {
+	    if (s->seg_in.hit_dist < mn) {
+		mn = s->seg_in.hit_dist;
+		segp[i].seg_in = s->seg_in;	/* struct copy */
+	    }
+	    if (s->seg_out.hit_dist > mx) {
+		mx = s->seg_out.hit_dist;
+		segp[i].seg_out = s->seg_out;	/* struct copy */
+	    }
+	}
+	segp[i].seg_stp = stp[i];
+
+	while (BU_LIST_WHILE(s, seg, &seghd.l)) {
+	    BU_LIST_DEQUEUE(&s->l);
+	    RT_FREE_SEG(s, resp);
+	}
+    }
+}
+
+
+/**
+ * EXPERIMENTAL vectorized counterpart to rt_shootray().
  *
- * It is important to note that rays extend infinitely only in the
- * positive direction.  The ray is composed of all points P, where
+ * See the file comment for the model and its limitations.  The control
+ * flow (resource/bitv/ptbl acquisition, model-RPP reject, boolweave,
+ * boolfinal, a_hit/a_miss dispatch, and freelist return) mirrors
+ * rt_shootray() so that, for scenes of convex solids, the produced image
+ * is identical -- only the per-solid intersection is routed through
+ * ft_vshot() in batches.
  *
- * P = r_pt + K * r_dir
- *
- * for K ranging from 0 to +infinity.  There is no looking backwards.
- *
- * It is also important to note that the direction vector r_dir must
- * have unit length; this is mandatory, and is not ordinarily checked,
- * in the name of efficiency.
- *
- * Input:  Pointer to an application structure, with these mandatory fields:
- * a_ray.r_pt Starting point of ray to be fired
- * a_ray.r_dir UNIT VECTOR with direction to fire in (dir cosines)
- * a_hit Routine to call when something is hit
- * a_miss Routine to call when ray misses everything
- *
- * Calls user's a_miss() or a_hit() routine as appropriate.  Passes
- * a_hit() routine list of partitions, with only hit_dist fields
- * valid.  Normal computation deferred to user code, to avoid needless
- * computation here.
- *
- * Returns: whatever the application function returns (an int).
- *
- * NOTE: The application functions may call rt_shootray() recursively.
- * Thus, none of the local variables may be static.
- *
- * An open issue for execution in a PARALLEL environment is locking of
- * the statistics variables.
+ * Returns whatever the application's a_hit()/a_miss() returns.
  */
 int
 rt_vshootray(struct application *ap)
 {
-    struct seg *HeadSeg;
-    int ret;
-    vect_t inv_dir;	/* inverses of ap->a_ray.r_dir */
-    struct bu_bitv *solidbits;	/* bits for all solids shot so far */
-    struct bu_ptbl *regionbits;	/* bits for all involved regions */
-    const char *status;
-    struct partition InitialPart;	/* Head of Initial Partitions */
-    struct partition FinalPart;	/* Head of Final Partitions */
-    int nrays = 1;			/* for now */
-    int vlen;
-    int id;
-    int i;
-    struct soltab **ary_stp;	/* array of pointers */
-    struct xray **ary_rp;	/* array of pointers */
-    struct seg *ary_seg;	/* array of structures */
+    struct seg waiting_segs;		/* awaiting rt_boolweave() */
+    struct seg finished_segs;		/* woven by rt_boolweave() */
+    struct partition InitialPart;	/* head of Initial Partitions */
+    struct partition FinalPart;		/* head of Final Partitions */
+    struct bu_bitv *solidbits;		/* bits for all solids shot */
+    struct bu_ptbl *regionbits;		/* bits for all involved regions */
+    struct resource *resp;
     struct rt_i *rtip;
-    int done;
+    const char *status = "";
+    vect_t inv_dir;			/* inverses of ap->a_ray.r_dir */
+    int id, i;
+    struct soltab **ary_stp = NULL;	/* scratch: solids of one type */
+    struct xray **ary_rp = NULL;	/* scratch: all == &ap->a_ray */
+    struct seg *ary_seg = NULL;		/* scratch: flat vshot results */
+    int vlen;
 
-#define BACKING_DIST (-2.0)		/* mm to look behind start point */
-    rtip = ap->a_rt_i;
     RT_AP_CHECK(ap);
-    if (!ap->a_resource) {
+    if (ap->a_magic) {
+	RT_CK_AP(ap);
+    } else {
+	ap->a_magic = RT_AP_MAGIC;
+    }
+    if (ap->a_ray.magic) {
+	RT_CK_RAY(&(ap->a_ray));
+    } else {
+	ap->a_ray.magic = RT_RAY_MAGIC;
+    }
+
+    rtip = ap->a_rt_i;
+    if (!rtip)
+	return 0;
+    if (!ap->a_resource)
 	ap->a_resource = &rt_uniresource;
-    }
-    RT_CK_RESOURCE(ap->a_resource);
+    resp = ap->a_resource;
+    RT_CK_RESOURCE(resp);
 
-    if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION)) {
-	bu_log("\n**********mshootray cpu=%d  %d, %d lvl=%d (%s)\n",
-	       ap->a_resource->re_cpu,
-	       ap->a_x, ap->a_y,
-	       ap->a_level,
-	       ap->a_purpose != (char *)0 ? ap->a_purpose : "?");
-	VPRINT("Pnt", ap->a_ray.r_pt);
-	VPRINT("Dir", ap->a_ray.r_dir);
-    }
-
-    rtip->stats.rti_nrays++;
     if (rtip->needprep)
 	rt_prep(rtip);
 
-    /* Allocate dynamic memory */
-    vlen = nrays * rtip->i->rti_maxsol_by_type;
-    ary_stp = (struct soltab **)bu_calloc(vlen, sizeof(struct soltab *),
-					  "*ary_stp[]");
-    ary_rp = (struct xray **)bu_calloc(vlen, sizeof(struct xray *),
-				       "*ary_rp[]");
-    ary_seg = (struct seg *)bu_calloc(vlen, sizeof(struct seg),
-				      "ary_seg[]");
-
-    /**** for each ray, do this ****/
-
+    /* Initialize partition and segment lists. */
     InitialPart.pt_forw = InitialPart.pt_back = &InitialPart;
+    InitialPart.pt_magic = PT_HD_MAGIC;
     FinalPart.pt_forw = FinalPart.pt_back = &FinalPart;
+    FinalPart.pt_magic = PT_HD_MAGIC;
+    ap->a_Final_Part_hdp = &FinalPart;
+    BU_LIST_INIT(&waiting_segs.l);
+    BU_LIST_INIT(&finished_segs.l);
+    ap->a_finished_segs_hdp = &finished_segs;
 
-    HeadSeg = RT_SEG_NULL;
+    if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead))
+	rt_init_resource(resp, resp->re_cpu, rtip);
 
-    solidbits = rt_get_solidbitv(rtip->stats.nsolids, ap->a_resource);
+    resp->re_nshootray++;
 
-    if (BU_LIST_IS_EMPTY(&ap->a_resource->re_region_ptbl)) {
+    solidbits = rt_get_solidbitv(rtip->stats.nsolids, resp);
+
+    if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
 	BU_ALLOC(regionbits, struct bu_ptbl);
-	bu_ptbl_init(regionbits, 7, "rt_shootray() regionbits ptbl");
+	bu_ptbl_init(regionbits, 7, "rt_vshootray() regionbits ptbl");
     } else {
-	regionbits = BU_LIST_FIRST(bu_ptbl, &ap->a_resource->re_region_ptbl);
+	regionbits = BU_LIST_FIRST(bu_ptbl, &resp->re_region_ptbl);
 	BU_LIST_DEQUEUE(&regionbits->l);
 	BU_CK_PTBL(regionbits);
     }
 
-    /* Compute the inverse of the direction cosines */
+    /* Compute the inverse of the direction cosines. */
     if (!ZERO(ap->a_ray.r_dir[X])) {
-	inv_dir[X]=1.0/ap->a_ray.r_dir[X];
+	inv_dir[X] = 1.0/ap->a_ray.r_dir[X];
     } else {
 	inv_dir[X] = INFINITY;
 	ap->a_ray.r_dir[X] = 0.0;
     }
     if (!ZERO(ap->a_ray.r_dir[Y])) {
-	inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
+	inv_dir[Y] = 1.0/ap->a_ray.r_dir[Y];
     } else {
 	inv_dir[Y] = INFINITY;
 	ap->a_ray.r_dir[Y] = 0.0;
     }
     if (!ZERO(ap->a_ray.r_dir[Z])) {
-	inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
+	inv_dir[Z] = 1.0/ap->a_ray.r_dir[Z];
     } else {
 	inv_dir[Z] = INFINITY;
 	ap->a_ray.r_dir[Z] = 0.0;
     }
+    VMOVE(ap->a_inv_dir, inv_dir);
 
     /*
-     * XXX handle infinite solids here, later.
+     * If the ray does not enter the model RPP, it is a miss.  (Infinite
+     * solids are intentionally not handled by this experimental path.)
      */
-
-    /*
-     * If ray does not enter the model RPP, skip on.
-     * If ray ends exactly at the model RPP, trace it.
-     */
-    if (!rt_in_rpp(&ap->a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
+    if (!rt_in_rpp(&ap->a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max) ||
 	ap->a_ray.r_max < 0.0) {
-	rtip->stats.nmiss_model++;
-	if (ap->a_miss)
-	    ret = ap->a_miss(ap);
-	else
-	    ret = 0;
+	resp->re_nmiss_model++;
+	ap->a_return = ap->a_miss ? ap->a_miss(ap) : 0;
 	status = "MISS model";
 	goto out;
     }
 
-    /* For each type of solid to be shot at, assemble the vectors */
+    /* Scratch arrays sized to the largest per-type instance count. */
+    vlen = (int)rtip->i->rti_maxsol_by_type;
+    if (vlen < 1)
+	vlen = 1;
+    ary_stp = (struct soltab **)bu_calloc(vlen, sizeof(struct soltab *), "vshoot ary_stp[]");
+    ary_rp = (struct xray **)bu_calloc(vlen, sizeof(struct xray *), "vshoot ary_rp[]");
+    ary_seg = (struct seg *)bu_calloc(vlen, sizeof(struct seg), "vshoot ary_seg[]");
+
+    /* For each solid type present, batch-shoot all instances. */
     for (id = 1; id <= ID_MAX_SOLID; id++) {
-	register int nsol;
+	int nsol = (int)rtip->i->rti_nsol_by_type[id];
+	if (nsol <= 0)
+	    continue;
+	if (!OBJ[id].ft_vshot && !OBJ[id].ft_shot)
+	    continue;
 
-	if ((nsol = rtip->i->rti_nsol_by_type[id]) <= 0) continue;
-
-	/* For each instance of this solid type */
-	for (i = nsol-1; i >= 0; i--) {
-	    ary_stp[i] = rtip->i->rti_sol_by_type[id][i];
-	    ary_rp[i] = &(ap->a_ray);	/* XXX, sb [ray] */
+	for (i = 0; i < nsol; i++) {
+	    struct soltab *stp = rtip->i->rti_sol_by_type[id][i];
+	    ary_stp[i] = stp;
+	    ary_rp[i] = &ap->a_ray;
 	    ary_seg[i].seg_stp = SOLTAB_NULL;
-	    BU_LIST_INIT(&ary_seg[i].l);
+	    BU_BITSET(solidbits, stp->st_bit);	/* mark as shot */
 	}
-	/* bounding box check */
-	/* bit vector per ray check */
-	/* mark elements to be skipped with ary_stp[] = SOLTAB_NULL */
-	ap->a_rt_i->stats.nshots += nsol;	/* later: skipped ones */
-	if (OBJ[id].ft_vshot) {
+
+	resp->re_shots += nsol;
+
+	if (OBJ[id].ft_vshot && !vshoot_force_scalar()) {
 	    OBJ[id].ft_vshot(ary_stp, ary_rp, ary_seg, nsol, ap);
 	} else {
 	    vshot_stub(ary_stp, ary_rp, ary_seg, nsol, ap);
 	}
 
-
-	/* set bits for all solids shot at for each ray */
-
-	/* append resulting seg list to input for boolweave */
-	for (i = nsol-1; i >= 0; i--) {
-	    register struct seg *seg2;
-
+	/* Promote each hit to a real seg on the waiting list. */
+	for (i = 0; i < nsol; i++) {
+	    struct seg *segp;
 	    if (ary_seg[i].seg_stp == SOLTAB_NULL) {
-		/* MISS */
-		ap->a_rt_i->stats.nmiss++;
+		resp->re_shot_miss++;
 		continue;
 	    }
-	    ap->a_rt_i->stats.nhits++;
-
-	    /* For now, do it the slow way.  sb [ray] */
-	    /* MUST dup it -- all segs have to live till after a_hit() */
-	    RT_GET_SEG(seg2, ap->a_resource);
-	    *seg2 = ary_seg[i];	/* struct copy */
-	    /* rt_boolweave(seg2, &InitialPart, ap); */
-	    bu_bomb("FIXME: need to call boolweave here");
-
-	    /* Add seg chain to list of used segs awaiting reclaim */
-
-#if 0
-	    /* FIXME: need to use waiting_segs/finished_segs here in
-	     * conjunction with rt_boolweave()
-	     {
-	     register struct seg *seg3 = seg2;
-	     while (seg3->seg_next != RT_SEG_NULL)
-	     seg3 = seg3->seg_next;
-	     seg3->seg_next = HeadSeg;
-	     HeadSeg = seg2;
-	     }
-	    */
-#endif
+	    resp->re_shot_hit++;
+	    RT_GET_SEG(segp, resp);
+	    segp->seg_stp = ary_seg[i].seg_stp;
+	    segp->seg_in = ary_seg[i].seg_in;		/* struct copy */
+	    segp->seg_out = ary_seg[i].seg_out;		/* struct copy */
+	    segp->seg_in.hit_magic = RT_HIT_MAGIC;
+	    segp->seg_out.hit_magic = RT_HIT_MAGIC;
+	    segp->seg_in.hit_rayp = segp->seg_out.hit_rayp = &ap->a_ray;
+	    BU_LIST_INSERT(&(waiting_segs.l), &(segp->l));
 	}
     }
 
-    /*
-     * Ray has finally left known space.
-     */
-    if (InitialPart.pt_forw == &InitialPart) {
-	if (ap->a_miss)
-	    ret = ap->a_miss(ap);
-	else
-	    ret = 0;
-	status = "MISSed all primitives";
-	goto freeup;
+    bu_free((char *)ary_stp, "vshoot ary_stp[]");
+    bu_free((char *)ary_rp, "vshoot ary_rp[]");
+    bu_free((char *)ary_seg, "vshoot ary_seg[]");
+    ary_stp = NULL;
+    ary_rp = NULL;
+    ary_seg = NULL;
+
+    /* Weave the segments into the partition list. */
+    if (BU_LIST_NON_EMPTY(&(waiting_segs.l)))
+	rt_boolweave(&finished_segs, &waiting_segs, &InitialPart, ap);
+
+    if (BU_LIST_IS_EMPTY(&(finished_segs.l))) {
+	ap->a_return = ap->a_miss ? ap->a_miss(ap) : 0;
+	status = "MISS primitives";
+	RT_FREE_PT_LIST(&InitialPart, resp);
+	goto out;
     }
 
-    /*
-     * All intersections of the ray with the model have been computed.
-     * Evaluate the boolean trees over each partition.
-     */
-    done = rt_boolfinal(&InitialPart, &FinalPart, BACKING_DIST, INFINITY, regionbits, ap, solidbits);
+    /* Evaluate the boolean trees over each partition. */
+    (void)rt_boolfinal(&InitialPart, &FinalPart, BACKING_DIST, INFINITY,
+		       regionbits, ap, solidbits);
 
-    if (done > 0) goto hitit;
+    RT_FREE_PT_LIST(&InitialPart, resp);
 
     if (FinalPart.pt_forw == &FinalPart) {
-	if (ap->a_miss)
-	    ret = ap->a_miss(ap);
-	else
-	    ret = 0;
+	ap->a_return = ap->a_miss ? ap->a_miss(ap) : 0;
 	status = "MISS bool";
-	goto freeup;
+	RT_FREE_SEG_LIST(&finished_segs, resp);
+	goto out;
     }
 
-    /*
-     * Ray/model intersections exist.  Pass the list to the user's
-     * a_hit() routine.  Note that only the hit_dist elements of
-     * pt_inhit and pt_outhit have been computed yet.  To compute both
-     * hit_point and hit_normal, use the
-     *
-     * RT_HIT_NORMAL(NULL, hitp, stp, rayp, 0);
-     *
-     * macro.  To compute just hit_point, use
-     *
-     * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
-     */
-hitit:
-    if (RT_G_DEBUG&RT_DEBUG_SHOOT) rt_pr_partitions(rtip, &FinalPart, "a_hit()");
-
-    if (ap->a_hit)
-	ret = ap->a_hit(ap, &FinalPart, HeadSeg/* &finished_segs */);
-    else
-	ret = 0;
-    status = "HIT";
-
-    /*
-     * Processing of this ray is complete.  Free dynamic resources.
-     */
-freeup:
-    {
-	register struct partition *pp;
-
-	/* Free up initial partition list */
-	for (pp = InitialPart.pt_forw; pp != &InitialPart;) {
-	    register struct partition *newpp;
-	    newpp = pp;
-	    pp = pp->pt_forw;
-	    FREE_PT(newpp, ap->a_resource);
-	}
-	/* Free up final partition list */
-	for (pp = FinalPart.pt_forw; pp != &FinalPart;) {
-	    register struct partition *newpp;
-	    newpp = pp;
-	    pp = pp->pt_forw;
-	    FREE_PT(newpp, ap->a_resource);
-	}
+    /* Ray/model intersections exist: hand the partitions to the app. */
+    if (ap->a_hit) {
+	ap->a_return = ap->a_hit(ap, &FinalPart, &finished_segs);
+	status = "HIT";
+    } else {
+	ap->a_return = 0;
+	status = "MISS (no a_hit)";
     }
+
+    RT_FREE_SEG_LIST(&finished_segs, resp);
+    RT_FREE_PT_LIST(&FinalPart, resp);
 
 out:
-    bu_free((char *)ary_stp, "*ary_stp[]");
-    bu_free((char *)ary_rp, "*ary_rp[]");
-    bu_free((char *)ary_seg, "ary_seg[]");
+    if (ary_stp) bu_free((char *)ary_stp, "vshoot ary_stp[]");
+    if (ary_rp) bu_free((char *)ary_rp, "vshoot ary_rp[]");
+    if (ary_seg) bu_free((char *)ary_seg, "vshoot ary_seg[]");
 
-    if (solidbits != NULL) {
-	bu_bitv_free(solidbits);
-    }
+    /* Return dynamic resources to their freelists. */
+    BU_CK_BITV(solidbits);
+    BU_LIST_APPEND(&resp->re_solid_bitv, &solidbits->l);
+    BU_CK_PTBL(regionbits);
+    BU_LIST_APPEND(&resp->re_region_ptbl, &regionbits->l);
+
     if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION)) {
-	bu_log("----------mshootray cpu=%d  %d, %d lvl=%d (%s) %s ret=%d\n",
-	       ap->a_resource->re_cpu,
-	       ap->a_x, ap->a_y,
-	       ap->a_level,
+	bu_log("----------vshootray cpu=%d  %d, %d lvl=%d (%s) %s ret=%d\n",
+	       resp->re_cpu, ap->a_x, ap->a_y, ap->a_level,
 	       ap->a_purpose != (char *)0 ? ap->a_purpose : "?",
-	       status, ret);
+	       status, ap->a_return);
     }
-    return ret;
+    return ap->a_return;
 }
 
 
