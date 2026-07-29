@@ -88,7 +88,6 @@ static void
 rt_submodel_resolve_path(struct bu_vls *resolved_path, const char *db_file, const char *submodel_file)
 {
     char *db_dir = NULL;
-    const char *normalized = NULL;
 
     BU_ASSERT(resolved_path);
 
@@ -102,10 +101,19 @@ rt_submodel_resolve_path(struct bu_vls *resolved_path, const char *db_file, cons
 	return;
     }
 
+    /* Resolve a relative submodel file= next to the parent .g.  Do NOT run the
+     * result through bu_path_normalize(): it is not relative/Windows aware and
+     * corrupts paths ("./x" -> "/x", drive letters "D:/x" -> "/D:/x"), which
+     * made db_open() fail and every submodel prep return -1. */
     db_dir = bu_path_dirname(db_file);
-    bu_vls_sprintf(resolved_path, "%s/%s", db_dir, submodel_file);
-    normalized = bu_path_normalize(bu_vls_addr(resolved_path));
-    bu_vls_sprintf(resolved_path, "%s", normalized);
+    if (db_dir && db_dir[0] && !BU_STR_EQUAL(db_dir, ".")) {
+	bu_vls_sprintf(resolved_path, "%s/%s", db_dir, submodel_file);
+    } else {
+	/* parent .g stored with no usable directory component (e.g. a bare
+	 * "main.g" as db_open records on Windows) -- resolve relative to the
+	 * current working directory. */
+	bu_vls_sprintf(resolved_path, "%s", submodel_file);
+    }
     bu_free(db_dir, "submodel db dir");
 }
 
