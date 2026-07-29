@@ -1908,7 +1908,7 @@ rt_ell_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const c
 	b = a;
 	c = a;
     } else if (BU_STR_EQUAL(variant, "ell1")) {
-	b = c;
+	c = b;
     }
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
