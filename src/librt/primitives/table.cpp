@@ -473,7 +473,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_bot_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_ars_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_bot_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_ars_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_ars_brep),
@@ -629,7 +629,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_pg_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_pg_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_pg_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_pg_tess),
 	NULL, /* tnurb */
 	NULL, /* brep */
@@ -681,7 +681,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_nurb_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_nurb_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_nurb_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_nurb_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_nurb_brep),
@@ -785,7 +785,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_nmg_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_nmg_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_nmg_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_nmg_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_nmg_brep),
@@ -837,7 +837,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_ebm_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_ebm_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_ebm_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_ebm_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_ebm_brep),
@@ -889,7 +889,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_vol_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_vol_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_vol_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_vol_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_vol_brep),
@@ -941,7 +941,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_arbn_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_arbn_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_arbn_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_arbn_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_arbn_brep),
@@ -993,7 +993,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_pipe_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_pipe_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_pipe_adaptive_plot),
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_pipe_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_pipe_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_pipe_brep),
@@ -1045,7 +1045,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_part_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_part_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_part_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_part_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_part_brep),
@@ -1097,7 +1097,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_rpc_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_rpc_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_rpc_adaptive_plot),
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_rpc_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_rpc_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_rpc_brep),
@@ -1149,7 +1149,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_rhc_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_rhc_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_rhc_adaptive_plot),
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_rhc_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_rhc_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_rhc_brep),
@@ -1201,7 +1201,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_epa_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_epa_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_epa_adaptive_plot),
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_epa_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_epa_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_epa_brep),
@@ -1253,7 +1253,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_ehy_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_ehy_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_ehy_adaptive_plot),
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_ehy_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_ehy_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_ehy_brep),
@@ -1305,7 +1305,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_eto_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_eto_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_eto_adaptive_plot),
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_eto_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_eto_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_eto_brep),
@@ -1357,7 +1357,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_grp_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_grp_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_grp_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_grp_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_grp_brep),
@@ -1409,7 +1409,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_joint_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_joint_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_joint_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_joint_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_joint_brep),
@@ -1461,7 +1461,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_hf_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_hf_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_hf_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_hf_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_hf_brep),
@@ -1513,7 +1513,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_dsp_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_dsp_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_dsp_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_dsp_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_dsp_brep),
@@ -1565,7 +1565,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_sketch_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_sketch_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_sketch_vshot),
 	NULL, /* tess */
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_sketch_brep),
@@ -1617,7 +1617,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_extrude_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_extrude_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_extrude_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_extrude_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_extrude_brep),
@@ -1669,7 +1669,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_submodel_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_submodel_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_submodel_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_submodel_tess),
 	NULL, /* tnurb */
 	NULL, /* brep */
@@ -1721,7 +1721,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_cline_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_cline_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_cline_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_cline_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_cline_brep),
@@ -1773,7 +1773,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_bot_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_bot_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_bot_adaptive_plot),
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_bot_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_bot_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_bot_brep),
@@ -2037,7 +2037,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_superell_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_superell_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_superell_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_superell_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_superell_brep),
@@ -2089,7 +2089,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_metaball_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_metaball_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_metaball_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_metaball_tess),
 	NULL, /* tnurb */
 	NULL, /* brep */
@@ -2141,7 +2141,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_brep_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_brep_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_brep_adaptive_plot),
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_brep_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_brep_tess),
 	NULL, /* tnurb */
 	NULL, /* brep */
@@ -2193,7 +2193,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_hyp_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_hyp_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_hyp_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_hyp_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_hyp_brep),
@@ -2297,7 +2297,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_revolve_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_revolve_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_revolve_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_revolve_tess),
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_revolve_brep),
@@ -2349,7 +2349,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_pnts_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_pnts_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_pnts_vshot),
 	NULL, /* tess */
 	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_pnts_brep),
@@ -2401,7 +2401,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_annot_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_annot_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_annot_vshot),
 	NULL, /* tess */
 	NULL, /* tnurb */
 	NULL, /* brep */
@@ -2506,7 +2506,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_datum_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_datum_plot),
 	NULL, /* adaptive_plot */
-	NULL, /* vshot */
+	RTFUNCTAB_FUNC_VSHOT_CAST(rt_datum_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_datum_tess),
 	NULL, /* tnurb */
 	NULL, /* brep */
