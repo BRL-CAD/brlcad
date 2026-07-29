@@ -133,6 +133,23 @@ rt_grp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
+ * Vectorized rt_grp_shot(): a grip carries no solid geometry, so every
+ * ray in the batch misses.  Provided so ID_GRIP dispatches through a
+ * real ft_vshot instead of the generic per-ray stub.
+ */
+C_DECL void
+rt_grp_vshot(struct soltab **stp, struct xray **UNUSED(rp), struct seg *segp, int n, struct application *ap)
+{
+    int i;
+    if (ap) RT_CK_APPLICATION(ap);
+    for (i = 0; i < n; i++) {
+	if (stp[i] == 0) continue;		/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* always MISS */
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  * The normal is already filled in.
  */
