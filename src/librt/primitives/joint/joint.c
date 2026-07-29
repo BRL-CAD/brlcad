@@ -527,7 +527,7 @@ rt_joint_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 }
 
 C_DECL int
-rt_joint_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
+rt_joint_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t origin, double UNUSED(scale))
 {
     struct rt_joint_internal* ip;
 
@@ -541,6 +541,7 @@ rt_joint_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const
     intern->idb_ptr = (void *)ip;
 
     ip->magic = RT_JOINT_INTERNAL_MAGIC;
+    VMOVE(ip->location, origin);
     struct bu_vls empty = BU_VLS_INIT_ZERO;
     ip->reference_path_1 = empty;
     ip->reference_path_2 = empty;
