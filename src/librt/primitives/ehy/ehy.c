@@ -513,6 +513,142 @@ check_plates:
 
 
 /**
+ * Vectorized counterpart to rt_ehy_shot().
+ *
+ * Intersect a batch of n rays, each against its own ehy soltab, writing
+ * exactly one seg per ray into the caller-supplied flat segp[] array.  A
+ * miss is flagged with segp[i].seg_stp == NULL; stp[i] == NULL signals a
+ * ray to skip.
+ *
+ * Unlike the scalar shot, no seg is acquired from the resource free list
+ * and no seg-list linkage is performed: results stream directly into the
+ * contiguous segp[] array.  Eliminating that per-hit allocation and list
+ * traffic is the data-coherency benefit of batching.  The per-ray
+ * arithmetic is a verbatim copy of rt_ehy_shot() so the two paths agree
+ * to the bit; hit_vpriv/hit_surfno are preserved for rt_ehy_norm().
+ */
+C_DECL void
+rt_ehy_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    int i;
+
+    if (ap) RT_CK_APPLICATION(ap);
+
+    for (i = 0; i < n; i++) {
+	struct ehy_specific *ehy;
+	vect_t dp;		/* D' */
+	vect_t pp;		/* P' */
+	fastf_t k1, k2;		/* distance constants of solution */
+	fastf_t cp;		/* c' */
+	vect_t xlated;		/* translated vector */
+	struct hit hits[3] = {RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO};
+	struct hit *hitp;
+
+	/* for finding roots */
+	fastf_t a, b, c;	/* coeffs of polynomial */
+	fastf_t disc;		/* discriminant */
+
+	if (stp[i] == 0) continue;		/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* assume MISS */
+
+	ehy = (struct ehy_specific *)stp[i]->st_specific;
+	hitp = &hits[0];
+
+	/* out, Mat, vect */
+	MAT4X3VEC(dp, ehy->ehy_SoR, rp[i]->r_dir);
+	VSUB2(xlated, rp[i]->r_pt, ehy->ehy_V);
+	MAT4X3VEC(pp, ehy->ehy_SoR, xlated);
+
+	cp = ehy->ehy_cprime;
+
+	/* Find roots of the equation, using formula for quadratic */
+
+	a = dp[Z] * dp[Z]
+	    - (2 * cp + 1) * (dp[X] * dp[X] + dp[Y] * dp[Y]);
+	b = 2.0 * (dp[Z] * (pp[Z] + cp + 1)
+		   - (2 * cp + 1) * (dp[X] * pp[X] + dp[Y] * pp[Y]));
+	c = pp[Z] * pp[Z]
+	    - (2 * cp + 1) * (pp[X] * pp[X] + pp[Y] * pp[Y] - 1.0)
+	    + 2 * (cp + 1) * pp[Z];
+	if (!NEAR_ZERO(a, RT_PCOEF_TOL)) {
+	    disc = b*b - 4 * a * c;
+	    if (disc > 0) {
+		disc = sqrt(disc);
+
+		k1 = (-b + disc) / (2.0 * a);
+		k2 = (-b - disc) / (2.0 * a);
+
+		/*
+		 * k1 and k2 are potential solutions to intersection with
+		 * side.  See if they fall in range.
+		 */
+		VJOIN1(hitp->hit_vpriv, pp, k1, dp);	/* hit' */
+		if (hitp->hit_vpriv[Z] >= -1.0
+		    && hitp->hit_vpriv[Z] <= 0.0) {
+		    hitp->hit_magic = RT_HIT_MAGIC;
+		    hitp->hit_dist = k1;
+		    hitp->hit_surfno = EHY_NORM_BODY;	/* compute N */
+		    hitp++;
+		}
+
+		VJOIN1(hitp->hit_vpriv, pp, k2, dp);	/* hit' */
+		if (hitp->hit_vpriv[Z] >= -1.0
+		    && hitp->hit_vpriv[Z] <= 0.0) {
+		    hitp->hit_magic = RT_HIT_MAGIC;
+		    hitp->hit_dist = k2;
+		    hitp->hit_surfno = EHY_NORM_BODY;	/* compute N */
+		    hitp++;
+		}
+	    }
+	} else if (!NEAR_ZERO(b, RT_PCOEF_TOL)) {
+	    k1 = -c/b;
+	    VJOIN1(hitp->hit_vpriv, pp, k1, dp);	/* hit' */
+	    if (hitp->hit_vpriv[Z] >= -1.0
+		&& hitp->hit_vpriv[Z] <= 0.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = EHY_NORM_BODY;	/* compute N */
+		hitp++;
+	    }
+	}
+
+	/* Check for hitting the top plate. */
+	if (hitp == &hits[1] && !ZERO(dp[Z])) {
+	    /* 1 hit so far, this is worthwhile */
+	    k1 = -pp[Z] / dp[Z];		/* top plate */
+
+	    VJOIN1(hitp->hit_vpriv, pp, k1, dp);	/* hit' */
+	    if (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+		hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = EHY_NORM_TOP;	/* -H */
+		hitp++;
+	    }
+	}
+
+	if (hitp != &hits[2])
+	    continue;		/* MISS */
+
+	segp[i].seg_stp = stp[i];
+	if (hits[0].hit_dist < hits[1].hit_dist) {
+	    /* entry is [0], exit is [1] */
+	    segp[i].seg_in = hits[0];		/* struct copy */
+	    segp[i].seg_out = hits[1];		/* struct copy */
+	} else {
+	    /* entry is [1], exit is [0] */
+	    segp[i].seg_in = hits[1];		/* struct copy */
+	    segp[i].seg_out = hits[0];		/* struct copy */
+	}
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 C_DECL void

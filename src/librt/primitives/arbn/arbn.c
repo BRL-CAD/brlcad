@@ -341,6 +341,100 @@ rt_arbn_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 
 /**
+ * Vectorized counterpart to rt_arbn_shot().
+ *
+ * Intersect a batch of n rays, each against its own arbn soltab, writing
+ * exactly one seg per ray into the caller-supplied flat segp[] array.  A
+ * miss is flagged with segp[i].seg_stp == NULL; stp[i] == NULL signals a
+ * ray to skip.
+ *
+ * Unlike the scalar shot, no seg is acquired from the resource free list
+ * and no seg-list linkage is performed: results stream directly into the
+ * contiguous segp[] array.  Eliminating that per-hit allocation and list
+ * traffic is the data-coherency benefit of batching.  The per-ray
+ * arithmetic is a verbatim copy of rt_arbn_shot() so the two paths agree
+ * to the bit; hit_surfno is preserved for rt_arbn_norm().
+ */
+C_DECL void
+rt_arbn_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    int j;
+
+    if (ap) RT_CK_APPLICATION(ap);
+
+    for (j = 0; j < n; j++) {
+	struct rt_arbn_internal *aip;
+	int i;
+	int iplane, oplane;
+	fastf_t in, out;	/* ray in/out distances */
+
+	if (stp[j] == 0) continue;		/* skip this ray */
+	segp[j].seg_stp = (struct soltab *)0;	/* assume MISS */
+
+	aip = (struct rt_arbn_internal *)stp[j]->st_specific;
+
+	in = -INFINITY;
+	out = INFINITY;
+	iplane = oplane = -1;
+
+	for (i = aip->neqn-1; i >= 0; i--) {
+	    fastf_t slant_factor;	/* Direction dot Normal */
+	    fastf_t norm_dist;
+	    fastf_t s;
+
+	    norm_dist = VDOT(aip->eqn[i], rp[j]->r_pt) - aip->eqn[i][3];
+	    if ((slant_factor = -VDOT(aip->eqn[i], rp[j]->r_dir)) < -1.0e-10) {
+		/* exit point, when dir.N < 0.  out = min(out, s) */
+		if (out > (s = norm_dist/slant_factor)) {
+		    out = s;
+		    oplane = i;
+		}
+	    } else if (slant_factor > 1.0e-10) {
+		/* entry point, when dir.N > 0.  in = max(in, s) */
+		if (in < (s = norm_dist/slant_factor)) {
+		    in = s;
+		    iplane = i;
+		}
+	    } else {
+		/* ray is parallel to plane when dir.N == 0.
+		 * If it is outside the solid, stop now
+		 * Allow very small amount of slop, to catch
+		 * rays that lie very nearly in the plane of a face.
+		 */
+		if (norm_dist > SQRT_SMALL_FASTF)
+		    goto miss;	/* MISS */
+	    }
+	    if (in > out)
+		goto miss;	/* MISS */
+	}
+
+	/* Validate */
+	if (iplane == -1 || oplane == -1) {
+	    /*bu_log("rt_arbn_shoot(%s): 1 hit => MISS\n", stp[j]->st_name);*/
+	    goto miss;	/* MISS */
+	}
+	if (in >= out || out >= INFINITY)
+	    goto miss;	/* MISS */
+
+	segp[j].seg_stp = stp[j];
+	segp[j].seg_in.hit_dist = in;
+	segp[j].seg_in.hit_surfno = iplane;
+
+	segp[j].seg_out.hit_dist = out;
+	segp[j].seg_out.hit_surfno = oplane;
+	continue;
+
+    miss:
+	segp[j].seg_stp = (struct soltab *)0;	/* MISS */
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 C_DECL void

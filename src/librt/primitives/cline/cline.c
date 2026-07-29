@@ -347,6 +347,100 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 
 
 /**
+ * Vectorized counterpart to rt_cline_shot().
+ *
+ * Batch-intersect n rays, writing one seg per ray directly into the flat
+ * segp[] array with no seg-list allocation.  Both the volume and plate
+ * modes of the scalar shot span the same outer extent
+ * [dist[1]-half_los, dist[1]+half_los] (clamped to the axis end caps), so
+ * the single returned seg is that span -- matching, to the bit, the outer
+ * span the scalar shot would produce, while avoiding the per-hit
+ * RT_GET_SEG/BU_LIST traffic.  hit_vpriv (the unit axis) and hit_surfno
+ * are preserved for rt_cline_norm().  The beam-radius (FASTGEN) term is
+ * honored identically to the scalar path.
+ */
+C_DECL void
+rt_cline_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+/* An array of solids */
+/* An array of rays */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    fastf_t add_radius = 0.0;
+    int i;
+
+    if (ap) RT_CK_APPLICATION(ap);
+    if (ap && ap->a_rt_i && ap->a_rt_i->rti_max_beam_radius > 0.0)
+	add_radius = ap->a_rt_i->rti_max_beam_radius;
+
+    for (i = 0; i < n; i++) {
+	register struct cline_specific *cline;
+	fastf_t reff, cosa, sina, half_los, tmp;
+	fastf_t dist[3];
+	fastf_t distmin, distmax, A, B;
+	point_t pt1, pt2;
+	vect_t diff;
+
+	if (stp[i] == 0) continue;		/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* assume MISS */
+
+	cline = (struct cline_specific *)stp[i]->st_specific;
+	reff = cline->radius + add_radius;
+
+	cosa = VDOT(rp[i]->r_dir, cline->h);
+	tmp = (cosa > 0.0) ? (cosa - 1.0) : (cosa + 1.0);
+
+	(void)bg_distsq_line3_line3(dist, cline->V, cline->height,
+				    rp[i]->r_pt, rp[i]->r_dir, pt1, pt2);
+
+	/* ray parallel to CLINE axis -> MISS (matches scalar #if 1 path) */
+	if (NEAR_ZERO(tmp, RT_DOT_TOL))
+	    continue;
+
+	if (dist[2] > reff*reff)
+	    continue;			/* missed */
+	if (dist[0] < 0.0 || dist[0] > 1.0)
+	    continue;			/* off the ends */
+
+	sina = sqrt(1.0 - cosa*cosa);
+	tmp = sqrt(dist[2]) - add_radius;
+	if (dist[2] > add_radius * add_radius)
+	    half_los = sqrt(cline->radius*cline->radius - tmp*tmp) / sina;
+	else
+	    half_los = cline->radius / sina;
+
+	VSUB2(diff, cline->V, rp[i]->r_pt);
+	distmin = VDOT(rp[i]->r_dir, diff);
+	VADD2(diff, cline->V, cline->height);
+	VSUB2(diff, diff, rp[i]->r_pt);
+	distmax = VDOT(rp[i]->r_dir, diff);
+	if (distmin > distmax) {
+	    tmp = distmin;
+	    distmin = distmax;
+	    distmax = tmp;
+	}
+	distmin -= cline->radius;
+	distmax += cline->radius;
+
+	A = dist[1] - half_los;
+	if (A < distmin) A = distmin;
+	B = dist[1] + half_los;
+	if (B > distmax) B = distmax;
+
+	segp[i].seg_stp = stp[i];
+	segp[i].seg_in.hit_magic = RT_HIT_MAGIC;
+	segp[i].seg_in.hit_dist = A;
+	segp[i].seg_in.hit_surfno = 2;
+	VMOVE(segp[i].seg_in.hit_vpriv, cline->h);
+	segp[i].seg_out.hit_magic = RT_HIT_MAGIC;
+	segp[i].seg_out.hit_dist = B;
+	segp[i].seg_out.hit_surfno = -2;
+	VMOVE(segp[i].seg_out.hit_vpriv, cline->h);
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 C_DECL void

@@ -590,6 +590,128 @@ rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
+ * Vectorized counterpart to rt_eto_shot().
+ *
+ * Batch-intersect n rays, one seg per ray written into the flat segp[]
+ * array (no seg-list allocation).  An eto is a quartic and a ray may
+ * pierce it as two disjoint segments (4 real roots); following the
+ * rt_tor_vshot() convention the single returned seg spans the OUTER
+ * extent (nearest entry to farthest exit).  The polynomial setup and
+ * root extraction mirror rt_eto_shot() exactly; hit_vpriv is preserved
+ * (hit_surfno=0) for rt_eto_norm().
+ */
+void
+rt_eto_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    int idx;
+
+    if (ap) RT_CK_APPLICATION(ap);
+
+    for (idx = 0; idx < n; idx++) {
+	struct eto_specific *eto;
+	vect_t dprime;		/* D' */
+	vect_t pprime;		/* P' */
+	vect_t work;		/* temporary vector */
+	bn_poly_t C;		/* The final equation */
+	bn_complex_t val[4];	/* The complex roots */
+	double k[4];		/* The real roots */
+	int i, j;
+	vect_t cor_pprime;	/* new ray origin */
+	fastf_t cor_proj;
+	fastf_t A1, A2, A3, A4, A5, A6, A7, A8, B1, B2, B3, C1, C2, C3, D1, term;
+
+	if (stp[idx] == 0) continue;			/* skip this ray */
+	segp[idx].seg_stp = (struct soltab *)0;		/* assume MISS */
+
+	eto = (struct eto_specific *)stp[idx]->st_specific;
+
+	/* Convert vector into the space of the unit eto */
+	MAT4X3VEC(dprime, eto->eto_R, rp[idx]->r_dir);
+	VUNITIZE(dprime);
+
+	VSUB2(work, rp[idx]->r_pt, eto->eto_V);
+	MAT4X3VEC(pprime, eto->eto_R, work);
+
+	cor_proj = VDOT(pprime, dprime);
+	VSCALE(cor_pprime, dprime, cor_proj);
+	VSUB2(cor_pprime, pprime, cor_pprime);
+
+	A1 = eto->eto_rd * eto->eu;
+	B1 = eto->eto_rc * eto->fu;
+	C1 = cor_pprime[X] * cor_pprime[X] + cor_pprime[Y] * cor_pprime[Y];
+	C2 = 2 * (dprime[X] * cor_pprime[X] + dprime[Y] * cor_pprime[Y]);
+	C3 = dprime[X] * dprime[X] + dprime[Y] * dprime[Y];
+	A2 = -eto->eto_rd * eto->eto_r * eto->eu + eto->eto_rd * eto->ev * cor_pprime[Z];
+	B2 = -eto->eto_rc * eto->eto_r * eto->fu + eto->eto_rc * eto->fv * cor_pprime[Z];
+	A3 = eto->eto_rd * eto->ev * dprime[Z];
+	B3 = eto->eto_rc * eto->fv * dprime[Z];
+	D1 = eto->eto_rc * eto->eto_rc * eto->eto_rd * eto->eto_rd;
+
+	A4 = A1*A1*C1 + B1*B1*C1 + A2*A2 + B2*B2 - D1;
+	A5 = A1*A1*C2 + B1*B1*C2 + 2*A2*A3 + 2*B2*B3;
+	A6 = A1*A1*C3 + B1*B1*C3 + A3*A3 + B3*B3;
+	A7 = 2*(A1*A2 + B1*B2);
+	A8 = 2*(A1*A3 + B1*B3);
+	term = A6*A6 - A8*A8*C3;
+
+	C.dgr=4;
+	C.cf[4] = (A4*A4 - A7*A7*C1);			/* t^0 */
+	C.cf[3] = (2*A4*A5 - A7*A7*C2 - 2*A7*A8*C1);	/* t^1 */
+	C.cf[2] = (2*A4*A6 + A5*A5 - A7*A7*C3 - 2*A7*A8*C2 - A8*A8*C1);	/* t^2 */
+	C.cf[1] = (2*A5*A6 - 2*A7*A8*C3 - A8*A8*C2);	/* t^3 */
+	C.cf[0] = term;					/* t^4 */
+
+	if ((i = rt_poly_roots(&C, val, stp[idx]->st_dp->d_namep)) != 4) {
+	    /* root finder failed / degenerate; treat as MISS (scalar logs) */
+	    continue;
+	}
+
+	/* Only real roots indicate an intersection in real space. */
+	for (j = 0, i = 0; j < 4; j++) {
+	    if (NEAR_ZERO(val[j].im, 0.0001))
+		k[i++] = val[j].re;
+	}
+
+	/* reverse above translation by adding distance to all 'k' values. */
+	for (j = 0; j < i; ++j)
+	    k[j] -= cor_proj;
+
+	if (i != 2 && i != 4)
+	    continue;		/* 0 (or reduced) roots -> MISS */
+
+	/* Sort k[] into descending order (k[0] = farthest, k[i-1] = nearest). */
+	{
+	    short lim, m;
+	    for (lim = (short)i - 1; lim > 0; lim--) {
+		for (m = 0; m < lim; m++) {
+		    if (k[m] < k[m+1]) {
+			fastf_t u = k[m];
+			k[m] = k[m+1];
+			k[m+1] = u;
+		    }
+		}
+	    }
+	}
+
+	/* Outer span: nearest entry k[i-1], farthest exit k[0]. */
+	segp[idx].seg_stp = stp[idx];
+	segp[idx].seg_in.hit_magic = RT_HIT_MAGIC;
+	segp[idx].seg_in.hit_dist = k[i-1];
+	segp[idx].seg_in.hit_surfno = 0;
+	VJOIN1(segp[idx].seg_in.hit_vpriv, pprime, k[i-1], dprime);
+	segp[idx].seg_out.hit_magic = RT_HIT_MAGIC;
+	segp[idx].seg_out.hit_dist = k[0];
+	segp[idx].seg_out.hit_surfno = 0;
+	VJOIN1(segp[idx].seg_out.hit_vpriv, pprime, k[0], dprime);
+    }
+}
+
+
+/**
  * Compute the normal to the eto, given a point on the eto centered at
  * the origin on the X-Y plane.  The gradient of the eto at that point
  * is in fact the normal vector, which will have to be given unit
