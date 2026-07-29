@@ -63,6 +63,8 @@
 #include "rt/db4.h"
 #include "bv/plot3.h"
 
+#include "../../librt_private.h"
+
 /* private header */
 #include "./dsp.h"
 
@@ -2763,6 +2765,16 @@ compute_normal_at_gridpoint(vect_t N,
     }
 
 
+}
+
+
+/**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_dsp_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+{
+    rt_vshot_via_shot(rt_dsp_shot, stp, rp, segp, n, ap);
 }
 
 

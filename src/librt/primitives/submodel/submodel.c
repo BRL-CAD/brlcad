@@ -573,6 +573,21 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 
 
 /**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_submodel_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+
+{
+    rt_vshot_via_shot(rt_submodel_shot, stp, rp, segp, n, ap);
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 C_DECL void

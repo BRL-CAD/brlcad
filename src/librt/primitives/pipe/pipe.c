@@ -1766,6 +1766,21 @@ rt_pipe_shot(
 
 
 /**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_pipe_vshot(
+    struct soltab *stp[],
+    struct xray *rp[],
+    struct seg *segp,
+    int n,
+    struct application *ap)
+{
+    rt_vshot_via_shot(rt_pipe_shot, stp, rp, segp, n, ap);
+}
+
+
+/**
  * Return the curvature of the pipe.
  */
 C_DECL void

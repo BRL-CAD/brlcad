@@ -67,6 +67,7 @@ extern "C" {
     int rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip);
     void rt_brep_print(const struct soltab *stp);
     int rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead);
+    void rt_brep_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap);
     void rt_brep_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
     void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
     void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
@@ -1483,6 +1484,16 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     }
 
     return 0;
+}
+
+
+/**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+void
+rt_brep_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+{
+    rt_vshot_via_shot(rt_brep_shot, stp, rp, segp, n, ap);
 }
 
 

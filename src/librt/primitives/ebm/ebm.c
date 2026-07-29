@@ -1250,6 +1250,16 @@ rt_ebm_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 /**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_ebm_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+{
+    rt_vshot_via_shot(rt_ebm_shot, stp, rp, segp, n, ap);
+}
+
+
+/**
  * Given one ray distance, return the normal and entry/exit point.
  * This is mostly a matter of translating the stored code into the
  * proper normal.

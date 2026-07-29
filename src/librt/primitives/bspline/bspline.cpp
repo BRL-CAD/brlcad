@@ -438,6 +438,20 @@ rt_nurb_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 }
 
 
+/**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+void
+rt_nurb_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    rt_vshot_via_shot(rt_nurb_shot, stp, rp, segp, n, ap);
+}
+
+
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 
 

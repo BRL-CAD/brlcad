@@ -38,8 +38,12 @@
 #include "rt/geom.h"
 #include "vmath.h"
 
+#include "../../librt_private.h"
+
+
 #define PNT_FMT "%.17g"    /* format precision for printf */
 #define PNT_FMT_3ARGS PNT_FMT " " PNT_FMT " " PNT_FMT
+
 
 /**
  * Per-soltab data computed at prep time, used to ray-trace the point
@@ -425,6 +429,21 @@ rt_pnts_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     }
 
     return nseg;
+}
+
+
+/**
+ * Baseline flat-array vshot: delegates to the scalar shot via
+ * rt_vshot_via_shot() (outer span across the point spheres hit).
+ */
+C_DECL void
+rt_pnts_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    rt_vshot_via_shot(rt_pnts_shot, stp, rp, segp, n, ap);
 }
 
 

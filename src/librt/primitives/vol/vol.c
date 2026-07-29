@@ -43,6 +43,7 @@
 #include "raytrace.h"
 
 #include "../fixpt.h"
+#include "../../librt_private.h"
 
 
 /*
@@ -509,6 +510,21 @@ vol_file_data(struct rt_vol_internal *vip, const struct db_i *dbip)
      */
     bu_close_mapped_file(mfile);
     return 0;
+}
+
+
+/**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_vol_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+/* An array of solids */
+/* An array of rays */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+
+{
+    rt_vshot_via_shot(rt_vol_shot, stp, rp, segp, n, ap);
 }
 
 

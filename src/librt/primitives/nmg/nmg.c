@@ -1400,6 +1400,21 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_nmg_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+/* An array of solids */
+/* An array of rays */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+
+{
+    rt_vshot_via_shot(rt_nmg_shot, stp, rp, segp, n, ap);
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 C_DECL void

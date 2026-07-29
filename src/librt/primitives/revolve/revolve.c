@@ -1007,6 +1007,16 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 
 
 /**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_revolve_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+{
+    rt_vshot_via_shot(rt_revolve_shot, stp, rp, segp, n, ap);
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 C_DECL void
