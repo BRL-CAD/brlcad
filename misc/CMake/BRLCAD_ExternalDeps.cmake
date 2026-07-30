@@ -841,6 +841,17 @@ function(brlcad_bext_process)
     brlcad_ext_setup()
   endif()
 
+  # Never allow an unset or incomplete dependency path to reach the recursive
+  # inventory logic below.  An empty root would make its glob scan "/".
+  if(NOT IS_DIRECTORY "${BRLCAD_EXT_INSTALL_DIR}" OR NOT IS_DIRECTORY "${BRLCAD_EXT_NOINSTALL_DIR}")
+    message(
+      FATAL_ERROR
+      "External dependency setup did not produce usable install and noinstall directories:\n"
+      "  install: ${BRLCAD_EXT_INSTALL_DIR}\n"
+      "  noinstall: ${BRLCAD_EXT_NOINSTALL_DIR}"
+    )
+  endif()
+
   # If we have a bext directories in the build directory, we need to clear them for distcheck
   distclean("${CMAKE_BINARY_DIR}/bext")
   distclean("${CMAKE_BINARY_DIR}/bext_build")
