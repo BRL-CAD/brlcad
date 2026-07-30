@@ -54,7 +54,10 @@ mged> **orient "0 0 1 0"**
 
 Sets the view using a 180° rotation about the Z axis (quaternion `(0, 0, 1, 0)`).
 ====
+[[see_also]]
+== SEE ALSO
 
+*view*(nged)
 [[author]]
 == AUTHOR
 
