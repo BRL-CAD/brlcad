@@ -33,7 +33,10 @@ mged>**viewsize 250**
 Sets the mged display to be 250 units across.
 
 ====
+[[see_also]]
+== SEE ALSO
 
+*view*(nged)
 
 [[author]]
 == AUTHOR
