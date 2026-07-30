@@ -17,7 +17,7 @@ viewdir [-i]
 [[description]]
 == DESCRIPTION
 
-Returns the direction vector using the current azimuth and elevation as input. If the _-i_ option is used the commmand will return the inverse directional vector. See also the *ae2dir*, *dir2ae* and *qvrot* commands.
+Returns the direction vector using the current azimuth and elevation as input. If the _-i_ option is used the commmand will return the inverse directional vector.
 
 
 [[examples]]
@@ -33,7 +33,10 @@ mged>**viewdir**
 Returns the direction vector using the current azimuth and elevation.
 
 ====
+[[see_also]]
+== SEE ALSO
 
+*view*(nged), *ae2dir*(nged), *dir2ae*(nged), and *qvrot*(nged)
 
 [[author]]
 == AUTHOR
