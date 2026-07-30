@@ -96,10 +96,9 @@ timer_timespec(const struct timespec *time_val)
     return ((int64_t)time_val->tv_sec * nsec_per_sec
 	    + (int64_t)time_val->tv_nsec);
 }
-#endif
 
 
-#if defined(HAVE_SYS_RESOURCE_H) && (defined(RUSAGE_SELF) || defined(RUSAGE_THREAD))
+#elif defined(HAVE_SYS_RESOURCE_H) && (defined(RUSAGE_SELF) || defined(RUSAGE_THREAD))
 static int64_t
 timer_rusage(const struct rusage *usage)
 {
@@ -109,6 +108,38 @@ timer_rusage(const struct rusage *usage)
 	+ (int64_t)usage->ru_stime.tv_usec;
 
     return usec * nsec_per_usec;
+}
+
+
+#elif defined(HAVE_SYS_TIMES_H) && defined(HAVE_SYSCONF)
+static int64_t
+times_process_cpu_nsec(void)
+{
+    struct tms usage;
+    long ticks_per_sec = sysconf(_SC_CLK_TCK);
+    clock_t ticks = 0;
+
+    if (ticks_per_sec <= 0)
+	return -1;
+    if (times(&usage) == (clock_t)-1)
+	return -1;
+
+    ticks = usage.tms_utime + usage.tms_stime;
+    return (int64_t)(((long double)ticks * (long double)nsec_per_sec) / (long double)ticks_per_sec);
+}
+
+
+#elif !defined(HAVE_WINDOWS_H)
+/* clock() exists on windows but is a low-fidelity wall clock timer */
+static int64_t
+timer_clock(void)
+{
+    clock_t cpu_time = clock();
+
+    if (cpu_time == (clock_t)-1)
+	return -1;
+
+    return (int64_t)(((long double)cpu_time * (long double)nsec_per_sec) / (long double)CLOCKS_PER_SEC);
 }
 #endif
 
@@ -135,40 +166,6 @@ timer_mach_thread(void)
 	return -1;
 
     return timer_mach_time_val(&info.user_time) + timer_mach_time_val(&info.system_time);
-}
-#endif
-
-
-#if defined(HAVE_SYS_TIMES_H) && defined(HAVE_SYSCONF)
-static int64_t
-times_process_cpu_nsec(void)
-{
-    struct tms usage;
-    long ticks_per_sec = sysconf(_SC_CLK_TCK);
-    clock_t ticks = 0;
-
-    if (ticks_per_sec <= 0)
-	return -1;
-    if (times(&usage) == (clock_t)-1)
-	return -1;
-
-    ticks = usage.tms_utime + usage.tms_stime;
-    return (int64_t)(((long double)ticks * (long double)nsec_per_sec) / (long double)ticks_per_sec);
-}
-#endif
-
-
-#if !defined(HAVE_WINDOWS_H)
-/* clock() exists on windows but is a low-fidelity wall clock timer */
-static int64_t
-timer_clock(void)
-{
-    clock_t cpu_time = clock();
-
-    if (cpu_time == (clock_t)-1)
-	return -1;
-
-    return (int64_t)(((long double)cpu_time * (long double)nsec_per_sec) / (long double)CLOCKS_PER_SEC);
 }
 #endif
 
