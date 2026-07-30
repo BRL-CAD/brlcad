@@ -4314,8 +4314,8 @@ mged> nmg_simplify poly shapea.poly shapea.nmg
 **
 
 
-oed path_lhs path_rhs::
-The “oed” command places MGED directly into the matrix edit mode. The __path_rhs__ must be a path to a primitive shape, and __path_lhs__ must be a path to a combination that includes the first component of __path_rhs__ as one of its members. Also, path_rhs/path_lhs must be a path that is currently displayed in mged. The edited matrix will be the matrix in the final component of __path_lhs__ that corresponds to the first component of __path_rhs__. The last component in __path_rhs__ is used as the reference shape during object editing.
+oed path_lhs [path_rhs]::
+The “oed” command places MGED directly into matrix edit mode. With one path, __path_lhs__ is the complete path to the object being edited; the matrix immediately above its final component is selected and the object's bounding-box center is used as the keypoint. With two paths, __path_rhs__ must end in a primitive shape, and __path_lhs__ must identify a combination containing the first component of __path_rhs__. The matrix between the final component of __path_lhs__ and the first component of __path_rhs__ is selected, and the final primitive in __path_rhs__ supplies the keypoint. The selected object path must currently be displayed in MGED.
 
 
 Examples:::
@@ -4324,6 +4324,12 @@ mged> oed group1/group2 region1/shapea
 
 
 – Place MGED into matrix edit mode, editing the matrix in _group2_ that corresponds to _region1_, using _shapea_ as the reference shape.
+
+mged> oed group1/group2/region1
+
+
+
+– Place MGED into matrix edit mode for _region1_, using the center of its bounding box as the keypoint.
 
 **
 
@@ -6943,7 +6949,7 @@ A <<REGION,region>> may be assigned an integer _material code_ by the user. This
 
 *matrix edit mode*
 
-This is the mode that <<mged,_mged_>> is in while editing a transformation matrix in a <<COMBINATION,combination>>. It is characterized by the illumination of one object in the graphics window, and the appearance of matrix editing selections in the _Edit_ menu. This mode may be entered through the _Matrix Selection.._ entry of the _Edit_ menu, or via the <<oed,_oed_>> command. Editing operations such as rotation, translation, and scale may be performed in this mode and will affect all objects below the edited matrix in the <<tree,tree>>. These operations will be applied in reference to a key solid that is a leaf of that tree.
+This is the mode that <<mged,_mged_>> is in while editing a transformation matrix in a <<COMBINATION,combination>>. It is characterized by the illumination of one object in the graphics window, and the appearance of matrix editing selections in the _Edit_ menu. This mode may be entered through the _Matrix Selection.._ entry of the _Edit_ menu, or via the <<oed,_oed_>> command. Editing operations such as rotation, translation, and scale may be performed in this mode and will affect all objects below the edited matrix in the <<tree,tree>>. These operations are applied relative to a keypoint obtained from a key solid, an object's bounding-box center, or an explicit *keypoint* command.
 
 *member*
 
