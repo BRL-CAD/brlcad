@@ -88,17 +88,18 @@ datetime_ctime_filetime(const FILETIME *kernel_time, const FILETIME *user_time)
 }
 #endif
 
-#ifndef HAVE_WINDOWS_H
-#  if defined(CLOCK_PROCESS_CPUTIME_ID) || defined(CLOCK_THREAD_CPUTIME_ID)
+
+#if defined(CLOCK_PROCESS_CPUTIME_ID) || defined(CLOCK_THREAD_CPUTIME_ID)
 static int64_t
 datetime_ctime_timespec(const struct timespec *time_val)
 {
     return ((int64_t)time_val->tv_sec * nsec_per_sec
 	    + (int64_t)time_val->tv_nsec);
 }
-#  endif
-`
-#  if defined(HAVE_SYS_RESOURCE_H) && (defined(RUSAGE_SELF) || defined(RUSAGE_THREAD))
+#endif
+
+
+#if defined(HAVE_SYS_RESOURCE_H) && (defined(RUSAGE_SELF) || defined(RUSAGE_THREAD))
 static int64_t
 datetime_ctime_rusage(const struct rusage *usage)
 {
@@ -109,9 +110,10 @@ datetime_ctime_rusage(const struct rusage *usage)
 
     return usec * nsec_per_usec;
 }
-#  endif
+#endif
 
-#  if defined(HAVE_MACH_THREAD_CPUTIME)
+
+#if defined(HAVE_MACH_THREAD_CPUTIME)
 static int64_t
 datetime_ctime_mach_time_val(const time_value_t *time_val)
 {
@@ -134,9 +136,10 @@ datetime_ctime_mach_thread(void)
 
     return datetime_ctime_mach_time_val(&info.user_time) + datetime_ctime_mach_time_val(&info.system_time);
 }
-#  endif
+#endif
 
-#  if defined(HAVE_SYS_TIMES_H) && defined(HAVE_SYSCONF)
+
+#if defined(HAVE_SYS_TIMES_H) && defined(HAVE_SYSCONF)
 static int64_t
 times_process_cpu_nsec(void)
 {
@@ -152,10 +155,13 @@ times_process_cpu_nsec(void)
     ticks = usage.tms_utime + usage.tms_stime;
     return (int64_t)(((long double)ticks * (long double)nsec_per_sec) / (long double)ticks_per_sec);
 }
-#  endif
+#endif
 
+
+#if !defined(HAVE_WINDOWS_H)
+/* clock() exists on windows but is a low-fidelity wall clock timer */
 static int64_t
-clock_process_cpu_nsec(void)
+datetime_ctime_clock(void)
 {
     clock_t cpu_time = clock();
 
@@ -165,6 +171,7 @@ clock_process_cpu_nsec(void)
     return (int64_t)(((long double)cpu_time * (long double)nsec_per_sec) / (long double)CLOCKS_PER_SEC);
 }
 #endif
+
 
 void
 bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
@@ -199,7 +206,7 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 int64_t
 bu_gettime(void)
 {
-#ifdef HAVE_SYS_TIME_H
+#if defined(HAVE_SYS_TIME_H)
 
     struct timeval nowTime;
 
@@ -207,8 +214,7 @@ bu_gettime(void)
     return ((int64_t)nowTime.tv_sec * usec_per_sec
 	    + (int64_t)nowTime.tv_usec);
 
-#else /* HAVE_SYS_TIME_H */
-#  ifdef HAVE_WINDOWS_H
+#elif defined(HAVE_WINDOWS_H)
 
     FILETIME ft;
     ULARGE_INTEGER ut;
@@ -218,57 +224,67 @@ bu_gettime(void)
     GetSystemTimePreciseAsFileTime(&ft);
     ut.LowPart = ft.dwLowDateTime;
     ut.HighPart = ft.dwHighDateTime;
-    /* https://support.microsoft.com/en-us/help/167296/how-to-convert-a-unix-time-t-to-a-win32-filetime-or-systemtime */
     nowTime = (ut.QuadPart - WINDOWS_UNIX_EPOCH_TICKS)/WINDOWS_TICKS_PER_USEC;
     return nowTime;
 
-#  else /* HAVE_WINDOWS_H */
-#    warning "bu_gettime() implementation missing for this machine type"
+#else
+
+#  warning "bu_gettime() implementation missing for this machine type"
     bu_log("WARNING, no bu_gettime implementation for this machine type.\n");
     return -1;
 
-#  endif /* HAVE_WINDOWS_H */
-#endif /* HAVE_SYS_TIME_H */
+#endif
 }
 
 
 int64_t
 bu_getctime(void)
 {
-#ifdef HAVE_GETPROCESSTIMES
-    FILETIME create_time, exit_time, kernel_time, user_time;
 
-    if (!GetProcessTimes(GetCurrentProcess(), &create_time, &exit_time, &kernel_time, &user_time))
-	return -1;
+#if defined(HAVE_GETPROCESSTIMES)
+    {
+	FILETIME create_time, exit_time, kernel_time, user_time;
 
-    return datetime_ctime_filetime(&kernel_time, &user_time);
-#elif !defined(HAVE_WINDOWS_H)
-#  ifdef CLOCK_PROCESS_CPUTIME_ID
-    struct timespec process_time;
+	if (!GetProcessTimes(GetCurrentProcess(), &create_time, &exit_time, &kernel_time, &user_time))
+	    return -1;
 
-    if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &process_time) == 0)
-	return datetime_ctime_timespec(&process_time);
-#  endif
+	return datetime_ctime_filetime(&kernel_time, &user_time);
+    }
 
-#  if defined(HAVE_SYS_RESOURCE_H) && defined(RUSAGE_SELF)
-    struct rusage usage;
+#elif defined(CLOCK_PROCESS_CPUTIME_ID)
+    {
+	struct timespec process_time;
 
-    if (getrusage(RUSAGE_SELF, &usage) == 0)
-	return datetime_ctime_rusage(&usage);
-#  endif
+	if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &process_time) == 0)
+	    return datetime_ctime_timespec(&process_time);
+    }
 
-#  if defined(HAVE_SYS_TIMES_H) && defined(HAVE_SYSCONF)
+#elif defined(HAVE_SYS_RESOURCE_H) && defined(RUSAGE_SELF)
+    {
+	struct rusage usage;
+
+	if (getrusage(RUSAGE_SELF, &usage) == 0)
+	    return datetime_ctime_rusage(&usage);
+    }
+
+#elif defined(HAVE_SYS_TIMES_H) && defined(HAVE_SYSCONF)
     {
 	int64_t times_cpu_time = times_process_cpu_nsec();
 
 	if (times_cpu_time >= 0)
 	    return times_cpu_time;
     }
-#  endif
 
-    return clock_process_cpu_nsec();
+#elif !defined(HAVE_WINDOWS_H)
+
+    return datetime_ctime_clock();
+
 #else
+
+#  warning "bu_getctime() implementation missing for this machine type"
+    bu_log("WARNING, no bu_getctime implementation for this machine type.\n");
     return -1;
+
 #endif
 }
 
@@ -276,40 +292,46 @@ bu_getctime(void)
 int64_t
 bu_thread_getctime(void)
 {
-#ifdef HAVE_GETTHREADTIMES
-    FILETIME create_time, exit_time, kernel_time, user_time;
 
-    if (!GetThreadTimes(GetCurrentThread(), &create_time, &exit_time, &kernel_time, &user_time))
-	return -1;
+#if defined(HAVE_GETTHREADTIMES)
+    {
+	FILETIME create_time, exit_time, kernel_time, user_time;
 
-    return datetime_ctime_filetime(&kernel_time, &user_time);
-#elif !defined(HAVE_WINDOWS_H)
-#  ifdef CLOCK_THREAD_CPUTIME_ID
-    struct timespec thread_time;
+	if (!GetThreadTimes(GetCurrentThread(), &create_time, &exit_time, &kernel_time, &user_time))
+	    return -1;
 
-    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_time) == 0)
-	return datetime_ctime_timespec(&thread_time);
-#  endif
+	return datetime_ctime_filetime(&kernel_time, &user_time);
+    }
 
-#  if defined(HAVE_SYS_RESOURCE_H) && defined(RUSAGE_THREAD)
-    struct rusage usage;
+#elif defined(CLOCK_THREAD_CPUTIME_ID)
+    {
+	struct timespec thread_time;
 
-    if (getrusage(RUSAGE_THREAD, &usage) == 0)
-	return datetime_ctime_rusage(&usage);
-#  endif
+	if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_time) == 0)
+	    return datetime_ctime_timespec(&thread_time);
+    }
 
-#  if defined(HAVE_MACH_THREAD_CPUTIME)
+#elif defined(HAVE_SYS_RESOURCE_H) && defined(RUSAGE_THREAD)
+    {
+	struct rusage usage;
+
+	if (getrusage(RUSAGE_THREAD, &usage) == 0)
+	    return datetime_ctime_rusage(&usage);
+    }
+
+#elif defined(HAVE_MACH_THREAD_CPUTIME)
     {
 	int64_t mach_cpu_time = datetime_ctime_mach_thread();
 
 	if (mach_cpu_time >= 0)
 	    return mach_cpu_time;
     }
-#  endif
+#endif
 
+#  warning "bu_thread_getctime() implementation missing for this machine type"
+    bu_log("WARNING, no bu_thread_getctime implementation for this machine type.\n");
     return -1;
-#else
-    return -1;
+
 #endif
 }
 
