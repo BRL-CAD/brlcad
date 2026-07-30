@@ -62,7 +62,7 @@
 #include "bu/process.h"
 #include "bu/snooze.h"
 #include "bu/str.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 
 /* strict c99 doesn't declare kill() (but POSIX does) */
 #if !defined(HAVE_DECL_KILL) && !defined(kill)

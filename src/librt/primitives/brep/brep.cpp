@@ -43,7 +43,7 @@
 
 #include "bu/cv.h"
 #include "bu/opt.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "brep.h"
 #include "bn/mat.h"
 #include "bn/dvec.h"

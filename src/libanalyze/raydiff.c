@@ -30,7 +30,7 @@
 #include "bu/log.h"
 #include "bu/ptbl.h"
 #include "bn/mat.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "raytrace.h"
 #include "analyze.h"
 #include "./analyze_private.h"

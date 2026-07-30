@@ -40,7 +40,7 @@
 #include "manifold/manifold.h"
 
 #include "vmath.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bn/tol.h"
 #include "bg/defines.h"
 #include "bg/trimesh.h"

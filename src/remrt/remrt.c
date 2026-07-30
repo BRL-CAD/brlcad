@@ -55,7 +55,7 @@
 #include "bu/app.h"
 #include "bu/env.h"
 #include "bu/interrupt.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/vls.h"
 
 /* decls for strict c90 */

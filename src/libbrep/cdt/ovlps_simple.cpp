@@ -34,7 +34,7 @@
 #include <queue>
 #include <random>
 #include <string>
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bg/chull.h"
 #include "bg/tri_pt.h"
 #include "bg/tri_tri.h"

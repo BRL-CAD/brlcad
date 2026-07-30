@@ -62,7 +62,7 @@
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "bu/version.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/snooze.h"
 #include "vmath.h"
 #include "bn.h"

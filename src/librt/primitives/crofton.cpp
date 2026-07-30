@@ -68,7 +68,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 

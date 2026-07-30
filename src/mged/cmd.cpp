@@ -50,7 +50,7 @@
 #include "vmath.h"
 #include "bu/getopt.h"
 #include "bu/path.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/snooze.h"
 #include "bn.h"
 #include "bv/util.h"

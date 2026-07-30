@@ -31,7 +31,7 @@
 #include <math.h>
 
 #include "bu/log.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"

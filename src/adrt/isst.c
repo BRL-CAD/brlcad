@@ -34,7 +34,7 @@
 
 #include "bu/app.h"
 #include "bu/parallel.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "dm.h"
 
 #include "rt/tie.h"

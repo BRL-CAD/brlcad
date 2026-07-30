@@ -31,7 +31,7 @@
 #include "bu/hash.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bv/defines.h"
 #include "dm.h"
 #include "./include/private.h"

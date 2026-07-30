@@ -50,7 +50,7 @@
 
 #include "bu/app.h"
 #include "bu/malloc.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "rt/defines.h"
 #include "raytrace.h"
 #include "wdb.h"

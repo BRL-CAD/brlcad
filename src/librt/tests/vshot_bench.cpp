@@ -57,7 +57,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/magic.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/vls.h"
 #include "bn/tol.h"
 #include "raytrace.h"

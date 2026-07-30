@@ -28,7 +28,7 @@
 #include <iostream>
 
 #include "bu/app.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/opt.h"

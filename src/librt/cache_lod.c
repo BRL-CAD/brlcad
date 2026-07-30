@@ -29,7 +29,7 @@
 #include "bu/file.h"
 #include "bu/path.h"
 #include "bu/process.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "rt/db_instance.h"
 
 #include "./librt_private.h"

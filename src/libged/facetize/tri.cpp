@@ -42,7 +42,7 @@
 #include "bu/app.h"
 #include "bu/path.h"
 #include "bu/snooze.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 #include "./tess_opts.h"

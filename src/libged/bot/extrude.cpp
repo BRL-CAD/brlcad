@@ -49,7 +49,7 @@
 
 extern "C" {
 #include "vmath.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bg/trimesh.h"
 #include "brep.h"
 #include "rt/primitives/bot.h"

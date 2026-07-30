@@ -31,7 +31,7 @@
 #include "bu/ptbl.h"
 #include "bn/mat.h"
 #include "bn/sobol.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "raytrace.h"
 
 typedef int (*hitfunc_t)(struct application *, struct partition *, struct seg *);

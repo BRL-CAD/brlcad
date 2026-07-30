@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include "bu/app.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "raytrace.h"
 #include "wdb.h"
 

@@ -40,7 +40,7 @@
 
 #include "bu.h"
 #include "bu/bitv.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 
 #define BITS_TO_TEST 100000000 /* 100 million bits */
 #define NUM_ITERATIONS 10
