@@ -84,7 +84,7 @@ Sets the view to look from the left side (azimuth 270°, elevation 0°).
 [[see_also]]
 == SEE ALSO
 
-*ypr*(nged), *quat*(nged), *ae2dir*(nged)
+*view*(nged), *ypr*(nged), *quat*(nged), *ae2dir*(nged)
 
 
 [[author]]
