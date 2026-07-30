@@ -43,7 +43,10 @@ mged> **eye_pt 100 0 0**
 
 Positions the camera eye point precisely at the model's (100, 0, 0) coordinates.
 ====
+[[see_also]]
+== SEE ALSO
 
+*view*(nged)
 
 [[author]]
 == AUTHOR
