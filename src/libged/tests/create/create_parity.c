@@ -83,7 +83,7 @@ static int check_coverage(void) {
     int missing = 0;
 
     for (ftp = OBJ; ftp->magic != 0; ftp++) {
-	if (!ftp->ft_label || ftp->ft_label[0] == '\0')
+	if (ftp->ft_label[0] == ' ' || ftp->ft_label[0] == '\0')
 	    continue;
 	if (BU_STR_EQUAL(ftp->ft_label, "NULL") ||
 	    bu_strncmp(ftp->ft_label, "UNUSED", 6) == 0)
