@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-B - Clears the _mged_ display of any currently displayed objects, then displays the list of objects provided in the parameter list.
+B -{empty} Clears the _mged_ display of any currently displayed objects, then displays the list of objects provided in the parameter list.
 
 == SYNOPSIS
 
