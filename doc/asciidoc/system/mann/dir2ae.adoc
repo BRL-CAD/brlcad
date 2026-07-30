@@ -17,7 +17,7 @@ dir2ae [-i] {dx dy dz}
 [[description]]
 == DESCRIPTION
 
-Returns the azimuth and elevation (AE) using the provided direction vector as input. If the _-i_ option is used the commmand will return the inverse AE. See also the *ae2dir* and *qvrot* commands.
+Returns the azimuth and elevation (AE) using the provided direction vector as input. If the _-i_ option is used the commmand will return the inverse AE.
 
 
 [[examples]]
@@ -34,6 +34,10 @@ Returns the AE using a direction vector of 0.707107 0.707107 0.
 
 ====
 
+[[see_also]]
+== SEE ALSO
+
+*view*(nged), *ae2dir*(nged), and *qvrot*(nged)
 
 [[author]]
 == AUTHOR
