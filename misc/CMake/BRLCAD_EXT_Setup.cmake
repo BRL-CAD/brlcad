@@ -539,9 +539,21 @@ function(brlcad_ext_setup)
   endif(BEXT_BLD_CLEANUP)
 
   # Persist key variables in the cache
-  set(BRLCAD_EXT_DIR ${BRLCAD_EXT_INSTALL_DIR} CACHE PATH "Local bext install" FORCE)
-  set(BRLCAD_EXT_INSTALL_DIR ${BRLCAD_EXT_DIR}/install CACHE PATH "Local bext install" FORCE)
-  set(BRLCAD_EXT_NOINSTALL_DIR ${BRLCAD_EXT_DIR}/noinstall CACHE PATH "Local bext install" FORCE)
+  set(_brlcad_ext_output_dir "${BRLCAD_EXT_INSTALL_DIR}")
+  set(BRLCAD_EXT_DIR "${_brlcad_ext_output_dir}")
+  set(BRLCAD_EXT_INSTALL_DIR "${_brlcad_ext_output_dir}/install")
+  set(BRLCAD_EXT_NOINSTALL_DIR "${_brlcad_ext_output_dir}/noinstall")
+
+  set(BRLCAD_EXT_DIR "${_brlcad_ext_output_dir}" CACHE PATH "Local bext install" FORCE)
+  set(BRLCAD_EXT_INSTALL_DIR "${_brlcad_ext_output_dir}/install" CACHE PATH "Local bext install files" FORCE)
+  set(BRLCAD_EXT_NOINSTALL_DIR "${_brlcad_ext_output_dir}/noinstall" CACHE PATH "Local bext noinstall files" FORCE)
+
+  # brlcad_ext_setup() is called from brlcad_bext_process(), which needs
+  # these values immediately.  Cache updates alone can remain hidden by
+  # normal variables established during initialization.
+  set(BRLCAD_EXT_DIR "${BRLCAD_EXT_DIR}" PARENT_SCOPE)
+  set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_INSTALL_DIR}" PARENT_SCOPE)
+  set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_NOINSTALL_DIR}" PARENT_SCOPE)
 endfunction(brlcad_ext_setup)
 
 # Local Variables:
