@@ -63,7 +63,10 @@ mged> **quat {*}$q**
 
 Saves the current quaternion, changes to a 35/25 azimuth-elevation view, then restores the original orientation using Tcl list expansion.
 ====
+[[see_also]]
+== SEE ALSO
 
+*view*(nged)
 [[author]]
 == AUTHOR
 
