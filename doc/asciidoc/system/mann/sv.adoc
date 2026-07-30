@@ -42,7 +42,10 @@ mged>**sv 1024 0 0**
 The view center is moved half way between the current view center and the right side of the view screen.
 
 ====
+[[see_also]]
+== SEE ALSO
 
+*view*(nged)
 
 [[author]]
 == AUTHOR
