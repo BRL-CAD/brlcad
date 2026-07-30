@@ -17,7 +17,7 @@ ae [ [-i]azimuth elevation [twist]]
 [[description]]
 == DESCRIPTION
 
-Set the view orientation for the _mged_ display by rotating the eye point about the center of the viewing cube. The eye point is determined by the supplied azimuth and elevation angles (degrees). The _azimuth_ angle is measured in the _xy_ plane with the positive _x_ direction corresponding to an azimuth of 0°. Positive azimuth angles are measured counter-clockwise about the positive _z_ axis. Elevation angles are measured from the _xy_ plane with +90° corresponding to the positive _z_ direction and -90 corresponding to the negative _z_ direction. If an optional _twist_ angle is included, the view will be rotated about the viewing direction by the specified _twist_ angle. The _-i_ option results in the angles supplied being interpreted as increments. If no arguments are supplied, the command will return the current azimuth, elevation, and twist. See also the *view* command.
+Set the view orientation for the _mged_ display by rotating the eye point about the center of the viewing cube. The eye point is determined by the supplied azimuth and elevation angles (degrees). The _azimuth_ angle is measured in the _xy_ plane with the positive _x_ direction corresponding to an azimuth of 0°. Positive azimuth angles are measured counter-clockwise about the positive _z_ axis. Elevation angles are measured from the _xy_ plane with +90° corresponding to the positive _z_ direction and -90 corresponding to the negative _z_ direction. If an optional _twist_ angle is included, the view will be rotated about the viewing direction by the specified _twist_ angle. The _-i_ option results in the angles supplied being interpreted as increments. If no arguments are supplied, the command will return the current azimuth, elevation, and twist.
 
 
 [[examples]]
@@ -59,6 +59,10 @@ Rotates the current view through 5 degrees about the viewing direction.
 
 ====
 
+[[see_also]]
+== SEE ALSO
+
+*view*(nged)
 
 [[author]]
 == AUTHOR
