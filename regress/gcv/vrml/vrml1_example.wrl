@@ -1,0 +1,79 @@
+#VRML V1.0 ascii
+# Exercises ordered state, nested separators, transforms, materials,
+# analytic and tessellated primitives, DEF/USE, and polygon triangulation.
+Separator {
+  Material { diffuseColor 0.1 0.7 0.2 }
+  Translation { translation -6 0 0 }
+  DEF UnitCube Cube { width 2 height 4 depth 6 }
+
+  Translation { translation 4 0 0 }
+  Rotation { rotation 0 0 1 0.4 }
+  Sphere { radius 1.5 }
+
+  Separator {
+    Translation { translation 4 0 0 }
+    Scale { scaleFactor 1 2 0.5 }
+    Cylinder { radius 1 height 3 }
+  }
+
+  Separator {
+    Translation { translation 8 0 0 }
+    Material { diffuseColor 0.8 0.3 0.1 }
+    Cone { bottomRadius 1.5 height 4 }
+  }
+
+  Separator {
+    Translation { translation 0 5 0 }
+    Material {
+      diffuseColor [ 0.2 0.4 0.9, 0.9 0.8 0.1 ]
+    }
+    MaterialBinding { value PER_FACE_INDEXED }
+    Coordinate3 {
+      point [
+        0 0 0,
+        4 0 0,
+        4 4 0,
+        2 2 0,
+        0 4 0,
+        2 2 3
+      ]
+    }
+    ShapeHints { faceType UNKNOWN_FACE_TYPE }
+    IndexedFaceSet {
+      coordIndex [
+        0, 1, 2, 3, 4, -1,
+        0, 1, 5, -1
+      ]
+      materialIndex [ 0, 1 ]
+    }
+  }
+
+  Separator {
+    Translation { translation 4 5 0 }
+    USE UnitCube
+  }
+}
+
+# Shear cannot be represented by BRL-CAD's analytic ELL primitive.  Exercise
+# the tessellated fallback that preserves the full MatrixTransform.
+Separator {
+  Translation { translation 12 0 0 }
+  MatrixTransform {
+    matrix
+      1 0.5 0 0
+      0 1   0 0
+      0 0   1 0
+      0 0   0 1
+  }
+  Sphere { radius 0.75 }
+}
+
+# A partial primitive is a surface rather than a closed analytic solid.
+Separator {
+  Translation { translation 12 4 0 }
+  Cylinder {
+    parts (SIDES | BOTTOM)
+    radius 0.75
+    height 2
+  }
+}
