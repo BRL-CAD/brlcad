@@ -257,6 +257,8 @@ bu_timer_cpu(void)
 
 	if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &process_time) == 0)
 	    return timer_timespec(&process_time);
+
+	return -1;
     }
 
 #elif defined(HAVE_SYS_RESOURCE_H) && defined(RUSAGE_SELF)
@@ -265,6 +267,8 @@ bu_timer_cpu(void)
 
 	if (getrusage(RUSAGE_SELF, &usage) == 0)
 	    return timer_rusage(&usage);
+
+	return -1;
     }
 
 #elif defined(HAVE_SYS_TIMES_H) && defined(HAVE_SYSCONF)
@@ -273,6 +277,8 @@ bu_timer_cpu(void)
 
 	if (times_cpu_time >= 0)
 	    return times_cpu_time;
+
+	return -1;
     }
 
 #elif !defined(HAVE_WINDOWS_H)
@@ -309,6 +315,8 @@ bu_timer_cpu_thread(void)
 
 	if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_time) == 0)
 	    return timer_timespec(&thread_time);
+
+	return -1;
     }
 
 #elif defined(HAVE_SYS_RESOURCE_H) && defined(RUSAGE_THREAD)
@@ -317,6 +325,8 @@ bu_timer_cpu_thread(void)
 
 	if (getrusage(RUSAGE_THREAD, &usage) == 0)
 	    return timer_rusage(&usage);
+
+	return -1;
     }
 
 #elif defined(HAVE_MACH_THREAD_CPUTIME)
@@ -325,6 +335,8 @@ bu_timer_cpu_thread(void)
 
 	if (mach_cpu_time >= 0)
 	    return mach_cpu_time;
+
+	return -1;
     }
 #else
 
