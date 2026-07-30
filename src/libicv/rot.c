@@ -49,7 +49,7 @@
 #include "bu/malloc.h"
 #include "bn.h"
 
-/* interface header, needed to export properly"
+/* interface header, needed to export properly */
 #include "icv/ops.h"
 
 
