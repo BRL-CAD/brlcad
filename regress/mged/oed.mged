@@ -3,6 +3,23 @@ puts "*** Testing 'oed' command ***"
 in_all_prims oed
 comb_all oed
 
+# The one-path form edits the named object and uses its bounding-box center.
+in oed_bbox_left.s sph 0 0 0 1
+in oed_bbox_right.s sph 9 0 0 1
+comb oed_bbox.c u oed_bbox_left.s u oed_bbox_right.s
+comb oed_bbox_parent.c u oed_bbox.c
+B oed_bbox_parent.c
+oed oed_bbox_parent.c/oed_bbox.c
+oed_bbox_keypoint_record 4.5
+translate 1 0 0
+oed_apply
+oed_bbox_keypoint_record 1
+oed_reset
+oed_bbox_keypoint_record 1
+oed_bbox_keypoint_check
+press accept
+d oed_bbox_parent.c
+
 # Make sure edit states change for all combinations
 
 puts "oed arb4 combination:"
