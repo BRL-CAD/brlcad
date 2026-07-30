@@ -1744,7 +1744,9 @@ _brlcad_include_probe(io.h HAVE_IO_H)
 _brlcad_include_probe(libgen.h HAVE_LIBGEN_H)
 # BRLCAD_INCLUDE_FILE(libproc.h HAVE_LIBPROC_H) - see below
 _brlcad_include_probe(mach/host_info.h HAVE_MACH_HOST_INFO_H)
+_brlcad_include_probe(mach/mach.h HAVE_MACH_MACH_H)
 _brlcad_include_probe(mach/mach_host.h HAVE_MACH_MACH_HOST_H)
+_brlcad_include_probe(mach/thread_info.h HAVE_MACH_THREAD_INFO_H)
 _brlcad_include_probe(mach/thread_policy.h HAVE_MACH_THREAD_POLICY_H)
 _brlcad_include_probe(memory.h HAVE_MEMORY_H)
 _brlcad_include_probe(netdb.h HAVE_NETDB_H)
@@ -2205,7 +2207,7 @@ return 0;
   SRCCOMPILE_WIN
 )
 
-# If we have GetProcessTimes, we need it instead of clock() for CPU time.
+# If we have GetProcessTimes, use it instead of clock() for Windows CPU time.
 # https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/clock
 _brlcad_srccompile_probe(HAVE_GETPROCESSTIMES
   "
@@ -2218,6 +2220,38 @@ return 0;
 "
   SRCCOMPILE_WIN
 )
+
+# Current-thread CPU time on Windows.
+_brlcad_srccompile_probe(HAVE_GETTHREADTIMES
+  "
+#include <windows.h>
+int main(void) {
+FILETIME a,b,c,d;
+(void)GetThreadTimes(GetCurrentThread(),&a,&b,&c,&d);
+return 0;
+}
+"
+  SRCCOMPILE_WIN
+)
+
+if(HAVE_MACH_MACH_H AND HAVE_MACH_THREAD_INFO_H)
+  # Current-thread CPU time on macOS when POSIX thread CPU timers are unavailable.
+  _brlcad_srccompile_probe(HAVE_MACH_THREAD_CPUTIME
+    "
+#include <mach/mach.h>
+#include <mach/thread_info.h>
+int main(void) {
+thread_t thread = mach_thread_self();
+thread_basic_info_data_t info;
+mach_msg_type_number_t count = THREAD_BASIC_INFO_COUNT;
+(void)thread_info(thread, THREAD_BASIC_INFO, (thread_info_t)&info, &count);
+(void)mach_port_deallocate(mach_task_self(), thread);
+return 0;
+}
+"
+    SRCCOMPILE_MACH
+  )
+endif()
 
 # GetCurrentProcessId
 _brlcad_srccompile_probe(HAVE_GETCURRENTPROCESSID
@@ -2233,6 +2267,9 @@ return 0;
 
 # Resolve the Windows-API source-compile probes registered above.
 _brlcad_run_probe_batch(SRCCOMPILE_WIN)
+if(HAVE_MACH_MACH_H AND HAVE_MACH_THREAD_INFO_H)
+  _brlcad_run_probe_batch(SRCCOMPILE_MACH)
+endif()
 
 
 if(HAVE_NETDB_H)
