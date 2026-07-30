@@ -136,7 +136,7 @@ cpu_timer_parallel_worker(int UNUSED(cpu), void *ptr)
 	}
     }
 
-    start = bu_thread_getctime();
+    start = bu_timer_cpu_thread();
     if (start < 0) {
 	bu_semaphore_acquire(BU_SEM_GENERAL);
 	data->timer_unavailable = 1;
@@ -148,7 +148,7 @@ cpu_timer_parallel_worker(int UNUSED(cpu), void *ptr)
     for (i = 0; i < CPU_TIMER_PARALLEL_MAX_ITERATIONS && end - start < CPU_TIMER_PARALLEL_TARGET_NSEC; i++) {
 	busy += (double)i * CPU_TIMER_BUSY_SCALE;
 	if ((i % CPU_TIMER_SAMPLE_INTERVAL) == 0) {
-	    end = bu_thread_getctime();
+	    end = bu_timer_cpu_thread();
 	    if (end < start) {
 		bu_semaphore_acquire(BU_SEM_GENERAL);
 		data->timer_backwards = 1;
@@ -158,7 +158,7 @@ cpu_timer_parallel_worker(int UNUSED(cpu), void *ptr)
 	}
     }
 
-    end = bu_thread_getctime();
+    end = bu_timer_cpu_thread();
     bu_semaphore_acquire(BU_SEM_GENERAL);
     if (end < 0) {
 	data->timer_unavailable = 1;
@@ -177,21 +177,21 @@ static int
 test_cpu_timer_scope(void)
 {
     struct cpu_timer_parallel_data data = {0, 0, 0, 0, 0, 0, 0, 0, {0, 0}};
-    int64_t process_start = bu_getctime();
+    int64_t process_start = bu_timer_cpu();
     int64_t process_end = 0;
     int64_t process_delta = 0;
     int64_t thread_delta = 0;
     int64_t tolerance = CPU_TIMER_PARALLEL_TOLERANCE_NSEC;
     size_t i = 0;
 
-    if (process_start < 0 || bu_thread_getctime() < 0)
+    if (process_start < 0 || bu_timer_cpu_thread() < 0)
 	return 0;
     if (bu_avail_cpus() < CPU_TIMER_PARALLEL_THREADS)
 	return 0;
 
     data.ncpu = CPU_TIMER_PARALLEL_THREADS;
     bu_parallel(cpu_timer_parallel_worker, data.ncpu, &data);
-    process_end = bu_getctime();
+    process_end = bu_timer_cpu();
 
     if (process_end < process_start)
 	bu_exit(1, "ERROR: Process CPU time went backwards!\n");
