@@ -33,7 +33,10 @@ mged>**orientation 1 0 0 0**
 Sets the viewing direction to bottom.
 
 ====
+[[see_also]]
+== SEE ALSO
 
+*view*(nged)
 
 [[author]]
 == AUTHOR
