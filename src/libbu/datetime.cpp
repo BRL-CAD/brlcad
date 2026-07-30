@@ -281,8 +281,8 @@ bu_timer_cpu(void)
 
 #else
 
-#  warning "bu_getctime() implementation missing for this machine type"
-    bu_log("WARNING, no bu_getctime implementation for this machine type.\n");
+#  warning "bu_timer_cpu() implementation missing for this machine type"
+    bu_log("WARNING, no bu_timer_cpu implementation for this machine type.\n");
     return -1;
 
 #endif
@@ -326,10 +326,10 @@ bu_timer_cpu_thread(void)
 	if (mach_cpu_time >= 0)
 	    return mach_cpu_time;
     }
-#endif
+#else
 
-#  warning "bu_thread_getctime() implementation missing for this machine type"
-    bu_log("WARNING, no bu_thread_getctime implementation for this machine type.\n");
+#  warning "bu_timer_cpu_thread() implementation missing for this machine type"
+    bu_log("WARNING, no bu_timer_cpu_thread implementation for this machine type.\n");
     return -1;
 
 #endif
