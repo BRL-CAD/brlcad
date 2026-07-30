@@ -73,7 +73,10 @@ mged>**saveview -e nirt raycast.sh**
 Appends an executable script to _raycast.sh_ that runs `nirt -M` using the current MGED view.
 
 ====
+[[see_also]]
+== SEE ALSO
 
+*view*(nged)
 
 [[author]]
 == AUTHOR
