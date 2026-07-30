@@ -77,49 +77,87 @@ function(brlcad_bext_init BEXT_SHA1)
   # misc/CMake/BRLCAD_ExternalDeps.cmake - find_program and
   # find_package calls may also make use of them, particularly
   # BRLCAD_EXT_NOINSTALL_DIR
+  #
+  # These are derived values.  Clear any cached copies before processing
+  # BRLCAD_EXT_DIR so they cannot keep an earlier root directory active.
+  set(BRLCAD_EXT_INSTALL_DIR "")
+  set(BRLCAD_EXT_NOINSTALL_DIR "")
+
   set(BRLCAD_EXT_DIR_ENV "$ENV{BRLCAD_EXT_DIR}")
   if(BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
-    set(BRLCAD_EXT_DIR ${BRLCAD_EXT_DIR_ENV})
+    set(BRLCAD_EXT_DIR "${BRLCAD_EXT_DIR_ENV}")
   endif(BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
 
-  # Handle a pre-defined BRLCAD_EXT_DIR variable
-  if(DEFINED BRLCAD_EXT_DIR)
+  set(_brlcad_ext_dir_specified FALSE)
+  set(_brlcad_ext_dir_managed FALSE)
+
+  # Handle a non-empty, pre-defined BRLCAD_EXT_DIR variable.
+  if(DEFINED BRLCAD_EXT_DIR AND NOT "${BRLCAD_EXT_DIR}" STREQUAL "")
+    set(_brlcad_ext_dir_specified TRUE)
+
     # Make sure to cache BRLCAD_EXT_DIR setting - otherwise, CMake
     # re-configure is going to ignore a previously specified directory
-    set(BRLCAD_EXT_DIR "${BRLCAD_EXT_DIR}" CACHE PATH "BRL-CAD external dependency sources")
+    set(BRLCAD_EXT_DIR "${BRLCAD_EXT_DIR}" CACHE PATH "BRL-CAD external dependency sources" FORCE)
 
-    if(NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
+    # Always derive these paths from BRLCAD_EXT_DIR.  Cached values may
+    # otherwise continue to reference an earlier BRLCAD_EXT_DIR setting.
+    if(IS_DIRECTORY "${BRLCAD_EXT_DIR}/install")
       set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/install")
-    endif(NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
+    endif(IS_DIRECTORY "${BRLCAD_EXT_DIR}/install")
+
     # Need to handle the case where BRLCAD_EXT_DIR is a symlink - if
     # it is, we need to expand the symlink in order for the tar tricks
     # we use later for file copying to work...
-    if(DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
+    if(BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK "${BRLCAD_EXT_INSTALL_DIR}")
       file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" EXT_PATH)
       set(BRLCAD_EXT_INSTALL_DIR "${EXT_PATH}")
-    endif(DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
+    endif(BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK "${BRLCAD_EXT_INSTALL_DIR}")
 
     # For noinstall we don't need to worry about symlinks since we'll
     # be using the contents in place.
-    if(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
+    if(IS_DIRECTORY "${BRLCAD_EXT_DIR}/noinstall")
       set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_DIR}/noinstall")
-    endif(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
-  endif(DEFINED BRLCAD_EXT_DIR)
+    endif(IS_DIRECTORY "${BRLCAD_EXT_DIR}/noinstall")
+
+    get_filename_component(_brlcad_ext_dir_absolute "${BRLCAD_EXT_DIR}" ABSOLUTE)
+    get_filename_component(_brlcad_ext_dir_managed_absolute "${CMAKE_CURRENT_BINARY_DIR}/bext_output" ABSOLUTE)
+    if("${_brlcad_ext_dir_absolute}" STREQUAL "${_brlcad_ext_dir_managed_absolute}")
+      set(_brlcad_ext_dir_managed TRUE)
+    endif()
+
+    if(BRLCAD_EXT_INSTALL_DIR AND BRLCAD_EXT_NOINSTALL_DIR)
+      set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_INSTALL_DIR}" CACHE PATH "Local bext install files" FORCE)
+      set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_NOINSTALL_DIR}" CACHE PATH "Local bext noinstall files" FORCE)
+    elseif(NOT _brlcad_ext_dir_managed)
+      message(
+	FATAL_ERROR
+	"BRLCAD_EXT_DIR is set to \"${BRLCAD_EXT_DIR}\", but that is not a usable bext output directory.\n"
+	"Expected directories:\n"
+	"  ${BRLCAD_EXT_DIR}/install\n"
+	"  ${BRLCAD_EXT_DIR}/noinstall\n"
+	"Correct or unset BRLCAD_EXT_DIR; unsetting it enables automatic dependency preparation."
+	)
+    endif()
+  endif(DEFINED BRLCAD_EXT_DIR AND NOT "${BRLCAD_EXT_DIR}" STREQUAL "")
 
   # We've got to have bext for at least a few custom components no
   # matter how many system packages are installed.
-  if(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
-    message(
-      WARNING
-      "External dependencies will be downloaded, configured, and built automatically as-needed. Set BRLCAD_EXT_DIR to specify instead."
-    )
+  if(NOT BRLCAD_EXT_NOINSTALL_DIR OR NOT BRLCAD_EXT_INSTALL_DIR)
+    if(_brlcad_ext_dir_managed)
+      message(WARNING "Managed external dependency output is incomplete and will be rebuilt as-needed.")
+    elseif(NOT _brlcad_ext_dir_specified)
+      message(
+	WARNING
+	"External dependencies will be downloaded, configured, and built automatically as-needed. Set BRLCAD_EXT_DIR to specify instead."
+	)
+    endif()
     message(
       STATUS
       "BRLCAD_EXT_DIR specifies prebuilt external dependencies directory\n"
       "containing 'install' and 'noinstall' folders, outputs from installing\n"
       "https://github.com/BRL-CAD/bext.\n"
     )
-  endif(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+  endif(NOT BRLCAD_EXT_NOINSTALL_DIR OR NOT BRLCAD_EXT_INSTALL_DIR)
 
   # Before configure, check whether there's a type mismatch with bext
   # and BRL-CAD build types.  Some platforms (Windows), that's fatal.
@@ -153,10 +191,10 @@ function(brlcad_bext_init BEXT_SHA1)
   endif(CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
 
   # Persist key variables
-  set(BEXT_SHA1 ${BEXT_SHA1} PARENT_SCOPE)
-  set(BRLCAD_EXT_DIR ${BRLCAD_EXT_DIR} PARENT_SCOPE)
-  set(BRLCAD_EXT_INSTALL_DIR ${BRLCAD_EXT_INSTALL_DIR} PARENT_SCOPE)
-  set(BRLCAD_EXT_NOINSTALL_DIR ${BRLCAD_EXT_NOINSTALL_DIR} PARENT_SCOPE)
+  set(BEXT_SHA1 "${BEXT_SHA1}" PARENT_SCOPE)
+  set(BRLCAD_EXT_DIR "${BRLCAD_EXT_DIR}" PARENT_SCOPE)
+  set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_INSTALL_DIR}" PARENT_SCOPE)
+  set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_NOINSTALL_DIR}" PARENT_SCOPE)
 
 endfunction()
 
