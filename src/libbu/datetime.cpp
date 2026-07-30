@@ -74,7 +74,7 @@ int BU_SEM_DATETIME;
 
 #if defined(HAVE_GETPROCESSTIMES) || defined(HAVE_GETTHREADTIMES)
 static int64_t
-datetime_ctime_filetime(const FILETIME *kernel_time, const FILETIME *user_time)
+timer_filetime(const FILETIME *kernel_time, const FILETIME *user_time)
 {
     ULARGE_INTEGER kernel;
     ULARGE_INTEGER user;
@@ -91,7 +91,7 @@ datetime_ctime_filetime(const FILETIME *kernel_time, const FILETIME *user_time)
 
 #if defined(CLOCK_PROCESS_CPUTIME_ID) || defined(CLOCK_THREAD_CPUTIME_ID)
 static int64_t
-datetime_ctime_timespec(const struct timespec *time_val)
+timer_timespec(const struct timespec *time_val)
 {
     return ((int64_t)time_val->tv_sec * nsec_per_sec
 	    + (int64_t)time_val->tv_nsec);
@@ -101,7 +101,7 @@ datetime_ctime_timespec(const struct timespec *time_val)
 
 #if defined(HAVE_SYS_RESOURCE_H) && (defined(RUSAGE_SELF) || defined(RUSAGE_THREAD))
 static int64_t
-datetime_ctime_rusage(const struct rusage *usage)
+timer_rusage(const struct rusage *usage)
 {
     int64_t usec = (int64_t)usage->ru_utime.tv_sec * usec_per_sec
 	+ (int64_t)usage->ru_utime.tv_usec
@@ -115,14 +115,14 @@ datetime_ctime_rusage(const struct rusage *usage)
 
 #if defined(HAVE_MACH_THREAD_CPUTIME)
 static int64_t
-datetime_ctime_mach_time_val(const time_value_t *time_val)
+timer_mach_time_val(const time_value_t *time_val)
 {
     return ((int64_t)time_val->seconds * nsec_per_sec
 	    + (int64_t)time_val->microseconds * nsec_per_usec);
 }
 
 static int64_t
-datetime_ctime_mach_thread(void)
+timer_mach_thread(void)
 {
     thread_t thread = mach_thread_self();
     thread_basic_info_data_t info;
@@ -134,7 +134,7 @@ datetime_ctime_mach_thread(void)
     if (ret != KERN_SUCCESS)
 	return -1;
 
-    return datetime_ctime_mach_time_val(&info.user_time) + datetime_ctime_mach_time_val(&info.system_time);
+    return timer_mach_time_val(&info.user_time) + timer_mach_time_val(&info.system_time);
 }
 #endif
 
@@ -161,7 +161,7 @@ times_process_cpu_nsec(void)
 #if !defined(HAVE_WINDOWS_H)
 /* clock() exists on windows but is a low-fidelity wall clock timer */
 static int64_t
-datetime_ctime_clock(void)
+timer_clock(void)
 {
     clock_t cpu_time = clock();
 
@@ -238,7 +238,7 @@ bu_gettime(void)
 
 
 int64_t
-bu_getctime(void)
+bu_timer_cpu(void)
 {
 
 #if defined(HAVE_GETPROCESSTIMES)
@@ -248,7 +248,7 @@ bu_getctime(void)
 	if (!GetProcessTimes(GetCurrentProcess(), &create_time, &exit_time, &kernel_time, &user_time))
 	    return -1;
 
-	return datetime_ctime_filetime(&kernel_time, &user_time);
+	return timer_filetime(&kernel_time, &user_time);
     }
 
 #elif defined(CLOCK_PROCESS_CPUTIME_ID)
@@ -256,7 +256,7 @@ bu_getctime(void)
 	struct timespec process_time;
 
 	if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &process_time) == 0)
-	    return datetime_ctime_timespec(&process_time);
+	    return timer_timespec(&process_time);
     }
 
 #elif defined(HAVE_SYS_RESOURCE_H) && defined(RUSAGE_SELF)
@@ -264,7 +264,7 @@ bu_getctime(void)
 	struct rusage usage;
 
 	if (getrusage(RUSAGE_SELF, &usage) == 0)
-	    return datetime_ctime_rusage(&usage);
+	    return timer_rusage(&usage);
     }
 
 #elif defined(HAVE_SYS_TIMES_H) && defined(HAVE_SYSCONF)
@@ -277,7 +277,7 @@ bu_getctime(void)
 
 #elif !defined(HAVE_WINDOWS_H)
 
-    return datetime_ctime_clock();
+    return timer_clock();
 
 #else
 
@@ -290,7 +290,7 @@ bu_getctime(void)
 
 
 int64_t
-bu_thread_getctime(void)
+bu_timer_cpu_thread(void)
 {
 
 #if defined(HAVE_GETTHREADTIMES)
@@ -300,7 +300,7 @@ bu_thread_getctime(void)
 	if (!GetThreadTimes(GetCurrentThread(), &create_time, &exit_time, &kernel_time, &user_time))
 	    return -1;
 
-	return datetime_ctime_filetime(&kernel_time, &user_time);
+	return timer_filetime(&kernel_time, &user_time);
     }
 
 #elif defined(CLOCK_THREAD_CPUTIME_ID)
@@ -308,7 +308,7 @@ bu_thread_getctime(void)
 	struct timespec thread_time;
 
 	if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_time) == 0)
-	    return datetime_ctime_timespec(&thread_time);
+	    return timer_timespec(&thread_time);
     }
 
 #elif defined(HAVE_SYS_RESOURCE_H) && defined(RUSAGE_THREAD)
@@ -316,12 +316,12 @@ bu_thread_getctime(void)
 	struct rusage usage;
 
 	if (getrusage(RUSAGE_THREAD, &usage) == 0)
-	    return datetime_ctime_rusage(&usage);
+	    return timer_rusage(&usage);
     }
 
 #elif defined(HAVE_MACH_THREAD_CPUTIME)
     {
-	int64_t mach_cpu_time = datetime_ctime_mach_thread();
+	int64_t mach_cpu_time = timer_mach_thread();
 
 	if (mach_cpu_time >= 0)
 	    return mach_cpu_time;
