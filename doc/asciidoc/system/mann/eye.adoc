@@ -43,6 +43,10 @@ mged> **eye 0 0 0**
 
 Positions the camera eye point precisely at the model's (0, 0, 0) origin.
 ====
+[[see_also]]
+== SEE ALSO
+
+*view*(nged)
 
 [[author]]
 == AUTHOR
