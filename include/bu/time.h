@@ -33,7 +33,7 @@ __BEGIN_DECLS
 
 /** @addtogroup bu_time
  * @brief
- * Cross platform wrapper for microsecond accuracy timing functionality.
+ * Cross platform wrapper for timing functionality.
  */
 /** @{ */
 /** @file bu/time.h */
@@ -52,6 +52,26 @@ __BEGIN_DECLS
  *
  */
 BU_EXPORT extern int64_t bu_gettime(void);
+
+/**
+ * Returns a high-resolution CPU time counter for the current process, in
+ * nanoseconds.
+ *
+ * Unlike bu_gettime(), this value is not a wall-clock or epoch timestamp.  It
+ * measures CPU time consumed by the process across all threads.  Returns -1 if
+ * a process CPU timer is not available on the platform.
+ */
+BU_EXPORT extern int64_t bu_getctime(void);
+
+/**
+ * Returns a high-resolution CPU time counter for the current thread, in
+ * nanoseconds.
+ *
+ * This is useful for profiling small regions of threaded work without charging
+ * scheduler preemption or other threads' work to the measured interval.
+ * Returns -1 if a current-thread CPU timer is not available on the platform.
+ */
+BU_EXPORT extern int64_t bu_thread_getctime(void);
 
 /**
  * Evaluate the time_t input as UTC time in ISO format.
