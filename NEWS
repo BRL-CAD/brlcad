@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * new doc guide, a visual overview of BRL-CAD objects - Sean Morrison
+* fixed submodel paths relative to parent databases - Sean Morrison
 * improved performance making huge combinations - Sean Morrison
 * added gcv import conversion support for vrml/wrl 1.0 - Sean Morrison
 
@@ -101,7 +102,6 @@ and extensively improving existing docs.
 * fixed potential DSP corner case rendering crash - Cliff Yapp
 * fixed multithreaded crashing with noise-using shaders - Cliff Yapp
 * corrected the exposed region count report in rtarea - Cliff Yapp
-* fixed submodel paths relative to parent databases - Sean Morrison
 * fixed icv support for RLE image format - Cliff Yapp
 * added similarity grouping identification mode to gdiff - Cliff Yapp
 * added preliminary JT mesh import support to gcv - Sean Morrison
