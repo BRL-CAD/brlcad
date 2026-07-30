@@ -29,10 +29,21 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
+#ifdef HAVE_SYS_TIMES_H
+#  include <sys/times.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #ifdef HAVE_SCHED_H
 #  include <sched.h>
 #endif
+#ifdef HAVE_MACH_THREAD_CPUTIME
+#  include <mach/mach.h>
+#  include <mach/thread_info.h>
+#endif
 
+#include "bresource.h"
 #include "bio.h"
 
 #include "bu/log.h"
@@ -50,9 +61,110 @@
 extern int gettimeofday(struct timeval *, void *);
 #endif
 
+static constexpr int64_t usec_per_sec = 1000000;
+static constexpr int64_t nsec_per_sec = 1000000000;
+static constexpr int64_t nsec_per_usec = 1000;
+#if defined(HAVE_GETPROCESSTIMES) || defined(HAVE_GETTHREADTIMES)
+static constexpr int64_t nsec_per_windows_tick = 100;
+#endif
+
 extern "C" {
 int BU_SEM_DATETIME;
 }
+
+#if defined(HAVE_GETPROCESSTIMES) || defined(HAVE_GETTHREADTIMES)
+static int64_t
+datetime_ctime_filetime(const FILETIME *kernel_time, const FILETIME *user_time)
+{
+    ULARGE_INTEGER kernel;
+    ULARGE_INTEGER user;
+
+    kernel.LowPart = kernel_time->dwLowDateTime;
+    kernel.HighPart = kernel_time->dwHighDateTime;
+    user.LowPart = user_time->dwLowDateTime;
+    user.HighPart = user_time->dwHighDateTime;
+
+    return (int64_t)((kernel.QuadPart + user.QuadPart) * nsec_per_windows_tick);
+}
+#endif
+
+#ifndef HAVE_WINDOWS_H
+#  if defined(CLOCK_PROCESS_CPUTIME_ID) || defined(CLOCK_THREAD_CPUTIME_ID)
+static int64_t
+datetime_ctime_timespec(const struct timespec *time_val)
+{
+    return ((int64_t)time_val->tv_sec * nsec_per_sec
+	    + (int64_t)time_val->tv_nsec);
+}
+#  endif
+`
+#  if defined(HAVE_SYS_RESOURCE_H) && (defined(RUSAGE_SELF) || defined(RUSAGE_THREAD))
+static int64_t
+datetime_ctime_rusage(const struct rusage *usage)
+{
+    int64_t usec = (int64_t)usage->ru_utime.tv_sec * usec_per_sec
+	+ (int64_t)usage->ru_utime.tv_usec
+	+ (int64_t)usage->ru_stime.tv_sec * usec_per_sec
+	+ (int64_t)usage->ru_stime.tv_usec;
+
+    return usec * nsec_per_usec;
+}
+#  endif
+
+#  if defined(HAVE_MACH_THREAD_CPUTIME)
+static int64_t
+datetime_ctime_mach_time_val(const time_value_t *time_val)
+{
+    return ((int64_t)time_val->seconds * nsec_per_sec
+	    + (int64_t)time_val->microseconds * nsec_per_usec);
+}
+
+static int64_t
+datetime_ctime_mach_thread(void)
+{
+    thread_t thread = mach_thread_self();
+    thread_basic_info_data_t info;
+    mach_msg_type_number_t count = THREAD_BASIC_INFO_COUNT;
+    kern_return_t ret = thread_info(thread, THREAD_BASIC_INFO, (thread_info_t)&info, &count);
+
+    (void)mach_port_deallocate(mach_task_self(), thread);
+
+    if (ret != KERN_SUCCESS)
+	return -1;
+
+    return datetime_ctime_mach_time_val(&info.user_time) + datetime_ctime_mach_time_val(&info.system_time);
+}
+#  endif
+
+#  if defined(HAVE_SYS_TIMES_H) && defined(HAVE_SYSCONF)
+static int64_t
+times_process_cpu_nsec(void)
+{
+    struct tms usage;
+    long ticks_per_sec = sysconf(_SC_CLK_TCK);
+    clock_t ticks = 0;
+
+    if (ticks_per_sec <= 0)
+	return -1;
+    if (times(&usage) == (clock_t)-1)
+	return -1;
+
+    ticks = usage.tms_utime + usage.tms_stime;
+    return (int64_t)(((long double)ticks * (long double)nsec_per_sec) / (long double)ticks_per_sec);
+}
+#  endif
+
+static int64_t
+clock_process_cpu_nsec(void)
+{
+    clock_t cpu_time = clock();
+
+    if (cpu_time == (clock_t)-1)
+	return -1;
+
+    return (int64_t)(((long double)cpu_time * (long double)nsec_per_sec) / (long double)CLOCKS_PER_SEC);
+}
+#endif
 
 void
 bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
@@ -92,7 +204,7 @@ bu_gettime(void)
     struct timeval nowTime;
 
     gettimeofday(&nowTime, NULL);
-    return ((int64_t)nowTime.tv_sec * (int64_t)1000000
+    return ((int64_t)nowTime.tv_sec * usec_per_sec
 	    + (int64_t)nowTime.tv_usec);
 
 #else /* HAVE_SYS_TIME_H */
@@ -100,12 +212,14 @@ bu_gettime(void)
 
     FILETIME ft;
     ULARGE_INTEGER ut;
+    static constexpr unsigned long long WINDOWS_UNIX_EPOCH_TICKS = 116444736000000000ULL;
+    static constexpr unsigned long long WINDOWS_TICKS_PER_USEC = 10ULL;
     long long nowTime;
     GetSystemTimePreciseAsFileTime(&ft);
     ut.LowPart = ft.dwLowDateTime;
     ut.HighPart = ft.dwHighDateTime;
     /* https://support.microsoft.com/en-us/help/167296/how-to-convert-a-unix-time-t-to-a-win32-filetime-or-systemtime */
-    nowTime = (ut.QuadPart - 116444736000000000)/10;
+    nowTime = (ut.QuadPart - WINDOWS_UNIX_EPOCH_TICKS)/WINDOWS_TICKS_PER_USEC;
     return nowTime;
 
 #  else /* HAVE_WINDOWS_H */
@@ -115,6 +229,88 @@ bu_gettime(void)
 
 #  endif /* HAVE_WINDOWS_H */
 #endif /* HAVE_SYS_TIME_H */
+}
+
+
+int64_t
+bu_getctime(void)
+{
+#ifdef HAVE_GETPROCESSTIMES
+    FILETIME create_time, exit_time, kernel_time, user_time;
+
+    if (!GetProcessTimes(GetCurrentProcess(), &create_time, &exit_time, &kernel_time, &user_time))
+	return -1;
+
+    return datetime_ctime_filetime(&kernel_time, &user_time);
+#elif !defined(HAVE_WINDOWS_H)
+#  ifdef CLOCK_PROCESS_CPUTIME_ID
+    struct timespec process_time;
+
+    if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &process_time) == 0)
+	return datetime_ctime_timespec(&process_time);
+#  endif
+
+#  if defined(HAVE_SYS_RESOURCE_H) && defined(RUSAGE_SELF)
+    struct rusage usage;
+
+    if (getrusage(RUSAGE_SELF, &usage) == 0)
+	return datetime_ctime_rusage(&usage);
+#  endif
+
+#  if defined(HAVE_SYS_TIMES_H) && defined(HAVE_SYSCONF)
+    {
+	int64_t times_cpu_time = times_process_cpu_nsec();
+
+	if (times_cpu_time >= 0)
+	    return times_cpu_time;
+    }
+#  endif
+
+    return clock_process_cpu_nsec();
+#else
+    return -1;
+#endif
+}
+
+
+int64_t
+bu_thread_getctime(void)
+{
+#ifdef HAVE_GETTHREADTIMES
+    FILETIME create_time, exit_time, kernel_time, user_time;
+
+    if (!GetThreadTimes(GetCurrentThread(), &create_time, &exit_time, &kernel_time, &user_time))
+	return -1;
+
+    return datetime_ctime_filetime(&kernel_time, &user_time);
+#elif !defined(HAVE_WINDOWS_H)
+#  ifdef CLOCK_THREAD_CPUTIME_ID
+    struct timespec thread_time;
+
+    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_time) == 0)
+	return datetime_ctime_timespec(&thread_time);
+#  endif
+
+#  if defined(HAVE_SYS_RESOURCE_H) && defined(RUSAGE_THREAD)
+    struct rusage usage;
+
+    if (getrusage(RUSAGE_THREAD, &usage) == 0)
+	return datetime_ctime_rusage(&usage);
+#  endif
+
+#  if defined(HAVE_MACH_THREAD_CPUTIME)
+    {
+	int64_t mach_cpu_time = datetime_ctime_mach_thread();
+
+	if (mach_cpu_time >= 0)
+	    return mach_cpu_time;
+    }
+#  endif
+
+    return -1;
+#else
+    return -1;
+#endif
 }
 
 
