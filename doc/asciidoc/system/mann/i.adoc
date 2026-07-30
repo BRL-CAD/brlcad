@@ -17,7 +17,7 @@ i {obj_name comb_name} [operation]
 [[description]]
 == DESCRIPTION
 
-Adds __obj_name__ to the end of the combination named __comb_name__. The _operation_ may be +, -, or u. If no _operation_ is specified, u is assumed. If __comb_name__ does not exist, it is created.
+Adds __obj_name__ to the end of the combination named __comb_name__. The _operation_ may be +, -, or u. If no _operation_ is specified, u is assumed. If __comb_name__ does not exist, it is created.
 
 
 [[examples]]
