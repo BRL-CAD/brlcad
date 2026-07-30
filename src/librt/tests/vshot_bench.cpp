@@ -752,7 +752,7 @@ main(int argc, char *argv[])
 
     int ran = 0, failed = 0;
     for (int i = 0; i < num_prim_cases; i++) {
-	if (strcmp(sel, "all") && strcmp(sel, prim_cases[i].name))
+	if (bu_strcmp(sel, "all") && bu_strcmp(sel, prim_cases[i].name))
 	    continue;
 	ran++;
 	failed += run_primitive(&prim_cases[i], rtip, resp, min_seconds);
