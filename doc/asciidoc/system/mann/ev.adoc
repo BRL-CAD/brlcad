@@ -23,7 +23,7 @@ Evaluates the _objects_ specified by tessellating all primitive shapes in the ob
 * _d_--Do not perform Boolean operations or any checking; simply convert shapes to polygons and draw them. Useful for visualizing BOT and polysolid primitives.
 * _f_--Fast path for quickly visualizing polysolid primitives.
 * _w_--Draw wireframes (rather than polygons).
-* _n_--Draw surface normals as little hairs.
+* _n_--Draw surface normals as little "hairs."
 * _s_--Draw shape lines only (no dot-dash for subtract and intersect).
 * _t_--Perform CSG-to-tNURBS conversion (still under development).
 * _v_--Shade using per-vertex normals, when present.
