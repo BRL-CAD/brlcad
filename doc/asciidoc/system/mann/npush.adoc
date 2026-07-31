@@ -553,11 +553,6 @@ mged>**npush -r group**
 Push all matrices under given group down to the region level (matrices will sit in group above regions).
 
 
-....
-
-      
-....
-
 ====
 
 .Push all matrices under a group down to the solid level
@@ -567,11 +562,22 @@ mged>**npush -s group**
 
 Push all matrices under given group down to the solid level (matrices will sit below regions).
 
-
-....
-
-      
-....
-
 ====
+
+[[see_also]]
+== SEE ALSO
+
+*push*(nged), *xpush*(nged), *pull*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
 
