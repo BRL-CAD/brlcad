@@ -102,7 +102,6 @@ set(
   rt_ignore_files
   CMakeLists.txt
   ext.h
-  libfb-dummy.c
   main.c
   rtuif.h
   rtsurf_hits.h
