@@ -150,6 +150,10 @@ Unused idents:
 
 ====
 
+[[see_also]]
+== SEE ALSO
+
+*search*(nged)
 
 [[author]]
 == AUTHOR
