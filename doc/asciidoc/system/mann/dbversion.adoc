@@ -40,7 +40,7 @@ Prints the version number of the open database, such as `5`.
 [[see_also]]
 == SEE ALSO
 
-*version*(nged), *opendb*(nged), *dbupgrade*(nged)
+*db*(nged), *opendb*(nged), *dbupgrade*(nged)
 
 
 [[author]]
