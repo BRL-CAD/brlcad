@@ -36,6 +36,11 @@ Rotates the view to place the point (10 20 30) (model coordinates) in the center
 
 ====
 
+[[see_also]]
+== SEE ALSO
+
+*view*(nged)
+
 
 [[author]]
 == AUTHOR
