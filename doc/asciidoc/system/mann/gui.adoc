@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-gui - Creates an instance of MGEDs default Tcl/Tk graphical user interface (GUI).
+gui - Creates an instance of MGED's default Tcl/Tk graphical user interface (GUI).
 
 == SYNOPSIS
 
@@ -17,7 +17,7 @@ gui [{-config} | [b] | [c] | [g]] [{-d} | {display_string}] [{-gd} | {graphics_d
 [[description]]
 == DESCRIPTION
 
-Creates an instance of MGEDs default Tcl/Tk graphical user interface (GUI). The following options are allowed:
+Creates an instance of MGED's default Tcl/Tk graphical user interface (GUI). The following options are allowed:
 
 
 _-config b c g_::
