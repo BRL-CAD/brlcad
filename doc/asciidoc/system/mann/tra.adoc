@@ -17,7 +17,7 @@ tra {dx} {dy} {dz}
 [[description]]
 == DESCRIPTION
 
-Translates the view or an object. Exactly what is done is determined by MGEDs state as well as the state of the current display manager. The parameters _dx, dy,_ and _dz_ are in local units.
+Translates the view or an object. Exactly what is done is determined by MGED's state as well as the state of the current display manager. The parameters _dx, dy,_ and _dz_ are in local units.
 
 
 [[examples]]
