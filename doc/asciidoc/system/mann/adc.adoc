@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-adc - This command controls the angle/distance cursor.
+adc - Controls the angle/distance cursor.
 
 == SYNOPSIS
 
@@ -123,46 +123,41 @@ Print the help message.
 
 The examples show the use of the *adc* command with no arguments, with _i_, and with subcommands.
 
+.Toggle display of the angle/distance cursor
 [example]
 ====
+mged> **adc**
 
-mged> **adc**::
-Toggle display of angle/distance cursor.
-
-
+Toggles the display of angle/distance cursor.
 
 ====
 
+.Set angle1
 [example]
 ====
+mged> **adc a1 37.5**
 
-mged> **adc a1 37.5**::
 Sets angle1 to 37.5 degrees.
 
-
-
 ====
 
+.Get angle1
 [example]
 ====
+mged> **adc a1 37.5**
 
-mged> **adc a1 37.5**::
 Gets angle1.
 
-
-
 ====
 
+.Move the ADC position
 [example]
 ====
+mged> **adc xyz 100 0 0**
 
-mged> **adc xyz 100 0 0**::
 Moves ADC position to (100,0,0), model coordinates and local units.
 
-
-
 ====
-
 
 [[author]]
 == AUTHOR
