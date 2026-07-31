@@ -20,24 +20,36 @@ db {command} [arguments]
 Provides an interface to a number of database manipulation routines. Note that this command always operates in units of millimeters. The _command_ must be one of the following with appropriate arguments:
 
 
-__match [regular_exp]__::
-Returns a list of all objects in that database that match the list of regular expressions.
+__adjust shape_name attribute new_value1 [new_value2 new_value3...]__::
+Modifies the shape named __shape_name__ by adjusting the value of its _attribute_ to the __new_values__.
+
+
+_close_::
+Closes the previously opened database and deletes the associated command.
+
+
+_concat_ [-h] [-t] [-u] [-c] [-s|-p] [-L] [-O] {database_file} [affix]::
+Concatenates an existing BRL-CAD database to the database currently being edited.
+
+
+_find_ [-a] <objects>::
+Displays all combinations that have any of the _objects_ specified as a member. By default, *db find* will only return non-hidden objects. The `-a` option will include hidden objects. 
+
+
+__form object_type__::
+Displays the format used to display objects of type __object_type__.
 
 
 __get shape_or_path [attribute]__::
 Returns information about the primitive shape at the end of the __shape_or_path__. If a path is specified, the transformation matrices encountered along that path will be accumulated and applied to the leaf shape before displaying the information. If no _attribute_ is specified, all the details about the shape are returned. If a specific _attribute_ is listed, then only that information is returned.
 
 
+__match [regular_exp]__::
+Returns a list of all objects in that database that match the list of regular expressions.
+
+
 __put shape_name shape_type attributes__::
 Creates shape named __shape_name__ of type __shape_type__ with attributes as listed in _attributes_. The arguments to the _put_ command are the same as those returned by the _get_ command.
-
-
-__adjust shape_name attribute new_value1 [new_value2 new_value3...]__::
-Modifies the shape named __shape_name__ by adjusting the value of its _attribute_ to the __new_values__.
-
-
-__form object_type__::
-Displays the format used to display objects of type __object_type__.
 
 
 _tops_::
@@ -46,18 +58,6 @@ Returns all top-level objects.
 
 _version_::
 Print the version of the currently open BRL-CAD database.
-
-
-_close_::
-Closes the previously opened database and deletes the associated command.
-
-
-_find_ [-a] <objects>::
-Displays all combinations that have any of the _objects_ specified as a member
-
-
-_concat_ [-h] [-t] [-u] [-c] [-s|-p] [-L] [-O] {database_file} [affix]::
-Concatenates an existing BRL-CAD database to the database currently being edited.
 
 
 [[examples]]
