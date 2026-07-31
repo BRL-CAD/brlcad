@@ -37,7 +37,7 @@ Moves all the effects of the transformation matrices in the tree rooted at _grou
 [[see_also]]
 == SEE ALSO
 
-*push*(nged), *npush*(nged)
+*push*(nged), *npush*(nged), *pull*(nged)
 
 [[author]]
 == AUTHOR
