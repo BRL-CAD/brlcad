@@ -55,7 +55,7 @@ Lists all references to _group1_ in the database.
 [[see_also]]
 == SEE ALSO
 
-*kill*(nged) *killtree*(nged)
+*kill*(nged), *killtree*(nged), *killall*(nged)
 
 
 [[author]]
