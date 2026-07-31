@@ -17,7 +17,7 @@ comb_color {combination_name r g b}
 [[description]]
 == DESCRIPTION
 
-Assigns the color using the provided _rgb_ values to the existing combination named __combination_name__. Valid values for each variable are between 0 and 255. See also the *mater* command.
+Assigns the color using the provided _rgb_ values to the existing combination named __combination_name__. Valid values for each variable are between 0 and 255. Note the *comb_color* command sets the rgb attribute. This is overwritten by the color attribute, so if a combination has both color and rgb attributes, the color attribute takes precedence in both wireframe and raytracing.
 
 
 [[examples]]
@@ -33,6 +33,11 @@ mged>**comb_color region.r 0 255 0**
 Assigns the color green to _region.r_.
 
 ====
+
+[[see_also]]
+== SEE ALSO
+
+*mater*(nged), *attr*(nged)
 
 
 [[author]]
