@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-screengrab, screen_grab - Save the current MGED display visual or framebuffer contents to an image file.
+screengrab - Save the current MGED display visual or framebuffer contents to an image file.
 
 == SYNOPSIS
 
@@ -73,6 +73,10 @@ mged> **screengrab --format jpg view.img**
 Writes the display manager scene to _view.img_ in JPEG format.
 ====
 
+[[see_also]]
+== SEE ALSO
+
+*png*(nged)
 
 [[author]]
 == AUTHOR
