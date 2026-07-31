@@ -21,7 +21,7 @@ Without a subcommand, the *status* command returns the following information: cu
 
 
 *state*::
-Get the current state of MGED (i.e., VIEWING, SOL PICK, SOL EDIT, OBJ PICK, OBJ PATH, OBJ EDIT, or VERTPICK).
+Get the current state of MGED (i.e., "VIEWING," "SOL PICK," "SOL EDIT," "OBJ PICK," "OBJ PATH," "OBJ EDIT," or "VERTPICK").
 
 
 *Viewscale*::
