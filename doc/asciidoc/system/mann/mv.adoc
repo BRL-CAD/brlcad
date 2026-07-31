@@ -17,7 +17,7 @@ mv {old_name new_name}
 [[description]]
 == DESCRIPTION
 
-Changes the name of __old_name__ to __new_name__. Note that this does not change any references to __old_name__ that may appear in other combinations in the database. The *mvall* command will change an objects name everywhere.
+Changes the name of __old_name__ to __new_name__. Note that this does not change any references to __old_name__ that may appear in other combinations in the database. The *mvall* command will change an object's name everywhere.
 
 
 [[examples]]
