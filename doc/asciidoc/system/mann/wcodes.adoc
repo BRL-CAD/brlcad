@@ -54,7 +54,7 @@ Saves all region codes from `vehicle.c` to `saved_codes.txt`, then restores them
 [[see_also]]
 == SEE ALSO
 
-*rcodes*(nged), *idents*(nged), *wmater*(nged)
+*rcodes*(nged), *idents*(nged), *wmater*(nged), *attr*(nged)
 
 
 [[author]]
