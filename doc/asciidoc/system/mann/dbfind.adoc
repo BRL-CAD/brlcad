@@ -37,6 +37,10 @@ mged> **dbfind shapea**
 Lists the names of all non-hidden combinations that refer to _shapea_ as a member.
 ====
 
+[[see_also]]
+== SEE ALSO
+
+*db*(nged), *search*(nged)
 
 [[author]]
 == AUTHOR
