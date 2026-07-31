@@ -17,7 +17,7 @@ mvall [-n] [(-f mapping_file) | (old_name new_name)]
 [[description]]
 == DESCRIPTION
 
-Changes the name of __old_name__ to __new_name__. This will also change any references to __old_name__ that may occur in other combinations in the database. If the _-f_ variation of the command is used, all __old_name__ __new_name__ pairings are read from the __mapping_file__ and processed as previously stated. The _-n_ flag returns all groups that will be affected if the command were run but without changing the name, essentially running a *dbfind* on the __old_name__.
+Changes the name of __old_name__ to __new_name__. This will also change any references to __old_name__ that may occur in other combinations in the database. If the _-f_ variation of the command is used, all __old_name__ __new_name__ pairings are read from the __mapping_file__ and processed as previously stated. The _-n_ flag returns all groups that will be affected if the command were run but without changing the name, essentially running a *db find* on the __old_name__.
 
 
 [[examples]]
@@ -51,7 +51,7 @@ bad_name good_name
 [[see_also]]
 == SEE ALSO
 
-mv prefix
+*mv*(nged), *prefix*(nged)
 
 
 [[author]]
