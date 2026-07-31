@@ -28,8 +28,8 @@ Clear the _mged_ display.
 .Enter *Z* to clear the _mged_ display.
 [example]
 ====
+mged> **Z**
 
-mged> **Z**::
 The _mged_ display is clear.
 
 
