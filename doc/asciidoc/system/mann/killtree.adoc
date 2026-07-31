@@ -58,7 +58,7 @@ Destroys _group1_, _region2_, and _shapeb_ and removes all references to these o
 [[see_also]]
 == SEE ALSO
 
-*kill*(nged) *killall*(nged)
+*kill*(nged), *killall*(nged), *killrefs*(nged)
 
 
 [[author]]
