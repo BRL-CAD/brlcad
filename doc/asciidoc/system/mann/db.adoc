@@ -44,10 +44,20 @@ _tops_::
 Returns all top-level objects.
 
 
+_version_::
+Print the version of the currently open BRL-CAD database.
+
+
 _close_::
 Closes the previously opened database and deletes the associated command.
 
 
+_find_ [-a] <objects>::
+Displays all combinations that have any of the _objects_ specified as a member
+
+
+_concat_ [-h] [-t] [-u] [-c] [-s|-p] [-L] [-O] {database_file} [affix]::
+Concatenates an existing BRL-CAD database to the database currently being edited.
 
 
 [[examples]]
