@@ -37,9 +37,10 @@ Removes all currently displayed objects from the graphics window. The database i
 [example]
 ====
 mged> **zap**
+
 mged> **draw hull.c**
 
-Clears the entire display, then draws only `hull.c`.
+Clears the entire display, then draws only _hull.c_.
 ====
 
 [[see_also]]
