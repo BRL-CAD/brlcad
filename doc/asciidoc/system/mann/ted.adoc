@@ -10,7 +10,7 @@ ted - Places the parameters of the currently edited primitive shape into a file,
 
 [source]
 ----
-ted [] []
+ted
 ----
 
 
