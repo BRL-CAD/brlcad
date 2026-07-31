@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD MGED Commands
 
 == NAME
-cp - 
+cp - Makes a copy of the given object.
 
 == SYNOPSIS
 
