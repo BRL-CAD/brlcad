@@ -369,7 +369,6 @@ set(
   test_brepreport.cpp
   test_dbio.c
   test_nurbsfit.cpp
-  test_root3-subd.cpp
   uvpoints.cpp
 )
 cmakefiles(${librt_ignored_files})
@@ -553,7 +552,6 @@ endif(MUSL_LD)
 #BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_brepreport test_brepreport.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
-#BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 
 add_subdirectory(tests)
