@@ -48,11 +48,28 @@ On Linux, PTHREAD_MUTEX_DEFAULT has undefined behavior when unlocking a mutex
 not owned by the caller -- it may silently succeed, hiding the bug.  On FreeBSD,
 the default mutex type returns EPERM in this situation, making the bug visible.
 
-FIX: In bu_semaphore_init(), change the unconditional "bu_nsemaphores = nsemaphores"
-to a conditional update: "if (nsemaphores > bu_nsemaphores) bu_nsemaphores = nsemaphores".
-This prevents a late-arriving thread (one that passed the early-return check with a
-stale bu_nsemaphores) from ever lowering the counter.  The same fix applies to all
-three platform-specific code paths (SunOS, pthreads, Win32).
+INITIAL FIX: In bu_semaphore_init(), changing the unconditional
+"bu_nsemaphores = nsemaphores" to a conditional update prevents a
+late-arriving thread from lowering the counter.  The same monotonic update is
+needed in all three platform-specific code paths (SunOS, pthreads, Win32).
+
+That change fixes the reinitialization sequence above, but is not by itself a
+complete concurrency fix.  The fast-path read occurs without bu_init_lock while
+the slow path writes the same ordinary C object under that lock.  A lock held
+only by the writer does not synchronize an unlocked reader: this remains a C
+data race and therefore undefined behavior.  The count also acts as a readiness
+publication marker.  A reader that observes the larger count must be guaranteed
+to observe the mutex initialization and magic-value writes that preceded it.
+
+COMPLETE FIX: Make bu_nsemaphores atomic.  Use an acquire load for the unlocked
+fast path, re-read the count after taking bu_init_lock, initialize only the
+range above that serialized value, and release-store the new count only after
+all native mutexes in that range are initialized.  The release/acquire pair
+publishes those initialization writes to fast-path readers.  A reader that sees
+an older, smaller count merely takes the slow path and rechecks under the init
+lock; it cannot reinitialize an already published mutex.  Native Windows uses
+the equivalent Interlocked operations for compatibility with older MSVC
+versions.
 
 
 The first failure is from a GQA run:
@@ -196,4 +213,3 @@ frame #4: 0x000000080366a193 librt.so.20`_rt_find_identical_solid(mat=0x00000000
    427 	    /*
    428 	     * Fill in the last little bit of the structure in full parallel
 (lldb) 
-

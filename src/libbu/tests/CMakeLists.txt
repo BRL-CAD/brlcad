@@ -94,6 +94,10 @@ endif()
 brlcad_addexec(bu_semaphore_registry test_semaphore_registry.cpp "libbu;Threads::Threads" TEST)
 brlcad_add_test(NAME bu_semaphore_registry COMMAND bu_semaphore_registry)
 
+brlcad_addexec(bu_parallel_concurrency test_parallel_concurrency.cpp "libbu;Threads::Threads" TEST)
+brlcad_add_test(NAME bu_parallel_concurrency COMMAND bu_parallel_concurrency)
+set_tests_properties(bu_parallel_concurrency PROPERTIES TIMEOUT 30)
+
 # The uuid code doesn't mix with C++ compilers - make a separate
 # C-only executable for this case
 set_source_files_properties(test_uuid.c PROPERTIES NO_CXX_COMPILE TRUE)

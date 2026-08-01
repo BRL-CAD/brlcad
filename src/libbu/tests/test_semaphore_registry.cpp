@@ -34,6 +34,7 @@
 
 #include "common.h"
 
+#include <atomic>
 #include <cstdio>
 #include <set>
 #include <string>
@@ -47,6 +48,7 @@ int
 main()
 {
     const size_t thread_count = 16;
+    const size_t reinit_rounds = 32;
     std::vector<int> same_ids(thread_count, 0);
     std::vector<int> distinct_ids(thread_count, 0);
     std::vector<std::thread> threads;
@@ -89,7 +91,34 @@ main()
 	return 1;
     }
 
-    bu_semaphore_free();
+    /*
+     * Recreate the native semaphore range from multiple threads.  This
+     * exercises publication of the initialized range independently of the
+     * registry lock and is intended to be run under ThreadSanitizer as well
+     * as in the normal test suite.
+     */
+    std::atomic<size_t> ready(0);
+    std::atomic<bool> start(false);
+    for (size_t round = 0; round < reinit_rounds; round++) {
+	bu_semaphore_free();
+	ready.store(0, std::memory_order_relaxed);
+	start.store(false, std::memory_order_relaxed);
+	threads.clear();
+	for (size_t i = 0; i < thread_count; i++) {
+	    threads.emplace_back([&, i]() {
+		ready.fetch_add(1, std::memory_order_release);
+		while (!start.load(std::memory_order_acquire))
+		    std::this_thread::yield();
+		bu_semaphore_acquire(distinct_ids[i]);
+		bu_semaphore_release(distinct_ids[i]);
+	    });
+	}
+	while (ready.load(std::memory_order_acquire) != thread_count)
+	    std::this_thread::yield();
+	start.store(true, std::memory_order_release);
+	for (std::thread &thread : threads)
+	    thread.join();
+    }
 
     if (bu_semaphore_register("temporary-shared-registration-name") != same_ids[0]) {
 	std::fprintf(stderr, "registry mapping changed after semaphore free\n");

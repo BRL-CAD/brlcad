@@ -93,11 +93,6 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
     if (!str)
 	str = nul;
 
-    /* bu_bomb hook to recover from memory problems */
-    if (UNLIKELY(!failsafe_init)) {
-	failsafe_init = bu_bomb_failsafe_init();
-    }
-
     if (UNLIKELY(cnt == 0 || sz == 0)) {
 	fprintf(stderr, "ERROR: alloc size=0 (cnt=%llu, sz=%llu) %s\n",
 		(unsigned long long)cnt, (unsigned long long)sz, str);
@@ -115,6 +110,16 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_acquire(BU_SEM_MALLOC);
 #endif
+
+    /*
+     * The failsafe uses raw malloc(), so initialize it while holding the
+     * same lock that already protects the allocation and accounting below.
+     * Keeping both the test and update under this lock avoids adding another
+     * synchronization operation to the allocation fast path.
+     */
+    if (UNLIKELY(!failsafe_init)) {
+	failsafe_init = bu_bomb_failsafe_init();
+    }
 
 /* align allocations to what address multiple */
 #define ALIGNMENT 8

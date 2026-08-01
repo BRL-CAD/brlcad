@@ -88,11 +88,19 @@ increment_thread(int cpu, void *pargs)
 	bu_semaphore_release(SEM);
     }
 
-    while (args->ncpu > 1 && i++ < UINT32_MAX-1 && !*args->parallel) {
+    while (args->ncpu > 1 && i++ < UINT32_MAX-1) {
+	int parallel;
+
 	bu_semaphore_acquire(SEM);
-	++*args->counter;
-	--*args->counter;
+	parallel = *args->parallel;
+	if (!parallel) {
+	    ++*args->counter;
+	    --*args->counter;
+	}
 	bu_semaphore_release(SEM);
+
+	if (parallel)
+	    break;
     }
 
     bu_semaphore_acquire(SEM);
