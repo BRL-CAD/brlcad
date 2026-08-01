@@ -559,6 +559,7 @@ add_subdirectory(tests)
 cmakefiles(
   CMakeLists.txt
   bot2nurbs.txt
+  brep_csg_boolean.txt
   vds/README
   vds/COPYING
   vds/vds.h
