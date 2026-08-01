@@ -51,7 +51,7 @@ extern char *realpath(const char *, char *);
 #endif
 
 
-int BU_SEM_DIR;
+int BU_SEM_DIR = BU_SEM_ID_DIR;
 
 
 char *

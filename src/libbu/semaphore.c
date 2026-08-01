@@ -105,12 +105,9 @@ static LONG bu_init_lock = 0;
 #endif
 
 #define SEMAPHORE_MAGIC 0x62757365
-#define SEMAPHORE_MAX 1024
-
-
 #if defined(PARALLEL) || defined(DEFINED_BU_SEMAPHORES)
 static unsigned int bu_nsemaphores = 0;
-static struct bu_semaphores bu_semaphores[SEMAPHORE_MAX] = {{0, SEMAPHORE_INIT}};
+static struct bu_semaphores bu_semaphores[BU_SEMAPHORE_MAX] = {{0, SEMAPHORE_INIT}};
 #endif
 
 
@@ -129,9 +126,9 @@ bu_semaphore_init(unsigned int nsemaphores)
 	nsemaphores = 1;
     else if (nsemaphores <= bu_nsemaphores)
 	return;	/* Already initialized */
-    else if (UNLIKELY(nsemaphores > SEMAPHORE_MAX)) {
+    else if (UNLIKELY(nsemaphores > BU_SEMAPHORE_MAX)) {
 	fprintf(stderr, "bu_semaphore_init(): could not initialize %d semaphores, max is %d\n",
-		nsemaphores, SEMAPHORE_MAX);
+		nsemaphores, BU_SEMAPHORE_MAX);
 	exit(2); /* cannot call bu_exit() here */
     }
 
@@ -205,7 +202,6 @@ void
 bu_semaphore_free(void)
 {
     unsigned int i;
-    semaphore_clear();
 
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
     return;					/* No support on this hardware */

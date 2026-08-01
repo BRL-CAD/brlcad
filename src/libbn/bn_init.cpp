@@ -29,6 +29,15 @@
 #include <mutex>
 
 #include "bn/noise.h"
+#include "bu/parallel.h"
+
+
+extern "C" int
+bn_noise_semaphore(void)
+{
+    static const int semaphore = bu_semaphore_register("BN_SEM_NOISE");
+    return semaphore;
+}
 
 static void
 libbn_init(void)

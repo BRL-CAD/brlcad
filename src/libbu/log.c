@@ -41,7 +41,7 @@
  * context instead of as a library-stateful set of callback functions
  */
 static struct bu_hook_list log_hook_list = BU_HOOK_LIST_INIT_ZERO;
-int BU_SEM_LOG_HOOK;
+int BU_SEM_LOG_HOOK = BU_SEM_ID_LOG_HOOK;
 
 static int log_first_time = 1;
 static THREADLOCAL int log_hooks_called = 0;

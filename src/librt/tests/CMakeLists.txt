@@ -1,5 +1,11 @@
 set(RT_TEST_LIBS "librt;${M_LIBRARY}")
 
+if(TARGET librt-static)
+  brlcad_addexec(rt_static_init static_init.cpp "librt-static;${M_LIBRARY}" TEST)
+  brlcad_add_test(NAME rt_static_init COMMAND rt_static_init)
+  set_tests_properties(rt_static_init PROPERTIES TIMEOUT 10)
+endif()
+
 brlcad_addexec(bundle bundle.c "${RT_TEST_LIBS}" TEST)
 brlcad_add_test(NAME rt_bundle COMMAND bundle)
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_CURRENT_BINARY_DIR}/bundle.plot3")
@@ -155,6 +161,7 @@ set(
   rt_datum.c
   rt_perturb.c
   search_stress.c
+  static_init.cpp
   sketch.g
   prim_tess.c
   tess_timing.c

@@ -43,7 +43,7 @@
 extern int posix_memalign(void **, size_t, size_t);
 #endif
 
-int BU_SEM_MALLOC;
+int BU_SEM_MALLOC = BU_SEM_ID_MALLOC;
 
 
 /**

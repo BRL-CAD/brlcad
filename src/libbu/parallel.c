@@ -128,7 +128,7 @@ long syscall(long number, ...);
 void parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg);
 #endif /* CPP11THREAD */
 
-int BU_SEM_THREAD;
+int BU_SEM_THREAD = BU_SEM_ID_THREAD;
 
 
 typedef enum {

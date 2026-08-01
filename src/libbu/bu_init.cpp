@@ -39,11 +39,10 @@
 #include "bu/parallel.h"
 #include "bu/dylib.h"
 
-
 /* These ARE exported outside LIBBU */
-int BU_SEM_GENERAL;
-int BU_SEM_SYSCALL;
-int BU_SEM_MAPPEDFILE;
+int BU_SEM_GENERAL = BU_SEM_ID_GENERAL;
+int BU_SEM_SYSCALL = BU_SEM_ID_SYSCALL;
+int BU_SEM_MAPPEDFILE = BU_SEM_ID_MAPPEDFILE;
 
 /* These ARE NOT exported outside LIBBU */
 extern "C" int BU_SEM_DATETIME;
@@ -58,15 +57,6 @@ libbu_init(void)
 {
     char iwd[MAXPATHLEN] = {0};
 
-    BU_SEMAPHORE_DEFINE(BU_SEM_GENERAL);
-    BU_SEMAPHORE_DEFINE(BU_SEM_SYSCALL);
-    BU_SEMAPHORE_DEFINE(BU_SEM_MAPPEDFILE);
-    BU_SEMAPHORE_DEFINE(BU_SEM_THREAD);
-    BU_SEMAPHORE_DEFINE(BU_SEM_MALLOC);
-    BU_SEMAPHORE_DEFINE(BU_SEM_DATETIME);
-    BU_SEMAPHORE_DEFINE(BU_SEM_DIR);
-    BU_SEMAPHORE_DEFINE(BU_SEM_LOG_HOOK);
-
     bu_getiwd(iwd, MAXPATHLEN);
 }
 
@@ -75,7 +65,6 @@ static void
 libbu_clear(void)
 {
     (void)bu_dlunload();
-    bu_semaphore_free();
 }
 
 

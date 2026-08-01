@@ -69,7 +69,7 @@ static constexpr int64_t nsec_per_windows_tick = 100;
 #endif
 
 extern "C" {
-int BU_SEM_DATETIME;
+int BU_SEM_DATETIME = BU_SEM_ID_DATETIME;
 }
 
 #if defined(HAVE_GETPROCESSTIMES) || defined(HAVE_GETTHREADTIMES)

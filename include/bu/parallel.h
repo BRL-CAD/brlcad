@@ -196,18 +196,64 @@ BU_EXPORT extern void bu_parallel(void (*func)(int func_cpu_id, void *func_data)
  * whatever storage is needed to implement each semaphore.
  *
  * Note that these routines can't use bu_log() for error logging,
- * because bu_log() acquires semaphore #0 (BU_SEM_SYSCALL).
+ * because logging itself uses semaphores.
  */
 
 /**
+ * Process-wide semaphores needed by core library infrastructure have fixed
+ * IDs.  They are valid during static initialization and do not depend on
+ * library constructor or registration order.  IDs not listed here and below
+ * BU_SEM_DYNAMIC_BASE are reserved for future core use.
  *
+ * Keep this list as the single source for both the numeric constants and the
+ * reserved name registry in libbu.
+ */
+#define BU_SEMAPHORE_RESERVED_LIST(_entry) \
+    _entry(1, REGISTRY, "SEM_LOCK") \
+    _entry(2, GENERAL, "BU_SEM_GENERAL") \
+    _entry(3, SYSCALL, "BU_SEM_SYSCALL") \
+    _entry(4, MAPPEDFILE, "BU_SEM_MAPPEDFILE") \
+    _entry(5, THREAD, "BU_SEM_THREAD") \
+    _entry(6, MALLOC, "BU_SEM_MALLOC") \
+    _entry(7, DATETIME, "BU_SEM_DATETIME") \
+    _entry(8, DIR, "BU_SEM_DIR") \
+    _entry(9, LOG_HOOK, "BU_SEM_LOG_HOOK") \
+    _entry(16, RT_WORKER, "RT_SEM_WORKER") \
+    _entry(17, RT_RESULTS, "RT_SEM_RESULTS") \
+    _entry(18, RT_MODEL, "RT_SEM_MODEL") \
+    _entry(19, RT_TREE0, "RT_SEM_TREE0") \
+    _entry(20, RT_TREE1, "RT_SEM_TREE1") \
+    _entry(21, RT_TREE2, "RT_SEM_TREE2") \
+    _entry(22, RT_TREE3, "RT_SEM_TREE3") \
+    _entry(23, RT_DB_USES, "LIBRT_SEM_USES")
+
+enum bu_semaphore_reserved_id {
+    BU_SEM_ID_NONE = 0,
+#define BU_SEMAPHORE_RESERVED_ENUM(_id, _symbol, _name) BU_SEM_ID_ ## _symbol = _id,
+    BU_SEMAPHORE_RESERVED_LIST(BU_SEMAPHORE_RESERVED_ENUM)
+#undef BU_SEMAPHORE_RESERVED_ENUM
+    BU_SEM_DYNAMIC_BASE = 64
+};
+
+/**
+ * Return the process-wide semaphore ID associated with name.  Registration is
+ * thread-safe and idempotent: repeated registrations of the same name return
+ * the same ID.  The registry keeps its own copy of name, and mappings remain
+ * valid for the lifetime of the process, including across
+ * bu_semaphore_free().
+ *
+ * Reserved core names return their fixed IDs.  Other names are assigned from
+ * BU_SEM_DYNAMIC_BASE upward.
+ *
+ * A name must be non-NULL and non-empty.
  */
 BU_EXPORT extern int bu_semaphore_register(const char *name);
 
 
 /**
- * emaphores available for both library and application
- * use.
+ * Define or update an application semaphore variable using the dynamic
+ * process-wide name registry.  The assignment to x is not synchronized;
+ * applications should use this during initialization before x is shared.
  *
  */
 #define BU_SEMAPHORE_DEFINE(x) x = bu_semaphore_register(CPP_STR(x))
@@ -259,7 +305,12 @@ BU_EXPORT extern jmp_buf bu_jmpbuf[MAX_PSW];   /* for BU_SETJUMP() */
 BU_EXPORT extern void bu_semaphore_init(unsigned int nsemaphores);
 
 /**
- * Release all initialized semaphores and any associated memory.
+ * Release all initialized native semaphore objects.  Registered name-to-ID
+ * mappings are process-lifetime state and are retained, so existing handles
+ * remain valid if semaphores are subsequently used again.
+ *
+ * The caller must ensure no other thread is using a semaphore while this
+ * routine runs.
  *
  * FIXME: per hacking, rename to bu_semaphore_clear()
  */

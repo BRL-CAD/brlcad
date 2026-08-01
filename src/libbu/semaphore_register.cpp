@@ -20,9 +20,11 @@
 
 #include "common.h"
 
+#include <cstdio>
+#include <cstdlib>
+#include <string>
 #include <vector>
 
-#include "bu/str.h"
 #include "bu/parallel.h"
 #include "./parallel.h"
 
@@ -32,46 +34,39 @@
 #endif
 
 
-static const int SEM_LOCK = 1;
-
-static std::vector<const char *> &
-semaphore_registry(bool wipe = false)
+static std::vector<std::string> &
+semaphore_registry()
 {
-    /* semaphore #1 is used internally here and only here, so we start with it */
-    static std::vector<const char *> semaphores = {"SEM_LOCK"};
+    /*
+     * Registration is process-lifetime infrastructure.  Intentionally keep
+     * the registry alive through global destruction so a client destructor
+     * may safely use libbu regardless of static object destruction order.
+     */
+    static std::vector<std::string> *semaphores = []() {
+	std::vector<std::string> *registry =
+	    new std::vector<std::string>(BU_SEM_DYNAMIC_BASE - 1);
+#define BU_SEMAPHORE_RESERVED_NAME(_id, _symbol, _name) (*registry)[(_id) - 1] = (_name);
+	BU_SEMAPHORE_RESERVED_LIST(BU_SEMAPHORE_RESERVED_NAME)
+#undef BU_SEMAPHORE_RESERVED_NAME
+	return registry;
+    }();
 
-    if (wipe) {
 #ifdef DEBUGSEM
-	std::cout << "!!! clearing " << semaphores.size() << " semaphores" << std::endl;
-	for (size_t i = 0; i < semaphores.size(); i++) {
-	    std::cout << "!!! found " << semaphores[i] << " = " << i+1 << std::endl;
-	}
+    std::cout << "!!! registry has " << semaphores->size() << " semaphores" << std::endl;
 #endif
-	bu_semaphore_acquire(SEM_LOCK);
-	semaphores.clear();
-	bu_semaphore_release(SEM_LOCK);
-    }
-
-    return semaphores;
-}
-
-
-extern "C" void
-semaphore_clear(void)
-{
-    (void)semaphore_registry(true);
+    return *semaphores;
 }
 
 
 static size_t
 semaphore_registered(const char *name)
 {
-    const std::vector<const char *> &semaphores = semaphore_registry();
+    const std::vector<std::string> &semaphores = semaphore_registry();
 
     for (size_t i = 0; i < semaphores.size(); ++i) {
-	if (BU_STR_EQUAL(semaphores[i], name)) {
+	if (!semaphores[i].empty() && semaphores[i] == name) {
 #ifdef DEBUGSEM
-	    printf("!!! found %s = %zu\n", semaphores[i], i+1);
+	    printf("!!! found %s = %zu\n", semaphores[i].c_str(), i+1);
 #endif
 	    return i+1;
 	}
@@ -83,19 +78,29 @@ semaphore_registered(const char *name)
 extern "C" int
 bu_semaphore_register(const char *name)
 {
-    std::vector<const char *> &semaphores = semaphore_registry();
+    std::vector<std::string> &semaphores = semaphore_registry();
+
+    if (!name || !name[0]) {
+	std::fprintf(stderr, "bu_semaphore_register(): a non-empty name is required\n");
+	std::exit(2);
+    }
 
 #ifdef DEBUGSEM
     printf("!!! registering %s (have %zu)\n", name, semaphores.size());
 #endif
 
-    bu_semaphore_acquire(SEM_LOCK);
+    bu_semaphore_acquire(BU_SEM_ID_REGISTRY);
     size_t idx = semaphore_registered(name);
     if (!idx) {
+	if (semaphores.size() >= BU_SEMAPHORE_MAX - 1) {
+	    bu_semaphore_release(BU_SEM_ID_REGISTRY);
+	    std::fprintf(stderr, "bu_semaphore_register(): maximum semaphore count reached\n");
+	    std::exit(2);
+	}
 	semaphores.push_back(name);
 	idx = semaphores.size();
     }
-    bu_semaphore_release(SEM_LOCK);
+    bu_semaphore_release(BU_SEM_ID_REGISTRY);
 
 #ifdef DEBUGSEM
     printf("!!! added %s = %zu\n", name, idx);

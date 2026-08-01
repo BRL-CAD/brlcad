@@ -62,35 +62,10 @@
 struct db_i *
 db_open(const char *name, const char *mode)
 {
-    static int sem_uses = 0;
-    extern int RT_SEM_WORKER;
-    extern int RT_SEM_RESULTS;
-    extern int RT_SEM_MODEL;
-    extern int RT_SEM_TREE0;
-    extern int RT_SEM_TREE1;
-    extern int RT_SEM_TREE2;
-    extern int RT_SEM_TREE3;
+    const int sem_uses = BU_SEM_ID_RT_DB_USES;
     register struct db_i *dbip = DBI_NULL;
     register int i;
     char **argv;
-
-    if (!sem_uses)
-	sem_uses = bu_semaphore_register("LIBRT_SEM_USES");
-
-    if (!RT_SEM_WORKER)
-	RT_SEM_WORKER = bu_semaphore_register("RT_SEM_WORKER");
-    if (!RT_SEM_RESULTS)
-	RT_SEM_RESULTS = bu_semaphore_register("RT_SEM_RESULTS");
-    if (!RT_SEM_MODEL)
-	RT_SEM_MODEL = bu_semaphore_register("RT_SEM_MODEL");
-    if (!RT_SEM_TREE0)
-	RT_SEM_TREE0 = bu_semaphore_register("RT_SEM_TREE0");
-    if (!RT_SEM_TREE1)
-	RT_SEM_TREE1 = bu_semaphore_register("RT_SEM_TREE1");
-    if (!RT_SEM_TREE2)
-	RT_SEM_TREE2 = bu_semaphore_register("RT_SEM_TREE2");
-    if (!RT_SEM_TREE3)
-	RT_SEM_TREE3 = bu_semaphore_register("RT_SEM_TREE3");
 
     if (name == NULL)
 	return DBI_NULL;
@@ -365,9 +340,7 @@ db_close(register struct db_i *dbip)
 {
     register int i;
     register struct directory *dp, *nextdp;
-    static int sem_uses = 0;
-    if (!sem_uses)
-	sem_uses = bu_semaphore_register("LIBRT_SEM_USES");
+    const int sem_uses = BU_SEM_ID_RT_DB_USES;
 
     if (!dbip)
 	return;
@@ -585,9 +558,7 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 struct db_i *
 db_clone_dbi(struct db_i *dbip, long int *client)
 {
-    static int sem_uses = 0;
-    if (!sem_uses)
-	sem_uses = bu_semaphore_register("LIBRT_SEM_USES");
+    const int sem_uses = BU_SEM_ID_RT_DB_USES;
 
     RT_CK_DBI(dbip);
 
