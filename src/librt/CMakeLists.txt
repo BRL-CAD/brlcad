@@ -558,6 +558,7 @@ add_subdirectory(tests)
 
 cmakefiles(
   CMakeLists.txt
+  bot2nurbs.txt
   vds/README
   vds/COPYING
   vds/vds.h
