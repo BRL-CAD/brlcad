@@ -66,8 +66,6 @@ namespace GEOBRL {
      * CentroidalVoronoiTesselation.
      *
      * Optimizer objects are created using the static create() method.
-     * Returns nullptr in this build (no HLBFGS implementation available);
-     * callers should fall back to Lloyd iterations in that case.
      */
     class GEOBRLCAD_API Optimizer {
     public:
@@ -100,17 +98,15 @@ namespace GEOBRL {
         /**
          * \brief Creates an Optimizer.
          * \param[in] name name of the Optimizer to create:
-         *  - "HLBFG" - BFGS (quasi-Newton)
-         *  - "HM1QN3" - for non-smooth functions
-         *  - "HCG" - non-linear conjugate gradient
-         *  - "HLBFGS_HESS" - BFGS with Hessian (full Newton)
-         *  - "default" - equivalent to "HLBFGS"
+         *  - "LBFGS" - limited-memory BFGS (quasi-Newton)
+         *  - "HLBFG" or "HLBFGS" - compatibility aliases for "LBFGS"
+         *  - "default" - equivalent to "LBFGS"
          * \retval nullptr if \p name is not a valid Optimizer algorithm name
          * \retval otherwise, a pointer to an Optimizer object. The returned
          * pointer must be stored in a Optimizer_var that does automatic
          * destruction:
          * \code
-         * Optimizer_var optimizer = Optimizer::create("HLBFGS") ;
+         * Optimizer_var optimizer = Optimizer::create("LBFGS") ;
          * \endcode
          */
         static std::shared_ptr<Optimizer> create(const std::string& name = "default");
@@ -136,8 +132,7 @@ namespace GEOBRL {
         }
 
         /**
-         * \brief Defines the inner number of iterations.
-         * \details Used by HLBFGSOptimizer.
+         * \brief Defines the number of stored L-BFGS corrections.
          */
         void set_M(index_t M) {
             m_ = M;
@@ -185,7 +180,8 @@ namespace GEOBRL {
          *  the Hessian of function to be minimized (second
          *  order derivatives).
          *
-         * \details Only used in "HLBFGS_HESS" mode.
+         * \details Reserved for optimizer implementations that use a Hessian;
+         * the LBFGS implementation does not call it.
          */
         void set_evalhessian_callback(evalhessian_callback fp) {
             evalhessian_callback_ = fp;

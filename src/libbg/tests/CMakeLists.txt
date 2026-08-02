@@ -378,8 +378,16 @@ brlcad_addexec(bg_trimesh_remesh trimesh_remesh.cpp "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_trimesh_remesh  COMMAND bg_trimesh_remesh)
 
+#  ************ embedded Geogram optimizer tests ***********
+
+brlcad_addexec(bg_geogram_optimizer geogram_optimizer.cpp "${BG_TEST_LIBS}" TEST)
+target_include_directories(bg_geogram_optimizer PRIVATE "${GEOGRAM_INCLUDE_DIR}")
+
+brlcad_add_test(NAME bg_geogram_optimizer COMMAND bg_geogram_optimizer)
+
 cmakefiles(
   bg_test.c.in
+  geogram_optimizer.cpp
   plane_dist.c
   plane_isect.c
   plane_pt.c
