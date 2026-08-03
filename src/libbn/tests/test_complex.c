@@ -35,10 +35,61 @@ test_complex_arithmetic(void)
 {
     int failures = 0;
     const char *test = "complex_arithmetic";
+    static const struct {
+	bn_complex_t a;
+	bn_complex_t b;
+	bn_complex_t expected;
+    } add_cases[] = {
+	{{5.2, 3.8}, {0.0, 0.0}, {5.2, 3.8}},
+	{{0.0, 0.0}, {5.2, 3.8}, {5.2, 3.8}},
+	{{1.4, 2.9}, {-1.4, -2.9}, {0.0, 0.0}},
+	{{7.4, -2.3}, {8.9, 6.4}, {16.3, 4.1}},
+	{{8.9, 6.4}, {7.4, -2.3}, {16.3, 4.1}}
+    };
+    static const struct {
+	bn_complex_t a;
+	bn_complex_t b;
+	bn_complex_t expected;
+    } sub_cases[] = {
+	{{5.2, 3.8}, {0.0, 0.0}, {5.2, 3.8}},
+	{{0.0, 0.0}, {5.2, 3.8}, {-5.2, -3.8}},
+	{{1.4, 2.9}, {1.4, 2.9}, {0.0, 0.0}},
+	{{7.4, -2.3}, {8.9, 6.4}, {-1.5, -8.7}},
+	{{8.9, 6.4}, {7.4, -2.3}, {1.5, 8.7}}
+    };
+    static const struct {
+	bn_complex_t a;
+	bn_complex_t b;
+	bn_complex_t expected;
+    } mul_cases[] = {
+	{{5.2, 3.8}, {0.0, 0.0}, {0.0, 0.0}},
+	{{0.0, 0.0}, {5.2, 3.8}, {0.0, 0.0}},
+	{{7.4, 2.3}, {0.123231, -0.0383014}, {1.0, 0.0}},
+	{{0.123231, -0.0383014}, {7.4, 2.3}, {1.0, 0.0}}
+    };
+    static const struct {
+	bn_complex_t in;
+	bn_complex_t expected;
+    } neg_cases[] = {
+	{{0.0, 0.0}, {0.0, 0.0}},
+	{{2.0, 0.0}, {-2.0, 0.0}},
+	{{0.0, 2.0}, {0.0, -2.0}},
+	{{6.3, 4.2}, {-6.3, -4.2}}
+    };
+    static const struct {
+	bn_complex_t in;
+	bn_complex_t expected;
+    } conj_cases[] = {
+	{{0.0, 0.0}, {0.0, 0.0}},
+	{{2.0, 0.0}, {2.0, 0.0}},
+	{{0.0, 2.0}, {0.0, -2.0}},
+	{{6.3, 4.2}, {6.3, -4.2}}
+    };
     bn_complex_t a = {1.5, -2.0};
     bn_complex_t b = {-3.0, 0.5};
     bn_complex_t c = {0.0, 0.0};
     bn_complex_t d = {0.0, 0.0};
+    int i;
 
     c = a;
     bn_cx_add(&c, &b);
@@ -108,6 +159,58 @@ test_complex_arithmetic(void)
 	failures++;
     }
 
+    for (i = 0; i < (int)(sizeof(add_cases) / sizeof(add_cases[0])); i++) {
+	c = add_cases[i].a;
+	bn_cx_add(&c, &add_cases[i].b);
+	if (!complex_close(&c, add_cases[i].expected.re, add_cases[i].expected.im, 1.0e-12)) {
+	    report_failure(test, "legacy add case %d failed", i);
+	    failures++;
+	}
+    }
+
+    for (i = 0; i < (int)(sizeof(sub_cases) / sizeof(sub_cases[0])); i++) {
+	c = sub_cases[i].a;
+	bn_cx_sub(&c, &sub_cases[i].b);
+	if (!complex_close(&c, sub_cases[i].expected.re, sub_cases[i].expected.im, 1.0e-12)) {
+	    report_failure(test, "legacy subtract case %d failed", i);
+	    failures++;
+	}
+    }
+
+    for (i = 0; i < (int)(sizeof(mul_cases) / sizeof(mul_cases[0])); i++) {
+	c = mul_cases[i].a;
+	bn_cx_mul(&c, &mul_cases[i].b);
+	bn_cx_mul2(&d, &mul_cases[i].a, &mul_cases[i].b);
+	if (!complex_close(&c, mul_cases[i].expected.re, mul_cases[i].expected.im, 1.0e-6) ||
+	    !complex_close(&d, mul_cases[i].expected.re, mul_cases[i].expected.im, 1.0e-6)) {
+	    report_failure(test, "legacy multiply case %d failed", i);
+	    failures++;
+	}
+    }
+
+    for (i = 0; i < (int)(sizeof(neg_cases) / sizeof(neg_cases[0])); i++) {
+	c = neg_cases[i].in;
+	bn_cx_neg(&c);
+	if (!complex_close(&c, neg_cases[i].expected.re, neg_cases[i].expected.im, 1.0e-12)) {
+	    report_failure(test, "legacy negate case %d failed", i);
+	    failures++;
+	}
+    }
+
+    for (i = 0; i < (int)(sizeof(conj_cases) / sizeof(conj_cases[0])); i++) {
+	c = conj_cases[i].in;
+	bn_cx_conj(&c);
+	if (!complex_close(&c, conj_cases[i].expected.re, conj_cases[i].expected.im, 1.0e-12)) {
+	    report_failure(test, "legacy conjugate case %d failed", i);
+	    failures++;
+	}
+	if (!scalar_close(bn_cx_real(&conj_cases[i].in), conj_cases[i].in.re, 0.0) ||
+	    !scalar_close(bn_cx_imag(&conj_cases[i].in), conj_cases[i].in.im, 0.0)) {
+	    report_failure(test, "legacy parts case %d failed", i);
+	    failures++;
+	}
+    }
+
     return failures;
 }
 
@@ -117,12 +220,24 @@ test_complex_division(void)
 {
     int failures = 0;
     const char *test = "complex_division";
+    static const struct {
+	bn_complex_t a;
+	bn_complex_t b;
+	bn_complex_t expected;
+    } div_cases[] = {
+	{{1.0, 3.0}, {1.0, 3.0}, {1.0, 0.0}},
+	{{3.0, 1.0}, {3.0, 1.0}, {1.0, 0.0}},
+	{{6.3, 4.2}, {9.8, 7.7}, {0.605678, -0.0473186}},
+	{{0.0, 0.0}, {1.0, 1.0}, {0.0, 0.0}},
+	{{1.0, 1.0}, {0.0, 0.0}, {1.0e20, 1.0e20}}
+    };
     bn_complex_t numer = {6.3, 4.2};
     bn_complex_t denom = {9.8, 7.7};
     bn_complex_t quot = numer;
     bn_complex_t prod = {0.0, 0.0};
     bn_complex_t same = {2.5, -0.5};
     bn_complex_t zero = {0.0, 0.0};
+    int i;
 
     bn_cx_div(&quot, &denom);
     bn_cx_mul2(&prod, &quot, &denom);
@@ -145,6 +260,15 @@ test_complex_division(void)
 	failures++;
     }
 
+    for (i = 0; i < (int)(sizeof(div_cases) / sizeof(div_cases[0])); i++) {
+	quot = div_cases[i].a;
+	bn_cx_div(&quot, &div_cases[i].b);
+	if (!complex_close(&quot, div_cases[i].expected.re, div_cases[i].expected.im, 1.0e-6)) {
+	    report_failure(test, "legacy divide case %d failed", i);
+	    failures++;
+	}
+    }
+
     return failures;
 }
 
@@ -154,9 +278,21 @@ test_complex_sqrt(void)
 {
     int failures = 0;
     const char *test = "complex_sqrt";
+    static const struct {
+	bn_complex_t in;
+	bn_complex_t expected;
+	double tol;
+    } sqrt_cases[] = {
+	{{0.0, 2.0}, {1.0, 1.0}, 1.0e-6},
+	{{2.0, 0.0}, {1.414214, 0.0}, 1.0e-6},
+	{{0.0, 0.0}, {0.0, 0.0}, 0.0},
+	{{6.3, 4.2}, {2.63360, 0.797389}, 1.0e-5},
+	{{9.8, 7.7}, {3.33640, 1.15394}, 1.0e-5}
+    };
     bn_complex_t in = {0.0, 0.0};
     bn_complex_t root = {0.0, 0.0};
     bn_complex_t square = {0.0, 0.0};
+    int i;
 
     bn_cx_cons(&in, 4.0, 0.0);
     bn_cx_sqrt(&root, &in);
@@ -186,6 +322,14 @@ test_complex_sqrt(void)
     if (!complex_close(&square, in.re, in.im, 1.0e-10)) {
 	report_failure(test, "bn_cx_sqrt failed to square back to the input");
 	failures++;
+    }
+
+    for (i = 0; i < (int)(sizeof(sqrt_cases) / sizeof(sqrt_cases[0])); i++) {
+	bn_cx_sqrt(&root, &sqrt_cases[i].in);
+	if (!complex_close(&root, sqrt_cases[i].expected.re, sqrt_cases[i].expected.im, sqrt_cases[i].tol)) {
+	    report_failure(test, "legacy sqrt case %d failed", i);
+	    failures++;
+	}
     }
 
     return failures;
