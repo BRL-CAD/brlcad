@@ -180,6 +180,7 @@ test_qmath_interp(void)
     quat_t qdouble_same_expected = {0.0, 0.894, 0.0, 0.447};
     quat_t qdouble_expected = {0.900, 0.177, 0.355, 0.179};
     quat_t qbisect_expected = {0.657, 0.327, 0.653, 0.187};
+    quat_t qslerp_expected = {0.657, 0.327, 0.653, 0.187};
     quat_t qsberp_same_expected = {0.723, 0.529, 0.230, 0.380};
     quat_t qsberp_expected = {0.724, 0.358, 0.501, 0.310};
     quat_t qsame = {0.0, 0.894, 0.0, 0.447};
@@ -274,7 +275,7 @@ test_qmath_interp(void)
     }
 
     quat_slerp(exact, q1, q2, 0.5);
-    if (!quat_close_or_neg(exact, (quat_t){0.657, 0.327, 0.653, 0.187}, 1.0e-3)) {
+    if (!quat_close_or_neg(exact, qslerp_expected, 1.0e-3)) {
 	report_failure(test, "quat_slerp legacy mixed-input midpoint case failed");
 	failures++;
     }

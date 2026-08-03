@@ -102,6 +102,22 @@ has_real_root(const bn_complex_t *roots, int n, double expected, double tol)
 
 
 static int
+has_complex_root(const bn_complex_t *roots, int n, double expected_re, double expected_im, double tol)
+{
+    int i;
+
+    for (i = 0; i < n; i++) {
+	if (fabs(roots[i].re - expected_re) <= tol &&
+	    fabs(roots[i].im - expected_im) <= tol) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+
+static int
 poly_close(const bn_poly_t *poly, int degree, const double *coeffs, double tol)
 {
     int i;
@@ -314,17 +330,48 @@ test_poly_roots(void)
     const double quadic[] = {1.0, 0.0, 1.0};
     const double cubicc[] = {1.0, -6.0, 11.0, -6.0};
     const double cubicmixc[] = {1.0, 0.0, 0.0, 1.0};
+    const double cubicnegc[] = {-4.0, -3.0, -2.0, -25.0};
+    const double cubicposc[] = {5478.0, 5485.0, 458.0, 786.0};
     const double quarticc[] = {1.0, 0.0, -10.0, 0.0, 9.0};
+    const double quarticnegc[] = {-4.0, -3.0, -2.0, -25.0, -38.0};
+    const double quarticposc[] = {5478.0, 5485.0, 458.0, 258564.0, 54785.0};
+    static const bn_complex_t cubic_neg_expected[] = {
+	{-0.49359, 0.0},
+	{0.20679876865588492, 0.5304573452575734},
+	{0.20679876865588492, -0.5304573452575734}
+    };
+    static const bn_complex_t cubic_pos_expected[] = {
+	{-0.9509931181746001, 0.0},
+	{0.18414795857839417, 2.700871695081346},
+	{0.18414795857839417, -2.700871695081346}
+    };
+    static const bn_complex_t quartic_neg_expected[] = {
+	{0.2613656082942032, 0.4284631324677022},
+	{0.2613656082942032, -0.4284631324677022},
+	{-0.5903129767152558, 0.263475942656035},
+	{-0.5903129767152558, -0.263475942656035}
+    };
+    static const bn_complex_t quartic_pos_expected[] = {
+	{0.12889648467110737, 0.25711127015404556},
+	{0.12889648467110737, -0.25711127015404556},
+	{-0.25602234520349354, 0.0},
+	{-4.721383656903164, 0.0}
+    };
     bn_poly_t linear = poly_from_coeffs(2, linearc);
     bn_poly_t constant = poly_from_coeffs(2, constc);
     bn_poly_t quad = poly_from_coeffs(2, quadc);
     bn_poly_t quadic = poly_from_coeffs(2, quadic);
     bn_poly_t cubic = poly_from_coeffs(3, cubicc);
     bn_poly_t cubicmix = poly_from_coeffs(3, cubicmixc);
+    bn_poly_t cubicneg = poly_from_coeffs(3, cubicnegc);
+    bn_poly_t cubicpos = poly_from_coeffs(3, cubicposc);
     bn_poly_t quartic = poly_from_coeffs(4, quarticc);
+    bn_poly_t quarticneg = poly_from_coeffs(4, quarticnegc);
+    bn_poly_t quarticpos = poly_from_coeffs(4, quarticposc);
     bn_complex_t roots2[4];
     bn_complex_t roots3[4];
     bn_complex_t roots4[4];
+    const double legacy_tol = 1.0e-5;
     int i;
 
     if (bn_poly_quadratic_roots(roots2, &constant) != 0) {
@@ -404,6 +451,42 @@ test_poly_roots(void)
 	}
     }
 
+    if (!bn_poly_cubic_roots(roots3, &cubicneg)) {
+	report_failure(test, "bn_poly_cubic_roots failed for the legacy negative cubic");
+	failures++;
+    } else {
+	for (i = 0; i < 3; i++) {
+	    if (!root_is_valid(&cubicneg, &roots3[i], 1.0e-7)) {
+		report_failure(test, "legacy negative cubic root %d did not satisfy the polynomial", i);
+		failures++;
+	    }
+	}
+	if (!has_complex_root(roots3, 3, cubic_neg_expected[0].re, cubic_neg_expected[0].im, legacy_tol) ||
+	    !has_complex_root(roots3, 3, cubic_neg_expected[1].re, cubic_neg_expected[1].im, legacy_tol) ||
+	    !has_complex_root(roots3, 3, cubic_neg_expected[2].re, cubic_neg_expected[2].im, legacy_tol)) {
+	    report_failure(test, "legacy negative cubic roots did not match the GNU Octave reference set");
+	    failures++;
+	}
+    }
+
+    if (!bn_poly_cubic_roots(roots3, &cubicpos)) {
+	report_failure(test, "bn_poly_cubic_roots failed for the legacy positive cubic");
+	failures++;
+    } else {
+	for (i = 0; i < 3; i++) {
+	    if (!root_is_valid(&cubicpos, &roots3[i], 1.0e-6)) {
+		report_failure(test, "legacy positive cubic root %d did not satisfy the polynomial", i);
+		failures++;
+	    }
+	}
+	if (!has_complex_root(roots3, 3, cubic_pos_expected[0].re, cubic_pos_expected[0].im, legacy_tol) ||
+	    !has_complex_root(roots3, 3, cubic_pos_expected[1].re, cubic_pos_expected[1].im, legacy_tol) ||
+	    !has_complex_root(roots3, 3, cubic_pos_expected[2].re, cubic_pos_expected[2].im, legacy_tol)) {
+	    report_failure(test, "legacy positive cubic roots did not match the GNU Octave reference set");
+	    failures++;
+	}
+    }
+
     if (!bn_poly_quartic_roots(roots4, &quartic)) {
 	report_failure(test, "bn_poly_quartic_roots failed for a real quartic");
 	failures++;
@@ -419,6 +502,44 @@ test_poly_roots(void)
 	    !has_real_root(roots4, 4, 1.0, 1.0e-6) ||
 	    !has_real_root(roots4, 4, 3.0, 1.0e-6)) {
 	    report_failure(test, "quartic roots did not contain the expected real solutions");
+	    failures++;
+	}
+    }
+
+    if (!bn_poly_quartic_roots(roots4, &quarticneg)) {
+	report_failure(test, "bn_poly_quartic_roots failed for the legacy negative quartic");
+	failures++;
+    } else {
+	for (i = 0; i < 4; i++) {
+	    if (!root_is_valid(&quarticneg, &roots4[i], 1.0e-6)) {
+		report_failure(test, "legacy negative quartic root %d did not satisfy the polynomial", i);
+		failures++;
+	    }
+	}
+	if (!has_complex_root(roots4, 4, quartic_neg_expected[0].re, quartic_neg_expected[0].im, legacy_tol) ||
+	    !has_complex_root(roots4, 4, quartic_neg_expected[1].re, quartic_neg_expected[1].im, legacy_tol) ||
+	    !has_complex_root(roots4, 4, quartic_neg_expected[2].re, quartic_neg_expected[2].im, legacy_tol) ||
+	    !has_complex_root(roots4, 4, quartic_neg_expected[3].re, quartic_neg_expected[3].im, legacy_tol)) {
+	    report_failure(test, "legacy negative quartic roots did not match the GNU Octave reference set");
+	    failures++;
+	}
+    }
+
+    if (!bn_poly_quartic_roots(roots4, &quarticpos)) {
+	report_failure(test, "bn_poly_quartic_roots failed for the legacy positive quartic");
+	failures++;
+    } else {
+	for (i = 0; i < 4; i++) {
+	    if (!root_is_valid(&quarticpos, &roots4[i], 1.0e-6)) {
+		report_failure(test, "legacy positive quartic root %d did not satisfy the polynomial", i);
+		failures++;
+	    }
+	}
+	if (!has_complex_root(roots4, 4, quartic_pos_expected[0].re, quartic_pos_expected[0].im, legacy_tol) ||
+	    !has_complex_root(roots4, 4, quartic_pos_expected[1].re, quartic_pos_expected[1].im, legacy_tol) ||
+	    !has_complex_root(roots4, 4, quartic_pos_expected[2].re, quartic_pos_expected[2].im, legacy_tol) ||
+	    !has_complex_root(roots4, 4, quartic_pos_expected[3].re, quartic_pos_expected[3].im, legacy_tol)) {
+	    report_failure(test, "legacy positive quartic roots did not match the GNU Octave reference set");
 	    failures++;
 	}
     }

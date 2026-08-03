@@ -3,15 +3,7 @@
 
 set(
   bn_test_srcs
-  complex.c
   mat.c
-  noise.c
-  poly_add.c
-  poly_multiply.c
-  poly_scale.c
-  poly_sub.c
-  poly_synthetic_div.c
-  qmath.c
   sobolseq.c
   tabdata.c
 )
@@ -40,9 +32,6 @@ brlcad_addexec(bn_test "${CMAKE_CURRENT_BINARY_DIR}/bn_test.c" "libbn;${M_LIBRAR
 cmakefiles(${bn_test_srcs})
 validate_style("${bn_test_srcs}" bn_test)
 
-# WIP - needs to become real test
-brlcad_addexec(bn_randsph randsph.c "libbu;libbn" TEST)
-
 # Higher-level public API behavior tests grouped to match libbn's existing
 # per-area test layout.
 set(
@@ -51,12 +40,10 @@ set(
   test_complex.c
   test_mat.c
   test_msr.c
-  test_mt19937ar.c
   test_noise.c
   test_poly.c
   test_qmath.c
   test_rand.c
-  test_randsph.c
   test_sobol.c
   test_str.c
   test_tabdata.c
@@ -78,10 +65,8 @@ brlcad_add_test(NAME test_ulp COMMAND test_ulp)
 brlcad_add_test(NAME test_noise COMMAND test_noise)
 brlcad_add_test(NAME test_complex COMMAND test_complex)
 brlcad_add_test(NAME test_mat COMMAND test_mat)
-brlcad_add_test(NAME test_mt19937ar COMMAND test_mt19937ar)
 brlcad_add_test(NAME test_poly COMMAND test_poly)
 brlcad_add_test(NAME test_qmath COMMAND test_qmath)
-brlcad_add_test(NAME test_randsph COMMAND test_randsph)
 
 brlcad_add_test(NAME test_rand_table COMMAND test_rand table)
 brlcad_add_test(NAME test_rand_randmt COMMAND test_rand randmt)
@@ -112,125 +97,6 @@ if(TARGET bn_eigen)
 endif(TARGET bn_eigen)
 
 #
-#  *********** poly.c tests *************
-#
-#Format is:
-# COMMAND bn_test poly      <  void      >         void
-brlcad_add_test(NAME bn_poly_multiply              COMMAND bn_test poly_multiply)
-brlcad_add_test(NAME bn_poly_scale                 COMMAND bn_test poly_scale)
-brlcad_add_test(NAME bn_poly_add                   COMMAND bn_test poly_add)
-
-brlcad_add_test(NAME bn_poly_sub                   COMMAND bn_test poly_sub)
-
-brlcad_add_test(NAME bn_poly_synthetic_div               COMMAND bn_test poly_synthetic_div)
-
-#
-#  ************ complex.c tests *************
-
-# For COMMAND bn_test complex, the input format is as follows:
-#
-# COMMAND bn_test complex <function number> <args>
-
-# For function #1 (bn_cx_div), the <args> format is as follows:
-#
-# AP BP expected_return
-#
-# where AP and BP are the numbers in question. An individual complex
-# number is two integer or floating point numbers separated by commas.
-
-brlcad_add_test(NAME bn_cx_div_same_1        COMMAND bn_test complex 1  1,3 1,3 1,0)
-brlcad_add_test(NAME bn_cx_div_same_2        COMMAND bn_test complex 1  3,1 3,1 1,0)
-brlcad_add_test(NAME bn_cx_div_dif_1         COMMAND bn_test complex 1  6.3,4.2 9.8,7.7 0.605678,-0.0473186)
-brlcad_add_test(NAME bn_cx_div_dif_2         COMMAND bn_test complex 1  0,0 1,1 0,0)
-brlcad_add_test(NAME bn_cx_div_by_0_1        COMMAND bn_test complex 1  1,1 0,0 1.0e20,1.0e20)
-
-# For function #2 (bn_cx_mul/bn_cx_mul2), the <args> format is as follows:
-#
-# AP BP expected_return
-#
-# where AP and BP are the numbers in question. An individual complex
-# number is two integer or floating point numbers separated by commas.
-
-brlcad_add_test(NAME bn_cx_mul_0_1           COMMAND bn_test complex 2 5.2,3.8 0,0 0,0)
-brlcad_add_test(NAME bn_cx_mul_0_2           COMMAND bn_test complex 2 0,0 5.2,3.8 0,0)
-brlcad_add_test(NAME bn_cx_mul_inv_1         COMMAND bn_test complex 2 7.4,2.3 0.123231,-0.0383014 1,0)
-brlcad_add_test(NAME bn_cx_mul_inv_2         COMMAND bn_test complex 2 0.123231,-0.0383014 7.4,2.3 1,0)
-
-# For function #3 (bn_cx_sub), the <args> format is as follows:
-#
-# AP BP expected_return
-#
-# where AP and BP are the numbers in question. An individual complex
-# number is two integer or floating point numbers separated by commas.
-
-brlcad_add_test(NAME bn_cx_sub_0_1           COMMAND bn_test complex 3 5.2,3.8 0,0 5.2,3.8)
-brlcad_add_test(NAME bn_cx_sub_0_2           COMMAND bn_test complex 3 0,0 5.2,3.8 -5.2,-3.8)
-brlcad_add_test(NAME bn_cx_sub_same_1        COMMAND bn_test complex 3 1.4,2.9 1.4,2.9 0,0)
-brlcad_add_test(NAME bn_cx_sub_dif_1         COMMAND bn_test complex 3 7.4,-2.3 8.9,6.4 -1.5,-8.7)
-brlcad_add_test(NAME bn_cx_sub_dif_2         COMMAND bn_test complex 3 8.9,6.4 7.4,-2.3 1.5,8.7)
-
-# For function #4 (bn_cx_add), the <args> format is as follows:
-#
-# AP BP expected_return
-#
-# where AP and BP are the numbers in question. An individual complex
-# number is two integer or floating point numbers separated by commas.
-
-brlcad_add_test(NAME bn_cx_add_0_1           COMMAND bn_test complex 4 5.2,3.8 0,0 5.2,3.8)
-brlcad_add_test(NAME bn_cx_add_0_2           COMMAND bn_test complex 4 0,0 5.2,3.8 5.2,3.8)
-brlcad_add_test(NAME bn_cx_add_inv_1         COMMAND bn_test complex 4 1.4,2.9 -1.4,-2.9 0,0)
-brlcad_add_test(NAME bn_cx_add_dif_1         COMMAND bn_test complex 4 7.4,-2.3 8.9,6.4 16.3,4.1)
-brlcad_add_test(NAME bn_cx_add_dif_2         COMMAND bn_test complex 4 8.9,6.4 7.4,-2.3 16.3,4.1)
-
-# For function #5 (bn_cx_sqrt), the <args> format is as follows:
-#
-# IP expected_return
-#
-# where IP is the number in question. An individual complex number is
-# two integer or floating point numbers separated by commas.
-
-brlcad_add_test(NAME bn_cx_sqrt_1            COMMAND bn_test complex 5  0,2 1,1)
-brlcad_add_test(NAME bn_cx_sqrt_2            COMMAND bn_test complex 5  2,0 1.414214,0)
-brlcad_add_test(NAME bn_cx_sqrt_3            COMMAND bn_test complex 5  0,0 0,0)
-brlcad_add_test(NAME bn_cx_sqrt_4            COMMAND bn_test complex 5 6.3,4.2 2.63360,0.797389)
-brlcad_add_test(NAME bn_cx_sqrt_5            COMMAND bn_test complex 5 9.8,7.7 3.33640,1.15394)
-
-# For function #6 (bn_cx_neg), the <args> format is as follows:
-#
-# IP expected_return
-#
-# where IP is the number in question. An individual complex number is
-# two integer or floating point numbers separated by commas.
-
-brlcad_add_test(NAME bn_cx_neg_0_1           COMMAND bn_test complex 6  0,0 0,0)
-brlcad_add_test(NAME bn_cx_neg_0_2           COMMAND bn_test complex 6  2,0 -2,0)
-brlcad_add_test(NAME bn_cx_neg_0_3           COMMAND bn_test complex 6  0,2 0,-2)
-brlcad_add_test(NAME bn_cx_neg_dif_1         COMMAND bn_test complex 6 6.3,4.2 -6.3,-4.2)
-
-# For function #7 (bn_cx_conj), the <args> format is as follows:
-#
-# IP expected_return
-#
-# where IP is the number in question. An individual complex number is
-# two integer or floating point numbers separated by commas.
-
-brlcad_add_test(NAME bn_cx_conj_0_1          COMMAND bn_test complex 7  0,0 0,0)
-brlcad_add_test(NAME bn_cx_conj_0_2          COMMAND bn_test complex 7  2,0 2,0)
-brlcad_add_test(NAME bn_cx_conj_0_3          COMMAND bn_test complex 7  0,2 0,-2)
-brlcad_add_test(NAME bn_cx_conj_dif_1        COMMAND bn_test complex 7 6.3,4.2 6.3,-4.2)
-
-# For function #8 (bn_cx_real/bn_cx_imag), the <args> format is as follows:
-#
-# IP expected_re,expected_im
-#
-# where IP is the number in question. An individual complex number is
-# two integer or floating point numbers separated by commas.
-
-brlcad_add_test(NAME bn_cx_parts_1           COMMAND bn_test complex 8  0,0 0,0)
-brlcad_add_test(NAME bn_cx_parts_2           COMMAND bn_test complex 8  1,2 1,2)
-brlcad_add_test(NAME bn_cx_parts_3           COMMAND bn_test complex 8  2,1 2,1)
-
-#
 #  *************** mat.c tests ***************
 #
 # For COMMAND bn_test mat, input is as follows:
@@ -239,45 +105,6 @@ brlcad_add_test(NAME bn_cx_parts_3           COMMAND bn_test complex 8  2,1 2,1)
 # Values supplied to the test program were verified using
 # Wolfram Alpha: http://www.wolframalpha.com/
 # and http://www.bluebit.gr/matrix-calculator/
-
-# For function #1 (bn_mat_mul), the <args> format is as follows:
-#
-# M1 M2 <expected_result>
-#
-# where M1 is the first matrix, M2 is the second matrix.
-# A matrix is 16 floating point numbers separated by commas.
-
-brlcad_add_test(NAME bn_mat_mul_0_1          COMMAND bn_test mat 1 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 1.0,2.1,3.3,4.4,5.5,6.6,7.7,8.8,9.9,10.1,11.11,12.12,13.13,14.14,15.15,16.16 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-brlcad_add_test(NAME bn_mat_mul_0_2          COMMAND bn_test mat 1 2.8,1.7,3205.555,87.76,55.0,66.0,77.0,0.0,0.0,10.1,46.8,537.999,13.0,14.0,15.0,24382.5373 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-brlcad_add_test(NAME bn_mat_mul_id_1         COMMAND bn_test mat 1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 33.34,28.7135672,44.84,55.85,1,1,0,0,0,7843.4444,11,12,473.232,83.17,75.0,8.417 33.34,28.7135672,44.84,55.85,1,1,0,0,0,7843.4444,11,12,473.232,83.17,75.0,8.417)
-brlcad_add_test(NAME bn_mat_mul_id_2         COMMAND bn_test mat 1 3688.701794246889,5712.945961512324,8172.282142910184,5109.8260742578495,2697.196099611537,2586.742536023153,5067.2882336104285,1149.9923643570387,6827.968448547921,9548.849169087358,5418.682604729545,9117.6798488191,5478.474626204755,7525.19019682893,3172.945417883698,8609.907811093646 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 3688.701794246889,5712.945961512324,8172.282142910184,5109.8260742578495,2697.196099611537,2586.742536023153,5067.2882336104285,1149.9923643570387,6827.968448547921,9548.849169087358,5418.682604729545,9117.6798488191,5478.474626204755,7525.19019682893,3172.945417883698,8609.907811093646)
-brlcad_add_test(NAME bn_mat_mul_id_id        COMMAND bn_test mat 1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1)
-brlcad_add_test(NAME bn_mat_mul_dif_1        COMMAND bn_test mat 1 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1 80,70,60,50,240,214,188,162,400,358,316,274,560,502,444,386)
-brlcad_add_test(NAME bn_mat_mul_dif_2        COMMAND bn_test mat 1 3.2,62.9,53.0,71.5,98.6,75.4,9.6,89.9,37.7,49.0,60.2,55.2,27.8,40.2,0.5,78.1 37.1,73.1,4.9,72.1,68.2,64.7,75.7,87.4,85.8,45.0,94.5,30.8,95.9,45.9,45.4,49.1 15812.75,9970.4,13031.81,10871.23,18245.43,16644.45,11179.58,18408.79,15199.31,11168.85,12089.01,11565.25,11305.71,8240.41,6772.35,9367.97)
-
-# For function #2 (bn_mat_mul3), the <args> format is as follows:
-#
-# M1 M2 M3 <expected_result>
-#
-# where M1 M2 M3 are the three matrices to be multiplied.
-# A matrix is 16 floating point numbers separated by commas.
-
-brlcad_add_test(NAME bn_mat_mul3_0_1         COMMAND bn_test mat 2 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-brlcad_add_test(NAME bn_mat_mul3_0_id        COMMAND bn_test mat 2 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-brlcad_add_test(NAME bn_mat_mul3_id_1        COMMAND bn_test mat 2 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1 80,70,60,50,240,214,188,162,400,358,316,274,560,502,444,386)
-brlcad_add_test(NAME bn_mat_mul3_dif         COMMAND bn_test mat 2 3.1,4.2,1.9,1.8,2.9,0.3,4.1,4.5,2.9,2.7,0.7,1.7,1.6,0.8,4.5,5.0 1.1,2.1,2.3,3.5,2.7,1.8,2.6,3.8,1.5,0.7,3.0,4.4,2.3,0.3,4.5,4.3 3.2,2.0,2.6,0.0,2.1,4.0,0.5,1.6,4.3,3.1,2.7,4.7,0.9,3.3,2.4,4.7 278.616,347.578,253.473,376.876,304.197,369.044,283.557,434.156,203.015,252.984,183.327,274.048,315.303,376.398,294.975,446.11)
-
-# For function #3 (bn_mat_mul4), the <args> format is as follows:
-#
-# M1 M2 M3 M4 <expected_result>
-#
-# where M1 M2 M3 M4 are the four matrices to be multiplied.
-# A matrix is 16 floating point numbers separated by commas.
-
-brlcad_add_test(NAME bn_mat_mul4_id_4        COMMAND bn_test mat 3 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1)
-brlcad_add_test(NAME bn_mat_mul4_0_4         COMMAND bn_test mat 3 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-brlcad_add_test(NAME bn_mat_mul4_id_0        COMMAND bn_test mat 3 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-brlcad_add_test(NAME bn_mat_mul4_same        COMMAND bn_test mat 3 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 113960,129040,144120,159200,263272,298128,332984,367840,412584,467216,521848,576480,561896,636304,710712,785120)
 
 # For function #4 (bn_matXvec), the <args> format is as follows:
 #
@@ -574,22 +401,6 @@ brlcad_add_test(NAME bn_mat_ck_1             COMMAND bn_test mat 26 -0.064769339
 brlcad_add_test(NAME bn_mat_ck_2             COMMAND bn_test mat 26 -0.384795044679446,-0.906520316365329,0.17364817766693,23.835,-0.772197474581702,0.419235049422787,0.477444272753497,-1.23,-0.505612335529687,0.049627506006009,-0.861332268528144,-46.321,0,0,0,1 0)
 brlcad_add_test(NAME bn_mat_ck_3             COMMAND bn_test mat 26 -0.38457345,-0.944,0.46483,23.835,0.27474,0.4192787,0.4272753497,-1.23,-0.87,0.06009,0.999144,-46.321,0,0,0,1 -1)
 
-# For function #27 (bn_mat_dup), there is one argument to keep main()
-# happy, which is ignored.
-# A matrix is initiated, copied and the dereferenced pointer compared in the function.
-
-brlcad_add_test(NAME bn_mat_dup              COMMAND bn_test mat 27 0)
-
-# For function #28 (bn_mat_opt), two matrices are supplied.  The
-# first is the expected answer - 16 floating point values separated
-# by commas.  Subsequent arguments are the option input(s)
-
-brlcad_add_test(NAME bn_mat_opt_idn_1          COMMAND bn_test mat 28 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 IDN)
-brlcad_add_test(NAME bn_mat_opt_idn_2          COMMAND bn_test mat 28 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1})
-brlcad_add_test(NAME bn_mat_opt_idn_3          COMMAND bn_test mat 28 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1)
-brlcad_add_test(NAME bn_mat_opt_idn_4          COMMAND bn_test mat 28 27.7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,3.3 {27.7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,3.3})
-brlcad_add_test(NAME bn_mat_opt_idn_5          COMMAND bn_test mat 28 27.7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,3.3 27.7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 3.3)
-
 #  ***************** sobolseq.c tests ***************
 
 brlcad_add_test(NAME bn_sobol_3_1000         COMMAND bn_test sobolseq 3 1000)
@@ -876,157 +687,12 @@ brlcad_add_test(NAME bn_tabdata_dup COMMAND bn_test tabdata 19 5,0,20,40,60,80,1
 
 brlcad_add_test(NAME bn_tabdata_get_constval COMMAND bn_test tabdata 20 5,0,20,40,60,80,100 3 3,3,3,3,3)
 
-#
-#  *************** qmath.c tests ***************
-#
-# For bn_qmath, input is as follows:
-# bn_qmath <function_number> <args>
-
-# For function #1 (quat_mat2quat), the <args> format is as follows:
-#
-# mat expected_quat
-#
-# where mat is a sequence of 16 comma-separated numbers representing a
-# mat_t matrix, and expected_quat is a sequence of 4 comma-separated
-# numbers representing a quaternion (X, Y, Z, W).
-
-brlcad_add_test(NAME bn_quat_mat2quat_identity COMMAND bn_test qmath 1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 0,0,0,1)
-brlcad_add_test(NAME bn_quat_mat2quat_trace_0_1 COMMAND bn_test qmath 1 1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,-1 1,0,0,0)
-brlcad_add_test(NAME bn_quat_mat2quat_trace_0_2 COMMAND bn_test qmath 1 -1,0,0,0,0,1,0,0,0,0,-1,0,0,0,0,-1 0,1,0,0)
-brlcad_add_test(NAME bn_quat_mat2quat_trace_0_3 COMMAND bn_test qmath 1 -1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,-1 0,0,1,0)
-
-# For function #2 (quat_quat2mat), the <args> format is as follows:
-#
-# quat expected_mat
-#
-# where quat is a sequence of 4 comma-separated numbers representing a
-# quaternion (X, Y, Z, W), and expected_mat is a sequence of 16
-# comma-separated numbers representing a mat_t matrix.
-
-brlcad_add_test(NAME bn_quat_quat2mat_identity COMMAND bn_test qmath 2 0,0,0,1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1)
-brlcad_add_test(NAME bn_quat_quat2mat_trace_0_1 COMMAND bn_test qmath 2 1,0,0,0 1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,1)
-brlcad_add_test(NAME bn_quat_quat2mat_trace_0_2 COMMAND bn_test qmath 2 0,1,0,0 -1,0,0,0,0,1,0,0,0,0,-1,0,0,0,0,1)
-brlcad_add_test(NAME bn_quat_quat2mat_trace_0_3 COMMAND bn_test qmath 2 0,0,1,0 -1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,1)
-
-# For function #3 (quat_distance), the <args> format is as follows:
-#
-# q1 q2 expected_distance
-#
-# where q1 and q2 are sequences of 4 comma-separated numbers each
-# representing a quaternion (X, Y, Z, W), and expected_distance is the
-# correct distance between q1 and q2.
-
-brlcad_add_test(NAME bn_quat_distance_0 COMMAND bn_test qmath 3 1,2,0,3 1,2,0,3 0)
-brlcad_add_test(NAME bn_quat_distance_1 COMMAND bn_test qmath 3 1,2,0,3 -1,-2,0,-3 7.483)
-brlcad_add_test(NAME bn_quat_distance_2 COMMAND bn_test qmath 3 4,2,3,1 0,0,2,3 5)
-
-# For function #4 (quat_double), the <args> format is as follows:
-#
-# q1 q2 expected_quat
-#
-# where q1, q2, and expected_quat are sequences of 4 comma-separated
-# numbers each representing a quaternion (X, Y, Z, W).
-
-brlcad_add_test(NAME bn_quat_double_0 COMMAND bn_test qmath 4 0,2,0,1 0,2,0,1 0,0.894,0,0.447)
-brlcad_add_test(NAME bn_quat_double_1 COMMAND bn_test qmath 4 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 0.900,0.177,0.355,0.179)
-
-# For function #5 (quat_bisect), the <args> format is as follows:
-#
-# q1 q2 expected_quat
-#
-# where q1, q2, and expected_quat are sequences of 4 comma-separated
-# numbers each representing a quaternion (X, Y, Z, W).
-
-brlcad_add_test(NAME bn_quat_bisect_0 COMMAND bn_test qmath 5 0,0.894,0,0.447 0,0.894,0,0.447 0,0.894,0,0.447)
-brlcad_add_test(NAME bn_quat_bisect_1 COMMAND bn_test qmath 5 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 0.657,0.327,0.653,0.187)
-
-# For function #6 (quat_slerp), the <args> format is as follows:
-#
-# q1 q2 f expected_quat
-#
-# where q1, q2, and expected_quat are sequences of 4 comma-separated
-# numbers each representing a quaternion (X, Y, Z, W), and f is a
-# single number which is the fraction between q1 and q2 to interpolate
-# for.
-
-brlcad_add_test(NAME bn_quat_slerp_same_0 COMMAND bn_test qmath 6 0,0.894,0,0.447 0,0.894,0,0.447 0 0,0.894,0,0.447)
-brlcad_add_test(NAME bn_quat_slerp_same_0.5 COMMAND bn_test qmath 6 0,0.894,0,0.447 0,0.894,0,0.447 0.5 0,0.894,0,0.447)
-brlcad_add_test(NAME bn_quat_slerp_same_0.783 COMMAND bn_test qmath 6 0,0.894,0,0.447 0,0.894,0,0.447 0.783 0,0.894,0,0.447)
-brlcad_add_test(NAME bn_quat_slerp_same_1 COMMAND bn_test qmath 6 0,0.894,0,0.447 0,0.894,0,0.447 1 0,0.894,0,0.447)
-brlcad_add_test(NAME bn_quat_slerp_diff_0 COMMAND bn_test qmath 6 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 0 0.548,0.365,0.730,0.183)
-brlcad_add_test(NAME bn_quat_slerp_diff_0.5 COMMAND bn_test qmath 6 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 0.5 0.657,0.327,0.653,0.187)
-brlcad_add_test(NAME bn_quat_slerp_diff_0.783 COMMAND bn_test qmath 6 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 0.783 0.713,0.302,0.604,0.188)
-brlcad_add_test(NAME bn_quat_slerp_diff_1 COMMAND bn_test qmath 6 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 1 0.753,0.282,0.564,0.188)
-
-# For function #7 (quat_sberp), the <args> format is as follows:
-#
-# q1 qa qb q2 f expected_quat
-#
-# where q1, qa, qb, q2, and expected_quat are sequences of 4
-# comma-separated numbers representing a quaternion (X, Y, Z, W), and
-# f is a single number which is the fraction between q1 and q2 to
-# interpolate for.
-
-brlcad_add_test(NAME bn_quat_sberp_same_0 COMMAND bn_test qmath 7 0,0.894,0,0.447 1,0,0,0 0.5,0.5,0.5,0.5  0,0.894,0,0.447 0 0,0.894,0,0.447)
-brlcad_add_test(NAME bn_quat_sberp_same_0.5 COMMAND bn_test qmath 7 0,0.894,0,0.447 1,0,0,0 0.5,0.5,0.5,0.5 0,0.894,0,0.447 0.5 0.723,0.529,0.230,0.380)
-brlcad_add_test(NAME bn_quat_sberp_same_0.783 COMMAND bn_test qmath 7 0,0.894,0,0.447 1,0,0,0 0.5,0.5,0.5,0.5 0,0.894,0,0.447 0.783 0.391,0.740,0.241,0.491)
-brlcad_add_test(NAME bn_quat_sberp_same_1 COMMAND bn_test qmath 7 0,0.894,0,0.447 1,0,0,0 0.5,0.5,0.5,0.5 0,0.894,0,0.447 1 0,0.894,0,0.447)
-brlcad_add_test(NAME bn_quat_sberp_diff_0 COMMAND bn_test qmath 7 0.548,0.365,0.730,0.183 1,0,0,0 0.5,0.5,0.5,0.5 0.753,0.282,0.564,0.188 0 0.548,0.365,0.730,0.183)
-brlcad_add_test(NAME bn_quat_sberp_diff_0.5 COMMAND bn_test qmath 7 0.548,0.365,0.730,0.183 1,0,0,0 0.5,0.5,0.5,0.5 0.753,0.282,0.564,0.188 0.5 0.828,0.302,0.392,0.264)
-brlcad_add_test(NAME bn_quat_sberp_diff_0.783 COMMAND bn_test qmath 7 0.548,0.365,0.730,0.183 1,0,0,0 0.5,0.5,0.5,0.5 0.753,0.282,0.564,0.188 0.783 0.724,0.358,0.501,0.310)
-brlcad_add_test(NAME bn_quat_sberp_diff_1 COMMAND bn_test qmath 7 0.548,0.365,0.730,0.183 1,0,0,0 0.5,0.5,0.5,0.5 0.753,0.282,0.564,0.188 1 0.753,0.282,0.564,0.188)
-
-# For function #8 (quat_make_nearest), the <args> format is as follows:
-#
-# q1 q2 f expected_result
-#
-# where q1, q2, and expected_result are sequences of 4 comma-separated
-# numbers, each representing a quaternion (X, Y, Z, W).
-
-brlcad_add_test(NAME bn_quat_make_nearest_same_0 COMMAND bn_test qmath 8 0,0.894,0,0.447 0,0.894,0,0.447 0,0.894,0,0.447)
-brlcad_add_test(NAME bn_quat_make_nearest_same_1 COMMAND bn_test qmath 8 0,-0.894,0,-0.447 0,0.894,0,0.447 0,0.894,0,0.447)
-brlcad_add_test(NAME bn_quat_make_nearest_diff_0 COMMAND bn_test qmath 8 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 0.548,0.365,0.730,0.183)
-brlcad_add_test(NAME bn_quat_make_nearest_diff_1 COMMAND bn_test qmath 8 -0.548,-0.365,-0.730,-0.183 0.753,0.282,0.564,0.188 0.548,0.365,0.730,0.183)
-
-# For function #9 (quat_exp), the <args> format is as follows:
-#
-# in expected_out
-#
-# where in and expected_out are sequences of 4 comma-separated
-# numbers, each representing a quaternion (X, Y, Z, W).
-
-brlcad_add_test(NAME bn_quat_exp_0 COMMAND bn_test qmath 9 0,0,0,0 0,0,0,1)
-brlcad_add_test(NAME bn_quat_exp_1 COMMAND bn_test qmath 9 0.577,0.577,0.577,0 0.486,0.486,0.486,0.541)
-brlcad_add_test(NAME bn_quat_exp_2 COMMAND bn_test qmath 9 0.365,0.730,0.183,0 0.324,0.648,0.162,0.670)
-
-# For function #10 (quat_exp), the <args> format is as follows:
-#
-# in expected_out
-#
-# where in and expected_out are sequences of 4 comma-separated
-# numbers, each representing a quaternion (X, Y, Z, W).
-
-brlcad_add_test(NAME bn_quat_log_0 COMMAND bn_test qmath 10 1,0,0,0 1.571,0,0,0)
-brlcad_add_test(NAME bn_quat_log_1 COMMAND bn_test qmath 10 0.5,0.5,0.5,0.5 0.605,0.605,0.605,0)
-brlcad_add_test(NAME bn_quat_log_2 COMMAND bn_test qmath 10 0.548,0.365,0.730,0.183 0.773,0.515,1.030,0)
-
 cmakefiles(
   CMakeLists.txt
   bntester.dat
   bn_test.c.in
   dbl_to_from_long_test.cpp
-  poly_cubic_roots.c
-  poly_quartic_roots.c
 )
-
-# ************ noise.c tests *************
-# 1 = large-coordinate single-thread (exercises the filter_args fix)
-# 2 = concurrent multi-thread (exercises the find_spec_wgt race fix)
-# 3 = basic perlin sanity (regression guard)
-brlcad_add_test(NAME bn_noise_large_coords   COMMAND bn_test noise 1)
-brlcad_add_test(NAME bn_noise_concurrent     COMMAND bn_test noise 2)
-brlcad_add_test(NAME bn_noise_perlin_basic   COMMAND bn_test noise 3)
-brlcad_add_test(NAME bn_noise_concurrent_first_use COMMAND bn_test noise 4)
 
 # Local Variables:
 # tab-width: 8
