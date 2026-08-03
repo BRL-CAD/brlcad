@@ -48,9 +48,15 @@ brlcad_addexec(bn_randsph randsph.c "libbu;libbn" TEST)
 set(
   bn_group_test_srcs
   test_anim.c
+  test_complex.c
+  test_mat.c
   test_msr.c
+  test_mt19937ar.c
   test_noise.c
+  test_poly.c
+  test_qmath.c
   test_rand.c
+  test_randsph.c
   test_sobol.c
   test_str.c
   test_tabdata.c
@@ -70,6 +76,12 @@ brlcad_add_test(NAME test_version COMMAND test_version)
 brlcad_add_test(NAME test_str COMMAND test_str)
 brlcad_add_test(NAME test_ulp COMMAND test_ulp)
 brlcad_add_test(NAME test_noise COMMAND test_noise)
+brlcad_add_test(NAME test_complex COMMAND test_complex)
+brlcad_add_test(NAME test_mat COMMAND test_mat)
+brlcad_add_test(NAME test_mt19937ar COMMAND test_mt19937ar)
+brlcad_add_test(NAME test_poly COMMAND test_poly)
+brlcad_add_test(NAME test_qmath COMMAND test_qmath)
+brlcad_add_test(NAME test_randsph COMMAND test_randsph)
 
 brlcad_add_test(NAME test_rand_table COMMAND test_rand table)
 brlcad_add_test(NAME test_rand_randmt COMMAND test_rand randmt)
