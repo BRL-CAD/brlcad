@@ -124,6 +124,256 @@ cleanup:
 
 
 static int
+test_tabdata_ops(void)
+{
+    int failures = 0;
+    const char *test = "tabdata_ops";
+    static const fastf_t uniform_xs[] = {
+	0.0, 10.0, 20.0, 30.0, 40.0, 50.0,
+	60.0, 70.0, 80.0, 90.0, 100.0
+    };
+    static const fastf_t xs[] = {0.0, 20.0, 40.0, 60.0, 80.0, 100.0};
+    static const fastf_t xs_scaled[] = {0.0, 40.0, 80.0, 120.0, 160.0, 200.0};
+    static const fastf_t xs_interp[] = {0.0, 20.0, 30.0, 60.0, 80.0, 100.0};
+    static const fastf_t y1[] = {1.0, 2.0, 3.0, 4.0, 5.0};
+    static const fastf_t y2[] = {8.0, 3.0, 6.0, 2.0, 9.0};
+    static const fastf_t y3[] = {8.0, 6.0, 18.0, 8.0, 45.0};
+    static const fastf_t yrev[] = {5.0, 4.0, 3.0, 2.0, 1.0};
+    static const fastf_t yblend[] = {2.0, 4.0, 6.0, 8.0, 10.0};
+    static const fastf_t yblend3[] = {3.0, 2.0, 4.0, 1.0, 5.0};
+    static const fastf_t yadd[] = {9.0, 5.0, 9.0, 6.0, 14.0};
+    static const fastf_t ymul[] = {8.0, 6.0, 18.0, 8.0, 45.0};
+    static const fastf_t ymul3[] = {64.0, 36.0, 324.0, 64.0, 2025.0};
+    static const fastf_t yincr3[] = {133.0, 76.0, 651.0, 130.0, 4051.0};
+    static const fastf_t yincr2[] = {21.0, 16.0, 39.0, 18.0, 91.0};
+    static const fastf_t yscale[] = {2.0, 4.0, 6.0, 8.0, 10.0};
+    static const fastf_t yjoin1[] = {11.0, 10.0, 9.0, 8.0, 7.0};
+    static const fastf_t yjoin2[] = {17.0, 22.0, 27.0, 32.0, 37.0};
+    static const fastf_t yblend2[] = {4.5, 6.0, 7.5, 9.0, 10.5};
+    static const fastf_t yblend3_expected[] = {13.5, 12.0, 19.5, 12.0, 25.5};
+    static const fastf_t yconst[] = {3.0, 3.0, 3.0, 3.0, 3.0};
+
+    {
+	struct bn_table *actual = bn_table_make_uniform(10, 0.0, 100.0);
+	struct bn_table *expected = make_table(uniform_xs, 10);
+	if (!table_close(actual, expected, 0.0)) {
+	    report_failure(test, "bn_table_make_uniform produced the wrong uniform sample positions");
+	    failures++;
+	}
+	bn_table_free(expected);
+	bn_table_free(actual);
+    }
+
+    {
+	struct bn_table *tab = make_table(xs, 5);
+	struct bn_table *tab_scaled = make_table(xs, 5);
+	struct bn_table *expected_scaled = make_table(xs_scaled, 5);
+	struct bn_tabdata *td1 = make_tabdata(tab, y1);
+	struct bn_tabdata *td2 = make_tabdata(tab, y2);
+	struct bn_tabdata *td3 = make_tabdata(tab, y3);
+	struct bn_tabdata *tdrev = make_tabdata(tab, yrev);
+	struct bn_tabdata *tdblend = make_tabdata(tab, yblend);
+	struct bn_tabdata *tdblend3 = make_tabdata(tab, yblend3);
+	struct bn_tabdata *actual = NULL;
+	struct bn_tabdata *expected = NULL;
+	struct bn_tabdata *dup = NULL;
+
+	actual = make_tabdata(tab, y1);
+	expected = make_tabdata(tab, yadd);
+	bn_tabdata_add(actual, td1, td2);
+	if (!tabdata_close(actual, expected, 0.0)) {
+	    report_failure(test, "bn_tabdata_add produced the wrong exact result");
+	    failures++;
+	}
+	bn_tabdata_free(expected);
+	bn_tabdata_free(actual);
+
+	actual = make_tabdata(tab, y1);
+	expected = make_tabdata(tab, ymul);
+	bn_tabdata_mul(actual, td1, td2);
+	if (!tabdata_close(actual, expected, 0.0)) {
+	    report_failure(test, "bn_tabdata_mul produced the wrong exact result");
+	    failures++;
+	}
+	bn_tabdata_free(expected);
+	bn_tabdata_free(actual);
+
+	actual = make_tabdata(tab, y1);
+	expected = make_tabdata(tab, ymul3);
+	bn_tabdata_mul3(actual, td1, td2, td3);
+	if (!tabdata_close(actual, expected, 0.0)) {
+	    report_failure(test, "bn_tabdata_mul3 produced the wrong exact result");
+	    failures++;
+	}
+	bn_tabdata_free(expected);
+	bn_tabdata_free(actual);
+
+	actual = make_tabdata(tab, yrev);
+	expected = make_tabdata(tab, yincr3);
+	bn_tabdata_incr_mul3_scale(actual, td1, td2, td3, 2.0);
+	if (!tabdata_close(actual, expected, 0.0)) {
+	    report_failure(test, "bn_tabdata_incr_mul3_scale produced the wrong exact result");
+	    failures++;
+	}
+	bn_tabdata_free(expected);
+	bn_tabdata_free(actual);
+
+	actual = make_tabdata(tab, yrev);
+	expected = make_tabdata(tab, yincr2);
+	bn_tabdata_incr_mul2_scale(actual, td1, td2, 2.0);
+	if (!tabdata_close(actual, expected, 0.0)) {
+	    report_failure(test, "bn_tabdata_incr_mul2_scale produced the wrong exact result");
+	    failures++;
+	}
+	bn_tabdata_free(expected);
+	bn_tabdata_free(actual);
+
+	actual = make_tabdata(tab, y1);
+	expected = make_tabdata(tab, yscale);
+	bn_tabdata_scale(actual, td1, 2.0);
+	if (!tabdata_close(actual, expected, 0.0)) {
+	    report_failure(test, "bn_tabdata_scale produced the wrong exact result");
+	    failures++;
+	}
+	bn_tabdata_free(expected);
+	bn_tabdata_free(actual);
+
+	bn_table_scale(tab_scaled, 2.0);
+	if (!table_close(tab_scaled, expected_scaled, 0.0)) {
+	    report_failure(test, "bn_table_scale produced the wrong exact result");
+	    failures++;
+	}
+
+	actual = make_tabdata(tab, y1);
+	expected = make_tabdata(tab, yjoin1);
+	bn_tabdata_join1(actual, td1, 2.0, tdrev);
+	if (!tabdata_close(actual, expected, 0.0)) {
+	    report_failure(test, "bn_tabdata_join1 produced the wrong exact result");
+	    failures++;
+	}
+	bn_tabdata_free(expected);
+	bn_tabdata_free(actual);
+
+	actual = make_tabdata(tab, y1);
+	expected = make_tabdata(tab, yjoin2);
+	bn_tabdata_join2(actual, td1, 2.0, tdrev, 3.0, tdblend);
+	if (!tabdata_close(actual, expected, 0.0)) {
+	    report_failure(test, "bn_tabdata_join2 produced the wrong exact result");
+	    failures++;
+	}
+	bn_tabdata_free(expected);
+	bn_tabdata_free(actual);
+
+	actual = make_tabdata(tab, y1);
+	expected = make_tabdata(tab, yblend2);
+	bn_tabdata_blend2(actual, 2.0, td1, 0.5, tdrev);
+	if (!tabdata_close(actual, expected, 0.0)) {
+	    report_failure(test, "bn_tabdata_blend2 produced the wrong exact result");
+	    failures++;
+	}
+	bn_tabdata_free(expected);
+	bn_tabdata_free(actual);
+
+	actual = make_tabdata(tab, y1);
+	expected = make_tabdata(tab, yblend3_expected);
+	bn_tabdata_blend3(actual, 2.0, td1, 0.5, tdrev, 3.0, tdblend3);
+	if (!tabdata_close(actual, expected, 0.0)) {
+	    report_failure(test, "bn_tabdata_blend3 produced the wrong exact result");
+	    failures++;
+	}
+	bn_tabdata_free(expected);
+	bn_tabdata_free(actual);
+
+	if (!scalar_close(bn_tabdata_area1(td1), 15.0, 0.0)) {
+	    report_failure(test, "bn_tabdata_area1 produced the wrong exact result");
+	    failures++;
+	}
+	if (!scalar_close(bn_tabdata_area2(td1), 300.0, 0.0)) {
+	    report_failure(test, "bn_tabdata_area2 produced the wrong exact result");
+	    failures++;
+	}
+	if (!scalar_close(bn_tabdata_mul_area1(td1, tdrev), 35.0, 0.0)) {
+	    report_failure(test, "bn_tabdata_mul_area1 produced the wrong exact result");
+	    failures++;
+	}
+	if (!scalar_close(bn_tabdata_mul_area2(td1, tdrev), 700.0, 0.0)) {
+	    report_failure(test, "bn_tabdata_mul_area2 produced the wrong exact result");
+	    failures++;
+	}
+
+	actual = make_tabdata(tab, yrev);
+	bn_tabdata_copy(actual, td1);
+	if (!tabdata_close(actual, td1, 0.0)) {
+	    report_failure(test, "bn_tabdata_copy failed to duplicate the source data");
+	    failures++;
+	}
+	bn_tabdata_free(actual);
+
+	dup = bn_tabdata_dup(td1);
+	if (!dup || !tabdata_close(dup, td1, 0.0)) {
+	    report_failure(test, "bn_tabdata_dup failed to duplicate the source data");
+	    failures++;
+	}
+	if (dup) bn_tabdata_free(dup);
+
+	expected = make_tabdata(tab, yconst);
+	actual = bn_tabdata_get_constval(3.0, tab);
+	if (!actual || !tabdata_close(actual, expected, 0.0)) {
+	    report_failure(test, "bn_tabdata_get_constval produced the wrong exact result");
+	    failures++;
+	}
+	bn_tabdata_free(expected);
+	if (actual) bn_tabdata_free(actual);
+
+	bn_tabdata_free(tdblend3);
+	bn_tabdata_free(tdblend);
+	bn_tabdata_free(tdrev);
+	bn_tabdata_free(td3);
+	bn_tabdata_free(td2);
+	bn_tabdata_free(td1);
+	bn_table_free(expected_scaled);
+	bn_table_free(tab_scaled);
+	bn_table_free(tab);
+    }
+
+    {
+	struct bn_table *tab = make_table(xs, 5);
+	struct bn_table *tab_alt = make_table(xs_interp, 5);
+	struct bn_tabdata *td = make_tabdata(tab, y1);
+	struct bn_tabdata *td_alt = make_tabdata(tab_alt, y1);
+
+	if (!scalar_close(bn_table_lin_interp(td, 30.0), 2.5, 0.0)) {
+	    report_failure(test, "bn_table_lin_interp case 1 produced the wrong exact result");
+	    failures++;
+	}
+	if (!scalar_close(bn_table_lin_interp(td_alt, 30.0), 3.0, 0.0)) {
+	    report_failure(test, "bn_table_lin_interp case 2 produced the wrong exact result");
+	    failures++;
+	}
+	if (!scalar_close(bn_table_lin_interp(td_alt, 45.0), 3.5, 0.0)) {
+	    report_failure(test, "bn_table_lin_interp case 3 produced the wrong exact result");
+	    failures++;
+	}
+	if (!scalar_close(bn_table_lin_interp(td_alt, 25.0), 2.5, 0.0)) {
+	    report_failure(test, "bn_table_lin_interp case 4 produced the wrong exact result");
+	    failures++;
+	}
+	if (!scalar_close(bn_table_lin_interp(td, 800.0), 0.0, 0.0)) {
+	    report_failure(test, "bn_table_lin_interp case 5 produced the wrong exact result");
+	    failures++;
+	}
+
+	bn_tabdata_free(td_alt);
+	bn_tabdata_free(td);
+	bn_table_free(tab_alt);
+	bn_table_free(tab);
+    }
+
+    return failures;
+}
+
+
+static int
 test_tabdata_utils(void)
 {
     int failures = 0;
@@ -210,6 +460,7 @@ test_tabdata_utils(void)
 
 static const struct bn_api_case tabdata_cases[] = {
     {"io", test_tabdata_io},
+    {"ops", test_tabdata_ops},
     {"utils", test_tabdata_utils},
     {NULL, NULL}
 };
