@@ -46,10 +46,68 @@ quat_is_unit_finite(const quat_t q, double tol)
 
 
 static int
+test_qmath_distance(void)
+{
+    int failures = 0;
+    const char *test = "qmath_distance";
+    quat_t q1 = {1.0, 2.0, 0.0, 3.0};
+    quat_t q2 = {-1.0, -2.0, 0.0, -3.0};
+    quat_t q3 = {4.0, 2.0, 3.0, 1.0};
+    quat_t q4 = {0.0, 0.0, 2.0, 3.0};
+
+    if (!scalar_close(quat_distance(q1, q1), 0.0, 0.0)) {
+	report_failure(test, "quat_distance failed for identical quaternions");
+	failures++;
+    }
+
+    if (!scalar_close(quat_distance(q1, q2), 7.483314773547883, 1.0e-12)) {
+	report_failure(test, "quat_distance failed for opposite-sign test case");
+	failures++;
+    }
+
+    if (!scalar_close(quat_distance(q3, q4), 5.0, 1.0e-12)) {
+	report_failure(test, "quat_distance failed for mixed quaternion inputs");
+	failures++;
+    }
+
+    return failures;
+}
+
+
+static int
 test_qmath_roundtrip(void)
 {
     int failures = 0;
     const char *test = "qmath_roundtrip";
+    static const struct {
+	quat_t quat;
+	mat_t expected;
+    } quat2mat_cases[] = {
+	{{0.0, 0.0, 0.0, 1.0}, {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	    }},
+	{{1.0, 0.0, 0.0, 0.0}, {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, -1.0, 0.0, 0.0,
+		0.0, 0.0, -1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	    }},
+	{{0.0, 1.0, 0.0, 0.0}, {
+		-1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, -1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	    }},
+	{{0.0, 0.0, 1.0, 0.0}, {
+		-1.0, 0.0, 0.0, 0.0,
+		0.0, -1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	    }}
+    };
     quat_t q = HINIT_ZERO;
     quat_t q2 = HINIT_ZERO;
     quat_t qscaled = HINIT_ZERO;
@@ -83,6 +141,19 @@ test_qmath_roundtrip(void)
 	}
     }
 
+    for (i = 0; i < (int)(sizeof(quat2mat_cases) / sizeof(quat2mat_cases[0])); i++) {
+	quat_quat2mat(roundtrip, quat2mat_cases[i].quat);
+	if (!mat_close(roundtrip, quat2mat_cases[i].expected, 1.0e-12)) {
+	    report_failure(test, "quat_quat2mat reference case %d failed", i);
+	    failures++;
+	}
+	quat_mat2quat(q, quat2mat_cases[i].expected);
+	if (!quat_close_or_neg(q, quat2mat_cases[i].quat, 1.0e-12)) {
+	    report_failure(test, "quat_mat2quat reference case %d failed", i);
+	    failures++;
+	}
+    }
+
     quat_quat2mat(mats[0], qarb);
     quat_quat2mat(mats[1], qscaled);
     if (!mat_close(mats[0], mats[1], 1.0e-12)) {
@@ -105,6 +176,19 @@ test_qmath_interp(void)
 {
     int failures = 0;
     const char *test = "qmath_interp";
+    quat_t qdouble_same_in = {0.0, 2.0, 0.0, 1.0};
+    quat_t qdouble_same_expected = {0.0, 0.894, 0.0, 0.447};
+    quat_t qdouble_expected = {0.900, 0.177, 0.355, 0.179};
+    quat_t qbisect_expected = {0.657, 0.327, 0.653, 0.187};
+    quat_t qsberp_same_expected = {0.723, 0.529, 0.230, 0.380};
+    quat_t qsberp_expected = {0.724, 0.358, 0.501, 0.310};
+    quat_t qsame = {0.0, 0.894, 0.0, 0.447};
+    quat_t qsame_neg = {0.0, -0.894, 0.0, -0.447};
+    quat_t q1 = {0.548, 0.365, 0.730, 0.183};
+    quat_t q2 = {0.753, 0.282, 0.564, 0.188};
+    quat_t qa = {1.0, 0.0, 0.0, 0.0};
+    quat_t qb = {0.5, 0.5, 0.5, 0.5};
+    quat_t exact = HINIT_ZERO;
     quat_t qid = {0.0, 0.0, 0.0, 1.0};
     quat_t qx = {1.0, 0.0, 0.0, 0.0};
     quat_t qanti = {0.0, 0.0, 0.0, -1.0};
@@ -159,6 +243,60 @@ test_qmath_interp(void)
 	failures++;
     }
 
+    quat_double(exact, qdouble_same_in, qdouble_same_in);
+    if (!hvect_close(exact, qdouble_same_expected, 1.0e-3)) {
+	report_failure(test, "quat_double legacy same-input case failed");
+	failures++;
+    }
+
+    quat_double(exact, q1, q2);
+    if (!quat_close_or_neg(exact, qdouble_expected, 1.0e-3)) {
+	report_failure(test, "quat_double legacy mixed-input case failed");
+	failures++;
+    }
+
+    quat_bisect(exact, qsame, qsame);
+    if (!hvect_close(exact, qsame, 1.0e-3)) {
+	report_failure(test, "quat_bisect legacy same-input case failed");
+	failures++;
+    }
+
+    quat_bisect(exact, q1, q2);
+    if (!quat_close_or_neg(exact, qbisect_expected, 1.0e-3)) {
+	report_failure(test, "quat_bisect legacy mixed-input case failed");
+	failures++;
+    }
+
+    quat_slerp(exact, qsame, qsame, 0.783);
+    if (!quat_close_or_neg(exact, qsame, 1.0e-3)) {
+	report_failure(test, "quat_slerp legacy equal-input case failed");
+	failures++;
+    }
+
+    quat_slerp(exact, q1, q2, 0.5);
+    if (!quat_close_or_neg(exact, (quat_t){0.657, 0.327, 0.653, 0.187}, 1.0e-3)) {
+	report_failure(test, "quat_slerp legacy mixed-input midpoint case failed");
+	failures++;
+    }
+
+    quat_sberp(exact, qsame, qa, qb, qsame, 0.5);
+    if (!quat_close_or_neg(exact, qsberp_same_expected, 1.0e-3)) {
+	report_failure(test, "quat_sberp legacy equal-endpoint case failed");
+	failures++;
+    }
+
+    quat_sberp(exact, q1, qa, qb, q2, 0.783);
+    if (!quat_close_or_neg(exact, qsberp_expected, 1.0e-3)) {
+	report_failure(test, "quat_sberp legacy mixed-input case failed");
+	failures++;
+    }
+
+    quat_make_nearest(qsame_neg, qsame);
+    if (!hvect_close(qsame_neg, qsame, 1.0e-3)) {
+	report_failure(test, "quat_make_nearest legacy sign-flip case failed");
+	failures++;
+    }
+
     return failures;
 }
 
@@ -168,10 +306,27 @@ test_qmath_logexp(void)
 {
     int failures = 0;
     const char *test = "qmath_logexp";
+    static const struct {
+	quat_t in;
+	quat_t expected;
+    } exp_cases[] = {
+	{{0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 1.0}},
+	{{0.577, 0.577, 0.577, 0.0}, {0.486, 0.486, 0.486, 0.541}},
+	{{0.365, 0.730, 0.183, 0.0}, {0.324, 0.648, 0.162, 0.670}}
+    };
+    static const struct {
+	quat_t in;
+	quat_t expected;
+    } log_cases[] = {
+	{{1.0, 0.0, 0.0, 0.0}, {1.571, 0.0, 0.0, 0.0}},
+	{{0.5, 0.5, 0.5, 0.5}, {0.605, 0.605, 0.605, 0.0}},
+	{{0.548, 0.365, 0.730, 0.183}, {0.773, 0.515, 1.030, 0.0}}
+    };
     quat_t v = {0.2, -0.1, 0.3, 0.0};
     quat_t q = HINIT_ZERO;
     quat_t out = HINIT_ZERO;
     quat_t qin = {0.3, 0.4, 0.1, 0.85};
+    int i;
 
     quat_exp(q, v);
     quat_log(out, q);
@@ -191,11 +346,28 @@ test_qmath_logexp(void)
 	failures++;
     }
 
+    for (i = 0; i < (int)(sizeof(exp_cases) / sizeof(exp_cases[0])); i++) {
+	quat_exp(q, exp_cases[i].in);
+	if (!hvect_close(q, exp_cases[i].expected, 1.0e-3)) {
+	    report_failure(test, "quat_exp reference case %d failed", i);
+	    failures++;
+	}
+    }
+
+    for (i = 0; i < (int)(sizeof(log_cases) / sizeof(log_cases[0])); i++) {
+	quat_log(out, log_cases[i].in);
+	if (!hvect_close(out, log_cases[i].expected, 1.0e-3)) {
+	    report_failure(test, "quat_log reference case %d failed", i);
+	    failures++;
+	}
+    }
+
     return failures;
 }
 
 
 static const struct bn_api_case qmath_cases[] = {
+    {"distance", test_qmath_distance},
     {"roundtrip", test_qmath_roundtrip},
     {"interp", test_qmath_interp},
     {"logexp", test_qmath_logexp},
