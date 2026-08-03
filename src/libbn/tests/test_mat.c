@@ -28,6 +28,169 @@ test_mat_basic(void)
 {
     int failures = 0;
     const char *test = "mat_basic";
+    static const struct {
+	mat_t a;
+	mat_t b;
+	mat_t expected;
+    } mul_cases[] = {
+	{{
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0
+	    }, {
+		1.0, 2.1, 3.3, 4.4,
+		5.5, 6.6, 7.7, 8.8,
+		9.9, 10.1, 11.11, 12.12,
+		13.13, 14.14, 15.15, 16.16
+	    }, {
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0
+	    }},
+	{{
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	    }, {
+		33.34, 28.7135672, 44.84, 55.85,
+		1.0, 1.0, 0.0, 0.0,
+		0.0, 7843.4444, 11.0, 12.0,
+		473.232, 83.17, 75.0, 8.417
+	    }, {
+		33.34, 28.7135672, 44.84, 55.85,
+		1.0, 1.0, 0.0, 0.0,
+		0.0, 7843.4444, 11.0, 12.0,
+		473.232, 83.17, 75.0, 8.417
+	    }},
+	{{
+		1.0, 2.0, 3.0, 4.0,
+		5.0, 6.0, 7.0, 8.0,
+		9.0, 10.0, 11.0, 12.0,
+		13.0, 14.0, 15.0, 16.0
+	    }, {
+		16.0, 15.0, 14.0, 13.0,
+		12.0, 11.0, 10.0, 9.0,
+		8.0, 7.0, 6.0, 5.0,
+		4.0, 3.0, 2.0, 1.0
+	    }, {
+		80.0, 70.0, 60.0, 50.0,
+		240.0, 214.0, 188.0, 162.0,
+		400.0, 358.0, 316.0, 274.0,
+		560.0, 502.0, 444.0, 386.0
+	    }}
+    };
+    static const struct {
+	mat_t a;
+	mat_t b;
+	mat_t c;
+	mat_t expected;
+    } mul3_cases[] = {
+	{{
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0
+	    }, {
+		1.0, 2.0, 3.0, 4.0,
+		5.0, 6.0, 7.0, 8.0,
+		9.0, 10.0, 11.0, 12.0,
+		13.0, 14.0, 15.0, 16.0
+	    }, {
+		16.0, 15.0, 14.0, 13.0,
+		12.0, 11.0, 10.0, 9.0,
+		8.0, 7.0, 6.0, 5.0,
+		4.0, 3.0, 2.0, 1.0
+	    }, {
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0
+	    }},
+	{{
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	    }, {
+		1.0, 2.0, 3.0, 4.0,
+		5.0, 6.0, 7.0, 8.0,
+		9.0, 10.0, 11.0, 12.0,
+		13.0, 14.0, 15.0, 16.0
+	    }, {
+		16.0, 15.0, 14.0, 13.0,
+		12.0, 11.0, 10.0, 9.0,
+		8.0, 7.0, 6.0, 5.0,
+		4.0, 3.0, 2.0, 1.0
+	    }, {
+		80.0, 70.0, 60.0, 50.0,
+		240.0, 214.0, 188.0, 162.0,
+		400.0, 358.0, 316.0, 274.0,
+		560.0, 502.0, 444.0, 386.0
+	    }}
+    };
+    static const struct {
+	mat_t a;
+	mat_t b;
+	mat_t c;
+	mat_t d;
+	mat_t expected;
+    } mul4_cases[] = {
+	{{
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	    }, {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	    }, {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	    }, {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	    }, {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	    }},
+	{{
+		1.0, 2.0, 3.0, 4.0,
+		5.0, 6.0, 7.0, 8.0,
+		9.0, 10.0, 11.0, 12.0,
+		13.0, 14.0, 15.0, 16.0
+	    }, {
+		1.0, 2.0, 3.0, 4.0,
+		5.0, 6.0, 7.0, 8.0,
+		9.0, 10.0, 11.0, 12.0,
+		13.0, 14.0, 15.0, 16.0
+	    }, {
+		1.0, 2.0, 3.0, 4.0,
+		5.0, 6.0, 7.0, 8.0,
+		9.0, 10.0, 11.0, 12.0,
+		13.0, 14.0, 15.0, 16.0
+	    }, {
+		1.0, 2.0, 3.0, 4.0,
+		5.0, 6.0, 7.0, 8.0,
+		9.0, 10.0, 11.0, 12.0,
+		13.0, 14.0, 15.0, 16.0
+	    }, {
+		113960.0, 129040.0, 144120.0, 159200.0,
+		263272.0, 298128.0, 332984.0, 367840.0,
+		412584.0, 467216.0, 521848.0, 576480.0,
+		561896.0, 636304.0, 710712.0, 785120.0
+	    }}
+    };
     mat_t a = {
 	1.0, 2.0, 3.0, 4.0,
 	5.0, 6.0, 7.0, 8.0,
@@ -42,7 +205,9 @@ test_mat_basic(void)
     };
     mat_t expected = MAT_INIT_ZERO;
     mat_t aliased = MAT_INIT_ZERO;
+    mat_t actual = MAT_INIT_ZERO;
     matp_t dup = NULL;
+    int i;
 
     bn_mat_mul(expected, a, b);
     MAT_COPY(aliased, b);
@@ -59,6 +224,30 @@ test_mat_basic(void)
     }
     if (dup) {
 	bu_free((void *)dup, "matrix duplicate");
+    }
+
+    for (i = 0; i < (int)(sizeof(mul_cases) / sizeof(mul_cases[0])); i++) {
+	bn_mat_mul(actual, mul_cases[i].a, mul_cases[i].b);
+	if (!mat_close(actual, mul_cases[i].expected, 1.0e-9)) {
+	    report_failure(test, "bn_mat_mul legacy case %d failed", i);
+	    failures++;
+	}
+    }
+
+    for (i = 0; i < (int)(sizeof(mul3_cases) / sizeof(mul3_cases[0])); i++) {
+	bn_mat_mul3(actual, mul3_cases[i].a, mul3_cases[i].b, mul3_cases[i].c);
+	if (!mat_close(actual, mul3_cases[i].expected, 1.0e-9)) {
+	    report_failure(test, "bn_mat_mul3 legacy case %d failed", i);
+	    failures++;
+	}
+    }
+
+    for (i = 0; i < (int)(sizeof(mul4_cases) / sizeof(mul4_cases[0])); i++) {
+	bn_mat_mul4(actual, mul4_cases[i].a, mul4_cases[i].b, mul4_cases[i].c, mul4_cases[i].d);
+	if (!mat_close(actual, mul4_cases[i].expected, 1.0e-9)) {
+	    report_failure(test, "bn_mat_mul4 legacy case %d failed", i);
+	    failures++;
+	}
     }
 
     return failures;
@@ -221,6 +410,24 @@ test_mat_opt(void)
     const char *test = "mat_opt";
     const char *idn_argv[] = {"IDN"};
     const char *str_argv[] = {"{1,0,0,4,0,1,0,5,0,0,1,6,0,0,0,1}"};
+    const char *argv16[] = {
+	"1", "0", "0", "0",
+	"0", "1", "0", "0",
+	"0", "0", "1", "0",
+	"0", "0", "0", "1"
+    };
+    const char *nonid_argv[] = {
+	"27.7", "7", "7", "7",
+	"7", "7", "7", "7",
+	"7", "7", "7", "7",
+	"7", "7", "7", "3.3"
+    };
+    mat_t expected = {
+	27.7, 7.0, 7.0, 7.0,
+	7.0, 7.0, 7.0, 7.0,
+	7.0, 7.0, 7.0, 7.0,
+	7.0, 7.0, 7.0, 3.3
+    };
     mat_t m = MAT_INIT_ZERO;
 
     if (bn_opt_mat(NULL, 1, idn_argv, m) != 1 || !bn_mat_is_identity(m)) {
@@ -235,6 +442,18 @@ test_mat_opt(void)
 	!scalar_close(m[11], 6.0, 0.0) ||
 	!scalar_close(m[15], 1.0, 0.0)) {
 	report_failure(test, "bn_opt_mat failed to parse a brace/comma formatted matrix");
+	failures++;
+    }
+
+    MAT_ZERO(m);
+    if (bn_opt_mat(NULL, 16, argv16, m) != 16 || !bn_mat_is_identity(m)) {
+	report_failure(test, "bn_opt_mat failed to parse 16 individual matrix arguments");
+	failures++;
+    }
+
+    MAT_ZERO(m);
+    if (bn_opt_mat(NULL, 16, nonid_argv, m) != 16 || !mat_close(m, expected, 0.0)) {
+	report_failure(test, "bn_opt_mat failed to parse a non-identity matrix from individual arguments");
 	failures++;
     }
 
