@@ -110,16 +110,31 @@ test_sobol_sphere(void)
     struct bn_soboldata *s1 = NULL;
     struct bn_soboldata *s2 = NULL;
     point_t center = {1.0, 2.0, 3.0};
+    point_t saved = {7.0, 8.0, 9.0};
+    point_t sample = {7.0, 8.0, 9.0};
     fastf_t radius = 2.5;
     point_t first = VINIT_ZERO;
     point_t p1;
     point_t p2;
     point_t delta;
+    vect_t mean = VINIT_ZERO;
     int saw_variation = 0;
     int i;
 
     s1 = bn_sobol_create(2, 2024UL);
     s2 = bn_sobol_create(2, 2024UL);
+
+    bn_sobol_sph_sample(sample, center, 0.0, s1);
+    if (!vect_close(sample, saved, 0.0)) {
+	report_failure(test, "zero-radius Sobol sampling should leave the output unchanged");
+	failures++;
+    }
+
+    bn_sobol_sph_sample(sample, center, 1.0, NULL);
+    if (!vect_close(sample, saved, 0.0)) {
+	report_failure(test, "NULL-state Sobol sampling should leave the output unchanged");
+	failures++;
+    }
 
     for (i = 0; i < 256; i++) {
 	bn_sobol_sph_sample(p1, center, radius, s1);
@@ -135,6 +150,9 @@ test_sobol_sphere(void)
 	    failures++;
 	    break;
 	}
+	mean[X] += delta[X];
+	mean[Y] += delta[Y];
+	mean[Z] += delta[Z];
 	if (i == 0) {
 	    VMOVE(first, p1);
 	} else if (!vect_close(p1, first, DBL_EPSILON * 8.0)) {
@@ -144,6 +162,12 @@ test_sobol_sphere(void)
 
     if (!saw_variation) {
 	report_failure(test, "Sobol sphere sampler produced a degenerate constant sequence");
+	failures++;
+    }
+
+    VSCALE(mean, mean, 1.0 / 256.0);
+    if (MAGNITUDE(mean) > radius * 0.15) {
+	report_failure(test, "Sobol sample mean drifted too far from the sphere center");
 	failures++;
     }
 
