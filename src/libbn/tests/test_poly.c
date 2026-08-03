@@ -102,6 +102,25 @@ has_real_root(const bn_complex_t *roots, int n, double expected, double tol)
 
 
 static int
+poly_close(const bn_poly_t *poly, int degree, const double *coeffs, double tol)
+{
+    int i;
+
+    if ((int)poly->dgr != degree) {
+	return 0;
+    }
+
+    for (i = 0; i <= degree; i++) {
+	if (!scalar_close(poly->cf[i], coeffs[i], tol)) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+
+static int
 test_poly_ops(void)
 {
     int failures = 0;
@@ -158,6 +177,125 @@ test_poly_ops(void)
 	!scalar_close(quotient.cf[2], 6.0, 1.0e-12) ||
 	!scalar_close(remainder.cf[0], 0.0, 1.0e-12)) {
 	report_failure(test, "bn_poly_synthetic_division produced the wrong quotient or remainder");
+	failures++;
+    }
+
+    return failures;
+}
+
+
+static int
+test_poly_legacy(void)
+{
+    int failures = 0;
+    const char *test = "poly_legacy";
+    const double zero2c[] = {0.0, 0.0, 0.0};
+    const double zero4c[] = {0.0, 0.0, 0.0, 0.0, 0.0};
+    const double neg2c[] = {-4853.0, -324.0, -275.0};
+    const double pos2c[] = {61685316.0, 33552288.0, 27339096.0};
+    const double mulnegc[] = {-4.0, -3.0, -2.0};
+    const double mulposc[] = {7854.0, 2136.0, 1450.0};
+    const double add_neg_expected[] = {-9706.0, -648.0, -550.0};
+    const double add_pos_expected[] = {123370632.0, 67104576.0, 54678192.0};
+    const double sub_pos_expected[] = {61690169.0, 33552612.0, 27339371.0};
+    const double scale_neg_expected[] = {-8000.0, -6000.0, -4000.0};
+    const double scale_pos_expected[] = {-3141600.0, -854400.0, -580000.0};
+    const double mul_neg_expected[] = {16.0, 24.0, 25.0, 12.0, 4.0};
+    const double mul_pos_expected[] = {61685316.0, 33552288.0, 27339096.0, 6194400.0, 2102500.0};
+    const double divisorc[] = {-4.0, -3.0, -2.0, -38.0};
+    const double dividendc[] = {5478.0, 5485.0, 458.0, 258564.0, 54785.0};
+    const double quo_expected[] = {-1369.5, -344.125};
+    const double rem_expected[] = {-3313.375, 205834.75, 41708.25};
+    bn_poly_t zero2 = poly_from_coeffs(2, zero2c);
+    bn_poly_t neg2 = poly_from_coeffs(2, neg2c);
+    bn_poly_t pos2 = poly_from_coeffs(2, pos2c);
+    bn_poly_t mulneg = poly_from_coeffs(2, mulnegc);
+    bn_poly_t mulpos = poly_from_coeffs(2, mulposc);
+    bn_poly_t divisor = poly_from_coeffs(3, divisorc);
+    bn_poly_t dividend = poly_from_coeffs(4, dividendc);
+    bn_poly_t out = BN_POLY_INIT_ZERO;
+    bn_poly_t quotient = BN_POLY_INIT_ZERO;
+    bn_poly_t remainder = BN_POLY_INIT_ZERO;
+
+    bn_poly_add(&out, &zero2, &zero2);
+    if (!poly_close(&out, 2, zero2c, 0.0)) {
+	report_failure(test, "legacy zero polynomial add case failed");
+	failures++;
+    }
+
+    bn_poly_add(&out, &neg2, &neg2);
+    if (!poly_close(&out, 2, add_neg_expected, 0.0)) {
+	report_failure(test, "legacy negative polynomial add case failed");
+	failures++;
+    }
+
+    bn_poly_add(&out, &pos2, &pos2);
+    if (!poly_close(&out, 2, add_pos_expected, 0.0)) {
+	report_failure(test, "legacy positive polynomial add case failed");
+	failures++;
+    }
+
+    bn_poly_sub(&out, &zero2, &zero2);
+    if (!poly_close(&out, 2, zero2c, 0.0)) {
+	report_failure(test, "legacy zero polynomial subtract case failed");
+	failures++;
+    }
+
+    bn_poly_sub(&out, &neg2, &zero2);
+    if (!poly_close(&out, 2, neg2c, 0.0)) {
+	report_failure(test, "legacy negative polynomial subtract case failed");
+	failures++;
+    }
+
+    bn_poly_sub(&out, &pos2, &neg2);
+    if (!poly_close(&out, 2, sub_pos_expected, 0.0)) {
+	report_failure(test, "legacy positive polynomial subtract case failed");
+	failures++;
+    }
+
+    out = zero2;
+    bn_poly_scale(&out, 0.0);
+    if (!poly_close(&out, 2, zero2c, 0.0)) {
+	report_failure(test, "legacy zero polynomial scale case failed");
+	failures++;
+    }
+
+    out = neg2;
+    bn_poly_scale(&out, 2000.0);
+    if (!poly_close(&out, 2, scale_neg_expected, 0.0)) {
+	report_failure(test, "legacy negative polynomial scale case failed");
+	failures++;
+    }
+
+    out = mulpos;
+    bn_poly_scale(&out, -400.0);
+    if (!poly_close(&out, 2, scale_pos_expected, 0.0)) {
+	report_failure(test, "legacy positive polynomial scale case failed");
+	failures++;
+    }
+
+    bn_poly_mul(&out, &zero2, &zero2);
+    if (!poly_close(&out, 4, zero4c, 0.0)) {
+	report_failure(test, "legacy zero polynomial multiply case failed");
+	failures++;
+    }
+
+    bn_poly_mul(&out, &mulneg, &mulneg);
+    if (!poly_close(&out, 4, mul_neg_expected, 0.0)) {
+	report_failure(test, "legacy negative polynomial multiply case failed");
+	failures++;
+    }
+
+    bn_poly_mul(&out, &mulpos, &mulpos);
+    if (!poly_close(&out, 4, mul_pos_expected, 0.0)) {
+	report_failure(test, "legacy positive polynomial multiply case failed");
+	failures++;
+    }
+
+    bn_poly_synthetic_division(&quotient, &remainder, &dividend, &divisor);
+    if (!poly_close(&quotient, 1, quo_expected, 1.0e-12) ||
+	!poly_close(&remainder, 2, rem_expected, 1.0e-12)) {
+	report_failure(test, "legacy synthetic division case failed");
 	failures++;
     }
 
@@ -291,6 +429,7 @@ test_poly_roots(void)
 
 static const struct bn_api_case poly_cases[] = {
     {"ops", test_poly_ops},
+    {"legacy", test_poly_legacy},
     {"roots", test_poly_roots},
     {NULL, NULL}
 };
