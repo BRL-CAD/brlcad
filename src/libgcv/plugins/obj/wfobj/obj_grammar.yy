@@ -870,6 +870,12 @@ group ::= GROUP id_list.
 {
     obj::set_working_groupset(obj::get_extra(scanner));
 }
+group ::= GROUP.
+{
+    obj::get_state(scanner).working_stringset.clear();
+    obj::get_state(scanner).working_stringset.insert("default");
+    obj::set_working_groupset(obj::get_extra(scanner));
+}
 
 smooth ::= SMOOTH INTEGER(A).
 {

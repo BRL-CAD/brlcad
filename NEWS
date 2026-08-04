@@ -10,6 +10,12 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
+--- 20XX-XX-XX  Release 7.44.2                                     ---
+----------------------------------------------------------------------
+
+* fixed OBJ conversion bug importing unnamed groups - Sean Morrison
+
+
 --- 2026-07-23  Release 7.44.0                                     ---
 ----------------------------------------------------------------------
 

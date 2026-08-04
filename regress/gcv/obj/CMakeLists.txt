@@ -7,12 +7,14 @@ else()
 endif(TARGET gcv-assetimport)
 
 gcv_regress_util("obj" "tetra.obj" ${dep_str})
+gcv_regress_util("obj_unnamed_group" "tetra-unnamed-group.obj" DEPS "gcv;gcv-obj")
 gcv_regress_util("obj" "tetra.g" ${dep_str} EXPORTER)
 distclean("${CMAKE_CURRENT_BINARY_DIR}/conv-tetra.mtl")
 
 cmakefiles(
   CMakeLists.txt
   tetra.obj
+  tetra-unnamed-group.obj
   tetra.mtl	# material file for obj
 )
 
