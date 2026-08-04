@@ -71,9 +71,20 @@ foreach(tname ${RT_OPT_TESTS})
 endforeach(tname)
 brlcad_add_test(NAME rt_opt_short_only COMMAND test_rt_opt --short-only)
 
+brlcad_add_test(
+  NAME rt_disk_framebuffer_size
+  COMMAND
+    "${CMAKE_COMMAND}"
+    "-DRT=$<TARGET_FILE:rt>"
+    "-DDB=${CMAKE_BINARY_DIR}/${DATA_DIR}/db/moss.g"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rt_disk_framebuffer_size.cmake"
+)
+
 # Housekeeping
 cmakefiles(
   CMakeLists.txt
+  test_rt_disk_framebuffer_size.cmake
   test_rt_opt.c
   run_rt_opt_lcov.sh
   run_rt_opt_short_compare.sh

@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.44.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed ray tracing small images to disk framebuffers - Sean Morrison
 * fixed OBJ conversion bug importing unnamed groups - Sean Morrison
 
 
