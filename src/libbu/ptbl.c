@@ -30,6 +30,22 @@
 
 static const size_t BU_PTBL_DEFAULT_LEN = 16;
 
+
+static inline intmax_t _BU_ATTR_ALWAYS_INLINE
+ptbl_locate(const struct bu_ptbl *b, const long int *p)
+{
+    intmax_t k;
+    const long **pp = (const long **)b->buffer;
+
+    for (k = (intmax_t)b->end-1; k >= 0; k--) {
+	if (pp[k] == p)
+	    return k;
+    }
+
+    return -1;
+}
+
+
 void
 bu_ptbl_init(struct bu_ptbl *b, size_t len, const char *str)
 {
@@ -87,19 +103,9 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 intmax_t
 bu_ptbl_locate(const struct bu_ptbl *b, const long int *p)
 {
-    intmax_t k;
-    const long **pp;
-
     BU_CK_PTBL(b);
 
-    pp = (const long **)b->buffer;
-    for (k = (intmax_t)b->end-1; k >= 0; k--) {
-	if (pp[k] == p) {
-	    return k;
-	}
-    }
-
-    return -1;
+    return ptbl_locate(b, p);
 }
 
 
@@ -123,19 +129,14 @@ bu_ptbl_zero(struct bu_ptbl *b, const long int *p)
 intmax_t
 bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 {
-    register intmax_t k;
-    register long **pp;
+    intmax_t k;
 
     BU_CK_PTBL(b);
 
-    pp = b->buffer;
-
     /* search for existing */
-    for (k = (intmax_t)b->end-1; k >= 0; k--) {
-	if (pp[k] == p) {
-	    return k;
-	}
-    }
+    k = ptbl_locate(b, p);
+    if (k >= 0)
+	return k;
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PTBL))
 	bu_log("bu_ptbl_ins_unique(%p, %p)\n", (void *)b, (void *)p);
@@ -222,7 +223,8 @@ bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
 					   "bu_ptbl.buffer[] (cat_uniq)");
     }
     for (BU_PTBL_FOR(p, (long **), src)) {
-	bu_ptbl_ins_unique(dest, *p);
+	if (ptbl_locate(dest, *p) < 0)
+	    dest->buffer[dest->end++] = *p;
     }
 }
 
