@@ -27,10 +27,6 @@ Recent Bugs
   problem area with -j but there are likely call sites..  Need to
   scrub all fb_write() and ideally make this a non-issue via icv API.
 
-* obj-g and gcv converters choke and crash on obj with unnamed g line.
-  spec wording on whether that's valid is unclear, but encountered in
-  wild.
-
 * recursive bu_parallel() failure, tbd whether cpp11 or pthread impl,
   likely because IDs are exceeding MAX_PSW, causing mayhem and chaos.
 
@@ -123,11 +119,6 @@ Recent Bugs
   crashing.
 
 * killtree / crashes
-
-* killtree reports spurious db_lookup failures saying object does not
-  exist as it previously deleted it.  should keep track of what it
-  deletes to not output spuriously, or (better) delete transactionally
-  so it only attempts to lookup and delete once per object.
 
 * object names with a / or \ in them make ls or underlying directory
   parsing logic display them incorrectly.
@@ -226,9 +217,6 @@ Recent Bugs
 
 * Recursive submodel predictably goes infinite, need stack-based
   db_walk_tree(): mged> in submodel submodel submodel grid test.g
-
-* running rt -s20 -F file.pix ... does not result in an 20x20 image
-  being written out.  it ends up being 512x512.
 
 * running rt -C255/0/0 -o file.pix ... does not result in the
   background color getting used.  It does work with -F file.pix, going
