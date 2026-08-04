@@ -81,9 +81,20 @@ brlcad_add_test(
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rtsil_output.cmake"
 )
 
+brlcad_add_test(
+  NAME rt_disk_framebuffer_size
+  COMMAND
+    "${CMAKE_COMMAND}"
+    "-DRT=$<TARGET_FILE:rt>"
+    "-DDB=${CMAKE_BINARY_DIR}/${DATA_DIR}/db/moss.g"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rt_disk_framebuffer_size.cmake"
+)
+
 # Housekeeping
 cmakefiles(
   CMakeLists.txt
+  test_rt_disk_framebuffer_size.cmake
   test_rt_opt.c
   test_rtsil_output.cmake
   run_rt_opt_lcov.sh
