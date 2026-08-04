@@ -1347,7 +1347,7 @@ rt_solid_bitfinder(union tree *treep, struct region *regp, struct resource *resp
 	    case OP_SOLID:
 		stp = treep->tr_a.tu_stp;
 		RT_CK_SOLTAB(stp);
-		bu_ptbl_ins(&stp->st_regions, (long *)regp);
+		bu_ptbl_ins_unique(&stp->st_regions, (long *)regp);
 		break;
 	    case OP_UNION:
 	    case OP_INTERSECT:
