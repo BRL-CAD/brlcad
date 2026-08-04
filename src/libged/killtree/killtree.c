@@ -29,6 +29,7 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "bu/hash.h"
 
 #include "../ged_private.h"
 
@@ -45,6 +46,11 @@ struct killtree_data {
     int ac;
     char **av;
     size_t av_capacity;
+    int pending_ac;
+    char **pending;
+    size_t pending_capacity;
+    struct bu_hash_tbl *queued;
+    struct bu_hash_tbl *visited;
 };
 
 
@@ -76,12 +82,34 @@ find_reference(struct db_i *dbip, const char *topobj, const char *obj)
 
 
 static void
-killtree_callback(struct db_i *dbip, struct directory *dp, void *ptr)
+append_name(char ***names, int *count, size_t *capacity, const char *name)
+{
+    if ((size_t)(*count + 2) >= *capacity) {
+	*names = (char **)bu_realloc(*names, sizeof(char *) * (*capacity + AV_STEP), "grow name array");
+	*capacity += AV_STEP;
+    }
+
+    (*names)[(*count)++] = bu_strdup(name);
+    (*names)[*count] = NULL;
+}
+
+
+static void
+collect_callback(struct db_i *dbip, struct directory *dp, void *ptr)
 {
     struct killtree_data *gktdp = (struct killtree_data *)ptr;
     int ref_exists = 0;
+    const uint8_t *name;
+    size_t name_len;
 
-    if (dbip == DBI_NULL)
+    if (dbip == DBI_NULL || dp == RT_DIR_NULL)
+	return;
+
+    name = (const uint8_t *)dp->d_namep;
+    name_len = strlen(dp->d_namep);
+
+    if (bu_hash_get(gktdp->visited, name, name_len)
+	|| bu_hash_get(gktdp->queued, name, name_len))
 	return;
 
     /* don't bother checking for references if the -f or -a flags are
@@ -97,16 +125,39 @@ killtree_callback(struct db_i *dbip, struct directory *dp, void *ptr)
     if (ref_exists)
 	return;
 
+    (void)bu_hash_set(gktdp->queued, name, name_len, gktdp);
+    append_name(&gktdp->pending, &gktdp->pending_ac,
+		&gktdp->pending_capacity, dp->d_namep);
+}
+
+
+/* Deletion is deliberately separate from collection.  db_treewalk_basic()
+ * resolves every reference as it walks, so mutating the directory from its
+ * callback makes a repeated leaf look like a missing object later in the same
+ * traversal.
+ */
+static void
+killtree_process(struct db_i *dbip, struct directory *dp, struct killtree_data *gktdp)
+{
+    const uint8_t *name;
+    size_t name_len;
+
+    if (dbip == DBI_NULL || dp == RT_DIR_NULL)
+	return;
+
+    name = (const uint8_t *)dp->d_namep;
+    name_len = strlen(dp->d_namep);
+
+    if (bu_hash_get(gktdp->visited, name, name_len))
+	return;
+
+    (void)bu_hash_set(gktdp->visited, name, name_len, gktdp);
+
     if (gktdp->print) {
 	if (!gktdp->killrefs)
 	    bu_vls_printf(gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
 	else {
-	    if ((size_t)(gktdp->ac + 2) >= gktdp->av_capacity) {
-		gktdp->av = (char **)bu_realloc(gktdp->av, sizeof(char *) * (gktdp->av_capacity + AV_STEP), "realloc av");
-		gktdp->av_capacity += AV_STEP;
-	    }
-	    gktdp->av[gktdp->ac++] = bu_strdup(dp->d_namep);
-	    gktdp->av[gktdp->ac] = (char *)0;
+	    append_name(&gktdp->av, &gktdp->ac, &gktdp->av_capacity, dp->d_namep);
 
 	    bu_vls_printf(gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
 	}
@@ -122,12 +173,7 @@ killtree_callback(struct db_i *dbip, struct directory *dp, void *ptr)
 		bu_vls_printf(gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
 	    }
 	} else {
-	    if ((size_t)(gktdp->ac + 2) >= gktdp->av_capacity) {
-		gktdp->av = (char **)bu_realloc(gktdp->av, sizeof(char *) * (gktdp->av_capacity + AV_STEP), "realloc av");
-		gktdp->av_capacity += AV_STEP;
-	    }
-	    gktdp->av[gktdp->ac++] = bu_strdup(dp->d_namep);
-	    gktdp->av[gktdp->ac] = (char *)0;
+	    append_name(&gktdp->av, &gktdp->ac, &gktdp->av_capacity, dp->d_namep);
 
 	    if (db_delete(dbip, dp) != 0 || db_dirdelete(dbip, dp) != 0) {
 		bu_vls_printf(gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
@@ -169,10 +215,14 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     gktd.force = 0;
     gktd.ac = 1;
     gktd.top = NULL;
+    gktd.pending_ac = 0;
+    gktd.queued = NULL;
+    gktd.visited = bu_hash_create(0);
 
     gktd.av = (char **)bu_calloc(1, sizeof(char *) * AV_STEP, "alloc av");
     gktd.av_capacity = AV_STEP;
-    BU_ASSERT(gktd.ac + argc + 2 < AV_STEP); /* potential -n opts */
+    gktd.pending = (char **)bu_calloc(1, sizeof(char *) * AV_STEP, "alloc pending names");
+    gktd.pending_capacity = AV_STEP;
     gktd.av[0] = "killrefs";
     gktd.av[1] = (char *)0;
 
@@ -194,6 +244,10 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		bu_free(gktd.av, "free av (error)");
 		gktd.av = NULL;
+		bu_free(gktd.pending, "free pending names (error)");
+		gktd.pending = NULL;
+		bu_hash_destroy(gktd.visited);
+		gktd.visited = NULL;
 		return BRLCAD_ERROR;
 	}
     }
@@ -211,8 +265,13 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "{");
 
     for (i = 1; i < argc; i++) {
-	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+	dp = db_lookup(gedp->dbip, argv[i], LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
+	    size_t name_len = strlen(argv[i]);
+	    if (!bu_hash_get(gktd.visited, (const uint8_t *)argv[i], name_len))
+		(void)db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY);
 	    continue;
+	}
 
 	/* ignore phony objects */
 	if (dp->d_addr == RT_DIR_PHONY_ADDR)
@@ -221,8 +280,19 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 	/* stash the what's killed so we can find refs elsewhere */
 	gktd.top = argv[i];
 
+	gktd.queued = bu_hash_create(0);
 	db_treewalk_basic(gedp->dbip, dp,
-		    killtree_callback, killtree_callback, (void *)&gktd);
+		    collect_callback, collect_callback, (void *)&gktd);
+
+	for (int j = 0; j < gktd.pending_ac; j++) {
+	    dp = db_lookup(gedp->dbip, gktd.pending[j], LOOKUP_QUIET);
+	    killtree_process(gedp->dbip, dp, &gktd);
+	    bu_free(gktd.pending[j], "pending killtree name");
+	    gktd.pending[j] = NULL;
+	}
+	gktd.pending_ac = 0;
+	bu_hash_destroy(gktd.queued);
+	gktd.queued = NULL;
     }
 
     /* Close the sublist of would-be killed objects. Also open the
@@ -249,6 +319,10 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_free(gktd.av, "free av");
     gktd.av = NULL;
+    bu_free(gktd.pending, "free pending names");
+    gktd.pending = NULL;
+    bu_hash_destroy(gktd.visited);
+    gktd.visited = NULL;
 
     /* Done removing stuff - update references. */
     db_update_nref(gedp->dbip);
