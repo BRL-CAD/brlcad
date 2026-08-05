@@ -124,6 +124,10 @@ add_subdirectory(edit)
 brlcad_addexec(rt_prim_tess prim_tess.c "librt;libnmg;libwdb;libbg;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_prim_tess COMMAND rt_prim_tess)
 
+# Solid primitive-to-BRep topology
+brlcad_addexec(rt_primitive_brep primitive_brep.cpp "librt;libbrep;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_primitive_brep COMMAND rt_primitive_brep)
+
 # stand-alone Crofton estimator tests
 brlcad_addexec(rt_crofton crofton.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_crofton COMMAND rt_crofton)
@@ -151,6 +155,7 @@ set(
   default_object.c
   dsp_raytrace_check.c
   dsp_sa_vol_check.c
+  primitive_brep.cpp
   brep_boolean_tests.g
   cyclic_tests.g
   extreme_ssi_test.g

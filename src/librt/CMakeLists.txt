@@ -330,6 +330,8 @@ set(
   primitives/bot/tieprivate.h
   primitives/brep/brep_debug.h
   primitives/brep/brep_local.h
+  primitives/brep/primitive_brep.h
+  primitives/sketch/sketch_brep.h
   primitives/datum/datum.h
   primitives/dsp/dsp.h
   primitives/dsp/TerraScape.hpp

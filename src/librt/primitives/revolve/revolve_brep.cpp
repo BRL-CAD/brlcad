@@ -25,131 +25,83 @@
 
 #include "common.h"
 
+#include <vector>
+
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "nmg.h"
 #include "brep.h"
+#include "primitives/brep/primitive_brep.h"
+#include "primitives/sketch/sketch_brep.h"
 
-extern "C" {
-    extern void rt_sketch_brep(ON_Brep **bi, const struct rt_db_internal *ip, const struct bn_tol *tol);
-}
-
-
-void FindLoops(ON_Brep **b, const ON_Line* revaxis, const fastf_t ang) {
-    ON_3dPoint ptmatch, ptterminate, pstart, pend;
-
-    int *curvearray;
-    curvearray = static_cast<int*>(bu_malloc((*b)->m_C3.Count() * sizeof(int), "sketch edge list"));
-    for (int i = 0; i < (*b)->m_C3.Count(); i++) {
-	curvearray[i] = -1;
-    }
-    ON_SimpleArray<ON_Curve *> allsegments;
-    ON_SimpleArray<ON_Curve *> loopsegments;
-    int loop_complete;
-    for (int i = 0; i < (*b)->m_C3.Count(); i++) {
-	allsegments.Append((*b)->m_C3[i]);
+static bool
+FindLoops(ON_Brep **b, const ON_Line *revaxis, fastf_t ang,
+	const struct bn_tol *tol, int *profile_loop_count)
+{
+    std::vector<ON_SimpleArray<ON_Curve *> > loops;
+    size_t outer_index = 0;
+    if (!rt_sketch_brep_order_loops(**b, tol, &loops, &outer_index)) {
+	bu_log("rt_revolve_brep: sketch segments do not form closed loops!\n");
+	return false;
     }
 
-    int allcurvesassigned = 0;
-    int assignedcount = 0;
-    int curvecount = 0;
-    int loopcount = 0;
-    while (allcurvesassigned != 1) {
-	int havefirstcurve = 0;
-	while ((havefirstcurve == 0) && (curvecount < allsegments.Count())) {
-	    if (curvearray[curvecount] == -1) {
-		havefirstcurve = 1;
-	    } else {
-		curvecount++;
+    for (size_t i = 0; i < loops.size(); ++i) {
+	ON_PolyCurve *poly_curve = new ON_PolyCurve();
+	for (int j = 0; j < loops[i].Count(); ++j) {
+	    ON_Curve *segment = loops[i][j]->DuplicateCurve();
+	    if (!segment || !poly_curve->Append(segment)) {
+		delete segment;
+		delete poly_curve;
+		return false;
 	    }
 	}
-	// First, sort through things to assign curves to loops.
-	loop_complete = 0;
-	while ((loop_complete != 1) && (allcurvesassigned != 1)) {
-	    curvearray[curvecount] = loopcount;
-	    ptmatch = (*b)->m_C3[curvecount]->PointAtEnd();
-	    ptterminate = (*b)->m_C3[curvecount]->PointAtStart();
-	    for (int i = 0; i < allsegments.Count(); i++) {
-		pstart = (*b)->m_C3[i]->PointAtStart();
-		pend = (*b)->m_C3[i]->PointAtEnd();
-		if (NEAR_ZERO(ptmatch.DistanceTo(pstart), ON_ZERO_TOLERANCE) && (curvearray[i] == -1)) {
-		    curvecount = i;
-		    ptmatch = pend;
-		    i = allsegments.Count();
-		    if (NEAR_ZERO(pend.DistanceTo(ptterminate), ON_ZERO_TOLERANCE)) {
-			loop_complete = 1;
-			loopcount++;
-		    }
-		} else {
-		    if (i == allsegments.Count() - 1) {
-			loop_complete = 1; //If we reach this pass, loop had better be complete
-			loopcount++;
-			assignedcount = 0;
-			for (int j = 0; j < allsegments.Count(); j++) {
-			    if (curvearray[j] != -1) assignedcount++;
-			}
-			if (allsegments.Count() == assignedcount) allcurvesassigned = 1;
-		    }
-		}
-	    }
-	}
-    }
-
-    double maxdist = 0.0;
-    int largest_loop_index = 0;
-    for (int i = 0; i <= loopcount ; i++) {
-	ON_BoundingBox lbbox;
-	for (int j = 0; j < (*b)->m_C3.Count(); j++) {
-	    if (curvearray[j] == i) {
-		ON_Curve *currcurve = (*b)->m_C3[j];
-		currcurve->GetBoundingBox(lbbox, true);
-	    }
-	}
-	point_t minpt, maxpt;
-	double currdist;
-	VSET(minpt, lbbox.m_min[0], lbbox.m_min[1], lbbox.m_min[2]);
-	VSET(maxpt, lbbox.m_max[0], lbbox.m_max[1], lbbox.m_max[2]);
-	currdist = DIST_PNT_PNT(minpt, maxpt);
-	if (currdist > maxdist) {
-	    maxdist = currdist;
-	    largest_loop_index = i;
-	}
-    }
-
-    for (int i = 0; i < loopcount ; i++) {
-	ON_PolyCurve* poly_curve = new ON_PolyCurve();
-	for (int j = 0; j < allsegments.Count(); j++) {
-	    if (curvearray[j] == i) {
-		 poly_curve->Append(allsegments[j]);
-	    }
-	}
-
+	poly_curve->SynchronizeSegmentDomains();
 	ON_NurbsCurve *revcurve = ON_NurbsCurve::New();
-	poly_curve->GetNurbForm(*revcurve);
-	ON_RevSurface* revsurf = ON_RevSurface::New();
+	if (poly_curve->GetNurbForm(*revcurve) <= 0) {
+	    delete revcurve;
+	    delete poly_curve;
+	    return false;
+	}
+	delete poly_curve;
+	ON_RevSurface *revsurf = ON_RevSurface::New();
 	revsurf->m_curve = revcurve;
 	revsurf->m_axis = *revaxis;
 	revsurf->m_angle = ON_Interval(0, ang);
+	revsurf->m_t = revsurf->m_angle;
+	revsurf->m_bTransposed = false;
+	revsurf->BoundingBox();
 	ON_BrepFace *face = (*b)->NewFace(*revsurf);
-
-	if (i == largest_loop_index) {
+	delete revsurf;
+	if (!face)
+	    return false;
+	if (i == outer_index)
 	    (*b)->FlipFace(*face);
-	}
     }
+    if (profile_loop_count)
+	*profile_loop_count = static_cast<int>(loops.size());
+    return true;
+}
 
-    bu_free(curvearray, "sketch edge list");
+
+static bool
+CurveOnPlane(const ON_Curve &curve, const ON_Plane &plane, double tolerance)
+{
+    const ON_Interval domain = curve.Domain();
+    const double parameters[] = {0.0, 0.173, 0.419, 0.731, 1.0};
+    for (size_t i = 0; i < sizeof(parameters) / sizeof(parameters[0]); ++i) {
+	if (fabs(plane.DistanceTo(curve.PointAt(
+		domain.ParameterAt(parameters[i])))) > tolerance)
+	    return false;
+    }
+    return true;
 }
 
 
 extern "C" void
 rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct rt_db_internal *tmp_internal;
     struct rt_revolve_internal *rip;
     struct rt_sketch_internal *eip;
-
-    BU_ALLOC(tmp_internal, struct rt_db_internal);
-    RT_DB_INTERNAL_INIT(tmp_internal);
 
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
@@ -171,138 +123,120 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     plane_x_dir = ON_3dVector(eip->u_vec);
     plane_y_dir = ON_3dVector(eip->v_vec);
     const ON_Plane sketch_plane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
-
-    //  For the brep, need the list of 3D vertex points.  In sketch, they
-    //  are stored as 2D coordinates, so use the sketch_plane to define 3 space
-    //  points for the vertices.
-    for (size_t i = 0; i < eip->vert_count; i++) {
-	(*b)->NewVertex(sketch_plane.PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
+    ON_Xform embedding;
+    if (!rt_sketch_brep_embedding(&embedding, plane_origin, plane_x_dir,
+	    plane_y_dir)) {
+	(*b)->Destroy();
+	return;
     }
 
-    // Create the brep elements corresponding to the sketch lines, curves
-    // and bezier segments. Create 2d, 3d and BrepEdge elements for each segment.
-    // Will need to use the bboxes of each element to
-    // build the overall bounding box for the face. Use bGrowBox to expand
-    // a single box.
-    struct line_seg *lsg;
-    struct carc_seg *csg;
-    struct bezier_seg *bsg;
-    uint32_t *lng;
-    for (size_t i = 0; i < (&eip->curve)->count; i++) {
-	lng = (uint32_t *)(&eip->curve)->segment[i];
-	switch (*lng) {
-	    case CURVE_LSEG_MAGIC: {
-		lsg = (struct line_seg *)lng;
-		ON_Curve* lsg3d = new ON_LineCurve((*b)->m_V[lsg->start].Point(), (*b)->m_V[lsg->end].Point());
-		lsg3d->SetDomain(0.0, 1.0);
-		(*b)->m_C3.Append(lsg3d);
-	    }
-		break;
-	    case CURVE_CARC_MAGIC:
-		csg = (struct carc_seg *)lng;
-		if (csg->radius < 0) { {
-		    ON_3dPoint cntrpt = (*b)->m_V[csg->end].Point();
-		    ON_3dPoint edgept = (*b)->m_V[csg->start].Point();
-		    ON_Plane cplane = ON_Plane(cntrpt, plane_x_dir, plane_y_dir);
-		    ON_Circle c3dcirc = ON_Circle(cplane, cntrpt.DistanceTo(edgept));
-		    ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)c3dcirc);
-		    c3d->SetDomain(0.0, 1.0);
-		    (*b)->m_C3.Append(c3d);
-		}
-		} else {
-		    // need to calculated 3rd point on arc - look to sketch.c around line 581 for
-		    // logic
-		}
-		break;
-	    case CURVE_BEZIER_MAGIC:
-		bsg = (struct bezier_seg *)lng;
-		{
-		    ON_3dPointArray bezpoints(bsg->degree + 1);
-		    for (int j = 0; j < bsg->degree + 1; j++) {
-			bezpoints.Append((*b)->m_V[bsg->ctl_points[j]].Point());
-		    }
-		    ON_BezierCurve bez3d = ON_BezierCurve(bezpoints);
-		    ON_NurbsCurve* beznurb3d = ON_NurbsCurve::New();
-		    bez3d.GetNurbForm(*beznurb3d);
-		    beznurb3d->SetDomain(0.0, 1.0);
-		    (*b)->m_C3.Append(beznurb3d);
-		}
-		break;
-	    default:
-		bu_log("Unhandled sketch object\n");
-		break;
+    for (size_t i = 0; i < eip->curve.count; ++i) {
+	enum rt_sketch_brep_curve_status status;
+	ON_Curve *curve = rt_sketch_brep_curve(eip, i, embedding, tol,
+	    &status);
+	if (status == RT_SKETCH_BREP_CURVE_DEGENERATE)
+	    continue;
+	if (!curve) {
+	    bu_log("rt_revolve_brep: sketch segment %zu is invalid or unsupported\n",
+		i);
+	    (*b)->Destroy();
+	    return;
 	}
+	(*b)->m_C3.Append(curve);
     }
 
     vect_t endpoint;
     VADD2(endpoint, rip->v3d, rip->axis3d);
     const ON_Line& revaxis = ON_Line(ON_3dPoint(rip->v3d), ON_3dPoint(endpoint));
 
-    FindLoops(b, &revaxis, rip->ang);
+    int profile_loop_count = 0;
+    if (!FindLoops(b, &revaxis, rip->ang, tol, &profile_loop_count)) {
+	(*b)->Destroy();
+	return;
+    }
 
     // Create the two boundary surfaces, if it's not a full revolution
     if (!full_revolve) {
-	// First, deduce the transformation matrices to calculate the position of the end surface
-	// The transformation matrices are to rotate an arbitrary point around an arbitrary axis
-	// Let the point A = (x, y, z), the rotation axis is p1p2 = (x2,y2,z2)-(x1,y1,z1) = (a,b,c)
-	// Then T1 is to translate p1 to the origin
-	// Rx is to rotate p1p2 around the X axis to the plane XOZ
-	// Ry is to rotate p1p2 around the Y axis to be coincident to Z axis
-	// Rz is to rotate A with the angle around Z axis (the new p1p2)
-	// RxInv, RyInv, T1Inv are the inverse transformation of Rx, Ry, T1, respectively.
-	// The whole transformation is A' = A*T1*Rx*Ry*Rz*Ry*Inv*Rx*Inv = A*R
-	vect_t end_plane_origin, end_plane_x_dir, end_plane_y_dir;
-	mat_t R;
-	MAT_IDN(R);
-	mat_t T1, Rx, Ry, Rz, RxInv, RyInv, T1Inv;
-	MAT_IDN(T1);
-	VSET(&T1[12], -rip->v3d[0], -rip->v3d[1], -rip->v3d[2]);
-	MAT_IDN(Rx);
-	fastf_t v = sqrt(rip->axis3d[1]*rip->axis3d[1]+rip->axis3d[2]*rip->axis3d[2]);
-	VSET(&Rx[4], 0, rip->axis3d[2]/v, rip->axis3d[1]/v);
-	VSET(&Rx[8], 0, -rip->axis3d[1]/v, rip->axis3d[2]/v);
-	MAT_IDN(Ry);
-	fastf_t u = MAGNITUDE(rip->axis3d);
-	VSET(&Ry[0], v/u, 0, -rip->axis3d[0]/u);
-	VSET(&Ry[8], rip->axis3d[0]/u, 0, v/u);
-	MAT_IDN(Rz);
-	fastf_t C, S;
-	C = cos(rip->ang);
-	S = sin(rip->ang);
-	VSET(&Rz[0], C, S, 0);
-	VSET(&Rz[4], -S, C, 0);
-	bn_mat_inv(RxInv, Rx);
-	bn_mat_inv(RyInv, Ry);
-	bn_mat_inv(T1Inv, T1);
-	mat_t temp;
-	bn_mat_mul4(temp, T1, Rx, Ry, Rz);
-	bn_mat_mul4(R, temp, RyInv, RxInv, T1Inv);
-	VEC3X3MAT(end_plane_origin, plane_origin, R);
-	VADD2(end_plane_origin, end_plane_origin, &R[12]);
-	VEC3X3MAT(end_plane_x_dir, plane_x_dir, R);
-	VEC3X3MAT(end_plane_y_dir, plane_y_dir, R);
+	ON_3dVector axis_direction(rip->axis3d);
+	if (!axis_direction.Unitize()) {
+	    (*b)->Destroy();
+	    return;
+	}
+	ON_Xform rotation;
+	rotation.Rotation(rip->ang, axis_direction, ON_3dPoint(rip->v3d));
+	ON_Plane end_plane(sketch_plane);
+	if (!end_plane.Transform(rotation)) {
+	    (*b)->Destroy();
+	    return;
+	}
 
-	// Create the start and end surface with rt_sketch_brep()
-	struct rt_sketch_internal sketch;
-	sketch = *(rip->skt);
-	ON_Brep *b1 = ON_Brep::New();
-	VMOVE(sketch.V, plane_origin);
-	VMOVE(sketch.u_vec, plane_x_dir);
-	VMOVE(sketch.v_vec, plane_y_dir);
-	tmp_internal->idb_ptr = (void *)(&sketch);
-	rt_sketch_brep(&b1, tmp_internal, tol);
-	(*b)->Append(*b1->Duplicate());
+	const double tolerance = (tol && tol->dist > 0.0) ?
+	    tol->dist : RT_LEN_TOL;
+	ON_SimpleArray<int> start_edges;
+	ON_SimpleArray<int> end_edges;
+	for (int i = 0; i < (*b)->m_E.Count(); ++i) {
+	    const ON_BrepEdge &edge = (*b)->m_E[i];
+	    if (edge.m_ti.Count() != 1 || !edge.IsClosed())
+		continue;
+	    const bool on_start = CurveOnPlane(edge, sketch_plane, tolerance);
+	    const bool on_end = CurveOnPlane(edge, end_plane, tolerance);
+	    if (on_start && !on_end)
+		start_edges.Append(i);
+	    else if (on_end && !on_start)
+		end_edges.Append(i);
+	}
+	if (start_edges.Count() != profile_loop_count ||
+	    end_edges.Count() != profile_loop_count) {
+	    bu_log("rt_revolve_brep: could not identify exact cap boundaries\n");
+	    (*b)->Destroy();
+	    return;
+	}
 
-	ON_Brep *b2 = ON_Brep::New();
-	VMOVE(sketch.V, end_plane_origin);
-	VMOVE(sketch.u_vec, end_plane_x_dir);
-	VMOVE(sketch.v_vec, end_plane_y_dir);
-	tmp_internal->idb_ptr = (void *)(&sketch);
-	rt_sketch_brep(&b2, tmp_internal, tol);
-	(*b)->Append(*b2->Duplicate());
-	(*b)->FlipFace((*b)->m_F[(*b)->m_F.Count()-1]);
+	int start_face = -1;
+	int end_face = -1;
+	if (!rt_brep_mate_planar_cap_loops(**b, start_edges, sketch_plane,
+		false, tol, &start_face) ||
+	    !rt_brep_mate_planar_cap_loops(**b, end_edges, end_plane,
+		true, tol, &end_face)) {
+	    (*b)->Destroy();
+	    return;
+	}
+	(*b)->Compact();
+	(*b)->SetTolerancesBoxesAndFlags(false);
+	for (int i = 0; i < (*b)->m_E.Count(); ++i)
+	    if ((*b)->m_E[i].m_tolerance < 0.0)
+		(*b)->m_E[i].m_tolerance = tolerance;
+	if (!(*b)->IsSolid()) {
+	    (*b)->FlipFace((*b)->m_F[start_face]);
+	    if (!(*b)->IsSolid()) {
+		(*b)->FlipFace((*b)->m_F[end_face]);
+		if (!(*b)->IsSolid()) {
+		    (*b)->FlipFace((*b)->m_F[start_face]);
+		    if (!(*b)->IsSolid()) {
+			bu_log("rt_revolve_brep: cap orientations do not form a solid\n");
+			(*b)->Destroy();
+			return;
+		    }
+		}
+	    }
+	}
     }
-    bu_free(tmp_internal, "free temporary rt_db_internal");
+
+    (*b)->Compact();
+    (*b)->SetTolerancesBoxesAndFlags(false);
+    const double final_tolerance = (tol && tol->dist > 0.0) ?
+	tol->dist : RT_LEN_TOL;
+    for (int i = 0; i < (*b)->m_E.Count(); ++i)
+	if ((*b)->m_E[i].m_tolerance < 0.0)
+	    (*b)->m_E[i].m_tolerance = final_tolerance;
+    ON_wString messages;
+    ON_TextLog log(messages);
+    if (!(*b)->IsValid(&log) || !(*b)->IsSolid()) {
+	ON_String text(messages);
+	bu_log("rt_revolve_brep: failed to construct a valid solid BRep:\n%s",
+	    text.Array());
+	(*b)->Destroy();
+    }
 }
 
 

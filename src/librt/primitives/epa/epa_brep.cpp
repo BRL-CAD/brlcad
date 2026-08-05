@@ -28,9 +28,10 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "brep.h"
+#include "primitives/brep/primitive_brep.h"
 
 extern "C" void
-rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
+rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_epa_internal *eip;
 
@@ -55,33 +56,6 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
     const ON_Plane epa_bottom_plane = ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
-
-    //  Next, create an ellipse in the plane corresponding to the edge of the epa.
-
-    ON_Ellipse ellipse1 = ON_Ellipse(epa_bottom_plane, eip->epa_r1, eip->epa_r2);
-    ON_NurbsCurve ellcurve1;
-    ellipse1.GetNurbForm(ellcurve1);
-    ellcurve1.SetDomain(0.0, 1.0);
-
-    // Generate the bottom cap
-    ON_SimpleArray<ON_Curve*> boundary;
-    boundary.Append(ON_Curve::Cast(&ellcurve1));
-    ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = epa_bottom_plane;
-    bp->SetDomain(0, -100.0, 100.0);
-    bp->SetDomain(1, -100.0, 100.0);
-    bp->SetExtents(0, bp->Domain(0));
-    bp->SetExtents(1, bp->Domain(1));
-    (*b)->m_S.Append(bp);
-    const int bsi = (*b)->m_S.Count() - 1;
-    ON_BrepFace& bface = (*b)->NewFace(bsi);
-    (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true);
-    const ON_BrepLoop* bloop = (*b)->m_L.Last();
-    bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x);
-    bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y);
-    bp->SetExtents(0, bp->Domain(0));
-    bp->SetExtents(1, bp->Domain(1));
-    (*b)->SetTrimIsoFlags(bface);
 
     //  Now, the hard part.  Need an elliptical parabolic NURBS surface
 
@@ -207,11 +181,47 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_Xform trans(transform_mat);
     epacurvedsurf->Transform(trans);
 
-    (*b)->m_S.Append(epacurvedsurf);
-    int surfindex = (*b)->m_S.Count();
-    (*b)->NewFace(surfindex - 1);
-    int faceindex = (*b)->m_F.Count();
-    (*b)->NewOuterLoop(faceindex-1);
+    ON_Brep *epa_brep = new ON_Brep();
+    const int surface_index = epa_brep->AddSurface(epacurvedsurf);
+    ON_BrepFace &side_face = epa_brep->NewFace(surface_index);
+    if (!epa_brep->NewOuterLoop(side_face.m_face_index)) {
+	delete epa_brep;
+	bu_log("rt_epa_brep: unable to construct side boundary loop!\n");
+	return;
+    }
+
+    int side_edge_index = -1;
+    for (int i = 0; i < epa_brep->m_E.Count(); ++i) {
+	if (epa_brep->m_E[i].m_ti.Count() == 1 && epa_brep->m_E[i].IsClosed()) {
+	    if (side_edge_index >= 0) {
+		delete epa_brep;
+		bu_log("rt_epa_brep: side has multiple candidate bottom edges!\n");
+		return;
+	    }
+	    side_edge_index = i;
+	}
+    }
+    if (side_edge_index < 0 || !rt_brep_mate_planar_cap(*epa_brep,
+	side_edge_index, epa_bottom_plane, true, tol, NULL)) {
+	delete epa_brep;
+	bu_log("rt_epa_brep: unable to mate bottom cap to side surface!\n");
+	return;
+    }
+
+    epa_brep->Compact();
+    epa_brep->SetTolerancesBoxesAndFlags(false);
+    const double model_tolerance = (tol && tol->dist > 0.0) ? tol->dist : RT_LEN_TOL;
+    for (int i = 0; i < epa_brep->m_E.Count(); ++i)
+	if (epa_brep->m_E[i].m_tolerance < 0.0)
+	    epa_brep->m_E[i].m_tolerance = model_tolerance;
+    if (!epa_brep->IsValid() || !epa_brep->IsSolid()) {
+	delete epa_brep;
+	bu_log("rt_epa_brep: generated BRep is not a valid manifold solid!\n");
+	return;
+    }
+
+    **b = *epa_brep;
+    delete epa_brep;
 }
 
 

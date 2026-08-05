@@ -28,16 +28,19 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "brep.h"
+#include "primitives/brep/primitive_brep.h"
 
 
 extern "C" void
-rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
+rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_part_internal *pip;
 
     RT_CK_DB_INTERNAL(ip);
     pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
+
+    ON_Brep *part_brep = new ON_Brep();
 
     fastf_t temp = asin((pip->part_vrad-pip->part_hrad)/MAGNITUDE(pip->part_H));
     point_t origin;
@@ -73,12 +76,14 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     delete part_surf;
 
     if (!EQUAL(fabs(temp), ON_PI/2.0)) {
-	(*b)->m_S.Append(part_nurbs_surf);
-	int surfindex = (*b)->m_S.Count();
-	ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
-	(*b)->FlipFace(face);
-	int faceindex = (*b)->m_F.Count();
-	(*b)->NewOuterLoop(faceindex-1);
+	part_brep->m_S.Append(part_nurbs_surf);
+	int surfindex = part_brep->m_S.Count();
+	ON_BrepFace& face = part_brep->NewFace(surfindex - 1);
+	part_brep->FlipFace(face);
+	int faceindex = part_brep->m_F.Count();
+	part_brep->NewOuterLoop(faceindex-1);
+    } else {
+	delete part_nurbs_surf;
     }
 
     // Then, create the v-hemisphere.
@@ -100,12 +105,14 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     delete v_sph_surf;
 
     if (!EQUAL(temp, -ON_PI/2.0)) {
-	(*b)->m_S.Append(v_nurbs_surf);
-	int surfindex = (*b)->m_S.Count();
-	ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
-	(*b)->FlipFace(face);
-	int faceindex = (*b)->m_F.Count();
-	(*b)->NewOuterLoop(faceindex-1);
+	part_brep->m_S.Append(v_nurbs_surf);
+	int surfindex = part_brep->m_S.Count();
+	ON_BrepFace& face = part_brep->NewFace(surfindex - 1);
+	part_brep->FlipFace(face);
+	int faceindex = part_brep->m_F.Count();
+	part_brep->NewOuterLoop(faceindex-1);
+    } else {
+	delete v_nurbs_surf;
     }
 
     // Last, the h-hemisphere.
@@ -125,13 +132,46 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     delete h_sph_surf;
 
     if (!EQUAL(temp, ON_PI/2.0)) {
-	(*b)->m_S.Append(h_nurbs_surf);
-	int surfindex = (*b)->m_S.Count();
-	ON_BrepFace& face2 = (*b)->NewFace(surfindex - 1);
-	(*b)->FlipFace(face2);
-	int faceindex = (*b)->m_F.Count();
-	(*b)->NewOuterLoop(faceindex-1);
+	part_brep->m_S.Append(h_nurbs_surf);
+	int surfindex = part_brep->m_S.Count();
+	ON_BrepFace& face2 = part_brep->NewFace(surfindex - 1);
+	part_brep->FlipFace(face2);
+	int faceindex = part_brep->m_F.Count();
+	part_brep->NewOuterLoop(faceindex-1);
+    } else {
+	delete h_nurbs_surf;
     }
+
+    int naked_edge_count = 0;
+    for (int i = 0; i < part_brep->m_E.Count(); ++i)
+	if (part_brep->m_E[i].m_ti.Count() == 1)
+	    ++naked_edge_count;
+    if (naked_edge_count < 2 || (naked_edge_count % 2) != 0 ||
+	rt_brep_merge_naked_edges(*part_brep, tol) != naked_edge_count / 2) {
+	delete part_brep;
+	bu_log("rt_part_brep: unable to mate body and end-cap surfaces!\n");
+	return;
+    }
+    part_brep->Compact();
+    part_brep->SetTolerancesBoxesAndFlags(false);
+    const double model_tolerance = (tol && tol->dist > 0.0) ? tol->dist : RT_LEN_TOL;
+    for (int i = 0; i < part_brep->m_E.Count(); ++i)
+	if (part_brep->m_E[i].m_tolerance < 0.0)
+	    part_brep->m_E[i].m_tolerance = model_tolerance;
+    ON_wString messages;
+    ON_TextLog log(messages);
+    const bool valid = part_brep->IsValid(&log);
+    const bool solid = part_brep->IsSolid();
+    if (!valid || !solid) {
+	ON_String text(messages);
+	delete part_brep;
+	bu_log("rt_part_brep: generated BRep is not a valid manifold solid "
+	    "(valid=%d, solid=%d):\n%s", valid, solid, text.Array());
+	return;
+    }
+
+    **b = *part_brep;
+    delete part_brep;
 }
 
 
