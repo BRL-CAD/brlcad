@@ -32,7 +32,7 @@
 #include "bu/parallel.h"
 
 
-extern "C" int
+extern "C" BN_EXPORT int
 bn_noise_semaphore(void)
 {
     static const int semaphore = bu_semaphore_register("BN_SEM_NOISE");
@@ -47,7 +47,7 @@ libbn_init(void)
 
 static std::once_flag g_init_once;
 
-extern "C" void
+extern "C" BN_EXPORT void
 bn_ensure_initialized(void)
 {
     std::call_once(g_init_once, [](){

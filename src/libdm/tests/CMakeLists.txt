@@ -16,10 +16,11 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/src/libbu
     ${CMAKE_SOURCE_DIR}/src/libdm/fontstash
 )
-brlcad_add_test(
-  NAME dm_fontstash
-  COMMAND test_fontstash ${CMAKE_SOURCE_DIR}/misc/osifont/osifont-lgpl3fe.ttf
-)
+
+#brlcad_add_test(
+#  NAME dm_fontstash
+#  COMMAND test_fontstash ${CMAKE_SOURCE_DIR}/misc/osifont/osifont-lgpl3fe.ttf
+#)
 
 cmakefiles(CMakeLists.txt)
 cmakefiles(

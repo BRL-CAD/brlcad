@@ -63,13 +63,12 @@ cx_add_real(const bn_complex_t *a, double b)
 static bn_complex_t
 poly_eval_complex(const bn_poly_t *poly, const bn_complex_t *z)
 {
-    int i;
     bn_complex_t acc;
 
     acc.re = poly->cf[0];
     acc.im = 0.0;
 
-    for (i = 1; i <= poly->dgr; i++) {
+    for (size_t i = 1; i <= poly->dgr; i++) {
 	acc = cx_mul(&acc, z);
 	acc = cx_add_real(&acc, poly->cf[i]);
     }
@@ -360,7 +359,7 @@ test_poly_roots(void)
     bn_poly_t linear = poly_from_coeffs(2, linearc);
     bn_poly_t constant = poly_from_coeffs(2, constc);
     bn_poly_t quad = poly_from_coeffs(2, quadc);
-    bn_poly_t quadic = poly_from_coeffs(2, quadic);
+    bn_poly_t bn_quadic = poly_from_coeffs(2, quadic);
     bn_poly_t cubic = poly_from_coeffs(3, cubicc);
     bn_poly_t cubicmix = poly_from_coeffs(3, cubicmixc);
     bn_poly_t cubicneg = poly_from_coeffs(3, cubicnegc);
@@ -405,12 +404,12 @@ test_poly_roots(void)
 	}
     }
 
-    if (!bn_poly_quadratic_roots(roots2, &quadic)) {
+    if (!bn_poly_quadratic_roots(roots2, &bn_quadic)) {
 	report_failure(test, "bn_poly_quadratic_roots failed for a complex quadratic");
 	failures++;
     } else {
 	for (i = 0; i < 2; i++) {
-	    if (!root_is_valid(&quadic, &roots2[i], 1.0e-10)) {
+	    if (!root_is_valid(&bn_quadic, &roots2[i], 1.0e-10)) {
 		report_failure(test, "complex quadratic root %d did not satisfy the polynomial", i);
 		failures++;
 	    }
