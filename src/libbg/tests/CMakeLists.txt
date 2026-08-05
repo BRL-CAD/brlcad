@@ -355,6 +355,12 @@ brlcad_addexec(bg_trimesh_sync trimesh_sync.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_trimesh_sync  COMMAND bg_trimesh_sync)
 
+#  ************ trimesh_split.cpp tests ***********
+
+brlcad_addexec(bg_trimesh_split_test trimesh_split.cpp "${BG_TEST_LIBS}" TEST)
+
+brlcad_add_test(NAME bg_trimesh_split COMMAND bg_trimesh_split_test)
+
 #  ************ triangle area tests ***********
 
 brlcad_addexec(bg_tri_area tri_area.c "${BG_TEST_LIBS}" TEST)

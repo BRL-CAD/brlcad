@@ -26,14 +26,10 @@
 
 #include "common.h"
 
+#include <deque>
 #include <map>
-#include <set>
-#include <functional>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bg/trimesh.h"
 
@@ -64,28 +60,17 @@ class tm_split_uedge {
 
 };
 
-// https://stackoverflow.com/a/27952689/2037687
-class tm_split_uedge_hash {
-    public:
-	size_t operator()(const tm_split_uedge& p) const
-	{
-	    size_t hout = p.v1;
-	    hout ^= p.v1 + 0x9e3779b97f4a7c16 + (p.v2 << 6) + (p.v2 >> 2);
-	    return hout;
-	}
-};
-
 class tm_split_sface {
     public:
-	size_t v1;
-	size_t v2;
-	size_t v3;
+	int v1;
+	int v2;
+	int v3;
 };
 
 extern "C" int
 bg_trimesh_split(int ***of, int **oc, int *f, int fcnt)
 {
-    if (!of || !f || fcnt < 0)
+    if (!of || !oc || !f || fcnt < 0)
 	return -1;
 
     std::map<tm_split_uedge, std::vector<size_t>> ue_fmap;
@@ -102,84 +87,55 @@ bg_trimesh_split(int ***of, int **oc, int *f, int fcnt)
 	ue_fmap[tm_split_uedge(nface.v3,nface.v1)].push_back(i);
     }
 
-    // All triangles go somewhere.
-    std::unordered_set<size_t> active_tris;
-    for (int i = 0; i < fcnt; ++i) {
-	active_tris.insert(i);
-    }
+    // Traverse face adjacency explicitly.  A mesh edge may be non-manifold
+    // and have more than two incident faces, so every face in ue_fmap[edge]
+    // must be visited.  The former edge-wavefront implementation marked an
+    // edge complete after following its first neighbor.  Which of three or
+    // more incident faces was left behind then depended on hash iteration
+    // order, and a connected mesh could be reported as multiple components.
+    std::vector<bool> visited((size_t)fcnt, false);
     std::vector<int *> fsets;
     std::vector<int> fset_cnts;
-    while (active_tris.size()) {
-	std::unordered_set<size_t> new_mesh;
-	// Seed the wavefront with a triangle
-	std::unordered_set<tm_split_uedge, tm_split_uedge_hash> wavefront_edges;
-	std::unordered_set<tm_split_uedge, tm_split_uedge_hash> interior_edges;
-	tm_split_sface &f_seed= afaces[*active_tris.begin()];
-	new_mesh.insert(*active_tris.begin());
-	active_tris.erase(active_tris.begin());
-	wavefront_edges.insert(tm_split_uedge(f_seed.v1, f_seed.v2));
-	wavefront_edges.insert(tm_split_uedge(f_seed.v2, f_seed.v3));
-	wavefront_edges.insert(tm_split_uedge(f_seed.v3, f_seed.v1));
-	while (wavefront_edges.size()) {
-	    tm_split_uedge cedge = *wavefront_edges.begin();
-	    // If we have a boundary edge, mark it as interior (i.e. not part
-	    // of the wavefront)
-	    if (ue_fmap[cedge].size() == 1) {
-		interior_edges.insert(cedge);
-		wavefront_edges.erase(wavefront_edges.begin());
-		continue;
-	    }
-	    // Get the two triangles associated with this tm_split_uedge.  If one of
-	    // them is unvisited, process it
-	    int f_ind = -1;
-	    for (size_t j = 0; j < ue_fmap[cedge].size(); j++) {
-		if (active_tris.find(ue_fmap[cedge][j]) == active_tris.end()) {
-		    continue;
-		}
-		f_ind = ue_fmap[cedge][j];
-		new_mesh.insert(f_ind);
-		active_tris.erase(f_ind);
-		break;
-	    }
+    for (size_t seed = 0; seed < afaces.size(); seed++) {
+	if (visited[seed])
+	    continue;
 
-	    // If neither face is unvisited, there's no work to do
-	    if (f_ind == -1) {
-		wavefront_edges.erase(wavefront_edges.begin());
-		continue;
-	    }
+	std::deque<size_t> pending;
+	std::vector<size_t> component;
+	visited[seed] = true;
+	pending.push_back(seed);
 
-	    tm_split_sface &bface = afaces[f_ind];
-	    tm_split_uedge ue[3] = {tm_split_uedge(bface.v1, bface.v2), tm_split_uedge(bface.v2, bface.v3), tm_split_uedge(bface.v3, bface.v1)};
-	    // For the new face, any edges that aren't already wavefront
-	    // edges and aren't part of the interior set get added, and any
-	    // that are already in the wavefront get moved to the interior set.
-	    for (size_t k = 0; k < 3; k++) {
-		if (wavefront_edges.find(ue[k]) != wavefront_edges.end()) {
-		    interior_edges.insert(ue[k]);
-		    wavefront_edges.erase(ue[k]);
-		} else {
-		    // If the mesh loops back on itself, the wavefront might hit
-		    // edges it has already seen.  Let's not infinite loop...
-		    if (interior_edges.find(ue[k]) == interior_edges.end())
-			wavefront_edges.insert(ue[k]);
+	while (!pending.empty()) {
+	    size_t f_ind = pending.front();
+	    pending.pop_front();
+	    component.push_back(f_ind);
+
+	    const tm_split_sface &face = afaces[f_ind];
+	    tm_split_uedge edges[3] = {
+		tm_split_uedge(face.v1, face.v2),
+		tm_split_uedge(face.v2, face.v3),
+		tm_split_uedge(face.v3, face.v1)
+	    };
+	    for (size_t edge_ind = 0; edge_ind < 3; edge_ind++) {
+		const std::vector<size_t> &neighbors = ue_fmap[edges[edge_ind]];
+		for (size_t neighbor : neighbors) {
+		    if (!visited[neighbor]) {
+			visited[neighbor] = true;
+			pending.push_back(neighbor);
+		    }
 		}
 	    }
-
 	}
 
-	if (new_mesh.size()) {
-	    int *fset = (int *)bu_calloc(new_mesh.size(), 3*sizeof(int), "face set");
-	    std::unordered_set<size_t>::iterator s_it;
-	    int f_ind = 0;
-	    for (s_it = new_mesh.begin(); s_it != new_mesh.end(); s_it++) {
-		fset[f_ind*3+0] = afaces[*s_it].v1;
-		fset[f_ind*3+1] = afaces[*s_it].v2;
-		fset[f_ind*3+2] = afaces[*s_it].v3;
-		f_ind++;
-	    }
-	    fsets.push_back(fset);
-	    fset_cnts.push_back(f_ind);
+	int *fset = (int *)bu_calloc(component.size(), 3*sizeof(int), "face set");
+	for (size_t i = 0; i < component.size(); i++) {
+	    const tm_split_sface &face = afaces[component[i]];
+	    fset[i*3+0] = face.v1;
+	    fset[i*3+1] = face.v2;
+	    fset[i*3+2] = face.v3;
 	}
+	fsets.push_back(fset);
+	fset_cnts.push_back((int)component.size());
     }
 
     if (!fsets.size())
