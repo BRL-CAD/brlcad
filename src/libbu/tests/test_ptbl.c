@@ -70,6 +70,11 @@ test_bu_ptbl_reset(void)
     long p;
     intmax_t locate_before, locate_after;
     size_t result;
+    int unallocated_ok;
+
+    BU_PTBL_INIT(&b);
+    bu_ptbl_reset(&b);
+    unallocated_ok = b.end == 0 && b.blen == 0 && b.buffer == NULL;
 
     bu_ptbl_init(&b, 0, "test_bu_ptbl_reset");
 
@@ -80,7 +85,8 @@ test_bu_ptbl_reset(void)
     bu_ptbl_reset(&b);
     locate_after = bu_ptbl_locate(&b, &p);
 
-    result = b.end == 0 && locate_before != -1 && locate_after == -1
+    result = unallocated_ok && b.end == 0 &&
+	locate_before != -1 && locate_after == -1
 	? BRLCAD_OK
 	: BRLCAD_ERROR;
 

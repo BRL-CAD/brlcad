@@ -15,6 +15,7 @@ set(
   test_cache.cpp
   test_cmd.c
   test_color.c
+  test_convert.c
   test_datetime.c
   test_dir.c
   test_dirname.c
@@ -859,6 +860,7 @@ brlcad_add_test(NAME bu_test_observer COMMAND bu_test test_observer)
 brlcad_add_test(NAME bu_test_vlb COMMAND bu_test test_vlb)
 brlcad_add_test(NAME bu_test_units COMMAND bu_test test_units)
 brlcad_add_test(NAME bu_test_endian COMMAND bu_test test_endian)
+brlcad_add_test(NAME bu_test_convert COMMAND bu_test test_convert)
 
 #
 #  *********** bu_dlopen/bu_dlsym test ************
