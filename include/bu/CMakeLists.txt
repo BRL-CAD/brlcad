@@ -8,6 +8,7 @@ set(
   cmd.h
   color.h
   cv.h
+  datetime.h
   debug.h
   defines.h
   dylib.h
@@ -39,7 +40,6 @@ set(
   sort.h
   str.h
   tc.h
-  time.h
   units.h
   user.h
   uuid.h
