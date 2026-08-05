@@ -233,9 +233,6 @@ wlt_decompose_1d(void)
     size_t sample_size;	/* size of data type x #values/sample */
     size_t scanline_size;	/* # bytes in a scanline */
 
-    setmode(fileno(stdin), O_BINARY);
-    setmode(fileno(stdout), O_BINARY);
-
     sample_size = value_size * channels;
     scanline_size = sample_size * width;
 
@@ -458,6 +455,9 @@ int
 main(int ac, char **av)
 {
     bu_setprogname(av[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     /* parse command flags, and make sure there are arguments
      * left over for processing.
