@@ -169,11 +169,19 @@ read_row(unsigned char *rp, size_t width, FILE *fp)
     size_t ret = fread(rp + 3, 3, width, fp);
     if (ret != width)
 	return 0;
-    *(rp + RED) = *(rp + GRN) = *(rp + BLU) = 0;
-    *(rp + 3 * (width + 1) + RED) =
-	*(rp + 3 * (width + 1) + GRN) =
-	*(rp + 3 * (width + 1) + BLU) = 0;
+    VMOVE(rp, exterior_rgb);
+    VMOVE(rp + 3 * (width + 1), exterior_rgb);
     return 1;
+}
+
+
+static void
+fill_row(unsigned char *row, size_t pixel_count, const unsigned char color[3])
+{
+    size_t i;
+
+    for (i = 0; i < pixel_count; ++i)
+	VMOVE(row + 3 * i, color);
 }
 
 
@@ -592,8 +600,7 @@ main (int argc, char **argv)
     /*
      * Initialize previous-row buffer
      */
-    for (i = 0; i < 3 * (file_width + 2); ++i)
-	*(inrow[prev_row] + i) = 0;
+    fill_row(inrow[prev_row], file_width + 2, exterior_rgb);
 
     /*
      * Initialize current- and next-row buffers
@@ -662,12 +669,12 @@ main (int argc, char **argv)
 		(void) fprintf(stderr, "pixborder:  fread() error\n");
 		bu_exit (1, NULL);
 	    }
-	} else
-	    for (i = 0; i < 3 * (file_width + 2); ++i)
-		*(inrow[next_row] + i) = 0;
+	} else {
+	    fill_row(inrow[next_row], file_width + 2, exterior_rgb);
+	}
     }
 
-    return 1;
+    return 0;
 }
 
 
