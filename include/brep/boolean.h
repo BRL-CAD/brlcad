@@ -53,6 +53,15 @@ enum op_type {
 extern BREP_EXPORT int
 ON_Boolean(ON_Brep *brepO, const ON_Brep *brepA, const ON_Brep *brepB, op_type operation);
 
+/**
+ * Classify a point known not to lie on the boundary of a valid closed BRep.
+ *
+ * @return true when the point is inside, false when it is outside or the
+ * input cannot be classified safely.
+ */
+extern BREP_EXPORT bool
+ON_BrepPointInside(const ON_3dPoint &point, const ON_Brep *brep);
+
 } /* extern C++ */
 #endif
 

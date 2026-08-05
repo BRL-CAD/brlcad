@@ -3323,6 +3323,27 @@ is_point_inside_brep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<S
 }
 
 
+bool
+ON_BrepPointInside(const ON_3dPoint &point, const ON_Brep *brep)
+{
+    if (!brep || !brep->IsValid() || !brep->IsSolid() || point.IsUnset())
+	return false;
+    ON_SimpleArray<Subsurface *> surface_tree;
+    for (int surface = 0; surface < brep->m_S.Count(); ++surface) {
+	if (!brep->m_S[surface]) {
+	    for (int created = 0; created < surface_tree.Count(); ++created)
+		delete surface_tree[created];
+	    return false;
+	}
+	surface_tree.Append(new Subsurface(brep->m_S[surface]->Duplicate()));
+    }
+    const bool inside = is_point_inside_brep(point, brep, surface_tree);
+    for (int surface = 0; surface < surface_tree.Count(); ++surface)
+	delete surface_tree[surface];
+    return inside;
+}
+
+
 static bool
 is_point_inside_trimmed_face(const ON_2dPoint &pt, const TrimmedFace *tface)
 {
