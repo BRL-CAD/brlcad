@@ -267,7 +267,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     if (ZERO(eqn->cf[0])) return 0;
 
     /* Cardano's formula below is expressed for a monic polynomial. */
-    if (eqn->cf[0] != 1.0) {
+    if (!NEAR_EQUAL(eqn->cf[0], 1.0, SMALL_FASTF)) {
 	monic = *eqn;
 	bn_poly_scale(&monic, 1.0 / monic.cf[0]);
 	eqn = &monic;
@@ -361,7 +361,7 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
     if (ZERO(eqn->cf[0])) return 0;
 
     /* Ferrari's formula below is expressed for a monic polynomial. */
-    if (eqn->cf[0] != 1.0) {
+    if (!NEAR_EQUAL(eqn->cf[0], 1.0, SMALL_FASTF)) {
 	monic = *eqn;
 	bn_poly_scale(&monic, 1.0 / monic.cf[0]);
 	eqn = &monic;
