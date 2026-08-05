@@ -1,4 +1,4 @@
-/*                         T I M E . H
+/*                     D A T E T I M E . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2026 United States Government as represented by
@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef BU_TIME_H
-#define BU_TIME_H
+#ifndef BU_DATETIME_H
+#define BU_DATETIME_H
 
 #include "common.h"
 
@@ -31,12 +31,12 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup bu_time
+/** @addtogroup bu_datetime
  * @brief
  * Cross platform wrapper for timing functionality.
  */
 /** @{ */
-/** @file bu/time.h */
+/** @file bu/datetime.h */
 
 /**
  * Returns a microsecond-accurate wall-clock time counter.
@@ -86,7 +86,7 @@ BU_EXPORT void bu_utctime(struct bu_vls *utc_result, const int64_t time_val);
 
 __END_DECLS
 
-#endif  /* BU_TIME_H */
+#endif  /* BU_DATETIME_H */
 
 /*
  * Local Variables:
