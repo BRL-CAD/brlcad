@@ -58,7 +58,7 @@
 #include "bu/opt.h"
 #include "bu/ptbl.h"
 #include "bu/str.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/vls.h"
 #include "bu/sort.h"
 #include "bn/sobol.h"
