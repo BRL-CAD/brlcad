@@ -155,7 +155,6 @@ set(
   fontstash/README.md
   fontstash/fontstash.h
   fontstash/glfontstash.h
-  fontstash/stb_truetype.h
 )
 cmakefiles(${libdm_ignore_files})
 

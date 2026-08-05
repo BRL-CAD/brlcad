@@ -1,4 +1,9 @@
-https://github.com/nothings/stb
+https://github.com/starseeker/struetype
+
+BRL-CAD vendors struetype revision 223c658.  It is a size-aware fork of
+stb_truetype.h v1.26 with breaking API changes that address the font parsing
+issues reported as CVE-2020-6617 through CVE-2020-6623 and CVE-2022-25514
+through CVE-2022-25516.
 
 Copyright (c) 2017 Sean Barrett
 Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -17,5 +22,5 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-file:/src/libdm/fontstash/stb_truetype.h
+file:/src/libbu/struetype.h
 

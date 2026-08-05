@@ -155,6 +155,11 @@ int
 swrast_close(struct dm *dmp)
 {
     struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+    if (pv->fs) {
+	(void)swrast_makeCurrent(dmp);
+	glfonsDelete(pv->fs);
+	pv->fs = NULL;
+    }
     bu_free(pv->os_b, "OSMesa rendering buffer");
     bu_vls_free(&dmp->i->dm_dName);
     bu_vls_free(&dmp->i->dm_tkName);

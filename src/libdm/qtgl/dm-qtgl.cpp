@@ -170,7 +170,13 @@ qtgl_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
 int
 qtgl_close(struct dm *dmp)
 {
+    struct qtgl_vars *pv = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
     gl_debug_print(dmp, "qtgl_close", dmp->i->dm_debugLevel);
+    if (pv->fs) {
+	(void)qtgl_makeCurrent(dmp);
+	glfonsDelete(pv->fs);
+	pv->fs = NULL;
+    }
     bu_vls_free(&dmp->i->dm_pathName);
     bu_vls_free(&dmp->i->dm_tkName);
     bu_vls_free(&dmp->i->dm_dName);

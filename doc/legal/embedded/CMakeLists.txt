@@ -71,7 +71,7 @@ brlcad_manage_files(sh_wood.txt                ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(sobolseq.txt               ${DOC_DIR}/legal/embedded TRIGGER libbn)
 brlcad_manage_files(SPSR.txt                   ${DOC_DIR}/legal/embedded TRIGGER libbg)
 brlcad_manage_files(sscanf.txt                 ${DOC_DIR}/legal/embedded TRIGGER libbu)
-brlcad_manage_files(stb_truetype.txt           ${DOC_DIR}/legal/embedded TRIGGER libdm)
+brlcad_manage_files(struetype.txt              ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(subprocess.txt             ${DOC_DIR}/legal/embedded TRIGGER libged)
 brlcad_manage_files(tcl_code.txt               ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(tcllib.txt                 ${DOC_DIR}/legal/embedded TRIGGER libtclcad)

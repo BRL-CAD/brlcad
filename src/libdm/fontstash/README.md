@@ -1,134 +1,75 @@
-NOTE:  If we need the OpenGL3 implementation at some point in the future, start
-by looking at https://github.com/BastiaanOlij/fontstash which has an OpenGL3
-implementation.  (At the moment the original basic OpenGL implementation
-suffices for BRL-CAD (and the swrast backend only supports OpenGL 2.1, so we'll
-need to retain the older capabilities regardless.)
+# BRL-CAD Fontstash
 
-Font Stash
-==========
+Fontstash is BRL-CAD's private, display-oriented text rasterizer.  It builds a
+bitmap glyph atlas on demand and emits textured triangles through renderer
+callbacks.  The Qt/OpenGL and software-raster OpenGL display-manager plugins
+use the implementation in this directory.
 
-Font stash is light-weight online font texture atlas builder written in C. It uses [stb_truetype](http://nothings.org) to render fonts on demand to a texture atlas.
+- atlas allocation and resizing are renderer resources;
+- cached glyph bitmaps have display-resolution-dependent sizes and blur;
+- colors, textured quads, batching, and renderer callbacks are drawing policy;
+- linking it from annotation geometry would create an inappropriate
+  `librt`-to-`libdm` dependency and would discard scalable outlines.
 
-The code is split in two parts, the font atlas and glyph quad generator [fontstash.h](/src/fontstash.h), and an example OpenGL backend ([glfontstash.h](/glfontstash.h)).
+BRL-CAD's private `libbu` source tree instead holds `struetype.h`, the compact,
+size-aware font parser and outline/raster API used by Fontstash.  Annotation
+geometry may share that lower-level parser and its metrics/outlines without
+depending on Fontstash.
 
-## Screenshot
+## BRL-CAD changes
 
-![screenshot of some text rendered with the sample program](/example/example.png?raw=true)
+This copy has diverged substantially from the historical Fontstash code.  In
+particular, it:
 
-## Example
-``` C
-// Create GL stash for 512x512 texture, our coordinate system has zero at top-left.
-struct FONScontext* fs = glfonsCreate(512, 512, FONS_ZERO_TOPLEFT);
+- uses BRL-CAD's size-aware `struetype.h` rather than `stb_truetype.h`;
+- validates font buffers and atlas dimensions before parsing or allocation;
+- owns renderer state through a copied `FONSparams` value;
+- performs atlas expansion and reset transactionally;
+- uses full-width atlas and glyph coordinates;
+- handles malformed and truncated UTF-8 with replacement characters;
+- preserves the actual fallback font used by each cached glyph;
+- avoids the historical fixed scratch allocator; and
+- tolerates invalid arguments at the public API boundary.
 
-// Add font to stash.
-int fontNormal = fonsAddFont(fs, "sans", "DroidSerif-Regular.ttf");
+The renderer `userPtr` is transferred to `fonsCreateInternal`, even if context
+creation fails.  Its `renderDelete` callback is therefore called exactly once
+by Fontstash.  A renderer resize callback must leave its old resource usable
+when it returns failure; Fontstash likewise leaves its CPU and atlas state
+unchanged.
 
-// Render some text
-float dx = 10, dy = 10;
-unsigned int white = glfonsRGBA(255,255,255,255);
-unsigned int brown = glfonsRGBA(192,128,0,128);
+`src/libdm/tests/fontstash_test.c` exercises the implementation with a mock
+renderer, so ownership, UTF-8 handling, and atlas changes can be checked
+without an OpenGL context.
 
-fonsSetFont(fs, fontNormal);
-fonsSetSize(fs, 124.0f);
-fonsSetColor(fs, white);
-fonsDrawText(fs, dx,dy,"The big ", NULL);
+## Integration pattern
 
-fonsSetSize(fs, 24.0f);
-fonsSetColor(fs, brown);
-fonsDrawText(fs, dx,dy,"brown fox", NULL);
-```
+One display backend translation unit defines the implementations before
+including the headers:
 
-## Using Font Stash in your project
-
-In order to use fontstash in your own project, just copy fontstash.h, stb_truetype.h, and potentially glstash.h to your project.
-In one C/C++ define FONTSTASH_IMPLEMENTATION before including the library to expand the font stash implementation in that file.
-
-``` C
-#include <stdio.h>					// malloc, free, fopen, fclose, ftell, fseek, fread
-#include <string.h>					// memset
-#define FONTSTASH_IMPLEMENTATION	// Expands implementation
+```c
+#define FONTSTASH_IMPLEMENTATION
 #include "fontstash.h"
-```
-
-``` C
-#include <GLFW/glfw3.h>				// Or any other GL header of your choice.
-#define GLFONTSTASH_IMPLEMENTATION	// Expands implementation
+#define GLFONTSTASH_IMPLEMENTATION
 #include "glfontstash.h"
 ```
 
-## Creating new rendering backend
+Call `glfonsCreate` only with a current OpenGL context.  Load fonts with
+`fonsAddFont`, draw with `fonsDrawText`, and call `glfonsDelete` while that
+context is still current.
 
-The default rendering backend uses OpenGL to render the glyphs. If you want to render the text using some other API, or want tighter integration with your code base you can write your own rendering backend. Take a look at the [glfontstash.h](/src/glfontstash.h) for reference implementation.
+Additional renderer backends implement the callbacks in `FONSparams`.
+`renderUpdate` receives a changed rectangle plus the full CPU atlas;
+`renderDraw` receives triangle vertices, texture coordinates, and packed RGBA
+colors.
 
-The rendering interface FontStash assumes access to is defined in the FONSparams structure. The renderer initialization function is assumed to fill in the FONSparams structure and call fonsCreateInternal to create the FontStash context.
+## Provenance and license
 
-```C
-struct FONSparams {
-	...
-	void* userPtr;
-	int (*renderCreate)(void* uptr, int width, int height);
-	int (*renderResize)(void* uptr, int width, int height);
-	void (*renderUpdate)(void* uptr, int* rect, const unsigned char* data);
-	void (*renderDraw)(void* uptr, const float* verts, const float* tcoords, const unsigned int* colors, int nverts);
-	void (*renderDelete)(void* uptr);
-};
-```
+The original Fontstash implementation is by Mikko Mononen.  The atlas is
+based on Jukka Jylanki's public-domain Skyline Bin Packer, and the UTF-8 state
+machine is by Bjoern Hoehrmann.  Complete notices and source locations are in
+`doc/legal/embedded/fontstash.txt`; struetype is recorded separately in
+`doc/legal/embedded/struetype.txt`.
 
-- **renderCreate** is called to create renderer for specific API, this is where you should create a texture of given size.
-	- return 1 of success, or 0 on failure.
-- **renderResize** is called to resize the texture. Called when user explicitly expands or resets the atlas texture.
-	- return 1 of success, or 0 on failure.
-- **renderUpdate** is called to update texture data
-	- _rect_ describes the region of the texture that has changed
-	- _data_ pointer to full texture data
-- **renderDraw** is called when the font triangles should be drawn
-	- _verts_ pointer to vertex position data, 2 floats per vertex
-	- _tcoords_ pointer to texture coordinate data, 2 floats per vertex
-	- _colors_ pointer to color data, 1 uint per vertex (or 4 bytes)
-	- _nverts_ is the number of vertices to draw
-- **renderDelete** is called when the renderer should be deleted
-- **userPtr** is passed to all calls as first parameter
-
-FontStash uses this API as follows:
-
-```
-fonsDrawText() {
-	foreach (glyph in input string) {
-		if (internal buffer full) {
-			updateTexture()
-			render()
-		}
-		add glyph to internal draw buffer
-	}
-	updateTexture()
-	render()
-}
-```
-
-The size of the internal buffer is defined using `FONS_VERTEX_COUNT` define. The default value is 1024, you can override it when you include fontstash.h and specify the implementation:
-
-``` C
-#define FONS_VERTEX_COUNT 2048
-#define FONTSTASH_IMPLEMENTATION	// Expands implementation
-#include "fontstash.h"
-```
-
-## Compiling
-
-```bash
-$ mkdir build
-$ cd build/
-$ cmake ..
-$ make
-$ ./bin/fontstash
-```
-
-# License
-The library is licensed under [zlib license](LICENSE.txt)
-
-## Links
-- **[stb_truetype](http://nothings.org)** - used for font rendering.
-
-- **[Jukka Jylänki's Skyline bin packer](https://github.com/juj/RectangleBinPack)** - used for atlas building.
-
-- **[Bjoern Hoehrmann's dfa](http://bjoern.hoehrmann.de/utf-8/decoder/dfa/)** - used for UTF-8 decoding.
+The note in the original BRL-CAD integration still applies: a future modern
+OpenGL renderer must coexist with the compatibility path because the software
+raster backend currently targets OpenGL 2.1 capabilities.
