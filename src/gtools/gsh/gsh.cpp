@@ -583,13 +583,18 @@ GshState::view_update()
 
     struct bview *v = gedp->ged_gvp;
     struct dm *dmp = (struct dm *)v->dmp;
-    if (dm_get_dirty(dmp)) {
+	/* Headless swrast has no window-system expose event to drive a repaint.
+	 * Render every command in new-command mode so screengrab always observes
+	 * the current scene, even when the command itself only changes the output
+	 * request. */
+    if (dm_get_dirty(dmp) || new_cmd_forms) {
 	if (new_cmd_forms) {
 	    unsigned char *dm_bg1;
 	    unsigned char *dm_bg2;
 	    dm_get_bg(&dm_bg1, &dm_bg2, dmp);
 	    dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
 	    dm_set_dirty(dmp, 0);
+	    dm_draw_begin(dmp);
 	    dm_draw_objs(v, NULL, NULL);
 	    dm_draw_end(dmp);
 	} else {
@@ -812,6 +817,12 @@ main(int argc, const char **argv)
 	fprintf(stderr, "%s", ged_init_str);
     }
 
+    /* The display manager is selected while the GED state is being created
+     * and while databases are opened.  Set this before constructing GshState,
+     * otherwise --new-cmds cannot provide the promised headless swrast DM. */
+    if (new_cmd_forms)
+	bu_setenv("DM_SWRAST", "1", 1);
+
     // Use a C++ class to manage info we will need
     std::shared_ptr<GshState> gs = std::make_shared<GshState>();
 
@@ -822,7 +833,6 @@ main(int argc, const char **argv)
     if (gs->new_cmd_forms) {
 	gs->gedp->dbi_state = new DbiState(gs->gedp);
 	gs->gedp->new_cmd_forms = 1;
-	bu_setenv("DM_SWRAST", "1", 1);
     }
 
     // If we're non-interactive, just evaluate and exit without getting into
@@ -913,4 +923,3 @@ main(int argc, const char **argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
