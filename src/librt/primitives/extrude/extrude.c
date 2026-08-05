@@ -43,6 +43,23 @@
 
 #include "../../librt_private.h"
 
+static uint32_t
+extrude_get_uint32(const unsigned char *cp)
+{
+    uint32_t value;
+
+    memcpy(&value, cp, sizeof(value));
+    return ntohl(value);
+}
+
+
+static void
+extrude_put_uint32(unsigned char *cp, uint32_t value)
+{
+    value = htonl(value);
+    memcpy(cp, &value, sizeof(value));
+}
+
 __BEGIN_DECLS
 extern int seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, point_t V,
 			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, void *seg);
@@ -2529,7 +2546,7 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
     MAT4X3VEC(extrude_ip->u_vec, mat, tmp_vec);
     bu_cv_ntohd((unsigned char *)tmp_vec, rp->extr.ex_vvec, ELEMENTS_PER_VECT);
     MAT4X3VEC(extrude_ip->v_vec, mat, tmp_vec);
-    extrude_ip->keypoint = ntohl(*(uint32_t *)&rp->extr.ex_key[0]);
+    extrude_ip->keypoint = extrude_get_uint32(&rp->extr.ex_key[0]);
 
     ptr = (char *)rp;
     ptr += sizeof(struct extr_rec);
@@ -2576,8 +2593,8 @@ rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, doub
     bu_cv_htond(rec->extr.ex_uvec, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
     VSCALE(tmp_vec, extrude_ip->v_vec, local2mm);
     bu_cv_htond(rec->extr.ex_vvec, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
-    *(uint32_t *)rec->extr.ex_key = htonl(extrude_ip->keypoint);
-    *(uint32_t *)rec->extr.ex_count = htonl(1);
+    extrude_put_uint32(rec->extr.ex_key, extrude_ip->keypoint);
+    extrude_put_uint32(rec->extr.ex_count, 1);
 
     ptr = (unsigned char *)rec;
     ptr += sizeof(struct extr_rec);
@@ -2625,7 +2642,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     ptr += ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
     rem -= ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
 
-    *(uint32_t *)ptr = htonl(extrude_ip->keypoint);
+    extrude_put_uint32(ptr, extrude_ip->keypoint);
 
     ptr += SIZEOF_NETWORK_LONG;
     rem -= SIZEOF_NETWORK_LONG;
@@ -2713,7 +2730,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     VMOVE(extrude_ip->u_vec, tmp_vec[2]);
     VMOVE(extrude_ip->v_vec, tmp_vec[3]);
     ptr += ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
-    extrude_ip->keypoint = ntohl(*(uint32_t *)ptr);
+    extrude_ip->keypoint = extrude_get_uint32(ptr);
     ptr += SIZEOF_NETWORK_LONG;
     extrude_ip->sketch_name = bu_strdup((const char *)ptr);
 

@@ -27,6 +27,7 @@
 
 /* system headers */
 #include <math.h>
+#include <string.h>
 #include "bnetwork.h"
 
 /* common headers */
@@ -504,6 +505,8 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
     /* must be double for import and export */
     double scan;
+    uint16_t type;
+    uint32_t count;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -528,9 +531,11 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     scan = pnts->scale; /* convert fastf_t to double */
     bu_cv_htond(buf, (unsigned char *)&scan, 1);
     buf += SIZEOF_NETWORK_DOUBLE;
-    *(uint16_t *)buf = htons((unsigned short)pnts->type);
+    type = htons((unsigned short)pnts->type);
+    memcpy(buf, &type, sizeof(type));
     buf += SIZEOF_NETWORK_SHORT;
-    *(uint32_t *)buf = htonl(pnts->count);
+    count = htonl(pnts->count);
+    memcpy(buf, &count, sizeof(count));
 
     if (pnts->count <= 0) {
 	/* no points to stash, we're done */
@@ -644,6 +649,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     unsigned char *buf = NULL;
     unsigned long i;
     uint16_t type;
+    uint32_t count;
 
     /* must be double for import and export */
     double scan;
@@ -669,10 +675,12 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     bu_cv_ntohd((unsigned char *)&scan, buf, 1);
     pnts->scale = scan; /* convert double to fastf_t */
     buf += SIZEOF_NETWORK_DOUBLE;
-    type = ntohs(*(uint16_t *)buf);
+    memcpy(&type, buf, sizeof(type));
+    type = ntohs(type);
     pnts->type = (rt_pnt_type)type; /* intentional enum coercion */
     buf += SIZEOF_NETWORK_SHORT;
-    pnts->count = ntohl(*(uint32_t *)buf);
+    memcpy(&count, buf, sizeof(count));
+    pnts->count = ntohl(count);
     buf += SIZEOF_NETWORK_LONG;
 
     if (pnts->count <= 0) {
