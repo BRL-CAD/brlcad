@@ -807,7 +807,13 @@ test_mat_orientation(void)
     vect_t opposite = {-1.0, 0.0, 0.0};
     vect_t dir = {1.0, 1.0, -2.0};
     vect_t out = VINIT_ZERO;
+    hvect_t homogeneous = HINIT_ZERO;
     mat_t m = MAT_INIT_ZERO;
+
+    if (!HZERO(homogeneous)) {
+	report_failure(test, "HZERO failed for a zero homogeneous vector");
+	failures++;
+    }
 
     bn_vec_perp(perp, input);
     if (!NEAR_ZERO(VDOT(perp, input), 1.0e-12) || NEAR_ZERO(MAGSQ(perp), 1.0e-12)) {
@@ -838,6 +844,7 @@ test_mat_orientation(void)
 	failures++;
     }
 
+    VUNITIZE(dir);
     bn_mat_lookat(m, dir, 0);
     MAT4X3VEC(out, m, dir);
     VUNITIZE(out);

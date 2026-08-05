@@ -15,6 +15,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bg/trimesh.h"
@@ -34,8 +35,10 @@ free_face_sets(int **face_sets, int *face_counts, int set_cnt)
 
 
 int
-main()
+main(int UNUSED(argc), char **argv)
 {
+    bu_setprogname(argv[0]);
+
     // The first three triangles all share edge 0-1.  All three must be in
     // one component even though that edge is non-manifold.  The last triangle
     // is disjoint and must form a second component.

@@ -969,6 +969,43 @@ init_oedit_vars(struct mged_state *s)
 }
 
 
+int
+set_oedit_bbox_keypoint(struct mged_state *s)
+{
+    point_t bbmin;
+    point_t bbmax;
+    struct db_full_path path;
+    char *path_name;
+
+    if (!MEDIT(s) || !illump || !illump->s_u_data)
+	return BRLCAD_ERROR;
+
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+    if (ipathpos < 0 || (size_t)ipathpos >= bdata->s_fullpath.fp_len)
+	return BRLCAD_ERROR;
+
+    db_full_path_init(&path);
+    db_dup_full_path(&path, &bdata->s_fullpath);
+    path.fp_len = (size_t)ipathpos + 1;
+    path_name = db_path_to_string(&path);
+    db_free_full_path(&path);
+    if (!path_name)
+	return BRLCAD_ERROR;
+
+    int ret = rt_obj_bounds(NULL, s->dbip, 1, (const char **)&path_name, 0, bbmin, bbmax);
+    bu_free(path_name, "object edit path");
+    if (ret != BRLCAD_OK)
+	return BRLCAD_ERROR;
+
+    VADD2(MEDIT(s)->e_keypoint, bbmin, bbmax);
+    VSCALE(MEDIT(s)->e_keypoint, MEDIT(s)->e_keypoint, 0.5);
+    MEDIT(s)->e_keytag = "bounding-box center";
+    set_e_axes_pos(s, 1);
+
+    return BRLCAD_OK;
+}
+
+
 void
 init_oedit(struct mged_state *s)
 {
@@ -1837,8 +1874,13 @@ f_oedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 	return TCL_ERROR;
     }
 
+    int bbox_keypoint = BU_STR_EQUAL(MEDIT(s)->e_keytag, "bounding-box center");
+
     oedit_reject(s);
     init_oedit_guts(s);
+
+    if (bbox_keypoint)
+	(void)set_oedit_bbox_keypoint(s);
 
     new_edit_mats(s);
     s->update_views = 1;
@@ -1864,6 +1906,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     const char *strp="";
 
     CHECK_DBI_NULL;
+    int bbox_keypoint = BU_STR_EQUAL(MEDIT(s)->e_keytag, "bounding-box center");
     oedit_apply(s, UP); /* apply changes, but continue editing */
 
     if (!illump->s_u_data)
@@ -1879,6 +1922,8 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
 
     rt_get_solid_keypoint(MEDIT(s), &MEDIT(s)->e_keypoint, &strp, MEDIT(s)->e_mat);
     init_oedit_vars(s);
+    if (bbox_keypoint)
+	(void)set_oedit_bbox_keypoint(s);
     new_edit_mats(s);
     s->update_views = 1;
     dm_set_dirty(DMP, 1);

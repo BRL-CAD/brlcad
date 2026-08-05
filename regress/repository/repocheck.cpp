@@ -499,6 +499,7 @@ init_repo_config(RepoConfig &cfg)
 	};
 	add_func_ex(".*/bomb[.]c$", "abort");
 	add_func_ex(".*/test_process[.]c$", "abort");
+	add_func_ex(".*/libbu/tests/test_static_init[.]cpp$", "abort");
 	add_func_ex(".*/tests/test_dirname[.]c$", "dirname");
 	add_func_ex(".*/file[.]c$", "remove");
 	add_func_ex(".*/libtermio[.]h$", "strncmp");
@@ -555,6 +556,7 @@ init_repo_config(RepoConfig &cfg)
 	    "rt_ecmd_scanner.cpp",
 	    "sha1.c",
 	    "stb_truetype.h",
+	    "struetype.h",
 	    "ttcp.c",
 	    nullptr
 	};

@@ -477,13 +477,13 @@ typedef enum vmath_matrix_component_ {
 
 /**
  * Test for all elements of `v' being smaller than `tol'.
- * Version for degree 2 vectors.
+ * Version for homogeneous 4D vectors.
  */
 #define HNEAR_ZERO(v, tol) \
     (NEAR_ZERO(v[X], tol) \
      && NEAR_ZERO(v[Y], tol) \
      && NEAR_ZERO(v[Z], tol) \
-     && NEAR_ZERO(h[W], tol))
+     && NEAR_ZERO(v[W], tol))
 
 
 /**

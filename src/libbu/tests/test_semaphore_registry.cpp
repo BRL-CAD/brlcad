@@ -41,12 +41,15 @@
 #include <thread>
 #include <vector>
 
+#include "bu/app.h"
 #include "bu/parallel.h"
 
 
 int
-main()
+main(int UNUSED(argc), char **argv)
 {
+    bu_setprogname(argv[0]);
+
     const size_t thread_count = 16;
     const size_t reinit_rounds = 32;
     std::vector<int> same_ids(thread_count, 0);

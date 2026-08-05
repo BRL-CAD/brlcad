@@ -621,6 +621,7 @@ void objedit_mouse(struct mged_state *s, const vect_t mousevec);
 void label_edited_solid(struct mged_state *s, int *num_lines, point_t *lines, struct rt_point_labels pl[], int max_pl, const mat_t xform, struct rt_db_internal *ip);
 void init_oedit(struct mged_state *s);
 void init_sedit(struct mged_state *s);
+int set_oedit_bbox_keypoint(struct mged_state *s);
 
 void set_e_axes_pos(struct mged_state *s, int both);
 int set_e_axes_pos_clbk(int , const char **, void *, void *);

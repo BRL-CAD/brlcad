@@ -34,6 +34,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "bu/parallel.h"
 #include "rt/resource.h"
 
@@ -80,8 +81,10 @@ static early_librt_client early_client;
 
 
 int
-main()
+main(int UNUSED(argc), char **argv)
 {
+    bu_setprogname(argv[0]);
+
     if (constructor_status)
 	return 1;
 

@@ -37,6 +37,7 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
 
@@ -118,8 +119,10 @@ static early_libbu_client early_client;
 
 
 int
-main()
+main(int UNUSED(argc), char **argv)
 {
+    bu_setprogname(argv[0]);
+
     int calls_before;
 
     if (constructor_status) {

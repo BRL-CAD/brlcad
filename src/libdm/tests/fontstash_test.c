@@ -15,6 +15,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/app.h"
+
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
@@ -187,6 +189,8 @@ main(int argc, char **argv)
     int dirty[4];
     const char text[] = "Fontstash: caf\xc3\xa9 " "\xff";
     const char malformed[] = {'A', (char)0xc3, '(', 'B', (char)0xe2, '\0'};
+
+    bu_setprogname(argv[0]);
 
     memset(&stats, 0, sizeof(stats));
     memset(&invalid_stats, 0, sizeof(invalid_stats));

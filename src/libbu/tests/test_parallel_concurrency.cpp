@@ -44,6 +44,7 @@
 #include <thread>
 #include <vector>
 
+#include "bu/app.h"
 #include "bu/parallel.h"
 
 
@@ -137,8 +138,10 @@ recursive_callback(int cpu, void *data)
 
 
 int
-main()
+main(int UNUSED(argc), char **argv)
 {
+    bu_setprogname(argv[0]);
+
     const size_t caller_count = 8;
     const size_t workers_per_caller = 2;
     std::atomic<size_t> ready{0};
