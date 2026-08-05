@@ -555,7 +555,6 @@ init_repo_config(RepoConfig &cfg)
 	    "test_perm.cpp",
 	    "rt_ecmd_scanner.cpp",
 	    "sha1.c",
-	    "stb_truetype.h",
 	    "struetype.h",
 	    "ttcp.c",
 	    nullptr
