@@ -930,7 +930,7 @@ _brlcad_srccompile_probe(HAVE_FLATTEN_ATTRIBUTE
 # serially).
 _brlcad_run_probe_batch(SRCCOMPILE)
 
-# Second flag-batch pre-warm (optimization, sanitizer and warning flags).
+# Second flag-batch pre-warm (optimization and warning flags).
 # Unlike the first batch, every consumer of these flags lives under the
 # "if(NOT MSVC)" optimization/warning blocks below, so on MSVC the reference
 # build never tests them.  Keep this batch gated to non-MSVC to match that -
@@ -975,23 +975,6 @@ if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES AND NOT MSVC)
       _brlcad_register_flag_probe(C "${_brlcad_stack_flag}")
       _brlcad_register_flag_probe(CXX "${_brlcad_stack_flag}")
     endforeach()
-  endif()
-
-  if(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
-    foreach(_brlcad_asan_flag IN ITEMS
-        "fsanitize=address"
-        "fsanitize-address-use-after-return=always"
-        fsanitize-address-use-after-scope
-        fno-omit-frame-pointer
-      )
-      _brlcad_register_flag_probe(C "${_brlcad_asan_flag}")
-      _brlcad_register_flag_probe(CXX "${_brlcad_asan_flag}")
-    endforeach()
-  endif()
-
-  if(BRLCAD_SANITIZE_THREAD)
-    _brlcad_register_flag_probe(C "fsanitize=thread")
-    _brlcad_register_flag_probe(CXX "fsanitize=thread")
   endif()
 
   if(BRLCAD_WARNINGS OR BRLCAD_ENABLE_STRICT)
@@ -1358,14 +1341,6 @@ if(NOT MSVC)
     check_c_flag(qstackprotect)
     check_cxx_flag(qstackprotect)
   endif(${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
-
-  # Differently, enable the ThreadSanitizer race condition detector
-  # only as requested since it can incur a 5x-15x slowdown.  See
-  # https://code.google.com/p/thread-sanitizer/ for more info.
-  if(BRLCAD_SANITIZE_THREAD)
-    check_c_flag(fsanitize=thread)
-    check_cxx_flag(fsanitize=thread)
-  endif(BRLCAD_SANITIZE_THREAD)
 
   # verbose warning flags.  we intentionally try to turn on as many as
   # possible.  adding more is encouraged (as long as all issues are
@@ -2446,10 +2421,18 @@ if(MSVC)
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
 endif(MSVC)
 
-# Enable AddressSanitizer only after the configure-time platform tests have
-# run.  Instrumenting try_run executables can make otherwise valid feature
-# checks fail when configuring under a debugger, tracer, or restricted runtime
-# where LeakSanitizer cannot inspect the process.
+# Enable sanitizers only after the configure-time platform tests have run.
+# Instrumenting try_run executables can make otherwise valid feature checks
+# fail when configuring under a debugger, tracer, or restricted runtime where
+# sanitizer runtimes cannot inspect the process.
+if(BRLCAD_ENABLE_THREAD_SANITIZER AND
+   (BRLCAD_ENABLE_ADDRESS_SANITIZER OR BRLCAD_ENABLE_UNDEFINED_SANITIZER))
+  message(FATAL_ERROR
+    "BRLCAD_ENABLE_THREAD_SANITIZER must use a separate build from "
+    "AddressSanitizer and UndefinedBehaviorSanitizer"
+  )
+endif()
+
 if(BRLCAD_ENABLE_ADDRESS_SANITIZER)
   if(MSVC)
     message(FATAL_ERROR "BRLCAD_ENABLE_ADDRESS_SANITIZER is not yet supported with MSVC")
@@ -2499,6 +2482,140 @@ if(BRLCAD_ENABLE_ADDRESS_SANITIZER)
   endif()
   if(BRLCAD_ASAN_CXX_FRAME_POINTER_SUPPORTED)
     add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-omit-frame-pointer>)
+  endif()
+endif()
+
+if(BRLCAD_ENABLE_UNDEFINED_SANITIZER)
+  if(MSVC)
+    message(FATAL_ERROR "BRLCAD_ENABLE_UNDEFINED_SANITIZER is not yet supported with MSVC")
+  endif()
+  if(BRLCAD_OPTIMIZED OR NOT BRLCAD_DEBUGGING)
+    message(FATAL_ERROR "BRLCAD_ENABLE_UNDEFINED_SANITIZER requires BRLCAD_OPTIMIZED=OFF and BRLCAD_DEBUGGING=ON")
+  endif()
+
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "-fsanitize=undefined")
+  list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=undefined")
+  check_c_compiler_flag("-fsanitize=undefined" BRLCAD_UBSAN_C_SUPPORTED)
+  check_cxx_compiler_flag("-fsanitize=undefined" BRLCAD_UBSAN_CXX_SUPPORTED)
+  check_c_compiler_flag("-fno-sanitize-recover=undefined" BRLCAD_UBSAN_C_NO_RECOVER_SUPPORTED)
+  check_cxx_compiler_flag("-fno-sanitize-recover=undefined" BRLCAD_UBSAN_CXX_NO_RECOVER_SUPPORTED)
+  check_c_compiler_flag("-fno-omit-frame-pointer" BRLCAD_UBSAN_C_FRAME_POINTER_SUPPORTED)
+  check_cxx_compiler_flag("-fno-omit-frame-pointer" BRLCAD_UBSAN_CXX_FRAME_POINTER_SUPPORTED)
+  cmake_pop_check_state()
+
+  if(NOT BRLCAD_UBSAN_C_SUPPORTED OR NOT BRLCAD_UBSAN_CXX_SUPPORTED)
+    message(FATAL_ERROR "BRLCAD_ENABLE_UNDEFINED_SANITIZER was requested, but the C/C++ compiler and linker do not support -fsanitize=undefined")
+  endif()
+  if(NOT BRLCAD_UBSAN_C_NO_RECOVER_SUPPORTED OR NOT BRLCAD_UBSAN_CXX_NO_RECOVER_SUPPORTED)
+    message(FATAL_ERROR "BRLCAD_ENABLE_UNDEFINED_SANITIZER requires C/C++ support for -fno-sanitize-recover=undefined")
+  endif()
+
+  add_compile_options(-fsanitize=undefined)
+  add_link_options(-fsanitize=undefined)
+  add_compile_options($<$<COMPILE_LANGUAGE:C>:-fno-sanitize-recover=undefined>)
+  add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-sanitize-recover=undefined>)
+  if(BRLCAD_UBSAN_C_FRAME_POINTER_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-fno-omit-frame-pointer>)
+  endif()
+  if(BRLCAD_UBSAN_CXX_FRAME_POINTER_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-omit-frame-pointer>)
+  endif()
+endif()
+
+if(BRLCAD_ENABLE_THREAD_SANITIZER)
+  if(MSVC)
+    message(FATAL_ERROR "BRLCAD_ENABLE_THREAD_SANITIZER is not yet supported with MSVC")
+  endif()
+  if(BRLCAD_OPTIMIZED OR NOT BRLCAD_DEBUGGING)
+    message(FATAL_ERROR "BRLCAD_ENABLE_THREAD_SANITIZER requires BRLCAD_OPTIMIZED=OFF and BRLCAD_DEBUGGING=ON")
+  endif()
+
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "-fsanitize=thread")
+  list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=thread")
+  check_c_compiler_flag("-fsanitize=thread" BRLCAD_TSAN_C_SUPPORTED)
+  check_cxx_compiler_flag("-fsanitize=thread" BRLCAD_TSAN_CXX_SUPPORTED)
+  check_c_compiler_flag("-fno-omit-frame-pointer" BRLCAD_TSAN_C_FRAME_POINTER_SUPPORTED)
+  check_cxx_compiler_flag("-fno-omit-frame-pointer" BRLCAD_TSAN_CXX_FRAME_POINTER_SUPPORTED)
+  check_c_compiler_flag("-Wno-error=tsan" BRLCAD_TSAN_C_NO_ERROR_SUPPORTED)
+  check_cxx_compiler_flag("-Wno-error=tsan" BRLCAD_TSAN_CXX_NO_ERROR_SUPPORTED)
+  cmake_pop_check_state()
+
+  if(NOT BRLCAD_TSAN_C_SUPPORTED OR NOT BRLCAD_TSAN_CXX_SUPPORTED)
+    message(FATAL_ERROR "BRLCAD_ENABLE_THREAD_SANITIZER was requested, but the C/C++ compiler and linker do not support -fsanitize=thread")
+  endif()
+
+  add_compile_options(-fsanitize=thread)
+  add_link_options(-fsanitize=thread)
+  if(BRLCAD_TSAN_C_FRAME_POINTER_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-fno-omit-frame-pointer>)
+  endif()
+  if(BRLCAD_TSAN_CXX_FRAME_POINTER_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-omit-frame-pointer>)
+  endif()
+  # GCC warns that ThreadSanitizer does not model atomic_thread_fence.  Keep
+  # that warning visible, but do not let BRL-CAD's global -Werror prevent a
+  # TSan build from reaching the runtime tests which characterize the impact.
+  if(BRLCAD_TSAN_C_NO_ERROR_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-Wno-error=tsan>)
+  endif()
+  if(BRLCAD_TSAN_CXX_NO_ERROR_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-error=tsan>)
+  endif()
+endif()
+
+# Instrumented executables can be substantially slower, especially when a
+# test drives geometry work through nested execute_process calls whose timeout
+# is not managed by CTest.  Supply a common multiplier for those scripts while
+# permitting CI and developers to tune it for their host.
+if(BRLCAD_ENABLE_ADDRESS_SANITIZER OR
+   BRLCAD_ENABLE_UNDEFINED_SANITIZER OR
+   BRLCAD_ENABLE_THREAD_SANITIZER)
+  set(_brlcad_test_timeout_scale_default 4)
+else()
+  set(_brlcad_test_timeout_scale_default 1)
+endif()
+set(
+  BRLCAD_TEST_TIMEOUT_SCALE "${_brlcad_test_timeout_scale_default}"
+  CACHE STRING "Multiplier for test-script subprocess timeouts"
+)
+mark_as_advanced(BRLCAD_TEST_TIMEOUT_SCALE)
+if(NOT BRLCAD_TEST_TIMEOUT_SCALE MATCHES "^[1-9][0-9]*$")
+  message(FATAL_ERROR "BRLCAD_TEST_TIMEOUT_SCALE must be a positive integer")
+endif()
+unset(_brlcad_test_timeout_scale_default)
+
+# Build-time scanners are implementation tools, not leak-test subjects.  An
+# instrumented scanner still needs to run while building, including under
+# ptrace-based CI/sandbox environments where LeakSanitizer cannot initialize.
+# GCC ThreadSanitizer on x86-64 Linux likewise needs address randomization
+# disabled before process startup to reserve its shadow address range.
+set(BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER)
+set(BRLCAD_SANITIZER_TEST_LAUNCHER)
+if(BRLCAD_ENABLE_ADDRESS_SANITIZER)
+  set(
+    BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER
+    ${CMAKE_COMMAND} -E env ASAN_OPTIONS=detect_leaks=0
+  )
+endif()
+if(BRLCAD_ENABLE_THREAD_SANITIZER AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND
+   CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
+  find_program(BRLCAD_SETARCH_EXECUTABLE NAMES setarch)
+  if(BRLCAD_SETARCH_EXECUTABLE)
+    set(
+      BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER
+      ${BRLCAD_SETARCH_EXECUTABLE} x86_64 -R
+    )
+    set(
+      BRLCAD_SANITIZER_TEST_LAUNCHER
+      ${BRLCAD_SETARCH_EXECUTABLE} x86_64 -R
+    )
+  else()
+    message(WARNING
+      "ThreadSanitizer build tools and tests may need to be run with "
+      "address randomization disabled, but setarch was not found"
+    )
   endif()
 endif()
 
