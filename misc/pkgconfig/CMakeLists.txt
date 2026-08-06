@@ -37,7 +37,11 @@ if(TARGET OPENNURBS::OPENNURBS)
     endforeach()
   endif()
   get_filename_component(_opennurbs_libname "${_opennurbs_library}" NAME_WE)
-  string(REGEX REPLACE "^${CMAKE_SHARED_LIBRARY_PREFIX}" "" _opennurbs_libname "${_opennurbs_libname}")
+
+  if(CMAKE_SHARED_LIBRARY_PREFIX)
+    string(REGEX REPLACE "^${CMAKE_SHARED_LIBRARY_PREFIX}" "" _opennurbs_libname "${_opennurbs_libname}")
+  endif()
+
   set(LIBOPENNURBS "-l${_opennurbs_libname}")
   unset(_opennurbs_config)
   unset(_opennurbs_configs)
