@@ -2,6 +2,10 @@ if(NOT DEFINED RTSIL OR NOT DEFINED DB OR NOT DEFINED TEST_DIR)
   message(FATAL_ERROR "RTSIL, DB, and TEST_DIR are required")
 endif()
 
+if(NOT EXISTS ${RTSIL})
+	message(FATAL_ERROR "RTSIL($RTSIL) not found")
+endif()
+
 set(image_side 32)
 math(EXPR expected_size "${image_side} * ${image_side}")
 set(stdout_file "${TEST_DIR}/rtsil-stdout.bw")

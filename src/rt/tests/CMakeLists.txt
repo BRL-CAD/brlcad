@@ -80,6 +80,10 @@ brlcad_add_test(
     "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rtsil_output.cmake"
 )
+# Since the test is a CMake script, we need to ensure the target
+# dependencies ourselves
+add_dependencies(unit rtsil)
+add_dependencies(check rtsil)
 
 brlcad_add_test(
   NAME rt_disk_framebuffer_size
@@ -90,6 +94,11 @@ brlcad_add_test(
     "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rt_disk_framebuffer_size.cmake"
 )
+# Since the test is a CMake script, we need to ensure the target
+# dependencies ourselves
+add_dependencies(unit rt)
+add_dependencies(check rt)
+
 
 # Housekeeping
 cmakefiles(
