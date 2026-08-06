@@ -81,6 +81,16 @@ ged_subprocesses_terminate(struct ged *gedp)
 	    rrp->aborted = 1;
 	}
 	(void)bu_process_wait_n(&rrp->p, 0);
+
+	/* Mirror the natural-EOF completion of src/libged/ged_util.cpp -
+	 * notify the drawable subsystem AND fire the caller-supplied end callback
+	 * with aborted so UI/render-done hooks don't stall on interrupt teardown. */
+	int aborted_flag = 1;
+	if (gedp->i && gedp->i->ged_gdp && gedp->i->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    gedp->i->ged_gdp->gd_rtCmdNotify(aborted_flag);
+	if (rrp->end_clbk)
+	    rrp->end_clbk(0, NULL, &aborted_flag, rrp->end_clbk_data);
+
 	bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
 	BU_PUT(rrp, struct ged_subprocess);
     }
