@@ -2,6 +2,7 @@ set(
   primitives_headers
   arb8.h
   annot.h
+  datum.h
   bot.h
   brep.h
   bspline.h

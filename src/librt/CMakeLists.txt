@@ -443,6 +443,7 @@ set(
   RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/vds
+  ${BRLCAD_SOURCE_DIR}/src/libbu
   ${REGEX_INCLUDE_DIRS}
 )
 # FIXME: needs materialX
@@ -471,6 +472,7 @@ brlcad_addlib(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_
     rt_init.cpp
     search.cpp
     search_old.cpp
+    primitives/annot/annot.c
     primitives/vol/vol_brep.cpp
     primitives/dsp/dsp.c
     primitives/ebm/ebm.c

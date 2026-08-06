@@ -33,18 +33,73 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#include <limits.h>
 #include "bnetwork.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/cv.h"
+#include "bu/file.h"
+#include "bu/mapped_file.h"
 #include "bu/opt.h"
+#include "bu/str.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "rt/primitives/annot.h"
 #include "raytrace.h"
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wbad-function-cast"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
+#define STRUETYPE_IMPLEMENTATION
+#include "struetype.h"
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
 #include "../../librt_private.h"
+
+#define ANNOT_EXT_MAGIC 0x414e5432u /* "ANT2" */
+#define ANNOT_EXT_VERSION 1u
+
+C_DECL void rt_annot_ifree(struct rt_db_internal *ip);
+
+static uint32_t
+annot_get_uint32(const unsigned char *cp)
+{
+    uint32_t value;
+
+    memcpy(&value, cp, sizeof(value));
+    return ntohl(value);
+}
+
+
+static void
+annot_put_uint32(unsigned char *cp, uint32_t value)
+{
+    value = htonl(value);
+    memcpy(cp, &value, sizeof(value));
+}
+
+
+static int
+annot_has_extension(const struct rt_annot_internal *annot_ip)
+{
+    return annot_ip->flags || annot_ip->styles ||
+	MAGNITUDE(annot_ip->u_vec) > SMALL_FASTF ||
+	MAGNITUDE(annot_ip->v_vec) > SMALL_FASTF;
+}
 
 
 int
@@ -142,7 +197,8 @@ ant_check_pos(const struct txt_seg *tsg, const char **rel_pos)
 
 
 static void
-ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fastf_t* height, struct bu_list *vlfree)
+ant_label_dimensions(const struct txt_seg *tsg, hpoint_t ref_pt,
+	fastf_t *length, fastf_t *height, struct bu_list *vlfree)
 {
     point_t bmin, bmax;
     struct bu_list vhead;
@@ -156,78 +212,118 @@ ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fast
 
     *length = bmax[0] - ref_pt[0];
     *height = bmax[1] - ref_pt[1];
+    BV_FREE_VLIST(vlfree, &vhead);
 }
 
 
 static int
-ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip, struct bu_list *vlfree)
+ant_pos_adjs(point2d_t adjusted, const struct txt_seg *tsg,
+	const struct rt_annot_internal *annot_ip, struct bu_list *vlfree)
 {
-    point2d_t pt = V2INIT_ZERO;
     fastf_t length = 0;
     fastf_t height = 0;
 
+    V2MOVE(adjusted, annot_ip->verts[tsg->ref_pt]);
     ant_label_dimensions(tsg, annot_ip->verts[tsg->ref_pt], &length, &height, vlfree);
 
     if (tsg->rel_pos == RT_TXT_POS_BL) {
-	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[0] = pt[0] + 1;
-	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+	adjusted[0] += 1;
     }else if (tsg->rel_pos == RT_TXT_POS_BC) {
-	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[0] = pt[0] - (length / 2);
-	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+	adjusted[0] -= length / 2;
     }else if (tsg->rel_pos == RT_TXT_POS_BR) {
-	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[0] = pt[0] - length;
-	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+	adjusted[0] -= length;
     }else if (tsg->rel_pos == RT_TXT_POS_ML) {
-	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[0] = pt[0] + 1;
-	pt[1] = pt[1] - (height / 2);
-	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+	adjusted[0] += 1;
+	adjusted[1] -= height / 2;
     }else if (tsg->rel_pos == RT_TXT_POS_MC) {
-	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[0] = pt[0] - (length / 2);
-	pt[1] = pt[1] - (height / 2);
-	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+	adjusted[0] -= length / 2;
+	adjusted[1] -= height / 2;
     }else if (tsg->rel_pos == RT_TXT_POS_MR) {
-	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[1] = pt[1] - (height / 2);
-	pt[0] = pt[0] - length;
-	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+	adjusted[1] -= height / 2;
+	adjusted[0] -= length;
     }else if (tsg->rel_pos == RT_TXT_POS_TL) {
-	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[1] = pt[1] - height;
-	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+	adjusted[1] -= height;
     }else if (tsg->rel_pos == RT_TXT_POS_TC) {
-	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[0] = pt[0] - (length / 2);
-	pt[1] = pt[1] - height;
-	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+	adjusted[0] -= length / 2;
+	adjusted[1] -= height;
     } else {
 	//this is the case of TR
-	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[0] = pt[0] - length;
-	pt[1] = pt[1] - height;
-	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+	adjusted[0] -= length;
+	adjusted[1] -= height;
     }
     return 0;
 }
 
 
-/* FIXME: Unused? */
-#if 0
-static int
-ant_check(const struct rt_ant *ant, const struct rt_annot_internal *annot_ip, int noisy)
+static void
+annot_validation_message(struct bu_vls *messages, size_t index,
+	const char *message)
 {
+    if (!messages)
+	return;
+    if (bu_vls_strlen(messages))
+	bu_vls_strcat(messages, "; ");
+    bu_vls_printf(messages, "annotation segment %zu: %s", index, message);
+}
+
+
+int
+rt_annot_validate(const struct rt_annot_internal *annot_ip,
+	struct bu_vls *messages)
+{
+    const struct rt_ant *ant;
     size_t i, j;
     int ret=0;
 
+    if (!annot_ip) {
+	annot_validation_message(messages, 0, "missing annotation");
+	return 1;
+    }
+    RT_ANNOT_CK_MAGIC(annot_ip);
+    ant = &annot_ip->ant;
+
+    if (annot_ip->flags & ~RT_ANNOT_MODEL_SPACE) {
+	annot_validation_message(messages, 0, "unknown placement flags");
+	ret++;
+    }
+    if (!isfinite(annot_ip->V[X]) || !isfinite(annot_ip->V[Y]) ||
+	    !isfinite(annot_ip->V[Z])) {
+	annot_validation_message(messages, 0, "non-finite anchor");
+	ret++;
+    }
+    for (i = 0; i < annot_ip->vert_count; ++i) {
+	if (!isfinite(annot_ip->verts[i][X]) ||
+		!isfinite(annot_ip->verts[i][Y])) {
+	    annot_validation_message(messages, i, "non-finite control vertex");
+	    ret++;
+	}
+    }
+    if (annot_ip->flags & RT_ANNOT_MODEL_SPACE) {
+	vect_t normal;
+	if (MAGNITUDE(annot_ip->u_vec) <= SMALL_FASTF ||
+		MAGNITUDE(annot_ip->v_vec) <= SMALL_FASTF) {
+	    annot_validation_message(messages, 0,
+		"model-space placement requires two nonzero basis vectors");
+	    ret++;
+	} else {
+	    VCROSS(normal, annot_ip->u_vec, annot_ip->v_vec);
+	    if (MAGNITUDE(normal) <= SMALL_FASTF) {
+		annot_validation_message(messages, 0,
+		    "model-space basis vectors are parallel");
+		ret++;
+	    }
+	}
+    }
+
     /* empty annotations are invalid */
     if (ant->count == 0) {
-	if (noisy)
-	    bu_log("annotation is void\n");
+	annot_validation_message(messages, 0, "annotation is empty");
 	return 1;
+    }
+
+    if (!ant->segments || !ant->reverse) {
+	annot_validation_message(messages, 0, "missing segment arrays");
+	return ret + 1;
     }
 
     for (i=0; i<ant->count; i++) {
@@ -238,6 +334,11 @@ ant_check(const struct rt_ant *ant, const struct rt_annot_internal *annot_ip, in
 	const struct txt_seg *tsg;
 	const uint32_t *lng;
 
+	if (!ant->segments[i]) {
+	    annot_validation_message(messages, i, "missing segment");
+	    ret++;
+	    continue;
+	}
 	lng = (uint32_t *)ant->segments[i];
 
 	switch (*lng) {
@@ -277,20 +378,44 @@ ant_check(const struct rt_ant *ant, const struct rt_annot_internal *annot_ip, in
 		    ret++;
 		if((size_t)tsg->rel_pos > 9 || (size_t)tsg->rel_pos < 1)
 		    ret++;
+		if (!isfinite(tsg->txt_size) || tsg->txt_size <= 0.0) {
+		    annot_validation_message(messages, i, "invalid text size");
+		    ret++;
+		}
+		if (!isfinite(tsg->txt_rot_angle)) {
+		    annot_validation_message(messages, i, "invalid text rotation");
+		    ret++;
+		}
 		break;
 	    default:
 		ret++;
-		if (noisy)
-		    bu_log("Unrecognized segment type in the annotation\n");
+		annot_validation_message(messages, i, "unrecognized segment type");
 		break;
+	}
+	if (annot_ip->styles) {
+	    const struct rt_annot_seg_style *style = &annot_ip->styles[i];
+	    if (style->role > RT_ANNOT_ROLE_SYMBOL) {
+		annot_validation_message(messages, i, "unknown semantic role");
+		ret++;
+	    }
+	    if (style->flags & ~(RT_ANNOT_STYLE_WIDTH | RT_ANNOT_STYLE_COLOR)) {
+		annot_validation_message(messages, i, "unknown style flags");
+		ret++;
+	    }
+	    if (style->line_pattern > RT_ANNOT_LINE_PHANTOM) {
+		annot_validation_message(messages, i, "unknown line pattern");
+		ret++;
+	    }
+	    if ((style->flags & RT_ANNOT_STYLE_WIDTH) &&
+		    (!isfinite(style->line_width) || style->line_width <= 0.0)) {
+		annot_validation_message(messages, i, "invalid line width");
+		ret++;
+	    }
 	}
     }
 
-    if (ret && noisy)
-	bu_log("annotation references non-existent vertices!\n");
     return ret;
 }
-#endif
 
 
 /**
@@ -311,6 +436,10 @@ rt_annot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_CK_SOLTAB(stp);
     if (ip) RT_CK_DB_INTERNAL(ip);
     if (rtip) RT_CK_RTI(rtip);
+
+    if (ip && rt_annot_validate(
+	    (const struct rt_annot_internal *)ip->idb_ptr, NULL))
+	return -1;
 
     stp->st_specific = (void *)NULL;
     return 0;
@@ -419,7 +548,360 @@ rt_annot_free(struct soltab *stp)
 
 
 static int
-seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, void *seg)
+annot_map_2d(point_t out, const point_t base, const point2d_t uv,
+	const struct rt_annot_internal *annot_ip)
+{
+    if (annot_ip->flags & RT_ANNOT_MODEL_SPACE)
+	VJOIN2(out, base, uv[X], annot_ip->u_vec, uv[Y], annot_ip->v_vec);
+    else
+	VSET(out, base[X] + uv[X], base[Y] + uv[Y], base[Z]);
+    return 0;
+}
+
+
+#define ANNOT_DEFAULT_FONT "osifont-lgpl3fe.ttf"
+#define ANNOT_FONT_APPL "librt annotation font"
+
+static struct bu_mapped_file *
+annot_try_font(const char *path, stt_fontinfo *font)
+{
+    struct bu_mapped_file *mapped;
+    int offset;
+
+    if (!path || !path[0] || !font)
+	return NULL;
+    mapped = bu_open_mapped_file(path, ANNOT_FONT_APPL);
+    if (!mapped)
+	return NULL;
+    if (!mapped->buf || mapped->buflen == 0 || mapped->buflen > INT_MAX) {
+	bu_close_mapped_file(mapped);
+	return NULL;
+    }
+    offset = stt_GetFontOffsetForIndex((const unsigned char *)mapped->buf,
+	(int)mapped->buflen, 0);
+    if (offset < 0 || !stt_InitFont(font,
+	    (const unsigned char *)mapped->buf, (int)mapped->buflen, offset)) {
+	bu_close_mapped_file(mapped);
+	return NULL;
+    }
+    return mapped;
+}
+
+
+static struct bu_mapped_file *
+annot_open_font(const char *requested, stt_fontinfo *font)
+{
+    struct bu_mapped_file *mapped = NULL;
+    char path[MAXPATHLEN];
+    char filename[MAXPATHLEN];
+    const char *name = requested;
+    int filename_len;
+
+    if (name && name[0]) {
+	if (BU_STR_EQUIV(name, "osifont"))
+	    name = ANNOT_DEFAULT_FONT;
+	if (strchr(name, '/') || strchr(name, '\\')) {
+	    mapped = annot_try_font(name, font);
+	} else {
+	    if (bu_dir(path, sizeof(path), BU_DIR_DATA, "fonts", name,
+		    (const char *)NULL))
+		mapped = annot_try_font(path, font);
+	    if (!mapped && !strchr(name, '.')) {
+		filename_len = snprintf(filename, sizeof(filename), "%s.ttf",
+		    name);
+		if (filename_len > 0 &&
+			(size_t)filename_len < sizeof(filename) &&
+			bu_dir(path, sizeof(path), BU_DIR_DATA, "fonts",
+			    filename, (const char *)NULL))
+		    mapped = annot_try_font(path, font);
+	    }
+	}
+	if (mapped)
+	    return mapped;
+    }
+
+    if (!name || !BU_STR_EQUAL(name, ANNOT_DEFAULT_FONT)) {
+	if (bu_dir(path, sizeof(path), BU_DIR_DATA, "fonts",
+		ANNOT_DEFAULT_FONT, (const char *)NULL))
+	    mapped = annot_try_font(path, font);
+    }
+    return mapped;
+}
+
+
+static uint32_t
+annot_utf8_next(const unsigned char **cursor, const unsigned char *end)
+{
+    const unsigned char *s;
+    size_t remaining;
+    uint32_t cp;
+
+    if (!cursor || !*cursor || !end || *cursor >= end)
+	return 0;
+    s = *cursor;
+    remaining = (size_t)(end - s);
+    if (s[0] < 0x80) {
+	*cursor = s + 1;
+	return s[0];
+    }
+    if (s[0] >= 0xc2 && s[0] <= 0xdf && remaining >= 2 &&
+	(s[1] & 0xc0) == 0x80) {
+	*cursor = s + 2;
+	return ((uint32_t)(s[0] & 0x1f) << 6) | (uint32_t)(s[1] & 0x3f);
+    }
+    if (s[0] >= 0xe0 && s[0] <= 0xef && remaining >= 3 &&
+	(s[1] & 0xc0) == 0x80 && (s[2] & 0xc0) == 0x80 &&
+	!(s[0] == 0xe0 && s[1] < 0xa0) &&
+	!(s[0] == 0xed && s[1] >= 0xa0)) {
+	cp = ((uint32_t)(s[0] & 0x0f) << 12) |
+	    ((uint32_t)(s[1] & 0x3f) << 6) | (uint32_t)(s[2] & 0x3f);
+	*cursor = s + 3;
+	return cp;
+    }
+    if (s[0] >= 0xf0 && s[0] <= 0xf4 && remaining >= 4 &&
+	(s[1] & 0xc0) == 0x80 && (s[2] & 0xc0) == 0x80 &&
+	(s[3] & 0xc0) == 0x80 &&
+	!(s[0] == 0xf0 && s[1] < 0x90) &&
+	!(s[0] == 0xf4 && s[1] >= 0x90)) {
+	cp = ((uint32_t)(s[0] & 0x07) << 18) |
+	    ((uint32_t)(s[1] & 0x3f) << 12) |
+	    ((uint32_t)(s[2] & 0x3f) << 6) | (uint32_t)(s[3] & 0x3f);
+	*cursor = s + 4;
+	return cp;
+    }
+    *cursor = s + 1;
+    return 0xfffd;
+}
+
+
+static void
+annot_local_point(struct bu_list *vlfree, struct bu_list *vhead,
+	fastf_t x, fastf_t y, int command, point2d_t bmin, point2d_t bmax)
+{
+    point_t point;
+
+    VSET(point, x, y, 0.0);
+    BV_ADD_VLIST(vlfree, vhead, point, command);
+    if (x < bmin[X]) bmin[X] = x;
+    if (y < bmin[Y]) bmin[Y] = y;
+    if (x > bmax[X]) bmax[X] = x;
+    if (y > bmax[Y]) bmax[Y] = y;
+}
+
+
+static void
+annot_quadratic(struct bu_list *vlfree, struct bu_list *vhead,
+	const point2d_t start, const point2d_t control, const point2d_t end,
+	point2d_t bmin, point2d_t bmax)
+{
+    int i;
+    const int segments = 8;
+
+    for (i = 1; i <= segments; ++i) {
+	fastf_t t = (fastf_t)i / (fastf_t)segments;
+	fastf_t mt = 1.0 - t;
+	fastf_t x = mt*mt*start[X] + 2.0*mt*t*control[X] +
+	    t*t*end[X];
+	fastf_t y = mt*mt*start[Y] + 2.0*mt*t*control[Y] +
+	    t*t*end[Y];
+	annot_local_point(vlfree, vhead, x, y, BV_VLIST_LINE_DRAW,
+	    bmin, bmax);
+    }
+}
+
+
+static void
+annot_cubic(struct bu_list *vlfree, struct bu_list *vhead,
+	const point2d_t start, const point2d_t control1,
+	const point2d_t control2, const point2d_t end,
+	point2d_t bmin, point2d_t bmax)
+{
+    int i;
+    const int segments = 12;
+
+    for (i = 1; i <= segments; ++i) {
+	fastf_t t = (fastf_t)i / (fastf_t)segments;
+	fastf_t mt = 1.0 - t;
+	fastf_t x = mt*mt*mt*start[X] + 3.0*mt*mt*t*control1[X] +
+	    3.0*mt*t*t*control2[X] + t*t*t*end[X];
+	fastf_t y = mt*mt*mt*start[Y] + 3.0*mt*mt*t*control1[Y] +
+	    3.0*mt*t*t*control2[Y] + t*t*t*end[Y];
+	annot_local_point(vlfree, vhead, x, y, BV_VLIST_LINE_DRAW,
+	    bmin, bmax);
+    }
+}
+
+
+static int
+annot_font_text(struct bu_list *vlfree, struct bu_list *vhead,
+	const point_t base, const struct rt_annot_internal *annot_ip,
+	const struct txt_seg *tsg, const struct rt_annot_seg_style *style)
+{
+    struct bu_mapped_file *mapped;
+    struct bu_list local;
+    struct bv_vlist *vp;
+    stt_fontinfo font;
+    const unsigned char *cursor;
+    const unsigned char *end;
+    point2d_t bmin, bmax;
+    fastf_t pen_x = 0.0;
+    fastf_t pen_y = 0.0;
+    fastf_t scale;
+    fastf_t line_advance;
+    fastf_t align_x = 0.0;
+    fastf_t align_y = 0.0;
+    fastf_t cosine, sine;
+    int ascent, descent, line_gap;
+    int previous_glyph = -1;
+    const char *font_name = style ? style->font : NULL;
+
+    mapped = annot_open_font(font_name, &font);
+    if (!mapped)
+	return 0;
+    scale = stt_ScaleForPixelHeight(&font, (float)tsg->txt_size);
+    if (!(scale > 0.0) || !isfinite(scale)) {
+	bu_close_mapped_file(mapped);
+	return 0;
+    }
+    stt_GetFontVMetrics(&font, &ascent, &descent, &line_gap);
+    line_advance = (fastf_t)(ascent - descent + line_gap) * scale;
+    if (!(line_advance > 0.0) || !isfinite(line_advance))
+	line_advance = tsg->txt_size;
+
+    BU_LIST_INIT(&local);
+    V2SET(bmin, 0.0, (fastf_t)descent * scale);
+    V2SET(bmax, 0.0, (fastf_t)ascent * scale);
+    cursor = (const unsigned char *)bu_vls_cstr(&tsg->label);
+    end = cursor + bu_vls_strlen(&tsg->label);
+    while (cursor < end) {
+	uint32_t codepoint = annot_utf8_next(&cursor, end);
+	int glyph, advance, bearing;
+	stt_vertex *vertices = NULL;
+	int vertex_count, i;
+
+	if (codepoint == '\r')
+	    continue;
+	if (codepoint == '\n') {
+	    if (pen_x > bmax[X]) bmax[X] = pen_x;
+	    pen_x = 0.0;
+	    pen_y -= line_advance;
+	    if (pen_y + (fastf_t)descent*scale < bmin[Y])
+		bmin[Y] = pen_y + (fastf_t)descent*scale;
+	    previous_glyph = -1;
+	    continue;
+	}
+	if (codepoint == '\t') {
+	    glyph = stt_FindGlyphIndex(&font, ' ');
+	    stt_GetGlyphHMetrics(&font, glyph, &advance, &bearing);
+	    pen_x += 4.0 * (fastf_t)advance * scale;
+	    if (pen_x > bmax[X]) bmax[X] = pen_x;
+	    previous_glyph = -1;
+	    continue;
+	}
+
+	glyph = stt_FindGlyphIndex(&font, (int)codepoint);
+	if (previous_glyph >= 0) {
+	    int kern = stt_GetGlyphKernAdvance(&font, previous_glyph, glyph);
+	    pen_x += (fastf_t)kern * scale;
+	}
+	vertex_count = stt_GetGlyphShape(&font, glyph, &vertices);
+	if (vertex_count > 0 && vertices) {
+	    point2d_t current = V2INIT_ZERO;
+	    for (i = 0; i < vertex_count; ++i) {
+		point2d_t target, control1, control2;
+		V2SET(target, pen_x + (fastf_t)vertices[i].x*scale,
+		    pen_y + (fastf_t)vertices[i].y*scale);
+		switch (vertices[i].type) {
+		    case STT_vmove:
+			V2MOVE(current, target);
+			annot_local_point(vlfree, &local, current[X], current[Y],
+			    BV_VLIST_LINE_MOVE, bmin, bmax);
+			break;
+		    case STT_vline:
+			annot_local_point(vlfree, &local, target[X], target[Y],
+			    BV_VLIST_LINE_DRAW, bmin, bmax);
+			V2MOVE(current, target);
+			break;
+		    case STT_vcurve:
+			V2SET(control1,
+			    pen_x + (fastf_t)vertices[i].cx*scale,
+			    pen_y + (fastf_t)vertices[i].cy*scale);
+			annot_quadratic(vlfree, &local, current, control1,
+			    target, bmin, bmax);
+			V2MOVE(current, target);
+			break;
+		    case STT_vcubic:
+			V2SET(control1,
+			    pen_x + (fastf_t)vertices[i].cx*scale,
+			    pen_y + (fastf_t)vertices[i].cy*scale);
+			V2SET(control2,
+			    pen_x + (fastf_t)vertices[i].cx1*scale,
+			    pen_y + (fastf_t)vertices[i].cy1*scale);
+			annot_cubic(vlfree, &local, current, control1,
+			    control2, target, bmin, bmax);
+			V2MOVE(current, target);
+			break;
+		}
+	    }
+	}
+	if (vertices)
+	    stt_FreeShape(&font, vertices);
+	stt_GetGlyphHMetrics(&font, glyph, &advance, &bearing);
+	pen_x += (fastf_t)advance * scale;
+	if (pen_x > bmax[X]) bmax[X] = pen_x;
+	if (pen_x < bmin[X]) bmin[X] = pen_x;
+	previous_glyph = glyph;
+    }
+
+    switch (tsg->rel_pos) {
+	case RT_TXT_POS_BL: case RT_TXT_POS_ML: case RT_TXT_POS_TL:
+	    align_x = -bmin[X];
+	    break;
+	case RT_TXT_POS_BC: case RT_TXT_POS_MC: case RT_TXT_POS_TC:
+	    align_x = -(bmin[X] + bmax[X]) * 0.5;
+	    break;
+	default:
+	    align_x = -bmax[X];
+	    break;
+    }
+    switch (tsg->rel_pos) {
+	case RT_TXT_POS_BL: case RT_TXT_POS_BC: case RT_TXT_POS_BR:
+	    align_y = -bmin[Y];
+	    break;
+	case RT_TXT_POS_ML: case RT_TXT_POS_MC: case RT_TXT_POS_MR:
+	    align_y = -(bmin[Y] + bmax[Y]) * 0.5;
+	    break;
+	default:
+	    align_y = -bmax[Y];
+	    break;
+    }
+
+    cosine = cos(tsg->txt_rot_angle * DEG2RAD);
+    sine = sin(tsg->txt_rot_angle * DEG2RAD);
+    for (BU_LIST_FOR(vp, bv_vlist, &local)) {
+	size_t i;
+	for (i = 0; i < vp->nused; ++i) {
+	    point2d_t uv;
+	    point_t point;
+	    fastf_t x = vp->pt[i][X] + align_x;
+	    fastf_t y = vp->pt[i][Y] + align_y;
+	    fastf_t rx = cosine*x - sine*y;
+	    fastf_t ry = sine*x + cosine*y;
+	    V2SET(uv, annot_ip->verts[tsg->ref_pt][X] + rx,
+		annot_ip->verts[tsg->ref_pt][Y] + ry);
+	    annot_map_2d(point, base, uv, annot_ip);
+	    BV_ADD_VLIST(vlfree, vhead, point, vp->cmd[i]);
+	}
+    }
+
+    BV_FREE_VLIST(vlfree, &local);
+    bu_close_mapped_file(mapped);
+    return 1;
+}
+
+
+static int
+seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, void *seg, const struct rt_annot_seg_style *style)
 {
     int ret=0;
     int i;
@@ -442,8 +924,6 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
     VSETALL(semi_a, 0);
     VSETALL(semi_b, 0);
     VSETALL(center, 0);
-    VSETALL(V, 0);
-
     lng = (uint32_t *)seg;
     switch (*lng) {
 	case CURVE_LSEG_MAGIC:
@@ -452,9 +932,9 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 		ret++;
 		break;
 	    }
-	    V2ADD2(pt, V, annot_ip->verts[lsg->start]);
+	    annot_map_2d(pt, V, annot_ip->verts[lsg->start], annot_ip);
 	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
-	    V2ADD2(pt, V, annot_ip->verts[lsg->end]);
+	    annot_map_2d(pt, V, annot_ip->verts[lsg->end], annot_ip);
 	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 	    break;
 	case ANN_TSEG_MAGIC:
@@ -467,9 +947,36 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 		ret++;
 		break;
 	    }
-	    ant_pos_adjs(tsg, annot_ip, vlfree);
-	    V2ADD2(pt, V, annot_ip->verts[tsg->ref_pt]);
-	    bv_vlist_2string(vhead, vlfree, tsg->label.vls_str, pt[0], pt[1], tsg->txt_size, tsg->txt_rot_angle);
+	    if (annot_font_text(vlfree, vhead, V, annot_ip, tsg, style))
+		break;
+	    {
+		point2d_t adjusted;
+		ant_pos_adjs(adjusted, tsg, annot_ip, vlfree);
+		annot_map_2d(pt, V, adjusted, annot_ip);
+		if (annot_ip->flags & RT_ANNOT_MODEL_SPACE) {
+		    mat_t basis, rotation, text_mat;
+		    vect_t normal;
+		    MAT_IDN(basis);
+		    basis[0] = annot_ip->u_vec[X];
+		    basis[4] = annot_ip->u_vec[Y];
+		    basis[8] = annot_ip->u_vec[Z];
+		    basis[1] = annot_ip->v_vec[X];
+		    basis[5] = annot_ip->v_vec[Y];
+		    basis[9] = annot_ip->v_vec[Z];
+		    VCROSS(normal, annot_ip->u_vec, annot_ip->v_vec);
+		    VUNITIZE(normal);
+		    basis[2] = normal[X];
+		    basis[6] = normal[Y];
+		    basis[10] = normal[Z];
+		    bn_mat_angles(rotation, 0.0, 0.0, tsg->txt_rot_angle);
+		    bn_mat_mul(text_mat, basis, rotation);
+		    bv_vlist_3string(vhead, vlfree, tsg->label.vls_str, pt,
+			text_mat, tsg->txt_size);
+		} else {
+		    bv_vlist_2string(vhead, vlfree, tsg->label.vls_str,
+			pt[0], pt[1], tsg->txt_size, tsg->txt_rot_angle);
+		}
+	    }
 	    break;
 	case CURVE_CARC_MAGIC:
 	    {
@@ -487,11 +994,16 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 
 		delta = M_PI_4;
 		if (csg->radius <= 0.0) {
-		    V2ADD2(center, V, annot_ip->verts[csg->end]);
-		    V2ADD2(pt, V, annot_ip->verts[csg->start]);
+		    annot_map_2d(center, V, annot_ip->verts[csg->end], annot_ip);
+		    annot_map_2d(pt, V, annot_ip->verts[csg->start], annot_ip);
 
 		    VSUB2(semi_a, pt, center);
-		    VSET(norm, 0, 0, 1);
+		    if (annot_ip->flags & RT_ANNOT_MODEL_SPACE) {
+			VCROSS(norm, annot_ip->u_vec, annot_ip->v_vec);
+			VUNITIZE(norm);
+		    } else {
+			VSET(norm, 0, 0, 1);
+		    }
 		    VCROSS(semi_b, norm, semi_a);
 		    VUNITIZE(semi_b);
 		    radius = MAGNITUDE(semi_a);
@@ -599,8 +1111,8 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 		cosdel = cos(delta);
 		sindel = sin(delta);
 
-		V2ADD2(center, V, center2d);
-		V2ADD2(start_pt, V, start2d);
+		annot_map_2d(center, V, center2d, annot_ip);
+		annot_map_2d(start_pt, V, start2d, annot_ip);
 		oldu = (start2d[0] - center2d[0]);
 		oldv = (start2d[1] - center2d[1]);
 		BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
@@ -608,7 +1120,7 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 		    newu = oldu * cosdel - oldv * sindel;
 		    newv = oldu * sindel + oldv * cosdel;
 		    V2SET(new_uv, newu, newv);
-		    V2ADD2(pt, center, new_uv);
+		    annot_map_2d(pt, center, new_uv, annot_ip);
 		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		    oldu = newu;
 		    oldv = newv;
@@ -632,7 +1144,7 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 		}
 		if (nsg->order < 3) {
 		    /* just straight lines */
-		    V2ADD2(start_pt, V, annot_ip->verts[nsg->ctl_points[0]]);
+		    annot_map_2d(start_pt, V, annot_ip->verts[nsg->ctl_points[0]], annot_ip);
 
 		    if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 			inv_weight = 1.0/nsg->weights[0];
@@ -640,7 +1152,7 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 		    }
 		    BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		    for (i=1; i<nsg->c_size; i++) {
-			V2ADD2(pt, V, annot_ip->verts[nsg->ctl_points[i]]);
+			annot_map_2d(pt, V, annot_ip->verts[nsg->ctl_points[i]], annot_ip);
 			if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 			    inv_weight = 1.0/nsg->weights[i];
 			    VSCALE(pt, pt, inv_weight);
@@ -659,12 +1171,14 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 		eg.ctl_points = (fastf_t *)bu_malloc(nsg->c_size * coords * sizeof(fastf_t), "eg.ctl_points");
 		if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 		    for (i=0; i<nsg->c_size; i++) {
-			V2ADD2(&eg.ctl_points[i*coords], V, annot_ip->verts[nsg->ctl_points[i]]);
+			annot_map_2d(&eg.ctl_points[i*coords], V,
+			    annot_ip->verts[nsg->ctl_points[i]], annot_ip);
 			eg.ctl_points[(i+1)*coords - 1] = nsg->weights[i];
 		    }
 		} else {
 		    for (i=0; i<nsg->c_size; i++) {
-			V2ADD2(&eg.ctl_points[i*coords], V, annot_ip->verts[nsg->ctl_points[i]]);
+			annot_map_2d(&eg.ctl_points[i*coords], V,
+			    annot_ip->verts[nsg->ctl_points[i]], annot_ip);
 		    }
 		}
 		epsilon = MAX_FASTF;
@@ -747,10 +1261,10 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 
 	    if (bsg->degree == 1) {
 		/* straight line */
-		V2ADD2(start_pt, V, annot_ip->verts[bsg->ctl_points[0]]);
+		annot_map_2d(start_pt, V, annot_ip->verts[bsg->ctl_points[0]], annot_ip);
 		BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		for (i=1; i<=bsg->degree; i++) {
-		    V2ADD2(pt, V, annot_ip->verts[bsg->ctl_points[i]]);
+		    annot_map_2d(pt, V, annot_ip->verts[bsg->ctl_points[i]], annot_ip);
 		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		}
 		break;
@@ -805,13 +1319,13 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 
 	    /* plot the results */
 	    bz = BU_LIST_FIRST(bezier_2d_list, &bezier_hd->l);
-	    V2ADD2(pt, V, bz->ctl[0]);
+	    annot_map_2d(pt, V, bz->ctl[0], annot_ip);
 	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 
 	    while (BU_LIST_WHILE(bz, bezier_2d_list, &(bezier_hd->l))) {
 		BU_LIST_DEQUEUE(&bz->l);
 		for (i=1; i<=bsg->degree; i++) {
-		    V2ADD2(pt, V, bz->ctl[i]);
+		    annot_map_2d(pt, V, bz->ctl[i], annot_ip);
 		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		}
 		bu_free((char *)bz->ctl, "g_annot.c: bz->ctl");
@@ -834,16 +1348,33 @@ ant_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 {
     size_t seg_no;
     int ret=0;
+    point_t base = VINIT_ZERO;
 
     BU_CK_LIST_HEAD(vhead);
 
-    BV_VLIST_SET_DISP_MAT(vlfree, vhead, annot_ip->V);
+
+    if (annot_ip->flags & RT_ANNOT_MODEL_SPACE)
+	VMOVE(base, annot_ip->V);
+    else
+	BV_VLIST_SET_DISP_MAT(vlfree, vhead, annot_ip->V);
 
     for (seg_no=0; seg_no < ant->count; seg_no++) {
-	ret += seg_to_vlist(vlfree, vhead, ttol, V, annot_ip, ant->segments[seg_no]);
+	if (annot_ip->styles &&
+		(annot_ip->styles[seg_no].flags & RT_ANNOT_STYLE_WIDTH))
+	    BV_VLIST_SET_LINE_WIDTH(vlfree, vhead,
+		annot_ip->styles[seg_no].line_width);
+	ret += seg_to_vlist(vlfree, vhead, ttol, base, annot_ip,
+	    ant->segments[seg_no], annot_ip->styles ?
+	    &annot_ip->styles[seg_no] : NULL);
+	if (annot_ip->styles &&
+		(annot_ip->styles[seg_no].flags & RT_ANNOT_STYLE_WIDTH))
+	    BV_VLIST_SET_LINE_WIDTH(vlfree, vhead, 1.0);
     }
 
-    BV_VLIST_SET_MODEL_MAT(vlfree, vhead);
+    if (!(annot_ip->flags & RT_ANNOT_MODEL_SPACE))
+	BV_VLIST_SET_MODEL_MAT(vlfree, vhead);
+
+    (void)V;
 
     return ret;
 }
@@ -886,6 +1417,12 @@ rt_annot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_int
     vect_t v;
     VMOVE(v, tip->V);
     MAT4X3PNT(top->V, mat, v);
+    if (tip->flags & RT_ANNOT_MODEL_SPACE) {
+	VMOVE(v, tip->u_vec);
+	MAT4X3VEC(top->u_vec, mat, v);
+	VMOVE(v, tip->v_vec);
+	MAT4X3VEC(top->v_vec, mat, v);
+    }
 
     return BRLCAD_OK;
 }
@@ -924,9 +1461,9 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     VMOVE(annot_ip->V, v);
 
     ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
-    annot_ip->vert_count = ntohl(*(uint32_t *)ptr);
+    annot_ip->vert_count = annot_get_uint32(ptr);
     ptr += SIZEOF_NETWORK_LONG;
-    annot_ip->ant.count = ntohl(*(uint32_t *)ptr);
+    annot_ip->ant.count = annot_get_uint32(ptr);
     ptr += SIZEOF_NETWORK_LONG;
 
     if (annot_ip->vert_count) {
@@ -961,24 +1498,24 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 	double scan;
 	double *scanp;
 
-	magic = ntohl(*(uint32_t *)ptr);
+	magic = annot_get_uint32(ptr);
 	ptr += SIZEOF_NETWORK_LONG;
 	switch (magic) {
 	    case CURVE_LSEG_MAGIC:
 		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = magic;
-		lsg->start = ntohl(*(uint32_t *)ptr);
+		lsg->start = annot_get_uint32(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
-		lsg->end = ntohl(*(uint32_t *)ptr);
+		lsg->end = annot_get_uint32(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
 		annot_ip->ant.segments[seg_no] = (void *)lsg;
 		break;
 	    case ANN_TSEG_MAGIC:
 		BU_ALLOC(tsg, struct txt_seg);
 		tsg->magic = magic;
-		tsg->ref_pt = ntohl(*(uint32_t *)ptr);
+		tsg->ref_pt = annot_get_uint32(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
-		tsg->rel_pos = ntohl(*(uint32_t *)ptr);
+		tsg->rel_pos = annot_get_uint32(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
 		bu_vls_init(&tsg->label);
 		bu_vls_strcpy(&tsg->label, (const char*)ptr);
@@ -994,13 +1531,13 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 	    case CURVE_CARC_MAGIC:
 		BU_ALLOC(csg, struct carc_seg);
 		csg->magic = magic;
-		csg->start = ntohl(*(uint32_t *)ptr);
+		csg->start = annot_get_uint32(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
-		csg->end = ntohl(*(uint32_t *)ptr);
+		csg->end = annot_get_uint32(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
-		csg->orientation = ntohl(*(uint32_t *)ptr);
+		csg->orientation = annot_get_uint32(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
-		csg->center_is_left = ntohl(*(uint32_t *)ptr);
+		csg->center_is_left = annot_get_uint32(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
 		bu_cv_ntohd((unsigned char *)&scan, ptr, 1);
 		csg->radius = scan; /* double to fastf_t */
@@ -1010,11 +1547,11 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 	    case CURVE_NURB_MAGIC:
 		BU_ALLOC(nsg, struct nurb_seg);
 		nsg->magic = magic;
-		nsg->order = ntohl(*(uint32_t *)ptr);
+		nsg->order = annot_get_uint32(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
-		nsg->pt_type = ntohl(*(uint32_t *)ptr);
+		nsg->pt_type = annot_get_uint32(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
-		nsg->k.k_size = ntohl(*(uint32_t *)ptr);
+		nsg->k.k_size = annot_get_uint32(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
 
 		nsg->k.knots = (fastf_t *)bu_malloc(nsg->k.k_size * sizeof(fastf_t), "nsg->k.knots");
@@ -1028,11 +1565,11 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 		bu_free(scanp, "scanp");
 
 		ptr += SIZEOF_NETWORK_DOUBLE * nsg->k.k_size;
-		nsg->c_size = ntohl(*(uint32_t *)ptr);
+		nsg->c_size = annot_get_uint32(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
 		nsg->ctl_points = (int *)bu_malloc(nsg->c_size * sizeof(int), "nsg->ctl_points");
 		for (i=0; i<(size_t)nsg->c_size; i++) {
-		    nsg->ctl_points[i] = ntohl(*(uint32_t *)ptr);
+		    nsg->ctl_points[i] = annot_get_uint32(ptr);
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
 		if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
@@ -1054,11 +1591,11 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 	    case CURVE_BEZIER_MAGIC:
 		BU_ALLOC(bsg, struct bezier_seg);
 		bsg->magic = magic;
-		bsg->degree = ntohl(*(uint32_t *)ptr);
+		bsg->degree = annot_get_uint32(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
 		bsg->ctl_points = (int *)bu_calloc(bsg->degree+1, sizeof(int), "bsg->ctl_points");
 		for (i=0; i<=(size_t)bsg->degree; i++) {
-		    bsg->ctl_points[i] = ntohl(*(uint32_t *)ptr);
+		    bsg->ctl_points[i] = annot_get_uint32(ptr);
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
 		annot_ip->ant.segments[seg_no] = (void *)bsg;
@@ -1076,13 +1613,93 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     }
 
     for (i=0; i<ant->count; i++) {
-	ant->reverse[i] = ntohl(*(uint32_t *)ptr);
+	ant->reverse[i] = annot_get_uint32(ptr);
 	ptr += SIZEOF_NETWORK_LONG;
     }
+
+    if ((size_t)((ep->ext_buf + ep->ext_nbytes) - ptr) >=
+	    SIZEOF_NETWORK_LONG && annot_get_uint32(ptr) == ANNOT_EXT_MAGIC) {
+	const unsigned char *end = ep->ext_buf + ep->ext_nbytes;
+	uint32_t magic;
+	uint32_t version;
+	uint32_t style_count;
+	double basis[6];
+
+#define ANNOT_IMPORT_NEED(_n) do { \
+	    if ((size_t)(end - ptr) < (size_t)(_n)) goto import_error; \
+	} while (0)
+#define ANNOT_IMPORT_UINT32(_v) do { \
+	    ANNOT_IMPORT_NEED(SIZEOF_NETWORK_LONG); \
+	    (_v) = annot_get_uint32(ptr); \
+	    ptr += SIZEOF_NETWORK_LONG; \
+	} while (0)
+
+	ANNOT_IMPORT_UINT32(magic);
+	ANNOT_IMPORT_UINT32(version);
+	ANNOT_IMPORT_UINT32(annot_ip->flags);
+	if (magic != ANNOT_EXT_MAGIC || version != ANNOT_EXT_VERSION)
+	    goto import_error;
+	ANNOT_IMPORT_NEED(6 * SIZEOF_NETWORK_DOUBLE);
+	bu_cv_ntohd((unsigned char *)basis, ptr, 6);
+	ptr += 6 * SIZEOF_NETWORK_DOUBLE;
+	VMOVE(annot_ip->u_vec, basis);
+	VMOVE(annot_ip->v_vec, &basis[3]);
+	ANNOT_IMPORT_UINT32(style_count);
+	if (style_count && style_count != ant->count)
+	    goto import_error;
+	if (style_count)
+	    annot_ip->styles = (struct rt_annot_seg_style *)bu_calloc(
+		style_count, sizeof(struct rt_annot_seg_style),
+		"annotation segment styles");
+	for (i = 0; i < style_count; ++i) {
+	    struct rt_annot_seg_style *style = &annot_ip->styles[i];
+	    uint32_t color;
+	    uint32_t font_len;
+	    uint32_t symbol_len;
+	    double line_width;
+	    ANNOT_IMPORT_UINT32(style->role);
+	    ANNOT_IMPORT_UINT32(style->flags);
+	    ANNOT_IMPORT_UINT32(style->line_pattern);
+	    ANNOT_IMPORT_UINT32(color);
+	    style->color[0] = (unsigned char)((color >> 24) & 0xff);
+	    style->color[1] = (unsigned char)((color >> 16) & 0xff);
+	    style->color[2] = (unsigned char)((color >> 8) & 0xff);
+	    style->color[3] = (unsigned char)(color & 0xff);
+	    ANNOT_IMPORT_NEED(SIZEOF_NETWORK_DOUBLE);
+	    bu_cv_ntohd((unsigned char *)&line_width, ptr, 1);
+	    ptr += SIZEOF_NETWORK_DOUBLE;
+	    style->line_width = line_width;
+	    ANNOT_IMPORT_UINT32(font_len);
+	    ANNOT_IMPORT_UINT32(symbol_len);
+	    ANNOT_IMPORT_NEED((size_t)font_len + symbol_len);
+	    if (font_len) {
+		style->font = (char *)bu_calloc(font_len + 1, 1,
+		    "annotation font");
+		memcpy(style->font, ptr, font_len);
+		ptr += font_len;
+	    }
+	    if (symbol_len) {
+		style->symbol = (char *)bu_calloc(symbol_len + 1, 1,
+		    "annotation symbol");
+		memcpy(style->symbol, ptr, symbol_len);
+		ptr += symbol_len;
+	    }
+	}
+
+#undef ANNOT_IMPORT_UINT32
+#undef ANNOT_IMPORT_NEED
+    }
+
+    if (rt_annot_validate(annot_ip, NULL))
+	goto import_error;
 
     /* Apply transform */
     if (mat == NULL) mat = bn_mat_identity;
     return rt_annot_mat(ip, mat, ip);
+
+import_error:
+    rt_annot_ifree(ip);
+    return -1;
 }
 
 
@@ -1096,6 +1713,9 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     unsigned char *cp;
     size_t seg_no;
     size_t i;
+    size_t extension_size = 0;
+    int enhanced;
+    double coordinate_scale;
 
     /* must be double for import and export */
     double tmp_vec[ELEMENTS_PER_VECT];
@@ -1108,6 +1728,11 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     RT_ANNOT_CK_MAGIC(annot_ip);
 
     BU_CK_EXTERNAL(ep);
+    if (rt_annot_validate(annot_ip, NULL))
+	return -1;
+    enhanced = annot_has_extension(annot_ip);
+    coordinate_scale = (annot_ip->flags & RT_ANNOT_MODEL_SPACE) ?
+	1.0 : local2mm;
 
     /* tally up size of buffer needed */
     ep->ext_nbytes =  (ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE)	/* V*/
@@ -1160,6 +1785,23 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		bu_bomb("rt_annot_export5: unsupported segment type\n");
 	}
     }
+    if (enhanced) {
+	extension_size = 4 * SIZEOF_NETWORK_LONG +
+	    6 * SIZEOF_NETWORK_DOUBLE;
+	if (annot_ip->styles) {
+	    for (seg_no = 0; seg_no < annot_ip->ant.count; ++seg_no) {
+		const struct rt_annot_seg_style *style =
+		    &annot_ip->styles[seg_no];
+		extension_size += 6 * SIZEOF_NETWORK_LONG +
+		    SIZEOF_NETWORK_DOUBLE;
+		if (style->font)
+		    extension_size += strlen(style->font);
+		if (style->symbol)
+		    extension_size += strlen(style->symbol);
+	    }
+	}
+    }
+    ep->ext_nbytes += extension_size;
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "annotation external");
 
     cp = (unsigned char *)ep->ext_buf;
@@ -1170,9 +1812,9 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     cp += ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE;
 
 
-    *(uint32_t *)cp = htonl(annot_ip->vert_count);
+    annot_put_uint32(cp, annot_ip->vert_count);
     cp += SIZEOF_NETWORK_LONG;
-    *(uint32_t *)cp = htonl(annot_ip->ant.count);
+    annot_put_uint32(cp, annot_ip->ant.count);
     cp += SIZEOF_NETWORK_LONG;
 
     /* convert 2D points to mm */
@@ -1180,7 +1822,7 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 	/* must be double for import and export */
 	double pt2d[ELEMENTS_PER_VECT2D];
 
-	V2SCALE(pt2d, annot_ip->verts[i], local2mm);
+	V2SCALE(pt2d, annot_ip->verts[i], coordinate_scale);
 	bu_cv_htond(cp, (const unsigned char *)pt2d, ELEMENTS_PER_VECT2D);
 	cp += 2 * SIZEOF_NETWORK_DOUBLE;
     }
@@ -1202,20 +1844,20 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
 		lseg = (struct line_seg *)lng;
-		*(uint32_t *)cp = htonl(CURVE_LSEG_MAGIC);
+		annot_put_uint32(cp, CURVE_LSEG_MAGIC);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(lseg->start);
+		annot_put_uint32(cp, lseg->start);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(lseg->end);
+		annot_put_uint32(cp, lseg->end);
 		cp += SIZEOF_NETWORK_LONG;
 		break;
 	    case ANN_TSEG_MAGIC:
 		tseg = (struct txt_seg *)lng;
-		*(uint32_t *)cp = htonl(ANN_TSEG_MAGIC);
+		annot_put_uint32(cp, ANN_TSEG_MAGIC);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(tseg->ref_pt);
+		annot_put_uint32(cp, tseg->ref_pt);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(tseg->rel_pos);
+		annot_put_uint32(cp, tseg->rel_pos);
 		cp += SIZEOF_NETWORK_LONG;
 
 		bu_strlcpy((char *)cp, bu_vls_addr(&tseg->label), bu_vls_strlen(&tseg->label) + 1);
@@ -1230,29 +1872,29 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		break;
 	    case CURVE_CARC_MAGIC:
 		cseg = (struct carc_seg *)lng;
-		*(uint32_t *)cp = htonl(CURVE_CARC_MAGIC);
+		annot_put_uint32(cp, CURVE_CARC_MAGIC);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(cseg->start);
+		annot_put_uint32(cp, cseg->start);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(cseg->end);
+		annot_put_uint32(cp, cseg->end);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(cseg->orientation);
+		annot_put_uint32(cp, cseg->orientation);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(cseg->center_is_left);
+		annot_put_uint32(cp, cseg->center_is_left);
 		cp += SIZEOF_NETWORK_LONG;
-		scan = cseg->radius * local2mm;
+		scan = cseg->radius * coordinate_scale;
 		bu_cv_htond(cp, (unsigned char *)&scan, 1);
 		cp += SIZEOF_NETWORK_DOUBLE;
 		break;
 	    case CURVE_NURB_MAGIC:
 		nseg = (struct nurb_seg *)lng;
-		*(uint32_t *)cp = htonl(CURVE_NURB_MAGIC);
+		annot_put_uint32(cp, CURVE_NURB_MAGIC);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(nseg->order);
+		annot_put_uint32(cp, nseg->order);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(nseg->pt_type);
+		annot_put_uint32(cp, nseg->pt_type);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(nseg->k.k_size);
+		annot_put_uint32(cp, nseg->k.k_size);
 		cp += SIZEOF_NETWORK_LONG;
 		scanp = (double *)bu_malloc(nseg->k.k_size * sizeof(double), "scanp");
 		/* convert fastf_t to double */
@@ -1262,10 +1904,10 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		bu_cv_htond(cp, (const unsigned char *)nseg->k.knots, nseg->k.k_size);
 		bu_free(scanp, "scanp");
 		cp += nseg->k.k_size * SIZEOF_NETWORK_DOUBLE;
-		*(uint32_t *)cp = htonl(nseg->c_size);
+		annot_put_uint32(cp, nseg->c_size);
 		cp += SIZEOF_NETWORK_LONG;
 		for (i=0; i<(size_t)nseg->c_size; i++) {
-		    *(uint32_t *)cp = htonl(nseg->ctl_points[i]);
+		    annot_put_uint32(cp, nseg->ctl_points[i]);
 		    cp += SIZEOF_NETWORK_LONG;
 		}
 		if (RT_NURB_IS_PT_RATIONAL(nseg->pt_type)) {
@@ -1281,12 +1923,12 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		break;
 	    case CURVE_BEZIER_MAGIC:
 		bseg = (struct bezier_seg *)lng;
-		*(uint32_t *)cp = htonl(CURVE_BEZIER_MAGIC);
+		annot_put_uint32(cp, CURVE_BEZIER_MAGIC);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(bseg->degree);
+		annot_put_uint32(cp, bseg->degree);
 		cp += SIZEOF_NETWORK_LONG;
 		for (i=0; i<=(size_t)bseg->degree; i++) {
-		    *(uint32_t *)cp = htonl(bseg->ctl_points[i]);
+		    annot_put_uint32(cp, bseg->ctl_points[i]);
 		    cp += SIZEOF_NETWORK_LONG;
 		}
 		break;
@@ -1298,8 +1940,59 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     }
 
     for (seg_no=0; seg_no < annot_ip->ant.count; seg_no++) {
-	*(uint32_t *)cp = htonl(annot_ip->ant.reverse[seg_no]);
+	annot_put_uint32(cp, annot_ip->ant.reverse[seg_no]);
 	cp += SIZEOF_NETWORK_LONG;
+    }
+
+    if (enhanced) {
+	double basis[6];
+	uint32_t style_count = annot_ip->styles ?
+	    (uint32_t)annot_ip->ant.count : 0;
+	annot_put_uint32(cp, ANNOT_EXT_MAGIC);
+	cp += SIZEOF_NETWORK_LONG;
+	annot_put_uint32(cp, ANNOT_EXT_VERSION);
+	cp += SIZEOF_NETWORK_LONG;
+	annot_put_uint32(cp, annot_ip->flags);
+	cp += SIZEOF_NETWORK_LONG;
+	VSCALE(basis, annot_ip->u_vec, local2mm);
+	VSCALE(&basis[3], annot_ip->v_vec, local2mm);
+	bu_cv_htond(cp, (unsigned char *)basis, 6);
+	cp += 6 * SIZEOF_NETWORK_DOUBLE;
+	annot_put_uint32(cp, style_count);
+	cp += SIZEOF_NETWORK_LONG;
+	for (seg_no = 0; seg_no < style_count; ++seg_no) {
+	    const struct rt_annot_seg_style *style =
+		&annot_ip->styles[seg_no];
+	    uint32_t color = ((uint32_t)style->color[0] << 24) |
+		((uint32_t)style->color[1] << 16) |
+		((uint32_t)style->color[2] << 8) |
+		(uint32_t)style->color[3];
+	    size_t font_len = style->font ? strlen(style->font) : 0;
+	    size_t symbol_len = style->symbol ? strlen(style->symbol) : 0;
+	    double line_width = style->line_width;
+	    annot_put_uint32(cp, style->role);
+	    cp += SIZEOF_NETWORK_LONG;
+	    annot_put_uint32(cp, style->flags);
+	    cp += SIZEOF_NETWORK_LONG;
+	    annot_put_uint32(cp, style->line_pattern);
+	    cp += SIZEOF_NETWORK_LONG;
+	    annot_put_uint32(cp, color);
+	    cp += SIZEOF_NETWORK_LONG;
+	    bu_cv_htond(cp, (unsigned char *)&line_width, 1);
+	    cp += SIZEOF_NETWORK_DOUBLE;
+	    annot_put_uint32(cp, (uint32_t)font_len);
+	    cp += SIZEOF_NETWORK_LONG;
+	    annot_put_uint32(cp, (uint32_t)symbol_len);
+	    cp += SIZEOF_NETWORK_LONG;
+	    if (font_len) {
+		memcpy(cp, style->font, font_len);
+		cp += font_len;
+	    }
+	    if (symbol_len) {
+		memcpy(cp, style->symbol, symbol_len);
+		cp += symbol_len;
+	    }
+	}
     }
 
     return 0;
@@ -1323,7 +2016,7 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
     point_t V;
 
     RT_ANNOT_CK_MAGIC(annot_ip);
-    bu_vls_strcat(str, "2D annotations (annotation)\n");
+    bu_vls_strcat(str, "Annotations (annotation)\n");
 
     VSCALE(V, annot_ip->V, mm2local);
 
@@ -1331,6 +2024,14 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 	    V3INTCLAMPARGS(V),
 	    (long unsigned)annot_ip->vert_count);
     bu_vls_strcat(str, buf);
+
+    if (annot_ip->flags & RT_ANNOT_MODEL_SPACE) {
+	bu_vls_printf(str, "\tPlacement: model space\n"
+	    "\tU-axis = (%g %g %g)\n\tV-axis = (%g %g %g)\n",
+	    V3ARGS(annot_ip->u_vec), V3ARGS(annot_ip->v_vec));
+    } else {
+	bu_vls_strcat(str, "\tPlacement: screen space\n");
+    }
 
     if (!verbose)
 	return 0;
@@ -1356,6 +2057,23 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 	struct bezier_seg *bsg;
 
 	lsg = (struct line_seg *)annot_ip->ant.segments[seg_no];
+	if (annot_ip->styles) {
+	    const struct rt_annot_seg_style *style =
+		&annot_ip->styles[seg_no];
+	    bu_vls_printf(str, "\t\tStyle: role %u, pattern %u",
+		style->role, style->line_pattern);
+	    if (style->flags & RT_ANNOT_STYLE_WIDTH)
+		bu_vls_printf(str, ", width %g", style->line_width);
+	    if (style->flags & RT_ANNOT_STYLE_COLOR)
+		bu_vls_printf(str, ", color %u/%u/%u/%u",
+		    style->color[0], style->color[1], style->color[2],
+		    style->color[3]);
+	    if (style->font)
+		bu_vls_printf(str, ", font %s", style->font);
+	    if (style->symbol)
+		bu_vls_printf(str, ", symbol %s", style->symbol);
+	    bu_vls_putc(str, '\n');
+	}
 	switch (lsg->magic) {
 	    case CURVE_LSEG_MAGIC:
 		lsg = (struct line_seg *)annot_ip->ant.segments[seg_no];
@@ -1576,6 +2294,24 @@ rt_ant_free(struct rt_ant *ant)
 }
 
 
+static void
+annot_styles_free(struct rt_annot_internal *annot_ip)
+{
+    size_t i;
+
+    if (!annot_ip->styles)
+	return;
+    for (i = 0; i < annot_ip->ant.count; ++i) {
+	if (annot_ip->styles[i].font)
+	    bu_free(annot_ip->styles[i].font, "annotation font");
+	if (annot_ip->styles[i].symbol)
+	    bu_free(annot_ip->styles[i].symbol, "annotation symbol");
+    }
+    bu_free(annot_ip->styles, "annotation segment styles");
+    annot_ip->styles = NULL;
+}
+
+
 /**
  * Free the storage associated with the rt_db_internal version of this
  * solid.
@@ -1596,6 +2332,7 @@ rt_annot_ifree(struct rt_db_internal *ip)
 	bu_free((char *)annot_ip->verts, "annot_ip->verts");
 
     ant = &annot_ip->ant;
+    annot_styles_free(annot_ip);
 
     rt_ant_free(ant);
 
@@ -1698,6 +2435,20 @@ rt_copy_annot(const struct rt_annot_internal *annot_ip)
     BU_ALLOC(out, struct rt_annot_internal);
     *out = *annot_ip;	/* struct copy */
 
+    out->styles = NULL;
+    if (annot_ip->styles && annot_ip->ant.count) {
+	out->styles = (struct rt_annot_seg_style *)bu_calloc(
+	    annot_ip->ant.count, sizeof(struct rt_annot_seg_style),
+	    "annotation segment styles");
+	for (i = 0; i < annot_ip->ant.count; ++i) {
+	    out->styles[i] = annot_ip->styles[i];
+	    out->styles[i].font = annot_ip->styles[i].font ?
+		bu_strdup(annot_ip->styles[i].font) : NULL;
+	    out->styles[i].symbol = annot_ip->styles[i].symbol ?
+		bu_strdup(annot_ip->styles[i].symbol) : NULL;
+	}
+    }
+
     if (out->vert_count)
 	out->verts = (point2d_t *)bu_calloc(out->vert_count, sizeof(point2d_t), "out->verts");
 
@@ -1783,7 +2534,9 @@ rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp)
     BU_CK_VLS(logstr);
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(logstr, "V {%%f %%f %%f} VL {{%%f %%f} {%%f %%f} ...} SL {{segment_data} {segment_data}}");
+    bu_vls_printf(logstr, "V {%%f %%f %%f} mode {screen|model} "
+	"A {%%f %%f %%f} B {%%f %%f %%f} "
+	"VL {{%%f %%f} {%%f %%f} ...} SL {{segment_data} {segment_data}}");
 
     return BRLCAD_OK;
 }
@@ -1802,6 +2555,10 @@ rt_annot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const c
     if (attr == (char *)NULL) {
 	bu_vls_strcpy(logstr, "annot");
 	bu_vls_printf(logstr, " V {%.25g %.25g %.25g}", V3ARGS(ann->V));
+	bu_vls_printf(logstr, " mode %s", (ann->flags & RT_ANNOT_MODEL_SPACE) ?
+	    "model" : "screen");
+	bu_vls_printf(logstr, " A {%.25g %.25g %.25g}", V3ARGS(ann->u_vec));
+	bu_vls_printf(logstr, " B {%.25g %.25g %.25g}", V3ARGS(ann->v_vec));
 	bu_vls_strcat(logstr, " VL {");
 	for (i=0; i<ann->vert_count; i++)
 	    bu_vls_printf(logstr, " {%.25g %.25g}", V2ARGS(ann->verts[i]));
@@ -1813,6 +2570,13 @@ rt_annot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const c
 	}
     } else if (BU_STR_EQUAL(attr, "V")) {
 	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(ann->V));
+    } else if (BU_STR_EQUAL(attr, "mode")) {
+	bu_vls_strcat(logstr, (ann->flags & RT_ANNOT_MODEL_SPACE) ?
+	    "model" : "screen");
+    } else if (BU_STR_EQUAL(attr, "A")) {
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(ann->u_vec));
+    } else if (BU_STR_EQUAL(attr, "B")) {
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(ann->v_vec));
     } else if (BU_STR_EQUAL(attr, "VL")) {
 	for (i=0; i<ann->vert_count; i++)
 	    bu_vls_printf(logstr, " {%.25g %.25g}", V2ARGS(ann->verts[i]));
@@ -1830,7 +2594,7 @@ rt_annot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const c
 	bu_vls_printf(logstr, "%.25g %.25g", V2ARGS(ann->verts[lval]));
     } else {
 	/* unrecognized attribute */
-	bu_vls_printf(logstr, "ERROR: Unknown attribute, choices are V, VL, SL, or V#\n");
+	bu_vls_printf(logstr, "ERROR: Unknown attribute, choices are V, mode, A, B, VL, SL, or V#\n");
 	return BRLCAD_ERROR;
     }
 
@@ -2047,6 +2811,29 @@ rt_annot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
+	} else if (BU_STR_EQUAL(argv[0], "mode")) {
+	    if (BU_STR_EQUAL(argv[1], "model")) {
+		annot_ip->flags |= RT_ANNOT_MODEL_SPACE;
+		if (MAGNITUDE(annot_ip->u_vec) <= SMALL_FASTF)
+		    VSET(annot_ip->u_vec, 1.0, 0.0, 0.0);
+		if (MAGNITUDE(annot_ip->v_vec) <= SMALL_FASTF)
+		    VSET(annot_ip->v_vec, 0.0, 1.0, 0.0);
+	    } else if (BU_STR_EQUAL(argv[1], "screen")) {
+		annot_ip->flags &= ~RT_ANNOT_MODEL_SPACE;
+	    } else {
+		bu_vls_printf(logstr, "ERROR: mode must be screen or model\n");
+		return BRLCAD_ERROR;
+	    }
+	} else if (BU_STR_EQUAL(argv[0], "A") ||
+		BU_STR_EQUAL(argv[0], "B")) {
+	    newval = BU_STR_EQUAL(argv[0], "A") ?
+		annot_ip->u_vec : annot_ip->v_vec;
+	    array_len = 3;
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
+		    array_len) {
+		bu_vls_printf(logstr, "ERROR: Incorrect number of basis coordinates\n");
+		return BRLCAD_ERROR;
+	    }
 	} else if (BU_STR_EQUAL(argv[0], "VL")) {
 	    fastf_t *new_verts=(fastf_t *)NULL;
 	    int len;
@@ -2086,6 +2873,7 @@ rt_annot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 	    ant = &annot_ip->ant;
 	    /* free any previously-populated segment list before rebuilding
 	     * (rt_ant_free is a safe no-op when count == 0) */
+	    annot_styles_free(annot_ip);
 	    rt_ant_free(ant);
 
 	    if ((ret=ant_get_tcl(logstr, ant, argv[1])) != 0)

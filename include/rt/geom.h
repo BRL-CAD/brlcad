@@ -999,6 +999,55 @@ struct rt_ant {
 };
 
 
+/** Annotation placement modes.  Legacy annotations use screen-space
+ * coordinates: V is the model-space anchor and verts are display-plane
+ * offsets.  Model-space annotations embed the same 2-D geometry in the
+ * plane spanned by u_vec and v_vec at V. */
+#define RT_ANNOT_SCREEN_SPACE 0x00000000u
+#define RT_ANNOT_MODEL_SPACE  0x00000001u
+
+/** Semantic roles for annotation segments.  These roles do not change the
+ * segment geometry; they let importers and applications distinguish, for
+ * example, a leader from an extension or dimension line. */
+typedef enum {
+    RT_ANNOT_ROLE_UNSPECIFIED = 0,
+    RT_ANNOT_ROLE_GEOMETRY = 1,
+    RT_ANNOT_ROLE_TEXT = 2,
+    RT_ANNOT_ROLE_LEADER = 3,
+    RT_ANNOT_ROLE_EXTENSION = 4,
+    RT_ANNOT_ROLE_DIMENSION = 5,
+    RT_ANNOT_ROLE_ARROWHEAD = 6,
+    RT_ANNOT_ROLE_SYMBOL = 7
+} rt_annot_segment_role;
+
+typedef enum {
+    RT_ANNOT_LINE_CONTINUOUS = 0,
+    RT_ANNOT_LINE_DASHED = 1,
+    RT_ANNOT_LINE_DOTTED = 2,
+    RT_ANNOT_LINE_CENTER = 3,
+    RT_ANNOT_LINE_PHANTOM = 4
+} rt_annot_line_pattern;
+
+#define RT_ANNOT_STYLE_WIDTH 0x00000001u
+#define RT_ANNOT_STYLE_COLOR 0x00000002u
+
+/** Optional presentation and semantic information corresponding to one
+ * rt_ant segment.  A NULL styles array means all segments use the database
+ * object's normal presentation.  Font and symbol are optional UTF-8 names.
+ * Text plotting loads the named scalable font at runtime, uses OSIFont when
+ * no usable named font is found, and retains the built-in stroke font as its
+ * final fallback. */
+struct rt_annot_seg_style {
+    uint32_t role;
+    uint32_t flags;
+    uint32_t line_pattern;
+    fastf_t line_width;
+    unsigned char color[4];
+    char *font;
+    char *symbol;
+};
+
+
 /**
  * text labels used by the annotation primitive
  */
@@ -1041,6 +1090,10 @@ struct rt_annot_internal
     size_t vert_count;			/**< @brief number of vertices */
     point2d_t *verts;			/**< @brief array of vertices that serve as control points */
     struct rt_ant ant;			/**< @brief segments in the annotation */
+    uint32_t flags;			/**< screen-space or model-space placement */
+    vect_t u_vec;			/**< model-space vector for one 2-D X unit */
+    vect_t v_vec;			/**< model-space vector for one 2-D Y unit */
+    struct rt_annot_seg_style *styles; /**< optional ant.count element array */
 };
 
 
@@ -1056,7 +1109,7 @@ struct rt_annot_internal
  * mutually perpendicular axes, three mutually perpendicular base
  * planes, and a point representing the origin.
  *
- * Planes distinguished by (!ZERO(w)) utilize 'pnt', 'dir', and 'w' to
+ * Legacy planes distinguished by (!ZERO(w)) utilize 'pnt', 'dir', and 'w' to
  * define an unoriented plane.  The plane is defined by the vector
  * from 'pnt' in 'dir' direction multiplied by the 'w' scalar value.
  *
@@ -1070,13 +1123,36 @@ struct rt_annot_internal
  *
  * This characterization is derived from ASME Y14.5M
  *
- * TODO:
- * - edsol needs to do more than move the first datum
- * - tedit is untested
- * - wdb needs to support more than one datum
- * - validate the datum during prep
- * - add CK validation checks to all loops
+ * The explicit type and semantic fields below are optional.  A zero type
+ * retains the historical pnt/dir/w inference.  Enhanced records can identify
+ * reference frames and bounded datum targets without overloading w.  For a
+ * frame, dir, xdir, and ydir are its Z, X, and Y axes respectively.  For an
+ * oriented plane or area target, xdir and ydir span the plane.  dimensions
+ * stores the target width and height (or target-line length in element 0).
+ * identifier and description are optional UTF-8 strings owned by the datum
+ * node.
  */
+typedef enum {
+    RT_DATUM_AUTO = 0,
+    RT_DATUM_POINT = 1,
+    RT_DATUM_LINE = 2,
+    RT_DATUM_PLANE = 3,
+    RT_DATUM_FRAME = 4,
+    RT_DATUM_TARGET_POINT = 5,
+    RT_DATUM_TARGET_LINE = 6,
+    RT_DATUM_TARGET_AREA = 7
+} rt_datum_type;
+
+typedef enum {
+    RT_DATUM_ROLE_UNSPECIFIED = 0,
+    RT_DATUM_ROLE_FEATURE = 1,
+    RT_DATUM_ROLE_REFERENCE = 2,
+    RT_DATUM_ROLE_TARGET = 3,
+    RT_DATUM_ROLE_REFERENCE_FRAME = 4
+} rt_datum_role;
+
+#define RT_DATUM_FLAG_BOUNDED 0x00000001u
+
 struct rt_datum_internal
 {
     uint32_t magic;
@@ -1086,6 +1162,15 @@ struct rt_datum_internal
     fastf_t w;
 
     struct rt_datum_internal *next;
+
+    uint32_t type;
+    uint32_t role;
+    uint32_t flags;
+    vect_t xdir;
+    vect_t ydir;
+    fastf_t dimensions[2];
+    char *identifier;
+    char *description;
 };
 
 

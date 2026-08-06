@@ -86,6 +86,17 @@ mk_datums(struct rt_wdb *fp, const char *name, struct rt_datum_internal *head)
 	VMOVE(datum->pnt, src->pnt);
 	VMOVE(datum->dir, src->dir);
 	datum->w = src->w;
+	datum->type = src->type;
+	datum->role = src->role;
+	datum->flags = src->flags;
+	VMOVE(datum->xdir, src->xdir);
+	VMOVE(datum->ydir, src->ydir);
+	datum->dimensions[0] = src->dimensions[0];
+	datum->dimensions[1] = src->dimensions[1];
+	if (src->identifier)
+	    datum->identifier = bu_strdup(src->identifier);
+	if (src->description)
+	    datum->description = bu_strdup(src->description);
 	datum->next = NULL;
 	datum->magic = RT_DATUM_INTERNAL_MAGIC;
 

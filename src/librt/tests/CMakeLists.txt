@@ -68,6 +68,13 @@ brlcad_addexec(db5_size db5_size.c "${RT_TEST_LIBS}" TEST)
 brlcad_addexec(rt_datum rt_datum.c "${RT_TEST_LIBS}" TEST)
 brlcad_add_test(NAME rt_datum_basic COMMAND rt_datum)
 
+brlcad_addexec(rt_datum_annot_semantics datum_annot_semantics.c
+  "librt;libwdb;libbv;libbu;${M_LIBRARY}" TEST)
+if(TARGET osifont_osifont-lgpl3fe_ttf_cp)
+  add_dependencies(rt_datum_annot_semantics osifont_osifont-lgpl3fe_ttf_cp)
+endif()
+brlcad_add_test(NAME rt_datum_annot_semantics COMMAND rt_datum_annot_semantics)
+
 # perturb testing
 #BRLCAD_ADDEXEC(rt_perturb rt_perturb.c "librt;libwdb" TEST)
 #BRLCAD_ADD_TEST(NAME rt_perturb_basic COMMAND rt_perturb)
@@ -153,6 +160,7 @@ set(
   binary_attribute.c
   crofton.c
   default_object.c
+  datum_annot_semantics.c
   dsp_raytrace_check.c
   dsp_sa_vol_check.c
   primitive_brep.cpp
