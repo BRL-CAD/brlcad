@@ -155,6 +155,8 @@ FONS_DEF void fonsDrawDebug(FONScontext* s, float x, float y);
 
 #ifdef FONTSTASH_IMPLEMENTATION
 
+#include "bio.h" /* for Windows UTF-8 file handling */
+
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
