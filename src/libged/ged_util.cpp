@@ -2060,16 +2060,15 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 
     BU_GET(run_rtp, struct ged_subprocess);
     run_rtp->magic = GED_CMD_MAGIC;
+    run_rtp->p = p;
+    run_rtp->aborted = 0;
+    run_rtp->gedp = gedp;
     run_rtp->stdin_active = 0;
     run_rtp->stdout_active = 0;
     run_rtp->stderr_active = 0;
     run_rtp->end_clbk = end_clbk;
     run_rtp->end_clbk_data = end_clbk_data;
     bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
-
-    run_rtp->p = p;
-    run_rtp->aborted = 0;
-    run_rtp->gedp = gedp;
 
     /* If we know how, set up hooks so the parent process knows to watch for output. */
     if (gedp->ged_create_io_handler) {

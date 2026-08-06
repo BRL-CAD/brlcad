@@ -57,14 +57,16 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
 
     BU_GET(run_rtp, struct ged_subprocess);
     run_rtp->magic = GED_CMD_MAGIC;
-    run_rtp->stdin_active = 0;
-    run_rtp->stdout_active = 0;
-    run_rtp->stderr_active = 0;
-    bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
-
     run_rtp->p = p;
     run_rtp->aborted = 0;
     run_rtp->gedp = gedp;
+    run_rtp->stdin_active = 0;
+    run_rtp->stdout_active = 0;
+    run_rtp->stderr_active = 0;
+    run_rtp->end_clbk = NULL;
+    run_rtp->end_clbk_data = NULL;
+
+    bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
 
     if (gedp->ged_create_io_handler) {
 	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDERR, _ged_rt_output_handler, (void *)run_rtp);

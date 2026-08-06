@@ -307,13 +307,13 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
     rtcp->rrtp->stdin_active = 0;
     rtcp->rrtp->stdout_active = 0;
     rtcp->rrtp->stderr_active = 0;
+    rtcp->rrtp->end_clbk = NULL;
+    rtcp->rrtp->end_clbk_data = NULL;
 
-    if (gedp->ged_create_io_handler) {
-	(*gedp->ged_create_io_handler)(rtcp->rrtp, BU_PROCESS_STDOUT, rtcheck_vector_handler, (void *)rtcp);
-    }
     bu_ptbl_ins(&gedp->ged_subp, (long *)rtcp->rrtp);
 
     if (gedp->ged_create_io_handler) {
+	(*gedp->ged_create_io_handler)(rtcp->rrtp, BU_PROCESS_STDOUT, rtcheck_vector_handler, (void *)rtcp);
 	(*gedp->ged_create_io_handler)(rtcp->rrtp, BU_PROCESS_STDERR, rtcheck_output_handler, (void *)rtcp);
     }
 
