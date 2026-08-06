@@ -40,6 +40,8 @@
 #  STEPCODE_INCLUDE_DIRS   - where to find stepcode headers
 #  STEPCODE_LIBRARIES      - List of libraries when using stepcode.
 #  STEPCODE_FOUND          - True if stepcode found.
+#  STEPCODE_LAZY_FOUND     - True if the supported lazy-file API is present.
+#  STEPCODE_LAZY_LIBRARY   - The optional STEPcode lazy-file library.
 
 # A user may set ``STEPCODE_ROOT`` to a stepcode installation root to tell this
 # module where to look.
@@ -88,6 +90,7 @@ foreach(search ${_STEPCODE_SEARCHES})
   find_path(STEPCODE_EXPPP_DIR NAMES exppp.h ${${search}} PATH_SUFFIXES include include/stepcode/exppp)
   find_path(STEPCODE_EXPRESS_DIR NAMES express.h ${${search}} PATH_SUFFIXES include include/stepcode/express)
   find_path(STEPCODE_INCLUDE_DIR NAMES config.h ${${search}} PATH_SUFFIXES include include/stepcode)
+  find_path(STEPCODE_LAZY_DIR NAMES lazyInstMgr.h ${${search}} PATH_SUFFIXES include include/stepcode/cllazyfile)
   #TODO - should be an all-or-nothing for the set...
 endforeach()
 
@@ -103,6 +106,7 @@ foreach(search ${_STEPCODE_SEARCHES})
   find_library(STEPCODE_EDITOR_LIBRARY NAMES stepeditor NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   find_library(STEPCODE_DAI_LIBRARY NAMES stepdai NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   find_library(STEPCODE_UTILS_LIBRARY NAMES steputils NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
+  find_library(STEPCODE_LAZY_LIBRARY NAMES steplazyfile NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   #TODO - should be an all-or-nothing for the set...
 endforeach()
 
@@ -152,7 +156,18 @@ if(STEPCODE_FOUND)
     ${STEPCODE_DAI_LIBRARY}
     ${STEPCODE_UTILS_LIBRARY}
   )
+
+  # cllazyfile predates its supported batch API.  Do not advertise lazy
+  # importing merely because an older lazyInstMgr.h happens to be installed;
+  # lazySupport.h and the corresponding library are both required.
+  if(STEPCODE_LAZY_DIR AND EXISTS "${STEPCODE_LAZY_DIR}/lazySupport.h" AND STEPCODE_LAZY_LIBRARY)
+    set(STEPCODE_LAZY_FOUND TRUE)
+  else()
+    set(STEPCODE_LAZY_FOUND FALSE)
+  endif()
 endif()
+
+mark_as_advanced(STEPCODE_LAZY_DIR STEPCODE_LAZY_LIBRARY)
 
 # Local Variables:
 # tab-width: 8
