@@ -20,7 +20,8 @@ distclean(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
 set(DEBUG_CMD_CPP "${CMAKE_CURRENT_BINARY_DIR}/debug_cmd.cpp")
 add_custom_command(
   OUTPUT ${DEBUG_CMD_CPP}
-  COMMAND debug2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${DEBUG_CMD_CPP}
+  COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER}
+    $<TARGET_FILE:debug2c> ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${DEBUG_CMD_CPP}
   DEPENDS debug2c
   COMMENT "[DEBUG2C] Scanning for debugging variables"
 )

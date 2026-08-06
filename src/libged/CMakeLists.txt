@@ -671,7 +671,9 @@ write_list_to_file(GED_COMMAND_ALL_SRCS ${ged_plugins_all_srcs})
 add_custom_command(
   OUTPUT ${GED_CMD_SRC} ${GED_CMD_HDR}
   COMMAND ${CMAKE_COMMAND} -E make_directory "${GED_HDR_DIR}"
-  COMMAND ${GED_CMD_SCANNER} --input-list ${ged_plugins_all_srcs} --gen-exec-api-cpp ${GED_CMD_SRC} --gen-exec-api-hdr ${GED_CMD_HDR}
+  COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER} ${GED_CMD_SCANNER}
+    --input-list ${ged_plugins_all_srcs} --gen-exec-api-cpp ${GED_CMD_SRC}
+    --gen-exec-api-hdr ${GED_CMD_HDR}
   COMMENT "[GED_CMD_SCANNER] Generating plugin exec wrappers"
   DEPENDS ${GED_CMD_SCANNER_TARGET} ${ged_plugins_all_srcs} ${GED_COMMAND_ALL_SRCS}
   VERBATIM
@@ -685,7 +687,9 @@ set(ged_plugins_static_srcs "${CMAKE_BINARY_DIR}/CMakeTmp/ged_plugins_static_sou
 write_list_to_file(GED_COMMAND_STATIC_SRCS ${ged_plugins_static_srcs})
 add_custom_command(
   OUTPUT ${GED_STATIC_REGISTRATION_CPP}
-  COMMAND ${GED_CMD_SCANNER} --input-list ${ged_plugins_static_srcs} --gen-force-cpp ${GED_STATIC_REGISTRATION_CPP}
+  COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER} ${GED_CMD_SCANNER}
+    --input-list ${ged_plugins_static_srcs}
+    --gen-force-cpp ${GED_STATIC_REGISTRATION_CPP}
   COMMENT "[GED_CMD_SCANNER] Generating static plugin registration"
   DEPENDS ${GED_CMD_SCANNER_TARGET} ${ged_plugins_static_srcs} ${GED_COMMAND_STATIC_SRCS}
   VERBATIM

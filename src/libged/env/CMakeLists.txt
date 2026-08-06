@@ -7,7 +7,8 @@ distclean(${CMAKE_CURRENT_BINARY_DIR}/env2c/Makefile)
 set(ENV_CMD_C "${CMAKE_CURRENT_BINARY_DIR}/env_cmd.c")
 add_custom_command(
   OUTPUT ${ENV_CMD_C}
-  COMMAND env2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${ENV_CMD_C}
+  COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER}
+    $<TARGET_FILE:env2c> ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${ENV_CMD_C}
   DEPENDS env2c
   COMMENT "[ENV2C] Scanning for environment variable usage"
 )

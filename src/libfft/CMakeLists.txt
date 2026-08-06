@@ -18,13 +18,15 @@ function(fft_gen numlist targetdir outfiles)
   foreach(filenum ${numlist})
     add_custom_command(
       OUTPUT ${targetdir}/rfft${filenum}.c
-      COMMAND fftc ${filenum} > ${targetdir}/rfft${filenum}.c
+      COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER}
+        $<TARGET_FILE:fftc> ${filenum} > ${targetdir}/rfft${filenum}.c
       DEPENDS fftc
     )
     set(output_files "${output_files};${targetdir}/rfft${filenum}.c")
     add_custom_command(
       OUTPUT ${targetdir}/irfft${filenum}.c
-      COMMAND ifftc ${filenum} > ${targetdir}/irfft${filenum}.c
+      COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER}
+        $<TARGET_FILE:ifftc> ${filenum} > ${targetdir}/irfft${filenum}.c
       DEPENDS ifftc
     )
     set(output_files "${output_files};${targetdir}/irfft${filenum}.c")
