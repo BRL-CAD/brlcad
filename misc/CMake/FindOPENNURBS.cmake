@@ -10,8 +10,8 @@ Find the native OPENNURBS includes and library.
 IMPORTED Targets
 ^^^^^^^^^^^^^^^^
 
-This module defines :prop_tgt:`IMPORTED` target ``OPENNURBS::OPENNURBS``, if
-OPENNURBS has been found.
+This module defines :prop_tgt:`IMPORTED` targets ``OPENNURBS::OPENNURBS`` and,
+when a static archive is available, ``OPENNURBS::OPENNURBS-static``.
 
 Result Variables
 ^^^^^^^^^^^^^^^^
@@ -22,6 +22,7 @@ This module defines the following variables:
 
   OPENNURBS_INCLUDE_DIRS   - where to find opennurbs.h, etc.
   OPENNURBS_LIBRARIES      - List of libraries when using openNURBS.
+  OPENNURBS_STATIC_LIBRARIES - List of static libraries when available.
   OPENNURBS_FOUND          - True if openNURBS found.
 
 Hints
@@ -46,6 +47,14 @@ unset(_OPENNURBS_x86)
 list(APPEND _OPENNURBS_SEARCHES _OPENNURBS_SEARCH_NORMAL)
 
 set(OPENNURBS_NAMES openNURBS OpenNURBS)
+set(
+  OPENNURBS_STATIC_NAMES
+  opennurbsStatic
+  OpenNURBSStatic
+  openNURBSStatic
+  opennurbs-static
+  OpenNURBS-static
+)
 
 # Try each search configuration.
 foreach(search ${_OPENNURBS_SEARCHES})
@@ -68,9 +77,32 @@ if(NOT OPENNURBS_LIBRARY)
   endforeach()
 endif()
 
-unset(OPENNURBS_NAMES)
+# OpenNURBS gives its static archive a distinct name.  Model it as a distinct
+# imported target so consumers compiled for a DLL are never silently paired
+# with the static archive (or vice versa).
+if(NOT OPENNURBS_STATIC_LIBRARY)
+  foreach(search ${_OPENNURBS_SEARCHES})
+    find_library(
+      OPENNURBS_STATIC_LIBRARY
+      NAMES ${OPENNURBS_STATIC_NAMES}
+      NAMES_PER_DIR
+      ${${search}}
+      PATH_SUFFIXES lib
+    )
+  endforeach()
+endif()
 
-mark_as_advanced(OPENNURBS_INCLUDE_DIR)
+unset(OPENNURBS_NAMES)
+unset(OPENNURBS_STATIC_NAMES)
+
+mark_as_advanced(
+  OPENNURBS_INCLUDE_DIR
+  OPENNURBS_X_INCLUDE_DIR
+  OPENNURBS_LIBRARY
+  OPENNURBS_LIBRARY_RELEASE
+  OPENNURBS_LIBRARY_DEBUG
+  OPENNURBS_STATIC_LIBRARY
+)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
@@ -102,5 +134,30 @@ if(OPENNURBS_FOUND)
     if(NOT OPENNURBS_LIBRARY_RELEASE AND NOT OPENNURBS_LIBRARY_DEBUG)
       set_property(TARGET OPENNURBS::OPENNURBS APPEND PROPERTY IMPORTED_LOCATION "${OPENNURBS_LIBRARY}")
     endif()
+
+    # The primary Windows library is the DLL import library when the separate
+    # opennurbsStatic archive is present.  Static-data members in particular
+    # require this annotation; unlike functions, the linker cannot supply a
+    # thunk for an undecorated data reference.
+    if(WIN32 AND OPENNURBS_STATIC_LIBRARY)
+      set_property(TARGET OPENNURBS::OPENNURBS APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS OPENNURBS_IMPORTS)
+    endif()
+  endif()
+
+  if(OPENNURBS_STATIC_LIBRARY AND NOT TARGET OPENNURBS::OPENNURBS-static)
+    add_library(OPENNURBS::OPENNURBS-static STATIC IMPORTED GLOBAL)
+    set_target_properties(
+      OPENNURBS::OPENNURBS-static PROPERTIES
+      IMPORTED_LOCATION "${OPENNURBS_STATIC_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${OPENNURBS_INCLUDE_DIRS}"
+    )
+  endif()
+
+  if(TARGET OPENNURBS::OPENNURBS-static)
+    set_property(
+      TARGET OPENNURBS::OPENNURBS
+      PROPERTY BRLCAD_STATIC_VARIANT_TARGET OPENNURBS::OPENNURBS-static
+    )
+    set(OPENNURBS_STATIC_LIBRARIES OPENNURBS::OPENNURBS-static)
   endif()
 endif()
