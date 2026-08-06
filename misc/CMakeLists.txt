@@ -22,6 +22,7 @@ endif(TARGET libanalyze)
 add_subdirectory(nirt)
 
 brlcad_adddata(profont/ProFont.ttf fonts)
+brlcad_adddata(osifont/osifont-lgpl3fe.ttf fonts)
 
 if(TARGET archer)
   brlcad_adddata(nsis/brlcad.ico icons)
@@ -123,6 +124,7 @@ set(
   profont/profont-IIx-charmap.png
   profont/profont_IIx_readme.pdf
   profont/readme.txt
+  osifont/README.md
   uncpowerplant2g.sh
   wix/License.rtf
   wix/brlcad_banner.bmp

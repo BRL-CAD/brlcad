@@ -20,6 +20,7 @@ brlcad_manage_files(detria.txt                 ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(earcut.txt                 ${DOC_DIR}/legal/embedded TRIGGER libbg)
 brlcad_manage_files(fnmatch.txt                ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(fontstash.txt              ${DOC_DIR}/legal/embedded TRIGGER libdm)
+brlcad_manage_files(osifont.txt                ${DOC_DIR}/legal/embedded TRIGGER librt)
 brlcad_manage_files(fort.txt                   ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(gecode.txt                 ${DOC_DIR}/legal/embedded TRIGGER librt)
 brlcad_manage_files(geogram.txt                ${DOC_DIR}/legal/embedded TRIGGER libbg)
