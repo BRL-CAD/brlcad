@@ -101,10 +101,24 @@ function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
   # for default ARGN behavior that doesn't pass through empty strings.  See
   # https://gitlab.kitware.com/cmake/cmake/-/issues/21414
   cmake_parse_arguments(PARSE_ARGV 3 ARG "" "" "")
-  foreach(_av IN LISTS ARG_UNPARSED_ARGUMENTS)
+  set(_test_arguments ${ARG_UNPARSED_ARGUMENTS})
+  # Once a launcher precedes the test command, add_test no longer recognizes a
+  # bare target name as its executable and consequently does not replace it
+  # with the target's path.  Resolve target-backed commands explicitly while
+  # preserving literal commands and generator expressions.
+  if(BRLCAD_SANITIZER_TEST_LAUNCHER AND TARGET ${test_prog})
+    list(POP_FRONT _test_arguments)
+    list(PREPEND _test_arguments "$<TARGET_FILE:${test_prog}>")
+  endif()
+  foreach(_av IN LISTS _test_arguments)
     string(APPEND test_args " [==[${_av}]==]")
   endforeach()
-  cmake_language(EVAL CODE "add_test(NAME ${test_name} COMMAND ${test_args})")
+  foreach(_launcher_arg IN LISTS BRLCAD_SANITIZER_TEST_LAUNCHER)
+    string(APPEND test_launcher_args " [==[${_launcher_arg}]==]")
+  endforeach()
+  cmake_language(EVAL CODE
+    "add_test(NAME ${test_name} COMMAND ${test_launcher_args} ${test_args})"
+  )
 
   # There are a variety of criteria that disqualify test_prog as a
   # dependency - check and return if we hit any of them.

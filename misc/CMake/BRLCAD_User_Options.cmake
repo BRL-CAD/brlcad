@@ -316,6 +316,23 @@ brlcad_option(BRLCAD_ENABLE_ADDRESS_SANITIZER OFF
 )
 mark_as_advanced(BRLCAD_ENABLE_ADDRESS_SANITIZER)
 
+# Instrument C and C++ code with UndefinedBehaviorSanitizer.  This may be
+# combined with AddressSanitizer, but not with ThreadSanitizer.
+brlcad_option(BRLCAD_ENABLE_UNDEFINED_SANITIZER OFF
+  TYPE BOOL
+  ALIASES ENABLE_UNDEFINED_SANITIZER ENABLE_UBSAN BRLCAD_ENABLE_UBSAN
+)
+mark_as_advanced(BRLCAD_ENABLE_UNDEFINED_SANITIZER)
+
+# Instrument C and C++ code with ThreadSanitizer.  Preserve the historical
+# BRLCAD_SANITIZE_THREAD spelling as an alias, but expose a conventional option
+# alongside the other sanitizers.
+brlcad_option(BRLCAD_ENABLE_THREAD_SANITIZER OFF
+  TYPE BOOL
+  ALIASES ENABLE_THREAD_SANITIZER ENABLE_TSAN BRLCAD_ENABLE_TSAN BRLCAD_SANITIZE_THREAD
+)
+mark_as_advanced(BRLCAD_ENABLE_THREAD_SANITIZER)
+
 # A variety of debugging messages in the code key off of the DEBUG definition -
 # set it according to whether we're using debug flags.
 if(BRLCAD_DEBUGGING)
