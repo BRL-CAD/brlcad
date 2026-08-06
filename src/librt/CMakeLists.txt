@@ -441,8 +441,7 @@ set(
 # Include directories needed by librt users
 # ${GTE_INCLUDE_DIR} is still needed by primitives/bot/bot_oriented_bbox.cpp
 # which uses GTE's ContOrientedBox3.h.
-set(RT_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS}
-  ${GTE_INCLUDE_DIR})
+set(RT_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} ${GTE_INCLUDE_DIR})
 
 # locally used but not needed by users of the library
 set(
@@ -500,8 +499,6 @@ brlcad_addlib(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_
 )
 
 # set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
-# BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}" PUBLIC_LIBS libbrep libnmg libbg libbv libbn libbu PRIVATE_LIBS ${MATERIALX_LIBS} ${OPENCL_LIBS} ${OPENNURBS_LIBRARIES} ${REGEX_LIBRARIES} ${WINSOCK_LIB} ${RPCRT_LIB} ${STDCXX_LIBRARIES})
-
 set_target_properties(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")

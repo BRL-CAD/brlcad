@@ -18,6 +18,33 @@ endif(REGEX_LIBRARY)
 if(UUID_LIBRARIES)
   set(LIBUUID "-l${UUID_LIBRARIES}")
 endif(UUID_LIBRARIES)
+if(TARGET OPENNURBS::OPENNURBS)
+  # pkg-config cannot express a CMake imported target.  Emit the discovered
+  # library's link name without embedding a build-machine path in the .pc file.
+  get_target_property(_opennurbs_library OPENNURBS::OPENNURBS IMPORTED_LOCATION)
+  if(NOT _opennurbs_library)
+    get_target_property(_opennurbs_configs OPENNURBS::OPENNURBS IMPORTED_CONFIGURATIONS)
+    foreach(_opennurbs_config IN LISTS _opennurbs_configs)
+      string(TOUPPER "${_opennurbs_config}" _opennurbs_config_upper)
+      get_target_property(
+        _opennurbs_library
+        OPENNURBS::OPENNURBS
+        "IMPORTED_LOCATION_${_opennurbs_config_upper}"
+      )
+      if(_opennurbs_library)
+        break()
+      endif()
+    endforeach()
+  endif()
+  get_filename_component(_opennurbs_libname "${_opennurbs_library}" NAME_WE)
+  string(REGEX REPLACE "^${CMAKE_SHARED_LIBRARY_PREFIX}" "" _opennurbs_libname "${_opennurbs_libname}")
+  set(LIBOPENNURBS "-l${_opennurbs_libname}")
+  unset(_opennurbs_config)
+  unset(_opennurbs_configs)
+  unset(_opennurbs_config_upper)
+  unset(_opennurbs_library)
+  unset(_opennurbs_libname)
+endif(TARGET OPENNURBS::OPENNURBS)
 
 #The CMake system relies on the C++ compiler to find
 #this, so we set it manually for pkgconfig
