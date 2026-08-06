@@ -44,6 +44,7 @@
 #include "bu/mapped_file.h"
 #include "bu/opt.h"
 #include "bu/str.h"
+#include "bg/polygon.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -72,6 +73,8 @@
 
 #define ANNOT_EXT_MAGIC 0x414e5432u /* "ANT2" */
 #define ANNOT_EXT_VERSION 1u
+#define ANNOT_PRES_MAGIC 0x414e5032u /* "ANP2" */
+#define ANNOT_PRES_VERSION 1u
 
 C_DECL void rt_annot_ifree(struct rt_db_internal *ip);
 
@@ -96,9 +99,16 @@ annot_put_uint32(unsigned char *cp, uint32_t value)
 static int
 annot_has_extension(const struct rt_annot_internal *annot_ip)
 {
-    return annot_ip->flags || annot_ip->styles ||
-	MAGNITUDE(annot_ip->u_vec) > SMALL_FASTF ||
-	MAGNITUDE(annot_ip->v_vec) > SMALL_FASTF;
+    size_t i;
+    if (annot_ip->flags || annot_ip->styles ||
+	    MAGNITUDE(annot_ip->u_vec) > SMALL_FASTF ||
+	    MAGNITUDE(annot_ip->v_vec) > SMALL_FASTF)
+	return 1;
+    for (i = 0; i < annot_ip->ant.count; ++i)
+	if (annot_ip->ant.segments[i] &&
+		*(uint32_t *)annot_ip->ant.segments[i] == ANN_FSEG_MAGIC)
+	    return 1;
+    return 0;
 }
 
 
@@ -332,6 +342,7 @@ rt_annot_validate(const struct rt_annot_internal *annot_ip,
 	const struct nurb_seg *nsg;
 	const struct bezier_seg *bsg;
 	const struct txt_seg *tsg;
+	const struct fill_seg *fsg;
 	const uint32_t *lng;
 
 	if (!ant->segments[i]) {
@@ -387,6 +398,53 @@ rt_annot_validate(const struct rt_annot_internal *annot_ip,
 		    ret++;
 		}
 		break;
+	    case ANN_FSEG_MAGIC:
+		fsg = (const struct fill_seg *)lng;
+		if (fsg->loop_count < 1 || fsg->point_count < 3 ||
+			!fsg->loop_ends || !fsg->points) {
+		    annot_validation_message(messages, i, "invalid fill loops");
+		    ret++;
+		    break;
+		}
+		for (j = 0; j < (size_t)fsg->loop_count; ++j) {
+		    int begin = j ? fsg->loop_ends[j - 1] : 0;
+		    int end = fsg->loop_ends[j];
+		    if (begin < 0 || end <= begin || end > fsg->point_count ||
+			    end - begin < 3) {
+			annot_validation_message(messages, i, "fill loop has fewer than three points");
+			ret++;
+			break;
+		    }
+		}
+		if (fsg->loop_ends[fsg->loop_count - 1] != fsg->point_count) {
+		    annot_validation_message(messages, i, "fill loop ends do not cover its points");
+		    ret++;
+		}
+		for (j = 0; j < (size_t)fsg->point_count; ++j)
+		    if (fsg->points[j] < 0 ||
+			    (size_t)fsg->points[j] >= annot_ip->vert_count) {
+			annot_validation_message(messages, i, "fill point index is out of range");
+			ret++;
+			break;
+		    }
+		if (fsg->legacy_start < 0 || fsg->legacy_count < 1 ||
+			(size_t)fsg->legacy_start >= ant->count ||
+			(size_t)fsg->legacy_count > ant->count -
+			(size_t)fsg->legacy_start) {
+		    annot_validation_message(messages, i, "fill has no compatible outline segments");
+		    ret++;
+		} else {
+		    for (j = (size_t)fsg->legacy_start;
+			    j < (size_t)(fsg->legacy_start + fsg->legacy_count); ++j)
+			if (!ant->segments[j] ||
+				*(uint32_t *)ant->segments[j] != CURVE_LSEG_MAGIC) {
+			    annot_validation_message(messages, i,
+				"fill compatibility range is not made of line segments");
+			    ret++;
+			    break;
+			}
+		}
+		break;
 	    default:
 		ret++;
 		annot_validation_message(messages, i, "unrecognized segment type");
@@ -394,11 +452,15 @@ rt_annot_validate(const struct rt_annot_internal *annot_ip,
 	}
 	if (annot_ip->styles) {
 	    const struct rt_annot_seg_style *style = &annot_ip->styles[i];
-	    if (style->role > RT_ANNOT_ROLE_SYMBOL) {
+	    if (style->role > RT_ANNOT_ROLE_TEXT_DECORATION) {
 		annot_validation_message(messages, i, "unknown semantic role");
 		ret++;
 	    }
-	    if (style->flags & ~(RT_ANNOT_STYLE_WIDTH | RT_ANNOT_STYLE_COLOR)) {
+	    if (style->flags & ~(RT_ANNOT_STYLE_WIDTH | RT_ANNOT_STYLE_COLOR |
+		    RT_ANNOT_STYLE_SCALE | RT_ANNOT_STYLE_FILLED |
+		    RT_ANNOT_STYLE_UNDERLINE | RT_ANNOT_STYLE_OVERLINE |
+		    RT_ANNOT_STYLE_STRIKETHROUGH | RT_ANNOT_STYLE_BOLD |
+		    RT_ANNOT_STYLE_ITALIC)) {
 		annot_validation_message(messages, i, "unknown style flags");
 		ret++;
 	    }
@@ -409,6 +471,15 @@ rt_annot_validate(const struct rt_annot_internal *annot_ip,
 	    if ((style->flags & RT_ANNOT_STYLE_WIDTH) &&
 		    (!isfinite(style->line_width) || style->line_width <= 0.0)) {
 		annot_validation_message(messages, i, "invalid line width");
+		ret++;
+	    }
+	    if ((style->flags & RT_ANNOT_STYLE_SCALE) &&
+		    (!isfinite(style->x_scale) ||
+		    !isfinite(style->xy_scale) || !isfinite(style->yx_scale) ||
+		    !isfinite(style->y_scale) ||
+		    fabs(style->x_scale * style->y_scale -
+			style->xy_scale * style->yx_scale) <= SMALL_FASTF)) {
+		annot_validation_message(messages, i, "invalid text or symbol scale");
 		ret++;
 	    }
 	}
@@ -750,10 +821,24 @@ annot_font_text(struct bu_list *vlfree, struct bu_list *vhead,
     fastf_t line_advance;
     fastf_t align_x = 0.0;
     fastf_t align_y = 0.0;
+    fastf_t italic_shear = 0.0;
+    fastf_t x_scale = 1.0;
+    fastf_t xy_scale = 0.0;
+    fastf_t yx_scale = 0.0;
+    fastf_t y_scale = 1.0;
     fastf_t cosine, sine;
     int ascent, descent, line_gap;
     int previous_glyph = -1;
     const char *font_name = style ? style->font : NULL;
+
+    if (style && (style->flags & RT_ANNOT_STYLE_SCALE)) {
+	x_scale = style->x_scale;
+	xy_scale = style->xy_scale;
+	yx_scale = style->yx_scale;
+	y_scale = style->y_scale;
+    }
+    if (style && (style->flags & RT_ANNOT_STYLE_ITALIC))
+	italic_shear = 0.20;
 
     mapped = annot_open_font(font_name, &font);
     if (!mapped)
@@ -853,16 +938,44 @@ annot_font_text(struct bu_list *vlfree, struct bu_list *vhead,
 	previous_glyph = glyph;
     }
 
+    if (style && (style->flags & (RT_ANNOT_STYLE_UNDERLINE |
+	    RT_ANNOT_STYLE_OVERLINE | RT_ANNOT_STYLE_STRIKETHROUGH)) &&
+	    bmax[X] > bmin[X]) {
+	point_t decoration;
+	fastf_t levels[3];
+	size_t level_count = 0;
+	if (style->flags & RT_ANNOT_STYLE_UNDERLINE)
+	    levels[level_count++] = bmin[Y] - 0.08 * tsg->txt_size;
+	if (style->flags & RT_ANNOT_STYLE_OVERLINE)
+	    levels[level_count++] = bmax[Y] + 0.05 * tsg->txt_size;
+	if (style->flags & RT_ANNOT_STYLE_STRIKETHROUGH)
+	    levels[level_count++] = bmin[Y] + 0.45 * (bmax[Y] - bmin[Y]);
+	for (size_t i = 0; i < level_count; ++i) {
+	    VSET(decoration, bmin[X], levels[i], 0.0);
+	    BV_ADD_VLIST(vlfree, &local, decoration, BV_VLIST_LINE_MOVE);
+	    VSET(decoration, bmax[X], levels[i], 0.0);
+	    BV_ADD_VLIST(vlfree, &local, decoration, BV_VLIST_LINE_DRAW);
+	}
+    }
+
+    {
+	fastf_t sheared_min_x = bmin[X] +
+	    ((italic_shear * bmin[Y] < italic_shear * bmax[Y]) ?
+	    italic_shear * bmin[Y] : italic_shear * bmax[Y]);
+	fastf_t sheared_max_x = bmax[X] +
+	    ((italic_shear * bmin[Y] > italic_shear * bmax[Y]) ?
+	    italic_shear * bmin[Y] : italic_shear * bmax[Y]);
     switch (tsg->rel_pos) {
 	case RT_TXT_POS_BL: case RT_TXT_POS_ML: case RT_TXT_POS_TL:
-	    align_x = -bmin[X];
+	    align_x = -sheared_min_x;
 	    break;
 	case RT_TXT_POS_BC: case RT_TXT_POS_MC: case RT_TXT_POS_TC:
-	    align_x = -(bmin[X] + bmax[X]) * 0.5;
+	    align_x = -(sheared_min_x + sheared_max_x) * 0.5;
 	    break;
 	default:
-	    align_x = -bmax[X];
+	    align_x = -sheared_max_x;
 	    break;
+    }
     }
     switch (tsg->rel_pos) {
 	case RT_TXT_POS_BL: case RT_TXT_POS_BC: case RT_TXT_POS_BR:
@@ -883,12 +996,15 @@ annot_font_text(struct bu_list *vlfree, struct bu_list *vhead,
 	for (i = 0; i < vp->nused; ++i) {
 	    point2d_t uv;
 	    point_t point;
-	    fastf_t x = vp->pt[i][X] + align_x;
+	    fastf_t x = vp->pt[i][X] + italic_shear * vp->pt[i][Y] +
+		align_x;
 	    fastf_t y = vp->pt[i][Y] + align_y;
 	    fastf_t rx = cosine*x - sine*y;
 	    fastf_t ry = sine*x + cosine*y;
-	    V2SET(uv, annot_ip->verts[tsg->ref_pt][X] + rx,
-		annot_ip->verts[tsg->ref_pt][Y] + ry);
+	    fastf_t mx = x_scale*rx + xy_scale*ry;
+	    fastf_t my = yx_scale*rx + y_scale*ry;
+	    V2SET(uv, annot_ip->verts[tsg->ref_pt][X] + mx,
+		annot_ip->verts[tsg->ref_pt][Y] + my);
 	    annot_map_2d(point, base, uv, annot_ip);
 	    BV_ADD_VLIST(vlfree, vhead, point, vp->cmd[i]);
 	}
@@ -901,6 +1017,68 @@ annot_font_text(struct bu_list *vlfree, struct bu_list *vhead,
 
 
 static int
+annot_fill_vlist(struct bu_list *vlfree, struct bu_list *vhead,
+	const point_t base, const struct rt_annot_internal *annot_ip,
+	const struct fill_seg *fsg)
+{
+    const int **holes = NULL;
+    size_t *hole_sizes = NULL;
+    int *faces = NULL;
+    int face_count = 0;
+    int first_end;
+    int ret;
+    int i;
+    vect_t normal;
+
+    if (!fsg || fsg->loop_count < 1 || !fsg->loop_ends || !fsg->points)
+	return 1;
+    first_end = fsg->loop_ends[0];
+    if (fsg->loop_count > 1) {
+	holes = (const int **)bu_calloc((size_t)fsg->loop_count - 1,
+	    sizeof(int *), "annotation fill hole pointers");
+	hole_sizes = (size_t *)bu_calloc((size_t)fsg->loop_count - 1,
+	    sizeof(size_t), "annotation fill hole sizes");
+	for (i = 1; i < fsg->loop_count; ++i) {
+	    holes[i - 1] = &fsg->points[fsg->loop_ends[i - 1]];
+	    hole_sizes[i - 1] = (size_t)(fsg->loop_ends[i] -
+		fsg->loop_ends[i - 1]);
+	}
+    }
+    ret = bg_nested_poly_triangulate(&faces, &face_count, NULL, NULL,
+	fsg->points, (size_t)first_end, holes, hole_sizes,
+	(size_t)fsg->loop_count - 1, NULL, 0,
+	(const point2d_t *)annot_ip->verts,
+	annot_ip->vert_count, TRI_EAR_CLIPPING);
+    if (holes) bu_free((void *)holes, "annotation fill hole pointers");
+    if (hole_sizes) bu_free(hole_sizes, "annotation fill hole sizes");
+    if (ret || !faces || face_count < 1) {
+	if (faces) bu_free(faces, "annotation fill faces");
+	return 1;
+    }
+
+    if (annot_ip->flags & RT_ANNOT_MODEL_SPACE) {
+	VCROSS(normal, annot_ip->u_vec, annot_ip->v_vec);
+	VUNITIZE(normal);
+    } else {
+	VSET(normal, 0.0, 0.0, 1.0);
+    }
+    for (i = 0; i < face_count; ++i) {
+	point_t p0, p1, p2;
+	annot_map_2d(p0, base, annot_ip->verts[faces[3*i]], annot_ip);
+	annot_map_2d(p1, base, annot_ip->verts[faces[3*i + 1]], annot_ip);
+	annot_map_2d(p2, base, annot_ip->verts[faces[3*i + 2]], annot_ip);
+	BV_ADD_VLIST(vlfree, vhead, normal, BV_VLIST_POLY_START);
+	BV_ADD_VLIST(vlfree, vhead, p2, BV_VLIST_POLY_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, p0, BV_VLIST_POLY_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, p1, BV_VLIST_POLY_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, p2, BV_VLIST_POLY_END);
+    }
+    bu_free(faces, "annotation fill faces");
+    return 0;
+}
+
+
+static int
 seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, void *seg, const struct rt_annot_seg_style *style)
 {
     int ret=0;
@@ -908,6 +1086,7 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
     uint32_t *lng;
     struct line_seg *lsg;
     struct txt_seg *tsg;
+    struct fill_seg *fsg;
     struct carc_seg *csg;
     struct nurb_seg *nsg;
     struct bezier_seg *bsg;
@@ -977,6 +1156,10 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 			pt[0], pt[1], tsg->txt_size, tsg->txt_rot_angle);
 		}
 	    }
+	    break;
+	case ANN_FSEG_MAGIC:
+	    fsg = (struct fill_seg *)lng;
+	    ret += annot_fill_vlist(vlfree, vhead, V, annot_ip, fsg);
 	    break;
 	case CURVE_CARC_MAGIC:
 	    {
@@ -1344,6 +1527,28 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 
 
 static int
+annot_is_fill_compatibility_outline(const struct rt_ant *ant, size_t seg_no)
+{
+    size_t i;
+
+    if (!ant) return 0;
+    for (i = 0; i < ant->count; ++i) {
+	const struct fill_seg *fsg;
+	if (!ant->segments[i] ||
+		*(uint32_t *)ant->segments[i] != ANN_FSEG_MAGIC)
+	    continue;
+	fsg = (const struct fill_seg *)ant->segments[i];
+	if (fsg->legacy_start >= 0 && fsg->legacy_count > 0 &&
+		seg_no >= (size_t)fsg->legacy_start &&
+		seg_no < (size_t)fsg->legacy_start +
+		(size_t)fsg->legacy_count)
+	    return 1;
+    }
+    return 0;
+}
+
+
+static int
 ant_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, struct rt_ant *ant)
 {
     size_t seg_no;
@@ -1358,17 +1563,44 @@ ant_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
     else
 	BV_VLIST_SET_DISP_MAT(vlfree, vhead, annot_ip->V);
 
-    for (seg_no=0; seg_no < ant->count; seg_no++) {
-	if (annot_ip->styles &&
-		(annot_ip->styles[seg_no].flags & RT_ANNOT_STYLE_WIDTH))
-	    BV_VLIST_SET_LINE_WIDTH(vlfree, vhead,
-		annot_ip->styles[seg_no].line_width);
-	ret += seg_to_vlist(vlfree, vhead, ttol, base, annot_ip,
-	    ant->segments[seg_no], annot_ip->styles ?
-	    &annot_ip->styles[seg_no] : NULL);
-	if (annot_ip->styles &&
-		(annot_ip->styles[seg_no].flags & RT_ANNOT_STYLE_WIDTH))
-	    BV_VLIST_SET_LINE_WIDTH(vlfree, vhead, 1.0);
+    /* Filled areas, in particular OpenNURBS-style text masks and STEP
+     * blanking boxes, are backgrounds.  Emit them before strokes and text
+     * regardless of their storage position. */
+    for (int fill_pass = 1; fill_pass >= 0; --fill_pass) {
+	for (seg_no=0; seg_no < ant->count; seg_no++) {
+	    const int is_fill = ant->segments[seg_no] &&
+		*(uint32_t *)ant->segments[seg_no] == ANN_FSEG_MAGIC;
+	    int custom_width = 0;
+	    fastf_t width = 1.0;
+	    if (is_fill != fill_pass)
+		continue;
+	    /* These line segments are deliberately kept in ANT2 so main-era
+	     * readers have a visible fallback.  ANP2-aware readers render the
+	     * actual fill and must not add an unintended border (notably around
+	     * text blanking masks). */
+	    if (!fill_pass && annot_is_fill_compatibility_outline(ant, seg_no))
+		continue;
+	    if (annot_ip->styles) {
+		const struct rt_annot_seg_style *style =
+		    &annot_ip->styles[seg_no];
+		if (style->flags & RT_ANNOT_STYLE_WIDTH) {
+		    custom_width = 1;
+		    width = style->line_width;
+		} else if ((style->flags & RT_ANNOT_STYLE_BOLD) &&
+			ant->segments[seg_no] &&
+			*(uint32_t *)ant->segments[seg_no] == ANN_TSEG_MAGIC) {
+		    custom_width = 1;
+		    width = 2.0;
+		}
+	    }
+	    if (custom_width)
+		BV_VLIST_SET_LINE_WIDTH(vlfree, vhead, width);
+	    ret += seg_to_vlist(vlfree, vhead, ttol, base, annot_ip,
+		ant->segments[seg_no], annot_ip->styles ?
+		&annot_ip->styles[seg_no] : NULL);
+	    if (custom_width)
+		BV_VLIST_SET_LINE_WIDTH(vlfree, vhead, 1.0);
+	}
     }
 
     if (!(annot_ip->flags & RT_ANNOT_MODEL_SPACE))
@@ -1690,6 +1922,150 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 #undef ANNOT_IMPORT_NEED
     }
 
+    /* ANP2 follows the original ANT2 extension.  Main-branch readers stop
+     * after ANT2 and therefore continue to load the compatibility outlines
+     * and unscaled text. */
+    if ((size_t)((ep->ext_buf + ep->ext_nbytes) - ptr) >=
+	    SIZEOF_NETWORK_LONG && annot_get_uint32(ptr) == ANNOT_PRES_MAGIC) {
+	const unsigned char *end = ep->ext_buf + ep->ext_nbytes;
+	uint32_t magic, version, legacy_count, fill_count;
+	size_t old_count = ant->count;
+	size_t new_count;
+
+#define ANNOT_PRES_NEED(_n) do { \
+	    if ((size_t)(end - ptr) < (size_t)(_n)) goto import_error; \
+	} while (0)
+#define ANNOT_PRES_UINT32(_v) do { \
+	    ANNOT_PRES_NEED(SIZEOF_NETWORK_LONG); \
+	    (_v) = annot_get_uint32(ptr); \
+	    ptr += SIZEOF_NETWORK_LONG; \
+	} while (0)
+
+	ANNOT_PRES_UINT32(magic);
+	ANNOT_PRES_UINT32(version);
+	ANNOT_PRES_UINT32(legacy_count);
+	ANNOT_PRES_UINT32(fill_count);
+	if (magic != ANNOT_PRES_MAGIC || version != ANNOT_PRES_VERSION ||
+		legacy_count != old_count || fill_count > INT_MAX ||
+		old_count > SIZE_MAX - fill_count)
+	    goto import_error;
+	new_count = old_count + fill_count;
+	if (!annot_ip->styles && new_count)
+	    annot_ip->styles = (struct rt_annot_seg_style *)bu_calloc(
+		new_count, sizeof(struct rt_annot_seg_style),
+		"annotation presentation styles");
+	else if (new_count)
+	    annot_ip->styles = (struct rt_annot_seg_style *)bu_realloc(
+		annot_ip->styles, new_count * sizeof(struct rt_annot_seg_style),
+		"annotation presentation styles");
+	if (new_count > old_count)
+	    memset(&annot_ip->styles[old_count], 0,
+		(new_count - old_count) * sizeof(struct rt_annot_seg_style));
+	for (i = 0; i < old_count; ++i) {
+	    uint32_t role, extra_flags;
+	    double scales[4];
+	    ANNOT_PRES_UINT32(role);
+	    ANNOT_PRES_UINT32(extra_flags);
+	    ANNOT_PRES_NEED(4 * SIZEOF_NETWORK_DOUBLE);
+	    bu_cv_ntohd((unsigned char *)scales, ptr, 4);
+	    ptr += 4 * SIZEOF_NETWORK_DOUBLE;
+	    annot_ip->styles[i].role = role;
+	    annot_ip->styles[i].flags |= extra_flags;
+	    annot_ip->styles[i].x_scale = scales[0];
+	    annot_ip->styles[i].xy_scale = scales[1];
+	    annot_ip->styles[i].yx_scale = scales[2];
+	    annot_ip->styles[i].y_scale = scales[3];
+	}
+	if (new_count > old_count) {
+	    ant->segments = (void **)bu_realloc(ant->segments,
+		new_count * sizeof(void *), "annotation presentation segments");
+	    ant->reverse = (int *)bu_realloc(ant->reverse,
+		new_count * sizeof(int), "annotation presentation reverse flags");
+	    memset(&ant->segments[old_count], 0,
+		(new_count - old_count) * sizeof(void *));
+	    memset(&ant->reverse[old_count], 0,
+		(new_count - old_count) * sizeof(int));
+	}
+	ant->count = new_count;
+	for (i = 0; i < fill_count; ++i) {
+	    struct fill_seg *fsg;
+	    uint32_t legacy_start, outline_count, loop_count, point_count;
+	    size_t j;
+	    ANNOT_PRES_UINT32(legacy_start);
+	    ANNOT_PRES_UINT32(outline_count);
+	    ANNOT_PRES_UINT32(loop_count);
+	    ANNOT_PRES_UINT32(point_count);
+	    if (!loop_count || loop_count > INT_MAX || point_count > INT_MAX ||
+		    legacy_start >= old_count || outline_count > old_count -
+		    legacy_start)
+		goto import_error;
+	    BU_ALLOC(fsg, struct fill_seg);
+	    ant->segments[old_count + i] = fsg;
+	    fsg->magic = ANN_FSEG_MAGIC;
+	    fsg->legacy_start = (int)legacy_start;
+	    fsg->legacy_count = (int)outline_count;
+	    fsg->loop_count = (int)loop_count;
+	    fsg->point_count = (int)point_count;
+	    fsg->loop_ends = (int *)bu_calloc(loop_count, sizeof(int),
+		"annotation fill loop ends");
+	    fsg->points = (int *)bu_calloc(point_count, sizeof(int),
+		"annotation fill points");
+	    for (j = 0; j < loop_count; ++j) {
+		uint32_t value;
+		ANNOT_PRES_UINT32(value);
+		if (value > INT_MAX) goto import_error;
+		fsg->loop_ends[j] = (int)value;
+	    }
+	    for (j = 0; j < point_count; ++j) {
+		uint32_t value;
+		ANNOT_PRES_UINT32(value);
+		if (value > INT_MAX) goto import_error;
+		fsg->points[j] = (int)value;
+	    }
+	    ant->reverse[old_count + i] = 0;
+	    {
+		struct rt_annot_seg_style *style =
+		    &annot_ip->styles[old_count + i];
+		uint32_t color, font_len, symbol_len;
+		double values[5];
+		ANNOT_PRES_UINT32(style->role);
+		ANNOT_PRES_UINT32(style->flags);
+		ANNOT_PRES_UINT32(style->line_pattern);
+		ANNOT_PRES_UINT32(color);
+		ANNOT_PRES_NEED(5 * SIZEOF_NETWORK_DOUBLE);
+		bu_cv_ntohd((unsigned char *)values, ptr, 5);
+		ptr += 5 * SIZEOF_NETWORK_DOUBLE;
+		style->line_width = values[0];
+		style->x_scale = values[1];
+		style->xy_scale = values[2];
+		style->yx_scale = values[3];
+		style->y_scale = values[4];
+		style->color[0] = (unsigned char)((color >> 24) & 0xff);
+		style->color[1] = (unsigned char)((color >> 16) & 0xff);
+		style->color[2] = (unsigned char)((color >> 8) & 0xff);
+		style->color[3] = (unsigned char)(color & 0xff);
+		ANNOT_PRES_UINT32(font_len);
+		ANNOT_PRES_UINT32(symbol_len);
+		ANNOT_PRES_NEED((size_t)font_len + symbol_len);
+		if (font_len) {
+		    style->font = (char *)bu_calloc(font_len + 1, 1,
+			"annotation fill font");
+		    memcpy(style->font, ptr, font_len);
+		    ptr += font_len;
+		}
+		if (symbol_len) {
+		    style->symbol = (char *)bu_calloc(symbol_len + 1, 1,
+			"annotation fill symbol");
+		    memcpy(style->symbol, ptr, symbol_len);
+		    ptr += symbol_len;
+		}
+		style->flags |= RT_ANNOT_STYLE_FILLED;
+	    }
+	}
+#undef ANNOT_PRES_UINT32
+#undef ANNOT_PRES_NEED
+    }
+
     if (rt_annot_validate(annot_ip, NULL))
 	goto import_error;
 
@@ -1714,6 +2090,11 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     size_t seg_no;
     size_t i;
     size_t extension_size = 0;
+    size_t presentation_size = 0;
+    size_t legacy_count = 0;
+    size_t fill_count = 0;
+    size_t *legacy_map = NULL;
+    size_t *memory_to_legacy = NULL;
     int enhanced;
     double coordinate_scale;
 
@@ -1730,6 +2111,20 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     BU_CK_EXTERNAL(ep);
     if (rt_annot_validate(annot_ip, NULL))
 	return -1;
+
+    legacy_map = (size_t *)bu_calloc(annot_ip->ant.count,
+	sizeof(size_t), "annotation legacy segment map");
+    memory_to_legacy = (size_t *)bu_calloc(annot_ip->ant.count,
+	sizeof(size_t), "annotation memory segment map");
+    for (seg_no = 0; seg_no < annot_ip->ant.count; ++seg_no) {
+	if (*(uint32_t *)annot_ip->ant.segments[seg_no] == ANN_FSEG_MAGIC) {
+	    ++fill_count;
+	    memory_to_legacy[seg_no] = SIZE_MAX;
+	    continue;
+	}
+	legacy_map[legacy_count] = seg_no;
+	memory_to_legacy[seg_no] = legacy_count++;
+    }
     enhanced = annot_has_extension(annot_ip);
     coordinate_scale = (annot_ip->flags & RT_ANNOT_MODEL_SPACE) ?
 	1.0 : local2mm;
@@ -1738,7 +2133,7 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     ep->ext_nbytes =  (ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE)	/* V*/
 	+ 2 * SIZEOF_NETWORK_LONG		/* vert_count and count */
 	+ 2 * annot_ip->vert_count * SIZEOF_NETWORK_DOUBLE	/* 2D-vertices */
-	+ annot_ip->ant.count * SIZEOF_NETWORK_LONG;	/* reverse flags */
+	+ legacy_count * SIZEOF_NETWORK_LONG;	/* reverse flags */
 
     for (seg_no=0; seg_no < annot_ip->ant.count; seg_no++) {
 	uint32_t *lng;
@@ -1747,6 +2142,8 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 	struct txt_seg *tseg;
 
 	lng = (uint32_t *)annot_ip->ant.segments[seg_no];
+	if (*lng == ANN_FSEG_MAGIC)
+	    continue;
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
 		/* magic + start + end */
@@ -1788,20 +2185,42 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     if (enhanced) {
 	extension_size = 4 * SIZEOF_NETWORK_LONG +
 	    6 * SIZEOF_NETWORK_DOUBLE;
-	if (annot_ip->styles) {
-	    for (seg_no = 0; seg_no < annot_ip->ant.count; ++seg_no) {
+	if (annot_ip->styles || fill_count) {
+	    for (i = 0; i < legacy_count; ++i) {
+		seg_no = legacy_map[i];
 		const struct rt_annot_seg_style *style =
-		    &annot_ip->styles[seg_no];
+		    annot_ip->styles ? &annot_ip->styles[seg_no] : NULL;
 		extension_size += 6 * SIZEOF_NETWORK_LONG +
 		    SIZEOF_NETWORK_DOUBLE;
-		if (style->font)
+		if (style && style->font)
 		    extension_size += strlen(style->font);
-		if (style->symbol)
+		if (style && style->symbol)
 		    extension_size += strlen(style->symbol);
 	    }
 	}
     }
+    if (fill_count || annot_ip->styles) {
+	presentation_size = 4 * SIZEOF_NETWORK_LONG +
+	    legacy_count * (2 * SIZEOF_NETWORK_LONG +
+		4 * SIZEOF_NETWORK_DOUBLE);
+	for (seg_no = 0; seg_no < annot_ip->ant.count; ++seg_no) {
+	    const struct fill_seg *fsg;
+	    if (*(uint32_t *)annot_ip->ant.segments[seg_no] != ANN_FSEG_MAGIC)
+		continue;
+	    fsg = (const struct fill_seg *)annot_ip->ant.segments[seg_no];
+	    presentation_size += (10 + (size_t)fsg->loop_count +
+		(size_t)fsg->point_count) * SIZEOF_NETWORK_LONG +
+		5 * SIZEOF_NETWORK_DOUBLE;
+	    if (annot_ip->styles) {
+		const struct rt_annot_seg_style *style =
+		    &annot_ip->styles[seg_no];
+		if (style->font) presentation_size += strlen(style->font);
+		if (style->symbol) presentation_size += strlen(style->symbol);
+	    }
+	}
+    }
     ep->ext_nbytes += extension_size;
+    ep->ext_nbytes += presentation_size;
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "annotation external");
 
     cp = (unsigned char *)ep->ext_buf;
@@ -1814,7 +2233,7 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 
     annot_put_uint32(cp, annot_ip->vert_count);
     cp += SIZEOF_NETWORK_LONG;
-    annot_put_uint32(cp, annot_ip->ant.count);
+    annot_put_uint32(cp, (uint32_t)legacy_count);
     cp += SIZEOF_NETWORK_LONG;
 
     /* convert 2D points to mm */
@@ -1841,6 +2260,8 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 
 	/* write segment type ID, and segment parameters */
 	lng = (uint32_t *)annot_ip->ant.segments[seg_no];
+	if (*lng == ANN_FSEG_MAGIC)
+	    continue;
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
 		lseg = (struct line_seg *)lng;
@@ -1940,14 +2361,16 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     }
 
     for (seg_no=0; seg_no < annot_ip->ant.count; seg_no++) {
+	if (*(uint32_t *)annot_ip->ant.segments[seg_no] == ANN_FSEG_MAGIC)
+	    continue;
 	annot_put_uint32(cp, annot_ip->ant.reverse[seg_no]);
 	cp += SIZEOF_NETWORK_LONG;
     }
 
     if (enhanced) {
 	double basis[6];
-	uint32_t style_count = annot_ip->styles ?
-	    (uint32_t)annot_ip->ant.count : 0;
+	uint32_t style_count = (annot_ip->styles || fill_count) ?
+	    (uint32_t)legacy_count : 0;
 	annot_put_uint32(cp, ANNOT_EXT_MAGIC);
 	cp += SIZEOF_NETWORK_LONG;
 	annot_put_uint32(cp, ANNOT_EXT_VERSION);
@@ -1960,9 +2383,11 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 	cp += 6 * SIZEOF_NETWORK_DOUBLE;
 	annot_put_uint32(cp, style_count);
 	cp += SIZEOF_NETWORK_LONG;
-	for (seg_no = 0; seg_no < style_count; ++seg_no) {
+	for (i = 0; i < style_count; ++i) {
+	    const struct rt_annot_seg_style empty_style = {0};
+	    seg_no = legacy_map[i];
 	    const struct rt_annot_seg_style *style =
-		&annot_ip->styles[seg_no];
+		annot_ip->styles ? &annot_ip->styles[seg_no] : &empty_style;
 	    uint32_t color = ((uint32_t)style->color[0] << 24) |
 		((uint32_t)style->color[1] << 16) |
 		((uint32_t)style->color[2] << 8) |
@@ -1970,9 +2395,11 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 	    size_t font_len = style->font ? strlen(style->font) : 0;
 	    size_t symbol_len = style->symbol ? strlen(style->symbol) : 0;
 	    double line_width = style->line_width;
-	    annot_put_uint32(cp, style->role);
+	    annot_put_uint32(cp, style->role <= RT_ANNOT_ROLE_SYMBOL ?
+		style->role : RT_ANNOT_ROLE_GEOMETRY);
 	    cp += SIZEOF_NETWORK_LONG;
-	    annot_put_uint32(cp, style->flags);
+	    annot_put_uint32(cp, style->flags &
+		(RT_ANNOT_STYLE_WIDTH | RT_ANNOT_STYLE_COLOR));
 	    cp += SIZEOF_NETWORK_LONG;
 	    annot_put_uint32(cp, style->line_pattern);
 	    cp += SIZEOF_NETWORK_LONG;
@@ -1994,6 +2421,103 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 	    }
 	}
     }
+
+    if (presentation_size) {
+	annot_put_uint32(cp, ANNOT_PRES_MAGIC);
+	cp += SIZEOF_NETWORK_LONG;
+	annot_put_uint32(cp, ANNOT_PRES_VERSION);
+	cp += SIZEOF_NETWORK_LONG;
+	annot_put_uint32(cp, (uint32_t)legacy_count);
+	cp += SIZEOF_NETWORK_LONG;
+	annot_put_uint32(cp, (uint32_t)fill_count);
+	cp += SIZEOF_NETWORK_LONG;
+	for (i = 0; i < legacy_count; ++i) {
+	    const struct rt_annot_seg_style *style = annot_ip->styles ?
+		&annot_ip->styles[legacy_map[i]] : NULL;
+	    double scales[4] = {1.0, 0.0, 0.0, 1.0};
+	    uint32_t extra_flags = 0;
+	    if (style) {
+		extra_flags = style->flags &
+		    ~(RT_ANNOT_STYLE_WIDTH | RT_ANNOT_STYLE_COLOR);
+		if (style->flags & RT_ANNOT_STYLE_SCALE) {
+		    scales[0] = style->x_scale;
+		    scales[1] = style->xy_scale;
+		    scales[2] = style->yx_scale;
+		    scales[3] = style->y_scale;
+		}
+	    }
+	    annot_put_uint32(cp, style ? style->role :
+		RT_ANNOT_ROLE_UNSPECIFIED);
+	    cp += SIZEOF_NETWORK_LONG;
+	    annot_put_uint32(cp, extra_flags);
+	    cp += SIZEOF_NETWORK_LONG;
+	    bu_cv_htond(cp, (unsigned char *)scales, 4);
+	    cp += 4 * SIZEOF_NETWORK_DOUBLE;
+	}
+	for (seg_no = 0; seg_no < annot_ip->ant.count; ++seg_no) {
+	    const struct fill_seg *fsg;
+	    size_t j;
+	    size_t mapped_start;
+	    if (*(uint32_t *)annot_ip->ant.segments[seg_no] != ANN_FSEG_MAGIC)
+		continue;
+	    fsg = (const struct fill_seg *)annot_ip->ant.segments[seg_no];
+	    mapped_start = memory_to_legacy[(size_t)fsg->legacy_start];
+	    annot_put_uint32(cp, (uint32_t)mapped_start);
+	    cp += SIZEOF_NETWORK_LONG;
+	    annot_put_uint32(cp, (uint32_t)fsg->legacy_count);
+	    cp += SIZEOF_NETWORK_LONG;
+	    annot_put_uint32(cp, (uint32_t)fsg->loop_count);
+	    cp += SIZEOF_NETWORK_LONG;
+	    annot_put_uint32(cp, (uint32_t)fsg->point_count);
+	    cp += SIZEOF_NETWORK_LONG;
+	    for (j = 0; j < (size_t)fsg->loop_count; ++j) {
+		annot_put_uint32(cp, (uint32_t)fsg->loop_ends[j]);
+		cp += SIZEOF_NETWORK_LONG;
+	    }
+	    for (j = 0; j < (size_t)fsg->point_count; ++j) {
+		annot_put_uint32(cp, (uint32_t)fsg->points[j]);
+		cp += SIZEOF_NETWORK_LONG;
+	    }
+	    {
+		const struct rt_annot_seg_style empty_style = {0};
+		const struct rt_annot_seg_style *style = annot_ip->styles ?
+		    &annot_ip->styles[seg_no] : &empty_style;
+		const uint32_t color = ((uint32_t)style->color[0] << 24) |
+		    ((uint32_t)style->color[1] << 16) |
+		    ((uint32_t)style->color[2] << 8) |
+		    (uint32_t)style->color[3];
+		const size_t font_len = style->font ? strlen(style->font) : 0;
+		const size_t symbol_len = style->symbol ? strlen(style->symbol) : 0;
+		double values[5] = {style->line_width, style->x_scale,
+		    style->xy_scale, style->yx_scale, style->y_scale};
+		annot_put_uint32(cp, style->role);
+		cp += SIZEOF_NETWORK_LONG;
+		annot_put_uint32(cp, style->flags | RT_ANNOT_STYLE_FILLED);
+		cp += SIZEOF_NETWORK_LONG;
+		annot_put_uint32(cp, style->line_pattern);
+		cp += SIZEOF_NETWORK_LONG;
+		annot_put_uint32(cp, color);
+		cp += SIZEOF_NETWORK_LONG;
+		bu_cv_htond(cp, (unsigned char *)values, 5);
+		cp += 5 * SIZEOF_NETWORK_DOUBLE;
+		annot_put_uint32(cp, (uint32_t)font_len);
+		cp += SIZEOF_NETWORK_LONG;
+		annot_put_uint32(cp, (uint32_t)symbol_len);
+		cp += SIZEOF_NETWORK_LONG;
+		if (font_len) {
+		    memcpy(cp, style->font, font_len);
+		    cp += font_len;
+		}
+		if (symbol_len) {
+		    memcpy(cp, style->symbol, symbol_len);
+		    cp += symbol_len;
+		}
+	    }
+	}
+    }
+
+    bu_free(memory_to_legacy, "annotation memory segment map");
+    bu_free(legacy_map, "annotation legacy segment map");
 
     return 0;
 }
@@ -2052,6 +2576,7 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
     for (seg_no=0; seg_no < annot_ip->ant.count; seg_no++) {
 	struct line_seg *lsg;
 	struct txt_seg *tsg;
+	struct fill_seg *fsg;
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
@@ -2072,6 +2597,22 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 		bu_vls_printf(str, ", font %s", style->font);
 	    if (style->symbol)
 		bu_vls_printf(str, ", symbol %s", style->symbol);
+	    if (style->flags & RT_ANNOT_STYLE_SCALE)
+		bu_vls_printf(str, ", transform %g/%g/%g/%g",
+		    style->x_scale, style->xy_scale, style->yx_scale,
+		    style->y_scale);
+	    if (style->flags & RT_ANNOT_STYLE_UNDERLINE)
+		bu_vls_strcat(str, ", underline");
+	    if (style->flags & RT_ANNOT_STYLE_OVERLINE)
+		bu_vls_strcat(str, ", overline");
+	    if (style->flags & RT_ANNOT_STYLE_STRIKETHROUGH)
+		bu_vls_strcat(str, ", strikethrough");
+	    if (style->flags & RT_ANNOT_STYLE_BOLD)
+		bu_vls_strcat(str, ", bold");
+	    if (style->flags & RT_ANNOT_STYLE_ITALIC)
+		bu_vls_strcat(str, ", italic");
+	    if (style->flags & RT_ANNOT_STYLE_FILLED)
+		bu_vls_strcat(str, ", filled");
 	    bu_vls_putc(str, '\n');
 	}
 	switch (lsg->magic) {
@@ -2109,12 +2650,21 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 		ant_check_pos(tsg, (const char **)&rel_pos);
 		sprintf(buf, "\t\tRelative position: %s\n", rel_pos);
 		bu_vls_strcat(str, buf);
-		sprintf(buf, "\tLabel text: %s\n", bu_vls_addr(&tsg->label));
-		bu_vls_strcat(str, buf);
+		/* Annotation text is unbounded (for example, imported multi-line
+		 * drawing notes), so it must not pass through the fixed-size
+		 * formatting scratch buffer used for the numeric descriptions. */
+		bu_vls_printf(str, "\tLabel text: %s\n", bu_vls_addr(&tsg->label));
 		sprintf(buf, "\tText size: %.1f\n", tsg->txt_size);
 		bu_vls_strcat(str, buf);
 		sprintf(buf, "\tText rotation angle: %.1f\n", tsg->txt_rot_angle);
 		bu_vls_strcat(str, buf);
+		break;
+	    case ANN_FSEG_MAGIC:
+		fsg = (struct fill_seg *)annot_ip->ant.segments[seg_no];
+		bu_vls_printf(str,
+		    "\t\tFilled area: %d loop%s, %d indexed points\n",
+		    fsg->loop_count, fsg->loop_count == 1 ? "" : "s",
+		    fsg->point_count);
 		break;
 	    case CURVE_CARC_MAGIC:
 		csg = (struct carc_seg *)annot_ip->ant.segments[seg_no];
@@ -2251,8 +2801,11 @@ rt_ant_free(struct rt_ant *ant)
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
 	struct txt_seg *tsg;
+	struct fill_seg *fsg;
 
 	lng = (uint32_t *)ant->segments[i];
+	if (!lng)
+	    continue;
 	switch (*lng) {
 	    case CURVE_NURB_MAGIC:
 		nsg = (struct nurb_seg *)lng;
@@ -2274,6 +2827,14 @@ rt_ant_free(struct rt_ant *ant)
 		tsg = (struct txt_seg *)lng;
 		if (BU_VLS_IS_INITIALIZED(&tsg->label))
 		    bu_vls_free(&tsg->label);
+		bu_free((char *)lng, "annotation segment");
+		break;
+	    case ANN_FSEG_MAGIC:
+		fsg = (struct fill_seg *)lng;
+		if (fsg->loop_ends)
+		    bu_free(fsg->loop_ends, "annotation fill loop ends");
+		if (fsg->points)
+		    bu_free(fsg->points, "annotation fill points");
 		bu_free((char *)lng, "annotation segment");
 		break;
 	    case CURVE_CARC_MAGIC:
@@ -2356,6 +2917,7 @@ ant_copy(struct rt_ant *ant_out, const struct rt_ant *ant_in)
 	uint32_t *lng;
 	struct line_seg *lsg_out, *lsg_in;
 	struct txt_seg *tsg_out, *tsg_in;
+	struct fill_seg *fsg_out, *fsg_in;
 	struct carc_seg *csg_out, *csg_in;
 	struct nurb_seg *nsg_out, *nsg_in;
 	struct bezier_seg *bsg_out, *bsg_in;
@@ -2379,6 +2941,22 @@ ant_copy(struct rt_ant *ant_out, const struct rt_ant *ant_in)
 		 * tsg_in->label.vls_str. */
 		bu_vls_init(&tsg_out->label);
 		bu_vls_strcpy(&tsg_out->label, bu_vls_cstr(&tsg_in->label));
+		break;
+	    case ANN_FSEG_MAGIC:
+		fsg_in = (struct fill_seg *)lng;
+		BU_ALLOC(fsg_out, struct fill_seg);
+		ant_out->segments[j] = (void *)fsg_out;
+		*fsg_out = *fsg_in;
+		fsg_out->loop_ends = (int *)bu_calloc(
+		    (size_t)fsg_in->loop_count, sizeof(int),
+		    "annotation fill loop ends");
+		fsg_out->points = (int *)bu_calloc(
+		    (size_t)fsg_in->point_count, sizeof(int),
+		    "annotation fill points");
+		memcpy(fsg_out->loop_ends, fsg_in->loop_ends,
+		    (size_t)fsg_in->loop_count * sizeof(int));
+		memcpy(fsg_out->points, fsg_in->points,
+		    (size_t)fsg_in->point_count * sizeof(int));
 		break;
 	    case CURVE_CARC_MAGIC:
 		csg_in = (struct carc_seg *)lng;
@@ -2482,6 +3060,19 @@ ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 		{
 		    struct txt_seg *tsg = (struct txt_seg *)ant->segments[j];
 		    bu_vls_printf(vls, " { txt R %d P %d L {%s} S %.25g A %.25g }", tsg->ref_pt, tsg->rel_pos, bu_vls_addr(&tsg->label), tsg->txt_size, tsg->txt_rot_angle);
+		}
+		break;
+	    case ANN_FSEG_MAGIC:
+		{
+		    struct fill_seg *fsg = (struct fill_seg *)ant->segments[j];
+		    bu_vls_printf(vls, " { fill E {");
+		    for (i = 0; i < (size_t)fsg->loop_count; ++i)
+			bu_vls_printf(vls, " %d", fsg->loop_ends[i]);
+		    bu_vls_strcat(vls, " } P {");
+		    for (i = 0; i < (size_t)fsg->point_count; ++i)
+			bu_vls_printf(vls, " %d", fsg->points[i]);
+		    bu_vls_printf(vls, " } S %d C %d }", fsg->legacy_start,
+			fsg->legacy_count);
 		}
 		break;
 	    case CURVE_CARC_MAGIC:
@@ -2686,6 +3277,35 @@ ant_get_tcl(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 	    }
 	    tsg->magic = ANN_TSEG_MAGIC;
 	    ant->segments[j] = (void *)tsg;
+	} else if (BU_STR_EQUAL(seg_argv[0], "fill")) {
+	    struct fill_seg *fsg;
+
+	    BU_ALLOC(fsg, struct fill_seg);
+	    fsg->legacy_start = -1;
+	    for (k = 1; k < seg_argc; k += 2) {
+		elem = seg_argv[k];
+		sval = seg_argv[k + 1];
+		switch (*elem) {
+		    case 'E':
+			(void)_rt_tcl_list_to_int_array(sval,
+			    &fsg->loop_ends, &fsg->loop_count);
+			break;
+		    case 'P':
+			(void)_rt_tcl_list_to_int_array(sval,
+			    &fsg->points, &fsg->point_count);
+			break;
+		    case 'S':
+			(void)bu_opt_int(NULL, 1, &sval,
+			    (void *)&fsg->legacy_start);
+			break;
+		    case 'C':
+			(void)bu_opt_int(NULL, 1, &sval,
+			    (void *)&fsg->legacy_count);
+			break;
+		}
+	    }
+	    fsg->magic = ANN_FSEG_MAGIC;
+	    ant->segments[j] = (void *)fsg;
 	} else if (BU_STR_EQUAL(seg_argv[0], "bezier")) {
 	    struct bezier_seg *bsg;
 	    int num_points;
