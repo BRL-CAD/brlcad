@@ -37,19 +37,116 @@
 
 #ifdef __cplusplus
 
+#  include <memory>
+
 __BEGIN_DECLS
 
 extern "C++" {
+
+namespace brlcad {
+class PullbackContext;
+
+struct PullbackStatistics {
+    uint64_t closest_point_queries = 0;
+    uint64_t surfaces_prepared = 0;
+    uint64_t surface_cache_hits = 0;
+    uint64_t span_boxes_built = 0;
+    uint64_t span_boxes_tested = 0;
+    uint64_t primary_search_successes = 0;
+    uint64_t continuity_seed_searches = 0;
+    uint64_t continuity_seed_successes = 0;
+    uint64_t continuity_seed_failures = 0;
+    uint64_t continuity_seed_finite_candidates = 0;
+    uint64_t continuity_seed_iterations = 0;
+    uint64_t continuity_seed_line_searches = 0;
+    uint64_t maximum_continuity_seed_iterations = 0;
+    uint64_t maximum_continuity_seed_line_searches = 0;
+    uint64_t multiseed_fallbacks = 0;
+    uint64_t multiseed_successes = 0;
+    uint64_t multiseed_failures = 0;
+    uint64_t fallback_calls_with_finite_primary = 0;
+    uint64_t fallback_samples_evaluated = 0;
+    uint64_t fallback_seed_refinements = 0;
+    uint64_t fallback_refinement_improvements = 0;
+    uint64_t fallback_late_seed_improvements = 0;
+    uint64_t maximum_winning_seed_index = 0;
+    uint64_t subdivision_nodes = 0;
+    uint64_t maximum_subdivision_nodes = 0;
+    uint64_t preparation_us = 0;
+    uint64_t primary_search_us = 0;
+    uint64_t continuity_seed_us = 0;
+    uint64_t multiseed_us = 0;
+    double fallback_primary_improvement_total = 0.0;
+    double fallback_primary_improvement_maximum = 0.0;
+    double fallback_refinement_improvement_total = 0.0;
+    double fallback_refinement_improvement_maximum = 0.0;
+};
+}
+
+enum class PullbackFailureReason {
+    None,
+    Cancelled,
+    ProjectionFailed,
+    SurfaceDistanceExceeded
+};
 
 typedef struct pbc_data {
     double tolerance;
     double flatness;
     const ON_Curve *curve;
     const ON_Surface *surf;
+    /** Immutable surface parameterization facts cached for the numerical job.
+     * ON_NurbsSurface::IsClosed() constructs and compares boundary curves, so
+     * it must not be repeated for every projected sample. */
+    bool surface_parameterization_cached = false;
+    bool surface_closed[2] = {false, false};
+    ON_Interval surface_domain[2];
     brlcad::SurfaceTree *surftree;
     std::list<ON_2dPointArray *> *segments;
     const ON_BrepEdge *edge;
     bool order_reversed;
+    /** Job-local closest-point cache.  It never owns STEP or geometry data. */
+    std::shared_ptr<brlcad::PullbackContext> context;
+    /** Typed result from the bounded point-projection stage. */
+    PullbackFailureReason failure_reason = PullbackFailureReason::None;
+    /** A speculative caller needs only to establish that its exact candidate
+     * cannot be constructed.  Once continuity-seeded and global projection
+     * have both rejected a sample, stop walking that direction instead of
+     * spending the caller's complete budget quantifying an already decisive
+     * failure.  Ordinary and repair pullbacks retain exhaustive sampling. */
+    bool stop_after_first_rejection = false;
+    size_t projection_samples = 0;
+    size_t rejected_projection_samples = 0;
+    /** Rejected samples for which the closest-point solver found no finite
+     * candidate.  These are solver failures, not evidence that the source
+     * curve lies outside its declared surface tolerance. */
+    size_t failed_projection_samples = 0;
+    /** Closed-curve seam transitions for which the local root finder did not
+     * locate an exact split.  Callers may defer these to loop-level seam
+     * resolution, but must report the aggregate rather than printing inside
+     * this low-level numerical routine. */
+    size_t failed_seam_crossing_searches = 0;
+    double maximum_projection_distance = 0.0;
+    /** Every stored UV was produced from a known source-curve parameter and
+     * its 3-D lift passed the active projection tolerance.  Importers may
+     * consume this proof before any seam/topology routine mutates the samples;
+     * subsequent validation must use the represented curve locus again. */
+    bool samples_source_validated = false;
+    bool tolerance_adjusted = false;
+    double declared_tolerance = 0.0;
+    /** Optional caller-authorized search bound used only when periodic seam
+     * handling collapses an otherwise valid pullback to one UV sample.  The
+     * recovery still records the largest measured lift error separately, so
+     * callers can install a measured tolerance rather than this search bound.
+     * Generic callers retain strict behavior because this defaults to the
+     * ordinary pullback tolerance. */
+    double maximum_recovery_tolerance = 0.0;
+    double maximum_recovery_distance = 0.0;
+    /** Loop-level proof selected this edge boundary as the unique periodic
+     * cut to a surface pole.  Endpoint closure must preserve this pair until
+     * the exact seam-edge and singular trims are emitted. */
+    bool periodic_pole_cut_before = false;
+    bool periodic_pole_cut_after = false;
 } PBCData;
 
 extern BREP_EXPORT int IsAtSingularity(const ON_Surface *surf, double u, double v, double tol = 1e-6);
@@ -68,7 +165,14 @@ extern BREP_EXPORT bool surface_GetClosestPoint3dFirstOrder(const ON_Surface *su
 extern BREP_EXPORT bool trim_GetClosestPoint3dFirstOrder(const ON_BrepTrim& trim,const ON_3dPoint& p,ON_2dPoint& p2d,double& t,double& distance,const ON_Interval* interval,double same_point_tol=BREP_SAME_POINT_TOLERANCE,double within_distance_tol=BREP_EDGE_MISS_TOLERANCE);
 extern BREP_EXPORT bool ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt,const ON_2dPoint &prev_pt, int &udir, int &vdir,double tol = 1e-6);
 
-extern BREP_EXPORT PBCData *pullback_samples(const ON_Surface *surf,const ON_Curve *curve,double tolerance = 1.0e-6,double flatness = 1.0e-3,double same_point_tol=BREP_SAME_POINT_TOLERANCE,double within_distance_tol=BREP_EDGE_MISS_TOLERANCE);
+extern BREP_EXPORT PBCData *pullback_samples(const ON_Surface *surf,
+        const ON_Curve *curve, double tolerance = 1.0e-6,
+        double flatness = 1.0e-3,
+        double same_point_tol = BREP_SAME_POINT_TOLERANCE,
+        double within_distance_tol = BREP_EDGE_MISS_TOLERANCE,
+        const std::shared_ptr<brlcad::PullbackContext> &context =
+            std::shared_ptr<brlcad::PullbackContext>(),
+        bool stop_after_first_rejection = false);
 
 extern BREP_EXPORT bool check_pullback_data(std::list<PBCData *> &pbcs);
 
@@ -76,6 +180,112 @@ extern BREP_EXPORT int
 check_pullback_singularity_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const ON_2dPoint &p2);
 
 namespace brlcad {
+
+    class PullbackWorkBudget;
+    typedef std::shared_ptr<PullbackWorkBudget> PullbackWorkBudgetHandle;
+
+    /** Create a CPU-work budget shared by all threads assisting one geometry
+     * job.  The budget follows the longest sequential worker path, rather than
+     * charging time while workers are descheduled or summing genuinely
+     * parallel work.  A zero limit returns an unlimited handle. */
+    extern BREP_EXPORT PullbackWorkBudgetHandle CreatePullbackWorkBudget(
+        uint64_t maximum_work_milliseconds);
+    /** Return the calling thread's current job budget so nested helper threads
+     * can participate in the same limit. */
+    extern BREP_EXPORT PullbackWorkBudgetHandle CurrentPullbackWorkBudget();
+
+    /** Install thread-local cancellation, CPU-work, and no-progress limits for
+     * the current geometry job.  A zero work limit disables that timer. */
+    typedef bool (*PullbackCancellationCallback)(void *context);
+    extern BREP_EXPORT void SetPullbackWorkLimit(
+        PullbackCancellationCallback cancellation_callback,
+        void *cancellation_context,
+        uint64_t maximum_work_milliseconds,
+        uint64_t maximum_stall_milliseconds = 0);
+    /** Join an existing job budget from a nested helper thread. */
+    extern BREP_EXPORT void SetPullbackWorkLimit(
+        PullbackCancellationCallback cancellation_callback,
+        void *cancellation_context,
+        const PullbackWorkBudgetHandle &work_budget,
+        uint64_t maximum_stall_milliseconds = 0);
+    extern BREP_EXPORT void ClearPullbackWorkLimit();
+    extern BREP_EXPORT bool PullbackWorkCancelled();
+    extern BREP_EXPORT bool PullbackWorkDeadlineExpired();
+    extern BREP_EXPORT bool PullbackWorkStalled();
+    /** Record completion of one or more bounded solver operations.  This
+     * heartbeat is independent of elapsed item deadlines and therefore keeps
+     * --no-item-budget runs cancellable when an algorithm stops advancing. */
+    extern BREP_EXPORT void PullbackWorkProgress(uint64_t operations = 1);
+    /** Propagate a helper thread's stop reason to the parent geometry job. */
+    extern BREP_EXPORT void PropagatePullbackWorkStop(
+        bool deadline_expired, bool stalled);
+    /** Milliseconds remaining on the calling thread's CPU-work budget.
+     * UINT64_MAX means no deadline is installed.  This permits a bounded
+     * parent conversion job to propagate its original budget to helper
+     * threads without restarting the per-item limit. */
+    extern BREP_EXPORT uint64_t PullbackWorkRemainingMilliseconds();
+
+    /**
+     * Mutable state used by one pullback job.  Solver state and statistics are
+     * private; immutable span/bounding-box preparation may be shared explicitly
+     * by related jobs and remains bounded by their context lifetimes.
+     */
+    class BREP_EXPORT PullbackContext {
+    public:
+        PullbackContext();
+        ~PullbackContext();
+
+        PullbackContext(const PullbackContext &) = delete;
+        PullbackContext &operator=(const PullbackContext &) = delete;
+
+        bool SurfaceClosestPoint(const ON_Surface *surf,
+                                 const ON_3dPoint& point,
+                                 ON_2dPoint& surface_point,
+                                 ON_3dPoint& lifted_point,
+                                 double& distance,
+                                 int quadrant = 0,
+                                 double same_point_tol = BREP_SAME_POINT_TOLERANCE,
+                                 double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
+
+        /** Refine a closest point from a known adjacent UV.  This is the
+         * continuity fast path used between successive samples of one edge;
+         * the caller remains responsible for applying its lift tolerance. */
+        bool SurfaceClosestPointFromSeed(const ON_Surface *surf,
+                                         const ON_3dPoint& point,
+                                         const ON_2dPoint& seed,
+                                         ON_2dPoint& surface_point,
+                                         ON_3dPoint& lifted_point,
+                                         double& distance,
+                                         double tolerance,
+                                         const bool *cached_closed = NULL,
+                                         const ON_Interval *cached_domains = NULL,
+                                         double refinement_tolerance = 0.0);
+
+        PullbackStatistics Statistics() const;
+
+        /**
+         * Create an independent pullback job which shares only this context's
+         * lazily constructed, immutable surface-search cache.  Closest-point
+         * state and statistics remain private to the returned context, so the
+         * jobs may run concurrently on the same read-only surface.
+         */
+        std::shared_ptr<PullbackContext> ForkWithSharedSurfaceCache() const;
+
+    private:
+        struct Impl;
+        std::unique_ptr<Impl> m_impl;
+    };
+
+    extern BREP_EXPORT bool surface_GetClosestPoint3dFirstOrder(
+        PullbackContext &context,
+        const ON_Surface *surf,
+        const ON_3dPoint& point,
+        ON_2dPoint& surface_point,
+        ON_3dPoint& lifted_point,
+        double& distance,
+        int quadrant = 0,
+        double same_point_tol = BREP_SAME_POINT_TOLERANCE,
+        double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
 
     /**
      * approach:
@@ -131,10 +341,9 @@ namespace brlcad {
 } /* end namespace brlcad */
 
 
-bool
+extern BREP_EXPORT bool
 ON_NurbsCurve_GetClosestPoint(
 	double *t,
-	ON_3dPoint *cp,
 	const ON_NurbsCurve *nc,
 	const ON_3dPoint &p,
 	double maximum_distance = 0.0,

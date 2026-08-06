@@ -50,6 +50,8 @@ __BEGIN_DECLS
 extern "C++" {
 namespace brlcad {
 
+    struct SurfaceSplitCache;
+
     /**
      * SurfaceTree declaration
      */
@@ -97,6 +99,7 @@ namespace brlcad {
 	bool isStraight(const ON_Plane frames[9]) const;
 	bool isFlatU(const ON_Plane frames[9]) const;
 	bool isFlatV(const ON_Plane frames[9]) const;
+	bool hasSplit(const ON_Surface *surf, int dir, const ON_Interval &interval, double &split) const;
 	BBNode *subdivideSurface(const ON_Surface *localsurf, const ON_Interval &u, const ON_Interval &v, ON_Plane frames[9], int depth, int depthLimit, int prev_knot, double within_distance_tol) const;
 	BBNode *surfaceBBox(const ON_Surface *localsurf, bool leaf, const ON_Plane frames[9], const ON_Interval &u, const ON_Interval &v, double within_distance_tol) const;
 
@@ -104,6 +107,7 @@ namespace brlcad {
 	const ON_BrepFace * const m_face;
 	BBNode *m_root;
 	std::queue<ON_Plane *> * const m_f_queue;
+	SurfaceSplitCache * const m_split_cache;
     };
 
 } /* namespace brlcad */

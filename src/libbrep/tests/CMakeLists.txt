@@ -1,5 +1,7 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 
+find_package(Threads REQUIRED)
+
 brlcad_addexec(test_brep_ppx ppx.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_ppx COMMAND test_brep_ppx)
 
@@ -11,6 +13,9 @@ brlcad_add_test(NAME brep_cdt_hole_face17 COMMAND test_brep_cdt_hole_face17)
 
 brlcad_addexec(test_brep_cdt_hole_face27 brep_cdt_hole_face27.c "libbg;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME brep_cdt_hole_face27 COMMAND test_brep_cdt_hole_face27)
+
+brlcad_addexec(test_pullback_context pullback_context.cpp "libbrep;Threads::Threads" TEST)
+brlcad_add_test(NAME brep_pullback_context COMMAND test_pullback_context)
 
 cmakefiles(
   CMakeLists.txt
@@ -25,6 +30,7 @@ cmakefiles(
   plate_mode_samples.g
   plate_mode_samples_creo.stp
   plate_mode_samples_rhino.stp
+  pullback_context.cpp
   single_bad_edge.cdtmesh
   test_curve_intersect.cpp
   test_point_intersect.cpp
