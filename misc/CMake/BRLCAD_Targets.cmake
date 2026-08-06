@@ -583,10 +583,10 @@ endfunction(BRLCAD_FILTER_AGGREGATE_DEPS)
 
 
 # Preserve non-BRL-CAD usage requirements from internal dependencies that are
-# filtered out of aggregate object targets.  For example, librt normally sees
-# OPENNURBS_IMPORTS through libbrep's interface, but the aggregate librt object
-# target cannot link to libbrep because libbrep's own object code is linked
-# directly into brlcad.dll.
+# filtered out of aggregate object targets.  The aggregate target cannot link
+# those internal libraries because their object code is linked directly into
+# brlcad.dll, but it must still inherit external compile definitions exposed by
+# their dependency targets.
 function(BRLCAD_AGGREGATE_DEP_COMPILE_DEFINITIONS out_var)
   set(_defs)
   foreach(_dep ${ARGN})

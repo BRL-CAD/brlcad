@@ -135,22 +135,48 @@ if(OPENNURBS_FOUND)
       set_property(TARGET OPENNURBS::OPENNURBS APPEND PROPERTY IMPORTED_LOCATION "${OPENNURBS_LIBRARY}")
     endif()
 
-    # The primary Windows library is the DLL import library when the separate
-    # opennurbsStatic archive is present.  Static-data members in particular
-    # require this annotation; unlike functions, the linker cannot supply a
-    # thunk for an undecorated data reference.
-    if(WIN32 AND OPENNURBS_STATIC_LIBRARY)
+    # The primary Windows library is the DLL import library.  Static-data
+    # members in particular require this annotation; unlike functions, the
+    # linker cannot supply a thunk for an undecorated data reference.
+    if(WIN32)
       set_property(TARGET OPENNURBS::OPENNURBS APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS OPENNURBS_IMPORTS)
     endif()
   endif()
 
   if(OPENNURBS_STATIC_LIBRARY AND NOT TARGET OPENNURBS::OPENNURBS-static)
+    # A static OpenNURBS consumer must link dependencies which are otherwise
+    # hidden behind the shared library.  Prefer the explicitly static zlib
+    # target when the active FindZLIB module provides one.
+    if(NOT TARGET ZLIB::ZLIB AND NOT TARGET ZLIB::ZLIB_STATIC)
+      find_package(ZLIB REQUIRED)
+    endif()
+    if(TARGET ZLIB::ZLIB_STATIC)
+      set(_OPENNURBS_STATIC_DEPS ZLIB::ZLIB_STATIC)
+    elseif(TARGET ZLIB::ZLIB)
+      set(_OPENNURBS_STATIC_DEPS ZLIB::ZLIB)
+    else()
+      set(_OPENNURBS_STATIC_DEPS ${ZLIB_LIBRARIES})
+    endif()
+
+    if(NOT TARGET Threads::Threads)
+      find_package(Threads REQUIRED)
+    endif()
+    list(APPEND _OPENNURBS_STATIC_DEPS Threads::Threads)
+
+    if(WIN32)
+      list(APPEND _OPENNURBS_STATIC_DEPS Rpcrt4 Shlwapi Usp10)
+    elseif(UUID_LIBRARIES)
+      list(APPEND _OPENNURBS_STATIC_DEPS ${UUID_LIBRARIES})
+    endif()
+
     add_library(OPENNURBS::OPENNURBS-static STATIC IMPORTED GLOBAL)
     set_target_properties(
       OPENNURBS::OPENNURBS-static PROPERTIES
       IMPORTED_LOCATION "${OPENNURBS_STATIC_LIBRARY}"
       INTERFACE_INCLUDE_DIRECTORIES "${OPENNURBS_INCLUDE_DIRS}"
+      INTERFACE_LINK_LIBRARIES "${_OPENNURBS_STATIC_DEPS}"
     )
+    unset(_OPENNURBS_STATIC_DEPS)
   endif()
 
   if(TARGET OPENNURBS::OPENNURBS-static)
