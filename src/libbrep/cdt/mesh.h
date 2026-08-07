@@ -441,7 +441,15 @@ class cpolyedge_t
 	    polygon = NULL;
 	    prev = NULL;
 	    next = NULL;
+	    trim_ind = -1;
+	    loop_type = 0;
 	    defines_spnt = false;
+	    spnt = ON_2dPoint::UnsetPoint;
+	    trim_start = 0.0;
+	    trim_end = 0.0;
+	    split_status = 0;
+	    v1_dist = 0.0;
+	    v2_dist = 0.0;
 	    eseg = NULL;
 	};
 
@@ -453,7 +461,15 @@ class cpolyedge_t
 	    polygon = NULL;
 	    prev = NULL;
 	    next = NULL;
+	    trim_ind = -1;
+	    loop_type = 0;
 	    defines_spnt = false;
+	    spnt = ON_2dPoint::UnsetPoint;
+	    trim_start = 0.0;
+	    trim_end = 0.0;
+	    split_status = 0;
+	    v1_dist = 0.0;
+	    v2_dist = 0.0;
 	    eseg = NULL;
 	};
 
@@ -506,6 +522,7 @@ class cpolygon_t
 	cpolyedge_t *add_edge(const struct uedge2d_t &e);
 	void remove_edge(const struct uedge2d_t &e);
 	std::set<cpolyedge_t *> replace_edges(std::set<uedge_t> &new_edges, std::set<uedge_t> &old_edges);
+	cpolyedge_t *first_edge() const;
 
 	/* Means to update the point array if we're incrementally building. orig_index should
 	 * identify the same point in the parent's index, so cdt() knows what triangles to
@@ -561,6 +578,7 @@ class cpolygon_t
 	std::set<triangle_t> visited_triangles;
 	std::set<uedge2d_t> active_edges;
 	std::set<uedge2d_t> self_isect_edges;
+	long last_cdt_start_vertex = -1;
 	ON_Plane tplane;
 	ON_Plane fit_plane;
 	ON_3dVector pdir;

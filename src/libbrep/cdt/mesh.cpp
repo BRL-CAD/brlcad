@@ -490,6 +490,27 @@ cpolygon_t::add_ordered_edge(const struct edge2d_t &e)
     return nedge;
 }
 
+/* Return a stable boundary-loop starting edge.  poly is a pointer set, so
+ * dereferencing begin() makes traversal order depend on allocator layout.
+ * Geometry algorithms which walk next/prev from that arbitrary entry can then
+ * assign samples or exercise bounded refinements in a different order. */
+cpolyedge_t *
+cpolygon_t::first_edge() const
+{
+    cpolyedge_t *first = NULL;
+    for (std::set<cpolyedge_t *>::const_iterator edge = poly.begin();
+	    edge != poly.end(); ++edge) {
+	cpolyedge_t *candidate = *edge;
+	if (!candidate)
+	    continue;
+	if (!first || candidate->v2d[0] < first->v2d[0] ||
+		(candidate->v2d[0] == first->v2d[0] &&
+		 candidate->v2d[1] < first->v2d[1]))
+	    first = candidate;
+    }
+    return first;
+}
+
 void
 cpolygon_t::remove_ordered_edge(const struct edge2d_t &e)
 {
@@ -1150,7 +1171,17 @@ cpolygon_t::cdt(triangulation_t ttype)
     int *opoly = (int *)bu_calloc(poly.size()+1, sizeof(int), "polygon points");
 
     size_t vcnt = 1;
-    cpolyedge_t *pe = (*poly.begin());
+    /* bg_nested_poly_triangulate may select a different valid diagonal when
+     * the same closed boundary is cyclically rotated.  Downstream face-mesh
+     * stitching requires that choice to be independent of allocator layout,
+     * so use the same stable topological start as the LSCM projection. */
+    cpolyedge_t *pe = first_edge();
+    last_cdt_start_vertex = pe ? pe->v2d[0] : -1;
+    if (!pe) {
+	bu_free(opoly, "polygon points");
+	bu_free(bgp_2d, "free libbg 2d points array)");
+	return false;
+    }
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
 
@@ -3354,6 +3385,33 @@ loop_to_bgpoly(cpolygon_t *loop)
     return opoly;
 }
 
+static bool
+point_on_polygon_boundary(const point2d_t *points, int point_index,
+	const int *polygon, size_t polygon_point_count, double tolerance_sq)
+{
+    if (!points || point_index < 0 || !polygon || polygon_point_count < 2)
+	return false;
+    const double px = points[point_index][X];
+    const double py = points[point_index][Y];
+    for (size_t edge = 0; edge + 1 < polygon_point_count; ++edge) {
+	const int first = polygon[edge];
+	const int second = polygon[edge + 1];
+	const double ax = points[first][X];
+	const double ay = points[first][Y];
+	const double dx = points[second][X] - ax;
+	const double dy = points[second][Y] - ay;
+	const double length_sq = dx * dx + dy * dy;
+	double parameter = length_sq > DBL_EPSILON ?
+	    ((px - ax) * dx + (py - ay) * dy) / length_sq : 0.0;
+	parameter = std::max(0.0, std::min(1.0, parameter));
+	const double ex = px - (ax + parameter * dx);
+	const double ey = py - (ay + parameter * dy);
+	if (ex * ex + ey * ey <= tolerance_sq)
+	    return true;
+    }
+    return false;
+}
+
 bool
 cdt_mesh_t::cdt()
 {
@@ -3440,8 +3498,10 @@ cdt_mesh_t::cdt()
 	}
     }
 
-    // Build Steiner array, filtering out any points that fall inside a hole.
-    // Sampled interior points inside trimmed-away hole regions confuse detria.
+    // Build the Steiner array, filtering points in trimmed-away holes and
+    // points numerically on a constrained boundary.  Detria rejects a
+    // Steiner point on a constrained segment; the boundary already supplies
+    // the exact sample, so retaining that duplicate adds no geometry.
     // Pre-build per-hole 2D polygon arrays once (reused for each Steiner point test).
     std::vector<std::vector<double>> hole_polys_flat; // pairs of (x,y) stored flat
     std::vector<size_t> hole_polys_npts;
@@ -3460,8 +3520,24 @@ cdt_mesh_t::cdt()
 
     std::vector<int> steiner_vec;
     steiner_vec.reserve(m_interior_pnts.size());
+    const double scaled_u_range = (umax - umin) * uscale;
+    const double scaled_v_range = (vmax - vmin) * vscale;
+    const double boundary_scale = std::max(1.0,
+	hypot(scaled_u_range, scaled_v_range));
+    const double boundary_tolerance =
+	sqrt(DBL_EPSILON) * boundary_scale;
+    const double boundary_tolerance_sq =
+	boundary_tolerance * boundary_tolerance;
     for (auto p_it = m_interior_pnts.begin(); p_it != m_interior_pnts.end(); p_it++) {
 	int idx = (int)*p_it;
+	bool on_boundary = point_on_polygon_boundary(bgp_2d, idx, opoly,
+	    outer_loop.poly.size() + 1, boundary_tolerance_sq);
+	for (int hi = 0; hi < holes_cnt && !on_boundary; ++hi) {
+	    on_boundary = point_on_polygon_boundary(bgp_2d, idx,
+		holes_array[hi], holes_npts[hi], boundary_tolerance_sq);
+	}
+	if (on_boundary)
+	    continue;
 	bool in_hole = false;
 	for (int hi = 0; hi < holes_cnt && !in_hole; hi++) {
 	    point2d_t test_pnt;
@@ -3824,7 +3900,77 @@ cdt_mesh_t::repair()
 
     // Now that the out-and-out problem triangles have been handled,
     // remesh near singularities to try and produce more reasonable
-    // triangles.
+    // triangles.  This is a quality refinement, not a topology repair.  Keep
+    // it transactional: process_seed_tri may have replaced several patches
+    // before a later singular seed proves unmeshable.  Returning with those
+    // partial mutations used to leak isolated triangles into an otherwise
+    // valid face mesh (notably the NIST MBE PMI 6 spherical cap).
+    boundary_edges_stale = true;
+    boundary_edges_update();
+    const bool pre_singularity_mesh_valid = problem_edges.empty();
+    std::vector<triangle_t> pre_singularity_triangle_store;
+    std::vector<size_t> pre_singularity_active_triangles;
+    decltype(v2edges) pre_singularity_v2edges;
+    decltype(v2tris) pre_singularity_v2tris;
+    decltype(edges2tris) pre_singularity_edges2tris;
+    decltype(uedges2tris) pre_singularity_uedges2tris;
+    decltype(boundary_edges) pre_singularity_boundary_edges;
+    decltype(problem_edges) pre_singularity_problem_edges;
+    if (pre_singularity_mesh_valid && has_singularities) {
+	/* Preserve the complete indexed mesh state rather than rebuilding it
+	 * through tri_add.  Coincident singularity triangles may intentionally
+	 * have the same three 3-D vertex indices but different orientations;
+	 * tri_add's duplicate filter would discard one and make rollback itself
+	 * non-transactional. */
+	pre_singularity_triangle_store = tris_vect;
+	pre_singularity_v2edges = v2edges;
+	pre_singularity_v2tris = v2tris;
+	pre_singularity_edges2tris = edges2tris;
+	pre_singularity_uedges2tris = uedges2tris;
+	pre_singularity_boundary_edges = boundary_edges;
+	pre_singularity_problem_edges = problem_edges;
+	RTree<size_t, double, 3>::Iterator snapshot_it;
+	tris_tree.GetFirst(snapshot_it);
+	while (!snapshot_it.IsNull()) {
+	    pre_singularity_active_triangles.push_back(*snapshot_it);
+	    ++snapshot_it;
+	}
+    }
+    const auto restore_pre_singularity_mesh = [&]() {
+	if (!pre_singularity_mesh_valid ||
+		pre_singularity_triangle_store.empty() ||
+		pre_singularity_active_triangles.empty())
+	    return false;
+	tris_vect = pre_singularity_triangle_store;
+	tris_tree.RemoveAll();
+	for (size_t triangle_index : pre_singularity_active_triangles) {
+	    if (triangle_index >= tris_vect.size()) return false;
+	    triangle_t &triangle = tris_vect[triangle_index];
+	    triangle.m = this;
+	    ON_3dPoint *point = pnts[triangle.v[0]];
+	    ON_BoundingBox bounds(*point, *point);
+	    for (int vertex = 1; vertex < 3; ++vertex) {
+		point = pnts[triangle.v[vertex]];
+		bounds.Set(*point, true);
+	    }
+	    const double minimum[3] = {bounds.Min().x, bounds.Min().y,
+		bounds.Min().z};
+	    const double maximum[3] = {bounds.Max().x, bounds.Max().y,
+		bounds.Max().z};
+	    tris_tree.Insert(minimum, maximum, triangle_index);
+	}
+	v2edges = pre_singularity_v2edges;
+	v2tris = pre_singularity_v2tris;
+	edges2tris = pre_singularity_edges2tris;
+	uedges2tris = pre_singularity_uedges2tris;
+	boundary_edges = pre_singularity_boundary_edges;
+	problem_edges = pre_singularity_problem_edges;
+	seed_tris.clear();
+	new_tris.clear();
+	boundary_edges_stale = false;
+	bounding_box_stale = true;
+	return true;
+    };
 
     if (has_singularities) {
 	std::vector<triangle_t> s_tris = this->singularity_triangles();
@@ -3839,6 +3985,11 @@ cdt_mesh_t::repair()
 		bool pseed = process_seed_tri(seed, false, deg, NULL);
 
 		if (!pseed || seed_tris.size() >= st_size) {
+		    if (restore_pre_singularity_mesh()) {
+			bu_log("Face %d: retained the valid pre-refinement mesh after singularity quality remeshing made no progress\n",
+			    f_id);
+			return true;
+		    }
 		    std::cerr << f_id << ":  Error - failed to process refinement seed triangle!\n";
 		    struct bu_vls fname = BU_VLS_INIT_ZERO;
 		    bu_vls_sprintf(&fname, "%d-failed_seed.plot3", f_id);
@@ -3849,7 +4000,6 @@ cdt_mesh_t::repair()
 		    serialize(bu_vls_cstr(&fname));
 		    bu_vls_free(&fname);
 		    return false;
-		    break;
 		}
 
 		st_size = seed_tris.size();
@@ -4597,13 +4747,13 @@ cdt_mesh_t::serialize(const char *fname)
 	sfile << m_it->first << "," << m_it->second << "\n";
     }
 
-    sfile << "TRIANGLES_VECT" << tris_vect.size() << "\n";
+    sfile << "TRIANGLES_VECT " << tris_vect.size() << "\n";
     std::vector<triangle_t>::iterator t_it;
     for (t_it = tris_vect.begin(); t_it != tris_vect.end(); t_it++) {
 	sfile << (*t_it).v[0] << "," << (*t_it).v[1] << "," << (*t_it).v[2] << "," << (*t_it).ind << "\n";
     }
 
-    sfile << "TRIANGLES_TREE" << tris_tree.Count() << "\n";
+    sfile << "TRIANGLES_TREE " << tris_tree.Count() << "\n";
     RTree<size_t, double, 3>::Iterator tree_it;
     size_t t_ind;
     triangle_t tri;
@@ -4679,9 +4829,11 @@ cdt_mesh_t::deserialize(const char *fname)
     if (std::getline(sfile,switch_line)) {
 	if (switch_line == std::string("V1")) {
 	    version = 1;
+	} else if (switch_line == std::string("V2")) {
+	    version = 2;
 	}
     }
-    if (version < 1 || version > 1) {
+    if (version < 1 || version > 2) {
 	std::cerr << "Invalid deserialization file - format version " << switch_line << "\n";
 	return false;
     }
@@ -4716,11 +4868,27 @@ cdt_mesh_t::deserialize(const char *fname)
     problem_edges.clear();
 
     while (std::getline(sfile,switch_line)) {
-	std::cout << switch_line << "\n";
 	size_t spos = switch_line.find_first_of(' ');
-	std::string dtype = switch_line.substr(0, spos);
-	switch_line.erase(0, spos+1);
-	long lcnt = std::stol(switch_line);
+	std::string dtype;
+	std::string count_text;
+	if (spos != std::string::npos) {
+	    dtype = switch_line.substr(0, spos);
+	    count_text = switch_line.substr(spos + 1);
+	} else if (switch_line.compare(0, 14, "TRIANGLES_VECT") == 0) {
+	    /* V2 snapshots written before the delimiter fix concatenated these
+	     * two record names and their counts.  Accept those diagnostics so
+	     * existing failure captures remain replayable. */
+	    dtype = "TRIANGLES_VECT";
+	    count_text = switch_line.substr(14);
+	} else if (switch_line.compare(0, 14, "TRIANGLES_TREE") == 0) {
+	    dtype = "TRIANGLES_TREE";
+	    count_text = switch_line.substr(14);
+	} else {
+	    std::cerr << "Malformed serialization record: " << switch_line
+		<< "\nSerialization import failed.\n";
+	    return false;
+	}
+	long lcnt = std::stol(count_text);
 
 	if (dtype == std::string("POINTS")) {
 	    for (long i = 0; i < lcnt; i++) {
@@ -4781,7 +4949,8 @@ cdt_mesh_t::deserialize(const char *fname)
 	    continue;
 	}
 
-	if (dtype == std::string("TRIANGLES_VECT")) {
+	if (dtype == std::string("TRIANGLES") ||
+		dtype == std::string("TRIANGLES_VECT")) {
 	    for (long i = 0; i < lcnt; i++) {
 		std::string tline;
 		std::getline(sfile,tline);
@@ -4796,9 +4965,17 @@ cdt_mesh_t::deserialize(const char *fname)
 		long v2 = std::stol(v2str);
 		long v3 = std::stol(v3str);
 		triangle_t tri(v1, v2, v3);
-		// The tree is loaded separately - just do the basic population
-		tri.ind = tris_vect.size();
-		tris_vect.push_back(tri);
+		if (dtype == std::string("TRIANGLES")) {
+		    /* V1 stored only active triangles.  Rebuild the spatial index and
+		     * adjacency maps through the normal insertion path. */
+		    tri.m = this;
+		    tri_add(tri);
+		} else {
+		    /* V2 stores inactive vector entries as well; its following tree
+		     * record identifies and indexes the active subset. */
+		    tri.ind = tris_vect.size();
+		    tris_vect.push_back(tri);
+		}
 	    }
 	    continue;
 	}
@@ -5285,10 +5462,17 @@ cdt_mesh_t::lscm_reproject(cpolygon_t *polygon)
     // ── Step 1: Walk the boundary loop ───────────────────────────────────────
     // Collect exactly poly.size() unique boundary vertices (one per edge,
     // using each edge's start vertex) so LSCMParameterization receives N
-    // distinct vertices without a closing repeat.
+    // distinct vertices without a closing repeat.  polygon->poly is a set of
+    // pointers, so its begin() depends on heap layout.  The choice of starting
+    // edge rotates the convex LSCM boundary and can change the triangulation
+    // of difficult patches.  Choose the lexicographically first topological
+    // edge instead, making the result independent of allocation order and
+    // unrelated inputs such as the requested output object name.
     std::vector<int32_t> bnd_loop;
     {
-	cpolyedge_t *pe  = *polygon->poly.begin();
+	cpolyedge_t *pe = polygon->first_edge();
+	if (!pe)
+	    return false;
 	cpolyedge_t *cur = pe;
 	do {
 	    bnd_loop.push_back((int32_t)cur->v2d[0]);
@@ -6172,6 +6356,100 @@ void cdt_mesh_t::polygon_print_3d(cpolygon_t *polygon)
     std::cout << "\n";
 }
 
+/* Exercise the allocator-independent polygon start used by the actual CDT
+ * call.  A square is deliberately co-circular, so rotating its boundary input
+ * can select the opposite valid diagonal unless the triangulator receives a
+ * stable starting vertex.  Keep this compact guard here because cpolygon_t is
+ * an internal type whose symbols are not exported from libbrep. */
+int
+cdt_test_boundary_start(void)
+{
+    const auto initialize_regular_polygon = [](cpolygon_t &polygon,
+	    int point_count, int first_allocated_edge) {
+	for (int point = 0; point < point_count; ++point) {
+	    const double angle = 2.0 * ON_PI * point / point_count;
+	    ON_2dPoint p(cos(angle), sin(angle));
+	    polygon.add_point(p, point);
+	}
+	for (int offset = 0; offset < point_count; ++offset) {
+	    const int start = (first_allocated_edge + offset) % point_count;
+	    edge2d_t edge(start, (start + 1) % point_count);
+	    polygon.add_ordered_edge(edge);
+	}
+    };
+    const auto canonical_triangles = [](const cpolygon_t &polygon) {
+	std::set<std::vector<long> > result;
+	for (std::set<triangle_t>::const_iterator triangle =
+		polygon.tris.begin(); triangle != polygon.tris.end(); ++triangle) {
+	    std::vector<long> vertices;
+	    vertices.push_back(triangle->v[0]);
+	    vertices.push_back(triangle->v[1]);
+	    vertices.push_back(triangle->v[2]);
+	    std::sort(vertices.begin(), vertices.end());
+	    result.insert(vertices);
+	}
+	return result;
+    };
+    const auto release_edges = [](cpolygon_t &polygon) {
+	for (std::set<cpolyedge_t *>::iterator edge = polygon.poly.begin();
+		edge != polygon.poly.end(); ++edge)
+	    delete *edge;
+	polygon.poly.clear();
+    };
+
+    for (int point_count = 4; point_count <= 12; ++point_count) {
+	for (int first_allocated_edge = 1;
+		first_allocated_edge < point_count; ++first_allocated_edge) {
+	    cpolygon_t edge_zero_first;
+	    cpolygon_t rotated_first;
+	    initialize_regular_polygon(edge_zero_first, point_count, 0);
+	    initialize_regular_polygon(rotated_first, point_count,
+		first_allocated_edge);
+	    for (cpolyedge_t *edge : edge_zero_first.poly) {
+		if (!edge || edge->trim_ind != -1 || edge->loop_type != 0 ||
+			edge->defines_spnt || edge->split_status != 0 ||
+			edge->eseg != NULL) {
+		    release_edges(edge_zero_first);
+		    release_edges(rotated_first);
+		    return 1;
+		}
+	    }
+	    const bool valid = edge_zero_first.cdt() && rotated_first.cdt();
+	    const std::set<std::vector<long> > first =
+		canonical_triangles(edge_zero_first);
+	    const std::set<std::vector<long> > rotated =
+		canonical_triangles(rotated_first);
+	    release_edges(edge_zero_first);
+	    release_edges(rotated_first);
+	    if (!valid || edge_zero_first.last_cdt_start_vertex != 0 ||
+		    rotated_first.last_cdt_start_vertex != 0 ||
+		    first.size() != static_cast<size_t>(point_count - 2) ||
+		    first != rotated)
+		return 1;
+	}
+    }
+    return 0;
+}
+
+int
+cdt_test_boundary_steiner_filter(void)
+{
+    point2d_t points[6] = {
+	{0.0, 0.0}, {2.0, 0.0}, {2.0, 2.0}, {0.0, 2.0},
+	{1.0, 0.0}, {1.0, 1.0}
+    };
+    const int polygon[] = {0, 1, 2, 3, 0};
+    const double tolerance = sqrt(DBL_EPSILON) * sqrt(8.0);
+    if (!point_on_polygon_boundary(points, 4, polygon, 5,
+	    tolerance * tolerance))
+	return 1;
+    if (point_on_polygon_boundary(points, 5, polygon, 5,
+	    tolerance * tolerance))
+	return 1;
+    return 0;
+}
+
+
 // PImpl exposure of some mesh operations for use in tests
 struct cdt_bmesh_impl {
     cdt_mesh_t fmesh;
@@ -6199,8 +6477,7 @@ cdt_bmesh_deserialize(const char *fname, struct cdt_bmesh *m)
 {
     if (!fname || !m) return -1;
     if (!bu_file_exists(fname, NULL)) return -1;
-    m->i->fmesh.deserialize(fname);
-    return 0;
+    return m->i->fmesh.deserialize(fname) ? 0 : -1;
 }
 
 int
