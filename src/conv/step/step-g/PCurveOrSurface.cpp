@@ -25,6 +25,8 @@
  */
 
 #include "STEPWrapper.h"
+#include "STEPGeneratedAPI.h"
+#include "ap_schema.h"
 #include "Factory.h"
 
 #include "Surface.h"
@@ -74,16 +76,26 @@ PCurveOrSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
 
-    SdaiPcurve_or_surface *v = (SdaiPcurve_or_surface *)sse;
+    SDAI_Select *v = reinterpret_cast<SDAI_Select *>(sse);
+    SDAI_Application_instance *selected = brlcad::step::SelectedEntity(v);
 
-    if (v->IsPcurve()) {
+    if (selected && sw->IsSchemaEntity(selected, "PCURVE")) {
 	type = PCURVE;
-	SdaiPcurve *p = *v;
-	pcurve = dynamic_cast<PCurve *>(Factory::CreateObject(sw, (SDAI_Application_instance *)p)); //CreateCurveObject(sw,(SDAI_Application_instance *)p));
-    } else if (v->IsSurface()) {
+	pcurve = dynamic_cast<PCurve *>(Factory::CreateObject(sw, selected));
+	if (!pcurve) {
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
+	    return false;
+	}
+    } else if (selected && sw->IsSchemaEntity(selected, "SURFACE")) {
 	type = SURFACE;
-	SdaiSurface *s = *v;
-	surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, (SDAI_Application_instance *)s)); //CreateSurfaceObject(sw,(SDAI_Application_instance*)s));
+	surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, selected));
+	if (!surface) {
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
+	    return false;
+	}
+    } else {
+	sw->entity_status[id] = STEP_LOAD_ERROR;
+	return false;
     }
 
     sw->entity_status[id] = STEP_LOADED;

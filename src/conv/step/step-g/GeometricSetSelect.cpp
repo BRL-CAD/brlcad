@@ -25,6 +25,8 @@
  */
 
 #include "STEPWrapper.h"
+#include "STEPGeneratedAPI.h"
+#include "ap_schema.h"
 #include "Factory.h"
 #include "Axis2Placement.h"
 
@@ -74,21 +76,19 @@ GeometricSetSelect::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
 
     if (element == NULL) {
-	SdaiGeometric_set_select *v = (SdaiGeometric_set_select *)sse;
+	SDAI_Select *v = reinterpret_cast<SDAI_Select *>(sse);
+	SDAI_Application_instance *selected = brlcad::step::SelectedEntity(v);
 
-	if (v->IsPoint()) {
-	    SdaiPoint *point_select = *v;
-	    Point *aPoint = dynamic_cast<Point *>(Factory::CreateObject(sw, (SDAI_Application_instance *)point_select));
+	if (selected && sw->IsSchemaEntity(selected, "POINT")) {
+	    Point *aPoint = dynamic_cast<Point *>(Factory::CreateObject(sw, selected));
 	    type = GeometricSetSelect::POINT;
 	    element = aPoint;
-	} else if (v->IsCurve()) {
-	    SdaiCurve *curve_select = *v;
-	    Curve *aCurve = dynamic_cast<Curve *>(Factory::CreateObject(sw, (SDAI_Application_instance *)curve_select));
+	} else if (selected && sw->IsSchemaEntity(selected, "CURVE")) {
+	    Curve *aCurve = dynamic_cast<Curve *>(Factory::CreateObject(sw, selected));
 	    type = GeometricSetSelect::CURVE;
 	    element = aCurve;
-	} else if (v->IsSurface()) {
-	    SdaiSurface *surface_select = *v;
-	    Surface *aSurface = dynamic_cast<Surface *>(Factory::CreateObject(sw, (SDAI_Application_instance *)surface_select));
+	} else if (selected && sw->IsSchemaEntity(selected, "SURFACE")) {
+	    Surface *aSurface = dynamic_cast<Surface *>(Factory::CreateObject(sw, selected));
 	    type = GeometricSetSelect::SURFACE;
 	    element = aSurface;
 	} else {

@@ -34,18 +34,28 @@
 string ProductDefinitionFormationWithSpecifiedSource::entityname = Factory::RegisterClass(ENTITYNAME,
 	(FactoryMethod) ProductDefinitionFormationWithSpecifiedSource::Create);
 
+enum StepProductSourceValue {
+    STEP_SOURCE_MADE,
+    STEP_SOURCE_BOUGHT,
+    STEP_SOURCE_NOT_KNOWN,
+    STEP_SOURCE_UNSET
+};
+static const char *Step_product_source_string[] = {
+    "made", "bought", "not_known", "unset"
+};
+
 ProductDefinitionFormationWithSpecifiedSource::ProductDefinitionFormationWithSpecifiedSource()
 {
     step = NULL;
     id = 0;
-    make_or_buy = Source_unset;
+    make_or_buy = STEP_SOURCE_UNSET;
 }
 
 ProductDefinitionFormationWithSpecifiedSource::ProductDefinitionFormationWithSpecifiedSource(STEPWrapper *sw, int step_id)
 {
     step = sw;
     id = step_id;
-    make_or_buy = Source_unset;
+    make_or_buy = STEP_SOURCE_UNSET;
 }
 
 ProductDefinitionFormationWithSpecifiedSource::~ProductDefinitionFormationWithSpecifiedSource()
@@ -61,16 +71,16 @@ string ProductDefinitionFormationWithSpecifiedSource::SourceString()
 {
     string sourcestring;
     switch (make_or_buy) {
-	case Source__made:
+	case STEP_SOURCE_MADE:
 	    sourcestring = ".MADE.";
 	    break;
-	case Source__bought:
+	case STEP_SOURCE_BOUGHT:
 	    sourcestring = ".BOUGHT.";
 	    break;
-	case Source__not_known:
+	case STEP_SOURCE_NOT_KNOWN:
 	    sourcestring = ".NOT_KNOWN.";
 	    break;
-	case Source_unset:
+	case STEP_SOURCE_UNSET:
 	default:
 	    sourcestring = ".UNSET.";
     }
@@ -92,8 +102,10 @@ bool ProductDefinitionFormationWithSpecifiedSource::Load(STEPWrapper *sw, SDAI_A
     // the actual entity and not a complex/supertype parent
     sse = step->getEntity(sse, ENTITYNAME);
 
-    make_or_buy = (Source) step->getEnumAttribute(sse, "make_or_buy");
-    V_MIN(make_or_buy, Source_unset);
+    make_or_buy = step->getEnumAttributeIndex(sse, "make_or_buy",
+	Step_product_source_string,
+	sizeof(Step_product_source_string) / sizeof(Step_product_source_string[0]),
+	STEP_SOURCE_UNSET);
 
     sw->entity_status[id] = STEP_LOADED;
 

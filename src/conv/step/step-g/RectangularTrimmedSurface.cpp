@@ -29,6 +29,10 @@
 #include "Surface.h"
 #include "RectangularTrimmedSurface.h"
 
+#include <algorithm>
+#include <cmath>
+#include <memory>
+
 #define CLASSNAME "RectangularTrimmedSurface"
 #define ENTITYNAME "Rectangular_Trimmed_Surface"
 string RectangularTrimmedSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RectangularTrimmedSurface::Create);
@@ -150,8 +154,52 @@ RectangularTrimmedSurface::Create(STEPWrapper *sw, SDAI_Application_instance *ss
 bool
 RectangularTrimmedSurface::LoadONBrep(ON_Brep *brep)
 {
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
+    if (!brep || !basis_surface)
+	return false;
+    if (GetONId() >= 0)
+	return true;
+    if (trim_curve_3d_bbox)
+	basis_surface->SetCurveBounds(trim_curve_3d_bbox);
+    if (!basis_surface->LoadONBrep(brep))
+	return false;
+    const int basis_id = basis_surface->GetONId();
+    if (basis_id < 0 || basis_id >= brep->m_S.Count() || !brep->m_S[basis_id])
+	return false;
+    std::unique_ptr<ON_Surface> trimmed(
+	brep->m_S[basis_id]->DuplicateSurface());
+    if (!trimmed)
+	return false;
+
+    const double starts[2] = {u1, v1};
+    const double ends[2] = {u2, v2};
+    const Boolean senses[2] = {usense, vsense};
+    for (int direction = 0; direction < 2; ++direction) {
+	const bool forward = ends[direction] > starts[direction];
+	const bool requested_forward = senses[direction] == BTrue;
+	/* A periodic interval whose direction disagrees with its numeric ordering
+	 * crosses the current seam.  Preserve correctness by rejecting that case
+	 * until a transactional seam relocation can represent the complement. */
+	if (trimmed->IsClosed(direction) && forward != requested_forward)
+	    return false;
+	ON_Interval interval(std::min(starts[direction], ends[direction]),
+	    std::max(starts[direction], ends[direction]));
+	if (!interval.IsIncreasing())
+	    return false;
+	const ON_Interval domain = trimmed->Domain(direction);
+	if (interval.Min() < domain.Min() || interval.Max() > domain.Max()) {
+	    if (trimmed->IsClosed(direction) ||
+		    !trimmed->Extend(direction, interval))
+		return false;
+	}
+	if (!trimmed->Trim(direction, interval))
+	    return false;
+	if (!requested_forward && !trimmed->Reverse(direction))
+	    return false;
+    }
+    if (!trimmed->IsValid())
+	return false;
+    SetONId(brep->AddSurface(trimmed.release()));
+    return GetONId() >= 0;
 }
 
 

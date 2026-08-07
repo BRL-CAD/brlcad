@@ -55,6 +55,7 @@ public:
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual const double *PointAtEnd();
     virtual const double *PointAtStart();
+    virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
 
     //static methods

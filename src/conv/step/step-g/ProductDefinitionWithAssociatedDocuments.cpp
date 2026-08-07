@@ -1,4 +1,4 @@
-/*                 ProductDefinition.cpp
+/*     ProductDefinitionWithAssociatedDocuments.cpp
  * BRL-CAD
  *
  * Copyright (c) 1994-2026 United States Government as represented by
@@ -17,10 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/ProductDefinition.cpp
+/** @file step/ProductDefinitionWithAssociatedDocuments.cpp
  *
- * Routines to convert STEP "ProductDefinition" to BRL-CAD BREP
- * structures.
+ * Product-definition adapter for the associated-document subtype.  The
+ * schema-neutral configuration graph retains the document references; this
+ * adapter supplies the inherited product-definition behavior expected by
+ * converter factory clients.
  *
  */
 
@@ -69,14 +71,8 @@ bool ProductDefinitionWithAssociatedDocuments::Load(STEPWrapper *sw, SDAI_Applic
 	return false;
     }
 
-#if 0
-    // TODO - unused right now - presumably we need to do some work to read
-    // info from the ProductDefinitionWithAssociatedDocuments entity?
-
-    // need to do this for local attributes to makes sure we have
-    // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse, ENTITYNAME);
-#endif
+    /* documentation_ids are retained by STEPWrapper's configuration graph.
+     * Do not build a second adapter-owned document graph here. */
 
     sw->entity_status[id] = STEP_LOADED;
 

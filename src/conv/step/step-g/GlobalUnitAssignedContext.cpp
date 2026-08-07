@@ -26,6 +26,8 @@
 
 //#include "SdaiCONFIG_CONTROL_DESIGN.h"
 #include "STEPWrapper.h"
+#include "STEPGeneratedAPI.h"
+#include "ap_schema.h"
 #include "Factory.h"
 
 #include "Unit.h"
@@ -138,9 +140,8 @@ GlobalUnitAssignedContext::GetSolidAngleConversionFactor()
 	}
 	SolidAngleConversionBasedUnit *cb = dynamic_cast<SolidAngleConversionBasedUnit *>(*i);
 	if (cb != NULL) {
-	    //found conversion based length unit
-	    std::cerr << "found SI length unit" << std::endl;
-	    return 1.0;
+	    // found conversion based solid angle unit
+	    return cb->GetSolidAngleConversionFactor();
 	}
 	SolidAngleContextDependentUnit *cd = dynamic_cast<SolidAngleContextDependentUnit *>(*i);
 	if (cd != NULL) {
@@ -171,20 +172,17 @@ GlobalUnitAssignedContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     sse = step->getEntity(sse, ENTITYNAME);
 
     if (units.empty()) {
-	SdaiUnit *unit;
 	LIST_OF_SELECTS *l = step->getListOfSelects(sse, "units");
 	LIST_OF_SELECTS::iterator i;
 	for (i = l->begin(); i != l->end(); i++) {
-	    unit = (SdaiUnit *)(*i);
-	    if (unit->IsNamed_unit()) {
-		SdaiNamed_unit *snu = *unit;
-		NamedUnit *nu = dynamic_cast<NamedUnit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)snu));
+	    SDAI_Application_instance *unit = brlcad::step::SelectedEntity(*i);
+	    if (unit && sw->IsSchemaEntity(unit, "NAMED_UNIT")) {
+		NamedUnit *nu = dynamic_cast<NamedUnit *>(Factory::CreateObject(sw, unit));
 		units.push_back(nu);
-#ifdef AP203e2
-	    } else if (unit->IsDerived_unit()) { 		//TODO: derived_unit
-		SdaiDerived_unit *sdu = *unit;
+#if defined(AP203e2) || defined(AP242)
+	    } else if (unit && sw->IsSchemaEntity(unit, "DERIVED_UNIT")) { //TODO: derived_unit
 		//NamedUnit *nu = (NamedUnit *);
-		Unit * du = dynamic_cast<Unit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)sdu));
+		Unit *du = dynamic_cast<Unit *>(Factory::CreateObject(sw, unit));
 		units.push_back(du);
 #endif
 	    } else {

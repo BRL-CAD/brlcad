@@ -26,8 +26,8 @@
 
 #include "AP_Common.h"
 
-SdaiRepresentation *
-Add_Shape_Representation(AP203_Contents *sc, SdaiRepresentation_context *context);
+STEPentity *
+Add_Shape_Representation(AP203_Contents *sc, STEPentity *context);
 
 #endif /*SHAPE_REPRESENTATION_H*/
 

@@ -42,14 +42,15 @@ static const char *SurfacePatch_Transition_code_string[] = {
     "cont_same_gradient_same_curvature",
     "unset"
 };
+static const int STEP_TRANSITION_CODE_UNSET = 4;
 
 SurfacePatch::SurfacePatch()
 {
     step = NULL;
     id = 0;
     parent_surface = NULL;
-    u_transition = Transition_code_unset;
-    v_transition = Transition_code_unset;
+    u_transition = STEP_TRANSITION_CODE_UNSET;
+    v_transition = STEP_TRANSITION_CODE_UNSET;
     u_sense = BUnset;
     v_sense = BUnset;
 }
@@ -59,8 +60,8 @@ SurfacePatch::SurfacePatch(STEPWrapper *sw, int step_id)
     step = sw;
     id = step_id;
     parent_surface = NULL;
-    u_transition = Transition_code_unset;
-    v_transition = Transition_code_unset;
+    u_transition = STEP_TRANSITION_CODE_UNSET;
+    v_transition = STEP_TRANSITION_CODE_UNSET;
     u_sense = BUnset;
     v_sense = BUnset;
 }
@@ -98,11 +99,17 @@ SurfacePatch::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	}
     }
 
-    u_transition = (Transition_code)step->getEnumAttribute(sse, "u_transition");
-    V_MIN(u_transition, Transition_code_unset);
+    u_transition = step->getEnumAttributeIndex(sse, "u_transition",
+	SurfacePatch_Transition_code_string,
+	sizeof(SurfacePatch_Transition_code_string) /
+	    sizeof(SurfacePatch_Transition_code_string[0]),
+	STEP_TRANSITION_CODE_UNSET);
 
-    v_transition = (Transition_code)step->getEnumAttribute(sse, "v_transition");
-    V_MIN(v_transition, Transition_code_unset);
+    v_transition = step->getEnumAttributeIndex(sse, "v_transition",
+	SurfacePatch_Transition_code_string,
+	sizeof(SurfacePatch_Transition_code_string) /
+	    sizeof(SurfacePatch_Transition_code_string[0]),
+	STEP_TRANSITION_CODE_UNSET);
 
     u_sense = step->getBooleanAttribute(sse, "u_sense");
     v_sense = step->getBooleanAttribute(sse, "v_sense");

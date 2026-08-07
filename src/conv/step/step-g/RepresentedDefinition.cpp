@@ -25,6 +25,7 @@
  */
 
 #include "STEPWrapper.h"
+#include "ap_schema.h"
 #include "Factory.h"
 
 #include "RepresentedDefinition.h"

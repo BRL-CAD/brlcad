@@ -29,10 +29,16 @@
 
 #include "TopologicalRepresentationItem.h"
 
+#include <memory>
+#include <vector>
+
 // forward declaration of class
 class Loop;
 class ON_BoundingBox;
 class ON_Brep;
+class ON_3dPoint;
+class ON_3dVector;
+namespace brlcad { class PullbackContext; }
 
 class FaceBound : public TopologicalRepresentationItem
 {
@@ -64,10 +70,22 @@ public:
 	return !inner;
     }
     ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
+    bool GrowTopologyVertexBounds(ON_BoundingBox *bounds);
+    bool GetEdgeAxisProjectionBounds(ON_Brep *brep,
+	const ON_3dPoint &origin, const ON_3dVector &axis,
+	double *minimum, double *maximum);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    bool CreateONLoop(ON_Brep *brep, bool sole_face_bound = false);
+    bool PrepareONBrep(ON_Brep *brep, std::vector<int> *edge_indices);
+    bool FinishONBrep(ON_Brep *brep, int loop_index,
+	const std::vector<int> &edge_indices,
+	double item_scale_override = 0.0,
+	std::shared_ptr<brlcad::PullbackContext> surface_cache =
+	    std::shared_ptr<brlcad::PullbackContext>());
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
     bool Oriented();
+    Loop *GetBound() const { return bound; }
     void SetFaceIndex(int index) {
 	ON_face_index = index;
     };

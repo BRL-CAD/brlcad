@@ -28,6 +28,7 @@
 #include <iostream>
 
 #include "bu/app.h"
+#include "bu/exit.h"
 #include "bu/getopt.h"
 #include "bu/datetime.h"
 #include "bu/file.h"

@@ -19,8 +19,9 @@
  */
 /** @file step/ProductDefinitionWithAssociatedDocuments.h
  *
- * Class definition used to convert STEP "ProductDefinitionWithAssociatedDocuments" to BRL-CAD BREP
- * structures.
+ * Adapter for a product definition that carries document references.  The
+ * shared configuration graph retains those references; this class supplies
+ * the inherited ProductDefinition behavior needed by factory clients.
  *
  */
 
@@ -33,25 +34,11 @@
 
 #include "ProductDefinition.h"
 
-// forward declaration of class
-class ON_Brep;
-/*
- * currently not loaded
-class Document;
-typedef list<Document *> LIST_OF_DOCUMENTS;
- */
-
 class ProductDefinitionWithAssociatedDocuments: public ProductDefinition
 {
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;
-
-protected:
-    /*
-     * currently not loaded
-    LIST_OF_DOCUMENTS documentation_ids;
-     */
 
 public:
     ProductDefinitionWithAssociatedDocuments();
@@ -70,7 +57,7 @@ public:
 /*
  * Local Variables:
  * tab-width: 8
- * mode: C
+ * mode: C++
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

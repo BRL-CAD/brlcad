@@ -24,10 +24,13 @@
  */
 
 #include "AP_Common.h"
+#include "STEPGeneratedAPI.h"
 
 void
-XYZ_to_Cartesian_point(double x, double y, double z, SdaiCartesian_point *step_pnt) {
-    RealAggregate_ptr coord_vals = step_pnt->coordinates_();
+XYZ_to_Cartesian_point(double x, double y, double z, STEPentity *step_pnt) {
+    RealAggregate *coord_vals = dynamic_cast<RealAggregate *>(
+	brlcad::step::Aggregate(step_pnt, "coordinates"));
+    if (!coord_vals) return;
     RealNode *xnode = new RealNode();
     xnode->value = x;
     coord_vals->AddNode(xnode);
@@ -41,8 +44,10 @@ XYZ_to_Cartesian_point(double x, double y, double z, SdaiCartesian_point *step_p
 
 
 void
-XYZ_to_Direction(double x, double y, double z, SdaiDirection *step_direction) {
-    RealAggregate_ptr coord_vals = step_direction->direction_ratios_();
+XYZ_to_Direction(double x, double y, double z, STEPentity *step_direction) {
+    RealAggregate *coord_vals = dynamic_cast<RealAggregate *>(
+	brlcad::step::Aggregate(step_direction, "direction_ratios"));
+    if (!coord_vals) return;
     RealNode *xnode = new RealNode();
     xnode->value = x;
     coord_vals->AddNode(xnode);

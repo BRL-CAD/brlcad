@@ -46,6 +46,7 @@ public:
     virtual ~SurfaceOfLinearExtrusion();
     SurfaceOfLinearExtrusion(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    bool RequiresFaceLocalONSurface() const override { return true; }
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
 

@@ -51,6 +51,9 @@ public:
     CurveBoundedSurface(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
+    Surface *BasisSurface() const { return basis_surface; }
+    const LIST_OF_BOUNDARIES &Boundaries() const { return boundaries; }
+    Boolean ImplicitOuter() const { return implicit_outer; }
     virtual void Print(int level);
 
     //static methods

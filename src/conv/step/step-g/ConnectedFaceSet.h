@@ -50,6 +50,9 @@ public:
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
     virtual void ReverseFaceSet();
+    virtual size_t FaceCount() const { return cfs_faces.size(); }
+    const LIST_OF_FACES &Faces() const { return cfs_faces; }
+    size_t MaximumPullbackSpanEstimate() const;
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

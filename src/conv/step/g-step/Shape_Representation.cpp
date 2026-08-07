@@ -22,81 +22,58 @@
  */
 
 #include "AP_Common.h"
+#include "STEPGeneratedAPI.h"
 #include "Shape_Representation.h"
 
-SdaiRepresentation *
-Add_Shape_Representation(AP203_Contents *sc, SdaiRepresentation_context *context)
+STEPentity *
+Add_Shape_Representation(AP203_Contents *sc, STEPentity *context)
 {
-
-    SdaiShape_representation *shape_rep = (SdaiShape_representation *)sc->registry->ObjCreate("SHAPE_REPRESENTATION");
-    sc->instance_list->Append((STEPentity *)shape_rep, completeSE);
-    shape_rep->name_("''");
-    shape_rep->context_of_items_(context);
-
-    EntityAggregate *axis_items = shape_rep->items_();
+    STEPentity *shape_rep = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "SHAPE_REPRESENTATION");
+    brlcad::step::SetString(shape_rep, "name", "");
+    brlcad::step::SetEntity(shape_rep, "context_of_items", context);
 
     /* create an axis */
 
-    SdaiAxis2_placement_3d *axis3d = (SdaiAxis2_placement_3d *)sc->registry->ObjCreate("AXIS2_PLACEMENT_3D");
-    sc->instance_list->Append((STEPentity *)axis3d, completeSE);
-    axis3d->name_("''");
+    STEPentity *axis3d = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "AXIS2_PLACEMENT_3D");
+    brlcad::step::SetString(axis3d, "name", "");
 
     /* set the axis origin */
 
-    SdaiCartesian_point *origin= (SdaiCartesian_point *)sc->registry->ObjCreate("CARTESIAN_POINT");
-    sc->instance_list->Append((STEPentity *)origin, completeSE);
-
-    RealNode *xnode = new RealNode();
-    xnode->value = 0.0;
-    RealNode *ynode= new RealNode();
-    ynode->value = 0.0;
-    RealNode *znode= new RealNode();
-    znode->value = 0.0;
-    origin->coordinates_()->AddNode(xnode);
-    origin->coordinates_()->AddNode(ynode);
-    origin->coordinates_()->AddNode(znode);
-    origin->name_("''");
-    axis3d->location_(origin);
+    STEPentity *origin = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "CARTESIAN_POINT");
+    brlcad::step::AddReal(origin, "coordinates", 0.0);
+    brlcad::step::AddReal(origin, "coordinates", 0.0);
+    brlcad::step::AddReal(origin, "coordinates", 0.0);
+    brlcad::step::SetString(origin, "name", "");
+    brlcad::step::SetEntity(axis3d, "location", origin);
 
     /* set the axis up direction (i-vector) */
 
-    SdaiDirection *axis = (SdaiDirection *)sc->registry->ObjCreate("DIRECTION");
-    sc->instance_list->Append((STEPentity *)axis, completeSE);
-
-    RealNode *axis_xnode = new RealNode();
-    axis_xnode->value = 0.0;
-    RealNode *axis_ynode= new RealNode();
-    axis_ynode->value = 0.0;
-    RealNode *axis_znode= new RealNode();
-    axis_znode->value = 1.0;
-    axis->direction_ratios_()->AddNode(axis_xnode);
-    axis->direction_ratios_()->AddNode(axis_ynode);
-    axis->direction_ratios_()->AddNode(axis_znode);
-    axis->name_("''");
-    axis3d->axis_(axis);
+    STEPentity *axis = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "DIRECTION");
+    brlcad::step::AddReal(axis, "direction_ratios", 0.0);
+    brlcad::step::AddReal(axis, "direction_ratios", 0.0);
+    brlcad::step::AddReal(axis, "direction_ratios", 1.0);
+    brlcad::step::SetString(axis, "name", "");
+    brlcad::step::SetEntity(axis3d, "axis", axis);
 
     /* add the axis front direction (j-vector) */
 
-    SdaiDirection *ref_dir = (SdaiDirection *)sc->registry->ObjCreate("DIRECTION");
-    sc->instance_list->Append((STEPentity *)ref_dir, completeSE);
-
-    RealNode *ref_dir_xnode = new RealNode();
-    ref_dir_xnode->value = 1.0;
-    RealNode *ref_dir_ynode= new RealNode();
-    ref_dir_ynode->value = 0.0;
-    RealNode *ref_dir_znode= new RealNode();
-    ref_dir_znode->value = 0.0;
-    ref_dir->direction_ratios_()->AddNode(ref_dir_xnode);
-    ref_dir->direction_ratios_()->AddNode(ref_dir_ynode);
-    ref_dir->direction_ratios_()->AddNode(ref_dir_znode);
-    ref_dir->name_("''");
-    axis3d->ref_direction_(ref_dir);
+    STEPentity *ref_dir = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "DIRECTION");
+    brlcad::step::AddReal(ref_dir, "direction_ratios", 1.0);
+    brlcad::step::AddReal(ref_dir, "direction_ratios", 0.0);
+    brlcad::step::AddReal(ref_dir, "direction_ratios", 0.0);
+    brlcad::step::SetString(ref_dir, "name", "");
+    brlcad::step::SetEntity(axis3d, "ref_direction", ref_dir);
 
     /* add the axis to the shape definition */
 
-    axis_items->AddNode(new EntityNode((SDAI_Application_instance *)axis3d));
+    brlcad::step::AddEntity(shape_rep, "items", axis3d);
 
-    return (SdaiRepresentation *)shape_rep;
+    return shape_rep;
 }
 
 // Local Variables:

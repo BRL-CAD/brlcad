@@ -1,0 +1,104 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('BRL-CAD AP214 horn torus keyhole fixture'),'2;1');
+FILE_NAME('ap214_horn_torus_keyhole.stp','2026-08-05T00:00:00',('BRL-CAD'),('BRL-CAD'),'','','');
+FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 3 1 1 1 }'));
+ENDSEC;
+DATA;
+
+/* Canonical horn torus with major and minor radii both equal to five. */
+#1=CARTESIAN_POINT('',(0.,0.,0.));
+#2=DIRECTION('',(0.,-1.,0.));
+#3=DIRECTION('',(0.,0.,1.));
+#4=AXIS2_PLACEMENT_3D('',#1,#2,#3);
+#5=TOROIDAL_SURFACE('',#4,5.,5.);
+
+/* Six vertices divide one keyhole-shaped face boundary. */
+#10=CARTESIAN_POINT('',(-10.,0.,0.));
+#11=VERTEX_POINT('',#10);
+#12=CARTESIAN_POINT('',(0.,0.,10.));
+#13=VERTEX_POINT('',#12);
+#14=CARTESIAN_POINT('',(0.,0.,-10.));
+#15=VERTEX_POINT('',#14);
+#16=CARTESIAN_POINT('',(0.,0.,0.));
+#17=VERTEX_POINT('',#16);
+#18=CARTESIAN_POINT('',(-5.,5.,0.));
+#19=VERTEX_POINT('',#18);
+#20=CARTESIAN_POINT('',(0.,5.,5.));
+#21=VERTEX_POINT('',#20);
+
+/* Outer circle, split at the positive and negative profile poles. */
+#30=CIRCLE('',#4,10.);
+#31=EDGE_CURVE('',#11,#15,#30,.T.);
+#32=EDGE_CURVE('',#13,#11,#30,.T.);
+
+/* Coincident reciprocal pole bridge on the lower profile circle. */
+#40=CARTESIAN_POINT('',(0.,0.,-5.));
+#41=DIRECTION('',(-1.,0.,0.));
+#42=DIRECTION('',(0.,0.,-1.));
+#43=AXIS2_PLACEMENT_3D('',#40,#41,#42);
+#44=CIRCLE('',#43,5.);
+#45=EDGE_CURVE('',#15,#17,#44,.T.);
+#46=EDGE_CURVE('',#17,#15,#44,.T.);
+
+/* Remaining arcs form the outer lobe of the keyhole. */
+#50=CARTESIAN_POINT('',(-5.,0.,0.));
+#51=DIRECTION('',(0.,0.,-1.));
+#52=DIRECTION('',(-0.7071067811865475,-0.7071067811865475,0.));
+#53=AXIS2_PLACEMENT_3D('',#50,#51,#52);
+#54=CIRCLE('',#53,5.);
+#55=EDGE_CURVE('',#11,#19,#54,.T.);
+
+#60=CARTESIAN_POINT('',(0.,5.,0.));
+#61=DIRECTION('',(0.,-1.,0.));
+#62=DIRECTION('',(0.,0.,-1.));
+#63=AXIS2_PLACEMENT_3D('',#60,#61,#62);
+#64=CIRCLE('',#63,5.);
+#65=EDGE_CURVE('',#21,#19,#64,.T.);
+
+#70=CARTESIAN_POINT('',(0.,0.,5.));
+#71=DIRECTION('',(1.,0.,0.));
+#72=DIRECTION('',(0.,0.,1.));
+#73=AXIS2_PLACEMENT_3D('',#70,#71,#72);
+#74=CIRCLE('',#73,5.);
+#75=EDGE_CURVE('',#17,#21,#74,.T.);
+#76=EDGE_CURVE('',#13,#17,#74,.T.);
+
+/*
+ * The ordered chain closes two lobes through the repeated pole vertices.
+ * This is a valid open-shell face and exercises exact periodic branch
+ * selection without requiring an incomplete CLOSED_SHELL reduction.
+ */
+#80=ORIENTED_EDGE('',*,*,#32,.F.);
+#81=ORIENTED_EDGE('',*,*,#76,.T.);
+#82=ORIENTED_EDGE('',*,*,#75,.T.);
+#83=ORIENTED_EDGE('',*,*,#65,.T.);
+#84=ORIENTED_EDGE('',*,*,#55,.F.);
+#85=ORIENTED_EDGE('',*,*,#31,.T.);
+#86=ORIENTED_EDGE('',*,*,#46,.F.);
+#87=ORIENTED_EDGE('',*,*,#45,.F.);
+#88=ORIENTED_EDGE('',*,*,#31,.F.);
+#89=EDGE_LOOP('',(#80,#81,#82,#83,#84,#85,#86,#87,#88));
+#90=FACE_OUTER_BOUND('',#89,.T.);
+#91=ADVANCED_FACE('',(#90),#5,.F.);
+#92=OPEN_SHELL('horn torus keyhole shell',(#91));
+#93=SHELL_BASED_SURFACE_MODEL('horn torus keyhole',(#92));
+
+#100=(LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.));
+#101=(NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.));
+#102=(NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT());
+#103=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-6),#100,'distance_accuracy_value','maximum gap value');
+#104=(GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#103)) GLOBAL_UNIT_ASSIGNED_CONTEXT((#100,#101,#102)) REPRESENTATION_CONTEXT('fixture','3D'));
+
+#110=APPLICATION_CONTEXT('automotive design');
+#111=APPLICATION_PROTOCOL_DEFINITION('fixture','automotive_design',2010,#110);
+#112=PRODUCT_CONTEXT('',#110,'mechanical');
+#113=PRODUCT_DEFINITION_CONTEXT('part definition',#110,'design');
+#114=PRODUCT('horn_torus_keyhole','Horn Torus Keyhole','periodic repeated-pole loop fixture',(#112));
+#115=PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE('1','',#114,.MADE.);
+#116=PRODUCT_DEFINITION('design','',#115,#113);
+#117=PRODUCT_DEFINITION_SHAPE('','',#116);
+#118=MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#4,#93),#104);
+#119=SHAPE_DEFINITION_REPRESENTATION(#117,#118);
+ENDSEC;
+END-ISO-10303-21;

@@ -43,7 +43,7 @@ protected:
     LIST_OF_TRIMMING_SELECT trim_1;
     LIST_OF_TRIMMING_SELECT trim_2;
     Boolean sense_agreement;
-    Trimming_preference master_representation;
+    int master_representation;
 
 public:
     TrimmedCurve();

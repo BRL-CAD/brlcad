@@ -1,0 +1,27 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('AP203 complex effectivity retention fixture'),'2;1');
+FILE_NAME('ap203_complex_effectivity.stp','2026-08-03T00:00:00',
+  ('BRL-CAD'),('BRL-CAD'),'BRL-CAD','BRL-CAD','');
+FILE_SCHEMA(('CONFIG_CONTROL_DESIGN'));
+ENDSEC;
+DATA;
+#1=APPLICATION_CONTEXT(
+  'configuration controlled 3d designs of mechanical parts and assemblies');
+#2=PRODUCT_CONCEPT_CONTEXT('market',#1,'general');
+#3=PRODUCT_CONCEPT('concept','Concept','retention fixture',#2);
+#4=CONFIGURATION_ITEM('configuration','Configuration',$,#3,$);
+#5=PRODUCT_CONTEXT('',#1,'mechanical');
+#6=PRODUCT('product','Product','',(#5));
+#7=PRODUCT_DEFINITION_FORMATION('formation','',#6);
+#8=PRODUCT_DEFINITION_CONTEXT('part definition',#1,'design');
+#9=PRODUCT_DEFINITION('definition','',#7,#8);
+#10=NEXT_ASSEMBLY_USAGE_OCCURRENCE('usage','',$,#9,#9,'');
+#11=CONFIGURATION_DESIGN(#4,#7);
+#12=CALENDAR_DATE(2028,1,1);
+#13=COORDINATED_UNIVERSAL_TIME_OFFSET(0,$,.AHEAD.);
+#14=LOCAL_TIME(0,$,$,#13);
+#15=DATE_AND_TIME(#12,#14);
+#16=(CONFIGURATION_EFFECTIVITY(#11) DATED_EFFECTIVITY(#15,$) EFFECTIVITY('effectivity') PRODUCT_DEFINITION_EFFECTIVITY(#10));
+ENDSEC;
+END-ISO-10303-21;

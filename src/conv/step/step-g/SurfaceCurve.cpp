@@ -25,6 +25,8 @@
  */
 
 #include "STEPWrapper.h"
+#include "STEPGeneratedAPI.h"
+#include "ap_schema.h"
 #include "Factory.h"
 #include "Surface.h"
 #include "DefinitionalRepresentation.h"
@@ -42,13 +44,14 @@ static const char *Preferred_surface_curve_representation_string[] = {
     "pcurve_s2",
     "unset"
 };
+static const int STEP_PREFERRED_SURFACE_CURVE_REPRESENTATION_UNSET = 3;
 
 SurfaceCurve::SurfaceCurve()
 {
     step = NULL;
     id = 0;
     curve_3d = NULL;
-    master_representation = Preferred_surface_curve_representation_unset;
+    master_representation = STEP_PREFERRED_SURFACE_CURVE_REPRESENTATION_UNSET;
 }
 
 SurfaceCurve::SurfaceCurve(STEPWrapper *sw, int step_id)
@@ -56,7 +59,7 @@ SurfaceCurve::SurfaceCurve(STEPWrapper *sw, int step_id)
     step = sw;
     id = step_id;
     curve_3d = NULL;
-    master_representation = Preferred_surface_curve_representation_unset;
+    master_representation = STEP_PREFERRED_SURFACE_CURVE_REPRESENTATION_UNSET;
 }
 
 SurfaceCurve::~SurfaceCurve()
@@ -127,10 +130,11 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		p_or_s = static_cast<SDAI_Select *>(sn->node);
 		if (!p_or_s) goto step_error;
 
-		const TypeDescriptor *underlying_type = p_or_s->CurrentUnderlyingType();
+		SDAI_Application_instance *selected =
+		    brlcad::step::SelectedEntity(p_or_s);
 
-		if (underlying_type == SCHEMA_NAMESPACE::e_pcurve ||
-		    underlying_type == SCHEMA_NAMESPACE::e_surface)
+		if (selected && (sw->IsSchemaEntity(selected, "PCURVE") ||
+		    sw->IsSchemaEntity(selected, "SURFACE")))
 		{
 		    PCurveOrSurface *aPCOS = new PCurveOrSurface();
 
@@ -150,7 +154,11 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     }
 
     /* TODO - is this something to fail on if get isn't successful? */
-    master_representation = (Preferred_surface_curve_representation)step->getEnumAttribute(sse, "master_representation");
+    master_representation = step->getEnumAttributeIndex(sse,
+	"master_representation", Preferred_surface_curve_representation_string,
+	sizeof(Preferred_surface_curve_representation_string) /
+	    sizeof(Preferred_surface_curve_representation_string[0]),
+	STEP_PREFERRED_SURFACE_CURVE_REPRESENTATION_UNSET);
 
     sw->entity_status[id] = STEP_LOADED;
     return true;
@@ -159,15 +167,51 @@ step_error:
     return false;
 }
 
+bool
+SurfaceCurve::LoadONBrep(ON_Brep *brep)
+{
+    if (!curve_3d)
+	return false;
+
+    /* EDGE_CURVE applies its endpoints to the SURFACE_CURVE wrapper.  The
+     * actual openNURBS curve is built by curve_3d, so forward the complete
+     * trimming state before conversion.  This retains the exact 3D curve;
+     * associated pcurves remain available for trim construction on the face. */
+    if (trimmed) {
+	if (parameter_trim)
+	    curve_3d->SetParameterTrim(t, s);
+	else
+	    curve_3d->SetPointTrim(trim_startpoint, trim_endpoint);
+    } else {
+	curve_3d->Start(start);
+	curve_3d->End(end);
+    }
+
+    if (!curve_3d->LoadONBrep(brep))
+	return false;
+
+    /* EdgeCurve consumes the wrapper's openNURBS index. */
+    SetONId(curve_3d->GetONId());
+    return GetONId() >= 0;
+}
+
 const double *
 SurfaceCurve::PointAtEnd()
 {
+    if (trimmed)
+	return Curve::PointAtEnd();
+    if (end)
+	return Curve::PointAtEnd();
     return curve_3d->PointAtEnd();
 }
 
 const double *
 SurfaceCurve::PointAtStart()
 {
+    if (trimmed)
+	return Curve::PointAtStart();
+    if (start)
+	return Curve::PointAtStart();
     return curve_3d->PointAtStart();
 }
 

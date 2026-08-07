@@ -25,6 +25,8 @@
  */
 
 #include "STEPWrapper.h"
+#include "STEPGeneratedAPI.h"
+#include "ap_schema.h"
 #include "Factory.h"
 #include "Axis2Placement.h"
 
@@ -124,16 +126,15 @@ CharacterizedProductDefinition::Load(STEPWrapper *sw, SDAI_Application_instance 
     step=sw;
 
     if (definition == NULL) {
-	SdaiCharacterized_product_definition *v = (SdaiCharacterized_product_definition *) sse;
+	SDAI_Select *v = reinterpret_cast<SDAI_Select *>(sse);
+	SDAI_Application_instance *selected = brlcad::step::SelectedEntity(v);
 
-	if (v->IsProduct_definition()) {
-	    SdaiProduct_definition *pd = *v;
+	if (selected && sw->IsSchemaEntity(selected, "PRODUCT_DEFINITION")) {
 	    type = CharacterizedProductDefinition::PRODUCT_DEFINITION;
-	    definition = dynamic_cast<ProductDefinition *>(Factory::CreateObject(sw, (SDAI_Application_instance *)pd));
-	} else if (v->IsProduct_definition_relationship()) {
-	    SdaiProduct_definition_relationship *pdr = *v;
+	    definition = dynamic_cast<ProductDefinition *>(Factory::CreateObject(sw, selected));
+	} else if (selected && sw->IsSchemaEntity(selected, "PRODUCT_DEFINITION_RELATIONSHIP")) {
 	    type = CharacterizedProductDefinition::PRODUCT_DEFINITION_RELATIONSHIP;
-	    definition = dynamic_cast<ProductDefinitionRelationship *>(Factory::CreateObject(sw, (SDAI_Application_instance *)pdr));
+	    definition = dynamic_cast<ProductDefinitionRelationship *>(Factory::CreateObject(sw, selected));
 	} else {
 	    type = CharacterizedProductDefinition::CHARACTERIZED_PRODUCT_DEFINITION_UNKNOWN;
 	    definition = NULL;

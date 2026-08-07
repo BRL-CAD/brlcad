@@ -94,8 +94,7 @@ CompositeCurveOnSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool
 CompositeCurveOnSurface::LoadONBrep(ON_Brep *brep)
 {
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
+    return CompositeCurve::LoadONBrep(brep);
 }
 
 // Local Variables:

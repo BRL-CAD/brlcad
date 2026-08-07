@@ -25,13 +25,186 @@
  */
 #include "STEPWrapper.h"
 #include "Factory.h"
+#include "brep/pullback.h"
 
 #include "ConnectedFaceSet.h"
 #include "AdvancedFace.h"
+#include "FaceSurface.h"
+#include "LocalUnits.h"
+#include "OpenNurbsInterfaces.h"
+
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <memory>
+#include <sstream>
+#include <vector>
 
 #define CLASSNAME "ConnectedFaceSet"
 #define ENTITYNAME "Connected_Face_Set"
 string ConnectedFaceSet::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ConnectedFaceSet::Create);
+
+namespace {
+
+/* Measured 152- and 271-face analytic solids spend more time duplicating and
+ * stitching standalone BREPs than they recover from helper work.  The
+ * 357-face Panzer periodic solid, however, spends 108 seconds in independent
+ * face pullbacks and benefits from helpers.  Start at 320 faces: safely above
+ * the largest measured negative case while admitting that next observed
+ * workload class.  Smaller items retain edge-level helpers and top-level
+ * solid parallelism. */
+constexpr size_t kMinimumParallelFaceCount = 320;
+/* Serial preparation touches small mutable caches on shared STEP curve and
+ * surface adapters.  Retain four faces per requested worker (at least eight,
+ * capped at 32) before parallel trim construction and deterministic append
+ * release the temporary face BREPs. */
+constexpr size_t kMinimumPreparedFacesPerBatch = 8;
+constexpr size_t kPreparedFacesPerWorker = 4;
+constexpr size_t kMaximumPreparedFacesPerBatch = 32;
+
+struct PreparedFaceTask {
+    FaceSurface *face = NULL;
+    std::unique_ptr<ON_Brep> brep;
+    STEPEntity::ONStateMap on_state;
+    std::vector<Face::PreparedBound> bounds;
+    uint64_t preparation_us = 0;
+    uint64_t trim_construction_us = 0;
+    bool finished = false;
+};
+
+/* Build independent face BREPs and stitch them only after every face has
+ * completed.  The caller runs this inside GeometryAttemptScope so a failed
+ * fast-path attempt can be discarded cleanly before the equivalent
+ * whole-shell construction is tried. */
+bool
+load_parallel_faces(STEPWrapper *step, int shell_id,
+    const std::vector<FaceSurface *> &ordered_faces, ON_Brep *brep,
+    std::string *failure_reason)
+{
+    if (!step || !brep || ordered_faces.empty())
+	return false;
+    const auto fail = [failure_reason](const std::string &reason) {
+	if (failure_reason)
+	    *failure_reason = reason;
+	return false;
+    };
+
+    const uint64_t total_faces = static_cast<uint64_t>(ordered_faces.size());
+    uint64_t completed_faces = 0;
+    ON_Brep stitched;
+    /* A face-local bounding box is intentionally too small for the bounded
+     * source-mismatch ceiling used by the serial whole-solid path.  Recover
+     * the authoritative shell scale directly from immutable STEP topology
+     * vertices. */
+    ON_BoundingBox shell_bounds;
+    const std::chrono::steady_clock::time_point scale_started =
+	std::chrono::steady_clock::now();
+    for (std::vector<FaceSurface *>::const_iterator face =
+	    ordered_faces.begin(); face != ordered_faces.end(); ++face) {
+	if (brlcad::PullbackWorkCancelled())
+	    return fail("parallel face construction was cancelled");
+	if (!*face || !(*face)->GrowTopologyVertexBounds(&shell_bounds))
+	    return fail("could not determine the connected-shell topology scale");
+    }
+    const double shell_scale = shell_bounds.IsValid() ?
+	shell_bounds.Diagonal().Length() : 0.0;
+    if (!(shell_scale > 0.0) || !std::isfinite(shell_scale))
+	return fail("connected-shell topology had no finite positive scale");
+    step->RecordStageTiming("face_topology_scale_prepass", shell_id,
+	"CONNECTED_FACE_SET", static_cast<uint64_t>(
+	    std::chrono::duration_cast<std::chrono::microseconds>(
+		std::chrono::steady_clock::now() - scale_started).count()),
+	total_faces, 0);
+
+    for (size_t batch_begin = 0; batch_begin < ordered_faces.size();) {
+	/* Re-evaluate capacity for every small retained batch.  A large solid
+	 * may begin while all -j slots are occupied, then enlist helpers as
+	 * shorter top-level jobs finish without retaining an entire prepared
+	 * shell in memory. */
+	const unsigned int available_face_helpers =
+	    step->AvailableGeometryHelperCapacity();
+	const size_t requested_batch = std::max<size_t>(
+	    kMinimumPreparedFacesPerBatch,
+	    static_cast<size_t>(available_face_helpers + 1) *
+		kPreparedFacesPerWorker);
+	const size_t batch_size = std::min(kMaximumPreparedFacesPerBatch,
+	    requested_batch);
+	const size_t batch_end = std::min(ordered_faces.size(),
+	    batch_begin + batch_size);
+	std::vector<PreparedFaceTask> tasks(batch_end - batch_begin);
+	for (size_t local = 0; local < tasks.size(); ++local) {
+	    PreparedFaceTask &task = tasks[local];
+	    task.face = ordered_faces[batch_begin + local];
+	    task.brep.reset(new ON_Brep());
+	    const std::chrono::steady_clock::time_point preparation_started =
+		std::chrono::steady_clock::now();
+	    STEPEntity::ONStateScope state(&task.on_state);
+	    step->SetProgressDetail("preparing exact BREP face topology",
+		task.face ? task.face->STEPid() : shell_id,
+		completed_faces, total_faces, "faces",
+		"shell=#" + std::to_string(shell_id));
+	    if (!task.face || !task.face->PrepareONBrep(task.brep.get(),
+		    &task.bounds)) {
+		std::ostringstream reason;
+		reason << "could not prepare independently owned face #"
+		    << (task.face ? task.face->STEPid() : shell_id);
+		return fail(reason.str());
+	    }
+	    task.preparation_us = static_cast<uint64_t>(
+		std::chrono::duration_cast<std::chrono::microseconds>(
+		    std::chrono::steady_clock::now() -
+		    preparation_started).count());
+	}
+	const auto finish_face = [&](size_t local) {
+	    PreparedFaceTask &task = tasks[local];
+	    const std::chrono::steady_clock::time_point trim_started =
+		std::chrono::steady_clock::now();
+	    STEPEntity::ONStateScope state(&task.on_state);
+	    task.finished = task.face && task.face->FinishONBrep(
+		task.brep.get(), task.bounds, shell_scale);
+	    task.trim_construction_us = static_cast<uint64_t>(
+		std::chrono::duration_cast<std::chrono::microseconds>(
+		    std::chrono::steady_clock::now() - trim_started).count());
+	};
+	step->ParallelForGeometry(tasks.size(), finish_face);
+	for (size_t local = 0; local < tasks.size(); ++local) {
+	    PreparedFaceTask &task = tasks[local];
+	    step->RecordStageTiming("face_construction_pullback",
+		task.face ? task.face->STEPid() : shell_id, "ADVANCED_FACE",
+		task.preparation_us + task.trim_construction_us,
+		task.brep ? static_cast<uint64_t>(task.brep->m_F.Count()) : 0,
+		task.brep ? static_cast<uint64_t>(task.brep->m_E.Count()) : 0,
+		task.brep ? static_cast<uint64_t>(task.brep->m_T.Count()) : 0);
+	    if (!task.finished || !task.brep || task.brep->m_F.Count() < 1) {
+		std::ostringstream reason;
+		reason << "could not finish independently owned face #"
+		    << (task.face ? task.face->STEPid() : shell_id);
+		return fail(reason.str());
+	    }
+	    for (int face_index = 0;
+		    face_index < task.brep->m_F.Count(); ++face_index)
+		task.brep->m_F[face_index].m_face_user.i = shell_id;
+	    stitched.Append(*task.brep);
+	    ++completed_faces;
+	}
+	batch_begin = batch_end;
+    }
+
+    step->SetProgressDetail("stitching exact STEP face topology", shell_id,
+	completed_faces, total_faces, "faces",
+	"shell=#" + std::to_string(shell_id));
+    std::string stitch_failure;
+    if (!step_stitch_face_breps(&stitched, LocalUnits::tolerance,
+	    &stitch_failure))
+	return fail("face-batch topology stitching failed: " + stitch_failure);
+    brep->Append(stitched);
+    step->SetProgressDetail("building exact BREP faces", shell_id,
+	completed_faces, total_faces, "faces",
+	"shell=#" + std::to_string(shell_id));
+    return true;
+}
+
+} // namespace
 
 ConnectedFaceSet::ConnectedFaceSet()
 {
@@ -72,7 +245,7 @@ ConnectedFaceSet::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	LIST_OF_ENTITIES::iterator i;
 	for (i = l->begin(); i != l->end(); i++) {
 	    SDAI_Application_instance *entity = (*i);
-	    if (entity) {
+	    if (entity && !isNilSTEPentity(entity)) {
 		Face *aAF = dynamic_cast<Face *>(Factory::CreateObject(sw, entity)); //CreateSurfaceObject(sw,entity));
 		if (aAF) {
 		    cfs_faces.push_back(aAF);
@@ -82,6 +255,11 @@ ConnectedFaceSet::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    sw->entity_status[id] = STEP_LOAD_ERROR;
 		    return false;
 		}
+	    } else if (!step->ImportOptions().exact &&
+		    step->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
+		step->RecordRepair(id, ENTITYNAME, "cfs_faces",
+		    "ignored a missing or non-face member in a connected face set");
+		continue;
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'cfs_faces'." << std::endl;
 		l->clear();
@@ -129,6 +307,19 @@ ConnectedFaceSet::ReverseFaceSet()
     }
 }
 
+size_t
+ConnectedFaceSet::MaximumPullbackSpanEstimate() const
+{
+    size_t maximum = 1;
+    for (LIST_OF_FACES::const_iterator face = cfs_faces.begin();
+	    face != cfs_faces.end(); ++face) {
+	const FaceSurface *surface_face = dynamic_cast<const FaceSurface *>(*face);
+	if (surface_face)
+	    maximum = std::max(maximum, surface_face->PullbackSpanEstimate());
+    }
+    return maximum;
+}
+
 STEPEntity *
 ConnectedFaceSet::GetInstance(STEPWrapper *sw, int id)
 {
@@ -154,10 +345,60 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
     }
 
     LIST_OF_FACES::iterator i;
+    uint64_t completed_faces = 0;
+    const uint64_t total_faces = static_cast<uint64_t>(cfs_faces.size());
+
+    /* Every face owns its destination BREP and OpenNURBS index state during
+     * this path.  Preparation stays serial because legacy STEP adapters cache
+     * curve endpoints and surface bounds; after that, trim construction reads
+     * immutable STEP entities and mutates only its face-local BREP. */
+    bool parallel_faces = step &&
+	total_faces >= kMinimumParallelFaceCount;
+    std::vector<FaceSurface *> ordered_faces;
+    if (parallel_faces) {
+	ordered_faces.reserve(cfs_faces.size());
+	for (i = cfs_faces.begin(); i != cfs_faces.end(); ++i) {
+	    FaceSurface *face = dynamic_cast<FaceSurface *>(*i);
+	    if (!face) {
+		parallel_faces = false;
+		break;
+	    }
+	    ordered_faces.push_back(face);
+	}
+    }
+    if (parallel_faces) {
+	std::string parallel_failure;
+	bool parallel_succeeded = false;
+	{
+	    STEPWrapper::GeometryAttemptScope parallel_attempt(step);
+	    parallel_succeeded = load_parallel_faces(step, id, ordered_faces,
+		brep, &parallel_failure);
+	    if (parallel_succeeded)
+		parallel_attempt.Commit();
+	}
+	if (parallel_succeeded)
+	    return true;
+	if (brlcad::PullbackWorkCancelled())
+	    return false;
+	/* Independent face ownership is an optimization, not a geometry policy.
+	 * Some valid and preservable files need a shared shell while constructing
+	 * their trims.  Retry through that authoritative path without publishing
+	 * provisional errors from the failed fast-path attempt. */
+	step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Information,
+	    id, "CONNECTED_FACE_SET", "scheduler",
+	    "parallel face-local construction fell back to whole-shell "
+	    "construction: " + parallel_failure);
+    }
 #ifdef _DEBUG_TESTING_
     int facecnt = 0;
 #endif
     for (i = cfs_faces.begin(); i != cfs_faces.end(); ++i) {
+	if (brlcad::PullbackWorkCancelled()) return false;
+	if (step) {
+	    step->SetProgressDetail("building exact BREP faces",
+		(*i) ? (*i)->STEPid() : id, completed_faces, total_faces,
+		"faces", "shell=#" + std::to_string(id));
+	}
 #ifdef _DEBUG_TESTING_
 	if (facecnt != _face_cnt_) {
 	    facecnt++;
@@ -165,14 +406,45 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
 	    std::cerr << "We're here." << std::endl;
 	}
 #endif
-	if (!(*i)->LoadONBrep(brep)) {
-	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	const int first_face_index = brep->m_F.Count();
+	const int initial_edges = brep->m_E.Count();
+	const int initial_trims = brep->m_T.Count();
+	const std::chrono::steady_clock::time_point face_started =
+	    std::chrono::steady_clock::now();
+	const bool face_loaded = (*i)->LoadONBrep(brep);
+	if (step) {
+	    step->RecordStageTiming("face_construction_pullback",
+		(*i) ? (*i)->STEPid() : id, "ADVANCED_FACE",
+		static_cast<uint64_t>(
+		    std::chrono::duration_cast<std::chrono::microseconds>(
+			std::chrono::steady_clock::now() - face_started).count()),
+		1, static_cast<uint64_t>(std::max(0,
+		    brep->m_E.Count() - initial_edges)),
+		static_cast<uint64_t>(std::max(0,
+		    brep->m_T.Count() - initial_trims)));
+	}
+	if (!face_loaded) {
+	    if (step && step->Verbose())
+		std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}
+	/* Retain authoritative connected-shell membership on every emitted face.
+	 * STEP exporters sometimes reuse one EDGE_CURVE across an outer and a void
+	 * shell; geometric adjacency alone is then cyclic and cannot recover the
+	 * intended two-use topological edge pairing.  ON_Brep documents
+	 * m_face_user.i for component labels and does not serialize it. */
+	for (int face_index = first_face_index;
+		face_index < brep->m_F.Count(); ++face_index)
+	    brep->m_F[face_index].m_face_user.i = id;
+	++completed_faces;
 #ifdef _DEBUG_TESTING_
 	facecnt++;
 #endif
-    }
+	}
+	if (step)
+	    step->SetProgressDetail("building exact BREP faces", id,
+		completed_faces, total_faces, "faces",
+		"shell=#" + std::to_string(id));
     return true;
 }
 

@@ -49,6 +49,8 @@ public:
     virtual curve_type CurveType() {
 	return LINE;
     };
+    const double *GetOrigin() const;
+    const double *GetDirection() const;
     void StartPoint(double *p);
     void EndPoint(double *p);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);

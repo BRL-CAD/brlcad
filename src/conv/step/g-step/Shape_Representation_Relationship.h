@@ -27,11 +27,19 @@
 
 #include "AP_Common.h"
 
+/* Assign a representation-valued relationship attribute through STEPcode's
+ * public conversion API.  The physical attribute is an entity reference in
+ * AP203/AP214/AP242e1 and a SELECT in AP242e2 and later. */
+bool
+Set_Representation_Relationship_Reference(STEPentity *relationship,
+	const char *attribute_name, STEPentity *representation,
+	InstMgr *instances);
+
 /* Shape Representation Relationship
  */
 STEPentity *
 Add_Shape_Representation_Relationship(AP203_Contents *sc,
-	SdaiRepresentation *shape_rep, SdaiRepresentation *manifold_shape);
+	STEPentity *shape_rep, STEPentity *manifold_shape);
 
 #endif /*SHAPE_REPRESENTATION_RELATIONSHIP_H*/
 

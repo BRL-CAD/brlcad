@@ -23,7 +23,23 @@
  */
 
 #include "AP_Common.h"
+#include "STEPGeneratedAPI.h"
 #include "Shape_Representation_Relationship.h"
+
+/* AP242 edition 2 widened rep_1 and rep_2 from REPRESENTATION to
+ * REPRESENTATION_OR_REPRESENTATION_REFERENCE.  Setting the standardized
+ * EXPRESS attributes through STEPcode's public conversion API works for both
+ * the direct-reference attributes in the older APs and the later SELECT, and
+ * avoids coupling common export code to one generated SELECT class. */
+bool
+Set_Representation_Relationship_Reference(STEPentity *relationship,
+	const char *attribute_name,
+	STEPentity *representation, InstMgr *instances)
+{
+    (void)instances;
+    return brlcad::step::SetEntity(relationship, attribute_name,
+	    representation);
+}
 
 /* Shape Representation Relationship
  *
@@ -35,18 +51,19 @@
  */
 STEPentity *
 Add_Shape_Representation_Relationship(AP203_Contents *sc,
-	SdaiRepresentation *shape_rep, SdaiRepresentation *manifold_shape)
+	STEPentity *shape_rep, STEPentity *manifold_shape)
 {
-    STEPentity *ret_entity = sc->registry->ObjCreate("SHAPE_REPRESENTATION_RELATIONSHIP");
-    sc->instance_list->Append(ret_entity, completeSE);
+    STEPentity *shape_rep_rel = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "SHAPE_REPRESENTATION_RELATIONSHIP");
+    brlcad::step::SetString(shape_rep_rel, "name", "");
+    brlcad::step::SetString(shape_rep_rel, "description", "");
+    if (!Set_Representation_Relationship_Reference(shape_rep_rel, "rep_1", shape_rep,
+	    sc->instance_list) ||
+	    !Set_Representation_Relationship_Reference(shape_rep_rel, "rep_2", manifold_shape,
+	    sc->instance_list))
+	return NULL;
 
-    SdaiShape_representation_relationship *shape_rep_rel = (SdaiShape_representation_relationship *) ret_entity;
-    shape_rep_rel->name_("''");
-    shape_rep_rel->description_("''");
-    shape_rep_rel->rep_1_(shape_rep);
-    shape_rep_rel->rep_2_(manifold_shape);
-
-    return ret_entity;
+    return shape_rep_rel;
 }
 
 // Local Variables:

@@ -58,6 +58,18 @@ Line::~Line()
 {
 }
 
+const double *
+Line::GetOrigin() const
+{
+    return pnt ? pnt->Point3d() : NULL;
+}
+
+const double *
+Line::GetDirection() const
+{
+    return dir ? dir->Orientation() : NULL;
+}
+
 void
 Line::StartPoint(double *p)
 {

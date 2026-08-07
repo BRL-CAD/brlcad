@@ -25,8 +25,18 @@
 #define G_OBJECTS_H
 
 #include "AP_Common.h"
-void Object_To_STEP(struct directory *dp, struct rt_db_internal *intern,
-	struct rt_wdb *wdbp, AP203_Contents *sc);
+#include <string>
+
+bool Object_To_STEP(struct directory *dp, struct rt_db_internal *intern,
+	struct rt_wdb *wdbp, AP203_Contents *sc,
+	std::string *diagnostic = NULL);
+
+/** Emit only the geometric representation for a BRL-CAD object.  Imported
+ * product containers use this path so representation items do not acquire
+ * synthetic PRODUCT identities of their own. */
+bool Object_Geometry_To_STEP(struct directory *dp,
+	struct rt_db_internal *intern, struct rt_wdb *wdbp,
+	AP203_Contents *sc, std::string *diagnostic = NULL);
 
 #endif /* G_OBJECTS_H */
 /*

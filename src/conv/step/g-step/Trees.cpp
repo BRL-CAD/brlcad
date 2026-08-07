@@ -24,14 +24,94 @@
  *
  */
 
-#include "AP203.h"
-#include "bu/ptbl.h"
+#include "AP_Common.h"
+#include "STEPGeneratedAPI.h"
 #include "bu/log.h"
 #include "ON_Brep.h"
 #include "Assembly_Product.h"
 #include "Comb.h"
 #include "Trees.h"
 #include "G_Objects.h"
+
+#include <set>
+#include <vector>
+
+namespace {
+
+/** Collect only the product/assembly side of a selected hierarchy.  A
+ * combination already present in comb_to_step is a schema-native CSG shape
+ * boundary prepared by the export host; its operands belong to that shape and
+ * must not also become orphan STEP products. */
+static bool
+collect_ordinary_products(struct directory *dp, struct rt_wdb *wdbp,
+    AP203_Contents *sc, std::set<struct directory *> &solids,
+    std::set<struct directory *> &geometry_solids,
+    std::set<struct directory *> &combinations,
+    std::set<struct directory *> &active, bool geometry_only)
+{
+    if (!dp) return false;
+    if (!(dp->d_flags & RT_DIR_COMB)) {
+	if (geometry_only)
+	    geometry_solids.insert(dp);
+	else
+	    solids.insert(dp);
+	return true;
+    }
+    if (sc->comb_to_step->find(dp) != sc->comb_to_step->end())
+	return true;
+    if (!active.insert(dp).second) {
+	bu_log("ERROR: combination cycle while planning STEP products at %s\n",
+	    dp->d_namep);
+	return false;
+    }
+    combinations.insert(dp);
+    struct rt_db_internal internal;
+    RT_DB_INTERNAL_INIT(&internal);
+    if (rt_db_get_internal(&internal, dp, wdbp->dbip, bn_mat_identity) < 0) {
+	active.erase(dp);
+	return false;
+    }
+    const struct rt_comb_internal *combination =
+	static_cast<const struct rt_comb_internal *>(internal.idb_ptr);
+    bool valid = combination && combination->tree;
+    std::vector<const union tree *> pending;
+    size_t occurrence_number = 0;
+    if (valid) pending.push_back(combination->tree);
+    while (!pending.empty()) {
+	const union tree *node = pending.back();
+	pending.pop_back();
+	if (!node) {
+	    valid = false;
+	    continue;
+	}
+	if (node->tr_op == OP_DB_LEAF) {
+	    struct directory *child = db_lookup(wdbp->dbip,
+		node->tr_l.tl_name, LOOKUP_QUIET);
+	    const size_t ordinal = ++occurrence_number;
+	    const bool representation_membership =
+		sc->representation_memberships &&
+		sc->representation_memberships->find(std::make_pair(dp, ordinal)) !=
+		    sc->representation_memberships->end();
+	    if (child == RT_DIR_NULL || !collect_ordinary_products(child, wdbp,
+		    sc, solids, geometry_solids, combinations, active,
+		    geometry_only || representation_membership))
+		valid = false;
+	    continue;
+	}
+	if (node->tr_op == OP_UNION || node->tr_op == OP_INTERSECT ||
+		node->tr_op == OP_SUBTRACT || node->tr_op == OP_XOR) {
+	    pending.push_back(node->tr_b.tb_right);
+	    pending.push_back(node->tr_b.tb_left);
+	    continue;
+	}
+	valid = false;
+    }
+    rt_db_free_internal(&internal);
+    active.erase(dp);
+    return valid;
+}
+
+} // namespace
 
 STEPentity *
 Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
@@ -49,20 +129,38 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
      * change - probably to making solids out of regions.  Ironically, the AP203 logic
      * for combs and solids as it exists here will most likely be preserved by
      * moving it to AP214, where it will still be needed for boolean exports*/
-    const char *solid_search = "! -type comb";
-    struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
-
-    (void)db_search(&breps, DB_SEARCH_RETURN_UNIQ_DP, solid_search, 1, &dp, wdbp->dbip, NULL, NULL, NULL);
-    for (int j = (int)BU_PTBL_LEN(&breps) - 1; j >= 0; j--) {
-	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&breps, j);
+    std::set<struct directory *> ordinary_solids;
+    std::set<struct directory *> geometry_solids;
+    std::set<struct directory *> ordinary_combinations;
+    std::set<struct directory *> active;
+    (void)collect_ordinary_products(dp, wdbp, sc, ordinary_solids,
+	geometry_solids, ordinary_combinations, active, false);
+    for (std::set<struct directory *>::const_iterator solid =
+	    geometry_solids.begin(); solid != geometry_solids.end(); ++solid) {
+	struct directory *curr_dp = *solid;
 	struct rt_db_internal solid_intern;
+	mat_t output_scale;
+	MAT_IDN(output_scale);
+	output_scale[15] = sc->length_unit_mm;
 
-	rt_db_get_internal(&solid_intern, curr_dp, wdbp->dbip, bn_mat_identity);
+	rt_db_get_internal(&solid_intern, curr_dp, wdbp->dbip, output_scale);
+	RT_CK_DB_INTERNAL(&solid_intern);
+	Object_Geometry_To_STEP(curr_dp, &solid_intern, wdbp, sc);
+	rt_db_free_internal(&solid_intern);
+    }
+    for (std::set<struct directory *>::const_iterator solid =
+	    ordinary_solids.begin(); solid != ordinary_solids.end(); ++solid) {
+	struct directory *curr_dp = *solid;
+	struct rt_db_internal solid_intern;
+	mat_t output_scale;
+	MAT_IDN(output_scale);
+	output_scale[15] = sc->length_unit_mm;
+
+	rt_db_get_internal(&solid_intern, curr_dp, wdbp->dbip, output_scale);
 	RT_CK_DB_INTERNAL(&solid_intern);
 	Object_To_STEP(curr_dp, &solid_intern, wdbp, sc);
 	rt_db_free_internal(&solid_intern);
     }
-    db_search_free(&breps);
 
     /* Find all combs that are not already wrappers, make instances of them, insert
      * them, and stick in *dp to STEPentity* map.
@@ -71,12 +169,10 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
      * for assemblies (i.e. combs with no regions above them) and regions, which
      * will become the "wrappers" for the evaluated brep solid below each region.
      * Again, some form of this logic will probably end up in AP214 */
-    const char *comb_search = "-type comb";
-    struct bu_ptbl combs = BU_PTBL_INIT_ZERO;
-
-    (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, comb_search, 1, &dp, wdbp->dbip, NULL, NULL, NULL);
-    for (int j = (int)BU_PTBL_LEN(&combs) - 1; j >= 0; j--) {
-	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&combs, j);
+    for (std::set<struct directory *>::const_iterator combination =
+	    ordinary_combinations.begin();
+	 combination != ordinary_combinations.end(); ++combination) {
+	struct directory *curr_dp = *combination;
 	int is_wrapper = !Comb_Is_Wrapper(curr_dp, wdbp);
 
 	if (sc->comb_to_step->find(curr_dp) == sc->comb_to_step->end()) {
@@ -94,41 +190,42 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 		struct directory *child;
 		union tree *curr_node;
 
-		rt_db_get_internal(&comb_intern, curr_dp, wdbp->dbip, bn_mat_identity);
+		if (rt_db_get_internal(&comb_intern, curr_dp, wdbp->dbip,
+			bn_mat_identity) < 0)
+		    continue;
 		RT_CK_DB_INTERNAL(&comb_intern);
 		comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
 		child = Comb_Get_Only_Child(curr_dp, wdbp);
 
-		curr_node = db_find_named_leaf(comb->tree, child->d_namep);
+		curr_node = child ? db_find_named_leaf(comb->tree, child->d_namep) : NULL;
 		if (curr_node && (sc->solid_to_step->find(child) != sc->solid_to_step->end())) {
 		    std::ostringstream ss;
 		    ss << "'" << curr_dp->d_namep << "'";
 		    std::string str = ss.str();
 		    (*sc->comb_to_step)[curr_dp] = sc->solid_to_step->find(child)->second;
 		    (*sc->comb_to_step_shape)[curr_dp] = sc->solid_to_step_shape->find(child)->second;
+		    std::map<struct directory *, STEPentity *>::const_iterator manifold =
+			sc->solid_to_step_manifold->find(child);
+		    if (manifold != sc->solid_to_step_manifold->end())
+			(*sc->comb_to_step_manifold)[curr_dp] = manifold->second;
 		    //bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
-		    ((SdaiProduct_definition *)((*sc->comb_to_step)[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
+		    STEPentity *formation = brlcad::step::Entity(
+			(*sc->comb_to_step)[curr_dp], "formation");
+		    STEPentity *product = brlcad::step::Entity(formation,
+			"of_product");
+		    brlcad::step::SetString(product, "name", str.c_str());
 		}
+		rt_db_free_internal(&comb_intern);
 	    }
 	}
     }
-    db_search_free(&combs);
 
-    /* For each non-wrapper comb, get list of immediate children and call Assembly Product,
-     * which will define the relationships between the comb and its children using
-     * the appropriate step foo and the pointers in the map.*/
-
-    /* TODO - need to figure out how to pull matrices, translate them into STEP, and
-     * where to associate them.*/
+    /* Products and shape representations must all exist before their assembly
+     * relationships are emitted.  Walk the actual boolean trees in the second
+     * pass: a unique-directory search loses repeated occurrences and cannot
+     * associate the correct matrix with each occurrence. */
     for (std::set<struct directory *>::iterator it=non_wrapper_combs.begin(); it != non_wrapper_combs.end(); ++it) {
-	const char *comb_children_search = "-mindepth 1 -maxdepth 1";
-
-	struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
-	struct directory *ccs_dp = (*it);
-
-	(void)db_search(&comb_children, DB_SEARCH_RETURN_UNIQ_DP, comb_children_search, 1, &ccs_dp, wdbp->dbip, NULL, NULL, NULL);
-	Add_Assembly_Product((*it), wdbp->dbip, &comb_children, sc);
-	db_search_free(&comb_children);
+	(void)Add_Assembly_Product((*it), wdbp->dbip, sc);
     }
 
     return toplevel_comb;

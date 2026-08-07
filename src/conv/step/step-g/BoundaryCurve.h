@@ -36,13 +36,14 @@ private:
     static EntityInstanceFunc GetInstance;
 
 protected:
-
+    bool outer_boundary;
 public:
     BoundaryCurve();
     virtual ~BoundaryCurve();
     BoundaryCurve(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
+    bool IsOuterBoundary() const { return outer_boundary; }
     virtual void Print(int level);
 
     //static methods

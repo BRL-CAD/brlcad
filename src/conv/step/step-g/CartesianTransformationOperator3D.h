@@ -47,6 +47,7 @@ public:
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
+    Direction *Axis3() const { return axis3; }
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

@@ -1,0 +1,66 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('BRL-CAD AP203 full unclamped closed-curve knot fixture'),'2;1');
+FILE_NAME('ap203_unclamped_closed_curve_knots.stp','2026-07-23T00:00:00',('BRL-CAD'),('BRL-CAD'),'','','');
+FILE_SCHEMA(('CONFIG_CONTROL_DESIGN'));
+ENDSEC;
+DATA;
+#1=CARTESIAN_POINT('',(10.,0.,0.));
+#2=VERTEX_POINT('',#1);
+
+/* This full STEP knot vector has 8 + 3 + 1 = 12 entries.  OpenNURBS
+ * stores the same vector without exactly one entry at each end.  The
+ * first distinct knot deliberately has multiplicity two: dropping that
+ * entire multiplicity, as the historical importer did for a negative
+ * exterior knot, leaves an invalid OpenNURBS vector. */
+#10=CARTESIAN_POINT('',(10.,0.,0.));
+#11=CARTESIAN_POINT('',(10.,0.,0.));
+#12=CARTESIAN_POINT('',(0.,10.,0.));
+#13=CARTESIAN_POINT('',(-10.,0.,0.));
+#14=CARTESIAN_POINT('',(-6.,-7.,0.));
+#15=CARTESIAN_POINT('',(0.,-10.,0.));
+#16=CARTESIAN_POINT('',(10.,0.,0.));
+#17=CARTESIAN_POINT('',(20.,10.,0.));
+#20=B_SPLINE_CURVE_WITH_KNOTS('unclamped closed cubic',3,
+  (#10,#11,#12,#13,#14,#15,#16,#17),
+  .UNSPECIFIED.,.T.,.F.,
+  (2,2,1,1,1,1,1,1,1,1),
+  (-2.,0.,1.,2.,3.,4.,5.,6.,7.,8.),
+  .UNSPECIFIED.);
+#21=EDGE_CURVE('',#2,#2,#20,.T.);
+#22=ORIENTED_EDGE('',*,*,#21,.T.);
+#23=EDGE_LOOP('closed cubic boundary',(#22));
+#24=FACE_OUTER_BOUND('',#23,.T.);
+
+#30=CARTESIAN_POINT('',(0.,0.,0.));
+#31=DIRECTION('',(0.,0.,1.));
+#32=DIRECTION('',(1.,0.,0.));
+#33=AXIS2_PLACEMENT_3D('',#30,#31,#32);
+#34=PLANE('',#33);
+#35=ADVANCED_FACE('unclamped closed curve face',(#24),#34,.T.);
+#36=OPEN_SHELL('unclamped closed curve shell',(#35));
+#37=SHELL_BASED_SURFACE_MODEL('unclamped closed curve model',(#36));
+
+#40=(LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.));
+#41=(NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.));
+#42=(NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT());
+#43=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(0.00001),#40,'distance_accuracy_value','maximum gap value');
+#44=(GEOMETRIC_REPRESENTATION_CONTEXT(3)
+  GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#43))
+  GLOBAL_UNIT_ASSIGNED_CONTEXT((#40,#41,#42))
+  REPRESENTATION_CONTEXT('fixture','3D'));
+
+#50=APPLICATION_CONTEXT('configuration controlled 3d designs of mechanical parts and assemblies');
+#51=APPLICATION_PROTOCOL_DEFINITION('international standard','config_control_design',1994,#50);
+#52=MECHANICAL_CONTEXT('',#50,'mechanical');
+#53=DESIGN_CONTEXT('',#50,'design');
+#54=PRODUCT('unclamped_closed_curve_knots','AP203 Unclamped Closed Curve Knots','full STEP knot-vector conversion fixture',(#52));
+#55=PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE('1','initial revision',#54,.MADE.);
+#56=PRODUCT_DEFINITION('design','fixture product definition',#55,#53);
+#57=PRODUCT_DEFINITION_SHAPE('','',#56);
+#58=SHAPE_REPRESENTATION('',(),#44);
+#59=SHAPE_DEFINITION_REPRESENTATION(#57,#58);
+#60=MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#37),#44);
+#61=SHAPE_REPRESENTATION_RELATIONSHIP('','',#58,#60);
+ENDSEC;
+END-ISO-10303-21;

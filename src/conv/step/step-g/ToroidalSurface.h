@@ -32,11 +32,14 @@ class ToroidalSurface: public ElementarySurface
 {
 private:
     static string entityname;
+    static string degenerate_entityname;
     static EntityInstanceFunc GetInstance;
 
 protected:
     double major_radius;
     double minor_radius;
+    bool is_degenerate;
+    bool select_outer;
 
 
 public:

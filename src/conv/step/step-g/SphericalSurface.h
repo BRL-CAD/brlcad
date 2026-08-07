@@ -47,6 +47,7 @@ public:
     const double *GetXAxis();
     const double *GetYAxis();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    bool RequiresFaceLocalONSurface() const override { return true; }
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
 

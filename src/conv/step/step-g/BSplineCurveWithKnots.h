@@ -43,7 +43,7 @@ protected:
     LIST_OF_REALS knots;
 
 
-    Knot_type knot_spec;
+    int knot_spec;
 
 public:
     BSplineCurveWithKnots();

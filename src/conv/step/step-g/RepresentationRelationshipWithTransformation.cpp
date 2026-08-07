@@ -25,6 +25,8 @@
  */
 
 #include "STEPWrapper.h"
+#include "STEPGeneratedAPI.h"
+#include "ap_schema.h"
 #include "Factory.h"
 
 #include "Axis2Placement3D.h"
@@ -96,7 +98,6 @@ bool RepresentationRelationshipWithTransformation::Load(STEPWrapper *sw, SDAI_Ap
     id = sse->STEPfile_id;
 
     if (!RepresentationRelationship::Load(step, sse)) {
-	std::cout << CLASSNAME << ":Error loading base class ::RepresentationRelationship." << std::endl;
 	goto step_error;
     }
     // need to do this for local attributes to makes sure we have
@@ -107,17 +108,21 @@ bool RepresentationRelationshipWithTransformation::Load(STEPWrapper *sw, SDAI_Ap
 	// select-select
 	SDAI_Select *select = step->getSelectAttribute(sse, "transformation_operator");
 	if (select) {
-	    SdaiTransformation *t = (SdaiTransformation *) select;
-	    if (t->IsItem_defined_transformation()) {
-		SdaiItem_defined_transformation *idt = *t;
-		transformation_operator = dynamic_cast<Transformation *>(Factory::CreateObject(sw, (SDAI_Application_instance *) idt));
+	    SDAI_Application_instance *transformation =
+		brlcad::step::SelectedEntity(select);
+	    if (transformation && sw->IsSchemaEntity(transformation,
+		    "ITEM_DEFINED_TRANSFORMATION")) {
+		transformation_operator = dynamic_cast<Transformation *>(Factory::CreateObject(sw, transformation));
 		if (!transformation_operator) goto step_error;
-	    } else if (t->IsFunctionally_defined_transformation()) {
-		SdaiFunctionally_defined_transformation *fdt = *t;
-		transformation_operator = dynamic_cast<Transformation *>(Factory::CreateObject(sw, (SDAI_Application_instance *) fdt));
+	    } else if (transformation && sw->IsSchemaEntity(transformation,
+		    "FUNCTIONALLY_DEFINED_TRANSFORMATION")) {
+		transformation_operator = dynamic_cast<Transformation *>(Factory::CreateObject(sw, transformation));
 		if (!transformation_operator) goto step_error;
 	    } else {
-		std::cerr << CLASSNAME << ": Unknown 'Transformation' type from select." << std::endl;
+		sw->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, id,
+		    "REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION",
+		    "transformation_operator",
+		    "transformation select did not resolve to a supported type");
 		goto step_error;
 	    }
 	} else {

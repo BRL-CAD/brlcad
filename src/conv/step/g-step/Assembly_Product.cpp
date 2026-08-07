@@ -23,7 +23,9 @@
  */
 
 #include "AP_Common.h"
+#include "STEPGeneratedAPI.h"
 #include "Comb.h"
+#include "Shape_Representation_Relationship.h"
 
 /*
  * To associate multiple objects in STEP, we must define and relate product definitions
@@ -129,25 +131,25 @@ Create_AXIS2_PLACEMENT_3D(fastf_t pt_x, fastf_t pt_y, fastf_t pt_z,
 	fastf_t d1_x, fastf_t d1_y, fastf_t d1_z,
 	fastf_t d2_x, fastf_t d2_y, fastf_t d2_z,
 	Registry *registry, InstMgr *instance_list) {
-    SdaiCartesian_point *pnt = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
-    pnt->name_("''");
+    STEPentity *pnt = brlcad::step::CreateEntity(registry, instance_list,
+	    "CARTESIAN_POINT");
+    brlcad::step::SetString(pnt, "name", "");
     XYZ_to_Cartesian_point(pt_x, pt_y, pt_z, pnt);
-    SdaiDirection *axis = (SdaiDirection *)registry->ObjCreate("DIRECTION");
-    axis->name_("''");
+    STEPentity *axis = brlcad::step::CreateEntity(registry, instance_list,
+	    "DIRECTION");
+    brlcad::step::SetString(axis, "name", "");
     XYZ_to_Direction(d1_x, d1_y, d1_z, axis);
-    SdaiDirection *ref = (SdaiDirection *)registry->ObjCreate("DIRECTION");
-    ref->name_("''");
+    STEPentity *ref = brlcad::step::CreateEntity(registry, instance_list,
+	    "DIRECTION");
+    brlcad::step::SetString(ref, "name", "");
     XYZ_to_Direction(d2_x, d2_y, d2_z, ref);
-    SdaiAxis2_placement_3d *placement = (SdaiAxis2_placement_3d *)registry->ObjCreate("AXIS2_PLACEMENT_3D");
-    placement->name_("''");
-    placement->location_(pnt);
-    placement->axis_(axis);
-    placement->ref_direction_(ref);
-    instance_list->Append((STEPentity *)pnt, completeSE);
-    instance_list->Append((STEPentity *)axis, completeSE);
-    instance_list->Append((STEPentity *)ref, completeSE);
-    instance_list->Append((STEPentity *)placement, completeSE);
-    return (STEPentity *)placement;
+    STEPentity *placement = brlcad::step::CreateEntity(registry, instance_list,
+	    "AXIS2_PLACEMENT_3D");
+    brlcad::step::SetString(placement, "name", "");
+    brlcad::step::SetEntity(placement, "location", pnt);
+    brlcad::step::SetEntity(placement, "axis", axis);
+    brlcad::step::SetEntity(placement, "ref_direction", ref);
+    return placement;
 }
 
 STEPentity *
@@ -164,45 +166,43 @@ Create_CARTESIAN_TRANSFORMATION_OPERATOR_3D(
 	fastf_t scale,
 	Registry *registry, InstMgr *instance_list)
 {
-    SdaiCartesian_transformation_operator_3d *op3d = (SdaiCartesian_transformation_operator_3d *)registry->ObjCreate("CARTESIAN_TRANSFORMATION_OPERATOR_3D");
-    SdaiDirection *axis1 = (SdaiDirection *)registry->ObjCreate("DIRECTION");
-    SdaiDirection *axis2 = (SdaiDirection *)registry->ObjCreate("DIRECTION");
-    SdaiDirection *axis3 = (SdaiDirection *)registry->ObjCreate("DIRECTION");
-    SdaiCartesian_point *local_origin = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
+    STEPentity *op3d = brlcad::step::CreateEntity(registry, instance_list,
+	    "CARTESIAN_TRANSFORMATION_OPERATOR_3D");
+    STEPentity *axis1 = brlcad::step::CreateEntity(registry, instance_list,
+	    "DIRECTION");
+    STEPentity *axis2 = brlcad::step::CreateEntity(registry, instance_list,
+	    "DIRECTION");
+    STEPentity *axis3 = brlcad::step::CreateEntity(registry, instance_list,
+	    "DIRECTION");
+    STEPentity *local_origin = brlcad::step::CreateEntity(registry,
+	    instance_list, "CARTESIAN_POINT");
     XYZ_to_Cartesian_point(pt_x, pt_y, pt_z, local_origin);
-    local_origin->name_("'local_origin'");
+    brlcad::step::SetString(local_origin, "name", "local_origin");
     XYZ_to_Direction(d1_x, d1_y, d1_z, axis1);
-    axis1->name_("'axis1'");
+    brlcad::step::SetString(axis1, "name", "axis1");
     XYZ_to_Direction(d2_x, d2_y, d2_z, axis2);
-    axis2->name_("'axis2'");
+    brlcad::step::SetString(axis2, "name", "axis2");
     XYZ_to_Direction(d3_x, d3_y, d3_z, axis3);
-    axis3->name_("'axis3'");
+    brlcad::step::SetString(axis3, "name", "axis3");
 
-    op3d->local_origin_(local_origin);
-    op3d->axis1_(axis1);
-    op3d->axis2_(axis2);
-    op3d->axis3_(axis3);
-    op3d->scale_(scale);
-    op3d->name_("''");
+    brlcad::step::SetEntity(op3d, "local_origin", local_origin);
+    brlcad::step::SetEntity(op3d, "axis1", axis1);
+    brlcad::step::SetEntity(op3d, "axis2", axis2);
+    brlcad::step::SetEntity(op3d, "axis3", axis3);
+    brlcad::step::SetReal(op3d, "scale", scale);
 
     /* For whatever reason, we seem to a) have TWO attributes called "name"
      * that need to be set and b) a "description" attribute that doesn't respond
      * to setting via op3d->description_("''") - fall back on attribute list
      * access */
-    ((STEPentity *)op3d)->ResetAttributes();
-    STEPattribute * attr = ((STEPentity *)op3d)->NextAttribute();
+    op3d->ResetAttributes();
+    STEPattribute * attr = op3d->NextAttribute();
     while ( attr != 0 ) {
 	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
 	if (!bu_strcmp(attr->Name(), "description")) attr->StrToVal("''");
-	attr = ((STEPentity *)op3d)->NextAttribute();
+	attr = op3d->NextAttribute();
     }
-
-    instance_list->Append((STEPentity *)local_origin, completeSE);
-    instance_list->Append((STEPentity *)axis1, completeSE);
-    instance_list->Append((STEPentity *)axis2, completeSE);
-    instance_list->Append((STEPentity *)axis3, completeSE);
-    instance_list->Append((STEPentity *)op3d, completeSE);
-    return (STEPentity *)op3d;
+    return op3d;
 }
 
 // Returns either an AXIS2_PLACEMENT_3D, a CARTESIAN_TRANSFORMATION_OPERATOR_3D, or NULL
@@ -222,7 +222,8 @@ Create_CARTESIAN_TRANSFORMATION_OPERATOR_3D(
 // how STEP views assemblies.
 
 STEPentity *
-Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
+Mat_to_Rep(matp_t curr_matrix, double mm_to_length_unit,
+    Registry *registry, InstMgr *instance_list)
 {
     point_t origin, outorig;
     vect_t x_axis, y_axis, z_axis;
@@ -238,6 +239,7 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
     VUNITIZE(outx);
     VUNITIZE(outy);
     VUNITIZE(outz);
+    VSCALE(outorig, outorig, mm_to_length_unit);
 
     // If we aren't scaling, handle things with axis placement
     if (NEAR_ZERO(curr_matrix[15] - 1.0, VUNITIZE_TOL)) {
@@ -266,14 +268,13 @@ Build_Representation_Relationship(STEPentity *input_transformation, STEPentity *
 	//std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
 	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
 	if (!bu_strcmp(attr->Name(), "description")) attr->StrToVal("''");
-	if (!bu_strcmp(attr->Name(), "rep_1")) {
-	    attr->ptr.c = new (STEPentity *);
-	    *(attr->ptr.c) = parent;
-	}
-	if (!bu_strcmp(attr->Name(), "rep_2")) {
-	    attr->ptr.c = new (STEPentity *);
-	    *(attr->ptr.c) = child;
-	}
+    }
+    if (!Set_Representation_Relationship_Reference(stepcomplex, "rep_1",
+	    parent, instance_list) ||
+	    !Set_Representation_Relationship_Reference(stepcomplex, "rep_2",
+	    child, instance_list)) {
+	delete complex_entity;
+	return NULL;
     }
 
     /* REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION */
@@ -281,8 +282,8 @@ Build_Representation_Relationship(STEPentity *input_transformation, STEPentity *
     stepcomplex->ResetAttributes();
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	if (!bu_strcmp(attr->Name(), "transformation_operator")) {
-	    SdaiTransformation *transformation = new SdaiTransformation((SdaiItem_defined_transformation *)input_transformation);
-	    attr->ptr.sh = transformation;
+	    SDAI_Select *transformation = attr->Select();
+	    if (transformation) transformation->SetEntity(input_transformation);
 	}
     }
 
@@ -291,70 +292,225 @@ Build_Representation_Relationship(STEPentity *input_transformation, STEPentity *
     return complex_entity;
 }
 
-void
-Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *children,
-	AP203_Contents *sc)
+namespace {
+
+static bool
+union_only_tree(const union tree *node)
 {
-    struct rt_db_internal comb_intern;
-    STEPentity *parent_shape = sc->comb_to_step_shape->find(dp)->second;
-    rt_db_get_internal(&comb_intern, dp, dbip, bn_mat_identity);
-    RT_CK_DB_INTERNAL(&comb_intern);
-    struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
-    for (int j = (int)BU_PTBL_LEN(children) - 1; j >= 0; j--) {
-	STEPentity *orig_transform = Identity_AXIS2_PLACEMENT_3D(sc->registry, sc->instance_list);
-	STEPentity *curr_transform = NULL;
-	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(children, j);
-	STEPentity *child_shape = sc->comb_to_step_shape->find(curr_dp)->second;
-	if (!child_shape)
-	    child_shape = sc->solid_to_step_shape->find(curr_dp)->second;
-	union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
-	matp_t curr_matrix = curr_node->tr_l.tl_mat;
+    if (!node) return false;
+    switch (node->tr_op) {
+	case OP_DB_LEAF:
+	    return true;
+	case OP_UNION:
+	    return union_only_tree(node->tr_b.tb_left) &&
+		union_only_tree(node->tr_b.tb_right);
+	default:
+	    return false;
+    }
+}
+
+static STEPentity *
+mapped_shape(struct directory *dp, AP203_Contents *sc)
+{
+    std::map<struct directory *, STEPentity *>::const_iterator comb =
+	sc->comb_to_step_shape->find(dp);
+    if (comb != sc->comb_to_step_shape->end() && comb->second)
+	return comb->second;
+    std::map<struct directory *, STEPentity *>::const_iterator solid =
+	sc->solid_to_step_shape->find(dp);
+    return solid == sc->solid_to_step_shape->end() ? NULL : solid->second;
+}
+
+static STEPentity *
+mapped_product(struct directory *dp, AP203_Contents *sc)
+{
+    std::map<struct directory *, STEPentity *>::const_iterator comb =
+	sc->comb_to_step->find(dp);
+    if (comb != sc->comb_to_step->end() && comb->second)
+	return comb->second;
+    std::map<struct directory *, STEPentity *>::const_iterator solid =
+	sc->solid_to_step->find(dp);
+    return solid == sc->solid_to_step->end() ? NULL : solid->second;
+}
+
+static bool
+emit_occurrence(struct directory *parent_dp, STEPentity *parent_shape,
+    STEPentity *parent_product, const union tree *node,
+    struct db_i *dbip, AP203_Contents *sc, size_t occurrence_ordinal,
+    size_t &usage_number)
+{
+    struct directory *child_dp = db_lookup(dbip, node->tr_l.tl_name, LOOKUP_QUIET);
+    if (child_dp == RT_DIR_NULL) {
+	bu_log("ERROR: omitting assembly member %s/%s because the child does not exist\n",
+	    parent_dp->d_namep, node->tr_l.tl_name);
+	return false;
+    }
+    STEPentity *child_shape = mapped_shape(child_dp, sc);
+    STEPentity *child_product = mapped_product(child_dp, sc);
+    if (!child_shape || !child_product) {
+	bu_log("ERROR: omitting assembly member %s/%s because the child has "
+	    "no STEP representation\n", parent_dp->d_namep, child_dp->d_namep);
+	return false;
+    }
+
+    STEPentity *curr_transform = NULL;
+    matp_t curr_matrix = node->tr_l.tl_mat;
 	if (curr_matrix) {
-	    //bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
-	    //bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, dp->d_namep);
-	    //bn_mat_print(curr_dp->d_namep, curr_matrix);
-	    curr_transform = Mat_to_Rep(curr_matrix, sc->registry, sc->instance_list);
+	    curr_transform = Mat_to_Rep(curr_matrix, sc->mm_to_length_unit,
+		sc->registry, sc->instance_list);
 	} else {
 	    curr_transform = Identity_AXIS2_PLACEMENT_3D(sc->registry, sc->instance_list);
-	    //bu_log("identity matrix\n");
 	}
-	if (curr_transform) {
-	    SdaiItem_defined_transformation *item_transform = (SdaiItem_defined_transformation *)sc->registry->ObjCreate("ITEM_DEFINED_TRANSFORMATION");
-	    item_transform->name_("''");
-	    item_transform->description_("''");
-	    item_transform->transform_item_1_((SdaiRepresentation_item_ptr)curr_transform);
-	    item_transform->transform_item_2_((SdaiRepresentation_item_ptr)orig_transform);
-	    sc->instance_list->Append((STEPentity *)item_transform, completeSE);
-	    SdaiNext_assembly_usage_occurrence *usage = (SdaiNext_assembly_usage_occurrence *)sc->registry->ObjCreate("NEXT_ASSEMBLY_USAGE_OCCURRENCE");
-	    usage->id_("''");
-	    usage->name_("''");
-	    usage->description_("''");
-	    usage->reference_designator_("''");
-	    usage->relating_product_definition_((SdaiProduct_definition *)sc->comb_to_step->find(dp)->second);
-	    SdaiProduct_definition *child_def = (SdaiProduct_definition *)sc->comb_to_step->find(curr_dp)->second;
-	    if (!child_def)
-		child_def = (SdaiProduct_definition *)sc->solid_to_step->find(curr_dp)->second;
-	    usage->related_product_definition_(child_def);
-	    sc->instance_list->Append((STEPentity *)usage, completeSE);
-	    SdaiProduct_definition_shape *pshape = (SdaiProduct_definition_shape *)sc->registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
-	    pshape->name_("''");
-	    pshape->description_("''");
-	    SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(usage);
-	    SdaiCharacterized_definition *cd = new SdaiCharacterized_definition(cpd);
-	    pshape->definition_(cd);
-	    sc->instance_list->Append((STEPentity *)pshape, completeSE);
-	    STEPentity *rep_rel = Build_Representation_Relationship(item_transform, parent_shape, child_shape, sc->registry, sc->instance_list);
-	    SdaiContext_dependent_shape_representation *cshape = (SdaiContext_dependent_shape_representation *)sc->registry->ObjCreate("CONTEXT_DEPENDENT_SHAPE_REPRESENTATION");
-	    cshape->representation_relation_((SdaiShape_representation_relationship *)rep_rel);
-	    cshape->represented_product_relation_(pshape);
-	    sc->instance_list->Append((STEPentity *)cshape, completeSE);
-	    delete cpd;
-	    delete cd;
-	} else {
-	    bu_log("\nA matrix with a scaling component is present in the following comb relationship:\n  %s/%s\nScaling is not supported by STEP in assembly structures - to export this structure, consider using\npush or xpush to remove the scaling matrices from the hierarchy.\n", dp->d_namep, curr_dp->d_namep);
-	}
+    if (!curr_transform) {
+	bu_log("\nA matrix with a scaling component is present in the following comb relationship:\n  %s/%s\nScaling is not supported by STEP in assembly structures - to export this structure, consider using\npush or xpush to remove the scaling matrices from the hierarchy.\n", parent_dp->d_namep, child_dp->d_namep);
+	return false;
     }
+
+    STEPentity *orig_transform =
+	Identity_AXIS2_PLACEMENT_3D(sc->registry, sc->instance_list);
+    STEPentity *item_transform = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "ITEM_DEFINED_TRANSFORMATION");
+    brlcad::step::SetString(item_transform, "name", "");
+    brlcad::step::SetString(item_transform, "description", "");
+    brlcad::step::SetEntity(item_transform, "transform_item_1", curr_transform);
+    brlcad::step::SetEntity(item_transform, "transform_item_2", orig_transform);
+
+    STEPentity *usage = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "NEXT_ASSEMBLY_USAGE_OCCURRENCE");
+    std::ostringstream occurrence_id;
+    occurrence_id << ++usage_number;
+    brlcad::step::SetString(usage, "id", occurrence_id.str().c_str());
+    brlcad::step::SetString(usage, "name", "");
+    brlcad::step::SetString(usage, "description", "");
+    brlcad::step::SetString(usage, "reference_designator",
+	    occurrence_id.str().c_str());
+    brlcad::step::SetEntity(usage, "relating_product_definition", parent_product);
+    brlcad::step::SetEntity(usage, "related_product_definition", child_product);
+    if (sc->occurrence_to_step)
+	(*sc->occurrence_to_step)[std::make_pair(parent_dp, occurrence_ordinal)] =
+	    usage;
+
+    STEPentity *pshape = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "PRODUCT_DEFINITION_SHAPE");
+    brlcad::step::SetString(pshape, "name", "");
+    brlcad::step::SetString(pshape, "description", "");
+    brlcad::step::SetEntity(pshape, "definition", usage);
+    STEPentity *rep_rel = Build_Representation_Relationship(item_transform,
+	parent_shape, child_shape, sc->registry, sc->instance_list);
+    if (!rep_rel) {
+	bu_log("ERROR: could not create the representation relationship for %s/%s\n",
+	    parent_dp->d_namep, child_dp->d_namep);
+	return false;
+    }
+    STEPentity *cshape = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "CONTEXT_DEPENDENT_SHAPE_REPRESENTATION");
+    brlcad::step::SetEntity(cshape, "representation_relation", rep_rel);
+    brlcad::step::SetEntity(cshape, "represented_product_relation", pshape);
+    return true;
+}
+
+static bool
+emit_representation_membership(struct directory *parent_dp,
+    STEPentity *parent_shape, const union tree *node, struct db_i *dbip,
+    AP203_Contents *sc)
+{
+    struct directory *child_dp = db_lookup(dbip, node->tr_l.tl_name,
+	LOOKUP_QUIET);
+    STEPentity *child_shape = child_dp == RT_DIR_NULL ? NULL :
+	mapped_shape(child_dp, sc);
+    if (!child_shape) {
+	bu_log("ERROR: omitting product representation member %s/%s because "
+	    "the child has no STEP shape representation\n", parent_dp->d_namep,
+	    node->tr_l.tl_name);
+	return false;
+    }
+
+    if (!node->tr_l.tl_mat || bn_mat_is_identity(node->tr_l.tl_mat))
+	return Add_Shape_Representation_Relationship(sc, parent_shape,
+	    child_shape) != NULL;
+
+    STEPentity *member_axis = node->tr_l.tl_mat ?
+	Mat_to_Rep(node->tr_l.tl_mat, sc->mm_to_length_unit,
+	    sc->registry, sc->instance_list) :
+	Identity_AXIS2_PLACEMENT_3D(sc->registry, sc->instance_list);
+    STEPentity *representation_axis =
+	Identity_AXIS2_PLACEMENT_3D(sc->registry, sc->instance_list);
+    if (!member_axis || !representation_axis) {
+	bu_log("ERROR: product representation member %s/%s has a transform "
+	    "which STEP representation relationships cannot preserve\n",
+	    parent_dp->d_namep, child_dp->d_namep);
+	return false;
+    }
+    STEPentity *transformation = brlcad::step::CreateEntity(sc->registry,
+	sc->instance_list, "ITEM_DEFINED_TRANSFORMATION");
+    brlcad::step::SetString(transformation, "name", "");
+    brlcad::step::SetString(transformation, "description", "");
+    brlcad::step::SetEntity(transformation, "transform_item_1", member_axis);
+    brlcad::step::SetEntity(transformation, "transform_item_2",
+	representation_axis);
+    return Build_Representation_Relationship(transformation, parent_shape,
+	child_shape, sc->registry, sc->instance_list) != NULL;
+}
+
+static bool
+emit_union_tree(struct directory *parent_dp, STEPentity *parent_shape,
+    STEPentity *parent_product, const union tree *node,
+    struct db_i *dbip, AP203_Contents *sc, size_t &occurrence_ordinal,
+    size_t &usage_number)
+{
+    if (node->tr_op == OP_DB_LEAF) {
+	const size_t ordinal = ++occurrence_ordinal;
+	const bool representation_membership =
+	    sc->representation_memberships &&
+	    sc->representation_memberships->find(
+		std::make_pair(parent_dp, ordinal)) !=
+		sc->representation_memberships->end();
+	if (representation_membership)
+	    return emit_representation_membership(parent_dp, parent_shape, node,
+		dbip, sc);
+	return emit_occurrence(parent_dp, parent_shape, parent_product, node,
+	    dbip, sc, ordinal, usage_number);
+    }
+    bool left = emit_union_tree(parent_dp, parent_shape, parent_product,
+	node->tr_b.tb_left, dbip, sc, occurrence_ordinal, usage_number);
+    bool right = emit_union_tree(parent_dp, parent_shape, parent_product,
+	node->tr_b.tb_right, dbip, sc, occurrence_ordinal, usage_number);
+    return left && right;
+}
+
+} // namespace
+
+bool
+Add_Assembly_Product(struct directory *dp, struct db_i *dbip, AP203_Contents *sc)
+{
+    std::map<struct directory *, STEPentity *>::const_iterator parent_entry =
+	sc->comb_to_step_shape->find(dp);
+    STEPentity *parent_product = mapped_product(dp, sc);
+    if (parent_entry == sc->comb_to_step_shape->end() || !parent_entry->second ||
+	!parent_product) {
+	bu_log("ERROR: assembly %s has no STEP product or shape representation\n",
+	    dp->d_namep);
+	return false;
+    }
+
+    struct rt_db_internal comb_intern;
+    if (rt_db_get_internal(&comb_intern, dp, dbip, bn_mat_identity) < 0)
+	return false;
+    RT_CK_DB_INTERNAL(&comb_intern);
+    struct rt_comb_internal *comb =
+	(struct rt_comb_internal *)(comb_intern.idb_ptr);
+    if (!union_only_tree(comb->tree)) {
+	bu_log("WARNING: assembly relationships for %s were omitted because its "
+	    "boolean tree is not union-only\n", dp->d_namep);
+	rt_db_free_internal(&comb_intern);
+	return false;
+    }
+    size_t occurrence_ordinal = 0;
+    size_t usage_number = 0;
+    bool result = emit_union_tree(dp, parent_entry->second, parent_product,
+	comb->tree, dbip, sc, occurrence_ordinal, usage_number);
     rt_db_free_internal(&comb_intern);
+    return result;
 }
 
 // Local Variables:

@@ -40,6 +40,7 @@ class GeometricSet: public GeometricRepresentationItem
 {
 private:
     static string entityname;
+    static string curve_entityname;
     static EntityInstanceFunc GetInstance;
 
 protected:

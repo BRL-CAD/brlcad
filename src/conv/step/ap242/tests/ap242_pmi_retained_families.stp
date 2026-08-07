@@ -1,0 +1,279 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('BRL-CAD owned AP242 retained presentation families'),'2;1');
+FILE_NAME('ap242_pmi_retained_families.stp','2026-08-05T00:00:00',('BRL-CAD'),('BRL-CAD'),'','','');
+FILE_SCHEMA(('AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF'));
+ENDSEC;
+DATA;
+#1=CARTESIAN_POINT('',(0.,0.,0.));
+#2=DIRECTION('',(0.,0.,1.));
+#3=DIRECTION('',(1.,0.,0.));
+#4=AXIS2_PLACEMENT_3D('',#1,#2,#3);
+#5=BLOCK('fixture block',#4,40.,30.,2.);
+#6=CSG_SOLID('retained family geometry',#5);
+
+#10=(LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.));
+#11=(NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.));
+#12=(NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT());
+#13=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(0.001),#10,'distance_accuracy_value','maximum gap value');
+#14=(GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#13)) GLOBAL_UNIT_ASSIGNED_CONTEXT((#10,#11,#12)) REPRESENTATION_CONTEXT('fixture','3D'));
+#15=(GEOMETRIC_REPRESENTATION_CONTEXT(2) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#13)) GLOBAL_UNIT_ASSIGNED_CONTEXT((#10,#11,#12)) REPRESENTATION_CONTEXT('presentation','2D'));
+#16=CSG_SHAPE_REPRESENTATION('',(#6),#14);
+#20=APPLICATION_CONTEXT('managed model based 3D engineering');
+#21=PRODUCT_CONTEXT('',#20,'mechanical');
+#22=PRODUCT_DEFINITION_CONTEXT('part definition',#20,'design');
+#23=PRODUCT('ap242_pmi_retained_families','AP242 PMI Retained Families','BRL-CAD owned retained presentation fixture',(#21));
+#24=PRODUCT_DEFINITION_FORMATION('1','initial revision',#23);
+#25=PRODUCT_DEFINITION('design','owned retained presentation definition',#24,#22);
+#26=PRODUCT_DEFINITION_SHAPE('','',#25);
+#27=PROPERTY_DEFINITION_REPRESENTATION(#26,#16);
+
+#30=PLANE('retained annotation plane',#4);
+#31=COLOUR_RGB('PMI black',0.,0.,0.);
+#32=FILL_AREA_STYLE_COLOUR('',#31);
+#33=FILL_AREA_STYLE('solid fill',(#32));
+#34=PRESENTATION_STYLE_ASSIGNMENT((#33));
+#35=TEXT_STYLE_FOR_DEFINED_FONT(#31);
+#36=TEXT_STYLE('OSIFont text',#35);
+#37=PRESENTATION_STYLE_ASSIGNMENT((#36));
+#38=PRESENTATION_STYLE_ASSIGNMENT((.NULL.));
+#39=PRE_DEFINED_TEXT_FONT('osifont');
+
+/* A fill with an outer square and a square hole. */
+#40=CARTESIAN_POINT('',(3.,3.,0.));
+#41=CARTESIAN_POINT('',(17.,3.,0.));
+#42=CARTESIAN_POINT('',(17.,17.,0.));
+#43=CARTESIAN_POINT('',(3.,17.,0.));
+#44=POLYLINE('',(#40,#41,#42,#43,#40));
+#45=CARTESIAN_POINT('',(7.,7.,0.));
+#46=CARTESIAN_POINT('',(7.,13.,0.));
+#47=CARTESIAN_POINT('',(13.,13.,0.));
+#48=CARTESIAN_POINT('',(13.,7.,0.));
+#49=POLYLINE('',(#45,#46,#47,#48,#45));
+#50=ANNOTATION_FILL_AREA('owned fill area',(#44,#49));
+#51=CARTESIAN_POINT('',(10.,10.,0.));
+#52=ANNOTATION_FILL_AREA_OCCURRENCE('owned fill occurrence',(#34),#50,#51);
+
+/* Mapped text with a rotated target. */
+#60=CARTESIAN_POINT('',(0.,0.));
+#61=DIRECTION('',(1.,0.));
+#62=AXIS2_PLACEMENT_2D('',#60,#61);
+#63=CARTESIAN_POINT('',(1.,1.));
+#64=AXIS2_PLACEMENT_2D('',#63,#61);
+#65=PLANAR_EXTENT('mapped text extent',10.,3.5);
+#66=TEXT_LITERAL_WITH_EXTENT('mapped literal','MAPPED',#64,'baseline left',.RIGHT.,#39,#65);
+#67=TEXT_STRING_REPRESENTATION('mapped text source',(#62,#66),#15);
+#68=REPRESENTATION_MAP(#62,#67);
+#69=CARTESIAN_POINT('',(24.,5.));
+#70=DIRECTION('',(0.,1.));
+#71=AXIS2_PLACEMENT_2D('',#69,#70);
+#72=ANNOTATION_TEXT('owned mapped text',#68,#71);
+#73=ANNOTATION_TEXT_OCCURRENCE('owned mapped text occurrence',(#37),#72);
+
+/* A pre-defined symbol uses OSIFont and retains its AP242 symbol name. */
+#80=PRE_DEFINED_DIMENSION_SYMBOL('diameter');
+#81=CARTESIAN_POINT('',(24.,14.));
+#82=AXIS2_PLACEMENT_2D('',#81,#61);
+#83=SYMBOL_TARGET('diameter target',#82,1.5,0.75);
+#84=DEFINED_SYMBOL('owned diameter symbol',#80,#83);
+#85=ANNOTATION_SYMBOL_OCCURRENCE('owned defined symbol occurrence',(#38),#84);
+
+/* A mapped geometric symbol exercises symbol_representation_map and target
+ * anisotropic scaling. */
+#90=CARTESIAN_POINT('',(0.,0.));
+#91=CARTESIAN_POINT('',(4.,0.));
+#92=CARTESIAN_POINT('',(2.,4.));
+#93=POLYLINE('',(#90,#91,#92,#90));
+#94=SYMBOL_REPRESENTATION('triangle symbol source',(#62,#93),#15);
+#95=SYMBOL_REPRESENTATION_MAP(#62,#94);
+#96=CARTESIAN_POINT('',(31.,14.));
+#97=AXIS2_PLACEMENT_2D('',#96,#61);
+#98=SYMBOL_TARGET('triangle target',#97,1.25,0.5);
+#99=ANNOTATION_SYMBOL('owned mapped triangle',#95,#98);
+#100=ANNOTATION_SYMBOL_OCCURRENCE('owned mapped symbol occurrence',(#38),#99);
+
+/* A mapped character stroke representation. */
+#110=CARTESIAN_POINT('',(0.,0.));
+#111=CARTESIAN_POINT('',(2.,5.));
+#112=CARTESIAN_POINT('',(4.,0.));
+#113=POLYLINE('',(#110,#111,#112));
+#114=PLANAR_EXTENT('glyph box',4.,5.);
+#115=CHARACTER_GLYPH_SYMBOL_STROKE('owned stroke glyph',(#62,#113,#114),#15,#114,0.2,(#113));
+#116=REPRESENTATION_MAP(#62,#115);
+#117=CARTESIAN_POINT('',(31.,5.));
+#118=AXIS2_PLACEMENT_2D('',#117,#61);
+#119=ANNOTATION_TEXT_CHARACTER('owned mapped character',#116,#118,'baseline centre');
+#120=ANNOTATION_TEXT_OCCURRENCE('owned character occurrence',(#37),#119);
+
+/* The remaining AP242 dimension-two fill boundaries are deliberately owned
+ * here rather than relying on examples appearing in an external corpus. */
+#140=CARTESIAN_POINT('',(22.,23.,0.));
+#141=AXIS2_PLACEMENT_3D('',#140,#2,#3);
+#142=ELLIPSE('owned ellipse fill boundary',#141,4.,2.);
+#143=ANNOTATION_FILL_AREA('owned ellipse fill area',(#142));
+#144=CARTESIAN_POINT('',(22.,23.,0.));
+#145=ANNOTATION_FILL_AREA_OCCURRENCE('owned ellipse fill occurrence',(#34),#143,#144);
+
+#150=CARTESIAN_POINT('',(29.,20.,0.));
+#151=CARTESIAN_POINT('',(36.,20.,0.));
+#152=CARTESIAN_POINT('',(36.,26.,0.));
+#153=CARTESIAN_POINT('',(29.,26.,0.));
+#154=B_SPLINE_CURVE_WITH_KNOTS('owned closed spline fill boundary',1,(#150,#151,#152,#153,#150),.POLYLINE_FORM.,.T.,.F.,(2,1,1,1,2),(0.,1.,2.,3.,4.),.UNSPECIFIED.);
+#155=ANNOTATION_FILL_AREA('owned spline fill area',(#154));
+#156=CARTESIAN_POINT('',(32.,23.,0.));
+#157=ANNOTATION_FILL_AREA_OCCURRENCE('owned spline fill occurrence',(#34),#155,#156);
+
+#160=CARTESIAN_POINT('',(3.,21.,0.));
+#161=CARTESIAN_POINT('',(9.,21.,0.));
+#162=CARTESIAN_POINT('',(9.,27.,0.));
+#163=CARTESIAN_POINT('',(3.,27.,0.));
+#164=POLYLINE('',(#160,#161));
+#165=POLYLINE('',(#161,#162));
+#166=POLYLINE('',(#162,#163));
+#167=POLYLINE('',(#163,#160));
+#168=COMPOSITE_CURVE_SEGMENT(.CONTINUOUS.,.T.,#164);
+#169=COMPOSITE_CURVE_SEGMENT(.CONTINUOUS.,.T.,#165);
+#170=COMPOSITE_CURVE_SEGMENT(.CONTINUOUS.,.T.,#166);
+#171=COMPOSITE_CURVE_SEGMENT(.CONTINUOUS.,.T.,#167);
+#172=COMPOSITE_CURVE('owned closed composite fill boundary',(#168,#169,#170,#171),.F.);
+#173=ANNOTATION_FILL_AREA('owned composite fill area',(#172));
+#174=CARTESIAN_POINT('',(6.,24.,0.));
+#175=ANNOTATION_FILL_AREA_OCCURRENCE('owned composite fill occurrence',(#34),#173,#174);
+
+/* Retained text subtypes which are not present in the NIST corpus.  The
+ * blanking box must become a native mask behind its OSIFont text; the
+ * associated curve must remain visible as part of the same annotation. */
+#180=CARTESIAN_POINT('',(12.,27.));
+#181=AXIS2_PLACEMENT_2D('',#180,#61);
+#182=PLANAR_BOX('owned text blanking box',8.,3.,#181);
+#183=TEXT_LITERAL_WITH_BLANKING_BOX('owned masked literal','MASK',#181,'baseline left',.RIGHT.,#39,#182);
+#184=ANNOTATION_TEXT_OCCURRENCE('owned masked text occurrence',(#37),#183);
+
+#185=CARTESIAN_POINT('',(22.,28.));
+#186=AXIS2_PLACEMENT_2D('',#185,#61);
+#187=CARTESIAN_POINT('',(21.,27.,0.));
+#188=CARTESIAN_POINT('',(25.,27.,0.));
+#189=POLYLINE('owned text associated curve',(#187,#188));
+#190=TEXT_LITERAL_WITH_ASSOCIATED_CURVES('owned curved literal','CURVE',#186,'baseline left',.RIGHT.,#39,(#189));
+#191=ANNOTATION_TEXT_OCCURRENCE('owned associated curve text occurrence',(#37),#190);
+
+/* Concrete occurrence subtypes are schema families in their own right. */
+#200=DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');
+#201=CURVE_STYLE('owned black continuous',#200,POSITIVE_LENGTH_MEASURE(0.25),#31);
+#202=PRESENTATION_STYLE_ASSIGNMENT((#201));
+#203=PLANAR_BOX('owned bounded annotation plane',40.,30.,#4);
+#204=LEADER_CURVE('owned direct leader curve',(#202),#189);
+#205=PRE_DEFINED_TERMINATOR_SYMBOL('filled arrow');
+#206=CARTESIAN_POINT('',(21.,27.));
+#207=AXIS2_PLACEMENT_2D('',#206,#61);
+#208=SYMBOL_TARGET('owned terminator target',#207,1.5,1.0);
+#209=DEFINED_SYMBOL('owned filled arrow',#205,#208);
+#210=LEADER_TERMINATOR('owned leader terminator',(#38),#209,#204);
+#211=GEOMETRIC_SET('owned placeholder geometry',(#189));
+#212=ANNOTATION_PLACEHOLDER_OCCURRENCE('owned annotation placeholder',(#202),#211,.ANNOTATION_TEXT.,4.);
+
+/* Every composite-text presentation extension, plus literal delineation. */
+#220=CARTESIAN_POINT('',(4.,29.));
+#221=AXIS2_PLACEMENT_2D('',#220,#61);
+#222=TEXT_LITERAL('owned composite child A','A',#221,'baseline left',.RIGHT.,#39);
+#223=CARTESIAN_POINT('',(6.,29.));
+#224=AXIS2_PLACEMENT_2D('',#223,#61);
+#225=TEXT_LITERAL('owned composite child B','B',#224,'baseline left',.RIGHT.,#39);
+#226=COMPOSITE_TEXT_WITH_DELINEATION('owned composite overline',(#222,#225),'overline');
+#227=ANNOTATION_TEXT_OCCURRENCE('owned composite overline occurrence',(#37),#226);
+#228=PLANAR_BOX('owned composite blanking box',6.,3.,#221);
+#229=COMPOSITE_TEXT_WITH_BLANKING_BOX('owned composite blanking text',(#222,#225),#228);
+#230=ANNOTATION_TEXT_OCCURRENCE('owned composite blanking occurrence',(#37),#229);
+#231=COMPOSITE_TEXT_WITH_ASSOCIATED_CURVES('owned composite associated curves',(#222,#225),(#189));
+#232=ANNOTATION_TEXT_OCCURRENCE('owned composite curve occurrence',(#37),#231);
+#233=PLANAR_EXTENT('owned composite extent',6.,3.);
+#234=COMPOSITE_TEXT_WITH_EXTENT('owned composite extent text',(#222,#225),#233);
+#235=ANNOTATION_TEXT_OCCURRENCE('owned composite extent occurrence',(#37),#234);
+#236=CARTESIAN_POINT('',(28.,28.));
+#237=AXIS2_PLACEMENT_2D('',#236,#61);
+#238=TEXT_LITERAL_WITH_DELINEATION('owned underlined literal','UNDER',#237,'baseline left',.RIGHT.,#39,'underline');
+#239=ANNOTATION_TEXT_OCCURRENCE('owned underlined literal occurrence',(#37),#238);
+
+/* Retained mapped representations may themselves contain occurrence objects
+ * instead of raw curves and literals.  Exercise both permitted families,
+ * including the callout nesting required by an annotation subfigure. */
+#240=CARTESIAN_POINT('',(0.,0.));
+#241=CARTESIAN_POINT('',(4.,0.));
+#242=POLYLINE('owned nested occurrence line',(#240,#241));
+#243=ANNOTATION_CURVE_OCCURRENCE('owned nested curve occurrence',(#202),#242);
+#244=CARTESIAN_POINT('',(0.,1.));
+#245=AXIS2_PLACEMENT_2D('',#244,#61);
+#246=TEXT_LITERAL_WITH_EXTENT('owned nested text','NEST',#245,'baseline left',.RIGHT.,#39,#65);
+#247=ANNOTATION_TEXT_OCCURRENCE('owned nested text occurrence',(#37),#246);
+#290=DRAUGHTING_PRE_DEFINED_CURVE_FONT('dashed');
+#291=CURVE_STYLE('owned dashed line',#290,POSITIVE_LENGTH_MEASURE(0.4),#31);
+#292=PRESENTATION_STYLE_ASSIGNMENT((#291));
+#293=ANNOTATION_CURVE_OCCURRENCE('owned dashed nested curve',(#292),#242);
+#248=DRAUGHTING_SYMBOL_REPRESENTATION('owned occurrence symbol source',(#62,#243,#247,#293),#15);
+#249=SYMBOL_REPRESENTATION_MAP(#62,#248);
+#250=CARTESIAN_POINT('',(2.,18.));
+#251=AXIS2_PLACEMENT_2D('',#250,#61);
+#252=SYMBOL_TARGET('owned occurrence symbol target',#251,1.,1.);
+#253=ANNOTATION_SYMBOL('owned occurrence symbol',#249,#252);
+#254=ANNOTATION_SYMBOL_OCCURRENCE('owned occurrence symbol occurrence',(#38),#253);
+
+#260=LEADER_DIRECTED_CALLOUT('owned nested subfigure callout',(#243,#247));
+#261=DRAUGHTING_SUBFIGURE_REPRESENTATION('owned subfigure source',(#62,#260),#15);
+#262=SYMBOL_REPRESENTATION_MAP(#62,#261);
+#263=CARTESIAN_POINT('',(20.,18.));
+#264=AXIS2_PLACEMENT_2D('',#263,#61);
+#265=SYMBOL_TARGET('owned subfigure target',#264,1.,1.);
+#266=ANNOTATION_SYMBOL('owned mapped subfigure',#262,#265);
+#267=ANNOTATION_SUBFIGURE_OCCURRENCE('owned subfigure occurrence',(#38),#266);
+
+/* The stroke and outline glyph representations have different retained item
+ * families.  A defined glyph is a third path and must become OSIFont text. */
+#270=CARTESIAN_POINT('',(0.,0.));
+#271=CARTESIAN_POINT('',(3.,0.));
+#272=CARTESIAN_POINT('',(3.,3.));
+#273=CARTESIAN_POINT('',(0.,3.));
+#274=POLYLINE('owned glyph outline boundary',(#270,#271,#272,#273,#270));
+#275=ANNOTATION_FILL_AREA('owned glyph outline fill',(#274));
+#276=PLANAR_EXTENT('owned outline glyph box',3.,3.);
+#277=CHARACTER_GLYPH_SYMBOL_OUTLINE('owned outline glyph',(#62,#275,#276),#15,#276,0.2,(#275));
+#278=REPRESENTATION_MAP(#62,#277);
+#279=CARTESIAN_POINT('',(34.,28.));
+#280=AXIS2_PLACEMENT_2D('',#279,#61);
+#281=ANNOTATION_TEXT_CHARACTER('owned mapped outline character',#278,#280,'baseline centre');
+#282=ANNOTATION_TEXT_OCCURRENCE('owned outline character occurrence',(#37),#281);
+#283=PRE_DEFINED_CHARACTER_GLYPH('plus minus');
+#284=CARTESIAN_POINT('',(38.,28.));
+#285=AXIS2_PLACEMENT_2D('',#284,#61);
+#286=DEFINED_CHARACTER_GLYPH('owned defined character glyph',#283,#285);
+#287=ANNOTATION_TEXT_OCCURRENCE('owned defined glyph occurrence',(#37),#286);
+
+/* GPS-data placeholders obtain their actual note text through the retained
+ * draughting model item association, not from a text_literal. */
+#300=PROPERTY_DEFINITION('semantic text','',#26);
+#301=DESCRIPTIVE_REPRESENTATION_ITEM('','OWNED SEMANTIC');
+#302=DESCRIPTIVE_REPRESENTATION_ITEM('','/n');
+#303=DESCRIPTIVE_REPRESENTATION_ITEM('','NOTE THIS OWNED ANNOTATION STRING IS DELIBERATELY LONGER THAN THE HISTORICAL DESCRIPTION SCRATCH BUFFER SO VERBOSE DATABASE INSPECTION EXERCISES DYNAMIC TEXT FORMATTING. IT ALSO CONFIRMS THAT LONG MULTILINE DRAWING NOTES REMAIN INTACT WHILE OSIFONT OUTLINES ARE GENERATED FOR DISPLAY. THE REMAINDER OF THIS SENTENCE PROVIDES ENOUGH DATA TO CROSS THE TWO HUNDRED AND FIFTY SIX BYTE BOUNDARY WITHOUT RELYING ON AN EXTERNAL CORPUS.');
+#304=REPRESENTATION('owned semantic note',(#301,#302,#303),#14);
+#305=PROPERTY_DEFINITION_REPRESENTATION(#300,#304);
+#306=CARTESIAN_POINT('',(12.,18.,0.));
+#307=AXIS2_PLACEMENT_3D('owned semantic note frame',#306,#2,#3);
+#308=GEOMETRIC_SET('owned semantic note placeholder',(#307));
+#309=ANNOTATION_PLACEHOLDER_OCCURRENCE('owned semantic note',(#202),#308,.GPS_DATA.,3.5);
+
+/* A placement may be retained placeholder geometry rather than a text frame.
+ * Its X axis is normal to the annotation plane, so its 2D projection is
+ * deliberately singular.  A strict importer must preserve the sibling
+ * presentation without treating this valid placeholder as corrupt. */
+#311=CARTESIAN_POINT('',(18.,18.,0.));
+#312=DIRECTION('',(0.,1.,0.));
+#313=AXIS2_PLACEMENT_3D('owned retained-only placement',#311,#3,#2);
+#314=GEOMETRIC_SET('owned retained-only placeholder',(#313));
+#315=ANNOTATION_PLACEHOLDER_OCCURRENCE('owned singular retained placeholder',(#202),#314,.GPS_DATA.,3.5);
+
+#130=LEADER_DIRECTED_CALLOUT('owned retained family callout',(#52,#73,#85,#100,#120,#145,#157,#175,#184,#191,#204,#210,#212,#227,#230,#232,#235,#239,#254,#267,#282,#287,#309,#315));
+#131=ANNOTATION_PLANE('owned retained family plane',(#202),#203,(#130));
+#132=DRAUGHTING_MODEL('owned retained family model',(#130,#131),#14);
+#133=MECHANICAL_DESIGN_AND_DRAUGHTING_RELATIONSHIP('','',#132,#16);
+#310=DRAUGHTING_MODEL_ITEM_ASSOCIATION_WITH_PLACEHOLDER('owned semantic text link','',#300,#132,#130,#309);
+ENDSEC;
+END-ISO-10303-21;

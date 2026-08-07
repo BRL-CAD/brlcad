@@ -103,7 +103,7 @@ IntersectionCurve::LoadONBrep(ON_Brep *brep)
     curve_3d->End(end);
 
     status = curve_3d->LoadONBrep(brep);
-    ON_id = curve_3d->GetONId();
+    SetONId(curve_3d->GetONId());
 
     return status;
 }

@@ -47,6 +47,7 @@
 #include <STEPcomplex.h>
 #include <STEPfile.h>
 
+#include "schema.h"
 #include "SdaiIFC4.h"
 
 #define IFC_LOADED 1

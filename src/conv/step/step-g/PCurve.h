@@ -52,6 +52,10 @@ public:
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual const double *PointAtEnd();
     virtual const double *PointAtStart();
+    Surface *BasisSurface() const { return basis_surface; }
+    DefinitionalRepresentation *ReferenceToCurve() const {
+	return reference_to_curve;
+    }
     virtual void Print(int level);
 
     //static methods

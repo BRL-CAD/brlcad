@@ -28,17 +28,41 @@
 
 /* implementation headers */
 #include "STEPEntity.h"
-
-#include "ap_schema.h"
+#include "PCurve.h"
+#include "SurfaceCurve.h"
 
 #define CLASSNAME "Factory"
-const char *Factory::factoryname = "AP203e2 Object Factory";
+const char *Factory::factoryname = "STEP Object Factory";
 Factory::OBJECTS Factory::objects;
 Factory::UNMAPPED_OBJECTS Factory::unmapped_objects;
 int Factory::vertex_count = 0;
 VECTOR_OF_OBJECTS Factory::vertices;
 Factory::ID_TO_INDEX_MAP Factory::vertex_to_index;
 Factory::INDEX_TO_ID_MAP Factory::vertex_index_to_id;
+
+static bool
+is_schema_entity(STEPWrapper *wrapper, SDAI_Application_instance *instance,
+    const char *name)
+{
+    const EntityDescriptor *descriptor = wrapper ? wrapper->SchemaEntity(name) : NULL;
+    return instance && descriptor && instance->IsA(descriptor);
+}
+
+
+static void
+report_unmapped_factory(STEPWrapper *wrapper,
+    const std::string &methodname)
+{
+    if (wrapper) {
+	/* Factory availability is type-wide, not instance-specific.  Entity zero
+	 * lets repeated lazy materializations increment one bounded diagnostic. */
+	wrapper->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Warning,
+	    0, methodname, "factory",
+	    "no converter factory is registered for this entity type");
+	return;
+    }
+    std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+}
 
 
 Factory::Factory()
@@ -91,21 +115,27 @@ Factory::CreateObject(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (sse->IsComplex()) {
 	//std::cout << "Complex Entity Instance Name:" << sse->EntityName() << " ID:"
 	//		<< sse->STEPfile_id << std::endl;
-	if (sse->IsA(SCHEMA_NAMESPACE::e_b_spline_curve)) {
+	if (is_schema_entity(sw, sse, "B_SPLINE_CURVE")) {
 	    return (STEPEntity *)CreateCurveObject(sw, sse);
-	} else if (sse->IsA(SCHEMA_NAMESPACE::e_b_spline_surface)) {
+	} else if (is_schema_entity(sw, sse, "B_SPLINE_SURFACE")) {
 	    return (STEPEntity *)CreateSurfaceObject(sw, sse);
-	} else if (sse->IsA(SCHEMA_NAMESPACE::e_named_unit)) {
+	} else if (is_schema_entity(sw, sse, "NAMED_UNIT")) {
 	    return (STEPEntity *)CreateNamedUnitObject(sw, sse);
-	} else if (sse->IsA(SCHEMA_NAMESPACE::e_surface_curve)) {
-	    /*
-	     * ONEOF (
-	     INTERSECTION_CURVE,
-	     SEAM_CURVE)
-	     ANDOR
-	     BOUNDED_SURFACE_CURVE
-	    */
-	} else if (sse->IsA(SCHEMA_NAMESPACE::e_topological_representation_item)) {
+	} else if (is_schema_entity(sw, sse, "SURFACE_CURVE")) {
+	    /* Part 42 represents a bounded surface curve as a complex instance
+	     * combining BOUNDED_CURVE and SURFACE_CURVE.  The surface-curve
+	     * wrapper already forwards EDGE_CURVE endpoint trimming to its exact
+	     * curve_3d and retains the associated pcurves; selecting the incomplete
+	     * BoundedSurfaceCurve conversion here would discard that working
+	     * implementation. */
+	    return SurfaceCurve::Create(sw, sse);
+	} else if (is_schema_entity(sw, sse, "PCURVE")) {
+	    /* The analogous Part 42 BOUNDED_PCURVE complex adds no geometry
+	     * attributes beyond PCURVE and BOUNDED_CURVE.  PCurve already retains
+	     * its bounded definitional-representation item, so use that complete
+	     * adapter instead of rejecting the legal complex instance. */
+	    return PCurve::Create(sw, sse);
+	} else if (is_schema_entity(sw, sse, "TOPOLOGICAL_REPRESENTATION_ITEM")) {
 	    //loop_path;
 	    /*
 	     * ONEOF (
@@ -121,10 +151,10 @@ Factory::CreateObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 	     ANDOR
 	     PATH))
 	    */
-	} else if (sse->IsA(SCHEMA_NAMESPACE::e_shape_representation_relationship)) {
+	} else if (is_schema_entity(sw, sse, "SHAPE_REPRESENTATION_RELATIONSHIP")) {
 	    // not sure why complex here
 	    return (STEPEntity *)CreateShapeRepresentationRelationshipObject(sw, sse);
-	} else if (sse->IsA(SCHEMA_NAMESPACE::e_representation_context)) {
+	} else if (is_schema_entity(sw, sse, "REPRESENTATION_CONTEXT")) {
 	    // not sure why complex here
 	    return (STEPEntity *)CreateRepresentationContext(sw, sse);
 	} else {
@@ -134,7 +164,7 @@ Factory::CreateObject(STEPWrapper *sw, SDAI_Application_instance *sse)
     } else {
 	//std::cout << "Getting Factory Method for:" << methodname << std::endl;
 	if ((i = methodmap.find(methodname)) == methodmap.end()) {
-	    std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+	    report_unmapped_factory(sw, methodname);
 	    return NULL;
 	}
 	f = (*i).second;
@@ -166,37 +196,37 @@ Factory::CreateCurveObject(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (sse->IsComplex()) {
 	//std::cout << "Complex Entity Instance Name:" << sse->EntityName() << " ID:"
 	//		<< sse->STEPfile_id << std::endl;
-	if (sse->IsA(SCHEMA_NAMESPACE::e_b_spline_curve)) {
-	    if (sse->IsA(SCHEMA_NAMESPACE::e_rational_b_spline_curve)) {
-		if (sse->IsA(SCHEMA_NAMESPACE::e_uniform_curve)) {
+	if (is_schema_entity(sw, sse, "B_SPLINE_CURVE")) {
+	    if (is_schema_entity(sw, sse, "RATIONAL_B_SPLINE_CURVE")) {
+		if (is_schema_entity(sw, sse, "UNIFORM_CURVE")) {
 		    methodname = "Rational_Uniform_Curve";
 		    //std::cout << "   Entity of type:rational_uniform_curve" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_quasi_uniform_curve)) {
+		} else if (is_schema_entity(sw, sse, "QUASI_UNIFORM_CURVE")) {
 		    methodname = "Rational_Quasi_Uniform_Curve";
 		    //std::cout << "   Entity of type:rational_quasi_uniform_curve" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_bezier_curve)) {
+		} else if (is_schema_entity(sw, sse, "BEZIER_CURVE")) {
 		    methodname = "Rational_Bezier_Curve";
 		    //std::cout << "   Entity of type:rational_bezier_curve" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_b_spline_curve_with_knots)) {
+		} else if (is_schema_entity(sw, sse, "B_SPLINE_CURVE_WITH_KNOTS")) {
 		    methodname = "Rational_B_Spline_Curve_With_Knots";
 		    //std::cout << "   Entity of type:rational_b_spline_curve_with_knots" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
@@ -213,7 +243,7 @@ Factory::CreateCurveObject(STEPWrapper *sw, SDAI_Application_instance *sse)
     } else {
 	//std::cout << "Getting Factory Method for:" << methodname << std::endl;
 	if ((i = methodmap.find(methodname)) == methodmap.end()) {
-	    std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+	    report_unmapped_factory(sw, methodname);
 	    return NULL;
 	}
 	f = (*i).second;
@@ -246,318 +276,306 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (sse->IsComplex()) {
 	//std::cout << "Complex Entity Instance Name:" << sse->EntityName() << " ID:"
 	//		<< sse->STEPfile_id << std::endl;
-	if (sse->IsA(SCHEMA_NAMESPACE::e_named_unit)) {
-	    if (sse->IsA(SCHEMA_NAMESPACE::e_si_unit)) {
-		if (sse->IsA(SCHEMA_NAMESPACE::e_length_unit)) {
+	if (is_schema_entity(sw, sse, "NAMED_UNIT")) {
+	    if (is_schema_entity(sw, sse, "SI_UNIT")) {
+		if (is_schema_entity(sw, sse, "LENGTH_UNIT")) {
 		    methodname = "Length_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_mass_unit)) {
+		} else if (is_schema_entity(sw, sse, "MASS_UNIT")) {
 		    methodname = "Mass_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e2
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_time_unit)) {
+		} else if (is_schema_entity(sw, sse, "TIME_UNIT")) {
 		    methodname = "Time_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_electric_current_unit)) {
+		} else if (is_schema_entity(sw, sse, "ELECTRIC_CURRENT_UNIT")) {
 		    methodname = "Electric_Current_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_thermodynamic_temperature_unit)) {
+		} else if (is_schema_entity(sw, sse, "THERMODYNAMIC_TEMPERATURE_UNIT")) {
 		    methodname = "Thermodynamic_Temperature_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_amount_of_substance_unit)) {
+		} else if (is_schema_entity(sw, sse, "AMOUNT_OF_SUBSTANCE_UNIT")) {
 		    methodname = "Amount_Of_Substance_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_luminous_intensity_unit)) {
+		} else if (is_schema_entity(sw, sse, "LUMINOUS_INTENSITY_UNIT")) {
 		    methodname = "Luminous_Intensity_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-#endif
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_plane_angle_unit)) {
+		} else if (is_schema_entity(sw, sse, "PLANE_ANGLE_UNIT")) {
 		    methodname = "Plane_Angle_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_solid_angle_unit)) {
+		} else if (is_schema_entity(sw, sse, "SOLID_ANGLE_UNIT")) {
 		    methodname = "Solid_Angle_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_area_unit)) {
+		} else if (is_schema_entity(sw, sse, "AREA_UNIT")) {
 		    methodname = "Area_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_volume_unit)) {
+		} else if (is_schema_entity(sw, sse, "VOLUME_UNIT")) {
 		    methodname = "Volume_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e2
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_ratio_unit)) {
+		} else if (is_schema_entity(sw, sse, "RATIO_UNIT")) {
 		    methodname = "Ratio_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-#endif
 		} else {
 		    std::cerr << "Unknown complex type for SI_Named_Unit." << std::endl;
 		    return NULL;
 		}
-	    } else if (sse->IsA(SCHEMA_NAMESPACE::e_conversion_based_unit)) {
-		if (sse->IsA(SCHEMA_NAMESPACE::e_length_unit)) {
+	    } else if (is_schema_entity(sw, sse, "CONVERSION_BASED_UNIT")) {
+		if (is_schema_entity(sw, sse, "LENGTH_UNIT")) {
 		    methodname = "Length_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_mass_unit)) {
+		} else if (is_schema_entity(sw, sse, "MASS_UNIT")) {
 		    methodname = "Mass_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e2
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_time_unit)) {
+		} else if (is_schema_entity(sw, sse, "TIME_UNIT")) {
 		    methodname = "Time_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_electric_current_unit)) {
+		} else if (is_schema_entity(sw, sse, "ELECTRIC_CURRENT_UNIT")) {
 		    methodname = "Electric_Current_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_thermodynamic_temperature_unit)) {
+		} else if (is_schema_entity(sw, sse, "THERMODYNAMIC_TEMPERATURE_UNIT")) {
 		    methodname = "Thermodynamic_Temperature_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_amount_of_substance_unit)) {
+		} else if (is_schema_entity(sw, sse, "AMOUNT_OF_SUBSTANCE_UNIT")) {
 		    methodname = "Amount_Of_Substance_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_luminous_intensity_unit)) {
+		} else if (is_schema_entity(sw, sse, "LUMINOUS_INTENSITY_UNIT")) {
 		    methodname = "Luminous_Intensity_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-#endif
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_plane_angle_unit)) {
+		} else if (is_schema_entity(sw, sse, "PLANE_ANGLE_UNIT")) {
 		    methodname = "Plane_Angle_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_solid_angle_unit)) {
+		} else if (is_schema_entity(sw, sse, "SOLID_ANGLE_UNIT")) {
 		    methodname = "Solid_Angle_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_area_unit)) {
+		} else if (is_schema_entity(sw, sse, "AREA_UNIT")) {
 		    methodname = "Area_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_volume_unit)) {
+		} else if (is_schema_entity(sw, sse, "VOLUME_UNIT")) {
 		    methodname = "Volume_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e2
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_ratio_unit)) {
+		} else if (is_schema_entity(sw, sse, "RATIO_UNIT")) {
 		    methodname = "Ratio_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-#endif
 		} else {
 		    std::cerr << "Unknown complex type for Conversion_Based_Named_Unit." << std::endl;
 		    return NULL;
 		}
-	    } else if (sse->IsA(SCHEMA_NAMESPACE::e_context_dependent_unit)) {
-		if (sse->IsA(SCHEMA_NAMESPACE::e_length_unit)) {
+	    } else if (is_schema_entity(sw, sse, "CONTEXT_DEPENDENT_UNIT")) {
+		if (is_schema_entity(sw, sse, "LENGTH_UNIT")) {
 		    methodname = "Length_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_mass_unit)) {
+		} else if (is_schema_entity(sw, sse, "MASS_UNIT")) {
 		    methodname = "Mass_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e2
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_time_unit)) {
+		} else if (is_schema_entity(sw, sse, "TIME_UNIT")) {
 		    methodname = "Time_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_electric_current_unit)) {
+		} else if (is_schema_entity(sw, sse, "ELECTRIC_CURRENT_UNIT")) {
 		    methodname = "Electric_Current_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_thermodynamic_temperature_unit)) {
+		} else if (is_schema_entity(sw, sse, "THERMODYNAMIC_TEMPERATURE_UNIT")) {
 		    methodname = "Thermodynamic_Temperature_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_amount_of_substance_unit)) {
+		} else if (is_schema_entity(sw, sse, "AMOUNT_OF_SUBSTANCE_UNIT")) {
 		    methodname = "Amount_Of_Substance_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_luminous_intensity_unit)) {
+		} else if (is_schema_entity(sw, sse, "LUMINOUS_INTENSITY_UNIT")) {
 		    methodname = "Luminous_Intensity_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-#endif
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_plane_angle_unit)) {
+		} else if (is_schema_entity(sw, sse, "PLANE_ANGLE_UNIT")) {
 		    methodname = "Plane_Angle_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_solid_angle_unit)) {
+		} else if (is_schema_entity(sw, sse, "SOLID_ANGLE_UNIT")) {
 		    methodname = "Solid_Angle_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_area_unit)) {
+		} else if (is_schema_entity(sw, sse, "AREA_UNIT")) {
 		    methodname = "Area_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_volume_unit)) {
+		} else if (is_schema_entity(sw, sse, "VOLUME_UNIT")) {
 		    methodname = "Volume_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e2
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_ratio_unit)) {
+		} else if (is_schema_entity(sw, sse, "RATIO_UNIT")) {
 		    methodname = "Ratio_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-#endif
 		} else {
 		    std::cerr << "Unknown complex type for Context_Dependent_Named_Unit." << std::endl;
 		    return NULL;
@@ -571,7 +589,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
     } else {
 	//std::cout << "Getting Factory Method for:" << methodname << std::endl;
 	if ((i = methodmap.find(methodname)) == methodmap.end()) {
-	    std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+	    report_unmapped_factory(sw, methodname);
 	    return NULL;
 	}
 	f = (*i).second;
@@ -604,37 +622,37 @@ Factory::CreateSurfaceObject(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (sse->IsComplex()) {
 	//std::cout << "Complex Entity Instance Name:" << sse->EntityName() << " ID:"
 	//		<< sse->STEPfile_id << std::endl;
-	if (sse->IsA(SCHEMA_NAMESPACE::e_b_spline_surface)) {
-	    if (sse->IsA(SCHEMA_NAMESPACE::e_rational_b_spline_surface)) {
-		if (sse->IsA(SCHEMA_NAMESPACE::e_uniform_surface)) {
+	if (is_schema_entity(sw, sse, "B_SPLINE_SURFACE")) {
+	    if (is_schema_entity(sw, sse, "RATIONAL_B_SPLINE_SURFACE")) {
+		if (is_schema_entity(sw, sse, "UNIFORM_SURFACE")) {
 		    methodname = "Rational_Uniform_Surface";
 		    //std::cout << "   Entity of type:rational_uniform_surface" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_quasi_uniform_surface)) {
+		} else if (is_schema_entity(sw, sse, "QUASI_UNIFORM_SURFACE")) {
 		    methodname = "Rational_Quasi_Uniform_Surface";
 		    //std::cout << "   Entity of type:rational_quasi_uniform_surface" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_bezier_surface)) {
+		} else if (is_schema_entity(sw, sse, "BEZIER_SURFACE")) {
 		    methodname = "Rational_Bezier_Surface";
 		    //std::cout << "   Entity of type:rational_bezier_surface" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(SCHEMA_NAMESPACE::e_b_spline_surface_with_knots)) {
+		} else if (is_schema_entity(sw, sse, "B_SPLINE_SURFACE_WITH_KNOTS")) {
 		    methodname = "Rational_B_Spline_Surface_With_Knots";
 		    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			report_unmapped_factory(sw, methodname);
 			return NULL;
 		    }
 		    f = (*i).second;
@@ -651,7 +669,7 @@ Factory::CreateSurfaceObject(STEPWrapper *sw, SDAI_Application_instance *sse)
     } else {
 	//std::cout << "Getting Factory Method for:" << methodname << std::endl;
 	if ((i = methodmap.find(methodname)) == methodmap.end()) {
-	    std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+	    report_unmapped_factory(sw, methodname);
 	    return NULL;
 	}
 	f = (*i).second;
@@ -682,21 +700,21 @@ Factory::CreateShapeRepresentationRelationshipObject(STEPWrapper *sw, SDAI_Appli
     FACTORYMAP::iterator i;
 
     if (sse->IsComplex()) {
-	if (sse->IsA(SCHEMA_NAMESPACE::e_shape_representation_relationship)) {
+	if (is_schema_entity(sw, sse, "SHAPE_REPRESENTATION_RELATIONSHIP")) {
 	    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-		std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+		report_unmapped_factory(sw, methodname);
 		return NULL;
 	    }
 	    f = (*i).second;
 	} else {
 	    // not sure if/why this would happen so error for now
-	    std::cerr << CLASSNAME << ": Tagged as complex SCHEMA_NAMESPACE::e_shape_representation_relationship but not complex." << std::endl;
+	    std::cerr << CLASSNAME << ": complex entity is not a SHAPE_REPRESENTATION_RELATIONSHIP." << std::endl;
 	    return NULL;
 	}
     } else {
 	//std::cout << "Getting Factory Method for:" << methodname << std::endl;
 	if ((i = methodmap.find(methodname)) == methodmap.end()) {
-	    std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+	    report_unmapped_factory(sw, methodname);
 	    return NULL;
 	}
 	f = (*i).second;
@@ -722,47 +740,47 @@ Factory::CreateRepresentationContext(STEPWrapper *sw, SDAI_Application_instance 
     FACTORYMAP::iterator i;
 
     if (sse->IsComplex()) {
-	if (sse->IsA(SCHEMA_NAMESPACE::e_geometric_representation_context)) {
+	if (is_schema_entity(sw, sse, "GEOMETRIC_REPRESENTATION_CONTEXT")) {
 	    methodname = "Geometric_Representation_Context";
 	    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
 	    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-		std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+		report_unmapped_factory(sw, methodname);
 		return NULL;
 	    }
 	    f = (*i).second;
-	} else if (sse->IsA(SCHEMA_NAMESPACE::e_global_uncertainty_assigned_context)) {
+	} else if (is_schema_entity(sw, sse, "GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT")) {
 	    methodname = "Global_Uncertainty_Assigned_Context";
 	    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
 	    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-		std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+		report_unmapped_factory(sw, methodname);
 		return NULL;
 	    }
 	    f = (*i).second;
-	} else if (sse->IsA(SCHEMA_NAMESPACE::e_global_unit_assigned_context)) {
+	} else if (is_schema_entity(sw, sse, "GLOBAL_UNIT_ASSIGNED_CONTEXT")) {
 	    methodname = "Global_Unit_Assigned_Context";
 	    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
 	    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-		std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+		report_unmapped_factory(sw, methodname);
 		return NULL;
 	    }
 	    f = (*i).second;
-	} else if (sse->IsA(SCHEMA_NAMESPACE::e_parametric_representation_context)) {
+	} else if (is_schema_entity(sw, sse, "PARAMETRIC_REPRESENTATION_CONTEXT")) {
 	    methodname = "Parametric_Representation_Context";
 	    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
 	    if ((i = methodmap.find(methodname)) == methodmap.end()) {
-		std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+		report_unmapped_factory(sw, methodname);
 		return NULL;
 	    }
 	    f = (*i).second;
 	} else {
 	    // not sure if/why this would happen so error for now
-	    std::cerr << CLASSNAME << ": Tagged as complex SCHEMA_NAMESPACE::e_representation_context but not complex." << std::endl;
+	    std::cerr << CLASSNAME << ": complex entity is not a REPRESENTATION_CONTEXT." << std::endl;
 	    return NULL;
 	}
     } else {
 	//std::cout << "Getting Factory Method for:" << methodname << std::endl;
 	if ((i = methodmap.find(methodname)) == methodmap.end()) {
-	    std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+	    report_unmapped_factory(sw, methodname);
 	    return NULL;
 	}
 	f = (*i).second;

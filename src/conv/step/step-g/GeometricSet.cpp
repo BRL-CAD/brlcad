@@ -33,6 +33,10 @@
 #define CLASSNAME "GeometricSet"
 #define ENTITYNAME "Geometric_Set"
 string GeometricSet::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod) GeometricSet::Create);
+/* GEOMETRIC_CURVE_SET only narrows the inherited element select to curves;
+ * its representation and exact wire conversion are otherwise identical. */
+string GeometricSet::curve_entityname = Factory::RegisterClass(
+    "Geometric_Curve_Set", (FactoryMethod) GeometricSet::Create);
 
 GeometricSet::GeometricSet()
 {

@@ -53,6 +53,11 @@ public:
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
+    Direction *Axis1() const { return axis1; }
+    Direction *Axis2() const { return axis2; }
+    CartesianPoint *LocalOrigin() const { return local_origin; }
+    double Scale() const { return scale; }
+    bool GetONTransform(ON_Xform &xform, double length_factor) const;
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

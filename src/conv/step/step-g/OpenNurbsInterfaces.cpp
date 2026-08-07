@@ -27,12 +27,19 @@
 #include "common.h"
 
 #include "brep/defines.h"
+#include "brep/pullback.h"
 
 #include "sdai.h"
 class SDAI_Application_instance;
 
 /* must come after nist step headers */
 #include "brep.h"
+
+#include <map>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <vector>
 #include "nmg.h"
 
 #include "STEPEntity.h"
@@ -46,6 +53,7 @@ class SDAI_Application_instance;
 #include "Vector.h"
 #include "EdgeCurve.h"
 #include "OrientedEdge.h"
+#include "OpenNurbsInterfaces.h"
 
 // Curve includes
 #include "BezierCurve.h"
@@ -104,2944 +112,438 @@ class SDAI_Application_instance;
 extern void print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoints);
 #endif
 
-ON_Brep *
-AdvancedBrepShapeRepresentation::GetONBrep()
-{
-    ON_Brep *brep = ON_Brep::New();
+namespace {
 
-    if (!brep) {
-	std::cerr << "ERROR: INTERNAL MEMORY ALLOCATION FAILURE in " << __FILE__ << ":" << __LINE__ << std::endl;
+/* Dense validation is the final proof that a repaired or reused pcurve lifts
+ * to its exact STEP edge within the file uncertainty.  1024 uniform segments
+ * were selected as a bounded empirical budget: they resolve the short seam
+ * reversals in the periodic-seam fixtures while keeping validation linear and
+ * deterministic.  This is a validation budget, not a geometric tolerance or
+ * a request to approximate the edge with 1024 segments. */
+constexpr int kDenseLiftValidationSegments = 1024;
+
+/* A triangular spline patch can express its apex by omitting the collapsed
+ * parameter-boundary trim.  Require the two adjacent exact STEP edges to span
+ * at least three quarters of that boundary before considering a missing-pole
+ * repair.  Candidate surface edits receive a bounded 64-by-64 interior audit;
+ * every retained edge is then regenerated and receives the ordinary
+ * 1024-segment exact-locus validation. */
+constexpr int kDegenerateBoundarySurfaceGridSegments = 64;
+constexpr double kDegenerateBoundaryMinimumParameterSpanFraction = 0.75;
+constexpr double kDegenerateBoundaryMinimumNormalAlignment = 0.5;
+
+/* Linear span scans are cheaper for the small curves that dominate ordinary
+ * models.  At 32 spans, an R-tree is shallow enough to amortize its build cost
+ * while avoiding the quadratic validation behavior seen on imported curves
+ * with thousands of spans.  This is solely a search-strategy threshold: every
+ * candidate returned by the tree still undergoes the same exact curve tests. */
+constexpr size_t kCurveDistanceRTreeMinimumSpans = 32;
+
+/* A two-dimensional closest-point solve visits the tensor product of a
+ * surface's spans.  For a non-linear edge which can be accepted here only as
+ * an exact knot-boundary isocurve, that global solve is merely a candidate
+ * filter: searching every knot boundary in one dimension is complete and is
+ * cheaper for a surface with more than 32 spans in either direction or more
+ * than 64 tensor-product patches.  The threshold changes only the search
+ * strategy; every candidate receives the same dense 3-D validation. */
+constexpr size_t kIsoparametricWitnessMaximumDirectionalSpans = 32;
+constexpr size_t kIsoparametricWitnessMaximumSurfacePatches = 64;
+
+/* Pullback fragments are polylines.  When deciding whether an extra fragment
+ * duplicates a complete authoritative STEP edge, test the represented line
+ * between every pair of stored UV samples, not just the stored endpoints.
+ * Eight subdivisions per interval is a bounded rejection test; accepted
+ * pcurves still undergo the 1024-segment final validation above. */
+constexpr int kFragmentIntervalValidationSubdivisions = 8;
+
+/* Closed-edge isocurve recognition is only a candidate generator; every
+ * accepted trim is subsequently subjected to the 1024-segment validation
+ * above.  Sixty-four segments reliably distinguishes traversal direction and
+ * supplies the locus matcher, while eight source samples provide a cheap
+ * one-way rejection proof before a parameterization-independent curve search.
+ * The rejection test cannot accept geometry and therefore does not weaken the
+ * authoritative dense validation. */
+constexpr int kClosedIsoCandidateValidationSegments = 64;
+constexpr int kClosedIsoCandidateRejectionSegments = 8;
+
+/* A closed pullback's declared STEP topology vertex may fall between two
+ * adaptive UV samples after a legacy periodic seam rotation.  Search each
+ * already validated polyline segment at a small deterministic resolution,
+ * then refine only the best bracket.  This locates a cyclic cut; it does not
+ * alter the pullback locus, and the accepted point must still lift to the
+ * topology vertex within the measured local tolerance. */
+constexpr int kTopologyVertexSegmentSearchSubdivisions = 16;
+constexpr int kTopologyVertexSegmentRefinementIterations = 32;
+/* Both a validated pullback sample and an exact candidate isocurve may sit one
+ * model tolerance from the authoritative 3-D edge.  Four tolerances therefore
+ * leave the full triangle-inequality allowance plus numerical headroom for a
+ * rejection-only lift test.  Passing this gate never accepts a trim. */
+constexpr double kClosedIsoCandidateLiftGateToleranceMultiplier = 4.0;
+/* Pre-closure full-period restoration is needed only when closest-point
+ * pullback has erased essentially the entire UV winding.  One ten-thousandth
+ * of each native parameter domain distinguishes that collapsed cloud from an
+ * already usable closed-edge path without acting as a geometric tolerance;
+ * the reconstructed candidate is still densely validated in model space. */
+/* A relocated periodic seam must lie in an interval containing no sampled
+ * boundary data.  Require that empty interval to span at least one thousandth
+ * of the complete parameter period so the new seam is not numerically
+ * indistinguishable from the exact boundary it is intended to avoid.  The
+ * complete remapped boundary is still validated in 3-D before acceptance. */
+constexpr double kMinimumSafeSeamGapFraction = 1.0e-3;
+
+static void
+record_pullback_context_statistics(STEPWrapper *step,
+    const std::list<PBCData *> &samples)
+{
+    if (!step) return;
+    std::set<const brlcad::PullbackContext *> recorded;
+    for (std::list<PBCData *>::const_iterator sample = samples.begin();
+	    sample != samples.end(); ++sample) {
+	if (!*sample || !(*sample)->context) continue;
+	const brlcad::PullbackContext *context = (*sample)->context.get();
+	if (!recorded.insert(context).second) continue;
+	step->RecordPullbackStatistics(context->Statistics());
+    }
+}
+
+/* If dense validation finds a missed bow between already projected UV
+ * samples, refine only that exceptional polyline.  These are work ceilings,
+ * not approximation settings: every inserted point and the completed curve
+ * are still checked against the exact 3-D STEP edge. */
+constexpr int kMaximumAdjustedPolylineRefinementDepth = 12;
+constexpr size_t kMaximumAdjustedPolylineSamples = 16384;
+
+/* STEP pcurves at a periodic join can differ by a few measured microradians
+ * even when their lifted 3-D endpoints and topology vertex coincide.  This
+ * scale-relative bound only recognizes and snaps parameters already proven
+ * coincident in model space; it is never used to accept geometric error. */
+constexpr double kPeriodicParameterSnapFraction = 1.0e-5;
+
+/* Directed winding accumulates projection error from every independently
+ * supplied edge, so its residual is not an endpoint snap tolerance.  Permit
+ * at most one thousandth of a turn for cap classification; acceptance still
+ * requires a topology join separated by one exact period, coincident 3-D
+ * lifts, and dense validation of the reparameterized surface.  This bound
+ * covers the 1.2e-5-turn residual in the compact HUMVEE spherical-cap guard
+ * without treating a materially partial winding as a pole boundary. */
+constexpr double kPeriodicWindingResidualFraction = 1.0e-3;
+
+/* Evaluating a rational periodic surface at parameters separated by one exact
+ * period can differ slightly because its independently supplied control points
+ * and knots are finite-precision decimal data.  Treat the two parameter images
+ * as equivalent only when their lifts agree within two percent of the model
+ * uncertainty.  This bound is used solely to rejoin an internal UV split; every
+ * merged sample must still lie on the original STEP edge within its full
+ * model-derived tolerance. */
+constexpr double kPeriodicLiftEquivalenceToleranceFraction = 2.0e-2;
+
+/* Keep numerical solver floors comfortably above floating-point zero without
+ * replacing the model-derived tolerance used for acceptance. */
+constexpr double kNumericalToleranceScale = 1024.0;
+
+/* A proposed seam relocation must preserve the spatial coverage of its STEP
+ * edge.  Locus-only checks can otherwise collapse a closed circle to its
+ * shared vertex and still report zero point-to-curve distance. */
+constexpr double kMinimumSeamCoverageFraction = 0.8;
+
+/* Real exchange files occasionally contain an edge curve, its asserted
+ * vertices, and its supporting surface at separations larger than the
+ * declared uncertainty.  Non-exact mode may reflect that measured reality in
+ * the one affected BREP edge, but only below one percent of the edge scale.
+ * This is a guardrail against accepting an unrelated surface or topology-
+ * scale gap, not an approximation allowance: source curves and vertices stay
+ * unchanged and dense lift validation still applies. */
+constexpr double kMaximumRelativeEdgeMismatch = 1.0e-2;
+constexpr double kMaximumRelativeItemMismatch = 1.0e-3;
+/* An explicitly associated boundary curve whose two exact endpoints both lie
+ * on the supplied surface at the declared uncertainty has stronger evidence
+ * of modeling intent than an arbitrary nearby curve.  In safe mode, complete
+ * dense projection may reflect interior approximation drift up to one eighth
+ * of one percent of the item scale.  This is only a 25 percent extension of
+ * the ordinary item-relative ceiling, is unavailable unless both endpoint
+ * anchors pass independently, and never moves either source object. */
+constexpr double kMaximumRelativeEndpointAnchoredItemMismatch = 1.25e-3;
+/* An open, non-periodic NURBS surface has no equivalent wrapped parameter
+ * branch.  After strict projection has identified a continuous closest locus,
+ * safe mode may measure a slightly wider source curve/surface disagreement:
+ * at most two percent of the bounded edge or two tenths of one percent of the
+ * complete item.  This second ceiling is deliberately unavailable to planes,
+ * analytic/periodic surfaces, vertices, and --exact.  It does not move either
+ * source object; the candidate must still pass complete 1024-segment
+ * curve-locus validation and whole-BREP validation. */
+constexpr double kMaximumRelativeOpenNurbsEdgeMismatch = 2.0e-2;
+constexpr double kMaximumRelativeOpenNurbsItemMismatch = 2.0e-3;
+/* Once the source graph has been proven contradictory, permissive import may
+ * construct a projected trim rather than omit the complete solid.  These are
+ * catastrophe guards, not claims that the inference is a safe repair: the
+ * result is tagged, and the complete B-rep must still validate.  Keeping the
+ * search below both one quarter of the affected edge scale and five percent
+ * of the item scale prevents either a very large item or a very long edge from
+ * authorizing an accidentally associated distant surface. */
+constexpr double kMaximumPermissiveRelativeEdgeMismatch = 2.5e-1;
+constexpr double kMaximumPermissiveRelativeItemMismatch = 5.0e-2;
+/* A separate whole-solid inference transaction may substitute geometry whose
+ * local discrepancy exceeds the ordinary feature-relative guard, but the
+ * measured displacement must still be small compared with the complete item.
+ * One percent is intentionally much tighter than the ordinary permissive
+ * item's catastrophe guard.  The transaction is accepted only after the
+ * complete result proves to be a closed, oriented manifold solid, and every
+ * substituted edge is retained in the inference provenance. */
+constexpr double kMaximumWholeItemInferenceRelativeMismatch = 1.0e-2;
+/* An explicit EDGE_CURVE reference supplies stronger identity than geometric
+ * adjacency alone.  Safe mode may retain measured vertex drift up to 35
+ * percent of the exact bounded curve length, after closest-point and endpoint
+ * reevaluation proofs.  This covers observed low-precision exports whose
+ * entire short edge is offset consistently (0.030 mm on a 0.090 mm edge)
+ * without admitting the 40%-plus gaps and same-parameter endpoints found in
+ * demonstrably broken loops.  Later edge/surface and whole-BREP validation
+ * remain mandatory. */
+constexpr double kMaximumRelativeEdgeVertexMismatch = 3.5e-1;
+/* A STEP EDGE_CURVE explicitly associates its curve and topology vertices.
+ * If that association is contradictory beyond the safe limit, permissive
+ * import may retain a vertex-bounded interval with an inferred tolerance up
+ * to two complete traversals of that interval.  This is deliberately much
+ * wider than safe repair and is always tagged as inferred geometry. */
+constexpr double kMaximumPermissiveEdgeVertexTraversalFraction = 2.0;
+/* The special one-vertex/open-curve contradiction is resolved only by a
+ * whole-item topology repair.  Screen inference retries with the same tight
+ * item-relative ceiling applied by that later transaction; the complete
+ * locus and neighboring-edge limit are still proved there. */
+constexpr double kZeroLengthTopologyMaximumRelativeItemMismatch = 5.0e-4;
+/* A contradictory EDGE_CURVE may contain only a terminal fragment of the edge
+ * named by its topology vertices.  Permissive import may prepend or append the
+ * missing straight segment only when one fragment endpoint is already exact.
+ * A nearly straight fragment must remain inside a narrow chord tube with a
+ * combined path no longer than 125 percent of the asserted edge.  A curved
+ * fragment may instead traverse at most twice that edge and the minimal
+ * connector at most 125 percent of the edge.  The latter accommodates a
+ * terminal fragment which extends slightly beyond its exact topology endpoint
+ * without letting a remote curve become a candidate.  These bounds preserve
+ * the complete authored locus; the result is tagged as inferred and the
+ * complete BREP must validate. */
+constexpr double kMaximumPermissiveTopologyBridgeFraction = 1.25;
+constexpr double kMaximumPermissiveTopologyBridgeTubeFraction = 1.25e-1;
+constexpr double kMaximumPermissiveTopologyBridgePathFraction = 1.25;
+constexpr double kMaximumPermissiveTopologyFragmentTraversalFraction = 2.0;
+constexpr double kMaximumPermissiveTopologyCurvedPathFraction = 3.0;
+/* A bounded EDGE_CURVE can name two vertices just beyond one end of an open
+ * NURBS curve even though the terminal polynomial span continues through the
+ * missing point.  Safe repair may use that exact continuation only when the
+ * omitted tail is no more than two tenths of one percent of the complete curve
+ * scale and no more than eight declared uncertainties.  The extended span must
+ * hit the asserted vertex at the declared tolerance; --exact never extends
+ * source domains. */
+constexpr double kMaximumRelativeNurbsEndpointExtension = 2.0e-3;
+constexpr double kMaximumDeclaredNurbsEndpointExtensionFactor = 8.0;
+/* A declared uncertainty rounded below the source data's measured separation
+ * needs an absolute-tolerance allowance even when the affected feature is
+ * shorter than that uncertainty.  Safe mode may reflect at most twice the
+ * declaration in one affected OpenNURBS edge.  Closest-point endpoint proofs,
+ * dense curve/surface validation, the independent relative feature/item
+ * ceilings, and whole-BREP validation still apply; source geometry is not
+ * moved.  Scale-relative allowances continue to handle larger features, and
+ * --exact never enters the adjustment paths which consume either allowance.
+ */
+constexpr double kMaximumDeclaredToleranceAdjustmentFactor = 2.0;
+constexpr double kMeasuredToleranceSafetyFactor = 1.05;
+/* Do not use an enlarged first projection search when the declared output-
+ * space uncertainty is below ten nanometres.  At that scale, decimal exchange
+ * noise and competing periodic branches dominate the claimed tolerance; a
+ * strict first pass is required to establish the branch before any densely
+ * measured retry.  LocalUnits converts STEP lengths to millimetres. */
+constexpr double kMinimumBoundedNurbsFirstPassToleranceMillimeters = 1.0e-5;
+/* Conversely, ordinary CAD tolerances at or above a tenth of a micrometre do
+ * not need the enlarged first search: the strict pass can establish a stable
+ * branch directly, and doing so avoids selecting a different periodic image.
+ * The bounded first pass is therefore reserved for the narrow 10--100 nm
+ * range where exchange precision can defeat strict seeding without making
+ * periodic branch identity numerically ambiguous. */
+constexpr double kMaximumBoundedNurbsFirstPassToleranceMillimeters = 1.0e-4;
+/* Adaptive UV refinement can discover a larger source mismatch between the
+ * original knot samples.  Re-measure and retry a small bounded number of
+ * times; double the search tolerance when successive refinement levels expose
+ * the mismatch only incrementally.  The accepted BREP tolerance is reset to
+ * the largest actually measured error (and later densely validated), so this
+ * exponential search does not itself loosen output geometry. */
+constexpr int kMaximumMeasuredToleranceRetries = 6;
+
+/* Curve-locus validation brackets the closest point independently in every
+ * exact NURBS knot span, then refines the best interval.  Sixty-four brackets
+ * are sufficient for a cubic span while keeping exceptional adjusted-edge
+ * validation deterministic and bounded. */
+constexpr int kCurveClosestBracketsPerSpan = 64;
+/* A chord projection normally starts within the local convergence basin for
+ * CAD edge curves.  Eight safeguarded Newton steps are enough to test that
+ * fast path; failure retains the bounded golden-section fallback below. */
+constexpr int kCurveClosestNewtonIterations = 8;
+constexpr int kCurveClosestRefinementIterations = 64;
+
+} // namespace
+
+
+
+#include "OpenNurbsPullback.inc"
+#include "OpenNurbsTopology.inc"
+
+
+ON_Curve *
+step_exact_planar_pcurve(const ON_Surface *surface, const ON_Curve *curve,
+    double tolerance)
+{
+    ON_Curve *result = NULL;
+    PBCData *data = exact_planar_pullback(surface, curve, tolerance,
+	tolerance, &result);
+    if (!data) {
+	delete result;
 	return NULL;
     }
-
-    if (!LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::GetONBrep() - Error loading openNURBS brep." << std::endl;
-	//still return brep may contain something useful to diagnose
-	return brep;
-    }
-
-    return brep;
-}
-
-
-bool
-AdvancedBrepShapeRepresentation::LoadONBrep(ON_Brep *brep)
-{
-    LIST_OF_REPRESENTATION_ITEMS::iterator i;
-
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    for (i = items.begin(); i != items.end(); i++) {
-	if (!(*i)->LoadONBrep(brep)) {
-	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	    return false;
-	}
-    }
-
-    return true;
-}
-
-ON_Brep *
-ShellBasedSurfaceModel::GetONBrep()
-{
-    ON_Brep *brep = ON_Brep::New();
-
-    if (!brep) {
-	std::cerr << "ERROR: INTERNAL MEMORY ALLOCATION FAILURE in " << __FILE__ << ":" << __LINE__ << std::endl;
-	return NULL;
-    }
-
-    if (!LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::GetONBrep() - Error loading openNURBS brep." << std::endl;
-	//still return brep may contain something useful to diagnose
-	return brep;
-    }
-
-    return brep;
-}
-
-
-bool
-ShellBasedSurfaceModel::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-    LIST_OF_OPEN_SHELLS::iterator i;
-    for (i = sbsm_boundary.begin(); i != sbsm_boundary.end(); ++i) {
-	if (!(*i)->LoadONBrep(brep)) {
-	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	    return false;
-	}
-    }
-    return true;
-}
-
-//
-// Curve handlers
-//
-bool
-BezierCurve::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
-    return false;
-}
-
-
-bool
-BSplineCurve::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;
-    }
-
-    int t_size = control_points_list.size();
-
-    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, false, degree + 1, t_size);
-
-    // knot index (>= 0 and < Order + CV_count - 2)
-    // generate u-knots
-    int n = t_size;
-    int p = degree;
-    int m = n + p - 1;
-    for (int i = 0; i < p; i++) {
-	curve->SetKnot(i, 0.0);
-    }
-    for (int j = 1; j < n - p; j++) {
-	double x = (double)j / (double)(n - p);
-	int knot_index = j + p - 1;
-	curve->SetKnot(knot_index, x);
-    }
-    for (int i = m - p; i < m; i++) {
-	curve->SetKnot(i, 1.0);
-    }
-
-    LIST_OF_POINTS::iterator i;
-    int cv_index = 0;
-    for (i = control_points_list.begin(); i != control_points_list.end(); ++i) {
-	curve->SetCV(cv_index, ON_3dPoint((*i)->X() * LocalUnits::length, (*i)->Y() * LocalUnits::length, (*i)->Z() * LocalUnits::length));
-	cv_index++;
-    }
-    ON_id = brep->AddEdgeCurve(curve);
-
-    return true;
-}
-
-
-bool
-BSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;
-    }
-
-    int t_size = control_points_list.size();
-
-    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, false, degree + 1, t_size);
-
-    if (closed_curve == 1) {
-	LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
-	LIST_OF_REALS::iterator r = knots.begin();
-	int multiplicity = (*m);
-	double knot_value = (*r);
-
-	if ((multiplicity < degree) && (knot_value < 0.0)) {
-	    //skip fist multiplicity and knot value
-	    m++;
-	    r++;
-	}
-	int knot_index = 0;
-	while (m != knot_multiplicities.end()) {
-	    LIST_OF_INTEGERS::iterator n = m;
-	    n++;
-	    multiplicity = (*m);
-	    knot_value = (*r);
-	    if (n == knot_multiplicities.end() && (multiplicity < degree) && (knot_value > 1.0)) {
-		break;
-	    }
-	    if ((multiplicity > degree) || (n == knot_multiplicities.end())) {
-		multiplicity = degree;
-	    }
-	    for (int j = 0; j < multiplicity; j++, knot_index++) {
-		curve->SetKnot(knot_index, knot_value);
-	    }
-	    r++;
-	    m++;
-	}
-    } else {
-	// knot index (>= 0 and < Order + CV_count - 2)
-	LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
-	LIST_OF_REALS::iterator r = knots.begin();
-	int knot_index = 0;
-	while (m != knot_multiplicities.end()) {
-	    LIST_OF_INTEGERS::iterator n = m;
-	    n++;
-	    int multiplicity = (*m);
-	    double knot_value = (*r);
-	    if ((multiplicity > degree) || (n == knot_multiplicities.end())) {
-		multiplicity = degree;
-	    }
-	    for (int j = 0; j < multiplicity; j++, knot_index++) {
-		curve->SetKnot(knot_index, knot_value);
-	    }
-	    r++;
-	    m++;
-	}
-    }
-    LIST_OF_POINTS::iterator i;
-    int cv_index = 0;
-    for (i = control_points_list.begin(); i != control_points_list.end(); ++i) {
-	curve->SetCV(cv_index, ON_3dPoint((*i)->X() * LocalUnits::length, (*i)->Y() * LocalUnits::length, (*i)->Z() * LocalUnits::length));
-	cv_index++;
-    }
-
-    ON_id = brep->AddEdgeCurve(curve);
-
-    return true;
-}
-
-
-bool
-QuasiUniformCurve::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;
-    }
-
-    if (!BSplineCurve::LoadONBrep(brep)) {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
-	return false;
-    }
-    return true;
-}
-
-
-bool
-RationalBezierCurve::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
-    return false;
-}
-
-
-bool
-RationalBSplineCurve::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;
-    }
-
-    int t_size = control_points_list.size();
-
-    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, true, degree + 1, t_size);
-
-    // knot index (>= 0 and < Order + CV_count - 2)
-    // generate u-knots
-    int n = t_size;
-    int p = degree;
-    int m = n + p - 1;
-    for (int i = 0; i < p; i++) {
-	curve->SetKnot(i, 0.0);
-    }
-    for (int j = 1; j < n - p; j++) {
-	double x = (double)j / (double)(n - p);
-	int knot_index = j + p - 1;
-	curve->SetKnot(knot_index, x);
-    }
-    for (int i = m - p; i < m; i++) {
-	curve->SetKnot(i, 1.0);
-    }
-
-    LIST_OF_POINTS::iterator i;
-    LIST_OF_REALS::iterator r = weights_data.begin();
-    int cv_index = 0;
-    for (i = control_points_list.begin(); i != control_points_list.end(); ++i) {
-	double w = (*r);
-	curve->SetCV(cv_index, ON_4dPoint((*i)->X() * LocalUnits::length * w, (*i)->Y() * LocalUnits::length * w, (*i)->Z() * LocalUnits::length * w, w));
-	cv_index++;
-	r++;
-    }
-
-    ON_id = brep->AddEdgeCurve(curve);
-
-    return true;
-}
-
-
-bool
-RationalBSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;
-    }
-
-    int t_size = control_points_list.size();
-
-    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, true, degree + 1, t_size);
-
-    if (closed_curve == 1) {
-	LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
-	LIST_OF_REALS::iterator r = knots.begin();
-	int multiplicity = (*m);
-	double knot_value = (*r);
-
-	if ((multiplicity < degree) && (knot_value < 0.0)) {
-	    //skip fist multiplicity and knot value
-	    m++;
-	    r++;
-	}
-	int knot_index = 0;
-	while (m != knot_multiplicities.end()) {
-	    LIST_OF_INTEGERS::iterator n = m;
-	    n++;
-	    multiplicity = (*m);
-	    knot_value = (*r);
-	    if (n == knot_multiplicities.end() && (multiplicity < degree) && (knot_value > 1.0)) {
-		break;
-	    }
-	    if ((multiplicity > degree) || (n == knot_multiplicities.end())) {
-		multiplicity = degree;
-	    }
-	    for (int j = 0; j < multiplicity; j++, knot_index++) {
-		curve->SetKnot(knot_index, knot_value);
-	    }
-	    r++;
-	    m++;
-	}
-    } else {
-	LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
-	LIST_OF_REALS::iterator r = knots.begin();
-	int knot_index = 0;
-	while (m != knot_multiplicities.end()) {
-	    int multiplicity = (*m);
-	    double knot_value = (*r);
-	    V_MIN(multiplicity, degree);
-
-	    for (int j = 0; j < multiplicity; j++, knot_index++) {
-		curve->SetKnot(knot_index, knot_value);
-	    }
-	    r++;
-	    m++;
-	}
-    }
-
-    LIST_OF_POINTS::iterator i;
-    LIST_OF_REALS::iterator r = weights_data.begin();
-    int cv_index = 0;
-    for (i = control_points_list.begin(); i != control_points_list.end(); ++i) {
-	double w = (*r);
-	curve->SetCV(cv_index, ON_4dPoint((*i)->X() * LocalUnits::length * w, (*i)->Y() * LocalUnits::length * w, (*i)->Z() * LocalUnits::length * w, w));
-	cv_index++;
-	r++;
-    }
-
-    ON_id = brep->AddEdgeCurve(curve);
-
-    return true;
-}
-
-
-bool
-RationalQuasiUniformCurve::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;
-    }
-
-    if (!RationalBSplineCurve::LoadONBrep(brep)) {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
-	return false;
-    }
-    return true;
-}
-
-
-bool
-RationalUniformCurve::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;
-    }
-
-    if (!RationalBSplineCurve::LoadONBrep(brep)) {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
-	return false;
-    }
-    return true;
-}
-
-
-bool
-UniformCurve::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;
-    }
-
-    if (!BSplineCurve::LoadONBrep(brep)) {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
-	return false;
-    }
-    return true;
-}
-
-
-//
-// Surface handlers
-//
-bool
-BezierSurface::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    //TODO: add bezier surface
-    //ON_BezierSurface* surf = ON_BezierSurface::New(3, false, u_degree+1, v_degree+1);
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
-}
-
-
-bool
-BSplineSurface::LoadONBrep(ON_Brep *brep)
-{
-    int u_size = control_points_list->size();
-    int v_size = (*control_points_list->begin())->size();
-
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    ON_NurbsSurface *surf = ON_NurbsSurface::New(3, false, u_degree + 1, v_degree + 1, u_size, v_size);
-
-    // knot index (>= 0 and < Order + CV_count - 2)
-    // generate u-knots
-    int n = u_size;
-    int p = u_degree;
-    int m = n + p - 1;
-    for (int i = 0; i < p; i++) {
-	surf->SetKnot(0, i, 0.0);
-    }
-    for (int j = 1; j < n - p; j++) {
-	double x = (double)j / (double)(n - p);
-	int knot_index = j + p - 1;
-	surf->SetKnot(0, knot_index, x);
-    }
-    for (int i = m - p; i < m; i++) {
-	surf->SetKnot(0, i, 1.0);
-    }
-    // generate v-knots
-    n = v_size;
-    p = v_degree;
-    m = n + p - 1;
-    for (int i = 0; i < p; i++) {
-	surf->SetKnot(1, i, 0.0);
-    }
-    for (int j = 1; j < n - p; j++) {
-	double x = (double)j / (double)(n - p);
-	int knot_index = j + p - 1;
-	surf->SetKnot(1, knot_index, x);
-    }
-    for (int i = m - p; i < m; i++) {
-	surf->SetKnot(1, i, 1.0);
-    }
-
-    LIST_OF_LIST_OF_POINTS::iterator i;
-    int u = 0;
-    for (i = control_points_list->begin(); i != control_points_list->end(); ++i) {
-	LIST_OF_POINTS::iterator j;
-	LIST_OF_POINTS *pnts = *i;
-	int v = 0;
-	for (j = pnts->begin(); j != pnts->end(); ++j) {
-	    surf->SetCV(u, v, ON_3dPoint((*j)->X() * LocalUnits::length, (*j)->Y() * LocalUnits::length, (*j)->Z() * LocalUnits::length));
-	    v++;
-	}
-	u++;
-    }
-    ON_id = brep->AddSurface(surf);
-
-    return true;
-}
-
-ON_Brep *
-BSplineSurfaceWithKnots::GetONBrep()
-{
-    ON_Brep *brep = ON_Brep::New();
-
-    if (!brep) {
-	std::cerr << "ERROR: INTERNAL MEMORY ALLOCATION FAILURE in " << __FILE__ << ":" << __LINE__ << std::endl;
-	return NULL;
-    }
-
-    if (!LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::GetONBrep() - Error loading openNURBS brep." << std::endl;
-	//still return brep may contain something useful to diagnose
-	return brep;
-    }
-
-    ON_Brep *b2 = ON_Brep::New();
-    b2->NewFace(*brep->m_S[0]);
-    b2->Flip();
-
-    delete brep;
-
-    return b2;
-}
-
-
-bool
-BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
-{
-    int u_size = control_points_list->size();
-    int v_size = (*control_points_list->begin())->size();
-
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    ON_NurbsSurface *surf = ON_NurbsSurface::New(3, false, u_degree + 1, v_degree + 1, u_size, v_size);
-
-    if (u_closed == 1) {
-	LIST_OF_INTEGERS::iterator m = u_multiplicities.begin();
-	LIST_OF_REALS::iterator r = u_knots.begin();
-
-	int multiplicity = (*m);
-	double knot_value = (*r);
-	if ((multiplicity < u_degree) && (knot_value < 0.0)) {
-	    //skip fist multiplicity and knot value
-	    m++;
-	    r++;
-	}
-	int knot_index = 0;
-	while (m != u_multiplicities.end()) {
-	    LIST_OF_INTEGERS::iterator n = m;
-	    n++;
-
-	    multiplicity = (*m);
-	    knot_value = (*r);
-
-	    if (n == this->u_multiplicities.end() && (multiplicity < u_degree) && (knot_value > 1.0)) {
-		break;
-	    }
-
-	    V_MIN(multiplicity, u_degree);
-
-	    for (int j = 0; j < multiplicity; j++) {
-		surf->SetKnot(0, knot_index++, knot_value);
-	    }
-	    r++;
-	    m++;
-	}
-    } else {
-	LIST_OF_INTEGERS::iterator m = u_multiplicities.begin();
-	LIST_OF_REALS::iterator r = u_knots.begin();
-	int knot_index = 0;
-	while (m != u_multiplicities.end()) {
-	    int multiplicity = (*m);
-	    double knot_value = (*r);
-
-	    V_MIN(multiplicity, u_degree);
-
-	    for (int j = 0; j < multiplicity; j++) {
-		surf->SetKnot(0, knot_index++, knot_value);
-	    }
-	    r++;
-	    m++;
-	}
-    }
-    if (v_closed == 1) {
-	LIST_OF_INTEGERS::iterator m = v_multiplicities.begin();
-	LIST_OF_REALS::iterator r = v_knots.begin();
-
-	int multiplicity = (*m);
-	double knot_value = (*r);
-	if ((multiplicity < v_degree) && (knot_value < 0.0)) {
-	    //skip fist multiplicity and knot value
-	    m++;
-	    r++;
-	}
-	int knot_index = 0;
-	while (m != v_multiplicities.end()) {
-	    LIST_OF_INTEGERS::iterator n = m;
-	    n++;
-
-	    multiplicity = (*m);
-	    knot_value = (*r);
-
-	    if (n == v_multiplicities.end() && (multiplicity < v_degree) && (knot_value > 1.0)) {
-		break;
-	    }
-
-	    V_MIN(multiplicity, v_degree);
-
-	    for (int j = 0; j < multiplicity; j++, knot_index++) {
-		surf->SetKnot(1, knot_index, knot_value);
-	    }
-	    r++;
-	    m++;
-	}
-    } else {
-	LIST_OF_INTEGERS::iterator m = v_multiplicities.begin();
-	LIST_OF_REALS::iterator r = v_knots.begin();
-	int knot_index = 0;
-	while (m != v_multiplicities.end()) {
-	    int multiplicity = (*m);
-	    double knot_value = (*r);
-
-	    V_MIN(multiplicity, v_degree);
-
-	    for (int j = 0; j < multiplicity; j++, knot_index++) {
-		surf->SetKnot(1, knot_index, knot_value);
-	    }
-	    r++;
-	    m++;
-	}
-    }
-    LIST_OF_LIST_OF_POINTS::iterator i;
-    int u = 0;
-    for (i = control_points_list->begin(); i != control_points_list->end(); ++i) {
-	LIST_OF_POINTS::iterator j;
-	LIST_OF_POINTS *p = *i;
-	int v = 0;
-	for (j = p->begin(); j != p->end(); ++j) {
-	    surf->SetCV(u, v, ON_3dPoint((*j)->X() * LocalUnits::length, (*j)->Y() * LocalUnits::length, (*j)->Z() * LocalUnits::length));
-	    v++;
-	}
-	u++;
-    }
-    ON_id = brep->AddSurface(surf);
-
-    return true;
-}
-
-
-bool
-QuasiUniformSurface::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (!BSplineSurface::LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-    return true;
-}
-
-
-bool
-RationalBezierSurface::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    //TODO: add rational bezier surface
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
-}
-
-
-bool
-RationalBSplineSurface::LoadONBrep(ON_Brep *brep)
-{
-    int u_size = control_points_list->size();
-    int v_size = (*control_points_list->begin())->size();
-
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    ON_NurbsSurface *surf = ON_NurbsSurface::New(3, false, u_degree + 1, v_degree + 1, u_size, v_size);
-
-    // knot index (>= 0 and < Order + CV_count - 2)
-    // generate u-knots
-    int n = u_size;
-    int p = u_degree;
-    int m = n + p - 1;
-    for (int i = 0; i < p; i++) {
-	surf->SetKnot(0, i, 0.0);
-    }
-    for (int j = 1; j < n - p; j++) {
-	double x = (double)j / (double)(n - p);
-	int knot_index = j + p - 1;
-	surf->SetKnot(0, knot_index, x);
-    }
-    for (int i = m - p; i < m; i++) {
-	surf->SetKnot(0, i, 1.0);
-    }
-    // generate v-knots
-    n = v_size;
-    p = v_degree;
-    m = n + p - 1;
-    for (int i = 0; i < p; i++) {
-	surf->SetKnot(1, i, 0.0);
-    }
-    for (int j = 1; j < n - p; j++) {
-	double x = (double)j / (double)(n - p);
-	int knot_index = j + p - 1;
-	surf->SetKnot(1, knot_index, x);
-    }
-    for (int i = m - p; i < m; i++) {
-	surf->SetKnot(1, i, 1.0);
-    }
-
-    LIST_OF_LIST_OF_POINTS::iterator i = control_points_list->begin();
-    LIST_OF_LIST_OF_REALS::iterator w = weights_data.begin();
-    LIST_OF_REALS::iterator r;
-    int u = 0;
-    for (i = control_points_list->begin(); i != control_points_list->end(); ++i) {
-	LIST_OF_POINTS::iterator j;
-	LIST_OF_POINTS *pnts = *i;
-	r = (*w)->begin();
-	int v = 0;
-	for (j = pnts->begin(); j != pnts->end(); ++j, r++, v++) {
-	    double weight = (*r);
-	    surf->SetCV(u, v, ON_4dPoint((*j)->X() * LocalUnits::length * weight, (*j)->Y() * LocalUnits::length * weight, (*j)->Z() * LocalUnits::length * weight, weight));
-	}
-	u++;
-	w++;
-    }
-    ON_id = brep->AddSurface(surf);
-
-    return true;
-}
-
-
-bool
-RationalBSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
-{
-    int u_size = control_points_list->size();
-    int v_size = (*control_points_list->begin())->size();
-
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (self_intersect) {
-    }
-    if (u_closed) {
-    }
-    if (v_closed) {
-    }
-
-    ON_NurbsSurface *surf = ON_NurbsSurface::New(3, true, u_degree + 1, v_degree + 1, u_size, v_size);
-
-    // knot index (>= 0 and < Order + CV_count - 2)
-    LIST_OF_INTEGERS::iterator m = u_multiplicities.begin();
-    LIST_OF_REALS::iterator r = u_knots.begin();
-    int knot_index = 0;
-    while (m != u_multiplicities.end()) {
-	int multiplicity = (*m);
-	double knot_value = (*r);
-
-	V_MIN(multiplicity, u_degree);
-
-	for (int j = 0; j < multiplicity; j++, knot_index++) {
-	    surf->SetKnot(0, knot_index, knot_value);
-	}
-	r++;
-	m++;
-    }
-    m = v_multiplicities.begin();
-    r = v_knots.begin();
-    knot_index = 0;
-    while (m != v_multiplicities.end()) {
-	int multiplicity = (*m);
-	double knot_value = (*r);
-
-	V_MIN(multiplicity, v_degree);
-
-	for (int j = 0; j < multiplicity; j++) {
-	    surf->SetKnot(1, knot_index++, knot_value);
-	}
-	r++;
-	m++;
-    }
-
-    LIST_OF_LIST_OF_POINTS::iterator i = control_points_list->begin();
-    LIST_OF_LIST_OF_REALS::iterator w = weights_data.begin();
-    int u = 0;
-    for (i = control_points_list->begin(); i != control_points_list->end(); ++i) {
-	LIST_OF_POINTS::iterator j;
-	LIST_OF_POINTS *p = *i;
-	r = (*w)->begin();
-	int v = 0;
-	for (j = p->begin(); j != p->end(); ++j, r++, v++) {
-	    double weight = (*r);
-	    surf->SetCV(u, v, ON_4dPoint((*j)->X() * LocalUnits::length * weight, (*j)->Y() * LocalUnits::length * weight, (*j)->Z() * LocalUnits::length * weight, weight));
-	}
-	u++;
-	w++;
-    }
-
-    ON_id = brep->AddSurface(surf);
-
-    return true;
-}
-
-
-bool
-RationalQuasiUniformSurface::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (!RationalBSplineSurface::LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-    return true;
-}
-
-
-bool
-RationalUniformSurface::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (!RationalBSplineSurface::LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-    return true;
-}
-
-
-bool
-UniformSurface::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (!BSplineSurface::LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-    return true;
-}
-
-
-void
-FaceSurface::AddFace(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return;
-    }
-
-    ON_BrepFace &face = brep->NewFace(face_geometry->GetONId());
-    if (same_sense == BTrue) {
-	face.m_bRev = false;
-    } else {
-	face.m_bRev = true;
-	face.Reverse(0); //need to remove here but check for reversed face in raytracer
-    }
-
-    ON_id = face.m_face_index;
-}
-
-
-bool
-FaceSurface::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    // need edge bounds to determine extents for some of the infinitely
-    // defined surfaces like cones/cylinders/planes
-    ON_BoundingBox *bb = GetEdgeBounds(brep);
-    if (!bb) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error calculating openNURBS brep bounds." << std::endl;
-	return false;
-    }
-
-    face_geometry->SetCurveBounds(bb);
-    delete bb;
-
-    if (!face_geometry->LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-
-    AddFace(brep);
-
-    //TODO: remove debugging code
-    if ((false) && (ON_id == 72)) {
-	std::cerr << "Debug:LoadONBrep for FaceSurface:" << ON_id << std::endl;
-    }
-    if (!Face::LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-
-    if (reverse) {
-	ON_BrepFace *face = brep->Face(ON_id);
-	face->Reverse(1);
-	face->m_bRev = face->m_bRev ? false : true;
-    }
-    return true;
-}
-
-
-bool
-OrientedFace::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    // need edge bounds to determine extents for some of the infinitely
-    // defined surfaces like cones/cylinders/planes
-    if (!face_element->LoadONBrep(brep)) {
-#ifndef AP242
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-#endif
-	return false;
-    }
-
-    return true;
-}
-
-
-void
-Point::AddVertex(ON_Brep *UNUSED(brep))
-{
-    std::cerr << "Warning: " << entityname << "::AddVertex() should be overridden by parent class." << std::endl;
-}
-
-
-void
-CartesianPoint::AddVertex(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return;
-    }
-
-    if (vertex_index < 0) {
-	ON_3dPoint p(coordinates[0] * LocalUnits::length, coordinates[1] * LocalUnits::length, coordinates[2] * LocalUnits::length);
-	ON_BrepVertex &v = brep->NewVertex(p);
-	vertex_index = v.m_vertex_index;
-	v.m_tolerance = 1e-3;
-	ON_id = v.m_vertex_index;
-    }
-}
-
-
-void
-BSplineCurve::AddPolyLine(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return;
-    }
-
-    if (ON_id < 0) {
-	int num_control_points = control_points_list.size();
-
-	if ((degree == 1) && (num_control_points >= 2)) {
-	    LIST_OF_POINTS::iterator i = control_points_list.begin();
-	    CartesianPoint *cp = (*i);
-	    while ((++i) != control_points_list.end()) {
-		ON_3dPoint start_point(cp->X() * LocalUnits::length, cp->Y() * LocalUnits::length, cp->Z() * LocalUnits::length);
-		cp = (*i);
-		ON_3dPoint end_point(cp->X() * LocalUnits::length, cp->Y() * LocalUnits::length, cp->Z() * LocalUnits::length);
-		ON_LineCurve *line = new ON_LineCurve(ON_3dPoint(start_point), ON_3dPoint(end_point));
-		brep->m_C3.Append(line);
-	    }
-	} else if (num_control_points > 2) {
-	    ON_NurbsCurve *c = ON_NurbsCurve::New(3, false, degree + 1, num_control_points);
-	    /* FIXME: do something with c */
-	    delete c;
-	} else {
-	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading polyLine." << std::endl;
-	}
-    }
-}
-
-
-void
-VertexPoint::AddVertex(ON_Brep *brep)
-{
-    vertex_geometry->AddVertex(brep);
-}
-
-
-ON_BoundingBox *
-Face::GetEdgeBounds(ON_Brep *brep)
-{
-    ON_BoundingBox *u = NULL;
-    LIST_OF_FACE_BOUNDS::iterator i;
-    for (i = bounds.begin(); i != bounds.end(); i++) {
-	ON_BoundingBox *bb = (*i)->GetEdgeBounds(brep);
-	if (bb != NULL) {
-	    if (u == NULL) {
-		u = new ON_BoundingBox();
-	    }
-	    u->Union(*bb);
-	}
-	delete bb;
-    }
-    return u;
-}
-
-
-bool
-Face::LoadONBrep(ON_Brep *brep)
-{
-    //TODO: Check for Outer bound if none check for
-    // direction perhaps offer input option possibly
-    // check for outer spanning to bounds
-    LIST_OF_FACE_BOUNDS::iterator i;
-    for (i = bounds.begin(); i != bounds.end(); i++) {
-	(*i)->SetFaceIndex(ON_id);
-	if (!(*i)->LoadONBrep(brep)) {
-	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	    return false;
-	}
-    }
-    return true;
-}
-
-
-bool
-FaceOuterBound::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    SetOuter();
-
-    if (!FaceBound::LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-    return true;
-}
-
-
-ON_BoundingBox *
-FaceBound::GetEdgeBounds(ON_Brep *brep)
-{
-    return bound->GetEdgeBounds(brep);
-}
-
-
-bool
-FaceBound::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id < 0) {
-	enum ON_BrepLoop::TYPE btype;
-	if (IsInner()) {
-	    btype = ON_BrepLoop::inner;
-	} else {
-	    btype = ON_BrepLoop::outer;
-	}
-	ON_BrepLoop &loop = brep->NewLoop(btype, brep->m_F[ON_face_index]);
-	ON_id = loop.m_loop_index;
-    }
-    bound->SetLoopIndex(ON_id);
-    if (!bound->LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-    if (!Oriented()) {
-	ON_BrepLoop &loop = brep->m_L[ON_id];
-	brep->FlipLoop(loop);
-    }
-    /* lets use the cues from STEP (Oriented) for now but leave this here
-     * in case we have to go back to brute force
-
-     if (IsInner()) {
-     ON_BrepLoop& loop = brep->m_L[ON_id];
-     if (brep->LoopDirection((const ON_BrepLoop&) loop) > 0) {
-     brep->FlipLoop(loop);
-     }
-     } else {
-     ON_BrepLoop& loop = brep->m_L[ON_id];
-     if (brep->LoopDirection((const ON_BrepLoop&) loop) < 0) {
-     brep->FlipLoop(loop);
-     }
-     }
-    */
-
-    return true;
-}
-
-bool
-EdgeCurve::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;    // already loaded
-    }
-
-    if ((false) && (brep->m_E.Count() == 484)) {
-	std::cerr << "Debug:LoadONBrep for EdgeCurve:" << brep->m_E.Count() << std::endl;
-    }
-
-    Vertex *start = NULL;
-    Vertex *end = NULL;
-    if (same_sense == 1) {
-	start = edge_start;
-	end = edge_end;
-    } else {
-	start = edge_end;
-	end = edge_start;
-    }
-    edge_geometry->Start(start);
-    edge_geometry->End(end);
-
-    if (!edge_geometry->LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-
-    ON_BrepEdge &edge = brep->NewEdge(brep->m_V[start->GetONId()], brep->m_V[end->GetONId()], edge_geometry->GetONId());
-    edge.m_tolerance = 1e-3; //TODO: - need tolerance definition or constant
-    ON_id = edge.m_edge_index;
-    if (same_sense != 1) {
-	edge.Reverse();
-    }
-
-    return true;
-}
-
-bool
-OrientedEdge::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;    //already loaded
-    }
-
-    //TODO: remove debugging code
-    //if ((false) && (brep->m_E.Count() == 5)) {
-    //std::cerr << "Debug:LoadONBrep for OrientedEdge:" << brep->m_E.Count() << std::endl;
-    //}
-
-    if (!edge_start->LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-    if (!edge_end->LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-    if (!edge_element->LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-
-    ON_id = edge_element->GetONId();
-
-    //TODO: remove debugging code
-    //if ((true) && (ON_id == 12)) {
-    //std::cerr << "Debug:LoadONBrep for OrientedEdge:" << ON_id << std::endl;
-    //}
-    return true;
-}
-
-
-ON_BoundingBox *
-Path::GetEdgeBounds(ON_Brep *brep)
-{
-    ON_BoundingBox *u = NULL;
-
-    LIST_OF_ORIENTED_EDGES::iterator i;
-    for (i = edge_list.begin(); i != edge_list.end(); i++) {
-	if (!(*i)->LoadONBrep(brep)) {
-	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	    delete u;
-	    return NULL;
-	}
-	if (u == NULL) {
-	    u = new ON_BoundingBox();
-	}
-	const ON_BrepEdge *edge = &brep->m_E[(*i)->GetONId()];
-	const ON_Curve *curve = edge->EdgeCurveOf();
-	u->Union(curve->BoundingBox());
-    }
-
-    return u;
-}
-
-
-bool
-Path::LoadONBrep(ON_Brep *brep)
-{
-    ON_TextLog tl;
-    LIST_OF_ORIENTED_EDGES::iterator i;
-
-    if ((false) && (id == 29429)) {
-	std::cerr << "Debug:LoadONBrep for Path:" << id << std::endl;
-    }
-
-    for (i = edge_list.begin(); i != edge_list.end(); i++) {
-	if (!(*i)->LoadONBrep(brep)) {
-	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	    return false;
-	}
-    }
-    //TODO: remove debugging code
-    if ((false) && (id == 26089)) {
-	std::cerr << "Debug:LoadONBrep for Path:" << id << std::endl;
-    }
-    if (!LoadONTrimmingCurves(brep)) {
-	return false;
-    }
-
-    return true;
-}
-
-
-bool
-Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
-{
-    const ON_BrepLoop *loop = NULL;
-    const ON_BrepFace *face = NULL;
-    const ON_Surface *surface = NULL;
-    double ang_min = 0.0;
-    double smin, smax;
-
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    loop = &brep->m_L[ON_path_index];
-    if (!loop) {
-	/* nothing to do */
-	return false;
-    }
-
-    face = loop->Face();
-    if (!face) {
-	/* nothing to do */
-	return false;
-    }
-
-    surface = face->SurfaceOf();
-    if (!surface) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (surface->IsCone() || surface->IsCylinder()) {
-	if (surface->IsClosed(0)) {
-	    surface->GetDomain(0, &smin, &smax);
-	} else {
-	    surface->GetDomain(1, &smin, &smax);
-	}
-
-	LIST_OF_ORIENTED_EDGES::iterator i;
-	for (i = edge_list.begin(); i != edge_list.end(); i++) {
-	    // grab the curve for this edge, face and surface
-	    const ON_BrepEdge *edge = &brep->m_E[(*i)->GetONId()];
-	    const ON_Curve *curve = edge->EdgeCurveOf();
-	    double tmin, tmax;
-	    curve->GetDomain(&tmin, &tmax);
-
-	    if (((tmin < 0.0) && (tmax > 0.0)) && ((tmin > smin) || (tmax < smax))) {
-		V_MIN(ang_min, tmin);
-	    }
-
-	}
-
-	if (ang_min < 0.0) {
-	    *t = ang_min;
-	    return true;
-	}
-    }
-    return false;
-}
-
-
-#ifdef _DEBUG_TESTING_
-bool _debug_print_ = false;
-#endif
-
-bool
-Path::LoadONTrimmingCurves(ON_Brep *brep)
-{
-    ON_TextLog tl;
-    LIST_OF_ORIENTED_EDGES::iterator i;
-    list<PBCData *> curve_pullback_samples;
-
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    const ON_BrepLoop *loop = &brep->m_L[ON_path_index];
-    ON_BrepFace *face = loop->Face();
-    const ON_Surface *surface = face->SurfaceOf();
-
-#if 0
-    if (surface) {
-	double surface_width, surface_height;
-	if (surface->GetSurfaceSize(&surface_width, &surface_height)) {
-	    // reparameterization of the face's surface and transforms the "u"
-	    // and "v" coordinates of all the face's parameter space trimming
-	    // curves to minimize distortion in the map from parameter space to 3d..
-	    face->SetDomain(0, 0.0, surface_width);
-	    face->SetDomain(1, 0.0, surface_height);
-	}
-    }
-#endif
-#ifdef _DEBUG_TESTING_
-    if (_debug_print_) {
-	int curve_cnt = 0;
-	for (i = edge_list.begin(); i != edge_list.end(); i++) {
-	    // grab the curve for this edge, face and surface
-	    const ON_BrepEdge *edge = &brep->m_E[(*i)->GetONId()];
-	    const ON_Curve *curve = edge->EdgeCurveOf();
-
-	    ON_Interval interval = curve->Domain();
-	    double delta = interval.Length()/100.0;
-	    for(int j =0; j < 100; j++) {
-		ON_3dPoint p = curve->PointAt(interval.m_t[0] + j*delta);
-		std::cerr << "in pt_" << curve_cnt << " sph " << p.x << " " << p.y << " " << p.z << " 0.1000"  << std::endl;
-		curve_cnt++;
-	    }
-	}
-    }
-#endif
-    // build surface tree making sure not to remove trimmed subsurfaces
-    // since currently building trims and need full tree
-    // bool removeTrimmed = false;
-
-    //TODO: remove debugging code
-    if ((false) && (id == 24894)) {
-	std::cerr << "Debug:LoadONTrimmingCurves for Path:" << id << std::endl;
-    }
-    PBCData *data = NULL;
-    LIST_OF_ORIENTED_EDGES::iterator prev, next;
-    for (i = edge_list.begin(); i != edge_list.end(); i++) {
-	// grab the curve for this edge, face and surface
-	const ON_BrepEdge *edge = &brep->m_E[(*i)->GetONId()];
-	const ON_Curve *curve = edge->EdgeCurveOf();
-	bool orientWithCurve = (*i)->OrientWithEdge();
-
-	if ((false) && (id == 34193)) {
-	    std::cerr << "Debug:LoadONTrimmingCurves for Path:" << id << std::endl;
-	}
-	data = pullback_samples(surface, curve);
-	if (data == NULL) {
-	    continue;
-	}
-
-	if (!orientWithCurve) {
-	    data->order_reversed = true;
-	} else {
-	    data->order_reversed = false;
-	}
-	data->edge = edge;
-	curve_pullback_samples.push_back(data);
-	if (!orientWithCurve) {
-	    list<ON_2dPointArray *>::iterator si;
-	    si = data->segments->begin();
-	    list<ON_2dPointArray *> rsegs;
-	    while (si != data->segments->end()) {
-		ON_2dPointArray *samples = (*si);
-		samples->Reverse();
-		rsegs.push_front(samples);
-		si++;
-	    }
-	    data->segments->clear();
-	    si = rsegs.begin();
-	    while (si != rsegs.end()) {
-		ON_2dPointArray *samples = (*si);
-		data->segments->push_back(samples);
-		si++;
-	    }
-	    rsegs.clear();
-	}
-    }
-#ifdef _DEBUG_TESTING_
-    //TODO: remove debugging
-    if (_debug_print_) {
-	std::cerr << "Face " << face->m_face_index << " id " << id << std::endl;
-	print_pullback_data("Before check_pullback_data", curve_pullback_samples, false);
-    }
-#endif
-    // check for seams and singularities
-    if (!check_pullback_data(curve_pullback_samples)) {
-	std::cerr << "Error: Can not resolve seam or singularity issues." << std::endl;
-    }
-#ifdef _DEBUG_TESTING_
-    //TODO: remove debugging
-    if (_debug_print_) {
-	std::cerr << "Face " << face->m_face_index << " id " << id << std::endl;
-	print_pullback_data("After check_pullback_data", curve_pullback_samples, false);
-    }
-#endif
-    list<PBCData *>::iterator cs = curve_pullback_samples.begin();
-    list<PBCData *>::iterator next_cs;
-
-    cs = curve_pullback_samples.begin();
-    while (cs != curve_pullback_samples.end()) {
-	next_cs = cs;
-	next_cs++;
-	if (next_cs == curve_pullback_samples.end()) {
-	    next_cs = curve_pullback_samples.begin();
-	}
-	data = (*cs);
-	list<ON_2dPointArray *>::iterator si;
-	si = data->segments->begin();
-	PBCData *ndata = (*next_cs);
-	list<ON_2dPointArray *>::iterator nsi;
-	nsi = ndata->segments->begin();
-	ON_2dPointArray *nsamples = NULL;
-
-	while (si != data->segments->end()) {
-	    nsi = si;
-	    nsi++;
-	    if (nsi == data->segments->end()) {
-		PBCData *nsidata = (*next_cs);
-		nsi = nsidata->segments->begin();
-	    }
-	    ON_2dPointArray *samples = (*si);
-	    nsamples = (*nsi);
-
-	    //TODO:Fix this shouldn't have sample counts less than 2
-	    if (samples->Count() < 2) {
-		si++;
-		continue;
-	    }
-	    int trimCurve = brep->m_C2.Count();
-	    //TODO: remove debugging code
-	    if ((false) && (trimCurve == 68)) {
-		std::cerr << "Debug:LoadONTrimmingCurves for Path:" << trimCurve << std::endl;
-	    }
-	    ON_Curve *c2d = interpolateCurve(*samples);
-	    brep->m_C2.Append(c2d);
-
-	    ON_BrepTrim &trim = brep->NewTrim((ON_BrepEdge &) * data->edge, data->order_reversed, (ON_BrepLoop &) * loop, trimCurve);
-	    trim.m_tolerance[0] = 1e-3; // FIXME: tolerance?
-	    trim.m_tolerance[1] = 1e-3;
-	    ON_Interval PD = trim.ProxyCurveDomain();
-	    trim.m_iso = surface->IsIsoparametric(*c2d, &PD);
-
-	    if (!trim.IsValid(&tl)) {
-		//TODO: remove debugging code
-		if (false) {
-		    ON_NurbsCurve nurbs_curve;
-		    c2d->GetNurbForm(nurbs_curve);
-		    std::cerr << "Num_knots - " << nurbs_curve.KnotCount() << std::endl;
-		    std::cerr << "CV count - " << nurbs_curve.CVCount() << std::endl;
-		    for (int knot_index = 0; knot_index < nurbs_curve.KnotCount(); knot_index++) {
-			std::cerr << "Knot[" << knot_index << "] - " << nurbs_curve.Knot(knot_index) << std::endl;
-		    }
-		    for (int cv_index = 0; cv_index < nurbs_curve.CVCount(); cv_index++) {
-			ON_3dPoint p;
-			nurbs_curve.GetCV(cv_index, p);
-			std::cerr << "CV[" << cv_index << "] - " << p.x << ", " << p.y << std::endl;
-		    }
-		}
-	    }
-
-	    // check for bridging trim, trims along singularities
-	    // are implicitly expected
-	    ON_2dPoint end_current, start_next;
-	    end_current = (*samples)[samples->Count() - 1];
-	    start_next = (*nsamples)[0];
-
-	    if (end_current.DistanceTo(start_next) > PBC_TOL) {
-		// endpoints don't connect
-		int is;
-		const ON_Surface *surf = data->surf;
-		if ((is = check_pullback_singularity_bridge(surf, end_current, start_next)) >= 0) {
-		    // insert trim
-		    // insert singular trim along
-		    // 0 = south, 1 = east, 2 = north, 3 = west
-		    ON_Surface::ISO iso = ON_Surface::N_iso;
-		    switch (is) {
-			case 0:
-			    //south
-			    iso = ON_Surface::S_iso;
-			    break;
-			case 1:
-			    //east
-			    iso = ON_Surface::E_iso;
-			    break;
-			case 2:
-			    //north
-			    iso = ON_Surface::N_iso;
-			    break;
-			case 3:
-			    //west
-			    iso = ON_Surface::W_iso;
-		    }
-
-		    ON_Curve *sing_c2d = new ON_LineCurve(end_current, start_next);
-		    trimCurve = brep->m_C2.Count();
-		    brep->m_C2.Append(sing_c2d);
-
-		    int vi;
-		    if (data->order_reversed) {
-			vi = data->edge->m_vi[0];
-		    } else {
-			vi = data->edge->m_vi[1];
-		    }
-
-		    ON_BrepTrim &sing_trim = brep->NewSingularTrim(brep->m_V[vi], (ON_BrepLoop &) * loop, iso, trimCurve);
-
-		    sing_trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
-		    sing_trim.m_tolerance[1] = 1e-3;
-		    ON_Interval sing_PD = sing_trim.ProxyCurveDomain();
-		    sing_trim.m_iso = surf->IsIsoparametric(*brep->m_C2[trimCurve], &sing_PD);
-		    sing_trim.m_iso = iso;
-		    //trim.Reverse();
-		    sing_trim.IsValid(&tl);
-		} /*else if ((is = check_pullback_seam_bridge(surf, end_current, start_next)) >= 0) {
-		  // insert trim
-		  // insert singular trim along
-		  // 0 = south, 1 = east, 2 = north, 3 = west
-		  ON_Surface::ISO iso;
-		  switch (is) {
-		  case 0:
-		  //south
-		  iso = ON_Surface::S_iso;
-		  break;
-		  case 1:
-		  //east
-		  iso = ON_Surface::E_iso;
-		  break;
-		  case 2:
-		  //north
-		  iso = ON_Surface::N_iso;
-		  break;
-		  case 3:
-		  //west
-		  iso = ON_Surface::W_iso;
-		  }
-
-		  ON_Curve* c2d = new ON_LineCurve(end_current, start_next);
-		  trimCurve = brep->m_C2.Count();
-		  brep->m_C2.Append(c2d);
-
-		  int vi;
-		  int vo;
-		  if (data->order_reversed) {
-		  vi = data->edge->m_vi[0];
-		  vo = data->edge->m_vi[1];
-		  } else {
-		  vi = data->edge->m_vi[1];
-		  vo = data->edge->m_vi[0];
-		  }
-		  #ifdef TREATASBOUNDARY
-		  ON_BrepEdge& e = (ON_BrepEdge&)*data->edge;
-		  ON_BrepTrim& trim = brep->NewTrim(e, false, (ON_BrepLoop&) *loop, trimCurve);
-
-		  trim.m_type = ON_BrepTrim::boundary;
-		  trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
-		  trim.m_tolerance[1] = 1e-3;
-		  #else
-		  ON_BrepTrim& trim = brep->NewSingularTrim(brep->m_V[vi], (ON_BrepLoop&) *loop, iso, trimCurve);
-
-		  trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
-		  trim.m_tolerance[1] = 1e-3;
-		  ON_Interval PD = trim.ProxyCurveDomain();
-		  trim.m_iso = surf->IsIsoparametric(*brep->m_C2[trimCurve], &PD);
-		  trim.m_iso = iso;
-		  #endif
-		  trim.IsValid(&tl);
-		  }*/
-	    }
-	    si++;
-	}
-	cs++;
-    }
-
-    while (!curve_pullback_samples.empty()) {
-	data = curve_pullback_samples.front();
-	while (!data->segments->empty()) {
-	    delete data->segments->front();
-	    data->segments->pop_front();
-	}
-	delete data->segments;
-	delete data;
-	curve_pullback_samples.pop_front();
-    }
-
-    return true;
-}
-
-
-bool
-Plane::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	ON_PlaneSurface *s = dynamic_cast<ON_PlaneSurface *>(brep->m_S[ON_id]);
-
-	if (s) {
-	    double bbdiag = trim_curve_3d_bbox->Diagonal().Length();
-
-	    // origin may not lie within face so include in extent
-	    double maxdist = s->m_plane.origin.DistanceTo(trim_curve_3d_bbox->m_max);
-	    double mindist = s->m_plane.origin.DistanceTo(trim_curve_3d_bbox->m_min);
-	    bbdiag += FMAX(maxdist, mindist);
-
-	    ON_Interval extents(-bbdiag, bbdiag);
-	    s->Extend(0,extents);
-	    s->Extend(1,extents);
-	}
-
-	return true;    // already loaded
-    }
-
-    ON_3dPoint origin(GetOrigin());
-    ON_3dVector xaxis(GetXAxis());
-    ON_3dVector yaxis(GetYAxis());
-    // ON_3dVector norm(GetNormal());
-
-    origin = origin * LocalUnits::length;
-    xaxis.Unitize();
-    yaxis.Unitize();
-
-    ON_Plane p(origin, xaxis, yaxis);
-
-    ON_PlaneSurface *s = new ON_PlaneSurface(p);
-
-    double bbdiag = trim_curve_3d_bbox->Diagonal().Length();
-    // origin may not lie within face so include in extent
-    double maxdist = origin.DistanceTo(trim_curve_3d_bbox->m_max);
-    double mindist = origin.DistanceTo(trim_curve_3d_bbox->m_min);
-    bbdiag += FMAX(maxdist, mindist);
-
-    //TODO: look into line curves that are just point and direction
-    ON_Interval extents(-bbdiag, bbdiag);
-    s->SetExtents(0, extents);
-    s->SetExtents(1, extents);
-    s->SetDomain(0, 0.0, 1.0);
-    s->SetDomain(1, 0.0, 1.0);
-
-    ON_id = brep->AddSurface(s);
-
-    return true;
-}
-
-
-bool
-CylindricalSurface::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    // new surface if reused because of bounding
-    //if (ON_id >= 0)
-    //	return true; // already loaded
-
-    if ((false) && (brep->m_S.Count() == 56)) {
-	std::cerr << "LoadONBrep for CylindricalSurface: " << 55 << std::endl;
-    }
-    ON_3dPoint origin(GetOrigin());
-    ON_3dVector xaxis(GetXAxis());
-    ON_3dVector yaxis(GetYAxis());
-    ON_3dVector norm(GetNormal());
-
-    origin = origin * LocalUnits::length;
-    xaxis.Unitize();
-    yaxis.Unitize();
-
-    // make sure origin is part of the bbox
-    trim_curve_3d_bbox->Set(origin, true);
-
-    double bbdiag = trim_curve_3d_bbox->Diagonal().Length();
-    origin = origin - bbdiag * norm;
-    ON_Plane p(origin, xaxis, yaxis);
-
-    // Creates a circle parallel to the plane
-    // with given center and radius.
-    ON_Circle c(p, origin, radius * LocalUnits::length);
-
-    //ON_Cylinder cyl(c, ON_DBL_MAX);
-    ON_Cylinder cyl(c, 2.0 * bbdiag);
-
-    ON_RevSurface *s = cyl.RevSurfaceForm();
-    if (s) {
-	double r = fabs(cyl.circle.radius);
-	if (r <= ON_SQRT_EPSILON) {
-	    r = 1.0;
-	}
-	s->SetDomain(0, 0.0, 2.0 * ON_PI * r);
-    }
-    ON_id = brep->AddSurface(s);
-
-    return true;
-}
-
-
-bool
-ConicalSurface::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;    // already loaded
-    }
-
-    ON_3dPoint origin(GetOrigin());
-    ON_3dVector xaxis(GetXAxis());
-    ON_3dVector yaxis(GetYAxis());
-    ON_3dVector norm(GetNormal());
-
-    origin = origin * LocalUnits::length;
-    xaxis.Unitize();
-    yaxis.Unitize();
-
-    double tan_semi_angle = tan(semi_angle * LocalUnits::planeangle);
-    double height = (radius * LocalUnits::length) / tan_semi_angle;
-
-    origin = origin + norm * (-height);
-    if (NEAR_ZERO(height, BN_TOL_DIST)) {
-	// make sure origin is part of the bbox
-	trim_curve_3d_bbox->Set(origin, true);
-
-	height = trim_curve_3d_bbox->Diagonal().Length();
-    }
-
-    double hplus = height * 2.01;
-    double r1 = hplus * tan_semi_angle;
-
-    ON_Plane p(origin, xaxis, yaxis);
-    ON_Cone c(p, hplus, r1);
-
-    ON_RevSurface *s = c.RevSurfaceForm();
-    if (s) {
-	s->SetDomain(0, 0.0, 2.0 * ON_PI);
-    }
-
-    ON_id = brep->AddSurface(s);
-
-    return true;
-}
-
-
-int
-intersectLines(const ON_Line &l1, const ON_Line &l2, ON_3dPoint &out)
-{
-    struct bn_tol tol;
-
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = BN_TOL_DIST;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-6;
-    tol.para = 1 - tol.perp;
-
-    point_t l1_from, l2_from;
-    VMOVE(l1_from, l1.from);
-    VMOVE(l2_from, l2.from);
-
-    ON_3dVector d;
-    vect_t l1_dir, l2_dir;
-
-    d = l1.Direction();
-    VMOVE(l1_dir, d);
-    d = l2.Direction();
-    VMOVE(l2_dir, d);
-
-    fastf_t l1_dist, l2_dist;
-    int i = bg_isect_line3_line3(&l1_dist, &l2_dist, l1_from, l1_dir,
-				 l2_from, l2_dir, &tol);
-    if (i == 1) {
-	ON_3dVector l1_unit_dir = l1.Direction();
-	l1_unit_dir.Unitize();
-
-	out = l1.from + l1_unit_dir * l1_dist;
-    }
-    return i;
-}
-
-
-void
-Circle::SetParameterTrim(double start_param, double end_param)
-{
-    double startpoint[3];
-    double endpoint[3];
-
-    t = start_param * LocalUnits::planeangle;
-    s = end_param * LocalUnits::planeangle;
-
-    if (s < t) {
-	s = s + 2 * ON_PI;
-    }
-    ON_3dPoint origin(GetOrigin());
-    ON_3dVector xaxis(GetXAxis());
-    ON_3dVector yaxis(GetYAxis());
-
-    origin = origin * LocalUnits::length;
-    xaxis.Unitize();
-    yaxis.Unitize();
-
-    ON_Plane p(origin, xaxis, yaxis);
-
-    // Creates a circle parallel to the plane
-    // with given center and radius.
-    ON_Circle c(p, origin, radius * LocalUnits::length);
-
-    ON_3dPoint P = c.PointAt(t);
-
-    startpoint[0] = P.x;
-    startpoint[1] = P.y;
-    startpoint[2] = P.z;
-
-
-    P = c.PointAt(s);
-
-    endpoint[0] = P.x;
-    endpoint[1] = P.y;
-    endpoint[2] = P.z;
-
-    SetPointTrim(startpoint, endpoint);
-}
-
-#define ANGLE_ZERO_TOL 1.0e-6
-
-static double
-simplify_angle(double rad)
-{
-    double result;
-
-    result = fmod(rad, 2.0 * ON_PI);
-
-    if (NEAR_ZERO(result, ANGLE_ZERO_TOL)) {
-	result = 0.0;
-    } else if (result < 0.0) {
-	result += 2.0 * ON_PI;
-    }
-
+    destroy_pullback_data(data);
     return result;
 }
 
-static double
-radians_from_xaxis_to_ellipse_point(Conic *conic, ON_3dPoint p, double a = 1.0, double b = 1.0)
+
+ON_Curve *
+step_curve_surface_pcurve(const ON_Surface *surface, const ON_Curve *curve,
+    double tolerance, std::string *failure_reason)
 {
-    ON_3dPoint origin(conic->GetOrigin());
-    ON_3dVector xaxis(conic->GetXAxis());
-    ON_3dVector yaxis(conic->GetYAxis());
-
-    origin = origin * LocalUnits::length;
-    xaxis.Unitize();
-    yaxis.Unitize();
-
-    // get p after translating to origin
-    ON_3dPoint canonical_p = p - origin;
-
-    // decompose into x and y components
-    double x = canonical_p * xaxis;
-    double y = canonical_p * yaxis;
-
-    // ellipse scaling
-    x /= a;
-    y /= b;
-
-    return atan2(y, x);
-}
-
-bool
-Circle::LoadONBrep(ON_Brep *brep)
-{
-    ON_TextLog dump;
-
-    if (!brep) {
-	/* nothing to do */
-	return false;
+    if (failure_reason)
+	failure_reason->clear();
+    if (!surface || !curve || !surface->IsValid() || !curve->IsValid() ||
+	    !(tolerance > 0.0)) {
+	if (failure_reason)
+	    *failure_reason = "the surface, curve, or model tolerance was invalid";
+	return NULL;
     }
 
-    //if (ON_id >= 0)
-    //	return true; // already loaded
-    if ((false) && ((brep->m_C3.Count() == 3) || (id == 1723))) {
-	std::cerr << "Debug:LoadONBrep for Circle:ID:" << id << std::endl;
+    /* A finite plane has an exact affine inverse and should not pay for (or
+     * inherit the branch ambiguity of) a numerical closest-point solve. */
+    if (ON_PlaneSurface::Cast(surface)) {
+	ON_Curve *plane = step_exact_planar_pcurve(surface, curve, tolerance);
+	if (plane)
+	    return plane;
     }
 
-    ON_3dPoint origin(GetOrigin());
-    ON_3dVector xaxis(GetXAxis());
-    ON_3dVector yaxis(GetYAxis());
-
-    origin = origin * LocalUnits::length;
-    xaxis.Unitize();
-    yaxis.Unitize();
-
-    double r = radius * LocalUnits::length;
-    ON_Plane plane(origin, xaxis, yaxis);
-    // Creates a circle parallel to the plane
-    // with given center and radius.
-    ON_Circle circle(plane, origin, r);
-
-    ON_3dPoint startpt;
-    ON_3dPoint endpt;
-
-    // get explicit start and end points
-    if (trimmed) {
-	if (!parameter_trim) {
-	    startpt = trim_startpoint;
-	    endpt = trim_endpoint;
+    std::shared_ptr<brlcad::PullbackContext> context(
+	new brlcad::PullbackContext());
+    PBCData *data = pullback_samples(surface, curve, tolerance, tolerance,
+	tolerance, tolerance, context);
+    if (!data || data->rejected_projection_samples != 0 ||
+	    !data->samples_source_validated ||
+	    pullback_sample_count(data) < 2) {
+	if (failure_reason) {
+	    std::ostringstream reason;
+	    reason << "bounded curve-to-surface projection did not produce a "
+		"complete pcurve";
+	    if (data)
+		reason << " (" << data->rejected_projection_samples << '/'
+		    << data->projection_samples << " samples rejected, maximum "
+		    << "distance " << data->maximum_projection_distance << ')';
+	    *failure_reason = reason.str();
 	}
-    } else if (start && end) {
-	startpt = start->Point3d();
-	endpt = end->Point3d();
-
-	startpt *= LocalUnits::length;
-	endpt *= LocalUnits::length;
+	destroy_pullback_data(data);
+	return NULL;
     }
 
-    // if we have start and end points, get corresponding t and s
-    if ((trimmed && !parameter_trim) || (start && end)) {
-	t = radians_from_xaxis_to_ellipse_point(this, startpt);
-	s = radians_from_xaxis_to_ellipse_point(this, endpt);
-    }
-
-    t = simplify_angle(t);
-    s = simplify_angle(s);
-
-    if (NEAR_ZERO(s, ANGLE_ZERO_TOL)) {
-	s = 2.0 * ON_PI;
-    }
-
-    while (s < t) {
-	s += 2.0 * ON_PI;
-    }
-
-    // if we have only t and s, get corresponding start and end points
-    if (parameter_trim) {
-	startpt = circle.PointAt(t);
-	endpt = circle.PointAt(s);
-    }
-
-    double theta = s - t;
-
-    if (VNEAR_EQUAL(startpt, endpt, BN_TOL_DIST)) {
-	theta = 2.0 * ON_PI;
-    }
-
-    int narcs = 1;
-    if (theta < ON_PI / 2.0) {
-	narcs = 1;
-    } else if (theta < ON_PI) {
-	narcs = 2;
-    } else if (theta < ON_PI * 3.0 / 2.0) {
-	narcs = 3;
-    } else {
-	narcs = 4;
-    }
-
-    double dtheta = theta / narcs;
-    double w = cos(dtheta / 2.0);
-    ON_3dPointArray cpts(2 * narcs + 1);
-    double angle = t;
-    double W[2 * 4 + 1]; /* 2 * max narcs + 1 */
-    ON_3dPoint circleP1, isect, circleP2;
-    ON_3dVector tangentP1, tangentP2;
-
-    circleP1 = circle.PointAt(angle); // was using 'startpt' from edge_curve but found case where not in tol
-    tangentP1 = circle.TangentAt(angle);
-
-    for (int i = 0; i < narcs; i++) {
-	angle = angle + dtheta;
-
-	circleP2 = circle.PointAt(angle);
-	tangentP2 = circle.TangentAt(angle);
-	ON_Line tangent1(circleP1, circleP1 + r * tangentP1);
-	ON_Line tangent2(circleP2, circleP2 + r * tangentP2);
-
-	if (intersectLines(tangent1, tangent2, isect) != 1) {
-	    std::cerr << entityname << ": Error: Control point can not be calculated." << std::endl;
-	    return false;
-	}
-
-	cpts.Append(circleP1);
-
-	isect *= w; // must pre-weight before putting into NURB
-	cpts.Append(isect);
-
-	W[2 * i] = 1.0;
-	W[2 * i + 1] = w;
-
-	circleP1 = circleP2;
-	tangentP1 = tangentP2;
-    }
-    cpts.Append(circle.PointAt(s));
-    W[2 * narcs] = 1.0;
-
-    int degree = 2;
-    int n = cpts.Count();
-    int p = degree;
-    int m = n + p - 1;
-    int dimension = 3;
-    double u[4 + 1]; /* max narcs + 1 */
-
-    for (int k = 0; k < narcs + 1; k++) {
-	u[k] = ((double)k) / narcs;
-    }
-
-    ON_NurbsCurve *c = ON_NurbsCurve::New(dimension, true, degree + 1, n);
-
-    c->ReserveKnotCapacity(m + 1);
-    for (int i = 0; i < degree; i++) {
-	c->SetKnot(i, 0.0);
-    }
-    for (int i = 1; i < narcs; i++) {
-	double knot_value = u[i] / u[narcs];
-	c->SetKnot(degree + 2 * (i - 1), knot_value);
-	c->SetKnot(degree + 2 * (i - 1) + 1, knot_value);
-    }
-    for (int i = n - 1; i < m; i++) {
-	c->SetKnot(i, 1.0);
-    }
-    // insert the control points
-    for (int i = 0; i < n; i++) {
-	ON_3dPoint pnt = cpts[i];
-	c->SetCV(i, pnt);
-	c->SetWeight(i, W[i]);
-    }
-
-    ON_id = brep->AddEdgeCurve(c);
-
-    return true;
-}
-
-void
-Ellipse::SetParameterTrim(double start_param, double end_param)
-{
-    double startpoint[3];
-    double endpoint[3];
-
-    t = start_param * LocalUnits::planeangle;
-    s = end_param * LocalUnits::planeangle;
-
-    if (s < t) {
-	s = s + 2 * ON_PI;
-    }
-    ON_3dPoint origin(GetOrigin());
-    ON_3dVector xaxis(GetXAxis());
-    ON_3dVector yaxis(GetYAxis());
-
-    origin = origin * LocalUnits::length;
-    xaxis.Unitize();
-    yaxis.Unitize();
-
-    double a = semi_axis_1 * LocalUnits::length;
-    double b = semi_axis_2 * LocalUnits::length;
-    ON_Plane plane(origin, xaxis, yaxis);
-    ON_Ellipse ellipse(plane, a, b);
-
-    ON_3dPoint P = ellipse.PointAt(t);
-
-    startpoint[0] = P.x;
-    startpoint[1] = P.y;
-    startpoint[2] = P.z;
-
-    P = ellipse.PointAt(s);
-
-    endpoint[0] = P.x;
-    endpoint[1] = P.y;
-    endpoint[2] = P.z;
-
-    SetPointTrim(startpoint, endpoint);
-}
-
-bool
-Ellipse::LoadONBrep(ON_Brep *brep)
-{
-    ON_TextLog dump;
-
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    //if (ON_id >= 0)
-    //	return true; // already loaded
-    ON_3dPoint origin(GetOrigin());
-    ON_3dVector xaxis(GetXAxis());
-    ON_3dVector yaxis(GetYAxis());
-
-    origin = origin * LocalUnits::length;
-    xaxis.Unitize();
-    yaxis.Unitize();
-
-    ON_Plane plane(origin, xaxis, yaxis);
-
-    ON_3dPoint center = origin;
-    double a = semi_axis_1 * LocalUnits::length;
-    double b = semi_axis_2 * LocalUnits::length;
-    ON_Ellipse ellipse(plane, a, b);
-
-    // double eccentricity = sqrt(1.0 - (b * b) / (a * a));
-    // ON_3dPoint focus_1 = center + (eccentricity * a) * xaxis;
-    // ON_3dPoint focus_2 = center - (eccentricity * a) * xaxis;
-
-    ON_3dPoint startpt;
-    ON_3dPoint endpt;
-
-    // get explicit start and end points
-    if (trimmed) {
-	if (!parameter_trim) {
-	    startpt = trim_startpoint;
-	    endpt = trim_endpoint;
-	}
-    } else if (start && end) {
-	startpt = start->Point3d();
-	endpt = end->Point3d();
-
-	startpt *= LocalUnits::length;
-	endpt *= LocalUnits::length;
-    }
-
-    // if we have start and end points, get corresponding t and s
-    if ((trimmed && !parameter_trim) || (start && end)) {
-	t = radians_from_xaxis_to_ellipse_point(this, startpt, a, b);
-	s = radians_from_xaxis_to_ellipse_point(this, endpt, a, b);
-    }
-
-    t = simplify_angle(t);
-    s = simplify_angle(s);
-
-    if (NEAR_ZERO(s, ANGLE_ZERO_TOL)) {
-	s = 2.0 * ON_PI;
-    }
-
-    while (s < t) {
-	s += 2.0 * ON_PI;
-    }
-
-    // if we have only t and s, get corresponding start and end points
-    if (parameter_trim) {
-	startpt = ellipse.PointAt(t);
-	endpt = ellipse.PointAt(s);
-    }
-
-    double theta = s - t;
-
-    if (VNEAR_EQUAL(startpt, endpt, BN_TOL_DIST)) {
-	theta = 2.0 * ON_PI;
-    }
-
-    int narcs = 1;
-    if (theta < ON_PI / 2.0) {
-	narcs = 1;
-    } else if (theta < ON_PI) {
-	narcs = 2;
-    } else if (theta < ON_PI * 3.0 / 2.0) {
-	narcs = 3;
-    } else {
-	narcs = 4;
-    }
-    double dtheta = theta / narcs;
-    ON_3dPointArray cpts(2 * narcs + 1);
-    double angle = t;
-    double W[2 * 4 + 1]; // 2 * max narcs + 1
-    ON_3dPoint Pnt[2 * 4 + 1];
-    ON_3dVector Tangent1, Tangent2;
-    ON_3dPoint P0, PX, P2, P1;
-
-    P0 = ellipse.PointAt(angle);
-    for (int i = 0; i < narcs; i++) {
-	Tangent1 = ellipse.TangentAt(angle);
-	PX = ellipse.PointAt(angle + dtheta / 2.0);
-	// step angle
-	angle = angle + dtheta;
-	P2 = ellipse.PointAt(angle);
-	Tangent2 = ellipse.TangentAt(angle);
-	ON_Line tangent1(P0, P0 + Tangent1);
-	ON_Line tangent2(P2, P2 + Tangent2);
-	if (intersectLines(tangent1, tangent2, P1) != 1) {
-	    std::cerr << entityname << ": Error: Control point can not be calculated." << std::endl;
-	    return false;
-	}
-	ON_Line l1(P1, center);
-	ON_Line l2(P0, P2);
-	ON_3dPoint PM;
-	if (intersectLines(l1, l2, PM) != 1) {
-	    std::cerr << entityname << ": Error: Control point can not be calculated." << std::endl;
-	    return false;
-	}
-	double mx = PM.DistanceTo(PX);
-	double mp1 = PM.DistanceTo(P1);
-	double R = mx / mp1;
-	double w = R / (1 - R);
-
-	cpts.Append(P0);
-	Pnt[2 * i] = P0;
-	W[2 * i] = 1.0;
-
-	Pnt[2 * i + 1] = P1;
-	P1 = (w) * P1; // must pre-weight before putting into NURB
-	cpts.Append(P1);
-	W[2 * i + 1] = w;
-
-	P0 = P2;
-    }
-    cpts.Append(P2);
-    Pnt[2 * narcs] = P2;
-    W[2 * narcs] = 1.0;
-
-    int degree = 2;
-    int n = cpts.Count();
-    int p = degree;
-    int m = n + p - 1;
-    int dimension = 3;
-    double u[4 + 1]; /* max narcs + 1 */
-
-    for (int k = 0; k < narcs + 1; k++) {
-	u[k] = ((double)k) / narcs;
-    }
-
-    ON_NurbsCurve *c = ON_NurbsCurve::New(dimension, true, degree + 1, n);
-
-    c->ReserveKnotCapacity(m + 1);
-    for (int i = 0; i < degree; i++) {
-	c->SetKnot(i, 0.0);
-    }
-    for (int i = 1; i < narcs; i++) {
-	double knot_value = u[i] / u[narcs];
-	c->SetKnot(degree + 2 * (i - 1), knot_value);
-	c->SetKnot(degree + 2 * (i - 1) + 1, knot_value);
-    }
-    for (int i = n - 1; i < m; i++) {
-	c->SetKnot(i, 1.0);
-    }
-    // insert the control points
-    for (int i = 0; i < n; i++) {
-	ON_3dPoint pnt = cpts[i];
-	c->SetCV(i, pnt);
-	c->SetWeight(i, W[i]);
-    }
-
-    ON_id = brep->AddEdgeCurve(c);
-
-    return true;
-}
-
-void
-Hyperbola::SetParameterTrim(double start_param, double end_param)
-{
-    double startpoint[3];
-    double endpoint[3];
-
-    t = start_param;
-    s = end_param;
-
-    ON_3dPoint origin(GetOrigin());
-    ON_3dVector xaxis(GetXAxis());
-    ON_3dVector yaxis(GetYAxis());
-    // ON_3dVector norm(GetNormal());
-
-    ON_3dPoint center = origin;
-    double a = semi_axis;
-    double b = semi_imag_axis;
-
-    if (s < t) {
-	double tmp = s;
-	s = t;
-	t = tmp;
-    }
-
-    double y = b * tan(t);
-    double x = a / cos(t);
-
-    ON_3dVector X = x * xaxis;
-    ON_3dVector Y = y * yaxis;
-    ON_3dPoint P = center + X + Y;
-
-    startpoint[0] = P.x;
-    startpoint[1] = P.y;
-    startpoint[2] = P.z;
-
-    y = b * tan(s);
-    x = a / cos(s);
-
-    X = x * xaxis;
-    Y = y * yaxis;
-    P = center + X + Y;
-
-    endpoint[0] = P.x;
-    endpoint[1] = P.y;
-    endpoint[2] = P.z;
-
-    SetPointTrim(startpoint, endpoint);
-}
-
-
-bool
-Hyperbola::LoadONBrep(ON_Brep *brep)
-{
-    ON_TextLog dump;
-
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    //if (ON_id >= 0)
-    //	return true; // already loaded
-
-    ON_3dPoint origin(GetOrigin());
-    ON_3dVector xaxis(GetXAxis());
-    ON_3dVector yaxis(GetYAxis());
-    ON_3dVector norm(GetNormal());
-
-    norm.Unitize();
-    xaxis.Unitize();
-    yaxis.Unitize();
-
-    ON_3dPoint center = origin * LocalUnits::length;
-    double a = semi_axis * LocalUnits::length;
-    double b = semi_imag_axis * LocalUnits::length;
-
-    double eccentricity = sqrt(1.0 + (b * b) / (a * a));
-    ON_3dPoint focus = center + (eccentricity * a) * xaxis;
-    ON_3dPoint focusprime = center - (eccentricity * a) * xaxis;
-    // ON_3dPoint vertex = center + a * xaxis;
-    // ON_3dPoint directrix = center + (a / eccentricity) * xaxis;
-
-    ON_3dPoint pnt1;
-    ON_3dPoint pnt2;
-    if (trimmed) { //explicitly trimmed
-	pnt1 = trim_startpoint;
-	pnt2 = trim_endpoint;
-    } else if ((start != NULL) && (end != NULL)) {
-	pnt1 = start->Point3d();
-	pnt2 = end->Point3d();
-    } else {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not endpoints for specified for curve " << entityname << std::endl;
-	return false;
-    }
-
-    ON_3dPoint P0 = pnt1 * LocalUnits::length;
-    ON_3dPoint P2 =  pnt2 * LocalUnits::length;
-
-    // calc tangent P0, P2 intersection
-    ON_3dVector ToFocus = focus - P0;
-    ToFocus.Unitize();
-
-    ON_3dVector ToFocusPrime = focusprime - P0;
-    ToFocusPrime.Unitize();
-
-    ON_3dVector bisector = ToFocus + ToFocusPrime;
-    bisector.Unitize();
-
-    ON_Line bs0(P0, P0 + bisector);
-
-    ToFocus = focus - P2;
-    ToFocus.Unitize();
-
-    ToFocusPrime = focusprime - P2;
-    ToFocusPrime.Unitize();
-
-    bisector = ToFocus + ToFocusPrime;
-    bisector.Unitize();
-
-    ON_Line bs2(P2, P2 + bisector);
-    ON_3dPoint P1;
-    if (intersectLines(bs0, bs2, P1) != 1) {
-	std::cerr << entityname << ": Error: Control point can not be calculated." << std::endl;
-	return false;
-    }
-
-    ON_Line l1(focus, P1);
-    ON_Line l2(P0, P2);
-    ON_3dPoint M = (P0 + P2) / 2.0;
-
-    ON_Line ctom(center, M);
-    ON_3dVector dtom = ctom.Direction();
-    dtom.Unitize();
-    double m = (dtom * yaxis) / (dtom * xaxis);
-    double x1 = a * b * sqrt(1.0 / (b * b - m * m * a * a));
-    double y1 = b * sqrt((x1 * x1) / (a * a) - 1.0);
-    if (m < 0.0) {
-	y1 *= -1.0;
-    }
-    ON_3dVector X = x1 * xaxis;
-    ON_3dVector Y = y1 * yaxis;
-    ON_3dPoint Pv = center + X + Y;
-    double mx = M.DistanceTo(Pv);
-    double mp1 = M.DistanceTo(P1);
-    double R = mx / mp1;
-    double w = R / (1 - R);
-
-    P1 = (w) * P1; // must pre-weight before putting into NURB
-
-    // add hyperbola weightings
-    ON_3dPointArray cpts(3);
-    cpts.Append(P0);
-    cpts.Append(P1);
-    cpts.Append(P2);
-    ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
-    bcurve->MakeRational();
-    bcurve->SetWeight(1, w);
-
-    ON_NurbsCurve *hypernurbscurve = ON_NurbsCurve::New();
-
-    bcurve->GetNurbForm(*hypernurbscurve);
-
-    ON_id = brep->AddEdgeCurve(hypernurbscurve);
-
-    return true;
-}
-
-
-void
-Parabola::SetParameterTrim(double start_param, double end_param)
-{
-    double startpoint[3];
-    double endpoint[3];
-
-    t = start_param;
-    s = end_param;
-
-    ON_3dPoint origin(GetOrigin());
-    ON_3dVector xaxis(GetXAxis());
-    xaxis.Unitize();
-    ON_3dVector yaxis(GetYAxis());
-    yaxis.Unitize();
-
-    ON_3dPoint center = origin;
-    double fd = focal_dist;
-
-    if (s < t) {
-	double tmp = s;
-	s = t;
-	t = tmp;
-    }
-    double x = 2.0 * fd * t; // tan(t);
-    double y = (x * x) / (4 * fd);
-
-    ON_3dVector X = x * yaxis;
-    ON_3dVector Y = y * xaxis;
-    ON_3dPoint P = center + X + Y;
-
-    startpoint[0] = P.x;
-    startpoint[1] = P.y;
-    startpoint[2] = P.z;
-
-    x = 2.0 * fd * s; //tan(s);
-    y = (x * x) / (4 * fd);
-
-    X = x * yaxis;
-    Y = y * xaxis;
-    P = center + X + Y;
-
-    endpoint[0] = P.x;
-    endpoint[1] = P.y;
-    endpoint[2] = P.z;
-
-    SetPointTrim(startpoint, endpoint);
-}
-
-
-bool
-Parabola::LoadONBrep(ON_Brep *brep)
-{
-    ON_TextLog dump;
-
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    //if (ON_id >= 0)
-    //	return true; // already loaded
-
-    ON_3dPoint origin(GetOrigin());
-    ON_3dVector xaxis(GetXAxis());
-    // ON_3dVector yaxis(GetYAxis());
-    // ON_3dVector normal(GetNormal());
-
-    ON_3dPoint center = origin * LocalUnits::length;
-    double fd = focal_dist * LocalUnits::length;
-    ON_3dPoint focus = center + fd * xaxis;
-    // ON_3dPoint directrix = center - fd * xaxis;
-
-    ON_3dPoint pnt1;
-    ON_3dPoint pnt2;
-    if (trimmed) { //explicitly trimmed
-	pnt1 = trim_startpoint;
-	pnt2 = trim_endpoint;
-    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
-	pnt1 = start->Point3d();
-	pnt2 = end->Point3d();
-    } else {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not endpoints for specified for curve " << entityname << std::endl;
-	return false;
-    }
-
-    ON_3dPoint P0 = pnt1 * LocalUnits::length;
-    ON_3dPoint P2 = pnt2 * LocalUnits::length;
-
-    // calc tang intersect with transverse axis
-    ON_3dVector ToFocus;
-
-    ToFocus = P0 - focus;
-    ToFocus.Unitize();
-    ON_3dVector bisector = ToFocus + xaxis;
-    bisector.Unitize();
-    ON_Line tangent1(P0, P0 + 10.0 * bisector);
-
-    ToFocus = P2 - focus;
-    ToFocus.Unitize();
-    bisector = ToFocus + xaxis;
-    bisector.Unitize();
-    ON_Line tangent2(P2, P2 + 10.0 * bisector);
-
-    ON_3dPoint P1;
-    if (intersectLines(tangent1, tangent2, P1) != 1) {
-	std::cerr << entityname << ": Error: Control point can not be calculated." << std::endl;
-	return false;
-    }
-
-    // make parabola from bezier
-    ON_3dPointArray cpts(3);
-    cpts.Append(P0);
-    cpts.Append(P1);
-    cpts.Append(P2);
-    ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
-    bcurve->MakeRational();
-
-    ON_NurbsCurve *parabnurbscurve = ON_NurbsCurve::New();
-
-    bcurve->GetNurbForm(*parabnurbscurve);
-    ON_id = brep->AddEdgeCurve(parabnurbscurve);
-
-    return true;
-}
-
-
-void
-Line::SetParameterTrim(double start_param, double end_param)
-{
-    double startpoint[3];
-    double endpoint[3];
-
-    t = start_param;
-    s = end_param;
-
-    ON_3dPoint ptstart(pnt->Point3d());
-    ON_3dVector vdir( dir->Orientation());
-    ON_3dPoint ptend = ptstart + (vdir*dir->Magnitude());
-    ON_Line l(ptstart, ptend);
-
-    if (s < t) {
-	double tmp = s;
-	s = t;
-	t = tmp;
-    }
-    VMOVE(startpoint,l.PointAt(t));
-    VMOVE(endpoint,l.PointAt(s));
-
-    SetPointTrim(startpoint, endpoint);
-}
-
-
-bool
-Line::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    //if (ON_id >= 0)
-    //	return true; // already loaded
-
-    ON_3dPoint startpnt = ON_3dPoint::UnsetPoint;
-    ON_3dPoint endpnt = ON_3dPoint::UnsetPoint;
-
-    if (trimmed) { //explicitly trimmed
-	startpnt = trim_startpoint;
-	endpnt = trim_endpoint;
-    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
-	startpnt = start->Point3d();
-	endpnt = end->Point3d();
-    } else {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not endpoints for specified for curve " << entityname << std::endl;
-	return false;
-    }
-
-    startpnt = startpnt * LocalUnits::length;
-    endpnt = endpnt * LocalUnits::length;
-
-    ON_LineCurve *l = new ON_LineCurve(startpnt, endpnt);
-
-    ON_id = brep->AddEdgeCurve(l);
-
-    return true;
-}
-
-
-bool
-SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
-{
-    ON_TextLog tl;
-
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;    // already loaded
-    }
-
-    // load parent class
-    if (!SweptSurface::LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-
-    ON_Curve *curve = brep->m_C3[swept_curve->GetONId()];
-
-    // use trimming edge bounding box unioned with bounding box of
-    // curve being extruded; calc diagonal to make sure extrusion
-    // magnitude is well represented
-    ON_BoundingBox curvebb = curve->BoundingBox();
-    trim_curve_3d_bbox->Union(curvebb);
-    double bbdiag = trim_curve_3d_bbox->Diagonal().Length(); // already converted to local units;
-
-    ON_3dPoint dir(extrusion_axis->Orientation());
-    double mag = extrusion_axis->Magnitude() * LocalUnits::length;
-    mag = FMAX(mag, bbdiag);
-
-    ON_3dPoint startpnt;
-    if (swept_curve->PointAtStart() == NULL) {
-	startpnt = curve->PointAtStart();
-    } else {
-	startpnt = swept_curve->PointAtStart();
-	startpnt = startpnt * LocalUnits::length;
-    }
-
-    // add a little buffer in the surface extrusion distance
-    // by extruding "+/-mag" distance along "dir"
-    ON_3dPoint extrusion_endpnt = startpnt + mag * dir;
-    ON_3dPoint extrusion_startpnt = startpnt - mag * dir;
-
-    ON_LineCurve *l = new ON_LineCurve(extrusion_startpnt, extrusion_endpnt);
-
-    // the following extrude code lifted from OpenNURBS ON_BrepExtrude()
-    ON_Line path_line;
-    path_line.from = extrusion_startpnt;
-    path_line.to = extrusion_endpnt;
-    ON_3dVector path_vector = path_line.Direction();
-    if (path_vector.IsZero()) {
-	delete l;
-	return false;
-    }
-
-    ON_SumSurface *sum_srf = 0;
-
-    ON_Curve *srf_base_curve = curve->Duplicate();
-    srf_base_curve->Translate(-mag * dir);
-
-    ON_3dPoint sum_basepoint = ON_origin - l->PointAtStart();
-    sum_srf = new ON_SumSurface();
-
-    if (!sum_srf) {
-	delete l;
-	return false;
-    }
-    sum_srf->m_curve[0] = srf_base_curve;
-    sum_srf->m_curve[1] = l; //srf_path_curve;
-    sum_srf->m_basepoint = sum_basepoint;
-    sum_srf->BoundingBox(); // fills in sum_srf->m_bbox
-
-
-    ON_id = brep->AddSurface(sum_srf);
-
-    return true;
-}
-
-
-bool
-SurfaceOfRevolution::LoadONBrep(ON_Brep *brep)
-{
-    ON_TextLog tl;
-
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;    // already loaded
-    }
-
-    // load parent class
-    if (!SweptSurface::LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-
-    ON_3dPoint start(axis_position->GetOrigin());
-    start = start * LocalUnits::length;
-
-    ON_3dVector dir(axis_position->GetNormal());
-    ON_3dPoint end = start + dir;
-
-    ON_Line axisline(start, end);
-    ON_RevSurface *revsurf = ON_RevSurface::New();
-
-    if (!revsurf) {
-	return false;
-    }
-    revsurf->m_curve = brep->m_C3[swept_curve->GetONId()]->DuplicateCurve();
-    revsurf->m_axis = axisline;
-    revsurf->BoundingBox(); // fills in sum_srf->m_bbox
-
-    //ON_Brep* b = ON_BrepRevSurface(revsurf, true, true);
-
-    //if (!revsurf)
-    //return false;
-
-    ON_id = brep->AddSurface(revsurf);
-
-    return true;
-}
-
-
-bool
-SphericalSurface::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    // get sphere center
-    ON_3dPoint center(GetOrigin());
-    center = center * LocalUnits::length;
-
-    // Creates a sphere with given center and radius.
-    ON_Sphere sphere(center, radius * LocalUnits::length);
-
-    ON_RevSurface *s = sphere.RevSurfaceForm(false, nullptr);
-    if (s) {
-	double r = fabs(sphere.radius);
-	if (r <= ON_SQRT_EPSILON) {
-	    r = 1.0;
-	}
-	r *= ON_PI;
-	s->SetDomain(0, 0.0, 2.0 * r);
-	s->SetDomain(1, -r, r);
-    }
-    ON_id = brep->AddSurface(s);
-
-    return true;
-}
-
-
-bool
-ToroidalSurface::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    ON_3dPoint origin(GetOrigin());
-    ON_3dVector xaxis(GetXAxis());
-    ON_3dVector yaxis(GetYAxis());
-    // ON_3dVector norm(GetNormal());
-
-    origin = origin * LocalUnits::length;
-
-    ON_Plane p(origin, xaxis, yaxis);
-
-    // Creates a torus parallel to the plane
-    // with given major and minor radius.
-    ON_Torus torus(p, major_radius * LocalUnits::length, minor_radius * LocalUnits::length);
-
-    ON_RevSurface *s = torus.RevSurfaceForm();
-    if (s) {
-	double r = fabs(torus.major_radius);
-	if (r <= ON_SQRT_EPSILON) {
-	    r = 1.0;
-	}
-	r *= ON_PI;
-	s->SetDomain(0, 0.0, 2.0 * r);
-	r = fabs(torus.minor_radius);
-	if (r <= ON_SQRT_EPSILON) {
-	    r = 1.0;
-	}
-	r *= ON_PI;
-	s->SetDomain(1, 0.0, 2.0 * r);
-    }
-    ON_id = brep->AddSurface(s);
-
-    return true;
-}
-
-
-bool
-VertexLoop::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	/* nothing to do */
-	return false;
-    }
-
-    //load vertex
-    loop_vertex->LoadONBrep(brep);
-
-    ON_3dPoint vertex(loop_vertex->Point3d());
-
-    // create singular trim;
-    ON_BrepLoop &loop = brep->m_L[ON_loop_index];
-    ON_BrepFace *face = loop.Face();
-    const ON_Surface *surface = face->SurfaceOf();
-
-    ON_Interval U = surface->Domain(0);
-    ON_Interval V = surface->Domain(1);
-    ON_3dPoint corner[4];
-    corner[0] = surface->PointAt(U.m_t[0], V.m_t[0]);
-    corner[1] = surface->PointAt(U.m_t[1], V.m_t[0]);
-    corner[2] = surface->PointAt(U.m_t[0], V.m_t[1]);
-    corner[3] = surface->PointAt(U.m_t[1], V.m_t[1]);
-
-    ON_2dPoint start, end;
-    ON_Surface::ISO iso = ON_Surface::N_iso;
-    if (VNEAR_EQUAL(vertex, corner[0], POINT_CLOSENESS_TOLERANCE)) {
-	start = ON_2dPoint(U.m_t[0], V.m_t[0]);
-	if (VNEAR_EQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
-	    //south;
-	    end = ON_2dPoint(U.m_t[1], V.m_t[0]);
-	    iso = ON_Surface::S_iso;
-	} else if (VNEAR_EQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
-	    //west
-	    end = ON_2dPoint(U.m_t[0], V.m_t[1]);
-	    iso = ON_Surface::W_iso;
-	}
-    } else if (VNEAR_EQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
-	start = ON_2dPoint(U.m_t[1], V.m_t[0]);
-	if (VNEAR_EQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
-	    //east
-	    end = ON_2dPoint(U.m_t[1], V.m_t[1]);
-	    iso = ON_Surface::E_iso;
-	}
-    } else if (VNEAR_EQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
-	start = ON_2dPoint(U.m_t[0], V.m_t[1]);
-	if (VNEAR_EQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
-	    //north
-	    end = ON_2dPoint(U.m_t[1], V.m_t[1]);
-	    iso = ON_Surface::N_iso;
+    ON_3dPointArray points;
+    ON_2dPoint previous = ON_2dPoint::UnsetPoint;
+    for (std::list<ON_2dPointArray *>::const_iterator segment =
+	    data->segments->begin(); segment != data->segments->end(); ++segment) {
+	if (!*segment)
+	    continue;
+	for (int sample = 0; sample < (*segment)->Count(); ++sample) {
+	    ON_2dPoint uv = (**segment)[sample];
+	    if (!uv.IsValid()) {
+		destroy_pullback_data(data);
+		if (failure_reason)
+		    *failure_reason = "curve-to-surface projection produced a "
+			"non-finite parameter";
+		return NULL;
+	    }
+	    /* Independently sampled fragments may choose neighboring images of
+	     * a periodic surface.  Translate whole periods to retain the nearest
+	     * continuous branch; this changes neither the surface locus nor the
+	     * authored 3-D curve. */
+	    if (previous.IsValid()) {
+		for (int direction = 0; direction < 2; ++direction) {
+		    if (!surface->IsClosed(direction))
+			continue;
+		    const double period = surface->Domain(direction).Length();
+		    if (period > ON_ZERO_TOLERANCE)
+			uv[direction] += round((previous[direction] -
+			    uv[direction]) / period) * period;
+		}
+		if (uv.DistanceTo(previous) <= ON_ZERO_TOLERANCE)
+		    continue;
+	    }
+	    points.Append(ON_3dPoint(uv.x, uv.y, 0.0));
+	    previous = uv;
 	}
     }
-    ON_Curve *c2d = new ON_LineCurve(start, end);
-    int trimCurve = brep->m_C2.Count();
-    brep->m_C2.Append(c2d);
+    destroy_pullback_data(data);
+    if (points.Count() < 2) {
+	if (failure_reason)
+	    *failure_reason = "curve-to-surface projection collapsed to one "
+		"parameter point";
+	return NULL;
+    }
 
-    (void)brep->NewSingularTrim(brep->m_V[loop_vertex->GetONId()], loop, iso, trimCurve);
-    /* FIXME: do something with this trim */
+    std::unique_ptr<ON_PolylineCurve> candidate(new ON_PolylineCurve(points));
+    if (!candidate->ChangeDimension(2) || !candidate->IsValid()) {
+	if (failure_reason)
+	    *failure_reason = "the projected parameter polyline was invalid";
+	return NULL;
+    }
 
-    return true;
+    std::vector<ON_3dPoint> lifted(kDenseLiftValidationSegments + 1,
+	ON_3dPoint::UnsetPoint);
+    const ON_Interval domain = candidate->Domain();
+    bool finite = domain.IsIncreasing();
+    for (int sample = 0; finite && sample <= kDenseLiftValidationSegments;
+	    ++sample) {
+	const ON_3dPoint uv = candidate->PointAt(domain.ParameterAt(
+	    static_cast<double>(sample) / kDenseLiftValidationSegments));
+	lifted[sample] = uv.IsValid() ? surface->PointAt(uv.x, uv.y) :
+	    ON_3dPoint::UnsetPoint;
+	finite = lifted[sample].IsValid();
+    }
+    std::size_t rejected_index = 0;
+    double rejected_distance = DBL_MAX;
+    if (!finite || !step_curve_locus_contains_points(curve, lifted.data(),
+	    lifted.size(), tolerance, &rejected_index, &rejected_distance)) {
+	if (failure_reason) {
+	    std::ostringstream reason;
+	    reason << "the projected pcurve did not preserve the complete 3-D "
+		"curve locus";
+	    if (finite)
+		reason << " at sample " << rejected_index << '/'
+		    << kDenseLiftValidationSegments << " (distance "
+		    << rejected_distance << ", tolerance " << tolerance << ')';
+	    *failure_reason = reason.str();
+	}
+	return NULL;
+    }
+    return candidate.release();
 }
 
 
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
+ON_Curve *
+step_closed_curve_with_seam_at(const ON_Curve *curve,
+    const ON_3dPoint &point, double tolerance)
+{
+    if (!curve || !curve->IsClosed() || !point.IsValid() ||
+	    !(tolerance > 0.0))
+	return NULL;
+    CurveDistanceEvaluator evaluator(curve);
+    double parameter = 0.0;
+    double distance = DBL_MAX;
+    if (!evaluator.ClosestParameter(point, &parameter, &distance) ||
+	    distance > tolerance)
+	return NULL;
+    std::unique_ptr<ON_NurbsCurve> result(new ON_NurbsCurve());
+    if (!curve->GetNurbForm(*result) || !result->IsClosed() ||
+	    !result->ChangeClosedCurveSeam(parameter) || !result->IsValid() ||
+	    result->PointAtStart().DistanceTo(point) > tolerance ||
+	    result->PointAtEnd().DistanceTo(point) > tolerance)
+	return NULL;
+    return result.release();
+}

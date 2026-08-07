@@ -25,6 +25,8 @@
  */
 
 #include "STEPWrapper.h"
+#include "STEPGeneratedAPI.h"
+#include "ap_schema.h"
 #include "Factory.h"
 
 #include "CartesianPoint.h"
@@ -92,16 +94,18 @@ TrimmingSelect::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     step = sw;
 
     //std::cout << sse->UnderlyingTypeName() << std::endl;
-    SdaiTrimming_select *v = (SdaiTrimming_select *)sse;
+    SDAI_Select *v = reinterpret_cast<SDAI_Select *>(sse);
+    SDAI_Application_instance *selected = brlcad::step::SelectedEntity(v);
 
-    if (v->IsCartesian_point()) {
-	SdaiCartesian_point *p = *v;
+    if (selected && sw->IsSchemaEntity(selected, "CARTESIAN_POINT")) {
 	type = CARTESIAN_POINT;
-	cartesian_point = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw, (SDAI_Application_instance *)p));
+	cartesian_point = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw, selected));
 	if (!cartesian_point) return false;
-    } else if (v->IsParameter_value()) {
+    } else if (brlcad::step::SelectIs(v, "PARAMETER_VALUE")) {
 	type = PARAMETER_VALUE;
-	parameter_value = (double)*v;
+	const SDAI_Real *value = brlcad::step::SelectedReal(v);
+	if (!value) return false;
+	parameter_value = *value;
     }
 
     return true;

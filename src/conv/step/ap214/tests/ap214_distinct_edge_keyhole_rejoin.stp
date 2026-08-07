@@ -1,0 +1,150 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('BRL-CAD AP214 distinct-edge keyhole topology fixture'),'2;1');
+FILE_NAME('ap214_distinct_edge_keyhole_rejoin.stp','2026-07-26T00:00:00',('BRL-CAD'),('BRL-CAD'),'','','');
+FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 3 1 1 1 }'));
+ENDSEC;
+DATA;
+/*
+ * The cylindrical face has an exact C-E-C keyhole excursion made from
+ * distinct edges #43/#44.  Each edge has its reciprocal use on one of the
+ * two adjacent faces of the tetrahedral component.  Face-local normalization
+ * removes the zero-area excursion; whole-shell processing must then rejoin
+ * the two remaining uses using authoritative endpoint and curve-locus proof.
+ */
+#1=CARTESIAN_POINT('',(0.,0.,0.));
+#2=CARTESIAN_POINT('',(0.,0.,2.));
+#3=CARTESIAN_POINT('',(2.,0.,0.));
+#4=CARTESIAN_POINT('',(2.,0.,2.));
+#5=CARTESIAN_POINT('',(2.,0.,1.));
+#6=CARTESIAN_POINT('',(3.,1.,0.5));
+#7=CARTESIAN_POINT('',(3.,-1.,0.5));
+#11=VERTEX_POINT('',#3);
+#12=VERTEX_POINT('',#4);
+#13=VERTEX_POINT('',#5);
+#14=VERTEX_POINT('',#6);
+#15=VERTEX_POINT('',#7);
+
+#20=DIRECTION('',(0.,0.,1.));
+#21=DIRECTION('',(0.,0.,-1.));
+#22=DIRECTION('',(1.,0.,0.));
+#23=VECTOR('',#20,1.);
+#24=AXIS2_PLACEMENT_3D('',#1,#20,#22);
+#25=AXIS2_PLACEMENT_3D('',#2,#20,#22);
+#26=AXIS2_PLACEMENT_3D('',#1,#21,#22);
+#30=CIRCLE('',#24,2.);
+#31=CIRCLE('',#25,2.);
+#32=LINE('',#3,#23);
+#33=LINE('',#3,#23);
+#40=EDGE_CURVE('',#11,#11,#30,.T.);
+#41=EDGE_CURVE('',#12,#12,#31,.T.);
+#42=EDGE_CURVE('',#11,#12,#32,.T.);
+#43=EDGE_CURVE('',#11,#13,#33,.T.);
+#44=EDGE_CURVE('',#11,#13,#33,.T.);
+
+#34=DIRECTION('',(0.6666666666666667,0.6666666666666667,0.3333333333333333));
+#35=DIRECTION('',(0.6666666666666667,-0.6666666666666667,0.3333333333333333));
+#36=DIRECTION('',(0.6666666666666667,0.6666666666666667,-0.3333333333333333));
+#37=DIRECTION('',(0.6666666666666667,-0.6666666666666667,-0.3333333333333333));
+#38=DIRECTION('',(0.,-1.,0.));
+#45=VECTOR('',#34,1.);
+#46=VECTOR('',#35,1.);
+#47=VECTOR('',#36,1.);
+#48=VECTOR('',#37,1.);
+#49=VECTOR('',#38,1.);
+#60=LINE('',#3,#45);
+#61=LINE('',#3,#46);
+#62=LINE('',#5,#47);
+#63=LINE('',#5,#48);
+#64=LINE('',#6,#49);
+#70=EDGE_CURVE('',#11,#14,#60,.T.);
+#71=EDGE_CURVE('',#11,#15,#61,.T.);
+#72=EDGE_CURVE('',#13,#14,#62,.T.);
+#73=EDGE_CURVE('',#13,#15,#63,.T.);
+#74=EDGE_CURVE('',#14,#15,#64,.T.);
+
+/* Cylinder side: an ordinary rectangular seam loop plus the C-E-C spike. */
+#80=ORIENTED_EDGE('',*,*,#40,.F.);
+#81=ORIENTED_EDGE('',*,*,#42,.T.);
+#82=ORIENTED_EDGE('',*,*,#41,.T.);
+#83=ORIENTED_EDGE('',*,*,#42,.F.);
+#84=ORIENTED_EDGE('',*,*,#43,.T.);
+#85=ORIENTED_EDGE('',*,*,#44,.F.);
+#86=EDGE_LOOP('',(#80,#81,#82,#83,#84,#85));
+#87=FACE_OUTER_BOUND('',#86,.T.);
+#88=CYLINDRICAL_SURFACE('',#24,2.);
+#89=ADVANCED_FACE('',(#87),#88,.T.);
+
+#90=ORIENTED_EDGE('',*,*,#40,.F.);
+#91=EDGE_LOOP('',(#90));
+#92=FACE_OUTER_BOUND('',#91,.T.);
+#93=PLANE('',#26);
+#94=ADVANCED_FACE('',(#92),#93,.T.);
+#95=ORIENTED_EDGE('',*,*,#41,.T.);
+#96=EDGE_LOOP('',(#95));
+#97=FACE_OUTER_BOUND('',#96,.T.);
+#98=PLANE('',#25);
+#99=ADVANCED_FACE('',(#97),#98,.T.);
+
+/* Tetrahedron: #43 and #44 are its two sides of the C-E edge. */
+#100=ORIENTED_EDGE('',*,*,#70,.T.);
+#101=ORIENTED_EDGE('',*,*,#72,.F.);
+#102=ORIENTED_EDGE('',*,*,#43,.F.);
+#103=EDGE_LOOP('',(#100,#101,#102));
+#104=FACE_OUTER_BOUND('',#103,.T.);
+#105=DIRECTION('',(0.7071067811865475,-0.7071067811865475,0.));
+#106=AXIS2_PLACEMENT_3D('',#3,#105,#20);
+#107=PLANE('',#106);
+#108=ADVANCED_FACE('',(#104),#107,.T.);
+
+#110=ORIENTED_EDGE('',*,*,#71,.T.);
+#111=ORIENTED_EDGE('',*,*,#74,.F.);
+#112=ORIENTED_EDGE('',*,*,#70,.F.);
+#113=EDGE_LOOP('',(#110,#111,#112));
+#114=FACE_OUTER_BOUND('',#113,.T.);
+#115=DIRECTION('',(-0.4472135954999579,0.,0.8944271909999159));
+#116=DIRECTION('',(0.,1.,0.));
+#117=AXIS2_PLACEMENT_3D('',#3,#115,#116);
+#118=PLANE('',#117);
+#119=ADVANCED_FACE('',(#114),#118,.T.);
+
+#120=ORIENTED_EDGE('',*,*,#44,.T.);
+#121=ORIENTED_EDGE('',*,*,#73,.T.);
+#122=ORIENTED_EDGE('',*,*,#71,.F.);
+#123=EDGE_LOOP('',(#120,#121,#122));
+#124=FACE_OUTER_BOUND('',#123,.T.);
+#125=DIRECTION('',(0.7071067811865475,0.7071067811865475,0.));
+#126=AXIS2_PLACEMENT_3D('',#3,#125,#20);
+#127=PLANE('',#126);
+#128=ADVANCED_FACE('',(#124),#127,.T.);
+
+#130=ORIENTED_EDGE('',*,*,#72,.T.);
+#131=ORIENTED_EDGE('',*,*,#74,.T.);
+#132=ORIENTED_EDGE('',*,*,#73,.F.);
+#133=EDGE_LOOP('',(#130,#131,#132));
+#134=FACE_OUTER_BOUND('',#133,.T.);
+#135=DIRECTION('',(-0.4472135954999579,0.,-0.8944271909999159));
+#136=AXIS2_PLACEMENT_3D('',#5,#135,#116);
+#137=PLANE('',#136);
+#138=ADVANCED_FACE('',(#134),#137,.T.);
+
+#150=CLOSED_SHELL('exact distinct-edge keyhole shell',(#89,#94,#99,#108,#119,#128,#138));
+#151=MANIFOLD_SOLID_BREP('distinct-edge keyhole solid',#150);
+#160=DIMENSIONAL_EXPONENTS(1.,0.,0.,0.,0.,0.,0.);
+#161=(LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.));
+#162=(NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.));
+#163=(NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT());
+#164=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-6),#161,'distance_accuracy_value','maximum gap value');
+#165=(GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#164)) GLOBAL_UNIT_ASSIGNED_CONTEXT((#161,#162,#163)) REPRESENTATION_CONTEXT('fixture','3D'));
+#170=APPLICATION_CONTEXT('automotive design');
+#171=APPLICATION_PROTOCOL_DEFINITION('fixture','automotive_design',2010,#170);
+#172=PRODUCT_CONTEXT('',#170,'mechanical');
+#173=PRODUCT_DEFINITION_CONTEXT('part definition',#170,'design');
+#174=PRODUCT('distinct_edge_keyhole','Distinct Edge Keyhole','whole-BREP topology repair fixture',(#172));
+#175=PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE('A','fixture revision',#174,.MADE.);
+#176=PRODUCT_DEFINITION('design','keyhole product',#175,#173);
+#177=PRODUCT_DEFINITION_SHAPE('','',#176);
+#178=ADVANCED_BREP_SHAPE_REPRESENTATION('',(#24,#151),#165);
+#179=SHAPE_DEFINITION_REPRESENTATION(#177,#178);
+ENDSEC;
+END-ISO-10303-21;
