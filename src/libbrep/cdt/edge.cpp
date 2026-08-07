@@ -1675,4 +1675,3 @@ finalize_rtrees(struct ON_Brep_CDT_State *s_cdt)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

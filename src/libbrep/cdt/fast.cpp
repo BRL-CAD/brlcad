@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include <vector>
+#include <atomic>
 #include <list>
 #include <map>
 #include <stack>
@@ -57,6 +58,8 @@
 #include "assert.h"
 
 #include "vmath.h"
+#include "bu/parallel.h"
+#include "bu/env.h"
 
 #include "bu/cv.h"
 #include "bu/opt.h"
@@ -288,6 +291,55 @@ getEdgePoints(ON_BrepTrim &trim,
 
 	getEdgePoints(trim, sbtp, ebtp, &cdt_tol, *param_points);
 
+    }
+
+    /* Boundary points shared by two faces must be taken from their common
+     * 3-D BREP edge, not independently from the two surface lifts.  Valid
+     * trims may differ from that edge by their asserted edge tolerance; using
+     * the lifts directly opens a visible crack in the fast shaded-display
+     * mesh.  A trim and its edge are not required to use identical parameter
+     * domains, so verify the normalized correspondence at every sample before
+     * changing any point.  If it is not valid for the entire trim, leave the
+     * trim on the existing general path rather than producing a mixture of
+     * surface and edge points. */
+    const ON_BrepEdge *edge = trim.Edge();
+    const ON_Curve *edge_curve = edge ? edge->EdgeCurveOf() : NULL;
+    const ON_Interval edge_domain = edge_curve ? edge_curve->Domain() :
+	ON_Interval::EmptyInterval;
+    const double edge_tolerance = edge ? std::max(tol->dist,
+	edge->m_tolerance) : tol->dist;
+
+    bool edge_parameterization_matches = edge_curve && range.IsIncreasing() &&
+	edge_domain.IsIncreasing();
+    if (edge_parameterization_matches) {
+	for (std::map<double, BrepTrimPoint *>::iterator sample =
+		param_points->begin(); sample != param_points->end(); ++sample) {
+	    BrepTrimPoint *point = sample->second;
+	    if (!point || !point->p3d) {
+		edge_parameterization_matches = false;
+		break;
+	    }
+	    double fraction = range.NormalizedParameterAt(point->t);
+	    if (trim.m_bRev3d)
+		fraction = 1.0 - fraction;
+	    const ON_3dPoint edge_point = edge_curve->PointAt(
+		edge_domain.ParameterAt(fraction));
+	    if (!edge_point.IsValid() ||
+		    edge_point.DistanceTo(*point->p3d) > edge_tolerance) {
+		edge_parameterization_matches = false;
+		break;
+	    }
+	}
+    }
+    if (edge_parameterization_matches) {
+	for (std::map<double, BrepTrimPoint *>::iterator sample =
+		param_points->begin(); sample != param_points->end(); ++sample) {
+	    BrepTrimPoint *point = sample->second;
+	    double fraction = range.NormalizedParameterAt(point->t);
+	    if (trim.m_bRev3d)
+		fraction = 1.0 - fraction;
+	    *point->p3d = edge_curve->PointAt(edge_domain.ParameterAt(fraction));
+	}
     }
 
     return param_points;
@@ -2298,6 +2350,55 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 }
 
 
+struct fast_cdt_face_result {
+    std::vector<int> faces;
+    std::vector<fastf_t> norms;
+    std::vector<fastf_t> pnts;
+};
+
+struct fast_cdt_parallel_state {
+    const ON_Brep *brep;
+    const struct bg_tess_tol *ttol;
+    const struct bn_tol *tol;
+    std::vector<fast_cdt_face_result> *results;
+    std::atomic<int> next_face;
+    std::atomic<size_t> result_bytes;
+    std::atomic<bool> over_budget;
+    size_t result_budget;
+};
+
+static void
+fast_cdt_face_worker(int UNUSED(cpu), void *data)
+{
+    fast_cdt_parallel_state *state = (fast_cdt_parallel_state *)data;
+    const int face_cnt = state->brep->m_F.Count();
+
+    for (;;) {
+	if (state->over_budget.load())
+	    return;
+	const int face_index = state->next_face.fetch_add(1);
+	if (face_index >= face_cnt)
+	    return;
+
+	const ON_BrepFace& face = state->brep->m_F[face_index];
+	bg_CDT((*state->results)[face_index].faces,
+	       (*state->results)[face_index].norms,
+	       (*state->results)[face_index].pnts,
+	       face, state->ttol, state->tol);
+
+	const fast_cdt_face_result &result = (*state->results)[face_index];
+	const size_t result_bytes = result.faces.size() * sizeof(int) +
+	    (result.norms.size() + result.pnts.size()) * sizeof(fastf_t);
+	if (state->result_bytes.fetch_add(result_bytes) + result_bytes > state->result_budget) {
+	    state->over_budget = true;
+	    (*state->results)[face_index].faces.clear();
+	    (*state->results)[face_index].norms.clear();
+	    (*state->results)[face_index].pnts.clear();
+	    return;
+	}
+    }
+}
+
 int
 brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, int *pntcnt,
 	const ON_Brep *brep, int index, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
@@ -2326,10 +2427,30 @@ brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, in
     std::vector<fastf_t> all_pnts;
 
     if (index == -1) {
-        for (index = 0; index < brep->m_F.Count(); index++) {
-            const ON_BrepFace& face = brep->m_F[index];
-            bg_CDT(all_faces, all_norms, all_pnts, face, ttol, tol);
-        }
+	/* Each face produces an independent set of indices and points.  Keep
+	 * those results separate while workers run, then concatenate them in
+	 * face order.  This avoids locking the hot CDT path and keeps output
+	 * stable across runs.  The BRep trim-user cleanup below remains serial. */
+	std::vector<fast_cdt_face_result> face_results(brep->m_F.Count());
+	ssize_t available = bu_mem(BU_MEM_AVAIL, NULL);
+	size_t result_budget = (available > 0) ? (size_t)available / 4 :
+	    (size_t)512 * 1024 * 1024;
+	fast_cdt_parallel_state state = {
+	    brep, ttol, tol, &face_results, 0, 0, false, result_budget
+	};
+	bu_parallel(fast_cdt_face_worker, 0, &state);
+	if (state.over_budget.load()) {
+	    bu_log("brep_cdt_fast: tessellation result exceeded memory budget (%zu bytes)\n", result_budget);
+	} else {
+	    for (size_t fi = 0; fi < face_results.size(); fi++) {
+		const size_t point_offset = all_pnts.size() / 3;
+		for (size_t i = 0; i < face_results[fi].faces.size(); i++) {
+		    all_faces.push_back((int)point_offset + face_results[fi].faces[i]);
+		}
+		all_norms.insert(all_norms.end(), face_results[fi].norms.begin(), face_results[fi].norms.end());
+		all_pnts.insert(all_pnts.end(), face_results[fi].pnts.begin(), face_results[fi].pnts.end());
+	    }
+	}
     } else if (index < brep->m_F.Count()) {
         const ON_BrepFaceArray& brep_faces = brep->m_F;
         if (index < brep_faces.Count()) {
@@ -2387,4 +2508,3 @@ brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, in
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
