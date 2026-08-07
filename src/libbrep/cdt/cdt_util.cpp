@@ -861,4 +861,3 @@ int ON_Brep_CDT_VList(
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
