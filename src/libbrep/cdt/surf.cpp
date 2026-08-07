@@ -1050,4 +1050,3 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
