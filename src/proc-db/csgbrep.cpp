@@ -63,7 +63,10 @@ write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct
 
     /* write the object in brep/nurbs form */
     brep = ON_Brep::New();
-    ip->idb_meth->ft_brep(&brep, ip, tol);
+    if (rt_obj_brep(&brep, ip, tol) < 0) {
+	delete brep;
+	return;
+    }
     mk_brep(fp, bname.c_str(), (void *)brep);
     // delete brep;
 }
@@ -246,7 +249,7 @@ main(int argc, char** argv)
     tmp_internal.idb_ptr = (void *)&arbnmg8;
     tmp_internal.idb_minor_type = ID_ARB8;
     tmp_internal.idb_meth = &OBJ[ID_ARB8];
-    tmp_internal.idb_meth->ft_tessellate(&r, m, &tmp_internal, &ttol, &tol);
+    rt_obj_tess(&r, m, &tmp_internal, &ttol, &tol);
 
     tmp_internal.idb_ptr = m;
     tmp_internal.idb_minor_type = ID_NMG;

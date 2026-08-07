@@ -112,6 +112,16 @@ RT_EXPORT extern int rt_obj_free(struct soltab *stp);
 RT_EXPORT extern int rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
 /**
+ * obtain a view-aware vlist wireframe representation of an object
+ */
+RT_EXPORT extern int rt_obj_plot_view(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *view);
+
+/**
+ * obtain an adaptive vlist wireframe representation of an object
+ */
+RT_EXPORT extern int rt_obj_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *view, fastf_t s_size);
+
+/**
  * shoot an array of rays at a set of homogeneous objects.
  */
 RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap);
@@ -120,6 +130,16 @@ RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struc
  * tessellate an object (into NMG form)
  */
 RT_EXPORT extern int rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
+
+/**
+ * calculate an axis-aligned object bounding box
+ */
+RT_EXPORT extern int rt_obj_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol);
+
+/**
+ * obtain an exact BRep representation of an object
+ */
+RT_EXPORT extern int rt_obj_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol);
 
 /**
  * calculate object volume

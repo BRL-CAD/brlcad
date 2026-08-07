@@ -71,6 +71,7 @@ struct affine_case {
     fastf_t rx;
     fastf_t ry;
     fastf_t rz;
+    fastf_t hscale;
 };
 
 
@@ -90,9 +91,10 @@ static const struct prim_case prims[] = {
 
 
 static const struct affine_case affine_cases[] = {
-    {"nonuniform", 1.7, 0.65, 1.3, 0.0, 0.0, 0.0},
-    {"rot_xyz", 1.7, 0.65, 1.3, 17.0, -23.0, 31.0},
-    {"rot_xz", 1.7, 1.0, 0.55, -12.0, 28.0, 9.0}
+    {"nonuniform", 1.7, 0.65, 1.3, 0.0, 0.0, 0.0, 1.0},
+    {"rot_xyz", 1.7, 0.65, 1.3, 17.0, -23.0, 31.0, 1.0},
+    {"rot_xz", 1.7, 1.0, 0.55, -12.0, 28.0, 9.0, 1.0},
+    {"homogeneous", 1.7, 0.65, 1.3, 0.0, 0.0, 0.0, 0.5}
 };
 
 
@@ -140,6 +142,7 @@ make_affine_mat(mat_t mat, const struct affine_case *ac)
     mat[3] = 12.0;
     mat[7] = -5.0;
     mat[11] = 3.0;
+    mat[15] = ac->hscale;
 }
 
 
@@ -238,6 +241,7 @@ expected_affine_curve(struct curvature *out, const struct curvature *body_curve,
     MAT4X3VEC(t2, body_to_model, e2);
 
     VEC3X3MAT(model_n, n, model_to_body);
+    VSCALE(model_n, model_n, 1.0 / model_to_body[15]);
     alpha = MAGNITUDE(model_n);
     if (!isfinite(alpha) || NEAR_ZERO(alpha, VDIVIDE_TOL))
 	return -1;

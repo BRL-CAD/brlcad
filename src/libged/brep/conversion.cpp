@@ -49,7 +49,8 @@ single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db
     } else if (intern->idb_type == ID_COMBINATION) {
 	rt_comb_brep(brep, intern, &tol, dbip);
     } else if (intern->idb_meth->ft_brep != NULL) {
-	intern->idb_meth->ft_brep(brep, intern, &tol);
+	if (rt_obj_brep(brep, intern, &tol) < 0)
+	    return -1;
     } else {
 	*brep = NULL;
 	return -1;

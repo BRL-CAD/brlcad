@@ -440,8 +440,8 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 	       up_segp->seg_out.hit_dist, up_ap->a_ray.r_dir);
 
 	/* RT_HIT_NORMAL */
-	inseg->seg_stp->st_meth->ft_norm(&inseg->seg_in, inseg->seg_stp, inseg->seg_in.hit_rayp);
-	outseg->seg_stp->st_meth->ft_norm(&outseg->seg_out, outseg->seg_stp, outseg->seg_out.hit_rayp);
+	rt_obj_norm(&inseg->seg_in, inseg->seg_stp, inseg->seg_in.hit_rayp);
+	rt_obj_norm(&outseg->seg_out, outseg->seg_stp, outseg->seg_out.hit_rayp);
 
 	/* XXX error checking */
 	{
@@ -721,7 +721,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
     }
 
     if (gp && ip->idb_meth->ft_plot) {
-	ret = ip->idb_meth->ft_plot(gp->vheadp, ip, tsp->ts_ttol, tsp->ts_tol, NULL);
+	ret = rt_obj_plot(gp->vheadp, ip, tsp->ts_ttol, tsp->ts_tol);
     }
     if (ret < 0) {
 	if (pathp && pathp->fp_len > 0)

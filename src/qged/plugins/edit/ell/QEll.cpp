@@ -198,7 +198,7 @@ QEll::update_obj_wireframe()
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct bn_tol *tol = &wdbp->wdb_tol;
     struct bg_tess_tol *ttol = &wdbp->wdb_ttol;
-    intern.idb_meth->ft_plot(&p->s_vlist, &intern, ttol, tol, p->s_v);
+    rt_obj_plot_view(&p->s_vlist, &intern, ttol, tol, p->s_v);
 
     // At least for now, mimic the MGED behavior and make editing wireframes white
     const char *wcolor = "255/255/255";

@@ -251,7 +251,7 @@ replot_modified_solid(
 
     transform_editing_solid(s, &intern, mat, ip, 0);
 
-    if (OBJ[ip->idb_type].ft_plot(&vhead, &intern, &s->tol.ttol, &s->tol.tol, NULL) < 0) {
+    if (rt_obj_plot(&vhead, &intern, &s->tol.ttol, &s->tol.tol) < 0) {
 	if (!sp->s_u_data)
 	    return -1;
 	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;

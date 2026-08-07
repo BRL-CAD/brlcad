@@ -1772,9 +1772,9 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_cline_make), /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_cline_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_cline_bbox),
-	NULL, /* volume */
-	NULL, /* surf_area */
-	NULL, /* centroid */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_cline_volume),
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_cline_surf_area),
+	RTFUNCTAB_FUNC_CENTROID_CAST(rt_cline_centroid),
 	NULL, /* oriented_bbox */
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */

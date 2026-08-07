@@ -883,7 +883,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct big
     rd.hitmiss = (struct hitmiss **)NULL;
     rd.stp = shoot;
 
-    if (OBJ[shoot->st_id].ft_shot && OBJ[shoot->st_id].ft_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
+    if (OBJ[shoot->st_id].ft_shot && rt_obj_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
 	struct seg *seg;
 
 	while (BU_LIST_WHILE (seg, seg, &rd.seghead->l)) {
@@ -908,7 +908,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct big
 	/* Compute the inverse of the direction cosines */
 	VINVDIR(rd.rd_invdir, new_rp.r_dir);
 
-	if (OBJ[shoot->st_id].ft_shot && OBJ[shoot->st_id].ft_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
+	if (OBJ[shoot->st_id].ft_shot && rt_obj_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
 	    struct seg *seg;
 
 	    while (BU_LIST_WHILE (seg, seg, &rd.seghead->l)) {
@@ -1067,7 +1067,7 @@ shoot_and_plot(point_t start_pt,
 	 * mark them as IN_SOL.
 	 */
 	if (rt_in_rpp(&rp, rd.rd_invdir, shoot->l.stp->st_min, shoot->l.stp->st_max)) {
-	    if (OBJ[shoot->l.stp->st_id].ft_shot && OBJ[shoot->l.stp->st_id].ft_shot(shoot->l.stp, &rp, dgcdp->ap, rd.seghead)) {
+	    if (OBJ[shoot->l.stp->st_id].ft_shot && rt_obj_shot(shoot->l.stp, &rp, dgcdp->ap, rd.seghead)) {
 		struct seg *seg;
 
 		/* put the segments in the lead solid structure */
