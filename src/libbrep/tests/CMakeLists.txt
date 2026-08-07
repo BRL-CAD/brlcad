@@ -5,6 +5,30 @@ find_package(Threads REQUIRED)
 brlcad_addexec(test_brep_ppx ppx.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_ppx COMMAND test_brep_ppx)
 
+# Replay serialized face-mesh failures without rerunning a complete BRep
+# tessellation.  mesh.cpp emits this format at the exact repair failure site,
+# making it useful both for diagnosis and for compact regression fixtures.
+brlcad_addexec(test_brep_cdt_mesh brep_cdt_mesh.cpp "libbrep" TEST)
+brlcad_add_test(
+  NAME brep_cdt_mesh_single_bad_edge
+  COMMAND test_brep_cdt_mesh "${CMAKE_CURRENT_SOURCE_DIR}/single_bad_edge.cdtmesh"
+)
+
+# A cyclic rotation of the same co-circular boundary must not change the CDT
+# diagonal merely because its cpolyedge allocations have different addresses.
+brlcad_addexec(test_brep_cdt_boundary_start brep_cdt_boundary_start.cpp "libbrep" TEST)
+brlcad_add_test(NAME brep_cdt_boundary_start COMMAND test_brep_cdt_boundary_start)
+
+# An interior sample exactly on a constrained face boundary must not be passed
+# to the triangulator a second time as a Steiner point.
+brlcad_addexec(test_brep_cdt_boundary_steiner brep_cdt_boundary_steiner.cpp "libbrep" TEST)
+brlcad_add_test(NAME brep_cdt_boundary_steiner COMMAND test_brep_cdt_boundary_steiner)
+
+# A closed source solid may not retain redundant open local-remesh islands
+# after either retained-solid or same-source-face coverage validation.
+brlcad_addexec(test_brep_cdt_spurious_components brep_cdt_spurious_components.cpp "libbrep" TEST)
+brlcad_add_test(NAME brep_cdt_spurious_components COMMAND test_brep_cdt_spurious_components)
+
 # Standalone CDT hole-triangulation tests: verify that bg_nested_poly_triangulate
 # produces no triangles whose centroid falls inside a hole polygon, for two
 # faces from the NIST MBE PMI sample that are known to have multiple holes.
@@ -14,7 +38,7 @@ brlcad_add_test(NAME brep_cdt_hole_face17 COMMAND test_brep_cdt_hole_face17)
 brlcad_addexec(test_brep_cdt_hole_face27 brep_cdt_hole_face27.c "libbg;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME brep_cdt_hole_face27 COMMAND test_brep_cdt_hole_face27)
 
-brlcad_addexec(test_pullback_context pullback_context.cpp "libbrep;Threads::Threads" TEST)
+brlcad_addexec(test_pullback_context pullback_context.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_pullback_context COMMAND test_pullback_context)
 
 cmakefiles(
@@ -22,6 +46,9 @@ cmakefiles(
   ayam_hyperbolid.3dm
   brep_cdt_hole_face17.c
   brep_cdt_hole_face27.c
+  brep_cdt_boundary_start.cpp
+  brep_cdt_boundary_steiner.cpp
+  brep_cdt_spurious_components.cpp
   brep_cdt_mesh.cpp
   cyl_hole.g
   cyls_holes.g

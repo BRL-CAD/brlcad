@@ -26,16 +26,425 @@
  */
 
 #include "common.h"
+#include <algorithm>
 #include <iostream>
+#include <map>
 #include <numeric>
 #include <queue>
 #include <string>
+#include <utility>
+#include <vector>
 #include "bg/chull.h"
+#include "bg/tri_pt.h"
 #include "bg/tri_tri.h"
 #include "./cdt.h"
 
 #define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
+
+/* cpolyedge_t containers historically used the default pointer comparator.
+ * That is adequate for membership, but it must not determine the order of
+ * geometry-changing operations: allocator layout can then change the order in
+ * which singular trims are subdivided and, consequently, the final surface
+ * sampling.  Every singular segment has an authoritative STEP trim index,
+ * parameter interval, and pair of face-local topology vertices, which together
+ * provide a stable processing order. */
+static bool
+singular_edge_process_less(const cpolyedge_t *a, const cpolyedge_t *b)
+{
+    if (a == b)
+	return false;
+    if (!a)
+	return true;
+    if (!b)
+	return false;
+    if (a->trim_ind != b->trim_ind)
+	return a->trim_ind < b->trim_ind;
+    if (a->trim_start < b->trim_start)
+	return true;
+    if (b->trim_start < a->trim_start)
+	return false;
+    if (a->trim_end < b->trim_end)
+	return true;
+    if (b->trim_end < a->trim_end)
+	return false;
+    if (a->v2d[0] != b->v2d[0])
+	return a->v2d[0] < b->v2d[0];
+    return a->v2d[1] < b->v2d[1];
+}
+
+/* Correct triangle winding only after the complete mesh proves closed and
+ * manifold and misorientation is its sole defect.  bg_trimesh_sync establishes
+ * a consistent orientation for each connected component, but its seed may
+ * choose either of the two possible component orientations.  Preserve the
+ * OpenNURBS face orientation by selecting the result that changes the fewest
+ * source triangles in each component.  A tied component has no authoritative
+ * majority, so leave the mesh unchanged rather than guessing.
+ *
+ * This function is transactional: faces and face normals are not modified
+ * unless the candidate subsequently passes the complete solid test. */
+static int
+closed_mesh_orientation_sync(int *faces, int face_count,
+	fastf_t *vertices, int vertex_count, int *face_normals)
+{
+    if (!faces || !vertices || face_count < 4 || vertex_count < 4)
+	return -1;
+
+    struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+    const int initial_invalid = bg_trimesh_solid2(vertex_count, face_count,
+	vertices, faces, &errors);
+    if (!initial_invalid) {
+	bg_free_trimesh_solid_errors(&errors);
+	return 0;
+    }
+
+    const bool only_misoriented = errors.misoriented.count > 0 &&
+	errors.degenerate.count == 0 && errors.unmatched.count == 0 &&
+	errors.excess.count == 0;
+    bg_free_trimesh_solid_errors(&errors);
+    if (!only_misoriented)
+	return -1;
+
+    std::vector<int> original(faces, faces + 3 * face_count);
+    std::vector<int> candidate(original);
+    if (bg_trimesh_sync(candidate.data(), candidate.data(), face_count) <= 0)
+	return -1;
+
+    /* Determine the connected closed-shell components from shared edges. */
+    std::vector<std::vector<int>> adjacent((size_t)face_count);
+    std::map<std::pair<int, int>, int> first_edge_face;
+    for (int face = 0; face < face_count; ++face) {
+	for (int edge = 0; edge < 3; ++edge) {
+	    int vertex_a = original[(size_t)face * 3 + edge];
+	    int vertex_b = original[(size_t)face * 3 + (edge + 1) % 3];
+	    if (vertex_a > vertex_b)
+		std::swap(vertex_a, vertex_b);
+	    const std::pair<int, int> key(vertex_a, vertex_b);
+	    auto first = first_edge_face.find(key);
+	    if (first == first_edge_face.end()) {
+		first_edge_face[key] = face;
+		continue;
+	    }
+	    adjacent[(size_t)face].push_back(first->second);
+	    adjacent[(size_t)first->second].push_back(face);
+	}
+    }
+
+    std::vector<int> component_id((size_t)face_count, -1);
+    std::vector<std::vector<int>> components;
+    for (int seed = 0; seed < face_count; ++seed) {
+	if (component_id[(size_t)seed] >= 0)
+	    continue;
+	const int current_id = (int)components.size();
+	components.push_back(std::vector<int>());
+	std::queue<int> work;
+	work.push(seed);
+	component_id[(size_t)seed] = current_id;
+	while (!work.empty()) {
+	    const int face = work.front();
+	    work.pop();
+	    components[(size_t)current_id].push_back(face);
+	    for (int neighbor : adjacent[(size_t)face]) {
+		if (component_id[(size_t)neighbor] >= 0)
+		    continue;
+		component_id[(size_t)neighbor] = current_id;
+		work.push(neighbor);
+	    }
+	}
+    }
+
+    for (const std::vector<int> &component : components) {
+	size_t changed = 0;
+	for (int face : component) {
+	    const size_t offset = (size_t)face * 3;
+	    if (candidate[offset] != original[offset] ||
+		    candidate[offset + 1] != original[offset + 1] ||
+		    candidate[offset + 2] != original[offset + 2])
+		changed++;
+	}
+	if (changed * 2 == component.size())
+	    return -1;
+	if (changed * 2 > component.size()) {
+	    for (int face : component)
+		std::swap(candidate[(size_t)face * 3],
+		    candidate[(size_t)face * 3 + 1]);
+	}
+    }
+
+    if (bg_trimesh_solid2(vertex_count, face_count, vertices,
+	    candidate.data(), NULL) != 0)
+	return -1;
+
+    int changed_count = 0;
+    for (int face = 0; face < face_count; ++face) {
+	const size_t offset = (size_t)face * 3;
+	if (candidate[offset] == original[offset] &&
+		candidate[offset + 1] == original[offset + 1] &&
+		candidate[offset + 2] == original[offset + 2])
+	    continue;
+	changed_count++;
+	if (face_normals)
+	    std::swap(face_normals[offset], face_normals[offset + 1]);
+    }
+
+    std::copy(candidate.begin(), candidate.end(), faces);
+    return changed_count;
+}
+
+/* A failed local face remesh can leave a few open triangle islands in addition
+ * to the useful tessellation of the source solid.  Those islands are removed
+ * only under one of two proofs: every retained component is independently
+ * closed and solid, or (for a partial display mesh) every point of an island
+ * is already covered within tolerance by retained triangles from the same
+ * source BREP face.  Valid disjoint shells are retained, and no change is made
+ * if neither proof succeeds.
+ *
+ * The operation is transactional with respect to the caller's face arrays.
+ * Vertex arrays may retain now-unused entries; that is legal for a BoT and
+ * keeps the face-normal and point ownership maps stable. */
+static int
+closed_mesh_component_filter(int *faces, int *face_count,
+	fastf_t *vertices, int vertex_count, int *face_normals,
+	const int *source_faces = NULL, double overlap_tolerance = 0.0,
+	bool source_is_solid = true, bool emit_diagnostics = true)
+{
+    if (!faces || !face_count || !vertices || *face_count < 2 ||
+	    vertex_count < 4)
+	return 0;
+
+    /* Validate all indices before making the first transactional edit. */
+    for (int face = 0; face < *face_count; ++face) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int vertex = faces[(size_t)face * 3 + corner];
+	    if (vertex < 0 || vertex >= vertex_count)
+		return 0;
+	}
+    }
+
+    /* Distinct face-mesh vertices may collapse to the same shared output
+     * point.  Cull the resulting zero-area index triangles before component
+     * discovery; otherwise their repeated edge can falsely bridge two
+     * components in this audit even though rt_bot_split correctly ignores
+     * that bridge. */
+    const int original_face_count = *face_count;
+    std::vector<int> compact_faces;
+    std::vector<int> compact_normals;
+    std::vector<int> compact_sources;
+    compact_faces.reserve((size_t)original_face_count * 3);
+    if (face_normals)
+	compact_normals.reserve((size_t)original_face_count * 3);
+    if (source_faces)
+	compact_sources.reserve((size_t)original_face_count);
+    for (int face = 0; face < original_face_count; ++face) {
+	const size_t offset = (size_t)face * 3;
+	if (faces[offset] == faces[offset + 1] ||
+		faces[offset + 1] == faces[offset + 2] ||
+		faces[offset + 2] == faces[offset])
+	    continue;
+	for (int corner = 0; corner < 3; ++corner) {
+	    compact_faces.push_back(faces[offset + corner]);
+	    if (face_normals)
+		compact_normals.push_back(face_normals[offset + corner]);
+	}
+	if (source_faces)
+	    compact_sources.push_back(source_faces[face]);
+    }
+    int removed_count = original_face_count -
+	(int)(compact_faces.size() / 3);
+    if (removed_count) {
+	std::copy(compact_faces.begin(), compact_faces.end(), faces);
+	if (face_normals)
+	    std::copy(compact_normals.begin(), compact_normals.end(),
+		face_normals);
+	*face_count = (int)(compact_faces.size() / 3);
+	if (source_faces)
+	    source_faces = compact_sources.data();
+    }
+    if (*face_count < 2)
+	return removed_count;
+
+    std::map<std::pair<int, int>, std::vector<int>> edge_faces;
+    for (int face = 0; face < *face_count; ++face) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    int first = faces[(size_t)face * 3 + corner];
+	    int second = faces[(size_t)face * 3 + (corner + 1) % 3];
+	    if (first > second)
+		std::swap(first, second);
+	    edge_faces[std::make_pair(first, second)].push_back(face);
+	}
+    }
+
+    std::vector<int> component_id((size_t)*face_count, -1);
+    std::vector<std::vector<int>> components;
+    for (int seed = 0; seed < *face_count; ++seed) {
+	if (component_id[(size_t)seed] >= 0)
+	    continue;
+	const int current_id = (int)components.size();
+	components.push_back(std::vector<int>());
+	std::queue<int> work;
+	work.push(seed);
+	component_id[(size_t)seed] = current_id;
+	while (!work.empty()) {
+	    const int face = work.front();
+	    work.pop();
+	    components[(size_t)current_id].push_back(face);
+	    for (int corner = 0; corner < 3; ++corner) {
+		int first = faces[(size_t)face * 3 + corner];
+		int second =
+		    faces[(size_t)face * 3 + (corner + 1) % 3];
+		if (first > second)
+		    std::swap(first, second);
+		const std::vector<int> &edge_neighbors =
+		    edge_faces[std::make_pair(first, second)];
+		/* An edge used by more than two triangles is non-manifold.  It
+		 * must not join an otherwise closed shell to a local remesh
+		 * artifact during component discovery.  Restricting adjacency
+		 * to exactly two uses also matches the topological connectivity
+		 * required by a valid solid mesh. */
+		if (edge_neighbors.size() != 2)
+		    continue;
+		for (int neighbor : edge_neighbors) {
+		    if (component_id[(size_t)neighbor] >= 0)
+			continue;
+		    component_id[(size_t)neighbor] = current_id;
+		    work.push(neighbor);
+		}
+	    }
+	}
+    }
+    if (components.size() < 2)
+	return removed_count;
+
+    std::vector<bool> retain(components.size(), false);
+    size_t retained_face_count = 0;
+    for (size_t component = 0;
+	    source_is_solid && component < components.size(); ++component) {
+	std::vector<int> component_faces;
+	component_faces.reserve(components[component].size() * 3);
+	for (int face : components[component]) {
+	    const size_t offset = (size_t)face * 3;
+	    component_faces.push_back(faces[offset]);
+	    component_faces.push_back(faces[offset + 1]);
+	    component_faces.push_back(faces[offset + 2]);
+	}
+	if (component_faces.size() >= 12 &&
+		bg_trimesh_solid2(vertex_count,
+		    (int)components[component].size(), vertices,
+		    component_faces.data(), NULL) == 0) {
+	    retain[component] = true;
+	    retained_face_count += components[component].size();
+	}
+    }
+    if (retained_face_count == (size_t)*face_count)
+	return removed_count;
+
+    /* A partial display tessellation may not itself be closed (for example,
+     * another BREP face may have independently failed to tessellate).  We can
+     * still remove a disconnected local-remesh island when every one of its
+     * vertices and its centroid lies on retained triangles from the same
+     * source face.  This is an exact redundancy proof within the tessellation
+     * tolerance, not a largest-component guess. */
+    if (!retained_face_count && source_faces &&
+	    overlap_tolerance > 0.0) {
+	size_t largest = 0;
+	for (size_t component = 1; component < components.size(); ++component) {
+	    if (components[component].size() > components[largest].size())
+		largest = component;
+	}
+	double minimum_failed_distance = DBL_MAX;
+	int failed_source_face = -1;
+	const auto point_covered =
+	    [&](const point_t point, int source_face) {
+		double minimum_distance = DBL_MAX;
+		for (int candidate : components[largest]) {
+		    if (source_faces[candidate] != source_face)
+			continue;
+		    point_t triangle[3];
+		    for (int corner = 0; corner < 3; ++corner) {
+			const int vertex =
+			    faces[(size_t)candidate * 3 + corner];
+			VMOVE(triangle[corner],
+			    &vertices[(size_t)vertex * 3]);
+		    }
+		    const double distance = bg_tri_closest_pt(NULL, point,
+			triangle[0], triangle[1], triangle[2]);
+		    minimum_distance = std::min(minimum_distance, distance);
+		    if (distance <= overlap_tolerance)
+			return true;
+		}
+		minimum_failed_distance = minimum_distance;
+		failed_source_face = source_face;
+		return false;
+	    };
+	bool redundant = true;
+	for (size_t component = 0;
+		component < components.size() && redundant; ++component) {
+	    if (component == largest)
+		continue;
+	    for (int face : components[component]) {
+		point_t centroid = VINIT_ZERO;
+		for (int corner = 0; corner < 3; ++corner) {
+		    const int vertex = faces[(size_t)face * 3 + corner];
+		    point_t point;
+		    VMOVE(point, &vertices[(size_t)vertex * 3]);
+		    if (!point_covered(point, source_faces[face])) {
+			redundant = false;
+			break;
+		    }
+		    VADD2(centroid, centroid, point);
+		}
+		VSCALE(centroid, centroid, 1.0 / 3.0);
+		if (redundant &&
+			!point_covered(centroid, source_faces[face]))
+		    redundant = false;
+		if (!redundant)
+		    break;
+	    }
+	}
+	if (!redundant) {
+	    if (!emit_diagnostics)
+		return removed_count;
+	    bu_log("CDT retained an open disconnected component because source "
+		"face %d was not redundantly covered (distance %.17g, "
+		"tolerance %.17g)\n", failed_source_face,
+		minimum_failed_distance, overlap_tolerance);
+	    return removed_count;
+	}
+	retain[largest] = true;
+	retained_face_count = components[largest].size();
+    }
+    if (!retained_face_count)
+	return removed_count;
+
+    std::vector<int> candidate_faces;
+    std::vector<int> candidate_normals;
+    candidate_faces.reserve(retained_face_count * 3);
+    if (face_normals)
+	candidate_normals.reserve(retained_face_count * 3);
+    for (int face = 0; face < *face_count; ++face) {
+	if (!retain[(size_t)component_id[(size_t)face]])
+	    continue;
+	const size_t offset = (size_t)face * 3;
+	for (int corner = 0; corner < 3; ++corner) {
+	    candidate_faces.push_back(faces[offset + corner]);
+	    if (face_normals)
+		candidate_normals.push_back(face_normals[offset + corner]);
+	}
+    }
+    if (!source_faces &&
+	    bg_trimesh_solid2(vertex_count, (int)retained_face_count,
+		vertices, candidate_faces.data(), NULL) != 0)
+	return removed_count;
+
+    const int removed = removed_count +
+	*face_count - (int)retained_face_count;
+    std::copy(candidate_faces.begin(), candidate_faces.end(), faces);
+    if (face_normals)
+	std::copy(candidate_normals.begin(), candidate_normals.end(),
+	    face_normals);
+    *face_count = (int)retained_face_count;
+    return removed;
+}
 
 // TODO - get rid of all BN_TOL_DIST-only tolerances - if the object is
 // very small, that distance is too big (e.g. for linearity testing).
@@ -493,8 +902,12 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    int cnt = 0;
 	    wq = &w1;
 	    nq = &w2;
-	    nq->push(*(s_cdt->unsplit_singular_edges.begin()));
-	    s_cdt->unsplit_singular_edges.erase(s_cdt->unsplit_singular_edges.begin());
+	    std::set<cpolyedge_t *>::iterator first =
+		std::min_element(s_cdt->unsplit_singular_edges.begin(),
+			s_cdt->unsplit_singular_edges.end(),
+			singular_edge_process_less);
+	    nq->push(*first);
+	    s_cdt->unsplit_singular_edges.erase(first);
 	    while (cnt < 6) {
 		cnt = 0;
 		tmpq = wq;
@@ -504,8 +917,12 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		    cpolyedge_t *ce = wq->front();
 		    wq->pop();
 		    std::set<cpolyedge_t *> nedges = split_singular_seg(s_cdt, ce, 0);
-		    std::set<cpolyedge_t *>::iterator n_it;
-		    for (n_it = nedges.begin(); n_it != nedges.end(); n_it++) {
+		    std::vector<cpolyedge_t *> ordered_edges(nedges.begin(),
+			    nedges.end());
+		    std::sort(ordered_edges.begin(), ordered_edges.end(),
+			    singular_edge_process_less);
+		    for (std::vector<cpolyedge_t *>::const_iterator n_it =
+			    ordered_edges.begin(); n_it != ordered_edges.end(); ++n_it) {
 			nq->push(*n_it);
 			cnt++;
 		    }
@@ -557,6 +974,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     if (invalid) {
 	trimesh_error_report(s_cdt, valid_fcnt, valid_vcnt, valid_faces, valid_vertices, &se);
     }
+
+    bg_free_trimesh_solid_errors(&se);
 
     bu_free(valid_faces, "faces");
     bu_free(valid_vertices, "vertices");
@@ -610,7 +1029,7 @@ ON_Brep_CDT_Mesh(
     std::set<ON_3dPoint *> vfnormals;
     std::set<ON_3dPoint *> flip_normals;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
-	cdt_mesh_t *fmesh = &s_cdt->fmeshes[(int)fi];
+	cdt_mesh_t *fmesh = &s_cdt->fmeshes[active_faces[fi]];
 	RTree<size_t, double, 3>::Iterator tree_it;
 	fmesh->tris_tree.GetFirst(tree_it);
 	size_t t_ind;
@@ -699,8 +1118,10 @@ ON_Brep_CDT_Mesh(
     // Iterate over faces, adding points and faces to BoT container.  Note: all
     // 3D points should be geometrically unique in this final container.
     int face_cnt = 0;
+    std::vector<int> output_face_ids;
+    output_face_ids.reserve(triangle_cnt);
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
-	cdt_mesh_t *fmesh = &s_cdt->fmeshes[(int)fi];
+	cdt_mesh_t *fmesh = &s_cdt->fmeshes[active_faces[fi]];
 	RTree<size_t, double, 3>::Iterator tree_it;
 	fmesh->tris_tree.GetFirst(tree_it);
 	size_t t_ind;
@@ -725,10 +1146,148 @@ ON_Brep_CDT_Mesh(
 		}
 	    }
 
+	    output_face_ids.push_back(fmesh->f_id);
 	    face_cnt++;
 	    ++tree_it;
 	}
     }
+
+    /* A complete, topologically solid BREP supplies authoritative shell
+     * orientation.  If tessellation produced an otherwise closed/manifold
+     * mesh with inconsistent triangle winding, repair that winding only when
+     * the fully synchronized candidate validates as a solid.  Partial/open
+     * meshes retain their original per-face ordering. */
+    if (!exp_face_cnt || !exp_faces) {
+	const bool source_is_solid = s_cdt->orig_brep &&
+	    s_cdt->orig_brep->IsSolid();
+	const int removed = closed_mesh_component_filter(*faces, fcnt,
+	    *vertices, *vcnt, face_normals ? *face_normals : NULL,
+	    output_face_ids.data(), std::max(s_cdt->absmin,
+		ON_ZERO_TOLERANCE), source_is_solid);
+	if (removed > 0) {
+	    bu_log("%s: removed %d redundant open triangle artifact%s after "
+		"transactional component validation\n",
+		s_cdt->name ? s_cdt->name : "BREP", removed,
+		removed == 1 ? "" : "s");
+	}
+	if (source_is_solid) {
+	    const int synchronized = closed_mesh_orientation_sync(*faces, *fcnt,
+		*vertices, *vcnt, face_normals ? *face_normals : NULL);
+	    if (synchronized > 0) {
+		bu_log("%s: synchronized %d triangle orientations after complete closed-mesh validation\n",
+		    s_cdt->name ? s_cdt->name : "BREP", synchronized);
+	    }
+	}
+    }
+
+    return 0;
+}
+
+int
+cdt_test_spurious_components(void)
+{
+    fastf_t vertices[] = {
+	0.0, 0.0, 0.0,
+	1.0, 0.0, 0.0,
+	0.0, 1.0, 0.0,
+	0.0, 0.0, 1.0,
+	2.0, 0.0, 0.0,
+	3.0, 0.0, 0.0,
+	2.0, 1.0, 0.0,
+	4.0, 0.0, 0.0
+    };
+    int tetra_and_open[] = {
+	0, 2, 1, 0, 1, 3, 0, 3, 2, 1, 2, 3,
+	4, 5, 6
+    };
+    int face_count = 5;
+    if (closed_mesh_component_filter(tetra_and_open, &face_count, vertices,
+	    8, NULL) != 1 || face_count != 4)
+	return 1;
+
+    int two_open_components[] = {0, 1, 2, 4, 5, 6};
+    face_count = 2;
+    if (closed_mesh_component_filter(two_open_components, &face_count,
+	    vertices, 8, NULL) != 0 || face_count != 2)
+	return 2;
+
+    fastf_t two_tetra_vertices[] = {
+	0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+	3.0, 0.0, 0.0, 4.0, 0.0, 0.0,
+	3.0, 1.0, 0.0, 3.0, 0.0, 1.0
+    };
+    int two_tetra_faces[] = {
+	0, 2, 1, 0, 1, 3, 0, 3, 2, 1, 2, 3,
+	4, 6, 5, 4, 5, 7, 4, 7, 6, 5, 6, 7
+    };
+    face_count = 8;
+    if (closed_mesh_component_filter(two_tetra_faces, &face_count,
+	    two_tetra_vertices, 8, NULL) != 0 || face_count != 8)
+	return 3;
+
+    fastf_t open_duplicate_vertices[] = {
+	0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+	1.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+	1.0, 1.0, 0.0
+    };
+    int open_duplicate_faces[] = {
+	0, 1, 2, 0, 2, 3, 4, 5, 6
+    };
+    const int open_duplicate_sources[] = {7, 7, 7};
+    face_count = 3;
+    if (closed_mesh_component_filter(open_duplicate_faces, &face_count,
+	    open_duplicate_vertices, 7, NULL, open_duplicate_sources,
+	    1.0e-12) != 1 || face_count != 2)
+	return 4;
+
+    open_duplicate_vertices[20] = 0.1;
+    int distinct_faces[] = {0, 1, 2, 0, 2, 3, 4, 5, 6};
+    face_count = 3;
+    if (closed_mesh_component_filter(distinct_faces, &face_count,
+	    open_duplicate_vertices, 7, NULL, open_duplicate_sources,
+	    1.0e-6, true, false) != 0 || face_count != 3)
+	return 5;
+
+    /* A redundant triangle attached to a closed shell through an edge with
+     * three uses is not part of that manifold shell.  This is the compact
+     * form of the NIST spherical-cap shading regression: treating the
+     * non-manifold edge as ordinary adjacency hid the extra component from
+     * the cleanup audit even though downstream BoT topology detected it. */
+    fastf_t nonmanifold_vertices[] = {
+	0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+	1.0, 0.0, 0.0
+    };
+    int nonmanifold_faces[] = {
+	0, 2, 1, 0, 1, 3, 0, 3, 2, 1, 2, 3,
+	0, 2, 4
+    };
+    face_count = 5;
+    if (closed_mesh_component_filter(nonmanifold_faces, &face_count,
+	    nonmanifold_vertices, 5, NULL) != 1 || face_count != 4)
+	return 6;
+
+    /* Face-local vertices can collapse to one shared output vertex.  The
+     * resulting index-degenerate triangle must not survive into a BoT or
+     * distort component discovery. */
+    int degenerate_faces[] = {
+	0, 2, 1, 0, 1, 3, 0, 3, 2, 1, 2, 3,
+	4, 4, 1
+    };
+    face_count = 5;
+    if (closed_mesh_component_filter(degenerate_faces, &face_count,
+	    nonmanifold_vertices, 5, NULL) != 1 || face_count != 4)
+	return 7;
+
+    int invalid_faces[] = {0, 1, 2, 3, 3, 99};
+    const int invalid_original[] = {0, 1, 2, 3, 3, 99};
+    face_count = 2;
+    if (closed_mesh_component_filter(invalid_faces, &face_count,
+	    nonmanifold_vertices, 5, NULL) != 0 || face_count != 2 ||
+	    !std::equal(invalid_faces, invalid_faces + 6, invalid_original))
+	return 8;
 
     return 0;
 }
@@ -815,4 +1374,3 @@ CDT_Audit(struct ON_Brep_CDT_State *s_cdt)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
