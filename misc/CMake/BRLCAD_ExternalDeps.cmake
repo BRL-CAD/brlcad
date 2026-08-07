@@ -2063,6 +2063,12 @@ function(_brlcad_ensure_soname lib_path)
   if(NOT lib_path OR NOT EXISTS "${lib_path}")
     return()
   endif()
+  # We only do this if it's a copy in our build tree
+  get_filename_component(_abs_dir "${lib_path}" ABSOLUTE)
+  is_subpath("${BRLCAD_BINARY_DIR}" "${_abs_dir}" _is_local)
+  if (NOT _is_local)
+    return()
+  endif()
   # Only shared libraries (.so / .dylib) need a SONAME.
   if(NOT lib_path MATCHES "\\.so(\\.[0-9]+)*$" AND NOT lib_path MATCHES "\\.dylib$")
     return()
