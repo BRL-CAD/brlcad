@@ -233,6 +233,13 @@ database.  *--no-gui* ensures the script never blocks on the GUI.
 
 .Live preview on a framebuffer
 ====
+[source,bash]
+----
+rtwizard -d /dev/wgl -i m35.g -l component
+----
+Display a line drawing of the m35 truck in an OpenGL framebuffer window
+rather than writing it to a file.
+====
 
 .Cutting-plane animation
 ====
@@ -245,13 +252,6 @@ Creates a 30-frame APNG with the cutting plane advancing in the negative Z
 direction.  Use a `.png` or `.apng` output for APNG and `.avi` or `.mjpg` for
 MJPEG.  Picture types using edge lines and the ambient-occlusion options may
 be combined with the animation options.
-====
-[source,bash]
-----
-rtwizard -d /dev/wgl -i m35.g -l component
-----
-Display a line drawing of the m35 truck in an OpenGL framebuffer window
-rather than writing it to a file.
 ====
 
 [[see_also]]
