@@ -817,11 +817,17 @@ struct Planner {
 		    *parent_role == "product" &&
 		    *child_role == "representation_item";
 		occurrence.metadata_requested =
-		    occurrence_value("id", occurrence.identifier) |
-		    occurrence_value("name", occurrence.name) |
-		    occurrence_value("description", occurrence.description) |
+		    occurrence_value("id", occurrence.identifier);
+		occurrence.metadata_requested =
+		    occurrence_value("name", occurrence.name) ||
+		    occurrence.metadata_requested;
+		occurrence.metadata_requested =
+		    occurrence_value("description", occurrence.description) ||
+		    occurrence.metadata_requested;
+		occurrence.metadata_requested =
 		    occurrence_value("reference_designator",
-			occurrence.reference_designator);
+			occurrence.reference_designator) ||
+		    occurrence.metadata_requested;
 		if (occurrence.metadata_requested &&
 			(!has_child || expected_child != plan.objects[child].name)) {
 		    occurrence.metadata_valid = false;

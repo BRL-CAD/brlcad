@@ -169,7 +169,7 @@ CartesianTransformationOperator::GetONTransform(ON_Xform &xform,
     }
 
     const double *origin = local_origin->Point3d();
-    xform.Identity();
+    xform = ON_Xform::IdentityTransformation;
     xform[0][0] = scale * xaxis.x;
     xform[0][1] = scale * yaxis.x;
     xform[0][2] = scale * zaxis.x;

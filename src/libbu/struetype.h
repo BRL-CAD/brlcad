@@ -441,8 +441,18 @@ int main(int arg, char **argv)
    // e.g. #define your own STT_ifloor/STT_iceil() to avoid math.h
    #ifndef STT_ifloor
    #include <math.h>
-   #define STT_ifloor(x)   ((int) floor(x))
-   #define STT_iceil(x)    ((int) ceil(x))
+   static int stt__ifloor(double x)
+   {
+      double result = floor(x);
+      return (int) result;
+   }
+   static int stt__iceil(double x)
+   {
+      double result = ceil(x);
+      return (int) result;
+   }
+   #define STT_ifloor(x)   stt__ifloor(x)
+   #define STT_iceil(x)    stt__iceil(x)
    #endif
 
    #ifndef STT_sqrt
@@ -5061,8 +5071,8 @@ STT_DEF void stt_GetPackedQuad(const stt_packedchar *chardata, int pw, int ph, i
    b = chardata + char_index;
 
    if (align_to_integer) {
-      float x = (float) STT_ifloor((*xpos + b->xoff) + 0.5f);
-      float y = (float) STT_ifloor((*ypos + b->yoff) + 0.5f);
+      float x = STT_ifloor((*xpos + b->xoff) + 0.5f);
+      float y = STT_ifloor((*ypos + b->yoff) + 0.5f);
       q->x0 = x;
       q->y0 = y;
       q->x1 = x + b->xoff2 - b->xoff;

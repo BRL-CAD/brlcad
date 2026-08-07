@@ -981,6 +981,9 @@ endif(BRLCAD_ENABLE_STEP)
 
 cmakefiles(
   CMakeLists.txt
+  CsgShapeRepresentation.h
+  CsgSolid.h
+  OpenNurbsInterfaces.h
   OpenNurbsPullback.inc
   OpenNurbsTopology.inc
   tests/ap203_appendix_j_multiple_sdr.cmake

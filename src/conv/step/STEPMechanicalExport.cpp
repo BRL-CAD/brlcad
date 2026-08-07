@@ -232,6 +232,7 @@ mark_native_subtree(size_t root, const brlcad::step::StepExportPlan &plan,
     }
 }
 
+#if defined(AP203e2) || defined(AP214e3) || defined(AP242)
 bool
 native_shape_boundary(size_t object, const brlcad::step::StepExportPlan &plan)
 {
@@ -269,6 +270,7 @@ collect_native_shape_boundaries(size_t assembly,
 	collect_native_shape_boundaries(occurrence->child, plan, boundaries, visited);
     }
 }
+#endif
 
 void
 usage(const STEPMechanicalExportConfig &config)

@@ -57,10 +57,10 @@ public:
 	curve_axis_maximum = maximum;
 	curve_axis_bounds_valid = minimum <= maximum;
     }
-    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse) override;
     bool RequiresFaceLocalONSurface() const override { return true; }
-    virtual bool LoadONBrep(ON_Brep *brep);
-    virtual void Print(int level);
+    bool LoadONBrep(ON_Brep *brep) override;
+    void Print(int level) override;
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

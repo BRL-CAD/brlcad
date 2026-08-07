@@ -576,10 +576,15 @@ cmakefiles(
   AP242Tessellated.h
   AP242PMI.h
   CMakeLists.txt
+  GlobalUnitAssignedContext.cpp
   GlobalUnitAssignedContext.h
+  MeasureValue.cpp
   MeasureValue.h
+  MeasureWithUnit.cpp
   MeasureWithUnit.h
+  PropertyDefinitionRepresentation.cpp
   PropertyDefinitionRepresentation.h
+  RepresentedDefinition.cpp
   RepresentedDefinition.h
   ap242e1.exp
   ap242e2.exp

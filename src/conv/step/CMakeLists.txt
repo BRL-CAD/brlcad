@@ -765,6 +765,7 @@ cmakefiles(
   STEPMaterialImport.h
   STEPPresentation.cpp
   STEPPresentation.h
+  STEPProgressReporter.h
   STEPSweptSolid.cpp
   STEPSweptSolid.h
   STEPTessellatedMesh.cpp

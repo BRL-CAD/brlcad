@@ -3032,7 +3032,7 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		 * retain the exact 3-D edge and surface; and authorize only a
 		 * scale-bounded tolerance no larger than the join proof. */
 		const auto verified_endpoint_candidate_tolerance =
-		    [brep, surface, wrapper, entity_id, &entity_type, item_scale,
+		    [surface, wrapper, entity_id, &entity_type, item_scale,
 		     record_changes](
 			ON_BrepTrim &trim, const ON_Curve &candidate,
 			double candidate_join_tolerance) {

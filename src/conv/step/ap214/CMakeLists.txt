@@ -1527,6 +1527,8 @@ cmakefiles(
   ../STEPLazySession.h
   AP214Presentation.h
   CMakeLists.txt
+  ExportComb.cpp
+  ExportTree.cpp
   ap214e3.exp
   tests/ap214_brep_with_voids.cmake
   tests/ap214_brep_with_voids.stp
@@ -1539,8 +1541,10 @@ cmakefiles(
   tests/ap214_composite_curve.stp
   tests/ap214_conical_closed_edge_band.cmake
   tests/ap214_conical_closed_edge_band.stp
+  tests/ap214_entity_selection.cmake
   tests/ap214_shared_conical_surface_bands.cmake
   tests/ap214_shared_conical_surface_bands.stp
+  tests/ap214_legacy_contexts.stp
   tests/ap214_multi_edge_conical_cap.cmake
   tests/ap214_multi_edge_conical_cap.stp
   tests/ap214_measured_full_period_chain.cmake
