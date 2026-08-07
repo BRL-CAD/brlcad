@@ -45,6 +45,14 @@ cmakefiles(
   asciiquack/vendor/cxxopts.hpp
   db2adoc/db2adoc.py
   db2adoc/db2adoc.xsl
+  brep_corpus_audit.py
+  step_corpus_capture.py
+  step_corpus_run.py
+  step_corpus_summary.py
+  step_corpus_verify.py
+  step_external_corpus_expectations.json
+  step_local_external_corpus_expectations.json
+  step_dependency_subset.py
   inactvhdrs/CMakeLists.txt
   inactvhdrs/inactvhdrs.cpp
 )

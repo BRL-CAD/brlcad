@@ -1,0 +1,46 @@
+{
+  "format": "brlcad-step-corpus-expectations-v1",
+  "description": "Checksum-pinned independent-producer samples from locally retained, non-redistributed corpora whose original download pages were not recorded.",
+  "redistribution": "These records provide reproducible local qualification evidence only. They do not grant permission to copy the exchange files into BRL-CAD or redistribute them.",
+  "files": [
+    {
+      "name": "Leopard2-A6.step",
+      "sha256": "ef8f21f6454f7d952b619ed1e41dab824f31f393e81a3e138392c53605a0ab94",
+      "source_page": "Local non-redistributed GrabCAD corpus; original download page not recorded",
+      "producer": "Autodesk Inventor 2018 / ST-Developer v17",
+      "expected": {
+        "equals": {
+          "exit_status": 1,
+          "coverage.products": 14,
+          "coverage.occurrences": 338,
+          "coverage.geometry_attempted": 31,
+          "coverage.geometry_written": 31,
+          "coverage.geometry_skipped": 0,
+          "coverage.outcome": "partial",
+          "coverage.styles_extracted": 2425,
+          "coverage.styles_applied": 31,
+          "coverage.materials_extracted": 13,
+          "coverage.properties_extracted": 26,
+          "coverage.properties_invalid": 13,
+          "validation.invalid_breps": 1,
+          "validation.invalid_breps_written": 1,
+          "validation.invalid_breps_rejected": 0,
+          "derived.assembly_usage_count": 338,
+          "derived.occurrence_detail_count": 338,
+          "derived.occurrence_max_depth": 1,
+          "derived.occurrence_methods": ["referenced"],
+          "derived.product_metadata_count": 13,
+          "derived.material_count": 13,
+          "derived.material_identifiers": [""],
+          "derived.material_names": ["Generic", "SAE 1020"],
+          "derived.material_property_count": 26,
+          "derived.material_property_names": ["Generic", "SAE 1020", "density measure"],
+          "derived.material_property_units": ["gram^1*centimetre^3"],
+          "derived.material_property_numeric_values": [1, 7.84],
+          "derived.validation_property_count": 0,
+          "derived.skipped_entity_ids": []
+        }
+      }
+    }
+  ]
+}

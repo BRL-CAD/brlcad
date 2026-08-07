@@ -1,0 +1,508 @@
+Remaining STEP Import/Export Work
+=================================
+
+Status: 2026-08-05
+
+
+Purpose
+-------
+
+This is the current implementation and qualification plan for the public
+step-g and g-step converters.  It replaces recommended_practices_todo.txt,
+save_invalid_plan.txt, and step_refactor.txt.  It is not a development
+changelog: completed work is summarized only to define the supported baseline,
+and the detailed sections describe work which remains.
+
+Status terms used below are:
+
+* COMPLETE -- implemented and covered by focused tests;
+* ACTIVE -- being qualified or reduced from real inputs;
+* REMAINING -- useful work with a defined scope;
+* BLOCKED -- requires a missing prerequisite and must not be approximated; and
+* DEFERRED -- outside the present converter objective.
+
+A feature is complete only when schema-valid fixtures, permissive and strict
+policy tests, and structured report assertions prove that geometry or semantics
+did not disappear.  Independent-producer evidence is required wherever a
+BRL-CAD export and re-import could otherwise repeat the same mistake.
+
+
+Supported Baseline
+------------------
+
+Architecture and schemas
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The public converter architecture is COMPLETE:
+
+* step-g and g-step are schema-dispatching hosts;
+* AP203 edition 1, AP203 edition 2, AP214 edition 3, and AP242 editions 1
+  through 4 are bidirectional plugins;
+* AP242 generated bindings remain edition-specific because the entity sets and
+  some Part 21 physical layouts differ;
+* the AP242 export alias targets edition 4, while automatic import probes
+  editions 4 through 1;
+* common conversion behavior is schema-neutral and schema-only behavior is
+  under ap203, ap203e2, ap214, or ap242; and
+* obsolete schema-specific public converter programs are not built.
+
+Explicit --schema ap242e1 through ap242e4 selection remains useful when a file
+uses only the editions' common physical subset.  Interim identifiers
+CONFIGURATION_CONTROL_3D_DESIGN_MIM_LF, CCD_CLA_GVP_AST, and
+CCD_CLA_GVP_AST_ASD route to AP203e2.  Supported multi-schema AP203e2 headers
+also route correctly; unknown companion schemas remain visible, and genuinely
+ambiguous supported-AP combinations fail rather than guessing.
+
+The STEPcode lazy reader supports multiple DATA sections, SCOPE,
+source-ordered complex components, bounded diagnostics, type census output,
+and schema-independent retention of unknown configuration records.  AP203
+Recommended Practice 8 fixtures cover referenced, mapped, and replicated
+shapes, multi-level hierarchy, SHUO and usage semantics, multiple SDR forms,
+wireframes, configuration data, and SCOPE.
+
+STEPcode and build tractability
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+BRL-CAD uses STEPcode's compact generated API v2, packed schema modules,
+precomputed attribute layouts, bounded unity chunks, and generated source
+manifests.  Entity and type chunk limits are independently tunable; 64:8 is the
+qualified default.  STEP plugins retain optimized compilation but disable LTO.
+
+On the qualification host, a serial AP242e4 binding build without LTO fell
+from 8m25s and 6.22 GB peak RSS at 64:64 to 6m12s and 1.33 GB at 64:8.  NIST
+CTC 03 showed no measurable conversion benefit from LTO.
+
+The importer is split into schema-neutral common build units for session and
+cache handling, document traversal, job scheduling, geometric sets, topology,
+periodic bands, pullback, seam repair, loop repair, validation, and
+finalization.  Schema plugins consume those objects directly, preserving
+static Factory registration without a new runtime ABI.  A local geometry
+repair edit therefore recompiles its topical unit and relinks only requested
+plugins.  Revisit these boundaries only in response to a measured dependency,
+ownership, or rebuild problem.
+
+Default policy and loss accounting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The user-facing default is deliberately permissive:
+
+* safe topology repair is enabled;
+* exact and strict modes are disabled;
+* storage-safe invalid BReps are preserved and explicitly tagged;
+* useful partial output is published with status 1 and a structured report;
+* --strict is transactional; and
+* --reject-invalid-objs restores invalid-BRep rejection.
+
+Recovery order is source-faithful construction, bounded safe repair, tagged
+modeling inference for a proven source contradiction, marked storage-safe
+invalid fallback, and finally omission.  Scale-bounded inference is attempted
+only in a detached whole-item retry after the ordinary candidate fails.  It is
+committed only when either:
+
+* the rebuilt BRep passes normal structural and solidness validation; or
+* permissive invalid preservation proves that a structurally safe open result
+  corresponds one-for-one to source EDGE_CURVEs with exactly one authored
+  ORIENTED_EDGE use.  Such a result remains invalid and is tagged
+  `step:invalidity=authored_open_topology`; it is never presented as a solid.
+
+Inference is disabled by exact, strict, no-repair, and reject-invalid policy.
+Reports and affected database objects retain source edge identifiers,
+discrepancy, safe and inference limits, declared tolerance, inference kind,
+and explanatory detail.  Rejected inference transactions do not contaminate
+ordinary results or diagnostics.
+
+Every product-bound representation, representation item, selected BRL-CAD
+object, and reachable child receives a handled, intentionally non-geometric,
+skipped, malformed, unsupported, or failed disposition.  Import and export
+distinguish complete, partial, empty, and failed outcomes.  The pre-conversion
+entity census describes the input and does not imply conversion support.
+
+A preserved invalid BRep is not, by itself, proof of bad authoring.  Unless an
+independent topology proof establishes a source contradiction, it remains an
+unresolved converter result tagged `step:geometry_status=invalid_preserved`
+and `step:source_validity=unresolved`.  It forces a partial result and remains
+in the failure ratchet.
+
+Geometry
+~~~~~~~~
+
+The following geometry paths are COMPLETE for their documented subsets:
+
+* rigid product hierarchies, repeated occurrences, transforms, and shared
+  product/occurrence emission in every supported schema;
+* optional native CSG import/export in AP203e2, AP214, and AP242, including
+  supported Boolean trees, exact mapped primitives, BRep leaves, transforms,
+  and RECTANGULAR_PYRAMID;
+* exact compatible extruded and revolved area/face solids and linear or
+  circular SWEPT_DISK_SOLID in AP203e2, AP214, and AP242;
+* AP242 triangulated faces, simple/complex surface sets, shells, and solids,
+  including strips, fans, pnindex, normals, welding, closure, and winding;
+* analytic and spline BRep import, periodic and singular topology, voids,
+  bounded repair, transactional inference, and explicit invalid fallback;
+* solid-BRep export/re-import for sphere, cylinder, cone, torus, box, open
+  NURBS faces with voids, rational Cobb surfaces, and BREP_WITH_VOIDS;
+* mated librt BRep fallback for EHY, EPA, HYP, PART, PIPE, EXTRUDE, REVOLVE,
+  solid BOT, closed ARS, and supported NMG input;
+* sketch recovery for reordered or reversed segments, zero-length segments,
+  inner loops, lines, circles, arcs, Beziers, and rational/non-rational NURBS;
+  and
+* mixed GEOMETRIC_SET curves, points, and CURVE_BOUNDED_SURFACEs with partial
+  set loss accounting and shared bounded pullback validation.
+
+The detailed native-CSG primitive and operator matrix is maintained in
+src/conv/step/README.csg.md.  AP203e1 has no native-CSG path; non-union AP203e1
+trees are BLOCKED on reliable Boolean evaluation.
+
+STEP B-spline curves and surfaces share exact conversion from EXPRESS full knot
+vectors to OpenNURBS endpoint-truncated storage.  Valid unclamped closed
+surfaces are clamped and only numerically equal seam controls are normalized,
+subject to dense before/after audits.
+
+Presentation, units, configuration, and PMI
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+AP203e2, AP214, and AP242 share colour, transparency, style, layer, material,
+property, validation-value, and recursive unit-graph extraction.  Export
+round-trips product identity and revision, presentation, multiple materials,
+typed properties, known SI and exact conversion units, derived units,
+occurrence labels, and reference designators.  AP203e1 explicitly reports
+presentation or property requests it cannot author.
+
+One constrained safe-mode repair handles an identified producer defect where
+a positive density's complete unit graph is mass^1 times length^3 instead of
+mass^1 times length^-3.  The value is retained, the denominator dimension is
+corrected, provenance is recorded, and exact, strict, and no-repair modes
+reject the graph.  This is not a general unit-guessing rule.
+
+--output-units, --angle-units, and --uncertainty form one schema-neutral export
+policy covering BReps, native CSG, cone angles, and rigid occurrence
+translations.
+
+Configuration data is retained as a typed reference graph with exact Part 21
+right-hand sides.  Cross-schema authoring covers approvals, provenance,
+assignments, effectivity, alternatives, substitutes, categories, people,
+organizations, addresses, security classifications, documents, date/time
+chains, and their legal schema-specific assignment forms.
+
+DATUM supports point, line, plane, frame, and bounded-target forms, semantic
+roles, axes, dimensions, identifiers, validation, transforms, and versioned
+legacy-compatible database storage.  ANNOT supports model-space planes,
+per-segment roles and styles, UTF-8 text, runtime TrueType outlines,
+transforms, and legacy screen-space compatibility.  The hardened private
+struetype code is shared from libbu; LGPL OSIFont remains runtime data and is
+not compiled into a binary.
+
+AP242 PMI stage 1 retains connected semantic, presentation, association, and
+dependency records with source values, component order, references, product
+ownership, and native disposition.  Exactly resolved point, axis, and plane
+datums become DATUM objects.  Supported graphical content becomes model-space
+ANNOT geometry; ambiguous content remains semantic-only.  Malformed
+presentation is partial in permissive mode and transactional in strict mode.
+
+Safety and test infrastructure
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+BRL-CAD and STEPcode support ASan+UBSan and a separate TSan mode.  Release and
+ASan+UBSan have covered the complete STEP/AP range; focused parallel, failure,
+native-CSG, and BRep-export paths have run under TSan.  On the qualification
+host TSan must run through `setarch x86_64 -R` because its runtime otherwise
+fails before main.  Repeated -j8 versus -j1 output comparison remains part of
+the determinism gate.
+
+
+Validation Snapshot
+-------------------
+
+In-tree tests include success, malformed, partial, strict, round-trip,
+sanitizer, and output-validity cases across every supported schema.  The last
+complete focused Release STEP matrix contains 197 tests.  Official NIST MBE PMI
+files are stored under db/nist with documented provenance.  Five AP203 MIM
+files exercise AP203e2, and 17 AP242 files span editions 1 through 4.
+
+Checksum-pinned, non-redistributed STEP Tools and STEPcode samples cover CATIA,
+Unigraphics, AutoCAD, I-DEAS, STEPnet, and STEP Tools producers.  Important
+independent modern-schema evidence currently includes:
+
+* AP242 Leopard2-A6: 31/31 geometry items, 14 products, 338 occurrences,
+  2,425 styles, 13 material identities, and 26 material values;
+* AP242 Open Source Rover: six product levels, 713 products, 1,390 rigid
+  occurrences, and 569 applied styles; and
+* AP203e2 ROTATOR_ASM: eight product levels, 126 participating products, 404
+  usages, 671 product-property records, and 3,991 styles.
+
+The last complete unified corpus baseline is the 1,138-file dry run at
+`.build/step-corpus-full-j8-validity-ladder-20260804-post-speaker`:
+
+* schemas: 616 AP203, 375 AP214, four AP203e2, and 143 AP242 files;
+* files: 1,057 clean; process statuses were 1,064 complete, 69 useful partial,
+  three intentionally empty, one failed, and one SIGSEGV;
+* geometry: 41,765 of 41,992 attempted items written (99.46 percent), 221 exact
+  omissions, and six unsupported-representation omissions;
+* invalid fallback: 386 structurally invalid but storage-safe BReps preserved,
+  none rejected;
+* aggregate wall/conversion time: 36,796.2/34,678.9 seconds; and
+* maximum per-file RSS: 3.62 GB.
+
+This remains the comparison baseline, not the current expected result.  The
+crash and several omission groups have since been fixed in selected working
+runs.  Its timing delta from the preceding baseline is not a controlled
+regression result because host load and available memory differed materially.
+Preserve both manifests and compare future runs only under similar load.
+
+The corpus runner records hashes, schemas, converter/plugin/shared-library
+identities, reports, logs, wall time, peak RSS, host load, memory availability,
+geometry outcomes, hierarchy depth, metadata, and failure categories.  Dry
+mode still parses, constructs, validates, and repairs geometry; it omits only
+database serialization.  Historical `.g` files are comparative artifacts, not
+correctness oracles, and must remain intact.
+
+Selected post-baseline qualifications establish:
+
+* cargo ship now terminates normally; its two remaining selected omissions are
+  explicit missing required FACE_SURFACE references;
+* hAVYARD now terminates normally after rejected seam transactions reacquire
+  topology owned by the restored BRep; a direct owned lifetime fixture remains
+  to be added;
+* SNAP #801290 is a valid solid after a face-scoped horn-torus keyhole repair;
+* all ten historical T90 omissions serialize: six valid solids, two
+  source-open BReps tagged `authored_open_topology`, and two storage-safe
+  partial fallbacks whose contradictions exceed bounded inference limits;
+* paired 135-file AP203/AP242 Recurta runs write all 139 attempted items per
+  schema as valid BReps, with three tagged inferences per schema; and
+* the selected 421-face speaker solid now produces a validated 419-face solid
+  through a whole-item shared-spur transaction.
+
+The T90 serialized selection is recorded in
+`.build/t90_omissions_final_write.json`; it attempted and wrote ten of ten,
+skipped none, and explicitly preserved four invalid objects.  The file-level
+partial status is intentional and does not represent an omission.
+
+Two measured performance targets remain useful:
+
+* Recurta `10012.step`, 992 faces: 78.7 seconds in the final qualification;
+  profiling attributes most time to periodic trim-orientation repair and
+  repeated transaction work, not preflight construction; and
+* chess king, 13,234 faces: about 616.8 seconds and 2.92 GB in its selected
+  clean run.
+
+
+Remaining Work in Recommended Order
+-----------------------------------
+
+1. Close the current corpus ratchet -- ACTIVE
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Complete selected work before starting another expensive unified run:
+
+1. Add a compact rejected-seam-transaction lifetime fixture, qualify it under
+   ASan+UBSan, and retain the complete hAVYARD real-file check.
+2. Sample and reduce the largest post-baseline omission sets:
+
+   * Garrett: 49;
+   * 2-litre engine: 49, including 48 GEOMETRIC_SET items;
+   * Open Source Rover: 16;
+   * Epoxy granite VMC: seven; and
+   * BLANCO: five.
+
+3. Retest the former 58-omission GEOMETRIC_SET group with the completed bounded
+   surface path.  The independent b/c/d compatibility files are already
+   qualified except for six d-wireframe boundary/pcurve disagreements.
+4. Reduce the Leopard2-A6 export/re-import failure at STEP edge #460691.  One
+   of 31 exported BReps fails while splitting a pcurve whose candidate
+   fragment is 36.4476 model units from its subedge.  This is a geometry
+   interoperability problem, not schema selection or assembly loss.
+5. Retain MOUSE as a source edge/surface mismatch unless independent geometry
+   proves a narrower correction.
+6. Revisit T90 #20240 and #20307 only if independent geometry supports a
+   narrower reconstruction.  Their marked partial results are preferable to
+   inventing a false solid.
+7. Remove repeated full-BRep scans and copies from large periodic repair
+   transactions while preserving exact rollback behavior.
+8. Run focused Release, ASan+UBSan, TSan where applicable, and -j1/-j8
+   determinism gates.  Then run the complete 1,138-file qualification.
+
+Corpus fixes require a compact reproducer, permissive and strict assertions,
+structured report coverage, and a selected real-file check.  Do not introduce
+broad repair heuristics solely to improve corpus percentages.
+
+The next unified run is acceptable only if every file reaches a normal terminal
+report; there is no crash, hang, schema-load failure, corrupt output, or
+unexplained zero-geometry result; and all omissions and invalid fallbacks are
+grouped by owned root cause.
+
+2. Expand independent AP203e2/AP242 evidence -- REMAINING
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Locate and pin independent examples for:
+
+* AP203e2 material and property association variants;
+* AP242 materials beyond the Inventor MAKE_FROM_USAGE_OPTION pattern;
+* mixed representation contexts and large multiple-product files; and
+* AP203e2/AP242 sweeps, NURBS, shells, voids, and mixed BRep/CSG assemblies.
+
+Promote small distributable reductions into in-tree fixtures.  For external
+inputs record source, producer, SHA-256, and structured expectations.  A
+BRL-CAD-authored round trip alone cannot close this item.
+
+3. Complete AP242 semantic PMI and MBD -- REMAINING
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Stage 1 graph retention and exact native point/axis/plane/curve creation are
+complete.  Remaining interpretation and authoring work is to:
+
+* normalize dimension type/value, tolerance type and magnitude,
+  material-condition modifiers, datum-reference compartments, and zones;
+* preserve stable product, occurrence, face, edge, and vertex target links;
+* distinguish semantic-only, graphical-only, and validated combined PMI;
+* map representable text, leaders, extension/dimension lines, arrowheads,
+  fills, area targets, and supported symbols;
+* explicitly report graphical content which cannot be mapped faithfully;
+* author retained semantic and supported presentation records in AP242; and
+* qualify against NIST PMI and independent AP242 files, not only hand-authored
+  fixtures.
+
+An ANNOT outline is not proof that original text or tolerance semantics were
+recovered.  Do not infer missing semantics from graphical similarity.
+
+4. Complete tessellated coverage and optional export -- REMAINING
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Add faithful mappings for tessellated point, curve, wire, geometric-set, and
+repositioned-item forms.  Add explicit optional AP242 BOT export using the
+shared unit and uncertainty policy.  Tessellation must not silently replace
+the eventual evaluated-BRep default for analytic solids.
+
+5. Broaden existing-BRep interoperability -- REMAINING
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Reduce the six d-wireframe boundary/pcurve disagreements and independently
+classify each as an authored tolerance violation or adapter defect.  Preserve
+faithful partial-set output until that proof exists; do not stretch pcurves or
+widen model uncertainty merely to reach complete counts.
+
+Expand independent-producer coverage for rational and non-rational NURBS,
+open shells, nested BREP_WITH_VOIDS, reversed proxies/faces, difficult trims,
+periodic and singular surfaces, and closed curves.  Define a legal policy for
+one BRL-CAD object containing disconnected material volumes.  Add wireframe
+and surface-curve export for databases without face topology.
+
+Verification must include STEPcode readback, strict BRL-CAD re-import,
+topology and material-ray comparison, and an independent STEP validator or
+consumer where available.  Textual identity is insufficient.
+
+Sketch containment still needs a complete loop hierarchy for disjoint outer
+regions and nested material islands.  REVOLVE should split profiles at sharp
+C0/tangent discontinuities when needed to avoid pathological wireframe and CDT
+refinement.
+
+DSP, deprecated HF, EBM, and VOL are a separate scalability and fidelity
+project.  They require bounded-error patching or faithful faceting, discrete
+boundary simplification, source-semantic ray/material comparisons, and hard
+validity, memory, and complexity limits.  A single high-degree DSP surface or
+unbounded voxel-to-BRep expansion is not an acceptable general solution.
+
+6. Complete product and configuration mappings -- REMAINING
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Define scoped mappings and loss policy for region identifiers,
+material/shader strings, and selected arbitrary BRL-CAD attributes.  Do not
+conflate opaque attributes with typed STEP properties.
+
+Broaden normalized named-unit conveniences only where schemas agree; the
+recursive retained graph remains authoritative.  Extend authoring for
+remaining configuration identities, relationships, complex addresses, and
+application edges only when required source values exist.  Expand
+import-export-import tests to multiple products, occurrences, shared complex
+effectivities, and schema-specific graphs.
+
+7. Resolve assembly and native-CSG edge cases -- REMAINING
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Define explicit policy for scale, mirror, and future non-rigid occurrence
+transforms.  Preserve or explicitly report nested combination identity inside
+one CSG expression; STEP CSG_SELECT cannot directly use another CSG_SOLID as
+an operand.  Expand stable naming and independent multi-level mixed BRep/CSG
+evidence across AP203e2, AP214, and AP242.
+
+NOT and guard/no-op Boolean nodes have no lossless finite STEP CSG encoding.
+AP242 CYCLIDE_SEGMENT_SOLID remains unsupported because recognizing a faithful
+BRL-CAD PIPE subset requires additional geometric semantics; similar
+dimensions alone are insufficient.
+
+8. Implement remaining exact sweeps -- REMAINING
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Add nonlinear swept-disk directrices only when OpenNURBS can construct a
+faithful pipe with validated frame continuity and self-intersection handling.
+Ellipse, spline, and composite-curve cases remain.  Implement drafted and
+trimmed face sweeps only after referenced termination, offset, trim intent,
+and per-edge draft can be evaluated exactly.  Inherited depth or angle is not
+a faithful fallback.
+
+
+Blocked and Deferred Work
+-------------------------
+
+Evaluated-BRep default export -- BLOCKED
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The broadly interoperable default should eventually evaluate arbitrary
+Boolean trees into final BReps.  Current Boolean evaluation is not reliable
+enough.  Continue evaluator work and validation; when it is ready, make
+evaluated BRep the default without weakening optional exact native CSG.
+
+STEPcode upstreaming -- DEFERRED maintenance
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The generated-binding scalability work required by step-g and g-step is
+complete.  Remaining STEPcode work is upstream preparation and maintenance:
+retain API v1 compatibility where required, and address correctness, cache,
+generation, or resource defects when measured.  Reopen generator scalability
+only for a demonstrated regression or a new schema exceeding current limits.
+
+Additional application protocols -- DEFERRED
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Do not build every ISO SMRL schema speculatively.  AP224 machining features and
+AP238 STEP-NC are the strongest future geometry/manufacturing candidates once
+representative inputs and mapping goals exist.  AP209 analysis and AP210
+electronics require domain-specific semantics.  AP232 and AP239 are primarily
+metadata protocols and are not geometry targets merely because they share
+integrated resources.
+
+ISO SMRL and historical STEPmod selection, provenance, and redistribution
+policy are documented in STEP(5).
+
+
+Definition of Done
+------------------
+
+Every new decoder, emitter, or repair must include, as applicable:
+
+1. an independent hand-authored or external fixture;
+2. a supported case and a malformed or explicitly unsupported case;
+3. permissive and transactional strict assertions;
+4. structured report checks proving exhaustive loss accounting;
+5. schema-specific coverage where legal alternatives or physical layouts
+   differ;
+6. round-trip geometry, topology, semantic, and unit checks;
+7. Release, sanitizer, and deterministic parallel tests;
+8. selected corpus reruns for every affected real file; and
+9. matching step-g, g-step, STEP(5), CSG matrix, and plan documentation.
+
+The overall STEP effort is broadly robust when:
+
+* every input and selected output object is exhaustively accounted for;
+* the unified corpus has no crash, hang, schema-load failure, corrupt output,
+  or unexplained zero-geometry result;
+* AP203e2 and AP242 have independent producer evidence comparable to the
+  relevant AP203/AP214 baseline;
+* supported tessellation, rigid assemblies, presentation, configuration, and
+  PMI round-trip with explicit losses;
+* existing BReps interoperate across analytic, NURBS, periodic, singular,
+  shell, void, orientation, and trim cases with independent consumers;
+* native CSG remains optional, exact, and explicit about unsupported content;
+* parallel, sanitizer, deterministic-output, performance, and memory gates
+  remain green; and
+* reliable Boolean evaluation enables evaluated-BRep default export without
+  regressing native CSG.
