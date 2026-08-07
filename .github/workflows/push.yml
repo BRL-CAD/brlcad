@@ -501,10 +501,13 @@ jobs:
         id: cachekey
         shell: bash
         run: |
+          set -euo pipefail
           xcodever="$(xcodebuild -version | head -n 1 | awk '{print $2}')"
           clangver="$(clang --version | head -n 1)"
           info="${{ steps.bext-sha.outputs.sha }}-$(uname -s)-$(uname -r)-$xcodever-$clangver"
-          echo "hash=$(echo -n "$info" | sha1sum | awk '{print $1}')" >> $GITHUB_OUTPUT
+          cache_hash="$(printf '%s' "$info" | shasum -a 1 | awk '{print $1}')"
+          [[ "$cache_hash" =~ ^[[:xdigit:]]{40}$ ]]
+          echo "hash=$cache_hash" >> "$GITHUB_OUTPUT"
 
       - name: Cache bext build outputs
         id: cache-bext
