@@ -176,7 +176,7 @@ proc geom_load {input_file gui_feedback} {
 # and may only want a subset.
 proc geom_save {input_file output_file db_component} {
 
-    set binpath [bu_dir bin] ]
+    set binpath [bu_dir bin]
 
     set output_filename [file tail $output_file]
     set output_dir [file dirname $output_file]
