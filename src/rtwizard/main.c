@@ -834,7 +834,7 @@ rtwizard_anim_write_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int 
 
     if (icv_anim_write(anim, output) != 0) {
 	icv_anim_destroy(anim);
-	(void)remove(output);
+	(void)bu_file_delete(output);
 	Tcl_SetObjResult(interp, Tcl_ObjPrintf("failed to write animation '%s'", output));
 	return TCL_ERROR;
     }
