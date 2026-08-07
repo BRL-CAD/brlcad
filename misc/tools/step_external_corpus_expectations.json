@@ -1,0 +1,178 @@
+{
+  "format": "brlcad-step-corpus-expectations-v1",
+  "description": "Checksum-pinned external samples used for independent producer qualification without copying their exchange files into BRL-CAD.",
+  "redistribution": "The linked STEP Tools pages state All Rights Reserved, while the STEPcode collective work is distributed under its 3-clause BSD COPYING terms. Obtain each sample from its stated source; this manifest does not independently grant redistribution rights.",
+  "files": [
+    {
+      "name": "cubsomcy.stp",
+      "aliases": ["ap203_cubsomcy.stp"],
+      "sha256": "eb8fb40f56523fb154b435066f7b2719a88e15e30d0b8d8e6d01dd99339ddcf1",
+      "source_page": "https://www.steptools.com/docs/stpfiles/ap203/index.html",
+      "producer": "CATIA / Alcatel Space Industries",
+      "expected": {
+        "equals": {
+          "exit_status": 0,
+          "coverage.products": 1,
+          "coverage.occurrences": 0,
+          "coverage.geometry_attempted": 2,
+          "coverage.geometry_written": 2,
+          "coverage.geometry_skipped": 0,
+          "coverage.outcome": "complete",
+          "coverage.entity_counts.ADVANCED_BREP_SHAPE_REPRESENTATION": 1,
+          "coverage.entity_counts.FACETED_BREP_SHAPE_REPRESENTATION": 1,
+          "derived.occurrence_max_depth": 0,
+          "derived.skipped_entity_ids": []
+        }
+      }
+    },
+    {
+      "name": "moon_buggy_asm.stp",
+      "aliases": ["ap203_moon_buggy_asm.stp"],
+      "sha256": "2afaaf50cd7ec15e36367be0a1e41730e7af5440ed974b62a0a21cf6346289dd",
+      "source_page": "https://www.steptools.com/docs/stpfiles/ap203/index.html",
+      "producer": "STEPNet / EDS Unigraphics 10.5",
+      "expected": {
+        "equals": {
+          "exit_status": 1,
+          "coverage.products": 20,
+          "coverage.occurrences": 23,
+          "coverage.geometry_attempted": 12,
+          "coverage.geometry_written": 9,
+          "coverage.geometry_skipped": 3,
+          "coverage.outcome": "partial",
+          "coverage.entity_counts.MAPPED_ITEM": 23,
+          "derived.assembly_usage_count": 23,
+          "derived.occurrence_detail_count": 23,
+          "derived.occurrence_max_depth": 4,
+          "derived.occurrence_methods": ["mapped"],
+          "derived.skipped_entity_ids": [32060, 32220, 32820]
+        }
+      }
+    },
+    {
+      "name": "123Block_Color.stp",
+      "aliases": ["ap203e2_123Block_Color.stp"],
+      "sha256": "4bbdd752fd3c4e7ebfee633da210b9e3df62c583a604e874ca5e9c36545d2be4",
+      "source_page": "https://www.steptools.com/docs/stpfiles/ap203e2/index.html",
+      "producer": "CATIA / Boeing",
+      "expected": {
+        "equals": {
+          "exit_status": 0,
+          "coverage.products": 1,
+          "coverage.geometry_attempted": 1,
+          "coverage.geometry_written": 1,
+          "coverage.geometry_skipped": 0,
+          "coverage.outcome": "complete",
+          "coverage.styles_extracted": 1,
+          "coverage.styles_applied": 1,
+          "derived.skipped_entity_ids": []
+        }
+      }
+    },
+    {
+      "name": "boxy_with_linearsize.stp",
+      "aliases": ["ap203e2_boxy_with_linearsize.stp"],
+      "sha256": "e120b982c5bb5c8b62c99bb03d5ae46c16d9200fcb53be6521c201be98ead6d6",
+      "source_page": "https://www.steptools.com/docs/stpfiles/ap214/index.html",
+      "producer": "STEP-NC Machine / STEP Tools, Inc.",
+      "expected": {
+        "equals": {
+          "exit_status": 3,
+          "coverage.products": 1,
+          "coverage.geometry_attempted": 1,
+          "coverage.geometry_written": 0,
+          "coverage.geometry_skipped": 1,
+          "coverage.outcome": "failed",
+          "coverage.entity_counts.DATUM": 3,
+          "coverage.entity_counts.PLUS_MINUS_TOLERANCE": 1,
+          "derived.skipped_entity_ids": [26]
+        }
+      }
+    },
+    {
+      "name": "as1-ac-214.stp",
+      "aliases": ["ap214_as1-ac-214.stp"],
+      "sha256": "1bb1a0e55dc4a0169e329529eb520596690f8745077c1bdd2f9fa41fa5a2aa95",
+      "source_page": "https://www.steptools.com/docs/stpfiles/ap214/index.html",
+      "producer": "AutoCAD / STEPnet",
+      "expected": {
+        "equals": {
+          "exit_status": 0,
+          "coverage.products": 9,
+          "coverage.occurrences": 13,
+          "coverage.geometry_attempted": 5,
+          "coverage.geometry_written": 5,
+          "coverage.geometry_skipped": 0,
+          "coverage.outcome": "complete",
+          "coverage.styles_extracted": 5,
+          "coverage.styles_applied": 5,
+          "coverage.layers_extracted": 1,
+          "derived.assembly_usage_count": 13,
+          "derived.occurrence_detail_count": 13,
+          "derived.occurrence_max_depth": 3,
+          "derived.occurrence_methods": ["referenced"],
+          "derived.skipped_entity_ids": []
+        }
+      }
+    },
+    {
+      "name": "as1-ug-214.stp",
+      "aliases": ["ap214_as1-ug-214.stp"],
+      "sha256": "53c5069f5d6b59435eb32ac743cc82e53bd3607954c94785d989d579d0e29426",
+      "source_page": "https://www.steptools.com/docs/stpfiles/ap214/index.html",
+      "producer": "Unigraphics / STEPnet",
+      "expected": {
+        "equals": {
+          "exit_status": 0,
+          "coverage.products": 9,
+          "coverage.occurrences": 13,
+          "coverage.geometry_attempted": 5,
+          "coverage.geometry_written": 5,
+          "coverage.geometry_skipped": 0,
+          "coverage.outcome": "complete",
+          "coverage.styles_extracted": 5,
+          "coverage.styles_applied": 5,
+          "coverage.layers_extracted": 3,
+          "coverage.properties_extracted": 42,
+          "derived.assembly_usage_count": 13,
+          "derived.occurrence_detail_count": 13,
+          "derived.occurrence_max_depth": 3,
+          "derived.occurrence_methods": ["referenced"],
+          "derived.validation_property_count": 42,
+          "derived.skipped_entity_ids": []
+        }
+      }
+    },
+    {
+      "name": "dm1-id-214.stp",
+      "sha256": "25e727cdc4d738064da7907d604bd4ceeb4e941c6fdc201f3df04c0b94671661",
+      "source_page": "STEPcode data/ap214e3/dm1-id-214.stp (3-clause BSD collective work)",
+      "producer": "I-DEAS Master Series 9 / SDRC",
+      "expected": {
+        "equals": {
+          "exit_status": 0,
+          "coverage.products": 7,
+          "coverage.occurrences": 7,
+          "coverage.geometry_attempted": 3,
+          "coverage.geometry_written": 3,
+          "coverage.geometry_skipped": 0,
+          "coverage.outcome": "complete",
+          "coverage.styles_extracted": 3,
+          "coverage.styles_applied": 3,
+          "coverage.materials_extracted": 3,
+          "coverage.properties_extracted": 22,
+          "coverage.entity_counts.MAKE_FROM_USAGE_OPTION": 3,
+          "derived.assembly_usage_count": 7,
+          "derived.occurrence_detail_count": 7,
+          "derived.occurrence_max_depth": 1,
+          "derived.occurrence_methods": ["referenced"],
+          "derived.material_count": 3,
+          "derived.material_identifiers": ["AMS 4928", "AMS 5613", "AMS 5662"],
+          "derived.material_names": ["Greek Ascoloy", "Inconel 718", "Titanium 6-4"],
+          "derived.validation_property_count": 19,
+          "derived.skipped_entity_ids": []
+        }
+      }
+    }
+  ]
+}
