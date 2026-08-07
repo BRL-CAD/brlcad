@@ -1328,7 +1328,7 @@ main(int argc, char **argv)
     BU_LIST_INIT(&head.l);
     for (BU_LIST_FOR(psh, pshell, &pshell_head.l)) {
 	struct model *m;
-	char name[NAMESIZE+1];
+	char name[32];
 
 	if (!psh->s)
 	    continue;
@@ -1340,7 +1340,7 @@ main(int argc, char **argv)
 	    nmg_model_face_fuse(m, vlfree, &tol);
 	    nmg_hollow_shell(psh->s, psh->thick*conv[units], 1, vlfree, &tol);
 	}
-	sprintf(name, "pshell.%d", psh->pid);
+	snprintf(name, sizeof(name), "pshell.%d", psh->pid);
 	if (polysolids)
 	    mk_bot_from_nmg(fpout, name, psh->s);
 	else
@@ -1355,12 +1355,12 @@ main(int argc, char **argv)
 
     BU_LIST_INIT(&head.l);
     for (BU_LIST_FOR(pbp, pbar, &pbar_head.l)) {
-	char name[NAMESIZE+1];
+	char name[32];
 
 	if (BU_LIST_IS_EMPTY(&pbp->head.l))
 	    continue;
 
-	sprintf(name, "pbar_group.%d", pbp->pid);
+	snprintf(name, sizeof(name), "pbar_group.%d", pbp->pid);
 	mk_lfcomb(fpout, name, &pbp->head, 0);
 
 	mk_addmember(name, &head.l, NULL, WMOP_UNION);
