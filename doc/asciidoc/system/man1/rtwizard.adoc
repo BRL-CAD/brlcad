@@ -25,6 +25,11 @@ BRL-CAD image-manipulation tools.  These layers are composited into a
 single image written to a *pix*(5) or PNG file, or displayed on a
 framebuffer.
 
+When *--cut-steps* is supplied, rtwizard produces an animation in which a
+cutting plane advances through the rendered objects.  The output may be APNG
+or MJPEG, and every full-color, ghost, and edge pass uses the same cutting
+plane for each frame.
+
 *rtwizard* has two modes.  With no arguments (or with *--gui*) it launches
 a wizard-style graphical interface that guides the user through building an
 image interactively.  Given sufficient options on the command line it runs
@@ -70,7 +75,8 @@ preferred.
 *-o* _filename_, *--output-file* _filename_::
   Output image file.  A .png extension produces a PNG image; otherwise
   a BRL-CAD *pix*(5) image is written.  Other supported extensions are
-  .ppm, .bw, and .dpix.
+  .ppm, .bw, and .dpix.  In cutting-plane animation mode, .png and .apng
+  produce APNG while .avi and .mjpg produce MJPEG.
 
 *-s* _#_, *--size* _#_::
   Width and height of a square output image, in pixels (default 512).
@@ -81,6 +87,19 @@ preferred.
 
 *-n* _#_, *--height* _#_::
   Output image height in pixels (overrides the height from *-s*).
+
+*--cut-steps* _#_::
+  Produce a cutting-plane animation containing exactly this many frames.
+  The value must be at least 2.  The first frame is just before clipping
+  begins and the last is just before the rendered bounds are fully clipped.
+
+*--cut-direction* _x/y/z_::
+  Model-space direction in which the cutting plane advances.  The vector is
+  normalized internally; reversing it reverses the animation.  If omitted,
+  the plane advances from the eye into the resolved render view.
+
+*--animation-fps* _#_::
+  Animation playback rate in frames per second (default 10).
 
 *-t* _A|B|C|D|E|F_, *--type* _A|B|C|D|E|F_::
   Picture type to produce (see the table above).  If a type is requested
@@ -143,6 +162,13 @@ preferred.
 
 *-O* _#_, *--occlusion* _#_::
   Occlusion mode (1 to 3) for line rendering (default 1).  See *rtedge*(1).
+
+*--ao-samples* _#_::
+  Number of ambient-occlusion samples per ray.  Zero disables ambient
+  occlusion (default 0).
+
+*--ao-radius* _value_::
+  Maximum ambient-occlusion radius.  Zero uses *rt*'s unbounded default.
 
 *--gui*::
   Force the graphical interface even when the command line specifies enough
@@ -207,6 +233,19 @@ database.  *--no-gui* ensures the script never blocks on the GUI.
 
 .Live preview on a framebuffer
 ====
+
+.Cutting-plane animation
+====
+[source,bash]
+----
+rtwizard --no-gui -i model.g -c all -o cutaway.apng \
+         --cut-steps 30 --cut-direction 0/0/-1 --animation-fps 12
+----
+Creates a 30-frame APNG with the cutting plane advancing in the negative Z
+direction.  Use a `.png` or `.apng` output for APNG and `.avi` or `.mjpg` for
+MJPEG.  Picture types using edge lines and the ambient-occlusion options may
+be combined with the animation options.
+====
 [source,bash]
 ----
 rtwizard -d /dev/wgl -i m35.g -l component
@@ -218,7 +257,7 @@ rather than writing it to a file.
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *rt*(1), *rtedge*(1), *fbserv*(1), *fbhelp*(1), *pix*(5)
+*brlcad*(1), *rt*(1), *rtedge*(1), *icv*(1), *fbserv*(1), *fbhelp*(1), *pix*(5)
 
 [[author]]
 == AUTHOR

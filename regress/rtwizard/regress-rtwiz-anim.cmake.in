@@ -1,0 +1,79 @@
+# Values set at CMake configure time
+set(INPUTFILE "@INPUT_FILE@")
+set(BIN_DIR "@BIN_DIR@")
+set(TEST_DIR "@CMAKE_CURRENT_BINARY_DIR@")
+
+string(REPLACE "\\" "" RTWIZ "${EXEC}")
+get_filename_component(BDIR "${RTWIZ}" DIRECTORY)
+get_filename_component(EXE_SUFFIX "${RTWIZ}" EXT)
+set(ICV_EXEC "${BDIR}/icv${EXE_SUFFIX}")
+set(PIXCMP_EXEC "${BDIR}/pixcmp${EXE_SUFFIX}")
+set(PIXSTAT_EXEC "${BDIR}/pixstat${EXE_SUFFIX}")
+string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
+set(SRCFILE "${RDIR}/${INPUTFILE}")
+
+set(ANIM "${TEST_DIR}/rtwizard_cut.apng")
+set(STILL "${TEST_DIR}/rtwizard_cut_still.pix")
+set(FIRST "${TEST_DIR}/rtwizard_cut_first.pix")
+set(LAST "${TEST_DIR}/rtwizard_cut_last.pix")
+set(PREFIX "${TEST_DIR}/rtwizard_cut_frame_")
+file(REMOVE "${ANIM}" "${STILL}" "${FIRST}" "${LAST}")
+file(GLOB OLD_FRAMES "${PREFIX}*")
+file(REMOVE ${OLD_FRAMES})
+
+execute_process(
+  COMMAND "${RTWIZ}" --no-gui -i "${SRCFILE}" -o "${ANIM}"
+          -c component -s 64 --cut-steps 3 --benchmark
+  RESULT_VARIABLE anim_result
+  OUTPUT_VARIABLE anim_log
+  ERROR_VARIABLE anim_log
+)
+if(anim_result OR NOT EXISTS "${ANIM}")
+  message(FATAL_ERROR "rtwizard APNG generation failed (${anim_result}):\n${anim_log}")
+endif()
+
+execute_process(
+  COMMAND "${ICV_EXEC}" anim extract "${ANIM}" "${PREFIX}"
+  RESULT_VARIABLE extract_result
+  OUTPUT_VARIABLE extract_log
+  ERROR_VARIABLE extract_log
+)
+file(GLOB FRAMES "${PREFIX}*_ctrl.png")
+list(LENGTH FRAMES FRAME_COUNT)
+if(extract_result OR NOT FRAME_COUNT EQUAL 3)
+  message(FATAL_ERROR "Expected 3 extracted APNG frames, found ${FRAME_COUNT}:\n${extract_log}")
+endif()
+list(GET FRAMES 0 FIRST_PNG)
+list(GET FRAMES 2 LAST_PNG)
+
+execute_process(
+  COMMAND "${RTWIZ}" --no-gui -i "${SRCFILE}" -o "${STILL}"
+          -c component -s 64 --benchmark
+  RESULT_VARIABLE still_result
+)
+execute_process(
+  COMMAND "${ICV_EXEC}" "${FIRST_PNG}" "${FIRST}"
+  RESULT_VARIABLE convert_result
+)
+execute_process(
+  COMMAND "${PIXCMP_EXEC}" "${STILL}" "${FIRST}"
+  RESULT_VARIABLE compare_result
+  OUTPUT_VARIABLE compare_log
+  ERROR_VARIABLE compare_log
+)
+if(still_result OR convert_result OR compare_result)
+  message(FATAL_ERROR "The first animation frame does not match the unclipped render:\n${compare_log}")
+endif()
+
+execute_process(COMMAND "${ICV_EXEC}" "${LAST_PNG}" "${LAST}" RESULT_VARIABLE last_convert_result)
+execute_process(
+  COMMAND "${PIXSTAT_EXEC}" -v "${LAST}"
+  RESULT_VARIABLE stat_result
+  OUTPUT_VARIABLE stat_log
+  ERROR_VARIABLE stat_log
+)
+if(last_convert_result OR stat_result OR stat_log MATCHES "Min[ \t]+255[ \t]+255[ \t]+255")
+  message(FATAL_ERROR "The final animation frame is fully clipped:\n${stat_log}")
+endif()
+
+file(REMOVE "${ANIM}" "${STILL}" "${FIRST}" "${LAST}" ${FRAMES})

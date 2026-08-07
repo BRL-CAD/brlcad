@@ -20,6 +20,8 @@ rtwizard [options]
 The *rtwizard* command launches the `rtwizard` rendering application as a subprocess. It automatically passes the current view parameters — including view size, orientation, and eye point — to the subprocess.
 
 When called from MGED, *rtwizard* runs in `--no_gui` (non-interactive) mode, using the current session's view state and the open database. All options are passed through to the `rtwizard` subprocess unchanged.
+If no color, line, or ghost object list is supplied, the objects displayed in
+the active view are rendered in full color.
 
 For interactive GUI use of RtWizard, launch the `rtwizard` application directly from the command line rather than through MGED.
 
@@ -34,6 +36,16 @@ NOTE: *rtwizard* runs asynchronously. Use *rtabort* to terminate an active rtwiz
 mged> **rtwizard -o output.png**
 
 Renders the current view using the `rtwizard` subprocess and writes the result to `output.png`.
+====
+
+.Animate a cutting plane through the current view
+[example]
+====
+mged> **rtwizard -o cutaway.apng --cut-steps 30**
+
+Produces a 30-frame APNG using the displayed geometry and a cutting plane
+advancing from the current eye into the model.  Use *--cut-direction x/y/z*
+to override the view direction.
 ====
 
 [[see_also]]

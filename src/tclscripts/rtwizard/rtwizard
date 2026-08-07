@@ -56,6 +56,10 @@ if {![info exists ::RtWizard::wizard_state(ghost_intensity)]} { set ::RtWizard::
 if {![info exists ::RtWizard::wizard_state(width)]} { set ::RtWizard::wizard_state(width) 512 }
 # Pix height (number of scan lines)
 if {![info exists ::RtWizard::wizard_state(scanlines)]} { set ::RtWizard::wizard_state(scanlines) 512 }
+# Animation and raytrace enhancement defaults
+if {![info exists ::RtWizard::wizard_state(animation_fps)]} { set ::RtWizard::wizard_state(animation_fps) 10 }
+if {![info exists ::RtWizard::wizard_state(ao_samples)]} { set ::RtWizard::wizard_state(ao_samples) 0 }
+if {![info exists ::RtWizard::wizard_state(ao_radius)]} { set ::RtWizard::wizard_state(ao_radius) 0 }
 
 # Load the package that lets us output images
 package require cadwidgets::RtImage
@@ -275,6 +279,9 @@ if {[info exists ::use_gui]} {
        unset -nocomplain _fbserv_max_retries
    }
 
+   # Open the database once.  It is used both for view setup and for animation bounds.
+   set db [go_open db db $::RtWizard::wizard_state(dbFile)]
+
    # Either we're using a specified view model, or we're deducing one based on user options
    if {[info exists ::RtWizard::wizard_state(viewsize)] && [info exists ::RtWizard::wizard_state(orientation)] && [info exists ::RtWizard::wizard_state(eye_pt)]} {
      set viewsize $::RtWizard::wizard_state(viewsize)
@@ -293,7 +300,6 @@ if {[info exists ::use_gui]} {
 	if {! [info exists ::have_eye_pt]} {puts "Error - when specifying view model directly, need eye_pt"}
 	if {[info exists argv]} {exit}
      }
-     set db [go_open db db $::RtWizard::wizard_state(dbFile)]
      db new_view v1 nu
 
      if {[llength $::RtWizard::wizard_state(color_objlist)]} {
@@ -346,15 +352,100 @@ if {[info exists ::use_gui]} {
        _edge_objects  $::RtWizard::wizard_state(line_objlist) \
        _benchmark_mode  $::benchmark_mode \
        _log_file  $::RtWizard::wizard_state(log_file) \
-       _pid_filename $::RtWizard::wizard_state(pid_filename)
+       _pid_filename $::RtWizard::wizard_state(pid_filename) \
+       _cut_plane "" \
+       _ao_samples $::RtWizard::wizard_state(ao_samples) \
+       _ao_radius $::RtWizard::wizard_state(ao_radius)
        ]
 
 
-    ::cadwidgets::rtimage $rtimage_dict
+   if {[info exists ::RtWizard::wizard_state(cut_steps)] && $::RtWizard::wizard_state(cut_steps) >= 2} {
+      set anim_objects [lsort -unique [concat \
+	  $::RtWizard::wizard_state(color_objlist) \
+	  $::RtWizard::wizard_state(line_objlist) \
+	  $::RtWizard::wizard_state(ghost_objlist)]]
+      if {![llength $anim_objects]} {
+	error "rtwizard: no objects available for cutting-plane animation bounds"
+      }
+
+      if {[info exists ::RtWizard::wizard_state(cut_direction)]} {
+	set cut_dir [vunitize $::RtWizard::wizard_state(cut_direction)]
+      } else {
+	# orientation is the model-to-view rotation.  Its third row points
+	# from the model toward the eye, so negate it to march into the view.
+	set omat [quat_quat2mat $orientation]
+	set cut_dir [vunitize [list \
+	    [expr {-[lindex $omat 8]}] \
+	    [expr {-[lindex $omat 9]}] \
+	    [expr {-[lindex $omat 10]}]]]
+      }
+
+      set sweep_bounds [rtwizard_cut_bounds \
+	  $::RtWizard::wizard_state(dbFile) $cut_dir {*}$anim_objects]
+      set sweep_min [lindex $sweep_bounds 0]
+      set sweep_max [lindex $sweep_bounds 1]
+      set sweep_span [expr {$sweep_max - $sweep_min}]
+      if {$sweep_span <= 0.0} {
+	error "rtwizard: rendered objects have degenerate cutting-plane bounds"
+      }
+      # Keep the terminal slice large enough to survive rasterization while
+      # remaining approximately one output-pixel fraction of the sweep.
+      set sweep_eps [expr {max(abs($sweep_span) / double(max(
+	  $::RtWizard::wizard_state(width), $::RtWizard::wizard_state(scanlines))),
+	  abs($sweep_span) * 0.05, 1.0e-9)}]
+      set sweep_first [expr {$sweep_min - $sweep_eps}]
+      set sweep_last [expr {$sweep_max - $sweep_eps}]
+      if {$::RtWizard::wizard_state(verbose)} {
+	puts "Cut sweep: direction=$cut_dir bounds=$sweep_min..$sweep_max margin=$sweep_eps"
+      }
+
+      set animation_frames {}
+      set frame_count $::RtWizard::wizard_state(cut_steps)
+      set frame_dir [file dirname $::RtWizard::wizard_state(output_filename)]
+      try {
+	for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
+	    set fraction [expr {double($frame_no) / double($frame_count - 1)}]
+	    set plane_dist [expr {$sweep_first + $fraction * ($sweep_last - $sweep_first)}]
+	    set plane_pt [vscale $cut_dir $plane_dist]
+	    set cut_plane [format "%.15g,%.15g,%.15g,%.15g,%.15g,%.15g" \
+		[lindex $plane_pt 0] [lindex $plane_pt 1] [lindex $plane_pt 2] \
+		[lindex $cut_dir 0] [lindex $cut_dir 1] [lindex $cut_dir 2]]
+	    dict set rtimage_dict _cut_plane $cut_plane
+
+	    puts "Rendering frame [expr {$frame_no + 1}]/$frame_count"
+	    catch {exec [file join [bu_dir bin] fbclear] -F [rtwiz_fb_target] \
+		[lindex $::RtWizard::wizard_state(bg_color) 0] \
+		[lindex $::RtWizard::wizard_state(bg_color) 1] \
+		[lindex $::RtWizard::wizard_state(bg_color) 2]}
+	    ::cadwidgets::rtimage $rtimage_dict
+
+	    set frame_file [file join $frame_dir [format ".rtwizard-%d-%06d.pix" [pid] $frame_no]]
+	    exec [file join [bu_dir bin] fb-pix] \
+		-w $::RtWizard::wizard_state(width) \
+		-n $::RtWizard::wizard_state(scanlines) \
+		-F [rtwiz_fb_target] $frame_file 2>@1
+	    lappend animation_frames $frame_file
+	}
+
+	rtwizard_anim_write $::RtWizard::wizard_state(output_filename) \
+	    $::RtWizard::wizard_state(width) \
+	    $::RtWizard::wizard_state(scanlines) \
+	    $::RtWizard::wizard_state(animation_fps) {*}$animation_frames
+      } finally {
+	foreach frame_file $animation_frames {
+	    catch {file delete -force $frame_file}
+	}
+      }
+   } else {
+      ::cadwidgets::rtimage $rtimage_dict
+   }
 
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
       set output_generated 0
-      if {[file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
+      if {[info exists ::RtWizard::wizard_state(cut_steps)] && $::RtWizard::wizard_state(cut_steps) >= 2} {
+	 set output_generated 1
+      }
+      if {!$output_generated && [file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
 	 exec [file join [bu_dir bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F [rtwiz_fb_target] $::RtWizard::wizard_state(output_filename) 2>@1
 	 set output_generated 1
       }

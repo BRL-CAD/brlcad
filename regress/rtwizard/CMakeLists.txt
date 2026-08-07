@@ -93,6 +93,14 @@ if(TARGET rtwizard)
   brlcad_regression_test(regress-rtwiz_m35_edge_only_color "rtwizard;pixcmp;m35.g" TEST_SCRIPT "${TSCRIPT}" EXEC rtwizard)
   distclean(${LOG_FILE} ${TARGET_IMAGE})
 
+  set(INPUT_FILE "${DATA_DIR}/db/m35.g")
+  brlcad_regression_test(
+    regress-rtwiz_cut_animation
+    "rtwizard;icv;pixcmp;pixstat;m35.g"
+    TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz-anim.cmake.in"
+    EXEC rtwizard
+  )
+
   distclean(${CMAKE_CURRENT_BINARY_DIR}/rtedge.log)
 endif()
 
@@ -107,6 +115,7 @@ cmakefiles(
   m35_edge_only_color_ref.pix
   m35_edge_only_ref.pix
   regress-rtwiz.cmake.in
+  regress-rtwiz-anim.cmake.in
 )
 
 # Local Variables:

@@ -181,6 +181,12 @@ namespace eval RtWizard {
     # constructor - builds the Framebuffer Page
     #
     ::itcl::body FbPage::constructor {args} {
+	if {![info exists ::RtWizard::wizard_state(make_animation)]} { set ::RtWizard::wizard_state(make_animation) 0 }
+	if {![info exists ::RtWizard::wizard_state(cut_steps)]} { set ::RtWizard::wizard_state(cut_steps) 30 }
+	if {![info exists ::RtWizard::wizard_state(animation_fps)]} { set ::RtWizard::wizard_state(animation_fps) 10 }
+	if {![info exists ::RtWizard::wizard_state(cut_direction)]} { set ::RtWizard::wizard_state(cut_direction) "" }
+	if {![info exists ::RtWizard::wizard_state(ao_samples)]} { set ::RtWizard::wizard_state(ao_samples) 0 }
+	if {![info exists ::RtWizard::wizard_state(ao_radius)]} { set ::RtWizard::wizard_state(ao_radius) 0 }
 
 	#
 	# Set up the childsite
@@ -323,6 +329,45 @@ namespace eval RtWizard {
 	    usual
 	}
 
+	itk_component add cutAnimation {
+	    checkbutton $devCs.cutAnimation \
+		-text "Cutting-plane animation" \
+		-variable ::RtWizard::wizard_state(make_animation)
+	}
+
+	itk_component add cutSteps {
+	    iwidgets::entryfield $devCs.cutSteps \
+		-labeltext "Frames:" -width 8 \
+		-validate integer \
+		-textvariable ::RtWizard::wizard_state(cut_steps)
+	} { usual }
+
+	itk_component add animationFps {
+	    iwidgets::entryfield $devCs.animationFps \
+		-labeltext "Frames/sec:" -width 8 \
+		-validate integer \
+		-textvariable ::RtWizard::wizard_state(animation_fps)
+	} { usual }
+
+	itk_component add cutDirection {
+	    iwidgets::entryfield $devCs.cutDirection \
+		-labeltext "Direction XYZ (blank = view):" -width 24 \
+		-textvariable ::RtWizard::wizard_state(cut_direction)
+	} { usual }
+
+	itk_component add aoSamples {
+	    iwidgets::entryfield $devCs.aoSamples \
+		-labeltext "Ambient samples:" -width 8 \
+		-validate integer \
+		-textvariable ::RtWizard::wizard_state(ao_samples)
+	} { usual }
+
+	itk_component add aoRadius {
+	    iwidgets::entryfield $devCs.aoRadius \
+		-labeltext "Ambient radius:" -width 12 \
+		-textvariable ::RtWizard::wizard_state(ao_radius)
+	} { usual }
+
 	#
 	# Add a buttonbox
 	#
@@ -356,6 +401,12 @@ namespace eval RtWizard {
 	pack $itk_component(radBox) -anchor w
 	pack $itk_component(fileName) -anchor w
 	pack $itk_component(browse)  -anchor e
+	pack $itk_component(cutAnimation) -anchor w
+	pack $itk_component(cutSteps) -anchor w
+	pack $itk_component(animationFps) -anchor w
+	pack $itk_component(cutDirection) -anchor w
+	pack $itk_component(aoSamples) -anchor w
+	pack $itk_component(aoRadius) -anchor w
 
 	#
 	# Pack the size frame and dev frame
@@ -608,7 +659,8 @@ namespace eval RtWizard {
     # selectFbFile - called when the "browse" fb file is specified
     #
     ::itcl::body FbPage::selectFbFile { } {
-	set of [tk_getSaveFile -initialfile rtwizard.png]
+	set of [tk_getSaveFile -initialfile rtwizard.png \
+	    -filetypes {{"Images and animations" {.png .apng .avi .mjpg .pix}} {"All files" *}}]
 	set ::RtWizard::wizard_state(output_filename) $of
     }
 
