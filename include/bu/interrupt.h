@@ -29,8 +29,11 @@
 #if defined(__APPLE__) && !defined(NSIG)
 #  define NSIG 32
 #endif
+#ifdef __cplusplus
+#include <csignal>
+#else
 #include <signal.h>
-
+#endif
 
 #include "bu/defines.h"
 
