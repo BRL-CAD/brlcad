@@ -1086,7 +1086,24 @@ two reference paths it connects.
 
 Annotations place text labels in the scene, optionally tied to a point of
 interest by a leader.  They are used to dimension and document a model directly
-in 3D.
+in 3D.  Legacy annotations keep their two-dimensional offsets in screen space.
+Model-space annotations instead store two basis vectors that embed their
+leaders, dimensions, symbols, and text in a plane in the model.
+
+Annotation text is UTF-8.  BRL-CAD loads scalable TrueType fonts at runtime and
+plots their glyph outlines, preserving the annotation plane and text rotation.
+OSIFont is the default because its technical lettering and engineering symbols
+are suited to dimensioning and PMI.  A segment style may select a font by an
+installed filename, by a name whose `.ttf` suffix is implied, or by a path.  If
+that font cannot be used, plotting tries OSIFont and then the built-in stroke
+font.  The font file remains an installed data file; it is not compiled into
+BRL-CAD.
+
+Enhanced annotations may also preserve a semantic role for each segment, such
+as text, leader, extension line, dimension line, arrowhead, or symbol.  Line
+pattern, width, color, font, and symbol metadata can accompany those roles.
+Importers can therefore retain PMI meaning separately from the plotted
+geometry even when a display backend does not implement every style property.
 
 [cols="1,1,4"]
 |===
@@ -1097,6 +1114,9 @@ in 3D.
 |horizontal / vertical |1/2/3 |Text justification (left/center/right, bottom/middle/top).
 |text size |scalar |Height of the text.
 |text angle |scalar |Rotation of the text.
+|placement |screen/model |Screen-space offsets or a model-space annotation plane.
+|segment role |enumeration |Optional text, leader, extension, dimension, arrowhead, symbol, or geometry meaning.
+|font |name/path |Optional runtime TrueType font selection; OSIFont is the default.
 |===
 
 Recipe:

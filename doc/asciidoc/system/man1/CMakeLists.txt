@@ -6,9 +6,6 @@ set(
   adrt_slave.adoc
   alias-pix.adoc
   ap-pix.adoc
-  ap203e2-g.adoc
-  ap214-g.adoc
-  ap242-g.adoc
   archer.adoc
   art.adoc
   asc-nmg.adoc
@@ -97,9 +94,6 @@ set(
   fbzoom.adoc
   fence.adoc
   g-acad.adoc
-  g-ap203e2.adoc
-  g-ap214.adoc
-  g-ap242.adoc
   g-dot.adoc
   g-dxf.adoc
   g-egg.adoc

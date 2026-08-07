@@ -5,67 +5,267 @@
 
 == NAME
 
-g-step - convert a BRL-CAD database to a STEP AP203 file
+g-step - export a BRL-CAD database as an ISO 10303 STEP file
 
 == SYNOPSIS
 
 [source]
 ----
-g-step -o output.stp database.g [object(s)]
+g-step [--schema AP] [--native-csg] [--output-units UNIT]
+       [--angle-units degree|radian] [--uncertainty VALUE]
+       [--strict] [--report FILE] -o output.step input.g [object ...]
+g-step --list-schemas
 ----
-
 
 [[description]]
 == DESCRIPTION
 
-*g-step* exports geometry from a BRL-CAD database _database.g_ to a STEP
-AP203 (Configuration Controlled 3D Designs of Mechanical Parts and
-Assemblies) exchange file _output.stp_.
+*g-step* writes selected BRL-CAD objects to an ISO 10303-21 exchange file.
+It supports AP203, AP203 edition 2, AP214 edition 3, and AP242 editions 1
+through 4 when their schema plugins are installed. AP203 is the default;
+*--schema ap242* selects AP242 edition 4.
 
-One or more named _object_ arguments may be supplied to limit the export
-to those objects; if none are given, every top-level object in the
-database is converted. BRL-CAD CSG primitives are tessellated into the
-STEP NURBS boundary representation, since AP203 has no notion of Boolean
-operations. The input database name may be given as *-* to read the
-database from standard input.
+Named _object_ arguments limit the export. Without them, every top-level
+object in _input.g_ is selected. The input may be *-* for standard input. The
+required *-o* option names the output, which is replaced if it already exists.
 
-To avoid clobbering data, *g-step* refuses to run when the named output
-file already exists.
+The default path writes B-reps and mechanical product structure for maximum
+interoperability. Union-only combinations become assemblies with repeated
+rigid occurrences preserved. Native CSG export is optional for AP203e2,
+AP214, and AP242. Unsupported content is reported rather than silently
+approximated; permissive mode may publish useful partial output with status 1,
+while *--strict* makes any omission transactional.
+
+The exporter also re-authors supported product identity, presentation,
+material, property, unit, occurrence, and configuration data retained by
+*step-g*. See *STEP*(5) for detailed representation and metadata coverage.
 
 [[options]]
 == OPTIONS
 
-*-o* _output.stp_::
-  Write the STEP AP203 output to _output.stp_. This option is required.
+=== Output and schema
+
+*-h*, *--help*::
+  Print usage and option information.
+
+*-o*, *--output* _output.step_::
+  Name the STEP Part 21 file to create. This option is required.
+
+*--schema* _AP_::
+  Select *ap203*, *ap203e2*, *ap214*, *ap242*, *ap242e1*, *ap242e2*,
+  *ap242e3*, *ap242e4*, or *auto*. *auto* currently selects AP203, and
+  *ap242* aliases *ap242e4*. Availability depends on the installed plugins.
+
+*--list-schemas*::
+  Print the installed STEP schema plugins and exit.
+
+=== Representation policy
+
+*--native-csg*::
+  Preserve supported Boolean CSG expressions and implicit primitives in
+  AP203e2, AP214, or AP242 instead of using only the normal B-rep-oriented
+  path. This is disabled by default.
+
+*--strict*::
+  Do not publish a STEP file if any selected or reachable object, Boolean
+  semantic, occurrence transform, or requested metadata value is omitted.
+  Without this option, usable partial output is published with status 1 and
+  every omission is diagnosed.
+
+=== Units and accuracy
+
+*--output-units* _UNIT_::
+  Select the STEP length unit. Any recognized BRL-CAD length unit is accepted;
+  common choices include *mm*, *cm*, *m*, *in*, and *ft*. The default is
+  *mm*. Geometry dimensions and placement translations use the same policy.
+
+*--angle-units* _degree|radian_::
+  Select the STEP plane-angle unit. *deg* and *rad* are also accepted. The
+  default is *degree*.
+
+*--uncertainty* _VALUE_::
+  Declare a positive finite global geometric uncertainty in the selected
+  output length unit. The default is the selected-unit equivalent of 0.05 mm.
+
+=== Reports
+
+*--report* _FILE_::
+  Write a `brlcad-step-export-report-v1` JSON report. It classifies every
+  selected and reachable object, records omissions and metadata dispositions,
+  and reports the effective schema, units, uncertainty, and aggregate
+  *complete*, *partial*, *empty*, or *failed* outcome.
+
+[[policy]]
+== EXPORT POLICY
+
+The ordinary path uses an existing B-rep or a primitive's B-rep conversion.
+It does not run the STEP importer's topology-repair pipeline on an existing
+BRL-CAD B-rep. A primitive for which neither the requested native mapping nor
+a B-rep fallback is available is omitted explicitly; an empty placeholder is
+never written.
+
+Until evaluated B-rep export is available, a non-union Boolean combination
+cannot be flattened on the ordinary path. It is reported as partial rather
+than misrepresented as an assembly union. Use *--native-csg* when its tree and
+leaves have exact mappings in the selected schema. Operations which cannot be
+represented without changing their meaning remain failures rather than being
+approximated.
+
+Permissive output is useful when supported objects should still be exchanged
+despite explicit omissions. Use *--report* to audit coverage, or *--strict*
+when the file must represent every selected and reachable object and requested
+metadata value.
+
+[[schemas]]
+== SCHEMAS AND GEOMETRY
+
+[cols="1,3"]
+|===
+|Schema |Export behavior
+
+|*ap203*
+|Default B-rep and mechanical product export; no native CSG or presentation authoring
+
+|*ap203e2*
+|B-reps, exact supported sweeps, presentation and metadata, and optional native CSG
+
+|*ap214*
+|B-reps, exact supported sweeps, presentation and metadata, and optional native CSG
+
+|*ap242e1* through *ap242e4*
+|Edition-specific output with shared mechanical, presentation, metadata, sweep, and optional native CSG support
+|===
+
+With *--native-csg*, union, intersection, and difference map directly and XOR
+is lowered to an equivalent expression. AP203e2 and AP214 share mappings for
+common STEP primitives; AP242 adds exact mappings such as ellipsoid,
+rectangular pyramid, tetrahedron, and convex hexahedron. Finite unsupported
+leaves may use an exact B-rep inside an otherwise preserved tree. BRL-CAD NOT
+and guard/no-op nodes have no lossless finite STEP encoding. See *STEP*(5) for
+the complete mapping policy.
+
+[[assemblies]]
+== ASSEMBLIES
+
+Union-only combinations become nested product assemblies. Repeated children
+remain repeated occurrences, and rigid member transforms become occurrence
+placements. Scaling cannot be expressed by this product-structure mapping and
+is reported as an omission.
+
+When a database came from *step-g*, retained role and source provenance lets
+the exporter distinguish a product's representation items from its assembly
+occurrences. Secondary placed geometry is restored with a transforming
+representation relationship instead of manufacturing another product usage.
+With native CSG, non-region union structure remains an assembly while a region
+or non-union Boolean shape receives its own CSG representation. Embedded CSG
+operands are not also emitted as unrelated products.
+
+Occurrence identity is retained on the parent combination with guarded
+`step:occurrence:N:...` attributes. The exporter applies those values only
+while the recorded child still matches the current tree member, preventing
+stale imported metadata from moving to another occurrence after edits.
+
+[[metadata]]
+== METADATA ROUND TRIP
+
+Product names, identifiers, descriptions, revisions, and definition fields
+are restored from `step:` object attributes when present; otherwise the
+BRL-CAD object name supplies a product name and identifier. Part 21 strings
+preserve apostrophes and Unicode.
+
+AP203e2, AP214, and AP242 can re-author retained colour, transparency, layers,
+materials, and typed product or material properties. Native BRL-CAD colour
+takes precedence over retained STEP colour. Supported numeric properties keep
+their measure type, dimensional exponents, and structured SI,
+conversion-based, context-dependent, or derived unit graph. Unsupported or
+malformed metadata is reported rather than emitted with guessed semantics.
+
+Reference-linked approvals, people, organizations, dates, documents,
+classifications, categories, effectivities, and related records retained by
+*step-g* are validated against the target schema before re-authoring. Every
+source reference is remapped to a newly emitted entity. AP203's narrower
+vocabularies, assignments, and mandatory management closure are enforced;
+records that cannot be translated legally remain explicit omissions. The
+export report gives each retained configuration node an *emitted*,
+*unsupported*, or *malformed* disposition.
+
+The exporter does not treat unrelated opaque `STEP::...` attributes as
+entities, and source IDs are never reused as output Part 21 instance numbers.
+AP242 PMI retained by the importer is not yet re-authored.
+
+[[units]]
+== UNITS AND UNCERTAINTY
+
+BRL-CAD geometry is stored internally in millimetres. *g-step* therefore
+defaults to millimetres, degrees, and a physical uncertainty of 0.05 mm.
+Changing *--output-units* rescales coordinates, B-rep control geometry,
+analytic dimensions, assembly translations, and the default uncertainty
+together. Recognized SI lengths use *SI_UNIT*; other recognized lengths use
+exact *CONVERSION_BASED_UNIT* values.
+
+An explicit *--uncertainty* value is interpreted in the selected output unit.
+A `.g` database has no authoritative model-wide construction tolerance, so
+display units and primitive-local tolerances are not silently promoted to a
+STEP uncertainty. Imported `step:source_context:N:...` attributes remain
+provenance rather than automatic export instructions; select the output
+policy explicitly when source settings should be restored.
+
+[[diagnostics]]
+== REPORTING
+
+The JSON report covers every selected and reachable object as *handled*,
+*deliberately skipped*, *unsupported*, or *failed*, with its BRL-CAD name and
+reason. Separate counters summarize products, occurrences, presentation,
+materials, properties, and retained configuration records. Records recognized
+but not supported for authoring are explicit omissions, not silent losses.
+
+[[exit_status]]
+== EXIT STATUS
+
+Status 0 means complete output. Status 1 means permissive partial output was
+published. Other nonzero statuses mean no STEP output was published; the JSON
+report, when requested, distinguishes empty input coverage from conversion,
+input, and output failures.
 
 [[examples]]
 == EXAMPLES
 
-.Export an entire database to STEP
+.Export all top-level objects as AP203
 ====
 [source,bash]
 ----
-g-step -o m35.stp m35.g
+g-step -o assembly.step assembly.g
 ----
-Converts every top-level object in _m35.g_ to STEP AP203 and writes the
-result to _m35.stp_, suitable for import into a mechanical CAD package.
 ====
 
-.Export selected assemblies for a downstream CAD tool
+.Export selected objects as AP214 with a report
 ====
 [source,bash]
 ----
-g-step -o cab.stp m35.g cab suspension
+g-step --schema ap214 --report cab.json -o cab.step vehicle.g cab suspension
 ----
-Exports only the _cab_ and _suspension_ assemblies, producing a smaller
-STEP file containing just the components of interest rather than the
-whole vehicle.
+====
+
+.Preserve a representable AP242 CSG tree
+====
+[source,bash]
+----
+g-step --schema ap242 --native-csg -o region.step model.g region
+----
+====
+
+.Require complete inch-based output
+====
+[source,bash]
+----
+g-step --strict --output-units in -o exact.step model.g
+----
 ====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *step-g*(1), *mged*(1), *g-iges*(1)
+*step-g*(1), *STEP*(5), *brlcad*(1), *mged*(1), *g-iges*(1)
 
 [[author]]
 == AUTHOR

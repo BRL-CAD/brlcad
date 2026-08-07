@@ -4,4 +4,4 @@ OSIFont from https://github.com/hikikomori82/osifont at revision
 
 The font is runtime data and must not be compiled into BRL-CAD binaries.
 Licensing details and complete license texts are recorded in
-`doc/legal/embedded/osifont.txt` and its companion files.
+`doc/legal/embedded/osifont.txt`.
