@@ -1017,7 +1017,11 @@ typedef enum {
     RT_ANNOT_ROLE_EXTENSION = 4,
     RT_ANNOT_ROLE_DIMENSION = 5,
     RT_ANNOT_ROLE_ARROWHEAD = 6,
-    RT_ANNOT_ROLE_SYMBOL = 7
+    RT_ANNOT_ROLE_SYMBOL = 7,
+    RT_ANNOT_ROLE_MASK = 8,
+    RT_ANNOT_ROLE_CENTERMARK = 9,
+    RT_ANNOT_ROLE_PLACEHOLDER = 10,
+    RT_ANNOT_ROLE_TEXT_DECORATION = 11
 } rt_annot_segment_role;
 
 typedef enum {
@@ -1030,13 +1034,22 @@ typedef enum {
 
 #define RT_ANNOT_STYLE_WIDTH 0x00000001u
 #define RT_ANNOT_STYLE_COLOR 0x00000002u
+#define RT_ANNOT_STYLE_SCALE 0x00000004u
+#define RT_ANNOT_STYLE_FILLED 0x00000008u
+#define RT_ANNOT_STYLE_UNDERLINE 0x00000010u
+#define RT_ANNOT_STYLE_OVERLINE 0x00000020u
+#define RT_ANNOT_STYLE_STRIKETHROUGH 0x00000040u
+#define RT_ANNOT_STYLE_BOLD 0x00000080u
+#define RT_ANNOT_STYLE_ITALIC 0x00000100u
 
 /** Optional presentation and semantic information corresponding to one
  * rt_ant segment.  A NULL styles array means all segments use the database
  * object's normal presentation.  Font and symbol are optional UTF-8 names.
  * Text plotting loads the named scalable font at runtime, uses OSIFont when
  * no usable named font is found, and retains the built-in stroke font as its
- * final fallback. */
+ * final fallback.  Independent text segments and the affine/decorative flags
+ * are sufficient to flatten rich-text runs (including the runs used by
+ * OpenNURBS annotations) without storing a foreign annotation container. */
 struct rt_annot_seg_style {
     uint32_t role;
     uint32_t flags;
@@ -1045,6 +1058,10 @@ struct rt_annot_seg_style {
     unsigned char color[4];
     char *font;
     char *symbol;
+    fastf_t x_scale;            /**< annotation X from source X */
+    fastf_t xy_scale;           /**< annotation X from source Y */
+    fastf_t yx_scale;           /**< annotation Y from source X */
+    fastf_t y_scale;            /**< annotation Y from source Y */
 };
 
 
@@ -1058,6 +1075,23 @@ struct txt_seg {
     struct bu_vls label;
     fastf_t txt_size;           /** text size */
     fastf_t txt_rot_angle;      /** text rotation angle */
+};
+
+
+/**
+ * A filled annotation polygon.  points contains indices into the enclosing
+ * annotation's vertex table.  loop_ends contains exclusive cumulative ends:
+ * loop 0 is the outer boundary and subsequent loops are holes.  Closing
+ * vertices may be repeated, but are not required.
+ */
+struct fill_seg {
+    uint32_t magic;
+    int loop_count;
+    int point_count;
+    int *loop_ends;
+    int *points;
+    int legacy_start;           /**< first compatibility outline segment */
+    int legacy_count;           /**< number of compatibility outline segments */
 };
 
 
