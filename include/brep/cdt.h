@@ -159,6 +159,9 @@ extern BREP_EXPORT int cdt_bmesh_create(struct cdt_bmesh **m);
 extern BREP_EXPORT void cdt_bmesh_destroy(struct cdt_bmesh *m);
 extern BREP_EXPORT int cdt_bmesh_deserialize(const char *fname, struct cdt_bmesh *m);
 extern BREP_EXPORT int cdt_bmesh_repair(struct cdt_bmesh *m);
+extern BREP_EXPORT int cdt_test_boundary_start(void);
+extern BREP_EXPORT int cdt_test_boundary_steiner_filter(void);
+extern BREP_EXPORT int cdt_test_spurious_components(void);
 
 __END_DECLS
 
