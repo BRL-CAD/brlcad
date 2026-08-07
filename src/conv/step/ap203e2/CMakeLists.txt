@@ -1,9 +1,9 @@
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap203e2.exp)
 
-if(DEFINED ENABLE_STEP_EXPERIMENTAL)
+if(BRLCAD_ENABLE_STEP)
   generate_schema_inputs(${STEP_SCHEMA_FILE} ap203e2g ap203e2)
   generate_schema_inputs(${STEP_SCHEMA_FILE} gap203e2 ap203e2)
-endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
+endif(BRLCAD_ENABLE_STEP)
 
 set(
   gap203e2_SOURCES
@@ -302,7 +302,7 @@ set(
   ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
 )
 
-if(DEFINED ENABLE_STEP_EXPERIMENTAL)
+if(BRLCAD_ENABLE_STEP)
   step_use_import_common_objects(ap203e2g_TARGET_SOURCES ap203e2g_SOURCES)
   step_record_schema_sources(AP203E2 IMPORT ap203e2g_TARGET_SOURCES)
   step_record_schema_sources(AP203E2 EXPORT gap203e2_SOURCES)
@@ -487,7 +487,7 @@ if(DEFINED ENABLE_STEP_EXPERIMENTAL)
       -DTOP=AP203e2_Void_Tetra
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_brep_with_voids_baseline.cmake
   )
-endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
+endif(BRLCAD_ENABLE_STEP)
 
 cmakefiles(
   ${ap203e2g_SOURCES}

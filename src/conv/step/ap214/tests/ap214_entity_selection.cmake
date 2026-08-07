@@ -15,7 +15,7 @@ if(NOT selected_result EQUAL 0)
 endif()
 
 file(READ "${REPORT}" report_text)
-if(NOT report_text MATCHES "\"selected_entity_ids\":\[200,207,263\]")
+if(NOT report_text MATCHES "\"selected_entity_ids\":\\[200,207,263\\]")
   message(FATAL_ERROR "report did not retain the normalized selection:\n${report_text}")
 endif()
 if(NOT report_text MATCHES

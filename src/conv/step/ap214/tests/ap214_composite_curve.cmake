@@ -49,9 +49,9 @@ execute_process(
 )
 set(curve_text "${curve_output}\n${curve_error}")
 if(NOT curve_text MATCHES "order = 2 cv_count = 4" OR
-   NOT curve_text MATCHES "CV\[[ ]*0\] \(0, 0, 0\)" OR
-   NOT curve_text MATCHES "CV\[[ ]*1\] \(10, 0, 0\)" OR
-   NOT curve_text MATCHES "CV\[[ ]*2\] \(10, 10, 0\)" OR
-   NOT curve_text MATCHES "CV\[[ ]*3\] \(20, 10, 0\)")
+   NOT curve_text MATCHES "CV\\[[ ]*0\\] \\(0, 0, 0\\)" OR
+   NOT curve_text MATCHES "CV\\[[ ]*1\\] \\(10, 0, 0\\)" OR
+   NOT curve_text MATCHES "CV\\[[ ]*2\\] \\(10, 10, 0\\)" OR
+   NOT curve_text MATCHES "CV\\[[ ]*3\\] \\(20, 10, 0\\)")
   message(FATAL_ERROR "composite curve geometry validation failed\n${curve_text}")
 endif()

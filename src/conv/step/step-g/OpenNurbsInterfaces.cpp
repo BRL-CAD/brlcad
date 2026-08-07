@@ -35,6 +35,7 @@ class SDAI_Application_instance;
 /* must come after nist step headers */
 #include "brep.h"
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <set>
