@@ -32,6 +32,9 @@ rt_obj_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     int id;
     const struct rt_functab *ft;
     mat_t nonuniform_mat;
+    struct rt_i body_rtip;
+    struct bn_tol body_tol;
+    struct rt_i *prep_rtip = rtip;
     int have_nonuniform = 0;
     int ret;
 
@@ -58,7 +61,14 @@ rt_obj_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (have_nonuniform < 0)
 	return -5;
 
-    ret = ft->ft_prep(stp, ip, rtip);
+    if (have_nonuniform > 0 && rtip) {
+	body_rtip = *rtip;
+	_rt_nonuniform_tolerances(NULL, &body_tol, NULL, &rtip->rti_tol, nonuniform_mat);
+	body_rtip.rti_tol = body_tol;
+	prep_rtip = &body_rtip;
+    }
+
+    ret = ft->ft_prep(stp, ip, prep_rtip);
     if (ret)
 	return ret;
 

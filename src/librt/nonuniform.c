@@ -259,6 +259,7 @@ fastf_t
 _rt_nonuniform_volume_scale(const mat_t mat)
 {
     fastf_t det;
+    fastf_t hscale;
 
     if (!mat)
 	return 1.0;
@@ -267,7 +268,74 @@ _rt_nonuniform_volume_scale(const mat_t mat)
 	- mat[1] * (mat[4] * mat[10] - mat[6] * mat[8])
 	+ mat[2] * (mat[4] * mat[9] - mat[5] * mat[8]);
 
-    return fabs(det);
+    hscale = fabs(mat[15]);
+    if (NEAR_ZERO(hscale, VDIVIDE_TOL))
+	return 0.0;
+
+    return fabs(det) / (hscale * hscale * hscale);
+}
+
+
+fastf_t
+_rt_nonuniform_max_stretch(const mat_t mat)
+{
+    fastf_t norm1 = 0.0;
+    fastf_t norm_inf = 0.0;
+    fastf_t hscale;
+    int i, j;
+
+    if (!mat)
+	return 1.0;
+
+    hscale = fabs(mat[15]);
+    if (NEAR_ZERO(hscale, VDIVIDE_TOL))
+	return 1.0;
+
+    for (j = 0; j < 3; j++) {
+	fastf_t sum = 0.0;
+	for (i = 0; i < 3; i++)
+	    sum += fabs(mat[i * 4 + j]) / hscale;
+	if (sum > norm1)
+	    norm1 = sum;
+    }
+
+    for (i = 0; i < 3; i++) {
+	fastf_t sum = 0.0;
+	for (j = 0; j < 3; j++)
+	    sum += fabs(mat[i * 4 + j]) / hscale;
+	if (sum > norm_inf)
+	    norm_inf = sum;
+    }
+
+    if (norm1 <= 0.0 || norm_inf <= 0.0)
+	return 1.0;
+
+    return sqrt(norm1 * norm_inf);
+}
+
+
+void
+_rt_nonuniform_tolerances(struct bg_tess_tol *ot, struct bn_tol *on, const struct bg_tess_tol *it, const struct bn_tol *in, const mat_t mat)
+{
+    fastf_t stretch = _rt_nonuniform_max_stretch(mat);
+
+    if (stretch < 1.0)
+	stretch = 1.0;
+
+    if (ot && it) {
+	*ot = *it;
+	if (ot->abs > 0.0) ot->abs /= stretch;
+	if (ot->absmax > 0.0) ot->absmax /= stretch;
+	if (ot->absmin > 0.0) ot->absmin /= stretch;
+    }
+
+    if (on && in) {
+	*on = *in;
+	if (on->dist > 0.0) {
+	    on->dist /= stretch;
+	    on->dist_sq = on->dist * on->dist;
+	}
+    }
 }
 
 
@@ -730,6 +798,7 @@ nonuniform_transform_curve(struct curvature *cvp, const struct curvature *body_c
     MAT4X3VEC(t2, body_to_model, e2);
 
     VEC3X3MAT(model_n, n, model_to_body);
+    VSCALE(model_n, model_n, 1.0 / model_to_body[15]);
     alpha = MAGNITUDE(model_n);
     if (!isfinite(alpha) || NEAR_ZERO(alpha, VDIVIDE_TOL))
 	return -1;

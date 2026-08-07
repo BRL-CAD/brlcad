@@ -121,6 +121,8 @@ int _rt_nonuniform_export4_check(const char *func, const struct rt_db_internal *
 int _rt_nonuniform_transform_needed(const struct rt_db_internal *ip, const mat_t mat);
 int _rt_nonuniform_transform_resolve(mat_t effective, int *remove_attr, const struct rt_db_internal *ip, const mat_t mat);
 fastf_t _rt_nonuniform_volume_scale(const mat_t mat);
+fastf_t _rt_nonuniform_max_stretch(const mat_t mat);
+void _rt_nonuniform_tolerances(struct bg_tess_tol *ot, struct bn_tol *on, const struct bg_tess_tol *it, const struct bn_tol *in, const mat_t mat);
 int _rt_nonuniform_soltab_setup(struct soltab *stp, const mat_t mat, const struct bn_tol *tol);
 void _rt_nonuniform_soltab_free(struct soltab *stp);
 int _rt_nonuniform_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead);

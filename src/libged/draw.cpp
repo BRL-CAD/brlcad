@@ -169,7 +169,7 @@ csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int flag)
 	return 0;
 
     if (ip->idb_meth->ft_adaptive_plot) {
-	ip->idb_meth->ft_adaptive_plot(&vo->s_vlist, ip, d->tol, v, vo->s_size);
+	rt_obj_adaptive_plot(&vo->s_vlist, ip, d->tol, v, vo->s_size);
 	vo->s_type_flags |= BV_CSG_LOD;
 	bv_obj_stale(vo);
     }
@@ -546,7 +546,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
     // Standard (view independent) wireframe
     if (!v || !v->gv_s->adaptive_plot_csg) {
 	if (ip->idb_meth->ft_plot) {
-	    ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, s->s_v);
+	    rt_obj_plot_view(&s->s_vlist, ip, ttol, tol, s->s_v);
 	    // Because this data is view independent, it only needs to be
 	    // generated once rather than per-view.
 	    s->current = 1;
@@ -586,7 +586,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
     // If we've got this far, we have no adaptive plotting capability for this
     // object.  Do the normal plot rather than show nothing.
     if (ip->idb_meth->ft_plot) {
-	ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, s->s_v);
+	rt_obj_plot_view(&s->s_vlist, ip, ttol, tol, s->s_v);
 	// Because this data is view independent, it only needs to be
 	// generated once rather than per-view.
 	s->current = 1;

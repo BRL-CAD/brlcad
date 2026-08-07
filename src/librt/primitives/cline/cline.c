@@ -91,6 +91,65 @@ rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struc
     return 0;
 }
 
+
+static fastf_t
+cline_inner_radius(const struct rt_cline_internal *cline_ip)
+{
+    if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius)
+	return cline_ip->radius - cline_ip->thickness;
+
+    return 0.0;
+}
+
+
+C_DECL void
+rt_cline_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct rt_cline_internal *cline_ip;
+    fastf_t inner;
+
+    RT_CK_DB_INTERNAL(ip);
+    cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
+    RT_CLINE_CK_MAGIC(cline_ip);
+
+    inner = cline_inner_radius(cline_ip);
+    *volume = M_PI * (cline_ip->radius * cline_ip->radius - inner * inner)
+	* MAGNITUDE(cline_ip->h);
+}
+
+
+C_DECL void
+rt_cline_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_cline_internal *cline_ip;
+    fastf_t inner;
+    fastf_t length;
+
+    RT_CK_DB_INTERNAL(ip);
+    cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
+    RT_CLINE_CK_MAGIC(cline_ip);
+
+    inner = cline_inner_radius(cline_ip);
+    length = MAGNITUDE(cline_ip->h);
+    *area = 2.0 * M_PI * cline_ip->radius * length
+	+ 2.0 * M_PI * (cline_ip->radius * cline_ip->radius - inner * inner);
+    if (inner > 0.0)
+	*area += 2.0 * M_PI * inner * length;
+}
+
+
+C_DECL void
+rt_cline_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_cline_internal *cline_ip;
+
+    RT_CK_DB_INTERNAL(ip);
+    cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
+    RT_CLINE_CK_MAGIC(cline_ip);
+
+    VJOIN1(*cent, cline_ip->v, 0.5, cline_ip->h);
+}
+
 /**
  * Given a pointer to a GED database record, determine if this is a
  * valid cline solid, and if so, precompute various terms of the

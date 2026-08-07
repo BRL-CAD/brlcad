@@ -800,7 +800,7 @@ rt_vlist_solid(
 
     ret = -1;
     if (OBJ[intern.idb_type].ft_plot) {
-	ret = OBJ[intern.idb_type].ft_plot(vhead, &intern, &rtip->rti_ttol, &rtip->rti_tol, NULL);
+	ret = rt_obj_plot(vhead, &intern, &rtip->rti_ttol, &rtip->rti_tol);
     }
     if (ret < 0) {
 	bu_log("rt_vlist_solid(%s): ft_plot() failure\n", stp->st_name);

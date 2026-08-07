@@ -33,6 +33,10 @@ rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     int id;
     const struct rt_functab *ft;
     mat_t nonuniform_mat;
+    struct bg_tess_tol body_ttol;
+    struct bn_tol body_tol;
+    const struct bg_tess_tol *tess_ttol = ttol;
+    const struct bn_tol *tess_tol = tol;
     int have_nonuniform;
     int ret;
 
@@ -59,7 +63,14 @@ rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (have_nonuniform < 0)
 	return -5;
 
-    ret = ft->ft_tessellate(r, m, ip, ttol, tol);
+    if (have_nonuniform > 0) {
+	_rt_nonuniform_tolerances(ttol ? &body_ttol : NULL, tol ? &body_tol : NULL,
+		ttol, tol, nonuniform_mat);
+	if (ttol) tess_ttol = &body_ttol;
+	if (tol) tess_tol = &body_tol;
+    }
+
+    ret = ft->ft_tessellate(r, m, ip, tess_ttol, tess_tol);
     if (ret == 0 && have_nonuniform > 0 && r && *r)
 	_rt_nonuniform_transform_nmgregion(*r, nonuniform_mat, tol);
 

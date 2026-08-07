@@ -31,7 +31,7 @@ check_brep(const char *name, struct rt_db_internal *intern, int expected_faces)
 {
     struct bn_tol tol = BN_TOL_INIT_TOL;
     ON_Brep *brep = ON_Brep::New();
-    intern->idb_meth->ft_brep(&brep, intern, &tol);
+    rt_obj_brep(&brep, intern, &tol);
 
     ON_wString messages;
     ON_TextLog log(messages);

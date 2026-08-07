@@ -39,9 +39,11 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "vmath.h"
+#include "bv.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
+#include "brep.h"
 #include "nmg.h"
 #include "wdb.h"
 #include "ged.h"
@@ -345,6 +347,24 @@ object_bbox(struct db_i *dbip, const char *name, point_t bmin, point_t bmax)
 
     if (rt_bound_internal(dbip, dp, bmin, bmax) < 0)
 	return BRLCAD_ERROR;
+
+    return BRLCAD_OK;
+}
+
+static int
+check_bounds(const char *label, const point_t got_min, const point_t got_max,
+	     const point_t expect_min, const point_t expect_max, fastf_t tol)
+{
+    for (int i = 0; i < 3; i++) {
+	if (!NEAR_EQUAL(got_min[i], expect_min[i], tol) ||
+	    !NEAR_EQUAL(got_max[i], expect_max[i], tol)) {
+	    bu_log("[nonuniform] %s bounds mismatch: got [%g %g %g] [%g %g %g], "
+		   "expected [%g %g %g] [%g %g %g], tol %g\n",
+		   label, V3ARGS(got_min), V3ARGS(got_max),
+		   V3ARGS(expect_min), V3ARGS(expect_max), tol);
+	    return BRLCAD_ERROR;
+	}
+    }
 
     return BRLCAD_OK;
 }
@@ -710,6 +730,92 @@ run_scaled_case(struct ged *gedp, const char *base_csg, const char *base_bot,
 }
 
 static int
+check_tor_products(struct ged *gedp)
+{
+    const char *name = "tor_axis_xyz_csg.s";
+    point_t expect_min = {-12.75, -4.875, -1.95};
+    point_t expect_max = {12.75, 4.875, 1.95};
+    point_t bmin, bmax;
+    struct directory *dp = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
+    if (!dp)
+	return BRLCAD_ERROR;
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) < 0)
+	return BRLCAD_ERROR;
+
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
+    ttol.abs = 0.01;
+    ttol.rel = 0.0;
+    ttol.norm = 0.0;
+
+    int ret = BRLCAD_OK;
+    if (rt_obj_bbox(&intern, &bmin, &bmax, &tol) != 0 ||
+	check_bounds("tor/bbox", bmin, bmax, expect_min, expect_max, 1.0e-7) != BRLCAD_OK)
+	ret = BRLCAD_ERROR;
+
+    struct bu_list vhead;
+    BU_LIST_INIT(&vhead);
+    if (rt_obj_plot(&vhead, &intern, &ttol, &tol) != 0 ||
+	bv_vlist_bbox(&vhead, &bmin, &bmax, NULL, NULL) < 0 ||
+	check_bounds("tor/plot", bmin, bmax, expect_min, expect_max, 0.05) != BRLCAD_OK)
+	ret = BRLCAD_ERROR;
+    if (BU_LIST_NON_EMPTY(&vhead))
+	BV_FREE_VLIST(&rt_vlfree, &vhead);
+
+    struct bview view;
+    bv_init(&view, NULL);
+    view.gv_size = 40.0;
+    view.gv_isize = 1.0 / view.gv_size;
+    view.gv_scale = 0.5 * view.gv_size;
+    view.gv_width = 512;
+    view.gv_height = 512;
+    bv_update(&view);
+    BU_LIST_INIT(&vhead);
+    if (rt_obj_adaptive_plot(&vhead, &intern, &tol, &view, 1.0) != 0 ||
+	bv_vlist_bbox(&vhead, &bmin, &bmax, NULL, NULL) < 0 ||
+	check_bounds("tor/adaptive-plot", bmin, bmax, expect_min, expect_max, 0.05) != BRLCAD_OK)
+	ret = BRLCAD_ERROR;
+    if (BU_LIST_NON_EMPTY(&vhead))
+	BV_FREE_VLIST(&rt_vlfree, &vhead);
+    bv_free(&view);
+
+    ON_Brep *brep = ON_Brep::New();
+    if (rt_obj_brep(&brep, &intern, &tol) != 0 || !brep) {
+	bu_log("[nonuniform] tor/BREP conversion failed\n");
+	ret = BRLCAD_ERROR;
+    } else {
+	ON_BoundingBox bb = brep->BoundingBox();
+	VSET(bmin, bb.m_min[0], bb.m_min[1], bb.m_min[2]);
+	VSET(bmax, bb.m_max[0], bb.m_max[1], bb.m_max[2]);
+	if (check_bounds("tor/BREP", bmin, bmax, expect_min, expect_max, 1.0e-7) != BRLCAD_OK)
+	    ret = BRLCAD_ERROR;
+    }
+    delete brep;
+    rt_db_free_internal(&intern);
+
+    fastf_t base_volume = -1.0;
+    fastf_t composed_volume = -1.0;
+    if (object_volume(gedp->dbip, "tor_axis_base.s", &base_volume) != BRLCAD_OK ||
+	copy_obj(gedp, name, "tor_axis_homogeneous.s") != BRLCAD_OK)
+	return BRLCAD_ERROR;
+
+    mat_t homogeneous;
+    MAT_IDN(homogeneous);
+    homogeneous[15] = 0.5;
+    if (write_wrapper(gedp, "tor_axis_homogeneous.c", "tor_axis_homogeneous.s", homogeneous) != BRLCAD_OK ||
+	npush_x(gedp, "tor_axis_homogeneous.c") != BRLCAD_OK ||
+	object_volume(gedp->dbip, "tor_axis_homogeneous.s", &composed_volume) != BRLCAD_OK ||
+	check_scaled_volume("tor/homogeneous-compose", base_volume, composed_volume,
+	    1.7 * 0.65 * 1.3 * 8.0, 1.0e-10) != BRLCAD_OK)
+	ret = BRLCAD_ERROR;
+
+    return ret;
+}
+
+static int
 run_prim_orientation(struct ged *gedp, const prim_case &pc, const char *orient)
 {
     char base[128], bot[128], tag[128];
@@ -817,6 +923,8 @@ main(int argc, const char **argv)
 	if (run_prim_orientation(gedp, pc, "oblique") != BRLCAD_OK)
 	    failures++;
     }
+    if (check_tor_products(gedp) != BRLCAD_OK)
+	failures++;
 
     ged_close(gedp);
     bu_dirclear(bu_vls_cstr(&bu_cache));

@@ -28,7 +28,8 @@ BRepFallback(struct rt_db_internal *internal, const struct bn_tol *tolerance)
 	return NULL;
     ON_Brep *allocated = ON_Brep::New();
     ON_Brep *result = allocated;
-    internal->idb_meth->ft_brep(&result, internal, tolerance);
+    if (rt_obj_brep(&result, internal, tolerance) < 0)
+	result = NULL;
     if (result != allocated) delete allocated;
     if (!result || !result->m_F.Count()) {
 	delete result;

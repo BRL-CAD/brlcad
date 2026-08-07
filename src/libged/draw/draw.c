@@ -179,9 +179,9 @@ draw_solid_wireframe(struct bv_scene_obj *sp, struct bview *gvp, struct db_i *db
     }
 
     if (gvp && gvp->gv_s->adaptive_plot_csg && ip->idb_meth->ft_adaptive_plot) {
-	ret = ip->idb_meth->ft_adaptive_plot(&vhead, ip, tol, gvp, sp->s_size);
+	ret = rt_obj_adaptive_plot(&vhead, ip, tol, gvp, sp->s_size);
     } else if (ip->idb_meth->ft_plot) {
-	ret = ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, gvp);
+	ret = rt_obj_plot_view(&vhead, ip, ttol, tol, gvp);
     }
 
     rt_db_free_internal(ip);
@@ -283,7 +283,7 @@ append_solid_to_display_list(
     VSETALL(sp->s_center, 0.0);
 
     if (ip->idb_meth->ft_bbox) {
-        if (ip->idb_meth->ft_bbox(ip, &min, &max, tsp->ts_tol) < 0) {
+        if (rt_obj_bbox(ip, &min, &max, tsp->ts_tol) < 0) {
 	    if (pathp && DB_FULL_PATH_CUR_DIR(pathp)) {
 		bu_log("%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 	    } else {
@@ -311,8 +311,7 @@ append_solid_to_display_list(
 
         BU_LIST_INIT(&vhead);
 
-        plot_status = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
-					    tsp->ts_tol, NULL);
+        plot_status = rt_obj_plot(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
 
         if (plot_status < 0) {
 	    if (pathp && DB_FULL_PATH_CUR_DIR(pathp)) {
@@ -1738,4 +1737,3 @@ GED_DECLARE_PLUGIN_MANIFEST("libged_draw", 1, GED_DRAW_COMMANDS)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

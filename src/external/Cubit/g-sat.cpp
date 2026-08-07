@@ -927,7 +927,7 @@ primitive_func(db_tree_state *tsp,
 
 		    NMG_CK_MODEL(m);
 
-		    if (OBJ[ip->idb_type].ft_tessellate(&r, m, ip, tsp->ts_ttol, tsp->ts_tol) != 0) {
+		if (rt_obj_tess(&r, m, ip, tsp->ts_ttol, tsp->ts_tol) != 0) {
 			bu_exit(1, "Failed to tessellate!\n");
 		    }
 

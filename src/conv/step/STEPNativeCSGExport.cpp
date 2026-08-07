@@ -562,6 +562,9 @@ private:
 		    static_cast<const struct rt_arb_internal *>(internal->idb_ptr), arb_type);
 	    }
 	    case DB5_MINORTYPE_BRLCAD_TOR:
+		if (internal->idb_avs.magic == BU_AVS_MAGIC &&
+		    bu_avs_get(&internal->idb_avs, "matrix:nonuniform"))
+		    return CsgNode();
 		return native_torus(dp,
 		    static_cast<const struct rt_tor_internal *>(internal->idb_ptr));
 	    case DB5_MINORTYPE_BRLCAD_HALF:

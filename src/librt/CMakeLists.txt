@@ -227,6 +227,8 @@ set(
   primitives/nmg/nmg_mirror.c
   primitives/nmg/nmg_tri_mc.c
   primitives/obj_adjust.c
+  primitives/obj_bbox.c
+  primitives/obj_brep.cpp
   primitives/obj_curve.c
   primitives/obj_describe.c
   primitives/obj_export.c
