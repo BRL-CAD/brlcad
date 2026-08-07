@@ -132,9 +132,10 @@ exercise_shared_surface_cache()
     std::vector<std::thread> workers;
     workers.reserve(worker_count);
     for (unsigned int worker = 0; worker < worker_count; ++worker) {
-	workers.emplace_back([worker, &surface, &contexts,
+	workers.emplace_back([worker, query_count = queries_per_worker,
+		&surface, &contexts,
 		&valid]() {
-	    for (int iteration = 0; iteration < queries_per_worker; ++iteration) {
+	    for (int iteration = 0; iteration < query_count; ++iteration) {
 		const double u = -9.0 + static_cast<double>(
 		    (iteration * 17 + worker) % 180) / 10.0;
 		const double v = -8.0 + static_cast<double>(
