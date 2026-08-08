@@ -1688,6 +1688,72 @@ ESTABLISHED FINDINGS
     per-coefficient construction plus complete one-sided existence/uniqueness
     proofs for both hard span parents and physical cross-span deduplication.
 
+54. The arithmetic and synthetic-proof layer needed by that next step is now
+    permanent but still has no production publication authority.  A fixed
+    Bernstein tensor-product operator forms interval control coefficients for
+    each product in
+
+      det(J) = phi_p psi_q - phi_q psi_p
+
+    before subtracting them.  Derivative coefficients retain individual
+    intervals.  Each product coefficient uses the exact Bernstein degree-
+    elevation weights, with the rational binomial ratios themselves enclosed
+    by outward interval division and multiplication.  Surface orders through
+    16x16 produce determinant orders through 30x30 in caller-bounded storage;
+    nonfinite arithmetic or an unsupported order is inconclusive.
+
+    The independent oracle does not approximate those rational coefficients
+    by resampling.  It accumulates their integer numerators with the exact
+    binomial weights, divides once in long-double only to compare the final
+    rational value, and uses dyadic input scaling.  It gates 172,800 nominal
+    determinant coefficients over every input order from 2x2 through 16x16 at
+    scales 2^-200, 1, and 2^200.  All 172,800 have a strict observed sign and
+    enclose the exact value.  A second exact integer-interval oracle applies
+    independent, coefficient-varying uncertainty through order 8x8 and gates
+    9,408 additional lower/upper enclosures at the same scales.  This closes
+    the missing Bernstein-product audit identified in Finding 52; it does not
+    yet close the separate fused ray-plane coefficient-construction audit.
+
+    A per-coefficient Krawczyk qualification path now also removes the fixed
+    1e-6 determinant-ratio rejection from the proof decision.  The computed
+    inverse is only a finite point preconditioner: Krawczyk remains valid for
+    any such approximate matrix because outward intervals enclose every
+    product with F and J.  Strict containment of the resulting image, not a
+    condition-number guess, is authoritative.  Singular, nonfinite, or
+    non-contained cases remain uncertified.  This distinction is important:
+    poor conditioning may make the enclosure fail, but a fixed angular cutoff
+    must not reject a proof that the enclosure actually establishes.
+
+    The focused fold corpus adds 36 candidate-centered root boxes: both sides
+    of separations 2^-4 through 2^-24 under parameter shears 1, 2^10, and
+    2^20.  All 36 have strict Krawczyk inclusion.  Twenty-four lie below the
+    old 1e-6 cutoff, and the smallest normalized determinant ratio is about
+    5.68e-14.  The root boxes narrow in the weak direction as shear grows so
+    coefficient magnitude does not swamp the small local residual.  An
+    initial fixed relative width failed the larger shear cases even when their
+    determinant ratio was less extreme; that useful failure shows that local
+    aspect ratio and coefficient-roundoff control are part of the proof, not
+    performance-only tuning.
+
+    Each root certificate is paired with a larger one-sided corridor for the
+    same analytic system.  A fixed interval test proves that phi_p excludes
+    zero, phi has strict opposite signs on its two p boundaries for all q, and
+    every Bernstein coefficient of det(J) has the expected side sign.  These
+    three facts make the regular-equation locus continuous and single-valued
+    and make psi strictly monotone along it.  Krawczyk existence in the nested
+    root box therefore establishes exactly one root in each of the 36 tested
+    corridors, rather than merely converging to a candidate.  Exact contact
+    still has no strict determinant sign and is intentionally not certified.
+
+    Optimized and ASan/UBSan `--fold-only` and `--interval-only` gates pass;
+    the complete optimized ray/Crofton corpus again ends with
+    `BREP ray correctness corpus: PASS`.  Production hit behavior is
+    unchanged.  Promotion against the six real affine misses still requires
+    interval-preserving fused ray-plane coefficient construction and
+    restriction, proof or exclusion of the strip between each corridor and
+    the fold boundary, qualification of both real span parents, and
+    cross-span physical-event deduplication.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1879,10 +1945,21 @@ IMPLEMENTATION CHECKLIST
                     [ ] Preserve per-coefficient or expansion enclosures and
                         exact-audit fused construction, restriction,
                         Bernstein products, and the selected precision tier.
+                        [x] Implement interval Bernstein derivative/product/
+                            determinant coefficients through order 30 and
+                            exact-audit nominal values at every supported
+                            order plus independent uncertainties through 8x8.
+                        [ ] Preserve those intervals through real fused ray-
+                            plane construction and arbitrary local restriction.
                     [ ] Prove both one-sided parent boxes complete with a
                         monotonic corridor or equivalent degree certificate;
                         do not use broad complement subdivision as the normal
                         path.
+                        [x] Gate the theorem on 36 analytic sheared one-sided
+                            corridors paired with strict Krawczyk existence
+                            boxes down to determinant ratio 5.68e-14.
+                        [ ] Apply it to both real parents for all six affine
+                            misses, including the fold-boundary strip.
                     [ ] Add every failed certificate/aspect-ratio/precision
                         case to a focused C/C++ fold-solver corpus.
             [x] Keep grazing, singular, and boundary roots on the conservative
@@ -2465,6 +2542,12 @@ Cobb sphere baseline:
     solves.  The complete corpus again ends with
     `BREP ray correctness corpus: PASS`; production grazing behavior and the
     970-box ordinary affine baseline remain unchanged.
+    Repeated after exact-audited Bernstein determinant arithmetic and the
+    synthetic one-sided proof matrix: `--interval-only` passes 172,800 nominal
+    and 9,408 uncertain determinant coefficients; `--fold-only` passes 36
+    root certificates and 36 uniqueness corridors.  The full optimized
+    corpus again ends with `BREP ray correctness corpus: PASS` and leaves
+    production hit selection unchanged.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -2548,6 +2631,9 @@ Cobb sphere baseline:
     Repeated after the bounded fold candidate implementation with halt-on-
     error: the focused `--fold-only` 200-system matrix passes with no ASan or
     UBSan diagnostic.
+    Repeated after determinant and one-sided proof qualification with halt-on-
+    error: focused `--fold-only` and `--interval-only` pass with no ASan or
+    UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -2622,10 +2708,12 @@ NEXT ACTIONS
    mapped tangent/grazing ratchet to certify and eliminate the six remaining
    condition-100 and condition-1,000 resolved misses, then analyze
    anisotropic seam tolerances.  The fixed-work analytic candidate corpus is
-   now a permanent search-stage ratchet; next exact-audit the per-coefficient
-   or expansion construction and Bernstein determinant products, prove both
-   one-sided parents complete, and deduplicate the resulting physical event
-   across their common span.  Separate old-solver root absence from prepared
+   now a permanent search-stage ratchet, and the Bernstein determinant and
+   synthetic corridor proofs are exact-audited.  Next preserve individual
+   intervals through fused real ray-plane construction and restriction, prove
+   both real one-sided parents complete including their fold-boundary strips,
+   and deduplicate the resulting physical event across the common span.
+   Separate old-solver root absence from prepared
    box explosion and local-corrector failure.  Find a lower-cost dispatch or
    fallback strategy
    before reducing tree density: the first correctness-only promotion passes
