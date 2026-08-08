@@ -39,6 +39,41 @@ RT_EXPORT extern int rt_brep_plot(struct bu_list                *vhead,
 				  const struct bg_tess_tol       *ttol,
 				  const struct bn_tol            *tol,
 				  const struct bview *info);
+
+struct rt_brep_draw_options {
+    size_t max_workers;
+    size_t max_result_bytes;
+    size_t max_points;
+    long max_time_ms;
+    int include_surface_cues;
+};
+
+struct rt_brep_draw_report {
+    int requested_edges;
+    int completed_edges;
+    int failed_edges;
+    int requested_surface_cues;
+    int completed_surface_cues;
+    size_t output_points;
+    size_t result_bytes;
+    int hit_time_limit;
+    int hit_memory_limit;
+    int hit_point_limit;
+};
+
+#define RT_BREP_DRAW_OK 0
+#define RT_BREP_DRAW_PARTIAL 1
+#define RT_BREP_DRAW_ERROR -1
+#define RT_BREP_DRAW_LIMIT -2
+
+RT_EXPORT extern void
+rt_brep_draw_options_default(struct rt_brep_draw_options *options);
+
+RT_EXPORT extern int
+rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
+	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
+	const struct bview *info, const struct rt_brep_draw_options *options,
+	struct rt_brep_draw_report *report);
 RT_EXPORT extern int rt_brep_plot_poly(struct bu_list           *vhead,
 				       const struct directory   *dp,
 				       struct rt_db_internal     *ip,

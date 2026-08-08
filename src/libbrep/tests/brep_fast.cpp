@@ -14,8 +14,10 @@
 #include <vector>
 
 #include "brep/cdt.h"
+#include "bv/vlist.h"
 #include "raytrace.h"
 #include "rt/geom.h"
+#include "rt/primitives/brep.h"
 
 struct fast_output {
     std::vector<int> faces;
@@ -23,6 +25,39 @@ struct fast_output {
     std::vector<fastf_t> points;
     struct brep_cdt_fast_report report = {};
 };
+
+struct wire_output {
+    std::vector<int> commands;
+    std::vector<fastf_t> points;
+    struct rt_brep_draw_report report = {};
+};
+
+static int
+run_wire(wire_output *output, struct rt_db_internal *intern, size_t workers,
+	size_t max_points)
+{
+    struct bu_list vhead;
+    BU_LIST_INIT(&vhead);
+    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    struct rt_brep_draw_options options;
+    rt_brep_draw_options_default(&options);
+    options.max_workers = workers;
+    options.max_points = max_points;
+
+    int ret = rt_brep_plot_ex(&vhead, intern, &ttol, &tol, NULL, &options,
+	&output->report);
+    const struct bv_vlist *vlist;
+    for (BU_LIST_FOR(vlist, bv_vlist, &vhead)) {
+	for (size_t i = 0; i < vlist->nused; i++) {
+	    output->commands.push_back(vlist->cmd[i]);
+	    output->points.insert(output->points.end(), vlist->pt[i],
+		vlist->pt[i] + 3);
+	}
+    }
+    BV_FREE_VLIST(&rt_vlfree, &vhead);
+    return ret;
+}
 
 static int
 run_fast(fast_output *output, const ON_Brep *brep, size_t workers,
@@ -112,6 +147,30 @@ main(int argc, const char **argv)
 	serial.report.completed_faces == bi->brep->m_F.Count() &&
 	parallel.report.completed_faces == bi->brep->m_F.Count();
 
+    fast_output limited;
+    int limit_ret = run_fast(&limited, bi->brep, 4, 1);
+    bool limited_cleanly = limit_ret == BREP_CDT_FAST_LIMIT &&
+	limited.report.hit_point_limit && limited.faces.empty() &&
+	limited.normals.empty() && limited.points.empty();
+
+    wire_output wire_serial;
+    wire_output wire_parallel;
+    int wire_serial_ret = run_wire(&wire_serial, &intern, 1,
+	4 * 1024 * 1024);
+    int wire_parallel_ret = run_wire(&wire_parallel, &intern, 4,
+	4 * 1024 * 1024);
+    bool wire_same = wire_serial_ret == RT_BREP_DRAW_OK &&
+	wire_parallel_ret == RT_BREP_DRAW_OK &&
+	wire_serial.commands == wire_parallel.commands &&
+	wire_serial.points == wire_parallel.points &&
+	!wire_serial.commands.empty();
+
+    wire_output wire_limited;
+    int wire_limit_ret = run_wire(&wire_limited, &intern, 4, 1);
+    bool wire_limited_cleanly = wire_limit_ret == RT_BREP_DRAW_LIMIT &&
+	wire_limited.report.hit_point_limit && wire_limited.commands.empty() &&
+	wire_limited.points.empty();
+
     bool unchanged = true;
     size_t domain_index = 0;
     for (int i = 0; i < bi->brep->m_F.Count(); i++) {
@@ -124,13 +183,8 @@ main(int argc, const char **argv)
 	unchanged = unchanged &&
 	    bi->brep->m_T[i].m_trim_user.p == trim_users[(size_t)i];
 
-    fast_output limited;
-    int limit_ret = run_fast(&limited, bi->brep, 4, 1);
-    bool limited_cleanly = limit_ret == BREP_CDT_FAST_LIMIT &&
-	limited.report.hit_point_limit && limited.faces.empty() &&
-	limited.normals.empty() && limited.points.empty();
-
     rt_db_free_internal(&intern);
     db_close(dbip);
-    return (same && complete && unchanged && limited_cleanly) ? 0 : 1;
+    return (same && complete && unchanged && limited_cleanly && wire_same &&
+	wire_limited_cleanly) ? 0 : 1;
 }
