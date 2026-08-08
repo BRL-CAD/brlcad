@@ -72,7 +72,12 @@ nearest representable miss-side line.  Prepared roots are now also classified
 against the owned face-wide CurveTree without allocation.  Fixed event
 clusters compare material/trim state, near/clean class, grazing-aware
 direction, and meaningful near-edge adjacency against legacy clusters before
-any SurfaceTree density change.
+any SurfaceTree density change.  Trace mode now also materializes both raw
+prepared candidates and canonical physical event clusters in fixed brep_hit
+workspaces, observes all five legacy cleanup stages, independently runs the
+certified crack repair, and records complete solid partitions.  The analytic
+sphere partitions are equivalent; one bowed Cobb partition differs and the
+prepared result is the one that matches the implicit sphere oracle.
 Production trim classification now scans the prepared trim leaves directly;
 the former copied-list implementation remains trace-only as an exact
 equivalence oracle.  The full traced corpus hard-gates candidate counts,
@@ -826,6 +831,65 @@ ESTABLISHED FINDINGS
     at 10.23 seconds.  ASan/UBSan passes 12/12 in 41.10 seconds with no
     diagnostic.
 
+39. Prepared roots are now materialized in two allocation-free, fixed-stack
+    shadow streams before any SurfaceTree density change.  The first retains
+    every non-CLEAN_MISS prepared root as a brep_hit candidate.  It rebuilds
+    the robust face normal with surface_EvNormal, preserves trim/near/adjacent-
+    face/direction state, sorts in the existing fixed workspace, and executes
+    the same near-miss, near-hit, grazing, duplicate, and direction cleanup
+    implementation as production.  A parallel workspace made from the legacy
+    Newton roots supplies per-stage physical signatures as well as raw count
+    comparisons.  These paths are trace-only and are not called when the
+    production trace pointer is null.
+
+    Raw candidate multiplicity is intentionally not treated as physical
+    equivalence.  The prepared solver sees roots from neighboring Bezier
+    spans that the dense leaf solver may represent differently, especially at
+    a tangent.  The sphere matrix has 324 prepared candidates and 25 raw
+    stage-count differences.  Its only semantic difference at each of the
+    five stages is the already classified prepared-only, zero-material contact
+    on the nearest representable miss-side line.  The bowed Cobb matrix has
+    620 candidates and 955 raw count differences.  Physical stage signatures
+    differ 0/16/19/19/19 after near-miss, near-hit, grazing, duplicate, and
+    direction cleanup respectively.  Exact near-miss-stage equivalence is a
+    hard gate because that is where seam evidence is resolved; later
+    differences are retained as observability and must be judged by their
+    final material partitions rather than candidate count.
+
+    The second stream materializes the already qualified physical event
+    clusters.  CLEAN_MISS and CONTACT clusters are omitted because neither is
+    a finite solid boundary.  The remaining events pass through fixed cleanup
+    and the same certified single-event crack repair.  Up to eight final solid
+    intervals are stored directly in the trace for comparison to both legacy
+    output and independent implicit oracles.  Missing normals, unsupported
+    direction, hit or segment capacity, and repair failures remain explicit;
+    no capacity is silently increased.
+
+    Across the analytic sphere sweep, 111 prepared groups contain 35 contacts
+    and produce 76 material events, 38 aggregate segments, and zero legacy
+    partition differences.  Across the 416-ray bowed Cobb family, 556 groups
+    contain 38 contacts and produce 518 material events, 16 certified repairs,
+    and 226 aggregate segments.  There is exactly one partition difference
+    from the depth-eight solver and it is an independently demonstrated
+    improvement, not bug-for-bug equivalence.  For the reverse inward-bowed
+    g/T=0.1, h/T=0.1 case, legacy repairs
+    [19.9997585419, 20.0316227402], while prepared events produce
+    [19.9683772359, 20.0316227918].  The implicit sphere oracle is
+    [19.9683772629, 20.0316227371]: prepared maximum endpoint error is about
+    5.47e-8, while legacy error is about 3.14e-2.  The corpus classifies every
+    final prepared/legacy difference as oracle improvement, regression, or
+    ambiguous; it hard-fails regressions and ambiguous changes.  The present
+    totals are 1/0/0.
+
+    This is final-partition shadow qualification, not production promotion.
+    Later raw cleanup stages still expose tangent/duplicate representation
+    differences, adaptive ordinary-span subdivision still retains boxes down
+    to depth 24, and the production SurfaceTree remains depth eight.  The
+    focused normal gate passes 13/13 with rt_brep_ray at 10.29 seconds.
+    ASan/UBSan passes 12/12 in 40.55 seconds with no diagnostic.
+    After the final stage-label refactor, direct normal and ASan/UBSan
+    rt_brep_ray reruns pass in 9.24 and 36.80 seconds respectively.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -910,6 +974,12 @@ IMPLEMENTATION CHECKLIST
         [x] Classify prepared roots with the allocation-free face-wide trim
             hierarchy and gate clustered trim/class/direction/adjacency
             equivalence against depth-eight legacy candidates.
+        [x] Materialize prepared candidates and canonical physical clusters in
+            fixed brep_hit workspaces, observe every cleanup stage, and store
+            final solid intervals without production-path allocation.
+        [x] Compare changed final partitions to the implicit oracle and hard-
+            fail regressions or ambiguous changes rather than requiring bug-
+            for-bug legacy equivalence.
     [x] Observe fixed-work 3D ray/shared-edge distance and declared edge-
         tolerance qualification independently of the UV trim tree.
     [x] Classify shadow-mode edge material sectors and validate smooth and
@@ -1466,6 +1536,10 @@ Cobb sphere baseline:
     prepared/legacy event-cluster comparison: 13/13, with rt_brep_ray at
     10.23 seconds and NIST03_MISS_01 at 0.82 seconds.  The sphere and bowed
     Cobb matrices retain zero trim/class/direction/adjacency mismatch.
+    Repeated after fixed prepared-event cleanup and final-partition oracle
+    classification: 13/13, with rt_brep_ray at 10.29 seconds and
+    NIST03_MISS_01 at 0.80 seconds.  The sole final change is an implicit-
+    oracle improvement in the reverse inward-bowed Cobb case.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -1506,6 +1580,9 @@ Cobb sphere baseline:
     Repeated after face-wide trim classification and physical event-cluster
     comparison with halt_on_error=1: 12/12 in 41.10 seconds, with no ASan or
     UBSan diagnostic.
+    Repeated after fixed prepared-event cleanup, five-stage observation, and
+    final-partition oracle classification with halt_on_error=1: 12/12 in
+    40.55 seconds, with no ASan or UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -1574,11 +1651,13 @@ NEXT ACTIONS
 2. Implement and gate cyclic convex/concave vertex-fan transitions before any
    multi-edge crack repair.  Preserve the current explicit fallback for
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
-3. Materialize the now-classified prepared event clusters in a fixed brep_hit
-   workspace and compare every legacy cleanup stage and final segment.  Add
-   adaptive subdivision termination beyond the first bounded corrector.  Do
-   not lower tree density until complete event equivalence and unsupported/
-   capacity fallback behavior are observable and proven equivalent.
+3. Add conservative adaptive termination to ordinary prepared-span
+   subdivision beyond the first bounded corrector.  Classify the observed
+   near-hit/grazing/duplicate-stage representation differences and extend
+   final-partition oracle gates before any production promotion.  Do not lower
+   tree density until unsupported/capacity fallback and every changed material
+   partition are observable and proven equivalent or better than the legacy
+   path.
 4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
