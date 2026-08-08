@@ -617,6 +617,10 @@ enum brep_solver_status_t {
     BREP_SOLVER_CAPACITY_EXHAUSTED
 };
 
+static_assert(RT_BREP_TRACE_SOLVER_STATUS_COUNT ==
+    BREP_SOLVER_CAPACITY_EXHAUSTED + 1,
+    "BREP trace solver status count is stale");
+
 
 struct brep_solver_result {
     int intersections;
@@ -1026,8 +1030,41 @@ utah_newton_4corner_solver(const BBNode* sbv, const ON_Surface* surf,
 }
 
 
+static void
+brep_trace_root(struct rt_brep_shot_trace *trace, const ON_BrepFace *face,
+    double dist, const ON_2dPoint &uv, const ON_3dVector &surface_normal,
+    const ON_Ray &ray, int trim_status, double trim_distance,
+    const BRNode *trim_node, int hit_class)
+{
+    if (!trace)
+	return;
+    trace->candidate_roots++;
+    if (trace->stored_roots >= RT_BREP_TRACE_MAX_ROOTS) {
+	trace->root_overflow++;
+	return;
+    }
+    struct rt_brep_trace_root &root = trace->roots[trace->stored_roots++];
+    ON_3dVector normal(surface_normal);
+    if (face->m_bRev)
+	normal.Reverse();
+    root.dist = dist;
+    root.uv[0] = uv.x;
+    root.uv[1] = uv.y;
+    root.normal_dot = normal * ray.m_dir;
+    root.trim_distance = trim_distance;
+    root.face_index = face->m_face_index;
+    root.adjacent_face_index = trim_node ? trim_node->m_adj_face_index : -99;
+    root.trim_status = trim_status;
+    root.hit_class = hit_class;
+    root.direction = root.normal_dot < 0.0 ? brep_hit::ENTERING :
+	brep_hit::LEAVING;
+}
+
+
 static int
-utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t& uv, const ON_Ray& ray, std::list<brep_hit>& hits)
+utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
+    const ON_Surface* surf, pt2d_t& uv, const ON_Ray& ray,
+    std::list<brep_hit>& hits, struct rt_brep_shot_trace *trace)
 {
 #define MAX_BREP_SUBDIVISION_INTERSECTS 5
     ON_3dVector N[MAX_BREP_SUBDIVISION_INTERSECTS];
@@ -1047,6 +1084,12 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 	    MAX_BREP_SUBDIVISION_INTERSECTS, 0);
     }
     numhits = solver_result.intersections;
+    if (trace) {
+	trace->solver_calls++;
+	const size_t status = (size_t)solver_result.status;
+	if (status < RT_BREP_TRACE_SOLVER_STATUS_COUNT)
+	    trace->solver_status[status]++;
+    }
 
     if (numhits > 0) {
 	for (int i = 0; i < numhits; i++) {
@@ -1081,6 +1124,8 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		    bh.closeToEdge = false;
 		    bh.hit = brep_hit::CLEAN_HIT;
 		}
+		brep_trace_root(trace, face, t[i], ouv[i], N[i], ray,
+		    trim_status, closesttrim, trimBR, bh.hit);
 		if (VDOT(ray.m_dir, vnorm) < 0.0)
 		    bh.direction = brep_hit::ENTERING;
 		else
@@ -1111,6 +1156,8 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		    bh.m_adj_face_index = -99;
 		}
 		bh.hit = brep_hit::NEAR_MISS;
+		brep_trace_root(trace, face, t[i], ouv[i], N[i], ray,
+		    trim_status, closesttrim, trimBR, bh.hit);
 		if (VDOT(ray.m_dir, vnorm) < 0.0)
 		    bh.direction = brep_hit::ENTERING;
 		else
@@ -1118,6 +1165,9 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		bh.sbv = sbv;
 		hits.push_back(bh);
 		found = BREP_INTERSECT_FOUND;
+	    } else {
+		brep_trace_root(trace, face, t[i], ouv[i], N[i], ray,
+		    trim_status, closesttrim, trimBR, brep_hit::CLEAN_MISS);
 	    }
 	}
     }
@@ -1236,8 +1286,10 @@ brep_platemode_thickness(const struct xray& ray, const brep_hit& hit, const stru
  * 0 MISS
  * >0 HIT
  */
-int
-rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
+static int
+rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
+    struct application *ap, struct seg *seghead,
+    struct rt_brep_shot_trace *trace)
 {
     struct brep_specific* bs;
 
@@ -1256,6 +1308,8 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     std::list<const BBNode*> inters;
     ON_Ray r = toXRay(rp);
     bs->bvh->intersectsHierarchy(r, inters);
+    if (trace)
+	trace->intersected_leaves = inters.size();
     if (inters.empty())
 	return 0; // MISS
 
@@ -1267,11 +1321,13 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	const ON_BrepFace* f = &sbv->get_face();
 	const ON_Surface* surf = f->SurfaceOf();
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
-	utah_brep_intersect(sbv, f, surf, uv, r, hits);
+	utah_brep_intersect(sbv, f, surf, uv, r, hits, trace);
     }
 
     // sort the hits
     hits.sort();
+    if (trace)
+	trace->raw_hits = hits.size();
 
 #ifdef RT_DEBUG_HITS
     std::list<brep_hit> orig = hits;
@@ -1404,6 +1460,9 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
     }
 
+    if (trace)
+	trace->after_near_miss = hits.size();
+
     ///////////// handle near hit
     if ((hits.size() > 1) && containsNearHit(&hits)) { //&& ((hits.size() % 2) != 0)) {
 	std::list<brep_hit>::iterator prev;
@@ -1455,6 +1514,9 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	}
     }
 
+    if (trace)
+	trace->after_near_hit = hits.size();
+
     if (!hits.empty()) {
 	// remove grazing hits with with normal to ray dot less than
 	// BREP_GRAZING_DOT_TOL (>= 89.999 degrees obliq)
@@ -1479,6 +1541,9 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    //++num;
 	}
     }
+
+    if (trace)
+	trace->after_grazing = hits.size();
 
     if (!hits.empty()) {
 	// we should have "valid" points now, remove duplicates or
@@ -1509,6 +1574,9 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    }
 	}
     }
+
+    if (trace)
+	trace->after_duplicates = hits.size();
 
     // remove multiple "INs" in a row assume last "IN" is the actual
     // entering hit, for multiple "OUTs" in a row assume first "OUT"
@@ -1558,6 +1626,11 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	if (sign(firstDot) == sign(lastDot)) {
 	    hits.pop_back();
 	}
+    }
+
+    if (trace) {
+	trace->after_direction_cleanup = hits.size();
+	trace->final_hits = hits.size();
     }
 
     if (bs->plate_mode) {
@@ -1621,6 +1694,8 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    bu_log("\n**********************\n");
 #endif
 	}
+	if (trace)
+	    trace->final_segments = nhits;
 
 	return nhits;
 
@@ -1656,6 +1731,8 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 		    VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
 
 		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+		    if (trace)
+			trace->final_segments++;
 		}
 		hit = true;
 	    }
@@ -1665,6 +1742,26 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     }
 
     return 0;
+}
+
+
+int
+rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap,
+    struct seg *seghead)
+{
+    return rt_brep_shot_impl(stp, rp, ap, seghead, NULL);
+}
+
+
+int
+_rt_brep_shot_trace(struct soltab *stp, struct xray *rp,
+    struct application *ap, struct seg *seghead,
+    struct rt_brep_shot_trace *trace)
+{
+    if (!trace)
+	return rt_brep_shot_impl(stp, rp, ap, seghead, NULL);
+    *trace = {};
+    return rt_brep_shot_impl(stp, rp, ap, seghead, trace);
 }
 
 

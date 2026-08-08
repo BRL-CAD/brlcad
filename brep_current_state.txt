@@ -27,7 +27,9 @@ solid; the pristine sewn form matches the implicit sphere on its first 8,000
 shared lines.  An endpoint-preserving bowed support-seam sweep now calibrates
 actual 3D discrepancy and records grazing behavior across 416 directed rays.
 It has reproduced a below-tolerance crack leak without yet changing seam
-policy.  Phase 0 baselines documented in brep_raytrace_plan.txt remain
+policy.  Fixed-capacity raw-shot tracing now distinguishes missing physical
+roots from trim rejection and legacy hit cleanup without changing production
+behavior.  Phase 0 baselines documented in brep_raytrace_plan.txt remain
 authoritative.
 
 
@@ -187,6 +189,19 @@ ESTABLISHED FINDINGS
     contact events must be canonicalized explicitly rather than being treated
     as ordinary material partitions.
 
+19. Raw-shot instrumentation localizes 14 of the 15 below-envelope crack
+    leaks before legacy trim and event cleanup: fewer than two distinct
+    geometric roots were found.  For inward g/T=1, h/T=0.9, two subdivision
+    leaves converge to the same clean adjacent-face root at t about 19.9051;
+    duplicate cleanup correctly reduces them to one event, while the bowed
+    target support has no mathematical intersection.  Reversing the line
+    produces the same physical root at t about 20.0949.  The missing solid
+    crossing therefore requires a topology-local seam closure event inside
+    the authorized 3D edge envelope.  It cannot be repaired by loosening the
+    Newton residual, accepting a trim miss, or retaining duplicate seeds.
+    The remaining leak has at least two distinct candidates and is lost in
+    cleanup; no leak in this matrix is caused by trim classification.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -236,7 +251,9 @@ IMPLEMENTATION CHECKLIST
         the analytic primitive fixtures; CSG reuse remains.
     [x] Report per-line crossing and chord differences for analytic fixtures.
     [x] Implement initial signed logarithmic sphere grazing report and a
-        non-regression envelope; raw solver instrumentation is still pending.
+        non-regression envelope.
+    [x] Add fixed-capacity raw root, solver outcome, trim class, and cleanup-
+        stage tracing for the bowed Cobb matrix.
     [x] Add aggregate implicit/BREP/analytic sphere Crofton ground truth.
 
 [ ] Tolerance/seam work
@@ -480,6 +497,22 @@ Cobb sphere baseline:
     inconsistency, and 32 zero-chord h=0 contact records.  No below-envelope
     leak occurs at h greater than 1.01g; regression beyond that bound fails.
 
+  * Private in-librt shot tracing records intersected tree leaves, structured
+    solver outcomes, every converged candidate root, trim classification,
+    normal orientation, and hit counts after each legacy cleanup stage.  It
+    has a fixed 64-root capacity, reports overflow, and is enabled only by the
+    correctness test entry point; normal production shots retain the same
+    path with a null trace pointer.
+
+  * Trace accounting proves that 14/15 below-envelope leaks have fewer than
+    two unique candidate t values, zero are lost during trim classification,
+    and one reaches cleanup with at least two unique candidates.  In the
+    representative inward g/T=1, h/T=0.9 case, both candidates are clean hits
+    from face 1 at the same root to about 7e-14 mm.  They are independent tree
+    seeds, not the two intended crossings.  The CSV report includes each
+    candidate, solver-status histograms, unique-root count, and every cleanup
+    stage so future seam work can ratchet the actual failure mechanism.
+
   cmake --build .build --target \
     librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
     PASS
@@ -517,13 +550,15 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Instrument raw candidate roots, trim classification, residuals, and final
-   event pairing on the bowed-seam lines, especially the g/T=1, h/T=0.9 case,
-   to locate whether the root is rejected by trim logic or lost during event
-   resolution.
-2. Design the topology-local crack resolver around explicit near-trim evidence
-   and winding/contact classes, then promote each repaired bowed-seam row from
-   the known-defect count to exact solid-interval parity.
+1. Design a direct 3D ray/mated-edge proximity observation for unresolved odd
+   shots.  It must use the declared/measured edge envelope, identify the same
+   topological edge from both incident faces, and remain distinct from UV,
+   numerical-root, t-cluster, and minimum-segment tolerances.
+2. Use that evidence to design the topology-local crack resolver and explicit
+   winding/contact classes.  Restore a crossing only inside an authorized
+   manifold edge envelope, make it symmetric under ray reversal, and promote
+   each repaired bowed-seam row from the known-defect count to exact solid-
+   interval parity.
 3. Add a safeguarded local correction/contact classification beyond the first
    conditioned Newton improvement.  Do not lower tree density until candidate
    exclusion and fallback behavior are observable and proven equivalent.
