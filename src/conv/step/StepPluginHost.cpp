@@ -112,7 +112,8 @@ brlcad::step::load_schema_plugin(const std::string &schema, std::string &error)
     }
 
     char path[MAXPATHLEN] = {0};
-    if (!bu_dir(path, MAXPATHLEN, BU_DIR_LIBEXEC, "step", basename, BU_DIR_LIBEXT, NULL)) {
+    const std::string filename = std::string(basename) + STEP_PLUGIN_MODULE_SUFFIX;
+    if (!bu_dir(path, MAXPATHLEN, BU_DIR_LIBEXEC, "step", filename.c_str(), NULL)) {
 	error = "cannot resolve the installed STEP plugin directory";
 	return false;
     }
