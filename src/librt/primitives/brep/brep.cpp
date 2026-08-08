@@ -707,6 +707,168 @@ brep_edge_trim_parameter(const ON_BrepEdge &edge, const ON_BrepTrim &trim,
 
 
 static bool
+brep_curve_closest_parameter(const ON_Curve &curve, const ON_3dPoint &point,
+    double &parameter)
+{
+    const ON_Interval domain = curve.Domain();
+    if (!domain.IsIncreasing() || !point.IsValid())
+	return false;
+    double best_distance = DBL_MAX;
+    double best_parameter = domain.Min();
+    for (int sample = 0; sample <= 32; ++sample) {
+	const double candidate = domain.ParameterAt((double)sample / 32.0);
+	const ON_3dPoint curve_point = curve.PointAt(candidate);
+	if (!curve_point.IsValid())
+	    return false;
+	const double distance = curve_point.DistanceTo(point);
+	if (!std::isfinite(distance))
+	    return false;
+	if (distance < best_distance) {
+	    best_distance = distance;
+	    best_parameter = candidate;
+	}
+    }
+
+    for (int iteration = 0; iteration < 24; ++iteration) {
+	ON_3dPoint curve_point;
+	ON_3dVector first_derivative;
+	ON_3dVector second_derivative;
+	if (!curve.Ev2Der(best_parameter, curve_point, first_derivative,
+		second_derivative) || !curve_point.IsValid() ||
+		!first_derivative.IsValid() || !second_derivative.IsValid())
+	    return false;
+	const ON_3dVector residual = curve_point - point;
+	const double numerator = residual * first_derivative;
+	const double denominator = first_derivative * first_derivative +
+	    residual * second_derivative;
+	const double denominator_scale = std::max(1.0,
+	    first_derivative * first_derivative +
+	    fabs(residual * second_derivative));
+	if (!std::isfinite(numerator) || !std::isfinite(denominator))
+	    return false;
+	if (fabs(denominator) <= 128.0 * DBL_EPSILON * denominator_scale)
+	    break;
+	const double step = numerator / denominator;
+	if (!std::isfinite(step))
+	    return false;
+	if (fabs(step) <= 64.0 * DBL_EPSILON *
+		std::max(1.0, domain.Length()))
+	    break;
+
+	bool improved = false;
+	double fraction = 1.0;
+	for (int line_search = 0; line_search < 8; ++line_search) {
+	    const double candidate = std::max(domain.Min(),
+		std::min(domain.Max(), best_parameter - fraction * step));
+	    const ON_3dPoint curve_point_candidate = curve.PointAt(candidate);
+	    if (!curve_point_candidate.IsValid())
+		return false;
+	    const double distance = curve_point_candidate.DistanceTo(point);
+	    if (!std::isfinite(distance))
+		return false;
+	    if (distance < best_distance) {
+		best_distance = distance;
+		best_parameter = candidate;
+		improved = true;
+		break;
+	    }
+	    fraction *= 0.5;
+	}
+	if (!improved)
+	    break;
+    }
+    parameter = best_parameter;
+    return std::isfinite(parameter) && std::isfinite(best_distance);
+}
+
+
+static bool
+brep_edge_trim_correspondence_regular(const ON_BrepEdge &edge,
+    const ON_BrepTrim &trim)
+{
+    const ON_BrepFace *face = trim.Face();
+    const ON_Surface *surface = face ? face->SurfaceOf() : NULL;
+    if (!surface || trim.m_ei != edge.m_edge_index)
+	return false;
+    ON_NurbsCurve nurbs;
+    if (!trim.GetNurbForm(nurbs) || nurbs.m_order < 2 ||
+	    nurbs.m_cv_count < nurbs.m_order)
+	return false;
+    const ON_Interval edge_domain = edge.Domain();
+    const ON_3dPoint edge_start = edge.PointAtStart();
+    const ON_3dPoint edge_end = edge.PointAtEnd();
+    if (!edge_domain.IsIncreasing() || !edge_start.IsValid() ||
+	    !edge_end.IsValid())
+	return false;
+    const double edge_coordinate_scale = std::max(1.0,
+	std::max(fabs(edge_start.x), std::max(fabs(edge_start.y),
+	std::max(fabs(edge_start.z), std::max(fabs(edge_end.x),
+	std::max(fabs(edge_end.y), fabs(edge_end.z)))))));
+    if (edge_start.DistanceTo(edge_end) <=
+	    1024.0 * DBL_EPSILON * edge_coordinate_scale)
+	return false;
+
+    size_t samples = 0;
+    bool have_previous_parameter = false;
+    double previous_edge_parameter = 0.0;
+    const double edge_parameter_tolerance = 1024.0 * DBL_EPSILON *
+	std::max(1.0, std::max(fabs(edge_domain.Min()),
+	    fabs(edge_domain.Max())));
+    for (int span_index = 0;
+	    span_index <= nurbs.m_cv_count - nurbs.m_order; ++span_index) {
+	const double lower = nurbs.m_knot[span_index + nurbs.m_order - 2];
+	const double upper = nurbs.m_knot[span_index + nurbs.m_order - 1];
+	if (!(lower < upper))
+	    continue;
+	for (int sample = 1; sample <= 4; ++sample) {
+	    if (++samples > 256)
+		return false;
+	    const double trim_parameter = lower +
+		((double)sample / 5.0) * (upper - lower);
+	    ON_3dPoint uv;
+	    ON_3dVector trim_derivative;
+	    if (!nurbs.Ev1Der(trim_parameter, uv, trim_derivative) ||
+		    !uv.IsValid() || !trim_derivative.IsValid())
+		return false;
+	    ON_3dPoint lift;
+	    ON_3dVector surface_u;
+	    ON_3dVector surface_v;
+	    if (!surface->Ev1Der(uv.x, uv.y, lift, surface_u, surface_v) ||
+		    !lift.IsValid() || !surface_u.IsValid() ||
+		    !surface_v.IsValid())
+		return false;
+	    ON_3dVector lift_tangent = trim_derivative.x * surface_u +
+		trim_derivative.y * surface_v;
+	    double edge_parameter = 0.0;
+	    if (!lift_tangent.Unitize() ||
+		    !brep_curve_closest_parameter(edge, lift, edge_parameter))
+		return false;
+	    ON_3dPoint edge_point;
+	    ON_3dVector edge_tangent;
+	    if (!edge.Ev1Der(edge_parameter, edge_point, edge_tangent) ||
+		    !edge_point.IsValid() || !edge_tangent.Unitize())
+		return false;
+	    if (have_previous_parameter) {
+		const double directed_change = trim.m_bRev3d ?
+		    previous_edge_parameter - edge_parameter :
+		    edge_parameter - previous_edge_parameter;
+		if (directed_change < -edge_parameter_tolerance)
+		    return false;
+	    }
+	    previous_edge_parameter = edge_parameter;
+	    have_previous_parameter = true;
+	    const double directed_tangent = (trim.m_bRev3d ? -1.0 : 1.0) *
+		(lift_tangent * edge_tangent);
+	    if (!std::isfinite(directed_tangent) ||
+		    directed_tangent <= 1.0e-8)
+		return false;
+	}
+    }
+    return samples > 0;
+}
+
+
+static bool
 brep_edge_discrepancy(const ON_Brep &brep, const ON_BrepEdge &edge,
     double &maximum)
 {
@@ -793,6 +955,11 @@ brep_build_edge_data(struct brep_specific *bs, const struct bn_tol *tol)
 	}
 	record.discrepancy_measured = brep_edge_discrepancy(brep, edge,
 	    record.measured_discrepancy);
+	record.correspondence_supported =
+	    brep_edge_trim_correspondence_regular(edge,
+		brep.m_T[first_trim]) &&
+	    brep_edge_trim_correspondence_regular(edge,
+		brep.m_T[second_trim]);
 	if (record.tolerance_inferred && record.discrepancy_measured)
 	    record.tolerance = std::max(record.tolerance,
 		record.measured_discrepancy);
@@ -1377,7 +1544,8 @@ brep_bound_edge_discrepancies(struct brep_specific *bs,
 	    bs->edge_records.begin(); record_it != bs->edge_records.end();
 	    ++record_it) {
 	brep_edge_record &record = *record_it;
-	if (!record.supported || record.edge_index < 0 ||
+	if (!record.supported || !record.correspondence_supported ||
+		record.edge_index < 0 ||
 		record.edge_index >= brep.m_E.Count())
 	    continue;
 	const ON_BrepEdge &edge = brep.m_E[record.edge_index];
@@ -3143,7 +3311,8 @@ brep_observe_edges(struct rt_brep_shot_trace *trace,
 		++span_index) {
 	    const brep_edge_span &span = bs->edge_spans[span_index];
 	    const bool valid_tolerance = ON_IsValid(record.tolerance) &&
-		record.tolerance >= 0.0 && record.discrepancy_authorized;
+		record.tolerance >= 0.0 && record.discrepancy_authorized &&
+		record.correspondence_supported;
 	    const double expansion = valid_tolerance ? record.tolerance : 0.0;
 	    if (valid_tolerance && brep_line_intersects_box(ray, span.bbox,
 		    expansion)) {
@@ -3198,6 +3367,8 @@ brep_observe_edges(struct rt_brep_shot_trace *trace,
 	observation.face_index[1] = record.face_index[1];
 	observation.candidate_spans = candidate_spans;
 	observation.discrepancy_measured = record.discrepancy_measured;
+	observation.correspondence_supported =
+	    record.correspondence_supported;
 	observation.discrepancy_bounded = record.discrepancy_bounded;
 	observation.discrepancy_bound_exhausted =
 	    record.discrepancy_bound_exhausted;
@@ -3207,7 +3378,7 @@ brep_observe_edges(struct rt_brep_shot_trace *trace,
 	    128.0 * DBL_EPSILON * std::max(1.0, distance));
 	observation.within_edge_tolerance =
 	    ON_IsValid(record.tolerance) && record.tolerance >= 0.0 &&
-	    record.discrepancy_authorized &&
+	    record.discrepancy_authorized && record.correspondence_supported &&
 	    distance <= record.tolerance + roundoff;
 	if (observation.within_edge_tolerance) {
 	    trace->edges_within_tolerance++;

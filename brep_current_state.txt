@@ -47,6 +47,11 @@ shadow certificate for their geometric edge/lifted-trim Hausdorff gap.  It is
 knot-aware, adaptive, similarity-gated, and bounded by a solid-wide work
 budget.  Exact-looking, unsupported, and budget-exhausted records remain
 explicitly uncertified, and production seam authorization is unchanged.
+A prep-time open-edge correspondence screen now also withholds seam evidence
+when either lifted trim reverses direction or maps non-monotonically along its
+edge.  A bowed forward/backward/forward trim and convex exact/near vertex-fan
+rays permanently gate the explicit non-repair paths; general vertex-fan
+transition resolution is still unsupported.
 Exact-parameter positive-weight surface spans and conservative ray-plane
 coefficient exclusion are prepared, and a bounded adjacent-support
 continuation solve recovers the missing bowed-seam endpoints.
@@ -661,6 +666,53 @@ ESTABLISHED FINDINGS
     The current normal focused gate completes in about 10 seconds.  These are
     engineering observations on this host, not performance acceptance limits.
 
+36. Edge-sector and crack-repair evidence now require a prep-time regular
+    correspondence screen in addition to sampled discrepancy authorization.
+    Each incident trim is converted to NURBS, visited four times in every
+    positive knot span (at most 256 samples), lifted through its face, and
+    projected geometrically back to the 3D edge.  The fixed projection uses a
+    33-point basin scan followed by at most 24 second-derivative corrections
+    and an eight-step line search.  In trim-domain order, projected edge
+    parameters must remain monotone with the direction implied by m_bRev3d,
+    and the unit lifted tangent must retain positive oriented agreement with
+    the local unit edge tangent.  Closed or numerically degenerate edges,
+    failed NURBS/evaluation/projection, more than 256 samples, a reversal, or
+    a stationary/opposed tangent leave correspondence_supported false.
+
+    correspondence_supported is traced per edge and is now necessary for an
+    expanded candidate edge span, within-edge evidence, material-sector
+    classification, the adaptive discrepancy shadow pass, and production
+    crack repair.  It does not suppress ordinary surface intersection or the
+    legacy solid result.  This is a bounded rejection screen, not a proof of
+    global injectivity: a sufficiently localized higher-order reversal could
+    still occur between samples.  Exact proof or a conservative derivative
+    subdivision remains required before calling all accepted trims uniquely
+    correlated.
+
+    The ambiguity fixture starts with the known g=T bowed Cobb seam whose
+    h=0.9T ray otherwise activates the certified production repair.  One trim
+    is replaced by a piecewise-linear NURBS that follows the identical UV
+    boundary forward, backward, and forward.  Its 3D locus and sampled gap
+    remain authorized, but the middle span reverses both edge parameter and
+    tangent.  In both ray directions the screen is false, no candidate edge
+    span or sector is published, and the legacy one-event crack remains
+    observable without closure, continuation, or a manufactured segment.
+
+    A converted convex ARB8 supplies the initial vertex-fan fallback fixture.
+    Body-diagonal rays in both directions and rays beginning exactly at the
+    vertex observe all three incident edges as CONTACT while preserving the
+    two-hit/one-interval solid result and never invoking closure.  A second
+    line passes 0.25T inside the vertex fan; three incident edges qualify and
+    two independently classify the ray as material-side, but neither ray
+    direction attempts edge closure.  This gates non-repair at a multi-edge
+    locus while a cyclic oriented vertex-fan resolver is still absent.
+
+    The focused normal gate passes 13/13 (rt_brep_ray about 10.2 seconds and
+    NIST03_MISS_01 about 0.82 seconds).  The focused ASan/UBSan gate passes
+    12/12 with halt-on-error and leak detection disabled for the existing host
+    limitation; rt_brep_ray completes in about 40.2 seconds without a
+    diagnostic.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -760,8 +812,13 @@ IMPLEMENTATION CHECKLIST
         it against the implicit oracle and similarities.
     [x] Remove the equal-normalized-speed assumption for regular two-trim edge
         correspondence and gate opposite nonlinear trim reparameterizations.
-    [ ] Add vertex-fan sector fixtures and explicit ambiguous-correspondence
-        fallback gates.
+    [x] Add initial vertex-fan and ambiguous-correspondence fallback gates.
+        [x] Gate exact and near convex three-edge fan rays without invoking
+            the unsupported vertex transition resolver.
+        [x] Screen a bowed forward/backward/forward trim and retain its
+            one-event crack without unsafe repair in both directions.
+        [ ] Replace the bounded regularity screen with a conservative global
+            injectivity/orientation proof and implement cyclic vertex fans.
     [ ] Add sewn and perturbed Cobb fixtures and threshold matrices.
         [x] Add reusable legacy-unsewn and solid-sewn Cobb constructors.
         [x] Gate topology, face/seam/vertex rays, scale, and 8,000 shared
@@ -1374,17 +1431,15 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Add vertex-fan fixtures and ambiguous/self-overlapping correspondence
-   fallback cases.  Extend the shadow seam-gap certificate with an efficient
-   exact-locus proof and explicit unsupported/capacity fallback, then tighten
-   the g=T decision before it can replace sampled production authorization.
-   Keep model-space, UV, numerical-root, t-cluster, and minimum-segment
-   tolerances distinct.
-2. Add explicit shadow event/winding/contact classes, then activate topology-
-   local crack closure only for fully supported manifold events.
-   Restore a crossing inside its authorized envelope, preserve ray-reversal
-   symmetry, fall back on unsupported cases, and promote each repaired bowed-
-   seam row from the known-defect count to exact solid-interval parity.
+1. Replace the bounded correspondence screen with a conservative global
+   injectivity/orientation proof.  Extend the shadow seam-gap certificate with
+   an efficient exact-locus proof and explicit unsupported/capacity fallback,
+   then tighten the g=T decision before it can replace sampled production
+   authorization.  Keep model-space, UV, numerical-root, t-cluster, and
+   minimum-segment tolerances distinct.
+2. Implement and gate cyclic convex/concave vertex-fan transitions before any
+   multi-edge crack repair.  Preserve the current explicit fallback for
+   unsupported, non-manifold, ambiguous, and capacity-limited fans.
 3. Add explicit local root clustering, trim/event classification, and
    adaptive subdivision termination beyond the first bounded corrector.  Do
    not lower tree density until candidate exclusion, event equivalence, and
