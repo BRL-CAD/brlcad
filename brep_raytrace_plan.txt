@@ -1226,6 +1226,48 @@ Surface area is more sensitive to representation and angular survival of thin
 features, as documented in include/rt/func.h.  Report both; do not dismiss a
 stable area disagreement as sampling noise merely because volume agrees.
 
+8.4 Later-stage hierarchy duality checks
+
+After the individual primitive and small controlled CSG gates are stable, add
+two more stressful comparisons.  These are valuable qualification targets,
+but they must not replace the simpler fixtures that localize a failure to leaf
+intersection, Boolean assembly, or conversion.
+
+The first comparison preserves an existing implicit CSG hierarchy exactly and
+replaces every leaf having an exact ft_brep conversion with a BREP leaf.  Keep
+all union/intersection/subtraction operators, matrices, region attributes,
+tolerances, ray bounds, and overlap policy unchanged.  Do not evaluate the
+tree into one BREP for this test: the purpose is to compare the mature implicit
+leaf solvers against NURBS leaf solvers under identical librt Boolean weaving.
+Build the original and substituted databases in memory, shoot the identical
+directed and Crofton lines through both, and retain ordered final partitions.
+Classify unsupported leaves explicitly and begin with fully replaceable trees;
+mixed trees can follow once the all-BREP-leaf case is understood.
+
+The second comparison runs in the opposite direction.  BRL-CAD's experimental
+BREP shape recognizer, exposed by the libged `brep csg` command, calls
+brep_to_csg() and may reconstruct either a complete implicit CSG tree or a
+partial tree retaining residual BREP pieces.  Apply it to simple controlled
+BREPs first and then to the NIST example solids expected to be substantially
+or fully recognizable.  Compare the original BREP against the reconstructed
+tree with the same shared-line partition harness.  Record whether each result
+is:
+
+  * fully implicit, providing the strongest independent intersection oracle;
+  * mixed implicit/BREP, which still stresses recognition, transformations,
+    tree semantics, and the recognized leaves but is not fully independent;
+  * unsupported without mutation; or
+  * conversion-failed/invalid, which is a conversion result and must not be
+    misreported as a ray-solver discrepancy.
+
+For both directions, serialize the first disagreeing model and ray into a
+small replayable C/C++ fixture or database artifact.  Preserve passing cases
+permanently.  A conversion improvement may reduce a documented disagreement,
+but never encode the old incorrect tree or partition as the expected answer.
+These dual conversions are later qualification tiers because they exercise
+more code and make root-cause attribution harder than the analytic primitive,
+Cobb, and direct BREP-leaf CSG corpora.
+
 
 9. DRAWING IMPROVEMENTS AND TESTING
 -----------------------------------
@@ -1369,6 +1411,13 @@ Phase 5: Drawing and corpus expansion
 
   * Improve adaptive edges and general trimmed surface indication.
 
+  * Qualify representative implicit CSG models against topology-identical
+    hierarchies whose exactly convertible leaves have been replaced by BREPs.
+
+  * Run the experimental BREP-to-CSG recognizer on controlled and NIST example
+    solids, classifying fully implicit, mixed, unsupported, and failed results
+    before applying the shared-line partition comparison.
+
   * Stratify /home/cyapp/step_corpus_g by face count, trim count, rational
     degree/order, closed/singular surfaces, bbox scale, file size, and prep
     cost.
@@ -1391,6 +1440,11 @@ Correctness:
   * Original CSG regions and their converted BREPs have no unexplained paired
     partition difference on the shared deterministic Crofton line set outside
     explicit numeric/tangent uncertainty bands.
+
+  * Later-stage topology-identical implicit-leaf and BREP-leaf CSG hierarchies
+    agree on ordered partitions.  Fully reconstructed BREP-to-CSG NIST cases
+    likewise agree; mixed reconstructions report their residual BREP content
+    and are not claimed as fully independent oracles.
 
   * Paired Crofton crossing and chord differences converge without systematic
     bias, and independent surface-area and volume estimates agree with
@@ -1526,6 +1580,16 @@ Primary BRL-CAD implementation sources:
 
   * src/librt/tests/primitive_brep.cpp
       existing implicit-to-BREP topology validation.
+
+  * src/librt/comb/comb_brep.cpp
+      recursive CSG-to-evaluated-BREP conversion.  This is distinct from the
+      topology-preserving BREP-leaf hierarchy oracle and belongs to a later
+      Boolean-conversion qualification tier.
+
+  * src/libged/brep/csg.cpp, include/brep/csg.h, and
+    src/libbrep/shape_recognition/
+      the experimental `brep csg` command, brep_to_csg(), primitive
+      recognition, and partial/full implicit reconstruction machinery.
 
   * src/proc-db/brep_cobb.cpp and src/proc-db/brep_invalid.cpp
       Cobb surface definition and an existing invalid-trim fixture.
