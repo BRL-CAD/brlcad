@@ -16,9 +16,10 @@ implemented.  Directed implicit-sphere/converted-BREP pole rays now pass.  An
 in-memory C++ ray corpus and signed grazing report are in place.  The initial
 report exposed a repeatable false-interval plateau at tangency; conditioned
 root acceptance now removes that plateau and all sampled outside false hits,
-and those cases are permanent gates.  Surface-tree density and seam behavior
-have not yet changed.  Phase 0 baselines documented in brep_raytrace_plan.txt
-remain authoritative.
+and those cases are permanent gates.  A shared-line Crofton harness now
+compares final implicit and BREP partitions on the identical 32,000-ray sphere
+sample.  Surface-tree density and seam behavior have not yet changed.  Phase 0
+baselines documented in brep_raytrace_plan.txt remain authoritative.
 
 
 REPOSITORY STATE AT START
@@ -154,10 +155,13 @@ IMPLEMENTATION CHECKLIST
 
 [ ] Paired correctness harness
     [ ] Compare implicit/CSG and converted BREP ordered partitions.
-        [x] Seed in-memory C++ corpus with paired sphere raw segments.
-        [ ] Exercise normal rt_shootray partitions and CSG combinations.
-    [ ] Reuse identical deterministic Crofton lines and bounding sphere.
-    [ ] Report per-line crossing and chord differences.
+        [x] Seed in-memory C++ corpus with paired sphere raw segments and
+            normal rt_shootray partitions.
+        [x] Exercise normal rt_shootray partitions for the sphere fixture.
+        [ ] Exercise non-spherical primitives and CSG combinations.
+    [x] Reuse identical deterministic Crofton lines and bounding sphere for
+        the initial sphere fixture; general primitive/CSG reuse remains.
+    [x] Report per-line crossing and chord differences for the sphere fixture.
     [x] Implement initial signed logarithmic sphere grazing report and a
         non-regression envelope; raw solver instrumentation is still pending.
     [x] Add aggregate implicit/BREP/analytic sphere Crofton ground truth.
@@ -297,6 +301,36 @@ Conditioned root convergence:
     --output-on-failure
     PASS: 12/12
 
+Shared-line Crofton and final partitions:
+
+  * The test now serializes the implicit sphere and its converted BREP into
+    separate in-memory databases, prepares normal rt_i instances, and shoots
+    each line through rt_shootray.  Fixed-capacity records retain every final
+    partition endpoint and post-Boolean entry/exit normal.
+
+  * One fixed-seed 32,000-line set is generated from an explicitly shared
+    bounding sphere using the production Crofton point-pairing algorithm.
+    Nested checkpoints at 2,000, 8,000, and 32,000 rays report independent
+    area/volume estimates and sample standard errors.  A four-standard-error
+    confidence band guards both implicit and BREP convergence to the analytic
+    sphere values.
+
+  * All 32,000 final partition lists agree, with no tangent-band exceptions.
+    Maximum paired endpoint error is approximately 9.69e-8 mm.  Signed and
+    absolute total chord differences are approximately 6.74e-5 mm and
+    8.15e-5 mm respectively over the full set; both aggregate representations
+    remain far inside the paired 0.1 percent gate.
+
+  cmake --build .build --target rt_brep_ray -j8
+    PASS
+
+  .build/src/librt/tests/rt_brep_ray
+    PASS: shared partition/Crofton sphere and all directed cases
+
+  ctest --test-dir .build -R '^(rt_brep_ray|rt_crofton)$' \
+    --output-on-failure
+    PASS: 2/2
+
 Legacy cleanup:
 
   * src/librt/primitives/bspline/bspline.cpp now unconditionally delegates
@@ -322,9 +356,7 @@ NEXT ACTIONS
 3. Add a safeguarded local correction/contact classification beyond the first
    conditioned Newton improvement.  Do not lower tree density until candidate
    exclusion and fallback behavior are observable and proven equivalent.
-4. Add normal rt_shootray partition comparisons, then feed exactly the same
-   deterministic Cauchy-Crofton lines and bounding sphere to implicit and BREP
-   paths.  The current aggregate analytic/paired sphere gate is only the first
-   stage.
+4. Generalize the new shared rt_shootray/Crofton comparison from the sphere to
+   ellipsoid, ARB8, cylinder/cone, torus, then well-separated CSG regions.
 5. Add sewn Cobb and deliberate seam/trim perturbation fixtures before changing
    tolerance roles or near-trim hit policy.
