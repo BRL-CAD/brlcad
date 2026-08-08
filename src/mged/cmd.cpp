@@ -945,6 +945,7 @@ cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 int
 cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    static const char *gqa_options = "A:a:de:f:g:Gn:N:p:P:qrS:t:U:u:vV:W:h?";
     char **vp;
     int i;
     int ret;
@@ -963,21 +964,26 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 
     vp = &gd_rt_cmd[0];
 
-    /* Grab command name and any options */
+    /* Locate the first object without mistaking separate option values for
+     * geometry names.  ged_gqa_core() will perform the authoritative parse. */
+    char *saved_optarg = bu_optarg;
+    int saved_opterr = bu_opterr;
+    int saved_optopt = bu_optopt;
+    int saved_optind = bu_optind;
+    bu_opterr = 0;
+    bu_optind = 1;
+    while (bu_getopt(argc, (char * const *)argv, gqa_options) != -1)
+	;
+    i = bu_optind;
+    bu_optarg = saved_optarg;
+    bu_opterr = saved_opterr;
+    bu_optopt = saved_optopt;
+    bu_optind = saved_optind;
+
+    /* Grab command name and all options, including separate values. */
     *vp++ = (char *)argv[0];
-    for (i=1; i < argc; i++) {
-	if (argv[i][0] != '-')
-	    break;
-
-	if (argv[i][0] == '-' &&
-	    argv[i][1] == '-' &&
-	    argv[i][2] == '\0') {
-	    ++i;
-	    break;
-	}
-
-	*vp++ = (char *)argv[i];
-    }
+    for (int option_index = 1; option_index < i; option_index++)
+	*vp++ = (char *)argv[option_index];
 
     /*
      * Append remaining args, if any. Otherwise, append currently
