@@ -2066,7 +2066,7 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 
 
 static bool
-brep_trace_continuation_certificate(struct rt_brep_shot_trace *trace,
+brep_continuation_certificate(struct rt_brep_shot_trace *trace,
     const brep_surface_span &span, const ON_Ray &ray,
     const double minimum[2], const double maximum[2],
     const ON_2dPoint &root_uv, double root_dist, double existing_dist)
@@ -2111,7 +2111,23 @@ brep_trace_continuation_certificate(struct rt_brep_shot_trace *trace,
     double minimum_t = DBL_MAX;
     double maximum_t = -DBL_MAX;
     const double parameter_tolerance = 1.0e-12;
-    const double distance_tolerance = 1.0e-7;
+    const double ray_length = ray.m_dir.Length();
+    const double span_scale = span.bbox.IsValid() ?
+	span.bbox.Diagonal().Length() : 0.0;
+    const double coordinate_scale = std::max(span_scale,
+	std::max(fabs(ray.m_origin.x),
+	std::max(fabs(ray.m_origin.y), fabs(ray.m_origin.z))));
+    if (!(ray_length > DBL_MIN) || !std::isfinite(ray_length) ||
+	    !(span_scale > DBL_MIN) || !std::isfinite(span_scale) ||
+	    !std::isfinite(coordinate_scale)) {
+	trace->continuation_certificate_exhausted++;
+	return false;
+    }
+    const double distance_tolerance = std::max(
+	BREP_DIRECT_ROOT_RELATIVE_TOLERANCE * span_scale,
+	BREP_DIRECT_EVALUATION_ULPS * DBL_EPSILON * coordinate_scale) /
+	ray_length + 128.0 * DBL_EPSILON * std::max(1.0,
+	std::max(fabs(root_dist), fabs(existing_dist)));
     for (size_t i = 0; i < certificate.stored_surface_boxes; ++i) {
 	const struct rt_brep_trace_surface_box &box =
 	    certificate.surface_boxes[i];
@@ -2259,7 +2275,7 @@ brep_directed_angle(const ON_3dVector &from, const ON_3dVector &to,
 
 
 static void
-brep_trace_edge_sector(struct rt_brep_trace_edge &observation,
+brep_classify_edge_sector(struct rt_brep_trace_edge &observation,
     const struct brep_specific *bs, const brep_edge_record &record,
     const ON_Ray &ray)
 {
@@ -2348,7 +2364,7 @@ brep_trace_edge_sector(struct rt_brep_trace_edge &observation,
 
 
 static void
-brep_trace_edges(struct rt_brep_shot_trace *trace,
+brep_observe_edges(struct rt_brep_shot_trace *trace,
     const struct brep_specific *bs,
     const ON_Ray &ray)
 {
@@ -2430,40 +2446,45 @@ brep_trace_edges(struct rt_brep_shot_trace *trace,
 	    distance <= record.tolerance + roundoff;
 	if (observation.within_edge_tolerance) {
 	    trace->edges_within_tolerance++;
-	    brep_trace_edge_sector(observation, bs, record, ray);
+	    brep_classify_edge_sector(observation, bs, record, ray);
 	}
     }
 }
 
 
 static void
-brep_trace_closure(struct rt_brep_shot_trace *trace,
-    const struct brep_specific *bs, const std::list<brep_hit> &hits)
+brep_classify_closure(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const brep_hit *hit)
 {
     if (!trace || !bs || !bs->is_solid || bs->plate_mode ||
-	    hits.size() != 1)
+	    !hit)
 	return;
-    const brep_hit &hit = hits.front();
     for (size_t edge_index = 0; edge_index < trace->stored_edges;
 	    ++edge_index) {
 	const struct rt_brep_trace_edge &edge = trace->edges[edge_index];
+	const double roundoff = std::max(ON_ZERO_TOLERANCE,
+	    128.0 * DBL_EPSILON * std::max(1.0,
+	    edge.measured_discrepancy));
 	if (!edge.within_edge_tolerance || !edge.sector_valid ||
-		edge.closest_state != 1 ||
-		(hit.face->m_face_index != edge.face_index[0] &&
-		 hit.face->m_face_index != edge.face_index[1]))
+		edge.closest_state != 1 || !edge.discrepancy_measured ||
+		edge.measured_discrepancy > edge.model_tolerance + roundoff ||
+		std::max(edge.lift_distance[0], edge.lift_distance[1]) >
+		edge.model_tolerance + roundoff ||
+		(hit->face->m_face_index != edge.face_index[0] &&
+		 hit->face->m_face_index != edge.face_index[1]))
 	    continue;
-	const bool ordered = hit.direction == brep_hit::ENTERING ?
-	    edge.ray_dist > hit.dist + BREP_SAME_POINT_TOLERANCE :
-	    edge.ray_dist < hit.dist - BREP_SAME_POINT_TOLERANCE;
+	const bool ordered = hit->direction == brep_hit::ENTERING ?
+	    edge.ray_dist > hit->dist + BREP_SAME_POINT_TOLERANCE :
+	    edge.ray_dist < hit->dist - BREP_SAME_POINT_TOLERANCE;
 	if (!ordered)
 	    continue;
 	trace->closure_candidates++;
 	if (trace->closure_edge_index >= 0)
 	    continue;
 	trace->closure_edge_dist = edge.ray_dist;
-	trace->closure_existing_dist = hit.dist;
+	trace->closure_existing_dist = hit->dist;
 	trace->closure_edge_index = edge.edge_index;
-	trace->closure_missing_direction = hit.direction == brep_hit::ENTERING ?
+	trace->closure_missing_direction = hit->direction == brep_hit::ENTERING ?
 	    brep_hit::LEAVING : brep_hit::ENTERING;
     }
 }
@@ -2606,14 +2627,13 @@ brep_continuation_newton(const brep_surface_span &span, const ON_Ray &ray,
 
 
 static void
-brep_trace_continuation(struct rt_brep_shot_trace *trace,
+brep_resolve_continuation(struct rt_brep_shot_trace *trace,
     const struct brep_specific *bs, const ON_Ray &ray,
-    const std::list<brep_hit> &hits)
+    const brep_hit *hit, brep_hit *repaired_hit)
 {
     if (!trace || !bs || !bs->brep || trace->closure_candidates != 1 ||
-	    trace->closure_edge_index < 0 || hits.size() != 1)
+	    trace->closure_edge_index < 0 || !hit)
 	return;
-    const brep_hit &hit = hits.front();
     const ON_Brep &brep = *bs->brep;
     if (trace->closure_edge_index >= brep.m_E.Count())
 	return;
@@ -2625,7 +2645,7 @@ brep_trace_continuation(struct rt_brep_shot_trace *trace,
     for (int side = 0; side < 2; ++side) {
 	const int trim_index = edge.m_ti[side];
 	if (trim_index >= 0 && trim_index < brep.m_T.Count() &&
-		brep.m_T[trim_index].FaceIndexOf() == hit.face->m_face_index) {
+		brep.m_T[trim_index].FaceIndexOf() == hit->face->m_face_index) {
 	    trim = &brep.m_T[trim_index];
 	    break;
 	}
@@ -2660,14 +2680,16 @@ brep_trace_continuation(struct rt_brep_shot_trace *trace,
 	    !trim_derivative3.IsValid())
 	return;
     const ON_2dPoint edge_uv(edge_uv3.x, edge_uv3.y);
-    const ON_2dPoint hit_uv(hit.uv[0], hit.uv[1]);
+    const ON_2dPoint hit_uv(hit->uv[0], hit->uv[1]);
+    brep_hit continuation_hit;
+    bool have_continuation_hit = false;
 
     for (std::vector<brep_face_record>::const_iterator face_it =
 	    bs->face_records.begin(); face_it != bs->face_records.end();
 	    ++face_it) {
 	const brep_face_record &face_record = *face_it;
 	if (!face_record.supported ||
-		face_record.face_index != hit.face->m_face_index)
+		face_record.face_index != hit->face->m_face_index)
 	    continue;
 	for (size_t span_index = face_record.span_begin;
 		span_index < face_record.span_begin + face_record.span_count;
@@ -2717,7 +2739,7 @@ brep_trace_continuation(struct rt_brep_shot_trace *trace,
 	    if (!result.converged)
 		continue;
 	    ON_3dVector oriented_normal = result.normal;
-	    if (hit.face->m_bRev)
+	    if (hit->face->m_bRev)
 		oriented_normal.Reverse();
 	    const double normal_dot = oriented_normal * ray.m_dir;
 	    const int direction = normal_dot < 0.0 ? brep_hit::ENTERING :
@@ -2747,9 +2769,9 @@ brep_trace_continuation(struct rt_brep_shot_trace *trace,
 		    certificate_maximum[parameter_direction]);
 	    }
 	    trace->continuation_candidates++;
-	    if (brep_trace_continuation_certificate(trace, span, ray,
+	    if (brep_continuation_certificate(trace, span, ray,
 		    certificate_minimum, certificate_maximum, root_uv,
-		    result.dist, hit.dist))
+		    result.dist, hit->dist))
 		trace->continuation_certified_candidates++;
 	    if (trace->continuation_face_index >= 0)
 		continue;
@@ -2759,26 +2781,57 @@ brep_trace_continuation(struct rt_brep_shot_trace *trace,
 	    trace->continuation_uv[1] = root_uv.y;
 	    trace->continuation_residual = result.residual;
 	    trace->continuation_normal_dot = normal_dot;
-	    trace->continuation_face_index = hit.face->m_face_index;
+	    trace->continuation_face_index = hit->face->m_face_index;
+	    vect_t point;
+	    vect_t normal;
+	    pt2d_t uv = {root_uv.x, root_uv.y};
+	    const ON_3dPoint ray_point = ray.m_origin +
+		(ray.m_dir * result.dist);
+	    VMOVE(point, ray_point);
+	    VMOVE(normal, oriented_normal);
+	    continuation_hit = brep_hit(*hit->face, result.dist, ray, point,
+		normal, uv);
+	    continuation_hit.closeToEdge = true;
+	    continuation_hit.trimmed = true;
+	    continuation_hit.hit = brep_hit::CRACK_HIT;
+	    continuation_hit.direction =
+		(brep_hit::hit_direction)direction;
+	    continuation_hit.sbv = hit->sbv;
+	    continuation_hit.m_adj_face_index =
+		edge.m_ti[0] >= 0 && edge.m_ti[0] < brep.m_T.Count() &&
+		brep.m_T[edge.m_ti[0]].FaceIndexOf() !=
+		hit->face->m_face_index ?
+		brep.m_T[edge.m_ti[0]].FaceIndexOf() :
+		(edge.m_ti[1] >= 0 && edge.m_ti[1] < brep.m_T.Count() ?
+		brep.m_T[edge.m_ti[1]].FaceIndexOf() : -99);
+	    have_continuation_hit = true;
 	}
     }
     if (trace->continuation_candidates == 1 &&
 	    trace->continuation_certified_candidates == 1 &&
 	    trace->continuation_face_index >= 0) {
-	if (hit.direction == brep_hit::ENTERING &&
+	const double ray_length = ray.m_dir.Length();
+	if (!(ray_length > DBL_MIN) || !std::isfinite(ray_length))
+	    return;
+	const double minimum_t = std::max(0.0,
+	    (double)observation->model_tolerance) / ray_length;
+	if (hit->direction == brep_hit::ENTERING &&
 		trace->closure_missing_direction == brep_hit::LEAVING &&
-		trace->continuation_dist > hit.dist) {
+		trace->continuation_dist - hit->dist >= minimum_t) {
 	    trace->closure_shadow_segments = 1;
-	    trace->closure_shadow_in_dist = hit.dist;
+	    trace->closure_shadow_in_dist = hit->dist;
 	    trace->closure_shadow_out_dist = trace->continuation_dist;
 	} else if (trace->closure_missing_direction == brep_hit::ENTERING &&
-		hit.direction == brep_hit::LEAVING &&
-		trace->continuation_dist < hit.dist) {
+		hit->direction == brep_hit::LEAVING &&
+		hit->dist - trace->continuation_dist >= minimum_t) {
 	    trace->closure_shadow_segments = 1;
 	    trace->closure_shadow_in_dist = trace->continuation_dist;
-	    trace->closure_shadow_out_dist = hit.dist;
+	    trace->closure_shadow_out_dist = hit->dist;
 	}
     }
+    if (repaired_hit && trace->closure_shadow_segments == 1 &&
+	    have_continuation_hit)
+	*repaired_hit = continuation_hit;
 }
 
 
@@ -3399,6 +3452,46 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray)
 
 
 static bool
+repair_fixed_brep_crack(brep_hit_workspace &hits,
+    const struct brep_specific *bs, const ON_Ray &ray)
+{
+    if (!bs || !bs->is_solid || bs->plate_mode || hits.size() != 1)
+	return false;
+
+    struct rt_brep_shot_trace repair = {};
+    repair.closure_edge_index = -1;
+    repair.closure_missing_direction = -1;
+    repair.continuation_face_index = -1;
+    brep_observe_edges(&repair, bs, ray);
+    if (repair.edge_overflow || repair.edge_evaluation_failures ||
+	    repair.edge_observations != repair.stored_edges)
+	return false;
+    brep_classify_closure(&repair, bs, &hits.front());
+    brep_hit repaired_hit;
+    brep_resolve_continuation(&repair, bs, ray, &hits.front(), &repaired_hit);
+    if (repair.closure_shadow_segments != 1 ||
+	    repair.continuation_candidates != 1 ||
+	    repair.continuation_certified_candidates != 1 ||
+	    repair.continuation_certificate_exhausted ||
+	    repair.continuation_certificate_existing_overlap)
+	return false;
+
+    const brep_hit &existing_hit = hits.front();
+    const bool ordered = existing_hit.direction == brep_hit::ENTERING ?
+	existing_hit.dist < repaired_hit.dist &&
+	    repaired_hit.direction == brep_hit::LEAVING :
+	repaired_hit.dist < existing_hit.dist &&
+	    repaired_hit.direction == brep_hit::ENTERING;
+    if (!ordered)
+	return false;
+
+    hits.push_back(repaired_hit);
+    hits.sort();
+    return true;
+}
+
+
+static bool
 containsNearMiss(const std::list<brep_hit> *hits)
 {
     for (std::list<brep_hit>::const_iterator i = hits->begin(); i != hits->end(); ++i) {
@@ -3618,7 +3711,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     brep_trace_isolated_roots(trace, bs, r);
     brep_trace_local_clusters(trace,
 	stp->st_rtip ? &stp->st_rtip->rti_tol : NULL);
-    brep_trace_edges(trace, bs, r);
+    brep_observe_edges(trace, bs, r);
     if (!fixed_leaf_count)
 	return 0; // MISS
 
@@ -3632,6 +3725,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 
     if (!trace && !fixed_hits.overflow()) {
 	(void)cleanup_fixed_brep_hits(fixed_hits, *rp);
+	(void)repair_fixed_brep_crack(fixed_hits, bs, r);
 	return emit_fixed_brep_hits(fixed_hits, stp, rp, ap, seghead, bs);
     }
 
@@ -3989,8 +4083,14 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	    }
 	}
     }
-    brep_trace_closure(trace, bs, hits);
-    brep_trace_continuation(trace, bs, r, hits);
+    const brep_hit *unmatched_hit = hits.size() == 1 ? &hits.front() : NULL;
+    brep_classify_closure(trace, bs, unmatched_hit);
+    brep_hit repaired_hit;
+    brep_resolve_continuation(trace, bs, r, unmatched_hit, &repaired_hit);
+    if (trace && trace->closure_shadow_segments == 1) {
+	hits.push_back(repaired_hit);
+	hits.sort();
+    }
 
     if (bs->plate_mode) {
 
