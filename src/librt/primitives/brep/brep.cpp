@@ -2747,48 +2747,170 @@ brep_trace_isolated_roots(struct rt_brep_shot_trace *trace,
 	    span.surface_domain[0].NormalizedParameterAt(box.uv_max[0]),
 	    span.surface_domain[1].NormalizedParameterAt(box.uv_max[1])
 	};
-	const ON_2dPoint seed(0.5 * (minimum[0] + maximum[0]),
-	    0.5 * (minimum[1] + maximum[1]));
-	trace->local_root_attempts++;
-	brep_continuation_result result = brep_continuation_newton(span, ray,
-	    seed, minimum, maximum);
 	const double span_scale = span.bbox.IsValid() ?
 	    span.bbox.Diagonal().Length() : 0.0;
-	const double coordinate_scale = std::max(span_scale,
-	    std::max(fabs(ray.m_origin.x),
-	    std::max(fabs(ray.m_origin.y),
-	    std::max(fabs(ray.m_origin.z),
-	    std::max(fabs(result.point.x),
-	    std::max(fabs(result.point.y), fabs(result.point.z)))))));
-	const double distance_tolerance = std::max(
-	    BREP_DIRECT_ROOT_RELATIVE_TOLERANCE * span_scale,
-	    BREP_DIRECT_EVALUATION_ULPS * DBL_EPSILON * coordinate_scale);
-	if (!result.converged ||
-		!std::isfinite(distance_tolerance) ||
-		result.dist < box.t_min - distance_tolerance ||
-		result.dist > box.t_max + distance_tolerance) {
-	    trace->local_root_failures++;
-	    continue;
+	const double seed_fraction[9][2] = {
+	    {0.5, 0.5},
+	    {0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, {1.0, 1.0},
+	    {0.5, 0.0}, {0.5, 1.0}, {0.0, 0.5}, {1.0, 0.5}
+	};
+	for (size_t seed_index = 0; seed_index < 9; ++seed_index) {
+	    const ON_2dPoint seed(
+		minimum[0] + seed_fraction[seed_index][0] *
+		(maximum[0] - minimum[0]),
+		minimum[1] + seed_fraction[seed_index][1] *
+		(maximum[1] - minimum[1]));
+	    trace->local_root_attempts++;
+	    brep_continuation_result result = brep_continuation_newton(span,
+		ray, seed, minimum, maximum);
+	    const double coordinate_scale = std::max(span_scale,
+		std::max(fabs(ray.m_origin.x),
+		std::max(fabs(ray.m_origin.y),
+		std::max(fabs(ray.m_origin.z),
+		std::max(fabs(result.point.x),
+		std::max(fabs(result.point.y), fabs(result.point.z)))))));
+	    const double distance_tolerance = std::max(
+		BREP_DIRECT_ROOT_RELATIVE_TOLERANCE * span_scale,
+		BREP_DIRECT_EVALUATION_ULPS * DBL_EPSILON * coordinate_scale);
+	    if (!result.converged ||
+		    !std::isfinite(distance_tolerance) ||
+		    result.dist < box.t_min - distance_tolerance ||
+		    result.dist > box.t_max + distance_tolerance) {
+		trace->local_root_failures++;
+		continue;
+	    }
+
+	    bool duplicate = false;
+	    for (size_t root_index = 0;
+		    root_index < trace->stored_local_roots; ++root_index) {
+		const struct rt_brep_trace_local_root &root =
+		    trace->local_roots[root_index];
+		if (root.span_index == box.span_index &&
+			fabs(root.dist - result.dist) <=
+			4.0 * distance_tolerance) {
+		    duplicate = true;
+		    break;
+		}
+	    }
+	    if (duplicate) {
+		trace->local_root_duplicates++;
+		continue;
+	    }
+
+	    trace->local_root_candidates++;
+	    if (trace->stored_local_roots >= RT_BREP_TRACE_MAX_LOCAL_ROOTS) {
+		trace->local_root_overflow++;
+		continue;
+	    }
+	    struct rt_brep_trace_local_root &root =
+		trace->local_roots[trace->stored_local_roots++];
+	    root.dist = result.dist;
+	    root.uv[0] = span.surface_domain[0].ParameterAt(result.uv.x);
+	    root.uv[1] = span.surface_domain[1].ParameterAt(result.uv.y);
+	    root.residual = result.residual;
+	    ON_3dVector normal = result.normal;
+	    if (box.face_index >= 0 && box.face_index < bs->brep->m_F.Count() &&
+		    bs->brep->m_F[box.face_index].m_bRev)
+		normal.Reverse();
+	    root.normal_dot = normal * ray.m_dir;
+	    root.iterations = result.iterations;
+	    root.face_index = box.face_index;
+	    root.span_index = box.span_index;
 	}
-	trace->local_root_candidates++;
-	if (trace->stored_local_roots >= RT_BREP_TRACE_MAX_LOCAL_ROOTS) {
-	    trace->local_root_overflow++;
-	    continue;
+    }
+}
+
+
+static void
+brep_trace_local_clusters(struct rt_brep_shot_trace *trace,
+    const struct bn_tol *tol)
+{
+    if (!trace)
+	return;
+    trace->local_cluster_tolerance = tol && tol->dist > 0.0 &&
+	std::isfinite(tol->dist) ? 0.1 * tol->dist : 0.0;
+
+    size_t order[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    for (size_t i = 0; i < trace->stored_local_roots; ++i) {
+	order[i] = i;
+	for (size_t j = i; j > 0 &&
+		trace->local_roots[order[j]].dist <
+		trace->local_roots[order[j - 1]].dist; --j)
+	    std::swap(order[j], order[j - 1]);
+    }
+
+    for (size_t order_index = 0;
+	    order_index < trace->stored_local_roots; ++order_index) {
+	const struct rt_brep_trace_local_root &root =
+	    trace->local_roots[order[order_index]];
+	struct rt_brep_trace_local_cluster *cluster = NULL;
+	for (size_t cluster_index = 0;
+		cluster_index < trace->stored_local_clusters; ++cluster_index) {
+	    struct rt_brep_trace_local_cluster &candidate =
+		trace->local_clusters[cluster_index];
+	    if (candidate.face_index == root.face_index &&
+		    root.dist >= candidate.dist_min -
+		    trace->local_cluster_tolerance &&
+		    root.dist <= candidate.dist_max +
+		    trace->local_cluster_tolerance) {
+		cluster = &candidate;
+		break;
+	    }
 	}
-	struct rt_brep_trace_local_root &root =
-	    trace->local_roots[trace->stored_local_roots++];
-	root.dist = result.dist;
-	root.uv[0] = span.surface_domain[0].ParameterAt(result.uv.x);
-	root.uv[1] = span.surface_domain[1].ParameterAt(result.uv.y);
-	root.residual = result.residual;
-	ON_3dVector normal = result.normal;
-	if (box.face_index >= 0 && box.face_index < bs->brep->m_F.Count() &&
-		bs->brep->m_F[box.face_index].m_bRev)
-	    normal.Reverse();
-	root.normal_dot = normal * ray.m_dir;
-	root.iterations = result.iterations;
-	root.face_index = box.face_index;
-	root.span_index = box.span_index;
+	if (!cluster) {
+	    trace->local_root_clusters++;
+	    if (trace->stored_local_clusters >=
+		    RT_BREP_TRACE_MAX_LOCAL_CLUSTERS) {
+		trace->local_cluster_overflow++;
+		continue;
+	    }
+	    cluster = &trace->local_clusters[trace->stored_local_clusters++];
+	    *cluster = {};
+	    cluster->dist_min = root.dist;
+	    cluster->dist_max = root.dist;
+	    cluster->normal_dot_min = root.normal_dot;
+	    cluster->normal_dot_max = root.normal_dot;
+	    cluster->face_index = root.face_index;
+	}
+	cluster->dist_min = std::min((double)cluster->dist_min,
+	    (double)root.dist);
+	cluster->dist_max = std::max((double)cluster->dist_max,
+	    (double)root.dist);
+	cluster->normal_dot_min = std::min((double)cluster->normal_dot_min,
+	    (double)root.normal_dot);
+	cluster->normal_dot_max = std::max((double)cluster->normal_dot_max,
+	    (double)root.normal_dot);
+	cluster->roots++;
+	if (root.normal_dot < -BREP_GRAZING_DOT_TOL)
+	    cluster->entering_roots++;
+	else if (root.normal_dot > BREP_GRAZING_DOT_TOL)
+	    cluster->leaving_roots++;
+	else
+	    cluster->tangent_roots++;
+    }
+
+    for (size_t i = 0; i < trace->stored_local_clusters; ++i) {
+	struct rt_brep_trace_local_cluster &cluster = trace->local_clusters[i];
+	if (cluster.tangent_roots ||
+		(cluster.entering_roots && cluster.leaving_roots))
+	    cluster.classification = RT_BREP_TRACE_LOCAL_CONTACT;
+	else if (cluster.entering_roots)
+	    cluster.classification = RT_BREP_TRACE_ENTERING;
+	else if (cluster.leaving_roots)
+	    cluster.classification = RT_BREP_TRACE_LEAVING;
+	else
+	    cluster.classification = RT_BREP_TRACE_LOCAL_UNRESOLVED;
+    }
+
+    for (size_t i = 1; i < trace->stored_local_clusters; ++i) {
+	struct rt_brep_trace_local_cluster value = trace->local_clusters[i];
+	size_t j = i;
+	while (j > 0 && value.dist_min <
+		trace->local_clusters[j - 1].dist_min) {
+	    trace->local_clusters[j] = trace->local_clusters[j - 1];
+	    --j;
+	}
+	trace->local_clusters[j] = value;
     }
 }
 
@@ -3044,6 +3166,8 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	trace->intersected_leaves = inters.size();
     brep_trace_surface_spans(trace, bs, r);
     brep_trace_isolated_roots(trace, bs, r);
+    brep_trace_local_clusters(trace,
+	stp->st_rtip ? &stp->st_rtip->rti_tol : NULL);
     brep_trace_edges(trace, bs, r);
     if (inters.empty())
 	return 0; // MISS
