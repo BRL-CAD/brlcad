@@ -2298,6 +2298,17 @@ utah_newton_4corner_solver(const BBNode* sbv, const ON_Surface* surf,
 }
 
 
+static int
+brep_initial_hit_class(int trim_status, double trim_distance)
+{
+    if (trim_status != 1)
+	return fabs(trim_distance) < BREP_EDGE_MISS_TOLERANCE ?
+	    brep_hit::NEAR_HIT : brep_hit::CLEAN_HIT;
+    return fabs(trim_distance) < BREP_EDGE_MISS_TOLERANCE ?
+	brep_hit::NEAR_MISS : brep_hit::CLEAN_MISS;
+}
+
+
 static void
 brep_trace_root(struct rt_brep_shot_trace *trace, const ON_BrepFace *face,
     double dist, const ON_2dPoint &uv, const ON_3dVector &surface_normal,
@@ -3859,6 +3870,30 @@ brep_trace_isolated_roots(struct rt_brep_shot_trace *trace,
 	    root.iterations = result.iterations;
 	    root.face_index = box.face_index;
 	    root.span_index = box.span_index;
+	    root.trim_distance = -1.0;
+	    root.adjacent_face_index = -99;
+	    root.trim_status = 1;
+	    root.hit_class = brep_hit::CLEAN_MISS;
+	    root.direction = root.normal_dot < 0.0 ? brep_hit::ENTERING :
+		brep_hit::LEAVING;
+	    if (box.face_index < 0 ||
+		    (size_t)box.face_index >= bs->ctrees.size() ||
+		    !bs->ctrees[box.face_index]) {
+		trace->local_trim_failures++;
+		continue;
+	    }
+	    const BRNode *trim_node = NULL;
+	    size_t trim_candidates = 0;
+	    trace->local_trim_queries++;
+	    root.trim_status = bs->ctrees[box.face_index]->isTrimmed(
+		ON_2dPoint(root.uv[0], root.uv[1]), &trim_node,
+		root.trim_distance, BREP_EDGE_MISS_TOLERANCE,
+		&trim_candidates);
+	    trace->local_trim_candidates += trim_candidates;
+	    root.adjacent_face_index = trim_node ?
+		trim_node->m_adj_face_index : -99;
+	    root.hit_class = brep_initial_hit_class(root.trim_status,
+		root.trim_distance);
 	}
     }
 }
@@ -3958,6 +3993,117 @@ brep_trace_local_clusters(struct rt_brep_shot_trace *trace,
 }
 
 
+struct brep_trace_event_group {
+    double dist_min;
+    double dist_max;
+    double closest_trim[2];
+    double event_dist[2];
+    double event_uv[2][2];
+    double event_normal_dot[2];
+    double event_trim_distance[2];
+    int event_adjacency[2];
+    bool present[2];
+    bool entering[2];
+    bool leaving[2];
+    bool tangent[2];
+    int face_index;
+    int trim_status;
+    int hit_class;
+    int direction_class;
+    int adjacency;
+    double dist;
+    double uv[2];
+    double normal_dot;
+    double trim_distance;
+};
+
+
+template <typename RootType>
+static size_t
+brep_trace_event_groups(const RootType *roots, size_t root_count,
+    size_t *order, brep_trace_event_group *groups, double tolerance)
+{
+    for (size_t i = 0; i < root_count; ++i) {
+	order[i] = i;
+	for (size_t j = i; j > 0; --j) {
+	    const RootType &left = roots[order[j - 1]];
+	    const RootType &right = roots[order[j]];
+	    if (left.face_index < right.face_index ||
+		    (left.face_index == right.face_index &&
+		    left.dist <= right.dist))
+		break;
+	    std::swap(order[j - 1], order[j]);
+	}
+    }
+
+    size_t group_count = 0;
+    for (size_t i = 0; i < root_count; ++i) {
+	const RootType &root = roots[order[i]];
+	brep_trace_event_group *group = group_count ?
+	    &groups[group_count - 1] : NULL;
+	if (!group || group->face_index != root.face_index ||
+		root.dist - group->dist_min > tolerance) {
+	    group = &groups[group_count++];
+	    *group = {};
+	    group->face_index = root.face_index;
+	    group->dist_min = root.dist;
+	    group->dist_max = root.dist;
+	    group->closest_trim[0] = DBL_MAX;
+	    group->closest_trim[1] = DBL_MAX;
+	    group->event_adjacency[0] = -99;
+	    group->event_adjacency[1] = -99;
+	}
+	group->dist_max = std::max(group->dist_max, (double)root.dist);
+	const int state = root.trim_status == 1 ? 1 : 0;
+	const double trim_distance = fabs(root.trim_distance);
+	if (!group->present[state] ||
+		trim_distance < group->closest_trim[state]) {
+	    group->present[state] = true;
+	    group->closest_trim[state] = trim_distance;
+	    group->event_dist[state] = root.dist;
+	    group->event_uv[state][0] = root.uv[0];
+	    group->event_uv[state][1] = root.uv[1];
+	    group->event_normal_dot[state] = root.normal_dot;
+	    group->event_trim_distance[state] = root.trim_distance;
+	    group->event_adjacency[state] = root.adjacent_face_index;
+	}
+	if (root.normal_dot < -BREP_GRAZING_DOT_TOL)
+	    group->entering[state] = true;
+	else if (root.normal_dot > BREP_GRAZING_DOT_TOL)
+	    group->leaving[state] = true;
+	else
+	    group->tangent[state] = true;
+    }
+
+    for (size_t i = 0; i < group_count; ++i) {
+	brep_trace_event_group &group = groups[i];
+	const int state = group.present[0] ? 0 : 1;
+	group.trim_status = state;
+	const bool near_trim = group.closest_trim[state] <
+	    BREP_EDGE_MISS_TOLERANCE;
+	group.hit_class = state == 0 ?
+	    (near_trim ? brep_hit::NEAR_HIT : brep_hit::CLEAN_HIT) :
+	    (near_trim ? brep_hit::NEAR_MISS : brep_hit::CLEAN_MISS);
+	if (group.tangent[state] ||
+		(group.entering[state] && group.leaving[state]))
+	    group.direction_class = RT_BREP_TRACE_LOCAL_CONTACT;
+	else if (group.entering[state])
+	    group.direction_class = brep_hit::ENTERING;
+	else if (group.leaving[state])
+	    group.direction_class = brep_hit::LEAVING;
+	else
+	    group.direction_class = RT_BREP_TRACE_LOCAL_UNRESOLVED;
+	group.adjacency = group.event_adjacency[state];
+	group.dist = group.event_dist[state];
+	group.uv[0] = group.event_uv[state][0];
+	group.uv[1] = group.event_uv[state][1];
+	group.normal_dot = group.event_normal_dot[state];
+	group.trim_distance = group.event_trim_distance[state];
+    }
+    return group_count;
+}
+
+
 static void
 brep_trace_root_coverage(struct rt_brep_shot_trace *trace)
 {
@@ -3968,71 +4114,19 @@ brep_trace_root_coverage(struct rt_brep_shot_trace *trace)
 	trace->local_cluster_tolerance : BREP_SAME_POINT_TOLERANCE;
     size_t legacy_order[RT_BREP_TRACE_MAX_ROOTS];
     size_t local_order[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
-    size_t legacy_count = trace->stored_roots;
-    size_t local_count = trace->stored_local_roots;
-    for (size_t i = 0; i < legacy_count; ++i) {
-	legacy_order[i] = i;
-	for (size_t j = i; j > 0; --j) {
-	    const struct rt_brep_trace_root &left =
-		trace->roots[legacy_order[j - 1]];
-	    const struct rt_brep_trace_root &right =
-		trace->roots[legacy_order[j]];
-	    if (left.face_index < right.face_index ||
-		    (left.face_index == right.face_index &&
-		    left.dist <= right.dist))
-		break;
-	    std::swap(legacy_order[j - 1], legacy_order[j]);
-	}
-    }
-    for (size_t i = 0; i < local_count; ++i) {
-	local_order[i] = i;
-	for (size_t j = i; j > 0; --j) {
-	    const struct rt_brep_trace_local_root &left =
-		trace->local_roots[local_order[j - 1]];
-	    const struct rt_brep_trace_local_root &right =
-		trace->local_roots[local_order[j]];
-	    if (left.face_index < right.face_index ||
-		    (left.face_index == right.face_index &&
-		    left.dist <= right.dist))
-		break;
-	    std::swap(local_order[j - 1], local_order[j]);
-	}
-    }
-
-    size_t legacy_unique = 0;
-    for (size_t i = 0; i < legacy_count; ++i) {
-	const struct rt_brep_trace_root &root = trace->roots[legacy_order[i]];
-	if (legacy_unique) {
-	    const struct rt_brep_trace_root &previous =
-		trace->roots[legacy_order[legacy_unique - 1]];
-	    if (previous.face_index == root.face_index &&
-		    root.dist - previous.dist <= tolerance)
-		continue;
-	}
-	legacy_order[legacy_unique++] = legacy_order[i];
-    }
-    size_t local_unique = 0;
-    for (size_t i = 0; i < local_count; ++i) {
-	const struct rt_brep_trace_local_root &root =
-	    trace->local_roots[local_order[i]];
-	if (local_unique) {
-	    const struct rt_brep_trace_local_root &previous =
-		trace->local_roots[local_order[local_unique - 1]];
-	    if (previous.face_index == root.face_index &&
-		    root.dist - previous.dist <= tolerance)
-		continue;
-	}
-	local_order[local_unique++] = local_order[i];
-    }
+    brep_trace_event_group legacy_groups[RT_BREP_TRACE_MAX_ROOTS];
+    brep_trace_event_group local_groups[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    const size_t legacy_count = brep_trace_event_groups(trace->roots,
+	trace->stored_roots, legacy_order, legacy_groups, tolerance);
+    const size_t local_count = brep_trace_event_groups(trace->local_roots,
+	trace->stored_local_roots, local_order, local_groups, tolerance);
 
     size_t legacy_index = 0;
     size_t local_index = 0;
     size_t matched = 0;
-    while (legacy_index < legacy_unique && local_index < local_unique) {
-	const struct rt_brep_trace_root &legacy =
-	    trace->roots[legacy_order[legacy_index]];
-	const struct rt_brep_trace_local_root &local =
-	    trace->local_roots[local_order[local_index]];
+    while (legacy_index < legacy_count && local_index < local_count) {
+	const brep_trace_event_group &legacy = legacy_groups[legacy_index];
+	const brep_trace_event_group &local = local_groups[local_index];
 	if (legacy.face_index < local.face_index) {
 	    legacy_index++;
 	    continue;
@@ -4041,24 +4135,62 @@ brep_trace_root_coverage(struct rt_brep_shot_trace *trace)
 	    local_index++;
 	    continue;
 	}
-	if (legacy.dist < local.dist - tolerance) {
+	if (legacy.dist_max < local.dist_min - tolerance) {
 	    legacy_index++;
 	    continue;
 	}
-	if (local.dist < legacy.dist - tolerance) {
+	if (local.dist_max < legacy.dist_min - tolerance) {
 	    local_index++;
 	    continue;
 	}
+	trace->matched_root_events++;
+	trace->root_match_max_t_error = std::max(
+	    (double)trace->root_match_max_t_error,
+	    fabs(legacy.dist - local.dist));
+	trace->root_match_max_uv_error = std::max(
+	    (double)trace->root_match_max_uv_error,
+	    hypot(legacy.uv[0] - local.uv[0],
+		legacy.uv[1] - local.uv[1]));
+	trace->root_match_max_normal_dot_error = std::max(
+	    (double)trace->root_match_max_normal_dot_error,
+	    fabs(legacy.normal_dot - local.normal_dot));
+	bool event_mismatch = false;
+	if (legacy.trim_status != local.trim_status) {
+	    trace->root_trim_status_mismatches++;
+	    event_mismatch = true;
+	}
+	if (legacy.hit_class != local.hit_class) {
+	    trace->root_hit_class_mismatches++;
+	    event_mismatch = true;
+	}
+	if (legacy.direction_class != local.direction_class) {
+	    trace->root_direction_mismatches++;
+	    event_mismatch = true;
+	}
+	const bool near_trim = legacy.hit_class == brep_hit::NEAR_HIT ||
+	    legacy.hit_class == brep_hit::NEAR_MISS ||
+	    local.hit_class == brep_hit::NEAR_HIT ||
+	    local.hit_class == brep_hit::NEAR_MISS;
+	if (near_trim)
+	    trace->root_match_max_trim_error = std::max(
+		(double)trace->root_match_max_trim_error,
+		fabs(legacy.trim_distance - local.trim_distance));
+	if (near_trim && legacy.adjacency != local.adjacency) {
+	    trace->root_adjacency_mismatches++;
+	    event_mismatch = true;
+	}
+	if (event_mismatch)
+	    trace->root_event_mismatches++;
 	matched++;
 	legacy_index++;
 	local_index++;
     }
-    trace->legacy_unique_roots = legacy_unique;
+    trace->legacy_unique_roots = legacy_count;
     trace->legacy_unique_roots_matched = matched;
-    trace->legacy_unique_roots_unmatched = legacy_unique - matched;
-    trace->local_unique_roots = local_unique;
+    trace->legacy_unique_roots_unmatched = legacy_count - matched;
+    trace->local_unique_roots = local_count;
     trace->local_unique_roots_matched = matched;
-    trace->local_unique_roots_unmatched = local_unique - matched;
+    trace->local_unique_roots_unmatched = local_count - matched;
 }
 
 
@@ -4130,6 +4262,53 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
 		}
 		if (mismatch)
 		    trace->trim_equivalence_mismatches++;
+	    }
+	    if (trace) {
+		bool mismatch = false;
+		if (!sbv->m_ctree) {
+		    trace->face_trim_equivalence_mismatches++;
+		} else {
+		    const BRNode *face_trim_node = NULL;
+		    double face_trim_distance = -1.0;
+		    size_t face_trim_candidates = 0;
+		    trace->face_trim_queries++;
+		    const int face_trim_status = sbv->m_ctree->isTrimmed(
+			ouv[i], &face_trim_node, face_trim_distance,
+			BREP_EDGE_MISS_TOLERANCE, &face_trim_candidates);
+		    trace->face_trim_candidates += face_trim_candidates;
+		    const int leaf_hit_class = brep_initial_hit_class(
+			trim_status, closesttrim);
+		    const int face_hit_class = brep_initial_hit_class(
+			face_trim_status, face_trim_distance);
+		    if (trim_status != face_trim_status) {
+			trace->face_trim_status_mismatches++;
+			mismatch = true;
+		    }
+		    if (leaf_hit_class != face_hit_class) {
+			trace->face_trim_hit_class_mismatches++;
+			mismatch = true;
+		    }
+		    const bool near_trim =
+			leaf_hit_class == brep_hit::NEAR_HIT ||
+			leaf_hit_class == brep_hit::NEAR_MISS ||
+			face_hit_class == brep_hit::NEAR_HIT ||
+			face_hit_class == brep_hit::NEAR_MISS;
+		    if (near_trim) {
+			trace->face_trim_max_near_distance_error = std::max(
+			    (double)trace->face_trim_max_near_distance_error,
+			    fabs(closesttrim - face_trim_distance));
+			const int leaf_adjacency = trimBR ?
+			    trimBR->m_adj_face_index : -99;
+			const int face_adjacency = face_trim_node ?
+			    face_trim_node->m_adj_face_index : -99;
+			if (leaf_adjacency != face_adjacency) {
+			    trace->face_trim_adjacency_mismatches++;
+			    mismatch = true;
+			}
+		    }
+		    if (mismatch)
+			trace->face_trim_equivalence_mismatches++;
+		}
 	    }
 	    if (trim_status != 1) {
 		ON_3dPoint _pt;
