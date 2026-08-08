@@ -793,6 +793,21 @@ struct rt_brep_linear_hull_test_result {
     int excluded;
 };
 
+#define RT_BREP_FOLD_TEST_MAX_CANDIDATES 4
+
+struct rt_brep_fold_test_result {
+    int frame_available;
+    int regular_direction;
+    int capacity_exhausted;
+    size_t samples;
+    size_t regular_solves;
+    size_t brackets;
+    size_t candidate_count;
+    fastf_t uv[RT_BREP_FOLD_TEST_MAX_CANDIDATES][2];
+    fastf_t residual[RT_BREP_FOLD_TEST_MAX_CANDIDATES];
+    fastf_t weak_bracket_width[RT_BREP_FOLD_TEST_MAX_CANDIDATES];
+};
+
 RT_EXPORT extern int _rt_brep_interval_test(
     const fastf_t *first_coefficients, const fastf_t *second_coefficients,
     int u_order, int v_order, const fastf_t coefficient_error[2],
@@ -807,6 +822,10 @@ RT_EXPORT extern int _rt_brep_linear_hull_test(
     size_t count, const fastf_t coefficient_error[2],
     const fastf_t transform[2][2],
     struct rt_brep_linear_hull_test_result *result);
+RT_EXPORT extern int _rt_brep_fold_test(
+    const fastf_t *first_coefficients, const fastf_t *second_coefficients,
+    int u_order, int v_order, const fastf_t coefficient_error[2],
+    struct rt_brep_fold_test_result *result);
 RT_EXPORT extern int _rt_brep_coefficient_test(
     const fastf_t cv[4], const fastf_t origin[3], const fastf_t direction[3],
     const fastf_t planes[2][3],

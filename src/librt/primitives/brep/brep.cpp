@@ -3738,10 +3738,17 @@ enum brep_rotated_hull_status {
 };
 
 
-static brep_rotated_hull_status
-brep_rotated_surface_hull_status(
+struct brep_conditioned_surface_frame {
+    double transform[2][2];
+    int regular_direction;
+};
+
+
+static bool
+brep_conditioned_surface_frame_init(
     const double values[2][BREP_DIRECT_BEZIER_MAX_CVS],
-    const int order[2], const double coefficient_error[2])
+    const int order[2], const double coefficient_error[2],
+    brep_conditioned_surface_frame &frame)
 {
     brep_interval derivative[2][2];
     double midpoint[2][2];
@@ -3750,7 +3757,7 @@ brep_rotated_surface_hull_status(
 	    if (!brep_surface_derivative_interval(values[equation], order[0],
 		    order[1], direction, coefficient_error[equation],
 		    derivative[equation][direction]))
-		return BREP_ROTATED_HULL_INCONCLUSIVE;
+		return false;
 	    midpoint[equation][direction] =
 		0.5 * derivative[equation][direction].minimum +
 		0.5 * derivative[equation][direction].maximum;
@@ -3760,20 +3767,34 @@ brep_rotated_surface_hull_status(
 	hypot(midpoint[0][0], midpoint[1][0]),
 	hypot(midpoint[0][1], midpoint[1][1])
     };
-    const int direction = scale[0] >= scale[1] ? 0 : 1;
-    if (!(scale[direction] > DBL_MIN) ||
-	    !std::isfinite(scale[direction]))
+    frame.regular_direction = scale[0] >= scale[1] ? 0 : 1;
+    const double regular_scale = scale[frame.regular_direction];
+    if (!(regular_scale > DBL_MIN) || !std::isfinite(regular_scale))
+	return false;
+    frame.transform[0][0] =
+	midpoint[0][frame.regular_direction] / regular_scale;
+    frame.transform[0][1] =
+	midpoint[1][frame.regular_direction] / regular_scale;
+    frame.transform[1][0] = -frame.transform[0][1];
+    frame.transform[1][1] = frame.transform[0][0];
+    return std::isfinite(frame.transform[0][0]) &&
+	std::isfinite(frame.transform[0][1]);
+}
+
+
+static brep_rotated_hull_status
+brep_rotated_surface_hull_status(
+    const double values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const int order[2], const double coefficient_error[2])
+{
+    brep_conditioned_surface_frame frame;
+    if (!brep_conditioned_surface_frame_init(values, order,
+	    coefficient_error, frame))
 	return BREP_ROTATED_HULL_INCONCLUSIVE;
-    const double transform[2][2] = {
-	{midpoint[0][direction] / scale[direction],
-	 midpoint[1][direction] / scale[direction]},
-	{-midpoint[1][direction] / scale[direction],
-	 midpoint[0][direction] / scale[direction]}
-    };
     brep_interval hull[2];
     const size_t count = (size_t)order[0] * order[1];
     if (!brep_linear_coefficient_hulls(values, count, coefficient_error,
-	    transform, hull))
+	    frame.transform, hull))
 	return BREP_ROTATED_HULL_INCONCLUSIVE;
     for (int equation = 0; equation < 2; ++equation) {
 	if (hull[equation].minimum > 0.0 ||
@@ -3781,6 +3802,260 @@ brep_rotated_surface_hull_status(
 	    return BREP_ROTATED_HULL_EXCLUDED;
     }
     return BREP_ROTATED_HULL_RETAINED;
+}
+
+
+static bool
+brep_fold_scalar_surface_evaluate(const double *values, int u_order,
+    int v_order, const double parameter[2], double &value)
+{
+    if (!values || !parameter || u_order < 1 || v_order < 1 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    parameter[0] < 0.0 || parameter[0] > 1.0 ||
+	    parameter[1] < 0.0 || parameter[1] > 1.0)
+	return false;
+    double v_control[BREP_DIRECT_BEZIER_MAX_ORDER];
+    for (int j = 0; j < v_order; ++j) {
+	double work[BREP_DIRECT_BEZIER_MAX_ORDER];
+	for (int i = 0; i < u_order; ++i)
+	    work[i] = values[(size_t)i * v_order + j];
+	for (int level = 1; level < u_order; ++level) {
+	    for (int i = 0; i < u_order - level; ++i)
+		work[i] = (1.0 - parameter[0]) * work[i] +
+		    parameter[0] * work[i + 1];
+	}
+	v_control[j] = work[0];
+    }
+    for (int level = 1; level < v_order; ++level) {
+	for (int j = 0; j < v_order - level; ++j)
+	    v_control[j] = (1.0 - parameter[1]) * v_control[j] +
+		parameter[1] * v_control[j + 1];
+    }
+    value = v_control[0];
+    return std::isfinite(value);
+}
+
+
+static bool
+brep_fold_transformed_evaluate(
+    const double values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const int order[2], const brep_conditioned_surface_frame &frame,
+    const double parameter[2], double transformed[2])
+{
+    double source[2];
+    for (int equation = 0; equation < 2; ++equation) {
+	if (!brep_fold_scalar_surface_evaluate(values[equation], order[0],
+		order[1], parameter, source[equation]))
+	    return false;
+    }
+    for (int row = 0; row < 2; ++row) {
+	transformed[row] = frame.transform[row][0] * source[0] +
+	    frame.transform[row][1] * source[1];
+	if (!std::isfinite(transformed[row]))
+	    return false;
+    }
+    return true;
+}
+
+
+static bool
+brep_fold_regular_solve(
+    const double values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const int order[2], const brep_conditioned_surface_frame &frame,
+    double weak_parameter, double root[2], double &weak_value,
+    struct rt_brep_fold_test_result &result)
+{
+    const int regular = frame.regular_direction;
+    const int weak = 1 - regular;
+    double lower = 0.0;
+    double upper = 1.0;
+    double lower_parameter[2] = {0.0, 0.0};
+    double upper_parameter[2] = {0.0, 0.0};
+    lower_parameter[weak] = upper_parameter[weak] = weak_parameter;
+    lower_parameter[regular] = lower;
+    upper_parameter[regular] = upper;
+    double lower_value[2];
+    double upper_value[2];
+    result.regular_solves++;
+    if (!brep_fold_transformed_evaluate(values, order, frame,
+	    lower_parameter, lower_value) ||
+	    !brep_fold_transformed_evaluate(values, order, frame,
+		upper_parameter, upper_value))
+	return false;
+    if (fabs(lower_value[0]) <= DBL_MIN) {
+	root[0] = lower_parameter[0];
+	root[1] = lower_parameter[1];
+	weak_value = lower_value[1];
+	return true;
+    }
+    if (fabs(upper_value[0]) <= DBL_MIN) {
+	root[0] = upper_parameter[0];
+	root[1] = upper_parameter[1];
+	weak_value = upper_value[1];
+	return true;
+    }
+    if (std::signbit(lower_value[0]) == std::signbit(upper_value[0]))
+	return false;
+
+    double middle_parameter[2] = {0.0, 0.0};
+    middle_parameter[weak] = weak_parameter;
+    double middle_value[2] = {0.0, 0.0};
+    for (int iteration = 0; iteration < 56; ++iteration) {
+	const double middle = 0.5 * lower + 0.5 * upper;
+	if (!(middle > lower) || !(middle < upper))
+	    break;
+	middle_parameter[regular] = middle;
+	if (!brep_fold_transformed_evaluate(values, order, frame,
+		middle_parameter, middle_value))
+	    return false;
+	if (fabs(middle_value[0]) <= DBL_MIN) {
+	    lower = upper = middle;
+	    break;
+	}
+	if (std::signbit(lower_value[0]) ==
+		std::signbit(middle_value[0])) {
+	    lower = middle;
+	    lower_value[0] = middle_value[0];
+	} else {
+	    upper = middle;
+	    upper_value[0] = middle_value[0];
+	}
+    }
+    middle_parameter[regular] = 0.5 * lower + 0.5 * upper;
+    if (!brep_fold_transformed_evaluate(values, order, frame,
+	    middle_parameter, middle_value))
+	return false;
+    root[0] = middle_parameter[0];
+    root[1] = middle_parameter[1];
+    weak_value = middle_value[1];
+    return true;
+}
+
+
+static bool
+brep_fold_store_candidate(
+    const double values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const int order[2], const brep_conditioned_surface_frame &frame,
+    const double root[2], double bracket_width,
+    struct rt_brep_fold_test_result &result)
+{
+    const double duplicate_tolerance = 1024.0 * DBL_EPSILON;
+    for (size_t i = 0; i < result.candidate_count; ++i) {
+	if (fabs(result.uv[i][0] - root[0]) <= duplicate_tolerance &&
+		fabs(result.uv[i][1] - root[1]) <= duplicate_tolerance)
+	    return true;
+    }
+    if (result.candidate_count >= RT_BREP_FOLD_TEST_MAX_CANDIDATES) {
+	result.capacity_exhausted = 1;
+	return false;
+    }
+    double transformed[2];
+    if (!brep_fold_transformed_evaluate(values, order, frame, root,
+	    transformed))
+	return false;
+    const size_t index = result.candidate_count++;
+    result.uv[index][0] = root[0];
+    result.uv[index][1] = root[1];
+    result.residual[index] = hypot(transformed[0], transformed[1]);
+    result.weak_bracket_width[index] = bracket_width;
+    return true;
+}
+
+
+extern "C" int
+_rt_brep_fold_test(const fastf_t *first_coefficients,
+    const fastf_t *second_coefficients, int u_order, int v_order,
+    const fastf_t coefficient_error[2],
+    struct rt_brep_fold_test_result *result)
+{
+    if (!first_coefficients || !second_coefficients || !coefficient_error ||
+	    !result || u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    coefficient_error[0] < 0.0 || coefficient_error[1] < 0.0 ||
+	    !std::isfinite(coefficient_error[0]) ||
+	    !std::isfinite(coefficient_error[1]))
+	return 0;
+    *result = {};
+    const int order[2] = {u_order, v_order};
+    const size_t count = (size_t)u_order * v_order;
+    double values[2][BREP_DIRECT_BEZIER_MAX_CVS] = {};
+    for (size_t i = 0; i < count; ++i) {
+	values[0][i] = first_coefficients[i];
+	values[1][i] = second_coefficients[i];
+    }
+    const double error[2] = {
+	coefficient_error[0], coefficient_error[1]
+    };
+    brep_conditioned_surface_frame frame;
+    if (!brep_conditioned_surface_frame_init(values, order, error, frame))
+	return 1;
+    result->frame_available = 1;
+    result->regular_direction = frame.regular_direction;
+    bool previous_valid = false;
+    double previous_weak_parameter = 0.0;
+    double previous_weak_value = 0.0;
+    for (int sample = 0; sample <= 16; ++sample) {
+	const double weak_parameter = (double)sample / 16.0;
+	double root[2];
+	double weak_value = 0.0;
+	result->samples++;
+	if (!brep_fold_regular_solve(values, order, frame, weak_parameter,
+		root, weak_value, *result)) {
+	    previous_valid = false;
+	    continue;
+	}
+	if (fabs(weak_value) <= DBL_MIN) {
+	    result->brackets++;
+	    if (!brep_fold_store_candidate(values, order, frame, root, 0.0,
+		    *result))
+		return 1;
+	    previous_valid = false;
+	    continue;
+	}
+	if (previous_valid && std::signbit(previous_weak_value) !=
+		std::signbit(weak_value)) {
+	    result->brackets++;
+	    double lower = previous_weak_parameter;
+	    double upper = weak_parameter;
+	    double lower_value = previous_weak_value;
+	    double bracket_root[2] = {root[0], root[1]};
+	    for (int iteration = 0; iteration < 64; ++iteration) {
+		const double middle = 0.5 * lower + 0.5 * upper;
+		if (!(middle > lower) || !(middle < upper))
+		    break;
+		double middle_root[2];
+		double middle_value = 0.0;
+		if (!brep_fold_regular_solve(values, order, frame, middle,
+			middle_root, middle_value, *result))
+		    return 1;
+		bracket_root[0] = middle_root[0];
+		bracket_root[1] = middle_root[1];
+		if (fabs(middle_value) <= DBL_MIN) {
+		    lower = upper = middle;
+		    break;
+		}
+		if (std::signbit(lower_value) == std::signbit(middle_value)) {
+		    lower = middle;
+		    lower_value = middle_value;
+		} else {
+		    upper = middle;
+		}
+	    }
+	    const double final_parameter = 0.5 * lower + 0.5 * upper;
+	    double final_value = 0.0;
+	    if (!brep_fold_regular_solve(values, order, frame,
+		    final_parameter, bracket_root, final_value, *result) ||
+		    !brep_fold_store_candidate(values, order, frame,
+			bracket_root, upper - lower, *result))
+		return 1;
+	}
+	previous_valid = true;
+	previous_weak_parameter = weak_parameter;
+	previous_weak_value = weak_value;
+    }
+    return 1;
 }
 
 
