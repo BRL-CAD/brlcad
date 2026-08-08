@@ -473,7 +473,28 @@ brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace,
 	 trace.fixed_leaf_stored == RT_BREP_MAX_LEAVES &&
 	 trace.fixed_leaf_count == trace.intersected_leaves &&
 	 trace.fixed_leaf_mismatches == 1);
+    size_t surface_corrector_statuses = 0;
+    size_t local_corrector_statuses = 0;
+    for (size_t status = 0;
+	    status < RT_BREP_TRACE_CORRECTOR_STATUS_COUNT; ++status) {
+	surface_corrector_statuses += trace.surface_corrector_status[status];
+	local_corrector_statuses += trace.local_corrector_status[status];
+    }
+    const bool corrector_statuses_match =
+	surface_corrector_statuses == trace.surface_corrector_attempts &&
+	local_corrector_statuses == trace.local_root_attempts &&
+	trace.surface_corrector_status[RT_BREP_TRACE_CORRECTOR_CONVERGED] ==
+	    trace.surface_corrector_converged &&
+	trace.local_corrector_failure_ratios <=
+	    trace.local_root_attempts -
+	    trace.local_corrector_status[RT_BREP_TRACE_CORRECTOR_CONVERGED] &&
+	(!trace.local_corrector_failure_ratios ||
+	 (trace.local_corrector_failure_ratios &&
+	  trace.local_corrector_min_failure_ratio > 1.0 &&
+	  trace.local_corrector_max_failure_ratio >=
+	    trace.local_corrector_min_failure_ratio));
     return leaf_workspace_matches &&
+	corrector_statuses_match &&
 	trace.prepared_production_attempts == 1 &&
 	trace.prepared_production_eligible ==
 	    trace.prepared_production_selected &&
@@ -4680,6 +4701,28 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			trace.stored_local_roots, trace.local_root_failures,
 			trace.surface_isolated_boxes,
 			trace.surface_krawczyk_boxes);
+		    std::printf("  corrector local status=%zu/%zu/%zu/%zu/"
+			"%zu/%zu/%zu/%zu surface=%zu/%zu/%zu/%zu/"
+			"%zu/%zu/%zu/%zu failure-ratio=%.3g/%.3g/%zu\n",
+			trace.local_corrector_status[0],
+			trace.local_corrector_status[1],
+			trace.local_corrector_status[2],
+			trace.local_corrector_status[3],
+			trace.local_corrector_status[4],
+			trace.local_corrector_status[5],
+			trace.local_corrector_status[6],
+			trace.local_corrector_status[7],
+			trace.surface_corrector_status[0],
+			trace.surface_corrector_status[1],
+			trace.surface_corrector_status[2],
+			trace.surface_corrector_status[3],
+			trace.surface_corrector_status[4],
+			trace.surface_corrector_status[5],
+			trace.surface_corrector_status[6],
+			trace.surface_corrector_status[7],
+			trace.local_corrector_min_failure_ratio,
+			trace.local_corrector_max_failure_ratio,
+			trace.local_corrector_failure_ratios);
 		    failures++;
 		}
 	    }

@@ -1432,6 +1432,56 @@ ESTABLISHED FINDINGS
     NURBS regression gate passes 4/4.  The test output deliberately reports
     `resolved-gaps=6` rather than claiming complete affine grazing invariance.
 
+49. Structured prepared-corrector outcomes now identify why the six affine
+    grazing gaps remain.  Every bounded correction attempt records invalid
+    input, evaluation failure, nonfinite arithmetic, degenerate normal,
+    singular Jacobian, no improvement, iteration limit, or convergence.  A
+    finite nonconverged local attempt also records its final projected
+    residual divided by the same scale-aware acceptance bound used by the
+    solver.  Trace consistency requires exactly one outcome per attempt,
+    convergence counters to agree, and every recorded failed ratio to exceed
+    one.  This instrumentation does not change a hit decision.
+
+    With the normal 64-box trace capacity, all 576 local seeds for each missed
+    affine case end in no improvement; none reaches the 24-iteration limit.
+    The surface-stage attempts show the same pattern, plus a small number of
+    singular Jacobians.  Controlled diagnostic builds established the
+    following boundaries and were then restored to production constants:
+
+      * Retaining 1,024 boxes instead of 64 lets the condition-100 case reach
+        one of its two roots.  The other local basin stops with a residual
+        about 3.2 times its acceptance bound.  The condition-1,000 cases retain
+        all 546 terminal boxes but find no root; their closest failed residuals
+        remain about 19 through 37 times the bound.
+
+      * Raising subdivision depth from 24 to 32 and 40 does not recover a
+        partition.  The extreme case grows from roughly 2,900 visits to 11,900
+        and then 49,400 visits.  More isotropic subdivision is therefore an
+        expensive repetition of the same ill-conditioned solve.
+
+      * Increasing numerical acceptance from 32 to 1,024 evaluation ULPs, or
+        similarly relaxing the old Utah solver, creates false outside/contact
+        candidates and endpoint errors around 1e-4 where the analytic gate is
+        around 1e-6.  Bypassing the Krawczyk requirement does not qualify the
+        prepared answer: the independent complete-root-coverage gate rejects
+        it.  Tolerance inflation is not a valid repair.
+
+      * Adding deterministic seeds along the smallest-singular-vector
+        direction to the old solver does not recover the pair.  A generic
+        closest-point query also enters the wrong local basin on these
+        ellipsoids, so neither experiment supplies a completeness argument.
+
+    The evidence points to a fold rather than an iteration-budget problem.
+    Near a generic tangent the weak reduced equation has the leading form
+    a(q-q0)^2-epsilon: root separation, Jacobian conditioning, and normal/ray
+    dot approach zero like sqrt(epsilon).  The next solver step should isolate
+    the well-conditioned equation across bounded strips, bracket the weak
+    direction on both sides of its fold, correct the roots in disjoint boxes,
+    and use outward interval/Bernstein exclusion plus Krawczyk inclusion to
+    account for the whole parent box.  Samples and an SVD may guide traversal
+    but cannot authorize exclusion.  Exact contact, incomplete coverage, or
+    fixed-workspace exhaustion must remain explicit conservative fallbacks.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1593,6 +1643,14 @@ IMPLEMENTATION CHECKLIST
             [ ] Resolve the six remaining high-condition affine grazing
                 solver/isolation misses before claiming tangent-limit affine
                 invariance or reducing dense-tree fallback.
+                [x] Classify every bounded surface/local corrector outcome and
+                    record failed residual-to-acceptance ratios.
+                [x] Rule out additional isotropic depth, acceptance-tolerance
+                    inflation, and weak-direction seed multiplication as safe
+                    general repairs.
+                [ ] Implement allocation-free fold-direction bracketing with
+                    conservative full-box exclusion/coverage and separate
+                    certification of both nearby roots.
             [x] Keep grazing, singular, and boundary roots on the conservative
                 depth-24 path.
             [x] Independently audit outward rounding and coefficient-error
@@ -2234,6 +2292,9 @@ Cobb sphere baseline:
     Repeated after affine grazing cleanup and trend qualification with
     halt_on_error=1: the focused 78-ray `--affine-only` run passes with no ASan
     or UBSan diagnostic.
+    Repeated after structured surface/local corrector outcomes and bounded
+    failure-ratio telemetry: the focused 78-ray `--affine-only` run passes
+    with no ASan or UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
