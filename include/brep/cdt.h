@@ -161,6 +161,8 @@ struct brep_cdt_fast_options {
     int allow_partial;
 };
 
+/* completed_faces includes faces proven to have no drawable area;
+ * skipped_degenerate_faces reports that subset explicitly. */
 struct brep_cdt_fast_report {
     int requested_faces;
     int completed_faces;
@@ -169,6 +171,8 @@ struct brep_cdt_fast_report {
     int hit_time_limit;
     int hit_memory_limit;
     int hit_point_limit;
+    /* Completed faces proven to have exactly zero parametric area. */
+    int skipped_degenerate_faces;
 };
 
 #define BREP_CDT_FAST_OK 0
