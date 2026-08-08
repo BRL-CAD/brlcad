@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* FB now supports /dev/stdout and /dev/stderr devices - Sean Morrison
 * fixed mged rt -C + -o background color to file bug - Sean Morrison
 * fixed rt -C255/0/0 -o file.pix background color bug - Sean Morrison
 * added rtsil foreground & background -c set options - Sean Morrison
