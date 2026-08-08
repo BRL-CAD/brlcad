@@ -303,7 +303,14 @@ view_pixel(struct application *ap)
 		p[2] = b;
 
 		if (bif != NULL) {
-		    icv_writepixel(bif, ap->a_x, ap->a_y, ap->a_color);
+		    double icv_pixel[3] = {
+			ICV_CONV_8BIT(p[0]),
+			ICV_CONV_8BIT(p[1]),
+			ICV_CONV_8BIT(p[2])
+		    };
+
+		    if (icv_writepixel(bif, ap->a_x, ap->a_y, icv_pixel) != 0)
+			bu_exit(EXIT_FAILURE, "pixel icv write error");
 		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
 		    if (bu_fseek(outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0) != 0)
