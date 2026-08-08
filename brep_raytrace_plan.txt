@@ -905,6 +905,74 @@ the event.  If two root intervals remain inseparable at the model tolerance,
 return one ambiguous cluster to the topology resolver rather than deleting
 both based on normal signs.
 
+The expected generic limit is a fold, not a discontinuous hit/miss switch.
+After a well-conditioned local change of parameter and projected-equation
+basis, the poorly conditioned component has the leading form
+
+  psi(q) = a (q - q0)^2 - epsilon + higher-order terms.
+
+On the material side, the two simple roots approach one another with
+separation proportional to sqrt(epsilon); their normal/ray dot products and
+the smallest singular value of the ray-plane Jacobian ordinarily vanish at
+the same rate.  At epsilon = 0 they form a double contact with no material
+interval, and on the other side there is no root.  A fixed angular cutoff
+therefore deletes legitimate intervals at a representation- and
+affine-transform-dependent distance from tangency.  The required behavioral
+trend is instead monotone two-root, contact, no-root behavior, with the two
+roots retained while their physical chord exceeds the model minimum-segment
+tolerance.
+
+The condition-100 and condition-1,000 affine ellipsoid ratchet shows that the
+regular corrector needs a separate fold path.  Its first implementation should
+be a bounded branch-and-prune procedure, not tolerance inflation:
+
+  1. On a terminal ambiguous parameter box, evaluate a candidate point and a
+     scaled 2x2 SVD or equivalent rank-revealing factorization of the
+     projected Jacobian.  Let p be the well-conditioned right-singular
+     direction, q the weak direction, and rotate the two equations by the
+     corresponding left-singular basis.  The factorization is a search hint;
+     interval bounds remain authoritative.
+
+  2. Contract the regular equation in p for bounded q strips using interval
+     Newton/Hansen-Sengupta or Bernstein clipping.  Split an axis-aligned UV
+     box along the coordinate with the largest component of q rather than
+     representing an unbounded rotated parameter polygon.  Discard a child
+     only when outward-rounded Bernstein or interval bounds prove that one of
+     the two equations excludes zero.
+
+  3. Along the retained regular-equation corridor, evaluate the weak scalar
+     equation on ordered q strips.  Scalar samples and the estimated fold
+     point may schedule work, but may not prove root absence.  Search both
+     sides of the estimated fold separately so one Newton basin cannot consume
+     or hide the neighboring root.
+
+  4. Correct each candidate inside its own bounded box.  A strict-interior
+     Krawczyk inclusion continues to certify each regular root away from exact
+     contact.  Root boxes must be disjoint in the weak direction or remain an
+     explicitly ambiguous cluster.
+
+  5. Account for the complete parent box: every portion must be either
+     coefficient-excluded, covered by a certified root box, or retained as
+     unresolved.  Two converged candidates alone do not prove that the pair is
+     complete.  Exact contact, an uncertifiable singular box, interval
+     dependency, or workspace exhaustion uses the conservative fallback.
+
+  6. Once two roots are certified, compare their ray-parameter interval gap
+     to rti_tol.dist/|D| with floating-point enclosure.  Publish an
+     ENTER/LEAVE interval only if its physical length is tolerance-resolved;
+     otherwise hand one ambiguous contact cluster to solid-event resolution.
+
+  7. Use fixed arrays for the strip/box stack, candidate brackets, and SVD
+     scratch.  Record high-water marks and an explicit fold-workspace fallback;
+     do not allocate during shot.
+
+This path deliberately separates three questions: numerical convergence,
+existence/uniqueness certification, and solid classification.  Deflation or
+regularized Newton methods for corank-one singular polynomial roots are useful
+references for exact-contact diagnostics, but they do not by themselves prove
+that all nearby simple roots were found.  The branch-and-prune coverage proof
+is still required.
+
 5.5 Allocation-free ray-time workspace
 
 The new fast path must not call malloc/new or grow STL containers while
@@ -1902,6 +1970,26 @@ Algorithm and geometry references:
     https://arxiv.org/abs/2011.05000.  This is a modern polynomial-system use
     of the Krawczyk method and reinforces that every function/Jacobian bound
     and interval arithmetic operation must be rigorous for certification.
+
+  * A. Mantzaflaris and B. Mourrain, "Deflation and Certified Isolation of
+    Singular Zeros of Polynomial Systems," 2011,
+    https://arxiv.org/abs/1101.3140.  Its symbolic-numeric treatment of
+    singular roots and interval-backed certification is relevant to an exact
+    tangent, but does not replace global box coverage for two close simple
+    roots.
+
+  * N. Li and L. Zhi, "Computing Isolated Singular Solutions of Polynomial
+    Systems: Case of Breadth One," SIAM Journal on Numerical Analysis 50(1),
+    2012, https://doi.org/10.1137/110827247.  This is relevant to the generic
+    corank-one fold model and regularized local refinement.
+
+  * T. Tejima, M. Fujita, and T. Matsuoka, "Direct Ray Tracing of
+    Full-Featured Subdivision Surfaces with Bezier Clipping," Journal of
+    Computer Graphics Techniques 4(1), 2015,
+    https://jcgt.org/published/0004/01/04/.  It is a modern low-memory example
+    of direct patch intersection using Bezier clipping.  BRL-CAD additionally
+    needs solid-event, trim-tolerance, and completeness certification suitable
+    for engineering solids.
 
   * S. Guthe, A. Balazs, and R. Klein, "GPU-based Trimming and Tessellation of
     NURBS and T-Spline Surfaces," and related Bauhaus work on ray casting
