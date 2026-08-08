@@ -1942,6 +1942,115 @@ brep_trace_edge(const struct rt_brep_shot_trace &trace, int edge_index)
 
 
 static int
+check_brep_edge_sector_box(const struct bn_tol *tol, struct rt_i *rtip,
+    struct resource *resource)
+{
+    struct rt_arb_internal box = {};
+    box.magic = RT_ARB_INTERNAL_MAGIC;
+    VSET(box.pt[0], -4.0, -3.0, -2.0);
+    VSET(box.pt[1], 4.0, -3.0, -2.0);
+    VSET(box.pt[2], 4.0, 3.0, -2.0);
+    VSET(box.pt[3], -4.0, 3.0, -2.0);
+    VSET(box.pt[4], -4.0, -3.0, 2.0);
+    VSET(box.pt[5], 4.0, -3.0, 2.0);
+    VSET(box.pt[6], 4.0, 3.0, 2.0);
+    VSET(box.pt[7], -4.0, 3.0, 2.0);
+    struct rt_db_internal box_intern;
+    RT_DB_INTERNAL_INIT(&box_intern);
+    box_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    box_intern.idb_type = ID_ARB8;
+    box_intern.idb_meth = &OBJ[ID_ARB8];
+    box_intern.idb_ptr = &box;
+
+    ON_Brep *brep = ON_Brep::New();
+    OBJ[ID_ARB8].ft_brep(&brep, &box_intern, tol);
+    if (!brep || !brep->IsSolid() || brep->m_E.Count() != 12) {
+	std::printf("FAIL: convex edge-sector box conversion\n");
+	delete brep;
+	return 1;
+    }
+    for (int edge_index = 0; edge_index < brep->m_E.Count(); ++edge_index)
+	brep->m_E[edge_index].m_tolerance = tol->dist;
+
+    const int target_edge_index = 0;
+    const ON_BrepEdge &target_edge = brep->m_E[target_edge_index];
+    ON_3dPoint edge_point;
+    ON_3dVector edge_tangent;
+    if (!target_edge.Ev1Der(target_edge.Domain().Mid(), edge_point,
+	    edge_tangent) || !edge_tangent.Unitize()) {
+	std::printf("FAIL: convex edge-sector target edge evaluation\n");
+	delete brep;
+	return 1;
+    }
+    ON_3dVector inside = ON_3dPoint(0.0, 0.0, 0.0) - edge_point;
+    inside -= (inside * edge_tangent) * edge_tangent;
+    ON_3dVector line_direction = ON_CrossProduct(edge_tangent, inside);
+    if (!inside.Unitize() || !line_direction.Unitize()) {
+	std::printf("FAIL: convex edge-sector frame\n");
+	delete brep;
+	return 1;
+    }
+
+    struct rt_brep_internal brep_internal = {};
+    brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal.brep = brep;
+    struct rt_db_internal brep_intern;
+    RT_DB_INTERNAL_INIT(&brep_intern);
+    brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    brep_intern.idb_type = ID_BREP;
+    brep_intern.idb_meth = &OBJ[ID_BREP];
+    brep_intern.idb_ptr = &brep_internal;
+    struct soltab *stp = prep_solid(rtip, &brep_intern, ID_BREP);
+    if (!stp) {
+	std::printf("FAIL: convex edge-sector BREP prep\n");
+	delete brep_internal.brep;
+	return 1;
+    }
+
+    int failures = 0;
+    const int states[] = {-1, 0, 1};
+    for (size_t state_index = 0;
+	    state_index < sizeof(states) / sizeof(states[0]); ++state_index) {
+	const int expected_state = states[state_index];
+	const ON_3dPoint closest = edge_point +
+	    expected_state * 0.5 * tol->dist * inside;
+	for (int reverse = 0; reverse <= 1; ++reverse) {
+	    const ON_3dVector direction = reverse ? -line_direction :
+		line_direction;
+	    const ON_3dPoint ray_origin = closest - 12.0 * direction;
+	    sampled_ray ray;
+	    VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
+	    VSET(ray.direction, direction.x, direction.y, direction.z);
+	    struct rt_brep_shot_trace trace;
+	    (void)shoot_brep_trace(stp, rtip, resource, ray, trace);
+	    const struct rt_brep_trace_edge *observation =
+		brep_trace_edge(trace, target_edge_index);
+	    const double expected_distance = expected_state ?
+		0.5 * tol->dist : 0.0;
+	    if (!observation || !observation->within_edge_tolerance ||
+		    !observation->candidate_spans ||
+		    !observation->sector_valid ||
+		    observation->closest_state != expected_state ||
+		    fabs(observation->distance - expected_distance) >
+		    1.0e-10 || fabs(observation->ray_edge_dot) > 1.0e-10) {
+		std::printf("FAIL: convex edge sector state=%d reverse=%d "
+		    "observed=%d valid=%d distance=%.17g spans=%zu "
+		    "ray-edge=%.17g\n", expected_state, reverse,
+		    observation ? observation->closest_state : -99,
+		    observation ? observation->sector_valid : 0,
+		    observation ? observation->distance : INFINITY,
+		    observation ? observation->candidate_spans : 0,
+		    observation ? observation->ray_edge_dot : INFINITY);
+		failures++;
+	    }
+	}
+    }
+    free_solid(stp);
+    return failures;
+}
+
+
+static int
 check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     struct rt_i *trace_rtip, struct resource *trace_resource)
 {
@@ -1982,8 +2091,13 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t leaks_during_trim_classification = 0;
     size_t leaks_during_hit_cleanup = 0;
     size_t leaks_with_target_edge_evidence = 0;
+    size_t leaks_with_inside_sector_evidence = 0;
+    size_t sector_inside = 0;
+    size_t sector_contact = 0;
+    size_t sector_outside = 0;
     double maximum_calibration_error = 0.0;
     double maximum_edge_distance_error = 0.0;
+    double maximum_lift_error = 0.0;
 
     if (emit_report) {
 	std::printf("cobb_family,direction,g_over_T,h_over_T,"
@@ -1994,7 +2108,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "after_direction,final_hits,final_segments,edge_observations,"
 	    "edge_candidates,prepared_edge_spans,candidate_edge_spans,"
 	    "target_edge_distance,target_edge_tolerance,target_edge_spans,"
-	    "target_edge_within\n");
+	    "target_edge_within,target_sector_valid,target_closest_state\n");
 	std::printf("cobb_root_columns,direction,g_over_T,h_over_T,reverse,"
 	    "root_index,face,t,u,v,normal_dot,trim_distance,trim_status,"
 	    "hit_class,adjacent_face\n");
@@ -2004,7 +2118,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "iteration_limit,evaluation_failed,nonfinite,capacity_exhausted\n");
 	std::printf("cobb_edge_columns,direction,g_over_T,h_over_T,reverse,"
 	    "edge_index,face0,face1,distance,ray_t,edge_parameter,"
-	    "edge_tolerance,candidate_spans,within_edge_tolerance\n");
+	    "edge_tolerance,candidate_spans,within_edge_tolerance,lift0,lift1,"
+	    "normal_dot0,normal_dot1,ray_edge_dot,sector_valid,closest_state\n");
     }
 
     for (size_t ratio_index = 0; ratio_index < sizeof(gap_ratios) /
@@ -2141,15 +2256,37 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    const bool expected_edge_evidence = target_edge &&
 			fabs(clearance) <= target_edge->edge_tolerance +
 			edge_distance_limit;
+		    const int expected_closest_state = clearance > 0.0 ? 1 :
+			(clearance < 0.0 ? -1 : 0);
+		    if (expected_edge_evidence && target_edge) {
+			const double lift_error = fabs(std::max(
+			    target_edge->lift_distance[0],
+			    target_edge->lift_distance[1]) - measured_gap);
+			maximum_lift_error = std::max(maximum_lift_error,
+			    lift_error);
+			if (target_edge->closest_state > 0)
+			    sector_inside++;
+			else if (target_edge->closest_state < 0)
+			    sector_outside++;
+			else
+			    sector_contact++;
+		    }
 		    if (!target_edge || edge_distance_error > edge_distance_limit ||
 			    target_edge->within_edge_tolerance !=
 			    expected_edge_evidence ||
 			    (target_edge->within_edge_tolerance &&
-			    !target_edge->candidate_spans)) {
+			    (!target_edge->candidate_spans ||
+			    !target_edge->sector_valid ||
+			    target_edge->closest_state != expected_closest_state ||
+			    fabs(std::max(target_edge->lift_distance[0],
+				target_edge->lift_distance[1]) - measured_gap) >
+			    edge_distance_limit ||
+			    fabs(target_edge->ray_edge_dot) > 1.0e-10))) {
 			std::printf("FAIL: bowed Cobb target edge distance sign=%d "
 			    "g/T=%.3g h/T=%.3g reverse=%d distance=%.17g "
 			    "expected=%.17g limit=%.17g tolerance=%.17g "
-			    "spans=%zu within=%d/%d\n", sign,
+			    "spans=%zu within=%d/%d sector=%d state=%d/%d "
+			    "lifts=%.17g/%.17g ray-edge=%.17g\n", sign,
 			    gap_ratios[ratio_index],
 			    clearance_ratios[clearance_index], reverse,
 			    target_edge ? target_edge->distance : INFINITY,
@@ -2157,7 +2294,13 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    target_edge ? target_edge->edge_tolerance : INFINITY,
 			    target_edge ? target_edge->candidate_spans : 0,
 			    target_edge ? target_edge->within_edge_tolerance : -1,
-			    expected_edge_evidence);
+			    expected_edge_evidence,
+			    target_edge ? target_edge->sector_valid : -1,
+			    target_edge ? target_edge->closest_state : -99,
+			    expected_closest_state,
+			    target_edge ? target_edge->lift_distance[0] : INFINITY,
+			    target_edge ? target_edge->lift_distance[1] : INFINITY,
+			    target_edge ? target_edge->ray_edge_dot : INFINITY);
 			failures++;
 		    }
 		    const bool valid = partition_result_valid(implicit_result,
@@ -2233,6 +2376,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    if (gap_ratios[ratio_index] <= 1.0 && crack_leak) {
 			if (target_edge && target_edge->within_edge_tolerance)
 			    leaks_with_target_edge_evidence++;
+			if (target_edge && target_edge->sector_valid &&
+				target_edge->closest_state == 1)
+			    leaks_with_inside_sector_evidence++;
 			if (unique_candidates < 2) {
 			    leaks_before_candidate_storage++;
 			} else if (trace.raw_hits < 2) {
@@ -2261,7 +2407,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			std::printf("bowed_surface_seam,%s,%.9g,%.9g,%d,%.9g,"
 			    "%zu,%zu,%.9g,%.9g,%.9g,%d,%d,%d,%zu,%zu,%zu,"
 			    "%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,"
-			    "%zu,%.9g,%.9g,%zu,%d\n",
+			    "%zu,%.9g,%.9g,%zu,%d,%d,%d\n",
 			    sign > 0 ? "outward" :
 			    "inward", measured_gap / tol->dist,
 			    clearance / tol->dist, reverse,
@@ -2282,7 +2428,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    target_edge ? target_edge->distance : INFINITY,
 			    target_edge ? target_edge->edge_tolerance : INFINITY,
 			    target_edge ? target_edge->candidate_spans : 0,
-			    target_edge ? target_edge->within_edge_tolerance : -1);
+			    target_edge ? target_edge->within_edge_tolerance : -1,
+			    target_edge ? target_edge->sector_valid : -1,
+			    target_edge ? target_edge->closest_state : -99);
 			for (size_t root_index = 0;
 				root_index < trace.stored_roots; ++root_index) {
 			    const struct rt_brep_trace_root &root =
@@ -2312,7 +2460,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    const struct rt_brep_trace_edge &edge =
 				trace.edges[edge_observation];
 			    std::printf("cobb_edge,%s,%.9g,%.9g,%d,%d,%d,%d,"
-				"%.17g,%.17g,%.17g,%.17g,%zu,%d\n",
+				"%.17g,%.17g,%.17g,%.17g,%zu,%d,%.17g,%.17g,"
+				"%.17g,%.17g,%.17g,%d,%d\n",
 				sign > 0 ? "outward" : "inward",
 				measured_gap / tol->dist,
 				clearance / tol->dist, reverse,
@@ -2321,7 +2470,11 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				edge.ray_dist, edge.edge_parameter,
 				edge.edge_tolerance,
 				edge.candidate_spans,
-				edge.within_edge_tolerance);
+				edge.within_edge_tolerance,
+				edge.lift_distance[0], edge.lift_distance[1],
+				edge.face_normal_dot[0],
+				edge.face_normal_dot[1], edge.ray_edge_dot,
+				edge.sector_valid, edge.closest_state);
 			}
 		    }
 		}
@@ -2337,13 +2490,15 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	"uncertainty-band=%zu outside-band=%zu band-invalid=%zu "
 	"below-envelope-leaks=%zu reversal-inconsistencies=%zu "
 	"leak-stages=%zu/%zu/%zu edge-evidence=%zu "
-	"max-edge-error=%.3g max-calibration=%.3g\n",
+	"inside-evidence=%zu sector-states=%zu/%zu/%zu "
+	"max-edge-error=%.3g max-lift-error=%.3g max-calibration=%.3g\n",
 	total_rays, differing_partitions, uncertainty_band_differences,
 	excessive_differences, uncertainty_band_invalid,
 	below_envelope_crack_leaks, reversal_inconsistencies,
 	leaks_before_candidate_storage, leaks_during_trim_classification,
 	leaks_during_hit_cleanup, leaks_with_target_edge_evidence,
-	maximum_edge_distance_error,
+	leaks_with_inside_sector_evidence, sector_inside, sector_contact,
+	sector_outside, maximum_edge_distance_error, maximum_lift_error,
 	maximum_calibration_error);
     free_prepared_model(implicit_model);
     delete pristine;
@@ -2520,6 +2675,7 @@ main(int argc, char **argv)
     failures += check_shared_primitive_corpus(&rtip->rti_tol);
     failures += check_brep_leaf_csg_corpus(&rtip->rti_tol);
     failures += check_cobb_sphere_corpus(&rtip->rti_tol);
+    failures += check_brep_edge_sector_box(&rtip->rti_tol, rtip, &resp);
     failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb,
 	rtip, &resp);
     failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);
