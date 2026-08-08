@@ -3478,6 +3478,8 @@ brep_cdt_fast_options_default(struct brep_cdt_fast_options *options)
     options->max_points = (size_t)16 * 1024 * 1024;
     options->max_time_ms = 0;
     options->allow_partial = 1;
+    options->face_status = NULL;
+    options->face_status_data = NULL;
 }
 
 int
@@ -3516,6 +3518,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    options.max_points = user_options->max_points;
 	options.max_time_ms = user_options->max_time_ms;
 	options.allow_partial = user_options->allow_partial;
+	options.face_status = user_options->face_status;
+	options.face_status_data = user_options->face_status_data;
     }
     options.max_workers = std::max((size_t)1,
 	std::min(options.max_workers, (size_t)brep_face_count));
@@ -3603,13 +3607,25 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	fast_cdt_face_result &result = face_results[(size_t)fi];
 	if (!result.completed) {
 	    failed_faces++;
+	    if (options.face_status)
+		options.face_status(fi, result.failed ?
+		    BREP_CDT_FAST_FACE_FAILED :
+		    BREP_CDT_FAST_FACE_NOT_PROCESSED,
+		    options.face_status_data);
 	    continue;
 	}
 	completed_faces++;
 	if (result.skipped_degenerate) {
 	    skipped_degenerate_faces++;
+	    if (options.face_status)
+		options.face_status(fi,
+		    BREP_CDT_FAST_FACE_SKIPPED_DEGENERATE,
+		    options.face_status_data);
 	    continue;
 	}
+	if (options.face_status)
+	    options.face_status(fi, BREP_CDT_FAST_FACE_COMPLETED,
+		options.face_status_data);
 	const size_t point_offset = all_pnts.size() / 3;
 	for (size_t i = 0; i < result.faces.size(); i++)
 	    all_faces.push_back((int)point_offset + result.faces[i]);

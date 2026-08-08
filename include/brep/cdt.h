@@ -152,14 +152,22 @@ brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, in
 /* Resource controls and diagnostics for display-quality tessellation.  A
  * zero option value selects the library default.  max_time_ms is checked
  * between faces; the per-face samplers also have fixed progress and recursion
- * guards to prevent non-terminating refinement. */
+ * guards to prevent non-terminating refinement.  face_status, when non-NULL,
+ * is called exactly once per requested face during serial result assembly. */
 struct brep_cdt_fast_options {
     size_t max_workers;
     size_t max_result_bytes;
     size_t max_points;
     long max_time_ms;
     int allow_partial;
+    void (*face_status)(int face_index, int status, void *data);
+    void *face_status_data;
 };
+
+#define BREP_CDT_FAST_FACE_COMPLETED 0
+#define BREP_CDT_FAST_FACE_FAILED 1
+#define BREP_CDT_FAST_FACE_SKIPPED_DEGENERATE 2
+#define BREP_CDT_FAST_FACE_NOT_PROCESSED 3
 
 /* completed_faces includes faces proven to have no drawable area;
  * skipped_degenerate_faces reports that subset explicitly. */
