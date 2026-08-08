@@ -603,6 +603,13 @@ struct rt_brep_shot_trace {
     size_t excluded_surface_spans;
     size_t surface_subdivision_boxes;
     size_t surface_isolated_boxes;
+    fastf_t surface_isolated_min_t_width;
+    fastf_t surface_isolated_max_t_width;
+    size_t surface_corrector_attempts;
+    size_t surface_corrector_converged;
+    size_t surface_krawczyk_boxes;
+    size_t surface_krawczyk_min_depth;
+    size_t surface_krawczyk_max_depth;
     size_t surface_subdivision_max_depth;
     size_t surface_workspace_high_water;
     size_t surface_workspace_exhausted;

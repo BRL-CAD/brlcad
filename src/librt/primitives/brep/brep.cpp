@@ -480,6 +480,7 @@ static const size_t BREP_DIRECT_BEZIER_MAX_CVS =
     BREP_DIRECT_BEZIER_MAX_ORDER * BREP_DIRECT_BEZIER_MAX_ORDER;
 static const size_t BREP_DIRECT_SUBDIVISION_CAPACITY = 64;
 static const int BREP_DIRECT_SUBDIVISION_MAX_DEPTH = 24;
+static const int BREP_DIRECT_SUBDIVISION_MIN_ADAPTIVE_DEPTH = 4;
 static const double BREP_DIRECT_ROOT_RELATIVE_TOLERANCE = 5.0e-9;
 static const double BREP_DIRECT_EVALUATION_ULPS = 32.0;
 static const double BREP_SEAM_BOUND_RELATIVE_TOLERANCE = 0.1;
@@ -2492,6 +2493,23 @@ brep_ray_plane_frame(const ON_Ray &ray, ON_3dVector &first,
 }
 
 
+struct brep_continuation_result {
+    ON_2dPoint uv;
+    ON_3dPoint point;
+    ON_3dVector normal;
+    double dist = 0.0;
+    double residual = DBL_MAX;
+    size_t iterations = 0;
+    bool converged = false;
+};
+
+
+static brep_continuation_result
+brep_continuation_newton(const brep_surface_span &span, const ON_Ray &ray,
+    const ON_2dPoint &seed, const double minimum[2],
+    const double maximum[2]);
+
+
 struct brep_surface_coefficients {
     double value[2][BREP_DIRECT_BEZIER_MAX_CVS];
     double ray_numerator[BREP_DIRECT_BEZIER_MAX_CVS];
@@ -2702,6 +2720,244 @@ brep_scalar_surface_restrict(const double *input, int u_order, int v_order,
 }
 
 
+struct brep_interval {
+    double minimum;
+    double maximum;
+};
+
+
+static brep_interval
+brep_interval_expanded(double minimum, double maximum)
+{
+    const double scale = std::max(1.0,
+	std::max(fabs(minimum), fabs(maximum)));
+    const double margin = 128.0 * DBL_EPSILON * scale;
+    return {std::nextafter(minimum - margin, -INFINITY),
+	std::nextafter(maximum + margin, INFINITY)};
+}
+
+
+static brep_interval
+brep_interval_add(const brep_interval &first, const brep_interval &second)
+{
+    return brep_interval_expanded(first.minimum + second.minimum,
+	first.maximum + second.maximum);
+}
+
+
+static brep_interval
+brep_interval_scale(double scale, const brep_interval &value)
+{
+    const double first = scale * value.minimum;
+    const double second = scale * value.maximum;
+    return brep_interval_expanded(std::min(first, second),
+	std::max(first, second));
+}
+
+
+static brep_interval
+brep_interval_multiply(const brep_interval &first,
+	const brep_interval &second)
+{
+    const double product[4] = {
+	first.minimum * second.minimum, first.minimum * second.maximum,
+	first.maximum * second.minimum, first.maximum * second.maximum
+    };
+    double minimum = product[0];
+    double maximum = product[0];
+    for (size_t i = 1; i < 4; ++i) {
+	minimum = std::min(minimum, product[i]);
+	maximum = std::max(maximum, product[i]);
+    }
+    return brep_interval_expanded(minimum, maximum);
+}
+
+
+static bool
+brep_scalar_bezier_evaluate(const double *input, int order,
+	double parameter, double &value)
+{
+    if (!input || order < 1 || order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    parameter < 0.0 || parameter > 1.0)
+	return false;
+    double work[BREP_DIRECT_BEZIER_MAX_ORDER];
+    for (int i = 0; i < order; ++i)
+	work[i] = input[i];
+    for (int level = 1; level < order; ++level) {
+	for (int i = 0; i < order - level; ++i)
+	    work[i] = (1.0 - parameter) * work[i] +
+		parameter * work[i + 1];
+    }
+    value = work[0];
+    return std::isfinite(value);
+}
+
+
+static bool
+brep_scalar_surface_evaluate(const double *input, int u_order, int v_order,
+	const double parameter[2], double &value)
+{
+    if (!input || u_order < 1 || v_order < 1 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return false;
+    double source[BREP_DIRECT_BEZIER_MAX_ORDER];
+    double v_control[BREP_DIRECT_BEZIER_MAX_ORDER];
+    for (int j = 0; j < v_order; ++j) {
+	for (int i = 0; i < u_order; ++i)
+	    source[i] = input[(size_t)i * v_order + j];
+	if (!brep_scalar_bezier_evaluate(source, u_order, parameter[0],
+		v_control[j]))
+	    return false;
+    }
+    return brep_scalar_bezier_evaluate(v_control, v_order, parameter[1],
+	value);
+}
+
+
+static bool
+brep_surface_derivative_interval(const double *values, int u_order,
+	int v_order, int direction, double coefficient_error,
+	brep_interval &result)
+{
+    if (!values || (direction != 0 && direction != 1) ||
+	    u_order < 2 || v_order < 2)
+	return false;
+    double minimum = DBL_MAX;
+    double maximum = -DBL_MAX;
+    double magnitude = 0.0;
+    if (direction == 0) {
+	for (int i = 0; i < u_order - 1; ++i) {
+	    for (int j = 0; j < v_order; ++j) {
+		const double value = (u_order - 1) *
+		    (values[(size_t)(i + 1) * v_order + j] -
+		     values[(size_t)i * v_order + j]);
+		minimum = std::min(minimum, value);
+		maximum = std::max(maximum, value);
+		magnitude = std::max(magnitude, fabs(value));
+	    }
+	}
+    } else {
+	for (int i = 0; i < u_order; ++i) {
+	    for (int j = 0; j < v_order - 1; ++j) {
+		const double value = (v_order - 1) *
+		    (values[(size_t)i * v_order + j + 1] -
+		     values[(size_t)i * v_order + j]);
+		minimum = std::min(minimum, value);
+		maximum = std::max(maximum, value);
+		magnitude = std::max(magnitude, fabs(value));
+	    }
+	}
+    }
+    const double error = 2.0 *
+	(direction == 0 ? u_order - 1 : v_order - 1) * coefficient_error +
+	128.0 * DBL_EPSILON * std::max(1.0, magnitude);
+    result = brep_interval_expanded(minimum - error, maximum + error);
+    return std::isfinite(result.minimum) && std::isfinite(result.maximum);
+}
+
+
+static bool
+brep_surface_krawczyk_certified(
+	const double values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+	int u_order, int v_order, const double coefficient_error[2],
+	const double root[2])
+{
+    if (root[0] < 0.0 || root[0] > 1.0 ||
+	    root[1] < 0.0 || root[1] > 1.0)
+	return false;
+
+    brep_interval function[2];
+    brep_interval jacobian[2][2];
+    for (int equation = 0; equation < 2; ++equation) {
+	double value = 0.0;
+	if (!brep_scalar_surface_evaluate(values[equation], u_order,
+		v_order, root, value) ||
+		!brep_surface_derivative_interval(values[equation], u_order,
+		v_order, 0, coefficient_error[equation],
+		jacobian[equation][0]) ||
+		!brep_surface_derivative_interval(values[equation], u_order,
+		v_order, 1, coefficient_error[equation],
+		jacobian[equation][1]))
+	    return false;
+	double coefficient_magnitude = 0.0;
+	const size_t coefficient_count = (size_t)u_order * v_order;
+	for (size_t i = 0; i < coefficient_count; ++i)
+	    coefficient_magnitude = std::max(coefficient_magnitude,
+		fabs(values[equation][i]));
+	const double evaluation_operations = u_order + v_order;
+	const double error = coefficient_error[equation] +
+	    128.0 * DBL_EPSILON * evaluation_operations *
+	    std::max(1.0, coefficient_magnitude);
+	function[equation] = brep_interval_expanded(value - error,
+	    value + error);
+    }
+
+    double midpoint[2][2];
+    for (int row = 0; row < 2; ++row) {
+	for (int column = 0; column < 2; ++column)
+	    midpoint[row][column] = 0.5 *
+		(jacobian[row][column].minimum +
+		 jacobian[row][column].maximum);
+    }
+    const double determinant = midpoint[0][0] * midpoint[1][1] -
+	midpoint[0][1] * midpoint[1][0];
+    const double first_scale = hypot(midpoint[0][0], midpoint[1][0]);
+    const double second_scale = hypot(midpoint[0][1], midpoint[1][1]);
+    if (!std::isfinite(determinant) ||
+	    !(first_scale > DBL_MIN) || !(second_scale > DBL_MIN) ||
+	    fabs(determinant) <= BREP_INTERSECTION_ROOT_EPSILON *
+	    first_scale * second_scale)
+	return false;
+    const double inverse[2][2] = {
+	{midpoint[1][1] / determinant, -midpoint[0][1] / determinant},
+	{-midpoint[1][0] / determinant, midpoint[0][0] / determinant}
+    };
+
+    brep_interval center[2];
+    for (int row = 0; row < 2; ++row) {
+	brep_interval correction = {0.0, 0.0};
+	for (int equation = 0; equation < 2; ++equation)
+	    correction = brep_interval_add(correction,
+		brep_interval_scale(inverse[row][equation],
+		    function[equation]));
+	center[row] = brep_interval_add({root[row], root[row]},
+	    brep_interval_scale(-1.0, correction));
+    }
+
+    brep_interval remainder[2][2];
+    for (int row = 0; row < 2; ++row) {
+	for (int column = 0; column < 2; ++column) {
+	    brep_interval product = {0.0, 0.0};
+	    for (int equation = 0; equation < 2; ++equation)
+		product = brep_interval_add(product,
+		    brep_interval_scale(inverse[row][equation],
+			jacobian[equation][column]));
+	    remainder[row][column] = brep_interval_scale(-1.0, product);
+	    if (row == column)
+		remainder[row][column] = brep_interval_add(
+		    {1.0, 1.0}, remainder[row][column]);
+	}
+    }
+
+    const brep_interval offset[2] = {
+	brep_interval_expanded(-root[0], 1.0 - root[0]),
+	brep_interval_expanded(-root[1], 1.0 - root[1])
+    };
+    const double inclusion_margin = 512.0 * DBL_EPSILON;
+    for (int row = 0; row < 2; ++row) {
+	brep_interval image = center[row];
+	for (int column = 0; column < 2; ++column)
+	    image = brep_interval_add(image, brep_interval_multiply(
+		remainder[row][column], offset[column]));
+	if (!(image.minimum > inclusion_margin) ||
+		!(image.maximum < 1.0 - inclusion_margin))
+	    return false;
+    }
+    return true;
+}
+
+
 static bool
 brep_scalar_bezier_reparameterize(const double *input, int order,
     double minimum, double maximum, double *output)
@@ -2904,7 +3160,8 @@ brep_surface_box_t_range(const brep_surface_coefficients &coefficients,
 static void
 brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
     const brep_surface_coefficients &coefficients,
-    const brep_surface_span &span)
+    const brep_surface_span &span, const ON_Ray &ray,
+    bool adaptive)
 {
     brep_subdivision_box pending[BREP_DIRECT_SUBDIVISION_CAPACITY];
     size_t pending_count = 1;
@@ -2917,6 +3174,7 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 	trace->surface_workspace_high_water, pending_count);
 
     double restricted[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    double restricted_error[2] = {0.0, 0.0};
     const size_t count = (size_t)coefficients.order[0] *
 	coefficients.order[1];
     while (pending_count) {
@@ -2940,6 +3198,7 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 	    const double error = coefficients.error[equation] *
 		(1.0 + 8.0 * box.depth) + 128.0 * DBL_EPSILON *
 		std::max(1.0, magnitude);
+	    restricted_error[equation] = error;
 	    if (brep_coefficient_hull_excluded(restricted[equation], count,
 		    error)) {
 		excluded = true;
@@ -2948,15 +3207,60 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 	}
 	if (excluded)
 	    continue;
-	if (box.depth >= BREP_DIRECT_SUBDIVISION_MAX_DEPTH) {
-	    double minimum_t = 0.0;
-	    double maximum_t = 0.0;
-	    if (!brep_surface_box_t_range(coefficients, box, minimum_t,
-		    maximum_t)) {
+	double minimum_t = 0.0;
+	double maximum_t = 0.0;
+	bool have_t_range = false;
+	bool krawczyk_terminated = false;
+	if (adaptive &&
+		box.depth >= BREP_DIRECT_SUBDIVISION_MIN_ADAPTIVE_DEPTH) {
+	    const ON_2dPoint seed(
+		0.5 * (box.minimum[0] + box.maximum[0]),
+		0.5 * (box.minimum[1] + box.maximum[1]));
+	    trace->surface_corrector_attempts++;
+	    const brep_continuation_result root = brep_continuation_newton(
+		span, ray, seed, box.minimum, box.maximum);
+	    if (root.converged) {
+		trace->surface_corrector_converged++;
+		const double local_root[2] = {
+		    (root.uv.x - box.minimum[0]) /
+			(box.maximum[0] - box.minimum[0]),
+		    (root.uv.y - box.minimum[1]) /
+			(box.maximum[1] - box.minimum[1])
+		};
+		krawczyk_terminated = brep_surface_krawczyk_certified(
+		    restricted, coefficients.order[0], coefficients.order[1],
+		    restricted_error, local_root);
+	    }
+	    if (krawczyk_terminated)
+		have_t_range = brep_surface_box_t_range(coefficients, box,
+		    minimum_t, maximum_t);
+	}
+	if (krawczyk_terminated ||
+		box.depth >= BREP_DIRECT_SUBDIVISION_MAX_DEPTH) {
+	    if (!have_t_range && !brep_surface_box_t_range(coefficients, box,
+		    minimum_t, maximum_t)) {
 		trace->surface_workspace_exhausted++;
 		return;
 	    }
 	    trace->surface_isolated_boxes++;
+	    const double t_width = maximum_t - minimum_t;
+	    if (trace->surface_isolated_boxes == 1)
+		trace->surface_isolated_min_t_width = t_width;
+	    else
+		trace->surface_isolated_min_t_width = std::min(
+		    (double)trace->surface_isolated_min_t_width, t_width);
+	    trace->surface_isolated_max_t_width = std::max(
+		(double)trace->surface_isolated_max_t_width, t_width);
+	    if (krawczyk_terminated) {
+		trace->surface_krawczyk_boxes++;
+		if (trace->surface_krawczyk_boxes == 1)
+		    trace->surface_krawczyk_min_depth = box.depth;
+		else
+		    trace->surface_krawczyk_min_depth = std::min(
+			trace->surface_krawczyk_min_depth, (size_t)box.depth);
+		trace->surface_krawczyk_max_depth = std::max(
+		    trace->surface_krawczyk_max_depth, (size_t)box.depth);
+	    }
 	    if (trace->stored_surface_boxes >=
 		    RT_BREP_TRACE_MAX_SURFACE_BOXES) {
 		trace->surface_box_overflow++;
@@ -3029,7 +3333,8 @@ brep_continuation_certificate(struct rt_brep_shot_trace *trace,
 	    span.surface_domain[direction].ParameterAt(minimum[direction]),
 	    span.surface_domain[direction].ParameterAt(maximum[direction]));
     struct rt_brep_shot_trace certificate = {};
-    brep_trace_surface_isolation(&certificate, extension, extension_span);
+    brep_trace_surface_isolation(&certificate, extension, extension_span,
+	ray, false);
     trace->continuation_certificate_boxes +=
 	certificate.surface_subdivision_boxes;
     trace->continuation_certificate_isolated +=
@@ -3098,7 +3403,8 @@ brep_continuation_certificate(struct rt_brep_shot_trace *trace,
 
 static void
 brep_trace_surface_spans(struct rt_brep_shot_trace *trace,
-    const struct brep_specific *bs, const ON_Ray &ray)
+    const struct brep_specific *bs, const ON_Ray &ray,
+    const struct bn_tol *tol)
 {
     if (!trace || !bs)
 	return;
@@ -3106,6 +3412,10 @@ brep_trace_surface_spans(struct rt_brep_shot_trace *trace,
     ON_3dVector first;
     ON_3dVector second;
     const bool valid_frame = brep_ray_plane_frame(ray, first, second);
+    const double ray_length = ray.m_dir.Length();
+    const bool adaptive = tol && tol->dist > 0.0 &&
+	std::isfinite(tol->dist) && ray_length > DBL_MIN &&
+	std::isfinite(ray_length);
     for (std::vector<brep_face_record>::const_iterator record_it =
 	    bs->face_records.begin(); record_it != bs->face_records.end();
 	    ++record_it) {
@@ -3127,7 +3437,7 @@ brep_trace_surface_spans(struct rt_brep_shot_trace *trace,
 		if (brep_surface_coefficients_init(coefficients,
 			bs->surface_spans[span_index], ray, first, second))
 		    brep_trace_surface_isolation(trace, coefficients,
-			bs->surface_spans[span_index]);
+			bs->surface_spans[span_index], ray, adaptive);
 		else
 		    trace->surface_workspace_exhausted++;
 	    }
@@ -3435,17 +3745,6 @@ brep_classify_closure(struct rt_brep_shot_trace *trace,
 	    brep_hit::LEAVING : brep_hit::ENTERING;
     }
 }
-
-
-struct brep_continuation_result {
-    ON_2dPoint uv;
-    ON_3dPoint point;
-    ON_3dVector normal;
-    double dist = 0.0;
-    double residual = DBL_MAX;
-    size_t iterations = 0;
-    bool converged = false;
-};
 
 
 static bool
@@ -5364,7 +5663,8 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	    trace->fixed_leaf_mismatches++;
 	}
     }
-    brep_trace_surface_spans(trace, bs, r);
+    brep_trace_surface_spans(trace, bs, r,
+	stp->st_rtip ? &stp->st_rtip->rti_tol : NULL);
     brep_trace_isolated_roots(trace, bs, r);
     brep_trace_local_clusters(trace,
 	stp->st_rtip ? &stp->st_rtip->rti_tol : NULL);

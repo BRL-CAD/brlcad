@@ -577,11 +577,47 @@ For boxes that cannot be excluded:
   4. Traverse near boxes first according to ray t range, but retain all boxes
      whose bounds may contain roots.
 
-  5. Stop subdividing when the box is isolated in both ray t and model space,
-     or when the safeguarded corrector has converged.
+  5. Stop subdividing early only when the safeguarded corrector supplies a
+     root that is independently certified as the unique root in the box.
+     Small parameter/model-space bounds and numerical convergence alone are
+     not stopping proofs.
 
 This supplies a root-isolation mechanism that does not rely on one Newton
 basin.  It is especially important for two close grazing roots.
+
+For a regular candidate, use an interval Krawczyk test as the uniqueness and
+existence certificate.  On a local parameter box X and a converged point x in
+X, form
+
+  K(X) = x - C F(x) + (I - C J(X)) (X - x),
+
+where C is a nonsingular real preconditioner (normally the inverse of the
+midpoint of the interval Jacobian), F is the pair of homogeneous ray-plane
+Bezier numerators, and J(X) encloses their Jacobian everywhere in X.  If the
+computed interval K(X) is strictly contained in the interior of X, the box
+contains exactly one root and may terminate without reaching a fixed depth.
+If the test fails, says nothing, encounters a singular midpoint, touches the
+box boundary, or exhausts arithmetic/workspace bounds, continue subdivision;
+never infer exclusion from failed certification.
+
+The interval implementation must be auditable.  Derivative ranges come from
+the convex hulls of derivative Bernstein coefficients.  Function,
+restriction, derivative, and interval-operation roundoff must all be enlarged
+outward; positive rational weights remain a prerequisite.  Record corrector
+attempts, convergences, successful certificates, depths, and the fixed-depth
+work avoided.  Exact tangencies and roots on subdivision/patch boundaries are
+expected not to certify with a strict-interior test and must retain the deep
+or neighboring-box path.  This is desirable: the certificate accelerates
+ordinary transverse roots while leaving close grazing roots under conservative
+subdivision.
+
+Treat the first implementation as shadow evidence until its outward-rounding
+and coefficient-error assumptions have received an independent numerical
+audit.  `nextafter` expansion plus deliberately conservative local error
+budgets are useful defenses, but production promotion requires showing that
+every generated coefficient and every function/Jacobian interval encloses the
+corresponding exact polynomial quantity.  Until then, a successful shadow
+test may reduce comparison work but may not alter production hit publication.
 
 5.3 Safeguarded corrector
 
@@ -1618,6 +1654,17 @@ Algorithm and geometry references:
   * T. Nishita, T. W. Sederberg, and M. Kakimoto, "Ray Tracing Trimmed
     Rational Surface Patches," SIGGRAPH 1990.  Relevant to subdivision,
     rational patches, and trims.
+
+  * R. E. Moore, "A Test for Existence of Solutions to Nonlinear Systems,"
+    SIAM Journal on Numerical Analysis 14(4), 1977,
+    https://doi.org/10.1137/0714040.  This develops computationally verifiable
+    existence tests based on Krawczyk's interval Newton construction.
+
+  * P. Breiding, K. Rose, and S. Timme, "Certifying zeros of polynomial
+    systems using interval arithmetic," 2020,
+    https://arxiv.org/abs/2011.05000.  This is a modern polynomial-system use
+    of the Krawczyk method and reinforces that every function/Jacobian bound
+    and interval arithmetic operation must be rigorous for certification.
 
   * S. Guthe, A. Balazs, and R. Klein, "GPU-based Trimming and Tessellation of
     NURBS and T-Spline Surfaces," and related Bauhaus work on ray casting

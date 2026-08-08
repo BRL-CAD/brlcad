@@ -647,11 +647,21 @@ struct brep_root_event_summary {
     size_t local_event_repaired = 0;
     size_t local_event_final_segments = 0;
     size_t local_event_final_mismatches = 0;
+    size_t surface_isolated_boxes = 0;
+    size_t surface_corrector_attempts = 0;
+    size_t surface_corrector_converged = 0;
+    size_t surface_krawczyk_boxes = 0;
+    size_t surface_krawczyk_min_depth = 0;
+    size_t surface_krawczyk_max_depth = 0;
+    size_t surface_subdivision_boxes = 0;
+    size_t surface_subdivision_max_boxes = 0;
     double maximum_t_error = 0.0;
     double maximum_uv_error = 0.0;
     double maximum_trim_error = 0.0;
     double maximum_normal_dot_error = 0.0;
     double maximum_face_trim_error = 0.0;
+    double minimum_surface_isolated_t_width = 0.0;
+    double maximum_surface_isolated_t_width = 0.0;
 };
 
 
@@ -708,6 +718,25 @@ brep_accumulate_root_events(brep_root_event_summary &summary,
     summary.local_event_final_segments += trace.local_event_final_segments;
     summary.local_event_final_mismatches +=
 	trace.local_event_final_mismatches;
+    summary.surface_corrector_attempts += trace.surface_corrector_attempts;
+    summary.surface_corrector_converged += trace.surface_corrector_converged;
+    if (trace.surface_krawczyk_boxes) {
+	if (!summary.surface_krawczyk_boxes)
+	    summary.surface_krawczyk_min_depth =
+		trace.surface_krawczyk_min_depth;
+	else
+	    summary.surface_krawczyk_min_depth = std::min(
+		summary.surface_krawczyk_min_depth,
+		trace.surface_krawczyk_min_depth);
+	summary.surface_krawczyk_boxes += trace.surface_krawczyk_boxes;
+	summary.surface_krawczyk_max_depth = std::max(
+	    summary.surface_krawczyk_max_depth,
+	    trace.surface_krawczyk_max_depth);
+    }
+    summary.surface_subdivision_boxes += trace.surface_subdivision_boxes;
+    summary.surface_subdivision_max_boxes = std::max(
+	summary.surface_subdivision_max_boxes,
+	trace.surface_subdivision_boxes);
     summary.maximum_t_error = std::max(summary.maximum_t_error,
 	(double)trace.root_match_max_t_error);
     summary.maximum_uv_error = std::max(summary.maximum_uv_error,
@@ -720,6 +749,19 @@ brep_accumulate_root_events(brep_root_event_summary &summary,
     summary.maximum_face_trim_error = std::max(
 	summary.maximum_face_trim_error,
 	(double)trace.face_trim_max_near_distance_error);
+    if (trace.surface_isolated_boxes) {
+	if (!summary.surface_isolated_boxes)
+	    summary.minimum_surface_isolated_t_width =
+		trace.surface_isolated_min_t_width;
+	else
+	    summary.minimum_surface_isolated_t_width = std::min(
+		summary.minimum_surface_isolated_t_width,
+		(double)trace.surface_isolated_min_t_width);
+	summary.maximum_surface_isolated_t_width = std::max(
+	    summary.maximum_surface_isolated_t_width,
+	    (double)trace.surface_isolated_max_t_width);
+	summary.surface_isolated_boxes += trace.surface_isolated_boxes;
+    }
 }
 
 
@@ -762,6 +804,18 @@ brep_print_prepared_event_summary(const char *label,
 	summary.local_event_repaired,
 	summary.local_event_final_segments,
 	summary.local_event_final_mismatches);
+    std::printf("%s prepared adaptive isolation: leaf-width=%.6g/%.6g "
+	"corrector=%zu/%zu krawczyk=%zu depth=%zu/%zu "
+	"subdivision=%zu/%zu\n", label,
+	summary.minimum_surface_isolated_t_width,
+	summary.maximum_surface_isolated_t_width,
+	summary.surface_corrector_converged,
+	summary.surface_corrector_attempts,
+	summary.surface_krawczyk_boxes,
+	summary.surface_krawczyk_min_depth,
+	summary.surface_krawczyk_max_depth,
+	summary.surface_subdivision_boxes,
+	summary.surface_subdivision_max_boxes);
 }
 
 
@@ -1289,6 +1343,80 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    outside_local_invalid);
 	failures++;
     }
+
+    brep_root_event_summary interior_events;
+    const ON_3dVector interior_directions[] = {
+	ON_3dVector(0.371, 0.529, 0.763),
+	ON_3dVector(-0.613, 0.247, 0.751),
+	ON_3dVector(0.193, -0.881, 0.432)
+    };
+    for (size_t direction_index = 0; direction_index <
+	    sizeof(interior_directions) / sizeof(interior_directions[0]);
+	    ++direction_index) {
+	ON_3dVector ray_direction = interior_directions[direction_index];
+	ON_3dVector first = ON_CrossProduct(ray_direction,
+	    ON_3dVector(0.0, 0.0, 1.0));
+	if (!ray_direction.Unitize() || !first.Unitize()) {
+	    failures++;
+	    continue;
+	}
+	ON_3dVector second = ON_CrossProduct(ray_direction, first);
+	if (!second.Unitize()) {
+	    failures++;
+	    continue;
+	}
+	const ON_3dPoint closest = 0.31 * radius * first +
+	    0.17 * radius * second;
+	for (int reverse = 0; reverse <= 1; ++reverse) {
+	    const ON_3dVector direction_vector = reverse ?
+		-ray_direction : ray_direction;
+	    const ON_3dPoint ray_origin = closest +
+		(reverse ? 2.0 : -2.0) * radius * ray_direction;
+	    sampled_ray ray;
+	    VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
+	    VSET(ray.direction, direction_vector.x, direction_vector.y,
+		direction_vector.z);
+	    const ray_result implicit_result = shoot_solid(implicit_stp, rtip,
+		resp, ray.origin, ray.direction);
+	    const ray_result legacy_result = shoot_solid(brep_stp, rtip, resp,
+		ray.origin, ray.direction);
+	    struct rt_brep_shot_trace trace;
+	    (void)shoot_brep_trace(brep_stp, rtip, resp, ray, trace);
+	    brep_accumulate_root_events(interior_events, trace);
+	    const bool prepared_matches = implicit_result.segments == 1 &&
+		trace.local_event_final_segments == 1 &&
+		trace.local_event_stored_segments == 1 &&
+		fabs(trace.local_event_segment_in[0] -
+		implicit_result.in_dist) <= rtip->rti_tol.dist &&
+		fabs(trace.local_event_segment_out[0] -
+		implicit_result.out_dist) <= rtip->rti_tol.dist;
+	    if (!brep_trace_fixed_workspaces_match(trace) ||
+		legacy_result.segments != 1 || !prepared_matches ||
+		trace.legacy_unique_roots_unmatched ||
+		trace.local_unique_roots_unmatched ||
+		trace.root_event_mismatches ||
+		trace.local_event_final_mismatches ||
+		trace.surface_krawczyk_boxes != 2 ||
+		trace.surface_subdivision_max_depth >= 24 ||
+		trace.surface_subdivision_boxes > 80) {
+		std::printf("FAIL: oblique interior sphere ray %zu/%d "
+		    "implicit/legacy/prepared=%d/%d/%zu roots=%zu/%zu "
+		    "events=%zu partitions=%zu krawczyk=%zu depth=%zu "
+		    "boxes=%zu\n", direction_index, reverse,
+		    implicit_result.segments, legacy_result.segments,
+		    trace.local_event_final_segments,
+		    trace.legacy_unique_roots_unmatched,
+		    trace.local_unique_roots_unmatched,
+		    trace.root_event_mismatches,
+		    trace.local_event_final_mismatches,
+		    trace.surface_krawczyk_boxes,
+		    trace.surface_subdivision_max_depth,
+		    trace.surface_subdivision_boxes);
+		failures++;
+	    }
+	}
+    }
+    brep_print_prepared_event_summary("Sphere interior", interior_events);
     std::printf("Sphere fixed workspaces: leaves=%zu/%d raw-hits=%zu/%d\n",
 	maximum_fixed_leaves, RT_BREP_MAX_LEAVES, maximum_fixed_hits,
 	RT_BREP_MAX_HITS);
@@ -1314,6 +1442,11 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     if (root_events.mismatched) {
 	std::printf("FAIL: %zu matched sphere roots changed event class\n",
 	    root_events.mismatched);
+	failures++;
+    }
+    if (root_events.surface_krawczyk_boxes) {
+	std::printf("FAIL: %zu grazing sphere boxes terminated adaptively\n",
+	    root_events.surface_krawczyk_boxes);
 	failures++;
     }
     if (root_events.local_event_failures ||
@@ -5108,6 +5241,11 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	std::printf("FAIL: prepared Cobb partitions have %zu regressions and "
 	    "%zu ambiguous changes\n", prepared_partition_regressions,
 	    prepared_partition_ambiguous);
+	failures++;
+    }
+    if (root_events.surface_krawczyk_boxes) {
+	std::printf("FAIL: %zu bowed Cobb boxes terminated adaptively\n",
+	    root_events.surface_krawczyk_boxes);
 	failures++;
     }
     if (root_events.local_event_failures ||
