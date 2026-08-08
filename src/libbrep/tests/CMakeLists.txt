@@ -29,6 +29,14 @@ brlcad_add_test(NAME brep_cdt_boundary_steiner COMMAND test_brep_cdt_boundary_st
 brlcad_addexec(test_brep_cdt_spurious_components brep_cdt_spurious_components.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_cdt_spurious_components COMMAND test_brep_cdt_spurious_components)
 
+# Fast display tessellation must be deterministic across worker counts, leave
+# its const BRep input untouched, and stop cleanly at configured limits.
+brlcad_addexec(test_brep_fast brep_fast.cpp "libbrep;librt" TEST)
+brlcad_add_test(
+  NAME brep_fast
+  COMMAND test_brep_fast "${CMAKE_CURRENT_SOURCE_DIR}/cyl_hole.g" CUBE.s
+)
+
 # Standalone CDT hole-triangulation tests: verify that bg_nested_poly_triangulate
 # produces no triangles whose centroid falls inside a hole polygon, for two
 # faces from the NIST MBE PMI sample that are known to have multiple holes.
@@ -54,6 +62,7 @@ cmakefiles(
   brep_cdt_boundary_start.cpp
   brep_cdt_boundary_steiner.cpp
   brep_cdt_spurious_components.cpp
+  brep_fast.cpp
   brep_cdt_mesh.cpp
   cyl_hole.g
   cyls_holes.g
