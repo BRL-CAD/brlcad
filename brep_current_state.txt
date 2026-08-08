@@ -93,8 +93,15 @@ The same regular-root path is now gated under translation, arbitrary rotation,
 and 0.01x/10,000x uniform scales with scaled model tolerances.  Thirty directed
 rays preserve normalized analytic/implicit/legacy/prepared partitions and all
 60 roots terminate adaptively at depths 4 through 11.  Work varies by
-transform,
-as expected, without changing classification.
+transform, as expected, without changing classification.
+An independent nonuniform affine ellipsoid matrix now maps analytic sphere
+chords through rotated principal scales and compares implicit, promoted,
+forced-legacy, and reconstructed-prepared results.  All ordinary production
+partitions remain oracle-equivalent through condition number 1,000.  The
+prepared path selects 28 of 36 rays; the remaining high-condition cases
+exercise four isolated-box-capacity and four uncertified fallbacks, including
+one 197-leaf legacy traversal that explicitly exceeds and falls back from the
+fixed 128-leaf workspace.
 Function and Jacobian enclosures now use outward interval operations throughout
 rather than scalar evaluation plus an error estimate.  An independent exact-
 dyadic gate covers all supported order pairs, five wide binary scales, positive
@@ -1273,8 +1280,8 @@ ESTABLISHED FINDINGS
     normalized errors are 4.62e-14 implicit, 1.08e-8 production, 2.87e-7
     forced legacy, and 1.08e-8 reconstructed prepared.  Thus classification
     and normalized hit locations are invariant for tested similarities when
-    model-space tolerances scale as lengths.  General nonuniform affine
-    scaling is still the separately planned ellipsoid qualification.
+    model-space tolerances scale as lengths.  Finding 47 supplies the separate
+    nonuniform affine ellipsoid qualification.
 
     The signed grazing matrix and exact tangent do not qualify: they report
     the explicit uncertified-root fallback and retain the legacy result.  In
@@ -1294,6 +1301,53 @@ ESTABLISHED FINDINGS
     throughput improvement until selection/fallback profiling supplies a
     lower-cost dispatch strategy or an adequate replacement for dense-tree
     fallback.
+
+47. Ordinary prepared-root publication is now qualified under nonuniform
+    affine sphere-to-ellipsoid transforms, with the high-condition fallback
+    boundary retained as a permanent ratchet.  Each fixture applies
+    A = R diag(sx, sy, sz) plus translation to a known sphere and its ray.  A
+    transformed ray is normalized for shooting, and its analytic entry/exit
+    parameters are the original chord parameters multiplied by |A d|.  This
+    gives a direct oracle rather than a second numerical ellipsoid solve.
+
+    The implicit ELL is formed from the three transformed radius vectors and
+    independently converted to BREP.  Both ray directions compare the exact
+    chord, implicit ELL, promoted production BREP, forced legacy BREP, and the
+    reconstructed prepared physical partition.  Model distance tolerance is
+    scaled by the minimum principal scale, which is the conservative scalar
+    choice for the thinnest ellipsoid direction; endpoint errors are normalized
+    by |A d|.  The six transforms include oblate and triaxial forms, arbitrary
+    rotation and translation, principal scales from 0.001 through 2,500, and
+    singular-value condition numbers from 1.67 through 1,000.
+
+    All 36 production and forced-legacy rays produce the same one-segment
+    implicit-oracle partition.  Twenty-eight rays publish the prepared result.
+    At condition 100, one of three directions reaches the conservative depth
+    limit in both ray directions and reports uncertified fallback.  At
+    condition 1,000, two directions exceed the 64-box prepared trace capacity
+    and one remains uncertified, again in both directions.  The latter middle
+    direction also intersects 197 dense SurfaceTree leaves: trace mode records
+    the 128-leaf fixed-workspace overflow and allocating-list fallback, while
+    production remains identical to the forced legacy and implicit answers.
+    Thus neither prepared nor legacy fixed capacity silently truncates an
+    extreme ellipsoid.
+
+    Across the 36 rays, all 72 intended roots receive a Krawczyk certificate
+    somewhere in the retained subdivision, at certificate depths 5 through
+    19.  Total subdivision visits are 16,860, with 15 minimum and 3,096 maximum
+    per ray.  Maximum normalized endpoint errors are 2.20e-12 implicit,
+    5.94e-8 production, 9.61e-8 forced legacy, and 5.94e-8 selected prepared.
+    The summary hard-gates 28 selections, four surface-box fallbacks, and four
+    uncertified fallbacks.  A new `--affine-only` mode runs this matrix directly
+    for fast conditioning work.
+
+    The focused affine gate passes in both optimized and ASan/UBSan builds with
+    no sanitizer diagnostic.  The complete normal gate passes 13/13 in 69.56
+    seconds, with rt_brep_ray at 69.52 seconds.  A full ASan/UBSan 12/12 run
+    before extending the condition sweep passed in 359.82 seconds; the final
+    condition-1,000 additions are covered by the focused sanitizer run.  This
+    finding does not claim affine grazing or seam invariance: those need a
+    separately mapped tangent-limit trend with anisotropic tolerance analysis.
 
 
 IMPLEMENTATION CHECKLIST
@@ -1444,6 +1498,9 @@ IMPLEMENTATION CHECKLIST
             [x] Gate normalized regular-root partitions and certification
                 under translation, arbitrary rotation, and 0.01x/10,000x
                 similarities with scaled model tolerances.
+            [x] Gate nonuniform affine sphere-to-ellipsoid partitions through
+                condition number 1,000, including prepared box-capacity,
+                uncertified-root, and 128-leaf legacy traversal fallback.
             [x] Keep grazing, singular, and boundary roots on the conservative
                 depth-24 path.
             [x] Independently audit outward rounding and coefficient-error
@@ -2003,6 +2060,9 @@ Cobb sphere baseline:
     seconds, with rt_brep_ray at 68.99 seconds.  All 30 similarity rays select
     the prepared production partition; resolved grazing and exact-tangent rays
     report uncertified fallback.
+    Repeated after the nonuniform affine ellipsoid selection/fallback matrix:
+    13/13 in 69.56 seconds, with rt_brep_ray at 69.52 seconds.  The focused
+    `--affine-only` gate covers 36 rays through condition 1,000 and passes.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -2070,6 +2130,10 @@ Cobb sphere baseline:
     Repeated after strict ordinary-root production publication and forced
     legacy comparison with halt_on_error=1: 12/12 in 361.99 seconds;
     rt_brep_ray takes 361.95 seconds with no ASan or UBSan diagnostic.
+    Repeated after the initial nonuniform affine matrix: 12/12 in 359.82
+    seconds; rt_brep_ray takes 359.79 seconds with no ASan or UBSan diagnostic.
+    After extending the matrix through condition 1,000, the focused
+    `--affine-only` ASan/UBSan run also passes without a diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -2140,13 +2204,14 @@ NEXT ACTIONS
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
 3. Profile the strict ordinary-root production selector on stratified analytic
    and STEP cases.  Separate prepared-attempt cost, selected ordinary rays,
-   uncertified grazing fallback, and each unsupported/capacity reason.  Add the
-   separate nonuniform affine ellipsoid gate.  Find a lower-cost dispatch or
-   fallback strategy before reducing tree density: the first correctness-only
-   promotion passes every partition oracle but increases the grazing-heavy ray
-   corpus from 24.07 to 68.99 seconds.  Do not lower density until every
-   fallback population remains correct without relying on a tree that is no
-   longer dense enough.
+   uncertified grazing fallback, and each unsupported/capacity reason.  Extend
+   the nonuniform affine ellipsoid work to the mapped tangent/grazing trend and
+   analyze anisotropic seam tolerances.  Find a lower-cost dispatch or fallback
+   strategy before reducing tree density: the first correctness-only promotion
+   passes every partition oracle but increases the grazing-heavy ray corpus
+   from 24.07 to about 69 seconds.  Do not lower density until every fallback
+   population remains correct without relying on a tree that is no longer
+   dense enough.
 4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
