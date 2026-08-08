@@ -2257,6 +2257,13 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 		    }
 		    bool bad = !edge || !edge->candidate_spans ||
 			!edge->within_edge_tolerance || !edge->sector_valid ||
+			edge->tolerance_inferred ||
+			!edge->discrepancy_measured ||
+			!edge->discrepancy_authorized ||
+			fabs(edge->model_tolerance / test.scale -
+			tol->dist) > normalized_limit ||
+			fabs(edge->measured_discrepancy / test.scale -
+			measured_gap) > normalized_limit ||
 			trace.supported_surface_faces != 6 ||
 			trace.unsupported_surface_faces != 0 ||
 			trace.prepared_surface_spans != 6 ||
@@ -2347,6 +2354,118 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
     delete base;
     if (!failures)
 	std::printf("Cobb classifier similarity invariance: PASS\n");
+    return failures;
+}
+
+
+static int
+check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
+    struct resource *resource)
+{
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    if (!pristine) {
+	std::printf("FAIL: Cobb tolerance-metadata pristine construction\n");
+	return 1;
+    }
+    struct metadata_case {
+	const char *name;
+	double declared_ratio;
+	bool unset;
+	bool inferred;
+	bool authorized;
+    } cases[] = {
+	{"correct", 1.01, false, false, true},
+	{"unset", 0.0, true, true, true},
+	{"explicit-zero", 0.0, false, false, false},
+	{"half", 0.5, false, false, false},
+	{"double", 2.0, false, false, true}
+    };
+
+    int failures = 0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	cobb_seam_frame frame;
+	double measured_gap = 0.0;
+	double displacement = 0.0;
+	ON_Brep *variant = cobb_bowed_seam_variant(pristine, origin,
+	    -2.0 * tol->dist, frame, measured_gap, displacement);
+	if (!variant) {
+	    std::printf("FAIL: Cobb %s tolerance variant\n",
+		cases[case_index].name);
+	    failures++;
+	    continue;
+	}
+	variant->m_E[frame.edge_index].m_tolerance = cases[case_index].unset ?
+	    ON_UNSET_VALUE : cases[case_index].declared_ratio * measured_gap;
+
+	struct rt_brep_internal variant_internal = {};
+	variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	variant_internal.brep = variant;
+	struct rt_db_internal variant_intern;
+	RT_DB_INTERNAL_INIT(&variant_intern);
+	variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	variant_intern.idb_type = ID_BREP;
+	variant_intern.idb_meth = &OBJ[ID_BREP];
+	variant_intern.idb_ptr = &variant_internal;
+	struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+	if (!stp) {
+	    std::printf("FAIL: Cobb %s tolerance prep\n",
+		cases[case_index].name);
+	    failures++;
+	    continue;
+	}
+
+	const sampled_ray ray = cobb_seam_grazing_ray(frame, origin, radius,
+	    0.9 * tol->dist, false);
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(stp, rtip, resource, ray, trace);
+	const struct rt_brep_trace_edge *edge =
+	    brep_trace_edge(trace, frame.edge_index);
+	double expected_tolerance = tol->dist;
+	if (cases[case_index].unset)
+	    expected_tolerance = std::max(expected_tolerance, measured_gap);
+	else
+	    expected_tolerance = std::max(expected_tolerance,
+		cases[case_index].declared_ratio * measured_gap);
+	const double limit = std::max(1.0e-10 * tol->dist,
+	    512.0 * DBL_EPSILON * radius);
+	const bool declared_ok = cases[case_index].unset ?
+	    edge && !ON_IsValid(edge->declared_tolerance) :
+	    edge && fabs(edge->declared_tolerance -
+	    cases[case_index].declared_ratio * measured_gap) <= limit;
+	if (!edge || !edge->discrepancy_measured ||
+		!declared_ok || edge->tolerance_inferred !=
+		cases[case_index].inferred ||
+		edge->discrepancy_authorized != cases[case_index].authorized ||
+		fabs(edge->model_tolerance - tol->dist) > limit ||
+		fabs(edge->measured_discrepancy - measured_gap) > limit ||
+		fabs(edge->edge_tolerance - expected_tolerance) > limit ||
+		edge->within_edge_tolerance != cases[case_index].authorized ||
+		(cases[case_index].authorized && !edge->candidate_spans) ||
+		(!cases[case_index].authorized && edge->candidate_spans)) {
+	    std::printf("FAIL: Cobb %s tolerance metadata declared=%.17g "
+		"model=%.17g measured=%.17g effective=%.17g "
+		"inferred=%d/%d authorized=%d/%d within=%d spans=%zu\n",
+		cases[case_index].name,
+		edge ? edge->declared_tolerance : INFINITY,
+		edge ? edge->model_tolerance : INFINITY,
+		edge ? edge->measured_discrepancy : INFINITY,
+		edge ? edge->edge_tolerance : INFINITY,
+		edge ? edge->tolerance_inferred : -1,
+		cases[case_index].inferred,
+		edge ? edge->discrepancy_authorized : -1,
+		cases[case_index].authorized,
+		edge ? edge->within_edge_tolerance : -1,
+		edge ? edge->candidate_spans : 0);
+	    failures++;
+	}
+	free_solid(stp);
+    }
+    delete pristine;
+    if (!failures)
+	std::printf("Cobb seam tolerance metadata: PASS\n");
     return failures;
 }
 
@@ -2669,7 +2788,10 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "iteration_limit,evaluation_failed,nonfinite,capacity_exhausted\n");
 	std::printf("cobb_edge_columns,direction,g_over_T,h_over_T,reverse,"
 	    "edge_index,face0,face1,distance,ray_t,edge_parameter,"
-	    "edge_tolerance,candidate_spans,within_edge_tolerance,lift0,lift1,"
+	    "edge_tolerance,model_tolerance,declared_tolerance,"
+	    "measured_discrepancy,discrepancy_measured,"
+	    "discrepancy_authorized,tolerance_inferred,candidate_spans,"
+	    "within_edge_tolerance,lift0,lift1,"
 	    "normal_dot0,normal_dot1,ray_edge_dot,sector_valid,closest_state\n");
     }
 
@@ -2874,6 +2996,15 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    sector_contact++;
 		    }
 		    if (!target_edge || edge_distance_error > edge_distance_limit ||
+			    !target_edge->discrepancy_measured ||
+			    !target_edge->discrepancy_authorized ||
+			    target_edge->tolerance_inferred ||
+			    fabs(target_edge->model_tolerance - tol->dist) >
+			    edge_distance_limit ||
+			    fabs(target_edge->declared_tolerance -
+			    1.01 * measured_gap) > edge_distance_limit ||
+			    fabs(target_edge->measured_discrepancy - measured_gap) >
+			    edge_distance_limit ||
 			    target_edge->within_edge_tolerance !=
 			    expected_edge_evidence ||
 			    (target_edge->within_edge_tolerance &&
@@ -3220,7 +3351,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    const struct rt_brep_trace_edge &edge =
 				trace.edges[edge_observation];
 			    std::printf("cobb_edge,%s,%.9g,%.9g,%d,%d,%d,%d,"
-				"%.17g,%.17g,%.17g,%.17g,%zu,%d,%.17g,%.17g,"
+				"%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,"
+				"%d,%d,%d,%zu,%d,%.17g,%.17g,"
 				"%.17g,%.17g,%.17g,%d,%d\n",
 				sign > 0 ? "outward" : "inward",
 				measured_gap / tol->dist,
@@ -3229,6 +3361,12 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				edge.face_index[1], edge.distance,
 				edge.ray_dist, edge.edge_parameter,
 				edge.edge_tolerance,
+				edge.model_tolerance,
+				edge.declared_tolerance,
+				edge.measured_discrepancy,
+				edge.discrepancy_measured,
+				edge.discrepancy_authorized,
+				edge.tolerance_inferred,
 				edge.candidate_spans,
 				edge.within_edge_tolerance,
 				edge.lift_distance[0], edge.lift_distance[1],
@@ -3456,6 +3594,7 @@ main(int argc, char **argv)
     failures += check_brep_edge_sector_concave(&rtip->rti_tol, rtip, &resp);
     failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
     failures += check_cobb_classifier_transform_invariance(&rtip->rti_tol);
+    failures += check_cobb_tolerance_metadata(&rtip->rti_tol, rtip, &resp);
     failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb,
 	rtip, &resp);
     failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);

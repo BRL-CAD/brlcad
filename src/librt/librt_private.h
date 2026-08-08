@@ -476,6 +476,9 @@ struct rt_brep_trace_edge {
     fastf_t ray_dist;
     fastf_t edge_parameter;
     fastf_t edge_tolerance;
+    fastf_t model_tolerance;
+    fastf_t declared_tolerance;
+    fastf_t measured_discrepancy;
     fastf_t lift_distance[2];
     fastf_t face_normal_dot[2];
     fastf_t ray_edge_dot;
@@ -485,6 +488,9 @@ struct rt_brep_trace_edge {
     int within_edge_tolerance;
     int sector_valid;
     int closest_state;
+    int discrepancy_measured;
+    int discrepancy_authorized;
+    int tolerance_inferred;
 };
 
 struct rt_brep_trace_surface_box {
