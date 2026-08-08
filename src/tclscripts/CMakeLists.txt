@@ -160,8 +160,9 @@ if(BRLCAD_ENABLE_TCL)
   tclindex_build(tclscripts)
 endif(BRLCAD_ENABLE_TCL)
 
-# Put rtwizard last so we can define a build target
-# that relies on the other tclscripts being set up.
+# Keep the retired implementation in source distributions for migration
+# reference.  Its subdirectory no longer installs or indexes Tcl runtime
+# files; the C++17/Qt application in src/rtwizard is self-contained.
 add_subdirectory(rtwizard)
 
 if(TARGET btclsh)

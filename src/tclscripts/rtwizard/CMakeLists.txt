@@ -1,11 +1,16 @@
+# The Qt implementation replaced these runtime assets.  Keep their source
+# manifest intact for historical reference without installing or indexing
+# them in new builds.
+set(RTWIZARD_INSTALL_LEGACY_TCL OFF)
+
 add_subdirectory(lib)
 
 set(rtwizard_TCLSCRIPTS RaytraceWizard.tcl rtwizard)
-if(BRLCAD_ENABLE_TCL)
+if(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
   brlcad_adddata(rtwizard_TCLSCRIPTS tclscripts/rtwizard)
   pkgindex_build(tclscripts/rtwizard)
   tclindex_build(tclscripts/rtwizard)
-endif(BRLCAD_ENABLE_TCL)
+endif(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
 
 # Examples
 
@@ -17,9 +22,9 @@ set(
   examples/PictureTypeA/title.txt
   examples/PictureTypeA/preview.small.gif
 )
-if(BRLCAD_ENABLE_TCL)
+if(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
   brlcad_adddata(PictureTypeA_DATA tclscripts/rtwizard/examples/PictureTypeA)
-endif(BRLCAD_ENABLE_TCL)
+endif(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
 
 set(
   PictureTypeB_DATA
@@ -29,9 +34,9 @@ set(
   examples/PictureTypeB/title.txt
   examples/PictureTypeB/preview.small.gif
 )
-if(BRLCAD_ENABLE_TCL)
+if(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
   brlcad_adddata(PictureTypeB_DATA tclscripts/rtwizard/examples/PictureTypeB)
-endif(BRLCAD_ENABLE_TCL)
+endif(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
 
 set(
   PictureTypeC_DATA
@@ -41,9 +46,9 @@ set(
   examples/PictureTypeC/title.txt
   examples/PictureTypeC/preview.small.gif
 )
-if(BRLCAD_ENABLE_TCL)
+if(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
   brlcad_adddata(PictureTypeC_DATA tclscripts/rtwizard/examples/PictureTypeC)
-endif(BRLCAD_ENABLE_TCL)
+endif(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
 
 set(
   PictureTypeD_DATA
@@ -53,9 +58,9 @@ set(
   examples/PictureTypeD/title.txt
   examples/PictureTypeD/preview.small.gif
 )
-if(BRLCAD_ENABLE_TCL)
+if(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
   brlcad_adddata(PictureTypeD_DATA tclscripts/rtwizard/examples/PictureTypeD)
-endif(BRLCAD_ENABLE_TCL)
+endif(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
 
 set(
   PictureTypeE_DATA
@@ -65,9 +70,9 @@ set(
   examples/PictureTypeE/title.txt
   examples/PictureTypeE/preview.small.gif
 )
-if(BRLCAD_ENABLE_TCL)
+if(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
   brlcad_adddata(PictureTypeE_DATA tclscripts/rtwizard/examples/PictureTypeE)
-endif(BRLCAD_ENABLE_TCL)
+endif(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
 
 set(
   PictureTypeF_DATA
@@ -77,9 +82,9 @@ set(
   examples/PictureTypeF/title.txt
   examples/PictureTypeF/preview.small.gif
 )
-if(BRLCAD_ENABLE_TCL)
+if(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
   brlcad_adddata(PictureTypeF_DATA tclscripts/rtwizard/examples/PictureTypeF)
-endif(BRLCAD_ENABLE_TCL)
+endif(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
 
 cmakefiles(
   CMakeLists.txt

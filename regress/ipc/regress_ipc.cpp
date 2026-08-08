@@ -403,6 +403,8 @@ test_pkg_ipc_listener(void)
         }
     }
 
+    TEST("opaque local IPC endpoint cleanup succeeds",
+         pkg_ipc_addr_cleanup(addr) == 0);
     pkg_listener_close(listener);
 }
 #endif
@@ -907,6 +909,8 @@ test_pkg_ipc_listener_win(void)
         TEST("Windows npipe client round-trip succeeds", client_rc == 0);
     }
 
+    TEST("opaque Windows IPC endpoint cleanup succeeds",
+         pkg_ipc_addr_cleanup(addr) == 0);
     pkg_listener_close(listener);
 }
 #endif /* _WIN32 */

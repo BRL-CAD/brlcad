@@ -513,6 +513,31 @@ pkg_ipc_addr(char *addr, size_t len, const char *name_hint)
 #endif
 }
 
+int
+pkg_ipc_addr_cleanup(const char *addr)
+{
+    if (!addr || addr[0] == '\0')
+	return -1;
+
+#ifdef _WIN32
+    /* Named pipe names cease to exist when their final handle closes. */
+    return strncmp(addr, "npipe:", 6) == 0 ? 0 : -1;
+#else
+    const char *path = NULL;
+    if (strncmp(addr, "fifo:", 5) == 0 || strncmp(addr, "unix:", 5) == 0)
+	path = addr + 5;
+#  if defined(__linux__)
+    else if (strncmp(addr, "unix-abstract:", 14) == 0)
+	return 0;
+#  endif
+    if (!path || path[0] == '\0')
+	return -1;
+    if (remove(path) == 0 || errno == ENOENT)
+	return 0;
+    return -1;
+#endif
+}
+
 
 /* ================================================================== */
 /* pkg_connect_addr / pkg_connect_env                                   */

@@ -32,10 +32,12 @@ set(TRACK_DIRECT_PREFIX "${TEST_DIR}/rtwizard_track_direct_frame_")
 set(TURNTABLE_SPEC "${TEST_DIR}/rtwizard_turntable_spec.json")
 set(TURNTABLE_ANIM "${TEST_DIR}/rtwizard_turntable.apng")
 set(TURNTABLE_DIR "${TEST_DIR}/rtwizard_turntable_frames")
+set(IPC_SPEC "${TEST_DIR}/rtwizard_ipc_spec.json")
+set(IPC_OUTPUT "${TEST_DIR}/rtwizard_ipc.png")
 file(TO_CMAKE_PATH "${SRCFILE}" SRCFILE_JSON)
 file(REMOVE "${ANIM}" "${STILL}" "${FIRST}" "${LAST}" "${SPEC}" "${SPEC_STILL}" "${SPEC_OVERRIDE}" "${SPEC_CONTROL}"
   "${ORBIT_SPEC}" "${ORBIT}" "${TRACK_SPEC}" "${TRACK_ANIM}" "${TRACK_DIRECT}"
-  "${TURNTABLE_SPEC}" "${TURNTABLE_ANIM}")
+  "${TURNTABLE_SPEC}" "${TURNTABLE_ANIM}" "${IPC_SPEC}" "${IPC_OUTPUT}")
 file(REMOVE_RECURSE "${TURNTABLE_DIR}")
 file(GLOB OLD_FRAMES "${PREFIX}*")
 if(OLD_FRAMES)
@@ -103,7 +105,7 @@ file(WRITE "${SPEC}" "{
   \"schema\": \"brlcad.rtwizard.render\",
   \"version\": 1,
   \"database\": \"${SRCFILE_JSON}\",
-  \"objects\": {\"color\": [\"component\"]},
+  \"objects\": {\"color\": [\"component\"], \"line\": [], \"ghost\": []},
   \"image\": {\"size\": 64, \"type\": \"A\"},
   \"output\": {\"file\": \"rtwizard_spec_still.pix\"},
   \"view\": {\"azimuth\": 35, \"elevation\": 25, \"zoom\": 1.5},
@@ -235,8 +237,30 @@ if(TURNTABLE_FIRST_HASH STREQUAL TURNTABLE_LAST_HASH)
   message(FATAL_ERROR "Turntable did not change the rendered model between frames")
 endif()
 
+# A managed framebuffer uses the platform's local libpkg transport without
+# opening a TCP listener.  Exercise the JSON spelling as well as the data path.
+file(WRITE "${IPC_SPEC}" "{
+  \"schema\": \"brlcad.rtwizard.render\",
+  \"version\": 1,
+  \"database\": \"${SRCFILE_JSON}\",
+  \"objects\": {\"color\": [\"component\"]},
+  \"image\": {\"size\": 16, \"type\": \"A\"},
+  \"output\": {
+    \"file\": \"rtwizard_ipc.png\",
+    \"framebuffer\": \"/dev/mem\",
+    \"framebuffer_port\": 51,
+    \"framebuffer_transport\": \"ipc\"
+  },
+  \"runtime\": {\"benchmark\": true, \"no_gui\": true, \"verbose\": 1}
+}\n")
+execute_process(COMMAND "${RTWIZ}" --render-spec "${IPC_SPEC}"
+  RESULT_VARIABLE ipc_result OUTPUT_VARIABLE ipc_log ERROR_VARIABLE ipc_log)
+if(ipc_result OR NOT EXISTS "${IPC_OUTPUT}" OR NOT ipc_log MATCHES "over local IPC")
+  message(FATAL_ERROR "Local IPC framebuffer rendering failed:\n${ipc_log}")
+endif()
+
 file(REMOVE "${ANIM}" "${STILL}" "${FIRST}" "${LAST}" "${SPEC}" "${SPEC_STILL}" "${SPEC_OVERRIDE}" "${SPEC_CONTROL}"
   "${ORBIT_SPEC}" "${ORBIT}" "${TRACK_SPEC}" "${TRACK_ANIM}" "${TRACK_DIRECT}"
-  "${TURNTABLE_SPEC}" "${TURNTABLE_ANIM}"
+  "${TURNTABLE_SPEC}" "${TURNTABLE_ANIM}" "${IPC_SPEC}" "${IPC_OUTPUT}"
   ${FRAMES} ${ORBIT_FRAMES} ${TRACK_FRAMES} ${TRACK_DIRECT_FRAMES})
 file(REMOVE_RECURSE "${TURNTABLE_DIR}")

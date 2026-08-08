@@ -98,7 +98,8 @@ Arrays used for points, vectors, quaternions, and colors contain only numbers.
 |`output` |`file` |Still or animation filename.
 |`output` |`frame_dir` |Directory for numbered PNG frames.
 |`output` |`resume` |Reuse valid, correctly sized frames already in `frame_dir`.
-|`output` |`framebuffer`, `framebuffer_port` |Framebuffer device and optional port.
+|`output` |`framebuffer`, `framebuffer_port` |Framebuffer device and optional service port.
+|`output` |`framebuffer_transport` |`auto` (local IPC preferred), `ipc`, or `tcp`.
 |`view` |`azimuth`, `elevation`, `twist`, `zoom` |High-level view controls.
 |`view` |`center` |Three-number high-level view center.
 |`view` |`eye`, `view_size`, `orientation` |Complete low-level view: three-number eye, size, and four-number quaternion.  All three are required together.
@@ -258,7 +259,10 @@ rtwizard -i vehicle.g -c all -a 25 -e 15 \
   --save-view-keyframe vehicle.json --time 2.5
 ----
 
-The command creates the file if necessary and appends a camera keyframe in
-millimeters.  A duplicate time is rejected; add `--replace-keyframe` to
-replace it.  Capturing multiple views is a convenient way to author a camera
-track without calculating eye points or quaternions.
+For a new animation the command records camera distances in millimeters.  If
+the specification already declares animation units, that unit convention is
+preserved and the resolved base-unit view is converted before it is appended.
+A duplicate time is rejected; add `--replace-keyframe` to replace it.
+Capturing multiple views is a convenient way to author a camera track without
+calculating eye points or quaternions.  The Qt workspace offers the same
+operation as _Capture Current View_ on its camera-keyframe timeline.

@@ -20,11 +20,11 @@ set(
   PictureTypeF.itcl
   Wizard.itk
 )
-if(BRLCAD_ENABLE_TCL)
+if(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
   brlcad_adddata(rtwizard_lib_TCLSCRIPTS tclscripts/rtwizard/lib)
   pkgindex_build(tclscripts/rtwizard/lib)
   tclindex_build(tclscripts/rtwizard/lib)
-endif(BRLCAD_ENABLE_TCL)
+endif(RTWIZARD_INSTALL_LEGACY_TCL AND BRLCAD_ENABLE_TCL)
 
 cmakefiles(
   CMakeLists.txt

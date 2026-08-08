@@ -8,15 +8,52 @@
 #ifndef RTWIZARD_ANIMATION_H
 #define RTWIZARD_ANIMATION_H
 
-#include "tcl.h"
+#ifdef __cplusplus
+#  include <array>
+#  include <string>
+#  include <vector>
+
+namespace rtwizard {
+
+struct AnimationFrame {
+    double time = 0.0;
+    double view_size = 0.0;
+    std::array<double, 4> orientation{{0.0, 0.0, 0.0, 1.0}};
+    std::array<double, 3> eye{{0.0, 0.0, 0.0}};
+    double perspective = 0.0;
+    std::string cut_plane;
+    std::vector<std::string> commands;
+};
+
+struct AnimationPlan {
+    double duration = 0.0;
+    int fps = 0;
+    bool cyclic = false;
+    int plays = 1;
+    std::vector<AnimationFrame> frames;
+};
+
+/* Evaluate a track-based version 1 animation without involving Tcl. */
+bool evaluate_animation(const std::string &path, double base_view_size,
+    const std::array<double, 4> &base_orientation,
+    const std::array<double, 3> &base_eye, double base_perspective,
+    double duration_override, int fps_override, int frames_override,
+    int plays_override, int cyclic_override, double local_to_base,
+    AnimationPlan &plan, std::string &error);
+
+/* Safely update the camera track in a render specification. */
+bool save_view_keyframe(const std::string &path, double time, bool replace,
+    const std::array<double, 3> &eye,
+    const std::array<double, 4> &orientation,
+    double view_size, double perspective, double database_local_to_base,
+    std::string &error);
+
+} // namespace rtwizard
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* Register private Tcl commands used to evaluate versioned render
- * specifications and capture camera keyframes. */
-void rtwizard_animation_init(Tcl_Interp *interp);
 
 /* Convert a declarative render specification into ordinary rtwizard options.
  * General animation tracks retain the specification path for later typed
