@@ -16,6 +16,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <cfloat>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -1500,6 +1501,164 @@ check_brep_leaf_csg_corpus(const struct bn_tol *tol)
 
 
 static int
+check_cobb_sphere_corpus(const struct bn_tol *tol)
+{
+    int failures = 0;
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *unsewn = ON_Brep_CobbSphereUnsewn(radius, origin);
+    ON_Brep *sewn = ON_Brep_CobbSphereSewn(radius, origin);
+    if (!unsewn || !sewn) {
+	std::printf("FAIL: Cobb sphere construction unsewn=%d sewn=%d\n",
+	    unsewn != NULL, sewn != NULL);
+	delete unsewn;
+	delete sewn;
+	return 1;
+    }
+
+    ON_wString unsewn_messages;
+    ON_wString sewn_messages;
+    ON_TextLog unsewn_log(unsewn_messages);
+    ON_TextLog sewn_log(sewn_messages);
+    bool unsewn_oriented = false;
+    bool unsewn_boundary = false;
+    bool sewn_oriented = false;
+    bool sewn_boundary = false;
+    const bool unsewn_valid = unsewn->IsValid(&unsewn_log);
+    const bool unsewn_manifold = unsewn->IsManifold(&unsewn_oriented,
+	&unsewn_boundary);
+    const bool sewn_valid = sewn->IsValid(&sewn_log);
+    const bool sewn_manifold = sewn->IsManifold(&sewn_oriented,
+	&sewn_boundary);
+    bool paired_edges = true;
+    for (int i = 0; i < sewn->m_E.Count(); ++i)
+	paired_edges = paired_edges && sewn->m_E[i].m_ti.Count() == 2;
+
+    if (!unsewn_valid || unsewn->IsSolid() ||
+	    unsewn->m_F.Count() != 6 || unsewn->m_V.Count() != 24 ||
+	    unsewn->m_E.Count() != 24 || unsewn->m_T.Count() != 24) {
+	ON_String log_text(unsewn_messages);
+	std::printf("FAIL: legacy Cobb topology valid=%d solid=%d "
+	    "manifold=%d oriented=%d boundary=%d V/E/T/F=%d/%d/%d/%d\n%s",
+	    unsewn_valid, unsewn->IsSolid(), unsewn_manifold,
+	    unsewn_oriented, unsewn_boundary, unsewn->m_V.Count(),
+	    unsewn->m_E.Count(), unsewn->m_T.Count(), unsewn->m_F.Count(),
+	    log_text.Array());
+	failures++;
+    }
+    if (!sewn_valid || !sewn->IsSolid() || !sewn_manifold ||
+	    !sewn_oriented || sewn_boundary || !paired_edges ||
+	    sewn->m_F.Count() != 6 || sewn->m_V.Count() != 8 ||
+	    sewn->m_E.Count() != 12 || sewn->m_T.Count() != 24) {
+	ON_String log_text(sewn_messages);
+	std::printf("FAIL: sewn Cobb topology valid=%d solid=%d manifold=%d "
+	    "oriented=%d boundary=%d paired=%d V/E/T/F=%d/%d/%d/%d\n%s",
+	    sewn_valid, sewn->IsSolid(), sewn_manifold, sewn_oriented,
+	    sewn_boundary, paired_edges, sewn->m_V.Count(), sewn->m_E.Count(),
+	    sewn->m_T.Count(), sewn->m_F.Count(), log_text.Array());
+	failures++;
+    }
+
+    const double unsewn_radial_error = ON_Brep_CobbSphereMaxRadialError(
+	unsewn, radius, origin);
+    const double sewn_radial_error = ON_Brep_CobbSphereMaxRadialError(sewn,
+	radius, origin);
+    std::printf("Cobb sphere baseline: max radial error unsewn=%.17g "
+	"sewn=%.17g\n", unsewn_radial_error, sewn_radial_error);
+    if (!std::isfinite(unsewn_radial_error) ||
+	    !std::isfinite(sewn_radial_error) ||
+	    fabs(unsewn_radial_error - sewn_radial_error) >
+	    64.0 * DBL_EPSILON * radius)
+	failures++;
+
+    struct cobb_scale_case {
+	const char *name;
+	double radius;
+	ON_3dPoint origin;
+    } scale_cases[] = {
+	{"small translated", 0.01, ON_3dPoint(1.25, -2.5, 5.0)},
+	{"large translated", 1.0e4,
+	    ON_3dPoint(1.0e6, -2.0e6, 3.0e6)}
+    };
+    for (size_t i = 0; i < sizeof(scale_cases) / sizeof(scale_cases[0]); ++i) {
+	ON_Brep *scaled = ON_Brep_CobbSphereSewn(scale_cases[i].radius,
+	    scale_cases[i].origin);
+	const double radial_error = ON_Brep_CobbSphereMaxRadialError(scaled,
+	    scale_cases[i].radius, scale_cases[i].origin);
+	const double coordinate_scale = std::max(scale_cases[i].radius,
+	    std::max(fabs(scale_cases[i].origin.x),
+	    std::max(fabs(scale_cases[i].origin.y),
+		fabs(scale_cases[i].origin.z))));
+	const double error_limit = std::max(1.0e-12 * scale_cases[i].radius,
+	    512.0 * DBL_EPSILON * coordinate_scale);
+	if (!scaled || !scaled->IsSolid() || scaled->m_V.Count() != 8 ||
+		scaled->m_E.Count() != 12 || !std::isfinite(radial_error) ||
+		radial_error > error_limit) {
+	    std::printf("FAIL: Cobb %s topology/radial error=%.17g "
+		"limit=%.17g V/E=%d/%d\n", scale_cases[i].name,
+		radial_error, error_limit, scaled ? scaled->m_V.Count() : 0,
+		scaled ? scaled->m_E.Count() : 0);
+	    failures++;
+	}
+	delete scaled;
+    }
+
+    struct rt_ell_internal sphere;
+    struct rt_db_internal sphere_intern;
+    point_t center = VINIT_ZERO;
+    init_sphere_internal(sphere, sphere_intern, center, radius);
+    struct rt_brep_internal cobb_internal = {};
+    cobb_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    cobb_internal.brep = sewn;
+    struct rt_db_internal cobb_intern;
+    RT_DB_INTERNAL_INIT(&cobb_intern);
+    cobb_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    cobb_intern.idb_type = ID_BREP;
+    cobb_intern.idb_meth = &OBJ[ID_BREP];
+    cobb_intern.idb_ptr = &cobb_internal;
+
+    prepared_model implicit_model;
+    prepared_model cobb_model;
+    if (!prep_partition_model(implicit_model, &sphere_intern,
+	    "cobb_oracle.s", tol) ||
+	    !prep_partition_model(cobb_model, &cobb_intern, "cobb_sewn.s", tol)) {
+	std::printf("FAIL: Cobb sphere paired model preparation\n");
+	free_prepared_model(cobb_model);
+	free_prepared_model(implicit_model);
+	delete unsewn;
+	delete sewn;
+	return failures + 1;
+    }
+
+    const double inv_sqrt2 = 1.0 / sqrt(2.0);
+    const double inv_sqrt3 = 1.0 / sqrt(3.0);
+    const directed_partition_ray rays[] = {
+	{"positive x face", {20.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}, 1,
+	    {10.0, 30.0}},
+	{"negative z face", {0.0, 0.0, -20.0}, {0.0, 0.0, 1.0}, 1,
+	    {10.0, 30.0}},
+	{"xy seam", {20.0*inv_sqrt2, 20.0*inv_sqrt2, 0.0},
+	    {-inv_sqrt2, -inv_sqrt2, 0.0}, 1, {10.0, 30.0}},
+	{"positive vertex", {20.0*inv_sqrt3, 20.0*inv_sqrt3,
+	    20.0*inv_sqrt3}, {-inv_sqrt3, -inv_sqrt3, -inv_sqrt3}, 1,
+	    {10.0, 30.0}}
+    };
+    point_t bbox_min = {-radius, -radius, -radius};
+    point_t bbox_max = {radius, radius, radius};
+    failures += check_shared_crofton_fixture("sewn-cobb-sphere", NULL, tol,
+	bbox_min, bbox_max, 4.0 * M_PI * radius * radius,
+	(4.0 / 3.0) * M_PI * radius * radius * radius, 8000, rays,
+	sizeof(rays) / sizeof(rays[0]), &implicit_model, &cobb_model);
+
+    free_prepared_model(cobb_model);
+    free_prepared_model(implicit_model);
+    delete unsewn;
+    delete sewn;
+    return failures;
+}
+
+
+static int
 check_crofton_sphere(struct rt_db_internal *ell_intern,
     const struct bn_tol *tol, double radius)
 {
@@ -1665,6 +1824,7 @@ main(int argc, char **argv)
 	(4.0 / 3.0) * M_PI * radius * radius * radius, 32000);
     failures += check_shared_primitive_corpus(&rtip->rti_tol);
     failures += check_brep_leaf_csg_corpus(&rtip->rti_tol);
+    failures += check_cobb_sphere_corpus(&rtip->rti_tol);
     failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);
 
     rt_clean_resource_basic(rtip, &resp);

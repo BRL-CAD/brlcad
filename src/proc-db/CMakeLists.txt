@@ -10,7 +10,7 @@ set(PROC_DB_WDB_NMG_LIBS "libwdb;libnmg;${M_LIBRARY}")
 set(PROC_DB_WDB_OPENNURBS_LIBS "libwdb;OPENNURBS::OPENNURBS;${M_LIBRARY}")
 
 brlcad_addexec(bottest bottest.c "${PROC_DB_WDB_LIBS}" NO_INSTALL)
-brlcad_addexec(brep_cobb brep_cobb.cpp "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)
+brlcad_addexec(brep_cobb brep_cobb.cpp "libbrep;${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)
 brlcad_addexec(brep_cube "brep_cube.cpp;twistedcube.cpp" "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)
 target_include_directories(brep_cube BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 brlcad_addexec(brep_invalid "brep_invalid.cpp" "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)
