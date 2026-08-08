@@ -753,6 +753,66 @@ full Crofton corpus.  This establishes ordinary transverse behavior only;
 repeat the grazing trend under affine distortion before claiming a tangent or
 seam classifier invariant beyond similarities.
 
+The affine grazing gate must map the complete line construction, not merely
+scale an already normalized world ray.  For a base-sphere unit direction d,
+choose a perpendicular closest-point direction n and signed clearance h, form
+the base line at (R-h)n, and transform both its origin and d by A.  Normalize
+A d only for librt shooting.  The exact transformed parameter endpoints are
+(2R +/- sqrt(R^2-(R-h)^2)) |A d|.  Report both h in units of the original
+model tolerance and the physical chord in units of the transformed model
+tolerance.  Sweep positive clearances logarithmically through exact contact
+and mirrored negative clearances, and shoot both directions.  Translation,
+rotation, anisotropic scale, and reversal then share the same analytic source
+line while exercising different numerical conditioning.
+
+This test must distinguish three stages that can otherwise look like the same
+miss:
+
+  * root absence: neither the legacy SurfaceTree solver nor the prepared local
+    corrector produces the analytic roots;
+
+  * qualification fallback: prepared boxes or roots exist but cannot be
+    certified or exceed fixed capacity, after which the complete legacy result
+    must be retained; and
+
+  * post-solve classification loss: two finite, ordered roots exist but cleanup
+    deletes or merges them.
+
+In particular, a fixed normal-dot grazing threshold cannot decide whether a
+solid interval exists.  Normal angle is not invariant under a general affine
+map: both endpoint normals of a long, thin ellipsoid chord can be arbitrarily
+close to perpendicular to the ray.  Grazing cleanup may delete an isolated
+contact, invalid trimmed candidate, or out-of-bounds root, but it must retain
+an adjacent ENTERING/LEAVING pair when its parameter separation represents at
+least rti_tol.dist in model space.  For a non-unit ray this threshold is
+rti_tol.dist/|d|.  Permit only a scale-aware floating-point evaluation slack;
+do not enlarge the modeling tolerance.  Apply the same decision to fixed,
+allocating, shadow-event, and prepared-publication cleanup so allocation mode
+cannot change topology.
+
+The initial implemented matrix uses conditions 13.3, 100, and 1,000; signed
+h/T values 100, 1, 0.01, 1e-4, 1e-6, 1e-8, 0, and their negative mirrors; and
+both directions, for 78 rays.  It found and repaired post-solve angular
+deletion on 16 directed rays.  The remaining monotone capability boundary is
+not yet the desired invariant: condition 100 misses a 3.08-T chord at h/T =
+1e-8, and condition 1,000 misses 305-T and 30.5-T chords at h/T = 1e-6 and
+1e-8.  These six cases have no stored legacy roots and no publishable prepared
+local roots, so solver/isolation—not cleanup—is now the next target.  Keep
+per-condition floors as one-way ratchets: improvements may reduce the miss
+count, but a hit may never disappear at a larger clearance or restart closer
+to tangency.  Require reversal agreement, analytic endpoint accuracy for every
+retained interval, stable misses for negative h, and explicit prepared fallback
+accounting.
+
+Do not use the implicit ELL as the sole oracle exactly at transformed
+tangency.  The first matrix shows direction-dependent, sub-resolution implicit
+segments on three of six exact-contact shots due to discriminant cancellation.
+Use the analytic zero-material contact at h=0; continue to compare the implicit
+and BREP results at representably positive and negative clearances.  This does
+not weaken later Cauchy-Crofton validation because exact tangencies have measure
+zero, but directed boundary tests must report the implicit artifact rather than
+canonize it as expected solid material.
+
 The first production publication boundary is deliberately stricter than root
 convergence.  A prepared result may replace the SurfaceTree result only when:
 
@@ -1668,9 +1728,11 @@ Correctness:
 
   * In the signed grazing sweep, raw root separation follows the analytic
     trend from two roots through a double contact to no roots.  Final librt
-    classification matches the implicit oracle and has at most one contiguous
+    classification matches the analytic oracle and has at most one contiguous
     tolerance-controlled transition band, with no odd-hit or alternating
-    hit/miss islands.
+    hit/miss islands.  The implicit primitive agrees outside its measured
+    floating-point contact uncertainty; exact transformed-discriminant
+    artifacts are reported rather than used as ground truth.
 
   * Sewn Cobb seam/vertex rays do not leak for g <= T.
 
