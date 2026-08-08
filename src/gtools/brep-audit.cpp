@@ -24,6 +24,10 @@
 #include <string>
 #include <vector>
 
+#ifdef __GLIBC__
+#  include <malloc.h>
+#endif
+
 #ifndef _WIN32
 #  include <sys/resource.h>
 #endif
@@ -38,6 +42,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/primitives/brep.h"
+#include "rt/vlist.h"
 
 struct geom_result {
     int ret = BRLCAD_ERROR;
@@ -58,8 +63,78 @@ struct geom_result {
     point_t bmax = VINIT_ZERO;
     double seconds = 0.0;
     size_t peak_rss_bytes = 0;
+    std::vector<int> failed_faces;
+    std::vector<int> skipped_faces;
+    std::vector<int> unprocessed_faces;
+    std::vector<int> failed_edges;
+    std::vector<int> unprocessed_edges;
+    std::vector<int> failed_surface_cues;
+    std::vector<int> unprocessed_surface_cues;
+    size_t omitted_failed_faces = 0;
+    size_t omitted_skipped_faces = 0;
+    size_t omitted_unprocessed_faces = 0;
+    size_t omitted_failed_edges = 0;
+    size_t omitted_unprocessed_edges = 0;
+    size_t omitted_failed_surface_cues = 0;
+    size_t omitted_unprocessed_surface_cues = 0;
     std::vector<std::string> issues;
 };
+
+static const size_t MAX_REPORTED_ITEM_INDICES = 16384;
+
+static void
+capture_index(std::vector<int> *indices, size_t *omitted, int index)
+{
+    if (indices->size() < MAX_REPORTED_ITEM_INDICES)
+	indices->push_back(index);
+    else
+	(*omitted)++;
+}
+
+static void
+wire_item_status(int item_type, int item_index, int status, void *data)
+{
+    geom_result *result = (geom_result *)data;
+    if (status == RT_BREP_DRAW_ITEM_COMPLETED)
+	return;
+    if (item_type == RT_BREP_DRAW_EDGE) {
+	if (status == RT_BREP_DRAW_ITEM_FAILED)
+	    capture_index(&result->failed_edges,
+		&result->omitted_failed_edges, item_index);
+	else
+	    capture_index(&result->unprocessed_edges,
+		&result->omitted_unprocessed_edges, item_index);
+	return;
+    }
+    if (status == RT_BREP_DRAW_ITEM_FAILED)
+	capture_index(&result->failed_surface_cues,
+	    &result->omitted_failed_surface_cues, item_index);
+    else
+	capture_index(&result->unprocessed_surface_cues,
+	    &result->omitted_unprocessed_surface_cues, item_index);
+}
+
+static void
+shaded_face_status(int face_index, int status, void *data)
+{
+    geom_result *result = (geom_result *)data;
+    switch (status) {
+	case BREP_CDT_FAST_FACE_FAILED:
+	    capture_index(&result->failed_faces,
+		&result->omitted_failed_faces, face_index);
+	    break;
+	case BREP_CDT_FAST_FACE_SKIPPED_DEGENERATE:
+	    capture_index(&result->skipped_faces,
+		&result->omitted_skipped_faces, face_index);
+	    break;
+	case BREP_CDT_FAST_FACE_NOT_PROCESSED:
+	    capture_index(&result->unprocessed_faces,
+		&result->omitted_unprocessed_faces, face_index);
+	    break;
+	default:
+	    break;
+    }
+}
 
 static size_t
 peak_rss_bytes()
@@ -200,10 +275,13 @@ wireframe_result(struct db_i *dbip, struct directory *dp,
 
     struct bu_list vhead;
     BU_LIST_INIT(&vhead);
+    struct rt_brep_draw_options active_options = *options;
+    active_options.item_status = wire_item_status;
+    active_options.item_status_data = &result;
     int64_t start = bu_gettime();
     struct rt_brep_draw_report report = {};
-    result.ret = rt_brep_plot_ex(&vhead, &intern, ttol, tol, NULL, options,
-	&report);
+    result.ret = rt_brep_plot_ex(&vhead, &intern, ttol, tol, NULL,
+	&active_options, &report);
     result.seconds = (bu_gettime() - start) / 1000000.0;
     result.peak_rss_bytes = peak_rss_bytes();
     result.requested_items = report.requested_edges +
@@ -274,10 +352,13 @@ shaded_result(struct db_i *dbip, struct directory *dp,
     vect_t *normals = NULL;
     point_t *points = NULL;
     int point_cnt = 0;
+    struct brep_cdt_fast_options active_options = *options;
+    active_options.face_status = shaded_face_status;
+    active_options.face_status_data = &result;
     int64_t start = bu_gettime();
     struct brep_cdt_fast_report report = {};
     result.ret = brep_cdt_fast_ex(&faces, &face_cnt, &normals, &points,
-	    &point_cnt, bi->brep, -1, ttol, tol, options, &report);
+	    &point_cnt, bi->brep, -1, ttol, tol, &active_options, &report);
     result.seconds = (bu_gettime() - start) / 1000000.0;
     result.peak_rss_bytes = peak_rss_bytes();
     result.requested_items = report.requested_faces;
@@ -405,6 +486,18 @@ print_issues(const std::vector<std::string> &issues)
 }
 
 static void
+print_indices(const std::vector<int> &indices)
+{
+    std::cout << "[";
+    for (size_t i = 0; i < indices.size(); i++) {
+	if (i)
+	    std::cout << ",";
+	std::cout << indices[i];
+    }
+    std::cout << "]";
+}
+
+static void
 print_result(const geom_result &result, const vect_t ref_dims)
 {
     vect_t gdims = VINIT_ZERO;
@@ -422,6 +515,30 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< ",\"completed_items\":" << result.completed_items
 	<< ",\"failed_items\":" << result.failed_items
 	<< ",\"skipped_items\":" << result.skipped_items
+	<< ",\"failed_faces\":";
+    print_indices(result.failed_faces);
+    std::cout << ",\"failed_faces_omitted\":"
+	<< result.omitted_failed_faces << ",\"skipped_faces\":";
+    print_indices(result.skipped_faces);
+    std::cout << ",\"skipped_faces_omitted\":"
+	<< result.omitted_skipped_faces << ",\"unprocessed_faces\":";
+    print_indices(result.unprocessed_faces);
+    std::cout << ",\"unprocessed_faces_omitted\":"
+	<< result.omitted_unprocessed_faces << ",\"failed_edges\":";
+    print_indices(result.failed_edges);
+    std::cout << ",\"failed_edges_omitted\":"
+	<< result.omitted_failed_edges << ",\"unprocessed_edges\":";
+    print_indices(result.unprocessed_edges);
+    std::cout << ",\"unprocessed_edges_omitted\":"
+	<< result.omitted_unprocessed_edges
+	<< ",\"failed_surface_cues\":";
+    print_indices(result.failed_surface_cues);
+    std::cout << ",\"failed_surface_cues_omitted\":"
+	<< result.omitted_failed_surface_cues
+	<< ",\"unprocessed_surface_cues\":";
+    print_indices(result.unprocessed_surface_cues);
+    std::cout << ",\"unprocessed_surface_cues_omitted\":"
+	<< result.omitted_unprocessed_surface_cues
 	<< ",\"limits\":{\"time\":" << (result.hit_time_limit ? "true" : "false")
 	<< ",\"memory\":" << (result.hit_memory_limit ? "true" : "false")
 	<< ",\"points\":" << (result.hit_point_limit ? "true" : "false") << "}"
@@ -466,105 +583,57 @@ list_breps(const char *db_path)
     return 0;
 }
 
-int
-main(int argc, const char **argv)
+struct audit_config {
+    double ratio_min;
+    double ratio_max;
+    double tess_abs;
+    double tess_rel;
+    double tess_norm;
+    long memory_limit_mib;
+    long jobs;
+    long max_time_ms;
+    long max_result_mib;
+    long max_points;
+};
+
+static int
+audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
+	const char *mode_name, const audit_config &config, long task_index)
 {
-    bu_setprogname(argv[0]);
-    argc--; argv++;
-
-    int print_help = 0;
-    int list_only = 0;
-    double ratio_min = 0.5;
-    double ratio_max = 2.0;
-    double tess_abs = 0.0;
-    double tess_rel = 0.01;
-    double tess_norm = 0.0;
-    long memory_limit_mib = 0;
-    long jobs = 0;
-    long max_time_ms = 0;
-    long max_result_mib = 0;
-    long max_points = 0;
-    const char *mode_name = "both";
-    struct bu_opt_desc d[14];
-    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
-    BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
-    BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
-    BU_OPT(d[3], "", "ratio-max", "#", &bu_opt_fastf_t, &ratio_max, "Maximum acceptable generated/reference dimension ratio");
-    BU_OPT(d[4], "", "tess-abs", "#", &bu_opt_fastf_t, &tess_abs, "Absolute shaded tessellation tolerance");
-    BU_OPT(d[5], "", "tess-rel", "#", &bu_opt_fastf_t, &tess_rel, "Relative shaded tessellation tolerance");
-    BU_OPT(d[6], "", "tess-norm", "#", &bu_opt_fastf_t, &tess_norm, "Normal shaded tessellation tolerance");
-    BU_OPT(d[7], "", "memory-limit-mib", "#", &bu_opt_long, &memory_limit_mib, "Process address-space limit in MiB (zero disables)");
-    BU_OPT(d[8], "m", "mode", "wireframe|shaded|both", &bu_opt_str, &mode_name, "Select one generator so resource measurements are independent");
-    BU_OPT(d[9], "j", "jobs", "#", &bu_opt_long, &jobs, "Maximum shaded face workers (zero selects the default)");
-    BU_OPT(d[10], "", "max-time-ms", "#", &bu_opt_long, &max_time_ms, "Shaded generation deadline checked between faces");
-    BU_OPT(d[11], "", "max-result-mib", "#", &bu_opt_long, &max_result_mib, "Maximum retained shaded result size");
-    BU_OPT(d[12], "", "max-points", "#", &bu_opt_long, &max_points, "Maximum retained shaded points");
-    BU_OPT_NULL(d[13]);
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    const char *usage = "Usage: brep-audit [options] [--list] file.g [brep]\n";
-    if (print_help || (list_only && ac != 1) || (!list_only && ac != 2) ||
-	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
-	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0 ||
-	    jobs < 0 || max_time_ms < 0 || max_result_mib < 0 ||
-	    max_points < 0 ||
-	    (!BU_STR_EQUAL(mode_name, "wireframe") &&
-	     !BU_STR_EQUAL(mode_name, "shaded") &&
-	     !BU_STR_EQUAL(mode_name, "both"))) {
-	std::cerr << usage;
-	return print_help ? 0 : 2;
-    }
-    if (!set_memory_limit(memory_limit_mib)) {
-	std::cerr << "Unable to set memory limit to " << memory_limit_mib << " MiB\n";
-	return 2;
-    }
-    if (!bu_file_exists(argv[0], NULL)) {
-	std::cerr << "Database does not exist: " << argv[0] << "\n";
-	return 2;
-    }
-    if (list_only)
-	return list_breps(argv[0]);
-
-    struct db_i *dbip = open_db(argv[0]);
-    if (dbip == DBI_NULL) {
-	std::cerr << "Unable to open database: " << argv[0] << "\n";
-	return 2;
-    }
-    struct directory *dp = db_lookup(dbip, argv[1], LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL || dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
-	std::cerr << "Not a BRep primitive: " << argv[1] << "\n";
-	db_close(dbip);
-	return 2;
-    }
-
     struct bn_tol tol = BN_TOL_INIT_TOL;
     struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
-    ttol.abs = tess_abs;
-    ttol.rel = tess_rel;
-    ttol.norm = tess_norm;
+    ttol.abs = config.tess_abs;
+    ttol.rel = config.tess_rel;
+    ttol.norm = config.tess_norm;
     struct brep_cdt_fast_options fast_options;
     brep_cdt_fast_options_default(&fast_options);
     struct rt_brep_draw_options draw_options;
     rt_brep_draw_options_default(&draw_options);
-    if (jobs > 0)
-	fast_options.max_workers = draw_options.max_workers = (size_t)jobs;
-    if (max_time_ms > 0) {
-	fast_options.max_time_ms = max_time_ms;
-	draw_options.max_time_ms = max_time_ms;
+    if (config.jobs > 0)
+	fast_options.max_workers = draw_options.max_workers =
+	    (size_t)config.jobs;
+    if (config.max_time_ms > 0) {
+	fast_options.max_time_ms = config.max_time_ms;
+	draw_options.max_time_ms = config.max_time_ms;
     }
-    if (max_result_mib > 0) {
-	fast_options.max_result_bytes = (size_t)max_result_mib * 1024 * 1024;
-	draw_options.max_result_bytes = (size_t)max_result_mib * 1024 * 1024;
+    if (config.max_result_mib > 0) {
+	fast_options.max_result_bytes =
+	    (size_t)config.max_result_mib * 1024 * 1024;
+	draw_options.max_result_bytes =
+	    (size_t)config.max_result_mib * 1024 * 1024;
     }
-    if (max_points > 0) {
-	fast_options.max_points = (size_t)max_points;
-	draw_options.max_points = (size_t)max_points;
+    if (config.max_points > 0) {
+	fast_options.max_points = (size_t)config.max_points;
+	draw_options.max_points = (size_t)config.max_points;
     }
+
     std::cerr << "brep-audit: phase=reference" << std::endl;
     point_t ref_min = VINIT_ZERO;
     point_t ref_max = VINIT_ZERO;
     bool ref_valid = false;
     int ref_faces = 0;
     int ref_face_failures = 0;
+    std::vector<int> ref_failed_faces;
     std::vector<std::string> top_issues;
     struct rt_db_internal intern;
     if (load_brep(dbip, dp, &intern) == BRLCAD_OK) {
@@ -576,6 +645,7 @@ main(int argc, const char **argv)
 	    if (!face_GetBoundingBox(bi->brep->m_F[i], face_bbox, false) ||
 		    !face_bbox.IsValid()) {
 		ref_face_failures++;
+		ref_failed_faces.push_back(i);
 		continue;
 	    }
 	    if (bbox.IsValid())
@@ -615,12 +685,11 @@ main(int argc, const char **argv)
 	dims(ref_dims, ref_min, ref_max);
 	ref_diag = MAGNITUDE(ref_dims);
 	if (run_wireframe)
-	    /* Edge-only wireframes may intentionally span just a seam or an arc
-	     * of the trimmed surface (a one-face sphere is a common example), so
-	     * a minimum extent is not a valid completeness test for this mode. */
-	    check_dimensions(&wire, ref_dims, ref_diag, 0.0, ratio_max, "wireframe");
+	    check_dimensions(&wire, ref_dims, ref_diag, 0.0,
+		config.ratio_max, "wireframe");
 	if (run_shaded)
-	    check_dimensions(&shaded, ref_dims, ref_diag, ratio_min, ratio_max, "shaded");
+	    check_dimensions(&shaded, ref_dims, ref_diag,
+		config.ratio_min, config.ratio_max, "shaded");
     }
     bool okay = ref_valid && top_issues.empty() &&
 	(!run_wireframe || wire.issues.empty()) &&
@@ -628,12 +697,15 @@ main(int argc, const char **argv)
 
     std::cerr << "brep-audit: phase=report" << std::endl;
     std::cout << "{\"format\":\"brlcad-brep-realization-audit-v1\",\"database\":"
-	<< json_quote(argv[0]) << ",\"object\":" << json_quote(argv[1])
+	<< json_quote(db_path) << ",\"object\":" << json_quote(dp->d_namep)
+	<< ",\"task_index\":" << task_index
 	<< ",\"status\":" << json_quote(okay ? "ok" : "fail")
-	<< ",\"ratio_limits\":[" << std::setprecision(17) << ratio_min << "," << ratio_max << "]"
-	<< ",\"tessellation_tolerance\":{\"abs\":" << tess_abs
-	<< ",\"rel\":" << tess_rel << ",\"norm\":" << tess_norm << "}"
-	<< ",\"memory_limit_mib\":" << memory_limit_mib
+	<< ",\"ratio_limits\":[" << std::setprecision(17)
+	<< config.ratio_min << "," << config.ratio_max << "]"
+	<< ",\"tessellation_tolerance\":{\"abs\":" << config.tess_abs
+	<< ",\"rel\":" << config.tess_rel << ",\"norm\":"
+	<< config.tess_norm << "}"
+	<< ",\"memory_limit_mib\":" << config.memory_limit_mib
 	<< ",\"mode\":" << json_quote(mode_name)
 	<< ",\"fast_options\":{\"jobs\":" << fast_options.max_workers
 	<< ",\"max_time_ms\":" << fast_options.max_time_ms
@@ -648,7 +720,9 @@ main(int argc, const char **argv)
 	<< ",\"reference\":{\"method\":\"face_GetBoundingBox_trim_parameter_envelopes\""
 	<< ",\"face_count\":" << ref_faces
 	<< ",\"failed_faces\":" << ref_face_failures
-	<< ",\"bbox_valid\":" << (ref_valid ? "true" : "false")
+	<< ",\"failed_face_indices\":";
+    print_indices(ref_failed_faces);
+    std::cout << ",\"bbox_valid\":" << (ref_valid ? "true" : "false")
 	<< ",\"bbox_min\":";
     if (ref_valid) print_vec(ref_min); else std::cout << "null";
     std::cout << ",\"bbox_max\":";
@@ -658,14 +732,137 @@ main(int argc, const char **argv)
     std::cout << ",\"diagonal\":";
     if (ref_valid) print_num(ref_diag); else std::cout << "null";
     std::cout << "},\"wireframe\":";
-
     if (run_wireframe) print_result(wire, ref_dims); else std::cout << "null";
     std::cout << ",\"shaded\":";
     if (run_shaded) print_result(shaded, ref_dims); else std::cout << "null";
     std::cout << ",\"issues\":";
     print_issues(top_issues);
-    std::cout << "}\n";
-
-    db_close(dbip);
+    std::cout << "}" << std::endl;
+    rt_vlist_cleanup();
+#ifdef __GLIBC__
+    malloc_trim(0);
+#endif
     return okay ? 0 : 1;
+}
+
+int
+main(int argc, const char **argv)
+{
+    bu_setprogname(argv[0]);
+    argc--; argv++;
+
+    int print_help = 0;
+    int list_only = 0;
+    int batch = 0;
+    double ratio_min = 0.5;
+    double ratio_max = 2.0;
+    double tess_abs = 0.0;
+    double tess_rel = 0.01;
+    double tess_norm = 0.0;
+    long memory_limit_mib = 0;
+    long jobs = 0;
+    long max_time_ms = 0;
+    long max_result_mib = 0;
+    long max_points = 0;
+    long batch_start = 0;
+    const char *mode_name = "both";
+    struct bu_opt_desc d[16];
+    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
+    BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
+    BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
+    BU_OPT(d[3], "", "ratio-max", "#", &bu_opt_fastf_t, &ratio_max, "Maximum acceptable generated/reference dimension ratio");
+    BU_OPT(d[4], "", "tess-abs", "#", &bu_opt_fastf_t, &tess_abs, "Absolute shaded tessellation tolerance");
+    BU_OPT(d[5], "", "tess-rel", "#", &bu_opt_fastf_t, &tess_rel, "Relative shaded tessellation tolerance");
+    BU_OPT(d[6], "", "tess-norm", "#", &bu_opt_fastf_t, &tess_norm, "Normal shaded tessellation tolerance");
+    BU_OPT(d[7], "", "memory-limit-mib", "#", &bu_opt_long, &memory_limit_mib, "Process address-space limit in MiB (zero disables)");
+    BU_OPT(d[8], "m", "mode", "wireframe|shaded|both", &bu_opt_str, &mode_name, "Select one generator so resource measurements are independent");
+    BU_OPT(d[9], "j", "jobs", "#", &bu_opt_long, &jobs, "Maximum shaded face workers (zero selects the default)");
+    BU_OPT(d[10], "", "max-time-ms", "#", &bu_opt_long, &max_time_ms, "Shaded generation deadline checked between faces");
+    BU_OPT(d[11], "", "max-result-mib", "#", &bu_opt_long, &max_result_mib, "Maximum retained shaded result size");
+    BU_OPT(d[12], "", "max-points", "#", &bu_opt_long, &max_points, "Maximum retained shaded points");
+    BU_OPT(d[13], "", "batch", "", NULL, &batch, "Audit all BReps in one database process");
+    BU_OPT(d[14], "", "batch-start", "#", &bu_opt_long, &batch_start, "First flattened batch task index");
+    BU_OPT_NULL(d[15]);
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+    const char *usage =
+	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
+    if (print_help || (list_only && (batch || ac != 1)) ||
+	    (batch && ac != 1) || (!list_only && !batch && ac != 2) ||
+	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
+	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0 ||
+	    jobs < 0 || max_time_ms < 0 || max_result_mib < 0 ||
+	    max_points < 0 || batch_start < 0 ||
+	    (!BU_STR_EQUAL(mode_name, "wireframe") &&
+	     !BU_STR_EQUAL(mode_name, "shaded") &&
+	     !BU_STR_EQUAL(mode_name, "both"))) {
+	std::cerr << usage;
+	return print_help ? 0 : 2;
+    }
+    if (!set_memory_limit(memory_limit_mib)) {
+	std::cerr << "Unable to set memory limit to " << memory_limit_mib << " MiB\n";
+	return 2;
+    }
+    if (!bu_file_exists(argv[0], NULL)) {
+	std::cerr << "Database does not exist: " << argv[0] << "\n";
+	return 2;
+    }
+    if (list_only)
+	return list_breps(argv[0]);
+
+    struct db_i *dbip = open_db(argv[0]);
+    if (dbip == DBI_NULL) {
+	std::cerr << "Unable to open database: " << argv[0] << "\n";
+	return 2;
+    }
+    audit_config config = {
+	ratio_min, ratio_max, tess_abs, tess_rel, tess_norm,
+	memory_limit_mib, jobs, max_time_ms, max_result_mib, max_points
+    };
+
+    if (batch) {
+	std::vector<struct directory *> breps;
+	struct directory *entry;
+	FOR_ALL_DIRECTORY_START(entry, dbip) {
+	    if (entry->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP)
+		breps.push_back(entry);
+	} FOR_ALL_DIRECTORY_END;
+	std::sort(breps.begin(), breps.end(),
+	    [](const struct directory *a, const struct directory *b) {
+		return std::string(a->d_namep) < std::string(b->d_namep);
+	    });
+	std::vector<const char *> modes;
+	if (!BU_STR_EQUAL(mode_name, "shaded"))
+	    modes.push_back("wireframe");
+	if (!BU_STR_EQUAL(mode_name, "wireframe"))
+	    modes.push_back("shaded");
+	long task_index = 0;
+	for (struct directory *brep : breps) {
+	    for (const char *task_mode : modes) {
+		if (task_index++ < batch_start)
+		    continue;
+		const long active_index = task_index - 1;
+		std::cout
+		    << "{\"format\":\"brlcad-brep-audit-progress-v1\""
+		    << ",\"database\":" << json_quote(argv[0])
+		    << ",\"object\":" << json_quote(brep->d_namep)
+		    << ",\"mode\":" << json_quote(task_mode)
+		    << ",\"task_index\":" << active_index
+		    << ",\"status\":\"started\"}" << std::endl;
+		audit_brep(dbip, brep, argv[0], task_mode, config,
+		    active_index);
+	    }
+	}
+	db_close(dbip);
+	return 0;
+    }
+
+    struct directory *dp = db_lookup(dbip, argv[1], LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL || dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	std::cerr << "Not a BRep primitive: " << argv[1] << "\n";
+	db_close(dbip);
+	return 2;
+    }
+    int ret = audit_brep(dbip, dp, argv[0], mode_name, config, -1);
+    db_close(dbip);
+    return ret;
 }

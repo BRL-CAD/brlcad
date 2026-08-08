@@ -40,13 +40,24 @@ RT_EXPORT extern int rt_brep_plot(struct bu_list                *vhead,
 				  const struct bn_tol            *tol,
 				  const struct bview *info);
 
+/* item_status, when non-NULL, is called exactly once per requested edge and
+ * surface cue during serial result assembly. */
 struct rt_brep_draw_options {
     size_t max_workers;
     size_t max_result_bytes;
     size_t max_points;
     long max_time_ms;
     int include_surface_cues;
+    void (*item_status)(int item_type, int item_index, int status,
+	void *data);
+    void *item_status_data;
 };
+
+#define RT_BREP_DRAW_EDGE 0
+#define RT_BREP_DRAW_SURFACE_CUE 1
+#define RT_BREP_DRAW_ITEM_COMPLETED 0
+#define RT_BREP_DRAW_ITEM_FAILED 1
+#define RT_BREP_DRAW_ITEM_NOT_PROCESSED 2
 
 struct rt_brep_draw_report {
     int requested_edges;
