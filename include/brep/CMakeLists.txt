@@ -3,6 +3,7 @@ set(
   defines.h
   bbnode.h
   boolean.h
+  cobb.h
   brnode.h
   cdt.h
   csg.h

@@ -43,6 +43,7 @@ __BEGIN_DECLS
 #include "brep/quality.h"
 #include "brep/intersect.h"
 #include "brep/boolean.h"
+#include "brep/cobb.h"
 #include "brep/cdt.h"
 #include "brep/csg.h"
 
