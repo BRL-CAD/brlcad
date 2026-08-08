@@ -1678,6 +1678,318 @@ brep_bound_edge_discrepancies(struct brep_specific *bs)
 }
 
 
+static const brep_edge_record *
+brep_vertex_edge_record(const struct brep_specific *bs, int edge_index)
+{
+    if (!bs)
+	return NULL;
+    for (std::vector<brep_edge_record>::const_iterator record_it =
+	    bs->edge_records.begin(); record_it != bs->edge_records.end();
+	    ++record_it) {
+	if (record_it->edge_index == edge_index)
+	    return &*record_it;
+    }
+    return NULL;
+}
+
+
+static bool
+brep_vertex_outgoing_tangent(const ON_Brep &brep, int vertex_index,
+    int edge_index, double tolerance, ON_3dVector &outgoing)
+{
+    if (vertex_index < 0 || vertex_index >= brep.m_V.Count() ||
+	    edge_index < 0 || edge_index >= brep.m_E.Count())
+	return false;
+    const ON_BrepVertex &vertex = brep.m_V[vertex_index];
+    const ON_BrepEdge &edge = brep.m_E[edge_index];
+    int endpoint = -1;
+    if (edge.m_vi[0] == vertex_index && edge.m_vi[1] != vertex_index)
+	endpoint = 0;
+    else if (edge.m_vi[1] == vertex_index && edge.m_vi[0] != vertex_index)
+	endpoint = 1;
+    if (endpoint < 0 || !edge.Domain().IsIncreasing())
+	return false;
+
+    ON_3dPoint point;
+    ON_3dVector tangent;
+    const double parameter = endpoint ? edge.Domain().Max() :
+	edge.Domain().Min();
+    if (!edge.Ev1Der(parameter, point, tangent) || !point.IsValid() ||
+	    !tangent.IsValid())
+	return false;
+    if (endpoint)
+	tangent = -tangent;
+    if (!tangent.Unitize())
+	return false;
+    const double coordinate_scale = std::max(1.0,
+	std::max(fabs(vertex.point.x), std::max(fabs(vertex.point.y),
+	fabs(vertex.point.z))));
+    const double roundoff = 512.0 * DBL_EPSILON * coordinate_scale;
+    if (point.DistanceTo(vertex.point) > tolerance + roundoff)
+	return false;
+    outgoing = tangent;
+    return true;
+}
+
+
+/* Build the oriented spherical link of each supported closed-manifold planar
+ * vertex.  Each incident face directs its arc so the local material is on the
+ * left.  Requiring the directed arcs to form one cycle rejects boundary,
+ * nonmanifold, disconnected, and inconsistently oriented fans at prep time.
+ * Curved incident faces intentionally remain unsupported until their local
+ * differential bounds are certified. */
+static void
+brep_build_vertex_data(struct brep_specific *bs)
+{
+    if (!bs)
+	return;
+    bs->vertex_records.clear();
+    if (!bs->brep)
+	return;
+
+    const ON_Brep &brep = *bs->brep;
+    bs->vertex_records.reserve(brep.m_V.Count());
+    for (int vertex_index = 0; vertex_index < brep.m_V.Count();
+	    ++vertex_index) {
+	const ON_BrepVertex &vertex = brep.m_V[vertex_index];
+	brep_vertex_record record;
+	record.vertex_index = vertex_index;
+	record.point = vertex.point;
+	const int valence = vertex.m_ei.Count();
+	if (!record.point.IsValid() || valence < 3 ||
+		valence > RT_BREP_TRACE_MAX_LOCAL_ROOTS) {
+	    bs->vertex_records.push_back(record);
+	    continue;
+	}
+
+	std::vector<int> edge_indices(valence, -1);
+	std::vector<ON_3dVector> outgoing(valence);
+	bool complete = true;
+	for (int incident = 0; incident < valence; ++incident) {
+	    const int edge_index = vertex.m_ei[incident];
+	    for (int previous = 0; previous < incident; ++previous)
+		if (edge_indices[previous] == edge_index)
+		    complete = false;
+	    edge_indices[incident] = edge_index;
+	    const brep_edge_record *edge_record =
+		brep_vertex_edge_record(bs, edge_index);
+	    if (!complete || !edge_record || !edge_record->supported ||
+		    !edge_record->correspondence_screened ||
+		    !edge_record->correspondence_supported ||
+		    edge_record->correspondence_exhausted ||
+		    !edge_record->discrepancy_bounded ||
+		    edge_record->discrepancy_bound_exhausted ||
+		    !edge_record->discrepancy_authorized ||
+		    edge_record->face_index[0] < 0 ||
+		    edge_record->face_index[1] < 0 ||
+		    edge_record->face_index[0] == edge_record->face_index[1] ||
+		    !brep_vertex_outgoing_tangent(brep, vertex_index,
+			edge_index, edge_record->tolerance,
+			outgoing[incident])) {
+		complete = false;
+		break;
+	    }
+	}
+	if (!complete) {
+	    bs->vertex_records.push_back(record);
+	    continue;
+	}
+
+	struct vertex_face_link {
+	    ON_3dVector outward_normal;
+	    int face_index = -1;
+	    int incident[2] = {-1, -1};
+	    int count = 0;
+	};
+	std::vector<vertex_face_link> links;
+	links.reserve(valence);
+	for (int incident = 0; complete && incident < valence; ++incident) {
+	    const brep_edge_record *edge_record =
+		brep_vertex_edge_record(bs, edge_indices[incident]);
+	    for (int side = 0; complete && side < 2; ++side) {
+		const int face_index = edge_record->face_index[side];
+		size_t link_index = 0;
+		while (link_index < links.size() &&
+			links[link_index].face_index != face_index)
+		    ++link_index;
+		if (link_index == links.size()) {
+		    if (face_index < 0 || face_index >= brep.m_F.Count()) {
+			complete = false;
+			break;
+		    }
+		    const ON_BrepFace &face = brep.m_F[face_index];
+		    const ON_Surface *surface = face.SurfaceOf();
+		    ON_Plane plane;
+		    if (!surface) {
+			complete = false;
+			break;
+		    }
+		    const ON_BoundingBox surface_bbox = surface->BoundingBox();
+		    if (!surface_bbox.IsValid()) {
+			complete = false;
+			break;
+		    }
+		    const double coordinate_scale = std::max(1.0,
+			std::max(fabs(surface_bbox.m_min.x),
+			std::max(fabs(surface_bbox.m_min.y),
+			std::max(fabs(surface_bbox.m_min.z),
+			std::max(fabs(surface_bbox.m_max.x),
+			std::max(fabs(surface_bbox.m_max.y),
+			fabs(surface_bbox.m_max.z)))))));
+		    const double planar_roundoff =
+			4096.0 * DBL_EPSILON * coordinate_scale;
+		    if (!surface->IsPlanar(&plane, planar_roundoff)) {
+			complete = false;
+			break;
+		    }
+		    vertex_face_link link;
+		    link.face_index = face_index;
+		    link.outward_normal = plane.Normal();
+		    if (face.m_bRev)
+			link.outward_normal = -link.outward_normal;
+		    if (!link.outward_normal.Unitize()) {
+			complete = false;
+			break;
+		    }
+		    links.push_back(link);
+		}
+		vertex_face_link &link = links[link_index];
+		if (link.count >= 2 ||
+			(link.count && link.incident[0] == incident)) {
+		    complete = false;
+		    break;
+		}
+		link.incident[link.count++] = incident;
+	    }
+	}
+	if (!complete || links.size() != (size_t)valence) {
+	    bs->vertex_records.push_back(record);
+	    continue;
+	}
+
+	std::vector<int> next(valence, -1);
+	std::vector<int> arc_face(valence, -1);
+	std::vector<ON_3dVector> arc_normal(valence);
+	std::vector<double> arc_sweep(valence, 0.0);
+	std::vector<int> incoming(valence, 0);
+	for (size_t link_index = 0; complete && link_index < links.size();
+		++link_index) {
+	    const vertex_face_link &link = links[link_index];
+	    if (link.count != 2) {
+		complete = false;
+		break;
+	    }
+	    const int first = link.incident[0];
+	    const int second = link.incident[1];
+	    if (fabs(link.outward_normal * outgoing[first]) > 1.0e-8 ||
+		    fabs(link.outward_normal * outgoing[second]) > 1.0e-8) {
+		complete = false;
+		break;
+	    }
+	    int loop_incoming = -1;
+	    int loop_outgoing = -1;
+	    const int face_incident[2] = {first, second};
+	    for (int side = 0; side < 2; ++side) {
+		const int incident = face_incident[side];
+		const ON_BrepEdge &edge = brep.m_E[edge_indices[incident]];
+		const ON_BrepTrim *face_trim = NULL;
+		for (int trim_side = 0; trim_side < edge.m_ti.Count();
+			++trim_side) {
+		    const int trim_index = edge.m_ti[trim_side];
+		    if (trim_index < 0 || trim_index >= brep.m_T.Count() ||
+			    brep.m_T[trim_index].FaceIndexOf() !=
+			    link.face_index)
+			continue;
+		    if (face_trim) {
+			complete = false;
+			break;
+		    }
+		    face_trim = &brep.m_T[trim_index];
+		}
+		if (!complete || !face_trim ||
+			face_trim->m_vi[0] == face_trim->m_vi[1]) {
+		    complete = false;
+		    break;
+		}
+		if (face_trim->m_vi[1] == vertex_index)
+		    loop_incoming = incident;
+		else if (face_trim->m_vi[0] == vertex_index)
+		    loop_outgoing = incident;
+		else
+		    complete = false;
+	    }
+	    if (!complete || loop_incoming < 0 || loop_outgoing < 0 ||
+		    loop_incoming == loop_outgoing) {
+		complete = false;
+		break;
+	    }
+	    int from = loop_incoming;
+	    int to = loop_outgoing;
+	    if (brep.m_F[link.face_index].m_bRev)
+		std::swap(from, to);
+	    const double sine = link.outward_normal *
+		ON_CrossProduct(outgoing[from], outgoing[to]);
+	    const double cosine = outgoing[from] * outgoing[to];
+	    if (!std::isfinite(sine) || !std::isfinite(cosine) ||
+		    fabs(sine) <= 1.0e-8) {
+		complete = false;
+		break;
+	    }
+	    double sweep = -atan2(sine, cosine);
+	    if (sweep <= 0.0)
+		sweep += 2.0 * ON_PI;
+	    if (!std::isfinite(sweep) || sweep <= 1.0e-8 ||
+		    sweep >= 2.0 * ON_PI - 1.0e-8) {
+		complete = false;
+		break;
+	    }
+	    if (next[from] >= 0 || ++incoming[to] != 1) {
+		complete = false;
+		break;
+	    }
+	    next[from] = to;
+	    arc_face[from] = link.face_index;
+	    arc_normal[from] = link.outward_normal;
+	    arc_sweep[from] = sweep;
+	}
+	for (int incident = 0; complete && incident < valence; ++incident)
+	    if (next[incident] < 0 || incoming[incident] != 1)
+		complete = false;
+	if (!complete) {
+	    bs->vertex_records.push_back(record);
+	    continue;
+	}
+
+	std::vector<bool> visited(valence, false);
+	int current = 0;
+	for (int arc_index = 0; arc_index < valence; ++arc_index) {
+	    if (current < 0 || current >= valence || visited[current]) {
+		complete = false;
+		break;
+	    }
+	    visited[current] = true;
+	    brep_vertex_arc arc;
+	    arc.outgoing = outgoing[current];
+	    arc.outward_normal = arc_normal[current];
+	    arc.clockwise_sweep = arc_sweep[current];
+	    arc.edge_index = edge_indices[current];
+	    arc.face_index = arc_face[current];
+	    record.arcs.push_back(arc);
+	    current = next[current];
+	}
+	if (!complete || current != 0 ||
+		record.arcs.size() != (size_t)valence) {
+	    record.arcs.clear();
+	    bs->vertex_records.push_back(record);
+	    continue;
+	}
+	record.planar = true;
+	record.supported = true;
+	bs->vertex_records.push_back(record);
+    }
+}
+
+
 static void
 brep_build_bvh_surface_tree(int cpu, void *data)
 {
@@ -1858,6 +2170,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     brep_build_surface_data(bs);
     brep_certify_edge_correspondences(bs);
     brep_bound_edge_discrepancies(bs);
+    brep_build_vertex_data(bs);
 
     //start = bu_gettime();
     /* do the majority of real work here */
@@ -11559,6 +11872,7 @@ brep_trace_regular_physical_events(struct rt_brep_shot_trace *trace,
 	event.source_root = matching_root;
 	event.source_kind = RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT;
 	event.edge_index = -1;
+	event.vertex_index = -1;
 	event.face_index = root.face_index;
 	event.span_index = root.span_index;
 	event.certificate = RT_BREP_TRACE_EVENT_REGULAR_INTERIOR;
@@ -11580,6 +11894,467 @@ brep_trace_regular_physical_events(struct rt_brep_shot_trace *trace,
 	}
     }
     brep_trace_finalize_physical_events(trace, ray, tol, complete);
+}
+
+
+static ON_3dVector
+brep_vertex_arc_direction(const brep_vertex_arc &arc, double angle)
+{
+    const double cosine = cos(angle);
+    const double sine = sin(angle);
+    ON_3dVector direction = cosine * arc.outgoing -
+	sine * ON_CrossProduct(arc.outward_normal, arc.outgoing);
+    direction.Unitize();
+    return direction;
+}
+
+
+/* The oriented winding of the spherical vertex link about the ray direction
+ * is I(+D)-I(-D).  Thus +1 is an entering transition and -1 is a leaving
+ * transition even for a nonconvex fan; zero is a contact or an unsupported
+ * ambiguity and is deliberately not published here.  Reflex face arcs are
+ * subdivided along their stored major sweep so endpoint atan2 branches cannot
+ * silently replace them with the complementary minor arc. */
+static int
+brep_vertex_fan_direction(const brep_vertex_record &record,
+    const ON_3dVector &ray_direction, size_t &winding_checks)
+{
+    if (!record.supported || record.arcs.size() < 3)
+	return -1;
+    ON_3dVector axis = ray_direction;
+    if (!axis.Unitize())
+	return -1;
+
+    long double winding = 0.0L;
+    size_t segments = 0;
+    for (size_t arc_index = 0; arc_index < record.arcs.size();
+	    ++arc_index) {
+	const brep_vertex_arc &arc = record.arcs[arc_index];
+	if (!arc.outgoing.IsValid() || !arc.outward_normal.IsValid() ||
+		!std::isfinite(arc.clockwise_sweep) ||
+		arc.clockwise_sweep <= 0.0 ||
+		arc.clockwise_sweep >= 2.0 * ON_PI ||
+		fabs(arc.outward_normal * axis) <= 1.0e-8)
+	    return -1;
+	const size_t subdivisions = std::max((size_t)1,
+	    (size_t)ceil(arc.clockwise_sweep / (0.25 * ON_PI)));
+	if (subdivisions > 8)
+	    return -1;
+	ON_3dVector start = arc.outgoing;
+	for (size_t subdivision = 1; subdivision <= subdivisions;
+		++subdivision) {
+	    const ON_3dVector end = subdivision == subdivisions ?
+		record.arcs[(arc_index + 1) % record.arcs.size()].outgoing :
+		brep_vertex_arc_direction(arc,
+		    arc.clockwise_sweep * (double)subdivision /
+		    (double)subdivisions);
+	    const long double numerator = (long double)(axis *
+		ON_CrossProduct(start, end));
+	    const long double denominator = (long double)(start * end) -
+		(long double)(axis * start) * (long double)(axis * end);
+	    if (!std::isfinite((double)numerator) ||
+		    !std::isfinite((double)denominator) ||
+		    (fabsl(numerator) <= 64.0L * LDBL_EPSILON &&
+		     fabsl(denominator) <= 64.0L * LDBL_EPSILON))
+		return -1;
+	    winding += atan2l(numerator, denominator);
+	    start = end;
+	    segments++;
+	}
+    }
+    winding_checks += segments;
+    const long double turn = 2.0L * (long double)ON_PI;
+    const long double error =
+	std::max(1.0e-10L, 4096.0L * LDBL_EPSILON * segments);
+    if (fabsl(winding - turn) <= error)
+	return brep_hit::ENTERING;
+    if (fabsl(winding + turn) <= error)
+	return brep_hit::LEAVING;
+    return -1;
+}
+
+
+static bool
+brep_vertex_ray_parameter(const brep_vertex_record &record,
+    const ON_Ray &ray, double &parameter, double &distance_tolerance)
+{
+    const double length_squared = ray.m_dir.LengthSquared();
+    if (!(length_squared > DBL_MIN) || !std::isfinite(length_squared))
+	return false;
+    parameter = ((record.point - ray.m_origin) * ray.m_dir) /
+	length_squared;
+    if (!std::isfinite(parameter))
+	return false;
+    const ON_3dPoint closest = ray.m_origin + parameter * ray.m_dir;
+    const double coordinate_scale = std::max(1.0,
+	std::max(fabs(record.point.x), std::max(fabs(record.point.y),
+	std::max(fabs(record.point.z), std::max(fabs(ray.m_origin.x),
+	std::max(fabs(ray.m_origin.y), fabs(ray.m_origin.z)))))));
+    const double line_tolerance = std::max(ON_ZERO_TOLERANCE,
+	4096.0 * DBL_EPSILON * coordinate_scale);
+    if (!closest.IsValid() || closest.DistanceTo(record.point) >
+	    line_tolerance)
+	return false;
+    distance_tolerance = std::max(line_tolerance / sqrt(length_squared),
+	4096.0 * DBL_EPSILON * std::max(1.0, fabs(parameter)));
+    return true;
+}
+
+
+/* Collapse one exactly witnessed planar manifold vertex fan and combine it
+ * with any ordinary certified roots on the rest of the ray.  Selection,
+ * complete many-boxes-to-one-root ownership, direction agreement, and the
+ * entire material state stream are checked before any disposition or event is
+ * committed. */
+static bool
+brep_trace_vertex_physical_events(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const ON_Ray &ray,
+    const struct bn_tol *tol)
+{
+    if (!trace || !bs || !bs->brep || !bs->is_solid || bs->plate_mode ||
+	    bs->vertex_records.empty())
+	return false;
+    const bool workspace_complete = trace->prepared_surface_spans &&
+	!trace->unsupported_surface_faces &&
+	trace->supported_surface_faces == bs->face_records.size() &&
+	trace->candidate_surface_spans + trace->excluded_surface_spans ==
+	    trace->prepared_surface_spans &&
+	!trace->surface_workspace_exhausted &&
+	!trace->surface_clip_restriction_failures &&
+	!trace->surface_box_overflow &&
+	trace->surface_isolated_boxes == trace->stored_surface_boxes &&
+	!trace->local_root_overflow && !trace->local_trim_failures &&
+	trace->local_root_candidates == trace->stored_local_roots &&
+	trace->stored_surface_boxes && trace->stored_local_roots &&
+	!trace->stored_physical_events;
+    if (!workspace_complete)
+	return false;
+
+    struct vertex_event_candidate {
+	size_t vertex_record = 0;
+	size_t canonical_root = 0;
+	size_t first_box = 0;
+	size_t roots = 0;
+	size_t boxes = 0;
+	double parameter = 0.0;
+	double t_min = 0.0;
+	double t_max = 0.0;
+	int direction = -1;
+    } candidates[RT_BREP_TRACE_MAX_PHYSICAL_EVENTS];
+    bool selected_root[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
+    bool selected_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    size_t selected_roots = 0;
+    size_t selected_boxes = 0;
+    size_t candidate_count = 0;
+    bool candidate_conflict = false;
+    bool saw_vertex_line = false;
+    size_t winding_checks = 0;
+    size_t winding_ambiguous = 0;
+
+    for (size_t record_index = 0;
+	    record_index < bs->vertex_records.size(); ++record_index) {
+	const brep_vertex_record &record = bs->vertex_records[record_index];
+	if (!record.supported)
+	    continue;
+	double parameter = 0.0;
+	double t_tolerance = 0.0;
+	if (!brep_vertex_ray_parameter(record, ray, parameter, t_tolerance))
+	    continue;
+	saw_vertex_line = true;
+	const double ray_length = ray.m_dir.Length();
+	const double root_t_tolerance = std::max(t_tolerance,
+	    tol && tol->dist > 0.0 && std::isfinite(tol->dist) &&
+	    ray_length > DBL_MIN ? 0.1 * tol->dist / ray_length : 0.0);
+	const int direction = brep_vertex_fan_direction(record, ray.m_dir,
+	    winding_checks);
+	if (direction != brep_hit::ENTERING &&
+		direction != brep_hit::LEAVING) {
+	    winding_ambiguous++;
+	    continue;
+	}
+
+	bool candidate_roots[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
+	bool candidate_boxes[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+	size_t canonical_root = (size_t)-1;
+	size_t first_box = (size_t)-1;
+	size_t root_count = 0;
+	size_t box_count = 0;
+	double t_min = DBL_MAX;
+	double t_max = -DBL_MAX;
+	bool complete = true;
+	bool face_root[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
+	for (size_t matching_root = 0; complete &&
+		matching_root < trace->stored_local_roots; ++matching_root) {
+	    const struct rt_brep_trace_local_root &root =
+		trace->local_roots[matching_root];
+	    const ON_3dPoint root_point = ray.m_origin +
+		root.dist * ray.m_dir;
+	    if (!root_point.IsValid() ||
+		    root_point.DistanceTo(record.point) >
+		    root_t_tolerance * ray_length)
+		continue;
+	    size_t face_slot = 0;
+	    while (face_slot < record.arcs.size() &&
+		    record.arcs[face_slot].face_index != root.face_index)
+		++face_slot;
+	    if (face_slot == record.arcs.size() ||
+		    face_root[face_slot] ||
+		    fabs(root.dist - parameter) > root_t_tolerance ||
+		    !std::isfinite(root.normal_dot) ||
+		    fabs(root.normal_dot) <= BREP_GRAZING_DOT_TOL ||
+		    root.direction != direction ||
+		    root.hit_class == brep_hit::CRACK_HIT) {
+		complete = false;
+		break;
+	    }
+	    size_t box_matches = 0;
+	    for (size_t box_index = 0;
+		    box_index < trace->stored_surface_boxes; ++box_index) {
+		const struct rt_brep_trace_surface_box &box =
+		    trace->surface_boxes[box_index];
+		if (!brep_prepared_box_matches_local_root(box,
+			trace->local_roots[matching_root], ray, tol))
+		    continue;
+		if (candidate_boxes[box_index] ||
+			box.disposition != RT_BREP_TRACE_BOX_UNRESOLVED ||
+			box.determinant_sign) {
+		    complete = false;
+		    break;
+		}
+		candidate_boxes[box_index] = true;
+		if (first_box == (size_t)-1)
+		    first_box = box_index;
+		t_min = std::min(t_min, (double)box.t_min);
+		t_max = std::max(t_max, (double)box.t_max);
+		box_matches++;
+	    }
+	    if (!complete || !box_matches) {
+		complete = false;
+		break;
+	    }
+	    face_root[face_slot] = true;
+	    candidate_roots[matching_root] = true;
+	    root_count++;
+	    box_count += box_matches;
+	    if (canonical_root == (size_t)-1 ||
+		    ((root.hit_class == brep_hit::CLEAN_HIT ||
+		      root.hit_class == brep_hit::NEAR_HIT) &&
+		     (trace->local_roots[canonical_root].hit_class !=
+			 brep_hit::CLEAN_HIT &&
+		      trace->local_roots[canonical_root].hit_class !=
+			 brep_hit::NEAR_HIT)))
+		canonical_root = matching_root;
+	}
+	for (size_t box_index = 0; complete &&
+		box_index < trace->stored_surface_boxes; ++box_index) {
+	    const struct rt_brep_trace_surface_box &box =
+		trace->surface_boxes[box_index];
+	    if (parameter < box.t_min - root_t_tolerance ||
+		    parameter > box.t_max + root_t_tolerance)
+		continue;
+	    bool incident_face = false;
+	    for (size_t arc_index = 0; arc_index < record.arcs.size();
+		    ++arc_index)
+		if (record.arcs[arc_index].face_index == box.face_index)
+		    incident_face = true;
+	    if (incident_face && !candidate_boxes[box_index])
+		complete = false;
+	}
+	if (!complete || !root_count || !box_count ||
+		canonical_root == (size_t)-1 || first_box == (size_t)-1)
+	    continue;
+
+	trace->physical_event_vertex_candidates++;
+	if (candidate_count >= RT_BREP_TRACE_MAX_PHYSICAL_EVENTS) {
+	    candidate_conflict = true;
+	    continue;
+	}
+	for (size_t root_index = 0;
+		root_index < trace->stored_local_roots; ++root_index)
+	    if (candidate_roots[root_index] && selected_root[root_index])
+		candidate_conflict = true;
+	for (size_t box_index = 0;
+		box_index < trace->stored_surface_boxes; ++box_index)
+	    if (candidate_boxes[box_index] && selected_box[box_index])
+		candidate_conflict = true;
+	if (candidate_conflict)
+	    continue;
+	vertex_event_candidate &candidate = candidates[candidate_count++];
+	candidate.vertex_record = record_index;
+	candidate.canonical_root = canonical_root;
+	candidate.first_box = first_box;
+	candidate.roots = root_count;
+	candidate.boxes = box_count;
+	candidate.parameter = parameter;
+	candidate.t_min = t_min;
+	candidate.t_max = t_max;
+	candidate.direction = direction;
+	selected_roots += root_count;
+	selected_boxes += box_count;
+	for (size_t root_index = 0;
+		root_index < trace->stored_local_roots; ++root_index)
+	    if (candidate_roots[root_index])
+		selected_root[root_index] = true;
+	for (size_t box_index = 0;
+		box_index < trace->stored_surface_boxes; ++box_index)
+	    if (candidate_boxes[box_index])
+		selected_box[box_index] = true;
+    }
+    if (!saw_vertex_line)
+	return false;
+    trace->physical_event_vertex_attempts++;
+    trace->physical_event_vertex_winding_checks += winding_checks;
+    trace->physical_event_vertex_winding_ambiguous += winding_ambiguous;
+    if (!candidate_count || candidate_conflict) {
+	trace->physical_event_vertex_failures++;
+	return false;
+    }
+
+    struct rt_brep_trace_physical_event
+	events[RT_BREP_TRACE_MAX_PHYSICAL_EVENTS] = {};
+    size_t event_count = 0;
+    bool root_owned[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
+    for (size_t root_index = 0; root_index < trace->stored_local_roots;
+	    ++root_index)
+	root_owned[root_index] = selected_root[root_index];
+
+    for (size_t candidate_index = 0; candidate_index < candidate_count;
+	    ++candidate_index) {
+	const vertex_event_candidate &candidate = candidates[candidate_index];
+	const brep_vertex_record &record =
+	    bs->vertex_records[candidate.vertex_record];
+	const struct rt_brep_trace_local_root &canonical =
+	    trace->local_roots[candidate.canonical_root];
+	struct rt_brep_trace_physical_event &vertex_event =
+	    events[event_count++];
+	vertex_event.dist = candidate.parameter;
+	vertex_event.t_min = candidate.t_min;
+	vertex_event.t_max = candidate.t_max;
+	vertex_event.uv[0] = canonical.uv[0];
+	vertex_event.uv[1] = canonical.uv[1];
+	vertex_event.source_box = candidate.first_box;
+	vertex_event.source_box_count = candidate.boxes;
+	vertex_event.source_root = candidate.canonical_root;
+	vertex_event.source_kind = RT_BREP_TRACE_EVENT_SOURCE_VERTEX_FAN;
+	vertex_event.edge_index = -1;
+	vertex_event.vertex_index = record.vertex_index;
+	vertex_event.face_index = canonical.face_index;
+	vertex_event.span_index = canonical.span_index;
+	vertex_event.certificate = RT_BREP_TRACE_EVENT_VERTEX_FAN;
+	vertex_event.determinant_sign = 0;
+	vertex_event.hit_class = brep_hit::CRACK_HIT;
+	vertex_event.trim_status = canonical.trim_status;
+	vertex_event.adjacent_face_index = canonical.adjacent_face_index;
+	vertex_event.direction = candidate.direction;
+    }
+
+    bool complete = true;
+    size_t regular_events = 0;
+    size_t clean_outside = 0;
+    for (size_t box_index = 0; complete &&
+	    box_index < trace->stored_surface_boxes; ++box_index) {
+	if (selected_box[box_index])
+	    continue;
+	const struct rt_brep_trace_surface_box &box =
+	    trace->surface_boxes[box_index];
+	if (box.disposition != RT_BREP_TRACE_BOX_RESOLVED_REGULAR ||
+		!box.determinant_sign || box.face_index < 0 ||
+		box.face_index >= bs->brep->m_F.Count()) {
+	    complete = false;
+	    break;
+	}
+	size_t matching_root = 0;
+	size_t matches = 0;
+	for (size_t root_index = 0;
+		root_index < trace->stored_local_roots; ++root_index) {
+	    if (!brep_prepared_box_matches_local_root(box,
+		    trace->local_roots[root_index], ray, tol))
+		continue;
+	    matching_root = root_index;
+	    matches++;
+	}
+	if (matches != 1 || root_owned[matching_root]) {
+	    complete = false;
+	    break;
+	}
+	root_owned[matching_root] = true;
+	const struct rt_brep_trace_local_root &root =
+	    trace->local_roots[matching_root];
+	int oriented_sign = box.determinant_sign;
+	if (bs->brep->m_F[box.face_index].m_bRev)
+	    oriented_sign = -oriented_sign;
+	const int direction = oriented_sign < 0 ? brep_hit::ENTERING :
+	    brep_hit::LEAVING;
+	if (!std::isfinite(root.normal_dot) || root.direction != direction) {
+	    complete = false;
+	    break;
+	}
+	if (root.hit_class == brep_hit::CLEAN_MISS &&
+		root.trim_status == 1) {
+	    clean_outside++;
+	    continue;
+	}
+	if (root.hit_class != brep_hit::CLEAN_HIT ||
+		root.trim_status == 1 ||
+		event_count >= RT_BREP_TRACE_MAX_PHYSICAL_EVENTS) {
+	    complete = false;
+	    break;
+	}
+	struct rt_brep_trace_physical_event &event = events[event_count++];
+	event.dist = root.dist;
+	event.t_min = box.t_min;
+	event.t_max = box.t_max;
+	event.uv[0] = root.uv[0];
+	event.uv[1] = root.uv[1];
+	event.source_box = box_index;
+	event.source_box_count = 1;
+	event.source_root = matching_root;
+	event.source_kind = RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT;
+	event.edge_index = -1;
+	event.vertex_index = -1;
+	event.face_index = root.face_index;
+	event.span_index = root.span_index;
+	event.certificate = RT_BREP_TRACE_EVENT_REGULAR_INTERIOR;
+	event.determinant_sign = box.determinant_sign;
+	event.hit_class = root.hit_class;
+	event.trim_status = root.trim_status;
+	event.adjacent_face_index = root.adjacent_face_index;
+	event.direction = direction;
+	regular_events++;
+    }
+    for (size_t root_index = 0; complete &&
+	    root_index < trace->stored_local_roots; ++root_index)
+	if (!root_owned[root_index])
+	    complete = false;
+    if (!complete || !event_count ||
+	    event_count > RT_BREP_TRACE_MAX_PHYSICAL_EVENTS) {
+	trace->physical_event_vertex_failures++;
+	return false;
+    }
+
+    for (size_t box_index = 0;
+	    box_index < trace->stored_surface_boxes; ++box_index)
+	if (selected_box[box_index])
+	    trace->surface_boxes[box_index].disposition =
+		RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY;
+    for (size_t event_index = 0; event_index < event_count; ++event_index)
+	trace->physical_events[trace->stored_physical_events++] =
+	    events[event_index];
+    trace->physical_event_attempts += trace->stored_surface_boxes;
+    trace->physical_event_direction_checks +=
+	selected_roots + trace->stored_surface_boxes - selected_boxes;
+    trace->physical_event_regular += regular_events;
+    trace->physical_event_clean_outside += clean_outside;
+    trace->physical_event_near_trim += selected_roots;
+    trace->physical_event_vertex += candidate_count;
+    trace->physical_event_vertex_owned_boxes += selected_boxes;
+    trace->physical_event_vertex_owned_roots += selected_roots;
+    brep_trace_finalize_physical_events(trace, ray, tol, true);
+    if (trace->physical_event_complete == 1)
+	trace->physical_event_vertex_certified++;
+    else
+	trace->physical_event_vertex_failures++;
+    return true;
 }
 
 
@@ -11858,6 +12633,7 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
     existing_event.source_root = selected_root;
     existing_event.source_kind = RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT;
     existing_event.edge_index = selected_edge.edge_index;
+    existing_event.vertex_index = -1;
     existing_event.face_index = existing.face_index;
     existing_event.span_index = existing.span_index;
     existing_event.certificate = RT_BREP_TRACE_EVENT_SEAM_EXISTING;
@@ -11879,6 +12655,7 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
     continuation_event.source_kind =
 	RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION;
     continuation_event.edge_index = selected_edge.edge_index;
+    continuation_event.vertex_index = -1;
     continuation_event.face_index = continuation_face;
     continuation_event.span_index = continuation_span;
     continuation_event.certificate =
@@ -12064,6 +12841,7 @@ brep_trace_fold_physical_events(struct rt_brep_shot_trace *trace,
 	event.source_root = matching_root;
 	event.source_kind = RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT;
 	event.edge_index = -1;
+	event.vertex_index = -1;
 	event.face_index = root.face_index;
 	event.span_index = root.span_index;
 	event.certificate = RT_BREP_TRACE_EVENT_BOUNDARY_FOLD;
@@ -12094,6 +12872,10 @@ brep_trace_physical_events(struct rt_brep_shot_trace *trace,
 {
     if (brep_prepared_fold_pair_eligible(trace))
 	brep_trace_fold_physical_events(trace, bs, ray, tol);
+    else if (trace && trace->surface_isolated_boxes !=
+	    trace->surface_krawczyk_boxes &&
+	    brep_trace_vertex_physical_events(trace, bs, ray, tol))
+	return;
     else if (trace && trace->surface_isolated_boxes !=
 	    trace->surface_krawczyk_boxes &&
 	    brep_trace_seam_physical_events(trace, bs, ray, tol))
@@ -12146,6 +12928,42 @@ brep_prepared_seam_pair_eligible(const struct rt_brep_shot_trace *trace)
 }
 
 
+static bool
+brep_prepared_vertex_events_eligible(const struct rt_brep_shot_trace *trace)
+{
+    if (!trace || trace->physical_event_complete != 1 ||
+	    !trace->physical_event_vertex ||
+	    trace->physical_event_vertex_certified != 1 ||
+	    trace->physical_event_vertex_failures ||
+	    trace->physical_event_unresolved ||
+	    trace->physical_event_direction_mismatches ||
+	    trace->physical_event_overflow ||
+	    trace->physical_event_state_failures ||
+	    trace->physical_event_subminimum_contacts ||
+	    trace->physical_event_tolerance_ambiguous ||
+	    !trace->physical_event_vertex_owned_boxes ||
+	    !trace->physical_event_vertex_owned_roots ||
+	    trace->stored_physical_events !=
+	    2 * trace->physical_event_material_segments)
+	return false;
+    size_t vertex_events = 0;
+    for (size_t event_index = 0;
+	    event_index < trace->stored_physical_events; ++event_index) {
+	const struct rt_brep_trace_physical_event &event =
+	    trace->physical_events[event_index];
+	if (event.certificate != RT_BREP_TRACE_EVENT_VERTEX_FAN)
+	    continue;
+	if (event.source_kind != RT_BREP_TRACE_EVENT_SOURCE_VERTEX_FAN ||
+		event.vertex_index < 0 || event.edge_index != -1 ||
+		!event.source_box_count ||
+		event.hit_class != brep_hit::CRACK_HIT)
+	    return false;
+	vertex_events++;
+    }
+    return vertex_events == trace->physical_event_vertex;
+}
+
+
 static int
 brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
     const struct brep_specific *bs, const ON_Ray &ray,
@@ -12165,6 +12983,7 @@ brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
     size_t fold_events = 0;
     size_t seam_existing_events = 0;
     size_t seam_continuation_events = 0;
+    size_t vertex_events = 0;
     for (size_t event_index = 0;
 	    event_index < trace->stored_physical_events; ++event_index) {
 	const struct rt_brep_trace_physical_event &event =
@@ -12179,23 +12998,32 @@ brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
 	if (event.certificate == RT_BREP_TRACE_EVENT_REGULAR_INTERIOR ||
 		event.certificate == RT_BREP_TRACE_EVENT_BOUNDARY_FOLD) {
 	    if (event.hit_class != brep_hit::CLEAN_HIT ||
-		    event.trim_status == 1 || event.edge_index != -1)
+		    event.trim_status == 1 || event.edge_index != -1 ||
+		    event.vertex_index != -1)
 		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
 	} else if (event.certificate ==
 		RT_BREP_TRACE_EVENT_SEAM_EXISTING) {
 	    if ((event.hit_class != brep_hit::CLEAN_HIT &&
 		    event.hit_class != brep_hit::NEAR_HIT) ||
 		    event.trim_status == 1 || event.edge_index < 0 ||
-		    !event.source_box_count)
+		    event.vertex_index != -1 || !event.source_box_count)
 		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
 	    seam_existing_events++;
 	} else if (event.certificate ==
 		RT_BREP_TRACE_EVENT_SEAM_CONTINUATION) {
 	    if (event.hit_class != brep_hit::CRACK_HIT ||
 		    event.trim_status != 1 || event.edge_index < 0 ||
-		    event.source_box_count)
+		    event.vertex_index != -1 || event.source_box_count)
 		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
 	    seam_continuation_events++;
+	} else if (event.certificate == RT_BREP_TRACE_EVENT_VERTEX_FAN) {
+	    if (event.hit_class != brep_hit::CRACK_HIT ||
+		    event.edge_index != -1 || event.vertex_index < 0 ||
+		    event.source_kind !=
+		    RT_BREP_TRACE_EVENT_SOURCE_VERTEX_FAN ||
+		    !event.source_box_count)
+		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	    vertex_events++;
 	} else {
 	    return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
 	}
@@ -12232,6 +13060,9 @@ brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
 		hits.size() != 2 || !brep_prepared_seam_pair_eligible(trace))
 	    return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
     }
+    if (vertex_events && (vertex_events != trace->physical_event_vertex ||
+	    !brep_prepared_vertex_events_eligible(trace)))
+	return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
     return RT_BREP_PREPARED_FALLBACK_NONE;
 }
 
@@ -12261,8 +13092,9 @@ brep_build_prepared_partition(struct rt_brep_shot_trace *trace,
 	return RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES;
     const bool fold_pair = brep_prepared_fold_pair_eligible(trace);
     const bool seam_pair = brep_prepared_seam_pair_eligible(trace);
+    const bool vertex_events = brep_prepared_vertex_events_eligible(trace);
     if (trace->surface_isolated_boxes != trace->surface_krawczyk_boxes &&
-	    !fold_pair && !seam_pair)
+	    !fold_pair && !seam_pair && !vertex_events)
 	return RT_BREP_PREPARED_FALLBACK_UNCERTIFIED;
     if (trace->local_root_overflow || trace->local_trim_failures ||
 	    trace->local_cluster_overflow ||
@@ -12321,6 +13153,12 @@ brep_try_prepared_partition(struct rt_brep_shot_trace *trace,
 	trace->prepared_production_fallback = object_fallback;
 	return object_fallback;
     }
+    trace->prepared_vertex_records = bs->vertex_records.size();
+    for (std::vector<brep_vertex_record>::const_iterator record_it =
+	    bs->vertex_records.begin(); record_it != bs->vertex_records.end();
+	    ++record_it)
+	if (record_it->supported)
+	    trace->supported_vertex_records++;
     brep_trace_surface_spans(trace, bs, ray, tol);
     brep_trace_fold_events(trace, bs, ray, tol);
     brep_trace_isolated_roots(trace, bs, ray);
@@ -14795,6 +15633,7 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 	brep_build_surface_data(specific);
 	brep_certify_edge_correspondences(specific);
 	brep_bound_edge_discrepancies(specific);
+	brep_build_vertex_data(specific);
 
 	Deserializer deserializer(*external);
 	const uint32_t num_children = deserializer.read_uint32();

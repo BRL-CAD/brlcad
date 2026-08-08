@@ -68,8 +68,12 @@ consistently oriented along one shared projection.  Exact rational control
 signs cover isoparametric boundaries and sphere-pole endpoint stationarity;
 other regular trims use outward derivative bounds and bounded subdivision.
 The old sample screen is telemetry only.  A sample-invisible degree-15 trim
-reversal and convex exact/near vertex-fan rays permanently gate explicit
-fallback; general vertex-fan transition resolution is still unsupported.
+reversal permanently gates explicit fallback.  Closed manifold planar vertex
+fans are now prepared as oriented cyclic links and exact vertex crossings are
+classified by spherical winding.  Convex and reentrant fans publish immutable
+events, including multiple vertex events and mixed regular events on one ray;
+exact face-tangent, near-but-not-on-vertex, curved, disconnected, ambiguous,
+unsupported, and capacity-limited fans retain whole-ray fallback.
 Exact-parameter positive-weight surface spans and conservative ray-plane
 coefficient exclusion are prepared, and a bounded adjacent-support
 continuation solve recovers the missing bowed-seam endpoints.
@@ -2556,13 +2560,131 @@ ESTABLISHED FINDINGS
     focused optimized seam shard passes in 24.89 seconds and its rebuilt
     ASan/UBSan counterpart passes in 68.94 seconds without a diagnostic.
 
-    This checkpoint does not yet solve general edge clustering.  Direct
-    contact-only publication, overlapping representations, a crack embedded
-    in a ray with unrelated ordinary segments, many-to-many edge clusters,
-    and cyclic vertex fans remain explicit fallback targets.  The continuation
-    certificate localizes all possible roots and gates a converged corrector;
-    a future stricter interval-existence theorem can strengthen that endpoint
-    without changing the event or fallback contract.
+    This checkpoint did not yet solve general edge clustering or cyclic
+    vertex fans.  Direct contact-only publication, overlapping
+    representations, a crack embedded in a ray with unrelated ordinary
+    segments, and many-to-many edge clusters remain explicit fallback
+    targets.  Finding 67 adds the first cyclic planar vertex-fan theorem.  The
+    continuation certificate localizes all possible roots and gates a
+    converged corrector; a future stricter interval-existence theorem can
+    strengthen that endpoint without changing the event or fallback contract.
+
+67. Exact crossings of supported closed manifold planar vertex fans now
+    publish immutable physical events.  Prep constructs one record per BREP
+    vertex without changing SurfaceTree density or cache serialization.  Every
+    incident edge must be unique, two-trim, globally correspondence-certified,
+    within its conservative edge/lift gap envelope, and free of proof or
+    workspace exhaustion.  Valence must fit the fixed local-root workspace.
+    Every incident face must occur on exactly two incident edges, and the
+    directed face arcs must form one connected cycle.  Boundary,
+    non-manifold, disconnected, repeated, inconsistently oriented, or
+    capacity-limited fans are marked unsupported rather than partially used.
+
+    Each incident edge contributes its outgoing tangent at the vertex.  Trim
+    direction, trim reversal, face reversal, and the two edge endpoints decide
+    the directed arc through each face.  The arc stores its full clockwise
+    sweep, not merely its endpoint vectors.  This distinction is necessary at
+    reentrant corners: a 270-degree material face sector and its 90-degree
+    complement have the same endpoint rays, and an endpoint-only `atan2`
+    would silently convexify the vertex.  Outgoing tangents must lie in their
+    incident face planes and every corner must be nondegenerate.
+
+    The initial theorem is intentionally planar.  Incident faces must pass an
+    OpenNURBS plane test with a coordinate-scaled binary64 roundoff envelope,
+    `4096 * DBL_EPSILON * coordinate_scale`, rather than model tolerance.  The
+    first implementation used an exact-zero plane tolerance and the
+    similarity matrix exposed false unsupported results after arbitrary
+    rotation.  The roundoff envelope repairs representation noise without
+    authorizing genuinely curved faces or turning modeling tolerance into a
+    topology classifier.
+
+    At shot time, the ray line must contain the topological vertex within a
+    similarly strict coordinate-roundoff envelope.  Only after that exact
+    geometric witness exists may solver observations be grouped within one
+    tenth of the model distance tolerance.  A ray merely near a vertex is not
+    promoted by this theorem.  The prepared cyclic link is projected onto the
+    unit sphere about the ray direction.  Each stored face sweep is divided
+    into pieces no larger than pi/4, rotated with Rodrigues' formula, and
+    accumulated with long-double projected `atan2` terms.  The oriented
+    winding satisfies
+
+        W(D) / (2 pi) = I(+D) - I(-D).
+
+    A winding of +1 is ENTER and -1 is LEAVE.  This handles convex and
+    reentrant solid angles without depending on which incident surface Newton
+    happens to return.  A direction transverse to every incident face and a
+    winding close to exactly plus or minus `2 pi` are required.  Exact
+    face-tangent rays, zero winding, and numerically ambiguous winding retain
+    fallback; they are not assigned material by parity.
+
+    Whole-ray ownership is again proved before mutation.  At least one
+    non-tangent local surface root and terminal box must establish numerical
+    hit provenance for each physical vertex.  Every observed nearby root must
+    belong to an incident face, be unique on that face, agree with the winding
+    direction, and be non-CRACK.  Every such root owns all matching terminal
+    boxes, and every incident terminal box covering the exact vertex parameter
+    must be owned.  A box without a matching root is fallback.  The cyclic
+    topology may witness an incident face whose redundant surface solve is
+    absent only when that face also produced no terminal box; all evidence
+    that does exist must still be accounted for.  Multiple disjoint vertex
+    clusters and remaining ordinary roots are accepted only when their box and
+    root ownership sets are disjoint and the ordinary theorem is complete.
+
+    After the complete proof, owned boxes become `RESOLVED_BOUNDARY` and one
+    `VERTEX_FAN` event is appended at the exact topological vertex parameter.
+    Its source kind and certificate are `VERTEX_FAN`, its hit class is
+    `CRACK_HIT`, its vertex identity is valid, and its edge identity is
+    invalid.  Existing regular,
+    fold, and seam events explicitly carry an invalid vertex identity.  The
+    event records one or more source boxes and a canonical source root; stream
+    telemetry separately counts attempts, candidates, winding checks,
+    ambiguity, certificates, events, owned boxes, and owned roots.  No disposition or
+    event changes until all vertex clusters, remaining ordinary events, the
+    global {0,1} state machine, outward minimum-segment proof, and fixed hit
+    reconstruction succeed.  Runtime traversal and classification use only
+    fixed-capacity shot workspaces; the variable-sized cyclic records are
+    immutable prep data.
+
+    The convex gate converts an ARB8 and shoots four exact mixed
+    vertex-plus-regular rays in both directions.  All eight prepared vertices
+    are supported; each ray owns three roots and three boxes, emits one vertex
+    and one regular event, and reconstructs the legacy one-segment answer.
+    An exact face-tangent line in both directions and rays displaced only 0.25
+    model tolerance from the vertex remain explicit fallback.  The concave gate
+    converts an exact L-shaped implicit EXTRUDE to BREP.  A single line crosses
+    its reentrant top vertex and a convex bottom vertex, producing two
+    disjoint vertex events, six roots, at least six boxes, and the same two
+    endpoints as the implicit primitive to 1.78e-15 in both directions.
+
+    Translation, arbitrary rotation plus translation, 0.01x uniform scale,
+    and 10,000x uniform scale plus large translation repeat the L-shaped test
+    in both directions with scaled model tolerances.  All twelve vertex
+    records remain supported and two certified events produce one complete
+    segment in every case.  Direct redundant surface-root counts vary under
+    transformation, which is why the theorem relies on the certified cyclic
+    topology while still requiring complete ownership of every actual root
+    and terminal box.  Tests independently reconstruct incident-face, root,
+    box, direction, source-count, reversal, and final-partition ownership from
+    the immutable trace rather than trusting production counters.
+
+    The optimized six-shard BREP correctness corpus passes 6/6, with the
+    interval shard remaining the 138.83-second critical path.  The focused
+    cache/conversion/NIST regression matrix passes 11/11.  ASan/UBSan exposed
+    a latent EXTRUDE alignment defect in the new implicit oracle: four loops
+    cast every sketch segment to `carc_seg` before reading its common magic,
+    although line segments may be only four-byte aligned.  They now read the
+    common 32-bit magic and cast only confirmed circular arcs.  The rebuilt
+    seam shard passes normally in 29.31 seconds and under ASan/UBSan with
+    halt-on-error in 97.59 seconds while run beside the cache gates; together
+    with the four already clean
+    affected shards, the sanitizer ray gate is 5/5.  The focused cache,
+    primitive-conversion, and NIST regression matrix passes 11/11 normally and
+    11/11 under ASan/UBSan in 19.66 seconds.  Rebuilt ThreadSanitizer cache
+    qualification passes all seven serial and parallel cases in 26.13 seconds
+    without a race or lock diagnostic.
+    Curved differential vertex links, tolerance-near intended vertex closure,
+    non-manifold fans, and general manifold-edge clusters remain explicit
+    future theorems rather than relaxations of this planar gate.
 
 
 IMPLEMENTATION CHECKLIST
@@ -2679,15 +2801,27 @@ IMPLEMENTATION CHECKLIST
         solid-state qualification; retain whole-ray fallback otherwise.
     [x] Remove the equal-normalized-speed assumption for regular two-trim edge
         correspondence and gate opposite nonlinear trim reparameterizations.
-    [x] Add initial vertex-fan and ambiguous-correspondence fallback gates.
-        [x] Gate exact and near convex three-edge fan rays without invoking
-            the unsupported vertex transition resolver.
+    [x] Add vertex-fan and ambiguous-correspondence gates.
+        [x] Gate exact and near convex three-edge fan rays before invoking
+            the vertex transition resolver.
         [x] Screen a bowed forward/backward/forward trim and retain its
             one-event crack without unsafe repair in both directions.
         [x] Replace the bounded regularity screen with a conservative global
             injectivity/orientation proof, retaining explicit unsupported and
             depth/workspace fallback.
-        [ ] Implement cyclic vertex fans.
+        [x] Implement cyclic planar vertex fans.
+            [x] Prepare one closed directed manifold link with full convex or
+                reflex face sweeps and explicit unsupported fallback.
+            [x] Classify exact transverse crossings by spherical winding and
+                publish multiple disjoint vertex clusters atomically.
+            [x] Gate convex ARB8 and concave implicit-EXTRUDE oracles in both
+                directions, including mixed vertex/regular event streams.
+            [x] Preserve exact face-tangent and near-but-not-on-vertex
+                fallback; do not use model tolerance to invent a vertex hit.
+            [x] Gate translation, rotation, and 0.01x/10,000x similarity
+                invariance with independently reconstructed source ownership.
+            [ ] Extend the theorem to certified curved differential links and
+                separately define tolerance-near intended vertex closure.
     [ ] Add sewn and perturbed Cobb fixtures and threshold matrices.
         [x] Add reusable legacy-unsewn and solid-sewn Cobb constructors.
         [x] Gate topology, face/seam/vertex rays, scale, and 8,000 shared
@@ -2864,16 +2998,18 @@ IMPLEMENTATION CHECKLIST
             independently from physical event records.
         [x] Derive ordinary interior ENTER/LEAVE from bounded oriented
             determinant evidence rather than nominal-normal cleanup.
-        [ ] Resolve supported interior, fold, edge, crack, and later vertex
+        [ ] Resolve supported interior, fold, edge, crack, and vertex
             clusters into ENTER/LEAVE/CONTACT events without deleting source
             evidence.
             [x] Resolve clean ordinary interior and strict cross-span fold
                 roots into provenance-preserving ENTER/LEAVE events.
             [x] Integrate the narrowly certified one-root/one-continuation
                 manifold seam pair with complete box/root ownership.
+            [x] Integrate closed manifold planar cyclic vertex fans with exact
+                line witnesses, complete source ownership, and mixed ordinary
+                event streams.
             [ ] Integrate general manifold-edge clusters, direct contacts,
-                overlaps, mixed ordinary/crack streams, and later cyclic
-                vertex fans.
+                overlaps, and mixed ordinary/crack streams.
         [ ] Assemble a complete {0,1} solid-state stream and apply the outward
             minimum-segment classifier before atomic publication.
             [x] Assemble and publish resolved clean regular/fold material
@@ -3634,17 +3770,18 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Implement and gate cyclic convex/concave vertex-fan transitions before any
-   multi-edge crack repair.  Preserve the current explicit fallback for
-   unsupported, non-manifold, ambiguous, and capacity-limited fans.  Reuse the
-   immutable event and whole-ray ownership contract; do not infer a transition
-   from hit parity or whichever incident face happens to converge.
-2. Extend the certified seam pair into general manifold-edge clustering.
+1. Extend the certified seam pair into general manifold-edge clustering.
    Independently qualify direct contacts, overlapping incident
    representations, mixed ordinary/crack rays, and multiple edge events before
    they can publish.  Keep the current one-existing/one-continuation theorem
    unchanged as the narrow production subset, and preserve whole-ray fallback
    for every incompatible or unowned root/box.
+2. Extend vertex classification only through a separately certified curved
+   differential-link theorem.  Bound surface-normal and tangent variation over
+   a local neighborhood before replacing the planar cyclic link.  Define exact
+   face-tangent contact and tolerance-near intended vertex closure as separate
+   policies; do not broaden the exact line witness or let model tolerance
+   authorize topology by itself.
 3. Revisit inferred tolerance policy without allowing a sampled or computed
    gap to authorize itself.  Keep model-space, UV, numerical-root, t-cluster,
    and minimum-segment tolerances distinct, and add explicit overlap/contact

@@ -982,8 +982,9 @@ convergence.  A prepared result may replace the SurfaceTree result only when:
   * every retained isolated box has exactly one complete ownership theorem:
     a strict-interior Krawczyk root, one of the two qualified fold parents, or
     a boundary/contact disposition owned by the narrowly certified manifold-
-    seam pair described in Section 6.4.1; mixing these exceptions with an
-    otherwise incomplete ray is not allowed;
+    seam pair described in Section 6.4.1 or the cyclic planar vertex theorem
+    in Section 6.4.2; mixing these exceptions with an otherwise incomplete ray
+    is not allowed;
 
   * every physical event group has an unambiguous entering or leaving
     direction (clean trimmed misses may be discarded, but tangencies,
@@ -1765,7 +1766,160 @@ from the immutable records, check both endpoint intervals against the implicit
 sphere, reverse every ray, and require no promotion above the authorized seam
 envelope.  General direct contact, incident-surface overlap, mixed
 ordinary/crack streams, multiple edge events, non-manifold topology, and cyclic
-vertex fans remain separate theorems rather than relaxations of this one.
+vertex fans remain separate theorems rather than relaxations of this one.  The
+initial vertex theorem is Section 6.4.2; curved and tolerance-near fans remain
+future extensions of that theorem.
+
+6.4.2 Cyclic planar vertex-fan theorem
+
+A BREP vertex can be one physical boundary crossing even though three or more
+incident faces independently report roots, or numerical conditioning causes
+one of those redundant face solves not to report a root.  Do not select one
+incident normal, delete an even number of observations, or infer a transition
+from retained-hit parity.  Prepare the oriented topological link of the vertex
+and classify the solid state on the unit sphere of ray directions.
+
+The first production theorem is deliberately restricted to closed manifold
+planar fans.  It is broad enough to cover convex and reentrant polyhedral
+vertices and exact implicit-to-BREP extrusions, while leaving curved,
+non-manifold, tolerance-near, and tangent cases on the complete legacy path.
+The restrictions are proof obligations, not heuristics:
+
+  1. Create one immutable prep record per BREP vertex.  Every incident edge
+     must be unique, have exactly two trims, have supported positive-weight
+     rational edge data, pass the global edge/lift injectivity and orientation
+     theorem, and have a conservative geometric gap decision that authorizes
+     its lifted representations.  Any exhaustion or unavailable proof makes
+     the complete vertex record unsupported.
+
+  2. Require a valence of at least three and no greater than the fixed local-
+     root/event workspace capacity.  Every incident face must occur on exactly
+     two incident edges.  Directed edge/face incidences must assemble into one
+     connected cycle; reject boundary, repeated, disconnected, or
+     inconsistently oriented components.  This is a sufficient closed-manifold
+     test, not an attempt to repair malformed topology.
+
+  3. Evaluate a finite outgoing edge tangent at the vertex endpoint.  Use the
+     edge endpoint, trim direction, trim reversal, and face reversal to orient
+     the pair of edge tangents bounding each material face sector.  Require
+     every outgoing tangent to lie in the corresponding face plane and reject
+     degenerate corners.
+
+  4. Preserve each face sector's complete directed sweep.  The two endpoint
+     vectors do not identify whether the material sector is the minor or major
+     arc: a reentrant 270-degree face sector has the same endpoint directions
+     as a convex 90-degree complement.  Store the signed clockwise sweep
+     selected by the oriented trim/face cycle, including reflex sweeps.
+
+  5. Require every incident surface to be planar only within a coordinate-
+     scaled floating-point roundoff envelope.  The implemented sufficient
+     bound is `4096 * DBL_EPSILON * coordinate_scale`.  It is intentionally
+     independent of model tolerance: exact-zero planarity is not invariant
+     under evaluated rotations, while model tolerance would incorrectly
+     authorize genuinely curved surfaces.  A later curved theorem must bound
+     differential variation rather than relax this test.
+
+At shot time, first establish that the mathematical ray line contains the
+stored topological vertex within a coordinate-scaled binary64 roundoff bound.
+This exact-locus witness is distinct from later clustering.  A line merely
+within model tolerance of the vertex does not qualify and must retain the
+ordinary/edge/fallback behavior.  After the witness is established, nearby
+redundant local-root observations may be associated with the vertex using a
+bounded fraction of model tolerance.
+
+Classify the crossing by the oriented spherical link.  For unit ray direction
+`D`, the closed link winding obeys
+
+    W(D) / (2 pi) = I(+D) - I(-D),
+
+where `I` is the local solid indicator.  Consequently winding +1 is ENTER,
+winding -1 is LEAVE, and zero is no transition.  For each prepared face arc:
+
+  * divide its stored full sweep into no more than eight pieces, each no larger
+    than pi/4;
+
+  * rotate successive directions in the face plane with Rodrigues' formula;
+
+  * project the endpoints perpendicular to `D`; and
+
+  * accumulate the oriented `atan2` angle in long double.
+
+Require the ray to be transverse to every incident face and the sum to enclose
+exactly plus or minus `2 pi` within a scale-aware arithmetic bound.  A ray on a
+face plane, a vanishing projection, zero winding, or an ambiguous winding is
+not resolved by this theorem.  In particular, exact face-tangent contact is a
+future contact theorem, not an ENTER/LEAVE guess.
+
+Before appending an event, prove complete source ownership for the whole ray:
+
+  1. At least one non-tangent local root and one retained terminal box must
+     supply numerical provenance for each physical vertex cluster.  Pure
+     topological line coincidence with no local surface evidence is not enough
+     for production publication.
+
+  2. Every local root in the vertex association interval must belong to an
+     incident face, be the sole root for that face in the cluster, have a
+     finite non-tangent direction equal to the winding result, and not be an
+     unrelated `CRACK_HIT`.
+
+  3. Each observed root owns every terminal box that contains it.  Every
+     terminal box on an incident face whose outward t interval contains the
+     exact vertex parameter must have a matching observed root and be owned.
+     A box with no root is incomplete and invokes fallback.
+
+  4. The cyclic topology may account for an incident face whose redundant
+     surface solver root is absent only if no terminal box for that face
+     covers the event.  This permits transform-dependent redundant-root
+     omission without overlooking any actual prepared work.  It must never be
+     used to excuse an unowned root or box.
+
+  5. Permit several disjoint vertex clusters on one ray, and permit ordinary
+     roots outside those clusters, only when all ownership sets are disjoint
+     and the remaining ordinary theorem succeeds.  Reject overlapping source
+     intervals, multiply owned boxes/roots, or capacity exhaustion.
+
+After every cluster and remaining event succeeds, mark vertex-owned boxes
+`RESOLVED_BOUNDARY` and append one immutable `VERTEX_FAN` event at the exact
+topological vertex parameter.  The event carries the vertex identity, an
+invalid edge identity, `VERTEX_FAN` source kind and certificate, `CRACK_HIT`
+hit class, direction, canonical source root, representative source box,
+source-box count, and an outward ray-parameter interval.  All other event
+classes carry an invalid vertex identity.  Maintain independent telemetry for
+prepared/supported records, attempts, candidates, winding checks and
+ambiguity, certifications, events, owned boxes, and owned roots.
+
+No box disposition or event count may change during a failed attempt.  Only
+after the complete event stream passes the normal {0,1} solid-state machine,
+outward minimum-segment proof, and fixed-workspace hit reconstruction may it
+replace the dense SurfaceTree answer atomically.  Prep may own variable-sized
+immutable fan records; ray traversal, winding, ownership, and event assembly
+must use fixed-capacity storage and perform no allocation.
+
+The permanent directed gate has four parts:
+
+  * a converted convex ARB8 with exact vertex-plus-regular rays in both
+    directions, independently checking three incident roots/boxes, event
+    provenance, one material interval, exact face-tangent fallback, and rays
+    displaced 0.25 model tolerance from the vertex;
+
+  * an exact concave L-shaped implicit EXTRUDE converted to BREP, with one line
+    crossing a reentrant vertex and a convex vertex, two disjoint fan events,
+    and endpoint comparison against the implicit primitive;
+
+  * translation, arbitrary rotation, 0.01x scale, and 10,000x scale plus large
+    translation, with scaled length tolerances and both ray directions; and
+
+  * independent reconstruction of incident faces, every observed root, every
+    terminal box, directions, source counts, disjoint ownership, event
+    reversal, and the final production partition from the immutable trace.
+
+Do not require the number of redundant incident-face roots to be identical
+under similarity transforms; require at least one root/box per physical vertex
+and complete ownership of everything the prepared solver actually retained.
+The analytic/implicit oracle and final physical transition must remain
+invariant.  Curved incident faces, tolerance-near intended vertex closure,
+non-manifold fans, and face-tangent contact require separately specified
+theorems and corpus gates before they acquire publication authority.
 
 6.5 Solid assembly
 
@@ -2471,8 +2625,10 @@ Phase 4: Certified physical events and atomic solid assembly
     evidence and retain roots separately from resolved events.
 
   * Integrate the certified same-face fold pair, manifold edge sectors, and
-    authorized crack continuation as distinct event theorems.  Add cyclic
-    vertex fans only after their complete topology/orientation gate exists.
+    authorized crack continuation as distinct event theorems.  Integrate the
+    cyclic planar vertex theorem only through its complete topology,
+    orientation, winding, and ownership gate; leave curved and tolerance-near
+    fans for separate later theorems.
 
   * Replace destructive hit cleanup with topology-first event clustering,
     outward minimum-segment classification, and state-machine solid assembly.
