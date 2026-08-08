@@ -632,6 +632,34 @@ coefficient construction, arbitrary sub-box restriction, rational weight and
 ray-t bounds, and any reparameterization amplification before treating the
 complete Krawczyk input as rigorous.
 
+For initial construction, regard every stored control-point component,
+weight, ray-origin component, ray-direction component, and ray-plane component
+as an exact binary64 input.  Form each homogeneous Cartesian numerator
+`cv.xyz - ray_origin * cv.w`, both ray-plane dot products, the ray-direction
+squared norm, and the ray-parameter numerator with outward interval operations
+at each multiply, add, and divide.  A scalar coefficient may remain as the
+working center, but its declared error must cover the complete independently
+formed interval rather than a magnitude-based estimate.
+
+For a sub-box, retain the scalar de Casteljau net as a working center and run a
+parallel interval de Casteljau restriction starting from every coefficient's
+full `[center-error, center+error]` interval.  Enclose the local `minimum /
+maximum` parameter used by a two-split restriction.  Reduce the resulting net
+to one common error only after every output coefficient interval has been
+formed.  Do the same independently for the homogeneous ray-parameter
+numerator and positive weight net; reject a ray-t bound if any restricted
+weight interval reaches zero, otherwise bound each rational coefficient with
+outward interval division and take their hull.  This replaces depth-scaled
+and absolute-epsilon error heuristics with operation-level enclosures.
+
+Extend the exact-dyadic oracle with multi-split tensor restrictions at several
+sub-box locations, every supported order pair, mixed signs, declared input
+uncertainty, and wide binary scales.  Also gate positive-denominator interval
+quotients and the initial homogeneous coefficient equations directly.  Keep
+outside-span reparameterization as a distinct audit: extrapolating basis
+transforms are not convex restrictions and require their own amplification
+proof.
+
 Qualify adaptive termination under similarities independently of physical
 classifier invariance.  Apply the same translation, arbitrary rotation, and
 0.01x/10,000x uniform scales to an exact implicit sphere, its converted BREP,
