@@ -24,7 +24,10 @@ CSG regions now compare implicit leaves against individually converted BREP
 leaves under the same Boolean trees.  A reusable exact Cobb sphere definition
 now supplies both the legacy unsewn patch set and a closed 8-vertex/12-edge
 solid; the pristine sewn form matches the implicit sphere on its first 8,000
-shared lines.  Phase 0 baselines documented in brep_raytrace_plan.txt remain
+shared lines.  An endpoint-preserving bowed support-seam sweep now calibrates
+actual 3D discrepancy and records grazing behavior across 416 directed rays.
+It has reproduced a below-tolerance crack leak without yet changing seam
+policy.  Phase 0 baselines documented in brep_raytrace_plan.txt remain
 authoritative.
 
 
@@ -158,6 +161,32 @@ ESTABLISHED FINDINGS
     Cobb construction follows the implementation order and the topology tests
     make this dependency observable.
 
+16. The first controlled bowed-seam sweep proves that current tolerance logic
+    does not reliably preserve the intended solid.  Moving only the three
+    interior boundary CVs of one Cobb face inward, while preserving endpoints,
+    shared topology, and declaring the measured edge tolerance, can remove one
+    near-grazing root.  At g/T=1 the defect persists through h/T=0.9, where the
+    analytic two-root separation is about 379T (a 0.1897 mm chord for the
+    current T=0.0005 mm).  Normal partition assembly may then discard the
+    entire interval.  The 416-ray matrix currently records 15 below-envelope
+    zero-partition leaks and one forward/reverse inconsistency.  Leakage does
+    not currently spread to h greater than the measured gap; that is now a
+    one-way ratchet, while any repaired cases are allowed to disappear.
+
+17. Near tangency, a surface displacement g can amplify into an along-ray
+    endpoint change much larger than g, approximately through the same
+    1/|N dot D| conditioning governing the solver.  Therefore seam validation
+    cannot gate endpoint error directly by g.  It must distinguish geometric
+    support uncertainty, root conditioning, interval existence/winding, and
+    final minimum-segment policy.
+
+18. The arbitrary-direction nominal h=0 seam lines expose a zero-chord
+    implicit contact partition to the normal callback, with tangent normals
+    that intentionally fail material entry/exit orientation.  Raw axis-aligned
+    exact tangency remains a miss.  Machine reports preserve this distinction;
+    contact events must be canonicalized explicitly rather than being treated
+    as ordinary material partitions.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -219,6 +248,10 @@ IMPLEMENTATION CHECKLIST
         [x] Add reusable legacy-unsewn and solid-sewn Cobb constructors.
         [x] Gate topology, face/seam/vertex rays, scale, and 8,000 shared
             implicit-oracle lines for the pristine sewn form.
+        [x] Add a calibrated, endpoint-preserving bowed support-seam family
+            with signed inward/outward displacement and g/T sweep.
+        [x] Add seam-crossing tangent-limit rays, reversal checks, CSV output,
+            and a ratchet around the measured current crack envelope.
         [ ] Add controlled gap, overlap, trim, and tangent perturbation sweeps.
 
 [ ] Local adaptive solve
@@ -429,6 +462,24 @@ Cobb sphere baseline:
     and no tangent-band exceptions.  Maximum endpoint difference is about
     9.69e-8 mm.  The shared corpus now contains 120,000 lines.
 
+  * The bowed-seam fixture preserves both edge endpoints, modifies homogeneous
+    CVs without changing their weights, measures the resulting discrepancy
+    from both trim lifts at 257 samples, and iterates the requested control-net
+    displacement until measured g is within 0.1 percent of its target.  The
+    observed maximum calibration error is approximately 3.5e-15 mm.
+
+  * The signed matrix covers g/T = 0.1, 0.25, 0.5, 0.9, 1, 1.1, 2, and 10;
+    h/T = 100, 10, 2, 1.1, 1, 0.9, 0.5, 0.1, 0, -0.1, -1, -10, and -100;
+    and both directions for every line.  It checks repeatability and emits a
+    CSV table with root separation, partition counts, chord lengths, endpoint
+    error, validity, and uncertainty classification under --cobb-report.
+
+  * The current 416-ray baseline has 284 oracle differences (including the
+    expected tangency-amplified endpoint changes of a deliberately distorted
+    surface), 15 below-envelope whole-interval leaks, one reversal
+    inconsistency, and 32 zero-chord h=0 contact records.  No below-envelope
+    leak occurs at h greater than 1.01g; regression beyond that bound fails.
+
   cmake --build .build --target \
     librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
     PASS
@@ -466,11 +517,13 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Add deterministic Cobb gap, overlap, support-displacement, and trim-offset
-   families.  Sweep signed perturbation magnitude around model tolerance and
-   minimum feature size, keeping pristine Cobb as the exact sphere oracle.
-2. Instrument raw solver outcomes/residuals/iterations so the grazing report
-   distinguishes candidate generation from final hit-list cleanup.
+1. Instrument raw candidate roots, trim classification, residuals, and final
+   event pairing on the bowed-seam lines, especially the g/T=1, h/T=0.9 case,
+   to locate whether the root is rejected by trim logic or lost during event
+   resolution.
+2. Design the topology-local crack resolver around explicit near-trim evidence
+   and winding/contact classes, then promote each repaired bowed-seam row from
+   the known-defect count to exact solid-interval parity.
 3. Add a safeguarded local correction/contact classification beyond the first
    conditioned Newton improvement.  Do not lower tree density until candidate
    exclusion and fallback behavior are observable and proven equivalent.
@@ -478,5 +531,7 @@ NEXT ACTIONS
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
    BREP-to-CSG recognition as later, separately classified qualification tiers.
-5. Remove the remaining duplicated Cobb control net from brep_invalid.cpp and
-   keep its deliberately invalid topology behavior independently gated.
+5. Add endpoint-moving gap/overlap, trim-only, edge-only, vertex, G1, and
+   combined-error Cobb families, then remove the remaining duplicated Cobb
+   control net from brep_invalid.cpp while independently gating its invalid
+   topology behavior.

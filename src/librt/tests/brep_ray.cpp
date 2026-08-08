@@ -1500,6 +1500,189 @@ check_brep_leaf_csg_corpus(const struct bn_tol *tol)
 }
 
 
+struct cobb_seam_frame {
+    int face_index = 0;
+    int side_index = 1;
+    int edge_index = -1;
+    ON_3dPoint point;
+    ON_3dVector normal;
+    ON_3dVector tangent;
+    ON_3dVector target_conormal;
+};
+
+
+static bool
+cobb_target_edge(const ON_Brep *brep, int face_index, int side_index,
+    int &edge_index)
+{
+    if (!brep || face_index < 0 || face_index >= brep->m_F.Count() ||
+	    side_index < 0 || side_index >= 4)
+	return false;
+    const ON_BrepFace &face = brep->m_F[face_index];
+    if (face.m_li.Count() != 1)
+	return false;
+    const int loop_index = face.m_li[0];
+    if (loop_index < 0 || loop_index >= brep->m_L.Count())
+	return false;
+    const ON_BrepLoop &loop = brep->m_L[loop_index];
+    if (loop.m_ti.Count() != 4)
+	return false;
+    const int trim_index = loop.m_ti[side_index];
+    if (trim_index < 0 || trim_index >= brep->m_T.Count())
+	return false;
+    edge_index = brep->m_T[trim_index].m_ei;
+    return edge_index >= 0 && edge_index < brep->m_E.Count();
+}
+
+
+static bool
+cobb_seam_geometry(const ON_Brep *brep, const ON_3dPoint &origin,
+    cobb_seam_frame &frame)
+{
+    if (!cobb_target_edge(brep, frame.face_index, frame.side_index,
+	    frame.edge_index))
+	return false;
+    const ON_BrepEdge &edge = brep->m_E[frame.edge_index];
+    const ON_Curve *curve = edge.EdgeCurveOf();
+    if (!curve || !curve->Ev1Der(curve->Domain().Mid(), frame.point,
+	    frame.tangent) || !frame.tangent.Unitize())
+	return false;
+    frame.normal = frame.point - origin;
+    if (!frame.normal.Unitize())
+	return false;
+    frame.target_conormal = ON_CrossProduct(frame.tangent, frame.normal);
+    if (!frame.target_conormal.Unitize())
+	return false;
+
+    const ON_BrepFace &face = brep->m_F[frame.face_index];
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!surface)
+	return false;
+    const ON_3dPoint face_center = surface->PointAt(surface->Domain(0).Mid(),
+	surface->Domain(1).Mid());
+    if (frame.target_conormal * (face_center - frame.point) < 0.0)
+	frame.target_conormal.Reverse();
+    return true;
+}
+
+
+static bool
+cobb_perturb_boundary_interior(ON_Brep *brep, int face_index,
+    int side_index, const ON_3dPoint &origin, double displacement)
+{
+    if (!brep || face_index < 0 || face_index >= brep->m_F.Count())
+	return false;
+    ON_NurbsSurface *surface = ON_NurbsSurface::Cast(const_cast<ON_Surface *>(
+	brep->m_F[face_index].SurfaceOf()));
+    if (!surface || surface->CVCount(0) < 3 || surface->CVCount(1) < 3)
+	return false;
+
+    const int fixed_index = (side_index == 0 || side_index == 3) ? 0 :
+	((side_index == 1) ? surface->CVCount(0) - 1 :
+	 surface->CVCount(1) - 1);
+    const int varying_count = (side_index % 2) ? surface->CVCount(1) :
+	surface->CVCount(0);
+    for (int varying = 1; varying < varying_count - 1; ++varying) {
+	const int i = (side_index % 2) ? fixed_index : varying;
+	const int j = (side_index % 2) ? varying : fixed_index;
+	ON_4dPoint cv;
+	if (!surface->GetCV(i, j, cv) || fabs(cv.w) <= DBL_MIN)
+	    return false;
+	ON_3dPoint euclidean(cv.x / cv.w, cv.y / cv.w, cv.z / cv.w);
+	ON_3dVector direction = euclidean - origin;
+	if (!direction.Unitize())
+	    return false;
+	cv.x += displacement * direction.x * cv.w;
+	cv.y += displacement * direction.y * cv.w;
+	cv.z += displacement * direction.z * cv.w;
+	if (!surface->SetCV(i, j, cv))
+	    return false;
+    }
+    surface->DestroyRuntimeCache(true);
+    brep->DestroyRuntimeCache(true);
+    return true;
+}
+
+
+static bool
+cobb_trim_lift(const ON_BrepTrim &trim, double edge_fraction,
+    ON_3dPoint &point)
+{
+    const ON_BrepFace *face = trim.Face();
+    const ON_Surface *surface = face ? face->SurfaceOf() : NULL;
+    const ON_Curve *curve = trim.TrimCurveOf();
+    const ON_Interval domain = trim.Domain();
+    if (!surface || !curve || !domain.IsIncreasing())
+	return false;
+    const double trim_fraction = trim.m_bRev3d ? 1.0 - edge_fraction :
+	edge_fraction;
+    const ON_3dPoint uv = curve->PointAt(
+	domain.ParameterAt(trim_fraction));
+    point = surface->PointAt(uv.x, uv.y);
+    return uv.IsValid() && point.IsValid();
+}
+
+
+static double
+cobb_seam_discrepancy(const ON_Brep *brep, int edge_index)
+{
+    if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count())
+	return INFINITY;
+    const ON_BrepEdge &edge = brep->m_E[edge_index];
+    if (edge.m_ti.Count() != 2)
+	return INFINITY;
+    const ON_BrepTrim &first = brep->m_T[edge.m_ti[0]];
+    const ON_BrepTrim &second = brep->m_T[edge.m_ti[1]];
+    double maximum = 0.0;
+    for (int sample = 0; sample <= 256; ++sample) {
+	const double fraction = (double)sample / 256.0;
+	ON_3dPoint first_lift;
+	ON_3dPoint second_lift;
+	if (!cobb_trim_lift(first, fraction, first_lift) ||
+		!cobb_trim_lift(second, fraction, second_lift))
+	    return INFINITY;
+	maximum = std::max(maximum, first_lift.DistanceTo(second_lift));
+    }
+    return maximum;
+}
+
+
+static ON_Brep *
+cobb_bowed_seam_variant(const ON_Brep *pristine, const ON_3dPoint &origin,
+    double signed_target_gap, cobb_seam_frame &frame, double &measured_gap,
+    double &applied_displacement)
+{
+    measured_gap = INFINITY;
+    applied_displacement = signed_target_gap;
+    if (!pristine || !(fabs(signed_target_gap) > 0.0) ||
+	    !cobb_seam_geometry(pristine, origin, frame))
+	return NULL;
+
+    ON_Brep *variant = NULL;
+    for (int iteration = 0; iteration < 4; ++iteration) {
+	delete variant;
+	variant = new ON_Brep(*pristine);
+	if (!cobb_perturb_boundary_interior(variant, frame.face_index,
+		frame.side_index, origin, applied_displacement)) {
+	    delete variant;
+	    return NULL;
+	}
+	measured_gap = cobb_seam_discrepancy(variant, frame.edge_index);
+	if (!(measured_gap > 0.0) || !std::isfinite(measured_gap)) {
+	    delete variant;
+	    return NULL;
+	}
+	const double ratio = fabs(signed_target_gap) / measured_gap;
+	if (fabs(ratio - 1.0) <= 1.0e-4)
+	    break;
+	applied_displacement *= ratio;
+    }
+
+    variant->m_E[frame.edge_index].m_tolerance = measured_gap * 1.01;
+    return variant;
+}
+
+
 static int
 check_cobb_sphere_corpus(const struct bn_tol *tol)
 {
@@ -1658,6 +1841,274 @@ check_cobb_sphere_corpus(const struct bn_tol *tol)
 }
 
 
+static bool
+partition_results_match(const partition_result &first,
+    const partition_result &second, double endpoint_tolerance,
+    double &maximum_endpoint_error)
+{
+    maximum_endpoint_error = 0.0;
+    if (first.overflow || second.overflow ||
+	    first.partitions != second.partitions) {
+	maximum_endpoint_error = INFINITY;
+	return false;
+    }
+    for (size_t i = 0; i < first.partitions; ++i) {
+	const double in_error = fabs(first.intervals[i].in_dist -
+	    second.intervals[i].in_dist);
+	const double out_error = fabs(first.intervals[i].out_dist -
+	    second.intervals[i].out_dist);
+	maximum_endpoint_error = std::max(maximum_endpoint_error,
+	    std::max(in_error, out_error));
+    }
+    return maximum_endpoint_error <= endpoint_tolerance;
+}
+
+
+static sampled_ray
+cobb_seam_grazing_ray(const cobb_seam_frame &frame,
+    const ON_3dPoint &origin, double radius, double clearance, bool reverse)
+{
+    const double closest_radius = radius - clearance;
+    const ON_3dPoint closest = origin + closest_radius * frame.normal;
+    const double start_sign = reverse ? 1.0 : -1.0;
+    const ON_3dPoint ray_origin = closest +
+	start_sign * 2.0 * radius * frame.target_conormal;
+    const ON_3dVector direction = reverse ? -frame.target_conormal :
+	frame.target_conormal;
+    sampled_ray ray;
+    VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
+    VSET(ray.direction, direction.x, direction.y, direction.z);
+    return ray;
+}
+
+
+static int
+check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report)
+{
+    int failures = 0;
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    if (!pristine) {
+	std::printf("FAIL: bowed Cobb pristine construction\n");
+	return 1;
+    }
+
+    struct rt_ell_internal sphere;
+    struct rt_db_internal sphere_intern;
+    point_t center = VINIT_ZERO;
+    init_sphere_internal(sphere, sphere_intern, center, radius);
+    prepared_model implicit_model;
+    if (!prep_partition_model(implicit_model, &sphere_intern,
+	    "cobb_bow_oracle.s", tol)) {
+	std::printf("FAIL: bowed Cobb implicit preparation\n");
+	delete pristine;
+	return 1;
+    }
+
+    const double gap_ratios[] = {0.1, 0.25, 0.5, 0.9, 1.0, 1.1, 2.0, 10.0};
+    const double clearance_ratios[] = {
+	100.0, 10.0, 2.0, 1.1, 1.0, 0.9, 0.5, 0.1,
+	0.0, -0.1, -1.0, -10.0, -100.0
+    };
+    size_t total_rays = 0;
+    size_t differing_partitions = 0;
+    size_t uncertainty_band_differences = 0;
+    size_t excessive_differences = 0;
+    size_t uncertainty_band_invalid = 0;
+    size_t below_envelope_crack_leaks = 0;
+    size_t reversal_inconsistencies = 0;
+    double maximum_calibration_error = 0.0;
+
+    if (emit_report) {
+	std::printf("cobb_family,direction,g_over_T,h_over_T,"
+	    "root_separation_over_T,implicit_partitions,brep_partitions,"
+	    "implicit_chord,brep_chord,endpoint_error,valid,deterministic,"
+	    "within_uncertainty\n");
+    }
+
+    for (size_t ratio_index = 0; ratio_index < sizeof(gap_ratios) /
+	    sizeof(gap_ratios[0]); ++ratio_index) {
+	for (int sign = -1; sign <= 1; sign += 2) {
+	    const double target_gap = gap_ratios[ratio_index] * tol->dist;
+	    cobb_seam_frame frame;
+	    double measured_gap = 0.0;
+	    double applied_displacement = 0.0;
+	    ON_Brep *variant = cobb_bowed_seam_variant(pristine, origin,
+		sign * target_gap, frame, measured_gap, applied_displacement);
+	    const double calibration_error = variant ?
+		fabs(measured_gap - target_gap) : INFINITY;
+	    maximum_calibration_error = std::max(maximum_calibration_error,
+		calibration_error);
+	    if (!variant || !variant->IsValid() || !variant->IsSolid() ||
+		    calibration_error > 1.0e-3 * target_gap) {
+		std::printf("FAIL: bowed Cobb construction sign=%d g/T=%.3g "
+		    "measured=%.17g target=%.17g displacement=%.17g\n",
+		    sign, gap_ratios[ratio_index], measured_gap, target_gap,
+		    applied_displacement);
+		delete variant;
+		failures++;
+		continue;
+	    }
+
+	    struct rt_brep_internal variant_internal = {};
+	    variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	    variant_internal.brep = variant;
+	    struct rt_db_internal variant_intern;
+	    RT_DB_INTERNAL_INIT(&variant_intern);
+	    variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	    variant_intern.idb_type = ID_BREP;
+	    variant_intern.idb_meth = &OBJ[ID_BREP];
+	    variant_intern.idb_ptr = &variant_internal;
+	    prepared_model variant_model;
+	    if (!prep_partition_model(variant_model, &variant_intern,
+		    "cobb_bowed.s", tol)) {
+		std::printf("FAIL: bowed Cobb prep sign=%d g/T=%.3g\n", sign,
+		    gap_ratios[ratio_index]);
+		delete variant;
+		failures++;
+		continue;
+	    }
+
+	    for (size_t clearance_index = 0; clearance_index <
+		    sizeof(clearance_ratios) /
+		    sizeof(clearance_ratios[0]); ++clearance_index) {
+		const double clearance = clearance_ratios[clearance_index] *
+		    tol->dist;
+		const double root_separation = clearance > 0.0 ?
+		    2.0 * sqrt(2.0 * radius * clearance -
+			clearance * clearance) : 0.0;
+		partition_result forward_implicit;
+		partition_result forward_variant;
+		for (int reverse = 0; reverse <= 1; ++reverse) {
+		    const sampled_ray ray = cobb_seam_grazing_ray(frame,
+			origin, radius, clearance, reverse != 0);
+		    const partition_result implicit_result = shoot_partitions(
+			implicit_model, ray);
+		    const partition_result variant_result = shoot_partitions(
+			variant_model, ray);
+		    const partition_result repeated_result = shoot_partitions(
+			variant_model, ray);
+		    const bool valid = partition_result_valid(implicit_result,
+			ray.direction) && partition_result_valid(variant_result,
+			ray.direction) && partition_result_valid(repeated_result,
+			ray.direction);
+		    double repeat_error = 0.0;
+		    const bool deterministic = partition_results_match(
+			variant_result, repeated_result, 1.0e-12,
+			repeat_error);
+		    double endpoint_error = 0.0;
+		    const bool same = partition_results_match(implicit_result,
+			variant_result, tol->dist, endpoint_error);
+		    const double implicit_chord = partition_chord(implicit_result);
+		    const double variant_chord = partition_chord(variant_result);
+		    const bool within_uncertainty = fabs(clearance) <=
+			2.0 * (tol->dist + measured_gap);
+		    if (!reverse) {
+			forward_implicit = implicit_result;
+			forward_variant = variant_result;
+		    } else {
+			const bool implicit_reversal =
+			    forward_implicit.partitions ==
+			    implicit_result.partitions &&
+			    fabs(partition_chord(forward_implicit) -
+				partition_chord(implicit_result)) <= tol->dist;
+			const bool variant_reversal =
+			    forward_variant.partitions ==
+			    variant_result.partitions &&
+			    fabs(partition_chord(forward_variant) -
+				partition_chord(variant_result)) <= tol->dist;
+			if (!implicit_reversal) {
+			    std::printf("FAIL: implicit Cobb seam reversal "
+				"h/T=%.3g\n",
+				clearance_ratios[clearance_index]);
+			    failures++;
+			}
+			if (!variant_reversal) {
+			    reversal_inconsistencies++;
+			    if (gap_ratios[ratio_index] <= 1.0 &&
+				    clearance > 1.01 * measured_gap) {
+				std::printf("FAIL: bowed Cobb reversal defect "
+				    "spread sign=%d g/T=%.3g h/T=%.3g\n",
+				    sign, gap_ratios[ratio_index],
+				    clearance_ratios[clearance_index]);
+				failures++;
+			    }
+			}
+		    }
+		    total_rays++;
+		    if (!same) {
+			differing_partitions++;
+			if (within_uncertainty) {
+			    uncertainty_band_differences++;
+			} else {
+			    excessive_differences++;
+			}
+		    }
+		    if (!deterministic || (!valid && !within_uncertainty)) {
+			std::printf("FAIL: bowed Cobb invalid/nondeterministic "
+			    "sign=%d g/T=%.3g h/T=%.3g reverse=%d\n", sign,
+			    gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index], reverse);
+			failures++;
+		    }
+		    if (!valid && within_uncertainty)
+			uncertainty_band_invalid++;
+		    const bool crack_leak = clearance > 0.0 &&
+			implicit_result.partitions > 0 &&
+			variant_result.partitions == 0;
+		    if (gap_ratios[ratio_index] <= 1.0 && crack_leak)
+			below_envelope_crack_leaks++;
+		    /* Preserve the measured defect as a one-way ratchet: a future
+		     * repair may close any of these cracks, but leakage must not
+		     * spread deeper than the actual support mismatch. */
+		    if (gap_ratios[ratio_index] <= 1.0 &&
+			    clearance > 1.01 * measured_gap &&
+			    implicit_result.partitions !=
+			    variant_result.partitions) {
+			std::printf("FAIL: bowed Cobb below-envelope leak "
+			    "sign=%d g/T=%.3g h/T=%.3g reverse=%d "
+			    "partitions=%zu/%zu\n", sign,
+			    gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index], reverse,
+			    implicit_result.partitions,
+			    variant_result.partitions);
+			failures++;
+		    }
+		    if (emit_report) {
+			std::printf("bowed_surface_seam,%s,%.9g,%.9g,%.9g,"
+			    "%zu,%zu,%.9g,%.9g,%.9g,%d,%d,%d\n",
+			    sign > 0 ? "outward" :
+			    "inward", measured_gap / tol->dist,
+			    clearance / tol->dist,
+			    root_separation / tol->dist,
+			    implicit_result.partitions,
+			    variant_result.partitions, implicit_chord,
+			    variant_chord, endpoint_error, valid, deterministic,
+			    within_uncertainty);
+		    }
+		}
+	    }
+
+	    free_prepared_model(variant_model);
+	    delete variant;
+	}
+    }
+
+    std::printf("Cobb bowed seam matrix: rays=%zu differing=%zu "
+	"uncertainty-band=%zu outside-band=%zu band-invalid=%zu "
+	"below-envelope-leaks=%zu reversal-inconsistencies=%zu "
+	"max-calibration=%.3g\n",
+	total_rays, differing_partitions, uncertainty_band_differences,
+	excessive_differences, uncertainty_band_invalid,
+	below_envelope_crack_leaks, reversal_inconsistencies,
+	maximum_calibration_error);
+    free_prepared_model(implicit_model);
+    delete pristine;
+    return failures;
+}
+
+
 static int
 check_crofton_sphere(struct rt_db_internal *ell_intern,
     const struct bn_tol *tol, double radius)
@@ -1716,8 +2167,10 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
     const bool report_grazing = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--grazing-report");
-    if (argc != 1 && !report_grazing)
-	bu_exit(1, "Usage: %s [--grazing-report]\n", argv[0]);
+    const bool report_cobb = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--cobb-report");
+    if (argc != 1 && !report_grazing && !report_cobb)
+	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report]\n", argv[0]);
 
     const double radius = 10.0;
     struct rt_ell_internal ell = {};
@@ -1825,6 +2278,7 @@ main(int argc, char **argv)
     failures += check_shared_primitive_corpus(&rtip->rti_tol);
     failures += check_brep_leaf_csg_corpus(&rtip->rti_tol);
     failures += check_cobb_sphere_corpus(&rtip->rti_tol);
+    failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb);
     failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);
 
     rt_clean_resource_basic(rtip, &resp);
