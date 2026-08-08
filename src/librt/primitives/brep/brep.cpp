@@ -5665,8 +5665,31 @@ fixed_hits_contain(const brep_hit_workspace &hits, brep_hit::hit_type type)
 }
 
 
+static bool
+brep_resolved_grazing_pair(const brep_hit &first, const brep_hit &second,
+	const struct xray &ray, const struct bn_tol *tol)
+{
+    const double ray_length = MAGNITUDE(ray.r_dir);
+    if (!(ray_length > DBL_MIN) || !std::isfinite(ray_length) ||
+	    !std::isfinite(first.dist) || !std::isfinite(second.dist) ||
+	    (first.trimmed && !first.closeToEdge) || first.oob ||
+	    (second.trimmed && !second.closeToEdge) || second.oob ||
+	    first.direction != brep_hit::ENTERING ||
+	    second.direction != brep_hit::LEAVING)
+	return false;
+    const double minimum_segment = tol && tol->dist > 0.0 &&
+	std::isfinite(tol->dist) ? tol->dist / ray_length :
+	BREP_SAME_POINT_TOLERANCE;
+    const double parameter_scale = std::max(1.0,
+	std::max(fabs(first.dist), fabs(second.dist)));
+    const double evaluation_slack = 128.0 * DBL_EPSILON * parameter_scale;
+    return second.dist - first.dist >= minimum_segment - evaluation_slack;
+}
+
+
 static brep_hit_cleanup_state
 cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray,
+	const struct bn_tol *tol,
 	brep_cleanup_observation *observation = NULL)
 {
     brep_hit_cleanup_state state = {};
@@ -5799,14 +5822,21 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray,
 	    observation->tolerance);
 
     if (!hits.empty()) {
+	/* Angular grazing is not affine invariant.  A separated entering/leaving
+	 * pair still represents material and is retained at model resolution. */
 	/* Preserve the list loop's advancement after erasing its first node:
 	 * the new first node is skipped, while later returned nodes are tested. */
 	size_t i = 0;
 	while (i < hits.size()) {
 	    const brep_hit &hit = hits[i];
-	    if ((hit.trimmed && !hit.closeToEdge) || hit.oob ||
-		    NEAR_ZERO(VDOT(hit.normal, ray.r_dir),
-			BREP_GRAZING_DOT_TOL)) {
+	    const bool invalid = (hit.trimmed && !hit.closeToEdge) || hit.oob;
+	    const bool grazing = NEAR_ZERO(VDOT(hit.normal, ray.r_dir),
+		BREP_GRAZING_DOT_TOL);
+	    const bool resolved_before = i > 0 &&
+		brep_resolved_grazing_pair(hits[i - 1], hit, ray, tol);
+	    const bool resolved_after = i + 1 < hits.size() &&
+		brep_resolved_grazing_pair(hit, hits[i + 1], ray, tol);
+	    if (invalid || (grazing && !resolved_before && !resolved_after)) {
 		hits.erase(i);
 		if (!i) {
 		    if (!hits.empty())
@@ -5984,7 +6014,8 @@ brep_trace_make_hit(const struct brep_specific *bs, const ON_Ray &ray,
 static void
 brep_trace_prepared_event_cleanup(struct rt_brep_shot_trace *trace,
 	const struct brep_specific *bs, const ON_Ray &ray,
-	const struct xray &xray, const std::list<brep_hit> &legacy_hits,
+	const struct xray &xray, const struct bn_tol *tol,
+	const std::list<brep_hit> &legacy_hits,
 	const brep_hit *legacy_repaired_hit)
 {
     if (!trace || !bs || !bs->brep)
@@ -6043,8 +6074,9 @@ brep_trace_prepared_event_cleanup(struct rt_brep_shot_trace *trace,
 	local_observation.tolerance = tolerance;
 	legacy_observation.tolerance = tolerance;
 	const brep_hit_cleanup_state candidate_cleanup =
-	    cleanup_fixed_brep_hits(candidate_hits, xray, &local_observation);
-	(void)cleanup_fixed_brep_hits(legacy_candidate_hits, xray,
+	    cleanup_fixed_brep_hits(candidate_hits, xray, tol,
+		&local_observation);
+	(void)cleanup_fixed_brep_hits(legacy_candidate_hits, xray, tol,
 	    &legacy_observation);
 	trace->local_candidate_after_near_miss =
 	    candidate_cleanup.after_near_miss;
@@ -6124,7 +6156,7 @@ brep_trace_prepared_event_cleanup(struct rt_brep_shot_trace *trace,
 	return;
 
     const brep_hit_cleanup_state local_cleanup =
-	cleanup_fixed_brep_hits(local_hits, xray);
+	cleanup_fixed_brep_hits(local_hits, xray, tol);
     trace->local_event_after_near_miss = local_cleanup.after_near_miss;
     trace->local_event_after_near_hit = local_cleanup.after_near_hit;
     trace->local_event_after_grazing = local_cleanup.after_grazing;
@@ -6353,7 +6385,7 @@ brep_build_prepared_partition(struct rt_brep_shot_trace *trace,
     if (hits.overflow())
 	return RT_BREP_PREPARED_FALLBACK_HIT_WORKSPACE;
     hits.sort();
-    (void)cleanup_fixed_brep_hits(hits, xray);
+    (void)cleanup_fixed_brep_hits(hits, xray, tol);
     if (hits.size() % 2 != 0)
 	return RT_BREP_PREPARED_FALLBACK_PARTITION;
 
@@ -6675,8 +6707,8 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	brep_trace_root_coverage(trace);
 	if (trace) {
 	    const std::list<brep_hit> empty_hits;
-	    brep_trace_prepared_event_cleanup(trace, bs, r, *rp, empty_hits,
-		NULL);
+	    brep_trace_prepared_event_cleanup(trace, bs, r, *rp, tol,
+		empty_hits, NULL);
 	}
 	if (trace && prepared_selected) {
 	    trace->final_segments = prepared_hits.size() / 2;
@@ -6696,7 +6728,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     brep_trace_root_coverage(trace);
 
     if (!trace && !fixed_hits.overflow()) {
-	(void)cleanup_fixed_brep_hits(fixed_hits, *rp);
+	(void)cleanup_fixed_brep_hits(fixed_hits, *rp, tol);
 	(void)repair_fixed_brep_crack(fixed_hits, bs, r);
 	return emit_fixed_brep_hits(fixed_hits, stp, rp, ap, seghead, bs);
     }
@@ -6915,13 +6947,28 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	trace->after_near_hit = hits.size();
 
     if (!hits.empty()) {
-	// remove grazing hits with with normal to ray dot less than
-	// BREP_GRAZING_DOT_TOL (>= 89.999 degrees obliq)
+	/* Remove isolated grazing contacts, but do not discard a resolved solid
+	 * interval merely because an affine distortion makes both endpoint
+	 * normals nearly perpendicular to the ray. */
 	TRACE("-- Remove grazing hits --");
 	//int num = 0;
 	for (std::list<brep_hit>::iterator i = hits.begin(); i != hits.end(); ++i) {
 	    const brep_hit &curr_hit = *i;
-	    if ((curr_hit.trimmed && !curr_hit.closeToEdge) || curr_hit.oob || NEAR_ZERO(VDOT(curr_hit.normal, rp->r_dir), BREP_GRAZING_DOT_TOL)) {
+	    std::list<brep_hit>::const_iterator grazing_prev = i;
+	    const bool have_prev = i != hits.begin();
+	    if (have_prev)
+		--grazing_prev;
+	    std::list<brep_hit>::const_iterator grazing_next = i;
+	    ++grazing_next;
+	    const bool resolved_before = have_prev &&
+		brep_resolved_grazing_pair(*grazing_prev, curr_hit, *rp, tol);
+	    const bool resolved_after = grazing_next != hits.end() &&
+		brep_resolved_grazing_pair(curr_hit, *grazing_next, *rp, tol);
+	    const bool invalid =
+		(curr_hit.trimmed && !curr_hit.closeToEdge) || curr_hit.oob;
+	    const bool grazing = NEAR_ZERO(VDOT(curr_hit.normal, rp->r_dir),
+		BREP_GRAZING_DOT_TOL);
+	    if (invalid || (grazing && !resolved_before && !resolved_after)) {
 		// remove what we were removing earlier
 		if (curr_hit.oob) {
 		    TRACE("\toob u: " << i->uv[0] << ", " << IVAL(i->sbv->m_u));
@@ -7029,7 +7076,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	trace->after_direction_cleanup = hits.size();
 	trace->final_hits = hits.size();
 	const brep_hit_cleanup_state fixed_cleanup =
-	    cleanup_fixed_brep_hits(fixed_hits, *rp);
+	    cleanup_fixed_brep_hits(fixed_hits, *rp, tol);
 	trace->fixed_after_near_miss = fixed_cleanup.after_near_miss;
 	trace->fixed_after_near_hit = fixed_cleanup.after_near_hit;
 	trace->fixed_after_grazing = fixed_cleanup.after_grazing;
@@ -7060,7 +7107,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     brep_hit repaired_hit;
     brep_resolve_continuation(trace, bs, r, unmatched_hit, &repaired_hit);
     if (trace)
-	brep_trace_prepared_event_cleanup(trace, bs, r, *rp, hits,
+	brep_trace_prepared_event_cleanup(trace, bs, r, *rp, tol, hits,
 	    trace->closure_shadow_segments == 1 ? &repaired_hit : NULL);
     if (trace && trace->closure_shadow_segments == 1) {
 	hits.push_back(repaired_hit);

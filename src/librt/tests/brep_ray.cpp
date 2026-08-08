@@ -4406,41 +4406,42 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	ON_3dVector translation;
 	ON_3dVector axis;
 	double angle;
+	double grazing_floor;
 	int expected_fallback[3];
     } cases[] = {
 	{"oblate", ON_3dVector(1.0, 1.0, 0.6),
 	    ON_3dVector(-31.25, 47.5, 103.75),
-	    ON_3dVector(1.0, -2.0, 0.5), 0.731,
+	    ON_3dVector(1.0, -2.0, 0.5), 0.731, 0.0,
 	    {RT_BREP_PREPARED_FALLBACK_NONE,
 	     RT_BREP_PREPARED_FALLBACK_NONE,
 	     RT_BREP_PREPARED_FALLBACK_NONE}},
 	{"triaxial", ON_3dVector(0.3, 1.7, 4.0),
 	    ON_3dVector(-19.0, 23.0, 41.0),
-	    ON_3dVector(-0.3, 1.0, 0.7), -1.113,
+	    ON_3dVector(-0.3, 1.0, 0.7), -1.113, 1.0e-6,
 	    {RT_BREP_PREPARED_FALLBACK_NONE,
 	     RT_BREP_PREPARED_FALLBACK_NONE,
 	     RT_BREP_PREPARED_FALLBACK_NONE}},
 	{"small-triaxial", ON_3dVector(0.005, 0.025, 0.1),
 	    ON_3dVector(1.25, -2.5, 5.0),
-	    ON_3dVector(0.2, -0.7, 1.0), 1.337,
+	    ON_3dVector(0.2, -0.7, 1.0), 1.337, 0.0,
 	    {RT_BREP_PREPARED_FALLBACK_NONE,
 	     RT_BREP_PREPARED_FALLBACK_NONE,
 	     RT_BREP_PREPARED_FALLBACK_NONE}},
 	{"high-condition", ON_3dVector(0.01, 0.2, 1.0),
 	    ON_3dVector(-203.0, 307.0, 509.0),
-	    ON_3dVector(1.0, 0.4, -0.2), -0.917,
+	    ON_3dVector(1.0, 0.4, -0.2), -0.917, 1.0e-6,
 	    {RT_BREP_PREPARED_FALLBACK_NONE,
 	     RT_BREP_PREPARED_FALLBACK_NONE,
 	     RT_BREP_PREPARED_FALLBACK_UNCERTIFIED}},
 	{"extreme-condition", ON_3dVector(0.001, 0.05, 1.0),
 	    ON_3dVector(17.0, -29.0, 43.0),
-	    ON_3dVector(-0.6, 0.3, 1.0), 0.583,
+	    ON_3dVector(-0.6, 0.3, 1.0), 0.583, 1.0e-4,
 	    {RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES,
 	     RT_BREP_PREPARED_FALLBACK_UNCERTIFIED,
 	     RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES}},
 	{"large-triaxial", ON_3dVector(100.0, 600.0, 2500.0),
 	    ON_3dVector(1.0e6, -2.0e6, 3.0e6),
-	    ON_3dVector(2.0, 0.25, -1.0), 2.017,
+	    ON_3dVector(2.0, 0.25, -1.0), 2.017, 0.0,
 	    {RT_BREP_PREPARED_FALLBACK_NONE,
 	     RT_BREP_PREPARED_FALLBACK_NONE,
 	     RT_BREP_PREPARED_FALLBACK_NONE}}
@@ -4454,6 +4455,21 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	0.17 * 0.17);
     const double expected_in = 2.0 * radius - half_chord;
     const double expected_out = 2.0 * radius + half_chord;
+    const double grazing_clearance_ratios[] = {
+	100.0, 1.0, 0.01, 1.0e-4, 1.0e-6, 1.0e-8, 0.0,
+	-1.0e-8, -1.0e-6, -1.0e-4, -0.01, -1.0, -100.0
+    };
+    struct affine_grazing_summary {
+	size_t rays = 0;
+	size_t implicit_segments = 0;
+	size_t production_segments = 0;
+	size_t selected = 0;
+	size_t fallback[RT_BREP_PREPARED_FALLBACK_COUNT] = {};
+	double minimum_chord_ratio = DBL_MAX;
+	double maximum_chord_ratio = 0.0;
+	double maximum_endpoint_error = 0.0;
+    } grazing[sizeof(grazing_clearance_ratios) /
+	sizeof(grazing_clearance_ratios[0])];
     int failures = 0;
     size_t total_rays = 0;
     size_t total_krawczyk = 0;
@@ -4474,6 +4490,201 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
     double maximum_production_error = 0.0;
     double maximum_legacy_error = 0.0;
     double maximum_prepared_error = 0.0;
+    size_t grazing_rays = 0;
+    size_t grazing_resolved_misses = 0;
+
+    const auto check_affine_grazing_case = [&](const affine_case &test,
+	    const ON_Xform &xform,
+	    const struct bn_tol &case_tol, double coordinate_scale,
+	    struct rt_i *rtip, struct resource *case_resource,
+	    struct soltab *implicit_stp, struct soltab *brep_stp) {
+	if (!(test.grazing_floor > 0.0))
+	    return;
+	ON_3dVector grazing_direction = directions[0];
+	ON_3dVector grazing_normal = ON_CrossProduct(grazing_direction,
+	    ON_3dVector(0.0, 0.0, 1.0));
+	if (!grazing_direction.Unitize() || !grazing_normal.Unitize()) {
+	    std::printf("FAIL: adaptive ellipsoid %s grazing frame\n",
+		test.name);
+	    failures++;
+	    return;
+	}
+	const double required_clearance_ratio = test.grazing_floor;
+	bool brep_interval_ended[2] = {false, false};
+
+	for (size_t ratio_index = 0; ratio_index <
+		sizeof(grazing_clearance_ratios) /
+		sizeof(grazing_clearance_ratios[0]); ++ratio_index) {
+	    const double clearance =
+		grazing_clearance_ratios[ratio_index] * tol->dist;
+	    const double closest_radius = radius - clearance;
+	    const double half_squared = radius * radius -
+		closest_radius * closest_radius;
+	    const double grazing_half_chord = half_squared > 0.0 ?
+		sqrt(half_squared) : 0.0;
+	    const ON_3dPoint closest = closest_radius * grazing_normal;
+	    affine_grazing_summary &summary = grazing[ratio_index];
+	    int forward_production_segments = -1;
+	    for (int reverse = 0; reverse <= 1; ++reverse) {
+		const ON_3dVector base_direction = reverse ?
+		    -grazing_direction : grazing_direction;
+		const ON_3dPoint base_origin = closest +
+		    (reverse ? 2.0 : -2.0) * radius * grazing_direction;
+		const ON_3dPoint transformed_origin =
+		    cobb_transform_point(xform, base_origin);
+		ON_3dVector transformed_direction =
+		    cobb_transform_vector(xform, base_direction);
+		const double direction_length = transformed_direction.Length();
+		if (!(direction_length > DBL_MIN) ||
+			!std::isfinite(direction_length) ||
+			!transformed_direction.Unitize()) {
+		    failures++;
+		    continue;
+		}
+		sampled_ray ray;
+		VSET(ray.origin, transformed_origin.x, transformed_origin.y,
+		    transformed_origin.z);
+		VSET(ray.direction, transformed_direction.x,
+		    transformed_direction.y, transformed_direction.z);
+		const ray_result implicit_result = shoot_solid(implicit_stp,
+		    rtip, case_resource, ray.origin, ray.direction);
+		const ray_result production_result = shoot_solid(brep_stp,
+		    rtip, case_resource, ray.origin, ray.direction);
+		const ray_result legacy_result = shoot_brep_legacy(brep_stp,
+		    rtip, case_resource, ray.origin, ray.direction);
+		struct rt_brep_shot_trace trace;
+		(void)shoot_brep_trace(brep_stp, rtip, case_resource, ray,
+		    trace);
+		grazing_rays++;
+		summary.rays++;
+		summary.implicit_segments += implicit_result.segments;
+		summary.production_segments += production_result.segments;
+		summary.selected += trace.prepared_production_selected;
+		if (trace.prepared_production_fallback >= 0 &&
+			trace.prepared_production_fallback <
+			RT_BREP_PREPARED_FALLBACK_COUNT)
+		    summary.fallback[trace.prepared_production_fallback]++;
+		const double chord_ratio = case_tol.dist > 0.0 ?
+		    2.0 * grazing_half_chord * direction_length /
+		    case_tol.dist : 0.0;
+		summary.minimum_chord_ratio = std::min(
+		    summary.minimum_chord_ratio, chord_ratio);
+		summary.maximum_chord_ratio = std::max(
+		    summary.maximum_chord_ratio, chord_ratio);
+		const double normalized_limit = std::max(
+		    case_tol.dist / direction_length,
+		    8192.0 * DBL_EPSILON * coordinate_scale /
+		    direction_length);
+		const double grazing_in =
+		    2.0 * radius - grazing_half_chord;
+		const double grazing_out =
+		    2.0 * radius + grazing_half_chord;
+		const double implicit_error = implicit_result.segments == 1 ?
+		    std::max(fabs(implicit_result.in_dist / direction_length -
+			grazing_in),
+		    fabs(implicit_result.out_dist / direction_length -
+			grazing_out)) : 0.0;
+		const double production_error = production_result.segments == 1 ?
+		    std::max(fabs(production_result.in_dist / direction_length -
+			grazing_in),
+		    fabs(production_result.out_dist / direction_length -
+			grazing_out)) : 0.0;
+		const double legacy_error = legacy_result.segments == 1 ?
+		    std::max(fabs(legacy_result.in_dist / direction_length -
+			grazing_in),
+		    fabs(legacy_result.out_dist / direction_length -
+			grazing_out)) : 0.0;
+		const double prepared_error =
+		    trace.local_event_stored_segments == 1 ?
+		    std::max(fabs(trace.local_event_segment_in[0] /
+			direction_length - grazing_in),
+		    fabs(trace.local_event_segment_out[0] /
+			direction_length - grazing_out)) : 0.0;
+		summary.maximum_endpoint_error = std::max(
+		    summary.maximum_endpoint_error, production_error);
+		const bool required_hit = clearance > 0.0 &&
+		    grazing_clearance_ratios[ratio_index] >=
+		    required_clearance_ratio;
+		const bool analytic_resolved = clearance > 0.0 &&
+		    2.0 * grazing_half_chord * direction_length >=
+		    case_tol.dist;
+		const bool exact_contact = !(clearance < 0.0) &&
+		    !(clearance > 0.0);
+		const size_t production_segments =
+		    (size_t)production_result.segments;
+		const bool restarted = production_segments &&
+		    brep_interval_ended[reverse];
+		if (!production_segments)
+		    brep_interval_ended[reverse] = true;
+		if (analytic_resolved && !production_segments)
+		    grazing_resolved_misses++;
+		const bool reversal_mismatch = reverse &&
+		    production_result.segments != forward_production_segments;
+		if (!reverse)
+		    forward_production_segments = production_result.segments;
+		const bool selected_partition_matches =
+		    !trace.prepared_production_selected ||
+		    (trace.local_event_final_segments == production_segments &&
+		     trace.local_event_stored_segments == production_segments &&
+		     (!production_segments ||
+		      prepared_error <= normalized_limit));
+		const bool bad = production_result.segments !=
+			legacy_result.segments ||
+		    trace.final_segments != production_segments ||
+		    (clearance > 0.0 && implicit_result.segments != 1) ||
+		    (clearance < 0.0 && implicit_result.segments != 0) ||
+		    (exact_contact && implicit_result.segments > 1) ||
+		    (required_hit && production_result.segments != 1) ||
+		    (clearance <= 0.0 && production_result.segments != 0) ||
+		    production_result.segments > 1 ||
+		    restarted ||
+		    reversal_mismatch ||
+		    (clearance > 0.0 && implicit_error > normalized_limit) ||
+		    production_error > normalized_limit ||
+		    legacy_error > normalized_limit ||
+		    !selected_partition_matches ||
+		    !brep_trace_fixed_workspaces_match(trace, true) ||
+		    trace.surface_workspace_exhausted ||
+		    trace.surface_clip_restriction_failures;
+		if (bad) {
+		    std::printf("FAIL: affine grazing %s ratio=%.3g "
+			"reverse=%d chord/T=%.3g "
+			"segments=%d/%d/%d/%zu required/trend=%d/%d "
+			"selection=%zu/%d "
+			"leaves=%zu/%zu boxes=%zu/%zu "
+			"errors=%.3g/%.3g/%.3g/%.3g limit=%.3g\n",
+			test.name, grazing_clearance_ratios[ratio_index],
+			reverse, chord_ratio, implicit_result.segments,
+			production_result.segments, legacy_result.segments,
+			trace.final_segments, required_hit,
+			restarted || reversal_mismatch,
+			trace.prepared_production_selected,
+			trace.prepared_production_fallback,
+			trace.fixed_leaf_count, trace.fixed_leaf_overflow,
+			trace.surface_subdivision_boxes,
+			trace.surface_box_overflow, implicit_error,
+			production_error, legacy_error, prepared_error,
+			normalized_limit);
+		    std::printf("  solver calls=%zu status=%zu/%zu/%zu/%zu/"
+			"%zu/%zu/%zu/%zu/%zu/%zu/%zu roots=%zu/%zu "
+			"local=%zu/%zu/%zu/%zu isolated=%zu/%zu\n",
+			trace.solver_calls,
+			trace.solver_status[0], trace.solver_status[1],
+			trace.solver_status[2], trace.solver_status[3],
+			trace.solver_status[4], trace.solver_status[5],
+			trace.solver_status[6], trace.solver_status[7],
+			trace.solver_status[8], trace.solver_status[9],
+			trace.solver_status[10], trace.candidate_roots,
+			trace.stored_roots, trace.local_root_attempts,
+			trace.local_root_candidates,
+			trace.stored_local_roots, trace.local_root_failures,
+			trace.surface_isolated_boxes,
+			trace.surface_krawczyk_boxes);
+		    failures++;
+		}
+	    }
+	}
+    };
 
     for (size_t case_index = 0;
 	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
@@ -4731,6 +4942,8 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		    }
 		}
 	    }
+	    check_affine_grazing_case(test, xform, case_tol,
+		coordinate_scale, rtip, &resource, implicit_stp, brep_stp);
 	}
 
 	free_solid(brep_stp);
@@ -4751,8 +4964,52 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	failures++;
     }
 
+    const size_t expected_grazing_rays =
+	3 * 2 * sizeof(grazing_clearance_ratios) /
+	sizeof(grazing_clearance_ratios[0]);
+    if (grazing_rays != expected_grazing_rays) {
+	std::printf("FAIL: ellipsoid affine grazing rays=%zu/%zu\n",
+	    grazing_rays, expected_grazing_rays);
+	failures++;
+    }
+    /* The capability floor is enforced per affine case above.  Keep the
+     * aggregate gap monotone while allowing later solver work to reduce it. */
+    if (grazing_resolved_misses > 6) {
+	std::printf("FAIL: ellipsoid affine resolved grazing misses=%zu/6\n",
+	    grazing_resolved_misses);
+	failures++;
+    }
+    for (size_t ratio_index = 0; ratio_index <
+	    sizeof(grazing_clearance_ratios) /
+	    sizeof(grazing_clearance_ratios[0]); ++ratio_index) {
+	const affine_grazing_summary &summary = grazing[ratio_index];
+	size_t fallback_total = 0;
+	for (size_t fallback = 0;
+		fallback < RT_BREP_PREPARED_FALLBACK_COUNT; ++fallback)
+	    fallback_total += summary.fallback[fallback];
+	if (summary.rays != 6 || fallback_total != summary.rays) {
+	    std::printf("FAIL: ellipsoid affine grazing ratio=%.3g "
+		"rays/fallback=%zu/%zu\n",
+		grazing_clearance_ratios[ratio_index], summary.rays,
+		fallback_total);
+	    failures++;
+	}
+	std::printf("Ellipsoid affine grazing ratio=% .3g rays=%zu "
+	    "segments=%zu/%zu selected=%zu "
+	    "fallback=%zu/%zu/%zu/%zu chord/T=%.3g/%.3g "
+	    "max-error=%.3g\n", grazing_clearance_ratios[ratio_index],
+	    summary.rays, summary.implicit_segments,
+	    summary.production_segments, summary.selected,
+	    summary.fallback[RT_BREP_PREPARED_FALLBACK_NONE],
+	    summary.fallback[RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES],
+	    summary.fallback[RT_BREP_PREPARED_FALLBACK_UNCERTIFIED],
+	    summary.fallback[RT_BREP_PREPARED_FALLBACK_PARTITION],
+	    summary.minimum_chord_ratio, summary.maximum_chord_ratio,
+	    summary.maximum_endpoint_error);
+    }
+
     if (!failures) {
-	std::printf("Ellipsoid adaptive affine invariance: PASS "
+	std::printf("Ellipsoid ordinary affine invariance: PASS "
 	    "rays=%zu selected=%zu fallback=%zu/%zu "
 	    "condition=%.3g/%.3g krawczyk=%zu "
 	    "cert-depth=%zu/%zu boxes=%zu/%zu/%zu "
@@ -4762,6 +5019,9 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	    minimum_depth, maximum_depth, minimum_boxes, total_boxes,
 	    maximum_boxes, maximum_implicit_error, maximum_production_error,
 	    maximum_legacy_error, maximum_prepared_error);
+	std::printf("Ellipsoid affine grazing ratchet: PASS rays=%zu "
+	    "resolved-gaps=%zu floors=1e-6/1e-6/1e-4\n",
+	    grazing_rays, grazing_resolved_misses);
     }
     return failures;
 }
