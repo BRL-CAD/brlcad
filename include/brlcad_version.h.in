@@ -79,16 +79,20 @@
 @BRLCAD_VERSION_AMEND_STR@
 
 /**
- * Macro for testing whether a given version precedes the current
- * compilation API.  Returns false if the version is newer than the
- * current compilation version, or true otherwise.  This allows codes
- * to support multiple API versions simultaneously.
+ * Macro for testing whether the current compilation environment
+ * is equal to or newer than the specified API version.
+ *
+ * Returns true if the current BRL-CAD version is >= the given
+ * version. This allows code to conditionally use newer features
+ * while maintaining backward compatibility with older versions.
  *
  @code
 #if BRLCAD_API(7,24,6)
-... code that worked in 7.24.6 API (and potentially prior) ...
+// TRUE: current environment is 7.24.6 or newer.
+... use the new 7.24.6 API features ...
 #else
-... current API ...
+// FALSE: current environment is older than 7.24.6.
+... fallback code for older versions ...
 #endif
  @endcode
  */
