@@ -36,6 +36,10 @@ brlcad_add_test(
   NAME brep_fast
   COMMAND test_brep_fast "${CMAKE_CURRENT_SOURCE_DIR}/cyl_hole.g" CUBE.s
 )
+brlcad_add_test(
+  NAME brep_fast_closed
+  COMMAND test_brep_fast "${CMAKE_CURRENT_SOURCE_DIR}/cyl_hole.g" PEG_ROT_LONG.s
+)
 
 # Standalone CDT hole-triangulation tests: verify that bg_nested_poly_triangulate
 # produces no triangles whose centroid falls inside a hole polygon, for two
