@@ -67,6 +67,7 @@
 #include "bu/opt.h"
 #include "bu/datetime.h"
 #include "bn/dvec.h"
+#include "bg/polygon.h"
 #include "brep.h"
 #include "./cdt.h"
 
@@ -290,7 +291,8 @@ getEdgePoints(const ON_BrepTrim &trim,
     }
     fast_recursion_guard guard(recursion_depth);
 
-    const ON_Surface *s = trim.SurfaceOf();
+    const ON_Surface *s = trim.Face() ?
+	static_cast<const ON_Surface *>(trim.Face()) : trim.SurfaceOf();
     ON_3dPoint mid_2d = ON_3dPoint::UnsetPoint;
     ON_3dPoint mid_3d = ON_3dPoint::UnsetPoint;
     ON_3dVector mid_norm = ON_3dVector::UnsetVector;
@@ -368,7 +370,8 @@ getEdgePoints(ON_BrepTrim &trim,
 
     double dist = 1000.0;
 
-    const ON_Surface *s = trim.SurfaceOf();
+    const ON_Surface *s = trim.Face() ?
+	static_cast<const ON_Surface *>(trim.Face()) : trim.SurfaceOf();
 
     bool bGrowBox = false;
     ON_3dPoint min, max;
@@ -763,7 +766,7 @@ getSurfacePoints(const ON_BrepFace &face,
 		 const fast_surface_metrics &metrics,
 		 double model_diagonal)
 {
-    const ON_Surface *s = face.SurfaceOf();
+    const ON_Surface *s = &face;
 
     if (s && metrics.sampling_valid) {
 	double dist = model_diagonal;
@@ -1448,6 +1451,93 @@ ExtendPointsOverClosedSeam(
 }
 
 
+static bool
+TrimLoopToSinglePeriod(const ON_Surface *s,
+	ON_SimpleArray<BrepTrimPoint> &points, double tolerance)
+{
+    const int count = points.Count();
+    if (count < 4 || V2NEAR_EQUAL(points[0].p2d,
+	    points[count - 1].p2d, tolerance))
+	return false;
+
+    int best_begin = -1;
+    int best_end = -1;
+    long double best_area = 0.0L;
+    for (int begin = 0; begin < count - 2; begin++) {
+	for (int end = begin + 2; end < count; end++) {
+	    bool shifted = false;
+	    bool equivalent = true;
+	    for (int dir = 0; dir < 2; dir++) {
+		const double delta = points[end].p2d[dir] -
+		    points[begin].p2d[dir];
+		if (!s->IsClosed(dir)) {
+		    if (fabs(delta) > tolerance)
+			equivalent = false;
+		    continue;
+		}
+		const double period = s->Domain(dir).Length();
+		if (!(period > ON_ZERO_TOLERANCE) || !std::isfinite(period)) {
+		    equivalent = false;
+		    continue;
+		}
+		const long turns = std::lround(delta / period);
+		if (labs(turns) > 1 ||
+			fabs(delta - turns * period) > tolerance) {
+		    equivalent = false;
+		    continue;
+		}
+		shifted = shifted || turns != 0;
+	    }
+	    if (!equivalent || !shifted)
+		continue;
+
+	    long double twice_area = 0.0L;
+	    for (int i = begin; i < end; i++) {
+		twice_area += (long double)points[i].p2d.x *
+		    points[i + 1].p2d.y -
+		    (long double)points[i + 1].p2d.x *
+		    points[i].p2d.y;
+	    }
+	    twice_area += (long double)points[end].p2d.x *
+		points[begin].p2d.y -
+		(long double)points[begin].p2d.x * points[end].p2d.y;
+	    const long double area = std::fabs(twice_area);
+	    if (area > best_area) {
+		best_area = area;
+		best_begin = begin;
+		best_end = end;
+	    }
+	}
+    }
+    if (best_begin < 0 || !(best_area > tolerance * tolerance))
+	return false;
+
+    ON_SimpleArray<BrepTrimPoint> trimmed;
+    trimmed.Append(best_end - best_begin + 1, &points[best_begin]);
+    points.Empty();
+    points.Append(trimmed.Count(), trimmed.Array());
+
+    for (int dir = 0; dir < 2; dir++) {
+	if (!s->IsClosed(dir))
+	    continue;
+	const ON_Interval domain = s->Domain(dir);
+	const double period = domain.Length();
+	double min_coord = INFINITY;
+	double max_coord = -INFINITY;
+	for (int i = 0; i < points.Count(); i++) {
+	    min_coord = std::min(min_coord, points[i].p2d[dir]);
+	    max_coord = std::max(max_coord, points[i].p2d[dir]);
+	}
+	const double center = 0.5 * (min_coord + max_coord);
+	const double shift = std::round((domain.Mid() - center) / period) *
+	    period;
+	for (int i = 0; i < points.Count(); i++)
+	    points[i].p2d[dir] += shift;
+    }
+    return true;
+}
+
+
 // process through loops checking for straddle condition.
 static void
 ShiftLoopsThatStraddleSeam(
@@ -1460,6 +1550,9 @@ ShiftLoopsThatStraddleSeam(
     for (int li = 0; li < loop_cnt; li++) {
 	int num_loop_points = brep_loop_points[li]->Count();
 	if (num_loop_points > 1) {
+	    if (TrimLoopToSinglePeriod(s, *brep_loop_points[li],
+		    same_point_tolerance))
+		continue;
 	    ON_2dPoint brep_loop_begin = (*brep_loop_points[li])[0].p2d;
 	    ON_2dPoint brep_loop_end = (*brep_loop_points[li])[num_loop_points - 1].p2d;
 
@@ -1491,8 +1584,34 @@ CloseOpenLoops(
 	if (num_loop_points > 1) {
 	    ON_2dPoint brep_loop_begin = (*brep_loop_points[li])[0].p2d;
 	    ON_2dPoint brep_loop_end = (*brep_loop_points[li])[num_loop_points - 1].p2d;
-	    ON_3dPoint brep_loop_begin3d = s->PointAt(brep_loop_begin.x, brep_loop_begin.y);
-	    ON_3dPoint brep_loop_end3d = s->PointAt(brep_loop_end.x, brep_loop_end.y);
+	    bool periodic_closed = true;
+	    bool crosses_period = false;
+	    for (int dir = 0; dir < 2; dir++) {
+		const double delta = brep_loop_end[dir] -
+		    brep_loop_begin[dir];
+		if (!s->IsClosed(dir)) {
+		    periodic_closed = periodic_closed &&
+			fabs(delta) <= same_point_tolerance;
+		    continue;
+		}
+		const double period = s->Domain(dir).Length();
+		if (!(period > ON_ZERO_TOLERANCE) || !std::isfinite(period)) {
+		    periodic_closed = false;
+		    continue;
+		}
+		const long turns = std::lround(delta / period);
+		periodic_closed = periodic_closed && labs(turns) <= 1 &&
+		    fabs(delta - turns * period) <= same_point_tolerance;
+		crosses_period = crosses_period || turns != 0;
+	    }
+	    if (periodic_closed && crosses_period)
+		continue;
+	    ON_2dPoint begin_uv = UnwrapUVPoint(s, brep_loop_begin,
+		same_point_tolerance);
+	    ON_2dPoint end_uv = UnwrapUVPoint(s, brep_loop_end,
+		same_point_tolerance);
+	    ON_3dPoint brep_loop_begin3d = s->PointAt(begin_uv.x, begin_uv.y);
+	    ON_3dPoint brep_loop_end3d = s->PointAt(end_uv.x, end_uv.y);
 
 	    if (!V2NEAR_EQUAL(brep_loop_begin, brep_loop_end, same_point_tolerance) &&
 		VNEAR_EQUAL(brep_loop_begin3d, brep_loop_end3d, same_point_tolerance)) {
@@ -1928,7 +2047,7 @@ detria_CDT(struct bu_list *vhead,
     fast_line_store line_store;
     ON_RTree rt_trims;
     ON_2dPointArray on_surf_points;
-    const ON_Surface *s = face.SurfaceOf();
+    const ON_Surface *s = &face;
     if (!s)
 	return;
     fast_surface_metrics metrics;
@@ -1975,7 +2094,12 @@ detria_CDT(struct bu_list *vhead,
 	std::vector<int> polyline;
 	int num_loop_points = brep_loop_points[li]->Count();
 	if (num_loop_points > 2) {
-	    for (int i = 1; i < num_loop_points; i++) {
+	    const bool uv_closed = V2NEAR_EQUAL(
+		(*brep_loop_points[li])[0].p2d,
+		(*brep_loop_points[li])[num_loop_points - 1].p2d,
+		BREP_SAME_POINT_TOLERANCE);
+	    const int first_point = uv_closed ? 1 : 0;
+	    for (int i = first_point; i < num_loop_points; i++) {
 		// map point to last entry to 3d point
 		detria::PointD npt;
 		npt.x = (*brep_loop_points[li])[i].p2d.x;
@@ -1997,6 +2121,20 @@ detria_CDT(struct bu_list *vhead,
 		bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
 		bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
 
+		rt_trims.Insert2d(bb.Min(), bb.Max(), line);
+	    }
+	    if (!uv_closed) {
+		ON_Line *line = new ON_Line(
+		    (*brep_loop_points[li])[num_loop_points - 1].p2d,
+		    (*brep_loop_points[li])[0].p2d);
+		line_store.lines.push_back(line);
+		ON_BoundingBox bb = line->BoundingBox();
+		bb.m_max.x += ON_ZERO_TOLERANCE;
+		bb.m_max.y += ON_ZERO_TOLERANCE;
+		bb.m_max.z += ON_ZERO_TOLERANCE;
+		bb.m_min.x -= ON_ZERO_TOLERANCE;
+		bb.m_min.y -= ON_ZERO_TOLERANCE;
+		bb.m_min.z -= ON_ZERO_TOLERANCE;
 		rt_trims.Insert2d(bb.Min(), bb.Max(), line);
 	    }
 	    if (outer) {
@@ -2283,7 +2421,7 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
     fast_line_store line_store;
     ON_RTree rt_trims;
     ON_2dPointArray on_surf_points;
-    const ON_Surface *s = face.SurfaceOf();
+    const ON_Surface *s = &face;
     if (!s)
 	return false;
     fast_surface_metrics metrics;
@@ -2331,7 +2469,12 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 	int num_loop_points = brep_loop_points[li]->Count();
 	if (num_loop_points <= 2)
 	    continue;
-	for (int i = 1; i < num_loop_points; i++) {
+	const bool uv_closed = V2NEAR_EQUAL(
+	    (*brep_loop_points[li])[0].p2d,
+	    (*brep_loop_points[li])[num_loop_points - 1].p2d,
+	    BREP_SAME_POINT_TOLERANCE);
+	const int first_point = uv_closed ? 1 : 0;
+	for (int i = first_point; i < num_loop_points; i++) {
 	    // map point to last entry to 3d point
 	    detria::PointD npt;
 	    npt.x = (*brep_loop_points[li])[i].p2d.x;
@@ -2360,6 +2503,20 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 
 	    rt_trims.Insert2d(bb.Min(), bb.Max(), line);
 	}
+	if (!uv_closed) {
+	    ON_Line *line = new ON_Line(
+		(*brep_loop_points[li])[num_loop_points - 1].p2d,
+		(*brep_loop_points[li])[0].p2d);
+	    line_store.lines.push_back(line);
+	    ON_BoundingBox bb = line->BoundingBox();
+	    bb.m_max.x += ON_ZERO_TOLERANCE;
+	    bb.m_max.y += ON_ZERO_TOLERANCE;
+	    bb.m_max.z += ON_ZERO_TOLERANCE;
+	    bb.m_min.x -= ON_ZERO_TOLERANCE;
+	    bb.m_min.y -= ON_ZERO_TOLERANCE;
+	    bb.m_min.z -= ON_ZERO_TOLERANCE;
+	    rt_trims.Insert2d(bb.Min(), bb.Max(), line);
+	}
 	if (outer) {
 	    outer_polyline = polyline;
 	    outer = false;
@@ -2372,6 +2529,8 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
 	return false;
     }
+
+    const size_t boundary_point_count = tpnts.size();
 
     getSurfacePoints(face, ttol, tol, on_surf_points, metrics,
 	model_diagonal);
@@ -2432,24 +2591,114 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 	    tri_success = tri.triangulate(true);
 	}
 	catch (...) {
-	    return false;
+	    tri_success = false;
 	}
     }
 
+    std::vector<int> cleaned_triangles;
     if (!tri_success) {
-	return false;
+	/* The direct path deliberately avoids preprocessing overhead.  If its
+	 * constraints are invalid, use libbg's Clipper-based sanitizer to merge
+	 * duplicate UV points, resolve intersecting loops, and remove surface
+	 * samples that lie on constrained edges. */
+	std::vector<fastf_t> input_points(tpnts.size() * 2);
+	for (size_t i = 0; i < tpnts.size(); i++) {
+	    input_points[2 * i] = tpnts[i].x;
+	    input_points[2 * i + 1] = tpnts[i].y;
+	}
+	std::vector<const int *> hole_arrays;
+	std::vector<size_t> hole_counts;
+	hole_arrays.reserve(holes.size());
+	hole_counts.reserve(holes.size());
+	for (const std::vector<int> &hole : holes) {
+	    hole_arrays.push_back(hole.data());
+	    hole_counts.push_back(hole.size());
+	}
+	std::vector<int> steiner;
+	steiner.reserve(tpnts.size() - boundary_point_count);
+	for (size_t i = boundary_point_count; i < tpnts.size(); i++)
+	    steiner.push_back((int)i);
+
+	int *clean_faces = NULL;
+	int clean_face_count = 0;
+	point2d_t *clean_points = NULL;
+	int clean_point_count = 0;
+	const int clean_ret = bg_nested_poly_triangulate_clean(&clean_faces,
+	    &clean_face_count, &clean_points, &clean_point_count,
+	    outer_polyline.data(), outer_polyline.size(),
+	    hole_arrays.empty() ? NULL : hole_arrays.data(),
+	    hole_counts.empty() ? NULL : hole_counts.data(), holes.size(),
+	    steiner.empty() ? NULL : steiner.data(), steiner.size(),
+	    (const point2d_t *)input_points.data(), tpnts.size());
+	if (clean_ret != BRLCAD_OK || !clean_faces || !clean_points ||
+		clean_face_count <= 0 || clean_point_count <= 0 ||
+		clean_point_count >= FAST_CDT_MAX_SURFACE_SAMPLES) {
+	    if (clean_faces)
+		bu_free(clean_faces, "clipped detria faces");
+	    if (clean_points)
+		bu_free(clean_points, "clipped detria points");
+	    return false;
+	}
+
+	cleaned_triangles.assign(clean_faces,
+	    clean_faces + (size_t)clean_face_count * 3);
+	std::unordered_map<int, BrepTrimPoint *> clean_pointmap;
+	std::unordered_map<int, size_t> clean_pind_map;
+	double uv_min[2] = {INFINITY, INFINITY};
+	double uv_max[2] = {-INFINITY, -INFINITY};
+	for (const detria::PointD &point : tpnts) {
+	    uv_min[X] = std::min(uv_min[X], point.x);
+	    uv_min[Y] = std::min(uv_min[Y], point.y);
+	    uv_max[X] = std::max(uv_max[X], point.x);
+	    uv_max[Y] = std::max(uv_max[Y], point.y);
+	}
+	const double uv_match_tol = std::max(BREP_SAME_POINT_TOLERANCE,
+	    4.0 * std::max(uv_max[X] - uv_min[X],
+		uv_max[Y] - uv_min[Y]) / CLIPPER_MAX);
+	for (int i = 0; i < clean_point_count; i++) {
+	    for (size_t j = 0; j < boundary_point_count; j++) {
+		if (!NEAR_EQUAL(clean_points[i][X], tpnts[j].x,
+			uv_match_tol) ||
+			!NEAR_EQUAL(clean_points[i][Y], tpnts[j].y,
+			uv_match_tol))
+		    continue;
+		auto pfound = pointmap.find((int)j);
+		if (pfound != pointmap.end())
+		    clean_pointmap[i] = pfound->second;
+		auto ifound = pind_map.find((int)j);
+		if (ifound != pind_map.end())
+		    clean_pind_map[i] = ifound->second;
+		break;
+	    }
+	}
+	tpnts.clear();
+	tpnts.reserve((size_t)clean_point_count);
+	for (int i = 0; i < clean_point_count; i++) {
+	    detria::PointD p;
+	    p.x = clean_points[i][X];
+	    p.y = clean_points[i][Y];
+	    tpnts.push_back(p);
+	}
+	bu_free(clean_faces, "clipped detria faces");
+	bu_free(clean_points, "clipped detria points");
+
+	/* Sanitization may replace and reorder boundary points.  Retain exact
+	 * edge samples where possible; Clipper-created intersections are realized
+	 * from their cleaned surface parameters. */
+	faces.clear();
+	pnt_norms.clear();
+	pind_map.swap(clean_pind_map);
+	pointmap.swap(clean_pointmap);
     }
 
-    tri.forEachTriangle([&](const detria::Triangle<int> triangle)
-    {
-        int tris[3];
-	tris[0] = triangle.x;
-	tris[1] = triangle.y;
-	tris[2] = triangle.z;
+    auto emit_triangle = [&](int t0, int t1, int t2) {
+	const int tris[3] = {t0, t1, t2};
 	for (size_t j = 0; j < 3; j++) {
 	    ON_3dPoint pnt;
 	    ON_3dVector norm(0.0, 0.0, 0.0);
-	    if (surface_EvNormal(s, tpnts[tris[j]].x, tpnts[tris[j]].y, pnt, norm)) {
+	    ON_2dPoint uv(tpnts[tris[j]].x, tpnts[tris[j]].y);
+	    uv = UnwrapUVPoint(s, uv, BREP_SAME_POINT_TOLERANCE);
+	    if (surface_EvNormal(s, uv.x, uv.y, pnt, norm)) {
 		// Vertex points are shared with other faces
 		std::unordered_map<int, size_t>::const_iterator ii = pind_map.find(tris[j]);
 		if (ii != pind_map.end()) {
@@ -2474,7 +2723,17 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 		pnt_norms.push_back(norm.z);
 	    }
 	}
-    }, true);
+    };
+
+    if (tri_success) {
+	tri.forEachTriangle([&](const detria::Triangle<int> triangle) {
+	    emit_triangle(triangle.x, triangle.y, triangle.z);
+	}, true);
+    } else {
+	for (size_t i = 0; i < cleaned_triangles.size(); i += 3)
+	    emit_triangle(cleaned_triangles[i], cleaned_triangles[i + 1],
+		cleaned_triangles[i + 2]);
+    }
 
     return !faces.empty() && faces.size() % 3 == 0 &&
 	pnts.size() % 3 == 0 && pnt_norms.size() == faces.size() * 3;
