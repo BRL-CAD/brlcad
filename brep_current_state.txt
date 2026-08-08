@@ -40,6 +40,8 @@ solid hits from that evidence and is invariant under tested similarities.
 Exact-parameter positive-weight surface spans and conservative ray-plane
 coefficient exclusion are prepared, and a bounded adjacent-support
 continuation solve recovers the missing bowed-seam endpoints in shadow mode.
+Fixed-capacity de Casteljau subdivision now narrows ordinary span candidates
+to conservative UV and ray-t boxes while reporting all workspace limits.
 Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
 
 
@@ -303,6 +305,31 @@ ESTABLISHED FINDINGS
     need explicit fallback and uniqueness proofs.  No synthetic hit is
     emitted.
 
+26. Tensor-product scalar Bernstein nets are sufficient for allocation-free
+    conservative root isolation on the ordinary [0,1]^2 surface span.  The
+    prepared homogeneous control points generate two ray-plane numerator nets
+    plus a ray-t numerator and positive weight net.  A depth-first stack keeps
+    only parameter boxes; fixed scratch arrays re-extract each subdomain with
+    de Casteljau restriction.  Orders above 16 make the face unsupported, the
+    pending stack is capped at 64, and depth is capped at 24.  Every capacity,
+    overflow, maximum depth, visited-box count, retained-box count, and stack
+    high-water mark is observable.  Retained UV boxes carry conservative ray-t
+    intervals from the rational convex hull.  Across the bowed Cobb matrix the
+    maximum is 226 visited boxes, six retained boxes, depth 24, and stack high-
+    water 24; every legacy Newton root lies in both a retained UV box and its
+    t interval.  The representative root is narrowed to duplicate
+    trim-boundary boxes with t about [19.90313,19.90660], far smaller than its
+    0.1897 mm analytic chord.  The ordinary sphere grazing sweep retains both
+    analytic roots down through one model tolerance and no one box covers both
+    roots once the chord is at least 10T.  Exact tangency retains a contact box
+    while production emits no interval.  On the miss side, only nine
+    floating-limit cases remain ambiguous and the largest clearance is about
+    2.27e-9 T; ambiguity beyond 1e-6 T is now forbidden.  Peak sphere work is
+    228 boxes, eight retained boxes, and stack high-water 25.  Similarity cases
+    preserve candidate, visited, and retained counts.  This still needs safe
+    coefficient treatment for the continuation's outside-span extension and
+    an adaptive termination/box corrector before it can replace dense trees.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -400,9 +427,14 @@ IMPLEMENTATION CHECKLIST
     [ ] Implement conservative coefficient exclusion and local subdivision.
         [x] Implement initial two-plane homogeneous coefficient exclusion with
             translation-aware numerical margins in shadow mode.
-        [ ] Add de Casteljau subdivision/clipping and interval isolation.
+        [x] Add fixed-capacity de Casteljau subdivision and conservative UV/t
+            interval isolation on ordinary surface spans.
+        [ ] Add safe clipping/extension bounds and adaptive termination.
     [ ] Use fixed-capacity allocation-free shot workspace with explicit
         fallback on unsupported weights/order/capacity.
+        [x] Bound direct surface order, subdivision stack, trace output, and
+            scratch control nets; expose every overflow/high-water result.
+        [ ] Integrate fixed traversal/root/event arrays and fallback dispatch.
     [ ] Reduce default tree density only after shadow equivalence passes.
     [ ] Version and verify prep cache changes.
 
@@ -710,6 +742,20 @@ Cobb sphere baseline:
     sphere over all 15 is approximately 2.71e-8 mm.  Continuation attempts,
     candidate count, face/UV/t, residual, normal dot, and iteration count are
     available in --cobb-report.  Production segments remain unchanged.
+
+  * Scalar de Casteljau restriction now subdivides each non-excluded
+    ray-plane coefficient pair using a fixed 64-box depth-first stack and
+    maximum order 16 scratch nets.  Retained depth-24 boxes include global UV
+    bounds and rational-convex-hull ray-t intervals.  Every bowed-matrix raw
+    Newton root must fall inside one such UV/t box; overflow or silent loss is
+    a test failure.  The machine report emits every retained box.
+
+  * The analytic sphere grazing sweep independently requires both roots to be
+    covered while their chord is at least T, and requires no single box to
+    contain both once the chord is at least 10T.  Exact tangency retains a
+    conservative contact box but produces no final segment.  Negative-h
+    ambiguity is measured on every representable mirrored sample and may not
+    spread beyond 1e-6 T; the present largest is approximately 2.27e-9 T.
 
   cmake --build .build --target \
     librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
