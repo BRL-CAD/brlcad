@@ -50,6 +50,8 @@ limit independently of SurfaceTree seeds and remain invariant across the
 existing similarity corpus.  A fixed preliminary same-face clustering stage
 now exposes ordered enter/leave/contact behavior without changing production
 events.
+Parallel BREP import, cache deserialization, and SurfaceTree construction now
+also pass the complete cache matrix under ThreadSanitizer without suppressions.
 Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
 
 
@@ -503,6 +505,41 @@ ESTABLISHED FINDINGS
     fallback.  Root/event conversion must preserve the same rule: decide to
     fall back before applying any partial cleanup or material-state change.
 
+33. ThreadSanitizer qualification of parallel cache prep exposed four real
+    publication races before it could validate SurfaceTree ownership.  The
+    libbu small-object heap raced on its process-global lazy atexit flag, and
+    bu_dir used a process-global scratch buffer even when callers supplied an
+    output buffer.  Heap registration is now serialized only when a per-CPU
+    size bin is initialized, and the legacy implicit bu_dir result buffer is
+    thread-local.  The ordinary bu_dir and heap tests pass.
+
+    openNURBS ONX_Model construction, archive reading/writing, and destruction
+    rebuild render-setting defaults through non-reentrant localtime().  All
+    ONX_Model lifetimes in the BREP primitive are now wrapped by the reserved
+    datetime semaphore.  This serializes BREP archive import/export, not
+    SurfaceTree construction or ray prep.  It can be narrowed or removed once
+    the external OpenNURBS implementation uses localtime_r/localtime_s.
+
+    More importantly, _rt_find_identical_solid published a soltab by setting
+    st_id before primitive prep or cache deserialization completed.  A second
+    tree-walk worker could therefore consume st_specific while
+    rt_brep_prep_serialize was still assigning it.  soltab now has an explicit
+    prep-complete publication flag protected by the same directory-hash
+    semaphore used for identical-solid lookup.  Matching workers wait without
+    holding the semaphore, and success or failure publishes all primitive
+    pointers, bounds, and path state before reuse.  The hierarchy fixture also
+    exposed the documented race caused by incrementing directory d_uses under
+    different region and solid locks; both uses now share the directory-hash
+    semaphore without nested lock ordering.
+
+    The normal focused suite remains 13/13, the ASan/UBSan focused suite is
+    12/12 with leak detection disabled for the host ptrace limitation, and all
+    seven serial/parallel cache tests pass under ThreadSanitizer with
+    halt_on_error=1 and no suppression file.  This is the first direct race
+    qualification of the repaired per-BREP SurfaceTree and CurveTree ownership
+    path; it does not prove unrelated librt operations outside this cache
+    matrix race-free.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -515,8 +552,8 @@ IMPLEMENTATION CHECKLIST
     [x] Remove unused m_face_user.p storage.
     [x] Own deserialized CurveTrees and verify teardown order.
     [x] Exercise ownership through existing normal/cached prep regression
-        tests.  A dedicated sanitizer build remains part of the broader
-        robustness gate.
+        tests, ASan/UBSan, and the unsuppressed ThreadSanitizer cache matrix.
+        LeakSanitizer remains blocked by the host ptrace wrapper.
 
 [ ] Phase 1 solver hardening
     [x] Add structured solver outcomes without changing final seam policy.
@@ -1062,8 +1099,23 @@ Cobb sphere baseline:
     PASS: 4/4 conversion and NURBS regression tests, with no ASan or UBSan
     diagnostics.  Together with rt_brep_ray and the cache matrix, the focused
     sanitizer gate is 12/12.  The combined 12-test command also passes in one
-    run (approximately 42 seconds), ruling out ordering dependence among the
+    run (approximately 38 seconds), ruling out ordering dependence among the
     focused sanitizer fixtures.
+
+  cmake -S . -B .build-tsan -G Ninja \
+    -DBRLCAD_EXT_DIR=/home/cyapp/bext/build \
+    -DBRLCAD_ENABLE_THREAD_SANITIZER=ON \
+    -DBRLCAD_OPTIMIZED=OFF -DBRLCAD_DEBUGGING=ON \
+    -DCMAKE_BUILD_TYPE=Debug
+  cmake --build .build-tsan --target librt rt_cache -j8
+  env TSAN_OPTIONS=halt_on_error=1:second_deadlock_stack=1 \
+    ctest --test-dir .build-tsan -j4 -R '^rt_cache_.*$' \
+    --output-on-failure
+    PASS: 7/7 serial, parallel, identical, different, and hierarchy cache
+    cases with no TSan diagnostic and no suppression file.  The diagnostic
+    first found and drove repairs for OpenNURBS calendar serialization, libbu
+    heap/path lazy state, soltab prep publication, and directory instance
+    locking before this clean gate was reached.
 
   .build/src/librt/tests/rt_brep_ray
     PASS: shared partition/Crofton sphere and all directed cases
