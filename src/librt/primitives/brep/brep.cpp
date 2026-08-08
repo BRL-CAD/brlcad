@@ -2949,7 +2949,40 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
 	for (int i = 0; i < numhits; i++) {
 	    double closesttrim;
 	    const BRNode* trimBR = NULL;
-	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim, BREP_EDGE_MISS_TOLERANCE);
+	    size_t trim_candidates = 0;
+	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim,
+		BREP_EDGE_MISS_TOLERANCE, &trim_candidates);
+	    if (trace) {
+		double allocating_closesttrim;
+		const BRNode *allocating_trimBR = NULL;
+		size_t allocating_candidates = 0;
+		int allocating_status = sbv->isTrimmedAllocating(ouv[i],
+		    &allocating_trimBR, allocating_closesttrim,
+		    BREP_EDGE_MISS_TOLERANCE, &allocating_candidates);
+		bool mismatch = false;
+		trace->trim_queries++;
+		trace->trim_noalloc_candidates += trim_candidates;
+		trace->trim_allocating_candidates += allocating_candidates;
+		if (trim_candidates != allocating_candidates) {
+		    trace->trim_candidate_mismatches++;
+		    mismatch = true;
+		}
+		if (trim_status != allocating_status) {
+		    trace->trim_status_mismatches++;
+		    mismatch = true;
+		}
+		if (trimBR != allocating_trimBR) {
+		    trace->trim_closest_mismatches++;
+		    mismatch = true;
+		}
+		if (std::memcmp(&closesttrim, &allocating_closesttrim,
+			sizeof(closesttrim)) != 0) {
+		    trace->trim_distance_mismatches++;
+		    mismatch = true;
+		}
+		if (mismatch)
+		    trace->trim_equivalence_mismatches++;
+	    }
 	    if (trim_status != 1) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);

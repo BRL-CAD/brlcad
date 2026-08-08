@@ -540,6 +540,14 @@ struct rt_brep_shot_trace {
     size_t fixed_leaf_overflow;
     size_t fixed_leaf_mismatches;
     size_t fixed_leaf_fallback;
+    size_t trim_queries;
+    size_t trim_noalloc_candidates;
+    size_t trim_allocating_candidates;
+    size_t trim_candidate_mismatches;
+    size_t trim_status_mismatches;
+    size_t trim_closest_mismatches;
+    size_t trim_distance_mismatches;
+    size_t trim_equivalence_mismatches;
     size_t solver_calls;
     size_t solver_status[RT_BREP_TRACE_SOLVER_STATUS_COUNT];
     size_t candidate_roots;

@@ -373,120 +373,174 @@ BBNode::getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<const BBNode *> &
 }
 
 
-bool
-BBNode::isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closesttrim, double within_distance_tol) const
+namespace {
+
+struct TrimClassificationState {
+    explicit TrimClassificationState(const BRNode **closest_node) :
+	closest(closest_node),
+	vclosest(NULL),
+	uclosest(NULL),
+	curr_height(0.0),
+	curr_trim_status(false),
+	vertical_trim(false),
+	under_trim(false),
+	vdist(0.0),
+	udist(0.0)
+    {
+    }
+
+    const BRNode **closest;
+    const BRNode *vclosest;
+    const BRNode *uclosest;
+    fastf_t curr_height;
+    bool curr_trim_status;
+    bool vertical_trim;
+    bool under_trim;
+    double vdist;
+    double udist;
+};
+
+
+static void
+classify_trim_candidate(TrimClassificationState &state, const BRNode *br,
+	const ON_2dPoint &uv, double within_distance_tol)
 {
-    const BRNode *br;
-    std::list<const BRNode *> trims;
+    /* skip if trim below */
+    if (br->m_node.m_max[1] + within_distance_tol < uv[Y])
+	return;
 
-    closesttrim = -1.0;
-    if (m_checkTrim) {
-	getTrimsAbove(uv, trims);
-
-	if (trims.empty()) {
-	    return true;
-	} else { /* find closest BB */
-	    std::list<const BRNode *>::const_iterator i;
-	    const BRNode *vclosest = NULL;
-	    const BRNode *uclosest = NULL;
-	    fastf_t currHeight = (fastf_t)0.0;
-	    bool currTrimStatus = false;
-	    bool verticalTrim = false;
-	    bool underTrim = false;
-	    double vdist = 0.0;
-	    double udist = 0.0;
-
-	    for (i = trims.begin(); i != trims.end(); i++) {
-		br = *i;
-
-		/* skip if trim below */
-		if (br->m_node.m_max[1] + within_distance_tol < uv[Y]) {
-		    continue;
-		}
-
-		if (br->m_Vertical) {
-		    if ((br->m_v[0] <= uv[Y]) && (br->m_v[1] >= uv[Y])) {
-			double dist = fabs(uv[X] - br->m_v[0]);
-			if (!verticalTrim) { /* haven't seen vertical trim yet */
-			    verticalTrim = true;
-			    vdist = dist;
-			    vclosest = br;
-			} else {
-			    if (dist < vdist) {
-				vdist = dist;
-				vclosest = br;
-			    }
-			}
-
-		    }
-		    continue;
-		}
-		double v;
-		bool trimstatus = br->isTrimmed(uv, v);
-		if (v >= 0.0) {
-		    if (closest && *closest == NULL) {
-			currHeight = v;
-			currTrimStatus = trimstatus;
-			if (closest) {
-			    *closest = br;
-			}
-		    } else if (v < currHeight) {
-			currHeight = v;
-			currTrimStatus = trimstatus;
-			if (closest) {
-			    *closest = br;
-			}
-		    }
-		} else {
-		    double dist = fabs(v);
-		    if (!underTrim) {
-			underTrim = true;
-			udist = dist;
-			uclosest = br;
-		    } else {
-			V_MIN(udist, dist);
-			uclosest = br;
-		    }
-		}
+    if (br->m_Vertical) {
+	if ((br->m_v[0] <= uv[Y]) && (br->m_v[1] >= uv[Y])) {
+	    double dist = fabs(uv[X] - br->m_v[0]);
+	    if (!state.vertical_trim || dist < state.vdist) {
+		state.vertical_trim = true;
+		state.vdist = dist;
+		state.vclosest = br;
 	    }
-	    if (closest && *closest == NULL) {
-		if (verticalTrim) {
-		    closesttrim = vdist;
-		    if (closest) {
-			*closest = vclosest;
-		    }
-		}
-		if ((underTrim) && (!verticalTrim || (udist < closesttrim))) {
-		    closesttrim = udist;
-		    if (closest) {
-			*closest = uclosest;
-		    }
-		}
-		return true;
-	    } else {
-		closesttrim = currHeight;
-		if ((verticalTrim) && (vdist < closesttrim)) {
-		    closesttrim = vdist;
-		    if (closest) {
-			*closest = vclosest;
-		    }
-		}
-		if ((underTrim) && (udist < closesttrim)) {
-		    closesttrim = udist;
-		    if (closest) {
-			*closest = uclosest;
-		    }
-		}
-		return currTrimStatus;
-	    }
+	}
+	return;
+    }
+
+    double v;
+    bool trim_status = br->isTrimmed(uv, v);
+    if (v >= 0.0) {
+	if (state.closest && *state.closest == NULL) {
+	    state.curr_height = v;
+	    state.curr_trim_status = trim_status;
+	    *state.closest = br;
+	} else if (v < state.curr_height) {
+	    state.curr_height = v;
+	    state.curr_trim_status = trim_status;
+	    if (state.closest)
+		*state.closest = br;
 	}
     } else {
-	if (m_trimmed) {
-	    return true;
+	double dist = fabs(v);
+	if (!state.under_trim) {
+	    state.under_trim = true;
+	    state.udist = dist;
+	    state.uclosest = br;
 	} else {
-	    return false;
+	    /* Preserve the legacy closest-node selection exactly. */
+	    V_MIN(state.udist, dist);
+	    state.uclosest = br;
 	}
     }
+}
+
+
+static bool
+finish_trim_classification(TrimClassificationState &state,
+	double &closesttrim)
+{
+    if (state.closest && *state.closest == NULL) {
+	if (state.vertical_trim) {
+	    closesttrim = state.vdist;
+	    *state.closest = state.vclosest;
+	}
+	if (state.under_trim &&
+		(!state.vertical_trim || state.udist < closesttrim)) {
+	    closesttrim = state.udist;
+	    *state.closest = state.uclosest;
+	}
+	return true;
+    }
+
+    closesttrim = state.curr_height;
+    if (state.vertical_trim && state.vdist < closesttrim) {
+	closesttrim = state.vdist;
+	if (state.closest)
+	    *state.closest = state.vclosest;
+    }
+	if (state.under_trim && state.udist < closesttrim) {
+	    closesttrim = state.udist;
+	    if (state.closest)
+		*state.closest = state.uclosest;
+	}
+    return state.curr_trim_status;
+}
+
+} /* anonymous namespace */
+
+
+bool
+BBNode::isTrimmed(const ON_2dPoint &uv, const BRNode **closest,
+	double &closesttrim, double within_distance_tol,
+	std::size_t *candidate_count) const
+{
+    closesttrim = -1.0;
+    if (candidate_count)
+	*candidate_count = 0;
+
+    if (!m_checkTrim)
+	return m_trimmed;
+
+    TrimClassificationState state(closest);
+    std::size_t candidates = 0;
+    for (std::list<const BRNode *>::const_iterator i =
+	    m_stl->m_trims_above.begin(); i != m_stl->m_trims_above.end();
+	    ++i) {
+	const BRNode *br = *i;
+	point_t bmin, bmax;
+	br->GetBBox(bmin, bmax);
+	const double dist = BREP_UV_DIST_FUZZ;
+	if ((uv[X] > bmin[X] - dist) && (uv[X] < bmax[X] + dist)) {
+	    ++candidates;
+	    classify_trim_candidate(state, br, uv, within_distance_tol);
+	}
+    }
+    if (candidate_count)
+	*candidate_count = candidates;
+    if (!candidates)
+	return true;
+    return finish_trim_classification(state, closesttrim);
+}
+
+
+bool
+BBNode::isTrimmedAllocating(const ON_2dPoint &uv, const BRNode **closest,
+	double &closesttrim, double within_distance_tol,
+	std::size_t *candidate_count) const
+{
+    std::list<const BRNode *> trims;
+    closesttrim = -1.0;
+    if (candidate_count)
+	*candidate_count = 0;
+
+    if (!m_checkTrim)
+	return m_trimmed;
+
+    getTrimsAbove(uv, trims);
+    if (candidate_count)
+	*candidate_count = trims.size();
+    if (trims.empty())
+	return true;
+
+    TrimClassificationState state(closest);
+    for (std::list<const BRNode *>::const_iterator i = trims.begin();
+	    i != trims.end(); ++i)
+	classify_trim_candidate(state, *i, uv, within_distance_tol);
+    return finish_trim_classification(state, closesttrim);
 }
 
 

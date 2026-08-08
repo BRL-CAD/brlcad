@@ -129,7 +129,15 @@ namespace brlcad {
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt) const;
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const;
 	int getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<const BBNode *> &out) const;
-	bool isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closesttrim, double within_distance_tol) const;
+	/** Classify against the prepared trim leaves without allocating.
+	 * isTrimmedAllocating retains the former filtered-list path for
+	 * transition-time equivalence diagnostics only. */
+	bool isTrimmed(const ON_2dPoint &uv, const BRNode **closest,
+		double &closesttrim, double within_distance_tol,
+		std::size_t *candidate_count = NULL) const;
+	bool isTrimmedAllocating(const ON_2dPoint &uv, const BRNode **closest,
+		double &closesttrim, double within_distance_tol,
+		std::size_t *candidate_count = NULL) const;
 
 	void BuildBBox();
 	bool prepTrims();
