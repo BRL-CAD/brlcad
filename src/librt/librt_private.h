@@ -494,9 +494,11 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_EVENT_BOUNDARY_FOLD 2
 #define RT_BREP_TRACE_EVENT_SEAM_EXISTING 3
 #define RT_BREP_TRACE_EVENT_SEAM_CONTINUATION 4
+#define RT_BREP_TRACE_EVENT_VERTEX_FAN 5
 #define RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT 1
 #define RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT 2
 #define RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION 3
+#define RT_BREP_TRACE_EVENT_SOURCE_VERTEX_FAN 4
 /* Seam-gap and fold-gap values classify separate trace fields. */
 #define RT_BREP_SEAM_GAP_UNAVAILABLE 0
 #define RT_BREP_SEAM_GAP_INSIDE 1
@@ -631,6 +633,7 @@ struct rt_brep_trace_physical_event {
     size_t source_root;
     int source_kind;
     int edge_index;
+    int vertex_index;
     int face_index;
     int span_index;
     int certificate;
@@ -849,6 +852,17 @@ struct rt_brep_shot_trace {
     size_t physical_event_seam_root_coverage_failures;
     size_t physical_event_seam_witness_boxes;
     size_t physical_event_seam_witness_roots;
+    size_t prepared_vertex_records;
+    size_t supported_vertex_records;
+    size_t physical_event_vertex;
+    size_t physical_event_vertex_attempts;
+    size_t physical_event_vertex_candidates;
+    size_t physical_event_vertex_certified;
+    size_t physical_event_vertex_failures;
+    size_t physical_event_vertex_winding_checks;
+    size_t physical_event_vertex_winding_ambiguous;
+    size_t physical_event_vertex_owned_boxes;
+    size_t physical_event_vertex_owned_roots;
     size_t physical_event_clean_outside;
     size_t physical_event_near_trim;
     size_t physical_event_unresolved;
