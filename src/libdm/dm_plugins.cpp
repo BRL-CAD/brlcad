@@ -400,6 +400,15 @@ fb_windows_drive_path(const char *s)
 }
 
 
+static int
+fb_standard_stream_path(const char *path)
+{
+    return BU_STR_EQUAL(path, "-")
+	|| BU_STR_EQUAL(path, "/dev/stdout")
+	|| BU_STR_EQUAL(path, "/dev/stderr");
+}
+
+
 struct fb *
 fb_open(const char *file, int width, int height)
 {
@@ -480,7 +489,7 @@ fb_open(const char *file, int width, int height)
 
     /* Not in list, check special interfaces or disk files */
     /* "/dev/" protection! */
-    if (bu_strncmp(file, "/dev/", 5) == 0) {
+    if (bu_strncmp(file, "/dev/", 5) == 0 && !fb_standard_stream_path(file)) {
         fb_log("fb_open: no such device \"%s\".\n", file);
         free((void *) ifp);
         return FB_NULL;
