@@ -439,6 +439,8 @@ struct rt_bot_internal *
 bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *bot_dp, const char *bname)
 {
 
+    facetize_log(s, 2, "\t%s: checking Boolean result for thin faces...\n", bname);
+
     // Unpack the existing bot
     if (!bot_dp)
 	return NULL;
@@ -459,9 +461,11 @@ bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *b
     struct rt_i *rtip = rt_i_create(wdbip);
     rt_gettree(rtip, bname);
     rt_prep(rtip);
+    facetize_log(s, 2, "\t%s: raytrace preparation complete; scanning %zu faces...\n", bname, bot->num_faces);
     struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
     int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 0);
     rt_i_destroy(rtip);
+    facetize_log(s, 2, "\t%s: thin-face scan complete; %zu face(s) flagged.\n", bname, BU_PTBL_LEN(&tfaces));
 
     // No problematic faces reported, nothing to do
     if (!have_thin_faces) {
@@ -474,6 +478,7 @@ bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *b
     // the mesh
     struct rt_bot_internal *nbot = rt_bot_remove_faces(&tfaces, bot);
     size_t removed_face_cnt = BU_PTBL_LEN(&tfaces);
+    facetize_log(s, 2, "\t%s: removed %zu thin face(s); attempting manifold repair...\n", bname, removed_face_cnt);
 
     // Done with original bot
     rt_db_free_internal(&bot_intern);
@@ -500,11 +505,13 @@ bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *b
     struct rt_bot_repair_info rs = RT_BOT_REPAIR_INFO_INIT;
     rs.strict = 0;
     int repair_result = rt_bot_repair(&rbot, nbot, &rs);
+    facetize_log(s, 2, "\t%s: conservative manifold repair returned %d.\n", bname, repair_result);
     if (repair_result < 0) {
 	// If a conservative repair fails, try being a little
 	// more aggressive
 	rs.max_hole_area_percent = 30;
 	repair_result = rt_bot_repair(&rbot, nbot, &rs);
+	facetize_log(s, 2, "\t%s: aggressive manifold repair returned %d.\n", bname, repair_result);
     }
 
     if (repair_result < 0 || !rbot || !rbot->num_faces) {
