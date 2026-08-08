@@ -10,8 +10,9 @@ set(image_side 32)
 math(EXPR expected_size "${image_side} * ${image_side}")
 set(stdout_file "${TEST_DIR}/rtsil-stdout.bw")
 set(output_file "${TEST_DIR}/rtsil-option.bw")
+set(custom_file "${TEST_DIR}/rtsil-custom.bw")
 
-file(REMOVE "${stdout_file}" "${output_file}")
+file(REMOVE "${stdout_file}" "${output_file}" "${custom_file}")
 
 execute_process(
   COMMAND "${RTSIL}" -P 1 -s "${image_side}" "${DB}" all.g
@@ -66,4 +67,25 @@ if(NOT unexpected_pixels STREQUAL "")
   message(FATAL_ERROR "rtsil output contains values other than 1 and 255")
 endif()
 
-file(REMOVE "${stdout_file}" "${output_file}")
+execute_process(
+  COMMAND
+    "${RTSIL}" -P 1 -s "${image_side}"
+    -c "set foreground=17 background=238"
+    -o "${custom_file}" "${DB}" all.g
+  ERROR_VARIABLE custom_log
+  RESULT_VARIABLE custom_result
+)
+if(NOT custom_result EQUAL 0)
+  message(FATAL_ERROR "rtsil custom-intensity render failed:\n${custom_log}")
+endif()
+
+file(READ "${custom_file}" custom_hex HEX)
+if(NOT custom_hex MATCHES "11" OR NOT custom_hex MATCHES "ee")
+  message(FATAL_ERROR "rtsil custom output lacks hit or miss intensities")
+endif()
+string(REGEX REPLACE "(11|ee)" "" unexpected_custom_pixels "${custom_hex}")
+if(NOT unexpected_custom_pixels STREQUAL "")
+  message(FATAL_ERROR "rtsil ignored configured foreground/background intensities")
+endif()
+
+file(REMOVE "${stdout_file}" "${output_file}" "${custom_file}")
