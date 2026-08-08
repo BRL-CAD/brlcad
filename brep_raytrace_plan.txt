@@ -1045,6 +1045,47 @@ ratchet each failed candidate, certificate, and threshold case in a focused
 C/C++ corpus and promote no root until both span parents, physical-event
 deduplication, and the complete final interval are qualified.
 
+The first permanent layer of that focused corpus should isolate candidate
+search from certification.  Use the analytic tensor-product fold
+
+  phi(u,v) = u - 0.37,
+  psi(u,v) = (v - 0.5)^2 - epsilon,
+
+whose positive-epsilon roots have separation 2*sqrt(epsilon), whose zero case
+is an exact double contact, and whose negative-epsilon case is a miss.  Sweep
+dyadic separations down toward binary precision so the expected coefficients
+and roots can be represented without an unrelated decimal-oracle ambiguity.
+Apply u/v reversal and exchange, and apply signed equation permutations plus
+wide independent power-of-two equation scaling.  Gate root count, one-to-one
+location, normalized residual, ordered weak brackets, fixed sample/work
+bounds, candidate capacity, and deterministic repetition.  Run this test
+without constructing a `.g` file so every difficult arithmetic case can be
+added directly to a small C/C++ matrix.
+
+The bounded candidate algorithm may choose a conditioned derivative frame,
+solve the regular equation on a fixed set of weak-coordinate samples, and
+bisect scalar weak-equation sign changes into separate one-sided candidates.
+It must use caller-provided fixed arrays and report exhaustion.  This is
+search evidence only.  It neither proves absence between samples nor proves
+that a candidate is a unique root, and it must not publish a hit until the
+coverage and certification rules above account for the complete parent box.
+The initial fixed matrix uses 17 weak samples, no more than 56 regular
+bisections per solve, no more than 64 weak bisections per bracket, and four
+candidate slots.  These constants are measurable workspace limits, not
+geometric assumptions.
+
+Keep equation-conditioning claims precise.  The derivative-aligned
+orthogonal frame is naturally covariant under signed equation permutations
+and independent power-of-two scales.  It is not, by itself, a proof of
+candidate-search invariance under an arbitrary shear: a large multiple of the
+weak equation may remain in the nominal regular equation even when the weak
+derivative vanishes at the fold.  Non-dyadic equation mixing may also perturb
+an exact double root at coefficient-roundoff scale.  Add those cases only
+with propagated coefficient-construction errors and a stronger
+rank-revealing or coefficient-aware basis.  The conservative transformed-hull
+exclusion remains valid because it uses outward bounds and gives a transform
+no positive root-publication authority.
+
 5.5 Allocation-free ray-time workspace
 
 The new fast path must not call malloc/new or grow STL containers while

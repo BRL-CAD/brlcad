@@ -1637,6 +1637,57 @@ ESTABLISHED FINDINGS
     patches with unspecified tolerance intent into a tractable exact,
     fixed-resource problem, and the implementation should not promise that.
 
+53. The first permanent focused fold-solver corpus now ratchets bounded
+    candidate recovery independently of root certification and production hit
+    publication.  A private allocation-free test entry reuses the same
+    conditioned derivative frame as the production rotated-hull exclusion.
+    It samples 17 ordered weak-parameter values, solves the regular equation
+    with at most 56 bisections, bisects each weak sign bracket at most 64
+    times, and stores at most four candidates in caller-provided fixed arrays.
+    Exhaustion and all work counts are explicit.  The routine only proposes
+    nominal roots; coefficient-error bounds do not turn it into an existence,
+    uniqueness, or completeness certificate.
+
+    The analytic tensor-product system is
+
+      phi(u,v) = u - 0.37
+      psi(u,v) = (v - 0.5)^2 - epsilon.
+
+    For positive epsilon, its two roots have prescribed separation
+    2*sqrt(epsilon).  The permanent matrix sweeps separations 2^-4 through
+    2^-24, exact contact at epsilon=0, and a strict miss at negative epsilon.
+    Five exact binary equation bases cover identity, equation exchange, sign
+    reversal, and diagonal/off-diagonal scale ratios of 2^200.  Five parameter
+    variants cover reversal of either coordinate, exchange of u and v, and a
+    combined exchange/reversal.  The result is 200 systems with 325 expected
+    roots.  Candidate count, one-to-one analytic location, normalized
+    residual, bracket count, the fixed 17 samples, a 147-solve theoretical
+    ceiling, capacity, and frame availability are all hard gates.  The first
+    optimized run found every root through 5.96046448e-8 separation with zero
+    represented location/residual error and used at most 61 regular solves.
+
+    This corpus also records an important scope boundary.  A derivative-only
+    orthogonal equation frame is invariant to signed permutation and wide
+    independent binary scaling, but it does not undo an arbitrary shear that
+    hides a large multiple of the weak equation in the regular equation.
+    Non-dyadic equation mixing can also perturb or numerically split an exact
+    double root below coefficient precision.  Such cases need explicit
+    input/construction-error envelopes and stronger rank-revealing or
+    coefficient-aware conditioning before they can be claimed as invariants;
+    loosening the root-location tolerance would hide the issue.  The
+    production hull exclusion remains safe for every finite mixing matrix
+    because transformed hulls have exclusion authority only when their
+    outward intervals omit zero.  Candidate recovery has no such authority.
+
+    Factoring the production frame construction into the shared helper leaves
+    all prior hull decisions unchanged.  Focused optimized `--fold-only`,
+    `--interval-only`, and `--affine-only` gates pass.  The ordinary affine
+    baseline remains 36/36 selected, 970 surface boxes, and 446 exclusions in
+    920 rotated-hull attempts; the six known grazing gaps are unchanged.  The
+    next promotion step is therefore not more sampling.  It is exact-audited
+    per-coefficient construction plus complete one-sided existence/uniqueness
+    proofs for both hard span parents and physical cross-span deduplication.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1821,6 +1872,10 @@ IMPLEMENTATION CHECKLIST
                     conservative full-box exclusion/coverage and separate
                     certification of both nearby roots, plus cross-span event
                     deduplication.
+                    [x] Add a fixed-work analytic two-root/contact/miss
+                        candidate corpus across parameter symmetries and exact
+                        binary equation conditioning, with explicit work and
+                        capacity gates and no production publication authority.
                     [ ] Preserve per-coefficient or expansion enclosures and
                         exact-audit fused construction, restriction,
                         Bernstein products, and the selected precision tier.
@@ -2403,6 +2458,13 @@ Cobb sphere baseline:
     rays select prepared production with no fallback; their surface-box visits
     fall from 16,860 to 970.  The six known grazing gaps remain unchanged but
     retain at most two terminal boxes each.
+    Repeated after the fixed-work fold candidate corpus: focused
+    `--fold-only`, `--interval-only`, and `--affine-only` gates and the full
+    optimized corpus pass.  The new matrix covers 200 analytic systems and
+    325 expected roots through 2^-24 separation with at most 61 regular
+    solves.  The complete corpus again ends with
+    `BREP ray correctness corpus: PASS`; production grazing behavior and the
+    970-box ordinary affine baseline remain unchanged.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -2483,6 +2545,9 @@ Cobb sphere baseline:
     Repeated after conditioned equation-hull exclusion with halt-on-error:
     focused `--affine-only` and `--interval-only` runs pass with no ASan or
     UBSan diagnostic.  The latter audits 2,187,000 transformed coefficients.
+    Repeated after the bounded fold candidate implementation with halt-on-
+    error: the focused `--fold-only` 200-system matrix passes with no ASan or
+    UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -2556,9 +2621,13 @@ NEXT ACTIONS
    uncertified grazing fallback, and each unsupported/capacity reason.  Use the
    mapped tangent/grazing ratchet to certify and eliminate the six remaining
    condition-100 and condition-1,000 resolved misses, then analyze
-   anisotropic seam tolerances.  Separate old-solver root absence from
-   prepared box explosion
-   and local-corrector failure.  Find a lower-cost dispatch or fallback strategy
+   anisotropic seam tolerances.  The fixed-work analytic candidate corpus is
+   now a permanent search-stage ratchet; next exact-audit the per-coefficient
+   or expansion construction and Bernstein determinant products, prove both
+   one-sided parents complete, and deduplicate the resulting physical event
+   across their common span.  Separate old-solver root absence from prepared
+   box explosion and local-corrector failure.  Find a lower-cost dispatch or
+   fallback strategy
    before reducing tree density: the first correctness-only promotion passes
    every qualified partition oracle but increases the grazing-heavy ray corpus
    from 24.07 to about 69 seconds.  Do not lower density until every fallback
