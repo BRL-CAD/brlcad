@@ -2051,6 +2051,36 @@ ESTABLISHED FINDINGS
     event identity, and minimum-segment/contact classification agree may the
     shadow event replace the dense-tree fallback.
 
+58. A first exact-perpendicular ray-plane frame experiment was rejected and
+    reverted after the new permanent ratchets exposed a trade rather than a
+    monotone improvement.  The prototype selected the largest ray-direction
+    component k, applied a common exact power-of-two scale, and formed the two
+    algebraic normals
+
+      n1[k] = -d[a], n1[a] = d[k]
+      n2[k] = -d[b], n2[b] = d[k]
+
+    for cyclic (k,a,b).  In exact real arithmetic both dot products with d
+    vanish and n1 cross n2 equals d[k] d, avoiding the current Unitize/cross-
+    product rounding.  This is still a useful construction for a future exact
+    frame path.
+
+    As a drop-in replacement, however, it reduced each directed condition-100
+    expansion existence floor from two roots to one and changed several
+    ordinary prepared-selector counts.  It removed the two transformed exact-
+    contact expansion certificates and improved one hardest condition-1,000
+    image excess from about 13.1 to 10.1, but the other remained about 11.7
+    and neither hardest root certified.  The net result violated the existing
+    affine ratchet and was reverted without a source change.
+
+    This shows that exact ray-plane representation, equation conditioning, and
+    candidate proof-box geometry are coupled.  Do not replace the frame on the
+    strength of orthogonality alone.  A next experiment should retain the
+    present floors, compare bounded exact algebraic pivot frames as shadow
+    alternatives, and construct each candidate box in the selected frame's
+    conditioning geometry.  Exact contact improving while ordinary roots
+    regress is diagnostic evidence, not a promotion result.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
