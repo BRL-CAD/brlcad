@@ -99,6 +99,14 @@ ESTABLISHED FINDINGS
    hard gate.  Avoid isolated changes tested only against their motivating
    model.
 
+10. A ray starting exactly on the +X sphere seam and pointing outward is a
+    raw miss in rt_sph_shot, which explicitly rejects an outside/on-surface
+    origin pointing away.  Current BREP shot instead returns the wholly
+    nonpositive interval [-2R, 0].  The in-memory corpus permits that known
+    result to disappear, but requires determinism and forbids any forward
+    material.  Once BREP applies the normal half-ray/partition policy, promote
+    this case to exact implicit parity.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -122,7 +130,10 @@ IMPLEMENTATION CHECKLIST
     [x] Reuse singularity-aware normal evaluation where appropriate.
     [ ] Add pole, boundary, reverse-ray, and repeated-run tests.
         [x] Exact north/south poles, reverse directions, and repeatability.
-        [ ] Patch boundaries, seams, inside starts, and non-unit directions.
+        [x] Periodic seam, surface-boundary inward, and inside starts.
+        [x] Small/large scale and large translations for directed sphere rays.
+        [ ] Clarify/test the public unit-direction contract before adding
+            non-unit raw ft_shot cases.
 
 [x] Legacy native ray-code audit
     [x] Trace the original Utah alternatives and 1991 native BSPLINE solver.
@@ -140,6 +151,7 @@ IMPLEMENTATION CHECKLIST
     [ ] Report per-line crossing and chord differences.
     [x] Implement initial signed logarithmic sphere grazing report and a
         non-regression envelope; raw solver instrumentation is still pending.
+    [x] Add aggregate implicit/BREP/analytic sphere Crofton ground truth.
 
 [ ] Tolerance/seam work
     [ ] Separate numerical, UV, model-space seam, t-cluster, and minimum
@@ -222,11 +234,23 @@ In-memory correctness corpus:
     ordered segment endpoints and validate converted-BREP normals over 16
     identical repetitions.
 
+  * Seam-boundary inward rays and rays beginning inside are hard paired gates.
+    The outward surface-start discrepancy is retained as a known-defect
+    ratchet.  Additional fixtures repeat pole, seam, and inside checks on a
+    translated 0.01 mm sphere and on a radius-10,000 mm sphere translated to
+    million-unit coordinates.
+
   * A logarithmic positive-h sweep enforces deterministic, non-restarting,
     non-growing BREP interval behavior and analytic endpoint agreement for
     chords at least 10*rti_tol.dist.  A clearly outside negative-h case is a
     permanent miss gate.  Known near-limit defects remain visible in the
     report rather than being encoded as expected answers.
+
+  * A 20,000-line Cauchy-Crofton check estimates area and volume independently
+    on the implicit sphere and its converted BREP.  Both must be within 3% of
+    analytic 4*pi*R^2 and 4*pi*R^3/3, and the two representations must agree
+    within 1%.  This is the first aggregate ground-truth gate; exact shared
+    bounding sphere and per-line differences remain to be implemented.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -256,16 +280,18 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Expand brep_ray.cpp into a table-driven in-memory corpus covering patch
-   boundaries, inside starts, non-unit directions, scale/translation, seam
-   directions, and known singular parameterizations before modifying tangent
+1. Continue expanding brep_ray.cpp with non-spherical analytic conversions,
+   seam directions, known singular parameterizations, and an explicit check
+   of the ray-direction normalization contract before modifying tangent
    convergence.
 2. Instrument raw solver outcomes/residuals/iterations so the grazing report
    distinguishes candidate generation from final hit-list cleanup.
 3. Replace the loose tangent termination with scale-aware convergence and a
    safeguarded correction/contact classification; promote exact tangent and
    negative-h cases to hard gates once corrected.
-4. Add normal rt_shootray partition comparisons, then feed the same paired
-   implicit/BREP lines into deterministic Cauchy-Crofton checks.
+4. Add normal rt_shootray partition comparisons, then feed exactly the same
+   deterministic Cauchy-Crofton lines and bounding sphere to implicit and BREP
+   paths.  The current aggregate analytic/paired sphere gate is only the first
+   stage.
 5. Run the full focused/cache/NURBS regression set and commit the verified
    ownership, solver, corpus, and legacy-cleanup work in logical local commits.
