@@ -83,7 +83,7 @@ main(int argc, const char *argv[])
 	return 0;
     }
 
-    if (BU_STR_EQUAL(argv[1], "exit7"))
+    if (BU_STR_EQUAL(argv[1], "exit7") || BU_STR_EQUAL(argv[1], "exit_7"))
 	return 7;
 
     if (BU_STR_EQUAL(argv[1], "output")) {

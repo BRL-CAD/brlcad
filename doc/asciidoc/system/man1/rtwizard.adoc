@@ -33,11 +33,20 @@ transform, color, material, and temperature tracks.  Every full-color,
 ghost, and edge pass uses the same state for each frame.
 
 *rtwizard* has two modes.  With no arguments (or with *--gui*) it launches
-a wizard-style graphical interface that guides the user through building an
-image interactively.  Given sufficient options on the command line it runs
-non-interactively, which is useful for scripting and bulk rendering.  If a
-command line invocation lacks enough information to produce the requested
+a Qt workspace with a live libqtcad model view, hierarchy-based render-role
+assignment, still-image controls, animation presets, camera-keyframe capture,
+preview, render progress, cancellation, and a diagnostic log.  Render
+specifications can be opened and saved directly; advanced tracks the workspace
+does not edit are preserved.  Given sufficient options on the command line it
+runs non-interactively, which is useful for scripting and bulk rendering.  If
+a command line invocation lacks enough information to produce the requested
 image, *rtwizard* falls back to the GUI unless *--no-gui* is given.
+
+The GUI and command-line modes use the same C++17 rendering engine.  Renderer
+processes are launched and managed with libbu, view state is resolved with
+libged, images and animations are handled with libicv, and the application
+does not evaluate Tcl startup or preference files.  A small, recognized subset
+of legacy `.rtwizardrc` window settings is imported once as data.
 
 The kind of image produced is governed by the *--type* option, or inferred
 from which object lists are supplied.  The six picture types are:
@@ -272,8 +281,17 @@ preferred.
   after image generation.
 
 *-p* _#_, *--fbserv-port* _#_::
-  TCP port for the *fbserv*(1) framebuffer.  An existing framebuffer server
-  may be reused; in that case *rtwizard* leaves it open after rendering.
+  Framebuffer service port.  With the default automatic transport, *rtwizard*
+  launches a managed server over local IPC and uses this number only if it
+  must fall back to TCP.  A TCP server selected explicitly is left open after
+  rendering when it was already running.
+
+*--fbserv-transport* _auto|ipc|tcp_::
+  Select communication with a managed *fbserv*(1).  `auto` (the default)
+  prefers BRL-CAD local IPC and falls back to TCP only when local IPC is not
+  available.  `ipc` requires local IPC.  `tcp` preserves explicit TCP reuse
+  and startup behavior.  Authentication is enabled for servers started by
+  *rtwizard* regardless of transport.
 
 *--benchmark*::
   Benchmark mode: disable randomness for reproducible timing.

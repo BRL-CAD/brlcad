@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include "tcl.h"
+#include "bio.h"
 #include "vmath.h"
 #include "bn/mat.h"
 #include "bn/qmath.h"
@@ -40,6 +40,19 @@ using json = nlohmann::json;
 namespace {
 
 namespace fs = std::filesystem;
+
+static bool
+publish_file(const fs::path &temporary, const fs::path &destination)
+{
+#ifdef HAVE_WINDOWS_H
+    return MoveFileEx(temporary.string().c_str(), destination.string().c_str(),
+	MOVEFILE_WRITE_THROUGH | MOVEFILE_REPLACE_EXISTING) != 0;
+#else
+    std::error_code error;
+    fs::rename(temporary, destination, error);
+    return !error;
+#endif
+}
 
 struct JKey {
     double time;
@@ -306,21 +319,6 @@ evaluate_quat(const std::vector<JKey> &keys, double t, const std::string &interp
     return {qo[0], qo[1], qo[2], qo[3]};
 }
 
-static Tcl_Obj *
-tcl_vec(const std::vector<double> &v)
-{
-    Tcl_Obj *o = Tcl_NewListObj(0, NULL);
-    for (double n : v)
-	Tcl_ListObjAppendElement(NULL, o, Tcl_NewDoubleObj(n));
-    return o;
-}
-
-static void
-dict_put(Tcl_Interp *interp, Tcl_Obj *dict, const char *key, Tcl_Obj *value)
-{
-    Tcl_DictObjPut(interp, dict, Tcl_NewStringObj(key, -1), value);
-}
-
 static std::string
 command_path(const json &track, const std::string &type)
 {
@@ -461,245 +459,224 @@ value_command(const json &track, double t, double duration)
     return ss.str();
 }
 
-static int
-animation_json_cmd(ClientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+static void
+evaluate_animation_impl(const std::string &path, double base_viewsize,
+    const std::array<double, 4> &base_q_in,
+    const std::array<double, 3> &base_eye_in, double base_perspective,
+    double duration_override, int fps_override, int frames_override,
+    int plays_override, int cyclic_override, double local2base,
+    ::rtwizard::AnimationPlan &plan)
 {
-    if (objc != 12) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj(
-	    "usage: rtwizard_animation_json file viewsize orientation eye perspective duration fps frames plays cyclic local2base", -1));
-	return TCL_ERROR;
+    std::ifstream in(path);
+    if (!in) throw std::runtime_error("unable to open animation file '" + path + "'");
+    json root;
+    in >> root;
+    if (root.value("schema", "") == "brlcad.rtwizard.render") {
+	check_keys(root, {"schema", "version", "name", "description", "database", "objects", "image", "output",
+		"view", "style", "runtime", "animation"}, "render specification");
+	if (root.value("version", 0) != 1 || !root.contains("animation"))
+	    throw std::runtime_error("render specification has no version 1 animation section");
+	root = root["animation"];
+    } else {
+	check_keys(root, {"schema", "version", "units", "timing", "tracks"}, "animation");
+	if (root.value("schema", "") != "brlcad.rtwizard.animation" || root.value("version", 0) != 1)
+	    throw std::runtime_error("unsupported animation schema or version");
     }
-    try {
-	const char *path = Tcl_GetString(objv[1]);
-	double base_viewsize, base_perspective, duration_override, local2base;
-	int fps_override, frames_override, plays_override, cyclic_override;
-	if (Tcl_GetDoubleFromObj(interp, objv[2], &base_viewsize) != TCL_OK ||
-	    Tcl_GetDoubleFromObj(interp, objv[5], &base_perspective) != TCL_OK ||
-	    Tcl_GetDoubleFromObj(interp, objv[6], &duration_override) != TCL_OK ||
-	    Tcl_GetIntFromObj(interp, objv[7], &fps_override) != TCL_OK ||
-	    Tcl_GetIntFromObj(interp, objv[8], &frames_override) != TCL_OK ||
-	    Tcl_GetIntFromObj(interp, objv[9], &plays_override) != TCL_OK ||
-	    Tcl_GetIntFromObj(interp, objv[10], &cyclic_override) != TCL_OK ||
-	    Tcl_GetDoubleFromObj(interp, objv[11], &local2base) != TCL_OK)
-	    return TCL_ERROR;
-
-	int oc = 0;
-	Tcl_Obj **ov = NULL;
-	if (Tcl_ListObjGetElements(interp, objv[3], &oc, &ov) != TCL_OK || oc != 4)
-	    throw std::runtime_error("base orientation must contain four numbers");
-	std::vector<double> base_q(4);
-	for (int i = 0; i < 4; ++i) if (Tcl_GetDoubleFromObj(interp, ov[i], &base_q[(size_t)i]) != TCL_OK) return TCL_ERROR;
-	if (Tcl_ListObjGetElements(interp, objv[4], &oc, &ov) != TCL_OK || oc != 3)
-	    throw std::runtime_error("base eye point must contain three numbers");
-	std::vector<double> base_eye(3);
-	for (int i = 0; i < 3; ++i) if (Tcl_GetDoubleFromObj(interp, ov[i], &base_eye[(size_t)i]) != TCL_OK) return TCL_ERROR;
-
-	std::ifstream in(path);
-	if (!in) throw std::runtime_error(std::string("unable to open animation file '") + path + "'");
-	json root;
-	in >> root;
-	if (root.value("schema", "") == "brlcad.rtwizard.render") {
-	    check_keys(root, {"schema", "version", "name", "description", "database", "objects", "image", "output",
-		    "view", "style", "runtime", "animation"}, "render specification");
-	    if (root.value("version", 0) != 1 || !root.contains("animation"))
-		throw std::runtime_error("render specification has no version 1 animation section");
-	    json animation = root["animation"];
-	    root = animation;
-	} else {
-	    check_keys(root, {"schema", "version", "units", "timing", "tracks"}, "animation");
-	    if (root.value("schema", "") != "brlcad.rtwizard.animation" || root.value("version", 0) != 1)
-		throw std::runtime_error("unsupported animation schema or version");
+    check_keys(root, {"schema", "version", "preset", "units", "timing", "options", "tracks"}, "animation");
+    if (root.contains("preset")) throw std::runtime_error("animation track files may not contain a preset");
+    if (root.contains("options")) throw std::runtime_error("animation options are only valid with a preset");
+    if (root.contains("units")) {
+	if (!root["units"].is_string()) throw std::runtime_error("animation units must be a string");
+	std::string units = root["units"].get<std::string>();
+	if (units != "database") {
+	    local2base = bu_units_conversion(units.c_str());
+	    if (!(local2base > 0.0)) throw std::runtime_error("unknown animation distance unit '" + units + "'");
 	}
-	check_keys(root, {"schema", "version", "preset", "units", "timing", "options", "tracks"}, "animation");
-	if (root.contains("preset")) throw std::runtime_error("animation track files may not contain a preset");
-	if (root.contains("options")) throw std::runtime_error("animation options are only valid with a preset");
-	if (root.contains("units")) {
-	    if (!root["units"].is_string()) throw std::runtime_error("animation units must be a string");
-	    std::string units = root["units"].get<std::string>();
-	    if (units != "database") {
-		local2base = bu_units_conversion(units.c_str());
-		if (!(local2base > 0.0)) throw std::runtime_error("unknown animation distance unit '" + units + "'");
-	    }
-	}
-	if (!root.contains("timing") || !root["timing"].is_object()) throw std::runtime_error("animation timing is required");
-	check_keys(root["timing"], {"duration", "fps", "frames", "cyclic", "plays"}, "timing");
-	double duration = duration_override > 0.0 ? duration_override : root["timing"].value("duration", 0.0);
-	int fps = fps_override > 0 ? fps_override : root["timing"].value("fps", 10);
-	bool cyclic = cyclic_override >= 0 ? cyclic_override != 0 : root["timing"].value("cyclic", false);
-	int plays = plays_override >= 0 ? plays_override : root["timing"].value("plays", cyclic ? 0 : 1);
-	if (!(duration > 0.0) || !std::isfinite(duration) || fps <= 0 || plays < 0)
-	    throw std::runtime_error("duration and fps must be positive and plays nonnegative");
-	int specified_frames = frames_override > 0 ? frames_override : root["timing"].value("frames", 0);
-	int frame_count = specified_frames > 0 ? specified_frames : (int)std::llround(duration * fps) + (cyclic ? 0 : 1);
-	if (frame_count < 2) throw std::runtime_error("animation must contain at least two frames");
-	if (!root.contains("tracks") || !root["tracks"].is_array() || root["tracks"].empty())
-	    throw std::runtime_error("animation tracks must be a nonempty array");
+    }
+    if (!root.contains("timing") || !root["timing"].is_object())
+	throw std::runtime_error("animation timing is required");
+    check_keys(root["timing"], {"duration", "fps", "frames", "cyclic", "plays"}, "timing");
+    const double duration = duration_override > 0.0 ? duration_override : root["timing"].value("duration", 0.0);
+    const int fps = fps_override > 0 ? fps_override : root["timing"].value("fps", 10);
+    const bool cyclic = cyclic_override >= 0 ? cyclic_override != 0 : root["timing"].value("cyclic", false);
+    const int plays = plays_override >= 0 ? plays_override : root["timing"].value("plays", cyclic ? 0 : 1);
+    if (!(duration > 0.0) || !std::isfinite(duration) || fps <= 0 || plays < 0)
+	throw std::runtime_error("duration and fps must be positive and plays nonnegative");
+    const int specified_frames = frames_override > 0 ? frames_override : root["timing"].value("frames", 0);
+    const int frame_count = specified_frames > 0 ? specified_frames :
+	static_cast<int>(std::llround(duration * fps)) + (cyclic ? 0 : 1);
+    if (frame_count < 2) throw std::runtime_error("animation must contain at least two frames");
+    if (!root.contains("tracks") || !root["tracks"].is_array() || root["tracks"].empty())
+	throw std::runtime_error("animation tracks must be a nonempty array");
 
-	Tcl_Obj *frame_list = Tcl_NewListObj(0, NULL);
-	for (int fi = 0; fi < frame_count; ++fi) {
-	    double denom = cyclic ? (double)frame_count : (double)(frame_count - 1);
-	    double time = duration * (double)fi / denom;
-	    std::vector<double> eye = base_eye;
-	    std::vector<double> orient = base_q;
-	    std::vector<double> look;
-	    std::vector<double> up;
-	    double viewsize = base_viewsize;
-	    double perspective = base_perspective;
-	    std::string cut;
-	    std::vector<std::string> commands;
+    plan = ::rtwizard::AnimationPlan();
+    plan.duration = duration;
+    plan.fps = fps;
+    plan.cyclic = cyclic;
+    plan.plays = plays;
+    plan.frames.reserve(static_cast<size_t>(frame_count));
+    for (int fi = 0; fi < frame_count; ++fi) {
+	const double denom = cyclic ? static_cast<double>(frame_count) : static_cast<double>(frame_count - 1);
+	const double time = duration * static_cast<double>(fi) / denom;
+	std::vector<double> eye(base_eye_in.begin(), base_eye_in.end());
+	std::vector<double> orient(base_q_in.begin(), base_q_in.end());
+	std::vector<double> look;
+	std::vector<double> up;
+	double viewsize = base_viewsize;
+	double perspective = base_perspective;
+	std::string cut;
+	std::vector<std::string> commands;
 
-	    for (const json &track : root["tracks"]) {
-		std::string type = track.value("type", "");
-		validate_track(track, type);
-		if (type == "camera") {
-		    std::vector<JKey> ek = property_keys(track, "eye", duration);
-		    std::vector<JKey> lk = property_keys(track, "look_at", duration);
-		    std::vector<JKey> uk = property_keys(track, "up", duration);
-		    std::vector<JKey> ok = property_keys(track, "orientation", duration);
-		    if (!lk.empty() && !ok.empty()) throw std::runtime_error("camera track may not mix look_at and orientation");
-		    if (!uk.empty() && lk.empty()) throw std::runtime_error("camera up requires look_at values in the same track");
-		    if (!ek.empty()) {
-			eye = number_array(evaluate_keys(ek, time, interpolation_for(track, "eye")), 3, "camera eye");
-			for (double &v : eye) v *= local2base;
-		    }
-		    if (!lk.empty()) {
-			look = number_array(evaluate_keys(lk, time, interpolation_for(track, "look_at")), 3, "camera look_at");
-			for (double &v : look) v *= local2base;
-			up.clear();
-		    }
-		    if (!uk.empty()) up = number_array(evaluate_keys(uk, time, interpolation_for(track, "up")), 3, "camera up");
-		    if (!ok.empty()) {
-			orient = evaluate_quat(ok, time, interpolation_for(track, "orientation"));
-			look.clear();
-			up.clear();
-		    }
-		    std::vector<JKey> vk = property_keys(track, "view_size", duration);
-		    if (!vk.empty()) {
-			json v = evaluate_keys(vk, time, interpolation_for(track, "view_size"));
-			if (!finite_number(v) || v.get<double>() <= 0.0) throw std::runtime_error("view_size must be positive");
-			viewsize = v.get<double>() * local2base;
-		    }
-		    std::vector<JKey> pk = property_keys(track, "perspective", duration);
-		    if (!pk.empty()) {
-			json v = evaluate_keys(pk, time, interpolation_for(track, "perspective"));
-			if (!finite_number(v)) throw std::runtime_error("perspective must be finite");
-			perspective = v.get<double>();
-		    }
-		} else if (type == "cut_plane") {
-		    std::vector<JKey> pk = property_keys(track, "point", duration);
-		    std::vector<JKey> nk = property_keys(track, "normal", duration);
-		    if (pk.empty() || nk.empty()) throw std::runtime_error("cut_plane requires point and normal values");
-		    std::vector<double> p = number_array(evaluate_keys(pk, time, interpolation_for(track, "point")), 3, "cut point");
-		    std::vector<double> n = number_array(evaluate_keys(nk, time, interpolation_for(track, "normal")), 3, "cut normal");
-		    double nm = std::sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
-		    if (!(nm > 1.0e-12)) throw std::runtime_error("cut normal must be nonzero");
-		    std::ostringstream cs; cs.precision(17);
-		    cs << p[0]*local2base << ',' << p[1]*local2base << ',' << p[2]*local2base << ','
-		       << n[0]/nm << ',' << n[1]/nm << ',' << n[2]/nm;
-		    cut = cs.str();
-		} else if (type == "transform") {
-		    commands.push_back(matrix_command(track, time, duration, local2base));
-		} else if (type == "material" || type == "color" || type == "temperature") {
-		    commands.push_back(value_command(track, time, duration));
-		} else {
-		    throw std::runtime_error("unknown animation track type '" + type + "'");
+	for (const json &track : root["tracks"]) {
+	    const std::string type = track.value("type", "");
+	    validate_track(track, type);
+	    if (type == "camera") {
+		std::vector<JKey> ek = property_keys(track, "eye", duration);
+		std::vector<JKey> lk = property_keys(track, "look_at", duration);
+		std::vector<JKey> uk = property_keys(track, "up", duration);
+		std::vector<JKey> ok = property_keys(track, "orientation", duration);
+		if (!lk.empty() && !ok.empty()) throw std::runtime_error("camera track may not mix look_at and orientation");
+		if (!uk.empty() && lk.empty()) throw std::runtime_error("camera up requires look_at values in the same track");
+		if (!ek.empty()) {
+		    eye = number_array(evaluate_keys(ek, time, interpolation_for(track, "eye")), 3, "camera eye");
+		    for (double &value : eye) value *= local2base;
 		}
-	    }
-
-	    if (!look.empty()) {
-		vect_t dir = {look[0]-eye[0], look[1]-eye[1], look[2]-eye[2]};
-		if (MAGNITUDE(dir) <= SMALL_FASTF) throw std::runtime_error("camera eye and look_at point coincide");
-		VUNITIZE(dir);
-		mat_t m; quat_t q;
-		if (up.empty()) {
-		    bn_mat_lookat(m, dir, 0);
-		} else {
-		    vect_t upv = {up[0], up[1], up[2]};
-		    vect_t right, camera_up;
-		    if (MAGNITUDE(upv) <= SMALL_FASTF) throw std::runtime_error("camera up vector must be nonzero");
-		    VUNITIZE(upv);
-		    VCROSS(right, dir, upv);
-		    if (MAGNITUDE(right) <= SMALL_FASTF) throw std::runtime_error("camera up vector is parallel to the viewing direction");
-		    VUNITIZE(right);
-		    VCROSS(camera_up, right, dir);
-		    MAT_IDN(m);
-		    VMOVE(&m[0], right);
-		    VMOVE(&m[4], camera_up);
-		    VREVERSE(&m[8], dir);
+		if (!lk.empty()) {
+		    look = number_array(evaluate_keys(lk, time, interpolation_for(track, "look_at")), 3, "camera look_at");
+		    for (double &value : look) value *= local2base;
+		    up.clear();
 		}
-		quat_mat2quat(q, m);
-		orient = {q[0], q[1], q[2], q[3]};
+		if (!uk.empty()) up = number_array(evaluate_keys(uk, time, interpolation_for(track, "up")), 3, "camera up");
+		if (!ok.empty()) {
+		    orient = evaluate_quat(ok, time, interpolation_for(track, "orientation"));
+		    look.clear();
+		    up.clear();
+		}
+		std::vector<JKey> vk = property_keys(track, "view_size", duration);
+		if (!vk.empty()) {
+		    json value = evaluate_keys(vk, time, interpolation_for(track, "view_size"));
+		    if (!finite_number(value) || value.get<double>() <= 0.0) throw std::runtime_error("view_size must be positive");
+		    viewsize = value.get<double>() * local2base;
+		}
+		std::vector<JKey> pk = property_keys(track, "perspective", duration);
+		if (!pk.empty()) {
+		    json value = evaluate_keys(pk, time, interpolation_for(track, "perspective"));
+		    if (!finite_number(value)) throw std::runtime_error("perspective must be finite");
+		    perspective = value.get<double>();
+		}
+	    } else if (type == "cut_plane") {
+		std::vector<JKey> pk = property_keys(track, "point", duration);
+		std::vector<JKey> nk = property_keys(track, "normal", duration);
+		if (pk.empty() || nk.empty()) throw std::runtime_error("cut_plane requires point and normal values");
+		std::vector<double> point = number_array(evaluate_keys(pk, time, interpolation_for(track, "point")), 3, "cut point");
+		std::vector<double> normal = number_array(evaluate_keys(nk, time, interpolation_for(track, "normal")), 3, "cut normal");
+		const double magnitude = std::sqrt(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2]);
+		if (!(magnitude > 1.0e-12)) throw std::runtime_error("cut normal must be nonzero");
+		std::ostringstream stream;
+		stream.precision(17);
+		stream << point[0]*local2base << ',' << point[1]*local2base << ',' << point[2]*local2base << ','
+		       << normal[0]/magnitude << ',' << normal[1]/magnitude << ',' << normal[2]/magnitude;
+		cut = stream.str();
+	    } else if (type == "transform") {
+		commands.push_back(matrix_command(track, time, duration, local2base));
+	    } else if (type == "material" || type == "color" || type == "temperature") {
+		commands.push_back(value_command(track, time, duration));
+	    } else {
+		throw std::runtime_error("unknown animation track type '" + type + "'");
 	    }
-
-	    Tcl_Obj *fd = Tcl_NewDictObj();
-	    dict_put(interp, fd, "time", Tcl_NewDoubleObj(time));
-	    dict_put(interp, fd, "viewsize", Tcl_NewDoubleObj(viewsize));
-	    dict_put(interp, fd, "orientation", tcl_vec(orient));
-	    dict_put(interp, fd, "eye_pt", tcl_vec(eye));
-	    dict_put(interp, fd, "perspective", Tcl_NewDoubleObj(perspective));
-	    dict_put(interp, fd, "cut_plane", Tcl_NewStringObj(cut.c_str(), -1));
-	    Tcl_Obj *cl = Tcl_NewListObj(0, NULL);
-	    for (const std::string &c : commands)
-		Tcl_ListObjAppendElement(interp, cl, Tcl_NewStringObj(c.c_str(), -1));
-	    dict_put(interp, fd, "anim_commands", cl);
-	    Tcl_ListObjAppendElement(interp, frame_list, fd);
 	}
-	Tcl_Obj *result = Tcl_NewDictObj();
-	dict_put(interp, result, "duration", Tcl_NewDoubleObj(duration));
-	dict_put(interp, result, "fps", Tcl_NewIntObj(fps));
-	dict_put(interp, result, "cyclic", Tcl_NewBooleanObj(cyclic));
-	dict_put(interp, result, "plays", Tcl_NewIntObj(plays));
-	dict_put(interp, result, "frames", frame_list);
-	Tcl_SetObjResult(interp, result);
-	return TCL_OK;
-    } catch (const std::exception &e) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj(e.what(), -1));
-	return TCL_ERROR;
+
+	if (!look.empty()) {
+	    vect_t direction = {look[0]-eye[0], look[1]-eye[1], look[2]-eye[2]};
+	    if (MAGNITUDE(direction) <= SMALL_FASTF) throw std::runtime_error("camera eye and look_at point coincide");
+	    VUNITIZE(direction);
+	    mat_t matrix;
+	    quat_t quaternion;
+	    if (up.empty()) {
+		bn_mat_lookat(matrix, direction, 0);
+	    } else {
+		vect_t up_vector = {up[0], up[1], up[2]};
+		vect_t right, camera_up;
+		if (MAGNITUDE(up_vector) <= SMALL_FASTF) throw std::runtime_error("camera up vector must be nonzero");
+		VUNITIZE(up_vector);
+		VCROSS(right, direction, up_vector);
+		if (MAGNITUDE(right) <= SMALL_FASTF) throw std::runtime_error("camera up vector is parallel to the viewing direction");
+		VUNITIZE(right);
+		VCROSS(camera_up, right, direction);
+		MAT_IDN(matrix);
+		VMOVE(&matrix[0], right);
+		VMOVE(&matrix[4], camera_up);
+		VREVERSE(&matrix[8], direction);
+	    }
+	    quat_mat2quat(quaternion, matrix);
+	    orient = {quaternion[0], quaternion[1], quaternion[2], quaternion[3]};
+	}
+
+	::rtwizard::AnimationFrame frame;
+	frame.time = time;
+	frame.view_size = viewsize;
+	std::copy(orient.begin(), orient.end(), frame.orientation.begin());
+	std::copy(eye.begin(), eye.end(), frame.eye.begin());
+	frame.perspective = perspective;
+	frame.cut_plane = cut;
+	frame.commands = std::move(commands);
+	plan.frames.push_back(std::move(frame));
     }
 }
 
-static int
-save_view_keyframe_cmd(ClientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+} // namespace
+
+bool
+rtwizard::evaluate_animation(const std::string &path, double base_view_size,
+    const std::array<double, 4> &base_orientation,
+    const std::array<double, 3> &base_eye, double base_perspective,
+    double duration_override, int fps_override, int frames_override,
+    int plays_override, int cyclic_override, double local_to_base,
+    AnimationPlan &plan, std::string &error)
 {
-    if (objc != 8) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj(
-	    "usage: rtwizard_save_view_keyframe file time replace eye orientation viewsize perspective", -1));
-	return TCL_ERROR;
-    }
     try {
-	const char *path = Tcl_GetString(objv[1]);
-	double time, viewsize, perspective;
-	int replace;
-	if (Tcl_GetDoubleFromObj(interp, objv[2], &time) != TCL_OK ||
-	    Tcl_GetBooleanFromObj(interp, objv[3], &replace) != TCL_OK ||
-	    Tcl_GetDoubleFromObj(interp, objv[6], &viewsize) != TCL_OK ||
-	    Tcl_GetDoubleFromObj(interp, objv[7], &perspective) != TCL_OK)
-	    return TCL_ERROR;
-	if (time < 0.0 || !std::isfinite(time) || viewsize <= 0.0)
+	evaluate_animation_impl(path, base_view_size, base_orientation, base_eye,
+	    base_perspective, duration_override, fps_override, frames_override,
+	    plays_override, cyclic_override, local_to_base, plan);
+	error.clear();
+	return true;
+    } catch (const std::exception &exception) {
+	error = exception.what();
+	return false;
+    }
+}
+
+bool
+rtwizard::save_view_keyframe(const std::string &path, double time, bool replace,
+    const std::array<double, 3> &eye,
+    const std::array<double, 4> &orientation,
+    double view_size, double perspective, double database_local_to_base,
+    std::string &error)
+{
+    try {
+	if (time < 0.0 || !std::isfinite(time) || !(view_size > 0.0) || !std::isfinite(view_size) ||
+	    !std::isfinite(perspective))
 	    throw std::runtime_error("keyframe time must be nonnegative and view size positive");
-	int oc; Tcl_Obj **ov;
-	if (Tcl_ListObjGetElements(interp, objv[4], &oc, &ov) != TCL_OK || oc != 3)
-	    throw std::runtime_error("eye must contain three numbers");
-	json eye = json::array();
-	for (int i = 0; i < 3; ++i) { double v; if (Tcl_GetDoubleFromObj(interp, ov[i], &v) != TCL_OK) return TCL_ERROR; eye.push_back(v); }
-	if (Tcl_ListObjGetElements(interp, objv[5], &oc, &ov) != TCL_OK || oc != 4)
-	    throw std::runtime_error("orientation must contain four numbers");
-	json orientation = json::array();
-	for (int i = 0; i < 4; ++i) { double v; if (Tcl_GetDoubleFromObj(interp, ov[i], &v) != TCL_OK) return TCL_ERROR; orientation.push_back(v); }
+	for (double value : eye) if (!std::isfinite(value)) throw std::runtime_error("eye contains a non-finite value");
+	for (double value : orientation) if (!std::isfinite(value)) throw std::runtime_error("orientation contains a non-finite value");
 
 	json root;
 	{
-	    std::ifstream in(path);
-	    if (in) in >> root;
+	    std::ifstream input(path);
+	    if (input) input >> root;
 	}
-	if (root.is_null()) {
-	    root = {{"schema", "brlcad.rtwizard.render"}, {"version", 1}};
-	}
+	if (root.is_null()) root = {{"schema", "brlcad.rtwizard.render"}, {"version", 1}};
 	if (root.value("schema", "") != "brlcad.rtwizard.render" || root.value("version", 0) != 1)
 	    throw std::runtime_error("view keyframes may only be saved to a version 1 rtwizard render specification");
 	json &animation = root["animation"];
 	if (!animation.is_object()) animation = json::object();
-	animation["units"] = "mm";
+	if (!animation.contains("units")) animation["units"] = "mm";
+	if (!animation["units"].is_string())
+	    throw std::runtime_error("animation units must be a string");
+	const std::string units = animation["units"].get<std::string>();
+	double unit_to_base = units == "database" ? database_local_to_base : bu_units_conversion(units.c_str());
+	if (!(unit_to_base > 0.0) || !std::isfinite(unit_to_base))
+	    throw std::runtime_error("unknown animation distance unit '" + units + "'");
 	if (animation.contains("preset"))
 	    throw std::runtime_error("replace the render specification's animation preset before adding camera keyframes");
 	json &timing = animation["timing"];
@@ -710,60 +687,55 @@ save_view_keyframe_cmd(ClientData, Tcl_Interp *interp, int objc, Tcl_Obj *const 
 	json &tracks = animation["tracks"];
 	if (!tracks.is_array()) tracks = json::array();
 	size_t camera_index = tracks.size();
-	for (size_t i = 0; i < tracks.size(); ++i) {
-	    if (tracks[i].is_object() && tracks[i].value("type", "") == "camera") { camera_index = i; break; }
+	for (size_t index = 0; index < tracks.size(); ++index) {
+	    if (tracks[index].is_object() && tracks[index].value("type", "") == "camera") {
+		camera_index = index;
+		break;
+	    }
 	}
-	if (camera_index == tracks.size()) {
+	if (camera_index == tracks.size())
 	    tracks.push_back({{"type", "camera"}, {"interpolation", "smooth"}, {"keyframes", json::array()}});
-	}
 	json &keys = tracks[camera_index]["keyframes"];
 	if (!keys.is_array()) keys = json::array();
-	json key = {{"time", time}, {"eye", eye}, {"orientation", orientation},
-	    {"view_size", viewsize}, {"perspective", perspective}};
+	json key = {{"time", time},
+	    {"eye", {eye[0] / unit_to_base, eye[1] / unit_to_base, eye[2] / unit_to_base}},
+	    {"orientation", orientation}, {"view_size", view_size / unit_to_base},
+	    {"perspective", perspective}};
 	bool found = false;
 	for (json &existing : keys) {
-	    if (existing.is_object() && existing.contains("time") && finite_number(existing["time"]) &&
+	    if (existing.is_object() && existing.contains("time") && existing["time"].is_number() &&
 		std::fabs(existing["time"].get<double>() - time) <= std::numeric_limits<double>::epsilon()) {
 		if (!replace) throw std::runtime_error("a camera keyframe already exists at that time; use --replace-keyframe");
-		existing = key; found = true; break;
+		existing = key;
+		found = true;
+		break;
 	    }
 	}
 	if (!found) keys.push_back(key);
-	std::sort(keys.begin(), keys.end(), [](const json &a, const json &b) { return a.value("time", 0.0) < b.value("time", 0.0); });
+	std::sort(keys.begin(), keys.end(), [](const json &left, const json &right) {
+	    return left.value("time", 0.0) < right.value("time", 0.0);
+	});
 
-	std::string temp = std::string(path) + ".tmp-" + std::to_string(bu_pid());
+	const fs::path destination(path);
+	const fs::path temporary = destination.parent_path() /
+	    (destination.filename().string() + ".tmp-" + std::to_string(bu_pid()));
 	{
-	    std::ofstream out(temp, std::ios::trunc);
-	    if (!out) throw std::runtime_error("unable to create temporary keyframe file");
-	    out << root.dump(2) << '\n';
-	    if (!out) throw std::runtime_error("unable to write keyframe file");
+	    std::ofstream output(temporary, std::ios::trunc);
+	    if (!output) throw std::runtime_error("unable to create temporary keyframe file");
+	    output << root.dump(2) << '\n';
+	    if (!output) throw std::runtime_error("unable to write keyframe file");
 	}
-	Tcl_Obj *renamev[6] = {
-	    Tcl_NewStringObj("file", -1), Tcl_NewStringObj("rename", -1),
-	    Tcl_NewStringObj("-force", -1), Tcl_NewStringObj("--", -1),
-	    Tcl_NewStringObj(temp.c_str(), -1), Tcl_NewStringObj(path, -1)
-	};
-	for (Tcl_Obj *obj : renamev) Tcl_IncrRefCount(obj);
-	int rename_status = Tcl_EvalObjv(interp, 6, renamev, TCL_EVAL_GLOBAL);
-	for (Tcl_Obj *obj : renamev) Tcl_DecrRefCount(obj);
-	if (rename_status != TCL_OK) {
-	    std::remove(temp.c_str());
+	if (!publish_file(temporary, destination)) {
+	    std::error_code ec;
+	    fs::remove(temporary, ec);
 	    throw std::runtime_error("unable to replace keyframe file");
 	}
-	return TCL_OK;
-    } catch (const std::exception &e) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj(e.what(), -1));
-	return TCL_ERROR;
+	error.clear();
+	return true;
+    } catch (const std::exception &exception) {
+	error = exception.what();
+	return false;
     }
-}
-
-} // namespace
-
-extern "C" void
-rtwizard_animation_init(Tcl_Interp *interp)
-{
-    (void)Tcl_CreateObjCommand(interp, "rtwizard_animation_json", animation_json_cmd, NULL, NULL);
-    (void)Tcl_CreateObjCommand(interp, "rtwizard_save_view_keyframe", save_view_keyframe_cmd, NULL, NULL);
 }
 
 namespace {
@@ -849,6 +821,10 @@ render_spec_args(const char *path)
 		std::make_pair("ghost", "--ghost-objects"), std::make_pair("line", "--line-objects")}) {
 	    if (!o.contains(entry.first)) continue;
 	    if (!o[entry.first].is_array()) throw std::runtime_error(std::string("objects.") + entry.first + " must be an array");
+	    /* An empty role is meaningful in a complete rendering specification,
+	     * but the corresponding command-line option requires at least one
+	     * object.  Omitting the option preserves the empty role. */
+	    if (o[entry.first].empty()) continue;
 	    std::ostringstream ss;
 	    for (size_t i = 0; i < o[entry.first].size(); ++i) {
 		if (!o[entry.first][i].is_string()) throw std::runtime_error("object names must be strings");
@@ -862,11 +838,12 @@ render_spec_args(const char *path)
 	{"size", "--size"}, {"width", "--width"}, {"height", "--height"}, {"type", "--type"}}, "image");
     if (root.contains("output")) {
 	const json &o = root["output"];
-	check_keys(o, {"file", "frame_dir", "framebuffer", "framebuffer_port", "resume"}, "output");
+	check_keys(o, {"file", "frame_dir", "framebuffer", "framebuffer_port", "framebuffer_transport", "resume"}, "output");
 	if (o.contains("file")) push_arg(args, "--output-file", file_arg(o["file"], base, "output.file"));
 	if (o.contains("frame_dir")) push_arg(args, "--frame-dir", file_arg(o["frame_dir"], base, "output.frame_dir"));
 	if (o.contains("framebuffer")) push_arg(args, "--fbserv-device", json_arg(o["framebuffer"], "output.framebuffer"));
 	if (o.contains("framebuffer_port")) push_arg(args, "--fbserv-port", json_arg(o["framebuffer_port"], "output.framebuffer_port"));
+	if (o.contains("framebuffer_transport")) push_arg(args, "--fbserv-transport", json_arg(o["framebuffer_transport"], "output.framebuffer_transport"));
 	if (boolean_arg(o, "resume", "output")) args.push_back("--resume");
     }
     if (root.contains("view")) section_args(args, root["view"], {
