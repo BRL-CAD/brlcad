@@ -53,6 +53,15 @@ brlcad_addexec(rt_diff diff.c "${RT_TEST_LIBS}" TEST)
 brlcad_addexec(rt_default_object default_object.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_default_object COMMAND rt_default_object)
 
+brlcad_addexec(rt_bound_internal bound_internal.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_bound_internal COMMAND rt_bound_internal)
+
+brlcad_addexec(rt_tree_prune tree_prune.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_tree_prune COMMAND rt_tree_prune)
+
+brlcad_addexec(rt_reprep_prune reprep_prune.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_reprep_prune COMMAND rt_reprep_prune)
+
 brlcad_addexec(rt_lcomb_large lcomb_large.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_lcomb_large COMMAND rt_lcomb_large)
 
@@ -158,12 +167,14 @@ set(
   CMakeLists.txt
   arb_intersect.g
   binary_attribute.c
+  bound_internal.c
   crofton.c
   default_object.c
   datum_annot_semantics.c
   dsp_raytrace_check.c
   dsp_sa_vol_check.c
   primitive_brep.cpp
+  reprep_prune.c
   brep_boolean_tests.g
   cyclic_tests.g
   extreme_ssi_test.g
@@ -178,6 +189,7 @@ set(
   sketch.g
   prim_tess.c
   tess_timing.c
+  tree_prune.c
 )
 
 cmakefiles(${distcheck_files})

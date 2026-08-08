@@ -116,7 +116,7 @@ struct rt_i {
     struct bn_tol       rti_tol;        /**< @brief  Math tolerances for this model */
     struct bg_tess_tol  rti_ttol;       /**< @brief  Tessellation tolerance defaults */
     fastf_t             rti_max_beam_radius; /**< @brief  Max threat radius for FASTGEN cline solid */
-    rti_clbk_t          rti_gettrees_clbk;  /**< @brief  Optional user clbk function called during rt_gettrees_and_attrs */
+    rti_clbk_t          rti_gettrees_clbk;  /**< @brief  Optional user clbk function called after each region tree is finalized by rt_gettrees_and_attrs */
     void *              rti_udata;      /**< @brief  ptr for user data. */
     /* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ */
     point_t             mdl_min;        /**< @brief  min corner of model bounding RPP */
@@ -213,9 +213,10 @@ RT_EXPORT extern int rt_gettrees(struct rt_i *rtip,
  * information in rti_udata. (stashed in the rt_i structure).
  *
  * This function may run in parallel, but is not multiply re-entrant itself,
- * because db_walk_tree() isn't multiply re-entrant.  Note that callback
- * implementations should protect any data writes to a shared structure with
- * the RT_SEM_RESULTS semaphore.
+ * because db_walk_tree() isn't multiply re-entrant.  The optional callback is
+ * invoked serially after dead-solid cleanup and subtractor pruning.  It may
+ * therefore inspect the final region tree and reg_all_unions value without
+ * observing nodes or soltabs that the finishing pass will subsequently free.
  *
  * Semaphores used for critical sections in parallel mode:
  * RT_SEM_TREE ====> protects rtip->i->rti_solidheads[] lists, d_uses(solids)
