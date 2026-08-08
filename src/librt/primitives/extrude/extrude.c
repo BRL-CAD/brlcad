@@ -174,10 +174,11 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
     vert_count = skt->vert_count;
     /* count how many additional vertices we will need for arc centers */
     for (i = 0; i < skt->curve.count; i++) {
-	struct carc_seg *csg=(struct carc_seg *)skt->curve.segment[i];
+	uint32_t *magic = (uint32_t *)skt->curve.segment[i];
 
-	if (csg->magic != CURVE_CARC_MAGIC)
+	if (*magic != CURVE_CARC_MAGIC)
 	    continue;
+	struct carc_seg *csg=(struct carc_seg *)skt->curve.segment[i];
 
 	if (csg->radius <= 0.0)
 	    continue;
@@ -249,12 +250,13 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
      * beyond the listed vertices
      */
     for (i = 0; i < skt->curve.count; i++) {
-	struct carc_seg *csg=(struct carc_seg *)skt->curve.segment[i];
-	struct carc_seg *csg_extr=(struct carc_seg *)extr.crv.segment[i];
+	uint32_t *magic = (uint32_t *)skt->curve.segment[i];
 	point_t center;
 
-	if (csg->magic != CURVE_CARC_MAGIC)
+	if (*magic != CURVE_CARC_MAGIC)
 	    continue;
+	struct carc_seg *csg=(struct carc_seg *)skt->curve.segment[i];
+	struct carc_seg *csg_extr=(struct carc_seg *)extr.crv.segment[i];
 
 	if (csg->radius <= 0.0) {
 	    /* full circle */
@@ -450,10 +452,11 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     vert_count = skt->vert_count;
     /* count how many additional vertices we will need for arc centers */
     for (i = 0; i < skt->curve.count; i++) {
-	struct carc_seg *csg=(struct carc_seg *)skt->curve.segment[i];
+	uint32_t *magic = (uint32_t *)skt->curve.segment[i];
 
-	if (csg->magic != CURVE_CARC_MAGIC)
+	if (*magic != CURVE_CARC_MAGIC)
 	    continue;
+	struct carc_seg *csg=(struct carc_seg *)skt->curve.segment[i];
 
 	if (csg->radius <= 0.0)
 	    continue;
@@ -525,12 +528,13 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
      * beyond the listed vertices
      */
     for (i = 0; i < skt->curve.count; i++) {
-	struct carc_seg *csg=(struct carc_seg *)skt->curve.segment[i];
-	struct carc_seg *csg_extr=(struct carc_seg *)extr->crv.segment[i];
+	uint32_t *magic = (uint32_t *)skt->curve.segment[i];
 	point_t center;
 
-	if (csg->magic != CURVE_CARC_MAGIC)
+	if (*magic != CURVE_CARC_MAGIC)
 	    continue;
+	struct carc_seg *csg=(struct carc_seg *)skt->curve.segment[i];
+	struct carc_seg *csg_extr=(struct carc_seg *)extr->crv.segment[i];
 
 	if (csg->radius <= 0.0) {
 	    /* full circle */
