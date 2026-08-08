@@ -37,6 +37,9 @@ An observation-only cross-section classifier validates incident trim lifts and
 distinguishes material-side, contact, and exterior edge proximity.  A further
 shadow-only event classifier now identifies uniquely repairable unmatched
 solid hits from that evidence and is invariant under tested similarities.
+Exact-parameter positive-weight surface spans and conservative ray-plane
+coefficient exclusion are prepared, and a bounded adjacent-support
+continuation solve recovers the missing bowed-seam endpoints in shadow mode.
 Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
 
 
@@ -268,6 +271,38 @@ ESTABLISHED FINDINGS
     endpoint near tangency, so production activation requires a bounded local
     continuation solve rather than using that projection as the root.
 
+24. Exact-parameter positive-weight NURBS surface spans can be prepared by the
+    same policy used for edge spans.  Each face record owns its rational
+    Bezier patches, original UV domains, and Euclidean control-hull box.
+    Reparameterized GetNurbForm results, invalid/nonpositive weights, malformed
+    knot spans, and incomplete conversions mark the complete face unsupported
+    rather than admitting unsafe partial data.  The two homogeneous ray-plane
+    numerator coefficient hulls now conservatively reject spans in trace mode.
+    Their floating-point margin includes the pre-cancellation |CV|+|O*W|
+    arithmetic scale, not just the final coefficient magnitude; this is
+    essential for translated geometry.  All six Cobb faces produce one span,
+    and the representative grazing line retains two of six spans.  Candidate
+    counts are invariant across the tested similarities.  Surface spans are
+    rebuilt from the cached BREP, so cache format version zero is unchanged.
+
+25. For the controlled bowed seam, the existing adjacent-face root supplies a
+    deterministic seed for a shadow continuation: map the authorized edge to
+    that face's trim, reflect the root across the local trim tangent, and solve
+    the prepared Bezier support in a bounded extension outside its ordinary
+    [0,1]^2 span.  A fixed 24-iteration Newton/line-search budget uses the same
+    conditioned ray residual and does no ray-time allocation.  All 15 current
+    below-envelope leaks yield exactly one continuation with the required
+    orientation and ordering.  Maximum error against the implicit sphere's
+    missing endpoint is about 2.71e-8 mm.  The g/T=1, h/T=0.9 representative
+    converges in three iterations from the reflected seed and agrees with the
+    implicit endpoint to about 1e-12 mm in both ray directions.  Identity,
+    rigid, 0.01x, and 10,000x cases preserve the candidate and continuation
+    classifications.  This is deliberately not production-ready: reflection
+    in parameter space is only a seed, the extension has not yet been covered
+    by conservative coefficient subdivision, and vertex/multiple-root cases
+    need explicit fallback and uniqueness proofs.  No synthetic hit is
+    emitted.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -344,6 +379,9 @@ IMPLEMENTATION CHECKLIST
     [x] Gate edge-sector and closure classifications under rotation,
         translation, and 0.01x/10,000x uniform scaling with scaled model
         tolerances.
+    [x] Recover the missing controlled bowed-seam endpoint with a bounded,
+        allocation-free adjacent-support continuation in shadow mode and gate
+        it against the implicit oracle and similarities.
     [ ] Qualify general trim/edge parameter correspondence and add vertex-fan
         sector fixtures.
     [ ] Add sewn and perturbed Cobb fixtures and threshold matrices.
@@ -357,8 +395,12 @@ IMPLEMENTATION CHECKLIST
         [ ] Add controlled gap, overlap, trim, and tangent perturbation sweeps.
 
 [ ] Local adaptive solve
-    [ ] Prepare rational Bezier spans.
+    [x] Prepare exact-parameter positive-weight rational Bezier surface spans
+        with complete-face unsupported fallback.
     [ ] Implement conservative coefficient exclusion and local subdivision.
+        [x] Implement initial two-plane homogeneous coefficient exclusion with
+            translation-aware numerical margins in shadow mode.
+        [ ] Add de Casteljau subdivision/clipping and interval isolation.
     [ ] Use fixed-capacity allocation-free shot workspace with explicit
         fallback on unsupported weights/order/capacity.
     [ ] Reduce default tree density only after shadow equivalence passes.
@@ -650,6 +692,24 @@ Cobb sphere baseline:
     state, unique closure count, missing enter/leave direction, and event
     ordering in both ray directions.  BREP edge/vertex and ray model
     tolerances are explicitly scaled as model-space lengths.
+
+  * Prepared face records now decompose exact-parameter NURBS surfaces at all
+    nonempty knot rectangles into positive-weight rational Bezier patches.
+    Each patch retains its original UV domain and a conservative control-hull
+    bound.  Trace-mode homogeneous ray-plane coefficient hulls reject spans
+    whose first or second numerator cannot contain zero.  The roundoff bound
+    accounts for large-coordinate subtraction.  Cobb has six supported faces
+    and six spans; the representative near-tangent line retains two spans and
+    this count is unchanged by all similarity fixtures.
+
+  * After a unique authorized closure is found, the trace path can reflect the
+    existing adjacent-face UV root across the associated trim tangent and run
+    a fixed-budget, line-searched solve on a bounded extension of that
+    prepared Bezier support.  Every current leak produces one correctly
+    oriented opposite event.  The maximum endpoint error against the implicit
+    sphere over all 15 is approximately 2.71e-8 mm.  Continuation attempts,
+    candidate count, face/UV/t, residual, normal dot, and iteration count are
+    available in --cobb-report.  Production segments remain unchanged.
 
   cmake --build .build --target \
     librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
