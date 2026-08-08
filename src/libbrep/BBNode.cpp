@@ -215,6 +215,29 @@ BBNode::intersectsHierarchy(const ON_Ray &ray, std::list<const BBNode *> &result
 
 
 bool
+BBNode::intersectsHierarchy(const ON_Ray &ray, const BBNode **results,
+	std::size_t capacity, std::size_t &count, bool &overflow) const
+{
+    double tnear, tfar;
+    bool intersects = intersectedBy(ray, &tnear, &tfar);
+    if (intersects && isLeaf()) {
+	if (count < capacity && results) {
+	    results[count] = this;
+	} else {
+	    overflow = true;
+	}
+	count++;
+    } else if (intersects) {
+	for (size_t i = 0; i < m_stl->m_children.size(); i++) {
+	    m_stl->m_children[i]->intersectsHierarchy(ray, results, capacity,
+		count, overflow);
+	}
+    }
+    return intersects;
+}
+
+
+bool
 BBNode::containsUV(const ON_2dPoint &uv) const
 {
     if ((uv[0] > m_u[0]) && (uv[0] < m_u[1]) && (uv[1] > m_v[0]) && (uv[1] < m_v[1])) {
