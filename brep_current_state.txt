@@ -37,7 +37,11 @@ boxes for eligible edges are now prepared in both normal and cached prep.
 An observation-only cross-section classifier validates incident trim lifts and
 distinguishes material-side, contact, and exterior edge proximity.  A further
 event classifier now identifies uniquely repairable unmatched solid hits from
-that evidence and is invariant under tested similarities.
+that evidence and is invariant under tested similarities.  Edge-sector,
+discrepancy, and continuation paths now resolve the corresponding incident
+trim parameter geometrically instead of assuming equal normalized parameter
+speed; an exact-locus Möbius trim-reparameterization fixture gates this
+representation invariance.
 Exact-parameter positive-weight surface spans and conservative ray-plane
 coefficient exclusion are prepared, and a bounded adjacent-support
 continuation solve recovers the missing bowed-seam endpoints.
@@ -552,6 +556,37 @@ ESTABLISHED FINDINGS
     path; it does not prove unrelated librt operations outside this cache
     matrix race-free.
 
+34. A topological edge parameter and an incident trim parameter do not in
+    general have the same normalized fraction, even when both curves describe
+    exactly the same locus.  The former discrepancy sampler, material-sector
+    frame, and continuation seed all made that representation-dependent
+    assumption.  They now map an edge point to each incident surface-lifted
+    trim geometrically: an orientation-aware normalized value is only an
+    initial hint, a fixed 33-sample scan finds a deterministic basin, and a
+    bounded 24-step Gauss-Newton corrector with an eight-step line search
+    minimizes 3D lift distance.  The composed trim/surface derivative is used
+    only by correction; point-only scans avoid unnecessary derivative work.
+    The routine allocates no ray-time memory and rejects invalid domains,
+    topology, evaluation results, and nonfinite arithmetic.
+
+    A copied bowed Cobb sphere converts both trims of the target edge to NURBS
+    and applies opposite Möbius reparameterizations c=0.05 and c=20.  This
+    changes the UV point evaluated at the trim-domain midpoint by at least
+    0.452 while preserving the curve locus to 2.48e-16.  The fixture refreshes
+    each OpenNURBS proxy domain after knot roundoff and requires the BREP to
+    remain valid.  Against the identity case it preserves all inward,
+    contact, and exterior sector states in both ray directions, measured
+    discrepancy, unique closure and missing direction, continuation
+    certificate, and published production interval.  The existing rotation,
+    translation, 0.01x, and 10,000x similarity cases remain unchanged.
+
+    This establishes regular two-trim correspondence invariance for the
+    controlled fixture.  It is not a conservative proof of the maximum seam
+    discrepancy: the preparatory 33 edge samples and correspondence basin
+    scan remain fixed.  Knot-aware adaptive discrepancy bounds, ambiguous or
+    self-overlapping trims, and vertex fans are still open and must retain
+    explicit unsupported fallback.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -640,8 +675,10 @@ IMPLEMENTATION CHECKLIST
     [x] Recover the missing controlled bowed-seam endpoint with a bounded,
         allocation-free adjacent-support continuation and gate
         it against the implicit oracle and similarities.
-    [ ] Qualify general trim/edge parameter correspondence and add vertex-fan
-        sector fixtures.
+    [x] Remove the equal-normalized-speed assumption for regular two-trim edge
+        correspondence and gate opposite nonlinear trim reparameterizations.
+    [ ] Add vertex-fan sector fixtures and explicit ambiguous-correspondence
+        fallback gates.
     [ ] Add sewn and perturbed Cobb fixtures and threshold matrices.
         [x] Add reusable legacy-unsewn and solid-sewn Cobb constructors.
         [x] Gate topology, face/seam/vertex rays, scale, and 8,000 shared
@@ -1130,6 +1167,17 @@ Cobb sphere baseline:
     the published segment endpoints pass identity, rigid, 0.01x, and 10,000x
     similarity cases when geometry and model tolerances scale together.
 
+  * Incident edge/trim correspondence no longer assumes equal normalized
+    parameter speed.  The discrepancy sampler, both material-sector frames,
+    and continuation reflection seed use the same fixed-work geometric lift
+    projection.  The nonlinear c=0.05/c=20 trim fixture preserves the locus
+    to 2.48e-16 despite a 0.452 midpoint parameter shift, and retains the
+    identity case's sector states, closure decision, certificate, and final
+    segment in both directions.  The normal full corpus passes in 8.46
+    seconds on the current host (versus 8.81 seconds immediately before this
+    change; these single-run timings are informational, not a performance
+    threshold).
+
   cmake --build .build --target \
     librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
     PASS
@@ -1141,7 +1189,9 @@ Cobb sphere baseline:
     trace-only edge qualification, fixed leaf-traversal equivalence, and
     allocating/no-allocation trim equivalence enabled across all 416 bowed-
     seam rays.  The matrix retains 15 legacy one-event cases, repairs all 15
-    in production, and has zero below-envelope leaks.
+    in production, and has zero below-envelope leaks.  Repeated after the
+    geometric edge/trim correspondence change and nonlinear parameter fixture:
+    13/13, with rt_brep_ray at 8.70 seconds in the parallel gate.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -1159,13 +1209,21 @@ Cobb sphere baseline:
     disabled because LeakSanitizer is incompatible with the host ptrace
     wrapper; leak qualification remains open.
 
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    .build-asan/src/librt/tests/rt_brep_ray
+    PASS after geometric edge/trim parameter correspondence and the nonlinear
+    trim-reparameterization fixture, with no ASan or UBSan diagnostic.
+
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 \
     -R '^(rt_brep_ray|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
     --output-on-failure
     PASS: 12/12 after fixed-hit and certified crack-closure production
     promotion, including solid and plate segment publication, with no ASan or
-    UBSan diagnostics.
+    UBSan diagnostics.  Repeated after geometric edge/trim correspondence and
+    nonlinear parameter invariance: 12/12 in 38.57 seconds, again with no
+    ASan or UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -1225,9 +1283,10 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Add vertex-fan fixtures and qualify edge/trim parameter correspondence
-   without assuming normalized parameter speed.  Keep model-space, UV,
-   numerical-root, t-cluster, and minimum-segment tolerances distinct.
+1. Add vertex-fan fixtures and ambiguous/self-overlapping correspondence
+   fallback cases.  Replace fixed seam-discrepancy sampling with a knot-aware
+   adaptive conservative bound.  Keep model-space, UV, numerical-root,
+   t-cluster, and minimum-segment tolerances distinct.
 2. Add explicit shadow event/winding/contact classes, then activate topology-
    local crack closure only for fully supported manifold events.
    Restore a crossing inside its authorized envelope, preserve ray-reversal
