@@ -2467,6 +2467,9 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
     int failures = 0;
     size_t maximum_fixed_leaves = 0;
     size_t maximum_fixed_hits = 0;
+    size_t maximum_discrepancy_cells = 0;
+    size_t maximum_discrepancy_depth = 0;
+    double maximum_discrepancy_width_ratio = 0.0;
     double maximum_parameter_locus_error = 0.0;
     double minimum_parameter_midpoint_shift = DBL_MAX;
 
@@ -2576,6 +2579,19 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 		    trace.fixed_hit_count);
 		    const struct rt_brep_trace_edge *edge =
 			brep_trace_edge(trace, frame.edge_index);
+		    if (edge && edge->discrepancy_bounded) {
+			maximum_discrepancy_cells = std::max(
+			    maximum_discrepancy_cells,
+			    edge->discrepancy_bound_cells);
+			maximum_discrepancy_depth = std::max(
+			    maximum_discrepancy_depth,
+			    edge->discrepancy_bound_depth);
+			maximum_discrepancy_width_ratio = std::max(
+			    maximum_discrepancy_width_ratio,
+			    (edge->discrepancy_upper_bound -
+			    edge->discrepancy_lower_bound) /
+			    (tol->dist * test.scale));
+		    }
 		    const size_t expected_closures = expected_state == 1 ? 1 : 0;
 		    const int expected_direction = reverse ?
 			RT_BREP_TRACE_ENTERING : RT_BREP_TRACE_LEAVING;
@@ -2651,6 +2667,18 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 		    bool bad = !brep_trace_fixed_workspaces_match(trace) ||
 			!edge || !edge->candidate_spans ||
 			!edge->within_edge_tolerance || !edge->sector_valid ||
+			!edge->discrepancy_bounded ||
+			edge->discrepancy_bound_exhausted ||
+			edge->discrepancy_lower_bound < 0.0 ||
+			edge->discrepancy_upper_bound <
+			edge->discrepancy_lower_bound ||
+			edge->measured_discrepancy >
+			edge->discrepancy_upper_bound + normalized_limit *
+			test.scale ||
+			edge->discrepancy_upper_bound -
+			edge->discrepancy_lower_bound >
+			edge->discrepancy_bound_tolerance +
+			normalized_limit * test.scale ||
 			edge->tolerance_inferred ||
 			!edge->discrepancy_measured ||
 			!edge->discrepancy_authorized ||
@@ -2798,12 +2826,190 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
     if (!failures) {
 	std::printf("Cobb classifier similarity/parameter invariance: PASS "
 	    "max-leaves=%zu/%d max-raw-hits=%zu/%d "
-	    "parameter-locus-error=%.3g midpoint-shift=%.3g\n",
+	    "parameter-locus-error=%.3g midpoint-shift=%.3g "
+	    "seam-bound-cells=%zu depth=%zu width/T=%.3g\n",
 	    maximum_fixed_leaves, RT_BREP_MAX_LEAVES,
 	    maximum_fixed_hits, RT_BREP_MAX_HITS,
 	    maximum_parameter_locus_error,
-	    minimum_parameter_midpoint_shift);
+	    minimum_parameter_midpoint_shift, maximum_discrepancy_cells,
+	    maximum_discrepancy_depth, maximum_discrepancy_width_ratio);
     }
+    return failures;
+}
+
+
+static int
+check_cobb_discrepancy_bound_budget(const struct bn_tol *tol,
+    struct rt_i *rtip, struct resource *resource)
+{
+    const size_t expected_cell_budget = 4096;
+    const size_t target_count = 3;
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *variant = ON_Brep_CobbSphereSewn(radius, origin);
+    if (!variant) {
+	std::printf("FAIL: Cobb adaptive seam budget construction\n");
+	return 1;
+    }
+
+    struct budget_target {
+	int face_index = -1;
+	int side_index = -1;
+	int edge_index = -1;
+	double measured_discrepancy = INFINITY;
+    } targets[target_count];
+    std::vector<bool> used_faces(variant->m_F.Count(), false);
+    size_t targets_found = 0;
+    for (int face_index = 0; face_index < variant->m_F.Count() &&
+	    targets_found < target_count; ++face_index) {
+	if (used_faces[face_index])
+	    continue;
+	for (int side_index = 0; side_index < 4; ++side_index) {
+	    int edge_index = -1;
+	    if (!cobb_target_edge(variant, face_index, side_index,
+		    edge_index))
+		continue;
+	    const ON_BrepEdge &edge = variant->m_E[edge_index];
+	    if (edge.m_ti.Count() != 2)
+		continue;
+	    int other_face = -1;
+	    bool contains_face = false;
+	    bool valid_faces = true;
+	    for (int trim_side = 0; trim_side < 2; ++trim_side) {
+		const int trim_index = edge.m_ti[trim_side];
+		if (trim_index < 0 || trim_index >= variant->m_T.Count()) {
+		    valid_faces = false;
+		    break;
+		}
+		const int incident_face =
+		    variant->m_T[trim_index].FaceIndexOf();
+		if (incident_face == face_index)
+		    contains_face = true;
+		else
+		    other_face = incident_face;
+	    }
+	    if (!valid_faces || !contains_face || other_face < 0 ||
+		    other_face >= variant->m_F.Count() ||
+		    used_faces[other_face])
+		continue;
+	    targets[targets_found].face_index = face_index;
+	    targets[targets_found].side_index = side_index;
+	    targets[targets_found].edge_index = edge_index;
+	    used_faces[face_index] = true;
+	    used_faces[other_face] = true;
+	    targets_found++;
+	    break;
+	}
+    }
+
+    bool construction_ok = targets_found == target_count;
+    for (size_t target_index = 0; construction_ok &&
+	    target_index < target_count; ++target_index) {
+	budget_target &target = targets[target_index];
+	construction_ok = cobb_perturb_boundary_interior(variant,
+	    target.face_index, target.side_index, origin, -0.5 * tol->dist);
+	if (!construction_ok)
+	    break;
+	target.measured_discrepancy = cobb_seam_discrepancy(variant,
+	    target.edge_index);
+	construction_ok = std::isfinite(target.measured_discrepancy) &&
+	    target.measured_discrepancy > 1.0e-6 * tol->dist &&
+	    target.measured_discrepancy <= tol->dist;
+	if (construction_ok)
+	    variant->m_E[target.edge_index].m_tolerance =
+		target.measured_discrepancy * 1.01;
+    }
+    if (!construction_ok || !variant->IsValid()) {
+	std::printf("FAIL: Cobb adaptive seam budget geometry targets=%zu/%zu\n",
+	    targets_found, target_count);
+	delete variant;
+	return 1;
+    }
+
+    struct rt_brep_internal variant_internal = {};
+    variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    variant_internal.brep = variant;
+    struct rt_db_internal variant_intern;
+    RT_DB_INTERNAL_INIT(&variant_intern);
+    variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    variant_intern.idb_type = ID_BREP;
+    variant_intern.idb_meth = &OBJ[ID_BREP];
+    variant_intern.idb_ptr = &variant_internal;
+    struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+    if (!stp) {
+	std::printf("FAIL: Cobb adaptive seam budget prep\n");
+	return 1;
+    }
+
+    sampled_ray ray;
+    VSET(ray.origin, 0.0, 0.0, 2.0 * radius);
+    VSET(ray.direction, 0.0, 0.0, -1.0);
+    struct rt_brep_shot_trace trace;
+    (void)shoot_brep_trace(stp, rtip, resource, ray, trace);
+    size_t bounded_count = 0;
+    size_t exhausted_count = 0;
+    size_t total_cells = 0;
+    int failures = 0;
+    const double limit = std::max(1.0e-10 * tol->dist,
+	512.0 * DBL_EPSILON * radius);
+    for (size_t target_index = 0; target_index < target_count;
+	    ++target_index) {
+	const budget_target &target = targets[target_index];
+	const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+	    target.edge_index);
+	if (!edge) {
+	    std::printf("FAIL: Cobb adaptive seam budget edge=%d missing\n",
+		target.edge_index);
+	    failures++;
+	    continue;
+	}
+	total_cells += edge->discrepancy_bound_cells;
+	if (edge->discrepancy_bounded)
+	    bounded_count++;
+	if (edge->discrepancy_bound_exhausted)
+	    exhausted_count++;
+	bool invalid = !edge->discrepancy_measured ||
+	    !edge->discrepancy_authorized ||
+	    (edge->discrepancy_bounded &&
+	    edge->discrepancy_bound_exhausted);
+	if (edge->discrepancy_bounded) {
+	    invalid = invalid || edge->discrepancy_lower_bound >
+		target.measured_discrepancy + limit ||
+		edge->discrepancy_upper_bound <
+		target.measured_discrepancy - limit ||
+		edge->discrepancy_upper_bound -
+		edge->discrepancy_lower_bound >
+		edge->discrepancy_bound_tolerance + limit;
+	} else {
+	    invalid = invalid || !edge->discrepancy_bound_exhausted;
+	}
+	if (invalid) {
+	    std::printf("FAIL: Cobb adaptive seam budget edge=%d "
+		"measured=%.17g bound=%.17g/%.17g target=%.17g "
+		"bounded=%d exhausted=%d cells=%zu depth=%zu\n",
+		target.edge_index, target.measured_discrepancy,
+		edge->discrepancy_lower_bound,
+		edge->discrepancy_upper_bound,
+		edge->discrepancy_bound_tolerance,
+		edge->discrepancy_bounded,
+		edge->discrepancy_bound_exhausted,
+		edge->discrepancy_bound_cells,
+		edge->discrepancy_bound_depth);
+	    failures++;
+	}
+    }
+    if (!brep_trace_fixed_workspaces_match(trace) || bounded_count < 1 ||
+	    exhausted_count < 1 || total_cells > expected_cell_budget) {
+	std::printf("FAIL: Cobb adaptive seam budget bounded=%zu exhausted=%zu "
+	    "cells=%zu/%zu\n", bounded_count, exhausted_count, total_cells,
+	    expected_cell_budget);
+	failures++;
+    }
+    free_solid(stp);
+    if (!failures)
+	std::printf("Cobb adaptive seam budget: PASS bounded=%zu "
+	    "exhausted=%zu cells=%zu/%zu\n", bounded_count,
+	    exhausted_count, total_cells, expected_cell_budget);
     return failures;
 }
 
@@ -2887,6 +3093,8 @@ check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
 	    cases[case_index].declared_ratio * measured_gap) <= limit;
 	if (!brep_trace_fixed_workspaces_match(trace) ||
 		!edge || !edge->discrepancy_measured ||
+		edge->discrepancy_bounded ||
+		edge->discrepancy_bound_exhausted ||
 		!declared_ok || edge->tolerance_inferred !=
 		cases[case_index].inferred ||
 		edge->discrepancy_authorized != cases[case_index].authorized ||
@@ -2897,12 +3105,15 @@ check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
 		(cases[case_index].authorized && !edge->candidate_spans) ||
 		(!cases[case_index].authorized && edge->candidate_spans)) {
 	    std::printf("FAIL: Cobb %s tolerance metadata declared=%.17g "
-		"model=%.17g measured=%.17g effective=%.17g "
+		"model=%.17g measured=%.17g bound=%.17g/%.17g "
+		"effective=%.17g "
 		"inferred=%d/%d authorized=%d/%d within=%d spans=%zu\n",
 		cases[case_index].name,
 		edge ? edge->declared_tolerance : INFINITY,
 		edge ? edge->model_tolerance : INFINITY,
 		edge ? edge->measured_discrepancy : INFINITY,
+		edge ? edge->discrepancy_lower_bound : INFINITY,
+		edge ? edge->discrepancy_upper_bound : INFINITY,
 		edge ? edge->edge_tolerance : INFINITY,
 		edge ? edge->tolerance_inferred : -1,
 		cases[case_index].inferred,
@@ -3210,6 +3421,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t maximum_local_root_duplicates = 0;
     size_t maximum_fixed_leaves = 0;
     size_t maximum_fixed_hits = 0;
+    size_t maximum_discrepancy_bound_cells = 0;
+    size_t maximum_discrepancy_bound_depth = 0;
+    double maximum_discrepancy_bound_width_ratio = 0.0;
     double maximum_calibration_error = 0.0;
     double maximum_edge_distance_error = 0.0;
     double maximum_lift_error = 0.0;
@@ -3268,7 +3482,11 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	std::printf("cobb_edge_columns,direction,g_over_T,h_over_T,reverse,"
 	    "edge_index,face0,face1,distance,ray_t,edge_parameter,"
 	    "edge_tolerance,model_tolerance,declared_tolerance,"
-	    "measured_discrepancy,discrepancy_measured,"
+	    "measured_discrepancy,discrepancy_lower_bound,"
+	    "discrepancy_upper_bound,discrepancy_bound_tolerance,"
+	    "discrepancy_bounded,discrepancy_bound_cells,"
+	    "discrepancy_bound_depth,discrepancy_bound_exhausted,"
+	    "discrepancy_measured,"
 	    "discrepancy_authorized,tolerance_inferred,candidate_spans,"
 	    "within_edge_tolerance,lift0,lift1,"
 	    "normal_dot0,normal_dot1,ray_edge_dot,sector_valid,closest_state\n");
@@ -3490,6 +3708,19 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    }
 		    const struct rt_brep_trace_edge *target_edge =
 			brep_trace_edge(trace, frame.edge_index);
+		    if (target_edge && target_edge->discrepancy_bounded) {
+			maximum_discrepancy_bound_cells = std::max(
+			    maximum_discrepancy_bound_cells,
+			    target_edge->discrepancy_bound_cells);
+			maximum_discrepancy_bound_depth = std::max(
+			    maximum_discrepancy_bound_depth,
+			    target_edge->discrepancy_bound_depth);
+			maximum_discrepancy_bound_width_ratio = std::max(
+			    maximum_discrepancy_bound_width_ratio,
+			    (target_edge->discrepancy_upper_bound -
+			    target_edge->discrepancy_lower_bound) /
+			    tol->dist);
+		    }
 		    if (!target_edge) {
 			std::printf("FAIL: bowed Cobb target edge observation sign=%d "
 			    "g/T=%.3g h/T=%.3g reverse=%d edge=%d\n", sign,
@@ -3504,6 +3735,22 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			maximum_edge_distance_error, edge_distance_error);
 		    const double edge_distance_limit = std::max(1.0e-10 * tol->dist,
 			512.0 * DBL_EPSILON * radius);
+		    const bool expected_discrepancy_bound =
+			measured_gap <= tol->dist + edge_distance_limit;
+		    const bool invalid_discrepancy_bound = target_edge &&
+			(expected_discrepancy_bound ?
+			(!target_edge->discrepancy_bounded ||
+			target_edge->discrepancy_bound_exhausted ||
+			target_edge->discrepancy_lower_bound >
+			measured_gap + edge_distance_limit ||
+			target_edge->discrepancy_upper_bound <
+			measured_gap - edge_distance_limit ||
+			target_edge->discrepancy_upper_bound -
+			target_edge->discrepancy_lower_bound >
+			target_edge->discrepancy_bound_tolerance +
+			edge_distance_limit) :
+			(target_edge->discrepancy_bounded ||
+			target_edge->discrepancy_bound_exhausted));
 		    const bool expected_edge_evidence = target_edge &&
 			fabs(clearance) <= target_edge->edge_tolerance +
 			edge_distance_limit;
@@ -3524,6 +3771,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    }
 		    if (!target_edge || edge_distance_error > edge_distance_limit ||
 			    !target_edge->discrepancy_measured ||
+			    invalid_discrepancy_bound ||
 			    !target_edge->discrepancy_authorized ||
 			    target_edge->tolerance_inferred ||
 			    fabs(target_edge->model_tolerance - tol->dist) >
@@ -3992,6 +4240,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				trace.edges[edge_observation];
 			    std::printf("cobb_edge,%s,%.9g,%.9g,%d,%d,%d,%d,"
 				"%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,"
+				"%.17g,%.17g,%.17g,%d,%zu,%zu,%d,"
 				"%d,%d,%d,%zu,%d,%.17g,%.17g,"
 				"%.17g,%.17g,%.17g,%d,%d\n",
 				sign > 0 ? "outward" : "inward",
@@ -4004,6 +4253,13 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				edge.model_tolerance,
 				edge.declared_tolerance,
 				edge.measured_discrepancy,
+				edge.discrepancy_lower_bound,
+				edge.discrepancy_upper_bound,
+				edge.discrepancy_bound_tolerance,
+				edge.discrepancy_bounded,
+				edge.discrepancy_bound_cells,
+				edge.discrepancy_bound_depth,
+				edge.discrepancy_bound_exhausted,
 				edge.discrepancy_measured,
 				edge.discrepancy_authorized,
 				edge.tolerance_inferred,
@@ -4077,6 +4333,10 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     std::printf("Cobb fixed workspaces: leaves=%zu/%d raw-hits=%zu/%d\n",
 	maximum_fixed_leaves, RT_BREP_MAX_LEAVES, maximum_fixed_hits,
 	RT_BREP_MAX_HITS);
+    std::printf("Cobb adaptive seam bounds: cells=%zu depth=%zu "
+	"max-width/T=%.6g\n", maximum_discrepancy_bound_cells,
+	maximum_discrepancy_bound_depth,
+	maximum_discrepancy_bound_width_ratio);
     free_prepared_model(implicit_model);
     delete pristine;
     return failures;
@@ -4256,6 +4516,8 @@ main(int argc, char **argv)
     failures += check_brep_edge_sector_concave(&rtip->rti_tol, rtip, &resp);
     failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
     failures += check_cobb_classifier_invariance(&rtip->rti_tol);
+    failures += check_cobb_discrepancy_bound_budget(&rtip->rti_tol, rtip,
+	&resp);
     failures += check_cobb_tolerance_metadata(&rtip->rti_tol, rtip, &resp);
     failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb,
 	rtip, &resp);
