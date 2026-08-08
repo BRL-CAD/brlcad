@@ -462,6 +462,7 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_CLUSTERS 64
 #define RT_BREP_TRACE_MAX_LOCAL_SEGMENTS 8
+#define RT_BREP_EXPANSION_CAPACITY 128
 #define RT_BREP_TRACE_CLEANUP_STAGES 5
 #define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
 #define RT_BREP_TRACE_CORRECTOR_STATUS_COUNT 8
@@ -651,8 +652,15 @@ struct rt_brep_shot_trace {
     size_t surface_fold_krawczyk_available;
     size_t surface_fold_krawczyk_certified;
     size_t surface_fold_restriction_failures;
+    size_t surface_fold_expansion_attempts;
+    size_t surface_fold_expansion_available;
+    size_t surface_fold_expansion_certified;
+    size_t surface_fold_expansion_failures;
+    size_t surface_fold_expansion_high_water;
     fastf_t surface_fold_min_determinant_ratio;
     fastf_t surface_fold_best_image_excess;
+    fastf_t surface_fold_expansion_min_determinant_ratio;
+    fastf_t surface_fold_expansion_best_image_excess;
     size_t surface_subdivision_max_depth;
     size_t surface_workspace_high_water;
     size_t surface_workspace_exhausted;
@@ -793,6 +801,10 @@ struct rt_brep_coefficient_test_result {
     fastf_t function_maximum[2];
     fastf_t ray_minimum;
     fastf_t ray_maximum;
+    int expansion_available;
+    size_t expansion_high_water;
+    fastf_t expansion_function_minimum[2];
+    fastf_t expansion_function_maximum[2];
 };
 
 struct rt_brep_linear_hull_test_result {
@@ -848,6 +860,9 @@ RT_EXPORT extern int _rt_brep_interval_test(
     const fastf_t root[2], struct rt_brep_interval_test_result *result);
 RT_EXPORT extern int _rt_brep_interval_product_test(
     const fastf_t first[2], const fastf_t second[2], fastf_t result[2]);
+RT_EXPORT extern int _rt_brep_expansion_interval_product_test(
+    const fastf_t first[2], const fastf_t second[2], fastf_t result[2],
+    size_t *expansion_high_water);
 RT_EXPORT extern int _rt_brep_interval_divide_test(
     const fastf_t numerator[2], const fastf_t denominator[2],
     fastf_t result[2]);
@@ -870,6 +885,12 @@ RT_EXPORT extern int _rt_brep_krawczyk_test(
     const fastf_t *second_coefficients, const fastf_t *second_error,
     int u_order, int v_order, const fastf_t root[2],
     struct rt_brep_krawczyk_test_result *result);
+RT_EXPORT extern int _rt_brep_expansion_krawczyk_test(
+    const fastf_t *first_coefficients, const fastf_t *first_error,
+    const fastf_t *second_coefficients, const fastf_t *second_error,
+    int u_order, int v_order, const fastf_t root[2],
+    struct rt_brep_krawczyk_test_result *result,
+    size_t *expansion_high_water);
 RT_EXPORT extern int _rt_brep_corridor_test(
     const fastf_t *first_coefficients, const fastf_t *first_error,
     const fastf_t *second_coefficients, const fastf_t *second_error,
@@ -887,6 +908,16 @@ RT_EXPORT extern int _rt_brep_interval_restrict_test(
     const fastf_t *input, const fastf_t *input_error, int u_order,
     int v_order, const fastf_t minimum[2], const fastf_t maximum[2],
     fastf_t *output_minimum, fastf_t *output_maximum);
+RT_EXPORT extern int _rt_brep_expansion_interval_test(
+    const fastf_t *first_coefficients, const fastf_t *second_coefficients,
+    int u_order, int v_order, const fastf_t coefficient_error[2],
+    const fastf_t root[2], struct rt_brep_interval_test_result *result,
+    size_t *expansion_high_water);
+RT_EXPORT extern int _rt_brep_expansion_restrict_test(
+    const fastf_t *input, const fastf_t *input_error, int u_order,
+    int v_order, const fastf_t minimum[2], const fastf_t maximum[2],
+    fastf_t *output_minimum, fastf_t *output_maximum,
+    size_t *expansion_high_water);
 RT_EXPORT extern int _rt_brep_reparameterize_test(
     const fastf_t *input, int u_order, int v_order, fastf_t input_error,
     const fastf_t minimum[2], const fastf_t maximum[2], fastf_t *output,

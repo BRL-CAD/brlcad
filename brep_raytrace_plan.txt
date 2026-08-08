@@ -1172,6 +1172,70 @@ restriction stage.  Platform `long double`, compiler excess precision, or a
 comparison only against the ordinary binary64 path is not a sufficient
 oracle.
 
+The implemented portable tier uses a fixed 128-component binary64 expansion.
+`TwoSum` supplies an error-free addition and `std::fma(a,b,-a*b)` supplies the
+product residual.  The implementation must remain conservative when a
+residual might underflow below the binary64 subnormal range, when a value is
+nonfinite, or when the fixed expansion fills: those cases are inconclusive
+and retain the fallback.  It must not silently drop a nonzero component.
+Conversion back to an interval takes an outward bound around the dominant
+component and all remaining magnitudes, and the result is intersected with
+the independently outward ordinary interval.  Thus the higher-precision tier
+is never used by itself as evidence merely because it is narrower.
+
+Construct an expansion for every represented ray-plane coefficient from the
+homogeneous operation `CV-origin*weight` and the two projected dot products.
+Be explicit about the scope of exactness: this encloses the exact value of the
+stored binary64 inputs.  It does not remove rounding already introduced while
+constructing the ray-plane frame.  If later cases show that frame error is the
+limiting term, build and propagate an expansion-valued frame or an independent
+frame-construction error bound rather than assigning the coefficient tier
+authority it does not possess.
+
+Restrict a coefficient net with the Bezier blossom rather than the ordinary
+two-split `a/b` formulation.  For an output coefficient at index i, evaluate
+the blossom with degree-i copies of the lower endpoint and i copies of the
+upper endpoint, in each tensor direction.  Normalize each scalar equation by
+an exact power of two before the blossom.  Independent nonzero scaling of the
+two equations preserves the root set, avoids many underflow cases, and needs
+no division by a non-dyadic subdomain width.  Preserve the full expansion
+through the bounded blossom; only compact if an exact audit and real profile
+show that the reduced stack/work cost is worthwhile.
+
+Use the same expansion contract for candidate-point evaluation, derivative
+hulls, interval endpoint products, and the Krawczyk image.  Every such result
+must also intersect its ordinary interval counterpart.  Exact-oracle gates
+cover every supported tensor order and wide binary scales.  The current
+checkpoint passes 2,250 expansion function checks, 324,000 derivative checks,
+45 interval products, 108 ray-plane coefficient equations, and 546,750 local
+restrictions.  All 45 products and 108 coefficients contract the ordinary
+enclosure; 544,500 restrictions contract.  Arithmetic-gate high-water is four
+components, while the real fold probe reaches 17 of 128.  Add explicit
+negative gates as well: a product with a residual below the binary64
+subnormal range and a mixed-scale normalization that cannot exactly round-
+trip a nonzero endpoint must both reject the expansion tier and retain the
+ordinary fallback.
+
+This tier is a measured partial success, not yet a production solver.  It
+recertifies all 36 analytic fold roots and certifies six of the twelve known
+real affine hard candidates: both roots in each directed condition-100
+h/T=1e-8 shot and one root in each directed condition-1,000 h/T=1e-6 shot.
+The condition-1,000 h/T=1e-8 pair remains uncertified, although normalized
+Krawczyk image excess improves from roughly 41 to 11--13.  Doubling symmetric
+proof depth and adding a second weak-direction anisotropic mode did not add a
+certificate.  Keep those negative results in the continuation record so work
+does not return to undirected depth or aspect-ratio sweeps.
+
+Represented exact-contact equations can acquire strict expansion certificates
+because preceding affine/frame arithmetic may have split the mathematical
+double root.  Such a certificate is numerical existence evidence only.  It
+cannot authorize a physical material interval until the minimum-size/contact
+classifier, both parent proofs, fold-boundary strips, and cross-span event
+identity agree.  Keep expansion telemetry shadow-only until those gates are
+complete.  Before production use, also profile the roughly 100-KiB transient
+maximum-order blossom stack and place it in an existing bounded shot workspace
+if needed.
+
 No real fold candidate may become a production hit until both adjacent span
 parents have a complete one-sided corridor/fold-strip proof, coincident
 observations are deduplicated as one physical event, and the resulting
