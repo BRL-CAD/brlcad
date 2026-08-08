@@ -83,6 +83,29 @@ struct brep_face_record {
 };
 
 
+/* One oriented arc of the link obtained by intersecting a sufficiently small
+ * sphere about a manifold vertex with the incident faces.  outgoing is the
+ * tangent of edge_index directed away from the vertex.  face_index carries
+ * this arc from outgoing to the next arc's outgoing tangent, with solid
+ * directions on its left. */
+struct brep_vertex_arc {
+    ON_3dVector outgoing;
+    ON_3dVector outward_normal;
+    double clockwise_sweep = 0.0;
+    int edge_index = -1;
+    int face_index = -1;
+};
+
+
+struct brep_vertex_record {
+    ON_3dPoint point;
+    std::vector<brep_vertex_arc> arcs;
+    int vertex_index = -1;
+    bool planar = false;
+    bool supported = false;
+};
+
+
 /**
  * The b-rep specific data structure for caching the prepared
  * acceleration data structure.
@@ -95,6 +118,7 @@ struct brep_specific {
     std::vector<brep_edge_span> edge_spans;
     std::vector<brep_face_record> face_records;
     std::vector<brep_surface_span> surface_spans;
+    std::vector<brep_vertex_record> vertex_records;
     int is_solid = 0;
     int plate_mode = 0;
     int plate_mode_nocos = 0;

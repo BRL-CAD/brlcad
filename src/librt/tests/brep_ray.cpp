@@ -3406,6 +3406,86 @@ brep_trace_edge(const struct rt_brep_shot_trace &trace, int edge_index)
 
 
 static bool
+brep_trace_vertex_event_owned(const struct rt_brep_shot_trace &trace,
+    const ON_Brep &brep, const struct rt_brep_trace_physical_event &event)
+{
+    if (event.certificate != RT_BREP_TRACE_EVENT_VERTEX_FAN ||
+	    event.source_kind != RT_BREP_TRACE_EVENT_SOURCE_VERTEX_FAN ||
+	    event.vertex_index < 0 || event.vertex_index >= brep.m_V.Count() ||
+	    event.source_root >= trace.stored_local_roots ||
+	    event.source_box >= trace.stored_surface_boxes ||
+	    !event.source_box_count)
+	return false;
+    const ON_BrepVertex &vertex = brep.m_V[event.vertex_index];
+    std::vector<int> faces;
+    for (int incident = 0; incident < vertex.m_ei.Count(); ++incident) {
+	const int edge_index = vertex.m_ei[incident];
+	if (edge_index < 0 || edge_index >= brep.m_E.Count())
+	    return false;
+	const ON_BrepEdge &edge = brep.m_E[edge_index];
+	for (int trim_side = 0; trim_side < edge.m_ti.Count(); ++trim_side) {
+	    const int trim_index = edge.m_ti[trim_side];
+	    if (trim_index < 0 || trim_index >= brep.m_T.Count())
+		return false;
+	    const int face_index = brep.m_T[trim_index].FaceIndexOf();
+	    if (std::find(faces.begin(), faces.end(), face_index) ==
+		    faces.end())
+		faces.push_back(face_index);
+	}
+    }
+    if (faces.size() != (size_t)vertex.m_ei.Count())
+	return false;
+
+    const double t_tolerance = 1.0e-9 *
+	std::max(1.0, fabs(event.dist));
+    size_t roots = 0;
+    size_t boxes = 0;
+    for (size_t face = 0; face < faces.size(); ++face) {
+	size_t face_roots = 0;
+	size_t face_boxes = 0;
+	for (size_t root_index = 0;
+		root_index < trace.stored_local_roots; ++root_index) {
+	    const struct rt_brep_trace_local_root &root =
+		trace.local_roots[root_index];
+	    if (root.face_index == faces[face] &&
+		    fabs(root.dist - event.dist) <= t_tolerance) {
+		if (root.direction != event.direction)
+		    return false;
+		face_roots++;
+		roots++;
+	    }
+	}
+	for (size_t box_index = 0;
+		box_index < trace.stored_surface_boxes; ++box_index) {
+	    const struct rt_brep_trace_surface_box &box =
+		trace.surface_boxes[box_index];
+	    if (box.face_index == faces[face] &&
+		    event.dist >= box.t_min - t_tolerance &&
+		    event.dist <= box.t_max + t_tolerance) {
+		if (box.disposition != RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY)
+		    return false;
+		face_boxes++;
+		boxes++;
+	    }
+	}
+	if (face_roots > 1 || (face_roots == 0) != (face_boxes == 0))
+	    return false;
+    }
+    for (size_t root_index = 0; root_index < trace.stored_local_roots;
+	    ++root_index) {
+	const struct rt_brep_trace_local_root &root =
+	    trace.local_roots[root_index];
+	if (fabs(root.dist - event.dist) <= t_tolerance &&
+		std::find(faces.begin(), faces.end(), root.face_index) ==
+		faces.end())
+	    return false;
+    }
+    return roots > 0 && boxes == event.source_box_count &&
+	trace.local_roots[event.source_root].face_index == event.face_index;
+}
+
+
+static bool
 brep_trace_root_isolated(const struct rt_brep_shot_trace &trace,
     const struct rt_brep_trace_root &root)
 {
@@ -8868,7 +8948,7 @@ check_brep_edge_sector_seam(const struct bn_tol *tol, struct rt_i *rtip,
 
 
 static int
-check_brep_vertex_fan_fallback(const struct bn_tol *tol, struct rt_i *rtip,
+check_brep_vertex_fan_transition(const struct bn_tol *tol, struct rt_i *rtip,
     struct resource *resource)
 {
     struct rt_arb_internal box = {};
@@ -8967,6 +9047,37 @@ check_brep_vertex_fan_fallback(const struct bn_tol *tol, struct rt_i *rtip,
 	struct rt_brep_shot_trace trace;
 	const int trace_hits = shoot_brep_trace(stp, rtip, resource, ray,
 	    trace);
+	size_t vertex_events = 0;
+	size_t regular_events = 0;
+	bool invalid_vertex_event = false;
+	const int expected_vertex_direction =
+	    cases[case_index].direction * diagonal < 0.0 ?
+	    RT_BREP_TRACE_ENTERING : RT_BREP_TRACE_LEAVING;
+	for (size_t event_index = 0;
+		event_index < trace.stored_physical_events; ++event_index) {
+	    const struct rt_brep_trace_physical_event &event =
+		trace.physical_events[event_index];
+	    if (event.certificate == RT_BREP_TRACE_EVENT_VERTEX_FAN) {
+		vertex_events++;
+		if (event.source_kind !=
+			RT_BREP_TRACE_EVENT_SOURCE_VERTEX_FAN ||
+			event.vertex_index != target_vertex ||
+			event.edge_index != -1 ||
+			event.source_box_count != 3 ||
+			event.hit_class != 4 ||
+			event.direction != expected_vertex_direction ||
+			!brep_trace_vertex_event_owned(trace, *brep, event))
+		    invalid_vertex_event = true;
+	    } else if (event.certificate ==
+		    RT_BREP_TRACE_EVENT_REGULAR_INTERIOR) {
+		regular_events++;
+		if (event.vertex_index != -1 || event.edge_index != -1 ||
+			event.source_box_count != 1)
+		    invalid_vertex_event = true;
+	    } else {
+		invalid_vertex_event = true;
+	    }
+	}
 	size_t contact_edges = 0;
 	bool invalid_edge = false;
 	for (size_t incident = 0; incident < 3; ++incident) {
@@ -8988,19 +9099,83 @@ check_brep_vertex_fan_fallback(const struct bn_tol *tol, struct rt_i *rtip,
 	if (!brep_trace_fixed_workspaces_match(trace) || invalid_edge ||
 		contact_edges != 3 || trace.closure_candidates ||
 		trace.continuation_attempts || trace.closure_shadow_segments ||
+		trace.prepared_vertex_records != 8 ||
+		trace.supported_vertex_records != 8 ||
+		trace.physical_event_vertex_attempts != 1 ||
+		trace.physical_event_vertex_candidates != 1 ||
+		trace.physical_event_vertex != 1 ||
+		trace.physical_event_vertex_certified != 1 ||
+		trace.physical_event_vertex_failures ||
+		trace.physical_event_vertex_winding_ambiguous ||
+		trace.physical_event_vertex_owned_boxes != 3 ||
+		trace.physical_event_vertex_owned_roots != 3 ||
+		trace.physical_event_regular != 1 ||
+		trace.physical_event_complete != 1 ||
+		trace.physical_event_material_segments != 1 ||
+		trace.stored_physical_events != 2 || vertex_events != 1 ||
+		regular_events != 1 || invalid_vertex_event ||
+		trace.prepared_production_fallback !=
+		RT_BREP_PREPARED_FALLBACK_NONE ||
+		trace.prepared_production_eligible != 1 ||
+		trace.prepared_production_selected != 1 ||
+		trace.prepared_production_hits != 2 ||
 		trace_hits != 2 || trace.final_segments != 1) {
 	    std::printf("FAIL: convex vertex-fan %s contacts=%zu/3 "
 		"closure=%zu continuation=%zu shadow=%zu "
-		"hits=%d/2 final=%zu/1\n", cases[case_index].name,
+		"vertices=%zu/%zu attempt/candidate/event/cert/fail="
+		"%zu/%zu/%zu/%zu/%zu owned=%zu/%zu events=%zu/%zu/%zu "
+		"complete=%zu selected=%zu fallback=%d hits=%d/2 final=%zu/1\n",
+		cases[case_index].name,
 		contact_edges, trace.closure_candidates,
 		trace.continuation_attempts, trace.closure_shadow_segments,
-		trace_hits, trace.final_segments);
+		trace.prepared_vertex_records, trace.supported_vertex_records,
+		trace.physical_event_vertex_attempts,
+		trace.physical_event_vertex_candidates,
+		trace.physical_event_vertex,
+		trace.physical_event_vertex_certified,
+		trace.physical_event_vertex_failures,
+		trace.physical_event_vertex_owned_boxes,
+		trace.physical_event_vertex_owned_roots,
+		trace.stored_physical_events, vertex_events, regular_events,
+		trace.physical_event_complete,
+		trace.prepared_production_selected,
+		trace.prepared_production_fallback, trace_hits,
+		trace.final_segments);
 	    failures++;
 	}
     }
 
     ON_3dVector fan_direction(1.0, -1.0, 0.0);
     fan_direction.Unitize();
+    for (int reverse = 0; reverse <= 1; ++reverse) {
+	const ON_3dVector direction = reverse ? -fan_direction :
+	    fan_direction;
+	const ON_3dPoint ray_origin = target_point - 20.0 * direction;
+	sampled_ray ray;
+	VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
+	VSET(ray.direction, direction.x, direction.y, direction.z);
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(stp, rtip, resource, ray, trace);
+	if (!brep_trace_fixed_workspaces_match(trace) ||
+		trace.physical_event_vertex_attempts != 1 ||
+		trace.physical_event_vertex_candidates ||
+		trace.physical_event_vertex ||
+		trace.physical_event_vertex_certified ||
+		trace.physical_event_vertex_winding_ambiguous != 1 ||
+		trace.prepared_production_selected) {
+	    std::printf("FAIL: convex vertex-fan tangent reverse=%d "
+		"attempt/candidate/event/cert/ambiguous=%zu/%zu/%zu/%zu/%zu "
+		"selected=%zu fallback=%d\n", reverse,
+		trace.physical_event_vertex_attempts,
+		trace.physical_event_vertex_candidates,
+		trace.physical_event_vertex,
+		trace.physical_event_vertex_certified,
+		trace.physical_event_vertex_winding_ambiguous,
+		trace.prepared_production_selected,
+		trace.prepared_production_fallback);
+	    failures++;
+	}
+    }
     const ON_3dPoint fan_closest = target_point -
 	0.25 * tol->dist * ON_3dVector(1.0, 1.0, 1.0);
     for (int reverse = 0; reverse <= 1; ++reverse) {
@@ -9041,7 +9216,10 @@ check_brep_vertex_fan_fallback(const struct bn_tol *tol, struct rt_i *rtip,
 	if (!brep_trace_fixed_workspaces_match(trace) ||
 		qualified_edges != 3 || inside_edges < 2 ||
 		!ambiguous_closure || trace.continuation_attempts ||
-		trace.closure_shadow_segments) {
+		trace.closure_shadow_segments ||
+		trace.physical_event_vertex ||
+		trace.physical_event_vertex_certified ||
+		trace.prepared_production_selected) {
 	    std::printf("FAIL: convex vertex-fan near reverse=%d "
 		"qualified=%zu/3 inside=%zu states=%d/%d/%d closure=%zu "
 		"continuation=%zu shadow=%zu final=%zu\n", reverse,
@@ -9053,9 +9231,407 @@ check_brep_vertex_fan_fallback(const struct bn_tol *tol, struct rt_i *rtip,
     }
     free_solid(stp);
     if (!failures)
-	std::printf("Convex vertex-fan fallback: PASS contact-edges=%zu "
+	std::printf("Convex vertex-fan transition: PASS contact-edges=%zu "
 	    "near-inside=%zu closure-candidates=%zu\n", maximum_contact_edges,
 	    maximum_near_inside_edges, maximum_near_closure_candidates);
+    return failures;
+}
+
+
+static int
+check_brep_vertex_fan_similarity(const ON_Brep &base, int target_vertex,
+    const ON_3dPoint &target_point, const ON_3dVector &base_inward,
+    const struct bn_tol *tol)
+{
+    struct similarity_case {
+	const char *name;
+	double scale;
+	ON_3dVector translation;
+	ON_3dVector axis;
+	double angle;
+    } cases[] = {
+	{"translated", 1.0, ON_3dVector(-31.25, 47.5, 103.75),
+	    ON_3dVector(1.0, 0.0, 0.0), 0.0},
+	{"rotated-translated", 1.0, ON_3dVector(13.0, -17.0, 29.0),
+	    ON_3dVector(1.0, -2.0, 0.5), 0.731},
+	{"small-similarity", 0.01, ON_3dVector(1.25, -2.5, 5.0),
+	    ON_3dVector(-0.3, 1.0, 0.7), -1.113},
+	{"large-similarity", 1.0e4,
+	    ON_3dVector(1.0e6, -2.0e6, 3.0e6),
+	    ON_3dVector(2.0, 0.25, -1.0), 2.017}
+    };
+    int failures = 0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const similarity_case &test = cases[case_index];
+	const ON_Xform xform = cobb_axis_angle_similarity_transform(test.scale,
+	    test.translation, test.axis, test.angle);
+	ON_Brep *variant = new ON_Brep(base);
+	if (!variant->Transform(xform)) {
+	    std::printf("FAIL: vertex-fan %s transform\n", test.name);
+	    delete variant;
+	    failures++;
+	    continue;
+	}
+	for (int vertex_index = 0; vertex_index < variant->m_V.Count();
+		++vertex_index)
+	    if (ON_IsValid(base.m_V[vertex_index].m_tolerance) &&
+		    base.m_V[vertex_index].m_tolerance >= 0.0)
+		variant->m_V[vertex_index].m_tolerance =
+		    test.scale * base.m_V[vertex_index].m_tolerance;
+	for (int edge_index = 0; edge_index < variant->m_E.Count();
+		++edge_index)
+	    if (ON_IsValid(base.m_E[edge_index].m_tolerance) &&
+		    base.m_E[edge_index].m_tolerance >= 0.0)
+		variant->m_E[edge_index].m_tolerance =
+		    test.scale * base.m_E[edge_index].m_tolerance;
+
+	struct bn_tol case_tol = *tol;
+	case_tol.dist = test.scale * tol->dist;
+	case_tol.dist_sq = case_tol.dist * case_tol.dist;
+	struct rt_i *case_rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+	if (!case_rtip) {
+	    std::printf("FAIL: vertex-fan %s rt_i construction\n",
+		test.name);
+	    delete variant;
+	    failures++;
+	    continue;
+	}
+	case_rtip->rti_tol = case_tol;
+	struct resource case_resource = {};
+	rt_init_resource(&case_resource, 0, case_rtip);
+	struct rt_brep_internal variant_internal = {};
+	variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	variant_internal.brep = variant;
+	struct rt_db_internal variant_intern;
+	RT_DB_INTERNAL_INIT(&variant_intern);
+	variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	variant_intern.idb_type = ID_BREP;
+	variant_intern.idb_meth = &OBJ[ID_BREP];
+	variant_intern.idb_ptr = &variant_internal;
+	struct soltab *stp = prep_solid(case_rtip, &variant_intern, ID_BREP);
+	if (!stp) {
+	    std::printf("FAIL: vertex-fan %s BREP prep\n", test.name);
+	    delete variant_internal.brep;
+	    rt_clean_resource_basic(case_rtip, &case_resource);
+	    BU_PTBL_SET(&case_rtip->rti_resources, 0, NULL);
+	    rt_i_destroy(case_rtip);
+	    failures++;
+	    continue;
+	}
+
+	const ON_3dPoint transformed_target =
+	    cobb_transform_point(xform, target_point);
+	ON_3dVector transformed_inward =
+	    cobb_transform_vector(xform, base_inward);
+	if (!transformed_inward.Unitize()) {
+	    std::printf("FAIL: vertex-fan %s transformed direction\n",
+		test.name);
+	    failures++;
+	} else {
+	    for (int reverse_ray = 0; reverse_ray <= 1; ++reverse_ray) {
+		const ON_3dVector direction = reverse_ray ?
+		    -transformed_inward : transformed_inward;
+		const ON_3dPoint ray_origin = transformed_target -
+		    20.0 * test.scale * direction;
+		sampled_ray ray;
+		VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
+		VSET(ray.direction, direction.x, direction.y, direction.z);
+		struct rt_brep_shot_trace trace;
+		const int trace_hits = shoot_brep_trace(stp, case_rtip,
+		    &case_resource, ray, trace);
+		size_t vertex_events = 0;
+		size_t target_events = 0;
+		bool invalid_event = false;
+		const int expected_target_direction = reverse_ray ?
+		    RT_BREP_TRACE_LEAVING : RT_BREP_TRACE_ENTERING;
+		for (size_t event_index = 0;
+			event_index < trace.stored_physical_events;
+			++event_index) {
+		    const struct rt_brep_trace_physical_event &event =
+			trace.physical_events[event_index];
+		    if (event.certificate != RT_BREP_TRACE_EVENT_VERTEX_FAN)
+			continue;
+		    vertex_events++;
+		    if (event.vertex_index == target_vertex) {
+			target_events++;
+			if (event.direction != expected_target_direction)
+			    invalid_event = true;
+		    }
+		    if (!brep_trace_vertex_event_owned(trace, *variant,
+			    event))
+			invalid_event = true;
+		}
+		if (!brep_trace_fixed_workspaces_match(trace) ||
+			trace.prepared_vertex_records != 12 ||
+			trace.supported_vertex_records != 12 ||
+			trace.physical_event_vertex_attempts != 1 ||
+			trace.physical_event_vertex_candidates != 2 ||
+			trace.physical_event_vertex != 2 ||
+			trace.physical_event_vertex_certified != 1 ||
+			trace.physical_event_vertex_failures ||
+			trace.physical_event_vertex_winding_ambiguous ||
+			trace.physical_event_vertex_owned_roots < 2 ||
+			vertex_events != 2 || target_events != 1 ||
+			invalid_event || trace.physical_event_complete != 1 ||
+			trace.physical_event_material_segments != 1 ||
+			trace.prepared_production_fallback !=
+			RT_BREP_PREPARED_FALLBACK_NONE ||
+			trace.prepared_production_selected != 1 ||
+			trace_hits != 2 || trace.final_segments != 1) {
+		    std::printf("FAIL: vertex-fan %s reverse=%d "
+			"records=%zu/%zu candidates/events/cert/fail="
+			"%zu/%zu/%zu/%zu winding=%zu/%zu owned=%zu/%zu "
+			"ledger=%zu/%zu target=%zu complete=%zu selected=%zu "
+			"fallback=%d hits=%d final=%zu\n", test.name,
+			reverse_ray, trace.prepared_vertex_records,
+			trace.supported_vertex_records,
+			trace.physical_event_vertex_candidates,
+			trace.physical_event_vertex,
+			trace.physical_event_vertex_certified,
+			trace.physical_event_vertex_failures,
+			trace.physical_event_vertex_winding_checks,
+			trace.physical_event_vertex_winding_ambiguous,
+			trace.physical_event_vertex_owned_boxes,
+			trace.physical_event_vertex_owned_roots,
+			trace.stored_physical_events, vertex_events,
+			target_events, trace.physical_event_complete,
+			trace.prepared_production_selected,
+			trace.prepared_production_fallback, trace_hits,
+			trace.final_segments);
+		    for (size_t box_index = 0;
+			    box_index < trace.stored_surface_boxes; ++box_index) {
+			const struct rt_brep_trace_surface_box &box =
+			    trace.surface_boxes[box_index];
+			std::printf("  SB %zu f=%d t=[%.17g,%.17g] d=%d s=%d\n",
+			    box_index, box.face_index, box.t_min, box.t_max,
+			    box.disposition, box.determinant_sign);
+		    }
+		    for (size_t root_index = 0;
+			    root_index < trace.stored_local_roots; ++root_index) {
+			const struct rt_brep_trace_local_root &root =
+			    trace.local_roots[root_index];
+			std::printf("  SR %zu f=%d t=%.17g class=%d trim=%d "
+			    "dir=%d nd=%.17g\n", root_index,
+			    root.face_index, root.dist, root.hit_class,
+			    root.trim_status, root.direction, root.normal_dot);
+		    }
+		    failures++;
+		}
+	    }
+	}
+	free_solid(stp);
+	rt_clean_resource_basic(case_rtip, &case_resource);
+	BU_PTBL_SET(&case_rtip->rti_resources, 0, NULL);
+	rt_i_destroy(case_rtip);
+    }
+    if (!failures)
+	std::printf("Vertex-fan similarity invariance: PASS cases=%zu\n",
+	    sizeof(cases) / sizeof(cases[0]));
+    return failures;
+}
+
+
+static int
+check_brep_concave_vertex_fan(const struct bn_tol *tol, struct rt_i *rtip,
+    struct resource *resource)
+{
+    point2d_t vertices[6] = {
+	{0.0, 0.0}, {4.0, 0.0}, {4.0, 2.0},
+	{2.0, 2.0}, {2.0, 4.0}, {0.0, 4.0}
+    };
+    struct line_seg segments[6] = {};
+    void *segment_pointers[6] = {};
+    int reverse[6] = {};
+    for (int segment = 0; segment < 6; ++segment) {
+	segments[segment].magic = CURVE_LSEG_MAGIC;
+	segments[segment].start = segment;
+	segments[segment].end = (segment + 1) % 6;
+	segment_pointers[segment] = &segments[segment];
+    }
+    struct rt_sketch_internal sketch = {};
+    sketch.magic = RT_SKETCH_INTERNAL_MAGIC;
+    VSET(sketch.V, 0.0, 0.0, -2.0);
+    VSET(sketch.u_vec, 1.0, 0.0, 0.0);
+    VSET(sketch.v_vec, 0.0, 1.0, 0.0);
+    sketch.vert_count = 6;
+    sketch.verts = vertices;
+    sketch.curve.count = 6;
+    sketch.curve.reverse = reverse;
+    sketch.curve.segment = segment_pointers;
+
+    struct rt_extrude_internal extrude = {};
+    extrude.magic = RT_EXTRUDE_INTERNAL_MAGIC;
+    VSET(extrude.V, 0.0, 0.0, -2.0);
+    VSET(extrude.h, 0.0, 0.0, 4.0);
+    VSET(extrude.u_vec, 1.0, 0.0, 0.0);
+    VSET(extrude.v_vec, 0.0, 1.0, 0.0);
+    extrude.skt = &sketch;
+    struct rt_db_internal extrude_intern;
+    RT_DB_INTERNAL_INIT(&extrude_intern);
+    extrude_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    extrude_intern.idb_type = ID_EXTRUDE;
+    extrude_intern.idb_meth = &OBJ[ID_EXTRUDE];
+    extrude_intern.idb_ptr = &extrude;
+
+    ON_Brep *brep = ON_Brep::New();
+    OBJ[ID_EXTRUDE].ft_brep(&brep, &extrude_intern, tol);
+    const ON_3dPoint target_point(2.0, 2.0, 2.0);
+    int target_vertex = -1;
+    if (brep) {
+	for (int vertex_index = 0; vertex_index < brep->m_V.Count();
+		++vertex_index) {
+	    if (brep->m_V[vertex_index].point.DistanceTo(target_point) <=
+		    1.0e-12) {
+		target_vertex = vertex_index;
+		break;
+	    }
+	}
+    }
+    if (!brep || !brep->IsSolid() || target_vertex < 0 ||
+	    brep->m_V[target_vertex].m_ei.Count() != 3) {
+	std::printf("FAIL: concave vertex-fan extrusion solid=%d vertex=%d "
+	    "valence=%d\n", brep && brep->IsSolid(), target_vertex,
+	    target_vertex >= 0 ? brep->m_V[target_vertex].m_ei.Count() : -1);
+	delete brep;
+	return 1;
+    }
+
+    struct soltab *implicit_stp = prep_solid(rtip, &extrude_intern,
+	ID_EXTRUDE);
+    struct rt_brep_internal brep_internal = {};
+    brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal.brep = brep;
+    struct rt_db_internal brep_intern;
+    RT_DB_INTERNAL_INIT(&brep_intern);
+    brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    brep_intern.idb_type = ID_BREP;
+    brep_intern.idb_meth = &OBJ[ID_BREP];
+    brep_intern.idb_ptr = &brep_internal;
+    struct soltab *brep_stp = prep_solid(rtip, &brep_intern, ID_BREP);
+    if (!implicit_stp || !brep_stp) {
+	std::printf("FAIL: concave vertex-fan prep implicit=%d brep=%d\n",
+	    implicit_stp != NULL, brep_stp != NULL);
+	free_solid(implicit_stp);
+	free_solid(brep_stp);
+	if (!brep_stp)
+	    delete brep_internal.brep;
+	return 1;
+    }
+
+    ON_3dVector inward(-0.5, -0.5, -1.0);
+    inward.Unitize();
+    int failures = 0;
+    double maximum_oracle_error = 0.0;
+    for (int reverse_ray = 0; reverse_ray <= 1; ++reverse_ray) {
+	const ON_3dVector direction = reverse_ray ? -inward : inward;
+	const ON_3dPoint ray_origin = target_point - 20.0 * direction;
+	sampled_ray ray;
+	VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
+	VSET(ray.direction, direction.x, direction.y, direction.z);
+	struct rt_brep_shot_trace trace;
+	const int trace_hits = shoot_brep_trace(brep_stp, rtip, resource,
+	    ray, trace);
+	const ray_result implicit_result = shoot_solid(implicit_stp, rtip,
+	    resource, ray.origin, ray.direction);
+	const ray_result production_result = shoot_solid(brep_stp, rtip,
+	    resource, ray.origin, ray.direction);
+	double oracle_error = DBL_MAX;
+	if (implicit_result.segments == 1 && production_result.segments == 1) {
+	    oracle_error = std::max(fabs(implicit_result.in_dist -
+		production_result.in_dist), fabs(implicit_result.out_dist -
+		production_result.out_dist));
+	    maximum_oracle_error = std::max(maximum_oracle_error,
+		oracle_error);
+	}
+	size_t vertex_events = 0;
+	size_t target_events = 0;
+	bool invalid_event = false;
+	const int expected_direction = reverse_ray ?
+	    RT_BREP_TRACE_LEAVING : RT_BREP_TRACE_ENTERING;
+	for (size_t event_index = 0;
+		event_index < trace.stored_physical_events; ++event_index) {
+	    const struct rt_brep_trace_physical_event &event =
+		trace.physical_events[event_index];
+	    if (event.certificate != RT_BREP_TRACE_EVENT_VERTEX_FAN)
+		continue;
+	    vertex_events++;
+	    if (event.vertex_index == target_vertex) {
+		target_events++;
+		if (event.direction != expected_direction)
+		    invalid_event = true;
+	    }
+	    if (event.source_box_count < 3 ||
+		    !brep_trace_vertex_event_owned(trace, *brep, event))
+		invalid_event = true;
+	}
+	if (!brep_trace_fixed_workspaces_match(trace) ||
+		trace.physical_event_vertex_attempts != 1 ||
+		trace.physical_event_vertex_candidates != 2 ||
+		trace.physical_event_vertex != 2 ||
+		trace.physical_event_vertex_certified != 1 ||
+		trace.physical_event_vertex_failures ||
+		trace.physical_event_vertex_winding_ambiguous ||
+		trace.physical_event_vertex_owned_boxes < 6 ||
+		trace.physical_event_vertex_owned_roots != 6 ||
+		vertex_events != 2 || target_events != 1 || invalid_event ||
+		trace.physical_event_complete != 1 ||
+		trace.physical_event_material_segments != 1 ||
+		trace.prepared_production_fallback !=
+		RT_BREP_PREPARED_FALLBACK_NONE ||
+		trace.prepared_production_selected != 1 ||
+		trace_hits != 2 || implicit_result.segments != 1 ||
+		production_result.segments != 1 ||
+		oracle_error > 1.0e-7) {
+	    std::printf("FAIL: concave vertex-fan reverse=%d "
+		"records=%zu/%zu attempt/candidate/event/cert/fail="
+		"%zu/%zu/%zu/%zu/%zu winding=%zu ambiguous=%zu "
+		"owned=%zu/%zu events=%zu complete=%zu selected=%zu "
+		"fallback=%d hits=%d implicit/production=%d/%d error=%.17g\n",
+		reverse_ray, trace.prepared_vertex_records,
+		trace.supported_vertex_records,
+		trace.physical_event_vertex_attempts,
+		trace.physical_event_vertex_candidates,
+		trace.physical_event_vertex,
+		trace.physical_event_vertex_certified,
+		trace.physical_event_vertex_failures,
+		trace.physical_event_vertex_winding_checks,
+		trace.physical_event_vertex_winding_ambiguous,
+		trace.physical_event_vertex_owned_boxes,
+		trace.physical_event_vertex_owned_roots, vertex_events,
+		trace.physical_event_complete,
+		trace.prepared_production_selected,
+		trace.prepared_production_fallback, trace_hits,
+		implicit_result.segments, production_result.segments,
+		oracle_error);
+	    for (size_t box_index = 0;
+		    box_index < trace.stored_surface_boxes; ++box_index) {
+		const struct rt_brep_trace_surface_box &box =
+		    trace.surface_boxes[box_index];
+		std::printf("  CB %zu f=%d s=%d t=[%.17g,%.17g] d=%d sign=%d\n",
+		    box_index, box.face_index, box.span_index, box.t_min,
+		    box.t_max, box.disposition, box.determinant_sign);
+	    }
+	    for (size_t root_index = 0;
+		    root_index < trace.stored_local_roots; ++root_index) {
+		const struct rt_brep_trace_local_root &root =
+		    trace.local_roots[root_index];
+		std::printf("  CR %zu f=%d s=%d t=%.17g trim=%d class=%d "
+		    "dir=%d nd=%.17g uv=(%.17g,%.17g)\n", root_index,
+		    root.face_index, root.span_index, root.dist,
+		    root.trim_status, root.hit_class, root.direction,
+		    root.normal_dot, root.uv[0], root.uv[1]);
+	    }
+	    failures++;
+	}
+    }
+    failures += check_brep_vertex_fan_similarity(*brep, target_vertex,
+	target_point, inward, tol);
+    free_solid(implicit_stp);
+    free_solid(brep_stp);
+    if (!failures)
+	std::printf("Concave vertex-fan transition: PASS oracle-error=%.3g\n",
+	    maximum_oracle_error);
     return failures;
 }
 
@@ -10486,7 +11062,9 @@ main(int argc, char **argv)
 	failures += check_brep_edge_sector_concave(&rtip->rti_tol, rtip,
 	    &resp);
 	failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
-	failures += check_brep_vertex_fan_fallback(&rtip->rti_tol, rtip,
+	failures += check_brep_vertex_fan_transition(&rtip->rti_tol, rtip,
+	    &resp);
+	failures += check_brep_concave_vertex_fan(&rtip->rti_tol, rtip,
 	    &resp);
 	failures += check_cobb_classifier_invariance(&rtip->rti_tol);
 	failures += check_cobb_ambiguous_correspondence(&rtip->rti_tol, rtip,
