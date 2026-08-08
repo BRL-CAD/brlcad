@@ -5141,6 +5141,9 @@ check_brep_fold_solver()
     size_t graph_contact_cases = 0;
     size_t graph_proof_boxes = 0;
     size_t graph_proof_contractions = 0;
+    size_t graph_boundary_available = 0;
+    size_t graph_boundary_certificates = 0;
+    size_t graph_boundary_contractions = 0;
     size_t graph_strip_boxes = 0;
     size_t graph_strip_contractions = 0;
     size_t graph_expansion_high_water = 0;
@@ -5549,6 +5552,11 @@ check_brep_fold_solver()
 	}
 	graph_expansion_high_water = std::max(graph_expansion_high_water,
 	    observed.expansion_high_water);
+	graph_boundary_available += observed.boundary_existence_available ? 1 : 0;
+	graph_boundary_certificates +=
+	    observed.boundary_existence_certified ? 1 : 0;
+	graph_boundary_contractions +=
+	    observed.boundary_existence_contractions;
 	if (observed.expansion_high_water >= RT_BREP_EXPANSION_CAPACITY) {
 	    std::printf("FAIL: fold graph expansion capacity %s high=%zu\n",
 		label, observed.expansion_high_water);
@@ -5562,16 +5570,23 @@ check_brep_fold_solver()
 	    if (observed.whole_determinant_signed ||
 		    !observed.graph_determinant_signed ||
 		    observed.determinant_sign != expected_sign ||
-		    !observed.graph_boxes || !observed.graph_contractions) {
+		    !observed.graph_boxes || !observed.graph_contractions ||
+		    !observed.boundary_existence_available ||
+		    !observed.boundary_existence_certified ||
+		    !observed.boundary_existence_contractions) {
 		std::printf("FAIL: fold implicit determinant %s epsilon=%.17g "
 		    "side=%d swap=%d scale=%d whole/graph/sign=%d/%d/%d "
 		    "expected=%d boxes/contractions=%zu/%zu "
+		    "boundary=%d/%d/%zu "
 		    "failure=r%zu/d%zu/s%zu/z%zu/w%zu\n", label,
 		    epsilon, side, swap, scale_exponent,
 		    observed.whole_determinant_signed,
 		    observed.graph_determinant_signed,
 		    observed.determinant_sign, expected_sign,
 		    observed.graph_boxes, observed.graph_contractions,
+		    observed.boundary_existence_available,
+		    observed.boundary_existence_certified,
+		    observed.boundary_existence_contractions,
 		    observed.graph_restriction_failures,
 		    observed.graph_determinant_failures,
 		    observed.graph_sign_conflicts,
@@ -5587,6 +5602,8 @@ check_brep_fold_solver()
 	    else
 		graph_contact_cases++;
 	    if ((observed.system_excluded != (expected_excluded ? 1 : 0)) ||
+		    !observed.boundary_existence_available ||
+		    observed.boundary_existence_certified ||
 		    !observed.strip_boxes ||
 		    (expected_excluded && !observed.strip_contractions) ||
 		    observed.strip_restriction_failures ||
@@ -5596,10 +5613,15 @@ check_brep_fold_solver()
 			(expected_excluded ? 0u : 1u)) {
 		std::printf("FAIL: fold implicit strip %s epsilon=%.17g "
 		    "side=%d swap=%d scale=%d excluded=%d expected=%d "
-		    "boxes/contractions=%zu/%zu failure=r%zu/a%zu/z%zu/w%zu\n",
+		    "boundary=%d/%d/%zu boxes/contractions=%zu/%zu "
+		    "failure=r%zu/a%zu/z%zu/w%zu\n",
 		    label, epsilon, side,
 		    swap, scale_exponent, observed.system_excluded,
-		    expected_excluded ? 1 : 0, observed.strip_boxes,
+		    expected_excluded ? 1 : 0,
+		    observed.boundary_existence_available,
+		    observed.boundary_existence_certified,
+		    observed.boundary_existence_contractions,
+		    observed.strip_boxes,
 		    observed.strip_contractions,
 		    observed.strip_restriction_failures,
 		    observed.strip_arithmetic_failures,
@@ -5646,6 +5668,7 @@ check_brep_fold_solver()
 	    "min-separation=%.9g max-error/residual=%.9g/%.9g "
 	    "max-regular-solves=%zu certificates=%zu/%zu+%zu/%zu "
 	    "corridors=%zu graph=%zu/%zu/%zu boxes=%zu/%zu+%zu/%zu "
+	    "boundary=%zu/%zu/%zu "
 	    "high=%zu "
 	    "min-det-ratio=%.9g\n",
 	    systems, expected_roots, minimum_separation,
@@ -5655,7 +5678,9 @@ check_brep_fold_solver()
 	    expansion_certificate_high_water, corridor_boxes,
 	    graph_corridor_cases, graph_strip_cases, graph_contact_cases,
 	    graph_proof_boxes, graph_proof_contractions, graph_strip_boxes,
-	    graph_strip_contractions, graph_expansion_high_water,
+	    graph_strip_contractions, graph_boundary_available,
+	    graph_boundary_certificates, graph_boundary_contractions,
+	    graph_expansion_high_water,
 	    minimum_determinant_ratio);
     }
     return failures;
@@ -6236,7 +6261,7 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		    expansion_certificate_floor = 2;
 		if (!std::strcmp(test.name, "extreme-condition") &&
 			ratio_index == 4)
-		    expansion_certificate_floor = 1;
+		    expansion_certificate_floor = 2;
 		if (!std::strcmp(test.name, "extreme-condition") &&
 			ratio_index == 5)
 		    expansion_certificate_floor = 0;
@@ -6252,6 +6277,13 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			trace.surface_fold_expansion_available !=
 			    trace.surface_fold_expansion_attempts ||
 			trace.surface_fold_expansion_failures ||
+			!trace.surface_fold_expansion_contraction_attempts ||
+			trace.surface_fold_expansion_contraction_attempts !=
+			    trace.surface_fold_expansion_contracted +
+			    trace.surface_fold_expansion_contraction_empty +
+			    trace.surface_fold_expansion_contraction_unchanged ||
+			(expansion_certificate_floor &&
+			 !trace.surface_fold_expansion_contracted) ||
 			!trace.surface_fold_expansion_high_water ||
 			trace.surface_fold_expansion_high_water >=
 			    RT_BREP_EXPANSION_CAPACITY ||
@@ -6263,7 +6295,8 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			std::printf("FAIL: affine grazing expansion ratchet %s "
 			    "ratio=%.3g reverse=%d "
 			    "attempts/available/certified/failures="
-			    "%zu/%zu/%zu/%zu floor=%zu "
+			    "%zu/%zu/%zu/%zu contraction=%zu/%zu/%zu/%zu "
+			    "floor=%zu "
 			    "excess=%.3g/%.3g high-water=%zu/%d\n",
 			    test.name,
 			    grazing_clearance_ratios[ratio_index], reverse,
@@ -6271,6 +6304,10 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			    trace.surface_fold_expansion_available,
 			    trace.surface_fold_expansion_certified,
 			    trace.surface_fold_expansion_failures,
+			    trace.surface_fold_expansion_contraction_attempts,
+			    trace.surface_fold_expansion_contracted,
+			    trace.surface_fold_expansion_contraction_empty,
+			    trace.surface_fold_expansion_contraction_unchanged,
 			    expansion_certificate_floor,
 			    trace.surface_fold_best_image_excess,
 			    trace.surface_fold_expansion_best_image_excess,
@@ -6293,6 +6330,11 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			trace.surface_fold_corridor_graph_sign_conflicts ||
 			trace.surface_fold_corridor_graph_depth_exhausted ||
 			trace.surface_fold_corridor_graph_workspace_exhausted ||
+			trace.surface_fold_boundary_existence_attempts != 2 ||
+			trace.surface_fold_boundary_existence_available != 2 ||
+			trace.surface_fold_boundary_existence_certified != 2 ||
+			!trace.surface_fold_boundary_existence_contractions ||
+			trace.surface_fold_boundary_existence_failures ||
 			trace.surface_fold_strip_excluded != 2 ||
 			!trace.surface_fold_strip_boxes ||
 			!trace.surface_fold_strip_contractions ||
@@ -6300,8 +6342,7 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			trace.surface_fold_strip_arithmetic_failures ||
 			trace.surface_fold_strip_depth_exhausted ||
 			trace.surface_fold_strip_workspace_exhausted ||
-			trace.surface_fold_complete !=
-			    trace.surface_fold_expansion_certified ||
+			trace.surface_fold_complete != 2 ||
 			trace.surface_fold_corridor_failures ||
 			!trace.surface_fold_corridor_high_water ||
 			trace.surface_fold_corridor_high_water >=
@@ -6311,7 +6352,8 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			std::printf("FAIL: affine grazing corridor ratchet %s "
 			    "ratio=%.3g reverse=%d corridor="
 			    "%zu/%zu/%zu/%zu/%zu/%zu graph="
-			    "%zu/%zu/%zu/%zu/%zu/%zu/%zu strip="
+			    "%zu/%zu/%zu/%zu/%zu/%zu/%zu existence="
+			    "%zu/%zu/%zu/%zu/%zu strip="
 			    "%zu/%zu/%zu complete=%zu/%zu failures/high=%zu/%zu\n",
 			    test.name, grazing_clearance_ratios[ratio_index],
 			    reverse, trace.surface_fold_corridor_attempts,
@@ -6327,6 +6369,11 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			    trace.surface_fold_corridor_graph_determinant_failures,
 			    trace.surface_fold_corridor_graph_depth_exhausted,
 			    trace.surface_fold_corridor_graph_workspace_exhausted,
+			    trace.surface_fold_boundary_existence_attempts,
+			    trace.surface_fold_boundary_existence_available,
+			    trace.surface_fold_boundary_existence_certified,
+			    trace.surface_fold_boundary_existence_contractions,
+			    trace.surface_fold_boundary_existence_failures,
 			    trace.surface_fold_strip_excluded,
 			    trace.surface_fold_strip_boxes,
 			    trace.surface_fold_strip_contractions,
@@ -6350,6 +6397,7 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			"expansion=%zu/%zu/%zu/%zu/%.3g/%.3g/%zu "
 			"corridor=%zu/%zu/%zu/%zu/%zu/%zu "
 			"graph=%zu/%zu/%zu/%zu/%zu "
+			"existence=%zu/%zu/%zu/%zu/%zu "
 			"strip=%zu/%zu/%zu/%zu total=%zu/%zu\n",
 			test.name,
 			grazing_clearance_ratios[ratio_index], reverse,
@@ -6378,6 +6426,11 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			trace.surface_fold_corridor_graph_boxes,
 			trace.surface_fold_corridor_graph_contractions,
 			trace.surface_fold_corridor_graph_failures,
+			trace.surface_fold_boundary_existence_attempts,
+			trace.surface_fold_boundary_existence_available,
+			trace.surface_fold_boundary_existence_certified,
+			trace.surface_fold_boundary_existence_contractions,
+			trace.surface_fold_boundary_existence_failures,
 			trace.surface_fold_strip_excluded,
 			trace.surface_fold_complete,
 			trace.surface_fold_strip_boxes,
