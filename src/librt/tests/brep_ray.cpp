@@ -50,6 +50,8 @@ prep_solid(struct rt_i *rtip, struct rt_db_internal *intern, int type)
     stp->st_meth = &OBJ[type];
 
     if (OBJ[type].ft_prep(stp, intern, rtip)) {
+	if (stp->st_specific && stp->st_meth && stp->st_meth->ft_free)
+	    stp->st_meth->ft_free(stp);
 	bu_free(stp, "direct ray test soltab");
 	return NULL;
     }
@@ -124,7 +126,8 @@ check_ray(const char *label, struct soltab *implicit_stp,
     const point_t origin, const vect_t direction, double expected_in,
     double expected_out)
 {
-    const double distance_tolerance = 1.0e-6;
+    const double distance_tolerance = std::max(1.0e-9,
+	rtip->rti_tol.dist);
     int failures = 0;
     ray_result implicit_result = shoot_solid(implicit_stp, rtip, resp,
 	origin, direction);
@@ -348,7 +351,185 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	}
     }
 
+    /* The implicit sphere rejects an outward ray beginning on its surface.
+     * BREP currently returns the entirely nonpositive segment [-2R, 0].
+     * Permit that known result to disappear, but prevent it from becoming
+     * nondeterministic or leaking material forward from the ray origin. */
+    point_t boundary_origin = {radius, 0.0, 0.0};
+    vect_t boundary_direction = {1.0, 0.0, 0.0};
+    ray_result implicit_boundary = shoot_solid(implicit_stp, rtip, resp,
+	boundary_origin, boundary_direction);
+    ray_result brep_boundary = shoot_solid(brep_stp, rtip, resp,
+	boundary_origin, boundary_direction);
+    ray_result repeated_boundary = shoot_solid(brep_stp, rtip, resp,
+	boundary_origin, boundary_direction);
+    if (implicit_boundary.segments != 0 ||
+	    brep_boundary.segments != repeated_boundary.segments ||
+	    (brep_boundary.segments == 1 &&
+	    (brep_boundary.out_dist > rtip->rti_tol.dist ||
+	    std::memcmp(&brep_boundary.in_dist, &repeated_boundary.in_dist,
+		sizeof(double)) != 0 ||
+	    std::memcmp(&brep_boundary.out_dist, &repeated_boundary.out_dist,
+		sizeof(double)) != 0)) ||
+	    brep_boundary.segments > 1) {
+	std::printf("FAIL: outward surface-start ratchet implicit=%d BREP=%d "
+	    "interval=[%.17g %.17g]\n", implicit_boundary.segments,
+	    brep_boundary.segments, brep_boundary.in_dist,
+	    brep_boundary.out_dist);
+	failures++;
+    }
+
     return failures;
+}
+
+
+static int
+check_transformed_sphere(struct rt_i *rtip, struct resource *resp,
+    const char *fixture_name, const point_t center, double radius)
+{
+    int failures = 0;
+    struct rt_ell_internal ell = {};
+    ell.magic = RT_ELL_INTERNAL_MAGIC;
+    VMOVE(ell.v, center);
+    VSET(ell.a, radius, 0.0, 0.0);
+    VSET(ell.b, 0.0, radius, 0.0);
+    VSET(ell.c, 0.0, 0.0, radius);
+
+    struct rt_db_internal ell_intern;
+    RT_DB_INTERNAL_INIT(&ell_intern);
+    ell_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    ell_intern.idb_type = ID_ELL;
+    ell_intern.idb_meth = &OBJ[ID_ELL];
+    ell_intern.idb_ptr = &ell;
+
+    struct soltab *implicit_stp = prep_solid(rtip, &ell_intern, ID_ELL);
+    if (!implicit_stp) {
+	std::printf("FAIL: %s implicit prep\n", fixture_name);
+	return 1;
+    }
+
+    ON_Brep *brep = ON_Brep::New();
+    OBJ[ID_ELL].ft_brep(&brep, &ell_intern, &rtip->rti_tol);
+    if (!brep) {
+	std::printf("FAIL: %s BREP conversion\n", fixture_name);
+	free_solid(implicit_stp);
+	return 1;
+    }
+    struct rt_brep_internal brep_internal = {};
+    brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal.brep = brep;
+    struct rt_db_internal brep_intern;
+    RT_DB_INTERNAL_INIT(&brep_intern);
+    brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    brep_intern.idb_type = ID_BREP;
+    brep_intern.idb_meth = &OBJ[ID_BREP];
+    brep_intern.idb_ptr = &brep_internal;
+
+    struct soltab *brep_stp = prep_solid(rtip, &brep_intern, ID_BREP);
+    if (!brep_stp) {
+	std::printf("FAIL: %s BREP prep\n", fixture_name);
+	delete brep_internal.brep;
+	free_solid(implicit_stp);
+	return 1;
+    }
+
+    struct transformed_ray {
+	const char *name;
+	point_t origin;
+	vect_t direction;
+	double expected_in;
+	double expected_out;
+    } rays[3];
+    rays[0].name = "north pole";
+    VSET(rays[0].origin, center[X], center[Y], center[Z] + 2.0 * radius);
+    VSET(rays[0].direction, 0.0, 0.0, -1.0);
+    rays[0].expected_in = radius;
+    rays[0].expected_out = 3.0 * radius;
+    rays[1].name = "positive-x seam";
+    VSET(rays[1].origin, center[X] + 2.0 * radius, center[Y], center[Z]);
+    VSET(rays[1].direction, -1.0, 0.0, 0.0);
+    rays[1].expected_in = radius;
+    rays[1].expected_out = 3.0 * radius;
+    rays[2].name = "inside";
+    VMOVE(rays[2].origin, center);
+    VSET(rays[2].direction, 0.0, 1.0, 0.0);
+    rays[2].expected_in = -radius;
+    rays[2].expected_out = radius;
+
+    for (int repeat = 0; repeat < 4; ++repeat) {
+	for (size_t i = 0; i < sizeof(rays) / sizeof(rays[0]); ++i) {
+	    char label[128];
+	    std::snprintf(label, sizeof(label), "%s %s", fixture_name,
+		rays[i].name);
+	    failures += check_ray(label, implicit_stp, brep_stp, rtip, resp,
+		rays[i].origin, rays[i].direction, rays[i].expected_in,
+		rays[i].expected_out);
+	}
+    }
+
+    free_solid(brep_stp);
+    free_solid(implicit_stp);
+    return failures;
+}
+
+
+static double
+relative_error(double observed, double expected)
+{
+    return fabs(expected) > SMALL_FASTF ? fabs(observed - expected) /
+	fabs(expected) : fabs(observed);
+}
+
+
+static int
+check_crofton_sphere(struct rt_db_internal *ell_intern,
+    const struct bn_tol *tol, double radius)
+{
+    ON_Brep *brep = ON_Brep::New();
+    OBJ[ID_ELL].ft_brep(&brep, ell_intern, tol);
+    if (!brep) {
+	std::printf("FAIL: Crofton sphere-to-BREP conversion\n");
+	return 1;
+    }
+
+    struct rt_brep_internal brep_internal = {};
+    brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal.brep = brep;
+    struct rt_db_internal brep_intern;
+    RT_DB_INTERNAL_INIT(&brep_intern);
+    brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    brep_intern.idb_type = ID_BREP;
+    brep_intern.idb_meth = &OBJ[ID_BREP];
+    brep_intern.idb_ptr = &brep_internal;
+
+    struct rt_crofton_params params = {20000, 0.0, 0.0};
+    fastf_t implicit_area = 0.0;
+    fastf_t implicit_volume = 0.0;
+    fastf_t brep_area = 0.0;
+    fastf_t brep_volume = 0.0;
+    rt_crofton_sample(&implicit_area, &implicit_volume, ell_intern, &params);
+    rt_crofton_sample(&brep_area, &brep_volume, &brep_intern, &params);
+    delete brep_internal.brep;
+
+    const double analytic_area = 4.0 * M_PI * radius * radius;
+    const double analytic_volume = (4.0 / 3.0) * M_PI * radius * radius *
+	radius;
+    const double aggregate_tolerance = 0.03;
+    const double paired_tolerance = 0.01;
+    if (relative_error(implicit_area, analytic_area) > aggregate_tolerance ||
+	    relative_error(implicit_volume, analytic_volume) >
+	    aggregate_tolerance ||
+	    relative_error(brep_area, analytic_area) > aggregate_tolerance ||
+	    relative_error(brep_volume, analytic_volume) > aggregate_tolerance ||
+	    relative_error(brep_area, implicit_area) > paired_tolerance ||
+	    relative_error(brep_volume, implicit_volume) > paired_tolerance) {
+	std::printf("FAIL: Crofton sphere analytic=[%.17g %.17g] "
+	    "implicit=[%.17g %.17g] BREP=[%.17g %.17g]\n", analytic_area,
+	    analytic_volume, implicit_area, implicit_volume, brep_area,
+	    brep_volume);
+	return 1;
+    }
+    return 0;
 }
 
 
@@ -417,29 +598,49 @@ main(int argc, char **argv)
 	const char *label;
 	point_t origin;
 	vect_t direction;
+	double expected_in;
+	double expected_out;
     } rays[] = {
-	{"north-pole down", {0.0, 0.0, 20.0}, {0.0, 0.0, -1.0}},
-	{"south-pole up", {0.0, 0.0, -20.0}, {0.0, 0.0, 1.0}},
-	{"positive-x", {20.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}},
-	{"negative-y", {0.0, -20.0, 0.0}, {0.0, 1.0, 0.0}}
+	{"north-pole down", {0.0, 0.0, 20.0}, {0.0, 0.0, -1.0},
+	    radius, 3.0 * radius},
+	{"south-pole up", {0.0, 0.0, -20.0}, {0.0, 0.0, 1.0},
+	    radius, 3.0 * radius},
+	{"positive-x seam", {20.0, 0.0, 0.0}, {-1.0, 0.0, 0.0},
+	    radius, 3.0 * radius},
+	{"negative-y", {0.0, -20.0, 0.0}, {0.0, 1.0, 0.0},
+	    radius, 3.0 * radius},
+	{"inside toward pole", {0.0, 0.0, 0.0}, {0.0, 0.0, 1.0},
+	    -radius, radius},
+	{"seam start inward", {radius, 0.0, 0.0}, {-1.0, 0.0, 0.0},
+	    0.0, 2.0 * radius}
     };
 
     int failures = 0;
     for (size_t repeat = 0; repeat < 16; ++repeat) {
 	for (size_t i = 0; i < sizeof(rays) / sizeof(rays[0]); ++i)
 	    failures += check_ray(rays[i].label, implicit_stp, brep_stp,
-		rtip, &resp, rays[i].origin, rays[i].direction, radius,
-		3.0 * radius);
+		rtip, &resp, rays[i].origin, rays[i].direction,
+		rays[i].expected_in, rays[i].expected_out);
     }
 
     failures += check_grazing_ratchet(implicit_stp, brep_stp, rtip, &resp,
 	radius);
+
+    point_t small_center = {1.25, -2.5, 5.0};
+    failures += check_transformed_sphere(rtip, &resp, "small-translated",
+	small_center, 0.01);
+    point_t large_center = {1.0e6, -2.0e6, 3.0e6};
+    failures += check_transformed_sphere(rtip, &resp, "large-translated",
+	large_center, 1.0e4);
 
     if (report_grazing)
 	grazing_report(implicit_stp, brep_stp, rtip, &resp, radius);
 
     free_solid(brep_stp);
     free_solid(implicit_stp);
+
+    failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);
+
     rt_clean_resource_basic(rtip, &resp);
     BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
     rt_i_destroy(rtip);
