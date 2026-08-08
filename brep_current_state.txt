@@ -78,6 +78,13 @@ workspaces, observes all five legacy cleanup stages, independently runs the
 certified crack repair, and records complete solid partitions.  The analytic
 sphere partitions are equivalent; one bowed Cobb partition differs and the
 prepared result is the one that matches the implicit sphere oracle.
+Ordinary transverse prepared-span roots can now terminate shadow subdivision
+after a converged corrector passes a strict interval Krawczyk inclusion test.
+Six oblique sphere rays preserve exact implicit/legacy/prepared partition
+agreement while reducing visited boxes by about 71.7 percent from a measured
+fixed-depth baseline.  Grazing and boundary roots do not qualify and retain
+the conservative depth-24 path.  This remains shadow-only pending an
+independent outward-rounding and coefficient-error audit.
 Production trim classification now scans the prepared trim leaves directly;
 the former copied-list implementation remains trace-only as an exact
 equivalence oracle.  The full traced corpus hard-gates candidate counts,
@@ -890,6 +897,65 @@ ESTABLISHED FINDINGS
     After the final stage-label refactor, direct normal and ASan/UBSan
     rt_brep_ray reruns pass in 9.24 and 36.80 seconds respectively.
 
+40. A provisional interval Krawczyk test now supplies the first adaptive
+    early-termination rule for ordinary prepared surface spans.  Given a
+    bounded corrector root x in local parameter box X, it computes
+
+      K(X) = x - C F(x) + (I - C J(X)) (X - x),
+
+    where F is the pair of homogeneous ray-plane Bernstein polynomials, J(X)
+    is bounded by the convex hulls of their derivative Bernstein
+    coefficients, and C is the inverse of the midpoint interval Jacobian.
+    Only strict containment of K(X) in the interior of X qualifies.  A failed
+    corrector, singular preconditioner, failed inclusion, tangent Jacobian, or
+    root on a subdivision/patch boundary says nothing and continues the
+    existing subdivision path to depth 24.  Small UV, model-space, or ray-t
+    width and numerical convergence alone never terminate a box.
+
+    The implementation uses fixed arrays and performs no ray-time allocation.
+    Coefficient uncertainty is propagated into function and derivative
+    intervals; interval endpoints receive deliberately conservative error
+    enlargement and nextafter expansion.  Corrector attempts/convergences,
+    successful Krawczyk boxes and their depths, isolated-box ray-t widths,
+    subdivision work, overflow, and high-water marks are observable.  The
+    continuation certificate deliberately disables this new rule, preserving
+    its prior depth-24 behavior.
+
+    Three deterministic off-center, oblique sphere lines are shot in both
+    directions.  All six have one implicit, legacy BREP, and prepared BREP
+    partition with endpoints within model tolerance.  They produce 12
+    physical events and exactly 12 Krawczyk-qualified boxes at depths 4
+    through 9, with zero candidate-stage, semantic-stage, cleaned-hit,
+    root/event, or final-partition differences.  Adaptive work is 294 visited
+    boxes total and at most 64 per ray, versus a directly measured run with
+    this one termination disabled of 1,038 total and 192 per ray at depth 24.
+    That is a 71.7 percent reduction in subdivision visits for this regular-
+    root fixture.  Correctors converge in 28 of 44 adaptive attempts.
+
+    This does not weaken grazing qualification.  The analytic grazing sphere
+    and 416-ray bowed Cobb matrices produce zero Krawczyk-qualified boxes;
+    tangent, nearly tangent, trim-boundary, and patch-boundary candidates all
+    remain on the depth-24 path.  Their root/event/partition results are
+    unchanged, including the one independently proved prepared-partition
+    improvement and zero regressions or ambiguous changes.  The production
+    SurfaceTree still uses depth eight, and no production hit publication or
+    tree density changed.
+
+    R. E. Moore's 1977 existence test and Breiding, Rose, and Timme's modern
+    interval certification treatment justify the strict Krawczyk inclusion
+    rule and are recorded with primary-source links in the plan.  The current
+    arithmetic is intentionally classified as shadow evidence, not a formal
+    production certificate: an independent numerical audit must prove that
+    every generated coefficient and function/Jacobian interval encloses the
+    exact polynomial quantity on all supported orders, scales, and
+    translations before production promotion.
+
+    The final focused normal gate passes 13/13 with rt_brep_ray at 9.30
+    seconds.  The focused ASan/UBSan gate passes 12/12 in 33.20 seconds;
+    rt_brep_ray takes 33.15 seconds in that parallel gate.  A final direct
+    ASan/UBSan rerun after the grazing no-termination hard gates passes in
+    25.16 seconds with no sanitizer diagnostic.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1033,7 +1099,13 @@ IMPLEMENTATION CHECKLIST
             coverage and classify direct-only tangent-band contacts.
         [x] Add bounded outside-span reparameterization with exact operator-
             norm error amplification and positive-weight certification.
-        [ ] Add safe clipping and adaptive termination.
+        [ ] Add production-safe clipping and adaptive termination.
+            [x] Add shadow strict-interior Krawczyk termination for regular
+                transverse roots and gate its fixed-depth work reduction.
+            [x] Keep grazing, singular, and boundary roots on the conservative
+                depth-24 path.
+            [ ] Independently audit outward rounding and coefficient-error
+                enclosure before production promotion.
     [ ] Use fixed-capacity allocation-free shot workspace with explicit
         fallback on unsupported weights/order/capacity.
         [x] Bound direct surface order, subdivision stack, trace output, and
@@ -1540,6 +1612,11 @@ Cobb sphere baseline:
     classification: 13/13, with rt_brep_ray at 10.29 seconds and
     NIST03_MISS_01 at 0.80 seconds.  The sole final change is an implicit-
     oracle improvement in the reverse inward-bowed Cobb case.
+    Repeated after provisional strict-interior Krawczyk termination for
+    ordinary transverse roots: 13/13, with rt_brep_ray at 9.30 seconds.  Six
+    oblique sphere rays reduce subdivision visits from the measured 1,038-box
+    fixed-depth baseline to 294 while preserving all partitions.  Grazing
+    matrices retain zero early terminations.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -1583,6 +1660,12 @@ Cobb sphere baseline:
     Repeated after fixed prepared-event cleanup, five-stage observation, and
     final-partition oracle classification with halt_on_error=1: 12/12 in
     40.55 seconds, with no ASan or UBSan diagnostic.
+    Repeated after provisional Krawczyk termination and conservative interval
+    expansion with halt_on_error=1: 12/12 in 33.20 seconds; rt_brep_ray takes
+    33.15 seconds with no ASan or UBSan diagnostic.  After hard-gating zero
+    adaptive termination in both grazing matrices and avoiding unnecessary
+    ray-t interval work on nonterminal boxes, a direct final rt_brep_ray pass
+    takes 25.16 seconds without a diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -1651,13 +1734,14 @@ NEXT ACTIONS
 2. Implement and gate cyclic convex/concave vertex-fan transitions before any
    multi-edge crack repair.  Preserve the current explicit fallback for
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
-3. Add conservative adaptive termination to ordinary prepared-span
-   subdivision beyond the first bounded corrector.  Classify the observed
-   near-hit/grazing/duplicate-stage representation differences and extend
-   final-partition oracle gates before any production promotion.  Do not lower
-   tree density until unsupported/capacity fallback and every changed material
-   partition are observable and proven equivalent or better than the legacy
-   path.
+3. Independently audit the shadow Krawczyk arithmetic, expand its regular-root
+   corpus across supported orders and similarities, and add conservative
+   clipping where it can prove exclusion or uniqueness.  Keep classifying the
+   observed near-hit/grazing/duplicate-stage representation differences and
+   extending final-partition oracle gates before production promotion.  Do
+   not lower tree density until unsupported/capacity fallback and every
+   changed material partition are observable and proven equivalent or better
+   than the legacy path.
 4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
