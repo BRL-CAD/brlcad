@@ -477,11 +477,31 @@ ESTABLISHED FINDINGS
     pointers on 64-bit systems and has explicit accounting; it is not a claim
     that 128 is sufficient for arbitrary corpus models.
 
-    This removes allocation from leaf collection itself, not from the complete
-    production shot.  Current hit lists, miss/trim cleanup, and fallback/event
-    integration still allocate.  The live traversal must not switch until a
-    fixed root/event workspace can either complete the ray or dispatch to the
-    existing allocating path without partial side effects.
+    This shadow checkpoint removes allocation from leaf collection itself,
+    not from the complete production shot.  Hit lists, miss/trim cleanup, and
+    fallback/event integration still allocate.  Any live promotion must make
+    its capacity decision before partial solver or cleanup side effects.
+
+32. After the count/order shadow gate passed, production leaf discovery was
+    promoted to the 128-pointer fixed array.  Capacity is resolved before any
+    surface solver or hit-cleanup state is mutated.  A ray exceeding capacity
+    immediately rebuilds the legacy std::list and runs the unchanged solver
+    loop from that list; a bounded ray runs the solver in the already-proven
+    fixed-array order.  Trace mode deliberately builds both representations,
+    reports whether fallback was selected, and continues to gate their exact
+    equivalence.  All current trace fixtures take the bounded path, and the
+    focused cache, analytic, Cobb, and NURBS suite remains 13/13.  A separate
+    Debug build instrumented with AddressSanitizer and UndefinedBehavior-
+    Sanitizer also passes the complete rt_brep_ray corpus without a sanitizer
+    diagnostic.  LeakSanitizer cannot run under the host ptrace wrapper and is
+    explicitly not claimed by this gate.
+
+    This promotion removes dynamic allocation from production surface-tree
+    leaf collection for bounded rays.  It does not yet make BREP shooting
+    allocation-free: brep_hit and cleanup structures remain std::list based,
+    and an over-capacity leaf ray intentionally allocates in the safe legacy
+    fallback.  Root/event conversion must preserve the same rule: decide to
+    fall back before applying any partial cleanup or material-state change.
 
 
 IMPLEMENTATION CHECKLIST
@@ -604,6 +624,8 @@ IMPLEMENTATION CHECKLIST
         [ ] Integrate fixed traversal/root/event arrays and fallback dispatch.
             [x] Add and corpus-gate a 128-entry fixed leaf traversal shadow,
                 including total count, exact order, and overflow reporting.
+            [x] Promote bounded production leaf collection to the fixed array
+                with pre-solve fallback to the legacy list on overflow.
             [ ] Move the live solver loop to fixed root/event storage with a
                 clean pre-mutation fallback to the allocating implementation.
     [x] Assemble the uniquely certified continuation and existing event into
@@ -973,8 +995,15 @@ Cobb sphere baseline:
     tree traversal.  All traced corpus rays require identical leaf count and
     pointer order.  Current maxima are 8 for the sphere grazing sweep, 12 for
     the bowed Cobb matrix, and 68 for the 0.01x transformed classifier.  The
-    fixed overload counts beyond capacity and exposes overflow; the production
-    solver continues to consume the list, so no shot result has changed.
+    fixed overload counts beyond capacity and exposes overflow.  At this
+    shadow checkpoint the production solver still consumed the list, so no
+    shot result changed.
+
+  * Production now consumes the fixed leaf array when it fits.  Overflow is
+    detected before solving and selects the legacy list path.  Trace mode
+    still constructs both and exposes fallback state, so order equivalence
+    remains continuously checked while normal bounded rays avoid list-node
+    allocation during leaf discovery.
 
   * Outside-span continuation rectangles are reparameterized algebraically
     into Bernstein form.  The code computes the absolute row-sum norm of each
@@ -1004,6 +1033,37 @@ Cobb sphere baseline:
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
+
+  cmake -S . -B .build-asan -G Ninja \
+    -DBRLCAD_EXT_DIR=/home/cyapp/bext/build \
+    -DBRLCAD_ENABLE_ADDRESS_SANITIZER=ON \
+    -DBRLCAD_ENABLE_UNDEFINED_SANITIZER=ON \
+    -DBRLCAD_OPTIMIZED=OFF -DBRLCAD_DEBUGGING=ON \
+    -DCMAKE_BUILD_TYPE=Debug
+  cmake --build .build-asan --target librt rt_brep_ray rt_cache -j8
+  env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
+    .build-asan/src/librt/tests/rt_brep_ray
+    PASS: full ray corpus, no ASan or UBSan diagnostics.  Leak detection is
+    disabled because LeakSanitizer is incompatible with the host ptrace
+    wrapper; leak qualification remains open.
+
+  env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
+    ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
+    --output-on-failure
+    PASS: 7/7 serial and parallel ordinary/cached prep ownership tests, with
+    no ASan or UBSan diagnostics.
+
+  cmake --build .build-asan --target \
+    rt_primitive_brep analyze_nhit NIST_MBE_PMI_3.g -j8
+  env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
+    ctest --test-dir .build-asan -j4 \
+    -R '^(rt_primitive_brep|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 4/4 conversion and NURBS regression tests, with no ASan or UBSan
+    diagnostics.  Together with rt_brep_ray and the cache matrix, the focused
+    sanitizer gate is 12/12.  The combined 12-test command also passes in one
+    run (approximately 42 seconds), ruling out ordering dependence among the
+    focused sanitizer fixtures.
 
   .build/src/librt/tests/rt_brep_ray
     PASS: shared partition/Crofton sphere and all directed cases

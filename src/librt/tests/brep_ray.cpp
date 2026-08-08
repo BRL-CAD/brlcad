@@ -420,6 +420,7 @@ static bool
 brep_trace_fixed_leaves_match(const struct rt_brep_shot_trace &trace)
 {
     return !trace.fixed_leaf_overflow &&
+	!trace.fixed_leaf_fallback &&
 	trace.fixed_leaf_count == trace.fixed_leaf_stored &&
 	trace.fixed_leaf_count == trace.intersected_leaves &&
 	trace.fixed_leaf_mismatches == 0;
@@ -1004,7 +1005,7 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	failures++;
     }
     std::printf("Sphere fixed leaf traversal: capacity=%d max-leaves=%zu\n",
-	RT_BREP_TRACE_MAX_LEAVES, maximum_fixed_leaves);
+	RT_BREP_MAX_LEAVES, maximum_fixed_leaves);
 
     /* The implicit sphere rejects an outward ray beginning on its surface.
      * BREP currently returns the entirely nonpositive segment [-2R, 0].
@@ -2624,7 +2625,8 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			    "edge-t=%.17g closure=%zu/%zu direction=%d/%d "
 			    "existing-t=%.17g local=%zu/%zu clusters=%zu/%zu "
 			    "failures=%zu/%zu invalid=%d differ=%d "
-			    "leaves=%zu/%zu stored=%zu overflow=%zu mismatch=%zu\n",
+			    "leaves=%zu/%zu stored=%zu overflow=%zu fallback=%zu "
+			    "mismatch=%zu\n",
 			    test.name,
 			    expected_state,
 			    reverse, edge ? edge->closest_state : -99,
@@ -2642,6 +2644,7 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			    local_root_invalid, local_roots_differ,
 			    trace.intersected_leaves, trace.fixed_leaf_count,
 			    trace.fixed_leaf_stored, trace.fixed_leaf_overflow,
+			    trace.fixed_leaf_fallback,
 			    trace.fixed_leaf_mismatches);
 			failures++;
 		    }
@@ -2658,7 +2661,7 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
     if (!failures) {
 	std::printf("Cobb classifier similarity invariance: PASS "
 	    "max-leaves=%zu/%d\n", maximum_fixed_leaves,
-	    RT_BREP_TRACE_MAX_LEAVES);
+	    RT_BREP_MAX_LEAVES);
     }
     return failures;
 }
@@ -3086,7 +3089,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "workspace_exhausted\n");
 	std::printf("cobb_leaf_traversal_columns,direction,g_over_T,h_over_T,"
 	    "reverse,list_leaves,fixed_leaves,fixed_stored,overflow,"
-	    "order_mismatches\n");
+	    "fallback,order_mismatches\n");
 	std::printf("cobb_closure_columns,direction,g_over_T,h_over_T,reverse,"
 	    "candidate_count,edge_index,edge_t,existing_t,missing_direction\n");
 	std::printf("cobb_continuation_columns,direction,g_over_T,h_over_T,"
@@ -3640,12 +3643,13 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    }
 		    if (emit_report) {
 			std::printf("cobb_leaf_traversal,%s,%.9g,%.9g,%d,"
-			    "%zu,%zu,%zu,%zu,%zu\n",
+			    "%zu,%zu,%zu,%zu,%zu,%zu\n",
 			    sign > 0 ? "outward" : "inward",
 			    measured_gap / tol->dist,
 			    clearance / tol->dist, reverse,
 			    trace.intersected_leaves, trace.fixed_leaf_count,
 			    trace.fixed_leaf_stored, trace.fixed_leaf_overflow,
+			    trace.fixed_leaf_fallback,
 			    trace.fixed_leaf_mismatches);
 			std::printf("bowed_surface_seam,%s,%.9g,%.9g,%d,%.9g,"
 			    "%zu,%zu,%.9g,%.9g,%.9g,%d,%d,%d,%zu,%zu,%zu,"
@@ -3875,7 +3879,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	maximum_certificate_boxes, maximum_certificate_workspace,
 	maximum_certificate_width);
     std::printf("Cobb fixed leaf traversal: capacity=%d max-leaves=%zu\n",
-	RT_BREP_TRACE_MAX_LEAVES, maximum_fixed_leaves);
+	RT_BREP_MAX_LEAVES, maximum_fixed_leaves);
     free_prepared_model(implicit_model);
     delete pristine;
     return failures;

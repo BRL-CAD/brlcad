@@ -3159,22 +3159,31 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
      * intersected, there is potentially a hit and more evaluation is
      * needed.  Otherwise, return a miss.
      */
-    std::list<const BBNode*> inters;
     ON_Ray r = toXRay(rp);
-    bs->bvh->intersectsHierarchy(r, inters);
+    const BBNode *fixed_leaves[RT_BREP_MAX_LEAVES] = {};
+    size_t fixed_leaf_count = 0;
+    bool fixed_leaf_overflow = false;
+    bs->bvh->intersectsHierarchy(r, fixed_leaves,
+	RT_BREP_MAX_LEAVES, fixed_leaf_count, fixed_leaf_overflow);
+
+    /* Overflow is resolved before any surface solve or hit mutation.  Trace
+     * mode also builds the list so the fixed path remains equivalence-gated. */
+    std::list<const BBNode*> fallback_leaves;
+    if (fixed_leaf_overflow || trace)
+	bs->bvh->intersectsHierarchy(r, fallback_leaves);
     if (trace) {
-	trace->intersected_leaves = inters.size();
-	const BBNode *fixed_leaves[RT_BREP_TRACE_MAX_LEAVES] = {};
-	bool overflow = false;
-	bs->bvh->intersectsHierarchy(r, fixed_leaves,
-	    RT_BREP_TRACE_MAX_LEAVES, trace->fixed_leaf_count, overflow);
+	trace->intersected_leaves = fallback_leaves.size();
+	trace->fixed_leaf_count = fixed_leaf_count;
 	trace->fixed_leaf_stored = std::min(trace->fixed_leaf_count,
-	    (size_t)RT_BREP_TRACE_MAX_LEAVES);
-	trace->fixed_leaf_overflow = overflow ? 1 : 0;
-	if (!overflow && trace->fixed_leaf_count == inters.size()) {
+	    (size_t)RT_BREP_MAX_LEAVES);
+	trace->fixed_leaf_overflow = fixed_leaf_overflow ? 1 : 0;
+	trace->fixed_leaf_fallback = fixed_leaf_overflow ? 1 : 0;
+	if (!fixed_leaf_overflow &&
+		trace->fixed_leaf_count == fallback_leaves.size()) {
 	    size_t leaf_index = 0;
-	    for (std::list<const BBNode*>::const_iterator i = inters.begin();
-		    i != inters.end(); ++i, ++leaf_index) {
+	    for (std::list<const BBNode*>::const_iterator i =
+		    fallback_leaves.begin(); i != fallback_leaves.end();
+		    ++i, ++leaf_index) {
 		if (fixed_leaves[leaf_index] != *i)
 		    trace->fixed_leaf_mismatches++;
 	    }
@@ -3187,18 +3196,30 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     brep_trace_local_clusters(trace,
 	stp->st_rtip ? &stp->st_rtip->rti_tol : NULL);
     brep_trace_edges(trace, bs, r);
-    if (inters.empty())
+    if (!fixed_leaf_count)
 	return 0; // MISS
 
     // find all the hits (XXX very inefficient right now!)
     std::list<brep_hit> hits;
     MissList misses;
-    for (std::list<const BBNode*>::const_iterator i = inters.begin(); i != inters.end(); i++) {
-	const BBNode* sbv = (*i);
-	const ON_BrepFace* f = &sbv->get_face();
-	const ON_Surface* surf = f->SurfaceOf();
-	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
-	utah_brep_intersect(sbv, f, surf, uv, r, hits, trace);
+    if (fixed_leaf_overflow) {
+	for (std::list<const BBNode*>::const_iterator i = fallback_leaves.begin();
+		i != fallback_leaves.end(); ++i) {
+	    const BBNode* sbv = *i;
+	    const ON_BrepFace* f = &sbv->get_face();
+	    const ON_Surface* surf = f->SurfaceOf();
+	    pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
+	    utah_brep_intersect(sbv, f, surf, uv, r, hits, trace);
+	}
+    } else {
+	for (size_t leaf_index = 0; leaf_index < fixed_leaf_count;
+		++leaf_index) {
+	    const BBNode* sbv = fixed_leaves[leaf_index];
+	    const ON_BrepFace* f = &sbv->get_face();
+	    const ON_Surface* surf = f->SurfaceOf();
+	    pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
+	    utah_brep_intersect(sbv, f, surf, uv, r, hits, trace);
+	}
     }
 
     // sort the hits
