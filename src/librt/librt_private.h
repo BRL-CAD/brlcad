@@ -524,9 +524,14 @@ struct rt_brep_trace_local_root {
     fastf_t uv[2];
     fastf_t residual;
     fastf_t normal_dot;
+    fastf_t trim_distance;
     size_t iterations;
     int face_index;
     int span_index;
+    int adjacent_face_index;
+    int trim_status;
+    int hit_class;
+    int direction;
 };
 
 struct rt_brep_trace_local_cluster {
@@ -568,6 +573,13 @@ struct rt_brep_shot_trace {
     size_t trim_closest_mismatches;
     size_t trim_distance_mismatches;
     size_t trim_equivalence_mismatches;
+    size_t face_trim_queries;
+    size_t face_trim_candidates;
+    size_t face_trim_status_mismatches;
+    size_t face_trim_hit_class_mismatches;
+    size_t face_trim_adjacency_mismatches;
+    size_t face_trim_equivalence_mismatches;
+    fastf_t face_trim_max_near_distance_error;
     size_t solver_calls;
     size_t solver_status[RT_BREP_TRACE_SOLVER_STATUS_COUNT];
     size_t candidate_roots;
@@ -602,6 +614,9 @@ struct rt_brep_shot_trace {
     size_t local_root_overflow;
     size_t local_root_failures;
     size_t local_root_duplicates;
+    size_t local_trim_queries;
+    size_t local_trim_candidates;
+    size_t local_trim_failures;
     struct rt_brep_trace_local_root
 	local_roots[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
     size_t legacy_unique_roots;
@@ -610,6 +625,16 @@ struct rt_brep_shot_trace {
     size_t local_unique_roots;
     size_t local_unique_roots_matched;
     size_t local_unique_roots_unmatched;
+    size_t matched_root_events;
+    size_t root_event_mismatches;
+    size_t root_trim_status_mismatches;
+    size_t root_hit_class_mismatches;
+    size_t root_direction_mismatches;
+    size_t root_adjacency_mismatches;
+    fastf_t root_match_max_t_error;
+    fastf_t root_match_max_uv_error;
+    fastf_t root_match_max_trim_error;
+    fastf_t root_match_max_normal_dot_error;
     fastf_t local_cluster_tolerance;
     size_t local_root_clusters;
     size_t stored_local_clusters;
