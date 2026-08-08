@@ -65,10 +65,12 @@ limit independently of SurfaceTree seeds and remain invariant across the
 expanded similarity corpus.  A fixed preliminary same-face clustering stage
 now exposes ordered enter/leave/contact behavior without changing production
 events.  Trace mode now compares unique prepared-span and depth-eight legacy
-Newton roots in both directions.  Prepared spans cover every legacy root in
-the controlled sphere, bowed Cobb, and classifier-similarity matrices; the
-only sphere direct-only root is a contact-only numerical ambiguity on the
-nearest representable miss-side line.  Prepared roots are now also classified
+Newton roots in both directions.  Prepared spans cover every physical legacy
+root in the controlled sphere, bowed Cobb, and classifier-similarity matrices.
+The remaining unmatched sphere clusters are explicitly gated legacy-only
+numerical ambiguities on representable miss-side lines; analytic and final-
+partition oracles classify all of them as misses.  Prepared roots are now also
+classified
 against the owned face-wide CurveTree without allocation.  Fixed event
 clusters compare material/trim state, near/clean class, grazing-aware
 direction, and meaningful near-edge adjacency against legacy clusters before
@@ -83,8 +85,9 @@ after a converged corrector passes a strict interval Krawczyk inclusion test.
 Six oblique sphere rays preserve exact implicit/legacy/prepared partition
 agreement while reducing visited boxes by about 71.7 percent from a measured
 fixed-depth baseline.  Grazing and boundary roots do not qualify and retain
-the conservative depth-24 path.  This remains shadow-only pending an
-independent outward-rounding and coefficient-error audit.
+the conservative depth-24 path.  Its ordinary in-span arithmetic audit is now
+complete, but the path remains shadow-only pending the remaining promotion,
+fallback, and physical-equivalence gates.
 The same regular-root path is now gated under translation, arbitrary rotation,
 and 0.01x/10,000x uniform scales with scaled model tolerances.  Thirty directed
 rays preserve normalized analytic/implicit/legacy/prepared partitions and all
@@ -93,9 +96,11 @@ as expected, without changing classification.
 Function and Jacobian enclosures now use outward interval operations throughout
 rather than scalar evaluation plus an error estimate.  An independent exact-
 dyadic gate covers all supported order pairs, five wide binary scales, positive
-coefficient uncertainty, derivative hulls, and interval products.  Initial
-coefficient construction and arbitrary sub-box restriction error bounds remain
-open, so production promotion is still unauthorized.
+coefficient uncertainty, derivative hulls, interval products, initial
+homogeneous coefficient construction, arbitrary sub-box restrictions,
+positive-denominator quotients, and rational ray-t bounds.  Outside-span
+reparameterization amplification remains open, so broad production promotion
+and tree-density reduction are still unauthorized.
 Production trim classification now scans the prepared trim leaves directly;
 the former copied-list implementation remains trace-only as an exact
 equivalence oracle.  The full traced corpus hard-gates candidate counts,
@@ -1053,6 +1058,70 @@ ESTABLISHED FINDINGS
     gate passes 12/12 in 37.29 seconds, with rt_brep_ray at 37.25 seconds and
     no sanitizer diagnostic.
 
+43. Initial homogeneous coefficient construction, arbitrary in-span
+    restriction, and rational ray-t bounding now use the same operation-level
+    outward intervals as the function/Jacobian layer.  Each stored binary64
+    control component, weight, ray origin, direction, and ray-plane component
+    begins as a point interval.  The implementation encloses `cv - origin*w`,
+    both plane dot products, the ray-direction squared norm, and the ray-t
+    numerator quotient at every arithmetic operation.  The existing scalar
+    coefficients remain deterministic working centers, but their one common
+    error per net is derived from the full interval hull rather than a
+    coefficient-magnitude heuristic.  Stored positive weights are exact
+    inputs and therefore begin with zero error.
+
+    Every scalar tensor restriction now has a parallel interval de Casteljau
+    restriction.  It starts from each complete center-plus-error coefficient
+    interval, encloses the local minimum/maximum ratio used by the second
+    split, and derives one common output error only after all restricted
+    coefficient intervals exist.  This replaces the former
+    `(1 + 8*depth)` error growth and `128*epsilon*max(1,magnitude)` addition.
+    The same bounded restriction is applied independently to the homogeneous
+    ray numerator and weight nets.  A weight interval reaching zero rejects
+    the ray-t certificate; otherwise outward interval division supplies each
+    rational coefficient bound and their hull supplies the box's t range.
+
+    The exact-dyadic oracle now restricts tensor nets independently with exact
+    half splits at three multi-split sub-box locations.  It covers both mixed-
+    sign coefficient patterns, all order pairs from 2x2 through 16x16, five
+    binary scales from exponent -400 through 400, and positive input
+    uncertainty.  All 546,750 restricted coefficients enclose the exact
+    nominal restricted value plus the full original uncertainty.  Maximum
+    output width is 1.00003862 times that uncertainty, below the 1.05 guard.
+    A separate gate checks 162 exact initial plane/ray coefficients across
+    coordinate, direction, and plane scales, and 36 positive-denominator
+    interval quotients.  Together with Finding 42, the audit now performs
+    873,243 permanent enclosure checks before the ray corpus.
+
+    Tighter proven hulls reject three legacy-only candidate clusters on
+    representable miss-side sphere lines which the former heuristics retained.
+    All three are analytically outside the sphere, produce zero implicit and
+    production segments, lie within 0.1 T in ray parameter of tangency, and
+    have grazing normal dot products.  The corpus reports unmatched legacy
+    clusters as raw/accepted/invalid and permits only this narrow oracle-
+    proven class; any invalid unmatched cluster is a hard failure.  Prepared
+    sphere candidates fall from 324 to 296 and physical clusters from 111 to
+    107 without changing a final partition.  This is a rigorous exclusion of
+    numerical miss-side ambiguity, not crack closure or relaxed hit handling.
+
+    The physical similarity contract remains unchanged.  Identity,
+    translation, arbitrary rotation, 0.01x, and 10,000x cases still preserve
+    normalized analytic/implicit/legacy/prepared partitions, all 60 ordinary
+    roots qualify at depths 4 through 9, and the 30 rays still visit 1,602
+    boxes.  The grazing matrices continue to qualify zero boxes early and the
+    fixed-depth sphere grazing traversal remains 12,384 boxes; the 71.7
+    percent measured work reduction still applies only to regular transverse
+    roots.
+
+    This completes the interval input proof for ordinary in-span Krawczyk
+    boxes.  Outside-span continuation reparameterization remains a distinct
+    open audit because extrapolating Bernstein transforms are not convex
+    restrictions.  No production SurfaceTree density or published hit path
+    changes in this checkpoint.  The focused normal gate passes 13/13 in
+    13.88 seconds, with rt_brep_ray at 12.58 seconds.  The focused ASan/UBSan
+    gate passes 12/12 in 54.91 seconds, with rt_brep_ray at 54.87 seconds and
+    no sanitizer diagnostic.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1209,9 +1278,10 @@ IMPLEMENTATION CHECKLIST
                 [x] Gate interval function evaluation, derivative hulls, and
                     products for every supported tensor order and five binary
                     dynamic ranges with an exact-dyadic oracle.
-                [ ] Audit initial ray-plane coefficient construction,
-                    arbitrary sub-box restriction, weights/ray-t bounds, and
-                    outside-span reparameterization amplification.
+                [x] Audit initial ray-plane coefficient construction,
+                    arbitrary sub-box restriction, and rational weight/ray-t
+                    bounds with operation-level intervals and exact gates.
+                [ ] Audit outside-span reparameterization amplification.
     [ ] Use fixed-capacity allocation-free shot workspace with explicit
         fallback on unsupported weights/order/capacity.
         [x] Bound direct surface order, subdivision stack, trace output, and
@@ -1729,6 +1799,9 @@ Cobb sphere baseline:
     Repeated after outward interval function/Jacobian evaluation and the
     exact-dyadic enclosure gate: 13/13, with rt_brep_ray at 10.36 seconds.
     All 326,295 permanent enclosure checks pass before the ray corpus.
+    Repeated after initial coefficient, arbitrary restriction, and rational
+    ray-t interval bounds: 13/13 in 13.88 seconds, with rt_brep_ray at 12.58
+    seconds.  All 873,243 permanent enclosure checks pass before the corpus.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -1784,6 +1857,9 @@ Cobb sphere baseline:
     Repeated after outward interval function/Jacobian evaluation and the
     exact-dyadic enclosure gate with halt_on_error=1: 12/12 in 37.29 seconds;
     rt_brep_ray takes 37.25 seconds with no ASan or UBSan diagnostic.
+    Repeated after initial coefficient, arbitrary restriction, and rational
+    ray-t interval bounds with halt_on_error=1: 12/12 in 54.91 seconds;
+    rt_brep_ray takes 54.87 seconds with no ASan or UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -1852,12 +1928,12 @@ NEXT ACTIONS
 2. Implement and gate cyclic convex/concave vertex-fan transitions before any
    multi-edge crack repair.  Preserve the current explicit fallback for
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
-3. Continue the layered Krawczyk audit with initial homogeneous ray-plane
-   coefficient construction, arbitrary sub-box restriction, rational
-   weights/ray-t bounds, and outside-span amplification.  Add conservative
-   clipping where it can prove exclusion or uniqueness.  Similarity and all
-   supported tensor orders are now gated for the function/Jacobian layer;
-   nonuniform affine transforms remain a separate ellipsoid target.  Keep
+3. Complete the layered Krawczyk audit for outside-span reparameterization
+   amplification, then add conservative clipping where it can prove exclusion
+   or uniqueness.  Initial construction, arbitrary in-span restriction,
+   rational ray-t bounds, similarity, and all supported tensor orders are now
+   independently gated; nonuniform affine transforms remain a separate
+   ellipsoid target.  Keep
    classifying the observed near-hit/grazing/duplicate-stage representation
    differences and extending final-partition oracle gates before production
    promotion.  Do not lower tree density until unsupported/capacity fallback
