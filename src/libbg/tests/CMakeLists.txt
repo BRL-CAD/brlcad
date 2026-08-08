@@ -375,8 +375,14 @@ brlcad_addexec(bg_trimesh_area trimesh_area.c "${BG_TEST_LIBS}" TEST)
 #  ************ trimesh_repair tests ***********
 
 brlcad_addexec(bg_trimesh_repair trimesh_repair.cpp "${BG_TEST_LIBS}" TEST)
+target_include_directories(
+  bg_trimesh_repair SYSTEM PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../GTE
+  ${GTE_INCLUDE_DIR}
+)
 
 brlcad_add_test(NAME bg_trimesh_repair  COMMAND bg_trimesh_repair)
+set_tests_properties(bg_trimesh_repair PROPERTIES TIMEOUT 30)
 
 #  ************ trimesh_remesh tests ***********
 
