@@ -1463,6 +1463,27 @@ namespace detria
             return false;
         }
 
+        inline bool detriaRecoverableAssert(bool condition, const char* message)
+        {
+            if (condition) DETRIA_LIKELY
+            {
+                return true;
+            }
+
+#ifdef NDEBUG
+            (void)message;
+#else
+            std::cerr << "Triangulation check failed";
+            if (message)
+            {
+                std::cerr << ": " << message;
+            }
+
+            std::cerr << std::endl;
+#endif
+            return false;
+        }
+
         // Similar to std::span, but without C++20, also much simpler
         template <typename T>
         struct ReadonlySpan
@@ -2236,7 +2257,7 @@ namespace detria
         AssertionFailed
     };
 
-#define DETRIA_ASSERT_MSG(cond, msg) do { if (!detail::detriaAssert((cond), msg)) DETRIA_UNLIKELY { return fail(TE_AssertionFailed{ }); } } while(0)
+#define DETRIA_ASSERT_MSG(cond, msg) do { if (!detail::detriaRecoverableAssert((cond), msg)) DETRIA_UNLIKELY { return fail(TE_AssertionFailed{ }); } } while(0)
 #define DETRIA_ASSERT(cond) DETRIA_ASSERT_MSG(cond, nullptr)
 
 #ifndef NDEBUG
@@ -3517,6 +3538,18 @@ namespace detria
                 // Points of the edge that we'd get if a flip is needed
                 Vector2 otherVertex0Position = getPoint(otherVertex0.index);
                 Vector2 otherVertex1Position = getPoint(otherVertex1.index);
+
+                // A diagonal of a non-convex or degenerate quadrilateral
+                // cannot be flipped. This can occur while re-triangulating
+                // around a constrained edge, and the incircle predicate
+                // requires its first three points to be counterclockwise.
+                if (orient2d(vertex0Position, vertex1Position,
+                        otherVertex1Position) != math::Orientation::CCW)
+                {
+                    edgeData.setDelaunay(true);
+                    oppositeEdgeData.setDelaunay(true);
+                    continue;
+                }
 
                 // TODO?: maybe we could allow user-defined functions to decide if an edge should be flipped
                 // That would enable other metrics, e.g. minimize edge length, flip based on the aspect ratio of the triangles, etc.
