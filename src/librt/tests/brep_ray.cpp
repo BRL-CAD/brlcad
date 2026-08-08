@@ -655,6 +655,11 @@ struct brep_root_event_summary {
     size_t surface_krawczyk_max_depth = 0;
     size_t surface_subdivision_boxes = 0;
     size_t surface_subdivision_max_boxes = 0;
+    size_t surface_clip_attempts = 0;
+    size_t surface_clip_contractions = 0;
+    size_t surface_clip_inconclusive = 0;
+    size_t surface_clip_restriction_failures = 0;
+    double surface_clip_max_fraction_removed = 0.0;
     double maximum_t_error = 0.0;
     double maximum_uv_error = 0.0;
     double maximum_trim_error = 0.0;
@@ -737,6 +742,14 @@ brep_accumulate_root_events(brep_root_event_summary &summary,
     summary.surface_subdivision_max_boxes = std::max(
 	summary.surface_subdivision_max_boxes,
 	trace.surface_subdivision_boxes);
+    summary.surface_clip_attempts += trace.surface_clip_attempts;
+    summary.surface_clip_contractions += trace.surface_clip_contractions;
+    summary.surface_clip_inconclusive += trace.surface_clip_inconclusive;
+    summary.surface_clip_restriction_failures +=
+	trace.surface_clip_restriction_failures;
+    summary.surface_clip_max_fraction_removed = std::max(
+	summary.surface_clip_max_fraction_removed,
+	(double)trace.surface_clip_max_fraction_removed);
     summary.maximum_t_error = std::max(summary.maximum_t_error,
 	(double)trace.root_match_max_t_error);
     summary.maximum_uv_error = std::max(summary.maximum_uv_error,
@@ -806,7 +819,7 @@ brep_print_prepared_event_summary(const char *label,
 	summary.local_event_final_mismatches);
     std::printf("%s prepared adaptive isolation: leaf-width=%.6g/%.6g "
 	"corrector=%zu/%zu krawczyk=%zu depth=%zu/%zu "
-	"subdivision=%zu/%zu\n", label,
+	"subdivision=%zu/%zu clip=%zu/%zu/%zu+%zu/%.3g\n", label,
 	summary.minimum_surface_isolated_t_width,
 	summary.maximum_surface_isolated_t_width,
 	summary.surface_corrector_converged,
@@ -815,7 +828,12 @@ brep_print_prepared_event_summary(const char *label,
 	summary.surface_krawczyk_min_depth,
 	summary.surface_krawczyk_max_depth,
 	summary.surface_subdivision_boxes,
-	summary.surface_subdivision_max_boxes);
+	summary.surface_subdivision_max_boxes,
+	summary.surface_clip_contractions,
+	summary.surface_clip_attempts,
+	summary.surface_clip_inconclusive,
+	summary.surface_clip_restriction_failures,
+	summary.surface_clip_max_fraction_removed);
 }
 
 
@@ -1102,6 +1120,9 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 		trace.candidate_surface_spans + trace.excluded_surface_spans !=
 		trace.prepared_surface_spans || trace.surface_workspace_exhausted ||
 		trace.surface_box_overflow ||
+		trace.surface_clip_restriction_failures ||
+		trace.surface_clip_max_fraction_removed >
+		0.5 + 64.0 * DBL_EPSILON ||
 		trace.local_root_overflow ||
 		trace.local_cluster_overflow ||
 		trace.local_root_candidates != trace.stored_local_roots ||
@@ -1114,12 +1135,16 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 		(analytic_chord >= 10.0 * rtip->rti_tol.dist &&
 		!roots_separated)) {
 	    std::printf("FAIL: grazing isolation h/R=%.17g spans=%zu/%zu "
-		"boxes=%zu/%zu workspace=%zu+%zu covered=%d separated=%d\n",
+		"boxes=%zu/%zu workspace=%zu+%zu clip=%zu/%zu/%zu/%.3g "
+		"covered=%d separated=%d\n",
 		h / radius, trace.candidate_surface_spans,
 		trace.prepared_surface_spans, trace.surface_subdivision_boxes,
 		trace.surface_isolated_boxes,
 		trace.surface_workspace_high_water,
-		trace.surface_workspace_exhausted, roots_covered,
+		trace.surface_workspace_exhausted,
+		trace.surface_clip_contractions, trace.surface_clip_attempts,
+		trace.surface_clip_restriction_failures,
+		trace.surface_clip_max_fraction_removed, roots_covered,
 		roots_separated);
 	    failures++;
 	}
@@ -1232,6 +1257,9 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    !brep_trace_covers_t(tangent_trace, 2.0 * radius, 1.0e-7) ||
 	    tangent_trace.surface_workspace_exhausted ||
 	    tangent_trace.surface_box_overflow ||
+	    tangent_trace.surface_clip_restriction_failures ||
+	    tangent_trace.surface_clip_max_fraction_removed >
+	    0.5 + 64.0 * DBL_EPSILON ||
 	    tangent_trace.local_root_overflow ||
 	    tangent_trace.local_cluster_overflow ||
 	    tangent_trace.stored_local_clusters != 1 ||
@@ -1311,6 +1339,9 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    trace.fixed_hit_count);
 	if (!brep_trace_fixed_workspaces_match(trace) ||
 		trace.surface_workspace_exhausted || trace.surface_box_overflow ||
+		trace.surface_clip_restriction_failures ||
+		trace.surface_clip_max_fraction_removed >
+		0.5 + 64.0 * DBL_EPSILON ||
 		trace.local_root_overflow ||
 		trace.local_cluster_overflow ||
 		trace.local_root_clusters != trace.stored_local_clusters ||
@@ -1429,6 +1460,10 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 		trace.root_event_mismatches ||
 		trace.local_event_final_mismatches ||
 		trace.surface_krawczyk_boxes != 2 ||
+		!trace.surface_clip_contractions ||
+		trace.surface_clip_restriction_failures ||
+		trace.surface_clip_max_fraction_removed >
+		0.5 + 64.0 * DBL_EPSILON ||
 		trace.surface_subdivision_max_depth >= 24 ||
 		trace.surface_subdivision_boxes > 80) {
 		std::printf("FAIL: oblique interior sphere ray %zu/%d "
@@ -1476,6 +1511,19 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     if (root_events.mismatched) {
 	std::printf("FAIL: %zu matched sphere roots changed event class\n",
 	    root_events.mismatched);
+	failures++;
+    }
+    if (!root_events.surface_clip_contractions ||
+	    root_events.surface_clip_restriction_failures ||
+	    root_events.surface_clip_max_fraction_removed >
+	    0.5 + 64.0 * DBL_EPSILON) {
+	std::printf("FAIL: grazing clipping contractions=%zu attempts=%zu "
+	    "inconclusive=%zu restriction-failures=%zu max-removed=%.3g\n",
+	    root_events.surface_clip_contractions,
+	    root_events.surface_clip_attempts,
+	    root_events.surface_clip_inconclusive,
+	    root_events.surface_clip_restriction_failures,
+	    root_events.surface_clip_max_fraction_removed);
 	failures++;
     }
     if (root_events.surface_krawczyk_boxes) {
@@ -3296,6 +3344,8 @@ check_brep_interval_enclosures()
     size_t coefficient_checks = 0;
     size_t restriction_checks = 0;
     size_t reparameterization_checks = 0;
+    size_t clip_checks = 0;
+    size_t clip_contractions = 0;
     long double maximum_function_width_ratio = 0.0L;
     long double maximum_restriction_width_ratio = 0.0L;
     long double maximum_reparameterization_width_ratio = 0.0L;
@@ -3804,14 +3854,80 @@ check_brep_interval_enclosures()
 	}
     }
 
+    const double clip_roots[][2] = {
+	{0.125, 0.875}, {0.5, 0.5}, {0.9375, 0.0625}
+    };
+    const int clip_scale_exponents[] = {-200, 0, 200};
+    for (int u_order = 2; u_order <= 16; ++u_order) {
+	for (int v_order = 2; v_order <= 16; ++v_order) {
+	    for (size_t root_index = 0; root_index <
+		    sizeof(clip_roots) / sizeof(clip_roots[0]); ++root_index) {
+		for (size_t scale_index = 0; scale_index <
+			sizeof(clip_scale_exponents) /
+			sizeof(clip_scale_exponents[0]); ++scale_index) {
+		    const double scale = std::ldexp(1.0,
+			clip_scale_exponents[scale_index]);
+		    const fastf_t error[2] = {
+			fabs(scale) * 1.0e-10, fabs(scale) * 1.0e-10
+		    };
+		    for (int i = 0; i < u_order; ++i) {
+			const double u = (double)i / (u_order - 1);
+			for (int j = 0; j < v_order; ++j) {
+			    const double v = (double)j / (v_order - 1);
+			    const size_t index = (size_t)i * v_order + j;
+			    const int first_pattern =
+				(int)((3 * i + 5 * j + root_index) % 5) - 2;
+			    const int second_pattern =
+				(int)((7 * i + 2 * j + root_index) % 5) - 2;
+			    values[0][index] = scale *
+				((u - clip_roots[root_index][0]) +
+				0.125 * (v - clip_roots[root_index][1])) +
+				0.25 * error[0] * first_pattern;
+			    values[1][index] = scale *
+				((v - clip_roots[root_index][1]) -
+				0.2 * (u - clip_roots[root_index][0])) +
+				0.25 * error[1] * second_pattern;
+			}
+		    }
+		    fastf_t range[4] = {};
+		    clip_checks++;
+		    if (!_rt_brep_clip_test(values[0], values[1], u_order,
+			    v_order, error, range) ||
+			    range[0] > clip_roots[root_index][0] ||
+			    range[1] < clip_roots[root_index][0] ||
+			    range[2] > clip_roots[root_index][1] ||
+			    range[3] < clip_roots[root_index][1]) {
+			std::printf("FAIL: Bernstein clipping enclosure "
+			    "order=%d/%d scale=%d root=%.17g/%.17g "
+			    "range=%.17g/%.17g %.17g/%.17g\n", u_order,
+			    v_order, clip_scale_exponents[scale_index],
+			    clip_roots[root_index][0], clip_roots[root_index][1],
+			    range[0], range[1], range[2], range[3]);
+			failures++;
+		    } else if (range[1] - range[0] < 1.0 ||
+			    range[3] - range[2] < 1.0) {
+			clip_contractions++;
+		    }
+		}
+	    }
+	}
+    }
+    if (clip_contractions != clip_checks) {
+	std::printf("FAIL: Bernstein clipping did not contract %zu/%zu "
+	    "affine systems\n", clip_checks - clip_contractions, clip_checks);
+	failures++;
+    }
+
     if (!failures) {
 	std::printf("BREP interval enclosure audit: PASS cases=%zu "
 	    "function=%zu derivative=%zu product=%zu quotient=%zu "
 	    "coefficient=%zu restriction=%zu reparameterization=%zu "
+	    "clip=%zu/%zu "
 	    "max-width/error=%.9Lg/%.9Lg/%.9Lg\n",
 	    cases, function_checks, derivative_checks, product_checks,
 	    division_checks, coefficient_checks, restriction_checks,
-	    reparameterization_checks, maximum_function_width_ratio,
+	    reparameterization_checks, clip_contractions, clip_checks,
+	    maximum_function_width_ratio,
 	    maximum_restriction_width_ratio,
 	    maximum_reparameterization_width_ratio);
     }
@@ -3859,6 +3975,11 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
     size_t maximum_boxes = 0;
     size_t minimum_depth = SIZE_MAX;
     size_t maximum_depth = 0;
+    size_t total_clip_attempts = 0;
+    size_t total_clip_contractions = 0;
+    size_t total_clip_inconclusive = 0;
+    size_t total_clip_restriction_failures = 0;
+    double maximum_clip_fraction_removed = 0.0;
     double maximum_implicit_error = 0.0;
     double maximum_legacy_error = 0.0;
     double maximum_prepared_error = 0.0;
@@ -3971,6 +4092,15 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
 		    total_rays++;
 		    total_krawczyk += trace.surface_krawczyk_boxes;
 		    total_boxes += trace.surface_subdivision_boxes;
+		    total_clip_attempts += trace.surface_clip_attempts;
+		    total_clip_contractions +=
+			trace.surface_clip_contractions;
+		    total_clip_inconclusive += trace.surface_clip_inconclusive;
+		    total_clip_restriction_failures +=
+			trace.surface_clip_restriction_failures;
+		    maximum_clip_fraction_removed = std::max(
+			maximum_clip_fraction_removed,
+			(double)trace.surface_clip_max_fraction_removed);
 		    minimum_boxes = std::min(minimum_boxes,
 			trace.surface_subdivision_boxes);
 		    maximum_boxes = std::max(maximum_boxes,
@@ -4021,13 +4151,18 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
 			trace.local_event_overflow ||
 			trace.local_event_final_mismatches ||
 			trace.surface_krawczyk_boxes != 2 ||
+			!trace.surface_clip_attempts ||
+			!trace.surface_clip_contractions ||
+			trace.surface_clip_restriction_failures ||
+			trace.surface_clip_max_fraction_removed >
+			0.5 + 64.0 * DBL_EPSILON ||
 			trace.surface_subdivision_max_depth >= 24 ||
 			trace.surface_workspace_exhausted ||
 			trace.surface_box_overflow;
 		    if (bad) {
 			std::printf("FAIL: adaptive sphere similarity %s %zu/%d "
 			    "segments=%d/%d/%zu roots=%zu/%zu events=%zu/%zu "
-			    "krawczyk=%zu depth=%zu boxes=%zu "
+			    "krawczyk=%zu depth=%zu boxes=%zu clip=%zu/%zu/%zu "
 			    "errors=%.3g/%.3g/%.3g limit=%.3g\n",
 			    test.name, direction_index, reverse,
 			    implicit_result.segments, legacy_result.segments,
@@ -4039,6 +4174,9 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
 			    trace.surface_krawczyk_boxes,
 			    trace.surface_subdivision_max_depth,
 			    trace.surface_subdivision_boxes,
+			    trace.surface_clip_contractions,
+			    trace.surface_clip_attempts,
+			    trace.surface_clip_restriction_failures,
 			    implicit_error, legacy_error, prepared_error,
 			    normalized_limit);
 			failures++;
@@ -4054,12 +4192,30 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
 	rt_i_destroy(rtip);
     }
 
+    /* The immediately preceding no-clipping similarity gate visited 1,602
+     * boxes for these same 30 rays.  Keep this broad threshold as a direct
+     * work-reduction ratchet while the solver remains shadow-only. */
+    if (total_rays == 30 && (total_boxes >= 1602 ||
+	    !total_clip_contractions || total_clip_restriction_failures ||
+	    maximum_clip_fraction_removed > 0.5 + 64.0 * DBL_EPSILON)) {
+	std::printf("FAIL: adaptive sphere clipping work "
+	    "boxes=%zu/1602 clip=%zu/%zu/%zu+%zu/%.3g\n", total_boxes,
+	    total_clip_contractions, total_clip_attempts,
+	    total_clip_inconclusive, total_clip_restriction_failures,
+	    maximum_clip_fraction_removed);
+	failures++;
+    }
+
     if (!failures) {
 	std::printf("Sphere adaptive similarity invariance: PASS "
 	    "rays=%zu krawczyk=%zu depth=%zu/%zu boxes=%zu/%zu/%zu "
-	    "max-errors=%.3g/%.3g/%.3g\n", total_rays,
+	    "clip=%zu/%zu/%zu+%zu/%.3g max-errors=%.3g/%.3g/%.3g\n",
+	    total_rays,
 	    total_krawczyk, minimum_depth, maximum_depth, minimum_boxes,
-	    total_boxes, maximum_boxes, maximum_implicit_error,
+	    total_boxes, maximum_boxes, total_clip_contractions,
+	    total_clip_attempts, total_clip_inconclusive,
+	    total_clip_restriction_failures, maximum_clip_fraction_removed,
+	    maximum_implicit_error,
 	    maximum_legacy_error, maximum_prepared_error);
     }
     return failures;
@@ -4571,7 +4727,8 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    "mismatch=%zu "
 			    "trim=%zu/%zu/%zu mismatch=%zu local-trim=%zu/%zu/%zu "
 			    "coverage=%zu/%zu/%zu/%zu events=%zu/%zu "
-			    "surface=%zu/%zu/%zu overflow=%zu\n",
+			    "surface=%zu/%zu/%zu overflow=%zu "
+			    "certificate=%zu/%zu/%zu/%zu+%zu\n",
 			    test.name,
 			    expected_state,
 			    reverse, edge ? edge->closest_state : -99,
@@ -4605,7 +4762,12 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    trace.candidate_surface_spans,
 			    trace.surface_subdivision_boxes,
 			    trace.surface_isolated_boxes,
-			    trace.surface_box_overflow);
+			    trace.surface_box_overflow,
+			    trace.continuation_certificate_boxes,
+			    trace.continuation_certificate_isolated,
+			    trace.continuation_certificate_root_boxes,
+			    trace.continuation_certificate_existing_overlap,
+			    trace.continuation_certificate_exhausted);
 			failures++;
 		    }
 		}
