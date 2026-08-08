@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 
+#include "bio.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "dm.h"
@@ -39,10 +40,45 @@ static char *framebuffer = NULL;
 static char usage[] = "\
 Usage: fbhelp [-F framebuffer]\n";
 
+static int
+fbhelp_log_to_stdout(int *saved_stderr)
+{
+    if (fflush(stdout) == EOF || fflush(stderr) == EOF)
+	return -1;
+
+    *saved_stderr = dup(fileno(stderr));
+    if (*saved_stderr == -1)
+	return -1;
+
+    if (dup2(fileno(stdout), fileno(stderr)) == -1) {
+	close(*saved_stderr);
+	*saved_stderr = -1;
+	return -1;
+    }
+
+    return 0;
+}
+
+static int
+fbhelp_restore_stderr(int saved_stderr)
+{
+    int ret = 0;
+
+    if (fflush(stderr) == EOF)
+	ret = -1;
+    if (dup2(saved_stderr, fileno(stderr)) == -1)
+	ret = -1;
+    close(saved_stderr);
+    return ret;
+}
+
 int
 main(int argc, char **argv)
 {
     int c;
+    int close_result;
+    int help_result;
+    int saved_stderr = -1;
     struct fb *fbp;
 
     bu_setprogname(argv[0]);
@@ -62,8 +98,18 @@ main(int argc, char **argv)
 	(void)fputs(usage, stderr);
 	return 1;
     }
+    if ((fbp = fb_open(framebuffer, 0, 0)) == FB_NULL) {
+	fprintf(stderr, "fbhelp: Can't open frame buffer\n");
+	return 1;
+    }
 
-    fprintf(stderr, "\
+    if (fbhelp_log_to_stdout(&saved_stderr) != 0) {
+	fprintf(stderr, "fbhelp: unable to consolidate help output\n");
+	fb_close(fbp);
+	return 1;
+    }
+
+    fprintf(stdout, "\
 A Frame Buffer display device is selected by\n\
 setting the environment variable FB_FILE:\n\
 (/bin/sh) FB_FILE=/dev/device; export FB_FILE\n\
@@ -71,16 +117,24 @@ setting the environment variable FB_FILE:\n\
 Many programs also accept a \"-F framebuffer\" flag.\n\
 Type \"man brlcad\" for more information.\n");
 
-    fprintf(stderr, "=============== Available Devices ================\n");
-    fb_genhelp();
+    fprintf(stdout, "=============== Available Devices ================\n");
+    help_result = fflush(stdout) == EOF;
+    if (fb_genhelp() != 0)
+	help_result = 1;
 
-    fprintf(stderr, "=============== Current Selection ================\n");
-    if ((fbp = fb_open(framebuffer, 0, 0)) == FB_NULL) {
-	fprintf(stderr, "fbhelp: Can't open frame buffer\n");
+    fprintf(stdout, "=============== Current Selection ================\n");
+    if (fflush(stdout) == EOF)
+	help_result = 1;
+    if (fb_help(fbp) != 0)
+	help_result = 1;
+    if (fbhelp_restore_stderr(saved_stderr) != 0) {
+	fprintf(stderr, "fbhelp: unable to restore standard error\n");
+	fb_close(fbp);
 	return 1;
     }
-    fb_help(fbp);
-    return fb_close(fbp);
+
+    close_result = fb_close(fbp);
+    return help_result != 0 || close_result != 0;
 }
 
 
