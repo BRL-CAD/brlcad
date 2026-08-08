@@ -151,7 +151,7 @@ brlcad_addexec(rt_brep_io brep_io.cpp "librt;libbrep;libbu;Threads::Threads;${M_
 brlcad_add_test(NAME rt_brep_io COMMAND rt_brep_io)
 
 # Directed analytic primitive vs converted-BRep ray intersections
-brlcad_addexec(rt_brep_ray brep_ray.cpp "librt;libbrep;libbu;${M_LIBRARY}" TEST)
+brlcad_addexec(rt_brep_ray brep_ray.cpp "librt;libbrep;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_brep_ray COMMAND rt_brep_ray)
 
 # stand-alone Crofton estimator tests
