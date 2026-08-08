@@ -7804,19 +7804,23 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			edge->discrepancy_lower_bound < 0.0 ||
 			edge->discrepancy_upper_bound <
 			edge->discrepancy_lower_bound ||
+			edge->discrepancy_lower_bound >
+			edge->measured_discrepancy + normalized_limit *
+			test.scale ||
 			edge->measured_discrepancy >
 			edge->discrepancy_upper_bound + normalized_limit *
 			test.scale ||
-			edge->discrepancy_upper_bound -
-			edge->discrepancy_lower_bound >
-			edge->discrepancy_bound_tolerance +
-			normalized_limit * test.scale ||
+			!(edge->discrepancy_upper_bound <
+			edge->edge_tolerance) ||
 			edge->tolerance_inferred ||
 			!edge->discrepancy_measured ||
+			!edge->discrepancy_sample_authorized ||
 			!edge->correspondence_screened ||
 			!edge->correspondence_supported ||
 			!edge->correspondence_cells ||
 			edge->correspondence_exhausted ||
+			edge->discrepancy_proof_class !=
+			RT_BREP_SEAM_GAP_INSIDE ||
 			!edge->discrepancy_authorized ||
 			fabs(edge->model_tolerance / test.scale -
 			tol->dist) > normalized_limit ||
@@ -8036,7 +8040,10 @@ check_cobb_ambiguous_correspondence(const struct bn_tol *tol,
 	    frame.edge_index);
 	if (!brep_trace_fixed_workspaces_match(trace) || !edge ||
 		!edge->discrepancy_measured ||
-		!edge->discrepancy_authorized ||
+		!edge->discrepancy_sample_authorized ||
+		edge->discrepancy_authorized ||
+		edge->discrepancy_proof_class !=
+		RT_BREP_SEAM_GAP_UNAVAILABLE ||
 		!edge->correspondence_screened ||
 		edge->correspondence_supported || !edge->correspondence_cells ||
 		!edge->correspondence_exhausted ||
@@ -8048,13 +8055,16 @@ check_cobb_ambiguous_correspondence(const struct bn_tol *tol,
 		trace.closure_shadow_segments ||
 		trace.after_direction_cleanup != 1 || trace.final_segments != 0) {
 	    std::printf("FAIL: Cobb ambiguous correspondence reverse=%d "
-		"edge=%d measured=%d authorized=%d correspondence=%d/%d "
+		"edge=%d measured=%d sample=%d authorized=%d proof=%d "
+		"correspondence=%d/%d "
 		"cells=%zu depth=%zu proof-exhausted=%d "
 		"spans=%zu within=%d sector=%d bound=%d exhausted=%d "
 		"closure=%zu continuation=%zu segment=%zu cleanup=%zu\n",
 		reverse,
 		frame.edge_index, edge ? edge->discrepancy_measured : -1,
+		edge ? edge->discrepancy_sample_authorized : -1,
 		edge ? edge->discrepancy_authorized : -1,
+		edge ? edge->discrepancy_proof_class : -1,
 		edge ? edge->correspondence_screened : -1,
 		edge ? edge->correspondence_supported : -1,
 		edge ? edge->correspondence_cells : 0,
@@ -8209,34 +8219,41 @@ check_cobb_discrepancy_bound_budget(const struct bn_tol *tol,
 	if (edge->discrepancy_bound_exhausted)
 	    exhausted_count++;
 	bool invalid = !edge->discrepancy_measured ||
+	    !edge->discrepancy_sample_authorized ||
 	    !edge->correspondence_screened ||
 	    !edge->correspondence_supported ||
 	    !edge->correspondence_cells ||
 	    edge->correspondence_exhausted ||
-	    !edge->discrepancy_authorized ||
 	    (edge->discrepancy_bounded &&
 	    edge->discrepancy_bound_exhausted);
 	if (edge->discrepancy_bounded) {
-	    invalid = invalid || edge->discrepancy_lower_bound >
+	    invalid = invalid || !edge->discrepancy_authorized ||
+		edge->discrepancy_proof_class !=
+		RT_BREP_SEAM_GAP_INSIDE ||
+		edge->discrepancy_lower_bound >
 		target.measured_discrepancy + limit ||
 		edge->discrepancy_upper_bound <
 		target.measured_discrepancy - limit ||
-		edge->discrepancy_upper_bound -
-		edge->discrepancy_lower_bound >
-		edge->discrepancy_bound_tolerance + limit;
+		!(edge->discrepancy_upper_bound < edge->edge_tolerance);
 	} else {
-	    invalid = invalid || !edge->discrepancy_bound_exhausted;
+	    invalid = invalid || edge->discrepancy_authorized ||
+		edge->discrepancy_proof_class !=
+		RT_BREP_SEAM_GAP_UNAVAILABLE ||
+		!edge->discrepancy_bound_exhausted;
 	}
 	if (invalid) {
 	    std::printf("FAIL: Cobb adaptive seam budget edge=%d "
 		"measured=%.17g bound=%.17g/%.17g target=%.17g "
-		"bounded=%d exhausted=%d cells=%zu depth=%zu\n",
+		"bounded=%d exhausted=%d proof=%d authorized=%d "
+		"cells=%zu depth=%zu\n",
 		target.edge_index, target.measured_discrepancy,
 		edge->discrepancy_lower_bound,
 		edge->discrepancy_upper_bound,
 		edge->discrepancy_bound_tolerance,
 		edge->discrepancy_bounded,
 		edge->discrepancy_bound_exhausted,
+		edge->discrepancy_proof_class,
+		edge->discrepancy_authorized,
 		edge->discrepancy_bound_cells,
 		edge->discrepancy_bound_depth);
 	    failures++;
@@ -8274,13 +8291,20 @@ check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
 	double declared_ratio;
 	bool unset;
 	bool inferred;
+	bool sample_authorized;
+	int proof_class;
 	bool authorized;
     } cases[] = {
-	{"correct", 1.01, false, false, true},
-	{"unset", 0.0, true, true, true},
-	{"explicit-zero", 0.0, false, false, false},
-	{"half", 0.5, false, false, false},
-	{"double", 2.0, false, false, true}
+	{"correct", 1.01, false, false, true,
+	    RT_BREP_SEAM_GAP_INSIDE, true},
+	{"unset", 0.0, true, true, true,
+	    RT_BREP_SEAM_GAP_AMBIGUOUS, false},
+	{"explicit-zero", 0.0, false, false, false,
+	    RT_BREP_SEAM_GAP_OUTSIDE, false},
+	{"half", 0.5, false, false, false,
+	    RT_BREP_SEAM_GAP_OUTSIDE, false},
+	{"double", 2.0, false, false, true,
+	    RT_BREP_SEAM_GAP_INSIDE, true}
     };
 
     int failures = 0;
@@ -8335,16 +8359,27 @@ check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
 	    edge && !ON_IsValid(edge->declared_tolerance) :
 	    edge && fabs(edge->declared_tolerance -
 	    cases[case_index].declared_ratio * measured_gap) <= limit;
+	const bool proof_bounds_ok = edge &&
+	    (cases[case_index].proof_class == RT_BREP_SEAM_GAP_INSIDE ?
+	    edge->discrepancy_upper_bound < edge->edge_tolerance :
+	    (cases[case_index].proof_class == RT_BREP_SEAM_GAP_OUTSIDE ?
+	    edge->discrepancy_lower_bound > edge->edge_tolerance :
+	    edge->discrepancy_lower_bound <= edge->edge_tolerance &&
+	    edge->discrepancy_upper_bound >= edge->edge_tolerance));
 	if (!brep_trace_fixed_workspaces_match(trace) ||
 		!edge || !edge->discrepancy_measured ||
 		!edge->correspondence_screened ||
 		!edge->correspondence_supported ||
 		!edge->correspondence_cells ||
 		edge->correspondence_exhausted ||
-		edge->discrepancy_bounded ||
+		!edge->discrepancy_bounded ||
 		edge->discrepancy_bound_exhausted ||
 		!declared_ok || edge->tolerance_inferred !=
 		cases[case_index].inferred ||
+		edge->discrepancy_sample_authorized !=
+		cases[case_index].sample_authorized ||
+		edge->discrepancy_proof_class !=
+		cases[case_index].proof_class || !proof_bounds_ok ||
 		edge->discrepancy_authorized != cases[case_index].authorized ||
 		fabs(edge->model_tolerance - tol->dist) > limit ||
 		fabs(edge->measured_discrepancy - measured_gap) > limit ||
@@ -8355,7 +8390,8 @@ check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
 	    std::printf("FAIL: Cobb %s tolerance metadata declared=%.17g "
 		"model=%.17g measured=%.17g bound=%.17g/%.17g "
 		"effective=%.17g "
-		"inferred=%d/%d authorized=%d/%d within=%d spans=%zu\n",
+		"inferred=%d/%d sample=%d/%d proof=%d/%d "
+		"authorized=%d/%d within=%d spans=%zu\n",
 		cases[case_index].name,
 		edge ? edge->declared_tolerance : INFINITY,
 		edge ? edge->model_tolerance : INFINITY,
@@ -8365,6 +8401,10 @@ check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
 		edge ? edge->edge_tolerance : INFINITY,
 		edge ? edge->tolerance_inferred : -1,
 		cases[case_index].inferred,
+		edge ? edge->discrepancy_sample_authorized : -1,
+		cases[case_index].sample_authorized,
+		edge ? edge->discrepancy_proof_class : -1,
+		cases[case_index].proof_class,
 		edge ? edge->discrepancy_authorized : -1,
 		cases[case_index].authorized,
 		edge ? edge->within_edge_tolerance : -1,
@@ -8946,6 +8986,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "discrepancy_measured,correspondence_screened,"
 	    "correspondence_supported,correspondence_cells,"
 	    "correspondence_depth,correspondence_exhausted,"
+	    "discrepancy_sample_authorized,discrepancy_proof_class,"
 	    "discrepancy_authorized,tolerance_inferred,candidate_spans,"
 	    "within_edge_tolerance,lift0,lift1,"
 	    "normal_dot0,normal_dot1,ray_edge_dot,sector_valid,closest_state\n");
@@ -9197,22 +9238,17 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			maximum_edge_distance_error, edge_distance_error);
 		    const double edge_distance_limit = std::max(1.0e-10 * tol->dist,
 			512.0 * DBL_EPSILON * radius);
-		    const bool expected_discrepancy_bound =
-			measured_gap <= tol->dist + edge_distance_limit;
 		    const bool invalid_discrepancy_bound = target_edge &&
-			(expected_discrepancy_bound ?
 			(!target_edge->discrepancy_bounded ||
 			target_edge->discrepancy_bound_exhausted ||
+			target_edge->discrepancy_proof_class !=
+			RT_BREP_SEAM_GAP_INSIDE ||
 			target_edge->discrepancy_lower_bound >
 			measured_gap + edge_distance_limit ||
 			target_edge->discrepancy_upper_bound <
 			measured_gap - edge_distance_limit ||
-			target_edge->discrepancy_upper_bound -
-			target_edge->discrepancy_lower_bound >
-			target_edge->discrepancy_bound_tolerance +
-			edge_distance_limit) :
-			(target_edge->discrepancy_bounded ||
-			target_edge->discrepancy_bound_exhausted));
+			!(target_edge->discrepancy_upper_bound <
+			target_edge->edge_tolerance));
 		    const bool expected_edge_evidence = target_edge &&
 			fabs(clearance) <= target_edge->edge_tolerance +
 			edge_distance_limit;
@@ -9233,6 +9269,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    }
 		    if (!target_edge || edge_distance_error > edge_distance_limit ||
 			    !target_edge->discrepancy_measured ||
+			    !target_edge->discrepancy_sample_authorized ||
 			    !target_edge->correspondence_screened ||
 			    !target_edge->correspondence_supported ||
 			    !target_edge->correspondence_cells ||
@@ -9259,6 +9296,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			std::printf("FAIL: bowed Cobb target edge distance sign=%d "
 			    "g/T=%.3g h/T=%.3g reverse=%d distance=%.17g "
 			    "expected=%.17g limit=%.17g tolerance=%.17g "
+			    "bound=%.17g/%.17g proof=%d sample=%d authorized=%d "
 			    "spans=%zu within=%d/%d sector=%d state=%d/%d "
 			    "lifts=%.17g/%.17g ray-edge=%.17g\n", sign,
 			    gap_ratios[ratio_index],
@@ -9266,6 +9304,15 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    target_edge ? target_edge->distance : INFINITY,
 			    fabs(clearance), edge_distance_limit,
 			    target_edge ? target_edge->edge_tolerance : INFINITY,
+			    target_edge ?
+				target_edge->discrepancy_lower_bound : INFINITY,
+			    target_edge ?
+				target_edge->discrepancy_upper_bound : INFINITY,
+			    target_edge ?
+				target_edge->discrepancy_proof_class : -1,
+			    target_edge ?
+				target_edge->discrepancy_sample_authorized : -1,
+			    target_edge ? target_edge->discrepancy_authorized : -1,
 			    target_edge ? target_edge->candidate_spans : 0,
 			    target_edge ? target_edge->within_edge_tolerance : -1,
 			    expected_edge_evidence,
@@ -9750,7 +9797,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    std::printf("cobb_edge,%s,%.9g,%.9g,%d,%d,%d,%d,"
 				"%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,"
 				"%.17g,%.17g,%.17g,%d,%zu,%zu,%d,"
-				"%d,%d,%d,%zu,%zu,%d,%d,%d,%zu,%d,"
+				"%d,%d,%d,%zu,%zu,%d,%d,%d,%d,%d,%zu,%d,"
 				"%.17g,%.17g,"
 				"%.17g,%.17g,%.17g,%d,%d\n",
 				sign > 0 ? "outward" : "inward",
@@ -9776,6 +9823,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				edge.correspondence_cells,
 				edge.correspondence_depth,
 				edge.correspondence_exhausted,
+				edge.discrepancy_sample_authorized,
+				edge.discrepancy_proof_class,
 				edge.discrepancy_authorized,
 				edge.tolerance_inferred,
 				edge.candidate_spans,

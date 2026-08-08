@@ -494,6 +494,11 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_EVENT_BOUNDARY_FOLD 2
 #define RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT 1
 #define RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT 2
+/* Seam-gap and fold-gap values classify separate trace fields. */
+#define RT_BREP_SEAM_GAP_UNAVAILABLE 0
+#define RT_BREP_SEAM_GAP_INSIDE 1
+#define RT_BREP_SEAM_GAP_OUTSIDE 2
+#define RT_BREP_SEAM_GAP_AMBIGUOUS 3
 #define RT_BREP_FOLD_GAP_RESOLVED 1
 #define RT_BREP_FOLD_GAP_SUBMINIMUM 2
 #define RT_BREP_FOLD_GAP_AMBIGUOUS 3
@@ -554,6 +559,8 @@ struct rt_brep_trace_edge {
     int correspondence_exhausted;
     int discrepancy_bounded;
     int discrepancy_bound_exhausted;
+    int discrepancy_sample_authorized;
+    int discrepancy_proof_class;
     int discrepancy_authorized;
     int tolerance_inferred;
 };

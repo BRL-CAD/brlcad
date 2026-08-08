@@ -59,6 +59,8 @@ struct brep_edge_record {
     bool correspondence_exhausted = false;
     bool discrepancy_bounded = false;
     bool discrepancy_bound_exhausted = false;
+    bool discrepancy_sample_authorized = false;
+    int discrepancy_proof_class = 0;
     bool discrepancy_authorized = false;
     bool tolerance_inferred = false;
 };
