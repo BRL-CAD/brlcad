@@ -30,6 +30,7 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdio.h>
 
 #include "bu/parallel.h"
@@ -43,6 +44,23 @@
 
 static unsigned char *scanline;
 
+#define DEFAULT_FOREGROUND_INTENSITY 1
+#define DEFAULT_BACKGROUND_INTENSITY UCHAR_MAX
+
+static int foreground_intensity = DEFAULT_FOREGROUND_INTENSITY;
+static int background_intensity = DEFAULT_BACKGROUND_INTENSITY;
+
+
+static unsigned char
+silhouette_intensity(int intensity)
+{
+    if (intensity < 0)
+	return 0;
+    if (intensity > UCHAR_MAX)
+	return UCHAR_MAX;
+    return (unsigned char)intensity;
+}
+
 /*
  *  Viewing module specific "set" variables.
  *  Any additional variables that the user may be allowed to change
@@ -51,6 +69,8 @@ static unsigned char *scanline;
  *  the command line, or from within an animation script.
  */
 struct bu_structparse view_parse[] = {
+    {"%d", 1, "foreground", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "background", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
@@ -147,7 +167,7 @@ int
 rayhit(register struct application *ap, struct partition *UNUSED(PartHeadp), struct seg *UNUSED(segp))
 {
     bu_semaphore_acquire( RT_SEM_RESULTS );
-    scanline[ap->a_x] = 1;
+    scanline[ap->a_x] = silhouette_intensity(foreground_intensity);
     bu_semaphore_release( RT_SEM_RESULTS );
     return 1;	/* report hit to main routine */
 }
@@ -159,7 +179,7 @@ int
 raymiss(register struct application *ap)
 {
     bu_semaphore_acquire( RT_SEM_RESULTS );
-    scanline[ap->a_x] = 255;
+    scanline[ap->a_x] = silhouette_intensity(background_intensity);
     bu_semaphore_release( RT_SEM_RESULTS );
     return 0;
 }
@@ -167,7 +187,11 @@ raymiss(register struct application *ap)
 C_DECL void
 application_init (void)
 {
+    view_parse[0].sp_offset = bu_byteoffset(foreground_intensity);
+    view_parse[1].sp_offset = bu_byteoffset(background_intensity);
+
     option("", "-o file.bw", "Output black & white silhouette image", 0);
+    option("Command (-c)", "\"set foreground=# background=#\"", "Set hit and miss intensities (0-255)", 0);
     option("Raytrace", "-i", "Enable incremental (progressive-style) rendering", 1);
     option("Raytrace", "-t", "Render from top to bottom (default: from bottom up)", 1);
 }
