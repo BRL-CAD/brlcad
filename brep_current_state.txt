@@ -2206,6 +2206,41 @@ ESTABLISHED FINDINGS
     material.  Dense SurfaceTree construction and every fallback population
     remain unchanged pending the broader corpus and performance gates.
 
+61. The monolithic BREP ray correctness executable is now process-sharded at
+    its safe semantic boundaries.  CTest registers six deterministic entries:
+    directed sphere/pole/grazing and similarity rays, shared-line Crofton and
+    CSG fixtures, Cobb/seam and topology fixtures, exhaustive interval
+    arithmetic, fold proofs, and nonuniform affine behavior.  The executable
+    retains its no-argument complete-corpus behavior, and `--core-only`
+    remains available as a manual combined model-work mode.  No coverage was
+    removed; the split only changes CTest scheduling.
+
+    The first four-way split reduced the isolated optimized qualification
+    wall time from approximately 238 seconds to 135.91 seconds, a roughly
+    43 percent reduction.  Splitting the model work further into directed,
+    Crofton, and seam entries produced six tests with an aggregate wall time
+    of 138.02 seconds under `ctest --parallel 6`; the exhaustive interval
+    enclosure audit remained the 137.98-second critical path.  Further
+    interval subdivision is intentionally deferred: it would optimize test
+    plumbing rather than advance the correctness-first production design.
+
+    The no-argument optimized executable again ends with
+    `BREP ray correctness corpus: PASS`, including the complete interval,
+    fold, grazing, Crofton, affine, and seam matrices.  The five sanitizer
+    shards affected by model-work dispatch (`directed`, `crofton`, `seam`,
+    `fold`, and `affine`) pass concurrently in 308.91 seconds with
+    `halt_on_error=1` and no ASan/UBSan diagnostic.  The exhaustive interval
+    sanitizer gate was already independently clean and its code path is
+    unchanged by this dispatch-only split.
+
+    This is the chosen validation parallelism boundary.  Continue using
+    independent CTest processes and parallel builds.  Do not add threads
+    inside the solver merely to shorten tests until OpenNURBS shared state,
+    fixture ownership, BRL-CAD resources, and deterministic telemetry have an
+    independent thread-safety qualification.  Correct root/event semantics
+    and the intended production pipeline now take priority over further test
+    runtime work.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -2243,6 +2278,9 @@ IMPLEMENTATION CHECKLIST
     [x] Record rejection reasons and provenance in this continuation log.
 
 [ ] Paired correctness harness
+    [x] Register directed, Crofton, seam, interval, fold, and affine
+        correctness partitions as independent deterministic CTest processes;
+        retain the no-argument complete-corpus executable.
     [ ] Compare implicit/CSG and converted BREP ordered partitions.
         [x] Seed in-memory C++ corpus with paired sphere raw segments and
             normal rt_shootray partitions.
@@ -3283,11 +3321,10 @@ NEXT ACTIONS
    combined-error Cobb families, then remove the remaining duplicated Cobb
    control net from brep_invalid.cpp while independently gating its invalid
    topology behavior.
-6. Register the existing interval, fold, and affine focused modes as separate
-   deterministic CTest processes, then split Crofton, Cobb/seam, and directed
-   partitions out of the remaining monolithic `rt_brep_ray` path.  The three
-   focused modes already pass when run concurrently as independent processes.
-   Use `ctest -j`, keep pure arithmetic counters deterministic, and do not
-   introduce shared-process parallelism into OpenNURBS/model construction
-   until separately qualified.  The exhaustive interval matrix is the
-   dominant ASan runtime.
+6. Use the registered directed, Crofton, seam, interval, fold, and affine
+   CTest processes with `ctest -j`; retain the no-argument full executable for
+   compatibility qualification.  Keep pure arithmetic counters deterministic
+   and do not introduce shared-process parallelism into OpenNURBS/model
+   construction until separately qualified.  The exhaustive interval matrix
+   is the remaining sanitizer critical path, but subdividing it is deferred
+   while correctness and the production pipeline are the priority.

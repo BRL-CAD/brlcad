@@ -2085,10 +2085,14 @@ semantics.  Build independent translation units with the build system's
 parallel mode.  Run deterministic focused executables or modes for interval
 arithmetic, fold proofs, affine grazing, Crofton, Cobb/seams, and directed
 partitions as separate processes under CTest `-j`.  The current
-`--interval-only`, `--fold-only`, and `--affine-only` modes already pass when
-run concurrently and should be registered as separate CTest entries.  This
-also prevents the exhaustive interval oracle, which dominates sanitizer wall
-time, from serializing short correctness gates.
+`--directed-only`, `--crofton-only`, `--seam-only`, `--interval-only`,
+`--fold-only`, and `--affine-only` modes are registered as separate CTest
+entries and pass when run concurrently.  The no-argument executable retains
+the complete corpus.  This prevents the exhaustive interval oracle, which
+dominates sanitizer wall time, from serializing short correctness gates.  On
+the current host the first split reduced isolated optimized wall time from
+about 238 seconds to about 136 seconds.  Further arithmetic-matrix sharding is
+lower priority than establishing correct production root and event semantics.
 
 Do not introduce threads inside one ray-solver test or share mutable
 OpenNURBS/model construction merely to accelerate validation.  That requires
@@ -2346,8 +2350,9 @@ Primary BRL-CAD implementation sources:
   * src/librt/librt_private.h and src/librt/tests/brep_ray.cpp
       fixed-capacity proof telemetry/private exact-audit hooks and the
       analytic, affine-grazing, interval, Crofton, Cobb, seam, and directed
-      correctness ratchets.  The focused process modes are `--interval-only`,
-      `--fold-only`, and `--affine-only`.
+      correctness ratchets.  The CTest process modes are `--directed-only`,
+      `--crofton-only`, `--seam-only`, `--interval-only`, `--fold-only`, and
+      `--affine-only`; no arguments run the complete corpus.
 
   * src/librt/primitives/brep/brep_local.h
       current brep_specific ownership model.
