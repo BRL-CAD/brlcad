@@ -33,9 +33,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h>
-#endif
 #include "bio.h"
 
 #include "bu/app.h"
@@ -83,7 +80,6 @@ main(int argc, char *argv[])
     size_t offmany = 0;
 
     FILE *f1, *f2;
-    struct stat sf1, sf2;
 
     bu_setprogname(argv[0]);
 
@@ -92,6 +88,10 @@ main(int argc, char *argv[])
 
     if (argc != 3 || isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: pixdiff f1.pix f2.pix >file.pix\n");
+    }
+
+    if (BU_STR_EQUAL(argv[1], "-") && BU_STR_EQUAL(argv[2], "-")) {
+	bu_exit(1, "pixdiff: standard input cannot supply both images\n");
     }
 
     if (BU_STR_EQUAL(argv[1], "-"))
@@ -104,27 +104,34 @@ main(int argc, char *argv[])
 	f2 = stdin;
     else if ((f2 = fopen(argv[2], "rb")) == NULL) {
 	perror(argv[2]);
+	if (f1 != stdin)
+	    fclose(f1);
 	return 1;
     }
 
-    stat(argv[1], &sf1);
-    stat(argv[2], &sf2);
-
-    if (sf1.st_size != sf2.st_size) {
-	bu_exit(1, "Different file sizes found: %s(%jd) and %s(%jd).  Cannot perform pixdiff.\n", argv[1], (intmax_t)sf1.st_size, argv[2], (intmax_t)sf2.st_size);
-    }
-
     while (1) {
+	unsigned char p1[3];
+	unsigned char p2[3];
+	size_t count1 = fread(p1, 1, sizeof(p1), f1);
+	size_t count2 = fread(p2, 1, sizeof(p2), f2);
 	int r1, g1, b1;
 	int r2, g2, b2;
 
-	r1 = fgetc(f1);
-	g1 = fgetc(f1);
-	b1 = fgetc(f1);
-	r2 = fgetc(f2);
-	g2 = fgetc(f2);
-	b2 = fgetc(f2);
-	if (feof(f1) || feof(f2)) break;
+	if (ferror(f1) || ferror(f2))
+	    bu_exit(1, "pixdiff: input read error\n");
+	if (count1 == 0 && count2 == 0) {
+	    break;
+	}
+	if (count1 != sizeof(p1) || count2 != sizeof(p2)) {
+	    bu_exit(1, "pixdiff: input sizes differ or contain an incomplete pixel\n");
+	}
+
+	r1 = p1[0];
+	g1 = p1[1];
+	b1 = p1[2];
+	r2 = p2[0];
+	g2 = p2[1];
+	b2 = p2[2];
 
 	if (r1 != r2 || g1 != g2 || b1 != b2) {
 	    rgb_diff(r1, r2, stdout, &offmany, &off1, &matching);
@@ -146,6 +153,12 @@ main(int argc, char *argv[])
 	    matching += 3;
 	}
     }
+
+    if (f1 != stdin)
+	fclose(f1);
+    if (f2 != stdin)
+	fclose(f2);
+
     fprintf(stderr,
 	    "pixdiff bytes: %7zu matching, %7zu off by 1, %7zu off by many\n",
 	    matching, off1, offmany);
