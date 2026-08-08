@@ -40,9 +40,15 @@ struct brep_edge_record {
     size_t span_begin = 0;
     size_t span_count = 0;
     double tolerance = ON_UNSET_VALUE;
+    double model_tolerance = 0.0;
+    double declared_tolerance = ON_UNSET_VALUE;
+    double measured_discrepancy = ON_UNSET_VALUE;
     int edge_index = -1;
     int face_index[2] = {-1, -1};
     bool supported = false;
+    bool discrepancy_measured = false;
+    bool discrepancy_authorized = false;
+    bool tolerance_inferred = false;
 };
 
 

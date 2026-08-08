@@ -246,12 +246,12 @@ ESTABLISHED FINDINGS
     evaluates both surface lifts and oriented normals, projects loop-interior
     conormals into the edge cross-section, and selects the interior angular
     sector from the material side of both faces.  It rejects the sector unless
-    both lifts are within the declared edge tolerance.  A sharp convex ARB8
+    both lifts are within the then-effective edge tolerance.  A sharp convex ARB8
     edge, a 270-degree concave edge on a capped L extrusion, and a periodic
     same-face sphere seam now permanently check inside/contact/outside offsets
-    in both ray directions.  Across 200 tolerance-qualified target
-    observations in the bowed Cobb matrix, it classifies 116 inside, 32
-    contact, and 52 outside; all 15 current crack leaks have valid inside-
+    in both ray directions.  With the initial model/declared tolerance policy,
+    252 target observations in the bowed Cobb matrix qualify: 152 inside, 32
+    contact, and 68 outside; all 15 current crack leaks have valid inside-
     sector evidence.  Maximum target lift-discrepancy error is about
     2.51e-15 mm.  This remains trace-only.  General STEP use still needs
     stronger trim/edge parameter-correspondence qualification and vertex-fan
@@ -353,6 +353,29 @@ ESTABLISHED FINDINGS
     non-isoparametric and vertex cases, stable shading endpoint provenance,
     and conservative fallback integration.
 
+28. Edge tolerance metadata must not collapse unset, explicit zero, and a
+    positive declaration into one sentinel test.  Prep now records the ray
+    model tolerance, raw edge declaration, initial measured edge-to-both-trim-
+    lift discrepancy, effective envelope, inferred/declaration source, and an
+    explicit discrepancy-authorized bit.  The effective envelope is at least
+    rti_tol.dist; valid edge and endpoint-vertex declarations can enlarge it.
+    Explicit zero remains a declaration rather than being inferred.  An unset
+    edge tolerance is initially inferred from the larger of model tolerance
+    and sampled discrepancy.  The discrepancy must actually lie within the
+    envelope before edge boxes, sectors, closure, or continuation qualify.
+    A g=2T Cobb metadata matrix proves these outcomes: correct and double
+    declarations authorize visibly; unset is inferred and authorizes; zero
+    and half-discrepancy declarations remain under-authorized and do not even
+    select an expanded edge span.  Rotation, translation, 0.01x, and 10,000x
+    tests also preserve model tolerance, measured discrepancy, and
+    authorization after scaling.  The present prep measurement is a fixed
+    33-sample observation, deliberately reduced from an expensive 257-sample
+    diagnostic.  It is not a conservative discrepancy proof, so this policy
+    remains shadow-only and production activation still requires knot-aware
+    adaptive bounds.  Cached prep now explicitly rebuilds both edge and
+    surface derived records using the active rti tolerance; the serialized
+    cache remains version zero.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -416,6 +439,12 @@ IMPLEMENTATION CHECKLIST
             cached prep.
         [ ] Measure face/edge lift discrepancy and resolve unset, zero,
             under-declared, and over-declared tolerance policies.
+            [x] Record initial sampled discrepancy, model/declaration source,
+                inferred envelope, and explicit authorization state.
+            [x] Gate correct, unset, zero, half, and double declarations on a
+                controlled g=2T Cobb seam.
+            [ ] Replace fixed sampling with conservative knot-aware adaptive
+                discrepancy bounds before production use.
     [ ] Preserve near-trim candidate evidence through local event resolution.
     [x] Observe fixed-work 3D ray/shared-edge distance and declared edge-
         tolerance qualification independently of the UV trim tree.
@@ -733,9 +762,23 @@ Cobb sphere baseline:
     edge, and a converted sphere's two-trim periodic same-face seam.  Offsets
     at +/-T/2 and exact contact all classify correctly in both ray directions.
     On the bowed Cobb sweep, all 15 leaks are authorized, span-selected, valid
-    inside-sector observations; qualified target states total 116 inside, 32
-    contact, and 52 outside.  Maximum error in the measured target lift
+    inside-sector observations; the initial effective-envelope policy expands
+    qualified target states to 152 inside, 32 contact, and 68 outside.  Maximum
+    error in the measured target lift
     discrepancy is about 2.51e-15 mm.
+
+  * Prepared edge records now distinguish raw declared tolerance, model
+    tolerance, inferred status, sampled maximum edge/trim-lift discrepancy,
+    effective envelope, and authorization.  Edge span expansion and all later
+    sector/closure work require the discrepancy-authorized bit.  A five-case
+    g=2T Cobb metadata fixture permanently distinguishes correct, unset,
+    explicit-zero, half-discrepancy, and double-discrepancy declarations.
+    Similarity fixtures require all length-valued fields to scale together.
+
+  * Cache deserialization rebuilds edge records with the active rti tolerance
+    and rebuilds prepared surface spans before using deserialized trees.  The
+    derived records are still not serialized, so cache version zero remains
+    compatible.
 
   * A shadow-only closure pass runs after legacy direction cleanup and only
     considers solid, non-plate BREPs with one unmatched final hit.  A candidate
