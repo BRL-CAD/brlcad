@@ -238,13 +238,15 @@ ESTABLISHED FINDINGS
     conormals into the edge cross-section, and selects the interior angular
     sector from the material side of both faces.  It rejects the sector unless
     both lifts are within the declared edge tolerance.  A sharp convex ARB8
-    edge now permanently checks inside/contact/outside offsets in both ray
-    directions.  Across 200 tolerance-qualified target observations in the
-    bowed Cobb matrix, it classifies 116 inside, 32 contact, and 52 outside;
-    all 15 current crack leaks have valid inside-sector evidence.  Maximum
-    target lift-discrepancy error is about 2.51e-15 mm.  This remains trace-
-    only.  General STEP use still needs stronger trim/edge parameter-
-    correspondence qualification and concave, seam, and vertex-fan fixtures.
+    edge, a 270-degree concave edge on a capped L extrusion, and a periodic
+    same-face sphere seam now permanently check inside/contact/outside offsets
+    in both ray directions.  Across 200 tolerance-qualified target
+    observations in the bowed Cobb matrix, it classifies 116 inside, 32
+    contact, and 52 outside; all 15 current crack leaks have valid inside-
+    sector evidence.  Maximum target lift-discrepancy error is about
+    2.51e-15 mm.  This remains trace-only.  General STEP use still needs
+    stronger trim/edge parameter-correspondence qualification and vertex-fan
+    fixtures.
 
 
 IMPLEMENTATION CHECKLIST
@@ -314,8 +316,10 @@ IMPLEMENTATION CHECKLIST
         tolerance qualification independently of the UV trim tree.
     [x] Classify shadow-mode edge material sectors and validate smooth and
         sharp-convex inside/contact/outside behavior under ray reversal.
-    [ ] Qualify general trim/edge parameter correspondence and add concave,
-        same-surface seam, and vertex-fan sector fixtures.
+    [x] Gate sharp convex, re-entrant concave, and periodic same-surface edge
+        sectors for inside/contact/outside states under ray reversal.
+    [ ] Qualify general trim/edge parameter correspondence and add vertex-fan
+        sector fixtures.
     [ ] Add sewn and perturbed Cobb fixtures and threshold matrices.
         [x] Add reusable legacy-unsewn and solid-sewn Cobb constructors.
         [x] Gate topology, face/seam/vertex rays, scale, and 8,000 shared
@@ -596,13 +600,14 @@ Cobb sphere baseline:
     normal dots, ray/edge alignment, sector validity, and whether the closest
     ray point is inside, on, or outside that sector.
 
-  * A converted ARB8 box supplies a sharp 90-degree convex edge fixture with
-    independently known interior.  Offsets at +/-T/2 and exact contact all
-    classify correctly in both ray directions.  On the bowed Cobb sweep, all
-    15 leaks are authorized, span-selected, valid inside-sector observations;
-    qualified target states total 116 inside, 32 contact, and 52 outside.
-    Maximum error in the measured target lift discrepancy is about 2.51e-15
-    mm.
+  * Three independent sector fixtures now cover a converted ARB8's sharp
+    90-degree convex edge, a capped L-shaped extrusion's 270-degree re-entrant
+    edge, and a converted sphere's two-trim periodic same-face seam.  Offsets
+    at +/-T/2 and exact contact all classify correctly in both ray directions.
+    On the bowed Cobb sweep, all 15 leaks are authorized, span-selected, valid
+    inside-sector observations; qualified target states total 116 inside, 32
+    contact, and 52 outside.  Maximum error in the measured target lift
+    discrepancy is about 2.51e-15 mm.
 
   cmake --build .build --target \
     librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
@@ -642,10 +647,9 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Add concave-edge, same-surface seam, and vertex-fan fixtures, and qualify
-   edge/trim parameter correspondence without assuming normalized parameter
-   speed.  Keep model-space, UV, numerical-root, t-cluster, and minimum-
-   segment tolerances distinct.
+1. Add vertex-fan fixtures and qualify edge/trim parameter correspondence
+   without assuming normalized parameter speed.  Keep model-space, UV,
+   numerical-root, t-cluster, and minimum-segment tolerances distinct.
 2. Add explicit shadow event/winding/contact classes, then activate topology-
    local crack closure only for fully supported manifold events.
    Restore a crossing inside its authorized envelope, preserve ray-reversal
