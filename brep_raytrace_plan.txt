@@ -1,0 +1,1600 @@
+BRL-CAD BREP RAYTRACING, TOLERANCE, AND DRAWING IMPROVEMENT PLAN
+=================================================================
+
+Status: Detailed engineering proposal
+Study date: 2026-08-07
+Repository studied: /home/cyapp/brlcad
+STEP test corpus: /home/cyapp/step_corpus_g
+
+
+1. PURPOSE AND SUCCESS CRITERIA
+-------------------------------
+
+BRL-CAD's BREP primitive must interpret a trimmed NURBS boundary as the
+boundary of the solid the modeler intended.  This is subtly different from
+reporting every mathematical intersection with each underlying surface.
+Imported patches and their trims may disagree by small amounts, adjacent
+surface parameterizations may have radically different scales, and a ray may
+pass through the uncertainty region at a seam.  A mathematically literal
+per-face answer can therefore leak through a nominally closed solid.
+
+At the same time, the raytracer must not bridge unrelated geometry or merge
+nearby, legitimate roots.  Near-tangent rays are particularly difficult:
+several roots can be close in model space, ordinary Newton iteration becomes
+ill-conditioned at a tangent, and a coarse starting guess can converge to the
+wrong root or to no root.  The current response has been to build very dense
+surface trees.  That improves the guesses but makes prep extremely expensive
+in time and memory.
+
+The target result has all of the following properties:
+
+  * Correct solid partitions for well-formed BREPs, including rays through
+    poles, surface seams, trim boundaries, vertices, and near-tangent regions.
+
+  * Tolerance-aware closure of cracks between topologically adjacent faces.
+    A sub-tolerance disagreement must not turn an intended solid ray into a
+    miss.  Geometry beyond the authorized tolerance must not be silently
+    healed.
+
+  * Explicit separation of numerical convergence tolerance, UV trim
+    uncertainty, model-space topology tolerance, ray-distance clustering,
+    and BRL-CAD's minimum meaningful segment thickness.
+
+  * A much smaller prepared acceleration structure.  Difficult regions are
+    refined locally during a shot, using bounded, allocation-free workspace.
+
+  * Deterministic behavior independent of thread scheduling.  Prep and shot
+    must not use stale surface-specific data or random perturbations.
+
+  * Measurable correctness against analytic implicit solids before relying on
+    converted STEP geometry whose true answer is not independently known.
+
+  * Original CSG raytracing is the primary behavioral oracle for every
+    implicit-solid-to-BREP conversion.  Identical rays must produce identical
+    ordered material intervals, and identical Cauchy-Crofton line samples must
+    converge to the same crossing and chord statistics.  This paired test is
+    the strongest promotion gate for the NURBS BREP solver, not an optional
+    aggregate smoke test.
+
+  * Predictable limiting behavior as a secant ray approaches a one-point
+    graze.  The two roots must approach each other continuously, remain
+    resolvable while their interval is meaningful at BRL-CAD tolerance, become
+    one zero-transition contact at exact tangency, and become a miss outside
+    the surface.  There must be no alternating hit/miss bands or odd-hit leaks
+    near the limit.
+
+  * Drawing behavior that does not depend on constructing the raytracer's
+    dense surface tree and that remains useful for trimmed, closed, and highly
+    curved surfaces.
+
+The implementation should be staged.  The current dense-tree route remains a
+correctness oracle and bounded fallback until the replacement passes directed
+ray, Cauchy-Crofton, and corpus tests.
+
+
+2. CURRENT IMPLEMENTATION: OBSERVATIONS AND IMPLICATIONS
+--------------------------------------------------------
+
+2.1 Surface-tree construction and the recent split-cache change
+
+The relevant change is commit:
+
+  23eabb2c056fc7d0c4ccc6c5d9299f72eedbb432
+  "Add libbrep changes from STEP work"
+
+The old SurfaceTree::hasSplit implementation kept file-static surface
+pointers, domains, span counts, and allocated span vectors indexed by
+bu_parallel_id().  This was unsafe for two independent reasons documented in
+the new code:
+
+  * bu_parallel_id() is not a unique identity for arbitrary C++ worker
+    threads used by STEP conversion.
+
+  * A cached ON_Surface pointer survived destruction of its surface.  If the
+    allocator later reused that address, stale knot data could be selected
+    for a different surface.
+
+The new implementation puts a SurfaceSplitCache on each SurfaceTree.  It owns
+the two surface domains and std::vector span arrays and dies with the tree.
+This is the correct ownership boundary for construction and must not be
+replaced with the old static scheme.  The useful optimization is instead to
+make SurfaceTree a temporary builder and release the split cache immediately
+after its prepared products are transferred to brep_specific.
+
+Current source locations:
+
+  * include/brep/surfacetree.h
+  * src/libbrep/opennurbs_ext.cpp, SurfaceSplitCache,
+    SurfaceTree::SurfaceTree, SurfaceTree::~SurfaceTree, and
+    SurfaceTree::hasSplit
+  * include/brep/defines.h, BREP_MAX_FT_DEPTH (currently 8)
+
+SurfaceTree subdivides at surface knots and according to sampled flatness and
+straightness.  A maximum depth of eight can produce a large number of BBNodes
+per face.  CurveTree data and per-leaf trim lists add additional memory.  In
+particular, BBNode::Stl contains a std::vector of children and a std::list of
+trim nodes above the leaf.  Dense subdivision magnifies the cost of all of
+these structures, not just bounding boxes.
+
+2.2 Prepared-object ownership problems
+
+brep_build_bvh constructs one SurfaceTree per face in parallel.  It adds each
+SurfaceTree root as a child of the top-level BVH, stores the SurfaceTree in
+ON_BrepFace::m_face_user.p, frees only the temporary pointer array, and
+contains the explicit comment that the SurfaceTrees are never destroyed.
+
+That leak currently masks an ownership conflict:
+
+  * SurfaceTree::~SurfaceTree deletes both m_root and m_ctree.
+
+  * The top-level BVH also treats the transferred root as its child and
+    recursively deletes BBNodes.
+
+  * BBNodes refer to the CurveTree but do not own it.
+
+  * brep_specific_delete deletes only the ON_Brep and top-level BVH.
+
+  * Cache deserialization constructs one CurveTree per face and does not
+    retain an owner for those trees.
+
+No reader of m_face_user.p was found in the repository.  It should not be
+used as an implicit ownership mechanism.
+
+The fix should make brep_specific a C++ owner of:
+
+  * the prepared ON_Brep;
+  * the top-level BVH and its recursively owned BBNode roots;
+  * one CurveTree per prepared face;
+  * immutable Bezier-span and seam metadata proposed below; and
+  * any diagnostic/prep statistics retained for reporting.
+
+SurfaceTree should expose explicit transfer/release operations, or be
+replaced internally by a builder-result object that transfers its root and
+CurveTree exactly once.  The temporary builder and its SurfaceSplitCache can
+then be destroyed.  Deserialization must populate the same owner containers
+as ordinary prep.  Delete the BVH before deleting CurveTrees so no BBNode can
+observe an already destroyed tree during teardown.
+
+The prep cache in rt_brep_prep_serialize is currently version 0.  It writes a
+CurveTree followed by a BBNode tree for every face.  Any new span, tolerance,
+or adjacency data requires a version bump.  Old cache entries must be rejected
+and rebuilt, not partially interpreted.
+
+2.3 Measured prep cost
+
+A cache-disabled baseline was recorded on the STEP corpus model FRAME.g:
+
+  file: /home/cyapp/step_corpus_g/FRAME.g
+  approximate file size: 79 MB
+  source census: 2,425 ADVANCED_FACE entities, 567 B-spline surfaces,
+                 and 40 solids
+  command class: .build/bin/rt -B -P1 -s1 ... FRAME.g FRAME
+  GETTREE wall time: approximately 33.4 seconds
+  GETTREE CPU time: approximately 226.6 seconds
+  total wall time: approximately 34.2 seconds
+  peak resident memory: approximately 3,052,176 KB
+
+Although the render was requested with -P1, BREP face prep itself runs in
+parallel.  This is a sufficiently severe baseline to justify changing the
+algorithm, and it must be retained as a reproducible performance gate.
+
+2.4 Current ray/surface solve
+
+rt_brep_shot asks the master BBNode hierarchy for every intersected leaf using
+std::list, then calls utah_brep_intersect for each leaf.  The intersection
+solver represents the ray as the intersection of two planes perpendicular to
+the ray.  For a surface S(u,v), it solves:
+
+  f(u,v) = (S(u,v) - O) dot P1 = 0
+  g(u,v) = (S(u,v) - O) dot P2 = 0
+
+where O is the ray origin and P1/P2 span the plane normal to the ray.  The
+Jacobian is:
+
+          [ Su dot P1   Sv dot P1 ]
+      J = [ Su dot P2   Sv dot P2 ]
+
+The code explicitly inverts the 2x2 determinant.  It normally starts from the
+leaf midpoint.  If the leaf midpoint normal has |normal dot ray| < 0.2, it
+also tries the four corners.  It can return at most five roots from a leaf.
+
+Important correctness and robustness issues are visible in the current code:
+
+  * It evaluates the initial residual but does not accept an already
+    converged seed before testing the Jacobian determinant.  An exact root at
+    a surface singularity can therefore be rejected before success is
+    considered.
+
+  * The determinant "jitter" at a singular initial seed is
+    uv += 0.1 * random * (uv0 - uv).  At the first iteration uv == uv0, so the
+    perturbation is exactly zero.  It can repeat for all 100 iterations.
+
+  * drand48 makes the solve nondeterministic and has undesirable cross-platform
+    and threading properties.
+
+  * The return value of Ev1Der is not checked.  Intermediate values and
+    normals are not checked for finiteness, and the result of normal Unitize
+    is not validated.
+
+  * A fixed absolute determinant threshold of 1e-6 is not scale- or
+    parameterization-invariant.
+
+  * UV is clamped back into the leaf after every step.  Clamping can turn
+    divergence into a stalled boundary point and obscure a root in the
+    neighboring leaf.
+
+  * The first-step corner direction rejection is heuristic and can discard a
+    valid path on a curved or badly parameterized patch.
+
+  * Step damping is limited to three halvings, followed by four non-improving
+    iterations, for no geometric reason.
+
+  * Duplicate detection is first performed in UV.  The same model-space root
+    can have different UV coordinates on a seam, and similar UV coordinates
+    do not imply similar model-space points under arbitrary parameterization.
+
+  * A fixed five-root array assumes the dense leaves have isolated the
+    surface sufficiently.  It is not a general root-count guarantee.
+
+  * A fixed ROOT_TOL of 1e-7, BREP_INTERSECTION_ROOT_EPSILON of 1e-6,
+    BREP_EDGE_MISS_TOLERANCE of 5e-3, BREP_SAME_POINT_TOLERANCE of 1e-6,
+    and BREP_GRAZING_DOT_TOL of 1.7453e-5 mix several unrelated meanings.
+
+The reported sphere-pole failure is therefore plausible even when a particular
+prepared sphere happens to succeed because another leaf seed approaches the
+pole.  An axial test of the current local build did produce the expected
+two-unit interval for one implicit-to-BREP sphere, but that does not remove
+the exact-seed bug above.  It means only that the current subdivision and seed
+set happened to route around it in that case.
+
+libbrep already contains useful singularity-aware routines:
+
+  * surface_EvNormal in include/brep/util.h and PullbackCurve.cpp
+  * IsAtSingularity in include/brep/pullback.h and PullbackCurve.cpp
+
+surface_EvNormal attempts one-sided normal evaluation at singular boundaries.
+The ray solver should reuse or generalize this behavior instead of building a
+normal solely as Unitize(CrossProduct(Su,Sv)).
+
+2.5 Current trim and solid-hit repair
+
+After Newton returns a UV point, utah_brep_intersect calls
+BBNode::isTrimmed(..., BREP_EDGE_MISS_TOLERANCE).  It creates:
+
+  * CLEAN_HIT for an interior point away from a trim;
+  * NEAR_HIT for an accepted point close to a trim; and
+  * NEAR_MISS for a trimmed-away point close to a trim.
+
+The associated BRNode supplies an adjacent face index when CurveTree prep can
+identify one.  rt_brep_shot then runs several ordered heuristic passes:
+
+  * remove near misses next to same-direction accepted hits;
+  * turn adjacent-face pairs of same-direction near misses into CRACK_HIT;
+  * remove opposite-direction near-miss pairs;
+  * collapse same-direction clean hits on adjacent faces;
+  * remove near misses from the ends of an odd list;
+  * perform similar collapsing for NEAR_HIT;
+  * discard trimmed, out-of-bounds, and grazing candidates;
+  * merge same-distance candidates, deleting both if their normal signs
+    disagree;
+  * remove consecutive entries or exits according to an assumed sign; and
+  * discard a final hit in some remaining odd-list cases.
+
+The final solid path emits segments only when the remaining hit count is even.
+This logic encodes valuable experience about real cracks, but it loses the
+geometric evidence needed to make principled decisions.  It also depends on
+pass order, assumes the first surviving sign identifies entry, and removes all
+grazing hits before determining whether a close pair represents a thin but
+valid interval.
+
+The replacement should preserve near-trim candidates and their uncertainty,
+then resolve them as local topological events.  It should not discard them
+early or infer solid state from hit-count parity alone.
+
+2.6 Tolerance-unit conflation
+
+include/brep/defines.h describes BREP_EDGE_MISS_TOLERANCE as critical to solid
+raytracing and trimming and notes that it may need model-scale adaptation.  It
+is currently 0.005.  The same number is used in contexts with incompatible
+units:
+
+  * as a distance from a trim in surface parameter space; and
+  * as a model-space amount used to grow surface-leaf bounding boxes.
+
+This cannot be invariant under UV rescaling or distorted parameterizations.
+A surface domain of [0,1]x[0,1] and an equivalent domain of
+[0,1000000]x[0,0.000001] must not get different crack behavior.
+
+OpenNURBS already distinguishes topology tolerances:
+
+  * ON_BrepVertex::m_tolerance is a model-space bound between the vertex and
+    applicable edge or lifted trim endpoints.
+
+  * ON_BrepEdge::m_tolerance is the maximum model-space distance from the 3D
+    edge curve to the surface of any face using that edge.
+
+  * ON_BrepTrim::m_tolerance[0] and [1] are u- and v-parameter accuracy of the
+    2D trim relative to a closest surface parameter corresponding to the edge.
+
+ON_UNSET_VALUE means the value needs to be computed; zero has a specific
+near-machine-tolerance meaning.  These values must be validated and used in
+their native units.
+
+BRL-CAD's default rti_tol.dist is 0.0005 mm (BN_TOL_DIST).  rt_boolfinal
+forces intervals whose entry and exit differ by this amount to zero thickness
+and fuses nearby partitions.  include/rt/func.h contains an extensive Crofton
+discussion showing that sub-tolerance slivers can appear or disappear by ray
+angle.  BREP shot semantics must be designed with this downstream behavior in
+mind; otherwise BREP may manufacture distinctions that librt later erases or
+may inconsistently preserve them only at oblique angles.
+
+2.7 Current drawing behavior
+
+The ordinary rt_brep_plot path is primarily an edge plot.  It uses
+ON_Curve_PolyLine_Approx for edges and adds special surface-tree isocurves only
+for selected closed ON_SumSurface and ON_RevSurface cases.  The adaptive plot
+path uses view-derived point spacing, but its edge subdivision is driven
+mostly by endpoint distance rather than a complete chord-error/curvature test.
+
+The shaded/tessellated path is separate and uses brep_facecdt_plot.  Drawing
+should remain separate from the ray acceleration structure.  Requiring a
+dense ray SurfaceTree to obtain a usable visual would preserve the prep cost
+we are trying to remove.
+
+
+3. REQUIRED SEMANTICS: FIVE DIFFERENT TOLERANCE JOBS
+----------------------------------------------------
+
+The implementation should introduce an internal BrepTolerancePolicy prepared
+from rti_tol, BREP topology metadata, local surface metrics, and ray scale.
+The following quantities must remain separate even if some share a numerical
+lower bound.
+
+3.1 Numerical solve tolerance
+
+This answers: "Is the candidate sufficiently close to the mathematical ray
+and surface to be a usable geometric observation?"
+
+For the two-plane formulation use the model-space line residual:
+
+  residual_line = hypot(f, g)
+
+when P1 and P2 are orthonormal.  This has model-space units.  Accepting a root
+also requires a suitably small model-space change in S, or a parameter change
+interpreted through the local first fundamental form:
+
+  G = [ Su.Su  Su.Sv ]
+      [ Su.Sv  Sv.Sv ]
+
+  step_model^2 = delta_uv^T G delta_uv
+
+Numerical tolerance should be a conservative fraction of the geometric
+acceptance tolerance, with a floor based on floating-point scale.  It must not
+be enlarged merely to heal a seam.  Solving and seam healing are separate
+operations.
+
+3.2 UV trim-query tolerance
+
+This answers: "Which trim segments might be relevant to this UV candidate?"
+It is a broad-phase parameter-space envelope, not the final crack decision.
+
+Use ON_BrepTrim::m_tolerance[0/1] when set.  Add a local conversion of the
+model-space uncertainty through the surface Jacobian.  The natural shape is a
+metric ellipse delta_uv^T G delta_uv <= T^2; an axis-aligned UV rectangle may
+conservatively bound that ellipse for CurveTree lookup.  Near singular G, do
+not permit the inverse metric to expand without bound.  Query a bounded UV
+region and make the final decision by closest distance in 3D to the lifted
+trim or edge.
+
+3.3 Model-space seam envelope
+
+This answers: "How far may two topologically mated representations disagree
+while still representing one intended boundary?"
+
+For each topological edge prepare an authorized envelope from:
+
+  * rti_tol.dist as the BRL-CAD minimum model-space scale;
+  * a valid ON_BrepEdge::m_tolerance;
+  * valid endpoint ON_BrepVertex tolerances; and
+  * the 3D lift of valid trim parameter tolerances where needed.
+
+If a tolerance is ON_UNSET_VALUE, compute it with OpenNURBS facilities or an
+adaptive edge/trim comparison during prep and mark it as inferred.  Do not
+treat an explicitly set zero tolerance as missing.
+
+Also measure the actual discrepancy g between the shared 3D edge curve and
+each adjacent lifted trim/surface boundary.  The measured discrepancy is
+evidence, not permission: a set tolerance authorizes closure only when g is
+within it.  An inferred tolerance may be based on g because OpenNURBS
+explicitly says an unset value needs computation.  Record unexpectedly large
+declared or inferred envelopes for diagnostics.
+
+Only faces joined by the same topological edge, or the two sides of a declared
+surface seam, are eligible for automatic solid closure.  Geometric proximity
+alone must not join unrelated faces.  Non-manifold edges, edges with missing
+adjacency, and discrepancies beyond the envelope are unresolved and use the
+fallback during the staged rollout.
+
+3.4 Ray-parameter clustering tolerance
+
+This answers: "Could two candidate observations describe the same uncertain
+physical event along this ray?"
+
+Each candidate carries a ray-parameter interval, not just one scalar t.  For
+ray direction D and model-space uncertainty T, the base conversion is:
+
+  delta_t = T / |D|
+
+with additional solver/bounding uncertainty included.  Candidates form a
+cluster when their intervals overlap and their topology/model-space evidence
+is compatible.  Do not cluster solely with BREP_SAME_POINT_TOLERANCE and do
+not assume ray directions are normalized internally.
+
+3.5 Minimum valid solid interval
+
+This answers: "Is a resulting material interval meaningful to BRL-CAD's
+Boolean evaluator?"
+
+rti_tol.dist is authoritative.  BREP must preserve genuinely separate roots
+until solid assembly, then handle intervals consistently with rt_boolweave and
+rt_boolfinal.  A tangent contact produces no transition.  An interval below
+the minimum solid thickness is represented according to the same zero-
+thickness/fusion rules used downstream, not discarded earlier because its
+normal happened to satisfy a fixed grazing threshold.
+
+
+4. PROPOSED PREPARED DATA MODEL
+-------------------------------
+
+4.1 BrepPreparedFace
+
+For every face retain:
+
+  * face and surface indices;
+  * an owned CurveTree;
+  * a coarse BBNode hierarchy;
+  * a list of immutable rational Bezier spans covering the surface;
+  * mapping from coarse leaves to candidate spans;
+  * trim/edge adjacency identifiers;
+  * face orientation; and
+  * prep statistics such as nodes, leaves, spans, and measured errors.
+
+Each Bezier span stores its surface domain, order, positive-weight status,
+homogeneous control points or an immutable reference to packed prepared
+control points, a conservative model-space bound, and references to trims
+whose UV bounds overlap it.
+
+For ordinary positive rational weights, the dehomogenized control points obey
+the rational convex-hull property.  If weights are non-positive, cross zero,
+or are otherwise unsafe for conservative rational bounds, mark the span for
+the existing dense-tree fallback.  Correct fallback is preferable to a false
+exclusion.  Support for projective interval bounds can be added later.
+
+4.2 BrepPreparedEdge
+
+For every edge retain:
+
+  * edge and endpoint vertex indices;
+  * the two trim and face indices for a manifold mated edge;
+  * trim orientations and face reversal state;
+  * edge parameter domains and maps to each trim;
+  * declared and inferred topology tolerances;
+  * measured maximum edge-to-lift discrepancy and where it occurs;
+  * a conservative model-space seam envelope; and
+  * flags for seam, singular, boundary, non-manifold, invalid, or excessive
+    discrepancy states.
+
+The maximum discrepancy must be conservatively estimated.  Begin with all
+curve knots/endpoints and adaptive midpoint sampling.  Subdivide until the
+curve/trim lift chord bound is below the measurement tolerance.  This work is
+done at prep, not during shots.
+
+4.3 BrepHitCandidate
+
+Replace the information-poor brep_hit during solving with an internal record
+containing at least:
+
+  * face, surface, span, leaf, trim, edge, and adjacent-face indices;
+  * UV point and a UV uncertainty region;
+  * model-space point and normal when well-defined;
+  * scalar t and [t_min,t_max] uncertainty interval;
+  * line residual, last model-space step, and a conditioning measure;
+  * signed model-space distance to the relevant trim/edge when available;
+  * face orientation and provisional enter/leave/contact classification;
+  * inside-trim, outside-trim-near-edge, clean-interior, singular, and
+    out-of-domain flags; and
+  * solver outcome and refinement provenance.
+
+Do not throw away an outside-near-trim candidate.  It is essential evidence
+when the neighboring face misses the ray because of a crack.
+
+4.4 Structured solver outcomes
+
+Use a result enum rather than a Boolean converged flag.  Required outcomes
+include:
+
+  CONVERGED_REGULAR
+  CONVERGED_SINGULAR
+  CONTACT_TANGENT
+  OUTSIDE_TRIM
+  OUTSIDE_DOMAIN
+  NO_ROOT_BOUND_PROVEN
+  JACOBIAN_SINGULAR
+  STALLED
+  DIVERGED
+  NONFINITE_EVALUATION
+  UNSUPPORTED_WEIGHTS
+  WORKSPACE_EXHAUSTED
+  FALLBACK_USED
+
+Keep the best residual and candidate box even on failure so the local
+refinement and diagnostics have useful evidence.
+
+
+5. PROPOSED INTERSECTION ALGORITHM
+----------------------------------
+
+5.1 Broad phase
+
+Keep a shallow surface/face hierarchy for rejecting rays far from a patch.
+Initially preserve the existing depth-eight hierarchy while the new solver is
+shadow-tested.  Once correctness gates pass, lower the default depth in
+measured steps.
+
+Add an allocation-free hierarchy traversal overload.  It should use a fixed
+array stack and write leaf/span references into a fixed candidate array or
+invoke a callback immediately.  The current std::list-based traversal and
+std::list hit collection allocate during every shot and must not be part of
+the final fast path.
+
+If a fixed traversal or candidate array fills, set WORKSPACE_EXHAUSTED and
+invoke the current path.  Never silently truncate candidates.
+
+5.2 Conservative local Bezier exclusion
+
+For each candidate rational Bezier span, choose orthonormal P1 and P2
+perpendicular to D.  Express the rational surface in homogeneous coordinates
+(X,Y,Z,W).  Roots of the ray-plane functions are roots of the polynomial
+Bezier numerators:
+
+  F1(u,v) = (XYZ(u,v) - O * W(u,v)) dot P1
+  F2(u,v) = (XYZ(u,v) - O * W(u,v)) dot P2
+
+The Bernstein coefficient ranges of F1 and F2 provide conservative exclusion:
+if either coefficient hull is strictly positive or strictly negative beyond
+the numerical interval error, the parameter box contains no ray intersection.
+
+For boxes that cannot be excluded:
+
+  1. Apply Bezier clipping when coefficient geometry yields a safe domain
+     contraction.
+
+  2. Otherwise split along the parameter direction with the larger predicted
+     model-space extent or poorer bound.
+
+  3. Use de Casteljau subdivision, preserving conservative coefficient bounds.
+
+  4. Traverse near boxes first according to ray t range, but retain all boxes
+     whose bounds may contain roots.
+
+  5. Stop subdividing when the box is isolated in both ray t and model space,
+     or when the safeguarded corrector has converged.
+
+This supplies a root-isolation mechanism that does not rely on one Newton
+basin.  It is especially important for two close grazing roots.
+
+5.3 Safeguarded corrector
+
+Use the current two-plane equations but replace explicit determinant inversion
+with a conditioned 2x2 solve (scaled pivoting or a small QR/SVD-style solve).
+The algorithm is:
+
+  1. Evaluate position and derivatives and check the return status and all
+     values for finiteness.
+
+  2. Test line residual before forming the Jacobian.  This fixes exact roots
+     at poles and other singular seeds.
+
+  3. If the regular Jacobian is usable, compute a Newton step and apply a
+     trust-region/line search that requires sufficient residual decrease.
+
+  4. Interpret step size with the local surface metric, not raw UV magnitude.
+
+  5. Do not clamp an arbitrary step to a leaf boundary.  Restrict it to the
+     active isolated parameter box; a step that wants to leave is evidence for
+     subdivision or a neighboring box.
+
+  6. If the Jacobian is rank-deficient or the normal is singular, retain the
+     converged positional candidate if appropriate and use one-sided
+     surface_EvNormal/IsAtSingularity logic for a normal.  Otherwise return a
+     singular outcome to subdivision.
+
+  7. Use deterministic alternate seeds: box center, corners inset by a
+     representable amount, edge midpoints, and the best point predicted by
+     coefficient clipping.  Do not use randomness.
+
+  8. Deduplicate in model space and overlapping t intervals, with topology
+     awareness for distinct faces.  UV is never the sole identity test.
+
+5.4 Tangencies and close roots
+
+Do not classify a hit as disposable merely because |N dot D| is small.  That
+quantity signals conditioning; it does not by itself determine the solid
+event.
+
+The local isolator must distinguish:
+
+  * an even-multiplicity tangent contact, which has no inside/outside change;
+  * two nearby simple roots enclosing a thin interval;
+  * coincident observations of one edge/vertex crossing; and
+  * a gap between intended adjacent patches.
+
+Use the isolated t intervals and a local sign/winding test on either side of
+the event.  If two root intervals remain inseparable at the model tolerance,
+return one ambiguous cluster to the topology resolver rather than deleting
+both based on normal signs.
+
+5.5 Allocation-free ray-time workspace
+
+The new fast path must not call malloc/new or grow STL containers while
+shooting.  Initial compile-time bounds should be deliberately finite and
+instrumented, for example:
+
+  * supported direct-path surface order up to 16;
+  * 64 pending subdivision boxes;
+  * 64 raw root candidates; and
+  * scratch for two or three maximum-order homogeneous control nets.
+
+These are starting engineering limits, not correctness assumptions.  A span
+above the supported order or a full array immediately uses the fallback.
+Measure high-water marks on analytic tests and the STEP corpus before tuning
+the capacities.
+
+To avoid storing a full control net for every pending box, keep only parameter
+subdomains and traversal state on the pending stack.  Use a bounded set of
+scratch control nets to extract/subdivide the active subpatch from its
+immutable prepared span.  Depth-first traversal bounds scratch memory.  The
+extra computation occurs only in ambiguous regions and is preferable to a
+large per-ray or per-leaf allocation.
+
+Use BRL-CAD's normal resource-based segment allocation only when emitting the
+final segments.  Add a debug/benchmark mode that counts all BREP-path dynamic
+allocations after prep so the no-allocation requirement is testable.
+
+
+6. TRIM, SEAM, AND SOLID-EVENT RESOLUTION
+-----------------------------------------
+
+6.1 Candidate classification
+
+After solving the untrimmed surface, classify the candidate without losing
+information:
+
+  * CLEAN_INTERIOR: inside the face and outside every seam envelope.
+
+  * INSIDE_NEAR_EDGE: accepted by the trim but within the local edge envelope.
+
+  * OUTSIDE_NEAR_EDGE: rejected by the trim but close enough in 3D and UV to a
+    specific eligible edge.
+
+  * OUTSIDE_TRIM: rejected and not close enough to an eligible edge.
+
+  * SINGULAR_BOUNDARY: a root on a declared surface singularity or degenerate
+    trim side.
+
+The final near-edge test uses distance to the lifted trim/shared 3D edge, not
+only closesttrim in UV.
+
+6.2 Event clustering
+
+Sort candidates by t_min, then form clusters whose t intervals overlap.
+Compatibility requires either the same face/root, the same topological edge,
+or an explicitly declared same-surface seam.  Geometrically close candidates
+from unrelated topology remain separate.
+
+Within each cluster:
+
+  * discard only candidates proven outside all relevant trims and envelopes;
+
+  * combine duplicate observations of the same face root;
+
+  * retain both sides of a shared-edge observation until local solid state is
+    known; and
+
+  * carry the widest justified uncertainty into the resolved event.
+
+6.3 Manifold edge transition
+
+For a normal manifold edge with two incident faces, build a local cross-section
+perpendicular to the edge tangent.  The oriented incident face normals and
+trim directions define the interior sector.  Evaluate the ray direction just
+before and after the clustered event in this oriented 2D cross-section:
+
+  * outside -> inside produces exactly one ENTER event;
+  * inside -> outside produces exactly one LEAVE event;
+  * unchanged state is a tangent/contact and produces no transition.
+
+This symbolic local perturbation handles a ray exactly on the edge without
+depending on which face Newton happened to find.  It also works for convex
+and concave manifold edges.  Vertex clusters use the cyclic fan of incident
+faces in the same spirit; unsupported/non-manifold fans fall back initially.
+
+6.4 Crack closure
+
+When one or both adjacent lifted surfaces miss the mathematical ray, an
+OUTSIDE_NEAR_EDGE candidate may still establish an intended boundary event.
+Create a closure transition only if:
+
+  * the evidence refers to the same mated topological edge;
+
+  * the candidate-to-edge and measured face/edge discrepancies are inside the
+    authorized model-space envelope;
+
+  * the local manifold sector changes solid state across the event; and
+
+  * no clean incompatible root occupies the same interval.
+
+The reported representative t should be the best-conditioned projection onto
+the shared edge/local boundary, with an uncertainty interval covering both
+adjacent representations.  Do not edit or snap the BREP itself during a shot.
+
+An overlap uses the same resolver: several same-direction face observations
+of one manifold event collapse to one oriented transition.  Opposite
+transitions at one t become a contact only when the local sector test confirms
+no state change.
+
+6.5 Solid assembly
+
+Process resolved events in t order with oriented winding/state, assuming the
+line begins outside at negative infinity.  ENTER increments the local solid
+state, LEAVE decrements it, and CONTACT changes nothing.  Emit segments over
+the intervals in which the state is inside.
+
+This replaces "the first sign is entering" and even-hit-count repair.  A final
+nonzero state, a negative state, an unresolved non-manifold cluster, or
+incompatible interval ordering is a structured failure and invokes the old
+path during rollout.
+
+Before segment emission, apply the minimum-valid-interval rule consistently
+with rti_tol.dist and rt_boolfinal.  Preserve the original face/UV/normal data
+selected for segment endpoints so rt_brep_norm, curvature, UV reporting, and
+shading remain meaningful.
+
+6.6 Plate mode and invalid topology
+
+Plate mode is a distinct contract.  A valid but non-solid BREP currently
+defaults to zero-thickness plate mode, and each accepted surface hit becomes a
+plate interval.  Do not apply solid crack closure or winding assembly to such
+objects unless plate semantics explicitly request it.
+
+Keep the legacy unsewn Cobb sphere as a plate-mode regression.  The new sewn
+Cobb fixture described below is the solid crack oracle.  Invalid and
+non-manifold BREPs should produce diagnostics and use the conservative legacy
+behavior until a separate policy is specified.
+
+
+7. COBB-SPHERE CONTROLLED TEST FRAMEWORK
+----------------------------------------
+
+7.1 Why the Cobb sphere is useful
+
+src/proc-db/brep_cobb.cpp implements J. E. Cobb's rational Bezier sphere
+tiling.  It creates six 5x5 rational Bezier surfaces, rotated into cube-face
+positions.  It is ideal for this work because:
+
+  * the underlying analytic oracle is a sphere;
+  * it has twelve long patch seams and eight three-face vertices;
+  * every patch is non-planar;
+  * seam and vertex rays can be constructed exactly; and
+  * homogeneous control points can be perturbed reproducibly.
+
+However, the current generator calls NewFace independently six times.
+Inspection of its generated database reports:
+
+  Valid: YES
+  Solid: NO
+  Plate mode: YES, zero thickness
+  Faces: 6
+  Edges: 24
+  Vertices: 24
+  Trims: 24
+
+Each face owns four boundary edges; matching geometric edges are not shared.
+That form must not be treated as the solid oracle.
+
+7.2 Shared fixture support
+
+Move the duplicated Cobb face construction in brep_cobb.cpp and
+brep_invalid.cpp into internal reusable test support.  Preserve the existing
+command's output for compatibility, then add constructors for:
+
+  1. cobb_unsewn: the current six independent faces, used for plate-mode and
+     legacy rendering tests.
+
+  2. cobb_sewn: the same six surfaces with cube topology: eight shared
+     vertices, twelve shared 3D edges, twenty-four trims, two mated trims per
+     edge, six oriented outer loops, and consistent face orientation.
+
+  3. cobb_variant: a deep copy of cobb_sewn with one deterministic
+     perturbation specification applied.
+
+The sewn constructor must pass IsValid, IsSolid, and IsManifold with oriented
+true, boundary false, and exactly two trims on every edge.  Before using it as
+an exact oracle, sample every patch against the unit sphere and record maximum
+radial error.  The expected result is roundoff-level disagreement; tests must
+use the measured baseline rather than assuming zero.
+
+7.3 Perturbation representation
+
+Define a test-only perturbation specification containing:
+
+  family
+  target face/edge/vertex
+  signed requested amplitude in model units
+  declared edge/trim/vertex tolerance policy
+  topology-preserving or topology-breaking flag
+  scale and translation
+  UV domain transform
+  deterministic seed only for selecting a target, never for solver behavior
+
+When moving a rational control point, preserve its weight.  Convert the
+homogeneous CV to Euclidean P, apply delta, and store (P + delta) * w with the
+same w.  Calibrate perturbations by measuring the resulting maximum 3D seam
+discrepancy; a control-point displacement is not generally equal to maximum
+curve displacement.
+
+7.4 Required perturbation families
+
+A. Boundary-row gap/overlap
+
+Move the boundary row of one patch along the local outward radial or
+co-normal direction while leaving the adjacent patch unchanged.  Test both a
+gap and overlap.  Provide endpoint-preserving and endpoint-moving variants.
+
+B. Bowed seam
+
+Leave the two edge endpoints fixed and move the three interior boundary CVs.
+This creates zero corner error and a maximum discrepancy near the edge
+middle, defeating endpoint-only tolerance checks.
+
+C. Vertex defect
+
+Perturb one cube-corner control point or the boundary ends of one incident
+face.  Sweep rays through and around the three-face vertex fan.
+
+D. Surface-only disagreement
+
+Move surface boundary CVs but keep the shared 3D edge, 2D trims, and topology
+metadata unchanged.  This directly exercises ON_BrepEdge tolerance semantics.
+
+E. Trim-only disagreement
+
+Offset or bow one 2D trim inward/outward while retaining the surface and 3D
+edge.  Test anisotropic u and v errors separately.  This exercises trim
+parameter tolerances and 3D lifted-distance verification.
+
+F. Edge-only disagreement
+
+Perturb the shared 3D edge curve without changing either surface lift.  This
+tests whether edge tolerance is used as metadata/evidence without incorrectly
+moving the actual mathematical surface hits.
+
+G. G1 discontinuity without a crack
+
+Keep the common boundary CV row identical and move only the first interior CV
+row.  Position remains continuous, but normals differ.  Shoot grazing rays to
+ensure a normal discontinuity is not interpreted as a gap or duplicate solid
+boundary.
+
+H. Exact geometry-preserving representation changes
+
+Insert knots, elevate degree where supported, split one patch into multiple
+faces with shared topology, reverse a parameter direction, and apply extreme
+affine domain scalings such as [0,1e6] by [0,1e-6].  These variants must give
+the same result as pristine Cobb.  A rational linear-fractional
+reparameterization may be added if OpenNURBS can construct it exactly.  Do
+not label an approximate refit as geometry-preserving.
+
+I. Combined trim and surface error
+
+Move a surface boundary and its trim in different directions with separately
+declared tolerances.  This represents realistic imported geometry and tests
+that UV and model-space errors are accumulated conservatively rather than
+compared as one scalar.
+
+7.5 Perturbation sweep
+
+For every family, adapt the requested CV/trim change until the measured
+maximum 3D mismatch g reaches these normalized targets relative to the
+effective authorized seam envelope T:
+
+  g/T = 0, 0.1, 0.25, 0.5, 0.9, 1.0, 1.1, 2, 10
+
+Independently test tolerance metadata with:
+
+  * correct declared tolerance;
+  * ON_UNSET_VALUE, requiring computation;
+  * explicit zero;
+  * declared tolerance half the actual discrepancy; and
+  * declared tolerance twice the actual discrepancy.
+
+The threshold behavior is part of the result:
+
+  * At or below the authorized envelope, the solid interpretation must not
+    leak and should match the implicit sphere outside the explicit uncertainty
+    band.
+
+  * Above the envelope, the implementation must report excessive discrepancy
+    or fall back.  It must not silently increase tolerance until the sphere
+    happens to close.
+
+  * An over-declared tolerance may authorize a large disagreement because it
+    explicitly records modeling accuracy, but it must be visible in
+    diagnostics and can only affect the mated topology that declares it.
+
+Run the matrix at radii well below, near, and well above one model unit, and at
+large translations from the origin.  Equal g/T cases must behave consistently
+under scale and translation within floating-point limits.
+
+7.6 Directed Cobb rays
+
+Generate deterministic families rather than relying on image pixels:
+
+  * axes through patch centers;
+  * exact rays through the north and south pole;
+  * rays through every seam midpoint, normal and oblique to the local seam;
+  * rays exactly along each seam tangent;
+  * parallel offset sweeps across each seam on both sides;
+  * rays through all eight vertices and small angular/positional fans around
+    each vertex;
+  * exact tangent rays at face interiors, seams, and vertices;
+  * near-tangent angular sweeps on both sides of tangency;
+  * rays whose two sphere roots approach each other toward tangency;
+  * reversed versions of every ray; and
+  * rays beginning inside as well as outside the sphere.
+
+For a unit sphere, analytic line/sphere roots provide expected t values and
+whether the ray is a miss, contact, or interval.  Compare the full ordered
+partition, not only hit count.
+
+7.7 Grazing-limit behavior study
+
+Near-tangent behavior needs its own convergence study, not a handful of
+special rays.  The study must approach tangency from both the hit and miss
+sides and record how raw roots, final solid intervals, numerical conditioning,
+and local-refinement work change.
+
+For a sphere of radius R, use a unit-direction line whose perpendicular
+distance from the center is b.  Define signed inward clearance:
+
+  h = R - b
+
+For h > 0 the analytic root separation/chord is:
+
+  delta_t = 2 * sqrt(R^2 - b^2)
+          = 2 * sqrt(2*R*h - h^2)
+
+and, close to tangency:
+
+  delta_t ~= 2 * sqrt(2*R*h)
+
+At either root:
+
+  |N dot D| = sqrt(R^2 - b^2) / R = delta_t / (2*R)
+
+Thus h, delta_t, and |N dot D| give three independent ways to verify that the
+test is approaching the same geometric limit.  At h = 0 there is one double
+root/contact and no material interval.  At h < 0 there is no real root.
+
+Use a logarithmic signed sweep rather than linear pixel offsets.  Include:
+
+  * h/R = 2^-k for k spanning ordinary chords down to the representable
+    floating-point/tolerance limit;
+  * cases selected so delta_t/rti_tol.dist is 100, 10, 2, 1.1, 1, 0.9,
+    0.5, 0.1, and smaller;
+  * exact h = 0 constructed analytically rather than by an accumulated camera
+    transform; and
+  * matching negative h values on the miss side.
+
+Run every case against the implicit sphere, its normal ft_brep conversion, the
+pristine sewn Cobb sphere, and selected perturbed Cobb seams.  Repeat at face
+interiors, seam midpoints, and vertices; reverse the ray; rotate the geometry;
+use non-unit ray directions; and repeat over object scale and translation.
+
+Capture two levels of result:
+
+  1. Raw primitive observations before rt_boolfinal: isolated parameter boxes,
+     mathematical candidate roots, residuals, t intervals, normal dot values,
+     solver outcome, subdivision depth/count, and fallback use.
+
+  2. Normal librt partitions after Boolean tolerance processing: miss,
+     contact/zero-thickness event, or material interval and its endpoints.
+
+The expected trend from the hit side is:
+
+  * delta_t decreases monotonically according to the analytic square-root
+    law;
+
+  * the two raw simple roots remain present and ordered while their isolating
+    intervals can be separated;
+
+  * absolute endpoint error stays bounded even though relative error in a
+    vanishing chord necessarily grows;
+
+  * refinement effort and conditioning warnings may grow, but failure status
+    remains deterministic and fallback is explicit;
+
+  * once delta_t enters the rti_tol.dist regime, final partition behavior
+    matches the implicit oracle and rt_boolfinal policy; and
+
+  * at exact tangency the candidate is a CONTACT_TANGENT with zero winding
+    change, followed by a stable miss on the negative-h side.
+
+Do not impose a fixed grazing-normal cutoff as the expected transition.  The
+meaningful transition is governed by root isolation, analytic geometry, and
+the final minimum-segment policy.  Plot or tabulate classification, measured
+delta_t, endpoint error, iterations, subdivisions, and fallback rate against
+both h/R and delta_t/rti_tol.dist.  There must be no non-monotone islands in
+which a sequence approaching tangency alternates between ordinary hit, miss,
+odd hit, and hit again.
+
+After the sphere is correct, repeat the limit study on curved geometries with
+different local behavior:
+
+  * ellipsoids at high- and low-curvature principal directions;
+  * torus outer and inner tangencies, including close pairs among four roots;
+  * a cylinder tangent in its curved direction and rays nearly parallel to
+    its zero-curvature direction;
+  * converted cone/quadric surfaces near caps and patch boundaries; and
+  * G1-discontinuous but position-continuous Cobb seams.
+
+For a regular surface with normal clearance h and normal curvature kappa in
+the ray direction, the local quadratic root separation is proportional to
+sqrt(h/kappa).  Use that prediction to normalize non-spherical trends, while
+using the implicit primitive's actual ray results as the authoritative oracle.
+Parabolic, singular, and multi-root cases should be labeled separately rather
+than forced into the quadratic model.
+
+7.8 Machine-readable limit report
+
+The full sweep tool should emit CSV or JSON containing:
+
+  fixture and perturbation family
+  target topology
+  object scale and translation
+  UV transform
+  requested displacement
+  measured gap/overlap
+  declared and inferred tolerances
+  normalized g/T
+  ray family and angle
+  signed tangent clearance h and h/R
+  analytic and measured root separation
+  delta_t/rti_tol.dist and |N dot D|
+  implicit and BREP ordered intervals
+  maximum endpoint error
+  candidate and resolved-event counts
+  solver/refinement outcomes
+  seam closure decision
+  fallback reason
+  allocation/workspace high-water marks
+  Crofton area and volume estimates with uncertainty
+
+The report should make it possible to plot exactly when a particular
+perturbation stops behaving like the implicit sphere.
+
+
+8. GENERAL IMPLICIT-TO-BREP CORRECTNESS TESTING
+-----------------------------------------------
+
+This is the primary correctness program.  The STEP corpus is valuable for
+coverage and performance, but it generally lacks an independent exact answer.
+In contrast, BRL-CAD can raytrace a known CSG model with mature implicit
+primitive code, convert that same model to BREP, and compare two
+representations of the same intended solid.  No BREP solver change should be
+promoted on corpus images alone if it fails this paired ground truth.
+
+8.1 Existing foundation
+
+src/librt/tests/primitive_brep.cpp already checks that several ft_brep
+conversions produce valid, solid, oriented manifolds with paired edges.  It
+does not currently shoot the converted geometry.  Extend this testing in a
+new focused executable rather than overloading topology-only assertions.
+
+Start with primitives that have reliable implicit raytracers and analytic
+area/volume formulas:
+
+  * sphere/ellipsoid;
+  * box/ARB8;
+  * right circular cylinder;
+  * truncated cone;
+  * torus; and
+  * additional converted quadrics after the basic harness is stable.
+
+Keep more complicated EPA/EHY/HYP/PART/extrude conversions in the topology
+suite and add them to paired ray testing when suitable ground truth is
+available.
+
+Add a second tier of actual CSG regions converted to BREP.  The original CSG
+tree remains the raytracing oracle even when a compact analytic area formula
+is unavailable.  The initial set should include:
+
+  * disjoint union, producing several material intervals on one line;
+  * overlapping sphere union;
+  * two-sphere intersection lens;
+  * sphere or cylinder subtraction producing an internal cavity;
+  * box minus cylinder, producing planar/non-planar trimmed faces;
+  * nested union/subtraction with multiple entry and exit events; and
+  * shells and thin walls at several multiples of rti_tol.dist.
+
+Begin with operands separated from coincident and sub-tolerance degeneracies
+so the conversion has one clear intended result.  Then introduce deliberate
+near-coincident faces and thin features as a separate tolerance-policy suite.
+Do not mix conversion ambiguity into the baseline solver gate.
+
+8.2 Paired ray comparison
+
+For each primitive construct the implicit object and its ft_brep conversion in
+separate prepared rt_i instances.  Use the identical ray origin and direction
+against both.  Record all returned partitions after normal librt Boolean
+processing.
+
+For CSG-region cases, prepare the original CSG tree in one rt_i and the
+converted BREP result in the other.  Use the same region semantics, ray
+minimum/maximum range, rti_tol, overlap policy, and explicitly shared sampling
+bounding box.  Compare both raw primitive segments where practical and final
+partitions; the latter are the solid behavioral contract.
+
+Compare:
+
+  * miss versus hit;
+  * number and order of material intervals;
+  * entry and exit t within model-space tolerance;
+  * entry/exit orientation;
+  * forward/reverse symmetry;
+  * finite point, normal, curvature, and UV outputs; and
+  * solver/fallback status.
+
+Classify rays inside a defined analytic tangency band separately.  They must
+remain deterministic and safe, but an exact tangent should not be used to
+claim a statistically meaningful inside interval.
+
+The paired harness should report the first differing ray with enough data to
+replay it as a single directed test.  Aggregate-only pass/fail is insufficient:
+opposite errors in crossing count or chord length can cancel in a Crofton
+estimate.
+
+Generally speaking the CSG intersections should be reliable, but it is possible
+that grazing behaviors or limit cases might hit CSG issues.  When we have a
+disagreement between a CSG ray and a brep ray, it is reasonable to double check
+the CSG answer if it seems to be confounding the analysis.
+
+8.3 Cauchy-Crofton verification
+
+src/librt/primitives/crofton.cpp implements:
+
+  SA = 4*pi*R^2 * crossings / (2*rays)
+  V  = pi*R^2 * total_chord / rays
+
+with a fixed RNG seed.  src/librt/tests/crofton.c already checks analytic
+primitives and convergence behavior.
+
+For implicit/CSG-to-BREP comparison, generate each deterministic line once
+from one explicitly shared bounding sphere and feed it to both
+representations.  Do not allow small differences in prepared bounding boxes
+to change the sample.  For each line retain the complete ordered partitions,
+crossing count, and total chord for both representations.  Compute per-line
+differences as well as independent aggregates.
+
+Implement this without weakening the production Crofton API: extract or
+reproduce its fixed-seed line generator in a librt test helper, materialize a
+read-only array of line origins/directions, and shoot that array through two
+prepared rt_i instances with a comparison callback that copies each final
+partition into bounded test records.  Feed the same per-line crossing and
+chord values into the existing Crofton formulas.  The ordinary
+rt_crofton_shoot entry point should remain the production estimator; the
+paired harness is an exact A/B validation tool.
+
+Use progressive sample levels such as 2,000, 8,000, 32,000, and 128,000.
+Compute batch/block estimates so the test reports standard error rather than
+using only successive-estimate stability.  Acceptance should require:
+
+  * analytic area and volume inside a preselected confidence band;
+  * BREP and implicit paired estimates inside that band;
+  * no persistent bias as sample count increases; and
+  * directed ray tests passing independently, since random Crofton rays will
+    almost never hit an exact seam, pole, or tangent.
+
+In addition, report:
+
+  * fraction of lines with different hit/miss classification;
+  * fraction with a different number of material intervals;
+  * crossing-count difference distribution;
+  * total absolute and signed chord-length difference;
+  * the contribution of differing lines to area and volume error; and
+  * disagreement stratified by grazing angle, trim proximity, and solver
+    fallback status.
+
+For baseline analytic and nondegenerate CSG conversions, the target is no
+unexplained paired partition difference outside the explicit numerical and
+tangent uncertainty bands.  Merely obtaining an area/volume estimate within a
+few percent is not sufficient.  Crofton then supplies a powerful integrated
+check that the remaining enormous ray population has no systematic bias.
+
+Volume is generally the more stable solid test near minimum-size slivers.
+Surface area is more sensitive to representation and angular survival of thin
+features, as documented in include/rt/func.h.  Report both; do not dismiss a
+stable area disagreement as sampling noise merely because volume agrees.
+
+
+9. DRAWING IMPROVEMENTS AND TESTING
+-----------------------------------
+
+Drawing work should follow the ray correctness foundation but use the same
+analytic and perturbed fixtures.
+
+9.1 Wireframe edges
+
+Replace endpoint-distance-only adaptive decisions with a criterion combining:
+
+  * view-derived point spacing;
+  * model-space chord deviation at midpoint/extrema;
+  * tangent-angle change; and
+  * mandatory subdivision at curve knots and discontinuities.
+
+Always terminate with explicit depth/segment limits and report limit hits in
+debug mode.  Evaluate points and tangents for success and finiteness before
+adding vlist entries.
+
+9.2 Surface indication
+
+The default edge-only view is ambiguous for closed or sparsely bounded
+surfaces.  Provide a surface indication independent of the ray SurfaceTree:
+
+  * use trimmed adaptive isocurves for lightweight wireframe display; or
+  * derive display lines from the existing CDT representation when a
+    tessellated view is requested.
+
+Do not special-case only ON_SumSurface and ON_RevSurface.  Any interior
+isocurve must be clipped against trim loops using parameter-space topology and
+must handle closed parameter seams.
+
+9.3 Drawing acceptance
+
+For pristine and perturbed Cobb variants verify:
+
+  * finite points only;
+  * all declared boundary edges represented;
+  * no long spikes from failed evaluation or seam wrapping;
+  * no missing patch at a pole or closed surface seam;
+  * stable output under equivalent UV domain scaling; and
+  * monotonic refinement as view/model tolerance tightens.
+
+Image regression can supplement, but geometric vlist invariants should be the
+primary automated tests.
+
+
+10. IMPLEMENTATION WORK PACKAGES AND PROMOTION GATES
+----------------------------------------------------
+
+Phase 0: Baseline and observability
+
+  * Add counters and timing for SurfaceTree/CurveTree/BBNode counts, prep
+    bytes, serialization bytes, leaves visited, roots attempted, solver
+    outcomes, closure events, fallbacks, workspace high-water marks, and shot
+    allocations.
+
+  * Capture current outputs for directed primitives, sewn/unsewn Cobb, small
+    STEP samples, and FRAME.g.
+
+  * Add the paired-ray harness before changing behavior.
+
+  * Add shared-line Cauchy-Crofton comparison for implicit primitives and
+    converted CSG regions, retaining per-line partitions, crossing counts, and
+    chord differences.
+
+  * Add the signed logarithmic sphere grazing sweep and record both raw roots
+    and final rt_boolfinal partitions.
+
+Gate: Reproducible correctness and performance baseline checked into test
+logic or documented benchmark configuration, including the current
+implicit/CSG-to-BREP disagreement set and grazing-limit trend.
+
+Phase 1: Ownership and deterministic solver correctness
+
+  * Make SurfaceTree a temporary builder with explicit ownership transfer.
+
+  * Own CurveTrees in brep_specific for normal and deserialized prep.
+
+  * Remove unused m_face_user.p assignment.
+
+  * Accept initial roots before Jacobian evaluation; remove random jitter;
+    validate evaluation, finiteness, and normals; add structured outcomes and
+    singular one-sided normal handling.
+
+  * Keep depth eight and existing solid repair so changes can be isolated.
+
+Gate: No prep leaks/double frees under sanitizers; deterministic repeated and
+parallel runs; pole/boundary/singularity tests pass without regressions.
+
+Phase 2: Tolerance policy and evidence-preserving candidates
+
+  * Prepare per-edge tolerance/adjacency records.
+
+  * Separate UV broad-phase, 3D seam, solver, t-cluster, and minimum-segment
+    tolerances.
+
+  * Introduce BrepHitCandidate and retain near misses through clustering.
+
+  * Add sewn Cobb and the full crack/overlap threshold matrix.
+
+  * Initially compare the new resolver to the old repair and fall back on any
+    unresolved case.
+
+Gate: All sub-envelope Cobb variants remain solid; above-envelope variants
+are diagnosed; UV scale invariance and unrelated-face non-healing pass.
+
+Phase 3: Local Bezier isolation
+
+  * Prepare immutable Bezier span data.
+
+  * Implement conservative ray-plane coefficient exclusion, clipping,
+    de Casteljau subdivision, and safeguarded correction.
+
+  * Add fixed-capacity traversal and shot workspace with overflow fallback.
+
+  * Shadow the new roots/events against the depth-eight path.
+
+Gate: Directed analytic partitions match; the two-root-to-contact-to-miss
+grazing trend matches the implicit oracle without classification islands; the
+paired Crofton comparison shows no unexplained systematic bias; no silent
+candidate truncation; no new-path dynamic allocation; and all fallback
+reasons are observable.
+
+Phase 4: Reduce prepared density and update cache
+
+  * Lower tree depth one step at a time and measure prep memory/time, shot
+    time, fallback rate, and partition deltas.
+
+  * Select the shallowest default that meets correctness and total-performance
+    gates on analytic and stratified corpus cases.
+
+  * Serialize new immutable prep data, bump cache version, and verify cached
+    versus uncached equality and ownership.
+
+Gate: Large prep/RSS reduction on FRAME.g with no accepted partition delta;
+bounded fallback rate and acceptable ray throughput.
+
+Phase 5: Drawing and corpus expansion
+
+  * Improve adaptive edges and general trimmed surface indication.
+
+  * Stratify /home/cyapp/step_corpus_g by face count, trim count, rational
+    degree/order, closed/singular surfaces, bbox scale, file size, and prep
+    cost.
+
+  * Run small representatives in continuous tests, a larger scheduled suite,
+    and the full corpus for release qualification.
+
+Gate: No crashes/non-finite results, bounded resource usage, stable cache
+reuse, and documented remaining fallback categories.
+
+
+11. ACCEPTANCE CRITERIA
+-----------------------
+
+Correctness:
+
+  * Implicit and BREP ordered partitions agree for all non-ambiguous directed
+    analytic rays within rti_tol.dist.
+
+  * Original CSG regions and their converted BREPs have no unexplained paired
+    partition difference on the shared deterministic Crofton line set outside
+    explicit numeric/tangent uncertainty bands.
+
+  * Paired Crofton crossing and chord differences converge without systematic
+    bias, and independent surface-area and volume estimates agree with
+    analytic values wherever such formulas are available.
+
+  * Exact sphere pole shots succeed deterministically from both directions.
+
+  * Tangent contacts do not create material intervals; nearby two-root cases
+    remain distinct when their interval is meaningful at BRL-CAD tolerance.
+
+  * In the signed grazing sweep, raw root separation follows the analytic
+    trend from two roots through a double contact to no roots.  Final librt
+    classification matches the implicit oracle and has at most one contiguous
+    tolerance-controlled transition band, with no odd-hit or alternating
+    hit/miss islands.
+
+  * Sewn Cobb seam/vertex rays do not leak for g <= T.
+
+  * g > T never triggers silent closure.
+
+  * Equivalent UV reparameterizations do not change hit classification.
+
+  * Nonadjacent faces are never joined based only on proximity.
+
+  * Plate-mode behavior remains separately correct.
+
+  * Crofton area and volume converge to analytic and paired implicit values
+    within measured statistical confidence, with no increasing-sample bias.
+
+Robustness:
+
+  * All surface/derivative/normal failures become structured outcomes.
+
+  * No NaN or infinity reaches a hit, segment, vlist, bbox, or serialized
+    cache.
+
+  * Workspace overflow, unsupported order/weights, non-manifold topology, and
+    excessive seam discrepancy use an explicit fallback or diagnostic.
+
+  * Parallel prep and shots are repeatable and sanitizer-clean.
+
+Performance:
+
+  * The new shot fast path performs no general heap allocation.
+
+  * Prepared BBNode/trim-list counts and serialized cache size fall
+    substantially when density is reduced.
+
+  * FRAME.g prep wall time and peak RSS improve materially from the recorded
+    approximately 33.4 seconds and 3.05 GB baseline.
+
+  * Total render performance, including local refinement, is no worse on
+    ordinary rays and is measured separately for deliberately grazing rays.
+
+  * Fallback frequency and workspace high-water marks are low and stable on a
+    representative corpus subset before the new path becomes default.
+
+
+12. RISKS AND REQUIRED SAFEGUARDS
+---------------------------------
+
+False exclusion in local bounds
+  This is the most serious algorithmic risk.  Use Bernstein/projective bounds
+  only when their preconditions hold.  Unsafe weights or arithmetic states
+  fall back.  Tests must contain high-degree and extreme-weight surfaces.
+
+Tolerance inflation
+  Automatically using measured error as permission can heal arbitrarily bad
+  geometry.  Only ON_UNSET_VALUE authorizes inferred topology tolerance;
+  explicitly set values remain authoritative.  Always report large envelopes.
+
+UV singularities
+  Inverse surface metrics can explode at a pole.  UV is only a broad phase;
+  final proximity is in 3D.  Use one-sided evaluation and bounded queries.
+
+Close roots versus crack observations
+  Never merge solely by t distance.  Require topology, isolated-root, and
+  local-state evidence.  Preserve ambiguity until solid-event resolution.
+
+Fixed workspace
+  Fixed capacity must not imply fixed correctness.  Every overflow is an
+  observable fallback.  Corpus high-water metrics determine later tuning.
+
+Legacy invalid geometry
+  The current heuristics accommodate unsolid geometry.  Do not remove the old
+  path until fallback telemetry identifies what real corpus cases still need
+  it.  Do not let those cases weaken the well-defined solid path.
+
+Cache compatibility
+  Version all new serialized data.  Reject incomplete or old records and
+  rebuild.  Exercise repeated load/free cycles under memory checking.
+
+Crofton interpretation
+  Dense sampling cannot repair a systematic raytracing bias or a
+  representation-dependent sub-tolerance sliver.  Always inspect paired ray
+  differences and block variance, not only the final scalar estimate.
+
+
+13. SOURCE AND LITERATURE GUIDE
+-------------------------------
+
+Primary BRL-CAD implementation sources:
+
+  * src/librt/primitives/brep/brep.cpp
+      brep_build_bvh_surface_tree, brep_build_bvh, rt_brep_prep,
+      utah_newton_solver, utah_newton_4corner_solver,
+      utah_brep_intersect, rt_brep_shot, rt_brep_plot,
+      rt_brep_adaptive_plot, and rt_brep_prep_serialize.
+
+  * src/librt/primitives/brep/brep_local.h
+      current brep_specific ownership model.
+
+  * include/brep/defines.h
+      current fixed depths and tolerances.
+
+  * include/brep/surfacetree.h and src/libbrep/opennurbs_ext.cpp
+      SurfaceTree, CurveTree, BBNode construction, trim adjacency, bounding,
+      and the recent SurfaceSplitCache change.
+
+  * include/brep/bbnode.h
+      BBNode hierarchy, CurveTree reference, and per-node STL storage.
+
+  * include/brep/pullback.h, include/brep/util.h, and
+    src/libbrep/PullbackCurve.cpp
+      singularity detection, surface_EvNormal, and closest-point/trim tools.
+
+  * src/librt/bool.c and include/rt/func.h
+      rti_tol.dist behavior, zero-thickness partition handling, and detailed
+      near-tolerance Crofton/sliver implications.
+
+  * src/librt/primitives/crofton.cpp and src/librt/tests/crofton.c
+      deterministic Cauchy-Crofton estimator, formulas, and analytic tests.
+
+  * src/librt/tests/primitive_brep.cpp
+      existing implicit-to-BREP topology validation.
+
+  * src/proc-db/brep_cobb.cpp and src/proc-db/brep_invalid.cpp
+      Cobb surface definition and an existing invalid-trim fixture.
+
+  * src/libbrep/cdt/
+      existing trim sampling, seam checks, one-sided normal use, and the CDT
+      drawing/tessellation route.  Reuse proven utilities where their
+      tolerance contracts match; do not duplicate them blindly.
+
+OpenNURBS source/API documentation:
+
+  * opennurbs_brep.h comments for ON_BrepVertex::m_tolerance,
+    ON_BrepEdge::m_tolerance, and ON_BrepTrim::m_tolerance[2].  The configured
+    build copy is at .build/include/OpenNURBS/opennurbs_brep.h.
+
+Algorithm and geometry references:
+
+  * J. E. Cobb, "Tiling the Sphere with Rational Bezier Patches,"
+    University of Utah Technical Report UUCS-88-009, 1988.  This is the basis
+    of src/proc-db/brep_cobb.cpp.
+
+  * J. T. Kajiya, "Ray Tracing Parametric Patches," SIGGRAPH 1982.  This is
+    foundational work on Newton-style ray/parametric-surface intersection and
+    its convergence limitations.
+
+  * T. Nishita, T. W. Sederberg, and M. Kakimoto, "Ray Tracing Trimmed
+    Rational Surface Patches," SIGGRAPH 1990.  Relevant to subdivision,
+    rational patches, and trims.
+
+  * S. Guthe, A. Balazs, and R. Klein, "GPU-based Trimming and Tessellation of
+    NURBS and T-Spline Surfaces," and related Bauhaus work on ray casting
+    trimmed NURBS.  A directly relevant iterative Bezier-clipping treatment is
+    available as "Ray Casting of Trimmed NURBS Surfaces on the GPU":
+    https://www.uni-weimar.de/fileadmin/user/fak/medien/professuren/Virtual_Reality/documents/publications/Ray_Casting_of_Trimmed_NURBS_Surfaces_on_the_GPU.pdf
+
+  * Li et al., "Using low-discrepancy sequences and the Crofton formula to
+    compute surface areas of geometric models," Computer-Aided Design 35
+    (2003), 771-782.
+
+  * Liu et al., "Surface area estimation of digitized 3D objects using
+    quasi-Monte Carlo methods," Pattern Recognition 43 (2010), 3900-3909.
+
+Bezier clipping and interval/geometric root isolation should be evaluated as
+conservative root-exclusion mechanisms, not adopted solely for speed claims.
+The implementation's authority is its proof of no false exclusion plus the
+analytic and paired-ray tests described here.
+
+
+14. RECOMMENDED FIRST CONCRETE CHANGE SET
+-----------------------------------------
+
+The first implementation change should deliberately avoid changing tree
+density or seam semantics.  It should contain only:
+
+  1. Prepared ownership repair and cache-deserialization ownership.
+
+  2. SurfaceTree root/CurveTree transfer with immediate destruction of the
+     temporary builder and its SurfaceSplitCache.
+
+  3. Removal of unused m_face_user.p storage.
+
+  4. Structured solver outcomes, initial-residual success, deterministic
+     singular handling, finite checks, and safe normal evaluation.
+
+  5. Directed sphere pole, boundary, seam, and reverse-ray tests.
+
+  6. Baseline counters needed to compare later phases.
+
+This produces an independently reviewable correctness and memory-management
+improvement.  The Cobb seam framework and tolerance resolver should be the
+next change set, followed by local Bezier isolation.  Only then should the
+default surface-tree depth be reduced.
