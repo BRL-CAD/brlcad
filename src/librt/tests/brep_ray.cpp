@@ -441,7 +441,11 @@ brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace)
 	trace.trim_status_mismatches == 0 &&
 	trace.trim_closest_mismatches == 0 &&
 	trace.trim_distance_mismatches == 0 &&
-	trace.trim_equivalence_mismatches == 0;
+	trace.trim_equivalence_mismatches == 0 &&
+	trace.legacy_unique_roots == trace.legacy_unique_roots_matched +
+	    trace.legacy_unique_roots_unmatched &&
+	trace.local_unique_roots == trace.local_unique_roots_matched +
+	    trace.local_unique_roots_unmatched;
 }
 
 
@@ -545,6 +549,39 @@ brep_trace_box_covers_both(const struct rt_brep_shot_trace &trace,
 	    return true;
     }
     return false;
+}
+
+
+static void
+brep_trace_root_coverage_diagnostic(const char *label,
+    const struct rt_brep_shot_trace &trace)
+{
+    if (!trace.legacy_unique_roots_unmatched &&
+	    !trace.local_unique_roots_unmatched)
+	return;
+    std::printf("Root coverage diagnostic %s: legacy=%zu/%zu/%zu "
+	"local=%zu/%zu/%zu clusters=%zu segments=%zu\n", label,
+	trace.legacy_unique_roots, trace.legacy_unique_roots_matched,
+	trace.legacy_unique_roots_unmatched, trace.local_unique_roots,
+	trace.local_unique_roots_matched, trace.local_unique_roots_unmatched,
+	trace.stored_local_clusters, trace.final_segments);
+    for (size_t root_index = 0; root_index < trace.stored_roots;
+	    ++root_index) {
+	const struct rt_brep_trace_root &root = trace.roots[root_index];
+	std::printf("  legacy %zu face=%d t=%.17g uv=%.17g/%.17g "
+	    "normal=%.17g class=%d trim=%d\n", root_index,
+	    root.face_index, root.dist, root.uv[0], root.uv[1],
+	    root.normal_dot, root.hit_class, root.trim_status);
+    }
+    for (size_t root_index = 0;
+	    root_index < trace.stored_local_roots; ++root_index) {
+	const struct rt_brep_trace_local_root &root =
+	    trace.local_roots[root_index];
+	std::printf("  local %zu face=%d span=%d t=%.17g "
+	    "uv=%.17g/%.17g residual=%.17g normal=%.17g\n",
+	    root_index, root.face_index, root.span_index, root.dist,
+	    root.uv[0], root.uv[1], root.residual, root.normal_dot);
+    }
 }
 
 
@@ -697,6 +734,9 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     size_t subtolerance_local_invalid = 0;
     double maximum_local_endpoint_error = 0.0;
     size_t outside_local_candidates = 0;
+    size_t outside_local_invalid = 0;
+    size_t legacy_roots_without_local = 0;
+    size_t local_roots_without_legacy = 0;
     double largest_outside_local_candidate = 0.0;
     vect_t direction = {1.0, 0.0, 0.0};
     const std::vector<double> clearances = grazing_clearances(radius,
@@ -740,6 +780,13 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    trace.local_root_failures);
 	maximum_local_duplicates = std::max(maximum_local_duplicates,
 	    trace.local_root_duplicates);
+	legacy_roots_without_local += trace.legacy_unique_roots_unmatched;
+	local_roots_without_legacy += trace.local_unique_roots_unmatched;
+	if (trace.legacy_unique_roots_unmatched) {
+	    std::printf("Inside root coverage h/T=%.17g\n",
+		h / rtip->rti_tol.dist);
+	    brep_trace_root_coverage_diagnostic("inside", trace);
+	}
 	const double expected_in = 2.0 * radius - analytic_chord * 0.5;
 	const double expected_out = 2.0 * radius + analytic_chord * 0.5;
 	const bool roots_covered = brep_trace_covers_t(trace, expected_in,
@@ -924,6 +971,11 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     struct rt_brep_shot_trace tangent_trace;
     (void)shoot_brep_trace(brep_stp, rtip, resp, tangent_trace_ray,
 	tangent_trace);
+    legacy_roots_without_local +=
+	tangent_trace.legacy_unique_roots_unmatched;
+    local_roots_without_legacy +=
+	tangent_trace.local_unique_roots_unmatched;
+    brep_trace_root_coverage_diagnostic("exact tangent", tangent_trace);
     maximum_fixed_leaves = std::max(maximum_fixed_leaves,
 	tangent_trace.fixed_leaf_count);
     maximum_fixed_hits = std::max(maximum_fixed_hits,
@@ -981,6 +1033,8 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	VMOVE(trace_ray.direction, direction);
 	struct rt_brep_shot_trace trace;
 	(void)shoot_brep_trace(brep_stp, rtip, resp, trace_ray, trace);
+	legacy_roots_without_local += trace.legacy_unique_roots_unmatched;
+	local_roots_without_legacy += trace.local_unique_roots_unmatched;
 	maximum_fixed_leaves = std::max(maximum_fixed_leaves,
 	    trace.fixed_leaf_count);
 	maximum_fixed_hits = std::max(maximum_fixed_hits,
@@ -1005,6 +1059,22 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    outside_local_candidates += trace.local_root_candidates;
 	    largest_outside_local_candidate = std::max(
 		largest_outside_local_candidate, -h);
+	    bool valid_contact = trace.local_unique_roots == 1 &&
+		trace.stored_local_clusters == 1 &&
+		trace.local_clusters[0].classification ==
+		RT_BREP_TRACE_LOCAL_CONTACT && trace.final_segments == 0;
+	    for (size_t local_index = 0;
+		    local_index < trace.stored_local_roots; ++local_index) {
+		if (fabs(trace.local_roots[local_index].dist -
+			2.0 * radius) > 0.1 * rtip->rti_tol.dist)
+		    valid_contact = false;
+	    }
+	    if (!valid_contact) {
+		outside_local_invalid++;
+		std::printf("Outside root coverage h/T=%.17g\n",
+		    h / rtip->rti_tol.dist);
+		brep_trace_root_coverage_diagnostic("outside", trace);
+	    }
 	}
 	if (implicit_result.segments != 0 || brep_result.segments != 0) {
 	    std::printf("FAIL: outside grazing h/R=%.17g did not miss: "
@@ -1014,9 +1084,10 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	}
     }
     std::printf("Sphere grazing miss-side isolation: ambiguous=%zu "
-	"largest-h/T=%.9g local-candidates=%zu largest-local-h/T=%.9g\n",
+	"largest-h/T=%.9g local-candidates=%zu local-invalid=%zu "
+	"largest-local-h/T=%.9g\n",
 	outside_ambiguous, largest_outside_ambiguous / rtip->rti_tol.dist,
-	outside_local_candidates,
+	outside_local_candidates, outside_local_invalid,
 	largest_outside_local_candidate / rtip->rti_tol.dist);
     if (largest_outside_ambiguous > 1.0e-6 * rtip->rti_tol.dist) {
 	std::printf("FAIL: miss-side isolation ambiguity spread to h/T=%.17g\n",
@@ -1029,9 +1100,22 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    largest_outside_local_candidate / rtip->rti_tol.dist);
 	failures++;
     }
+    if (outside_local_invalid) {
+	std::printf("FAIL: %zu miss-side local roots were not contact-only\n",
+	    outside_local_invalid);
+	failures++;
+    }
     std::printf("Sphere fixed workspaces: leaves=%zu/%d raw-hits=%zu/%d\n",
 	maximum_fixed_leaves, RT_BREP_MAX_LEAVES, maximum_fixed_hits,
 	RT_BREP_MAX_HITS);
+    std::printf("Sphere prepared-span root coverage: legacy-unmatched=%zu "
+	"direct-only=%zu\n", legacy_roots_without_local,
+	local_roots_without_legacy);
+    if (legacy_roots_without_local) {
+	std::printf("FAIL: prepared spans missed %zu legacy sphere roots\n",
+	    legacy_roots_without_local);
+	failures++;
+    }
 
     /* The implicit sphere rejects an outward ray beginning on its surface.
      * BREP currently returns the entirely nonpositive segment [-2R, 0].
@@ -2330,6 +2414,38 @@ cobb_similarity_transform(double scale, const ON_3dVector &translation)
 }
 
 
+static ON_Xform
+cobb_axis_angle_similarity_transform(double scale,
+    const ON_3dVector &translation, ON_3dVector axis, double angle)
+{
+    ON_Xform xform(ON_Xform::IdentityTransformation);
+    if (!axis.Unitize())
+	return xform;
+    const double c = cos(angle);
+    const double s = sin(angle);
+    const double v = 1.0 - c;
+    const double rotation[3][3] = {
+	{axis.x * axis.x * v + c,
+	 axis.x * axis.y * v - axis.z * s,
+	 axis.x * axis.z * v + axis.y * s},
+	{axis.y * axis.x * v + axis.z * s,
+	 axis.y * axis.y * v + c,
+	 axis.y * axis.z * v - axis.x * s},
+	{axis.z * axis.x * v - axis.y * s,
+	 axis.z * axis.y * v + axis.x * s,
+	 axis.z * axis.z * v + c}
+    };
+    for (int row = 0; row < 3; ++row) {
+	for (int column = 0; column < 3; ++column)
+	    xform[row][column] = scale * rotation[row][column];
+    }
+    xform[0][3] = translation.x;
+    xform[1][3] = translation.y;
+    xform[2][3] = translation.z;
+    return xform;
+}
+
+
 static ON_3dPoint
 cobb_transform_point(const ON_Xform &xform, const ON_3dPoint &point)
 {
@@ -2484,31 +2600,45 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 	return 1;
     }
 
+    enum rotation_kind {
+	NO_ROTATION,
+	CYCLIC_ROTATION,
+	AXIS_ANGLE_ROTATION
+    };
     struct transform_case {
 	const char *name;
 	double scale;
 	ON_3dVector translation;
-	bool rotate;
+	rotation_kind rotation;
+	ON_3dVector axis;
+	double angle;
 	bool reparameterize;
     } cases[] = {
-	{"identity", 1.0, ON_3dVector(0.0, 0.0, 0.0), false, false},
+	{"identity", 1.0, ON_3dVector(0.0, 0.0, 0.0), NO_ROTATION,
+	    ON_3dVector(0.0, 0.0, 0.0), 0.0, false},
 	{"trim-reparameterized", 1.0, ON_3dVector(0.0, 0.0, 0.0),
-	    false, true},
-	{"rotated-translated", 1.0, ON_3dVector(13.0, -17.0, 29.0),
-	    true, false},
+	    NO_ROTATION, ON_3dVector(0.0, 0.0, 0.0), 0.0, true},
+	{"translated", 1.0, ON_3dVector(-31.25, 47.5, 103.75),
+	    NO_ROTATION, ON_3dVector(0.0, 0.0, 0.0), 0.0, false},
+	{"cyclic-rotated-translated", 1.0,
+	    ON_3dVector(13.0, -17.0, 29.0), CYCLIC_ROTATION,
+	    ON_3dVector(0.0, 0.0, 0.0), 0.0, false},
+	{"oblique-rotated-translated", 1.0,
+	    ON_3dVector(-19.0, 23.0, 41.0), AXIS_ANGLE_ROTATION,
+	    ON_3dVector(1.0, -2.0, 0.5), 0.731, false},
 	{"small-similarity", 0.01, ON_3dVector(1.25, -2.5, 5.0),
-	    true, false},
+	    AXIS_ANGLE_ROTATION, ON_3dVector(-0.3, 1.0, 0.7), -1.113,
+	    false},
 	{"large-similarity", 1.0e4,
-	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), true, false}
+	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), AXIS_ANGLE_ROTATION,
+	    ON_3dVector(2.0, 0.25, -1.0), 2.017, false}
     };
     double reference_existing[2] = {0.0, 0.0};
     double reference_continuation[2] = {0.0, 0.0};
-    size_t reference_surface_candidates[3][2] = {};
-    size_t reference_subdivision_boxes[3][2] = {};
-    size_t reference_isolated_boxes[3][2] = {};
     size_t reference_local_root_count[3][2] = {};
     size_t reference_local_cluster_count[3][2] = {};
-    size_t reference_local_root_failures[3][2] = {};
+    int reference_local_cluster_class[3][2]
+	[RT_BREP_TRACE_MAX_LOCAL_CLUSTERS] = {};
     double reference_local_root_distances[3][2]
 	[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
     int failures = 0;
@@ -2523,9 +2653,12 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
     for (size_t case_index = 0;
 	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
 	const transform_case &test = cases[case_index];
-	ON_Xform xform = test.rotate ?
-	    cobb_similarity_transform(test.scale, test.translation) :
-	    ON_Xform(ON_Xform::IdentityTransformation);
+	ON_Xform xform(ON_Xform::IdentityTransformation);
+	if (test.rotation == CYCLIC_ROTATION)
+	    xform = cobb_similarity_transform(test.scale, test.translation);
+	else if (test.rotation == AXIS_ANGLE_ROTATION)
+	    xform = cobb_axis_angle_similarity_transform(test.scale,
+		test.translation, test.axis, test.angle);
 	ON_Brep *variant = new ON_Brep(*base);
 	if (!variant->Transform(xform)) {
 	    std::printf("FAIL: Cobb %s BREP transform\n", test.name);
@@ -2668,18 +2801,15 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 		    const size_t local_cluster_count =
 			trace.stored_local_clusters;
 		    if (case_index == 0) {
-			reference_surface_candidates[state_index][reverse] =
-			    trace.candidate_surface_spans;
-			reference_subdivision_boxes[state_index][reverse] =
-			    trace.surface_subdivision_boxes;
-			reference_isolated_boxes[state_index][reverse] =
-			    trace.surface_isolated_boxes;
 			reference_local_root_count[state_index][reverse] =
 			    local_root_distances.size();
 			reference_local_cluster_count[state_index][reverse] =
 			    local_cluster_count;
-			reference_local_root_failures[state_index][reverse] =
-			    trace.local_root_failures;
+			for (size_t cluster_index = 0;
+				cluster_index < local_cluster_count; ++cluster_index)
+			    reference_local_cluster_class[state_index][reverse]
+				[cluster_index] =
+				trace.local_clusters[cluster_index].classification;
 			for (size_t root_index = 0;
 				root_index < local_root_distances.size(); ++root_index)
 			    reference_local_root_distances[state_index][reverse]
@@ -2711,6 +2841,20 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 				local_roots_differ = true;
 			}
 		    }
+		    if (local_cluster_count !=
+			    reference_local_cluster_count[state_index][reverse]) {
+			local_roots_differ = true;
+		    } else {
+			for (size_t cluster_index = 0;
+				cluster_index < local_cluster_count; ++cluster_index) {
+			    if (trace.local_clusters[cluster_index].classification !=
+				    reference_local_cluster_class[state_index][reverse]
+				    [cluster_index]) {
+				local_roots_differ = true;
+				break;
+			    }
+			}
+		    }
 		    bool bad = !brep_trace_fixed_workspaces_match(trace) ||
 			!edge || !edge->candidate_spans ||
 			!edge->within_edge_tolerance || !edge->sector_valid ||
@@ -2739,15 +2883,12 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			trace.prepared_surface_spans != 6 ||
 			trace.candidate_surface_spans +
 			trace.excluded_surface_spans != 6 ||
-			trace.candidate_surface_spans !=
-			reference_surface_candidates[state_index][reverse] ||
-			trace.surface_subdivision_boxes !=
-			reference_subdivision_boxes[state_index][reverse] ||
-			trace.surface_isolated_boxes !=
-			reference_isolated_boxes[state_index][reverse] ||
 			trace.surface_workspace_exhausted != 0 ||
+			trace.surface_box_overflow != 0 ||
+			trace.root_overflow != 0 ||
 			trace.local_root_overflow != 0 ||
 			trace.local_cluster_overflow != 0 ||
+			trace.legacy_unique_roots_unmatched != 0 ||
 			trace.local_root_candidates !=
 			trace.stored_local_roots ||
 			trace.local_root_clusters !=
@@ -2758,8 +2899,6 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			trace.local_root_candidates +
 			trace.local_root_failures +
 			trace.local_root_duplicates ||
-			trace.local_root_failures !=
-			reference_local_root_failures[state_index][reverse] ||
 			local_root_invalid || local_roots_differ ||
 			edge->closest_state != expected_state ||
 			fabs(edge->distance / test.scale - fabs(clearance)) >
@@ -2829,7 +2968,7 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    "reverse=%d observed=%d distance=%.17g "
 			    "edge-t=%.17g closure=%zu/%zu direction=%d/%d "
 			    "existing-t=%.17g local=%zu/%zu clusters=%zu/%zu "
-			    "failures=%zu/%zu invalid=%d differ=%d "
+			    "failures=%zu invalid=%d differ=%d "
 			    "leaves=%zu/%zu stored=%zu overflow=%zu fallback=%zu "
 			    "mismatch=%zu hits=%zu/%zu overflow=%zu fallback=%zu "
 			    "mismatch=%zu "
@@ -2847,7 +2986,6 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    local_cluster_count,
 			    reference_local_cluster_count[state_index][reverse],
 			    trace.local_root_failures,
-			    reference_local_root_failures[state_index][reverse],
 			    local_root_invalid, local_roots_differ,
 			    trace.intersected_leaves, trace.fixed_leaf_count,
 			    trace.fixed_leaf_stored, trace.fixed_leaf_overflow,
@@ -3724,6 +3862,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t leaks_with_double_local_cluster = 0;
     size_t leaks_with_triple_local_cluster = 0;
     size_t local_roots_without_legacy_root = 0;
+    size_t legacy_roots_without_local_root = 0;
     size_t sector_inside = 0;
     size_t sector_contact = 0;
     size_t sector_outside = 0;
@@ -3918,6 +4057,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    maximum_local_root_duplicates = std::max(
 			maximum_local_root_duplicates,
 			trace.local_root_duplicates);
+		    legacy_roots_without_local_root +=
+			trace.legacy_unique_roots_unmatched;
 		    maximum_certificate_boxes = std::max(
 			maximum_certificate_boxes,
 			trace.continuation_certificate_boxes);
@@ -4639,12 +4780,21 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	maximum_calibration_error);
     std::printf("Cobb surface isolation: max-boxes=%zu max-isolated=%zu "
 	"max-depth=%zu workspace-high-water=%zu local-attempts=%zu "
-	"local-failures=%zu local-duplicates=%zu unmatched-local=%zu\n",
+	"local-failures=%zu local-duplicates=%zu unmatched-legacy=%zu "
+	"unmatched-local=%zu\n",
 	maximum_subdivision_boxes, maximum_isolated_boxes,
 	maximum_subdivision_depth, maximum_workspace_high_water,
 	maximum_local_root_attempts, maximum_local_root_failures,
 	maximum_local_root_duplicates,
+	legacy_roots_without_local_root,
 	local_roots_without_legacy_root);
+    if (legacy_roots_without_local_root ||
+	    local_roots_without_legacy_root) {
+	std::printf("FAIL: Cobb prepared-span root coverage legacy=%zu "
+	    "local=%zu\n", legacy_roots_without_local_root,
+	    local_roots_without_legacy_root);
+	failures++;
+    }
     std::printf("Cobb continuation certificate: max-boxes=%zu "
 	"workspace-high-water=%zu max-t-width=%.9g\n",
 	maximum_certificate_boxes, maximum_certificate_workspace,
