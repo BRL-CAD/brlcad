@@ -4375,6 +4375,48 @@ private:
 };
 
 
+class RT_BrepSemaphoreGuard
+{
+public:
+    explicit RT_BrepSemaphoreGuard(int semaphore) : m_semaphore(semaphore)
+    {
+	bu_semaphore_acquire(m_semaphore);
+    }
+
+    ~RT_BrepSemaphoreGuard()
+    {
+	bu_semaphore_release(m_semaphore);
+    }
+
+private:
+    RT_BrepSemaphoreGuard(const RT_BrepSemaphoreGuard &);
+    RT_BrepSemaphoreGuard &operator=(const RT_BrepSemaphoreGuard &);
+
+    int m_semaphore;
+};
+
+
+/* openNURBS constructs, reads, writes, and resets render-setting defaults
+ * through non-reentrant localtime().  Keep the guard alive until after the
+ * model member is destroyed (members are destroyed in reverse order). */
+class RT_SerializedONXModel
+{
+private:
+    RT_BrepSemaphoreGuard m_guard;
+
+public:
+    RT_SerializedONXModel() : m_guard(BU_SEM_ID_DATETIME), model()
+    {
+    }
+
+    ONX_Model model;
+
+private:
+    RT_SerializedONXModel(const RT_SerializedONXModel &);
+    RT_SerializedONXModel &operator=(const RT_SerializedONXModel &);
+};
+
+
 RT_MemoryArchive::RT_MemoryArchive()
     : ON_BinaryArchive(ON::archive_mode::write3dm), pos(0), m_buffer()
 {
@@ -4543,6 +4585,7 @@ brep_read_archive(const void *buffer, size_t buffer_size, ON_TextLog *log)
     if (!buffer || !buffer_size)
 	return NULL;
 
+    RT_BrepSemaphoreGuard datetime_guard(BU_SEM_ID_DATETIME);
     std::lock_guard<std::mutex> archive_guard(rt_brep_archive_read_mutex());
     ON::Begin();
 
@@ -4641,7 +4684,8 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
     if (attr == (char *)NULL) {
 	bu_vls_sprintf(logstr, "brep");
 
-	ONX_Model model;
+	RT_SerializedONXModel serialized_model;
+	ONX_Model &model = serialized_model.model;
 	brep_dbi2on(intern, model);
 
 	/* Create a serialized version for base-64 encoding */
@@ -4705,7 +4749,8 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     BU_EXTERNAL_INIT(ep);
 
-    ONX_Model model;
+    RT_SerializedONXModel serialized_model;
+    ONX_Model &model = serialized_model.model;
     brep_dbi2on(ip, model);
 
     RT_MemoryArchive archive;
