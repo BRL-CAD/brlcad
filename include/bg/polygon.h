@@ -201,6 +201,29 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 
 /**
  * @brief
+ * Sanitize and triangulate a 2D polygon with holes.
+ *
+ * This variant returns a newly allocated point array because topology repair
+ * may merge points, split intersections, or reorder contours.  It first
+ * removes duplicate and boundary-coincident unconstrained points.  If needed,
+ * it then uses integer Clipper operations to reconstruct valid contour
+ * nesting before constrained Delaunay triangulation.
+ *
+ * The caller must free both faces and out_pts with bu_free.
+ *
+ * @return 0 if triangulation is successful
+ * @return 1 if triangulation is unsuccessful
+ */
+BG_EXPORT extern int
+bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
+	point2d_t **out_pts, int *num_outpts,
+	const int *poly, const size_t poly_npts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const point2d_t *pts, const size_t npts);
+
+/**
+ * @brief
  * Triangulate a 2D polygon without holes.
  *
  * The polygon cannot have holes and must be provided as an array of
@@ -254,7 +277,7 @@ bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_
 		       struct bg_polygon *p, triangulation_t type);
 
 
-/* Test function - do not use */
+/* Legacy experimental entry point. */
 BG_EXPORT extern int
 bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const int *poly, const size_t poly_pnts,

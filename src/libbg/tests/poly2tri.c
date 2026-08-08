@@ -68,6 +68,8 @@ main(int argc, const char **argv)
 	size_t num_points = 0;
 	int num_faces = 0;
 	int *faces = NULL;
+	point2d_t *out_points = NULL;
+	int out_point_count = 0;
 
 	/* 44 point polygon derived from NIST MBE PMI sample 1 shape */
 	point2d_t points[44] = {{0}};
@@ -127,13 +129,19 @@ main(int argc, const char **argv)
 	    verts_ind[i] = (int)i;
 	}
 
-	ret = bg_poly2tri_test(&faces, &num_faces, NULL, NULL, verts_ind, 44, NULL, NULL, 0, NULL, 0, (const point2d_t *)points);
+	ret = bg_nested_poly_triangulate_clean(&faces, &num_faces,
+		&out_points, &out_point_count, verts_ind, 44, NULL, NULL,
+		0, NULL, 0, (const point2d_t *)points, num_points);
 	if (ret) {
-	    bu_log("test 1 ear clipping failure!\n");
+	    bu_log("test 1 cleanup failure!\n");
 	    return 1;
 	} else {
-	    _tess_report(faces, num_faces, (const point2d_t *)points, 1, 1);
+	    _tess_report(faces, num_faces,
+		(const point2d_t *)out_points, 1, 1);
 	}
+	bu_free(faces, "test 1 faces");
+	bu_free(out_points, "test 1 points");
+	bu_free(verts_ind, "test 1 indices");
     }
 
     {
@@ -177,14 +185,23 @@ main(int argc, const char **argv)
 
 	point2d_t *opnts = NULL;
 	int noutpnts = 0;
-	ret = bg_poly2tri_test(&faces, &num_faces, &opnts, &noutpnts, (const int *)outer, 4, (const int **)hole_array, (const size_t *)hcnts, hole_cnt, NULL, 0, (const point2d_t *)points);
+	ret = bg_nested_poly_triangulate_clean(&faces, &num_faces, &opnts,
+		&noutpnts, (const int *)outer, 4,
+		(const int **)hole_array, (const size_t *)hcnts, hole_cnt,
+		NULL, 0, (const point2d_t *)points, num_points);
 	if (ret) {
 	    bu_log("multiple hole splitting failure!\n");
 	    return 1;
 	} else {
-	    bg_trimesh_2d_plot3("poly2tri_new_pnts.plot3", faces, num_faces, (const point2d_t *)opnts, noutpnts);
+	    if (plot_files)
+		bg_trimesh_2d_plot3("poly2tri_new_pnts.plot3", faces,
+		    num_faces, (const point2d_t *)opnts, noutpnts);
 	    _tess_report(faces, num_faces, (const point2d_t *)opnts, 1, 1);
 	}
+	bu_free(faces, "multiple hole faces");
+	bu_free(opnts, "multiple hole points");
+	bu_free(hole_array, "multiple hole array");
+	bu_free(hcnts, "multiple hole counts");
     }
 
     /* Nested test case 1 */
