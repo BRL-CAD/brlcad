@@ -3165,8 +3165,26 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     std::list<const BBNode*> inters;
     ON_Ray r = toXRay(rp);
     bs->bvh->intersectsHierarchy(r, inters);
-    if (trace)
+    if (trace) {
 	trace->intersected_leaves = inters.size();
+	const BBNode *fixed_leaves[RT_BREP_TRACE_MAX_LEAVES] = {};
+	bool overflow = false;
+	bs->bvh->intersectsHierarchy(r, fixed_leaves,
+	    RT_BREP_TRACE_MAX_LEAVES, trace->fixed_leaf_count, overflow);
+	trace->fixed_leaf_stored = std::min(trace->fixed_leaf_count,
+	    (size_t)RT_BREP_TRACE_MAX_LEAVES);
+	trace->fixed_leaf_overflow = overflow ? 1 : 0;
+	if (!overflow && trace->fixed_leaf_count == inters.size()) {
+	    size_t leaf_index = 0;
+	    for (std::list<const BBNode*>::const_iterator i = inters.begin();
+		    i != inters.end(); ++i, ++leaf_index) {
+		if (fixed_leaves[leaf_index] != *i)
+		    trace->fixed_leaf_mismatches++;
+	    }
+	} else {
+	    trace->fixed_leaf_mismatches++;
+	}
+    }
     brep_trace_surface_spans(trace, bs, r);
     brep_trace_isolated_roots(trace, bs, r);
     brep_trace_local_clusters(trace,

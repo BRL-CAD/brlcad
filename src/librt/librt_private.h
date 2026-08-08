@@ -457,6 +457,7 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_MAX_SURFACE_BOXES 64
 #define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_CLUSTERS 64
+#define RT_BREP_TRACE_MAX_LEAVES 128
 #define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
 #define RT_BREP_TRACE_ENTERING 0
 #define RT_BREP_TRACE_LEAVING 1
@@ -532,6 +533,10 @@ struct rt_brep_trace_local_cluster {
 
 struct rt_brep_shot_trace {
     size_t intersected_leaves;
+    size_t fixed_leaf_count;
+    size_t fixed_leaf_stored;
+    size_t fixed_leaf_overflow;
+    size_t fixed_leaf_mismatches;
     size_t solver_calls;
     size_t solver_status[RT_BREP_TRACE_SOLVER_STATUS_COUNT];
     size_t candidate_roots;
