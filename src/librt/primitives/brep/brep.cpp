@@ -9807,6 +9807,7 @@ brep_resolve_continuation(struct rt_brep_shot_trace *trace,
 	    trace->continuation_residual = result.residual;
 	    trace->continuation_normal_dot = normal_dot;
 	    trace->continuation_face_index = hit->face->m_face_index;
+	    trace->continuation_span_index = span.span_index;
 	    vect_t point;
 	    vect_t normal;
 	    pt2d_t uv = {root_uv.x, root_uv.y};
@@ -9829,6 +9830,8 @@ brep_resolve_continuation(struct rt_brep_shot_trace *trace,
 		brep.m_T[edge.m_ti[0]].FaceIndexOf() :
 		(edge.m_ti[1] >= 0 && edge.m_ti[1] < brep.m_T.Count() ?
 		brep.m_T[edge.m_ti[1]].FaceIndexOf() : -99);
+	    trace->continuation_adjacent_face_index =
+		continuation_hit.m_adj_face_index;
 	    have_continuation_hit = true;
 	}
     }
@@ -10996,7 +10999,7 @@ brep_trace_make_hit(const struct brep_specific *bs, const ON_Ray &ray,
     hit = brep_hit(face, dist, ray, point, hit_normal, hit_uv);
     hit.trimmed = trim_status == 1;
     hit.closeToEdge = hit_class == brep_hit::NEAR_HIT ||
-	hit_class == brep_hit::NEAR_MISS;
+	hit_class == brep_hit::NEAR_MISS || hit_class == brep_hit::CRACK_HIT;
     hit.hit = (brep_hit::hit_type)hit_class;
     hit.direction = (brep_hit::hit_direction)direction;
     hit.m_adj_face_index = adjacency;
@@ -11251,6 +11254,8 @@ repair_fixed_brep_crack(brep_hit_workspace &hits,
     repair.closure_edge_index = -1;
     repair.closure_missing_direction = -1;
     repair.continuation_face_index = -1;
+    repair.continuation_span_index = -1;
+    repair.continuation_adjacent_face_index = -99;
     brep_observe_edges(&repair, bs, ray);
     if (repair.edge_overflow || repair.edge_evaluation_failures ||
 	    repair.edge_observations != repair.stored_edges)
@@ -11550,8 +11555,10 @@ brep_trace_regular_physical_events(struct rt_brep_shot_trace *trace,
 	event.uv[0] = root.uv[0];
 	event.uv[1] = root.uv[1];
 	event.source_box = box_index;
+	event.source_box_count = 1;
 	event.source_root = matching_root;
 	event.source_kind = RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT;
+	event.edge_index = -1;
 	event.face_index = root.face_index;
 	event.span_index = root.span_index;
 	event.certificate = RT_BREP_TRACE_EVENT_REGULAR_INTERIOR;
@@ -11573,6 +11580,326 @@ brep_trace_regular_physical_events(struct rt_brep_shot_trace *trace,
 	}
     }
     brep_trace_finalize_physical_events(trace, ray, tol, complete);
+}
+
+
+/* A crack continuation is a separate boundary theorem, not a weakened
+ * regular-root certificate.  The accepted case has one non-tangent root, one
+ * authorized manifold-edge witness, and one independently isolated
+ * continuation root.  Any additional retained roots must be tangent witnesses
+ * on that same edge corridor. */
+static bool
+brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const ON_Ray &ray,
+    const struct bn_tol *tol)
+{
+    if (!trace || !bs || !bs->brep || !bs->is_solid || bs->plate_mode)
+	return false;
+    trace->physical_event_seam_attempts++;
+    const bool workspace_complete = trace->prepared_surface_spans &&
+	!trace->unsupported_surface_faces &&
+	trace->supported_surface_faces == bs->face_records.size() &&
+	trace->candidate_surface_spans + trace->excluded_surface_spans ==
+	    trace->prepared_surface_spans &&
+	!trace->surface_workspace_exhausted &&
+	!trace->surface_clip_restriction_failures &&
+	!trace->surface_box_overflow &&
+	trace->surface_isolated_boxes == trace->stored_surface_boxes &&
+	!trace->local_root_overflow && !trace->local_trim_failures &&
+	trace->local_root_candidates == trace->stored_local_roots &&
+	trace->stored_surface_boxes && trace->stored_local_roots &&
+	!trace->stored_physical_events;
+    if (!workspace_complete) {
+	trace->physical_event_seam_failures++;
+	return false;
+    }
+
+    struct rt_brep_shot_trace edge_trace = {};
+    edge_trace.closure_edge_index = -1;
+    edge_trace.closure_missing_direction = -1;
+    edge_trace.continuation_face_index = -1;
+    edge_trace.continuation_span_index = -1;
+    edge_trace.continuation_adjacent_face_index = -99;
+    brep_observe_edges(&edge_trace, bs, ray);
+    if (edge_trace.edge_overflow || edge_trace.edge_evaluation_failures ||
+	edge_trace.edge_observations != edge_trace.stored_edges) {
+	trace->physical_event_seam_failures++;
+	return false;
+    }
+
+    size_t certified_candidates = 0;
+    size_t selected_root = 0;
+    struct rt_brep_trace_edge selected_edge = {};
+    double continuation_dist = 0.0;
+    double continuation_uv[2] = {0.0, 0.0};
+    double continuation_t_min = 0.0;
+    double continuation_t_max = 0.0;
+    int continuation_face = -1;
+    int continuation_span = -1;
+    int continuation_adjacency = -99;
+    int continuation_direction = -1;
+    for (size_t root_index = 0;
+	    root_index < trace->stored_local_roots; ++root_index) {
+	const struct rt_brep_trace_local_root &root =
+	    trace->local_roots[root_index];
+	if (root.trim_status == 1 ||
+		(root.hit_class != brep_hit::CLEAN_HIT &&
+		 root.hit_class != brep_hit::NEAR_HIT) ||
+		!std::isfinite(root.normal_dot) ||
+		fabs(root.normal_dot) <= BREP_GRAZING_DOT_TOL)
+	    continue;
+	brep_hit existing_hit;
+	if (!brep_trace_make_hit(bs, ray, root.face_index, root.dist,
+		root.uv, root.trim_status, root.hit_class, root.direction,
+		root.adjacent_face_index, existing_hit))
+	    continue;
+	trace->physical_event_seam_root_candidates++;
+
+	struct rt_brep_shot_trace candidate = {};
+	candidate.closure_edge_index = -1;
+	candidate.closure_missing_direction = -1;
+	candidate.continuation_face_index = -1;
+	candidate.continuation_span_index = -1;
+	candidate.continuation_adjacent_face_index = -99;
+	candidate.stored_edges = edge_trace.stored_edges;
+	for (size_t edge_index = 0;
+		edge_index < edge_trace.stored_edges; ++edge_index)
+	    candidate.edges[edge_index] = edge_trace.edges[edge_index];
+	brep_classify_closure(&candidate, bs, &existing_hit);
+	if (candidate.closure_candidates != 1 ||
+		candidate.closure_edge_index < 0)
+	    continue;
+	trace->physical_event_seam_closure_candidates++;
+	brep_resolve_continuation(&candidate, bs, ray, &existing_hit, NULL);
+	if (candidate.closure_shadow_segments != 1 ||
+		candidate.continuation_candidates != 1 ||
+		candidate.continuation_certified_candidates != 1 ||
+		candidate.continuation_certificate_exhausted ||
+		candidate.continuation_certificate_existing_overlap ||
+		candidate.continuation_certificate_root_boxes !=
+		candidate.continuation_certificate_isolated ||
+		!candidate.continuation_certificate_root_boxes ||
+		candidate.continuation_face_index != root.face_index ||
+		candidate.continuation_span_index < 0 ||
+		candidate.continuation_dist <
+		candidate.continuation_certificate_t_min ||
+		candidate.continuation_dist >
+		candidate.continuation_certificate_t_max ||
+		!std::isfinite(candidate.continuation_normal_dot) ||
+		fabs(candidate.continuation_normal_dot) <=
+		BREP_GRAZING_DOT_TOL)
+	    continue;
+	const struct rt_brep_trace_edge *observation = NULL;
+	for (size_t edge_index = 0;
+		edge_index < candidate.stored_edges; ++edge_index) {
+	    if (candidate.edges[edge_index].edge_index ==
+		    candidate.closure_edge_index) {
+		observation = &candidate.edges[edge_index];
+		break;
+	    }
+	}
+	if (!observation || !observation->within_edge_tolerance ||
+		!observation->sector_valid || observation->closest_state != 1 ||
+		!observation->correspondence_supported ||
+		observation->correspondence_exhausted ||
+		!observation->discrepancy_bounded ||
+		observation->discrepancy_bound_exhausted ||
+		observation->discrepancy_proof_class !=
+		RT_BREP_SEAM_GAP_INSIDE ||
+		!observation->discrepancy_authorized)
+	    continue;
+	trace->physical_event_seam_continuation_candidates++;
+	certified_candidates++;
+	if (certified_candidates != 1)
+	    continue;
+	selected_root = root_index;
+	selected_edge = *observation;
+	continuation_dist = candidate.continuation_dist;
+	continuation_uv[0] = candidate.continuation_uv[0];
+	continuation_uv[1] = candidate.continuation_uv[1];
+	continuation_t_min = candidate.continuation_certificate_t_min;
+	continuation_t_max = candidate.continuation_certificate_t_max;
+	continuation_face = candidate.continuation_face_index;
+	continuation_span = candidate.continuation_span_index;
+	continuation_adjacency =
+	    candidate.continuation_adjacent_face_index;
+	continuation_direction = candidate.closure_missing_direction;
+    }
+    if (certified_candidates != 1) {
+	trace->physical_event_seam_failures++;
+	return false;
+    }
+
+    const double ray_length = ray.m_dir.Length();
+    if (!(ray_length > DBL_MIN) || !std::isfinite(ray_length)) {
+	trace->physical_event_seam_failures++;
+	return false;
+    }
+    const double t_scale = std::max(1.0,
+	std::max(fabs(selected_edge.ray_dist), fabs(continuation_dist)));
+    const double witness_tolerance = std::max(
+	(double)selected_edge.model_tolerance / ray_length,
+	128.0 * DBL_EPSILON * t_scale);
+    bool witness_root[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
+    size_t witness_roots = 0;
+    for (size_t root_index = 0;
+	    root_index < trace->stored_local_roots; ++root_index) {
+	if (root_index == selected_root)
+	    continue;
+	const struct rt_brep_trace_local_root &root =
+	    trace->local_roots[root_index];
+	const bool incident = root.face_index == selected_edge.face_index[0] ||
+	    root.face_index == selected_edge.face_index[1];
+	if (!incident || !std::isfinite(root.normal_dot) ||
+		fabs(root.normal_dot) > BREP_GRAZING_DOT_TOL ||
+		fabs(root.dist - selected_edge.ray_dist) > witness_tolerance) {
+	    trace->physical_event_seam_ownership_failures++;
+	    trace->physical_event_seam_witness_failures++;
+	    trace->physical_event_seam_failures++;
+	    return false;
+	}
+	witness_root[root_index] = true;
+	witness_roots++;
+    }
+    if (!witness_roots) {
+	trace->physical_event_seam_edge_only_candidates++;
+    }
+
+    size_t first_source_box = (size_t)-1;
+    size_t source_boxes = 0;
+    size_t witness_boxes = 0;
+    bool source_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    bool witness_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    bool root_box_owned[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
+    double existing_t_min = DBL_MAX;
+    double existing_t_max = -DBL_MAX;
+    for (size_t box_index = 0;
+	    box_index < trace->stored_surface_boxes; ++box_index) {
+	const struct rt_brep_trace_surface_box &box =
+	    trace->surface_boxes[box_index];
+	const bool source = brep_prepared_box_matches_local_root(box,
+	    trace->local_roots[selected_root], ray, tol);
+	bool witness = false;
+	for (size_t root_index = 0;
+		root_index < trace->stored_local_roots; ++root_index) {
+	    if (!witness_root[root_index] ||
+		    !brep_prepared_box_matches_local_root(box,
+		    trace->local_roots[root_index], ray, tol))
+		continue;
+	    witness = true;
+	    root_box_owned[root_index] = true;
+	}
+	if (source == witness || (witness &&
+		(selected_edge.ray_dist < box.t_min - witness_tolerance ||
+		 selected_edge.ray_dist > box.t_max + witness_tolerance))) {
+	    trace->physical_event_seam_ownership_failures++;
+	    trace->physical_event_seam_box_failures++;
+	    trace->physical_event_seam_failures++;
+	    return false;
+	}
+	if (source) {
+	    source_box[box_index] = true;
+	    if (first_source_box == (size_t)-1)
+		first_source_box = box_index;
+	    source_boxes++;
+	    root_box_owned[selected_root] = true;
+	    existing_t_min = std::min(existing_t_min, (double)box.t_min);
+	    existing_t_max = std::max(existing_t_max, (double)box.t_max);
+	} else {
+	    witness_box[box_index] = true;
+	    witness_boxes++;
+	}
+    }
+    if (!source_boxes || (witness_roots && !witness_boxes)) {
+	trace->physical_event_seam_ownership_failures++;
+	trace->physical_event_seam_box_failures++;
+	trace->physical_event_seam_failures++;
+	return false;
+    }
+    for (size_t root_index = 0;
+	    root_index < trace->stored_local_roots; ++root_index) {
+	if (!root_box_owned[root_index]) {
+	    trace->physical_event_seam_ownership_failures++;
+	    trace->physical_event_seam_root_coverage_failures++;
+	    trace->physical_event_seam_failures++;
+	    return false;
+	}
+    }
+
+    /* Publish box dispositions only after the complete ownership proof. */
+    for (size_t box_index = 0;
+	    box_index < trace->stored_surface_boxes; ++box_index) {
+	if (source_box[box_index])
+	    trace->surface_boxes[box_index].disposition =
+		RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY;
+	else if (witness_box[box_index])
+	    trace->surface_boxes[box_index].disposition =
+		RT_BREP_TRACE_BOX_RESOLVED_CONTACT;
+    }
+
+    if (trace->stored_physical_events + 2 >
+	    RT_BREP_TRACE_MAX_PHYSICAL_EVENTS) {
+	trace->physical_event_overflow++;
+	trace->physical_event_seam_failures++;
+	return true;
+    }
+    const struct rt_brep_trace_local_root &existing =
+	trace->local_roots[selected_root];
+    struct rt_brep_trace_physical_event &existing_event =
+	trace->physical_events[trace->stored_physical_events++];
+    existing_event = {};
+    existing_event.dist = existing.dist;
+    existing_event.t_min = existing_t_min;
+    existing_event.t_max = existing_t_max;
+    existing_event.uv[0] = existing.uv[0];
+    existing_event.uv[1] = existing.uv[1];
+    existing_event.source_box = first_source_box;
+    existing_event.source_box_count = source_boxes;
+    existing_event.source_root = selected_root;
+    existing_event.source_kind = RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT;
+    existing_event.edge_index = selected_edge.edge_index;
+    existing_event.face_index = existing.face_index;
+    existing_event.span_index = existing.span_index;
+    existing_event.certificate = RT_BREP_TRACE_EVENT_SEAM_EXISTING;
+    existing_event.hit_class = existing.hit_class;
+    existing_event.trim_status = existing.trim_status;
+    existing_event.adjacent_face_index = existing.adjacent_face_index;
+    existing_event.direction = existing.direction;
+
+    struct rt_brep_trace_physical_event &continuation_event =
+	trace->physical_events[trace->stored_physical_events++];
+    continuation_event = {};
+    continuation_event.dist = continuation_dist;
+    continuation_event.t_min = continuation_t_min;
+    continuation_event.t_max = continuation_t_max;
+    continuation_event.uv[0] = continuation_uv[0];
+    continuation_event.uv[1] = continuation_uv[1];
+    continuation_event.source_box = (size_t)-1;
+    continuation_event.source_root = (size_t)-1;
+    continuation_event.source_kind =
+	RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION;
+    continuation_event.edge_index = selected_edge.edge_index;
+    continuation_event.face_index = continuation_face;
+    continuation_event.span_index = continuation_span;
+    continuation_event.certificate =
+	RT_BREP_TRACE_EVENT_SEAM_CONTINUATION;
+    continuation_event.hit_class = brep_hit::CRACK_HIT;
+    continuation_event.trim_status = 1;
+    continuation_event.adjacent_face_index = continuation_adjacency;
+    continuation_event.direction = continuation_direction;
+
+    trace->physical_event_attempts += trace->stored_surface_boxes;
+    trace->physical_event_direction_checks += 2;
+    trace->physical_event_near_trim += witness_boxes;
+    trace->physical_event_seam += 2;
+    trace->physical_event_seam_witness_boxes += witness_boxes;
+    trace->physical_event_seam_witness_roots += witness_roots;
+    brep_trace_finalize_physical_events(trace, ray, tol, true);
+    if (trace->physical_event_complete == 1)
+	trace->physical_event_seam_certified++;
+    else
+	trace->physical_event_seam_failures++;
+    return true;
 }
 
 
@@ -11733,8 +12060,10 @@ brep_trace_fold_physical_events(struct rt_brep_shot_trace *trace,
 	event.uv[0] = root.uv[0];
 	event.uv[1] = root.uv[1];
 	event.source_box = box_index;
+	event.source_box_count = 1;
 	event.source_root = matching_root;
 	event.source_kind = RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT;
+	event.edge_index = -1;
 	event.face_index = root.face_index;
 	event.span_index = root.span_index;
 	event.certificate = RT_BREP_TRACE_EVENT_BOUNDARY_FOLD;
@@ -11765,8 +12094,55 @@ brep_trace_physical_events(struct rt_brep_shot_trace *trace,
 {
     if (brep_prepared_fold_pair_eligible(trace))
 	brep_trace_fold_physical_events(trace, bs, ray, tol);
+    else if (trace && trace->surface_isolated_boxes !=
+	    trace->surface_krawczyk_boxes &&
+	    brep_trace_seam_physical_events(trace, bs, ray, tol))
+	return;
     else
 	brep_trace_regular_physical_events(trace, bs, ray, tol);
+}
+
+
+static bool
+brep_prepared_seam_pair_eligible(const struct rt_brep_shot_trace *trace)
+{
+    if (!trace || trace->physical_event_complete != 1 ||
+	    trace->physical_event_seam != 2 ||
+	    trace->physical_event_seam_certified != 1 ||
+	    trace->physical_event_seam_failures ||
+	    trace->physical_event_unresolved ||
+	    trace->physical_event_direction_mismatches ||
+	    trace->physical_event_overflow ||
+	    trace->physical_event_state_failures ||
+	    trace->physical_event_material_segments != 1 ||
+	    trace->physical_event_subminimum_contacts ||
+	    trace->physical_event_tolerance_ambiguous ||
+	    trace->stored_physical_events != 2)
+	return false;
+    const struct rt_brep_trace_physical_event *existing = NULL;
+    const struct rt_brep_trace_physical_event *continuation = NULL;
+    for (size_t event_index = 0; event_index < 2; ++event_index) {
+	const struct rt_brep_trace_physical_event *event =
+	    &trace->physical_events[event_index];
+	if (event->certificate == RT_BREP_TRACE_EVENT_SEAM_EXISTING)
+	    existing = event;
+	else if (event->certificate ==
+		RT_BREP_TRACE_EVENT_SEAM_CONTINUATION)
+	    continuation = event;
+	else
+	    return false;
+    }
+    return existing && continuation && existing->edge_index >= 0 &&
+	existing->edge_index == continuation->edge_index &&
+	existing->source_kind == RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT &&
+	existing->source_box_count > 0 &&
+	continuation->source_kind ==
+	    RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION &&
+	continuation->source_box_count == 0 &&
+	((existing->direction == brep_hit::ENTERING &&
+	  continuation->direction == brep_hit::LEAVING) ||
+	 (continuation->direction == brep_hit::ENTERING &&
+	  existing->direction == brep_hit::LEAVING));
 }
 
 
@@ -11787,21 +12163,42 @@ brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
 	return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
 
     size_t fold_events = 0;
+    size_t seam_existing_events = 0;
+    size_t seam_continuation_events = 0;
     for (size_t event_index = 0;
 	    event_index < trace->stored_physical_events; ++event_index) {
 	const struct rt_brep_trace_physical_event &event =
 	    trace->physical_events[event_index];
-	if ((event.certificate != RT_BREP_TRACE_EVENT_REGULAR_INTERIOR &&
-		event.certificate != RT_BREP_TRACE_EVENT_BOUNDARY_FOLD) ||
-		event.hit_class != brep_hit::CLEAN_HIT ||
-		event.trim_status == 1 ||
-		(event.direction != brep_hit::ENTERING &&
+	if ((event.direction != brep_hit::ENTERING &&
 		 event.direction != brep_hit::LEAVING) ||
 		!std::isfinite(event.dist) ||
 		!std::isfinite(event.t_min) ||
 		!std::isfinite(event.t_max) ||
 		event.t_min > event.dist || event.dist > event.t_max)
 	    return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	if (event.certificate == RT_BREP_TRACE_EVENT_REGULAR_INTERIOR ||
+		event.certificate == RT_BREP_TRACE_EVENT_BOUNDARY_FOLD) {
+	    if (event.hit_class != brep_hit::CLEAN_HIT ||
+		    event.trim_status == 1 || event.edge_index != -1)
+		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	} else if (event.certificate ==
+		RT_BREP_TRACE_EVENT_SEAM_EXISTING) {
+	    if ((event.hit_class != brep_hit::CLEAN_HIT &&
+		    event.hit_class != brep_hit::NEAR_HIT) ||
+		    event.trim_status == 1 || event.edge_index < 0 ||
+		    !event.source_box_count)
+		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	    seam_existing_events++;
+	} else if (event.certificate ==
+		RT_BREP_TRACE_EVENT_SEAM_CONTINUATION) {
+	    if (event.hit_class != brep_hit::CRACK_HIT ||
+		    event.trim_status != 1 || event.edge_index < 0 ||
+		    event.source_box_count)
+		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	    seam_continuation_events++;
+	} else {
+	    return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	}
 	brep_hit hit;
 	if (!brep_trace_make_hit(bs, ray, event.face_index, event.dist,
 		event.uv, event.trim_status, event.hit_class, event.direction,
@@ -11829,6 +12226,11 @@ brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
 	if (fold_events != 2 || hits.size() != 2)
 	    return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
 	trace->surface_fold_promoted_pairs++;
+    }
+    if (seam_existing_events || seam_continuation_events) {
+	if (seam_existing_events != 1 || seam_continuation_events != 1 ||
+		hits.size() != 2 || !brep_prepared_seam_pair_eligible(trace))
+	    return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
     }
     return RT_BREP_PREPARED_FALLBACK_NONE;
 }
@@ -11858,8 +12260,9 @@ brep_build_prepared_partition(struct rt_brep_shot_trace *trace,
 	    trace->surface_isolated_boxes != trace->stored_surface_boxes)
 	return RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES;
     const bool fold_pair = brep_prepared_fold_pair_eligible(trace);
+    const bool seam_pair = brep_prepared_seam_pair_eligible(trace);
     if (trace->surface_isolated_boxes != trace->surface_krawczyk_boxes &&
-	    !fold_pair)
+	    !fold_pair && !seam_pair)
 	return RT_BREP_PREPARED_FALLBACK_UNCERTIFIED;
     if (trace->local_root_overflow || trace->local_trim_failures ||
 	    trace->local_cluster_overflow ||
@@ -11945,6 +12348,8 @@ brep_try_prepared_partition(const struct brep_specific *bs,
     trace.closure_edge_index = -1;
     trace.closure_missing_direction = -1;
     trace.continuation_face_index = -1;
+    trace.continuation_span_index = -1;
+    trace.continuation_adjacent_face_index = -99;
     return brep_try_prepared_partition(&trace, bs, ray, xray, tol, hits);
 }
 
@@ -12729,6 +13134,8 @@ _rt_brep_shot_trace(struct soltab *stp, struct xray *rp,
     trace->closure_edge_index = -1;
     trace->closure_missing_direction = -1;
     trace->continuation_face_index = -1;
+    trace->continuation_span_index = -1;
+    trace->continuation_adjacent_face_index = -99;
     return rt_brep_shot_impl(stp, rp, ap, seghead, trace, true);
 }
 

@@ -486,8 +486,11 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_BOX_RESOLVED_CONTACT 3
 #define RT_BREP_TRACE_EVENT_REGULAR_INTERIOR 1
 #define RT_BREP_TRACE_EVENT_BOUNDARY_FOLD 2
+#define RT_BREP_TRACE_EVENT_SEAM_EXISTING 3
+#define RT_BREP_TRACE_EVENT_SEAM_CONTINUATION 4
 #define RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT 1
 #define RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT 2
+#define RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION 3
 /* Seam-gap and fold-gap values classify separate trace fields. */
 #define RT_BREP_SEAM_GAP_UNAVAILABLE 0
 #define RT_BREP_SEAM_GAP_INSIDE 1
@@ -618,8 +621,10 @@ struct rt_brep_trace_physical_event {
     fastf_t t_max;
     fastf_t uv[2];
     size_t source_box;
+    size_t source_box_count;
     size_t source_root;
     int source_kind;
+    int edge_index;
     int face_index;
     int span_index;
     int certificate;
@@ -824,6 +829,20 @@ struct rt_brep_shot_trace {
     size_t physical_event_attempts;
     size_t physical_event_regular;
     size_t physical_event_boundary;
+    size_t physical_event_seam;
+    size_t physical_event_seam_attempts;
+    size_t physical_event_seam_root_candidates;
+    size_t physical_event_seam_closure_candidates;
+    size_t physical_event_seam_continuation_candidates;
+    size_t physical_event_seam_certified;
+    size_t physical_event_seam_failures;
+    size_t physical_event_seam_ownership_failures;
+    size_t physical_event_seam_witness_failures;
+    size_t physical_event_seam_edge_only_candidates;
+    size_t physical_event_seam_box_failures;
+    size_t physical_event_seam_root_coverage_failures;
+    size_t physical_event_seam_witness_boxes;
+    size_t physical_event_seam_witness_roots;
     size_t physical_event_clean_outside;
     size_t physical_event_near_trim;
     size_t physical_event_unresolved;
@@ -930,6 +949,8 @@ struct rt_brep_shot_trace {
     fastf_t continuation_residual;
     fastf_t continuation_normal_dot;
     int continuation_face_index;
+    int continuation_span_index;
+    int continuation_adjacent_face_index;
     size_t continuation_certificate_boxes;
     size_t continuation_certificate_isolated;
     size_t continuation_certificate_root_boxes;

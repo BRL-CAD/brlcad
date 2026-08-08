@@ -979,9 +979,11 @@ convergence.  A prepared result may replace the SurfaceTree result only when:
   * no subdivision, clipping/restriction, isolated-box, local-root, trim,
     cluster, or hit workspace reported failure or overflow;
 
-  * every retained isolated box has a strict-interior Krawczyk certificate
-    and contains a corresponding corrected local root from the same face and
-    span;
+  * every retained isolated box has exactly one complete ownership theorem:
+    a strict-interior Krawczyk root, one of the two qualified fold parents, or
+    a boundary/contact disposition owned by the narrowly certified manifold-
+    seam pair described in Section 6.4.1; mixing these exceptions with an
+    otherwise incomplete ray is not allowed;
 
   * every physical event group has an unambiguous entering or leaving
     direction (clean trimmed misses may be discarded, but tangencies,
@@ -1666,6 +1668,104 @@ An overlap uses the same resolver: several same-direction face observations
 of one manifold event collapse to one oriented transition.  Opposite
 transitions at one t become a contact only when the local sector test confirms
 no state change.
+
+6.4.1 Narrow paired seam-continuation theorem
+
+The first production seam path is intentionally narrower than the eventual
+general cluster resolver.  It handles the observed one-existing-endpoint,
+one-missing-endpoint crack without treating an unresolved near-trim root as an
+ordinary root and without editing the cleaned legacy hit array.  Keep it as an
+independent event theorem even after general edge clustering exists; its proof
+obligations are useful as a low-complexity fast path and as a fallback boundary
+for the more general resolver.
+
+This is a two-endpoint grazing chord, not two observations to collapse at one
+edge parameter.  The certified edge ray parameter is topological/sector
+evidence lying between the endpoints; it is not emitted as either boundary
+event.  The existing corrected surface root and the independently certified
+continuation root remain the physical ENTER/LEAVE representatives, with their
+own outward intervals.
+
+The input is the immutable prepared surface-box/local-root ledger plus a fresh
+fixed-capacity evaluation of the prepared manifold edges.  Qualification is:
+
+  1. The object is a non-plate solid; every face/span is supported; all
+     candidate/excluded span accounting is complete; and surface, box, local-
+     root, trim, and event workspaces report no failure or overflow.
+
+  2. Try each nontrimmed, non-tangent CLEAN_HIT or NEAR_HIT local root as the
+     existing endpoint.  The normal sign supplies its provisional direction.
+     Do not destructively clean, merge, or relabel any other root while trying
+     a candidate.
+
+  3. The candidate must select exactly one supported two-trim edge.  Its ray
+     distance is inside the authorized envelope; its cross-section sector is
+     the material side; global edge/lift correspondence is certified; the
+     adaptive geometric gap proof is strictly INSIDE; and no correspondence,
+     gap, or evaluation workspace is exhausted.  Sampled gap measurements are
+     diagnostic only.
+
+  4. Map the certified edge parameter to the incident trim geometrically.
+     Reflect the existing UV seed across the local trim tangent into the
+     bounded Bezier-span extension and run the safeguarded corrector.  Require
+     the opposite ENTER/LEAVE direction and the correct ordering about the
+     edge observation.
+
+  5. Certify the continuation over a bounded outside-span reparameterization.
+     Exactly one continuation candidate and one certified candidate are
+     allowed.  Every isolated certificate box must contain the corrected root;
+     no certificate box may overlap the existing endpoint; the root must lie
+     inside the outward ray-t hull; and its oriented normal must be finite and
+     non-tangent.  Store the exact face, Bezier span, UV, adjacent face,
+     direction, representative t, and certificate interval produced by this
+     proof.
+
+  6. Prove global source ownership before changing a disposition.  Every
+     retained box that contains the selected existing root is a boundary
+     source; the union of those boxes is its outward t interval.  Every other
+     local root must be tangent, incident to the same edge, and within the
+     model-space edge tolerance converted to ray parameter.  Every remaining
+     box must own at least one such root and is a contact witness.  A box that
+     is both or neither is a failure.  Every local root must be owned.
+
+  7. Permit the edge-only witness case only when there is no other local root
+     and every retained surface box owns the existing endpoint.  Here the
+     independently evaluated topological edge is the seam witness; the absence
+     of an additional mathematical surface root is precisely the crack being
+     resolved.  This rule must not be generalized to a ray with an unowned box
+     or unrelated root.
+
+  8. Only after the complete proof, mark endpoint boxes RESOLVED_BOUNDARY and
+     tangent-witness boxes RESOLVED_CONTACT.  Append two immutable events:
+     SEAM_EXISTING, sourced from its local root and source-box set; and
+     SEAM_CONTINUATION, sourced from the outside-span certificate.  Both carry
+     the same edge identity.  Preserve the existing endpoint's CLEAN/NEAR
+     state; label the continuation as a trimmed CRACK_HIT with near-edge
+     provenance.
+
+  9. Submit those events to the same global state machine and outward minimum-
+     segment classifier used by ordinary/fold streams.  Publication requires
+     one ENTER followed by one LEAVE, disjoint ordered endpoint intervals, one
+     resolved material segment, a final outside state, finite strictly ordered
+     representatives, and successful final hit reconstruction.  Any other
+     result invokes whole-ray fallback before segment allocation.
+
+The event record therefore needs source kind, certificate kind, edge index,
+source root, representative source box plus owned-box count, face/span/UV,
+adjacency, hit/trim class, direction, and outward t interval.  Continuation
+records use explicit invalid source-box/root sentinels rather than pretending
+the extrapolated root came from an in-domain terminal box.  Regular and fold
+events explicitly have no edge identity.
+
+The initial Cobb gate contains both forms of the theorem.  Fourteen rays have
+only edge evidence and endpoint-owned boxes.  Two rays also have tangent
+surface witnesses.  Six candidates with an extra non-tangent or off-corridor
+root must remain fallback.  Tests must reconstruct every ownership decision
+from the immutable records, check both endpoint intervals against the implicit
+sphere, reverse every ray, and require no promotion above the authorized seam
+envelope.  General direct contact, incident-surface overlap, mixed
+ordinary/crack streams, multiple edge events, non-manifold topology, and cyclic
+vertex fans remain separate theorems rather than relaxations of this one.
 
 6.5 Solid assembly
 

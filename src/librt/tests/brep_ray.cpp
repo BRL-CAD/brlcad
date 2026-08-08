@@ -714,6 +714,7 @@ brep_trace_regular_event_stream_valid(
 		!box.determinant_sign ||
 		event.certificate != RT_BREP_TRACE_EVENT_REGULAR_INTERIOR ||
 		event.source_kind != RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT ||
+		event.source_box_count != 1 || event.edge_index != -1 ||
 		event.determinant_sign != box.determinant_sign ||
 		event.face_index != box.face_index ||
 		event.face_index != root.face_index ||
@@ -781,6 +782,7 @@ brep_trace_fold_event_stream_valid(const struct rt_brep_shot_trace &trace)
 		box.determinant_sign != root.determinant_sign ||
 		event.certificate != RT_BREP_TRACE_EVENT_BOUNDARY_FOLD ||
 		event.source_kind != RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT ||
+		event.source_box_count != 1 || event.edge_index != -1 ||
 		event.determinant_sign != root.determinant_sign ||
 		event.face_index != box.face_index ||
 		event.face_index != root.face_index ||
@@ -803,6 +805,160 @@ brep_trace_fold_event_stream_valid(const struct rt_brep_shot_trace &trace)
     }
     return trace.physical_events[0].t_max <
 	trace.physical_events[1].t_min;
+}
+
+
+static bool
+brep_trace_seam_event_stream_valid(
+    const struct rt_brep_shot_trace &trace,
+    const struct rt_brep_trace_edge *edge,
+    const partition_result &oracle, double model_tolerance)
+{
+    if (!edge || oracle.partitions != 1 || oracle.overflow ||
+	    trace.physical_event_seam_attempts != 1 ||
+	    trace.physical_event_seam != 2 ||
+	    trace.physical_event_seam_certified != 1 ||
+	    trace.physical_event_seam_failures ||
+	    trace.physical_event_unresolved ||
+	    trace.physical_event_direction_mismatches ||
+	    trace.physical_event_overflow ||
+	    trace.physical_event_complete != 1 ||
+	    trace.physical_event_state_failures ||
+	    trace.physical_event_material_segments != 1 ||
+	    trace.physical_event_subminimum_contacts ||
+	    trace.physical_event_tolerance_ambiguous ||
+	    trace.physical_event_attempts != trace.stored_surface_boxes ||
+	    trace.physical_event_direction_checks != 2 ||
+	    trace.stored_physical_events != 2)
+	return false;
+
+    const struct rt_brep_trace_physical_event *existing = NULL;
+    const struct rt_brep_trace_physical_event *continuation = NULL;
+    for (size_t event_index = 0; event_index < 2; ++event_index) {
+	const struct rt_brep_trace_physical_event &event =
+	    trace.physical_events[event_index];
+	if (event.direction != (event_index ? RT_BREP_TRACE_LEAVING :
+		RT_BREP_TRACE_ENTERING) || event.edge_index != edge->edge_index ||
+		event.dist < event.t_min || event.dist > event.t_max)
+	    return false;
+	if (event.certificate == RT_BREP_TRACE_EVENT_SEAM_EXISTING)
+	    existing = &event;
+	else if (event.certificate ==
+		RT_BREP_TRACE_EVENT_SEAM_CONTINUATION)
+	    continuation = &event;
+	else
+	    return false;
+    }
+    if (!existing || !continuation ||
+	    existing->source_kind != RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT ||
+	    existing->source_root >= trace.stored_local_roots ||
+	    existing->source_box >= trace.stored_surface_boxes ||
+	    !existing->source_box_count || existing->trim_status == 1 ||
+	    (existing->hit_class != 0 && existing->hit_class != 2) ||
+	    continuation->source_kind !=
+		RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION ||
+	    continuation->source_box != (size_t)-1 ||
+	    continuation->source_box_count ||
+	    continuation->source_root != (size_t)-1 ||
+	    continuation->hit_class != 4 || continuation->trim_status != 1 ||
+	    continuation->span_index < 0 ||
+	    trace.physical_events[0].t_max >= trace.physical_events[1].t_min ||
+	    fabs(trace.physical_events[0].dist -
+		oracle.intervals[0].in_dist) > 1.0e-7 ||
+	    fabs(trace.physical_events[1].dist -
+		oracle.intervals[0].out_dist) > 1.0e-7)
+	return false;
+
+    const struct rt_brep_trace_local_root &source_root =
+	trace.local_roots[existing->source_root];
+    if (existing->face_index != source_root.face_index ||
+	    existing->span_index != source_root.span_index ||
+	    existing->hit_class != source_root.hit_class ||
+	    existing->trim_status != source_root.trim_status ||
+	    existing->direction != source_root.direction ||
+	    std::memcmp(&existing->dist, &source_root.dist,
+		sizeof(existing->dist)) ||
+	    std::memcmp(existing->uv, source_root.uv, sizeof(existing->uv)))
+	return false;
+
+    const double t_roundoff =
+	128.0 * DBL_EPSILON * std::max(1.0, fabs(edge->ray_dist));
+    const double source_t_tolerance = std::max(0.1 * model_tolerance,
+	t_roundoff);
+    const double witness_tolerance = std::max(model_tolerance, t_roundoff);
+    const double uv_tolerance = 128.0 * DBL_EPSILON;
+    size_t source_boxes = 0;
+    size_t witness_boxes = 0;
+    double source_t_min = DBL_MAX;
+    double source_t_max = -DBL_MAX;
+    bool root_owned[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
+    root_owned[existing->source_root] = true;
+    for (size_t box_index = 0;
+	    box_index < trace.stored_surface_boxes; ++box_index) {
+	const struct rt_brep_trace_surface_box &box =
+	    trace.surface_boxes[box_index];
+	const bool source = box.face_index == source_root.face_index &&
+	    box.span_index == source_root.span_index &&
+	    source_root.dist >= box.t_min - source_t_tolerance &&
+	    source_root.dist <= box.t_max + source_t_tolerance &&
+	    source_root.uv[0] >= box.uv_min[0] - uv_tolerance &&
+	    source_root.uv[0] <= box.uv_max[0] + uv_tolerance &&
+	    source_root.uv[1] >= box.uv_min[1] - uv_tolerance &&
+	    source_root.uv[1] <= box.uv_max[1] + uv_tolerance;
+	if (source) {
+	    if (box.disposition != RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY)
+		return false;
+	    source_boxes++;
+	    source_t_min = std::min(source_t_min, (double)box.t_min);
+	    source_t_max = std::max(source_t_max, (double)box.t_max);
+	    continue;
+	}
+	if (box.disposition != RT_BREP_TRACE_BOX_RESOLVED_CONTACT ||
+		edge->ray_dist < box.t_min - witness_tolerance ||
+		edge->ray_dist > box.t_max + witness_tolerance)
+	    return false;
+	bool box_has_witness = false;
+	for (size_t root_index = 0;
+		root_index < trace.stored_local_roots; ++root_index) {
+	    if (root_index == existing->source_root)
+		continue;
+	    const struct rt_brep_trace_local_root &root =
+		trace.local_roots[root_index];
+	    const bool incident = root.face_index == edge->face_index[0] ||
+		root.face_index == edge->face_index[1];
+	    const bool in_box = root.face_index == box.face_index &&
+		root.span_index == box.span_index &&
+		root.dist >= box.t_min - source_t_tolerance &&
+		root.dist <= box.t_max + source_t_tolerance &&
+		root.uv[0] >= box.uv_min[0] - uv_tolerance &&
+		root.uv[0] <= box.uv_max[0] + uv_tolerance &&
+		root.uv[1] >= box.uv_min[1] - uv_tolerance &&
+		root.uv[1] <= box.uv_max[1] + uv_tolerance;
+	    if (!incident || fabs(root.normal_dot) > BREP_GRAZING_DOT_TOL ||
+		    fabs(root.dist - edge->ray_dist) > witness_tolerance ||
+		    !in_box)
+		continue;
+	    box_has_witness = true;
+	    root_owned[root_index] = true;
+	}
+	if (!box_has_witness)
+	    return false;
+	witness_boxes++;
+    }
+    for (size_t root_index = 0;
+	    root_index < trace.stored_local_roots; ++root_index) {
+	if (!root_owned[root_index])
+	    return false;
+    }
+    return source_boxes == existing->source_box_count &&
+	trace.physical_event_seam_witness_boxes == witness_boxes &&
+	trace.physical_event_near_trim == witness_boxes &&
+	!std::memcmp(&source_t_min, &existing->t_min, sizeof(source_t_min)) &&
+	!std::memcmp(&source_t_max, &existing->t_max, sizeof(source_t_max)) &&
+	((!witness_boxes &&
+	  trace.physical_event_seam_edge_only_candidates == 1) ||
+	 (witness_boxes &&
+	  trace.physical_event_seam_edge_only_candidates == 0));
 }
 
 
@@ -896,6 +1052,20 @@ struct brep_root_event_summary {
     size_t physical_event_attempts = 0;
     size_t physical_event_regular = 0;
     size_t physical_event_boundary = 0;
+    size_t physical_event_seam = 0;
+    size_t physical_event_seam_attempts = 0;
+    size_t physical_event_seam_root_candidates = 0;
+    size_t physical_event_seam_closure_candidates = 0;
+    size_t physical_event_seam_continuation_candidates = 0;
+    size_t physical_event_seam_certified = 0;
+    size_t physical_event_seam_failures = 0;
+    size_t physical_event_seam_ownership_failures = 0;
+    size_t physical_event_seam_witness_failures = 0;
+    size_t physical_event_seam_edge_only_candidates = 0;
+    size_t physical_event_seam_box_failures = 0;
+    size_t physical_event_seam_root_coverage_failures = 0;
+    size_t physical_event_seam_witness_boxes = 0;
+    size_t physical_event_seam_witness_roots = 0;
     size_t physical_event_clean_outside = 0;
     size_t physical_event_near_trim = 0;
     size_t physical_event_unresolved = 0;
@@ -1006,6 +1176,33 @@ brep_accumulate_root_events(brep_root_event_summary &summary,
     summary.physical_event_attempts += trace.physical_event_attempts;
     summary.physical_event_regular += trace.physical_event_regular;
     summary.physical_event_boundary += trace.physical_event_boundary;
+    summary.physical_event_seam += trace.physical_event_seam;
+    summary.physical_event_seam_attempts +=
+	trace.physical_event_seam_attempts;
+    summary.physical_event_seam_root_candidates +=
+	trace.physical_event_seam_root_candidates;
+    summary.physical_event_seam_closure_candidates +=
+	trace.physical_event_seam_closure_candidates;
+    summary.physical_event_seam_continuation_candidates +=
+	trace.physical_event_seam_continuation_candidates;
+    summary.physical_event_seam_certified +=
+	trace.physical_event_seam_certified;
+    summary.physical_event_seam_failures +=
+	trace.physical_event_seam_failures;
+    summary.physical_event_seam_ownership_failures +=
+	trace.physical_event_seam_ownership_failures;
+    summary.physical_event_seam_witness_failures +=
+	trace.physical_event_seam_witness_failures;
+    summary.physical_event_seam_edge_only_candidates +=
+	trace.physical_event_seam_edge_only_candidates;
+    summary.physical_event_seam_box_failures +=
+	trace.physical_event_seam_box_failures;
+    summary.physical_event_seam_root_coverage_failures +=
+	trace.physical_event_seam_root_coverage_failures;
+    summary.physical_event_seam_witness_boxes +=
+	trace.physical_event_seam_witness_boxes;
+    summary.physical_event_seam_witness_roots +=
+	trace.physical_event_seam_witness_roots;
     summary.physical_event_clean_outside +=
 	trace.physical_event_clean_outside;
     summary.physical_event_near_trim += trace.physical_event_near_trim;
@@ -1131,16 +1328,20 @@ brep_print_prepared_event_summary(const char *label,
 	summary.surface_clip_restriction_failures,
 	summary.surface_clip_max_fraction_removed);
     std::printf("%s certified event ledger: orientation=%zu/%zu/%zu/%zu "
-	"boxes=%zu regular/boundary=%zu/%zu outside=%zu near=%zu "
+	"boxes=%zu regular/boundary/seam=%zu/%zu/%zu outside=%zu near=%zu "
 	"unresolved=%zu "
 	"direction-mismatch=%zu overflow=%zu complete=%zu state-failure=%zu "
-	"segments/contact/ambiguous=%zu/%zu/%zu\n", label,
+	"segments/contact/ambiguous=%zu/%zu/%zu "
+	"seam=attempt/root/closure/continuation/certified/failure/ownership:"
+	"%zu/%zu/%zu/%zu/%zu/%zu/%zu "
+	"ownership=witness/edge-only/box/root:%zu/%zu/%zu/%zu "
+	"witness-box/root:%zu/%zu\n", label,
 	summary.surface_regular_orientation_signed,
 	summary.surface_regular_orientation_attempts,
 	summary.surface_regular_orientation_uncertain,
 	summary.surface_regular_orientation_failures,
 	summary.physical_event_attempts, summary.physical_event_regular,
-	summary.physical_event_boundary,
+	summary.physical_event_boundary, summary.physical_event_seam,
 	summary.physical_event_clean_outside, summary.physical_event_near_trim,
 	summary.physical_event_unresolved,
 	summary.physical_event_direction_mismatches,
@@ -1148,7 +1349,20 @@ brep_print_prepared_event_summary(const char *label,
 	summary.physical_event_state_failures,
 	summary.physical_event_material_segments,
 	summary.physical_event_subminimum_contacts,
-	summary.physical_event_tolerance_ambiguous);
+	summary.physical_event_tolerance_ambiguous,
+	summary.physical_event_seam_attempts,
+	summary.physical_event_seam_root_candidates,
+	summary.physical_event_seam_closure_candidates,
+	summary.physical_event_seam_continuation_candidates,
+	summary.physical_event_seam_certified,
+	summary.physical_event_seam_failures,
+	summary.physical_event_seam_ownership_failures,
+	summary.physical_event_seam_witness_failures,
+	summary.physical_event_seam_edge_only_candidates,
+	summary.physical_event_seam_box_failures,
+	summary.physical_event_seam_root_coverage_failures,
+	summary.physical_event_seam_witness_boxes,
+	summary.physical_event_seam_witness_roots);
     std::printf("%s prepared production: selected=%zu/%zu/%zu "
 	"fallback=none:%zu non-solid:%zu plate:%zu unsupported:%zu "
 	"surface-work:%zu boxes:%zu uncertified:%zu local-work:%zu "
@@ -8902,6 +9116,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t prepared_partition_improvements = 0;
     size_t prepared_partition_regressions = 0;
     size_t prepared_partition_ambiguous = 0;
+    size_t prepared_partition_promotions = 0;
+    size_t prepared_seam_pairs = 0;
     brep_root_event_summary root_events;
     size_t sector_inside = 0;
     size_t sector_contact = 0;
@@ -9324,6 +9540,42 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    target_edge ? target_edge->ray_edge_dot : INFINITY);
 			failures++;
 		    }
+		    if (trace.physical_event_seam_certified) {
+			if (!trace.prepared_production_selected ||
+				!brep_trace_seam_event_stream_valid(trace,
+				target_edge, implicit_result, tol->dist)) {
+			    std::printf("FAIL: bowed Cobb seam event stream "
+				"sign=%d g/T=%.3g h/T=%.3g reverse=%d "
+				"selected=%zu events=%zu/%zu complete=%zu "
+				"failures=%zu ownership=%zu\n", sign,
+				gap_ratios[ratio_index],
+				clearance_ratios[clearance_index], reverse,
+				trace.prepared_production_selected,
+				trace.physical_event_seam,
+				trace.stored_physical_events,
+				trace.physical_event_complete,
+				trace.physical_event_seam_failures,
+				trace.physical_event_seam_ownership_failures);
+			    failures++;
+			} else {
+			    prepared_seam_pairs++;
+			}
+		    }
+		    if (trace.physical_event_seam_ownership_failures &&
+			    (trace.prepared_production_selected ||
+			     trace.physical_event_seam ||
+			     trace.physical_event_seam_certified)) {
+			std::printf("FAIL: bowed Cobb unowned seam work published "
+			    "sign=%d g/T=%.3g h/T=%.3g reverse=%d "
+			    "ownership=%zu selected/events/certified=%zu/%zu/%zu\n",
+			    sign, gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index], reverse,
+			    trace.physical_event_seam_ownership_failures,
+			    trace.prepared_production_selected,
+			    trace.physical_event_seam,
+			    trace.physical_event_seam_certified);
+			failures++;
+		    }
 		    const bool valid = partition_result_valid(implicit_result,
 			ray.direction) && partition_result_valid(variant_result,
 			ray.direction) && partition_result_valid(repeated_result,
@@ -9345,7 +9597,11 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				maximum_prepared_oracle_error,
 				prepared_endpoint_error);
 			const char *classification = "ambiguous";
-			if (prepared_same && !same) {
+			if (trace.prepared_production_selected && prepared_same &&
+				same) {
+			    prepared_partition_promotions++;
+			    classification = "promotion";
+			} else if (prepared_same && !same) {
 			    prepared_partition_improvements++;
 			    classification = "improvement";
 			} else if (!prepared_same && same) {
@@ -9910,14 +10166,45 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    root_events.physical_event_complete);
 	failures++;
     }
-    std::printf("Cobb prepared partition changes: improvements=%zu "
-	"regressions=%zu ambiguous=%zu max-changed-oracle-error=%.3g\n",
+    std::printf("Cobb prepared partition changes: promotions=%zu "
+	"improvements=%zu regressions=%zu ambiguous=%zu "
+	"max-changed-oracle-error=%.3g\n", prepared_partition_promotions,
 	prepared_partition_improvements, prepared_partition_regressions,
 	prepared_partition_ambiguous, maximum_prepared_oracle_error);
-    if (prepared_partition_regressions || prepared_partition_ambiguous) {
+    if (prepared_partition_promotions != 2 ||
+	    prepared_partition_regressions || prepared_partition_ambiguous) {
 	std::printf("FAIL: prepared Cobb partitions have %zu regressions and "
-	    "%zu ambiguous changes\n", prepared_partition_regressions,
-	    prepared_partition_ambiguous);
+	    "%zu ambiguous changes; promotions=%zu/2\n",
+	    prepared_partition_regressions, prepared_partition_ambiguous,
+	    prepared_partition_promotions);
+	failures++;
+    }
+    if (prepared_seam_pairs != 16 ||
+	    root_events.prepared_production_selected != 118 ||
+	    root_events.physical_event_seam != 32 ||
+	    root_events.physical_event_seam_certified != 16 ||
+	    root_events.physical_event_seam_edge_only_candidates != 14 ||
+	    root_events.physical_event_seam_ownership_failures != 6 ||
+	    root_events.physical_event_seam_witness_failures != 6 ||
+	    root_events.physical_event_seam_box_failures ||
+	    root_events.physical_event_seam_root_coverage_failures ||
+	    root_events.physical_event_seam_witness_boxes != 4 ||
+	    root_events.physical_event_seam_witness_roots != 4) {
+	std::printf("FAIL: prepared Cobb seam certification pairs=%zu/16 "
+	    "selected=%zu/118 "
+	    "events=%zu/32 certified=%zu/16 edge-only=%zu/14 "
+	    "ownership=%zu/6 witness=%zu/6 box/root=%zu/%zu "
+	    "witness-box/root=%zu/%zu\n", prepared_seam_pairs,
+	    root_events.prepared_production_selected,
+	    root_events.physical_event_seam,
+	    root_events.physical_event_seam_certified,
+	    root_events.physical_event_seam_edge_only_candidates,
+	    root_events.physical_event_seam_ownership_failures,
+	    root_events.physical_event_seam_witness_failures,
+	    root_events.physical_event_seam_box_failures,
+	    root_events.physical_event_seam_root_coverage_failures,
+	    root_events.physical_event_seam_witness_boxes,
+	    root_events.physical_event_seam_witness_roots);
 	failures++;
     }
     if (root_events.surface_krawczyk_boxes) {
@@ -9929,16 +10216,16 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    root_events.local_event_overflow ||
 	    root_events.local_candidate_semantic_stage[0] != 0 ||
 	    root_events.local_event_final_mismatches !=
-	    prepared_partition_improvements + prepared_partition_regressions +
-	    prepared_partition_ambiguous) {
+	    prepared_partition_promotions + prepared_partition_improvements +
+	    prepared_partition_regressions + prepared_partition_ambiguous) {
 	std::printf("FAIL: prepared Cobb event accounting failures=%zu "
 	    "overflow=%zu near-miss-stage=%zu changes=%zu/%zu\n",
 	    root_events.local_event_failures,
 	    root_events.local_event_overflow,
 	    root_events.local_candidate_semantic_stage[0],
 	    root_events.local_event_final_mismatches,
-	    prepared_partition_improvements + prepared_partition_regressions +
-	    prepared_partition_ambiguous);
+	    prepared_partition_promotions + prepared_partition_improvements +
+	    prepared_partition_regressions + prepared_partition_ambiguous);
 	failures++;
     }
     if (legacy_roots_without_local_root ||
