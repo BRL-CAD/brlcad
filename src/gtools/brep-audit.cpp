@@ -187,7 +187,8 @@ load_brep(struct db_i *dbip, struct directory *dp, struct rt_db_internal *intern
 
 static geom_result
 wireframe_result(struct db_i *dbip, struct directory *dp,
-	const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
+	const struct rt_brep_draw_options *options)
 {
     geom_result result;
     struct rt_db_internal intern;
@@ -199,9 +200,20 @@ wireframe_result(struct db_i *dbip, struct directory *dp,
     struct bu_list vhead;
     BU_LIST_INIT(&vhead);
     int64_t start = bu_gettime();
-    result.ret = rt_brep_plot(&vhead, &intern, ttol, tol, NULL);
+    struct rt_brep_draw_report report = {};
+    result.ret = rt_brep_plot_ex(&vhead, &intern, ttol, tol, NULL, options,
+	&report);
     result.seconds = (bu_gettime() - start) / 1000000.0;
     result.peak_rss_bytes = peak_rss_bytes();
+    result.requested_items = report.requested_edges +
+	report.requested_surface_cues;
+    result.completed_items = report.completed_edges +
+	report.completed_surface_cues;
+    result.failed_items = report.failed_edges +
+	report.requested_surface_cues - report.completed_surface_cues;
+    result.hit_time_limit = report.hit_time_limit;
+    result.hit_memory_limit = report.hit_memory_limit;
+    result.hit_point_limit = report.hit_point_limit;
 
     struct bv_vlist *vp;
     for (BU_LIST_FOR(vp, bv_vlist, &vhead)) {
@@ -224,7 +236,11 @@ wireframe_result(struct db_i *dbip, struct directory *dp,
 	}
     }
 
-    if (result.ret != BRLCAD_OK)
+    if (result.ret == RT_BREP_DRAW_PARTIAL)
+	result.issues.push_back("partial_geometry");
+    else if (result.ret == RT_BREP_DRAW_LIMIT)
+	result.issues.push_back("resource_limit");
+    else if (result.ret != RT_BREP_DRAW_OK)
 	result.issues.push_back("generation_failed");
     if (!result.vertices || !result.primitives)
 	result.issues.push_back("empty_geometry");
@@ -524,14 +540,22 @@ main(int argc, const char **argv)
     ttol.norm = tess_norm;
     struct brep_cdt_fast_options fast_options;
     brep_cdt_fast_options_default(&fast_options);
+    struct rt_brep_draw_options draw_options;
+    rt_brep_draw_options_default(&draw_options);
     if (jobs > 0)
-	fast_options.max_workers = (size_t)jobs;
-    if (max_time_ms > 0)
+	fast_options.max_workers = draw_options.max_workers = (size_t)jobs;
+    if (max_time_ms > 0) {
 	fast_options.max_time_ms = max_time_ms;
-    if (max_result_mib > 0)
+	draw_options.max_time_ms = max_time_ms;
+    }
+    if (max_result_mib > 0) {
 	fast_options.max_result_bytes = (size_t)max_result_mib * 1024 * 1024;
-    if (max_points > 0)
+	draw_options.max_result_bytes = (size_t)max_result_mib * 1024 * 1024;
+    }
+    if (max_points > 0) {
 	fast_options.max_points = (size_t)max_points;
+	draw_options.max_points = (size_t)max_points;
+    }
     std::cerr << "brep-audit: phase=reference" << std::endl;
     point_t ref_min = VINIT_ZERO;
     point_t ref_max = VINIT_ZERO;
@@ -576,7 +600,7 @@ main(int argc, const char **argv)
     geom_result shaded;
     if (run_wireframe) {
 	std::cerr << "brep-audit: phase=wireframe" << std::endl;
-	wire = wireframe_result(dbip, dp, &ttol, &tol);
+	wire = wireframe_result(dbip, dp, &ttol, &tol, &draw_options);
     }
     if (run_shaded) {
 	std::cerr << "brep-audit: phase=shaded" << std::endl;
@@ -612,6 +636,10 @@ main(int argc, const char **argv)
 	<< ",\"max_time_ms\":" << fast_options.max_time_ms
 	<< ",\"max_result_bytes\":" << fast_options.max_result_bytes
 	<< ",\"max_points\":" << fast_options.max_points << "}"
+	<< ",\"wire_options\":{\"jobs\":" << draw_options.max_workers
+	<< ",\"max_time_ms\":" << draw_options.max_time_ms
+	<< ",\"max_result_bytes\":" << draw_options.max_result_bytes
+	<< ",\"max_points\":" << draw_options.max_points << "}"
 	<< ",\"generators\":{\"wireframe\":\"rt_brep_plot\""
 	<< ",\"shaded\":\"brep_cdt_fast\"}"
 	<< ",\"reference\":{\"method\":\"face_GetBoundingBox_trim_parameter_envelopes\""
