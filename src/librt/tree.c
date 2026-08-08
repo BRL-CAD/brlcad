@@ -27,6 +27,7 @@
 #include "bio.h"
 
 #include "bu/parallel.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rt/db4.h"
@@ -207,10 +208,17 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     if (rp->reg_mater.ma_color_valid == 0)
 	db_mater_color_region(tsp->ts_dbip, rp);
 
+    /* d_uses also indexes solid instances and must use the same directory-
+     * hash semaphore as _rt_find_identical_solid(). */
+    {
+	int hash = db_dirhash(dp->d_namep);
+	ACQUIRE_SEMAPHORE_TREE(hash);
+	rp->reg_instnum = dp->d_uses++;
+	RELEASE_SEMAPHORE_TREE(hash);
+    }
+
     /* enter critical section */
     bu_semaphore_acquire(RT_SEM_RESULTS);
-
-    rp->reg_instnum = dp->d_uses++;
 
     /*
      * Add the region to the linked list of regions.
@@ -300,6 +308,7 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
 
     hash = db_dirhash(dp->d_namep);
 
+retry:
     /* Enter the appropriate dual critical-section */
     ACQUIRE_SEMAPHORE_TREE(hash);
 
@@ -339,6 +348,16 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
 	     * last
 	     */
 	    if (stp->st_rtip != rtip) continue;
+
+	    /* A matching soltab is linked before its potentially expensive
+	     * primitive prep begins.  Do not publish or reference its mutable
+	     * prep result until the creating worker has completed under this
+	     * same hash semaphore. */
+	    if (!stp->st_prep_complete) {
+		RELEASE_SEMAPHORE_TREE(hash);
+		bu_snooze(1000);
+		goto retry;
+	    }
 
 	    /*
 	     * stp now points to re-referenced solid.  stp->st_id is
@@ -512,6 +531,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 	hash = db_dirhash(dp->d_namep);
 	ACQUIRE_SEMAPHORE_TREE(hash);
 	stp->st_aradius = -1;
+	stp->st_prep_complete = 1;
 	stp->st_uses--;
 	RELEASE_SEMAPHORE_TREE(hash);
 	return TREE_NULL;		/* BAD */
@@ -571,6 +591,15 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 	}
 	bu_log("%s:  %s", dp->d_namep, bu_vls_addr(&str));
 	bu_vls_free(&str);
+    }
+
+    /* Publish every primitive-specific pointer, bound, and path write before
+     * another reference is allowed to consume this soltab. */
+    {
+	int hash = db_dirhash(dp->d_namep);
+	ACQUIRE_SEMAPHORE_TREE(hash);
+	stp->st_prep_complete = 1;
+	RELEASE_SEMAPHORE_TREE(hash);
     }
 
 found_it:

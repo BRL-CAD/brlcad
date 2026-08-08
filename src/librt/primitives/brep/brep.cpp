@@ -4378,6 +4378,48 @@ private:
 };
 
 
+class RT_BrepSemaphoreGuard
+{
+public:
+    explicit RT_BrepSemaphoreGuard(int semaphore) : m_semaphore(semaphore)
+    {
+	bu_semaphore_acquire(m_semaphore);
+    }
+
+    ~RT_BrepSemaphoreGuard()
+    {
+	bu_semaphore_release(m_semaphore);
+    }
+
+private:
+    RT_BrepSemaphoreGuard(const RT_BrepSemaphoreGuard &);
+    RT_BrepSemaphoreGuard &operator=(const RT_BrepSemaphoreGuard &);
+
+    int m_semaphore;
+};
+
+
+/* openNURBS constructs, reads, writes, and resets render-setting defaults
+ * through non-reentrant localtime().  Keep the guard alive until after the
+ * model member is destroyed (members are destroyed in reverse order). */
+class RT_SerializedONXModel
+{
+private:
+    RT_BrepSemaphoreGuard m_guard;
+
+public:
+    RT_SerializedONXModel() : m_guard(BU_SEM_ID_DATETIME), model()
+    {
+    }
+
+    ONX_Model model;
+
+private:
+    RT_SerializedONXModel(const RT_SerializedONXModel &);
+    RT_SerializedONXModel &operator=(const RT_SerializedONXModel &);
+};
+
+
 RT_MemoryArchive::RT_MemoryArchive()
     : ON_BinaryArchive(ON::archive_mode::write3dm), pos(0), m_buffer()
 {
@@ -4578,7 +4620,8 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
     if (attr == (char *)NULL) {
 	bu_vls_sprintf(logstr, "brep");
 
-	ONX_Model model;
+	RT_SerializedONXModel serialized_model;
+	ONX_Model &model = serialized_model.model;
 	brep_dbi2on(intern, model);
 
 	/* Create a serialized version for base-64 encoding */
@@ -4603,7 +4646,8 @@ rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 {
     struct rt_brep_internal *bi = (struct rt_brep_internal *)intern->idb_ptr;
     signed char *decoded;
-    ONX_Model model;
+    RT_SerializedONXModel serialized_model;
+    ONX_Model &model = serialized_model.model;
     if (argc == 1 && argv[0]) {
 	int decoded_size = bu_b64_decode(&decoded, (const signed char *)argv[0]);
 	RT_MemoryArchive archive(decoded, decoded_size);
@@ -4636,7 +4680,8 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     BU_EXTERNAL_INIT(ep);
 
-    ONX_Model model;
+    RT_SerializedONXModel serialized_model;
+    ONX_Model &model = serialized_model.model;
     brep_dbi2on(ip, model);
 
     RT_MemoryArchive archive;
@@ -4735,7 +4780,8 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     bi->magic = RT_BREP_INTERNAL_MAGIC;
 
     RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
-    ONX_Model model;
+    RT_SerializedONXModel serialized_model;
+    ONX_Model &model = serialized_model.model;
     ON_TextLog err(stderr);
     unsigned int obj_filter = ON::brep_object;
     model.Read(archive, 0, obj_filter, &err);

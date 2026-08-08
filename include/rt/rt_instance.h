@@ -218,8 +218,8 @@ RT_EXPORT extern int rt_gettrees(struct rt_i *rtip,
  * the RT_SEM_RESULTS semaphore.
  *
  * Semaphores used for critical sections in parallel mode:
- * RT_SEM_TREE ====> protects rtip->i->rti_solidheads[] lists, d_uses(solids)
- * RT_SEM_RESULTS => protects HeadRegion, mdl_min/max, d_uses(reg), nregions
+ * RT_SEM_TREE ====> protects rti_solidheads[], directory d_uses, prep publish
+ * RT_SEM_RESULTS => protects HeadRegion, mdl_min/max, nregions
  * RT_SEM_WORKER ==> (db_walk_dispatcher, from db_walk_tree)
  * RT_SEM_STATS ===> nsolids
  *
