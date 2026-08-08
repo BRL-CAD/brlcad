@@ -1942,51 +1942,32 @@ brep_trace_edge(const struct rt_brep_shot_trace &trace, int edge_index)
 
 
 static int
-check_brep_edge_sector_box(const struct bn_tol *tol, struct rt_i *rtip,
-    struct resource *resource)
+check_brep_edge_sector_fixture(const char *label, ON_Brep *brep,
+    int target_edge_index, ON_3dVector inside, const struct bn_tol *tol,
+    struct rt_i *rtip, struct resource *resource)
 {
-    struct rt_arb_internal box = {};
-    box.magic = RT_ARB_INTERNAL_MAGIC;
-    VSET(box.pt[0], -4.0, -3.0, -2.0);
-    VSET(box.pt[1], 4.0, -3.0, -2.0);
-    VSET(box.pt[2], 4.0, 3.0, -2.0);
-    VSET(box.pt[3], -4.0, 3.0, -2.0);
-    VSET(box.pt[4], -4.0, -3.0, 2.0);
-    VSET(box.pt[5], 4.0, -3.0, 2.0);
-    VSET(box.pt[6], 4.0, 3.0, 2.0);
-    VSET(box.pt[7], -4.0, 3.0, 2.0);
-    struct rt_db_internal box_intern;
-    RT_DB_INTERNAL_INIT(&box_intern);
-    box_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    box_intern.idb_type = ID_ARB8;
-    box_intern.idb_meth = &OBJ[ID_ARB8];
-    box_intern.idb_ptr = &box;
-
-    ON_Brep *brep = ON_Brep::New();
-    OBJ[ID_ARB8].ft_brep(&brep, &box_intern, tol);
-    if (!brep || !brep->IsSolid() || brep->m_E.Count() != 12) {
-	std::printf("FAIL: convex edge-sector box conversion\n");
+    if (!brep || !brep->IsSolid() || target_edge_index < 0 ||
+	    target_edge_index >= brep->m_E.Count()) {
+	std::printf("FAIL: %s edge-sector geometry\n", label);
 	delete brep;
 	return 1;
     }
     for (int edge_index = 0; edge_index < brep->m_E.Count(); ++edge_index)
 	brep->m_E[edge_index].m_tolerance = tol->dist;
 
-    const int target_edge_index = 0;
     const ON_BrepEdge &target_edge = brep->m_E[target_edge_index];
     ON_3dPoint edge_point;
     ON_3dVector edge_tangent;
     if (!target_edge.Ev1Der(target_edge.Domain().Mid(), edge_point,
 	    edge_tangent) || !edge_tangent.Unitize()) {
-	std::printf("FAIL: convex edge-sector target edge evaluation\n");
+	std::printf("FAIL: %s edge-sector target evaluation\n", label);
 	delete brep;
 	return 1;
     }
-    ON_3dVector inside = ON_3dPoint(0.0, 0.0, 0.0) - edge_point;
     inside -= (inside * edge_tangent) * edge_tangent;
     ON_3dVector line_direction = ON_CrossProduct(edge_tangent, inside);
     if (!inside.Unitize() || !line_direction.Unitize()) {
-	std::printf("FAIL: convex edge-sector frame\n");
+	std::printf("FAIL: %s edge-sector frame\n", label);
 	delete brep;
 	return 1;
     }
@@ -2002,7 +1983,7 @@ check_brep_edge_sector_box(const struct bn_tol *tol, struct rt_i *rtip,
     brep_intern.idb_ptr = &brep_internal;
     struct soltab *stp = prep_solid(rtip, &brep_intern, ID_BREP);
     if (!stp) {
-	std::printf("FAIL: convex edge-sector BREP prep\n");
+	std::printf("FAIL: %s edge-sector BREP prep\n", label);
 	delete brep_internal.brep;
 	return 1;
     }
@@ -2033,9 +2014,9 @@ check_brep_edge_sector_box(const struct bn_tol *tol, struct rt_i *rtip,
 		    observation->closest_state != expected_state ||
 		    fabs(observation->distance - expected_distance) >
 		    1.0e-10 || fabs(observation->ray_edge_dot) > 1.0e-10) {
-		std::printf("FAIL: convex edge sector state=%d reverse=%d "
+		std::printf("FAIL: %s edge sector state=%d reverse=%d "
 		    "observed=%d valid=%d distance=%.17g spans=%zu "
-		    "ray-edge=%.17g\n", expected_state, reverse,
+		    "ray-edge=%.17g\n", label, expected_state, reverse,
 		    observation ? observation->closest_state : -99,
 		    observation ? observation->sector_valid : 0,
 		    observation ? observation->distance : INFINITY,
@@ -2047,6 +2028,138 @@ check_brep_edge_sector_box(const struct bn_tol *tol, struct rt_i *rtip,
     }
     free_solid(stp);
     return failures;
+}
+
+
+static int
+check_brep_edge_sector_box(const struct bn_tol *tol, struct rt_i *rtip,
+    struct resource *resource)
+{
+    struct rt_arb_internal box = {};
+    box.magic = RT_ARB_INTERNAL_MAGIC;
+    VSET(box.pt[0], -4.0, -3.0, -2.0);
+    VSET(box.pt[1], 4.0, -3.0, -2.0);
+    VSET(box.pt[2], 4.0, 3.0, -2.0);
+    VSET(box.pt[3], -4.0, 3.0, -2.0);
+    VSET(box.pt[4], -4.0, -3.0, 2.0);
+    VSET(box.pt[5], 4.0, -3.0, 2.0);
+    VSET(box.pt[6], 4.0, 3.0, 2.0);
+    VSET(box.pt[7], -4.0, 3.0, 2.0);
+    struct rt_db_internal box_intern;
+    RT_DB_INTERNAL_INIT(&box_intern);
+    box_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    box_intern.idb_type = ID_ARB8;
+    box_intern.idb_meth = &OBJ[ID_ARB8];
+    box_intern.idb_ptr = &box;
+
+    ON_Brep *brep = ON_Brep::New();
+    OBJ[ID_ARB8].ft_brep(&brep, &box_intern, tol);
+    if (!brep || brep->m_E.Count() != 12) {
+	std::printf("FAIL: convex edge-sector box conversion\n");
+	delete brep;
+	return 1;
+    }
+    const int target_edge_index = 0;
+    const ON_3dPoint edge_point = brep->m_E[target_edge_index].PointAt(
+	brep->m_E[target_edge_index].Domain().Mid());
+    const ON_3dVector inside = ON_3dPoint(0.0, 0.0, 0.0) - edge_point;
+    return check_brep_edge_sector_fixture("convex", brep,
+	target_edge_index, inside, tol, rtip, resource);
+}
+
+
+static int
+check_brep_edge_sector_concave(const struct bn_tol *tol, struct rt_i *rtip,
+    struct resource *resource)
+{
+    ON_3dPointArray points;
+    points.Append(ON_3dPoint(-3.0, -3.0, 0.0));
+    points.Append(ON_3dPoint(3.0, -3.0, 0.0));
+    points.Append(ON_3dPoint(3.0, -1.0, 0.0));
+    points.Append(ON_3dPoint(-1.0, -1.0, 0.0));
+    points.Append(ON_3dPoint(-1.0, 3.0, 0.0));
+    points.Append(ON_3dPoint(-3.0, 3.0, 0.0));
+    points.Append(points[0]);
+    ON_PolylineCurve profile(points);
+    ON_Extrusion extrusion;
+    if (!ON_Extrusion::CreateFrom3dCurve(profile, &ON_Plane::World_xy,
+	    4.0, true, &extrusion)) {
+	std::printf("FAIL: concave edge-sector extrusion construction\n");
+	return 1;
+    }
+    ON_Brep *brep = extrusion.BrepForm();
+    if (!brep || !brep->IsSolid()) {
+	std::printf("FAIL: concave edge-sector BREP conversion\n");
+	delete brep;
+	return 1;
+    }
+
+    const ON_3dPoint expected_midpoint(-1.0, -1.0, 2.0);
+    int target_edge_index = -1;
+    double target_distance = DBL_MAX;
+    for (int edge_index = 0; edge_index < brep->m_E.Count(); ++edge_index) {
+	const ON_BrepEdge &edge = brep->m_E[edge_index];
+	ON_3dPoint point;
+	ON_3dVector tangent;
+	if (!edge.Ev1Der(edge.Domain().Mid(), point, tangent) ||
+		!point.IsValid() || !tangent.Unitize() || fabs(tangent.z) < 0.9)
+	    continue;
+	const double distance = point.DistanceTo(expected_midpoint);
+	if (distance < target_distance) {
+	    target_distance = distance;
+	    target_edge_index = edge_index;
+	}
+    }
+    if (target_edge_index < 0 || target_distance > 1.0e-10) {
+	std::printf("FAIL: concave edge-sector target search distance=%.17g\n",
+	    target_distance);
+	delete brep;
+	return 1;
+    }
+    return check_brep_edge_sector_fixture("concave", brep,
+	target_edge_index, ON_3dVector(-1.0, -1.0, 0.0), tol, rtip,
+	resource);
+}
+
+
+static int
+check_brep_edge_sector_seam(const struct bn_tol *tol, struct rt_i *rtip,
+    struct resource *resource)
+{
+    struct rt_ell_internal sphere;
+    struct rt_db_internal sphere_intern;
+    point_t center = VINIT_ZERO;
+    init_sphere_internal(sphere, sphere_intern, center, 5.0);
+    ON_Brep *brep = ON_Brep::New();
+    OBJ[ID_ELL].ft_brep(&brep, &sphere_intern, tol);
+    if (!brep || !brep->IsSolid()) {
+	std::printf("FAIL: same-surface seam BREP conversion\n");
+	delete brep;
+	return 1;
+    }
+
+    int target_edge_index = -1;
+    for (int edge_index = 0; edge_index < brep->m_E.Count(); ++edge_index) {
+	const ON_BrepEdge &edge = brep->m_E[edge_index];
+	if (edge.m_ti.Count() != 2)
+	    continue;
+	const int first_face = brep->m_T[edge.m_ti[0]].FaceIndexOf();
+	const int second_face = brep->m_T[edge.m_ti[1]].FaceIndexOf();
+	if (first_face >= 0 && first_face == second_face) {
+	    target_edge_index = edge_index;
+	    break;
+	}
+    }
+    if (target_edge_index < 0) {
+	std::printf("FAIL: same-surface seam target search\n");
+	delete brep;
+	return 1;
+    }
+    const ON_BrepEdge &edge = brep->m_E[target_edge_index];
+    const ON_3dPoint edge_point = edge.PointAt(edge.Domain().Mid());
+    const ON_3dVector inside = ON_3dPoint(0.0, 0.0, 0.0) - edge_point;
+    return check_brep_edge_sector_fixture("same-surface seam", brep,
+	target_edge_index, inside, tol, rtip, resource);
 }
 
 
@@ -2676,6 +2789,8 @@ main(int argc, char **argv)
     failures += check_brep_leaf_csg_corpus(&rtip->rti_tol);
     failures += check_cobb_sphere_corpus(&rtip->rti_tol);
     failures += check_brep_edge_sector_box(&rtip->rti_tol, rtip, &resp);
+    failures += check_brep_edge_sector_concave(&rtip->rti_tol, rtip, &resp);
+    failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
     failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb,
 	rtip, &resp);
     failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);
