@@ -27,12 +27,21 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/ptbl.h"
 #include "rt/defines.h"
 #include "rt/resource.h"
 
 __BEGIN_DECLS
 
-RT_EXPORT extern int rt_find_paths(struct db_i *dbip, struct directory *start, struct directory *end);
+/**
+ * Append every database path from @p start to @p end to an initialized
+ * @p paths table.  Combination trees, including region combinations, are
+ * traversed.  The caller owns the returned db_full_path objects.
+ */
+RT_EXPORT extern int rt_find_paths(struct db_i *dbip,
+				   struct directory *start,
+				   struct directory *end,
+				   struct bu_ptbl *paths);
 
 RT_EXPORT extern struct bu_bitv *rt_get_solidbitv(size_t nbits, struct resource *resp);
 

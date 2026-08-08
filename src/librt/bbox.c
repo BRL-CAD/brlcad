@@ -305,11 +305,12 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 	    VMIN(tree_max, r_max);
 	    break;
 	case OP_SUBTRACT:
-	    /* BINARY type -- just use left tree */
-	    if (rt_traverse_tree(rtip, tp->tr_b.tb_left, tree_min, tree_max) < 0 ||
-		rt_traverse_tree(rtip, tp->tr_b.tb_right, r_min, r_max) < 0)
+	    /* A - B cannot extend beyond A.  In particular, do not traverse B:
+	     * rt_gettree's subtractor shaker may have already discarded a
+	     * disjoint B (and its soltab) from the prepared tree, while this
+	     * routine may be walking the original database tree. */
+	    if (rt_traverse_tree(rtip, tp->tr_b.tb_left, tree_min, tree_max) < 0)
 		return -1;
-	    /* Discard right rpp */
 	    break;
 
 	    /* This case is especially for handling rt_db_internal
