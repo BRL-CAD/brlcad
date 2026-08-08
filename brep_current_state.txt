@@ -42,6 +42,8 @@ coefficient exclusion are prepared, and a bounded adjacent-support
 continuation solve recovers the missing bowed-seam endpoints in shadow mode.
 Fixed-capacity de Casteljau subdivision now narrows ordinary span candidates
 to conservative UV and ray-t boxes while reporting all workspace limits.
+Bounded outside-span reparameterization now certifies the continuation root
+and assembles an oracle-matching material interval in shadow mode.
 Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
 
 
@@ -330,6 +332,27 @@ ESTABLISHED FINDINGS
     coefficient treatment for the continuation's outside-span extension and
     an adaptive termination/box corrector before it can replace dense trees.
 
+27. A bounded Bezier continuation interval can be handled without assuming
+    the rational convex-hull property survives arbitrary extrapolation.
+    Algebraic de Casteljau reparameterization maps the requested outside-span
+    rectangle back to [0,1]^2.  Its exact control-net operator infinity norm
+    is computed from transformed Bernstein basis vectors and used to amplify
+    all inherited coefficient error bounds.  The reparameterized weight hull
+    must remain positive beyond that error or the certificate fails.  The
+    normal fixed-capacity isolator then proves which UV/t boxes remain.  A
+    continuation is certified only when every retained box contains the
+    solved root cluster and none can also contain the existing root.  All 15
+    below-envelope leaks pass.  Maximum certificate work is 93 boxes, stack
+    high-water 20, and maximum retained t-cluster width about 5.15e-5 mm;
+    there are no positive-weight, workspace, trace-capacity, or existing-root
+    overlaps.  The certified transition pair assembles exactly one shadow
+    material segment for all 15 leaks, with both endpoints within 1e-7 mm of
+    the implicit sphere interval in both ray directions.  Normal segment
+    emission is still unchanged.  General activation remains blocked on
+    stronger trim/edge correspondence, declared/inferred tolerance policy,
+    non-isoparametric and vertex cases, stable shading endpoint provenance,
+    and conservative fallback integration.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -429,12 +452,17 @@ IMPLEMENTATION CHECKLIST
             translation-aware numerical margins in shadow mode.
         [x] Add fixed-capacity de Casteljau subdivision and conservative UV/t
             interval isolation on ordinary surface spans.
-        [ ] Add safe clipping/extension bounds and adaptive termination.
+        [x] Add bounded outside-span reparameterization with exact operator-
+            norm error amplification and positive-weight certification.
+        [ ] Add safe clipping and adaptive termination.
     [ ] Use fixed-capacity allocation-free shot workspace with explicit
         fallback on unsupported weights/order/capacity.
         [x] Bound direct surface order, subdivision stack, trace output, and
             scratch control nets; expose every overflow/high-water result.
         [ ] Integrate fixed traversal/root/event arrays and fallback dispatch.
+    [x] Assemble the uniquely certified continuation and existing event into
+        an ordered material interval in shadow mode and gate both endpoints
+        against the implicit oracle.
     [ ] Reduce default tree density only after shadow equivalence passes.
     [ ] Version and verify prep cache changes.
 
@@ -756,6 +784,21 @@ Cobb sphere baseline:
     conservative contact box but produces no final segment.  Negative-h
     ambiguity is measured on every representable mirrored sample and may not
     spread beyond 1e-6 T; the present largest is approximately 2.27e-9 T.
+
+  * Outside-span continuation rectangles are reparameterized algebraically
+    into Bernstein form.  The code computes the absolute row-sum norm of each
+    one-dimensional basis transformation, multiplies the tensor norms, and
+    inflates ray-plane, ray-t, and weight errors accordingly.  A certificate
+    requires the complete transformed weight hull to remain positive and the
+    fixed isolator to retain only boxes belonging to the recovered root
+    cluster.  No retained box may cover the original root.
+
+  * All 15 current crack continuations are certified.  The worst case visits
+    93 boxes with stack high-water 20 and retains a t cluster no wider than
+    approximately 5.15e-5 mm.  Pairing the certified event with the original
+    opposite-direction hit produces one shadow segment whose endpoints match
+    the implicit sphere within 1e-7 mm.  The CSV continuation record exposes
+    certificate counts, capacity state, t bounds, and shadow interval.
 
   cmake --build .build --target \
     librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
