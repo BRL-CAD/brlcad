@@ -137,6 +137,10 @@ ICV_EXPORT extern size_t icv_anim_num_frames(const icv_anim_t *anim);
  */
 ICV_EXPORT extern int icv_anim_set_fps(icv_anim_t *anim, int fps);
 
+/** Set the container playback count.  Zero means indefinite playback.
+ * Formats without playback-count metadata ignore this value. */
+ICV_EXPORT extern int icv_anim_set_plays(icv_anim_t *anim, uint32_t plays);
+
 /**
  * Set a specific frame's delay in microseconds. This overrides the global FPS
  * for this specific frame. (Note: Only fully supported by APNG format. MJPG

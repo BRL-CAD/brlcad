@@ -25,10 +25,12 @@ BRL-CAD image-manipulation tools.  These layers are composited into a
 single image written to a *pix*(5) or PNG file, or displayed on a
 framebuffer.
 
-When *--cut-steps* is supplied, rtwizard produces an animation in which a
-cutting plane advances through the rendered objects.  The output may be APNG
-or MJPEG, and every full-color, ghost, and edge pass uses the same cutting
-plane for each frame.
+*rtwizard* can also produce APNG or MJPEG animations.  Simple presets move a
+cutting plane, orbit the camera around a fixed model, or rotate a database
+object on a turntable.  A declarative JSON render specification can describe
+the complete render and, when needed, general camera, cutting-plane,
+transform, color, material, and temperature tracks.  Every full-color,
+ghost, and edge pass uses the same state for each frame.
 
 *rtwizard* has two modes.  With no arguments (or with *--gui*) it launches
 a wizard-style graphical interface that guides the user through building an
@@ -75,8 +77,17 @@ preferred.
 *-o* _filename_, *--output-file* _filename_::
   Output image file.  A .png extension produces a PNG image; otherwise
   a BRL-CAD *pix*(5) image is written.  Other supported extensions are
-  .ppm, .bw, and .dpix.  In cutting-plane animation mode, .png and .apng
+  .ppm, .bw, and .dpix.  In animation mode, .png and .apng
   produce APNG while .avi and .mjpg produce MJPEG.
+
+*--render-spec* _file.json_::
+  Load a complete version 1 `brlcad.rtwizard.render` JSON specification.
+  It may supply the database, object roles, image/output, view, style,
+  runtime, and animation.  Ordinary command-line options override scalar
+  values from the file; an explicit command-line object-role list replaces
+  that JSON list.  Recipe filenames are resolved relative to the recipe.
+  See `RtWizard Render Specification, Version 1` in the BRL-CAD
+  specifications documentation.
 
 *-s* _#_, *--size* _#_::
   Width and height of a square output image, in pixels (default 512).
@@ -92,6 +103,8 @@ preferred.
   Produce a cutting-plane animation containing exactly this many frames.
   The value must be at least 2.  The first frame is just before clipping
   begins and the last is just before the rendered bounds are fully clipped.
+  This is the compatibility shorthand for `--animation cut` with an exact
+  frame count.
 
 *--cut-direction* _x/y/z_::
   Model-space direction in which the cutting plane advances.  The vector is
@@ -100,6 +113,80 @@ preferred.
 
 *--animation-fps* _#_::
   Animation playback rate in frames per second (default 10).
+
+*--animation* _cut|orbit|turntable_::
+  Select an easy animation preset.  Orbit moves the camera while the model
+  stays fixed; turntable moves a specified model path while the camera stays
+  fixed.
+
+*--animation-file* _file.json_::
+  Read general animation tracks from a version 1 RtWizard render
+  specification.  Usually *--render-spec* is more convenient because it can
+  also supply the other render settings.
+
+*--animation-duration* _seconds_::
+  Animation duration (preset default 5).  Overrides JSON timing when given.
+
+*--animation-frames* _#_::
+  Exact number of frames.  If omitted, it is derived from duration and fps.
+
+*--animation-plays* _#_::
+  APNG playback count.  Zero means indefinite playback.  MJPEG ignores this
+  metadata.
+
+*--animation-cyclic* _0|1_::
+  Whether sampling excludes a terminal frame that duplicates the first.
+  Complete 360-degree orbit and turntable presets default to cyclic.
+
+*--frame-dir* _directory_::
+  Preserve completed animation frames as numbered PNG files.  The directory
+  may be used with or without a final *-o* animation.
+
+*--resume*::
+  Reuse readable, correctly sized frames already in *--frame-dir*.  Without
+  this option, an existing numbered frame is an error.
+
+*--orbit-angle* _degrees_::
+  Camera sweep for the orbit preset (default 360).
+
+*--orbit-axis* _x/y/z_::
+  Model-space orbit axis (default 0/0/1).
+
+*--orbit-center* _x/y/z_::
+  Fixed look-at target.  Defaults to the combined rendered-object bounds
+  center.
+
+*--orbit-elevation* _degrees_::
+  Camera elevation above the plane normal to the orbit axis.  If omitted,
+  the initial eye's elevation is preserved.
+
+*--orbit-radius* _distance_::
+  Camera distance from the orbit center.  If omitted, the initial eye's
+  distance is preserved.
+
+*--turntable-object* _path_::
+  Database object or full path rotated by the turntable preset.  Required
+  for that preset.
+
+*--turntable-angle* _degrees_::
+  Model rotation sweep (default 360).
+
+*--turntable-axis* _x/y/z_::
+  Model-space turntable axis (default 0/0/1).
+
+*--turntable-center* _x/y/z_::
+  Rotation pivot.  Defaults to the turntable object's bounds center.
+
+*--save-view-keyframe* _file.json_::
+  Save the resolved view as a camera keyframe in a render specification and
+  exit without rendering.  Creates the file when necessary.
+
+*--time* _seconds_::
+  Nonnegative keyframe time required by *--save-view-keyframe*.
+
+*--replace-keyframe*::
+  Replace a camera keyframe already present at *--time* rather than report
+  an error.
 
 *-t* _A|B|C|D|E|F_, *--type* _A|B|C|D|E|F_::
   Picture type to produce (see the table above).  If a type is requested
@@ -252,6 +339,31 @@ Creates a 30-frame APNG with the cutting plane advancing in the negative Z
 direction.  Use a `.png` or `.apng` output for APNG and `.avi` or `.mjpg` for
 MJPEG.  Picture types using edge lines and the ambient-occlusion options may
 be combined with the animation options.
+====
+
+.Orbit overview with restartable frames
+====
+[source,bash]
+----
+rtwizard --no-gui -i vehicle.g -c all -o overview.apng \
+         --animation orbit --orbit-axis 0/0/1 --orbit-elevation 20 \
+         --animation-duration 8 --animation-fps 24 \
+         --frame-dir overview-frames
+----
+Moves the camera through a full circle around the rendered bounds center,
+looking at that center throughout.  The model does not move.  Add *--resume*
+to a later identical invocation to reuse valid frames.
+====
+
+.Complete render recipe
+====
+[source,bash]
+----
+rtwizard --render-spec vehicle-overview.json
+----
+Loads the database, objects, dimensions, output, style, view, and optional
+animation from one declarative file.  For a one-off higher resolution render,
+append `--size 1440`; the command-line value overrides the recipe.
 ====
 
 [[see_also]]

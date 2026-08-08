@@ -17,9 +17,30 @@ set(STILL "${TEST_DIR}/rtwizard_cut_still.pix")
 set(FIRST "${TEST_DIR}/rtwizard_cut_first.pix")
 set(LAST "${TEST_DIR}/rtwizard_cut_last.pix")
 set(PREFIX "${TEST_DIR}/rtwizard_cut_frame_")
-file(REMOVE "${ANIM}" "${STILL}" "${FIRST}" "${LAST}")
+set(SPEC "${TEST_DIR}/rtwizard_render_spec.json")
+set(SPEC_STILL "${TEST_DIR}/rtwizard_spec_still.pix")
+set(SPEC_OVERRIDE "${TEST_DIR}/rtwizard_spec_override.pix")
+set(SPEC_CONTROL "${TEST_DIR}/rtwizard_spec_control.pix")
+set(ORBIT_SPEC "${TEST_DIR}/rtwizard_orbit_spec.json")
+set(ORBIT "${TEST_DIR}/rtwizard_orbit.apng")
+set(ORBIT_PREFIX "${TEST_DIR}/rtwizard_orbit_frame_")
+set(TRACK_SPEC "${TEST_DIR}/rtwizard_track_spec.json")
+set(TRACK_ANIM "${TEST_DIR}/rtwizard_track.apng")
+set(TRACK_PREFIX "${TEST_DIR}/rtwizard_track_frame_")
+set(TRACK_DIRECT "${TEST_DIR}/rtwizard_track_direct.apng")
+set(TRACK_DIRECT_PREFIX "${TEST_DIR}/rtwizard_track_direct_frame_")
+set(TURNTABLE_SPEC "${TEST_DIR}/rtwizard_turntable_spec.json")
+set(TURNTABLE_ANIM "${TEST_DIR}/rtwizard_turntable.apng")
+set(TURNTABLE_DIR "${TEST_DIR}/rtwizard_turntable_frames")
+file(TO_CMAKE_PATH "${SRCFILE}" SRCFILE_JSON)
+file(REMOVE "${ANIM}" "${STILL}" "${FIRST}" "${LAST}" "${SPEC}" "${SPEC_STILL}" "${SPEC_OVERRIDE}" "${SPEC_CONTROL}"
+  "${ORBIT_SPEC}" "${ORBIT}" "${TRACK_SPEC}" "${TRACK_ANIM}" "${TRACK_DIRECT}"
+  "${TURNTABLE_SPEC}" "${TURNTABLE_ANIM}")
+file(REMOVE_RECURSE "${TURNTABLE_DIR}")
 file(GLOB OLD_FRAMES "${PREFIX}*")
-file(REMOVE ${OLD_FRAMES})
+if(OLD_FRAMES)
+  file(REMOVE ${OLD_FRAMES})
+endif()
 
 execute_process(
   COMMAND "${RTWIZ}" --no-gui -i "${SRCFILE}" -o "${ANIM}"
@@ -76,4 +97,146 @@ if(last_convert_result OR stat_result OR stat_log MATCHES "Min[ \t]+255[ \t]+255
   message(FATAL_ERROR "The final animation frame is fully clipped:\n${stat_log}")
 endif()
 
-file(REMOVE "${ANIM}" "${STILL}" "${FIRST}" "${LAST}" ${FRAMES})
+# A render specification can provide the complete still-image invocation.
+# A later scalar command-line option must override the value in the file.
+file(WRITE "${SPEC}" "{
+  \"schema\": \"brlcad.rtwizard.render\",
+  \"version\": 1,
+  \"database\": \"${SRCFILE_JSON}\",
+  \"objects\": {\"color\": [\"component\"]},
+  \"image\": {\"size\": 64, \"type\": \"A\"},
+  \"output\": {\"file\": \"rtwizard_spec_still.pix\"},
+  \"view\": {\"azimuth\": 35, \"elevation\": 25, \"zoom\": 1.5},
+  \"runtime\": {\"benchmark\": true, \"no_gui\": true}
+}\n")
+execute_process(
+  COMMAND "${RTWIZ}" --render-spec "${SPEC}" --size 48 --output-file "${SPEC_OVERRIDE}"
+  RESULT_VARIABLE spec_result OUTPUT_VARIABLE spec_log ERROR_VARIABLE spec_log
+)
+execute_process(
+  COMMAND "${RTWIZ}" --no-gui -i "${SRCFILE}" -o "${SPEC_CONTROL}" -c component
+          -t A -s 48 -a 35 -e 25 -z 1.5 --benchmark
+  RESULT_VARIABLE control_result
+)
+execute_process(COMMAND "${PIXCMP_EXEC}" "${SPEC_OVERRIDE}" "${SPEC_CONTROL}"
+  RESULT_VARIABLE spec_compare_result OUTPUT_VARIABLE spec_compare_log ERROR_VARIABLE spec_compare_log)
+if(spec_result OR control_result OR spec_compare_result OR EXISTS "${SPEC_STILL}")
+  message(FATAL_ERROR "Render-spec still or CLI override failed:\n${spec_log}\n${spec_compare_log}")
+endif()
+
+# Exercise the orbit preset and persistent frame directory.
+file(WRITE "${ORBIT_SPEC}" "{
+  \"schema\": \"brlcad.rtwizard.render\",
+  \"version\": 1,
+  \"database\": \"${SRCFILE_JSON}\",
+  \"objects\": {\"color\": [\"component\"]},
+  \"image\": {\"size\": 32, \"type\": \"A\"},
+  \"output\": {\"file\": \"rtwizard_orbit.apng\"},
+  \"runtime\": {\"benchmark\": true, \"no_gui\": true},
+  \"animation\": {
+    \"preset\": \"orbit\",
+    \"timing\": {\"duration\": 1, \"fps\": 3, \"frames\": 3, \"cyclic\": true, \"plays\": 2},
+    \"options\": {\"orbit_angle\": 360, \"orbit_axis\": [0, 0, 1], \"orbit_elevation\": 20}
+  }
+}\n")
+execute_process(COMMAND "${RTWIZ}" --render-spec "${ORBIT_SPEC}"
+  RESULT_VARIABLE orbit_result OUTPUT_VARIABLE orbit_log ERROR_VARIABLE orbit_log)
+execute_process(COMMAND "${ICV_EXEC}" anim extract "${ORBIT}" "${ORBIT_PREFIX}"
+  RESULT_VARIABLE orbit_extract_result OUTPUT_VARIABLE orbit_extract_log ERROR_VARIABLE orbit_extract_log)
+file(GLOB ORBIT_FRAMES "${ORBIT_PREFIX}*_ctrl.png")
+list(LENGTH ORBIT_FRAMES ORBIT_FRAME_COUNT)
+if(orbit_result OR orbit_extract_result OR NOT ORBIT_FRAME_COUNT EQUAL 3)
+  message(FATAL_ERROR "Orbit render specification failed or produced ${ORBIT_FRAME_COUNT} frames:\n${orbit_log}\n${orbit_extract_log}")
+endif()
+
+# Exercise a general, interpolated camera track rather than a preset.
+file(WRITE "${TRACK_SPEC}" "{
+  \"schema\": \"brlcad.rtwizard.render\",
+  \"version\": 1,
+  \"database\": \"${SRCFILE_JSON}\",
+  \"objects\": {\"color\": [\"component\"]},
+  \"image\": {\"size\": 32, \"type\": \"A\"},
+  \"output\": {\"file\": \"rtwizard_track.apng\"},
+  \"runtime\": {\"benchmark\": true, \"no_gui\": true},
+  \"animation\": {
+    \"units\": \"mm\",
+    \"timing\": {\"duration\": 1, \"fps\": 2, \"frames\": 2, \"cyclic\": false},
+    \"tracks\": [
+      {
+        \"type\": \"camera\",
+        \"interpolation\": \"linear\",
+        \"keyframes\": [
+          {\"time\": 0, \"view_size\": 12000},
+          {\"time\": 1, \"view_size\": 10000}
+        ]
+      },
+      {
+        \"type\": \"color\",
+        \"path\": \"/all.g/component/bed/r850\",
+        \"keyframes\": [
+          {\"time\": 0, \"color\": [255, 0, 0]},
+          {\"time\": 1, \"color\": [0, 0, 255]}
+        ]
+      }
+    ]
+  }
+}\n")
+execute_process(COMMAND "${RTWIZ}" --render-spec "${TRACK_SPEC}"
+  RESULT_VARIABLE track_result OUTPUT_VARIABLE track_log ERROR_VARIABLE track_log)
+execute_process(COMMAND "${ICV_EXEC}" anim extract "${TRACK_ANIM}" "${TRACK_PREFIX}"
+  RESULT_VARIABLE track_extract_result OUTPUT_VARIABLE track_extract_log ERROR_VARIABLE track_extract_log)
+file(GLOB TRACK_FRAMES "${TRACK_PREFIX}*_ctrl.png")
+list(LENGTH TRACK_FRAMES TRACK_FRAME_COUNT)
+if(track_result OR track_extract_result OR NOT TRACK_FRAME_COUNT EQUAL 2)
+  message(FATAL_ERROR "General camera track failed or produced ${TRACK_FRAME_COUNT} frames:\n${track_log}\n${track_extract_log}")
+endif()
+
+# The animation-only entry point must honor timing.frames from the same
+# general render specification without relying on render-spec expansion.
+execute_process(
+  COMMAND "${RTWIZ}" --no-gui -i "${SRCFILE}" -o "${TRACK_DIRECT}" -c component
+          -t A -s 32 --benchmark --animation-file "${TRACK_SPEC}"
+  RESULT_VARIABLE track_direct_result OUTPUT_VARIABLE track_direct_log ERROR_VARIABLE track_direct_log)
+execute_process(COMMAND "${ICV_EXEC}" anim extract "${TRACK_DIRECT}" "${TRACK_DIRECT_PREFIX}"
+  RESULT_VARIABLE track_direct_extract_result
+  OUTPUT_VARIABLE track_direct_extract_log ERROR_VARIABLE track_direct_extract_log)
+file(GLOB TRACK_DIRECT_FRAMES "${TRACK_DIRECT_PREFIX}*_ctrl.png")
+list(LENGTH TRACK_DIRECT_FRAMES TRACK_DIRECT_FRAME_COUNT)
+if(track_direct_result OR track_direct_extract_result OR NOT TRACK_DIRECT_FRAME_COUNT EQUAL 2)
+  message(FATAL_ERROR "Direct animation-file timing failed or produced ${TRACK_DIRECT_FRAME_COUNT} frames:\n${track_direct_log}\n${track_direct_extract_log}")
+endif()
+
+# A turntable animates the model, not the camera.  Its two persistent frames
+# must differ, proving the typed database animation reached rt after DB open.
+file(WRITE "${TURNTABLE_SPEC}" "{
+  \"schema\": \"brlcad.rtwizard.render\",
+  \"version\": 1,
+  \"database\": \"${SRCFILE_JSON}\",
+  \"objects\": {\"color\": [\"component\"]},
+  \"image\": {\"size\": 32, \"type\": \"A\"},
+  \"output\": {\"file\": \"rtwizard_turntable.apng\", \"frame_dir\": \"rtwizard_turntable_frames\"},
+  \"runtime\": {\"benchmark\": true, \"no_gui\": true},
+  \"animation\": {
+    \"preset\": \"turntable\",
+    \"timing\": {\"duration\": 1, \"fps\": 2, \"frames\": 2, \"cyclic\": false},
+    \"options\": {\"turntable_object\": \"component\", \"turntable_angle\": 90}
+  }
+}\n")
+execute_process(COMMAND "${RTWIZ}" --render-spec "${TURNTABLE_SPEC}"
+  RESULT_VARIABLE turntable_result OUTPUT_VARIABLE turntable_log ERROR_VARIABLE turntable_log)
+set(TURNTABLE_FIRST "${TURNTABLE_DIR}/frame-000000.png")
+set(TURNTABLE_LAST "${TURNTABLE_DIR}/frame-000001.png")
+if(turntable_result OR NOT EXISTS "${TURNTABLE_FIRST}" OR NOT EXISTS "${TURNTABLE_LAST}")
+  message(FATAL_ERROR "Turntable render specification failed:\n${turntable_log}")
+endif()
+file(SHA256 "${TURNTABLE_FIRST}" TURNTABLE_FIRST_HASH)
+file(SHA256 "${TURNTABLE_LAST}" TURNTABLE_LAST_HASH)
+if(TURNTABLE_FIRST_HASH STREQUAL TURNTABLE_LAST_HASH)
+  message(FATAL_ERROR "Turntable did not change the rendered model between frames")
+endif()
+
+file(REMOVE "${ANIM}" "${STILL}" "${FIRST}" "${LAST}" "${SPEC}" "${SPEC_STILL}" "${SPEC_OVERRIDE}" "${SPEC_CONTROL}"
+  "${ORBIT_SPEC}" "${ORBIT}" "${TRACK_SPEC}" "${TRACK_ANIM}" "${TRACK_DIRECT}"
+  "${TURNTABLE_SPEC}" "${TURNTABLE_ANIM}"
+  ${FRAMES} ${ORBIT_FRAMES} ${TRACK_FRAMES} ${TRACK_DIRECT_FRAMES})
+file(REMOVE_RECURSE "${TURNTABLE_DIR}")

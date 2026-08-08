@@ -1,0 +1,264 @@
+= RtWizard Render Specification, Version 1
+:toc: left
+
+== Purpose
+
+The RtWizard render specification is a declarative JSON instruction file for
+one still image or animation.  It can contain the database, object roles,
+image and output settings, view, rendering style, runtime settings, and an
+optional animation.  It does not contain shell commands or arbitrary
+ray-tracer commands.
+
+Run a specification with:
+
+[source,bash]
+----
+rtwizard --render-spec scene.json
+----
+
+Options written after `--render-spec` override scalar values loaded from the
+file.  If `--color-objects`, `--ghost-objects`, or `--line-objects` is present
+on the command line, that list replaces its JSON counterpart.  Filenames in
+`database`, `output.file`, `output.frame_dir`, `runtime.log_file`, and
+`runtime.pid_file` are relative to the specification file unless absolute.
+
+Unknown fields are errors.  This makes misspellings visible and permits a
+future version to assign new meanings without silently changing an old
+render.
+
+== Complete still-image example
+
+[source,json]
+----
+{
+  "schema": "brlcad.rtwizard.render",
+  "version": 1,
+  "name": "M35 highlighted power train",
+  "database": "m35.g",
+  "objects": {
+    "color": ["component/power.train"],
+    "ghost": ["component"],
+    "line": ["component"]
+  },
+  "image": {
+    "width": 1024,
+    "height": 768,
+    "type": "F"
+  },
+  "output": {
+    "file": "m35-highlight.png"
+  },
+  "view": {
+    "azimuth": -35,
+    "elevation": 15,
+    "zoom": 1.6,
+    "perspective": 0
+  },
+  "style": {
+    "background": [255, 255, 255],
+    "line_color": [0, 0, 0],
+    "ghost_intensity": 6,
+    "occlusion": 1,
+    "ao_samples": 0,
+    "ao_radius": 0
+  },
+  "runtime": {
+    "benchmark": true,
+    "cpu_count": 0,
+    "verbose": 0,
+    "no_gui": true
+  }
+}
+----
+
+== Top-level members
+
+`schema`:: Required string `brlcad.rtwizard.render`.
+`version`:: Required integer `1`.
+`name`, `description`:: Optional human-readable metadata.
+`database`:: Geometry database filename.
+`objects`:: Object-role lists.
+`image`:: Raster dimensions and picture type.
+`output`:: Still, animation, frame-directory, or framebuffer destination.
+`view`:: Initial or still-image camera.
+`style`:: Compositing and ray-tracing appearance.
+`runtime`:: Execution controls.
+`animation`:: Optional preset or general track animation.
+
+The following tables map JSON members to the corresponding RtWizard option.
+Arrays used for points, vectors, quaternions, and colors contain only numbers.
+
+[cols="2,2,3"]
+|===
+|Section |Member |Meaning
+
+|`objects` |`color`, `ghost`, `line` |Arrays of database object or path names.
+|`image` |`size`, `width`, `height` |Square size or per-axis raster dimensions.
+|`image` |`type` |Picture type `A` through `F`.
+|`output` |`file` |Still or animation filename.
+|`output` |`frame_dir` |Directory for numbered PNG frames.
+|`output` |`resume` |Reuse valid, correctly sized frames already in `frame_dir`.
+|`output` |`framebuffer`, `framebuffer_port` |Framebuffer device and optional port.
+|`view` |`azimuth`, `elevation`, `twist`, `zoom` |High-level view controls.
+|`view` |`center` |Three-number high-level view center.
+|`view` |`eye`, `view_size`, `orientation` |Complete low-level view: three-number eye, size, and four-number quaternion.  All three are required together.
+|`view` |`perspective` |Perspective angle.
+|`style` |`background`, `line_color`, `non_line_color` |R/G/B arrays or color strings accepted by RtWizard.
+|`style` |`ghost_intensity`, `occlusion` |Ghost visibility and edge occlusion mode.
+|`style` |`ao_samples`, `ao_radius` |Ambient-occlusion sample count and maximum radius.
+|`runtime` |`benchmark`, `cpu_count`, `verbose` |Repeatable rendering and process controls.
+|`runtime` |`log_file`, `pid_file` |Diagnostic output files.
+|`runtime` |`gui`, `no_gui` |Explicit interface selection.  Do not set both true.
+|===
+
+== Preset animations
+
+The three presets cover common jobs without keyframes:
+
+`cut`:: Move a model-space cutting plane through the rendered object bounds.
+`orbit`:: Move the camera around a fixed target while continuously looking at
+that target.  The geometry remains stationary.
+`turntable`:: Rotate one database path about a model-space pivot while the
+camera remains stationary.
+
+This example makes a seamless model overview.  A cyclic animation omits the
+duplicate terminal frame.
+
+[source,json]
+----
+{
+  "schema": "brlcad.rtwizard.render",
+  "version": 1,
+  "database": "vehicle.g",
+  "objects": { "color": ["all"] },
+  "image": { "size": 720, "type": "A" },
+  "output": { "file": "overview.apng", "frame_dir": "overview-frames" },
+  "animation": {
+    "preset": "orbit",
+    "timing": { "duration": 8, "fps": 24, "cyclic": true, "plays": 0 },
+    "options": {
+      "orbit_angle": 360,
+      "orbit_axis": [0, 0, 1],
+      "orbit_elevation": 20
+    }
+  }
+}
+----
+
+Animation `timing` accepts `duration` in seconds, `fps`, an exact `frames`
+count, `cyclic`, and `plays`.  `plays: 0` means indefinite APNG playback;
+MJPEG has no equivalent metadata.  If `frames` is absent, a non-cyclic
+animation has `round(duration * fps) + 1` frames and includes both endpoints.
+A cyclic animation has `round(duration * fps)` frames and excludes its
+duplicate endpoint.
+
+Preset `options` are:
+
+[cols="2,2,4"]
+|===
+|Preset |Member |Meaning and default
+
+|cut |`cut_direction` |Nonzero model-space vector; default is forward through the initial view.
+|orbit |`orbit_angle` |Sweep in degrees; default 360.
+|orbit |`orbit_axis` |Model-space rotation axis; default `[0,0,1]`.
+|orbit |`orbit_center` |Look-at target; default is the combined rendered-object bounds center.
+|orbit |`orbit_elevation` |Camera elevation above the orbit plane in degrees; default preserves the initial eye.
+|orbit |`orbit_radius` |Eye-to-target distance; default preserves the initial eye.
+|turntable |`turntable_object` |Required database object or full path to rotate.
+|turntable |`turntable_angle` |Sweep in degrees; default 360.
+|turntable |`turntable_axis` |Model-space rotation axis; default `[0,0,1]`.
+|turntable |`turntable_center` |Pivot; default is the turntable object's bounds center.
+|===
+
+== General animation tracks
+
+Use `tracks` instead of `preset` and `options` when a preset is insufficient.
+Track specifications require `timing`.  `units` is either `database` or a
+distance unit recognized by BRL-CAD, such as `mm`, `cm`, `m`, `in`, or `ft`.
+It applies to animated points, translations, pivots, view sizes, and matrix
+translation terms.  The default is `database`.
+
+[source,json]
+----
+"animation": {
+  "units": "mm",
+  "timing": { "duration": 4, "fps": 20, "cyclic": false, "plays": 1 },
+  "tracks": [
+    {
+      "type": "camera",
+      "interpolation": "smooth",
+      "keyframes": [
+        { "time": 0, "eye": [4000, -4000, 1800], "look_at": [0, 0, 500] },
+        { "time": 4, "eye": [-4000, -4000, 1800], "look_at": [0, 0, 500] }
+      ]
+    },
+    {
+      "type": "transform",
+      "path": "vehicle/turret",
+      "operation": "left_multiply",
+      "pivot": [0, 0, 1200],
+      "keyframes": [
+        { "time": 0, "rotation": { "axis": [0, 0, 1], "degrees": 0 } },
+        { "time": 4, "rotation": { "axis": [0, 0, 1], "degrees": 90 } }
+      ]
+    }
+  ]
+}
+----
+
+Every track contains a `type`, optional interpolation, and time-ordered
+`keyframes`.  Times are seconds in the inclusive range zero through
+`timing.duration`; duplicate times for the same property are errors.  A
+single track may animate multiple properties, and properties need not occur
+in every keyframe.
+
+`interpolation` may be `step`, `linear`, or `smooth`.  It may also be an
+object with a `default` and per-property choices, for example
+`{"default":"linear", "orientation":"smooth"}`.  Numeric smooth
+interpolation uses a Catmull-Rom curve.  Rotations use normalized quaternion
+spherical interpolation for both `linear` and `smooth`.
+
+[cols="2,3,5"]
+|===
+|Track type |Fields |Details
+
+|`camera` |`eye`; `look_at` or `orientation`; `up`; `view_size`; `perspective` |Each supplied property overlays the initial camera, so a track may animate only the properties it needs. `eye` and `look_at` are three-number points. `orientation` is `[x,y,z,w]` or an axis/degrees object. An optional `up` vector controls roll and requires `look_at`. Do not mix `look_at` and `orientation` in one camera track.
+|`cut_plane` |`point`, `normal` |The normal is normalized. Both properties are required.
+|`transform` |`path`, `operation`, optional `pivot`; keyframe `translation`, `rotation`, `scale`, or `matrix` |Rotation is quaternion or axis/degrees. Scale is uniform and nonzero. A matrix is 16 row-major numbers and is sampled with step interpolation. Do not mix matrix and decomposed values.
+|`color` |`path`; keyframe `color` or `value` |Three channels in the inclusive range 0 through 255.
+|`temperature` |`path`; keyframe `temperature` or `value` |Numeric region temperature.
+|`material` |`path`, `operation`; keyframe `material` or `value` |String or structured material, sampled with step interpolation. Operation is `replace` (default) or `append`.
+|===
+
+A structured material avoids assembling a shader string.  For example,
+`{"shader":"plastic", "parameters":{"di":0.8, "sp":0.2}}` becomes
+the BRL-CAD material `plastic di=0.8 sp=0.2`.  Parameter values may be finite
+numbers, booleans, or command-word strings.
+
+Transform operations are `replace_stack`, `replace_arc`, `left_multiply`,
+`right_multiply` (default), and `replace_both`, corresponding to the typed
+BRL-CAD `anim ... matrix` operations.  Animation paths may not contain
+whitespace or command separators.  Material strings may not contain command
+separators.  These restrictions keep the format declarative.
+
+== Frames, restart, and keyframe capture
+
+If `output.frame_dir` is set, each completed frame is atomically stored as
+`frame-NNNNNN.png`.  Existing frames are an error unless `output.resume` is
+true.  Resume accepts only readable images with the requested dimensions and
+rerenders invalid ones.  The final animation is also written when
+`output.file` is present.
+
+An interactively selected or command-line view can be captured into a render
+specification without rendering:
+
+[source,bash]
+----
+rtwizard -i vehicle.g -c all -a 25 -e 15 \
+  --save-view-keyframe vehicle.json --time 2.5
+----
+
+The command creates the file if necessary and appends a camera keyframe in
+millimeters.  A duplicate time is rejected; add `--replace-keyframe` to
+replace it.  Capturing multiple views is a convenient way to author a camera
+track without calculating eye points or quaternions.
