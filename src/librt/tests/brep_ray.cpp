@@ -423,7 +423,14 @@ brep_trace_fixed_leaves_match(const struct rt_brep_shot_trace &trace)
 	!trace.fixed_leaf_fallback &&
 	trace.fixed_leaf_count == trace.fixed_leaf_stored &&
 	trace.fixed_leaf_count == trace.intersected_leaves &&
-	trace.fixed_leaf_mismatches == 0;
+	trace.fixed_leaf_mismatches == 0 &&
+	trace.trim_queries == trace.candidate_roots &&
+	trace.trim_noalloc_candidates == trace.trim_allocating_candidates &&
+	trace.trim_candidate_mismatches == 0 &&
+	trace.trim_status_mismatches == 0 &&
+	trace.trim_closest_mismatches == 0 &&
+	trace.trim_distance_mismatches == 0 &&
+	trace.trim_equivalence_mismatches == 0;
 }
 
 
@@ -2626,7 +2633,7 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			    "existing-t=%.17g local=%zu/%zu clusters=%zu/%zu "
 			    "failures=%zu/%zu invalid=%d differ=%d "
 			    "leaves=%zu/%zu stored=%zu overflow=%zu fallback=%zu "
-			    "mismatch=%zu\n",
+			    "mismatch=%zu trim=%zu/%zu/%zu mismatch=%zu\n",
 			    test.name,
 			    expected_state,
 			    reverse, edge ? edge->closest_state : -99,
@@ -2645,7 +2652,10 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			    trace.intersected_leaves, trace.fixed_leaf_count,
 			    trace.fixed_leaf_stored, trace.fixed_leaf_overflow,
 			    trace.fixed_leaf_fallback,
-			    trace.fixed_leaf_mismatches);
+			    trace.fixed_leaf_mismatches, trace.trim_queries,
+			    trace.trim_noalloc_candidates,
+			    trace.trim_allocating_candidates,
+			    trace.trim_equivalence_mismatches);
 			failures++;
 		    }
 		}
@@ -3089,7 +3099,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "workspace_exhausted\n");
 	std::printf("cobb_leaf_traversal_columns,direction,g_over_T,h_over_T,"
 	    "reverse,list_leaves,fixed_leaves,fixed_stored,overflow,"
-	    "fallback,order_mismatches\n");
+	    "fallback,order_mismatches,trim_queries,trim_noalloc_candidates,"
+	    "trim_allocating_candidates,trim_mismatches\n");
 	std::printf("cobb_closure_columns,direction,g_over_T,h_over_T,reverse,"
 	    "candidate_count,edge_index,edge_t,existing_t,missing_direction\n");
 	std::printf("cobb_continuation_columns,direction,g_over_T,h_over_T,"
@@ -3643,14 +3654,17 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    }
 		    if (emit_report) {
 			std::printf("cobb_leaf_traversal,%s,%.9g,%.9g,%d,"
-			    "%zu,%zu,%zu,%zu,%zu,%zu\n",
+			    "%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu\n",
 			    sign > 0 ? "outward" : "inward",
 			    measured_gap / tol->dist,
 			    clearance / tol->dist, reverse,
 			    trace.intersected_leaves, trace.fixed_leaf_count,
 			    trace.fixed_leaf_stored, trace.fixed_leaf_overflow,
 			    trace.fixed_leaf_fallback,
-			    trace.fixed_leaf_mismatches);
+			    trace.fixed_leaf_mismatches, trace.trim_queries,
+			    trace.trim_noalloc_candidates,
+			    trace.trim_allocating_candidates,
+			    trace.trim_equivalence_mismatches);
 			std::printf("bowed_surface_seam,%s,%.9g,%.9g,%d,%.9g,"
 			    "%zu,%zu,%.9g,%.9g,%.9g,%d,%d,%d,%zu,%zu,%zu,"
 			    "%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,"
