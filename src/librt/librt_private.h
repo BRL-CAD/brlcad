@@ -729,6 +729,20 @@ struct rt_brep_shot_trace {
     fastf_t closure_shadow_out_dist;
 };
 
+struct rt_brep_interval_test_result {
+    fastf_t function_minimum[2];
+    fastf_t function_maximum[2];
+    fastf_t jacobian_minimum[2][2];
+    fastf_t jacobian_maximum[2][2];
+};
+
+RT_EXPORT extern int _rt_brep_interval_test(
+    const fastf_t *first_coefficients, const fastf_t *second_coefficients,
+    int u_order, int v_order, const fastf_t coefficient_error[2],
+    const fastf_t root[2], struct rt_brep_interval_test_result *result);
+RT_EXPORT extern int _rt_brep_interval_product_test(
+    const fastf_t first[2], const fastf_t second[2], fastf_t result[2]);
+
 RT_EXPORT extern int _rt_brep_shot_trace(
     struct soltab *stp, struct xray *rp, struct application *ap,
     struct seg *seghead, struct rt_brep_shot_trace *trace);
