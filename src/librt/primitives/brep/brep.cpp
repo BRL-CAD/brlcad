@@ -3958,6 +3958,110 @@ brep_trace_local_clusters(struct rt_brep_shot_trace *trace,
 }
 
 
+static void
+brep_trace_root_coverage(struct rt_brep_shot_trace *trace)
+{
+    if (!trace)
+	return;
+    const double tolerance = trace->local_cluster_tolerance > 0.0 &&
+	std::isfinite(trace->local_cluster_tolerance) ?
+	trace->local_cluster_tolerance : BREP_SAME_POINT_TOLERANCE;
+    size_t legacy_order[RT_BREP_TRACE_MAX_ROOTS];
+    size_t local_order[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    size_t legacy_count = trace->stored_roots;
+    size_t local_count = trace->stored_local_roots;
+    for (size_t i = 0; i < legacy_count; ++i) {
+	legacy_order[i] = i;
+	for (size_t j = i; j > 0; --j) {
+	    const struct rt_brep_trace_root &left =
+		trace->roots[legacy_order[j - 1]];
+	    const struct rt_brep_trace_root &right =
+		trace->roots[legacy_order[j]];
+	    if (left.face_index < right.face_index ||
+		    (left.face_index == right.face_index &&
+		    left.dist <= right.dist))
+		break;
+	    std::swap(legacy_order[j - 1], legacy_order[j]);
+	}
+    }
+    for (size_t i = 0; i < local_count; ++i) {
+	local_order[i] = i;
+	for (size_t j = i; j > 0; --j) {
+	    const struct rt_brep_trace_local_root &left =
+		trace->local_roots[local_order[j - 1]];
+	    const struct rt_brep_trace_local_root &right =
+		trace->local_roots[local_order[j]];
+	    if (left.face_index < right.face_index ||
+		    (left.face_index == right.face_index &&
+		    left.dist <= right.dist))
+		break;
+	    std::swap(local_order[j - 1], local_order[j]);
+	}
+    }
+
+    size_t legacy_unique = 0;
+    for (size_t i = 0; i < legacy_count; ++i) {
+	const struct rt_brep_trace_root &root = trace->roots[legacy_order[i]];
+	if (legacy_unique) {
+	    const struct rt_brep_trace_root &previous =
+		trace->roots[legacy_order[legacy_unique - 1]];
+	    if (previous.face_index == root.face_index &&
+		    root.dist - previous.dist <= tolerance)
+		continue;
+	}
+	legacy_order[legacy_unique++] = legacy_order[i];
+    }
+    size_t local_unique = 0;
+    for (size_t i = 0; i < local_count; ++i) {
+	const struct rt_brep_trace_local_root &root =
+	    trace->local_roots[local_order[i]];
+	if (local_unique) {
+	    const struct rt_brep_trace_local_root &previous =
+		trace->local_roots[local_order[local_unique - 1]];
+	    if (previous.face_index == root.face_index &&
+		    root.dist - previous.dist <= tolerance)
+		continue;
+	}
+	local_order[local_unique++] = local_order[i];
+    }
+
+    size_t legacy_index = 0;
+    size_t local_index = 0;
+    size_t matched = 0;
+    while (legacy_index < legacy_unique && local_index < local_unique) {
+	const struct rt_brep_trace_root &legacy =
+	    trace->roots[legacy_order[legacy_index]];
+	const struct rt_brep_trace_local_root &local =
+	    trace->local_roots[local_order[local_index]];
+	if (legacy.face_index < local.face_index) {
+	    legacy_index++;
+	    continue;
+	}
+	if (legacy.face_index > local.face_index) {
+	    local_index++;
+	    continue;
+	}
+	if (legacy.dist < local.dist - tolerance) {
+	    legacy_index++;
+	    continue;
+	}
+	if (local.dist < legacy.dist - tolerance) {
+	    local_index++;
+	    continue;
+	}
+	matched++;
+	legacy_index++;
+	local_index++;
+    }
+    trace->legacy_unique_roots = legacy_unique;
+    trace->legacy_unique_roots_matched = matched;
+    trace->legacy_unique_roots_unmatched = legacy_unique - matched;
+    trace->local_unique_roots = local_unique;
+    trace->local_unique_roots_matched = matched;
+    trace->local_unique_roots_unmatched = local_unique - matched;
+}
+
+
 static int
 utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
     const ON_Surface* surf, pt2d_t& uv, const ON_Ray& ray,
@@ -4641,8 +4745,10 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     brep_trace_local_clusters(trace,
 	stp->st_rtip ? &stp->st_rtip->rti_tol : NULL);
     brep_observe_edges(trace, bs, r);
-    if (!fixed_leaf_count)
+    if (!fixed_leaf_count) {
+	brep_trace_root_coverage(trace);
 	return 0; // MISS
+    }
 
     /* Collect into the fixed workspace in production.  Trace mode also
      * retains the legacy list so each transition stage remains gated. */
@@ -4651,6 +4757,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     collect_brep_hits(fixed_leaves, fixed_leaf_count, fallback_leaves,
 	fixed_leaf_overflow, r, trace ? &hits : NULL, &fixed_hits, trace);
     fixed_hits.sort();
+    brep_trace_root_coverage(trace);
 
     if (!trace && !fixed_hits.overflow()) {
 	(void)cleanup_fixed_brep_hits(fixed_hits, *rp);
