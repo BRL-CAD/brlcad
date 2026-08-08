@@ -4443,6 +4443,111 @@ struct brep_hit_cleanup_state {
 };
 
 
+#define BREP_CLEANUP_STAGE_COUNT RT_BREP_TRACE_CLEANUP_STAGES
+
+struct brep_cleanup_event {
+    double dist_min;
+    double dist_max;
+    bool actual;
+    bool near_actual;
+    bool crack;
+    bool entering;
+    bool leaving;
+    bool tangent;
+};
+
+
+struct brep_cleanup_signature {
+    size_t event_count;
+    brep_cleanup_event events[RT_BREP_MAX_HITS];
+};
+
+
+struct brep_cleanup_observation {
+    brep_cleanup_signature stages[BREP_CLEANUP_STAGE_COUNT];
+    double tolerance;
+};
+
+
+static void
+observe_brep_cleanup(const brep_hit_workspace &hits,
+	brep_cleanup_signature &signature, const struct xray &ray,
+	double tolerance)
+{
+    signature = {};
+    for (size_t hit_index = 0; hit_index < hits.size(); ++hit_index) {
+	const brep_hit &hit = hits[hit_index];
+	brep_cleanup_event *event = signature.event_count ?
+	    &signature.events[signature.event_count - 1] : NULL;
+	if (!event || hit.dist - event->dist_min > tolerance) {
+	    event = &signature.events[signature.event_count++];
+	    *event = {};
+	    event->dist_min = hit.dist;
+	    event->dist_max = hit.dist;
+	}
+	event->dist_max = std::max(event->dist_max, (double)hit.dist);
+	if (hit.hit != brep_hit::NEAR_MISS) {
+	    event->actual = true;
+	    event->near_actual = event->near_actual || hit.closeToEdge;
+	    event->crack = event->crack || hit.hit == brep_hit::CRACK_HIT;
+	}
+	const double normal_dot = VDOT(hit.normal, ray.r_dir);
+	if (normal_dot < -BREP_GRAZING_DOT_TOL)
+	    event->entering = true;
+	else if (normal_dot > BREP_GRAZING_DOT_TOL)
+	    event->leaving = true;
+	else
+	    event->tangent = true;
+    }
+}
+
+
+static int
+brep_cleanup_event_class(const brep_cleanup_event &event)
+{
+    if (!event.actual)
+	return brep_hit::NEAR_MISS;
+    if (event.crack)
+	return brep_hit::CRACK_HIT;
+    return event.near_actual ? brep_hit::NEAR_HIT : brep_hit::CLEAN_HIT;
+}
+
+
+static int
+brep_cleanup_event_direction(const brep_cleanup_event &event)
+{
+    if (event.tangent || (event.entering && event.leaving))
+	return RT_BREP_TRACE_LOCAL_CONTACT;
+    if (event.entering)
+	return brep_hit::ENTERING;
+    if (event.leaving)
+	return brep_hit::LEAVING;
+    return RT_BREP_TRACE_LOCAL_UNRESOLVED;
+}
+
+
+static bool
+brep_cleanup_signatures_match(const brep_cleanup_signature &legacy,
+	const brep_cleanup_signature &local, double tolerance)
+{
+    if (legacy.event_count != local.event_count)
+	return false;
+    for (size_t event_index = 0; event_index < legacy.event_count;
+	    ++event_index) {
+	const brep_cleanup_event &first = legacy.events[event_index];
+	const brep_cleanup_event &second = local.events[event_index];
+	if (first.dist_max < second.dist_min - tolerance ||
+		second.dist_max < first.dist_min - tolerance ||
+		brep_cleanup_event_class(first) !=
+		brep_cleanup_event_class(second) ||
+		brep_cleanup_event_direction(first) !=
+		brep_cleanup_event_direction(second))
+	    return false;
+    }
+    return true;
+}
+
+
 static bool
 fixed_hits_contain(const brep_hit_workspace &hits, brep_hit::hit_type type)
 {
@@ -4455,7 +4560,8 @@ fixed_hits_contain(const brep_hit_workspace &hits, brep_hit::hit_type type)
 
 
 static brep_hit_cleanup_state
-cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray)
+cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray,
+	brep_cleanup_observation *observation = NULL)
 {
     brep_hit_cleanup_state state = {};
 
@@ -4545,6 +4651,9 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray)
 	    hits.pop_front();
     }
     state.after_near_miss = hits.size();
+    if (observation)
+	observe_brep_cleanup(hits, observation->stages[0], ray,
+	    observation->tolerance);
 
     if (hits.size() > 1 && fixed_hits_contain(hits, brep_hit::NEAR_HIT)) {
 	size_t curr = 0;
@@ -4579,6 +4688,9 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray)
 	}
     }
     state.after_near_hit = hits.size();
+    if (observation)
+	observe_brep_cleanup(hits, observation->stages[1], ray,
+	    observation->tolerance);
 
     if (!hits.empty()) {
 	/* Preserve the list loop's advancement after erasing its first node:
@@ -4602,6 +4714,9 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray)
 	}
     }
     state.after_grazing = hits.size();
+    if (observation)
+	observe_brep_cleanup(hits, observation->stages[2], ray,
+	    observation->tolerance);
 
     if (!hits.empty()) {
 	size_t last = 0;
@@ -4626,6 +4741,9 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray)
 	}
     }
     state.after_duplicates = hits.size();
+    if (observation)
+	observe_brep_cleanup(hits, observation->stages[3], ray,
+	    observation->tolerance);
 
     if (!hits.empty()) {
 	size_t last = 0;
@@ -4659,7 +4777,334 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray)
 	    hits.pop_back();
     }
     state.after_direction = hits.size();
+    if (observation)
+	observe_brep_cleanup(hits, observation->stages[4], ray,
+	    observation->tolerance);
     return state;
+}
+
+
+static bool
+repair_fixed_brep_crack(brep_hit_workspace &hits,
+	const struct brep_specific *bs, const ON_Ray &ray);
+
+
+static bool
+brep_trace_hits_equivalent(const brep_hit &legacy, const brep_hit &local,
+	double tolerance, struct rt_brep_shot_trace *trace)
+{
+    const double t_error = fabs(legacy.dist - local.dist);
+    trace->local_event_max_t_error = std::max(
+	(double)trace->local_event_max_t_error, t_error);
+    bool equivalent = true;
+    if (t_error > tolerance) {
+	trace->local_event_t_mismatches++;
+	equivalent = false;
+    }
+    if (legacy.face->m_face_index != local.face->m_face_index) {
+	trace->local_event_face_mismatches++;
+	equivalent = false;
+    }
+    if (legacy.trimmed != local.trimmed) {
+	trace->local_event_trim_mismatches++;
+	equivalent = false;
+    }
+    if (legacy.closeToEdge != local.closeToEdge) {
+	trace->local_event_edge_mismatches++;
+	equivalent = false;
+    }
+    if (legacy.hit != local.hit) {
+	trace->local_event_class_mismatches++;
+	equivalent = false;
+    }
+    if (legacy.direction != local.direction) {
+	trace->local_event_direction_mismatches++;
+	equivalent = false;
+    }
+    if (legacy.closeToEdge &&
+	    legacy.m_adj_face_index != local.m_adj_face_index) {
+	trace->local_event_adjacency_mismatches++;
+	equivalent = false;
+    }
+    return equivalent;
+}
+
+
+static bool
+brep_trace_make_hit(const struct brep_specific *bs, const ON_Ray &ray,
+	int face_index, double dist, const double uv[2], int trim_status,
+	int hit_class, int direction, int adjacency, brep_hit &hit)
+{
+    if (!bs || !bs->brep || face_index < 0 ||
+	    face_index >= bs->brep->m_F.Count() ||
+	    (direction != brep_hit::ENTERING &&
+	     direction != brep_hit::LEAVING))
+	return false;
+    const ON_BrepFace &face = bs->brep->m_F[face_index];
+    const ON_Surface *surface = face.SurfaceOf();
+    ON_3dPoint surface_point;
+    ON_3dVector normal;
+    if (!surface || !surface_EvNormal(surface, uv[0], uv[1],
+	    surface_point, normal) || !normal.Unitize())
+	return false;
+    if (face.m_bRev)
+	normal.Reverse();
+    const double normal_dot = normal * ray.m_dir;
+    const int evaluated_direction = normal_dot < 0.0 ?
+	brep_hit::ENTERING : brep_hit::LEAVING;
+    if (!std::isfinite(normal_dot) ||
+	    (evaluated_direction != direction &&
+	     fabs(normal_dot) > BREP_GRAZING_DOT_TOL))
+	return false;
+
+    point_t point;
+    vect_t hit_normal;
+    pt2d_t hit_uv = {uv[0], uv[1]};
+    const ON_3dPoint ray_point = ray.m_origin + ray.m_dir * dist;
+    VMOVE(point, ray_point);
+    VMOVE(hit_normal, normal);
+    hit = brep_hit(face, dist, ray, point, hit_normal, hit_uv);
+    hit.trimmed = trim_status == 1;
+    hit.closeToEdge = hit_class == brep_hit::NEAR_HIT ||
+	hit_class == brep_hit::NEAR_MISS;
+    hit.hit = (brep_hit::hit_type)hit_class;
+    hit.direction = (brep_hit::hit_direction)direction;
+    hit.m_adj_face_index = adjacency;
+    hit.sbv = NULL;
+    return true;
+}
+
+
+static void
+brep_trace_prepared_event_cleanup(struct rt_brep_shot_trace *trace,
+	const struct brep_specific *bs, const ON_Ray &ray,
+	const struct xray &xray, const std::list<brep_hit> &legacy_hits,
+	const brep_hit *legacy_repaired_hit)
+{
+    if (!trace || !bs || !bs->brep)
+	return;
+
+    size_t order[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    brep_trace_event_group groups[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    const double tolerance = trace->local_cluster_tolerance > 0.0 &&
+	std::isfinite(trace->local_cluster_tolerance) ?
+	trace->local_cluster_tolerance : BREP_SAME_POINT_TOLERANCE;
+    const size_t group_count = brep_trace_event_groups(trace->local_roots,
+	trace->stored_local_roots, order, groups, tolerance);
+    trace->local_event_groups = group_count;
+
+    brep_hit_workspace candidate_hits;
+    for (size_t root_index = 0; root_index < trace->stored_local_roots;
+	    ++root_index) {
+	const struct rt_brep_trace_local_root &root =
+	    trace->local_roots[root_index];
+	if (root.hit_class == brep_hit::CLEAN_MISS)
+	    continue;
+	brep_hit hit;
+	if (!brep_trace_make_hit(bs, ray, root.face_index, root.dist, root.uv,
+		root.trim_status, root.hit_class, root.direction,
+		root.adjacent_face_index, hit)) {
+	    trace->local_candidate_failures++;
+	    continue;
+	}
+	candidate_hits.push_back(hit);
+    }
+    candidate_hits.sort();
+    trace->local_candidate_hits = candidate_hits.total();
+    trace->local_candidate_overflow = candidate_hits.overflow() ? 1 : 0;
+
+    brep_hit_workspace legacy_candidate_hits;
+    for (size_t root_index = 0; root_index < trace->stored_roots;
+	    ++root_index) {
+	const struct rt_brep_trace_root &root = trace->roots[root_index];
+	if (root.hit_class == brep_hit::CLEAN_MISS)
+	    continue;
+	brep_hit hit;
+	if (!brep_trace_make_hit(bs, ray, root.face_index, root.dist, root.uv,
+		root.trim_status, root.hit_class, root.direction,
+		root.adjacent_face_index, hit)) {
+	    trace->local_candidate_failures++;
+	    continue;
+	}
+	legacy_candidate_hits.push_back(hit);
+    }
+    legacy_candidate_hits.sort();
+    if (legacy_candidate_hits.overflow())
+	trace->local_candidate_overflow++;
+    if (!candidate_hits.overflow()) {
+	brep_cleanup_observation local_observation = {};
+	brep_cleanup_observation legacy_observation = {};
+	local_observation.tolerance = tolerance;
+	legacy_observation.tolerance = tolerance;
+	const brep_hit_cleanup_state candidate_cleanup =
+	    cleanup_fixed_brep_hits(candidate_hits, xray, &local_observation);
+	(void)cleanup_fixed_brep_hits(legacy_candidate_hits, xray,
+	    &legacy_observation);
+	trace->local_candidate_after_near_miss =
+	    candidate_cleanup.after_near_miss;
+	trace->local_candidate_after_near_hit =
+	    candidate_cleanup.after_near_hit;
+	trace->local_candidate_after_grazing =
+	    candidate_cleanup.after_grazing;
+	trace->local_candidate_after_duplicates =
+	    candidate_cleanup.after_duplicates;
+	trace->local_candidate_after_direction_cleanup =
+	    candidate_cleanup.after_direction;
+	if (candidate_cleanup.after_near_miss != trace->after_near_miss)
+	    trace->local_candidate_stage_mismatches++;
+	if (candidate_cleanup.after_near_hit != trace->after_near_hit)
+	    trace->local_candidate_stage_mismatches++;
+	if (candidate_cleanup.after_grazing != trace->after_grazing)
+	    trace->local_candidate_stage_mismatches++;
+	if (candidate_cleanup.after_duplicates != trace->after_duplicates)
+	    trace->local_candidate_stage_mismatches++;
+	if (candidate_cleanup.after_direction != trace->after_direction_cleanup)
+	    trace->local_candidate_stage_mismatches++;
+	for (size_t stage_index = 0; stage_index < BREP_CLEANUP_STAGE_COUNT;
+		++stage_index) {
+	    if (!brep_cleanup_signatures_match(
+		    legacy_observation.stages[stage_index],
+		    local_observation.stages[stage_index], tolerance)) {
+		trace->local_candidate_semantic_stage_mismatches++;
+		trace->local_candidate_semantic_stage[stage_index]++;
+	    }
+	}
+	if (candidate_hits.size() != legacy_hits.size()) {
+	    trace->local_candidate_hit_mismatches++;
+	} else {
+	    size_t hit_index = 0;
+	    for (std::list<brep_hit>::const_iterator legacy =
+		    legacy_hits.begin(); legacy != legacy_hits.end();
+		    ++legacy, ++hit_index) {
+		const brep_hit &local = candidate_hits[hit_index];
+		if (fabs(legacy->dist - local.dist) > tolerance ||
+			legacy->face->m_face_index !=
+			local.face->m_face_index ||
+			legacy->trimmed != local.trimmed ||
+			legacy->closeToEdge != local.closeToEdge ||
+			legacy->hit != local.hit ||
+			legacy->direction != local.direction ||
+			(legacy->closeToEdge &&
+			 legacy->m_adj_face_index != local.m_adj_face_index))
+		    trace->local_candidate_hit_mismatches++;
+	    }
+	}
+    }
+
+    brep_hit_workspace local_hits;
+    for (size_t group_index = 0; group_index < group_count; ++group_index) {
+	const brep_trace_event_group &group = groups[group_index];
+	if (group.direction_class == RT_BREP_TRACE_LOCAL_CONTACT) {
+	    trace->local_event_contacts++;
+	    continue;
+	}
+	if (group.hit_class == brep_hit::CLEAN_MISS) {
+	    trace->local_event_clean_misses++;
+	    continue;
+	}
+	brep_hit hit;
+	if (!brep_trace_make_hit(bs, ray, group.face_index, group.dist,
+		group.uv, group.trim_status, group.hit_class,
+		group.direction_class, group.adjacency, hit)) {
+	    trace->local_event_failures++;
+	    continue;
+	}
+	local_hits.push_back(hit);
+    }
+    local_hits.sort();
+    trace->local_event_hits = local_hits.total();
+    trace->local_event_overflow = local_hits.overflow() ? 1 : 0;
+    if (local_hits.overflow())
+	return;
+
+    const brep_hit_cleanup_state local_cleanup =
+	cleanup_fixed_brep_hits(local_hits, xray);
+    trace->local_event_after_near_miss = local_cleanup.after_near_miss;
+    trace->local_event_after_near_hit = local_cleanup.after_near_hit;
+    trace->local_event_after_grazing = local_cleanup.after_grazing;
+    trace->local_event_after_duplicates = local_cleanup.after_duplicates;
+    trace->local_event_after_direction_cleanup =
+	local_cleanup.after_direction;
+    if (local_cleanup.after_near_miss != trace->after_near_miss)
+	trace->local_event_stage_mismatches++;
+    if (local_cleanup.after_near_hit != trace->after_near_hit)
+	trace->local_event_stage_mismatches++;
+    if (local_cleanup.after_grazing != trace->after_grazing)
+	trace->local_event_stage_mismatches++;
+    if (local_cleanup.after_duplicates != trace->after_duplicates)
+	trace->local_event_stage_mismatches++;
+    if (local_cleanup.after_direction != trace->after_direction_cleanup)
+	trace->local_event_stage_mismatches++;
+
+    if (local_hits.size() != legacy_hits.size()) {
+	trace->local_event_hit_mismatches++;
+	trace->local_event_count_mismatches++;
+    } else {
+	size_t hit_index = 0;
+	for (std::list<brep_hit>::const_iterator legacy = legacy_hits.begin();
+		legacy != legacy_hits.end(); ++legacy, ++hit_index) {
+	    if (!brep_trace_hits_equivalent(*legacy, local_hits[hit_index],
+		    tolerance, trace))
+		trace->local_event_hit_mismatches++;
+	}
+    }
+
+    trace->local_event_repaired =
+	repair_fixed_brep_crack(local_hits, bs, ray) ? 1 : 0;
+    trace->local_event_final_hits = local_hits.size();
+    trace->local_event_final_segments = bs->plate_mode ? local_hits.size() :
+	(local_hits.size() > 1 && local_hits.size() % 2 == 0 ?
+	 local_hits.size() / 2 : 0);
+    if (bs->plate_mode) {
+	trace->local_event_segment_overflow =
+	    trace->local_event_final_segments ? 1 : 0;
+    } else {
+	for (size_t hit_index = 0; hit_index + 1 < local_hits.size();
+		hit_index += 2) {
+	    if (trace->local_event_stored_segments ==
+		    RT_BREP_TRACE_MAX_LOCAL_SEGMENTS) {
+		trace->local_event_segment_overflow++;
+		continue;
+	    }
+	    const size_t segment_index = trace->local_event_stored_segments++;
+	    trace->local_event_segment_in[segment_index] =
+		local_hits[hit_index].dist;
+	    trace->local_event_segment_out[segment_index] =
+		local_hits[hit_index + 1].dist;
+	}
+    }
+
+    brep_hit_workspace expected_hits;
+    for (std::list<brep_hit>::const_iterator legacy = legacy_hits.begin();
+	    legacy != legacy_hits.end(); ++legacy)
+	expected_hits.push_back(*legacy);
+    if (legacy_repaired_hit)
+	expected_hits.push_back(*legacy_repaired_hit);
+    expected_hits.sort();
+    const size_t expected_segments = bs->plate_mode ? expected_hits.size() :
+	(expected_hits.size() > 1 && expected_hits.size() % 2 == 0 ?
+	 expected_hits.size() / 2 : 0);
+    bool partition_mismatch =
+	expected_segments != trace->local_event_final_segments;
+    if (!partition_mismatch && expected_segments > 0) {
+	if (expected_hits.size() != local_hits.size()) {
+	    partition_mismatch = true;
+	} else {
+	    for (size_t hit_index = 0; hit_index < expected_hits.size();
+		    ++hit_index) {
+		const double t_error = fabs(expected_hits[hit_index].dist -
+		    local_hits[hit_index].dist);
+		trace->local_event_max_t_error = std::max(
+		    (double)trace->local_event_max_t_error, t_error);
+		if (t_error > tolerance) {
+		    partition_mismatch = true;
+		    break;
+		}
+	    }
+	}
+    }
+    if (partition_mismatch)
+	trace->local_event_final_mismatches++;
 }
 
 
@@ -4926,6 +5371,11 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     brep_observe_edges(trace, bs, r);
     if (!fixed_leaf_count) {
 	brep_trace_root_coverage(trace);
+	if (trace) {
+	    const std::list<brep_hit> empty_hits;
+	    brep_trace_prepared_event_cleanup(trace, bs, r, *rp, empty_hits,
+		NULL);
+	}
 	return 0; // MISS
     }
 
@@ -5302,6 +5752,9 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     brep_classify_closure(trace, bs, unmatched_hit);
     brep_hit repaired_hit;
     brep_resolve_continuation(trace, bs, r, unmatched_hit, &repaired_hit);
+    if (trace)
+	brep_trace_prepared_event_cleanup(trace, bs, r, *rp, hits,
+	    trace->closure_shadow_segments == 1 ? &repaired_hit : NULL);
     if (trace && trace->closure_shadow_segments == 1) {
 	hits.push_back(repaired_hit);
 	hits.sort();

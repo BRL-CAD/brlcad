@@ -450,6 +450,13 @@ brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace)
 	trace.local_trim_failures == 0 &&
 	trace.local_trim_queries + trace.local_trim_failures ==
 	    trace.stored_local_roots &&
+	trace.local_event_failures == 0 &&
+	trace.local_event_overflow == 0 &&
+	trace.local_candidate_failures == 0 &&
+	trace.local_candidate_overflow == 0 &&
+	trace.local_event_segment_overflow == 0 &&
+	trace.local_event_final_segments ==
+	    trace.local_event_stored_segments &&
 	trace.legacy_unique_roots == trace.legacy_unique_roots_matched +
 	    trace.legacy_unique_roots_unmatched &&
 	trace.local_unique_roots == trace.local_unique_roots_matched +
@@ -614,6 +621,32 @@ struct brep_root_event_summary {
     size_t face_trim_queries = 0;
     size_t face_trim_candidates = 0;
     size_t face_trim_mismatches = 0;
+    size_t local_event_groups = 0;
+    size_t local_event_contacts = 0;
+    size_t local_event_clean_misses = 0;
+    size_t local_candidate_hits = 0;
+    size_t local_candidate_failures = 0;
+    size_t local_candidate_overflow = 0;
+    size_t local_candidate_stage_mismatches = 0;
+    size_t local_candidate_semantic_stage_mismatches = 0;
+    size_t local_candidate_semantic_stage[RT_BREP_TRACE_CLEANUP_STAGES] = {};
+    size_t local_candidate_hit_mismatches = 0;
+    size_t local_event_hits = 0;
+    size_t local_event_failures = 0;
+    size_t local_event_overflow = 0;
+    size_t local_event_stage_mismatches = 0;
+    size_t local_event_hit_mismatches = 0;
+    size_t local_event_count_mismatches = 0;
+    size_t local_event_t_mismatches = 0;
+    size_t local_event_face_mismatches = 0;
+    size_t local_event_trim_mismatches = 0;
+    size_t local_event_edge_mismatches = 0;
+    size_t local_event_class_mismatches = 0;
+    size_t local_event_direction_mismatches = 0;
+    size_t local_event_adjacency_mismatches = 0;
+    size_t local_event_repaired = 0;
+    size_t local_event_final_segments = 0;
+    size_t local_event_final_mismatches = 0;
     double maximum_t_error = 0.0;
     double maximum_uv_error = 0.0;
     double maximum_trim_error = 0.0;
@@ -638,6 +671,43 @@ brep_accumulate_root_events(brep_root_event_summary &summary,
     summary.face_trim_candidates += trace.face_trim_candidates;
     summary.face_trim_mismatches +=
 	trace.face_trim_equivalence_mismatches;
+    summary.local_event_groups += trace.local_event_groups;
+    summary.local_event_contacts += trace.local_event_contacts;
+    summary.local_event_clean_misses += trace.local_event_clean_misses;
+    summary.local_candidate_hits += trace.local_candidate_hits;
+    summary.local_candidate_failures += trace.local_candidate_failures;
+    summary.local_candidate_overflow += trace.local_candidate_overflow;
+    summary.local_candidate_stage_mismatches +=
+	trace.local_candidate_stage_mismatches;
+    summary.local_candidate_semantic_stage_mismatches +=
+	trace.local_candidate_semantic_stage_mismatches;
+    for (size_t stage_index = 0;
+	    stage_index < RT_BREP_TRACE_CLEANUP_STAGES; ++stage_index)
+	summary.local_candidate_semantic_stage[stage_index] +=
+	    trace.local_candidate_semantic_stage[stage_index];
+    summary.local_candidate_hit_mismatches +=
+	trace.local_candidate_hit_mismatches;
+    summary.local_event_hits += trace.local_event_hits;
+    summary.local_event_failures += trace.local_event_failures;
+    summary.local_event_overflow += trace.local_event_overflow;
+    summary.local_event_stage_mismatches +=
+	trace.local_event_stage_mismatches;
+    summary.local_event_hit_mismatches += trace.local_event_hit_mismatches;
+    summary.local_event_count_mismatches +=
+	trace.local_event_count_mismatches;
+    summary.local_event_t_mismatches += trace.local_event_t_mismatches;
+    summary.local_event_face_mismatches += trace.local_event_face_mismatches;
+    summary.local_event_trim_mismatches += trace.local_event_trim_mismatches;
+    summary.local_event_edge_mismatches += trace.local_event_edge_mismatches;
+    summary.local_event_class_mismatches += trace.local_event_class_mismatches;
+    summary.local_event_direction_mismatches +=
+	trace.local_event_direction_mismatches;
+    summary.local_event_adjacency_mismatches +=
+	trace.local_event_adjacency_mismatches;
+    summary.local_event_repaired += trace.local_event_repaired;
+    summary.local_event_final_segments += trace.local_event_final_segments;
+    summary.local_event_final_mismatches +=
+	trace.local_event_final_mismatches;
     summary.maximum_t_error = std::max(summary.maximum_t_error,
 	(double)trace.root_match_max_t_error);
     summary.maximum_uv_error = std::max(summary.maximum_uv_error,
@@ -650,6 +720,48 @@ brep_accumulate_root_events(brep_root_event_summary &summary,
     summary.maximum_face_trim_error = std::max(
 	summary.maximum_face_trim_error,
 	(double)trace.face_trim_max_near_distance_error);
+}
+
+
+static void
+brep_print_prepared_event_summary(const char *label,
+	const brep_root_event_summary &summary)
+{
+    std::printf("%s prepared candidate cleanup: hits=%zu failures=%zu "
+	"overflow=%zu count-stage-differences=%zu "
+	"semantic-stage-differences=%zu[%zu/%zu/%zu/%zu/%zu] "
+	"cleaned-hit-differences=%zu\n", label,
+	summary.local_candidate_hits, summary.local_candidate_failures,
+	summary.local_candidate_overflow,
+	summary.local_candidate_stage_mismatches,
+	summary.local_candidate_semantic_stage_mismatches,
+	summary.local_candidate_semantic_stage[0],
+	summary.local_candidate_semantic_stage[1],
+	summary.local_candidate_semantic_stage[2],
+	summary.local_candidate_semantic_stage[3],
+	summary.local_candidate_semantic_stage[4],
+	summary.local_candidate_hit_mismatches);
+    std::printf("%s prepared physical cleanup: groups=%zu contacts=%zu "
+	"clean-misses=%zu hits=%zu failures=%zu overflow=%zu "
+	"count-stage-differences=%zu cleaned-hit-differences="
+	"%zu[%zu/%zu/%zu/%zu/%zu/%zu/%zu/%zu] repairs=%zu "
+	"segments=%zu partition-changes=%zu\n", label,
+	summary.local_event_groups, summary.local_event_contacts,
+	summary.local_event_clean_misses, summary.local_event_hits,
+	summary.local_event_failures, summary.local_event_overflow,
+	summary.local_event_stage_mismatches,
+	summary.local_event_hit_mismatches,
+	summary.local_event_count_mismatches,
+	summary.local_event_t_mismatches,
+	summary.local_event_face_mismatches,
+	summary.local_event_trim_mismatches,
+	summary.local_event_edge_mismatches,
+	summary.local_event_class_mismatches,
+	summary.local_event_direction_mismatches,
+	summary.local_event_adjacency_mismatches,
+	summary.local_event_repaired,
+	summary.local_event_final_segments,
+	summary.local_event_final_mismatches);
 }
 
 
@@ -1193,6 +1305,7 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	root_events.local_trim_candidates, root_events.face_trim_queries,
 	root_events.face_trim_candidates, root_events.face_trim_mismatches,
 	root_events.maximum_face_trim_error);
+    brep_print_prepared_event_summary("Sphere", root_events);
     if (legacy_roots_without_local) {
 	std::printf("FAIL: prepared spans missed %zu legacy sphere roots\n",
 	    legacy_roots_without_local);
@@ -1201,6 +1314,16 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     if (root_events.mismatched) {
 	std::printf("FAIL: %zu matched sphere roots changed event class\n",
 	    root_events.mismatched);
+	failures++;
+    }
+    if (root_events.local_event_failures ||
+	    root_events.local_event_overflow ||
+	    root_events.local_event_final_mismatches) {
+	std::printf("FAIL: prepared sphere event partitions failures=%zu "
+	    "overflow=%zu mismatches=%zu\n",
+	    root_events.local_event_failures,
+	    root_events.local_event_overflow,
+	    root_events.local_event_final_mismatches);
 	failures++;
     }
 
@@ -2403,6 +2526,33 @@ partition_results_match(const partition_result &first,
 	    second.intervals[i].in_dist);
 	const double out_error = fabs(first.intervals[i].out_dist -
 	    second.intervals[i].out_dist);
+	maximum_endpoint_error = std::max(maximum_endpoint_error,
+	    std::max(in_error, out_error));
+    }
+    return maximum_endpoint_error <= endpoint_tolerance;
+}
+
+
+static bool
+prepared_event_partitions_match(const struct rt_brep_shot_trace &trace,
+	const partition_result &oracle, double endpoint_tolerance,
+	double &maximum_endpoint_error)
+{
+    maximum_endpoint_error = 0.0;
+    if (oracle.overflow || trace.local_event_segment_overflow ||
+	    trace.local_event_final_segments != oracle.partitions ||
+	    trace.local_event_stored_segments != oracle.partitions) {
+	maximum_endpoint_error = INFINITY;
+	return false;
+    }
+    for (size_t segment_index = 0; segment_index < oracle.partitions;
+	    ++segment_index) {
+	const double in_error = fabs(
+	    trace.local_event_segment_in[segment_index] -
+	    oracle.intervals[segment_index].in_dist);
+	const double out_error = fabs(
+	    trace.local_event_segment_out[segment_index] -
+	    oracle.intervals[segment_index].out_dist);
 	maximum_endpoint_error = std::max(maximum_endpoint_error,
 	    std::max(in_error, out_error));
     }
@@ -3965,6 +4115,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t leaks_with_triple_local_cluster = 0;
     size_t local_roots_without_legacy_root = 0;
     size_t legacy_roots_without_local_root = 0;
+    size_t prepared_partition_improvements = 0;
+    size_t prepared_partition_regressions = 0;
+    size_t prepared_partition_ambiguous = 0;
     brep_root_event_summary root_events;
     size_t sector_inside = 0;
     size_t sector_contact = 0;
@@ -3988,6 +4141,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     double maximum_lift_error = 0.0;
     double maximum_continuation_error = 0.0;
     double maximum_certificate_width = 0.0;
+    double maximum_prepared_oracle_error = 0.0;
 
     if (emit_report) {
 	std::printf("cobb_family,direction,g_over_T,h_over_T,"
@@ -4385,6 +4539,49 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    double endpoint_error = 0.0;
 		    const bool same = partition_results_match(implicit_result,
 			variant_result, tol->dist, endpoint_error);
+		    double prepared_endpoint_error = 0.0;
+		    const bool prepared_same = prepared_event_partitions_match(
+			trace, implicit_result, tol->dist,
+			prepared_endpoint_error);
+		    if (trace.local_event_final_mismatches) {
+			if (std::isfinite(prepared_endpoint_error))
+			    maximum_prepared_oracle_error = std::max(
+				maximum_prepared_oracle_error,
+				prepared_endpoint_error);
+			const char *classification = "ambiguous";
+			if (prepared_same && !same) {
+			    prepared_partition_improvements++;
+			    classification = "improvement";
+			} else if (!prepared_same && same) {
+			    prepared_partition_regressions++;
+			    classification = "regression";
+			} else {
+			    prepared_partition_ambiguous++;
+			}
+			std::printf("Prepared partition %s sign=%d g/T=%.17g "
+			    "h/T=%.17g reverse=%d legacy=%zu local=%zu "
+			    "implicit=%zu errors=%.17g/%.17g "
+			    "intervals=%.17g/%.17g %.17g/%.17g "
+			    "%.17g/%.17g\n", classification, sign,
+			    gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index], reverse,
+			    variant_result.partitions,
+			    trace.local_event_final_segments,
+			    implicit_result.partitions, endpoint_error,
+			    prepared_endpoint_error,
+			    variant_result.partitions ?
+			    variant_result.intervals[0].in_dist : 0.0,
+			    variant_result.partitions ?
+			    variant_result.intervals[0].out_dist : 0.0,
+			    trace.local_event_stored_segments ?
+			    trace.local_event_segment_in[0] : 0.0,
+			    trace.local_event_stored_segments ?
+			    trace.local_event_segment_out[0] : 0.0,
+			    implicit_result.partitions ?
+			    implicit_result.intervals[0].in_dist : 0.0,
+			    implicit_result.partitions ?
+			    implicit_result.intervals[0].out_dist : 0.0);
+		    }
 		    const double implicit_chord = partition_chord(implicit_result);
 		    const double variant_chord = partition_chord(variant_result);
 		    const bool within_uncertainty = fabs(clearance) <=
@@ -4902,6 +5099,33 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	root_events.local_trim_candidates, root_events.face_trim_queries,
 	root_events.face_trim_candidates, root_events.face_trim_mismatches,
 	root_events.maximum_face_trim_error);
+    brep_print_prepared_event_summary("Cobb", root_events);
+    std::printf("Cobb prepared partition changes: improvements=%zu "
+	"regressions=%zu ambiguous=%zu max-changed-oracle-error=%.3g\n",
+	prepared_partition_improvements, prepared_partition_regressions,
+	prepared_partition_ambiguous, maximum_prepared_oracle_error);
+    if (prepared_partition_regressions || prepared_partition_ambiguous) {
+	std::printf("FAIL: prepared Cobb partitions have %zu regressions and "
+	    "%zu ambiguous changes\n", prepared_partition_regressions,
+	    prepared_partition_ambiguous);
+	failures++;
+    }
+    if (root_events.local_event_failures ||
+	    root_events.local_event_overflow ||
+	    root_events.local_candidate_semantic_stage[0] != 0 ||
+	    root_events.local_event_final_mismatches !=
+	    prepared_partition_improvements + prepared_partition_regressions +
+	    prepared_partition_ambiguous) {
+	std::printf("FAIL: prepared Cobb event accounting failures=%zu "
+	    "overflow=%zu near-miss-stage=%zu changes=%zu/%zu\n",
+	    root_events.local_event_failures,
+	    root_events.local_event_overflow,
+	    root_events.local_candidate_semantic_stage[0],
+	    root_events.local_event_final_mismatches,
+	    prepared_partition_improvements + prepared_partition_regressions +
+	    prepared_partition_ambiguous);
+	failures++;
+    }
     if (legacy_roots_without_local_root ||
 	    local_roots_without_legacy_root) {
 	std::printf("FAIL: Cobb prepared-span root coverage legacy=%zu "
