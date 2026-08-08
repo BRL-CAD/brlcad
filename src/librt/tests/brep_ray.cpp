@@ -667,6 +667,145 @@ brep_trace_box_covers_both(const struct rt_brep_shot_trace &trace,
 }
 
 
+static bool
+brep_trace_regular_event_stream_valid(
+    const struct rt_brep_shot_trace &trace, size_t expected_segments)
+{
+    if (trace.surface_regular_orientation_attempts !=
+	    trace.surface_krawczyk_boxes ||
+	    trace.surface_regular_orientation_signed !=
+	    trace.surface_regular_orientation_attempts ||
+	    trace.surface_regular_orientation_uncertain ||
+	    trace.surface_regular_orientation_failures ||
+	    trace.physical_event_attempts != trace.stored_surface_boxes ||
+	    trace.physical_event_regular != trace.stored_physical_events ||
+	    trace.physical_event_clean_outside ||
+	    trace.physical_event_near_trim ||
+	    trace.physical_event_unresolved ||
+	    trace.physical_event_direction_checks !=
+	    trace.stored_surface_boxes ||
+	    trace.physical_event_direction_mismatches ||
+	    trace.physical_event_overflow ||
+	    trace.physical_event_complete != 1 ||
+	    trace.physical_event_state_failures ||
+	    trace.physical_event_material_segments != expected_segments ||
+	    trace.physical_event_subminimum_contacts ||
+	    trace.physical_event_tolerance_ambiguous ||
+	    trace.stored_physical_events != 2 * expected_segments)
+	return false;
+
+    bool used_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    bool used_root[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
+    for (size_t event_index = 0;
+	    event_index < trace.stored_physical_events; ++event_index) {
+	const struct rt_brep_trace_physical_event &event =
+	    trace.physical_events[event_index];
+	if (event.source_box >= trace.stored_surface_boxes ||
+		event.source_root >= trace.stored_local_roots ||
+		used_box[event.source_box] || used_root[event.source_root])
+	    return false;
+	used_box[event.source_box] = true;
+	used_root[event.source_root] = true;
+	const struct rt_brep_trace_surface_box &box =
+	    trace.surface_boxes[event.source_box];
+	const struct rt_brep_trace_local_root &root =
+	    trace.local_roots[event.source_root];
+	if (box.disposition != RT_BREP_TRACE_BOX_RESOLVED_REGULAR ||
+		!box.determinant_sign ||
+		event.certificate != RT_BREP_TRACE_EVENT_REGULAR_INTERIOR ||
+		event.source_kind != RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT ||
+		event.determinant_sign != box.determinant_sign ||
+		event.face_index != box.face_index ||
+		event.face_index != root.face_index ||
+		event.span_index != box.span_index ||
+		event.span_index != root.span_index ||
+		event.hit_class != root.hit_class ||
+		event.trim_status != root.trim_status ||
+		event.adjacent_face_index != root.adjacent_face_index ||
+		event.hit_class != 0 || event.direction != root.direction ||
+		std::memcmp(&event.dist, &root.dist, sizeof(event.dist)) ||
+		std::memcmp(&event.t_min, &box.t_min, sizeof(event.t_min)) ||
+		std::memcmp(&event.t_max, &box.t_max, sizeof(event.t_max)) ||
+		event.dist < event.t_min ||
+		event.dist > event.t_max ||
+		std::memcmp(event.uv, root.uv, sizeof(event.uv)) ||
+		event.direction !=
+		    (event_index % 2 ? RT_BREP_TRACE_LEAVING :
+		    RT_BREP_TRACE_ENTERING) ||
+		(event_index && trace.physical_events[event_index - 1].t_min >
+		    event.t_min))
+	    return false;
+    }
+    return true;
+}
+
+
+static bool
+brep_trace_fold_event_stream_valid(const struct rt_brep_shot_trace &trace)
+{
+    if (trace.surface_regular_orientation_attempts ||
+	    trace.surface_regular_orientation_signed ||
+	    trace.surface_regular_orientation_uncertain ||
+	    trace.surface_regular_orientation_failures ||
+	    trace.physical_event_attempts != 2 ||
+	    trace.physical_event_regular || trace.physical_event_boundary != 2 ||
+	    trace.physical_event_clean_outside ||
+	    trace.physical_event_near_trim || trace.physical_event_unresolved ||
+	    trace.physical_event_direction_checks != 2 ||
+	    trace.physical_event_direction_mismatches ||
+	    trace.physical_event_overflow ||
+	    trace.physical_event_complete != 1 ||
+	    trace.physical_event_state_failures ||
+	    trace.physical_event_material_segments != 1 ||
+	    trace.physical_event_subminimum_contacts ||
+	    trace.physical_event_tolerance_ambiguous ||
+	    trace.stored_physical_events != 2)
+	return false;
+
+    bool used_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    bool used_root[RT_BREP_TRACE_MAX_FOLD_ROOTS] = {};
+    for (size_t event_index = 0; event_index < 2; ++event_index) {
+	const struct rt_brep_trace_physical_event &event =
+	    trace.physical_events[event_index];
+	if (event.source_box >= trace.stored_surface_boxes ||
+		event.source_root >= trace.stored_surface_fold_roots ||
+		used_box[event.source_box] || used_root[event.source_root])
+	    return false;
+	used_box[event.source_box] = true;
+	used_root[event.source_root] = true;
+	const struct rt_brep_trace_surface_box &box =
+	    trace.surface_boxes[event.source_box];
+	const struct rt_brep_trace_fold_root &root =
+	    trace.surface_fold_roots_data[event.source_root];
+	if (box.disposition != RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY ||
+		box.determinant_sign != root.determinant_sign ||
+		event.certificate != RT_BREP_TRACE_EVENT_BOUNDARY_FOLD ||
+		event.source_kind != RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT ||
+		event.determinant_sign != root.determinant_sign ||
+		event.face_index != box.face_index ||
+		event.face_index != root.face_index ||
+		event.span_index != box.span_index ||
+		event.span_index != root.span_index ||
+		event.hit_class != root.hit_class ||
+		event.trim_status != root.trim_status ||
+		event.adjacent_face_index != root.adjacent_face_index ||
+		event.hit_class != 0 ||
+		event.direction != root.direction ||
+		std::memcmp(&event.dist, &root.dist, sizeof(event.dist)) ||
+		std::memcmp(&event.t_min, &root.t_min, sizeof(event.t_min)) ||
+		std::memcmp(&event.t_max, &root.t_max, sizeof(event.t_max)) ||
+		std::memcmp(event.uv, root.uv, sizeof(event.uv)) ||
+		event.dist < event.t_min || event.dist > event.t_max ||
+		event.direction !=
+		    (event_index ? RT_BREP_TRACE_LEAVING :
+		    RT_BREP_TRACE_ENTERING))
+	    return false;
+    }
+    return trace.physical_events[0].t_max <
+	trace.physical_events[1].t_min;
+}
+
+
 static void
 brep_trace_root_coverage_diagnostic(const char *label,
     const struct rt_brep_shot_trace &trace)
@@ -750,6 +889,23 @@ struct brep_root_event_summary {
     size_t surface_krawczyk_boxes = 0;
     size_t surface_krawczyk_min_depth = 0;
     size_t surface_krawczyk_max_depth = 0;
+    size_t surface_regular_orientation_attempts = 0;
+    size_t surface_regular_orientation_signed = 0;
+    size_t surface_regular_orientation_uncertain = 0;
+    size_t surface_regular_orientation_failures = 0;
+    size_t physical_event_attempts = 0;
+    size_t physical_event_regular = 0;
+    size_t physical_event_boundary = 0;
+    size_t physical_event_clean_outside = 0;
+    size_t physical_event_near_trim = 0;
+    size_t physical_event_unresolved = 0;
+    size_t physical_event_direction_mismatches = 0;
+    size_t physical_event_overflow = 0;
+    size_t physical_event_complete = 0;
+    size_t physical_event_state_failures = 0;
+    size_t physical_event_material_segments = 0;
+    size_t physical_event_subminimum_contacts = 0;
+    size_t physical_event_tolerance_ambiguous = 0;
     size_t surface_subdivision_boxes = 0;
     size_t surface_subdivision_max_boxes = 0;
     size_t surface_clip_attempts = 0;
@@ -839,6 +995,33 @@ brep_accumulate_root_events(brep_root_event_summary &summary,
 	    summary.surface_krawczyk_max_depth,
 	    trace.surface_krawczyk_max_depth);
     }
+    summary.surface_regular_orientation_attempts +=
+	trace.surface_regular_orientation_attempts;
+    summary.surface_regular_orientation_signed +=
+	trace.surface_regular_orientation_signed;
+    summary.surface_regular_orientation_uncertain +=
+	trace.surface_regular_orientation_uncertain;
+    summary.surface_regular_orientation_failures +=
+	trace.surface_regular_orientation_failures;
+    summary.physical_event_attempts += trace.physical_event_attempts;
+    summary.physical_event_regular += trace.physical_event_regular;
+    summary.physical_event_boundary += trace.physical_event_boundary;
+    summary.physical_event_clean_outside +=
+	trace.physical_event_clean_outside;
+    summary.physical_event_near_trim += trace.physical_event_near_trim;
+    summary.physical_event_unresolved += trace.physical_event_unresolved;
+    summary.physical_event_direction_mismatches +=
+	trace.physical_event_direction_mismatches;
+    summary.physical_event_overflow += trace.physical_event_overflow;
+    summary.physical_event_complete += trace.physical_event_complete;
+    summary.physical_event_state_failures +=
+	trace.physical_event_state_failures;
+    summary.physical_event_material_segments +=
+	trace.physical_event_material_segments;
+    summary.physical_event_subminimum_contacts +=
+	trace.physical_event_subminimum_contacts;
+    summary.physical_event_tolerance_ambiguous +=
+	trace.physical_event_tolerance_ambiguous;
     summary.surface_subdivision_boxes += trace.surface_subdivision_boxes;
     summary.surface_subdivision_max_boxes = std::max(
 	summary.surface_subdivision_max_boxes,
@@ -947,6 +1130,25 @@ brep_print_prepared_event_summary(const char *label,
 	summary.surface_clip_inconclusive,
 	summary.surface_clip_restriction_failures,
 	summary.surface_clip_max_fraction_removed);
+    std::printf("%s certified event ledger: orientation=%zu/%zu/%zu/%zu "
+	"boxes=%zu regular/boundary=%zu/%zu outside=%zu near=%zu "
+	"unresolved=%zu "
+	"direction-mismatch=%zu overflow=%zu complete=%zu state-failure=%zu "
+	"segments/contact/ambiguous=%zu/%zu/%zu\n", label,
+	summary.surface_regular_orientation_signed,
+	summary.surface_regular_orientation_attempts,
+	summary.surface_regular_orientation_uncertain,
+	summary.surface_regular_orientation_failures,
+	summary.physical_event_attempts, summary.physical_event_regular,
+	summary.physical_event_boundary,
+	summary.physical_event_clean_outside, summary.physical_event_near_trim,
+	summary.physical_event_unresolved,
+	summary.physical_event_direction_mismatches,
+	summary.physical_event_overflow, summary.physical_event_complete,
+	summary.physical_event_state_failures,
+	summary.physical_event_material_segments,
+	summary.physical_event_subminimum_contacts,
+	summary.physical_event_tolerance_ambiguous);
     std::printf("%s prepared production: selected=%zu/%zu/%zu "
 	"fallback=none:%zu non-solid:%zu plate:%zu unsupported:%zu "
 	"surface-work:%zu boxes:%zu uncertified:%zu local-work:%zu "
@@ -1613,6 +1815,7 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 		trace.prepared_production_selected != 1 ||
 		trace.prepared_production_fallback !=
 		RT_BREP_PREPARED_FALLBACK_NONE ||
+		!brep_trace_regular_event_stream_valid(trace, 1) ||
 		trace.surface_krawczyk_boxes != 2 ||
 		!trace.surface_clip_contractions ||
 		trace.surface_clip_restriction_failures ||
@@ -1659,6 +1862,13 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	root_events.face_trim_candidates, root_events.face_trim_mismatches,
 	root_events.maximum_face_trim_error);
     brep_print_prepared_event_summary("Sphere", root_events);
+    if (root_events.physical_event_complete !=
+	    root_events.prepared_production_selected) {
+	std::printf("FAIL: prepared sphere/event-ledger selection=%zu/%zu\n",
+	    root_events.prepared_production_selected,
+	    root_events.physical_event_complete);
+	failures++;
+    }
     if (invalid_legacy_roots_without_local) {
 	std::printf("FAIL: prepared spans missed %zu valid legacy sphere roots\n",
 	    invalid_legacy_roots_without_local);
@@ -6022,6 +6232,7 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
 			trace.prepared_production_selected != 1 ||
 			trace.prepared_production_fallback !=
 			RT_BREP_PREPARED_FALLBACK_NONE ||
+			!brep_trace_regular_event_stream_valid(trace, 1) ||
 			trace.surface_krawczyk_boxes != 2 ||
 			!trace.surface_clip_attempts ||
 			!trace.surface_clip_contractions ||
@@ -6534,6 +6745,7 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			!(trace.surface_fold_segment_in <
 			    trace.surface_fold_segment_out) ||
 			trace.surface_fold_promoted_pairs != 1 ||
+			!brep_trace_fold_event_stream_valid(trace) ||
 			fold_event_error > normalized_limit;
 		    grazing_fold_event_ratchets++;
 		    if (fold_event_bad) {
@@ -6697,6 +6909,14 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		    production_result.segments == legacy_result.segments ||
 		    (fold_selected && production_result.segments ==
 		    implicit_result.segments);
+		const bool selected_event_ledger_matches =
+		    !trace.prepared_production_selected ||
+		    (trace.physical_event_complete == 1 &&
+		     !trace.physical_event_state_failures &&
+		     !trace.physical_event_overflow &&
+		     !trace.physical_event_unresolved &&
+		     trace.physical_event_material_segments ==
+			 production_segments);
 		const bool fixed_match =
 		    brep_trace_fixed_workspaces_match(trace, true);
 		const bool bad = !solver_partition_matches ||
@@ -6713,6 +6933,7 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		    production_error > normalized_limit ||
 		    legacy_error > normalized_limit ||
 		    !selected_partition_matches ||
+		    !selected_event_ledger_matches ||
 		    !fixed_match ||
 		    trace.surface_workspace_exhausted ||
 		    trace.surface_clip_restriction_failures;
@@ -6997,6 +7218,7 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			(expected_selected &&
 			 (trace.local_event_final_segments != 1 ||
 			  trace.local_event_stored_segments != 1 ||
+			  !brep_trace_regular_event_stream_valid(trace, 1) ||
 			  prepared_error > normalized_limit ||
 			  trace.local_unique_roots != 2 ||
 			  trace.legacy_unique_roots_unmatched ||
@@ -9554,6 +9776,13 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	root_events.face_trim_candidates, root_events.face_trim_mismatches,
 	root_events.maximum_face_trim_error);
     brep_print_prepared_event_summary("Cobb", root_events);
+    if (root_events.physical_event_complete !=
+	    root_events.prepared_production_selected) {
+	std::printf("FAIL: prepared Cobb/event-ledger selection=%zu/%zu\n",
+	    root_events.prepared_production_selected,
+	    root_events.physical_event_complete);
+	failures++;
+    }
     std::printf("Cobb prepared partition changes: improvements=%zu "
 	"regressions=%zu ambiguous=%zu max-changed-oracle-error=%.3g\n",
 	prepared_partition_improvements, prepared_partition_regressions,

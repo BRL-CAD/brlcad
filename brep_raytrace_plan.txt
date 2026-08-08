@@ -631,15 +631,26 @@ pipeline.  Its stages and authority are:
      fallback ray; never splice an uncertified legacy hit into an otherwise
      prepared partition or publish a partial prepared result.
 
-The current strict ordinary-root and clean-interior fold selectors are narrow
-instances of this contract.  They correctly require whole-ray coverage and
-publish atomically, but the general path still routes candidates through the
-legacy ordered cleanup rules.  Those cleanup rules are a compatibility
-fallback, not the intended event resolver.  The next correctness work should
-make ledger and event states explicit, then replace cleanup authority one
-qualified topology class at a time.  The dense SurfaceTree remains available
-during rollout, but agreement with it is diagnostic evidence rather than a
-mathematical correctness proof.
+The current strict ordinary-root and clean-interior fold selectors are the
+first production implementation of this contract.  Every terminal box stores
+an explicit unresolved, resolved-regular, or resolved-boundary disposition.
+An outward Bernstein determinant signs each Krawczyk-certified ordinary box.
+A separate fixed-capacity event array preserves source box/root indices, UV,
+ray-t interval, trim state, certificate type, determinant orientation, and
+ENTER/LEAVE direction.  The same array accepts the already-certified
+cross-span fold theorem.  It sorts events, validates {0,1} state, and applies
+the outward minimum-segment classifier before publication.
+
+Prepared publication now requires this ledger to be complete and emits the
+already-authorized clean events directly; it no longer routes selected roots
+through the legacy ordered cleanup passes.  Clean exterior roots produce no
+event, and a completely excluded ray produces a certified empty partition.
+Near-trim roots, unqualified contacts, unsupported topology, uncertain
+orientation/order, and every capacity failure still select the whole-ray
+legacy path before output mutation.  Add edge, crack, contact, and vertex
+event theorems one independently qualified class at a time.  The dense
+SurfaceTree remains available during rollout, but agreement with it is
+diagnostic evidence rather than a mathematical correctness proof.
 
 5.1 Broad phase
 
