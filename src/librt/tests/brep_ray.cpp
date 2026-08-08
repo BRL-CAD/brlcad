@@ -72,6 +72,15 @@ struct sampled_ray {
 };
 
 
+struct directed_partition_ray {
+    const char *name;
+    point_t origin;
+    vect_t direction;
+    size_t partitions;
+    double distances[2 * MAX_TEST_PARTITIONS];
+};
+
+
 static struct soltab *
 prep_solid(struct rt_i *rtip, struct rt_db_internal *intern, int type)
 {
@@ -767,17 +776,21 @@ sample_standard_error(double sum, double sum_squared, size_t sample_count)
 
 
 static int
-check_shared_crofton_sphere(struct rt_db_internal *ell_intern,
-    const struct bn_tol *tol, double radius)
+check_shared_crofton_fixture(const char *label,
+    struct rt_db_internal *implicit_intern, const struct bn_tol *tol,
+    const point_t bbox_min, const point_t bbox_max, double analytic_area,
+    double analytic_volume, size_t ray_count,
+    const directed_partition_ray *directed_rays = NULL,
+    size_t directed_ray_count = 0)
 {
     int failures = 0;
     prepared_model implicit_model;
     prepared_model brep_model;
 
     ON_Brep *brep = ON_Brep::New();
-    OBJ[ID_ELL].ft_brep(&brep, ell_intern, tol);
+    OBJ[implicit_intern->idb_minor_type].ft_brep(&brep, implicit_intern, tol);
     if (!brep) {
-	std::printf("FAIL: shared Crofton sphere-to-BREP conversion\n");
+	std::printf("FAIL: %s shared Crofton BREP conversion\n", label);
 	return 1;
     }
 
@@ -791,22 +804,64 @@ check_shared_crofton_sphere(struct rt_db_internal *ell_intern,
     brep_intern.idb_meth = &OBJ[ID_BREP];
     brep_intern.idb_ptr = &brep_internal;
 
-    if (!prep_partition_model(implicit_model, ell_intern,
+    if (!prep_partition_model(implicit_model, implicit_intern,
 	    "paired_implicit.s", tol) ||
 	    !prep_partition_model(brep_model, &brep_intern,
 	    "paired_brep.s", tol)) {
-	std::printf("FAIL: shared Crofton model preparation\n");
+	std::printf("FAIL: %s shared Crofton model preparation\n", label);
 	free_prepared_model(brep_model);
 	free_prepared_model(implicit_model);
 	delete brep_internal.brep;
 	return 1;
     }
 
-    const size_t checkpoints[] = {2000, 8000, 32000};
-    const size_t checkpoint_count = sizeof(checkpoints) / sizeof(checkpoints[0]);
-    const size_t ray_count = checkpoints[checkpoint_count - 1];
-    point_t center = VINIT_ZERO;
-    const double sampling_radius = sqrt(3.0) * radius;
+    for (size_t i = 0; i < directed_ray_count; ++i) {
+	sampled_ray ray;
+	VMOVE(ray.origin, directed_rays[i].origin);
+	VMOVE(ray.direction, directed_rays[i].direction);
+	VUNITIZE(ray.direction);
+	partition_result implicit_result = shoot_partitions(implicit_model, ray);
+	partition_result brep_result = shoot_partitions(brep_model, ray);
+	bool valid = partition_result_valid(implicit_result, ray.direction) &&
+	    partition_result_valid(brep_result, ray.direction) &&
+	    implicit_result.partitions == directed_rays[i].partitions &&
+	    brep_result.partitions == directed_rays[i].partitions;
+	for (size_t j = 0; valid && j < directed_rays[i].partitions; ++j) {
+	    const double expected_in = directed_rays[i].distances[2 * j];
+	    const double expected_out = directed_rays[i].distances[2 * j + 1];
+	    valid = fabs(implicit_result.intervals[j].in_dist - expected_in) <=
+		tol->dist &&
+		fabs(implicit_result.intervals[j].out_dist - expected_out) <=
+		tol->dist &&
+		fabs(brep_result.intervals[j].in_dist - expected_in) <=
+		tol->dist &&
+		fabs(brep_result.intervals[j].out_dist - expected_out) <=
+		tol->dist;
+	}
+	if (!valid) {
+	    std::printf("FAIL: %s directed partition %s implicit=%zu "
+		"BREP=%zu expected=%zu\n", label, directed_rays[i].name,
+		implicit_result.partitions, brep_result.partitions,
+		directed_rays[i].partitions);
+	    failures++;
+	}
+    }
+
+    const size_t candidate_checkpoints[] = {2000, 8000, 32000, 128000};
+    std::vector<size_t> checkpoints;
+    for (size_t i = 0; i < sizeof(candidate_checkpoints) /
+	    sizeof(candidate_checkpoints[0]); ++i) {
+	if (candidate_checkpoints[i] <= ray_count)
+	    checkpoints.push_back(candidate_checkpoints[i]);
+    }
+    if (checkpoints.empty() || checkpoints.back() != ray_count)
+	checkpoints.push_back(ray_count);
+
+    point_t center;
+    VADD2SCALE(center, bbox_max, bbox_min, 0.5);
+    vect_t bbox_diagonal;
+    VSUB2(bbox_diagonal, bbox_max, bbox_min);
+    const double sampling_radius = 0.5 * MAGNITUDE(bbox_diagonal);
     const std::vector<sampled_ray> rays = generate_paired_rays(ray_count,
 	sampling_radius, center);
     size_t implicit_crossings = 0;
@@ -829,9 +884,6 @@ check_shared_crofton_sphere(struct rt_db_internal *ell_intern,
     const double area_scale = 4.0 * M_PI * sampling_radius *
 	sampling_radius;
     const double volume_scale = M_PI * sampling_radius * sampling_radius;
-    const double analytic_area = 4.0 * M_PI * radius * radius;
-    const double analytic_volume = (4.0 / 3.0) * M_PI * radius * radius *
-	radius;
     size_t checkpoint_index = 0;
     size_t reported = 0;
 
@@ -870,8 +922,8 @@ check_shared_crofton_sphere(struct rt_db_internal *ell_intern,
 	if (!partition_result_valid(implicit_result, rays[i].direction) ||
 		!partition_result_valid(brep_result, rays[i].direction)) {
 	    if (reported++ < 5)
-		std::printf("FAIL: shared Crofton ray %zu has invalid "
-		    "partition data\n", i);
+		std::printf("FAIL: %s shared Crofton ray %zu has invalid "
+		    "partition data\n", label, i);
 	    failures++;
 	    continue;
 	}
@@ -885,8 +937,9 @@ check_shared_crofton_sphere(struct rt_db_internal *ell_intern,
 		tangent_band_lines++;
 	    } else {
 		if (reported++ < 5)
-		    std::printf("FAIL: shared Crofton ray %zu partition count "
-			"implicit=%zu BREP=%zu chords=[%.17g %.17g]\n", i,
+		    std::printf("FAIL: %s shared Crofton ray %zu partition "
+			"count implicit=%zu BREP=%zu chords=[%.17g %.17g]\n",
+			label, i,
 			implicit_result.partitions, brep_result.partitions,
 			implicit_chord, brep_chord);
 		failures++;
@@ -904,8 +957,8 @@ check_shared_crofton_sphere(struct rt_db_internal *ell_intern,
 		if (in_error > tol->dist || out_error > tol->dist) {
 		    line_differs = true;
 		    if (reported++ < 5)
-			std::printf("FAIL: shared Crofton ray %zu endpoint "
-			    "errors=[%.17g %.17g]\n", i, in_error,
+			std::printf("FAIL: %s shared Crofton ray %zu endpoint "
+			    "errors=[%.17g %.17g]\n", label, i, in_error,
 			    out_error);
 		    failures++;
 		}
@@ -914,7 +967,7 @@ check_shared_crofton_sphere(struct rt_db_internal *ell_intern,
 	if (line_differs)
 	    differing_lines++;
 
-	if (checkpoint_index < checkpoint_count &&
+	if (checkpoint_index < checkpoints.size() &&
 		i + 1 == checkpoints[checkpoint_index]) {
 	    const size_t samples = i + 1;
 	    const double implicit_area_estimate = implicit_area_sum / samples;
@@ -938,14 +991,14 @@ check_shared_crofton_sphere(struct rt_db_internal *ell_intern,
 		    fabs(implicit_volume_estimate - analytic_volume) >
 		    volume_band ||
 		    fabs(brep_volume_estimate - analytic_volume) > volume_band) {
-		std::printf("FAIL: shared Crofton confidence at %zu rays "
-		    "area-band=%.17g volume-band=%.17g\n", samples,
+		std::printf("FAIL: %s shared Crofton confidence at %zu rays "
+		    "area-band=%.17g volume-band=%.17g\n", label, samples,
 		    area_band, volume_band);
 		failures++;
 	    }
-	    std::printf("Shared Crofton checkpoint %zu: area implicit="
+	    std::printf("Shared Crofton %s checkpoint %zu: area implicit="
 		"%.9g+/-%.3g BREP=%.9g+/-%.3g volume implicit="
-		"%.9g+/-%.3g BREP=%.9g+/-%.3g\n", samples,
+		"%.9g+/-%.3g BREP=%.9g+/-%.3g\n", label, samples,
 		implicit_area_estimate, implicit_area_se, brep_area_estimate,
 		brep_area_se, implicit_volume_estimate, implicit_volume_se,
 		brep_volume_estimate, brep_volume_se);
@@ -967,22 +1020,173 @@ check_shared_crofton_sphere(struct rt_db_internal *ell_intern,
 	    relative_error(brep_volume, analytic_volume) > 0.06 ||
 	    relative_error(brep_area, implicit_area) > 0.001 ||
 	    relative_error(brep_volume, implicit_volume) > 0.001) {
-	std::printf("FAIL: shared Crofton aggregates analytic=[%.17g %.17g] "
+	std::printf("FAIL: %s shared Crofton aggregates analytic="
+	    "[%.17g %.17g] "
 	    "implicit=[%.17g %.17g] BREP=[%.17g %.17g]\n",
-	    analytic_area, analytic_volume, implicit_area, implicit_volume,
+	    label, analytic_area, analytic_volume, implicit_area, implicit_volume,
 	    brep_area, brep_volume);
 	failures++;
     }
 
-    std::printf("Shared Crofton sphere: rays=%zu differing=%zu "
+    std::printf("Shared Crofton %s: rays=%zu differing=%zu "
 	"tangent-band=%zu max-endpoint=%.3g signed-chord=%.3g "
-	"absolute-chord=%.3g\n", ray_count, differing_lines,
+	"absolute-chord=%.3g\n", label, ray_count, differing_lines,
 	tangent_band_lines, maximum_endpoint_error, signed_chord_difference,
 	absolute_chord_difference);
 
     free_prepared_model(brep_model);
     free_prepared_model(implicit_model);
     delete brep_internal.brep;
+    return failures;
+}
+
+
+static int
+check_shared_primitive_corpus(const struct bn_tol *tol)
+{
+    int failures = 0;
+
+    struct rt_ell_internal ellipsoid = {};
+    ellipsoid.magic = RT_ELL_INTERNAL_MAGIC;
+    VSET(ellipsoid.v, 4.0, -3.0, 2.0);
+    VSET(ellipsoid.a, 10.0, 0.0, 0.0);
+    VSET(ellipsoid.b, 0.0, 10.0, 0.0);
+    VSET(ellipsoid.c, 0.0, 0.0, 6.0);
+    struct rt_db_internal ellipsoid_intern;
+    RT_DB_INTERNAL_INIT(&ellipsoid_intern);
+    ellipsoid_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    ellipsoid_intern.idb_type = ID_ELL;
+    ellipsoid_intern.idb_meth = &OBJ[ID_ELL];
+    ellipsoid_intern.idb_ptr = &ellipsoid;
+    point_t ellipsoid_min = {-6.0, -13.0, -4.0};
+    point_t ellipsoid_max = {14.0, 7.0, 8.0};
+    const double eccentricity = 0.8;
+    const double ellipsoid_area = 2.0 * M_PI * 100.0 *
+	(1.0 + (1.0 - eccentricity * eccentricity) /
+	 eccentricity * atanh(eccentricity));
+    const double ellipsoid_volume = (4.0 / 3.0) * M_PI * 100.0 * 6.0;
+    const directed_partition_ray ellipsoid_rays[] = {
+	{"north pole", {4.0, -3.0, 14.0}, {0.0, 0.0, -1.0}, 1,
+	    {6.0, 18.0}},
+	{"periodic seam", {24.0, -3.0, 2.0}, {-1.0, 0.0, 0.0}, 1,
+	    {10.0, 30.0}}
+    };
+    failures += check_shared_crofton_fixture("oblate-ellipsoid",
+	&ellipsoid_intern, tol, ellipsoid_min, ellipsoid_max,
+	ellipsoid_area, ellipsoid_volume, 8000, ellipsoid_rays,
+	sizeof(ellipsoid_rays) / sizeof(ellipsoid_rays[0]));
+
+    struct rt_arb_internal arb = {};
+    arb.magic = RT_ARB_INTERNAL_MAGIC;
+    VSET(arb.pt[0], -11.0, -7.0, -5.0);
+    VSET(arb.pt[1], 9.0, -7.0, -5.0);
+    VSET(arb.pt[2], 9.0, 5.0, -5.0);
+    VSET(arb.pt[3], -11.0, 5.0, -5.0);
+    VSET(arb.pt[4], -11.0, -7.0, 3.0);
+    VSET(arb.pt[5], 9.0, -7.0, 3.0);
+    VSET(arb.pt[6], 9.0, 5.0, 3.0);
+    VSET(arb.pt[7], -11.0, 5.0, 3.0);
+    struct rt_db_internal arb_intern;
+    RT_DB_INTERNAL_INIT(&arb_intern);
+    arb_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    arb_intern.idb_type = ID_ARB8;
+    arb_intern.idb_meth = &OBJ[ID_ARB8];
+    arb_intern.idb_ptr = &arb;
+    point_t arb_min = {-11.0, -7.0, -5.0};
+    point_t arb_max = {9.0, 5.0, 3.0};
+    const double arb_diagonal = sqrt(20.0 * 20.0 + 12.0 * 12.0 +
+	8.0 * 8.0);
+    const directed_partition_ray arb_rays[] = {
+	{"face forward", {-31.0, -1.0, -1.0}, {1.0, 0.0, 0.0}, 1,
+	    {20.0, 40.0}},
+	{"face reverse", {29.0, -1.0, -1.0}, {-1.0, 0.0, 0.0}, 1,
+	    {20.0, 40.0}},
+	{"opposite vertices", {-31.0, -19.0, -13.0},
+	    {20.0, 12.0, 8.0}, 1, {arb_diagonal, 2.0 * arb_diagonal}}
+    };
+    failures += check_shared_crofton_fixture("arb8-box", &arb_intern, tol,
+	arb_min, arb_max, 992.0, 1920.0, 8000, arb_rays,
+	sizeof(arb_rays) / sizeof(arb_rays[0]));
+
+    struct rt_tgc_internal cylinder = {};
+    cylinder.magic = RT_TGC_INTERNAL_MAGIC;
+    VSET(cylinder.v, 3.0, -4.0, -7.0);
+    VSET(cylinder.h, 0.0, 0.0, 14.0);
+    VSET(cylinder.a, 6.0, 0.0, 0.0);
+    VSET(cylinder.b, 0.0, 6.0, 0.0);
+    VMOVE(cylinder.c, cylinder.a);
+    VMOVE(cylinder.d, cylinder.b);
+    struct rt_db_internal cylinder_intern;
+    RT_DB_INTERNAL_INIT(&cylinder_intern);
+    cylinder_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    cylinder_intern.idb_type = ID_TGC;
+    cylinder_intern.idb_meth = &OBJ[ID_TGC];
+    cylinder_intern.idb_ptr = &cylinder;
+    point_t cylinder_min = {-3.0, -10.0, -7.0};
+    point_t cylinder_max = {9.0, 2.0, 7.0};
+    const directed_partition_ray cylinder_rays[] = {
+	{"axis", {3.0, -4.0, -14.0}, {0.0, 0.0, 1.0}, 1,
+	    {7.0, 21.0}},
+	{"periodic seam", {15.0, -4.0, 0.0}, {-1.0, 0.0, 0.0}, 1,
+	    {6.0, 18.0}},
+	{"periodic seam reverse", {-9.0, -4.0, 0.0},
+	    {1.0, 0.0, 0.0}, 1, {6.0, 18.0}}
+    };
+    failures += check_shared_crofton_fixture("rcc", &cylinder_intern, tol,
+	cylinder_min, cylinder_max, 240.0 * M_PI, 504.0 * M_PI, 8000,
+	cylinder_rays, sizeof(cylinder_rays) / sizeof(cylinder_rays[0]));
+
+    struct rt_tgc_internal cone = cylinder;
+    VSET(cone.c, 3.0, 0.0, 0.0);
+    VSET(cone.d, 0.0, 3.0, 0.0);
+    struct rt_db_internal cone_intern;
+    RT_DB_INTERNAL_INIT(&cone_intern);
+    cone_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    cone_intern.idb_type = ID_TGC;
+    cone_intern.idb_meth = &OBJ[ID_TGC];
+    cone_intern.idb_ptr = &cone;
+    const double cone_slant = sqrt(14.0 * 14.0 + 3.0 * 3.0);
+    const double cone_area = M_PI * (6.0 + 3.0) * cone_slant +
+	M_PI * (6.0 * 6.0 + 3.0 * 3.0);
+    const directed_partition_ray cone_rays[] = {
+	{"axis", {3.0, -4.0, -14.0}, {0.0, 0.0, 1.0}, 1,
+	    {7.0, 21.0}},
+	{"periodic seam", {15.0, -4.0, 0.0}, {-1.0, 0.0, 0.0}, 1,
+	    {7.5, 16.5}}
+    };
+    failures += check_shared_crofton_fixture("truncated-cone", &cone_intern,
+	tol, cylinder_min, cylinder_max, cone_area, 294.0 * M_PI, 8000,
+	cone_rays, sizeof(cone_rays) / sizeof(cone_rays[0]));
+
+    struct rt_tor_internal torus = {};
+    torus.magic = RT_TOR_INTERNAL_MAGIC;
+    VSET(torus.v, 0.0, 0.0, 0.0);
+    VSET(torus.h, 0.0, 0.0, 1.0);
+    torus.r_a = 12.0;
+    torus.r_h = 3.0;
+    struct rt_db_internal torus_intern;
+    RT_DB_INTERNAL_INIT(&torus_intern);
+    torus_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    torus_intern.idb_type = ID_TOR;
+    torus_intern.idb_meth = &OBJ[ID_TOR];
+    torus_intern.idb_ptr = &torus;
+    point_t torus_min = {-15.0, -15.0, -3.0};
+    point_t torus_max = {15.0, 15.0, 3.0};
+    const directed_partition_ray torus_rays[] = {
+	{"two intervals", {-20.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, 2,
+	    {5.0, 11.0, 29.0, 35.0}},
+	{"two intervals reverse", {20.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}, 2,
+	    {5.0, 11.0, 29.0, 35.0}},
+	{"central hole", {0.0, 0.0, -10.0}, {0.0, 0.0, 1.0}, 0,
+	    {0.0, 0.0}},
+	{"tube vertical", {12.0, 0.0, -10.0}, {0.0, 0.0, 1.0}, 1,
+	    {7.0, 13.0}}
+    };
+    failures += check_shared_crofton_fixture("torus", &torus_intern, tol,
+	torus_min, torus_max, 144.0 * M_PI * M_PI,
+	216.0 * M_PI * M_PI, 8000, torus_rays,
+	sizeof(torus_rays) / sizeof(torus_rays[0]));
+
     return failures;
 }
 
@@ -1145,8 +1349,13 @@ main(int argc, char **argv)
     free_solid(brep_stp);
     free_solid(implicit_stp);
 
-    failures += check_shared_crofton_sphere(&ell_intern, &rtip->rti_tol,
-	radius);
+    point_t sphere_min = {-radius, -radius, -radius};
+    point_t sphere_max = {radius, radius, radius};
+    failures += check_shared_crofton_fixture("sphere", &ell_intern,
+	&rtip->rti_tol, sphere_min, sphere_max,
+	4.0 * M_PI * radius * radius,
+	(4.0 / 3.0) * M_PI * radius * radius * radius, 32000);
+    failures += check_shared_primitive_corpus(&rtip->rti_tol);
     failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);
 
     rt_clean_resource_basic(rtip, &resp);
@@ -1154,9 +1363,9 @@ main(int argc, char **argv)
     rt_i_destroy(rtip);
 
     if (failures)
-	std::printf("BREP directed sphere rays: %d failure(s)\n", failures);
+	std::printf("BREP ray correctness corpus: %d failure(s)\n", failures);
     else
-	std::printf("BREP directed sphere rays: PASS\n");
+	std::printf("BREP ray correctness corpus: PASS\n");
     return failures ? 1 : 0;
 }
 
