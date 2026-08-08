@@ -2492,13 +2492,36 @@ brep_ray_plane_frame(const ON_Ray &ray, ON_3dVector &first,
 }
 
 
+enum brep_corrector_status_t {
+    BREP_CORRECTOR_INVALID_INPUT = RT_BREP_TRACE_CORRECTOR_INVALID_INPUT,
+    BREP_CORRECTOR_EVALUATION_FAILED =
+	RT_BREP_TRACE_CORRECTOR_EVALUATION_FAILED,
+    BREP_CORRECTOR_NONFINITE = RT_BREP_TRACE_CORRECTOR_NONFINITE,
+    BREP_CORRECTOR_DEGENERATE_NORMAL =
+	RT_BREP_TRACE_CORRECTOR_DEGENERATE_NORMAL,
+    BREP_CORRECTOR_JACOBIAN_SINGULAR =
+	RT_BREP_TRACE_CORRECTOR_JACOBIAN_SINGULAR,
+    BREP_CORRECTOR_NO_IMPROVEMENT =
+	RT_BREP_TRACE_CORRECTOR_NO_IMPROVEMENT,
+    BREP_CORRECTOR_ITERATION_LIMIT =
+	RT_BREP_TRACE_CORRECTOR_ITERATION_LIMIT,
+    BREP_CORRECTOR_CONVERGED = RT_BREP_TRACE_CORRECTOR_CONVERGED
+};
+
+static_assert(RT_BREP_TRACE_CORRECTOR_STATUS_COUNT ==
+    BREP_CORRECTOR_CONVERGED + 1,
+    "BREP trace corrector status count is stale");
+
+
 struct brep_continuation_result {
     ON_2dPoint uv;
     ON_3dPoint point;
     ON_3dVector normal;
     double dist = 0.0;
     double residual = DBL_MAX;
+    double acceptance_limit = 0.0;
     size_t iterations = 0;
+    brep_corrector_status_t status = BREP_CORRECTOR_INVALID_INPUT;
     bool converged = false;
 };
 
@@ -4018,6 +4041,8 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 	    trace->surface_corrector_attempts++;
 	    const brep_continuation_result root = brep_continuation_newton(
 		span, ray, seed, box.minimum, box.maximum);
+	    if ((size_t)root.status < RT_BREP_TRACE_CORRECTOR_STATUS_COUNT)
+		trace->surface_corrector_status[root.status]++;
 	    if (root.converged) {
 		trace->surface_corrector_converged++;
 		const double local_root[2] = {
@@ -4595,12 +4620,15 @@ brep_continuation_newton(const brep_surface_span &span, const ON_Ray &ray,
      * cancellation and is intentionally not a modeling/seam tolerance. */
     const double root_tolerance = BREP_DIRECT_ROOT_RELATIVE_TOLERANCE *
 	span_scale;
+    result.status = BREP_CORRECTOR_ITERATION_LIMIT;
     for (size_t iteration = 0; iteration < 24; ++iteration) {
 	ON_3dVector derivative_u;
 	ON_3dVector derivative_v;
 	if (!brep_bezier_surface_derivatives(span.surface, result.uv,
-		result.point, derivative_u, derivative_v))
+		result.point, derivative_u, derivative_v)) {
+	    result.status = BREP_CORRECTOR_EVALUATION_FAILED;
 	    return result;
+	}
 	const ON_3dVector offset = result.point - ray.m_origin;
 	const double f = offset * first;
 	const double g = offset * second;
@@ -4608,9 +4636,15 @@ brep_continuation_newton(const brep_surface_span &span, const ON_Ray &ray,
 	result.iterations = iteration + 1;
 	result.normal = ON_CrossProduct(derivative_u, derivative_v);
 	const double ray_length = ray.m_dir.Length();
-	if (!std::isfinite(result.residual) || !result.normal.Unitize() ||
-		!(ray_length > DBL_MIN) || !std::isfinite(ray_length))
+	if (!std::isfinite(result.residual) ||
+		!(ray_length > DBL_MIN) || !std::isfinite(ray_length)) {
+	    result.status = BREP_CORRECTOR_NONFINITE;
 	    return result;
+	}
+	if (!result.normal.Unitize()) {
+	    result.status = BREP_CORRECTOR_DEGENERATE_NORMAL;
+	    return result;
+	}
 	const double normal_dot = fabs(result.normal * ray.m_dir) / ray_length;
 	const double coordinate_scale = std::max(span_scale,
 	    std::max(fabs(ray.m_origin.x),
@@ -4620,10 +4654,13 @@ brep_continuation_newton(const brep_surface_span &span, const ON_Ray &ray,
 	    std::max(fabs(result.point.y), fabs(result.point.z)))))));
 	const double evaluation_floor = BREP_DIRECT_EVALUATION_ULPS *
 	    DBL_EPSILON * coordinate_scale;
-	if (result.residual <= std::max(evaluation_floor,
-		root_tolerance * normal_dot)) {
+	result.acceptance_limit = std::max(evaluation_floor,
+	    root_tolerance * normal_dot);
+	if (result.residual <= result.acceptance_limit) {
 	    result.dist = utah_calc_t(ray, result.point);
 	    result.converged = std::isfinite(result.dist);
+	    result.status = result.converged ? BREP_CORRECTOR_CONVERGED :
+		BREP_CORRECTOR_NONFINITE;
 	    return result;
 	}
 
@@ -4635,15 +4672,23 @@ brep_continuation_newton(const brep_surface_span &span, const ON_Ray &ray,
 	const double u_scale = hypot(j11, j21);
 	const double v_scale = hypot(j12, j22);
 	if (!std::isfinite(determinant) || !std::isfinite(u_scale) ||
-		!std::isfinite(v_scale) || u_scale <= ON_ZERO_TOLERANCE ||
+		!std::isfinite(v_scale)) {
+	    result.status = BREP_CORRECTOR_NONFINITE;
+	    return result;
+	}
+	if (u_scale <= ON_ZERO_TOLERANCE ||
 		v_scale <= ON_ZERO_TOLERANCE ||
 		fabs(determinant) <=
-		BREP_INTERSECTION_ROOT_EPSILON * u_scale * v_scale)
+		BREP_INTERSECTION_ROOT_EPSILON * u_scale * v_scale) {
+	    result.status = BREP_CORRECTOR_JACOBIAN_SINGULAR;
 	    return result;
+	}
 	const ON_2dVector step((j22 * f - j12 * g) / determinant,
 	    (j11 * g - j21 * f) / determinant);
-	if (!step.IsValid())
+	if (!step.IsValid()) {
+	    result.status = BREP_CORRECTOR_NONFINITE;
 	    return result;
+	}
 
 	bool improved = false;
 	double fraction = 1.0;
@@ -4672,8 +4717,10 @@ brep_continuation_newton(const brep_surface_span &span, const ON_Ray &ray,
 	    }
 	    fraction *= 0.5;
 	}
-	if (!improved)
+	if (!improved) {
+	    result.status = BREP_CORRECTOR_NO_IMPROVEMENT;
 	    return result;
+	}
     }
     return result;
 }
@@ -4923,6 +4970,21 @@ brep_trace_isolated_roots(struct rt_brep_shot_trace *trace,
 	    trace->local_root_attempts++;
 	    brep_continuation_result result = brep_continuation_newton(span,
 		ray, seed, minimum, maximum);
+	    if ((size_t)result.status < RT_BREP_TRACE_CORRECTOR_STATUS_COUNT)
+		trace->local_corrector_status[result.status]++;
+	    if (!result.converged && result.acceptance_limit > 0.0 &&
+		    std::isfinite(result.acceptance_limit) &&
+		    std::isfinite(result.residual)) {
+		const double ratio = result.residual / result.acceptance_limit;
+		if (!trace->local_corrector_failure_ratios)
+		    trace->local_corrector_min_failure_ratio = ratio;
+		else
+		    trace->local_corrector_min_failure_ratio = std::min(
+			(double)trace->local_corrector_min_failure_ratio, ratio);
+		trace->local_corrector_max_failure_ratio = std::max(
+		    (double)trace->local_corrector_max_failure_ratio, ratio);
+		trace->local_corrector_failure_ratios++;
+	    }
 	    const double coordinate_scale = std::max(span_scale,
 		std::max(fabs(ray.m_origin.x),
 		std::max(fabs(ray.m_origin.y),
