@@ -1234,6 +1234,24 @@ SurfaceTree::getRootNode() const
 }
 
 
+BBNode*
+SurfaceTree::releaseRootNode()
+{
+    BBNode *root = m_root;
+    m_root = NULL;
+    return root;
+}
+
+
+const CurveTree*
+SurfaceTree::releaseCurveTree()
+{
+    const CurveTree *ctree = m_ctree;
+    m_ctree = NULL;
+    return ctree;
+}
+
+
 int
 SurfaceTree::depth() const
 {
