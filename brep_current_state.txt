@@ -102,6 +102,14 @@ prepared path selects 28 of 36 rays; the remaining high-condition cases
 exercise four isolated-box-capacity and four uncertified fallbacks, including
 one 197-leaf legacy traversal that explicitly exceeds and falls back from the
 fixed 128-leaf workspace.
+The same construction now sweeps 78 mapped grazing/contact/miss rays at
+conditions 13.3, 100, and 1,000.  It proved that angular grazing deletion was
+not affine invariant and now preserves tolerance-resolved ENTER/LEAVE pairs.
+The trend is monotone and reversal-consistent, but six high-condition analytic
+chords above the model tolerance still have no solver roots; they remain an
+explicit capability gap rather than a claimed invariant.  Exact transformed
+tangency also exposes three direction-dependent implicit ELL contact slivers,
+so the analytic oracle is authoritative exactly at zero clearance.
 Function and Jacobian enclosures now use outward interval operations throughout
 rather than scalar evaluation plus an error estimate.  An independent exact-
 dyadic gate covers all supported order pairs, five wide binary scales, positive
@@ -1349,6 +1357,81 @@ ESTABLISHED FINDINGS
     finding does not claim affine grazing or seam invariance: those need a
     separately mapped tangent-limit trend with anisotropic tolerance analysis.
 
+48. The mapped affine grazing trend is now an executable ratchet, and it
+    proves that the current classifiers are not yet fully affine invariant at
+    the tangent limit.  The gate reuses the analytic sphere line and maps both
+    its closest point and direction through A = R diag(sx, sy, sz) plus
+    translation.  It shoots the triaxial, condition-100, and condition-1,000
+    ellipsoids in both directions at signed base-sphere clearances
+    h/T = 100, 1, 0.01, 1e-4, 1e-6, 1e-8, 0, and the six mirrored negative
+    values.  This is 78 directed rays.  The exact base chord is multiplied by
+    |A d| and divided by the model tolerance scaled by the smallest principal
+    scale; endpoint errors are normalized back by |A d|.  Thus the oracle
+    measures physical material at the thinnest modeled scale rather than a
+    fixed angle or an untransformed parameter distance.
+
+    The first run found a classification defect after successful root solve.
+    At increasingly anisotropic grazes the legacy solver had two clean,
+    correctly ordered roots, but both normal dot products fell below the fixed
+    BREP_GRAZING_DOT_TOL.  Cleanup deleted the roots even when their physical
+    chord was tens, hundreds, or thousands of model tolerances long.  A fixed
+    angular cutoff is not affine invariant: an affine distortion can make the
+    endpoint normals arbitrarily close to perpendicular without eliminating
+    the material between the endpoints.
+
+    Grazing cleanup now distinguishes an isolated contact from a resolved
+    solid interval.  A nearly perpendicular hit is retained when it belongs
+    to an adjacent, finite, untrimmed-or-authorized, ordered ENTERING/LEAVING
+    pair whose ray-parameter separation is at least
+    rti_tol.dist/|ray direction|, with only a scale-aware floating-point slack.
+    Invalid trimmed and out-of-bounds candidates are still removed.  The same
+    rule is used by the allocation-free cleanup, the legacy list cleanup, the
+    prepared-event shadow, and prepared production qualification, so fixed and
+    allocating paths remain equivalence-gated.  Exact contacts and
+    sub-tolerance slivers may still collapse.  This change restores 16 of the
+    initially missing directed affine grazing partitions.
+
+    The resulting trend has no reversal mismatch and no hit/miss restart as h
+    approaches zero.  All six transformed rays hit at h/T = 100, 1, 0.01, and
+    1e-4.  Four of six hit at 1e-6 and zero hit at 1e-8.  The corresponding
+    analytic chord ranges, in transformed model tolerances, are
+    4.24e4--3.05e6, 4.25e3--3.05e5, 425--3.05e4, 42.5--3.05e3,
+    4.25--305, and 0.425--30.5.  The triaxial condition-13.3 case is resolved
+    through h/T = 1e-6 and its next miss has only a 0.425-T chord.  The
+    condition-100 case still misses both directions at h/T = 1e-8 despite a
+    3.08-T chord.  The condition-1,000 case still misses both directions at
+    h/T = 1e-6 and 1e-8 despite 305-T and 30.5-T chords.  Those six resolved
+    misses occur before hit construction: the old solver stores no roots and
+    the prepared path reaches hundreds of uncertified/overflowed boxes without
+    a publishable local root.  They are a solver/isolation problem, distinct
+    from the corrected angular-cleanup problem.
+
+    The gate therefore enforces monotone capability floors of h/T = 1e-6,
+    1e-6, and 1e-4 for conditions 13.3, 100, and 1,000, respectively, while
+    allowing closer cases and the aggregate six-resolved-miss count only to
+    improve.  Production and forced legacy topology must match, every retained
+    endpoint must satisfy the analytic tolerance, both ray directions must
+    agree, negative clearances must miss, and prepared overflow/fallback must
+    remain explicit.  This records a bounded known gap without blessing the
+    gap as the desired final answer.
+
+    Exact transformed tangency also revealed that the implicit ELL is not a
+    reliable binary oracle exactly on the discriminant: three of six directed
+    shots return tiny, direction-dependent contact slivers from affine
+    floating-point cancellation, while the analytic oracle and BREP both
+    classify all six as no material.  Positive and negative clearances still
+    use the implicit result as an independent comparison, but exact contact is
+    judged analytically.  This is relevant to later Cauchy-Crofton work:
+    tangencies have measure zero in the estimator, but directed tangent tests
+    must not silently treat an implicit numerical artifact as ground truth.
+
+    The optimized `--affine-only` gate, the complete `rt_brep_ray` corpus, and
+    the focused ASan/UBSan `--affine-only` gate pass.  The full normal corpus
+    ends with `BREP ray correctness corpus: PASS`; the sanitizer run uses
+    halt-on-error and reports no diagnostic.  The focused implicit-to-BREP and
+    NURBS regression gate passes 4/4.  The test output deliberately reports
+    `resolved-gaps=6` rather than claiming complete affine grazing invariance.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1501,6 +1584,15 @@ IMPLEMENTATION CHECKLIST
             [x] Gate nonuniform affine sphere-to-ellipsoid partitions through
                 condition number 1,000, including prepared box-capacity,
                 uncertified-root, and 128-leaf legacy traversal fallback.
+            [x] Gate the mapped two-root/contact/miss grazing trend in both ray
+                directions at conditions 13.3, 100, and 1,000, with analytic
+                transformed chord lengths and monotone capability floors.
+            [x] Preserve tolerance-resolved ENTER/LEAVE material intervals
+                during grazing cleanup instead of deleting them solely by a
+                non-affine-invariant normal-angle cutoff.
+            [ ] Resolve the six remaining high-condition affine grazing
+                solver/isolation misses before claiming tangent-limit affine
+                invariance or reducing dense-tree fallback.
             [x] Keep grazing, singular, and boundary roots on the conservative
                 depth-24 path.
             [x] Independently audit outward rounding and coefficient-error
@@ -2063,6 +2155,11 @@ Cobb sphere baseline:
     Repeated after the nonuniform affine ellipsoid selection/fallback matrix:
     13/13 in 69.56 seconds, with rt_brep_ray at 69.52 seconds.  The focused
     `--affine-only` gate covers 36 rays through condition 1,000 and passes.
+    Repeated after the 78-ray mapped affine grazing ratchet and the
+    tolerance-resolved grazing-pair cleanup: the focused `--affine-only` gate
+    and the complete normal `rt_brep_ray` corpus pass.  Ordinary affine rays
+    remain 36/36; the grazing output reports six bounded high-condition
+    resolved gaps and no reversal inconsistency or classification restart.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -2134,6 +2231,9 @@ Cobb sphere baseline:
     seconds; rt_brep_ray takes 359.79 seconds with no ASan or UBSan diagnostic.
     After extending the matrix through condition 1,000, the focused
     `--affine-only` ASan/UBSan run also passes without a diagnostic.
+    Repeated after affine grazing cleanup and trend qualification with
+    halt_on_error=1: the focused 78-ray `--affine-only` run passes with no ASan
+    or UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -2204,11 +2304,13 @@ NEXT ACTIONS
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
 3. Profile the strict ordinary-root production selector on stratified analytic
    and STEP cases.  Separate prepared-attempt cost, selected ordinary rays,
-   uncertified grazing fallback, and each unsupported/capacity reason.  Extend
-   the nonuniform affine ellipsoid work to the mapped tangent/grazing trend and
-   analyze anisotropic seam tolerances.  Find a lower-cost dispatch or fallback
-   strategy before reducing tree density: the first correctness-only promotion
-   passes every partition oracle but increases the grazing-heavy ray corpus
+   uncertified grazing fallback, and each unsupported/capacity reason.  Use the
+   mapped tangent/grazing ratchet to eliminate the six remaining condition-100
+   and condition-1,000 resolved misses, then analyze anisotropic seam
+   tolerances.  Separate old-solver root absence from prepared box explosion
+   and local-corrector failure.  Find a lower-cost dispatch or fallback strategy
+   before reducing tree density: the first correctness-only promotion passes
+   every qualified partition oracle but increases the grazing-heavy ray corpus
    from 24.07 to about 69 seconds.  Do not lower density until every fallback
    population remains correct without relying on a tree that is no longer
    dense enough.
