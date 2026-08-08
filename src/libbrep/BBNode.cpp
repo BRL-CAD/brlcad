@@ -484,6 +484,40 @@ finish_trim_classification(TrimClassificationState &state,
 
 
 bool
+CurveTree::isTrimmed(const ON_2dPoint &uv, const BRNode **closest,
+	double &closesttrim, double within_distance_tol,
+	std::size_t *candidate_count) const
+{
+    closesttrim = -1.0;
+    if (closest)
+	*closest = NULL;
+    if (candidate_count)
+	*candidate_count = 0;
+
+    TrimClassificationState state(closest);
+    std::size_t candidates = 0;
+    for (std::vector<const BRNode *>::const_iterator i =
+	    m_stl->m_sortedX.begin(); i != m_stl->m_sortedX.end(); ++i) {
+	const BRNode *br = *i;
+	point_t bmin, bmax;
+	br->GetBBox(bmin, bmax);
+	const double dist = BREP_UV_DIST_FUZZ;
+	if (uv[X] <= bmin[X] - dist)
+	    break;
+	if (uv[X] < bmax[X] + dist) {
+	    ++candidates;
+	    classify_trim_candidate(state, br, uv, within_distance_tol);
+	}
+    }
+    if (candidate_count)
+	*candidate_count = candidates;
+    if (!candidates)
+	return true;
+    return finish_trim_classification(state, closesttrim);
+}
+
+
+bool
 BBNode::isTrimmed(const ON_2dPoint &uv, const BRNode **closest,
 	double &closesttrim, double within_distance_tol,
 	std::size_t *candidate_count) const

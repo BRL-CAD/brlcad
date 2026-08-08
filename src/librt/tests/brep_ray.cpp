@@ -442,10 +442,21 @@ brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace)
 	trace.trim_closest_mismatches == 0 &&
 	trace.trim_distance_mismatches == 0 &&
 	trace.trim_equivalence_mismatches == 0 &&
+	trace.face_trim_queries == trace.trim_queries &&
+	trace.face_trim_status_mismatches == 0 &&
+	trace.face_trim_hit_class_mismatches == 0 &&
+	trace.face_trim_adjacency_mismatches == 0 &&
+	trace.face_trim_equivalence_mismatches == 0 &&
+	trace.local_trim_failures == 0 &&
+	trace.local_trim_queries + trace.local_trim_failures ==
+	    trace.stored_local_roots &&
 	trace.legacy_unique_roots == trace.legacy_unique_roots_matched +
 	    trace.legacy_unique_roots_unmatched &&
 	trace.local_unique_roots == trace.local_unique_roots_matched +
-	    trace.local_unique_roots_unmatched;
+	    trace.local_unique_roots_unmatched &&
+	trace.matched_root_events == trace.legacy_unique_roots_matched &&
+	trace.matched_root_events == trace.local_unique_roots_matched &&
+	trace.root_event_mismatches <= trace.matched_root_events;
 }
 
 
@@ -557,7 +568,8 @@ brep_trace_root_coverage_diagnostic(const char *label,
     const struct rt_brep_shot_trace &trace)
 {
     if (!trace.legacy_unique_roots_unmatched &&
-	    !trace.local_unique_roots_unmatched)
+	    !trace.local_unique_roots_unmatched &&
+	    !trace.root_event_mismatches)
 	return;
     std::printf("Root coverage diagnostic %s: legacy=%zu/%zu/%zu "
 	"local=%zu/%zu/%zu clusters=%zu segments=%zu\n", label,
@@ -569,19 +581,75 @@ brep_trace_root_coverage_diagnostic(const char *label,
 	    ++root_index) {
 	const struct rt_brep_trace_root &root = trace.roots[root_index];
 	std::printf("  legacy %zu face=%d t=%.17g uv=%.17g/%.17g "
-	    "normal=%.17g class=%d trim=%d\n", root_index,
+	    "normal=%.17g class=%d trim=%d distance=%.17g adj=%d "
+	    "direction=%d\n", root_index,
 	    root.face_index, root.dist, root.uv[0], root.uv[1],
-	    root.normal_dot, root.hit_class, root.trim_status);
+	    root.normal_dot, root.hit_class, root.trim_status,
+	    root.trim_distance, root.adjacent_face_index, root.direction);
     }
     for (size_t root_index = 0;
 	    root_index < trace.stored_local_roots; ++root_index) {
 	const struct rt_brep_trace_local_root &root =
 	    trace.local_roots[root_index];
 	std::printf("  local %zu face=%d span=%d t=%.17g "
-	    "uv=%.17g/%.17g residual=%.17g normal=%.17g\n",
+	    "uv=%.17g/%.17g residual=%.17g normal=%.17g class=%d "
+	    "trim=%d distance=%.17g adj=%d direction=%d\n",
 	    root_index, root.face_index, root.span_index, root.dist,
-	    root.uv[0], root.uv[1], root.residual, root.normal_dot);
+	    root.uv[0], root.uv[1], root.residual, root.normal_dot,
+	    root.hit_class, root.trim_status, root.trim_distance,
+	    root.adjacent_face_index, root.direction);
     }
+}
+
+
+struct brep_root_event_summary {
+    size_t matched = 0;
+    size_t mismatched = 0;
+    size_t trim_status_mismatches = 0;
+    size_t hit_class_mismatches = 0;
+    size_t direction_mismatches = 0;
+    size_t adjacency_mismatches = 0;
+    size_t local_trim_queries = 0;
+    size_t local_trim_candidates = 0;
+    size_t face_trim_queries = 0;
+    size_t face_trim_candidates = 0;
+    size_t face_trim_mismatches = 0;
+    double maximum_t_error = 0.0;
+    double maximum_uv_error = 0.0;
+    double maximum_trim_error = 0.0;
+    double maximum_normal_dot_error = 0.0;
+    double maximum_face_trim_error = 0.0;
+};
+
+
+static void
+brep_accumulate_root_events(brep_root_event_summary &summary,
+    const struct rt_brep_shot_trace &trace)
+{
+    summary.matched += trace.matched_root_events;
+    summary.mismatched += trace.root_event_mismatches;
+    summary.trim_status_mismatches += trace.root_trim_status_mismatches;
+    summary.hit_class_mismatches += trace.root_hit_class_mismatches;
+    summary.direction_mismatches += trace.root_direction_mismatches;
+    summary.adjacency_mismatches += trace.root_adjacency_mismatches;
+    summary.local_trim_queries += trace.local_trim_queries;
+    summary.local_trim_candidates += trace.local_trim_candidates;
+    summary.face_trim_queries += trace.face_trim_queries;
+    summary.face_trim_candidates += trace.face_trim_candidates;
+    summary.face_trim_mismatches +=
+	trace.face_trim_equivalence_mismatches;
+    summary.maximum_t_error = std::max(summary.maximum_t_error,
+	(double)trace.root_match_max_t_error);
+    summary.maximum_uv_error = std::max(summary.maximum_uv_error,
+	(double)trace.root_match_max_uv_error);
+    summary.maximum_trim_error = std::max(summary.maximum_trim_error,
+	(double)trace.root_match_max_trim_error);
+    summary.maximum_normal_dot_error = std::max(
+	summary.maximum_normal_dot_error,
+	(double)trace.root_match_max_normal_dot_error);
+    summary.maximum_face_trim_error = std::max(
+	summary.maximum_face_trim_error,
+	(double)trace.face_trim_max_near_distance_error);
 }
 
 
@@ -737,6 +805,7 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     size_t outside_local_invalid = 0;
     size_t legacy_roots_without_local = 0;
     size_t local_roots_without_legacy = 0;
+    brep_root_event_summary root_events;
     double largest_outside_local_candidate = 0.0;
     vect_t direction = {1.0, 0.0, 0.0};
     const std::vector<double> clearances = grazing_clearances(radius,
@@ -782,6 +851,7 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    trace.local_root_duplicates);
 	legacy_roots_without_local += trace.legacy_unique_roots_unmatched;
 	local_roots_without_legacy += trace.local_unique_roots_unmatched;
+	brep_accumulate_root_events(root_events, trace);
 	if (trace.legacy_unique_roots_unmatched) {
 	    std::printf("Inside root coverage h/T=%.17g\n",
 		h / rtip->rti_tol.dist);
@@ -975,6 +1045,7 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	tangent_trace.legacy_unique_roots_unmatched;
     local_roots_without_legacy +=
 	tangent_trace.local_unique_roots_unmatched;
+    brep_accumulate_root_events(root_events, tangent_trace);
     brep_trace_root_coverage_diagnostic("exact tangent", tangent_trace);
     maximum_fixed_leaves = std::max(maximum_fixed_leaves,
 	tangent_trace.fixed_leaf_count);
@@ -1035,6 +1106,7 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	(void)shoot_brep_trace(brep_stp, rtip, resp, trace_ray, trace);
 	legacy_roots_without_local += trace.legacy_unique_roots_unmatched;
 	local_roots_without_legacy += trace.local_unique_roots_unmatched;
+	brep_accumulate_root_events(root_events, trace);
 	maximum_fixed_leaves = std::max(maximum_fixed_leaves,
 	    trace.fixed_leaf_count);
 	maximum_fixed_hits = std::max(maximum_fixed_hits,
@@ -1109,11 +1181,26 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	maximum_fixed_leaves, RT_BREP_MAX_LEAVES, maximum_fixed_hits,
 	RT_BREP_MAX_HITS);
     std::printf("Sphere prepared-span root coverage: legacy-unmatched=%zu "
-	"direct-only=%zu\n", legacy_roots_without_local,
-	local_roots_without_legacy);
+	"direct-only=%zu events=%zu mismatched=%zu/%zu/%zu/%zu/%zu "
+	"max-errors=%.3g/%.3g/%.3g/%.3g trims=%zu/%zu "
+	"face-trims=%zu/%zu/%zu/%.3g\n", legacy_roots_without_local,
+	local_roots_without_legacy, root_events.matched,
+	root_events.mismatched, root_events.trim_status_mismatches,
+	root_events.hit_class_mismatches, root_events.direction_mismatches,
+	root_events.adjacency_mismatches, root_events.maximum_t_error,
+	root_events.maximum_uv_error, root_events.maximum_trim_error,
+	root_events.maximum_normal_dot_error, root_events.local_trim_queries,
+	root_events.local_trim_candidates, root_events.face_trim_queries,
+	root_events.face_trim_candidates, root_events.face_trim_mismatches,
+	root_events.maximum_face_trim_error);
     if (legacy_roots_without_local) {
 	std::printf("FAIL: prepared spans missed %zu legacy sphere roots\n",
 	    legacy_roots_without_local);
+	failures++;
+    }
+    if (root_events.mismatched) {
+	std::printf("FAIL: %zu matched sphere roots changed event class\n",
+	    root_events.mismatched);
 	failures++;
     }
 
@@ -2888,7 +2975,9 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			trace.root_overflow != 0 ||
 			trace.local_root_overflow != 0 ||
 			trace.local_cluster_overflow != 0 ||
+			trace.local_trim_failures != 0 ||
 			trace.legacy_unique_roots_unmatched != 0 ||
+			trace.root_event_mismatches != 0 ||
 			trace.local_root_candidates !=
 			trace.stored_local_roots ||
 			trace.local_root_clusters !=
@@ -2964,6 +3053,7 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    production_result.segments != 0;
 		    }
 		    if (bad) {
+			brep_trace_root_coverage_diagnostic(test.name, trace);
 			std::printf("FAIL: Cobb %s classifier state=%d "
 			    "reverse=%d observed=%d distance=%.17g "
 			    "edge-t=%.17g closure=%zu/%zu direction=%d/%d "
@@ -2972,7 +3062,9 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    "leaves=%zu/%zu stored=%zu overflow=%zu fallback=%zu "
 			    "mismatch=%zu hits=%zu/%zu overflow=%zu fallback=%zu "
 			    "mismatch=%zu "
-			    "trim=%zu/%zu/%zu mismatch=%zu\n",
+			    "trim=%zu/%zu/%zu mismatch=%zu local-trim=%zu/%zu/%zu "
+			    "coverage=%zu/%zu/%zu/%zu events=%zu/%zu "
+			    "surface=%zu/%zu/%zu overflow=%zu\n",
 			    test.name,
 			    expected_state,
 			    reverse, edge ? edge->closest_state : -99,
@@ -2996,7 +3088,17 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    trace.fixed_hit_mismatches, trace.trim_queries,
 			    trace.trim_noalloc_candidates,
 			    trace.trim_allocating_candidates,
-			    trace.trim_equivalence_mismatches);
+			    trace.trim_equivalence_mismatches,
+			    trace.local_trim_queries, trace.local_trim_candidates,
+			    trace.local_trim_failures, trace.legacy_unique_roots,
+			    trace.legacy_unique_roots_unmatched,
+			    trace.local_unique_roots,
+			    trace.local_unique_roots_unmatched,
+			    trace.matched_root_events, trace.root_event_mismatches,
+			    trace.candidate_surface_spans,
+			    trace.surface_subdivision_boxes,
+			    trace.surface_isolated_boxes,
+			    trace.surface_box_overflow);
 			failures++;
 		    }
 		}
@@ -3863,6 +3965,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t leaks_with_triple_local_cluster = 0;
     size_t local_roots_without_legacy_root = 0;
     size_t legacy_roots_without_local_root = 0;
+    brep_root_event_summary root_events;
     size_t sector_inside = 0;
     size_t sector_contact = 0;
     size_t sector_outside = 0;
@@ -4059,6 +4162,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			trace.local_root_duplicates);
 		    legacy_roots_without_local_root +=
 			trace.legacy_unique_roots_unmatched;
+		    brep_accumulate_root_events(root_events, trace);
 		    maximum_certificate_boxes = std::max(
 			maximum_certificate_boxes,
 			trace.continuation_certificate_boxes);
@@ -4781,18 +4885,33 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     std::printf("Cobb surface isolation: max-boxes=%zu max-isolated=%zu "
 	"max-depth=%zu workspace-high-water=%zu local-attempts=%zu "
 	"local-failures=%zu local-duplicates=%zu unmatched-legacy=%zu "
-	"unmatched-local=%zu\n",
+	"unmatched-local=%zu events=%zu mismatched=%zu/%zu/%zu/%zu/%zu "
+	"max-errors=%.3g/%.3g/%.3g/%.3g trims=%zu/%zu "
+	"face-trims=%zu/%zu/%zu/%.3g\n",
 	maximum_subdivision_boxes, maximum_isolated_boxes,
 	maximum_subdivision_depth, maximum_workspace_high_water,
 	maximum_local_root_attempts, maximum_local_root_failures,
 	maximum_local_root_duplicates,
 	legacy_roots_without_local_root,
-	local_roots_without_legacy_root);
+	local_roots_without_legacy_root, root_events.matched,
+	root_events.mismatched, root_events.trim_status_mismatches,
+	root_events.hit_class_mismatches, root_events.direction_mismatches,
+	root_events.adjacency_mismatches, root_events.maximum_t_error,
+	root_events.maximum_uv_error, root_events.maximum_trim_error,
+	root_events.maximum_normal_dot_error, root_events.local_trim_queries,
+	root_events.local_trim_candidates, root_events.face_trim_queries,
+	root_events.face_trim_candidates, root_events.face_trim_mismatches,
+	root_events.maximum_face_trim_error);
     if (legacy_roots_without_local_root ||
 	    local_roots_without_legacy_root) {
 	std::printf("FAIL: Cobb prepared-span root coverage legacy=%zu "
 	    "local=%zu\n", legacy_roots_without_local_root,
 	    local_roots_without_legacy_root);
+	failures++;
+    }
+    if (root_events.mismatched) {
+	std::printf("FAIL: %zu matched Cobb roots changed event class\n",
+	    root_events.mismatched);
 	failures++;
     }
     std::printf("Cobb continuation certificate: max-boxes=%zu "
