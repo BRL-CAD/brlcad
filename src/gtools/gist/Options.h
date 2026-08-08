@@ -92,6 +92,7 @@ public:
     std::string getUnitMass();
     size_t getNCPU();
     std::string getDensityFile();
+    bool getPreviewMode();
 
     bool isOriginalUnitsLength();
     bool isOriginalUnitsMass();
@@ -153,6 +154,10 @@ private:
 
     // string path to density file (lexically normalized)
     std::string densityFile;
+
+    // Fast report mode: retain the standard sheet but omit costly numerical
+    // verification passes (rtarea/gqa).
+    int previewMode;
 
     // print verbose status messages
     int verbosePrint;
