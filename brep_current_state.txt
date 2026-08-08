@@ -34,7 +34,9 @@ below-envelope leak has eligible 3D evidence on the intended mated edge.
 Compact positive-weight rational Bezier spans and conservative control-hull
 boxes for eligible edges are now prepared in both normal and cached prep.
 An observation-only cross-section classifier validates incident trim lifts and
-distinguishes material-side, contact, and exterior edge proximity.
+distinguishes material-side, contact, and exterior edge proximity.  A further
+shadow-only event classifier now identifies uniquely repairable unmatched
+solid hits from that evidence and is invariant under tested similarities.
 Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
 
 
@@ -248,6 +250,24 @@ ESTABLISHED FINDINGS
     stronger trim/edge parameter-correspondence qualification and vertex-fan
     fixtures.
 
+23. An unresolved solid hit can be considered for topology-local closure only
+    when exactly one eligible inside-sector edge is incident to its existing
+    face and lies on the correct side of that event along the ray.  The new
+    shadow classifier records the edge, its projected t, the existing root t,
+    and whether the missing event is entering or leaving.  It identifies all
+    15 current below-envelope Cobb leaks with exactly one candidate: forward
+    rays have a missing leave after the existing enter, and reversed rays have
+    a missing enter before the existing leave.  It does not activate on the
+    target edge's contact or exterior states.  Identity, rotated/translated,
+    0.01x, and 10,000x copies preserve all sector and closure classifications
+    when both geometric and modeling tolerances are scaled as lengths.  The
+    small-scale nonlinear root moves about 6e-7 mm in baseline-normalized
+    coordinates, well below T=0.0005 mm; classifier invariance and solver
+    accuracy therefore have separate gates.  This remains trace-only and does
+    not emit a synthetic hit.  The edge projection is not an accurate missing
+    endpoint near tangency, so production activation requires a bounded local
+    continuation solve rather than using that projection as the root.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -318,6 +338,12 @@ IMPLEMENTATION CHECKLIST
         sharp-convex inside/contact/outside behavior under ray reversal.
     [x] Gate sharp convex, re-entrant concave, and periodic same-surface edge
         sectors for inside/contact/outside states under ray reversal.
+    [x] Classify uniquely compatible unmatched solid events in shadow mode,
+        including ordered missing directions and non-activation on target
+        contact/exterior states.
+    [x] Gate edge-sector and closure classifications under rotation,
+        translation, and 0.01x/10,000x uniform scaling with scaled model
+        tolerances.
     [ ] Qualify general trim/edge parameter correspondence and add vertex-fan
         sector fixtures.
     [ ] Add sewn and perturbed Cobb fixtures and threshold matrices.
@@ -608,6 +634,22 @@ Cobb sphere baseline:
     inside-sector observations; qualified target states total 116 inside, 32
     contact, and 52 outside.  Maximum error in the measured target lift
     discrepancy is about 2.51e-15 mm.
+
+  * A shadow-only closure pass runs after legacy direction cleanup and only
+    considers solid, non-plate BREPs with one unmatched final hit.  A candidate
+    must be a tolerance-qualified valid inside sector, share the hit's face,
+    and have the t ordering required for the opposite event direction.  The
+    bowed matrix hard-gates one and only one target-edge candidate for every
+    current below-envelope leak; all 15 are found without changing production
+    segment lists.
+
+  * A dedicated similarity corpus transforms the representative inward
+    g/T=1, h/T=0.9 bowed case and its contact/exterior companions.  Identity,
+    rigid rotation/translation, translated 0.01x scale, and translated 10,000x
+    scale preserve the target edge, candidate span, inside/contact/outside
+    state, unique closure count, missing enter/leave direction, and event
+    ordering in both ray directions.  BREP edge/vertex and ray model
+    tolerances are explicitly scaled as model-space lengths.
 
   cmake --build .build --target \
     librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
