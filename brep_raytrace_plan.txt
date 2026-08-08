@@ -530,9 +530,116 @@ include:
 Keep the best residual and candidate box even on failure so the local
 refinement and diagnostics have useful evidence.
 
+4.5 Per-ray completion ledger
+
+The prepared path needs a fixed-capacity `BrepRayLedger` (the exact name is
+not important) whose purpose is to prove completeness, not merely collect
+hits.  It records the immutable object/prep mode used for the shot; every
+coarse face/span candidate; the disposition of every retained subdivision
+box; every certified mathematical root; every physical event; the final
+material intervals; workspace high-water marks; and one structured fallback
+reason.
+
+Every potentially intersected span or descendant box must end in exactly one
+of these states:
+
+  * `EXCLUDED`: a conservative model-space/Bernstein bound proves no root;
+
+  * `RESOLVED_REGULAR`: subdivision plus a strict certificate proves exactly
+    one ordinary root and supplies its bounded orientation;
+
+  * `RESOLVED_BOUNDARY`: adjacent span/face evidence proves the complete root
+    set on a shared parameter or topological boundary;
+
+  * `RESOLVED_CONTACT`: a complete proof identifies a zero-material tangent
+    or a subminimum event without manufacturing a solid interval; or
+
+  * `UNRESOLVED`: arithmetic, topology, unsupported geometry, ambiguity, or a
+    fixed-work limit prevents one of the conclusions above.
+
+`UNRESOLVED` is not a miss.  It makes the complete prepared ray ineligible and
+selects the fallback before any segment is emitted.  A converged Newton point,
+a small box, an even candidate count, or agreement with the legacy result is
+never by itself a completion state.  The ledger must also detect missing and
+duplicate accounting: the number of excluded plus candidate spans must equal
+the number prepared for every fully supported face, and every terminal box
+must have exactly one disposition and a compatible root/event owner.
+
+Keep root evidence immutable as it moves through the pipeline.  Event
+resolution may reference or coalesce root records, but it must not erase the
+original face/span, UV box, t interval, trim class, certificate type, or
+orientation proof.  This is necessary both for seam decisions and for
+diagnosing whether a future failure arose in broad-phase coverage, root
+isolation, trim classification, event identity, or solid assembly.
+
 
 5. PROPOSED INTERSECTION ALGORITHM
 ----------------------------------
+
+5.0 Production authority and stage contract
+
+The intended production solver is a proof-producing, evidence-preserving
+pipeline.  Its stages and authority are:
+
+  1. Object dispatch and prep eligibility.  Select solid, plate, invalid, and
+     unsupported contracts before solving.  A direct solid path requires a
+     closed orientable BREP, complete immutable face/span records, supported
+     positive rational weights and orders, and the topology records needed by
+     every candidate face.  Otherwise use the appropriate fallback contract.
+
+  2. Conservative broad phase and coverage accounting.  Traverse a coarse
+     face hierarchy without allocation.  Every potentially intersected face
+     reaches its prepared spans, and every span is either conservatively
+     excluded or entered into the local isolation worklist.  Bounding boxes
+     may add work but may never remove an unproven span.
+
+  3. Local mathematical root isolation.  Build outward ray-plane Bernstein
+     coefficients, apply contraction-only clipping and bounded subdivision,
+     and use safeguarded correctors only to propose representatives.  A
+     regular Krawczyk inclusion, a complete fold/boundary theorem, or another
+     independently audited certificate supplies root authority.  Every
+     sibling region must be excluded or resolved, so the result is a complete
+     set rather than a collection of roots that happened to converge.
+
+  4. Geometric and trim classification.  Evaluate certified roots against
+     face trims, lifted 3D edges, seam envelopes, surface singularities, and
+     prepared adjacency without discarding near-boundary evidence.  Produce
+     clean-interior, inside-near-edge, outside-near-edge, outside-trim, or
+     singular-boundary records with bounded UV/model/t uncertainty.
+
+  5. Physical event resolution.  Establish identity from certified root
+     intervals plus topology, never from t proximity alone.  Interior roots
+     use the oriented surface determinant; shared surface spans use the
+     boundary/fold proof; manifold edges use their incident material sector;
+     authorized cracks use the same edge and bounded discrepancy evidence;
+     and supported vertices use a cyclic fan.  Emit one `ENTER`, `LEAVE`, or
+     `CONTACT` event, or mark the cluster unresolved.
+
+  6. Ordered solid-state assembly.  Starting outside at negative infinity,
+     process the complete event stream by outward t intervals.  A valid
+     oriented manifold boundary changes state only through resolved ENTER and
+     LEAVE events; CONTACT has zero state change.  Form material intervals
+     from state transitions and apply the model minimum-size policy with
+     outward interval comparisons.  Negative state, an invalid winding/state,
+     ambiguous event ordering, or an unresolved final state selects fallback.
+
+  7. Atomic publication.  Only after the ledger proves complete span/box/root
+     coverage, complete event resolution, valid solid state, finite endpoint
+     attributes, and sufficient output capacity may it allocate librt
+     segments and publish the prepared answer.  Until that point the legacy
+     hit list and `seghead` remain untouched.  Any failure reruns the complete
+     fallback ray; never splice an uncertified legacy hit into an otherwise
+     prepared partition or publish a partial prepared result.
+
+The current strict ordinary-root and clean-interior fold selectors are narrow
+instances of this contract.  They correctly require whole-ray coverage and
+publish atomically, but the general path still routes candidates through the
+legacy ordered cleanup rules.  Those cleanup rules are a compatibility
+fallback, not the intended event resolver.  The next correctness work should
+make ledger and event states explicit, then replace cleanup authority one
+qualified topology class at a time.  The dense SurfaceTree remains available
+during rollout, but agreement with it is diagnostic evidence rather than a
+mathematical correctness proof.
 
 5.1 Broad phase
 
@@ -1426,6 +1533,14 @@ allocations after prep so the no-allocation requirement is testable.
 6. TRIM, SEAM, AND SOLID-EVENT RESOLUTION
 -----------------------------------------
 
+The resolver consumes the immutable certified-root records and produces a new
+event array; it does not destructively edit the root array.  Each event stores
+its source-root indices, topological identity, outward t interval, net state
+change, representative endpoint attributes, classification theorem, and any
+authorized seam envelope.  A cluster that has multiple plausible identities
+or state changes is unresolved even if deleting one observation would make
+the final hit count even.
+
 6.1 Candidate classification
 
 After solving the untrimmed surface, classify the candidate without losing
@@ -1515,6 +1630,21 @@ This replaces "the first sign is entering" and even-hit-count repair.  A final
 nonzero state, a negative state, an unresolved non-manifold cluster, or
 incompatible interval ordering is a structured failure and invokes the old
 path during rollout.
+
+For a well-defined oriented solid, the state must remain in {0,1}; disjoint
+shells may return to zero between intervals, and inward-oriented cavity faces
+produce the expected LEAVE/ENTER transitions.  A transition to a negative
+state or above one indicates an orientation, overlap, ordering, or event-
+identity problem and is not repaired by deleting hits.  If overlapping shell
+semantics are later desired, they need an explicit winding contract and their
+own oracle corpus.
+
+Do not decide interval existence from nominal endpoint separation.  Subtract
+the outward event t intervals and compare them with an outward bound for
+`rti_tol.dist / |D|`.  A strict material gap forms a segment, a strict
+subminimum gap becomes zero-material contact, and a straddling result is
+unresolved.  This is the same policy already gated for cross-span fold pairs
+and must become the sole minimum-size classifier for all event classes.
 
 Before segment emission, apply the minimum-valid-interval rule consistently
 with rti_tol.dist and rt_boolfinal.  Preserve the original face/UV/normal data
@@ -2177,7 +2307,32 @@ paired Crofton comparison shows no unexplained systematic bias; no silent
 candidate truncation; no new-path dynamic allocation; and all fallback
 reasons are observable.
 
-Phase 4: Reduce prepared density and update cache
+Phase 4: Certified physical events and atomic solid assembly
+
+  * Add the explicit fixed-capacity span/box/root/event completion ledger and
+    require one disposition for every candidate region.
+
+  * Derive ordinary interior ENTER/LEAVE from bounded oriented determinant
+    evidence and retain roots separately from resolved events.
+
+  * Integrate the certified same-face fold pair, manifold edge sectors, and
+    authorized crack continuation as distinct event theorems.  Add cyclic
+    vertex fans only after their complete topology/orientation gate exists.
+
+  * Replace destructive hit cleanup with topology-first event clustering,
+    outward minimum-segment classification, and state-machine solid assembly.
+
+  * Publish segments atomically only when the entire ledger is complete;
+    otherwise select the whole-ray fallback before output mutation.
+
+Gate: Analytic directed rays, the signed grazing limit, affine folds, sewn and
+perturbed Cobb seams, nested multi-interval CSG/BREP trees, and paired Crofton
+lines all have complete, reversal-consistent event streams and oracle-matching
+partitions.  Contacts create no material, tolerance-resolved close roots stay
+distinct, ambiguous/unsupported topology falls back, and no success depends
+on hit parity or legacy cleanup order.
+
+Phase 5: Reduce prepared density and update cache
 
   * Lower tree depth one step at a time and measure prep memory/time, shot
     time, fallback rate, and partition deltas.
@@ -2191,7 +2346,7 @@ Phase 4: Reduce prepared density and update cache
 Gate: Large prep/RSS reduction on FRAME.g with no accepted partition delta;
 bounded fallback rate and acceptable ray throughput.
 
-Phase 5: Drawing and corpus expansion
+Phase 6: Drawing and corpus expansion
 
   * Improve adaptive edges and general trimmed surface indication.
 
@@ -2217,6 +2372,16 @@ reuse, and documented remaining fallback categories.
 -----------------------
 
 Correctness:
+
+  * A selected prepared ray accounts for every potentially intersected
+    face/span and every terminal subdivision box as excluded or completely
+    resolved.  No unresolved/capacity/unsupported state is converted to a
+    miss, and no partial prepared partition is mixed with fallback hits.
+
+  * Each published endpoint is owned by a certified physical ENTER or LEAVE
+    event with preserved face, UV, orientation, topology, and uncertainty
+    provenance.  Hit parity and cleanup pass order have no publication
+    authority.
 
   * Implicit and BREP ordered partitions agree for all non-ambiguous directed
     analytic rays within rti_tol.dist.
