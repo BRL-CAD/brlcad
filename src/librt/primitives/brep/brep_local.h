@@ -46,13 +46,17 @@ struct brep_edge_record {
     double discrepancy_lower_bound = ON_UNSET_VALUE;
     double discrepancy_upper_bound = ON_UNSET_VALUE;
     double discrepancy_bound_tolerance = ON_UNSET_VALUE;
+    size_t correspondence_cells = 0;
+    size_t correspondence_depth = 0;
     size_t discrepancy_bound_cells = 0;
     size_t discrepancy_bound_depth = 0;
     int edge_index = -1;
     int face_index[2] = {-1, -1};
     bool supported = false;
     bool discrepancy_measured = false;
+    bool correspondence_screened = false;
     bool correspondence_supported = false;
+    bool correspondence_exhausted = false;
     bool discrepancy_bounded = false;
     bool discrepancy_bound_exhausted = false;
     bool discrepancy_authorized = false;

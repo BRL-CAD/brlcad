@@ -7465,13 +7465,37 @@ cobb_make_ambiguous_edge_trim(ON_Brep *brep, int edge_index)
 	    start.DistanceTo(end) <= DBL_MIN)
 	return false;
 
-    /* Traverse the same boundary forward, backward, then forward.  The locus
-     * stays on the valid UV boundary, but its edge correspondence is not
-     * one-to-one and the middle span has the wrong orientation. */
-    ON_NurbsCurve *ambiguous = ON_NurbsCurve::New(2, false, 2, 4);
-    if (!ambiguous || !ambiguous->SetCV(0, start) ||
-	    !ambiguous->SetCV(1, end) || !ambiguous->SetCV(2, start) ||
-	    !ambiguous->SetCV(3, end) ||
+    /* This degree-15 scalar control net reverses only between the old
+     * screen's t=0.4 and t=0.6 samples.  Values and derivatives at all four
+     * samples remain forward.  Every control stays on the original UV
+     * segment, while the global proof must reject the hidden non-injective
+     * traversal. */
+    const double fraction[16] = {
+	0.0,
+	0.066666666666666666,
+	0.13333333333333333,
+	0.22748150458765812,
+	0.33625349748826455,
+	0.7208158028380063,
+	0.5751840105173857,
+	0.6005489273945116,
+	0.44750405015860617,
+	0.6305690007427176,
+	0.30313585207409444,
+	0.5477137465243344,
+	0.9423385356407661,
+	0.8666666666666667,
+	0.93333333333333335,
+	1.0
+    };
+    ON_NurbsCurve *ambiguous = ON_NurbsCurve::New(2, false, 16, 16);
+    bool controls_set = ambiguous != NULL;
+    for (int i = 0; controls_set && i < 16; ++i) {
+	const ON_3dPoint point = (1.0 - fraction[i]) * start +
+	    fraction[i] * end;
+	controls_set = ambiguous->SetCV(i, point);
+    }
+    if (!ambiguous || !controls_set ||
 	    !ambiguous->MakeClampedUniformKnotVector() ||
 	    !ambiguous->SetDomain(domain.Min(), domain.Max())) {
 	delete ambiguous;
@@ -7551,6 +7575,8 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
     int failures = 0;
     size_t maximum_fixed_leaves = 0;
     size_t maximum_fixed_hits = 0;
+    size_t maximum_correspondence_cells = 0;
+    size_t maximum_correspondence_depth = 0;
     size_t maximum_discrepancy_cells = 0;
     size_t maximum_discrepancy_depth = 0;
     double maximum_discrepancy_width_ratio = 0.0;
@@ -7666,6 +7692,14 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 		    trace.fixed_hit_count);
 		    const struct rt_brep_trace_edge *edge =
 			brep_trace_edge(trace, frame.edge_index);
+		    if (edge) {
+			maximum_correspondence_cells = std::max(
+			    maximum_correspondence_cells,
+			    edge->correspondence_cells);
+			maximum_correspondence_depth = std::max(
+			    maximum_correspondence_depth,
+			    edge->correspondence_depth);
+		    }
 		    if (edge && edge->discrepancy_bounded) {
 			maximum_discrepancy_cells = std::max(
 			    maximum_discrepancy_cells,
@@ -7779,7 +7813,10 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			normalized_limit * test.scale ||
 			edge->tolerance_inferred ||
 			!edge->discrepancy_measured ||
+			!edge->correspondence_screened ||
 			!edge->correspondence_supported ||
+			!edge->correspondence_cells ||
+			edge->correspondence_exhausted ||
 			!edge->discrepancy_authorized ||
 			fabs(edge->model_tolerance / test.scale -
 			tol->dist) > normalized_limit ||
@@ -7941,11 +7978,13 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 	std::printf("Cobb classifier similarity/parameter invariance: PASS "
 	    "max-leaves=%zu/%d max-raw-hits=%zu/%d "
 	    "parameter-locus-error=%.3g midpoint-shift=%.3g "
+	    "correspondence-cells=%zu depth=%zu "
 	    "seam-bound-cells=%zu depth=%zu width/T=%.3g\n",
 	    maximum_fixed_leaves, RT_BREP_MAX_LEAVES,
 	    maximum_fixed_hits, RT_BREP_MAX_HITS,
 	    maximum_parameter_locus_error,
-	    minimum_parameter_midpoint_shift, maximum_discrepancy_cells,
+	    minimum_parameter_midpoint_shift, maximum_correspondence_cells,
+	    maximum_correspondence_depth, maximum_discrepancy_cells,
 	    maximum_discrepancy_depth, maximum_discrepancy_width_ratio);
     }
     return failures;
@@ -7998,7 +8037,10 @@ check_cobb_ambiguous_correspondence(const struct bn_tol *tol,
 	if (!brep_trace_fixed_workspaces_match(trace) || !edge ||
 		!edge->discrepancy_measured ||
 		!edge->discrepancy_authorized ||
-		edge->correspondence_supported || edge->candidate_spans ||
+		!edge->correspondence_screened ||
+		edge->correspondence_supported || !edge->correspondence_cells ||
+		!edge->correspondence_exhausted ||
+		edge->correspondence_depth != 24 || edge->candidate_spans ||
 		edge->within_edge_tolerance || edge->sector_valid ||
 		edge->discrepancy_bounded ||
 		edge->discrepancy_bound_exhausted ||
@@ -8006,13 +8048,18 @@ check_cobb_ambiguous_correspondence(const struct bn_tol *tol,
 		trace.closure_shadow_segments ||
 		trace.after_direction_cleanup != 1 || trace.final_segments != 0) {
 	    std::printf("FAIL: Cobb ambiguous correspondence reverse=%d "
-		"edge=%d measured=%d authorized=%d correspondence=%d "
+		"edge=%d measured=%d authorized=%d correspondence=%d/%d "
+		"cells=%zu depth=%zu proof-exhausted=%d "
 		"spans=%zu within=%d sector=%d bound=%d exhausted=%d "
 		"closure=%zu continuation=%zu segment=%zu cleanup=%zu\n",
 		reverse,
 		frame.edge_index, edge ? edge->discrepancy_measured : -1,
 		edge ? edge->discrepancy_authorized : -1,
+		edge ? edge->correspondence_screened : -1,
 		edge ? edge->correspondence_supported : -1,
+		edge ? edge->correspondence_cells : 0,
+		edge ? edge->correspondence_depth : 0,
+		edge ? edge->correspondence_exhausted : -1,
 		edge ? edge->candidate_spans : 0,
 		edge ? edge->within_edge_tolerance : -1,
 		edge ? edge->sector_valid : -1,
@@ -8162,7 +8209,10 @@ check_cobb_discrepancy_bound_budget(const struct bn_tol *tol,
 	if (edge->discrepancy_bound_exhausted)
 	    exhausted_count++;
 	bool invalid = !edge->discrepancy_measured ||
+	    !edge->correspondence_screened ||
 	    !edge->correspondence_supported ||
+	    !edge->correspondence_cells ||
+	    edge->correspondence_exhausted ||
 	    !edge->discrepancy_authorized ||
 	    (edge->discrepancy_bounded &&
 	    edge->discrepancy_bound_exhausted);
@@ -8287,7 +8337,10 @@ check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
 	    cases[case_index].declared_ratio * measured_gap) <= limit;
 	if (!brep_trace_fixed_workspaces_match(trace) ||
 		!edge || !edge->discrepancy_measured ||
+		!edge->correspondence_screened ||
 		!edge->correspondence_supported ||
+		!edge->correspondence_cells ||
+		edge->correspondence_exhausted ||
 		edge->discrepancy_bounded ||
 		edge->discrepancy_bound_exhausted ||
 		!declared_ok || edge->tolerance_inferred !=
@@ -8396,7 +8449,10 @@ check_brep_edge_sector_fixture(const char *label, ON_Brep *brep,
 		0.5 * tol->dist : 0.0;
 	    if (!brep_trace_fixed_workspaces_match(trace) ||
 		    !observation || !observation->within_edge_tolerance ||
+		    !observation->correspondence_screened ||
 		    !observation->correspondence_supported ||
+		    !observation->correspondence_cells ||
+		    observation->correspondence_exhausted ||
 		    !observation->candidate_spans ||
 		    !observation->sector_valid ||
 		    observation->closest_state != expected_state ||
@@ -8404,12 +8460,18 @@ check_brep_edge_sector_fixture(const char *label, ON_Brep *brep,
 		    1.0e-10 || fabs(observation->ray_edge_dot) > 1.0e-10) {
 		std::printf("FAIL: %s edge sector state=%d reverse=%d "
 		    "observed=%d valid=%d distance=%.17g spans=%zu "
-		    "ray-edge=%.17g\n", label, expected_state, reverse,
+		    "ray-edge=%.17g correspondence=%d/%d cells=%zu "
+		    "depth=%zu exhausted=%d\n", label, expected_state, reverse,
 		    observation ? observation->closest_state : -99,
 		    observation ? observation->sector_valid : 0,
 		    observation ? observation->distance : INFINITY,
 		    observation ? observation->candidate_spans : 0,
-		    observation ? observation->ray_edge_dot : INFINITY);
+		    observation ? observation->ray_edge_dot : INFINITY,
+		    observation ? observation->correspondence_screened : -1,
+		    observation ? observation->correspondence_supported : -1,
+		    observation ? observation->correspondence_cells : 0,
+		    observation ? observation->correspondence_depth : 0,
+		    observation ? observation->correspondence_exhausted : -1);
 		failures++;
 	    }
 	}
@@ -8656,7 +8718,10 @@ check_brep_vertex_fan_fallback(const struct bn_tol *tol, struct rt_i *rtip,
 	for (size_t incident = 0; incident < 3; ++incident) {
 	    const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
 		incident_edges[incident]);
-	    if (!edge || !edge->correspondence_supported ||
+	    if (!edge || !edge->correspondence_screened ||
+		    !edge->correspondence_supported ||
+		    !edge->correspondence_cells ||
+		    edge->correspondence_exhausted ||
 		    !edge->within_edge_tolerance || !edge->candidate_spans ||
 		    !edge->sector_valid || edge->closest_state != 0 ||
 		    edge->distance > 1.0e-10)
@@ -8702,7 +8767,10 @@ check_brep_vertex_fan_fallback(const struct bn_tol *tol, struct rt_i *rtip,
 	    if (!edge)
 		continue;
 	    states[incident] = edge->closest_state;
-	    if (edge->correspondence_supported &&
+	    if (edge->correspondence_screened &&
+		    edge->correspondence_supported &&
+		    edge->correspondence_cells &&
+		    !edge->correspondence_exhausted &&
 		    edge->within_edge_tolerance && edge->candidate_spans &&
 		    edge->sector_valid) {
 		qualified_edges++;
@@ -8875,7 +8943,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "discrepancy_upper_bound,discrepancy_bound_tolerance,"
 	    "discrepancy_bounded,discrepancy_bound_cells,"
 	    "discrepancy_bound_depth,discrepancy_bound_exhausted,"
-	    "discrepancy_measured,correspondence_supported,"
+	    "discrepancy_measured,correspondence_screened,"
+	    "correspondence_supported,correspondence_cells,"
+	    "correspondence_depth,correspondence_exhausted,"
 	    "discrepancy_authorized,tolerance_inferred,candidate_spans,"
 	    "within_edge_tolerance,lift0,lift1,"
 	    "normal_dot0,normal_dot1,ray_edge_dot,sector_valid,closest_state\n");
@@ -9163,7 +9233,10 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    }
 		    if (!target_edge || edge_distance_error > edge_distance_limit ||
 			    !target_edge->discrepancy_measured ||
+			    !target_edge->correspondence_screened ||
 			    !target_edge->correspondence_supported ||
+			    !target_edge->correspondence_cells ||
+			    target_edge->correspondence_exhausted ||
 			    invalid_discrepancy_bound ||
 			    !target_edge->discrepancy_authorized ||
 			    target_edge->tolerance_inferred ||
@@ -9677,7 +9750,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    std::printf("cobb_edge,%s,%.9g,%.9g,%d,%d,%d,%d,"
 				"%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,"
 				"%.17g,%.17g,%.17g,%d,%zu,%zu,%d,"
-				"%d,%d,%d,%d,%zu,%d,%.17g,%.17g,"
+				"%d,%d,%d,%zu,%zu,%d,%d,%d,%zu,%d,"
+				"%.17g,%.17g,"
 				"%.17g,%.17g,%.17g,%d,%d\n",
 				sign > 0 ? "outward" : "inward",
 				measured_gap / tol->dist,
@@ -9697,7 +9771,11 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				edge.discrepancy_bound_depth,
 				edge.discrepancy_bound_exhausted,
 				edge.discrepancy_measured,
+				edge.correspondence_screened,
 				edge.correspondence_supported,
+				edge.correspondence_cells,
+				edge.correspondence_depth,
+				edge.correspondence_exhausted,
 				edge.discrepancy_authorized,
 				edge.tolerance_inferred,
 				edge.candidate_spans,
