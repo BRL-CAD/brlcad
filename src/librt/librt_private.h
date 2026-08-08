@@ -461,6 +461,8 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_MAX_SURFACE_BOXES 64
 #define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_CLUSTERS 64
+#define RT_BREP_TRACE_MAX_LOCAL_SEGMENTS 8
+#define RT_BREP_TRACE_CLEANUP_STAGES 5
 #define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
 #define RT_BREP_TRACE_ENTERING 0
 #define RT_BREP_TRACE_LEAVING 1
@@ -635,6 +637,49 @@ struct rt_brep_shot_trace {
     fastf_t root_match_max_uv_error;
     fastf_t root_match_max_trim_error;
     fastf_t root_match_max_normal_dot_error;
+    size_t local_event_groups;
+    size_t local_event_contacts;
+    size_t local_event_clean_misses;
+    size_t local_candidate_hits;
+    size_t local_candidate_failures;
+    size_t local_candidate_overflow;
+    size_t local_candidate_after_near_miss;
+    size_t local_candidate_after_near_hit;
+    size_t local_candidate_after_grazing;
+    size_t local_candidate_after_duplicates;
+    size_t local_candidate_after_direction_cleanup;
+    size_t local_candidate_stage_mismatches;
+    size_t local_candidate_semantic_stage_mismatches;
+    /* Near miss, near hit, grazing, duplicate, and direction cleanup. */
+    size_t local_candidate_semantic_stage[RT_BREP_TRACE_CLEANUP_STAGES];
+    size_t local_candidate_hit_mismatches;
+    size_t local_event_hits;
+    size_t local_event_failures;
+    size_t local_event_overflow;
+    size_t local_event_after_near_miss;
+    size_t local_event_after_near_hit;
+    size_t local_event_after_grazing;
+    size_t local_event_after_duplicates;
+    size_t local_event_after_direction_cleanup;
+    size_t local_event_stage_mismatches;
+    size_t local_event_hit_mismatches;
+    size_t local_event_count_mismatches;
+    size_t local_event_t_mismatches;
+    size_t local_event_face_mismatches;
+    size_t local_event_trim_mismatches;
+    size_t local_event_edge_mismatches;
+    size_t local_event_class_mismatches;
+    size_t local_event_direction_mismatches;
+    size_t local_event_adjacency_mismatches;
+    size_t local_event_repaired;
+    size_t local_event_final_hits;
+    size_t local_event_final_segments;
+    size_t local_event_final_mismatches;
+    fastf_t local_event_max_t_error;
+    size_t local_event_stored_segments;
+    size_t local_event_segment_overflow;
+    fastf_t local_event_segment_in[RT_BREP_TRACE_MAX_LOCAL_SEGMENTS];
+    fastf_t local_event_segment_out[RT_BREP_TRACE_MAX_LOCAL_SEGMENTS];
     fastf_t local_cluster_tolerance;
     size_t local_root_clusters;
     size_t stored_local_clusters;
