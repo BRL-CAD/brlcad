@@ -994,6 +994,57 @@ references for exact-contact diagnostics, but they do not by themselves prove
 that all nearby simple roots were found.  The branch-and-prune coverage proof
 is still required.
 
+The first bounded fold qualification should be treated as measured design
+input, not as authority to weaken these gates.  Conditioned hulls localized
+the known condition-100 and condition-1,000 misses to two boxes on opposite
+sides of a Bezier-span boundary.  Solving the dominant equation at nine fixed
+weak-parameter samples and bisecting a weak-equation sign change recovered all
+twelve expected candidates.  Candidate recovery is therefore not the hard
+part.
+
+The hard limit is interval precision near the fold.  Candidate-centered
+binary64 Krawczyk tests should retain a separate interval for each Bernstein
+coefficient; collapsing all coefficients to the largest patch error discards
+enough information to prevent certification.  Fused centered-coordinate and
+dot-product construction can avoid cancellation error proportional to the
+world-coordinate magnitude.  If error-free transforms or an extended
+precision tier are used, every operation must have a portable outward-
+rounding contract and an independent exact oracle.  Platform `long double`
+alone is not such a contract: its mantissa width varies, and a test result on
+one ABI does not establish portable certification.
+
+A better completeness proof than tiling the complement is available for a
+generic one-sided fold.  In a conditioned equation basis let phi be the
+regular equation and psi the weak equation.  On a parent box, prove:
+
+  * the Bernstein hull of d(phi)/d(p) excludes zero;
+  * phi has strict opposite signs on its two p boundaries, so exactly one
+    continuous regular-equation corridor crosses every retained q; and
+  * the Bernstein polynomial for
+    det(d(phi,psi)/d(p,q)) is one-signed on that corridor domain.
+
+Then psi restricted to the corridor is monotone because its derivative has
+the sign of det(J) divided by d(phi)/d(p).  An existence certificate for one
+bracketed root consequently proves that it is the only root in the parent.  A
+parent
+touching the zero-determinant fold boundary may first remove a thin box whose
+root absence is interval-excluded, then apply the same proof to the remaining
+root-containing box.  The two equation products in det(J) should be formed in
+Bernstein form before subtraction; multiplying independent derivative hulls
+is usually too pessimistic.  Exact tangent and any determinant coefficient
+whose sign remains uncertain still fall back.
+
+The qualification prototype showed why this structure matters.  Per-control
+binary64 intervals certified both condition-100 candidates and part of the
+condition-1,000 h/T=1e-6 set; a provisional wider-mantissa interval path
+certified the rest of that set but not the condition-1,000 h/T=1e-8 pair.
+One-sided monotonicity proved only one of the two span parents in each hard
+shot.  Generic complement subdivision exhausted even a 1,024-box diagnostic
+budget per parent.  These incomplete paths were reverted.  Future work should
+ratchet each failed candidate, certificate, and threshold case in a focused
+C/C++ corpus and promote no root until both span parents, physical-event
+deduplication, and the complete final interval are qualified.
+
 5.5 Allocation-free ray-time workspace
 
 The new fast path must not call malloc/new or grow STL containers while

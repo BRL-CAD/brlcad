@@ -1579,6 +1579,64 @@ ESTABLISHED FINDINGS
     coverage, and cross-span deduplication remain prerequisites for promoting
     the recovered fold roots.
 
+52. A second bounded fold experiment narrows the remaining proof and
+    precision requirements without changing production behavior.  On each of
+    the two boundary-adjacent boxes for every one of the six unresolved affine
+    rays, a nine-sample regular/weak decomposition found a scalar sign bracket
+    and converged it with fixed bisection.  All twelve expected local
+    candidates were recovered with transformed residuals between zero and
+    about 2e-16.  Their nearest parent-boundary distances were 0.00176 through
+    0.0257 of the relevant box width, so the candidates were not numerical
+    artifacts placed exactly on the shared span boundary.
+
+    Strict Krawczyk trials on candidate-centered anisotropic boxes exposed the
+    actual precision limit.  The normalized midpoint-Jacobian determinant
+    ratios were about 1.25e-7 for condition 100 and 4.4e-8 through 4.6e-7 for
+    condition 1,000.  Patch-wide common coefficient errors could not certify
+    any of the twelve roots.  Fused `CV-origin*weight` construction, fused dot
+    accumulation, one-sided error-free-transform envelopes, and preservation
+    of individual coefficient intervals instead of collapsing them to the
+    worst patch-wide error allowed binary64 interval Krawczyk to certify both
+    condition-100 candidates and one side of each condition-1,000 h/T=1e-6
+    pair.  A provisional outward long-double path certified both sides of the
+    latter pair on this platform.  Neither binary64 nor the 64-bit-mantissa
+    long-double path certified the condition-1,000 h/T=1e-8 pair; its analytic
+    chord is nevertheless 30.5 model tolerances and therefore cannot be
+    dismissed as a minimum-size contact.
+
+    Root existence is only part of publication.  The experiment also tested a
+    fold-specific uniqueness argument.  If the dominant transformed equation
+    is strictly monotone in the regular parameter, has opposite signs on its
+    two regular boundaries, and the Bernstein polynomial for the projected
+    Jacobian determinant is one-signed, the implicit regular-equation corridor
+    has at most one crossing.  Krawczyk existence then makes that root unique
+    in the parent.  When the parent touches the zero-determinant fold boundary,
+    an interval-excluded boundary strip can be removed before applying the
+    same argument.  This certified one of the two parent boxes in each hard
+    condition-100 shot and, after locally conditioning the strip exclusion,
+    one parent in each condition-1,000 h/T=1e-6 shot.  The opposite parents
+    remained inconclusive.  Generic complement subdivision was a poor
+    substitute: even a 1,024-box allowance per parent exhausted while refining
+    interval ambiguity next to the certified box.
+
+    The experimental implementation was reverted after measurement.  It had
+    no exact-dyadic audit for the new Bernstein-product determinant, no
+    portable extended-precision contract, no complete two-parent coverage,
+    and no cross-span event deduplication.  The evidence favors a small hybrid
+    path: use conditioned hulls to localize the fold, bounded scalar brackets
+    to propose both one-sided roots, per-coefficient or expansion arithmetic
+    for certification, and a monotonic corridor/degree proof rather than a
+    dense complement tiling.  Assemble every failed certificate and threshold
+    case into a C/C++ solver corpus before further arithmetic changes.  An
+    uncertified case must continue to use the existing fallback.
+
+    This further supports tractability under the stated engineering contract.
+    The search and candidate solve are already bounded and reliable on the
+    known failures; the open work is a finite set of enclosure, uniqueness,
+    and topology proofs.  It does not make arbitrary degenerate rational
+    patches with unspecified tolerance intent into a tractable exact,
+    fixed-resource problem, and the implementation should not promise that.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1755,10 +1813,23 @@ IMPLEMENTATION CHECKLIST
                     conditioned equation hull, reducing each unresolved case
                     to at most two terminal boxes without changing hit
                     publication.
+                [x] Measure one-sided candidate, Krawczyk, coefficient-
+                    precision, monotonic-uniqueness, and complement-coverage
+                    boundaries on all twelve localized hard boxes; revert the
+                    unqualified prototype after recording the results.
                 [ ] Implement allocation-free fold-direction bracketing with
                     conservative full-box exclusion/coverage and separate
                     certification of both nearby roots, plus cross-span event
                     deduplication.
+                    [ ] Preserve per-coefficient or expansion enclosures and
+                        exact-audit fused construction, restriction,
+                        Bernstein products, and the selected precision tier.
+                    [ ] Prove both one-sided parent boxes complete with a
+                        monotonic corridor or equivalent degree certificate;
+                        do not use broad complement subdivision as the normal
+                        path.
+                    [ ] Add every failed certificate/aspect-ratio/precision
+                        case to a focused C/C++ fold-solver corpus.
             [x] Keep grazing, singular, and boundary roots on the conservative
                 depth-24 path.
             [x] Independently audit outward rounding and coefficient-error
