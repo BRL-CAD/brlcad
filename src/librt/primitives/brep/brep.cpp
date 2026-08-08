@@ -2234,6 +2234,8 @@ rt_brep_draw_options_default(struct rt_brep_draw_options *options)
     options->max_points = (size_t)4 * 1024 * 1024;
     options->max_time_ms = 0;
     options->include_surface_cues = 1;
+    options->item_status = NULL;
+    options->item_status_data = NULL;
 }
 
 
@@ -2284,6 +2286,8 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 	    options.max_points = user_options->max_points;
 	options.max_time_ms = user_options->max_time_ms;
 	options.include_surface_cues = user_options->include_surface_cues;
+	options.item_status = user_options->item_status;
+	options.item_status_data = user_options->item_status_data;
     }
 
     const int edge_count = brep->m_E.Count();
@@ -2314,9 +2318,18 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
     size_t output_points = 0;
     for (int edge_index = 0; edge_index < edge_count; edge_index++) {
 	brep_wire_edge_result &result = edge_results[(size_t)edge_index];
-	if (!result.completed)
+	if (!result.completed) {
+	    if (options.item_status)
+		options.item_status(RT_BREP_DRAW_EDGE, edge_index,
+		    result.failed ? RT_BREP_DRAW_ITEM_FAILED :
+		    RT_BREP_DRAW_ITEM_NOT_PROCESSED,
+		    options.item_status_data);
 	    continue;
+	}
 	completed_edges++;
+	if (options.item_status)
+	    options.item_status(RT_BREP_DRAW_EDGE, edge_index,
+		RT_BREP_DRAW_ITEM_COMPLETED, options.item_status_data);
 	for (size_t point_index = 0; point_index < result.points.size();
 		point_index++) {
 	    point_t point;
@@ -2340,6 +2353,8 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
     }
 
     int completed_surface_cues = 0;
+    std::vector<int> surface_cue_status((size_t)brep->m_F.Count(),
+	RT_BREP_DRAW_ITEM_NOT_PROCESSED);
     for (int face_index : surface_cue_faces) {
 	if (hit_memory_limit || hit_point_limit)
 	    break;
@@ -2361,6 +2376,8 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 	    }
 	} catch (...) {
 	    BV_FREE_VLIST(vlfree, &face_vhead);
+	    surface_cue_status[(size_t)face_index] =
+		RT_BREP_DRAW_ITEM_FAILED;
 	    continue;
 	}
 
@@ -2369,17 +2386,30 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 	if (output_points + cue_points > options.max_points) {
 	    hit_point_limit = true;
 	    BV_FREE_VLIST(vlfree, &face_vhead);
+	    surface_cue_status[(size_t)face_index] =
+		RT_BREP_DRAW_ITEM_FAILED;
 	    break;
 	}
 	if (result_bytes + cue_bytes > options.max_result_bytes) {
 	    hit_memory_limit = true;
 	    BV_FREE_VLIST(vlfree, &face_vhead);
+	    surface_cue_status[(size_t)face_index] =
+		RT_BREP_DRAW_ITEM_FAILED;
 	    break;
 	}
 	BU_LIST_APPEND_LIST(vhead, &face_vhead);
 	output_points += cue_points;
 	result_bytes += cue_bytes;
 	completed_surface_cues++;
+	surface_cue_status[(size_t)face_index] =
+	    RT_BREP_DRAW_ITEM_COMPLETED;
+    }
+
+    if (options.item_status) {
+	for (int face_index : surface_cue_faces)
+	    options.item_status(RT_BREP_DRAW_SURFACE_CUE, face_index,
+		surface_cue_status[(size_t)face_index],
+		options.item_status_data);
     }
 
     if (report) {
