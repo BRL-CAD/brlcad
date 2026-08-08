@@ -1500,9 +1500,9 @@ ESTABLISHED FINDINGS
     This reduced the false terminal ambiguity corridor from 104 and 546 boxes
     to exactly the two boundary-adjacent boxes.  Because F=0 implies M F=0 for
     any nonsingular finite 2x2 matrix M, the idea has a straightforward
-    no-false-exclusion argument; a permanent implementation still needs a
-    direct exact-dyadic enclosure gate for the new coefficient combinations
-    and explicit telemetry before promotion.
+    no-false-exclusion argument; at the prototype stage, a permanent
+    implementation still needed a direct exact-dyadic enclosure gate for the
+    new coefficient combinations and explicit telemetry before promotion.
 
     A second prototype solved the dominant rotated equation for the regular
     parameter at fixed values of the weak parameter, then bracketed the signed
@@ -1533,6 +1533,51 @@ ESTABLISHED FINDINGS
     trims, and unspecified modeling intent is not a realistic target.  The
     project should continue to state the former contract explicitly rather
     than accidentally promising the latter.
+
+51. The conditioned equation-hull exclusion from Finding 50 is now a
+    permanent, allocation-free part of prepared surface isolation.  After the
+    ordinary per-equation Bernstein hull retains a box, the implementation
+    forms interval derivative hulls for both projected ray-plane equations.
+    The midpoint column with the greater Euclidean magnitude supplies a local
+    orthonormal equation basis.  Every transformed Bernstein coefficient is
+    then formed from outward interval scaling and addition, including the
+    complete inherited coefficient uncertainty.  A box is excluded only when
+    one transformed coefficient hull proves that zero is absent.  A bad or
+    nonfinite conditioning hint is inconclusive and retains the box; it cannot
+    authorize exclusion.
+
+    The safety property does not depend on the midpoint derivative being an
+    accurate Jacobian estimate.  For every finite 2x2 matrix M, F=0 implies
+    M F=0, so an outward enclosure of a transformed component that omits zero
+    proves that the original system has no root in the box.  The derivative
+    column only selects a useful search basis.  This deliberately gives the
+    rotation less authority than the interval coefficient arithmetic.
+
+    A private exact-dyadic gate now audits arbitrary two-equation linear hulls
+    at every supported tensor order from 2x2 through 16x16.  Four signed
+    integer matrices, transform exponents -100, 0, and 100, and coefficient
+    exponents -400, -40, 0, 40, and 400 exercise 2,187,000 transformed
+    coefficients.  Each observed lower and upper bound must enclose the exact
+    nominal value plus declared uncertainty, and an observed exclusion may
+    occur only when the exact hull also excludes zero.  A new
+    `--interval-only` test mode runs this arithmetic gate without constructing
+    the ray corpus.
+
+    The permanent exclusion reproduces the diagnostic localization: each of
+    the six unresolved high-condition affine grazing shots now retains at
+    most two terminal boxes and performs at least one rotated-hull exclusion.
+    It does not publish an uncertified root, and the production hit results
+    remain unchanged.  On the 36 ordinary affine shots, all 36 now select the
+    prepared result with no fallback through condition 1,000.  Surface-box
+    visits fall from 16,860 to 970, a 94.2 percent reduction, with 446
+    exclusions in 920 rotated-hull attempts and no inconclusive arithmetic.
+    The normal sphere, seam, crack, trim, Cobb, affine-grazing, and
+    Cauchy-Crofton gates preserve their prior classifications and partitions;
+    the complete corpus still ends with `BREP ray correctness corpus: PASS`.
+    Focused optimized and ASan/UBSan `--affine-only` and `--interval-only`
+    runs pass without a sanitizer diagnostic.  Certification, full local
+    coverage, and cross-span deduplication remain prerequisites for promoting
+    the recovered fold roots.
 
 
 IMPLEMENTATION CHECKLIST
@@ -1706,6 +1751,10 @@ IMPLEMENTATION CHECKLIST
                 [x] Demonstrate one-sided regular/weak scalar bracketing that
                     recovers both condition-1,000 root pairs without tolerance
                     inflation; keep the prototype unpromoted and reverted.
+                [x] Permanently apply an exact-audited, allocation-free
+                    conditioned equation hull, reducing each unresolved case
+                    to at most two terminal boxes without changing hit
+                    publication.
                 [ ] Implement allocation-free fold-direction bracketing with
                     conservative full-box exclusion/coverage and separate
                     certification of both nearby roots, plus cross-span event
@@ -2277,6 +2326,12 @@ Cobb sphere baseline:
     and the complete normal `rt_brep_ray` corpus pass.  Ordinary affine rays
     remain 36/36; the grazing output reports six bounded high-condition
     resolved gaps and no reversal inconsistency or classification restart.
+    Repeated after permanent conditioned equation-hull exclusion and its
+    2,187,000-case exact-dyadic audit: the full optimized corpus and focused
+    `--affine-only` and `--interval-only` gates pass.  All 36 ordinary affine
+    rays select prepared production with no fallback; their surface-box visits
+    fall from 16,860 to 970.  The six known grazing gaps remain unchanged but
+    retain at most two terminal boxes each.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -2354,6 +2409,9 @@ Cobb sphere baseline:
     Repeated after structured surface/local corrector outcomes and bounded
     failure-ratio telemetry: the focused 78-ray `--affine-only` run passes
     with no ASan or UBSan diagnostic.
+    Repeated after conditioned equation-hull exclusion with halt-on-error:
+    focused `--affine-only` and `--interval-only` runs pass with no ASan or
+    UBSan diagnostic.  The latter audits 2,187,000 transformed coefficients.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -2425,9 +2483,10 @@ NEXT ACTIONS
 3. Profile the strict ordinary-root production selector on stratified analytic
    and STEP cases.  Separate prepared-attempt cost, selected ordinary rays,
    uncertified grazing fallback, and each unsupported/capacity reason.  Use the
-   mapped tangent/grazing ratchet to eliminate the six remaining condition-100
-   and condition-1,000 resolved misses, then analyze anisotropic seam
-   tolerances.  Separate old-solver root absence from prepared box explosion
+   mapped tangent/grazing ratchet to certify and eliminate the six remaining
+   condition-100 and condition-1,000 resolved misses, then analyze
+   anisotropic seam tolerances.  Separate old-solver root absence from
+   prepared box explosion
    and local-corrector failure.  Find a lower-cost dispatch or fallback strategy
    before reducing tree density: the first correctness-only promotion passes
    every qualified partition oracle but increases the grazing-heavy ray corpus
