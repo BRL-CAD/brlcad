@@ -448,6 +448,48 @@ RT_EXPORT extern void rt_vshot_via_shot(
     struct application *ap);
 
 
+/* Fixed-capacity BREP shot observations for in-librt correctness tests.
+ * Solver status indices match the private brep_solver_status_t order in
+ * primitives/brep/brep.cpp.  Root classes are CLEAN_HIT, CLEAN_MISS,
+ * NEAR_HIT, NEAR_MISS, and CRACK_HIT at values 0 through 4. */
+#define RT_BREP_TRACE_MAX_ROOTS 64
+#define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
+
+struct rt_brep_trace_root {
+    fastf_t dist;
+    fastf_t uv[2];
+    fastf_t normal_dot;
+    fastf_t trim_distance;
+    int face_index;
+    int adjacent_face_index;
+    int trim_status;
+    int hit_class;
+    int direction;
+};
+
+struct rt_brep_shot_trace {
+    size_t intersected_leaves;
+    size_t solver_calls;
+    size_t solver_status[RT_BREP_TRACE_SOLVER_STATUS_COUNT];
+    size_t candidate_roots;
+    size_t stored_roots;
+    size_t root_overflow;
+    struct rt_brep_trace_root roots[RT_BREP_TRACE_MAX_ROOTS];
+    size_t raw_hits;
+    size_t after_near_miss;
+    size_t after_near_hit;
+    size_t after_grazing;
+    size_t after_duplicates;
+    size_t after_direction_cleanup;
+    size_t final_hits;
+    size_t final_segments;
+};
+
+RT_EXPORT extern int _rt_brep_shot_trace(
+    struct soltab *stp, struct xray *rp, struct application *ap,
+    struct seg *seghead, struct rt_brep_shot_trace *trace);
+
+
 __END_DECLS
 
 #endif /* LIBRT_LIBRT_PRIVATE_H */
