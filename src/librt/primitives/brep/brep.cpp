@@ -3463,27 +3463,60 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct directory *dp, struct 
 		      const struct bg_tess_tol *ttol, const struct bn_tol *tol,
 		      const struct bview *UNUSED(info))
 {
-    TRACE1("rt_brep_plot");
+    TRACE1("rt_brep_plot_poly");
 
     if (!vhead || dp == RT_DIR_NULL || !ip || !ttol || !tol)
 	return -1;
 
     struct bu_list *vlfree = &rt_vlfree;
     struct rt_brep_internal* bi;
-    const char *solid_name =  dp->d_namep;
-    ON_wString wstr;
-    ON_TextLog tl(wstr);
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*) ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
-    ON_Brep* brep = bi->brep;
-
-    if (brep_facecdt_plot(NULL, solid_name, ttol, tol, brep, vhead, NULL, vlfree, -1, 0, -1)) {
+    int *faces = NULL;
+    int face_count = 0;
+    vect_t *normals = NULL;
+    point_t *points = NULL;
+    int point_count = 0;
+    if (brep_cdt_fast(&faces, &face_count, &normals, &points,
+	    &point_count, bi->brep, -1, ttol, tol) != BRLCAD_OK) {
+	bu_free(faces, "B-Rep plot faces");
+	bu_free(normals, "B-Rep plot normals");
+	bu_free(points, "B-Rep plot points");
 	return -1;
     }
+
+    for (int triangle = 0; triangle < face_count; triangle++) {
+	for (int corner = 0; corner < 3; corner++) {
+	    const int point_index = faces[triangle * 3 + corner];
+	    if (point_index < 0 || point_index >= point_count) {
+		bu_free(faces, "B-Rep plot faces");
+		bu_free(normals, "B-Rep plot normals");
+		bu_free(points, "B-Rep plot points");
+		return -1;
+	    }
+	}
+    }
+
+    for (int triangle = 0; triangle < face_count; triangle++) {
+	const int *indices = &faces[triangle * 3];
+	const vect_t *triangle_normals = &normals[triangle * 3];
+	BV_ADD_VLIST(vlfree, vhead, triangle_normals[0], BV_VLIST_TRI_START);
+	for (int corner = 0; corner < 3; corner++) {
+	    BV_ADD_VLIST(vlfree, vhead, triangle_normals[corner],
+		BV_VLIST_TRI_VERTNORM);
+	    BV_ADD_VLIST(vlfree, vhead, points[indices[corner]],
+		corner ? BV_VLIST_TRI_DRAW : BV_VLIST_TRI_MOVE);
+	}
+	BV_ADD_VLIST(vlfree, vhead, points[indices[0]], BV_VLIST_TRI_END);
+    }
+
+    bu_free(faces, "B-Rep plot faces");
+    bu_free(normals, "B-Rep plot normals");
+    bu_free(points, "B-Rep plot points");
     return 0;
 }
 
