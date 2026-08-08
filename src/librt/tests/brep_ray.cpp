@@ -2420,6 +2420,53 @@ cobb_reparameterize_edge_trims(ON_Brep *brep, int edge_index,
 }
 
 
+static bool
+cobb_make_ambiguous_edge_trim(ON_Brep *brep, int edge_index)
+{
+    if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count())
+	return false;
+    const ON_BrepEdge &edge = brep->m_E[edge_index];
+    if (edge.m_ti.Count() != 2)
+	return false;
+    const int trim_index = edge.m_ti[0];
+    if (trim_index < 0 || trim_index >= brep->m_T.Count())
+	return false;
+    ON_BrepTrim &trim = brep->m_T[trim_index];
+    const ON_Curve *original = trim.TrimCurveOf();
+    if (!original || !original->Domain().IsIncreasing())
+	return false;
+    const ON_Interval domain = original->Domain();
+    const ON_3dPoint start = original->PointAt(domain.Min());
+    const ON_3dPoint end = original->PointAt(domain.Max());
+    if (!start.IsValid() || !end.IsValid() ||
+	    start.DistanceTo(end) <= DBL_MIN)
+	return false;
+
+    /* Traverse the same boundary forward, backward, then forward.  The locus
+     * stays on the valid UV boundary, but its edge correspondence is not
+     * one-to-one and the middle span has the wrong orientation. */
+    ON_NurbsCurve *ambiguous = ON_NurbsCurve::New(2, false, 2, 4);
+    if (!ambiguous || !ambiguous->SetCV(0, start) ||
+	    !ambiguous->SetCV(1, end) || !ambiguous->SetCV(2, start) ||
+	    !ambiguous->SetCV(3, end) ||
+	    !ambiguous->MakeClampedUniformKnotVector() ||
+	    !ambiguous->SetDomain(domain.Min(), domain.Max())) {
+	delete ambiguous;
+	return false;
+    }
+    const int curve_index = brep->AddTrimCurve(ambiguous);
+    if (curve_index < 0) {
+	delete ambiguous;
+	return false;
+    }
+    if (!brep->SetTrimCurve(trim, curve_index))
+	return false;
+    brep->SetTrimIsoFlags(trim);
+    brep->DestroyRuntimeCache(true);
+    return true;
+}
+
+
 static int
 check_cobb_classifier_invariance(const struct bn_tol *tol)
 {
@@ -2681,6 +2728,7 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			normalized_limit * test.scale ||
 			edge->tolerance_inferred ||
 			!edge->discrepancy_measured ||
+			!edge->correspondence_supported ||
 			!edge->discrepancy_authorized ||
 			fabs(edge->model_tolerance / test.scale -
 			tol->dist) > normalized_limit ||
@@ -2839,6 +2887,85 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 
 
 static int
+check_cobb_ambiguous_correspondence(const struct bn_tol *tol,
+    struct rt_i *rtip, struct resource *resource)
+{
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    cobb_seam_frame frame;
+    double measured_gap = 0.0;
+    double displacement = 0.0;
+    ON_Brep *variant = cobb_bowed_seam_variant(pristine, origin,
+	-tol->dist, frame, measured_gap, displacement);
+    delete pristine;
+    if (!variant || !cobb_make_ambiguous_edge_trim(variant,
+	    frame.edge_index)) {
+	std::printf("FAIL: Cobb ambiguous correspondence construction\n");
+	delete variant;
+	return 1;
+    }
+
+    struct rt_brep_internal variant_internal = {};
+    variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    variant_internal.brep = variant;
+    struct rt_db_internal variant_intern;
+    RT_DB_INTERNAL_INIT(&variant_intern);
+    variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    variant_intern.idb_type = ID_BREP;
+    variant_intern.idb_meth = &OBJ[ID_BREP];
+    variant_intern.idb_ptr = &variant_internal;
+    struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+    if (!stp) {
+	std::printf("FAIL: Cobb ambiguous correspondence prep\n");
+	return 1;
+    }
+
+    int failures = 0;
+    for (int reverse = 0; reverse <= 1; ++reverse) {
+	const sampled_ray ray = cobb_seam_grazing_ray(frame, origin, radius,
+	    0.9 * tol->dist, reverse != 0);
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(stp, rtip, resource, ray, trace);
+	const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+	    frame.edge_index);
+	if (!brep_trace_fixed_workspaces_match(trace) || !edge ||
+		!edge->discrepancy_measured ||
+		!edge->discrepancy_authorized ||
+		edge->correspondence_supported || edge->candidate_spans ||
+		edge->within_edge_tolerance || edge->sector_valid ||
+		edge->discrepancy_bounded ||
+		edge->discrepancy_bound_exhausted ||
+		trace.closure_candidates || trace.continuation_attempts ||
+		trace.closure_shadow_segments ||
+		trace.after_direction_cleanup != 1 || trace.final_segments != 0) {
+	    std::printf("FAIL: Cobb ambiguous correspondence reverse=%d "
+		"edge=%d measured=%d authorized=%d correspondence=%d "
+		"spans=%zu within=%d sector=%d bound=%d exhausted=%d "
+		"closure=%zu continuation=%zu segment=%zu cleanup=%zu\n",
+		reverse,
+		frame.edge_index, edge ? edge->discrepancy_measured : -1,
+		edge ? edge->discrepancy_authorized : -1,
+		edge ? edge->correspondence_supported : -1,
+		edge ? edge->candidate_spans : 0,
+		edge ? edge->within_edge_tolerance : -1,
+		edge ? edge->sector_valid : -1,
+		edge ? edge->discrepancy_bounded : -1,
+		edge ? edge->discrepancy_bound_exhausted : -1,
+		trace.closure_candidates, trace.continuation_attempts,
+		trace.closure_shadow_segments, trace.after_direction_cleanup);
+	    failures++;
+	}
+    }
+
+    free_solid(stp);
+    if (!failures)
+	std::printf("Cobb ambiguous trim correspondence fallback: PASS\n");
+    return failures;
+}
+
+
+static int
 check_cobb_discrepancy_bound_budget(const struct bn_tol *tol,
     struct rt_i *rtip, struct resource *resource)
 {
@@ -2969,6 +3096,7 @@ check_cobb_discrepancy_bound_budget(const struct bn_tol *tol,
 	if (edge->discrepancy_bound_exhausted)
 	    exhausted_count++;
 	bool invalid = !edge->discrepancy_measured ||
+	    !edge->correspondence_supported ||
 	    !edge->discrepancy_authorized ||
 	    (edge->discrepancy_bounded &&
 	    edge->discrepancy_bound_exhausted);
@@ -3093,6 +3221,7 @@ check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
 	    cases[case_index].declared_ratio * measured_gap) <= limit;
 	if (!brep_trace_fixed_workspaces_match(trace) ||
 		!edge || !edge->discrepancy_measured ||
+		!edge->correspondence_supported ||
 		edge->discrepancy_bounded ||
 		edge->discrepancy_bound_exhausted ||
 		!declared_ok || edge->tolerance_inferred !=
@@ -3201,6 +3330,7 @@ check_brep_edge_sector_fixture(const char *label, ON_Brep *brep,
 		0.5 * tol->dist : 0.0;
 	    if (!brep_trace_fixed_workspaces_match(trace) ||
 		    !observation || !observation->within_edge_tolerance ||
+		    !observation->correspondence_supported ||
 		    !observation->candidate_spans ||
 		    !observation->sector_valid ||
 		    observation->closest_state != expected_state ||
@@ -3356,6 +3486,193 @@ check_brep_edge_sector_seam(const struct bn_tol *tol, struct rt_i *rtip,
 
 
 static int
+check_brep_vertex_fan_fallback(const struct bn_tol *tol, struct rt_i *rtip,
+    struct resource *resource)
+{
+    struct rt_arb_internal box = {};
+    box.magic = RT_ARB_INTERNAL_MAGIC;
+    VSET(box.pt[0], -4.0, -3.0, -2.0);
+    VSET(box.pt[1], 4.0, -3.0, -2.0);
+    VSET(box.pt[2], 4.0, 3.0, -2.0);
+    VSET(box.pt[3], -4.0, 3.0, -2.0);
+    VSET(box.pt[4], -4.0, -3.0, 2.0);
+    VSET(box.pt[5], 4.0, -3.0, 2.0);
+    VSET(box.pt[6], 4.0, 3.0, 2.0);
+    VSET(box.pt[7], -4.0, 3.0, 2.0);
+    struct rt_db_internal box_intern;
+    RT_DB_INTERNAL_INIT(&box_intern);
+    box_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    box_intern.idb_type = ID_ARB8;
+    box_intern.idb_meth = &OBJ[ID_ARB8];
+    box_intern.idb_ptr = &box;
+
+    ON_Brep *brep = ON_Brep::New();
+    OBJ[ID_ARB8].ft_brep(&brep, &box_intern, tol);
+    const ON_3dPoint target_point(4.0, 3.0, 2.0);
+    int target_vertex = -1;
+    if (brep) {
+	for (int vertex_index = 0; vertex_index < brep->m_V.Count();
+		++vertex_index) {
+	    if (brep->m_V[vertex_index].point.DistanceTo(target_point) <=
+		    1.0e-12) {
+		target_vertex = vertex_index;
+		break;
+	    }
+	}
+    }
+    int incident_edges[3] = {-1, -1, -1};
+    size_t incident_count = 0;
+    if (brep && target_vertex >= 0) {
+	for (int edge_index = 0; edge_index < brep->m_E.Count();
+		++edge_index) {
+	    const ON_BrepEdge &edge = brep->m_E[edge_index];
+	    if (edge.m_vi[0] != target_vertex && edge.m_vi[1] != target_vertex)
+		continue;
+	    if (incident_count < 3)
+		incident_edges[incident_count] = edge_index;
+	    incident_count++;
+	}
+    }
+    if (!brep || !brep->IsSolid() || target_vertex < 0 ||
+	    incident_count != 3) {
+	std::printf("FAIL: convex vertex-fan geometry vertex=%d edges=%zu\n",
+	    target_vertex, incident_count);
+	delete brep;
+	return 1;
+    }
+    for (int edge_index = 0; edge_index < brep->m_E.Count(); ++edge_index)
+	brep->m_E[edge_index].m_tolerance = tol->dist;
+
+    struct rt_brep_internal brep_internal = {};
+    brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal.brep = brep;
+    struct rt_db_internal brep_intern;
+    RT_DB_INTERNAL_INIT(&brep_intern);
+    brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    brep_intern.idb_type = ID_BREP;
+    brep_intern.idb_meth = &OBJ[ID_BREP];
+    brep_intern.idb_ptr = &brep_internal;
+    struct soltab *stp = prep_solid(rtip, &brep_intern, ID_BREP);
+    if (!stp) {
+	std::printf("FAIL: convex vertex-fan BREP prep\n");
+	delete brep_internal.brep;
+	return 1;
+    }
+
+    ON_3dVector diagonal(1.0, 1.0, 1.0);
+    diagonal.Unitize();
+    struct vertex_ray_case {
+	const char *name;
+	ON_3dPoint origin;
+	ON_3dVector direction;
+    } cases[] = {
+	{"through-forward", target_point + 20.0 * diagonal, -diagonal},
+	{"through-reverse", target_point - 20.0 * diagonal, diagonal},
+	{"surface-outward", target_point, diagonal},
+	{"surface-inward", target_point, -diagonal}
+    };
+    int failures = 0;
+    size_t maximum_contact_edges = 0;
+    size_t maximum_near_inside_edges = 0;
+    size_t maximum_near_closure_candidates = 0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	sampled_ray ray;
+	VSET(ray.origin, cases[case_index].origin.x,
+	    cases[case_index].origin.y, cases[case_index].origin.z);
+	VSET(ray.direction, cases[case_index].direction.x,
+	    cases[case_index].direction.y, cases[case_index].direction.z);
+	struct rt_brep_shot_trace trace;
+	const int trace_hits = shoot_brep_trace(stp, rtip, resource, ray,
+	    trace);
+	size_t contact_edges = 0;
+	bool invalid_edge = false;
+	for (size_t incident = 0; incident < 3; ++incident) {
+	    const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+		incident_edges[incident]);
+	    if (!edge || !edge->correspondence_supported ||
+		    !edge->within_edge_tolerance || !edge->candidate_spans ||
+		    !edge->sector_valid || edge->closest_state != 0 ||
+		    edge->distance > 1.0e-10)
+		invalid_edge = true;
+	    else
+		contact_edges++;
+	}
+	maximum_contact_edges = std::max(maximum_contact_edges,
+	    contact_edges);
+	if (!brep_trace_fixed_workspaces_match(trace) || invalid_edge ||
+		contact_edges != 3 || trace.closure_candidates ||
+		trace.continuation_attempts || trace.closure_shadow_segments ||
+		trace_hits != 2 || trace.final_segments != 1) {
+	    std::printf("FAIL: convex vertex-fan %s contacts=%zu/3 "
+		"closure=%zu continuation=%zu shadow=%zu "
+		"hits=%d/2 final=%zu/1\n", cases[case_index].name,
+		contact_edges, trace.closure_candidates,
+		trace.continuation_attempts, trace.closure_shadow_segments,
+		trace_hits, trace.final_segments);
+	    failures++;
+	}
+    }
+
+    ON_3dVector fan_direction(1.0, -1.0, 0.0);
+    fan_direction.Unitize();
+    const ON_3dPoint fan_closest = target_point -
+	0.25 * tol->dist * ON_3dVector(1.0, 1.0, 1.0);
+    for (int reverse = 0; reverse <= 1; ++reverse) {
+	const ON_3dVector direction = reverse ? -fan_direction :
+	    fan_direction;
+	const ON_3dPoint ray_origin = fan_closest - 20.0 * direction;
+	sampled_ray ray;
+	VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
+	VSET(ray.direction, direction.x, direction.y, direction.z);
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(stp, rtip, resource, ray, trace);
+	size_t qualified_edges = 0;
+	size_t inside_edges = 0;
+	int states[3] = {-99, -99, -99};
+	for (size_t incident = 0; incident < 3; ++incident) {
+	    const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+		incident_edges[incident]);
+	    if (!edge)
+		continue;
+	    states[incident] = edge->closest_state;
+	    if (edge->correspondence_supported &&
+		    edge->within_edge_tolerance && edge->candidate_spans &&
+		    edge->sector_valid) {
+		qualified_edges++;
+		if (edge->closest_state == 1)
+		    inside_edges++;
+	    }
+	}
+	const bool ambiguous_closure = trace.closure_candidates == 0 ||
+	    trace.closure_candidates >= 2;
+	maximum_near_inside_edges = std::max(maximum_near_inside_edges,
+	    inside_edges);
+	maximum_near_closure_candidates = std::max(
+	    maximum_near_closure_candidates, trace.closure_candidates);
+	if (!brep_trace_fixed_workspaces_match(trace) ||
+		qualified_edges != 3 || inside_edges < 2 ||
+		!ambiguous_closure || trace.continuation_attempts ||
+		trace.closure_shadow_segments) {
+	    std::printf("FAIL: convex vertex-fan near reverse=%d "
+		"qualified=%zu/3 inside=%zu states=%d/%d/%d closure=%zu "
+		"continuation=%zu shadow=%zu final=%zu\n", reverse,
+		qualified_edges, inside_edges, states[0], states[1], states[2],
+		trace.closure_candidates, trace.continuation_attempts,
+		trace.closure_shadow_segments, trace.final_segments);
+	    failures++;
+	}
+    }
+    free_solid(stp);
+    if (!failures)
+	std::printf("Convex vertex-fan fallback: PASS contact-edges=%zu "
+	    "near-inside=%zu closure-candidates=%zu\n", maximum_contact_edges,
+	    maximum_near_inside_edges, maximum_near_closure_candidates);
+    return failures;
+}
+
+
+static int
 check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     struct rt_i *trace_rtip, struct resource *trace_resource)
 {
@@ -3486,7 +3803,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "discrepancy_upper_bound,discrepancy_bound_tolerance,"
 	    "discrepancy_bounded,discrepancy_bound_cells,"
 	    "discrepancy_bound_depth,discrepancy_bound_exhausted,"
-	    "discrepancy_measured,"
+	    "discrepancy_measured,correspondence_supported,"
 	    "discrepancy_authorized,tolerance_inferred,candidate_spans,"
 	    "within_edge_tolerance,lift0,lift1,"
 	    "normal_dot0,normal_dot1,ray_edge_dot,sector_valid,closest_state\n");
@@ -3771,6 +4088,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    }
 		    if (!target_edge || edge_distance_error > edge_distance_limit ||
 			    !target_edge->discrepancy_measured ||
+			    !target_edge->correspondence_supported ||
 			    invalid_discrepancy_bound ||
 			    !target_edge->discrepancy_authorized ||
 			    target_edge->tolerance_inferred ||
@@ -4241,7 +4559,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    std::printf("cobb_edge,%s,%.9g,%.9g,%d,%d,%d,%d,"
 				"%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,"
 				"%.17g,%.17g,%.17g,%d,%zu,%zu,%d,"
-				"%d,%d,%d,%zu,%d,%.17g,%.17g,"
+				"%d,%d,%d,%d,%zu,%d,%.17g,%.17g,"
 				"%.17g,%.17g,%.17g,%d,%d\n",
 				sign > 0 ? "outward" : "inward",
 				measured_gap / tol->dist,
@@ -4261,6 +4579,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				edge.discrepancy_bound_depth,
 				edge.discrepancy_bound_exhausted,
 				edge.discrepancy_measured,
+				edge.correspondence_supported,
 				edge.discrepancy_authorized,
 				edge.tolerance_inferred,
 				edge.candidate_spans,
@@ -4515,7 +4834,10 @@ main(int argc, char **argv)
     failures += check_brep_edge_sector_box(&rtip->rti_tol, rtip, &resp);
     failures += check_brep_edge_sector_concave(&rtip->rti_tol, rtip, &resp);
     failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
+    failures += check_brep_vertex_fan_fallback(&rtip->rti_tol, rtip, &resp);
     failures += check_cobb_classifier_invariance(&rtip->rti_tol);
+    failures += check_cobb_ambiguous_correspondence(&rtip->rti_tol, rtip,
+	&resp);
     failures += check_cobb_discrepancy_bound_budget(&rtip->rti_tol, rtip,
 	&resp);
     failures += check_cobb_tolerance_metadata(&rtip->rti_tol, rtip, &resp);
