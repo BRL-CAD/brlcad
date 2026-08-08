@@ -2241,6 +2241,32 @@ ESTABLISHED FINDINGS
     and the intended production pipeline now take priority over further test
     runtime work.
 
+62. The detailed plan now defines the intended production raytracer as one
+    atomic proof/evidence pipeline rather than a series of local hit-cleanup
+    heuristics.  A fixed-capacity per-ray completion ledger must account for
+    every candidate span and terminal box as conservatively excluded,
+    completely resolved regular, completely resolved boundary, resolved
+    contact, or unresolved.  Unresolved is never a miss; it selects the
+    whole-ray fallback before segment publication.
+
+    The seven explicit stages are object/prep dispatch, conservative broad
+    phase, complete local root isolation, trim/geometric classification,
+    topology-first physical event resolution, ordered solid-state assembly,
+    and atomic publication.  Newton supplies representatives but no proof
+    authority.  Events reference immutable root records, identify physical
+    identity through topology plus certified intervals, and carry ENTER,
+    LEAVE, CONTACT, or unresolved state.  Minimum material size is decided
+    only by outward comparison against `rti_tol.dist / |D|`.
+
+    A selected prepared solid ray must prove complete coverage, a completely
+    resolved event stream, valid {0,1} material state from negative infinity,
+    finite endpoint provenance, and output capacity.  Any failure reruns the
+    complete legacy ray during rollout; partial prepared and legacy hits are
+    never spliced.  The legacy SurfaceTree is a continuity fallback and a
+    comparison source, not a correctness oracle.  The implementation plan now
+    has a separate certified-event/atomic-assembly phase before tree-density
+    reduction and cache redesign.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -2524,6 +2550,23 @@ IMPLEMENTATION CHECKLIST
     [x] Assemble the uniquely certified continuation and existing event into
         an ordered production material interval and gate both endpoints
         against the implicit oracle and similarity transforms.
+    [ ] Replace legacy cleanup authority with the explicit completion-ledger
+        and physical-event pipeline.
+        [x] Select the prepared result atomically only after whole-ray span,
+            box, root, hit, and partition qualification; otherwise leave
+            output untouched and run the complete fallback.
+        [x] Require prepared/excluded span equality, one stored terminal box
+            per isolated box, and a compatible local or fold root for every
+            terminal box in the currently supported selectors.
+        [ ] Store immutable per-box dispositions and certified root records
+            independently from physical event records.
+        [ ] Derive ordinary interior ENTER/LEAVE from bounded oriented
+            determinant evidence rather than nominal-normal cleanup.
+        [ ] Resolve supported interior, fold, edge, crack, and later vertex
+            clusters into ENTER/LEAVE/CONTACT events without deleting source
+            evidence.
+        [ ] Assemble a complete {0,1} solid-state stream and apply the outward
+            minimum-segment classifier before atomic publication.
     [ ] Reduce default tree density only after publication equivalence passes.
     [ ] Version and verify prep cache changes.
 
@@ -3277,16 +3320,24 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Replace the bounded correspondence screen with a conservative global
+1. Implement the first explicit completion-ledger/event increment without
+   broadening production authority.  Preserve immutable terminal-box and root
+   records, add separate fixed-capacity physical event records, and prove
+   ordinary clean-interior ENTER/LEAVE orientation with the same outward
+   determinant arithmetic used by the fold path.  Shadow the resulting event
+   stream against current prepared publication and the implicit/CSG oracles;
+   keep whole-ray atomic fallback on any coverage, orientation, event, state,
+   or capacity uncertainty.
+2. Replace the bounded correspondence screen with a conservative global
    injectivity/orientation proof.  Extend the shadow seam-gap certificate with
    an efficient exact-locus proof and explicit unsupported/capacity fallback,
    then tighten the g=T decision before it can replace sampled production
    authorization.  Keep model-space, UV, numerical-root, t-cluster, and
    minimum-segment tolerances distinct.
-2. Implement and gate cyclic convex/concave vertex-fan transitions before any
+3. Implement and gate cyclic convex/concave vertex-fan transitions before any
    multi-edge crack repair.  Preserve the current explicit fallback for
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
-3. Profile the strict ordinary- and fold-root production selectors on
+4. Profile the strict ordinary- and fold-root production selectors on
    stratified analytic and STEP cases.  Separate prepared-attempt cost,
    selected ordinary rays, selected clean-interior fold pairs, uncertified
    grazing fallback, near-trim rejection, and every unsupported/capacity
@@ -3313,15 +3364,15 @@ NEXT ACTIONS
    from 24.07 to about 69 seconds.  Do not lower density until every fallback
    population remains correct without relying on a tree that is no longer
    dense enough.
-4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
+5. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
    BREP-to-CSG recognition as later, separately classified qualification tiers.
-5. Add endpoint-moving gap/overlap, trim-only, edge-only, vertex, G1, and
+6. Add endpoint-moving gap/overlap, trim-only, edge-only, vertex, G1, and
    combined-error Cobb families, then remove the remaining duplicated Cobb
    control net from brep_invalid.cpp while independently gating its invalid
    topology behavior.
-6. Use the registered directed, Crofton, seam, interval, fold, and affine
+7. Use the registered directed, Crofton, seam, interval, fold, and affine
    CTest processes with `ctest -j`; retain the no-argument full executable for
    compatibility qualification.  Keep pure arithmetic counters deterministic
    and do not introduce shared-process parallelism into OpenNURBS/model
