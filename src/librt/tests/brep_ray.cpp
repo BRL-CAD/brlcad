@@ -2356,8 +2356,72 @@ cobb_transform_vector(const ON_Xform &xform, const ON_3dVector &vector)
 }
 
 
+static bool
+cobb_reparameterize_edge_trims(ON_Brep *brep, int edge_index,
+    double &maximum_locus_error, double &minimum_midpoint_shift)
+{
+    maximum_locus_error = 0.0;
+    minimum_midpoint_shift = DBL_MAX;
+    double coordinate_scale = 1.0;
+    if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count())
+	return false;
+    const ON_BrepEdge &edge = brep->m_E[edge_index];
+    if (edge.m_ti.Count() != 2)
+	return false;
+
+    const double constants[2] = {0.05, 20.0};
+    for (int side = 0; side < 2; ++side) {
+	const int trim_index = edge.m_ti[side];
+	if (trim_index < 0 || trim_index >= brep->m_T.Count())
+	    return false;
+	ON_BrepTrim &trim = brep->m_T[trim_index];
+	ON_NurbsCurve *curve = brep->MakeTrimCurveNurb(trim);
+	if (!curve || !curve->Domain().IsIncreasing())
+	    return false;
+	const ON_NurbsCurve original(*curve);
+	const ON_Interval domain = curve->Domain();
+	const ON_3dPoint original_midpoint = original.PointAt(domain.Mid());
+	if (!curve->Reparameterize(constants[side]))
+	    return false;
+	for (int sample = 0; sample <= 64; ++sample) {
+	    const double fraction = (double)sample / 64.0;
+	    /* Reparameterize maps every old knot k to
+	     * c*k/((c-1)*k+1).  Invert that map to find the original
+	     * parameter evaluated at this new parameter. */
+	    const double denominator = constants[side] +
+		(1.0 - constants[side]) * fraction;
+	    const double mapped_fraction = fraction / denominator;
+	    const ON_3dPoint expected = original.PointAt(
+		domain.ParameterAt(mapped_fraction));
+	    const ON_3dPoint actual = curve->PointAt(
+		domain.ParameterAt(fraction));
+	    if (!expected.IsValid() || !actual.IsValid())
+		return false;
+	    coordinate_scale = std::max(coordinate_scale,
+		std::max(fabs(expected.x), std::max(fabs(expected.y),
+		std::max(fabs(actual.x), fabs(actual.y)))));
+	    maximum_locus_error = std::max(maximum_locus_error,
+		expected.DistanceTo(actual));
+	}
+	minimum_midpoint_shift = std::min(minimum_midpoint_shift,
+	    original_midpoint.DistanceTo(curve->PointAt(domain.Mid())));
+	curve->DestroyRuntimeCache(true);
+	/* Reparameterize() can move an endpoint knot by roundoff.  Refresh the
+	 * proxy's cached real-curve domain so the unchanged full locus remains a
+	 * valid trim representation. */
+	trim.SetProxyCurve(curve);
+    }
+    brep->DestroyRuntimeCache(true);
+    const double locus_limit = 4096.0 * DBL_EPSILON * coordinate_scale;
+    return std::isfinite(maximum_locus_error) &&
+	std::isfinite(minimum_midpoint_shift) &&
+	maximum_locus_error <= locus_limit &&
+	minimum_midpoint_shift > 0.1 && brep->IsValid();
+}
+
+
 static int
-check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
+check_cobb_classifier_invariance(const struct bn_tol *tol)
 {
     const double radius = 10.0;
     const ON_3dPoint origin(0.0, 0.0, 0.0);
@@ -2369,7 +2433,7 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 	frame, measured_gap, displacement);
     delete pristine;
     if (!base) {
-	std::printf("FAIL: Cobb transform-invariance construction\n");
+	std::printf("FAIL: Cobb classifier-invariance construction\n");
 	return 1;
     }
 
@@ -2378,12 +2442,17 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 	double scale;
 	ON_3dVector translation;
 	bool rotate;
+	bool reparameterize;
     } cases[] = {
-	{"identity", 1.0, ON_3dVector(0.0, 0.0, 0.0), false},
-	{"rotated-translated", 1.0, ON_3dVector(13.0, -17.0, 29.0), true},
-	{"small-similarity", 0.01, ON_3dVector(1.25, -2.5, 5.0), true},
+	{"identity", 1.0, ON_3dVector(0.0, 0.0, 0.0), false, false},
+	{"trim-reparameterized", 1.0, ON_3dVector(0.0, 0.0, 0.0),
+	    false, true},
+	{"rotated-translated", 1.0, ON_3dVector(13.0, -17.0, 29.0),
+	    true, false},
+	{"small-similarity", 0.01, ON_3dVector(1.25, -2.5, 5.0),
+	    true, false},
 	{"large-similarity", 1.0e4,
-	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), true}
+	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), true, false}
     };
     double reference_existing[2] = {0.0, 0.0};
     double reference_continuation[2] = {0.0, 0.0};
@@ -2398,6 +2467,8 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
     int failures = 0;
     size_t maximum_fixed_leaves = 0;
     size_t maximum_fixed_hits = 0;
+    double maximum_parameter_locus_error = 0.0;
+    double minimum_parameter_midpoint_shift = DBL_MAX;
 
     for (size_t case_index = 0;
 	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
@@ -2411,6 +2482,22 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 	    delete variant;
 	    failures++;
 	    continue;
+	}
+	if (test.reparameterize) {
+	    double locus_error = 0.0;
+	    double midpoint_shift = 0.0;
+	    if (!cobb_reparameterize_edge_trims(variant, frame.edge_index,
+		    locus_error, midpoint_shift)) {
+		std::printf("FAIL: Cobb %s trim reparameterization\n",
+		    test.name);
+		delete variant;
+		failures++;
+		continue;
+	    }
+	    maximum_parameter_locus_error = std::max(
+		maximum_parameter_locus_error, locus_error);
+	    minimum_parameter_midpoint_shift = std::min(
+		minimum_parameter_midpoint_shift, midpoint_shift);
 	}
 	/* ON_Brep tolerances are model-space lengths.  Restore their exact
 	 * similarity-scaled values independently of Transform's policy. */
@@ -2709,10 +2796,13 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 
     delete base;
     if (!failures) {
-	std::printf("Cobb classifier similarity invariance: PASS "
-	    "max-leaves=%zu/%d max-raw-hits=%zu/%d\n",
+	std::printf("Cobb classifier similarity/parameter invariance: PASS "
+	    "max-leaves=%zu/%d max-raw-hits=%zu/%d "
+	    "parameter-locus-error=%.3g midpoint-shift=%.3g\n",
 	    maximum_fixed_leaves, RT_BREP_MAX_LEAVES,
-	    maximum_fixed_hits, RT_BREP_MAX_HITS);
+	    maximum_fixed_hits, RT_BREP_MAX_HITS,
+	    maximum_parameter_locus_error,
+	    minimum_parameter_midpoint_shift);
     }
     return failures;
 }
@@ -4165,7 +4255,7 @@ main(int argc, char **argv)
     failures += check_brep_edge_sector_box(&rtip->rti_tol, rtip, &resp);
     failures += check_brep_edge_sector_concave(&rtip->rti_tol, rtip, &resp);
     failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
-    failures += check_cobb_classifier_transform_invariance(&rtip->rti_tol);
+    failures += check_cobb_classifier_invariance(&rtip->rti_tol);
     failures += check_cobb_tolerance_metadata(&rtip->rti_tol, rtip, &resp);
     failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb,
 	rtip, &resp);
