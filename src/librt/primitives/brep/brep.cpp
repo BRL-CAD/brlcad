@@ -2866,6 +2866,85 @@ brep_interval_divide(const brep_interval &numerator,
 
 
 static bool
+brep_linear_coefficient_hulls(
+    const double values[2][BREP_DIRECT_BEZIER_MAX_CVS], size_t count,
+    const double coefficient_error[2], const double transform[2][2],
+    brep_interval hull[2])
+{
+    if (!values || !coefficient_error || !transform || !hull || !count ||
+	    count > BREP_DIRECT_BEZIER_MAX_CVS ||
+	    !std::isfinite(coefficient_error[0]) ||
+	    !std::isfinite(coefficient_error[1]) ||
+	    coefficient_error[0] < 0.0 || coefficient_error[1] < 0.0)
+	return false;
+    for (int row = 0; row < 2; ++row) {
+	if (!std::isfinite(transform[row][0]) ||
+		!std::isfinite(transform[row][1]))
+	    return false;
+	hull[row].minimum = DBL_MAX;
+	hull[row].maximum = -DBL_MAX;
+	for (size_t i = 0; i < count; ++i) {
+	    brep_interval combination = {0.0, 0.0};
+	    for (int source = 0; source < 2; ++source) {
+		if (!std::isfinite(values[source][i]))
+		    return false;
+		const brep_interval coefficient = brep_interval_expanded(
+		    values[source][i] - coefficient_error[source],
+		    values[source][i] + coefficient_error[source]);
+		combination = brep_interval_add(combination,
+		    brep_interval_scale(transform[row][source], coefficient));
+	    }
+	    hull[row].minimum = std::min(hull[row].minimum,
+		combination.minimum);
+	    hull[row].maximum = std::max(hull[row].maximum,
+		combination.maximum);
+	}
+	if (!std::isfinite(hull[row].minimum) ||
+		!std::isfinite(hull[row].maximum) ||
+		hull[row].minimum > hull[row].maximum)
+	    return false;
+    }
+    return true;
+}
+
+
+extern "C" int
+_rt_brep_linear_hull_test(const fastf_t *first_coefficients,
+    const fastf_t *second_coefficients, size_t count,
+    const fastf_t coefficient_error[2], const fastf_t transform[2][2],
+    struct rt_brep_linear_hull_test_result *result)
+{
+    if (!first_coefficients || !second_coefficients || !coefficient_error ||
+	    !transform || !result || !count ||
+	    count > BREP_DIRECT_BEZIER_MAX_CVS)
+	return 0;
+    double values[2][BREP_DIRECT_BEZIER_MAX_CVS] = {};
+    for (size_t i = 0; i < count; ++i) {
+	values[0][i] = first_coefficients[i];
+	values[1][i] = second_coefficients[i];
+    }
+    const double errors[2] = {
+	coefficient_error[0], coefficient_error[1]
+    };
+    const double matrix[2][2] = {
+	{transform[0][0], transform[0][1]},
+	{transform[1][0], transform[1][1]}
+    };
+    brep_interval hull[2];
+    if (!brep_linear_coefficient_hulls(values, count, errors, matrix, hull))
+	return 0;
+    result->excluded = 0;
+    for (int row = 0; row < 2; ++row) {
+	result->minimum[row] = hull[row].minimum;
+	result->maximum[row] = hull[row].maximum;
+	if (hull[row].minimum > 0.0 || hull[row].maximum < 0.0)
+	    result->excluded = 1;
+    }
+    return 1;
+}
+
+
+static bool
 brep_single_coefficient_intervals(const double cv[4],
     const double origin[3], const double direction[3],
     const double planes[2][3], const brep_interval &direction_squared,
@@ -3652,6 +3731,59 @@ struct brep_subdivision_box {
 };
 
 
+enum brep_rotated_hull_status {
+    BREP_ROTATED_HULL_INCONCLUSIVE = 0,
+    BREP_ROTATED_HULL_RETAINED,
+    BREP_ROTATED_HULL_EXCLUDED
+};
+
+
+static brep_rotated_hull_status
+brep_rotated_surface_hull_status(
+    const double values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const int order[2], const double coefficient_error[2])
+{
+    brep_interval derivative[2][2];
+    double midpoint[2][2];
+    for (int equation = 0; equation < 2; ++equation) {
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!brep_surface_derivative_interval(values[equation], order[0],
+		    order[1], direction, coefficient_error[equation],
+		    derivative[equation][direction]))
+		return BREP_ROTATED_HULL_INCONCLUSIVE;
+	    midpoint[equation][direction] =
+		0.5 * derivative[equation][direction].minimum +
+		0.5 * derivative[equation][direction].maximum;
+	}
+    }
+    const double scale[2] = {
+	hypot(midpoint[0][0], midpoint[1][0]),
+	hypot(midpoint[0][1], midpoint[1][1])
+    };
+    const int direction = scale[0] >= scale[1] ? 0 : 1;
+    if (!(scale[direction] > DBL_MIN) ||
+	    !std::isfinite(scale[direction]))
+	return BREP_ROTATED_HULL_INCONCLUSIVE;
+    const double transform[2][2] = {
+	{midpoint[0][direction] / scale[direction],
+	 midpoint[1][direction] / scale[direction]},
+	{-midpoint[1][direction] / scale[direction],
+	 midpoint[0][direction] / scale[direction]}
+    };
+    brep_interval hull[2];
+    const size_t count = (size_t)order[0] * order[1];
+    if (!brep_linear_coefficient_hulls(values, count, coefficient_error,
+	    transform, hull))
+	return BREP_ROTATED_HULL_INCONCLUSIVE;
+    for (int equation = 0; equation < 2; ++equation) {
+	if (hull[equation].minimum > 0.0 ||
+		hull[equation].maximum < 0.0)
+	    return BREP_ROTATED_HULL_EXCLUDED;
+    }
+    return BREP_ROTATED_HULL_RETAINED;
+}
+
+
 enum brep_clip_status {
     BREP_CLIP_INCONCLUSIVE = 0,
     BREP_CLIP_EMPTY,
@@ -3971,6 +4103,18 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 	}
 	if (excluded)
 	    continue;
+	trace->surface_rotated_hull_attempts++;
+	const brep_rotated_hull_status rotated_hull =
+	    brep_rotated_surface_hull_status(restricted, coefficients.order,
+		restricted_error);
+	if (rotated_hull == BREP_ROTATED_HULL_EXCLUDED) {
+	    trace->surface_rotated_hull_exclusions++;
+	    continue;
+	}
+	if (rotated_hull == BREP_ROTATED_HULL_INCONCLUSIVE)
+	    trace->surface_rotated_hull_inconclusive++;
+	else
+	    trace->surface_rotated_hull_retained++;
 
 	brep_subdivision_box clipped_box;
 	double removed[2] = {0.0, 0.0};
