@@ -90,6 +90,12 @@ and 0.01x/10,000x uniform scales with scaled model tolerances.  Thirty directed
 rays preserve normalized analytic/implicit/legacy/prepared partitions and all
 60 roots terminate adaptively at depths 4 through 9.  Work varies by transform,
 as expected, without changing classification.
+Function and Jacobian enclosures now use outward interval operations throughout
+rather than scalar evaluation plus an error estimate.  An independent exact-
+dyadic gate covers all supported order pairs, five wide binary scales, positive
+coefficient uncertainty, derivative hulls, and interval products.  Initial
+coefficient construction and arbitrary sub-box restriction error bounds remain
+open, so production promotion is still unauthorized.
 Production trim classification now scans the prepared trim leaves directly;
 the former copied-list implementation remains trace-only as an exact
 equivalence oracle.  The full traced corpus hard-gates candidate counts,
@@ -998,6 +1004,55 @@ ESTABLISHED FINDINGS
     The focused ASan/UBSan gate passes 12/12 in 36.26 seconds, with
     rt_brep_ray at 36.22 seconds and no sanitizer diagnostic.
 
+42. The function/Jacobian arithmetic layer of the provisional Krawczyk test
+    now has an independent enclosure audit.  Scalar double evaluation of
+    F(x) plus a post hoc magnitude estimate has been removed.  Each uncertain
+    Bernstein coefficient begins as an outward interval, and tensor de
+    Casteljau evaluation uses outward interval scaling and addition at every
+    level.  Derivative Bernstein coefficients are likewise formed as
+    intervals before their convex hulls are taken.  Krawczyk matrix products
+    use the same outward interval multiplication.
+
+    Primitive interval operations now expand each computed endpoint by one
+    `nextafter` step instead of adding a fixed `128 epsilon * max(1, |x|)`
+    margin.  The old absolute floor was conservative but destroyed binary
+    scale covariance for small coefficients.  One outward representable step
+    around each finite IEEE operation encloses its exact result regardless of
+    whether the active rounding mode rounded that operation up or down.  All
+    nonfinite results remain rejection paths.
+
+    A private librt test hook publishes only the computed function, Jacobian,
+    and product intervals.  The independent C++ oracle represents generated
+    coefficients as exact signed dyadics, evaluates their tensor midpoint by
+    exact integer addition and exponent adjustment, and computes derivative
+    control coefficients exactly.  It then verifies that production
+    intervals contain the nominal value plus the complete declared
+    coefficient uncertainty.  This avoids relying on the implementation's
+    own scalar evaluator as its oracle.
+
+    Every tensor order pair from 2x2 through the supported 16x16 maximum is
+    covered at binary exponents -400, -40, 0, 40, and 400.  Mixed-sign nets
+    force cancellation.  The permanent gate checks 1,125 nets, 2,250 function
+    intervals, 324,000 derivative coefficients, and 45 signed interval
+    products.  Maximum function interval width is 1.00001197 times the exact
+    propagated coefficient-uncertainty width, well inside the 1.05 guard.
+
+    This completes only one proof layer.  The initial homogeneous ray-plane
+    coefficient construction, arbitrary sub-box de Casteljau restriction
+    error, rational weight/ray-t intervals, and outside-span
+    reparameterization amplification still require independent enclosure
+    audits.  Until those are complete, a successful Krawczyk result remains
+    shadow evidence and cannot change production hit publication or tree
+    density.
+
+    All existing physical results remain unchanged: the ordinary sphere and
+    similarity matrices qualify at depths 4 through 9, both grazing matrices
+    qualify zero boxes early, and prepared partitions retain one improvement
+    with zero regressions or ambiguous changes.  The focused normal gate
+    passes 13/13 with rt_brep_ray at 10.36 seconds.  The focused ASan/UBSan
+    gate passes 12/12 in 37.29 seconds, with rt_brep_ray at 37.25 seconds and
+    no sanitizer diagnostic.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1151,6 +1206,12 @@ IMPLEMENTATION CHECKLIST
                 depth-24 path.
             [ ] Independently audit outward rounding and coefficient-error
                 enclosure before production promotion.
+                [x] Gate interval function evaluation, derivative hulls, and
+                    products for every supported tensor order and five binary
+                    dynamic ranges with an exact-dyadic oracle.
+                [ ] Audit initial ray-plane coefficient construction,
+                    arbitrary sub-box restriction, weights/ray-t bounds, and
+                    outside-span reparameterization amplification.
     [ ] Use fixed-capacity allocation-free shot workspace with explicit
         fallback on unsupported weights/order/capacity.
         [x] Bound direct surface order, subdivision stack, trace output, and
@@ -1665,6 +1726,9 @@ Cobb sphere baseline:
     Repeated after the adaptive-root similarity matrix: 13/13, with
     rt_brep_ray at 10.14 seconds.  All 30 transformed rays and 60 regular
     roots retain normalized oracle partitions and early qualification.
+    Repeated after outward interval function/Jacobian evaluation and the
+    exact-dyadic enclosure gate: 13/13, with rt_brep_ray at 10.36 seconds.
+    All 326,295 permanent enclosure checks pass before the ray corpus.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -1717,6 +1781,9 @@ Cobb sphere baseline:
     Repeated after the adaptive-root similarity matrix with halt_on_error=1:
     12/12 in 36.26 seconds; rt_brep_ray takes 36.22 seconds with no ASan or
     UBSan diagnostic.
+    Repeated after outward interval function/Jacobian evaluation and the
+    exact-dyadic enclosure gate with halt_on_error=1: 12/12 in 37.29 seconds;
+    rt_brep_ray takes 37.25 seconds with no ASan or UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -1785,16 +1852,17 @@ NEXT ACTIONS
 2. Implement and gate cyclic convex/concave vertex-fan transitions before any
    multi-edge crack repair.  Preserve the current explicit fallback for
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
-3. Independently audit the shadow Krawczyk arithmetic, expand its regular-root
-   corpus across supported orders, rational weights, and coefficient dynamic
-   ranges, and add conservative clipping where it can prove exclusion or
-   uniqueness.  Similarity qualification is now gated; nonuniform affine
-   transforms remain a separate ellipsoid target.  Keep classifying the
-   observed near-hit/grazing/duplicate-stage representation differences and
-   extending final-partition oracle gates before production promotion.  Do
-   not lower tree density until unsupported/capacity fallback and every
-   changed material partition are observable and proven equivalent or better
-   than the legacy path.
+3. Continue the layered Krawczyk audit with initial homogeneous ray-plane
+   coefficient construction, arbitrary sub-box restriction, rational
+   weights/ray-t bounds, and outside-span amplification.  Add conservative
+   clipping where it can prove exclusion or uniqueness.  Similarity and all
+   supported tensor orders are now gated for the function/Jacobian layer;
+   nonuniform affine transforms remain a separate ellipsoid target.  Keep
+   classifying the observed near-hit/grazing/duplicate-stage representation
+   differences and extending final-partition oracle gates before production
+   promotion.  Do not lower tree density until unsupported/capacity fallback
+   and every changed material partition are observable and proven equivalent
+   or better than the legacy path.
 4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
