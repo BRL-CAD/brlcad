@@ -495,8 +495,46 @@ brep_build_surface_data(struct brep_specific *bs)
 }
 
 
+static bool
+brep_edge_discrepancy(const ON_Brep &brep, const ON_BrepEdge &edge,
+    double &maximum)
+{
+    const ON_Interval edge_domain = edge.Domain();
+    if (edge.m_ti.Count() != 2 || !edge_domain.IsIncreasing())
+	return false;
+    maximum = 0.0;
+    for (int sample = 0; sample <= 32; ++sample) {
+	double edge_fraction = (double)sample / 32.0;
+	const ON_3dPoint edge_point = edge.PointAt(
+	    edge_domain.ParameterAt(edge_fraction));
+	if (!edge_point.IsValid())
+	    return false;
+	for (int side = 0; side < 2; ++side) {
+	    const int trim_index = edge.m_ti[side];
+	    if (trim_index < 0 || trim_index >= brep.m_T.Count())
+		return false;
+	    const ON_BrepTrim &trim = brep.m_T[trim_index];
+	    const ON_BrepFace *face = trim.Face();
+	    const ON_Surface *surface = face ? face->SurfaceOf() : NULL;
+	    const ON_Interval trim_domain = trim.Domain();
+	    if (!surface || !trim_domain.IsIncreasing())
+		return false;
+	    double trim_fraction = trim.m_bRev3d ? 1.0 - edge_fraction :
+		edge_fraction;
+	    const ON_3dPoint uv = trim.PointAt(
+		trim_domain.ParameterAt(trim_fraction));
+	    const ON_3dPoint lift = surface->PointAt(uv.x, uv.y);
+	    if (!uv.IsValid() || !lift.IsValid())
+		return false;
+	    maximum = std::max(maximum, edge_point.DistanceTo(lift));
+	}
+    }
+    return std::isfinite(maximum);
+}
+
+
 static void
-brep_build_edge_data(struct brep_specific *bs)
+brep_build_edge_data(struct brep_specific *bs, const struct bn_tol *tol)
 {
     bs->edge_records.clear();
     bs->edge_spans.clear();
@@ -527,7 +565,39 @@ brep_build_edge_data(struct brep_specific *bs)
 	record.edge_index = edge_index;
 	record.face_index[0] = brep.m_T[first_trim].FaceIndexOf();
 	record.face_index[1] = brep.m_T[second_trim].FaceIndexOf();
-	record.tolerance = edge.m_tolerance;
+	record.model_tolerance = tol && tol->dist >= 0.0 ? tol->dist : 0.0;
+	record.declared_tolerance = edge.m_tolerance;
+	record.tolerance = record.model_tolerance;
+	const bool declared = ON_IsValid(record.declared_tolerance) &&
+	    record.declared_tolerance >= 0.0;
+	if (declared)
+	    record.tolerance = std::max(record.tolerance,
+		record.declared_tolerance);
+	else
+	    record.tolerance_inferred = true;
+	for (int endpoint = 0; endpoint < 2; ++endpoint) {
+	    const int vertex_index = edge.m_vi[endpoint];
+	    if (vertex_index < 0 || vertex_index >= brep.m_V.Count())
+		continue;
+	    const double vertex_tolerance =
+		brep.m_V[vertex_index].m_tolerance;
+	    if (ON_IsValid(vertex_tolerance) && vertex_tolerance >= 0.0)
+		record.tolerance = std::max(record.tolerance,
+		    vertex_tolerance);
+	}
+	record.discrepancy_measured = brep_edge_discrepancy(brep, edge,
+	    record.measured_discrepancy);
+	if (record.tolerance_inferred && record.discrepancy_measured)
+	    record.tolerance = std::max(record.tolerance,
+		record.measured_discrepancy);
+	const double coordinate_scale = std::max(1.0,
+	    std::max(fabs(edge.PointAtStart().x),
+	    std::max(fabs(edge.PointAtStart().y),
+	    fabs(edge.PointAtStart().z))));
+	const double roundoff = std::max(ON_ZERO_TOLERANCE,
+	    128.0 * DBL_EPSILON * coordinate_scale);
+	record.discrepancy_authorized = record.discrepancy_measured &&
+	    record.measured_discrepancy <= record.tolerance + roundoff;
 	record.span_begin = bs->edge_spans.size();
 	if (record.face_index[0] < 0 || record.face_index[1] < 0) {
 	    bs->edge_records.push_back(record);
@@ -749,7 +819,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 	//bu_log("brep %s solid\n", (bs->is_solid) ? "is" : "is NOT");
     }
 
-    brep_build_edge_data(bs);
+    brep_build_edge_data(bs, tol);
     brep_build_surface_data(bs);
 
     //start = bu_gettime();
@@ -2239,7 +2309,7 @@ brep_trace_edges(struct rt_brep_shot_trace *trace,
 		++span_index) {
 	    const brep_edge_span &span = bs->edge_spans[span_index];
 	    const bool valid_tolerance = ON_IsValid(record.tolerance) &&
-		record.tolerance >= 0.0;
+		record.tolerance >= 0.0 && record.discrepancy_authorized;
 	    const double expansion = valid_tolerance ? record.tolerance : 0.0;
 	    if (valid_tolerance && brep_line_intersects_box(ray, span.bbox,
 		    expansion)) {
@@ -2276,14 +2346,21 @@ brep_trace_edges(struct rt_brep_shot_trace *trace,
 	observation.ray_dist = ray_dist;
 	observation.edge_parameter = edge_parameter;
 	observation.edge_tolerance = record.tolerance;
+	observation.model_tolerance = record.model_tolerance;
+	observation.declared_tolerance = record.declared_tolerance;
+	observation.measured_discrepancy = record.measured_discrepancy;
 	observation.edge_index = record.edge_index;
 	observation.face_index[0] = record.face_index[0];
 	observation.face_index[1] = record.face_index[1];
 	observation.candidate_spans = candidate_spans;
+	observation.discrepancy_measured = record.discrepancy_measured;
+	observation.discrepancy_authorized = record.discrepancy_authorized;
+	observation.tolerance_inferred = record.tolerance_inferred;
 	const double roundoff = std::max(ON_ZERO_TOLERANCE,
 	    128.0 * DBL_EPSILON * std::max(1.0, distance));
 	observation.within_edge_tolerance =
 	    ON_IsValid(record.tolerance) && record.tolerance >= 0.0 &&
+	    record.discrepancy_authorized &&
 	    distance <= record.tolerance + roundoff;
 	if (observation.within_edge_tolerance) {
 	    trace->edges_within_tolerance++;
@@ -4924,7 +5001,10 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 	}
 	specific->bvh = new BBNode(specific->brep->BoundingBox());
 	specific->is_solid = specific->brep->IsSolid(); // recompute solidity
-	brep_build_edge_data(specific);
+	const struct bn_tol *prepared_tol = stp->st_rtip ?
+	    &stp->st_rtip->rti_tol : NULL;
+	brep_build_edge_data(specific, prepared_tol);
+	brep_build_surface_data(specific);
 
 	Deserializer deserializer(*external);
 	const uint32_t num_children = deserializer.read_uint32();
