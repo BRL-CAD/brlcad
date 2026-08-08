@@ -454,6 +454,9 @@ RT_EXPORT extern int rt_bot_shot_specific(
     struct application *ap, struct seg *seghead);
 
 
+/* Allocation-free BREP surface-tree traversal capacity. */
+#define RT_BREP_MAX_LEAVES 128
+
 /* Fixed-capacity BREP shot observations for in-librt correctness tests.
  * Solver status indices match the private brep_solver_status_t order in
  * primitives/brep/brep.cpp.  Root classes are CLEAN_HIT, CLEAN_MISS,
@@ -463,7 +466,6 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_MAX_SURFACE_BOXES 64
 #define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_CLUSTERS 64
-#define RT_BREP_TRACE_MAX_LEAVES 128
 #define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
 #define RT_BREP_TRACE_ENTERING 0
 #define RT_BREP_TRACE_LEAVING 1
@@ -543,6 +545,7 @@ struct rt_brep_shot_trace {
     size_t fixed_leaf_stored;
     size_t fixed_leaf_overflow;
     size_t fixed_leaf_mismatches;
+    size_t fixed_leaf_fallback;
     size_t solver_calls;
     size_t solver_status[RT_BREP_TRACE_SOLVER_STATUS_COUNT];
     size_t candidate_roots;
