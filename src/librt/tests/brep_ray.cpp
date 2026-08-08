@@ -3751,16 +3751,31 @@ check_brep_interval_enclosures()
     const fastf_t root[2] = {0.5, 0.5};
     size_t cases = 0;
     size_t function_checks = 0;
+    size_t expansion_function_checks = 0;
     size_t derivative_checks = 0;
+    size_t expansion_derivative_checks = 0;
+    size_t expansion_interval_contractions = 0;
+    size_t expansion_interval_high_water = 0;
     size_t product_checks = 0;
+    size_t expansion_product_checks = 0;
+    size_t expansion_product_contractions = 0;
+    size_t expansion_product_high_water = 0;
+    size_t expansion_product_fallbacks = 0;
     size_t division_checks = 0;
     size_t linear_hull_checks = 0;
     size_t determinant_checks = 0;
     size_t determinant_signed = 0;
     size_t determinant_uncertain_checks = 0;
     size_t coefficient_checks = 0;
+    size_t expansion_coefficient_checks = 0;
+    size_t expansion_coefficient_contractions = 0;
+    size_t expansion_coefficient_high_water = 0;
     size_t restriction_checks = 0;
     size_t per_coefficient_restriction_checks = 0;
+    size_t expansion_restriction_checks = 0;
+    size_t expansion_restriction_contractions = 0;
+    size_t expansion_restriction_high_water = 0;
+    size_t expansion_normalization_fallbacks = 0;
     size_t reparameterization_checks = 0;
     size_t clip_checks = 0;
     size_t clip_contractions = 0;
@@ -3841,6 +3856,36 @@ check_brep_interval_enclosures()
 				plane_exponents[plane_scale], weight, equation);
 			    failures++;
 			}
+			expansion_coefficient_checks++;
+			expansion_coefficient_high_water = std::max(
+			    expansion_coefficient_high_water,
+			    observed.expansion_high_water);
+			const long double interval_width =
+			    (long double)observed.function_maximum[equation] -
+			    observed.function_minimum[equation];
+			const long double expansion_width =
+			    (long double)observed.
+				expansion_function_maximum[equation] -
+			    observed.expansion_function_minimum[equation];
+			if (!observed.expansion_available ||
+				(long double)observed.
+				    expansion_function_minimum[equation] >
+				exact_value ||
+				(long double)observed.
+				    expansion_function_maximum[equation] <
+				exact_value || expansion_width > interval_width) {
+			    std::printf("FAIL: expansion coefficient enclosure "
+				"scale=%d/%d/%d weight=%d equation=%d "
+				"width=%.9Lg/%.9Lg high=%zu\n",
+				coordinate_exponents[coordinate_scale],
+				direction_exponents[direction_scale],
+				plane_exponents[plane_scale], weight, equation,
+				expansion_width, interval_width,
+				observed.expansion_high_water);
+			    failures++;
+			}
+			if (expansion_width < interval_width)
+			    expansion_coefficient_contractions++;
 		    }
 		    const int64_t ray_dot_mantissa =
 			numerator_mantissa[0] + numerator_mantissa[1];
@@ -3915,7 +3960,46 @@ check_brep_interval_enclosures()
 			product_exponents[second_scale]);
 		    failures++;
 		}
+		fastf_t expansion_observed[2] = {};
+		size_t expansion_high_water = 0;
+		expansion_product_checks++;
+		if (!_rt_brep_expansion_interval_product_test(first, second,
+			expansion_observed, &expansion_high_water) ||
+			(long double)expansion_observed[0] > expected_minimum ||
+			(long double)expansion_observed[1] < expected_maximum ||
+			(long double)expansion_observed[1] -
+			    expansion_observed[0] >
+			(long double)observed[1] - observed[0]) {
+		    std::printf("FAIL: expansion interval product enclosure "
+			"case=%zu scale=%d/%d\n", interval_index,
+			product_exponents[first_scale],
+			product_exponents[second_scale]);
+		    failures++;
+		}
+		expansion_product_high_water = std::max(
+		    expansion_product_high_water, expansion_high_water);
+		if ((long double)expansion_observed[1] -
+			expansion_observed[0] <
+			(long double)observed[1] - observed[0])
+		    expansion_product_contractions++;
 	    }
+	}
+    }
+
+    {
+	const fastf_t denormal = std::ldexp(1.0,
+	    DBL_MIN_EXP - DBL_MANT_DIG);
+	const fastf_t first[2] = {denormal, denormal};
+	const fastf_t second[2] = {0.5, 0.5};
+	fastf_t observed[2] = {};
+	size_t high_water = 0;
+	if (_rt_brep_expansion_interval_product_test(first, second, observed,
+		&high_water)) {
+	    std::printf("FAIL: expansion product accepted unrepresentable "
+		"subnormal residual\n");
+	    failures++;
+	} else {
+	    expansion_product_fallbacks++;
 	}
     }
 
@@ -4110,6 +4194,21 @@ check_brep_interval_enclosures()
 		    failures++;
 		    continue;
 		}
+		struct rt_brep_interval_test_result expansion_observed = {};
+		size_t expansion_evaluation_high_water = 0;
+		if (!_rt_brep_expansion_interval_test(values[0], values[1],
+			u_order, v_order, coefficient_error, root,
+			&expansion_observed,
+			&expansion_evaluation_high_water)) {
+		    std::printf("FAIL: expansion interval audit unavailable "
+			"order=%d/%d scale=%d\n", u_order, v_order,
+			scale_exponent);
+		    failures++;
+		    continue;
+		}
+		expansion_interval_high_water = std::max(
+		    expansion_interval_high_water,
+		    expansion_evaluation_high_water);
 
 		for (int equation = 0; equation < 2; ++equation) {
 		    exact_dyadic midpoint = {};
@@ -4139,6 +4238,21 @@ check_brep_interval_enclosures()
 			    width_ratio);
 			failures++;
 		    }
+		    const long double expansion_lower =
+			expansion_observed.function_minimum[equation];
+		    const long double expansion_upper =
+			expansion_observed.function_maximum[equation];
+		    expansion_function_checks++;
+		    if (expansion_lower > nominal - error ||
+			    expansion_upper < nominal + error ||
+			    expansion_upper - expansion_lower > upper - lower) {
+			std::printf("FAIL: expansion function enclosure "
+			    "order=%d/%d scale=%d equation=%d\n", u_order,
+			    v_order, scale_exponent, equation);
+			failures++;
+		    }
+		    if (expansion_upper - expansion_lower < upper - lower)
+			expansion_interval_contractions++;
 
 		    for (int direction = 0; direction < 2; ++direction) {
 			const int degree = direction == 0 ? u_order - 1 :
@@ -4174,6 +4288,30 @@ check_brep_interval_enclosures()
 					"equation=%d direction=%d\n",
 					u_order, v_order, scale_exponent,
 					equation, direction);
+				    failures++;
+				}
+				const long double expansion_derivative_minimum =
+				    expansion_observed.jacobian_minimum
+					[equation][direction];
+				const long double expansion_derivative_maximum =
+				    expansion_observed.jacobian_maximum
+					[equation][direction];
+				expansion_derivative_checks++;
+				if (expansion_derivative_minimum >
+					derivative - derivative_error ||
+					expansion_derivative_maximum <
+					derivative + derivative_error ||
+					expansion_derivative_maximum -
+					expansion_derivative_minimum >
+					(long double)observed.jacobian_maximum
+					    [equation][direction] -
+					observed.jacobian_minimum
+					    [equation][direction]) {
+				    std::printf("FAIL: expansion derivative "
+					"enclosure order=%d/%d scale=%d "
+					"equation=%d direction=%d\n", u_order,
+					v_order, scale_exponent, equation,
+					direction);
 				    failures++;
 				}
 			    }
@@ -4297,6 +4435,57 @@ check_brep_interval_enclosures()
 						v_order, scale_exponent, restriction, i);
 					    failures++;
 					}
+				    }
+				}
+				fastf_t expansion_minimum[256] = {};
+				fastf_t expansion_maximum[256] = {};
+				size_t expansion_high_water = 0;
+				if (!individual_exact ||
+					!_rt_brep_expansion_restrict_test(
+					    values[equation], individual_error, u_order,
+					    v_order, minimum, maximum,
+					    expansion_minimum, expansion_maximum,
+					    &expansion_high_water)) {
+				    std::printf("FAIL: expansion restriction unavailable "
+					"order=%d/%d scale=%d case=%zu\n", u_order,
+					v_order, scale_exponent, restriction);
+				    failures++;
+				} else {
+				    expansion_restriction_high_water = std::max(
+					expansion_restriction_high_water,
+					expansion_high_water);
+				    for (size_t i = 0; i < count; ++i) {
+					const long double exact_minimum =
+					    exact_dyadic_value(exact_lower_output[i]);
+					const long double exact_maximum =
+					    exact_dyadic_value(exact_upper_output[i]);
+					expansion_restriction_checks++;
+					const long double interval_width =
+					    (long double)interval_maximum[i] -
+					    interval_minimum[i];
+					const long double expansion_width =
+					    (long double)expansion_maximum[i] -
+					    expansion_minimum[i];
+					if ((long double)expansion_minimum[i] >
+						exact_minimum ||
+						(long double)expansion_maximum[i] <
+						exact_maximum ||
+						expansion_width > interval_width) {
+					    std::printf("FAIL: expansion restriction "
+						"enclosure order=%d/%d scale=%d "
+						"case=%zu coefficient=%zu width=%.17Lg/%.17Lg "
+						"bounds=%.17Lg/%.17Lg:%.17Lg/%.17Lg\n",
+						u_order, v_order, scale_exponent,
+						restriction, i, expansion_width,
+						interval_width,
+						(long double)expansion_minimum[i],
+						exact_minimum,
+						(long double)expansion_maximum[i],
+						exact_maximum);
+					    failures++;
+					}
+					if (expansion_width < interval_width)
+					    expansion_restriction_contractions++;
 				    }
 				}
 			    }
@@ -4656,6 +4845,31 @@ check_brep_interval_enclosures()
 	}
     }
 
+    {
+	const fastf_t denormal = std::ldexp(1.0,
+	    DBL_MIN_EXP - DBL_MANT_DIG);
+	const fastf_t mixed_scale[4] = {
+	    4.0 * denormal, 1.0, -0.5, 0.25
+	};
+	const fastf_t mixed_error[4] = {
+	    2.0 * denormal, 0.0, 0.0, 0.0
+	};
+	const fastf_t minimum[2] = {0.0, 0.0};
+	const fastf_t maximum[2] = {0.75, 0.75};
+	fastf_t observed_minimum[4] = {};
+	fastf_t observed_maximum[4] = {};
+	size_t high_water = 0;
+	if (_rt_brep_expansion_restrict_test(mixed_scale, mixed_error, 2, 2,
+		minimum, maximum, observed_minimum, observed_maximum,
+		&high_water)) {
+	    std::printf("FAIL: expansion restriction accepted lossy "
+		"power-of-two normalization\n");
+	    failures++;
+	} else {
+	    expansion_normalization_fallbacks++;
+	}
+    }
+
     const double clip_roots[][2] = {
 	{0.125, 0.875}, {0.5, 0.5}, {0.9375, 0.0625}
     };
@@ -4722,16 +4936,30 @@ check_brep_interval_enclosures()
 
     if (!failures) {
 	std::printf("BREP interval enclosure audit: PASS cases=%zu "
-	    "function=%zu derivative=%zu product=%zu quotient=%zu "
-	    "linear-hull=%zu determinant=%zu/%zu+%zu coefficient=%zu "
-	    "restriction=%zu+%zu "
+	    "function=%zu+%zu derivative=%zu+%zu/%zu/%zu "
+	    "product=%zu+%zu/%zu/%zu+%zu quotient=%zu "
+	    "linear-hull=%zu determinant=%zu/%zu+%zu "
+	    "coefficient=%zu+%zu/%zu/%zu "
+	    "restriction=%zu+%zu+%zu/%zu/%zu "
+	    "normalization-fallback=%zu "
 	    "reparameterization=%zu "
 	    "clip=%zu/%zu "
 	    "max-width/error=%.9Lg/%.9Lg/%.9Lg\n",
-	    cases, function_checks, derivative_checks, product_checks,
+	    cases, function_checks, expansion_function_checks,
+	    derivative_checks, expansion_derivative_checks,
+	    expansion_interval_contractions, expansion_interval_high_water,
+	    product_checks, expansion_product_checks,
+	    expansion_product_contractions, expansion_product_high_water,
+	    expansion_product_fallbacks,
 	    division_checks, linear_hull_checks, determinant_signed,
 	    determinant_checks, determinant_uncertain_checks, coefficient_checks,
+	    expansion_coefficient_checks, expansion_coefficient_contractions,
+	    expansion_coefficient_high_water,
 	    restriction_checks, per_coefficient_restriction_checks,
+	    expansion_restriction_checks,
+	    expansion_restriction_contractions,
+	    expansion_restriction_high_water,
+	    expansion_normalization_fallbacks,
 	    reparameterization_checks, clip_contractions, clip_checks,
 	    maximum_function_width_ratio,
 	    maximum_restriction_width_ratio,
@@ -4771,6 +4999,8 @@ check_brep_fold_solver()
     size_t expected_roots = 0;
     size_t maximum_regular_solves = 0;
     size_t certificate_boxes = 0;
+    size_t expansion_certificate_boxes = 0;
+    size_t expansion_certificate_high_water = 0;
     size_t corridor_boxes = 0;
     size_t certificates_below_old_cutoff = 0;
     double minimum_separation = DBL_MAX;
@@ -5052,6 +5282,8 @@ check_brep_fold_solver()
 		}
 		struct rt_brep_determinant_test_result determinant = {};
 		struct rt_brep_krawczyk_test_result krawczyk = {};
+		struct rt_brep_krawczyk_test_result expansion_krawczyk = {};
+		size_t expansion_high_water = 0;
 		const fastf_t root[2] = {0.5, 0.5};
 		certificate_boxes++;
 		if (!_rt_brep_determinant_test(coefficients[0], errors[0],
@@ -5059,16 +5291,29 @@ check_brep_fold_solver()
 			!_rt_brep_krawczyk_test(coefficients[0], errors[0],
 			    coefficients[1], errors[1], 3, 3, root,
 			    &krawczyk) || !krawczyk.available ||
-			!krawczyk.certified) {
+			!krawczyk.certified ||
+			!_rt_brep_expansion_krawczyk_test(coefficients[0],
+			    errors[0], coefficients[1], errors[1], 3, 3,
+			    root, &expansion_krawczyk,
+			    &expansion_high_water) ||
+			!expansion_krawczyk.available ||
+			!expansion_krawczyk.certified) {
 		    std::printf("FAIL: fold certificate unavailable "
 			"separation=%.17g shear=2^%d side=%d "
-			"available/certified=%d/%d ratio=%.17g\n", separation,
+			"available/certified=%d/%d+%d/%d ratio=%.17g/%.17g\n",
+			separation,
 			parameter_shear_exponents[shear_index], side,
 			krawczyk.available, krawczyk.certified,
-			krawczyk.determinant_ratio);
+			expansion_krawczyk.available,
+			expansion_krawczyk.certified,
+			krawczyk.determinant_ratio,
+			expansion_krawczyk.determinant_ratio);
 		    failures++;
 		    continue;
 		}
+		expansion_certificate_boxes++;
+		expansion_certificate_high_water = std::max(
+		    expansion_certificate_high_water, expansion_high_water);
 		bool determinant_signed = true;
 		const size_t determinant_count =
 		    (size_t)determinant.u_order * determinant.v_order;
@@ -5096,12 +5341,14 @@ check_brep_fold_solver()
     if (!failures) {
 	std::printf("BREP fold solver corpus: PASS systems=%zu roots=%zu "
 	    "min-separation=%.9g max-error/residual=%.9g/%.9g "
-	    "max-regular-solves=%zu certificates=%zu/%zu corridors=%zu "
+	    "max-regular-solves=%zu certificates=%zu/%zu+%zu/%zu "
+	    "corridors=%zu "
 	    "min-det-ratio=%.9g\n",
 	    systems, expected_roots, minimum_separation,
 	    maximum_root_error, maximum_residual_ratio,
 	    maximum_regular_solves, certificate_boxes,
-	    certificates_below_old_cutoff, corridor_boxes,
+	    certificates_below_old_cutoff, expansion_certificate_boxes,
+	    expansion_certificate_high_water, corridor_boxes,
 	    minimum_determinant_ratio);
     }
     return failures;
@@ -5486,6 +5733,12 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	size_t fold_candidates = 0;
 	size_t fold_certified = 0;
 	double fold_minimum_ratio = DBL_MAX;
+	size_t expansion_attempts = 0;
+	size_t expansion_available = 0;
+	size_t expansion_certified = 0;
+	size_t expansion_failures = 0;
+	size_t expansion_high_water = 0;
+	double expansion_minimum_ratio = DBL_MAX;
 	double minimum_chord_ratio = DBL_MAX;
 	double maximum_chord_ratio = 0.0;
 	double maximum_endpoint_error = 0.0;
@@ -5516,6 +5769,7 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
     double maximum_prepared_error = 0.0;
     size_t grazing_rays = 0;
     size_t grazing_resolved_misses = 0;
+    size_t grazing_expansion_ratchets = 0;
     size_t grazing_gap_maximum_boxes = 0;
     size_t grazing_gap_rotated_exclusions = 0;
 
@@ -5590,10 +5844,27 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		summary.fold_candidates += trace.surface_fold_candidates;
 		summary.fold_certified +=
 		    trace.surface_fold_krawczyk_certified;
+		summary.expansion_attempts +=
+		    trace.surface_fold_expansion_attempts;
+		summary.expansion_available +=
+		    trace.surface_fold_expansion_available;
+		summary.expansion_certified +=
+		    trace.surface_fold_expansion_certified;
+		summary.expansion_failures +=
+		    trace.surface_fold_expansion_failures;
+		summary.expansion_high_water = std::max(
+		    summary.expansion_high_water,
+		    trace.surface_fold_expansion_high_water);
 		if (trace.surface_fold_krawczyk_available) {
 		    summary.fold_minimum_ratio = std::min(
 			summary.fold_minimum_ratio,
 			(double)trace.surface_fold_min_determinant_ratio);
+		}
+		if (trace.surface_fold_expansion_available) {
+		    summary.expansion_minimum_ratio = std::min(
+			summary.expansion_minimum_ratio,
+			(double)trace.
+			    surface_fold_expansion_min_determinant_ratio);
 		}
 		if (trace.prepared_production_fallback >= 0 &&
 			trace.prepared_production_fallback <
@@ -5652,6 +5923,55 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		if (!production_segments)
 		    brep_interval_ended[reverse] = true;
 		if (analytic_resolved && !production_segments) {
+		    size_t expansion_certificate_floor = SIZE_MAX;
+		    if (!std::strcmp(test.name, "high-condition") &&
+			    ratio_index == 5)
+			expansion_certificate_floor = 2;
+		    if (!std::strcmp(test.name, "extreme-condition") &&
+			    ratio_index == 4)
+			expansion_certificate_floor = 1;
+		    if (!std::strcmp(test.name, "extreme-condition") &&
+			    ratio_index == 5)
+			expansion_certificate_floor = 0;
+
+		    const bool known_expansion_case =
+			expansion_certificate_floor != SIZE_MAX;
+		    const bool expansion_improved =
+			trace.surface_fold_expansion_certified ||
+			trace.surface_fold_expansion_best_image_excess <
+			    trace.surface_fold_best_image_excess;
+		    const bool expansion_bad = !known_expansion_case ||
+			!trace.surface_fold_expansion_attempts ||
+			trace.surface_fold_expansion_available !=
+			    trace.surface_fold_expansion_attempts ||
+			trace.surface_fold_expansion_failures ||
+			!trace.surface_fold_expansion_high_water ||
+			trace.surface_fold_expansion_high_water >=
+			    RT_BREP_EXPANSION_CAPACITY ||
+			trace.surface_fold_expansion_certified <
+			    expansion_certificate_floor ||
+			!expansion_improved;
+		    if (known_expansion_case)
+			grazing_expansion_ratchets++;
+		    if (expansion_bad) {
+			std::printf("FAIL: affine grazing expansion ratchet %s "
+			    "ratio=%.3g reverse=%d "
+			    "attempts/available/certified/failures="
+			    "%zu/%zu/%zu/%zu floor=%zu "
+			    "excess=%.3g/%.3g high-water=%zu/%d\n",
+			    test.name,
+			    grazing_clearance_ratios[ratio_index], reverse,
+			    trace.surface_fold_expansion_attempts,
+			    trace.surface_fold_expansion_available,
+			    trace.surface_fold_expansion_certified,
+			    trace.surface_fold_expansion_failures,
+			    expansion_certificate_floor,
+			    trace.surface_fold_best_image_excess,
+			    trace.surface_fold_expansion_best_image_excess,
+			    trace.surface_fold_expansion_high_water,
+			    RT_BREP_EXPANSION_CAPACITY);
+			failures++;
+		    }
 		    grazing_resolved_misses++;
 		    grazing_gap_maximum_boxes = std::max(
 			grazing_gap_maximum_boxes,
@@ -5660,7 +5980,9 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			trace.surface_rotated_hull_exclusions;
 		    std::printf("Ellipsoid affine fold gap %s ratio=%.3g "
 			"reverse=%d boxes=%zu fold=%zu/%zu/%zu/%zu "
-			"min-ratio/excess=%.3g/%.3g\n", test.name,
+			"min-ratio/excess=%.3g/%.3g "
+			"expansion=%zu/%zu/%zu/%zu/%.3g/%.3g/%zu\n",
+			test.name,
 			grazing_clearance_ratios[ratio_index], reverse,
 			trace.surface_isolated_boxes,
 			trace.surface_fold_attempts,
@@ -5668,7 +5990,14 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			trace.surface_fold_krawczyk_available,
 			trace.surface_fold_krawczyk_certified,
 			trace.surface_fold_min_determinant_ratio,
-			trace.surface_fold_best_image_excess);
+			trace.surface_fold_best_image_excess,
+			trace.surface_fold_expansion_attempts,
+			trace.surface_fold_expansion_available,
+			trace.surface_fold_expansion_certified,
+			trace.surface_fold_expansion_failures,
+			trace.surface_fold_expansion_min_determinant_ratio,
+			trace.surface_fold_expansion_best_image_excess,
+			trace.surface_fold_expansion_high_water);
 		}
 		const bool reversal_mismatch = reverse &&
 		    production_result.segments != forward_production_segments;
@@ -6057,6 +6386,11 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	    grazing_resolved_misses);
 	failures++;
     }
+    if (grazing_expansion_ratchets != grazing_resolved_misses) {
+	std::printf("FAIL: ellipsoid affine expansion ratchets=%zu/%zu\n",
+	    grazing_expansion_ratchets, grazing_resolved_misses);
+	failures++;
+    }
     if (grazing_resolved_misses &&
 	    (grazing_gap_maximum_boxes > 2 ||
 	     !grazing_gap_rotated_exclusions)) {
@@ -6084,7 +6418,8 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	std::printf("Ellipsoid affine grazing ratio=% .3g rays=%zu "
 	    "segments=%zu/%zu selected=%zu "
 	    "fallback=%zu/%zu/%zu/%zu chord/T=%.3g/%.3g "
-	    "fold=%zu/%zu/%zu/%.3g max-error=%.3g\n",
+	    "fold=%zu/%zu/%zu/%.3g expansion=%zu/%zu/%zu/%zu/%.3g/%zu "
+	    "max-error=%.3g\n",
 	    grazing_clearance_ratios[ratio_index],
 	    summary.rays, summary.implicit_segments,
 	    summary.production_segments, summary.selected,
@@ -6097,6 +6432,11 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	    summary.fold_certified,
 	    summary.fold_minimum_ratio < DBL_MAX ?
 		summary.fold_minimum_ratio : 0.0,
+	    summary.expansion_attempts, summary.expansion_available,
+	    summary.expansion_certified, summary.expansion_failures,
+	    summary.expansion_minimum_ratio < DBL_MAX ?
+		summary.expansion_minimum_ratio : 0.0,
+	    summary.expansion_high_water,
 	    summary.maximum_endpoint_error);
     }
 
@@ -6115,8 +6455,10 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	    maximum_implicit_error, maximum_production_error,
 	    maximum_legacy_error, maximum_prepared_error);
 	std::printf("Ellipsoid affine grazing ratchet: PASS rays=%zu "
-	    "resolved-gaps=%zu floors=1e-6/1e-6/1e-4\n",
-	    grazing_rays, grazing_resolved_misses);
+	    "resolved-gaps=%zu expansion-ratchets=%zu "
+	    "floors=1e-6/1e-6/1e-4\n",
+	    grazing_rays, grazing_resolved_misses,
+	    grazing_expansion_ratchets);
     }
     return failures;
 }
