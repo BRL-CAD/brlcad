@@ -1941,6 +1941,230 @@ brep_trace_edge(const struct rt_brep_shot_trace &trace, int edge_index)
 }
 
 
+static ON_Xform
+cobb_similarity_transform(double scale, const ON_3dVector &translation)
+{
+    /* A cyclic axis permutation is a proper 120-degree rotation. */
+    ON_Xform xform(ON_Xform::IdentityTransformation);
+    xform[0][0] = 0.0;
+    xform[0][1] = 0.0;
+    xform[0][2] = scale;
+    xform[0][3] = translation.x;
+    xform[1][0] = scale;
+    xform[1][1] = 0.0;
+    xform[1][2] = 0.0;
+    xform[1][3] = translation.y;
+    xform[2][0] = 0.0;
+    xform[2][1] = scale;
+    xform[2][2] = 0.0;
+    xform[2][3] = translation.z;
+    return xform;
+}
+
+
+static ON_3dPoint
+cobb_transform_point(const ON_Xform &xform, const ON_3dPoint &point)
+{
+    return ON_3dPoint(
+	xform[0][0] * point.x + xform[0][1] * point.y +
+	xform[0][2] * point.z + xform[0][3],
+	xform[1][0] * point.x + xform[1][1] * point.y +
+	xform[1][2] * point.z + xform[1][3],
+	xform[2][0] * point.x + xform[2][1] * point.y +
+	xform[2][2] * point.z + xform[2][3]);
+}
+
+
+static ON_3dVector
+cobb_transform_vector(const ON_Xform &xform, const ON_3dVector &vector)
+{
+    return ON_3dVector(
+	xform[0][0] * vector.x + xform[0][1] * vector.y +
+	xform[0][2] * vector.z,
+	xform[1][0] * vector.x + xform[1][1] * vector.y +
+	xform[1][2] * vector.z,
+	xform[2][0] * vector.x + xform[2][1] * vector.y +
+	xform[2][2] * vector.z);
+}
+
+
+static int
+check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
+{
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    cobb_seam_frame frame;
+    double measured_gap = 0.0;
+    double displacement = 0.0;
+    ON_Brep *base = cobb_bowed_seam_variant(pristine, origin, -tol->dist,
+	frame, measured_gap, displacement);
+    delete pristine;
+    if (!base) {
+	std::printf("FAIL: Cobb transform-invariance construction\n");
+	return 1;
+    }
+
+    struct transform_case {
+	const char *name;
+	double scale;
+	ON_3dVector translation;
+	bool rotate;
+    } cases[] = {
+	{"identity", 1.0, ON_3dVector(0.0, 0.0, 0.0), false},
+	{"rotated-translated", 1.0, ON_3dVector(13.0, -17.0, 29.0), true},
+	{"small-similarity", 0.01, ON_3dVector(1.25, -2.5, 5.0), true},
+	{"large-similarity", 1.0e4,
+	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), true}
+    };
+    double reference_existing[2] = {0.0, 0.0};
+    int failures = 0;
+
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const transform_case &test = cases[case_index];
+	ON_Xform xform = test.rotate ?
+	    cobb_similarity_transform(test.scale, test.translation) :
+	    ON_Xform(ON_Xform::IdentityTransformation);
+	ON_Brep *variant = new ON_Brep(*base);
+	if (!variant->Transform(xform)) {
+	    std::printf("FAIL: Cobb %s BREP transform\n", test.name);
+	    delete variant;
+	    failures++;
+	    continue;
+	}
+	/* ON_Brep tolerances are model-space lengths.  Restore their exact
+	 * similarity-scaled values independently of Transform's policy. */
+	for (int vertex_index = 0; vertex_index < variant->m_V.Count();
+		++vertex_index)
+	    variant->m_V[vertex_index].m_tolerance =
+		base->m_V[vertex_index].m_tolerance * test.scale;
+	for (int edge_index = 0; edge_index < variant->m_E.Count(); ++edge_index)
+	    variant->m_E[edge_index].m_tolerance =
+		base->m_E[edge_index].m_tolerance * test.scale;
+
+	struct bn_tol case_tol = *tol;
+	case_tol.dist = tol->dist * test.scale;
+	case_tol.dist_sq = case_tol.dist * case_tol.dist;
+	struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+	if (!rtip) {
+	    std::printf("FAIL: Cobb %s rt_i construction\n", test.name);
+	    delete variant;
+	    failures++;
+	    continue;
+	}
+	rtip->rti_tol = case_tol;
+	struct resource resource = {};
+	rt_init_resource(&resource, 0, rtip);
+
+	struct rt_brep_internal variant_internal = {};
+	variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	variant_internal.brep = variant;
+	struct rt_db_internal variant_intern;
+	RT_DB_INTERNAL_INIT(&variant_intern);
+	variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	variant_intern.idb_type = ID_BREP;
+	variant_intern.idb_meth = &OBJ[ID_BREP];
+	variant_intern.idb_ptr = &variant_internal;
+	struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+	if (!stp) {
+	    std::printf("FAIL: Cobb %s BREP prep\n", test.name);
+	    failures++;
+	} else {
+	    const double clearance_ratios[] = {0.9, 0.0, -0.9};
+	    for (size_t state_index = 0; state_index <
+		    sizeof(clearance_ratios) / sizeof(clearance_ratios[0]);
+		    ++state_index) {
+		const double clearance = clearance_ratios[state_index] *
+		    tol->dist;
+		const int expected_state = clearance > 0.0 ? 1 :
+		    (clearance < 0.0 ? -1 : 0);
+		for (int reverse = 0; reverse <= 1; ++reverse) {
+		    const sampled_ray base_ray = cobb_seam_grazing_ray(frame,
+			origin, radius, clearance, reverse != 0);
+		    const ON_3dPoint base_ray_origin(base_ray.origin);
+		    const ON_3dVector base_direction(base_ray.direction);
+		    const ON_3dPoint transformed_origin =
+			cobb_transform_point(xform, base_ray_origin);
+		    ON_3dVector transformed_direction =
+			cobb_transform_vector(xform, base_direction);
+		    if (!transformed_direction.Unitize()) {
+			std::printf("FAIL: Cobb %s transformed direction\n",
+			    test.name);
+			failures++;
+			continue;
+		    }
+		    sampled_ray ray;
+		    VSET(ray.origin, transformed_origin.x,
+			transformed_origin.y, transformed_origin.z);
+		    VSET(ray.direction, transformed_direction.x,
+			transformed_direction.y, transformed_direction.z);
+		    struct rt_brep_shot_trace trace;
+		    (void)shoot_brep_trace(stp, rtip, &resource, ray, trace);
+		    const struct rt_brep_trace_edge *edge =
+			brep_trace_edge(trace, frame.edge_index);
+		    const size_t expected_closures = expected_state == 1 ? 1 : 0;
+		    const int expected_direction = reverse ?
+			RT_BREP_TRACE_ENTERING : RT_BREP_TRACE_LEAVING;
+		    const double coordinate_scale = std::max(radius * test.scale,
+			std::max(fabs(test.translation.x),
+			std::max(fabs(test.translation.y),
+			fabs(test.translation.z))));
+		    const double normalized_limit = std::max(1.0e-9,
+			4096.0 * DBL_EPSILON * coordinate_scale / test.scale);
+		    const double normalized_root_limit = std::max(
+			normalized_limit, 0.01 * tol->dist);
+		    bool bad = !edge || !edge->candidate_spans ||
+			!edge->within_edge_tolerance || !edge->sector_valid ||
+			edge->closest_state != expected_state ||
+			fabs(edge->distance / test.scale - fabs(clearance)) >
+			normalized_limit ||
+			fabs(edge->ray_dist / test.scale - 2.0 * radius) >
+			normalized_limit ||
+			trace.closure_candidates != expected_closures;
+		    if (expected_closures) {
+			if (case_index == 0)
+			    reference_existing[reverse] =
+				trace.closure_existing_dist;
+			bad = bad || trace.closure_edge_index != frame.edge_index ||
+			    trace.closure_missing_direction != expected_direction ||
+			    fabs(trace.closure_edge_dist / test.scale -
+			    2.0 * radius) > normalized_limit ||
+			    fabs(trace.closure_existing_dist / test.scale -
+			    reference_existing[reverse]) > normalized_root_limit ||
+			    (reverse ?
+			    trace.closure_edge_dist >= trace.closure_existing_dist :
+			    trace.closure_edge_dist <= trace.closure_existing_dist);
+		    }
+		    if (bad) {
+			std::printf("FAIL: Cobb %s classifier state=%d "
+			    "reverse=%d observed=%d distance=%.17g "
+			    "edge-t=%.17g closure=%zu/%zu direction=%d/%d "
+			    "existing-t=%.17g\n", test.name, expected_state,
+			    reverse, edge ? edge->closest_state : -99,
+			    edge ? edge->distance : INFINITY,
+			    edge ? edge->ray_dist : INFINITY,
+			    trace.closure_candidates, expected_closures,
+			    trace.closure_missing_direction,
+			    expected_direction, trace.closure_existing_dist);
+			failures++;
+		    }
+		}
+	    }
+	    free_solid(stp);
+	}
+	rt_clean_resource_basic(rtip, &resource);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+    }
+
+    delete base;
+    if (!failures)
+	std::printf("Cobb classifier similarity invariance: PASS\n");
+    return failures;
+}
+
+
 static int
 check_brep_edge_sector_fixture(const char *label, ON_Brep *brep,
     int target_edge_index, ON_3dVector inside, const struct bn_tol *tol,
@@ -2205,6 +2429,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t leaks_during_hit_cleanup = 0;
     size_t leaks_with_target_edge_evidence = 0;
     size_t leaks_with_inside_sector_evidence = 0;
+    size_t leaks_with_shadow_closure = 0;
     size_t sector_inside = 0;
     size_t sector_contact = 0;
     size_t sector_outside = 0;
@@ -2222,6 +2447,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "edge_candidates,prepared_edge_spans,candidate_edge_spans,"
 	    "target_edge_distance,target_edge_tolerance,target_edge_spans,"
 	    "target_edge_within,target_sector_valid,target_closest_state\n");
+	std::printf("cobb_closure_columns,direction,g_over_T,h_over_T,reverse,"
+	    "candidate_count,edge_index,edge_t,existing_t,missing_direction\n");
 	std::printf("cobb_root_columns,direction,g_over_T,h_over_T,reverse,"
 	    "root_index,face,t,u,v,normal_dot,trim_distance,trim_status,"
 	    "hit_class,adjacent_face\n");
@@ -2332,6 +2559,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.edge_observations != trace.stored_edges ||
 			    trace.manifold_edges != 12 ||
 			    trace.prepared_edge_spans != 12 ||
+			    (trace.final_hits != 1 &&
+			    trace.closure_candidates != 0) ||
 			    trace.candidate_edge_spans >
 			    trace.prepared_edge_spans) {
 			std::printf("FAIL: bowed Cobb trace accounting sign=%d "
@@ -2484,6 +2713,15 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    const bool crack_leak = clearance > 0.0 &&
 			implicit_result.partitions > 0 &&
 			variant_result.partitions == 0;
+		    if (clearance <= 0.0 && trace.closure_candidates != 0) {
+			std::printf("FAIL: bowed Cobb exterior/contact closure "
+			    "sign=%d g/T=%.3g h/T=%.3g reverse=%d "
+			    "candidates=%zu edge=%d\n", sign,
+			    gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index], reverse,
+			    trace.closure_candidates, trace.closure_edge_index);
+			failures++;
+		    }
 		    if (gap_ratios[ratio_index] <= 1.0 && crack_leak)
 			below_envelope_crack_leaks++;
 		    if (gap_ratios[ratio_index] <= 1.0 && crack_leak) {
@@ -2492,6 +2730,34 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			if (target_edge && target_edge->sector_valid &&
 				target_edge->closest_state == 1)
 			    leaks_with_inside_sector_evidence++;
+			if (trace.closure_candidates == 1 &&
+				trace.closure_edge_index == frame.edge_index)
+			    leaks_with_shadow_closure++;
+			const int expected_missing_direction = reverse ?
+			    RT_BREP_TRACE_ENTERING : RT_BREP_TRACE_LEAVING;
+			const bool closure_ordered = reverse ?
+			    trace.closure_edge_dist < trace.closure_existing_dist :
+			    trace.closure_edge_dist > trace.closure_existing_dist;
+			if (trace.closure_candidates != 1 ||
+				trace.closure_edge_index != frame.edge_index ||
+				trace.closure_missing_direction !=
+				expected_missing_direction ||
+				!closure_ordered || !target_edge ||
+				fabs(trace.closure_edge_dist -
+				target_edge->ray_dist) > edge_distance_limit) {
+			    std::printf("FAIL: bowed Cobb shadow closure sign=%d "
+				"g/T=%.3g h/T=%.3g reverse=%d candidates=%zu "
+				"edge=%d/%d direction=%d/%d t=%.17g/%.17g\n",
+				sign, gap_ratios[ratio_index],
+				clearance_ratios[clearance_index], reverse,
+				trace.closure_candidates,
+				trace.closure_edge_index, frame.edge_index,
+				trace.closure_missing_direction,
+				expected_missing_direction,
+				trace.closure_edge_dist,
+				trace.closure_existing_dist);
+			    failures++;
+			}
 			if (unique_candidates < 2) {
 			    leaks_before_candidate_storage++;
 			} else if (trace.raw_hits < 2) {
@@ -2544,6 +2810,14 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    target_edge ? target_edge->within_edge_tolerance : -1,
 			    target_edge ? target_edge->sector_valid : -1,
 			    target_edge ? target_edge->closest_state : -99);
+			std::printf("cobb_closure,%s,%.9g,%.9g,%d,%zu,%d,"
+			    "%.17g,%.17g,%d\n",
+			    sign > 0 ? "outward" : "inward",
+			    measured_gap / tol->dist, clearance / tol->dist,
+			    reverse, trace.closure_candidates,
+			    trace.closure_edge_index, trace.closure_edge_dist,
+			    trace.closure_existing_dist,
+			    trace.closure_missing_direction);
 			for (size_t root_index = 0;
 				root_index < trace.stored_roots; ++root_index) {
 			    const struct rt_brep_trace_root &root =
@@ -2603,14 +2877,16 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	"uncertainty-band=%zu outside-band=%zu band-invalid=%zu "
 	"below-envelope-leaks=%zu reversal-inconsistencies=%zu "
 	"leak-stages=%zu/%zu/%zu edge-evidence=%zu "
-	"inside-evidence=%zu sector-states=%zu/%zu/%zu "
+	"inside-evidence=%zu shadow-closure=%zu "
+	"sector-states=%zu/%zu/%zu "
 	"max-edge-error=%.3g max-lift-error=%.3g max-calibration=%.3g\n",
 	total_rays, differing_partitions, uncertainty_band_differences,
 	excessive_differences, uncertainty_band_invalid,
 	below_envelope_crack_leaks, reversal_inconsistencies,
 	leaks_before_candidate_storage, leaks_during_trim_classification,
 	leaks_during_hit_cleanup, leaks_with_target_edge_evidence,
-	leaks_with_inside_sector_evidence, sector_inside, sector_contact,
+	leaks_with_inside_sector_evidence, leaks_with_shadow_closure,
+	sector_inside, sector_contact,
 	sector_outside, maximum_edge_distance_error, maximum_lift_error,
 	maximum_calibration_error);
     free_prepared_model(implicit_model);
@@ -2791,6 +3067,7 @@ main(int argc, char **argv)
     failures += check_brep_edge_sector_box(&rtip->rti_tol, rtip, &resp);
     failures += check_brep_edge_sector_concave(&rtip->rti_tol, rtip, &resp);
     failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
+    failures += check_cobb_classifier_transform_invariance(&rtip->rti_tol);
     failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb,
 	rtip, &resp);
     failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);
