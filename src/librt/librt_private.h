@@ -604,6 +604,12 @@ struct rt_brep_shot_trace {
     size_t local_root_duplicates;
     struct rt_brep_trace_local_root
 	local_roots[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    size_t legacy_unique_roots;
+    size_t legacy_unique_roots_matched;
+    size_t legacy_unique_roots_unmatched;
+    size_t local_unique_roots;
+    size_t local_unique_roots_matched;
+    size_t local_unique_roots_unmatched;
     fastf_t local_cluster_tolerance;
     size_t local_root_clusters;
     size_t stored_local_clusters;
