@@ -60,6 +60,7 @@ struct soltab {
     struct rt_i *               st_rtip;        /**< @brief "up" pointer to rt_i */
     long                        st_uses;        /**< @brief Usage count, for instanced solids */
     int                         st_id;          /**< @brief Solid ident */
+    int                         st_prep_complete; /**< @brief prep publication flag */
     point_t                     st_center;      /**< @brief Centroid of solid */
     fastf_t                     st_aradius;     /**< @brief Radius of APPROXIMATING sphere */
     fastf_t                     st_bradius;     /**< @brief Radius of BOUNDING sphere */
@@ -77,7 +78,7 @@ struct soltab {
     struct bound_rpp *          st_piece_rpps;  /**< @brief bounding RPP of each piece of this solid */
 };
 
-#define RT_SOLTAB_INIT_ZERO {BU_LIST_INIT_ZERO, BU_LIST_INIT_ZERO, NULL, NULL, 0, 0, VINIT_ZERO, 0.0, 0.0, NULL, NULL, VINIT_ZERO, VINIT_ZERO, 0, BU_PTBL_INIT_ZERO, NULL, DB_FULL_PATH_INIT_ZERO, 0, 0, NULL}
+#define RT_SOLTAB_INIT_ZERO {BU_LIST_INIT_ZERO, BU_LIST_INIT_ZERO, NULL, NULL, 0, 0, 0, VINIT_ZERO, 0.0, 0.0, NULL, NULL, VINIT_ZERO, VINIT_ZERO, 0, BU_PTBL_INIT_ZERO, NULL, DB_FULL_PATH_INIT_ZERO, 0, 0, NULL}
 
 #define st_name         st_dp->d_namep
 #define RT_SOLTAB_NULL  ((struct soltab *)0)
