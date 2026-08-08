@@ -2478,8 +2478,11 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			transformed_origin.y, transformed_origin.z);
 		    VSET(ray.direction, transformed_direction.x,
 			transformed_direction.y, transformed_direction.z);
+		    const ray_result production_result = shoot_solid(stp, rtip,
+			&resource, ray.origin, ray.direction);
 		    struct rt_brep_shot_trace trace;
-		    (void)shoot_brep_trace(stp, rtip, &resource, ray, trace);
+		    const int trace_hits = shoot_brep_trace(stp, rtip,
+			&resource, ray, trace);
 		maximum_fixed_leaves = std::max(maximum_fixed_leaves,
 		    trace.fixed_leaf_count);
 		maximum_fixed_hits = std::max(maximum_fixed_hits,
@@ -2639,6 +2642,14 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			    trace.closure_edge_dist : trace.continuation_dist <=
 			    trace.closure_edge_dist) ||
 			    trace.closure_shadow_segments != 1 ||
+			    trace_hits != 2 || trace.final_segments != 1 ||
+			    production_result.segments != 1 ||
+			    fabs(production_result.in_dist -
+			    trace.closure_shadow_in_dist) >
+			    normalized_root_limit * test.scale ||
+			    fabs(production_result.out_dist -
+			    trace.closure_shadow_out_dist) >
+			    normalized_root_limit * test.scale ||
 			    trace.closure_shadow_in_dist >=
 			    trace.closure_shadow_out_dist;
 		    } else {
@@ -2646,7 +2657,9 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			    trace.continuation_candidates != 0 ||
 			    trace.continuation_certified_candidates != 0 ||
 			    trace.continuation_certificate_boxes != 0 ||
-			    trace.closure_shadow_segments != 0;
+			    trace.closure_shadow_segments != 0 || trace_hits != 0 ||
+			    trace.final_segments != 0 ||
+			    production_result.segments != 0;
 		    }
 		    if (bad) {
 			std::printf("FAIL: Cobb %s classifier state=%d "
@@ -3077,6 +3090,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t excessive_differences = 0;
     size_t uncertainty_band_invalid = 0;
     size_t below_envelope_crack_leaks = 0;
+    size_t below_envelope_legacy_cases = 0;
+    size_t below_envelope_repairs = 0;
     size_t reversal_inconsistencies = 0;
     size_t leaks_before_candidate_storage = 0;
     size_t leaks_during_trim_classification = 0;
@@ -3526,6 +3541,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    const bool crack_leak = clearance > 0.0 &&
 			implicit_result.partitions > 0 &&
 			variant_result.partitions == 0;
+		    const bool legacy_crack_case =
+			gap_ratios[ratio_index] <= 1.0 && clearance > 0.0 &&
+			implicit_result.partitions > 0 && trace.final_hits == 1;
 		    if (clearance <= 0.0 && trace.closure_candidates != 0) {
 			std::printf("FAIL: bowed Cobb exterior/contact closure "
 			    "sign=%d g/T=%.3g h/T=%.3g reverse=%d "
@@ -3537,7 +3555,11 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    }
 		    if (gap_ratios[ratio_index] <= 1.0 && crack_leak)
 			below_envelope_crack_leaks++;
-		    if (gap_ratios[ratio_index] <= 1.0 && crack_leak) {
+		    if (legacy_crack_case) {
+			below_envelope_legacy_cases++;
+			if (variant_result.partitions == 1 &&
+				trace.final_segments == 1)
+			    below_envelope_repairs++;
 			const size_t unique_local_roots =
 			    trace.stored_local_clusters;
 			if (unique_local_roots == 1) {
@@ -3662,6 +3684,16 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				trace.continuation_normal_dot);
 			    failures++;
 			}
+			if (variant_result.partitions != 1 ||
+				trace.final_segments != 1) {
+			    std::printf("FAIL: bowed Cobb certified repair was not "
+				"published sign=%d g/T=%.3g h/T=%.3g reverse=%d "
+				"partitions=%zu segments=%zu\n", sign,
+				gap_ratios[ratio_index],
+				clearance_ratios[clearance_index], reverse,
+				variant_result.partitions, trace.final_segments);
+			    failures++;
+			}
 			if (unique_candidates < 2) {
 			    leaks_before_candidate_storage++;
 			} else if (trace.raw_hits < 2) {
@@ -3670,9 +3702,17 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    leaks_during_hit_cleanup++;
 			}
 		    }
-		    /* Preserve the measured defect as a one-way ratchet: a future
-		     * repair may close any of these cracks, but leakage must not
-		     * spread deeper than the actual support mismatch. */
+		    if (gap_ratios[ratio_index] > 1.0 &&
+			    trace.closure_candidates != 0) {
+			std::printf("FAIL: bowed Cobb above-model-tolerance "
+			    "closure sign=%d g/T=%.3g h/T=%.3g reverse=%d "
+			    "candidates=%zu\n", sign, gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index], reverse,
+			    trace.closure_candidates);
+			failures++;
+		    }
+		    /* Outside the measured support mismatch, the deliberately bowed
+		     * surface must not change the implicit solid classification. */
 		    if (gap_ratios[ratio_index] <= 1.0 &&
 			    clearance > 1.01 * measured_gap &&
 			    implicit_result.partitions !=
@@ -3894,10 +3934,20 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	}
     }
 
+    if (!below_envelope_legacy_cases || below_envelope_crack_leaks ||
+	    below_envelope_repairs != below_envelope_legacy_cases) {
+	std::printf("FAIL: bowed Cobb production repair coverage "
+	    "legacy=%zu repaired=%zu leaks=%zu\n",
+	    below_envelope_legacy_cases, below_envelope_repairs,
+	    below_envelope_crack_leaks);
+	failures++;
+    }
+
     std::printf("Cobb bowed seam matrix: rays=%zu differing=%zu "
 	"uncertainty-band=%zu outside-band=%zu band-invalid=%zu "
-	"below-envelope-leaks=%zu reversal-inconsistencies=%zu "
-	"leak-stages=%zu/%zu/%zu edge-evidence=%zu "
+	"below-envelope-leaks=%zu legacy-cases=%zu repairs=%zu "
+	"reversal-inconsistencies=%zu legacy-stages=%zu/%zu/%zu "
+	"edge-evidence=%zu "
 	"inside-evidence=%zu shadow-closure=%zu "
 	"shadow-continuation=%zu certified-continuation=%zu "
 	"shadow-segment=%zu local-clusters=%zu/%zu/%zu "
@@ -3906,7 +3956,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	"max-continuation-error=%.3g max-calibration=%.3g\n",
 	total_rays, differing_partitions, uncertainty_band_differences,
 	excessive_differences, uncertainty_band_invalid,
-	below_envelope_crack_leaks, reversal_inconsistencies,
+	below_envelope_crack_leaks, below_envelope_legacy_cases,
+	below_envelope_repairs,
+	reversal_inconsistencies,
 	leaks_before_candidate_storage, leaks_during_trim_classification,
 	leaks_during_hit_cleanup, leaks_with_target_edge_evidence,
 	leaks_with_inside_sector_evidence, leaks_with_shadow_closure,

@@ -26,8 +26,9 @@ now supplies both the legacy unsewn patch set and a closed 8-vertex/12-edge
 solid; the pristine sewn form matches the implicit sphere on its first 8,000
 shared lines.  An endpoint-preserving bowed support-seam sweep now calibrates
 actual 3D discrepancy and records grazing behavior across 416 directed rays.
-It has reproduced a below-tolerance crack leak without yet changing seam
-policy.  Fixed-capacity raw-shot tracing now distinguishes missing physical
+It retains 15 reproducible legacy one-event crack cases and now repairs all 15
+in production without closing any g > T, contact, or exterior case.  Fixed-
+capacity raw-shot tracing now distinguishes missing physical
 roots from trim rejection and legacy hit cleanup without changing production
 behavior.  Direct shared-edge observations also prove that every current
 below-envelope leak has eligible 3D evidence on the intended mated edge.
@@ -35,15 +36,15 @@ Compact positive-weight rational Bezier spans and conservative control-hull
 boxes for eligible edges are now prepared in both normal and cached prep.
 An observation-only cross-section classifier validates incident trim lifts and
 distinguishes material-side, contact, and exterior edge proximity.  A further
-shadow-only event classifier now identifies uniquely repairable unmatched
-solid hits from that evidence and is invariant under tested similarities.
+event classifier now identifies uniquely repairable unmatched solid hits from
+that evidence and is invariant under tested similarities.
 Exact-parameter positive-weight surface spans and conservative ray-plane
 coefficient exclusion are prepared, and a bounded adjacent-support
-continuation solve recovers the missing bowed-seam endpoints in shadow mode.
+continuation solve recovers the missing bowed-seam endpoints.
 Fixed-capacity de Casteljau subdivision now narrows ordinary span candidates
 to conservative UV and ray-t boxes while reporting all workspace limits.
 Bounded outside-span reparameterization now certifies the continuation root
-and assembles an oracle-matching material interval in shadow mode.
+and assembles an oracle-matching material interval in production.
 Every retained ordinary surface box now also runs an allocation-free bounded
 local corrector.  Its shadow roots reproduce the resolved sphere grazing
 limit independently of SurfaceTree seeds and remain invariant across the
@@ -387,10 +388,13 @@ ESTABLISHED FINDINGS
     authorization after scaling.  The present prep measurement is a fixed
     33-sample observation, deliberately reduced from an expensive 257-sample
     diagnostic.  It is not a conservative discrepancy proof, so this policy
-    remains shadow-only and production activation still requires knot-aware
-    adaptive bounds.  Cached prep now explicitly rebuilds both edge and
-    surface derived records using the active rti tolerance; the serialized
-    cache remains version zero.
+    cannot by itself authorize general production closure.  The narrowly
+    promoted one-event resolver additionally requires both incident trim
+    lifts evaluated at the event's edge parameter to be within rti_tol.dist,
+    plus unique topology/sector evidence and a complete root certificate.
+    General edge-envelope policy still requires knot-aware adaptive bounds.
+    Cached prep now explicitly rebuilds both edge and surface derived records
+    using the active rti tolerance; the serialized cache remains version zero.
 
 29. A retained coefficient box can seed a mathematical surface root without
     consulting the legacy SurfaceTree.  Trace mode maps a fixed deterministic
@@ -626,14 +630,15 @@ IMPLEMENTATION CHECKLIST
         sharp-convex inside/contact/outside behavior under ray reversal.
     [x] Gate sharp convex, re-entrant concave, and periodic same-surface edge
         sectors for inside/contact/outside states under ray reversal.
-    [x] Classify uniquely compatible unmatched solid events in shadow mode,
+    [x] Classify uniquely compatible unmatched solid events and activate the
+        fully certified subset in production,
         including ordered missing directions and non-activation on target
         contact/exterior states.
     [x] Gate edge-sector and closure classifications under rotation,
         translation, and 0.01x/10,000x uniform scaling with scaled model
         tolerances, including bounded local-root counts and positions.
     [x] Recover the missing controlled bowed-seam endpoint with a bounded,
-        allocation-free adjacent-support continuation in shadow mode and gate
+        allocation-free adjacent-support continuation and gate
         it against the implicit oracle and similarities.
     [ ] Qualify general trim/edge parameter correspondence and add vertex-fan
         sector fixtures.
@@ -671,11 +676,12 @@ IMPLEMENTATION CHECKLIST
                 including total count, exact order, and overflow reporting.
             [x] Promote bounded production leaf collection to the fixed array
                 with pre-solve fallback to the legacy list on overflow.
-            [ ] Move the live solver loop to fixed root/event storage with a
-                clean pre-mutation fallback to the allocating implementation.
+            [x] Move live raw-hit sorting and cleanup to fixed event storage,
+                with a clean pre-mutation fallback to the allocating
+                implementation on capacity overflow.
     [x] Assemble the uniquely certified continuation and existing event into
-        an ordered material interval in shadow mode and gate both endpoints
-        against the implicit oracle.
+        an ordered production material interval and gate both endpoints
+        against the implicit oracle and similarity transforms.
     [ ] Reduce default tree density only after shadow equivalence passes.
     [ ] Version and verify prep cache changes.
 
@@ -964,21 +970,26 @@ Cobb sphere baseline:
     derived records are still not serialized, so cache version zero remains
     compatible.
 
-  * A shadow-only closure pass runs after legacy direction cleanup and only
+  * The closure pass runs after direction cleanup and only
     considers solid, non-plate BREPs with one unmatched final hit.  A candidate
     must be a tolerance-qualified valid inside sector, share the hit's face,
     and have the t ordering required for the opposite event direction.  The
     bowed matrix hard-gates one and only one target-edge candidate for every
-    current below-envelope leak; all 15 are found without changing production
-    segment lists.
+    legacy below-envelope leak.  Production activation additionally requires
+    the measured face/edge discrepancy to be no larger than rti_tol.dist;
+    both incident trim lifts at the actual event parameter must independently
+    be within rti_tol.dist.  Imported topology tolerances larger than the
+    model tolerance cannot silently broaden closure, and the sampled prep
+    discrepancy is not treated as sufficient proof by itself.
 
   * A dedicated similarity corpus transforms the representative inward
     g/T=1, h/T=0.9 bowed case and its contact/exterior companions.  Identity,
     rigid rotation/translation, translated 0.01x scale, and translated 10,000x
     scale preserve the target edge, candidate span, inside/contact/outside
     state, unique closure count, missing enter/leave direction, and event
-    ordering in both ray directions.  BREP edge/vertex and ray model
-    tolerances are explicitly scaled as model-space lengths.
+    ordering and the published repaired interval in both ray directions.
+    BREP edge/vertex and ray model tolerances are explicitly scaled as model-
+    space lengths.
 
   * Prepared face records now decompose exact-parameter NURBS surfaces at all
     nonempty knot rectangles into positive-weight rational Bezier patches.
@@ -989,14 +1000,15 @@ Cobb sphere baseline:
     and six spans; the representative near-tangent line retains two spans and
     this count is unchanged by all similarity fixtures.
 
-  * After a unique authorized closure is found, the trace path can reflect the
+  * After a unique authorized closure is found, the resolver reflects the
     existing adjacent-face UV root across the associated trim tangent and run
     a fixed-budget, line-searched solve on a bounded extension of that
     prepared Bezier support.  Every current leak produces one correctly
     oriented opposite event.  The maximum endpoint error against the implicit
     sphere over all 15 is approximately 2.71e-8 mm.  Continuation attempts,
     candidate count, face/UV/t, residual, normal dot, and iteration count are
-    available in --cobb-report.  Production segments remain unchanged.
+    available in --cobb-report.  A certified continuation now becomes a
+    CRACK_HIT endpoint retaining face, UV, normal, and adjacency provenance.
 
   * Scalar de Casteljau restriction now subdivides each non-excluded
     ray-plane coefficient pair using a fixed 64-box depth-first stack and
@@ -1102,12 +1114,21 @@ Cobb sphere baseline:
     fixed isolator to retain only boxes belonging to the recovered root
     cluster.  No retained box may cover the original root.
 
-  * All 15 current crack continuations are certified.  The worst case visits
-    93 boxes with stack high-water 20 and retains a t cluster no wider than
-    approximately 5.15e-5 mm.  Pairing the certified event with the original
-    opposite-direction hit produces one shadow segment whose endpoints match
-    the implicit sphere within 1e-7 mm.  The CSV continuation record exposes
-    certificate counts, capacity state, t bounds, and shadow interval.
+  * All 15 legacy one-event crack cases are certified and repaired in
+    production.  The worst eligible case visits 93 boxes with stack high-
+    water 20 and retains a t cluster no wider than approximately 3.47e-5 mm.
+    Every repaired endpoint matches the implicit sphere within 1e-7 mm.  The
+    416-ray matrix reports zero below-envelope leaks, while g > T, contact,
+    exterior, ambiguous, edge-overflow, and edge-evaluation-failure cases do
+    not activate closure.  The CSV continuation record exposes certificate
+    counts, capacity state, t bounds, and the resulting interval.
+
+  * Closure also requires the repaired material interval to be at least the
+    model distance tolerance after conversion through |ray direction|.
+    Certificate t comparisons use a span/coordinate-conditioned numerical
+    tolerance rather than a fixed model-space constant.  These conditions and
+    the published segment endpoints pass identity, rigid, 0.01x, and 10,000x
+    similarity cases when geometry and model tolerances scale together.
 
   cmake --build .build --target \
     librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
@@ -1119,7 +1140,8 @@ Cobb sphere baseline:
     PASS: 13/13; rt_brep_ray completes in approximately 8 seconds with
     trace-only edge qualification, fixed leaf-traversal equivalence, and
     allocating/no-allocation trim equivalence enabled across all 416 bowed-
-    seam rays
+    seam rays.  The matrix retains 15 legacy one-event cases, repairs all 15
+    in production, and has zero below-envelope leaks.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -1141,8 +1163,9 @@ Cobb sphere baseline:
     ctest --test-dir .build-asan -j4 \
     -R '^(rt_brep_ray|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
     --output-on-failure
-    PASS: 12/12 after fixed-hit production promotion, including solid and
-    plate segment publication, with no ASan or UBSan diagnostics.
+    PASS: 12/12 after fixed-hit and certified crack-closure production
+    promotion, including solid and plate segment publication, with no ASan or
+    UBSan diagnostics.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
