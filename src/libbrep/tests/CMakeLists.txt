@@ -41,6 +41,12 @@ brlcad_add_test(
   COMMAND test_brep_fast "${CMAKE_CURRENT_SOURCE_DIR}/cyl_hole.g" PEG_ROT_LONG.s
 )
 
+# Fast display recovery must retain thin nonlinear loops, reconstruct periodic
+# caps and bands, repair malformed pcurves from their 3-D edges, and report
+# exact zero-area imports separately from triangulation failures.
+brlcad_addexec(test_brep_fast_repair brep_fast_repair.cpp "libbrep" TEST)
+brlcad_add_test(NAME brep_fast_repair COMMAND test_brep_fast_repair)
+
 # Standalone CDT hole-triangulation tests: verify that bg_nested_poly_triangulate
 # produces no triangles whose centroid falls inside a hole polygon, for two
 # faces from the NIST MBE PMI sample that are known to have multiple holes.
@@ -69,6 +75,7 @@ cmakefiles(
   brep_cdt_boundary_steiner.cpp
   brep_cdt_spurious_components.cpp
   brep_fast.cpp
+  brep_fast_repair.cpp
   brep_cdt_mesh.cpp
   cyl_hole.g
   cyls_holes.g

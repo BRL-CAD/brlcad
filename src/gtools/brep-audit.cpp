@@ -48,6 +48,7 @@ struct geom_result {
     int requested_items = 0;
     int completed_items = 0;
     int failed_items = 0;
+    int skipped_items = 0;
     bool hit_time_limit = false;
     bool hit_memory_limit = false;
     bool hit_point_limit = false;
@@ -282,6 +283,7 @@ shaded_result(struct db_i *dbip, struct directory *dp,
     result.requested_items = report.requested_faces;
     result.completed_items = report.completed_faces;
     result.failed_items = report.failed_faces;
+    result.skipped_items = report.skipped_degenerate_faces;
     result.hit_time_limit = report.hit_time_limit;
     result.hit_memory_limit = report.hit_memory_limit;
     result.hit_point_limit = report.hit_point_limit;
@@ -419,6 +421,7 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< ",\"requested_items\":" << result.requested_items
 	<< ",\"completed_items\":" << result.completed_items
 	<< ",\"failed_items\":" << result.failed_items
+	<< ",\"skipped_items\":" << result.skipped_items
 	<< ",\"limits\":{\"time\":" << (result.hit_time_limit ? "true" : "false")
 	<< ",\"memory\":" << (result.hit_memory_limit ? "true" : "false")
 	<< ",\"points\":" << (result.hit_point_limit ? "true" : "false") << "}"
