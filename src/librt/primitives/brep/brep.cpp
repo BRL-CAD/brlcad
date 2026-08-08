@@ -366,6 +366,104 @@ struct brep_build_bvh_parallel {
 };
 
 
+static bool
+brep_bezier_control_bbox(const ON_BezierCurve &curve, ON_BoundingBox &bbox)
+{
+    if (curve.Dimension() != 3 || curve.CVCount() < 1)
+	return false;
+    bool grow = false;
+    for (int i = 0; i < curve.CVCount(); ++i) {
+	ON_4dPoint cv;
+	if (!curve.GetCV(i, cv) || !cv.IsValid() ||
+		!(cv.w > 0.0) || !std::isfinite(cv.w))
+	    return false;
+	const ON_3dPoint point(cv.x / cv.w, cv.y / cv.w, cv.z / cv.w);
+	if (!point.IsValid() || !bbox.Set(point, grow))
+	    return false;
+	grow = true;
+    }
+    return bbox.IsValid();
+}
+
+
+static void
+brep_build_edge_data(struct brep_specific *bs)
+{
+    bs->edge_records.clear();
+    bs->edge_spans.clear();
+    if (!bs->brep)
+	return;
+
+    const ON_Brep &brep = *bs->brep;
+    size_t maximum_spans = 0;
+    for (int edge_index = 0; edge_index < brep.m_E.Count(); ++edge_index) {
+	const ON_BrepEdge &edge = brep.m_E[edge_index];
+	if (edge.m_ti.Count() == 2)
+	    maximum_spans += std::max(0, edge.SpanCount());
+    }
+    bs->edge_records.reserve(brep.m_E.Count());
+    bs->edge_spans.reserve(maximum_spans);
+
+    for (int edge_index = 0; edge_index < brep.m_E.Count(); ++edge_index) {
+	const ON_BrepEdge &edge = brep.m_E[edge_index];
+	if (edge.m_ti.Count() != 2)
+	    continue;
+	const int first_trim = edge.m_ti[0];
+	const int second_trim = edge.m_ti[1];
+	if (first_trim < 0 || first_trim >= brep.m_T.Count() ||
+		second_trim < 0 || second_trim >= brep.m_T.Count())
+	    continue;
+
+	brep_edge_record record;
+	record.edge_index = edge_index;
+	record.face_index[0] = brep.m_T[first_trim].FaceIndexOf();
+	record.face_index[1] = brep.m_T[second_trim].FaceIndexOf();
+	record.tolerance = edge.m_tolerance;
+	record.span_begin = bs->edge_spans.size();
+	if (record.face_index[0] < 0 || record.face_index[1] < 0) {
+	    bs->edge_records.push_back(record);
+	    continue;
+	}
+
+	ON_NurbsCurve nurbs;
+	/* A return value of two preserves the locus but not the edge's
+	 * parameterization.  Local topology work needs both, so leave such
+	 * curves on the explicit unsupported/fallback path. */
+	if (edge.GetNurbForm(nurbs) != 1 || nurbs.m_order < 2 ||
+		nurbs.m_cv_count < nurbs.m_order) {
+	    bs->edge_records.push_back(record);
+	    continue;
+	}
+
+	bool complete = true;
+	for (int span_index = 0;
+		span_index <= nurbs.m_cv_count - nurbs.m_order;
+		++span_index) {
+	    const double lower = nurbs.m_knot[span_index + nurbs.m_order - 2];
+	    const double upper = nurbs.m_knot[span_index + nurbs.m_order - 1];
+	    if (!(lower < upper))
+		continue;
+	    brep_edge_span span;
+	    if (!nurbs.ConvertSpanToBezier(span_index, span.curve) ||
+		    !brep_bezier_control_bbox(span.curve, span.bbox)) {
+		complete = false;
+		break;
+	    }
+	    span.edge_domain = ON_Interval(lower, upper);
+	    span.edge_index = edge_index;
+	    bs->edge_spans.push_back(span);
+	}
+	if (!complete || bs->edge_spans.size() == record.span_begin) {
+	    bs->edge_spans.resize(record.span_begin);
+	} else {
+	    record.span_count = bs->edge_spans.size() - record.span_begin;
+	    record.supported = true;
+	}
+	bs->edge_records.push_back(record);
+    }
+}
+
+
 static void
 brep_build_bvh_surface_tree(int cpu, void *data)
 {
@@ -541,6 +639,8 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 	bs->is_solid = bs->brep->IsSolid();
 	//bu_log("brep %s solid\n", (bs->is_solid) ? "is" : "is NOT");
     }
+
+    brep_build_edge_data(bs);
 
     //start = bu_gettime();
     /* do the majority of real work here */
@@ -1058,8 +1158,9 @@ brep_trace_root(struct rt_brep_shot_trace *trace, const ON_BrepFace *face,
 }
 
 
+template <typename CurveType>
 static bool
-brep_line_curve_distance_at(const ON_Curve &curve, const ON_Ray &ray,
+brep_line_curve_distance_at(const CurveType &curve, const ON_Ray &ray,
     double parameter, double &distance, double &ray_dist)
 {
     const double direction_squared = ray.m_dir * ray.m_dir;
@@ -1076,19 +1177,19 @@ brep_line_curve_distance_at(const ON_Curve &curve, const ON_Ray &ray,
 }
 
 
+template <typename CurveType>
 static bool
-brep_line_curve_distance(const ON_Curve &curve, const ON_Ray &ray,
+brep_line_curve_distance(const CurveType &curve, const ON_Ray &ray,
     double &parameter, double &distance, double &ray_dist)
 {
     const ON_Interval domain = curve.Domain();
     if (!domain.IsIncreasing())
 	return false;
 
-    /* This fixed-work observation is intentionally independent of the UV
-     * trim tree.  It records actual points on the shared 3D edge.  The
-     * production resolver will replace the uniform seed grid with prepared
-     * Bezier spans before this evidence can change shot behavior. */
-    const int sample_count = 65;
+    /* Each input is one prepared Bezier span.  This bounded minimization is
+     * diagnostic only; a production event resolver must subdivide every
+     * ambiguous span conservatively rather than assuming it is unimodal. */
+    const int sample_count = 17;
     int best_sample = -1;
     distance = DBL_MAX;
     for (int sample = 0; sample < sample_count; ++sample) {
@@ -1161,32 +1262,85 @@ brep_line_curve_distance(const ON_Curve &curve, const ON_Ray &ray,
 }
 
 
+static bool
+brep_line_intersects_box(const ON_Ray &ray, const ON_BoundingBox &bbox,
+    double expansion)
+{
+    if (!bbox.IsValid() || !(expansion >= 0.0) || !std::isfinite(expansion))
+	return false;
+    double minimum_t = -DBL_MAX;
+    double maximum_t = DBL_MAX;
+    for (int axis = 0; axis < 3; ++axis) {
+	const double lower = bbox.m_min[axis] - expansion;
+	const double upper = bbox.m_max[axis] + expansion;
+	if (fabs(ray.m_dir[axis]) <= DBL_MIN) {
+	    if (ray.m_origin[axis] < lower || ray.m_origin[axis] > upper)
+		return false;
+	    continue;
+	}
+	double first = (lower - ray.m_origin[axis]) / ray.m_dir[axis];
+	double second = (upper - ray.m_origin[axis]) / ray.m_dir[axis];
+	if (first > second)
+	    std::swap(first, second);
+	minimum_t = std::max(minimum_t, first);
+	maximum_t = std::min(maximum_t, second);
+	if (minimum_t > maximum_t)
+	    return false;
+    }
+    return true;
+}
+
+
 static void
-brep_trace_edges(struct rt_brep_shot_trace *trace, const ON_Brep *brep,
+brep_trace_edges(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs,
     const ON_Ray &ray)
 {
-    if (!trace || !brep)
+    if (!trace || !bs)
 	return;
-    for (int edge_index = 0; edge_index < brep->m_E.Count(); ++edge_index) {
-	const ON_BrepEdge &edge = brep->m_E[edge_index];
-	if (edge.m_ti.Count() != 2)
-	    continue;
-	const int first_trim = edge.m_ti[0];
-	const int second_trim = edge.m_ti[1];
-	if (first_trim < 0 || first_trim >= brep->m_T.Count() ||
-		second_trim < 0 || second_trim >= brep->m_T.Count())
-	    continue;
-	const int first_face = brep->m_T[first_trim].FaceIndexOf();
-	const int second_face = brep->m_T[second_trim].FaceIndexOf();
-	if (first_face < 0 || second_face < 0)
-	    continue;
+    trace->prepared_edge_spans = bs->edge_spans.size();
+    for (std::vector<brep_edge_record>::const_iterator record_it =
+	    bs->edge_records.begin(); record_it != bs->edge_records.end();
+	    ++record_it) {
+	const brep_edge_record &record = *record_it;
 	trace->manifold_edges++;
+	if (!record.supported) {
+	    trace->edge_evaluation_failures++;
+	    continue;
+	}
 
 	double edge_parameter = 0.0;
 	double distance = DBL_MAX;
 	double ray_dist = 0.0;
-	if (!brep_line_curve_distance(edge, ray, edge_parameter, distance,
-		ray_dist)) {
+	size_t candidate_spans = 0;
+	bool evaluated = false;
+	for (size_t span_index = record.span_begin;
+		span_index < record.span_begin + record.span_count;
+		++span_index) {
+	    const brep_edge_span &span = bs->edge_spans[span_index];
+	    const bool valid_tolerance = ON_IsValid(record.tolerance) &&
+		record.tolerance >= 0.0;
+	    const double expansion = valid_tolerance ? record.tolerance : 0.0;
+	    if (valid_tolerance && brep_line_intersects_box(ray, span.bbox,
+		    expansion)) {
+		candidate_spans++;
+		trace->candidate_edge_spans++;
+	    }
+
+	    double local_parameter = 0.0;
+	    double candidate_distance = DBL_MAX;
+	    double candidate_ray_dist = 0.0;
+	    if (!brep_line_curve_distance(span.curve, ray, local_parameter,
+		    candidate_distance, candidate_ray_dist))
+		continue;
+	    evaluated = true;
+	    if (candidate_distance < distance) {
+		distance = candidate_distance;
+		ray_dist = candidate_ray_dist;
+		edge_parameter = span.edge_domain.ParameterAt(local_parameter);
+	    }
+	}
+	if (!evaluated) {
 	    trace->edge_evaluation_failures++;
 	    continue;
 	}
@@ -1201,15 +1355,16 @@ brep_trace_edges(struct rt_brep_shot_trace *trace, const ON_Brep *brep,
 	observation.distance = distance;
 	observation.ray_dist = ray_dist;
 	observation.edge_parameter = edge_parameter;
-	observation.edge_tolerance = edge.m_tolerance;
-	observation.edge_index = edge_index;
-	observation.face_index[0] = first_face;
-	observation.face_index[1] = second_face;
+	observation.edge_tolerance = record.tolerance;
+	observation.edge_index = record.edge_index;
+	observation.face_index[0] = record.face_index[0];
+	observation.face_index[1] = record.face_index[1];
+	observation.candidate_spans = candidate_spans;
 	const double roundoff = std::max(ON_ZERO_TOLERANCE,
 	    128.0 * DBL_EPSILON * std::max(1.0, distance));
 	observation.within_edge_tolerance =
-	    ON_IsValid(edge.m_tolerance) && edge.m_tolerance >= 0.0 &&
-	    distance <= edge.m_tolerance + roundoff;
+	    ON_IsValid(record.tolerance) && record.tolerance >= 0.0 &&
+	    distance <= record.tolerance + roundoff;
 	if (observation.within_edge_tolerance)
 	    trace->edges_within_tolerance++;
     }
@@ -1465,7 +1620,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     bs->bvh->intersectsHierarchy(r, inters);
     if (trace)
 	trace->intersected_leaves = inters.size();
-    brep_trace_edges(trace, bs->brep, r);
+    brep_trace_edges(trace, bs, r);
     if (inters.empty())
 	return 0; // MISS
 
@@ -3516,6 +3671,7 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 	}
 	specific->bvh = new BBNode(specific->brep->BoundingBox());
 	specific->is_solid = specific->brep->IsSolid(); // recompute solidity
+	brep_build_edge_data(specific);
 
 	Deserializer deserializer(*external);
 	const uint32_t num_children = deserializer.read_uint32();

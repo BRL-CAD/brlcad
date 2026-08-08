@@ -475,6 +475,7 @@ struct rt_brep_trace_edge {
     fastf_t edge_tolerance;
     int edge_index;
     int face_index[2];
+    size_t candidate_spans;
     int within_edge_tolerance;
 };
 
@@ -492,6 +493,8 @@ struct rt_brep_shot_trace {
     size_t stored_edges;
     size_t edge_overflow;
     size_t edges_within_tolerance;
+    size_t prepared_edge_spans;
+    size_t candidate_edge_spans;
     struct rt_brep_trace_edge edges[RT_BREP_TRACE_MAX_EDGES];
     size_t raw_hits;
     size_t after_near_miss;
