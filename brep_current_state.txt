@@ -1943,6 +1943,114 @@ ESTABLISHED FINDINGS
     parents and their intervening strips must be accounted for before the two
     observations can be deduplicated into a physical event.
 
+57. The real one-sided corridor and fold-boundary strip theorem is now
+    implemented as an allocation-free, trace-only proof.  The central
+    decomposition is deliberately stronger than a grid of local root solves.
+    In a candidate-conditioned equation frame, let phi be the regular
+    equation and p its regular parameter.  The parent corridor first proves
+    that phi_p has one strict sign and that phi has strict, opposed signs on
+    the two p boundaries for every weak parameter q.  The implicit function
+    is consequently one continuous p(q) graph crossing the whole weak
+    interval.  The frame and the choice of p are nominal conditioning hints;
+    only outward coefficient intervals authorize a proof.
+
+    A full-corridor Bernstein sign for det(J) is still accepted when it is
+    available, but it is unnecessarily strong near a fold.  The new bounded
+    graph proof subdivides q, restricts the original coefficient intervals to
+    each slab, and applies at most four interval-Newton contractions to phi in
+    p.  It then requires one common strict determinant sign on the enclosure
+    of phi=0 in every slab.  This is sufficient: psi is strictly monotone
+    along the unique phi graph even if det(J) changes sign elsewhere in the
+    two-dimensional corridor.  Restriction failure, nonfinite arithmetic,
+    sign conflict, depth exhaustion, or fixed-workspace exhaustion is
+    explicitly inconclusive.
+
+    An important failed intermediate implementation recomputed det(J) after
+    restricting and reparameterizing a very thin p interval.  Reparameterizing
+    the equations multiplies the p derivatives, and hence the determinant, by
+    the contracted interval width.  That artificial scale loss made a strict
+    sign harder to prove as the graph enclosure improved.  The corrected path
+    forms the determinant polynomial on the q slab before p contraction,
+    tracks the contracted p range back in the original slab coordinates, and
+    restricts that already-formed determinant polynomial to the range.  Its
+    values and sign are preserved without the extra derivative scale factor.
+    Power-of-two equation normalization remains a best-effort zero-set-
+    preserving aid inside graph contraction, never an independent authority.
+
+    The adjacent fold-boundary strip uses the same regular-graph contraction.
+    It covers the weak interval with a fixed depth-eight binary traversal and
+    proves on every contracted graph enclosure that either phi or psi has a
+    coefficient hull excluding zero.  Thus no second system root lies between
+    the certified corridor and its fold-side boundary.  The traversal uses a
+    16-entry stack, a 511-box visit cap, fixed tensor arrays, and no allocation.
+    Arithmetic, restriction, depth, and workspace failures have separate
+    telemetry and retain the dense-tree fallback.  An exact-contact fixture
+    intentionally reaches the depth bound and remains unexcluded, confirming
+    that the path does not turn contact uncertainty into a material interval.
+
+    The first whole-box hull chooses the regular/weak axis.  A
+    candidate-Jacobian frame conditions the two equations, after which each
+    real candidate tries the dyadic fractions 1/16, 1/8, 1/4, 3/8, 1/2, 5/8,
+    3/4, and 7/8 between the candidate and its nearest weak boundary.  Direct
+    restrictions always start from the original expansion coefficient
+    intervals.  A complete shadow proof requires expansion Krawczyk existence,
+    a unique one-sided corridor, and exclusion of the remaining fold strip.
+    None of these outcomes yet terminates traversal or publishes a hit.
+
+    The strengthened dyadic synthetic graph corpus has 72 corridor cases:
+    six root separations, both sides, both parameter orientations, and
+    independent equation scales 2^-100, 1, and 2^100.  A coupled term is large
+    enough that the determinant has no strict sign on the whole corridor in
+    every case.  Restriction to the contracted implicit graph recovers the
+    expected strict sign in all 72, using 162 contractions.  Another 72
+    root-free strip cases are all excluded, using 198 contractions, while the
+    exact-contact case remains inconclusive.  The optimized fold summary is:
+
+      graph=72/72/1 boxes=72/162+81/198 high=7
+
+    where the first triplet is corridor/strip/contact case count and the two
+    box pairs report determinant-graph and strip boxes/contractions.
+
+    The determinant restriction itself has a new exact-dyadic enclosure gate.
+    It covers every supported even determinant order from 2 through 30 in
+    both tensor directions, all three half/quarter subintervals, scales
+    2^-200, 1, and 2^200, plus the 30x30 maximum-order corner.  All 33,408
+    checked output coefficients contain the exact restricted lower and upper
+    controls.  The older complete determinant construction audits remain
+    172,800 exact nominal coefficients plus 9,408 coefficient-varying interval
+    cases.  This directly guards the corrected preserve-scale operation rather
+    than relying only on a real-ray behavioral success.
+
+    All six hard directed affine shots now permanently ratchet the proof path
+    even if a later production fix eliminates their recorded miss.  Both
+    condition-100 parents have complete existence, corridor uniqueness, and
+    strip exclusion in each ray direction.  Every condition-1,000 candidate
+    also has its unique corridor and both adjacent strips covered.  At h/T=
+    1e-6, expansion Krawczyk existence still certifies only one of the two
+    candidates per direction; at h/T=1e-8 it certifies neither.  The remaining
+    per-shot complete-proof counts are therefore 2, 2, 1, 1, 0, 0 even though
+    corridor and strip counts are 2/2 throughout.  This isolates the next
+    blocker to candidate existence precision or upstream frame construction,
+    not missing parent coverage.
+
+    Optimized `--fold-only`, `--affine-only`, and `--interval-only` pass.  The
+    independent fold and affine modes were run concurrently as separate
+    processes; their optimized wall times are approximately 0.04 and 1.42
+    seconds.  ASan/UBSan `--fold-only`, `--affine-only`, and `--interval-only`
+    likewise pass when sharded as independent processes.  The full optimized
+    corpus ends with `BREP ray correctness corpus: PASS`.  Process-level build
+    and test parallelism is safe and useful now.  Shared-process parallelism
+    remains a separate qualification task because OpenNURBS/model fixtures and
+    global state must first be audited, and arithmetic counters must stay
+    deterministic.
+
+    Production behavior remains unchanged.  The next arithmetic target is to
+    propagate exact expansions or a rigorous construction-error envelope
+    through the candidate plane frame and then recover the six missing
+    existence certificates.  Only after existence, parent proof, cross-span
+    event identity, and minimum-segment/contact classification agree may the
+    shadow event replace the dense-tree fallback.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -2131,6 +2239,10 @@ IMPLEMENTATION CHECKLIST
                         candidate corpus across parameter symmetries and exact
                         binary equation conditioning, with explicit work and
                         capacity gates and no production publication authority.
+                    [x] Add allocation-free implicit-graph determinant and
+                        fold-strip coverage with bounded depth/workspace,
+                        explicit inconclusive outcomes, and exact-contact
+                        fallback.
                     [x] Preserve per-coefficient or expansion enclosures and
                         exact-audit fused construction, restriction,
                         Bernstein products, and the selected precision tier.
@@ -2138,6 +2250,9 @@ IMPLEMENTATION CHECKLIST
                             determinant coefficients through order 30 and
                             exact-audit nominal values at every supported
                             order plus independent uncertainties through 8x8.
+                        [x] Preserve determinant value scale by restricting the
+                            pre-contraction polynomial to the graph enclosure;
+                            exact-audit restriction through order 30.
                         [x] Preserve binary64 per-coefficient intervals through
                             real fused ray-plane construction,
                             reparameterization, and arbitrary local
@@ -2152,8 +2267,11 @@ IMPLEMENTATION CHECKLIST
                         [x] Gate the theorem on 36 analytic sheared one-sided
                             corridors paired with strict Krawczyk existence
                             boxes down to determinant ratio 5.68e-14.
-                        [ ] Apply it to both real parents for all six affine
-                            misses, including the fold-boundary strip.
+                        [x] Apply the unique-corridor and fold-strip proof to
+                            both real parents for all six affine misses.
+                        [ ] Supply strict existence for the remaining six real
+                            candidates; current complete-parent counts are
+                            2/2/1/1/0/0 despite 2/2 corridor/strip coverage.
                     [ ] Add every failed certificate/aspect-ratio/precision
                         case to a focused C/C++ fold-solver corpus.
                         [x] Keep all twelve real hard boxes in the focused
@@ -2855,6 +2973,10 @@ Cobb sphere baseline:
     Repeated after fixed-size expansion coefficient/restriction/Krawczyk
     arithmetic and the real certificate ratchet: focused `--interval-only`,
     `--fold-only`, and `--affine-only` pass with no ASan or UBSan diagnostic.
+    Repeated after implicit-graph determinant and fold-strip coverage:
+    process-sharded `--interval-only`, `--fold-only`, and `--affine-only` pass
+    with halt_on_error=1 and no ASan or UBSan diagnostic.  The interval gate
+    includes 33,408 exact determinant-restriction checks through order 30.
     Leak detection remains disabled because the host ptrace wrapper makes
     LeakSanitizer terminate before the test begins.
 
@@ -2936,13 +3058,13 @@ NEXT ACTIONS
    restriction paths are exact-audited.  All twelve hard candidates are
    recovered in the shadow real path.  Binary64 Krawczyk certifies none; the
    portable fixed-size expansion tier certifies six and reduces the hardest
-   remaining image excess from about 41 to 11--13.  Next prove both real
-   one-sided parents complete, including their fold-boundary strips, and use a
-   candidate-centered conditioned corridor rather than more symmetric depth.
-   If the two condition-1,000 h/T=1e-8 candidates remain precision-limited,
-   propagate exact expansions or explicit error through plane-frame
-   construction.  Then deduplicate the resulting physical event across the
-   common span and apply the minimum-segment/contact policy.
+   remaining image excess from about 41 to 11--13.  Both real corridors and
+   fold-boundary strips are now covered for all twelve candidates; the
+   remaining complete-proof counts 2/2/1/1/0/0 are solely the expansion
+   existence floor.  Propagate exact expansions or an explicit construction-
+   error envelope through the candidate plane frame and certify the remaining
+   six condition-1,000 candidates.  Then deduplicate the resulting physical
+   event across the common span and apply the minimum-segment/contact policy.
    Separate old-solver root absence from prepared
    box explosion and local-corrector failure.  Find a lower-cost dispatch or
    fallback strategy
@@ -2959,9 +3081,11 @@ NEXT ACTIONS
    combined-error Cobb families, then remove the remaining duplicated Cobb
    control net from brep_invalid.cpp while independently gating its invalid
    topology behavior.
-6. Shard the monolithic `rt_brep_ray` regression into deterministic CTest
-   processes for interval arithmetic, fold proofs, affine grazing, Crofton,
-   Cobb/seam, and directed partitions.  Run those processes with `ctest -j`;
-   keep pure arithmetic counters deterministic and do not introduce shared-
-   process parallelism into OpenNURBS/model construction until separately
-   qualified.  The exhaustive interval matrix is the dominant ASan runtime.
+6. Register the existing interval, fold, and affine focused modes as separate
+   deterministic CTest processes, then split Crofton, Cobb/seam, and directed
+   partitions out of the remaining monolithic `rt_brep_ray` path.  The three
+   focused modes already pass when run concurrently as independent processes.
+   Use `ctest -j`, keep pure arithmetic counters deterministic, and do not
+   introduce shared-process parallelism into OpenNURBS/model construction
+   until separately qualified.  The exhaustive interval matrix is the
+   dominant ASan runtime.

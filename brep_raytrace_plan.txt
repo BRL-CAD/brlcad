@@ -1236,6 +1236,76 @@ complete.  Before production use, also profile the roughly 100-KiB transient
 maximum-order blossom stack and place it in an existing bounded shot workspace
 if needed.
 
+The implemented one-sided parent theorem separates regular-graph existence
+from determinant behavior away from that graph.  In a conditioned equation
+frame, designate phi as the regular equation, p as the regular parameter, and
+q as the weak parameter.  Require an interval hull for phi_p that excludes
+zero with one strict sign, and require strict opposed phi signs on the two p
+boundaries for the entire q range.  Those facts prove that phi=0 is one
+continuous graph p(q) crossing the parent.  The conditioning matrix and the
+choice of p may be selected from nominal candidate/Jacobian information, but
+they are hints only: the two boundary tests and derivative test use the
+outward Bernstein coefficient intervals after transformation.
+
+Do not require det(J) to have one sign throughout the full two-dimensional
+parent if that test is inconclusive.  Along phi=0,
+
+  d psi(p(q), q) / dq = det(J) / phi_p
+
+up to the fixed parameter-orientation convention.  It is therefore enough to
+prove one common strict determinant sign on the implicit graph.  Cover q with
+a bounded depth-first set of dyadic slabs.  On each slab, restrict the
+original equation coefficients and apply a fixed number of interval-Newton
+steps in p using phi at p=1/2 and the interval derivative hull.  If phi is
+excluded, that slab needs no determinant test.  Otherwise test the determinant
+on the resulting graph enclosure.  Every covered slab must obtain the same
+strict sign; restriction/arithmetic failure, sign conflict, depth exhaustion,
+or workspace exhaustion is inconclusive and uses the existing fallback.
+
+Preserve determinant value scale during this operation.  Form the Bernstein
+determinant polynomial on the q slab before contracting p.  Track every local
+p contraction back to a rigorously outward interval in the original slab
+coordinates, then restrict the already-formed determinant polynomial to that
+interval.  Do not recompute derivatives and det(J) after reparameterizing the
+equations to the thin p enclosure: that multiplies the p derivative column by
+the enclosure width and can destroy usable sign scale precisely when the
+contraction succeeds.  Fixed-size determinant restriction supports orders
+through 30x30 and has an independent exact-dyadic enclosure audit across
+every supported even order in both axes, three quarter-grid intervals, wide
+binary scales, and the maximum-order corner.
+
+Prove the remaining fold-boundary strip independently.  Given the regular
+phi graph on the full one-sided parent, traverse bounded q slabs, contract p
+around phi=0 as above, and require the Bernstein hull of phi or psi to exclude
+zero on every contracted enclosure.  This is a coverage proof that the strip
+contains no additional system root, not another candidate sampler.  The
+current fixed limits are a 16-entry depth-first stack, 511 visited boxes,
+depth eight, and four p contractions per slab.  They are engineering work
+bounds, not correctness assumptions; exhaustion is observable and falls
+back.  Exact contact must remain inconclusive rather than being interpreted
+as a root-free material strip.
+
+For each real localized candidate, construct candidate-centered one-sided
+parents using the dyadic fractions 1/16, 1/8, 1/4, 3/8, 1/2, 5/8, 3/4, and
+7/8 between the candidate and the nearest weak boundary.  Always restrict
+from the original expansion-valued ray-plane net.  A complete shadow parent
+requires all three independently meaningful facts: strict Krawczyk existence
+in a nested root box, uniqueness from the regular graph plus determinant sign,
+and exclusion of the adjacent fold strip.  This decomposition localizes a
+failure instead of encouraging more global depth or weaker tolerances.
+
+The permanent synthetic qualification deliberately makes the whole-parent
+determinant unsigned with a coupled term while leaving its graph sign known.
+It spans six root separations, two sides, parameter interchange, and equation
+scales 2^-100, 1, and 2^100.  All 72 graph determinant cases must certify, all
+72 root-free strips must exclude, and exact contact must hit the explicit
+depth-inconclusive path.  The corresponding real affine ratchet always runs
+all six directed hard shots even after a production improvement removes a
+miss.  Current real results prove both corridors and fold strips for all
+twelve candidates.  Expansion Krawczyk existence remains 2, 2, 1, 1, 0, 0,
+so the next solver step is exact expansion or rigorous error propagation
+through candidate plane-frame construction, not more parent subdivision.
+
 No real fold candidate may become a production hit until both adjacent span
 parents have a complete one-sided corridor/fold-strip proof, coincident
 observations are deduplicated as one physical event, and the resulting
@@ -1929,6 +1999,25 @@ primary automated tests.
 10. IMPLEMENTATION WORK PACKAGES AND PROMOTION GATES
 ----------------------------------------------------
 
+Execution should use parallelism at boundaries that do not change solver
+semantics.  Build independent translation units with the build system's
+parallel mode.  Run deterministic focused executables or modes for interval
+arithmetic, fold proofs, affine grazing, Crofton, Cobb/seams, and directed
+partitions as separate processes under CTest `-j`.  The current
+`--interval-only`, `--fold-only`, and `--affine-only` modes already pass when
+run concurrently and should be registered as separate CTest entries.  This
+also prevents the exhaustive interval oracle, which dominates sanitizer wall
+time, from serializing short correctness gates.
+
+Do not introduce threads inside one ray-solver test or share mutable
+OpenNURBS/model construction merely to accelerate validation.  That requires
+an independent audit of OpenNURBS globals, fixture ownership, BRL-CAD resource
+assignment, callback state, and deterministic telemetry.  The allocation-free
+local proof should give identical results independent of scheduling before a
+shared-process parallel benchmark is meaningful.  Existing face-parallel prep
+and production ray parallelism remain in scope for their own sanitizer and
+repeatability gates; process sharding is the immediate low-risk speedup.
+
 Phase 0: Baseline and observability
 
   * Add counters and timing for SurfaceTree/CurveTree/BBNode counts, prep
@@ -2164,7 +2253,17 @@ Primary BRL-CAD implementation sources:
       brep_build_bvh_surface_tree, brep_build_bvh, rt_brep_prep,
       utah_newton_solver, utah_newton_4corner_solver,
       utah_brep_intersect, rt_brep_shot, rt_brep_plot,
-      rt_brep_adaptive_plot, and rt_brep_prep_serialize.
+      rt_brep_adaptive_plot, and rt_brep_prep_serialize.  The shadow local
+      proof additionally lives in brep_fold_regular_graph_contract,
+      brep_fold_graph_determinant_signed, brep_fold_strip_excluded, and the
+      interval/expansion Bernstein coefficient and restriction helpers near
+      them.
+
+  * src/librt/librt_private.h and src/librt/tests/brep_ray.cpp
+      fixed-capacity proof telemetry/private exact-audit hooks and the
+      analytic, affine-grazing, interval, Crofton, Cobb, seam, and directed
+      correctness ratchets.  The focused process modes are `--interval-only`,
+      `--fold-only`, and `--affine-only`.
 
   * src/librt/primitives/brep/brep_local.h
       current brep_specific ownership model.
