@@ -99,8 +99,10 @@ dyadic gate covers all supported order pairs, five wide binary scales, positive
 coefficient uncertainty, derivative hulls, interval products, initial
 homogeneous coefficient construction, arbitrary sub-box restrictions,
 positive-denominator quotients, and rational ray-t bounds.  Outside-span
-reparameterization amplification remains open, so broad production promotion
-and tree-density reduction are still unauthorized.
+reparameterization now also uses a directly applied outward interval tensor
+operator and has an independent exact-dyadic audit.  The ordinary and
+continuation arithmetic layers are complete; broad production promotion and
+tree-density reduction remain gated on fallback and physical equivalence.
 Production trim classification now scans the prepared trim leaves directly;
 the former copied-list implementation remains trace-only as an exact
 equivalence oracle.  The full traced corpus hard-gates candidate counts,
@@ -1122,6 +1124,61 @@ ESTABLISHED FINDINGS
     gate passes 12/12 in 54.91 seconds, with rt_brep_ray at 54.87 seconds and
     no sanitizer diagnostic.
 
+44. Outside-span Bernstein reparameterization now has operation-level
+    enclosures and an independent exact audit.  The former implementation
+    computed a scalar infinity norm from transformed basis vectors, multiplied
+    inherited errors by the tensor norm, and added a magnitude-based epsilon
+    estimate for transformation roundoff.  Although the norm correctly
+    described exact input-error amplification, the scalar transformation
+    itself had no independently proven rounding enclosure.
+
+    The scalar transformed net remains the deterministic working center.  For
+    its bound, each one-dimensional Bernstein transformation matrix is now
+    constructed with outward interval de Casteljau operations, including the
+    interval quotient used by both algebraic split branches.  The u/v tensor
+    matrix is then applied directly to every complete source coefficient
+    interval with outward products and sums.  The final common error is
+    derived from all output intervals, and every transformed weight interval
+    must remain strictly positive before a continuation certificate proceeds.
+
+    Direct tensor application matters for quality as well as proof.  A trial
+    that propagated uncertain controls through two sequential interval split
+    nets retained false correlations: even the linear [2,3] extrapolation
+    enlarged the exact 5E input uncertainty to 7E, and the factor could
+    compound with degree.  Building interval transformation matrices from
+    exact basis vectors and applying the tensor operator once removes that
+    dependency blow-up while still enclosing matrix-construction roundoff.
+
+    The independent oracle performs exact-dyadic de Casteljau transforms and
+    obtains exact input-uncertainty bounds from absolute u/v operator row
+    sums.  Four large cases cover extension below zero, above one, the
+    alternate minimum-equals-one split branch, an interval wholly above one
+    with a negative intermediate denominator, and identity in one direction.
+    They exercise both mixed-sign nets, all 2x2 through 16x16 order pairs, and
+    exponents -400, -40, 0, 40, and 400.  A fifth seam-sized
+    [-1/1024,1] x [0,1025/1024] case covers exact combined degrees through six;
+    larger exact dyadic denominators exceed the fixed 64-bit oracle workspace,
+    while the large integer-parameter cases continue to cover every supported
+    order.
+
+    All 730,550 transformed coefficient checks contain the exact nominal
+    value plus its complete operator-amplified input uncertainty.  Maximum
+    common-error width is 1.01298951 times the exact maximum uncertainty,
+    below the 1.05 efficiency guard.  Combined with Findings 42 and 43, the
+    permanent arithmetic audit now contains 1,603,793 enclosure checks.
+
+    All 15 authorized bowed-Cobb continuation repairs remain certified and
+    match the implicit sphere oracle.  Certificate maximum work remains 93
+    boxes with stack high-water 20; maximum t-cluster width changes only from
+    approximately 3.46262659e-5 to 3.46262648e-5 mm.  Identity, rigid,
+    0.01x, and 10,000x classification and published partitions are unchanged.
+    Ordinary similarity roots still qualify at depths 4 through 9 and grazing
+    roots still qualify zero boxes early.  No SurfaceTree density changes in
+    this checkpoint.  The focused normal gate passes 13/13 in 25.64 seconds,
+    with rt_brep_ray at 24.37 seconds.  The focused ASan/UBSan gate passes
+    12/12 in 93.19 seconds, with rt_brep_ray at 93.15 seconds and no sanitizer
+    diagnostic.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1263,8 +1320,8 @@ IMPLEMENTATION CHECKLIST
         [x] Compare unique same-face prepared-span roots bidirectionally with
             the depth-eight legacy candidate set; require complete legacy
             coverage and classify direct-only tangent-band contacts.
-        [x] Add bounded outside-span reparameterization with exact operator-
-            norm error amplification and positive-weight certification.
+        [x] Add bounded outside-span reparameterization with conservative
+            error propagation and positive-weight certification.
         [ ] Add production-safe clipping and adaptive termination.
             [x] Add shadow strict-interior Krawczyk termination for regular
                 transverse roots and gate its fixed-depth work reduction.
@@ -1273,7 +1330,7 @@ IMPLEMENTATION CHECKLIST
                 similarities with scaled model tolerances.
             [x] Keep grazing, singular, and boundary roots on the conservative
                 depth-24 path.
-            [ ] Independently audit outward rounding and coefficient-error
+            [x] Independently audit outward rounding and coefficient-error
                 enclosure before production promotion.
                 [x] Gate interval function evaluation, derivative hulls, and
                     products for every supported tensor order and five binary
@@ -1281,7 +1338,9 @@ IMPLEMENTATION CHECKLIST
                 [x] Audit initial ray-plane coefficient construction,
                     arbitrary sub-box restriction, and rational weight/ray-t
                     bounds with operation-level intervals and exact gates.
-                [ ] Audit outside-span reparameterization amplification.
+                [x] Audit outside-span reparameterization amplification with
+                    direct outward interval tensor operators and exact row-
+                    sum uncertainty bounds.
     [ ] Use fixed-capacity allocation-free shot workspace with explicit
         fallback on unsupported weights/order/capacity.
         [x] Bound direct surface order, subdivision stack, trace output, and
@@ -1722,10 +1781,11 @@ Cobb sphere baseline:
     cleanup containers, while unsupported capacity cases retain correctness.
 
   * Outside-span continuation rectangles are reparameterized algebraically
-    into Bernstein form.  The code computes the absolute row-sum norm of each
-    one-dimensional basis transformation, multiplies the tensor norms, and
-    inflates ray-plane, ray-t, and weight errors accordingly.  A certificate
-    requires the complete transformed weight hull to remain positive and the
+    into Bernstein form.  Outward interval one-dimensional transformation
+    matrices are applied directly as a tensor operator to the complete source
+    coefficient intervals, bounding both inherited uncertainty and transform
+    roundoff without intermediate split dependency growth.  A certificate
+    requires every transformed weight interval to remain positive and the
     fixed isolator to retain only boxes belonging to the recovered root
     cluster.  No retained box may cover the original root.
 
@@ -1802,6 +1862,9 @@ Cobb sphere baseline:
     Repeated after initial coefficient, arbitrary restriction, and rational
     ray-t interval bounds: 13/13 in 13.88 seconds, with rt_brep_ray at 12.58
     seconds.  All 873,243 permanent enclosure checks pass before the corpus.
+    Repeated after direct outward interval outside-span reparameterization:
+    13/13 in 25.64 seconds, with rt_brep_ray at 24.37 seconds.  All 1,603,793
+    permanent enclosure checks pass before the corpus.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -1860,6 +1923,9 @@ Cobb sphere baseline:
     Repeated after initial coefficient, arbitrary restriction, and rational
     ray-t interval bounds with halt_on_error=1: 12/12 in 54.91 seconds;
     rt_brep_ray takes 54.87 seconds with no ASan or UBSan diagnostic.
+    Repeated after direct outward interval outside-span reparameterization
+    with halt_on_error=1: 12/12 in 93.19 seconds; rt_brep_ray takes 93.15
+    seconds with no ASan or UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -1928,12 +1994,12 @@ NEXT ACTIONS
 2. Implement and gate cyclic convex/concave vertex-fan transitions before any
    multi-edge crack repair.  Preserve the current explicit fallback for
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
-3. Complete the layered Krawczyk audit for outside-span reparameterization
-   amplification, then add conservative clipping where it can prove exclusion
-   or uniqueness.  Initial construction, arbitrary in-span restriction,
-   rational ray-t bounds, similarity, and all supported tensor orders are now
-   independently gated; nonuniform affine transforms remain a separate
-   ellipsoid target.  Keep
+3. Add conservative clipping where it can prove exclusion or uniqueness, then
+   define the ordinary-root production promotion/fallback gate.  Initial
+   construction, arbitrary in-span restriction, rational ray-t bounds,
+   outside-span reparameterization, similarity, and all supported tensor
+   orders are now independently gated; nonuniform affine transforms remain a
+   separate ellipsoid target.  Keep
    classifying the observed near-hit/grazing/duplicate-stage representation
    differences and extending final-partition oracle gates before production
    promotion.  Do not lower tree density until unsupported/capacity fallback

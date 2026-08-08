@@ -660,6 +660,28 @@ outside-span reparameterization as a distinct audit: extrapolating basis
 transforms are not convex restrictions and require their own amplification
 proof.
 
+For that proof, construct outward interval matrices for the one-dimensional
+Bernstein reparameterizations in u and v, then apply their tensor product
+directly to each uncertain source coefficient.  Do not propagate coefficient
+intervals through two sequential split nets: intermediate controls share the
+same source coefficients, so ordinary interval arithmetic loses those
+dependencies and can compound a needlessly large bound with degree.  A direct
+tensor matrix sum retains independent source-coefficient uncertainty while
+still enclosing transformation-matrix roundoff.  Derive one common result
+error only after every output coefficient interval is available, and require
+every resulting rational weight interval to remain strictly positive.
+
+The independent oracle should form the same mathematical reparameterization
+over exact dyadics, but obtain uncertainty amplification from exact absolute
+row sums of the u and v operators.  Cover extension on either side, intervals
+wholly above one (which give a negative intermediate denominator), the
+alternate minimum-equals-one split branch, large extrapolation through every
+supported tensor order, representative small seam-like extensions, mixed
+signs, and wide binary scales.  Gate enclosure independently from efficiency;
+also retain a bound on interval width relative to exact operator uncertainty
+so a formally safe but dependency-exploded implementation cannot silently
+make continuation certificates useless.
+
 Qualify adaptive termination under similarities independently of physical
 classifier invariance.  Apply the same translation, arbitrary rotation, and
 0.01x/10,000x uniform scales to an exact implicit sphere, its converted BREP,

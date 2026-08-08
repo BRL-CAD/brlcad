@@ -2883,35 +2883,111 @@ struct exact_dyadic {
 
 
 static bool
-exact_dyadic_half_sum(const exact_dyadic &first,
-    const exact_dyadic &second, exact_dyadic &result)
+exact_dyadic_normalize(exact_dyadic &value)
+{
+    while (value.mantissa && !(value.mantissa % 2)) {
+	value.mantissa /= 2;
+	value.exponent++;
+    }
+    return true;
+}
+
+
+static bool
+exact_dyadic_scale_mantissa(int64_t mantissa, int shift, int64_t &result)
+{
+    if (shift < 0 || shift >= 63)
+	return false;
+    const int64_t factor = INT64_C(1) << shift;
+    if ((mantissa > 0 && mantissa > INT64_MAX / factor) ||
+	    (mantissa < 0 && mantissa < INT64_MIN / factor))
+	return false;
+    result = mantissa * factor;
+    return true;
+}
+
+
+static bool
+exact_dyadic_add(const exact_dyadic &first, const exact_dyadic &second,
+    exact_dyadic &result)
 {
     const int exponent = std::min(first.exponent, second.exponent);
     const int first_shift = first.exponent - exponent;
     const int second_shift = second.exponent - exponent;
-    if (first_shift >= 63 || second_shift >= 63)
+    int64_t first_mantissa;
+    int64_t second_mantissa;
+    if (!exact_dyadic_scale_mantissa(first.mantissa, first_shift,
+	    first_mantissa) ||
+	    !exact_dyadic_scale_mantissa(second.mantissa, second_shift,
+		second_mantissa))
 	return false;
-    const int64_t first_factor = INT64_C(1) << first_shift;
-    const int64_t second_factor = INT64_C(1) << second_shift;
-    if ((first.mantissa > 0 &&
-	    first.mantissa > INT64_MAX / first_factor) ||
-	    (first.mantissa < 0 &&
-	    first.mantissa < INT64_MIN / first_factor) ||
-	    (second.mantissa > 0 &&
-	    second.mantissa > INT64_MAX / second_factor) ||
-	    (second.mantissa < 0 &&
-	    second.mantissa < INT64_MIN / second_factor))
-	return false;
-    const int64_t first_mantissa = first.mantissa * first_factor;
-    const int64_t second_mantissa = second.mantissa * second_factor;
     if ((second_mantissa > 0 &&
 	    first_mantissa > INT64_MAX - second_mantissa) ||
 	    (second_mantissa < 0 &&
 	    first_mantissa < INT64_MIN - second_mantissa))
 	return false;
     result.mantissa = first_mantissa + second_mantissa;
-    result.exponent = exponent - 1;
-    return true;
+    result.exponent = exponent;
+    return exact_dyadic_normalize(result);
+}
+
+
+static bool
+exact_dyadic_multiply(const exact_dyadic &first,
+    const exact_dyadic &second, exact_dyadic &result)
+{
+    const int64_t a = first.mantissa;
+    const int64_t b = second.mantissa;
+    if ((a > 0 && b > 0 && a > INT64_MAX / b) ||
+	    (a > 0 && b < 0 && b < INT64_MIN / a) ||
+	    (a < 0 && b > 0 && a < INT64_MIN / b) ||
+	    (a < 0 && b < 0 && a < INT64_MAX / b))
+	return false;
+    result.mantissa = a * b;
+    result.exponent = first.exponent + second.exponent;
+    return exact_dyadic_normalize(result);
+}
+
+
+static bool
+exact_dyadic_subtract(const exact_dyadic &first,
+    const exact_dyadic &second, exact_dyadic &result)
+{
+    if (second.mantissa == INT64_MIN)
+	return false;
+    const exact_dyadic negative = {-second.mantissa, second.exponent};
+    return exact_dyadic_add(first, negative, result);
+}
+
+
+static bool
+exact_dyadic_divide(const exact_dyadic &numerator,
+    const exact_dyadic &denominator, exact_dyadic &result)
+{
+    exact_dyadic normalized_numerator = numerator;
+    exact_dyadic normalized_denominator = denominator;
+    exact_dyadic_normalize(normalized_numerator);
+    exact_dyadic_normalize(normalized_denominator);
+    if (!normalized_denominator.mantissa ||
+	    normalized_numerator.mantissa %
+	    normalized_denominator.mantissa)
+	return false;
+    result.mantissa = normalized_numerator.mantissa /
+	normalized_denominator.mantissa;
+    result.exponent = normalized_numerator.exponent -
+	normalized_denominator.exponent;
+    return exact_dyadic_normalize(result);
+}
+
+
+static bool
+exact_dyadic_half_sum(const exact_dyadic &first,
+    const exact_dyadic &second, exact_dyadic &result)
+{
+    if (!exact_dyadic_add(first, second, result))
+	return false;
+    result.exponent--;
+    return exact_dyadic_normalize(result);
 }
 
 
@@ -2936,10 +3012,14 @@ exact_dyadic_midpoint(const exact_dyadic *input, int order,
 
 
 static bool
-exact_dyadic_bezier_split_half(const exact_dyadic *input, int order,
-    exact_dyadic *left, exact_dyadic *right)
+exact_dyadic_bezier_split(const exact_dyadic *input, int order,
+    const exact_dyadic &parameter, exact_dyadic *left,
+    exact_dyadic *right)
 {
     if (!input || !left || !right || order < 2 || order > 16)
+	return false;
+    exact_dyadic complement;
+    if (!exact_dyadic_subtract({1, 0}, parameter, complement))
 	return false;
     exact_dyadic work[16];
     for (int i = 0; i < order; ++i)
@@ -2948,13 +3028,25 @@ exact_dyadic_bezier_split_half(const exact_dyadic *input, int order,
     right[order - 1] = work[order - 1];
     for (int level = 1; level < order; ++level) {
 	for (int i = 0; i < order - level; ++i) {
-	    if (!exact_dyadic_half_sum(work[i], work[i + 1], work[i]))
+	    exact_dyadic first;
+	    exact_dyadic second;
+	    if (!exact_dyadic_multiply(complement, work[i], first) ||
+		    !exact_dyadic_multiply(parameter, work[i + 1], second) ||
+		    !exact_dyadic_add(first, second, work[i]))
 		return false;
 	}
 	left[level] = work[0];
 	right[order - level - 1] = work[order - level - 1];
     }
     return true;
+}
+
+
+static bool
+exact_dyadic_bezier_split_half(const exact_dyadic *input, int order,
+    exact_dyadic *left, exact_dyadic *right)
+{
+    return exact_dyadic_bezier_split(input, order, {1, -1}, left, right);
 }
 
 
@@ -3021,6 +3113,126 @@ exact_dyadic_surface_restrict_quarters(const exact_dyadic *input,
 
 
 static bool
+exact_dyadic_equal(exact_dyadic first, exact_dyadic second)
+{
+    exact_dyadic_normalize(first);
+    exact_dyadic_normalize(second);
+    return first.mantissa == second.mantissa &&
+	first.exponent == second.exponent;
+}
+
+
+static bool
+exact_dyadic_bezier_reparameterize(const exact_dyadic *input, int order,
+    const exact_dyadic &minimum, const exact_dyadic &maximum,
+    exact_dyadic *output)
+{
+    if (!input || !output || order < 2 || order > 16)
+	return false;
+    if (exact_dyadic_equal(minimum, {0, 0}) &&
+	    exact_dyadic_equal(maximum, {1, 0})) {
+	for (int i = 0; i < order; ++i)
+	    output[i] = input[i];
+	return true;
+    }
+
+    exact_dyadic first[16];
+    exact_dyadic second[16];
+    exact_dyadic unused[16];
+    exact_dyadic from_minimum;
+    if (!exact_dyadic_subtract({1, 0}, minimum, from_minimum))
+	return false;
+    if (from_minimum.mantissa) {
+	if (!exact_dyadic_bezier_split(input, order, minimum, unused,
+		second))
+	    return false;
+	exact_dyadic numerator;
+	exact_dyadic local_maximum;
+	if (!exact_dyadic_subtract(maximum, minimum, numerator) ||
+		!exact_dyadic_divide(numerator, from_minimum,
+		    local_maximum) ||
+		!exact_dyadic_bezier_split(second, order, local_maximum,
+		    first, unused))
+	    return false;
+	for (int i = 0; i < order; ++i)
+	    output[i] = first[i];
+	return true;
+    }
+
+    if (!maximum.mantissa ||
+	    !exact_dyadic_bezier_split(input, order, maximum, first, unused))
+	return false;
+    exact_dyadic local_minimum;
+    if (!exact_dyadic_divide(minimum, maximum, local_minimum) ||
+	    !exact_dyadic_bezier_split(first, order, local_minimum, unused,
+		second))
+	return false;
+    for (int i = 0; i < order; ++i)
+	output[i] = second[i];
+    return true;
+}
+
+
+static bool
+exact_dyadic_surface_reparameterize(const exact_dyadic *input, int u_order,
+    int v_order, const exact_dyadic minimum[2],
+    const exact_dyadic maximum[2], exact_dyadic *output)
+{
+    exact_dyadic u_reparameterized[256];
+    exact_dyadic source[16];
+    exact_dyadic result[16];
+    for (int j = 0; j < v_order; ++j) {
+	for (int i = 0; i < u_order; ++i)
+	    source[i] = input[(size_t)i * v_order + j];
+	if (!exact_dyadic_bezier_reparameterize(source, u_order, minimum[0],
+		maximum[0], result))
+	    return false;
+	for (int i = 0; i < u_order; ++i)
+	    u_reparameterized[(size_t)i * v_order + j] = result[i];
+    }
+    for (int i = 0; i < u_order; ++i) {
+	for (int j = 0; j < v_order; ++j)
+	    source[j] = u_reparameterized[(size_t)i * v_order + j];
+	if (!exact_dyadic_bezier_reparameterize(source, v_order, minimum[1],
+		maximum[1], result))
+	    return false;
+	for (int j = 0; j < v_order; ++j)
+	    output[(size_t)i * v_order + j] = result[j];
+    }
+    return true;
+}
+
+
+static bool
+exact_dyadic_bezier_reparameterization_row_sums(int order,
+    const exact_dyadic &minimum, const exact_dyadic &maximum,
+    exact_dyadic *row_sums)
+{
+    if (!row_sums || order < 2 || order > 16)
+	return false;
+    for (int row = 0; row < order; ++row)
+	row_sums[row] = {0, 0};
+    for (int basis = 0; basis < order; ++basis) {
+	exact_dyadic input[16] = {};
+	exact_dyadic output[16];
+	input[basis] = {1, 0};
+	if (!exact_dyadic_bezier_reparameterize(input, order, minimum,
+		maximum, output))
+	    return false;
+	for (int row = 0; row < order; ++row) {
+	    if (output[row].mantissa == INT64_MIN)
+		return false;
+	    exact_dyadic magnitude = {llabs(output[row].mantissa),
+		output[row].exponent};
+	    if (!exact_dyadic_add(row_sums[row], magnitude, row_sums[row]))
+		return false;
+	}
+    }
+    return true;
+}
+
+
+static bool
 exact_dyadic_surface_midpoint(const exact_dyadic *input, int u_order,
     int v_order, exact_dyadic &result)
 {
@@ -3061,6 +3273,18 @@ check_brep_interval_enclosures()
     const int restriction_quarters[][4] = {
 	{0, 0, 2, 2}, {1, 2, 2, 4}, {2, 1, 4, 2}
     };
+    struct exact_reparameterization_case {
+	exact_dyadic u_minimum;
+	exact_dyadic u_maximum;
+	exact_dyadic v_minimum;
+	exact_dyadic v_maximum;
+    } reparameterization_cases[] = {
+	{{-1, 0}, {1, 0}, {0, 0}, {2, 0}},
+	{{0, 0}, {2, 0}, {1, 0}, {2, 0}},
+	{{-1, -1}, {1, 0}, {-1, 0}, {1, 0}},
+	{{-1, -10}, {1, 0}, {0, 0}, {1025, -10}},
+	{{2, 0}, {3, 0}, {0, 0}, {1, 0}}
+    };
     double values[2][256] = {};
     exact_dyadic exact[2][256] = {};
     const fastf_t root[2] = {0.5, 0.5};
@@ -3071,8 +3295,10 @@ check_brep_interval_enclosures()
     size_t division_checks = 0;
     size_t coefficient_checks = 0;
     size_t restriction_checks = 0;
+    size_t reparameterization_checks = 0;
     long double maximum_function_width_ratio = 0.0L;
     long double maximum_restriction_width_ratio = 0.0L;
+    long double maximum_reparameterization_width_ratio = 0.0L;
     int failures = 0;
 
     for (size_t coordinate_scale = 0; coordinate_scale <
@@ -3389,7 +3615,7 @@ check_brep_interval_enclosures()
 			}
 		    }
 
-		    for (size_t restriction = 0; restriction <
+			    for (size_t restriction = 0; restriction <
 			    sizeof(restriction_quarters) /
 			    sizeof(restriction_quarters[0]); ++restriction) {
 			const int minimum_quarters[2] = {
@@ -3450,9 +3676,129 @@ check_brep_interval_enclosures()
 				    u_order, v_order, scale_exponent,
 				    restriction, i, restriction_width_ratio);
 				failures++;
+				    }
+				}
 			    }
-			}
-		    }
+
+			    for (size_t reparameterization = 0; reparameterization <
+				    sizeof(reparameterization_cases) /
+				    sizeof(reparameterization_cases[0]);
+				    ++reparameterization) {
+				if (reparameterization == 3 && u_order + v_order > 8)
+				    continue;
+				const exact_reparameterization_case &test =
+				    reparameterization_cases[reparameterization];
+				const exact_dyadic exact_minimum[2] = {
+				    test.u_minimum, test.v_minimum
+				};
+				const exact_dyadic exact_maximum[2] = {
+				    test.u_maximum, test.v_maximum
+				};
+				const fastf_t minimum[2] = {
+				    (fastf_t)exact_dyadic_value(exact_minimum[0]),
+				    (fastf_t)exact_dyadic_value(exact_minimum[1])
+				};
+				const fastf_t maximum[2] = {
+				    (fastf_t)exact_dyadic_value(exact_maximum[0]),
+				    (fastf_t)exact_dyadic_value(exact_maximum[1])
+				};
+				exact_dyadic expected[256];
+				exact_dyadic u_row_sums[16];
+				exact_dyadic v_row_sums[16];
+				fastf_t reparameterized[256] = {};
+				fastf_t reparameterized_error = 0.0;
+				if (!exact_dyadic_surface_reparameterize(exact[equation],
+					u_order, v_order, exact_minimum,
+					exact_maximum, expected) ||
+					!exact_dyadic_bezier_reparameterization_row_sums(
+					u_order, exact_minimum[0], exact_maximum[0],
+					u_row_sums) ||
+					!exact_dyadic_bezier_reparameterization_row_sums(
+					v_order, exact_minimum[1], exact_maximum[1],
+					v_row_sums) ||
+					!_rt_brep_reparameterize_test(values[equation],
+					u_order, v_order, coefficient_error[equation],
+					minimum, maximum, reparameterized,
+					&reparameterized_error)) {
+				    std::printf("FAIL: interval reparameterization "
+					"unavailable order=%d/%d scale=%d "
+					"equation=%d case=%zu\n", u_order, v_order,
+					scale_exponent, equation, reparameterization);
+				    failures++;
+				    continue;
+				}
+
+				long double exact_errors[256];
+				long double maximum_exact_error = 0.0L;
+				const exact_dyadic input_error = {
+				    1, scale_exponent - 32
+				};
+				bool exact_error_available = true;
+				for (int i = 0; i < u_order; ++i) {
+				    for (int j = 0; j < v_order; ++j) {
+					const size_t index =
+					    (size_t)i * v_order + j;
+					exact_dyadic directional_error;
+					exact_dyadic tensor_error;
+					if (!exact_dyadic_multiply(input_error,
+						u_row_sums[i], directional_error) ||
+						!exact_dyadic_multiply(
+						directional_error, v_row_sums[j],
+						tensor_error)) {
+					    exact_error_available = false;
+					    break;
+					}
+					exact_errors[index] =
+					    exact_dyadic_value(tensor_error);
+					maximum_exact_error = std::max(
+					    maximum_exact_error, exact_errors[index]);
+				    }
+				    if (!exact_error_available)
+					break;
+				}
+				if (!exact_error_available ||
+					!(maximum_exact_error > 0.0L)) {
+				    std::printf("FAIL: exact reparameterization error "
+					"unavailable order=%d/%d scale=%d "
+					"equation=%d case=%zu\n", u_order, v_order,
+					scale_exponent, equation, reparameterization);
+				    failures++;
+				    continue;
+				}
+				const long double reparameterization_width_ratio =
+				    reparameterized_error / maximum_exact_error;
+				maximum_reparameterization_width_ratio = std::max(
+				    maximum_reparameterization_width_ratio,
+				    reparameterization_width_ratio);
+				for (size_t i = 0; i < count; ++i) {
+				    const long double reparameterized_nominal =
+					exact_dyadic_value(expected[i]);
+				    const long double reparameterized_lower = std::nextafter(
+					reparameterized[i] - reparameterized_error,
+					-INFINITY);
+				    const long double reparameterized_upper = std::nextafter(
+					reparameterized[i] + reparameterized_error,
+					INFINITY);
+				    reparameterization_checks++;
+				    if (!std::isfinite((double)reparameterized_lower) ||
+					    !std::isfinite(
+					    (double)reparameterized_upper) ||
+					    reparameterized_lower >
+					    reparameterized_nominal - exact_errors[i] ||
+					    reparameterized_upper <
+					    reparameterized_nominal + exact_errors[i] ||
+					    !(reparameterization_width_ratio <= 1.05L)) {
+					std::printf("FAIL: interval reparameterization "
+					    "enclosure order=%d/%d scale=%d "
+					    "equation=%d case=%zu coefficient=%zu "
+					    "width/error=%.9Lg\n", u_order,
+					    v_order, scale_exponent, equation,
+					    reparameterization, i,
+					    reparameterization_width_ratio);
+					failures++;
+				    }
+				}
+			    }
 		}
 	    }
 	}
@@ -3461,10 +3807,13 @@ check_brep_interval_enclosures()
     if (!failures) {
 	std::printf("BREP interval enclosure audit: PASS cases=%zu "
 	    "function=%zu derivative=%zu product=%zu quotient=%zu "
-	    "coefficient=%zu restriction=%zu max-width/error=%.9Lg/%.9Lg\n",
+	    "coefficient=%zu restriction=%zu reparameterization=%zu "
+	    "max-width/error=%.9Lg/%.9Lg/%.9Lg\n",
 	    cases, function_checks, derivative_checks, product_checks,
 	    division_checks, coefficient_checks, restriction_checks,
-	    maximum_function_width_ratio, maximum_restriction_width_ratio);
+	    reparameterization_checks, maximum_function_width_ratio,
+	    maximum_restriction_width_ratio,
+	    maximum_reparameterization_width_ratio);
     }
     return failures;
 }
