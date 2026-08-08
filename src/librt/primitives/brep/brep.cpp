@@ -32,6 +32,7 @@
 #include <list>
 #include <map>
 #include <stack>
+#include <cmath>
 #include <iostream>
 #include <algorithm>
 #include <set>
@@ -339,7 +340,7 @@ toXRay(const struct xray* rp)
 static struct brep_specific*
 brep_specific_new()
 {
-    return (struct brep_specific*)bu_calloc(1, sizeof(struct brep_specific), "brep_specific_new");
+    return new brep_specific();
 }
 
 
@@ -347,9 +348,11 @@ static void
 brep_specific_delete(struct brep_specific* bs)
 {
     if (bs != NULL) {
-	delete bs->brep;
 	delete bs->bvh;
-	bu_free(bs, "brep_specific_delete");
+	for (std::vector<const CurveTree *>::const_iterator i = bs->ctrees.begin(); i != bs->ctrees.end(); ++i)
+	    delete *i;
+	delete bs->brep;
+	delete bs;
     }
 }
 
@@ -445,14 +448,15 @@ brep_build_bvh(struct brep_specific* bs)
     //start = bu_gettime();
     bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
 
+    bs->ctrees.reserve(faceCount);
     for (int i = 0; (size_t)i < faceCount; i++) {
-	ON_BrepFace& face = faces[i];
-	face.m_face_user.p = bbbp.faces[i];
-	bs->bvh->addChild(bbbp.faces[i]->getRootNode());
+	SurfaceTree *st = bbbp.faces[i];
+	bs->ctrees.push_back(st->releaseCurveTree());
+	bs->bvh->addChild(st->releaseRootNode());
+	delete st;
     }
     //bu_log("!!! PREP FACES: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
 
-    // note: the SurfaceTrees in bbbp.faces are never destroyed/freed
     bu_free(bbbp.faces, "free face array");
 
     bs->bvh->BuildBBox();
@@ -596,6 +600,72 @@ typedef enum {
 } brep_intersect_reason_t;
 
 
+enum brep_solver_status_t {
+    BREP_SOLVER_NO_ROOT = 0,
+    BREP_SOLVER_CONVERGED_REGULAR,
+    BREP_SOLVER_CONVERGED_SINGULAR,
+    BREP_SOLVER_DUPLICATE_ROOT,
+    BREP_SOLVER_OUTSIDE_DOMAIN,
+    BREP_SOLVER_JACOBIAN_SINGULAR,
+    BREP_SOLVER_STALLED,
+    BREP_SOLVER_ITERATION_LIMIT,
+    BREP_SOLVER_EVALUATION_FAILED,
+    BREP_SOLVER_NONFINITE,
+    BREP_SOLVER_CAPACITY_EXHAUSTED
+};
+
+
+struct brep_solver_result {
+    int intersections;
+    brep_solver_status_t status;
+
+    brep_solver_result(int count = 0, brep_solver_status_t reason = BREP_SOLVER_NO_ROOT) :
+	intersections(count), status(reason)
+    {
+    }
+
+    bool converged() const
+    {
+	return status == BREP_SOLVER_CONVERGED_REGULAR ||
+	    status == BREP_SOLVER_CONVERGED_SINGULAR ||
+	    status == BREP_SOLVER_DUPLICATE_ROOT;
+    }
+};
+
+
+static bool
+utah_finite(double value)
+{
+    return std::isfinite(value);
+}
+
+
+static bool
+utah_finite(const ON_2dPoint &point)
+{
+    return utah_finite(point.x) && utah_finite(point.y);
+}
+
+
+static bool
+utah_finite(const ON_3dPoint &point)
+{
+    return utah_finite(point.x) && utah_finite(point.y) && utah_finite(point.z);
+}
+
+
+static bool
+utah_finite(const ON_3dVector &vector)
+{
+    return utah_finite(vector.x) && utah_finite(vector.y) && utah_finite(vector.z);
+}
+
+
+/* This remains tighter than the default librt model tolerance.  It is only a
+ * numerical root test; trim and solid acceptance use separate logic. */
+static const double BREP_ROOT_TOL = 1.0e-7;
+
+
 static void
 utah_F(const ON_3dPoint &S, const ON_3dVector &p1, const double p1d, const ON_3dVector &p2, const double p2d, double &f1, double &f2)
 {
@@ -654,11 +724,52 @@ utah_pushBack(const BBNode* sbv, ON_2dPoint &uv)
 }
 
 
-static int
-utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, ON_2dPoint* suv, const int count, const int iu, const int iv)
+static brep_solver_result
+utah_store_root(const BBNode *sbv, const ON_Surface *surf, const ON_Ray &r,
+	ON_2dPoint *ouv, double *t, ON_3dVector *N, const int capacity,
+	const int count, const ON_2dPoint &uv, const ON_3dPoint &S,
+	const ON_3dVector &Su, const ON_3dVector &Sv)
+{
+    int ulow = (sbv->m_u.m_t[0] <= sbv->m_u.m_t[1]) ? 0 : 1;
+    int vlow = (sbv->m_v.m_t[0] <= sbv->m_v.m_t[1]) ? 0 : 1;
+    if (!((sbv->m_u.m_t[ulow] - VUNITIZE_TOL < uv.x && uv.x < sbv->m_u.m_t[1 - ulow] + VUNITIZE_TOL) &&
+	    (sbv->m_v.m_t[vlow] - VUNITIZE_TOL < uv.y && uv.y < sbv->m_v.m_t[1 - vlow] + VUNITIZE_TOL)))
+	return brep_solver_result(0, BREP_SOLVER_OUTSIDE_DOMAIN);
+
+    for (int j = 0; j < count; j++) {
+	if (NEAR_EQUAL(uv.x, ouv[j].x, VUNITIZE_TOL) && NEAR_EQUAL(uv.y, ouv[j].y, VUNITIZE_TOL))
+	    return brep_solver_result(0, BREP_SOLVER_DUPLICATE_ROOT);
+    }
+
+    if (count >= capacity)
+	return brep_solver_result(0, BREP_SOLVER_CAPACITY_EXHAUSTED);
+
+    double root_t = utah_calc_t(r, S);
+    if (!utah_finite(root_t))
+	return brep_solver_result(0, BREP_SOLVER_NONFINITE);
+
+    ON_3dVector normal = ON_CrossProduct(Su, Sv);
+    bool regular_normal = utah_finite(normal) && normal.Unitize();
+    if (!regular_normal) {
+	ON_3dPoint normal_point;
+	if (!surface_EvNormal(surf, uv.x, uv.y, normal_point, normal) ||
+		!utah_finite(normal_point) || !utah_finite(normal) || !normal.Unitize())
+	    return brep_solver_result(0, BREP_SOLVER_EVALUATION_FAILED);
+    }
+
+    t[count] = root_t;
+    N[count] = normal;
+    ouv[count] = uv;
+    return brep_solver_result(1, regular_normal ? BREP_SOLVER_CONVERGED_REGULAR : BREP_SOLVER_CONVERGED_SINGULAR);
+}
+
+
+static brep_solver_result
+utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r,
+	ON_2dPoint* ouv, double* t, ON_3dVector* N, const int capacity,
+	ON_2dPoint* suv, const int count, const int iu, const int iv)
 {
     int i = 0;
-    int intersects = 0;
     double j11 = 0.0;
     double j12 = 0.0;
     double j21 = 0.0;
@@ -690,12 +801,29 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
     uv.x = suv->x;
     uv.y = suv->y;
 
-    ON_2dPoint uv0(uv);
-    surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
-    //surf->Ev2Der(uv.x, uv.y, S, Su, Sv, Suu, Suv, Svv);
-
+    if (!surf->EvPoint(uv.x, uv.y, S) || !utah_finite(uv) || !utah_finite(S))
+	return brep_solver_result(0, BREP_SOLVER_EVALUATION_FAILED);
     utah_F(S, p1, p1d, p2, p2d, f, g);
-    rootdist = fabs(f) + fabs(g);
+    rootdist = hypot(f, g);
+    if (!utah_finite(rootdist))
+	return brep_solver_result(0, BREP_SOLVER_NONFINITE);
+
+    /* Position is authoritative for convergence.  In particular, an exact
+     * root at a pole can have a singular derivative/Jacobian. */
+    if (rootdist < BREP_ROOT_TOL) {
+	ON_3dPoint derivative_point;
+	ON_3dVector derivative_u;
+	ON_3dVector derivative_v;
+	if (surf->Ev1Der(uv.x, uv.y, derivative_point, derivative_u, derivative_v) &&
+		utah_finite(derivative_point) && utah_finite(derivative_u) && utah_finite(derivative_v))
+	    return utah_store_root(sbv, surf, r, ouv, t, N, capacity, count, uv,
+		derivative_point, derivative_u, derivative_v);
+	return utah_store_root(sbv, surf, r, ouv, t, N, capacity, count, uv, S, Su, Sv);
+    }
+
+    if (!surf->Ev1Der(uv.x, uv.y, S, Su, Sv) ||
+	    !utah_finite(S) || !utah_finite(Su) || !utah_finite(Sv))
+	return brep_solver_result(0, BREP_SOLVER_EVALUATION_FAILED);
 
     for (i = 0; i < BREP_MAX_ITERATIONS; i++) {
 	utah_Fu(Su, p1, p2, j11, j21);
@@ -703,15 +831,13 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 
 	J = (j11 * j22 - j12 * j21);
 
-	if (NEAR_ZERO(J, BREP_INTERSECTION_ROOT_EPSILON)) {
-	    // perform jittered perturbation in parametric domain....
-	    // FIXME: drand48 call should be replaced by a faster
-	    // libbn random mechanism - common.h's definition of
-	    // drand48 on Windows showed hot in profiling.
-	    uv.x = uv.x + .1 * drand48() * (uv0.x - uv.x);
-	    uv.y = uv.y + .1 * drand48() * (uv0.y - uv.y);
-	    continue;
-	}
+	double ucol = hypot(j11, j21);
+	double vcol = hypot(j12, j22);
+	if (!utah_finite(J) || !utah_finite(ucol) || !utah_finite(vcol))
+	    return brep_solver_result(0, BREP_SOLVER_NONFINITE);
+	if (ucol <= ON_ZERO_TOLERANCE || vcol <= ON_ZERO_TOLERANCE ||
+		fabs(J) <= BREP_INTERSECTION_ROOT_EPSILON * ucol * vcol)
+	    return brep_solver_result(0, BREP_SOLVER_JACOBIAN_SINGULAR);
 
 	invdetJ = 1.0 / J;
 
@@ -721,14 +847,16 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 
 	    if (i == 0) {
 		if (((iu == 0) && (du < 0.0)) || ((iu == 1) && (du > 0.0)))
-		    return intersects; //head out of U bounds
+		    return brep_solver_result(0, BREP_SOLVER_OUTSIDE_DOMAIN);
 		if (((iv == 0) && (dv < 0.0)) || ((iv == 1) && (dv > 0.0)))
-		    return intersects; //head out of V bounds
+		    return brep_solver_result(0, BREP_SOLVER_OUTSIDE_DOMAIN);
 	    }
 	}
 
 	du = invdetJ * (j22 * f - j12 * g);
 	dv = invdetJ * (j11 * g - j21 * f);
+	if (!utah_finite(du) || !utah_finite(dv))
+	    return brep_solver_result(0, BREP_SOLVER_NONFINITE);
 
 
 	if (i == 0) {
@@ -756,10 +884,14 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 
 	utah_pushBack(sbv, uv);
 
-	surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
+	if (!surf->Ev1Der(uv.x, uv.y, S, Su, Sv) ||
+		!utah_finite(S) || !utah_finite(Su) || !utah_finite(Sv))
+	    return brep_solver_result(0, BREP_SOLVER_EVALUATION_FAILED);
 	utah_F(S, p1, p1d, p2, p2d, f, g);
 	oldrootdist = rootdist;
-	rootdist = fabs(f) + fabs(g);
+	rootdist = hypot(f, g);
+	if (!utah_finite(rootdist))
+	    return brep_solver_result(0, BREP_SOLVER_NONFINITE);
 	int halve_count = 0;
 
 	/* iterate at most 3 times just because. might be worth trying
@@ -772,9 +904,13 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 
 	    utah_pushBack(sbv, uv);
 
-	    surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
+	    if (!surf->Ev1Der(uv.x, uv.y, S, Su, Sv) ||
+		    !utah_finite(S) || !utah_finite(Su) || !utah_finite(Sv))
+		return brep_solver_result(0, BREP_SOLVER_EVALUATION_FAILED);
 	    utah_F(S, p1, p1d, p2, p2d, f, g);
-	    rootdist = fabs(f) + fabs(g);
+	    rootdist = hypot(f, g);
+	    if (!utah_finite(rootdist))
+		return brep_solver_result(0, BREP_SOLVER_NONFINITE);
 	}
 
 	if (oldrootdist <= rootdist) {
@@ -783,59 +919,37 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	     * and return what was found.  no particular reason for 3.
 	     */
 	    if (errantcount > 3) {
-		return intersects;
+		return brep_solver_result(0, BREP_SOLVER_STALLED);
 	    } else {
 		errantcount++;
 	    }
 	}
 
-/* if we get this close to a root, good enough.  No particular
- * significance other than it's below our typical distance tol and
- * above double precision tol.
- */
-#define ROOT_TOL 1.E-7
-
-	if (rootdist < ROOT_TOL) {
-	    int ulow = (sbv->m_u.m_t[0] <= sbv->m_u.m_t[1]) ? 0 : 1;
-	    int vlow = (sbv->m_v.m_t[0] <= sbv->m_v.m_t[1]) ? 0 : 1;
-	    if ((sbv->m_u.m_t[ulow] - VUNITIZE_TOL < uv.x && uv.x < sbv->m_u.m_t[1 - ulow] + VUNITIZE_TOL) &&
-		(sbv->m_v.m_t[vlow] - VUNITIZE_TOL < uv.y && uv.y < sbv->m_v.m_t[1 - vlow] + VUNITIZE_TOL)) {
-		bool new_point = true;
-		for (int j = 0; j < count; j++) {
-		    if (NEAR_EQUAL(uv.x, ouv[j].x, VUNITIZE_TOL) && NEAR_EQUAL(uv.y, ouv[j].y, VUNITIZE_TOL)) {
-			new_point = false;
-		    }
-		}
-		if (new_point) {
-		    //bu_log("New Hit Point:(%f %f %f) uv(%f, %f)\n", S.x, S.y, S.z, uv.x, uv.y);
-		    t[count] = utah_calc_t(r, S);
-		    N[count] = ON_CrossProduct(Su, Sv);
-		    N[count].Unitize();
-		    ouv[count].x = uv.x;
-		    ouv[count].y = uv.y;
-		    intersects++;
-		    converged = true;
-		}
-	    }
-	    return intersects;
-	}
+	if (rootdist < BREP_ROOT_TOL)
+	    return utah_store_root(sbv, surf, r, ouv, t, N, capacity, count, uv, S, Su, Sv);
     }
-    return intersects;
+    return brep_solver_result(0, BREP_SOLVER_ITERATION_LIMIT);
 }
 
 
-static int
-utah_newton_4corner_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, int docorners)
+static brep_solver_result
+utah_newton_4corner_solver(const BBNode* sbv, const ON_Surface* surf,
+	const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N,
+	const int capacity, int docorners)
 {
     int intersects = 0;
-    converged = false;
+    brep_solver_status_t status = BREP_SOLVER_NO_ROOT;
     if (docorners) {
 	for (int iu = 0; iu < 2; iu++) {
 	    for (int iv = 0; iv < 2; iv++) {
 		ON_2dPoint uv;
 		uv.x = sbv->m_u[iu];
 		uv.y = sbv->m_v[iv];
-		intersects += utah_newton_solver(sbv, surf, r, ouv, t, N, converged, &uv, intersects, iu, iv);
+		brep_solver_result result = utah_newton_solver(sbv, surf, r, ouv, t, N,
+		    capacity, &uv, intersects, iu, iv);
+		intersects += result.intersections;
+		if (result.converged() || status == BREP_SOLVER_NO_ROOT)
+		    status = result.status;
 	    }
 	}
     }
@@ -843,8 +957,12 @@ utah_newton_4corner_solver(const BBNode* sbv, const ON_Surface* surf, const ON_R
     ON_2dPoint uv;
     uv.x = sbv->m_u.Mid();
     uv.y = sbv->m_v.Mid();
-    intersects += utah_newton_solver(sbv, surf, r, ouv, t, N, converged, &uv, intersects, -1, -1);
-    return intersects;
+    brep_solver_result result = utah_newton_solver(sbv, surf, r, ouv, t, N,
+	capacity, &uv, intersects, -1, -1);
+    intersects += result.intersections;
+    if (result.converged() || status == BREP_SOLVER_NO_ROOT)
+	status = result.status;
+    return brep_solver_result(intersects, status);
 }
 
 
@@ -856,18 +974,21 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
     double t[MAX_BREP_SUBDIVISION_INTERSECTS];
     ON_2dPoint ouv[MAX_BREP_SUBDIVISION_INTERSECTS];
     int found = BREP_INTERSECT_ROOT_DIVERGED;
-    bool converged = false;
     int numhits;
 
     double grazing_float = sbv->m_normal * ray.m_dir;
 
+    brep_solver_result solver_result;
     if (fabs(grazing_float) < 0.2) {
-	numhits = utah_newton_4corner_solver(sbv, surf, ray, ouv, t, N, converged, 1);
+	solver_result = utah_newton_4corner_solver(sbv, surf, ray, ouv, t, N,
+	    MAX_BREP_SUBDIVISION_INTERSECTS, 1);
     } else {
-	numhits = utah_newton_4corner_solver(sbv, surf, ray, ouv, t, N, converged, 0);
+	solver_result = utah_newton_4corner_solver(sbv, surf, ray, ouv, t, N,
+	    MAX_BREP_SUBDIVISION_INTERSECTS, 0);
     }
+    numhits = solver_result.intersections;
 
-    if (converged) {
+    if (numhits > 0) {
 	for (int i = 0; i < numhits; i++) {
 	    double closesttrim;
 	    const BRNode* trimBR = NULL;
@@ -3088,6 +3209,7 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 
 	for (uint32_t i = 0; i < num_children; ++i) {
 	    const CurveTree * const ctree = new CurveTree(deserializer, *specific->brep->m_F.At(i));
+	    specific->ctrees.push_back(ctree);
 	    specific->bvh->addChild(new BBNode(deserializer, *ctree));
 	}
 
