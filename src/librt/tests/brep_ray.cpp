@@ -187,9 +187,8 @@ ray_class(const ray_result &result, double tolerance)
 }
 
 
-static void
-grazing_report(struct soltab *implicit_stp, struct soltab *brep_stp,
-    struct rt_i *rtip, struct resource *resp, double radius)
+static std::vector<double>
+grazing_clearances(double radius, double distance_tolerance)
 {
     std::vector<double> clearances;
     for (int exponent = 1; exponent <= 50; ++exponent)
@@ -199,7 +198,7 @@ grazing_report(struct soltab *implicit_stp, struct soltab *brep_stp,
 	0.5, 0.1, 0.01};
     for (size_t i = 0; i < sizeof(chord_ratios) / sizeof(chord_ratios[0]);
 	    ++i) {
-	const double half_chord = chord_ratios[i] * rtip->rti_tol.dist * 0.5;
+	const double half_chord = chord_ratios[i] * distance_tolerance * 0.5;
 	const double root = sqrt(std::max(0.0,
 	    radius * radius - half_chord * half_chord));
 	clearances.push_back((half_chord * half_chord) / (radius + root));
@@ -208,6 +207,16 @@ grazing_report(struct soltab *implicit_stp, struct soltab *brep_stp,
     std::sort(clearances.begin(), clearances.end(), std::greater<double>());
     clearances.erase(std::unique(clearances.begin(), clearances.end()),
 	clearances.end());
+    return clearances;
+}
+
+
+static void
+grazing_report(struct soltab *implicit_stp, struct soltab *brep_stp,
+    struct rt_i *rtip, struct resource *resp, double radius)
+{
+    std::vector<double> clearances = grazing_clearances(radius,
+	rtip->rti_tol.dist);
 
     std::printf("# signed sphere grazing report\n");
     std::printf("# h/R chord/tol implicit implicit_chord BREP BREP_chord "
@@ -267,13 +276,14 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     bool brep_interval_ended = false;
     double previous_brep_chord = INFINITY;
     vect_t direction = {1.0, 0.0, 0.0};
+    const std::vector<double> clearances = grazing_clearances(radius,
+	rtip->rti_tol.dist);
 
-    /* Sweep toward tangency without prescribing the still-unfixed contact
-     * transition.  Resolved intervals must agree with the analytic oracle,
-     * observed chords must not grow, and once interval production stops it
-     * must not restart in a closer-to-tangent band. */
-    for (int exponent = 1; exponent <= 50; ++exponent) {
-	const double h = std::ldexp(radius, -exponent);
+    /* Resolved intervals must agree with the analytic oracle.  Below the
+     * model distance tolerance, either a contact-sized segment or no segment
+     * is acceptable, but an interval must never restart nearer the tangent. */
+    for (size_t i = 0; i < clearances.size(); ++i) {
+	const double h = clearances[i];
 	const double b = radius - h;
 	if (!(b < radius))
 	    continue;
@@ -317,10 +327,8 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    brep_interval_ended = true;
 	}
 
-	/* Keep a hard correctness gate where the chord is comfortably above
-	 * downstream Boolean tolerance.  Nearer the limit, the expected final
-	 * contact policy is intentionally not frozen until the defect is fixed. */
-	if (analytic_chord >= 10.0 * rtip->rti_tol.dist) {
+	if (analytic_chord + rtip->rti_tol.dist * 1.0e-6 >=
+		rtip->rti_tol.dist) {
 	    const double expected_in = 2.0 * radius - analytic_chord * 0.5;
 	    const double expected_out = 2.0 * radius + analytic_chord * 0.5;
 	    if (implicit_result.segments != 1 || brep_result.segments != 1 ||
@@ -331,22 +339,44 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 		    implicit_result.segments, brep_result.segments);
 		failures++;
 	    }
+	} else if (brep_result.segments > 1 ||
+		(brep_result.segments == 1 &&
+		brep_result.out_dist - brep_result.in_dist >
+		rtip->rti_tol.dist + 1.0e-9)) {
+	    std::printf("FAIL: sub-tolerance grazing material h/R=%.17g "
+		"BREP=%d chord=%.17g\n", h / radius,
+		brep_result.segments, brep_result.out_dist -
+		brep_result.in_dist);
+	    failures++;
 	}
     }
 
-    /* Well outside the surface must remain a stable miss.  Much smaller
-     * negative clearances are currently retained in --grazing-report as a
-     * known defect and will become hard gates when contact handling lands. */
-    for (int repeat = 0; repeat < 16; ++repeat) {
-	const double h = -rtip->rti_tol.dist;
+    /* Exact tangency and every representable mirrored outside clearance must
+     * be misses for both the analytic and converted representations. */
+    point_t tangent_origin = {-2.0 * radius, radius, 0.0};
+    ray_result implicit_tangent = shoot_solid(implicit_stp, rtip, resp,
+	tangent_origin, direction);
+    ray_result brep_tangent = shoot_solid(brep_stp, rtip, resp,
+	tangent_origin, direction);
+    if (implicit_tangent.segments != 0 || brep_tangent.segments != 0) {
+	std::printf("FAIL: exact tangent did not miss: implicit=%d BREP=%d\n",
+	    implicit_tangent.segments, brep_tangent.segments);
+	failures++;
+    }
+
+    for (size_t i = 0; i < clearances.size(); ++i) {
+	const double h = -clearances[i];
 	point_t origin = {-2.0 * radius, radius - h, 0.0};
+	if (!(origin[Y] > radius))
+	    continue;
 	ray_result implicit_result = shoot_solid(implicit_stp, rtip, resp,
 	    origin, direction);
 	ray_result brep_result = shoot_solid(brep_stp, rtip, resp, origin,
 	    direction);
 	if (implicit_result.segments != 0 || brep_result.segments != 0) {
-	    std::printf("FAIL: outside grazing ray did not miss: implicit=%d "
-		"BREP=%d\n", implicit_result.segments, brep_result.segments);
+	    std::printf("FAIL: outside grazing h/R=%.17g did not miss: "
+		"implicit=%d BREP=%d\n", h / radius,
+		implicit_result.segments, brep_result.segments);
 	    failures++;
 	}
     }

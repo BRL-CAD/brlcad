@@ -13,11 +13,12 @@ CURRENT PHASE
 
 Phase 1 ownership repair and the first deterministic Newton hardening pass are
 implemented.  Directed implicit-sphere/converted-BREP pole rays now pass.  An
-in-memory C++ ray corpus and signed grazing report are in place; the report has
-exposed a repeatable false-interval plateau at tangency that must be fixed
-before the near-tangent cases can become hard correctness gates.  Surface-tree
-density and seam behavior have not yet changed.  Phase 0 baselines documented
-in brep_raytrace_plan.txt remain authoritative.
+in-memory C++ ray corpus and signed grazing report are in place.  The initial
+report exposed a repeatable false-interval plateau at tangency; conditioned
+root acceptance now removes that plateau and all sampled outside false hits,
+and those cases are permanent gates.  Surface-tree density and seam behavior
+have not yet changed.  Phase 0 baselines documented in brep_raytrace_plan.txt
+remain authoritative.
 
 
 REPOSITORY STATE AT START
@@ -82,15 +83,13 @@ ESTABLISHED FINDINGS
    assumptions, stops on a UV-only tolerance, has no trim support, and the old
    wrapper fabricated a 0.01-unit exit for odd hit counts.  Do not port it.
 
-8. The first R=10 mm grazing sweep found a deterministic but incorrect current
-   limit.  As h -> 0+ the converted BREP chord stops converging and approaches
-   about 0.001812758 mm.  At exact tangency the implicit sphere is a raw miss
-   while BREP reports that false interval.  BREP also reports false intervals
-   for very small negative h, out to between approximately -7.45e-8 mm and
-   -1.49e-7 mm in this setup.  This scale is consistent with the loose 1e-7
-   line-residual termination being converted into two apparent roots near an
-   ill-conditioned tangent.  Preserve this report as a baseline; do not merely
-   tune one fixed tolerance until a broader corpus is present.
+8. The first R=10 mm grazing sweep found a deterministic but incorrect
+   baseline.  As h -> 0+ the converted BREP chord stopped converging and
+   approached about 0.001812758 mm.  At exact tangency it reported that false
+   interval, and it reported false intervals for small negative h out to
+   between approximately -7.45e-8 mm and -1.49e-7 mm.  The conditioned root
+   test described in Finding 11 has repaired this baseline.  Keep the history
+   as evidence for why the permanent exact-tangent and negative-h gates exist.
 
 9. Solver work follows a corpus-first ratchet rule learned from the STEP work:
    reproduce difficult cases in C/C++ with analytic or paired implicit
@@ -106,6 +105,16 @@ ESTABLISHED FINDINGS
     result to disappear, but requires determinism and forbids any forward
     material.  Once BREP applies the normal half-ray/partition policy, promote
     this case to exact implicit parity.
+
+11. A fixed perpendicular line residual is not a sufficient root criterion at
+    tangency.  For a unit surface normal N and ray direction D, residual divided
+    by |N dot D|/|D| is the first-order error along the ray.  Root acceptance
+    now requires that estimate to satisfy the numerical root tolerance, with a
+    1e-13 residual floor for exact/double contact.  Residuals are evaluated
+    from S-ray_origin instead of a global plane offset, avoiding cancellation
+    on million-unit translated fixtures.  This retained the singular north
+    pole, small/large scale, and translated cases while repairing the grazing
+    limit.  This is solver conditioning, not the final contact or seam policy.
 
 
 IMPLEMENTATION CHECKLIST
@@ -240,11 +249,12 @@ In-memory correctness corpus:
     translated 0.01 mm sphere and on a radius-10,000 mm sphere translated to
     million-unit coordinates.
 
-  * A logarithmic positive-h sweep enforces deterministic, non-restarting,
-    non-growing BREP interval behavior and analytic endpoint agreement for
-    chords at least 10*rti_tol.dist.  A clearly outside negative-h case is a
-    permanent miss gate.  Known near-limit defects remain visible in the
-    report rather than being encoded as expected answers.
+  * A logarithmic and target-chord positive-h sweep enforces deterministic,
+    non-restarting, non-growing BREP interval behavior.  Chords at least the
+    model distance tolerance must resolve with analytic endpoint agreement;
+    smaller chords may collapse to a contact-sized segment or miss but may not
+    reintroduce material larger than the minimum size.  Exact tangency and all
+    representable mirrored negative-h samples must be misses in both paths.
 
   * A 20,000-line Cauchy-Crofton check estimates area and volume independently
     on the implicit sphere and its converted BREP.  Both must be within 3% of
@@ -259,9 +269,33 @@ In-memory correctness corpus:
     PASS: 1/1
 
   .build/src/librt/tests/rt_brep_ray --grazing-report
-    REPORT: deterministic false BREP interval plateau ~0.001812758 mm at
-    h=0, with a narrow false-positive band on the h<0 side as described in
-    Established Finding 8.
+    REPORT: BREP follows the analytic square-root chord trend through a chord
+    of one model distance tolerance, reports a contact-sized segment at 0.9
+    tolerance, and is a miss by 0.61 tolerance.  Exact tangency and every
+    sampled negative clearance are misses.  The raw solver/contact status is
+    not yet instrumented, so CONTACT here is the test's segment-length class.
+
+Conditioned root convergence:
+
+  * The two ray-plane residuals are evaluated relative to the ray origin.  A
+    root must satisfy both the 1e-7 perpendicular ceiling and the corresponding
+    first-order ray-distance estimate based on |N dot D|/|D|.  A 1e-13 floor
+    prevents an exact double root from requiring literal floating-point zero.
+
+  * Simply reducing the fixed residual threshold to 1e-9 or 1e-12 repaired the
+    R=10 tangent but lost the million-unit translated north-pole root.  A fixed
+    1e-8 happened to pass the current corpus but retained a smaller tangent
+    false interval.  Those rejected experiments demonstrate why the
+    conditioning term and translated fixture are both necessary.
+
+  cmake --build .build --target \
+    librt rt_primitive_brep rt_brep_ray rt_cache -j8
+    PASS
+
+  ctest --test-dir .build -j4 \
+    -R '^(rt_brep_ray|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 12/12
 
 Legacy cleanup:
 
@@ -282,16 +316,15 @@ NEXT ACTIONS
 
 1. Continue expanding brep_ray.cpp with non-spherical analytic conversions,
    seam directions, known singular parameterizations, and an explicit check
-   of the ray-direction normalization contract before modifying tangent
-   convergence.
+   of the ray-direction normalization contract.
 2. Instrument raw solver outcomes/residuals/iterations so the grazing report
    distinguishes candidate generation from final hit-list cleanup.
-3. Replace the loose tangent termination with scale-aware convergence and a
-   safeguarded correction/contact classification; promote exact tangent and
-   negative-h cases to hard gates once corrected.
+3. Add a safeguarded local correction/contact classification beyond the first
+   conditioned Newton improvement.  Do not lower tree density until candidate
+   exclusion and fallback behavior are observable and proven equivalent.
 4. Add normal rt_shootray partition comparisons, then feed exactly the same
    deterministic Cauchy-Crofton lines and bounding sphere to implicit and BREP
    paths.  The current aggregate analytic/paired sphere gate is only the first
    stage.
-5. Run the full focused/cache/NURBS regression set and commit the verified
-   ownership, solver, corpus, and legacy-cleanup work in logical local commits.
+5. Add sewn Cobb and deliberate seam/trim perturbation fixtures before changing
+   tolerance roles or near-trim hit policy.
