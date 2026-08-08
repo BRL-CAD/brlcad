@@ -2842,6 +2842,256 @@ cobb_transform_vector(const ON_Xform &xform, const ON_3dVector &vector)
 }
 
 
+struct exact_dyadic {
+    int64_t mantissa;
+    int exponent;
+};
+
+
+static bool
+exact_dyadic_midpoint(const exact_dyadic *input, int order,
+    exact_dyadic &result)
+{
+    if (!input || order < 1 || order > 16)
+	return false;
+    exact_dyadic work[16];
+    for (int i = 0; i < order; ++i)
+	work[i] = input[i];
+    for (int level = 1; level < order; ++level) {
+	for (int i = 0; i < order - level; ++i) {
+	    if (work[i].exponent != work[i + 1].exponent)
+		return false;
+	    work[i].mantissa += work[i + 1].mantissa;
+	    work[i].exponent--;
+	}
+    }
+    result = work[0];
+    return true;
+}
+
+
+static bool
+exact_dyadic_surface_midpoint(const exact_dyadic *input, int u_order,
+    int v_order, exact_dyadic &result)
+{
+    exact_dyadic source[16];
+    exact_dyadic v_control[16];
+    for (int j = 0; j < v_order; ++j) {
+	for (int i = 0; i < u_order; ++i)
+	    source[i] = input[(size_t)i * v_order + j];
+	if (!exact_dyadic_midpoint(source, u_order, v_control[j]))
+	    return false;
+    }
+    return exact_dyadic_midpoint(v_control, v_order, result);
+}
+
+
+static long double
+exact_dyadic_value(const exact_dyadic &value)
+{
+    return std::ldexp((long double)value.mantissa, value.exponent);
+}
+
+
+static int
+check_brep_interval_enclosures()
+{
+    const int scale_exponents[] = {-400, -40, 0, 40, 400};
+    const int product_exponents[] = {-200, 0, 200};
+    const int64_t product_intervals[][4] = {
+	{-3, 5, -7, 2}, {1, 4, 2, 8}, {-9, -2, -5, -1},
+	{-8, -1, 2, 7}, {0, 3, -4, 0}
+    };
+    double values[2][256] = {};
+    exact_dyadic exact[2][256] = {};
+    const fastf_t root[2] = {0.5, 0.5};
+    size_t cases = 0;
+    size_t function_checks = 0;
+    size_t derivative_checks = 0;
+    size_t product_checks = 0;
+    long double maximum_function_width_ratio = 0.0L;
+    int failures = 0;
+
+    for (size_t interval_index = 0; interval_index <
+	    sizeof(product_intervals) / sizeof(product_intervals[0]);
+	    ++interval_index) {
+	for (size_t first_scale = 0; first_scale <
+		sizeof(product_exponents) / sizeof(product_exponents[0]);
+		++first_scale) {
+	    for (size_t second_scale = 0; second_scale <
+		    sizeof(product_exponents) / sizeof(product_exponents[0]);
+		    ++second_scale) {
+		fastf_t first[2] = {
+		    std::ldexp((double)product_intervals[interval_index][0],
+			product_exponents[first_scale]),
+		    std::ldexp((double)product_intervals[interval_index][1],
+			product_exponents[first_scale])
+		};
+		fastf_t second[2] = {
+		    std::ldexp((double)product_intervals[interval_index][2],
+			product_exponents[second_scale]),
+		    std::ldexp((double)product_intervals[interval_index][3],
+			product_exponents[second_scale])
+		};
+		fastf_t observed[2] = {};
+		const int product_exponent = product_exponents[first_scale] +
+		    product_exponents[second_scale];
+		int64_t exact_products[4] = {
+		    product_intervals[interval_index][0] *
+			product_intervals[interval_index][2],
+		    product_intervals[interval_index][0] *
+			product_intervals[interval_index][3],
+		    product_intervals[interval_index][1] *
+			product_intervals[interval_index][2],
+		    product_intervals[interval_index][1] *
+			product_intervals[interval_index][3]
+		};
+		const int64_t exact_minimum = *std::min_element(exact_products,
+		    exact_products + 4);
+		const int64_t exact_maximum = *std::max_element(exact_products,
+		    exact_products + 4);
+		const long double expected_minimum = std::ldexp(
+		    (long double)exact_minimum, product_exponent);
+		const long double expected_maximum = std::ldexp(
+		    (long double)exact_maximum, product_exponent);
+		product_checks++;
+		if (!_rt_brep_interval_product_test(first, second, observed) ||
+			(long double)observed[0] > expected_minimum ||
+			(long double)observed[1] < expected_maximum) {
+		    std::printf("FAIL: interval product enclosure case=%zu "
+			"scale=%d/%d\n", interval_index,
+			product_exponents[first_scale],
+			product_exponents[second_scale]);
+		    failures++;
+		}
+	    }
+	}
+    }
+
+    for (int u_order = 2; u_order <= 16; ++u_order) {
+	for (int v_order = 2; v_order <= 16; ++v_order) {
+	    const size_t count = (size_t)u_order * v_order;
+	    for (size_t scale_index = 0; scale_index <
+		    sizeof(scale_exponents) / sizeof(scale_exponents[0]);
+		    ++scale_index) {
+		const int scale_exponent = scale_exponents[scale_index];
+		for (int equation = 0; equation < 2; ++equation) {
+		    for (int i = 0; i < u_order; ++i) {
+			for (int j = 0; j < v_order; ++j) {
+			    const size_t index = (size_t)i * v_order + j;
+			    int64_t mantissa = (i * 5 + j * 3 + equation * 2 +
+				u_order + 2 * v_order) % 7 - 3;
+			    if (!mantissa)
+				mantissa = ((i + j + equation) & 1) ? 1 : -1;
+			    exact[equation][index] = {mantissa,
+				scale_exponent};
+			    values[equation][index] = std::ldexp(
+				(double)mantissa, scale_exponent);
+			}
+		    }
+		    for (size_t i = count; i < 256; ++i) {
+			exact[equation][i] = {0, 0};
+			values[equation][i] = 0.0;
+		    }
+		}
+		const fastf_t coefficient_error[2] = {
+		    std::ldexp(1.0, scale_exponent - 32),
+		    std::ldexp(1.0, scale_exponent - 32)
+		};
+		struct rt_brep_interval_test_result observed = {};
+		cases++;
+		if (!_rt_brep_interval_test(values[0], values[1], u_order,
+			v_order, coefficient_error, root, &observed)) {
+		    std::printf("FAIL: interval audit unavailable order=%d/%d "
+			"scale=%d\n", u_order, v_order, scale_exponent);
+		    failures++;
+		    continue;
+		}
+
+		for (int equation = 0; equation < 2; ++equation) {
+		    exact_dyadic midpoint = {};
+		    if (!exact_dyadic_surface_midpoint(exact[equation], u_order,
+			    v_order, midpoint)) {
+			failures++;
+			continue;
+		    }
+		    const long double nominal = exact_dyadic_value(midpoint);
+		    const long double error = coefficient_error[equation];
+		    const long double lower =
+			observed.function_minimum[equation];
+		    const long double upper =
+			observed.function_maximum[equation];
+		    const long double width_ratio =
+			(upper - lower) / (2.0L * error);
+		    maximum_function_width_ratio = std::max(
+			maximum_function_width_ratio, width_ratio);
+		    function_checks++;
+		    if (!std::isfinite((double)lower) ||
+			    !std::isfinite((double)upper) ||
+			    lower > nominal - error || upper < nominal + error ||
+			    !(width_ratio <= 1.05L)) {
+			std::printf("FAIL: interval function enclosure order=%d/%d "
+			    "scale=%d equation=%d width/error=%.9Lg\n",
+			    u_order, v_order, scale_exponent, equation,
+			    width_ratio);
+			failures++;
+		    }
+
+		    for (int direction = 0; direction < 2; ++direction) {
+			const int degree = direction == 0 ? u_order - 1 :
+			    v_order - 1;
+			const int first_count = direction == 0 ? u_order - 1 :
+			    u_order;
+			const int second_count = direction == 0 ? v_order :
+			    v_order - 1;
+			const long double derivative_error =
+			    2.0L * degree * error;
+			for (int i = 0; i < first_count; ++i) {
+			    for (int j = 0; j < second_count; ++j) {
+				const size_t previous =
+				    (size_t)i * v_order + j;
+				const size_t next = direction == 0 ?
+				    (size_t)(i + 1) * v_order + j :
+				    (size_t)i * v_order + j + 1;
+				const int64_t derivative_mantissa = degree *
+				    (exact[equation][next].mantissa -
+				     exact[equation][previous].mantissa);
+				const long double derivative = std::ldexp(
+				    (long double)derivative_mantissa,
+				    scale_exponent);
+				derivative_checks++;
+				if ((long double)observed.jacobian_minimum
+					[equation][direction] >
+					derivative - derivative_error ||
+					(long double)observed.jacobian_maximum
+					[equation][direction] <
+					derivative + derivative_error) {
+				    std::printf("FAIL: interval derivative "
+					"enclosure order=%d/%d scale=%d "
+					"equation=%d direction=%d\n",
+					u_order, v_order, scale_exponent,
+					equation, direction);
+				    failures++;
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    if (!failures) {
+	std::printf("BREP interval enclosure audit: PASS cases=%zu "
+	    "function=%zu derivative=%zu product=%zu "
+	    "max-width/error=%.9Lg\n", cases, function_checks,
+	    derivative_checks, product_checks,
+	    maximum_function_width_ratio);
+    }
+    return failures;
+}
+
+
 static int
 check_sphere_adaptive_similarity(const struct bn_tol *tol)
 {
@@ -5677,6 +5927,7 @@ main(int argc, char **argv)
     };
 
     int failures = 0;
+    failures += check_brep_interval_enclosures();
     for (size_t repeat = 0; repeat < 16; ++repeat) {
 	for (size_t i = 0; i < sizeof(rays) / sizeof(rays[0]); ++i)
 	    failures += check_ray(rays[i].label, implicit_stp, brep_stp,

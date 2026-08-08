@@ -2729,11 +2729,8 @@ struct brep_interval {
 static brep_interval
 brep_interval_expanded(double minimum, double maximum)
 {
-    const double scale = std::max(1.0,
-	std::max(fabs(minimum), fabs(maximum)));
-    const double margin = 128.0 * DBL_EPSILON * scale;
-    return {std::nextafter(minimum - margin, -INFINITY),
-	std::nextafter(maximum + margin, INFINITY)};
+    return {std::nextafter(minimum, -INFINITY),
+	std::nextafter(maximum, INFINITY)};
 }
 
 
@@ -2774,44 +2771,60 @@ brep_interval_multiply(const brep_interval &first,
 
 
 static bool
-brep_scalar_bezier_evaluate(const double *input, int order,
-	double parameter, double &value)
+brep_scalar_bezier_interval_evaluate(const double *input, int order,
+	double coefficient_error, double parameter, brep_interval &value)
 {
     if (!input || order < 1 || order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    coefficient_error < 0.0 || !std::isfinite(coefficient_error) ||
 	    parameter < 0.0 || parameter > 1.0)
 	return false;
-    double work[BREP_DIRECT_BEZIER_MAX_ORDER];
+    brep_interval work[BREP_DIRECT_BEZIER_MAX_ORDER];
     for (int i = 0; i < order; ++i)
-	work[i] = input[i];
+	work[i] = brep_interval_expanded(input[i] - coefficient_error,
+	    input[i] + coefficient_error);
     for (int level = 1; level < order; ++level) {
-	for (int i = 0; i < order - level; ++i)
-	    work[i] = (1.0 - parameter) * work[i] +
-		parameter * work[i + 1];
+	for (int i = 0; i < order - level; ++i) {
+	    const brep_interval first = brep_interval_scale(1.0 - parameter,
+		work[i]);
+	    const brep_interval second = brep_interval_scale(parameter,
+		work[i + 1]);
+	    work[i] = brep_interval_add(first, second);
+	}
     }
     value = work[0];
-    return std::isfinite(value);
+    return std::isfinite(value.minimum) && std::isfinite(value.maximum);
 }
 
 
 static bool
-brep_scalar_surface_evaluate(const double *input, int u_order, int v_order,
-	const double parameter[2], double &value)
+brep_scalar_surface_interval_evaluate(const double *input, int u_order,
+	int v_order, double coefficient_error, const double parameter[2],
+	brep_interval &value)
 {
     if (!input || u_order < 1 || v_order < 1 ||
 	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
 	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
 	return false;
     double source[BREP_DIRECT_BEZIER_MAX_ORDER];
-    double v_control[BREP_DIRECT_BEZIER_MAX_ORDER];
+    brep_interval v_control[BREP_DIRECT_BEZIER_MAX_ORDER];
     for (int j = 0; j < v_order; ++j) {
 	for (int i = 0; i < u_order; ++i)
 	    source[i] = input[(size_t)i * v_order + j];
-	if (!brep_scalar_bezier_evaluate(source, u_order, parameter[0],
-		v_control[j]))
+	if (!brep_scalar_bezier_interval_evaluate(source, u_order,
+		coefficient_error, parameter[0], v_control[j]))
 	    return false;
     }
-    return brep_scalar_bezier_evaluate(v_control, v_order, parameter[1],
-	value);
+    for (int level = 1; level < v_order; ++level) {
+	for (int j = 0; j < v_order - level; ++j) {
+	    const brep_interval first = brep_interval_scale(
+		1.0 - parameter[1], v_control[j]);
+	    const brep_interval second = brep_interval_scale(parameter[1],
+		v_control[j + 1]);
+	    v_control[j] = brep_interval_add(first, second);
+	}
+    }
+    value = v_control[0];
+    return std::isfinite(value.minimum) && std::isfinite(value.maximum);
 }
 
 
@@ -2825,35 +2838,127 @@ brep_surface_derivative_interval(const double *values, int u_order,
 	return false;
     double minimum = DBL_MAX;
     double maximum = -DBL_MAX;
-    double magnitude = 0.0;
     if (direction == 0) {
 	for (int i = 0; i < u_order - 1; ++i) {
 	    for (int j = 0; j < v_order; ++j) {
-		const double value = (u_order - 1) *
-		    (values[(size_t)(i + 1) * v_order + j] -
-		     values[(size_t)i * v_order + j]);
-		minimum = std::min(minimum, value);
-		maximum = std::max(maximum, value);
-		magnitude = std::max(magnitude, fabs(value));
+		const brep_interval next = brep_interval_expanded(
+		    values[(size_t)(i + 1) * v_order + j] -
+			coefficient_error,
+		    values[(size_t)(i + 1) * v_order + j] +
+			coefficient_error);
+		const brep_interval previous = brep_interval_expanded(
+		    values[(size_t)i * v_order + j] - coefficient_error,
+		    values[(size_t)i * v_order + j] + coefficient_error);
+		const brep_interval value = brep_interval_scale(u_order - 1,
+		    brep_interval_add(next,
+			brep_interval_scale(-1.0, previous)));
+		minimum = std::min(minimum, value.minimum);
+		maximum = std::max(maximum, value.maximum);
 	    }
 	}
     } else {
 	for (int i = 0; i < u_order; ++i) {
 	    for (int j = 0; j < v_order - 1; ++j) {
-		const double value = (v_order - 1) *
-		    (values[(size_t)i * v_order + j + 1] -
-		     values[(size_t)i * v_order + j]);
-		minimum = std::min(minimum, value);
-		maximum = std::max(maximum, value);
-		magnitude = std::max(magnitude, fabs(value));
+		const brep_interval next = brep_interval_expanded(
+		    values[(size_t)i * v_order + j + 1] -
+			coefficient_error,
+		    values[(size_t)i * v_order + j + 1] +
+			coefficient_error);
+		const brep_interval previous = brep_interval_expanded(
+		    values[(size_t)i * v_order + j] - coefficient_error,
+		    values[(size_t)i * v_order + j] + coefficient_error);
+		const brep_interval value = brep_interval_scale(v_order - 1,
+		    brep_interval_add(next,
+			brep_interval_scale(-1.0, previous)));
+		minimum = std::min(minimum, value.minimum);
+		maximum = std::max(maximum, value.maximum);
 	    }
 	}
     }
-    const double error = 2.0 *
-	(direction == 0 ? u_order - 1 : v_order - 1) * coefficient_error +
-	128.0 * DBL_EPSILON * std::max(1.0, magnitude);
-    result = brep_interval_expanded(minimum - error, maximum + error);
+    result = brep_interval_expanded(minimum, maximum);
     return std::isfinite(result.minimum) && std::isfinite(result.maximum);
+}
+
+
+static bool
+brep_surface_function_jacobian_intervals(
+	const double values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+	int u_order, int v_order, const double coefficient_error[2],
+	const double root[2], brep_interval function[2],
+	brep_interval jacobian[2][2])
+{
+    if (root[0] < 0.0 || root[0] > 1.0 ||
+	    root[1] < 0.0 || root[1] > 1.0)
+	return false;
+
+    for (int equation = 0; equation < 2; ++equation) {
+	if (!brep_scalar_surface_interval_evaluate(values[equation], u_order,
+		v_order, coefficient_error[equation], root,
+		function[equation]) ||
+		!brep_surface_derivative_interval(values[equation], u_order,
+		v_order, 0, coefficient_error[equation],
+		jacobian[equation][0]) ||
+		!brep_surface_derivative_interval(values[equation], u_order,
+		v_order, 1, coefficient_error[equation],
+		jacobian[equation][1]))
+	    return false;
+    }
+    return true;
+}
+
+
+extern "C" int
+_rt_brep_interval_test(const fastf_t *first_coefficients,
+    const fastf_t *second_coefficients, int u_order, int v_order,
+    const fastf_t coefficient_error[2], const fastf_t root[2],
+    struct rt_brep_interval_test_result *result)
+{
+    if (!first_coefficients || !second_coefficients || !coefficient_error ||
+	    !root || !result || u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return 0;
+    double values[2][BREP_DIRECT_BEZIER_MAX_CVS] = {};
+    const size_t count = (size_t)u_order * v_order;
+    for (size_t i = 0; i < count; ++i) {
+	values[0][i] = first_coefficients[i];
+	values[1][i] = second_coefficients[i];
+    }
+    brep_interval function[2];
+    brep_interval jacobian[2][2];
+    if (!brep_surface_function_jacobian_intervals(values, u_order, v_order,
+	    coefficient_error, root, function, jacobian))
+	return 0;
+    for (int equation = 0; equation < 2; ++equation) {
+	result->function_minimum[equation] = function[equation].minimum;
+	result->function_maximum[equation] = function[equation].maximum;
+	for (int direction = 0; direction < 2; ++direction) {
+	    result->jacobian_minimum[equation][direction] =
+		jacobian[equation][direction].minimum;
+	    result->jacobian_maximum[equation][direction] =
+		jacobian[equation][direction].maximum;
+	}
+    }
+    return 1;
+}
+
+
+extern "C" int
+_rt_brep_interval_product_test(const fastf_t first[2],
+    const fastf_t second[2], fastf_t result[2])
+{
+    if (!first || !second || !result || !std::isfinite(first[0]) ||
+	    !std::isfinite(first[1]) || !std::isfinite(second[0]) ||
+	    !std::isfinite(second[1]) || first[0] > first[1] ||
+	    second[0] > second[1])
+	return 0;
+    const brep_interval product = brep_interval_multiply(
+	{first[0], first[1]}, {second[0], second[1]});
+    if (!std::isfinite(product.minimum) || !std::isfinite(product.maximum))
+	return 0;
+    result[0] = product.minimum;
+    result[1] = product.maximum;
+    return 1;
 }
 
 
@@ -2863,35 +2968,11 @@ brep_surface_krawczyk_certified(
 	int u_order, int v_order, const double coefficient_error[2],
 	const double root[2])
 {
-    if (root[0] < 0.0 || root[0] > 1.0 ||
-	    root[1] < 0.0 || root[1] > 1.0)
-	return false;
-
     brep_interval function[2];
     brep_interval jacobian[2][2];
-    for (int equation = 0; equation < 2; ++equation) {
-	double value = 0.0;
-	if (!brep_scalar_surface_evaluate(values[equation], u_order,
-		v_order, root, value) ||
-		!brep_surface_derivative_interval(values[equation], u_order,
-		v_order, 0, coefficient_error[equation],
-		jacobian[equation][0]) ||
-		!brep_surface_derivative_interval(values[equation], u_order,
-		v_order, 1, coefficient_error[equation],
-		jacobian[equation][1]))
-	    return false;
-	double coefficient_magnitude = 0.0;
-	const size_t coefficient_count = (size_t)u_order * v_order;
-	for (size_t i = 0; i < coefficient_count; ++i)
-	    coefficient_magnitude = std::max(coefficient_magnitude,
-		fabs(values[equation][i]));
-	const double evaluation_operations = u_order + v_order;
-	const double error = coefficient_error[equation] +
-	    128.0 * DBL_EPSILON * evaluation_operations *
-	    std::max(1.0, coefficient_magnitude);
-	function[equation] = brep_interval_expanded(value - error,
-	    value + error);
-    }
+    if (!brep_surface_function_jacobian_intervals(values, u_order, v_order,
+	    coefficient_error, root, function, jacobian))
+	return false;
 
     double midpoint[2][2];
     for (int row = 0; row < 2; ++row) {
