@@ -2293,16 +2293,34 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			    trace.closure_edge_dist <= trace.closure_existing_dist);
 			bad = bad || trace.continuation_attempts != 1 ||
 			    trace.continuation_candidates != 1 ||
+			    trace.continuation_certified_candidates != 1 ||
+			    !trace.continuation_certificate_root_boxes ||
+			    trace.continuation_certificate_root_boxes !=
+			    trace.continuation_certificate_isolated ||
+			    trace.continuation_certificate_exhausted != 0 ||
+			    trace.continuation_certificate_existing_overlap != 0 ||
+			    trace.continuation_dist <
+			    trace.continuation_certificate_t_min -
+			    normalized_root_limit * test.scale ||
+			    trace.continuation_dist >
+			    trace.continuation_certificate_t_max +
+			    normalized_root_limit * test.scale ||
 			    trace.continuation_face_index < 0 ||
 			    fabs(trace.continuation_dist / test.scale -
 			    reference_continuation[reverse]) >
 			    normalized_root_limit ||
 			    (reverse ? trace.continuation_dist >=
 			    trace.closure_edge_dist : trace.continuation_dist <=
-			    trace.closure_edge_dist);
+			    trace.closure_edge_dist) ||
+			    trace.closure_shadow_segments != 1 ||
+			    trace.closure_shadow_in_dist >=
+			    trace.closure_shadow_out_dist;
 		    } else {
 			bad = bad || trace.continuation_attempts != 0 ||
-			    trace.continuation_candidates != 0;
+			    trace.continuation_candidates != 0 ||
+			    trace.continuation_certified_candidates != 0 ||
+			    trace.continuation_certificate_boxes != 0 ||
+			    trace.closure_shadow_segments != 0;
 		    }
 		    if (bad) {
 			std::printf("FAIL: Cobb %s classifier state=%d "
@@ -2599,6 +2617,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t leaks_with_inside_sector_evidence = 0;
     size_t leaks_with_shadow_closure = 0;
     size_t leaks_with_shadow_continuation = 0;
+    size_t leaks_with_certified_continuation = 0;
+    size_t leaks_with_shadow_segment = 0;
     size_t sector_inside = 0;
     size_t sector_contact = 0;
     size_t sector_outside = 0;
@@ -2606,10 +2626,13 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t maximum_isolated_boxes = 0;
     size_t maximum_subdivision_depth = 0;
     size_t maximum_workspace_high_water = 0;
+    size_t maximum_certificate_boxes = 0;
+    size_t maximum_certificate_workspace = 0;
     double maximum_calibration_error = 0.0;
     double maximum_edge_distance_error = 0.0;
     double maximum_lift_error = 0.0;
     double maximum_continuation_error = 0.0;
+    double maximum_certificate_width = 0.0;
 
     if (emit_report) {
 	std::printf("cobb_family,direction,g_over_T,h_over_T,"
@@ -2630,7 +2653,11 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "candidate_count,edge_index,edge_t,existing_t,missing_direction\n");
 	std::printf("cobb_continuation_columns,direction,g_over_T,h_over_T,"
 	    "reverse,attempts,candidates,face,t,u,v,residual,normal_dot,"
-	    "iterations\n");
+	    "iterations,certificate_boxes,certificate_isolated,"
+	    "certificate_root_boxes,certificate_workspace,"
+	    "certificate_exhausted,certificate_existing_overlap,"
+	    "certified_candidates,certificate_t_min,certificate_t_max,"
+	    "shadow_segments,shadow_in,shadow_out\n");
 	std::printf("cobb_box_columns,direction,g_over_T,h_over_T,reverse,"
 	    "box_index,face,u_min,u_max,v_min,v_max,t_min,t_max,depth\n");
 	std::printf("cobb_root_columns,direction,g_over_T,h_over_T,reverse,"
@@ -2744,6 +2771,17 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    maximum_workspace_high_water = std::max(
 			maximum_workspace_high_water,
 			trace.surface_workspace_high_water);
+		    maximum_certificate_boxes = std::max(
+			maximum_certificate_boxes,
+			trace.continuation_certificate_boxes);
+		    maximum_certificate_workspace = std::max(
+			maximum_certificate_workspace,
+			trace.continuation_certificate_workspace);
+		    if (trace.continuation_certificate_root_boxes)
+			maximum_certificate_width = std::max(
+			    maximum_certificate_width,
+			    trace.continuation_certificate_t_max -
+			    trace.continuation_certificate_t_min);
 		    if (trace.root_overflow ||
 			    trace.solver_calls != trace.intersected_leaves ||
 			    trace.candidate_roots != trace.stored_roots ||
@@ -2957,6 +2995,10 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    leaks_with_shadow_closure++;
 			if (trace.continuation_candidates == 1)
 			    leaks_with_shadow_continuation++;
+			if (trace.continuation_certified_candidates == 1)
+			    leaks_with_certified_continuation++;
+			if (trace.closure_shadow_segments == 1)
+			    leaks_with_shadow_segment++;
 			const double expected_continuation_dist = reverse ?
 			    implicit_result.intervals[0].in_dist :
 			    implicit_result.intervals[0].out_dist;
@@ -2995,6 +3037,25 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    (target_edge ? target_edge->face_index[0] : -1);
 			if (trace.continuation_attempts != 1 ||
 				trace.continuation_candidates != 1 ||
+				trace.continuation_certified_candidates != 1 ||
+				!trace.continuation_certificate_root_boxes ||
+				trace.continuation_certificate_root_boxes !=
+				trace.continuation_certificate_isolated ||
+				trace.continuation_certificate_exhausted ||
+				trace.continuation_certificate_existing_overlap ||
+				expected_continuation_dist <
+				trace.continuation_certificate_t_min - 1.0e-7 ||
+				expected_continuation_dist >
+				trace.continuation_certificate_t_max + 1.0e-7 ||
+				(trace.closure_existing_dist >=
+				trace.continuation_certificate_t_min - 1.0e-7 &&
+				trace.closure_existing_dist <=
+				trace.continuation_certificate_t_max + 1.0e-7) ||
+				trace.closure_shadow_segments != 1 ||
+				fabs(trace.closure_shadow_in_dist -
+				implicit_result.intervals[0].in_dist) > 1.0e-7 ||
+				fabs(trace.closure_shadow_out_dist -
+				implicit_result.intervals[0].out_dist) > 1.0e-7 ||
 				trace.continuation_face_index !=
 				expected_continuation_face ||
 				continuation_error > 1.0e-7 ||
@@ -3091,7 +3152,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.closure_existing_dist,
 			    trace.closure_missing_direction);
 			std::printf("cobb_continuation,%s,%.9g,%.9g,%d,%zu,%zu,"
-			    "%d,%.17g,%.17g,%.17g,%.17g,%.17g,%zu\n",
+			    "%d,%.17g,%.17g,%.17g,%.17g,%.17g,%zu,%zu,%zu,"
+			    "%zu,%zu,%zu,%zu,%zu,%.17g,%.17g,%zu,%.17g,"
+			    "%.17g\n",
 			    sign > 0 ? "outward" : "inward",
 			    measured_gap / tol->dist, clearance / tol->dist,
 			    reverse, trace.continuation_attempts,
@@ -3101,7 +3164,19 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.continuation_uv[1],
 			    trace.continuation_residual,
 			    trace.continuation_normal_dot,
-			    trace.continuation_iterations);
+			    trace.continuation_iterations,
+			    trace.continuation_certificate_boxes,
+			    trace.continuation_certificate_isolated,
+			    trace.continuation_certificate_root_boxes,
+			    trace.continuation_certificate_workspace,
+			    trace.continuation_certificate_exhausted,
+			    trace.continuation_certificate_existing_overlap,
+			    trace.continuation_certified_candidates,
+			    trace.continuation_certificate_t_min,
+			    trace.continuation_certificate_t_max,
+			    trace.closure_shadow_segments,
+			    trace.closure_shadow_in_dist,
+			    trace.closure_shadow_out_dist);
 			for (size_t box_index = 0;
 				box_index < trace.stored_surface_boxes;
 				++box_index) {
@@ -3176,7 +3251,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	"below-envelope-leaks=%zu reversal-inconsistencies=%zu "
 	"leak-stages=%zu/%zu/%zu edge-evidence=%zu "
 	"inside-evidence=%zu shadow-closure=%zu "
-	"shadow-continuation=%zu "
+	"shadow-continuation=%zu certified-continuation=%zu "
+	"shadow-segment=%zu "
 	"sector-states=%zu/%zu/%zu "
 	"max-edge-error=%.3g max-lift-error=%.3g "
 	"max-continuation-error=%.3g max-calibration=%.3g\n",
@@ -3187,6 +3263,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	leaks_during_hit_cleanup, leaks_with_target_edge_evidence,
 	leaks_with_inside_sector_evidence, leaks_with_shadow_closure,
 	leaks_with_shadow_continuation,
+	leaks_with_certified_continuation,
+	leaks_with_shadow_segment,
 	sector_inside, sector_contact,
 	sector_outside, maximum_edge_distance_error, maximum_lift_error,
 	maximum_continuation_error,
@@ -3195,6 +3273,10 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	"max-depth=%zu workspace-high-water=%zu\n",
 	maximum_subdivision_boxes, maximum_isolated_boxes,
 	maximum_subdivision_depth, maximum_workspace_high_water);
+    std::printf("Cobb continuation certificate: max-boxes=%zu "
+	"workspace-high-water=%zu max-t-width=%.9g\n",
+	maximum_certificate_boxes, maximum_certificate_workspace,
+	maximum_certificate_width);
     free_prepared_model(implicit_model);
     delete pristine;
     return failures;

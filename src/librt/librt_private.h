@@ -548,6 +548,18 @@ struct rt_brep_shot_trace {
     fastf_t continuation_residual;
     fastf_t continuation_normal_dot;
     int continuation_face_index;
+    size_t continuation_certificate_boxes;
+    size_t continuation_certificate_isolated;
+    size_t continuation_certificate_root_boxes;
+    size_t continuation_certificate_workspace;
+    size_t continuation_certificate_exhausted;
+    size_t continuation_certificate_existing_overlap;
+    size_t continuation_certified_candidates;
+    fastf_t continuation_certificate_t_min;
+    fastf_t continuation_certificate_t_max;
+    size_t closure_shadow_segments;
+    fastf_t closure_shadow_in_dist;
+    fastf_t closure_shadow_out_dist;
 };
 
 RT_EXPORT extern int _rt_brep_shot_trace(

@@ -1633,6 +1633,152 @@ brep_scalar_surface_restrict(const double *input, int u_order, int v_order,
 }
 
 
+static bool
+brep_scalar_bezier_reparameterize(const double *input, int order,
+    double minimum, double maximum, double *output)
+{
+    if (!input || !output || order < 2 ||
+	    order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    !std::isfinite(minimum) || !std::isfinite(maximum) ||
+	    !(minimum < maximum))
+	return false;
+    if (fabs(minimum) <= DBL_MIN && fabs(maximum - 1.0) <= DBL_MIN) {
+	for (int i = 0; i < order; ++i)
+	    output[i] = input[i];
+	return true;
+    }
+
+    double first[BREP_DIRECT_BEZIER_MAX_ORDER];
+    double second[BREP_DIRECT_BEZIER_MAX_ORDER];
+    double unused[BREP_DIRECT_BEZIER_MAX_ORDER];
+    const double from_minimum = 1.0 - minimum;
+    if (fabs(from_minimum) > DBL_MIN) {
+	brep_scalar_bezier_split(input, order, minimum, unused, second);
+	const double local_maximum = (maximum - minimum) / from_minimum;
+	brep_scalar_bezier_split(second, order, local_maximum, first, unused);
+	for (int i = 0; i < order; ++i)
+	    output[i] = first[i];
+	return true;
+    }
+
+    if (fabs(maximum) <= DBL_MIN)
+	return false;
+    brep_scalar_bezier_split(input, order, maximum, first, unused);
+    const double local_minimum = minimum / maximum;
+    brep_scalar_bezier_split(first, order, local_minimum, unused, second);
+    for (int i = 0; i < order; ++i)
+	output[i] = second[i];
+    return true;
+}
+
+
+static bool
+brep_scalar_surface_reparameterize(const double *input, int u_order,
+    int v_order, double u_minimum, double u_maximum, double v_minimum,
+    double v_maximum, double *output)
+{
+    double u_reparameterized[BREP_DIRECT_BEZIER_MAX_CVS];
+    double source[BREP_DIRECT_BEZIER_MAX_ORDER];
+    double result[BREP_DIRECT_BEZIER_MAX_ORDER];
+    for (int j = 0; j < v_order; ++j) {
+	for (int i = 0; i < u_order; ++i)
+	    source[i] = input[(size_t)i * v_order + j];
+	if (!brep_scalar_bezier_reparameterize(source, u_order, u_minimum,
+		u_maximum, result))
+	    return false;
+	for (int i = 0; i < u_order; ++i)
+	    u_reparameterized[(size_t)i * v_order + j] = result[i];
+    }
+    for (int i = 0; i < u_order; ++i) {
+	for (int j = 0; j < v_order; ++j)
+	    source[j] = u_reparameterized[(size_t)i * v_order + j];
+	if (!brep_scalar_bezier_reparameterize(source, v_order, v_minimum,
+		v_maximum, result))
+	    return false;
+	for (int j = 0; j < v_order; ++j)
+	    output[(size_t)i * v_order + j] = result[j];
+    }
+    return true;
+}
+
+
+static double
+brep_scalar_bezier_reparameterization_norm(int order, double minimum,
+    double maximum)
+{
+    double row_sum[BREP_DIRECT_BEZIER_MAX_ORDER] = {0.0};
+    for (int basis = 0; basis < order; ++basis) {
+	double input[BREP_DIRECT_BEZIER_MAX_ORDER] = {0.0};
+	double output[BREP_DIRECT_BEZIER_MAX_ORDER] = {0.0};
+	input[basis] = 1.0;
+	if (!brep_scalar_bezier_reparameterize(input, order, minimum, maximum,
+		output))
+	    return INFINITY;
+	for (int row = 0; row < order; ++row)
+	    row_sum[row] += fabs(output[row]);
+    }
+    double norm = 0.0;
+    for (int row = 0; row < order; ++row)
+	norm = std::max(norm, row_sum[row]);
+    return norm;
+}
+
+
+static bool
+brep_surface_coefficients_reparameterize(
+    const brep_surface_coefficients &source, const double minimum[2],
+    const double maximum[2], brep_surface_coefficients &result)
+{
+    result.order[0] = source.order[0];
+    result.order[1] = source.order[1];
+    const double u_norm = brep_scalar_bezier_reparameterization_norm(
+	source.order[0], minimum[0], maximum[0]);
+    const double v_norm = brep_scalar_bezier_reparameterization_norm(
+	source.order[1], minimum[1], maximum[1]);
+    const double amplification = u_norm * v_norm;
+    if (!std::isfinite(amplification) || !(amplification > 0.0))
+	return false;
+
+    for (int equation = 0; equation < 2; ++equation) {
+	if (!brep_scalar_surface_reparameterize(source.value[equation],
+		source.order[0], source.order[1], minimum[0], maximum[0],
+		minimum[1], maximum[1], result.value[equation]))
+	    return false;
+    }
+    if (!brep_scalar_surface_reparameterize(source.ray_numerator,
+	    source.order[0], source.order[1], minimum[0], maximum[0],
+	    minimum[1], maximum[1], result.ray_numerator) ||
+	    !brep_scalar_surface_reparameterize(source.weight,
+	    source.order[0], source.order[1], minimum[0], maximum[0],
+	    minimum[1], maximum[1], result.weight))
+	return false;
+
+    const size_t count = (size_t)source.order[0] * source.order[1];
+    for (int equation = 0; equation < 2; ++equation) {
+	double magnitude = 0.0;
+	for (size_t i = 0; i < count; ++i)
+	    magnitude = std::max(magnitude, fabs(result.value[equation][i]));
+	result.error[equation] = source.error[equation] * amplification +
+	    128.0 * DBL_EPSILON * std::max(1.0, magnitude);
+    }
+    double ray_magnitude = 0.0;
+    double weight_magnitude = 0.0;
+    double minimum_weight = DBL_MAX;
+    for (size_t i = 0; i < count; ++i) {
+	ray_magnitude = std::max(ray_magnitude,
+	    fabs(result.ray_numerator[i]));
+	weight_magnitude = std::max(weight_magnitude, fabs(result.weight[i]));
+	minimum_weight = std::min(minimum_weight, result.weight[i]);
+    }
+    result.ray_numerator_error =
+	source.ray_numerator_error * amplification +
+	128.0 * DBL_EPSILON * std::max(1.0, ray_magnitude);
+    result.weight_error = source.weight_error * amplification +
+	128.0 * DBL_EPSILON * std::max(1.0, weight_magnitude);
+    return minimum_weight > result.weight_error;
+}
+
+
 struct brep_subdivision_box {
     double minimum[2];
     double maximum[2];
@@ -1784,6 +1930,82 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 	trace->surface_workspace_high_water = std::max(
 	    trace->surface_workspace_high_water, pending_count);
     }
+}
+
+
+static bool
+brep_trace_continuation_certificate(struct rt_brep_shot_trace *trace,
+    const brep_surface_span &span, const ON_Ray &ray,
+    const double minimum[2], const double maximum[2],
+    const ON_2dPoint &root_uv, double root_dist, double existing_dist)
+{
+    ON_3dVector first;
+    ON_3dVector second;
+    brep_surface_coefficients source;
+    brep_surface_coefficients extension;
+    if (!brep_ray_plane_frame(ray, first, second) ||
+	    !brep_surface_coefficients_init(source, span, ray, first, second) ||
+	    !brep_surface_coefficients_reparameterize(source, minimum, maximum,
+		extension)) {
+	trace->continuation_certificate_exhausted++;
+	return false;
+    }
+
+    brep_surface_span extension_span;
+    extension_span.face_index = span.face_index;
+    for (int direction = 0; direction < 2; ++direction)
+	extension_span.surface_domain[direction] = ON_Interval(
+	    span.surface_domain[direction].ParameterAt(minimum[direction]),
+	    span.surface_domain[direction].ParameterAt(maximum[direction]));
+    struct rt_brep_shot_trace certificate = {};
+    brep_trace_surface_isolation(&certificate, extension, extension_span);
+    trace->continuation_certificate_boxes +=
+	certificate.surface_subdivision_boxes;
+    trace->continuation_certificate_isolated +=
+	certificate.surface_isolated_boxes;
+    trace->continuation_certificate_workspace = std::max(
+	trace->continuation_certificate_workspace,
+	certificate.surface_workspace_high_water);
+    trace->continuation_certificate_exhausted +=
+	certificate.surface_workspace_exhausted +
+	certificate.surface_box_overflow;
+    if (certificate.surface_workspace_exhausted ||
+	    certificate.surface_box_overflow)
+	return false;
+
+    size_t root_boxes = 0;
+    size_t existing_overlap = 0;
+    double minimum_t = DBL_MAX;
+    double maximum_t = -DBL_MAX;
+    const double parameter_tolerance = 1.0e-12;
+    const double distance_tolerance = 1.0e-7;
+    for (size_t i = 0; i < certificate.stored_surface_boxes; ++i) {
+	const struct rt_brep_trace_surface_box &box =
+	    certificate.surface_boxes[i];
+	const bool contains_root = box.face_index == span.face_index &&
+	    root_uv.x >= box.uv_min[0] - parameter_tolerance &&
+	    root_uv.x <= box.uv_max[0] + parameter_tolerance &&
+	    root_uv.y >= box.uv_min[1] - parameter_tolerance &&
+	    root_uv.y <= box.uv_max[1] + parameter_tolerance &&
+	    root_dist >= box.t_min - distance_tolerance &&
+	    root_dist <= box.t_max + distance_tolerance;
+	if (!contains_root)
+	    continue;
+	root_boxes++;
+	minimum_t = std::min(minimum_t, box.t_min);
+	maximum_t = std::max(maximum_t, box.t_max);
+	if (existing_dist >= box.t_min - distance_tolerance &&
+		existing_dist <= box.t_max + distance_tolerance)
+	    existing_overlap++;
+    }
+    trace->continuation_certificate_root_boxes += root_boxes;
+    trace->continuation_certificate_existing_overlap += existing_overlap;
+    if (root_boxes) {
+	trace->continuation_certificate_t_min = minimum_t;
+	trace->continuation_certificate_t_max = maximum_t;
+    }
+    return root_boxes > 0 &&
+	root_boxes == certificate.surface_isolated_boxes && !existing_overlap;
 }
 
 
@@ -2344,18 +2566,56 @@ brep_trace_continuation(struct rt_brep_shot_trace *trace,
 		result.dist < observation->ray_dist;
 	    if (direction != trace->closure_missing_direction || !ordered)
 		continue;
+	    const ON_2dPoint root_uv(
+		span.surface_domain[0].ParameterAt(result.uv.x),
+		span.surface_domain[1].ParameterAt(result.uv.y));
+	    const double padding = std::max(1.0 / 4096.0, 0.25 * outside);
+	    double certificate_minimum[2] = {
+		std::min(local_edge.x, std::min(seed.x, result.uv.x)) - padding,
+		std::min(local_edge.y, std::min(seed.y, result.uv.y)) - padding
+	    };
+	    double certificate_maximum[2] = {
+		std::max(local_edge.x, std::max(seed.x, result.uv.x)) + padding,
+		std::max(local_edge.y, std::max(seed.y, result.uv.y)) + padding
+	    };
+	    for (int parameter_direction = 0; parameter_direction < 2;
+		    ++parameter_direction) {
+		certificate_minimum[parameter_direction] = std::max(-0.25,
+		    certificate_minimum[parameter_direction]);
+		certificate_maximum[parameter_direction] = std::min(1.25,
+		    certificate_maximum[parameter_direction]);
+	    }
 	    trace->continuation_candidates++;
+	    if (brep_trace_continuation_certificate(trace, span, ray,
+		    certificate_minimum, certificate_maximum, root_uv,
+		    result.dist, hit.dist))
+		trace->continuation_certified_candidates++;
 	    if (trace->continuation_face_index >= 0)
 		continue;
 	    trace->continuation_iterations = result.iterations;
 	    trace->continuation_dist = result.dist;
-	    trace->continuation_uv[0] =
-		span.surface_domain[0].ParameterAt(result.uv.x);
-	    trace->continuation_uv[1] =
-		span.surface_domain[1].ParameterAt(result.uv.y);
+	    trace->continuation_uv[0] = root_uv.x;
+	    trace->continuation_uv[1] = root_uv.y;
 	    trace->continuation_residual = result.residual;
 	    trace->continuation_normal_dot = normal_dot;
 	    trace->continuation_face_index = hit.face.m_face_index;
+	}
+    }
+    if (trace->continuation_candidates == 1 &&
+	    trace->continuation_certified_candidates == 1 &&
+	    trace->continuation_face_index >= 0) {
+	if (hit.direction == brep_hit::ENTERING &&
+		trace->closure_missing_direction == brep_hit::LEAVING &&
+		trace->continuation_dist > hit.dist) {
+	    trace->closure_shadow_segments = 1;
+	    trace->closure_shadow_in_dist = hit.dist;
+	    trace->closure_shadow_out_dist = trace->continuation_dist;
+	} else if (trace->closure_missing_direction == brep_hit::ENTERING &&
+		hit.direction == brep_hit::LEAVING &&
+		trace->continuation_dist < hit.dist) {
+	    trace->closure_shadow_segments = 1;
+	    trace->closure_shadow_in_dist = trace->continuation_dist;
+	    trace->closure_shadow_out_dist = hit.dist;
 	}
     }
 }
