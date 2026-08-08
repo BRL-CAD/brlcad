@@ -36,6 +36,7 @@
 #include <mutex>
 #include <stack>
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <algorithm>
 #include <set>
@@ -2943,6 +2944,512 @@ _rt_brep_linear_hull_test(const fastf_t *first_coefficients,
 	if (hull[row].minimum > 0.0 || hull[row].maximum < 0.0)
 	    result->excluded = 1;
     }
+    return 1;
+}
+
+
+static uint64_t
+brep_binomial_coefficient(int degree, int index)
+{
+    if (index < 0 || index > degree)
+	return 0;
+    index = std::min(index, degree - index);
+    uint64_t result = 1;
+    for (int i = 1; i <= index; ++i)
+	result = result * (uint64_t)(degree - index + i) / (uint64_t)i;
+    return result;
+}
+
+
+static bool
+brep_interval_surface_derivative_coefficients(const brep_interval *input,
+    int u_order, int v_order, int direction, brep_interval *output,
+    int output_order[2])
+{
+    if (!input || !output || !output_order ||
+	    (direction != 0 && direction != 1) ||
+	    u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return false;
+    output_order[0] = u_order - (direction == 0 ? 1 : 0);
+    output_order[1] = v_order - (direction == 1 ? 1 : 0);
+    const int degree = direction == 0 ? u_order - 1 : v_order - 1;
+    for (int i = 0; i < output_order[0]; ++i) {
+	for (int j = 0; j < output_order[1]; ++j) {
+	    const size_t previous = (size_t)i * v_order + j;
+	    const size_t next = direction == 0 ?
+		(size_t)(i + 1) * v_order + j :
+		(size_t)i * v_order + j + 1;
+	    const brep_interval delta = brep_interval_add(input[next],
+		brep_interval_scale(-1.0, input[previous]));
+	    const brep_interval derivative = brep_interval_scale(degree,
+		delta);
+	    if (!std::isfinite(derivative.minimum) ||
+		    !std::isfinite(derivative.maximum) ||
+		    derivative.minimum > derivative.maximum)
+		return false;
+	    output[(size_t)i * output_order[1] + j] = derivative;
+	}
+    }
+    return true;
+}
+
+
+static bool
+brep_interval_surface_product_coefficients(const brep_interval *first,
+    const int first_order[2], const brep_interval *second,
+    const int second_order[2], brep_interval *output, int output_order[2])
+{
+    if (!first || !first_order || !second || !second_order || !output ||
+	    !output_order || first_order[0] < 1 || first_order[1] < 1 ||
+	    second_order[0] < 1 || second_order[1] < 1)
+	return false;
+    output_order[0] = first_order[0] + second_order[0] - 1;
+    output_order[1] = first_order[1] + second_order[1] - 1;
+    if (output_order[0] > RT_BREP_DETERMINANT_TEST_MAX_ORDER ||
+	    output_order[1] > RT_BREP_DETERMINANT_TEST_MAX_ORDER)
+	return false;
+
+    const int first_degree[2] = {
+	first_order[0] - 1, first_order[1] - 1
+    };
+    const int second_degree[2] = {
+	second_order[0] - 1, second_order[1] - 1
+    };
+    for (int k = 0; k < output_order[0]; ++k) {
+	const uint64_t u_denominator = brep_binomial_coefficient(
+	    first_degree[0] + second_degree[0], k);
+	const int first_u_minimum = std::max(0, k - second_degree[0]);
+	const int first_u_maximum = std::min(first_degree[0], k);
+	for (int l = 0; l < output_order[1]; ++l) {
+	    const uint64_t v_denominator = brep_binomial_coefficient(
+		first_degree[1] + second_degree[1], l);
+	    const int first_v_minimum = std::max(0,
+		l - second_degree[1]);
+	    const int first_v_maximum = std::min(first_degree[1], l);
+	    if (!u_denominator || !v_denominator)
+		return false;
+	    brep_interval coefficient = {0.0, 0.0};
+	    for (int i = first_u_minimum; i <= first_u_maximum; ++i) {
+		const int second_i = k - i;
+		const uint64_t u_numerator =
+		    brep_binomial_coefficient(first_degree[0], i) *
+		    brep_binomial_coefficient(second_degree[0], second_i);
+		brep_interval u_weight;
+		if (!brep_interval_divide_nonzero(
+			{(double)u_numerator, (double)u_numerator},
+			{(double)u_denominator, (double)u_denominator},
+			u_weight))
+		    return false;
+		for (int j = first_v_minimum; j <= first_v_maximum; ++j) {
+		    const int second_j = l - j;
+		    const uint64_t v_numerator =
+			brep_binomial_coefficient(first_degree[1], j) *
+			brep_binomial_coefficient(second_degree[1], second_j);
+		    brep_interval v_weight;
+		    if (!brep_interval_divide_nonzero(
+			    {(double)v_numerator, (double)v_numerator},
+			    {(double)v_denominator, (double)v_denominator},
+			    v_weight))
+			return false;
+		    const brep_interval value = brep_interval_multiply(
+			first[(size_t)i * first_order[1] + j],
+			second[(size_t)second_i * second_order[1] + second_j]);
+		    coefficient = brep_interval_add(coefficient,
+			brep_interval_multiply(value,
+			    brep_interval_multiply(u_weight, v_weight)));
+		}
+	    }
+	    if (!std::isfinite(coefficient.minimum) ||
+		    !std::isfinite(coefficient.maximum) ||
+		    coefficient.minimum > coefficient.maximum)
+		return false;
+	    output[(size_t)k * output_order[1] + l] = coefficient;
+	}
+    }
+    return true;
+}
+
+
+static bool
+brep_interval_surface_determinant_coefficients(
+    const brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    int u_order, int v_order, brep_interval *determinant,
+    int determinant_order[2])
+{
+    if (!values || !determinant || !determinant_order)
+	return false;
+    brep_interval derivative[2][2][BREP_DIRECT_BEZIER_MAX_CVS];
+    int derivative_order[2][2][2];
+    for (int equation = 0; equation < 2; ++equation) {
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!brep_interval_surface_derivative_coefficients(
+		    values[equation], u_order, v_order, direction,
+		    derivative[equation][direction],
+		    derivative_order[equation][direction]))
+		return false;
+	}
+    }
+
+    brep_interval cross[RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+    int first_order[2];
+    int second_order[2];
+    if (!brep_interval_surface_product_coefficients(derivative[0][0],
+	    derivative_order[0][0], derivative[1][1],
+	    derivative_order[1][1], determinant, first_order) ||
+	    !brep_interval_surface_product_coefficients(derivative[0][1],
+		derivative_order[0][1], derivative[1][0],
+		derivative_order[1][0], cross, second_order) ||
+	    first_order[0] != second_order[0] ||
+	    first_order[1] != second_order[1])
+	return false;
+    determinant_order[0] = first_order[0];
+    determinant_order[1] = first_order[1];
+    const size_t count = (size_t)first_order[0] * first_order[1];
+    for (size_t i = 0; i < count; ++i) {
+	determinant[i] = brep_interval_add(determinant[i],
+	    brep_interval_scale(-1.0, cross[i]));
+	if (!std::isfinite(determinant[i].minimum) ||
+		!std::isfinite(determinant[i].maximum) ||
+		determinant[i].minimum > determinant[i].maximum)
+	    return false;
+    }
+    return true;
+}
+
+
+extern "C" int
+_rt_brep_determinant_test(const fastf_t *first_coefficients,
+    const fastf_t *first_error, const fastf_t *second_coefficients,
+    const fastf_t *second_error, int u_order, int v_order,
+    struct rt_brep_determinant_test_result *result)
+{
+    if (!first_coefficients || !first_error || !second_coefficients ||
+	    !second_error || !result || u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return 0;
+    brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    const fastf_t *coefficient[2] = {
+	first_coefficients, second_coefficients
+    };
+    const fastf_t *error[2] = {first_error, second_error};
+    const size_t count = (size_t)u_order * v_order;
+    for (int equation = 0; equation < 2; ++equation) {
+	for (size_t i = 0; i < count; ++i) {
+	    if (!std::isfinite(coefficient[equation][i]) ||
+		    !std::isfinite(error[equation][i]) ||
+		    error[equation][i] < 0.0)
+		return 0;
+	    values[equation][i] = brep_interval_expanded(
+		coefficient[equation][i] - error[equation][i],
+		coefficient[equation][i] + error[equation][i]);
+	}
+    }
+    brep_interval determinant[RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+    int determinant_order[2];
+    if (!brep_interval_surface_determinant_coefficients(values, u_order,
+	    v_order, determinant, determinant_order))
+	return 0;
+    result->u_order = determinant_order[0];
+    result->v_order = determinant_order[1];
+    const size_t determinant_count =
+	(size_t)determinant_order[0] * determinant_order[1];
+    for (size_t i = 0; i < determinant_count; ++i) {
+	result->minimum[i] = determinant[i].minimum;
+	result->maximum[i] = determinant[i].maximum;
+    }
+    return 1;
+}
+
+
+static bool
+brep_interval_surface_evaluate_coefficients(const brep_interval *input,
+    int u_order, int v_order, const double parameter[2],
+    brep_interval &value)
+{
+    if (!input || !parameter || u_order < 1 || v_order < 1 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    parameter[0] < 0.0 || parameter[0] > 1.0 ||
+	    parameter[1] < 0.0 || parameter[1] > 1.0)
+	return false;
+    brep_interval v_control[BREP_DIRECT_BEZIER_MAX_ORDER];
+    for (int j = 0; j < v_order; ++j) {
+	brep_interval work[BREP_DIRECT_BEZIER_MAX_ORDER];
+	for (int i = 0; i < u_order; ++i)
+	    work[i] = input[(size_t)i * v_order + j];
+	for (int level = 1; level < u_order; ++level) {
+	    for (int i = 0; i < u_order - level; ++i) {
+		work[i] = brep_interval_add(
+		    brep_interval_scale(1.0 - parameter[0], work[i]),
+		    brep_interval_scale(parameter[0], work[i + 1]));
+	    }
+	}
+	v_control[j] = work[0];
+    }
+    for (int level = 1; level < v_order; ++level) {
+	for (int j = 0; j < v_order - level; ++j) {
+	    v_control[j] = brep_interval_add(
+		brep_interval_scale(1.0 - parameter[1], v_control[j]),
+		brep_interval_scale(parameter[1], v_control[j + 1]));
+	}
+    }
+    value = v_control[0];
+    return std::isfinite(value.minimum) && std::isfinite(value.maximum) &&
+	value.minimum <= value.maximum;
+}
+
+
+static bool
+brep_interval_surface_derivative_hull(const brep_interval *input,
+    int u_order, int v_order, int direction, brep_interval &hull)
+{
+    brep_interval derivative[BREP_DIRECT_BEZIER_MAX_CVS];
+    int derivative_order[2];
+    if (!brep_interval_surface_derivative_coefficients(input, u_order,
+	    v_order, direction, derivative, derivative_order))
+	return false;
+    hull.minimum = DBL_MAX;
+    hull.maximum = -DBL_MAX;
+    const size_t count =
+	(size_t)derivative_order[0] * derivative_order[1];
+    for (size_t i = 0; i < count; ++i) {
+	hull.minimum = std::min(hull.minimum, derivative[i].minimum);
+	hull.maximum = std::max(hull.maximum, derivative[i].maximum);
+    }
+    return std::isfinite(hull.minimum) && std::isfinite(hull.maximum) &&
+	hull.minimum <= hull.maximum;
+}
+
+
+static bool
+brep_interval_surface_krawczyk(
+    const brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    int u_order, int v_order, const double root[2],
+    struct rt_brep_krawczyk_test_result &result)
+{
+    if (!values || !root || root[0] < 0.0 || root[0] > 1.0 ||
+	    root[1] < 0.0 || root[1] > 1.0)
+	return false;
+    brep_interval function[2];
+    brep_interval jacobian[2][2];
+    for (int equation = 0; equation < 2; ++equation) {
+	if (!brep_interval_surface_evaluate_coefficients(values[equation],
+		u_order, v_order, root, function[equation]))
+	    return false;
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!brep_interval_surface_derivative_hull(values[equation],
+		    u_order, v_order, direction,
+		    jacobian[equation][direction]))
+		return false;
+	}
+    }
+
+    double midpoint[2][2];
+    for (int row = 0; row < 2; ++row) {
+	for (int column = 0; column < 2; ++column) {
+	    midpoint[row][column] =
+		0.5 * jacobian[row][column].minimum +
+		0.5 * jacobian[row][column].maximum;
+	}
+    }
+    const double determinant = midpoint[0][0] * midpoint[1][1] -
+	midpoint[0][1] * midpoint[1][0];
+    const double first_scale = hypot(midpoint[0][0], midpoint[1][0]);
+    const double second_scale = hypot(midpoint[0][1], midpoint[1][1]);
+    if (!std::isfinite(determinant) || !(first_scale > DBL_MIN) ||
+	    !(second_scale > DBL_MIN))
+	return false;
+    result.determinant_ratio =
+	fabs(determinant / first_scale) / second_scale;
+    if (!(fabs(determinant) > 0.0) ||
+	    !std::isfinite(result.determinant_ratio))
+	return false;
+    const double inverse[2][2] = {
+	{midpoint[1][1] / determinant, -midpoint[0][1] / determinant},
+	{-midpoint[1][0] / determinant, midpoint[0][0] / determinant}
+    };
+    for (int row = 0; row < 2; ++row) {
+	for (int column = 0; column < 2; ++column) {
+	    if (!std::isfinite(inverse[row][column]))
+		return false;
+	}
+    }
+    result.available = 1;
+
+    brep_interval center[2];
+    for (int row = 0; row < 2; ++row) {
+	brep_interval correction = {0.0, 0.0};
+	for (int equation = 0; equation < 2; ++equation) {
+	    correction = brep_interval_add(correction,
+		brep_interval_scale(inverse[row][equation],
+		    function[equation]));
+	}
+	center[row] = brep_interval_add({root[row], root[row]},
+	    brep_interval_scale(-1.0, correction));
+    }
+
+    brep_interval remainder[2][2];
+    for (int row = 0; row < 2; ++row) {
+	for (int column = 0; column < 2; ++column) {
+	    brep_interval product = {0.0, 0.0};
+	    for (int equation = 0; equation < 2; ++equation) {
+		product = brep_interval_add(product,
+		    brep_interval_scale(inverse[row][equation],
+			jacobian[equation][column]));
+	    }
+	    remainder[row][column] = brep_interval_scale(-1.0, product);
+	    if (row == column) {
+		remainder[row][column] = brep_interval_add({1.0, 1.0},
+		    remainder[row][column]);
+	    }
+	}
+    }
+
+    const brep_interval offset[2] = {
+	brep_interval_expanded(-root[0], 1.0 - root[0]),
+	brep_interval_expanded(-root[1], 1.0 - root[1])
+    };
+    result.certified = 1;
+    const double inclusion_margin = 512.0 * DBL_EPSILON;
+    for (int row = 0; row < 2; ++row) {
+	brep_interval image = center[row];
+	for (int column = 0; column < 2; ++column) {
+	    image = brep_interval_add(image, brep_interval_multiply(
+		remainder[row][column], offset[column]));
+	}
+	result.image_minimum[row] = image.minimum;
+	result.image_maximum[row] = image.maximum;
+	if (!(image.minimum > inclusion_margin) ||
+		!(image.maximum < 1.0 - inclusion_margin))
+	    result.certified = 0;
+    }
+    return true;
+}
+
+
+extern "C" int
+_rt_brep_krawczyk_test(const fastf_t *first_coefficients,
+    const fastf_t *first_error, const fastf_t *second_coefficients,
+    const fastf_t *second_error, int u_order, int v_order,
+    const fastf_t root[2], struct rt_brep_krawczyk_test_result *result)
+{
+    if (!first_coefficients || !first_error || !second_coefficients ||
+	    !second_error || !root || !result || u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return 0;
+    *result = {};
+    brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    const fastf_t *coefficient[2] = {
+	first_coefficients, second_coefficients
+    };
+    const fastf_t *error[2] = {first_error, second_error};
+    const size_t count = (size_t)u_order * v_order;
+    for (int equation = 0; equation < 2; ++equation) {
+	for (size_t i = 0; i < count; ++i) {
+	    if (!std::isfinite(coefficient[equation][i]) ||
+		    !std::isfinite(error[equation][i]) ||
+		    error[equation][i] < 0.0)
+		return 0;
+	    values[equation][i] = brep_interval_expanded(
+		coefficient[equation][i] - error[equation][i],
+		coefficient[equation][i] + error[equation][i]);
+	}
+    }
+    (void)brep_interval_surface_krawczyk(values, u_order, v_order, root,
+	*result);
+    return 1;
+}
+
+
+extern "C" int
+_rt_brep_corridor_test(const fastf_t *first_coefficients,
+    const fastf_t *first_error, const fastf_t *second_coefficients,
+    const fastf_t *second_error, int u_order, int v_order,
+    int regular_direction, struct rt_brep_corridor_test_result *result)
+{
+    if (!first_coefficients || !first_error || !second_coefficients ||
+	    !second_error || !result ||
+	    (regular_direction != 0 && regular_direction != 1) ||
+	    u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return 0;
+    *result = {};
+    brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    const fastf_t *coefficient[2] = {
+	first_coefficients, second_coefficients
+    };
+    const fastf_t *error[2] = {first_error, second_error};
+    const size_t count = (size_t)u_order * v_order;
+    for (int equation = 0; equation < 2; ++equation) {
+	for (size_t i = 0; i < count; ++i) {
+	    if (!std::isfinite(coefficient[equation][i]) ||
+		    !std::isfinite(error[equation][i]) ||
+		    error[equation][i] < 0.0)
+		return 0;
+	    values[equation][i] = brep_interval_expanded(
+		coefficient[equation][i] - error[equation][i],
+		coefficient[equation][i] + error[equation][i]);
+	}
+    }
+
+    brep_interval regular_derivative;
+    if (!brep_interval_surface_derivative_hull(values[0], u_order,
+	    v_order, regular_direction, regular_derivative))
+	return 1;
+    result->regular_derivative_signed =
+	regular_derivative.minimum > 0.0 || regular_derivative.maximum < 0.0;
+
+    brep_interval boundary[2] = {
+	{DBL_MAX, -DBL_MAX}, {DBL_MAX, -DBL_MAX}
+    };
+    const int weak_count = regular_direction == 0 ? v_order : u_order;
+    for (int i = 0; i < weak_count; ++i) {
+	const size_t first_index = regular_direction == 0 ? (size_t)i :
+	    (size_t)i * v_order;
+	const size_t second_index = regular_direction == 0 ?
+	    (size_t)(u_order - 1) * v_order + i :
+	    (size_t)i * v_order + v_order - 1;
+	boundary[0].minimum = std::min(boundary[0].minimum,
+	    values[0][first_index].minimum);
+	boundary[0].maximum = std::max(boundary[0].maximum,
+	    values[0][first_index].maximum);
+	boundary[1].minimum = std::min(boundary[1].minimum,
+	    values[0][second_index].minimum);
+	boundary[1].maximum = std::max(boundary[1].maximum,
+	    values[0][second_index].maximum);
+    }
+    result->regular_boundaries_opposed =
+	(boundary[0].maximum < 0.0 && boundary[1].minimum > 0.0) ||
+	(boundary[1].maximum < 0.0 && boundary[0].minimum > 0.0);
+
+    brep_interval determinant[RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+    int determinant_order[2];
+    if (!brep_interval_surface_determinant_coefficients(values, u_order,
+	    v_order, determinant, determinant_order))
+	return 1;
+    const size_t determinant_count =
+	(size_t)determinant_order[0] * determinant_order[1];
+    int determinant_sign = 0;
+    result->determinant_signed = 1;
+    for (size_t i = 0; i < determinant_count; ++i) {
+	const int sign = determinant[i].minimum > 0.0 ? 1 :
+	    (determinant[i].maximum < 0.0 ? -1 : 0);
+	if (!sign || (determinant_sign && sign != determinant_sign)) {
+	    result->determinant_signed = 0;
+	    determinant_sign = 0;
+	    break;
+	}
+	determinant_sign = sign;
+    }
+    result->determinant_sign = determinant_sign;
+    result->available = 1;
+    result->unique = result->regular_derivative_signed &&
+	result->regular_boundaries_opposed && result->determinant_signed;
     return 1;
 }
 
