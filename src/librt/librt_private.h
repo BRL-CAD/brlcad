@@ -462,6 +462,7 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_MAX_FOLD_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_CLUSTERS 64
+#define RT_BREP_TRACE_MAX_PHYSICAL_EVENTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_SEGMENTS 8
 #define RT_BREP_EXPANSION_CAPACITY 128
 #define RT_BREP_TRACE_CLEANUP_STAGES 5
@@ -479,6 +480,14 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_LEAVING 1
 #define RT_BREP_TRACE_LOCAL_CONTACT 2
 #define RT_BREP_TRACE_LOCAL_UNRESOLVED 3
+#define RT_BREP_TRACE_BOX_UNRESOLVED 0
+#define RT_BREP_TRACE_BOX_RESOLVED_REGULAR 1
+#define RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY 2
+#define RT_BREP_TRACE_BOX_RESOLVED_CONTACT 3
+#define RT_BREP_TRACE_EVENT_REGULAR_INTERIOR 1
+#define RT_BREP_TRACE_EVENT_BOUNDARY_FOLD 2
+#define RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT 1
+#define RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT 2
 #define RT_BREP_FOLD_GAP_RESOLVED 1
 #define RT_BREP_FOLD_GAP_SUBMINIMUM 2
 #define RT_BREP_FOLD_GAP_AMBIGUOUS 3
@@ -547,6 +556,8 @@ struct rt_brep_trace_surface_box {
     int face_index;
     int span_index;
     int depth;
+    int disposition;
+    int determinant_sign;
 };
 
 struct rt_brep_trace_fold_root {
@@ -587,6 +598,24 @@ struct rt_brep_trace_local_root {
     int adjacent_face_index;
     int trim_status;
     int hit_class;
+    int direction;
+};
+
+struct rt_brep_trace_physical_event {
+    fastf_t dist;
+    fastf_t t_min;
+    fastf_t t_max;
+    fastf_t uv[2];
+    size_t source_box;
+    size_t source_root;
+    int source_kind;
+    int face_index;
+    int span_index;
+    int certificate;
+    int determinant_sign;
+    int hit_class;
+    int trim_status;
+    int adjacent_face_index;
     int direction;
 };
 
@@ -676,6 +705,10 @@ struct rt_brep_shot_trace {
     size_t surface_krawczyk_boxes;
     size_t surface_krawczyk_min_depth;
     size_t surface_krawczyk_max_depth;
+    size_t surface_regular_orientation_attempts;
+    size_t surface_regular_orientation_signed;
+    size_t surface_regular_orientation_uncertain;
+    size_t surface_regular_orientation_failures;
     size_t surface_fold_attempts;
     size_t surface_fold_candidates;
     size_t surface_fold_krawczyk_attempts;
@@ -777,6 +810,23 @@ struct rt_brep_shot_trace {
     size_t local_trim_failures;
     struct rt_brep_trace_local_root
 	local_roots[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    size_t physical_event_attempts;
+    size_t physical_event_regular;
+    size_t physical_event_boundary;
+    size_t physical_event_clean_outside;
+    size_t physical_event_near_trim;
+    size_t physical_event_unresolved;
+    size_t physical_event_direction_checks;
+    size_t physical_event_direction_mismatches;
+    size_t physical_event_overflow;
+    size_t physical_event_complete;
+    size_t physical_event_state_failures;
+    size_t physical_event_material_segments;
+    size_t physical_event_subminimum_contacts;
+    size_t physical_event_tolerance_ambiguous;
+    size_t stored_physical_events;
+    struct rt_brep_trace_physical_event
+	physical_events[RT_BREP_TRACE_MAX_PHYSICAL_EVENTS];
     size_t legacy_unique_roots;
     size_t legacy_unique_roots_matched;
     size_t legacy_unique_roots_unmatched;

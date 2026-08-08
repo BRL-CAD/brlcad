@@ -2267,6 +2267,63 @@ ESTABLISHED FINDINGS
     has a separate certified-event/atomic-assembly phase before tree-density
     reduction and cache redesign.
 
+63. The first completion-ledger/physical-event pipeline is implemented and
+    has production authority for exactly the previously selected clean
+    ordinary and cross-span fold cases.
+
+    Every stored terminal surface box now has an explicit unresolved,
+    resolved-regular, or resolved-boundary disposition.  For a
+    Krawczyk-certified regular box, the outward per-coefficient ray-plane
+    intervals construct the full Bernstein Jacobian determinant and require
+    one strict sign over the box.  Face reversal converts that sign to a
+    certified ENTER/LEAVE direction.  This reuses the exact-audited
+    derivative/product/determinant arithmetic rather than trusting the
+    nominal evaluated normal; disagreement is an observable unresolved
+    event.
+
+    A separate 64-entry fixed event array preserves the source box and local
+    or fold root, representative t/UV, outward t interval, face/span,
+    certificate type, determinant sign, trim/adjacency provenance, and event
+    direction.  Clean regular boxes and the existing strict two-parent fold
+    theorem populate this array without editing the source roots.  Clean
+    outside-trim roots account for their mathematical box but produce no
+    physical event.  Near-trim roots remain unresolved.
+
+    The event finalizer sorts by outward t bounds, requires an alternating
+    {0,1} material state from negative infinity, and classifies each
+    ENTER/LEAVE gap against an outward `rti_tol.dist / |D|` interval.  A
+    resolved gap is material, a strict subminimum gap is contact evidence,
+    and a straddling gap is unresolved.  Direct publication is still limited
+    to resolved material events or a completely certified empty ray;
+    subminimum contacts await a dedicated direct-publication gate.
+
+    `brep_build_prepared_partition` now requires one complete event ledger and
+    emits its clean certified events directly into the fixed hit workspace.
+    The legacy near-miss, near-hit, angle-grazing, duplicate, and assumed-sign
+    cleanup passes no longer have authority over a selected prepared ray.
+    Any incomplete ledger, near trim, contact ambiguity, provenance mismatch,
+    state error, or capacity limit selects the complete legacy ray before
+    segment output.  This narrows authority; it does not add a new root or
+    seam repair.
+
+    Permanent provenance ratchets cover six oblique sphere rays, all 30
+    similarity rays, all 36 ordinary affine rays (72 certified roots), every
+    selected affine grazing hit/miss, and all six hard fold pairs in both
+    directions and through condition 1,000.  The sphere interior aggregate is
+    `orientation=12/12`, `complete=6`, and `segments=6`; the signed sphere and
+    bowed Cobb matrices require every selected prepared ray to have a complete
+    event ledger (59/59 and 102/102 respectively).  The fold ratchet requires
+    two resolved-boundary source boxes and two provenance-preserving events
+    for every promoted pair.
+
+    The optimized six-process CTest gate passes 6/6 in 143.38 seconds.  The
+    directed, affine, seam, and shared-line Crofton/CSG tests preserve all
+    prior partitions; all paired implicit/BREP fixtures retain zero differing
+    lines.  The five affected ASan/UBSan shards (directed, Crofton, seam,
+    fold, and affine) pass concurrently with halt-on-error in 300.17 seconds
+    and no sanitizer diagnostic.  Dense SurfaceTrees, seam authorization,
+    plate mode, and every fallback population are unchanged.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -2558,15 +2615,24 @@ IMPLEMENTATION CHECKLIST
         [x] Require prepared/excluded span equality, one stored terminal box
             per isolated box, and a compatible local or fold root for every
             terminal box in the currently supported selectors.
-        [ ] Store immutable per-box dispositions and certified root records
+        [x] Store immutable per-box dispositions and certified root records
             independently from physical event records.
-        [ ] Derive ordinary interior ENTER/LEAVE from bounded oriented
+        [x] Derive ordinary interior ENTER/LEAVE from bounded oriented
             determinant evidence rather than nominal-normal cleanup.
         [ ] Resolve supported interior, fold, edge, crack, and later vertex
             clusters into ENTER/LEAVE/CONTACT events without deleting source
             evidence.
+            [x] Resolve clean ordinary interior and strict cross-span fold
+                roots into provenance-preserving ENTER/LEAVE events.
+            [ ] Integrate manifold edges, authorized cracks, direct contacts,
+                and later cyclic vertex fans.
         [ ] Assemble a complete {0,1} solid-state stream and apply the outward
             minimum-segment classifier before atomic publication.
+            [x] Assemble and publish resolved clean regular/fold material
+                streams and completely certified empty rays without legacy
+                cleanup authority.
+            [ ] Qualify direct subminimum-contact and general near-trim event
+                publication.
     [ ] Reduce default tree density only after publication equivalence passes.
     [ ] Version and verify prep cache changes.
 
@@ -3320,20 +3386,17 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Implement the first explicit completion-ledger/event increment without
-   broadening production authority.  Preserve immutable terminal-box and root
-   records, add separate fixed-capacity physical event records, and prove
-   ordinary clean-interior ENTER/LEAVE orientation with the same outward
-   determinant arithmetic used by the fold path.  Shadow the resulting event
-   stream against current prepared publication and the implicit/CSG oracles;
-   keep whole-ray atomic fallback on any coverage, orientation, event, state,
-   or capacity uncertainty.
-2. Replace the bounded correspondence screen with a conservative global
+1. Replace the bounded correspondence screen with a conservative global
    injectivity/orientation proof.  Extend the shadow seam-gap certificate with
    an efficient exact-locus proof and explicit unsupported/capacity fallback,
    then tighten the g=T decision before it can replace sampled production
    authorization.  Keep model-space, UV, numerical-root, t-cluster, and
    minimum-segment tolerances distinct.
+2. Feed the already certified manifold edge sector and continuation evidence
+   into the immutable event array only after the seam-envelope proof above is
+   production-qualified.  Preserve the existing whole-ray fallback for every
+   near-trim ambiguity, and independently gate contact, overlap, and crack
+   event streams before they can publish.
 3. Implement and gate cyclic convex/concave vertex-fan transitions before any
    multi-edge crack repair.  Preserve the current explicit fallback for
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
