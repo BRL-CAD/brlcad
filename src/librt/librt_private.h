@@ -657,6 +657,32 @@ struct rt_brep_shot_trace {
     size_t surface_fold_expansion_certified;
     size_t surface_fold_expansion_failures;
     size_t surface_fold_expansion_high_water;
+    size_t surface_fold_corridor_attempts;
+    size_t surface_fold_corridor_available;
+    size_t surface_fold_corridor_regular_signed;
+    size_t surface_fold_corridor_boundaries_opposed;
+    size_t surface_fold_corridor_determinant_signed;
+    size_t surface_fold_corridor_unique;
+    size_t surface_fold_corridor_graph_attempts;
+    size_t surface_fold_corridor_graph_certified;
+    size_t surface_fold_corridor_graph_boxes;
+    size_t surface_fold_corridor_graph_contractions;
+    size_t surface_fold_corridor_graph_failures;
+    size_t surface_fold_corridor_graph_restriction_failures;
+    size_t surface_fold_corridor_graph_determinant_failures;
+    size_t surface_fold_corridor_graph_sign_conflicts;
+    size_t surface_fold_corridor_graph_depth_exhausted;
+    size_t surface_fold_corridor_graph_workspace_exhausted;
+    size_t surface_fold_strip_excluded;
+    size_t surface_fold_strip_boxes;
+    size_t surface_fold_strip_contractions;
+    size_t surface_fold_strip_restriction_failures;
+    size_t surface_fold_strip_arithmetic_failures;
+    size_t surface_fold_strip_depth_exhausted;
+    size_t surface_fold_strip_workspace_exhausted;
+    size_t surface_fold_complete;
+    size_t surface_fold_corridor_failures;
+    size_t surface_fold_corridor_high_water;
     fastf_t surface_fold_min_determinant_ratio;
     fastf_t surface_fold_best_image_excess;
     fastf_t surface_fold_expansion_min_determinant_ratio;
@@ -854,6 +880,30 @@ struct rt_brep_corridor_test_result {
     int determinant_sign;
 };
 
+struct rt_brep_fold_graph_test_result {
+    int available;
+    int regular_derivative_signed;
+    int regular_boundaries_opposed;
+    int whole_determinant_signed;
+    int graph_determinant_signed;
+    int determinant_sign;
+    int system_excluded;
+    size_t graph_boxes;
+    size_t graph_contractions;
+    size_t graph_restriction_failures;
+    size_t graph_determinant_failures;
+    size_t graph_sign_conflicts;
+    size_t graph_depth_exhausted;
+    size_t graph_workspace_exhausted;
+    size_t strip_boxes;
+    size_t strip_contractions;
+    size_t strip_restriction_failures;
+    size_t strip_arithmetic_failures;
+    size_t strip_depth_exhausted;
+    size_t strip_workspace_exhausted;
+    size_t expansion_high_water;
+};
+
 RT_EXPORT extern int _rt_brep_interval_test(
     const fastf_t *first_coefficients, const fastf_t *second_coefficients,
     int u_order, int v_order, const fastf_t coefficient_error[2],
@@ -880,6 +930,11 @@ RT_EXPORT extern int _rt_brep_determinant_test(
     const fastf_t *second_coefficients, const fastf_t *second_error,
     int u_order, int v_order,
     struct rt_brep_determinant_test_result *result);
+RT_EXPORT extern int _rt_brep_determinant_restrict_test(
+    const fastf_t *input_minimum, const fastf_t *input_maximum,
+    int u_order, int v_order, const fastf_t minimum[2],
+    const fastf_t maximum[2], fastf_t *output_minimum,
+    fastf_t *output_maximum);
 RT_EXPORT extern int _rt_brep_krawczyk_test(
     const fastf_t *first_coefficients, const fastf_t *first_error,
     const fastf_t *second_coefficients, const fastf_t *second_error,
@@ -896,6 +951,12 @@ RT_EXPORT extern int _rt_brep_corridor_test(
     const fastf_t *second_coefficients, const fastf_t *second_error,
     int u_order, int v_order, int regular_direction,
     struct rt_brep_corridor_test_result *result);
+RT_EXPORT extern int _rt_brep_fold_graph_test(
+    const fastf_t *first_minimum, const fastf_t *first_maximum,
+    const fastf_t *second_minimum, const fastf_t *second_maximum,
+    int u_order, int v_order, int regular_direction, int test_determinant,
+    int test_exclusion,
+    struct rt_brep_fold_graph_test_result *result);
 RT_EXPORT extern int _rt_brep_coefficient_test(
     const fastf_t cv[4], const fastf_t origin[3], const fastf_t direction[3],
     const fastf_t planes[2][3],
