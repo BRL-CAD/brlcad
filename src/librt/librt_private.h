@@ -656,6 +656,10 @@ struct rt_brep_shot_trace {
     size_t surface_fold_expansion_available;
     size_t surface_fold_expansion_certified;
     size_t surface_fold_expansion_failures;
+    size_t surface_fold_expansion_contraction_attempts;
+    size_t surface_fold_expansion_contracted;
+    size_t surface_fold_expansion_contraction_empty;
+    size_t surface_fold_expansion_contraction_unchanged;
     size_t surface_fold_expansion_high_water;
     size_t surface_fold_corridor_attempts;
     size_t surface_fold_corridor_available;
@@ -673,6 +677,11 @@ struct rt_brep_shot_trace {
     size_t surface_fold_corridor_graph_sign_conflicts;
     size_t surface_fold_corridor_graph_depth_exhausted;
     size_t surface_fold_corridor_graph_workspace_exhausted;
+    size_t surface_fold_boundary_existence_attempts;
+    size_t surface_fold_boundary_existence_available;
+    size_t surface_fold_boundary_existence_certified;
+    size_t surface_fold_boundary_existence_contractions;
+    size_t surface_fold_boundary_existence_failures;
     size_t surface_fold_strip_excluded;
     size_t surface_fold_strip_boxes;
     size_t surface_fold_strip_contractions;
@@ -887,6 +896,8 @@ struct rt_brep_fold_graph_test_result {
     int whole_determinant_signed;
     int graph_determinant_signed;
     int determinant_sign;
+    int boundary_existence_available;
+    int boundary_existence_certified;
     int system_excluded;
     size_t graph_boxes;
     size_t graph_contractions;
@@ -895,6 +906,7 @@ struct rt_brep_fold_graph_test_result {
     size_t graph_sign_conflicts;
     size_t graph_depth_exhausted;
     size_t graph_workspace_exhausted;
+    size_t boundary_existence_contractions;
     size_t strip_boxes;
     size_t strip_contractions;
     size_t strip_restriction_failures;

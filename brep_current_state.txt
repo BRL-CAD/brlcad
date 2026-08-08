@@ -2044,12 +2044,11 @@ ESTABLISHED FINDINGS
     global state must first be audited, and arithmetic counters must stay
     deterministic.
 
-    Production behavior remains unchanged.  The next arithmetic target is to
-    propagate exact expansions or a rigorous construction-error envelope
-    through the candidate plane frame and then recover the six missing
-    existence certificates.  Only after existence, parent proof, cross-span
-    event identity, and minimum-segment/contact classification agree may the
-    shadow event replace the dense-tree fallback.
+    Production behavior remains unchanged.  Finding 59 below supersedes the
+    proposed frame-first next step by proving the remaining existence cases
+    on the unique regular graph.  Only after cross-span event identity and
+    minimum-segment/contact classification agree may the shadow event replace
+    the dense-tree fallback.
 
 58. A first exact-perpendicular ray-plane frame experiment was rejected and
     reverted after the new permanent ratchets exposed a trade rather than a
@@ -2080,6 +2079,62 @@ ESTABLISHED FINDINGS
     alternatives, and construct each candidate box in the selected frame's
     conditioning geometry.  Exact contact improving while ordinary roots
     regress is diagnostic evidence, not a promotion result.
+
+59. All twelve known hard affine fold candidates now have complete shadow
+    existence/uniqueness/strip proofs without changing production hit
+    publication.  Two monotone additions closed the former existence gap.
+
+    First, `brep_trace_expansion_krawczyk_contractions` turns an unsuccessful
+    expansion Krawczyk image into a bounded contraction opportunity.  It
+    intersects the outward image with [0,1]^2, maps the retained box outward
+    into original span coordinates, restricts again from the original
+    expansion-valued coefficient net, and retries at the new midpoint.  The
+    loop has at most four attempts, fixed stack arrays, no allocation, and
+    separate attempt/applied/empty-or-degenerate/unchanged/failure telemetry.
+    A failed or unchanged contraction remains inconclusive.  This improves
+    the six directed real-shot expansion certificate floors from
+    2/2/1/1/0/0 to 2/2/2/2/0/0: both condition-1,000 h/T=1e-6 candidates now
+    certify in each ray direction.  The h/T=1e-8 Krawczyk images are
+    classified as unchanged and retain their existing 11--13 normalized
+    excess; the ratchet intentionally permits that conservative outcome.
+
+    Second, two-dimensional Krawczyk inclusion is no longer the sole
+    existence theorem after a unique regular graph has been established.
+    `brep_fold_graph_boundary_existence` takes the already-proved phi=0 graph
+    p(q).  On q=0 and q=1 it uses bounded one-dimensional interval Newton to
+    contract p around the unique phi root, restricting both expansion-valued
+    boundary curves at every step.  A strict psi sign on each contracted
+    endpoint enclosure, with opposite signs at the two q boundaries, proves
+    existence by continuity.  The existing common strict det(J) sign on the
+    graph makes psi strictly monotone and supplies uniqueness.  Exact
+    singleton p contractions are evaluated directly.  A zero/uncertain psi
+    endpoint, restriction/arithmetic failure, or unavailable graph remains
+    inconclusive, so exact contact is not promoted to a crossing.
+
+    The theorem is independently gated through `_rt_brep_fold_graph_test`.
+    The exact-dyadic synthetic matrix reports endpoint existence available in
+    all 145 cases.  It certifies all 72 root-bearing, whole-determinant-
+    unsigned corridors and certifies none of the 72 root-free strips or the
+    exact-contact case.  The aggregate is:
+
+      graph=72/72/1 boxes=72/162+81/198 boundary=145/72/778 high=7
+
+    Thus the positive and negative paths both cover axis interchange,
+    separations through 2^-24, and independent equation scales 2^-100, 1,
+    and 2^100.  The real affine ratchet requires two available and certified
+    endpoint proofs, nonzero contractions, zero failures, both unique
+    corridors, and both excluded fold strips for every hard shot.  Its
+    complete-parent counts are now 2/2/2/2/2/2 even though the separately
+    retained expansion Krawczyk floors are 2/2/2/2/0/0.
+
+    This changes the next engineering boundary.  More frame precision may
+    still improve numerical conditioning, but it is no longer required to
+    prove these twelve roots.  The immediate solver task is to prove that the
+    two adjacent-span observations denote one physical event, deduplicate
+    them without erasing distinct close roots, and apply the model minimum-
+    segment/exact-contact policy before any shadow result gains production
+    authority.  The dense-tree fallback remains active until that work and
+    its partition/Crofton gates are complete.
 
 
 IMPLEMENTATION CHECKLIST
@@ -2290,7 +2345,7 @@ IMPLEMENTATION CHECKLIST
                         [x] Add and exact-audit a portable error-free expansion
                             or equivalent outward precision tier for the real
                             cases binary64 cannot certify.
-                    [ ] Prove both one-sided parent boxes complete with a
+                    [x] Prove both one-sided parent boxes complete with a
                         monotonic corridor or equivalent degree certificate;
                         do not use broad complement subdivision as the normal
                         path.
@@ -2299,10 +2354,11 @@ IMPLEMENTATION CHECKLIST
                             boxes down to determinant ratio 5.68e-14.
                         [x] Apply the unique-corridor and fold-strip proof to
                             both real parents for all six affine misses.
-                        [ ] Supply strict existence for the remaining six real
-                            candidates; current complete-parent counts are
-                            2/2/1/1/0/0 despite 2/2 corridor/strip coverage.
-                    [ ] Add every failed certificate/aspect-ratio/precision
+                        [x] Supply strict existence for the remaining six real
+                            candidates with opposed endpoint signs on the
+                            unique regular graph; complete-parent counts are
+                            now 2/2/2/2/2/2.
+                    [x] Add every failed certificate/aspect-ratio/precision
                         case to a focused C/C++ fold-solver corpus.
                         [x] Keep all twelve real hard boxes in the focused
                             affine C++ ratchet with candidate, determinant,
@@ -2911,6 +2967,15 @@ Cobb sphere baseline:
     fixtures report zero differing lines and production partitions remain
     unchanged.  Cache-write warnings in the restricted execution environment
     are nonfatal and exercise the existing uncached continuation path.
+    Repeated after bounded Krawczyk contraction and regular-graph endpoint
+    existence: process-sharded optimized `--fold-only`, `--affine-only`, and
+    `--interval-only` pass.  The fold aggregate is
+    `boundary=145/72/778`; the affine ratchet has expansion floors
+    2/2/2/2/0/0 and complete-parent counts 2/2/2/2/2/2.  The full optimized
+    corpus again ends with `BREP ray correctness corpus: PASS`, all shared
+    implicit/BREP Crofton fixtures have zero differing lines, and production
+    partitions remain unchanged.  The broader optimized CTest group passes
+    13/13 with four-way process parallelism.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -3007,6 +3072,12 @@ Cobb sphere baseline:
     process-sharded `--interval-only`, `--fold-only`, and `--affine-only` pass
     with halt_on_error=1 and no ASan or UBSan diagnostic.  The interval gate
     includes 33,408 exact determinant-restriction checks through order 30.
+    Repeated after bounded Krawczyk contraction and regular-graph endpoint
+    existence: process-sharded `--fold-only` and `--affine-only` pass with
+    halt_on_error=1 and no ASan or UBSan diagnostic.  The fold gate proves all
+    72 positive endpoint cases and rejects all 73 root-free/contact cases.
+    The separately sharded exhaustive `--interval-only` gate also passes with
+    no diagnostic.
     Leak detection remains disabled because the host ptrace wrapper makes
     LeakSanitizer terminate before the test begins.
 
@@ -3087,14 +3158,16 @@ NEXT ACTIONS
    synthetic corridor, fused real coefficient, and per-coefficient
    restriction paths are exact-audited.  All twelve hard candidates are
    recovered in the shadow real path.  Binary64 Krawczyk certifies none; the
-   portable fixed-size expansion tier certifies six and reduces the hardest
-   remaining image excess from about 41 to 11--13.  Both real corridors and
-   fold-boundary strips are now covered for all twelve candidates; the
-   remaining complete-proof counts 2/2/1/1/0/0 are solely the expansion
-   existence floor.  Propagate exact expansions or an explicit construction-
-   error envelope through the candidate plane frame and certify the remaining
-   six condition-1,000 candidates.  Then deduplicate the resulting physical
-   event across the common span and apply the minimum-segment/contact policy.
+   portable fixed-size expansion tier plus bounded Krawczyk contraction
+   certifies eight, with floors 2/2/2/2/0/0, and reduces the hardest image
+   excess from about 41 to 11--13.  Both real corridors and fold-boundary
+   strips are covered for all twelve candidates.  Opposed psi signs on the
+   two contracted endpoints of each unique regular graph now prove existence
+   for the remaining four as well, so complete-parent counts are
+   2/2/2/2/2/2.  Deduplicate the resulting physical event across the common
+   span and apply the minimum-segment/contact policy.  Keep exact or bounded
+   alternative frame construction as a later conditioning improvement, not
+   as a blocker for these roots.
    Separate old-solver root absence from prepared
    box explosion and local-corrector failure.  Find a lower-cost dispatch or
    fallback strategy
