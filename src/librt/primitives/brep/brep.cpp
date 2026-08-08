@@ -484,8 +484,7 @@ static const double BREP_DIRECT_CLIP_MINIMUM_FRACTION = 1.0 / 16.0;
 static const double BREP_DIRECT_CLIP_MINIMUM_RETAINED_FRACTION = 0.5;
 static const double BREP_DIRECT_ROOT_RELATIVE_TOLERANCE = 5.0e-9;
 static const double BREP_DIRECT_EVALUATION_ULPS = 32.0;
-static const double BREP_SEAM_BOUND_RELATIVE_TOLERANCE = 0.1;
-static const double BREP_SEAM_VISIBLE_RELATIVE_TOLERANCE = 1.0e-6;
+static const double BREP_SEAM_BOUND_RELATIVE_TOLERANCE = 0.01;
 static const size_t BREP_SEAM_BOUND_CELL_BUDGET = 4096;
 static const size_t BREP_SEAM_CORRESPONDENCE_CELL_BUDGET = 4096;
 
@@ -978,8 +977,9 @@ brep_build_edge_data(struct brep_specific *bs, const struct bn_tol *tol)
 	    fabs(edge.PointAtStart().z))));
 	const double roundoff = std::max(ON_ZERO_TOLERANCE,
 	    128.0 * DBL_EPSILON * coordinate_scale);
-	record.discrepancy_authorized = record.discrepancy_measured &&
+	record.discrepancy_sample_authorized = record.discrepancy_measured &&
 	    record.measured_discrepancy <= record.tolerance + roundoff;
+	record.discrepancy_authorized = false;
 	record.span_begin = bs->edge_spans.size();
 	if (record.face_index[0] < 0 || record.face_index[1] < 0) {
 	    bs->edge_records.push_back(record);
@@ -1425,12 +1425,13 @@ brep_discrepancy_cell_bounds(const struct brep_specific *bs,
 static bool
 brep_bound_edge_trim_discrepancy(const struct brep_specific *bs,
     const brep_edge_record &record, const ON_BrepEdge &edge,
-    const ON_BrepTrim &trim, double target_width, size_t cell_budget,
-    double &lower, double &upper, size_t &cell_count, size_t &maximum_depth,
-    bool &exhausted)
+    const ON_BrepTrim &trim, double envelope, double target_width,
+    size_t cell_budget, double &lower, double &upper, int &proof_class,
+    size_t &cell_count, size_t &maximum_depth, bool &exhausted)
 {
     const size_t maximum_subdivision_depth = 24;
     exhausted = false;
+    proof_class = RT_BREP_SEAM_GAP_UNAVAILABLE;
     std::vector<brep_trim_span> trim_spans;
     if (!brep_prepare_trim_spans(trim, trim_spans))
 	return false;
@@ -1477,6 +1478,8 @@ brep_bound_edge_trim_discrepancy(const struct brep_specific *bs,
     upper = 0.0;
     cell_count = 0;
     maximum_depth = 0;
+    bool ambiguous = false;
+    bool outside = false;
     while (!stack.empty()) {
 	if (cell_count >= cell_budget) {
 	    exhausted = true;
@@ -1491,13 +1494,40 @@ brep_bound_edge_trim_discrepancy(const struct brep_specific *bs,
 	if (!brep_discrepancy_cell_bounds(bs, edge, trim, trim_spans, cell,
 		cell_lower, cell_upper))
 	    return false;
-	if (cell_upper - cell_lower <= target_width) {
+	/* Once one cell is strictly outside, its lower bound is enough to
+	 * reject seam repair.  Bound the remaining partition cells without
+	 * further refinement so the reported aggregate stays conservative. */
+	if (outside) {
 	    lower = std::max(lower, cell_lower);
 	    upper = std::max(upper, cell_upper);
 	    continue;
 	}
-	if (cell.depth >= maximum_subdivision_depth)
-	    return false;
+	if (cell_lower > envelope) {
+	    lower = std::max(lower, cell_lower);
+	    upper = std::max(upper, cell_upper);
+	    outside = true;
+	    continue;
+	}
+	if (cell_upper < envelope) {
+	    lower = std::max(lower, cell_lower);
+	    upper = std::max(upper, cell_upper);
+	    continue;
+	}
+	/* Equality is deliberately not acceptance.  If a straddling interval
+	 * has reached the advertised resolution, retain it as an explicit
+	 * ambiguous result. */
+	if (cell_upper - cell_lower <= target_width) {
+	    lower = std::max(lower, cell_lower);
+	    upper = std::max(upper, cell_upper);
+	    ambiguous = true;
+	    continue;
+	}
+	if (cell.depth >= maximum_subdivision_depth) {
+	    lower = std::max(lower, cell_lower);
+	    upper = std::max(upper, cell_upper);
+	    ambiguous = true;
+	    continue;
+	}
 
 	const double edge_midpoint = cell.edge_domain.Mid();
 	double trim_midpoint = 0.0;
@@ -1507,20 +1537,32 @@ brep_bound_edge_trim_discrepancy(const struct brep_specific *bs,
 	    cell.trim_parameter[1]);
 	const ON_Interval parameter_domain(parameter_min, parameter_max);
 	if (!brep_edge_trim_parameter_in_domain(edge, trim, edge_midpoint,
-		parameter_domain, 9, trim_midpoint))
-	    return false;
+		parameter_domain, 9, trim_midpoint)) {
+	    lower = std::max(lower, cell_lower);
+	    upper = std::max(upper, cell_upper);
+	    ambiguous = true;
+	    continue;
+	}
 	const double midpoint_tolerance = 256.0 * DBL_EPSILON *
 	    std::max(1.0, std::max(fabs(parameter_min),
 	    fabs(parameter_max)));
 	if (trim_midpoint < parameter_min - midpoint_tolerance ||
-		trim_midpoint > parameter_max + midpoint_tolerance)
-	    return false;
+		trim_midpoint > parameter_max + midpoint_tolerance) {
+	    lower = std::max(lower, cell_lower);
+	    upper = std::max(upper, cell_upper);
+	    ambiguous = true;
+	    continue;
+	}
 	trim_midpoint = std::max(parameter_min,
 	    std::min(parameter_max, trim_midpoint));
 	ON_BezierCurve left;
 	ON_BezierCurve right;
-	if (!cell.edge_curve.Split(0.5, left, right))
-	    return false;
+	if (!cell.edge_curve.Split(0.5, left, right)) {
+	    lower = std::max(lower, cell_lower);
+	    upper = std::max(upper, cell_upper);
+	    ambiguous = true;
+	    continue;
+	}
 	brep_discrepancy_cell children[2];
 	children[0].edge_curve = left;
 	children[0].edge_domain = ON_Interval(cell.edge_domain.Min(),
@@ -1536,14 +1578,17 @@ brep_bound_edge_trim_discrepancy(const struct brep_specific *bs,
 	stack.push_back(children[1]);
 	stack.push_back(children[0]);
     }
-    return std::isfinite(lower) && std::isfinite(upper) && lower <= upper &&
-	upper - lower <= target_width;
+    if (!std::isfinite(lower) || !std::isfinite(upper) || lower > upper)
+	return false;
+    proof_class = outside ? RT_BREP_SEAM_GAP_OUTSIDE :
+	(ambiguous ? RT_BREP_SEAM_GAP_AMBIGUOUS :
+	RT_BREP_SEAM_GAP_INSIDE);
+    return true;
 }
 
 
 static void
-brep_bound_edge_discrepancies(struct brep_specific *bs,
-    const struct bn_tol *tol)
+brep_bound_edge_discrepancies(struct brep_specific *bs)
 {
     if (!bs || !bs->brep)
 	return;
@@ -1566,30 +1611,11 @@ brep_bound_edge_discrepancies(struct brep_specific *bs,
 	    std::max(fabs(edge_start.x), std::max(fabs(edge_start.y),
 	    std::max(fabs(edge_start.z), std::max(fabs(edge_end.x),
 	    std::max(fabs(edge_end.y), fabs(edge_end.z)))))));
-	const double model_tolerance = tol && tol->dist > 0.0 ?
-	    tol->dist : record.model_tolerance;
 	record.discrepancy_bound_tolerance = std::max(
 	    4096.0 * DBL_EPSILON * coordinate_scale,
 	    BREP_SEAM_BOUND_RELATIVE_TOLERANCE *
-	    std::max(0.0, model_tolerance));
-	/* The adaptive shadow currently qualifies visibly discrepant seams.  A
-	 * zero sampled value is not a proof of an exact locus, so leave those
-	 * edges explicitly unbounded until an exact NURBS identity path or the
-	 * full adaptive pass can qualify them without imposing this prep cost. */
-	const double visible_discrepancy = std::max(
-	    1024.0 * DBL_EPSILON * coordinate_scale,
-	    BREP_SEAM_VISIBLE_RELATIVE_TOLERANCE *
-	    std::max(0.0, model_tolerance));
-	if (!record.discrepancy_measured ||
-		record.measured_discrepancy <= visible_discrepancy)
-	    continue;
-	/* A sampled point already beyond the model envelope is conclusive
-	 * rejection evidence: the true maximum cannot be smaller.  The upper
-	 * certificate is needed only for seams that might still qualify for
-	 * topology-local repair. */
-	if (!(model_tolerance > 0.0) ||
-		record.measured_discrepancy > model_tolerance +
-		visible_discrepancy)
+	    std::max(0.0, record.tolerance));
+	if (!ON_IsValid(record.tolerance) || record.tolerance < 0.0)
 	    continue;
 	/* Eligible records not visited because an earlier record consumed the
 	 * solid-wide budget are explicit capacity fallbacks as well. */
@@ -1602,6 +1628,7 @@ brep_bound_edge_discrepancies(struct brep_specific *bs,
 	size_t total_cells = 0;
 	size_t total_depth = 0;
 	bool complete = true;
+	int total_class = RT_BREP_SEAM_GAP_INSIDE;
 	for (int side = 0; side < 2; ++side) {
 	    const int trim_index = edge.m_ti[side];
 	    if (trim_index < 0 || trim_index >= brep.m_T.Count()) {
@@ -1612,11 +1639,13 @@ brep_bound_edge_discrepancies(struct brep_specific *bs,
 	    double side_upper = 0.0;
 	    size_t side_cells = 0;
 	    size_t side_depth = 0;
+	    int side_class = RT_BREP_SEAM_GAP_UNAVAILABLE;
 	    bool side_exhausted = false;
 	    if (!brep_bound_edge_trim_discrepancy(bs, record, edge,
-		    brep.m_T[trim_index], record.discrepancy_bound_tolerance,
-		    remaining_cells, side_lower, side_upper, side_cells,
-		    side_depth, side_exhausted)) {
+		    brep.m_T[trim_index], record.tolerance,
+		    record.discrepancy_bound_tolerance, remaining_cells,
+		    side_lower, side_upper, side_class, side_cells, side_depth,
+		    side_exhausted)) {
 		total_cells += side_cells;
 		total_depth = std::max(total_depth, side_depth);
 		remaining_cells -= std::min(remaining_cells, side_cells);
@@ -1629,14 +1658,21 @@ brep_bound_edge_discrepancies(struct brep_specific *bs,
 	    total_cells += side_cells;
 	    total_depth = std::max(total_depth, side_depth);
 	    remaining_cells -= std::min(remaining_cells, side_cells);
+	    if (side_class == RT_BREP_SEAM_GAP_OUTSIDE)
+		total_class = RT_BREP_SEAM_GAP_OUTSIDE;
+	    else if (side_class == RT_BREP_SEAM_GAP_AMBIGUOUS &&
+		    total_class != RT_BREP_SEAM_GAP_OUTSIDE)
+		total_class = RT_BREP_SEAM_GAP_AMBIGUOUS;
 	}
 	record.discrepancy_bound_cells = total_cells;
 	record.discrepancy_bound_depth = total_depth;
-	if (complete && total_upper - total_lower <=
-		record.discrepancy_bound_tolerance) {
+	if (complete) {
 	    record.discrepancy_lower_bound = total_lower;
 	    record.discrepancy_upper_bound = total_upper;
 	    record.discrepancy_bounded = true;
+	    record.discrepancy_proof_class = total_class;
+	    record.discrepancy_authorized =
+		total_class == RT_BREP_SEAM_GAP_INSIDE;
 	}
     }
 }
@@ -1821,7 +1857,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     brep_build_edge_data(bs, tol);
     brep_build_surface_data(bs);
     brep_certify_edge_correspondences(bs);
-    brep_bound_edge_discrepancies(bs, tol);
+    brep_bound_edge_discrepancies(bs);
 
     //start = bu_gettime();
     /* do the majority of real work here */
@@ -9418,6 +9454,9 @@ brep_observe_edges(struct rt_brep_shot_trace *trace,
 	observation.discrepancy_bounded = record.discrepancy_bounded;
 	observation.discrepancy_bound_exhausted =
 	    record.discrepancy_bound_exhausted;
+	observation.discrepancy_sample_authorized =
+	    record.discrepancy_sample_authorized;
+	observation.discrepancy_proof_class = record.discrepancy_proof_class;
 	observation.discrepancy_authorized = record.discrepancy_authorized;
 	observation.tolerance_inferred = record.tolerance_inferred;
 	const double roundoff = std::max(ON_ZERO_TOLERANCE,
@@ -14348,7 +14387,7 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 	brep_build_edge_data(specific, prepared_tol);
 	brep_build_surface_data(specific);
 	brep_certify_edge_correspondences(specific);
-	brep_bound_edge_discrepancies(specific, prepared_tol);
+	brep_bound_edge_discrepancies(specific);
 
 	Deserializer deserializer(*external);
 	const uint32_t num_children = deserializer.read_uint32();
