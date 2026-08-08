@@ -456,9 +456,12 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_MAX_EDGES 64
 #define RT_BREP_TRACE_MAX_SURFACE_BOXES 64
 #define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
+#define RT_BREP_TRACE_MAX_LOCAL_CLUSTERS 64
 #define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
 #define RT_BREP_TRACE_ENTERING 0
 #define RT_BREP_TRACE_LEAVING 1
+#define RT_BREP_TRACE_LOCAL_CONTACT 2
+#define RT_BREP_TRACE_LOCAL_UNRESOLVED 3
 
 struct rt_brep_trace_root {
     fastf_t dist;
@@ -514,6 +517,19 @@ struct rt_brep_trace_local_root {
     int span_index;
 };
 
+struct rt_brep_trace_local_cluster {
+    fastf_t dist_min;
+    fastf_t dist_max;
+    fastf_t normal_dot_min;
+    fastf_t normal_dot_max;
+    size_t roots;
+    size_t entering_roots;
+    size_t leaving_roots;
+    size_t tangent_roots;
+    int face_index;
+    int classification;
+};
+
 struct rt_brep_shot_trace {
     size_t intersected_leaves;
     size_t solver_calls;
@@ -549,8 +565,15 @@ struct rt_brep_shot_trace {
     size_t stored_local_roots;
     size_t local_root_overflow;
     size_t local_root_failures;
+    size_t local_root_duplicates;
     struct rt_brep_trace_local_root
 	local_roots[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    fastf_t local_cluster_tolerance;
+    size_t local_root_clusters;
+    size_t stored_local_clusters;
+    size_t local_cluster_overflow;
+    struct rt_brep_trace_local_cluster
+	local_clusters[RT_BREP_TRACE_MAX_LOCAL_CLUSTERS];
     struct rt_brep_trace_edge edges[RT_BREP_TRACE_MAX_EDGES];
     size_t raw_hits;
     size_t after_near_miss;
