@@ -482,6 +482,9 @@ static const size_t BREP_DIRECT_SUBDIVISION_CAPACITY = 64;
 static const int BREP_DIRECT_SUBDIVISION_MAX_DEPTH = 24;
 static const double BREP_DIRECT_ROOT_RELATIVE_TOLERANCE = 5.0e-9;
 static const double BREP_DIRECT_EVALUATION_ULPS = 32.0;
+static const double BREP_SEAM_BOUND_RELATIVE_TOLERANCE = 0.1;
+static const double BREP_SEAM_VISIBLE_RELATIVE_TOLERANCE = 1.0e-6;
+static const size_t BREP_SEAM_BOUND_CELL_BUDGET = 4096;
 
 
 static void
@@ -596,13 +599,22 @@ brep_trim_lift_at(const ON_BrepTrim &trim, double parameter,
 
 
 static bool
-brep_edge_trim_parameter(const ON_BrepEdge &edge, const ON_BrepTrim &trim,
-    double edge_parameter, double &trim_parameter)
+brep_edge_trim_parameter_in_domain(const ON_BrepEdge &edge,
+    const ON_BrepTrim &trim, double edge_parameter,
+    const ON_Interval &search_domain, int sample_count,
+    double &trim_parameter)
 {
     const ON_Interval edge_domain = edge.Domain();
     const ON_Interval trim_domain = trim.Domain();
     if (!edge_domain.IsIncreasing() || !trim_domain.IsIncreasing() ||
+	    !search_domain.IsIncreasing() || sample_count < 2 ||
 	    trim.m_ei != edge.m_edge_index)
+	return false;
+    const double domain_tolerance = 256.0 * DBL_EPSILON *
+	std::max(1.0, std::max(fabs(trim_domain.Min()),
+	    fabs(trim_domain.Max())));
+    if (search_domain.Min() < trim_domain.Min() - domain_tolerance ||
+	    search_domain.Max() > trim_domain.Max() + domain_tolerance)
 	return false;
     const ON_3dPoint edge_point = edge.PointAt(edge_parameter);
     if (!edge_point.IsValid())
@@ -618,14 +630,17 @@ brep_edge_trim_parameter(const ON_BrepEdge &edge, const ON_BrepTrim &trim,
 	edge_fraction = 1.0 - edge_fraction;
 
     double best_parameter = trim_domain.ParameterAt(edge_fraction);
+    best_parameter = std::max(search_domain.Min(),
+	std::min(search_domain.Max(), best_parameter));
     ON_3dPoint initial_lift;
     if (!brep_trim_lift_at(trim, best_parameter, initial_lift, NULL))
 	return false;
     double best_distance = initial_lift.DistanceTo(edge_point);
     if (!std::isfinite(best_distance))
 	return false;
-    for (int sample = 0; sample <= 32; ++sample) {
-	const double parameter = trim_domain.ParameterAt((double)sample / 32.0);
+    for (int sample = 0; sample < sample_count; ++sample) {
+	const double parameter = search_domain.ParameterAt((double)sample /
+	    (double)(sample_count - 1));
 	ON_3dPoint lift;
 	if (!brep_trim_lift_at(trim, parameter, lift, NULL))
 	    return false;
@@ -651,14 +666,14 @@ brep_edge_trim_parameter(const ON_BrepEdge &edge, const ON_BrepTrim &trim,
 	if (!std::isfinite(step))
 	    return false;
 	if (fabs(step) <= 64.0 * DBL_EPSILON *
-		std::max(1.0, trim_domain.Length()))
+		std::max(1.0, search_domain.Length()))
 	    break;
 
 	bool improved = false;
 	double fraction = 1.0;
 	for (int line_search = 0; line_search < 8; ++line_search) {
-	    const double candidate = std::max(trim_domain.Min(),
-		std::min(trim_domain.Max(), best_parameter - fraction * step));
+	    const double candidate = std::max(search_domain.Min(),
+		std::min(search_domain.Max(), best_parameter - fraction * step));
 	    ON_3dPoint candidate_lift;
 	    if (!brep_trim_lift_at(trim, candidate, candidate_lift, NULL)) {
 		fraction *= 0.5;
@@ -679,6 +694,15 @@ brep_edge_trim_parameter(const ON_BrepEdge &edge, const ON_BrepTrim &trim,
 
     trim_parameter = best_parameter;
     return std::isfinite(trim_parameter) && std::isfinite(best_distance);
+}
+
+
+static bool
+brep_edge_trim_parameter(const ON_BrepEdge &edge, const ON_BrepTrim &trim,
+    double edge_parameter, double &trim_parameter)
+{
+    return brep_edge_trim_parameter_in_domain(edge, trim, edge_parameter,
+	trim.Domain(), 33, trim_parameter);
 }
 
 
@@ -821,6 +845,622 @@ brep_build_edge_data(struct brep_specific *bs, const struct bn_tol *tol)
 	    record.supported = true;
 	}
 	bs->edge_records.push_back(record);
+    }
+}
+
+
+/* Prep-time shadow certificate for the geometric seam gap.  For each
+ * incident face it bounds the symmetric Hausdorff separation between the
+ * shared 3D edge locus and the surface-lifted trim locus.  Positive rational
+ * Bezier control hulls bound both loci relative to endpoint chords.  These
+ * fields are diagnostic only until exact-looking, unsupported, and exhausted
+ * cases have complete fallback coverage; production authorization above
+ * deliberately continues to use the established sampled policy. */
+struct brep_trim_span {
+    ON_BezierCurve curve;
+    ON_Interval trim_domain;
+};
+
+
+struct brep_discrepancy_cell {
+    ON_BezierCurve edge_curve;
+    ON_Interval edge_domain;
+    double trim_parameter[2] = {0.0, 0.0};
+    size_t depth = 0;
+};
+
+
+static ON_4dPoint
+brep_lerp_homogeneous(const ON_4dPoint &first, const ON_4dPoint &second,
+    double fraction)
+{
+    const double complement = 1.0 - fraction;
+    return ON_4dPoint(complement * first.x + fraction * second.x,
+	complement * first.y + fraction * second.y,
+	complement * first.z + fraction * second.z,
+	complement * first.w + fraction * second.w);
+}
+
+
+static bool
+brep_split_homogeneous(const ON_4dPoint *input, int order, double parameter,
+    ON_4dPoint *left, ON_4dPoint *right)
+{
+    if (!input || !left || !right || order < 2 ||
+	    order > BREP_DIRECT_BEZIER_MAX_ORDER || !(parameter >= 0.0) ||
+	    !(parameter <= 1.0))
+	return false;
+    ON_4dPoint work[BREP_DIRECT_BEZIER_MAX_ORDER] = {};
+    for (int i = 0; i < order; ++i)
+	work[i] = input[i];
+    left[0] = work[0];
+    right[order - 1] = work[order - 1];
+    for (int level = 1; level < order; ++level) {
+	for (int i = 0; i < order - level; ++i)
+	    work[i] = brep_lerp_homogeneous(work[i], work[i + 1],
+		parameter);
+	left[level] = work[0];
+	right[order - level - 1] = work[order - level - 1];
+    }
+    return true;
+}
+
+
+static bool
+brep_restrict_homogeneous(const ON_4dPoint *input, int order,
+    const ON_Interval &interval, ON_4dPoint *output)
+{
+    if (!input || !output || !interval.IsIncreasing() ||
+	    interval.Min() < 0.0 || interval.Max() > 1.0)
+	return false;
+    if (interval.Min() <= 0.0 && interval.Max() >= 1.0) {
+	for (int i = 0; i < order; ++i)
+	    output[i] = input[i];
+	return true;
+    }
+    ON_4dPoint left[BREP_DIRECT_BEZIER_MAX_ORDER];
+    ON_4dPoint unused[BREP_DIRECT_BEZIER_MAX_ORDER];
+    if (!brep_split_homogeneous(input, order, interval.Max(), left,
+	    unused))
+	return false;
+    if (interval.Min() <= 0.0) {
+	for (int i = 0; i < order; ++i)
+	    output[i] = left[i];
+	return true;
+    }
+    const double local_minimum = interval.Min() / interval.Max();
+    return brep_split_homogeneous(left, order, local_minimum, unused,
+	output);
+}
+
+
+static double
+brep_point_segment_distance(const ON_3dPoint &point,
+    const ON_3dPoint &start, const ON_3dPoint &end)
+{
+    const ON_3dVector chord = end - start;
+    const double length_squared = chord * chord;
+    if (!(length_squared > DBL_MIN) || !std::isfinite(length_squared))
+	return point.DistanceTo(start);
+    double fraction = ((point - start) * chord) / length_squared;
+    fraction = std::max(0.0, std::min(1.0, fraction));
+    return point.DistanceTo(start + fraction * chord);
+}
+
+
+static double
+brep_segment_hausdorff_bound(const ON_3dPoint &first_start,
+    const ON_3dPoint &first_end, const ON_3dPoint &second_start,
+    const ON_3dPoint &second_end)
+{
+    return std::max(
+	std::max(brep_point_segment_distance(first_start, second_start,
+	    second_end),
+	    brep_point_segment_distance(first_end, second_start, second_end)),
+	std::max(brep_point_segment_distance(second_start, first_start,
+	    first_end),
+	    brep_point_segment_distance(second_end, first_start, first_end)));
+}
+
+
+static bool
+brep_bezier_chord_deviation(const ON_BezierCurve &curve,
+    const ON_3dPoint &start, const ON_3dPoint &end, double &deviation)
+{
+    if (curve.Dimension() != 3 || curve.CVCount() < 2)
+	return false;
+    deviation = 0.0;
+    const int denominator = curve.CVCount() - 1;
+    for (int cv_index = 0; cv_index < curve.CVCount(); ++cv_index) {
+	ON_4dPoint cv;
+	if (!curve.GetCV(cv_index, cv) || !cv.IsValid() ||
+		!(cv.w > 0.0) || !std::isfinite(cv.w))
+	    return false;
+	const ON_3dPoint point(cv.x / cv.w, cv.y / cv.w, cv.z / cv.w);
+	const double fraction = (double)cv_index / (double)denominator;
+	const ON_3dPoint chord_point = (1.0 - fraction) * start +
+	    fraction * end;
+	deviation = std::max(deviation, point.DistanceTo(chord_point));
+    }
+    return std::isfinite(deviation);
+}
+
+
+static bool
+brep_prepare_trim_spans(const ON_BrepTrim &trim,
+    std::vector<brep_trim_span> &spans)
+{
+    spans.clear();
+    ON_NurbsCurve nurbs;
+    if (trim.GetNurbForm(nurbs) != 1 || nurbs.Dimension() != 2 ||
+	    nurbs.m_order < 2 || nurbs.m_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    nurbs.m_cv_count < nurbs.m_order)
+	return false;
+    spans.reserve(nurbs.m_cv_count - nurbs.m_order + 1);
+    for (int span_index = 0;
+	    span_index <= nurbs.m_cv_count - nurbs.m_order; ++span_index) {
+	const double lower =
+	    nurbs.m_knot[span_index + nurbs.m_order - 2];
+	const double upper =
+	    nurbs.m_knot[span_index + nurbs.m_order - 1];
+	if (!(lower < upper))
+	    continue;
+	brep_trim_span span;
+	if (!nurbs.ConvertSpanToBezier(span_index, span.curve))
+	    return false;
+	for (int cv_index = 0; cv_index < span.curve.CVCount(); ++cv_index) {
+	    ON_4dPoint cv;
+	    if (!span.curve.GetCV(cv_index, cv) || !cv.IsValid() ||
+		    !(cv.w > 0.0) || !std::isfinite(cv.w))
+		return false;
+	}
+	span.trim_domain = ON_Interval(lower, upper);
+	spans.push_back(span);
+    }
+    return !spans.empty();
+}
+
+
+static bool
+brep_trim_segment_uv_bbox(const std::vector<brep_trim_span> &spans,
+    const ON_Interval &trim_interval, ON_BoundingBox &bbox)
+{
+    if (!trim_interval.IsIncreasing())
+	return false;
+    bool grow = false;
+    double covered = 0.0;
+    for (std::vector<brep_trim_span>::const_iterator span_it = spans.begin();
+	    span_it != spans.end(); ++span_it) {
+	const double lower = std::max(trim_interval.Min(),
+	    span_it->trim_domain.Min());
+	const double upper = std::min(trim_interval.Max(),
+	    span_it->trim_domain.Max());
+	if (!(lower < upper))
+	    continue;
+	const ON_Interval normalized(
+	    span_it->trim_domain.NormalizedParameterAt(lower),
+	    span_it->trim_domain.NormalizedParameterAt(upper));
+	const int order = span_it->curve.CVCount();
+	ON_4dPoint input[BREP_DIRECT_BEZIER_MAX_ORDER];
+	ON_4dPoint restricted[BREP_DIRECT_BEZIER_MAX_ORDER];
+	if (!normalized.IsIncreasing() || order < 2 ||
+		order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	    return false;
+	for (int cv_index = 0; cv_index < order; ++cv_index) {
+	    if (!span_it->curve.GetCV(cv_index, input[cv_index]))
+		return false;
+	}
+	if (!brep_restrict_homogeneous(input, order, normalized, restricted))
+	    return false;
+	for (int cv_index = 0; cv_index < order; ++cv_index) {
+	    const ON_4dPoint &cv = restricted[cv_index];
+	    if (!cv.IsValid() ||
+		    !(cv.w > 0.0) || !std::isfinite(cv.w))
+		return false;
+	    const ON_3dPoint uv(cv.x / cv.w, cv.y / cv.w, 0.0);
+	    if (!uv.IsValid() || !bbox.Set(uv, grow))
+		return false;
+	    grow = true;
+	}
+	covered += upper - lower;
+    }
+    const double coverage_tolerance = 256.0 * DBL_EPSILON *
+	std::max(1.0, trim_interval.Length());
+    return grow && bbox.IsValid() &&
+	covered + coverage_tolerance >= trim_interval.Length();
+}
+
+
+static const brep_face_record *
+brep_prepared_face(const struct brep_specific *bs, int face_index)
+{
+    if (!bs)
+	return NULL;
+    for (std::vector<brep_face_record>::const_iterator face_it =
+	    bs->face_records.begin(); face_it != bs->face_records.end();
+	    ++face_it) {
+	if (face_it->face_index == face_index)
+	    return &*face_it;
+    }
+    return NULL;
+}
+
+
+static bool
+brep_lifted_trim_chord_deviation(const struct brep_specific *bs,
+    int face_index, const ON_BoundingBox &uv_bbox,
+    const ON_3dPoint &start, const ON_3dPoint &end, double &deviation)
+{
+    const brep_face_record *face_record = brep_prepared_face(bs, face_index);
+    if (!bs || !bs->brep || !face_record || !face_record->supported ||
+	    face_index < 0 || face_index >= bs->brep->m_F.Count())
+	return false;
+    const ON_Surface *surface = bs->brep->m_F[face_index].SurfaceOf();
+    if (!surface || !uv_bbox.IsValid())
+	return false;
+
+    double parameter_min[2] = {uv_bbox.m_min.x, uv_bbox.m_min.y};
+    double parameter_max[2] = {uv_bbox.m_max.x, uv_bbox.m_max.y};
+    for (int direction = 0; direction < 2; ++direction) {
+	const ON_Interval domain = surface->Domain(direction);
+	if (!domain.IsIncreasing())
+	    return false;
+	const double coordinate_scale = std::max(1.0,
+	    std::max(fabs(domain.Min()), std::max(fabs(domain.Max()),
+	    std::max(fabs(parameter_min[direction]),
+		fabs(parameter_max[direction])))));
+	const double padding = 256.0 * DBL_EPSILON * coordinate_scale;
+	if (parameter_min[direction] < domain.Min() - padding ||
+		parameter_max[direction] > domain.Max() + padding)
+	    return false;
+	parameter_min[direction] = std::max(domain.Min(),
+	    parameter_min[direction] - padding);
+	parameter_max[direction] = std::min(domain.Max(),
+	    parameter_max[direction] + padding);
+	if (!(parameter_min[direction] < parameter_max[direction])) {
+	    if (parameter_min[direction] <= domain.Min())
+		parameter_max[direction] = std::min(domain.Max(),
+		    domain.Min() + padding);
+	    else
+		parameter_min[direction] = std::max(domain.Min(),
+		    domain.Max() - padding);
+	}
+	if (!(parameter_min[direction] < parameter_max[direction]))
+	    return false;
+    }
+
+    deviation = 0.0;
+    bool bounded = false;
+    for (size_t span_index = face_record->span_begin;
+	    span_index < face_record->span_begin + face_record->span_count;
+	    ++span_index) {
+	const brep_surface_span &span = bs->surface_spans[span_index];
+	double overlap_min[2];
+	double overlap_max[2];
+	bool overlaps = true;
+	for (int direction = 0; direction < 2; ++direction) {
+	    overlap_min[direction] = std::max(parameter_min[direction],
+		span.surface_domain[direction].Min());
+	    overlap_max[direction] = std::min(parameter_max[direction],
+		span.surface_domain[direction].Max());
+	    overlaps = overlaps &&
+		overlap_min[direction] < overlap_max[direction];
+	}
+	if (!overlaps)
+	    continue;
+	ON_Interval normalized[2];
+	for (int direction = 0; direction < 2; ++direction) {
+	    normalized[direction] = ON_Interval(
+		span.surface_domain[direction].NormalizedParameterAt(
+		    overlap_min[direction]),
+		span.surface_domain[direction].NormalizedParameterAt(
+		    overlap_max[direction]));
+	    if (!normalized[direction].IsIncreasing())
+		return false;
+	}
+	const int u_order = span.surface.Order(0);
+	const int v_order = span.surface.Order(1);
+	if (u_order < 2 || v_order < 2 ||
+		u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+		v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	    return false;
+	ON_4dPoint input[BREP_DIRECT_BEZIER_MAX_CVS];
+	ON_4dPoint u_restricted[BREP_DIRECT_BEZIER_MAX_CVS];
+	ON_4dPoint restricted[BREP_DIRECT_BEZIER_MAX_CVS];
+	for (int i = 0; i < u_order; ++i) {
+	    for (int j = 0; j < v_order; ++j) {
+		if (!span.surface.GetCV(i, j, input[i * v_order + j]))
+		    return false;
+	    }
+	}
+	for (int j = 0; j < v_order; ++j) {
+	    ON_4dPoint curve[BREP_DIRECT_BEZIER_MAX_ORDER];
+	    ON_4dPoint result[BREP_DIRECT_BEZIER_MAX_ORDER];
+	    for (int i = 0; i < u_order; ++i)
+		curve[i] = input[i * v_order + j];
+	    if (!brep_restrict_homogeneous(curve, u_order, normalized[0],
+		    result))
+		return false;
+	    for (int i = 0; i < u_order; ++i)
+		u_restricted[i * v_order + j] = result[i];
+	}
+	for (int i = 0; i < u_order; ++i) {
+	    if (!brep_restrict_homogeneous(&u_restricted[i * v_order],
+		    v_order, normalized[1], &restricted[i * v_order]))
+		return false;
+	}
+	for (int i = 0; i < u_order; ++i) {
+	    for (int j = 0; j < v_order; ++j) {
+		const ON_4dPoint &cv = restricted[i * v_order + j];
+		if (!cv.IsValid() || !(cv.w > 0.0) || !std::isfinite(cv.w))
+		    return false;
+		const ON_3dPoint point(cv.x / cv.w, cv.y / cv.w,
+		    cv.z / cv.w);
+		deviation = std::max(deviation,
+		    brep_point_segment_distance(point, start, end));
+		bounded = true;
+	    }
+	}
+    }
+    return bounded && std::isfinite(deviation);
+}
+
+
+static bool
+brep_discrepancy_cell_bounds(const struct brep_specific *bs,
+    const ON_BrepEdge &edge, const ON_BrepTrim &trim,
+    const std::vector<brep_trim_span> &trim_spans,
+    const brep_discrepancy_cell &cell, double &lower, double &upper)
+{
+    const ON_3dPoint edge_start = cell.edge_curve.PointAt(0.0);
+    const ON_3dPoint edge_end = cell.edge_curve.PointAt(1.0);
+    ON_3dPoint lift_start;
+    ON_3dPoint lift_end;
+    if (!edge_start.IsValid() || !edge_end.IsValid() ||
+	    !brep_trim_lift_at(trim, cell.trim_parameter[0], lift_start, NULL) ||
+	    !brep_trim_lift_at(trim, cell.trim_parameter[1], lift_end, NULL))
+	return false;
+
+    double edge_deviation = 0.0;
+    if (!brep_bezier_chord_deviation(cell.edge_curve, edge_start, edge_end,
+	    edge_deviation))
+	return false;
+    const ON_Interval trim_interval(
+	std::min(cell.trim_parameter[0], cell.trim_parameter[1]),
+	std::max(cell.trim_parameter[0], cell.trim_parameter[1]));
+    ON_BoundingBox uv_bbox;
+    if (!brep_trim_segment_uv_bbox(trim_spans, trim_interval, uv_bbox))
+	return false;
+    double lift_deviation = 0.0;
+    if (!brep_lifted_trim_chord_deviation(bs, trim.FaceIndexOf(), uv_bbox,
+	    lift_start, lift_end, lift_deviation))
+	return false;
+
+    const double chord_distance = brep_segment_hausdorff_bound(edge_start,
+	edge_end, lift_start, lift_end);
+    const double deviation = edge_deviation + lift_deviation;
+    lower = std::max(0.0, chord_distance - deviation);
+    upper = chord_distance + deviation;
+    return std::isfinite(lower) && std::isfinite(upper) && lower <= upper &&
+	cell.edge_domain.IsIncreasing() && edge.m_edge_index == trim.m_ei;
+}
+
+
+static bool
+brep_bound_edge_trim_discrepancy(const struct brep_specific *bs,
+    const brep_edge_record &record, const ON_BrepEdge &edge,
+    const ON_BrepTrim &trim, double target_width, size_t cell_budget,
+    double &lower, double &upper, size_t &cell_count, size_t &maximum_depth,
+    bool &exhausted)
+{
+    const size_t maximum_subdivision_depth = 24;
+    exhausted = false;
+    std::vector<brep_trim_span> trim_spans;
+    if (!brep_prepare_trim_spans(trim, trim_spans))
+	return false;
+    std::vector<brep_discrepancy_cell> stack;
+    stack.reserve(128);
+    const ON_Interval trim_domain = trim.Domain();
+    if (!trim_domain.IsIncreasing())
+	return false;
+    const double parameter_tolerance = 512.0 * DBL_EPSILON *
+	std::max(1.0, std::max(fabs(trim_domain.Min()),
+	    fabs(trim_domain.Max())));
+    const double expected_start = trim.m_bRev3d ? trim_domain.Max() :
+	trim_domain.Min();
+    const double expected_end = trim.m_bRev3d ? trim_domain.Min() :
+	trim_domain.Max();
+    double previous_end = expected_start;
+    for (size_t span_index = record.span_begin;
+	    span_index < record.span_begin + record.span_count; ++span_index) {
+	const brep_edge_span &span = bs->edge_spans[span_index];
+	brep_discrepancy_cell cell;
+	cell.edge_curve = span.curve;
+	cell.edge_domain = span.edge_domain;
+	if (!brep_edge_trim_parameter(edge, trim, cell.edge_domain.Min(),
+		cell.trim_parameter[0]) ||
+		!brep_edge_trim_parameter(edge, trim, cell.edge_domain.Max(),
+		cell.trim_parameter[1]))
+	    return false;
+	const double directed_span = trim.m_bRev3d ?
+	    cell.trim_parameter[0] - cell.trim_parameter[1] :
+	    cell.trim_parameter[1] - cell.trim_parameter[0];
+	if (!(directed_span > 0.0) ||
+		fabs(cell.trim_parameter[0] - previous_end) >
+		parameter_tolerance)
+	    return false;
+	previous_end = cell.trim_parameter[1];
+	stack.push_back(cell);
+    }
+    if (stack.empty() || fabs(stack.front().trim_parameter[0] -
+	    expected_start) > parameter_tolerance ||
+	    fabs(previous_end - expected_end) > parameter_tolerance)
+	return false;
+
+    lower = 0.0;
+    upper = 0.0;
+    cell_count = 0;
+    maximum_depth = 0;
+    while (!stack.empty()) {
+	if (cell_count >= cell_budget) {
+	    exhausted = true;
+	    return false;
+	}
+	brep_discrepancy_cell cell = stack.back();
+	stack.pop_back();
+	cell_count++;
+	maximum_depth = std::max(maximum_depth, cell.depth);
+	double cell_lower = 0.0;
+	double cell_upper = 0.0;
+	if (!brep_discrepancy_cell_bounds(bs, edge, trim, trim_spans, cell,
+		cell_lower, cell_upper))
+	    return false;
+	if (cell_upper - cell_lower <= target_width) {
+	    lower = std::max(lower, cell_lower);
+	    upper = std::max(upper, cell_upper);
+	    continue;
+	}
+	if (cell.depth >= maximum_subdivision_depth)
+	    return false;
+
+	const double edge_midpoint = cell.edge_domain.Mid();
+	double trim_midpoint = 0.0;
+	const double parameter_min = std::min(cell.trim_parameter[0],
+	    cell.trim_parameter[1]);
+	const double parameter_max = std::max(cell.trim_parameter[0],
+	    cell.trim_parameter[1]);
+	const ON_Interval parameter_domain(parameter_min, parameter_max);
+	if (!brep_edge_trim_parameter_in_domain(edge, trim, edge_midpoint,
+		parameter_domain, 9, trim_midpoint))
+	    return false;
+	const double midpoint_tolerance = 256.0 * DBL_EPSILON *
+	    std::max(1.0, std::max(fabs(parameter_min),
+	    fabs(parameter_max)));
+	if (trim_midpoint < parameter_min - midpoint_tolerance ||
+		trim_midpoint > parameter_max + midpoint_tolerance)
+	    return false;
+	trim_midpoint = std::max(parameter_min,
+	    std::min(parameter_max, trim_midpoint));
+	ON_BezierCurve left;
+	ON_BezierCurve right;
+	if (!cell.edge_curve.Split(0.5, left, right))
+	    return false;
+	brep_discrepancy_cell children[2];
+	children[0].edge_curve = left;
+	children[0].edge_domain = ON_Interval(cell.edge_domain.Min(),
+	    edge_midpoint);
+	children[0].trim_parameter[0] = cell.trim_parameter[0];
+	children[0].trim_parameter[1] = trim_midpoint;
+	children[1].edge_curve = right;
+	children[1].edge_domain = ON_Interval(edge_midpoint,
+	    cell.edge_domain.Max());
+	children[1].trim_parameter[0] = trim_midpoint;
+	children[1].trim_parameter[1] = cell.trim_parameter[1];
+	children[0].depth = children[1].depth = cell.depth + 1;
+	stack.push_back(children[1]);
+	stack.push_back(children[0]);
+    }
+    return std::isfinite(lower) && std::isfinite(upper) && lower <= upper &&
+	upper - lower <= target_width;
+}
+
+
+static void
+brep_bound_edge_discrepancies(struct brep_specific *bs,
+    const struct bn_tol *tol)
+{
+    if (!bs || !bs->brep)
+	return;
+    const ON_Brep &brep = *bs->brep;
+    size_t remaining_cells = BREP_SEAM_BOUND_CELL_BUDGET;
+    for (std::vector<brep_edge_record>::iterator record_it =
+	    bs->edge_records.begin(); record_it != bs->edge_records.end();
+	    ++record_it) {
+	brep_edge_record &record = *record_it;
+	if (!record.supported || record.edge_index < 0 ||
+		record.edge_index >= brep.m_E.Count())
+	    continue;
+	const ON_BrepEdge &edge = brep.m_E[record.edge_index];
+	if (edge.m_ti.Count() != 2)
+	    continue;
+	const ON_3dPoint edge_start = edge.PointAtStart();
+	const ON_3dPoint edge_end = edge.PointAtEnd();
+	const double coordinate_scale = std::max(1.0,
+	    std::max(fabs(edge_start.x), std::max(fabs(edge_start.y),
+	    std::max(fabs(edge_start.z), std::max(fabs(edge_end.x),
+	    std::max(fabs(edge_end.y), fabs(edge_end.z)))))));
+	const double model_tolerance = tol && tol->dist > 0.0 ?
+	    tol->dist : record.model_tolerance;
+	record.discrepancy_bound_tolerance = std::max(
+	    4096.0 * DBL_EPSILON * coordinate_scale,
+	    BREP_SEAM_BOUND_RELATIVE_TOLERANCE *
+	    std::max(0.0, model_tolerance));
+	/* The adaptive shadow currently qualifies visibly discrepant seams.  A
+	 * zero sampled value is not a proof of an exact locus, so leave those
+	 * edges explicitly unbounded until an exact NURBS identity path or the
+	 * full adaptive pass can qualify them without imposing this prep cost. */
+	const double visible_discrepancy = std::max(
+	    1024.0 * DBL_EPSILON * coordinate_scale,
+	    BREP_SEAM_VISIBLE_RELATIVE_TOLERANCE *
+	    std::max(0.0, model_tolerance));
+	if (!record.discrepancy_measured ||
+		record.measured_discrepancy <= visible_discrepancy)
+	    continue;
+	/* A sampled point already beyond the model envelope is conclusive
+	 * rejection evidence: the true maximum cannot be smaller.  The upper
+	 * certificate is needed only for seams that might still qualify for
+	 * topology-local repair. */
+	if (!(model_tolerance > 0.0) ||
+		record.measured_discrepancy > model_tolerance +
+		visible_discrepancy)
+	    continue;
+	/* Eligible records not visited because an earlier record consumed the
+	 * solid-wide budget are explicit capacity fallbacks as well. */
+	if (!remaining_cells) {
+	    record.discrepancy_bound_exhausted = true;
+	    continue;
+	}
+	double total_lower = 0.0;
+	double total_upper = 0.0;
+	size_t total_cells = 0;
+	size_t total_depth = 0;
+	bool complete = true;
+	for (int side = 0; side < 2; ++side) {
+	    const int trim_index = edge.m_ti[side];
+	    if (trim_index < 0 || trim_index >= brep.m_T.Count()) {
+		complete = false;
+		break;
+	    }
+	    double side_lower = 0.0;
+	    double side_upper = 0.0;
+	    size_t side_cells = 0;
+	    size_t side_depth = 0;
+	    bool side_exhausted = false;
+	    if (!brep_bound_edge_trim_discrepancy(bs, record, edge,
+		    brep.m_T[trim_index], record.discrepancy_bound_tolerance,
+		    remaining_cells, side_lower, side_upper, side_cells,
+		    side_depth, side_exhausted)) {
+		total_cells += side_cells;
+		total_depth = std::max(total_depth, side_depth);
+		remaining_cells -= std::min(remaining_cells, side_cells);
+		record.discrepancy_bound_exhausted = side_exhausted;
+		complete = false;
+		break;
+	    }
+	    total_lower = std::max(total_lower, side_lower);
+	    total_upper = std::max(total_upper, side_upper);
+	    total_cells += side_cells;
+	    total_depth = std::max(total_depth, side_depth);
+	    remaining_cells -= std::min(remaining_cells, side_cells);
+	}
+	record.discrepancy_bound_cells = total_cells;
+	record.discrepancy_bound_depth = total_depth;
+	if (complete && total_upper - total_lower <=
+		record.discrepancy_bound_tolerance) {
+	    record.discrepancy_lower_bound = total_lower;
+	    record.discrepancy_upper_bound = total_upper;
+	    record.discrepancy_bounded = true;
+	}
     }
 }
 
@@ -1003,6 +1643,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
     brep_build_edge_data(bs, tol);
     brep_build_surface_data(bs);
+    brep_bound_edge_discrepancies(bs, tol);
 
     //start = bu_gettime();
     /* do the majority of real work here */
@@ -2542,11 +3183,24 @@ brep_observe_edges(struct rt_brep_shot_trace *trace,
 	observation.model_tolerance = record.model_tolerance;
 	observation.declared_tolerance = record.declared_tolerance;
 	observation.measured_discrepancy = record.measured_discrepancy;
+	observation.discrepancy_lower_bound =
+	    record.discrepancy_lower_bound;
+	observation.discrepancy_upper_bound =
+	    record.discrepancy_upper_bound;
+	observation.discrepancy_bound_tolerance =
+	    record.discrepancy_bound_tolerance;
+	observation.discrepancy_bound_cells =
+	    record.discrepancy_bound_cells;
+	observation.discrepancy_bound_depth =
+	    record.discrepancy_bound_depth;
 	observation.edge_index = record.edge_index;
 	observation.face_index[0] = record.face_index[0];
 	observation.face_index[1] = record.face_index[1];
 	observation.candidate_spans = candidate_spans;
 	observation.discrepancy_measured = record.discrepancy_measured;
+	observation.discrepancy_bounded = record.discrepancy_bounded;
+	observation.discrepancy_bound_exhausted =
+	    record.discrepancy_bound_exhausted;
 	observation.discrepancy_authorized = record.discrepancy_authorized;
 	observation.tolerance_inferred = record.tolerance_inferred;
 	const double roundoff = std::max(ON_ZERO_TOLERANCE,
@@ -6028,6 +6682,7 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 	    &stp->st_rtip->rti_tol : NULL;
 	brep_build_edge_data(specific, prepared_tol);
 	brep_build_surface_data(specific);
+	brep_bound_edge_discrepancies(specific, prepared_tol);
 
 	Deserializer deserializer(*external);
 	const uint32_t num_children = deserializer.read_uint32();
