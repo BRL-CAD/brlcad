@@ -625,6 +625,10 @@ struct rt_brep_shot_trace {
     size_t candidate_surface_spans;
     size_t excluded_surface_spans;
     size_t surface_subdivision_boxes;
+    size_t surface_rotated_hull_attempts;
+    size_t surface_rotated_hull_exclusions;
+    size_t surface_rotated_hull_retained;
+    size_t surface_rotated_hull_inconclusive;
     size_t surface_clip_attempts;
     size_t surface_clip_contractions;
     size_t surface_clip_u_contractions;
@@ -783,6 +787,12 @@ struct rt_brep_coefficient_test_result {
     fastf_t ray_maximum;
 };
 
+struct rt_brep_linear_hull_test_result {
+    fastf_t minimum[2];
+    fastf_t maximum[2];
+    int excluded;
+};
+
 RT_EXPORT extern int _rt_brep_interval_test(
     const fastf_t *first_coefficients, const fastf_t *second_coefficients,
     int u_order, int v_order, const fastf_t coefficient_error[2],
@@ -792,6 +802,11 @@ RT_EXPORT extern int _rt_brep_interval_product_test(
 RT_EXPORT extern int _rt_brep_interval_divide_test(
     const fastf_t numerator[2], const fastf_t denominator[2],
     fastf_t result[2]);
+RT_EXPORT extern int _rt_brep_linear_hull_test(
+    const fastf_t *first_coefficients, const fastf_t *second_coefficients,
+    size_t count, const fastf_t coefficient_error[2],
+    const fastf_t transform[2][2],
+    struct rt_brep_linear_hull_test_result *result);
 RT_EXPORT extern int _rt_brep_coefficient_test(
     const fastf_t cv[4], const fastf_t origin[3], const fastf_t direction[3],
     const fastf_t planes[2][3],
