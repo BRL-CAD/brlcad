@@ -47,7 +47,9 @@ and assembles an oracle-matching material interval in shadow mode.
 Every retained ordinary surface box now also runs an allocation-free bounded
 local corrector.  Its shadow roots reproduce the resolved sphere grazing
 limit independently of SurfaceTree seeds and remain invariant across the
-existing similarity corpus.
+existing similarity corpus.  A fixed preliminary same-face clustering stage
+now exposes ordered enter/leave/contact behavior without changing production
+events.
 Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
 
 
@@ -381,16 +383,20 @@ ESTABLISHED FINDINGS
     cache remains version zero.
 
 29. A retained coefficient box can seed a mathematical surface root without
-    consulting the legacy SurfaceTree.  Trace mode now maps the box center
-    into its prepared rational Bezier span and runs a fixed 24-iteration,
-    line-searched corrector bounded by that box.  Projecting Newton steps onto
-    the box is necessary for roots on shared Bezier-span boundaries; the
-    residual test still prevents a projected boundary point from becoming a
-    false root.  The ordinary convergence target scales with the local support
-    diagonal, while a separate 32-epsilon world-coordinate floor admits only
-    the cancellation inherent in evaluating translated geometry.  The
-    retained-box t check uses the same scale-aware numerical allowance rather
-    than a fixed model-space constant.
+    consulting the legacy SurfaceTree.  Trace mode maps a fixed deterministic
+    set consisting of the box center, four corners, and four edge midpoints
+    into its prepared rational Bezier span.  Each seed runs a fixed
+    24-iteration, line-searched corrector bounded by that box.  Projecting
+    Newton steps onto the box is necessary for roots on shared Bezier-span
+    boundaries; the residual test still prevents a projected boundary point
+    from becoming a false root.  Same-span results are deduplicated with a
+    scale-aware numerical t tolerance.  Attempts, failures, duplicates,
+    unique candidates, and capacity overflow are separately observable.  The
+    ordinary convergence target scales with the local support diagonal, while
+    a separate 32-epsilon world-coordinate floor admits only the cancellation
+    inherent in evaluating translated geometry.  The retained-box t check
+    uses the same scale-aware numerical allowance rather than a fixed model-
+    space constant.
 
     On the analytic R=10 sphere, all 36 cases with chord at least T recover
     two distinct local root clusters and both analytic endpoints within
@@ -399,22 +405,55 @@ ESTABLISHED FINDINGS
     On the miss side, numerical contact candidates occur only within about
     2.84e-10 T, tighter than the existing 1e-6 T ambiguity gate.  The complete
     bowed Cobb matrix has no local root absent from the legacy candidate set.
-    Fourteen of the 15 below-envelope leaks expose one in-domain local cluster;
-    the remaining sub-tolerance boundary case exposes two, but all 15 still
-    require the separately certified adjacent-support root to reproduce the
-    implicit interval.  The machine report records every local face, span,
-    UV, t, residual, normal dot, and iteration count.
+    Fourteen of the 15 below-envelope leaks expose one in-domain local cluster.
+    The remaining sub-tolerance boundary case has three: the valid entry, the
+    bowed-face crossing, and the exact seam-boundary crossing.  A center-only
+    solve had found only the first two; the alternate boundary seeds make the
+    third basin observable.  All 15 still require the separately certified
+    adjacent-support root to reproduce the implicit interval.  The machine
+    report records every local face, span, UV, t, residual, normal dot, and
+    iteration count plus per-ray attempt accounting.
 
     Identity, rigid rotation/translation, translated 0.01x scale, and
-    translated 10,000x scale now gate the local corrector's candidate count,
-    failure count, normalized root positions, and residuals alongside the
-    edge-sector and closure classifier.  This answers the similarity question
-    for the present controlled corpus: the classifier and bounded local solve
-    are invariant when all model-space tolerances scale with the geometry.
+    translated 10,000x scale now gate the local corrector's failure count,
+    normalized regular-root positions, residuals, and physical contact-cluster
+    count alongside the edge-sector and closure classifier.  Raw numerical
+    representatives of an exactly singular contact may differ while still
+    forming the same one physical cluster.  This answers the similarity
+    question for the present controlled corpus: the classifier and bounded
+    local solve are invariant when all model-space tolerances scale with the
+    geometry.
     Arbitrary nonuniform scaling is not a similarity and remains a separate
     transformed-surface case.  These roots are still trace-only: production
     traversal, trim/event classification, adaptive termination, and fallback
     integration are not yet changed.
+
+30. Local mathematical roots now feed a first allocation-free clustering
+    stage rather than relying on test-side vectors alone.  A fixed insertion
+    sort orders at most 64 roots by t.  The initial compatibility rule joins
+    only roots on the same face whose t values are within 0.1 of the active
+    model distance tolerance; each cluster records its t and normal-dot range,
+    root count, entering/leaving/tangent observations, face, and preliminary
+    ENTER/LEAVE/CONTACT/UNRESOLVED class.  Capacity and the provisional
+    clustering tolerance are explicit trace fields.  This 0.1T value is a
+    shadow rollout policy, not the final ray-interval or minimum-valid-size
+    tolerance.
+
+    Every sphere case with analytic chord at least T now produces exactly two
+    ordered clusters, ENTER followed by LEAVE.  Exact tangency produces one
+    CONTACT cluster.  The classifier similarity matrix gates cluster counts;
+    exactly singular raw representative counts may change with floating
+    conditioning, but identity, rigid, 0.01x, and 10,000x cases all retain one
+    physical contact cluster.  The bowed leak matrix produces cluster-count
+    histogram 14/0/1 for one/two/three clusters.  Machine output includes each
+    cluster and exact attempt = unique + duplicate + failure accounting.
+
+    This is deliberately not the final topology resolver.  Cross-face roots
+    require shared-edge/same-surface-seam compatibility, trimmed candidates
+    require evidence-preserving classification, clusters need certified t
+    intervals rather than point-distance grouping, and minimum-segment policy
+    must remain separate.  No production event or segment is emitted from
+    these preliminary clusters.
 
 
 IMPLEMENTATION CHECKLIST
@@ -486,6 +525,8 @@ IMPLEMENTATION CHECKLIST
             [ ] Replace fixed sampling with conservative knot-aware adaptive
                 discrepancy bounds before production use.
     [ ] Preserve near-trim candidate evidence through local event resolution.
+        [x] Add fixed-capacity same-face preliminary local-root clusters and
+            entering/leaving/contact observability in shadow mode.
     [x] Observe fixed-work 3D ray/shared-edge distance and declared edge-
         tolerance qualification independently of the UV trim tree.
     [x] Classify shadow-mode edge material sectors and validate smooth and
@@ -523,6 +564,8 @@ IMPLEMENTATION CHECKLIST
             interval isolation on ordinary surface spans.
         [x] Correct each retained ordinary box with a bounded, allocation-free
             projected Newton solve and gate the two-root/contact/miss trend.
+        [x] Use fixed center/corner/edge-midpoint seeds and report convergence,
+            deduplication, failure, and capacity accounting independently.
         [x] Add bounded outside-span reparameterization with exact operator-
             norm error amplification and positive-weight certification.
         [ ] Add safe clipping and adaptive termination.
@@ -875,15 +918,24 @@ Cobb sphere baseline:
     recover both analytic roots with maximum endpoint error about 8.56e-8 mm.
     The 23 positive sub-T cases and exact tangency each form one contact-sized
     cluster.  Miss-side local candidates are confined to about 2.84e-10 T.
-    The corrector performs at most eight attempts per sphere line and six per
-    bowed Cobb line, uses fixed trace capacity, and performs no ray-time
-    allocation.  Candidate roots, residuals, normals, and iterations are
-    emitted under --cobb-report.
+    The nine deterministic seeds per box produce at most 72 attempts per
+    sphere line and 54 per bowed Cobb line, use fixed trace capacity, and
+    perform no ray-time allocation.  Candidate roots, residuals, normals,
+    iterations, failures, and deduplication counts are emitted under
+    --cobb-report.
 
-  * The classifier similarity gate now includes local-root candidate/failure
-    counts, scaled residuals, and normalized root positions.  Identity, rigid
-    rotation/translation, translated 0.01x, and translated 10,000x fixtures
-    pass when their model-space tolerances are scaled with the geometry.
+  * The classifier similarity gate includes local-root failure counts, scaled
+    residuals, normalized regular-root positions, and the physical cluster
+    count at exact contact.  Identity, rigid rotation/translation, translated
+    0.01x, and translated 10,000x fixtures pass when their model-space
+    tolerances are scaled with the geometry.  Raw contact representatives may
+    differ with floating conditioning but always collapse to one cluster.
+
+  * A fixed 64-entry preliminary root-cluster array now classifies same-face
+    observations.  Resolved sphere grazing produces ordered ENTER/LEAVE
+    clusters, tangency produces one CONTACT, cluster capacity never exhausts,
+    and the bowed leak histogram is 14/0/1 for one/two/three clusters.  This
+    remains upstream of trim/topology compatibility and material winding.
 
   * Outside-span continuation rectangles are reparameterized algebraically
     into Bernstein form.  The code computes the absolute row-sum norm of each
