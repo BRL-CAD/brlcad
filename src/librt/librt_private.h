@@ -502,6 +502,11 @@ struct rt_brep_shot_trace {
     size_t edges_within_tolerance;
     size_t prepared_edge_spans;
     size_t candidate_edge_spans;
+    size_t supported_surface_faces;
+    size_t unsupported_surface_faces;
+    size_t prepared_surface_spans;
+    size_t candidate_surface_spans;
+    size_t excluded_surface_spans;
     struct rt_brep_trace_edge edges[RT_BREP_TRACE_MAX_EDGES];
     size_t raw_hits;
     size_t after_near_miss;
@@ -516,6 +521,14 @@ struct rt_brep_shot_trace {
     fastf_t closure_existing_dist;
     int closure_edge_index;
     int closure_missing_direction;
+    size_t continuation_attempts;
+    size_t continuation_candidates;
+    size_t continuation_iterations;
+    fastf_t continuation_dist;
+    fastf_t continuation_uv[2];
+    fastf_t continuation_residual;
+    fastf_t continuation_normal_dot;
+    int continuation_face_index;
 };
 
 RT_EXPORT extern int _rt_brep_shot_trace(
