@@ -101,8 +101,14 @@ homogeneous coefficient construction, arbitrary sub-box restrictions,
 positive-denominator quotients, and rational ray-t bounds.  Outside-span
 reparameterization now also uses a directly applied outward interval tensor
 operator and has an independent exact-dyadic audit.  The ordinary and
-continuation arithmetic layers are complete; broad production promotion and
-tree-density reduction remain gated on fallback and physical equivalence.
+continuation arithmetic layers are complete.  Ordinary shadow isolation now
+also applies conservative Bernstein convex-hull clipping before subdivision.
+It retains at least half of each parameter width, charges clipping against the
+depth budget according to retained area, and falls back to the unchanged box
+on every inconclusive or inconsistent result.  Thirty similarity rays reduce
+from the recorded 1,602-box no-clipping baseline to 964 boxes while preserving
+all analytic, legacy, and prepared partitions.  Broad production promotion
+and tree-density reduction remain gated on fallback and physical equivalence.
 Production trim classification now scans the prepared trim leaves directly;
 the former copied-list implementation remains trace-only as an exact
 equivalence oracle.  The full traced corpus hard-gates candidate counts,
@@ -1179,6 +1185,58 @@ ESTABLISHED FINDINGS
     12/12 in 93.19 seconds, with rt_brep_ray at 93.15 seconds and no sanitizer
     diagnostic.
 
+45. Conservative Bernstein clipping now reduces ordinary shadow isolation
+    work without changing published hits or SurfaceTree density.  For each
+    parameter direction, each ray-plane equation is reduced to lower and
+    upper univariate coefficient envelopes over the other parameter.  A root
+    must lie where the lower Bernstein curve can be nonpositive and the upper
+    curve can be nonnegative.  Fixed control-polygon halfspace bounds include
+    every eligible vertex and every pairwise zero crossing using outward
+    interval arithmetic.  Scanning non-hull chords may enlarge the parameter
+    range but cannot remove a valid root.
+
+    The ranges from both equations are intersected in U and V.  Empty or
+    inconclusive results do not exclude a box in this checkpoint.  A proposed
+    contraction is re-restricted from the complete prepared coefficient net;
+    restriction failure or a contradictory hull result restores the original
+    box.  No clipping path allocates.  Trace accounting reports attempts,
+    accepted U/V contractions, inconclusive results, restriction failures,
+    and maximum removed width.
+
+    Two numerical guards were required.  Each clip retains at least half of
+    each parameter width and ignores removal below 1/16.  A contraction is
+    charged one or two subdivision levels according to retained parameter
+    area and capped at depth 24.  Without depth charging, repeated clipping
+    narrowed boxes far beyond the old depth-24 resolution, outran corrector
+    accuracy, and exposed non-progressing midpoint subdivision.  If neither
+    midpoint is representably interior, the box now terminates conservatively
+    rather than generating duplicate children.
+
+    Continuation certificates intentionally retain the unclipped isolator.
+    Trial clipping covered the intended continuation root but also retained
+    extra conservative terminal boxes, violating the certificate's stronger
+    requirement that its bounded region contain only that root component.
+    This is an explicit promotion boundary rather than a loosened seam check.
+
+    A private arithmetic gate covers 2,025 affine bivariate systems with known
+    roots, positive coefficient uncertainty, every order pair from 2x2 through
+    16x16, and binary scales 2^-200, 1, and 2^200.  Every clipped range contains
+    the known root and contracts.  The complete 1,603,793 prior arithmetic
+    gates and the new clipping gate pass before the geometry corpus.
+
+    On the 30-ray similarity matrix, all 60 ordinary roots still qualify at
+    depths 4 through 11 and normalized analytic/implicit/legacy/prepared
+    partitions are unchanged.  Subdivision visits fall from the recorded
+    no-clipping 1,602 boxes to 964 (39.8 percent).  The complete signed sphere
+    grazing sequence, exact tangent, mirrored miss-side sequence, and bowed
+    Cobb seam matrix pass with zero clipping restriction failures; grazing
+    boxes receive no Krawczyk early termination.  The full direct ray corpus
+    passes.  The focused normal gate passes 13/13 in 25.30 seconds, with
+    rt_brep_ray at 24.07 seconds.  The focused ASan/UBSan gate passes 12/12 in
+    91.04 seconds, with rt_brep_ray at 91.00 seconds and no sanitizer
+    diagnostic.  Production ordinary hits still come only from the
+    depth-eight SurfaceTree path.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1341,6 +1399,18 @@ IMPLEMENTATION CHECKLIST
                 [x] Audit outside-span reparameterization amplification with
                     direct outward interval tensor operators and exact row-
                     sum uncertainty bounds.
+            [x] Add contraction-only shadow Bernstein clipping with outward
+                convex-hull bounds, bounded contraction, depth charging,
+                non-progress termination, and observable conservative
+                fallback.
+            [x] Gate clipping root enclosure on 2,025 uncertain affine systems
+                covering all supported tensor orders and wide binary scales.
+            [x] Reduce the 30-ray similarity gate below its recorded 1,602-box
+                no-clipping baseline while preserving the complete grazing,
+                seam, and final-partition corpora.
+            [ ] Define the ordinary-root production publication boundary and
+                retain explicit legacy fallback for unsupported surfaces,
+                workspace exhaustion, and any unqualified physical event.
     [ ] Use fixed-capacity allocation-free shot workspace with explicit
         fallback on unsupported weights/order/capacity.
         [x] Bound direct surface order, subdivision stack, trace output, and
@@ -1865,6 +1935,10 @@ Cobb sphere baseline:
     Repeated after direct outward interval outside-span reparameterization:
     13/13 in 25.64 seconds, with rt_brep_ray at 24.37 seconds.  All 1,603,793
     permanent enclosure checks pass before the corpus.
+    Repeated after contraction-only Bernstein clipping and its 2,025-case
+    affine enclosure gate: 13/13 in 25.30 seconds, with rt_brep_ray at 24.07
+    seconds.  All geometry classifications and published partitions remain
+    unchanged; the 30-ray shadow similarity matrix visits 964 boxes.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -1926,6 +2000,9 @@ Cobb sphere baseline:
     Repeated after direct outward interval outside-span reparameterization
     with halt_on_error=1: 12/12 in 93.19 seconds; rt_brep_ray takes 93.15
     seconds with no ASan or UBSan diagnostic.
+    Repeated after contraction-only Bernstein clipping with halt_on_error=1:
+    12/12 in 91.04 seconds; rt_brep_ray takes 91.00 seconds with no ASan or
+    UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -1994,12 +2071,12 @@ NEXT ACTIONS
 2. Implement and gate cyclic convex/concave vertex-fan transitions before any
    multi-edge crack repair.  Preserve the current explicit fallback for
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
-3. Add conservative clipping where it can prove exclusion or uniqueness, then
-   define the ordinary-root production promotion/fallback gate.  Initial
-   construction, arbitrary in-span restriction, rational ray-t bounds,
-   outside-span reparameterization, similarity, and all supported tensor
-   orders are now independently gated; nonuniform affine transforms remain a
-   separate ellipsoid target.  Keep
+3. Define the ordinary-root production promotion/fallback gate now that
+   contraction-only clipping, Krawczyk qualification, initial construction,
+   arbitrary in-span restriction, rational ray-t bounds, outside-span
+   reparameterization, similarity, and all supported tensor orders are
+   independently gated.  Nonuniform affine transforms remain a separate
+   ellipsoid target.  Keep
    classifying the observed near-hit/grazing/duplicate-stage representation
    differences and extending final-partition oracle gates before production
    promotion.  Do not lower tree density until unsupported/capacity fallback

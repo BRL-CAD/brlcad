@@ -602,6 +602,13 @@ struct rt_brep_shot_trace {
     size_t candidate_surface_spans;
     size_t excluded_surface_spans;
     size_t surface_subdivision_boxes;
+    size_t surface_clip_attempts;
+    size_t surface_clip_contractions;
+    size_t surface_clip_u_contractions;
+    size_t surface_clip_v_contractions;
+    size_t surface_clip_inconclusive;
+    size_t surface_clip_restriction_failures;
+    fastf_t surface_clip_max_fraction_removed;
     size_t surface_isolated_boxes;
     fastf_t surface_isolated_min_t_width;
     fastf_t surface_isolated_max_t_width;
@@ -764,6 +771,10 @@ RT_EXPORT extern int _rt_brep_reparameterize_test(
     const fastf_t *input, int u_order, int v_order, fastf_t input_error,
     const fastf_t minimum[2], const fastf_t maximum[2], fastf_t *output,
     fastf_t *output_error);
+RT_EXPORT extern int _rt_brep_clip_test(
+    const fastf_t *first_coefficients, const fastf_t *second_coefficients,
+    int u_order, int v_order, const fastf_t coefficient_error[2],
+    fastf_t parameter_range[4]);
 
 RT_EXPORT extern int _rt_brep_shot_trace(
     struct soltab *stp, struct xray *rp, struct application *ap,

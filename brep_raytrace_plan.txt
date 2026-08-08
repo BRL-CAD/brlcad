@@ -569,6 +569,34 @@ For boxes that cannot be excluded:
   1. Apply Bezier clipping when coefficient geometry yields a safe domain
      contraction.
 
+     The implemented shadow contraction reduces each bivariate coefficient
+     net to conservative one-dimensional envelopes.  For a selected
+     direction and each ray-plane equation, the lower control value is the
+     minimum interval lower bound over the other parameter and the upper
+     control value is the maximum interval upper bound.  A root can occur
+     only where the lower Bernstein curve can be nonpositive and the upper
+     curve can be nonnegative.  Bound those parameter sets with the convex
+     hulls of the control polygons.  The fixed implementation considers all
+     vertices already in the requested halfspace and every pairwise control-
+     polygon zero crossing; considering non-hull chords can only enlarge the
+     result.  All crossing arithmetic is outward interval arithmetic.
+
+     Intersect the lower/upper ranges for both equations and both parameter
+     directions.  An inconclusive or empty clipping calculation currently
+     falls through to ordinary subdivision; it is not an exclusion proof.
+     Re-restrict both complete coefficient nets to a proposed clipped box and
+     reject the clip if bounded restriction fails or its hull result is
+     inconsistent.  Thus the first clipping deployment is contraction-only.
+
+     Do not let a successful clip hide extra effective subdivision.  Retain
+     at least half of each parameter width per clipping operation, ignore
+     contractions below 1/16 of a width, and charge one or two subdivision
+     levels according to the retained parameter-box area.  Cap the charged
+     depth at the existing depth-24 limit.  If neither parameter midpoint is
+     representably interior, retain the current box as a terminal candidate
+     instead of generating duplicate children.  These rules are correctness
+     and solver-resolution guards, not performance tuning constants.
+
   2. Otherwise split along the parameter direction with the larger predicted
      model-space extent or poorer bound.
 
@@ -618,6 +646,13 @@ budgets are useful defenses, but production promotion requires showing that
 every generated coefficient and every function/Jacobian interval encloses the
 corresponding exact polynomial quantity.  Until then, a successful shadow
 test may reduce comparison work but may not alter production hit publication.
+
+The current continuation certificate deliberately does not use clipping.
+That certificate must show that its bounded outside-span region isolates only
+the proposed missing seam root.  Early experiments with conservative
+clipping retained extra terminal ambiguity boxes and therefore weakened that
+single-component proof even though the intended root remained covered.
+Revisit continuation clipping only with a separate component/exclusion gate.
 
 Audit the layers separately.  For already bounded Bernstein coefficients,
 evaluate F(x) with interval de Casteljau operations and form derivative
