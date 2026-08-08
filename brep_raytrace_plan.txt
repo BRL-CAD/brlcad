@@ -619,6 +619,19 @@ every generated coefficient and every function/Jacobian interval encloses the
 corresponding exact polynomial quantity.  Until then, a successful shadow
 test may reduce comparison work but may not alter production hit publication.
 
+Qualify adaptive termination under similarities independently of physical
+classifier invariance.  Apply the same translation, arbitrary rotation, and
+0.01x/10,000x uniform scales to an exact implicit sphere, its converted BREP,
+and every test ray; scale all model-space tolerances as lengths.  Normalize ray
+parameters by the uniform scale and compare implicit, legacy-BREP, and
+prepared-BREP intervals to the analytic chord.  Require the same two regular
+event classes and one material interval in both ray directions, and require
+both roots to receive strict-interior certificates before depth 24.  Do not
+require subdivision counts to match: ray-plane basis selection, coefficient
+conditioning, and conservative bounds may change work without changing the
+physical answer.  Nonuniform scaling is not a similarity and needs a separate
+affine/ellipsoid qualification rather than reuse of this invariant.
+
 5.3 Safeguarded corrector
 
 Use the current two-plane equations but replace explicit determinant inversion
