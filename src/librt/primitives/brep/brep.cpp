@@ -1058,6 +1058,164 @@ brep_trace_root(struct rt_brep_shot_trace *trace, const ON_BrepFace *face,
 }
 
 
+static bool
+brep_line_curve_distance_at(const ON_Curve &curve, const ON_Ray &ray,
+    double parameter, double &distance, double &ray_dist)
+{
+    const double direction_squared = ray.m_dir * ray.m_dir;
+    if (!(direction_squared > DBL_MIN) || !std::isfinite(direction_squared))
+	return false;
+    const ON_3dPoint point = curve.PointAt(parameter);
+    if (!point.IsValid())
+	return false;
+    ON_3dVector offset = point - ray.m_origin;
+    ray_dist = (offset * ray.m_dir) / direction_squared;
+    offset -= ray_dist * ray.m_dir;
+    distance = offset.Length();
+    return std::isfinite(distance) && std::isfinite(ray_dist);
+}
+
+
+static bool
+brep_line_curve_distance(const ON_Curve &curve, const ON_Ray &ray,
+    double &parameter, double &distance, double &ray_dist)
+{
+    const ON_Interval domain = curve.Domain();
+    if (!domain.IsIncreasing())
+	return false;
+
+    /* This fixed-work observation is intentionally independent of the UV
+     * trim tree.  It records actual points on the shared 3D edge.  The
+     * production resolver will replace the uniform seed grid with prepared
+     * Bezier spans before this evidence can change shot behavior. */
+    const int sample_count = 65;
+    int best_sample = -1;
+    distance = DBL_MAX;
+    for (int sample = 0; sample < sample_count; ++sample) {
+	const double fraction = (double)sample / (double)(sample_count - 1);
+	const double candidate_parameter = domain.ParameterAt(fraction);
+	double candidate_distance;
+	double candidate_ray_dist;
+	if (!brep_line_curve_distance_at(curve, ray, candidate_parameter,
+		candidate_distance, candidate_ray_dist))
+	    continue;
+	if (candidate_distance < distance) {
+	    best_sample = sample;
+	    parameter = candidate_parameter;
+	    distance = candidate_distance;
+	    ray_dist = candidate_ray_dist;
+	}
+    }
+    if (best_sample < 0)
+	return false;
+
+    const int lower_sample = std::max(0, best_sample - 1);
+    const int upper_sample = std::min(sample_count - 1, best_sample + 1);
+    double lower = domain.ParameterAt((double)lower_sample /
+	(double)(sample_count - 1));
+    double upper = domain.ParameterAt((double)upper_sample /
+	(double)(sample_count - 1));
+    const double golden = 0.6180339887498948482;
+    double left = upper - golden * (upper - lower);
+    double right = lower + golden * (upper - lower);
+    double left_distance = DBL_MAX;
+    double right_distance = DBL_MAX;
+    double left_ray_dist = 0.0;
+    double right_ray_dist = 0.0;
+    (void)brep_line_curve_distance_at(curve, ray, left, left_distance,
+	left_ray_dist);
+    (void)brep_line_curve_distance_at(curve, ray, right, right_distance,
+	right_ray_dist);
+    for (int iteration = 0; iteration < 32; ++iteration) {
+	if (left_distance <= right_distance) {
+	    upper = right;
+	    right = left;
+	    right_distance = left_distance;
+	    right_ray_dist = left_ray_dist;
+	    left = upper - golden * (upper - lower);
+	    left_distance = DBL_MAX;
+	    (void)brep_line_curve_distance_at(curve, ray, left, left_distance,
+		left_ray_dist);
+	} else {
+	    lower = left;
+	    left = right;
+	    left_distance = right_distance;
+	    left_ray_dist = right_ray_dist;
+	    right = lower + golden * (upper - lower);
+	    right_distance = DBL_MAX;
+	    (void)brep_line_curve_distance_at(curve, ray, right, right_distance,
+		right_ray_dist);
+	}
+    }
+    if (left_distance < distance) {
+	parameter = left;
+	distance = left_distance;
+	ray_dist = left_ray_dist;
+    }
+    if (right_distance < distance) {
+	parameter = right;
+	distance = right_distance;
+	ray_dist = right_ray_dist;
+    }
+    return std::isfinite(distance) && std::isfinite(ray_dist);
+}
+
+
+static void
+brep_trace_edges(struct rt_brep_shot_trace *trace, const ON_Brep *brep,
+    const ON_Ray &ray)
+{
+    if (!trace || !brep)
+	return;
+    for (int edge_index = 0; edge_index < brep->m_E.Count(); ++edge_index) {
+	const ON_BrepEdge &edge = brep->m_E[edge_index];
+	if (edge.m_ti.Count() != 2)
+	    continue;
+	const int first_trim = edge.m_ti[0];
+	const int second_trim = edge.m_ti[1];
+	if (first_trim < 0 || first_trim >= brep->m_T.Count() ||
+		second_trim < 0 || second_trim >= brep->m_T.Count())
+	    continue;
+	const int first_face = brep->m_T[first_trim].FaceIndexOf();
+	const int second_face = brep->m_T[second_trim].FaceIndexOf();
+	if (first_face < 0 || second_face < 0)
+	    continue;
+	trace->manifold_edges++;
+
+	double edge_parameter = 0.0;
+	double distance = DBL_MAX;
+	double ray_dist = 0.0;
+	if (!brep_line_curve_distance(edge, ray, edge_parameter, distance,
+		ray_dist)) {
+	    trace->edge_evaluation_failures++;
+	    continue;
+	}
+	trace->edge_observations++;
+	if (trace->stored_edges >= RT_BREP_TRACE_MAX_EDGES) {
+	    trace->edge_overflow++;
+	    continue;
+	}
+
+	struct rt_brep_trace_edge &observation =
+	    trace->edges[trace->stored_edges++];
+	observation.distance = distance;
+	observation.ray_dist = ray_dist;
+	observation.edge_parameter = edge_parameter;
+	observation.edge_tolerance = edge.m_tolerance;
+	observation.edge_index = edge_index;
+	observation.face_index[0] = first_face;
+	observation.face_index[1] = second_face;
+	const double roundoff = std::max(ON_ZERO_TOLERANCE,
+	    128.0 * DBL_EPSILON * std::max(1.0, distance));
+	observation.within_edge_tolerance =
+	    ON_IsValid(edge.m_tolerance) && edge.m_tolerance >= 0.0 &&
+	    distance <= edge.m_tolerance + roundoff;
+	if (observation.within_edge_tolerance)
+	    trace->edges_within_tolerance++;
+    }
+}
+
+
 static int
 utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
     const ON_Surface* surf, pt2d_t& uv, const ON_Ray& ray,
@@ -1307,6 +1465,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     bs->bvh->intersectsHierarchy(r, inters);
     if (trace)
 	trace->intersected_leaves = inters.size();
+    brep_trace_edges(trace, bs->brep, r);
     if (inters.empty())
 	return 0; // MISS
 
