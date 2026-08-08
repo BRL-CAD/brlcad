@@ -1930,6 +1930,17 @@ brep_trace_unique_roots(const struct rt_brep_shot_trace &trace)
 }
 
 
+static const struct rt_brep_trace_edge *
+brep_trace_edge(const struct rt_brep_shot_trace &trace, int edge_index)
+{
+    for (size_t i = 0; i < trace.stored_edges; ++i) {
+	if (trace.edges[i].edge_index == edge_index)
+	    return &trace.edges[i];
+    }
+    return NULL;
+}
+
+
 static int
 check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     struct rt_i *trace_rtip, struct resource *trace_resource)
@@ -1970,7 +1981,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t leaks_before_candidate_storage = 0;
     size_t leaks_during_trim_classification = 0;
     size_t leaks_during_hit_cleanup = 0;
+    size_t leaks_with_target_edge_evidence = 0;
     double maximum_calibration_error = 0.0;
+    double maximum_edge_distance_error = 0.0;
 
     if (emit_report) {
 	std::printf("cobb_family,direction,g_over_T,h_over_T,"
@@ -1978,7 +1991,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "implicit_chord,brep_chord,endpoint_error,valid,deterministic,"
 	    "within_uncertainty,leaves,candidates,raw_hits,after_near_miss,"
 	    "unique_candidates,after_near_hit,after_grazing,after_duplicates,"
-	    "after_direction,final_hits,final_segments\n");
+	    "after_direction,final_hits,final_segments,edge_observations,"
+	    "edge_candidates,target_edge_distance,target_edge_tolerance,"
+	    "target_edge_within\n");
 	std::printf("cobb_root_columns,direction,g_over_T,h_over_T,reverse,"
 	    "root_index,face,t,u,v,normal_dot,trim_distance,trim_status,"
 	    "hit_class,adjacent_face\n");
@@ -1986,6 +2001,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "solver_calls,no_root,converged_regular,converged_singular,"
 	    "duplicate,outside_domain,jacobian_singular,stalled,"
 	    "iteration_limit,evaluation_failed,nonfinite,capacity_exhausted\n");
+	std::printf("cobb_edge_columns,direction,g_over_T,h_over_T,reverse,"
+	    "edge_index,face0,face1,distance,ray_t,edge_parameter,"
+	    "edge_tolerance,within_edge_tolerance\n");
     }
 
     for (size_t ratio_index = 0; ratio_index < sizeof(gap_ratios) /
@@ -2079,16 +2097,57 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    if (trace.root_overflow ||
 			    trace.solver_calls != trace.intersected_leaves ||
 			    trace.candidate_roots != trace.stored_roots ||
-			    trace.final_segments != variant_result.partitions) {
+			    trace.final_segments != variant_result.partitions ||
+			    trace.edge_overflow ||
+			    trace.edge_evaluation_failures ||
+			    trace.edge_observations != trace.stored_edges ||
+			    trace.manifold_edges != 12) {
 			std::printf("FAIL: bowed Cobb trace accounting sign=%d "
 			    "g/T=%.3g h/T=%.3g reverse=%d leaves/calls=%zu/%zu "
-			    "roots=%zu/%zu+%zu segments/partitions=%zu/%zu\n",
+			    "roots=%zu/%zu+%zu segments/partitions=%zu/%zu "
+			    "edges=%zu/%zu+%zu failed=%zu\n",
 			    sign, gap_ratios[ratio_index],
 			    clearance_ratios[clearance_index], reverse,
 			    trace.intersected_leaves, trace.solver_calls,
 			    trace.candidate_roots, trace.stored_roots,
 			    trace.root_overflow, trace.final_segments,
-			    variant_result.partitions);
+			    variant_result.partitions, trace.manifold_edges,
+			    trace.stored_edges, trace.edge_overflow,
+			    trace.edge_evaluation_failures);
+			failures++;
+		    }
+		    const struct rt_brep_trace_edge *target_edge =
+			brep_trace_edge(trace, frame.edge_index);
+		    if (!target_edge) {
+			std::printf("FAIL: bowed Cobb target edge observation sign=%d "
+			    "g/T=%.3g h/T=%.3g reverse=%d edge=%d\n", sign,
+			    gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index], reverse,
+			    frame.edge_index);
+			failures++;
+		    }
+		    const double edge_distance_error = target_edge ?
+			fabs(target_edge->distance - fabs(clearance)) : INFINITY;
+		    maximum_edge_distance_error = std::max(
+			maximum_edge_distance_error, edge_distance_error);
+		    const double edge_distance_limit = std::max(1.0e-10 * tol->dist,
+			512.0 * DBL_EPSILON * radius);
+		    const bool expected_edge_evidence = target_edge &&
+			fabs(clearance) <= target_edge->edge_tolerance +
+			edge_distance_limit;
+		    if (!target_edge || edge_distance_error > edge_distance_limit ||
+			    target_edge->within_edge_tolerance !=
+			    expected_edge_evidence) {
+			std::printf("FAIL: bowed Cobb target edge distance sign=%d "
+			    "g/T=%.3g h/T=%.3g reverse=%d distance=%.17g "
+			    "expected=%.17g limit=%.17g tolerance=%.17g "
+			    "within=%d/%d\n", sign, gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index], reverse,
+			    target_edge ? target_edge->distance : INFINITY,
+			    fabs(clearance), edge_distance_limit,
+			    target_edge ? target_edge->edge_tolerance : INFINITY,
+			    target_edge ? target_edge->within_edge_tolerance : -1,
+			    expected_edge_evidence);
 			failures++;
 		    }
 		    const bool valid = partition_result_valid(implicit_result,
@@ -2162,6 +2221,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    if (gap_ratios[ratio_index] <= 1.0 && crack_leak)
 			below_envelope_crack_leaks++;
 		    if (gap_ratios[ratio_index] <= 1.0 && crack_leak) {
+			if (target_edge && target_edge->within_edge_tolerance)
+			    leaks_with_target_edge_evidence++;
 			if (unique_candidates < 2) {
 			    leaks_before_candidate_storage++;
 			} else if (trace.raw_hits < 2) {
@@ -2189,7 +2250,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    if (emit_report) {
 			std::printf("bowed_surface_seam,%s,%.9g,%.9g,%d,%.9g,"
 			    "%zu,%zu,%.9g,%.9g,%.9g,%d,%d,%d,%zu,%zu,%zu,"
-			    "%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu\n",
+			    "%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,"
+			    "%.9g,%.9g,%d\n",
 			    sign > 0 ? "outward" :
 			    "inward", measured_gap / tol->dist,
 			    clearance / tol->dist, reverse,
@@ -2203,7 +2265,11 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.after_near_hit,
 			    trace.after_grazing, trace.after_duplicates,
 			    trace.after_direction_cleanup, trace.final_hits,
-			    trace.final_segments);
+			    trace.final_segments, trace.edge_observations,
+			    trace.edges_within_tolerance,
+			    target_edge ? target_edge->distance : INFINITY,
+			    target_edge ? target_edge->edge_tolerance : INFINITY,
+			    target_edge ? target_edge->within_edge_tolerance : -1);
 			for (size_t root_index = 0;
 				root_index < trace.stored_roots; ++root_index) {
 			    const struct rt_brep_trace_root &root =
@@ -2227,6 +2293,22 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				++status)
 			    std::printf(",%zu", trace.solver_status[status]);
 			std::printf("\n");
+			for (size_t edge_observation = 0;
+				edge_observation < trace.stored_edges;
+				++edge_observation) {
+			    const struct rt_brep_trace_edge &edge =
+				trace.edges[edge_observation];
+			    std::printf("cobb_edge,%s,%.9g,%.9g,%d,%d,%d,%d,"
+				"%.17g,%.17g,%.17g,%.17g,%d\n",
+				sign > 0 ? "outward" : "inward",
+				measured_gap / tol->dist,
+				clearance / tol->dist, reverse,
+				edge.edge_index, edge.face_index[0],
+				edge.face_index[1], edge.distance,
+				edge.ray_dist, edge.edge_parameter,
+				edge.edge_tolerance,
+				edge.within_edge_tolerance);
+			}
 		    }
 		}
 	    }
@@ -2240,12 +2322,14 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     std::printf("Cobb bowed seam matrix: rays=%zu differing=%zu "
 	"uncertainty-band=%zu outside-band=%zu band-invalid=%zu "
 	"below-envelope-leaks=%zu reversal-inconsistencies=%zu "
-	"leak-stages=%zu/%zu/%zu max-calibration=%.3g\n",
+	"leak-stages=%zu/%zu/%zu edge-evidence=%zu "
+	"max-edge-error=%.3g max-calibration=%.3g\n",
 	total_rays, differing_partitions, uncertainty_band_differences,
 	excessive_differences, uncertainty_band_invalid,
 	below_envelope_crack_leaks, reversal_inconsistencies,
 	leaks_before_candidate_storage, leaks_during_trim_classification,
-	leaks_during_hit_cleanup,
+	leaks_during_hit_cleanup, leaks_with_target_edge_evidence,
+	maximum_edge_distance_error,
 	maximum_calibration_error);
     free_prepared_model(implicit_model);
     delete pristine;

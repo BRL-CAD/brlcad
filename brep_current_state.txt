@@ -29,8 +29,9 @@ actual 3D discrepancy and records grazing behavior across 416 directed rays.
 It has reproduced a below-tolerance crack leak without yet changing seam
 policy.  Fixed-capacity raw-shot tracing now distinguishes missing physical
 roots from trim rejection and legacy hit cleanup without changing production
-behavior.  Phase 0 baselines documented in brep_raytrace_plan.txt remain
-authoritative.
+behavior.  Direct shared-edge observations also prove that every current
+below-envelope leak has eligible 3D evidence on the intended mated edge.
+Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
 
 
 REPOSITORY STATE AT START
@@ -202,6 +203,17 @@ ESTABLISHED FINDINGS
     The remaining leak has at least two distinct candidates and is lost in
     cleanup; no leak in this matrix is caused by trim classification.
 
+20. A direct line-to-shared-edge observation supplies the missing model-space
+    evidence independently of the UV trim tree.  Across all 416 bowed-seam
+    rays, the target-edge distance follows |h| with maximum error about
+    3.59e-15 mm, is unchanged by ray reversal, and qualifies exactly inside
+    the edge's declared tolerance.  All 15 below-envelope leaks have this
+    target-edge evidence; target-edge observations outside the declared
+    envelope do not qualify.  The current implementation is deliberately
+    trace-only and uses a fixed sampling/refinement budget.  It must not
+    change production results until prepared edge spans provide conservative
+    exclusion and the local manifold-sector transition is implemented.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -261,6 +273,8 @@ IMPLEMENTATION CHECKLIST
         segment tolerances.
     [ ] Prepare topology/adjacency and seam discrepancy records.
     [ ] Preserve near-trim candidate evidence through local event resolution.
+    [x] Observe fixed-work 3D ray/shared-edge distance and declared edge-
+        tolerance qualification independently of the UV trim tree.
     [ ] Add sewn and perturbed Cobb fixtures and threshold matrices.
         [x] Add reusable legacy-unsewn and solid-sewn Cobb constructors.
         [x] Gate topology, face/seam/vertex rays, scale, and 8,000 shared
@@ -513,6 +527,20 @@ Cobb sphere baseline:
     candidate, solver-status histograms, unique-root count, and every cleanup
     stage so future seam work can ratchet the actual failure mechanism.
 
+  * The trace path evaluates every two-trim shared 3D edge with a fixed
+    65-point seed grid and 32-step bounded local refinement.  It stores edge
+    index, both incident faces, edge parameter, ray parameter, distance,
+    declared edge tolerance, and qualification without allocating per ray.
+    This is diagnostic groundwork, not yet a completeness claim: prepared
+    Bezier spans and conservative bounds are required before it may drive
+    production event resolution.
+
+  * Every one of the 15 below-envelope leaks identifies the intended target
+    edge inside its declared tolerance.  Across the complete signed and
+    reversed matrix, target-edge distance differs from analytic |h| by at
+    most about 3.59e-15 mm and no target observation beyond the edge envelope
+    is marked eligible.
+
   cmake --build .build --target \
     librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
     PASS
@@ -520,7 +548,8 @@ Cobb sphere baseline:
   ctest --test-dir .build -j4 \
     -R '^(rt_brep_ray|rt_crofton|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
     --output-on-failure
-    PASS: 13/13; rt_brep_ray completes in approximately 7 seconds
+    PASS: 13/13; rt_brep_ray completes in approximately 16 seconds with
+    trace-only edge qualification enabled across all 416 bowed-seam rays
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -550,23 +579,26 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Design a direct 3D ray/mated-edge proximity observation for unresolved odd
-   shots.  It must use the declared/measured edge envelope, identify the same
-   topological edge from both incident faces, and remain distinct from UV,
-   numerical-root, t-cluster, and minimum-segment tolerances.
-2. Use that evidence to design the topology-local crack resolver and explicit
-   winding/contact classes.  Restore a crossing only inside an authorized
-   manifold edge envelope, make it symmetric under ray reversal, and promote
-   each repaired bowed-seam row from the known-defect count to exact solid-
-   interval parity.
-3. Add a safeguarded local correction/contact classification beyond the first
+1. Prepare compact two-trim edge/topology records and rational Bezier edge
+   spans during both normal and cached prep.  Replace the diagnostic uniform
+   edge seed grid with conservative ray/span exclusion and bounded local
+   refinement before allowing edge evidence to affect a shot.
+2. Use the proven 3D edge evidence to implement a shadow-mode local manifold
+   sector classifier and explicit winding/contact classes.  It must identify
+   the same topological edge from both incident faces and keep model-space,
+   UV, numerical-root, t-cluster, and minimum-segment tolerances distinct.
+3. Activate topology-local crack closure only for supported manifold events.
+   Restore a crossing inside its authorized envelope, preserve ray-reversal
+   symmetry, fall back on unsupported cases, and promote each repaired bowed-
+   seam row from the known-defect count to exact solid-interval parity.
+4. Add a safeguarded local correction/contact classification beyond the first
    conditioned Newton improvement.  Do not lower tree density until candidate
    exclusion and fallback behavior are observable and proven equivalent.
-4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
+5. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
    BREP-to-CSG recognition as later, separately classified qualification tiers.
-5. Add endpoint-moving gap/overlap, trim-only, edge-only, vertex, G1, and
+6. Add endpoint-moving gap/overlap, trim-only, edge-only, vertex, G1, and
    combined-error Cobb families, then remove the remaining duplicated Cobb
    control net from brep_invalid.cpp while independently gating its invalid
    topology behavior.

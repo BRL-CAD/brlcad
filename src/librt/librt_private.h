@@ -459,6 +459,7 @@ RT_EXPORT extern int rt_bot_shot_specific(
  * primitives/brep/brep.cpp.  Root classes are CLEAN_HIT, CLEAN_MISS,
  * NEAR_HIT, NEAR_MISS, and CRACK_HIT at values 0 through 4. */
 #define RT_BREP_TRACE_MAX_ROOTS 64
+#define RT_BREP_TRACE_MAX_EDGES 64
 #define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
 
 struct rt_brep_trace_root {
@@ -473,6 +474,16 @@ struct rt_brep_trace_root {
     int direction;
 };
 
+struct rt_brep_trace_edge {
+    fastf_t distance;
+    fastf_t ray_dist;
+    fastf_t edge_parameter;
+    fastf_t edge_tolerance;
+    int edge_index;
+    int face_index[2];
+    int within_edge_tolerance;
+};
+
 struct rt_brep_shot_trace {
     size_t intersected_leaves;
     size_t solver_calls;
@@ -481,6 +492,13 @@ struct rt_brep_shot_trace {
     size_t stored_roots;
     size_t root_overflow;
     struct rt_brep_trace_root roots[RT_BREP_TRACE_MAX_ROOTS];
+    size_t manifold_edges;
+    size_t edge_evaluation_failures;
+    size_t edge_observations;
+    size_t stored_edges;
+    size_t edge_overflow;
+    size_t edges_within_tolerance;
+    struct rt_brep_trace_edge edges[RT_BREP_TRACE_MAX_EDGES];
     size_t raw_hits;
     size_t after_near_miss;
     size_t after_near_hit;
