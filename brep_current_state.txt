@@ -17,9 +17,10 @@ in-memory C++ ray corpus and signed grazing report are in place.  The initial
 report exposed a repeatable false-interval plateau at tangency; conditioned
 root acceptance now removes that plateau and all sampled outside false hits,
 and those cases are permanent gates.  A shared-line Crofton harness now
-compares final implicit and BREP partitions on the identical 32,000-ray sphere
-sample.  Surface-tree density and seam behavior have not yet changed.  Phase 0
-baselines documented in brep_raytrace_plan.txt remain authoritative.
+compares final implicit and BREP partitions on identical samples for sphere,
+oblate ellipsoid, ARB8 box, RCC, truncated cone, and torus fixtures.  Surface-
+tree density and seam behavior have not yet changed.  Phase 0 baselines
+documented in brep_raytrace_plan.txt remain authoritative.
 
 
 REPOSITORY STATE AT START
@@ -157,11 +158,11 @@ IMPLEMENTATION CHECKLIST
     [ ] Compare implicit/CSG and converted BREP ordered partitions.
         [x] Seed in-memory C++ corpus with paired sphere raw segments and
             normal rt_shootray partitions.
-        [x] Exercise normal rt_shootray partitions for the sphere fixture.
-        [ ] Exercise non-spherical primitives and CSG combinations.
+        [x] Exercise normal rt_shootray partitions for six analytic fixtures.
+        [ ] Exercise CSG combinations.
     [x] Reuse identical deterministic Crofton lines and bounding sphere for
-        the initial sphere fixture; general primitive/CSG reuse remains.
-    [x] Report per-line crossing and chord differences for the sphere fixture.
+        the analytic primitive fixtures; CSG reuse remains.
+    [x] Report per-line crossing and chord differences for analytic fixtures.
     [x] Implement initial signed logarithmic sphere grazing report and a
         non-regression envelope; raw solver instrumentation is still pending.
     [x] Add aggregate implicit/BREP/analytic sphere Crofton ground truth.
@@ -321,15 +322,33 @@ Shared-line Crofton and final partitions:
     8.15e-5 mm respectively over the full set; both aggregate representations
     remain far inside the paired 0.1 percent gate.
 
+  * The harness is generalized to any ft_brep-capable implicit internal with
+    explicit shared bounds.  Five additional fixtures each retain 8,000 shared
+    lines: a translated oblate ellipsoid, translated ARB8 box, RCC, truncated
+    cone, and torus.  Their analytic surface areas and volumes are confidence
+    gates, not merely paired comparisons.
+
+  * Exact directed final-partition gates cover ellipsoid pole and periodic
+    seam, ARB8 forward/reverse faces and opposite vertices, cylinder/cone axes
+    and periodic seams, and torus forward/reverse two-interval rays, central
+    hole miss, and tube-vertical hit.  Entry/exit normals must be finite, unit,
+    and correctly oriented after Boolean processing.
+
+  * Across 72,000 shared lines for all six fixtures there are zero differing
+    partition lists and zero tangent-band exceptions.  Every maximum BREP/
+    implicit endpoint delta is below 1e-7 mm; the planar ARB8 maximum is about
+    5.68e-14 mm.
+
   cmake --build .build --target rt_brep_ray -j8
     PASS
 
   .build/src/librt/tests/rt_brep_ray
     PASS: shared partition/Crofton sphere and all directed cases
 
-  ctest --test-dir .build -R '^(rt_brep_ray|rt_crofton)$' \
+  ctest --test-dir .build \
+    -R '^(rt_brep_ray|rt_crofton|rt_primitive_brep)$' \
     --output-on-failure
-    PASS: 2/2
+    PASS: 3/3
 
 Legacy cleanup:
 
@@ -356,7 +375,8 @@ NEXT ACTIONS
 3. Add a safeguarded local correction/contact classification beyond the first
    conditioned Newton improvement.  Do not lower tree density until candidate
    exclusion and fallback behavior are observable and proven equivalent.
-4. Generalize the new shared rt_shootray/Crofton comparison from the sphere to
-   ellipsoid, ARB8, cylinder/cone, torus, then well-separated CSG regions.
+4. Apply the shared rt_shootray/Crofton comparison to well-separated CSG
+   regions: union, intersection, subtraction/cavity, trimmed box-minus-
+   cylinder, nested multi-interval, and tolerance-scaled thin walls.
 5. Add sewn Cobb and deliberate seam/trim perturbation fixtures before changing
    tolerance roles or near-trim hit policy.
