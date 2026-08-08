@@ -1482,6 +1482,58 @@ ESTABLISHED FINDINGS
     but cannot authorize exclusion.  Exact contact, incomplete coverage, or
     fixed-workspace exhaustion must remain explicit conservative fallbacks.
 
+50. A bounded diagnostic prototype gives positive evidence that the broader
+    solver goal is tractable under the supported-patch, model-tolerance, and
+    explicit-fallback contract.  Mapping the analytic root t values back into
+    all retained boxes showed that the missing affine pair is not hidden in an
+    arbitrary interior singularity.  Its two roots approach the ellipsoid's
+    equatorial Bezier-span boundary from opposite sides: the relevant boxes
+    are spans 6 and 7 meeting at v=0.5.  With unrestricted diagnostic storage,
+    they appeared at box indices 64/65 of 104 for condition 100 and 206/207 of
+    546 for condition 1,000.  The ordinary 64-box observation limit therefore
+    did not even retain the relevant boxes before local correction.
+
+    A locally invertible rotation of the two ray-plane equations, aligned to
+    the dominant projected surface derivative, was then applied only as a
+    conservative coefficient-hull exclusion test.  Each rotated coefficient
+    was formed with the already outward interval addition/scaling operations.
+    This reduced the false terminal ambiguity corridor from 104 and 546 boxes
+    to exactly the two boundary-adjacent boxes.  Because F=0 implies M F=0 for
+    any nonsingular finite 2x2 matrix M, the idea has a straightforward
+    no-false-exclusion argument; a permanent implementation still needs a
+    direct exact-dyadic enclosure gate for the new coefficient combinations
+    and explicit telemetry before promotion.
+
+    A second prototype solved the dominant rotated equation for the regular
+    parameter at fixed values of the weak parameter, then bracketed the signed
+    weak equation independently on each side of the span boundary.  It
+    recovered two local roots in all four previously missed condition-1,000
+    directed shots, including both h/T=1e-8 shots whose transformed analytic
+    chord is 30.5 model tolerances.  Thus the roots are numerically recoverable
+    without deeper global subdivision or tolerance inflation.  The
+    condition-100 case produced three raw local observations because one
+    existing Newton result and the two one-sided span results were not yet
+    seam-deduplicated.
+
+    The prototype was intentionally reverted after measurement.  Its roots
+    were not published: strict Krawczyk inclusion on the original terminal
+    boxes still fails as the roots approach their shared box boundary, and the
+    production completeness gate correctly reports uncertified fallback.
+    Promotion therefore requires smaller one-sided root boxes, conservative
+    exclusion of every remaining rotated box, separate certification of each
+    simple root, and topology-aware cross-span event deduplication.  Exact
+    contact must remain ambiguous/fallback because strict regular-root
+    certification is expected to fail at the double root.
+
+    This narrows the tractability boundary.  Correct, substantially cheaper
+    raytracing is a realistic engineering target for valid positive-weight
+    patches within supported order, explicit model tolerances, fixed-workspace
+    limits, and conservative fallback.  A universal exact, fixed-time,
+    fixed-memory classifier for arbitrary rational surfaces, degenerate
+    trims, and unspecified modeling intent is not a realistic target.  The
+    project should continue to state the former contract explicitly rather
+    than accidentally promising the latter.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1648,9 +1700,16 @@ IMPLEMENTATION CHECKLIST
                 [x] Rule out additional isotropic depth, acceptance-tolerance
                     inflation, and weak-direction seed multiplication as safe
                     general repairs.
+                [x] Localize the missing roots to opposite sides of the
+                    equatorial Bezier-span boundary and demonstrate that a
+                    rotated interval hull reduces 104/546 boxes to two.
+                [x] Demonstrate one-sided regular/weak scalar bracketing that
+                    recovers both condition-1,000 root pairs without tolerance
+                    inflation; keep the prototype unpromoted and reverted.
                 [ ] Implement allocation-free fold-direction bracketing with
                     conservative full-box exclusion/coverage and separate
-                    certification of both nearby roots.
+                    certification of both nearby roots, plus cross-span event
+                    deduplication.
             [x] Keep grazing, singular, and boundary roots on the conservative
                 depth-24 path.
             [x] Independently audit outward rounding and coefficient-error
