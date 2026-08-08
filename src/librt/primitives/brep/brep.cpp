@@ -6958,6 +6958,33 @@ brep_surface_box_t_range(const brep_surface_coefficients &coefficients,
 }
 
 
+static bool
+brep_surface_determinant_sign(
+    const double coefficients[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const int order[2], const double error[2], int &determinant_sign)
+{
+    if (!coefficients || !order || !error || order[0] < 2 || order[1] < 2 ||
+	    order[0] > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    order[1] > BREP_DIRECT_BEZIER_MAX_ORDER || error[0] < 0.0 ||
+	    error[1] < 0.0 || !std::isfinite(error[0]) ||
+	    !std::isfinite(error[1]))
+	return false;
+    brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    const size_t count = (size_t)order[0] * order[1];
+    for (int equation = 0; equation < 2; ++equation) {
+	for (size_t i = 0; i < count; ++i) {
+	    if (!std::isfinite(coefficients[equation][i]))
+		return false;
+	    values[equation][i] = brep_interval_expanded(
+		coefficients[equation][i] - error[equation],
+		coefficients[equation][i] + error[equation]);
+	}
+    }
+    return brep_interval_surface_determinant_sign(values, order[0], order[1],
+	determinant_sign);
+}
+
+
 static void
 brep_trace_localize_fold_root(struct rt_brep_shot_trace *trace,
     const brep_surface_coefficients &coefficients,
@@ -7732,6 +7759,7 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 	double maximum_t = 0.0;
 	bool have_t_range = false;
 	bool krawczyk_terminated = false;
+	int determinant_sign = 0;
 	if (adaptive &&
 		box.depth >= BREP_DIRECT_SUBDIVISION_MIN_ADAPTIVE_DEPTH) {
 	    const ON_2dPoint seed(
@@ -7757,6 +7785,18 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 	    if (krawczyk_terminated)
 		have_t_range = brep_surface_box_t_range(coefficients, box,
 		    minimum_t, maximum_t);
+	}
+	if (krawczyk_terminated) {
+	    trace->surface_regular_orientation_attempts++;
+	    if (!brep_surface_determinant_sign(restricted,
+		    coefficients.order, restricted_error,
+		    determinant_sign)) {
+		trace->surface_regular_orientation_failures++;
+	    } else if (determinant_sign) {
+		trace->surface_regular_orientation_signed++;
+	    } else {
+		trace->surface_regular_orientation_uncertain++;
+	    }
 	}
 	const double midpoint[2] = {
 	    0.5 * (box.minimum[0] + box.maximum[0]),
@@ -7816,6 +7856,10 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 		stored.face_index = span.face_index;
 		stored.span_index = span.span_index;
 		stored.depth = box.depth;
+		stored.disposition = krawczyk_terminated ?
+		    RT_BREP_TRACE_BOX_RESOLVED_REGULAR :
+		    RT_BREP_TRACE_BOX_UNRESOLVED;
+		stored.determinant_sign = determinant_sign;
 	    }
 	    continue;
 	}
@@ -10339,12 +10383,13 @@ repair_fixed_brep_crack(brep_hit_workspace &hits,
 
 
 static bool
-brep_prepared_box_has_root(const struct rt_brep_shot_trace *trace,
-    const struct rt_brep_trace_surface_box &box, const ON_Ray &ray,
+brep_prepared_box_matches_local_root(
+    const struct rt_brep_trace_surface_box &box,
+    const struct rt_brep_trace_local_root &root, const ON_Ray &ray,
     const struct bn_tol *tol)
 {
     const double ray_length = ray.m_dir.Length();
-    if (!trace || !(ray_length > DBL_MIN) || !std::isfinite(ray_length))
+    if (!(ray_length > DBL_MIN) || !std::isfinite(ray_length))
 	return false;
     const double model_tolerance = tol && tol->dist > 0.0 &&
 	std::isfinite(tol->dist) ? 0.1 * tol->dist / ray_length : 0.0;
@@ -10358,32 +10403,68 @@ brep_prepared_box_has_root(const struct rt_brep_shot_trace *trace,
 	std::max(fabs(box.uv_min[1]), fabs(box.uv_max[1])));
     const double u_tolerance = 128.0 * DBL_EPSILON * u_scale;
     const double v_tolerance = 128.0 * DBL_EPSILON * v_scale;
+    return root.face_index == box.face_index &&
+	root.span_index == box.span_index &&
+	root.dist >= box.t_min - t_tolerance &&
+	root.dist <= box.t_max + t_tolerance &&
+	root.uv[0] >= box.uv_min[0] - u_tolerance &&
+	root.uv[0] <= box.uv_max[0] + u_tolerance &&
+	root.uv[1] >= box.uv_min[1] - v_tolerance &&
+	root.uv[1] <= box.uv_max[1] + v_tolerance;
+}
+
+
+static bool
+brep_prepared_box_matches_fold_root(
+    const struct rt_brep_trace_surface_box &box,
+    const struct rt_brep_trace_fold_root &root, const ON_Ray &ray,
+    const struct bn_tol *tol)
+{
+    const double ray_length = ray.m_dir.Length();
+    if (!(ray_length > DBL_MIN) || !std::isfinite(ray_length))
+	return false;
+    const double model_tolerance = tol && tol->dist > 0.0 &&
+	std::isfinite(tol->dist) ? 0.1 * tol->dist / ray_length : 0.0;
+    const double t_scale = std::max(1.0,
+	std::max(fabs(box.t_min), fabs(box.t_max)));
+    const double t_tolerance = std::max(model_tolerance,
+	128.0 * DBL_EPSILON * t_scale);
+    const double u_scale = std::max(1.0,
+	std::max(fabs(box.uv_min[0]), fabs(box.uv_max[0])));
+    const double v_scale = std::max(1.0,
+	std::max(fabs(box.uv_min[1]), fabs(box.uv_max[1])));
+    const double u_tolerance = 128.0 * DBL_EPSILON * u_scale;
+    const double v_tolerance = 128.0 * DBL_EPSILON * v_scale;
+    return root.face_index == box.face_index &&
+	root.span_index == box.span_index &&
+	root.t_max >= box.t_min - t_tolerance &&
+	root.t_min <= box.t_max + t_tolerance &&
+	root.uv[0] >= box.uv_min[0] - u_tolerance &&
+	root.uv[0] <= box.uv_max[0] + u_tolerance &&
+	root.uv[1] >= box.uv_min[1] - v_tolerance &&
+	root.uv[1] <= box.uv_max[1] + v_tolerance;
+}
+
+
+static bool
+brep_prepared_box_has_root(const struct rt_brep_shot_trace *trace,
+    const struct rt_brep_trace_surface_box &box, const ON_Ray &ray,
+    const struct bn_tol *tol)
+{
+    if (!trace)
+	return false;
     for (size_t root_index = 0; root_index < trace->stored_local_roots;
 	    ++root_index) {
 	const struct rt_brep_trace_local_root &root =
 	    trace->local_roots[root_index];
-	if (root.face_index == box.face_index &&
-		root.span_index == box.span_index &&
-		root.dist >= box.t_min - t_tolerance &&
-		root.dist <= box.t_max + t_tolerance &&
-		root.uv[0] >= box.uv_min[0] - u_tolerance &&
-		root.uv[0] <= box.uv_max[0] + u_tolerance &&
-		root.uv[1] >= box.uv_min[1] - v_tolerance &&
-		root.uv[1] <= box.uv_max[1] + v_tolerance)
+	if (brep_prepared_box_matches_local_root(box, root, ray, tol))
 	    return true;
     }
     for (size_t root_index = 0;
 	    root_index < trace->stored_surface_fold_roots; ++root_index) {
 	const struct rt_brep_trace_fold_root &root =
 	    trace->surface_fold_roots_data[root_index];
-	if (root.face_index == box.face_index &&
-		root.span_index == box.span_index &&
-		root.t_max >= box.t_min - t_tolerance &&
-		root.t_min <= box.t_max + t_tolerance &&
-		root.uv[0] >= box.uv_min[0] - u_tolerance &&
-		root.uv[0] <= box.uv_max[0] + u_tolerance &&
-		root.uv[1] >= box.uv_min[1] - v_tolerance &&
-		root.uv[1] <= box.uv_max[1] + v_tolerance)
+	if (brep_prepared_box_matches_fold_root(box, root, ray, tol))
 	    return true;
     }
     return false;
@@ -10402,6 +10483,198 @@ brep_fold_root_matches_local(const struct rt_brep_trace_fold_root &fold,
     const double t_tolerance = 128.0 * DBL_EPSILON * t_scale;
     return local.dist >= fold.t_min - t_tolerance &&
 	local.dist <= fold.t_max + t_tolerance;
+}
+
+
+static void
+brep_trace_finalize_physical_events(struct rt_brep_shot_trace *trace,
+    const ON_Ray &ray, const struct bn_tol *tol, bool complete)
+{
+    if (!trace)
+	return;
+    for (size_t i = 1; i < trace->stored_physical_events; ++i) {
+	const struct rt_brep_trace_physical_event value =
+	    trace->physical_events[i];
+	size_t j = i;
+	while (j && value.t_min < trace->physical_events[j - 1].t_min) {
+	    trace->physical_events[j] = trace->physical_events[j - 1];
+	    --j;
+	}
+	trace->physical_events[j] = value;
+    }
+
+    brep_interval minimum_t;
+    if (complete && !brep_fold_minimum_t_interval(ray, tol, minimum_t)) {
+	trace->physical_event_state_failures++;
+	complete = false;
+    }
+    int state = 0;
+    size_t entering_index = 0;
+    for (size_t event_index = 0;
+	    complete && event_index < trace->stored_physical_events;
+	    ++event_index) {
+	const struct rt_brep_trace_physical_event &event =
+	    trace->physical_events[event_index];
+	if (event_index && state == 0 &&
+		trace->physical_events[event_index - 1].t_max >= event.t_min) {
+	    trace->physical_event_state_failures++;
+	    complete = false;
+	    break;
+	}
+	if (event.direction == brep_hit::ENTERING && state == 0) {
+	    entering_index = event_index;
+	    state = 1;
+	    continue;
+	}
+	if (event.direction != brep_hit::LEAVING || state != 1) {
+	    trace->physical_event_state_failures++;
+	    complete = false;
+	    break;
+	}
+	const struct rt_brep_trace_physical_event &entering =
+	    trace->physical_events[entering_index];
+	brep_interval gap;
+	const int gap_class = brep_fold_gap_classify(
+	    {entering.t_min, entering.t_max}, {event.t_min, event.t_max},
+	    minimum_t, gap);
+	if (gap_class == RT_BREP_FOLD_GAP_RESOLVED) {
+	    trace->physical_event_material_segments++;
+	} else if (gap_class == RT_BREP_FOLD_GAP_SUBMINIMUM) {
+	    trace->physical_event_subminimum_contacts++;
+	} else {
+	    trace->physical_event_tolerance_ambiguous++;
+	    trace->physical_event_state_failures++;
+	    complete = false;
+	    break;
+	}
+	state = 0;
+    }
+    if (complete && state != 0) {
+	trace->physical_event_state_failures++;
+	complete = false;
+    }
+    if (complete)
+	trace->physical_event_complete++;
+}
+
+
+static void
+brep_trace_regular_physical_events(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const ON_Ray &ray,
+    const struct bn_tol *tol)
+{
+    if (!trace || !bs || !bs->brep)
+	return;
+
+    bool complete = trace->prepared_surface_spans &&
+	!trace->unsupported_surface_faces &&
+	trace->supported_surface_faces == bs->face_records.size() &&
+	trace->candidate_surface_spans + trace->excluded_surface_spans ==
+	    trace->prepared_surface_spans &&
+	!trace->surface_workspace_exhausted &&
+	!trace->surface_clip_restriction_failures &&
+	!trace->surface_box_overflow &&
+	trace->surface_isolated_boxes == trace->stored_surface_boxes &&
+	trace->surface_isolated_boxes == trace->surface_krawczyk_boxes &&
+	!trace->local_root_overflow && !trace->local_trim_failures &&
+	trace->local_root_candidates == trace->stored_local_roots;
+    bool root_owned[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
+
+    for (size_t box_index = 0; box_index < trace->stored_surface_boxes;
+	    ++box_index) {
+	const struct rt_brep_trace_surface_box &box =
+	    trace->surface_boxes[box_index];
+	trace->physical_event_attempts++;
+	if (box.disposition != RT_BREP_TRACE_BOX_RESOLVED_REGULAR ||
+		!box.determinant_sign || box.face_index < 0 ||
+		box.face_index >= bs->brep->m_F.Count()) {
+	    trace->physical_event_unresolved++;
+	    complete = false;
+	    continue;
+	}
+
+	size_t matching_root = 0;
+	size_t matches = 0;
+	for (size_t root_index = 0;
+		root_index < trace->stored_local_roots; ++root_index) {
+	    if (!brep_prepared_box_matches_local_root(box,
+		    trace->local_roots[root_index], ray, tol))
+		continue;
+	    matching_root = root_index;
+	    matches++;
+	}
+	if (matches != 1 || root_owned[matching_root]) {
+	    trace->physical_event_unresolved++;
+	    complete = false;
+	    continue;
+	}
+	root_owned[matching_root] = true;
+	const struct rt_brep_trace_local_root &root =
+	    trace->local_roots[matching_root];
+	int oriented_sign = box.determinant_sign;
+	if (bs->brep->m_F[box.face_index].m_bRev)
+	    oriented_sign = -oriented_sign;
+	const int direction = oriented_sign < 0 ? brep_hit::ENTERING :
+	    brep_hit::LEAVING;
+	trace->physical_event_direction_checks++;
+	if (!std::isfinite(root.normal_dot) || root.direction != direction) {
+	    trace->physical_event_direction_mismatches++;
+	    trace->physical_event_unresolved++;
+	    complete = false;
+	    continue;
+	}
+
+	if (root.hit_class == brep_hit::CLEAN_MISS &&
+		root.trim_status == 1) {
+	    trace->physical_event_clean_outside++;
+	    continue;
+	}
+	if (root.hit_class != brep_hit::CLEAN_HIT ||
+		root.trim_status == 1) {
+	    trace->physical_event_near_trim++;
+	    trace->physical_event_unresolved++;
+	    complete = false;
+	    continue;
+	}
+
+	if (trace->stored_physical_events >=
+		RT_BREP_TRACE_MAX_PHYSICAL_EVENTS) {
+	    trace->physical_event_overflow++;
+	    complete = false;
+	    continue;
+	}
+	struct rt_brep_trace_physical_event &event =
+	    trace->physical_events[trace->stored_physical_events++];
+	event = {};
+	event.dist = root.dist;
+	event.t_min = box.t_min;
+	event.t_max = box.t_max;
+	event.uv[0] = root.uv[0];
+	event.uv[1] = root.uv[1];
+	event.source_box = box_index;
+	event.source_root = matching_root;
+	event.source_kind = RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT;
+	event.face_index = root.face_index;
+	event.span_index = root.span_index;
+	event.certificate = RT_BREP_TRACE_EVENT_REGULAR_INTERIOR;
+	event.determinant_sign = box.determinant_sign;
+	event.hit_class = root.hit_class;
+	event.trim_status = root.trim_status;
+	event.adjacent_face_index = root.adjacent_face_index;
+	event.direction = direction;
+	trace->physical_event_regular++;
+    }
+
+    if (complete) {
+	for (size_t root_index = 0;
+		root_index < trace->stored_local_roots; ++root_index) {
+	    if (!root_owned[root_index]) {
+		trace->physical_event_unresolved++;
+		complete = false;
+	    }
+	}
+    }
+    brep_trace_finalize_physical_events(trace, ray, tol, complete);
 }
 
 
@@ -10481,34 +10754,184 @@ brep_prepared_fold_pair_eligible(const struct rt_brep_shot_trace *trace)
 }
 
 
+static void
+brep_trace_fold_physical_events(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const ON_Ray &ray,
+    const struct bn_tol *tol)
+{
+    if (!trace || !bs || !bs->brep)
+	return;
+    bool complete = brep_prepared_fold_pair_eligible(trace) &&
+	trace->prepared_surface_spans && !trace->unsupported_surface_faces &&
+	trace->supported_surface_faces == bs->face_records.size() &&
+	trace->candidate_surface_spans + trace->excluded_surface_spans ==
+	    trace->prepared_surface_spans &&
+	!trace->surface_workspace_exhausted &&
+	!trace->surface_clip_restriction_failures &&
+	!trace->surface_box_overflow &&
+	trace->surface_isolated_boxes == trace->stored_surface_boxes &&
+	!trace->local_root_overflow && !trace->local_trim_failures &&
+	trace->local_root_candidates == trace->stored_local_roots;
+    bool root_owned[RT_BREP_TRACE_MAX_FOLD_ROOTS] = {};
+
+    for (size_t box_index = 0; box_index < trace->stored_surface_boxes;
+	    ++box_index) {
+	struct rt_brep_trace_surface_box &box =
+	    trace->surface_boxes[box_index];
+	trace->physical_event_attempts++;
+	size_t matching_root = 0;
+	size_t matches = 0;
+	for (size_t root_index = 0;
+		root_index < trace->stored_surface_fold_roots; ++root_index) {
+	    if (!brep_prepared_box_matches_fold_root(box,
+		    trace->surface_fold_roots_data[root_index], ray, tol))
+		continue;
+	    matching_root = root_index;
+	    matches++;
+	}
+	if (matches != 1 || root_owned[matching_root]) {
+	    trace->physical_event_unresolved++;
+	    complete = false;
+	    continue;
+	}
+	root_owned[matching_root] = true;
+	const struct rt_brep_trace_fold_root &root =
+	    trace->surface_fold_roots_data[matching_root];
+	if (!root.determinant_sign || root.face_index < 0 ||
+		root.face_index >= bs->brep->m_F.Count() ||
+		root.hit_class != brep_hit::CLEAN_HIT ||
+		root.trim_status == 1) {
+	    trace->physical_event_unresolved++;
+	    complete = false;
+	    continue;
+	}
+	int oriented_sign = root.determinant_sign;
+	if (bs->brep->m_F[root.face_index].m_bRev)
+	    oriented_sign = -oriented_sign;
+	const int direction = oriented_sign < 0 ? brep_hit::ENTERING :
+	    brep_hit::LEAVING;
+	trace->physical_event_direction_checks++;
+	if (root.direction != direction) {
+	    trace->physical_event_direction_mismatches++;
+	    trace->physical_event_unresolved++;
+	    complete = false;
+	    continue;
+	}
+
+	box.disposition = RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY;
+	box.determinant_sign = root.determinant_sign;
+	if (trace->stored_physical_events >=
+		RT_BREP_TRACE_MAX_PHYSICAL_EVENTS) {
+	    trace->physical_event_overflow++;
+	    complete = false;
+	    continue;
+	}
+	struct rt_brep_trace_physical_event &event =
+	    trace->physical_events[trace->stored_physical_events++];
+	event = {};
+	event.dist = root.dist;
+	event.t_min = root.t_min;
+	event.t_max = root.t_max;
+	event.uv[0] = root.uv[0];
+	event.uv[1] = root.uv[1];
+	event.source_box = box_index;
+	event.source_root = matching_root;
+	event.source_kind = RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT;
+	event.face_index = root.face_index;
+	event.span_index = root.span_index;
+	event.certificate = RT_BREP_TRACE_EVENT_BOUNDARY_FOLD;
+	event.determinant_sign = root.determinant_sign;
+	event.hit_class = root.hit_class;
+	event.trim_status = root.trim_status;
+	event.adjacent_face_index = root.adjacent_face_index;
+	event.direction = direction;
+	trace->physical_event_boundary++;
+    }
+
+    for (size_t root_index = 0;
+	    complete && root_index < trace->stored_surface_fold_roots;
+	    ++root_index) {
+	if (!root_owned[root_index]) {
+	    trace->physical_event_unresolved++;
+	    complete = false;
+	}
+    }
+    brep_trace_finalize_physical_events(trace, ray, tol, complete);
+}
+
+
+static void
+brep_trace_physical_events(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const ON_Ray &ray,
+    const struct bn_tol *tol)
+{
+    if (brep_prepared_fold_pair_eligible(trace))
+	brep_trace_fold_physical_events(trace, bs, ray, tol);
+    else
+	brep_trace_regular_physical_events(trace, bs, ray, tol);
+}
+
+
 static int
-brep_build_prepared_fold_pair(struct rt_brep_shot_trace *trace,
+brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
     const struct brep_specific *bs, const ON_Ray &ray,
     brep_hit_workspace &hits)
 {
-    for (size_t root_index = 0;
-	    root_index < trace->stored_surface_fold_roots; ++root_index) {
-	const struct rt_brep_trace_fold_root &root =
-	    trace->surface_fold_roots_data[root_index];
+    if (!trace || !bs || !bs->brep || trace->physical_event_complete != 1 ||
+	    trace->physical_event_unresolved ||
+	    trace->physical_event_direction_mismatches ||
+	    trace->physical_event_overflow ||
+	    trace->physical_event_state_failures ||
+	    trace->physical_event_subminimum_contacts ||
+	    trace->physical_event_tolerance_ambiguous ||
+	    trace->stored_physical_events !=
+	    2 * trace->physical_event_material_segments)
+	return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+
+    size_t fold_events = 0;
+    for (size_t event_index = 0;
+	    event_index < trace->stored_physical_events; ++event_index) {
+	const struct rt_brep_trace_physical_event &event =
+	    trace->physical_events[event_index];
+	if ((event.certificate != RT_BREP_TRACE_EVENT_REGULAR_INTERIOR &&
+		event.certificate != RT_BREP_TRACE_EVENT_BOUNDARY_FOLD) ||
+		event.hit_class != brep_hit::CLEAN_HIT ||
+		event.trim_status == 1 ||
+		(event.direction != brep_hit::ENTERING &&
+		 event.direction != brep_hit::LEAVING) ||
+		!std::isfinite(event.dist) ||
+		!std::isfinite(event.t_min) ||
+		!std::isfinite(event.t_max) ||
+		event.t_min > event.dist || event.dist > event.t_max)
+	    return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
 	brep_hit hit;
-	if (!brep_trace_make_hit(bs, ray, root.face_index, root.dist,
-		root.uv, root.trim_status, root.hit_class, root.direction,
-		root.adjacent_face_index, hit))
+	if (!brep_trace_make_hit(bs, ray, event.face_index, event.dist,
+		event.uv, event.trim_status, event.hit_class, event.direction,
+		event.adjacent_face_index, hit))
 	    return RT_BREP_PREPARED_FALLBACK_HIT_BUILD;
 	hits.push_back(hit);
+	if (event.certificate == RT_BREP_TRACE_EVENT_BOUNDARY_FOLD)
+	    fold_events++;
     }
     if (hits.overflow())
 	return RT_BREP_PREPARED_FALLBACK_HIT_WORKSPACE;
     hits.sort();
-    if (hits.size() != 2 ||
-	    hits[0].direction != brep_hit::ENTERING ||
-	    hits[1].direction != brep_hit::LEAVING ||
-	    !std::isfinite(hits[0].dist) ||
-	    !std::isfinite(hits[1].dist) ||
-	    !(hits[1].dist - hits[0].dist >
-	    trace->surface_fold_minimum_t))
-	return RT_BREP_PREPARED_FALLBACK_PARTITION;
-    trace->surface_fold_promoted_pairs++;
+    if (hits.size() != trace->stored_physical_events)
+	return RT_BREP_PREPARED_FALLBACK_HIT_WORKSPACE;
+    for (size_t hit_index = 0; hit_index < hits.size(); ++hit_index) {
+	const int expected_direction = hit_index % 2 ? brep_hit::LEAVING :
+	    brep_hit::ENTERING;
+	if (hits[hit_index].direction != expected_direction ||
+		!std::isfinite(hits[hit_index].dist) ||
+		(hit_index &&
+		 !(hits[hit_index - 1].dist < hits[hit_index].dist)))
+	    return RT_BREP_PREPARED_FALLBACK_PARTITION;
+    }
+    if (fold_events) {
+	if (fold_events != 2 || hits.size() != 2)
+	    return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	trace->surface_fold_promoted_pairs++;
+    }
     return RT_BREP_PREPARED_FALLBACK_NONE;
 }
 
@@ -10544,6 +10967,13 @@ brep_build_prepared_partition(struct rt_brep_shot_trace *trace,
 	    trace->local_cluster_overflow ||
 	    trace->local_root_candidates != trace->stored_local_roots)
 	return RT_BREP_PREPARED_FALLBACK_LOCAL_WORKSPACE;
+    if (trace->physical_event_complete != 1 ||
+	    trace->physical_event_unresolved ||
+	    trace->physical_event_direction_mismatches ||
+	    trace->physical_event_overflow ||
+	    trace->physical_event_state_failures ||
+	    trace->physical_event_tolerance_ambiguous)
+	return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
 
     for (size_t box_index = 0; box_index < trace->stored_surface_boxes;
 	    ++box_index) {
@@ -10552,53 +10982,8 @@ brep_build_prepared_partition(struct rt_brep_shot_trace *trace,
 	    return RT_BREP_PREPARED_FALLBACK_ROOT_COVERAGE;
     }
 
-    if (fold_pair)
-	return brep_build_prepared_fold_pair(trace, bs, ray, hits);
-
-    size_t order[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
-    brep_trace_event_group groups[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
-    const double cluster_tolerance = trace->local_cluster_tolerance > 0.0 &&
-	std::isfinite(trace->local_cluster_tolerance) ?
-	trace->local_cluster_tolerance : BREP_SAME_POINT_TOLERANCE;
-    const size_t group_count = brep_trace_event_groups(trace->local_roots,
-	trace->stored_local_roots, order, groups, cluster_tolerance);
-    for (size_t group_index = 0; group_index < group_count; ++group_index) {
-	const brep_trace_event_group &group = groups[group_index];
-	if (group.direction_class != brep_hit::ENTERING &&
-		group.direction_class != brep_hit::LEAVING)
-	    return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
-	if (group.hit_class == brep_hit::CLEAN_MISS)
-	    continue;
-	brep_hit hit;
-	if (!brep_trace_make_hit(bs, ray, group.face_index, group.dist,
-		group.uv, group.trim_status, group.hit_class,
-		group.direction_class, group.adjacency, hit))
-	    return RT_BREP_PREPARED_FALLBACK_HIT_BUILD;
-	hits.push_back(hit);
-    }
-    if (hits.overflow())
-	return RT_BREP_PREPARED_FALLBACK_HIT_WORKSPACE;
-    hits.sort();
-    (void)cleanup_fixed_brep_hits(hits, xray, tol);
-    if (hits.size() % 2 != 0)
-	return RT_BREP_PREPARED_FALLBACK_PARTITION;
-
-    const double ray_length = ray.m_dir.Length();
-    if (!(ray_length > DBL_MIN) || !std::isfinite(ray_length))
-	return RT_BREP_PREPARED_FALLBACK_PARTITION;
-    const double minimum_segment = tol && tol->dist > 0.0 &&
-	std::isfinite(tol->dist) ? tol->dist / ray_length : 0.0;
-    for (size_t hit_index = 0; hit_index + 1 < hits.size();
-	    hit_index += 2) {
-	const brep_hit &in = hits[hit_index];
-	const brep_hit &out = hits[hit_index + 1];
-	if (in.direction != brep_hit::ENTERING ||
-		out.direction != brep_hit::LEAVING ||
-		!std::isfinite(in.dist) || !std::isfinite(out.dist) ||
-		out.dist - in.dist < minimum_segment)
-	    return RT_BREP_PREPARED_FALLBACK_PARTITION;
-    }
-    return RT_BREP_PREPARED_FALLBACK_NONE;
+    (void)xray;
+    return brep_build_prepared_event_partition(trace, bs, ray, hits);
 }
 
 
@@ -10639,6 +11024,7 @@ brep_try_prepared_partition(struct rt_brep_shot_trace *trace,
     brep_trace_fold_events(trace, bs, ray, tol);
     brep_trace_isolated_roots(trace, bs, ray);
     brep_trace_local_clusters(trace, tol);
+    brep_trace_physical_events(trace, bs, ray, tol);
     /* Publication is authorized only after every retained root box and the
      * complete physical partition pass the conservative qualification above.
      * Any other result leaves the legacy SurfaceTree path untouched. */
