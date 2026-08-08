@@ -459,9 +459,21 @@ shoot_brep_trace(struct soltab *stp, struct rt_i *rtip,
 
 
 static bool
-brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace)
+brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace,
+    bool allow_leaf_fallback = false)
 {
-    return !trace.fixed_leaf_overflow &&
+    const bool leaf_workspace_matches =
+	(!trace.fixed_leaf_overflow && !trace.fixed_leaf_fallback &&
+	 trace.fixed_leaf_count == trace.fixed_leaf_stored &&
+	 trace.fixed_leaf_count == trace.intersected_leaves &&
+	 trace.fixed_leaf_mismatches == 0) ||
+	(allow_leaf_fallback && trace.fixed_leaf_overflow &&
+	 trace.fixed_leaf_fallback &&
+	 trace.fixed_leaf_count > RT_BREP_MAX_LEAVES &&
+	 trace.fixed_leaf_stored == RT_BREP_MAX_LEAVES &&
+	 trace.fixed_leaf_count == trace.intersected_leaves &&
+	 trace.fixed_leaf_mismatches == 1);
+    return leaf_workspace_matches &&
 	trace.prepared_production_attempts == 1 &&
 	trace.prepared_production_eligible ==
 	    trace.prepared_production_selected &&
@@ -476,10 +488,6 @@ brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace)
 	 (!trace.prepared_production_selected &&
 	  trace.prepared_production_fallback !=
 	    RT_BREP_PREPARED_FALLBACK_NONE)) &&
-	!trace.fixed_leaf_fallback &&
-	trace.fixed_leaf_count == trace.fixed_leaf_stored &&
-	trace.fixed_leaf_count == trace.intersected_leaves &&
-	trace.fixed_leaf_mismatches == 0 &&
 	!trace.fixed_hit_overflow &&
 	!trace.fixed_hit_fallback &&
 	trace.fixed_hit_count == trace.fixed_hit_stored &&
@@ -3013,6 +3021,39 @@ cobb_axis_angle_similarity_transform(double scale,
 }
 
 
+static ON_Xform
+cobb_axis_angle_affine_transform(const ON_3dVector &scale,
+    const ON_3dVector &translation, ON_3dVector axis, double angle)
+{
+    ON_Xform xform(ON_Xform::IdentityTransformation);
+    if (!axis.Unitize())
+	return xform;
+    const double c = cos(angle);
+    const double s = sin(angle);
+    const double v = 1.0 - c;
+    const double rotation[3][3] = {
+	{axis.x * axis.x * v + c,
+	 axis.x * axis.y * v - axis.z * s,
+	 axis.x * axis.z * v + axis.y * s},
+	{axis.y * axis.x * v + axis.z * s,
+	 axis.y * axis.y * v + c,
+	 axis.y * axis.z * v - axis.x * s},
+	{axis.z * axis.x * v - axis.y * s,
+	 axis.z * axis.y * v + axis.x * s,
+	 axis.z * axis.z * v + c}
+    };
+    const double scales[3] = {scale.x, scale.y, scale.z};
+    for (int row = 0; row < 3; ++row) {
+	for (int column = 0; column < 3; ++column)
+	    xform[row][column] = rotation[row][column] * scales[column];
+    }
+    xform[0][3] = translation.x;
+    xform[1][3] = translation.y;
+    xform[2][3] = translation.z;
+    return xform;
+}
+
+
 static ON_3dPoint
 cobb_transform_point(const ON_Xform &xform, const ON_3dPoint &point)
 {
@@ -4349,6 +4390,378 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
 	    maximum_implicit_error,
 	    maximum_production_error, maximum_legacy_error,
 	    maximum_prepared_error);
+    }
+    return failures;
+}
+
+
+static int
+check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
+{
+    const double radius = 10.0;
+    const ON_3dPoint base_center(0.0, 0.0, 0.0);
+    struct affine_case {
+	const char *name;
+	ON_3dVector scale;
+	ON_3dVector translation;
+	ON_3dVector axis;
+	double angle;
+	int expected_fallback[3];
+    } cases[] = {
+	{"oblate", ON_3dVector(1.0, 1.0, 0.6),
+	    ON_3dVector(-31.25, 47.5, 103.75),
+	    ON_3dVector(1.0, -2.0, 0.5), 0.731,
+	    {RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_NONE}},
+	{"triaxial", ON_3dVector(0.3, 1.7, 4.0),
+	    ON_3dVector(-19.0, 23.0, 41.0),
+	    ON_3dVector(-0.3, 1.0, 0.7), -1.113,
+	    {RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_NONE}},
+	{"small-triaxial", ON_3dVector(0.005, 0.025, 0.1),
+	    ON_3dVector(1.25, -2.5, 5.0),
+	    ON_3dVector(0.2, -0.7, 1.0), 1.337,
+	    {RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_NONE}},
+	{"high-condition", ON_3dVector(0.01, 0.2, 1.0),
+	    ON_3dVector(-203.0, 307.0, 509.0),
+	    ON_3dVector(1.0, 0.4, -0.2), -0.917,
+	    {RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_UNCERTIFIED}},
+	{"extreme-condition", ON_3dVector(0.001, 0.05, 1.0),
+	    ON_3dVector(17.0, -29.0, 43.0),
+	    ON_3dVector(-0.6, 0.3, 1.0), 0.583,
+	    {RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES,
+	     RT_BREP_PREPARED_FALLBACK_UNCERTIFIED,
+	     RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES}},
+	{"large-triaxial", ON_3dVector(100.0, 600.0, 2500.0),
+	    ON_3dVector(1.0e6, -2.0e6, 3.0e6),
+	    ON_3dVector(2.0, 0.25, -1.0), 2.017,
+	    {RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_NONE}}
+    };
+    const ON_3dVector directions[] = {
+	ON_3dVector(0.371, 0.529, 0.763),
+	ON_3dVector(-0.613, 0.247, 0.751),
+	ON_3dVector(0.193, -0.881, 0.432)
+    };
+    const double half_chord = radius * sqrt(1.0 - 0.31 * 0.31 -
+	0.17 * 0.17);
+    const double expected_in = 2.0 * radius - half_chord;
+    const double expected_out = 2.0 * radius + half_chord;
+    int failures = 0;
+    size_t total_rays = 0;
+    size_t total_krawczyk = 0;
+    size_t total_boxes = 0;
+    size_t minimum_boxes = SIZE_MAX;
+    size_t maximum_boxes = 0;
+    size_t minimum_depth = SIZE_MAX;
+    size_t maximum_depth = 0;
+    size_t selected_rays = 0;
+    size_t surface_box_fallbacks = 0;
+    size_t uncertified_fallbacks = 0;
+    size_t expected_selected_rays = 0;
+    size_t expected_surface_box_fallbacks = 0;
+    size_t expected_uncertified_fallbacks = 0;
+    double minimum_condition = DBL_MAX;
+    double maximum_condition = 0.0;
+    double maximum_implicit_error = 0.0;
+    double maximum_production_error = 0.0;
+    double maximum_legacy_error = 0.0;
+    double maximum_prepared_error = 0.0;
+
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const affine_case &test = cases[case_index];
+	const double minimum_scale = std::min(test.scale.x,
+	    std::min(test.scale.y, test.scale.z));
+	const double maximum_scale = std::max(test.scale.x,
+	    std::max(test.scale.y, test.scale.z));
+	const double condition = maximum_scale / minimum_scale;
+	minimum_condition = std::min(minimum_condition, condition);
+	maximum_condition = std::max(maximum_condition, condition);
+	const ON_Xform xform = cobb_axis_angle_affine_transform(test.scale,
+	    test.translation, test.axis, test.angle);
+	const ON_3dPoint center = cobb_transform_point(xform, base_center);
+	const ON_3dVector a = cobb_transform_vector(xform,
+	    ON_3dVector(radius, 0.0, 0.0));
+	const ON_3dVector b = cobb_transform_vector(xform,
+	    ON_3dVector(0.0, radius, 0.0));
+	const ON_3dVector c = cobb_transform_vector(xform,
+	    ON_3dVector(0.0, 0.0, radius));
+	struct rt_ell_internal ell = {};
+	ell.magic = RT_ELL_INTERNAL_MAGIC;
+	VSET(ell.v, center.x, center.y, center.z);
+	VSET(ell.a, a.x, a.y, a.z);
+	VSET(ell.b, b.x, b.y, b.z);
+	VSET(ell.c, c.x, c.y, c.z);
+	struct rt_db_internal ell_intern;
+	RT_DB_INTERNAL_INIT(&ell_intern);
+	ell_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	ell_intern.idb_type = ID_ELL;
+	ell_intern.idb_meth = &OBJ[ID_ELL];
+	ell_intern.idb_ptr = &ell;
+
+	/* A general affine map has no single length scale.  Scale the model
+	 * tolerance with the smallest singular value so it remains conservative
+	 * for the thinnest ellipsoid direction. */
+	struct bn_tol case_tol = *tol;
+	case_tol.dist = tol->dist * minimum_scale;
+	case_tol.dist_sq = case_tol.dist * case_tol.dist;
+	struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+	if (!rtip) {
+	    std::printf("FAIL: adaptive ellipsoid %s rt_i construction\n",
+		test.name);
+	    failures++;
+	    continue;
+	}
+	rtip->rti_tol = case_tol;
+	struct resource resource = {};
+	rt_init_resource(&resource, 0, rtip);
+	struct soltab *implicit_stp = prep_solid(rtip, &ell_intern, ID_ELL);
+	ON_Brep *brep = ON_Brep::New();
+	OBJ[ID_ELL].ft_brep(&brep, &ell_intern, &case_tol);
+	struct rt_brep_internal brep_internal = {};
+	brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	brep_internal.brep = brep;
+	struct rt_db_internal brep_intern;
+	RT_DB_INTERNAL_INIT(&brep_intern);
+	brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	brep_intern.idb_type = ID_BREP;
+	brep_intern.idb_meth = &OBJ[ID_BREP];
+	brep_intern.idb_ptr = &brep_internal;
+	struct soltab *brep_stp = brep ? prep_solid(rtip, &brep_intern,
+	    ID_BREP) : NULL;
+	if (!implicit_stp || !brep_stp) {
+	    std::printf("FAIL: adaptive ellipsoid %s prep "
+		"implicit/BREP=%d/%d\n", test.name, implicit_stp != NULL,
+		brep_stp != NULL);
+	    failures++;
+	} else {
+	    const double coordinate_scale = std::max(radius * maximum_scale,
+		std::max(fabs(test.translation.x),
+		std::max(fabs(test.translation.y),
+		fabs(test.translation.z))));
+	    for (size_t direction_index = 0; direction_index <
+		    sizeof(directions) / sizeof(directions[0]);
+		    ++direction_index) {
+		ON_3dVector direction = directions[direction_index];
+		ON_3dVector first = ON_CrossProduct(direction,
+		    ON_3dVector(0.0, 0.0, 1.0));
+		if (!direction.Unitize() || !first.Unitize()) {
+		    failures++;
+		    continue;
+		}
+		ON_3dVector second = ON_CrossProduct(direction, first);
+		if (!second.Unitize()) {
+		    failures++;
+		    continue;
+		}
+		const ON_3dPoint closest = 0.31 * radius * first +
+		    0.17 * radius * second;
+		for (int reverse = 0; reverse <= 1; ++reverse) {
+		    const ON_3dVector base_direction = reverse ?
+			-direction : direction;
+		    const ON_3dPoint base_origin = closest +
+			(reverse ? 2.0 : -2.0) * radius * direction;
+		    const ON_3dPoint transformed_origin =
+			cobb_transform_point(xform, base_origin);
+		    ON_3dVector transformed_direction =
+			cobb_transform_vector(xform, base_direction);
+		    const double direction_scale =
+			transformed_direction.Length();
+		    if (!(direction_scale > DBL_MIN) ||
+			    !std::isfinite(direction_scale) ||
+			    !transformed_direction.Unitize()) {
+			failures++;
+			continue;
+		    }
+		    sampled_ray ray;
+		    VSET(ray.origin, transformed_origin.x,
+			transformed_origin.y, transformed_origin.z);
+		    VSET(ray.direction, transformed_direction.x,
+			transformed_direction.y, transformed_direction.z);
+		    const ray_result implicit_result = shoot_solid(implicit_stp,
+			rtip, &resource, ray.origin, ray.direction);
+		    const ray_result production_result = shoot_solid(brep_stp,
+			rtip, &resource, ray.origin, ray.direction);
+		    const ray_result legacy_result = shoot_brep_legacy(brep_stp,
+			rtip, &resource, ray.origin, ray.direction);
+		    struct rt_brep_shot_trace trace;
+		    (void)shoot_brep_trace(brep_stp, rtip, &resource, ray,
+			trace);
+		    total_rays++;
+		    total_krawczyk += trace.surface_krawczyk_boxes;
+		    total_boxes += trace.surface_subdivision_boxes;
+		    minimum_boxes = std::min(minimum_boxes,
+			trace.surface_subdivision_boxes);
+		    maximum_boxes = std::max(maximum_boxes,
+			trace.surface_subdivision_boxes);
+		    if (trace.surface_krawczyk_boxes) {
+			minimum_depth = std::min(minimum_depth,
+			    trace.surface_krawczyk_min_depth);
+			maximum_depth = std::max(maximum_depth,
+			    trace.surface_krawczyk_max_depth);
+		    }
+		    const double normalized_limit = std::max(
+			0.1 * case_tol.dist / direction_scale,
+			8192.0 * DBL_EPSILON * coordinate_scale /
+			direction_scale);
+		    const double implicit_error = std::max(
+			fabs(implicit_result.in_dist / direction_scale -
+			    expected_in),
+			fabs(implicit_result.out_dist / direction_scale -
+			    expected_out));
+		    const double production_error = std::max(
+			fabs(production_result.in_dist / direction_scale -
+			    expected_in),
+			fabs(production_result.out_dist / direction_scale -
+			    expected_out));
+		    const double legacy_error = std::max(
+			fabs(legacy_result.in_dist / direction_scale -
+			    expected_in),
+			fabs(legacy_result.out_dist / direction_scale -
+			    expected_out));
+		    const double prepared_error =
+			trace.local_event_stored_segments == 1 ? std::max(
+			fabs(trace.local_event_segment_in[0] / direction_scale -
+			    expected_in),
+			fabs(trace.local_event_segment_out[0] / direction_scale -
+			    expected_out)) : INFINITY;
+		    maximum_implicit_error = std::max(maximum_implicit_error,
+			implicit_error);
+		    maximum_production_error = std::max(
+			maximum_production_error, production_error);
+		    maximum_legacy_error = std::max(maximum_legacy_error,
+			legacy_error);
+		    const int expected_fallback =
+			test.expected_fallback[direction_index];
+		    const bool expected_selected = expected_fallback ==
+			RT_BREP_PREPARED_FALLBACK_NONE;
+		    if (expected_selected)
+			expected_selected_rays++;
+		    else if (expected_fallback ==
+			    RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES)
+			expected_surface_box_fallbacks++;
+		    else if (expected_fallback ==
+			    RT_BREP_PREPARED_FALLBACK_UNCERTIFIED)
+			expected_uncertified_fallbacks++;
+		    if (trace.prepared_production_selected) {
+			selected_rays++;
+			maximum_prepared_error = std::max(
+			    maximum_prepared_error, prepared_error);
+		} else if (trace.prepared_production_fallback ==
+			RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES) {
+			surface_box_fallbacks++;
+		} else if (trace.prepared_production_fallback ==
+			RT_BREP_PREPARED_FALLBACK_UNCERTIFIED) {
+			uncertified_fallbacks++;
+		}
+		    const bool bad = implicit_result.segments != 1 ||
+			production_result.segments != 1 ||
+			legacy_result.segments != 1 ||
+			trace.final_segments != 1 ||
+			implicit_error > normalized_limit ||
+			production_error > normalized_limit ||
+			legacy_error > normalized_limit ||
+			!brep_trace_fixed_workspaces_match(trace,
+			    !expected_selected) ||
+			trace.legacy_unique_roots != 2 ||
+			trace.prepared_production_selected !=
+			    (expected_selected ? 1 : 0) ||
+			trace.prepared_production_fallback !=
+			    expected_fallback ||
+			trace.surface_workspace_exhausted ||
+			trace.surface_clip_restriction_failures ||
+			(!expected_selected &&
+			 (fabs(production_result.in_dist -
+			    legacy_result.in_dist) / direction_scale >
+			    normalized_limit ||
+			  fabs(production_result.out_dist -
+			    legacy_result.out_dist) / direction_scale >
+			    normalized_limit)) ||
+			(expected_selected &&
+			 (trace.local_event_final_segments != 1 ||
+			  trace.local_event_stored_segments != 1 ||
+			  prepared_error > normalized_limit ||
+			  trace.local_unique_roots != 2 ||
+			  trace.legacy_unique_roots_unmatched ||
+			  trace.local_unique_roots_unmatched ||
+			  trace.matched_root_events != 2 ||
+			  trace.root_event_mismatches ||
+			  trace.local_event_groups != 2 ||
+			  trace.local_event_contacts ||
+			  trace.local_event_clean_misses ||
+			  trace.local_event_hits != 2 ||
+			  trace.local_event_final_mismatches ||
+			  trace.surface_krawczyk_boxes != 2 ||
+			  trace.surface_subdivision_max_depth >= 24 ||
+			  trace.surface_box_overflow));
+		    if (bad) {
+			std::printf("FAIL: adaptive ellipsoid affine %s %zu/%d "
+			    "segments=%d/%d/%d/%zu roots=%zu/%zu "
+			    "krawczyk=%zu depth=%zu boxes=%zu "
+			    "selection=%zu/%d/%d fixed=%d leaves=%zu/%zu/%zu "
+			    "hits=%zu/%zu/%zu errors=%.3g/%.3g/%.3g/%.3g "
+			    "limit=%.3g\n", test.name, direction_index, reverse,
+			    implicit_result.segments,
+			    production_result.segments, legacy_result.segments,
+			    trace.local_event_final_segments,
+			    trace.legacy_unique_roots,
+			    trace.local_unique_roots,
+			    trace.surface_krawczyk_boxes,
+			    trace.surface_subdivision_max_depth,
+			    trace.surface_subdivision_boxes,
+			    trace.prepared_production_selected,
+			    trace.prepared_production_fallback,
+			    expected_fallback,
+			    brep_trace_fixed_workspaces_match(trace,
+				!expected_selected),
+			    trace.fixed_leaf_count, trace.fixed_leaf_stored,
+			    trace.fixed_leaf_overflow, trace.fixed_hit_count,
+			    trace.fixed_hit_stored, trace.fixed_hit_overflow,
+			    implicit_error, production_error, legacy_error,
+			    prepared_error, normalized_limit);
+			failures++;
+		    }
+		}
+	    }
+	}
+
+	free_solid(brep_stp);
+	free_solid(implicit_stp);
+	rt_clean_resource_basic(rtip, &resource);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+    }
+
+    if (selected_rays != expected_selected_rays ||
+	    surface_box_fallbacks != expected_surface_box_fallbacks ||
+	    uncertified_fallbacks != expected_uncertified_fallbacks) {
+	std::printf("FAIL: ellipsoid affine fallback totals "
+	    "selected=%zu/%zu boxes=%zu/%zu uncertified=%zu/%zu\n",
+	    selected_rays, expected_selected_rays, surface_box_fallbacks,
+	    expected_surface_box_fallbacks, uncertified_fallbacks,
+	    expected_uncertified_fallbacks);
+	failures++;
+    }
+
+    if (!failures) {
+	std::printf("Ellipsoid adaptive affine invariance: PASS "
+	    "rays=%zu selected=%zu fallback=%zu/%zu "
+	    "condition=%.3g/%.3g krawczyk=%zu "
+	    "cert-depth=%zu/%zu boxes=%zu/%zu/%zu "
+	    "max-errors=%.3g/%.3g/%.3g/%.3g\n", total_rays,
+	    selected_rays, surface_box_fallbacks, uncertified_fallbacks,
+	    minimum_condition, maximum_condition, total_krawczyk,
+	    minimum_depth, maximum_depth, minimum_boxes, total_boxes,
+	    maximum_boxes, maximum_implicit_error, maximum_production_error,
+	    maximum_legacy_error, maximum_prepared_error);
     }
     return failures;
 }
@@ -6871,8 +7284,11 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--grazing-report");
     const bool report_cobb = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--cobb-report");
-    if (argc != 1 && !report_grazing && !report_cobb)
-	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report]\n", argv[0]);
+    const bool affine_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--affine-only");
+    if (argc != 1 && !report_grazing && !report_cobb && !affine_only)
+	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
+	    "--affine-only]\n", argv[0]);
 
     const double radius = 10.0;
     struct rt_ell_internal ell = {};
@@ -6900,6 +7316,15 @@ main(int argc, char **argv)
 
     struct resource resp = {};
     rt_init_resource(&resp, 0, rtip);
+
+    if (affine_only) {
+	const int affine_failures =
+	    check_ellipsoid_adaptive_affine(&rtip->rti_tol);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return affine_failures ? 1 : 0;
+    }
 
     struct soltab *implicit_stp = prep_solid(rtip, &ell_intern, ID_ELL);
     if (!implicit_stp)
@@ -6986,6 +7411,7 @@ main(int argc, char **argv)
     failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
     failures += check_brep_vertex_fan_fallback(&rtip->rti_tol, rtip, &resp);
     failures += check_sphere_adaptive_similarity(&rtip->rti_tol);
+    failures += check_ellipsoid_adaptive_affine(&rtip->rti_tol);
     failures += check_cobb_classifier_invariance(&rtip->rti_tol);
     failures += check_cobb_ambiguous_correspondence(&rtip->rti_tol, rtip,
 	&resp);

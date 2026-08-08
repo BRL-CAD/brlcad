@@ -730,6 +730,29 @@ conditioning, and conservative bounds may change work without changing the
 physical answer.  Nonuniform scaling is not a similarity and needs a separate
 affine/ellipsoid qualification rather than reuse of this invariant.
 
+For that separate gate, map the exact sphere, its interior transverse rays,
+and the analytic chord through A = R diag(sx, sy, sz) plus translation.  If d
+is the original unit ray direction, normalize A d for shooting and scale the
+expected ray parameters by |A d|.  This retains an analytic oracle without
+solving a second ellipsoid equation numerically.  Construct the implicit ELL
+from the three transformed radius vectors, convert the same ELL to BREP, and
+compare implicit, promoted production, forced legacy, and reconstructed
+prepared partitions in both directions.  A general affine map has no single
+length scale; use the smallest singular value to scale the model distance
+tolerance so the thinnest principal direction remains conservative, and use
+the transformed direction length to normalize endpoint errors.
+
+Sweep both overall scale and singular-value condition number.  Moderate cases
+must select the prepared path.  Higher-condition cases that reach depth or
+workspace limits must preserve the production partition through an exact,
+observable fallback reason.  Independently ratchet prepared isolated-box and
+legacy SurfaceTree-leaf capacity fallback: an ellipsoid may exceed either one
+without being allowed to truncate candidates.  Keep a focused affine-only
+test mode so conditioning boundaries can be iterated without rerunning the
+full Crofton corpus.  This establishes ordinary transverse behavior only;
+repeat the grazing trend under affine distortion before claiming a tangent or
+seam classifier invariant beyond similarities.
+
 The first production publication boundary is deliberately stricter than root
 convergence.  A prepared result may replace the SurfaceTree result only when:
 
