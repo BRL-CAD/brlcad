@@ -45,6 +45,12 @@ struct geom_result {
     size_t primitives = 0;
     size_t commands = 0;
     size_t invalid_indices = 0;
+    int requested_items = 0;
+    int completed_items = 0;
+    int failed_items = 0;
+    bool hit_time_limit = false;
+    bool hit_memory_limit = false;
+    bool hit_point_limit = false;
     bool finite = true;
     bool have_bbox = false;
     point_t bmin = VINIT_ZERO;
@@ -234,7 +240,8 @@ wireframe_result(struct db_i *dbip, struct directory *dp,
 
 static geom_result
 shaded_result(struct db_i *dbip, struct directory *dp,
-	const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
+	const struct brep_cdt_fast_options *options)
 {
     geom_result result;
     struct rt_db_internal intern;
@@ -251,10 +258,17 @@ shaded_result(struct db_i *dbip, struct directory *dp,
     point_t *points = NULL;
     int point_cnt = 0;
     int64_t start = bu_gettime();
-    result.ret = brep_cdt_fast(&faces, &face_cnt, &normals, &points,
-	    &point_cnt, bi->brep, -1, ttol, tol);
+    struct brep_cdt_fast_report report = {};
+    result.ret = brep_cdt_fast_ex(&faces, &face_cnt, &normals, &points,
+	    &point_cnt, bi->brep, -1, ttol, tol, options, &report);
     result.seconds = (bu_gettime() - start) / 1000000.0;
     result.peak_rss_bytes = peak_rss_bytes();
+    result.requested_items = report.requested_faces;
+    result.completed_items = report.completed_faces;
+    result.failed_items = report.failed_faces;
+    result.hit_time_limit = report.hit_time_limit;
+    result.hit_memory_limit = report.hit_memory_limit;
+    result.hit_point_limit = report.hit_point_limit;
 
     if (face_cnt > 0)
 	result.primitives = (size_t)face_cnt;
@@ -278,7 +292,11 @@ shaded_result(struct db_i *dbip, struct directory *dp,
 	    result.finite = false;
     }
 
-    if (result.ret != BRLCAD_OK)
+    if (result.ret == BREP_CDT_FAST_PARTIAL)
+	result.issues.push_back("partial_geometry");
+    else if (result.ret == BREP_CDT_FAST_LIMIT)
+	result.issues.push_back("resource_limit");
+    else if (result.ret != BREP_CDT_FAST_OK)
 	result.issues.push_back("generation_failed");
     if (!result.vertices || !result.primitives)
 	result.issues.push_back("empty_geometry");
@@ -382,6 +400,12 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< ",\"commands\":" << result.commands
 	<< ",\"peak_rss_bytes\":" << result.peak_rss_bytes
 	<< ",\"invalid_indices\":" << result.invalid_indices
+	<< ",\"requested_items\":" << result.requested_items
+	<< ",\"completed_items\":" << result.completed_items
+	<< ",\"failed_items\":" << result.failed_items
+	<< ",\"limits\":{\"time\":" << (result.hit_time_limit ? "true" : "false")
+	<< ",\"memory\":" << (result.hit_memory_limit ? "true" : "false")
+	<< ",\"points\":" << (result.hit_point_limit ? "true" : "false") << "}"
 	<< ",\"finite\":" << (result.finite ? "true" : "false")
 	<< ",\"bbox_valid\":" << (result.have_bbox ? "true" : "false")
 	<< ",\"bbox_min\":";
@@ -437,8 +461,12 @@ main(int argc, const char **argv)
     double tess_rel = 0.01;
     double tess_norm = 0.0;
     long memory_limit_mib = 0;
+    long jobs = 0;
+    long max_time_ms = 0;
+    long max_result_mib = 0;
+    long max_points = 0;
     const char *mode_name = "both";
-    struct bu_opt_desc d[10];
+    struct bu_opt_desc d[14];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -448,12 +476,18 @@ main(int argc, const char **argv)
     BU_OPT(d[6], "", "tess-norm", "#", &bu_opt_fastf_t, &tess_norm, "Normal shaded tessellation tolerance");
     BU_OPT(d[7], "", "memory-limit-mib", "#", &bu_opt_long, &memory_limit_mib, "Process address-space limit in MiB (zero disables)");
     BU_OPT(d[8], "m", "mode", "wireframe|shaded|both", &bu_opt_str, &mode_name, "Select one generator so resource measurements are independent");
-    BU_OPT_NULL(d[9]);
+    BU_OPT(d[9], "j", "jobs", "#", &bu_opt_long, &jobs, "Maximum shaded face workers (zero selects the default)");
+    BU_OPT(d[10], "", "max-time-ms", "#", &bu_opt_long, &max_time_ms, "Shaded generation deadline checked between faces");
+    BU_OPT(d[11], "", "max-result-mib", "#", &bu_opt_long, &max_result_mib, "Maximum retained shaded result size");
+    BU_OPT(d[12], "", "max-points", "#", &bu_opt_long, &max_points, "Maximum retained shaded points");
+    BU_OPT_NULL(d[13]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage = "Usage: brep-audit [options] [--list] file.g [brep]\n";
     if (print_help || (list_only && ac != 1) || (!list_only && ac != 2) ||
 	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
 	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0 ||
+	    jobs < 0 || max_time_ms < 0 || max_result_mib < 0 ||
+	    max_points < 0 ||
 	    (!BU_STR_EQUAL(mode_name, "wireframe") &&
 	     !BU_STR_EQUAL(mode_name, "shaded") &&
 	     !BU_STR_EQUAL(mode_name, "both"))) {
@@ -488,6 +522,16 @@ main(int argc, const char **argv)
     ttol.abs = tess_abs;
     ttol.rel = tess_rel;
     ttol.norm = tess_norm;
+    struct brep_cdt_fast_options fast_options;
+    brep_cdt_fast_options_default(&fast_options);
+    if (jobs > 0)
+	fast_options.max_workers = (size_t)jobs;
+    if (max_time_ms > 0)
+	fast_options.max_time_ms = max_time_ms;
+    if (max_result_mib > 0)
+	fast_options.max_result_bytes = (size_t)max_result_mib * 1024 * 1024;
+    if (max_points > 0)
+	fast_options.max_points = (size_t)max_points;
     std::cerr << "brep-audit: phase=reference" << std::endl;
     point_t ref_min = VINIT_ZERO;
     point_t ref_max = VINIT_ZERO;
@@ -536,7 +580,7 @@ main(int argc, const char **argv)
     }
     if (run_shaded) {
 	std::cerr << "brep-audit: phase=shaded" << std::endl;
-	shaded = shaded_result(dbip, dp, &ttol, &tol);
+	shaded = shaded_result(dbip, dp, &ttol, &tol, &fast_options);
     }
     vect_t ref_dims = VINIT_ZERO;
     double ref_diag = 0.0;
@@ -564,6 +608,10 @@ main(int argc, const char **argv)
 	<< ",\"rel\":" << tess_rel << ",\"norm\":" << tess_norm << "}"
 	<< ",\"memory_limit_mib\":" << memory_limit_mib
 	<< ",\"mode\":" << json_quote(mode_name)
+	<< ",\"fast_options\":{\"jobs\":" << fast_options.max_workers
+	<< ",\"max_time_ms\":" << fast_options.max_time_ms
+	<< ",\"max_result_bytes\":" << fast_options.max_result_bytes
+	<< ",\"max_points\":" << fast_options.max_points << "}"
 	<< ",\"generators\":{\"wireframe\":\"rt_brep_plot\""
 	<< ",\"shaded\":\"brep_cdt_fast\"}"
 	<< ",\"reference\":{\"method\":\"face_GetBoundingBox_trim_parameter_envelopes\""
