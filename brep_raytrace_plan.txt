@@ -1328,9 +1328,12 @@ runs all six directed hard shots even after a production improvement removes
 a miss.  Both corridors, both fold strips, and both endpoint-existence proofs
 now complete in every shot, for real complete-parent counts 2, 2, 2, 2, 2, 2.
 Expansion Krawczyk remains a separately useful floor at 2, 2, 2, 2, 0, 0.
-The next solver step is therefore cross-span physical-event identity and the
-minimum-segment/contact policy, not more parent subdivision or an immediate
-plane-frame precision rewrite.
+The next solver step at that checkpoint was cross-span physical-event identity
+and the minimum-segment/contact policy, not more parent subdivision or an
+immediate plane-frame precision rewrite.  That step is now implemented for the
+strict same-face, exactly-one-shared-span-boundary case described below; this
+historical conclusion remains important because it explains why additional
+precision/depth experiments are not the current optimization target.
 
 Do not treat an exact-perpendicular frame as a drop-in change.  A tested
 largest-component algebraic basis used a common exact power-of-two direction
@@ -1350,6 +1353,47 @@ ENTER/LEAVE interval passes the model minimum-size rule.  Exact contact,
 uncertain determinant sign, capacity exhaustion, unsupported weights/order,
 or an inconclusive precision tier continues to the conservative dense-tree
 fallback.
+
+The first production fold gate now satisfies that rule without broadening it.
+Each complete parent stores a fixed-capacity root record and is localized by
+24 dyadically shrinking weak-parameter slabs.  Every accepted slab re-proves
+the unique regular graph and endpoint existence, contracts the regular
+parameter, maps the result outward to the original span, and obtains a
+rigorous rational ray-t interval.  No localization step allocates.
+
+Two observations are eligible to pair only when they belong to one face and
+two distinct tensor-product Bezier spans sharing exactly one parameter
+boundary, with overlapping transverse domains.  The topology graph must make
+them mutual degree-one neighbors; corner, many-to-many, and cross-face cases
+remain unsupported.  The certified determinant sign supplies orientation:
+with the selected ray-plane frame its sign is `(Su x Sv) dot D`, adjusted for
+face reversal.  Same-direction overlapping intervals are duplicate span
+observations; opposite directions in ray order distinguish ENTER/LEAVE
+material from LEAVE/ENTER void.  This avoids using a grazing normal-angle
+threshold to decide event identity.
+
+The minimum-size classifier uses only outward intervals.  It computes the
+ray-parameter interval for `tol->dist / |D|` and subtracts the localized root
+intervals.  A strict lower gap above the minimum upper bound is resolved; a
+strict upper gap below the minimum lower bound is a subminimum contact; every
+straddling case is ambiguous.  A private 36-case matrix covers those three
+classes plus overlapping exact contact under 0.01x/10,000x model scaling and
+0.25x/16x ray-direction scaling.  Invalid intervals and invalid directions
+reject.  Equality is deliberately ambiguous rather than resolved.
+
+Production remains narrower still: exactly two non-Krawczyk terminal boxes,
+two complete parents, one mutually unique resolved material pair, zero proof,
+workspace, trim, direction, topology, or classification failure, and two
+clean interior trim classifications are required.  Every ordinary local root
+must match one certified root interval or be the known ill-conditioned
+single observation collapsed between the pair on one of the same two spans.
+Any unrelated root or near-trim result falls back.  The pair is published
+directly so legacy angle-based grazing cleanup cannot erase the certified
+close ENTER/LEAVE interval.  This initial gate restores all six former
+condition-100/1,000 tolerance-resolved affine chords, leaves exact contact and
+negative clearance as misses, and makes no tree-density change.  General
+near-trim/seam authorization and corner or multi-span event topology remain
+separate later work.
 
 5.5 Allocation-free ray-time workspace
 
@@ -2294,7 +2338,10 @@ Primary BRL-CAD implementation sources:
       proof additionally lives in brep_fold_regular_graph_contract,
       brep_fold_graph_determinant_signed, brep_fold_strip_excluded, and the
       interval/expansion Bernstein coefficient and restriction helpers near
-      them.
+      them.  Cross-span production qualification is in
+      brep_trace_localize_fold_root, brep_trace_fold_events,
+      brep_prepared_fold_pair_eligible, and
+      brep_build_prepared_fold_pair.
 
   * src/librt/librt_private.h and src/librt/tests/brep_ray.cpp
       fixed-capacity proof telemetry/private exact-audit hooks and the

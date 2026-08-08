@@ -538,6 +538,12 @@ brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace,
 	trace.face_trim_hit_class_mismatches == 0 &&
 	trace.face_trim_adjacency_mismatches == 0 &&
 	trace.face_trim_equivalence_mismatches == 0 &&
+	(trace.surface_fold_root_failures ||
+	 trace.surface_fold_trim_queries + trace.surface_fold_trim_failures ==
+	    trace.stored_surface_fold_roots) &&
+	trace.surface_fold_promoted_pairs <= 1 &&
+	(!trace.surface_fold_promoted_pairs ||
+	 trace.prepared_production_selected) &&
 	trace.local_trim_failures == 0 &&
 	trace.local_trim_queries + trace.local_trim_failures ==
 	    trace.stored_local_roots &&
@@ -5104,6 +5110,107 @@ check_brep_interval_enclosures()
 
 
 static int
+check_brep_fold_interval_classifier()
+{
+    struct interval_case {
+	const char *name;
+	double lower[2];
+	double upper[2];
+	int expected;
+    } cases[] = {
+	{"resolved", {1.0, 1.01}, {1.12, 1.13},
+	    RT_BREP_FOLD_GAP_RESOLVED},
+	{"subminimum", {1.0, 1.01}, {1.04, 1.05},
+	    RT_BREP_FOLD_GAP_SUBMINIMUM},
+	{"ambiguous", {1.0, 1.01}, {1.09, 1.12},
+	    RT_BREP_FOLD_GAP_AMBIGUOUS},
+	{"contact", {1.0, 1.01}, {1.005, 1.006},
+	    RT_BREP_FOLD_GAP_SUBMINIMUM}
+    };
+    const double direction_scales[] = {0.25, 1.0, 16.0};
+    const double model_scales[] = {0.01, 1.0, 1.0e4};
+    const double base_direction[3] = {3.0, 4.0, 0.0};
+    const double base_tolerance = 0.5;
+    int failures = 0;
+    size_t checks = 0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	for (size_t direction_index = 0; direction_index <
+		sizeof(direction_scales) / sizeof(direction_scales[0]);
+		++direction_index) {
+	    for (size_t model_index = 0; model_index <
+		    sizeof(model_scales) / sizeof(model_scales[0]);
+		    ++model_index) {
+		const double direction_scale =
+		    direction_scales[direction_index];
+		const double model_scale = model_scales[model_index];
+		const double parameter_scale = model_scale / direction_scale;
+		fastf_t lower[2] = {
+		    cases[case_index].lower[0] * parameter_scale,
+		    cases[case_index].lower[1] * parameter_scale
+		};
+		fastf_t upper[2] = {
+		    cases[case_index].upper[0] * parameter_scale,
+		    cases[case_index].upper[1] * parameter_scale
+		};
+		fastf_t direction[3] = {
+		    base_direction[0] * direction_scale,
+		    base_direction[1] * direction_scale,
+		    base_direction[2] * direction_scale
+		};
+		struct rt_brep_fold_interval_test_result result = {};
+		checks++;
+		const long double exact_gap_minimum =
+		    (long double)upper[0] - (long double)lower[1];
+		const long double exact_gap_maximum =
+		    (long double)upper[1] - (long double)lower[0];
+		const long double exact_minimum_t =
+		    (long double)(base_tolerance * model_scale) /
+		    hypotl((long double)direction[0],
+			(long double)direction[1]);
+		if (!_rt_brep_fold_interval_test(lower, upper, direction,
+			base_tolerance * model_scale, &result) ||
+			result.classification != cases[case_index].expected ||
+			(long double)result.gap_minimum > exact_gap_minimum ||
+			(long double)result.gap_maximum < exact_gap_maximum ||
+			(long double)result.minimum_t_minimum > exact_minimum_t ||
+			(long double)result.minimum_t_maximum < exact_minimum_t) {
+		    std::printf("FAIL: fold interval %s direction/model=%.3g/"
+			"%.3g class=%d/%d gap=%.17g/%.17g min=%.17g/%.17g\n",
+			cases[case_index].name, direction_scale, model_scale,
+			result.classification, cases[case_index].expected,
+			result.gap_minimum, result.gap_maximum,
+			result.minimum_t_minimum,
+			result.minimum_t_maximum);
+		    failures++;
+		}
+	    }
+	}
+    }
+
+    fastf_t valid_lower[2] = {1.0, 1.01};
+    fastf_t valid_upper[2] = {1.12, 1.13};
+    fastf_t valid_direction[3] = {3.0, 4.0, 0.0};
+    fastf_t reversed[2] = {1.01, 1.0};
+    fastf_t zero_direction[3] = {0.0, 0.0, 0.0};
+    struct rt_brep_fold_interval_test_result result = {};
+    if (_rt_brep_fold_interval_test(reversed, valid_upper,
+	    valid_direction, base_tolerance, &result) ||
+	    _rt_brep_fold_interval_test(valid_lower, valid_upper,
+	    zero_direction, base_tolerance, &result) ||
+	    _rt_brep_fold_interval_test(valid_lower, valid_upper,
+	    valid_direction, -base_tolerance, &result)) {
+	std::printf("FAIL: fold interval invalid-input rejection\n");
+	failures++;
+    }
+    if (!failures)
+	std::printf("BREP fold interval classifier: PASS cases=%zu "
+	    "classes=resolved/subminimum/ambiguous/contact\n", checks);
+    return failures;
+}
+
+
+static int
 check_brep_fold_solver()
 {
     const double equation_transform[][2][2] = {
@@ -6103,6 +6210,7 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
     size_t grazing_resolved_misses = 0;
     size_t grazing_expansion_ratchets = 0;
     size_t grazing_corridor_ratchets = 0;
+    size_t grazing_fold_event_ratchets = 0;
     size_t grazing_gap_maximum_boxes = 0;
     size_t grazing_gap_rotated_exclusions = 0;
 
@@ -6237,8 +6345,14 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		    trace.local_event_stored_segments == 1 ?
 		    std::max(fabs(trace.local_event_segment_in[0] /
 			direction_length - grazing_in),
-		    fabs(trace.local_event_segment_out[0] /
-			direction_length - grazing_out)) : 0.0;
+			fabs(trace.local_event_segment_out[0] /
+			    direction_length - grazing_out)) : 0.0;
+		const double fold_event_error =
+		    trace.surface_fold_resolved_pairs == 1 ?
+		    std::max(fabs(trace.surface_fold_segment_in /
+			direction_length - grazing_in),
+		    fabs(trace.surface_fold_segment_out /
+			direction_length - grazing_out)) : DBL_MAX;
 		summary.maximum_endpoint_error = std::max(
 		    summary.maximum_endpoint_error, production_error);
 		const bool required_hit = clearance > 0.0 &&
@@ -6383,6 +6497,79 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			    trace.surface_fold_corridor_high_water);
 			failures++;
 		    }
+		    bool fold_roots_clean =
+			trace.stored_surface_fold_roots == 2;
+		    for (size_t fold_index = 0; fold_roots_clean &&
+			    fold_index < trace.stored_surface_fold_roots;
+			    ++fold_index) {
+			const struct rt_brep_trace_fold_root &root =
+			    trace.surface_fold_roots_data[fold_index];
+			fold_roots_clean = root.trim_status == 0 &&
+			    root.hit_class == 0;
+		    }
+		    const bool fold_event_bad =
+			trace.surface_fold_roots != 2 ||
+			trace.stored_surface_fold_roots != 2 ||
+			trace.surface_fold_root_overflow ||
+			trace.surface_fold_root_failures ||
+			trace.surface_fold_localization_attempts != 48 ||
+			!trace.surface_fold_localization_certified ||
+			!trace.surface_fold_localization_contractions ||
+			trace.surface_fold_localization_failures ||
+			trace.surface_fold_direction_checks != 2 ||
+			trace.surface_fold_direction_mismatches ||
+			trace.surface_fold_trim_queries != 2 ||
+			trace.surface_fold_trim_failures ||
+			!fold_roots_clean ||
+			trace.surface_fold_topology_pairs != 1 ||
+			trace.surface_fold_duplicate_events ||
+			trace.surface_fold_material_pairs != 1 ||
+			trace.surface_fold_void_pairs ||
+			trace.surface_fold_resolved_pairs != 1 ||
+			trace.surface_fold_subminimum_contacts ||
+			trace.surface_fold_tolerance_ambiguous ||
+			trace.surface_fold_unmatched_roots ||
+			!(trace.surface_fold_pair_gap_min >
+			    trace.surface_fold_minimum_t) ||
+			!(trace.surface_fold_segment_in <
+			    trace.surface_fold_segment_out) ||
+			trace.surface_fold_promoted_pairs != 1 ||
+			fold_event_error > normalized_limit;
+		    grazing_fold_event_ratchets++;
+		    if (fold_event_bad) {
+			std::printf("FAIL: affine fold event ratchet %s "
+			    "ratio=%.3g reverse=%d roots=%zu/%zu/%zu/%zu "
+			    "localize=%zu/%zu/%zu/%zu directions=%zu/%zu "
+			    "events=%zu/%zu/%zu/%zu/%zu/%zu/%zu/%zu "
+			    "gap/min=%.3g/%.3g/%.3g segment=%.17g/%.17g "
+			    "error/limit=%.3g/%.3g\n", test.name,
+			    grazing_clearance_ratios[ratio_index], reverse,
+			    trace.surface_fold_roots,
+			    trace.stored_surface_fold_roots,
+			    trace.surface_fold_root_overflow,
+			    trace.surface_fold_root_failures,
+			    trace.surface_fold_localization_attempts,
+			    trace.surface_fold_localization_certified,
+			    trace.surface_fold_localization_contractions,
+			    trace.surface_fold_localization_failures,
+			    trace.surface_fold_direction_checks,
+			    trace.surface_fold_direction_mismatches,
+			    trace.surface_fold_topology_pairs,
+			    trace.surface_fold_duplicate_events,
+			    trace.surface_fold_material_pairs,
+			    trace.surface_fold_void_pairs,
+			    trace.surface_fold_resolved_pairs,
+			    trace.surface_fold_subminimum_contacts,
+			    trace.surface_fold_tolerance_ambiguous,
+			    trace.surface_fold_unmatched_roots,
+			    trace.surface_fold_pair_gap_min,
+			    trace.surface_fold_pair_gap_max,
+			    trace.surface_fold_minimum_t,
+			    trace.surface_fold_segment_in,
+			    trace.surface_fold_segment_out,
+			    fold_event_error, normalized_limit);
+			failures++;
+		    }
 		}
 		if (analytic_resolved && !production_segments) {
 		    grazing_resolved_misses++;
@@ -6398,7 +6585,12 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			"corridor=%zu/%zu/%zu/%zu/%zu/%zu "
 			"graph=%zu/%zu/%zu/%zu/%zu "
 			"existence=%zu/%zu/%zu/%zu/%zu "
-			"strip=%zu/%zu/%zu/%zu total=%zu/%zu\n",
+			"strip=%zu/%zu/%zu/%zu total=%zu/%zu "
+			"fold-roots=%zu/%zu/%zu/%zu directions=%zu/%zu "
+			"localize=%zu/%zu/%zu/%zu "
+			"events=%zu/%zu/%zu/%zu/%zu/%zu/%zu/%zu "
+			"gap/min=%.3g/%.3g/%.3g segment=%.17g/%.17g "
+			"local=%zu/%zu/%zu/%zu\n",
 			test.name,
 			grazing_clearance_ratios[ratio_index], reverse,
 			trace.surface_isolated_boxes,
@@ -6436,20 +6628,78 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			trace.surface_fold_strip_boxes,
 			trace.surface_fold_strip_contractions,
 			trace.surface_fold_corridor_failures,
-			trace.surface_fold_corridor_high_water);
+			trace.surface_fold_corridor_high_water,
+			trace.surface_fold_roots,
+			trace.stored_surface_fold_roots,
+			trace.surface_fold_root_overflow,
+			trace.surface_fold_root_failures,
+			trace.surface_fold_direction_checks,
+			trace.surface_fold_direction_mismatches,
+			trace.surface_fold_localization_attempts,
+			trace.surface_fold_localization_certified,
+			trace.surface_fold_localization_contractions,
+			trace.surface_fold_localization_failures,
+			trace.surface_fold_topology_pairs,
+			trace.surface_fold_duplicate_events,
+			trace.surface_fold_material_pairs,
+			trace.surface_fold_void_pairs,
+			trace.surface_fold_resolved_pairs,
+			trace.surface_fold_subminimum_contacts,
+			trace.surface_fold_tolerance_ambiguous,
+			trace.surface_fold_unmatched_roots,
+			trace.surface_fold_pair_gap_min,
+			trace.surface_fold_pair_gap_max,
+			trace.surface_fold_minimum_t,
+			trace.surface_fold_segment_in,
+			trace.surface_fold_segment_out,
+			trace.local_root_candidates,
+			trace.stored_local_roots,
+			trace.local_root_failures,
+			trace.local_root_duplicates);
+		    for (size_t fold_index = 0; fold_index <
+			    trace.stored_surface_fold_roots; ++fold_index) {
+			const struct rt_brep_trace_fold_root &root =
+			    trace.surface_fold_roots_data[fold_index];
+			std::printf("  fold root %zu face/span=%d/%d "
+			    "t=%.17g [%.17g %.17g] uv=%.17g/%.17g "
+			    "trim/class=%d/%d distance=%.17g\n", fold_index,
+			    root.face_index, root.span_index, root.dist,
+			    root.t_min, root.t_max, root.uv[0], root.uv[1],
+			    root.trim_status, root.hit_class,
+			    root.trim_distance);
+		    }
+		    for (size_t local_index = 0;
+			    local_index < trace.stored_local_roots; ++local_index) {
+			const struct rt_brep_trace_local_root &root =
+			    trace.local_roots[local_index];
+			std::printf("  local root %zu face/span=%d/%d "
+			    "t=%.17g uv=%.17g/%.17g\n", local_index,
+			    root.face_index, root.span_index, root.dist,
+			    root.uv[0], root.uv[1]);
+		    }
 		}
 		const bool reversal_mismatch = reverse &&
 		    production_result.segments != forward_production_segments;
 		if (!reverse)
 		    forward_production_segments = production_result.segments;
+		const bool fold_selected =
+		    trace.surface_fold_promoted_pairs == 1;
 		const bool selected_partition_matches =
 		    !trace.prepared_production_selected ||
-		    (trace.local_event_final_segments == production_segments &&
-		     trace.local_event_stored_segments == production_segments &&
-		     (!production_segments ||
-		      prepared_error <= normalized_limit));
-		const bool bad = production_result.segments !=
-			legacy_result.segments ||
+		    (fold_selected ?
+		     production_segments == 1 &&
+			fold_event_error <= normalized_limit :
+		     trace.local_event_final_segments == production_segments &&
+			trace.local_event_stored_segments == production_segments &&
+			(!production_segments ||
+			 prepared_error <= normalized_limit));
+		const bool solver_partition_matches =
+		    production_result.segments == legacy_result.segments ||
+		    (fold_selected && production_result.segments ==
+		    implicit_result.segments);
+		const bool fixed_match =
+		    brep_trace_fixed_workspaces_match(trace, true);
+		const bool bad = !solver_partition_matches ||
 		    trace.final_segments != production_segments ||
 		    (clearance > 0.0 && implicit_result.segments != 1) ||
 		    (clearance < 0.0 && implicit_result.segments != 0) ||
@@ -6463,14 +6713,14 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		    production_error > normalized_limit ||
 		    legacy_error > normalized_limit ||
 		    !selected_partition_matches ||
-		    !brep_trace_fixed_workspaces_match(trace, true) ||
+		    !fixed_match ||
 		    trace.surface_workspace_exhausted ||
 		    trace.surface_clip_restriction_failures;
 		if (bad) {
 		    std::printf("FAIL: affine grazing %s ratio=%.3g "
 			"reverse=%d chord/T=%.3g "
 			"segments=%d/%d/%d/%zu required/trend=%d/%d "
-			"selection=%zu/%d "
+			"selection=%zu/%d fold=%d fixed=%d partition=%d "
 			"leaves=%zu/%zu boxes=%zu/%zu "
 			"errors=%.3g/%.3g/%.3g/%.3g limit=%.3g\n",
 			test.name, grazing_clearance_ratios[ratio_index],
@@ -6479,7 +6729,8 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			trace.final_segments, required_hit,
 			restarted || reversal_mismatch,
 			trace.prepared_production_selected,
-			trace.prepared_production_fallback,
+			trace.prepared_production_fallback, fold_selected,
+			fixed_match, selected_partition_matches,
 			trace.fixed_leaf_count, trace.fixed_leaf_overflow,
 			trace.surface_subdivision_boxes,
 			trace.surface_box_overflow, implicit_error,
@@ -6820,14 +7071,16 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
     }
     /* The capability floor is enforced per affine case above.  Keep the
      * aggregate gap monotone while allowing later solver work to reduce it. */
-    if (grazing_resolved_misses > 6) {
-	std::printf("FAIL: ellipsoid affine resolved grazing misses=%zu/6\n",
+    if (grazing_resolved_misses) {
+	std::printf("FAIL: ellipsoid affine resolved grazing misses=%zu/0\n",
 	    grazing_resolved_misses);
 	failures++;
     }
-    if (grazing_expansion_ratchets != 6 || grazing_corridor_ratchets != 6) {
-	std::printf("FAIL: ellipsoid affine fold ratchets=%zu/%zu expected=6\n",
-	    grazing_expansion_ratchets, grazing_corridor_ratchets);
+    if (grazing_expansion_ratchets != 6 || grazing_corridor_ratchets != 6 ||
+	    grazing_fold_event_ratchets != 6) {
+	std::printf("FAIL: ellipsoid affine fold ratchets=%zu/%zu/%zu "
+	    "expected=6\n", grazing_expansion_ratchets,
+	    grazing_corridor_ratchets, grazing_fold_event_ratchets);
 	failures++;
     }
     if (grazing_resolved_misses &&
@@ -6894,10 +7147,11 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	    maximum_implicit_error, maximum_production_error,
 	    maximum_legacy_error, maximum_prepared_error);
 	std::printf("Ellipsoid affine grazing ratchet: PASS rays=%zu "
-	    "resolved-gaps=%zu expansion/corridor-ratchets=%zu/%zu "
+	    "resolved-gaps=%zu expansion/corridor/event-ratchets=%zu/%zu/%zu "
 	    "floors=1e-6/1e-6/1e-4\n",
 	    grazing_rays, grazing_resolved_misses,
-	    grazing_expansion_ratchets, grazing_corridor_ratchets);
+	    grazing_expansion_ratchets, grazing_corridor_ratchets,
+	    grazing_fold_event_ratchets);
     }
     return failures;
 }
@@ -9430,8 +9684,11 @@ main(int argc, char **argv)
 	    !interval_only && !fold_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
 	    "--affine-only|--interval-only|--fold-only]\n", argv[0]);
-    if (interval_only)
-	return check_brep_interval_enclosures() ? 1 : 0;
+    if (interval_only) {
+	const int interval_failures = check_brep_interval_enclosures() +
+	    check_brep_fold_interval_classifier();
+	return interval_failures ? 1 : 0;
+    }
     if (fold_only)
 	return check_brep_fold_solver() ? 1 : 0;
 
@@ -9519,6 +9776,7 @@ main(int argc, char **argv)
 
     int failures = 0;
     failures += check_brep_interval_enclosures();
+    failures += check_brep_fold_interval_classifier();
     failures += check_brep_fold_solver();
     for (size_t repeat = 0; repeat < 16; ++repeat) {
 	for (size_t i = 0; i < sizeof(rays) / sizeof(rays[0]); ++i)
