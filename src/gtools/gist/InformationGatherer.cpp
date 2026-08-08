@@ -628,7 +628,13 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     double surfArea00 = 0;
     double surfArea090 = 0;
     double surfArea900 = 0;
-    getVerificationData(g, opt, infoMap, volume, mass, hasDensities, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
+    if (opt->getPreviewMode()) {
+        // Preview reports preserve the standard gist sheet and render views,
+        // but avoid the potentially unbounded rtarea/gqa calculations.
+        hasDensities = false;
+    } else {
+        getVerificationData(g, opt, infoMap, volume, mass, hasDensities, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
+    }
     std::string vol = formatDouble(volume);
     std::string ma = formatDouble(mass);
     std::string surf00 = formatDouble(surfArea00);
