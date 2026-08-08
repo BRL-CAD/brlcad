@@ -247,8 +247,10 @@ brlcad_add_test(NAME bg_plane_isect_lseg3_lseg3_case1_1    COMMAND bg_test plane
 
 #  ************ polygon.c tests ***********
 brlcad_addexec(bg_polygon_triangulate polygon_triangulate.c "${BG_TEST_LIBS}" TEST)
+brlcad_addexec(bg_polygon_triangulate_clean polygon_triangulate_clean.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_polygon_triangulate	    COMMAND bg_polygon_triangulate)
+brlcad_add_test(NAME bg_polygon_triangulate_clean COMMAND bg_polygon_triangulate_clean)
 
 #  ************ chull.c tests ***********
 # 2D Convex Hull tests
