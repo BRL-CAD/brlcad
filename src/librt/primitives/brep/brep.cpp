@@ -667,13 +667,70 @@ utah_finite(const ON_3dVector &vector)
 /* This remains tighter than the default librt model tolerance.  It is only a
  * numerical root test; trim and solid acceptance use separate logic. */
 static const double BREP_ROOT_TOL = 1.0e-7;
+static const double BREP_ROOT_RESIDUAL_FLOOR = 1.0e-13;
 
 
 static void
-utah_F(const ON_3dPoint &S, const ON_3dVector &p1, const double p1d, const ON_3dVector &p2, const double p2d, double &f1, double &f2)
+utah_F(const ON_3dPoint &S, const ON_3dPoint &ray_origin,
+    const ON_3dVector &p1, const ON_3dVector &p2, double &f1, double &f2)
 {
-    f1 = (S * p1) + p1d;
-    f2 = (S * p2) + p2d;
+    const ON_3dVector relative_point(S - ray_origin);
+    f1 = relative_point * p1;
+    f2 = relative_point * p2;
+}
+
+
+static bool
+utah_root_normal(const ON_Surface *surf, const ON_2dPoint &uv,
+    const ON_3dPoint &S, const ON_3dVector &Su, const ON_3dVector &Sv,
+    ON_3dVector &normal, bool &regular_normal)
+{
+    normal = ON_CrossProduct(Su, Sv);
+    regular_normal = utah_finite(normal) && normal.Unitize();
+    if (regular_normal)
+	return true;
+
+    ON_3dPoint normal_point;
+    if (!surface_EvNormal(surf, uv.x, uv.y, normal_point, normal) ||
+	    !utah_finite(normal_point) || !utah_finite(normal) ||
+	    !normal.Unitize())
+	return false;
+
+    /* A one-sided normal may evaluate at a nearby point.  S is retained as
+     * the positional root; the normal is used only for conditioning and hit
+     * orientation. */
+    (void)S;
+    return true;
+}
+
+
+static bool
+utah_root_converged(const ON_Surface *surf, const ON_Ray &r,
+    const ON_2dPoint &uv, const ON_3dPoint &S, const ON_3dVector &Su,
+    const ON_3dVector &Sv, double residual)
+{
+    if (!utah_finite(residual) || residual > BREP_ROOT_TOL)
+	return false;
+
+    ON_3dVector normal;
+    bool regular_normal = false;
+    if (!utah_root_normal(surf, uv, S, Su, Sv, normal, regular_normal))
+	return false;
+
+    const double ray_length = r.m_dir.Length();
+    if (!utah_finite(ray_length) || ray_length <= ON_ZERO_TOLERANCE)
+	return false;
+    const double normal_dot = fabs(normal * r.m_dir) / ray_length;
+    if (!utah_finite(normal_dot))
+	return false;
+
+    /* The perpendicular residual alone badly overstates convergence near a
+     * tangent.  Dividing it by |N.D| is the first-order error estimate along
+     * the ray, so require that estimate to meet the ordinary root tolerance.
+     * The floor allows an exact/double contact to reach the later contact
+     * cleanup without demanding a literal floating-point zero. */
+    return residual <= std::max(BREP_ROOT_RESIDUAL_FLOOR,
+	BREP_ROOT_TOL * normal_dot);
 }
 
 
@@ -751,14 +808,10 @@ utah_store_root(const BBNode *sbv, const ON_Surface *surf, const ON_Ray &r,
     if (!utah_finite(root_t))
 	return brep_solver_result(0, BREP_SOLVER_NONFINITE);
 
-    ON_3dVector normal = ON_CrossProduct(Su, Sv);
-    bool regular_normal = utah_finite(normal) && normal.Unitize();
-    if (!regular_normal) {
-	ON_3dPoint normal_point;
-	if (!surface_EvNormal(surf, uv.x, uv.y, normal_point, normal) ||
-		!utah_finite(normal_point) || !utah_finite(normal) || !normal.Unitize())
-	    return brep_solver_result(0, BREP_SOLVER_EVALUATION_FAILED);
-    }
+    ON_3dVector normal;
+    bool regular_normal = false;
+    if (!utah_root_normal(surf, uv, S, Su, Sv, normal, regular_normal))
+	return brep_solver_result(0, BREP_SOLVER_EVALUATION_FAILED);
 
     t[count] = root_t;
     N[count] = normal;
@@ -806,7 +859,7 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r,
 
     if (!surf->EvPoint(uv.x, uv.y, S) || !utah_finite(uv) || !utah_finite(S))
 	return brep_solver_result(0, BREP_SOLVER_EVALUATION_FAILED);
-    utah_F(S, p1, p1d, p2, p2d, f, g);
+    utah_F(S, r.m_origin, p1, p2, f, g);
     rootdist = hypot(f, g);
     if (!utah_finite(rootdist))
 	return brep_solver_result(0, BREP_SOLVER_NONFINITE);
@@ -818,10 +871,14 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r,
 	ON_3dVector derivative_u;
 	ON_3dVector derivative_v;
 	if (surf->Ev1Der(uv.x, uv.y, derivative_point, derivative_u, derivative_v) &&
-		utah_finite(derivative_point) && utah_finite(derivative_u) && utah_finite(derivative_v))
+		utah_finite(derivative_point) && utah_finite(derivative_u) &&
+		utah_finite(derivative_v) && utah_root_converged(surf, r, uv,
+		    derivative_point, derivative_u, derivative_v, rootdist))
 	    return utah_store_root(sbv, surf, r, ouv, t, N, capacity, count, uv,
 		derivative_point, derivative_u, derivative_v);
-	return utah_store_root(sbv, surf, r, ouv, t, N, capacity, count, uv, S, Su, Sv);
+	if (utah_root_converged(surf, r, uv, S, Su, Sv, rootdist))
+	    return utah_store_root(sbv, surf, r, ouv, t, N, capacity, count,
+		uv, S, Su, Sv);
     }
 
     if (!surf->Ev1Der(uv.x, uv.y, S, Su, Sv) ||
@@ -890,7 +947,7 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r,
 	if (!surf->Ev1Der(uv.x, uv.y, S, Su, Sv) ||
 		!utah_finite(S) || !utah_finite(Su) || !utah_finite(Sv))
 	    return brep_solver_result(0, BREP_SOLVER_EVALUATION_FAILED);
-	utah_F(S, p1, p1d, p2, p2d, f, g);
+	utah_F(S, r.m_origin, p1, p2, f, g);
 	oldrootdist = rootdist;
 	rootdist = hypot(f, g);
 	if (!utah_finite(rootdist))
@@ -910,7 +967,7 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r,
 	    if (!surf->Ev1Der(uv.x, uv.y, S, Su, Sv) ||
 		    !utah_finite(S) || !utah_finite(Su) || !utah_finite(Sv))
 		return brep_solver_result(0, BREP_SOLVER_EVALUATION_FAILED);
-	    utah_F(S, p1, p1d, p2, p2d, f, g);
+	    utah_F(S, r.m_origin, p1, p2, f, g);
 	    rootdist = hypot(f, g);
 	    if (!utah_finite(rootdist))
 		return brep_solver_result(0, BREP_SOLVER_NONFINITE);
@@ -928,7 +985,7 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r,
 	    }
 	}
 
-	if (rootdist < BREP_ROOT_TOL)
+	if (utah_root_converged(surf, r, uv, S, Su, Sv, rootdist))
 	    return utah_store_root(sbv, surf, r, ouv, t, N, capacity, count, uv, S, Su, Sv);
     }
     return brep_solver_result(0, BREP_SOLVER_ITERATION_LIMIT);
