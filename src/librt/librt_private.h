@@ -473,10 +473,15 @@ struct rt_brep_trace_edge {
     fastf_t ray_dist;
     fastf_t edge_parameter;
     fastf_t edge_tolerance;
+    fastf_t lift_distance[2];
+    fastf_t face_normal_dot[2];
+    fastf_t ray_edge_dot;
     int edge_index;
     int face_index[2];
     size_t candidate_spans;
     int within_edge_tolerance;
+    int sector_valid;
+    int closest_state;
 };
 
 struct rt_brep_shot_trace {
