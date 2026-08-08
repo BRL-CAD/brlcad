@@ -2522,6 +2522,8 @@ static brep_interval brep_interval_multiply(const brep_interval &first,
     const brep_interval &second);
 static bool brep_interval_divide(const brep_interval &numerator,
     const brep_interval &denominator, brep_interval &result);
+static bool brep_interval_divide_nonzero(const brep_interval &numerator,
+    const brep_interval &denominator, brep_interval &result);
 static bool brep_single_coefficient_intervals(const double cv[4],
     const double origin[3], const double direction[3],
     const double planes[2][3], const brep_interval &direction_squared,
@@ -2801,11 +2803,16 @@ brep_interval_multiply(const brep_interval &first,
 
 
 static bool
-brep_interval_divide(const brep_interval &numerator,
+brep_interval_divide_nonzero(const brep_interval &numerator,
 	const brep_interval &denominator, brep_interval &result)
 {
-    if (!(denominator.minimum > 0.0) ||
-	    !std::isfinite(denominator.maximum))
+    if (!std::isfinite(numerator.minimum) ||
+	    !std::isfinite(numerator.maximum) ||
+	    !std::isfinite(denominator.minimum) ||
+	    !std::isfinite(denominator.maximum) ||
+	    numerator.minimum > numerator.maximum ||
+	    denominator.minimum > denominator.maximum ||
+	    (denominator.minimum <= 0.0 && denominator.maximum >= 0.0))
 	return false;
     const double quotient[4] = {
 	numerator.minimum / denominator.minimum,
@@ -2821,6 +2828,15 @@ brep_interval_divide(const brep_interval &numerator,
     }
     result = brep_interval_expanded(minimum, maximum);
     return std::isfinite(result.minimum) && std::isfinite(result.maximum);
+}
+
+
+static bool
+brep_interval_divide(const brep_interval &numerator,
+	const brep_interval &denominator, brep_interval &result)
+{
+    return denominator.minimum > 0.0 &&
+	brep_interval_divide_nonzero(numerator, denominator, result);
 }
 
 
@@ -3384,25 +3400,177 @@ brep_scalar_surface_reparameterize(const double *input, int u_order,
 }
 
 
-static double
-brep_scalar_bezier_reparameterization_norm(int order, double minimum,
-    double maximum)
+static bool
+brep_interval_bezier_reparameterize(const brep_interval *input, int order,
+    double minimum, double maximum, brep_interval *output)
 {
-    double row_sum[BREP_DIRECT_BEZIER_MAX_ORDER] = {0.0};
-    for (int basis = 0; basis < order; ++basis) {
-	double input[BREP_DIRECT_BEZIER_MAX_ORDER] = {0.0};
-	double output[BREP_DIRECT_BEZIER_MAX_ORDER] = {0.0};
-	input[basis] = 1.0;
-	if (!brep_scalar_bezier_reparameterize(input, order, minimum, maximum,
-		output))
-	    return INFINITY;
-	for (int row = 0; row < order; ++row)
-	    row_sum[row] += fabs(output[row]);
+    if (!input || !output || order < 2 ||
+	    order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    !std::isfinite(minimum) || !std::isfinite(maximum) ||
+	    !(minimum < maximum))
+	return false;
+    if (fabs(minimum) <= DBL_MIN && fabs(maximum - 1.0) <= DBL_MIN) {
+	for (int i = 0; i < order; ++i)
+	    output[i] = input[i];
+	return true;
     }
-    double norm = 0.0;
-    for (int row = 0; row < order; ++row)
-	norm = std::max(norm, row_sum[row]);
-    return norm;
+
+    brep_interval first[BREP_DIRECT_BEZIER_MAX_ORDER];
+    brep_interval second[BREP_DIRECT_BEZIER_MAX_ORDER];
+    brep_interval unused[BREP_DIRECT_BEZIER_MAX_ORDER];
+    const double from_minimum = 1.0 - minimum;
+    if (fabs(from_minimum) > DBL_MIN) {
+	brep_interval_bezier_split(input, order, {minimum, minimum}, unused,
+	    second);
+	const brep_interval numerator = brep_interval_add(
+	    {maximum, maximum}, brep_interval_scale(-1.0,
+		{minimum, minimum}));
+	const brep_interval denominator = brep_interval_add({1.0, 1.0},
+	    brep_interval_scale(-1.0, {minimum, minimum}));
+	brep_interval local_maximum;
+	if (!brep_interval_divide_nonzero(numerator, denominator,
+		local_maximum))
+	    return false;
+	brep_interval_bezier_split(second, order, local_maximum, first,
+	    unused);
+	for (int i = 0; i < order; ++i)
+	    output[i] = first[i];
+	return true;
+    }
+
+    if (fabs(maximum) <= DBL_MIN)
+	return false;
+    brep_interval_bezier_split(input, order, {maximum, maximum}, first,
+	unused);
+    brep_interval local_minimum;
+    if (!brep_interval_divide_nonzero({minimum, minimum},
+	    {maximum, maximum}, local_minimum))
+	return false;
+    brep_interval_bezier_split(first, order, local_minimum, unused, second);
+    for (int i = 0; i < order; ++i)
+	output[i] = second[i];
+    return true;
+}
+
+
+static bool
+brep_interval_bezier_reparameterization_matrix(int order, double minimum,
+    double maximum, brep_interval *matrix)
+{
+    if (!matrix || order < 2 || order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return false;
+    for (int basis = 0; basis < order; ++basis) {
+	brep_interval input[BREP_DIRECT_BEZIER_MAX_ORDER];
+	brep_interval output[BREP_DIRECT_BEZIER_MAX_ORDER];
+	for (int i = 0; i < order; ++i)
+	    input[i] = {i == basis ? 1.0 : 0.0,
+		i == basis ? 1.0 : 0.0};
+	if (!brep_interval_bezier_reparameterize(input, order, minimum,
+		maximum, output))
+	    return false;
+	for (int row = 0; row < order; ++row)
+	    matrix[(size_t)row * order + basis] = output[row];
+    }
+    return true;
+}
+
+
+static bool
+brep_interval_surface_apply_reparameterization(const brep_interval *input,
+    int u_order, int v_order, const brep_interval *u_matrix,
+    const brep_interval *v_matrix, brep_interval *output)
+{
+    if (!input || !u_matrix || !v_matrix || !output ||
+	    u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return false;
+    for (int i = 0; i < u_order; ++i) {
+	for (int j = 0; j < v_order; ++j) {
+	    brep_interval value = {0.0, 0.0};
+	    for (int source_i = 0; source_i < u_order; ++source_i) {
+		const brep_interval u_coefficient =
+		    u_matrix[(size_t)i * u_order + source_i];
+		for (int source_j = 0; source_j < v_order; ++source_j) {
+		    const brep_interval coefficient = brep_interval_multiply(
+			u_coefficient,
+			v_matrix[(size_t)j * v_order + source_j]);
+		    value = brep_interval_add(value,
+			brep_interval_multiply(coefficient,
+			    input[(size_t)source_i * v_order + source_j]));
+		}
+	    }
+	    output[(size_t)i * v_order + j] = value;
+	}
+    }
+    return true;
+}
+
+
+static bool
+brep_scalar_surface_reparameterize_bounded_with_matrices(const double *input,
+    int u_order, int v_order, double input_error, double u_minimum,
+    double u_maximum, double v_minimum, double v_maximum,
+    const brep_interval *u_matrix, const brep_interval *v_matrix,
+    double *output, double &output_error)
+{
+    if (!input || !output || input_error < 0.0 ||
+	    !std::isfinite(input_error) ||
+	    !brep_scalar_surface_reparameterize(input, u_order, v_order,
+		u_minimum, u_maximum, v_minimum, v_maximum, output))
+	return false;
+    const size_t count = (size_t)u_order * v_order;
+    brep_interval source[BREP_DIRECT_BEZIER_MAX_CVS];
+    brep_interval reparameterized[BREP_DIRECT_BEZIER_MAX_CVS];
+    for (size_t i = 0; i < count; ++i)
+	source[i] = brep_interval_expanded(input[i] - input_error,
+	    input[i] + input_error);
+    if (!brep_interval_surface_apply_reparameterization(source, u_order,
+	    v_order, u_matrix, v_matrix, reparameterized))
+	return false;
+    output_error = 0.0;
+    for (size_t i = 0; i < count; ++i) {
+	if (!brep_interval_common_error(output[i], reparameterized[i],
+		output_error))
+	    return false;
+    }
+    return true;
+}
+
+
+static bool
+brep_scalar_surface_reparameterize_bounded(const double *input, int u_order,
+    int v_order, double input_error, double u_minimum, double u_maximum,
+    double v_minimum, double v_maximum, double *output,
+    double &output_error)
+{
+    brep_interval u_matrix[BREP_DIRECT_BEZIER_MAX_CVS];
+    brep_interval v_matrix[BREP_DIRECT_BEZIER_MAX_CVS];
+    if (!brep_interval_bezier_reparameterization_matrix(u_order, u_minimum,
+	    u_maximum, u_matrix) ||
+	    !brep_interval_bezier_reparameterization_matrix(v_order, v_minimum,
+		v_maximum, v_matrix))
+	return false;
+    return brep_scalar_surface_reparameterize_bounded_with_matrices(input,
+	u_order, v_order, input_error, u_minimum, u_maximum, v_minimum,
+	v_maximum, u_matrix, v_matrix, output, output_error);
+}
+
+
+extern "C" int
+_rt_brep_reparameterize_test(const fastf_t *input, int u_order, int v_order,
+    fastf_t input_error, const fastf_t minimum[2],
+    const fastf_t maximum[2], fastf_t *output, fastf_t *output_error)
+{
+    if (!minimum || !maximum || !output_error)
+	return 0;
+    double error = 0.0;
+    if (!brep_scalar_surface_reparameterize_bounded(input, u_order, v_order,
+	    input_error, minimum[0], maximum[0], minimum[1], maximum[1],
+	    output, error))
+	return 0;
+    *output_error = error;
+    return 1;
 }
 
 
@@ -3413,51 +3581,42 @@ brep_surface_coefficients_reparameterize(
 {
     result.order[0] = source.order[0];
     result.order[1] = source.order[1];
-    const double u_norm = brep_scalar_bezier_reparameterization_norm(
-	source.order[0], minimum[0], maximum[0]);
-    const double v_norm = brep_scalar_bezier_reparameterization_norm(
-	source.order[1], minimum[1], maximum[1]);
-    const double amplification = u_norm * v_norm;
-    if (!std::isfinite(amplification) || !(amplification > 0.0))
+    brep_interval u_matrix[BREP_DIRECT_BEZIER_MAX_CVS];
+    brep_interval v_matrix[BREP_DIRECT_BEZIER_MAX_CVS];
+    if (!brep_interval_bezier_reparameterization_matrix(source.order[0],
+	    minimum[0], maximum[0], u_matrix) ||
+	    !brep_interval_bezier_reparameterization_matrix(source.order[1],
+		minimum[1], maximum[1], v_matrix))
 	return false;
 
     for (int equation = 0; equation < 2; ++equation) {
-	if (!brep_scalar_surface_reparameterize(source.value[equation],
-		source.order[0], source.order[1], minimum[0], maximum[0],
-		minimum[1], maximum[1], result.value[equation]))
+	if (!brep_scalar_surface_reparameterize_bounded_with_matrices(
+		source.value[equation], source.order[0], source.order[1],
+		source.error[equation], minimum[0], maximum[0], minimum[1],
+		maximum[1], u_matrix, v_matrix, result.value[equation],
+		result.error[equation]))
 	    return false;
     }
-    if (!brep_scalar_surface_reparameterize(source.ray_numerator,
-	    source.order[0], source.order[1], minimum[0], maximum[0],
-	    minimum[1], maximum[1], result.ray_numerator) ||
-	    !brep_scalar_surface_reparameterize(source.weight,
-	    source.order[0], source.order[1], minimum[0], maximum[0],
-	    minimum[1], maximum[1], result.weight))
+    if (!brep_scalar_surface_reparameterize_bounded_with_matrices(
+	    source.ray_numerator, source.order[0], source.order[1],
+	    source.ray_numerator_error, minimum[0], maximum[0], minimum[1],
+	    maximum[1], u_matrix, v_matrix, result.ray_numerator,
+	    result.ray_numerator_error) ||
+	    !brep_scalar_surface_reparameterize_bounded_with_matrices(
+	    source.weight, source.order[0], source.order[1], source.weight_error,
+	    minimum[0], maximum[0], minimum[1], maximum[1], u_matrix, v_matrix,
+	    result.weight, result.weight_error))
 	return false;
 
     const size_t count = (size_t)source.order[0] * source.order[1];
-    for (int equation = 0; equation < 2; ++equation) {
-	double magnitude = 0.0;
-	for (size_t i = 0; i < count; ++i)
-	    magnitude = std::max(magnitude, fabs(result.value[equation][i]));
-	result.error[equation] = source.error[equation] * amplification +
-	    128.0 * DBL_EPSILON * std::max(1.0, magnitude);
-    }
-    double ray_magnitude = 0.0;
-    double weight_magnitude = 0.0;
-    double minimum_weight = DBL_MAX;
     for (size_t i = 0; i < count; ++i) {
-	ray_magnitude = std::max(ray_magnitude,
-	    fabs(result.ray_numerator[i]));
-	weight_magnitude = std::max(weight_magnitude, fabs(result.weight[i]));
-	minimum_weight = std::min(minimum_weight, result.weight[i]);
+	const brep_interval weight = brep_interval_expanded(
+	    result.weight[i] - result.weight_error,
+	    result.weight[i] + result.weight_error);
+	if (!(weight.minimum > 0.0) || !std::isfinite(weight.maximum))
+	    return false;
     }
-    result.ray_numerator_error =
-	source.ray_numerator_error * amplification +
-	128.0 * DBL_EPSILON * std::max(1.0, ray_magnitude);
-    result.weight_error = source.weight_error * amplification +
-	128.0 * DBL_EPSILON * std::max(1.0, weight_magnitude);
-    return minimum_weight > result.weight_error;
+    return true;
 }
 
 

@@ -760,6 +760,10 @@ RT_EXPORT extern int _rt_brep_restrict_test(
     const fastf_t *input, int u_order, int v_order, fastf_t input_error,
     const fastf_t minimum[2], const fastf_t maximum[2], fastf_t *output,
     fastf_t *output_error);
+RT_EXPORT extern int _rt_brep_reparameterize_test(
+    const fastf_t *input, int u_order, int v_order, fastf_t input_error,
+    const fastf_t minimum[2], const fastf_t maximum[2], fastf_t *output,
+    fastf_t *output_error);
 
 RT_EXPORT extern int _rt_brep_shot_trace(
     struct soltab *stp, struct xray *rp, struct application *ap,
