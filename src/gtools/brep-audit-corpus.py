@@ -200,6 +200,7 @@ def audit_database(audit, args, run_dir, database, start_index, sink):
         batch_mode = "both"
     next_index = start_index
     no_progress_restarts = 0
+    process_retries = {}
 
     while True:
         command = [
@@ -320,6 +321,7 @@ def audit_database(audit, args, run_dir, database, start_index, sink):
             task_index = record.get("task_index")
             if isinstance(task_index, int) and task_index >= 0:
                 next_index = task_index + 1
+                process_retries.pop(task_index, None)
             peak_rss = (record.get(record.get("mode")) or {}).get(
                 "peak_rss_bytes", 0
             ) or 0
@@ -351,17 +353,36 @@ def audit_database(audit, args, run_dir, database, start_index, sink):
         if return_code == 0:
             return
         if current is not None:
+            task_index = current.get("task_index")
+            retry_count = process_retries.get(task_index, 0)
+            if retry_count < 1:
+                process_retries[task_index] = retry_count + 1
+                sink(failure_record(
+                    database_name,
+                    None,
+                    None,
+                    "batch_retry",
+                    task_index=task_index,
+                    retry_object=current.get("object"),
+                    retry_mode=current.get("mode"),
+                    return_code=return_code,
+                    last_phase=current_phase,
+                    stderr=stderr_tail,
+                ))
+                next_index = task_index
+                continue
             sink(failure_record(
                 database_name,
                 current.get("object"),
                 current.get("mode"),
                 "process_error",
-                task_index=current.get("task_index"),
+                task_index=task_index,
                 return_code=return_code,
                 last_phase=current_phase,
                 stderr=stderr_tail,
             ))
-            next_index = current["task_index"] + 1
+            process_retries.pop(task_index, None)
+            next_index = task_index + 1
             continue
 
         if made_progress:
