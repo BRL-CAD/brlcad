@@ -47,11 +47,14 @@ shadow certificate for their geometric edge/lifted-trim Hausdorff gap.  It is
 knot-aware, adaptive, similarity-gated, and bounded by a solid-wide work
 budget.  Exact-looking, unsupported, and budget-exhausted records remain
 explicitly uncertified, and production seam authorization is unchanged.
-A prep-time open-edge correspondence screen now also withholds seam evidence
-when either lifted trim reverses direction or maps non-monotonically along its
-edge.  A bowed forward/backward/forward trim and convex exact/near vertex-fan
-rays permanently gate the explicit non-repair paths; general vertex-fan
-transition resolution is still unsupported.
+A prep-time global correspondence theorem now withholds seam evidence unless
+the rational 3D edge and both lifted trims are provably injective and
+consistently oriented along one shared projection.  Exact rational control
+signs cover isoparametric boundaries and sphere-pole endpoint stationarity;
+other regular trims use outward derivative bounds and bounded subdivision.
+The old sample screen is telemetry only.  A sample-invisible degree-15 trim
+reversal and convex exact/near vertex-fan rays permanently gate explicit
+fallback; general vertex-fan transition resolution is still unsupported.
 Exact-parameter positive-weight surface spans and conservative ray-plane
 coefficient exclusion are prepared, and a bounded adjacent-support
 continuation solve recovers the missing bowed-seam endpoints.
@@ -740,8 +743,10 @@ ESTABLISHED FINDINGS
     The current normal focused gate completes in about 10 seconds.  These are
     engineering observations on this host, not performance acceptance limits.
 
-36. Edge-sector and crack-repair evidence now require a prep-time regular
-    correspondence screen in addition to sampled discrepancy authorization.
+36. At this checkpoint edge-sector and crack-repair evidence first required a
+    prep-time regular correspondence screen in addition to sampled discrepancy
+    authorization.  Finding 64 supersedes the screen's authority with a
+    conservative global proof while retaining its result as telemetry.
     Each incident trim is converted to NURBS, visited four times in every
     positive knot span (at most 256 samples), lifted through its face, and
     projected geometrically back to the 3D edge.  The fixed projection uses a
@@ -753,15 +758,13 @@ ESTABLISHED FINDINGS
     failed NURBS/evaluation/projection, more than 256 samples, a reversal, or
     a stationary/opposed tangent leave correspondence_supported false.
 
-    correspondence_supported is traced per edge and is now necessary for an
-    expanded candidate edge span, within-edge evidence, material-sector
-    classification, the adaptive discrepancy shadow pass, and production
-    crack repair.  It does not suppress ordinary surface intersection or the
-    legacy solid result.  This is a bounded rejection screen, not a proof of
-    global injectivity: a sufficiently localized higher-order reversal could
-    still occur between samples.  Exact proof or a conservative derivative
-    subdivision remains required before calling all accepted trims uniquely
-    correlated.
+    At that checkpoint the sampled result populated correspondence_supported
+    and gated expanded edge spans, material sectors, the discrepancy pass, and
+    crack repair without suppressing ordinary surface intersection or the
+    legacy result.  It was explicitly only a bounded rejection screen: a
+    localized higher-order reversal could occur between samples.  Finding 64
+    implements the required exact/interval derivative proof and moves the old
+    result to correspondence_screened.
 
     The ambiguity fixture starts with the known g=T bowed Cobb seam whose
     h=0.9T ray otherwise activates the certified production repair.  One trim
@@ -2324,6 +2327,66 @@ ESTABLISHED FINDINGS
     and no sanitizer diagnostic.  Dense SurfaceTrees, seam authorization,
     plate mode, and every fallback population are unchanged.
 
+64. Production edge/seam eligibility no longer trusts the bounded
+    correspondence sampler.  A prep-time global sufficient theorem now proves
+    that the 3D edge and both lifted trims are injective and consistently
+    oriented along one shared projection axis.  The old four-sample
+    projection/tangent result is retained separately as diagnostic telemetry.
+
+    Every positive-weight rational edge Bezier span is checked with exact
+    binary64 expansions.  Its projected rational control polygon must be
+    nondecreasing, contain a strict increase, and join the next span at an
+    exactly identical projected endpoint and parameter knot.  A monotone
+    rational control polygon makes the complete projected curve monotone, so
+    this is a global statement rather than a collection of point samples.
+
+    Boundary-isoparametric trims have a second exact path.  Expansions prove
+    every trim control lies on the declared constant UV boundary, prove the
+    varying trim coordinate monotone, and prove all corresponding rational
+    surface-boundary control polygons monotone with the edge orientation.
+    Nonnegative control differences with at least one strict difference allow
+    zero endpoint derivatives; this is what certifies the converted sphere's
+    same-face meridian seam through both poles without weakening an interval
+    sign test.
+
+    Other regular trims use outward interval arithmetic.  Each dyadic trim
+    cell bounds its rational UV derivative, a padded UV hull, restricted
+    rational surface partial derivatives, and the composed lifted derivative
+    along the same projection.  Only a strict oriented lower bound certifies a
+    cell.  Depth 24, a solid-wide 4,096-cell budget, arithmetic failure, or an
+    unresolved/reversed derivative leaves the whole edge unsupported.  Cell
+    count, maximum depth, exhaustion, the old screen, and the new certificate
+    are separately visible in edge trace records and Cobb CSV output.
+
+    The ordinary convex/concave/same-surface sector fixtures, nonlinear trim
+    reparameterizations, all similarities, and the bowed seam continuation
+    matrix retain their prior classifications.  The controlled target uses at
+    most five exact correspondence cells at depth zero.  The ambiguity fixture
+    is now substantially stronger: one degree-15 trim remains on the same UV
+    segment and has forward values and derivatives at all four old sample
+    locations, but reverses between t=0.4 and t=0.6.  The old screen accepts
+    it; the global proof reaches its explicit depth-24 fallback, publishes no
+    edge span/sector/closure, and leaves the legacy ray unchanged in both
+    directions.  The complete optimized six-process gate passes 6/6 in
+    144.49 seconds.  The five affected ASan/UBSan shards pass concurrently
+    with halt-on-error in 282.39 seconds and no diagnostic; the independently
+    gated exhaustive interval arithmetic remains unchanged.  The seven
+    serial/parallel cache ownership cases plus rt_primitive_brep and the
+    focused NIST miss, sphere-solid, and box-plate regressions pass 11/11,
+    covering normal and deserialized derived-record reconstruction.  The same
+    11-test matrix passes under ASan/UBSan in 12.88 seconds without a
+    diagnostic.  Rebuilt ThreadSanitizer cache qualification passes all seven
+    serial, parallel, identical, different, and hierarchy cases in 15.14
+    seconds with no race or lock diagnostic.
+
+    This completes correspondence identity/orientation, not geometric gap
+    authorization.  The adaptive Hausdorff gap interval remains shadow-only,
+    and production crack permission still uses sampled discrepancy.  The next
+    seam task is decision-directed upper/lower refinement, exact-looking gap
+    handling, conservative inferred/declaration policy, and an explicit
+    inconclusive result at the tolerance boundary before replacing sampled
+    authorization or emitting a seam event from the new physical ledger.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -2441,8 +2504,10 @@ IMPLEMENTATION CHECKLIST
             the unsupported vertex transition resolver.
         [x] Screen a bowed forward/backward/forward trim and retain its
             one-event crack without unsafe repair in both directions.
-        [ ] Replace the bounded regularity screen with a conservative global
-            injectivity/orientation proof and implement cyclic vertex fans.
+        [x] Replace the bounded regularity screen with a conservative global
+            injectivity/orientation proof, retaining explicit unsupported and
+            depth/workspace fallback.
+        [ ] Implement cyclic vertex fans.
     [ ] Add sewn and perturbed Cobb fixtures and threshold matrices.
         [x] Add reusable legacy-unsewn and solid-sewn Cobb constructors.
         [x] Gate topology, face/seam/vertex rays, scale, and 8,000 shared
@@ -3386,12 +3451,15 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Replace the bounded correspondence screen with a conservative global
-   injectivity/orientation proof.  Extend the shadow seam-gap certificate with
-   an efficient exact-locus proof and explicit unsupported/capacity fallback,
-   then tighten the g=T decision before it can replace sampled production
-   authorization.  Keep model-space, UV, numerical-root, t-cluster, and
-   minimum-segment tolerances distinct.
+1. Replace sampled seam-gap authorization with a decision-directed
+   conservative proof.  The global correspondence/injectivity theorem is now
+   complete for its supported projection classes.  Extend the Hausdorff pass
+   through exact-looking loci, refine until its upper bound is strictly inside
+   or its lower bound is strictly outside the declared/model envelope, and
+   preserve explicit unsupported, equality-ambiguous, depth, and capacity
+   fallback.  Revisit inferred tolerance policy using the proof rather than a
+   sample.  Keep model-space, UV, numerical-root, t-cluster, and minimum-
+   segment tolerances distinct.
 2. Feed the already certified manifold edge sector and continuation evidence
    into the immutable event array only after the seam-envelope proof above is
    production-qualified.  Preserve the existing whole-ray fallback for every

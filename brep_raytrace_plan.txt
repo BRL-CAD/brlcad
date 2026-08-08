@@ -484,10 +484,35 @@ For every edge retain:
   * flags for seam, singular, boundary, non-manifold, invalid, or excessive
     discrepancy states.
 
-The maximum discrepancy must be conservatively estimated.  Begin with all
-curve knots/endpoints and adaptive midpoint sampling.  Subdivide until the
-curve/trim lift chord bound is below the measurement tolerance.  This work is
-done at prep, not during shots.
+Do not infer edge/trim identity from a finite parameter sample.  The first
+implemented global correspondence theorem chooses the oriented edge endpoint
+chord as a shared projection axis.  Exact binary64 expansions prove that every
+positive-weight rational edge Bezier span has a nondecreasing projected
+control polygon with at least one strict increase.  For a boundary-
+isoparametric trim, expansions also prove the fixed UV coordinate exactly,
+the varying rational trim coordinate monotone, and every corresponding
+surface-boundary control polygon monotone with the required orientation.
+This handles zero projection derivatives at sphere poles without ignoring an
+uncertain interval.
+
+For other regular trims, outward intervals bound the rational trim derivative,
+the restricted rational surface partials, and their composed projected lift
+derivative.  Dyadic subdivision continues until every cell is strictly
+oriented.  A depth-24 or solid-wide 4,096-cell limit, unsupported arithmetic,
+or any reversal leaves correspondence unsupported.  The former four-sample
+projection/tangent screen remains telemetry only.  A degree-15 fixture whose
+values and derivatives are forward at all four old samples but which reverses
+between 0.4 and 0.6 permanently gates this distinction and the explicit depth
+fallback.
+
+Correspondence and discrepancy are separate proofs.  The maximum geometric
+gap still needs a conservative edge/trim-lift Hausdorff bound.  The current
+knot-aware chord/control-hull subdivision provides such a shadow interval for
+visibly discrepant supported seams, but sampled discrepancy still controls
+production authorization.  Add decision-directed refinement, exact-looking
+locus support, and a strict/inconclusive tolerance-boundary policy before the
+Hausdorff result replaces that sampled permission.  All such work is prep-time,
+not ray-time.
 
 4.3 BrepHitCandidate
 
@@ -2287,6 +2312,13 @@ parallel runs; pole/boundary/singularity tests pass without regressions.
 Phase 2: Tolerance policy and evidence-preserving candidates
 
   * Prepare per-edge tolerance/adjacency records.
+
+  * Prove edge/trim injectivity and orientation globally with exact rational
+    control signs or conservative lifted-derivative subdivision; finite
+    samples are diagnostic only.
+
+  * Authorize seam discrepancy only from conservative upper/lower gap bounds,
+    with explicit equality, unsupported, depth, and workspace fallback.
 
   * Separate UV broad-phase, 3D seam, solver, t-cluster, and minimum-segment
     tolerances.
