@@ -97,11 +97,9 @@ transform, as expected, without changing classification.
 An independent nonuniform affine ellipsoid matrix now maps analytic sphere
 chords through rotated principal scales and compares implicit, promoted,
 forced-legacy, and reconstructed-prepared results.  All ordinary production
-partitions remain oracle-equivalent through condition number 1,000.  The
-prepared path selects 28 of 36 rays; the remaining high-condition cases
-exercise four isolated-box-capacity and four uncertified fallbacks, including
-one 197-leaf legacy traversal that explicitly exceeds and falls back from the
-fixed 128-leaf workspace.
+partitions remain oracle-equivalent through condition number 1,000.  After
+conditioned equation-hull exclusion, the prepared path selects all 36 rays
+with no fallback and visits 970 surface boxes in the complete matrix.
 The same construction now sweeps 78 mapped grazing/contact/miss rays at
 conditions 13.3, 100, and 1,000.  It proved that angular grazing deletion was
 not affine invariant and now preserves tolerance-resolved ENTER/LEAVE pairs.
@@ -136,6 +134,14 @@ Production raw-hit collection, stable sorting, and all legacy cleanup stages
 now use a fixed 128-hit workspace.  Capacity overflow reruns the deterministic
 solve into the legacy list before cleanup or segment publication; trace mode
 keeps exact raw-order, per-stage, and final-event equivalence gates.
+The localized real-fold probe now also has a portable, fixed-size error-free
+expansion tier.  It exact-audits coefficient construction, restriction,
+evaluation, derivatives, products, and Krawczyk arithmetic and certifies six
+of the twelve known hard real candidates.  It is trace-only: neither these
+certificates nor the represented exact-contact observations affect traversal
+or hit publication.  The remaining real work is complete one-sided parent and
+fold-strip coverage, the two hardest precision cases, and cross-span physical
+event deduplication before any production promotion.
 Parallel BREP import, cache deserialization, and SurfaceTree construction now
 also pass the complete cache matrix under ThreadSanitizer without suppressions.
 Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
@@ -1829,6 +1835,114 @@ ESTABLISHED FINDINGS
     coverage and cross-span physical-event deduplication before production
     promotion.
 
+56. A portable fixed-size expansion precision tier now implements the next
+    arithmetic checkpoint without changing production authority.  Each
+    expansion stores at most 128 binary64 components.  Error-free `TwoSum`
+    addition and an FMA residual for `TwoProduct` preserve the exact result of
+    operations on the represented inputs.  Nonfinite arithmetic, a product
+    whose residual could underflow below the representable binary64 expansion
+    range, or capacity exhaustion returns inconclusive.  There is no heap
+    allocation and no dependence on platform `long double`.
+
+    Ray-plane coefficients are constructed as exact expansions of the
+    represented operations in
+
+      CV - origin * weight
+
+    followed by each projected ray-plane dot product.  These bounds describe
+    the exact equation defined by the stored binary64 CV, origin, and plane
+    components; they do not claim that the binary64 plane-frame construction
+    equals an ideal real-valued frame.  Expansion results are converted to an
+    outward binary64 interval and intersected with the independently outward
+    ordinary interval, so the shadow tier is never wider and cannot invent an
+    exclusion or root if both arithmetic paths satisfy their contracts.
+
+    Local restriction uses the tensor-product Bezier blossom directly.  An
+    output coefficient with index i is the blossom with degree-i copies of
+    the lower parameter endpoint and i copies of the upper endpoint.  This
+    avoids the non-dyadic `a/b` division in a two-split restriction.  Each
+    scalar equation is first normalized by an exactly represented power of
+    two selected from its maximum coefficient magnitude.  Independent
+    nonzero equation scaling preserves its zero set and greatly reduces
+    underflow risk.  Full expansions are retained throughout the bounded
+    blossom; an experiment that compacted after every interpolation was safe
+    but did not improve a real certificate and was reverted.
+
+    Expansion evaluation, derivative hulls, interval endpoint products, and
+    the Krawczyk correction/remainder/image arithmetic use the same fixed
+    representation.  Every expansion interval is intersected with the
+    ordinary outward result.  Tight endpoint algebra did not add a real
+    certificate beyond exact coefficient construction and restriction,
+    indicating that the dominant remaining uncertainty is upstream geometry,
+    candidate/proof-box layout, or the missing one-sided coverage theorem
+    rather than the final Krawczyk additions and products.
+
+    The permanent exact-oracle audit now reports:
+
+      function       2,250 ordinary + 2,250 expansion checks
+      derivative     324,000 + 324,000 checks, 2,250 contractions
+      product        45 + 45 checks, all 45 contractions
+      coefficient    162 ordinary + 108 expansion checks, all 108 contractions
+      restriction    546,750 common-error + 546,750 per-coefficient
+                     + 546,750 expansion checks, 544,500 contractions
+
+    All observed expansion bounds enclose the exact oracle.  The largest
+    expansion in these arithmetic gates uses four components; the product and
+    coefficient gates use one.  Separate gates require conservative fallback
+    for a product residual below the binary64 subnormal range and for a mixed-
+    scale power-of-two normalization that cannot round-trip every nonzero
+    endpoint exactly.  The synthetic fold corpus independently recertifies all
+    36 roots with the expansion Krawczyk path, uses at most two components,
+    and retains all 36 one-sided uniqueness corridors.
+
+    On the six unresolved affine shots, the expansion path is available for
+    all 96 attempted nested boxes with no failure.  It certifies both roots in
+    each directed condition-100 h/T=1e-8 shot and one root in each directed
+    condition-1,000 h/T=1e-6 shot: six of the twelve real candidates.  The
+    per-shot certificate ratchet is therefore 2, 2, 1, 1, 0, 0.  The hardest
+    condition-1,000 h/T=1e-8 pair remains uncertified, but its best normalized
+    Krawczyk image excess falls from about 40.9--41.5 to 11.1--13.1.  Real
+    expansion high-water is 17 of 128 components.  Increasing symmetric proof
+    depth from eight to sixteen levels and adding a second weak-direction
+    anisotropic mode produced no new certificates and were reverted.
+
+    Exact transformed contact currently records two expansion certificates.
+    Those equations are the exact equations of their represented binary64
+    inputs, which may be slightly split by affine and frame construction; a
+    numerical certificate must therefore not be confused with a physical
+    ENTER/LEAVE interval.  Exact contact, minimum-size classification, parent
+    completeness, and cross-span event identity remain separate gates.  The
+    expansion path is consequently trace-only and cannot terminate traversal
+    or publish a hit.
+
+    The real affine ratchet permits a later production improvement to remove
+    any of the six gaps.  While a gap exists it requires a recognized hard
+    case, a nonzero expansion attempt count, complete availability, zero
+    arithmetic failures, high-water below 128, the recorded certificate
+    floor, and either a certificate or a strictly smaller image excess than
+    binary64.  This prevents a fixed-this/broke-that precision regression
+    without freezing the present miss count.
+
+    Optimized `--interval-only`, `--fold-only`, `--affine-only`, and the full
+    ray/Cauchy-Crofton corpus pass.  Focused ASan/UBSan builds pass the same
+    three paths with no diagnostic; leak checking remains disabled because
+    the host ptrace wrapper is incompatible with LeakSanitizer.  The full
+    optimized corpus again ends with `BREP ray correctness corpus: PASS`, and
+    production partitions remain unchanged.  The maximum-order blossom has
+    a transient fixed stack cost on the order of 100 KiB, so stack use and
+    execution cost must be profiled or moved into an existing bounded shot
+    workspace before production promotion.
+
+    This result reinforces the tractability boundary rather than closing the
+    solver task.  Portable precision resolves half of the known real proof
+    failures and materially contracts the rest.  More symmetric depth is not
+    the next lever.  The next step is a one-sided corridor/fold-boundary strip
+    proof using the conditioned regular/weak frame, with more faithful
+    candidate-centered parameter geometry and, if still necessary, exact
+    expansion propagation through the frame construction itself.  Both span
+    parents and their intervening strips must be accounted for before the two
+    observations can be deduplicated into a physical event.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -2017,7 +2131,7 @@ IMPLEMENTATION CHECKLIST
                         candidate corpus across parameter symmetries and exact
                         binary equation conditioning, with explicit work and
                         capacity gates and no production publication authority.
-                    [ ] Preserve per-coefficient or expansion enclosures and
+                    [x] Preserve per-coefficient or expansion enclosures and
                         exact-audit fused construction, restriction,
                         Bernstein products, and the selected precision tier.
                         [x] Implement interval Bernstein derivative/product/
@@ -2028,7 +2142,7 @@ IMPLEMENTATION CHECKLIST
                             real fused ray-plane construction,
                             reparameterization, and arbitrary local
                             restriction; exact-audit all supported orders.
-                        [ ] Add and exact-audit a portable error-free expansion
+                        [x] Add and exact-audit a portable error-free expansion
                             or equivalent outward precision tier for the real
                             cases binary64 cannot certify.
                     [ ] Prove both one-sided parent boxes complete with a
@@ -2638,6 +2752,17 @@ Cobb sphere baseline:
     all twelve hard candidates and records zero real binary64 certificates.
     The complete optimized corpus again ends with
     `BREP ray correctness corpus: PASS`; production partitions are unchanged.
+    Repeated after the portable expansion tier and real certificate ratchet:
+    `--interval-only` passes 2,250 expansion function, 324,000 derivative, 45
+    product, 108 coefficient, 546,750 restriction, and two conservative-
+    fallback checks; `--fold-only`
+    recertifies all 36 analytic roots; and `--affine-only` passes the six-case
+    real ratchet with certificate floors 2/2/1/1/0/0 and zero expansion
+    failures.  The complete optimized corpus again ends with
+    `BREP ray correctness corpus: PASS`; all shared implicit/BREP Crofton
+    fixtures report zero differing lines and production partitions remain
+    unchanged.  Cache-write warnings in the restricted execution environment
+    are nonfatal and exercise the existing uncached continuation path.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -2727,6 +2852,11 @@ Cobb sphere baseline:
     Repeated after per-coefficient restriction and the shadow real-fold probe
     with halt-on-error: focused `--interval-only`, `--fold-only`, and
     `--affine-only` pass with no ASan or UBSan diagnostic.
+    Repeated after fixed-size expansion coefficient/restriction/Krawczyk
+    arithmetic and the real certificate ratchet: focused `--interval-only`,
+    `--fold-only`, and `--affine-only` pass with no ASan or UBSan diagnostic.
+    Leak detection remains disabled because the host ptrace wrapper makes
+    LeakSanitizer terminate before the test begins.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -2804,10 +2934,15 @@ NEXT ACTIONS
    now a permanent search-stage ratchet, and the Bernstein determinant,
    synthetic corridor, fused real coefficient, and per-coefficient
    restriction paths are exact-audited.  All twelve hard candidates are
-   recovered in the shadow real path, but binary64 Krawczyk certifies none.
-   Next add an exact-audited portable expansion precision tier, prove both real
-   one-sided parents complete including their fold-boundary strips, and
-   deduplicate the resulting physical event across the common span.
+   recovered in the shadow real path.  Binary64 Krawczyk certifies none; the
+   portable fixed-size expansion tier certifies six and reduces the hardest
+   remaining image excess from about 41 to 11--13.  Next prove both real
+   one-sided parents complete, including their fold-boundary strips, and use a
+   candidate-centered conditioned corridor rather than more symmetric depth.
+   If the two condition-1,000 h/T=1e-8 candidates remain precision-limited,
+   propagate exact expansions or explicit error through plane-frame
+   construction.  Then deduplicate the resulting physical event across the
+   common span and apply the minimum-segment/contact policy.
    Separate old-solver root absence from prepared
    box explosion and local-corrector failure.  Find a lower-cost dispatch or
    fallback strategy
@@ -2824,3 +2959,9 @@ NEXT ACTIONS
    combined-error Cobb families, then remove the remaining duplicated Cobb
    control net from brep_invalid.cpp while independently gating its invalid
    topology behavior.
+6. Shard the monolithic `rt_brep_ray` regression into deterministic CTest
+   processes for interval arithmetic, fold proofs, affine grazing, Crofton,
+   Cobb/seam, and directed partitions.  Run those processes with `ctest -j`;
+   keep pure arithmetic counters deterministic and do not introduce shared-
+   process parallelism into OpenNURBS/model construction until separately
+   qualified.  The exhaustive interval matrix is the dominant ASan runtime.
