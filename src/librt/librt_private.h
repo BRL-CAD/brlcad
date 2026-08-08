@@ -464,6 +464,15 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_MAX_LOCAL_SEGMENTS 8
 #define RT_BREP_TRACE_CLEANUP_STAGES 5
 #define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
+#define RT_BREP_TRACE_CORRECTOR_STATUS_COUNT 8
+#define RT_BREP_TRACE_CORRECTOR_INVALID_INPUT 0
+#define RT_BREP_TRACE_CORRECTOR_EVALUATION_FAILED 1
+#define RT_BREP_TRACE_CORRECTOR_NONFINITE 2
+#define RT_BREP_TRACE_CORRECTOR_DEGENERATE_NORMAL 3
+#define RT_BREP_TRACE_CORRECTOR_JACOBIAN_SINGULAR 4
+#define RT_BREP_TRACE_CORRECTOR_NO_IMPROVEMENT 5
+#define RT_BREP_TRACE_CORRECTOR_ITERATION_LIMIT 6
+#define RT_BREP_TRACE_CORRECTOR_CONVERGED 7
 #define RT_BREP_TRACE_ENTERING 0
 #define RT_BREP_TRACE_LEAVING 1
 #define RT_BREP_TRACE_LOCAL_CONTACT 2
@@ -628,6 +637,7 @@ struct rt_brep_shot_trace {
     fastf_t surface_isolated_max_t_width;
     size_t surface_corrector_attempts;
     size_t surface_corrector_converged;
+    size_t surface_corrector_status[RT_BREP_TRACE_CORRECTOR_STATUS_COUNT];
     size_t surface_krawczyk_boxes;
     size_t surface_krawczyk_min_depth;
     size_t surface_krawczyk_max_depth;
@@ -644,6 +654,10 @@ struct rt_brep_shot_trace {
     size_t local_root_overflow;
     size_t local_root_failures;
     size_t local_root_duplicates;
+    size_t local_corrector_status[RT_BREP_TRACE_CORRECTOR_STATUS_COUNT];
+    size_t local_corrector_failure_ratios;
+    fastf_t local_corrector_min_failure_ratio;
+    fastf_t local_corrector_max_failure_ratio;
     size_t local_trim_queries;
     size_t local_trim_candidates;
     size_t local_trim_failures;
