@@ -43,13 +43,75 @@ proc ::pid_wait { pid } {
 
 namespace eval cadwidgets {
 
-proc rtimage_exec_log {cmd log_file} {
-    if {[catch {exec {*}$cmd >& $log_file} msg]} {
+proc rtimage_control_word {word} {
+    if {[regexp {[;\r\n]} $word]} {
+	return -code error "rtwizard: animation object names may not contain command separators"
+    }
+    return \"[string map [list \\ \\\\ \" \\\"] $word]\"
+}
+
+proc rtimage_exec_log {cmd log_file {objects {}} {anim_commands {}}} {
+    if {[llength $anim_commands]} {
+	set script ""
+	foreach anim_cmd $anim_commands { append script $anim_cmd ";\n" }
+	append script "tree"
+	foreach object $objects { append script " " [rtimage_control_word $object] }
+	append script ";\nend;\n"
+	# Object arguments make rt take its immediate-render path, which does not
+	# consume the control stream.  The script's typed tree command supplies
+	# those objects after the database and animations have been loaded.
+	set exec_cmd $cmd
+	if {[llength $objects]} { set exec_cmd [lrange $cmd 0 end-[llength $objects]] }
+	set status [catch {exec {*}$exec_cmd << $script >& $log_file} msg]
+    } else {
+	set status [catch {exec {*}$cmd >& $log_file} msg]
+    }
+    if {$status} {
 	return -code error "rtimage command failed: $cmd\n$msg"
     }
 }
 
-proc rtimage_cut_animation {rtimage_dict} {
+proc rtimage_bounds_center {dbfile objects} {
+    foreach {xmin xmax} [rtwizard_cut_bounds $dbfile {1 0 0} {*}$objects] break
+    foreach {ymin ymax} [rtwizard_cut_bounds $dbfile {0 1 0} {*}$objects] break
+    foreach {zmin zmax} [rtwizard_cut_bounds $dbfile {0 0 1} {*}$objects] break
+    return [list [expr {($xmin+$xmax)/2.0}] [expr {($ymin+$ymax)/2.0}] [expr {($zmin+$zmax)/2.0}]]
+}
+
+proc rtimage_rotate_vector {v axis angle_degrees} {
+    set a [vunitize $axis]
+    set r [expr {$angle_degrees * acos(-1.0) / 180.0}]
+    set c [expr {cos($r)}]
+    set s [expr {sin($r)}]
+    set dot [expr {[lindex $a 0]*[lindex $v 0]+[lindex $a 1]*[lindex $v 1]+[lindex $a 2]*[lindex $v 2]}]
+    set cross [list \
+	[expr {[lindex $a 1]*[lindex $v 2]-[lindex $a 2]*[lindex $v 1]}] \
+	[expr {[lindex $a 2]*[lindex $v 0]-[lindex $a 0]*[lindex $v 2]}] \
+	[expr {[lindex $a 0]*[lindex $v 1]-[lindex $a 1]*[lindex $v 0]}]]
+    return [list \
+	[expr {[lindex $v 0]*$c+[lindex $cross 0]*$s+[lindex $a 0]*$dot*(1.0-$c)}] \
+	[expr {[lindex $v 1]*$c+[lindex $cross 1]*$s+[lindex $a 1]*$dot*(1.0-$c)}] \
+	[expr {[lindex $v 2]*$c+[lindex $cross 2]*$s+[lindex $a 2]*$dot*(1.0-$c)}]]
+}
+
+proc rtimage_lookat_quat {direction {up {}}} {
+    set forward [vunitize $direction]
+    if {![llength $up]} { return [quat_mat2quat [mat_lookat $forward 0]] }
+    set right [vcross $forward [vunitize $up]]
+    if {[magnitude $right] < 1.0e-12} {
+	return [quat_mat2quat [mat_lookat $forward 0]]
+    }
+    set right [vunitize $right]
+    set camera_up [vcross $right $forward]
+    set m [list \
+	[lindex $right 0] [lindex $right 1] [lindex $right 2] 0 \
+	[lindex $camera_up 0] [lindex $camera_up 1] [lindex $camera_up 2] 0 \
+	[expr {-[lindex $forward 0]}] [expr {-[lindex $forward 1]}] [expr {-[lindex $forward 2]}] 0 \
+	0 0 0 1]
+    return [quat_mat2quat $m]
+}
+
+proc rtimage_preset_plan {rtimage_dict} {
     foreach param [dict keys $rtimage_dict] {
 	set $param [dict get $rtimage_dict $param]
     }
@@ -61,12 +123,29 @@ proc rtimage_cut_animation {rtimage_dict} {
     if {![llength $anim_objects]} {
 	return -code error "rtwizard: no objects available for cutting-plane animation bounds"
     }
-    if {![info exists ::RtWizard::wizard_state(output_filename)] ||
-	$::RtWizard::wizard_state(output_filename) eq ""} {
-	return -code error "rtwizard: cutting-plane animation requires a file output"
+    set preset [expr {[info exists ::RtWizard::wizard_state(animation_preset)] ?
+	$::RtWizard::wizard_state(animation_preset) : "cut"}]
+    set fps $::RtWizard::wizard_state(animation_fps)
+    set duration $::RtWizard::wizard_state(animation_duration)
+    set frame_count $::RtWizard::wizard_state(animation_frames)
+    set cyclic [expr {$preset in {orbit turntable} &&
+	abs($::RtWizard::wizard_state(${preset}_angle)) >= 360.0}]
+    if {[info exists ::RtWizard::wizard_state(animation_cyclic)] &&
+	$::RtWizard::wizard_state(animation_cyclic) >= 0} {
+	set cyclic $::RtWizard::wizard_state(animation_cyclic)
     }
+    if {$frame_count < 2} { set frame_count [expr {round($duration*$fps) + ($cyclic ? 0 : 1)}] }
+    if {$frame_count < 2} { return -code error "rtwizard: animation requires at least two frames" }
+    set plays $::RtWizard::wizard_state(animation_plays)
+    if {$plays < 0} { set plays [expr {$cyclic ? 0 : 1}] }
+    set frames {}
 
-    if {[info exists ::RtWizard::wizard_state(cut_direction)] &&
+    if {$preset eq "cut"} {
+      if {[info exists ::RtWizard::wizard_state(cut_steps)] && $::RtWizard::wizard_state(cut_steps) >= 2} {
+	set frame_count $::RtWizard::wizard_state(cut_steps)
+      }
+
+      if {[info exists ::RtWizard::wizard_state(cut_direction)] &&
 	[string trim $::RtWizard::wizard_state(cut_direction)] ne ""} {
 	if {[catch {set cut_dir [vunitize $::RtWizard::wizard_state(cut_direction)]}]} {
 	    return -code error "rtwizard: cutting direction must be a non-zero XYZ vector"
@@ -77,7 +156,7 @@ proc rtimage_cut_animation {rtimage_dict} {
 	    [expr {-[lindex $omat 9]}] [expr {-[lindex $omat 10]}]]]
     }
 
-    set sweep_bounds [rtwizard_cut_bounds $_dbfile $cut_dir {*}$anim_objects]
+      set sweep_bounds [rtwizard_cut_bounds $_dbfile $cut_dir {*}$anim_objects]
     set sweep_min [lindex $sweep_bounds 0]
     set sweep_max [lindex $sweep_bounds 1]
     set sweep_span [expr {$sweep_max - $sweep_min}]
@@ -90,34 +169,167 @@ proc rtimage_cut_animation {rtimage_dict} {
 	abs($sweep_span) * 0.05, 1.0e-9)}]
     set sweep_first [expr {$sweep_min - $sweep_eps}]
     set sweep_last [expr {$sweep_max - $sweep_eps}]
-    set frame_count $::RtWizard::wizard_state(cut_steps)
-    if {$frame_count < 2} {
-	return -code error "rtwizard: animation frame count must be at least 2"
+      for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
+	set fraction [expr {double($frame_no) / double($frame_count - 1)}]
+	set plane_dist [expr {$sweep_first + $fraction * ($sweep_last - $sweep_first)}]
+	set plane_pt [vscale $cut_dir $plane_dist]
+	lappend frames [dict create time [expr {$duration*$fraction}] \
+	    viewsize $_viewsize orientation $_orientation eye_pt $_eye_pt perspective $_perspective \
+	    cut_plane [format "%.15g,%.15g,%.15g,%.15g,%.15g,%.15g" \
+		[lindex $plane_pt 0] [lindex $plane_pt 1] [lindex $plane_pt 2] \
+		[lindex $cut_dir 0] [lindex $cut_dir 1] [lindex $cut_dir 2]] anim_commands {}]
+      }
+    } elseif {$preset eq "orbit"} {
+      set axis [vunitize $::RtWizard::wizard_state(orbit_axis)]
+      if {[info exists ::RtWizard::wizard_state(orbit_center)]} {
+	set center $::RtWizard::wizard_state(orbit_center)
+      } else {
+	set center [rtimage_bounds_center $_dbfile $anim_objects]
+      }
+      set radial [list [expr {[lindex $_eye_pt 0]-[lindex $center 0]}] \
+	[expr {[lindex $_eye_pt 1]-[lindex $center 1]}] [expr {[lindex $_eye_pt 2]-[lindex $center 2]}]]
+      set radius [magnitude $radial]
+	if {$radius < 1.0e-12} {
+	    if {abs([lindex $axis 2]) < 0.9} { set reference {0 0 1} } else { set reference {1 0 0} }
+	    set radius $_viewsize
+	    set radial [vscale [vunitize [vcross $axis $reference]] $radius]
+	}
+      if {[info exists ::RtWizard::wizard_state(orbit_radius)]} {
+	set radius $::RtWizard::wizard_state(orbit_radius)
+	set radial [vscale [vunitize $radial] $radius]
+      }
+      if {[info exists ::RtWizard::wizard_state(orbit_elevation)]} {
+	set elev [expr {$::RtWizard::wizard_state(orbit_elevation)*acos(-1.0)/180.0}]
+	set along [expr {[lindex $radial 0]*[lindex $axis 0]+[lindex $radial 1]*[lindex $axis 1]+[lindex $radial 2]*[lindex $axis 2]}]
+	set plane [list [expr {[lindex $radial 0]-$along*[lindex $axis 0]}] \
+	    [expr {[lindex $radial 1]-$along*[lindex $axis 1]}] [expr {[lindex $radial 2]-$along*[lindex $axis 2]}]]
+	if {[magnitude $plane] < 1.0e-12} {
+	    if {abs([lindex $axis 2]) < 0.9} { set reference {0 0 1} } else { set reference {1 0 0} }
+	    set plane [vcross $axis $reference]
+	}
+	set radial [vadd2 [vscale [vunitize $plane] [expr {$radius*cos($elev)}]] \
+	    [vscale $axis [expr {$radius*sin($elev)}]]]
+      }
+      for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
+	set fraction [expr {double($frame_no) / double($cyclic ? $frame_count : $frame_count-1)}]
+	set rv [rtimage_rotate_vector $radial $axis [expr {$fraction*$::RtWizard::wizard_state(orbit_angle)}]]
+	set eye [vadd2 $center $rv]
+	set dir [vunitize [list [expr {[lindex $center 0]-[lindex $eye 0]}] \
+	    [expr {[lindex $center 1]-[lindex $eye 1]}] [expr {[lindex $center 2]-[lindex $eye 2]}]]]
+	set q [rtimage_lookat_quat $dir $axis]
+	lappend frames [dict create time [expr {$duration*$fraction}] viewsize $_viewsize \
+	    orientation $q eye_pt $eye perspective $_perspective cut_plane "" anim_commands {}]
+      }
+    } elseif {$preset eq "turntable"} {
+      set axis [vunitize $::RtWizard::wizard_state(turntable_axis)]
+	if {[regexp {[[:space:];]} $::RtWizard::wizard_state(turntable_object)]} {
+	    return -code error "rtwizard: turntable object paths may not contain whitespace or semicolons"
+	}
+	set turntable_path $::RtWizard::wizard_state(turntable_object)
+	if {[string first "/" $turntable_path] < 0} { set turntable_path "/$turntable_path" }
+      if {[info exists ::RtWizard::wizard_state(turntable_center)]} {
+	set center $::RtWizard::wizard_state(turntable_center)
+      } else {
+	set center [rtimage_bounds_center $_dbfile [list $::RtWizard::wizard_state(turntable_object)]]
+      }
+      foreach {x y z} $axis break
+      foreach {px py pz} $center break
+      for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
+	set fraction [expr {double($frame_no) / double($cyclic ? $frame_count : $frame_count-1)}]
+	set a [expr {$fraction*$::RtWizard::wizard_state(turntable_angle)*acos(-1.0)/180.0}]
+	set c [expr {cos($a)}]; set s [expr {sin($a)}]; set m [expr {1.0-$c}]
+	set r00 [expr {$c+$x*$x*$m}]; set r01 [expr {$x*$y*$m-$z*$s}]; set r02 [expr {$x*$z*$m+$y*$s}]
+	set r10 [expr {$y*$x*$m+$z*$s}]; set r11 [expr {$c+$y*$y*$m}]; set r12 [expr {$y*$z*$m-$x*$s}]
+	set r20 [expr {$z*$x*$m-$y*$s}]; set r21 [expr {$z*$y*$m+$x*$s}]; set r22 [expr {$c+$z*$z*$m}]
+	set tx [expr {$px-($r00*$px+$r01*$py+$r02*$pz)}]
+	set ty [expr {$py-($r10*$px+$r11*$py+$r12*$pz)}]
+	set tz [expr {$pz-($r20*$px+$r21*$py+$r22*$pz)}]
+	set cmd [format "anim %s matrix lmul %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g 0 0 0 1" \
+	    $turntable_path $r00 $r01 $r02 $tx $r10 $r11 $r12 $ty $r20 $r21 $r22 $tz]
+	lappend frames [dict create time [expr {$duration*$fraction}] viewsize $_viewsize \
+	    orientation $_orientation eye_pt $_eye_pt perspective $_perspective cut_plane "" anim_commands [list $cmd]]
+      }
+    } else {
+      return -code error "rtwizard: unknown animation preset '$preset'"
     }
+    return [dict create duration $duration fps $fps cyclic $cyclic plays $plays frames $frames]
+}
 
+proc rtimage_animation {rtimage_dict} {
+    foreach param [dict keys $rtimage_dict] { set $param [dict get $rtimage_dict $param] }
+    if {[info exists ::RtWizard::wizard_state(animation_file)] &&
+	$::RtWizard::wizard_state(animation_file) ne ""} {
+	set local2base 1.0
+	if {![catch {set unit_name [db units -s]}] && $unit_name ne ""} {
+	    set local2base [bu_units_conversion $unit_name]
+	}
+	set plan [rtwizard_animation_json $::RtWizard::wizard_state(animation_file) \
+	    $_viewsize $_orientation $_eye_pt $_perspective \
+	    $::RtWizard::wizard_state(animation_duration) $::RtWizard::wizard_state(animation_fps) \
+	    $::RtWizard::wizard_state(animation_frames) $::RtWizard::wizard_state(animation_plays) \
+	    $::RtWizard::wizard_state(animation_cyclic) $local2base]
+    } else {
+	set plan [rtimage_preset_plan $rtimage_dict]
+    }
     dict set rtimage_dict _animate 0
     set animation_frames {}
-    set frame_dir [file dirname $::RtWizard::wizard_state(output_filename)]
+    set temp_dir [expr {[info exists ::RtWizard::wizard_state(output_filename)] ?
+	[file dirname $::RtWizard::wizard_state(output_filename)] : [pwd]}]
+    set keep_dir ""
+    if {[info exists ::RtWizard::wizard_state(frame_dir)] && $::RtWizard::wizard_state(frame_dir) ne ""} {
+	set keep_dir $::RtWizard::wizard_state(frame_dir)
+	file mkdir $keep_dir
+    }
+    set output_tmp ""
     try {
+	set frames [dict get $plan frames]
+	set frame_count [llength $frames]
 	for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
-	    set fraction [expr {double($frame_no) / double($frame_count - 1)}]
-	    set plane_dist [expr {$sweep_first + $fraction * ($sweep_last - $sweep_first)}]
-	    set plane_pt [vscale $cut_dir $plane_dist]
-	    dict set rtimage_dict _cut_plane [format "%.15g,%.15g,%.15g,%.15g,%.15g,%.15g" \
-		[lindex $plane_pt 0] [lindex $plane_pt 1] [lindex $plane_pt 2] \
-		[lindex $cut_dir 0] [lindex $cut_dir 1] [lindex $cut_dir 2]]
+	    if {$keep_dir ne ""} {
+		set frame_file [file join $keep_dir [format "frame-%06d.png" $frame_no]]
+		if {[file exists $frame_file]} {
+		    if {[info exists ::RtWizard::wizard_state(resume_animation)] &&
+			$::RtWizard::wizard_state(resume_animation) &&
+			[rtwizard_image_valid $frame_file $_w $_n]} {
+			puts "Using existing frame [expr {$frame_no + 1}]/$frame_count"
+			lappend animation_frames $frame_file
+			continue
+		    }
+		    if {![info exists ::RtWizard::wizard_state(resume_animation)] ||
+			!$::RtWizard::wizard_state(resume_animation)} {
+			return -code error "rtwizard: frame already exists: $frame_file (use --resume)"
+		    }
+		}
+	    } else {
+		set frame_file [file join $temp_dir [format ".rtwizard-%d-%06d.pix" [pid] $frame_no]]
+	    }
+	    set frame [lindex $frames $frame_no]
+	    foreach key {viewsize orientation eye_pt perspective cut_plane anim_commands} {
+		dict set rtimage_dict _$key [dict get $frame $key]
+	    }
 	    puts "Rendering frame [expr {$frame_no + 1}]/$frame_count"
 	    catch {exec [file join [bu_dir bin] fbclear] -F $_port \
 		[lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
 	    rtimage $rtimage_dict
-	    set frame_file [file join $frame_dir [format ".rtwizard-%d-%06d.pix" [pid] $frame_no]]
-	    exec [file join [bu_dir bin] fb-pix] -w $_w -n $_n -F $_port $frame_file 2>@1
+	    if {$keep_dir ne ""} {
+		set frame_tmp "${frame_file}.tmp-[pid]"
+		exec [file join [bu_dir bin] fb-png] -w $_w -n $_n -F $_port $frame_tmp 2>@1
+		file rename -force $frame_tmp $frame_file
+	    } else {
+		exec [file join [bu_dir bin] fb-pix] -w $_w -n $_n -F $_port $frame_file 2>@1
+	    }
 	    lappend animation_frames $frame_file
 	}
-	rtwizard_anim_write $::RtWizard::wizard_state(output_filename) $_w $_n \
-	    $::RtWizard::wizard_state(animation_fps) {*}$animation_frames
+        if {[info exists ::RtWizard::wizard_state(output_filename)] && $::RtWizard::wizard_state(output_filename) ne ""} {
+	    set output $::RtWizard::wizard_state(output_filename)
+	    set output_tmp "${output}.tmp-[pid][file extension $output]"
+	    rtwizard_anim_write $output_tmp $_w $_n \
+		[dict get $plan fps] [dict get $plan plays] {*}$animation_frames
+	    file rename -force $output_tmp $output
+	}
     } finally {
-	foreach frame_file $animation_frames { catch {file delete -force $frame_file} }
+	if {$output_tmp ne ""} { catch {file delete -force $output_tmp} }
+	if {$keep_dir eq ""} { foreach frame_file $animation_frames { catch {file delete -force $frame_file} } }
     }
     return 1
 }
@@ -127,7 +339,7 @@ proc rtimage {rtimage_dict} {
     global env
     set necessary_vars [list _dbfile _port _w _n _viewsize _orientation \
     _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma _benchmark_mode \
-    _cut_plane _ao_samples _ao_radius _animate]
+    _cut_plane _anim_commands _ao_samples _ao_radius _animate]
     set necessary_lists [list _color_objects _ghost_objects _edge_objects]
 
     # It's the responsibility of the calling function
@@ -149,7 +361,7 @@ proc rtimage {rtimage_dict} {
     if {$_animate ne "" && $_animate &&
 	[info exists ::RtWizard::wizard_state(make_animation)] &&
 	$::RtWizard::wizard_state(make_animation)} {
-	return [rtimage_cut_animation $rtimage_dict]
+	return [rtimage_animation $rtimage_dict]
     }
 
     set ar [ expr $_w.0 / $_n.0 ]
@@ -201,8 +413,8 @@ proc rtimage {rtimage_dict} {
 	    -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
 	    -c "viewsize $_viewsize" \
 	    -c "orientation $_orientation" \
-	    -c "eye_pt $_eye_pt" \
-	    $_dbfile
+	    -c "eye_pt $_eye_pt"
+	lappend cmd $_dbfile
 
 	foreach obj $_color_objects {
 	    lappend cmd $obj
@@ -213,7 +425,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the color insert
 	#
-	rtimage_exec_log $cmd $_log_file
+	rtimage_exec_log $cmd $_log_file $_color_objects $_anim_commands
 
 	# Look for color objects that also get edges
 	if {[llength $_edge_objects] && [llength $_ecolor] == 3} {
@@ -259,8 +471,8 @@ proc rtimage {rtimage_dict} {
 			-c "set ov=1" \
 			-c "viewsize $_viewsize" \
 			-c "orientation $_orientation" \
-			-c "eye_pt $_eye_pt" \
-			$_dbfile
+			-c "eye_pt $_eye_pt"
+		    lappend cmd $_dbfile
 
 		    foreach obj $ce_objects {
 			lappend cmd $obj
@@ -273,7 +485,7 @@ proc rtimage {rtimage_dict} {
 		#
 		# Run rtedge to generate the full-color with edges
 		#
-		rtimage_exec_log $cmd $_log_file
+		rtimage_exec_log $cmd $_log_file $ce_objects $_anim_commands
 	    }
 	}
 
@@ -312,8 +524,8 @@ proc rtimage {rtimage_dict} {
 	    -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
 	    -c "viewsize $_viewsize" \
 	    -c "orientation $_orientation" \
-	    -c "eye_pt $_eye_pt" \
-	    $_dbfile
+	    -c "eye_pt $_eye_pt"
+	lappend cmd $_dbfile
 
 	foreach obj $_ghost_objects {
 	    lappend cmd $obj
@@ -324,7 +536,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
-	rtimage_exec_log $cmd $_log_file
+	rtimage_exec_log $cmd $_log_file $_ghost_objects $_anim_commands
 
 	set cmd [list [file join $binpath rt] -w $_w -n $_n]
 	if {$_benchmark_mode != ""} {
@@ -346,8 +558,8 @@ proc rtimage {rtimage_dict} {
 	    -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
 	    -c "viewsize $_viewsize" \
 	    -c "orientation $_orientation" \
-	    -c "eye_pt $_eye_pt" \
-	    $_dbfile
+	    -c "eye_pt $_eye_pt"
+	lappend cmd $_dbfile
 
 	foreach obj $occlude_objects {
 	    lappend cmd $obj
@@ -358,7 +570,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the full-color version of the occlude_objects (i.e. color and ghost)
 	#
-	rtimage_exec_log $cmd $_log_file
+	rtimage_exec_log $cmd $_log_file $occlude_objects $_anim_commands
 
 	#
 	# Convert to ghost image
@@ -423,8 +635,8 @@ proc rtimage {rtimage_dict} {
 	lappend cmd \
 	    -c "viewsize $_viewsize" \
 	    -c "orientation $_orientation" \
-	    -c "eye_pt $_eye_pt" \
-	    $_dbfile
+	    -c "eye_pt $_eye_pt"
+	lappend cmd $_dbfile
 	foreach obj $_edge_objects {
 	    lappend cmd $obj
 	}
@@ -434,7 +646,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rtedge to generate the full-color version of the ghost image
 	# !!! manually write an rtedge log
-	rtimage_exec_log $cmd rtedge.log
+	rtimage_exec_log $cmd rtedge.log $_edge_objects $_anim_commands
     }
 
     catch {file delete -force $tgi}

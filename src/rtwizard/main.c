@@ -57,6 +57,8 @@ __declspec(dllimport) int __stdcall SetHandleInformation(void *, unsigned long, 
 #include "raytrace.h"
 #include "tclcad.h"
 
+#include "animation.h"
+
 #define RTWIZARD_HAVE_GUI 0
 
 #define RTWIZARD_SIZE_DEFAULT 512
@@ -81,6 +83,32 @@ struct rtwizard_settings {
     int port;
     struct bu_vls *log_file;
     struct bu_vls *pid_file;
+
+    /* Declarative render and animation specifications */
+    struct bu_vls *render_spec;
+    struct bu_vls *animation_file;
+    struct bu_vls *animation_preset;
+    struct bu_vls *frame_dir;
+    double animation_duration;
+    int animation_frames;
+    int animation_plays;
+    int animation_cyclic;
+    int resume;
+
+    double orbit_angle;
+    vect_t orbit_axis;
+    vect_t orbit_center;
+    double orbit_elevation;
+    double orbit_radius;
+
+    struct bu_vls *turntable_object;
+    double turntable_angle;
+    vect_t turntable_axis;
+    vect_t turntable_center;
+
+    struct bu_vls *save_view_keyframe;
+    double keyframe_time;
+    int replace_keyframe;
 
     size_t width;
     int width_set;
@@ -161,6 +189,18 @@ rtwizard_settings_create(void)
     bu_vls_init(s->log_file);
     BU_GET(s->pid_file, struct bu_vls);
     bu_vls_init(s->pid_file);
+    BU_GET(s->render_spec, struct bu_vls);
+    bu_vls_init(s->render_spec);
+    BU_GET(s->animation_file, struct bu_vls);
+    bu_vls_init(s->animation_file);
+    BU_GET(s->animation_preset, struct bu_vls);
+    bu_vls_init(s->animation_preset);
+    BU_GET(s->frame_dir, struct bu_vls);
+    bu_vls_init(s->frame_dir);
+    BU_GET(s->turntable_object, struct bu_vls);
+    bu_vls_init(s->turntable_object);
+    BU_GET(s->save_view_keyframe, struct bu_vls);
+    bu_vls_init(s->save_view_keyframe);
 
     BU_GET(s->bkg_color, struct bu_color);
     (void)bu_color_from_rgb_chars(s->bkg_color, white);
@@ -172,7 +212,24 @@ rtwizard_settings_create(void)
     s->port = -1;
     s->cpus = 0;
     s->cut_steps = 0;
-    s->animation_fps = 10;
+    /* Zero means "take the value from an animation track file".  Presets
+     * receive their user-facing defaults after option parsing. */
+    s->animation_fps = 0;
+    s->animation_duration = 0.0;
+    s->animation_frames = 0;
+    s->animation_plays = -1;
+    s->animation_cyclic = -1;
+    s->resume = 0;
+    s->orbit_angle = 360.0;
+    VSET(s->orbit_axis, 0.0, 0.0, 1.0);
+    VSETALL(s->orbit_center, DBL_MAX);
+    s->orbit_elevation = DBL_MAX;
+    s->orbit_radius = DBL_MAX;
+    s->turntable_angle = 360.0;
+    VSET(s->turntable_axis, 0.0, 0.0, 1.0);
+    VSETALL(s->turntable_center, DBL_MAX);
+    s->keyframe_time = DBL_MAX;
+    s->replace_keyframe = 0;
     VSETALL(s->cut_direction, 0.0);
     s->cut_direction_set = 0;
     s->ao_samples = 0;
@@ -232,6 +289,18 @@ void rtwizard_settings_destroy(struct rtwizard_settings *s) {
     BU_PUT(s->log_file, struct bu_vls);
     bu_vls_free(s->pid_file);
     BU_PUT(s->pid_file, struct bu_vls);
+    bu_vls_free(s->render_spec);
+    BU_PUT(s->render_spec, struct bu_vls);
+    bu_vls_free(s->animation_file);
+    BU_PUT(s->animation_file, struct bu_vls);
+    bu_vls_free(s->animation_preset);
+    BU_PUT(s->animation_preset, struct bu_vls);
+    bu_vls_free(s->frame_dir);
+    BU_PUT(s->frame_dir, struct bu_vls);
+    bu_vls_free(s->turntable_object);
+    BU_PUT(s->turntable_object, struct bu_vls);
+    bu_vls_free(s->save_view_keyframe);
+    BU_PUT(s->save_view_keyframe, struct bu_vls);
 
 
     BU_PUT(s, struct rtwizard_settings);
@@ -786,23 +855,25 @@ rtwizard_anim_write_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int 
     icv_anim_t *anim = NULL;
     icv_anim_format_t fmt;
     const char *output;
-    int width, height, fps;
+    int width, height, fps, plays;
     int i;
 
-    if (objc < 6) {
+    if (objc < 7) {
 	Tcl_SetObjResult(interp, Tcl_NewStringObj(
-		"usage: rtwizard_anim_write output width height fps frame1 ?frame2 ...?", -1));
+		"usage: rtwizard_anim_write output width height fps plays frame1 ?frame2 ...?", -1));
 	return TCL_ERROR;
     }
 
     output = Tcl_GetString(objv[1]);
     if (Tcl_GetIntFromObj(interp, objv[2], &width) != TCL_OK ||
 	Tcl_GetIntFromObj(interp, objv[3], &height) != TCL_OK ||
-	Tcl_GetIntFromObj(interp, objv[4], &fps) != TCL_OK)
+	Tcl_GetIntFromObj(interp, objv[4], &fps) != TCL_OK ||
+	Tcl_GetIntFromObj(interp, objv[5], &plays) != TCL_OK)
 	return TCL_ERROR;
 
-    if (width <= 0 || height <= 0 || fps <= 0) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj("animation width, height, and fps must be positive", -1));
+    if (width <= 0 || height <= 0 || fps <= 0 || plays < 0) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"animation width, height, and fps must be positive and plays must be nonnegative", -1));
 	return TCL_ERROR;
     }
 
@@ -819,9 +890,11 @@ rtwizard_anim_write_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int 
 	return TCL_ERROR;
     }
 
-    for (i = 5; i < objc; i++) {
+    (void)icv_anim_set_plays(anim, (uint32_t)plays);
+
+    for (i = 6; i < objc; i++) {
 	const char *frame = Tcl_GetString(objv[i]);
-	icv_image_t *img = icv_read(frame, BU_MIME_IMAGE_PIX, (size_t)width, (size_t)height);
+	icv_image_t *img = icv_read(frame, BU_MIME_IMAGE_AUTO, (size_t)width, (size_t)height);
 	if (!img || icv_anim_add_frame(anim, img) != 0) {
 	    if (img)
 		icv_destroy(img);
@@ -840,6 +913,27 @@ rtwizard_anim_write_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int 
     }
 
     icv_anim_destroy(anim);
+    return TCL_OK;
+}
+
+
+static int
+rtwizard_image_valid_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+{
+    int width, height;
+    icv_image_t *img;
+    int valid = 0;
+    if (objc != 4 || Tcl_GetIntFromObj(interp, objv[2], &width) != TCL_OK ||
+	Tcl_GetIntFromObj(interp, objv[3], &height) != TCL_OK) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("usage: rtwizard_image_valid file width height", -1));
+	return TCL_ERROR;
+    }
+    img = icv_read(Tcl_GetString(objv[1]), BU_MIME_IMAGE_AUTO, (size_t)width, (size_t)height);
+    if (img) {
+	valid = (img->width == (size_t)width && img->height == (size_t)height);
+	icv_destroy(img);
+    }
+    Tcl_SetObjResult(interp, Tcl_NewBooleanObj(valid));
     return TCL_OK;
 }
 
@@ -1190,6 +1284,65 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(animation_fps) %d", s->animation_fps);
     (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(animation_duration) %.17g", s->animation_duration);
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(animation_frames) %d", s->animation_frames);
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(animation_plays) %d", s->animation_plays);
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(animation_cyclic) %d", s->animation_cyclic);
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(resume_animation) %d", s->resume);
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+
+    if (bu_vls_strlen(s->render_spec))
+	rtwizard_set_state(interp, "render_spec", bu_vls_addr(s->render_spec));
+    if (bu_vls_strlen(s->animation_file)) {
+	rtwizard_set_state(interp, "animation_file", bu_vls_addr(s->animation_file));
+	(void)Tcl_SetVar2(interp, "::RtWizard::wizard_state", "make_animation", "1", TCL_GLOBAL_ONLY);
+    }
+    if (bu_vls_strlen(s->animation_preset)) {
+	rtwizard_set_state(interp, "animation_preset", bu_vls_addr(s->animation_preset));
+	(void)Tcl_SetVar2(interp, "::RtWizard::wizard_state", "make_animation", "1", TCL_GLOBAL_ONLY);
+    }
+    if (bu_vls_strlen(s->frame_dir))
+	rtwizard_set_state(interp, "frame_dir", bu_vls_addr(s->frame_dir));
+    if (bu_vls_strlen(s->save_view_keyframe)) {
+	rtwizard_set_state(interp, "save_view_keyframe", bu_vls_addr(s->save_view_keyframe));
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(keyframe_time) %.17g", s->keyframe_time);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(replace_keyframe) %d", s->replace_keyframe);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(orbit_angle) %.17g", s->orbit_angle);
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(orbit_axis) {%.17g %.17g %.17g}", V3ARGS(s->orbit_axis));
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    if (s->orbit_center[0] < DBL_MAX) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(orbit_center) {%.17g %.17g %.17g}", V3ARGS(s->orbit_center));
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+    if (s->orbit_elevation < DBL_MAX) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(orbit_elevation) %.17g", s->orbit_elevation);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+    if (s->orbit_radius < DBL_MAX) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(orbit_radius) %.17g", s->orbit_radius);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (bu_vls_strlen(s->turntable_object))
+	rtwizard_set_state(interp, "turntable_object", bu_vls_addr(s->turntable_object));
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(turntable_angle) %.17g", s->turntable_angle);
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(turntable_axis) {%.17g %.17g %.17g}", V3ARGS(s->turntable_axis));
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    if (s->turntable_center[0] < DBL_MAX) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(turntable_center) {%.17g %.17g %.17g}", V3ARGS(s->turntable_center));
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
     if (s->cut_direction_set) {
 	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(cut_direction) \"%0.15f %0.15f %0.15f\"", V3ARGS(s->cut_direction));
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
@@ -1269,7 +1422,7 @@ rtwizard_help(struct bu_opt_desc *d)
     bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
 
     /* I/O options */
-    bu_vls_sprintf(&filtered, "h help-dev i o s w n cut-steps cut-direction animation-fps");
+    bu_vls_sprintf(&filtered, "h help-dev i o s w n render-spec animation animation-file animation-duration animation-fps animation-frames animation-plays animation-cyclic frame-dir resume cut-steps cut-direction orbit-angle orbit-axis orbit-center orbit-elevation orbit-radius turntable-object turntable-angle turntable-axis turntable-center save-view-keyframe time replace-keyframe");
     settings.accept = bu_vls_addr(&filtered);
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
@@ -1395,6 +1548,143 @@ rtwizard_rc(Tcl_Interp *interp)
 }
 
 
+static int
+rtwizard_argv_has_option(int argc, char **argv, const char *shortopt, const char *longopt)
+{
+    int i;
+    size_t llen = strlen(longopt);
+    for (i = 1; i < argc; i++) {
+	if ((shortopt && BU_STR_EQUAL(argv[i], shortopt)) || BU_STR_EQUAL(argv[i], longopt) ||
+	    (bu_strncmp(argv[i], longopt, llen) == 0 && argv[i][llen] == '='))
+	    return 1;
+    }
+    return 0;
+}
+
+
+static const char *
+rtwizard_short_option(const char *longopt)
+{
+    if (BU_STR_EQUAL(longopt, "--input-file")) return "-i";
+    if (BU_STR_EQUAL(longopt, "--output-file")) return "-o";
+    if (BU_STR_EQUAL(longopt, "--size")) return "-s";
+    if (BU_STR_EQUAL(longopt, "--width")) return "-w";
+    if (BU_STR_EQUAL(longopt, "--height")) return "-n";
+    if (BU_STR_EQUAL(longopt, "--type")) return "-t";
+    if (BU_STR_EQUAL(longopt, "--color-objects")) return "-c";
+    if (BU_STR_EQUAL(longopt, "--line-objects")) return "-l";
+    if (BU_STR_EQUAL(longopt, "--ghost-objects")) return "-g";
+    if (BU_STR_EQUAL(longopt, "--azimuth")) return "-a";
+    if (BU_STR_EQUAL(longopt, "--elevation")) return "-e";
+    if (BU_STR_EQUAL(longopt, "--zoom")) return "-z";
+    if (BU_STR_EQUAL(longopt, "--perspective")) return "-P";
+    if (BU_STR_EQUAL(longopt, "--background-color")) return "-C";
+    if (BU_STR_EQUAL(longopt, "--ghost-intensity")) return "-G";
+    if (BU_STR_EQUAL(longopt, "--occlusion")) return "-O";
+    if (BU_STR_EQUAL(longopt, "--fbserv-device")) return "-d";
+    if (BU_STR_EQUAL(longopt, "--fbserv-port")) return "-p";
+    if (BU_STR_EQUAL(longopt, "--verbose")) return "-v";
+    return NULL;
+}
+
+
+static int
+rtwizard_spec_option_takes_arg(const char *opt)
+{
+    return !(BU_STR_EQUAL(opt, "--benchmark") ||
+	    BU_STR_EQUAL(opt, "--gui") ||
+	    BU_STR_EQUAL(opt, "--no-gui") ||
+	    BU_STR_EQUAL(opt, "--resume") ||
+	    BU_STR_EQUAL(opt, "--replace-keyframe"));
+}
+
+
+/* Expand a render specification before normal option parsing.  Spec options
+ * are placed first.  Explicit command-line instances suppress their JSON
+ * counterpart because bu_opt_vls intentionally concatenates repeated string
+ * options.  This also gives object role lists replace rather than append
+ * semantics. */
+static void
+rtwizard_expand_render_spec(int *argcp, char ***argvp)
+{
+    int argc = *argcp;
+    char **argv = *argvp;
+    const char *spec = NULL;
+    int spec_index = -1;
+    int spec_separate = 0;
+    int i;
+    int sac = 0;
+    char **sav = NULL;
+    char *errmsg = NULL;
+    char **merged;
+    int mac = 0;
+    int cli_animation = rtwizard_argv_has_option(argc, argv, NULL, "--animation") ||
+	rtwizard_argv_has_option(argc, argv, NULL, "--animation-file") ||
+	rtwizard_argv_has_option(argc, argv, NULL, "--cut-steps");
+    int cli_gui = rtwizard_argv_has_option(argc, argv, NULL, "--gui");
+    int cli_no_gui = rtwizard_argv_has_option(argc, argv, NULL, "--no-gui");
+
+    for (i = 1; i < argc; i++) {
+	if (BU_STR_EQUAL(argv[i], "--render-spec")) {
+	    if (i + 1 >= argc)
+		bu_exit(EXIT_FAILURE, "ERROR: --render-spec requires a filename.\n");
+	    spec = argv[i+1];
+	    spec_index = i;
+	    spec_separate = 1;
+	    break;
+	}
+	if (bu_strncmp(argv[i], "--render-spec=", 14) == 0) {
+	    spec = argv[i] + 14;
+	    spec_index = i;
+	    break;
+	}
+    }
+    if (!spec)
+	return;
+    if (rtwizard_spec_to_argv(spec, &sac, &sav, &errmsg) != 0) {
+	bu_exit(EXIT_FAILURE, "ERROR: %s\n", errmsg ? errmsg : "unable to load render specification");
+    }
+
+    merged = (char **)bu_calloc((size_t)argc + (size_t)sac + 1, sizeof(char *), "merged rtwizard argv");
+    merged[mac++] = argv[0];
+    for (i = 0; i < sac; i++) {
+	int skip = 0;
+	if (bu_strncmp(sav[i], "--", 2) == 0 &&
+	    rtwizard_argv_has_option(argc, argv, rtwizard_short_option(sav[i]), sav[i])) {
+	    skip = 1;
+	}
+	if (cli_animation && (BU_STR_EQUAL(sav[i], "--animation") ||
+		BU_STR_EQUAL(sav[i], "--animation-file"))) {
+	    skip = 1;
+	}
+	/* These two flags are alternate values of one setting. */
+	if ((cli_gui && BU_STR_EQUAL(sav[i], "--no-gui")) ||
+	    (cli_no_gui && BU_STR_EQUAL(sav[i], "--gui")))
+	    skip = 1;
+	if (skip) {
+	    if (rtwizard_spec_option_takes_arg(sav[i]) && i + 1 < sac) i++;
+	    continue;
+	}
+	merged[mac++] = bu_strdup(sav[i]);
+    }
+    /* Retain the option itself so the resolved path is available to Tcl and
+     * to view-keyframe capture. */
+    merged[mac++] = bu_strdup("--render-spec");
+    merged[mac++] = bu_strdup(spec);
+    for (i = 1; i < argc; i++) {
+	if (i == spec_index) {
+	    if (spec_separate) i++;
+	    continue;
+	}
+	merged[mac++] = argv[i];
+    }
+    rtwizard_spec_argv_free(sac, sav);
+    if (errmsg) bu_free(errmsg, "render spec error");
+    *argcp = mac;
+    *argvp = merged;
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -1408,7 +1698,7 @@ main(int argc, char **argv)
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_vls info_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
-    struct bu_opt_desc d[40];
+    struct bu_opt_desc d[61];
 
     BU_OPT(d[0],  "h", "help",          "",             NULL,            &need_help,     "Print options help and exit");
     BU_OPT(d[1],  "",  "help-dev",      "",             NULL,            &need_help_dev, "Print development and programmatic options.");
@@ -1459,11 +1749,34 @@ main(int argc, char **argv)
     BU_OPT(d[36], "",  "animation-fps", "#",            &bu_opt_int,     &s->animation_fps, "Animation frames per second");
     BU_OPT(d[37], "",  "ao-samples",    "#",            &bu_opt_int,     &s->ao_samples, "Ambient occlusion samples per ray");
     BU_OPT(d[38], "",  "ao-radius",     "<float>",      &bu_opt_fastf_t, &s->ao_radius,  "Ambient occlusion maximum radius");
-    BU_OPT_NULL(d[39]);
+    BU_OPT(d[39], "",  "render-spec",   "<file.json>",  &bu_opt_vls,     s->render_spec, "Load a complete declarative render specification");
+    BU_OPT(d[40], "",  "animation",     "cut|orbit|turntable", &bu_opt_vls, s->animation_preset, "Select an animation preset");
+    BU_OPT(d[41], "",  "animation-file","<file.json>",  &bu_opt_vls,     s->animation_file, "Load animation tracks from a render specification");
+    BU_OPT(d[42], "",  "animation-duration", "<seconds>", &bu_opt_fastf_t, &s->animation_duration, "Animation duration in seconds");
+    BU_OPT(d[43], "",  "animation-frames", "#",          &bu_opt_int,     &s->animation_frames, "Exact animation frame count");
+    BU_OPT(d[44], "",  "animation-plays", "#",           &bu_opt_int,     &s->animation_plays, "APNG play count (0 means indefinite)");
+    BU_OPT(d[45], "",  "frame-dir",     "<directory>",   &bu_opt_vls,     s->frame_dir, "Preserve numbered PNG animation frames");
+    BU_OPT(d[46], "",  "resume",        "",              NULL,            &s->resume, "Resume using valid frames in --frame-dir");
+    BU_OPT(d[47], "",  "orbit-angle",   "<degrees>",     &bu_opt_fastf_t, &s->orbit_angle, "Orbit angle");
+    BU_OPT(d[48], "",  "orbit-axis",    "<vector>",      &bu_opt_vect_t,  &s->orbit_axis, "Orbit axis");
+    BU_OPT(d[49], "",  "orbit-center",  "<point>",       &bu_opt_vect_t,  &s->orbit_center, "Orbit target center");
+    BU_OPT(d[50], "",  "orbit-elevation", "<degrees>",   &bu_opt_fastf_t, &s->orbit_elevation, "Camera elevation above the orbit plane");
+    BU_OPT(d[51], "",  "orbit-radius",  "<distance>",    &bu_opt_fastf_t, &s->orbit_radius, "Camera distance from orbit center");
+    BU_OPT(d[52], "",  "turntable-object", "<path>",      &bu_opt_vls,     s->turntable_object, "Database path rotated by the turntable preset");
+    BU_OPT(d[53], "",  "turntable-angle", "<degrees>",    &bu_opt_fastf_t, &s->turntable_angle, "Turntable rotation angle");
+    BU_OPT(d[54], "",  "turntable-axis", "<vector>",      &bu_opt_vect_t,  &s->turntable_axis, "Turntable axis");
+    BU_OPT(d[55], "",  "turntable-center", "<point>",     &bu_opt_vect_t,  &s->turntable_center, "Turntable pivot");
+    BU_OPT(d[56], "",  "save-view-keyframe", "<file.json>", &bu_opt_vls, s->save_view_keyframe, "Create or append a camera view keyframe");
+    BU_OPT(d[57], "",  "time",          "<seconds>",     &bu_opt_fastf_t, &s->keyframe_time, "Keyframe time for --save-view-keyframe");
+    BU_OPT(d[58], "",  "replace-keyframe", "",           NULL,            &s->replace_keyframe, "Replace an existing camera keyframe at --time");
+    BU_OPT(d[59], "",  "animation-cyclic", "0|1",        &bu_opt_int,     &s->animation_cyclic, "Exclude a duplicate animation endpoint");
+    BU_OPT_NULL(d[60]);
 
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
     av0 = argv[0];
+
+    rtwizard_expand_render_spec(&argc, &argv);
 
     /* Change the working directory to BU_DIR_HOME if we are invoking
      * without any arguments. */
@@ -1564,22 +1877,56 @@ main(int argc, char **argv)
 	bu_vls_trunc(&info_msg, 0);
     }
 
+    if (s->cut_steps && !bu_vls_strlen(s->animation_preset) && !bu_vls_strlen(s->animation_file))
+	bu_vls_strcpy(s->animation_preset, "cut");
+    if (bu_vls_strlen(s->animation_preset) && bu_vls_strlen(s->animation_file))
+	bu_exit(EXIT_FAILURE, "ERROR: --animation and --animation-file are mutually exclusive.\n");
+    if (bu_vls_strlen(s->animation_preset) &&
+	!BU_STR_EQUAL(bu_vls_addr(s->animation_preset), "cut") &&
+	!BU_STR_EQUAL(bu_vls_addr(s->animation_preset), "orbit") &&
+	!BU_STR_EQUAL(bu_vls_addr(s->animation_preset), "turntable"))
+	bu_exit(EXIT_FAILURE, "ERROR: --animation must be cut, orbit, or turntable.\n");
+    if (BU_STR_EQUAL(bu_vls_addr(s->animation_preset), "turntable") && !bu_vls_strlen(s->turntable_object))
+	bu_exit(EXIT_FAILURE, "ERROR: --animation turntable requires --turntable-object.\n");
+
+    /* Presets have simple defaults.  For track files, zero remains an
+     * intentional sentinel so timing is read from the JSON specification. */
+    if (bu_vls_strlen(s->animation_preset)) {
+	if (s->animation_fps == 0) s->animation_fps = 10;
+	if (NEAR_ZERO(s->animation_duration, SMALL_FASTF)) s->animation_duration = 5.0;
+    }
+
     if (s->cut_steps != 0 && s->cut_steps < 2)
 	bu_exit(EXIT_FAILURE, "ERROR: --cut-steps must be at least 2.\n");
-    if (s->animation_fps <= 0)
-	bu_exit(EXIT_FAILURE, "ERROR: --animation-fps must be positive.\n");
+    if (s->animation_fps < 0)
+	bu_exit(EXIT_FAILURE, "ERROR: --animation-fps must be positive when specified.\n");
+    if (s->animation_duration < 0.0 || !isfinite(s->animation_duration))
+	bu_exit(EXIT_FAILURE, "ERROR: --animation-duration must be positive and finite when specified.\n");
+    if (s->animation_frames < 0 || s->animation_frames == 1)
+	bu_exit(EXIT_FAILURE, "ERROR: --animation-frames must be zero or at least 2.\n");
+    if (s->animation_plays < -1)
+	bu_exit(EXIT_FAILURE, "ERROR: --animation-plays may not be negative (except the unset value).\n");
+    if (s->animation_cyclic < -1 || s->animation_cyclic > 1)
+	bu_exit(EXIT_FAILURE, "ERROR: --animation-cyclic must be 0 or 1.\n");
+    if (bu_vls_strlen(s->save_view_keyframe) && (!(s->keyframe_time < DBL_MAX) || s->keyframe_time < 0.0))
+	bu_exit(EXIT_FAILURE, "ERROR: --save-view-keyframe requires a nonnegative --time.\n");
     if (s->ao_samples < 0 || s->ao_radius < 0.0)
 	bu_exit(EXIT_FAILURE, "ERROR: ambient occlusion samples and radius may not be negative.\n");
     if (s->cut_direction_set && MAGNITUDE(s->cut_direction) <= SQRT_SMALL_FASTF)
 	bu_exit(EXIT_FAILURE, "ERROR: --cut-direction must be a non-zero vector.\n");
-    if (s->cut_steps && !bu_vls_strlen(s->output_file) && !s->use_gui)
-	bu_exit(EXIT_FAILURE, "ERROR: a file output is required for a cutting-plane animation.\n");
-    if (s->cut_steps && bu_vls_strlen(s->output_file) &&
+    if (MAGNITUDE(s->orbit_axis) <= SQRT_SMALL_FASTF || MAGNITUDE(s->turntable_axis) <= SQRT_SMALL_FASTF)
+	bu_exit(EXIT_FAILURE, "ERROR: orbit and turntable axes must be non-zero vectors.\n");
+    {
+	int have_animation = bu_vls_strlen(s->animation_preset) || bu_vls_strlen(s->animation_file);
+	if (have_animation && !bu_vls_strlen(s->output_file) && !bu_vls_strlen(s->frame_dir) && !s->use_gui)
+	    bu_exit(EXIT_FAILURE, "ERROR: an animation requires -o or --frame-dir.\n");
+	if (have_animation && bu_vls_strlen(s->output_file) &&
 	!rtwizard_anim_path_supported(bu_vls_addr(s->output_file)))
-	bu_exit(EXIT_FAILURE, "ERROR: animation output must use .apng, .png, .avi, or .mjpg.\n");
-    if (!s->cut_steps && !s->use_gui && bu_vls_strlen(s->output_file) &&
+	    bu_exit(EXIT_FAILURE, "ERROR: animation output must use .apng, .png, .avi, or .mjpg.\n");
+    if (!have_animation && !s->use_gui && bu_vls_strlen(s->output_file) &&
 	rtwizard_anim_only_path(bu_vls_addr(s->output_file)))
-	bu_exit(EXIT_FAILURE, "ERROR: .apng, .avi, and .mjpg outputs require --cut-steps.\n");
+	bu_exit(EXIT_FAILURE, "ERROR: .apng, .avi, and .mjpg outputs require an animation option.\n");
+    }
 
     if (!s->use_gui && !rtwizard_info_sufficient(&info_msg, s, type)) {
 	if ((!s->use_gui) && (!s->no_gui)) {
@@ -1617,6 +1964,9 @@ main(int argc, char **argv)
 		rtwizard_anim_write_cmd, NULL, NULL);
 	(void)Tcl_CreateObjCommand(interp, "rtwizard_cut_bounds",
 		rtwizard_cut_bounds_cmd, NULL, NULL);
+	(void)Tcl_CreateObjCommand(interp, "rtwizard_image_valid",
+		rtwizard_image_valid_cmd, NULL, NULL);
+	rtwizard_animation_init(interp);
 
 	/* Normalize .g and output image file paths, since they're to be used
 	 * in Tcl scripts */

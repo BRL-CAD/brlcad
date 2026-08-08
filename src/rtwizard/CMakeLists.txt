@@ -1,5 +1,5 @@
 if(TARGET libtclcad)
-  set(RTWIZARD_SRCS main.c)
+  set(RTWIZARD_SRCS main.c animation.cpp)
 
   if(HAVE_WINDOWS_H)
     # To associate an icon with the application for Windows (needed
@@ -28,6 +28,8 @@ endif(TARGET libtclcad)
 
 cmakefiles(
   CMakeLists.txt
+  animation.cpp
+  animation.h
   main.c
   rtwizard.rc
   rtwizard.ico

@@ -182,9 +182,23 @@ namespace eval RtWizard {
     #
     ::itcl::body FbPage::constructor {args} {
 	if {![info exists ::RtWizard::wizard_state(make_animation)]} { set ::RtWizard::wizard_state(make_animation) 0 }
-	if {![info exists ::RtWizard::wizard_state(cut_steps)]} { set ::RtWizard::wizard_state(cut_steps) 30 }
-	if {![info exists ::RtWizard::wizard_state(animation_fps)]} { set ::RtWizard::wizard_state(animation_fps) 10 }
+	if {![info exists ::RtWizard::wizard_state(animation_preset)]} { set ::RtWizard::wizard_state(animation_preset) "" }
+	if {![info exists ::RtWizard::wizard_state(animation_fps)] || $::RtWizard::wizard_state(animation_fps) <= 0} {
+	    set ::RtWizard::wizard_state(animation_fps) 10
+	}
+	if {![info exists ::RtWizard::wizard_state(animation_duration)] || $::RtWizard::wizard_state(animation_duration) <= 0} {
+	    set ::RtWizard::wizard_state(animation_duration) 5
+	}
+	if {![info exists ::RtWizard::wizard_state(animation_frames)] || $::RtWizard::wizard_state(animation_frames) < 2} {
+	    set ::RtWizard::wizard_state(animation_frames) 30
+	}
+	if {![info exists ::RtWizard::wizard_state(animation_plays)]} { set ::RtWizard::wizard_state(animation_plays) -1 }
 	if {![info exists ::RtWizard::wizard_state(cut_direction)]} { set ::RtWizard::wizard_state(cut_direction) "" }
+	if {![info exists ::RtWizard::wizard_state(orbit_angle)]} { set ::RtWizard::wizard_state(orbit_angle) 360 }
+	if {![info exists ::RtWizard::wizard_state(orbit_axis)]} { set ::RtWizard::wizard_state(orbit_axis) "0 0 1" }
+	if {![info exists ::RtWizard::wizard_state(turntable_object)]} { set ::RtWizard::wizard_state(turntable_object) "" }
+	if {![info exists ::RtWizard::wizard_state(turntable_angle)]} { set ::RtWizard::wizard_state(turntable_angle) 360 }
+	if {![info exists ::RtWizard::wizard_state(turntable_axis)]} { set ::RtWizard::wizard_state(turntable_axis) "0 0 1" }
 	if {![info exists ::RtWizard::wizard_state(ao_samples)]} { set ::RtWizard::wizard_state(ao_samples) 0 }
 	if {![info exists ::RtWizard::wizard_state(ao_radius)]} { set ::RtWizard::wizard_state(ao_radius) 0 }
 
@@ -329,17 +343,32 @@ namespace eval RtWizard {
 	    usual
 	}
 
-	itk_component add cutAnimation {
-	    checkbutton $devCs.cutAnimation \
-		-text "Cutting-plane animation" \
-		-variable ::RtWizard::wizard_state(make_animation)
+	itk_component add animationMode {
+	    iwidgets::radiobox $devCs.animationMode -labeltext "Output:" -orient horizontal
 	}
+	$itk_component(animationMode) add still -text "Still" -command {
+	    set ::RtWizard::wizard_state(animation_preset) ""
+	    set ::RtWizard::wizard_state(make_animation) 0
+	}
+	$itk_component(animationMode) add cut -text "Cut" -command {
+	    set ::RtWizard::wizard_state(animation_preset) cut
+	    set ::RtWizard::wizard_state(make_animation) 1
+	}
+	$itk_component(animationMode) add orbit -text "Orbit" -command {
+	    set ::RtWizard::wizard_state(animation_preset) orbit
+	    set ::RtWizard::wizard_state(make_animation) 1
+	}
+	$itk_component(animationMode) add turntable -text "Turntable" -command {
+	    set ::RtWizard::wizard_state(animation_preset) turntable
+	    set ::RtWizard::wizard_state(make_animation) 1
+	}
+	$itk_component(animationMode) select 0
 
 	itk_component add cutSteps {
 	    iwidgets::entryfield $devCs.cutSteps \
 		-labeltext "Frames:" -width 8 \
 		-validate integer \
-		-textvariable ::RtWizard::wizard_state(cut_steps)
+		-textvariable ::RtWizard::wizard_state(animation_frames)
 	} { usual }
 
 	itk_component add animationFps {
@@ -349,10 +378,46 @@ namespace eval RtWizard {
 		-textvariable ::RtWizard::wizard_state(animation_fps)
 	} { usual }
 
+	itk_component add animationDuration {
+	    iwidgets::entryfield $devCs.animationDuration \
+		-labeltext "Duration (sec):" -width 8 \
+		-textvariable ::RtWizard::wizard_state(animation_duration)
+	} { usual }
+
 	itk_component add cutDirection {
 	    iwidgets::entryfield $devCs.cutDirection \
 		-labeltext "Direction XYZ (blank = view):" -width 24 \
 		-textvariable ::RtWizard::wizard_state(cut_direction)
+	} { usual }
+
+	itk_component add orbitSettings {
+	    iwidgets::entryfield $devCs.orbitSettings \
+		-labeltext "Orbit angle:" -width 24 \
+		-textvariable ::RtWizard::wizard_state(orbit_angle)
+	} { usual }
+
+	itk_component add orbitAxis {
+	    iwidgets::entryfield $devCs.orbitAxis \
+		-labeltext "Orbit axis XYZ:" -width 24 \
+		-textvariable ::RtWizard::wizard_state(orbit_axis)
+	} { usual }
+
+	itk_component add turntableObject {
+	    iwidgets::entryfield $devCs.turntableObject \
+		-labeltext "Turntable object path:" -width 24 \
+		-textvariable ::RtWizard::wizard_state(turntable_object)
+	} { usual }
+
+	itk_component add turntableSettings {
+	    iwidgets::entryfield $devCs.turntableSettings \
+		-labeltext "Turntable angle:" -width 12 \
+		-textvariable ::RtWizard::wizard_state(turntable_angle)
+	} { usual }
+
+	itk_component add turntableAxis {
+	    iwidgets::entryfield $devCs.turntableAxis \
+		-labeltext "Turntable axis XYZ:" -width 24 \
+		-textvariable ::RtWizard::wizard_state(turntable_axis)
 	} { usual }
 
 	itk_component add aoSamples {
@@ -401,10 +466,16 @@ namespace eval RtWizard {
 	pack $itk_component(radBox) -anchor w
 	pack $itk_component(fileName) -anchor w
 	pack $itk_component(browse)  -anchor e
-	pack $itk_component(cutAnimation) -anchor w
+	pack $itk_component(animationMode) -anchor w
 	pack $itk_component(cutSteps) -anchor w
 	pack $itk_component(animationFps) -anchor w
+	pack $itk_component(animationDuration) -anchor w
 	pack $itk_component(cutDirection) -anchor w
+	pack $itk_component(orbitSettings) -anchor w
+	pack $itk_component(orbitAxis) -anchor w
+	pack $itk_component(turntableObject) -anchor w
+	pack $itk_component(turntableSettings) -anchor w
+	pack $itk_component(turntableAxis) -anchor w
 	pack $itk_component(aoSamples) -anchor w
 	pack $itk_component(aoRadius) -anchor w
 
