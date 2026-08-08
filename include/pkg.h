@@ -462,6 +462,17 @@ PKG_EXPORT extern int pkg_ipc_addr(char *addr, size_t len,
 				   const char *name_hint);
 
 /**
+ * Remove any filesystem name associated with an opaque IPC listener address.
+ * This is safe to call after normal listener shutdown and is useful when an
+ * externally launched listener had to be terminated before it could clean up.
+ * Address types without persistent filesystem state are successful no-ops.
+ *
+ * Returns 0 on success (including an already absent endpoint), -1 for an
+ * invalid/unsupported address or a cleanup failure.
+ */
+PKG_EXPORT extern int pkg_ipc_addr_cleanup(const char *addr);
+
+/**
  * Return non-zero when addr names a reusable listener-style IPC endpoint,
  * as opposed to a single inherited connected endpoint.
  */

@@ -828,7 +828,7 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 		rc = 0;	// process concluded, albeit forcibly
 	} else {
 		if (WIFEXITED(retcode))		    // normal exit
-		rc = 0;
+		rc = WEXITSTATUS(retcode);
 		else if (WIFSIGNALED(retcode))	    // terminated
 		rc = ERROR_PROCESS_ABORTED;
 		else

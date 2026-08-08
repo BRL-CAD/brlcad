@@ -299,6 +299,25 @@ test_exec_wait(const char* cmd)
 }
 
 
+/* A normal non-zero child exit must be reported to callers. */
+static int
+test_exit_status(const char* cmd)
+{
+    struct bu_process* p;
+    const char* run_av[3] = {cmd, "exit_7", NULL};
+
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+
+    int status = bu_process_wait_n(&p, 0);
+    if (status != 7) {
+	fprintf(stderr, "bu_process_test[\"exit_status\"] - got %d, expected 7\n", status);
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
 /* tests:   process creation with options
  *  bu_process_create() [bu_process_opts]
  * also relies on
@@ -762,6 +781,7 @@ typedef struct {
 
 ProcessTest tests[] = {
     {"exec_wait", test_exec_wait},
+    {"exit_status", test_exit_status},
     {"create_opts", test_create_opts},
     {"create_timeout", test_create_timeout},
     {"func_capture", test_func_capture},

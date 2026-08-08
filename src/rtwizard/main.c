@@ -28,17 +28,6 @@
 #  include <direct.h> /* For chdir */
 #endif
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-__declspec(dllimport) void * __stdcall GetStdHandle(unsigned long);
-__declspec(dllimport) int __stdcall SetHandleInformation(void *, unsigned long, unsigned long);
-#  define RTWIZARD_STD_INPUT_HANDLE  ((unsigned long)-10)
-#  define RTWIZARD_STD_OUTPUT_HANDLE ((unsigned long)-11)
-#  define RTWIZARD_STD_ERROR_HANDLE  ((unsigned long)-12)
-#  define RTWIZARD_HANDLE_FLAG_INHERIT 0x00000001UL
-#endif
-
-#include "tcl.h"
-
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/color.h"
@@ -50,119 +39,18 @@ __declspec(dllimport) int __stdcall SetHandleInformation(void *, unsigned long, 
 #include "bu/ptbl.h"
 #include "bu/opt.h"
 #include "bu/str.h"
-#include "bv/vlist.h"
-#include "icv.h"
-#include "icv/anim.h"
-#include "pkg.h"
 #include "raytrace.h"
-#include "tclcad.h"
 
 #include "animation.h"
+#if RTWIZARD_HAVE_GUI
+#  include "gui.h"
+#endif
+#include "settings.h"
+#include "render.h"
 
-#define RTWIZARD_HAVE_GUI 0
-
-#define RTWIZARD_SIZE_DEFAULT 512
-
-#define RTWIZARD_MAGIC 0x72747769 /**< rtwi */
-
-
-struct rtwizard_settings {
-    uint32_t magic;
-
-    int use_gui;
-    int no_gui;
-    int verbose;
-
-    struct bu_ptbl *color;
-    struct bu_ptbl *ghost;
-    struct bu_ptbl *line;
-
-    struct bu_vls *input_file;
-    struct bu_vls *output_file;
-    struct bu_vls *fb_dev;
-    int port;
-    struct bu_vls *log_file;
-    struct bu_vls *pid_file;
-
-    /* Declarative render and animation specifications */
-    struct bu_vls *render_spec;
-    struct bu_vls *animation_file;
-    struct bu_vls *animation_preset;
-    struct bu_vls *frame_dir;
-    double animation_duration;
-    int animation_frames;
-    int animation_plays;
-    int animation_cyclic;
-    int resume;
-
-    double orbit_angle;
-    vect_t orbit_axis;
-    vect_t orbit_center;
-    double orbit_elevation;
-    double orbit_radius;
-
-    struct bu_vls *turntable_object;
-    double turntable_angle;
-    vect_t turntable_axis;
-    vect_t turntable_center;
-
-    struct bu_vls *save_view_keyframe;
-    double keyframe_time;
-    int replace_keyframe;
-
-    size_t width;
-    int width_set;
-    size_t height;
-    int height_set;
-    size_t size; /* Assumes square - width and height - overridden by width and height */
-    int size_set;
-
-    struct bu_color *bkg_color;
-    struct bu_color *line_color;
-    struct bu_color *non_line_color;
-
-    double ghost_intensity;
-    int occlusion;
-    int benchmark;
-    int cpus;
-
-    /* Cutting plane animation */
-    int cut_steps;
-    int animation_fps;
-    vect_t cut_direction;
-    int cut_direction_set;
-
-    /* Raytrace enhancements */
-    int ao_samples;
-    double ao_radius;
-
-    /* View model */
-    double viewsize;
-    quat_t orientation;
-    vect_t eye_pt;
-
-    /* View settings */
-    double az, el, tw;
-    double perspective;
-    double zoom;
-    vect_t center;
-
-};
-
-static int
-rtwizard_setup_ipc(Tcl_Interp *interp)
-{
-    char ipc_addr[MAXPATHLEN] = {0};
-
-    if (pkg_ipc_addr(ipc_addr, sizeof(ipc_addr), "brlcad-rtwizard") != 0)
-	return 0;
-
-    (void)Tcl_SetVar2(interp, "::RtWizard::wizard_state", "fbserv_ipc_addr",
-		      ipc_addr, TCL_GLOBAL_ONLY);
-
-    return 1;
-}
-
+#ifndef RTWIZARD_HAVE_GUI
+#  define RTWIZARD_HAVE_GUI 0
+#endif
 
 struct rtwizard_settings *
 rtwizard_settings_create(void)
@@ -210,6 +98,7 @@ rtwizard_settings_create(void)
     (void)bu_color_from_rgb_chars(s->non_line_color, black);
     s->benchmark = 0;
     s->port = -1;
+    s->fb_transport = RTWIZARD_FB_AUTO;
     s->cpus = 0;
     s->cut_steps = 0;
     /* Zero means "take the value from an animation track file".  Presets
@@ -267,10 +156,19 @@ rtwizard_settings_create(void)
 
 
 void rtwizard_settings_destroy(struct rtwizard_settings *s) {
+    size_t i;
+
+    if (!s)
+	return;
+    for (i = 0; i < BU_PTBL_LEN(s->color); i++)
+	bu_free((char *)BU_PTBL_GET(s->color, i), "rtwizard color object");
+    for (i = 0; i < BU_PTBL_LEN(s->ghost); i++)
+	bu_free((char *)BU_PTBL_GET(s->ghost, i), "rtwizard ghost object");
+    for (i = 0; i < BU_PTBL_LEN(s->line); i++)
+	bu_free((char *)BU_PTBL_GET(s->line, i), "rtwizard line object");
     bu_ptbl_free(s->color);
     bu_ptbl_free(s->ghost);
     bu_ptbl_free(s->line);
-    /* TODO - loop over and free table contents */
     BU_PUT(s->color, struct bu_ptbl);
     BU_PUT(s->ghost, struct bu_ptbl);
     BU_PUT(s->line,  struct bu_ptbl);
@@ -392,8 +290,8 @@ rtwizard_view_opts_check(struct bu_vls *msg, struct rtwizard_settings *s)
 {
     int high_level = 0;
     int low_level = 0;
-    if (s->az < DBL_MAX || s->el < DBL_MAX || s->tw < DBL_MAX || s->perspective < DBL_MAX
-	|| s->zoom < DBL_MAX || s->center[0] < DBL_MAX) {
+    if (s->az < DBL_MAX || s->el < DBL_MAX || s->tw < DBL_MAX ||
+	s->zoom < DBL_MAX || s->center[0] < DBL_MAX) {
 	high_level = 1;
     }
     if (s->viewsize < DBL_MAX || s->orientation[0] < DBL_MAX || s->eye_pt[0] < DBL_MAX) {
@@ -416,10 +314,6 @@ rtwizard_view_opts_check(struct bu_vls *msg, struct rtwizard_settings *s)
 	    if (s->tw < DBL_MAX) {
 		if (msg) bu_vls_printf(msg, " twist ");
 		s->tw = DBL_MAX;
-	    }
-	    if (s->perspective < DBL_MAX) {
-		if (msg) bu_vls_printf(msg, " perspective ");
-		s->perspective = DBL_MAX;
 	    }
 	    if (s->zoom < DBL_MAX) {
 		if (msg) bu_vls_printf(msg, " zoom ");
@@ -508,6 +402,26 @@ opt_size(struct bu_vls *msg, size_t argc, const char **argv, void *settings)
     } else {
 	return -1;
     }
+}
+
+
+int
+opt_fb_transport(struct bu_vls *msg, size_t argc, const char **argv, void *settings)
+{
+    struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "opt_fb_transport");
+    if (BU_STR_EQUAL(argv[0], "auto"))
+	s->fb_transport = RTWIZARD_FB_AUTO;
+    else if (BU_STR_EQUAL(argv[0], "ipc"))
+	s->fb_transport = RTWIZARD_FB_IPC;
+    else if (BU_STR_EQUAL(argv[0], "tcp"))
+	s->fb_transport = RTWIZARD_FB_TCP;
+    else {
+	bu_vls_printf(msg, "invalid framebuffer transport '%s' (expected auto, ipc, or tcp)\n", argv[0]);
+	return -1;
+    }
+    return 1;
 }
 
 
@@ -718,6 +632,7 @@ void print_rtwizard_state(struct rtwizard_settings *s) {
     bu_vls_printf(&slog, "output_file: %s\n", bu_vls_addr(s->output_file));
     bu_vls_printf(&slog, "fb_dev: %s\n", bu_vls_addr(s->fb_dev));
     bu_vls_printf(&slog, "port: %d\n", s->port);
+    bu_vls_printf(&slog, "fb_transport: %d\n", s->fb_transport);
     bu_vls_printf(&slog, "log_file: %s\n", bu_vls_addr(s->log_file));
     bu_vls_printf(&slog, "pid_file: %s\n", bu_vls_addr(s->pid_file));
 
@@ -752,7 +667,21 @@ void print_rtwizard_state(struct rtwizard_settings *s) {
 }
 
 
-static icv_anim_format_t rtwizard_anim_format(const char *path);
+static int
+rtwizard_anim_path_supported_native(const char *path)
+{
+    const char *ext = strrchr(path, '.');
+    return (ext && (BU_STR_EQUIV(ext, ".apng") || BU_STR_EQUIV(ext, ".png") ||
+	BU_STR_EQUIV(ext, ".avi") || BU_STR_EQUIV(ext, ".mjpg")));
+}
+
+static int
+rtwizard_anim_only_path_native(const char *path)
+{
+    const char *ext = strrchr(path, '.');
+    return (ext && (BU_STR_EQUIV(ext, ".apng") || BU_STR_EQUIV(ext, ".avi") ||
+	BU_STR_EQUIV(ext, ".mjpg")));
+}
 
 
 int rtwizard_imgformat_supported(int fmt) {
@@ -767,646 +696,6 @@ int rtwizard_imgformat_supported(int fmt) {
     if (fmt == BU_MIME_IMAGE_BW)
 	return 1;
     return 0;
-}
-
-
-static int
-rtwizard_anim_path_supported(const char *path)
-{
-    return (rtwizard_anim_format(path) != ICV_ANIM_UNKNOWN);
-}
-
-
-static int
-rtwizard_anim_only_path(const char *path)
-{
-    const char *ext = strrchr(path, '.');
-    return (ext && (BU_STR_EQUIV(ext, ".apng") || BU_STR_EQUIV(ext, ".avi") ||
-	BU_STR_EQUIV(ext, ".mjpg")));
-}
-
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-static void
-rtwizard_disable_std_handle_inheritance(void)
-{
-    void *h = NULL;
-
-    h = GetStdHandle(RTWIZARD_STD_INPUT_HANDLE);
-    if (h)
-	(void)SetHandleInformation(h, RTWIZARD_HANDLE_FLAG_INHERIT, 0);
-
-    h = GetStdHandle(RTWIZARD_STD_OUTPUT_HANDLE);
-    if (h)
-	(void)SetHandleInformation(h, RTWIZARD_HANDLE_FLAG_INHERIT, 0);
-
-    h = GetStdHandle(RTWIZARD_STD_ERROR_HANDLE);
-    if (h)
-	(void)SetHandleInformation(h, RTWIZARD_HANDLE_FLAG_INHERIT, 0);
-}
-#endif
-
-
-static void
-rtwizard_set_state(Tcl_Interp *interp, const char *key, const char *value)
-{
-    (void)Tcl_SetVar2(interp, "::RtWizard::wizard_state", key, value, TCL_GLOBAL_ONLY);
-}
-
-
-static void
-rtwizard_set_state_ptbl(Tcl_Interp *interp, const char *key, struct bu_ptbl *ptbl)
-{
-    size_t i = 0;
-    Tcl_Obj *obj = Tcl_NewListObj(0, NULL);
-
-    Tcl_IncrRefCount(obj);
-    for (i = 0; i < BU_PTBL_LEN(ptbl); i++) {
-	const char *item = (const char *)BU_PTBL_GET(ptbl, i);
-	(void)Tcl_ListObjAppendElement(interp, obj, Tcl_NewStringObj(item, -1));
-    }
-    (void)Tcl_SetVar2Ex(interp, "::RtWizard::wizard_state", key, obj, TCL_GLOBAL_ONLY);
-    Tcl_DecrRefCount(obj);
-}
-
-
-static icv_anim_format_t
-rtwizard_anim_format(const char *path)
-{
-    const char *ext = strrchr(path, '.');
-
-    if (!ext)
-	return ICV_ANIM_UNKNOWN;
-    if (BU_STR_EQUIV(ext, ".apng") || BU_STR_EQUIV(ext, ".png"))
-	return ICV_ANIM_APNG;
-    if (BU_STR_EQUIV(ext, ".avi") || BU_STR_EQUIV(ext, ".mjpg"))
-	return ICV_ANIM_MJPG;
-
-    return ICV_ANIM_UNKNOWN;
-}
-
-
-/* Tcl bridge used by the orchestration script after all PIX frames have
- * been rendered.  Keeping encoding here lets rtwizard use its linked libicv
- * directly rather than repeatedly invoking the icv command line tool. */
-static int
-rtwizard_anim_write_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
-{
-    icv_anim_t *anim = NULL;
-    icv_anim_format_t fmt;
-    const char *output;
-    int width, height, fps, plays;
-    int i;
-
-    if (objc < 7) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj(
-		"usage: rtwizard_anim_write output width height fps plays frame1 ?frame2 ...?", -1));
-	return TCL_ERROR;
-    }
-
-    output = Tcl_GetString(objv[1]);
-    if (Tcl_GetIntFromObj(interp, objv[2], &width) != TCL_OK ||
-	Tcl_GetIntFromObj(interp, objv[3], &height) != TCL_OK ||
-	Tcl_GetIntFromObj(interp, objv[4], &fps) != TCL_OK ||
-	Tcl_GetIntFromObj(interp, objv[5], &plays) != TCL_OK)
-	return TCL_ERROR;
-
-    if (width <= 0 || height <= 0 || fps <= 0 || plays < 0) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj(
-		"animation width, height, and fps must be positive and plays must be nonnegative", -1));
-	return TCL_ERROR;
-    }
-
-    fmt = rtwizard_anim_format(output);
-    if (fmt == ICV_ANIM_UNKNOWN) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj(
-		"animation output must use .apng, .png, .avi, or .mjpg", -1));
-	return TCL_ERROR;
-    }
-
-    anim = icv_anim_create(fmt, (uint32_t)width, (uint32_t)height, fps);
-    if (!anim) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj("failed to create libicv animation", -1));
-	return TCL_ERROR;
-    }
-
-    (void)icv_anim_set_plays(anim, (uint32_t)plays);
-
-    for (i = 6; i < objc; i++) {
-	const char *frame = Tcl_GetString(objv[i]);
-	icv_image_t *img = icv_read(frame, BU_MIME_IMAGE_AUTO, (size_t)width, (size_t)height);
-	if (!img || icv_anim_add_frame(anim, img) != 0) {
-	    if (img)
-		icv_destroy(img);
-	    icv_anim_destroy(anim);
-	    Tcl_SetObjResult(interp, Tcl_ObjPrintf("failed to add animation frame '%s'", frame));
-	    return TCL_ERROR;
-	}
-	icv_destroy(img);
-    }
-
-    if (icv_anim_write(anim, output) != 0) {
-	icv_anim_destroy(anim);
-	(void)bu_file_delete(output);
-	Tcl_SetObjResult(interp, Tcl_ObjPrintf("failed to write animation '%s'", output));
-	return TCL_ERROR;
-    }
-
-    icv_anim_destroy(anim);
-    return TCL_OK;
-}
-
-
-static int
-rtwizard_image_valid_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
-{
-    int width, height;
-    icv_image_t *img;
-    int valid = 0;
-    if (objc != 4 || Tcl_GetIntFromObj(interp, objv[2], &width) != TCL_OK ||
-	Tcl_GetIntFromObj(interp, objv[3], &height) != TCL_OK) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj("usage: rtwizard_image_valid file width height", -1));
-	return TCL_ERROR;
-    }
-    img = icv_read(Tcl_GetString(objv[1]), BU_MIME_IMAGE_AUTO, (size_t)width, (size_t)height);
-    if (img) {
-	valid = (img->width == (size_t)width && img->height == (size_t)height);
-	icv_destroy(img);
-    }
-    Tcl_SetObjResult(interp, Tcl_NewBooleanObj(valid));
-    return TCL_OK;
-}
-
-
-struct rtwizard_bound_data {
-    point_t bmin;
-    point_t bmax;
-    int have_bounds;
-    int error;
-};
-
-
-static union tree *
-rtwizard_bound_leaf(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), struct rt_db_internal *ip, void *client_data)
-{
-    struct rtwizard_bound_data *bd = (struct rtwizard_bound_data *)client_data;
-    point_t bmin, bmax;
-    int bret = -1;
-    union tree *tp;
-    struct soltab *stp;
-    struct soltab st_init = RT_SOLTAB_INIT_ZERO;
-
-    VSETALL(bmin, INFINITY);
-    VSETALL(bmax, -INFINITY);
-    if (ip->idb_meth->ft_bbox)
-	bret = ip->idb_meth->ft_bbox(ip, &bmin, &bmax, tsp->ts_tol);
-    if (bret < 0 && ip->idb_meth->ft_plot) {
-	struct bu_list vhead;
-	BU_LIST_INIT(&vhead);
-	if (ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol, tsp->ts_tol, NULL) >= 0 &&
-	    bv_vlist_bbox(&vhead, &bmin, &bmax, NULL, NULL) == 0)
-	    bret = 0;
-    }
-    if (bret < 0) {
-	bd->error = 1;
-	return TREE_NULL;
-    }
-
-    BU_GET(stp, struct soltab);
-    *stp = st_init;
-    stp->l.magic = RT_SOLTAB_MAGIC;
-    stp->l2.magic = RT_SOLTAB2_MAGIC;
-    stp->st_aradius = 1.0;
-    VMOVE(stp->st_min, bmin);
-    VMOVE(stp->st_max, bmax);
-
-    BU_GET(tp, union tree);
-    RT_TREE_INIT(tp);
-    tp->tr_op = OP_SOLID;
-    tp->tr_a.tu_stp = stp;
-    return tp;
-}
-
-
-static int
-rtwizard_bound_tree(const union tree *tp, point_t bmin, point_t bmax)
-{
-    point_t rmin, rmax;
-
-    VSETALL(bmin, INFINITY);
-    VSETALL(bmax, -INFINITY);
-    VSETALL(rmin, INFINITY);
-    VSETALL(rmax, -INFINITY);
-    if (!tp)
-	return -1;
-
-    switch (tp->tr_op) {
-	case OP_SOLID:
-	    VMOVE(bmin, tp->tr_a.tu_stp->st_min);
-	    VMOVE(bmax, tp->tr_a.tu_stp->st_max);
-	    return 0;
-	case OP_UNION:
-	case OP_XOR:
-	    if (rtwizard_bound_tree(tp->tr_b.tb_left, bmin, bmax) < 0 ||
-		rtwizard_bound_tree(tp->tr_b.tb_right, rmin, rmax) < 0)
-		return -1;
-	    VMIN(bmin, rmin);
-	    VMAX(bmax, rmax);
-	    return 0;
-	case OP_INTERSECT:
-	    if (rtwizard_bound_tree(tp->tr_b.tb_left, bmin, bmax) < 0 ||
-		rtwizard_bound_tree(tp->tr_b.tb_right, rmin, rmax) < 0)
-		return -1;
-	    VMAX(bmin, rmin);
-	    VMIN(bmax, rmax);
-	    return 0;
-	case OP_SUBTRACT:
-	    return rtwizard_bound_tree(tp->tr_b.tb_left, bmin, bmax);
-	case OP_GUARD:
-	case OP_XNOP:
-	    return rtwizard_bound_tree(tp->tr_b.tb_left, bmin, bmax);
-	case OP_NOT:
-	    VSETALL(bmin, -INFINITY);
-	    VSETALL(bmax, INFINITY);
-	    return 0;
-	case OP_NOP:
-	default:
-	    return -1;
-    }
-}
-
-
-static void
-rtwizard_bound_tree_clear(union tree *tp, int keep_root)
-{
-    if (!tp)
-	return;
-
-    switch (tp->tr_op) {
-	case OP_SOLID:
-	    if (tp->tr_a.tu_stp)
-		BU_PUT(tp->tr_a.tu_stp, struct soltab);
-	    break;
-	case OP_UNION:
-	case OP_XOR:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	    rtwizard_bound_tree_clear(tp->tr_b.tb_left, 0);
-	    rtwizard_bound_tree_clear(tp->tr_b.tb_right, 0);
-	    break;
-	case OP_GUARD:
-	case OP_XNOP:
-	case OP_NOT:
-	    rtwizard_bound_tree_clear(tp->tr_b.tb_left, 0);
-	    break;
-	default:
-	    break;
-    }
-
-    if (keep_root) {
-	RT_TREE_INIT(tp);
-	tp->tr_op = OP_NOP;
-    } else {
-	BU_PUT(tp, union tree);
-    }
-}
-
-
-static union tree *
-rtwizard_bound_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, void *client_data)
-{
-    struct rtwizard_bound_data *bd = (struct rtwizard_bound_data *)client_data;
-    point_t bmin, bmax;
-
-    if (rtwizard_bound_tree(curtree, bmin, bmax) == 0) {
-	if (!bd->have_bounds) {
-	    VMOVE(bd->bmin, bmin);
-	    VMOVE(bd->bmax, bmax);
-	    bd->have_bounds = 1;
-	} else {
-	    VMIN(bd->bmin, bmin);
-	    VMAX(bd->bmax, bmax);
-	}
-    }
-    rtwizard_bound_tree_clear(curtree, 1);
-    return curtree;
-}
-
-
-/* Return the min/max projection of the requested object trees along a model
- * space direction.  Applying the direction-alignment rotation as the tree's
- * initial matrix avoids the loose diagonal projection of an axis-aligned
- * model bounding box. */
-static int
-rtwizard_cut_bounds_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
-{
-    struct db_i *dbip;
-    struct db_tree_state ts = RT_DBTS_INIT_IDN;
-    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
-    struct bn_tol tol = BN_TOL_INIT_TOL;
-    struct rtwizard_bound_data bd;
-    vect_t dir, ref, xaxis, yaxis;
-    mat_t rmat;
-    const char **objects;
-    int ret;
-    int i;
-
-    if (objc < 4) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj(
-		"usage: rtwizard_cut_bounds database direction object ?object ...?", -1));
-	return TCL_ERROR;
-    }
-    if (bn_decode_vect(dir, Tcl_GetString(objv[2])) != 3 ||
-	MAGNITUDE(dir) <= SQRT_SMALL_FASTF) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj("cutting direction must be a non-zero XYZ vector", -1));
-	return TCL_ERROR;
-    }
-    VUNITIZE(dir);
-
-    dbip = db_open(Tcl_GetString(objv[1]), DB_OPEN_READONLY);
-    if (!dbip || db_dirbuild(dbip) < 0) {
-	if (dbip)
-	    db_close(dbip);
-	Tcl_SetObjResult(interp, Tcl_NewStringObj("unable to open geometry database for animation bounds", -1));
-	return TCL_ERROR;
-    }
-
-    if (fabs(dir[Z]) < 0.9)
-	VSET(ref, 0.0, 0.0, 1.0);
-    else
-	VSET(ref, 0.0, 1.0, 0.0);
-    VCROSS(xaxis, ref, dir);
-    VUNITIZE(xaxis);
-    VCROSS(yaxis, dir, xaxis);
-    VUNITIZE(yaxis);
-    MAT_IDN(rmat);
-    VMOVE(&rmat[0], xaxis);
-    VMOVE(&rmat[4], yaxis);
-    VMOVE(&rmat[8], dir);
-
-    memset(&bd, 0, sizeof(bd));
-    VSETALL(bd.bmin, INFINITY);
-    VSETALL(bd.bmax, -INFINITY);
-    ts.ts_dbip = dbip;
-    ts.ts_ttol = &ttol;
-    ts.ts_tol = &tol;
-    MAT_COPY(ts.ts_mat, rmat);
-
-    objects = (const char **)bu_calloc((size_t)objc - 3, sizeof(char *), "animation bound objects");
-    for (i = 3; i < objc; i++)
-	objects[i - 3] = Tcl_GetString(objv[i]);
-    ret = db_walk_tree(dbip, objc - 3, objects, 1, &ts, NULL,
-	rtwizard_bound_region_end, rtwizard_bound_leaf, &bd);
-    bu_free(objects, "animation bound objects");
-    db_close(dbip);
-
-    if (ret < 0 || bd.error || !bd.have_bounds || !isfinite(bd.bmin[Z]) || !isfinite(bd.bmax[Z])) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj(
-		"cutting-plane animation requires finite rendered-object bounds", -1));
-	return TCL_ERROR;
-    }
-
-    Tcl_Obj *bounds = Tcl_NewListObj(0, NULL);
-    Tcl_ListObjAppendElement(interp, bounds, Tcl_NewDoubleObj(bd.bmin[Z]));
-    Tcl_ListObjAppendElement(interp, bounds, Tcl_NewDoubleObj(bd.bmax[Z]));
-    Tcl_SetObjResult(interp, bounds);
-    return TCL_OK;
-}
-
-
-void
-Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
-{
-    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-
-    (void)Tcl_Eval(interp, "namespace eval RtWizard {}");
-
-    if (s->use_gui) {
-	bu_vls_sprintf(&tcl_cmd, "set ::use_gui 1");
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    if (s->no_gui) {
-	bu_vls_sprintf(&tcl_cmd, "set ::disable_gui 1");
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    if (s->verbose) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(verbose) %d", s->verbose);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    if (bu_vls_strlen(s->input_file)) {
-	rtwizard_set_state(interp, "dbFile", bu_vls_addr(s->input_file));
-    }
-
-    if (bu_vls_strlen(s->output_file)) {
-	rtwizard_set_state(interp, "output_filename", bu_vls_addr(s->output_file));
-    }
-
-    if (bu_vls_strlen(s->fb_dev)) {
-	rtwizard_set_state(interp, "fbserv_device", bu_vls_addr(s->fb_dev));
-    }
-
-    if (s->port > -1) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(fbserv_port) %d", s->port);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    if (s->width_set) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(width) %zu", s->width);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    if (s->height_set) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(scanlines) %zu", s->height);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    if (s->size_set) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(size) %zu", s->size);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	if (!s->width_set) {
-	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(width) %zu", s->size);
-	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	}
-	if (!s->height_set) {
-	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(scanlines) %zu", s->size);
-	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	}
-    }
-
-    rtwizard_set_state_ptbl(interp, "color_objlist", s->color);
-    rtwizard_set_state_ptbl(interp, "ghost_objlist", s->ghost);
-    rtwizard_set_state_ptbl(interp, "line_objlist", s->line);
-
-    {
-	unsigned char rgb[3];
-	(void) bu_color_to_rgb_chars(s->bkg_color, (unsigned char *)rgb);
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(bg_color) \"%d %d %d\"", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-    {
-	unsigned char rgb[3];
-	(void) bu_color_to_rgb_chars(s->line_color, (unsigned char *)rgb);
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(e_color) \"%d %d %d\"", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-    {
-	unsigned char rgb[3];
-	(void) bu_color_to_rgb_chars(s->non_line_color, (unsigned char *)rgb);
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ne_color) \"%d %d %d\"", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ghost_intensity) %0.15f", s->ghost_intensity);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(occmode) %d", s->occlusion);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-
-    if (s->benchmark) {
-	bu_vls_sprintf(&tcl_cmd, "set ::benchmark_mode \"-B\"");
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    if (s->cpus) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(cpu_count) %d", s->cpus);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    if (s->cut_steps) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(cut_steps) %d", s->cut_steps);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	(void)Tcl_SetVar2(interp, "::RtWizard::wizard_state", "make_animation", "1", TCL_GLOBAL_ONLY);
-    }
-
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(animation_fps) %d", s->animation_fps);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(animation_duration) %.17g", s->animation_duration);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(animation_frames) %d", s->animation_frames);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(animation_plays) %d", s->animation_plays);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(animation_cyclic) %d", s->animation_cyclic);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(resume_animation) %d", s->resume);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-
-    if (bu_vls_strlen(s->render_spec))
-	rtwizard_set_state(interp, "render_spec", bu_vls_addr(s->render_spec));
-    if (bu_vls_strlen(s->animation_file)) {
-	rtwizard_set_state(interp, "animation_file", bu_vls_addr(s->animation_file));
-	(void)Tcl_SetVar2(interp, "::RtWizard::wizard_state", "make_animation", "1", TCL_GLOBAL_ONLY);
-    }
-    if (bu_vls_strlen(s->animation_preset)) {
-	rtwizard_set_state(interp, "animation_preset", bu_vls_addr(s->animation_preset));
-	(void)Tcl_SetVar2(interp, "::RtWizard::wizard_state", "make_animation", "1", TCL_GLOBAL_ONLY);
-    }
-    if (bu_vls_strlen(s->frame_dir))
-	rtwizard_set_state(interp, "frame_dir", bu_vls_addr(s->frame_dir));
-    if (bu_vls_strlen(s->save_view_keyframe)) {
-	rtwizard_set_state(interp, "save_view_keyframe", bu_vls_addr(s->save_view_keyframe));
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(keyframe_time) %.17g", s->keyframe_time);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(replace_keyframe) %d", s->replace_keyframe);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(orbit_angle) %.17g", s->orbit_angle);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(orbit_axis) {%.17g %.17g %.17g}", V3ARGS(s->orbit_axis));
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    if (s->orbit_center[0] < DBL_MAX) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(orbit_center) {%.17g %.17g %.17g}", V3ARGS(s->orbit_center));
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-    if (s->orbit_elevation < DBL_MAX) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(orbit_elevation) %.17g", s->orbit_elevation);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-    if (s->orbit_radius < DBL_MAX) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(orbit_radius) %.17g", s->orbit_radius);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    if (bu_vls_strlen(s->turntable_object))
-	rtwizard_set_state(interp, "turntable_object", bu_vls_addr(s->turntable_object));
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(turntable_angle) %.17g", s->turntable_angle);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(turntable_axis) {%.17g %.17g %.17g}", V3ARGS(s->turntable_axis));
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    if (s->turntable_center[0] < DBL_MAX) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(turntable_center) {%.17g %.17g %.17g}", V3ARGS(s->turntable_center));
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    if (s->cut_direction_set) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(cut_direction) \"%0.15f %0.15f %0.15f\"", V3ARGS(s->cut_direction));
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ao_samples) %d", s->ao_samples);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ao_radius) %0.15f", s->ao_radius);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-
-    if (s->az < DBL_MAX) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(init_azimuth) %0.15f", s->az);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-    if (s->el < DBL_MAX) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(init_elevation) %0.15f", s->el);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-    if (s->tw < DBL_MAX) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(init_twist) %0.15f", s->tw);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-    if (s->perspective < DBL_MAX) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(perspective) %0.15f", s->perspective);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-    if (s->zoom < DBL_MAX) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(zoom) %0.15f", s->zoom);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-    if (s->center[0] < DBL_MAX) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(x_center) %0.15f", s->center[0]);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(y_center) %0.15f", s->center[1]);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(z_center) %0.15f", s->center[2]);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-
-    if (s->viewsize < DBL_MAX) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(viewsize) %0.15f", s->viewsize);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    if (s->orientation[0] < DBL_MAX) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(orientation) \"%0.15f %0.15f %0.15f %0.15f\"", s->orientation[0], s->orientation[1], s->orientation[2], s->orientation[3]);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    if (s->eye_pt[0] < DBL_MAX) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(eye_pt) \"%0.15f %0.15f %0.15f\"", s->eye_pt[0], s->eye_pt[1], s->eye_pt[2]);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    }
-
-    if (bu_vls_strlen(s->log_file)) {
-	rtwizard_set_state(interp, "log_file", bu_vls_addr(s->log_file));
-    }
-
-    if (bu_vls_strlen(s->pid_file)) {
-	rtwizard_set_state(interp, "pid_filename", bu_vls_addr(s->pid_file));
-    }
-
-
 }
 
 
@@ -1458,7 +747,7 @@ rtwizard_help(struct bu_opt_desc *d)
     bu_free(option_help, "help str");
 
     /* Display options */
-    bu_vls_sprintf(&filtered, "gui no-gui d p v");
+    bu_vls_sprintf(&filtered, "gui no-gui d p fbserv-transport v");
     settings.accept = bu_vls_addr(&filtered);
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
@@ -1495,56 +784,6 @@ rtwizard_help_dev(struct bu_opt_desc *d)
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);
     bu_vls_free(&filtered);
-}
-
-
-#define RCFILE  ".rtwizardrc"
-static int
-rtwizard_rc(Tcl_Interp *interp)
-{
-    FILE *fp = NULL;
-    char *path;
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-
-
-    if ((path = getenv("RTWIZARD_RCFILE")) != (char *)NULL) {
-	if ((fp = fopen(path, "r")) != NULL) {
-	    bu_vls_strcpy(&str, path);
-	}
-    }
-
-    if (!fp) {
-	if ((path = getenv("HOME")) != (char *)NULL) {
-	    bu_vls_strcpy(&str, path);
-	    bu_vls_strcat(&str, "/");
-	    bu_vls_strcat(&str, RCFILE);
-
-	    fp = fopen(bu_vls_addr(&str), "r");
-	}
-    }
-
-    if (!fp) {
-	if ((fp = fopen(RCFILE, "r")) != NULL) {
-	    bu_vls_strcpy(&str, RCFILE);
-	}
-    }
-
-    /* At this point, if none of the above attempts panned out, give up. */
-
-    if (!fp) {
-	bu_vls_free(&str);
-	return -1;
-    }
-    fclose(fp);
-
-    if (Tcl_EvalFile(interp, bu_vls_addr(&str)) != TCL_OK) {
-	bu_log("Error reading %s:\n%s\n", RCFILE,
-	       Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY));
-    }
-
-    bu_vls_free(&str);
-
-    return 0;
 }
 
 
@@ -1667,8 +906,8 @@ rtwizard_expand_render_spec(int *argcp, char ***argvp)
 	}
 	merged[mac++] = bu_strdup(sav[i]);
     }
-    /* Retain the option itself so the resolved path is available to Tcl and
-     * to view-keyframe capture. */
+    /* Retain the option itself so the resolved path is available to the
+     * native renderer and view-keyframe capture. */
     merged[mac++] = bu_strdup("--render-spec");
     merged[mac++] = bu_strdup(spec);
     for (i = 1; i < argc; i++) {
@@ -1698,7 +937,7 @@ main(int argc, char **argv)
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_vls info_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
-    struct bu_opt_desc d[61];
+    struct bu_opt_desc d[62];
 
     BU_OPT(d[0],  "h", "help",          "",             NULL,            &need_help,     "Print options help and exit");
     BU_OPT(d[1],  "",  "help-dev",      "",             NULL,            &need_help_dev, "Print development and programmatic options.");
@@ -1738,7 +977,7 @@ main(int argc, char **argv)
     BU_OPT(d[25],  "",  "gui",           "",             NULL,            &s->use_gui,    "Force use of GUI.");
     BU_OPT(d[26],  "",  "no-gui",        "",             NULL,            &s->no_gui,     "Do not use GUI, even if available information is insufficient to generate image.");
     BU_OPT(d[27], "d", "fbserv-device", "<device>",     &bu_opt_vls,     s->fb_dev,      "Device for framebuffer viewing (e.g., -d /dev/wgl)");
-    BU_OPT(d[28], "p", "fbserv-port",   "#",            &bu_opt_int,     &s->port,       "Port # for framebuffer");
+    BU_OPT(d[28], "p", "fbserv-port",   "#",            &bu_opt_int,     &s->port,       "Framebuffer service port (used by TCP fallback)");
     BU_OPT(d[29], "",  "benchmark",     "",             NULL,            &s->benchmark,  "Benchmark mode (no randomness)");
     BU_OPT(d[30], "",  "cpu-count",     "#",            &bu_opt_int,     &s->cpus,       "Specify the number of CPUs to use");
     BU_OPT(d[31], "",  "pid-file",      "<filename>",   &bu_opt_vls,     s->pid_file,    "File used for tracking PID numbers");
@@ -1770,11 +1009,15 @@ main(int argc, char **argv)
     BU_OPT(d[57], "",  "time",          "<seconds>",     &bu_opt_fastf_t, &s->keyframe_time, "Keyframe time for --save-view-keyframe");
     BU_OPT(d[58], "",  "replace-keyframe", "",           NULL,            &s->replace_keyframe, "Replace an existing camera keyframe at --time");
     BU_OPT(d[59], "",  "animation-cyclic", "0|1",        &bu_opt_int,     &s->animation_cyclic, "Exclude a duplicate animation endpoint");
-    BU_OPT_NULL(d[60]);
+    BU_OPT(d[60], "",  "fbserv-transport", "auto|ipc|tcp", &opt_fb_transport, s, "Framebuffer transport (local IPC preferred by default)");
+    BU_OPT_NULL(d[61]);
 
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
     av0 = argv[0];
+#if !RTWIZARD_HAVE_GUI
+    (void)av0;
+#endif
 
     rtwizard_expand_render_spec(&argc, &argv);
 
@@ -1861,7 +1104,7 @@ main(int argc, char **argv)
 	if (bu_vls_strlen(s->output_file) == 0 && bu_vls_strlen(s->fb_dev) == 0) {
 	    if (bu_path_component(&c, argv[i], BU_PATH_EXT)) {
 		if (rtwizard_imgformat_supported(bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE)) ||
-		    rtwizard_anim_path_supported(argv[i])) {
+		    rtwizard_anim_path_supported_native(argv[i])) {
 		    bu_vls_sprintf(s->output_file, "%s", argv[i]);
 		    /* This looks like the output image name - don't add it to the color list */
 		    continue;
@@ -1921,10 +1164,10 @@ main(int argc, char **argv)
 	if (have_animation && !bu_vls_strlen(s->output_file) && !bu_vls_strlen(s->frame_dir) && !s->use_gui)
 	    bu_exit(EXIT_FAILURE, "ERROR: an animation requires -o or --frame-dir.\n");
 	if (have_animation && bu_vls_strlen(s->output_file) &&
-	!rtwizard_anim_path_supported(bu_vls_addr(s->output_file)))
+	!rtwizard_anim_path_supported_native(bu_vls_addr(s->output_file)))
 	    bu_exit(EXIT_FAILURE, "ERROR: animation output must use .apng, .png, .avi, or .mjpg.\n");
     if (!have_animation && !s->use_gui && bu_vls_strlen(s->output_file) &&
-	rtwizard_anim_only_path(bu_vls_addr(s->output_file)))
+	rtwizard_anim_only_path_native(bu_vls_addr(s->output_file)))
 	bu_exit(EXIT_FAILURE, "ERROR: .apng, .avi, and .mjpg outputs require an animation option.\n");
     }
 
@@ -1941,109 +1184,26 @@ main(int argc, char **argv)
 
     /*print_rtwizard_state(s);*/
 
-    /* For now, all roads lead to Tcl. */
+    if (s->use_gui) {
+#if RTWIZARD_HAVE_GUI
+	return rtwizard_gui(av0, s, type);
+#else
+	bu_exit(EXIT_FAILURE, "ERROR: this rtwizard build does not include Qt GUI support; supply a complete render request with --no-gui.\n");
+#endif
+    }
 
     {
-	int status = 0;
-	struct bu_vls tlog = BU_VLS_INIT_ZERO;
-	const char *rtwizard = NULL;
-	const char *fullname = NULL;
-	const char *result = NULL;
-	Tcl_DString temp;
-	Tcl_Interp *interp = Tcl_CreateInterp();
-
-
-	/* The subsequent Tcl scripts will take of Tk, so at this
-	 * level we need only the standard init */
-	status = tclcad_init(interp, 0, &tlog);
-	if (status == TCL_ERROR) {
-	    bu_log("tclcad init failure:\n%s\n", bu_vls_addr(&tlog));
+	char *render_error = NULL;
+	int render_status = rtwizard_render(s, type, NULL, NULL, &render_error);
+	if (render_status != BRLCAD_OK) {
+	    bu_log("ERROR: %s\n", render_error ? render_error : "native render failed");
+	    if (render_error) bu_free(render_error, "native render error");
+	    return EXIT_FAILURE;
 	}
-	bu_vls_free(&tlog);
-	(void)Tcl_CreateObjCommand(interp, "rtwizard_anim_write",
-		rtwizard_anim_write_cmd, NULL, NULL);
-	(void)Tcl_CreateObjCommand(interp, "rtwizard_cut_bounds",
-		rtwizard_cut_bounds_cmd, NULL, NULL);
-	(void)Tcl_CreateObjCommand(interp, "rtwizard_image_valid",
-		rtwizard_image_valid_cmd, NULL, NULL);
-	rtwizard_animation_init(interp);
-
-	/* Normalize .g and output image file paths, since they're to be used
-	 * in Tcl scripts */
-	if (bu_vls_strlen(s->input_file) > 0) {
-	    Tcl_Obj *initPath, *normalPath;
-	    initPath = Tcl_NewStringObj(bu_vls_addr(s->input_file), (int)bu_vls_strlen(s->input_file));
-	    Tcl_IncrRefCount(initPath);
-	    normalPath = Tcl_FSGetNormalizedPath(interp, initPath);
-	    bu_vls_sprintf(s->input_file, "%s", Tcl_GetString(normalPath));
-	    Tcl_DecrRefCount(initPath);
-	}
-	if (bu_vls_strlen(s->output_file) > 0) {
-	    Tcl_Obj *initPath, *normalPath;
-	    initPath = Tcl_NewStringObj(bu_vls_addr(s->output_file), (int)bu_vls_strlen(s->output_file));
-	    Tcl_IncrRefCount(initPath);
-	    normalPath = Tcl_FSGetNormalizedPath(interp, initPath);
-	    bu_vls_sprintf(s->output_file, "%s", Tcl_GetString(normalPath));
-	    Tcl_DecrRefCount(initPath);
-	}
-
-	/* Set a single argv so the Tcl scripts will run the main proc.  Not passing more args
-	 * because they can apparently cause problems with Tcl script execution. */
-	tclcad_set_argv(interp, 1, (const char **)&av0);
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	rtwizard_disable_std_handle_inheritance();
-#endif
-
-	Init_RtWizard_Vars(interp, s);
-	if (s->port < 0) {
-	    (void)rtwizard_setup_ipc(interp);
-	}
-
-	/* If we have a .rtwizardrc file, get the previous size settings from it */
-	rtwizard_rc(interp);
-
-	/* We're using this path on the file system, not in Tcl: translate it
-	 * to the appropriate form before doing the eval */
-	Tcl_DStringInit(&temp);
-	rtwizard = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "rtwizard", "rtwizard", NULL);
-	fullname = Tcl_TranslateFileName(interp, rtwizard, &temp);
-	status = Tcl_EvalFile(interp, fullname);
-	Tcl_DStringFree(&temp);
-
-	result = Tcl_GetStringResult(interp);
-	if (status != TCL_OK) {
-	    const char *error_info = Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY);
-	    bu_log("rtwizard Tcl script returned status %d\n", status);
-	    if (strlen(result) > 0)
-		bu_log("%s\n", result);
-	    if (error_info && strlen(error_info) > 0)
-		bu_log("%s\n", error_info);
-	}
-
-	/*Tcl_DeleteInterp(interp);*/
-	return status;
+	if (render_error) bu_free(render_error, "native render error");
+	return EXIT_SUCCESS;
     }
 
-    /* Someday, we want to do this without Tcl via library calls unless
-     * the GUI is needed... */
-#if 0
-    /* At this point, if we know we're supposed to launch the GUI, do it */
-    if (s->use_gui) {
-	/* launch gui */
-    } else {
-	/* Check that we know enough to make an image. */
-	if (!rtwizard_info_sufficient(NULL, s, type)) {
-	    /* If we *can* launch the GUI in this situation, do it */
-	    if (s->no_gui) {
-		bu_exit(EXIT_FAILURE, "ERROR: Image type %c specified, but supplied inputs are insufficient for generating a type %c image.\n", type, type);
-	    } else {
-		/* Launch GUI */
-	    }
-	}
-	/* We know enough - make our image */
-    }
-#endif
     return 0;
 }
 
