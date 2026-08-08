@@ -19,8 +19,10 @@ root acceptance now removes that plateau and all sampled outside false hits,
 and those cases are permanent gates.  A shared-line Crofton harness now
 compares final implicit and BREP partitions on identical samples for sphere,
 oblate ellipsoid, ARB8 box, RCC, truncated cone, and torus fixtures.  Surface-
-tree density and seam behavior have not yet changed.  Phase 0 baselines
-documented in brep_raytrace_plan.txt remain authoritative.
+tree density and seam behavior have not yet changed.  Five topology-identical
+CSG regions now compare implicit leaves against individually converted BREP
+leaves under the same Boolean trees.  Phase 0 baselines documented in
+brep_raytrace_plan.txt remain authoritative.
 
 
 REPOSITORY STATE AT START
@@ -118,6 +120,32 @@ ESTABLISHED FINDINGS
     pole, small/large scale, and translated cases while repairing the grazing
     limit.  This is solver conditioning, not the final contact or seam policy.
 
+12. The correct first CSG stress test preserves the Boolean hierarchy and
+    replaces only exactly convertible implicit leaves with BREP leaves.  It
+    does not collapse the tree through ON_Boolean.  Disjoint and overlapping
+    sphere unions, a sphere-intersection lens, a concentric subtraction
+    cavity, and box-minus-cylinder all agree on every directed and shared line
+    in this form.
+
+13. A diagnostic experiment that did collapse the same binary trees to single
+    evaluated BREPs separated Boolean-conversion defects from ray-solver
+    defects.  Disjoint sphere union and concentric cavity happened to match,
+    but overlapping union, intersection lens, and box-minus-cylinder were
+    geometrically wrong before raytracing.  At 8,000 lines, overlapping union
+    produced BREP area/volume about 313.2/527.7 versus implicit 497.6/937.5;
+    the lens produced about 265.4/469.5 versus 121.9/105.5; and the drilled
+    box produced zero BREP chord volume with invalid partitions.  Treat this
+    as a later ON_Boolean/conversion qualification problem, not evidence
+    against the leaf BREP intersection solver.
+
+14. Two later-stage duality tiers are now specified in the plan: replacing
+    exactly convertible leaves throughout larger existing CSG databases while
+    preserving their trees, and using the experimental `brep csg`/
+    brep_to_csg shape recognizer to reconstruct full or partial implicit trees
+    from controlled and NIST BREP examples.  Fully implicit reconstructions
+    are independent oracles; mixed reconstructions must disclose residual
+    BREP leaves and make a weaker claim.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -159,7 +187,9 @@ IMPLEMENTATION CHECKLIST
         [x] Seed in-memory C++ corpus with paired sphere raw segments and
             normal rt_shootray partitions.
         [x] Exercise normal rt_shootray partitions for six analytic fixtures.
-        [ ] Exercise CSG combinations.
+        [x] Exercise five binary CSG combinations with BREP-substituted leaves.
+        [ ] Exercise nested/larger database hierarchies and reverse
+            BREP-to-CSG reconstruction as later qualification tiers.
     [x] Reuse identical deterministic Crofton lines and bounding sphere for
         the analytic primitive fixtures; CSG reuse remains.
     [x] Report per-line crossing and chord differences for analytic fixtures.
@@ -339,6 +369,34 @@ Shared-line Crofton and final partitions:
     implicit endpoint delta is below 1e-7 mm; the planar ARB8 maximum is about
     5.68e-14 mm.
 
+BREP-leaf CSG hierarchy corpus:
+
+  * Each implicit region is duplicated without changing its Boolean tree.
+    Only the two leaf objects are replaced with their exact ft_brep exports in
+    the comparison database.  Normal rt_shootray Boolean weaving therefore
+    sees identical operators, transforms, region semantics, and tolerances.
+
+  * The current hard fixtures are disjoint sphere union, overlapping sphere
+    union, equal-sphere intersection lens, concentric sphere subtraction, and
+    box minus a through cylinder.  They cover disjoint/merged intervals,
+    intersection, internal cavity orientation, planar and curved leaves, and
+    subtraction-generated final partitions without depending on ON_Boolean.
+
+  * All 40,000 shared CSG lines have identical final partition lists and no
+    tangent-band exceptions.  Directed forward/reverse multi-component,
+    merged-union, lens, cavity, cross-hole, through-hole miss, and solid-wall
+    rays also match analytic endpoints.  Maximum paired endpoint error remains
+    below 1e-7 mm.
+
+  cmake --build .build --target \
+    librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
+    PASS
+
+  ctest --test-dir .build -j4 \
+    -R '^(rt_brep_ray|rt_crofton|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 13/13; rt_brep_ray completes in approximately 7 seconds
+
   cmake --build .build --target rt_brep_ray -j8
     PASS
 
@@ -375,8 +433,9 @@ NEXT ACTIONS
 3. Add a safeguarded local correction/contact classification beyond the first
    conditioned Newton improvement.  Do not lower tree density until candidate
    exclusion and fallback behavior are observable and proven equivalent.
-4. Apply the shared rt_shootray/Crofton comparison to well-separated CSG
-   regions: union, intersection, subtraction/cavity, trimmed box-minus-
-   cylinder, nested multi-interval, and tolerance-scaled thin walls.
+4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
+   transformations, noncoincident production-style trees, and tolerance-
+   scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
+   BREP-to-CSG recognition as later, separately classified qualification tiers.
 5. Add sewn Cobb and deliberate seam/trim perturbation fixtures before changing
    tolerance roles or near-trim hit policy.
