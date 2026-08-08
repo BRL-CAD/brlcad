@@ -9680,10 +9680,20 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--interval-only");
     const bool fold_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--fold-only");
+    const bool core_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--core-only");
+    const bool directed_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--directed-only");
+    const bool crofton_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--crofton-only");
+    const bool seam_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--seam-only");
     if (argc != 1 && !report_grazing && !report_cobb && !affine_only &&
-	    !interval_only && !fold_only)
+	    !interval_only && !fold_only && !core_only && !directed_only &&
+	    !crofton_only && !seam_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
-	    "--affine-only|--interval-only|--fold-only]\n", argv[0]);
+	    "--affine-only|--interval-only|--fold-only|--core-only|"
+	    "--directed-only|--crofton-only|--seam-only]\n", argv[0]);
     if (interval_only) {
 	const int interval_failures = check_brep_interval_enclosures() +
 	    check_brep_fold_interval_classifier();
@@ -9691,6 +9701,10 @@ main(int argc, char **argv)
     }
     if (fold_only)
 	return check_brep_fold_solver() ? 1 : 0;
+    const bool split_core = directed_only || crofton_only || seam_only;
+    const bool run_directed = !split_core || directed_only;
+    const bool run_crofton = !split_core || crofton_only;
+    const bool run_seam = !split_core || seam_only;
 
     const double radius = 10.0;
     struct rt_ell_internal ell = {};
@@ -9775,56 +9789,72 @@ main(int argc, char **argv)
     };
 
     int failures = 0;
-    failures += check_brep_interval_enclosures();
-    failures += check_brep_fold_interval_classifier();
-    failures += check_brep_fold_solver();
-    for (size_t repeat = 0; repeat < 16; ++repeat) {
-	for (size_t i = 0; i < sizeof(rays) / sizeof(rays[0]); ++i)
-	    failures += check_ray(rays[i].label, implicit_stp, brep_stp,
-		rtip, &resp, rays[i].origin, rays[i].direction,
-		rays[i].expected_in, rays[i].expected_out);
+    if (!core_only && !split_core) {
+	failures += check_brep_interval_enclosures();
+	failures += check_brep_fold_interval_classifier();
+	failures += check_brep_fold_solver();
     }
+    if (run_directed) {
+	for (size_t repeat = 0; repeat < 16; ++repeat) {
+	    for (size_t i = 0; i < sizeof(rays) / sizeof(rays[0]); ++i)
+		failures += check_ray(rays[i].label, implicit_stp, brep_stp,
+		    rtip, &resp, rays[i].origin, rays[i].direction,
+		    rays[i].expected_in, rays[i].expected_out);
+	}
 
-    failures += check_grazing_ratchet(implicit_stp, brep_stp, rtip, &resp,
-	radius);
+	failures += check_grazing_ratchet(implicit_stp, brep_stp, rtip,
+	    &resp, radius);
 
-    point_t small_center = {1.25, -2.5, 5.0};
-    failures += check_transformed_sphere(rtip, &resp, "small-translated",
-	small_center, 0.01);
-    point_t large_center = {1.0e6, -2.0e6, 3.0e6};
-    failures += check_transformed_sphere(rtip, &resp, "large-translated",
-	large_center, 1.0e4);
+	point_t small_center = {1.25, -2.5, 5.0};
+	failures += check_transformed_sphere(rtip, &resp,
+	    "small-translated", small_center, 0.01);
+	point_t large_center = {1.0e6, -2.0e6, 3.0e6};
+	failures += check_transformed_sphere(rtip, &resp,
+	    "large-translated", large_center, 1.0e4);
 
-    if (report_grazing)
-	grazing_report(implicit_stp, brep_stp, rtip, &resp, radius);
+	if (report_grazing)
+	    grazing_report(implicit_stp, brep_stp, rtip, &resp, radius);
+    }
 
     free_solid(brep_stp);
     free_solid(implicit_stp);
 
-    point_t sphere_min = {-radius, -radius, -radius};
-    point_t sphere_max = {radius, radius, radius};
-    failures += check_shared_crofton_fixture("sphere", &ell_intern,
-	&rtip->rti_tol, sphere_min, sphere_max,
-	4.0 * M_PI * radius * radius,
-	(4.0 / 3.0) * M_PI * radius * radius * radius, 32000);
-    failures += check_shared_primitive_corpus(&rtip->rti_tol);
-    failures += check_brep_leaf_csg_corpus(&rtip->rti_tol);
-    failures += check_cobb_sphere_corpus(&rtip->rti_tol);
-    failures += check_brep_edge_sector_box(&rtip->rti_tol, rtip, &resp);
-    failures += check_brep_edge_sector_concave(&rtip->rti_tol, rtip, &resp);
-    failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
-    failures += check_brep_vertex_fan_fallback(&rtip->rti_tol, rtip, &resp);
-    failures += check_sphere_adaptive_similarity(&rtip->rti_tol);
-    failures += check_ellipsoid_adaptive_affine(&rtip->rti_tol);
-    failures += check_cobb_classifier_invariance(&rtip->rti_tol);
-    failures += check_cobb_ambiguous_correspondence(&rtip->rti_tol, rtip,
-	&resp);
-    failures += check_cobb_discrepancy_bound_budget(&rtip->rti_tol, rtip,
-	&resp);
-    failures += check_cobb_tolerance_metadata(&rtip->rti_tol, rtip, &resp);
-    failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb,
-	rtip, &resp);
-    failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);
+    if (run_directed)
+	failures += check_sphere_adaptive_similarity(&rtip->rti_tol);
+
+    if (run_crofton) {
+	point_t sphere_min = {-radius, -radius, -radius};
+	point_t sphere_max = {radius, radius, radius};
+	failures += check_shared_crofton_fixture("sphere", &ell_intern,
+	    &rtip->rti_tol, sphere_min, sphere_max,
+	    4.0 * M_PI * radius * radius,
+	    (4.0 / 3.0) * M_PI * radius * radius * radius, 32000);
+	failures += check_shared_primitive_corpus(&rtip->rti_tol);
+	failures += check_brep_leaf_csg_corpus(&rtip->rti_tol);
+	failures += check_cobb_sphere_corpus(&rtip->rti_tol);
+	failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);
+    }
+
+    if (!core_only && !split_core)
+	failures += check_ellipsoid_adaptive_affine(&rtip->rti_tol);
+
+    if (run_seam) {
+	failures += check_brep_edge_sector_box(&rtip->rti_tol, rtip, &resp);
+	failures += check_brep_edge_sector_concave(&rtip->rti_tol, rtip,
+	    &resp);
+	failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
+	failures += check_brep_vertex_fan_fallback(&rtip->rti_tol, rtip,
+	    &resp);
+	failures += check_cobb_classifier_invariance(&rtip->rti_tol);
+	failures += check_cobb_ambiguous_correspondence(&rtip->rti_tol, rtip,
+	    &resp);
+	failures += check_cobb_discrepancy_bound_budget(&rtip->rti_tol, rtip,
+	    &resp);
+	failures += check_cobb_tolerance_metadata(&rtip->rti_tol, rtip,
+	    &resp);
+	failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb,
+	    rtip, &resp);
+    }
 
     rt_clean_resource_basic(rtip, &resp);
     BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
