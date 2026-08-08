@@ -926,6 +926,27 @@ The condition-100 and condition-1,000 affine ellipsoid ratchet shows that the
 regular corrector needs a separate fold path.  Its first implementation should
 be a bounded branch-and-prune procedure, not tolerance inflation:
 
+Before entering that fold path, use a conditioned equation basis to remove
+interval dependency that is purely an artifact of the two selected ray-plane
+equations.  If F=(f0,f1) is the original Bernstein system, choose a finite 2x2
+matrix M from a representative projected Jacobian and form G=M F.  A useful
+choice aligns one row with the dominant derivative column and the other row
+perpendicular to it.  The transform is only a conditioning hint: F=0 implies
+G=0 even if M is inaccurate or singular.  Consequently, an outward
+coefficient hull for either component of G that excludes zero safely excludes
+the box.  Failure to construct finite derivative or transformed-coefficient
+bounds must retain the box.
+
+This operation must propagate both source coefficient errors with outward
+interval multiplication and addition for every transformed coefficient.  Its
+test gate must compare observed hulls to an exact-dyadic oracle over every
+supported surface order, signed mixing matrices, very small and very large
+binary scales, and zero matrix entries.  A transformed exclusion is permitted
+only when the exact hull excludes zero as well.  The operation is
+allocation-free and separately counts attempts, exclusions, retained boxes,
+and inconclusive arithmetic.  It can reduce the work presented to the fold
+solver, but it does not establish a root or authorize hit publication.
+
   1. On a terminal ambiguous parameter box, evaluate a candidate point and a
      scaled 2x2 SVD or equivalent rank-revealing factorization of the
      projected Jacobian.  Let p be the well-conditioned right-singular

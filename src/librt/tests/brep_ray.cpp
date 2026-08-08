@@ -493,8 +493,14 @@ brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace,
 	  trace.local_corrector_min_failure_ratio > 1.0 &&
 	  trace.local_corrector_max_failure_ratio >=
 	    trace.local_corrector_min_failure_ratio));
+    const bool rotated_hulls_match =
+	trace.surface_rotated_hull_attempts ==
+	trace.surface_rotated_hull_exclusions +
+	trace.surface_rotated_hull_retained +
+	trace.surface_rotated_hull_inconclusive;
     return leaf_workspace_matches &&
 	corrector_statuses_match &&
+	rotated_hulls_match &&
 	trace.prepared_production_attempts == 1 &&
 	trace.prepared_production_eligible ==
 	    trace.prepared_production_selected &&
@@ -3136,6 +3142,14 @@ static bool
 exact_dyadic_add(const exact_dyadic &first, const exact_dyadic &second,
     exact_dyadic &result)
 {
+    if (!first.mantissa) {
+	result = second;
+	return exact_dyadic_normalize(result);
+    }
+    if (!second.mantissa) {
+	result = first;
+	return exact_dyadic_normalize(result);
+    }
     const int exponent = std::min(first.exponent, second.exponent);
     const int first_shift = first.exponent - exponent;
     const int second_shift = second.exponent - exponent;
@@ -3488,6 +3502,13 @@ check_brep_interval_enclosures()
     const int coordinate_exponents[] = {-300, 0, 300};
     const int direction_exponents[] = {-100, 0, 100};
     const int plane_exponents[] = {-50, 0, 50};
+    const int linear_transform_exponents[] = {-100, 0, 100};
+    const int64_t linear_transform_mantissa[][2][2] = {
+	{{1, 0}, {0, 1}},
+	{{1, 1}, {-1, 1}},
+	{{3, -2}, {1, 4}},
+	{{1, -1}, {1, 1}}
+    };
     const int64_t product_intervals[][4] = {
 	{-3, 5, -7, 2}, {1, 4, 2, 8}, {-9, -2, -5, -1},
 	{-8, -1, 2, 7}, {0, 3, -4, 0}
@@ -3518,6 +3539,7 @@ check_brep_interval_enclosures()
     size_t derivative_checks = 0;
     size_t product_checks = 0;
     size_t division_checks = 0;
+    size_t linear_hull_checks = 0;
     size_t coefficient_checks = 0;
     size_t restriction_checks = 0;
     size_t reparameterization_checks = 0;
@@ -3763,6 +3785,103 @@ check_brep_interval_enclosures()
 		    std::ldexp(1.0, scale_exponent - 32),
 		    std::ldexp(1.0, scale_exponent - 32)
 		};
+		for (size_t transform_case = 0; transform_case <
+			sizeof(linear_transform_mantissa) /
+			sizeof(linear_transform_mantissa[0]); ++transform_case) {
+		    for (size_t transform_scale = 0; transform_scale <
+			    sizeof(linear_transform_exponents) /
+			    sizeof(linear_transform_exponents[0]);
+			    ++transform_scale) {
+			fastf_t transform[2][2];
+			exact_dyadic exact_transform[2][2];
+			for (int row = 0; row < 2; ++row) {
+			    for (int column = 0; column < 2; ++column) {
+				exact_transform[row][column] = {
+				    linear_transform_mantissa[transform_case]
+					[row][column],
+				    linear_transform_exponents[transform_scale]
+				};
+				transform[row][column] = std::ldexp(
+				    (double)exact_transform[row][column].mantissa,
+				    exact_transform[row][column].exponent);
+			    }
+			}
+			struct rt_brep_linear_hull_test_result observed_hull = {};
+			if (!_rt_brep_linear_hull_test(values[0], values[1],
+				count, coefficient_error, transform,
+				&observed_hull)) {
+			    std::printf("FAIL: linear hull unavailable order=%d/%d "
+				"scale=%d transform=%zu/%d\n", u_order, v_order,
+				scale_exponent, transform_case,
+				linear_transform_exponents[transform_scale]);
+			    failures++;
+			    continue;
+			}
+			bool expected_excluded = false;
+			for (int row = 0; row < 2; ++row) {
+			    long double expected_minimum = LDBL_MAX;
+			    long double expected_maximum = -LDBL_MAX;
+			    for (size_t i = 0; i < count; ++i) {
+				exact_dyadic nominal = {0, 0};
+				exact_dyadic uncertainty = {0, 0};
+				for (int source = 0; source < 2; ++source) {
+				    exact_dyadic term;
+				    exact_dyadic error_term;
+				    exact_dyadic magnitude =
+					exact_transform[row][source];
+				    magnitude.mantissa = llabs(magnitude.mantissa);
+				    const exact_dyadic exact_error = {
+					1, scale_exponent - 32
+				    };
+				    if (!exact_dyadic_multiply(
+					    exact_transform[row][source],
+					    exact[source][i], term) ||
+					    !exact_dyadic_add(nominal, term, nominal) ||
+					    !exact_dyadic_multiply(magnitude,
+						exact_error, error_term) ||
+					    !exact_dyadic_add(uncertainty,
+						error_term, uncertainty)) {
+					failures++;
+					continue;
+				    }
+				}
+				exact_dyadic lower;
+				exact_dyadic upper;
+				if (!exact_dyadic_subtract(nominal, uncertainty,
+					lower) || !exact_dyadic_add(nominal,
+					uncertainty, upper)) {
+				    failures++;
+				    continue;
+				}
+				expected_minimum = std::min(expected_minimum,
+				    exact_dyadic_value(lower));
+				expected_maximum = std::max(expected_maximum,
+				    exact_dyadic_value(upper));
+			    }
+			    linear_hull_checks += count;
+			    if ((long double)observed_hull.minimum[row] >
+				    expected_minimum ||
+				    (long double)observed_hull.maximum[row] <
+				    expected_maximum) {
+				std::printf("FAIL: linear hull enclosure order=%d/%d "
+				    "scale=%d transform=%zu/%d row=%d\n", u_order,
+				    v_order, scale_exponent, transform_case,
+				    linear_transform_exponents[transform_scale], row);
+				failures++;
+			    }
+			    if (expected_minimum > 0.0L ||
+				    expected_maximum < 0.0L)
+				expected_excluded = true;
+			}
+			if (observed_hull.excluded && !expected_excluded) {
+			    std::printf("FAIL: linear hull false exclusion "
+				"order=%d/%d scale=%d transform=%zu/%d\n",
+				u_order, v_order, scale_exponent, transform_case,
+				linear_transform_exponents[transform_scale]);
+			    failures++;
+			}
+		    }
+		}
 		struct rt_brep_interval_test_result observed = {};
 		cases++;
 		if (!_rt_brep_interval_test(values[0], values[1], u_order,
@@ -4098,11 +4217,13 @@ check_brep_interval_enclosures()
     if (!failures) {
 	std::printf("BREP interval enclosure audit: PASS cases=%zu "
 	    "function=%zu derivative=%zu product=%zu quotient=%zu "
-	    "coefficient=%zu restriction=%zu reparameterization=%zu "
+	    "linear-hull=%zu coefficient=%zu restriction=%zu "
+	    "reparameterization=%zu "
 	    "clip=%zu/%zu "
 	    "max-width/error=%.9Lg/%.9Lg/%.9Lg\n",
 	    cases, function_checks, derivative_checks, product_checks,
-	    division_checks, coefficient_checks, restriction_checks,
+	    division_checks, linear_hull_checks, coefficient_checks,
+	    restriction_checks,
 	    reparameterization_checks, clip_contractions, clip_checks,
 	    maximum_function_width_ratio,
 	    maximum_restriction_width_ratio,
@@ -4453,13 +4574,13 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	    ON_3dVector(1.0, 0.4, -0.2), -0.917, 1.0e-6,
 	    {RT_BREP_PREPARED_FALLBACK_NONE,
 	     RT_BREP_PREPARED_FALLBACK_NONE,
-	     RT_BREP_PREPARED_FALLBACK_UNCERTIFIED}},
+	     RT_BREP_PREPARED_FALLBACK_NONE}},
 	{"extreme-condition", ON_3dVector(0.001, 0.05, 1.0),
 	    ON_3dVector(17.0, -29.0, 43.0),
 	    ON_3dVector(-0.6, 0.3, 1.0), 0.583, 1.0e-4,
-	    {RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES,
-	     RT_BREP_PREPARED_FALLBACK_UNCERTIFIED,
-	     RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES}},
+	    {RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_NONE}},
 	{"large-triaxial", ON_3dVector(100.0, 600.0, 2500.0),
 	    ON_3dVector(1.0e6, -2.0e6, 3.0e6),
 	    ON_3dVector(2.0, 0.25, -1.0), 2.017, 0.0,
@@ -4495,6 +4616,9 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
     size_t total_rays = 0;
     size_t total_krawczyk = 0;
     size_t total_boxes = 0;
+    size_t total_rotated_hull_attempts = 0;
+    size_t total_rotated_hull_exclusions = 0;
+    size_t total_rotated_hull_inconclusive = 0;
     size_t minimum_boxes = SIZE_MAX;
     size_t maximum_boxes = 0;
     size_t minimum_depth = SIZE_MAX;
@@ -4513,6 +4637,8 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
     double maximum_prepared_error = 0.0;
     size_t grazing_rays = 0;
     size_t grazing_resolved_misses = 0;
+    size_t grazing_gap_maximum_boxes = 0;
+    size_t grazing_gap_rotated_exclusions = 0;
 
     const auto check_affine_grazing_case = [&](const affine_case &test,
 	    const ON_Xform &xform,
@@ -4637,8 +4763,14 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		    brep_interval_ended[reverse];
 		if (!production_segments)
 		    brep_interval_ended[reverse] = true;
-		if (analytic_resolved && !production_segments)
+		if (analytic_resolved && !production_segments) {
 		    grazing_resolved_misses++;
+		    grazing_gap_maximum_boxes = std::max(
+			grazing_gap_maximum_boxes,
+			trace.surface_isolated_boxes);
+		    grazing_gap_rotated_exclusions +=
+			trace.surface_rotated_hull_exclusions;
+		}
 		const bool reversal_mismatch = reverse &&
 		    production_result.segments != forward_production_segments;
 		if (!reverse)
@@ -4852,6 +4984,12 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		    total_rays++;
 		    total_krawczyk += trace.surface_krawczyk_boxes;
 		    total_boxes += trace.surface_subdivision_boxes;
+		    total_rotated_hull_attempts +=
+			trace.surface_rotated_hull_attempts;
+		    total_rotated_hull_exclusions +=
+			trace.surface_rotated_hull_exclusions;
+		    total_rotated_hull_inconclusive +=
+			trace.surface_rotated_hull_inconclusive;
 		    minimum_boxes = std::min(minimum_boxes,
 			trace.surface_subdivision_boxes);
 		    maximum_boxes = std::max(maximum_boxes,
@@ -4923,8 +5061,7 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			implicit_error > normalized_limit ||
 			production_error > normalized_limit ||
 			legacy_error > normalized_limit ||
-			!brep_trace_fixed_workspaces_match(trace,
-			    !expected_selected) ||
+			!brep_trace_fixed_workspaces_match(trace, true) ||
 			trace.legacy_unique_roots != 2 ||
 			trace.prepared_production_selected !=
 			    (expected_selected ? 1 : 0) ||
@@ -4974,8 +5111,7 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			    trace.prepared_production_selected,
 			    trace.prepared_production_fallback,
 			    expected_fallback,
-			    brep_trace_fixed_workspaces_match(trace,
-				!expected_selected),
+			    brep_trace_fixed_workspaces_match(trace, true),
 			    trace.fixed_leaf_count, trace.fixed_leaf_stored,
 			    trace.fixed_leaf_overflow, trace.fixed_hit_count,
 			    trace.fixed_hit_stored, trace.fixed_hit_overflow,
@@ -5022,6 +5158,15 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	    grazing_resolved_misses);
 	failures++;
     }
+    if (grazing_resolved_misses &&
+	    (grazing_gap_maximum_boxes > 2 ||
+	     !grazing_gap_rotated_exclusions)) {
+	std::printf("FAIL: ellipsoid affine rotated grazing isolation "
+	    "gaps=%zu max-boxes=%zu exclusions=%zu\n",
+	    grazing_resolved_misses, grazing_gap_maximum_boxes,
+	    grazing_gap_rotated_exclusions);
+	failures++;
+    }
     for (size_t ratio_index = 0; ratio_index <
 	    sizeof(grazing_clearance_ratios) /
 	    sizeof(grazing_clearance_ratios[0]); ++ratio_index) {
@@ -5056,11 +5201,14 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	    "rays=%zu selected=%zu fallback=%zu/%zu "
 	    "condition=%.3g/%.3g krawczyk=%zu "
 	    "cert-depth=%zu/%zu boxes=%zu/%zu/%zu "
+	    "rotated-hull=%zu/%zu/%zu "
 	    "max-errors=%.3g/%.3g/%.3g/%.3g\n", total_rays,
 	    selected_rays, surface_box_fallbacks, uncertified_fallbacks,
 	    minimum_condition, maximum_condition, total_krawczyk,
 	    minimum_depth, maximum_depth, minimum_boxes, total_boxes,
-	    maximum_boxes, maximum_implicit_error, maximum_production_error,
+	    maximum_boxes, total_rotated_hull_exclusions,
+	    total_rotated_hull_attempts, total_rotated_hull_inconclusive,
+	    maximum_implicit_error, maximum_production_error,
 	    maximum_legacy_error, maximum_prepared_error);
 	std::printf("Ellipsoid affine grazing ratchet: PASS rays=%zu "
 	    "resolved-gaps=%zu floors=1e-6/1e-6/1e-4\n",
@@ -7589,9 +7737,14 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--cobb-report");
     const bool affine_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--affine-only");
-    if (argc != 1 && !report_grazing && !report_cobb && !affine_only)
+    const bool interval_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--interval-only");
+    if (argc != 1 && !report_grazing && !report_cobb && !affine_only &&
+	    !interval_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
-	    "--affine-only]\n", argv[0]);
+	    "--affine-only|--interval-only]\n", argv[0]);
+    if (interval_only)
+	return check_brep_interval_enclosures() ? 1 : 0;
 
     const double radius = 10.0;
     struct rt_ell_internal ell = {};
