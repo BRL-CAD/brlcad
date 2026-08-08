@@ -1992,7 +1992,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "within_uncertainty,leaves,candidates,raw_hits,after_near_miss,"
 	    "unique_candidates,after_near_hit,after_grazing,after_duplicates,"
 	    "after_direction,final_hits,final_segments,edge_observations,"
-	    "edge_candidates,target_edge_distance,target_edge_tolerance,"
+	    "edge_candidates,prepared_edge_spans,candidate_edge_spans,"
+	    "target_edge_distance,target_edge_tolerance,target_edge_spans,"
 	    "target_edge_within\n");
 	std::printf("cobb_root_columns,direction,g_over_T,h_over_T,reverse,"
 	    "root_index,face,t,u,v,normal_dot,trim_distance,trim_status,"
@@ -2003,7 +2004,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "iteration_limit,evaluation_failed,nonfinite,capacity_exhausted\n");
 	std::printf("cobb_edge_columns,direction,g_over_T,h_over_T,reverse,"
 	    "edge_index,face0,face1,distance,ray_t,edge_parameter,"
-	    "edge_tolerance,within_edge_tolerance\n");
+	    "edge_tolerance,candidate_spans,within_edge_tolerance\n");
     }
 
     for (size_t ratio_index = 0; ratio_index < sizeof(gap_ratios) /
@@ -2101,11 +2102,14 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.edge_overflow ||
 			    trace.edge_evaluation_failures ||
 			    trace.edge_observations != trace.stored_edges ||
-			    trace.manifold_edges != 12) {
+			    trace.manifold_edges != 12 ||
+			    trace.prepared_edge_spans != 12 ||
+			    trace.candidate_edge_spans >
+			    trace.prepared_edge_spans) {
 			std::printf("FAIL: bowed Cobb trace accounting sign=%d "
 			    "g/T=%.3g h/T=%.3g reverse=%d leaves/calls=%zu/%zu "
 			    "roots=%zu/%zu+%zu segments/partitions=%zu/%zu "
-			    "edges=%zu/%zu+%zu failed=%zu\n",
+			    "edges=%zu/%zu+%zu failed=%zu spans=%zu/%zu\n",
 			    sign, gap_ratios[ratio_index],
 			    clearance_ratios[clearance_index], reverse,
 			    trace.intersected_leaves, trace.solver_calls,
@@ -2113,7 +2117,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.root_overflow, trace.final_segments,
 			    variant_result.partitions, trace.manifold_edges,
 			    trace.stored_edges, trace.edge_overflow,
-			    trace.edge_evaluation_failures);
+			    trace.edge_evaluation_failures,
+			    trace.candidate_edge_spans,
+			    trace.prepared_edge_spans);
 			failures++;
 		    }
 		    const struct rt_brep_trace_edge *target_edge =
@@ -2137,15 +2143,19 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			edge_distance_limit;
 		    if (!target_edge || edge_distance_error > edge_distance_limit ||
 			    target_edge->within_edge_tolerance !=
-			    expected_edge_evidence) {
+			    expected_edge_evidence ||
+			    (target_edge->within_edge_tolerance &&
+			    !target_edge->candidate_spans)) {
 			std::printf("FAIL: bowed Cobb target edge distance sign=%d "
 			    "g/T=%.3g h/T=%.3g reverse=%d distance=%.17g "
 			    "expected=%.17g limit=%.17g tolerance=%.17g "
-			    "within=%d/%d\n", sign, gap_ratios[ratio_index],
+			    "spans=%zu within=%d/%d\n", sign,
+			    gap_ratios[ratio_index],
 			    clearance_ratios[clearance_index], reverse,
 			    target_edge ? target_edge->distance : INFINITY,
 			    fabs(clearance), edge_distance_limit,
 			    target_edge ? target_edge->edge_tolerance : INFINITY,
+			    target_edge ? target_edge->candidate_spans : 0,
 			    target_edge ? target_edge->within_edge_tolerance : -1,
 			    expected_edge_evidence);
 			failures++;
@@ -2250,8 +2260,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    if (emit_report) {
 			std::printf("bowed_surface_seam,%s,%.9g,%.9g,%d,%.9g,"
 			    "%zu,%zu,%.9g,%.9g,%.9g,%d,%d,%d,%zu,%zu,%zu,"
-			    "%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,"
-			    "%.9g,%.9g,%d\n",
+			    "%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,"
+			    "%zu,%.9g,%.9g,%zu,%d\n",
 			    sign > 0 ? "outward" :
 			    "inward", measured_gap / tol->dist,
 			    clearance / tol->dist, reverse,
@@ -2267,8 +2277,11 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.after_direction_cleanup, trace.final_hits,
 			    trace.final_segments, trace.edge_observations,
 			    trace.edges_within_tolerance,
+			    trace.prepared_edge_spans,
+			    trace.candidate_edge_spans,
 			    target_edge ? target_edge->distance : INFINITY,
 			    target_edge ? target_edge->edge_tolerance : INFINITY,
+			    target_edge ? target_edge->candidate_spans : 0,
 			    target_edge ? target_edge->within_edge_tolerance : -1);
 			for (size_t root_index = 0;
 				root_index < trace.stored_roots; ++root_index) {
@@ -2299,7 +2312,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    const struct rt_brep_trace_edge &edge =
 				trace.edges[edge_observation];
 			    std::printf("cobb_edge,%s,%.9g,%.9g,%d,%d,%d,%d,"
-				"%.17g,%.17g,%.17g,%.17g,%d\n",
+				"%.17g,%.17g,%.17g,%.17g,%zu,%d\n",
 				sign > 0 ? "outward" : "inward",
 				measured_gap / tol->dist,
 				clearance / tol->dist, reverse,
@@ -2307,6 +2320,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				edge.face_index[1], edge.distance,
 				edge.ray_dist, edge.edge_parameter,
 				edge.edge_tolerance,
+				edge.candidate_spans,
 				edge.within_edge_tolerance);
 			}
 		    }
