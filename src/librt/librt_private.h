@@ -454,6 +454,7 @@ RT_EXPORT extern void rt_vshot_via_shot(
  * NEAR_HIT, NEAR_MISS, and CRACK_HIT at values 0 through 4. */
 #define RT_BREP_TRACE_MAX_ROOTS 64
 #define RT_BREP_TRACE_MAX_EDGES 64
+#define RT_BREP_TRACE_MAX_SURFACE_BOXES 64
 #define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
 #define RT_BREP_TRACE_ENTERING 0
 #define RT_BREP_TRACE_LEAVING 1
@@ -486,6 +487,15 @@ struct rt_brep_trace_edge {
     int closest_state;
 };
 
+struct rt_brep_trace_surface_box {
+    fastf_t uv_min[2];
+    fastf_t uv_max[2];
+    fastf_t t_min;
+    fastf_t t_max;
+    int face_index;
+    int depth;
+};
+
 struct rt_brep_shot_trace {
     size_t intersected_leaves;
     size_t solver_calls;
@@ -507,6 +517,15 @@ struct rt_brep_shot_trace {
     size_t prepared_surface_spans;
     size_t candidate_surface_spans;
     size_t excluded_surface_spans;
+    size_t surface_subdivision_boxes;
+    size_t surface_isolated_boxes;
+    size_t surface_subdivision_max_depth;
+    size_t surface_workspace_high_water;
+    size_t surface_workspace_exhausted;
+    size_t stored_surface_boxes;
+    size_t surface_box_overflow;
+    struct rt_brep_trace_surface_box
+	surface_boxes[RT_BREP_TRACE_MAX_SURFACE_BOXES];
     struct rt_brep_trace_edge edges[RT_BREP_TRACE_MAX_EDGES];
     size_t raw_hits;
     size_t after_near_miss;
