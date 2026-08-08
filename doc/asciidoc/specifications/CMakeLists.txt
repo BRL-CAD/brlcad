@@ -2,6 +2,7 @@ set(
   specifications_EN
   BRL_CAD_g_format_V6.adoc
   BRL_CAD_g_format_V5.adoc
+  rtwizard_render_spec.adoc
 )
 
 if(TARGET librt)
