@@ -563,6 +563,126 @@ brep_build_surface_data(struct brep_specific *bs)
 
 
 static bool
+brep_trim_lift_at(const ON_BrepTrim &trim, double parameter,
+    ON_3dPoint &lift, ON_3dVector *derivative)
+{
+    const ON_BrepFace *face = trim.Face();
+    const ON_Surface *surface = face ? face->SurfaceOf() : NULL;
+    if (!surface)
+	return false;
+    if (!derivative) {
+	const ON_3dPoint uv = trim.PointAt(parameter);
+	lift = surface->PointAt(uv.x, uv.y);
+	return uv.IsValid() && lift.IsValid();
+    }
+    ON_3dPoint uv;
+    ON_3dVector trim_derivative;
+    if (!trim.Ev1Der(parameter, uv, trim_derivative) || !uv.IsValid() ||
+	    !trim_derivative.IsValid())
+	return false;
+    ON_3dVector surface_u;
+    ON_3dVector surface_v;
+    if (!surface->Ev1Der(uv.x, uv.y, lift, surface_u, surface_v) ||
+	    !lift.IsValid() || !surface_u.IsValid() || !surface_v.IsValid())
+	return false;
+    if (derivative) {
+	*derivative = trim_derivative.x * surface_u +
+	    trim_derivative.y * surface_v;
+	if (!derivative->IsValid())
+	    return false;
+    }
+    return true;
+}
+
+
+static bool
+brep_edge_trim_parameter(const ON_BrepEdge &edge, const ON_BrepTrim &trim,
+    double edge_parameter, double &trim_parameter)
+{
+    const ON_Interval edge_domain = edge.Domain();
+    const ON_Interval trim_domain = trim.Domain();
+    if (!edge_domain.IsIncreasing() || !trim_domain.IsIncreasing() ||
+	    trim.m_ei != edge.m_edge_index)
+	return false;
+    const ON_3dPoint edge_point = edge.PointAt(edge_parameter);
+    if (!edge_point.IsValid())
+	return false;
+
+    double edge_fraction = edge_domain.NormalizedParameterAt(edge_parameter);
+    if (!std::isfinite(edge_fraction) ||
+	    edge_fraction < -ON_ZERO_TOLERANCE ||
+	    edge_fraction > 1.0 + ON_ZERO_TOLERANCE)
+	return false;
+    edge_fraction = std::max(0.0, std::min(1.0, edge_fraction));
+    if (trim.m_bRev3d)
+	edge_fraction = 1.0 - edge_fraction;
+
+    double best_parameter = trim_domain.ParameterAt(edge_fraction);
+    ON_3dPoint initial_lift;
+    if (!brep_trim_lift_at(trim, best_parameter, initial_lift, NULL))
+	return false;
+    double best_distance = initial_lift.DistanceTo(edge_point);
+    if (!std::isfinite(best_distance))
+	return false;
+    for (int sample = 0; sample <= 32; ++sample) {
+	const double parameter = trim_domain.ParameterAt((double)sample / 32.0);
+	ON_3dPoint lift;
+	if (!brep_trim_lift_at(trim, parameter, lift, NULL))
+	    return false;
+	const double distance = lift.DistanceTo(edge_point);
+	if (!std::isfinite(distance))
+	    return false;
+	if (distance < best_distance) {
+	    best_distance = distance;
+	    best_parameter = parameter;
+	}
+    }
+
+    for (int iteration = 0; iteration < 24; ++iteration) {
+	ON_3dPoint lift;
+	ON_3dVector derivative;
+	if (!brep_trim_lift_at(trim, best_parameter, lift, &derivative))
+	    return false;
+	const double denominator = derivative * derivative;
+	if (!(denominator > DBL_MIN) || !std::isfinite(denominator))
+	    break;
+	const ON_3dVector residual = lift - edge_point;
+	const double step = (residual * derivative) / denominator;
+	if (!std::isfinite(step))
+	    return false;
+	if (fabs(step) <= 64.0 * DBL_EPSILON *
+		std::max(1.0, trim_domain.Length()))
+	    break;
+
+	bool improved = false;
+	double fraction = 1.0;
+	for (int line_search = 0; line_search < 8; ++line_search) {
+	    const double candidate = std::max(trim_domain.Min(),
+		std::min(trim_domain.Max(), best_parameter - fraction * step));
+	    ON_3dPoint candidate_lift;
+	    if (!brep_trim_lift_at(trim, candidate, candidate_lift, NULL)) {
+		fraction *= 0.5;
+		continue;
+	    }
+	    const double distance = candidate_lift.DistanceTo(edge_point);
+	    if (std::isfinite(distance) && distance < best_distance) {
+		best_parameter = candidate;
+		best_distance = distance;
+		improved = true;
+		break;
+	    }
+	    fraction *= 0.5;
+	}
+	if (!improved)
+	    break;
+    }
+
+    trim_parameter = best_parameter;
+    return std::isfinite(trim_parameter) && std::isfinite(best_distance);
+}
+
+
+static bool
 brep_edge_discrepancy(const ON_Brep &brep, const ON_BrepEdge &edge,
     double &maximum)
 {
@@ -581,17 +701,12 @@ brep_edge_discrepancy(const ON_Brep &brep, const ON_BrepEdge &edge,
 	    if (trim_index < 0 || trim_index >= brep.m_T.Count())
 		return false;
 	    const ON_BrepTrim &trim = brep.m_T[trim_index];
-	    const ON_BrepFace *face = trim.Face();
-	    const ON_Surface *surface = face ? face->SurfaceOf() : NULL;
-	    const ON_Interval trim_domain = trim.Domain();
-	    if (!surface || !trim_domain.IsIncreasing())
+	    double trim_parameter = 0.0;
+	    if (!brep_edge_trim_parameter(edge, trim,
+		    edge_domain.ParameterAt(edge_fraction), trim_parameter))
 		return false;
-	    double trim_fraction = trim.m_bRev3d ? 1.0 - edge_fraction :
-		edge_fraction;
-	    const ON_3dPoint uv = trim.PointAt(
-		trim_domain.ParameterAt(trim_fraction));
-	    const ON_3dPoint lift = surface->PointAt(uv.x, uv.y);
-	    if (!uv.IsValid() || !lift.IsValid())
+	    ON_3dPoint lift;
+	    if (!brep_trim_lift_at(trim, trim_parameter, lift, NULL))
 		return false;
 	    maximum = std::max(maximum, edge_point.DistanceTo(lift));
 	}
@@ -2215,21 +2330,14 @@ brep_edge_face_frame_at(const ON_Brep &brep, const ON_BrepEdge &edge,
 {
     const ON_BrepFace *face = trim.Face();
     const ON_Surface *surface = face ? face->SurfaceOf() : NULL;
-    const ON_Interval edge_domain = edge.Domain();
-    const ON_Interval trim_domain = trim.Domain();
-    if (!face || !surface || !edge_domain.IsIncreasing() ||
-	    !trim_domain.IsIncreasing() || trim.m_ei != edge.m_edge_index)
+    if (!face || !surface || trim.m_ei != edge.m_edge_index)
 	return false;
 
-    double fraction = edge_domain.NormalizedParameterAt(edge_parameter);
-    if (!std::isfinite(fraction) || fraction < -ON_ZERO_TOLERANCE ||
-	    fraction > 1.0 + ON_ZERO_TOLERANCE)
+    double trim_parameter = 0.0;
+    if (!brep_edge_trim_parameter(edge, trim, edge_parameter,
+	    trim_parameter))
 	return false;
-    fraction = std::max(0.0, std::min(1.0, fraction));
-    if (trim.m_bRev3d)
-	fraction = 1.0 - fraction;
 
-    const double trim_parameter = trim_domain.ParameterAt(fraction);
     ON_3dPoint uv;
     ON_3dVector trim_derivative;
     if (!trim.Ev1Der(trim_parameter, uv, trim_derivative) ||
@@ -2665,20 +2773,13 @@ brep_resolve_continuation(struct rt_brep_shot_trace *trace,
     if (!trim || !observation)
 	return;
 
-    const ON_Interval edge_domain = edge.Domain();
-    const ON_Interval trim_domain = trim->Domain();
-    if (!edge_domain.IsIncreasing() || !trim_domain.IsIncreasing())
+    double trim_parameter = 0.0;
+    if (!brep_edge_trim_parameter(edge, *trim,
+	    observation->edge_parameter, trim_parameter))
 	return;
-    double fraction = edge_domain.NormalizedParameterAt(
-	observation->edge_parameter);
-    if (!std::isfinite(fraction))
-	return;
-    fraction = std::max(0.0, std::min(1.0, fraction));
-    if (trim->m_bRev3d)
-	fraction = 1.0 - fraction;
     ON_3dPoint edge_uv3;
     ON_3dVector trim_derivative3;
-    if (!trim->Ev1Der(trim_domain.ParameterAt(fraction), edge_uv3,
+    if (!trim->Ev1Der(trim_parameter, edge_uv3,
 	    trim_derivative3) || !edge_uv3.IsValid() ||
 	    !trim_derivative3.IsValid())
 	return;
