@@ -541,7 +541,11 @@ struct rt_brep_trace_edge {
     int sector_valid;
     int closest_state;
     int discrepancy_measured;
+    int correspondence_screened;
     int correspondence_supported;
+    size_t correspondence_cells;
+    size_t correspondence_depth;
+    int correspondence_exhausted;
     int discrepancy_bounded;
     int discrepancy_bound_exhausted;
     int discrepancy_authorized;
