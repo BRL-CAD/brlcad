@@ -46,6 +46,7 @@ Options::Options()
     originalUnitsMass = true;
     ncpu = 0; // all available
     verbosePrint = 0;
+    previewMode = 0;
 }
 
 Options::~Options()
@@ -77,7 +78,7 @@ bool Options::readParameters(int argc, const char **argv) {
     std::string param_densityFile = "";	// user requested density file
     int param_ncpu = 0;			// user requested num CPUs to use
 
-    struct bu_opt_desc options[26] = {
+    struct bu_opt_desc options[27] = {
 	{"i", "",     "filename.g",        &_param_set_std_str,     &this->inFile,         "input .g"					    },
 	{"o", "",     "filename.png",      &_param_set_std_str,     &param_oFile,          "output file name"				    },
 	{"F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate"		    },
@@ -100,6 +101,7 @@ bool Options::readParameters(int argc, const char **argv) {
 	{"w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units"			    },
 	{"a", "",     "path/to/dir",	   &_param_set_std_str,     &this->workingDir,     "specify dir to write c(a)ched work to"	    },
 	{"P", "",     "#cpus",             &bu_opt_int,             &param_ncpu,           "number of CPUs to use"			    },
+	{"Q", "preview", "",              NULL,                    &this->previewMode,    "fast preview: skip rtarea/gqa verification"        },
 	{"v", "",     "",                  NULL,                    &this->verbosePrint,   "verbose printing"				    },
 	{"h", "help", "",                  NULL,                    &print_help,           "Print help and exit"			    },
 	{"?", "",     "",                  NULL,                    &print_help,           ""						    },
@@ -552,6 +554,10 @@ size_t Options::getNCPU() {
 
 std::string Options::getDensityFile() {
     return densityFile;
+}
+
+bool Options::getPreviewMode() {
+    return previewMode;
 }
 
 
