@@ -730,6 +730,47 @@ conditioning, and conservative bounds may change work without changing the
 physical answer.  Nonuniform scaling is not a similarity and needs a separate
 affine/ellipsoid qualification rather than reuse of this invariant.
 
+The first production publication boundary is deliberately stricter than root
+convergence.  A prepared result may replace the SurfaceTree result only when:
+
+  * the object is a solid and is not in plate mode;
+
+  * every face has supported positive-weight Bezier spans and every span was
+    either coefficient-excluded or completely processed;
+
+  * no subdivision, clipping/restriction, isolated-box, local-root, trim,
+    cluster, or hit workspace reported failure or overflow;
+
+  * every retained isolated box has a strict-interior Krawczyk certificate
+    and contains a corresponding corrected local root from the same face and
+    span;
+
+  * every physical event group has an unambiguous entering or leaving
+    direction (clean trimmed misses may be discarded, but tangencies,
+    contacts, and otherwise unresolved groups may not be published); and
+
+  * the reconstructed fixed-workspace hits survive the established cleanup
+    stages as a finite, even, alternating ENTER/LEAVE partition whose segments
+    are at least the model distance tolerance long.
+
+Any failed condition runs the existing dense SurfaceTree solver unchanged.
+Keep the reasons individually observable: non-solid, plate, unsupported
+surface, surface workspace/restriction, isolated-box storage, uncertified
+root, local workspace/trim, root coverage, event class, hit construction, hit
+workspace, and invalid final partition.  Trace mode should still execute the
+legacy solver after a prepared result qualifies, compare physical events and
+partitions, and then return the prepared production answer.  A private test
+entry point should force the legacy path so that promoted production results
+can be compared against an implementation-independent baseline rather than
+against themselves.
+
+This publication checkpoint does not by itself justify reducing SurfaceTree
+density.  It may increase shot time while both structures coexist, especially
+for grazing rays that do the prepared work and then conservatively fall back.
+Measure ordinary selection rate, fallback distribution, and end-to-end shot
+time before changing the prep tree.  Retain the dense tree until the fallback
+population has another correctness-preserving route.
+
 5.3 Safeguarded corrector
 
 Use the current two-plane equations but replace explicit determinant inversion
