@@ -130,7 +130,11 @@ if {[info exists ::use_gui]} {
    if {[info exists argv]} {exit}
 } else {
 
-   if {![info exists ::RtWizard::wizard_state(output_filename)] && ![info exists ::RtWizard::wizard_state(fbserv_port)] && ![info exists ::RtWizard::wizard_state(fbserv_device)]} {
+   if {![info exists ::RtWizard::wizard_state(output_filename)] &&
+       ![info exists ::RtWizard::wizard_state(frame_dir)] &&
+       ![info exists ::RtWizard::wizard_state(save_view_keyframe)] &&
+       ![info exists ::RtWizard::wizard_state(fbserv_port)] &&
+       ![info exists ::RtWizard::wizard_state(fbserv_device)]} {
      set ::RtWizard::wizard_state(output_filename) rtwizard.pix
      if {![file exists $::RtWizard::wizard_state(output_filename)]} {
 	puts "Warning - no output file or framebuffer specified - using file rtwizard.pix for output."
@@ -138,8 +142,15 @@ if {[info exists ::use_gui]} {
    }
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
      if {[file exists $::RtWizard::wizard_state(output_filename)]} {
-	puts "Error - cannot create output file, $::RtWizard::wizard_state(output_filename) already exists."
-	if {[info exists argv]} {exit}
+	set resume_output [expr {
+	    [info exists ::RtWizard::wizard_state(make_animation)] &&
+	    $::RtWizard::wizard_state(make_animation) &&
+	    [info exists ::RtWizard::wizard_state(resume_animation)] &&
+	    $::RtWizard::wizard_state(resume_animation)}]
+	if {!$resume_output} {
+	    puts "Error - cannot create output file, $::RtWizard::wizard_state(output_filename) already exists."
+	    if {[info exists argv]} {exit}
+	}
      }
    }
 
@@ -332,6 +343,15 @@ if {[info exists ::use_gui]} {
      set eye_pt [lrange [lindex $vdata 2] 1 end]
    }
 
+   set save_only 0
+   if {[info exists ::RtWizard::wizard_state(save_view_keyframe)]} {
+      rtwizard_save_view_keyframe $::RtWizard::wizard_state(save_view_keyframe) \
+	  $::RtWizard::wizard_state(keyframe_time) $::RtWizard::wizard_state(replace_keyframe) \
+	  $eye_pt $orientation $viewsize $::RtWizard::wizard_state(perspective)
+      puts "Saved view keyframe at $::RtWizard::wizard_state(keyframe_time) seconds to $::RtWizard::wizard_state(save_view_keyframe)"
+      set save_only 1
+   }
+
    # populate a dictionary to pass to rtimage
    set rtimage_dict [dict create \
        _dbfile $::RtWizard::wizard_state(dbFile) \
@@ -354,95 +374,22 @@ if {[info exists ::use_gui]} {
        _log_file  $::RtWizard::wizard_state(log_file) \
        _pid_filename $::RtWizard::wizard_state(pid_filename) \
        _cut_plane "" \
+       _anim_commands {} \
        _ao_samples $::RtWizard::wizard_state(ao_samples) \
-       _ao_radius $::RtWizard::wizard_state(ao_radius)
+       _ao_radius $::RtWizard::wizard_state(ao_radius) \
+       _animate 1
        ]
 
 
-   if {[info exists ::RtWizard::wizard_state(cut_steps)] && $::RtWizard::wizard_state(cut_steps) >= 2} {
-      set anim_objects [lsort -unique [concat \
-	  $::RtWizard::wizard_state(color_objlist) \
-	  $::RtWizard::wizard_state(line_objlist) \
-	  $::RtWizard::wizard_state(ghost_objlist)]]
-      if {![llength $anim_objects]} {
-	error "rtwizard: no objects available for cutting-plane animation bounds"
-      }
-
-      if {[info exists ::RtWizard::wizard_state(cut_direction)]} {
-	set cut_dir [vunitize $::RtWizard::wizard_state(cut_direction)]
-      } else {
-	# orientation is the model-to-view rotation.  Its third row points
-	# from the model toward the eye, so negate it to march into the view.
-	set omat [quat_quat2mat $orientation]
-	set cut_dir [vunitize [list \
-	    [expr {-[lindex $omat 8]}] \
-	    [expr {-[lindex $omat 9]}] \
-	    [expr {-[lindex $omat 10]}]]]
-      }
-
-      set sweep_bounds [rtwizard_cut_bounds \
-	  $::RtWizard::wizard_state(dbFile) $cut_dir {*}$anim_objects]
-      set sweep_min [lindex $sweep_bounds 0]
-      set sweep_max [lindex $sweep_bounds 1]
-      set sweep_span [expr {$sweep_max - $sweep_min}]
-      if {$sweep_span <= 0.0} {
-	error "rtwizard: rendered objects have degenerate cutting-plane bounds"
-      }
-      # Keep the terminal slice large enough to survive rasterization while
-      # remaining approximately one output-pixel fraction of the sweep.
-      set sweep_eps [expr {max(abs($sweep_span) / double(max(
-	  $::RtWizard::wizard_state(width), $::RtWizard::wizard_state(scanlines))),
-	  abs($sweep_span) * 0.05, 1.0e-9)}]
-      set sweep_first [expr {$sweep_min - $sweep_eps}]
-      set sweep_last [expr {$sweep_max - $sweep_eps}]
-      if {$::RtWizard::wizard_state(verbose)} {
-	puts "Cut sweep: direction=$cut_dir bounds=$sweep_min..$sweep_max margin=$sweep_eps"
-      }
-
-      set animation_frames {}
-      set frame_count $::RtWizard::wizard_state(cut_steps)
-      set frame_dir [file dirname $::RtWizard::wizard_state(output_filename)]
-      try {
-	for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
-	    set fraction [expr {double($frame_no) / double($frame_count - 1)}]
-	    set plane_dist [expr {$sweep_first + $fraction * ($sweep_last - $sweep_first)}]
-	    set plane_pt [vscale $cut_dir $plane_dist]
-	    set cut_plane [format "%.15g,%.15g,%.15g,%.15g,%.15g,%.15g" \
-		[lindex $plane_pt 0] [lindex $plane_pt 1] [lindex $plane_pt 2] \
-		[lindex $cut_dir 0] [lindex $cut_dir 1] [lindex $cut_dir 2]]
-	    dict set rtimage_dict _cut_plane $cut_plane
-
-	    puts "Rendering frame [expr {$frame_no + 1}]/$frame_count"
-	    catch {exec [file join [bu_dir bin] fbclear] -F [rtwiz_fb_target] \
-		[lindex $::RtWizard::wizard_state(bg_color) 0] \
-		[lindex $::RtWizard::wizard_state(bg_color) 1] \
-		[lindex $::RtWizard::wizard_state(bg_color) 2]}
-	    ::cadwidgets::rtimage $rtimage_dict
-
-	    set frame_file [file join $frame_dir [format ".rtwizard-%d-%06d.pix" [pid] $frame_no]]
-	    exec [file join [bu_dir bin] fb-pix] \
-		-w $::RtWizard::wizard_state(width) \
-		-n $::RtWizard::wizard_state(scanlines) \
-		-F [rtwiz_fb_target] $frame_file 2>@1
-	    lappend animation_frames $frame_file
-	}
-
-	rtwizard_anim_write $::RtWizard::wizard_state(output_filename) \
-	    $::RtWizard::wizard_state(width) \
-	    $::RtWizard::wizard_state(scanlines) \
-	    $::RtWizard::wizard_state(animation_fps) {*}$animation_frames
-      } finally {
-	foreach frame_file $animation_frames {
-	    catch {file delete -force $frame_file}
-	}
-      }
+   if {$save_only} {
+      # View capture deliberately performs no rendering.
    } else {
       ::cadwidgets::rtimage $rtimage_dict
    }
 
-   if {[info exists ::RtWizard::wizard_state(output_filename)]} {
+   if {!$save_only && [info exists ::RtWizard::wizard_state(output_filename)]} {
       set output_generated 0
-      if {[info exists ::RtWizard::wizard_state(cut_steps)] && $::RtWizard::wizard_state(cut_steps) >= 2} {
+      if {[info exists ::RtWizard::wizard_state(make_animation)] && $::RtWizard::wizard_state(make_animation)} {
 	 set output_generated 1
       }
       if {!$output_generated && [file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {

@@ -52,6 +52,7 @@ struct icv_anim {
     uint32_t width;
     uint32_t height;
     int fps;
+    uint32_t plays;
     std::vector<icv_anim_frame> frames;
 };
 
@@ -66,6 +67,7 @@ extern "C" {
 	anim->width = width;
 	anim->height = height;
 	anim->fps = (fps > 0) ? fps : 10;
+	anim->plays = 0;
 	return anim;
     }
 
@@ -99,6 +101,14 @@ extern "C" {
 	for (size_t i = 0; i < anim->frames.size(); ++i) {
 	    anim->frames[i].delay_usec = delay_usec;
 	}
+	return 0;
+    }
+
+    int
+    icv_anim_set_plays(icv_anim_t *anim, uint32_t plays)
+    {
+	if (!anim) return -1;
+	anim->plays = plays;
 	return 0;
     }
 
@@ -296,6 +306,7 @@ extern "C" {
 		if (aapng.frames.empty()) return NULL;
 
 		icv_anim_t *anim = icv_anim_create(ICV_ANIM_APNG, aapng.canvas_width, aapng.canvas_height, 10);
+		anim->plays = aapng.num_plays;
 
 		bool use_composed_frames = false;
 		for (size_t i = 0; i < aapng.frames.size(); ++i) {
@@ -517,7 +528,7 @@ extern "C" {
 	    apngmini::Animation aapng;
 	    aapng.canvas_width = w;
 	    aapng.canvas_height = h;
-	    aapng.num_plays = 0;
+	    aapng.num_plays = anim->plays;
 
 	    for (size_t i = 0; i < anim->frames.size(); ++i) {
 		aapng.frames.push_back(icv_to_apng(anim->frames[i].img, anim->frames[i].delay_usec));
