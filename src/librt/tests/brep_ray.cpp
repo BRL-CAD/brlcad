@@ -3760,6 +3760,7 @@ check_brep_interval_enclosures()
     size_t determinant_uncertain_checks = 0;
     size_t coefficient_checks = 0;
     size_t restriction_checks = 0;
+    size_t per_coefficient_restriction_checks = 0;
     size_t reparameterization_checks = 0;
     size_t clip_checks = 0;
     size_t clip_contractions = 0;
@@ -4242,6 +4243,62 @@ check_brep_interval_enclosures()
 				failures++;
 				    }
 				}
+				exact_dyadic exact_lower_input[256];
+				exact_dyadic exact_upper_input[256];
+				exact_dyadic exact_lower_output[256];
+				exact_dyadic exact_upper_output[256];
+				fastf_t individual_error[256] = {};
+				fastf_t interval_minimum[256] = {};
+				fastf_t interval_maximum[256] = {};
+				bool individual_exact = true;
+				for (size_t i = 0; i < count; ++i) {
+				    const exact_dyadic error_value = {
+					(int64_t)(i % 3 + 1), scale_exponent - 8
+				    };
+				    individual_error[i] =
+					(fastf_t)exact_dyadic_value(error_value);
+				    if (!exact_dyadic_subtract(exact[equation][i],
+					    error_value, exact_lower_input[i]) ||
+					    !exact_dyadic_add(exact[equation][i],
+						error_value, exact_upper_input[i]))
+					individual_exact = false;
+				}
+				if (!individual_exact ||
+					!exact_dyadic_surface_restrict_quarters(
+					    exact_lower_input, u_order, v_order,
+					    minimum_quarters, maximum_quarters,
+					    exact_lower_output) ||
+					!exact_dyadic_surface_restrict_quarters(
+					    exact_upper_input, u_order, v_order,
+					    minimum_quarters, maximum_quarters,
+					    exact_upper_output) ||
+					!_rt_brep_interval_restrict_test(
+					    values[equation], individual_error, u_order,
+					    v_order, minimum, maximum, interval_minimum,
+					    interval_maximum)) {
+				    std::printf("FAIL: per-coefficient restriction "
+					"unavailable order=%d/%d scale=%d case=%zu\n",
+					u_order, v_order, scale_exponent, restriction);
+				    failures++;
+				} else {
+				    for (size_t i = 0; i < count; ++i) {
+					const long double exact_minimum =
+					    exact_dyadic_value(exact_lower_output[i]);
+					const long double exact_maximum =
+					    exact_dyadic_value(exact_upper_output[i]);
+					per_coefficient_restriction_checks++;
+					if ((long double)interval_minimum[i] >
+						exact_minimum ||
+						(long double)interval_maximum[i] <
+						exact_maximum) {
+					    std::printf("FAIL: per-coefficient restriction "
+						"enclosure order=%d/%d scale=%d "
+						"case=%zu coefficient=%zu\n", u_order,
+						v_order, scale_exponent, restriction, i);
+					    failures++;
+					}
+				    }
+				}
 			    }
 
 			    for (size_t reparameterization = 0; reparameterization <
@@ -4667,14 +4724,14 @@ check_brep_interval_enclosures()
 	std::printf("BREP interval enclosure audit: PASS cases=%zu "
 	    "function=%zu derivative=%zu product=%zu quotient=%zu "
 	    "linear-hull=%zu determinant=%zu/%zu+%zu coefficient=%zu "
-	    "restriction=%zu "
+	    "restriction=%zu+%zu "
 	    "reparameterization=%zu "
 	    "clip=%zu/%zu "
 	    "max-width/error=%.9Lg/%.9Lg/%.9Lg\n",
 	    cases, function_checks, derivative_checks, product_checks,
 	    division_checks, linear_hull_checks, determinant_signed,
 	    determinant_checks, determinant_uncertain_checks, coefficient_checks,
-	    restriction_checks,
+	    restriction_checks, per_coefficient_restriction_checks,
 	    reparameterization_checks, clip_contractions, clip_checks,
 	    maximum_function_width_ratio,
 	    maximum_restriction_width_ratio,
@@ -5425,6 +5482,10 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	size_t production_segments = 0;
 	size_t selected = 0;
 	size_t fallback[RT_BREP_PREPARED_FALLBACK_COUNT] = {};
+	size_t fold_attempts = 0;
+	size_t fold_candidates = 0;
+	size_t fold_certified = 0;
+	double fold_minimum_ratio = DBL_MAX;
 	double minimum_chord_ratio = DBL_MAX;
 	double maximum_chord_ratio = 0.0;
 	double maximum_endpoint_error = 0.0;
@@ -5525,6 +5586,15 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		summary.implicit_segments += implicit_result.segments;
 		summary.production_segments += production_result.segments;
 		summary.selected += trace.prepared_production_selected;
+		summary.fold_attempts += trace.surface_fold_attempts;
+		summary.fold_candidates += trace.surface_fold_candidates;
+		summary.fold_certified +=
+		    trace.surface_fold_krawczyk_certified;
+		if (trace.surface_fold_krawczyk_available) {
+		    summary.fold_minimum_ratio = std::min(
+			summary.fold_minimum_ratio,
+			(double)trace.surface_fold_min_determinant_ratio);
+		}
 		if (trace.prepared_production_fallback >= 0 &&
 			trace.prepared_production_fallback <
 			RT_BREP_PREPARED_FALLBACK_COUNT)
@@ -5588,6 +5658,17 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			trace.surface_isolated_boxes);
 		    grazing_gap_rotated_exclusions +=
 			trace.surface_rotated_hull_exclusions;
+		    std::printf("Ellipsoid affine fold gap %s ratio=%.3g "
+			"reverse=%d boxes=%zu fold=%zu/%zu/%zu/%zu "
+			"min-ratio/excess=%.3g/%.3g\n", test.name,
+			grazing_clearance_ratios[ratio_index], reverse,
+			trace.surface_isolated_boxes,
+			trace.surface_fold_attempts,
+			trace.surface_fold_candidates,
+			trace.surface_fold_krawczyk_available,
+			trace.surface_fold_krawczyk_certified,
+			trace.surface_fold_min_determinant_ratio,
+			trace.surface_fold_best_image_excess);
 		}
 		const bool reversal_mismatch = reverse &&
 		    production_result.segments != forward_production_segments;
@@ -6003,7 +6084,8 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	std::printf("Ellipsoid affine grazing ratio=% .3g rays=%zu "
 	    "segments=%zu/%zu selected=%zu "
 	    "fallback=%zu/%zu/%zu/%zu chord/T=%.3g/%.3g "
-	    "max-error=%.3g\n", grazing_clearance_ratios[ratio_index],
+	    "fold=%zu/%zu/%zu/%.3g max-error=%.3g\n",
+	    grazing_clearance_ratios[ratio_index],
 	    summary.rays, summary.implicit_segments,
 	    summary.production_segments, summary.selected,
 	    summary.fallback[RT_BREP_PREPARED_FALLBACK_NONE],
@@ -6011,6 +6093,10 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	    summary.fallback[RT_BREP_PREPARED_FALLBACK_UNCERTIFIED],
 	    summary.fallback[RT_BREP_PREPARED_FALLBACK_PARTITION],
 	    summary.minimum_chord_ratio, summary.maximum_chord_ratio,
+	    summary.fold_attempts, summary.fold_candidates,
+	    summary.fold_certified,
+	    summary.fold_minimum_ratio < DBL_MAX ?
+		summary.fold_minimum_ratio : 0.0,
 	    summary.maximum_endpoint_error);
     }
 

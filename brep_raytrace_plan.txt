@@ -1146,6 +1146,40 @@ ray-plane path must preserve individual coefficient intervals through fused
 construction and restriction, exclude the remaining strip next to the fold,
 prove both adjacent Bezier-span parents, and deduplicate their physical event.
 
+The first real-data qualification must keep that path observable and
+non-authoritative.  Preserve every initial ray-plane coefficient interval
+through span reparameterization and direct restriction to a candidate box;
+do not reconstruct a common patch error after restriction.  Form
+`CV-origin*weight` and each ray-plane dot product with fused operations where
+available, enclosing the correctly rounded fused result outward by a
+representable step.  Audit coefficient-varying restriction independently at
+every supported tensor order, several sub-boxes, and wide dyadic scales.  A
+nominal candidate corrector may center or size proof boxes, but it must not
+shrink the interval coefficients or provide publication authority.
+
+Instrument each localized terminal box with candidate count, restriction
+failure, strict Krawczyk attempts/certificates, determinant ratio, and the
+normalized amount by which the best Krawczyk image misses strict containment.
+This distinguishes search failure from enclosure failure.  If bounded
+candidate search recovers both expected roots but the image remains
+materially outside the box, do not add samples, increase iterations, or
+weaken a determinant/tolerance cutoff.  Introduce a portable higher-precision
+enclosure tier instead, preferably error-free `TwoSum`/FMA-residual products
+and fixed-size expansions with a rigorously outward conversion back to
+binary64.  Apply it only to the localized ambiguous boxes, keep it
+allocation-free, and exact-audit fused coefficient construction plus every
+restriction stage.  Platform `long double`, compiler excess precision, or a
+comparison only against the ordinary binary64 path is not a sufficient
+oracle.
+
+No real fold candidate may become a production hit until both adjacent span
+parents have a complete one-sided corridor/fold-strip proof, coincident
+observations are deduplicated as one physical event, and the resulting
+ENTER/LEAVE interval passes the model minimum-size rule.  Exact contact,
+uncertain determinant sign, capacity exhaustion, unsupported weights/order,
+or an inconclusive precision tier continues to the conservative dense-tree
+fallback.
+
 5.5 Allocation-free ray-time workspace
 
 The new fast path must not call malloc/new or grow STL containers while

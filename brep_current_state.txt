@@ -1754,6 +1754,81 @@ ESTABLISHED FINDINGS
     the fold boundary, qualification of both real span parents, and
     cross-span physical-event deduplication.
 
+55. The real ray-plane interval plumbing and a permanent shadow fold probe
+    now separate candidate discovery from the remaining precision failure.
+    Each prepared span retains an outward interval for every ray-plane
+    Bernstein coefficient, and those intervals follow the same outside-span
+    reparameterization as the nominal coefficients.  Terminal candidate boxes
+    are restricted directly from those original per-coefficient intervals;
+    they are never widened into one patch-wide error first.  Centered
+    homogeneous coordinates use a fused `CV-origin*weight` operation with one
+    outward representable step, and the nominal ray and ray-plane dot products
+    use fused accumulation.  The existing exact coefficient audit still
+    passes.
+
+    A new exact-dyadic restriction gate varies every source coefficient's
+    uncertainty independently.  It covers every supported order pair, three
+    quarter-grid sub-boxes, signed patterns, and the existing wide coefficient
+    scales.  All 546,750 lower and 546,750 upper output bounds enclose the
+    exact restricted values.  This closes the binary64 per-coefficient
+    construction/restriction plumbing item; it does not establish that
+    binary64 intervals are narrow enough for every grazing certificate.
+
+    On each terminal adaptive box retained by the conditioned equation hull,
+    a trace-only, allocation-free probe now runs the fixed 17-sample fold
+    candidate solver.  It optionally applies at most twelve bounded nominal
+    Newton steps to center the candidate, tries eight nested symmetric
+    candidate boxes, restricts the original coefficient intervals directly,
+    and applies the threshold-free interval Krawczyk test.  It records search,
+    restriction, proof, determinant-ratio, and Krawczyk-image-excess telemetry.
+    No outcome changes traversal, publishes a hit, or terminates production
+    isolation.
+
+    The result is decisive on the six known affine grazing gaps.  All twelve
+    expected roots are recovered from the twelve terminal boxes, with two
+    candidates and sixteen Krawczyk trials per forward/reverse hard shot, but
+    none receives strict binary64 inclusion.  The condition-100 h/T=1e-8
+    cases have minimum determinant ratios about 1.24e-7 to 1.26e-7 and best
+    normalized image excesses 0.058 to 0.0663.  The condition-1,000 h/T=1e-6
+    cases have ratios about 4.61e-7 to 4.62e-7 and excesses 0.337 to 0.365.
+    At h/T=1e-8 the ratios fall to about 4.42e-8 to 4.47e-8 and the image
+    excess rises to 40.9 through 41.5.  An anisotropic aspect-ratio grid and
+    the nominal Newton refinement did not move this boundary; the grid was
+    reverted because it only added work and reduced easier certificate
+    counts.  The evidence therefore identifies enclosure precision, not root
+    search, iteration count, or the old determinant threshold, as the next
+    problem.
+
+    The focused optimized and ASan/UBSan `--interval-only`, `--fold-only`, and
+    `--affine-only` gates pass.  The interval audit reports 546,750 common-
+    error and 546,750 per-coefficient restrictions; the fold corpus retains
+    200 systems, 325 roots, 36 strict root certificates, and 36 uniqueness
+    corridors.  The complete optimized ray/Cauchy-Crofton corpus ends with
+    `BREP ray correctness corpus: PASS`.  Production partitions and the six
+    recorded grazing gaps remain unchanged.  Fused nominal arithmetic changes
+    the ordinary affine diagnostic baseline by one conservative hull decision
+    to 36/36 selected, 970 surface boxes, and 445 exclusions in 919 attempts.
+
+    This also preserves the transformation contract established by the Cobb
+    and analytic sphere gates.  Translation, arbitrary rigid rotation, and
+    uniform scale are classifier similarities when geometry, rays, and every
+    model-space length tolerance transform together; the current directed
+    Cobb classifier and sphere solver matrices pass that invariant.  Keeping
+    a fixed absolute tolerance while scaling the geometry is a different
+    modeling contract and is not expected to be invariant.  Nonuniform scale
+    is not a similarity, so it is tested separately through the analytic
+    sphere-to-ellipsoid affine oracle.  Ordinary affine rays pass through
+    condition 1,000, while the six tangent-limit gaps above prevent a broader
+    affine-grazing invariance claim.
+
+    The next arithmetic step is a portable fixed-size error-free expansion or
+    equivalent rigorously outward precision tier, applied only to localized
+    ambiguous boxes and checked against an independent exact oracle.  It must
+    not rely on platform `long double`.  After it certifies the real roots,
+    both adjacent span parents still need complete corridor/fold-boundary
+    coverage and cross-span physical-event deduplication before production
+    promotion.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1949,8 +2024,13 @@ IMPLEMENTATION CHECKLIST
                             determinant coefficients through order 30 and
                             exact-audit nominal values at every supported
                             order plus independent uncertainties through 8x8.
-                        [ ] Preserve those intervals through real fused ray-
-                            plane construction and arbitrary local restriction.
+                        [x] Preserve binary64 per-coefficient intervals through
+                            real fused ray-plane construction,
+                            reparameterization, and arbitrary local
+                            restriction; exact-audit all supported orders.
+                        [ ] Add and exact-audit a portable error-free expansion
+                            or equivalent outward precision tier for the real
+                            cases binary64 cannot certify.
                     [ ] Prove both one-sided parent boxes complete with a
                         monotonic corridor or equivalent degree certificate;
                         do not use broad complement subdivision as the normal
@@ -1962,6 +2042,9 @@ IMPLEMENTATION CHECKLIST
                             misses, including the fold-boundary strip.
                     [ ] Add every failed certificate/aspect-ratio/precision
                         case to a focused C/C++ fold-solver corpus.
+                        [x] Keep all twelve real hard boxes in the focused
+                            affine C++ ratchet with candidate, determinant,
+                            and Krawczyk-image-excess telemetry.
             [x] Keep grazing, singular, and boundary roots on the conservative
                 depth-24 path.
             [x] Independently audit outward rounding and coefficient-error
@@ -2548,6 +2631,13 @@ Cobb sphere baseline:
     root certificates and 36 uniqueness corridors.  The full optimized
     corpus again ends with `BREP ray correctness corpus: PASS` and leaves
     production hit selection unchanged.
+    Repeated after real per-coefficient restriction and the shadow fold proof
+    probe: `--interval-only` exact-audits 546,750 common-error plus 546,750
+    independently uncertain restrictions; `--fold-only` retains all 200
+    systems/325 roots and 36 certificates/corridors; `--affine-only` recovers
+    all twelve hard candidates and records zero real binary64 certificates.
+    The complete optimized corpus again ends with
+    `BREP ray correctness corpus: PASS`; production partitions are unchanged.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -2634,6 +2724,9 @@ Cobb sphere baseline:
     Repeated after determinant and one-sided proof qualification with halt-on-
     error: focused `--fold-only` and `--interval-only` pass with no ASan or
     UBSan diagnostic.
+    Repeated after per-coefficient restriction and the shadow real-fold probe
+    with halt-on-error: focused `--interval-only`, `--fold-only`, and
+    `--affine-only` pass with no ASan or UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -2708,11 +2801,13 @@ NEXT ACTIONS
    mapped tangent/grazing ratchet to certify and eliminate the six remaining
    condition-100 and condition-1,000 resolved misses, then analyze
    anisotropic seam tolerances.  The fixed-work analytic candidate corpus is
-   now a permanent search-stage ratchet, and the Bernstein determinant and
-   synthetic corridor proofs are exact-audited.  Next preserve individual
-   intervals through fused real ray-plane construction and restriction, prove
-   both real one-sided parents complete including their fold-boundary strips,
-   and deduplicate the resulting physical event across the common span.
+   now a permanent search-stage ratchet, and the Bernstein determinant,
+   synthetic corridor, fused real coefficient, and per-coefficient
+   restriction paths are exact-audited.  All twelve hard candidates are
+   recovered in the shadow real path, but binary64 Krawczyk certifies none.
+   Next add an exact-audited portable expansion precision tier, prove both real
+   one-sided parents complete including their fold-boundary strips, and
+   deduplicate the resulting physical event across the common span.
    Separate old-solver root absence from prepared
    box explosion and local-corrector failure.  Find a lower-cost dispatch or
    fallback strategy
