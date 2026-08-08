@@ -33,6 +33,7 @@
 #include <cmath>
 #include <list>
 #include <map>
+#include <new>
 #include <stack>
 #include <iostream>
 #include <algorithm>
@@ -135,6 +136,57 @@ struct fast_line_store {
     {
 	for (ON_Line *line : lines)
 	    delete line;
+    }
+};
+
+struct fast_bridge_store {
+    std::vector<std::map<double, ON_3dPoint *> *> maps;
+
+    ~fast_bridge_store()
+    {
+	for (std::map<double, ON_3dPoint *> *map : maps) {
+	    if (!map)
+		continue;
+	    for (const auto &sample : *map)
+		delete sample.second;
+	    delete map;
+	}
+    }
+
+    void push_back(std::map<double, ON_3dPoint *> *map)
+    {
+	maps.push_back(map);
+    }
+};
+
+struct fast_loop_point_store {
+    ON_SimpleArray<BrepTrimPoint> **points = NULL;
+    int count;
+
+    explicit fast_loop_point_store(int loop_count) : count(loop_count)
+    {
+	if (count <= 0)
+	    return;
+	points = (ON_SimpleArray<BrepTrimPoint> **)bu_calloc(count,
+	    sizeof(ON_SimpleArray<BrepTrimPoint> *), "loop_pnts");
+	try {
+	    for (int i = 0; i < count; i++)
+		points[i] = new ON_SimpleArray<BrepTrimPoint>;
+	} catch (...) {
+	    for (int i = 0; i < count; i++)
+		delete points[i];
+	    bu_free(points, "brep_loop_points");
+	    points = NULL;
+	    throw;
+	}
+    }
+
+    ~fast_loop_point_store()
+    {
+	for (int i = 0; i < count; i++)
+	    delete points[i];
+	if (points)
+	    bu_free(points, "brep_loop_points");
     }
 };
 
@@ -478,11 +530,20 @@ getSurfacePoints(const ON_Surface *s,
     }
 
     if (u_metric_dist > ldfactor * v_metric_dist) {
-	int isteps = (int)(u_metric_dist / v_metric_dist / ldfactor * 2.0);
+	const double requested = u_metric_dist / v_metric_dist / ldfactor * 2.0;
+	const int remaining = FAST_CDT_MAX_SURFACE_SAMPLES -
+	    on_surf_points.Count();
+	if (!std::isfinite(requested) || remaining < 2)
+	    return;
+	int isteps = (int)std::min(requested, (double)(remaining / 2));
+	if (isteps < 1)
+	    return;
 	fastf_t step = udist / (fastf_t) isteps;
 
 	fastf_t step_u;
 	for (int i = 1; i <= isteps; i++) {
+	    if (on_surf_points.Count() >= FAST_CDT_MAX_SURFACE_SAMPLES)
+		return;
 	    step_u = u1 + i * step;
 	    if ((below) && (i < isteps)) {
 		p2d.Set(step_u, v1);
@@ -509,10 +570,19 @@ getSurfacePoints(const ON_Surface *s,
 	    }
 	}
     } else if (v_metric_dist > ldfactor * u_metric_dist) {
-	int isteps = (int)(v_metric_dist / u_metric_dist / ldfactor * 2.0);
+	const double requested = v_metric_dist / u_metric_dist / ldfactor * 2.0;
+	const int remaining = FAST_CDT_MAX_SURFACE_SAMPLES -
+	    on_surf_points.Count();
+	if (!std::isfinite(requested) || remaining < 2)
+	    return;
+	int isteps = (int)std::min(requested, (double)(remaining / 2));
+	if (isteps < 1)
+	    return;
 	fastf_t step = vdist / (fastf_t) isteps;
 	fastf_t step_v;
 	for (int i = 1; i <= isteps; i++) {
+	    if (on_surf_points.Count() >= FAST_CDT_MAX_SURFACE_SAMPLES)
+		return;
 	    step_v = v1 + i * step;
 	    if ((left) && (i < isteps)) {
 		p2d.Set(u1, step_v);
@@ -888,12 +958,22 @@ getUVCurveSamples(const ON_Surface *s,
 		  fastf_t cos_within_ang,
 		  std::map<double, ON_3dPoint *> &param_points)
 {
+    static thread_local int recursion_depth = 0;
+    if (recursion_depth >= FAST_CDT_MAX_RECURSION ||
+	    param_points.size() >= FAST_CDT_MAX_TRIM_SAMPLES ||
+	    !std::isfinite(t1) || !std::isfinite(t2) || !(t2 > t1))
+	return;
+    fast_recursion_guard guard(recursion_depth);
+
     ON_Interval range = curve->Domain();
     ON_3dPoint mid_2d(0.0, 0.0, 0.0);
     ON_3dPoint mid_3d(0.0, 0.0, 0.0);
     ON_3dVector mid_norm(0.0, 0.0, 0.0);
     ON_3dVector mid_tang(0.0, 0.0, 0.0);
     fastf_t t = (t1 + t2) / 2.0;
+    if (!range.IsIncreasing() || !std::isfinite(t) ||
+	    !(t > t1) || !(t < t2))
+	return;
 
     if (curve->EvTangent(t, mid_2d, mid_tang)
 	&& surface_EvNormal(s, mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
@@ -1178,10 +1258,17 @@ extend_over_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint
     int num_points = brep_loop_points.Count();
     double ulength = surf->Domain(0).Length();
     double vlength = surf->Domain(1).Length();
+    if ((surf->IsClosed(0) &&
+	    (!(ulength > ON_ZERO_TOLERANCE) || !std::isfinite(ulength))) ||
+	    (surf->IsClosed(1) &&
+	    (!(vlength > ON_ZERO_TOLERANCE) || !std::isfinite(vlength))))
+	return false;
     for (int i = 1; i < num_points; i++) {
 	if (surf->IsClosed(0)) {
 	    double delta = brep_loop_points[i].p2d.x - brep_loop_points[i - 1].p2d.x;
-	    while (fabs(delta) > ulength / 2.0) {
+	    int shifts = 0;
+	    while (std::isfinite(delta) && fabs(delta) > ulength / 2.0 &&
+		    shifts++ < 64) {
 		if (delta < 0.0) {
 		    brep_loop_points[i].p2d.x += ulength; // east bound
 		} else {
@@ -1189,10 +1276,14 @@ extend_over_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint
 		}
 		delta = brep_loop_points[i].p2d.x - brep_loop_points[i - 1].p2d.x;
 	    }
+	    if (!std::isfinite(delta) || fabs(delta) > ulength / 2.0)
+		return false;
 	}
 	if (surf->IsClosed(1)) {
 	    double delta = brep_loop_points[i].p2d.y - brep_loop_points[i - 1].p2d.y;
-	    while (fabs(delta) > vlength / 2.0) {
+	    int shifts = 0;
+	    while (std::isfinite(delta) && fabs(delta) > vlength / 2.0 &&
+		    shifts++ < 64) {
 		if (delta < 0.0) {
 		    brep_loop_points[i].p2d.y += vlength; // north bound
 		} else {
@@ -1200,6 +1291,8 @@ extend_over_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint
 		}
 		delta = brep_loop_points[i].p2d.y - brep_loop_points[i - 1].p2d.y;
 	    }
+	    if (!std::isfinite(delta) || fabs(delta) > vlength / 2.0)
+		return false;
 	}
     }
 
@@ -1216,10 +1309,14 @@ get_loop_sample_points(
 	const struct bn_tol *tol,
 	fast_face_scratch &scratch)
 {
+    if (!loop)
+	return;
     int trim_count = loop->TrimCount();
 
     for (int lti = 0; lti < trim_count; lti++) {
 	ON_BrepTrim *trim = loop->Trim(lti);
+	if (!trim)
+	    continue;
 	//ON_BrepEdge *edge = trim->Edge();
 
 	if (trim->m_type == ON_BrepTrim::singular) {
@@ -1359,9 +1456,9 @@ CloseOpenLoops(
 	const struct bg_tess_tol *ttol,
 	const struct bn_tol *tol,
 	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
-	double same_point_tolerance)
+	double same_point_tolerance,
+	fast_bridge_store &bridgePoints)
 {
-    std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
     int loop_cnt = face.LoopCount();
     for (int li = 0; li < loop_cnt; li++) {
 	int num_loop_points = brep_loop_points[li]->Count();
@@ -1382,6 +1479,8 @@ CloseOpenLoops(
 			// close using remaining loops
 			for (int rli = li + 1; rli < loop_cnt; rli++) {
 			    int rnum_loop_points = brep_loop_points[rli]->Count();
+			    if (rnum_loop_points < 2)
+				continue;
 			    ON_2dPoint rbrep_loop_begin = (*brep_loop_points[rli])[0].p2d;
 			    ON_2dPoint rbrep_loop_end = (*brep_loop_points[rli])[rnum_loop_points - 1].p2d;
 			    if (!V2NEAR_EQUAL(rbrep_loop_begin, rbrep_loop_end, same_point_tolerance)) {
@@ -1658,6 +1757,8 @@ ShiftInnerLoops(
     int loop_cnt = face.LoopCount();
     if (loop_cnt > 1) { // has inner loops or holes
 	for( int li = 1; li < loop_cnt; li++) {
+	    if (!brep_loop_points[li]->Count())
+		continue;
 	    ON_2dPoint p2d((*brep_loop_points[li])[0].p2d.x, (*brep_loop_points[li])[0].p2d.y);
 	    if (!PointInPolygon(p2d, *brep_loop_points[0])) {
 		double ulength = s->Domain(0).Length();
@@ -1766,7 +1867,8 @@ PerformClosedSurfaceChecks(
 	const struct bg_tess_tol *ttol,
 	const struct bn_tol *tol,
 	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
-	double same_point_tolerance)
+	double same_point_tolerance,
+	fast_bridge_store &bridge_store)
 {
     // force near seam points to seam.
     ForceNearSeamPointsToSeam(s, face, brep_loop_points, same_point_tolerance);
@@ -1778,7 +1880,8 @@ PerformClosedSurfaceChecks(
     ShiftLoopsThatStraddleSeam(s, face, brep_loop_points, same_point_tolerance);
 
     // process through closing open loops that begin and end on closed seam
-    CloseOpenLoops(s, face, ttol, tol, brep_loop_points, same_point_tolerance);
+    CloseOpenLoops(s, face, ttol, tol, brep_loop_points,
+	same_point_tolerance, bridge_store);
 
     // process through to make sure inner hole loops are actually inside of outer polygon
     // need to make sure that any hole polygons are properly shifted over correct closed seams
@@ -1799,6 +1902,8 @@ detria_CDT(struct bu_list *vhead,
     ON_RTree rt_trims;
     ON_2dPointArray on_surf_points;
     const ON_Surface *s = face.SurfaceOf();
+    if (!s)
+	return;
     double surface_width, surface_height;
     int fi = face.m_face_index;
 
@@ -1814,10 +1919,8 @@ detria_CDT(struct bu_list *vhead,
 
     int loop_cnt = face.LoopCount();
     ON_2dPointArray on_loop_points;
-    ON_SimpleArray<BrepTrimPoint> **brep_loop_points = (ON_SimpleArray<BrepTrimPoint> **)bu_calloc(loop_cnt, sizeof(ON_SimpleArray<BrepTrimPoint> *), "loop_pnts");
-    for (int i = 0; i < loop_cnt; i++) {
-	brep_loop_points[i] = new ON_SimpleArray<BrepTrimPoint>;
-    }
+    fast_loop_point_store loop_points(loop_cnt);
+    ON_SimpleArray<BrepTrimPoint> **brep_loop_points = loop_points.points;
 
     // first simply load loop point samples
     for (int li = 0; li < loop_cnt; li++) {
@@ -1826,15 +1929,13 @@ detria_CDT(struct bu_list *vhead,
 		ttol, tol, scratch);
     }
     if (scratch.hit_sample_limit) {
-	for (int i = 0; i < loop_cnt; i++)
-	    delete brep_loop_points[i];
-	bu_free(brep_loop_points, "brep_loop_points");
 	return;
     }
 
-    std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
+    fast_bridge_store bridgePoints;
     if (s->IsClosed(0) || s->IsClosed(1)) {
-	PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
+	PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points,
+	    BREP_SAME_POINT_TOLERANCE, bridgePoints);
 
     }
     // process through loops building polygons.
@@ -1879,11 +1980,6 @@ detria_CDT(struct bu_list *vhead,
 	    }
 	}
     }
-
-    for (int i = 0; i < loop_cnt; i++) {
-	delete brep_loop_points[i];
-    }
-    bu_free(brep_loop_points, "brep_loop_points");
 
     if (outer) {
 	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
@@ -2079,20 +2175,6 @@ detria_CDT(struct bu_list *vhead,
 	}
     }
 
-    std::list<std::map<double, ON_3dPoint *> *>::const_iterator bridgeIter = bridgePoints.begin();
-    while (bridgeIter != bridgePoints.end()) {
-	std::map<double, ON_3dPoint *> *map = (*bridgeIter);
-	std::map<double, ON_3dPoint *>::const_iterator mapIter = map->begin();
-	while (mapIter != map->end()) {
-	    const ON_3dPoint *p = (*mapIter++).second;
-	    delete p;
-	}
-	map->clear();
-	delete map;
-	bridgeIter++;
-    }
-    bridgePoints.clear();
-
     return;
 }
 
@@ -2169,6 +2251,8 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
     ON_RTree rt_trims;
     ON_2dPointArray on_surf_points;
     const ON_Surface *s = face.SurfaceOf();
+    if (!s)
+	return false;
     double surface_width, surface_height;
     int fi = face.m_face_index;
 
@@ -2181,10 +2265,8 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 
     int loop_cnt = face.LoopCount();
     ON_2dPointArray on_loop_points;
-    ON_SimpleArray<BrepTrimPoint> **brep_loop_points = (ON_SimpleArray<BrepTrimPoint> **)bu_calloc(loop_cnt, sizeof(ON_SimpleArray<BrepTrimPoint> *), "loop_pnts");
-    for (int i = 0; i < loop_cnt; i++) {
-	brep_loop_points[i] = new ON_SimpleArray<BrepTrimPoint>;
-    }
+    fast_loop_point_store loop_points(loop_cnt);
+    ON_SimpleArray<BrepTrimPoint> **brep_loop_points = loop_points.points;
 
     // first simply load loop point samples
     for (int li = 0; li < loop_cnt; li++) {
@@ -2193,15 +2275,13 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 		ttol, tol, scratch);
     }
     if (scratch.hit_sample_limit) {
-	for (int i = 0; i < loop_cnt; i++)
-	    delete brep_loop_points[i];
-	bu_free(brep_loop_points, "brep_loop_points");
 	return false;
     }
 
-    std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
+    fast_bridge_store bridgePoints;
     if (s->IsClosed(0) || s->IsClosed(1))
-	PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
+	PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points,
+	    BREP_SAME_POINT_TOLERANCE, bridgePoints);
 
     // process through loops building polygons.
     std::vector<detria::PointD> tpnts;
@@ -2255,18 +2335,11 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 
     if (outer) {
 	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
-	for (int i = 0; i < loop_cnt; i++) {
-	    delete brep_loop_points[i];
-	}
-	bu_free(brep_loop_points, "brep_loop_points");
 	return false;
     }
 
     getSurfacePoints(face, ttol, tol, on_surf_points);
     if (on_surf_points.Count() >= FAST_CDT_MAX_SURFACE_SAMPLES) {
-	for (int i = 0; i < loop_cnt; i++)
-	    delete brep_loop_points[i];
-	bu_free(brep_loop_points, "brep_loop_points");
 	return false;
     }
 
@@ -2323,19 +2396,11 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 	    tri_success = tri.triangulate(true);
 	}
 	catch (...) {
-	    for (int i = 0; i < loop_cnt; i++) {
-		delete brep_loop_points[i];
-	    }
-	    bu_free(brep_loop_points, "brep_loop_points");
 	    return false;
 	}
     }
 
     if (!tri_success) {
-	for (int i = 0; i < loop_cnt; i++) {
-	    delete brep_loop_points[i];
-	}
-	bu_free(brep_loop_points, "brep_loop_points");
 	return false;
     }
 
@@ -2374,25 +2439,6 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 	    }
 	}
     }, true);
-
-    for (int i = 0; i < loop_cnt; i++) {
-	delete brep_loop_points[i];
-    }
-    bu_free(brep_loop_points, "brep_loop_points");
-
-    std::list<std::map<double, ON_3dPoint *> *>::const_iterator bridgeIter = bridgePoints.begin();
-    while (bridgeIter != bridgePoints.end()) {
-	std::map<double, ON_3dPoint *> *map = (*bridgeIter);
-	std::map<double, ON_3dPoint *>::const_iterator mapIter = map->begin();
-	while (mapIter != map->end()) {
-	    const ON_3dPoint *p = (*mapIter++).second;
-	    delete p;
-	}
-	map->clear();
-	delete map;
-	bridgeIter++;
-    }
-    bridgePoints.clear();
 
     return !faces.empty() && faces.size() % 3 == 0 &&
 	pnts.size() % 3 == 0 && pnt_norms.size() == faces.size() * 3;
@@ -2445,8 +2491,17 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 
 	const ON_BrepFace& face = state->brep->m_F[face_index];
 	fast_cdt_face_result &result = (*state->results)[face_index];
-	if (!bg_CDT(result.faces, result.norms, result.pnts, face,
-		state->ttol, state->tol)) {
+	bool success = false;
+	try {
+	    success = bg_CDT(result.faces, result.norms, result.pnts, face,
+		state->ttol, state->tol);
+	} catch (const std::bad_alloc &) {
+	    state->hit_memory_limit = true;
+	    state->stop = true;
+	} catch (...) {
+	    success = false;
+	}
+	if (!success) {
 	    result.failed = true;
 	    result.faces.clear();
 	    result.norms.clear();
@@ -2461,6 +2516,7 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	const size_t result_points = result.pnts.size() / 3;
 	if (state->result_bytes.fetch_add(result_bytes) + result_bytes >
 		state->max_result_bytes) {
+	    state->result_bytes.fetch_sub(result_bytes);
 	    state->hit_memory_limit = true;
 	    state->stop = true;
 	    result.faces.clear();
@@ -2471,6 +2527,8 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	}
 	if (state->result_points.fetch_add(result_points) + result_points >
 		state->max_points) {
+	    state->result_points.fetch_sub(result_points);
+	    state->result_bytes.fetch_sub(result_bytes);
 	    state->hit_point_limit = true;
 	    state->stop = true;
 	    result.faces.clear();
@@ -2574,21 +2632,31 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	if (deadline > 0 && bu_gettime() >= deadline) {
 	    hit_time_limit = true;
 	    result.failed = true;
-	} else if (bg_CDT(result.faces, result.norms, result.pnts,
-		brep->m_F[index], ttol, tol)) {
-	    const size_t bytes = result.faces.size() * sizeof(int) +
-		(result.norms.size() + result.pnts.size()) * sizeof(fastf_t);
-	    if (bytes > options.max_result_bytes) {
+	} else {
+	    bool success = false;
+	    try {
+		success = bg_CDT(result.faces, result.norms, result.pnts,
+		    brep->m_F[index], ttol, tol);
+	    } catch (const std::bad_alloc &) {
 		hit_memory_limit = true;
-		result.failed = true;
-	    } else if (result.pnts.size() / 3 > options.max_points) {
-		hit_point_limit = true;
+	    } catch (...) {
+		success = false;
+	    }
+	    if (!success) {
 		result.failed = true;
 	    } else {
-		result.completed = true;
+		const size_t bytes = result.faces.size() * sizeof(int) +
+		    (result.norms.size() + result.pnts.size()) * sizeof(fastf_t);
+		if (bytes > options.max_result_bytes) {
+		    hit_memory_limit = true;
+		    result.failed = true;
+		} else if (result.pnts.size() / 3 > options.max_points) {
+		    hit_point_limit = true;
+		    result.failed = true;
+		} else {
+		    result.completed = true;
+		}
 	    }
-	} else {
-	    result.failed = true;
 	}
 	if (result.failed) {
 	    result.faces.clear();
