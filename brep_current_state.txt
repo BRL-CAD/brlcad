@@ -54,6 +54,10 @@ Production trim classification now scans the prepared trim leaves directly;
 the former copied-list implementation remains trace-only as an exact
 equivalence oracle.  The full traced corpus hard-gates candidate counts,
 status, selected trim node, and distance.
+Production raw-hit collection, stable sorting, and all legacy cleanup stages
+now use a fixed 128-hit workspace.  Capacity overflow reruns the deterministic
+solve into the legacy list before cleanup or segment publication; trace mode
+keeps exact raw-order, per-stage, and final-event equivalence gates.
 Parallel BREP import, cache deserialization, and SurfaceTree construction now
 also pass the complete cache matrix under ThreadSanitizer without suppressions.
 Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
@@ -1062,11 +1066,33 @@ Cobb sphere baseline:
     under-trim update rule, are deliberately preserved pending a separately
     justified correctness audit.
 
-  * This change does not yet make a complete BREP shot allocation-free.  The
-    production cleanup stages still use std::list<brep_hit>, and fixed leaf
-    traversal deliberately falls back to the allocating legacy path when its
-    128-pointer workspace overflows.  Both are explicit later work rather
-    than hidden assumptions of this checkpoint.
+  * brep_hit no longer retains a const face reference whose assignment
+    operator wrote through const_cast and could overwrite ON_BrepFace
+    geometry.  It now holds a non-owning const pointer and copies that pointer
+    safely.  The uninitialized active member and its only consumer, an unused
+    debug helper, were removed along with the unused MissList declaration.
+
+  * A fixed 128-hit workspace now collects raw production hits, performs a
+    stable insertion sort, and applies index-based equivalents of every
+    legacy near-miss, near-hit, grazing, duplicate, and direction cleanup
+    stage.  Solid and plate segment publication consume the fixed result
+    directly.  Workspace slots are assigned in full only as hits arrive, so
+    the other capacity slots are not eagerly initialized for every shot.
+
+  * Trace mode still runs the legacy std::list path from the same solved hits.
+    It bitwise-compares every raw hit after stable sorting, hard-gates the hit
+    count after each cleanup stage, and compares every final hit field.  The
+    complete directed/Crofton/similarity/metadata/Cobb corpus has zero raw-
+    order, stage-count, or final-event mismatches.  Observed raw-hit high-water
+    marks are 4 for sphere grazing and the transformed classifier, and 6 for
+    the bowed Cobb matrix, versus capacity 128.
+
+  * Hit-workspace overflow is detected before cleanup or segment publication.
+    Production then reruns the deterministic surface solve into the legacy
+    list; trace mode exposes overflow and fallback as hard-gated counters.
+    Surface-leaf traversal has its independent 128-pointer fallback.  Thus the
+    bounded common path avoids dynamic leaf, trim-query, raw-hit, sort, and
+    cleanup containers, while unsupported capacity cases retain correctness.
 
   * Outside-span continuation rectangles are reparameterized algebraically
     into Bernstein form.  The code computes the absolute row-sum norm of each
@@ -1110,6 +1136,13 @@ Cobb sphere baseline:
     PASS: full ray corpus, no ASan or UBSan diagnostics.  Leak detection is
     disabled because LeakSanitizer is incompatible with the host ptrace
     wrapper; leak qualification remains open.
+
+  env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
+    ctest --test-dir .build-asan -j4 \
+    -R '^(rt_brep_ray|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 12/12 after fixed-hit production promotion, including solid and
+    plate segment publication, with no ASan or UBSan diagnostics.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -1169,28 +1202,24 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Make brep_hit safely copyable (the current reference-member assignment can
-   mutate face geometry and active is not consistently initialized/copied),
-   then stage a fixed-capacity root/event workspace with observable overflow
-   fallback before replacing the remaining std::list cleanup path.
-2. Add vertex-fan fixtures and qualify edge/trim parameter correspondence
+1. Add vertex-fan fixtures and qualify edge/trim parameter correspondence
    without assuming normalized parameter speed.  Keep model-space, UV,
    numerical-root, t-cluster, and minimum-segment tolerances distinct.
-3. Add explicit shadow event/winding/contact classes, then activate topology-
+2. Add explicit shadow event/winding/contact classes, then activate topology-
    local crack closure only for fully supported manifold events.
    Restore a crossing inside its authorized envelope, preserve ray-reversal
    symmetry, fall back on unsupported cases, and promote each repaired bowed-
    seam row from the known-defect count to exact solid-interval parity.
-4. Add explicit local root clustering, trim/event classification, and
+3. Add explicit local root clustering, trim/event classification, and
    adaptive subdivision termination beyond the first bounded corrector.  Do
    not lower tree density until candidate exclusion, event equivalence, and
    unsupported/capacity fallback behavior are observable and proven
    equivalent.
-5. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
+4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
    BREP-to-CSG recognition as later, separately classified qualification tiers.
-6. Add endpoint-moving gap/overlap, trim-only, edge-only, vertex, G1, and
+5. Add endpoint-moving gap/overlap, trim-only, edge-only, vertex, G1, and
    combined-error Cobb families, then remove the remaining duplicated Cobb
    control net from brep_invalid.cpp while independently gating its invalid
    topology behavior.
