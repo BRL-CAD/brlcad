@@ -36,6 +36,7 @@
 #include <mutex>
 #include <stack>
 #include <cmath>
+#include <cstring>
 #include <cstdint>
 #include <iostream>
 #include <algorithm>
@@ -2557,6 +2558,9 @@ static bool brep_single_coefficient_intervals(const double cv[4],
     const double origin[3], const double direction[3],
     const double planes[2][3], const brep_interval &direction_squared,
     brep_interval function[2], brep_interval &ray_coefficient);
+static bool brep_single_coefficient_expansion_intervals(const double cv[4],
+    const double origin[3], const double planes[2][3],
+    brep_interval function[2], size_t &high_water);
 
 
 static bool
@@ -2579,12 +2583,15 @@ brep_interval_common_error(double center, const brep_interval &interval,
 struct brep_surface_coefficients {
     double value[2][BREP_DIRECT_BEZIER_MAX_CVS];
     brep_interval value_interval[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    brep_interval value_expansion_interval[2][BREP_DIRECT_BEZIER_MAX_CVS];
     double ray_numerator[BREP_DIRECT_BEZIER_MAX_CVS];
     double weight[BREP_DIRECT_BEZIER_MAX_CVS];
     double error[2] = {0.0, 0.0};
     double ray_numerator_error = 0.0;
     double weight_error = 0.0;
     int order[2] = {0, 0};
+    size_t expansion_high_water = 0;
+    bool expansion_available = false;
 };
 
 
@@ -2615,6 +2622,7 @@ brep_surface_coefficients_init(brep_surface_coefficients &coefficients,
     if (!(direction_squared_interval.minimum > 0.0) ||
 	    !std::isfinite(direction_squared_interval.maximum))
 	return false;
+    coefficients.expansion_available = true;
     for (int i = 0; i < coefficients.order[0]; ++i) {
 	for (int j = 0; j < coefficients.order[1]; ++j) {
 	    ON_4dPoint cv;
@@ -2640,6 +2648,25 @@ brep_surface_coefficients_init(brep_surface_coefficients &coefficients,
 		    plane_value, direction_squared_interval, function_interval,
 		    ray_coefficient))
 		return false;
+	    brep_interval expansion_function_interval[2];
+	    bool expansion_available =
+		brep_single_coefficient_expansion_intervals(cv_value, origin,
+		    plane_value, expansion_function_interval,
+		    coefficients.expansion_high_water);
+	    for (int equation = 0; expansion_available && equation < 2;
+		    ++equation) {
+		expansion_function_interval[equation].minimum = std::max(
+		    expansion_function_interval[equation].minimum,
+		    function_interval[equation].minimum);
+		expansion_function_interval[equation].maximum = std::min(
+		    expansion_function_interval[equation].maximum,
+		    function_interval[equation].maximum);
+		if (expansion_function_interval[equation].minimum >
+			expansion_function_interval[equation].maximum)
+		    expansion_available = false;
+	    }
+	    if (!expansion_available)
+		coefficients.expansion_available = false;
 	    const size_t index = (size_t)i * coefficients.order[1] + j;
 	    double ray_dot = 0.0;
 	    for (int component = 0; component < 3; ++component)
@@ -2662,6 +2689,10 @@ brep_surface_coefficients_init(brep_surface_coefficients &coefficients,
 		    return false;
 		coefficients.value[equation][index] = value;
 		coefficients.value_interval[equation][index] =
+		    function_interval[equation];
+		coefficients.value_expansion_interval[equation][index] =
+		    expansion_available ?
+		    expansion_function_interval[equation] :
 		    function_interval[equation];
 		if (!brep_interval_common_error(value,
 			function_interval[equation],
@@ -3235,28 +3266,14 @@ brep_interval_surface_derivative_hull(const brep_interval *input,
 
 
 static bool
-brep_interval_surface_krawczyk(
-    const brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS],
-    int u_order, int v_order, const double root[2],
+brep_interval_krawczyk_from_bounds(const brep_interval function[2],
+    const brep_interval jacobian[2][2], const double root[2],
     struct rt_brep_krawczyk_test_result &result)
 {
-    if (!values || !root || root[0] < 0.0 || root[0] > 1.0 ||
+    if (!function || !jacobian || !root ||
+	    root[0] < 0.0 || root[0] > 1.0 ||
 	    root[1] < 0.0 || root[1] > 1.0)
 	return false;
-    brep_interval function[2];
-    brep_interval jacobian[2][2];
-    for (int equation = 0; equation < 2; ++equation) {
-	if (!brep_interval_surface_evaluate_coefficients(values[equation],
-		u_order, v_order, root, function[equation]))
-	    return false;
-	for (int direction = 0; direction < 2; ++direction) {
-	    if (!brep_interval_surface_derivative_hull(values[equation],
-		    u_order, v_order, direction,
-		    jacobian[equation][direction]))
-		return false;
-	}
-    }
-
     double midpoint[2][2];
     for (int row = 0; row < 2; ++row) {
 	for (int column = 0; column < 2; ++column) {
@@ -3337,6 +3354,33 @@ brep_interval_surface_krawczyk(
 	    result.certified = 0;
     }
     return true;
+}
+
+
+static bool
+brep_interval_surface_krawczyk(
+    const brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    int u_order, int v_order, const double root[2],
+    struct rt_brep_krawczyk_test_result &result)
+{
+    if (!values || !root || root[0] < 0.0 || root[0] > 1.0 ||
+	    root[1] < 0.0 || root[1] > 1.0)
+	return false;
+    brep_interval function[2];
+    brep_interval jacobian[2][2];
+    for (int equation = 0; equation < 2; ++equation) {
+	if (!brep_interval_surface_evaluate_coefficients(values[equation],
+		u_order, v_order, root, function[equation]))
+	    return false;
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!brep_interval_surface_derivative_hull(values[equation],
+		    u_order, v_order, direction,
+		    jacobian[equation][direction]))
+		return false;
+	}
+    }
+    return brep_interval_krawczyk_from_bounds(function, jacobian, root,
+	result);
 }
 
 
@@ -3589,6 +3633,977 @@ brep_interval_surface_restrict(const brep_interval *input, int u_order,
 }
 
 
+/*
+ * A floating-point expansion stores an exact sum of binary64 components.
+ * The fixed capacity is a work limit, not a geometric assumption: callers
+ * must retain the conservative ordinary interval path when it is exhausted.
+ */
+struct brep_expansion {
+    double component[RT_BREP_EXPANSION_CAPACITY];
+    size_t count;
+};
+
+
+struct brep_expansion_interval {
+    brep_expansion minimum;
+    brep_expansion maximum;
+};
+
+
+static bool brep_expansion_bounds(const brep_expansion &value,
+    brep_interval &bounds);
+
+
+static bool
+brep_two_sum(double first, double second, double &sum, double &error)
+{
+    sum = first + second;
+    if (!std::isfinite(sum))
+	return false;
+    const double second_virtual = sum - first;
+    const double first_virtual = sum - second_virtual;
+    const double second_roundoff = second - second_virtual;
+    const double first_roundoff = first - first_virtual;
+    error = first_roundoff + second_roundoff;
+    return std::isfinite(error);
+}
+
+
+static bool
+brep_two_product(double first, double second, double &product, double &error)
+{
+    if (!std::isfinite(first) || !std::isfinite(second))
+	return false;
+    if (std::fpclassify(first) == FP_ZERO ||
+	    std::fpclassify(second) == FP_ZERO) {
+	product = first * second;
+	error = 0.0;
+	return true;
+    }
+
+    /*
+     * An expansion cannot represent a nonzero bit below the least binary64
+     * subnormal.  Reject any product whose least possible exact significand
+     * bit could cross that boundary.  This is deliberately conservative for
+     * operands with trailing zero bits.
+     */
+    int first_exponent = 0;
+    int second_exponent = 0;
+    (void)std::frexp(first, &first_exponent);
+    (void)std::frexp(second, &second_exponent);
+    const int least_product_exponent = first_exponent + second_exponent -
+	2 * DBL_MANT_DIG;
+    const int least_binary64_exponent = DBL_MIN_EXP - DBL_MANT_DIG;
+    if (least_product_exponent < least_binary64_exponent)
+	return false;
+
+    product = first * second;
+    if (!std::isfinite(product))
+	return false;
+    error = std::fma(first, second, -product);
+    return std::isfinite(error);
+}
+
+
+static bool
+brep_expansion_set(brep_expansion &result, double value,
+    size_t &high_water)
+{
+    if (!std::isfinite(value))
+	return false;
+    result.count = 1;
+    result.component[0] = value;
+    high_water = std::max(high_water, result.count);
+    return true;
+}
+
+
+static bool
+brep_expansion_append(brep_expansion &result, double value)
+{
+    if (std::fpclassify(value) == FP_ZERO)
+	return true;
+    if (!std::isfinite(value) ||
+	    result.count >= RT_BREP_EXPANSION_CAPACITY)
+	return false;
+    result.component[result.count++] = value;
+    return true;
+}
+
+
+static bool
+brep_expansion_grow(const brep_expansion &input, double value,
+    brep_expansion &result, size_t &high_water)
+{
+    if (!input.count || input.count > RT_BREP_EXPANSION_CAPACITY ||
+	    !std::isfinite(value))
+	return false;
+    result.count = 0;
+    double accumulator = value;
+    for (size_t i = 0; i < input.count; ++i) {
+	double sum = 0.0;
+	double error = 0.0;
+	if (!brep_two_sum(accumulator, input.component[i], sum, error) ||
+		!brep_expansion_append(result, error))
+	    return false;
+	accumulator = sum;
+    }
+    if (!brep_expansion_append(result, accumulator))
+	return false;
+    if (!result.count && !brep_expansion_set(result, 0.0, high_water))
+	return false;
+    high_water = std::max(high_water, result.count);
+    return true;
+}
+
+
+static bool
+brep_expansion_add(const brep_expansion &first,
+    const brep_expansion &second, brep_expansion &result,
+    size_t &high_water)
+{
+    if (!first.count || !second.count ||
+	    first.count > RT_BREP_EXPANSION_CAPACITY ||
+	    second.count > RT_BREP_EXPANSION_CAPACITY)
+	return false;
+    brep_expansion current = first;
+    brep_expansion next = {};
+    for (size_t i = 0; i < second.count; ++i) {
+	if (!brep_expansion_grow(current, second.component[i], next,
+		high_water))
+	    return false;
+	current = next;
+    }
+    result = current;
+    return true;
+}
+
+
+static bool
+brep_expansion_scale(const brep_expansion &input, double scale,
+    brep_expansion &result, size_t &high_water)
+{
+    if (!input.count || input.count > RT_BREP_EXPANSION_CAPACITY ||
+	    !std::isfinite(scale))
+	return false;
+    if (std::fpclassify(scale) == FP_ZERO)
+	return brep_expansion_set(result, 0.0, high_water);
+    brep_expansion current = {};
+    if (!brep_expansion_set(current, 0.0, high_water))
+	return false;
+    for (size_t i = 0; i < input.count; ++i) {
+	double product = 0.0;
+	double error = 0.0;
+	if (!brep_two_product(input.component[i], scale, product, error))
+	    return false;
+	brep_expansion term = {};
+	term.count = 0;
+	if (!brep_expansion_append(term, error) ||
+		!brep_expansion_append(term, product))
+	    return false;
+	if (!term.count && !brep_expansion_set(term, 0.0, high_water))
+	    return false;
+	brep_expansion next = {};
+	if (!brep_expansion_add(current, term, next, high_water))
+	    return false;
+	current = next;
+    }
+    result = current;
+    return true;
+}
+
+
+static bool
+brep_expansion_lerp(const brep_expansion &first,
+    const brep_expansion &second, double parameter, brep_expansion &result,
+    size_t &high_water)
+{
+    if (parameter < 0.0 || parameter > 1.0 ||
+	    !std::isfinite(parameter))
+	return false;
+    brep_expansion negative_first = {};
+    brep_expansion difference = {};
+    brep_expansion scaled = {};
+    if (!brep_expansion_scale(first, -1.0, negative_first, high_water) ||
+	    !brep_expansion_add(second, negative_first, difference,
+		high_water) ||
+	    !brep_expansion_scale(difference, parameter, scaled,
+		high_water) ||
+	    !brep_expansion_add(first, scaled, result, high_water))
+	return false;
+    return true;
+}
+
+
+static bool
+brep_expansion_interval_lerp(const brep_expansion_interval &first,
+    const brep_expansion_interval &second, double parameter,
+    brep_expansion_interval &result, size_t &high_water)
+{
+    if (!brep_expansion_lerp(first.minimum, second.minimum, parameter,
+	    result.minimum, high_water) ||
+	    !brep_expansion_lerp(first.maximum, second.maximum, parameter,
+		result.maximum, high_water))
+	return false;
+    return true;
+}
+
+
+static bool
+brep_expansion_bounds(const brep_expansion &value, brep_interval &bounds)
+{
+    if (!value.count || value.count > RT_BREP_EXPANSION_CAPACITY)
+	return false;
+    size_t center_index = 0;
+    for (size_t i = 0; i < value.count; ++i) {
+	if (!std::isfinite(value.component[i]))
+	    return false;
+	if (fabs(value.component[i]) > fabs(value.component[center_index]))
+	    center_index = i;
+    }
+    double radius = 0.0;
+    for (size_t i = 0; i < value.count; ++i) {
+	if (i == center_index)
+	    continue;
+	if (std::fpclassify(value.component[i]) == FP_ZERO)
+	    continue;
+	radius = std::nextafter(radius + fabs(value.component[i]), INFINITY);
+	if (!std::isfinite(radius))
+	    return false;
+    }
+    const double center = value.component[center_index];
+    if (std::fpclassify(radius) == FP_ZERO) {
+	bounds.minimum = center;
+	bounds.maximum = center;
+	return true;
+    }
+    bounds.minimum = std::nextafter(center - radius, -INFINITY);
+    bounds.maximum = std::nextafter(center + radius, INFINITY);
+    return std::isfinite(bounds.minimum) && std::isfinite(bounds.maximum) &&
+	bounds.minimum <= bounds.maximum;
+}
+
+
+static bool
+brep_expansion_exact_ldexp(double input, int exponent, double &output)
+{
+    if (!std::isfinite(input))
+	return false;
+    output = std::ldexp(input, exponent);
+    if (!std::isfinite(output))
+	return false;
+    const double restored = std::ldexp(output, -exponent);
+    return std::isfinite(restored) &&
+	std::memcmp(&restored, &input, sizeof(input)) == 0;
+}
+
+
+static bool
+brep_expansion_outward_ldexp(double input, int exponent, bool lower,
+    double &output)
+{
+    if (!std::isfinite(input))
+	return false;
+    output = std::ldexp(input, exponent);
+    if (!std::isfinite(output))
+	return false;
+    const double restored = std::ldexp(output, -exponent);
+    if (!std::isfinite(restored) ||
+	    std::memcmp(&restored, &input, sizeof(input)) != 0) {
+	output = std::nextafter(output, lower ? -INFINITY : INFINITY);
+    }
+    return std::isfinite(output);
+}
+
+
+static bool
+brep_single_coefficient_expansion_intervals(const double cv[4],
+    const double origin[3], const double planes[2][3],
+    brep_interval function[2], size_t &high_water)
+{
+    if (!cv || !origin || !planes)
+	return false;
+    brep_expansion numerator[3];
+    for (int component = 0; component < 3; ++component) {
+	if (!std::isfinite(cv[component]) ||
+		!std::isfinite(origin[component]) ||
+		!std::isfinite(cv[3]) ||
+		!std::isfinite(planes[0][component]) ||
+		!std::isfinite(planes[1][component]))
+	    return false;
+	brep_expansion cv_value = {};
+	brep_expansion origin_value = {};
+	brep_expansion weighted_origin = {};
+	brep_expansion negative_origin = {};
+	if (!brep_expansion_set(cv_value, cv[component], high_water) ||
+		!brep_expansion_set(origin_value, origin[component], high_water) ||
+		!brep_expansion_scale(origin_value, cv[3], weighted_origin,
+		    high_water) ||
+		!brep_expansion_scale(weighted_origin, -1.0, negative_origin,
+		    high_water) ||
+		!brep_expansion_add(cv_value, negative_origin,
+		    numerator[component], high_water))
+	    return false;
+    }
+
+    for (int equation = 0; equation < 2; ++equation) {
+	brep_expansion dot = {};
+	if (!brep_expansion_set(dot, 0.0, high_water))
+	    return false;
+	for (int component = 0; component < 3; ++component) {
+	    brep_expansion term = {};
+	    brep_expansion next = {};
+	    if (!brep_expansion_scale(numerator[component],
+		    planes[equation][component], term, high_water) ||
+		    !brep_expansion_add(dot, term, next, high_water))
+		return false;
+	    dot = next;
+	}
+	if (!brep_expansion_bounds(dot, function[equation]))
+	    return false;
+    }
+    return true;
+}
+
+
+static bool
+brep_expansion_interval_from_interval(const brep_interval &input,
+    brep_expansion_interval &result, size_t &high_water)
+{
+    if (!std::isfinite(input.minimum) || !std::isfinite(input.maximum) ||
+	    input.minimum > input.maximum)
+	return false;
+    return brep_expansion_set(result.minimum, input.minimum, high_water) &&
+	brep_expansion_set(result.maximum, input.maximum, high_water);
+}
+
+
+/*
+ * Q_i on [minimum, maximum] is the blossom with degree-i copies of the
+ * minimum followed by i copies of the maximum.  This avoids the a/b division
+ * in the usual two-split restriction and keeps every binary64 parameter an
+ * exact dyadic expansion operand.
+ */
+static bool
+brep_expansion_bezier_blossom(const brep_expansion_interval *input,
+    int order, double minimum, double maximum, int output_index,
+    brep_expansion_interval &output, size_t &high_water)
+{
+    if (!input || order < 2 || order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    minimum < 0.0 || maximum > 1.0 || !(minimum < maximum) ||
+	    output_index < 0 || output_index >= order)
+	return false;
+    brep_expansion_interval work[BREP_DIRECT_BEZIER_MAX_ORDER];
+    for (int i = 0; i < order; ++i)
+	work[i] = input[i];
+    const int degree = order - 1;
+    const int minimum_count = degree - output_index;
+    for (int level = 1; level <= degree; ++level) {
+	const double parameter = level <= minimum_count ? minimum : maximum;
+	for (int i = 0; i <= degree - level; ++i) {
+	    brep_expansion_interval next = {};
+	    if (!brep_expansion_interval_lerp(work[i], work[i + 1],
+		    parameter, next, high_water))
+		return false;
+	    work[i] = next;
+	}
+    }
+    output = work[0];
+    return true;
+}
+
+
+static bool
+brep_expansion_surface_restrict(const brep_interval *input, int u_order,
+    int v_order, double u_minimum, double u_maximum, double v_minimum,
+    double v_maximum, bool normalized_output, brep_interval *output,
+    size_t &high_water)
+{
+    if (!input || !output || u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    u_minimum < 0.0 || u_maximum > 1.0 ||
+	    v_minimum < 0.0 || v_maximum > 1.0 ||
+	    !(u_minimum < u_maximum) || !(v_minimum < v_maximum))
+	return false;
+
+    double maximum_magnitude = 0.0;
+    const size_t count = (size_t)u_order * v_order;
+    for (size_t i = 0; i < count; ++i) {
+	if (!std::isfinite(input[i].minimum) ||
+		!std::isfinite(input[i].maximum) ||
+		input[i].minimum > input[i].maximum)
+	    return false;
+	maximum_magnitude = std::max(maximum_magnitude,
+	    std::max(fabs(input[i].minimum), fabs(input[i].maximum)));
+    }
+    int equation_exponent = 0;
+    if (std::fpclassify(maximum_magnitude) != FP_ZERO)
+	(void)std::frexp(maximum_magnitude, &equation_exponent);
+
+    brep_interval normalized_input[BREP_DIRECT_BEZIER_MAX_CVS];
+    for (size_t i = 0; i < count; ++i) {
+	if (!brep_expansion_exact_ldexp(input[i].minimum,
+		-equation_exponent, normalized_input[i].minimum) ||
+		!brep_expansion_exact_ldexp(input[i].maximum,
+		    -equation_exponent, normalized_input[i].maximum))
+	    return false;
+    }
+    brep_interval ordinary[BREP_DIRECT_BEZIER_MAX_CVS];
+    if (!brep_interval_surface_restrict(normalized_input, u_order, v_order,
+	    u_minimum, u_maximum, v_minimum, v_maximum, ordinary))
+	return false;
+
+    brep_expansion_interval source[BREP_DIRECT_BEZIER_MAX_ORDER];
+    brep_expansion_interval u_control[BREP_DIRECT_BEZIER_MAX_ORDER];
+    for (int output_u = 0; output_u < u_order; ++output_u) {
+	for (int j = 0; j < v_order; ++j) {
+	    for (int i = 0; i < u_order; ++i) {
+		if (!brep_expansion_interval_from_interval(
+			normalized_input[(size_t)i * v_order + j], source[i],
+			high_water))
+		    return false;
+	    }
+	    if (!brep_expansion_bezier_blossom(source, u_order, u_minimum,
+		    u_maximum, output_u, u_control[j], high_water))
+		return false;
+	}
+	for (int output_v = 0; output_v < v_order; ++output_v) {
+	    brep_expansion_interval restricted = {};
+	    if (!brep_expansion_bezier_blossom(u_control, v_order,
+		    v_minimum, v_maximum, output_v, restricted, high_water))
+		return false;
+	    brep_interval lower_bounds;
+	    brep_interval upper_bounds;
+	    if (!brep_expansion_bounds(restricted.minimum, lower_bounds) ||
+		    !brep_expansion_bounds(restricted.maximum, upper_bounds) ||
+		    lower_bounds.minimum > upper_bounds.maximum)
+		return false;
+	    brep_interval result = {
+		lower_bounds.minimum, upper_bounds.maximum
+	    };
+	    const size_t output_index =
+		(size_t)output_u * v_order + output_v;
+	    result.minimum = std::max(result.minimum,
+		ordinary[output_index].minimum);
+	    result.maximum = std::min(result.maximum,
+		ordinary[output_index].maximum);
+	    if (result.minimum > result.maximum)
+		return false;
+	    if (!normalized_output) {
+		if (!brep_expansion_outward_ldexp(result.minimum,
+			equation_exponent, true, result.minimum) ||
+			!brep_expansion_outward_ldexp(result.maximum,
+			    equation_exponent, false, result.maximum))
+		    return false;
+	    }
+	    output[output_index] = result;
+	}
+    }
+    return true;
+}
+
+
+static bool
+brep_expansion_bezier_evaluate(const brep_expansion_interval *input,
+    int order, double parameter, brep_expansion_interval &output,
+    size_t &high_water)
+{
+    if (!input || order < 1 || order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    parameter < 0.0 || parameter > 1.0)
+	return false;
+    brep_expansion_interval work[BREP_DIRECT_BEZIER_MAX_ORDER];
+    for (int i = 0; i < order; ++i)
+	work[i] = input[i];
+    for (int level = 1; level < order; ++level) {
+	for (int i = 0; i < order - level; ++i) {
+	    brep_expansion_interval next = {};
+	    if (!brep_expansion_interval_lerp(work[i], work[i + 1],
+		    parameter, next, high_water))
+		return false;
+	    work[i] = next;
+	}
+    }
+    output = work[0];
+    return true;
+}
+
+
+static bool
+brep_expansion_surface_evaluate_coefficients(const brep_interval *input,
+    int u_order, int v_order, const double parameter[2],
+    brep_interval &value, size_t &high_water)
+{
+    if (!input || !parameter || u_order < 1 || v_order < 1 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    parameter[0] < 0.0 || parameter[0] > 1.0 ||
+	    parameter[1] < 0.0 || parameter[1] > 1.0)
+	return false;
+    brep_expansion_interval source[BREP_DIRECT_BEZIER_MAX_ORDER];
+    brep_expansion_interval v_control[BREP_DIRECT_BEZIER_MAX_ORDER];
+    for (int j = 0; j < v_order; ++j) {
+	for (int i = 0; i < u_order; ++i) {
+	    if (!brep_expansion_interval_from_interval(
+		    input[(size_t)i * v_order + j], source[i], high_water))
+		return false;
+	}
+	if (!brep_expansion_bezier_evaluate(source, u_order, parameter[0],
+		v_control[j], high_water))
+	    return false;
+    }
+    brep_expansion_interval evaluated = {};
+    if (!brep_expansion_bezier_evaluate(v_control, v_order, parameter[1],
+	    evaluated, high_water))
+	return false;
+    brep_interval lower;
+    brep_interval upper;
+    brep_interval ordinary;
+    if (!brep_expansion_bounds(evaluated.minimum, lower) ||
+	    !brep_expansion_bounds(evaluated.maximum, upper) ||
+	    !brep_interval_surface_evaluate_coefficients(input, u_order,
+		v_order, parameter, ordinary))
+	return false;
+    value.minimum = std::max(lower.minimum, ordinary.minimum);
+    value.maximum = std::min(upper.maximum, ordinary.maximum);
+    return std::isfinite(value.minimum) && std::isfinite(value.maximum) &&
+	value.minimum <= value.maximum;
+}
+
+
+static bool
+brep_expansion_difference_scaled(const brep_interval &next,
+    const brep_interval &previous, double scale, brep_interval &result,
+    size_t &high_water)
+{
+    brep_expansion next_value = {};
+    brep_expansion previous_value = {};
+    brep_expansion negative_previous = {};
+    brep_expansion difference = {};
+    brep_expansion scaled = {};
+    brep_interval lower;
+    if (!brep_expansion_set(next_value, next.minimum, high_water) ||
+	    !brep_expansion_set(previous_value, previous.maximum, high_water) ||
+	    !brep_expansion_scale(previous_value, -1.0, negative_previous,
+		high_water) ||
+	    !brep_expansion_add(next_value, negative_previous, difference,
+		high_water) ||
+	    !brep_expansion_scale(difference, scale, scaled, high_water) ||
+	    !brep_expansion_bounds(scaled, lower))
+	return false;
+
+    if (!brep_expansion_set(next_value, next.maximum, high_water) ||
+	    !brep_expansion_set(previous_value, previous.minimum, high_water) ||
+	    !brep_expansion_scale(previous_value, -1.0, negative_previous,
+		high_water) ||
+	    !brep_expansion_add(next_value, negative_previous, difference,
+		high_water) ||
+	    !brep_expansion_scale(difference, scale, scaled, high_water))
+	return false;
+    brep_interval upper;
+    if (!brep_expansion_bounds(scaled, upper))
+	return false;
+    result = {lower.minimum, upper.maximum};
+    return std::isfinite(result.minimum) && std::isfinite(result.maximum) &&
+	result.minimum <= result.maximum;
+}
+
+
+static bool
+brep_expansion_surface_derivative_hull(const brep_interval *input,
+    int u_order, int v_order, int direction, brep_interval &hull,
+    size_t &high_water)
+{
+    if (!input || (direction != 0 && direction != 1) ||
+	    u_order < 2 || v_order < 2)
+	return false;
+    brep_interval ordinary[BREP_DIRECT_BEZIER_MAX_CVS];
+    int ordinary_order[2];
+    if (!brep_interval_surface_derivative_coefficients(input, u_order,
+	    v_order, direction, ordinary, ordinary_order))
+	return false;
+    const int degree = direction == 0 ? u_order - 1 : v_order - 1;
+    hull.minimum = DBL_MAX;
+    hull.maximum = -DBL_MAX;
+    for (int i = 0; i < ordinary_order[0]; ++i) {
+	for (int j = 0; j < ordinary_order[1]; ++j) {
+	    const size_t previous = (size_t)i * v_order + j;
+	    const size_t next = direction == 0 ?
+		(size_t)(i + 1) * v_order + j :
+		(size_t)i * v_order + j + 1;
+	    brep_interval derivative;
+	    if (!brep_expansion_difference_scaled(input[next],
+		    input[previous], degree, derivative, high_water))
+		return false;
+	    const size_t index = (size_t)i * ordinary_order[1] + j;
+	    derivative.minimum = std::max(derivative.minimum,
+		ordinary[index].minimum);
+	    derivative.maximum = std::min(derivative.maximum,
+		ordinary[index].maximum);
+	    if (derivative.minimum > derivative.maximum)
+		return false;
+	    hull.minimum = std::min(hull.minimum, derivative.minimum);
+	    hull.maximum = std::max(hull.maximum, derivative.maximum);
+	}
+    }
+    return std::isfinite(hull.minimum) && std::isfinite(hull.maximum) &&
+	hull.minimum <= hull.maximum;
+}
+
+
+static bool
+brep_expansion_interval_add_tight(const brep_interval &first,
+    const brep_interval &second, brep_interval &result, size_t &high_water)
+{
+    const brep_interval ordinary = brep_interval_add(first, second);
+    brep_expansion first_value = {};
+    brep_expansion second_value = {};
+    brep_expansion sum = {};
+    brep_interval lower;
+    if (!brep_expansion_set(first_value, first.minimum, high_water) ||
+	    !brep_expansion_set(second_value, second.minimum, high_water) ||
+	    !brep_expansion_add(first_value, second_value, sum, high_water) ||
+	    !brep_expansion_bounds(sum, lower))
+	return false;
+    brep_interval upper;
+    if (!brep_expansion_set(first_value, first.maximum, high_water) ||
+	    !brep_expansion_set(second_value, second.maximum, high_water) ||
+	    !brep_expansion_add(first_value, second_value, sum, high_water) ||
+	    !brep_expansion_bounds(sum, upper))
+	return false;
+    result.minimum = std::max(lower.minimum, ordinary.minimum);
+    result.maximum = std::min(upper.maximum, ordinary.maximum);
+    return result.minimum <= result.maximum;
+}
+
+
+static bool
+brep_expansion_interval_scale_tight(double scale,
+    const brep_interval &value, brep_interval &result, size_t &high_water)
+{
+    const brep_interval ordinary = brep_interval_scale(scale, value);
+    const bool negative = std::signbit(scale);
+    const double lower_input = negative ? value.maximum : value.minimum;
+    const double upper_input = negative ? value.minimum : value.maximum;
+    brep_expansion input_value = {};
+    brep_expansion scaled = {};
+    brep_interval lower;
+    if (!brep_expansion_set(input_value, lower_input, high_water) ||
+	    !brep_expansion_scale(input_value, scale, scaled, high_water) ||
+	    !brep_expansion_bounds(scaled, lower))
+	return false;
+    brep_interval upper;
+    if (!brep_expansion_set(input_value, upper_input, high_water) ||
+	    !brep_expansion_scale(input_value, scale, scaled, high_water) ||
+	    !brep_expansion_bounds(scaled, upper))
+	return false;
+    result.minimum = std::max(lower.minimum, ordinary.minimum);
+    result.maximum = std::min(upper.maximum, ordinary.maximum);
+    return result.minimum <= result.maximum;
+}
+
+
+static bool
+brep_expansion_interval_multiply_tight(const brep_interval &first,
+    const brep_interval &second, brep_interval &result, size_t &high_water)
+{
+    const brep_interval ordinary = brep_interval_multiply(first, second);
+    const double first_endpoint[2] = {first.minimum, first.maximum};
+    const double second_endpoint[2] = {second.minimum, second.maximum};
+    double minimum = DBL_MAX;
+    double maximum = -DBL_MAX;
+    for (int i = 0; i < 2; ++i) {
+	for (int j = 0; j < 2; ++j) {
+	    brep_expansion input_value = {};
+	    brep_expansion product = {};
+	    brep_interval bounds;
+	    if (!brep_expansion_set(input_value, first_endpoint[i],
+		    high_water) ||
+		    !brep_expansion_scale(input_value, second_endpoint[j],
+			product, high_water) ||
+		    !brep_expansion_bounds(product, bounds))
+		return false;
+	    minimum = std::min(minimum, bounds.minimum);
+	    maximum = std::max(maximum, bounds.maximum);
+	}
+    }
+    result.minimum = std::max(minimum, ordinary.minimum);
+    result.maximum = std::min(maximum, ordinary.maximum);
+    return result.minimum <= result.maximum;
+}
+
+
+static bool
+brep_expansion_krawczyk_from_bounds(const brep_interval function[2],
+    const brep_interval jacobian[2][2], const double root[2],
+    struct rt_brep_krawczyk_test_result &result, size_t &high_water)
+{
+    if (!function || !jacobian || !root ||
+	    root[0] < 0.0 || root[0] > 1.0 ||
+	    root[1] < 0.0 || root[1] > 1.0)
+	return false;
+    double midpoint[2][2];
+    for (int row = 0; row < 2; ++row) {
+	for (int column = 0; column < 2; ++column) {
+	    midpoint[row][column] =
+		0.5 * jacobian[row][column].minimum +
+		0.5 * jacobian[row][column].maximum;
+	}
+    }
+    const double determinant = midpoint[0][0] * midpoint[1][1] -
+	midpoint[0][1] * midpoint[1][0];
+    const double first_scale = hypot(midpoint[0][0], midpoint[1][0]);
+    const double second_scale = hypot(midpoint[0][1], midpoint[1][1]);
+    if (!std::isfinite(determinant) || !(first_scale > DBL_MIN) ||
+	    !(second_scale > DBL_MIN))
+	return false;
+    result.determinant_ratio =
+	fabs(determinant / first_scale) / second_scale;
+    if (!(fabs(determinant) > 0.0) ||
+	    !std::isfinite(result.determinant_ratio))
+	return false;
+    const double inverse[2][2] = {
+	{midpoint[1][1] / determinant, -midpoint[0][1] / determinant},
+	{-midpoint[1][0] / determinant, midpoint[0][0] / determinant}
+    };
+    for (int row = 0; row < 2; ++row) {
+	for (int column = 0; column < 2; ++column) {
+	    if (!std::isfinite(inverse[row][column]))
+		return false;
+	}
+    }
+    result.available = 1;
+
+    brep_interval center[2];
+    for (int row = 0; row < 2; ++row) {
+	brep_interval correction = {0.0, 0.0};
+	for (int equation = 0; equation < 2; ++equation) {
+	    brep_interval term;
+	    brep_interval next;
+	    if (!brep_expansion_interval_scale_tight(
+		    inverse[row][equation], function[equation], term,
+		    high_water) ||
+		    !brep_expansion_interval_add_tight(correction, term, next,
+			high_water))
+		return false;
+	    correction = next;
+	}
+	brep_interval negative_correction;
+	if (!brep_expansion_interval_scale_tight(-1.0, correction,
+		negative_correction, high_water) ||
+	    !brep_expansion_interval_add_tight({root[row], root[row]},
+		negative_correction, center[row], high_water))
+	    return false;
+    }
+
+    brep_interval remainder[2][2];
+    for (int row = 0; row < 2; ++row) {
+	for (int column = 0; column < 2; ++column) {
+	    brep_interval product = {0.0, 0.0};
+	    for (int equation = 0; equation < 2; ++equation) {
+		brep_interval term;
+		brep_interval next;
+		if (!brep_expansion_interval_scale_tight(
+			inverse[row][equation],
+			jacobian[equation][column], term, high_water) ||
+			!brep_expansion_interval_add_tight(product, term, next,
+			    high_water))
+		    return false;
+		product = next;
+	    }
+	    if (!brep_expansion_interval_scale_tight(-1.0, product,
+		    remainder[row][column], high_water))
+		return false;
+	    if (row == column) {
+		brep_interval next;
+		if (!brep_expansion_interval_add_tight({1.0, 1.0},
+			remainder[row][column], next, high_water))
+		    return false;
+		remainder[row][column] = next;
+	    }
+	}
+    }
+
+    const brep_interval offset[2] = {
+	brep_interval_expanded(-root[0], 1.0 - root[0]),
+	brep_interval_expanded(-root[1], 1.0 - root[1])
+    };
+    result.certified = 1;
+    const double inclusion_margin = 512.0 * DBL_EPSILON;
+    for (int row = 0; row < 2; ++row) {
+	brep_interval image = center[row];
+	for (int column = 0; column < 2; ++column) {
+	    brep_interval product;
+	    brep_interval next;
+	    if (!brep_expansion_interval_multiply_tight(
+		    remainder[row][column], offset[column], product,
+		    high_water) ||
+		    !brep_expansion_interval_add_tight(image, product, next,
+			high_water))
+		return false;
+	    image = next;
+	}
+	result.image_minimum[row] = image.minimum;
+	result.image_maximum[row] = image.maximum;
+	if (!(image.minimum > inclusion_margin) ||
+		!(image.maximum < 1.0 - inclusion_margin))
+	    result.certified = 0;
+    }
+    return true;
+}
+
+
+static bool
+brep_expansion_surface_krawczyk(
+    const brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    int u_order, int v_order, const double root[2],
+    struct rt_brep_krawczyk_test_result &result, size_t &high_water)
+{
+    if (!values || !root)
+	return false;
+    brep_interval function[2];
+    brep_interval jacobian[2][2];
+    for (int equation = 0; equation < 2; ++equation) {
+	if (!brep_expansion_surface_evaluate_coefficients(values[equation],
+		u_order, v_order, root, function[equation], high_water))
+	    return false;
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!brep_expansion_surface_derivative_hull(values[equation],
+		    u_order, v_order, direction,
+		    jacobian[equation][direction], high_water))
+		return false;
+	}
+    }
+    return brep_expansion_krawczyk_from_bounds(function, jacobian, root,
+	result, high_water);
+}
+
+
+extern "C" int
+_rt_brep_expansion_interval_test(const fastf_t *first_coefficients,
+    const fastf_t *second_coefficients, int u_order, int v_order,
+    const fastf_t coefficient_error[2], const fastf_t root[2],
+    struct rt_brep_interval_test_result *result,
+    size_t *expansion_high_water)
+{
+    if (!first_coefficients || !second_coefficients || !coefficient_error ||
+	    !root || !result || !expansion_high_water || u_order < 2 ||
+	    v_order < 2 || u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return 0;
+    *result = {};
+    brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    const fastf_t *coefficient[2] = {
+	first_coefficients, second_coefficients
+    };
+    const size_t count = (size_t)u_order * v_order;
+    for (int equation = 0; equation < 2; ++equation) {
+	if (!std::isfinite(coefficient_error[equation]) ||
+		coefficient_error[equation] < 0.0)
+	    return 0;
+	for (size_t i = 0; i < count; ++i) {
+	    if (!std::isfinite(coefficient[equation][i]))
+		return 0;
+	    values[equation][i] =
+		std::fpclassify(coefficient_error[equation]) == FP_ZERO ?
+		brep_interval{coefficient[equation][i],
+		    coefficient[equation][i]} :
+		brep_interval_expanded(coefficient[equation][i] -
+		    coefficient_error[equation], coefficient[equation][i] +
+		    coefficient_error[equation]);
+	}
+    }
+    size_t high_water = 0;
+    for (int equation = 0; equation < 2; ++equation) {
+	brep_interval function;
+	if (!brep_expansion_surface_evaluate_coefficients(values[equation],
+		u_order, v_order, root, function, high_water))
+	    return 0;
+	result->function_minimum[equation] = function.minimum;
+	result->function_maximum[equation] = function.maximum;
+	for (int direction = 0; direction < 2; ++direction) {
+	    brep_interval derivative;
+	    if (!brep_expansion_surface_derivative_hull(values[equation],
+		    u_order, v_order, direction, derivative, high_water))
+		return 0;
+	    result->jacobian_minimum[equation][direction] =
+		derivative.minimum;
+	    result->jacobian_maximum[equation][direction] =
+		derivative.maximum;
+	}
+    }
+    *expansion_high_water = high_water;
+    return 1;
+}
+
+
+extern "C" int
+_rt_brep_expansion_krawczyk_test(const fastf_t *first_coefficients,
+    const fastf_t *first_error, const fastf_t *second_coefficients,
+    const fastf_t *second_error, int u_order, int v_order,
+    const fastf_t root[2], struct rt_brep_krawczyk_test_result *result,
+    size_t *expansion_high_water)
+{
+    if (!first_coefficients || !first_error || !second_coefficients ||
+	    !second_error || !root || !result || !expansion_high_water ||
+	    u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return 0;
+    *result = {};
+    brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    const fastf_t *coefficient[2] = {
+	first_coefficients, second_coefficients
+    };
+    const fastf_t *error[2] = {first_error, second_error};
+    const size_t count = (size_t)u_order * v_order;
+    for (int equation = 0; equation < 2; ++equation) {
+	for (size_t i = 0; i < count; ++i) {
+	    if (!std::isfinite(coefficient[equation][i]) ||
+		    !std::isfinite(error[equation][i]) ||
+		    error[equation][i] < 0.0)
+		return 0;
+	    values[equation][i] =
+		std::fpclassify(error[equation][i]) == FP_ZERO ?
+		brep_interval{coefficient[equation][i],
+		    coefficient[equation][i]} :
+		brep_interval_expanded(coefficient[equation][i] -
+		    error[equation][i], coefficient[equation][i] +
+		    error[equation][i]);
+	}
+    }
+    size_t high_water = 0;
+    if (!brep_expansion_surface_krawczyk(values, u_order, v_order, root,
+	    *result, high_water))
+	return 0;
+    *expansion_high_water = high_water;
+    return 1;
+}
+
+
+extern "C" int
+_rt_brep_expansion_interval_product_test(const fastf_t first[2],
+    const fastf_t second[2], fastf_t result[2],
+    size_t *expansion_high_water)
+{
+    if (!first || !second || !result || !expansion_high_water ||
+	    !std::isfinite(first[0]) || !std::isfinite(first[1]) ||
+	    !std::isfinite(second[0]) || !std::isfinite(second[1]) ||
+	    first[0] > first[1] || second[0] > second[1])
+	return 0;
+    size_t high_water = 0;
+    brep_interval product;
+    if (!brep_expansion_interval_multiply_tight(
+	    {first[0], first[1]}, {second[0], second[1]}, product,
+	    high_water))
+	return 0;
+    result[0] = product.minimum;
+    result[1] = product.maximum;
+    *expansion_high_water = high_water;
+    return 1;
+}
+
+
 static bool
 brep_scalar_surface_restrict_bounded(const double *input, int u_order,
     int v_order, double input_error, double u_minimum, double u_maximum,
@@ -3673,6 +4688,47 @@ _rt_brep_interval_restrict_test(const fastf_t *input,
 
 
 extern "C" int
+_rt_brep_expansion_restrict_test(const fastf_t *input,
+    const fastf_t *input_error, int u_order, int v_order,
+    const fastf_t minimum[2], const fastf_t maximum[2],
+    fastf_t *output_minimum, fastf_t *output_maximum,
+    size_t *expansion_high_water)
+{
+    if (!input || !input_error || !minimum || !maximum ||
+	    !output_minimum || !output_maximum || !expansion_high_water ||
+	    u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return 0;
+    const size_t count = (size_t)u_order * v_order;
+    brep_interval source[BREP_DIRECT_BEZIER_MAX_CVS] = {};
+    brep_interval restricted[BREP_DIRECT_BEZIER_MAX_CVS] = {};
+    for (size_t i = 0; i < count; ++i) {
+	if (!std::isfinite(input[i]) || !std::isfinite(input_error[i]) ||
+		input_error[i] < 0.0)
+	    return 0;
+	source[i] = brep_interval_expanded(input[i] - input_error[i],
+	    input[i] + input_error[i]);
+    }
+    size_t high_water = 0;
+    if (!brep_expansion_surface_restrict(source, u_order, v_order,
+	    minimum[0], maximum[0], minimum[1], maximum[1], false,
+	    restricted, high_water))
+	return 0;
+    for (size_t i = 0; i < count; ++i) {
+	if (!std::isfinite(restricted[i].minimum) ||
+		!std::isfinite(restricted[i].maximum) ||
+		restricted[i].minimum > restricted[i].maximum)
+	    return 0;
+	output_minimum[i] = restricted[i].minimum;
+	output_maximum[i] = restricted[i].maximum;
+    }
+    *expansion_high_water = high_water;
+    return 1;
+}
+
+
+extern "C" int
 _rt_brep_coefficient_test(const fastf_t cv[4], const fastf_t origin[3],
     const fastf_t direction[3], const fastf_t planes[2][3],
     struct rt_brep_coefficient_test_result *result)
@@ -3691,9 +4747,31 @@ _rt_brep_coefficient_test(const fastf_t cv[4], const fastf_t origin[3],
     if (!brep_single_coefficient_intervals(cv, origin, direction, planes,
 	    direction_squared, function, ray_coefficient))
 	return 0;
+    brep_interval expansion_function[2];
+    size_t expansion_high_water = 0;
+    result->expansion_available =
+	brep_single_coefficient_expansion_intervals(cv, origin, planes,
+	    expansion_function, expansion_high_water) ? 1 : 0;
+    for (int equation = 0; result->expansion_available && equation < 2;
+	    ++equation) {
+	expansion_function[equation].minimum = std::max(
+	    expansion_function[equation].minimum, function[equation].minimum);
+	expansion_function[equation].maximum = std::min(
+	    expansion_function[equation].maximum, function[equation].maximum);
+	if (expansion_function[equation].minimum >
+		expansion_function[equation].maximum)
+	    result->expansion_available = 0;
+    }
+    result->expansion_high_water = expansion_high_water;
     for (int equation = 0; equation < 2; ++equation) {
 	result->function_minimum[equation] = function[equation].minimum;
 	result->function_maximum[equation] = function[equation].maximum;
+	if (result->expansion_available) {
+	    result->expansion_function_minimum[equation] =
+		expansion_function[equation].minimum;
+	    result->expansion_function_maximum[equation] =
+		expansion_function[equation].maximum;
+	}
     }
     result->ray_minimum = ray_coefficient.minimum;
     result->ray_maximum = ray_coefficient.maximum;
@@ -5004,14 +6082,15 @@ brep_trace_fold_certificates(struct rt_brep_shot_trace *trace,
 	    std::min(0.125, 0.5 * boundary_distance[0]),
 	    std::min(0.125, 0.5 * boundary_distance[1])
 	};
+	bool expansion_candidate_certified = false;
 	for (int level = 0; level < 8; ++level) {
 	    double subbox_minimum[2];
 	    double subbox_maximum[2];
 	    double subbox_root[2];
 	    bool valid = true;
 	    for (int direction = 0; direction < 2; ++direction) {
-		const double local_half_width =
-		    initial_half_width[direction] * std::ldexp(1.0, -level);
+		const double local_half_width = initial_half_width[direction] *
+		    std::ldexp(1.0, -level);
 		const double local_minimum =
 		    refined_root[direction] - local_half_width;
 		const double local_maximum =
@@ -5046,42 +6125,107 @@ brep_trace_fold_certificates(struct rt_brep_shot_trace *trace,
 		    break;
 		}
 	    }
+	    const double inclusion_margin = 512.0 * DBL_EPSILON;
+	    bool binary_certified = false;
 	    if (!restricted_available) {
 		trace->surface_fold_restriction_failures++;
-		break;
-	    }
-	    struct rt_brep_krawczyk_test_result result = {};
-	    trace->surface_fold_krawczyk_attempts++;
-	    if (!brep_interval_surface_krawczyk(subbox_values,
-		    coefficients.order[0], coefficients.order[1], subbox_root,
-		    result))
-		continue;
-	    const double inclusion_margin = 512.0 * DBL_EPSILON;
-	    double image_excess = 0.0;
-	    for (int direction = 0; direction < 2; ++direction) {
-		image_excess = std::max(image_excess,
-		    inclusion_margin - result.image_minimum[direction]);
-		image_excess = std::max(image_excess,
-		    result.image_maximum[direction] -
-			(1.0 - inclusion_margin));
-	    }
-	    image_excess = std::max(0.0, image_excess);
-	    if (!trace->surface_fold_krawczyk_available ||
-		    image_excess < trace->surface_fold_best_image_excess)
-		trace->surface_fold_best_image_excess = image_excess;
-	    trace->surface_fold_krawczyk_available++;
-	    if (trace->surface_fold_krawczyk_available == 1) {
-		trace->surface_fold_min_determinant_ratio =
-		    result.determinant_ratio;
 	    } else {
-		trace->surface_fold_min_determinant_ratio = std::min(
-		    (double)trace->surface_fold_min_determinant_ratio,
-		    (double)result.determinant_ratio);
+		struct rt_brep_krawczyk_test_result result = {};
+		trace->surface_fold_krawczyk_attempts++;
+		if (brep_interval_surface_krawczyk(subbox_values,
+			coefficients.order[0], coefficients.order[1],
+			subbox_root, result)) {
+		    double image_excess = 0.0;
+		    for (int direction = 0; direction < 2; ++direction) {
+			image_excess = std::max(image_excess,
+			    inclusion_margin - result.image_minimum[direction]);
+			image_excess = std::max(image_excess,
+			    result.image_maximum[direction] -
+				(1.0 - inclusion_margin));
+		    }
+		    image_excess = std::max(0.0, image_excess);
+		    if (!trace->surface_fold_krawczyk_available ||
+			    image_excess < trace->surface_fold_best_image_excess)
+			trace->surface_fold_best_image_excess = image_excess;
+		    trace->surface_fold_krawczyk_available++;
+		    if (trace->surface_fold_krawczyk_available == 1) {
+			trace->surface_fold_min_determinant_ratio =
+			    result.determinant_ratio;
+		    } else {
+			trace->surface_fold_min_determinant_ratio = std::min(
+			    (double)trace->surface_fold_min_determinant_ratio,
+			    (double)result.determinant_ratio);
+		    }
+		    if (result.certified) {
+			trace->surface_fold_krawczyk_certified++;
+			binary_certified = true;
+		    }
+		}
 	    }
-	    if (result.certified) {
-		trace->surface_fold_krawczyk_certified++;
+
+	    brep_interval expansion_values[2][BREP_DIRECT_BEZIER_MAX_CVS];
+	    size_t expansion_high_water = coefficients.expansion_high_water;
+	    bool expansion_restricted = coefficients.expansion_available;
+	    trace->surface_fold_expansion_attempts++;
+	    for (int equation = 0; expansion_restricted && equation < 2;
+		    ++equation) {
+		if (!brep_expansion_surface_restrict(
+			coefficients.value_expansion_interval[equation],
+			coefficients.order[0], coefficients.order[1],
+			subbox_minimum[0], subbox_maximum[0],
+			subbox_minimum[1], subbox_maximum[1],
+			true, expansion_values[equation],
+			expansion_high_water)) {
+		    expansion_restricted = false;
+		    break;
+		}
+	    }
+	    trace->surface_fold_expansion_high_water = std::max(
+		trace->surface_fold_expansion_high_water, expansion_high_water);
+	    if (!expansion_restricted) {
+		trace->surface_fold_expansion_failures++;
+	    } else {
+		struct rt_brep_krawczyk_test_result result = {};
+		if (brep_expansion_surface_krawczyk(expansion_values,
+			coefficients.order[0], coefficients.order[1],
+			subbox_root, result, expansion_high_water)) {
+		    trace->surface_fold_expansion_high_water = std::max(
+			trace->surface_fold_expansion_high_water,
+			expansion_high_water);
+		    double image_excess = 0.0;
+		    for (int direction = 0; direction < 2; ++direction) {
+			image_excess = std::max(image_excess,
+			    inclusion_margin - result.image_minimum[direction]);
+			image_excess = std::max(image_excess,
+			    result.image_maximum[direction] -
+				(1.0 - inclusion_margin));
+		    }
+		    image_excess = std::max(0.0, image_excess);
+		    if (!trace->surface_fold_expansion_available ||
+			    image_excess <
+			    trace->surface_fold_expansion_best_image_excess)
+			trace->surface_fold_expansion_best_image_excess =
+			    image_excess;
+		    trace->surface_fold_expansion_available++;
+		    if (trace->surface_fold_expansion_available == 1) {
+			trace->surface_fold_expansion_min_determinant_ratio =
+			    result.determinant_ratio;
+		    } else {
+			trace->surface_fold_expansion_min_determinant_ratio =
+			    std::min((double)trace->
+				surface_fold_expansion_min_determinant_ratio,
+				(double)result.determinant_ratio);
+		    }
+		    if (result.certified && !expansion_candidate_certified) {
+			trace->surface_fold_expansion_certified++;
+			expansion_candidate_certified = true;
+		    }
+		} else {
+		    trace->surface_fold_expansion_failures++;
+		}
+	    }
+	    if (binary_certified)
 		break;
-	    }
 	}
     }
 }
