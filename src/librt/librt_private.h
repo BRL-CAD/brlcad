@@ -459,6 +459,7 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_MAX_ROOTS 64
 #define RT_BREP_TRACE_MAX_EDGES 64
 #define RT_BREP_TRACE_MAX_SURFACE_BOXES 64
+#define RT_BREP_TRACE_MAX_FOLD_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_CLUSTERS 64
 #define RT_BREP_TRACE_MAX_LOCAL_SEGMENTS 8
@@ -478,6 +479,9 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_LEAVING 1
 #define RT_BREP_TRACE_LOCAL_CONTACT 2
 #define RT_BREP_TRACE_LOCAL_UNRESOLVED 3
+#define RT_BREP_FOLD_GAP_RESOLVED 1
+#define RT_BREP_FOLD_GAP_SUBMINIMUM 2
+#define RT_BREP_FOLD_GAP_AMBIGUOUS 3
 #define RT_BREP_PREPARED_FALLBACK_NONE 0
 #define RT_BREP_PREPARED_FALLBACK_NON_SOLID 1
 #define RT_BREP_PREPARED_FALLBACK_PLATE 2
@@ -543,6 +547,32 @@ struct rt_brep_trace_surface_box {
     int face_index;
     int span_index;
     int depth;
+};
+
+struct rt_brep_trace_fold_root {
+    fastf_t dist;
+    fastf_t t_min;
+    fastf_t t_max;
+    fastf_t uv[2];
+    fastf_t uv_min[2];
+    fastf_t uv_max[2];
+    fastf_t normal_dot;
+    fastf_t trim_distance;
+    int face_index;
+    int span_index;
+    int adjacent_face_index;
+    int trim_status;
+    int hit_class;
+    int determinant_sign;
+    int direction;
+};
+
+struct rt_brep_fold_interval_test_result {
+    fastf_t gap_minimum;
+    fastf_t gap_maximum;
+    fastf_t minimum_t_minimum;
+    fastf_t minimum_t_maximum;
+    int classification;
 };
 
 struct rt_brep_trace_local_root {
@@ -690,6 +720,33 @@ struct rt_brep_shot_trace {
     size_t surface_fold_strip_depth_exhausted;
     size_t surface_fold_strip_workspace_exhausted;
     size_t surface_fold_complete;
+    size_t surface_fold_roots;
+    size_t stored_surface_fold_roots;
+    size_t surface_fold_root_overflow;
+    size_t surface_fold_root_failures;
+    size_t surface_fold_localization_attempts;
+    size_t surface_fold_localization_certified;
+    size_t surface_fold_localization_contractions;
+    size_t surface_fold_localization_failures;
+    size_t surface_fold_direction_checks;
+    size_t surface_fold_direction_mismatches;
+    size_t surface_fold_trim_queries;
+    size_t surface_fold_trim_candidates;
+    size_t surface_fold_trim_failures;
+    size_t surface_fold_topology_pairs;
+    size_t surface_fold_duplicate_events;
+    size_t surface_fold_material_pairs;
+    size_t surface_fold_void_pairs;
+    size_t surface_fold_resolved_pairs;
+    size_t surface_fold_subminimum_contacts;
+    size_t surface_fold_tolerance_ambiguous;
+    size_t surface_fold_unmatched_roots;
+    size_t surface_fold_promoted_pairs;
+    fastf_t surface_fold_minimum_t;
+    fastf_t surface_fold_pair_gap_min;
+    fastf_t surface_fold_pair_gap_max;
+    fastf_t surface_fold_segment_in;
+    fastf_t surface_fold_segment_out;
     size_t surface_fold_corridor_failures;
     size_t surface_fold_corridor_high_water;
     fastf_t surface_fold_min_determinant_ratio;
@@ -703,6 +760,8 @@ struct rt_brep_shot_trace {
     size_t surface_box_overflow;
     struct rt_brep_trace_surface_box
 	surface_boxes[RT_BREP_TRACE_MAX_SURFACE_BOXES];
+    struct rt_brep_trace_fold_root
+	surface_fold_roots_data[RT_BREP_TRACE_MAX_FOLD_ROOTS];
     size_t local_root_attempts;
     size_t local_root_candidates;
     size_t stored_local_roots;
@@ -999,6 +1058,10 @@ RT_EXPORT extern int _rt_brep_clip_test(
     const fastf_t *first_coefficients, const fastf_t *second_coefficients,
     int u_order, int v_order, const fastf_t coefficient_error[2],
     fastf_t parameter_range[4]);
+RT_EXPORT extern int _rt_brep_fold_interval_test(
+    const fastf_t lower[2], const fastf_t upper[2],
+    const fastf_t direction[3], fastf_t model_tolerance,
+    struct rt_brep_fold_interval_test_result *result);
 
 RT_EXPORT extern int _rt_brep_shot_trace(
     struct soltab *stp, struct xray *rp, struct application *ap,
