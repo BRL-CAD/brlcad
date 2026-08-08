@@ -794,6 +794,8 @@ struct rt_brep_linear_hull_test_result {
 };
 
 #define RT_BREP_FOLD_TEST_MAX_CANDIDATES 4
+#define RT_BREP_DETERMINANT_TEST_MAX_ORDER 30
+#define RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS 900
 
 struct rt_brep_fold_test_result {
     int frame_available;
@@ -806,6 +808,30 @@ struct rt_brep_fold_test_result {
     fastf_t uv[RT_BREP_FOLD_TEST_MAX_CANDIDATES][2];
     fastf_t residual[RT_BREP_FOLD_TEST_MAX_CANDIDATES];
     fastf_t weak_bracket_width[RT_BREP_FOLD_TEST_MAX_CANDIDATES];
+};
+
+struct rt_brep_determinant_test_result {
+    int u_order;
+    int v_order;
+    fastf_t minimum[RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+    fastf_t maximum[RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+};
+
+struct rt_brep_krawczyk_test_result {
+    int available;
+    int certified;
+    fastf_t determinant_ratio;
+    fastf_t image_minimum[2];
+    fastf_t image_maximum[2];
+};
+
+struct rt_brep_corridor_test_result {
+    int available;
+    int regular_derivative_signed;
+    int regular_boundaries_opposed;
+    int determinant_signed;
+    int unique;
+    int determinant_sign;
 };
 
 RT_EXPORT extern int _rt_brep_interval_test(
@@ -826,6 +852,21 @@ RT_EXPORT extern int _rt_brep_fold_test(
     const fastf_t *first_coefficients, const fastf_t *second_coefficients,
     int u_order, int v_order, const fastf_t coefficient_error[2],
     struct rt_brep_fold_test_result *result);
+RT_EXPORT extern int _rt_brep_determinant_test(
+    const fastf_t *first_coefficients, const fastf_t *first_error,
+    const fastf_t *second_coefficients, const fastf_t *second_error,
+    int u_order, int v_order,
+    struct rt_brep_determinant_test_result *result);
+RT_EXPORT extern int _rt_brep_krawczyk_test(
+    const fastf_t *first_coefficients, const fastf_t *first_error,
+    const fastf_t *second_coefficients, const fastf_t *second_error,
+    int u_order, int v_order, const fastf_t root[2],
+    struct rt_brep_krawczyk_test_result *result);
+RT_EXPORT extern int _rt_brep_corridor_test(
+    const fastf_t *first_coefficients, const fastf_t *first_error,
+    const fastf_t *second_coefficients, const fastf_t *second_error,
+    int u_order, int v_order, int regular_direction,
+    struct rt_brep_corridor_test_result *result);
 RT_EXPORT extern int _rt_brep_coefficient_test(
     const fastf_t cv[4], const fastf_t origin[3], const fastf_t direction[3],
     const fastf_t planes[2][3],

@@ -1086,6 +1086,66 @@ rank-revealing or coefficient-aware basis.  The conservative transformed-hull
 exclusion remains valid because it uses outward bounds and gives a transform
 no positive root-publication authority.
 
+The next permanent arithmetic layer should form the corridor determinant in
+Bernstein form.  If A has bidegree (m,n) and B has bidegree (p,q), form each
+product coefficient as
+
+  C[k,l] = sum A[i,j] B[k-i,l-j]
+                 choose(m,i) choose(p,k-i) / choose(m+p,k)
+                 choose(n,j) choose(q,l-j) / choose(n+q,l).
+
+Do not multiply only the global derivative hulls; that loses the coefficient
+correlation and is substantially wider.  Treat every binomial ratio as an
+outward interval even though its integer numerator and denominator are exact.
+For input surface orders up to 16x16, the two derivative products and their
+difference have order at most 30x30.  Storage and loop limits must reflect
+that maximum explicitly, reject overflow/nonfinite arithmetic, and remain
+fixed-size.
+
+Audit this operator independently.  An efficient exact oracle can accumulate
+the integer numerator of each rational Bernstein product coefficient with
+exact binomial weights and apply a dyadic scale only after the sum.  Cover all
+input order pairs, signed coefficient patterns, and wide binary scales.  Also
+use exact integer intervals on a lower-order but nontrivial matrix to verify
+that coefficient-varying source uncertainty is propagated through derivative,
+product, and determinant bounds.  A strict observed determinant sign may be
+used only when the exact enclosure has the same property.
+
+For root existence, do not confuse a fixed determinant-angle threshold with
+the Krawczyk theorem.  The inverse midpoint Jacobian is a point
+preconditioner; any finite approximate matrix C is admissible when every
+operation in
+
+  K(x,X) = x - C F(x) + (I - C J(X))(X - x)
+
+is outward enclosed.  Poor conditioning will often make K fail strict
+containment, which correctly returns inconclusive, but it need not reject a
+strict containment merely because a normalized determinant is below 1e-6.
+Keep the existing production threshold until the per-coefficient path and its
+fallbacks are qualified; exercise the threshold-free rule first through a
+private test entry.
+
+The synthetic certification matrix should add parameter shear to the normal
+fold form so the two Jacobian columns become nearly parallel without changing
+the known roots.  Vary shear and root separation independently.  Narrow each
+candidate box enough that its coefficient magnitude and evaluation enclosure
+remain commensurate with the local residual; box aspect ratio is part of the
+proof strategy, not merely a speed heuristic.  For each side require:
+
+  * strict Krawczyk inclusion in a candidate-centered sub-box;
+  * a larger containing corridor where d(phi)/d(p) excludes zero;
+  * strict opposite phi signs on the two p boundaries for every q; and
+  * one strict Bernstein sign for det(J) throughout the corridor.
+
+The last three facts make the phi=0 corridor single-valued and make psi
+strictly monotone along it.  Together with Krawczyk existence they prove
+exactly one root in the corridor.  Sweep down well below the old fixed
+determinant ratio and retain exact contact as an expected inconclusive case.
+This analytic proof matrix is still not production qualification: the real
+ray-plane path must preserve individual coefficient intervals through fused
+construction and restriction, exclude the remaining strip next to the fold,
+prove both adjacent Bezier-span parents, and deduplicate their physical event.
+
 5.5 Allocation-free ray-time workspace
 
 The new fast path must not call malloc/new or grow STL containers while
