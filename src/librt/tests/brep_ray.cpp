@@ -970,6 +970,8 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     size_t outside_local_candidates = 0;
     size_t outside_local_invalid = 0;
     size_t legacy_roots_without_local = 0;
+    size_t invalid_legacy_roots_without_local = 0;
+    size_t outside_legacy_only_contacts = 0;
     size_t local_roots_without_legacy = 0;
     brep_root_event_summary root_events;
     double largest_outside_local_candidate = 0.0;
@@ -1016,6 +1018,8 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	maximum_local_duplicates = std::max(maximum_local_duplicates,
 	    trace.local_root_duplicates);
 	legacy_roots_without_local += trace.legacy_unique_roots_unmatched;
+	invalid_legacy_roots_without_local +=
+	    trace.legacy_unique_roots_unmatched;
 	local_roots_without_legacy += trace.local_unique_roots_unmatched;
 	brep_accumulate_root_events(root_events, trace);
 	if (trace.legacy_unique_roots_unmatched) {
@@ -1209,6 +1213,8 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	tangent_trace);
     legacy_roots_without_local +=
 	tangent_trace.legacy_unique_roots_unmatched;
+    invalid_legacy_roots_without_local +=
+	tangent_trace.legacy_unique_roots_unmatched;
     local_roots_without_legacy +=
 	tangent_trace.local_unique_roots_unmatched;
     brep_accumulate_root_events(root_events, tangent_trace);
@@ -1272,6 +1278,32 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	(void)shoot_brep_trace(brep_stp, rtip, resp, trace_ray, trace);
 	legacy_roots_without_local += trace.legacy_unique_roots_unmatched;
 	local_roots_without_legacy += trace.local_unique_roots_unmatched;
+	if (trace.legacy_unique_roots_unmatched) {
+	    bool valid_legacy_contact =
+		-h <= 1.0e-6 * rtip->rti_tol.dist &&
+		trace.legacy_unique_roots == 1 &&
+		trace.legacy_unique_roots_unmatched == 1 &&
+		trace.local_unique_roots == 0 && trace.final_segments == 0;
+	    for (size_t root_index = 0; root_index < trace.stored_roots;
+		    ++root_index) {
+		const struct rt_brep_trace_root &root = trace.roots[root_index];
+		if (fabs(root.dist - 2.0 * radius) >
+			0.1 * rtip->rti_tol.dist ||
+			fabs(root.normal_dot) > BREP_GRAZING_DOT_TOL)
+		    valid_legacy_contact = false;
+	    }
+	    if (valid_legacy_contact) {
+		outside_legacy_only_contacts +=
+		    trace.legacy_unique_roots_unmatched;
+	    } else {
+		invalid_legacy_roots_without_local +=
+		    trace.legacy_unique_roots_unmatched;
+		std::printf("Outside invalid legacy-only root h/T=%.17g\n",
+		    h / rtip->rti_tol.dist);
+		brep_trace_root_coverage_diagnostic("outside legacy-only",
+		    trace);
+	    }
+	}
 	brep_accumulate_root_events(root_events, trace);
 	maximum_fixed_leaves = std::max(maximum_fixed_leaves,
 	    trace.fixed_leaf_count);
@@ -1420,10 +1452,12 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     std::printf("Sphere fixed workspaces: leaves=%zu/%d raw-hits=%zu/%d\n",
 	maximum_fixed_leaves, RT_BREP_MAX_LEAVES, maximum_fixed_hits,
 	RT_BREP_MAX_HITS);
-    std::printf("Sphere prepared-span root coverage: legacy-unmatched=%zu "
-	"direct-only=%zu events=%zu mismatched=%zu/%zu/%zu/%zu/%zu "
+    std::printf("Sphere prepared-span root coverage: "
+	"legacy-unmatched=%zu/%zu/%zu direct-only=%zu "
+	"events=%zu mismatched=%zu/%zu/%zu/%zu/%zu "
 	"max-errors=%.3g/%.3g/%.3g/%.3g trims=%zu/%zu "
 	"face-trims=%zu/%zu/%zu/%.3g\n", legacy_roots_without_local,
+	outside_legacy_only_contacts, invalid_legacy_roots_without_local,
 	local_roots_without_legacy, root_events.matched,
 	root_events.mismatched, root_events.trim_status_mismatches,
 	root_events.hit_class_mismatches, root_events.direction_mismatches,
@@ -1434,9 +1468,9 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	root_events.face_trim_candidates, root_events.face_trim_mismatches,
 	root_events.maximum_face_trim_error);
     brep_print_prepared_event_summary("Sphere", root_events);
-    if (legacy_roots_without_local) {
-	std::printf("FAIL: prepared spans missed %zu legacy sphere roots\n",
-	    legacy_roots_without_local);
+    if (invalid_legacy_roots_without_local) {
+	std::printf("FAIL: prepared spans missed %zu valid legacy sphere roots\n",
+	    invalid_legacy_roots_without_local);
 	failures++;
     }
     if (root_events.mismatched) {
@@ -2849,6 +2883,39 @@ struct exact_dyadic {
 
 
 static bool
+exact_dyadic_half_sum(const exact_dyadic &first,
+    const exact_dyadic &second, exact_dyadic &result)
+{
+    const int exponent = std::min(first.exponent, second.exponent);
+    const int first_shift = first.exponent - exponent;
+    const int second_shift = second.exponent - exponent;
+    if (first_shift >= 63 || second_shift >= 63)
+	return false;
+    const int64_t first_factor = INT64_C(1) << first_shift;
+    const int64_t second_factor = INT64_C(1) << second_shift;
+    if ((first.mantissa > 0 &&
+	    first.mantissa > INT64_MAX / first_factor) ||
+	    (first.mantissa < 0 &&
+	    first.mantissa < INT64_MIN / first_factor) ||
+	    (second.mantissa > 0 &&
+	    second.mantissa > INT64_MAX / second_factor) ||
+	    (second.mantissa < 0 &&
+	    second.mantissa < INT64_MIN / second_factor))
+	return false;
+    const int64_t first_mantissa = first.mantissa * first_factor;
+    const int64_t second_mantissa = second.mantissa * second_factor;
+    if ((second_mantissa > 0 &&
+	    first_mantissa > INT64_MAX - second_mantissa) ||
+	    (second_mantissa < 0 &&
+	    first_mantissa < INT64_MIN - second_mantissa))
+	return false;
+    result.mantissa = first_mantissa + second_mantissa;
+    result.exponent = exponent - 1;
+    return true;
+}
+
+
+static bool
 exact_dyadic_midpoint(const exact_dyadic *input, int order,
     exact_dyadic &result)
 {
@@ -2859,13 +2926,96 @@ exact_dyadic_midpoint(const exact_dyadic *input, int order,
 	work[i] = input[i];
     for (int level = 1; level < order; ++level) {
 	for (int i = 0; i < order - level; ++i) {
-	    if (work[i].exponent != work[i + 1].exponent)
+	    if (!exact_dyadic_half_sum(work[i], work[i + 1], work[i]))
 		return false;
-	    work[i].mantissa += work[i + 1].mantissa;
-	    work[i].exponent--;
 	}
     }
     result = work[0];
+    return true;
+}
+
+
+static bool
+exact_dyadic_bezier_split_half(const exact_dyadic *input, int order,
+    exact_dyadic *left, exact_dyadic *right)
+{
+    if (!input || !left || !right || order < 2 || order > 16)
+	return false;
+    exact_dyadic work[16];
+    for (int i = 0; i < order; ++i)
+	work[i] = input[i];
+    left[0] = work[0];
+    right[order - 1] = work[order - 1];
+    for (int level = 1; level < order; ++level) {
+	for (int i = 0; i < order - level; ++i) {
+	    if (!exact_dyadic_half_sum(work[i], work[i + 1], work[i]))
+		return false;
+	}
+	left[level] = work[0];
+	right[order - level - 1] = work[order - level - 1];
+    }
+    return true;
+}
+
+
+static bool
+exact_dyadic_bezier_restrict_quarters(const exact_dyadic *input, int order,
+    int minimum_quarters, int maximum_quarters, exact_dyadic *output)
+{
+    if (!input || !output || minimum_quarters < 0 ||
+	    maximum_quarters > 4 || minimum_quarters >= maximum_quarters)
+	return false;
+    exact_dyadic first[16];
+    exact_dyadic second[16];
+    const exact_dyadic *current = input;
+    if (maximum_quarters == 2) {
+	if (!exact_dyadic_bezier_split_half(input, order, first, second))
+	    return false;
+	current = first;
+    } else if (maximum_quarters != 4) {
+	return false;
+    }
+    if (minimum_quarters) {
+	const bool half_of_current =
+	    (maximum_quarters == 2 && minimum_quarters == 1) ||
+	    (maximum_quarters == 4 && minimum_quarters == 2);
+	if (!half_of_current ||
+		!exact_dyadic_bezier_split_half(current, order, first, second))
+	    return false;
+	current = second;
+    }
+    for (int i = 0; i < order; ++i)
+	output[i] = current[i];
+    return true;
+}
+
+
+static bool
+exact_dyadic_surface_restrict_quarters(const exact_dyadic *input,
+    int u_order, int v_order, const int minimum_quarters[2],
+    const int maximum_quarters[2], exact_dyadic *output)
+{
+    exact_dyadic u_restricted[256];
+    exact_dyadic source[16];
+    exact_dyadic result[16];
+    for (int j = 0; j < v_order; ++j) {
+	for (int i = 0; i < u_order; ++i)
+	    source[i] = input[(size_t)i * v_order + j];
+	if (!exact_dyadic_bezier_restrict_quarters(source, u_order,
+		minimum_quarters[0], maximum_quarters[0], result))
+	    return false;
+	for (int i = 0; i < u_order; ++i)
+	    u_restricted[(size_t)i * v_order + j] = result[i];
+    }
+    for (int i = 0; i < u_order; ++i) {
+	for (int j = 0; j < v_order; ++j)
+	    source[j] = u_restricted[(size_t)i * v_order + j];
+	if (!exact_dyadic_bezier_restrict_quarters(source, v_order,
+		minimum_quarters[1], maximum_quarters[1], result))
+	    return false;
+	for (int j = 0; j < v_order; ++j)
+	    output[(size_t)i * v_order + j] = result[j];
+    }
     return true;
 }
 
@@ -2898,9 +3048,18 @@ check_brep_interval_enclosures()
 {
     const int scale_exponents[] = {-400, -40, 0, 40, 400};
     const int product_exponents[] = {-200, 0, 200};
+    const int coordinate_exponents[] = {-300, 0, 300};
+    const int direction_exponents[] = {-100, 0, 100};
+    const int plane_exponents[] = {-50, 0, 50};
     const int64_t product_intervals[][4] = {
 	{-3, 5, -7, 2}, {1, 4, 2, 8}, {-9, -2, -5, -1},
 	{-8, -1, 2, 7}, {0, 3, -4, 0}
+    };
+    const int division_intervals[][4] = {
+	{-7, 5, 0, 2}, {1, 9, 1, 3}, {-9, -1, 0, 3}, {0, 7, 1, 2}
+    };
+    const int restriction_quarters[][4] = {
+	{0, 0, 2, 2}, {1, 2, 2, 4}, {2, 1, 4, 2}
     };
     double values[2][256] = {};
     exact_dyadic exact[2][256] = {};
@@ -2909,8 +3068,106 @@ check_brep_interval_enclosures()
     size_t function_checks = 0;
     size_t derivative_checks = 0;
     size_t product_checks = 0;
+    size_t division_checks = 0;
+    size_t coefficient_checks = 0;
+    size_t restriction_checks = 0;
     long double maximum_function_width_ratio = 0.0L;
+    long double maximum_restriction_width_ratio = 0.0L;
     int failures = 0;
+
+    for (size_t coordinate_scale = 0; coordinate_scale <
+	    sizeof(coordinate_exponents) / sizeof(coordinate_exponents[0]);
+	    ++coordinate_scale) {
+	for (size_t direction_scale = 0; direction_scale <
+		sizeof(direction_exponents) / sizeof(direction_exponents[0]);
+		++direction_scale) {
+	    for (size_t plane_scale = 0; plane_scale <
+		    sizeof(plane_exponents) / sizeof(plane_exponents[0]);
+		    ++plane_scale) {
+		for (int weight = 1; weight <= 2; ++weight) {
+		    const int64_t cv_mantissa[3] = {5, -7, 4};
+		    const int64_t origin_mantissa[3] = {2, -3, 1};
+		    const int64_t direction_mantissa[3] = {1, 1, 0};
+		    const int64_t plane_mantissa[2][3] = {
+			{1, -2, 3}, {-3, 1, 2}
+		    };
+		    fastf_t cv[4];
+		    fastf_t origin[3];
+		    fastf_t direction[3];
+		    fastf_t planes[2][3];
+		    for (int component = 0; component < 3; ++component) {
+			cv[component] = std::ldexp((double)cv_mantissa[component],
+			    coordinate_exponents[coordinate_scale]);
+			origin[component] = std::ldexp(
+			    (double)origin_mantissa[component],
+			    coordinate_exponents[coordinate_scale]);
+			direction[component] = std::ldexp(
+			    (double)direction_mantissa[component],
+			    direction_exponents[direction_scale]);
+			for (int equation = 0; equation < 2; ++equation) {
+			    planes[equation][component] = std::ldexp(
+				(double)plane_mantissa[equation][component],
+				plane_exponents[plane_scale]);
+			}
+		    }
+		    cv[3] = weight;
+		    struct rt_brep_coefficient_test_result observed = {};
+		    if (!_rt_brep_coefficient_test(cv, origin, direction, planes,
+			    &observed)) {
+			std::printf("FAIL: coefficient interval unavailable "
+			    "scale=%d/%d/%d weight=%d\n",
+			    coordinate_exponents[coordinate_scale],
+			    direction_exponents[direction_scale],
+			    plane_exponents[plane_scale], weight);
+			failures++;
+			continue;
+		    }
+		    int64_t numerator_mantissa[3];
+		    for (int component = 0; component < 3; ++component)
+			numerator_mantissa[component] = cv_mantissa[component] -
+			    weight * origin_mantissa[component];
+		    for (int equation = 0; equation < 2; ++equation) {
+			int64_t dot_mantissa = 0;
+			for (int component = 0; component < 3; ++component)
+			    dot_mantissa += numerator_mantissa[component] *
+				plane_mantissa[equation][component];
+			const long double exact_value = std::ldexp(
+			    (long double)dot_mantissa,
+			    coordinate_exponents[coordinate_scale] +
+			    plane_exponents[plane_scale]);
+			coefficient_checks++;
+			if ((long double)observed.function_minimum[equation] >
+				exact_value ||
+				(long double)observed.function_maximum[equation] <
+				exact_value) {
+			    std::printf("FAIL: coefficient function enclosure "
+				"scale=%d/%d/%d weight=%d equation=%d\n",
+				coordinate_exponents[coordinate_scale],
+				direction_exponents[direction_scale],
+				plane_exponents[plane_scale], weight, equation);
+			    failures++;
+			}
+		    }
+		    const int64_t ray_dot_mantissa =
+			numerator_mantissa[0] + numerator_mantissa[1];
+		    const long double exact_ray = std::ldexp(
+			(long double)ray_dot_mantissa,
+			coordinate_exponents[coordinate_scale] -
+			direction_exponents[direction_scale] - 1);
+		    coefficient_checks++;
+		    if ((long double)observed.ray_minimum > exact_ray ||
+			    (long double)observed.ray_maximum < exact_ray) {
+			std::printf("FAIL: coefficient ray enclosure "
+			    "scale=%d/%d/%d weight=%d\n",
+			    coordinate_exponents[coordinate_scale],
+			    direction_exponents[direction_scale],
+			    plane_exponents[plane_scale], weight);
+			failures++;
+		    }
+		}
+	    }
+	}
+    }
 
     for (size_t interval_index = 0; interval_index <
 	    sizeof(product_intervals) / sizeof(product_intervals[0]);
@@ -2962,6 +3219,61 @@ check_brep_interval_enclosures()
 			"scale=%d/%d\n", interval_index,
 			product_exponents[first_scale],
 			product_exponents[second_scale]);
+		    failures++;
+		}
+	    }
+	}
+    }
+
+    for (size_t interval_index = 0; interval_index <
+	    sizeof(division_intervals) / sizeof(division_intervals[0]);
+	    ++interval_index) {
+	for (size_t numerator_scale = 0; numerator_scale <
+		sizeof(product_exponents) / sizeof(product_exponents[0]);
+		++numerator_scale) {
+	    for (size_t denominator_scale = 0; denominator_scale <
+		    sizeof(product_exponents) / sizeof(product_exponents[0]);
+		    ++denominator_scale) {
+		fastf_t numerator[2] = {
+		    std::ldexp((double)division_intervals[interval_index][0],
+			product_exponents[numerator_scale]),
+		    std::ldexp((double)division_intervals[interval_index][1],
+			product_exponents[numerator_scale])
+		};
+		fastf_t denominator[2] = {
+		    std::ldexp(1.0, product_exponents[denominator_scale] +
+			division_intervals[interval_index][2]),
+		    std::ldexp(1.0, product_exponents[denominator_scale] +
+			division_intervals[interval_index][3])
+		};
+		long double exact_quotients[4];
+		size_t quotient = 0;
+		for (int numerator_endpoint = 0; numerator_endpoint < 2;
+			numerator_endpoint++) {
+		    for (int denominator_endpoint = 0; denominator_endpoint < 2;
+			    denominator_endpoint++) {
+			exact_quotients[quotient++] = std::ldexp(
+			    (long double)division_intervals[interval_index]
+				[numerator_endpoint],
+			    product_exponents[numerator_scale] -
+			    product_exponents[denominator_scale] -
+			    division_intervals[interval_index]
+				[2 + denominator_endpoint]);
+		    }
+		}
+		const long double exact_minimum = *std::min_element(
+		    exact_quotients, exact_quotients + 4);
+		const long double exact_maximum = *std::max_element(
+		    exact_quotients, exact_quotients + 4);
+		fastf_t observed[2] = {};
+		division_checks++;
+		if (!_rt_brep_interval_divide_test(numerator, denominator,
+			observed) || (long double)observed[0] > exact_minimum ||
+			(long double)observed[1] < exact_maximum) {
+		    std::printf("FAIL: interval quotient enclosure case=%zu "
+			"scale=%d/%d\n", interval_index,
+			product_exponents[numerator_scale],
+			product_exponents[denominator_scale]);
 		    failures++;
 		}
 	    }
@@ -3076,6 +3388,71 @@ check_brep_interval_enclosures()
 			    }
 			}
 		    }
+
+		    for (size_t restriction = 0; restriction <
+			    sizeof(restriction_quarters) /
+			    sizeof(restriction_quarters[0]); ++restriction) {
+			const int minimum_quarters[2] = {
+			    restriction_quarters[restriction][0],
+			    restriction_quarters[restriction][1]
+			};
+			const int maximum_quarters[2] = {
+			    restriction_quarters[restriction][2],
+			    restriction_quarters[restriction][3]
+			};
+			const fastf_t minimum[2] = {
+			    0.25 * minimum_quarters[0],
+			    0.25 * minimum_quarters[1]
+			};
+			const fastf_t maximum[2] = {
+			    0.25 * maximum_quarters[0],
+			    0.25 * maximum_quarters[1]
+			};
+			exact_dyadic expected[256];
+			fastf_t restricted[256] = {};
+			fastf_t restricted_error = 0.0;
+			if (!exact_dyadic_surface_restrict_quarters(exact[equation],
+				u_order, v_order, minimum_quarters,
+				maximum_quarters, expected) ||
+				!_rt_brep_restrict_test(values[equation], u_order,
+				v_order, coefficient_error[equation], minimum,
+				maximum, restricted, &restricted_error)) {
+			    std::printf("FAIL: interval restriction unavailable "
+				"order=%d/%d scale=%d case=%zu\n", u_order,
+				v_order, scale_exponent, restriction);
+			    failures++;
+			    continue;
+			}
+			const long double exact_error = coefficient_error[equation];
+			const long double restriction_width_ratio = restricted_error /
+			    exact_error;
+			maximum_restriction_width_ratio = std::max(
+			    maximum_restriction_width_ratio,
+			    restriction_width_ratio);
+			for (size_t i = 0; i < count; ++i) {
+			    const long double restricted_nominal =
+				exact_dyadic_value(expected[i]);
+			    const long double restricted_lower = std::nextafter(
+				restricted[i] - restricted_error, -INFINITY);
+			    const long double restricted_upper = std::nextafter(
+				restricted[i] + restricted_error, INFINITY);
+			    restriction_checks++;
+			    if (!std::isfinite((double)restricted_lower) ||
+				    !std::isfinite((double)restricted_upper) ||
+				    restricted_lower >
+					restricted_nominal - exact_error ||
+				    restricted_upper <
+					restricted_nominal + exact_error ||
+				    !(restriction_width_ratio <= 1.05L)) {
+				std::printf("FAIL: interval restriction enclosure "
+				    "order=%d/%d scale=%d case=%zu "
+				    "coefficient=%zu width/error=%.9Lg\n",
+				    u_order, v_order, scale_exponent,
+				    restriction, i, restriction_width_ratio);
+				failures++;
+			    }
+			}
+		    }
 		}
 	    }
 	}
@@ -3083,10 +3460,11 @@ check_brep_interval_enclosures()
 
     if (!failures) {
 	std::printf("BREP interval enclosure audit: PASS cases=%zu "
-	    "function=%zu derivative=%zu product=%zu "
-	    "max-width/error=%.9Lg\n", cases, function_checks,
-	    derivative_checks, product_checks,
-	    maximum_function_width_ratio);
+	    "function=%zu derivative=%zu product=%zu quotient=%zu "
+	    "coefficient=%zu restriction=%zu max-width/error=%.9Lg/%.9Lg\n",
+	    cases, function_checks, derivative_checks, product_checks,
+	    division_checks, coefficient_checks, restriction_checks,
+	    maximum_function_width_ratio, maximum_restriction_width_ratio);
     }
     return failures;
 }
