@@ -450,6 +450,7 @@ RT_EXPORT extern void rt_vshot_via_shot(
 
 /* Allocation-free BREP surface-tree traversal capacity. */
 #define RT_BREP_MAX_LEAVES 128
+#define RT_BREP_MAX_HITS 128
 
 /* Fixed-capacity BREP shot observations for in-librt correctness tests.
  * Solver status indices match the private brep_solver_status_t order in
@@ -540,6 +541,17 @@ struct rt_brep_shot_trace {
     size_t fixed_leaf_overflow;
     size_t fixed_leaf_mismatches;
     size_t fixed_leaf_fallback;
+    size_t fixed_hit_count;
+    size_t fixed_hit_stored;
+    size_t fixed_hit_overflow;
+    size_t fixed_hit_mismatches;
+    size_t fixed_hit_fallback;
+    size_t fixed_after_near_miss;
+    size_t fixed_after_near_hit;
+    size_t fixed_after_grazing;
+    size_t fixed_after_duplicates;
+    size_t fixed_after_direction_cleanup;
+    size_t fixed_cleanup_mismatches;
     size_t trim_queries;
     size_t trim_noalloc_candidates;
     size_t trim_allocating_candidates;
