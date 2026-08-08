@@ -645,6 +645,14 @@ struct rt_brep_shot_trace {
     size_t surface_krawczyk_boxes;
     size_t surface_krawczyk_min_depth;
     size_t surface_krawczyk_max_depth;
+    size_t surface_fold_attempts;
+    size_t surface_fold_candidates;
+    size_t surface_fold_krawczyk_attempts;
+    size_t surface_fold_krawczyk_available;
+    size_t surface_fold_krawczyk_certified;
+    size_t surface_fold_restriction_failures;
+    fastf_t surface_fold_min_determinant_ratio;
+    fastf_t surface_fold_best_image_excess;
     size_t surface_subdivision_max_depth;
     size_t surface_workspace_high_water;
     size_t surface_workspace_exhausted;
@@ -875,6 +883,10 @@ RT_EXPORT extern int _rt_brep_restrict_test(
     const fastf_t *input, int u_order, int v_order, fastf_t input_error,
     const fastf_t minimum[2], const fastf_t maximum[2], fastf_t *output,
     fastf_t *output_error);
+RT_EXPORT extern int _rt_brep_interval_restrict_test(
+    const fastf_t *input, const fastf_t *input_error, int u_order,
+    int v_order, const fastf_t minimum[2], const fastf_t maximum[2],
+    fastf_t *output_minimum, fastf_t *output_maximum);
 RT_EXPORT extern int _rt_brep_reparameterize_test(
     const fastf_t *input, int u_order, int v_order, fastf_t input_error,
     const fastf_t minimum[2], const fastf_t maximum[2], fastf_t *output,

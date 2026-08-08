@@ -2575,6 +2575,7 @@ brep_interval_common_error(double center, const brep_interval &interval,
 
 struct brep_surface_coefficients {
     double value[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    brep_interval value_interval[2][BREP_DIRECT_BEZIER_MAX_CVS];
     double ray_numerator[BREP_DIRECT_BEZIER_MAX_CVS];
     double weight[BREP_DIRECT_BEZIER_MAX_CVS];
     double error[2] = {0.0, 0.0};
@@ -2617,9 +2618,10 @@ brep_surface_coefficients_init(brep_surface_coefficients &coefficients,
 	    if (!span.surface.GetCV(i, j, cv) || !cv.IsValid() ||
 		    !(cv.w > 0.0) || !std::isfinite(cv.w))
 		return false;
-	    const ON_3dVector numerator(cv.x - ray.m_origin.x * cv.w,
-		cv.y - ray.m_origin.y * cv.w,
-		cv.z - ray.m_origin.z * cv.w);
+	    const ON_3dVector numerator(
+		std::fma(-ray.m_origin.x, cv.w, cv.x),
+		std::fma(-ray.m_origin.y, cv.w, cv.y),
+		std::fma(-ray.m_origin.z, cv.w, cv.z));
 	    const double cv_value[4] = {cv.x, cv.y, cv.z, cv.w};
 	    const double origin[3] = {ray.m_origin.x, ray.m_origin.y,
 		ray.m_origin.z};
@@ -2636,8 +2638,11 @@ brep_surface_coefficients_init(brep_surface_coefficients &coefficients,
 		    ray_coefficient))
 		return false;
 	    const size_t index = (size_t)i * coefficients.order[1] + j;
-	    coefficients.ray_numerator[index] =
-		(numerator * ray.m_dir) / direction_squared;
+	    double ray_dot = 0.0;
+	    for (int component = 0; component < 3; ++component)
+		ray_dot = std::fma(numerator[component], ray.m_dir[component],
+		    ray_dot);
+	    coefficients.ray_numerator[index] = ray_dot / direction_squared;
 	    coefficients.weight[index] = cv.w;
 	    if (!std::isfinite(coefficients.ray_numerator[index]))
 		return false;
@@ -2646,10 +2651,15 @@ brep_surface_coefficients_init(brep_surface_coefficients &coefficients,
 			coefficients.ray_numerator_error))
 		return false;
 	    for (int equation = 0; equation < 2; ++equation) {
-		const double value = numerator * planes[equation];
+		double value = 0.0;
+		for (int component = 0; component < 3; ++component)
+		    value = std::fma(numerator[component],
+			planes[equation][component], value);
 		if (!std::isfinite(value))
 		    return false;
 		coefficients.value[equation][index] = value;
+		coefficients.value_interval[equation][index] =
+		    function_interval[equation];
 		if (!brep_interval_common_error(value,
 			function_interval[equation],
 			coefficients.error[equation]))
@@ -3464,10 +3474,11 @@ brep_single_coefficient_intervals(const double cv[4],
 		!std::isfinite(planes[0][component]) ||
 		!std::isfinite(planes[1][component]) || !std::isfinite(cv[3]))
 	    return false;
-	numerator[component] = brep_interval_add(
-	    {cv[component], cv[component]}, brep_interval_scale(-1.0,
-		brep_interval_multiply({origin[component], origin[component]},
-		    {cv[3], cv[3]})));
+	const double centered = std::fma(-origin[component], cv[3],
+	    cv[component]);
+	if (!std::isfinite(centered))
+	    return false;
+	numerator[component] = brep_interval_expanded(centered, centered);
     }
     brep_interval ray_dot = {0.0, 0.0};
     for (int component = 0; component < 3; ++component) {
@@ -3587,8 +3598,8 @@ brep_scalar_surface_restrict_bounded(const double *input, int u_order,
 		u_maximum, v_minimum, v_maximum, output))
 	return false;
     const size_t count = (size_t)u_order * v_order;
-    brep_interval source[BREP_DIRECT_BEZIER_MAX_CVS];
-    brep_interval restricted[BREP_DIRECT_BEZIER_MAX_CVS];
+    brep_interval source[BREP_DIRECT_BEZIER_MAX_CVS] = {};
+    brep_interval restricted[BREP_DIRECT_BEZIER_MAX_CVS] = {};
     for (size_t i = 0; i < count; ++i)
 	source[i] = brep_interval_expanded(input[i] - input_error,
 	    input[i] + input_error);
@@ -3618,6 +3629,42 @@ _rt_brep_restrict_test(const fastf_t *input, int u_order, int v_order,
 	    output, error))
 	return 0;
     *output_error = error;
+    return 1;
+}
+
+
+extern "C" int
+_rt_brep_interval_restrict_test(const fastf_t *input,
+    const fastf_t *input_error, int u_order, int v_order,
+    const fastf_t minimum[2], const fastf_t maximum[2],
+    fastf_t *output_minimum, fastf_t *output_maximum)
+{
+    if (!input || !input_error || !minimum || !maximum ||
+	    !output_minimum || !output_maximum || u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return 0;
+    const size_t count = (size_t)u_order * v_order;
+    brep_interval source[BREP_DIRECT_BEZIER_MAX_CVS] = {};
+    brep_interval restricted[BREP_DIRECT_BEZIER_MAX_CVS] = {};
+    for (size_t i = 0; i < count; ++i) {
+	if (!std::isfinite(input[i]) || !std::isfinite(input_error[i]) ||
+		input_error[i] < 0.0)
+	    return 0;
+	source[i] = brep_interval_expanded(input[i] - input_error[i],
+	    input[i] + input_error[i]);
+    }
+    if (!brep_interval_surface_restrict(source, u_order, v_order,
+	    minimum[0], maximum[0], minimum[1], maximum[1], restricted))
+	return 0;
+    for (size_t i = 0; i < count; ++i) {
+	if (!std::isfinite(restricted[i].minimum) ||
+		!std::isfinite(restricted[i].maximum) ||
+		restricted[i].minimum > restricted[i].maximum)
+	    return 0;
+	output_minimum[i] = restricted[i].minimum;
+	output_maximum[i] = restricted[i].maximum;
+    }
     return 1;
 }
 
@@ -4207,6 +4254,11 @@ brep_surface_coefficients_reparameterize(
 		maximum[1], u_matrix, v_matrix, result.value[equation],
 		result.error[equation]))
 	    return false;
+	if (!brep_interval_surface_apply_reparameterization(
+		source.value_interval[equation], source.order[0],
+		source.order[1], u_matrix, v_matrix,
+		result.value_interval[equation]))
+	    return false;
     }
     if (!brep_scalar_surface_reparameterize_bounded_with_matrices(
 	    source.ray_numerator, source.order[0], source.order[1],
@@ -4341,6 +4393,78 @@ brep_fold_scalar_surface_evaluate(const double *values, int u_order,
     }
     value = v_control[0];
     return std::isfinite(value);
+}
+
+
+static bool
+brep_fold_scalar_surface_derivative_evaluate(const double *values,
+    int u_order, int v_order, int direction, const double parameter[2],
+    double &value)
+{
+    if (!values || (direction != 0 && direction != 1) ||
+	    u_order < 2 || v_order < 2)
+	return false;
+    double derivative[BREP_DIRECT_BEZIER_MAX_CVS];
+    const int derivative_u_order = u_order - (direction == 0 ? 1 : 0);
+    const int derivative_v_order = v_order - (direction == 1 ? 1 : 0);
+    const int degree = direction == 0 ? u_order - 1 : v_order - 1;
+    for (int i = 0; i < derivative_u_order; ++i) {
+	for (int j = 0; j < derivative_v_order; ++j) {
+	    const size_t previous = (size_t)i * v_order + j;
+	    const size_t next = direction == 0 ?
+		(size_t)(i + 1) * v_order + j :
+		(size_t)i * v_order + j + 1;
+	    derivative[(size_t)i * derivative_v_order + j] =
+		degree * (values[next] - values[previous]);
+	}
+    }
+    return brep_fold_scalar_surface_evaluate(derivative,
+	derivative_u_order, derivative_v_order, parameter, value);
+}
+
+
+static bool
+brep_fold_refine_candidate(
+    const double values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const int order[2], double root[2])
+{
+    if (!values || !root)
+	return false;
+    for (int iteration = 0; iteration < 12; ++iteration) {
+	double function[2];
+	double jacobian[2][2];
+	for (int equation = 0; equation < 2; ++equation) {
+	    if (!brep_fold_scalar_surface_evaluate(values[equation], order[0],
+		    order[1], root, function[equation]))
+		return false;
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (!brep_fold_scalar_surface_derivative_evaluate(
+			values[equation], order[0], order[1], direction,
+			root, jacobian[equation][direction]))
+		    return false;
+	    }
+	}
+	const double determinant = std::fma(jacobian[0][0],
+	    jacobian[1][1], -jacobian[0][1] * jacobian[1][0]);
+	if (!(fabs(determinant) > DBL_MIN) || !std::isfinite(determinant))
+	    return false;
+	const double step[2] = {
+	    std::fma(function[0], jacobian[1][1],
+		-function[1] * jacobian[0][1]) / determinant,
+	    std::fma(jacobian[0][0], function[1],
+		-jacobian[1][0] * function[0]) / determinant
+	};
+	const double next[2] = {root[0] - step[0], root[1] - step[1]};
+	if (!std::isfinite(next[0]) || !std::isfinite(next[1]) ||
+		next[0] < 0.0 || next[0] > 1.0 ||
+		next[1] < 0.0 || next[1] > 1.0)
+	    return false;
+	if (std::memcmp(next, root, sizeof(next)) == 0)
+	    return true;
+	root[0] = next[0];
+	root[1] = next[1];
+    }
+    return true;
 }
 
 
@@ -4842,6 +4966,125 @@ brep_surface_box_t_range(const brep_surface_coefficients &coefficients,
 
 
 static void
+brep_trace_fold_certificates(struct rt_brep_shot_trace *trace,
+    const brep_surface_coefficients &coefficients,
+    const double restricted[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const double restricted_error[2], const brep_subdivision_box &box)
+{
+    struct rt_brep_fold_test_result candidates = {};
+    trace->surface_fold_attempts++;
+    if (!_rt_brep_fold_test(restricted[0], restricted[1],
+	    coefficients.order[0], coefficients.order[1], restricted_error,
+	    &candidates) || !candidates.frame_available ||
+	    candidates.capacity_exhausted)
+	return;
+    trace->surface_fold_candidates += candidates.candidate_count;
+    const double box_width[2] = {
+	box.maximum[0] - box.minimum[0],
+	box.maximum[1] - box.minimum[1]
+    };
+    for (size_t candidate = 0; candidate < candidates.candidate_count;
+	    ++candidate) {
+	double refined_root[2] = {
+	    candidates.uv[candidate][0], candidates.uv[candidate][1]
+	};
+	(void)brep_fold_refine_candidate(restricted, coefficients.order,
+	    refined_root);
+	const double boundary_distance[2] = {
+	    std::min(refined_root[0], 1.0 - refined_root[0]),
+	    std::min(refined_root[1], 1.0 - refined_root[1])
+	};
+	if (!(boundary_distance[0] > 1024.0 * DBL_EPSILON) ||
+		!(boundary_distance[1] > 1024.0 * DBL_EPSILON))
+	    continue;
+	const double initial_half_width[2] = {
+	    std::min(0.125, 0.5 * boundary_distance[0]),
+	    std::min(0.125, 0.5 * boundary_distance[1])
+	};
+	for (int level = 0; level < 8; ++level) {
+	    double subbox_minimum[2];
+	    double subbox_maximum[2];
+	    double subbox_root[2];
+	    bool valid = true;
+	    for (int direction = 0; direction < 2; ++direction) {
+		const double local_half_width =
+		    initial_half_width[direction] * std::ldexp(1.0, -level);
+		const double local_minimum =
+		    refined_root[direction] - local_half_width;
+		const double local_maximum =
+		    refined_root[direction] + local_half_width;
+		const double candidate_parameter = box.minimum[direction] +
+		    refined_root[direction] * box_width[direction];
+		subbox_minimum[direction] = box.minimum[direction] +
+		    local_minimum * box_width[direction];
+		subbox_maximum[direction] = box.minimum[direction] +
+		    local_maximum * box_width[direction];
+		if (!(subbox_minimum[direction] < candidate_parameter) ||
+			!(candidate_parameter < subbox_maximum[direction])) {
+		    valid = false;
+		    break;
+		}
+		subbox_root[direction] =
+		    (candidate_parameter - subbox_minimum[direction]) /
+		    (subbox_maximum[direction] - subbox_minimum[direction]);
+	    }
+	    if (!valid)
+		break;
+	    brep_interval subbox_values[2][BREP_DIRECT_BEZIER_MAX_CVS];
+	    bool restricted_available = true;
+	    for (int equation = 0; equation < 2; ++equation) {
+		if (!brep_interval_surface_restrict(
+			coefficients.value_interval[equation],
+			coefficients.order[0], coefficients.order[1],
+			subbox_minimum[0], subbox_maximum[0],
+			subbox_minimum[1], subbox_maximum[1],
+			subbox_values[equation])) {
+		    restricted_available = false;
+		    break;
+		}
+	    }
+	    if (!restricted_available) {
+		trace->surface_fold_restriction_failures++;
+		break;
+	    }
+	    struct rt_brep_krawczyk_test_result result = {};
+	    trace->surface_fold_krawczyk_attempts++;
+	    if (!brep_interval_surface_krawczyk(subbox_values,
+		    coefficients.order[0], coefficients.order[1], subbox_root,
+		    result))
+		continue;
+	    const double inclusion_margin = 512.0 * DBL_EPSILON;
+	    double image_excess = 0.0;
+	    for (int direction = 0; direction < 2; ++direction) {
+		image_excess = std::max(image_excess,
+		    inclusion_margin - result.image_minimum[direction]);
+		image_excess = std::max(image_excess,
+		    result.image_maximum[direction] -
+			(1.0 - inclusion_margin));
+	    }
+	    image_excess = std::max(0.0, image_excess);
+	    if (!trace->surface_fold_krawczyk_available ||
+		    image_excess < trace->surface_fold_best_image_excess)
+		trace->surface_fold_best_image_excess = image_excess;
+	    trace->surface_fold_krawczyk_available++;
+	    if (trace->surface_fold_krawczyk_available == 1) {
+		trace->surface_fold_min_determinant_ratio =
+		    result.determinant_ratio;
+	    } else {
+		trace->surface_fold_min_determinant_ratio = std::min(
+		    (double)trace->surface_fold_min_determinant_ratio,
+		    (double)result.determinant_ratio);
+	    }
+	    if (result.certified) {
+		trace->surface_fold_krawczyk_certified++;
+		break;
+	    }
+	}
+    }
+}
+
+
+static void
 brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
     const brep_surface_coefficients &coefficients,
     const brep_surface_span &span, const ON_Ray &ray,
@@ -4996,6 +5239,10 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 	if (krawczyk_terminated ||
 		box.depth >= BREP_DIRECT_SUBDIVISION_MAX_DEPTH ||
 		(!splittable[0] && !splittable[1])) {
+	    if (!krawczyk_terminated && adaptive &&
+		    rotated_hull == BREP_ROTATED_HULL_RETAINED)
+		brep_trace_fold_certificates(trace, coefficients, restricted,
+		    restricted_error, box);
 	    if (!have_t_range && !brep_surface_box_t_range(coefficients, box,
 		    minimum_t, maximum_t)) {
 		trace->surface_workspace_exhausted++;
