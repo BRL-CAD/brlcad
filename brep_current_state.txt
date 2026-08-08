@@ -26,7 +26,7 @@ now supplies both the legacy unsewn patch set and a closed 8-vertex/12-edge
 solid; the pristine sewn form matches the implicit sphere on its first 8,000
 shared lines.  An endpoint-preserving bowed support-seam sweep now calibrates
 actual 3D discrepancy and records grazing behavior across 416 directed rays.
-It retains 15 reproducible legacy one-event crack cases and now repairs all 15
+It retains 14 reproducible legacy one-event crack cases and now repairs all 14
 in production without closing any g > T, contact, or exterior case.  Fixed-
 capacity raw-shot tracing now distinguishes missing physical
 roots from trim rejection and legacy hit cleanup without changing production
@@ -42,11 +42,13 @@ discrepancy, and continuation paths now resolve the corresponding incident
 trim parameter geometrically instead of assuming equal normalized parameter
 speed; an exact-locus Möbius trim-reparameterization fixture gates this
 representation invariance.
-Supported, visibly discrepant two-trim edges now also receive a prep-time
-shadow certificate for their geometric edge/lifted-trim Hausdorff gap.  It is
-knot-aware, adaptive, similarity-gated, and bounded by a solid-wide work
-budget.  Exact-looking, unsupported, and budget-exhausted records remain
-explicitly uncertified, and production seam authorization is unchanged.
+Every supported two-trim edge with certified global correspondence now
+receives a prep-time decision certificate for its geometric edge/lifted-trim
+Hausdorff gap.  It is knot-aware, adaptive, similarity-gated, and bounded by a
+solid-wide work budget.  Strict upper-inside bounds authorize production seam
+evidence; strict lower-outside bounds reject it; equality-straddling,
+unsupported, and budget-exhausted records remain explicit fallback.  The old
+sampled authorization is telemetry only, including for exact-looking seams.
 A prep-time global correspondence theorem now withholds seam evidence unless
 the rational 3D edge and both lifted trims are provably injective and
 consistently oriented along one shared projection.  Exact rational control
@@ -2387,6 +2389,73 @@ ESTABLISHED FINDINGS
     inconclusive result at the tolerance boundary before replacing sampled
     authorization or emitting a seam event from the new physical ledger.
 
+65. Production edge/seam gap authorization no longer trusts the fixed
+    discrepancy sample.  `discrepancy_sample_authorized` retains the former
+    33-point decision as trace/CSV telemetry, while
+    `discrepancy_authorized` is initialized false and can be set only by the
+    conservative prep-time gap proof.  Expanded edge boxes, sector
+    classification, closure, and continuation therefore cannot acquire
+    authority from the sample alone.
+
+    The proof now visits every supported two-trim record whose global
+    correspondence theorem passed, including seams whose fixed sample looks
+    exact and seams whose sample lies beyond the model tolerance.  Each edge
+    Bezier span is paired with complete, direction-consistent intervals on
+    both incident trims.  Existing positive-weight rational control-hull and
+    chord-deviation bounds enclose the maximum 3D edge-to-lift distance over
+    every cell.  Accepted cell bounds combine by maxima over the complete
+    edge and both incident faces.
+
+    Refinement is directed by the effective edge envelope E.  A cell with a
+    strict upper bound below E is complete for authorization.  A strict lower
+    bound above E proves rejection; after that result, remaining cells are
+    bounded without further subdivision.  A cell still straddling or touching
+    E is subdivided until it decides, reaches depth 24, or has interval width
+    at most max(roundoff, 0.01 E).  A valid parent bound whose refinement
+    cannot proceed remains ambiguous rather than becoming permission.
+    Unsupported initial arithmetic or topology is unavailable.  The existing
+    solid-wide 4,096-cell budget remains fixed; exhaustion is unavailable and
+    never publishes a partial proof.
+
+    `RT_BREP_SEAM_GAP_INSIDE`, `OUTSIDE`, `AMBIGUOUS`, and `UNAVAILABLE` are
+    reported independently from the old sample bit.  Both incident trims must
+    be strictly inside before the record is authorized.  Either incident trim
+    can prove outside; any unresolved boundary without an outside proof is
+    ambiguous.  Equality is deliberately not inside.  In particular, the
+    prior unset-tolerance policy may still record an envelope inferred from
+    the sample, but a g=E proof straddles that envelope and does not
+    self-authorize an arbitrary crack.
+
+    The controlled g=2T metadata matrix now proves all four outcomes.  A
+    1.01g declaration and a 2g declaration are strictly inside and authorize.
+    Explicit zero and 0.5g declarations retain the model T floor, obtain a
+    strict outside proof, and do not authorize.  An unset declaration infers
+    E=g but is explicitly ambiguous and does not authorize.  In every case
+    the conservative interval contains the independently sampled diagnostic.
+    The sample-invisible degree-15 correspondence reversal stays unavailable,
+    even though the old sample says it would authorize.
+
+    The bowed Cobb target retains production crack repair for all declared
+    1.01g cases in its 416-ray matrix.  Identity, nonlinear opposite Mobius
+    trim reparameterization, translation, cyclic and oblique rotation, 0.01x
+    similarity, and 10,000x similarity all prove the same target seam inside;
+    the maximum controlled decision cost is 1,130 cells at depth 11.  The
+    three-seam budget fixture certifies two targets, marks the third exhausted,
+    and visits 1,220 target cells within the unchanged 4,096-cell solid cap.
+    The complete optimized seam shard passes with zero below-envelope leaks,
+    14 production repairs, no reversal inconsistency, and no manufactured
+    correspondence or capacity result.
+
+    The complete optimized six-process correctness gate passes 6/6 in 160.94
+    seconds.  The five affected ASan/UBSan shards pass concurrently with
+    halt-on-error in 313.89 seconds and no diagnostic.  The seven cache tests,
+    rt_primitive_brep, and the focused NIST miss, sphere-solid, and box-plate
+    regressions pass 11/11 normally and 11/11 under ASan/UBSan.  Rebuilt
+    ThreadSanitizer cache qualification passes all seven serial, parallel,
+    identical, different, and hierarchy cases in 19.99 seconds with no race
+    or lock diagnostic.  This covers both normal prep and cached
+    derived-record reconstruction under the new production authorization.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -2451,13 +2520,13 @@ IMPLEMENTATION CHECKLIST
         [x] Prepare two-trim edge/incident-face records and exact-parameter,
             positive-weight rational Bezier edge spans during normal and
             cached prep.
-        [ ] Measure face/edge lift discrepancy and resolve unset, zero,
+        [x] Measure face/edge lift discrepancy and resolve unset, zero,
             under-declared, and over-declared tolerance policies.
             [x] Record initial sampled discrepancy, model/declaration source,
                 inferred envelope, and explicit authorization state.
             [x] Gate correct, unset, zero, half, and double declarations on a
                 controlled g=2T Cobb seam.
-            [ ] Replace fixed sampling with conservative knot-aware adaptive
+            [x] Replace fixed sampling with conservative knot-aware adaptive
                 discrepancy bounds before production use.
                 [x] Add a shadow Hausdorff interval for supported, visibly
                     discrepant regular two-trim edges within the model
@@ -2465,9 +2534,9 @@ IMPLEMENTATION CHECKLIST
                 [x] Gate nonlinear trim reparameterization, similarity,
                     dense bowed-gap containment, and solid-wide budget
                     exhaustion.
-                [ ] Prove exact-looking loci, qualify unsupported/exhausted
-                    fallback, tighten the g=T decision, and only then replace
-                    sampled production authorization.
+                [x] Bound exact-looking loci, preserve unsupported/exhausted
+                    fallback, make g=T explicitly ambiguous, and replace
+                    sampled production authorization with strict proof.
     [ ] Preserve near-trim candidate evidence through local event resolution.
         [x] Add fixed-capacity same-face preliminary local-root clusters and
             entering/leaving/contact observability in shadow mode.
@@ -3451,20 +3520,17 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Replace sampled seam-gap authorization with a decision-directed
-   conservative proof.  The global correspondence/injectivity theorem is now
-   complete for its supported projection classes.  Extend the Hausdorff pass
-   through exact-looking loci, refine until its upper bound is strictly inside
-   or its lower bound is strictly outside the declared/model envelope, and
-   preserve explicit unsupported, equality-ambiguous, depth, and capacity
-   fallback.  Revisit inferred tolerance policy using the proof rather than a
-   sample.  Keep model-space, UV, numerical-root, t-cluster, and minimum-
-   segment tolerances distinct.
-2. Feed the already certified manifold edge sector and continuation evidence
-   into the immutable event array only after the seam-envelope proof above is
-   production-qualified.  Preserve the existing whole-ray fallback for every
-   near-trim ambiguity, and independently gate contact, overlap, and crack
-   event streams before they can publish.
+1. Feed the certified manifold edge sector, seam-envelope, and continuation
+   evidence into the immutable physical event array.  Preserve the existing
+   whole-ray fallback for every near-trim ambiguity, and independently gate
+   contact, overlap, and crack event streams before they can publish.  Require
+   stable endpoint provenance, one global state transition per physical
+   boundary, and forward/reverse ray equivalence before replacing the current
+   specialized closure publication.
+2. Revisit inferred tolerance policy without allowing a sampled or computed
+   gap to authorize itself.  Keep model-space, UV, numerical-root, t-cluster,
+   and minimum-segment tolerances distinct, and add explicit overlap/contact
+   threshold cases around the new strict/ambiguous decision boundary.
 3. Implement and gate cyclic convex/concave vertex-fan transitions before any
    multi-edge crack repair.  Preserve the current explicit fallback for
    unsupported, non-manifold, ambiguous, and capacity-limited fans.

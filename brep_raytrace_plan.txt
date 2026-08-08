@@ -409,6 +409,15 @@ within it.  An inferred tolerance may be based on g because OpenNURBS
 explicitly says an unset value needs computation.  Record unexpectedly large
 declared or inferred envelopes for diagnostics.
 
+Production permission must nevertheless come from a conservative bound, not
+from the value used to infer the envelope.  The implemented strict policy
+authorizes only when the complete edge/both-lift upper bound is below the
+effective envelope.  A lower bound above it rejects repair; a bound touching
+or straddling it is ambiguous.  Consequently an unset tolerance inferred as
+E=g cannot self-authorize at equality.  A broader inference policy, if later
+needed for imported models, must impose an independently justified maximum
+closure scale rather than defining permission from the observed gap itself.
+
 Only faces joined by the same topological edge, or the two sides of a declared
 surface seam, are eligible for automatic solid closure.  Geometric proximity
 alone must not join unrelated faces.  Non-manifold edges, edges with missing
@@ -505,14 +514,17 @@ values and derivatives are forward at all four old samples but which reverses
 between 0.4 and 0.6 permanently gates this distinction and the explicit depth
 fallback.
 
-Correspondence and discrepancy are separate proofs.  The maximum geometric
-gap still needs a conservative edge/trim-lift Hausdorff bound.  The current
-knot-aware chord/control-hull subdivision provides such a shadow interval for
-visibly discrepant supported seams, but sampled discrepancy still controls
-production authorization.  Add decision-directed refinement, exact-looking
-locus support, and a strict/inconclusive tolerance-boundary policy before the
-Hausdorff result replaces that sampled permission.  All such work is prep-time,
-not ray-time.
+Correspondence and discrepancy are separate proofs.  Production now applies
+the knot-aware chord/control-hull Hausdorff subdivision to every supported
+globally corresponding seam, including exact-looking records.  Refinement is
+directed by the effective envelope E: strict upper < E authorizes, strict
+lower > E rejects, and equality or a surviving straddle is ambiguous.  The
+straddle resolution is max(roundoff, 0.01 E), maximum depth is 24, and the
+solid-wide work budget is 4,096 cells.  Unsupported arithmetic/topology and
+budget exhaustion are unavailable and retain whole-ray fallback.  The former
+33-point authorization is exposed only as diagnostic telemetry.  Both trims
+must prove inside before edge boxes, sectors, closure, or continuation acquire
+authority.  All such work is prep-time, not ray-time.
 
 4.3 BrepHitCandidate
 
