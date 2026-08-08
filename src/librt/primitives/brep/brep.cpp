@@ -39,7 +39,6 @@
 #include <iostream>
 #include <algorithm>
 #include <set>
-#include <utility>
 
 #include "assert.h"
 
@@ -162,7 +161,7 @@ public:
 	LEAVING
     };
 
-    const ON_BrepFace& face;
+    const ON_BrepFace *face;
     fastf_t dist;
     point_t origin;
     point_t point;
@@ -176,10 +175,12 @@ public:
     int m_adj_face_index;
     // XXX - calculate the dot of the dir with the normal here!
     const BBNode *sbv;
-    int active;
+
+    /* Fixed workspace slots are assigned in full before use. */
+    brep_hit() = default;
 
     brep_hit(const ON_BrepFace& f, const ON_Ray& ray, const point_t p, const vect_t n, const pt2d_t _uv)
-	: face(f), trimmed(false), closeToEdge(false), oob(false), hit(CLEAN_HIT), direction(ENTERING), m_adj_face_index(0), sbv(NULL)
+	: face(&f), trimmed(false), closeToEdge(false), oob(false), hit(CLEAN_HIT), direction(ENTERING), m_adj_face_index(0), sbv(NULL)
     {
 	vect_t dir;
 	VMOVE(origin, ray.m_origin);
@@ -191,7 +192,7 @@ public:
     }
 
     brep_hit(const ON_BrepFace& f, fastf_t d, const ON_Ray& ray, const point_t p, const vect_t n, const pt2d_t _uv)
-	: face(f), dist(d), trimmed(false), closeToEdge(false), oob(false), hit(CLEAN_HIT), direction(ENTERING), m_adj_face_index(0), sbv(NULL)
+	: face(&f), dist(d), trimmed(false), closeToEdge(false), oob(false), hit(CLEAN_HIT), direction(ENTERING), m_adj_face_index(0), sbv(NULL)
     {
 	VMOVE(origin, ray.m_origin);
 	VMOVE(point, p);
@@ -211,7 +212,7 @@ public:
 
     brep_hit& operator=(const brep_hit& h)
     {
-	const_cast<ON_BrepFace&>(face) = h.face;
+	face = h.face;
 	dist = h.dist;
 	VMOVE(origin, h.origin);
 	VMOVE(point, h.point);
@@ -238,6 +239,91 @@ public:
 	return dist < h.dist;
     }
 };
+
+
+class brep_hit_workspace
+{
+public:
+    brep_hit_workspace() : m_count(0), m_total(0), m_overflow(false) {}
+
+    void push_back(const brep_hit &hit)
+    {
+	++m_total;
+	if (m_count == RT_BREP_MAX_HITS) {
+	    m_overflow = true;
+	    return;
+	}
+	m_hits[m_count++] = hit;
+    }
+
+    void sort()
+    {
+	/* Stable insertion sort matches std::list::sort's ordering of hits with
+	 * equal ray distances and keeps this bounded workspace self-contained. */
+	for (size_t i = 1; i < m_count; ++i) {
+	    brep_hit value = m_hits[i];
+	    size_t j = i;
+	    while (j > 0 && value < m_hits[j - 1]) {
+		m_hits[j] = m_hits[j - 1];
+		--j;
+	    }
+	    m_hits[j] = value;
+	}
+    }
+
+    brep_hit &operator[](size_t index) { return m_hits[index]; }
+    const brep_hit &operator[](size_t index) const { return m_hits[index]; }
+    brep_hit &front() { return m_hits[0]; }
+    const brep_hit &front() const { return m_hits[0]; }
+    brep_hit &back() { return m_hits[m_count - 1]; }
+    const brep_hit &back() const { return m_hits[m_count - 1]; }
+    void erase(size_t index)
+    {
+	for (size_t i = index + 1; i < m_count; ++i)
+	    m_hits[i - 1] = m_hits[i];
+	if (m_count)
+	    --m_count;
+    }
+    void pop_back()
+    {
+	if (m_count)
+	    --m_count;
+    }
+    void pop_front()
+    {
+	if (m_count)
+	    erase(0);
+    }
+    bool empty() const { return m_count == 0; }
+    size_t size() const { return m_count; }
+    size_t total() const { return m_total; }
+    bool overflow() const { return m_overflow; }
+
+private:
+    brep_hit m_hits[RT_BREP_MAX_HITS];
+    size_t m_count;
+    size_t m_total;
+    bool m_overflow;
+};
+
+
+static bool
+brep_hits_identical(const brep_hit &first, const brep_hit &second)
+{
+    return first.face == second.face &&
+	std::memcmp(&first.dist, &second.dist, sizeof(first.dist)) == 0 &&
+	std::memcmp(first.origin, second.origin, sizeof(first.origin)) == 0 &&
+	std::memcmp(first.point, second.point, sizeof(first.point)) == 0 &&
+	std::memcmp(first.normal, second.normal, sizeof(first.normal)) == 0 &&
+	std::memcmp(first.uv, second.uv, sizeof(first.uv)) == 0 &&
+	first.trimmed == second.trimmed &&
+	first.closeToEdge == second.closeToEdge &&
+	first.oob == second.oob &&
+	first.hit == second.hit &&
+	first.direction == second.direction &&
+	first.m_adj_face_index == second.m_adj_face_index &&
+	first.sbv == second.sbv;
+}
 
 
 #ifdef RT_DEBUG_HITS
@@ -290,7 +376,7 @@ log_hits(std::list<brep_hit> &hits, int UNUSED(verbosity))
 	    bu_vls_printf(&logstr, "<%g>", DIST_PNT_PNT(out.point, prev));
 	}
 	bu_vls_printf(&logstr, "{");
-	bu_vls_printf(&logstr, "%s(%d)", brep_hit_type_str((int)out.hit), out.face.m_face_index);
+	bu_vls_printf(&logstr, "%s(%d)", brep_hit_type_str((int)out.hit), out.face->m_face_index);
 	if (out.direction == brep_hit::ENTERING) bu_vls_printf(&logstr, "+");
 	if (out.direction == brep_hit::LEAVING) bu_vls_printf(&logstr, "-");
 	bu_vls_printf(&logstr, "[%d]", out.sbv->get_face().m_bRev);
@@ -298,31 +384,6 @@ log_hits(std::list<brep_hit> &hits, int UNUSED(verbosity))
 	VMOVE(prev, out.point);
     }
     bu_log("%s\n", bu_vls_addr(&logstr));
-    bu_vls_free(&logstr);
-}
-
-
-static void
-log_subset(std::vector<brep_hit*> &hits, size_t min, size_t max, brep_hit *pprev)
-{
-    struct bu_vls logstr = BU_VLS_INIT_ZERO;
-    brep_hit *prev = pprev;
-    for (size_t i = min; i < max; i++) {
-	if (!hits[i]->active) continue;
-	if (prev) {
-	    bu_vls_printf(&logstr, "<%g>", DIST_PNT_PNT(hits[i]->point, prev->point));
-	}
-	bu_vls_printf(&logstr, "{");
-	bu_vls_printf(&logstr, "%s(%d)", brep_hit_type_str((int)hits[i]->hit), hits[i]->face.m_face_index);
-	if (hits[i]->direction == brep_hit::ENTERING) bu_vls_printf(&logstr, "+");
-	if (hits[i]->direction == brep_hit::LEAVING) bu_vls_printf(&logstr, "-");
-	bu_vls_printf(&logstr, "[%d]", hits[i]->sbv->get_face().m_bRev);
-	bu_vls_printf(&logstr, "}");
-	prev = hits[i];
-    }
-    if (bu_vls_strlen(&logstr) > 0) {
-	bu_log("%s\n", bu_vls_addr(&logstr));
-    }
     bu_vls_free(&logstr);
 }
 
@@ -2391,8 +2452,8 @@ brep_trace_closure(struct rt_brep_shot_trace *trace,
 	const struct rt_brep_trace_edge &edge = trace->edges[edge_index];
 	if (!edge.within_edge_tolerance || !edge.sector_valid ||
 		edge.closest_state != 1 ||
-		(hit.face.m_face_index != edge.face_index[0] &&
-		 hit.face.m_face_index != edge.face_index[1]))
+		(hit.face->m_face_index != edge.face_index[0] &&
+		 hit.face->m_face_index != edge.face_index[1]))
 	    continue;
 	const bool ordered = hit.direction == brep_hit::ENTERING ?
 	    edge.ray_dist > hit.dist + BREP_SAME_POINT_TOLERANCE :
@@ -2567,7 +2628,7 @@ brep_trace_continuation(struct rt_brep_shot_trace *trace,
     for (int side = 0; side < 2; ++side) {
 	const int trim_index = edge.m_ti[side];
 	if (trim_index >= 0 && trim_index < brep.m_T.Count() &&
-		brep.m_T[trim_index].FaceIndexOf() == hit.face.m_face_index) {
+		brep.m_T[trim_index].FaceIndexOf() == hit.face->m_face_index) {
 	    trim = &brep.m_T[trim_index];
 	    break;
 	}
@@ -2609,7 +2670,7 @@ brep_trace_continuation(struct rt_brep_shot_trace *trace,
 	    ++face_it) {
 	const brep_face_record &face_record = *face_it;
 	if (!face_record.supported ||
-		face_record.face_index != hit.face.m_face_index)
+		face_record.face_index != hit.face->m_face_index)
 	    continue;
 	for (size_t span_index = face_record.span_begin;
 		span_index < face_record.span_begin + face_record.span_count;
@@ -2659,7 +2720,7 @@ brep_trace_continuation(struct rt_brep_shot_trace *trace,
 	    if (!result.converged)
 		continue;
 	    ON_3dVector oriented_normal = result.normal;
-	    if (hit.face.m_bRev)
+	    if (hit.face->m_bRev)
 		oriented_normal.Reverse();
 	    const double normal_dot = oriented_normal * ray.m_dir;
 	    const int direction = normal_dot < 0.0 ? brep_hit::ENTERING :
@@ -2701,7 +2762,7 @@ brep_trace_continuation(struct rt_brep_shot_trace *trace,
 	    trace->continuation_uv[1] = root_uv.y;
 	    trace->continuation_residual = result.residual;
 	    trace->continuation_normal_dot = normal_dot;
-	    trace->continuation_face_index = hit.face.m_face_index;
+	    trace->continuation_face_index = hit.face->m_face_index;
 	}
     }
     if (trace->continuation_candidates == 1 &&
@@ -2921,7 +2982,8 @@ brep_trace_local_clusters(struct rt_brep_shot_trace *trace,
 static int
 utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
     const ON_Surface* surf, pt2d_t& uv, const ON_Ray& ray,
-    std::list<brep_hit>& hits, struct rt_brep_shot_trace *trace)
+    std::list<brep_hit> *hits, brep_hit_workspace *fixed_hits,
+    struct rt_brep_shot_trace *trace)
 {
 #define MAX_BREP_SUBDIVISION_INTERSECTS 5
     ON_3dVector N[MAX_BREP_SUBDIVISION_INTERSECTS];
@@ -3021,7 +3083,10 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
 		else
 		    bh.direction = brep_hit::LEAVING;
 		bh.sbv = sbv;
-		hits.push_back(bh);
+		if (hits)
+		    hits->push_back(bh);
+		if (fixed_hits)
+		    fixed_hits->push_back(bh);
 		found = BREP_INTERSECT_FOUND;
 	    } else if (fabs(closesttrim) < BREP_EDGE_MISS_TOLERANCE) {
 		ON_3dPoint _pt;
@@ -3053,7 +3118,10 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
 		else
 		    bh.direction = brep_hit::LEAVING;
 		bh.sbv = sbv;
-		hits.push_back(bh);
+		if (hits)
+		    hits->push_back(bh);
+		if (fixed_hits)
+		    fixed_hits->push_back(bh);
 		found = BREP_INTERSECT_FOUND;
 	    } else {
 		brep_trace_root(trace, face, t[i], ouv[i], N[i], ray,
@@ -3065,13 +3133,271 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
 }
 
 
-typedef std::pair<int, int> ip_t;
-typedef std::list<ip_t> MissList;
+static void
+collect_brep_hits(const BBNode *const *fixed_leaves, size_t fixed_leaf_count,
+    const std::list<const BBNode *> &fallback_leaves,
+    bool fixed_leaf_overflow, const ON_Ray &ray,
+    std::list<brep_hit> *hits, brep_hit_workspace *fixed_hits,
+    struct rt_brep_shot_trace *trace)
+{
+    if (fixed_leaf_overflow) {
+	for (std::list<const BBNode *>::const_iterator i =
+		fallback_leaves.begin(); i != fallback_leaves.end(); ++i) {
+	    const BBNode *sbv = *i;
+	    const ON_BrepFace *face = &sbv->get_face();
+	    const ON_Surface *surface = face->SurfaceOf();
+	    pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
+	    utah_brep_intersect(sbv, face, surface, uv, ray, hits,
+		fixed_hits, trace);
+	}
+	return;
+    }
+
+    for (size_t leaf_index = 0; leaf_index < fixed_leaf_count;
+	    ++leaf_index) {
+	const BBNode *sbv = fixed_leaves[leaf_index];
+	const ON_BrepFace *face = &sbv->get_face();
+	const ON_Surface *surface = face->SurfaceOf();
+	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
+	utah_brep_intersect(sbv, face, surface, uv, ray, hits, fixed_hits,
+	    trace);
+    }
+}
+
 
 static int
 sign(double val)
 {
     return (val >= 0.0) ? 1 : -1;
+}
+
+
+struct brep_hit_cleanup_state {
+    size_t after_near_miss;
+    size_t after_near_hit;
+    size_t after_grazing;
+    size_t after_duplicates;
+    size_t after_direction;
+};
+
+
+static bool
+fixed_hits_contain(const brep_hit_workspace &hits, brep_hit::hit_type type)
+{
+    for (size_t i = 0; i < hits.size(); ++i) {
+	if (hits[i].hit == type)
+	    return true;
+    }
+    return false;
+}
+
+
+static brep_hit_cleanup_state
+cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray)
+{
+    brep_hit_cleanup_state state = {};
+
+    if (hits.size() > 1 &&
+	    fixed_hits_contain(hits, brep_hit::NEAR_MISS)) {
+	size_t curr = 0;
+	while (curr < hits.size()) {
+	    if (hits[curr].hit == brep_hit::NEAR_MISS) {
+		if (curr > 0 &&
+			hits[curr - 1].hit != brep_hit::NEAR_MISS &&
+			hits[curr - 1].direction == hits[curr].direction) {
+		    hits.erase(curr);
+		    curr = 0;
+		    continue;
+		}
+		if (curr + 1 < hits.size() &&
+			hits[curr + 1].hit != brep_hit::NEAR_MISS &&
+			hits[curr + 1].direction == hits[curr].direction) {
+		    hits.erase(curr);
+		    curr = 0;
+		    continue;
+		}
+	    }
+	    ++curr;
+	}
+
+	curr = 0;
+	while (curr < hits.size()) {
+	    if (curr > 0) {
+		const size_t prev = curr - 1;
+		if (hits[curr].hit == brep_hit::NEAR_MISS) {
+		    if (hits[prev].hit == brep_hit::NEAR_MISS) {
+			if (hits[prev].m_adj_face_index ==
+				hits[curr].face->m_face_index) {
+			    if (hits[prev].direction == hits[curr].direction) {
+				hits[prev].hit = brep_hit::CRACK_HIT;
+				hits.erase(curr);
+				continue;
+			    }
+			    hits.erase(prev);
+			    hits.erase(prev);
+			    curr = prev;
+			    continue;
+			}
+			hits.erase(prev);
+			--curr;
+		    }
+		} else if ((hits[curr].hit == brep_hit::CLEAN_HIT ||
+			hits[curr].hit == brep_hit::NEAR_HIT) &&
+			hits[prev].hit == brep_hit::NEAR_MISS) {
+		    if (hits[curr].direction == brep_hit::ENTERING) {
+			hits.erase(prev);
+			--curr;
+		    } else {
+			hits[prev].hit = brep_hit::CRACK_HIT;
+		    }
+		}
+	    }
+	    ++curr;
+	}
+
+	curr = 0;
+	while (curr < hits.size()) {
+	    if (hits[curr].hit == brep_hit::CLEAN_HIT && curr > 0 &&
+		    hits[curr - 1].hit == brep_hit::CLEAN_HIT &&
+		    hits[curr - 1].direction == hits[curr].direction &&
+		    hits[curr - 1].face->m_face_index ==
+		    hits[curr].m_adj_face_index) {
+		const brep_hit::hit_direction first_direction =
+		    hits.front().direction;
+		if (first_direction == hits[curr].direction) {
+		    hits.erase(curr - 1);
+		    --curr;
+		} else {
+		    hits.erase(curr);
+		}
+		continue;
+	    }
+	    ++curr;
+	}
+
+	if (!hits.empty() && hits.size() % 2 != 0 &&
+		hits.back().hit == brep_hit::NEAR_MISS)
+	    hits.pop_back();
+	if (!hits.empty() && hits.size() % 2 != 0 &&
+		hits.front().hit == brep_hit::NEAR_MISS)
+	    hits.pop_front();
+    }
+    state.after_near_miss = hits.size();
+
+    if (hits.size() > 1 && fixed_hits_contain(hits, brep_hit::NEAR_HIT)) {
+	size_t curr = 0;
+	while (curr < hits.size()) {
+	    if (hits[curr].hit == brep_hit::NEAR_HIT) {
+		if (curr > 0 &&
+			hits[curr - 1].hit != brep_hit::NEAR_HIT &&
+			hits[curr - 1].direction == hits[curr].direction) {
+		    hits.erase(curr);
+		    continue;
+		}
+		if (curr + 1 < hits.size() &&
+			hits[curr + 1].hit != brep_hit::NEAR_HIT &&
+			hits[curr + 1].direction == hits[curr].direction) {
+		    hits.erase(curr);
+		    continue;
+		}
+	    }
+	    ++curr;
+	}
+
+	curr = 0;
+	while (curr < hits.size()) {
+	    if (curr > 0 && hits[curr].hit == brep_hit::NEAR_HIT &&
+		    hits[curr - 1].hit == brep_hit::NEAR_HIT &&
+		    hits[curr - 1].direction == hits[curr].direction) {
+		hits[curr - 1].hit = brep_hit::CRACK_HIT;
+		hits.erase(curr);
+		continue;
+	    }
+	    ++curr;
+	}
+    }
+    state.after_near_hit = hits.size();
+
+    if (!hits.empty()) {
+	/* Preserve the list loop's advancement after erasing its first node:
+	 * the new first node is skipped, while later returned nodes are tested. */
+	size_t i = 0;
+	while (i < hits.size()) {
+	    const brep_hit &hit = hits[i];
+	    if ((hit.trimmed && !hit.closeToEdge) || hit.oob ||
+		    NEAR_ZERO(VDOT(hit.normal, ray.r_dir),
+			BREP_GRAZING_DOT_TOL)) {
+		hits.erase(i);
+		if (!i) {
+		    if (!hits.empty())
+			++i;
+		} else {
+		    /* erase returned i; --i and the loop's ++i cancel. */
+		}
+		continue;
+	    }
+	    ++i;
+	}
+    }
+    state.after_grazing = hits.size();
+
+    if (!hits.empty()) {
+	size_t last = 0;
+	size_t i = 1;
+	while (i < hits.size()) {
+	    if (hits[i] == hits[last]) {
+		const double last_dot = VDOT(hits[last].normal, ray.r_dir);
+		const double current_dot = VDOT(hits[i].normal, ray.r_dir);
+		if (sign(last_dot) != sign(current_dot)) {
+		    hits.erase(last);
+		    hits.erase(last);
+		    i = last;
+		    if (i < hits.size())
+			++i;
+		} else {
+		    hits.erase(i);
+		}
+	    } else {
+		last = i;
+		++i;
+	    }
+	}
+    }
+    state.after_duplicates = hits.size();
+
+    if (!hits.empty()) {
+	size_t last = 0;
+	size_t i = 1;
+	int entering = 1;
+	while (i < hits.size()) {
+	    const double last_dot = VDOT(hits[last].normal, ray.r_dir);
+	    const double current_dot = VDOT(hits[i].normal, ray.r_dir);
+	    if (!i)
+		entering = sign(current_dot);
+	    if (sign(last_dot) == sign(current_dot)) {
+		if (sign(current_dot) == entering) {
+		    hits.erase(last);
+		    i = last;
+		    if (i < hits.size())
+			++i;
+		} else {
+		    hits.erase(i);
+		}
+	    } else {
+		last = i;
+		++i;
+	    }
+	}
+    }
+
+    if (hits.size() > 1 && hits.size() % 2 != 0) {
+	const double first_dot = VDOT(hits.front().normal, ray.r_dir);
+	const double last_dot = VDOT(hits.back().normal, ray.r_dir);
+	if (sign(first_dot) == sign(last_dot))
+	    hits.pop_back();
+    }
+    state.after_direction = hits.size();
+    return state;
 }
 
 
@@ -3127,8 +3453,8 @@ brep_platemode_thickness(const struct xray& ray, const brep_hit& hit, const stru
      * beyond the surface by calculating the proposed exit point's
      * distance to the surface.
      */
-    const ON_Surface* surf = hit.face.SurfaceOf();
-    const ON_BrepFace& face = hit.face;
+    const ON_Surface* surf = hit.face->SurfaceOf();
+    const ON_BrepFace& face = *hit.face;
 
 #if 0
     SurfaceTree* tree = NULL;
@@ -3165,6 +3491,70 @@ brep_platemode_thickness(const struct xray& ray, const brep_hit& hit, const stru
 
 
     return los;
+}
+
+
+static int
+emit_fixed_brep_hits(const brep_hit_workspace &hits, struct soltab *stp,
+    struct xray *ray, struct application *ap, struct seg *seghead,
+    const struct brep_specific *bs)
+{
+    if (bs->plate_mode) {
+	for (size_t i = 0; i < hits.size(); ++i) {
+	    const brep_hit &in = hits[i];
+	    const brep_hit &out = hits[i];
+	    const double los = brep_platemode_thickness(*ray, in, *bs);
+
+	    struct seg *segp;
+	    RT_GET_SEG(segp, ap->a_resource);
+	    segp->seg_stp = stp;
+
+	    segp->seg_in.hit_dist = in.dist - los * 0.5;
+	    segp->seg_in.hit_surfno = in.face->m_face_index;
+	    VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
+	    VMOVE(segp->seg_in.hit_normal, in.normal);
+	    VJOIN1(segp->seg_in.hit_point, ray->r_pt,
+		segp->seg_in.hit_dist, ray->r_dir);
+	    segp->seg_in.hit_rayp = &ap->a_ray;
+
+	    segp->seg_out.hit_dist = out.dist + los * 0.5;
+	    segp->seg_out.hit_surfno = out.face->m_face_index;
+	    VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
+	    VREVERSE(segp->seg_out.hit_normal, out.normal);
+	    VJOIN1(segp->seg_out.hit_point, ray->r_pt,
+		segp->seg_out.hit_dist, ray->r_dir);
+	    segp->seg_out.hit_rayp = &ap->a_ray;
+
+	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+	}
+	return (int)hits.size();
+    }
+
+    if (hits.size() <= 1 || hits.size() % 2 != 0)
+	return 0;
+
+    for (size_t i = 0; i < hits.size(); i += 2) {
+	const brep_hit &in = hits[i];
+	const brep_hit &out = hits[i + 1];
+	struct seg *segp;
+	RT_GET_SEG(segp, ap->a_resource);
+	segp->seg_stp = stp;
+
+	VMOVE(segp->seg_in.hit_point, in.point);
+	VMOVE(segp->seg_in.hit_normal, in.normal);
+	segp->seg_in.hit_dist = in.dist;
+	segp->seg_in.hit_surfno = in.face->m_face_index;
+	VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
+
+	VMOVE(segp->seg_out.hit_point, out.point);
+	VMOVE(segp->seg_out.hit_normal, out.normal);
+	segp->seg_out.hit_dist = out.dist;
+	segp->seg_out.hit_surfno = out.face->m_face_index;
+	VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
+
+	BU_LIST_INSERT(&(seghead->l), &(segp->l));
+    }
+    return (int)hits.size();
 }
 
 
@@ -3235,33 +3625,43 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     if (!fixed_leaf_count)
 	return 0; // MISS
 
-    // find all the hits (XXX very inefficient right now!)
+    /* Collect into the fixed workspace in production.  Trace mode also
+     * retains the legacy list so each transition stage remains gated. */
     std::list<brep_hit> hits;
-    MissList misses;
-    if (fixed_leaf_overflow) {
-	for (std::list<const BBNode*>::const_iterator i = fallback_leaves.begin();
-		i != fallback_leaves.end(); ++i) {
-	    const BBNode* sbv = *i;
-	    const ON_BrepFace* f = &sbv->get_face();
-	    const ON_Surface* surf = f->SurfaceOf();
-	    pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
-	    utah_brep_intersect(sbv, f, surf, uv, r, hits, trace);
-	}
-    } else {
-	for (size_t leaf_index = 0; leaf_index < fixed_leaf_count;
-		++leaf_index) {
-	    const BBNode* sbv = fixed_leaves[leaf_index];
-	    const ON_BrepFace* f = &sbv->get_face();
-	    const ON_Surface* surf = f->SurfaceOf();
-	    pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
-	    utah_brep_intersect(sbv, f, surf, uv, r, hits, trace);
-	}
+    brep_hit_workspace fixed_hits;
+    collect_brep_hits(fixed_leaves, fixed_leaf_count, fallback_leaves,
+	fixed_leaf_overflow, r, trace ? &hits : NULL, &fixed_hits, trace);
+    fixed_hits.sort();
+
+    if (!trace && !fixed_hits.overflow()) {
+	(void)cleanup_fixed_brep_hits(fixed_hits, *rp);
+	return emit_fixed_brep_hits(fixed_hits, stp, rp, ap, seghead, bs);
     }
 
-    // sort the hits
+    if (!trace) {
+	/* Capacity overflow is known before cleanup or segment publication.
+	 * Re-run the deterministic solve into the legacy allocating container. */
+	collect_brep_hits(fixed_leaves, fixed_leaf_count, fallback_leaves,
+	    fixed_leaf_overflow, r, &hits, NULL, NULL);
+    }
     hits.sort();
-    if (trace)
+    if (trace) {
 	trace->raw_hits = hits.size();
+	trace->fixed_hit_count = fixed_hits.total();
+	trace->fixed_hit_stored = fixed_hits.size();
+	trace->fixed_hit_overflow = fixed_hits.overflow() ? 1 : 0;
+	trace->fixed_hit_fallback = fixed_hits.overflow() ? 1 : 0;
+	if (!fixed_hits.overflow() && fixed_hits.size() == hits.size()) {
+	    size_t hit_index = 0;
+	    for (std::list<brep_hit>::const_iterator i = hits.begin();
+		    i != hits.end(); ++i, ++hit_index) {
+		if (!brep_hits_identical(fixed_hits[hit_index], *i))
+		    trace->fixed_hit_mismatches++;
+	    }
+	} else {
+	    trace->fixed_hit_mismatches++;
+	}
+    }
 
 #ifdef RT_DEBUG_HITS
     std::list<brep_hit> orig = hits;
@@ -3313,7 +3713,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 		    prev--;
 		    brep_hit &prev_hit = (*prev);
 		    if (prev_hit.hit == brep_hit::NEAR_MISS) { // two near misses in a row
-			if (prev_hit.m_adj_face_index == curr_hit.face.m_face_index) {
+			if (prev_hit.m_adj_face_index == curr_hit.face->m_face_index) {
 			    if (prev_hit.direction == curr_hit.direction) {
 				//remove current miss
 				prev_hit.hit = brep_hit::CRACK_HIT;
@@ -3358,7 +3758,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 		    const brep_hit &prev_hit = (*prev);
 		    if ((prev_hit.hit == brep_hit::CLEAN_HIT) &&
 			(prev_hit.direction == curr_hit.direction) &&
-			(prev_hit.face.m_face_index == curr_hit.m_adj_face_index)) {
+			(prev_hit.face->m_face_index == curr_hit.m_adj_face_index)) {
 			// if "entering" remove first hit if
 			// "existing" remove second hit until we get
 			// good solids with known normal directions
@@ -3565,6 +3965,32 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     if (trace) {
 	trace->after_direction_cleanup = hits.size();
 	trace->final_hits = hits.size();
+	const brep_hit_cleanup_state fixed_cleanup =
+	    cleanup_fixed_brep_hits(fixed_hits, *rp);
+	trace->fixed_after_near_miss = fixed_cleanup.after_near_miss;
+	trace->fixed_after_near_hit = fixed_cleanup.after_near_hit;
+	trace->fixed_after_grazing = fixed_cleanup.after_grazing;
+	trace->fixed_after_duplicates = fixed_cleanup.after_duplicates;
+	trace->fixed_after_direction_cleanup = fixed_cleanup.after_direction;
+	if (trace->fixed_after_near_miss != trace->after_near_miss)
+	    trace->fixed_cleanup_mismatches++;
+	if (trace->fixed_after_near_hit != trace->after_near_hit)
+	    trace->fixed_cleanup_mismatches++;
+	if (trace->fixed_after_grazing != trace->after_grazing)
+	    trace->fixed_cleanup_mismatches++;
+	if (trace->fixed_after_duplicates != trace->after_duplicates)
+	    trace->fixed_cleanup_mismatches++;
+	if (trace->fixed_after_direction_cleanup !=
+		trace->after_direction_cleanup) {
+	    trace->fixed_cleanup_mismatches++;
+	} else {
+	    size_t hit_index = 0;
+	    for (std::list<brep_hit>::const_iterator i = hits.begin();
+		    i != hits.end(); ++i, ++hit_index) {
+		if (!brep_hits_identical(fixed_hits[hit_index], *i))
+		    trace->fixed_cleanup_mismatches++;
+	    }
+	}
     }
     brep_trace_closure(trace, bs, hits);
     brep_trace_continuation(trace, bs, r, hits);
@@ -3593,7 +4019,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 		/* set in hit */
 		segp->seg_in.hit_dist = in.dist - (los*0.5);
 		// segment is centered on the hit point
-		segp->seg_in.hit_surfno = in.face.m_face_index;
+		segp->seg_in.hit_surfno = in.face->m_face_index;
 		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
 		VMOVE(segp->seg_in.hit_normal, in.normal);
 		VJOIN1(segp->seg_in.hit_point, rp->r_pt, segp->seg_in.hit_dist, rp->r_dir);
@@ -3605,7 +4031,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 
 		/* set out hit */
 		segp->seg_out.hit_dist = out.dist + (los*0.5); // centered
-		segp->seg_out.hit_surfno = out.face.m_face_index;
+		segp->seg_out.hit_surfno = out.face->m_face_index;
 		VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
 		VREVERSE(segp->seg_out.hit_normal, out.normal);
 		segp->seg_out.hit_rayp = &ap->a_ray;
@@ -3657,13 +4083,13 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 		    VMOVE(segp->seg_in.hit_point, in.point);
 		    VMOVE(segp->seg_in.hit_normal, in.normal);
 		    segp->seg_in.hit_dist = in.dist;
-		    segp->seg_in.hit_surfno = in.face.m_face_index;
+		    segp->seg_in.hit_surfno = in.face->m_face_index;
 		    VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
 
 		    VMOVE(segp->seg_out.hit_point, out.point);
 		    VMOVE(segp->seg_out.hit_normal, out.normal);
 		    segp->seg_out.hit_dist = out.dist;
-		    segp->seg_out.hit_surfno = out.face.m_face_index;
+		    segp->seg_out.hit_surfno = out.face->m_face_index;
 		    VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
 
 		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
