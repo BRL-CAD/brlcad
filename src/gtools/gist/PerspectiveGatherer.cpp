@@ -110,12 +110,14 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
     std::string render;
     std::string cmd;
     std::string ncpu(std::to_string(opt.getNCPU()));
+    const char* renderSize = opt.getPreviewMode() ? "128" : "1024";
+    const char* ambient = opt.getPreviewMode() ? "set ambSamples=1" : "set ambSamples=8";
 
     // setup av for rtedge since that's the majority of our work. The outliers (rt / rtwizard) will
     // reset the av to their needs
     const char* av[22] = { NULL,                    // [00]: cmd
                            "-s",                    // [01]
-                           "1024",                  // [02]
+                           renderSize,               // [02]
                            "-W",                    // [03]
                            "-R",                    // [04]
                            "-a",                    // [05]
@@ -206,7 +208,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             outputname += "_detailed.png";
 
             av[0] = cmd.c_str();
-            av[1] = "-s"; av[2] = "1024";
+            av[1] = "-s"; av[2] = renderSize;
             av[3] = "-W";
             av[4] = "-R";
             av[5] = "-a";  av[6] = "45";
@@ -214,7 +216,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[9] = "-C";  av[10] = "255/255/255";
             av[13] = "-A"; av[14] = "1.2";
 	    /* FIXME: this needs to be user-configurable, at least low/high quality (along with image sizes)*/
-            av[15] = "-c"; av[16] = "set ambSamples=8";
+            av[15] = "-c"; av[16] = ambient;
             av[17] = "-o"; av[18] = outputname.c_str();
             av[19] = pathToInput.c_str();
             av[20] = component.c_str();
@@ -225,7 +227,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             outputname += "_ghost.png";
 
             av[0] = cmd.c_str();
-            av[1] = "-s";  av[2] = "1024";
+            av[1] = "-s";  av[2] = renderSize;
             av[3] = "-a";  av[4] = "35";
             av[5] = "-e";  av[6] = "25";
             av[7] = "-i";  av[8] = pathToInput.c_str();

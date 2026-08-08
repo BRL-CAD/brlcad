@@ -77,6 +77,14 @@ generateReport(Options opt)
     Position fileSection(imagePosition.right() - imagePosition.sixthWidth() - margin, topSection.bottom() + padding, imagePosition.sixthWidth(), hierarchySection.top() - topSection.bottom() - padding);
     Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
 
+    // Scale formerly fixed 300-PPI artwork coordinates with the requested
+    // page resolution.  Without this, low-PPI reports draw outside the image
+    // bounds and OpenCV aborts while composing the standard gist sheet.
+    const double pageScale = static_cast<double>(opt.getWidth()) / 3508.0;
+    const auto scaled = [pageScale](int value) {
+        return std::max(1, static_cast<int>(std::lround(value * pageScale)));
+    };
+
     // draw all sections
     statusPrint("*Creating report sections", opt.verbosePrinting());
     makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
@@ -93,10 +101,10 @@ generateReport(Options opt)
     statusPrint("    *Drawing Logos", opt.verbosePrinting());
     //brl-cad logo
     std::string model_logo_path = info.getModelLogoPath();
-    img.drawTransparentImage(3250, 10, 200, 200, model_logo_path, 250);
+    img.drawTransparentImage(scaled(3250), scaled(10), scaled(200), scaled(200), model_logo_path, scaled(250));
     //branding logo
     if (opt.getLogopath() != ""){
-        img.drawTransparentImage(3250, 2280, 200, 200, opt.getLogopath(), 250);
+        img.drawTransparentImage(scaled(3250), scaled(2280), scaled(200), scaled(200), opt.getLogopath(), scaled(250));
     }
     statusPrint("    ...Finished logos", opt.verbosePrinting());
     statusPrint(opt.getOpenGUI() ? "...Finished report" : std::string("...Finished report: " + opt.getOutFile()), opt.verbosePrinting());
