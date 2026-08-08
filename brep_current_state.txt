@@ -68,7 +68,11 @@ events.  Trace mode now compares unique prepared-span and depth-eight legacy
 Newton roots in both directions.  Prepared spans cover every legacy root in
 the controlled sphere, bowed Cobb, and classifier-similarity matrices; the
 only sphere direct-only root is a contact-only numerical ambiguity on the
-nearest representable miss-side line.
+nearest representable miss-side line.  Prepared roots are now also classified
+against the owned face-wide CurveTree without allocation.  Fixed event
+clusters compare material/trim state, near/clean class, grazing-aware
+direction, and meaningful near-edge adjacency against legacy clusters before
+any SurfaceTree density change.
 Production trim classification now scans the prepared trim leaves directly;
 the former copied-list implementation remains trace-only as an exact
 equivalence oracle.  The full traced corpus hard-gates candidate counts,
@@ -763,6 +767,65 @@ ESTABLISHED FINDINGS
     seconds.  The focused ASan/UBSan gate passes 12/12 in about 40.7 seconds
     with halt-on-error and no sanitizer diagnostic.
 
+38. CurveTree now provides a face-wide isTrimmed query over its existing
+    prep-time m_sortedX leaf vector.  It reuses the same trim-candidate and
+    final-classification implementation as BBNode::isTrimmed, creates no
+    filtered list, and stops once the X-sorted remaining leaves begin beyond
+    the query parameter.  The dense leaf-local classifier remains production;
+    the face-wide form supplies SurfaceTree-independent classification for
+    prepared-span roots.
+
+    Every stored prepared root now records trim status and distance, initial
+    CLEAN_HIT/CLEAN_MISS/NEAR_HIT/NEAR_MISS class, closest near-edge adjacent
+    face, and oriented direction.  Missing face CurveTrees are explicit trace
+    failures.  At every legacy Newton root, trace mode independently reruns the
+    face-wide classifier at the exact same UV and requires identical trim
+    status, near/clean hit class, and adjacency whenever the event is within
+    BREP_EDGE_MISS_TOLERANCE.  The sphere grazing matrix checks 256 such roots
+    and 512 full-face trim candidates; the bowed Cobb matrix checks 1,112 roots
+    and 2,328 candidates.  Both have zero semantic mismatch and zero near-trim
+    distance error.  Prepared roots make 324/648 and 620/1,356 query/candidate
+    visits respectively, without allocation.
+
+    Root equivalence is now event-cluster equivalence rather than arbitrary
+    representative-root equality.  Same-face candidates within the scaled
+    0.1 T t envelope form a fixed stack cluster.  The cluster prefers actual
+    material-side candidates over trimmed candidates, selects the minimum
+    absolute trim distance within that state, derives near/clean class from
+    that evidence, and combines root normal signs using the established
+    BREP_GRAZING_DOT_TOL into ENTERING, LEAVING, or CONTACT.  Only near events
+    require adjacency equality; a closest trim on a clean root has no cleanup
+    semantics.
+
+    This clustering distinction is essential.  A first raw comparison made
+    all 110 sphere matches appear different because irrelevant clean-root
+    closest-adjacency choices differed, and nine tangent candidates crossed
+    zero normal dot while remaining far inside the grazing band.  The oblique
+    0.01x exact-contact fixture also emits four legacy candidates (one clean
+    and three near) versus four prepared near candidates.  Both contain the
+    same exact near-edge contact, and both correctly collapse to one CONTACT;
+    selecting the numerically earliest raw root would instead compare the
+    legacy clean outlier.  The fixed physical event cluster avoids that error
+    without weakening regular two-root separation.
+
+    The final analytic sphere sweep has 110 matched event clusters and zero
+    trim/class/direction/adjacency mismatch.  Its maximum matched t, UV, and
+    normal-dot differences are approximately 1.96e-6, 3.46e-8, and 1.96e-7;
+    no matched event is near a trim.  The 416-ray bowed Cobb matrix has 556
+    matched clusters, zero semantic mismatch, and maximum corresponding
+    differences about 9.84e-8, 6.92e-9, zero, and 9.84e-9.  All expanded
+    similarity cases retain zero legacy-root and event mismatch.
+
+    This establishes trim-aware initial-event equivalence on the controlled
+    corpus, but it is not final cleanup equivalence.  Prepared clusters have
+    not yet been materialized as fixed brep_hit events and passed through the
+    duplicate/grazing/direction cleanup pipeline.  The face-wide trim query is
+    allocation-free but scans a prefix of the X-sorted trim leaves; complex
+    STEP faces may require a stronger prepared index after measurement.  Tree
+    depth remains eight.  The focused normal gate passes 13/13 with rt_brep_ray
+    at 10.23 seconds.  ASan/UBSan passes 12/12 in 41.10 seconds with no
+    diagnostic.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -844,6 +907,9 @@ IMPLEMENTATION CHECKLIST
     [ ] Preserve near-trim candidate evidence through local event resolution.
         [x] Add fixed-capacity same-face preliminary local-root clusters and
             entering/leaving/contact observability in shadow mode.
+        [x] Classify prepared roots with the allocation-free face-wide trim
+            hierarchy and gate clustered trim/class/direction/adjacency
+            equivalence against depth-eight legacy candidates.
     [x] Observe fixed-work 3D ray/shared-edge distance and declared edge-
         tolerance qualification independently of the UV trim tree.
     [x] Classify shadow-mode edge material sectors and validate smooth and
@@ -1396,6 +1462,10 @@ Cobb sphere baseline:
     arbitrary-axis similarity expansion and one-to-one scale-aware matching:
     13/13, with rt_brep_ray at 10.34 seconds and NIST03_MISS_01 at 0.80
     seconds.
+    Repeated after allocation-free face-wide trim classification and physical
+    prepared/legacy event-cluster comparison: 13/13, with rt_brep_ray at
+    10.23 seconds and NIST03_MISS_01 at 0.82 seconds.  The sphere and bowed
+    Cobb matrices retain zero trim/class/direction/adjacency mismatch.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -1433,6 +1503,9 @@ Cobb sphere baseline:
     Repeated after bidirectional root coverage and arbitrary-axis similarity
     expansion with one-to-one scale-aware matching and halt_on_error=1: 12/12
     in 40.72 seconds, with no ASan or UBSan diagnostic.
+    Repeated after face-wide trim classification and physical event-cluster
+    comparison with halt_on_error=1: 12/12 in 41.10 seconds, with no ASan or
+    UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -1501,11 +1574,11 @@ NEXT ACTIONS
 2. Implement and gate cyclic convex/concave vertex-fan transitions before any
    multi-edge crack repair.  Preserve the current explicit fallback for
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
-3. Add trim/event classification and adaptive subdivision termination beyond
-   the first bounded corrector and its now-gated untrimmed root coverage.  Do
-   not lower tree density until candidate exclusion, event equivalence, and
-   unsupported/capacity fallback behavior are observable and proven
-   equivalent.
+3. Materialize the now-classified prepared event clusters in a fixed brep_hit
+   workspace and compare every legacy cleanup stage and final segment.  Add
+   adaptive subdivision termination beyond the first bounded corrector.  Do
+   not lower tree density until complete event equivalence and unsupported/
+   capacity fallback behavior are observable and proven equivalent.
 4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST

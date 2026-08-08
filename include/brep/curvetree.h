@@ -73,6 +73,12 @@ namespace brlcad {
 	void getLeavesAbove(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
 	void getLeavesRight(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
 
+	/** Classify a face parameter against all prepared trim leaves without
+	 * allocating a filtered list. */
+	bool isTrimmed(const ON_2dPoint &uv, const BRNode **closest,
+		double &closesttrim, double within_distance_tol,
+		std::size_t *candidate_count = NULL) const;
+
     private:
 	friend class BBNode;
 
