@@ -194,6 +194,43 @@ static const int FAST_CDT_MAX_RECURSION = 64;
 static const int FAST_CDT_MAX_TRIM_SAMPLES = 16384;
 static const int FAST_CDT_MAX_SURFACE_SAMPLES = 262144;
 
+struct fast_surface_metrics {
+    double width = 0.0;
+    double height = 0.0;
+    double u_scale = 0.0;
+    double v_scale = 0.0;
+    bool size_valid = false;
+    bool sampling_valid = false;
+};
+
+static void
+fast_surface_metrics_get(const ON_Surface *surface,
+	fast_surface_metrics *metrics)
+{
+    if (!surface || !metrics)
+	return;
+    metrics->size_valid = surface->GetSurfaceSize(&metrics->width,
+	&metrics->height);
+    if (!metrics->size_valid)
+	return;
+
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    if (!udom.IsIncreasing() || !vdom.IsIncreasing())
+	return;
+    metrics->u_scale = metrics->width / udom.Length();
+    metrics->v_scale = metrics->height / vdom.Length();
+    metrics->sampling_valid = true;
+}
+
+static double
+fast_brep_diagonal(const ON_Brep *brep)
+{
+    ON_BoundingBox bbox;
+    return (brep && brep->GetTightBoundingBox(bbox)) ?
+	bbox.Diagonal().Length() : 0.0;
+}
+
 // Digest tessellation tolerances...
 static void
 CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
@@ -491,6 +528,7 @@ getSurfacePoints(const ON_Surface *s,
 		 fastf_t min_dist,
 		 fastf_t within_dist,
 		 fastf_t cos_within_ang,
+		 const fast_surface_metrics &metrics,
 		 ON_2dPointArray &on_surf_points,
 		 bool left,
 		 bool below)
@@ -514,15 +552,8 @@ getSurfacePoints(const ON_Surface *s,
     fastf_t v = (v1 + v2) / 2.0;
     fastf_t udist = u2 - u1;
     fastf_t vdist = v2 - v1;
-    double surface_width = 0.0;
-    double surface_height = 0.0;
-    const ON_Interval udom = s->Domain(0);
-    const ON_Interval vdom = s->Domain(1);
-    if (!s->GetSurfaceSize(&surface_width, &surface_height) ||
-	    !udom.IsIncreasing() || !vdom.IsIncreasing())
-	return;
-    const fastf_t u_metric_dist = udist * surface_width / udom.Length();
-    const fastf_t v_metric_dist = vdist * surface_height / vdom.Length();
+    const fastf_t u_metric_dist = udist * metrics.u_scale;
+    const fastf_t v_metric_dist = vdist * metrics.v_scale;
 
     if ((u_metric_dist < min_dist + ON_ZERO_TOLERANCE)
 	|| (v_metric_dist < min_dist + ON_ZERO_TOLERANCE)) {
@@ -551,15 +582,15 @@ getSurfacePoints(const ON_Surface *s,
 	    }
 	    if (i == 1) {
 		getSurfacePoints(s, u1, u1 + step, v1, v2, min_dist,
-				 within_dist, cos_within_ang, on_surf_points, left,
+				 within_dist, cos_within_ang, metrics, on_surf_points, left,
 				 below);
 	    } else if (i == isteps) {
 		getSurfacePoints(s, u2 - step, u2, v1, v2, min_dist,
-				 within_dist, cos_within_ang, on_surf_points, left,
+				 within_dist, cos_within_ang, metrics, on_surf_points, left,
 				 below);
 	    } else {
 		getSurfacePoints(s, step_u - step, step_u, v1, v2, min_dist, within_dist,
-				 cos_within_ang, on_surf_points, left, below);
+				 cos_within_ang, metrics, on_surf_points, left, below);
 	    }
 	    left = false;
 
@@ -591,15 +622,15 @@ getSurfacePoints(const ON_Surface *s,
 
 	    if (i == 1) {
 		getSurfacePoints(s, u1, u2, v1, v1 + step, min_dist,
-				 within_dist, cos_within_ang, on_surf_points, left,
+				 within_dist, cos_within_ang, metrics, on_surf_points, left,
 				 below);
 	    } else if (i == isteps) {
 		getSurfacePoints(s, u1, u2, v2 - step, v2, min_dist,
-				 within_dist, cos_within_ang, on_surf_points, left,
+				 within_dist, cos_within_ang, metrics, on_surf_points, left,
 				 below);
 	    } else {
 		getSurfacePoints(s, u1, u2, step_v - step, step_v, min_dist, within_dist,
-				 cos_within_ang, on_surf_points, left, below);
+				 cos_within_ang, metrics, on_surf_points, left, below);
 	    }
 
 	    below = false;
@@ -657,13 +688,13 @@ getSurfacePoints(const ON_Surface *s,
 	    on_surf_points.Append(p2d);
 
 	    getSurfacePoints(s, u1, u, v1, v, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, left, below);
+			     cos_within_ang, metrics, on_surf_points, left, below);
 	    getSurfacePoints(s, u1, u, v, v2, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, left, false);
+			     cos_within_ang, metrics, on_surf_points, left, false);
 	    getSurfacePoints(s, u, u2, v1, v, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, false, below);
+			     cos_within_ang, metrics, on_surf_points, false, below);
 	    getSurfacePoints(s, u, u2, v, v2, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, false, false);
+			     cos_within_ang, metrics, on_surf_points, false, false);
 	} else if (udot < cos_within_ang - ON_ZERO_TOLERANCE) {
 	    if (below) {
 		p2d.Set(u, v1);
@@ -673,9 +704,9 @@ getSurfacePoints(const ON_Surface *s,
 	    p2d.Set(u, v2);
 	    on_surf_points.Append(p2d);
 	    getSurfacePoints(s, u1, u, v1, v2, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, left, below);
+			     cos_within_ang, metrics, on_surf_points, left, below);
 	    getSurfacePoints(s, u, u2, v1, v2, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, false, below);
+			     cos_within_ang, metrics, on_surf_points, false, below);
 	} else if (vdot < cos_within_ang - ON_ZERO_TOLERANCE) {
 	    if (left) {
 		p2d.Set(u1, v);
@@ -686,9 +717,9 @@ getSurfacePoints(const ON_Surface *s,
 	    on_surf_points.Append(p2d);
 
 	    getSurfacePoints(s, u1, u2, v1, v, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, left, below);
+			     cos_within_ang, metrics, on_surf_points, left, below);
 	    getSurfacePoints(s, u1, u2, v, v2, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, left, false);
+			     cos_within_ang, metrics, on_surf_points, left, false);
 	} else {
 	    if (left) {
 		p2d.Set(u1, v);
@@ -711,13 +742,13 @@ getSurfacePoints(const ON_Surface *s,
 	    if (dist > within_dist + ON_ZERO_TOLERANCE) {
 
 		getSurfacePoints(s, u1, u, v1, v, min_dist, within_dist,
-				 cos_within_ang, on_surf_points, left, below);
+				 cos_within_ang, metrics, on_surf_points, left, below);
 		getSurfacePoints(s, u1, u, v, v2, min_dist, within_dist,
-				 cos_within_ang, on_surf_points, left, false);
+				 cos_within_ang, metrics, on_surf_points, left, false);
 		getSurfacePoints(s, u, u2, v1, v, min_dist, within_dist,
-				 cos_within_ang, on_surf_points, false, below);
+				 cos_within_ang, metrics, on_surf_points, false, below);
 		getSurfacePoints(s, u, u2, v, v2, min_dist, within_dist,
-				 cos_within_ang, on_surf_points, false, false);
+				 cos_within_ang, metrics, on_surf_points, false, false);
 	    }
 	}
     }
@@ -728,19 +759,19 @@ static void
 getSurfacePoints(const ON_BrepFace &face,
 		 const struct bg_tess_tol *ttol,
 		 const struct bn_tol *tol,
-		 ON_2dPointArray &on_surf_points)
+		 ON_2dPointArray &on_surf_points,
+		 const fast_surface_metrics &metrics,
+		 double model_diagonal)
 {
-    double surface_width, surface_height;
     const ON_Surface *s = face.SurfaceOf();
-    const ON_Brep *brep = face.Brep();
 
-    if (s->GetSurfaceSize(&surface_width, &surface_height)) {
-	double dist = 0.0;
+    if (s && metrics.sampling_valid) {
+	double dist = model_diagonal;
 	double min_dist = 0.0;
 	double within_dist = 0.0;
 	double  cos_within_ang = 0.0;
 
-	if ((surface_width < tol->dist) || (surface_height < tol->dist)) {
+	if ((metrics.width < tol->dist) || (metrics.height < tol->dist)) {
 	    return;
 	}
 
@@ -759,11 +790,6 @@ getSurfacePoints(const ON_BrepFace &face,
 	// Sanity
 	if (!bGrowBox)
 	    return;
-
-	ON_BoundingBox tight_bbox;
-	if (brep->GetTightBoundingBox(tight_bbox)) {
-	    dist = DIST_PNT_PNT(tight_bbox.m_min, tight_bbox.m_max);
-	}
 
 	if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
 	    min_dist = tol->dist;
@@ -809,7 +835,7 @@ getSurfacePoints(const ON_BrepFace &face,
 	    on_surf_points.Append(p);
 
 	    getSurfacePoints(s, min.x, midx, min.y, midy, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, true, true);
+			     cos_within_ang, metrics, on_surf_points, true, true);
 
 	    //bottom midx
 	    p.Set(midx, min.y);
@@ -820,7 +846,7 @@ getSurfacePoints(const ON_BrepFace &face,
 	    on_surf_points.Append(p);
 
 	    getSurfacePoints(s, midx, max.x, min.y, midy, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, false, true);
+			     cos_within_ang, metrics, on_surf_points, false, true);
 
 	    //bottom right
 	    p.Set(max.x, min.y);
@@ -835,14 +861,14 @@ getSurfacePoints(const ON_BrepFace &face,
 	    on_surf_points.Append(p);
 
 	    getSurfacePoints(s, min.x, midx, midy, max.y, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, true, false);
+			     cos_within_ang, metrics, on_surf_points, true, false);
 
 	    //top midx
 	    p.Set(midx, max.y);
 	    on_surf_points.Append(p);
 
 	    getSurfacePoints(s, midx, max.x, midy, max.y, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, false, false);
+			     cos_within_ang, metrics, on_surf_points, false, false);
 
 	    //top left
 	    p.Set(max.x, max.y);
@@ -860,7 +886,7 @@ getSurfacePoints(const ON_BrepFace &face,
 	    on_surf_points.Append(p);
 
 	    getSurfacePoints(s, min.x, midx, min.y, max.y, min_dist,
-			     within_dist, cos_within_ang, on_surf_points, true, true);
+			     within_dist, cos_within_ang, metrics, on_surf_points, true, true);
 
 	    //bottom midx
 	    p.Set(midx, min.y);
@@ -871,7 +897,7 @@ getSurfacePoints(const ON_BrepFace &face,
 	    on_surf_points.Append(p);
 
 	    getSurfacePoints(s, midx, max.x, min.y, max.y, min_dist,
-			     within_dist, cos_within_ang, on_surf_points, false, true);
+			     within_dist, cos_within_ang, metrics, on_surf_points, false, true);
 
 	    //bottom right
 	    p.Set(max.x, min.y);
@@ -893,7 +919,7 @@ getSurfacePoints(const ON_BrepFace &face,
 	    on_surf_points.Append(p);
 
 	    getSurfacePoints(s, min.x, max.x, min.y, midy, min_dist,
-			     within_dist, cos_within_ang, on_surf_points, true, true);
+			     within_dist, cos_within_ang, metrics, on_surf_points, true, true);
 
 	    //bottom right
 	    p.Set(max.x, min.y);
@@ -904,7 +930,7 @@ getSurfacePoints(const ON_BrepFace &face,
 	    on_surf_points.Append(p);
 
 	    getSurfacePoints(s, min.x, max.x, midy, max.y, min_dist,
-			     within_dist, cos_within_ang, on_surf_points, true, false);
+			     within_dist, cos_within_ang, metrics, on_surf_points, true, false);
 
 	    // top left
 	    p.Set(min.x, max.y);
@@ -925,7 +951,7 @@ getSurfacePoints(const ON_BrepFace &face,
 	    on_surf_points.Append(p);
 
 	    getSurfacePoints(s, min.x, max.x, min.y, max.y, min_dist,
-			     within_dist, cos_within_ang, on_surf_points, true, true);
+			     within_dist, cos_within_ang, metrics, on_surf_points, true, true);
 
 	    //bottom right
 	    p.Set(max.x, min.y);
@@ -1895,7 +1921,8 @@ detria_CDT(struct bu_list *vhead,
 	     const struct bn_tol *tol,
 	     struct bu_list *vlfree,
 	     int plottype,
-	     int UNUSED(num_points))
+	     int UNUSED(num_points),
+	     double model_diagonal)
 {
     fast_face_scratch scratch;
     fast_line_store line_store;
@@ -1904,16 +1931,16 @@ detria_CDT(struct bu_list *vhead,
     const ON_Surface *s = face.SurfaceOf();
     if (!s)
 	return;
-    double surface_width, surface_height;
+    fast_surface_metrics metrics;
     int fi = face.m_face_index;
 
     fastf_t max_dist = 0.0;
-    if (s->GetSurfaceSize(&surface_width, &surface_height)) {
-	if ((surface_width < tol->dist) || (surface_height < tol->dist)) {
+    fast_surface_metrics_get(s, &metrics);
+    if (metrics.size_valid) {
+	if (metrics.width < tol->dist || metrics.height < tol->dist)
 	    return;
-	}
-	max_dist = sqrt(surface_width * surface_width + surface_height *
-		surface_height) / 10.0;
+	max_dist = sqrt(metrics.width * metrics.width +
+	    metrics.height * metrics.height) / 10.0;
     }
 
 
@@ -1986,7 +2013,8 @@ detria_CDT(struct bu_list *vhead,
 	return;
     }
 
-    getSurfacePoints(face, ttol, tol, on_surf_points);
+    getSurfacePoints(face, ttol, tol, on_surf_points, metrics,
+	model_diagonal);
     if (on_surf_points.Count() >= FAST_CDT_MAX_SURFACE_SAMPLES) {
 	return;
     }
@@ -2219,17 +2247,21 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 	}
     }
 
+    const double model_diagonal = fast_brep_diagonal(brep);
+
     if (index == -1) {
         for (index = 0; index < brep->m_F.Count(); index++) {
             const ON_BrepFace& face = brep->m_F[index];
-            detria_CDT(vhead, face, ttol, tol, vlfree, plottype, num_points);
+            detria_CDT(vhead, face, ttol, tol, vlfree, plottype,
+		num_points, model_diagonal);
         }
     } else if (index < brep->m_F.Count()) {
         const ON_BrepFaceArray& faces = brep->m_F;
         if (index < faces.Count()) {
             const ON_BrepFace& face = faces[index];
             face.Dump(tl);
-            detria_CDT(vhead, face, ttol, tol, vlfree, plottype, num_points);
+            detria_CDT(vhead, face, ttol, tol, vlfree, plottype,
+		num_points, model_diagonal);
         }
     }
 
@@ -2244,7 +2276,8 @@ static bool
 bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fastf_t> &pnts,
 	const ON_BrepFace &face,
 	const struct bg_tess_tol *ttol,
-	const struct bn_tol *tol)
+	const struct bn_tol *tol,
+	double model_diagonal)
 {
     fast_face_scratch scratch;
     fast_line_store line_store;
@@ -2253,14 +2286,16 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
     const ON_Surface *s = face.SurfaceOf();
     if (!s)
 	return false;
-    double surface_width, surface_height;
+    fast_surface_metrics metrics;
     int fi = face.m_face_index;
 
     fastf_t max_dist = 0.0;
-    if (s->GetSurfaceSize(&surface_width, &surface_height)) {
-	if ((surface_width < tol->dist) || (surface_height < tol->dist))
+    fast_surface_metrics_get(s, &metrics);
+    if (metrics.size_valid) {
+	if (metrics.width < tol->dist || metrics.height < tol->dist)
 	    return false;
-	max_dist = sqrt(surface_width * surface_width + surface_height * surface_height) / 10.0;
+	max_dist = sqrt(metrics.width * metrics.width +
+	    metrics.height * metrics.height) / 10.0;
     }
 
     int loop_cnt = face.LoopCount();
@@ -2338,7 +2373,8 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 	return false;
     }
 
-    getSurfacePoints(face, ttol, tol, on_surf_points);
+    getSurfacePoints(face, ttol, tol, on_surf_points, metrics,
+	model_diagonal);
     if (on_surf_points.Count() >= FAST_CDT_MAX_SURFACE_SAMPLES) {
 	return false;
     }
@@ -2457,6 +2493,7 @@ struct fast_cdt_parallel_state {
     const ON_Brep *brep;
     const struct bg_tess_tol *ttol;
     const struct bn_tol *tol;
+    double model_diagonal;
     std::vector<fast_cdt_face_result> *results;
     std::atomic<int> next_face;
     std::atomic<size_t> result_bytes;
@@ -2494,7 +2531,7 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	bool success = false;
 	try {
 	    success = bg_CDT(result.faces, result.norms, result.pnts, face,
-		state->ttol, state->tol);
+		state->ttol, state->tol, state->model_diagonal);
 	} catch (const std::bad_alloc &) {
 	    state->hit_memory_limit = true;
 	    state->stop = true;
@@ -2600,6 +2637,10 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	options.max_result_bytes = std::min(options.max_result_bytes,
 	    (size_t)available / 4);
 
+    const int64_t deadline = options.max_time_ms > 0 ?
+	bu_gettime() + (int64_t)options.max_time_ms * 1000 : 0;
+    const double model_diagonal = fast_brep_diagonal(brep);
+
     std::vector<int> all_faces;
     std::vector<fastf_t> all_norms;
     std::vector<fastf_t> all_pnts;
@@ -2607,8 +2648,6 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
     const int first_face = (index == -1) ? 0 : index;
     const int end_face = (index == -1) ? brep_face_count : index + 1;
     std::vector<fast_cdt_face_result> face_results((size_t)brep_face_count);
-    const int64_t deadline = options.max_time_ms > 0 ?
-	bu_gettime() + (int64_t)options.max_time_ms * 1000 : 0;
     bool hit_time_limit = false;
     bool hit_memory_limit = false;
     bool hit_point_limit = false;
@@ -2619,7 +2658,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	 * face order.  This avoids locking the hot CDT path, keeps output
 	 * stable across runs, and leaves the input BRep unchanged. */
 	fast_cdt_parallel_state state = {
-	    brep, ttol, tol, &face_results, 0, 0, 0, false, false,
+	    brep, ttol, tol, model_diagonal, &face_results, 0, 0, 0,
+	    false, false,
 	    false, false, options.max_result_bytes, options.max_points,
 	    deadline, (bool)options.allow_partial
 	};
@@ -2636,7 +2676,7 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    bool success = false;
 	    try {
 		success = bg_CDT(result.faces, result.norms, result.pnts,
-		    brep->m_F[index], ttol, tol);
+		    brep->m_F[index], ttol, tol, model_diagonal);
 	    } catch (const std::bad_alloc &) {
 		hit_memory_limit = true;
 	    } catch (...) {
