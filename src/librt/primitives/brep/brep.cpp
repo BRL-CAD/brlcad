@@ -6258,6 +6258,190 @@ repair_fixed_brep_crack(brep_hit_workspace &hits,
 
 
 static bool
+brep_prepared_box_has_root(const struct rt_brep_shot_trace *trace,
+    const struct rt_brep_trace_surface_box &box, const ON_Ray &ray,
+    const struct bn_tol *tol)
+{
+    const double ray_length = ray.m_dir.Length();
+    if (!trace || !(ray_length > DBL_MIN) || !std::isfinite(ray_length))
+	return false;
+    const double model_tolerance = tol && tol->dist > 0.0 &&
+	std::isfinite(tol->dist) ? 0.1 * tol->dist / ray_length : 0.0;
+    const double t_scale = std::max(1.0,
+	std::max(fabs(box.t_min), fabs(box.t_max)));
+    const double t_tolerance = std::max(model_tolerance,
+	128.0 * DBL_EPSILON * t_scale);
+    const double u_scale = std::max(1.0,
+	std::max(fabs(box.uv_min[0]), fabs(box.uv_max[0])));
+    const double v_scale = std::max(1.0,
+	std::max(fabs(box.uv_min[1]), fabs(box.uv_max[1])));
+    const double u_tolerance = 128.0 * DBL_EPSILON * u_scale;
+    const double v_tolerance = 128.0 * DBL_EPSILON * v_scale;
+    for (size_t root_index = 0; root_index < trace->stored_local_roots;
+	    ++root_index) {
+	const struct rt_brep_trace_local_root &root =
+	    trace->local_roots[root_index];
+	if (root.face_index == box.face_index &&
+		root.span_index == box.span_index &&
+		root.dist >= box.t_min - t_tolerance &&
+		root.dist <= box.t_max + t_tolerance &&
+		root.uv[0] >= box.uv_min[0] - u_tolerance &&
+		root.uv[0] <= box.uv_max[0] + u_tolerance &&
+		root.uv[1] >= box.uv_min[1] - v_tolerance &&
+		root.uv[1] <= box.uv_max[1] + v_tolerance)
+	    return true;
+    }
+    return false;
+}
+
+
+static int
+brep_build_prepared_partition(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const ON_Ray &ray,
+    const struct xray &xray, const struct bn_tol *tol,
+    brep_hit_workspace &hits)
+{
+    if (!trace || !bs || !bs->brep)
+	return RT_BREP_PREPARED_FALLBACK_UNSUPPORTED;
+    if (bs->plate_mode)
+	return RT_BREP_PREPARED_FALLBACK_PLATE;
+    if (!bs->is_solid)
+	return RT_BREP_PREPARED_FALLBACK_NON_SOLID;
+    if (!trace->prepared_surface_spans || trace->unsupported_surface_faces ||
+	    trace->supported_surface_faces != bs->face_records.size() ||
+	    trace->candidate_surface_spans + trace->excluded_surface_spans !=
+	    trace->prepared_surface_spans)
+	return RT_BREP_PREPARED_FALLBACK_UNSUPPORTED;
+    if (trace->surface_workspace_exhausted ||
+	    trace->surface_clip_restriction_failures)
+	return RT_BREP_PREPARED_FALLBACK_SURFACE_WORKSPACE;
+    if (trace->surface_box_overflow ||
+	    trace->surface_isolated_boxes != trace->stored_surface_boxes)
+	return RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES;
+    if (trace->surface_isolated_boxes != trace->surface_krawczyk_boxes)
+	return RT_BREP_PREPARED_FALLBACK_UNCERTIFIED;
+    if (trace->local_root_overflow || trace->local_trim_failures ||
+	    trace->local_cluster_overflow ||
+	    trace->local_root_candidates != trace->stored_local_roots)
+	return RT_BREP_PREPARED_FALLBACK_LOCAL_WORKSPACE;
+
+    for (size_t box_index = 0; box_index < trace->stored_surface_boxes;
+	    ++box_index) {
+	if (!brep_prepared_box_has_root(trace,
+		trace->surface_boxes[box_index], ray, tol))
+	    return RT_BREP_PREPARED_FALLBACK_ROOT_COVERAGE;
+    }
+
+    size_t order[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    brep_trace_event_group groups[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    const double cluster_tolerance = trace->local_cluster_tolerance > 0.0 &&
+	std::isfinite(trace->local_cluster_tolerance) ?
+	trace->local_cluster_tolerance : BREP_SAME_POINT_TOLERANCE;
+    const size_t group_count = brep_trace_event_groups(trace->local_roots,
+	trace->stored_local_roots, order, groups, cluster_tolerance);
+    for (size_t group_index = 0; group_index < group_count; ++group_index) {
+	const brep_trace_event_group &group = groups[group_index];
+	if (group.direction_class != brep_hit::ENTERING &&
+		group.direction_class != brep_hit::LEAVING)
+	    return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	if (group.hit_class == brep_hit::CLEAN_MISS)
+	    continue;
+	brep_hit hit;
+	if (!brep_trace_make_hit(bs, ray, group.face_index, group.dist,
+		group.uv, group.trim_status, group.hit_class,
+		group.direction_class, group.adjacency, hit))
+	    return RT_BREP_PREPARED_FALLBACK_HIT_BUILD;
+	hits.push_back(hit);
+    }
+    if (hits.overflow())
+	return RT_BREP_PREPARED_FALLBACK_HIT_WORKSPACE;
+    hits.sort();
+    (void)cleanup_fixed_brep_hits(hits, xray);
+    if (hits.size() % 2 != 0)
+	return RT_BREP_PREPARED_FALLBACK_PARTITION;
+
+    const double ray_length = ray.m_dir.Length();
+    if (!(ray_length > DBL_MIN) || !std::isfinite(ray_length))
+	return RT_BREP_PREPARED_FALLBACK_PARTITION;
+    const double minimum_segment = tol && tol->dist > 0.0 &&
+	std::isfinite(tol->dist) ? tol->dist / ray_length : 0.0;
+    for (size_t hit_index = 0; hit_index + 1 < hits.size();
+	    hit_index += 2) {
+	const brep_hit &in = hits[hit_index];
+	const brep_hit &out = hits[hit_index + 1];
+	if (in.direction != brep_hit::ENTERING ||
+		out.direction != brep_hit::LEAVING ||
+		!std::isfinite(in.dist) || !std::isfinite(out.dist) ||
+		out.dist - in.dist < minimum_segment)
+	    return RT_BREP_PREPARED_FALLBACK_PARTITION;
+    }
+    return RT_BREP_PREPARED_FALLBACK_NONE;
+}
+
+
+static int
+brep_prepared_object_fallback(const struct brep_specific *bs)
+{
+    if (!bs || !bs->brep)
+	return RT_BREP_PREPARED_FALLBACK_UNSUPPORTED;
+    if (bs->plate_mode)
+	return RT_BREP_PREPARED_FALLBACK_PLATE;
+    if (!bs->is_solid)
+	return RT_BREP_PREPARED_FALLBACK_NON_SOLID;
+    if (bs->face_records.empty() || bs->surface_spans.empty())
+	return RT_BREP_PREPARED_FALLBACK_UNSUPPORTED;
+    for (std::vector<brep_face_record>::const_iterator record =
+	    bs->face_records.begin(); record != bs->face_records.end();
+	    ++record) {
+	if (!record->supported)
+	    return RT_BREP_PREPARED_FALLBACK_UNSUPPORTED;
+    }
+    return RT_BREP_PREPARED_FALLBACK_NONE;
+}
+
+
+static int
+brep_try_prepared_partition(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const ON_Ray &ray,
+    const struct xray &xray, const struct bn_tol *tol,
+    brep_hit_workspace &hits)
+{
+    trace->prepared_production_attempts++;
+    const int object_fallback = brep_prepared_object_fallback(bs);
+    if (object_fallback != RT_BREP_PREPARED_FALLBACK_NONE) {
+	trace->prepared_production_fallback = object_fallback;
+	return object_fallback;
+    }
+    brep_trace_surface_spans(trace, bs, ray, tol);
+    brep_trace_isolated_roots(trace, bs, ray);
+    brep_trace_local_clusters(trace, tol);
+    /* Publication is authorized only after every retained root box and the
+     * complete physical partition pass the conservative qualification above.
+     * Any other result leaves the legacy SurfaceTree path untouched. */
+    const int fallback = brep_build_prepared_partition(trace, bs, ray,
+	xray, tol, hits);
+    trace->prepared_production_fallback = fallback;
+    trace->prepared_production_hits = hits.size();
+    if (fallback == RT_BREP_PREPARED_FALLBACK_NONE)
+	trace->prepared_production_eligible++;
+    return fallback;
+}
+
+
+static int
+brep_try_prepared_partition(const struct brep_specific *bs,
+    const ON_Ray &ray, const struct xray &xray, const struct bn_tol *tol,
+    brep_hit_workspace &hits)
+{
+    struct rt_brep_shot_trace trace = {};
+    trace.closure_edge_index = -1;
+    trace.closure_missing_direction = -1;
+    trace.continuation_face_index = -1;
+    return brep_try_prepared_partition(&trace, bs, ray, xray, tol, hits);
+}
+
+
+static bool
 containsNearMiss(const std::list<brep_hit> *hits)
 {
     for (std::list<brep_hit>::const_iterator i = hits->begin(); i != hits->end(); ++i) {
@@ -6425,7 +6609,7 @@ emit_fixed_brep_hits(const brep_hit_workspace &hits, struct soltab *stp,
 static int
 rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     struct application *ap, struct seg *seghead,
-    struct rt_brep_shot_trace *trace)
+    struct rt_brep_shot_trace *trace, bool allow_prepared)
 {
     struct brep_specific* bs;
 
@@ -6442,6 +6626,22 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
      * needed.  Otherwise, return a miss.
      */
     ON_Ray r = toXRay(rp);
+    const struct bn_tol *tol = stp->st_rtip ? &stp->st_rtip->rti_tol : NULL;
+    brep_hit_workspace prepared_hits;
+    int prepared_fallback = RT_BREP_PREPARED_FALLBACK_UNSUPPORTED;
+    if (trace)
+	prepared_fallback = brep_try_prepared_partition(trace, bs, r, *rp,
+	    tol, prepared_hits);
+    else if (allow_prepared)
+	prepared_fallback = brep_try_prepared_partition(bs, r, *rp, tol,
+	    prepared_hits);
+    const bool prepared_selected = allow_prepared &&
+	prepared_fallback == RT_BREP_PREPARED_FALLBACK_NONE;
+    if (trace && prepared_selected)
+	trace->prepared_production_selected++;
+    if (!trace && prepared_selected)
+	return emit_fixed_brep_hits(prepared_hits, stp, rp, ap, seghead, bs);
+
     const BBNode *fixed_leaves[RT_BREP_MAX_LEAVES] = {};
     size_t fixed_leaf_count = 0;
     bool fixed_leaf_overflow = false;
@@ -6473,11 +6673,6 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	    trace->fixed_leaf_mismatches++;
 	}
     }
-    brep_trace_surface_spans(trace, bs, r,
-	stp->st_rtip ? &stp->st_rtip->rti_tol : NULL);
-    brep_trace_isolated_roots(trace, bs, r);
-    brep_trace_local_clusters(trace,
-	stp->st_rtip ? &stp->st_rtip->rti_tol : NULL);
     brep_observe_edges(trace, bs, r);
     if (!fixed_leaf_count) {
 	brep_trace_root_coverage(trace);
@@ -6485,6 +6680,11 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	    const std::list<brep_hit> empty_hits;
 	    brep_trace_prepared_event_cleanup(trace, bs, r, *rp, empty_hits,
 		NULL);
+	}
+	if (trace && prepared_selected) {
+	    trace->final_segments = prepared_hits.size() / 2;
+	    return emit_fixed_brep_hits(prepared_hits, stp, rp, ap, seghead,
+		bs);
 	}
 	return 0; // MISS
     }
@@ -6870,6 +7070,11 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	hits.sort();
     }
 
+    if (trace && prepared_selected) {
+	trace->final_segments = prepared_hits.size() / 2;
+	return emit_fixed_brep_hits(prepared_hits, stp, rp, ap, seghead, bs);
+    }
+
     if (bs->plate_mode) {
 
 	/* Newer plate mode enabled version of logic, causing problems
@@ -6986,7 +7191,7 @@ int
 rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap,
     struct seg *seghead)
 {
-    return rt_brep_shot_impl(stp, rp, ap, seghead, NULL);
+    return rt_brep_shot_impl(stp, rp, ap, seghead, NULL, true);
 }
 
 
@@ -6996,12 +7201,20 @@ _rt_brep_shot_trace(struct soltab *stp, struct xray *rp,
     struct rt_brep_shot_trace *trace)
 {
     if (!trace)
-	return rt_brep_shot_impl(stp, rp, ap, seghead, NULL);
+	return rt_brep_shot_impl(stp, rp, ap, seghead, NULL, true);
     *trace = {};
     trace->closure_edge_index = -1;
     trace->closure_missing_direction = -1;
     trace->continuation_face_index = -1;
-    return rt_brep_shot_impl(stp, rp, ap, seghead, trace);
+    return rt_brep_shot_impl(stp, rp, ap, seghead, trace, true);
+}
+
+
+int
+_rt_brep_shot_legacy(struct soltab *stp, struct xray *rp,
+    struct application *ap, struct seg *seghead)
+{
+    return rt_brep_shot_impl(stp, rp, ap, seghead, NULL, false);
 }
 
 
