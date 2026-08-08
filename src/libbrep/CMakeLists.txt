@@ -9,6 +9,7 @@ set(
   Subcurve.cpp
   Subsurface.cpp
   boolean.cpp
+  cobb.cpp
   cdt/cdt.cpp
   cdt/fast.cpp
   cdt/surf.cpp
