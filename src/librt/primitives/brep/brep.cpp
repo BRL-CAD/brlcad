@@ -416,6 +416,8 @@ static const size_t BREP_DIRECT_BEZIER_MAX_CVS =
     BREP_DIRECT_BEZIER_MAX_ORDER * BREP_DIRECT_BEZIER_MAX_ORDER;
 static const size_t BREP_DIRECT_SUBDIVISION_CAPACITY = 64;
 static const int BREP_DIRECT_SUBDIVISION_MAX_DEPTH = 24;
+static const double BREP_DIRECT_ROOT_RELATIVE_TOLERANCE = 5.0e-9;
+static const double BREP_DIRECT_EVALUATION_ULPS = 32.0;
 
 
 static void
@@ -479,6 +481,7 @@ brep_build_surface_data(struct brep_specific *bs)
 		span.surface_domain[0] = ON_Interval(u_lower, u_upper);
 		span.surface_domain[1] = ON_Interval(v_lower, v_upper);
 		span.face_index = face_index;
+		span.span_index = (int)bs->surface_spans.size();
 		bs->surface_spans.push_back(span);
 	    }
 	    if (!complete)
@@ -1972,6 +1975,7 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 		stored.t_min = minimum_t;
 		stored.t_max = maximum_t;
 		stored.face_index = span.face_index;
+		stored.span_index = span.span_index;
 		stored.depth = box.depth;
 	    }
 	    continue;
@@ -2020,6 +2024,7 @@ brep_trace_continuation_certificate(struct rt_brep_shot_trace *trace,
 
     brep_surface_span extension_span;
     extension_span.face_index = span.face_index;
+    extension_span.span_index = span.span_index;
     for (int direction = 0; direction < 2; ++direction)
 	extension_span.surface_domain[direction] = ON_Interval(
 	    span.surface_domain[direction].ParameterAt(minimum[direction]),
@@ -2431,18 +2436,30 @@ brep_bezier_surface_derivatives(const ON_BezierSurface &surface,
 
 static brep_continuation_result
 brep_continuation_newton(const brep_surface_span &span, const ON_Ray &ray,
-    const ON_2dPoint &seed, double extension)
+    const ON_2dPoint &seed, const double minimum[2],
+    const double maximum[2])
 {
     brep_continuation_result result;
     result.uv = seed;
     ON_3dVector first;
     ON_3dVector second;
     if (!brep_ray_plane_frame(ray, first, second) ||
-	    !(extension > 0.0) || !std::isfinite(extension))
+	    !std::isfinite(minimum[0]) || !std::isfinite(minimum[1]) ||
+	    !std::isfinite(maximum[0]) || !std::isfinite(maximum[1]) ||
+	    !(minimum[0] < maximum[0]) || !(minimum[1] < maximum[1]) ||
+	    seed.x < minimum[0] || seed.x > maximum[0] ||
+	    seed.y < minimum[1] || seed.y > maximum[1])
 	return result;
-
-    const double lower = -extension;
-    const double upper = 1.0 + extension;
+    const double span_scale = span.bbox.IsValid() ?
+	span.bbox.Diagonal().Length() : 0.0;
+    if (!(span_scale > DBL_MIN) || !std::isfinite(span_scale))
+	return result;
+    /* This solver is used on prepared patches ranging over many model scales.
+     * Tie the ordinary along-ray target to the local support size.  The
+     * separate evaluation floor below accounts for world-coordinate
+     * cancellation and is intentionally not a modeling/seam tolerance. */
+    const double root_tolerance = BREP_DIRECT_ROOT_RELATIVE_TOLERANCE *
+	span_scale;
     for (size_t iteration = 0; iteration < 24; ++iteration) {
 	ON_3dVector derivative_u;
 	ON_3dVector derivative_v;
@@ -2460,8 +2477,16 @@ brep_continuation_newton(const brep_surface_span &span, const ON_Ray &ray,
 		!(ray_length > DBL_MIN) || !std::isfinite(ray_length))
 	    return result;
 	const double normal_dot = fabs(result.normal * ray.m_dir) / ray_length;
-	if (result.residual <= std::max(BREP_ROOT_RESIDUAL_FLOOR,
-		BREP_ROOT_TOL * normal_dot)) {
+	const double coordinate_scale = std::max(span_scale,
+	    std::max(fabs(ray.m_origin.x),
+	    std::max(fabs(ray.m_origin.y),
+	    std::max(fabs(ray.m_origin.z),
+	    std::max(fabs(result.point.x),
+	    std::max(fabs(result.point.y), fabs(result.point.z)))))));
+	const double evaluation_floor = BREP_DIRECT_EVALUATION_ULPS *
+	    DBL_EPSILON * coordinate_scale;
+	if (result.residual <= std::max(evaluation_floor,
+		root_tolerance * normal_dot)) {
 	    result.dist = utah_calc_t(ray, result.point);
 	    result.converged = std::isfinite(result.dist);
 	    return result;
@@ -2488,13 +2513,11 @@ brep_continuation_newton(const brep_surface_span &span, const ON_Ray &ray,
 	bool improved = false;
 	double fraction = 1.0;
 	for (int line_search = 0; line_search < 8; ++line_search) {
-	    const ON_2dPoint candidate(result.uv.x - fraction * step.x,
-		result.uv.y - fraction * step.y);
-	    if (candidate.x < lower || candidate.x > upper ||
-		    candidate.y < lower || candidate.y > upper) {
-		fraction *= 0.5;
-		continue;
-	    }
+	    const ON_2dPoint candidate(
+		std::max(minimum[0], std::min(maximum[0],
+		result.uv.x - fraction * step.x)),
+		std::max(minimum[1], std::min(maximum[1],
+		result.uv.y - fraction * step.y)));
 	    ON_3dPoint candidate_point;
 	    ON_3dVector candidate_u;
 	    ON_3dVector candidate_v;
@@ -2624,9 +2647,12 @@ brep_trace_continuation(struct rt_brep_shot_trace *trace,
 		continue;
 	    const double extension = std::min(0.25,
 		std::max(1.0e-6, 4.0 * outside));
+	    const double solve_minimum[2] = {-extension, -extension};
+	    const double solve_maximum[2] = {1.0 + extension,
+		1.0 + extension};
 	    trace->continuation_attempts++;
 	    brep_continuation_result result = brep_continuation_newton(span,
-		ray, seed, extension);
+		ray, seed, solve_minimum, solve_maximum);
 	    if (!result.converged)
 		continue;
 	    ON_3dVector oriented_normal = result.normal;
@@ -2691,6 +2717,78 @@ brep_trace_continuation(struct rt_brep_shot_trace *trace,
 	    trace->closure_shadow_in_dist = trace->continuation_dist;
 	    trace->closure_shadow_out_dist = hit.dist;
 	}
+    }
+}
+
+
+static void
+brep_trace_isolated_roots(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const ON_Ray &ray)
+{
+    if (!trace || !bs || !bs->brep)
+	return;
+    for (size_t box_index = 0; box_index < trace->stored_surface_boxes;
+	    ++box_index) {
+	const struct rt_brep_trace_surface_box &box =
+	    trace->surface_boxes[box_index];
+	if (box.span_index < 0 ||
+		(size_t)box.span_index >= bs->surface_spans.size()) {
+	    trace->local_root_failures++;
+	    continue;
+	}
+	const brep_surface_span &span = bs->surface_spans[box.span_index];
+	if (span.face_index != box.face_index)
+	    continue;
+	double minimum[2] = {
+	    span.surface_domain[0].NormalizedParameterAt(box.uv_min[0]),
+	    span.surface_domain[1].NormalizedParameterAt(box.uv_min[1])
+	};
+	double maximum[2] = {
+	    span.surface_domain[0].NormalizedParameterAt(box.uv_max[0]),
+	    span.surface_domain[1].NormalizedParameterAt(box.uv_max[1])
+	};
+	const ON_2dPoint seed(0.5 * (minimum[0] + maximum[0]),
+	    0.5 * (minimum[1] + maximum[1]));
+	trace->local_root_attempts++;
+	brep_continuation_result result = brep_continuation_newton(span, ray,
+	    seed, minimum, maximum);
+	const double span_scale = span.bbox.IsValid() ?
+	    span.bbox.Diagonal().Length() : 0.0;
+	const double coordinate_scale = std::max(span_scale,
+	    std::max(fabs(ray.m_origin.x),
+	    std::max(fabs(ray.m_origin.y),
+	    std::max(fabs(ray.m_origin.z),
+	    std::max(fabs(result.point.x),
+	    std::max(fabs(result.point.y), fabs(result.point.z)))))));
+	const double distance_tolerance = std::max(
+	    BREP_DIRECT_ROOT_RELATIVE_TOLERANCE * span_scale,
+	    BREP_DIRECT_EVALUATION_ULPS * DBL_EPSILON * coordinate_scale);
+	if (!result.converged ||
+		!std::isfinite(distance_tolerance) ||
+		result.dist < box.t_min - distance_tolerance ||
+		result.dist > box.t_max + distance_tolerance) {
+	    trace->local_root_failures++;
+	    continue;
+	}
+	trace->local_root_candidates++;
+	if (trace->stored_local_roots >= RT_BREP_TRACE_MAX_LOCAL_ROOTS) {
+	    trace->local_root_overflow++;
+	    continue;
+	}
+	struct rt_brep_trace_local_root &root =
+	    trace->local_roots[trace->stored_local_roots++];
+	root.dist = result.dist;
+	root.uv[0] = span.surface_domain[0].ParameterAt(result.uv.x);
+	root.uv[1] = span.surface_domain[1].ParameterAt(result.uv.y);
+	root.residual = result.residual;
+	ON_3dVector normal = result.normal;
+	if (box.face_index >= 0 && box.face_index < bs->brep->m_F.Count() &&
+		bs->brep->m_F[box.face_index].m_bRev)
+	    normal.Reverse();
+	root.normal_dot = normal * ray.m_dir;
+	root.iterations = result.iterations;
+	root.face_index = box.face_index;
+	root.span_index = box.span_index;
     }
 }
 
@@ -2945,6 +3043,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     if (trace)
 	trace->intersected_leaves = inters.size();
     brep_trace_surface_spans(trace, bs, r);
+    brep_trace_isolated_roots(trace, bs, r);
     brep_trace_edges(trace, bs, r);
     if (inters.empty())
 	return 0; // MISS

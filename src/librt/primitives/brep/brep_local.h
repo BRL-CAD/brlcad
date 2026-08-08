@@ -57,6 +57,7 @@ struct brep_surface_span {
     ON_BoundingBox bbox;
     ON_Interval surface_domain[2];
     int face_index = -1;
+    int span_index = -1;
 };
 
 
