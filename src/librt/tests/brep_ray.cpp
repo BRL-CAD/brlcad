@@ -491,6 +491,34 @@ ray_class(const ray_result &result, double tolerance)
 }
 
 
+static bool
+brep_trace_covers_t(const struct rt_brep_shot_trace &trace, double dist,
+    double tolerance)
+{
+    for (size_t i = 0; i < trace.stored_surface_boxes; ++i) {
+	const struct rt_brep_trace_surface_box &box = trace.surface_boxes[i];
+	if (dist >= box.t_min - tolerance && dist <= box.t_max + tolerance)
+	    return true;
+    }
+    return false;
+}
+
+
+static bool
+brep_trace_box_covers_both(const struct rt_brep_shot_trace &trace,
+    double first, double second, double tolerance)
+{
+    for (size_t i = 0; i < trace.stored_surface_boxes; ++i) {
+	const struct rt_brep_trace_surface_box &box = trace.surface_boxes[i];
+	if (first >= box.t_min - tolerance && first <= box.t_max + tolerance &&
+		second >= box.t_min - tolerance &&
+		second <= box.t_max + tolerance)
+	    return true;
+    }
+    return false;
+}
+
+
 static std::vector<double>
 grazing_clearances(double radius, double distance_tolerance)
 {
@@ -579,6 +607,11 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     int failures = 0;
     bool brep_interval_ended = false;
     double previous_brep_chord = INFINITY;
+    size_t maximum_isolation_boxes = 0;
+    size_t maximum_isolated_boxes = 0;
+    size_t maximum_workspace = 0;
+    size_t outside_ambiguous = 0;
+    double largest_outside_ambiguous = 0.0;
     vect_t direction = {1.0, 0.0, 0.0};
     const std::vector<double> clearances = grazing_clearances(radius,
 	rtip->rti_tol.dist);
@@ -600,6 +633,42 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    direction);
 	ray_result repeated_result = shoot_solid(brep_stp, rtip, resp, origin,
 	    direction);
+	sampled_ray trace_ray;
+	VMOVE(trace_ray.origin, origin);
+	VMOVE(trace_ray.direction, direction);
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(brep_stp, rtip, resp, trace_ray, trace);
+	maximum_isolation_boxes = std::max(maximum_isolation_boxes,
+	    trace.surface_subdivision_boxes);
+	maximum_isolated_boxes = std::max(maximum_isolated_boxes,
+	    trace.surface_isolated_boxes);
+	maximum_workspace = std::max(maximum_workspace,
+	    trace.surface_workspace_high_water);
+	const double expected_in = 2.0 * radius - analytic_chord * 0.5;
+	const double expected_out = 2.0 * radius + analytic_chord * 0.5;
+	const bool roots_covered = brep_trace_covers_t(trace, expected_in,
+	    1.0e-7) && brep_trace_covers_t(trace, expected_out, 1.0e-7);
+	const bool roots_separated = !brep_trace_box_covers_both(trace,
+	    expected_in, expected_out, 1.0e-7);
+	if (!trace.supported_surface_faces ||
+		trace.candidate_surface_spans + trace.excluded_surface_spans !=
+		trace.prepared_surface_spans || trace.surface_workspace_exhausted ||
+		trace.surface_box_overflow ||
+		trace.surface_isolated_boxes != trace.stored_surface_boxes ||
+		trace.final_segments != (size_t)brep_result.segments ||
+		(analytic_chord >= rtip->rti_tol.dist && !roots_covered) ||
+		(analytic_chord >= 10.0 * rtip->rti_tol.dist &&
+		!roots_separated)) {
+	    std::printf("FAIL: grazing isolation h/R=%.17g spans=%zu/%zu "
+		"boxes=%zu/%zu workspace=%zu+%zu covered=%d separated=%d\n",
+		h / radius, trace.candidate_surface_spans,
+		trace.prepared_surface_spans, trace.surface_subdivision_boxes,
+		trace.surface_isolated_boxes,
+		trace.surface_workspace_high_water,
+		trace.surface_workspace_exhausted, roots_covered,
+		roots_separated);
+	    failures++;
+	}
 
 	if (brep_result.segments != repeated_result.segments ||
 	    (brep_result.segments == 1 &&
@@ -633,8 +702,6 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 
 	if (analytic_chord + rtip->rti_tol.dist * 1.0e-6 >=
 		rtip->rti_tol.dist) {
-	    const double expected_in = 2.0 * radius - analytic_chord * 0.5;
-	    const double expected_out = 2.0 * radius + analytic_chord * 0.5;
 	    if (implicit_result.segments != 1 || brep_result.segments != 1 ||
 		    fabs(brep_result.in_dist - expected_in) > rtip->rti_tol.dist ||
 		    fabs(brep_result.out_dist - expected_out) > rtip->rti_tol.dist) {
@@ -655,6 +722,10 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	}
     }
 
+    std::printf("Sphere grazing isolation: max-boxes=%zu max-isolated=%zu "
+	"workspace-high-water=%zu\n", maximum_isolation_boxes,
+	maximum_isolated_boxes, maximum_workspace);
+
     /* Exact tangency and every representable mirrored outside clearance must
      * be misses for both the analytic and converted representations. */
     point_t tangent_origin = {-2.0 * radius, radius, 0.0};
@@ -662,9 +733,24 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	tangent_origin, direction);
     ray_result brep_tangent = shoot_solid(brep_stp, rtip, resp,
 	tangent_origin, direction);
+    sampled_ray tangent_trace_ray;
+    VMOVE(tangent_trace_ray.origin, tangent_origin);
+    VMOVE(tangent_trace_ray.direction, direction);
+    struct rt_brep_shot_trace tangent_trace;
+    (void)shoot_brep_trace(brep_stp, rtip, resp, tangent_trace_ray,
+	tangent_trace);
     if (implicit_tangent.segments != 0 || brep_tangent.segments != 0) {
 	std::printf("FAIL: exact tangent did not miss: implicit=%d BREP=%d\n",
 	    implicit_tangent.segments, brep_tangent.segments);
+	failures++;
+    }
+    if (!brep_trace_covers_t(tangent_trace, 2.0 * radius, 1.0e-7) ||
+	    tangent_trace.surface_workspace_exhausted ||
+	    tangent_trace.surface_box_overflow) {
+	std::printf("FAIL: exact tangent isolation boxes=%zu workspace=%zu+%zu\n",
+	    tangent_trace.surface_isolated_boxes,
+	    tangent_trace.surface_workspace_high_water,
+	    tangent_trace.surface_workspace_exhausted);
 	failures++;
     }
 
@@ -677,12 +763,35 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    origin, direction);
 	ray_result brep_result = shoot_solid(brep_stp, rtip, resp, origin,
 	    direction);
+	sampled_ray trace_ray;
+	VMOVE(trace_ray.origin, origin);
+	VMOVE(trace_ray.direction, direction);
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(brep_stp, rtip, resp, trace_ray, trace);
+	if (trace.surface_workspace_exhausted || trace.surface_box_overflow) {
+	    std::printf("FAIL: outside grazing isolation overflow h/R=%.17g\n",
+		h / radius);
+	    failures++;
+	}
+	if (trace.surface_isolated_boxes) {
+	    outside_ambiguous++;
+	    largest_outside_ambiguous = std::max(largest_outside_ambiguous,
+		-h);
+	}
 	if (implicit_result.segments != 0 || brep_result.segments != 0) {
 	    std::printf("FAIL: outside grazing h/R=%.17g did not miss: "
 		"implicit=%d BREP=%d\n", h / radius,
 		implicit_result.segments, brep_result.segments);
 	    failures++;
 	}
+    }
+    std::printf("Sphere grazing miss-side isolation: ambiguous=%zu "
+	"largest-h/T=%.9g\n", outside_ambiguous,
+	largest_outside_ambiguous / rtip->rti_tol.dist);
+    if (largest_outside_ambiguous > 1.0e-6 * rtip->rti_tol.dist) {
+	std::printf("FAIL: miss-side isolation ambiguity spread to h/T=%.17g\n",
+	    largest_outside_ambiguous / rtip->rti_tol.dist);
+	failures++;
     }
 
     /* The implicit sphere rejects an outward ray beginning on its surface.
@@ -1941,6 +2050,26 @@ brep_trace_edge(const struct rt_brep_shot_trace &trace, int edge_index)
 }
 
 
+static bool
+brep_trace_root_isolated(const struct rt_brep_shot_trace &trace,
+    const struct rt_brep_trace_root &root)
+{
+    const double parameter_tolerance = 1.0e-12;
+    for (size_t i = 0; i < trace.stored_surface_boxes; ++i) {
+	const struct rt_brep_trace_surface_box &box = trace.surface_boxes[i];
+	if (box.face_index == root.face_index &&
+		root.uv[0] >= box.uv_min[0] - parameter_tolerance &&
+		root.uv[0] <= box.uv_max[0] + parameter_tolerance &&
+		root.uv[1] >= box.uv_min[1] - parameter_tolerance &&
+		root.uv[1] <= box.uv_max[1] + parameter_tolerance &&
+		root.dist >= box.t_min - 1.0e-7 &&
+		root.dist <= box.t_max + 1.0e-7)
+	    return true;
+    }
+    return false;
+}
+
+
 static ON_Xform
 cobb_similarity_transform(double scale, const ON_3dVector &translation)
 {
@@ -2020,6 +2149,8 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
     double reference_existing[2] = {0.0, 0.0};
     double reference_continuation[2] = {0.0, 0.0};
     size_t reference_surface_candidates[3][2] = {};
+    size_t reference_subdivision_boxes[3][2] = {};
+    size_t reference_isolated_boxes[3][2] = {};
     int failures = 0;
 
     for (size_t case_index = 0;
@@ -2116,9 +2247,14 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			4096.0 * DBL_EPSILON * coordinate_scale / test.scale);
 		    const double normalized_root_limit = std::max(
 			normalized_limit, 0.01 * tol->dist);
-		    if (case_index == 0)
+		    if (case_index == 0) {
 			reference_surface_candidates[state_index][reverse] =
 			    trace.candidate_surface_spans;
+			reference_subdivision_boxes[state_index][reverse] =
+			    trace.surface_subdivision_boxes;
+			reference_isolated_boxes[state_index][reverse] =
+			    trace.surface_isolated_boxes;
+		    }
 		    bool bad = !edge || !edge->candidate_spans ||
 			!edge->within_edge_tolerance || !edge->sector_valid ||
 			trace.supported_surface_faces != 6 ||
@@ -2128,6 +2264,11 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			trace.excluded_surface_spans != 6 ||
 			trace.candidate_surface_spans !=
 			reference_surface_candidates[state_index][reverse] ||
+			trace.surface_subdivision_boxes !=
+			reference_subdivision_boxes[state_index][reverse] ||
+			trace.surface_isolated_boxes !=
+			reference_isolated_boxes[state_index][reverse] ||
+			trace.surface_workspace_exhausted != 0 ||
 			edge->closest_state != expected_state ||
 			fabs(edge->distance / test.scale - fabs(clearance)) >
 			normalized_limit ||
@@ -2461,6 +2602,10 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t sector_inside = 0;
     size_t sector_contact = 0;
     size_t sector_outside = 0;
+    size_t maximum_subdivision_boxes = 0;
+    size_t maximum_isolated_boxes = 0;
+    size_t maximum_subdivision_depth = 0;
+    size_t maximum_workspace_high_water = 0;
     double maximum_calibration_error = 0.0;
     double maximum_edge_distance_error = 0.0;
     double maximum_lift_error = 0.0;
@@ -2478,12 +2623,16 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "target_edge_within,target_sector_valid,target_closest_state,"
 	    "supported_surface_faces,unsupported_surface_faces,"
 	    "prepared_surface_spans,candidate_surface_spans,"
-	    "excluded_surface_spans\n");
+	    "excluded_surface_spans,subdivision_boxes,isolated_boxes,"
+	    "subdivision_max_depth,workspace_high_water,"
+	    "workspace_exhausted\n");
 	std::printf("cobb_closure_columns,direction,g_over_T,h_over_T,reverse,"
 	    "candidate_count,edge_index,edge_t,existing_t,missing_direction\n");
 	std::printf("cobb_continuation_columns,direction,g_over_T,h_over_T,"
 	    "reverse,attempts,candidates,face,t,u,v,residual,normal_dot,"
 	    "iterations\n");
+	std::printf("cobb_box_columns,direction,g_over_T,h_over_T,reverse,"
+	    "box_index,face,u_min,u_max,v_min,v_max,t_min,t_max,depth\n");
 	std::printf("cobb_root_columns,direction,g_over_T,h_over_T,reverse,"
 	    "root_index,face,t,u,v,normal_dot,trim_distance,trim_status,"
 	    "hit_class,adjacent_face\n");
@@ -2585,6 +2734,16 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    (void)shoot_brep_trace(trace_stp, trace_rtip,
 			trace_resource, ray, trace);
 		    const size_t unique_candidates = brep_trace_unique_roots(trace);
+		    maximum_subdivision_boxes = std::max(maximum_subdivision_boxes,
+			trace.surface_subdivision_boxes);
+		    maximum_isolated_boxes = std::max(maximum_isolated_boxes,
+			trace.surface_isolated_boxes);
+		    maximum_subdivision_depth = std::max(
+			maximum_subdivision_depth,
+			trace.surface_subdivision_max_depth);
+		    maximum_workspace_high_water = std::max(
+			maximum_workspace_high_water,
+			trace.surface_workspace_high_water);
 		    if (trace.root_overflow ||
 			    trace.solver_calls != trace.intersected_leaves ||
 			    trace.candidate_roots != trace.stored_roots ||
@@ -2600,6 +2759,12 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.candidate_surface_spans +
 			    trace.excluded_surface_spans !=
 			    trace.prepared_surface_spans ||
+			    trace.surface_subdivision_boxes <
+			    trace.candidate_surface_spans ||
+			    trace.surface_workspace_exhausted != 0 ||
+			    trace.surface_box_overflow != 0 ||
+			    trace.surface_isolated_boxes !=
+			    trace.stored_surface_boxes ||
 			    (trace.final_hits != 1 &&
 			    trace.closure_candidates != 0) ||
 			    trace.candidate_edge_spans >
@@ -2619,6 +2784,22 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.candidate_edge_spans,
 			    trace.prepared_edge_spans);
 			failures++;
+		    }
+		    for (size_t root_index = 0;
+			    root_index < trace.stored_roots; ++root_index) {
+			if (!brep_trace_root_isolated(trace,
+				trace.roots[root_index])) {
+			    std::printf("FAIL: bowed Cobb root exclusion sign=%d "
+				"g/T=%.3g h/T=%.3g reverse=%d root=%zu "
+				"face=%d uv=%.17g/%.17g boxes=%zu\n", sign,
+				gap_ratios[ratio_index],
+				clearance_ratios[clearance_index], reverse,
+				root_index, trace.roots[root_index].face_index,
+				trace.roots[root_index].uv[0],
+				trace.roots[root_index].uv[1],
+				trace.stored_surface_boxes);
+			    failures++;
+			}
 		    }
 		    const struct rt_brep_trace_edge *target_edge =
 			brep_trace_edge(trace, frame.edge_index);
@@ -2867,7 +3048,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    "%zu,%zu,%.9g,%.9g,%.9g,%d,%d,%d,%zu,%zu,%zu,"
 			    "%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,"
 			    "%zu,%.9g,%.9g,%zu,%d,%d,%d,%zu,%zu,%zu,%zu,"
-			    "%zu\n",
+			    "%zu,%zu,%zu,%zu,%zu,%zu\n",
 			    sign > 0 ? "outward" :
 			    "inward", measured_gap / tol->dist,
 			    clearance / tol->dist, reverse,
@@ -2895,7 +3076,12 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.unsupported_surface_faces,
 			    trace.prepared_surface_spans,
 			    trace.candidate_surface_spans,
-			    trace.excluded_surface_spans);
+			    trace.excluded_surface_spans,
+			    trace.surface_subdivision_boxes,
+			    trace.surface_isolated_boxes,
+			    trace.surface_subdivision_max_depth,
+			    trace.surface_workspace_high_water,
+			    trace.surface_workspace_exhausted);
 			std::printf("cobb_closure,%s,%.9g,%.9g,%d,%zu,%d,"
 			    "%.17g,%.17g,%d\n",
 			    sign > 0 ? "outward" : "inward",
@@ -2916,6 +3102,20 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.continuation_residual,
 			    trace.continuation_normal_dot,
 			    trace.continuation_iterations);
+			for (size_t box_index = 0;
+				box_index < trace.stored_surface_boxes;
+				++box_index) {
+			    const struct rt_brep_trace_surface_box &box =
+				trace.surface_boxes[box_index];
+			    std::printf("cobb_box,%s,%.9g,%.9g,%d,%zu,%d,"
+				"%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%d\n",
+				sign > 0 ? "outward" : "inward",
+				measured_gap / tol->dist,
+				clearance / tol->dist, reverse, box_index,
+				box.face_index, box.uv_min[0], box.uv_max[0],
+				box.uv_min[1], box.uv_max[1], box.t_min,
+				box.t_max, box.depth);
+			}
 			for (size_t root_index = 0;
 				root_index < trace.stored_roots; ++root_index) {
 			    const struct rt_brep_trace_root &root =
@@ -2991,6 +3191,10 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	sector_outside, maximum_edge_distance_error, maximum_lift_error,
 	maximum_continuation_error,
 	maximum_calibration_error);
+    std::printf("Cobb surface isolation: max-boxes=%zu max-isolated=%zu "
+	"max-depth=%zu workspace-high-water=%zu\n",
+	maximum_subdivision_boxes, maximum_isolated_boxes,
+	maximum_subdivision_depth, maximum_workspace_high_water);
     free_prepared_model(implicit_model);
     delete pristine;
     return failures;

@@ -411,6 +411,13 @@ brep_bezier_control_bbox(const ON_BezierSurface &surface,
 }
 
 
+static const int BREP_DIRECT_BEZIER_MAX_ORDER = 16;
+static const size_t BREP_DIRECT_BEZIER_MAX_CVS =
+    BREP_DIRECT_BEZIER_MAX_ORDER * BREP_DIRECT_BEZIER_MAX_ORDER;
+static const size_t BREP_DIRECT_SUBDIVISION_CAPACITY = 64;
+static const int BREP_DIRECT_SUBDIVISION_MAX_DEPTH = 24;
+
+
 static void
 brep_build_surface_data(struct brep_specific *bs)
 {
@@ -437,6 +444,8 @@ brep_build_surface_data(struct brep_specific *bs)
 	 * reparameterized form cannot safely share the face's trim domains. */
 	if (surface->GetNurbForm(nurbs) != 1 || nurbs.m_order[0] < 2 ||
 		nurbs.m_order[1] < 2 ||
+		nurbs.m_order[0] > BREP_DIRECT_BEZIER_MAX_ORDER ||
+		nurbs.m_order[1] > BREP_DIRECT_BEZIER_MAX_ORDER ||
 		nurbs.m_cv_count[0] < nurbs.m_order[0] ||
 		nurbs.m_cv_count[1] < nurbs.m_order[1]) {
 	    bs->face_records.push_back(record);
@@ -1411,17 +1420,40 @@ brep_ray_plane_frame(const ON_Ray &ray, ON_3dVector &first,
 }
 
 
+struct brep_surface_coefficients {
+    double value[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    double ray_numerator[BREP_DIRECT_BEZIER_MAX_CVS];
+    double weight[BREP_DIRECT_BEZIER_MAX_CVS];
+    double error[2] = {0.0, 0.0};
+    double ray_numerator_error = 0.0;
+    double weight_error = 0.0;
+    int order[2] = {0, 0};
+};
+
+
 static bool
-brep_surface_span_excluded(const brep_surface_span &span,
-    const ON_Ray &ray, const ON_3dVector &first,
-    const ON_3dVector &second)
+brep_surface_coefficients_init(brep_surface_coefficients &coefficients,
+    const brep_surface_span &span, const ON_Ray &ray,
+    const ON_3dVector &first, const ON_3dVector &second)
 {
-    double minimum[2] = {DBL_MAX, DBL_MAX};
-    double maximum[2] = {-DBL_MAX, -DBL_MAX};
+    coefficients.order[0] = span.surface.Order(0);
+    coefficients.order[1] = span.surface.Order(1);
+    if (coefficients.order[0] < 2 || coefficients.order[1] < 2 ||
+	    coefficients.order[0] > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    coefficients.order[1] > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return false;
+
     double magnitude[2] = {0.0, 0.0};
     double arithmetic_scale[2] = {0.0, 0.0};
-    for (int i = 0; i < span.surface.Order(0); ++i) {
-	for (int j = 0; j < span.surface.Order(1); ++j) {
+    double ray_magnitude = 0.0;
+    double ray_arithmetic_scale = 0.0;
+    double maximum_weight = 0.0;
+    const ON_3dVector planes[2] = {first, second};
+    const double direction_squared = ray.m_dir * ray.m_dir;
+    if (!(direction_squared > DBL_MIN) || !std::isfinite(direction_squared))
+	return false;
+    for (int i = 0; i < coefficients.order[0]; ++i) {
+	for (int j = 0; j < coefficients.order[1]; ++j) {
 	    ON_4dPoint cv;
 	    if (!span.surface.GetCV(i, j, cv) || !cv.IsValid() ||
 		    !(cv.w > 0.0) || !std::isfinite(cv.w))
@@ -1429,18 +1461,29 @@ brep_surface_span_excluded(const brep_surface_span &span,
 	    const ON_3dVector numerator(cv.x - ray.m_origin.x * cv.w,
 		cv.y - ray.m_origin.y * cv.w,
 		cv.z - ray.m_origin.z * cv.w);
-	    const double coefficients[2] = {numerator * first,
-		numerator * second};
-	    const ON_3dVector planes[2] = {first, second};
+	    const size_t index = (size_t)i * coefficients.order[1] + j;
+	    coefficients.ray_numerator[index] =
+		(numerator * ray.m_dir) / direction_squared;
+	    coefficients.weight[index] = cv.w;
+	    if (!std::isfinite(coefficients.ray_numerator[index]))
+		return false;
+	    ray_magnitude = std::max(ray_magnitude,
+		fabs(coefficients.ray_numerator[index]));
+	    ray_arithmetic_scale = std::max(ray_arithmetic_scale,
+		((fabs(cv.x) + fabs(ray.m_origin.x * cv.w)) *
+		fabs(ray.m_dir.x) +
+		(fabs(cv.y) + fabs(ray.m_origin.y * cv.w)) *
+		fabs(ray.m_dir.y) +
+		(fabs(cv.z) + fabs(ray.m_origin.z * cv.w)) *
+		fabs(ray.m_dir.z)) / direction_squared);
+	    maximum_weight = std::max(maximum_weight, cv.w);
 	    for (int equation = 0; equation < 2; ++equation) {
-		if (!std::isfinite(coefficients[equation]))
+		const double value = numerator * planes[equation];
+		if (!std::isfinite(value))
 		    return false;
-		minimum[equation] = std::min(minimum[equation],
-		    coefficients[equation]);
-		maximum[equation] = std::max(maximum[equation],
-		    coefficients[equation]);
+		coefficients.value[equation][index] = value;
 		magnitude[equation] = std::max(magnitude[equation],
-		    fabs(coefficients[equation]));
+		    fabs(value));
 		const double scale =
 		    (fabs(cv.x) + fabs(ray.m_origin.x * cv.w)) *
 		    fabs(planes[equation].x) +
@@ -1453,14 +1496,291 @@ brep_surface_span_excluded(const brep_surface_span &span,
 	    }
 	}
     }
-    for (int equation = 0; equation < 2; ++equation) {
-	const double error = 128.0 * DBL_EPSILON *
+    for (int equation = 0; equation < 2; ++equation)
+	coefficients.error[equation] = 128.0 * DBL_EPSILON *
 	    std::max(1.0, std::max(magnitude[equation],
 	    arithmetic_scale[equation]));
-	if (minimum[equation] > error || maximum[equation] < -error)
+    coefficients.ray_numerator_error = 128.0 * DBL_EPSILON *
+	std::max(1.0, std::max(ray_magnitude, ray_arithmetic_scale));
+    coefficients.weight_error = 128.0 * DBL_EPSILON *
+	std::max(1.0, maximum_weight);
+    return true;
+}
+
+
+static bool
+brep_coefficient_hull_excluded(const double *values, size_t count,
+    double error)
+{
+    double minimum = DBL_MAX;
+    double maximum = -DBL_MAX;
+    for (size_t i = 0; i < count; ++i) {
+	minimum = std::min(minimum, values[i]);
+	maximum = std::max(maximum, values[i]);
+    }
+    return minimum > error || maximum < -error;
+}
+
+
+static bool
+brep_surface_coefficients_excluded(
+    const brep_surface_coefficients &coefficients)
+{
+    const size_t count = (size_t)coefficients.order[0] *
+	coefficients.order[1];
+    for (int equation = 0; equation < 2; ++equation) {
+	if (brep_coefficient_hull_excluded(coefficients.value[equation],
+		count, coefficients.error[equation]))
 	    return true;
     }
     return false;
+}
+
+
+static bool
+brep_surface_span_excluded(const brep_surface_span &span,
+    const ON_Ray &ray, const ON_3dVector &first,
+    const ON_3dVector &second)
+{
+    brep_surface_coefficients coefficients;
+    if (!brep_surface_coefficients_init(coefficients, span, ray, first,
+	    second))
+	return false;
+    return brep_surface_coefficients_excluded(coefficients);
+}
+
+
+static void
+brep_scalar_bezier_split(const double *input, int order, double parameter,
+    double *left, double *right)
+{
+    if (!input || !left || !right || order < 1 ||
+	    order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return;
+    double work[BREP_DIRECT_BEZIER_MAX_ORDER] = {0.0};
+    for (int i = 0; i < order; ++i)
+	work[i] = input[i];
+    left[0] = work[0];
+    right[order - 1] = work[order - 1];
+    for (int level = 1; level < order; ++level) {
+	for (int i = 0; i < order - level; ++i)
+	    work[i] = (1.0 - parameter) * work[i] +
+		parameter * work[i + 1];
+	left[level] = work[0];
+	right[order - level - 1] = work[order - level - 1];
+    }
+}
+
+
+static bool
+brep_scalar_bezier_restrict(const double *input, int order, double minimum,
+    double maximum, double *output)
+{
+    if (order < 2 || order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    minimum < 0.0 || maximum > 1.0 || !(minimum < maximum))
+	return false;
+    double first[BREP_DIRECT_BEZIER_MAX_ORDER];
+    double second[BREP_DIRECT_BEZIER_MAX_ORDER];
+    const double *current = input;
+    double local_minimum = minimum;
+    if (maximum < 1.0) {
+	brep_scalar_bezier_split(input, order, maximum, first, second);
+	current = first;
+	local_minimum = minimum / maximum;
+    }
+    if (local_minimum > 0.0) {
+	brep_scalar_bezier_split(current, order, local_minimum, first, second);
+	for (int i = 0; i < order; ++i)
+	    output[i] = second[i];
+    } else {
+	for (int i = 0; i < order; ++i)
+	    output[i] = current[i];
+    }
+    return true;
+}
+
+
+static bool
+brep_scalar_surface_restrict(const double *input, int u_order, int v_order,
+    double u_minimum, double u_maximum, double v_minimum, double v_maximum,
+    double *output)
+{
+    double u_restricted[BREP_DIRECT_BEZIER_MAX_CVS];
+    double source[BREP_DIRECT_BEZIER_MAX_ORDER];
+    double result[BREP_DIRECT_BEZIER_MAX_ORDER];
+    for (int j = 0; j < v_order; ++j) {
+	for (int i = 0; i < u_order; ++i)
+	    source[i] = input[(size_t)i * v_order + j];
+	if (!brep_scalar_bezier_restrict(source, u_order, u_minimum,
+		u_maximum, result))
+	    return false;
+	for (int i = 0; i < u_order; ++i)
+	    u_restricted[(size_t)i * v_order + j] = result[i];
+    }
+    for (int i = 0; i < u_order; ++i) {
+	for (int j = 0; j < v_order; ++j)
+	    source[j] = u_restricted[(size_t)i * v_order + j];
+	if (!brep_scalar_bezier_restrict(source, v_order, v_minimum,
+		v_maximum, result))
+	    return false;
+	for (int j = 0; j < v_order; ++j)
+	    output[(size_t)i * v_order + j] = result[j];
+    }
+    return true;
+}
+
+
+struct brep_subdivision_box {
+    double minimum[2];
+    double maximum[2];
+    int depth;
+};
+
+
+static bool
+brep_surface_box_t_range(const brep_surface_coefficients &coefficients,
+    const brep_subdivision_box &box, double &minimum_t, double &maximum_t)
+{
+    double numerator[BREP_DIRECT_BEZIER_MAX_CVS];
+    double weight[BREP_DIRECT_BEZIER_MAX_CVS];
+    if (!brep_scalar_surface_restrict(coefficients.ray_numerator,
+	    coefficients.order[0], coefficients.order[1], box.minimum[0],
+	    box.maximum[0], box.minimum[1], box.maximum[1], numerator) ||
+	    !brep_scalar_surface_restrict(coefficients.weight,
+	    coefficients.order[0], coefficients.order[1], box.minimum[0],
+	    box.maximum[0], box.minimum[1], box.maximum[1], weight))
+	return false;
+    const size_t count = (size_t)coefficients.order[0] *
+	coefficients.order[1];
+    minimum_t = DBL_MAX;
+    maximum_t = -DBL_MAX;
+    double minimum_weight = DBL_MAX;
+    for (size_t i = 0; i < count; ++i) {
+	if (!(weight[i] > 0.0) || !std::isfinite(weight[i]) ||
+		!std::isfinite(numerator[i]))
+	    return false;
+	const double value = numerator[i] / weight[i];
+	if (!std::isfinite(value))
+	    return false;
+	minimum_t = std::min(minimum_t, value);
+	maximum_t = std::max(maximum_t, value);
+	minimum_weight = std::min(minimum_weight, weight[i]);
+    }
+    const double depth_factor = 1.0 + 8.0 * box.depth;
+    const double numerator_error =
+	coefficients.ray_numerator_error * depth_factor;
+    const double weight_error = coefficients.weight_error * depth_factor;
+    if (!(minimum_weight > weight_error))
+	return false;
+    const double magnitude = std::max(fabs(minimum_t), fabs(maximum_t));
+    const double margin = (numerator_error + magnitude * weight_error) /
+	(minimum_weight - weight_error) +
+	128.0 * DBL_EPSILON * std::max(1.0, magnitude);
+    minimum_t -= margin;
+    maximum_t += margin;
+    return std::isfinite(minimum_t) && std::isfinite(maximum_t) &&
+	minimum_t <= maximum_t;
+}
+
+
+static void
+brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
+    const brep_surface_coefficients &coefficients,
+    const brep_surface_span &span)
+{
+    brep_subdivision_box pending[BREP_DIRECT_SUBDIVISION_CAPACITY];
+    size_t pending_count = 1;
+    pending[0].minimum[0] = 0.0;
+    pending[0].minimum[1] = 0.0;
+    pending[0].maximum[0] = 1.0;
+    pending[0].maximum[1] = 1.0;
+    pending[0].depth = 0;
+    trace->surface_workspace_high_water = std::max(
+	trace->surface_workspace_high_water, pending_count);
+
+    double restricted[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    const size_t count = (size_t)coefficients.order[0] *
+	coefficients.order[1];
+    while (pending_count) {
+	const brep_subdivision_box box = pending[--pending_count];
+	trace->surface_subdivision_boxes++;
+	trace->surface_subdivision_max_depth = std::max(
+	    trace->surface_subdivision_max_depth, (size_t)box.depth);
+	bool excluded = false;
+	for (int equation = 0; equation < 2; ++equation) {
+	    if (!brep_scalar_surface_restrict(coefficients.value[equation],
+		    coefficients.order[0], coefficients.order[1],
+		    box.minimum[0], box.maximum[0], box.minimum[1],
+		    box.maximum[1], restricted[equation])) {
+		trace->surface_workspace_exhausted++;
+		return;
+	    }
+	    double magnitude = 0.0;
+	    for (size_t i = 0; i < count; ++i)
+		magnitude = std::max(magnitude,
+		    fabs(restricted[equation][i]));
+	    const double error = coefficients.error[equation] *
+		(1.0 + 8.0 * box.depth) + 128.0 * DBL_EPSILON *
+		std::max(1.0, magnitude);
+	    if (brep_coefficient_hull_excluded(restricted[equation], count,
+		    error)) {
+		excluded = true;
+		break;
+	    }
+	}
+	if (excluded)
+	    continue;
+	if (box.depth >= BREP_DIRECT_SUBDIVISION_MAX_DEPTH) {
+	    double minimum_t = 0.0;
+	    double maximum_t = 0.0;
+	    if (!brep_surface_box_t_range(coefficients, box, minimum_t,
+		    maximum_t)) {
+		trace->surface_workspace_exhausted++;
+		return;
+	    }
+	    trace->surface_isolated_boxes++;
+	    if (trace->stored_surface_boxes >=
+		    RT_BREP_TRACE_MAX_SURFACE_BOXES) {
+		trace->surface_box_overflow++;
+	    } else {
+		struct rt_brep_trace_surface_box &stored =
+		    trace->surface_boxes[trace->stored_surface_boxes++];
+		stored.uv_min[0] = span.surface_domain[0].ParameterAt(
+		    box.minimum[0]);
+		stored.uv_min[1] = span.surface_domain[1].ParameterAt(
+		    box.minimum[1]);
+		stored.uv_max[0] = span.surface_domain[0].ParameterAt(
+		    box.maximum[0]);
+		stored.uv_max[1] = span.surface_domain[1].ParameterAt(
+		    box.maximum[1]);
+		stored.t_min = minimum_t;
+		stored.t_max = maximum_t;
+		stored.face_index = span.face_index;
+		stored.depth = box.depth;
+	    }
+	    continue;
+	}
+
+	const int direction =
+	    box.maximum[0] - box.minimum[0] >=
+	    box.maximum[1] - box.minimum[1] ? 0 : 1;
+	const double midpoint = 0.5 *
+	    (box.minimum[direction] + box.maximum[direction]);
+	if (pending_count + 2 > BREP_DIRECT_SUBDIVISION_CAPACITY) {
+	    trace->surface_workspace_exhausted++;
+	    return;
+	}
+	brep_subdivision_box &second = pending[pending_count++];
+	second = box;
+	second.minimum[direction] = midpoint;
+	second.depth++;
+	brep_subdivision_box &first = pending[pending_count++];
+	first = box;
+	first.maximum[direction] = midpoint;
+	first.depth++;
+	trace->surface_workspace_high_water = std::max(
+	    trace->surface_workspace_high_water, pending_count);
+    }
 }
 
 
@@ -1491,6 +1811,13 @@ brep_trace_surface_spans(struct rt_brep_shot_trace *trace,
 		trace->excluded_surface_spans++;
 	    } else {
 		trace->candidate_surface_spans++;
+		brep_surface_coefficients coefficients;
+		if (brep_surface_coefficients_init(coefficients,
+			bs->surface_spans[span_index], ray, first, second))
+		    brep_trace_surface_isolation(trace, coefficients,
+			bs->surface_spans[span_index]);
+		else
+		    trace->surface_workspace_exhausted++;
 	    }
 	}
     }
