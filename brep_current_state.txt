@@ -80,18 +80,20 @@ workspaces, observes all five legacy cleanup stages, independently runs the
 certified crack repair, and records complete solid partitions.  The analytic
 sphere partitions are equivalent; one bowed Cobb partition differs and the
 prepared result is the one that matches the implicit sphere oracle.
-Ordinary transverse prepared-span roots can now terminate shadow subdivision
+Ordinary transverse prepared-span roots can now terminate subdivision
 after a converged corrector passes a strict interval Krawczyk inclusion test.
 Six oblique sphere rays preserve exact implicit/legacy/prepared partition
 agreement while reducing visited boxes by about 71.7 percent from a measured
 fixed-depth baseline.  Grazing and boundary roots do not qualify and retain
 the conservative depth-24 path.  Its ordinary in-span arithmetic audit is now
-complete, but the path remains shadow-only pending the remaining promotion,
-fallback, and physical-equivalence gates.
+complete.  Strictly qualified ordinary partitions now publish in production;
+all incomplete, grazing, boundary, unsupported, and capacity-limited cases
+retain the dense SurfaceTree fallback.
 The same regular-root path is now gated under translation, arbitrary rotation,
 and 0.01x/10,000x uniform scales with scaled model tolerances.  Thirty directed
 rays preserve normalized analytic/implicit/legacy/prepared partitions and all
-60 roots terminate adaptively at depths 4 through 9.  Work varies by transform,
+60 roots terminate adaptively at depths 4 through 11.  Work varies by
+transform,
 as expected, without changing classification.
 Function and Jacobian enclosures now use outward interval operations throughout
 rather than scalar evaluation plus an error estimate.  An independent exact-
@@ -101,14 +103,16 @@ homogeneous coefficient construction, arbitrary sub-box restrictions,
 positive-denominator quotients, and rational ray-t bounds.  Outside-span
 reparameterization now also uses a directly applied outward interval tensor
 operator and has an independent exact-dyadic audit.  The ordinary and
-continuation arithmetic layers are complete.  Ordinary shadow isolation now
+continuation arithmetic layers are complete.  Ordinary prepared isolation now
 also applies conservative Bernstein convex-hull clipping before subdivision.
 It retains at least half of each parameter width, charges clipping against the
 depth budget according to retained area, and falls back to the unchanged box
 on every inconclusive or inconsistent result.  Thirty similarity rays reduce
 from the recorded 1,602-box no-clipping baseline to 964 boxes while preserving
 all analytic, legacy, and prepared partitions.  Broad production promotion
-and tree-density reduction remain gated on fallback and physical equivalence.
+now publishes only completely certified ordinary partitions; every other case
+runs the unchanged dense SurfaceTree path.  Tree-density reduction remains
+gated on fallback coverage and performance.
 Production trim classification now scans the prepared trim leaves directly;
 the former copied-list implementation remains trace-only as an exact
 equivalence oracle.  The full traced corpus hard-gates candidate counts,
@@ -1237,6 +1241,60 @@ ESTABLISHED FINDINGS
     diagnostic.  Production ordinary hits still come only from the
     depth-eight SurfaceTree path.
 
+46. Completely certified ordinary prepared partitions now have a production
+    publication path.  It is deliberately fail-closed: the BREP must be a
+    solid and not a plate; every face and span must be supported and fully
+    accounted; every retained box must be stored, Krawczyk-certified, and
+    covered by a corrected root from the same face/span; and no surface,
+    clipping, root, trim, cluster, or hit workspace may fail or overflow.
+    Reconstructed events must be unambiguous ENTERING or LEAVING events and
+    must clean to a finite, alternating, even partition with no sub-tolerance
+    segment.  Clean trimmed misses are allowed; contacts, tangencies, odd
+    partitions, and all incomplete evidence fall back.
+
+    Thirteen observable outcomes distinguish selection from non-solid, plate,
+    unsupported-surface, surface-workspace/restriction, surface-box-capacity,
+    uncertified-root, local-workspace/trim, root-coverage, event-class,
+    hit-construction, hit-workspace, and final-partition fallback.  Production
+    returns a qualified fixed-workspace partition before SurfaceTree traversal.
+    Otherwise it executes the existing dense-tree solver unchanged.  Plate,
+    non-solid, and unsupported-face checks occur before prepared
+    isolation, so those object modes do not pay for a solve merely to report
+    their fallback.  Trace mode intentionally runs the legacy solver even
+    after qualification so all prior event and partition comparisons remain
+    live, then returns the prepared answer.  A private test entry forces legacy
+    dispatch and prevents the promoted path from serving as its own oracle.
+
+    Six oblique interior sphere rays qualify and match the analytic implicit,
+    promoted production, forced legacy, and reconstructed prepared paths to
+    the model tolerance.  The 30-ray similarity gate applies identity,
+    translation, arbitrary-axis rotation, 0.01x scale, and 10,000x scale.  All
+    60 roots qualify, all 30 partitions are selected, and the maximum
+    normalized errors are 4.62e-14 implicit, 1.08e-8 production, 2.87e-7
+    forced legacy, and 1.08e-8 reconstructed prepared.  Thus classification
+    and normalized hit locations are invariant for tested similarities when
+    model-space tolerances scale as lengths.  General nonuniform affine
+    scaling is still the separately planned ellipsoid qualification.
+
+    The signed grazing matrix and exact tangent do not qualify: they report
+    the explicit uncertified-root fallback and retain the legacy result.  In
+    accumulated trace observations, the sphere interior selects 6/6 attempts,
+    the broader sphere matrix selects 58/119 with 61 uncertified fallbacks,
+    and the bowed Cobb matrix selects 102/416 with 314 uncertified fallbacks.
+    The complete Crofton, CSG-leaf, similarity, classifier, metadata, and Cobb
+    corpus passes without a partition delta.
+
+    This is a correctness checkpoint, not yet a performance win.  The normal
+    focused gate passes 13/13 with rt_brep_ray at 68.99 seconds; the previous
+    shadow-only checkpoint took 24.07 seconds.  Some increase is independent
+    test duplication, but production now also attempts prepared isolation on
+    every BREP ray and grazing rays pay for that attempt before fallback.  The
+    ASan/UBSan gate passes 12/12 in 361.99 seconds with rt_brep_ray at 361.95
+    seconds and no diagnostic.  Do not lower SurfaceTree density or claim a
+    throughput improvement until selection/fallback profiling supplies a
+    lower-cost dispatch strategy or an adequate replacement for dense-tree
+    fallback.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1366,9 +1424,9 @@ IMPLEMENTATION CHECKLIST
 [ ] Local adaptive solve
     [x] Prepare exact-parameter positive-weight rational Bezier surface spans
         with complete-face unsupported fallback.
-    [ ] Implement conservative coefficient exclusion and local subdivision.
+    [x] Implement conservative coefficient exclusion and local subdivision.
         [x] Implement initial two-plane homogeneous coefficient exclusion with
-            translation-aware numerical margins in shadow mode.
+            translation-aware numerical margins in the prepared path.
         [x] Add fixed-capacity de Casteljau subdivision and conservative UV/t
             interval isolation on ordinary surface spans.
         [x] Correct each retained ordinary box with a bounded, allocation-free
@@ -1380,8 +1438,8 @@ IMPLEMENTATION CHECKLIST
             coverage and classify direct-only tangent-band contacts.
         [x] Add bounded outside-span reparameterization with conservative
             error propagation and positive-weight certification.
-        [ ] Add production-safe clipping and adaptive termination.
-            [x] Add shadow strict-interior Krawczyk termination for regular
+        [x] Add production-safe clipping and adaptive termination.
+            [x] Add strict-interior Krawczyk termination for regular
                 transverse roots and gate its fixed-depth work reduction.
             [x] Gate normalized regular-root partitions and certification
                 under translation, arbitrary rotation, and 0.01x/10,000x
@@ -1399,7 +1457,7 @@ IMPLEMENTATION CHECKLIST
                 [x] Audit outside-span reparameterization amplification with
                     direct outward interval tensor operators and exact row-
                     sum uncertainty bounds.
-            [x] Add contraction-only shadow Bernstein clipping with outward
+            [x] Add contraction-only Bernstein clipping with outward
                 convex-hull bounds, bounded contraction, depth charging,
                 non-progress termination, and observable conservative
                 fallback.
@@ -1408,14 +1466,15 @@ IMPLEMENTATION CHECKLIST
             [x] Reduce the 30-ray similarity gate below its recorded 1,602-box
                 no-clipping baseline while preserving the complete grazing,
                 seam, and final-partition corpora.
-            [ ] Define the ordinary-root production publication boundary and
-                retain explicit legacy fallback for unsupported surfaces,
-                workspace exhaustion, and any unqualified physical event.
-    [ ] Use fixed-capacity allocation-free shot workspace with explicit
+            [x] Define the ordinary-root production publication boundary and
+                retain explicit legacy fallback for plates, unsupported
+                surfaces, workspace exhaustion, uncertified roots, and any
+                unqualified physical event.
+    [x] Use fixed-capacity allocation-free shot workspace with explicit
         fallback on unsupported weights/order/capacity.
         [x] Bound direct surface order, subdivision stack, trace output, and
             scratch control nets; expose every overflow/high-water result.
-        [ ] Integrate fixed traversal/root/event arrays and fallback dispatch.
+        [x] Integrate fixed traversal/root/event arrays and fallback dispatch.
             [x] Add and corpus-gate a 128-entry fixed leaf traversal shadow,
                 including total count, exact order, and overflow reporting.
             [x] Promote bounded production leaf collection to the fixed array
@@ -1426,7 +1485,7 @@ IMPLEMENTATION CHECKLIST
     [x] Assemble the uniquely certified continuation and existing event into
         an ordered production material interval and gate both endpoints
         against the implicit oracle and similarity transforms.
-    [ ] Reduce default tree density only after shadow equivalence passes.
+    [ ] Reduce default tree density only after publication equivalence passes.
     [ ] Version and verify prep cache changes.
 
 [ ] Drawing and corpus completion
@@ -1939,6 +1998,11 @@ Cobb sphere baseline:
     affine enclosure gate: 13/13 in 25.30 seconds, with rt_brep_ray at 24.07
     seconds.  All geometry classifications and published partitions remain
     unchanged; the 30-ray shadow similarity matrix visits 964 boxes.
+    Repeated after strict ordinary-root publication, explicit fallback
+    accounting, and an independent forced-legacy test entry: 13/13 in 69.03
+    seconds, with rt_brep_ray at 68.99 seconds.  All 30 similarity rays select
+    the prepared production partition; resolved grazing and exact-tangent rays
+    report uncertified fallback.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -2003,6 +2067,9 @@ Cobb sphere baseline:
     Repeated after contraction-only Bernstein clipping with halt_on_error=1:
     12/12 in 91.04 seconds; rt_brep_ray takes 91.00 seconds with no ASan or
     UBSan diagnostic.
+    Repeated after strict ordinary-root production publication and forced
+    legacy comparison with halt_on_error=1: 12/12 in 361.99 seconds;
+    rt_brep_ray takes 361.95 seconds with no ASan or UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -2071,17 +2138,15 @@ NEXT ACTIONS
 2. Implement and gate cyclic convex/concave vertex-fan transitions before any
    multi-edge crack repair.  Preserve the current explicit fallback for
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
-3. Define the ordinary-root production promotion/fallback gate now that
-   contraction-only clipping, Krawczyk qualification, initial construction,
-   arbitrary in-span restriction, rational ray-t bounds, outside-span
-   reparameterization, similarity, and all supported tensor orders are
-   independently gated.  Nonuniform affine transforms remain a separate
-   ellipsoid target.  Keep
-   classifying the observed near-hit/grazing/duplicate-stage representation
-   differences and extending final-partition oracle gates before production
-   promotion.  Do not lower tree density until unsupported/capacity fallback
-   and every changed material partition are observable and proven equivalent
-   or better than the legacy path.
+3. Profile the strict ordinary-root production selector on stratified analytic
+   and STEP cases.  Separate prepared-attempt cost, selected ordinary rays,
+   uncertified grazing fallback, and each unsupported/capacity reason.  Add the
+   separate nonuniform affine ellipsoid gate.  Find a lower-cost dispatch or
+   fallback strategy before reducing tree density: the first correctness-only
+   promotion passes every partition oracle but increases the grazing-heavy ray
+   corpus from 24.07 to 68.99 seconds.  Do not lower density until every
+   fallback population remains correct without relying on a tree that is no
+   longer dense enough.
 4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
