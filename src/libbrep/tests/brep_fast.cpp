@@ -60,6 +60,27 @@ run_wire(wire_output *output, struct rt_db_internal *intern, size_t workers,
 }
 
 static int
+run_shaded(wire_output *output, struct directory *dp,
+	struct rt_db_internal *intern)
+{
+    struct bu_list vhead;
+    BU_LIST_INIT(&vhead);
+    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    int ret = rt_brep_plot_poly(&vhead, dp, intern, &ttol, &tol, NULL);
+    const struct bv_vlist *vlist;
+    for (BU_LIST_FOR(vlist, bv_vlist, &vhead)) {
+	for (size_t i = 0; i < vlist->nused; i++) {
+	    output->commands.push_back(vlist->cmd[i]);
+	    output->points.insert(output->points.end(), vlist->pt[i],
+		vlist->pt[i] + 3);
+	}
+    }
+    BV_FREE_VLIST(&rt_vlfree, &vhead);
+    return ret;
+}
+
+static int
 run_fast(fast_output *output, const ON_Brep *brep, size_t workers,
 	size_t max_points)
 {
@@ -171,6 +192,37 @@ main(int argc, const char **argv)
 	wire_limited.report.hit_point_limit && wire_limited.commands.empty() &&
 	wire_limited.points.empty();
 
+    wire_output shaded;
+    int shaded_ret = run_shaded(&shaded, dp, &intern);
+    std::vector<int> expected_commands;
+    std::vector<fastf_t> expected_shaded_points;
+    for (size_t triangle = 0; triangle < serial.faces.size() / 3;
+	    triangle++) {
+	const int *indices = &serial.faces[triangle * 3];
+	const fastf_t *triangle_normals = &serial.normals[triangle * 9];
+	expected_commands.push_back(BV_VLIST_TRI_START);
+	expected_shaded_points.insert(expected_shaded_points.end(),
+	    triangle_normals, triangle_normals + 3);
+	for (int corner = 0; corner < 3; corner++) {
+	    expected_commands.push_back(BV_VLIST_TRI_VERTNORM);
+	    expected_shaded_points.insert(expected_shaded_points.end(),
+		triangle_normals + corner * 3,
+		triangle_normals + corner * 3 + 3);
+	    expected_commands.push_back(corner ? BV_VLIST_TRI_DRAW :
+		BV_VLIST_TRI_MOVE);
+	    expected_shaded_points.insert(expected_shaded_points.end(),
+		&serial.points[(size_t)indices[corner] * 3],
+		&serial.points[(size_t)indices[corner] * 3 + 3]);
+	}
+	expected_commands.push_back(BV_VLIST_TRI_END);
+	expected_shaded_points.insert(expected_shaded_points.end(),
+	    &serial.points[(size_t)indices[0] * 3],
+	    &serial.points[(size_t)indices[0] * 3 + 3]);
+    }
+    bool shaded_matches_fast = shaded_ret == BRLCAD_OK &&
+	shaded.commands == expected_commands &&
+	shaded.points == expected_shaded_points;
+
     bool unchanged = true;
     size_t domain_index = 0;
     for (int i = 0; i < bi->brep->m_F.Count(); i++) {
@@ -186,5 +238,5 @@ main(int argc, const char **argv)
     rt_db_free_internal(&intern);
     db_close(dbip);
     return (same && complete && unchanged && limited_cleanly && wire_same &&
-	wire_limited_cleanly) ? 0 : 1;
+	wire_limited_cleanly && shaded_matches_fast) ? 0 : 1;
 }
