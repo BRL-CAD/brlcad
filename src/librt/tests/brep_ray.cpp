@@ -3494,6 +3494,221 @@ exact_dyadic_value(const exact_dyadic &value)
 }
 
 
+static uint64_t
+exact_binomial_coefficient(int degree, int index)
+{
+    if (index < 0 || index > degree)
+	return 0;
+    index = std::min(index, degree - index);
+    uint64_t result = 1;
+    for (int i = 1; i <= index; ++i)
+	result = result * (uint64_t)(degree - index + i) / (uint64_t)i;
+    return result;
+}
+
+
+static bool
+exact_integer_surface_derivative(const int64_t *input, int u_order,
+    int v_order, int direction, int64_t *output, int output_order[2])
+{
+    if (!input || !output || !output_order ||
+	    (direction != 0 && direction != 1) ||
+	    u_order < 2 || v_order < 2 || u_order > 16 || v_order > 16)
+	return false;
+    output_order[0] = u_order - (direction == 0 ? 1 : 0);
+    output_order[1] = v_order - (direction == 1 ? 1 : 0);
+    const int degree = direction == 0 ? u_order - 1 : v_order - 1;
+    for (int i = 0; i < output_order[0]; ++i) {
+	for (int j = 0; j < output_order[1]; ++j) {
+	    const size_t previous = (size_t)i * v_order + j;
+	    const size_t next = direction == 0 ?
+		(size_t)(i + 1) * v_order + j :
+		(size_t)i * v_order + j + 1;
+	    output[(size_t)i * output_order[1] + j] =
+		degree * (input[next] - input[previous]);
+	}
+    }
+    return true;
+}
+
+
+static bool
+exact_integer_surface_product_coefficient(const int64_t *first,
+    const int first_order[2], const int64_t *second,
+    const int second_order[2], int output_i, int output_j,
+    int64_t &numerator, uint64_t &denominator)
+{
+    if (!first || !first_order || !second || !second_order ||
+	    first_order[0] < 1 || first_order[1] < 1 ||
+	    second_order[0] < 1 || second_order[1] < 1)
+	return false;
+    const int first_degree[2] = {
+	first_order[0] - 1, first_order[1] - 1
+    };
+    const int second_degree[2] = {
+	second_order[0] - 1, second_order[1] - 1
+    };
+    const uint64_t u_denominator = exact_binomial_coefficient(
+	first_degree[0] + second_degree[0], output_i);
+    const uint64_t v_denominator = exact_binomial_coefficient(
+	first_degree[1] + second_degree[1], output_j);
+    if (!u_denominator || !v_denominator ||
+	    u_denominator > UINT64_MAX / v_denominator)
+	return false;
+    denominator = u_denominator * v_denominator;
+    numerator = 0;
+    const int first_u_minimum = std::max(0,
+	output_i - second_degree[0]);
+    const int first_u_maximum = std::min(first_degree[0], output_i);
+    const int first_v_minimum = std::max(0,
+	output_j - second_degree[1]);
+    const int first_v_maximum = std::min(first_degree[1], output_j);
+    for (int i = first_u_minimum; i <= first_u_maximum; ++i) {
+	const int second_i = output_i - i;
+	const uint64_t u_weight =
+	    exact_binomial_coefficient(first_degree[0], i) *
+	    exact_binomial_coefficient(second_degree[0], second_i);
+	for (int j = first_v_minimum; j <= first_v_maximum; ++j) {
+	    const int second_j = output_j - j;
+	    const uint64_t v_weight =
+		exact_binomial_coefficient(first_degree[1], j) *
+		exact_binomial_coefficient(second_degree[1], second_j);
+	    if (u_weight > UINT64_MAX / v_weight)
+		return false;
+	    const uint64_t weight = u_weight * v_weight;
+	    const int64_t value =
+		first[(size_t)i * first_order[1] + j] *
+		second[(size_t)second_i * second_order[1] + second_j];
+	    if (value && weight > (uint64_t)INT64_MAX /
+		    (uint64_t)llabs(value))
+		return false;
+	    const int64_t term = value * (int64_t)weight;
+	    if ((term > 0 && numerator > INT64_MAX - term) ||
+		    (term < 0 && numerator < INT64_MIN - term))
+		return false;
+	    numerator += term;
+	}
+    }
+    return true;
+}
+
+
+struct exact_integer_interval {
+    int64_t minimum;
+    int64_t maximum;
+};
+
+
+static bool
+exact_integer_interval_surface_derivative(const exact_integer_interval *input,
+    int u_order, int v_order, int direction, exact_integer_interval *output,
+    int output_order[2])
+{
+    if (!input || !output || !output_order ||
+	    (direction != 0 && direction != 1) ||
+	    u_order < 2 || v_order < 2 || u_order > 16 || v_order > 16)
+	return false;
+    output_order[0] = u_order - (direction == 0 ? 1 : 0);
+    output_order[1] = v_order - (direction == 1 ? 1 : 0);
+    const int degree = direction == 0 ? u_order - 1 : v_order - 1;
+    for (int i = 0; i < output_order[0]; ++i) {
+	for (int j = 0; j < output_order[1]; ++j) {
+	    const size_t previous = (size_t)i * v_order + j;
+	    const size_t next = direction == 0 ?
+		(size_t)(i + 1) * v_order + j :
+		(size_t)i * v_order + j + 1;
+	    exact_integer_interval &value =
+		output[(size_t)i * output_order[1] + j];
+	    value.minimum = degree *
+		(input[next].minimum - input[previous].maximum);
+	    value.maximum = degree *
+		(input[next].maximum - input[previous].minimum);
+	}
+    }
+    return true;
+}
+
+
+static bool
+exact_integer_interval_surface_product_coefficient(
+    const exact_integer_interval *first, const int first_order[2],
+    const exact_integer_interval *second, const int second_order[2],
+    int output_i, int output_j, int64_t &minimum_numerator,
+    int64_t &maximum_numerator, uint64_t &denominator)
+{
+    if (!first || !first_order || !second || !second_order ||
+	    first_order[0] < 1 || first_order[1] < 1 ||
+	    second_order[0] < 1 || second_order[1] < 1)
+	return false;
+    const int first_degree[2] = {
+	first_order[0] - 1, first_order[1] - 1
+    };
+    const int second_degree[2] = {
+	second_order[0] - 1, second_order[1] - 1
+    };
+    const uint64_t u_denominator = exact_binomial_coefficient(
+	first_degree[0] + second_degree[0], output_i);
+    const uint64_t v_denominator = exact_binomial_coefficient(
+	first_degree[1] + second_degree[1], output_j);
+    if (!u_denominator || !v_denominator ||
+	    u_denominator > UINT64_MAX / v_denominator)
+	return false;
+    denominator = u_denominator * v_denominator;
+    minimum_numerator = 0;
+    maximum_numerator = 0;
+    const int first_u_minimum = std::max(0,
+	output_i - second_degree[0]);
+    const int first_u_maximum = std::min(first_degree[0], output_i);
+    const int first_v_minimum = std::max(0,
+	output_j - second_degree[1]);
+    const int first_v_maximum = std::min(first_degree[1], output_j);
+    for (int i = first_u_minimum; i <= first_u_maximum; ++i) {
+	const int second_i = output_i - i;
+	const uint64_t u_weight =
+	    exact_binomial_coefficient(first_degree[0], i) *
+	    exact_binomial_coefficient(second_degree[0], second_i);
+	for (int j = first_v_minimum; j <= first_v_maximum; ++j) {
+	    const int second_j = output_j - j;
+	    const uint64_t v_weight =
+		exact_binomial_coefficient(first_degree[1], j) *
+		exact_binomial_coefficient(second_degree[1], second_j);
+	    if (u_weight > UINT64_MAX / v_weight)
+		return false;
+	    const uint64_t weight = u_weight * v_weight;
+	    const exact_integer_interval &a =
+		first[(size_t)i * first_order[1] + j];
+	    const exact_integer_interval &b =
+		second[(size_t)second_i * second_order[1] + second_j];
+	    const int64_t products[4] = {
+		a.minimum * b.minimum, a.minimum * b.maximum,
+		a.maximum * b.minimum, a.maximum * b.maximum
+	    };
+	    const int64_t minimum = *std::min_element(products, products + 4);
+	    const int64_t maximum = *std::max_element(products, products + 4);
+	    if ((minimum && weight > (uint64_t)INT64_MAX /
+		    (uint64_t)llabs(minimum)) ||
+		    (maximum && weight > (uint64_t)INT64_MAX /
+		    (uint64_t)llabs(maximum)))
+		return false;
+	    const int64_t minimum_term = minimum * (int64_t)weight;
+	    const int64_t maximum_term = maximum * (int64_t)weight;
+	    if ((minimum_term > 0 &&
+		    minimum_numerator > INT64_MAX - minimum_term) ||
+		    (minimum_term < 0 &&
+		    minimum_numerator < INT64_MIN - minimum_term) ||
+		    (maximum_term > 0 &&
+		    maximum_numerator > INT64_MAX - maximum_term) ||
+		    (maximum_term < 0 &&
+		    maximum_numerator < INT64_MIN - maximum_term))
+		return false;
+	    minimum_numerator += minimum_term;
+	    maximum_numerator += maximum_term;
+	}
+    }
+    return true;
+}
+
+
 static int
 check_brep_interval_enclosures()
 {
@@ -3540,6 +3755,9 @@ check_brep_interval_enclosures()
     size_t product_checks = 0;
     size_t division_checks = 0;
     size_t linear_hull_checks = 0;
+    size_t determinant_checks = 0;
+    size_t determinant_signed = 0;
+    size_t determinant_uncertain_checks = 0;
     size_t coefficient_checks = 0;
     size_t restriction_checks = 0;
     size_t reparameterization_checks = 0;
@@ -4150,6 +4368,237 @@ check_brep_interval_enclosures()
 	}
     }
 
+    const int determinant_scale_exponents[] = {-200, 0, 200};
+    for (int u_order = 2; u_order <= 16; ++u_order) {
+	for (int v_order = 2; v_order <= 16; ++v_order) {
+	    int64_t exact_coefficient[2][256] = {};
+	    int64_t exact_derivative[2][2][256] = {};
+	    int derivative_order[2][2][2] = {};
+	    double coefficient_error[2][256] = {};
+	    for (int i = 0; i < u_order; ++i) {
+		for (int j = 0; j < v_order; ++j) {
+		    const size_t index = (size_t)i * v_order + j;
+		    exact_coefficient[0][index] = (3 * i + u_order) & 1;
+		    exact_coefficient[1][index] =
+			(3 * i + 5 * j + u_order + v_order) & 1;
+		}
+	    }
+	    bool derivatives_available = true;
+	    for (int equation = 0; equation < 2; ++equation) {
+		for (int direction = 0; direction < 2; ++direction) {
+		    if (!exact_integer_surface_derivative(
+			    exact_coefficient[equation], u_order, v_order,
+			    direction, exact_derivative[equation][direction],
+			    derivative_order[equation][direction]))
+			derivatives_available = false;
+		}
+	    }
+	    if (!derivatives_available) {
+		failures++;
+		continue;
+	    }
+	    for (size_t scale_index = 0; scale_index <
+		    sizeof(determinant_scale_exponents) /
+		    sizeof(determinant_scale_exponents[0]); ++scale_index) {
+		const int scale_exponent =
+		    determinant_scale_exponents[scale_index];
+		for (int equation = 0; equation < 2; ++equation) {
+		    for (int i = 0; i < u_order; ++i) {
+			for (int j = 0; j < v_order; ++j) {
+			    const size_t index = (size_t)i * v_order + j;
+			    values[equation][index] = std::ldexp(
+				(double)exact_coefficient[equation][index],
+				scale_exponent);
+			}
+		    }
+		}
+		struct rt_brep_determinant_test_result observed = {};
+		if (!_rt_brep_determinant_test(values[0], coefficient_error[0],
+			values[1], coefficient_error[1], u_order, v_order,
+			&observed) || observed.u_order != 2 * u_order - 2 ||
+			observed.v_order != 2 * v_order - 2) {
+		    std::printf("FAIL: determinant coefficients unavailable "
+			"order=%d/%d scale=%d output=%d/%d\n", u_order,
+			v_order, scale_exponent, observed.u_order,
+			observed.v_order);
+		    failures++;
+		    continue;
+		}
+		for (int i = 0; i < observed.u_order; ++i) {
+		    for (int j = 0; j < observed.v_order; ++j) {
+			int64_t positive_numerator = 0;
+			int64_t negative_numerator = 0;
+			uint64_t positive_denominator = 0;
+			uint64_t negative_denominator = 0;
+			if (!exact_integer_surface_product_coefficient(
+				exact_derivative[0][0],
+				derivative_order[0][0],
+				exact_derivative[1][1],
+				derivative_order[1][1], i, j,
+				positive_numerator, positive_denominator) ||
+				!exact_integer_surface_product_coefficient(
+				exact_derivative[0][1],
+				derivative_order[0][1],
+				exact_derivative[1][0],
+				derivative_order[1][0], i, j,
+				negative_numerator, negative_denominator) ||
+				positive_denominator != negative_denominator) {
+			    std::printf("FAIL: exact determinant unavailable "
+				"order=%d/%d coefficient=%d/%d\n", u_order,
+				v_order, i, j);
+			    failures++;
+			    continue;
+			}
+			const int64_t exact_numerator =
+			    positive_numerator - negative_numerator;
+			const long double exact_value = std::ldexp(
+			    (long double)exact_numerator /
+				(long double)positive_denominator,
+			    2 * scale_exponent);
+			const size_t index = (size_t)i * observed.v_order + j;
+			determinant_checks++;
+			if (exact_numerator &&
+				((observed.minimum[index] > 0.0 &&
+				  observed.maximum[index] > 0.0) ||
+				 (observed.minimum[index] < 0.0 &&
+				  observed.maximum[index] < 0.0)))
+			    determinant_signed++;
+			if ((long double)observed.minimum[index] > exact_value ||
+				(long double)observed.maximum[index] < exact_value) {
+			    std::printf("FAIL: determinant coefficient enclosure "
+				"order=%d/%d scale=%d coefficient=%d/%d "
+				"range=%.17g/%.17g exact=%.21Lg\n", u_order,
+				v_order, scale_exponent, i, j,
+				observed.minimum[index], observed.maximum[index],
+				exact_value);
+			    failures++;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    for (int u_order = 2; u_order <= 8; ++u_order) {
+	for (int v_order = 2; v_order <= 8; ++v_order) {
+	    exact_integer_interval exact_coefficient[2][256] = {};
+	    exact_integer_interval exact_derivative[2][2][256] = {};
+	    int derivative_order[2][2][2] = {};
+	    int64_t center[2][256] = {};
+	    int64_t error[2][256] = {};
+	    double determinant_error[2][256] = {};
+	    for (int i = 0; i < u_order; ++i) {
+		for (int j = 0; j < v_order; ++j) {
+		    const size_t index = (size_t)i * v_order + j;
+		    center[0][index] = 4 * ((3 * i + u_order) & 1);
+		    center[1][index] = 4 *
+			((3 * i + 5 * j + u_order + v_order) & 1);
+		    error[1][index] = (i + 2 * j) % 2 + 1;
+		    for (int equation = 0; equation < 2; ++equation) {
+			exact_coefficient[equation][index] = {
+			    center[equation][index] - error[equation][index],
+			    center[equation][index] + error[equation][index]
+			};
+		    }
+		}
+	    }
+	    bool derivatives_available = true;
+	    for (int equation = 0; equation < 2; ++equation) {
+		for (int direction = 0; direction < 2; ++direction) {
+		    if (!exact_integer_interval_surface_derivative(
+			    exact_coefficient[equation], u_order, v_order,
+			    direction, exact_derivative[equation][direction],
+			    derivative_order[equation][direction]))
+			derivatives_available = false;
+		}
+	    }
+	    if (!derivatives_available) {
+		failures++;
+		continue;
+	    }
+	    for (size_t scale_index = 0; scale_index <
+		    sizeof(determinant_scale_exponents) /
+		    sizeof(determinant_scale_exponents[0]); ++scale_index) {
+		const int unit_exponent =
+		    determinant_scale_exponents[scale_index] - 2;
+		for (int equation = 0; equation < 2; ++equation) {
+		    for (int i = 0; i < u_order; ++i) {
+			for (int j = 0; j < v_order; ++j) {
+			    const size_t index = (size_t)i * v_order + j;
+			    values[equation][index] = std::ldexp(
+				(double)center[equation][index], unit_exponent);
+			    determinant_error[equation][index] = std::ldexp(
+				(double)error[equation][index], unit_exponent);
+			}
+		    }
+		}
+		struct rt_brep_determinant_test_result observed = {};
+		if (!_rt_brep_determinant_test(values[0], determinant_error[0],
+			values[1], determinant_error[1], u_order, v_order,
+			&observed)) {
+		    std::printf("FAIL: uncertain determinant unavailable "
+			"order=%d/%d scale=%d\n", u_order, v_order,
+			determinant_scale_exponents[scale_index]);
+		    failures++;
+		    continue;
+		}
+		for (int i = 0; i < observed.u_order; ++i) {
+		    for (int j = 0; j < observed.v_order; ++j) {
+			int64_t positive_minimum = 0;
+			int64_t positive_maximum = 0;
+			int64_t negative_minimum = 0;
+			int64_t negative_maximum = 0;
+			uint64_t positive_denominator = 0;
+			uint64_t negative_denominator = 0;
+			if (!exact_integer_interval_surface_product_coefficient(
+				exact_derivative[0][0],
+				derivative_order[0][0],
+				exact_derivative[1][1],
+				derivative_order[1][1], i, j,
+				positive_minimum, positive_maximum,
+				positive_denominator) ||
+				!exact_integer_interval_surface_product_coefficient(
+				exact_derivative[0][1],
+				derivative_order[0][1],
+				exact_derivative[1][0],
+				derivative_order[1][0], i, j,
+				negative_minimum, negative_maximum,
+				negative_denominator) ||
+				positive_denominator != negative_denominator) {
+			    std::printf("FAIL: exact uncertain determinant "
+				"unavailable order=%d/%d coefficient=%d/%d\n",
+				u_order, v_order, i, j);
+			    failures++;
+			    continue;
+			}
+			const int64_t exact_minimum_numerator =
+			    positive_minimum - negative_maximum;
+			const int64_t exact_maximum_numerator =
+			    positive_maximum - negative_minimum;
+			const long double exact_minimum = std::ldexp(
+			    (long double)exact_minimum_numerator /
+				(long double)positive_denominator,
+			    2 * unit_exponent);
+			const long double exact_maximum = std::ldexp(
+			    (long double)exact_maximum_numerator /
+				(long double)positive_denominator,
+			    2 * unit_exponent);
+			const size_t index = (size_t)i * observed.v_order + j;
+			determinant_uncertain_checks++;
+			if ((long double)observed.minimum[index] > exact_minimum ||
+				(long double)observed.maximum[index] < exact_maximum) {
+			    std::printf("FAIL: uncertain determinant enclosure "
+				"order=%d/%d scale=%d coefficient=%d/%d\n",
+				u_order, v_order,
+				determinant_scale_exponents[scale_index], i, j);
+			    failures++;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
     const double clip_roots[][2] = {
 	{0.125, 0.875}, {0.5, 0.5}, {0.9375, 0.0625}
     };
@@ -4217,12 +4666,14 @@ check_brep_interval_enclosures()
     if (!failures) {
 	std::printf("BREP interval enclosure audit: PASS cases=%zu "
 	    "function=%zu derivative=%zu product=%zu quotient=%zu "
-	    "linear-hull=%zu coefficient=%zu restriction=%zu "
+	    "linear-hull=%zu determinant=%zu/%zu+%zu coefficient=%zu "
+	    "restriction=%zu "
 	    "reparameterization=%zu "
 	    "clip=%zu/%zu "
 	    "max-width/error=%.9Lg/%.9Lg/%.9Lg\n",
 	    cases, function_checks, derivative_checks, product_checks,
-	    division_checks, linear_hull_checks, coefficient_checks,
+	    division_checks, linear_hull_checks, determinant_signed,
+	    determinant_checks, determinant_uncertain_checks, coefficient_checks,
 	    restriction_checks,
 	    reparameterization_checks, clip_contractions, clip_checks,
 	    maximum_function_width_ratio,
@@ -4262,9 +4713,13 @@ check_brep_fold_solver()
     size_t systems = 0;
     size_t expected_roots = 0;
     size_t maximum_regular_solves = 0;
+    size_t certificate_boxes = 0;
+    size_t corridor_boxes = 0;
+    size_t certificates_below_old_cutoff = 0;
     double minimum_separation = DBL_MAX;
     double maximum_root_error = 0.0;
     double maximum_residual_ratio = 0.0;
+    double minimum_determinant_ratio = DBL_MAX;
 
     const auto run_case = [&](double epsilon, size_t transform_index,
 	    size_t variant_index, size_t expected_count,
@@ -4456,13 +4911,141 @@ check_brep_fold_solver()
 		0, 0.0);
 	}
     }
+
+    const int parameter_shear_exponents[] = {0, 10, 20};
+    for (size_t shear_index = 0; shear_index <
+	    sizeof(parameter_shear_exponents) /
+	    sizeof(parameter_shear_exponents[0]); ++shear_index) {
+	const double shear = std::ldexp(1.0,
+	    parameter_shear_exponents[shear_index]);
+	for (size_t separation_index = 0; separation_index <
+		sizeof(separation_exponents) /
+		sizeof(separation_exponents[0]); ++separation_index) {
+	    const double separation = std::ldexp(1.0,
+		-separation_exponents[separation_index]);
+	    const double delta = 0.5 * separation;
+	    const double epsilon = delta * delta;
+	    const double regular_width = 0.25;
+	    const double weak_width = std::min(0.5 * delta,
+		regular_width / (8.0 * shear));
+	    for (int side = -1; side <= 1; side += 2) {
+		double corridor_coefficients[2][9];
+		double corridor_errors[2][9] = {};
+		const double corridor_minimum = side < 0 ?
+		    -1.5 * delta : 0.25 * delta;
+		const double corridor_maximum = side < 0 ?
+		    -0.25 * delta : 1.5 * delta;
+		const double corridor_width =
+		    corridor_maximum - corridor_minimum;
+		const double corridor_regular_width =
+		    4.0 * shear * delta + 0.25;
+		const double corridor_weak_control[3] = {
+		    corridor_minimum * corridor_minimum - epsilon,
+		    corridor_minimum * corridor_maximum - epsilon,
+		    corridor_maximum * corridor_maximum - epsilon
+		};
+		for (int i = 0; i < 3; ++i) {
+		    for (int j = 0; j < 3; ++j) {
+			const size_t index = (size_t)i * 3 + j;
+			const double weak_parameter = corridor_minimum +
+			    0.5 * j * corridor_width;
+			corridor_coefficients[0][index] =
+			    corridor_regular_width * (0.5 * i - 0.5) +
+			    shear * (weak_parameter - side * delta);
+			corridor_coefficients[1][index] =
+			    corridor_weak_control[j];
+		    }
+		}
+		struct rt_brep_corridor_test_result corridor = {};
+		corridor_boxes++;
+		if (!_rt_brep_corridor_test(corridor_coefficients[0],
+			corridor_errors[0], corridor_coefficients[1],
+			corridor_errors[1], 3, 3, 0, &corridor) ||
+			!corridor.available || !corridor.unique ||
+			corridor.determinant_sign != side) {
+		    std::printf("FAIL: fold corridor proof unavailable "
+			"separation=%.17g shear=2^%d side=%d "
+			"available/derivative/boundary/determinant/unique="
+			"%d/%d/%d/%d/%d sign=%d\n", separation,
+			parameter_shear_exponents[shear_index], side,
+			corridor.available, corridor.regular_derivative_signed,
+			corridor.regular_boundaries_opposed,
+			corridor.determinant_signed, corridor.unique,
+			corridor.determinant_sign);
+		    failures++;
+		}
+
+		double coefficients[2][9];
+		double errors[2][9] = {};
+		const double weak_minimum = side * delta - 0.5 * weak_width;
+		const double weak_maximum = weak_minimum + weak_width;
+		const double weak_control[3] = {
+		    weak_minimum * weak_minimum - epsilon,
+		    weak_minimum * weak_maximum - epsilon,
+		    weak_maximum * weak_maximum - epsilon
+		};
+		for (int i = 0; i < 3; ++i) {
+		    for (int j = 0; j < 3; ++j) {
+			const size_t index = (size_t)i * 3 + j;
+			coefficients[0][index] =
+			    regular_width * (0.5 * i - 0.5) +
+			    shear * weak_width * (0.5 * j - 0.5);
+			coefficients[1][index] = weak_control[j];
+		    }
+		}
+		struct rt_brep_determinant_test_result determinant = {};
+		struct rt_brep_krawczyk_test_result krawczyk = {};
+		const fastf_t root[2] = {0.5, 0.5};
+		certificate_boxes++;
+		if (!_rt_brep_determinant_test(coefficients[0], errors[0],
+			coefficients[1], errors[1], 3, 3, &determinant) ||
+			!_rt_brep_krawczyk_test(coefficients[0], errors[0],
+			    coefficients[1], errors[1], 3, 3, root,
+			    &krawczyk) || !krawczyk.available ||
+			!krawczyk.certified) {
+		    std::printf("FAIL: fold certificate unavailable "
+			"separation=%.17g shear=2^%d side=%d "
+			"available/certified=%d/%d ratio=%.17g\n", separation,
+			parameter_shear_exponents[shear_index], side,
+			krawczyk.available, krawczyk.certified,
+			krawczyk.determinant_ratio);
+		    failures++;
+		    continue;
+		}
+		bool determinant_signed = true;
+		const size_t determinant_count =
+		    (size_t)determinant.u_order * determinant.v_order;
+		for (size_t i = 0; i < determinant_count; ++i) {
+		    if ((side < 0 && !(determinant.maximum[i] < 0.0)) ||
+			    (side > 0 && !(determinant.minimum[i] > 0.0))) {
+			determinant_signed = false;
+			break;
+		    }
+		}
+		if (!determinant_signed) {
+		    std::printf("FAIL: fold determinant sign unavailable "
+			"separation=%.17g shear=2^%d side=%d\n", separation,
+			parameter_shear_exponents[shear_index], side);
+		    failures++;
+		}
+		minimum_determinant_ratio = std::min(minimum_determinant_ratio,
+		    (double)krawczyk.determinant_ratio);
+		if (krawczyk.determinant_ratio <
+			BREP_INTERSECTION_ROOT_EPSILON)
+		    certificates_below_old_cutoff++;
+	    }
+	}
+    }
     if (!failures) {
 	std::printf("BREP fold solver corpus: PASS systems=%zu roots=%zu "
 	    "min-separation=%.9g max-error/residual=%.9g/%.9g "
-	    "max-regular-solves=%zu\n",
+	    "max-regular-solves=%zu certificates=%zu/%zu corridors=%zu "
+	    "min-det-ratio=%.9g\n",
 	    systems, expected_roots, minimum_separation,
 	    maximum_root_error, maximum_residual_ratio,
-	    maximum_regular_solves);
+	    maximum_regular_solves, certificate_boxes,
+	    certificates_below_old_cutoff, corridor_boxes,
+	    minimum_determinant_ratio);
     }
     return failures;
 }
