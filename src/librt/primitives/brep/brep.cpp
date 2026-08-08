@@ -1541,6 +1541,39 @@ brep_trace_edges(struct rt_brep_shot_trace *trace,
 }
 
 
+static void
+brep_trace_closure(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const std::list<brep_hit> &hits)
+{
+    if (!trace || !bs || !bs->is_solid || bs->plate_mode ||
+	    hits.size() != 1)
+	return;
+    const brep_hit &hit = hits.front();
+    for (size_t edge_index = 0; edge_index < trace->stored_edges;
+	    ++edge_index) {
+	const struct rt_brep_trace_edge &edge = trace->edges[edge_index];
+	if (!edge.within_edge_tolerance || !edge.sector_valid ||
+		edge.closest_state != 1 ||
+		(hit.face.m_face_index != edge.face_index[0] &&
+		 hit.face.m_face_index != edge.face_index[1]))
+	    continue;
+	const bool ordered = hit.direction == brep_hit::ENTERING ?
+	    edge.ray_dist > hit.dist + BREP_SAME_POINT_TOLERANCE :
+	    edge.ray_dist < hit.dist - BREP_SAME_POINT_TOLERANCE;
+	if (!ordered)
+	    continue;
+	trace->closure_candidates++;
+	if (trace->closure_edge_index >= 0)
+	    continue;
+	trace->closure_edge_dist = edge.ray_dist;
+	trace->closure_existing_dist = hit.dist;
+	trace->closure_edge_index = edge.edge_index;
+	trace->closure_missing_direction = hit.direction == brep_hit::ENTERING ?
+	    brep_hit::LEAVING : brep_hit::ENTERING;
+    }
+}
+
+
 static int
 utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
     const ON_Surface* surf, pt2d_t& uv, const ON_Ray& ray,
@@ -2113,6 +2146,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	trace->after_direction_cleanup = hits.size();
 	trace->final_hits = hits.size();
     }
+    brep_trace_closure(trace, bs, hits);
 
     if (bs->plate_mode) {
 
@@ -2242,6 +2276,8 @@ _rt_brep_shot_trace(struct soltab *stp, struct xray *rp,
     if (!trace)
 	return rt_brep_shot_impl(stp, rp, ap, seghead, NULL);
     *trace = {};
+    trace->closure_edge_index = -1;
+    trace->closure_missing_direction = -1;
     return rt_brep_shot_impl(stp, rp, ap, seghead, trace);
 }
 

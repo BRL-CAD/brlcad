@@ -455,6 +455,8 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_MAX_ROOTS 64
 #define RT_BREP_TRACE_MAX_EDGES 64
 #define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
+#define RT_BREP_TRACE_ENTERING 0
+#define RT_BREP_TRACE_LEAVING 1
 
 struct rt_brep_trace_root {
     fastf_t dist;
@@ -509,6 +511,11 @@ struct rt_brep_shot_trace {
     size_t after_direction_cleanup;
     size_t final_hits;
     size_t final_segments;
+    size_t closure_candidates;
+    fastf_t closure_edge_dist;
+    fastf_t closure_existing_dist;
+    int closure_edge_index;
+    int closure_missing_direction;
 };
 
 RT_EXPORT extern int _rt_brep_shot_trace(
