@@ -52,6 +52,7 @@ struct brep_edge_record {
     int face_index[2] = {-1, -1};
     bool supported = false;
     bool discrepancy_measured = false;
+    bool correspondence_supported = false;
     bool discrepancy_bounded = false;
     bool discrepancy_bound_exhausted = false;
     bool discrepancy_authorized = false;
