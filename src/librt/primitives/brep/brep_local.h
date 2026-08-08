@@ -28,6 +28,24 @@
 #include <vector>
 
 
+struct brep_edge_span {
+    ON_BezierCurve curve;
+    ON_BoundingBox bbox;
+    ON_Interval edge_domain;
+    int edge_index = -1;
+};
+
+
+struct brep_edge_record {
+    size_t span_begin = 0;
+    size_t span_count = 0;
+    double tolerance = ON_UNSET_VALUE;
+    int edge_index = -1;
+    int face_index[2] = {-1, -1};
+    bool supported = false;
+};
+
+
 /**
  * The b-rep specific data structure for caching the prepared
  * acceleration data structure.
@@ -36,6 +54,8 @@ struct brep_specific {
     ON_Brep *brep = NULL;
     BrepBoundingVolume *bvh = NULL;
     std::vector<const brlcad::CurveTree *> ctrees;
+    std::vector<brep_edge_record> edge_records;
+    std::vector<brep_edge_span> edge_spans;
     int is_solid = 0;
     int plate_mode = 0;
     int plate_mode_nocos = 0;
