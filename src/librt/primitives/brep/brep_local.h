@@ -25,18 +25,21 @@
 #ifndef LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H
 #define LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H
 
+#include <vector>
+
 
 /**
  * The b-rep specific data structure for caching the prepared
  * acceleration data structure.
  */
 struct brep_specific {
-    ON_Brep* brep;
-    BrepBoundingVolume* bvh;
-    int is_solid;
-    int plate_mode;
-    int plate_mode_nocos;
-    double plate_mode_thickness;
+    ON_Brep *brep = NULL;
+    BrepBoundingVolume *bvh = NULL;
+    std::vector<const brlcad::CurveTree *> ctrees;
+    int is_solid = 0;
+    int plate_mode = 0;
+    int plate_mode_nocos = 0;
+    double plate_mode_thickness = 0.0;
 };
 
 #endif /* LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H */

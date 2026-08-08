@@ -70,6 +70,20 @@ namespace brlcad {
 	BBNode *getRootNode() const;
 
 	/**
+	 * Transfer ownership of the prepared surface hierarchy to a caller.
+	 * The returned node must be deleted by the caller.  After this call the
+	 * SurfaceTree destructor will not delete the hierarchy.
+	 */
+	BBNode *releaseRootNode();
+
+	/**
+	 * Transfer ownership of the curve hierarchy referenced by the prepared
+	 * BBNodes to a caller.  The curve tree must outlive the BBNode hierarchy.
+	 * After this call the SurfaceTree destructor will not delete it.
+	 */
+	const CurveTree *releaseCurveTree();
+
+	/**
 	 * Calculate, using the surface bounding volume hierarchy, a uv
 	 * estimate for the closest point on the surface to the point in
 	 * 3-space.

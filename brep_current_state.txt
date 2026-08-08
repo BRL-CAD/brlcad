@@ -1,0 +1,271 @@
+BREP RAYTRACE IMPLEMENTATION CURRENT STATE
+==========================================
+
+Last updated: 2026-08-07
+Repository: /home/cyapp/brlcad
+Implementation specification: brep_raytrace_plan.txt
+Active objective: Implement the complete specification, preserving this file
+as the authoritative continuation log until all acceptance gates pass.
+
+
+CURRENT PHASE
+-------------
+
+Phase 1 ownership repair and the first deterministic Newton hardening pass are
+implemented.  Directed implicit-sphere/converted-BREP pole rays now pass.  An
+in-memory C++ ray corpus and signed grazing report are in place; the report has
+exposed a repeatable false-interval plateau at tangency that must be fixed
+before the near-tangent cases can become hard correctness gates.  Surface-tree
+density and seam behavior have not yet changed.  Phase 0 baselines documented
+in brep_raytrace_plan.txt remain authoritative.
+
+
+REPOSITORY STATE AT START
+-------------------------
+
+Starting HEAD:
+
+  c1a962399c note
+
+The worktree was clean when implementation began.  The detailed plan is
+already tracked by commit 4edf531392 ("stash plan document").
+
+No AGENTS.md file was found in the repository.
+
+Existing build tree:
+
+  /home/cyapp/brlcad/.build
+
+Relevant existing tests:
+
+  src/librt/tests/primitive_brep.cpp -> rt_primitive_brep
+  src/librt/tests/crofton.c          -> rt_crofton
+
+
+ESTABLISHED FINDINGS
+--------------------
+
+1. Commit 23eabb2c056fc7d0c4ccc6c5d9299f72eedbb432 correctly replaced the
+   unsafe file-static SurfaceTree::hasSplit cache with a per-SurfaceTree
+   SurfaceSplitCache.  Do not restore the static cache.
+
+2. brep_build_bvh currently leaks each SurfaceTree.  This leak prevents
+   SurfaceTree::~SurfaceTree from double-deleting its root after that root is
+   attached to the master BVH.  CurveTrees likewise lack an owner after cache
+   deserialization.  No repository reader of ON_BrepFace::m_face_user.p was
+   found.
+
+3. The current Newton solver fails to accept an initially converged root before
+   checking its Jacobian.  Its singular "jitter" is identically zero on the
+   first iteration and uses drand48.  Ev1Der/finite/normal results need checks.
+
+4. The current fixed BREP_EDGE_MISS_TOLERANCE is used in incompatible UV and
+   model-space roles.  This will be addressed only after Phase 1 behavior is
+   isolated and tested.
+
+5. The existing Cobb generator is a valid but non-solid six-face patch set
+   with 24 independent edges.  A sewn 8-vertex/12-edge variant is required for
+   solid crack testing.
+
+6. Primary correctness validation will pair original implicit/CSG raytracing
+   with converted BREP raytracing on identical lines, including Crofton
+   crossing/chord statistics.  Grazing tests will sweep signed clearance and
+   verify the two-root -> tangent-contact -> no-root limit.
+
+7. The old native ID_BSPLINE ray path dates to the 1991 Release 4.0 NURB
+   module.  It was compile-time unreachable after ID_BSPLINE began converting
+   to BREP in 2009, and it could not compile if re-enabled after its hit-list
+   helpers were deleted in 2010.  Its live nmg_nurb_intersect engine projects
+   a surface onto two ray planes, applies control-hull clipping, and recursively
+   subdivides.  Those concepts are useful precedents, but the implementation
+   allocates and copies surfaces during recursion, has fixed-size/order
+   assumptions, stops on a UV-only tolerance, has no trim support, and the old
+   wrapper fabricated a 0.01-unit exit for odd hit counts.  Do not port it.
+
+8. The first R=10 mm grazing sweep found a deterministic but incorrect current
+   limit.  As h -> 0+ the converted BREP chord stops converging and approaches
+   about 0.001812758 mm.  At exact tangency the implicit sphere is a raw miss
+   while BREP reports that false interval.  BREP also reports false intervals
+   for very small negative h, out to between approximately -7.45e-8 mm and
+   -1.49e-7 mm in this setup.  This scale is consistent with the loose 1e-7
+   line-residual termination being converted into two apparent roots near an
+   ill-conditioned tangent.  Preserve this report as a baseline; do not merely
+   tune one fixed tolerance until a broader corpus is present.
+
+9. Solver work follows a corpus-first ratchet rule learned from the STEP work:
+   reproduce difficult cases in C/C++ with analytic or paired implicit
+   oracles, keep permanent passing gates, permit documented defects to improve
+   without freezing their bad answer, and promote each repaired defect to a
+   hard gate.  Avoid isolated changes tested only against their motivating
+   model.
+
+
+IMPLEMENTATION CHECKLIST
+------------------------
+
+[x] Phase 1 ownership
+    [x] Give brep_specific explicit CurveTree ownership.
+    [x] Add safe SurfaceTree root/CurveTree release operations or equivalent
+        builder-result ownership transfer.
+    [x] Destroy temporary SurfaceTrees after transfer.
+    [x] Remove unused m_face_user.p storage.
+    [x] Own deserialized CurveTrees and verify teardown order.
+    [x] Exercise ownership through existing normal/cached prep regression
+        tests.  A dedicated sanitizer build remains part of the broader
+        robustness gate.
+
+[ ] Phase 1 solver hardening
+    [x] Add structured solver outcomes without changing final seam policy.
+    [x] Accept an initially converged positional root.
+    [x] Replace random/ineffective singular jitter with deterministic handling.
+    [x] Check Ev1Der, finite values, root t, and normal construction.
+    [x] Reuse singularity-aware normal evaluation where appropriate.
+    [ ] Add pole, boundary, reverse-ray, and repeated-run tests.
+        [x] Exact north/south poles, reverse directions, and repeatability.
+        [ ] Patch boundaries, seams, inside starts, and non-unit directions.
+
+[x] Legacy native ray-code audit
+    [x] Trace the original Utah alternatives and 1991 native BSPLINE solver.
+    [x] Remove the unreachable native BSPLINE ray wrapper and stale compile
+        switch; retain live nmg_nurb_intersect for NMG/IGES callers.
+    [x] Carry only independently justified two-plane and conservative
+        control-hull ideas into the proposed modern design.
+    [x] Record rejection reasons and provenance in this continuation log.
+
+[ ] Paired correctness harness
+    [ ] Compare implicit/CSG and converted BREP ordered partitions.
+        [x] Seed in-memory C++ corpus with paired sphere raw segments.
+        [ ] Exercise normal rt_shootray partitions and CSG combinations.
+    [ ] Reuse identical deterministic Crofton lines and bounding sphere.
+    [ ] Report per-line crossing and chord differences.
+    [x] Implement initial signed logarithmic sphere grazing report and a
+        non-regression envelope; raw solver instrumentation is still pending.
+
+[ ] Tolerance/seam work
+    [ ] Separate numerical, UV, model-space seam, t-cluster, and minimum
+        segment tolerances.
+    [ ] Prepare topology/adjacency and seam discrepancy records.
+    [ ] Preserve near-trim candidate evidence through local event resolution.
+    [ ] Add sewn and perturbed Cobb fixtures and threshold matrices.
+
+[ ] Local adaptive solve
+    [ ] Prepare rational Bezier spans.
+    [ ] Implement conservative coefficient exclusion and local subdivision.
+    [ ] Use fixed-capacity allocation-free shot workspace with explicit
+        fallback on unsupported weights/order/capacity.
+    [ ] Reduce default tree density only after shadow equivalence passes.
+    [ ] Version and verify prep cache changes.
+
+[ ] Drawing and corpus completion
+    [ ] Improve adaptive curve/surface plotting independently of ray trees.
+    [ ] Pass analytic, Cobb, stratified STEP, and full corpus gates.
+    [ ] Re-run FRAME.g prep/RSS baseline and document improvement.
+
+
+VERIFICATION LOG
+----------------
+
+Ownership implementation:
+
+  * include/brep/surfacetree.h and src/libbrep/opennurbs_ext.cpp now provide
+    releaseRootNode() and releaseCurveTree().
+
+  * brep_specific is now constructed/destructed as a C++ object and owns a
+    vector of CurveTrees.  Teardown order is BVH, CurveTrees, then ON_Brep.
+
+  * brep_build_bvh transfers each builder's CurveTree and BBNode root, destroys
+    the temporary SurfaceTree immediately, and no longer writes
+    ON_BrepFace::m_face_user.p.
+
+  * Cache deserialization records each new CurveTree in the same owner vector.
+
+Verification commands and results:
+
+  cmake --build .build --target librt rt_primitive_brep -j8
+    PASS
+
+  ctest --test-dir .build -R '^rt_primitive_brep$' --output-on-failure
+    PASS: 1/1
+
+  cmake --build .build --target rt_cache -j8
+    PASS
+
+  ctest --test-dir .build -R '^rt_cache_' --output-on-failure
+    PASS: 7/7, including serial/parallel, repeated identical/different BREP,
+    and hierarchy cache cases.
+
+  ctest --test-dir .build \
+    -R '^regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01)$' \
+    --output-on-failure
+    PASS: 3/3
+
+Newton hardening:
+
+  * The solver returns explicit converged, duplicate, outside-domain,
+    singular-Jacobian, stalled, iteration-limit, evaluation, non-finite, and
+    capacity outcomes.
+
+  * An initial positional root is accepted before testing the Jacobian.  A
+    singular parameterization uses surface_EvNormal for a finite unit normal.
+
+  * EvPoint/Ev1Der results, residuals, Jacobian columns, Newton steps, root t,
+    and normals are checked for failure and non-finite values.  The random
+    singular-Jacobian jitter was removed.
+
+In-memory correctness corpus:
+
+  * src/librt/tests/brep_ray.cpp constructs one analytic rt_ell_internal,
+    converts that exact internal with ft_brep, preps both paths, and shoots
+    identical rays without generating .g files.
+
+  * Exact north-pole, south-pole/reverse, and two regular-axis rays compare
+    ordered segment endpoints and validate converted-BREP normals over 16
+    identical repetitions.
+
+  * A logarithmic positive-h sweep enforces deterministic, non-restarting,
+    non-growing BREP interval behavior and analytic endpoint agreement for
+    chords at least 10*rti_tol.dist.  A clearly outside negative-h case is a
+    permanent miss gate.  Known near-limit defects remain visible in the
+    report rather than being encoded as expected answers.
+
+  cmake --build .build --target rt_brep_ray -j8
+    PASS
+
+  ctest --test-dir .build -R '^rt_brep_ray$' --output-on-failure
+    PASS: 1/1
+
+  .build/src/librt/tests/rt_brep_ray --grazing-report
+    REPORT: deterministic false BREP interval plateau ~0.001812758 mm at
+    h=0, with a narrow false-positive band on the h<0 side as described in
+    Established Finding 8.
+
+Legacy cleanup:
+
+  * src/librt/primitives/bspline/bspline.cpp now unconditionally delegates
+    prep/shot/normal/curve/UV/free to BREP.  The unreachable native solver,
+    its obsolete structs, and its compile switch were removed.
+
+  * rt_nurb_bbox still uses native Bezier decomposition, but now frees each
+    temporary list directly instead of constructing the deleted ray-prep
+    wrapper and an unnecessary copy of every original surface.
+
+  cmake --build .build --target librt -j8
+    PASS
+
+
+NEXT ACTIONS
+------------
+
+1. Expand brep_ray.cpp into a table-driven in-memory corpus covering patch
+   boundaries, inside starts, non-unit directions, scale/translation, seam
+   directions, and known singular parameterizations before modifying tangent
+   convergence.
+2. Instrument raw solver outcomes/residuals/iterations so the grazing report
+   distinguishes candidate generation from final hit-list cleanup.
+3. Replace the loose tangent termination with scale-aware convergence and a
+   safeguarded correction/contact classification; promote exact tangent and
+   negative-h cases to hard gates once corrected.
+4. Add normal rt_shootray partition comparisons, then feed the same paired
+   implicit/BREP lines into deterministic Cauchy-Crofton checks.
+5. Run the full focused/cache/NURBS regression set and commit the verified
+   ownership, solver, corpus, and legacy-cleanup work in logical local commits.
