@@ -578,7 +578,7 @@ static const char *
 vdir(char *result, size_t len, va_list args)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    static char buf[MAXPATHLEN] = {0};
+    static THREADLOCAL char buf[MAXPATHLEN] = {0};
     const char *cpath;
     uintptr_t arg;
 
