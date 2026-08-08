@@ -62,9 +62,13 @@ and assembles an oracle-matching material interval in production.
 Every retained ordinary surface box now also runs an allocation-free bounded
 local corrector.  Its shadow roots reproduce the resolved sphere grazing
 limit independently of SurfaceTree seeds and remain invariant across the
-existing similarity corpus.  A fixed preliminary same-face clustering stage
+expanded similarity corpus.  A fixed preliminary same-face clustering stage
 now exposes ordered enter/leave/contact behavior without changing production
-events.
+events.  Trace mode now compares unique prepared-span and depth-eight legacy
+Newton roots in both directions.  Prepared spans cover every legacy root in
+the controlled sphere, bowed Cobb, and classifier-similarity matrices; the
+only sphere direct-only root is a contact-only numerical ambiguity on the
+nearest representable miss-side line.
 Production trim classification now scans the prepared trim leaves directly;
 the former copied-list implementation remains trace-only as an exact
 equivalence oracle.  The full traced corpus hard-gates candidate counts,
@@ -713,6 +717,52 @@ ESTABLISHED FINDINGS
     limitation; rt_brep_ray completes in about 40.2 seconds without a
     diagnostic.
 
+37. Fixed trace storage now records bidirectional root-set coverage between
+    the prepared positive-weight Bezier-span corrector and the existing
+    depth-eight SurfaceTree-seeded Newton solve.  Each side is sorted and
+    deduplicated by face and ray parameter using the similarity-scaled 0.1 T
+    cluster tolerance, then the ordered sets are matched one-to-one without
+    allocation.  BREP_SAME_POINT_TOLERANCE is used only when no positive model
+    tolerance exists.  One-to-one matching prevents a single prepared root
+    from masking the loss of one of two nearby legacy roots.  Accounting
+    remains explicit when either fixed trace array overflows; completeness
+    claims are gated only when all involved workspaces remain within capacity.
+
+    Across the analytic sphere grazing sweep, every unique legacy candidate
+    root has a prepared-span match.  The prepared solver has one direct-only
+    root on the closest representable outside line, h/T approximately
+    -2.84217e-10.  Four span-boundary representatives collapse to one physical
+    contact at t=2R, residual approximately 1.42e-13, zero normal dot, and no
+    final material interval.  The gate accepts outside candidates only when
+    they form exactly one CONTACT cluster at 2R, publish zero segments, and
+    remain within the pre-existing 1e-6 T numerical ambiguity band.  It still
+    fails any legacy root not covered by a prepared span.  The 416-ray bowed
+    Cobb matrix has zero unmatched roots in either direction.
+
+    The classifier similarity matrix now goes beyond an exact cyclic axis
+    permutation.  It includes pure translation, the cyclic rotation, an
+    arbitrary-axis unit-scale rotation, and independent arbitrary-axis
+    rotations at 0.01x and 10,000x scale with translated geometry and all
+    model-space tolerances scaled as lengths.  Normalized local root clusters,
+    ENTER/LEAVE/CONTACT classes, edge-sector state, crack closure, continuation
+    ordering, and the final production interval remain invariant in both ray
+    directions.  Every legacy root in every transformed case has a prepared-
+    span match.
+
+    Acceleration work is deliberately not required to be invariant.  The
+    oblique 0.01x case visits 104 of the 128 fixed dense-tree leaf slots,
+    whereas the former exact-permutation matrix reached 68.  Candidate-hull
+    and subdivision effort can change with the ray-plane basis even when the
+    physical classifier does not.  This observation strengthens the need for
+    explicit fixed-capacity fallback and is not evidence for increasing the
+    fixed array.  Root coverage is still untrimmed candidate equivalence, not
+    trim/event equivalence, and does not yet authorize reducing SurfaceTree
+    depth or replacing the legacy event path.
+
+    The focused normal gate passes 13/13 with rt_brep_ray at about 10.3
+    seconds.  The focused ASan/UBSan gate passes 12/12 in about 40.7 seconds
+    with halt-on-error and no sanitizer diagnostic.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -804,9 +854,10 @@ IMPLEMENTATION CHECKLIST
         fully certified subset in production,
         including ordered missing directions and non-activation on target
         contact/exterior states.
-    [x] Gate edge-sector and closure classifications under rotation,
-        translation, and 0.01x/10,000x uniform scaling with scaled model
-        tolerances, including bounded local-root counts and positions.
+    [x] Gate edge-sector and closure classifications under pure translation,
+        exact and arbitrary-axis rotation, and 0.01x/10,000x uniform scaling
+        with scaled model tolerances, including bounded local-root clusters
+        and normalized positions.
     [x] Recover the missing controlled bowed-seam endpoint with a bounded,
         allocation-free adjacent-support continuation and gate
         it against the implicit oracle and similarities.
@@ -841,6 +892,9 @@ IMPLEMENTATION CHECKLIST
             projected Newton solve and gate the two-root/contact/miss trend.
         [x] Use fixed center/corner/edge-midpoint seeds and report convergence,
             deduplication, failure, and capacity accounting independently.
+        [x] Compare unique same-face prepared-span roots bidirectionally with
+            the depth-eight legacy candidate set; require complete legacy
+            coverage and classify direct-only tangent-band contacts.
         [x] Add bounded outside-span reparameterization with exact operator-
             norm error amplification and positive-weight certification.
         [ ] Add safe clipping and adaptive termination.
@@ -1338,6 +1392,10 @@ Cobb sphere baseline:
     2,046 cells at depth 9 with maximum interval width about 0.0823 T; the
     three-seam fixture reports two bounded and one exhausted at exactly the
     solid-wide budget.
+    Repeated after bidirectional prepared/legacy root coverage and the
+    arbitrary-axis similarity expansion and one-to-one scale-aware matching:
+    13/13, with rt_brep_ray at 10.34 seconds and NIST03_MISS_01 at 0.80
+    seconds.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -1372,6 +1430,9 @@ Cobb sphere baseline:
     UBSan diagnostics.  Repeated after geometric edge/trim correspondence and
     nonlinear parameter invariance: 12/12 in 38.57 seconds, again with no
     ASan or UBSan diagnostic.
+    Repeated after bidirectional root coverage and arbitrary-axis similarity
+    expansion with one-to-one scale-aware matching and halt_on_error=1: 12/12
+    in 40.72 seconds, with no ASan or UBSan diagnostic.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -1440,8 +1501,8 @@ NEXT ACTIONS
 2. Implement and gate cyclic convex/concave vertex-fan transitions before any
    multi-edge crack repair.  Preserve the current explicit fallback for
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
-3. Add explicit local root clustering, trim/event classification, and
-   adaptive subdivision termination beyond the first bounded corrector.  Do
+3. Add trim/event classification and adaptive subdivision termination beyond
+   the first bounded corrector and its now-gated untrimmed root coverage.  Do
    not lower tree density until candidate exclusion, event equivalence, and
    unsupported/capacity fallback behavior are observable and proven
    equivalent.
