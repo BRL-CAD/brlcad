@@ -736,12 +736,30 @@ struct rt_brep_interval_test_result {
     fastf_t jacobian_maximum[2][2];
 };
 
+struct rt_brep_coefficient_test_result {
+    fastf_t function_minimum[2];
+    fastf_t function_maximum[2];
+    fastf_t ray_minimum;
+    fastf_t ray_maximum;
+};
+
 RT_EXPORT extern int _rt_brep_interval_test(
     const fastf_t *first_coefficients, const fastf_t *second_coefficients,
     int u_order, int v_order, const fastf_t coefficient_error[2],
     const fastf_t root[2], struct rt_brep_interval_test_result *result);
 RT_EXPORT extern int _rt_brep_interval_product_test(
     const fastf_t first[2], const fastf_t second[2], fastf_t result[2]);
+RT_EXPORT extern int _rt_brep_interval_divide_test(
+    const fastf_t numerator[2], const fastf_t denominator[2],
+    fastf_t result[2]);
+RT_EXPORT extern int _rt_brep_coefficient_test(
+    const fastf_t cv[4], const fastf_t origin[3], const fastf_t direction[3],
+    const fastf_t planes[2][3],
+    struct rt_brep_coefficient_test_result *result);
+RT_EXPORT extern int _rt_brep_restrict_test(
+    const fastf_t *input, int u_order, int v_order, fastf_t input_error,
+    const fastf_t minimum[2], const fastf_t maximum[2], fastf_t *output,
+    fastf_t *output_error);
 
 RT_EXPORT extern int _rt_brep_shot_trace(
     struct soltab *stp, struct xray *rp, struct application *ap,
