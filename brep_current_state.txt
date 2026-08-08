@@ -33,6 +33,8 @@ behavior.  Direct shared-edge observations also prove that every current
 below-envelope leak has eligible 3D evidence on the intended mated edge.
 Compact positive-weight rational Bezier spans and conservative control-hull
 boxes for eligible edges are now prepared in both normal and cached prep.
+An observation-only cross-section classifier validates incident trim lifts and
+distinguishes material-side, contact, and exterior edge proximity.
 Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
 
 
@@ -229,6 +231,21 @@ ESTABLISHED FINDINGS
     diagnostic rather than a proof; only box exclusion is presently claimed
     conservative.
 
+22. Edge proximity alone is insufficient: the closest ray point must also be
+    on the intended material side of an authorized manifold sector.  The
+    shadow classifier maps the edge fraction to both trims with m_bRev3d,
+    evaluates both surface lifts and oriented normals, projects loop-interior
+    conormals into the edge cross-section, and selects the interior angular
+    sector from the material side of both faces.  It rejects the sector unless
+    both lifts are within the declared edge tolerance.  A sharp convex ARB8
+    edge now permanently checks inside/contact/outside offsets in both ray
+    directions.  Across 200 tolerance-qualified target observations in the
+    bowed Cobb matrix, it classifies 116 inside, 32 contact, and 52 outside;
+    all 15 current crack leaks have valid inside-sector evidence.  Maximum
+    target lift-discrepancy error is about 2.51e-15 mm.  This remains trace-
+    only.  General STEP use still needs stronger trim/edge parameter-
+    correspondence qualification and concave, seam, and vertex-fan fixtures.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -295,6 +312,10 @@ IMPLEMENTATION CHECKLIST
     [ ] Preserve near-trim candidate evidence through local event resolution.
     [x] Observe fixed-work 3D ray/shared-edge distance and declared edge-
         tolerance qualification independently of the UV trim tree.
+    [x] Classify shadow-mode edge material sectors and validate smooth and
+        sharp-convex inside/contact/outside behavior under ray reversal.
+    [ ] Qualify general trim/edge parameter correspondence and add concave,
+        same-surface seam, and vertex-fan sector fixtures.
     [ ] Add sewn and perturbed Cobb fixtures and threshold matrices.
         [x] Add reusable legacy-unsewn and solid-sewn Cobb constructors.
         [x] Gate topology, face/seam/vertex rays, scale, and 8,000 shared
@@ -568,6 +589,21 @@ Cobb sphere baseline:
     selected prepared span.  The Cobb fixture has 12 eligible edges and 12
     prepared spans.
 
+  * For tolerance-qualified edges, the trace maps the closest edge fraction
+    to both incident trims, applies trim reversal, evaluates both surface
+    lifts, and constructs the local material sector from loop-interior
+    conormals and oriented face normals.  It records lift distances, face/ray
+    normal dots, ray/edge alignment, sector validity, and whether the closest
+    ray point is inside, on, or outside that sector.
+
+  * A converted ARB8 box supplies a sharp 90-degree convex edge fixture with
+    independently known interior.  Offsets at +/-T/2 and exact contact all
+    classify correctly in both ray directions.  On the bowed Cobb sweep, all
+    15 leaks are authorized, span-selected, valid inside-sector observations;
+    qualified target states total 116 inside, 32 contact, and 52 outside.
+    Maximum error in the measured target lift discrepancy is about 2.51e-15
+    mm.
+
   cmake --build .build --target \
     librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
     PASS
@@ -606,11 +642,12 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Use the proven 3D edge evidence to implement a shadow-mode local manifold
-   sector classifier and explicit winding/contact classes.  It must identify
-   the same topological edge from both incident faces and keep model-space,
-   UV, numerical-root, t-cluster, and minimum-segment tolerances distinct.
-2. Activate topology-local crack closure only for supported manifold events.
+1. Add concave-edge, same-surface seam, and vertex-fan fixtures, and qualify
+   edge/trim parameter correspondence without assuming normalized parameter
+   speed.  Keep model-space, UV, numerical-root, t-cluster, and minimum-
+   segment tolerances distinct.
+2. Add explicit shadow event/winding/contact classes, then activate topology-
+   local crack closure only for fully supported manifold events.
    Restore a crossing inside its authorized envelope, preserve ray-reversal
    symmetry, fall back on unsupported cases, and promote each repaired bowed-
    seam row from the known-defect count to exact solid-interval parity.

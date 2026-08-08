@@ -1291,6 +1291,171 @@ brep_line_intersects_box(const ON_Ray &ray, const ON_BoundingBox &bbox,
 }
 
 
+struct brep_edge_face_frame {
+    ON_3dPoint lift;
+    ON_3dVector outward_normal;
+    ON_3dVector interior_conormal;
+};
+
+
+static bool
+brep_edge_face_frame_at(const ON_Brep &brep, const ON_BrepEdge &edge,
+    const ON_BrepTrim &trim, double edge_parameter,
+    const ON_3dVector &edge_tangent, brep_edge_face_frame &frame)
+{
+    const ON_BrepFace *face = trim.Face();
+    const ON_Surface *surface = face ? face->SurfaceOf() : NULL;
+    const ON_Interval edge_domain = edge.Domain();
+    const ON_Interval trim_domain = trim.Domain();
+    if (!face || !surface || !edge_domain.IsIncreasing() ||
+	    !trim_domain.IsIncreasing() || trim.m_ei != edge.m_edge_index)
+	return false;
+
+    double fraction = edge_domain.NormalizedParameterAt(edge_parameter);
+    if (!std::isfinite(fraction) || fraction < -ON_ZERO_TOLERANCE ||
+	    fraction > 1.0 + ON_ZERO_TOLERANCE)
+	return false;
+    fraction = std::max(0.0, std::min(1.0, fraction));
+    if (trim.m_bRev3d)
+	fraction = 1.0 - fraction;
+
+    const double trim_parameter = trim_domain.ParameterAt(fraction);
+    ON_3dPoint uv;
+    ON_3dVector trim_derivative;
+    if (!trim.Ev1Der(trim_parameter, uv, trim_derivative) ||
+	    !uv.IsValid() || !trim_derivative.IsValid())
+	return false;
+
+    ON_3dVector surface_u;
+    ON_3dVector surface_v;
+    if (!surface->Ev1Der(uv.x, uv.y, frame.lift, surface_u, surface_v) ||
+	    !frame.lift.IsValid() || !surface_u.IsValid() ||
+	    !surface_v.IsValid())
+	return false;
+
+    ON_3dVector parameter_normal = ON_CrossProduct(surface_u, surface_v);
+    ON_3dVector loop_tangent = trim_derivative.x * surface_u +
+	trim_derivative.y * surface_v;
+    if (!parameter_normal.Unitize() || !loop_tangent.Unitize())
+	return false;
+    frame.outward_normal = parameter_normal;
+    if (face->m_bRev)
+	frame.outward_normal.Reverse();
+    frame.interior_conormal = ON_CrossProduct(parameter_normal, loop_tangent);
+
+    /* A discrepant trim lift need not have exactly the prepared edge tangent.
+     * Project its local directions into the edge cross-section before using
+     * them to define a material sector. */
+    frame.outward_normal -=
+	(frame.outward_normal * edge_tangent) * edge_tangent;
+    frame.interior_conormal -=
+	(frame.interior_conormal * edge_tangent) * edge_tangent;
+    return frame.outward_normal.Unitize() &&
+	frame.interior_conormal.Unitize() && face->m_face_index >= 0 &&
+	face->m_face_index < brep.m_F.Count();
+}
+
+
+static double
+brep_directed_angle(const ON_3dVector &from, const ON_3dVector &to,
+    const ON_3dVector &axis)
+{
+    double angle = atan2(axis * ON_CrossProduct(from, to), from * to);
+    if (angle < 0.0)
+	angle += 2.0 * M_PI;
+    return angle;
+}
+
+
+static void
+brep_trace_edge_sector(struct rt_brep_trace_edge &observation,
+    const struct brep_specific *bs, const brep_edge_record &record,
+    const ON_Ray &ray)
+{
+    if (!bs->brep || record.edge_index < 0 ||
+	    record.edge_index >= bs->brep->m_E.Count())
+	return;
+    const ON_Brep &brep = *bs->brep;
+    const ON_BrepEdge &edge = brep.m_E[record.edge_index];
+    if (edge.m_ti.Count() != 2)
+	return;
+
+    ON_3dPoint edge_point;
+    ON_3dVector edge_tangent;
+    if (!edge.Ev1Der(observation.edge_parameter, edge_point, edge_tangent) ||
+	    !edge_point.IsValid() || !edge_tangent.Unitize())
+	return;
+    const double ray_length = ray.m_dir.Length();
+    if (!(ray_length > DBL_MIN) || !std::isfinite(ray_length))
+	return;
+    const ON_3dVector ray_direction = ray.m_dir / ray_length;
+    observation.ray_edge_dot = ray_direction * edge_tangent;
+
+    brep_edge_face_frame frames[2];
+    for (int side = 0; side < 2; ++side) {
+	const int trim_index = edge.m_ti[side];
+	if (trim_index < 0 || trim_index >= brep.m_T.Count() ||
+		!brep_edge_face_frame_at(brep, edge, brep.m_T[trim_index],
+		    observation.edge_parameter, edge_tangent, frames[side]))
+	    return;
+	observation.lift_distance[side] =
+	    frames[side].lift.DistanceTo(edge_point);
+	observation.face_normal_dot[side] =
+	    frames[side].outward_normal * ray_direction;
+    }
+
+    const double coordinate_scale = std::max(1.0,
+	std::max(fabs(edge_point.x), std::max(fabs(edge_point.y),
+	    fabs(edge_point.z))));
+    const double model_roundoff = std::max(ON_ZERO_TOLERANCE,
+	128.0 * DBL_EPSILON * coordinate_scale);
+    if (!ON_IsValid(record.tolerance) || record.tolerance < 0.0 ||
+	    observation.lift_distance[0] > record.tolerance + model_roundoff ||
+	    observation.lift_distance[1] > record.tolerance + model_roundoff)
+	return;
+
+    ON_3dVector cross_ray = ray_direction -
+	(ray_direction * edge_tangent) * edge_tangent;
+    if (!cross_ray.Unitize())
+	return;
+
+    const ON_3dVector positive_turn = ON_CrossProduct(edge_tangent,
+	frames[0].interior_conormal);
+    const int orientation = positive_turn * frames[0].outward_normal < 0.0 ?
+	1 : -1;
+    const ON_3dVector oriented_axis = orientation * edge_tangent;
+    const ON_3dVector arrival_turn = ON_CrossProduct(oriented_axis,
+	frames[1].interior_conormal);
+    const double sector_angle = brep_directed_angle(
+	frames[0].interior_conormal, frames[1].interior_conormal,
+	oriented_axis);
+    const double orientation_epsilon = 1.0e-10;
+    if (orientation * positive_turn * frames[0].outward_normal >=
+	    -orientation_epsilon ||
+	    arrival_turn * frames[1].outward_normal <= orientation_epsilon ||
+	    sector_angle <= orientation_epsilon ||
+	    sector_angle >= 2.0 * M_PI - orientation_epsilon)
+	return;
+
+    observation.sector_valid = 1;
+    const ON_3dPoint ray_point = ray.m_origin +
+	observation.ray_dist * ray.m_dir;
+    ON_3dVector offset = ray_point - edge_point;
+    offset -= (offset * edge_tangent) * edge_tangent;
+    const double offset_length = offset.Length();
+    const double contact_tolerance = std::max(ON_ZERO_TOLERANCE,
+	128.0 * DBL_EPSILON * coordinate_scale);
+    if (offset_length <= contact_tolerance) {
+	observation.closest_state = 0;
+	return;
+    }
+    offset /= offset_length;
+    const double offset_angle = brep_directed_angle(
+	frames[0].interior_conormal, offset, oriented_axis);
+    observation.closest_state = offset_angle < sector_angle ? 1 : -1;
+}
+
+
 static void
 brep_trace_edges(struct rt_brep_shot_trace *trace,
     const struct brep_specific *bs,
@@ -1365,8 +1530,10 @@ brep_trace_edges(struct rt_brep_shot_trace *trace,
 	observation.within_edge_tolerance =
 	    ON_IsValid(record.tolerance) && record.tolerance >= 0.0 &&
 	    distance <= record.tolerance + roundoff;
-	if (observation.within_edge_tolerance)
+	if (observation.within_edge_tolerance) {
 	    trace->edges_within_tolerance++;
+	    brep_trace_edge_sector(observation, bs, record, ray);
+	}
     }
 }
 
