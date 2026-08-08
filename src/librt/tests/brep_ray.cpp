@@ -390,6 +390,48 @@ shoot_solid(struct soltab *stp, struct rt_i *rtip, struct resource *resp,
 }
 
 
+static ray_result
+shoot_brep_legacy(struct soltab *stp, struct rt_i *rtip,
+    struct resource *resp, const point_t origin, const vect_t direction)
+{
+    ray_result result;
+    struct application ap;
+    struct seg seghead;
+
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;
+    ap.a_resource = resp;
+    ap.a_onehit = 0;
+    VMOVE(ap.a_ray.r_pt, origin);
+    VMOVE(ap.a_ray.r_dir, direction);
+    VUNITIZE(ap.a_ray.r_dir);
+    ap.a_ray.magic = RT_RAY_MAGIC;
+    BU_LIST_INIT(&seghead.l);
+
+    result.shot_hits = _rt_brep_shot_legacy(stp, &ap.a_ray, &ap, &seghead);
+    struct seg *segp;
+    for (BU_LIST_FOR(segp, seg, &seghead.l)) {
+	result.segments++;
+	if (result.segments != 1)
+	    continue;
+	result.in_dist = segp->seg_in.hit_dist;
+	result.out_dist = segp->seg_out.hit_dist;
+	struct hit in = segp->seg_in;
+	struct hit out = segp->seg_out;
+	rt_obj_norm(&in, stp, &ap.a_ray);
+	rt_obj_norm(&out, stp, &ap.a_ray);
+	VMOVE(result.in_normal, in.hit_normal);
+	VMOVE(result.out_normal, out.hit_normal);
+    }
+
+    while (BU_LIST_WHILE(segp, seg, &seghead.l)) {
+	BU_LIST_DEQUEUE(&segp->l);
+	RT_FREE_SEG(segp, resp);
+    }
+    return result;
+}
+
+
 static int
 shoot_brep_trace(struct soltab *stp, struct rt_i *rtip,
     struct resource *resp, const sampled_ray &ray,
@@ -420,6 +462,20 @@ static bool
 brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace)
 {
     return !trace.fixed_leaf_overflow &&
+	trace.prepared_production_attempts == 1 &&
+	trace.prepared_production_eligible ==
+	    trace.prepared_production_selected &&
+	trace.prepared_production_eligible <= 1 &&
+	trace.prepared_production_fallback >=
+	    RT_BREP_PREPARED_FALLBACK_NONE &&
+	trace.prepared_production_fallback < RT_BREP_PREPARED_FALLBACK_COUNT &&
+	((trace.prepared_production_selected &&
+	  trace.prepared_production_fallback ==
+	    RT_BREP_PREPARED_FALLBACK_NONE &&
+	  trace.prepared_production_hits % 2 == 0) ||
+	 (!trace.prepared_production_selected &&
+	  trace.prepared_production_fallback !=
+	    RT_BREP_PREPARED_FALLBACK_NONE)) &&
 	!trace.fixed_leaf_fallback &&
 	trace.fixed_leaf_count == trace.fixed_leaf_stored &&
 	trace.fixed_leaf_count == trace.intersected_leaves &&
@@ -659,6 +715,10 @@ struct brep_root_event_summary {
     size_t surface_clip_contractions = 0;
     size_t surface_clip_inconclusive = 0;
     size_t surface_clip_restriction_failures = 0;
+    size_t prepared_production_attempts = 0;
+    size_t prepared_production_eligible = 0;
+    size_t prepared_production_selected = 0;
+    size_t prepared_production_fallback[RT_BREP_PREPARED_FALLBACK_COUNT] = {};
     double surface_clip_max_fraction_removed = 0.0;
     double maximum_t_error = 0.0;
     double maximum_uv_error = 0.0;
@@ -747,6 +807,18 @@ brep_accumulate_root_events(brep_root_event_summary &summary,
     summary.surface_clip_inconclusive += trace.surface_clip_inconclusive;
     summary.surface_clip_restriction_failures +=
 	trace.surface_clip_restriction_failures;
+    summary.prepared_production_attempts +=
+	trace.prepared_production_attempts;
+    summary.prepared_production_eligible +=
+	trace.prepared_production_eligible;
+    summary.prepared_production_selected +=
+	trace.prepared_production_selected;
+    if (trace.prepared_production_fallback >=
+	    RT_BREP_PREPARED_FALLBACK_NONE &&
+	    trace.prepared_production_fallback <
+	    RT_BREP_PREPARED_FALLBACK_COUNT)
+	summary.prepared_production_fallback
+	    [trace.prepared_production_fallback]++;
     summary.surface_clip_max_fraction_removed = std::max(
 	summary.surface_clip_max_fraction_removed,
 	(double)trace.surface_clip_max_fraction_removed);
@@ -834,6 +906,26 @@ brep_print_prepared_event_summary(const char *label,
 	summary.surface_clip_inconclusive,
 	summary.surface_clip_restriction_failures,
 	summary.surface_clip_max_fraction_removed);
+    std::printf("%s prepared production: selected=%zu/%zu/%zu "
+	"fallback=none:%zu non-solid:%zu plate:%zu unsupported:%zu "
+	"surface-work:%zu boxes:%zu uncertified:%zu local-work:%zu "
+	"coverage:%zu event:%zu hit-build:%zu hit-work:%zu partition:%zu\n",
+	label, summary.prepared_production_selected,
+	summary.prepared_production_eligible,
+	summary.prepared_production_attempts,
+	summary.prepared_production_fallback[0],
+	summary.prepared_production_fallback[1],
+	summary.prepared_production_fallback[2],
+	summary.prepared_production_fallback[3],
+	summary.prepared_production_fallback[4],
+	summary.prepared_production_fallback[5],
+	summary.prepared_production_fallback[6],
+	summary.prepared_production_fallback[7],
+	summary.prepared_production_fallback[8],
+	summary.prepared_production_fallback[9],
+	summary.prepared_production_fallback[10],
+	summary.prepared_production_fallback[11],
+	summary.prepared_production_fallback[12]);
 }
 
 
@@ -1131,6 +1223,10 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 		trace.local_root_failures + trace.local_root_duplicates ||
 		trace.surface_isolated_boxes != trace.stored_surface_boxes ||
 		trace.final_segments != (size_t)brep_result.segments ||
+		(analytic_chord >= rtip->rti_tol.dist &&
+		 (trace.prepared_production_selected ||
+		  trace.prepared_production_fallback !=
+		    RT_BREP_PREPARED_FALLBACK_UNCERTIFIED)) ||
 		(analytic_chord >= rtip->rti_tol.dist && !roots_covered) ||
 		(analytic_chord >= 10.0 * rtip->rti_tol.dist &&
 		!roots_separated)) {
@@ -1260,6 +1356,9 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    tangent_trace.surface_clip_restriction_failures ||
 	    tangent_trace.surface_clip_max_fraction_removed >
 	    0.5 + 64.0 * DBL_EPSILON ||
+	    tangent_trace.prepared_production_selected ||
+	    tangent_trace.prepared_production_fallback !=
+	    RT_BREP_PREPARED_FALLBACK_UNCERTIFIED ||
 	    tangent_trace.local_root_overflow ||
 	    tangent_trace.local_cluster_overflow ||
 	    tangent_trace.stored_local_clusters != 1 ||
@@ -1441,8 +1540,10 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 		direction_vector.z);
 	    const ray_result implicit_result = shoot_solid(implicit_stp, rtip,
 		resp, ray.origin, ray.direction);
-	    const ray_result legacy_result = shoot_solid(brep_stp, rtip, resp,
-		ray.origin, ray.direction);
+	    const ray_result production_result = shoot_solid(brep_stp, rtip,
+		resp, ray.origin, ray.direction);
+	    const ray_result legacy_result = shoot_brep_legacy(brep_stp, rtip,
+		resp, ray.origin, ray.direction);
 	    struct rt_brep_shot_trace trace;
 	    (void)shoot_brep_trace(brep_stp, rtip, resp, ray, trace);
 	    brep_accumulate_root_events(interior_events, trace);
@@ -1454,11 +1555,23 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 		fabs(trace.local_event_segment_out[0] -
 		implicit_result.out_dist) <= rtip->rti_tol.dist;
 	    if (!brep_trace_fixed_workspaces_match(trace) ||
+		production_result.segments != 1 ||
 		legacy_result.segments != 1 || !prepared_matches ||
+		fabs(production_result.in_dist - implicit_result.in_dist) >
+		rtip->rti_tol.dist ||
+		fabs(production_result.out_dist - implicit_result.out_dist) >
+		rtip->rti_tol.dist ||
+		fabs(legacy_result.in_dist - implicit_result.in_dist) >
+		rtip->rti_tol.dist ||
+		fabs(legacy_result.out_dist - implicit_result.out_dist) >
+		rtip->rti_tol.dist ||
 		trace.legacy_unique_roots_unmatched ||
 		trace.local_unique_roots_unmatched ||
 		trace.root_event_mismatches ||
 		trace.local_event_final_mismatches ||
+		trace.prepared_production_selected != 1 ||
+		trace.prepared_production_fallback !=
+		RT_BREP_PREPARED_FALLBACK_NONE ||
 		trace.surface_krawczyk_boxes != 2 ||
 		!trace.surface_clip_contractions ||
 		trace.surface_clip_restriction_failures ||
@@ -1467,10 +1580,12 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 		trace.surface_subdivision_max_depth >= 24 ||
 		trace.surface_subdivision_boxes > 80) {
 		std::printf("FAIL: oblique interior sphere ray %zu/%d "
-		    "implicit/legacy/prepared=%d/%d/%zu roots=%zu/%zu "
+		    "implicit/production/legacy/prepared=%d/%d/%d/%zu "
+		    "roots=%zu/%zu "
 		    "events=%zu partitions=%zu krawczyk=%zu depth=%zu "
 		    "boxes=%zu\n", direction_index, reverse,
-		    implicit_result.segments, legacy_result.segments,
+		    implicit_result.segments, production_result.segments,
+		    legacy_result.segments,
 		    trace.local_event_final_segments,
 		    trace.legacy_unique_roots_unmatched,
 		    trace.local_unique_roots_unmatched,
@@ -3981,6 +4096,7 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
     size_t total_clip_restriction_failures = 0;
     double maximum_clip_fraction_removed = 0.0;
     double maximum_implicit_error = 0.0;
+    double maximum_production_error = 0.0;
     double maximum_legacy_error = 0.0;
     double maximum_prepared_error = 0.0;
 
@@ -4084,8 +4200,10 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
 			transformed_direction.y, transformed_direction.z);
 		    const ray_result implicit_result = shoot_solid(implicit_stp,
 			rtip, &resource, ray.origin, ray.direction);
-		    const ray_result legacy_result = shoot_solid(brep_stp, rtip,
-			&resource, ray.origin, ray.direction);
+		    const ray_result production_result = shoot_solid(brep_stp,
+			rtip, &resource, ray.origin, ray.direction);
+		    const ray_result legacy_result = shoot_brep_legacy(brep_stp,
+			rtip, &resource, ray.origin, ray.direction);
 		    struct rt_brep_shot_trace trace;
 		    (void)shoot_brep_trace(brep_stp, rtip, &resource, ray,
 			trace);
@@ -4114,6 +4232,9 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
 		    const double implicit_error = std::max(
 			fabs(implicit_result.in_dist / test.scale - expected_in),
 			fabs(implicit_result.out_dist / test.scale - expected_out));
+		    const double production_error = std::max(
+			fabs(production_result.in_dist / test.scale - expected_in),
+			fabs(production_result.out_dist / test.scale - expected_out));
 		    const double legacy_error = std::max(
 			fabs(legacy_result.in_dist / test.scale - expected_in),
 			fabs(legacy_result.out_dist / test.scale - expected_out));
@@ -4125,15 +4246,19 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
 			    expected_out)) : INFINITY;
 		    maximum_implicit_error = std::max(maximum_implicit_error,
 			implicit_error);
+		    maximum_production_error = std::max(maximum_production_error,
+			production_error);
 		    maximum_legacy_error = std::max(maximum_legacy_error,
 			legacy_error);
 		    maximum_prepared_error = std::max(maximum_prepared_error,
 			prepared_error);
 		    const bool bad = implicit_result.segments != 1 ||
+			production_result.segments != 1 ||
 			legacy_result.segments != 1 ||
 			trace.local_event_final_segments != 1 ||
 			trace.local_event_stored_segments != 1 ||
 			implicit_error > normalized_limit ||
+			production_error > normalized_limit ||
 			legacy_error > normalized_limit ||
 			prepared_error > normalized_limit ||
 			!brep_trace_fixed_workspaces_match(trace) ||
@@ -4150,6 +4275,9 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
 			trace.local_event_failures ||
 			trace.local_event_overflow ||
 			trace.local_event_final_mismatches ||
+			trace.prepared_production_selected != 1 ||
+			trace.prepared_production_fallback !=
+			RT_BREP_PREPARED_FALLBACK_NONE ||
 			trace.surface_krawczyk_boxes != 2 ||
 			!trace.surface_clip_attempts ||
 			!trace.surface_clip_contractions ||
@@ -4161,11 +4289,12 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
 			trace.surface_box_overflow;
 		    if (bad) {
 			std::printf("FAIL: adaptive sphere similarity %s %zu/%d "
-			    "segments=%d/%d/%zu roots=%zu/%zu events=%zu/%zu "
+			    "segments=%d/%d/%d/%zu roots=%zu/%zu events=%zu/%zu "
 			    "krawczyk=%zu depth=%zu boxes=%zu clip=%zu/%zu/%zu "
-			    "errors=%.3g/%.3g/%.3g limit=%.3g\n",
+			    "errors=%.3g/%.3g/%.3g/%.3g limit=%.3g\n",
 			    test.name, direction_index, reverse,
-			    implicit_result.segments, legacy_result.segments,
+			    implicit_result.segments,
+			    production_result.segments, legacy_result.segments,
 			    trace.local_event_final_segments,
 			    trace.legacy_unique_roots,
 			    trace.local_unique_roots,
@@ -4177,7 +4306,8 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
 			    trace.surface_clip_contractions,
 			    trace.surface_clip_attempts,
 			    trace.surface_clip_restriction_failures,
-			    implicit_error, legacy_error, prepared_error,
+			    implicit_error, production_error, legacy_error,
+			    prepared_error,
 			    normalized_limit);
 			failures++;
 		    }
@@ -4194,7 +4324,7 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
 
     /* The immediately preceding no-clipping similarity gate visited 1,602
      * boxes for these same 30 rays.  Keep this broad threshold as a direct
-     * work-reduction ratchet while the solver remains shadow-only. */
+     * work-reduction ratchet for the strictly qualified production path. */
     if (total_rays == 30 && (total_boxes >= 1602 ||
 	    !total_clip_contractions || total_clip_restriction_failures ||
 	    maximum_clip_fraction_removed > 0.5 + 64.0 * DBL_EPSILON)) {
@@ -4209,14 +4339,16 @@ check_sphere_adaptive_similarity(const struct bn_tol *tol)
     if (!failures) {
 	std::printf("Sphere adaptive similarity invariance: PASS "
 	    "rays=%zu krawczyk=%zu depth=%zu/%zu boxes=%zu/%zu/%zu "
-	    "clip=%zu/%zu/%zu+%zu/%.3g max-errors=%.3g/%.3g/%.3g\n",
+	    "clip=%zu/%zu/%zu+%zu/%.3g "
+	    "max-errors=%.3g/%.3g/%.3g/%.3g\n",
 	    total_rays,
 	    total_krawczyk, minimum_depth, maximum_depth, minimum_boxes,
 	    total_boxes, maximum_boxes, total_clip_contractions,
 	    total_clip_attempts, total_clip_inconclusive,
 	    total_clip_restriction_failures, maximum_clip_fraction_removed,
 	    maximum_implicit_error,
-	    maximum_legacy_error, maximum_prepared_error);
+	    maximum_production_error, maximum_legacy_error,
+	    maximum_prepared_error);
     }
     return failures;
 }

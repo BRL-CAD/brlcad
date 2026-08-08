@@ -468,6 +468,20 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_LEAVING 1
 #define RT_BREP_TRACE_LOCAL_CONTACT 2
 #define RT_BREP_TRACE_LOCAL_UNRESOLVED 3
+#define RT_BREP_PREPARED_FALLBACK_NONE 0
+#define RT_BREP_PREPARED_FALLBACK_NON_SOLID 1
+#define RT_BREP_PREPARED_FALLBACK_PLATE 2
+#define RT_BREP_PREPARED_FALLBACK_UNSUPPORTED 3
+#define RT_BREP_PREPARED_FALLBACK_SURFACE_WORKSPACE 4
+#define RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES 5
+#define RT_BREP_PREPARED_FALLBACK_UNCERTIFIED 6
+#define RT_BREP_PREPARED_FALLBACK_LOCAL_WORKSPACE 7
+#define RT_BREP_PREPARED_FALLBACK_ROOT_COVERAGE 8
+#define RT_BREP_PREPARED_FALLBACK_EVENT_CLASS 9
+#define RT_BREP_PREPARED_FALLBACK_HIT_BUILD 10
+#define RT_BREP_PREPARED_FALLBACK_HIT_WORKSPACE 11
+#define RT_BREP_PREPARED_FALLBACK_PARTITION 12
+#define RT_BREP_PREPARED_FALLBACK_COUNT 13
 
 struct rt_brep_trace_root {
     fastf_t dist;
@@ -694,6 +708,11 @@ struct rt_brep_shot_trace {
     size_t local_event_segment_overflow;
     fastf_t local_event_segment_in[RT_BREP_TRACE_MAX_LOCAL_SEGMENTS];
     fastf_t local_event_segment_out[RT_BREP_TRACE_MAX_LOCAL_SEGMENTS];
+    size_t prepared_production_attempts;
+    size_t prepared_production_eligible;
+    size_t prepared_production_selected;
+    int prepared_production_fallback;
+    size_t prepared_production_hits;
     fastf_t local_cluster_tolerance;
     size_t local_root_clusters;
     size_t stored_local_clusters;
@@ -779,6 +798,9 @@ RT_EXPORT extern int _rt_brep_clip_test(
 RT_EXPORT extern int _rt_brep_shot_trace(
     struct soltab *stp, struct xray *rp, struct application *ap,
     struct seg *seghead, struct rt_brep_shot_trace *trace);
+RT_EXPORT extern int _rt_brep_shot_legacy(
+    struct soltab *stp, struct xray *rp, struct application *ap,
+    struct seg *seghead);
 
 
 __END_DECLS
