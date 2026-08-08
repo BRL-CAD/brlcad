@@ -4234,6 +4234,241 @@ check_brep_interval_enclosures()
 
 
 static int
+check_brep_fold_solver()
+{
+    const double equation_transform[][2][2] = {
+	{{1.0, 0.0}, {0.0, 1.0}},
+	{{0.0, 1.0}, {1.0, 0.0}},
+	{{-1.0, 0.0}, {0.0, 1.0}},
+	{{std::ldexp(1.0, 100), 0.0},
+	 {0.0, std::ldexp(1.0, -100)}},
+	{{0.0, std::ldexp(1.0, -100)},
+	 {-std::ldexp(1.0, 100), 0.0}}
+    };
+    struct parameter_variant {
+	bool reverse_u;
+	bool reverse_v;
+	bool swap;
+    } parameter_variants[] = {
+	{false, false, false},
+	{true, false, false},
+	{false, true, false},
+	{false, false, true},
+	{true, true, true}
+    };
+    const int separation_exponents[] = {4, 8, 12, 16, 20, 24};
+    const double regular_root = 0.37;
+    int failures = 0;
+    size_t systems = 0;
+    size_t expected_roots = 0;
+    size_t maximum_regular_solves = 0;
+    double minimum_separation = DBL_MAX;
+    double maximum_root_error = 0.0;
+    double maximum_residual_ratio = 0.0;
+
+    const auto run_case = [&](double epsilon, size_t transform_index,
+	    size_t variant_index, size_t expected_count,
+	    double root_separation) {
+	double base[2][9];
+	for (int i = 0; i < 3; ++i) {
+	    for (int j = 0; j < 3; ++j) {
+		const size_t index = (size_t)i * 3 + j;
+		base[0][index] = 0.5 * i - regular_root;
+		const double weak_control[3] = {
+		    0.25 - epsilon, -0.25 - epsilon,
+		    0.25 - epsilon
+		};
+		base[1][index] = weak_control[j];
+	    }
+	}
+	const parameter_variant &variant = parameter_variants[variant_index];
+	double parameterized[2][9];
+	for (int equation = 0; equation < 2; ++equation) {
+	    double reversed[9];
+	    for (int i = 0; i < 3; ++i) {
+		for (int j = 0; j < 3; ++j) {
+		    const int source_i = variant.reverse_u ? 2 - i : i;
+		    const int source_j = variant.reverse_v ? 2 - j : j;
+		    reversed[(size_t)i * 3 + j] =
+			base[equation][(size_t)source_i * 3 + source_j];
+		}
+	    }
+	    for (int i = 0; i < 3; ++i) {
+		for (int j = 0; j < 3; ++j) {
+		    parameterized[equation][(size_t)i * 3 + j] =
+			variant.swap ? reversed[(size_t)j * 3 + i] :
+			reversed[(size_t)i * 3 + j];
+		}
+	    }
+	}
+	double coefficients[2][9];
+	double coefficient_scale = 0.0;
+	for (int equation = 0; equation < 2; ++equation) {
+	    for (size_t i = 0; i < 9; ++i) {
+		coefficients[equation][i] =
+		    equation_transform[transform_index][equation][0] *
+			parameterized[0][i] +
+		    equation_transform[transform_index][equation][1] *
+			parameterized[1][i];
+		coefficient_scale = std::max(coefficient_scale,
+		    fabs(coefficients[equation][i]));
+	    }
+	}
+	const fastf_t coefficient_error[2] = {0.0, 0.0};
+	struct rt_brep_fold_test_result observed = {};
+	struct rt_brep_fold_test_result repeated = {};
+	systems++;
+	expected_roots += expected_count;
+	if (!_rt_brep_fold_test(coefficients[0], coefficients[1], 3, 3,
+		coefficient_error, &observed) ||
+		!_rt_brep_fold_test(coefficients[0], coefficients[1], 3, 3,
+		    coefficient_error, &repeated)) {
+	    std::printf("FAIL: fold solver rejected epsilon=%.17g "
+		"transform=%zu variant=%zu\n", epsilon, transform_index,
+		variant_index);
+	    failures++;
+	    return;
+	}
+	bool deterministic = observed.frame_available == repeated.frame_available &&
+	    observed.regular_direction == repeated.regular_direction &&
+	    observed.capacity_exhausted == repeated.capacity_exhausted &&
+	    observed.samples == repeated.samples &&
+	    observed.regular_solves == repeated.regular_solves &&
+	    observed.brackets == repeated.brackets &&
+	    observed.candidate_count == repeated.candidate_count;
+	for (size_t i = 0; deterministic && i < observed.candidate_count; ++i) {
+	    deterministic = std::memcmp(observed.uv[i], repeated.uv[i],
+		sizeof(observed.uv[i])) == 0 &&
+		std::memcmp(&observed.residual[i], &repeated.residual[i],
+		    sizeof(observed.residual[i])) == 0 &&
+		std::memcmp(&observed.weak_bracket_width[i],
+		    &repeated.weak_bracket_width[i],
+		    sizeof(observed.weak_bracket_width[i])) == 0;
+	}
+	if (!deterministic) {
+	    std::printf("FAIL: fold solver nondeterministic epsilon=%.17g "
+		"transform=%zu variant=%zu\n", epsilon, transform_index,
+		variant_index);
+	    failures++;
+	    return;
+	}
+	maximum_regular_solves = std::max(maximum_regular_solves,
+	    observed.regular_solves);
+	if (!observed.frame_available || observed.samples != 17 ||
+		observed.regular_solves < observed.samples ||
+		observed.regular_solves > 147 ||
+		observed.brackets != expected_count ||
+		observed.capacity_exhausted ||
+		observed.candidate_count != expected_count) {
+	    std::printf("FAIL: fold candidate/work epsilon=%.17g "
+		"transform=%zu variant=%zu observed=%zu expected=%zu "
+		"frame/capacity=%d/%d samples/solves/brackets=%zu/%zu/%zu\n",
+		epsilon, transform_index,
+		variant_index, observed.candidate_count, expected_count,
+		observed.frame_available, observed.capacity_exhausted,
+		observed.samples, observed.regular_solves, observed.brackets);
+	    failures++;
+	    return;
+	}
+	if (!expected_count)
+	    return;
+	double expected[2][2] = {};
+	if (expected_count == 1) {
+	    expected[0][0] = regular_root;
+	    expected[0][1] = 0.5;
+	} else {
+	    expected[0][0] = expected[1][0] = regular_root;
+	    expected[0][1] = 0.5 - 0.5 * root_separation;
+	    expected[1][1] = 0.5 + 0.5 * root_separation;
+	}
+	for (size_t root_index = 0; root_index < expected_count;
+		++root_index) {
+	    if (variant.reverse_u)
+		expected[root_index][0] = 1.0 - expected[root_index][0];
+	    if (variant.reverse_v)
+		expected[root_index][1] = 1.0 - expected[root_index][1];
+	    if (variant.swap)
+		std::swap(expected[root_index][0], expected[root_index][1]);
+	}
+	bool used[RT_BREP_FOLD_TEST_MAX_CANDIDATES] = {};
+	for (size_t expected_index = 0; expected_index < expected_count;
+		++expected_index) {
+	    size_t best_index = SIZE_MAX;
+	    double best_error = DBL_MAX;
+	    for (size_t candidate_index = 0;
+		    candidate_index < observed.candidate_count;
+		    ++candidate_index) {
+		if (used[candidate_index])
+		    continue;
+		const double error = hypot(
+		    observed.uv[candidate_index][0] -
+			expected[expected_index][0],
+		    observed.uv[candidate_index][1] -
+			expected[expected_index][1]);
+		if (error < best_error) {
+		    best_error = error;
+		    best_index = candidate_index;
+		}
+	    }
+	    if (best_index == SIZE_MAX || best_error > 2.0e-12) {
+		std::printf("FAIL: fold candidate location epsilon=%.17g "
+		    "transform=%zu variant=%zu root=%zu error=%.17g\n",
+		    epsilon, transform_index, variant_index, expected_index,
+		    best_error);
+		failures++;
+		continue;
+	    }
+	    used[best_index] = true;
+	    maximum_root_error = std::max(maximum_root_error, best_error);
+	    const double residual_ratio = coefficient_scale > 0.0 ?
+		observed.residual[best_index] / coefficient_scale :
+		observed.residual[best_index];
+	    maximum_residual_ratio = std::max(maximum_residual_ratio,
+		residual_ratio);
+	    if (!(residual_ratio <= 2.0e-12)) {
+		std::printf("FAIL: fold candidate residual epsilon=%.17g "
+		    "transform=%zu variant=%zu root=%zu ratio=%.17g\n",
+		    epsilon, transform_index, variant_index, expected_index,
+		    residual_ratio);
+		failures++;
+	    }
+	}
+    };
+
+    for (size_t transform_index = 0; transform_index <
+	    sizeof(equation_transform) / sizeof(equation_transform[0]);
+	    ++transform_index) {
+	for (size_t variant_index = 0; variant_index <
+		sizeof(parameter_variants) / sizeof(parameter_variants[0]);
+		++variant_index) {
+	    for (size_t separation_index = 0; separation_index <
+		    sizeof(separation_exponents) /
+		    sizeof(separation_exponents[0]); ++separation_index) {
+		const double separation = std::ldexp(1.0,
+		    -separation_exponents[separation_index]);
+		const double epsilon = 0.25 * separation * separation;
+		minimum_separation = std::min(minimum_separation, separation);
+		run_case(epsilon, transform_index, variant_index, 2,
+		    separation);
+	    }
+	    run_case(0.0, transform_index, variant_index, 1, 0.0);
+	    run_case(-std::ldexp(1.0, -20), transform_index, variant_index,
+		0, 0.0);
+	}
+    }
+    if (!failures) {
+	std::printf("BREP fold solver corpus: PASS systems=%zu roots=%zu "
+	    "min-separation=%.9g max-error/residual=%.9g/%.9g "
+	    "max-regular-solves=%zu\n",
+	    systems, expected_roots, minimum_separation,
+	    maximum_root_error, maximum_residual_ratio,
+	    maximum_regular_solves);
+    }
+    return failures;
+}
+
+
+static int
 check_sphere_adaptive_similarity(const struct bn_tol *tol)
 {
     const double radius = 10.0;
@@ -7739,12 +7974,16 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--affine-only");
     const bool interval_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--interval-only");
+    const bool fold_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--fold-only");
     if (argc != 1 && !report_grazing && !report_cobb && !affine_only &&
-	    !interval_only)
+	    !interval_only && !fold_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
-	    "--affine-only|--interval-only]\n", argv[0]);
+	    "--affine-only|--interval-only|--fold-only]\n", argv[0]);
     if (interval_only)
 	return check_brep_interval_enclosures() ? 1 : 0;
+    if (fold_only)
+	return check_brep_fold_solver() ? 1 : 0;
 
     const double radius = 10.0;
     struct rt_ell_internal ell = {};
@@ -7830,6 +8069,7 @@ main(int argc, char **argv)
 
     int failures = 0;
     failures += check_brep_interval_enclosures();
+    failures += check_brep_fold_solver();
     for (size_t repeat = 0; repeat < 16; ++repeat) {
 	for (size_t i = 0; i < sizeof(rays) / sizeof(rays[0]); ++i)
 	    failures += check_ray(rays[i].label, implicit_stp, brep_stp,
