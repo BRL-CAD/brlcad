@@ -28,6 +28,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "brep.h"
+#include "wdb.h"
 
 
 struct ray_result {
@@ -187,6 +188,110 @@ prep_partition_model(prepared_model &model,
     rt_init_resource(&model.resp, 0, model.rtip);
     model.resource_initialized = true;
     return true;
+}
+
+
+static bool
+export_internal_object(struct db_i *dbip, struct rt_wdb *wdbp,
+    const struct rt_db_internal *intern, const char *name)
+{
+    struct rt_db_internal tmp_intern;
+    RT_DB_INTERNAL_INIT(&tmp_intern);
+    tmp_intern.idb_major_type = intern->idb_major_type;
+    tmp_intern.idb_type = intern->idb_minor_type;
+    tmp_intern.idb_meth = &OBJ[intern->idb_minor_type];
+    tmp_intern.idb_ptr = intern->idb_ptr;
+
+    struct bu_external ext;
+    BU_EXTERNAL_INIT(&ext);
+    if (rt_db_cvt_to_ext5(&ext, name, &tmp_intern, 1.0, dbip,
+	    intern->idb_major_type) < 0) {
+	bu_free_external(&ext);
+	return false;
+    }
+    if (wdb_export_external(wdbp, &ext, name,
+	    db_flags_internal(&tmp_intern),
+	    (unsigned char)intern->idb_minor_type) < 0) {
+	bu_free_external(&ext);
+	return false;
+    }
+    bu_free_external(&ext);
+    return true;
+}
+
+
+static bool
+export_brep_conversion(struct db_i *dbip, struct rt_wdb *wdbp,
+    struct rt_db_internal *intern, const char *name,
+    const struct bn_tol *tol)
+{
+    ON_Brep *brep = ON_Brep::New();
+    OBJ[intern->idb_minor_type].ft_brep(&brep, intern, tol);
+    if (!brep)
+	return false;
+    struct rt_brep_internal brep_internal = {};
+    brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal.brep = brep;
+    struct rt_db_internal brep_intern;
+    RT_DB_INTERNAL_INIT(&brep_intern);
+    brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    brep_intern.idb_type = ID_BREP;
+    brep_intern.idb_meth = &OBJ[ID_BREP];
+    brep_intern.idb_ptr = &brep_internal;
+    const bool result = export_internal_object(dbip, wdbp, &brep_intern,
+	name);
+    delete brep;
+    return result;
+}
+
+
+static bool
+prep_region_model(prepared_model &model, const char *region_name,
+    const struct bn_tol *tol)
+{
+    if (!model.dbip)
+	return false;
+    db_update_nref(model.dbip);
+    model.rtip = rt_i_create(model.dbip);
+    if (!model.rtip)
+	return false;
+    model.rtip->rti_tol = *tol;
+    if (rt_gettree(model.rtip, region_name) < 0)
+	return false;
+    rt_prep_parallel(model.rtip, 1);
+    rt_init_resource(&model.resp, 0, model.rtip);
+    model.resource_initialized = true;
+    return true;
+}
+
+
+static bool
+prep_binary_csg_model(prepared_model &model,
+    struct rt_db_internal *left_intern,
+    struct rt_db_internal *right_intern, int member_operation,
+    const struct bn_tol *tol, bool brep_leaves)
+{
+    model.dbip = db_open_inmem();
+    if (!model.dbip)
+	return false;
+    struct rt_wdb *wdbp = wdb_dbopen(model.dbip, RT_WDB_TYPE_DB_INMEM);
+    if (!wdbp)
+	return false;
+
+    const bool left_ok = brep_leaves ?
+	export_brep_conversion(model.dbip, wdbp, left_intern, "left.s", tol) :
+	export_internal_object(model.dbip, wdbp, left_intern, "left.s");
+    const bool right_ok = brep_leaves ?
+	export_brep_conversion(model.dbip, wdbp, right_intern, "right.s", tol) :
+	export_internal_object(model.dbip, wdbp, right_intern, "right.s");
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    if (!left_ok || !right_ok ||
+	    !mk_addmember("left.s", &members.l, NULL, WMOP_UNION) ||
+	    !mk_addmember("right.s", &members.l, NULL, member_operation) ||
+	    mk_lcomb(wdbp, "oracle.r", &members, 1, NULL, NULL, NULL, 0))
+	return false;
+    return prep_region_model(model, "oracle.r", tol);
 }
 
 
@@ -781,38 +886,56 @@ check_shared_crofton_fixture(const char *label,
     const point_t bbox_min, const point_t bbox_max, double analytic_area,
     double analytic_volume, size_t ray_count,
     const directed_partition_ray *directed_rays = NULL,
-    size_t directed_ray_count = 0)
+    size_t directed_ray_count = 0,
+    prepared_model *supplied_implicit_model = NULL,
+    prepared_model *supplied_brep_model = NULL,
+    bool enforce_comparison = true, size_t *comparison_issues_out = NULL)
 {
     int failures = 0;
-    prepared_model implicit_model;
-    prepared_model brep_model;
+    size_t comparison_issues = 0;
+    const char *comparison_status = enforce_comparison ? "FAIL" : "KNOWN";
+    prepared_model local_implicit_model;
+    prepared_model local_brep_model;
+    prepared_model &implicit_model = supplied_implicit_model ?
+	*supplied_implicit_model : local_implicit_model;
+    prepared_model &brep_model = supplied_brep_model ?
+	*supplied_brep_model : local_brep_model;
 
-    ON_Brep *brep = ON_Brep::New();
-    OBJ[implicit_intern->idb_minor_type].ft_brep(&brep, implicit_intern, tol);
-    if (!brep) {
-	std::printf("FAIL: %s shared Crofton BREP conversion\n", label);
+    if ((supplied_implicit_model == NULL) !=
+	    (supplied_brep_model == NULL)) {
+	std::printf("FAIL: %s incomplete supplied model pair\n", label);
 	return 1;
     }
 
     struct rt_brep_internal brep_internal = {};
-    brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
-    brep_internal.brep = brep;
-    struct rt_db_internal brep_intern;
-    RT_DB_INTERNAL_INIT(&brep_intern);
-    brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    brep_intern.idb_type = ID_BREP;
-    brep_intern.idb_meth = &OBJ[ID_BREP];
-    brep_intern.idb_ptr = &brep_internal;
+    if (!supplied_implicit_model) {
+	ON_Brep *brep = ON_Brep::New();
+	OBJ[implicit_intern->idb_minor_type].ft_brep(&brep, implicit_intern,
+	    tol);
+	if (!brep) {
+	    std::printf("FAIL: %s shared Crofton BREP conversion\n", label);
+	    return 1;
+	}
 
-    if (!prep_partition_model(implicit_model, implicit_intern,
-	    "paired_implicit.s", tol) ||
-	    !prep_partition_model(brep_model, &brep_intern,
-	    "paired_brep.s", tol)) {
-	std::printf("FAIL: %s shared Crofton model preparation\n", label);
-	free_prepared_model(brep_model);
-	free_prepared_model(implicit_model);
-	delete brep_internal.brep;
-	return 1;
+	brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	brep_internal.brep = brep;
+	struct rt_db_internal brep_intern;
+	RT_DB_INTERNAL_INIT(&brep_intern);
+	brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	brep_intern.idb_type = ID_BREP;
+	brep_intern.idb_meth = &OBJ[ID_BREP];
+	brep_intern.idb_ptr = &brep_internal;
+
+	if (!prep_partition_model(implicit_model, implicit_intern,
+		"paired_implicit.s", tol) ||
+		!prep_partition_model(brep_model, &brep_intern,
+		"paired_brep.s", tol)) {
+	    std::printf("FAIL: %s shared Crofton model preparation\n", label);
+	    free_prepared_model(brep_model);
+	    free_prepared_model(implicit_model);
+	    delete brep_internal.brep;
+	    return 1;
+	}
     }
 
     for (size_t i = 0; i < directed_ray_count; ++i) {
@@ -839,11 +962,12 @@ check_shared_crofton_fixture(const char *label,
 		tol->dist;
 	}
 	if (!valid) {
-	    std::printf("FAIL: %s directed partition %s implicit=%zu "
-		"BREP=%zu expected=%zu\n", label, directed_rays[i].name,
+	    std::printf("%s: %s directed partition %s implicit=%zu "
+		"BREP=%zu expected=%zu\n", comparison_status, label,
+		directed_rays[i].name,
 		implicit_result.partitions, brep_result.partitions,
 		directed_rays[i].partitions);
-	    failures++;
+	    comparison_issues++;
 	}
     }
 
@@ -922,9 +1046,9 @@ check_shared_crofton_fixture(const char *label,
 	if (!partition_result_valid(implicit_result, rays[i].direction) ||
 		!partition_result_valid(brep_result, rays[i].direction)) {
 	    if (reported++ < 5)
-		std::printf("FAIL: %s shared Crofton ray %zu has invalid "
-		    "partition data\n", label, i);
-	    failures++;
+		std::printf("%s: %s shared Crofton ray %zu has invalid "
+		    "partition data\n", comparison_status, label, i);
+	    comparison_issues++;
 	    continue;
 	}
 
@@ -937,12 +1061,12 @@ check_shared_crofton_fixture(const char *label,
 		tangent_band_lines++;
 	    } else {
 		if (reported++ < 5)
-		    std::printf("FAIL: %s shared Crofton ray %zu partition "
+		    std::printf("%s: %s shared Crofton ray %zu partition "
 			"count implicit=%zu BREP=%zu chords=[%.17g %.17g]\n",
-			label, i,
+			comparison_status, label, i,
 			implicit_result.partitions, brep_result.partitions,
 			implicit_chord, brep_chord);
-		failures++;
+		comparison_issues++;
 	    }
 	}
 
@@ -957,10 +1081,11 @@ check_shared_crofton_fixture(const char *label,
 		if (in_error > tol->dist || out_error > tol->dist) {
 		    line_differs = true;
 		    if (reported++ < 5)
-			std::printf("FAIL: %s shared Crofton ray %zu endpoint "
-			    "errors=[%.17g %.17g]\n", label, i, in_error,
+			std::printf("%s: %s shared Crofton ray %zu endpoint "
+			    "errors=[%.17g %.17g]\n", comparison_status,
+			    label, i, in_error,
 			    out_error);
-		    failures++;
+		    comparison_issues++;
 		}
 	    }
 	}
@@ -991,10 +1116,10 @@ check_shared_crofton_fixture(const char *label,
 		    fabs(implicit_volume_estimate - analytic_volume) >
 		    volume_band ||
 		    fabs(brep_volume_estimate - analytic_volume) > volume_band) {
-		std::printf("FAIL: %s shared Crofton confidence at %zu rays "
-		    "area-band=%.17g volume-band=%.17g\n", label, samples,
-		    area_band, volume_band);
-		failures++;
+		std::printf("%s: %s shared Crofton confidence at %zu rays "
+		    "area-band=%.17g volume-band=%.17g\n",
+		    comparison_status, label, samples, area_band, volume_band);
+		comparison_issues++;
 	    }
 	    std::printf("Shared Crofton %s checkpoint %zu: area implicit="
 		"%.9g+/-%.3g BREP=%.9g+/-%.3g volume implicit="
@@ -1020,12 +1145,12 @@ check_shared_crofton_fixture(const char *label,
 	    relative_error(brep_volume, analytic_volume) > 0.06 ||
 	    relative_error(brep_area, implicit_area) > 0.001 ||
 	    relative_error(brep_volume, implicit_volume) > 0.001) {
-	std::printf("FAIL: %s shared Crofton aggregates analytic="
+	std::printf("%s: %s shared Crofton aggregates analytic="
 	    "[%.17g %.17g] "
 	    "implicit=[%.17g %.17g] BREP=[%.17g %.17g]\n",
-	    label, analytic_area, analytic_volume, implicit_area, implicit_volume,
-	    brep_area, brep_volume);
-	failures++;
+	    comparison_status, label, analytic_area, analytic_volume,
+	    implicit_area, implicit_volume, brep_area, brep_volume);
+	comparison_issues++;
     }
 
     std::printf("Shared Crofton %s: rays=%zu differing=%zu "
@@ -1034,9 +1159,45 @@ check_shared_crofton_fixture(const char *label,
 	tangent_band_lines, maximum_endpoint_error, signed_chord_difference,
 	absolute_chord_difference);
 
+    if (!supplied_implicit_model) {
+	free_prepared_model(brep_model);
+	free_prepared_model(implicit_model);
+	delete brep_internal.brep;
+    }
+    if (comparison_issues_out)
+	*comparison_issues_out = comparison_issues;
+    if (enforce_comparison)
+	failures += (int)comparison_issues;
+    return failures;
+}
+
+
+static int
+check_brep_leaf_csg_fixture(const char *label,
+    struct rt_db_internal *left_intern,
+    struct rt_db_internal *right_intern, int member_operation,
+    const struct bn_tol *tol, const point_t bbox_min,
+    const point_t bbox_max, double analytic_area, double analytic_volume,
+    const directed_partition_ray *directed_rays,
+    size_t directed_ray_count)
+{
+    prepared_model implicit_model;
+    prepared_model brep_model;
+    if (!prep_binary_csg_model(implicit_model, left_intern, right_intern,
+	    member_operation, tol, false) ||
+	    !prep_binary_csg_model(brep_model, left_intern, right_intern,
+	    member_operation, tol, true)) {
+	std::printf("FAIL: %s BREP-leaf CSG preparation\n", label);
+	free_prepared_model(brep_model);
+	free_prepared_model(implicit_model);
+	return 1;
+    }
+
+    const int failures = check_shared_crofton_fixture(label, NULL, tol,
+	bbox_min, bbox_max, analytic_area, analytic_volume, 8000,
+	directed_rays, directed_ray_count, &implicit_model, &brep_model);
     free_prepared_model(brep_model);
     free_prepared_model(implicit_model);
-    delete brep_internal.brep;
     return failures;
 }
 
@@ -1186,6 +1347,153 @@ check_shared_primitive_corpus(const struct bn_tol *tol)
 	torus_min, torus_max, 144.0 * M_PI * M_PI,
 	216.0 * M_PI * M_PI, 8000, torus_rays,
 	sizeof(torus_rays) / sizeof(torus_rays[0]));
+
+    return failures;
+}
+
+
+static void
+init_sphere_internal(struct rt_ell_internal &sphere,
+    struct rt_db_internal &intern, const point_t center, double radius)
+{
+    sphere = {};
+    sphere.magic = RT_ELL_INTERNAL_MAGIC;
+    VMOVE(sphere.v, center);
+    VSET(sphere.a, radius, 0.0, 0.0);
+    VSET(sphere.b, 0.0, radius, 0.0);
+    VSET(sphere.c, 0.0, 0.0, radius);
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_ELL;
+    intern.idb_meth = &OBJ[ID_ELL];
+    intern.idb_ptr = &sphere;
+}
+
+
+static int
+check_brep_leaf_csg_corpus(const struct bn_tol *tol)
+{
+    int failures = 0;
+    struct rt_ell_internal left_sphere;
+    struct rt_ell_internal right_sphere;
+    struct rt_db_internal left_intern;
+    struct rt_db_internal right_intern;
+
+    point_t disjoint_left_center = {-6.0, 0.0, 0.0};
+    point_t disjoint_right_center = {6.0, 0.0, 0.0};
+    init_sphere_internal(left_sphere, left_intern, disjoint_left_center, 4.0);
+    init_sphere_internal(right_sphere, right_intern, disjoint_right_center,
+	4.0);
+    point_t disjoint_min = {-10.0, -4.0, -4.0};
+    point_t disjoint_max = {10.0, 4.0, 4.0};
+    const directed_partition_ray disjoint_rays[] = {
+	{"two components", {-20.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, 2,
+	    {10.0, 18.0, 22.0, 30.0}},
+	{"two components reverse", {20.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}, 2,
+	    {10.0, 18.0, 22.0, 30.0}}
+    };
+    failures += check_brep_leaf_csg_fixture("disjoint-sphere-union",
+	&left_intern, &right_intern, WMOP_UNION, tol,
+	disjoint_min, disjoint_max, 128.0 * M_PI,
+	(512.0 / 3.0) * M_PI, disjoint_rays,
+	sizeof(disjoint_rays) / sizeof(disjoint_rays[0]));
+
+    point_t overlap_left_center = {-3.0, 0.0, 0.0};
+    point_t overlap_right_center = {3.0, 0.0, 0.0};
+    init_sphere_internal(left_sphere, left_intern, overlap_left_center, 5.0);
+    init_sphere_internal(right_sphere, right_intern, overlap_right_center,
+	5.0);
+    point_t overlap_union_min = {-8.0, -5.0, -5.0};
+    point_t overlap_union_max = {8.0, 5.0, 5.0};
+    const directed_partition_ray overlap_union_rays[] = {
+	{"merged interval", {-20.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, 1,
+	    {12.0, 28.0}},
+	{"merged interval reverse", {20.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}, 1,
+	    {12.0, 28.0}}
+    };
+    failures += check_brep_leaf_csg_fixture("overlapping-sphere-union",
+	&left_intern, &right_intern, WMOP_UNION, tol,
+	overlap_union_min, overlap_union_max, 160.0 * M_PI,
+	(896.0 / 3.0) * M_PI, overlap_union_rays,
+	sizeof(overlap_union_rays) / sizeof(overlap_union_rays[0]));
+
+    point_t overlap_intersection_min = {-2.0, -4.0, -4.0};
+    point_t overlap_intersection_max = {2.0, 4.0, 4.0};
+    const directed_partition_ray overlap_intersection_rays[] = {
+	{"lens", {-20.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, 1,
+	    {18.0, 22.0}},
+	{"lens reverse", {20.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}, 1,
+	    {18.0, 22.0}}
+    };
+    failures += check_brep_leaf_csg_fixture("sphere-intersection-lens",
+	&left_intern, &right_intern, WMOP_INTERSECT, tol,
+	overlap_intersection_min, overlap_intersection_max, 40.0 * M_PI,
+	(104.0 / 3.0) * M_PI, overlap_intersection_rays,
+	sizeof(overlap_intersection_rays) /
+	    sizeof(overlap_intersection_rays[0]));
+
+    point_t concentric_center = VINIT_ZERO;
+    init_sphere_internal(left_sphere, left_intern, concentric_center, 8.0);
+    init_sphere_internal(right_sphere, right_intern, concentric_center, 3.0);
+    point_t shell_min = {-8.0, -8.0, -8.0};
+    point_t shell_max = {8.0, 8.0, 8.0};
+    const directed_partition_ray shell_rays[] = {
+	{"cavity", {-12.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, 2,
+	    {4.0, 9.0, 15.0, 20.0}},
+	{"cavity reverse", {12.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}, 2,
+	    {4.0, 9.0, 15.0, 20.0}}
+    };
+    failures += check_brep_leaf_csg_fixture("concentric-sphere-cavity",
+	&left_intern, &right_intern, WMOP_SUBTRACT, tol,
+	shell_min, shell_max, 292.0 * M_PI, (1940.0 / 3.0) * M_PI,
+	shell_rays, sizeof(shell_rays) / sizeof(shell_rays[0]));
+
+    struct rt_arb_internal box = {};
+    box.magic = RT_ARB_INTERNAL_MAGIC;
+    VSET(box.pt[0], -8.0, -8.0, -5.0);
+    VSET(box.pt[1], 8.0, -8.0, -5.0);
+    VSET(box.pt[2], 8.0, 8.0, -5.0);
+    VSET(box.pt[3], -8.0, 8.0, -5.0);
+    VSET(box.pt[4], -8.0, -8.0, 5.0);
+    VSET(box.pt[5], 8.0, -8.0, 5.0);
+    VSET(box.pt[6], 8.0, 8.0, 5.0);
+    VSET(box.pt[7], -8.0, 8.0, 5.0);
+    struct rt_db_internal box_intern;
+    RT_DB_INTERNAL_INIT(&box_intern);
+    box_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    box_intern.idb_type = ID_ARB8;
+    box_intern.idb_meth = &OBJ[ID_ARB8];
+    box_intern.idb_ptr = &box;
+
+    struct rt_tgc_internal cutter = {};
+    cutter.magic = RT_TGC_INTERNAL_MAGIC;
+    VSET(cutter.v, 0.0, 0.0, -6.0);
+    VSET(cutter.h, 0.0, 0.0, 12.0);
+    VSET(cutter.a, 3.0, 0.0, 0.0);
+    VSET(cutter.b, 0.0, 3.0, 0.0);
+    VMOVE(cutter.c, cutter.a);
+    VMOVE(cutter.d, cutter.b);
+    struct rt_db_internal cutter_intern;
+    RT_DB_INTERNAL_INIT(&cutter_intern);
+    cutter_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    cutter_intern.idb_type = ID_TGC;
+    cutter_intern.idb_meth = &OBJ[ID_TGC];
+    cutter_intern.idb_ptr = &cutter;
+    point_t drilled_box_min = {-8.0, -8.0, -5.0};
+    point_t drilled_box_max = {8.0, 8.0, 5.0};
+    const directed_partition_ray drilled_box_rays[] = {
+	{"cross hole", {-12.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, 2,
+	    {4.0, 9.0, 15.0, 20.0}},
+	{"through hole", {0.0, 0.0, -10.0}, {0.0, 0.0, 1.0}, 0,
+	    {0.0, 0.0}},
+	{"through material", {5.0, 0.0, -10.0}, {0.0, 0.0, 1.0}, 1,
+	    {5.0, 15.0}}
+    };
+    failures += check_brep_leaf_csg_fixture("box-minus-cylinder", &box_intern,
+	&cutter_intern, WMOP_SUBTRACT, tol, drilled_box_min,
+	drilled_box_max, 1152.0 + 42.0 * M_PI, 2560.0 - 90.0 * M_PI,
+	drilled_box_rays,
+	sizeof(drilled_box_rays) / sizeof(drilled_box_rays[0]));
 
     return failures;
 }
@@ -1356,6 +1664,7 @@ main(int argc, char **argv)
 	4.0 * M_PI * radius * radius,
 	(4.0 / 3.0) * M_PI * radius * radius * radius, 32000);
     failures += check_shared_primitive_corpus(&rtip->rti_tol);
+    failures += check_brep_leaf_csg_corpus(&rtip->rti_tol);
     failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);
 
     rt_clean_resource_basic(rtip, &resp);
