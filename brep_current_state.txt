@@ -44,6 +44,10 @@ Fixed-capacity de Casteljau subdivision now narrows ordinary span candidates
 to conservative UV and ray-t boxes while reporting all workspace limits.
 Bounded outside-span reparameterization now certifies the continuation root
 and assembles an oracle-matching material interval in shadow mode.
+Every retained ordinary surface box now also runs an allocation-free bounded
+local corrector.  Its shadow roots reproduce the resolved sphere grazing
+limit independently of SurfaceTree seeds and remain invariant across the
+existing similarity corpus.
 Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
 
 
@@ -376,6 +380,42 @@ ESTABLISHED FINDINGS
     surface derived records using the active rti tolerance; the serialized
     cache remains version zero.
 
+29. A retained coefficient box can seed a mathematical surface root without
+    consulting the legacy SurfaceTree.  Trace mode now maps the box center
+    into its prepared rational Bezier span and runs a fixed 24-iteration,
+    line-searched corrector bounded by that box.  Projecting Newton steps onto
+    the box is necessary for roots on shared Bezier-span boundaries; the
+    residual test still prevents a projected boundary point from becoming a
+    false root.  The ordinary convergence target scales with the local support
+    diagonal, while a separate 32-epsilon world-coordinate floor admits only
+    the cancellation inherent in evaluating translated geometry.  The
+    retained-box t check uses the same scale-aware numerical allowance rather
+    than a fixed model-space constant.
+
+    On the analytic R=10 sphere, all 36 cases with chord at least T recover
+    two distinct local root clusters and both analytic endpoints within
+    8.56e-8 mm.  All 23 positive cases below T collapse to one contact-sized
+    cluster; exact tangency also forms one cluster and no material segment.
+    On the miss side, numerical contact candidates occur only within about
+    2.84e-10 T, tighter than the existing 1e-6 T ambiguity gate.  The complete
+    bowed Cobb matrix has no local root absent from the legacy candidate set.
+    Fourteen of the 15 below-envelope leaks expose one in-domain local cluster;
+    the remaining sub-tolerance boundary case exposes two, but all 15 still
+    require the separately certified adjacent-support root to reproduce the
+    implicit interval.  The machine report records every local face, span,
+    UV, t, residual, normal dot, and iteration count.
+
+    Identity, rigid rotation/translation, translated 0.01x scale, and
+    translated 10,000x scale now gate the local corrector's candidate count,
+    failure count, normalized root positions, and residuals alongside the
+    edge-sector and closure classifier.  This answers the similarity question
+    for the present controlled corpus: the classifier and bounded local solve
+    are invariant when all model-space tolerances scale with the geometry.
+    Arbitrary nonuniform scaling is not a similarity and remains a separate
+    transformed-surface case.  These roots are still trace-only: production
+    traversal, trim/event classification, adaptive termination, and fallback
+    integration are not yet changed.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -457,7 +497,7 @@ IMPLEMENTATION CHECKLIST
         contact/exterior states.
     [x] Gate edge-sector and closure classifications under rotation,
         translation, and 0.01x/10,000x uniform scaling with scaled model
-        tolerances.
+        tolerances, including bounded local-root counts and positions.
     [x] Recover the missing controlled bowed-seam endpoint with a bounded,
         allocation-free adjacent-support continuation in shadow mode and gate
         it against the implicit oracle and similarities.
@@ -481,6 +521,8 @@ IMPLEMENTATION CHECKLIST
             translation-aware numerical margins in shadow mode.
         [x] Add fixed-capacity de Casteljau subdivision and conservative UV/t
             interval isolation on ordinary surface spans.
+        [x] Correct each retained ordinary box with a bounded, allocation-free
+            projected Newton solve and gate the two-root/contact/miss trend.
         [x] Add bounded outside-span reparameterization with exact operator-
             norm error amplification and positive-weight certification.
         [ ] Add safe clipping and adaptive termination.
@@ -828,6 +870,21 @@ Cobb sphere baseline:
     ambiguity is measured on every representable mirrored sample and may not
     spread beyond 1e-6 T; the present largest is approximately 2.27e-9 T.
 
+  * Each retained ordinary box now seeds a projected, bounded local corrector
+    over its prepared Bezier support.  For chord >= T, all 36 sphere cases
+    recover both analytic roots with maximum endpoint error about 8.56e-8 mm.
+    The 23 positive sub-T cases and exact tangency each form one contact-sized
+    cluster.  Miss-side local candidates are confined to about 2.84e-10 T.
+    The corrector performs at most eight attempts per sphere line and six per
+    bowed Cobb line, uses fixed trace capacity, and performs no ray-time
+    allocation.  Candidate roots, residuals, normals, and iterations are
+    emitted under --cobb-report.
+
+  * The classifier similarity gate now includes local-root candidate/failure
+    counts, scaled residuals, and normalized root positions.  Identity, rigid
+    rotation/translation, translated 0.01x, and translated 10,000x fixtures
+    pass when their model-space tolerances are scaled with the geometry.
+
   * Outside-span continuation rectangles are reparameterized algebraically
     into Bernstein form.  The code computes the absolute row-sum norm of each
     one-dimensional basis transformation, multiplies the tensor norms, and
@@ -889,9 +946,11 @@ NEXT ACTIONS
    Restore a crossing inside its authorized envelope, preserve ray-reversal
    symmetry, fall back on unsupported cases, and promote each repaired bowed-
    seam row from the known-defect count to exact solid-interval parity.
-3. Add a safeguarded local correction/contact classification beyond the first
-   conditioned Newton improvement.  Do not lower tree density until candidate
-   exclusion and fallback behavior are observable and proven equivalent.
+3. Add explicit local root clustering, trim/event classification, and
+   adaptive subdivision termination beyond the first bounded corrector.  Do
+   not lower tree density until candidate exclusion, event equivalence, and
+   unsupported/capacity fallback behavior are observable and proven
+   equivalent.
 4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST

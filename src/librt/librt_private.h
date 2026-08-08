@@ -455,6 +455,7 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_MAX_ROOTS 64
 #define RT_BREP_TRACE_MAX_EDGES 64
 #define RT_BREP_TRACE_MAX_SURFACE_BOXES 64
+#define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
 #define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
 #define RT_BREP_TRACE_ENTERING 0
 #define RT_BREP_TRACE_LEAVING 1
@@ -499,7 +500,18 @@ struct rt_brep_trace_surface_box {
     fastf_t t_min;
     fastf_t t_max;
     int face_index;
+    int span_index;
     int depth;
+};
+
+struct rt_brep_trace_local_root {
+    fastf_t dist;
+    fastf_t uv[2];
+    fastf_t residual;
+    fastf_t normal_dot;
+    size_t iterations;
+    int face_index;
+    int span_index;
 };
 
 struct rt_brep_shot_trace {
@@ -532,6 +544,13 @@ struct rt_brep_shot_trace {
     size_t surface_box_overflow;
     struct rt_brep_trace_surface_box
 	surface_boxes[RT_BREP_TRACE_MAX_SURFACE_BOXES];
+    size_t local_root_attempts;
+    size_t local_root_candidates;
+    size_t stored_local_roots;
+    size_t local_root_overflow;
+    size_t local_root_failures;
+    struct rt_brep_trace_local_root
+	local_roots[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
     struct rt_brep_trace_edge edges[RT_BREP_TRACE_MAX_EDGES];
     size_t raw_hits;
     size_t after_near_miss;
