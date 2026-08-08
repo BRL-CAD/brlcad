@@ -214,13 +214,19 @@ bu_heap_get(size_t sz)
 
     /* init */
     if (heap->count == 0) {
-
-	if (registered++ == 0) {
+	/*
+	 * Different per-CPU bins can be initialized concurrently.  Serialize
+	 * the process-global environment check and atexit registration rather
+	 * than racing on the lazy initialization flag.
+	 */
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	if (!registered) {
+	    registered = 1;
 	    ret = getenv("BU_HEAP_PRINT");
-	    if ((++registered == 2) && (ret && atoi(ret) > 0)) {
+	    if (ret && atoi(ret) > 0)
 		atexit(heap_print);
-	    }
 	}
+	bu_semaphore_release(BU_SEM_SYSCALL);
 
 	heap->count++;
 	heap->pages = (char **)bu_malloc(1 * sizeof(char *), "heap malloc pages[]");
