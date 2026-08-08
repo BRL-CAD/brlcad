@@ -193,7 +193,7 @@ wireframe_result(struct db_i *dbip, struct directory *dp,
     struct bu_list vhead;
     BU_LIST_INIT(&vhead);
     int64_t start = bu_gettime();
-    result.ret = rt_brep_plot_poly(&vhead, dp, &intern, ttol, tol, NULL);
+    result.ret = rt_brep_plot(&vhead, &intern, ttol, tol, NULL);
     result.seconds = (bu_gettime() - start) / 1000000.0;
     result.peak_rss_bytes = peak_rss_bytes();
 
@@ -437,7 +437,8 @@ main(int argc, const char **argv)
     double tess_rel = 0.01;
     double tess_norm = 0.0;
     long memory_limit_mib = 0;
-    struct bu_opt_desc d[9];
+    const char *mode_name = "both";
+    struct bu_opt_desc d[10];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -446,12 +447,16 @@ main(int argc, const char **argv)
     BU_OPT(d[5], "", "tess-rel", "#", &bu_opt_fastf_t, &tess_rel, "Relative shaded tessellation tolerance");
     BU_OPT(d[6], "", "tess-norm", "#", &bu_opt_fastf_t, &tess_norm, "Normal shaded tessellation tolerance");
     BU_OPT(d[7], "", "memory-limit-mib", "#", &bu_opt_long, &memory_limit_mib, "Process address-space limit in MiB (zero disables)");
-    BU_OPT_NULL(d[8]);
+    BU_OPT(d[8], "m", "mode", "wireframe|shaded|both", &bu_opt_str, &mode_name, "Select one generator so resource measurements are independent");
+    BU_OPT_NULL(d[9]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage = "Usage: brep-audit [options] [--list] file.g [brep]\n";
     if (print_help || (list_only && ac != 1) || (!list_only && ac != 2) ||
 	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
-	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0) {
+	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0 ||
+	    (!BU_STR_EQUAL(mode_name, "wireframe") &&
+	     !BU_STR_EQUAL(mode_name, "shaded") &&
+	     !BU_STR_EQUAL(mode_name, "both"))) {
 	std::cerr << usage;
 	return print_help ? 0 : 2;
     }
@@ -521,19 +526,34 @@ main(int argc, const char **argv)
 	top_issues.push_back("database_internal_load_failed");
     }
 
-    std::cerr << "brep-audit: phase=wireframe" << std::endl;
-    geom_result wire = wireframe_result(dbip, dp, &ttol, &tol);
-    std::cerr << "brep-audit: phase=shaded" << std::endl;
-    geom_result shaded = shaded_result(dbip, dp, &ttol, &tol);
+    const bool run_wireframe = !BU_STR_EQUAL(mode_name, "shaded");
+    const bool run_shaded = !BU_STR_EQUAL(mode_name, "wireframe");
+    geom_result wire;
+    geom_result shaded;
+    if (run_wireframe) {
+	std::cerr << "brep-audit: phase=wireframe" << std::endl;
+	wire = wireframe_result(dbip, dp, &ttol, &tol);
+    }
+    if (run_shaded) {
+	std::cerr << "brep-audit: phase=shaded" << std::endl;
+	shaded = shaded_result(dbip, dp, &ttol, &tol);
+    }
     vect_t ref_dims = VINIT_ZERO;
     double ref_diag = 0.0;
     if (ref_valid) {
 	dims(ref_dims, ref_min, ref_max);
 	ref_diag = MAGNITUDE(ref_dims);
-	check_dimensions(&wire, ref_dims, ref_diag, ratio_min, ratio_max, "wireframe");
-	check_dimensions(&shaded, ref_dims, ref_diag, ratio_min, ratio_max, "shaded");
+	if (run_wireframe)
+	    /* Edge-only wireframes may intentionally span just a seam or an arc
+	     * of the trimmed surface (a one-face sphere is a common example), so
+	     * a minimum extent is not a valid completeness test for this mode. */
+	    check_dimensions(&wire, ref_dims, ref_diag, 0.0, ratio_max, "wireframe");
+	if (run_shaded)
+	    check_dimensions(&shaded, ref_dims, ref_diag, ratio_min, ratio_max, "shaded");
     }
-    bool okay = ref_valid && top_issues.empty() && wire.issues.empty() && shaded.issues.empty();
+    bool okay = ref_valid && top_issues.empty() &&
+	(!run_wireframe || wire.issues.empty()) &&
+	(!run_shaded || shaded.issues.empty());
 
     std::cerr << "brep-audit: phase=report" << std::endl;
     std::cout << "{\"format\":\"brlcad-brep-realization-audit-v1\",\"database\":"
@@ -543,7 +563,8 @@ main(int argc, const char **argv)
 	<< ",\"tessellation_tolerance\":{\"abs\":" << tess_abs
 	<< ",\"rel\":" << tess_rel << ",\"norm\":" << tess_norm << "}"
 	<< ",\"memory_limit_mib\":" << memory_limit_mib
-	<< ",\"generators\":{\"wireframe\":\"rt_brep_plot_poly\""
+	<< ",\"mode\":" << json_quote(mode_name)
+	<< ",\"generators\":{\"wireframe\":\"rt_brep_plot\""
 	<< ",\"shaded\":\"brep_cdt_fast\"}"
 	<< ",\"reference\":{\"method\":\"face_GetBoundingBox_trim_parameter_envelopes\""
 	<< ",\"face_count\":" << ref_faces
@@ -558,9 +579,10 @@ main(int argc, const char **argv)
     std::cout << ",\"diagonal\":";
     if (ref_valid) print_num(ref_diag); else std::cout << "null";
     std::cout << "},\"wireframe\":";
-    print_result(wire, ref_dims);
+
+    if (run_wireframe) print_result(wire, ref_dims); else std::cout << "null";
     std::cout << ",\"shaded\":";
-    print_result(shaded, ref_dims);
+    if (run_shaded) print_result(shaded, ref_dims); else std::cout << "null";
     std::cout << ",\"issues\":";
     print_issues(top_issues);
     std::cout << "}\n";
