@@ -417,6 +417,16 @@ shoot_brep_trace(struct soltab *stp, struct rt_i *rtip,
 
 
 static bool
+brep_trace_fixed_leaves_match(const struct rt_brep_shot_trace &trace)
+{
+    return !trace.fixed_leaf_overflow &&
+	trace.fixed_leaf_count == trace.fixed_leaf_stored &&
+	trace.fixed_leaf_count == trace.intersected_leaves &&
+	trace.fixed_leaf_mismatches == 0;
+}
+
+
+static bool
 finite_unit_vector(const vect_t value)
 {
     return std::isfinite(value[X]) && std::isfinite(value[Y]) &&
@@ -659,6 +669,7 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     size_t maximum_local_attempts = 0;
     size_t maximum_local_failures = 0;
     size_t maximum_local_duplicates = 0;
+    size_t maximum_fixed_leaves = 0;
     size_t resolved_local_misses = 0;
     size_t resolved_local_cases = 0;
     size_t subtolerance_local_contacts = 0;
@@ -693,6 +704,8 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	VMOVE(trace_ray.direction, direction);
 	struct rt_brep_shot_trace trace;
 	(void)shoot_brep_trace(brep_stp, rtip, resp, trace_ray, trace);
+	maximum_fixed_leaves = std::max(maximum_fixed_leaves,
+	    trace.fixed_leaf_count);
 	maximum_isolation_boxes = std::max(maximum_isolation_boxes,
 	    trace.surface_subdivision_boxes);
 	maximum_isolated_boxes = std::max(maximum_isolated_boxes,
@@ -775,7 +788,8 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    if (local_outside_contact)
 		subtolerance_local_invalid++;
 	}
-	if (!trace.supported_surface_faces ||
+	if (!brep_trace_fixed_leaves_match(trace) ||
+		!trace.supported_surface_faces ||
 		trace.candidate_surface_spans + trace.excluded_surface_spans !=
 		trace.prepared_surface_spans || trace.surface_workspace_exhausted ||
 		trace.surface_box_overflow ||
@@ -888,12 +902,15 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     struct rt_brep_shot_trace tangent_trace;
     (void)shoot_brep_trace(brep_stp, rtip, resp, tangent_trace_ray,
 	tangent_trace);
+    maximum_fixed_leaves = std::max(maximum_fixed_leaves,
+	tangent_trace.fixed_leaf_count);
     if (implicit_tangent.segments != 0 || brep_tangent.segments != 0) {
 	std::printf("FAIL: exact tangent did not miss: implicit=%d BREP=%d\n",
 	    implicit_tangent.segments, brep_tangent.segments);
 	failures++;
     }
-    if (!brep_trace_covers_t(tangent_trace, 2.0 * radius, 1.0e-7) ||
+    if (!brep_trace_fixed_leaves_match(tangent_trace) ||
+	    !brep_trace_covers_t(tangent_trace, 2.0 * radius, 1.0e-7) ||
 	    tangent_trace.surface_workspace_exhausted ||
 	    tangent_trace.surface_box_overflow ||
 	    tangent_trace.local_root_overflow ||
@@ -940,7 +957,10 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	VMOVE(trace_ray.direction, direction);
 	struct rt_brep_shot_trace trace;
 	(void)shoot_brep_trace(brep_stp, rtip, resp, trace_ray, trace);
-	if (trace.surface_workspace_exhausted || trace.surface_box_overflow ||
+	maximum_fixed_leaves = std::max(maximum_fixed_leaves,
+	    trace.fixed_leaf_count);
+	if (!brep_trace_fixed_leaves_match(trace) ||
+		trace.surface_workspace_exhausted || trace.surface_box_overflow ||
 		trace.local_root_overflow ||
 		trace.local_cluster_overflow ||
 		trace.local_root_clusters != trace.stored_local_clusters ||
@@ -983,6 +1003,8 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    largest_outside_local_candidate / rtip->rti_tol.dist);
 	failures++;
     }
+    std::printf("Sphere fixed leaf traversal: capacity=%d max-leaves=%zu\n",
+	RT_BREP_TRACE_MAX_LEAVES, maximum_fixed_leaves);
 
     /* The implicit sphere rejects an outward ray beginning on its surface.
      * BREP currently returns the entirely nonpositive segment [-2R, 0].
@@ -2347,6 +2369,7 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
     double reference_local_root_distances[3][2]
 	[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
     int failures = 0;
+    size_t maximum_fixed_leaves = 0;
 
     for (size_t case_index = 0;
 	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
@@ -2429,6 +2452,8 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			transformed_direction.y, transformed_direction.z);
 		    struct rt_brep_shot_trace trace;
 		    (void)shoot_brep_trace(stp, rtip, &resource, ray, trace);
+		    maximum_fixed_leaves = std::max(maximum_fixed_leaves,
+			trace.fixed_leaf_count);
 		    const struct rt_brep_trace_edge *edge =
 			brep_trace_edge(trace, frame.edge_index);
 		    const size_t expected_closures = expected_state == 1 ? 1 : 0;
@@ -2503,7 +2528,8 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 				local_roots_differ = true;
 			}
 		    }
-		    bool bad = !edge || !edge->candidate_spans ||
+		    bool bad = !brep_trace_fixed_leaves_match(trace) ||
+			!edge || !edge->candidate_spans ||
 			!edge->within_edge_tolerance || !edge->sector_valid ||
 			edge->tolerance_inferred ||
 			!edge->discrepancy_measured ||
@@ -2597,7 +2623,9 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			    "reverse=%d observed=%d distance=%.17g "
 			    "edge-t=%.17g closure=%zu/%zu direction=%d/%d "
 			    "existing-t=%.17g local=%zu/%zu clusters=%zu/%zu "
-			    "failures=%zu/%zu invalid=%d differ=%d\n", test.name,
+			    "failures=%zu/%zu invalid=%d differ=%d "
+			    "leaves=%zu/%zu stored=%zu overflow=%zu mismatch=%zu\n",
+			    test.name,
 			    expected_state,
 			    reverse, edge ? edge->closest_state : -99,
 			    edge ? edge->distance : INFINITY,
@@ -2611,7 +2639,10 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			    reference_local_cluster_count[state_index][reverse],
 			    trace.local_root_failures,
 			    reference_local_root_failures[state_index][reverse],
-			    local_root_invalid, local_roots_differ);
+			    local_root_invalid, local_roots_differ,
+			    trace.intersected_leaves, trace.fixed_leaf_count,
+			    trace.fixed_leaf_stored, trace.fixed_leaf_overflow,
+			    trace.fixed_leaf_mismatches);
 			failures++;
 		    }
 		}
@@ -2624,8 +2655,11 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
     }
 
     delete base;
-    if (!failures)
-	std::printf("Cobb classifier similarity invariance: PASS\n");
+    if (!failures) {
+	std::printf("Cobb classifier similarity invariance: PASS "
+	    "max-leaves=%zu/%d\n", maximum_fixed_leaves,
+	    RT_BREP_TRACE_MAX_LEAVES);
+    }
     return failures;
 }
 
@@ -2707,7 +2741,8 @@ check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
 	    edge && !ON_IsValid(edge->declared_tolerance) :
 	    edge && fabs(edge->declared_tolerance -
 	    cases[case_index].declared_ratio * measured_gap) <= limit;
-	if (!edge || !edge->discrepancy_measured ||
+	if (!brep_trace_fixed_leaves_match(trace) ||
+		!edge || !edge->discrepancy_measured ||
 		!declared_ok || edge->tolerance_inferred !=
 		cases[case_index].inferred ||
 		edge->discrepancy_authorized != cases[case_index].authorized ||
@@ -2809,7 +2844,8 @@ check_brep_edge_sector_fixture(const char *label, ON_Brep *brep,
 		brep_trace_edge(trace, target_edge_index);
 	    const double expected_distance = expected_state ?
 		0.5 * tol->dist : 0.0;
-	    if (!observation || !observation->within_edge_tolerance ||
+	    if (!brep_trace_fixed_leaves_match(trace) ||
+		    !observation || !observation->within_edge_tolerance ||
 		    !observation->candidate_spans ||
 		    !observation->sector_valid ||
 		    observation->closest_state != expected_state ||
@@ -3026,6 +3062,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t maximum_local_root_attempts = 0;
     size_t maximum_local_root_failures = 0;
     size_t maximum_local_root_duplicates = 0;
+    size_t maximum_fixed_leaves = 0;
     double maximum_calibration_error = 0.0;
     double maximum_edge_distance_error = 0.0;
     double maximum_lift_error = 0.0;
@@ -3047,6 +3084,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "excluded_surface_spans,subdivision_boxes,isolated_boxes,"
 	    "subdivision_max_depth,workspace_high_water,"
 	    "workspace_exhausted\n");
+	std::printf("cobb_leaf_traversal_columns,direction,g_over_T,h_over_T,"
+	    "reverse,list_leaves,fixed_leaves,fixed_stored,overflow,"
+	    "order_mismatches\n");
 	std::printf("cobb_closure_columns,direction,g_over_T,h_over_T,reverse,"
 	    "candidate_count,edge_index,edge_t,existing_t,missing_direction\n");
 	std::printf("cobb_continuation_columns,direction,g_over_T,h_over_T,"
@@ -3170,6 +3210,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    struct rt_brep_shot_trace trace;
 		    (void)shoot_brep_trace(trace_stp, trace_rtip,
 			trace_resource, ray, trace);
+		    maximum_fixed_leaves = std::max(maximum_fixed_leaves,
+			trace.fixed_leaf_count);
 		    const size_t unique_candidates = brep_trace_unique_roots(trace);
 		    maximum_subdivision_boxes = std::max(maximum_subdivision_boxes,
 			trace.surface_subdivision_boxes);
@@ -3199,7 +3241,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    maximum_certificate_width,
 			    trace.continuation_certificate_t_max -
 			    trace.continuation_certificate_t_min);
-		    if (trace.root_overflow ||
+		    if (!brep_trace_fixed_leaves_match(trace) ||
+			    trace.root_overflow ||
 			    trace.solver_calls != trace.intersected_leaves ||
 			    trace.candidate_roots != trace.stored_roots ||
 			    trace.final_segments != variant_result.partitions ||
@@ -3596,6 +3639,14 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			failures++;
 		    }
 		    if (emit_report) {
+			std::printf("cobb_leaf_traversal,%s,%.9g,%.9g,%d,"
+			    "%zu,%zu,%zu,%zu,%zu\n",
+			    sign > 0 ? "outward" : "inward",
+			    measured_gap / tol->dist,
+			    clearance / tol->dist, reverse,
+			    trace.intersected_leaves, trace.fixed_leaf_count,
+			    trace.fixed_leaf_stored, trace.fixed_leaf_overflow,
+			    trace.fixed_leaf_mismatches);
 			std::printf("bowed_surface_seam,%s,%.9g,%.9g,%d,%.9g,"
 			    "%zu,%zu,%.9g,%.9g,%.9g,%d,%d,%d,%zu,%zu,%zu,"
 			    "%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,"
@@ -3823,6 +3874,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	"workspace-high-water=%zu max-t-width=%.9g\n",
 	maximum_certificate_boxes, maximum_certificate_workspace,
 	maximum_certificate_width);
+    std::printf("Cobb fixed leaf traversal: capacity=%d max-leaves=%zu\n",
+	RT_BREP_TRACE_MAX_LEAVES, maximum_fixed_leaves);
     free_prepared_model(implicit_model);
     delete pristine;
     return failures;

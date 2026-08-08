@@ -455,6 +455,34 @@ ESTABLISHED FINDINGS
     must remain separate.  No production event or segment is emitted from
     these preliminary clusters.
 
+31. Surface-tree leaf discovery now has an allocation-free fixed-array
+    overload in shadow mode.  It traverses the existing prepared child vectors
+    in exactly the same depth-first order as the std::list overload, stores up
+    to 128 leaf pointers in caller-owned memory, continues counting after
+    capacity, and reports overflow explicitly.  Trace-mode shooting still
+    invokes the allocating traversal first and uses its list for the live
+    solver loop; the fixed traversal is compared by total count and pointer
+    order, so the list remains an automatic correctness fallback while the
+    shadow path is qualified.
+
+    Every traced sphere grazing/contact/miss ray, tolerance-metadata ray,
+    convex/concave/periodic sector ray, classifier similarity ray, and all 416
+    bowed-seam rays now hard-gate count equality, order equality, and absence
+    of overflow.  The ordinary sphere grazing sweep reaches 8 intersected
+    leaves, the bowed matrix reaches 12, and the translated/rotated 0.01x
+    similarity reaches 68.  The latter initially exhausted a 64-entry trial
+    capacity, demonstrating that geometric similarity does not imply an
+    invariant dense-tree leaf count even though the physical event classifier
+    remains invariant.  The retained 128-entry trace workspace is 1 KiB of
+    pointers on 64-bit systems and has explicit accounting; it is not a claim
+    that 128 is sufficient for arbitrary corpus models.
+
+    This removes allocation from leaf collection itself, not from the complete
+    production shot.  Current hit lists, miss/trim cleanup, and fallback/event
+    integration still allocate.  The live traversal must not switch until a
+    fixed root/event workspace can either complete the ray or dispatch to the
+    existing allocating path without partial side effects.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -574,6 +602,10 @@ IMPLEMENTATION CHECKLIST
         [x] Bound direct surface order, subdivision stack, trace output, and
             scratch control nets; expose every overflow/high-water result.
         [ ] Integrate fixed traversal/root/event arrays and fallback dispatch.
+            [x] Add and corpus-gate a 128-entry fixed leaf traversal shadow,
+                including total count, exact order, and overflow reporting.
+            [ ] Move the live solver loop to fixed root/event storage with a
+                clean pre-mutation fallback to the allocating implementation.
     [x] Assemble the uniquely certified continuation and existing event into
         an ordered material interval in shadow mode and gate both endpoints
         against the implicit oracle.
@@ -937,6 +969,13 @@ Cobb sphere baseline:
     and the bowed leak histogram is 14/0/1 for one/two/three clusters.  This
     remains upstream of trim/topology compatibility and material winding.
 
+  * A caller-owned 128-pointer leaf array now shadows the std::list surface-
+    tree traversal.  All traced corpus rays require identical leaf count and
+    pointer order.  Current maxima are 8 for the sphere grazing sweep, 12 for
+    the bowed Cobb matrix, and 68 for the 0.01x transformed classifier.  The
+    fixed overload counts beyond capacity and exposes overflow; the production
+    solver continues to consume the list, so no shot result has changed.
+
   * Outside-span continuation rectangles are reparameterized algebraically
     into Bernstein form.  The code computes the absolute row-sum norm of each
     one-dimensional basis transformation, multiplies the tensor norms, and
@@ -960,7 +999,8 @@ Cobb sphere baseline:
     -R '^(rt_brep_ray|rt_crofton|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
     --output-on-failure
     PASS: 13/13; rt_brep_ray completes in approximately 8 seconds with
-    trace-only edge qualification enabled across all 416 bowed-seam rays
+    trace-only edge qualification and fixed leaf-traversal equivalence enabled
+    across all 416 bowed-seam rays
 
   cmake --build .build --target rt_brep_ray -j8
     PASS

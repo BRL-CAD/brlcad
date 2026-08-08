@@ -115,8 +115,16 @@ namespace brlcad {
 	/** Test whether a ray intersects the 3D bounding volume of the
 	 * node - if so, and node is not a leaf node, query children.  If
 	 * leaf node, and intersects, add to list.
+	 *
+	 * The fixed-array overload appends while count is below capacity,
+	 * increments count for every intersected leaf, and sets overflow if
+	 * any leaf cannot be stored.  The caller initializes count and
+	 * overflow and may use the total count to select a fallback.
 	 */
 	bool intersectsHierarchy(const ON_Ray &ray, std::list<const BBNode *> &results) const;
+	bool intersectsHierarchy(const ON_Ray &ray, const BBNode **results,
+		std::size_t capacity, std::size_t &count,
+		bool &overflow) const;
 
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt) const;
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const;
