@@ -1306,6 +1306,17 @@ twelve candidates.  Expansion Krawczyk existence remains 2, 2, 1, 1, 0, 0,
 so the next solver step is exact expansion or rigorous error propagation
 through candidate plane-frame construction, not more parent subdivision.
 
+Do not treat an exact-perpendicular frame as a drop-in change.  A tested
+largest-component algebraic basis used a common exact power-of-two direction
+scale and normals (-d[a],d[k],0) and (-d[b],0,d[k]) in cyclic coordinates.
+It removed the represented exact-contact certificates and modestly improved
+one hardest Krawczyk excess, but lost one of two condition-100 certificates in
+both directions and changed ordinary selection counts.  The permanent ratchet
+correctly rejected it.  Retain this construction as a bounded shadow frame
+candidate, but choose frame and candidate box together, require all existing
+existence floors to remain monotone, and do not confuse exact orthogonality
+with good interval conditioning.
+
 No real fold candidate may become a production hit until both adjacent span
 parents have a complete one-sided corridor/fold-strip proof, coincident
 observations are deduplicated as one physical event, and the resulting
