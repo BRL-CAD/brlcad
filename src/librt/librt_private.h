@@ -126,6 +126,10 @@ struct rt_i_internal {
     size_t              rti_cutlen;             /**< @brief  goal for # solids per boxnode */
     size_t              rti_cutdepth;           /**< @brief  goal for depth of NUBSPT cut tree */
 
+    /* Per-instance BREP prep experiment.  Production initializes this to the
+     * legacy default; tests may lower it before any solids are prepared. */
+    int                 rti_brep_surface_tree_depth;
+
     /* Per-type solid tables (filled during prep) */
     struct soltab **    rti_sol_by_type[ID_MAX_SOLID+1];
     size_t              rti_nsol_by_type[ID_MAX_SOLID+1];
@@ -451,6 +455,7 @@ RT_EXPORT extern void rt_vshot_via_shot(
 /* Allocation-free BREP surface-tree traversal capacity. */
 #define RT_BREP_MAX_LEAVES 128
 #define RT_BREP_MAX_HITS 128
+#define RT_BREP_DEFAULT_SURFACE_TREE_DEPTH 8
 
 /* Fixed-capacity BREP shot observations for in-librt correctness tests.
  * Solver status indices match the private brep_solver_status_t order in
@@ -1122,6 +1127,16 @@ struct rt_brep_local_root_test_result {
     fastf_t image_maximum[2];
 };
 
+struct rt_brep_prep_stats {
+    int surface_tree_depth_limit;
+    int surface_tree_maximum_depth;
+    size_t surface_tree_nodes;
+    size_t surface_tree_leaves;
+    size_t curve_trees;
+    size_t curve_tree_leaves;
+    size_t surface_tree_build_microseconds;
+};
+
 #define RT_BREP_SOURCE_UNION_TEST_ROOT 1
 #define RT_BREP_SOURCE_UNION_TEST_CANDIDATE 2
 
@@ -1250,6 +1265,10 @@ RT_EXPORT extern int _rt_brep_surface_local_root_test(
     const fastf_t ray_direction[3], int face_index, int span_index,
     const fastf_t uv[2], fastf_t maximum_radius,
     struct rt_brep_local_root_test_result *result);
+RT_EXPORT extern int _rt_brep_set_surface_tree_depth(
+    struct rt_i *rtip, int depth_limit);
+RT_EXPORT extern int _rt_brep_prep_stats(
+    const struct soltab *stp, struct rt_brep_prep_stats *result);
 RT_EXPORT extern int _rt_brep_local_root_tube_test(
     fastf_t image_displacement, fastf_t edge_distance,
     fastf_t trim_distance, fastf_t tolerance, fastf_t roundoff,

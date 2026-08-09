@@ -7,6 +7,84 @@ Repository studied: /home/cyapp/brlcad
 STEP test corpus: /home/cyapp/step_corpus_g
 
 
+IMPLEMENTATION CHECKPOINT: CONTROLLED SURFACETREE DENSITY (2026-08-09)
+----------------------------------------------------------------------
+
+The first controlled density experiment preserves the production default of
+eight while making the adaptive SurfaceTree depth an immutable per-rt_i prep
+choice.  This is intentionally not an environment variable, process global,
+or shot-time option.  Prepared BREP data now records requested and observed
+depth, BBNode node/leaf counts, CurveTree counts, and construction time;
+rt_brep_ray and brep-audit expose the control and measurements for experiments.
+The version-zero cache format is unchanged and consequently reports an
+unknown requested construction depth when old data is deserialized.
+
+On the nine BREP preparations in the isolated Cobb trim/edge-defect gate,
+reducing the limit from eight to seven reduces BBNodes from 136566 to 68094,
+leaves from 68796 to 34560, and measured SurfaceTree construction from 0.308
+to 0.155 seconds.  Limit zero has only the 54 mandatory face roots.  Every
+level from eight through zero nevertheless produces the same 96 prepared
+material selections, 24 deliberate exact-contact fallbacks, two healed edge
+transitions, and analytic intervals.  This is direct evidence that bounded
+local certification can replace dense global subdivision in the seam/crack
+cases for which it has been implemented.
+
+Broader gates establish different current floors.  Non-isoparametric and
+contact/trim behavior pass at limit zero, and affine/affine-grazing behavior
+passes at limit two.  The directed and paired Crofton suites pass at limit
+seven.  The latter compares 128000 identical sampled lines over converted
+implicit primitives, nontrivial CSG trees, transformed nested BREP leaves,
+and the sewn Cobb sphere and observes zero differing implicit/BREP
+partitions.  This exact paired-line result is stronger than merely observing
+overlapping Cauchy-Crofton area and volume confidence intervals.
+
+The complete seam/classifier shard also passes at limit seven.  A first
+462-face STEP-corpus object reduces from 123919 to 66943 BBNodes, 62451 to
+33985 leaves, 2.51 to 1.43 measured seconds, and 59.4 to 48.0 MB peak RSS when
+moving from limit eight to seven; its 13060 CurveTree leaves do not change.
+This is a smoke measurement, not a corpus distribution.  The serial audit
+schema is version two because the depth and node fields extend its original
+payload.  The focused defect and grazing gates also pass under ASAN/UBSAN at
+limit seven.
+
+The current density floor is not a diffuse numerical instability.  Limits
+zero through six fail exactly six material sphere rays at h/T = 10, 2, and
+1.1, in both directions.  The direct prepared solver already isolates the
+correct nearby ENTER and LEAVE roots.  Both lie in one connected same-face,
+same-span coarse component, so the single-root ownership theorem cannot prove
+that component complete and refuses to publish.  The sparse legacy fallback
+then retains only one root.  This supplies the next precise algorithm target:
+
+  * collect all observations in the connected component transactionally;
+  * identify exactly two distinct, opposite-direction regular root groups;
+  * contract two disjoint local neighborhoods with fixed workspace;
+  * certify existence/uniqueness, determinant sign, and outward ray-parameter
+    enclosure independently for each root;
+  * split at both local boxes and use direct/rotated Bernstein bounds to
+    exclude every remaining portion of the complete component hull; and
+  * publish both events atomically only after every root and box has one
+    proved owner.
+
+This theorem is the regular/regular analogue of the existing joint
+boundary/regular component proof.  It must retain the same stack, depth, and
+visit bounds, fail conservatively, and add telemetry and a focused regression
+ratchet.  Only after it moves the grazing floor downward should another
+default-reduction experiment be considered.  Limit seven is a promising
+intermediate measurement, not yet a production-default decision.  A cache
+version change, full sanitizer gates, the complete parallel suite, and STEP
+corpus profiling are mandatory before any production default changes.
+
+The experiment also sharpens what convergence means.  As a secant approaches
+one-point tangency, two physical crossings necessarily coalesce into a
+zero-transition contact and then disappear.  Stable behavior is therefore
+defined relative to geometry and minimum-segment tolerances: root separation
+and the material interval must trend monotonically, contacts must not create
+odd-hit solid leaks, and transform/scaling tests must preserve the normalized
+classification.  Requiring the raw hit count to remain continuous at the
+singular tangent would be mathematically impossible and is not an acceptance
+criterion.
+
+
 IMPLEMENTATION CHECKPOINT: TOLERANCE-HEALED EDGE TRANSITIONS (2026-08-09)
 ------------------------------------------------------------------------
 
