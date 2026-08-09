@@ -299,7 +299,7 @@ periodic_strip_test()
 }
 
 static bool
-paired_periodic_strip_test()
+paired_periodic_strip_case(bool single_high_boundary)
 {
     ON_Brep brep;
     ON_Circle base(ON_xy_plane, 1.0);
@@ -368,12 +368,32 @@ paired_periodic_strip_test()
     up.m_iso = ON_Surface::W_iso;
     up.m_tolerance[0] = up.m_tolerance[1] = 1.0e-6;
 
-    add_half_boundary(high_mid, high_end, high_v,
-	ON_Interval(seam_u, udom.Max()), false,
-	ON_2dPoint(seam_u, high_v), ON_2dPoint(udom.Max(), high_v));
-    add_half_boundary(high_end, high_mid, high_v,
-	ON_Interval(udom.Min(), seam_u), false,
-	ON_2dPoint(udom.Max(), high_v), ON_2dPoint(seam_u, high_v));
+    if (single_high_boundary) {
+	ON_Curve *edge_curve = surface->IsoCurve(0, high_v);
+	edge_curve->ChangeClosedCurveSeam(seam_u);
+	const int c3i = brep.AddEdgeCurve(edge_curve);
+	ON_BrepEdge &edge = brep.NewEdge(brep.m_V[high_mid],
+	    brep.m_V[high_mid], c3i);
+	edge.m_tolerance = 1.0e-6;
+	ON_LineCurve *trim_curve = new ON_LineCurve(
+	    ON_2dPoint(seam_u, high_v),
+	    ON_2dPoint(seam_u + udom.Length(), high_v));
+	trim_curve->SetDomain(0.0, 1.0);
+	ON_BrepTrim &trim = brep.NewTrim(edge, false, loop,
+	    brep.AddTrimCurve(trim_curve));
+	trim.m_type = ON_BrepTrim::boundary;
+	trim.m_iso = ON_Surface::x_iso;
+	trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-6;
+    } else {
+	add_half_boundary(high_mid, high_end, high_v,
+	    ON_Interval(seam_u, udom.Max()), false,
+	    ON_2dPoint(seam_u, high_v),
+	    ON_2dPoint(udom.Max(), high_v));
+	add_half_boundary(high_end, high_mid, high_v,
+	    ON_Interval(udom.Min(), seam_u), false,
+	    ON_2dPoint(udom.Max(), high_v),
+	    ON_2dPoint(seam_u, high_v));
+    }
 
     ON_LineCurve *down_curve = new ON_LineCurve(
 	ON_2dPoint(seam_u, high_v), ON_2dPoint(seam_u, low_v));
@@ -389,6 +409,13 @@ paired_periodic_strip_test()
 	result->report.failed_faces == 0 && result->face_count > 0;
     delete result;
     return valid;
+}
+
+static bool
+paired_periodic_strip_test()
+{
+    return paired_periodic_strip_case(false) &&
+	paired_periodic_strip_case(true);
 }
 
 static void

@@ -2536,25 +2536,29 @@ fast_reconstruct_paired_periodic_strip(const ON_Surface *surface,
 	int *outer_loop_index)
 {
     if (!surface || face.LoopCount() != 1 || !brep_loop_points ||
-	    !brep_loop_points[0] || brep_loop_points[0]->Count() < 6)
+	    !brep_loop_points[0] || brep_loop_points[0]->Count() < 4)
 	return false;
     const ON_BrepLoop *loop = face.Loop(0);
     if (!loop || loop->m_type != ON_BrepLoop::outer ||
-	    loop->TrimCount() != 6)
+	    loop->TrimCount() < 4 || loop->TrimCount() > 6)
 	return false;
 
     std::vector<const ON_BrepTrim *> seam_trims;
     std::vector<const ON_BrepTrim *> boundary_trims;
     for (int ti = 0; ti < loop->TrimCount(); ++ti) {
 	const ON_BrepTrim *trim = loop->Trim(ti);
-	if (!trim || trim->m_type == ON_BrepTrim::singular)
+	const ON_BrepTrim *next = loop->Trim(
+	    (ti + 1) % loop->TrimCount());
+	if (!trim || !next || trim->m_type == ON_BrepTrim::singular ||
+		trim->m_vi[1] != next->m_vi[0])
 	    return false;
 	if (trim->m_type == ON_BrepTrim::seam)
 	    seam_trims.push_back(trim);
 	else
 	    boundary_trims.push_back(trim);
     }
-    if (seam_trims.size() != 2 || boundary_trims.size() != 4 ||
+    if (seam_trims.size() != 2 || boundary_trims.size() < 2 ||
+	    boundary_trims.size() > 4 ||
 	    !seam_trims[0]->Edge() ||
 	    seam_trims[0]->Edge() != seam_trims[1]->Edge())
 	return false;
@@ -2617,15 +2621,32 @@ fast_reconstruct_paired_periodic_strip(const ON_Surface *surface,
 	    [](const boundary_info &a, const boundary_info &b) {
 		return a.open_coordinate < b.open_coordinate;
 	    });
-	if (fabs(boundaries[0].open_coordinate -
-		boundaries[1].open_coordinate) > isocurve_tolerance ||
-		fabs(boundaries[2].open_coordinate -
-		    boundaries[3].open_coordinate) > isocurve_tolerance)
+	size_t split = 0;
+	double largest_gap = -INFINITY;
+	for (size_t bi = 1; bi < boundaries.size(); ++bi) {
+	    const double gap = boundaries[bi].open_coordinate -
+		boundaries[bi - 1].open_coordinate;
+	    if (gap > largest_gap) {
+		largest_gap = gap;
+		split = bi;
+	    }
+	}
+	if (largest_gap <= isocurve_tolerance || split < 1 ||
+		split > 2 || boundaries.size() - split < 1 ||
+		boundaries.size() - split > 2 ||
+		boundaries[split - 1].open_coordinate -
+		    boundaries[0].open_coordinate > isocurve_tolerance ||
+		boundaries.back().open_coordinate -
+		    boundaries[split].open_coordinate > isocurve_tolerance)
 	    continue;
-	const double open_low = 0.5 * (boundaries[0].open_coordinate +
-	    boundaries[1].open_coordinate);
-	const double open_high = 0.5 * (boundaries[2].open_coordinate +
-	    boundaries[3].open_coordinate);
+	double open_low = 0.0;
+	for (size_t bi = 0; bi < split; ++bi)
+	    open_low += boundaries[bi].open_coordinate;
+	open_low /= split;
+	double open_high = 0.0;
+	for (size_t bi = split; bi < boundaries.size(); ++bi)
+	    open_high += boundaries[bi].open_coordinate;
+	open_high /= boundaries.size() - split;
 	if (open_high - open_low <= isocurve_tolerance)
 	    continue;
 
@@ -2635,8 +2656,16 @@ fast_reconstruct_paired_periodic_strip(const ON_Surface *surface,
 		first->m_vi[0] == second->m_vi[1] &&
 		first->m_vi[1] == second->m_vi[0];
 	};
-	if (!reversed_pair(boundaries[0].trim, boundaries[1].trim) ||
-		!reversed_pair(boundaries[2].trim, boundaries[3].trim))
+	auto valid_boundary_group = [&](size_t begin, size_t end) {
+	    const size_t count = end - begin;
+	    if (count == 1)
+		return boundaries[begin].trim->m_vi[0] ==
+		    boundaries[begin].trim->m_vi[1];
+	    return count == 2 && reversed_pair(boundaries[begin].trim,
+		boundaries[begin + 1].trim);
+	};
+	if (!valid_boundary_group(0, split) ||
+		!valid_boundary_group(split, boundaries.size()))
 	    continue;
 
 	bool seam_joins_boundaries = true;
@@ -3185,6 +3214,113 @@ fast_reconstruct_periodic_strip_domain(const ON_Surface *surface,
     return false;
 }
 
+static bool
+fast_reconstruct_periodic_boundary_loops(const ON_Surface *surface,
+	const ON_BrepFace &face,
+	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
+	double tolerance, fast_face_scratch &scratch, int *closed_direction,
+	int *outer_loop_index)
+{
+    if (!surface || face.LoopCount() != 2 || !brep_loop_points)
+	return false;
+    int outer_index = -1;
+    int inner_index = -1;
+    for (int li = 0; li < 2; ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop || loop->TrimCount() < 1 || !brep_loop_points[li] ||
+		brep_loop_points[li]->Count() < 2)
+	    return false;
+	for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	    const ON_BrepTrim *trim = loop->Trim(ti);
+	    const ON_BrepTrim *next = loop->Trim(
+		(ti + 1) % loop->TrimCount());
+	    if (!trim || !next || !trim->Edge() ||
+		    trim->m_type == ON_BrepTrim::seam ||
+		    trim->m_type == ON_BrepTrim::singular ||
+		    trim->m_vi[1] != next->m_vi[0])
+		return false;
+	}
+	if (loop->m_type == ON_BrepLoop::outer)
+	    outer_index = li;
+	else if (loop->m_type == ON_BrepLoop::inner)
+	    inner_index = li;
+    }
+    if (outer_index < 0 || inner_index < 0)
+	return false;
+
+    for (int closed_dir = 0; closed_dir < 2; ++closed_dir) {
+	if (!surface->IsClosed(closed_dir))
+	    continue;
+	const int open_dir = 1 - closed_dir;
+	const double period = surface->Domain(closed_dir).Length();
+	const double open_length = surface->Domain(open_dir).Length();
+	if (!(period > ON_ZERO_TOLERANCE) ||
+		!(open_length > ON_ZERO_TOLERANCE))
+	    continue;
+	const double parameter_tolerance = std::max(tolerance,
+	    std::max(period, open_length) * 1.0e-4);
+	const double isocurve_tolerance = std::max(parameter_tolerance,
+	    open_length * 1.0e-3);
+	double open_coordinates[2] = {0.0, 0.0};
+	bool loops_valid = true;
+	for (int li = 0; li < 2; ++li) {
+	    const ON_SimpleArray<BrepTrimPoint> &points =
+		*brep_loop_points[li];
+	    double closed_min = INFINITY;
+	    double closed_max = -INFINITY;
+	    double open_min = INFINITY;
+	    double open_max = -INFINITY;
+	    for (int pi = 0; pi < points.Count(); ++pi) {
+		closed_min = std::min(closed_min,
+		    points[pi].p2d[closed_dir]);
+		closed_max = std::max(closed_max,
+		    points[pi].p2d[closed_dir]);
+		open_min = std::min(open_min, points[pi].p2d[open_dir]);
+		open_max = std::max(open_max, points[pi].p2d[open_dir]);
+	    }
+	    if (closed_max - closed_min < 0.90 * period ||
+		    closed_max - closed_min > 1.10 * period ||
+		    open_max - open_min > isocurve_tolerance) {
+		loops_valid = false;
+		break;
+	    }
+	    open_coordinates[li] = 0.5 * (open_min + open_max);
+	}
+	if (!loops_valid || fabs(open_coordinates[outer_index] -
+		open_coordinates[inner_index]) <= isocurve_tolerance)
+	    continue;
+
+	const double closed_start = surface->Domain(closed_dir).Min();
+	const double closed_end = surface->Domain(closed_dir).Max();
+	const double outer_open = open_coordinates[outer_index];
+	const double inner_open = open_coordinates[inner_index];
+	ON_2dPoint corners[5];
+	for (int ci = 0; ci < 5; ++ci)
+	    corners[ci] = (*brep_loop_points[outer_index])[0].p2d;
+	corners[0][closed_dir] = corners[1][closed_dir] =
+	    corners[4][closed_dir] = closed_start;
+	corners[2][closed_dir] = corners[3][closed_dir] = closed_end;
+	corners[0][open_dir] = corners[3][open_dir] =
+	    corners[4][open_dir] = outer_open;
+	corners[1][open_dir] = corners[2][open_dir] = inner_open;
+
+	ON_SimpleArray<BrepTrimPoint> replacement;
+	for (int ci = 0; ci < 5; ++ci) {
+	    if (!fast_append_synthetic_uv(replacement, surface, corners[ci],
+		    -1, scratch))
+		return false;
+	}
+	*brep_loop_points[outer_index] = replacement;
+	brep_loop_points[inner_index]->Empty();
+	if (closed_direction)
+	    *closed_direction = closed_dir;
+	if (outer_loop_index)
+	    *outer_loop_index = outer_index;
+	return true;
+    }
+    return false;
+}
+
 void
 detria_CDT(struct bu_list *vhead,
 	     const ON_BrepFace &face,
@@ -3674,6 +3810,10 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	BREP_SAME_POINT_TOLERANCE, model_diagonal, scratch);
     if (!full_periodic_face)
 	full_periodic_face = fast_reconstruct_periodic_strip_domain(s, face,
+	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
+	    &full_periodic_closed_dir, &full_periodic_outer_index);
+    if (!full_periodic_face)
+	full_periodic_face = fast_reconstruct_periodic_boundary_loops(s, face,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
     if (!full_periodic_face)
