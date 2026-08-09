@@ -45,6 +45,7 @@
 #include "bg/tri_pt.h"
 #include "bg/trimesh.h"
 #include "brep.h"
+#include "./chart.h"
 #include "./cdt.h"
 #include "./mesh.h"
 
@@ -3479,153 +3480,239 @@ cdt_mesh_t::cdt()
     //cdt_inputs_print("cdt_inputs.c");
     //cdt_inputs_plot("cdt_inputs.plot3");
 
-    // Aspect-ratio normalization: if the face UV bounding box has a large
-    // aspect ratio (e.g. a long cylindrical face), scale the shorter axis in
-    // bgp_2d so the CDT triangulator sees a near-square domain.  This avoids
-    // numerically degenerate initial triangles for faces like NIST Face 35
-    // whose UV extents span ~93:1.  The scale is applied only to the local
-    // bgp_2d array; m_pnts_2d is unchanged, so all upstream UV coordinates
-    // remain correct.  bg_nested_poly_triangulate is invariant to uniform
-    // axis scaling (it only determines topology, not UV values).
-    double umin = std::numeric_limits<double>::max();
-    double umax = -std::numeric_limits<double>::max();
-    double vmin = std::numeric_limits<double>::max();
-    double vmax = -std::numeric_limits<double>::max();
-    for (size_t i = 0; i < m_pnts_2d.size(); i++) {
-	double u = m_pnts_2d[i].first;
-	double v = m_pnts_2d[i].second;
-	if (u < umin) umin = u;
-	if (u > umax) umax = u;
-	if (v < vmin) vmin = v;
-	if (v > vmax) vmax = v;
+    int *native_outer = loop_to_bgpoly(&outer_loop);
+    if (!native_outer)
+	return false;
+    const size_t native_outer_count = outer_loop.poly.size() + 1;
+    std::vector<int> source_outer(native_outer,
+	native_outer + native_outer_count);
+    bu_free(native_outer, "native chart outline");
+
+    std::vector<std::vector<int>> source_holes;
+    for (il_it = inner_loops.begin(); il_it != inner_loops.end(); ++il_it) {
+	int *native_hole = loop_to_bgpoly(il_it->second);
+	if (!native_hole)
+	    return false;
+	const size_t count = il_it->second->poly.size() + 1;
+	source_holes.push_back(std::vector<int>(native_hole,
+	    native_hole + count));
+	bu_free(native_hole, "native chart hole");
     }
-    double uscale = 1.0, vscale = 1.0;
-    {
-	double urng = umax - umin;
-	double vrng = vmax - vmin;
-	if (urng > 0.0 && vrng > 0.0) {
-	    double ratio = (urng > vrng) ? urng / vrng : vrng / urng;
-	    if (ratio > 10.0) {
-		if (urng < vrng)
-		    uscale = vrng / urng;
-		else
-		    vscale = urng / vrng;
-		bu_log("Face %d: UV aspect ratio %.1f:1, normalizing (uscale=%.4g vscale=%.4g)\n",
-		    f_id, ratio, uscale, vscale);
+    std::vector<int> source_steiner;
+    source_steiner.reserve(m_interior_pnts.size());
+    for (long point : m_interior_pnts) {
+	if (point < 0 || (size_t)point >= m_pnts_2d.size())
+	    continue;
+	source_steiner.push_back((int)point);
+    }
+    std::vector<const ON_3dPoint *> source_points_3d(m_pnts_2d.size(),
+	NULL);
+    for (size_t i = 0; i < source_points_3d.size(); ++i) {
+	const auto mapped = p2d3d.find((long)i);
+	if (mapped != p2d3d.end() && mapped->second >= 0 &&
+		(size_t)mapped->second < pnts.size())
+	    source_points_3d[i] = pnts[(size_t)mapped->second];
+    }
+    std::vector<cdt_topo_vertex_id> source_topology_vertices(
+	m_pnts_2d.size(), CDT_TOPOLOGY_ID_NONE);
+    bool source_topology_conflict = false;
+    const auto assign_topology_vertex = [&](long source_point,
+	    int vertex_id) {
+	if (source_point < 0 || (size_t)source_point >=
+		source_topology_vertices.size() || vertex_id < 0)
+	    return;
+	cdt_topo_vertex_id &current =
+	    source_topology_vertices[(size_t)source_point];
+	if (current == CDT_TOPOLOGY_ID_NONE || current == vertex_id)
+	    current = vertex_id;
+	else
+	    source_topology_conflict = true;
+    };
+    const auto assign_loop_topology = [&](const cpolygon_t *loop) {
+	if (!loop)
+	    return;
+	for (const cpolyedge_t *edge : loop->poly) {
+	    if (!edge || edge->trim_ind < 0 ||
+		    edge->trim_ind >= brep->m_T.Count())
+		continue;
+	    const ON_BrepTrim &trim = brep->m_T[edge->trim_ind];
+	    const auto first_point = loop->p2o.find(edge->v2d[0]);
+	    const auto second_point = loop->p2o.find(edge->v2d[1]);
+	    if (first_point == loop->p2o.end() ||
+		    second_point == loop->p2o.end())
+		continue;
+	    const long first = first_point->second;
+	    const long second = second_point->second;
+	    if (trim.m_type == ON_BrepTrim::singular) {
+		assign_topology_vertex(first, trim.m_vi[0]);
+		assign_topology_vertex(second, trim.m_vi[0]);
+		continue;
 	    }
+	    // Segment adjacency identifies the original trim endpoints without
+	    // relying on parameter values changed by edge subdivision.
+	    if (!edge->prev || edge->prev->trim_ind != edge->trim_ind)
+		assign_topology_vertex(first, trim.m_vi[0]);
+	    if (!edge->next || edge->next->trim_ind != edge->trim_ind)
+		assign_topology_vertex(second, trim.m_vi[1]);
+	    const ON_Interval domain = trim.Domain();
+	    const double magnitude = std::max(std::fabs(domain.Min()),
+		std::fabs(domain.Max()));
+	    const double tolerance = 256.0 *
+		std::numeric_limits<double>::epsilon() *
+		std::max(magnitude, domain.Length());
+	    if (std::fabs(edge->trim_start - domain.Min()) <= tolerance)
+		assign_topology_vertex(first, trim.m_vi[0]);
+	    if (std::fabs(edge->trim_start - domain.Max()) <= tolerance)
+		assign_topology_vertex(first, trim.m_vi[1]);
+	    if (std::fabs(edge->trim_end - domain.Min()) <= tolerance)
+		assign_topology_vertex(second, trim.m_vi[0]);
+	    if (std::fabs(edge->trim_end - domain.Max()) <= tolerance)
+		assign_topology_vertex(second, trim.m_vi[1]);
+	}
+    };
+    assign_loop_topology(&outer_loop);
+    for (const auto &loop : inner_loops)
+	assign_loop_topology(loop.second);
+    if (source_topology_conflict) {
+	struct ON_Brep_CDT_State *state =
+	    (struct ON_Brep_CDT_State *)p_cdt;
+	if (state)
+	    cdt_diagnostic_set(state, BREP_CDT_RESULT_CHART_FAILED,
+		BREP_CDT_STAGE_CHART_CONSTRUCTION, f_id, 0, 1,
+		"chart point has conflicting B-Rep vertex identities");
+	return false;
+    }
+
+    cdt_face_chart chart;
+    const ON_BrepFace &face = brep->m_F[f_id];
+    if (!chart.build(face, m_pnts_2d, source_outer, source_holes,
+	    source_steiner, source_points_3d, source_topology_vertices)) {
+	bu_log("Face %d: chart construction failed: %s\n", f_id,
+	    chart.failure().c_str());
+	struct ON_Brep_CDT_State *state =
+	    (struct ON_Brep_CDT_State *)p_cdt;
+	if (state)
+	    cdt_diagnostic_set(state, BREP_CDT_RESULT_CHART_FAILED,
+		BREP_CDT_STAGE_CHART_CONSTRUCTION, f_id, 0, 1,
+		chart.failure().c_str());
+	return false;
+    }
+    // Carry explicit chart singularity identity into the 3-D mesh.  The
+    // legacy global singular-normal map is incomplete when a pole has no
+    // usable evaluated normal, but that must not make the pole masquerade as
+    // an ordinary B-Rep edge sample during validation.
+    for (const cdt_chart_vertex &vertex : chart.vertices) {
+	if (!vertex.singular || vertex.native_point < 0)
+	    continue;
+	const auto p3d_index = p2d3d.find(vertex.native_point);
+	if (p3d_index == p2d3d.end() || p3d_index->second < 0 ||
+		(size_t)p3d_index->second >= pnts.size())
+	    continue;
+	const auto mesh_index = p2ind.find(pnts[(size_t)p3d_index->second]);
+	if (mesh_index != p2ind.end())
+	    sv.insert(mesh_index->second);
+    }
+
+    point2d_t *bgp_2d = (point2d_t *)bu_calloc(chart.points.size(),
+	sizeof(point2d_t), "chart points array");
+    for (size_t i = 0; i < chart.points.size(); ++i)
+	V2SET(bgp_2d[i], chart.points[i].first, chart.points[i].second);
+
+    const size_t opoly_count = chart.outer.size() + 1;
+    int *opoly = (int *)bu_calloc(opoly_count, sizeof(int),
+	"chart outline");
+    for (size_t i = 0; i < chart.outer.size(); ++i)
+	opoly[i] = chart.outer[i];
+    opoly[chart.outer.size()] = chart.outer[0];
+
+    const int holes_cnt = (int)chart.holes.size();
+    const int **holes_array = NULL;
+    size_t *holes_npts = NULL;
+    if (holes_cnt) {
+	holes_array = (const int **)bu_calloc((size_t)holes_cnt,
+	    sizeof(int *), "chart holes");
+	holes_npts = (size_t *)bu_calloc((size_t)holes_cnt,
+	    sizeof(size_t), "chart hole counts");
+	for (int hi = 0; hi < holes_cnt; ++hi) {
+	    holes_npts[hi] = chart.holes[(size_t)hi].size() + 1;
+	    int *hole = (int *)bu_calloc(holes_npts[hi], sizeof(int),
+		"chart hole");
+	    for (size_t pi = 0; pi < chart.holes[(size_t)hi].size(); ++pi)
+		hole[pi] = chart.holes[(size_t)hi][pi];
+	    hole[holes_npts[hi] - 1] = chart.holes[(size_t)hi][0];
+	    holes_array[hi] = hole;
 	}
     }
 
-    point2d_t *bgp_2d = (point2d_t *)bu_calloc(m_pnts_2d.size() + 1, sizeof(point2d_t), "2D points array");
-    for (size_t i = 0; i < m_pnts_2d.size(); i++) {
-	bgp_2d[i][X] = m_pnts_2d[i].first * uscale;
-	bgp_2d[i][Y] = m_pnts_2d[i].second * vscale;
+    std::vector<std::vector<double>> hole_polys_flat((size_t)holes_cnt);
+    for (int hi = 0; hi < holes_cnt; ++hi) {
+	hole_polys_flat[(size_t)hi].resize(holes_npts[hi] * 2);
+	for (size_t pi = 0; pi < holes_npts[hi]; ++pi) {
+	    const int point = holes_array[hi][pi];
+	    hole_polys_flat[(size_t)hi][pi * 2] = bgp_2d[point][X];
+	    hole_polys_flat[(size_t)hi][pi * 2 + 1] = bgp_2d[point][Y];
+	}
+    }
+
+    double chart_min_x = DBL_MAX;
+    double chart_max_x = -DBL_MAX;
+    double chart_min_y = DBL_MAX;
+    double chart_max_y = -DBL_MAX;
+    for (const auto &point : chart.points) {
+	chart_min_x = std::min(chart_min_x, point.first);
+	chart_max_x = std::max(chart_max_x, point.first);
+	chart_min_y = std::min(chart_min_y, point.second);
+	chart_max_y = std::max(chart_max_y, point.second);
+    }
+    const double boundary_scale = std::max(DBL_MIN,
+	hypot(chart_max_x - chart_min_x, chart_max_y - chart_min_y));
+    const double boundary_tolerance = sqrt(DBL_EPSILON) * boundary_scale;
+    const double boundary_tolerance_sq = boundary_tolerance *
+	boundary_tolerance;
+    std::vector<int> steiner_vec;
+    steiner_vec.reserve(chart.steiner.size());
+    for (int point : chart.steiner) {
+	bool on_boundary = point_on_polygon_boundary(bgp_2d, point, opoly,
+	    opoly_count, boundary_tolerance_sq);
+	for (int hi = 0; hi < holes_cnt && !on_boundary; ++hi)
+	    on_boundary = point_on_polygon_boundary(bgp_2d, point,
+		holes_array[hi], holes_npts[hi], boundary_tolerance_sq);
+	if (on_boundary)
+	    continue;
+	bool in_hole = false;
+	for (int hi = 0; hi < holes_cnt && !in_hole; ++hi) {
+	    point2d_t test_point;
+	    V2SET(test_point, bgp_2d[point][X], bgp_2d[point][Y]);
+	    const point2d_t *hole = (const point2d_t *)
+		hole_polys_flat[(size_t)hi].data();
+	    in_hole = bg_pnt_in_polygon(holes_npts[hi], hole,
+		(const point2d_t *)&test_point);
+	}
+	if (!in_hole)
+	    steiner_vec.push_back(point);
+    }
+    int *steiner = steiner_vec.empty() ? NULL : steiner_vec.data();
+    const size_t steiner_cnt = steiner_vec.size();
+    std::vector<int> constraint_vec;
+    constraint_vec.reserve(chart.constraints.size() * 2);
+    for (const std::pair<int, int> &constraint : chart.constraints) {
+	constraint_vec.push_back(constraint.first);
+	constraint_vec.push_back(constraint.second);
     }
 
     int *faces = NULL;
     int num_faces = 0;
-
-    // Walk the outer loop and build the libbg polygon
-    int *opoly = loop_to_bgpoly(&outer_loop);
-    if (!opoly) {
-	return false;
-    }
-
-    const int **holes_array = NULL;
-    size_t *holes_npts = NULL;
-    int holes_cnt = inner_loops.size();
-    if (holes_cnt) {
-	holes_array = (const int **)bu_calloc(holes_cnt+1, sizeof(int *), "holes array");
-	holes_npts = (size_t *)bu_calloc(holes_cnt+1, sizeof(size_t), "hole pntcnt array");
-	int loop_cnt = 0;
-	for (il_it = inner_loops.begin(); il_it != inner_loops.end(); il_it++) {
-	    cpolygon_t *inl = il_it->second;
-	    holes_array[loop_cnt] = loop_to_bgpoly(inl);
-	    holes_npts[loop_cnt] = inl->poly.size()+1;
-	    loop_cnt++;
-	}
-    }
-
-    // Build the Steiner array, filtering points in trimmed-away holes and
-    // points numerically on a constrained boundary.  Detria rejects a
-    // Steiner point on a constrained segment; the boundary already supplies
-    // the exact sample, so retaining that duplicate adds no geometry.
-    // Pre-build per-hole 2D polygon arrays once (reused for each Steiner point test).
-    std::vector<std::vector<double>> hole_polys_flat; // pairs of (x,y) stored flat
-    std::vector<size_t> hole_polys_npts;
-    if (holes_cnt) {
-	hole_polys_flat.resize(holes_cnt);
-	hole_polys_npts.resize(holes_cnt);
-	for (int hi = 0; hi < holes_cnt; hi++) {
-	    hole_polys_npts[hi] = holes_npts[hi];
-	    hole_polys_flat[hi].resize(holes_npts[hi] * 2);
-	    for (size_t hj = 0; hj < holes_npts[hi]; hj++) {
-		hole_polys_flat[hi][hj*2+0] = bgp_2d[holes_array[hi][hj]][X];
-		hole_polys_flat[hi][hj*2+1] = bgp_2d[holes_array[hi][hj]][Y];
-	    }
-	}
-    }
-
-    std::vector<int> steiner_vec;
-    steiner_vec.reserve(m_interior_pnts.size());
-    const double scaled_u_range = (umax - umin) * uscale;
-    const double scaled_v_range = (vmax - vmin) * vscale;
-    const double boundary_scale = std::max(1.0,
-	hypot(scaled_u_range, scaled_v_range));
-    const double boundary_tolerance =
-	sqrt(DBL_EPSILON) * boundary_scale;
-    const double boundary_tolerance_sq =
-	boundary_tolerance * boundary_tolerance;
-    for (auto p_it = m_interior_pnts.begin(); p_it != m_interior_pnts.end(); p_it++) {
-	int idx = (int)*p_it;
-	bool on_boundary = point_on_polygon_boundary(bgp_2d, idx, opoly,
-	    outer_loop.poly.size() + 1, boundary_tolerance_sq);
-	for (int hi = 0; hi < holes_cnt && !on_boundary; ++hi) {
-	    on_boundary = point_on_polygon_boundary(bgp_2d, idx,
-		holes_array[hi], holes_npts[hi], boundary_tolerance_sq);
-	}
-	if (on_boundary)
-	    continue;
-	bool in_hole = false;
-	for (int hi = 0; hi < holes_cnt && !in_hole; hi++) {
-	    point2d_t test_pnt;
-	    V2SET(test_pnt, bgp_2d[idx][X], bgp_2d[idx][Y]);
-	    const point2d_t *hpoly = (const point2d_t *)hole_polys_flat[hi].data();
-	    if (bg_pnt_in_polygon(hole_polys_npts[hi], hpoly, (const point2d_t *)&test_pnt))
-		in_hole = true;
-	}
-	if (!in_hole)
-	    steiner_vec.push_back(idx);
-    }
-    int *steiner = steiner_vec.empty() ? NULL : steiner_vec.data();
-    size_t steiner_cnt = steiner_vec.size();
-
-    // Sanity check: every polygon array must be closed (first index == last index).
-    // Detria uses front()==back() to detect the closed-polyline format; warn if
-    // that invariant is ever violated.
-    if (holes_cnt) {
-	size_t opoly_n = outer_loop.poly.size()+1;
-	if (opoly[0] != opoly[opoly_n-1])
-	    bu_log("Face %d CDT: outer polygon NOT CLOSED (first=%d last=%d)\n",
-		   f_id, opoly[0], opoly[opoly_n-1]);
-	for (int hi = 0; hi < holes_cnt; hi++) {
-	    size_t hn = holes_npts[hi];
-	    if (holes_array[hi][0] != holes_array[hi][hn-1])
-		bu_log("Face %d CDT: hole[%d] NOT CLOSED (first=%d last=%d)\n",
-		       f_id, hi, holes_array[hi][0], holes_array[hi][hn-1]);
-	}
-    }
-
     struct bg_triangulation_report tri_report = {0, -1, {0}};
-    bool result = (bool)!bg_nested_poly_triangulate_strict(&faces,
-	&num_faces, NULL, NULL, opoly, outer_loop.poly.size() + 1,
+    bool result = (bool)!bg_nested_poly_triangulate_constraints_strict(&faces,
+	&num_faces, NULL, NULL, opoly, opoly_count,
 	(const int **)holes_array, holes_npts, holes_cnt, steiner, steiner_cnt,
-	bgp_2d, m_pnts_2d.size(), &tri_report);
+	constraint_vec.empty() ? NULL : constraint_vec.data(),
+	chart.constraints.size(), bgp_2d, chart.points.size(), &tri_report);
 
     if (!result) {
 	bu_log("Face %d: constrained triangulation failed: %s "
 	    "(bnd_pnts=%zu steiner=%zu/%zu holes=%d)\n", f_id,
-	    tri_report.message, outer_loop.poly.size(), steiner_cnt,
+	    tri_report.message, chart.outer.size(), steiner_cnt,
 	    m_interior_pnts.size(), holes_cnt);
 	struct ON_Brep_CDT_State *state =
 	    (struct ON_Brep_CDT_State *)p_cdt;
@@ -3654,15 +3741,15 @@ cdt_mesh_t::cdt()
 	    fprintf(df, "#include \"bu/malloc.h\"\n");
 	    fprintf(df, "#include \"bg/polygon.h\"\n");
 	    fprintf(df, "int main() {\n");
-	    size_t np = m_pnts_2d.size();
+	    size_t np = chart.points.size();
 	    fprintf(df, "    point2d_t *bgp_2d = (point2d_t *)bu_calloc(%zu, sizeof(point2d_t), \"2d pts\");\n", np);
 	    for (size_t i = 0; i < np; i++) {
-		fprintf(df, "    bgp_2d[%zu][X] = %.17g;\n", i, m_pnts_2d[i].first  * uscale);
-		fprintf(df, "    bgp_2d[%zu][Y] = %.17g;\n", i, m_pnts_2d[i].second * vscale);
+		fprintf(df, "    bgp_2d[%zu][X] = %.17g;\n", i, chart.points[i].first);
+		fprintf(df, "    bgp_2d[%zu][Y] = %.17g;\n", i, chart.points[i].second);
 	    }
 	    // The polygon array for bg_nested_poly_triangulate uses a closed format:
 	    // the first vertex index is repeated as the last entry (size = edge_count + 1).
-	    size_t on = outer_loop.poly.size() + 1;
+	    size_t on = opoly_count;
 	    fprintf(df, "    int *opoly = (int *)bu_calloc(%zu, sizeof(int), \"opoly\");\n", on);
 	    for (size_t i = 0; i < on; i++)
 		fprintf(df, "    opoly[%zu] = %d;\n", i, opoly[i]);
@@ -3687,10 +3774,20 @@ cdt_mesh_t::cdt()
 	    } else {
 		fprintf(df, "    int *steiner = NULL;\n");
 	    }
+	    if (!constraint_vec.empty()) {
+		fprintf(df, "    int *constraints = (int *)bu_calloc(%zu, sizeof(int), \"constraints\");\n",
+		    constraint_vec.size());
+		for (size_t ci = 0; ci < constraint_vec.size(); ++ci)
+		    fprintf(df, "    constraints[%zu] = %d;\n", ci,
+			constraint_vec[ci]);
+	    } else {
+		fprintf(df, "    int *constraints = NULL;\n");
+	    }
 	    fprintf(df, "    int *faces = NULL; int num_faces = 0;\n");
-	    fprintf(df, "    int r = !bg_nested_poly_triangulate(&faces, &num_faces,\n");
+	    fprintf(df, "    int r = !bg_nested_poly_triangulate_constraints_strict(&faces, &num_faces,\n");
 	    fprintf(df, "        NULL, NULL, opoly, %zu, holes, holes_npts, %d,\n", on, holes_cnt);
-	    fprintf(df, "        steiner, %zu, bgp_2d, %zu, TRI_CONSTRAINED_DELAUNAY);\n", steiner_cnt, np);
+	    fprintf(df, "        steiner, %zu, constraints, %zu, bgp_2d, %zu, NULL);\n",
+		steiner_cnt, chart.constraints.size(), np);
 	    fprintf(df, "    if (r) printf(\"success\\n\"); else printf(\"FAIL\\n\");\n");
 	    fprintf(df, "    return !r;\n}\n");
 	    fclose(df);
@@ -3703,15 +3800,27 @@ cdt_mesh_t::cdt()
     if (result) {
 	for (int i = 0; i < num_faces; i++) {
 	    triangle_t t;
-	    t.v[0] = faces[3*i+0];
-	    t.v[1] = faces[3*i+1];
-	    t.v[2] = faces[3*i+2];
+	    t.v[0] = chart.native_point(faces[3*i+0]);
+	    t.v[1] = chart.native_point(faces[3*i+1]);
+	    t.v[2] = chart.native_point(faces[3*i+2]);
+	    if (t.v[0] < 0 || t.v[1] < 0 || t.v[2] < 0) {
+		result = false;
+		tris_2d.clear();
+		struct ON_Brep_CDT_State *state =
+		    (struct ON_Brep_CDT_State *)p_cdt;
+		if (state)
+		    cdt_diagnostic_set(state,
+			BREP_CDT_RESULT_CERTIFICATION_FAILED,
+			BREP_CDT_STAGE_DETRIA, f_id, 0, 1,
+			"chart output did not map to native UV");
+		break;
+	    }
 
 	    tris_2d.push_back(t);
 	}
-
-	bu_free(faces, "faces array");
     }
+
+    bu_free(faces, "faces array");
 
     bu_free(bgp_2d, "free libbg 2d points array)");
     bu_free(opoly, "polygon points");
@@ -3723,9 +3832,6 @@ cdt_mesh_t::cdt()
 	bu_free((void *)holes_array, "holes array");
 	bu_free(holes_npts, "holes array");
     }
-
-    // steiner points into steiner_vec's internal buffer (not bu_calloc'd),
-    // so no explicit free is needed here; steiner_vec cleans itself up.
 
     // Use the 2D triangles to create the face 3D triangle mesh
     reset();
@@ -4186,7 +4292,8 @@ cdt_mesh_t::valid(int verbose)
     bool tret = true;
     bool topret = true;
 
-    bool fplanar = planar();
+    const bool check_edge_triangles =
+	!cdt_face_uses_cone_chart(brep->m_F[f_id]) && !planar();
 
     boundary_edges_update();
 
@@ -4219,30 +4326,31 @@ cdt_mesh_t::valid(int verbose)
 	serialize(bu_vls_cstr(&fname));
     }
 
-    tris_tree.GetFirst(tree_it);
-    while (!tree_it.IsNull()) {
-	t_ind = *tree_it;
-	tri = tris_vect[t_ind];
+    if (check_edge_triangles) {
+	tris_tree.GetFirst(tree_it);
+	while (!tree_it.IsNull()) {
+	    t_ind = *tree_it;
+	    tri = tris_vect[t_ind];
 
-	int epnt_cnt = 0;
-	int bedge_cnt = 0;
-	for (int i = 0; i < 3; i++) {
-	    epnt_cnt = (ep.find(tri.v[i]) == ep.end()) ? epnt_cnt : epnt_cnt + 1;
-	}
-	std::set<uedge_t> ue = tri.uedges();
-	std::set<uedge_t>::iterator ue_it;
-	for (ue_it = ue.begin(); ue_it != ue.end(); ue_it++) {
-	    if (boundary_edges.find(*ue_it) != boundary_edges.end()) {
-		bedge_cnt++;
+	    int epnt_cnt = 0;
+	    int bedge_cnt = 0;
+	    for (int i = 0; i < 3; ++i) {
+		if (ep.find(tri.v[i]) != ep.end())
+		    epnt_cnt++;
 	    }
+	    for (const uedge_t &edge : tri.uedges()) {
+		if (boundary_edges.find(edge) != boundary_edges.end())
+		    bedge_cnt++;
+	    }
+	    if (epnt_cnt == 3 && bedge_cnt < 2) {
+		if (verbose > 0)
+		    std::cout << name << " face " << f_id
+			<< ": triangle has three edge points but only "
+			<< bedge_cnt << " boundary edges\n";
+		tret = false;
+	    }
+	    ++tree_it;
 	}
-
-	if (!fplanar && epnt_cnt == 3 && bedge_cnt < 2) {
-	    std::cerr << "tri has three edge points, but only " << bedge_cnt << "  boundary edges??\n";
-	    tret = false;
-	}
-
-	++tree_it;
     }
 
     if (!tret && verbose > 1) {

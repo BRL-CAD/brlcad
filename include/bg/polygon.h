@@ -251,6 +251,18 @@ bg_nested_poly_triangulate_strict(int **faces, int *num_faces,
 	const point2d_t *pts, const size_t npts,
 	struct bg_triangulation_report *report);
 
+/** Strict triangulation with additional noncrossing interior constraint
+ * edges.  constraints contains two point indices per edge. */
+BG_EXPORT extern int
+bg_nested_poly_triangulate_constraints_strict(int **faces, int *num_faces,
+	point2d_t **out_pts, int *num_outpts,
+	const int *poly, const size_t poly_npts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const int *constraints, const size_t constraint_cnt,
+	const point2d_t *pts, const size_t npts,
+	struct bg_triangulation_report *report);
+
 /**
  * @brief
  * Triangulate a 2D polygon without holes.

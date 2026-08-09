@@ -194,5 +194,47 @@ main(int argc, const char **argv)
 	    return 13;
     }
 
+    {
+	point2d_t points[4] = {
+	    {0.0, 0.0}, {2.0, 0.0}, {2.0, 1.0}, {0.0, 1.0}
+	};
+	const int outer[4] = {0, 1, 2, 3};
+	const int constraint[2] = {0, 2};
+	int *faces = NULL;
+	int face_count = 0;
+	struct bg_triangulation_report report = {0, -1, {0}};
+	if (bg_nested_poly_triangulate_constraints_strict(&faces,
+		&face_count, NULL, NULL, outer, 4, NULL, NULL, 0, NULL,
+		0, constraint, 1, (const point2d_t *)points, 4,
+		&report) || face_count != 2 ||
+		report.reason != BG_TRIANGULATION_OK) {
+	    bu_free(faces, "constrained strict faces");
+	    return 14;
+	}
+	int edge_uses = 0;
+	for (int face = 0; face < face_count; ++face) {
+	    for (int edge = 0; edge < 3; ++edge) {
+		const int first = faces[3 * face + edge];
+		const int second = faces[3 * face + (edge + 1) % 3];
+		if ((first == 0 && second == 2) ||
+			(second == 0 && first == 2))
+		    edge_uses++;
+	    }
+	}
+	bu_free(faces, "constrained strict faces");
+	if (edge_uses != 2)
+	    return 15;
+
+	const int crossing[4] = {0, 2, 1, 3};
+	faces = NULL;
+	face_count = 0;
+	if (!bg_nested_poly_triangulate_constraints_strict(&faces,
+		&face_count, NULL, NULL, outer, 4, NULL, NULL, 0, NULL,
+		0, crossing, 2, (const point2d_t *)points, 4,
+		&report) || faces || face_count ||
+		report.reason != BG_TRIANGULATION_CROSSING_CONSTRAINTS)
+	    return 16;
+    }
+
     return 0;
 }
