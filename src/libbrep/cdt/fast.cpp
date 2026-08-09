@@ -3977,9 +3977,10 @@ fast_reconstruct_winding_periodic_strip(const ON_Surface *surface,
 	int *outer_loop_index)
 {
     /* An essential inner loop may backtrack through many periods while its
-     * net winding still matches a one-turn outer boundary.  Such a loop is a
-     * second boundary of a strip on the quotient surface, not a planar hole.
-     * Cut both loops at the same physical parameter and stitch them into one
+     * net winding still matches a one-turn outer boundary.  Doubly periodic
+     * surfaces can also encode the same strip with oppositely oriented cuts
+     * whose other coordinate spans one period.  Neither is a planar hole.
+     * Cut both loops at matching physical parameters and stitch them into one
      * outline in the universal cover. */
     if (!surface || face.LoopCount() != 2 || !brep_loop_points)
 	return false;
@@ -3990,7 +3991,7 @@ fast_reconstruct_winding_periodic_strip(const ON_Surface *surface,
 	if (!loop || !brep_loop_points[li] ||
 		brep_loop_points[li]->Count() < 2)
 	    return false;
-	if (loop->m_type == ON_BrepLoop::outer && loop->TrimCount() == 1)
+	if (loop->m_type == ON_BrepLoop::outer)
 	    outer_index = li;
 	else if (loop->m_type == ON_BrepLoop::inner)
 	    inner_index = li;
@@ -3998,15 +3999,19 @@ fast_reconstruct_winding_periodic_strip(const ON_Surface *surface,
     if (outer_index < 0 || inner_index < 0)
 	return false;
 
+    const ON_BrepLoop *outer_loop = face.Loop(outer_index);
     const ON_BrepLoop *inner_loop = face.Loop(inner_index);
-    if (!inner_loop || inner_loop->TrimCount() < 2)
+    if (!outer_loop || !inner_loop || inner_loop->TrimCount() < 2)
 	return false;
-    for (int ti = 0; ti < inner_loop->TrimCount(); ++ti) {
-	const ON_BrepTrim *trim = inner_loop->Trim(ti);
-	const ON_BrepTrim *next = inner_loop->Trim(
-	    (ti + 1) % inner_loop->TrimCount());
-	if (!trim || !next || trim->m_vi[1] != next->m_vi[0])
-	    return false;
+    const ON_BrepLoop *candidate_loops[2] = {outer_loop, inner_loop};
+    for (const ON_BrepLoop *candidate : candidate_loops) {
+	for (int ti = 0; ti < candidate->TrimCount(); ++ti) {
+	    const ON_BrepTrim *trim = candidate->Trim(ti);
+	    const ON_BrepTrim *next = candidate->Trim(
+		(ti + 1) % candidate->TrimCount());
+	    if (!trim || !next || trim->m_vi[1] != next->m_vi[0])
+		return false;
+	}
     }
 
     fast_periodic_loop_info outer_info;
@@ -4039,26 +4044,36 @@ fast_reconstruct_winding_periodic_strip(const ON_Surface *surface,
 	    return false;
 	topology_delta += end[closed_dir] - start[closed_dir];
     }
-    const long topology_winding = std::lround(topology_delta / period);
-    if (labs(topology_winding) != 1 ||
-	    fabs(topology_delta - topology_winding * period) >
-		parameter_tolerance)
-	return false;
-
     double inner_delta =
 	inner[inner.Count() - 1].p2d[closed_dir] -
 	inner[0].p2d[closed_dir];
-    const int inner_winding = topology_winding > 0 ? 1 : -1;
+    const long topology_winding = std::lround(topology_delta / period);
+    const long sampled_winding = std::lround(inner_delta / period);
+    int inner_winding = 0;
+    if (labs(topology_winding) == 1 &&
+	    fabs(topology_delta - topology_winding * period) <=
+		parameter_tolerance)
+	inner_winding = topology_winding > 0 ? 1 : -1;
+    else if (surface->IsClosed(open_dir) &&
+	    sampled_winding == -outer_info.winding &&
+	    fabs(inner_delta - sampled_winding * period) <=
+		parameter_tolerance)
+	inner_winding = sampled_winding > 0 ? 1 : -1;
+    if (!inner_winding)
+	return false;
     bool lift_inner_end = false;
     if (fabs(inner_delta) <= parameter_tolerance) {
 	lift_inner_end = true;
 	inner_delta = inner_winding * period;
     }
-    if (inner_winding != outer_info.winding ||
+    const bool opposite_winding = inner_winding == -outer_info.winding;
+    if ((inner_winding != outer_info.winding && !opposite_winding) ||
 	    fabs(inner_delta - inner_winding * period) >
 		parameter_tolerance ||
 	    fabs(inner[inner.Count() - 1].p2d[open_dir] -
 		inner[0].p2d[open_dir]) > parameter_tolerance)
+	return false;
+    if (outer_loop->TrimCount() != 1 && !opposite_winding)
 	return false;
 
     double inner_open_min = INFINITY;
@@ -4081,32 +4096,61 @@ fast_reconstruct_winding_periodic_strip(const ON_Surface *surface,
 	inner_open_max = std::max(inner_open_max,
 	    inner[pi].p2d[open_dir]);
     }
-    if (outer_info.open_coordinate >
-	    inner_open_min - parameter_tolerance &&
-	    outer_info.open_coordinate <
-		inner_open_max + parameter_tolerance)
+    if (!opposite_winding) {
+	if (outer_info.open_coordinate >
+		inner_open_min - parameter_tolerance &&
+		outer_info.open_coordinate <
+		    inner_open_max + parameter_tolerance)
+	    return false;
+    } else if (!surface->IsClosed(open_dir) ||
+	    inner_open_max - inner_open_min < 0.90 * open_length ||
+	    inner_open_max - inner_open_min > 1.10 * open_length) {
 	return false;
+    }
 
     if (inner_closed_max - inner_closed_min > 64.0 * period)
 	return false;
 
-    const double shift = std::round((outer[0].p2d[closed_dir] -
-	inner[0].p2d[closed_dir]) / period) * period;
-    const double target_start = inner[0].p2d[closed_dir] + shift;
-    if (!fast_rotate_periodic_boundary(surface, outer, closed_dir, period,
-	    target_start, scratch))
-	return false;
-
     ON_SimpleArray<BrepTrimPoint> replacement = outer;
-    for (int pi = inner.Count() - 1; pi >= 0; --pi) {
-	BrepTrimPoint point = inner[pi];
-	if (lift_inner_end && pi == inner.Count() - 1)
-	    point.p2d[closed_dir] = inner[0].p2d[closed_dir] +
-		inner_winding * period;
-	point.p2d[closed_dir] += shift;
-	if (!V2NEAR_EQUAL(replacement[replacement.Count() - 1].p2d,
-		point.p2d, BREP_SAME_POINT_TOLERANCE))
-	    replacement.Append(point);
+    if (opposite_winding) {
+	const double shift = std::round((
+	    outer[outer.Count() - 1].p2d[closed_dir] -
+	    inner[0].p2d[closed_dir]) / period) * period;
+	if (fabs(outer[outer.Count() - 1].p2d[closed_dir] -
+		(inner[0].p2d[closed_dir] + shift)) >
+		parameter_tolerance ||
+	    fabs(outer[0].p2d[closed_dir] -
+		(inner[inner.Count() - 1].p2d[closed_dir] + shift)) >
+		parameter_tolerance)
+	    return false;
+	for (int pi = 0; pi < inner.Count(); ++pi) {
+	    BrepTrimPoint point = inner[pi];
+	    if (lift_inner_end && pi == inner.Count() - 1)
+		point.p2d[closed_dir] = inner[0].p2d[closed_dir] +
+		    inner_winding * period;
+	    point.p2d[closed_dir] += shift;
+	    if (!V2NEAR_EQUAL(replacement[replacement.Count() - 1].p2d,
+		    point.p2d, BREP_SAME_POINT_TOLERANCE))
+		replacement.Append(point);
+	}
+    } else {
+	const double shift = std::round((outer[0].p2d[closed_dir] -
+	    inner[0].p2d[closed_dir]) / period) * period;
+	const double target_start = inner[0].p2d[closed_dir] + shift;
+	if (!fast_rotate_periodic_boundary(surface, outer, closed_dir, period,
+		target_start, scratch))
+	    return false;
+	replacement = outer;
+	for (int pi = inner.Count() - 1; pi >= 0; --pi) {
+	    BrepTrimPoint point = inner[pi];
+	    if (lift_inner_end && pi == inner.Count() - 1)
+		point.p2d[closed_dir] = inner[0].p2d[closed_dir] +
+		    inner_winding * period;
+	    point.p2d[closed_dir] += shift;
+	    if (!V2NEAR_EQUAL(replacement[replacement.Count() - 1].p2d,
+		    point.p2d, BREP_SAME_POINT_TOLERANCE))
+		replacement.Append(point);
+	}
     }
     if (replacement.Count() < 6)
 	return false;
@@ -4633,6 +4677,9 @@ fast_split_touching_periodic_loop(const ON_Surface *surface,
     }
     if (split_point_index < 2 ||
 	    points.Count() - split_point_index < 3)
+	return false;
+    if (!V2NEAR_EQUAL(points[0].p2d, points[split_point_index].p2d,
+	    BREP_SAME_POINT_TOLERANCE))
 	return false;
 
     ON_SimpleArray<BrepTrimPoint> first_cycle;
