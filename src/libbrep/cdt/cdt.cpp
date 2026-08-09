@@ -534,12 +534,6 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
     if (fmesh->valid(0))
 	return true;
 
-    if (topology_chart) {
-	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_CHART_FAILED,
-	    BREP_CDT_STAGE_CHART_CONSTRUCTION, fmesh->f_id, 0, 1,
-	    "topology chart did not preserve the face validity invariants");
-	return false;
-    }
     size_t refinement_points = 0;
     int refinement_attempts = 0;
     bool refinement_stalled = false;
@@ -582,6 +576,13 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REFINEMENT_LIMIT,
 	    BREP_CDT_STAGE_ADAPTIVE_REFINEMENT, fmesh->f_id, 0, 1,
 	    message.c_str());
+	return false;
+    }
+
+    if (topology_chart) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_CHART_FAILED,
+	    BREP_CDT_STAGE_CHART_CONSTRUCTION, fmesh->f_id, 0, 1,
+	    "topology chart did not preserve the face validity invariants");
 	return false;
     }
 
