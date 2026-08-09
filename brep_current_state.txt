@@ -3430,6 +3430,63 @@ ESTABLISHED FINDINGS
     tangency, vertex neighborhoods, and non-manifold topology remain
     fail-closed.
 
+75. The production rational trim restriction now has an independent
+    solver-level corpus, and complete span coverage is an interval-union proof
+    rather than a length sum.
+
+    A private `_rt_brep_trim_interval_test` hook accepts at most four fixed
+    rational Bezier spans, constructs a test-local `brep_specific`, and calls
+    `brep_interval_trim_cell_geometry` directly.  It does not copy or
+    approximate the production interval algorithm.  Test construction may
+    allocate, but the helper exercised by production remains fixed-storage and
+    allocation free.  Invalid interface data is distinct from unavailable
+    theorem data: malformed/nonfinite requests return false, while missing
+    provenance, incomplete coverage, nonpositive weights, or an OpenNURBS
+    construction refusal return a valid result with `available=0`.
+
+    The former shot and prep coverage checks summed all positive
+    span-intersection lengths.  That was not a proof of a complete locus:
+    duplicate or overlapping spans could contribute the same parameter
+    interval twice and hide a gap.  Both stages now share
+    `brep_trim_spans_cover`, which grows a covered prefix from the cell minimum
+    by repeatedly selecting the farthest reachable span endpoint.  It succeeds
+    only when that interval union reaches the cell maximum.  The scan is
+    bounded by the retained span count, assumes no span ordering, and
+    allocates no storage.  Boundaries retained from the same knot vector must
+    meet exactly; any representable parameter gap fails closed rather than
+    becoming geometric authority through a numerical allowance.  UV and
+    derivative hulls still include every positive-length intersection;
+    coverage cannot excuse an invalid weight, order, or interval operation.
+
+    Fourteen deterministic requests cover a positive rational quadratic on a
+    monotone subinterval, two joined spans in both storage orders, reversed
+    control direction, an exact span-boundary cell, missing and zero-count
+    provenance, incomplete coverage, a deliberately overlap-masked gap, zero
+    and negative weights, a rational turning derivative containing zero, and
+    nonfinite controls and domains.  The rational quadratic is independently
+    evaluated at 65 points.
+    Every UV value and quotient-rule derivative lies inside the production
+    result; derivative comparison includes the positive local
+    reparameterization scale introduced by interval restriction.  Strict
+    derivative signs are required where mathematically valid and zero must
+    remain enclosed at the turning point.
+
+    The focused optimized `rt_brep_ray_trim_interval` shard passes in 0.01
+    seconds and reports fourteen cases, six available enclosures, six valid
+    fail-closed results, and two invalid-input rejections.  The exhaustive
+    `rt_brep_ray_interval` shard, which now includes the corpus, passes in
+    143.15 seconds in the final ten-process matrix.  Full parallel and
+    sanitizer matrices are recorded in the verification log below.
+
+    This checkpoint qualifies complete rational trim UV and derivative
+    enclosures only.  It does not change SurfaceTree density, root isolation,
+    contact-face ownership, seam tolerances, or publication authority.  A
+    contact-face trim perturbation can still alter which exact surface roots
+    the earlier closure stage admits.  Extending that behavior requires an
+    allocation-free local surface/trim/edge tube plus a separate root-ownership
+    theorem; proximity samples and tolerance-manufactured roots remain
+    forbidden.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -3559,6 +3616,10 @@ IMPLEMENTATION CHECKLIST
         surface chain rule, and preserving every former sector and ownership
         obligation.  Gate real curved Cobb trims under reversal and
         0.01x/10,000x similarities in a focused parallel shard.
+        [x] Exercise the exact production trim restriction through a private
+            rational quadratic/multispan solver corpus, and replace summed
+            coverage lengths with a no-allocation interval-union proof that
+            rejects overlap-masked gaps.
     [x] Remove the equal-normalized-speed assumption for regular two-trim edge
         correspondence and gate opposite nonlinear trim reparameterizations.
     [x] Add vertex-fan and ambiguous-correspondence gates.
@@ -4822,26 +4883,48 @@ Rational non-isoparametric frame checkpoint (Finding 74):
     PASS: 12/12 in 132.13 seconds; the new curved-trim shard took 124.75
     seconds and no sanitizer reported a diagnostic.
 
+Rational trim interval solver checkpoint (Finding 75):
+
+  ctest --test-dir .build \
+    -R '^rt_brep_ray_trim_interval$' --output-on-failure
+  PASS: 1/1 in 0.01 seconds.  Direct output reports fourteen requests: six
+  complete enclosures, six valid fail-closed results, and two invalid-input
+  rejections.  The independently sampled rational quadratic contributes 65
+  value/derivative comparisons per component.
+
+  ctest --test-dir .build --parallel 10 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+  PASS: 10/10 in 143.20 seconds (source union 0.01, trim interval 0.01,
+  fold 0.28, endpoint 2.76, affine 4.69, non-isoparametric 32.44, complete
+  directed process 50.14, Crofton 62.96, seam 139.13, interval 143.15).
+
+  ctest --test-dir .build --parallel 6 \
+    -R '^(rt_brep_ray_trim_interval|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+  PASS: 12/12 in 4.08 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 6 \
+      -R '^(rt_brep_ray_trim_interval|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+      --output-on-failure
+  PASS: 12/12 in 12.96 seconds; the rational trim shard took 0.17 seconds and
+  no sanitizer reported a diagnostic.
+
 
 NEXT ACTIONS
 ------------
 
-1. Add a solver-level corpus for Finding 74's rational trim restriction:
-   positive-weight curved and multispan loci, rational derivative enclosures,
-   reversed parameter orientation, exact span-boundary cells, missing span
-   provenance, incomplete coverage, nonpositive weights, and derivative/frame
-   signs containing zero.  Share the production restriction core rather than
-   copying its arithmetic into the test.  Then perturb the trim on the Cobb
-   contact-root face across signed amplitude/T.  The current experiment shows
-   that this can change which roots the earlier closure stage admits before
-   the new frame theorem is reached.  If those cases are to represent the
-   intended solid, give closure a locally convergent, allocation-free
-   surface/trim/edge tube and root-ownership proof; do not substitute a
-   proximity sample or let model tolerance manufacture a missing exact root.
-   Keep arbitrary root counts, faces, spans, sector-boundary or exact tangency,
-   and edge/vertex neighborhoods fail-closed until separately proved.  Do not
-   reuse Finding 72 outside the narrow seam transaction without an equally
-   explicit root-count theorem.
+1. Perturb the trim on the Cobb contact-root face across signed amplitude/T.
+   The current experiment shows that this can change which roots the earlier
+   closure stage admits before the new frame theorem is reached.  If those
+   cases are to represent the intended solid, give closure a locally
+   convergent, allocation-free surface/trim/edge tube and root-ownership proof;
+   do not substitute a proximity sample or let model tolerance manufacture a
+   missing exact root.  Keep arbitrary root counts, faces, spans,
+   sector-boundary or exact tangency, and edge/vertex neighborhoods fail-closed
+   until separately proved.  Do not reuse Finding 72 outside the narrow seam
+   transaction without an equally explicit root-count theorem.
 2. Extend vertex classification only through a separately certified curved
    differential-link theorem.  Bound surface-normal and tangent variation over
    a local neighborhood before replacing the planar cyclic link.  Define exact
