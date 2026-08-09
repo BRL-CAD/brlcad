@@ -17824,6 +17824,102 @@ check_crofton_sphere(struct rt_db_internal *ell_intern,
 }
 
 
+static bool
+append_classifier_trim(ON_Brep *brep, ON_BrepLoop &loop,
+	const ON_2dPoint &start, const ON_2dPoint &end)
+{
+    ON_LineCurve *curve = new ON_LineCurve(start, end);
+    if (!curve->SetDomain(0.0, 1.0)) {
+	delete curve;
+	return false;
+    }
+    const int curve_index = brep->AddTrimCurve(curve);
+    if (curve_index < 0)
+	return false;
+    ON_BrepTrim &trim = brep->NewTrim(false, loop, curve_index);
+    trim.m_type = ON_BrepTrim::boundary;
+    trim.m_tolerance[0] = 0.01;
+    trim.m_tolerance[1] = 0.01;
+    return trim.m_trim_index >= 0;
+}
+
+
+static int
+check_brep_trim_classifier_endpoint()
+{
+    ON_Brep *brep = ON_Brep::New();
+    ON_PlaneSurface *surface = new ON_PlaneSurface(ON_xy_plane);
+    surface->SetDomain(0, 0.0, 2.0);
+    surface->SetDomain(1, 0.0, 1.0);
+    surface->SetExtents(0, surface->Domain(0));
+    surface->SetExtents(1, surface->Domain(1));
+    const int surface_index = brep->AddSurface(surface);
+    ON_BrepFace &face = brep->NewFace(surface_index);
+    ON_BrepLoop &loop = brep->NewLoop(ON_BrepLoop::outer, face);
+
+    /* Model the imported NIST failure: two upper trims have a small endpoint
+     * discrepancy.  The right trim ends just above u=1, while the next trim
+     * begins farther to the left.  A u=1 scanline is inside the intended
+     * rectangle and lies within the structural UV fuzz of the right trim.
+     */
+    const double near_gap = 0.02 * BREP_UV_DIST_FUZZ;
+    const double remote_gap = 160.0 * BREP_UV_DIST_FUZZ;
+    const bool trims_ok =
+	append_classifier_trim(brep, loop, ON_2dPoint(0.0, 0.0),
+	    ON_2dPoint(2.0, 0.0)) &&
+	append_classifier_trim(brep, loop, ON_2dPoint(2.0, 0.0),
+	    ON_2dPoint(2.0, 1.0)) &&
+	append_classifier_trim(brep, loop, ON_2dPoint(2.0, 1.0),
+	    ON_2dPoint(1.0 + near_gap, 1.0)) &&
+	append_classifier_trim(brep, loop,
+	    ON_2dPoint(1.0 - remote_gap, 1.0),
+	    ON_2dPoint(0.0, 1.0)) &&
+	append_classifier_trim(brep, loop, ON_2dPoint(0.0, 1.0),
+	    ON_2dPoint(0.0, 0.0));
+    if (!trims_ok) {
+	std::printf("FAIL: trim classifier endpoint fixture construction\n");
+	delete brep;
+	return 1;
+    }
+
+    bool near_trimmed = true;
+    bool far_trimmed = false;
+    bool near_ok = false;
+    bool far_ok = false;
+    double near_distance = -1.0;
+    double far_distance = -1.0;
+    size_t near_candidates = 0;
+    size_t far_candidates = 0;
+    {
+	brlcad::CurveTree tree(&face);
+	const brlcad::BRNode *closest = NULL;
+	near_trimmed = tree.isTrimmed(ON_2dPoint(1.0, 0.5), &closest,
+	    near_distance, BREP_EDGE_MISS_TOLERANCE, &near_candidates);
+	near_ok = !near_trimmed && closest && near_candidates == 2 &&
+	    fabs(near_distance - 0.5) <= 32.0 * DBL_EPSILON;
+
+	closest = NULL;
+	far_trimmed = tree.isTrimmed(
+	    ON_2dPoint(1.0 - 2.0 * BREP_UV_DIST_FUZZ, 0.5),
+	    &closest, far_distance, BREP_EDGE_MISS_TOLERANCE,
+	    &far_candidates);
+	far_ok = far_trimmed && far_candidates == 1;
+    }
+    delete brep;
+
+    if (!near_ok || !far_ok) {
+	std::printf("FAIL: trim classifier endpoint near/far=%d/%d "
+	    "near-status/distance/candidates=%d/%.17g/%zu "
+	    "far-status/distance/candidates=%d/%.17g/%zu\n",
+	    near_ok, far_ok, near_trimmed, near_distance, near_candidates,
+	    far_trimmed, far_distance, far_candidates);
+	return 1;
+    }
+    std::printf("BREP trim classifier endpoint: PASS\n");
+    return 0;
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -17864,6 +17960,8 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(mode, "--grazing-root-only");
     const bool trim_interval_only = mode &&
 	BU_STR_EQUAL(mode, "--trim-interval-only");
+    const bool trim_classifier_only = mode &&
+	BU_STR_EQUAL(mode, "--trim-classifier-only");
     const bool source_union_only = mode &&
 	BU_STR_EQUAL(mode, "--source-union-only");
     const bool fold_only = mode && BU_STR_EQUAL(mode, "--fold-only");
@@ -17886,7 +17984,7 @@ main(int argc, char **argv)
 	    !report_cobb_oblique && !affine_only &&
 	    !interval_only && !local_root_only && !cleanup_only &&
 	    !grazing_root_only &&
-	    !trim_interval_only &&
+	    !trim_interval_only && !trim_classifier_only &&
 	    !source_union_only &&
 	    !fold_only && !core_only && !pole_only &&
 	    !directed_only &&
@@ -17898,6 +17996,7 @@ main(int argc, char **argv)
 	    "--affine-only|--interval-only|--local-root-only|--cleanup-only|"
 	    "--grazing-root-only|"
 	    "--trim-interval-only|"
+	    "--trim-classifier-only|"
 	    "--source-union-only|--fold-only|"
 	    "--core-only|--pole-only|"
 	    "--directed-only|--crofton-only|--crofton-hard-only|"
@@ -17922,6 +18021,8 @@ main(int argc, char **argv)
 	return check_brep_direction_cleanup() ? 1 : 0;
     if (trim_interval_only)
 	return check_brep_trim_interval_solver() ? 1 : 0;
+    if (trim_classifier_only)
+	return check_brep_trim_classifier_endpoint() ? 1 : 0;
     if (source_union_only)
 	return check_brep_source_union_solver() ? 1 : 0;
     if (fold_only)

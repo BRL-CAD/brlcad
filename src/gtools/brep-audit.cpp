@@ -174,6 +174,17 @@ struct ray_audit_shot {
     size_t after_duplicates = 0;
     size_t after_direction_cleanup = 0;
     size_t final_hits = 0;
+    size_t fixed_after_near_miss = 0;
+    size_t fixed_after_near_hit = 0;
+    size_t fixed_after_grazing = 0;
+    size_t fixed_after_duplicates = 0;
+    size_t fixed_after_direction_cleanup = 0;
+    size_t fixed_cleanup_mismatches = 0;
+    size_t trim_equivalence_mismatches = 0;
+    size_t face_trim_status_mismatches = 0;
+    size_t face_trim_hit_class_mismatches = 0;
+    size_t face_trim_adjacency_mismatches = 0;
+    size_t face_trim_equivalence_mismatches = 0;
     std::vector<struct rt_brep_trace_root> roots;
     std::vector<ray_audit_interval> intervals;
 };
@@ -818,6 +829,22 @@ ray_audit_shoot(audit_prepared_brep &prepared,
     result.after_duplicates = trace->after_duplicates;
     result.after_direction_cleanup = trace->after_direction_cleanup;
     result.final_hits = trace->final_hits;
+    result.fixed_after_near_miss = trace->fixed_after_near_miss;
+    result.fixed_after_near_hit = trace->fixed_after_near_hit;
+    result.fixed_after_grazing = trace->fixed_after_grazing;
+    result.fixed_after_duplicates = trace->fixed_after_duplicates;
+    result.fixed_after_direction_cleanup =
+	trace->fixed_after_direction_cleanup;
+    result.fixed_cleanup_mismatches = trace->fixed_cleanup_mismatches;
+    result.trim_equivalence_mismatches = trace->trim_equivalence_mismatches;
+    result.face_trim_status_mismatches =
+	trace->face_trim_status_mismatches;
+    result.face_trim_hit_class_mismatches =
+	trace->face_trim_hit_class_mismatches;
+    result.face_trim_adjacency_mismatches =
+	trace->face_trim_adjacency_mismatches;
+    result.face_trim_equivalence_mismatches =
+	trace->face_trim_equivalence_mismatches;
     result.roots.assign(trace->roots,
 	trace->roots + std::min(trace->stored_roots,
 	    (size_t)RT_BREP_TRACE_MAX_ROOTS));
@@ -1146,6 +1173,21 @@ print_ray_audit_shot(const ray_audit_shot &shot,
 	<< ",\"after_duplicates\":" << shot.after_duplicates
 	<< ",\"after_direction\":" << shot.after_direction_cleanup
 	<< ",\"final\":" << shot.final_hits << "}"
+	<< ",\"fixed_cleanup\":{\"after_near_miss\":"
+	<< shot.fixed_after_near_miss
+	<< ",\"after_near_hit\":" << shot.fixed_after_near_hit
+	<< ",\"after_grazing\":" << shot.fixed_after_grazing
+	<< ",\"after_duplicates\":" << shot.fixed_after_duplicates
+	<< ",\"after_direction\":" << shot.fixed_after_direction_cleanup
+	<< ",\"mismatches\":" << shot.fixed_cleanup_mismatches << "}"
+	<< ",\"trim_equivalence\":{\"leaf_allocating\":"
+	<< shot.trim_equivalence_mismatches
+	<< ",\"face_status\":" << shot.face_trim_status_mismatches
+	<< ",\"face_class\":" << shot.face_trim_hit_class_mismatches
+	<< ",\"face_adjacency\":"
+	<< shot.face_trim_adjacency_mismatches
+	<< ",\"face_total\":" << shot.face_trim_equivalence_mismatches
+	<< "}"
 	<< ",\"root_overflow\":" << shot.root_overflow
 	<< ",\"roots\":[";
     for (size_t i = 0; i < shot.roots.size(); ++i) {
@@ -1161,7 +1203,12 @@ print_ray_audit_shot(const ray_audit_shot &shot,
 	    << ",\"normal_dot\":" << root.normal_dot
 	    << ",\"trim_status\":" << root.trim_status
 	    << ",\"trim_distance\":" << root.trim_distance
+	    << ",\"trim_candidates\":" << root.trim_candidates
 	    << ",\"hit_class\":" << root.hit_class
+	    << ",\"face_trim_status\":" << root.face_trim_status
+	    << ",\"face_trim_distance\":" << root.face_trim_distance
+	    << ",\"face_trim_candidates\":" << root.face_trim_candidates
+	    << ",\"face_hit_class\":" << root.face_hit_class
 	    << ",\"direction\":" << root.direction
 	    << ",\"adjacent_face\":" << root.adjacent_face_index << "}";
     }
