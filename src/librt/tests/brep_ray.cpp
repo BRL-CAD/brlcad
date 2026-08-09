@@ -876,11 +876,24 @@ brep_trace_seam_event_stream_valid(
 	    RT_BREP_TRACE_EVENT_SEAM_CONTACT_EXISTING &&
 	  continuation->certificate ==
 	    RT_BREP_TRACE_EVENT_SEAM_CONTACT_CONTINUATION));
+    const bool oblique_contact = contact_pair &&
+	trace.physical_event_seam_oblique_pairs == 1;
+    const bool oblique_evidence_valid = contact_pair ?
+	((oblique_contact && trace.physical_event_seam_oblique_cells > 0 &&
+	  trace.physical_event_seam_oblique_box_links ==
+	    trace.physical_event_seam_contact_boxes &&
+	  edge->frame_interval_supported && edge->frame_interval_cells > 0) ||
+	 (!trace.physical_event_seam_oblique_pairs &&
+	  !trace.physical_event_seam_oblique_cells &&
+	  !trace.physical_event_seam_oblique_box_links)) :
+	(!trace.physical_event_seam_oblique_pairs &&
+	 !trace.physical_event_seam_oblique_cells &&
+	 !trace.physical_event_seam_oblique_box_links);
     const double endpoint_tolerance = std::max(
 	endpoint_tolerance_scale * model_tolerance,
 	4096.0 * DBL_EPSILON * std::max(1.0,
 	    fabs(trace.physical_events[1].dist)));
-    if (!matching_certificates ||
+    if (!matching_certificates || !oblique_evidence_valid ||
 	    trace.physical_event_direction_checks !=
 		(contact_pair ? 4 : 2) ||
 	    (contact_pair ?
@@ -1080,10 +1093,11 @@ brep_trace_seam_event_stream_valid(
 	if (!box_has_witness)
 	    return false;
 	if (contact_pair) {
-	    if (contact_edge_uv.x < box.uv_min[0] - uv_tolerance ||
+	    if (!oblique_contact &&
+		    (contact_edge_uv.x < box.uv_min[0] - uv_tolerance ||
 		    contact_edge_uv.x > box.uv_max[0] + uv_tolerance ||
 		    contact_edge_uv.y < box.uv_min[1] - uv_tolerance ||
-		    contact_edge_uv.y > box.uv_max[1] + uv_tolerance)
+		    contact_edge_uv.y > box.uv_max[1] + uv_tolerance))
 		return false;
 	    contact_boxes++;
 	    contact_t_min = std::min(contact_t_min, (double)box.t_min);
@@ -1223,6 +1237,9 @@ struct brep_root_event_summary {
     size_t physical_event_seam_contact_pairs = 0;
     size_t physical_event_seam_contact_boxes = 0;
     size_t physical_event_seam_contact_roots = 0;
+    size_t physical_event_seam_oblique_pairs = 0;
+    size_t physical_event_seam_oblique_cells = 0;
+    size_t physical_event_seam_oblique_box_links = 0;
     size_t physical_event_clean_outside = 0;
     size_t physical_event_near_trim = 0;
     size_t physical_event_unresolved = 0;
@@ -1366,6 +1383,12 @@ brep_accumulate_root_events(brep_root_event_summary &summary,
 	trace.physical_event_seam_contact_boxes;
     summary.physical_event_seam_contact_roots +=
 	trace.physical_event_seam_contact_roots;
+    summary.physical_event_seam_oblique_pairs +=
+	trace.physical_event_seam_oblique_pairs;
+    summary.physical_event_seam_oblique_cells +=
+	trace.physical_event_seam_oblique_cells;
+    summary.physical_event_seam_oblique_box_links +=
+	trace.physical_event_seam_oblique_box_links;
     summary.physical_event_clean_outside +=
 	trace.physical_event_clean_outside;
     summary.physical_event_near_trim += trace.physical_event_near_trim;
@@ -1498,7 +1521,8 @@ brep_print_prepared_event_summary(const char *label,
 	"seam=attempt/root/closure/continuation/certified/failure/ownership:"
 	"%zu/%zu/%zu/%zu/%zu/%zu/%zu "
 	"ownership=witness/edge-only/box/root:%zu/%zu/%zu/%zu "
-	"witness-box/root:%zu/%zu contact-pair/box/root:%zu/%zu/%zu\n",
+	"witness-box/root:%zu/%zu contact-pair/box/root:%zu/%zu/%zu "
+	"oblique-pair/cell/link:%zu/%zu/%zu\n",
 	label,
 	summary.surface_regular_orientation_signed,
 	summary.surface_regular_orientation_attempts,
@@ -1529,7 +1553,10 @@ brep_print_prepared_event_summary(const char *label,
 	summary.physical_event_seam_witness_roots,
 	summary.physical_event_seam_contact_pairs,
 	summary.physical_event_seam_contact_boxes,
-	summary.physical_event_seam_contact_roots);
+	summary.physical_event_seam_contact_roots,
+	summary.physical_event_seam_oblique_pairs,
+	summary.physical_event_seam_oblique_cells,
+	summary.physical_event_seam_oblique_box_links);
     std::printf("%s prepared production: selected=%zu/%zu/%zu "
 	"fallback=none:%zu non-solid:%zu plate:%zu unsupported:%zu "
 	"surface-work:%zu boxes:%zu uncertified:%zu local-work:%zu "
@@ -3694,6 +3721,26 @@ cobb_seam_grazing_ray(const cobb_seam_frame &frame,
 	start_sign * 2.0 * radius * frame.target_conormal;
     const ON_3dVector direction = reverse ? -frame.target_conormal :
 	frame.target_conormal;
+    sampled_ray ray;
+    VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
+    VSET(ray.direction, direction.x, direction.y, direction.z);
+    return ray;
+}
+
+
+static sampled_ray
+cobb_seam_oblique_ray(const cobb_seam_frame &frame,
+    const ON_3dPoint &origin, double radius, double clearance,
+    double tangent_component, bool reverse)
+{
+    const double closest_radius = radius - clearance;
+    const ON_3dPoint closest = origin + closest_radius * frame.normal;
+    ON_3dVector direction = frame.target_conormal +
+	tangent_component * frame.tangent;
+    direction.Unitize();
+    if (reverse)
+	direction.Reverse();
+    const ON_3dPoint ray_origin = closest - 2.0 * radius * direction;
     sampled_ray ray;
     VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
     VSET(ray.direction, direction.x, direction.y, direction.z);
@@ -8305,6 +8352,7 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
     size_t maximum_discrepancy_cells = 0;
     size_t maximum_discrepancy_depth = 0;
     size_t contact_similarity_cases = 0;
+    size_t oblique_similarity_cases = 0;
     size_t minimum_contact_boxes = RT_BREP_TRACE_MAX_SURFACE_BOXES;
     size_t maximum_contact_boxes = 0;
     double maximum_discrepancy_width_ratio = 0.0;
@@ -8745,6 +8793,81 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 		    }
 		}
 	    }
+
+	    const double tangent_component = 0.25;
+	    for (int reverse = 0; reverse <= 1; ++reverse) {
+		const sampled_ray base_ray = cobb_seam_oblique_ray(frame,
+		    origin, radius, tol->dist, tangent_component, reverse != 0);
+		const ON_3dPoint transformed_origin = cobb_transform_point(xform,
+		    ON_3dPoint(base_ray.origin));
+		ON_3dVector transformed_direction = cobb_transform_vector(xform,
+		    ON_3dVector(base_ray.direction));
+		if (!transformed_direction.Unitize()) {
+		    std::printf("FAIL: Cobb %s oblique direction\n", test.name);
+		    failures++;
+		    continue;
+		}
+		sampled_ray ray;
+		VSET(ray.origin, transformed_origin.x, transformed_origin.y,
+		    transformed_origin.z);
+		VSET(ray.direction, transformed_direction.x,
+		    transformed_direction.y, transformed_direction.z);
+		const ray_result production_result = shoot_solid(stp, rtip,
+		    &resource, ray.origin, ray.direction);
+		struct rt_brep_shot_trace trace;
+		const int trace_hits = shoot_brep_trace(stp, rtip, &resource,
+		    ray, trace);
+		const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+		    frame.edge_index);
+		const double transformed_radius = radius * test.scale;
+		const double transformed_clearance = tol->dist * test.scale;
+		const double half_chord = sqrt(2.0 * transformed_radius *
+		    transformed_clearance - transformed_clearance *
+		    transformed_clearance);
+		partition_result oracle;
+		oracle.partitions = 1;
+		oracle.intervals[0].in_dist = 2.0 * transformed_radius -
+		    half_chord;
+		oracle.intervals[0].out_dist = 2.0 * transformed_radius +
+		    half_chord;
+		const double expected_edge_dot = tangent_component /
+		    sqrt(1.0 + tangent_component * tangent_component);
+		const double dot_error = edge ?
+		    fabs(fabs(edge->ray_edge_dot) - expected_edge_dot) : INFINITY;
+		const bool bad = !brep_trace_fixed_workspaces_match(trace) ||
+		    !edge || !edge->frame_interval_supported ||
+		    !edge->frame_interval_cells ||
+		    !edge->within_edge_tolerance || !edge->sector_valid ||
+		    dot_error > 1.0e-10 || trace_hits != 2 ||
+		    trace.final_segments != 1 || production_result.segments != 1 ||
+		    trace.physical_event_seam_oblique_pairs != 1 ||
+		    !trace.physical_event_seam_oblique_cells ||
+		    trace.physical_event_seam_oblique_box_links !=
+			trace.physical_event_seam_contact_boxes ||
+		    trace.prepared_production_selected != 1 ||
+		    trace.prepared_production_fallback !=
+			RT_BREP_PREPARED_FALLBACK_NONE ||
+		    !brep_trace_seam_event_stream_valid(trace, edge, variant,
+			oracle, case_tol.dist, test.reparameterize);
+		if (bad) {
+		    std::printf("FAIL: Cobb %s oblique reverse=%d edge=%d "
+			"frame=%d/%zu dot-error=%.3g hits/segments=%d/%zu/%d "
+			"oblique=%zu/%zu/%zu contact-boxes=%zu selected=%zu "
+			"fallback=%d\n", test.name, reverse, edge != NULL,
+			edge ? edge->frame_interval_supported : 0,
+			edge ? edge->frame_interval_cells : 0, dot_error,
+			trace_hits, trace.final_segments, production_result.segments,
+			trace.physical_event_seam_oblique_pairs,
+			trace.physical_event_seam_oblique_cells,
+			trace.physical_event_seam_oblique_box_links,
+			trace.physical_event_seam_contact_boxes,
+			trace.prepared_production_selected,
+			trace.prepared_production_fallback);
+		    failures++;
+		} else {
+		    oblique_similarity_cases++;
+		}
+	    }
 	    free_solid(stp);
 	}
 	rt_clean_resource_basic(rtip, &resource);
@@ -8759,16 +8882,225 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 	    "parameter-locus-error=%.3g midpoint-shift=%.3g "
 	    "correspondence-cells=%zu depth=%zu "
 	    "seam-bound-cells=%zu depth=%zu width/T=%.3g "
-	    "contact-cases=%zu boxes=%zu/%zu\n",
+	    "contact-cases=%zu oblique-cases=%zu boxes=%zu/%zu\n",
 	    maximum_fixed_leaves, RT_BREP_MAX_LEAVES,
 	    maximum_fixed_hits, RT_BREP_MAX_HITS,
 	    maximum_parameter_locus_error,
 	    minimum_parameter_midpoint_shift, maximum_correspondence_cells,
 	    maximum_correspondence_depth, maximum_discrepancy_cells,
 	    maximum_discrepancy_depth, maximum_discrepancy_width_ratio,
-	    contact_similarity_cases, minimum_contact_boxes,
+	    contact_similarity_cases, oblique_similarity_cases,
+	    minimum_contact_boxes,
 	    maximum_contact_boxes);
     }
+    return failures;
+}
+
+
+static int
+check_cobb_oblique_contact_trend(const struct bn_tol *tol, bool emit_report)
+{
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    cobb_seam_frame frame;
+    double measured_gap = 0.0;
+    double displacement = 0.0;
+    ON_Brep *variant = cobb_bowed_seam_variant(pristine, origin,
+	-tol->dist, frame, measured_gap, displacement);
+    delete pristine;
+    if (!variant)
+	return 1;
+
+    struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+    if (!rtip) {
+	delete variant;
+	return 1;
+    }
+    rtip->rti_tol = *tol;
+    struct resource resource = {};
+    rt_init_resource(&resource, 0, rtip);
+    struct rt_brep_internal variant_internal = {};
+    variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    variant_internal.brep = variant;
+    struct rt_db_internal variant_intern;
+    RT_DB_INTERNAL_INIT(&variant_intern);
+    variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    variant_intern.idb_type = ID_BREP;
+    variant_intern.idb_meth = &OBJ[ID_BREP];
+    variant_intern.idb_ptr = &variant_internal;
+    struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+    if (!stp) {
+	rt_clean_resource_basic(rtip, &resource);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return 1;
+    }
+
+    enum oblique_expectation {
+	EXPECT_FALLBACK,
+	EXPECT_OBSERVE,
+	EXPECT_CERTIFIED
+    };
+    struct oblique_case {
+	double component;
+	oblique_expectation expectation;
+    } cases[] = {
+	{1.0e-6, EXPECT_FALLBACK},
+	{1.0e-4, EXPECT_CERTIFIED},
+	{1.0e-3, EXPECT_OBSERVE},
+	{0.01, EXPECT_CERTIFIED},
+	{0.05, EXPECT_OBSERVE},
+	{0.1, EXPECT_OBSERVE},
+	{0.25, EXPECT_CERTIFIED},
+	{0.5, EXPECT_CERTIFIED},
+	{1.0, EXPECT_CERTIFIED},
+	{10.0, EXPECT_FALLBACK},
+	{1.0e6, EXPECT_FALLBACK}
+    };
+    int failures = 0;
+    size_t certified = 0;
+    size_t fail_closed = 0;
+    size_t observed_certified = 0;
+    size_t observed_fallback = 0;
+    for (size_t case_index = 0; case_index <
+	    sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	for (int reverse = 0; reverse <= 1; ++reverse) {
+	    const sampled_ray ray = cobb_seam_oblique_ray(frame, origin,
+		radius, tol->dist, cases[case_index].component, reverse != 0);
+	    const ray_result production_result = shoot_solid(stp, rtip,
+		&resource, ray.origin, ray.direction);
+	    struct rt_brep_shot_trace trace;
+	    const int trace_hits = shoot_brep_trace(stp, rtip, &resource, ray,
+		trace);
+	    const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+		frame.edge_index);
+	    const bool selected = trace.prepared_production_selected == 1 &&
+		trace.prepared_production_fallback ==
+		    RT_BREP_PREPARED_FALLBACK_NONE;
+	    const bool certified_evidence = selected && edge &&
+		edge->frame_interval_supported && edge->frame_interval_cells > 0 &&
+		trace.physical_event_seam_certified == 1 &&
+		trace.physical_event_seam_contact_pairs == 1 &&
+		trace.physical_event_seam_contact_boxes > 0 &&
+		trace.physical_event_seam_contact_roots == 2 &&
+		trace.physical_event_seam_oblique_pairs == 1 &&
+		trace.physical_event_seam_oblique_cells > 0 &&
+		trace.physical_event_seam_oblique_box_links ==
+		    trace.physical_event_seam_contact_boxes;
+	    const bool fallback_evidence = !selected &&
+		trace.prepared_production_fallback !=
+		    RT_BREP_PREPARED_FALLBACK_NONE &&
+		!trace.physical_event_seam_oblique_pairs &&
+		!trace.physical_event_seam_oblique_cells &&
+		!trace.physical_event_seam_oblique_box_links;
+	    bool bad = !brep_trace_fixed_workspaces_match(trace) || !edge ||
+		!edge->frame_interval_supported || !edge->frame_interval_cells ||
+		trace.root_overflow || trace.edge_overflow ||
+		trace.surface_workspace_exhausted || trace.surface_box_overflow ||
+		trace.local_root_overflow || trace.local_cluster_overflow;
+	    if (cases[case_index].expectation == EXPECT_CERTIFIED) {
+		const double half_chord = sqrt(2.0 * radius * tol->dist -
+		    tol->dist * tol->dist);
+		partition_result oracle;
+		oracle.partitions = 1;
+		oracle.intervals[0].in_dist = 2.0 * radius - half_chord;
+		oracle.intervals[0].out_dist = 2.0 * radius + half_chord;
+		bad = bad || !certified_evidence || trace_hits != 2 ||
+		    trace.final_segments != 1 || production_result.segments != 1 ||
+		    !brep_trace_seam_event_stream_valid(trace, edge, variant,
+			oracle, tol->dist);
+		if (!bad)
+		    certified++;
+	    } else if (cases[case_index].expectation == EXPECT_FALLBACK) {
+		bad = bad || !fallback_evidence ||
+		    trace.physical_event_seam_failures != 1;
+		if (!bad)
+		    fail_closed++;
+	    } else {
+		bad = bad || (!certified_evidence && !fallback_evidence);
+		if (!bad && certified_evidence)
+		    observed_certified++;
+		else if (!bad)
+		    observed_fallback++;
+	    }
+	    if (bad) {
+		std::printf("FAIL: Cobb oblique trend component=%.17g reverse=%d "
+		    "expect=%d edge=%d frame=%d/%zu selected=%zu fallback=%d "
+		    "seam/contact/oblique=%zu/%zu/%zu cells/links=%zu/%zu "
+		    "hits/segments=%d/%zu/%d failures=%zu\n",
+		    cases[case_index].component, reverse,
+		    (int)cases[case_index].expectation, edge != NULL,
+		    edge ? edge->frame_interval_supported : 0,
+		    edge ? edge->frame_interval_cells : 0,
+		    trace.prepared_production_selected,
+		    trace.prepared_production_fallback,
+		    trace.physical_event_seam_certified,
+		    trace.physical_event_seam_contact_pairs,
+		    trace.physical_event_seam_oblique_pairs,
+		    trace.physical_event_seam_oblique_cells,
+		    trace.physical_event_seam_oblique_box_links,
+		    trace_hits, trace.final_segments, production_result.segments,
+		    trace.physical_event_seam_failures);
+		failures++;
+	    }
+	    if (emit_report) {
+		std::printf("oblique component=%.17g reverse=%d edge-dot=%.17g "
+		"distance=%.17g frame=%d/%zu roots/boxes=%zu/%zu seam=%zu "
+		"contact=%zu/%zu/%zu oblique=%zu/%zu/%zu "
+		"selected/final=%zu/%zu failures=%zu/%zu/%zu/%zu/%zu\n",
+		cases[case_index].component, reverse,
+		edge ? edge->ray_edge_dot : INFINITY,
+		edge ? edge->distance : INFINITY,
+		edge ? edge->frame_interval_supported : -1,
+		edge ? edge->frame_interval_cells : 0, trace.stored_local_roots,
+		trace.stored_surface_boxes, trace.physical_event_seam_certified,
+		trace.physical_event_seam_contact_pairs,
+		trace.physical_event_seam_contact_boxes,
+		trace.physical_event_seam_contact_roots,
+		trace.physical_event_seam_oblique_pairs,
+		trace.physical_event_seam_oblique_cells,
+		trace.physical_event_seam_oblique_box_links,
+		trace.prepared_production_selected, trace.final_segments,
+		trace.physical_event_seam_failures,
+		trace.physical_event_seam_ownership_failures,
+		trace.physical_event_seam_witness_failures,
+		trace.physical_event_seam_box_failures,
+		trace.physical_event_seam_root_coverage_failures);
+	    }
+	    if (!emit_report)
+		continue;
+	    for (size_t root_index = 0; root_index < trace.stored_local_roots;
+		    ++root_index) {
+		const struct rt_brep_trace_local_root &root =
+		    trace.local_roots[root_index];
+		std::printf("  root[%zu] face/span=%d/%d t=%.17g uv=%.17g/%.17g "
+		    "dir/class/trim=%d/%d/%d ndot=%.17g\n", root_index,
+		    root.face_index, root.span_index, root.dist, root.uv[0],
+		    root.uv[1], root.direction, root.hit_class,
+		    root.trim_status, root.normal_dot);
+	    }
+	    for (size_t box_index = 0; box_index < trace.stored_surface_boxes;
+		    ++box_index) {
+		const struct rt_brep_trace_surface_box &box =
+		    trace.surface_boxes[box_index];
+		std::printf("  box[%zu] face/span=%d/%d uv=[%.17g %.17g]x"
+		    "[%.17g %.17g] t=[%.17g %.17g] depth=%d disp/det=%d/%d\n",
+		    box_index, box.face_index, box.span_index, box.uv_min[0],
+		    box.uv_max[0], box.uv_min[1], box.uv_max[1], box.t_min,
+		    box.t_max, box.depth, box.disposition, box.determinant_sign);
+	    }
+	}
+    }
+
+    free_solid(stp);
+    rt_clean_resource_basic(rtip, &resource);
+    BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+    rt_i_destroy(rtip);
+    if (!failures)
+	std::printf("Cobb oblique contact trend: PASS certified=%zu "
+	    "fail-closed=%zu observed=%zu/%zu\n", certified, fail_closed,
+	    observed_certified, observed_fallback);
     return failures;
 }
 
@@ -8825,7 +9157,9 @@ check_cobb_ambiguous_correspondence(const struct bn_tol *tol,
 		!edge->correspondence_screened ||
 		edge->correspondence_supported || !edge->correspondence_cells ||
 		!edge->correspondence_exhausted ||
-		edge->correspondence_depth != 24 || edge->candidate_spans ||
+		edge->correspondence_depth != 24 ||
+		edge->frame_interval_supported || edge->frame_interval_cells ||
+		edge->candidate_spans ||
 		edge->within_edge_tolerance || edge->sector_valid ||
 		edge->discrepancy_bounded ||
 		edge->discrepancy_bound_exhausted ||
@@ -8835,7 +9169,7 @@ check_cobb_ambiguous_correspondence(const struct bn_tol *tol,
 	    std::printf("FAIL: Cobb ambiguous correspondence reverse=%d "
 		"edge=%d measured=%d sample=%d authorized=%d proof=%d "
 		"correspondence=%d/%d "
-		"cells=%zu depth=%zu proof-exhausted=%d "
+		"cells=%zu depth=%zu proof-exhausted=%d frame=%d/%zu "
 		"spans=%zu within=%d sector=%d bound=%d exhausted=%d "
 		"closure=%zu continuation=%zu segment=%zu cleanup=%zu\n",
 		reverse,
@@ -8848,6 +9182,8 @@ check_cobb_ambiguous_correspondence(const struct bn_tol *tol,
 		edge ? edge->correspondence_cells : 0,
 		edge ? edge->correspondence_depth : 0,
 		edge ? edge->correspondence_exhausted : -1,
+		edge ? edge->frame_interval_supported : -1,
+		edge ? edge->frame_interval_cells : 0,
 		edge ? edge->candidate_spans : 0,
 		edge ? edge->within_edge_tolerance : -1,
 		edge ? edge->sector_valid : -1,
@@ -12662,6 +12998,8 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--grazing-report");
     const bool report_cobb = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--cobb-report");
+    const bool report_cobb_oblique = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--cobb-oblique-report");
     const bool affine_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--affine-only");
     const bool interval_only = argc == 2 &&
@@ -12678,10 +13016,12 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--seam-only");
     const bool endpoint_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--endpoint-only");
-    if (argc != 1 && !report_grazing && !report_cobb && !affine_only &&
+    if (argc != 1 && !report_grazing && !report_cobb &&
+	    !report_cobb_oblique && !affine_only &&
 	    !interval_only && !fold_only && !core_only && !directed_only &&
 	    !crofton_only && !seam_only && !endpoint_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
+	    "--cobb-oblique-report|"
 	    "--affine-only|--interval-only|--fold-only|--core-only|"
 	    "--directed-only|--crofton-only|--seam-only|--endpoint-only]\n",
 	    argv[0]);
@@ -12725,6 +13065,15 @@ main(int argc, char **argv)
 
     struct resource resp = {};
     rt_init_resource(&resp, 0, rtip);
+
+    if (report_cobb_oblique) {
+	const int oblique_failures = check_cobb_oblique_contact_trend(
+	    &rtip->rti_tol, true);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return oblique_failures ? 1 : 0;
+    }
 
     if (affine_only) {
 	const int affine_failures =
@@ -12841,6 +13190,7 @@ main(int argc, char **argv)
 	failures += check_brep_concave_vertex_fan(&rtip->rti_tol, rtip,
 	    &resp);
 	failures += check_cobb_classifier_invariance(&rtip->rti_tol);
+	failures += check_cobb_oblique_contact_trend(&rtip->rti_tol, false);
 	failures += check_cobb_ambiguous_correspondence(&rtip->rti_tol, rtip,
 	    &resp);
 	failures += check_cobb_discrepancy_bound_budget(&rtip->rti_tol, rtip,
