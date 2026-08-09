@@ -3358,6 +3358,78 @@ ESTABLISHED FINDINGS
     an optimized rebuild and is not a performance baseline.  All graph storage
     remains fixed-capacity stack memory.
 
+74. Oblique material-sector frames now support globally certified curved
+    non-isoparametric trims through complete retained rational intervals.
+
+    Prep no longer discards frame authority merely because a trim is not
+    W/E/S/N isoparametric.  The existing global correspondence theorem must
+    still certify the edge and both trims as injective and consistently
+    oriented.  The strict discrepancy transaction now also retains each
+    authorized trim's immutable positive-weight rational Bezier spans.
+    Installed `brep_edge_trim_cell` records identify the complete side-local
+    span range.  Cells and spans are appended only after both endpoint
+    contracts, both correspondences, and both strict gap bounds complete, so
+    no partial span data can acquire production authority.  Cached prep
+    reconstructs the process-local spans from the BREP; cache serialization is
+    unchanged.
+
+    At shot time, `brep_interval_trim_cell_geometry` intersects a mapped trim
+    cell with every retained span and restricts homogeneous numerator and
+    weight controls with the existing outward interval arithmetic.  Positive
+    weight division encloses the complete UV locus.  Coefficient-wise
+    `X'W-XW'` rational derivatives enclose both UV differential components.
+    The union must cover the complete trim parameter cell, and its UV hull must
+    fit exactly one prepared surface span.  Missing spans, incomplete
+    coverage, a surface-span crossing that local subdivision cannot isolate,
+    nonfinite arithmetic, unsupported order, or any work limit fails the
+    whole ray closed.
+
+    The generic loop tangent is the interval chain rule
+    `L=Su*(du/ds)+Sv*(dv/ds)`.  The local span parameter differs from the
+    original trim parameter only by a positive scale, so every homogeneous
+    orientation and material-sector sign is preserved.  All prior outward
+    normal, interior conormal, edge-tangent, complete ray-t sector, monotone
+    sweep, box ownership, source-union, immutable-event, and atomic
+    publication obligations remain unchanged.  Exact isoparametric trims keep
+    their endpoint/fixed-coordinate fast path.  Generic contact-face box
+    ownership uses the complete rational UV hull rather than endpoints.
+
+    A new valid Cobb fixture bows the target surface seam by exactly model
+    tolerance and replaces the opposite incident trim with an
+    endpoint-preserving quadratic Bezier bowed toward its face interior.  Its
+    measured maximum 3D trim-lift change is `0.05*T`; the curve is required to
+    be genuinely non-isoparametric, endpoint preserving, and BREP-valid.
+    The maximum separation between the two lifted trims is `1.00125*T`, while
+    their separate distances from the shared edge remain `T` and `0.05*T`;
+    the declared edge tolerance is `1.01` times the two-lift separation.  This
+    keeps model tolerance, edge metadata, and the geometric discrepancy facts
+    explicit rather than using one number for all three roles.
+    Seam-tangent components 0.001 and 0.1 in both directions require the
+    analytic sphere chord, production selection, strict correspondence/gap
+    evidence, a nonempty frame-cell proof, and the complete oblique ledger.
+    Identity component 0.1 additionally requires the `1/1/2` connected
+    source-union ledger.
+
+    The same four rays pass after arbitrary-axis rotation plus translation,
+    0.01x similarity, and 10,000x similarity with large translation: 16/16
+    classifications select the same analytic partition.  As in Finding 72,
+    transformed adaptive box topology may use either the ordinary source-root
+    proof or a valid source-union proof; identity retains the exact union
+    ratchet.  The existing hidden-reversal degree-15 trim remains a required
+    correspondence/discrepancy fallback in the seam suite.  The focused
+    `rt_brep_ray_nonisoparametric` shard isolates this matrix and runs in
+    parallel with the larger ray tests.
+
+    This adds prep memory proportional to retained trim Bezier spans only on
+    strictly authorized seam edges.  It adds no shot-time allocation and does
+    not change SurfaceTree density or fixed workspaces.  A trim perturbation on
+    the contact-root face can change which roots the earlier closure stage
+    admits; this checkpoint does not invent those roots or replace that stage
+    with a tolerance tube.  Changed contact-root topology, unsupported
+    rational data, arbitrary faces/spans/root counts, exact or sector-boundary
+    tangency, vertex neighborhoods, and non-manifold topology remain
+    fail-closed.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -3481,6 +3553,12 @@ IMPLEMENTATION CHECKLIST
         affine whole-segment sector signs, monotone edge sweep, reversal,
         analytic chord, threshold, and full similarity gates.  All unsupported
         frame, vertex-neighborhood, determinant, and capacity cases fail closed.
+    [x] Extend the same frame theorem to globally certified curved
+        non-isoparametric trims by retaining complete positive-weight rational
+        trim spans, enclosing full UV loci and derivatives, applying the
+        surface chain rule, and preserving every former sector and ownership
+        obligation.  Gate real curved Cobb trims under reversal and
+        0.01x/10,000x similarities in a focused parallel shard.
     [x] Remove the equal-normalized-speed assumption for regular two-trim edge
         correspondence and gate opposite nonlinear trim reparameterizations.
     [x] Add vertex-fan and ambiguous-correspondence gates.
@@ -4717,24 +4795,53 @@ Synthetic source-union theorem checkpoint (Finding 73):
       --output-on-failure
     PASS: 11/11 in 23.25 seconds with no sanitizer diagnostic.
 
+Rational non-isoparametric frame checkpoint (Finding 74):
+
+  ctest --test-dir .build \
+    -R '^rt_brep_ray_nonisoparametric$' --output-on-failure
+    PASS: 1/1.  Direct output reports four similarity cases, sixteen required
+    oblique certifications, two identity source-union certificates, measured
+    trim lift `0.05*T`, and complete two-lift discrepancy `1.00125*T`.
+
+  ctest --test-dir .build --parallel 9 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+    PASS: 9/9 in 146.36 seconds (source union 0.01, fold 0.29, endpoint
+    2.32, affine 5.12, new non-isoparametric 27.31, complete directed process
+    46.53, Crofton 57.33, interval 146.17, seam 146.31).
+
+  ctest --test-dir .build --parallel 6 \
+    -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 11/11 in 4.17 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 6 \
+      -R '^(rt_brep_ray_nonisoparametric|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+      --output-on-failure
+    PASS: 12/12 in 132.13 seconds; the new curved-trim shard took 124.75
+    seconds and no sanitizer reported a diagnostic.
+
 
 NEXT ACTIONS
 ------------
 
-1. Extend oblique frame intervals to non-isoparametric trims only after prep
-   retains a complete rational UV locus and derivative enclosure for every
-   mapped edge cell.  Prove parameter coverage/orientation, bound the curved
-   trim hull inside each solver box, and preserve the existing edge/surface
-   frame and full-t material-sector predicates.  Finding 73 now supplies the
-   required disconnected, multiple-root, singular-Jacobian, and higher-order
-   source-union ratchets; do not reuse Finding 72 outside the narrow
-   seam-contact transaction without an equally explicit topology/ownership
-   theorem.  Keep arbitrary root counts, faces, spans, sector-boundary
-   tangency, exact tangency, and edge/vertex neighborhood interactions
-   fail-closed until each has its own theorem.  Keep the exact edge,
-   perpendicular contact, and original one-existing/one-continuation paths
-   unchanged as narrow production subsets, and never let the model envelope
-   manufacture the exact witness used by Finding 68.
+1. Add a solver-level corpus for Finding 74's rational trim restriction:
+   positive-weight curved and multispan loci, rational derivative enclosures,
+   reversed parameter orientation, exact span-boundary cells, missing span
+   provenance, incomplete coverage, nonpositive weights, and derivative/frame
+   signs containing zero.  Share the production restriction core rather than
+   copying its arithmetic into the test.  Then perturb the trim on the Cobb
+   contact-root face across signed amplitude/T.  The current experiment shows
+   that this can change which roots the earlier closure stage admits before
+   the new frame theorem is reached.  If those cases are to represent the
+   intended solid, give closure a locally convergent, allocation-free
+   surface/trim/edge tube and root-ownership proof; do not substitute a
+   proximity sample or let model tolerance manufacture a missing exact root.
+   Keep arbitrary root counts, faces, spans, sector-boundary or exact tangency,
+   and edge/vertex neighborhoods fail-closed until separately proved.  Do not
+   reuse Finding 72 outside the narrow seam transaction without an equally
+   explicit root-count theorem.
 2. Extend vertex classification only through a separately certified curved
    differential-link theorem.  Bound surface-normal and tangent variation over
    a local neighborhood before replacing the planar cyclic link.  Define exact
