@@ -7,6 +7,53 @@ Repository studied: /home/cyapp/brlcad
 STEP test corpus: /home/cyapp/step_corpus_g
 
 
+IMPLEMENTATION CHECKPOINT: CERTIFIED CLOSE REGULAR ROOT PAIRS (2026-08-09)
+----------------------------------------------------------------------------
+
+The first reduced-density failure has been converted into a production
+theorem rather than hidden by retaining depth seven.  Exactly two clean,
+opposite-direction simple roots on one face/span may now own their complete
+coarse component when their physical separation exceeds BRL-CAD's minimum
+segment size.  Two disjoint local Krawczyk neighborhoods prove existence and
+uniqueness, fixed-stack Bernstein work excludes the complete hull complement,
+and two nested event boxes independently prove determinant directions and
+outward ray-parameter intervals.  Publication is atomic and allocation-free.
+
+This authority does not merge arbitrary nearby roots.  It requires the whole
+shot ledger to consist of the same face/span component and exactly two finite,
+non-grazing CLEAN_HIT observations.  It excludes status-2 parameter remaps,
+trim-near hits, exact tangency, minimum-size ambiguity, additional roots, and
+any incomplete box ledger.  The boxes may be separated by a previously
+excluded root-free gap; the new theorem directly re-proves that gap over their
+rectangular hull.  Component boxes have a distinct pair disposition and no
+single determinant sign, because the two event neighborhoods have opposite
+orientations.
+
+The sphere grazing gate now passes down through SurfaceTree depth zero.  At
+depth zero, six required near-grazing lines certify six components containing
+18 terminal boxes; their complement walks make 254 visits and reach stack
+high-water nine.  Exact tangency, the one-T minimum-size boundary, outside
+misses, torus grazing, and status-2 similarity retain their prior semantics.
+This removes the earlier depth-seven grazing floor without weakening any
+minimum-segment rule.
+
+The next reduced-density boundary is pole and transformed seam behavior, not
+the close-root solve.  Sphere directed behavior is non-monotonic across the
+legacy tree depths: pole misses at two, a pass at three, invalid pole normals
+at four, a large-transformed pole miss at five and six, and a pass at seven.
+Depth-two paired Crofton also exposes grazing misses on converted RCC, cone,
+and torus solids.  These failures should be ratcheted as explicit C/C++ hard
+cases and moved to prepared pole/degenerate-parameter and general component
+authority.  They are evidence against choosing a lower global depth until it
+happens to pass; the new pipeline must make the result independent of that
+initial subdivision accident.
+
+The final default-depth eleven-shard optimized suite passes.  The complete
+seam gate specifically proves that the pair dispatcher is inactive for its
+different-face two-observation cases.  Depth-zero grazing and isolated-defect
+gates also pass under ASAN/UBSAN.
+
+
 IMPLEMENTATION CHECKPOINT: CONTROLLED SURFACETREE DENSITY (2026-08-09)
 ----------------------------------------------------------------------
 
