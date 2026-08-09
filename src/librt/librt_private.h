@@ -710,6 +710,7 @@ struct rt_brep_shot_trace {
     size_t prepared_edge_spans;
     size_t candidate_edge_spans;
     size_t supported_surface_faces;
+    size_t reparameterized_surface_faces;
     size_t unsupported_surface_faces;
     size_t prepared_surface_spans;
     size_t candidate_surface_spans;
@@ -732,6 +733,14 @@ struct rt_brep_shot_trace {
     size_t surface_corrector_attempts;
     size_t surface_corrector_converged;
     size_t surface_corrector_status[RT_BREP_TRACE_CORRECTOR_STATUS_COUNT];
+    size_t surface_terminal_expansion_attempts;
+    size_t surface_terminal_expansion_available;
+    size_t surface_terminal_expansion_exclusions;
+    size_t surface_terminal_expansion_krawczyk;
+    size_t surface_terminal_expansion_failures;
+    size_t surface_terminal_expansion_refinements;
+    size_t surface_terminal_expansion_budget_exhausted;
+    size_t surface_terminal_expansion_high_water;
     size_t surface_krawczyk_boxes;
     size_t surface_krawczyk_min_depth;
     size_t surface_krawczyk_max_depth;
@@ -804,6 +813,7 @@ struct rt_brep_shot_trace {
     size_t surface_fold_subminimum_contacts;
     size_t surface_fold_tolerance_ambiguous;
     size_t surface_fold_unmatched_roots;
+    size_t surface_fold_mixed_pairs;
     size_t surface_fold_promoted_pairs;
     fastf_t surface_fold_minimum_t;
     fastf_t surface_fold_pair_gap_min;
