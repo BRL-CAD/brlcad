@@ -1085,6 +1085,24 @@ struct rt_brep_source_union_test_result {
     fastf_t uv_maximum[2];
 };
 
+#define RT_BREP_TRIM_INTERVAL_TEST_MAX_SPANS 4
+#define RT_BREP_TRIM_INTERVAL_TEST_MAX_ORDER 16
+
+struct rt_brep_trim_interval_test_span {
+    int order;
+    fastf_t domain_minimum;
+    fastf_t domain_maximum;
+    fastf_t control[RT_BREP_TRIM_INTERVAL_TEST_MAX_ORDER][3];
+};
+
+struct rt_brep_trim_interval_test_result {
+    int available;
+    fastf_t uv_minimum[2];
+    fastf_t uv_maximum[2];
+    fastf_t derivative_minimum[2];
+    fastf_t derivative_maximum[2];
+};
+
 struct rt_brep_corridor_test_result {
     int available;
     int regular_derivative_signed;
@@ -1169,6 +1187,11 @@ RT_EXPORT extern int _rt_brep_source_union_test(
     const fastf_t coefficient_error[2],
     const struct rt_brep_source_union_test_box *boxes, size_t box_count,
     const fastf_t root[2], struct rt_brep_source_union_test_result *result);
+RT_EXPORT extern int _rt_brep_trim_interval_test(
+    const struct rt_brep_trim_interval_test_span *spans, size_t span_count,
+    size_t cell_span_begin, size_t cell_span_count,
+    const fastf_t cell_domain[2],
+    struct rt_brep_trim_interval_test_result *result);
 RT_EXPORT extern int _rt_brep_corridor_test(
     const fastf_t *first_coefficients, const fastf_t *first_error,
     const fastf_t *second_coefficients, const fastf_t *second_error,
