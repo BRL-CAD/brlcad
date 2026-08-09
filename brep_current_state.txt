@@ -3645,12 +3645,12 @@ ESTABLISHED FINDINGS
     ratio after `10,000x` scale and a large translation.  All three certify a
     support-boundary-crossing root with positive weight and finite complete
     image.  Maximum image displacement is `2.27e-9`; root and model expansion
-    high-water are both 2.  A diagnostic `2^400` ratio was intentionally not
-    retained: the parameter derivative is numerically singular under the
-    current OpenNURBS normal threshold, and SurfaceTree preparation calls
-    `bu_bomb` when its initial midpoint normal cannot be evaluated.  That is a
-    separate prep fail-closed robustness issue, not a local-certificate
-    failure and not a reason to relax the theorem.
+    high-water are both 2.  A `2^400` ratio is now retained as a required prep
+    rejection: its parameter derivative is numerically singular under the
+    current OpenNURBS normal threshold.  Finding 79 makes that rejection
+    fail-closed instead of aborting the process.  It remains a prep robustness
+    case, not a local-certificate failure and not a reason to relax the
+    theorem.
 
     The real Cobb test independently replays the actual prepared coefficient
     intervals for all sixteen transformations and reversals.  All sixteen
@@ -3701,6 +3701,42 @@ ESTABLISHED FINDINGS
     The focused `rt_brep_ray_grazing_root` CTest shard makes this distinction a
     permanent, independently parallelizable ratchet.
 
+79. Numerically unavailable SurfaceTree faces now fail complete BREP prep
+    instead of aborting the process or permitting a partial acceleration tree.
+
+    `initialBBox` previously called `bu_bomb` when `surface_EvNormal` could not
+    produce the estimate point and normal.  The positive-weight rational
+    bilinear diagnostic with weights `2^-200` and `2^200` reached this path:
+    its geometry and homogeneous controls are finite, but the parameter
+    derivative is below the OpenNURBS normal threshold at the midpoint.  A
+    single difficult input could therefore terminate conversion, rendering,
+    or a test process before librt could report prep failure.
+
+    `initialBBox` now evaluates the midpoint of its actual local `u,v` box and
+    returns no node when the normal is unavailable.  Surface subdivision
+    treats every missing expected child as failure of the complete subtree,
+    deletes every sibling built for that subdivision, and propagates failure
+    to the root.  After parallel face construction joins, `brep_build_bvh`
+    validates every SurfaceTree before releasing any root or CurveTree.  One
+    invalid face deletes all temporary builders and makes `rt_brep_prep`
+    return failure.  No face can disappear from an otherwise successful solid
+    BVH.
+
+    An invalid SurfaceTree is now an ordinary observable builder state:
+    depth, closest-estimate, leaf, and surface-point queries are null-safe, and
+    the libged and librt plotting helpers skip it.  Existing callers that use
+    `Valid()` continue unchanged.  Successful prep retains the prior ownership
+    order: every CurveTree is transferred only after all faces validate, the
+    temporary builders are destroyed, and the top-level BVH owns all released
+    roots.
+
+    The weighted focused corpus now has four surfaces.  Equal weights and the
+    two `2^20` weight-range/reversal/similarity cases still prep and certify;
+    the `2^400` case must return prep failure without invoking the local-root
+    hook.  This is deliberately whole-solid fail-closed behavior.  A future
+    algorithm may support more extreme parameterizations, but it may not
+    recover by raytracing an incomplete face set.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -3712,6 +3748,8 @@ IMPLEMENTATION CHECKLIST
     [x] Destroy temporary SurfaceTrees after transfer.
     [x] Remove unused m_face_user.p storage.
     [x] Own deserialized CurveTrees and verify teardown order.
+    [x] Reject a complete prep before ownership transfer when any SurfaceTree
+        is invalid; never publish a partial face hierarchy.
     [x] Exercise ownership through existing normal/cached prep regression
         tests, ASan/UBSan, and the unsuppressed ThreadSanitizer cache matrix.
         LeakSanitizer remains blocked by the host ptrace wrapper.
@@ -5286,6 +5324,40 @@ Near-grazing local-certificate bridge (Finding 78):
   PASS in 6.62 seconds with the same capability boundary and no sanitizer
   diagnostic.  Leak scanning remains disabled because of the host ptrace
   wrapper.
+
+SurfaceTree prep fail-closed checkpoint (Finding 79):
+
+  .build/src/librt/tests/rt_brep_ray --local-root-only
+  PASS: thirteen arithmetic systems remain 10 certified/3 rejected.  The
+  weighted surface corpus is now four cases: three complete root/model-image
+  certificates and one required `2^400` weight-ratio prep rejection.  The
+  process returns normally with `prep-rejected=1`; no local-root hook is called
+  for the unavailable surface.
+
+  cmake --build .build --target rt_brep_ray libged -j8
+  PASS: libbrep, librt, the ray test, and both null-safe plotting callers build
+  cleanly with the release warning-as-error configuration.
+
+  ctest --test-dir .build --parallel 13 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+  PASS: 13/13 in 174.44 seconds.  Local root took 0.51, grazing root 2.72,
+  contact trim 34.86, directed 48.64, Crofton 59.42, interval 145.00, and seam
+  174.39 seconds.
+
+  ctest --test-dir .build --parallel 13 \
+    -R '^(rt_brep_ray_local_root|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+  PASS: 12/12 in 8.11 seconds, including serial/parallel prep-cache matrices,
+  primitive conversion topology, and three established NURBS regressions.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+      ctest --test-dir .build-asan --parallel 13 \
+        -R '^rt_brep_ray($|_)' --output-on-failure
+  PASS: 13/13 in 892.65 seconds; local root took 4.87, grazing root 19.12,
+  contact trim 224.93, directed 337.52, Crofton 363.07, interval 635.94, and
+  seam 892.51 seconds.  No sanitizer diagnostic appeared.  Leak scanning
+  remains disabled because of the host ptrace wrapper.
 
 
 NEXT ACTIONS

@@ -690,6 +690,8 @@ drawBBNode(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vlblock *vbp
 static void
 plotFaceFromSurfaceTree(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vlblock *vbp, int UNUSED(isocurveres), int UNUSED(gridres))
 {
+    if (!st || !st->Valid())
+	return;
     const BBNode *root = st->getRootNode();
     drawBBNode(st, vlfree, vbp, root);
 }
