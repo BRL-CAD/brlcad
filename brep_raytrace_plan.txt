@@ -1989,20 +1989,93 @@ translation.  All fourteen cases preserve the analytic normalized chord;
 terminal subdivision legitimately produces one or two contact boxes without
 changing the physical result.
 
-This subtype does not authorize endpoint-moving defects, arbitrary numbers of
-overlap roots, roots on several faces or spans, an oblique edge interval,
-sector-boundary tangency, a vertex neighborhood, or non-manifold topology.
-The new endpoint-moving Cobb family deliberately moves the entire boundary
-row, measures every affected edge and endpoint-vertex discrepancy, and
-calibrates g/T at 0.25, 0.9, and 1.1 with both signs, five tangent-clearance
-states, and ray reversal.  Its first 60-ray ratchet reports all
-target discrepancy proofs UNAVAILABLE rather than exhausted, no seam-contact
-certificate, no difference outside the explicit model/clearance uncertainty
-band, and at most the two observed below-envelope no-partition leaks.  This is
-a preserved capability boundary, not a correctness claim.  The registered
-`rt_brep_ray_endpoint` process keeps that family parallel with the main seam
-matrix until endpoint/vertex correspondence and closure receive their own
-proof.
+This contact-lobe subtype does not itself authorize endpoint-moving defects,
+arbitrary numbers of overlap roots, roots on several faces or spans, an
+oblique edge interval, sector-boundary tangency, a vertex neighborhood, or
+non-manifold topology.  Endpoint-moving edge-corridor authorization is the
+separate prerequisite in Section 6.4.1.2; it can enable the original narrow
+seam theorem without weakening this two-root contact theorem.
+
+6.4.1.2 Topological endpoint closure and representation-independent dispatch
+
+A tolerance-displaced lifted trim endpoint need not have its nearest point on
+the 3-D edge at the edge-domain endpoint.  Consequently, a geometric closest-
+point map cannot be required to reproduce the trim's exact domain boundary.
+That former requirement caused the endpoint-moving Cobb family to report
+`SEAM_GAP_UNAVAILABLE` before visiting a bounding cell even though the global
+strict-monotonicity correspondence proof succeeded.  Resolve the boundary
+pair from BREP topology and reserve closest-point mapping for interior
+subdivision:
+
+  1. For edge endpoint e and each of its two trims, select trim endpoint
+     `m_bRev3d ? 1-e : e`.  Its `m_vi` must exactly equal `edge.m_vi[e]`.
+     Boundary association is therefore topological; distance tolerance may
+     validate its geometry but may not manufacture or change its vertex.
+
+  2. Evaluate the 3-D edge endpoint and the surface lift of that exact trim
+     endpoint.  Both must lie within that specific topological vertex's point
+     by `max(model distance tolerance, valid vertex.m_tolerance)` plus only a
+     coordinate-scaled binary64 roundoff allowance.  Do this independently at
+     both ends and on both incident trims.  A large edge tolerance or the
+     opposite endpoint's vertex tolerance cannot authorize a failed endpoint.
+
+  3. Seed the complete edge/lift discrepancy partition with the two certified
+     trim-domain endpoints.  Consecutive edge Bezier spans inherit the previous
+     trim endpoint exactly; only an interior span boundary is mapped by the
+     geometric solver, constrained to the remaining directed trim interval.
+     Adaptive child midpoints remain constrained to their parent trim
+     interval.  Thus cells cover both complete loci with no endpoint gap while
+     preserving nonlinear trim-reparameterization invariance.
+
+  4. The existing positive-weight rational control-hull bounds still decide
+     each cell.  Endpoint closure does not relax the gap envelope: the complete
+     maximum Hausdorff upper bound must remain strictly inside the authorized
+     edge corridor.  Outside, equality-straddling, unavailable, and exhausted
+     results remain fallback.  Record a distinct
+     `discrepancy_endpoints_certified` bit and require it explicitly anywhere
+     a closure or seam event consumes the discrepancy proof.
+
+  5. Surface-root isolation method is not a solid-boundary completeness
+     theorem.  In particular, an interval Krawczyk box can certify the one
+     surviving non-tangent surface root of a cracked solid stream.  Before
+     dispatch, count clean/near, retained, non-tangent ENTER and LEAVE roots.
+     If those directions are imbalanced, allow the existing seam-continuation
+     theorem to run even when every box happened to be Krawczyk-qualified.
+     The theorem's full edge, continuation, box/root ownership, event, and
+     global-state obligations are unchanged; balanced ordinary streams still
+     take the regular path without a speculative seam attempt.
+
+The endpoint-moving Cobb family moves the entire rational boundary row while
+preserving weights, independently measures the target/adjacent edge and
+endpoint-vertex lift discrepancies, and sets every affected declared
+tolerance.  Its 60 primary rays cover g/T = 0.25, 0.9, and 1.1, inward and
+outward signs, h/T = 2.0, 0.9, 0.25, 0, and -0.25, and reversal.  Every target
+now has an independently reconstructed topological endpoint contract and a
+complete strict INSIDE gap proof, using at most 1,598 cells without exhaustion.
+The original seam theorem certifies the inward g/T=0.9, h/T=0.25 pair in both
+directions; its physical event enclosures contain the implicit-sphere
+endpoints and its representatives agree within 2.5e-4 T.  Those two repairs
+remove both former below-envelope no-partition leaks.  The new baseline is 16
+legacy one-hit rays, two certified pairs, ten total prepared selections, 46
+implicit/variant differences all inside the declared uncertainty band, zero
+outside-band differences, and zero below-envelope leaks.
+
+An additional eight-case gate repeats that certified state in both directions
+under translation, arbitrary rotation plus translation, 0.01x scale, and
+10,000x scale with large translation.  It reconstructs the endpoint contract,
+requires the complete strict gap proof, and validates both immutable event
+enclosures and representatives against similarity-scaled implicit-sphere
+intervals.  Two in-memory under-declared endpoint metadata controls must be
+rejected by the independent endpoint oracle; intentionally invalid BREP
+metadata is not sent through full prep.  The registered
+`rt_brep_ray_endpoint` process keeps these checks parallel with the main seam
+matrix.
+
+This closes the parameter-boundary assumption and a representation-sensitive
+dispatch decision.  It does not classify a ray whose relevant edge parameter
+lies in a vertex neighborhood, prove a curved vertex fan, authorize arbitrary
+endpoint overlap root graphs, or bound an oblique contact interval whose edge
+frame varies along the ray.  Those remain separate fail-closed theorems.
 
 6.4.2 Cyclic planar vertex-fan theorem
 
