@@ -257,13 +257,22 @@ _brep_cmd_bot(void *bs, int argc, const char **argv)
     cdttol.norm = ttol->norm;
     ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bi->brep, gb->solid_name.c_str());
     ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
-    if (ON_Brep_CDT_Tessellate(s_cdt, 0, NULL) == -1) {
-	bu_vls_printf(gedp->ged_result_str, "tessellation failed\n");
+    if (ON_Brep_CDT_Tessellate(s_cdt, 0, NULL) != 0) {
+	struct brep_cdt_diagnostic diagnostic;
+	ON_Brep_CDT_Diagnostic(&diagnostic, s_cdt);
+	bu_vls_printf(gedp->ged_result_str, "tessellation failed: %s\n",
+	    diagnostic.message);
 	ON_Brep_CDT_Destroy(s_cdt);
 	bu_vls_free(&bname_bot);
 	return BRLCAD_ERROR;
     }
-    ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, s_cdt, 0, NULL);
+    if (ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt,
+	    &face_normals, &fncnt, &normals, &ncnt, s_cdt, 0, NULL) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "mesh assembly failed\n");
+	ON_Brep_CDT_Destroy(s_cdt);
+	bu_vls_free(&bname_bot);
+	return BRLCAD_ERROR;
+    }
     ON_Brep_CDT_Destroy(s_cdt);
 
     struct rt_bot_internal *bot;
@@ -365,7 +374,17 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 
     // Do tessellations
     for (int i = 0; i < obj_cnt; i++) {
-	ON_Brep_CDT_Tessellate(ss_cdt[i], 0, NULL);
+	if (ON_Brep_CDT_Tessellate(ss_cdt[i], 0, NULL) != 0) {
+	    struct brep_cdt_diagnostic diagnostic;
+	    ON_Brep_CDT_Diagnostic(&diagnostic, ss_cdt[i]);
+	    bu_vls_printf(gedp->ged_result_str,
+		"Error: %s tessellation failed: %s\n", obj_names[i],
+		diagnostic.message);
+	    for (size_t j = 0; j < ss_cdt.size(); ++j)
+		ON_Brep_CDT_Destroy(ss_cdt[j]);
+	    bu_free(obj_names, "object names");
+	    return BRLCAD_ERROR;
+	}
     }
 
     // Do comparison/resolution
@@ -375,8 +394,13 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
     }
     if (ON_Brep_CDT_Ovlp_Resolve(s_a, obj_cnt, ovlp_max_smallest, INT_MAX) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error: RESOLVE fail.");
+	bu_free(s_a, "state array");
+	for (size_t i = 0; i < ss_cdt.size(); ++i)
+	    ON_Brep_CDT_Destroy(ss_cdt[i]);
+	bu_free(obj_names, "object names");
 	return BRLCAD_ERROR;
     }
+    bu_free(s_a, "state array");
 
     // Make final meshes
     for (int i = 0; i < obj_cnt; i++) {
@@ -386,7 +410,18 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 	int *face_normals = NULL;
 	fastf_t *normals = NULL;
 
-	ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, ss_cdt[i], 0, NULL);
+	if (ON_Brep_CDT_Status(ss_cdt[i]) != 0 ||
+		ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt,
+		    &face_normals, &fncnt, &normals, &ncnt,
+		    ss_cdt[i], 0, NULL) < 0) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"Error: %s did not produce a certified solid mesh\n",
+		obj_names[i]);
+	    for (size_t j = (size_t)i; j < ss_cdt.size(); ++j)
+		ON_Brep_CDT_Destroy(ss_cdt[j]);
+	    bu_free(obj_names, "object names");
+	    return BRLCAD_ERROR;
+	}
 	ON_Brep_CDT_Destroy(ss_cdt[i]);
 
 	struct bu_vls bot_name = BU_VLS_INIT_ZERO;
@@ -415,6 +450,7 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 	bu_vls_free(&bot_name);
     }
 
+    bu_free(obj_names, "object names");
     return BRLCAD_OK;
 }
 
@@ -1610,4 +1646,3 @@ GED_DECLARE_PLUGIN_MANIFEST("libged_brep", 1, GED_BREP_COMMANDS)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

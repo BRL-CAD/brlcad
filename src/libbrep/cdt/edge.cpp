@@ -32,6 +32,14 @@
 #include "bg/chull.h"
 #include "./cdt.h"
 
+static bool
+edge_has_singular_trim(const ON_BrepTrim *trim1, const ON_BrepTrim *trim2)
+{
+    return trim1 && trim2 &&
+	(trim1->m_type == ON_BrepTrim::singular ||
+	 trim2->m_type == ON_BrepTrim::singular);
+}
+
 #define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
 
@@ -890,7 +898,7 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 
 	    if (!trim1 || !trim2) return false;
 
-	    if (trim1->m_type == ON_BrepTrim::singular || trim1->m_type == ON_BrepTrim::singular) return false;
+	    if (edge_has_singular_trim(trim1, trim2)) return false;
 
 	    // 1.  Any edges with at least 1 closed trim are split.
 	    if (trim1->IsClosed() || trim2->IsClosed()) {
@@ -952,6 +960,24 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 #endif
 
     return true;
+}
+
+int
+cdt_test_edge_singular_pair(void)
+{
+    ON_BrepTrim ordinary1;
+    ON_BrepTrim ordinary2;
+    ON_BrepTrim singular;
+    ordinary1.m_type = ON_BrepTrim::boundary;
+    ordinary2.m_type = ON_BrepTrim::mated;
+    singular.m_type = ON_BrepTrim::singular;
+    if (edge_has_singular_trim(&ordinary1, &ordinary2))
+	return 1;
+    if (!edge_has_singular_trim(&ordinary1, &singular))
+	return 2;
+    if (!edge_has_singular_trim(&singular, &ordinary2))
+	return 3;
+    return 0;
 }
 
 // Charcterize the edges.  Five possibilities:

@@ -98,6 +98,8 @@ struct brep_cdt_tol {
 struct ON_Brep_CDT_State {
 
     int status;
+    struct brep_cdt_diagnostic diagnostic;
+    bool tolerance_changed;
     ON_Brep *orig_brep;
     ON_Brep *brep;
     const char *name;
@@ -164,6 +166,10 @@ void initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt);
 void refine_close_edges(struct ON_Brep_CDT_State *s_cdt);
 void tol_curved_edges_split(struct ON_Brep_CDT_State *s_cdt);
 void tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt);
+void cdt_state_reset(struct ON_Brep_CDT_State *s_cdt);
+void cdt_diagnostic_set(struct ON_Brep_CDT_State *s_cdt, int result,
+	int stage, int face_index, int completed_faces, int failed_faces,
+	const char *message);
 
 /* debug */
 void trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_vcnt, int *valid_faces, fastf_t *valid_vertices, struct bg_trimesh_solid_errors *se);
@@ -185,4 +191,3 @@ bool TRICHECK(triangle_t &tri);
 // ex: shiftwidth=4 tabstop=8
 
 #endif /* LIBBREP_CDT_H */
-
