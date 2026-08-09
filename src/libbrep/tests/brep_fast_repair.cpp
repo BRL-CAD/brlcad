@@ -15,6 +15,7 @@
 
 #include "brep/cdt.h"
 #include "bu/app.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 
 struct fast_result {
@@ -352,6 +353,53 @@ untrimmed_planar_face_test()
 }
 
 static bool
+skinny_planar_strip_test()
+{
+    ON_Brep brep;
+    ON_PlaneSurface *surface = new ON_PlaneSurface(ON_xy_plane);
+    surface->SetDomain(0, 0.0, 0.01);
+    surface->SetDomain(1, 0.0, 1000.0);
+    surface->SetExtents(0, surface->Domain(0));
+    surface->SetExtents(1, surface->Domain(1));
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_3dPoint corners[4] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(0.01, 0.0, 0.0),
+	ON_3dPoint(0.01, 1000.0, 0.0), ON_3dPoint(0.0, 1000.0, 0.0)
+    };
+    int vertices[4];
+    for (int i = 0; i < 4; ++i)
+	vertices[i] = brep.NewVertex(corners[i]).m_vertex_index;
+    for (int i = 0; i < 4; ++i) {
+	const int next = (i + 1) % 4;
+	add_nurbs_trim(brep, loop, vertices[i], vertices[next], {
+	    corners[i], corners[next]
+	}, 1.0e-6);
+    }
+
+    fast_result *result = run_fast(brep);
+    point_t bmin = {INFINITY, INFINITY, INFINITY};
+    point_t bmax = {-INFINITY, -INFINITY, -INFINITY};
+    for (int i = 0; result->points && i < result->point_count; ++i)
+	VMINMAX(bmin, bmax, result->points[i]);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0 &&
+	result->face_count <= 128 && result->point_count <= 128 &&
+	NEAR_EQUAL(bmin[X], 0.0, 1.0e-9) &&
+	NEAR_EQUAL(bmax[X], 0.01, 1.0e-9) &&
+	NEAR_EQUAL(bmin[Y], 0.0, 1.0e-9) &&
+	NEAR_EQUAL(bmax[Y], 1000.0, 1.0e-9);
+    if (!valid)
+	bu_log("skinny strip: ret=%d faces=%d points=%d "
+	    "bbox=(%.17g %.17g)-(%.17g %.17g)\n", result->ret,
+	    result->face_count, result->point_count, bmin[X], bmin[Y],
+	    bmax[X], bmax[Y]);
+    delete result;
+    return valid;
+}
+
+static bool
 malformed_pcurve_test()
 {
     ON_Brep brep;
@@ -408,5 +456,5 @@ main(int argc, const char **argv)
 	degenerate_collinear_loop_test() &&
 	singular_cap_test() && periodic_strip_test() &&
 	full_periodic_face_test() && untrimmed_planar_face_test() &&
-	malformed_pcurve_test() ? 0 : 1;
+	skinny_planar_strip_test() && malformed_pcurve_test() ? 0 : 1;
 }
