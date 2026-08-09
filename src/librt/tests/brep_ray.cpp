@@ -4777,6 +4777,41 @@ cobb_seam_oblique_ray(const cobb_seam_frame &frame,
 }
 
 
+static bool
+cobb_seam_endpoint_chord_ray(const cobb_seam_frame &frame,
+    const ON_3dPoint &origin, double radius, double chord,
+    int conormal_sign, bool reverse, sampled_ray &ray)
+{
+    if (!(radius > 0.0) || !(chord >= 0.0) || chord >= 2.0 * radius ||
+	    (conormal_sign != -1 && conormal_sign != 1))
+	return false;
+    const ON_3dPoint seam_point = origin + radius * frame.normal;
+    const double denominator = sqrt(4.0 * radius * radius - chord * chord);
+    const double radial_component = chord / denominator;
+    ON_3dVector direction =
+	(double)conormal_sign * frame.target_conormal -
+	radial_component * frame.normal;
+    if (!direction.Unitize())
+	return false;
+    const ON_3dPoint other_point = seam_point + chord * direction;
+    const ON_3dPoint ray_origin = reverse ?
+	other_point + 2.0 * radius * direction :
+	seam_point - 2.0 * radius * direction;
+    if (reverse)
+	direction.Reverse();
+    const double coordinate_scale = std::max(1.0,
+	std::max(radius, std::max(fabs(origin.x), std::max(fabs(origin.y),
+	    fabs(origin.z)))));
+    const double roundoff = std::max(ON_ZERO_TOLERANCE,
+	4096.0 * DBL_EPSILON * coordinate_scale);
+    if (fabs(other_point.DistanceTo(origin) - radius) > roundoff)
+	return false;
+    VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
+    VSET(ray.direction, direction.x, direction.y, direction.z);
+    return true;
+}
+
+
 static size_t
 brep_trace_unique_roots(const struct rt_brep_shot_trace &trace)
 {
@@ -10357,12 +10392,16 @@ cobb_reparameterize_edge_trims(ON_Brep *brep, int edge_index,
 
 static bool
 cobb_curve_edge_trim(ON_Brep *brep, int edge_index, int face_index,
-    double target_lift_shift, double &maximum_lift_shift)
+    double signed_target_lift_shift, double &maximum_lift_shift,
+    double &maximum_u_shift, double &maximum_v_shift)
 {
     maximum_lift_shift = INFINITY;
+    maximum_u_shift = INFINITY;
+    maximum_v_shift = INFINITY;
     if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count() ||
 	face_index < 0 || face_index >= brep->m_F.Count() ||
-	!(target_lift_shift > 0.0) || !std::isfinite(target_lift_shift))
+	!(fabs(signed_target_lift_shift) > 0.0) ||
+	!std::isfinite(signed_target_lift_shift))
 	return false;
     const ON_BrepEdge &edge = brep->m_E[edge_index];
     if (edge.m_ti.Count() != 2)
@@ -10421,7 +10460,7 @@ cobb_curve_edge_trim(ON_Brep *brep, int edge_index, int face_index,
      * perturbation; the independently sampled 3D lift below is the fixture's
      * measured fact. */
     const double control_displacement =
-	2.0 * target_lift_shift / lift_rate;
+	2.0 * signed_target_lift_shift / lift_rate;
     const ON_3dPoint control(midpoint.x + control_displacement * inward.x,
 	midpoint.y + control_displacement * inward.y, 0.0);
     ON_NurbsCurve *curved = ON_NurbsCurve::New(2, false, 3, 3);
@@ -10435,6 +10474,8 @@ cobb_curve_edge_trim(ON_Brep *brep, int edge_index, int face_index,
     }
 
     maximum_lift_shift = 0.0;
+    maximum_u_shift = 0.0;
+    maximum_v_shift = 0.0;
     double maximum_chord_error = 0.0;
     for (int sample = 0; sample <= 128; ++sample) {
 	const double fraction = (double)sample / 128.0;
@@ -10453,6 +10494,10 @@ cobb_curve_edge_trim(ON_Brep *brep, int edge_index, int face_index,
 	}
 	maximum_chord_error = std::max(maximum_chord_error,
 	    old_uv.DistanceTo(ON_3dPoint(chord.x, chord.y, 0.0)));
+	maximum_u_shift = std::max(maximum_u_shift,
+	    fabs(new_uv.x - old_uv.x));
+	maximum_v_shift = std::max(maximum_v_shift,
+	    fabs(new_uv.y - old_uv.y));
 	maximum_lift_shift = std::max(maximum_lift_shift,
 	    old_lift.DistanceTo(new_lift));
     }
@@ -10461,8 +10506,9 @@ cobb_curve_edge_trim(ON_Brep *brep, int edge_index, int face_index,
 	std::max(fabs(end.x), fabs(end.y)))));
     const double uv_roundoff = 4096.0 * DBL_EPSILON * uv_scale;
     if (maximum_chord_error > uv_roundoff ||
-	    !(maximum_lift_shift > 0.01 * target_lift_shift) ||
-	    maximum_lift_shift > 2.0 * target_lift_shift) {
+	    !(maximum_lift_shift >
+		0.01 * fabs(signed_target_lift_shift)) ||
+	    maximum_lift_shift > 2.0 * fabs(signed_target_lift_shift)) {
 	delete original_curve;
 	delete curved;
 	return false;
@@ -10475,6 +10521,8 @@ cobb_curve_edge_trim(ON_Brep *brep, int edge_index, int face_index,
 	    delete curved;
 	return false;
     }
+    trim.m_tolerance[0] = 1.01 * maximum_u_shift;
+    trim.m_tolerance[1] = 1.01 * maximum_v_shift;
     brep->SetTrimIsoFlags(trim);
     brep->DestroyRuntimeCache(true);
     const ON_3dPoint installed_start = trim.PointAt(domain.Min());
@@ -10487,6 +10535,175 @@ cobb_curve_edge_trim(ON_Brep *brep, int edge_index, int face_index,
 	trim.m_iso != ON_Surface::E_iso &&
 	trim.m_iso != ON_Surface::S_iso &&
 	trim.m_iso != ON_Surface::N_iso && brep->IsValid();
+}
+
+
+static bool
+cobb_edge_lift_discrepancy(const ON_Brep *brep, int edge_index,
+    double &maximum)
+{
+    maximum = INFINITY;
+    if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count())
+	return false;
+    const ON_BrepEdge &edge = brep->m_E[edge_index];
+    if (edge.m_ti.Count() != 2 || !edge.Domain().IsIncreasing())
+	return false;
+    maximum = 0.0;
+    for (int sample = 0; sample <= 256; ++sample) {
+	const double fraction = (double)sample / 256.0;
+	const ON_3dPoint edge_point = edge.PointAt(
+	    edge.Domain().ParameterAt(fraction));
+	if (!edge_point.IsValid())
+	    return false;
+	for (int side = 0; side < 2; ++side) {
+	    const int trim_index = edge.m_ti[side];
+	    if (trim_index < 0 || trim_index >= brep->m_T.Count())
+		return false;
+	    ON_3dPoint lift;
+	    if (!cobb_trim_lift(brep->m_T[trim_index], fraction, lift))
+		return false;
+	    maximum = std::max(maximum, edge_point.DistanceTo(lift));
+	}
+    }
+    return std::isfinite(maximum);
+}
+
+
+static bool
+cobb_perturb_edge_curve(ON_Brep *brep, int edge_index,
+    const ON_3dPoint &origin, double displacement)
+{
+    if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count() ||
+	    !std::isfinite(displacement) || !(fabs(displacement) > 0.0))
+	return false;
+    ON_BrepEdge &edge = brep->m_E[edge_index];
+    ON_NurbsCurve nurbs;
+    if (edge.GetNurbForm(nurbs) != 1 || nurbs.m_cv_count < 3 ||
+	    !nurbs.Domain().IsIncreasing())
+	return false;
+    const ON_3dPoint start = edge.PointAtStart();
+    const ON_3dPoint end = edge.PointAtEnd();
+    for (int cv_index = 1; cv_index + 1 < nurbs.m_cv_count; ++cv_index) {
+	ON_4dPoint cv;
+	if (!nurbs.GetCV(cv_index, cv) || fabs(cv.w) <= DBL_MIN)
+	    return false;
+	ON_3dPoint point(cv.x / cv.w, cv.y / cv.w, cv.z / cv.w);
+	ON_3dVector direction = point - origin;
+	if (!direction.Unitize())
+	    return false;
+	cv.x += displacement * direction.x * cv.w;
+	cv.y += displacement * direction.y * cv.w;
+	cv.z += displacement * direction.z * cv.w;
+	if (!nurbs.SetCV(cv_index, cv))
+	    return false;
+    }
+
+    ON_NurbsCurve *replacement = new ON_NurbsCurve(nurbs);
+    const int curve_index = brep->AddEdgeCurve(replacement);
+    if (curve_index < 0 ||
+	    !brep->SetEdgeCurve(brep->m_E[edge_index], curve_index)) {
+	if (curve_index < 0)
+	    delete replacement;
+	return false;
+    }
+    brep->m_E[edge_index].UnsetPlineEdgeParameters();
+    brep->DestroyRuntimeCache(true);
+    const ON_BrepEdge &installed = brep->m_E[edge_index];
+    const double coordinate_scale = std::max(1.0,
+	std::max(fabs(start.x), std::max(fabs(start.y),
+	std::max(fabs(start.z), std::max(fabs(end.x),
+	std::max(fabs(end.y), fabs(end.z)))))));
+    const double roundoff = std::max(ON_ZERO_TOLERANCE,
+	4096.0 * DBL_EPSILON * coordinate_scale);
+    return installed.PointAtStart().DistanceTo(start) <= roundoff &&
+	installed.PointAtEnd().DistanceTo(end) <= roundoff;
+}
+
+
+static ON_Brep *
+cobb_trim_only_variant(const ON_Brep *pristine, const ON_3dPoint &origin,
+    double signed_target_gap, cobb_seam_frame &frame, double &measured_gap,
+    double &applied_displacement, double &maximum_u_shift,
+    double &maximum_v_shift)
+{
+    measured_gap = INFINITY;
+    applied_displacement = signed_target_gap;
+    maximum_u_shift = INFINITY;
+    maximum_v_shift = INFINITY;
+    if (!pristine || !(fabs(signed_target_gap) > 0.0) ||
+	    !cobb_seam_geometry(pristine, origin, frame))
+	return NULL;
+
+    ON_Brep *variant = NULL;
+    for (int iteration = 0; iteration < 4; ++iteration) {
+	delete variant;
+	variant = new ON_Brep(*pristine);
+	/* The helper validates the installed trim before returning.  Give that
+	 * intermediate model a conservative declared edge envelope; replace it
+	 * with the independently chosen test policy after calibration. */
+	variant->m_E[frame.edge_index].m_tolerance =
+	    4.0 * fabs(applied_displacement);
+	double maximum_lift_shift = INFINITY;
+	if (!cobb_curve_edge_trim(variant, frame.edge_index,
+		frame.face_index, applied_displacement, maximum_lift_shift,
+		maximum_u_shift, maximum_v_shift)) {
+	    delete variant;
+	    return NULL;
+	}
+	measured_gap = cobb_seam_discrepancy(variant, frame.edge_index);
+	if (!(measured_gap > 0.0) || !std::isfinite(measured_gap) ||
+		fabs(maximum_lift_shift - measured_gap) >
+		    0.02 * measured_gap) {
+	    delete variant;
+	    return NULL;
+	}
+	const double ratio = fabs(signed_target_gap) / measured_gap;
+	if (fabs(ratio - 1.0) <= 1.0e-4)
+	    break;
+	applied_displacement *= ratio;
+    }
+    variant->m_E[frame.edge_index].m_tolerance = 1.01 * measured_gap;
+    if (!variant->IsValid()) {
+	delete variant;
+	return NULL;
+    }
+    return variant;
+}
+
+
+static ON_Brep *
+cobb_edge_only_variant(const ON_Brep *pristine, const ON_3dPoint &origin,
+    double signed_target_gap, cobb_seam_frame &frame, double &measured_gap,
+    double &applied_displacement)
+{
+    measured_gap = INFINITY;
+    applied_displacement = signed_target_gap;
+    if (!pristine || !(fabs(signed_target_gap) > 0.0) ||
+	    !cobb_seam_geometry(pristine, origin, frame))
+	return NULL;
+
+    ON_Brep *variant = NULL;
+    for (int iteration = 0; iteration < 4; ++iteration) {
+	delete variant;
+	variant = new ON_Brep(*pristine);
+	if (!cobb_perturb_edge_curve(variant, frame.edge_index, origin,
+		applied_displacement) ||
+		!cobb_edge_lift_discrepancy(variant, frame.edge_index,
+		    measured_gap) || !(measured_gap > 0.0)) {
+	    delete variant;
+	    return NULL;
+	}
+	const double ratio = fabs(signed_target_gap) / measured_gap;
+	if (fabs(ratio - 1.0) <= 1.0e-4)
+	    break;
+	applied_displacement *= ratio;
+    }
+    variant->m_E[frame.edge_index].m_tolerance = 1.01 * measured_gap;
+    if (!variant->IsValid()) {
+	delete variant;
+	return NULL;
+    }
+    return variant;
 }
 
 
@@ -11535,8 +11752,13 @@ check_cobb_nonisoparametric_oblique_side(const struct bn_tol *tol,
 	    }
 	}
     }
+    double maximum_u_shift = INFINITY;
+    double maximum_v_shift = INFINITY;
     if (!variant || !cobb_curve_edge_trim(variant, frame.edge_index,
-	    curved_face, target_lift_shift, maximum_lift_shift)) {
+	    curved_face, target_lift_shift, maximum_lift_shift,
+	    maximum_u_shift, maximum_v_shift) ||
+	    !std::isfinite(maximum_u_shift) ||
+	    !std::isfinite(maximum_v_shift)) {
 	std::printf("FAIL: Cobb non-isoparametric %s trim construction\n",
 	    contact_face_trim ? "contact-face" : "opposite-face");
 	delete variant;
@@ -12390,6 +12612,350 @@ check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
     delete pristine;
     if (!failures)
 	std::printf("Cobb seam tolerance metadata: PASS\n");
+    return failures;
+}
+
+
+static int
+check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
+    struct rt_i *rtip, struct resource *resource)
+{
+    if (!tol || !rtip || !resource)
+	return 1;
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    if (!pristine) {
+	std::printf("FAIL: isolated Cobb defect pristine construction\n");
+	return 1;
+    }
+
+    struct rt_ell_internal sphere = {};
+    sphere.magic = RT_ELL_INTERNAL_MAGIC;
+    VSET(sphere.v, 0.0, 0.0, 0.0);
+    VSET(sphere.a, radius, 0.0, 0.0);
+    VSET(sphere.b, 0.0, radius, 0.0);
+    VSET(sphere.c, 0.0, 0.0, radius);
+    struct rt_db_internal sphere_intern;
+    RT_DB_INTERNAL_INIT(&sphere_intern);
+    sphere_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    sphere_intern.idb_type = ID_ELL;
+    sphere_intern.idb_meth = &OBJ[ID_ELL];
+    sphere_intern.idb_ptr = &sphere;
+    struct soltab *implicit_stp = prep_solid(rtip, &sphere_intern, ID_ELL);
+    if (!implicit_stp) {
+	delete pristine;
+	std::printf("FAIL: isolated Cobb defect implicit prep\n");
+	return 1;
+    }
+
+    struct defect_family {
+	const char *name;
+	bool trim_only;
+	int signs;
+    } families[] = {
+	{"trim-only", true, 1},
+	{"edge-only", false, 2}
+    };
+    const double gap_ratios[] = {0.25, 0.9};
+    const double chord_ratios[] = {100.0, 10.0, 2.0, 1.1, 0.0};
+    int failures = 0;
+    size_t rays = 0;
+    size_t prepared = 0;
+    size_t fallback = 0;
+    size_t contacts = 0;
+    size_t family_rays[2] = {0, 0};
+    size_t family_prepared[2] = {0, 0};
+    size_t family_fallback[2] = {0, 0};
+    size_t family_seam_certified[2] = {0, 0};
+    size_t family_edge_certified[2] = {0, 0};
+    size_t family_regular[2] = {0, 0};
+    size_t family_near_trim[2] = {0, 0};
+    size_t family_unresolved[2] = {0, 0};
+    size_t family_seam_attempts[2] = {0, 0};
+    size_t family_seam_candidates[2] = {0, 0};
+    size_t family_seam_failures[2] = {0, 0};
+    size_t family_seam_ownership_failures[2] = {0, 0};
+    size_t family_seam_witness_failures[2] = {0, 0};
+    size_t family_seam_box_failures[2] = {0, 0};
+    size_t family_seam_root_failures[2] = {0, 0};
+    size_t family_edge_attempts[2] = {0, 0};
+    size_t family_edge_candidates[2] = {0, 0};
+    size_t family_edge_failures[2] = {0, 0};
+    size_t family_fallback_reason[2][RT_BREP_PREPARED_FALLBACK_COUNT] = {};
+    double maximum_endpoint_error = 0.0;
+    double maximum_gap_calibration = 0.0;
+
+    for (size_t family_index = 0;
+	    family_index < sizeof(families) / sizeof(families[0]);
+	    ++family_index) {
+	const defect_family &family = families[family_index];
+	for (size_t gap_index = 0;
+		gap_index < sizeof(gap_ratios) / sizeof(gap_ratios[0]);
+		++gap_index) {
+	    for (int sign_index = 0; sign_index < family.signs;
+		    ++sign_index) {
+		const double sign = sign_index ? -1.0 : 1.0;
+		const double target_gap = gap_ratios[gap_index] * tol->dist;
+		cobb_seam_frame frame;
+		double measured_gap = INFINITY;
+		double applied_displacement = INFINITY;
+		double maximum_u_shift = 0.0;
+		double maximum_v_shift = 0.0;
+		ON_Brep *variant = family.trim_only ?
+		    cobb_trim_only_variant(pristine, origin, sign * target_gap,
+			frame, measured_gap, applied_displacement,
+			maximum_u_shift, maximum_v_shift) :
+		    cobb_edge_only_variant(pristine, origin, sign * target_gap,
+			frame, measured_gap, applied_displacement);
+		if (!variant) {
+		    std::printf("FAIL: Cobb %s construction sign=%g g/T=%.3g\n",
+			family.name, sign, gap_ratios[gap_index]);
+		    failures++;
+		    continue;
+		}
+		variant->m_E[frame.edge_index].m_tolerance = tol->dist;
+		double edge_gap = INFINITY;
+		double surface_gap = cobb_seam_discrepancy(variant,
+		    frame.edge_index);
+		const double radial_error = ON_Brep_CobbSphereMaxRadialError(
+		    variant, radius, origin, 16);
+		const double calibration = fabs(measured_gap - target_gap) /
+		    target_gap;
+		maximum_gap_calibration = std::max(maximum_gap_calibration,
+		    calibration);
+		const double coordinate_roundoff = std::max(ON_ZERO_TOLERANCE,
+		    4096.0 * DBL_EPSILON * radius);
+		const bool anisotropic_trim = !family.trim_only ||
+		    (std::max(maximum_u_shift, maximum_v_shift) > 0.0 &&
+		    std::min(maximum_u_shift, maximum_v_shift) <=
+			coordinate_roundoff);
+		if (!cobb_edge_lift_discrepancy(variant, frame.edge_index,
+			edge_gap) || !variant->IsValid() || !variant->IsSolid() ||
+			calibration > 2.0e-3 || radial_error >
+			coordinate_roundoff || !anisotropic_trim ||
+			fabs(edge_gap - measured_gap) >
+			    0.02 * measured_gap ||
+			(family.trim_only ?
+			 fabs(surface_gap - measured_gap) >
+			     0.02 * measured_gap :
+			 surface_gap > coordinate_roundoff)) {
+		    std::printf("FAIL: Cobb %s geometry sign=%g g/T=%.3g "
+			"measured/edge/surface=%.17g/%.17g/%.17g "
+			"calibration=%.3g radial=%.3g uv=%.3g/%.3g "
+			"valid/solid=%d/%d\n", family.name, sign,
+			gap_ratios[gap_index], measured_gap, edge_gap,
+			surface_gap, calibration, radial_error,
+			maximum_u_shift, maximum_v_shift, variant->IsValid(),
+			variant->IsSolid());
+		    failures++;
+		    delete variant;
+		    continue;
+		}
+
+		struct rt_brep_internal variant_internal = {};
+		variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+		variant_internal.brep = variant;
+		struct rt_db_internal variant_intern;
+		RT_DB_INTERNAL_INIT(&variant_intern);
+		variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		variant_intern.idb_type = ID_BREP;
+		variant_intern.idb_meth = &OBJ[ID_BREP];
+		variant_intern.idb_ptr = &variant_internal;
+		struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+		if (!stp) {
+		    std::printf("FAIL: Cobb %s prep sign=%g g/T=%.3g\n",
+			family.name, sign, gap_ratios[gap_index]);
+		    failures++;
+		    continue;
+		}
+
+		for (size_t chord_index = 0;
+			chord_index < sizeof(chord_ratios) /
+			    sizeof(chord_ratios[0]); ++chord_index) {
+		    const double chord = chord_ratios[chord_index] * tol->dist;
+		    for (int conormal_index = 0; conormal_index < 2;
+			    ++conormal_index) {
+			const int conormal_sign = conormal_index ? 1 : -1;
+			for (int reverse = 0; reverse <= 1; ++reverse) {
+			    sampled_ray ray;
+			    if (!cobb_seam_endpoint_chord_ray(frame, origin, radius,
+				    chord, conormal_sign, reverse != 0, ray)) {
+				std::printf("FAIL: Cobb %s ray construction "
+				    "dt/T=%.3g side/reverse=%d/%d\n", family.name,
+				    chord_ratios[chord_index], conormal_sign,
+				    reverse);
+				failures++;
+				continue;
+			    }
+			const ray_result implicit_result = shoot_solid(implicit_stp,
+			    rtip, resource, ray.origin, ray.direction);
+			const ray_result variant_result = shoot_solid(stp, rtip,
+			    resource, ray.origin, ray.direction);
+			struct rt_brep_shot_trace trace;
+			(void)shoot_brep_trace(stp, rtip, resource, ray, trace);
+			const struct rt_brep_trace_edge *edge = brep_trace_edge(
+			    trace, frame.edge_index);
+			const int expected_segments = chord > tol->dist ? 1 : 0;
+			double endpoint_error = 0.0;
+			if (expected_segments) {
+			    const double expected_in = 2.0 * radius;
+			    const double expected_out = 2.0 * radius + chord;
+			    endpoint_error = std::max(
+				fabs(variant_result.in_dist - expected_in),
+				fabs(variant_result.out_dist - expected_out));
+			    maximum_endpoint_error = std::max(
+				maximum_endpoint_error, endpoint_error);
+			}
+			const bool normal_valid = !expected_segments ||
+			    (finite_unit_vector(variant_result.in_normal) &&
+			    finite_unit_vector(variant_result.out_normal) &&
+			    VDOT(variant_result.in_normal, ray.direction) < 0.0 &&
+			    VDOT(variant_result.out_normal, ray.direction) > 0.0);
+			const double edge_limit = std::max(1.0e-10 * tol->dist,
+			    512.0 * DBL_EPSILON * radius);
+			const bool edge_valid = edge &&
+			    edge->discrepancy_measured &&
+			    edge->correspondence_supported &&
+			    !edge->correspondence_exhausted &&
+			    edge->discrepancy_endpoints_certified &&
+			    edge->discrepancy_bounded &&
+			    !edge->discrepancy_bound_exhausted &&
+			    edge->discrepancy_proof_class ==
+				RT_BREP_SEAM_GAP_INSIDE &&
+			    edge->discrepancy_authorized &&
+			    fabs(edge->measured_discrepancy - measured_gap) <=
+				edge_limit &&
+			    fabs(edge->edge_tolerance - tol->dist) <= edge_limit;
+			const bool selected = trace.prepared_production_selected > 0;
+			if (!brep_trace_fixed_workspaces_match(trace) || !edge_valid ||
+				implicit_result.segments != expected_segments ||
+				variant_result.segments != expected_segments ||
+				trace.final_segments != (size_t)expected_segments ||
+				endpoint_error > tol->dist || !normal_valid ||
+				(selected ? trace.prepared_production_fallback !=
+				    RT_BREP_PREPARED_FALLBACK_NONE :
+				 trace.prepared_production_fallback ==
+				    RT_BREP_PREPARED_FALLBACK_NONE)) {
+			    std::printf("FAIL: Cobb %s ray sign=%g g/T=%.3g "
+				"dt/T=%.3g side/reverse=%d/%d "
+				"implicit/variant/final="
+				"%d/%d/%zu error=%.3g edge=%d proof/auth="
+				"%d/%d selected/fallback=%d/%d\n",
+				family.name, sign, gap_ratios[gap_index],
+				chord_ratios[chord_index], conormal_sign, reverse,
+				implicit_result.segments, variant_result.segments,
+				trace.final_segments, endpoint_error, edge != NULL,
+				edge ? edge->discrepancy_proof_class : -1,
+				edge ? edge->discrepancy_authorized : -1,
+				selected, trace.prepared_production_fallback);
+			    failures++;
+			} else {
+			    prepared += selected ? 1 : 0;
+			    fallback += selected ? 0 : 1;
+			    contacts += chord_index == 4 ? 1 : 0;
+			    family_rays[family_index]++;
+			    family_prepared[family_index] += selected ? 1 : 0;
+			    family_fallback[family_index] += selected ? 0 : 1;
+			    family_seam_certified[family_index] +=
+				trace.physical_event_seam_certified;
+			    family_edge_certified[family_index] +=
+				trace.physical_event_edge_certified;
+			    family_regular[family_index] +=
+				trace.physical_event_regular;
+			    family_near_trim[family_index] +=
+				trace.physical_event_near_trim;
+			    family_unresolved[family_index] +=
+				trace.physical_event_unresolved;
+			    family_seam_attempts[family_index] +=
+				trace.physical_event_seam_attempts;
+			    family_seam_candidates[family_index] +=
+				trace.physical_event_seam_root_candidates;
+			    family_seam_failures[family_index] +=
+				trace.physical_event_seam_failures;
+			    family_seam_ownership_failures[family_index] +=
+				trace.physical_event_seam_ownership_failures;
+			    family_seam_witness_failures[family_index] +=
+				trace.physical_event_seam_witness_failures;
+			    family_seam_box_failures[family_index] +=
+				trace.physical_event_seam_box_failures;
+			    family_seam_root_failures[family_index] +=
+				trace.physical_event_seam_root_coverage_failures;
+			    family_edge_attempts[family_index] +=
+				trace.physical_event_edge_attempts;
+			    family_edge_candidates[family_index] +=
+				trace.physical_event_edge_candidates;
+			    family_edge_failures[family_index] +=
+				trace.physical_event_edge_failures;
+			    if (!selected && trace.prepared_production_fallback >= 0 &&
+				    trace.prepared_production_fallback <
+					RT_BREP_PREPARED_FALLBACK_COUNT)
+				family_fallback_reason[family_index]
+				    [trace.prepared_production_fallback]++;
+			}
+			    rays++;
+			}
+		    }
+		}
+		free_solid(stp);
+	    }
+	}
+    }
+
+    free_solid(implicit_stp);
+    delete pristine;
+    if (rays != 120 || contacts != 24 || family_rays[0] != 40 ||
+	    family_rays[1] != 80 ||
+	    family_prepared[0] + family_fallback[0] != family_rays[0] ||
+	    family_prepared[1] + family_fallback[1] != family_rays[1]) {
+	std::printf("FAIL: Cobb isolated defect coverage rays=%zu/120 "
+	    "families=%zu/40,%zu/80 contacts=%zu/24\n", rays,
+	    family_rays[0], family_rays[1], contacts);
+	failures++;
+    }
+    if (!failures) {
+	for (size_t family_index = 0;
+		family_index < sizeof(families) / sizeof(families[0]);
+		++family_index) {
+	    std::printf("Cobb isolated %s: rays=%zu selected/fallback=%zu/%zu "
+		"seam/edge-certified=%zu/%zu fallback-reasons=",
+		families[family_index].name, family_rays[family_index],
+		family_prepared[family_index], family_fallback[family_index],
+		family_seam_certified[family_index],
+		family_edge_certified[family_index]);
+	    bool first_reason = true;
+	    for (int reason = 0; reason < RT_BREP_PREPARED_FALLBACK_COUNT;
+		    ++reason) {
+		if (family_fallback_reason[family_index][reason]) {
+		    std::printf("%s%d:%zu", first_reason ? "" : ",",
+			reason, family_fallback_reason[family_index][reason]);
+		    first_reason = false;
+		}
+	    }
+	    std::printf("\n");
+	    std::printf("  events regular/near/unresolved=%zu/%zu/%zu "
+		"seam attempt/candidate/failure=%zu/%zu/%zu "
+		"failure-kind=%zu/%zu/%zu/%zu "
+		"edge attempt/candidate/failure=%zu/%zu/%zu\n",
+		family_regular[family_index], family_near_trim[family_index],
+		family_unresolved[family_index],
+		family_seam_attempts[family_index],
+		family_seam_candidates[family_index],
+		family_seam_failures[family_index],
+		family_seam_ownership_failures[family_index],
+		family_seam_witness_failures[family_index],
+		family_seam_box_failures[family_index],
+		family_seam_root_failures[family_index],
+		family_edge_attempts[family_index],
+		family_edge_candidates[family_index],
+		family_edge_failures[family_index]);
+	}
+	std::printf("Cobb isolated trim/edge defects: PASS rays=%zu "
+	    "selected/fallback=%zu/%zu contacts=%zu "
+	    "max-calibration=%.3g max-endpoint=%.3g\n", rays, prepared,
+	    fallback, contacts, maximum_gap_calibration,
+	    maximum_endpoint_error);
+    }
     return failures;
 }
 
@@ -15890,6 +16456,8 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--nonisoparametric-only");
     const bool contact_trim_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--contact-trim-only");
+    const bool defect_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--defect-only");
     if (argc != 1 && !report_grazing && !report_cobb &&
 	    !report_cobb_oblique && !affine_only &&
 	    !interval_only && !local_root_only && !grazing_root_only &&
@@ -15898,7 +16466,7 @@ main(int argc, char **argv)
 	    !fold_only && !core_only &&
 	    !directed_only &&
 	    !crofton_only && !seam_only && !endpoint_only &&
-	    !nonisoparametric_only && !contact_trim_only)
+	    !nonisoparametric_only && !contact_trim_only && !defect_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
 	    "--cobb-oblique-report|"
 	    "--affine-only|--interval-only|--local-root-only|"
@@ -15907,7 +16475,7 @@ main(int argc, char **argv)
 	    "--source-union-only|--fold-only|"
 	    "--core-only|"
 	    "--directed-only|--crofton-only|--seam-only|--endpoint-only|"
-	    "--nonisoparametric-only|--contact-trim-only]\n",
+	    "--nonisoparametric-only|--contact-trim-only|--defect-only]\n",
 	    argv[0]);
     if (interval_only) {
 	const int interval_failures = check_brep_interval_enclosures() +
@@ -15979,6 +16547,15 @@ main(int argc, char **argv)
 	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
 	rt_i_destroy(rtip);
 	return contact_trim_failures ? 1 : 0;
+    }
+
+    if (defect_only) {
+	const int defect_failures = check_cobb_isolated_defect_corpus(
+	    &rtip->rti_tol, rtip, &resp);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return defect_failures ? 1 : 0;
     }
 
     if (report_cobb_oblique) {
@@ -16132,6 +16709,8 @@ main(int argc, char **argv)
 	    &resp);
 	failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb,
 	    rtip, &resp);
+	failures += check_cobb_isolated_defect_corpus(&rtip->rti_tol, rtip,
+	    &resp);
     }
 
     if (run_endpoint)
