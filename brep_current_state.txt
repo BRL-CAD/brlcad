@@ -5360,6 +5360,97 @@ SurfaceTree prep fail-closed checkpoint (Finding 79):
   remains disabled because of the host ptrace wrapper.
 
 
+STEP ray-prep observability and dense-tree census (Finding 80):
+
+  `SurfaceTree` now retains the first deterministic construction failure as
+  one of null surface, bounding box, midpoint normal evaluation, or unexpected
+  subdivision, plus the failing recursion depth and UV domain.  Successful
+  construction is unchanged.  The synthetic positive-weight `2^400` rational
+  patch is now gated specifically as a normal-evaluation failure; its bbox is
+  available, but OpenNURBS cannot supply the required midpoint normal.
+
+  `brep-audit --prep-only file.g primitive` invokes actual BREP primitive prep
+  and emits `brlcad-brep-ray-prep-audit-v1` JSON with time, peak RSS, face
+  count, bbox, overall failure category, and per-face SurfaceTree failure
+  cells.  `empty_brep` is separate from `surface_tree`.  The existing drawing
+  audit did not call ray prep and could not observe this state.
+
+  `brep-audit --surface-trees-only file.g primitive` serially profiles each
+  face tree and emits `brlcad-brep-surface-tree-audit-v1` JSON with total and
+  per-face time/leaves, source surface class and topology, domain, native
+  NURBS dimensions, converted NURBS dimensions, and failure cell.  Building
+  one face at a time bounds diagnostic retained memory and localizes a dense
+  tree; it is not a production parallel-prep benchmark.
+
+  Seven NIST databases all completed uncapped actual prep: 10 to 597 faces,
+  about 0.88 to 7.39 seconds, and about 35 to 257 MiB peak RSS.  Thirty small
+  non-GrabCAD primitives and thirty objects stratified across database sizes
+  through 58 MiB also prepared without a SurfaceTree failure.
+
+  An uncapped, two-process scan of the first BREP in all 135 recurta AP203
+  databases completed in 239.57 seconds: 130 prepared, four exceeded a
+  15-second classification cap, no process crashed, and the only normal
+  failure was `10058.g`'s zero-face BREP.  The 130 successes cover 4,923
+  faces.  The largest sub-cap model had 992 faces in 9.30 seconds; the slowest
+  sub-cap model had 17 faces in 11.39 seconds.
+
+  Uncapped replay classified all four time outliers as valid prep:
+
+    * `10007.g`: 15 faces, 50.97 seconds, 77.8 MiB;
+    * `10057.g`: 301 faces, 15.33 seconds, 859.7 MiB;
+    * `10062.g`: 3,623 faces, 17.72 seconds, 270.9 MiB; and
+    * `10088.g`: 5,771 faces, 17.38 seconds, 236.8 MiB.
+
+  The low-face cases expose the tree algorithm rather than database scale.
+  Serial `10007.g` profiling took 46.88 seconds.  Face 7 took 24.95 seconds
+  for 12,722 leaves; faces 1, 3, and 5 took 6.56, 7.28, and 7.46 seconds.
+  They are trimmed `ON_RevSurface` patches with rational order-3-by-3,
+  9-by-9 NURBS forms.  Serial `10057.g` profiling took 85.99 seconds and
+  412.2 MiB for 113,008 leaves.  Repeated revolved faces with rational
+  order-3-by-2, 9-by-2 forms each cost about 2.4 to 2.6 seconds and 1,215
+  leaves.  Production retained/overlapped parallel construction explains its
+  larger 859.7 MiB peak.  The one-face revolved surface in `10145.g` creates
+  8,192 leaves.
+
+  A 1-GiB RLIMIT_AS pass with four external processes was deliberately
+  discarded as a geometry census.  Each prep also requested twelve internal
+  workers; the virtual-memory cap caused pthread creation failure,
+  `std::bad_alloc`, and secondary termination even for models that later
+  prepared normally uncapped.  This is useful bounded-resource hardening
+  evidence, but it is not a solver or SurfaceTree-unavailability result.
+
+  Direct verification on the final source:
+
+    .build/src/librt/tests/rt_brep_ray --local-root-only
+
+  PASS: thirteen arithmetic cases remain 10 certified/3 rejected, and the
+  four weighted prepared-surface cases remain 3 certified/1 prep-rejected.
+  The rejected surface is additionally checked for the exact non-none
+  `FAILURE_NORMAL_EVALUATION` diagnostic.
+
+    ctest --test-dir .build --parallel 13 \
+      -R '^rt_brep_ray($|_)' --output-on-failure
+
+  PASS: 13/13 in 192.67 seconds.  Local root took 2.57, grazing root
+  5.98, contact trim 39.32, the complete process 53.54, Crofton 62.93,
+  interval 165.31, and seam 192.24 seconds.
+
+    ctest --test-dir .build --parallel 13 \
+      -R '^(rt_brep_ray_local_root|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+      --output-on-failure
+
+  PASS: 12/12 in 9.25 seconds, including serial/parallel cache matrices,
+  primitive BREP topology, and the three established NURBS regressions.
+
+    env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+      UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+      .build-asan/src/librt/tests/rt_brep_ray --local-root-only
+
+  PASS with the same arithmetic and prepared-surface counts and no sanitizer
+  diagnostic.  Leak scanning remains disabled because the host ptrace wrapper
+  prevents LeakSanitizer qualification.
+
+
 NEXT ACTIONS
 ------------
 
@@ -5369,9 +5460,14 @@ NEXT ACTIONS
    determinant-`2^-40`, `2^20` rational-weight-range, similarity, and reversal
    cases.  The generic converted-sphere bridge now adds real near-tangent
    rational coefficients through `0.1T`, exact-double-root rejection, and
-   mirrored misses.  Next capture unavailable systems from the STEP corpus
-   and prove complete parent coverage/candidate accounting before considering
-   the theorem for ordinary seams, vertices, or general grazing dispatch.
+   mirrored misses.  The first uncapped STEP subset found no numerical
+   SurfaceTree failure, so do not fabricate one from resource-cap termination.
+   Promote the revolved order-3-by-3 and order-3-by-2 outliers through their
+   analytic torus/cone/cylinder equivalents, add their convex and concave
+   grazing trends, and keep the audit ready to capture the first genuine
+   unavailable face.  Prove complete parent coverage/candidate accounting
+   before considering the theorem for ordinary seams, vertices, or general
+   grazing dispatch.
    Profile the fixed-expansion Taylor cost separately from
    continuation and material-sector work.  Keep arbitrary root counts, exact
    tangency, vertex neighborhoods, inferred tolerance authority, and every

@@ -189,6 +189,62 @@ Although the render was requested with -P1, BREP face prep itself runs in
 parallel.  This is a sufficiently severe baseline to justify changing the
 algorithm, and it must be retained as a reproducible performance gate.
 
+The STEP-derived corpus now has a ray-prep audit independent of drawing:
+
+  brep-audit --prep-only file.g primitive
+
+It invokes the actual BREP primitive prep and emits deterministic JSON with
+the return status, aggregate time, peak RSS, face count, prepared bbox, and
+the first unavailable cell for every failed SurfaceTree.  SurfaceTree records
+one of null-surface, bounding-box, midpoint-normal-evaluation, or unexpected
+subdivision failure, together with face, recursion depth, and UV domain.  An
+empty BREP is a separate conversion artifact and must not be described as a
+surface-solver failure.
+
+A second diagnostic separates persistent prepared-object cost from temporary
+parallel build overlap:
+
+  brep-audit --surface-trees-only file.g primitive
+
+It builds and destroys one face tree at a time and records per-face time and
+leaf count, source surface class, topology counts, domain, and both native and
+converted NURBS dimensions.  The serial profile is diagnostic; it does not
+model the production builder's face parallelism or retained total memory.
+
+An uncapped scan of the 135 recurta AP203 databases prepared the first BREP
+primitive in 130 databases, comprising 4,923 faces.  Four valid models took
+longer than a 15-second classification cap, no process crashed, and the only
+normal prep failure was `10058.g`, whose five BREP primitives all contain zero
+faces.  The four outliers were:
+
+  * `10007.g`: 15 faces, about 51 seconds, 78 MiB peak RSS;
+  * `10057.g`: 301 faces, about 15 seconds, 860 MiB peak RSS;
+  * `10062.g`: 3,623 faces, about 18 seconds, 271 MiB peak RSS; and
+  * `10088.g`: 5,771 faces, about 17 seconds, 237 MiB peak RSS.
+
+The small-face outliers are the most useful algorithmic evidence.  A serial
+profile of `10007.g` took about 47 seconds.  Face 7 alone took about 25 seconds
+and produced 12,722 leaves; faces 1, 3, and 5 added roughly 21 seconds.  They
+are trimmed ON_RevSurface patches whose NURBS forms are rational order 3 by 3
+with 9 by 9 control points.  A serial profile of `10057.g` built 113,008
+leaves over 301 faces in about 86 seconds and 412 MiB peak RSS.  Repeated
+ON_RevSurface faces with rational order 3 by 2, 9 by 2 NURBS forms each took
+about 2.4 to 2.6 seconds for 1,215 leaves.  Production parallel construction
+retains all completed trees and overlaps builder temporaries, explaining its
+higher 860 MiB peak.  Even the one-face `10145.g` revolved surface produces
+8,192 leaves.  These measurements show that dense-tree cost occurs on
+ordinary revolved analytic geometry, not only exotic imported freeform
+patches.
+
+A separate 1-GiB RLIMIT_AS stress pass is not a valid geometry census.  The
+process already has substantial virtual mappings, and four external audit
+processes each caused BREP prep to request twelve internal workers.  The cap
+therefore produced pthread creation failures, `std::bad_alloc`, and secondary
+termination.  Preserve those results only as evidence that bounded-memory
+prep needs an explicit allocation/failure policy.  Corpus qualification must
+use process isolation and time caps without interpreting resource-limit
+termination as a numerical SurfaceTree result.
+
 2.4 Current ray/surface solve
 
 rt_brep_shot asks the master BBNode hierarchy for every intersected leaf using
