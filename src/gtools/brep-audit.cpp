@@ -90,6 +90,7 @@ struct surface_tree_profile {
     int cv_count[2] = {0, 0};
     int span_count[2] = {0, 0};
     ON_Interval domain[2];
+    int nurb_form_status = 0;
     bool nurb_form_available = false;
     bool nurb_form_rational = false;
     int nurb_form_order[2] = {0, 0};
@@ -367,7 +368,8 @@ surface_tree_profile_result(struct db_i *dbip, struct directory *dp)
 		}
 	    }
 	    ON_NurbsSurface nurb_form;
-	    if (surface->GetNurbForm(nurb_form) > 0) {
+	    profile.nurb_form_status = surface->GetNurbForm(nurb_form);
+	    if (profile.nurb_form_status > 0) {
 		profile.nurb_form_available = true;
 		profile.nurb_form_rational = nurb_form.IsRational();
 		for (int direction = 0; direction < 2; ++direction) {
@@ -683,8 +685,20 @@ print_surface_tree_result(const char *db_path, const char *object,
     int maximum_leaves_face = -1;
     double maximum_seconds = 0.0;
     int maximum_seconds_face = -1;
+    size_t nurb_form_unavailable = 0;
+    size_t nurb_form_status_one = 0;
+    size_t nurb_form_status_two = 0;
+    size_t nurb_form_status_other = 0;
     for (size_t i = 0; i < result.faces.size(); ++i) {
 	const surface_tree_profile &profile = result.faces[i];
+	if (profile.nurb_form_status <= 0)
+	    nurb_form_unavailable++;
+	else if (profile.nurb_form_status == 1)
+	    nurb_form_status_one++;
+	else if (profile.nurb_form_status == 2)
+	    nurb_form_status_two++;
+	else
+	    nurb_form_status_other++;
 	total_leaves += profile.leaves;
 	if (profile.leaves > maximum_leaves) {
 	    maximum_leaves = profile.leaves;
@@ -708,6 +722,10 @@ print_surface_tree_result(const char *db_path, const char *object,
 	<< ",\"total_leaves\":" << total_leaves
 	<< ",\"maximum_leaves\":" << maximum_leaves
 	<< ",\"maximum_leaves_face\":" << maximum_leaves_face
+	<< ",\"nurb_form_status_counts\":{\"unavailable\":"
+	<< nurb_form_unavailable << ",\"exact\":" << nurb_form_status_one
+	<< ",\"reparameterized\":" << nurb_form_status_two
+	<< ",\"other\":" << nurb_form_status_other << "}"
 	<< ",\"maximum_face_seconds\":";
     print_num(maximum_seconds);
     std::cout << ",\"maximum_seconds_face\":" << maximum_seconds_face
@@ -736,6 +754,7 @@ print_surface_tree_result(const char *db_path, const char *object,
 	    << profile.cv_count[1] << "]"
 	    << ",\"span_count\":[" << profile.span_count[0] << ","
 	    << profile.span_count[1] << "]"
+	    << ",\"nurb_form_status\":" << profile.nurb_form_status
 	    << ",\"nurb_form_available\":" <<
 		(profile.nurb_form_available ? "true" : "false")
 	    << ",\"nurb_form_rational\":" <<
