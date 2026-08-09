@@ -234,6 +234,30 @@ add_periodic_trim(ON_Brep &brep, ON_BrepLoop &loop,
     return trim;
 }
 
+static void
+add_uv_polyline_trim(ON_Brep &brep, ON_BrepLoop &loop,
+	const ON_Surface &surface, int first_vertex, int second_vertex,
+	const ON_2dPoint &start, const ON_2dPoint &end)
+{
+    ON_3dPointArray edge_points;
+    for (int sample = 0; sample <= 64; ++sample) {
+	const ON_2dPoint uv = start + (double)sample / 64.0 *
+	    (end - start);
+	edge_points.Append(surface.PointAt(uv.x, uv.y));
+    }
+    ON_PolylineCurve *edge_curve = new ON_PolylineCurve(edge_points);
+    ON_BrepEdge &edge = brep.NewEdge(brep.m_V[first_vertex],
+	brep.m_V[second_vertex], brep.AddEdgeCurve(edge_curve));
+    edge.m_tolerance = 1.0e-6;
+    ON_LineCurve *trim_curve = new ON_LineCurve(start, end);
+    trim_curve->SetDomain(0.0, 1.0);
+    ON_BrepTrim &trim = brep.NewTrim(edge, false, loop,
+	brep.AddTrimCurve(trim_curve));
+    trim.m_type = ON_BrepTrim::boundary;
+    trim.m_iso = surface.IsIsoparametric(*trim_curve);
+    trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-6;
+}
+
 static bool
 singular_cap_case(bool decreasing, ON_BrepLoop::TYPE loop_type,
 	bool reverse_face, bool north_pole)
@@ -1032,6 +1056,112 @@ winding_periodic_strip_test()
 }
 
 static bool
+periodic_vertex_copy_strip_test()
+{
+    ON_Brep brep;
+    ON_Circle base(ON_xy_plane, 28.0);
+    ON_Cylinder cylinder(base, 286.08030853825159);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    surface->SetDomain(0, M_PI, 3.0 * M_PI);
+    surface->SetDomain(1, 0.0, 286.08030853825159);
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_2dPoint walk[8] = {
+	ON_2dPoint(M_PI, 239.999),
+	ON_2dPoint(2.0 * M_PI, 240.0),
+	ON_2dPoint(2.5 * M_PI, 239.999),
+	ON_2dPoint(3.0 * M_PI, 239.999),
+	ON_2dPoint(3.0 * M_PI, 280.0),
+	ON_2dPoint(2.0 * M_PI, 280.0),
+	ON_2dPoint(M_PI, 280.0),
+	ON_2dPoint(M_PI, 239.999)
+    };
+    int vertices[7];
+    vertices[0] = brep.NewVertex(surface->PointAt(
+	walk[0].x, walk[0].y)).m_vertex_index;
+    vertices[1] = brep.NewVertex(surface->PointAt(
+	walk[1].x, walk[1].y)).m_vertex_index;
+    vertices[2] = brep.NewVertex(surface->PointAt(
+	walk[2].x, walk[2].y)).m_vertex_index;
+    vertices[3] = vertices[0];
+    vertices[4] = brep.NewVertex(surface->PointAt(
+	walk[4].x, walk[4].y)).m_vertex_index;
+    vertices[5] = brep.NewVertex(surface->PointAt(
+	walk[5].x, walk[5].y)).m_vertex_index;
+    vertices[6] = vertices[4];
+    for (int i = 0; i < 7; ++i) {
+	const int next = (i + 1) % 7;
+	add_uv_polyline_trim(brep, loop, *surface, vertices[i],
+	    vertices[next], walk[i], walk[i + 1]);
+    }
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
+doubly_periodic_winding_strip_test()
+{
+    ON_Brep brep;
+    ON_Circle major(ON_xy_plane, 9.0);
+    ON_Torus torus(major, 2.5);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (!torus.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+
+    ON_BrepLoop &outer = brep.NewLoop(ON_BrepLoop::outer, face);
+    const double outer_u = udom.Min();
+    const ON_2dPoint outer_walk[3] = {
+	ON_2dPoint(outer_u, vdom.Min()),
+	ON_2dPoint(outer_u, vdom.Mid()),
+	ON_2dPoint(outer_u, vdom.Max())
+    };
+    const int outer_start = brep.NewVertex(surface->PointAt(
+	outer_walk[0].x, outer_walk[0].y)).m_vertex_index;
+    const int outer_mid = brep.NewVertex(surface->PointAt(
+	outer_walk[1].x, outer_walk[1].y)).m_vertex_index;
+    add_uv_polyline_trim(brep, outer, *surface, outer_start, outer_mid,
+	outer_walk[0], outer_walk[1]);
+    add_uv_polyline_trim(brep, outer, *surface, outer_mid, outer_start,
+	outer_walk[1], outer_walk[2]);
+
+    ON_BrepLoop &inner = brep.NewLoop(ON_BrepLoop::inner, face);
+    const ON_2dPoint inner_walk[3] = {
+	ON_2dPoint(udom.Min(), vdom.Max()),
+	ON_2dPoint(udom.Max(), vdom.Mid()),
+	ON_2dPoint(udom.Min(), vdom.Min())
+    };
+    const int inner_start = brep.NewVertex(surface->PointAt(
+	inner_walk[0].x, inner_walk[0].y)).m_vertex_index;
+    const int inner_mid = brep.NewVertex(surface->PointAt(
+	inner_walk[1].x, inner_walk[1].y)).m_vertex_index;
+    add_uv_polyline_trim(brep, inner, *surface, inner_start, inner_mid,
+	inner_walk[0], inner_walk[1]);
+    add_uv_polyline_trim(brep, inner, *surface, inner_mid, inner_start,
+	inner_walk[1], inner_walk[2]);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
 collapsed_closed_pcurve_test()
 {
     ON_Brep brep;
@@ -1703,6 +1833,8 @@ main(int argc, const char **argv)
 	degenerate_inner_loop_test() &&
 	bridged_inner_loop_test() &&
 	winding_periodic_strip_test() &&
+	periodic_vertex_copy_strip_test() &&
+	doubly_periodic_winding_strip_test() &&
 	collapsed_closed_pcurve_test() &&
 	misclassified_periodic_boundaries_test() &&
 	touching_periodic_subloops_test() &&
