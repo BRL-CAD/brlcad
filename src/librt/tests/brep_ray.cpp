@@ -26,6 +26,7 @@
 
 #include "bu/app.h"
 #include "bu/malloc.h"
+#include "brep/surfacetree.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "brep.h"
@@ -6956,6 +6957,27 @@ check_brep_weighted_local_root_solver()
 	struct rt_brep_internal brep_internal = {};
 	brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
 	brep_internal.brep = brep;
+	bool tree_valid = false;
+	brlcad::SurfaceTree::FailureReason tree_failure =
+	    brlcad::SurfaceTree::FAILURE_NONE;
+	{
+	    brlcad::SurfaceTree prep_tree(&brep->m_F[0], true, 8);
+	    tree_valid = prep_tree.Valid();
+	    tree_failure = prep_tree.Failure();
+	}
+	if (tree_valid != test.expect_prep ||
+		(tree_valid && tree_failure !=
+		 brlcad::SurfaceTree::FAILURE_NONE) ||
+		(!tree_valid && tree_failure ==
+		 brlcad::SurfaceTree::FAILURE_NONE) ||
+		(!test.expect_prep && tree_failure !=
+		 brlcad::SurfaceTree::FAILURE_NORMAL_EVALUATION)) {
+	    std::printf("FAIL: weighted local root %s surface tree "
+		"valid/failure=%d/%d expected=%d\n", test.name,
+		tree_valid ? 1 : 0, (int)tree_failure,
+		test.expect_prep ? 1 : 0);
+	    failures++;
+	}
 	ON_3dPoint point = ON_3dPoint::UnsetPoint;
 	if (brep->m_F.Count() == 1 && brep->m_F[0].SurfaceOf())
 	    point = brep->m_F[0].SurfaceOf()->PointAt(1.0, 0.5);
