@@ -863,6 +863,9 @@ struct rt_brep_shot_trace {
     size_t physical_event_seam_oblique_pairs;
     size_t physical_event_seam_oblique_cells;
     size_t physical_event_seam_oblique_box_links;
+    size_t physical_event_seam_source_union_certified;
+    size_t physical_event_seam_source_union_boxes;
+    size_t physical_event_seam_source_union_root_boxes;
     size_t prepared_vertex_records;
     size_t supported_vertex_records;
     size_t physical_event_vertex;

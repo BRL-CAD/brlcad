@@ -14152,6 +14152,189 @@ brep_trace_seam_contact_roots(const struct rt_brep_shot_trace *trace,
 }
 
 
+static bool
+brep_trace_surface_boxes_connected(
+    const struct rt_brep_trace_surface_box &first,
+    const struct rt_brep_trace_surface_box &second)
+{
+    if (first.face_index != second.face_index ||
+	first.span_index != second.span_index)
+	return false;
+    for (int direction = 0; direction < 2; ++direction) {
+	const double scale = std::max(1.0,
+	    std::max(fabs(first.uv_min[direction]),
+	    std::max(fabs(first.uv_max[direction]),
+	    std::max(fabs(second.uv_min[direction]),
+		fabs(second.uv_max[direction])))));
+	const double tolerance = 256.0 * DBL_EPSILON * scale;
+	if (first.uv_max[direction] <
+		second.uv_min[direction] - tolerance ||
+	    second.uv_max[direction] <
+		first.uv_min[direction] - tolerance)
+	    return false;
+    }
+    const double t_scale = std::max(1.0,
+	std::max(fabs(first.t_min), std::max(fabs(first.t_max),
+	std::max(fabs(second.t_min), fabs(second.t_max)))));
+    const double t_tolerance = 256.0 * DBL_EPSILON * t_scale;
+    return first.t_max >= second.t_min - t_tolerance &&
+	second.t_max >= first.t_min - t_tolerance;
+}
+
+
+/*
+ * A strict Krawczyk inclusion over the rectangular hull of a connected
+ * terminal-box component proves that the component contains exactly the one
+ * already isolated source root.  This is a surface-root count theorem, not a
+ * proximity rule: disconnected boxes, other roots, faces, spans, and a failed
+ * hull certificate remain unowned.
+ */
+static bool
+brep_trace_seam_source_union(
+    const struct rt_brep_shot_trace *trace, const struct brep_specific *bs,
+    const ON_Ray &ray, const struct bn_tol *tol, size_t selected_root,
+    int contact_face, int contact_span,
+    bool component_box[RT_BREP_TRACE_MAX_SURFACE_BOXES],
+    size_t &root_boxes, size_t &component_boxes)
+{
+    root_boxes = 0;
+    component_boxes = 0;
+    if (!trace || !bs || !component_box ||
+	selected_root >= trace->stored_local_roots)
+	return false;
+    const struct rt_brep_trace_local_root &root =
+	trace->local_roots[selected_root];
+    if (root.face_index == contact_face && root.span_index == contact_span)
+	return false;
+    if (root.span_index < 0 ||
+	(size_t)root.span_index >= bs->surface_spans.size())
+	return false;
+    const brep_surface_span &span = bs->surface_spans[root.span_index];
+    if (span.face_index != root.face_index ||
+	!span.surface_domain[0].IsIncreasing() ||
+	!span.surface_domain[1].IsIncreasing())
+	return false;
+
+    bool candidate[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    bool have_candidate = false;
+    int determinant_sign = 0;
+    for (size_t box_index = 0;
+	    box_index < trace->stored_surface_boxes; ++box_index) {
+	const struct rt_brep_trace_surface_box &box =
+	    trace->surface_boxes[box_index];
+	if (brep_prepared_box_matches_local_root(box, root, ray, tol)) {
+	    if (box.disposition != RT_BREP_TRACE_BOX_RESOLVED_REGULAR ||
+		!box.determinant_sign ||
+		(determinant_sign &&
+		 box.determinant_sign != determinant_sign))
+		return false;
+	    determinant_sign = box.determinant_sign;
+	    component_box[box_index] = true;
+	    root_boxes++;
+	    component_boxes++;
+	    continue;
+	}
+	if (box.face_index != root.face_index ||
+		box.span_index != root.span_index ||
+		box.disposition != RT_BREP_TRACE_BOX_UNRESOLVED ||
+		box.determinant_sign ||
+		brep_prepared_box_has_root(trace, box, ray, tol))
+	    continue;
+	candidate[box_index] = true;
+	have_candidate = true;
+    }
+    if (!root_boxes || !have_candidate)
+	return false;
+
+    bool changed = true;
+    while (changed) {
+	changed = false;
+	for (size_t candidate_index = 0;
+		candidate_index < trace->stored_surface_boxes;
+		++candidate_index) {
+	    if (!candidate[candidate_index] ||
+		    component_box[candidate_index])
+		continue;
+	    for (size_t component_index = 0;
+		    component_index < trace->stored_surface_boxes;
+		    ++component_index) {
+		if (!component_box[component_index] ||
+			!brep_trace_surface_boxes_connected(
+			    trace->surface_boxes[candidate_index],
+			    trace->surface_boxes[component_index]))
+		    continue;
+		component_box[candidate_index] = true;
+		component_boxes++;
+		changed = true;
+		break;
+	    }
+	}
+    }
+    if (component_boxes <= root_boxes)
+	return false;
+
+    double uv_minimum[2] = {DBL_MAX, DBL_MAX};
+    double uv_maximum[2] = {-DBL_MAX, -DBL_MAX};
+    for (size_t box_index = 0;
+	    box_index < trace->stored_surface_boxes; ++box_index) {
+	if (!component_box[box_index])
+	    continue;
+	const struct rt_brep_trace_surface_box &box =
+	    trace->surface_boxes[box_index];
+	for (int direction = 0; direction < 2; ++direction) {
+	    uv_minimum[direction] = std::min(uv_minimum[direction],
+		(double)box.uv_min[direction]);
+	    uv_maximum[direction] = std::max(uv_maximum[direction],
+		(double)box.uv_max[direction]);
+	}
+    }
+
+    double minimum[2];
+    double maximum[2];
+    double local_root[2];
+    for (int direction = 0; direction < 2; ++direction) {
+	minimum[direction] = std::max(0.0, std::nextafter(
+	    span.surface_domain[direction].NormalizedParameterAt(
+		uv_minimum[direction]), -INFINITY));
+	maximum[direction] = std::min(1.0, std::nextafter(
+	    span.surface_domain[direction].NormalizedParameterAt(
+		uv_maximum[direction]), INFINITY));
+	const double root_parameter =
+	    span.surface_domain[direction].NormalizedParameterAt(
+		root.uv[direction]);
+	if (!std::isfinite(minimum[direction]) ||
+		!std::isfinite(maximum[direction]) ||
+		!std::isfinite(root_parameter) ||
+		!(minimum[direction] < maximum[direction]) ||
+		root_parameter < minimum[direction] ||
+		root_parameter > maximum[direction])
+	    return false;
+	local_root[direction] = (root_parameter - minimum[direction]) /
+	    (maximum[direction] - minimum[direction]);
+    }
+
+    ON_3dVector first;
+    ON_3dVector second;
+    brep_surface_coefficients coefficients;
+    if (!brep_ray_plane_frame(ray, first, second) ||
+	!brep_surface_coefficients_init(coefficients, span, ray, first, second))
+	return false;
+    double restricted[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    double restricted_error[2] = {0.0, 0.0};
+    for (int equation = 0; equation < 2; ++equation) {
+	if (!brep_scalar_surface_restrict_bounded(
+		coefficients.value[equation], coefficients.order[0],
+		coefficients.order[1], coefficients.error[equation],
+		minimum[0], maximum[0], minimum[1], maximum[1],
+		restricted[equation], restricted_error[equation]))
+	    return false;
+    }
+    return brep_surface_krawczyk_certified(restricted,
+	coefficients.order[0], coefficients.order[1], restricted_error,
+	local_root);
+}
+
+
 /* A crack continuation is a separate boundary theorem, not a weakened
  * regular-root certificate.  The accepted case has one non-tangent root, one
  * authorized manifold-edge witness, and one independently isolated
@@ -14370,12 +14553,21 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
     size_t oblique_box_links = 0;
     const bool perpendicular_contact = contact_pair &&
 	fabs(selected_edge.ray_edge_dot) <= 1.0e-10;
+    bool source_union_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    size_t source_union_root_boxes = 0;
+    size_t source_union_boxes = 0;
+    const bool source_union_certified = contact_pair &&
+	!perpendicular_contact && brep_trace_seam_source_union(trace, bs, ray,
+	    tol, selected_root, contact_face, contact_span, source_union_box,
+	    source_union_root_boxes, source_union_boxes);
     for (size_t box_index = 0;
 	    box_index < trace->stored_surface_boxes; ++box_index) {
 	const struct rt_brep_trace_surface_box &box =
 	    trace->surface_boxes[box_index];
-	const bool source = brep_prepared_box_matches_local_root(box,
+	const bool source_root_box = brep_prepared_box_matches_local_root(box,
 	    trace->local_roots[selected_root], ray, tol);
+	const bool source = source_root_box ||
+	    (source_union_certified && source_union_box[box_index]);
 	bool witness = false;
 	for (size_t root_index = 0;
 		root_index < trace->stored_local_roots; ++root_index) {
@@ -14435,7 +14627,7 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 	}
 	if (source) {
 	    source_box[box_index] = true;
-	    if (first_source_box == (size_t)-1)
+	    if (source_root_box && first_source_box == (size_t)-1)
 		first_source_box = box_index;
 	    source_boxes++;
 	    root_box_owned[selected_root] = true;
@@ -14451,7 +14643,10 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 	    contact_t_max = std::max(contact_t_max, (double)box.t_max);
 	}
     }
-    if (!source_boxes || (witness_roots && !witness_boxes) ||
+    if (!source_boxes || first_source_box == (size_t)-1 ||
+	    (source_union_certified &&
+	     source_boxes != source_union_boxes) ||
+	    (witness_roots && !witness_boxes) ||
 	    (contact_pair && !contact_boxes)) {
 	trace->physical_event_seam_ownership_failures++;
 	trace->physical_event_seam_box_failures++;
@@ -14576,6 +14771,12 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 	    trace->physical_event_seam_oblique_cells += oblique_frame_cells;
 	    trace->physical_event_seam_oblique_box_links += oblique_box_links;
 	}
+    }
+    if (source_union_certified) {
+	trace->physical_event_seam_source_union_certified++;
+	trace->physical_event_seam_source_union_boxes += source_union_boxes;
+	trace->physical_event_seam_source_union_root_boxes +=
+	    source_union_root_boxes;
     }
     brep_trace_finalize_physical_events(trace, ray, tol, true);
     if (trace->physical_event_complete == 1)
@@ -14910,7 +15111,18 @@ brep_prepared_seam_pair_eligible(const struct rt_brep_shot_trace *trace)
 	  (!trace->physical_event_seam_witness_roots &&
 	   !trace->physical_event_seam_witness_boxes &&
 	   trace->physical_event_seam_edge_only_candidates == 1)));
+    const bool matching_source_union_evidence =
+	(!trace->physical_event_seam_source_union_certified &&
+	 !trace->physical_event_seam_source_union_boxes &&
+	 !trace->physical_event_seam_source_union_root_boxes) ||
+	(trace->physical_event_seam_source_union_certified == 1 && existing &&
+	 trace->physical_event_seam_source_union_boxes ==
+	    existing->source_box_count &&
+	 trace->physical_event_seam_source_union_root_boxes > 0 &&
+	 trace->physical_event_seam_source_union_root_boxes <
+	    trace->physical_event_seam_source_union_boxes);
     return matching_certificates && matching_contact_evidence &&
+	matching_source_union_evidence &&
 	existing->edge_index >= 0 &&
 	existing->edge_index == continuation->edge_index &&
 	existing->source_kind == RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT &&
@@ -15183,7 +15395,14 @@ brep_build_prepared_partition(struct rt_brep_shot_trace *trace,
 	    trace->physical_event_seam_oblique_box_links ==
 		trace->physical_event_seam_contact_boxes &&
 	    trace->physical_event_seam_contact_boxes > 0;
-	if (!certified_contact_corridor)
+	const bool certified_source_union = seam_pair &&
+	    box.disposition == RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY &&
+	    !box.determinant_sign &&
+	    trace->physical_event_seam_source_union_certified == 1 &&
+	    trace->physical_event_seam_source_union_boxes >
+		trace->physical_event_seam_source_union_root_boxes &&
+	    trace->physical_event_seam_source_union_root_boxes > 0;
+	if (!certified_contact_corridor && !certified_source_union)
 	    return RT_BREP_PREPARED_FALLBACK_ROOT_COVERAGE;
     }
 

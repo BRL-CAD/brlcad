@@ -3194,7 +3194,8 @@ ESTABLISHED FINDINGS
     whose one-pair ledger links every contact box.  A rootless box cannot gain
     production authority merely from its location, determinant, or proximity.
 
-    The permanent trend uses seam-tangent components 1e-4, 1e-3, 0.01, 0.05,
+    At this checkpoint the permanent trend used seam-tangent components 1e-4,
+    1e-3, 0.01, 0.05,
     0.25, 0.5, and 1 in both ray directions: all fourteen require production
     certification and analytic chord agreement.  The 1e-3 and 0.05 cases
     require certification of one or two contact boxes despite only one box
@@ -3232,6 +3233,93 @@ ESTABLISHED FINDINGS
     frame intervals, trim-only and edge-only errors, exact tangency,
     sector-boundary contact, vertex neighborhoods, and non-manifold topology
     remain fallback targets.
+
+72. A connected source-root union now supplies the missing surface-root count
+    theorem for the component-0.1 oblique Cobb cases.
+
+    The forward case had three terminal boxes.  Contact face/span 0/0 owned
+    one unresolved contact box.  Source face/span 1/1 had a depth-20 regular
+    Krawczyk box containing the analytic outer sphere root at approximately
+    UV (0.0070216, 0.499223), plus a rootless depth-24 zero-determinant box
+    immediately below it.  Their V intervals met at 0.4992098714, their U
+    intervals overlapped, and their outward t intervals overlapped.  Reverse
+    had the same two source boxes plus two separately certified contact boxes.
+    The contact material-sector theorem could prove that contact boxes hide no
+    transition, but said nothing about a second root on the outer source
+    surface.  The former whole-ray fallback was therefore correct.
+
+    The new `brep_trace_seam_source_union` proof begins only inside a qualified
+    finite nonparallel oblique contact transaction.  The source face/span must
+    differ from the contact face/span.  Every source-root-owning box must
+    already be `RESOLVED_REGULAR` with one nonzero consistent determinant
+    sign.  Additional candidates must be unresolved, zero-determinant,
+    rootless boxes on exactly that source face/span.  Fixed boolean arrays grow
+    only the component connected to a root box by closed UV-rectangle
+    intersection and outward t-interval overlap, with a 256-epsilon roundoff
+    allowance.  A disconnected box or a box containing any local/fold root is
+    never considered owned.
+
+    The proof takes the component's complete rectangular UV hull, maps it into
+    the prepared Bezier span, widens its normalized boundaries outward by one
+    binary64 step, reconstructs the two ray-plane Bernstein systems from the
+    positive-weight control net, and restricts them with the existing audited
+    outward arithmetic.  Strict Krawczyk inclusion over that entire hull proves
+    existence and uniqueness of one surface root.  Because the regular source
+    box already contains a root, every connected rootless box is redundant
+    isolator coverage rather than another solid transition.  All arrays and
+    coefficients are fixed stack storage; there is no shot-time allocation.
+
+    Publication remains atomic.  A successful seam event keeps a root-owning
+    box as its representative, uses all component boxes for its outward t
+    interval and source-box count, and records
+    `physical_event_seam_source_union_certified/root_boxes/boxes`.  Eligibility
+    requires either all three fields zero or exactly one certificate with
+    `0 < root_boxes < boxes` and `boxes == event.source_box_count`.  The global
+    root-coverage gate waives a rootless resolved-boundary box only after the
+    complete seam eligibility check and that ledger.  The immutable validator
+    independently checks representative ownership, determinant roles, the
+    same UV/t connectivity graph, every root and box, and the analytic sphere
+    chord.
+
+    Component 0.1 now requires production in both directions with a `1/1/2`
+    source-union ledger, raising the trend to sixteen required certifications,
+    six fail-closed threshold controls, and no observational cases.  The
+    similarity/reparameterization/reversal gate retains the fourteen
+    component-1e-3 contact-corridor cases and adds fourteen component-0.1
+    source-union cases.  All 28 select the same analytic sphere partition.
+    Isolation topology needs the union proof in eight of those cases; the
+    other six component-0.1 cases have no rootless source box and correctly
+    carry an all-zero ledger.  Thus physical classification is similarity
+    invariant without requiring solver box topology itself to be invariant.
+    Each identity direction also copies its valid trace into three negative
+    controls.  The immutable validator rejects a UV-disconnected rootless box,
+    `root_boxes == boxes` ledger corruption, and selection of the rootless box
+    as the event representative.
+
+    Optimized verification:
+
+      ctest --test-dir .build --parallel 7 \
+        -R '^rt_brep_ray($|_)' --output-on-failure
+
+    PASS: 7/7 in 145.51 seconds (seam 110.84, interval 145.46, complete
+    process 44.68, Crofton 57.36).  The focused optimized
+    cache/conversion/NURBS matrix passes 11/11 in 6.28 seconds.
+
+      env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+        UBSAN_OPTIONS=halt_on_error=1 \
+        ctest --test-dir .build-asan --parallel 2 \
+          -R '^rt_brep_ray_(seam|endpoint)$' --output-on-failure
+
+    PASS: 2/2 in 527.51 seconds (endpoint 8.63, seam 527.47) with no
+    sanitizer diagnostic.  The ASan/UBSan cache/conversion/NURBS matrix passes
+    11/11 in 13.71 seconds.
+
+    Root-owning boxes without a regular Krawczyk/determinant certificate,
+    disconnected candidates, other faces/spans/roots, a failed outward
+    restriction or non-strict Krawczyk image, perpendicular contact, and every
+    previously unsupported contact topology still fail closed.  SurfaceTree
+    density, cache serialization, and fixed workspace capacities are
+    unchanged.
 
 
 IMPLEMENTATION CHECKLIST
@@ -3569,6 +3657,12 @@ IMPLEMENTATION CHECKLIST
                 roots into provenance-preserving ENTER/LEAVE events.
             [x] Integrate the narrowly certified one-root/one-continuation
                 manifold seam pair with complete box/root ownership.
+                [x] Certify finite oblique two-root contact lobes with complete
+                    edge/surface-frame intervals and per-box material-sector
+                    links.
+                [x] Prove one connected rootless source-box component contains
+                    only the existing regular root by strict Krawczyk inclusion
+                    over its complete rectangular UV hull.
             [x] Integrate closed manifold planar cyclic vertex fans with exact
                 line witnesses, complete source ownership, and mixed ordinary
                 event streams.
@@ -4518,23 +4612,54 @@ Rootless oblique contact-corridor checkpoint (Finding 71):
       --output-on-failure
     PASS: 11/11 in 15.41 seconds with no sanitizer diagnostic.
 
+Connected source-root union checkpoint (Finding 72):
+
+  ctest --test-dir .build --parallel 7 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+    PASS: 7/7 in 145.51 seconds.  The seam shard passes in 110.84 seconds
+    with sixteen required oblique certifications, six required fail-closed
+    controls, no observational cases, fourteen component-1e-3 and fourteen
+    component-0.1 similarity/reparameterization/reversal cases, eight
+    similarity-matrix source-union certificates, and six mutated negative
+    controls.
+    The interval shard passes in 145.46 seconds, the complete process in 44.68
+    seconds, and Cauchy-Crofton in 57.36 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 2 \
+      -R '^rt_brep_ray_(seam|endpoint)$' --output-on-failure
+    PASS: 2/2 in 527.51 seconds with no sanitizer diagnostic.
+
+  ctest --test-dir .build --parallel 6 \
+    -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 11/11 in 6.28 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 6 \
+      -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+      --output-on-failure
+    PASS: 11/11 in 13.71 seconds with no sanitizer diagnostic.
+
 
 NEXT ACTIONS
 ------------
 
-1. Isolate the component-0.1 source-boundary terminal boxes and seek a bounded
-   surface-root completeness/count theorem.  The oblique contact-sector proof
-   now safely absorbs same-contact-face/span rootless boxes at components
-   1e-3 and 0.05, but it deliberately cannot authorize a rootless box on the
-   outer source face.  Prove whether that box is a redundant isolator corridor
-   or can contain an omitted physical boundary root before changing policy.
-   Extend frame intervals to non-isoparametric trims only with a complete
-   rational UV locus and derivative bound.  Keep arbitrary root counts, faces,
-   spans, sector-boundary tangency, exact tangency, and edge/vertex
-   neighborhood interactions fail-closed until each has its own theorem.  Keep
-   the exact edge, perpendicular contact, and original one-existing/one-
-   continuation paths unchanged as narrow production subsets, and never let
-   the model envelope manufacture the exact witness used by Finding 68.
+1. Extend oblique frame intervals to non-isoparametric trims only after prep
+   retains a complete rational UV locus and derivative enclosure for every
+   mapped edge cell.  Prove parameter coverage/orientation, bound the curved
+   trim hull inside each solver box, and preserve the existing edge/surface
+   frame and full-t material-sector predicates.  Add synthetic disconnected,
+   multiple-root, singular-Jacobian, and higher-order source-union systems to
+   the focused C/C++ solver corpus before reusing Finding 72 outside the narrow
+   seam-contact transaction.  Keep arbitrary root counts, faces, spans,
+   sector-boundary tangency, exact tangency, and edge/vertex neighborhood
+   interactions fail-closed until each has its own theorem.  Keep the exact
+   edge, perpendicular contact, and original one-existing/one-continuation
+   paths unchanged as narrow production subsets, and never let the model
+   envelope manufacture the exact witness used by Finding 68.
 2. Extend vertex classification only through a separately certified curved
    differential-link theorem.  Bound surface-normal and tangent variation over
    a local neighborhood before replacing the planar cyclic link.  Define exact
