@@ -30,7 +30,9 @@ typedef int64_t cdt_chart_vertex_id;
 
 enum cdt_face_chart_type {
     CDT_FACE_CHART_NATIVE_UV = 0,
-    CDT_FACE_CHART_CONE_WEDGE = 1
+    CDT_FACE_CHART_CONE_WEDGE = 1,
+    CDT_FACE_CHART_POLAR = 2,
+    CDT_FACE_CHART_SURFACE_METRIC = 3
 };
 
 struct cdt_chart_vertex {
@@ -68,6 +70,8 @@ public:
     int closed_direction() const { return m_closed_dir; }
     cdt_topo_vertex_id pole_topology_vertex() const
 	{ return m_pole_topology_vertex; }
+    cdt_topo_vertex_id second_pole_topology_vertex() const
+	{ return m_second_pole_topology_vertex; }
     const std::string &failure() const { return m_failure; }
 
     std::vector<std::pair<double, double>> points;
@@ -91,6 +95,21 @@ private:
 	const std::vector<int> &source_steiner,
 	const std::vector<const ON_3dPoint *> &points_3d,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices);
+    bool build_pole_wedge(const ON_BrepFace &face,
+	const std::vector<std::pair<double, double>> &native_points,
+	const std::vector<int> &source_outer,
+	const std::vector<std::vector<int>> &source_holes,
+	const std::vector<int> &source_steiner,
+	const std::vector<const ON_3dPoint *> &points_3d,
+	const std::vector<cdt_topo_vertex_id> &topology_vertices,
+	bool ruled);
+    bool build_polar(const ON_BrepFace &face,
+	const std::vector<std::pair<double, double>> &native_points,
+	const std::vector<int> &source_outer,
+	const std::vector<std::vector<int>> &source_holes,
+	const std::vector<int> &source_steiner,
+	const std::vector<const ON_3dPoint *> &points_3d,
+	const std::vector<cdt_topo_vertex_id> &topology_vertices);
     bool validate_boundary(const ON_BrepFace &face,
 	const std::vector<std::pair<double, double>> &native_points);
 
@@ -99,12 +118,20 @@ private:
     int m_closed_dir = -1;
     int m_open_dir = -1;
     int m_singular_side = -1;
+    int m_second_singular_side = -1;
+    bool m_periodic = false;
     cdt_topo_vertex_id m_pole_topology_vertex = CDT_TOPOLOGY_ID_NONE;
+    cdt_topo_vertex_id m_second_pole_topology_vertex =
+	CDT_TOPOLOGY_ID_NONE;
     ON_Interval m_closed_domain;
     ON_Interval m_open_domain;
+    ON_Interval m_native_domain[2];
+    double m_metric_scale[2] = {1.0, 1.0};
     std::string m_failure;
 };
 
 BREP_EXPORT bool cdt_face_uses_cone_chart(const ON_BrepFace &face);
+BREP_EXPORT bool cdt_face_uses_polar_chart(const ON_BrepFace &face);
+BREP_EXPORT bool cdt_face_uses_topology_chart(const ON_BrepFace &face);
 
 #endif /* LIBBREP_CDT_CHART_H */

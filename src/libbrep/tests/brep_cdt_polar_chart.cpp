@@ -1,0 +1,191 @@
+/*               B R E P _ C D T _ P O L A R _ C H A R T . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by the
+ * U.S. Army Research Laboratory.
+ *
+ * Distributed under the terms of the GNU Lesser General Public License
+ * (LGPL), version 2.1.
+ */
+
+#include "common.h"
+
+#include <cmath>
+#include <iostream>
+#include <memory>
+#include <vector>
+
+#include "bg/trimesh.h"
+#include "brep/cdt.h"
+#include "../cdt/chart.h"
+
+static bool
+exercise_sphere(const ON_3dPoint &center, double radius)
+{
+    ON_Sphere sphere(center, radius);
+    if (!sphere.IsValid())
+	return false;
+    std::unique_ptr<ON_Brep> brep(ON_BrepSphere(sphere));
+    if (!brep || !brep->IsValid() || !brep->IsSolid() ||
+	    brep->m_F.Count() != 1) {
+	std::cerr << "invalid sphere B-Rep" << std::endl;
+	return false;
+    }
+    const ON_BrepFace &face = brep->m_F[0];
+    if (!cdt_face_uses_polar_chart(face)) {
+	std::cerr << "sphere face was not classified as polar" << std::endl;
+	return false;
+    }
+
+    const ON_Surface *surface = face.SurfaceOf();
+    const ON_BrepLoop *loop = face.OuterLoop();
+    if (!surface || !loop)
+	return false;
+    int open_dir = -1;
+    for (int side = 0; side < 4; ++side) {
+	if (surface->IsSingular(side)) {
+	    open_dir = (side == 0 || side == 2) ? 1 : 0;
+	    break;
+	}
+    }
+    if (open_dir < 0)
+	return false;
+    const int angular_dir = 1 - open_dir;
+    const ON_Interval open_domain = surface->Domain(open_dir);
+    const ON_Interval angular_domain = surface->Domain(angular_dir);
+
+    std::vector<std::pair<double, double>> native_points;
+    std::vector<int> outer;
+    std::vector<int> steiner;
+    std::vector<const ON_3dPoint *> points_3d;
+    std::vector<cdt_topo_vertex_id> topology_vertices;
+    std::vector<ON_3dPoint> topology_points((size_t)brep->m_V.Count());
+    for (int vi = 0; vi < brep->m_V.Count(); ++vi)
+	topology_points[(size_t)vi] = brep->m_V[vi].Point();
+    const auto add_point = [&](const ON_2dPoint &uv,
+	    cdt_topo_vertex_id topology, const ON_3dPoint *point_3d) {
+	const int index = (int)native_points.size();
+	native_points.push_back(std::make_pair(uv.x, uv.y));
+	points_3d.push_back(point_3d);
+	topology_vertices.push_back(topology);
+	return index;
+    };
+    for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	const ON_BrepTrim *trim = loop->Trim(ti);
+	if (!trim || trim->m_vi[0] < 0)
+	    return false;
+	const ON_3dPoint uv3 = trim->PointAtStart();
+	outer.push_back(add_point(ON_2dPoint(uv3.x, uv3.y),
+	    trim->m_vi[0], &topology_points[(size_t)trim->m_vi[0]]));
+	if (trim->m_type != ON_BrepTrim::singular) {
+	    const ON_3dPoint midpoint = trim->PointAt(trim->Domain().Mid());
+	    outer.push_back(add_point(ON_2dPoint(midpoint.x, midpoint.y),
+		CDT_TOPOLOGY_ID_NONE, NULL));
+	}
+    }
+    outer.push_back(outer[0]);
+
+    for (int angular_sample = 1; angular_sample <= 3;
+	    ++angular_sample) {
+	for (int open_sample = 1; open_sample <= 3; ++open_sample) {
+	    ON_2dPoint uv;
+	    uv[angular_dir] = angular_domain.ParameterAt(
+		0.2 * angular_sample);
+	    uv[open_dir] = open_domain.ParameterAt(0.25 * open_sample);
+	    steiner.push_back(add_point(uv, CDT_TOPOLOGY_ID_NONE, NULL));
+	}
+    }
+
+    cdt_face_chart chart;
+    if (!chart.build(face, native_points, outer,
+	    std::vector<std::vector<int>>(), steiner, points_3d,
+	    topology_vertices) || chart.type() != CDT_FACE_CHART_POLAR ||
+	    chart.pole_topology_vertex() < 0 ||
+	    chart.second_pole_topology_vertex() < 0 ||
+	    chart.constraints.empty()) {
+	std::cerr << "polar chart build failed: " << chart.failure()
+	    << std::endl;
+	return false;
+    }
+    int pole_count = 0;
+    for (const cdt_chart_vertex &vertex : chart.vertices)
+	pole_count += vertex.singular ? 1 : 0;
+    if (pole_count != 2) {
+	std::cerr << "polar chart did not preserve both poles" << std::endl;
+	return false;
+    }
+
+    for (size_t i = 0; i < native_points.size(); ++i) {
+	const ON_2dPoint native_uv(native_points[i].first,
+	    native_points[i].second);
+	ON_2dPoint chart_uv;
+	ON_2dPoint round_trip;
+	if (!chart.native_to_chart(native_uv, chart_uv) ||
+		!chart.chart_to_native(chart_uv, round_trip)) {
+	    std::cerr << "polar chart mapping failed" << std::endl;
+	    return false;
+	}
+	const ON_3dPoint expected = surface->PointAt(native_uv.x,
+	    native_uv.y);
+	const ON_3dPoint actual = surface->PointAt(round_trip.x,
+	    round_trip.y);
+	if (actual.DistanceTo(expected) > 1.0e-10 * radius) {
+	    std::cerr << "polar chart round trip exceeded tolerance"
+		<< std::endl;
+	    return false;
+	}
+    }
+
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(brep.get(),
+	"polar chart fixture");
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.05;
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    if (ON_Brep_CDT_Tessellate(state, 0, NULL) != 0) {
+	struct brep_cdt_diagnostic diagnostic;
+	ON_Brep_CDT_Diagnostic(&diagnostic, state);
+	std::cerr << "sphere tessellation failed at stage "
+	    << diagnostic.stage << ": " << diagnostic.message << std::endl;
+	ON_Brep_CDT_Destroy(state);
+	return false;
+    }
+    int *mesh_faces = NULL;
+    fastf_t *mesh_vertices = NULL;
+    int mesh_face_count = 0;
+    int mesh_vertex_count = 0;
+    const int mesh_status = ON_Brep_CDT_Mesh(&mesh_faces,
+	&mesh_face_count, &mesh_vertices, &mesh_vertex_count, NULL, NULL,
+	NULL, NULL, state, 0, NULL);
+    const bool solid = mesh_status >= 0 && mesh_face_count > 0 &&
+	mesh_vertex_count > 0 && bg_trimesh_solid2(mesh_vertex_count,
+	    mesh_face_count, mesh_vertices, mesh_faces, NULL) == 0;
+    bu_free(mesh_faces, "polar chart fixture faces");
+    bu_free(mesh_vertices, "polar chart fixture vertices");
+    ON_Brep_CDT_Destroy(state);
+    if (!solid) {
+	std::cerr << "polar chart output was not solid" << std::endl;
+	return false;
+    }
+    return true;
+}
+
+int
+main()
+{
+    const ON_3dPoint centers[6] = {
+	ON_3dPoint::Origin,
+	ON_3dPoint(10.0, -20.0, 30.0),
+	ON_3dPoint(-1.0e6, 2.0e6, -3.0e6),
+	ON_3dPoint(1.0e-6, -2.0e-6, 3.0e-6),
+	ON_3dPoint(-7.0, 8.0, -9.0),
+	ON_3dPoint(9.0e4, -8.0e4, 7.0e4)
+    };
+    const double radii[6] = {
+	1.0e-6, 1.0e-3, 1.0, 1.0e3, 1.0e6, 64.0
+    };
+    for (int i = 0; i < 6; ++i) {
+	if (!exercise_sphere(centers[i], radii[i]))
+	    return i + 1;
+    }
+    return 0;
+}

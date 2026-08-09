@@ -463,19 +463,21 @@ cpolygon_t::add_ordered_edge(const struct edge2d_t &e)
     cpolyedge_t *prev = NULL;
     cpolyedge_t *next = NULL;
 
-    std::set<cpolyedge_t *>::iterator cp_it;
-    for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
+    const std::set<cpolyedge_t *> &start_edges = v2pe[e.v2d[0]];
+    for (std::set<cpolyedge_t *>::const_iterator cp_it =
+	    start_edges.begin(); cp_it != start_edges.end(); ++cp_it) {
 	cpolyedge_t *pe = *cp_it;
-
-	if (pe == nedge) continue;
-
-	if (pe->v2d[1] == nedge->v2d[0]) {
+	if (pe != nedge && pe->v2d[1] == nedge->v2d[0] &&
+		(!prev || pe->v2d[0] < prev->v2d[0]))
 	    prev = pe;
-	}
-
-	if (pe->v2d[0] == nedge->v2d[1]) {
+    }
+    const std::set<cpolyedge_t *> &end_edges = v2pe[e.v2d[1]];
+    for (std::set<cpolyedge_t *>::const_iterator cp_it =
+	    end_edges.begin(); cp_it != end_edges.end(); ++cp_it) {
+	cpolyedge_t *pe = *cp_it;
+	if (pe != nedge && pe->v2d[0] == nedge->v2d[1] &&
+		(!next || pe->v2d[1] < next->v2d[1]))
 	    next = pe;
-	}
     }
 
     if (prev) {
@@ -516,8 +518,14 @@ void
 cpolygon_t::remove_ordered_edge(const struct edge2d_t &e)
 {
     cpolyedge_t *cull = NULL;
-    std::set<cpolyedge_t *>::iterator cp_it;
-    for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
+
+    const std::map<long, std::set<cpolyedge_t *>>::iterator vertex_entry =
+	v2pe.find(e.v2d[0]);
+    if (vertex_entry == v2pe.end())
+	return;
+    for (std::set<cpolyedge_t *>::const_iterator cp_it =
+	    vertex_entry->second.begin(); cp_it != vertex_entry->second.end();
+	    ++cp_it) {
 	cpolyedge_t *pe = *cp_it;
 	struct edge2d_t oe(pe->v2d[0], pe->v2d[1]);
 	if (e == oe) {
@@ -532,15 +540,10 @@ cpolygon_t::remove_ordered_edge(const struct edge2d_t &e)
     v2pe[e.v2d[0]].erase(cull);
     v2pe[e.v2d[1]].erase(cull);
 
-    for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
-	cpolyedge_t *pe = *cp_it;
-	if (pe->prev == cull) {
-	    pe->prev = NULL;
-	}
-	if (pe->next == cull) {
-	    pe->next = NULL;
-	}
-    }
+    if (cull->prev && cull->prev->next == cull)
+	cull->prev->next = NULL;
+    if (cull->next && cull->next->prev == cull)
+	cull->next->prev = NULL;
     poly.erase(cull);
     delete cull;
 }
@@ -2571,6 +2574,31 @@ cdt_mesh_t::brep_edge_pnt(long v)
     return (ep.find(v) != ep.end());
 }
 
+size_t
+cdt_mesh_t::geometric_degenerate_count()
+{
+    size_t count = 0;
+    RTree<size_t, double, 3>::Iterator tree_it;
+    tris_tree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	const triangle_t &triangle = tris_vect[*tree_it];
+	const ON_3dPoint &a = *pnts[(size_t)triangle.v[0]];
+	const ON_3dPoint &b = *pnts[(size_t)triangle.v[1]];
+	const ON_3dPoint &c = *pnts[(size_t)triangle.v[2]];
+	const ON_3dVector ab = b - a;
+	const ON_3dVector ac = c - a;
+	const ON_3dVector bc = c - b;
+	const double longest_sq = std::max(ab.LengthSquared(),
+	    std::max(ac.LengthSquared(), bc.LengthSquared()));
+	const double doubled_area = ON_CrossProduct(ab, ac).Length();
+	if (!(longest_sq > 0.0) || doubled_area <= 64.0 *
+		std::numeric_limits<double>::epsilon() * longest_sq)
+	    count++;
+	++tree_it;
+    }
+    return count;
+}
+
 void cdt_mesh_t::reset()
 {
     this->tris_vect.clear();
@@ -3435,27 +3463,94 @@ loop_to_bgpoly(cpolygon_t *loop)
 }
 
 static bool
+point_on_segment(const point2d_t *points, int point_index, int first,
+	int second, double tolerance_sq)
+{
+    if (!points || point_index < 0 || first < 0 || second < 0)
+	return false;
+    const double px = points[point_index][X];
+    const double py = points[point_index][Y];
+    const double ax = points[first][X];
+    const double ay = points[first][Y];
+    const double dx = points[second][X] - ax;
+    const double dy = points[second][Y] - ay;
+    const double length_sq = dx * dx + dy * dy;
+    double parameter = length_sq > DBL_EPSILON ?
+	((px - ax) * dx + (py - ay) * dy) / length_sq : 0.0;
+    parameter = std::max(0.0, std::min(1.0, parameter));
+    const double ex = px - (ax + parameter * dx);
+    const double ey = py - (ay + parameter * dy);
+    return ex * ex + ey * ey <= tolerance_sq;
+}
+
+static bool
 point_on_polygon_boundary(const point2d_t *points, int point_index,
 	const int *polygon, size_t polygon_point_count, double tolerance_sq)
 {
     if (!points || point_index < 0 || !polygon || polygon_point_count < 2)
 	return false;
-    const double px = points[point_index][X];
-    const double py = points[point_index][Y];
     for (size_t edge = 0; edge + 1 < polygon_point_count; ++edge) {
 	const int first = polygon[edge];
 	const int second = polygon[edge + 1];
-	const double ax = points[first][X];
-	const double ay = points[first][Y];
-	const double dx = points[second][X] - ax;
-	const double dy = points[second][Y] - ay;
-	const double length_sq = dx * dx + dy * dy;
-	double parameter = length_sq > DBL_EPSILON ?
-	    ((px - ax) * dx + (py - ay) * dy) / length_sq : 0.0;
-	parameter = std::max(0.0, std::min(1.0, parameter));
-	const double ex = px - (ax + parameter * dx);
-	const double ey = py - (ay + parameter * dy);
-	if (ex * ex + ey * ey <= tolerance_sq)
+	if (point_on_segment(points, point_index, first, second,
+		tolerance_sq))
+	    return true;
+    }
+    return false;
+}
+
+struct chart_boundary_segment {
+    int first;
+    int second;
+};
+
+static bool
+collect_boundary_segment(size_t segment, void *context)
+{
+    std::vector<size_t> *segments = (std::vector<size_t> *)context;
+    segments->push_back(segment);
+    return true;
+}
+
+static void
+index_polygon_boundary(RTree<size_t, double, 2> &index,
+	std::vector<chart_boundary_segment> &segments,
+	const point2d_t *points, const int *polygon,
+	size_t polygon_point_count, double tolerance)
+{
+    for (size_t edge = 0; edge + 1 < polygon_point_count; ++edge) {
+	const int first = polygon[edge];
+	const int second = polygon[edge + 1];
+	double minimum[2] = {
+	    std::min(points[first][X], points[second][X]) - tolerance,
+	    std::min(points[first][Y], points[second][Y]) - tolerance
+	};
+	double maximum[2] = {
+	    std::max(points[first][X], points[second][X]) + tolerance,
+	    std::max(points[first][Y], points[second][Y]) + tolerance
+	};
+	const size_t segment = segments.size();
+	segments.push_back({first, second});
+	index.Insert(minimum, maximum, segment);
+    }
+}
+
+static bool
+point_on_indexed_boundary(RTree<size_t, double, 2> &index,
+	const std::vector<chart_boundary_segment> &segments,
+	const point2d_t *points, int point_index, double tolerance_sq)
+{
+    double query[2] = {
+	points[point_index][X], points[point_index][Y]
+    };
+    std::vector<size_t> candidates;
+    index.Search(query, query, collect_boundary_segment, &candidates);
+    for (size_t candidate : candidates) {
+	if (candidate >= segments.size())
+	    continue;
+	const chart_boundary_segment &segment = segments[candidate];
+	if (point_on_segment(points, point_index, segment.first,
+		segment.second, tolerance_sq))
 	    return true;
     }
     return false;
@@ -3669,15 +3764,22 @@ cdt_mesh_t::cdt()
     const double boundary_tolerance = sqrt(DBL_EPSILON) * boundary_scale;
     const double boundary_tolerance_sq = boundary_tolerance *
 	boundary_tolerance;
+    RTree<size_t, double, 2> boundary_index;
+    std::vector<chart_boundary_segment> boundary_segments;
+    index_polygon_boundary(boundary_index, boundary_segments, bgp_2d,
+	opoly, opoly_count, boundary_tolerance);
+    for (int hi = 0; hi < holes_cnt; ++hi)
+	index_polygon_boundary(boundary_index, boundary_segments, bgp_2d,
+	    holes_array[hi], holes_npts[hi], boundary_tolerance);
     std::vector<int> steiner_vec;
     steiner_vec.reserve(chart.steiner.size());
+    const bool planar_chart = face.SurfaceOf()->IsPlanar(NULL,
+	ON_ZERO_TOLERANCE);
     for (int point : chart.steiner) {
-	bool on_boundary = point_on_polygon_boundary(bgp_2d, point, opoly,
-	    opoly_count, boundary_tolerance_sq);
-	for (int hi = 0; hi < holes_cnt && !on_boundary; ++hi)
-	    on_boundary = point_on_polygon_boundary(bgp_2d, point,
-		holes_array[hi], holes_npts[hi], boundary_tolerance_sq);
-	if (on_boundary)
+	if (planar_chart)
+	    continue;
+	if (point_on_indexed_boundary(boundary_index, boundary_segments,
+		bgp_2d, point, boundary_tolerance_sq))
 	    continue;
 	bool in_hole = false;
 	for (int hi = 0; hi < holes_cnt && !in_hole; ++hi) {
@@ -3833,8 +3935,14 @@ cdt_mesh_t::cdt()
 	bu_free(holes_npts, "holes array");
     }
 
-    // Use the 2D triangles to create the face 3D triangle mesh
+    // Use the 2D triangles to create the face 3D triangle mesh.  Preserve
+    // chart orientation when only a subset of coarse surface chords fold in
+    // 3-D.  Flipping such triangles individually destroys edge incidence;
+    // the caller can instead refine their chart regions transactionally.
     reset();
+    std::vector<triangle_t> mapped_tris;
+    size_t forward_count = 0;
+    size_t reverse_count = 0;
     std::vector<triangle_t>::iterator tr_it;
     for (tr_it = tris_2d.begin(); tr_it != tris_2d.end(); tr_it++) {
 	triangle_t tri2d = *tr_it;
@@ -3862,16 +3970,137 @@ cdt_mesh_t::cdt()
 
 	ON_3dVector tdir = tnorm(tri3d);
 	ON_3dVector bdir = bnorm(tri3d);
-	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
-	    long tmp = tri3d.v[1];
-	    tri3d.v[1] = tri3d.v[2];
-	    tri3d.v[2] = tmp;
+	if (tdir.Length() > 0 && bdir.Length() > 0) {
+	    if (ON_DotProduct(tdir, bdir) > 0.0)
+		forward_count++;
+	    else
+		reverse_count++;
 	}
-
+	mapped_tris.push_back(tri3d);
+    }
+    const bool reverse_chart = reverse_count > forward_count;
+    for (triangle_t &tri3d : mapped_tris) {
+	if (reverse_chart)
+	    std::swap(tri3d.v[1], tri3d.v[2]);
 	tri_add(tri3d);
     }
 
     return result;
+}
+
+size_t
+cdt_mesh_t::refine_incorrect_normals(size_t max_points)
+{
+    if (!max_points || !brep || f_id < 0 || f_id >= brep->m_F.Count())
+	return 0;
+    const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
+    if (!surface || surface->IsClosed(0) || surface->IsClosed(1))
+	return 0;
+
+    std::vector<triangle_t> folded = interior_incorrect_normals();
+    std::sort(folded.begin(), folded.end(), [](const triangle_t &first,
+	    const triangle_t &second) { return first.ind < second.ind; });
+    std::set<std::pair<double, double>> existing(m_pnts_2d.begin(),
+	m_pnts_2d.end());
+    struct ON_Brep_CDT_State *state =
+	(struct ON_Brep_CDT_State *)p_cdt;
+    double surface_size[2] = {1.0, 1.0};
+    if (!surface->GetSurfaceSize(&surface_size[0], &surface_size[1])) {
+	surface_size[0] = 1.0;
+	surface_size[1] = 1.0;
+    }
+    double metric_scale[2] = {1.0, 1.0};
+    for (int direction = 0; direction < 2; ++direction) {
+	const double domain_length = surface->Domain(direction).Length();
+	if (domain_length > 0.0 && surface_size[direction] > 0.0)
+	    metric_scale[direction] = surface_size[direction] /
+		domain_length;
+    }
+    size_t inserted = 0;
+
+    for (const triangle_t &triangle : folded) {
+	if (inserted >= max_points)
+	    break;
+	ON_2dPoint uv[3];
+	bool mapped = true;
+	for (int corner = 0; corner < 3; ++corner) {
+	    bool found = false;
+	    for (const auto &point_map : p2d3d) {
+		const long native_point = point_map.first;
+		const long point_3d = point_map.second;
+		if (native_point < 0 ||
+			(size_t)native_point >= m_pnts_2d.size() ||
+			point_3d < 0 || (size_t)point_3d >= pnts.size())
+		    continue;
+		const auto canonical = p2ind.find(pnts[(size_t)point_3d]);
+		if (canonical == p2ind.end() ||
+			canonical->second != triangle.v[corner])
+		    continue;
+		uv[corner] = ON_2dPoint(
+		    m_pnts_2d[(size_t)native_point].first,
+		    m_pnts_2d[(size_t)native_point].second);
+		found = true;
+		break;
+	    }
+	    mapped = mapped && found;
+	}
+	if (!mapped)
+	    continue;
+
+	int split_first = -1;
+	int split_second = -1;
+	double longest = -1.0;
+	for (int first = 0; first < 3; ++first) {
+	    const int second = (first + 1) % 3;
+	    if (brep_edges.find(uedge_t(triangle.v[first],
+		    triangle.v[second])) != brep_edges.end())
+		continue;
+	    const double du = (uv[second].x - uv[first].x) *
+		metric_scale[0];
+	    const double dv = (uv[second].y - uv[first].y) *
+		metric_scale[1];
+	    const double length_sq = du * du + dv * dv;
+	    if (length_sq > longest) {
+		longest = length_sq;
+		split_first = first;
+		split_second = second;
+	    }
+	}
+	ON_2dPoint sample;
+	if (split_first >= 0) {
+	    sample = ON_2dPoint(
+		0.5 * (uv[split_first].x + uv[split_second].x),
+		0.5 * (uv[split_first].y + uv[split_second].y));
+	} else {
+	    sample = ON_2dPoint((uv[0].x + uv[1].x + uv[2].x) / 3.0,
+		(uv[0].y + uv[1].y + uv[2].y) / 3.0);
+	}
+	const std::pair<double, double> sample_key(sample.x, sample.y);
+	if (!sample.IsValid() || !existing.insert(sample_key).second)
+	    continue;
+
+	ON_3dPoint point;
+	ON_3dVector normal = ON_3dVector::UnsetVector;
+	if (!surface_EvNormal(surface, sample.x, sample.y, point, normal))
+	    continue;
+	if (m_bRev)
+	    normal = -normal;
+	const long point_2d = add_point(sample);
+	m_interior_pnts.insert(point_2d);
+	const long point_index = add_point(new ON_3dPoint(point));
+	const long normal_index = add_normal(new ON_3dPoint(normal));
+	p2d3d[point_2d] = point_index;
+	nmap[point_index] = normal_index;
+	if (state) {
+	    CDT_Add3DPnt(state, pnts[(size_t)point_index], f_id, -1, -1,
+		-1, sample.x, sample.y);
+	    CDT_Add3DNorm(state, normals[(size_t)normal_index],
+		pnts[(size_t)point_index], f_id, -1, -1, -1,
+		sample.x, sample.y);
+	}
+	inserted++;
+    }
+    return inserted;
 }
 
 bool
@@ -4293,7 +4522,9 @@ cdt_mesh_t::valid(int verbose)
     bool topret = true;
 
     const bool check_edge_triangles =
-	!cdt_face_uses_cone_chart(brep->m_F[f_id]) && !planar();
+	!cdt_face_uses_topology_chart(brep->m_F[f_id]) && !planar();
+    const bool topology_chart =
+	cdt_face_uses_topology_chart(brep->m_F[f_id]);
 
     boundary_edges_update();
 
@@ -4306,9 +4537,15 @@ cdt_mesh_t::valid(int verbose)
 	tri = tris_vect[t_ind];
 	ON_3dVector tdir = tnorm(tri);
 	ON_3dVector bdir = bnorm(tri);
-	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
+	const double normal_dot = ON_DotProduct(tdir, bdir);
+	const bool invalid_normal = topology_chart ? !(normal_dot > 0.0) :
+	    normal_dot < 0.1;
+	if (tdir.Length() > 0 && bdir.Length() > 0 && invalid_normal) {
 	    if (verbose > 0) {
-		std::cout << name << " face " << f_id << ": invalid normals in mesh, triangle " << tri.ind << " (" << tri.v[0] << "," << tri.v[1] << "," << tri.v[2] << ")\n";
+		std::cout << name << " face " << f_id
+		    << ": invalid normals in mesh, triangle " << tri.ind
+		    << " (" << tri.v[0] << "," << tri.v[1] << ","
+		    << tri.v[2] << "), dot=" << normal_dot << "\n";
 	    }
 	    if (verbose > 1) {
 		bu_vls_sprintf(&fname, "%d-invalid_normal_tri_%ld_%ld_%ld.plot3", f_id, tri.v[0], tri.v[1], tri.v[2]);

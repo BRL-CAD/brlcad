@@ -196,8 +196,10 @@ def audit_database(audit, args, run_dir, database, start_index, sink):
     database_name = str(database.resolve())
     if len(args.modes) == 1:
         batch_mode = args.modes[0]
-    else:
+    elif set(args.modes) == {"wireframe", "shaded"}:
         batch_mode = "both"
+    else:
+        batch_mode = "all"
     next_index = start_index
     no_progress_restarts = 0
     process_retries = {}
@@ -415,7 +417,7 @@ def parse_args():
     parser.add_argument(
         "--modes",
         nargs="+",
-        choices=("wireframe", "shaded"),
+        choices=("wireframe", "shaded", "quality"),
         default=("wireframe", "shaded"),
     )
     parser.add_argument("--jobs", type=int, default=8)
@@ -473,6 +475,14 @@ def parse_args():
         parser.error("corpus limits cannot be negative")
     if args.batch_databases and args.max_objects:
         parser.error("--max-objects is not available with --batch-databases")
+    selected_modes = set(args.modes)
+    supported_batch_sets = (
+        {"wireframe"}, {"shaded"}, {"quality"},
+        {"wireframe", "shaded"},
+        {"wireframe", "shaded", "quality"},
+    )
+    if args.batch_databases and selected_modes not in supported_batch_sets:
+        parser.error("batch mode supports one mode, wireframe+shaded, or all modes")
     return args
 
 

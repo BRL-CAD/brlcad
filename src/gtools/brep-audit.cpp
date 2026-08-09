@@ -10,7 +10,7 @@
  */
 /** @file brep-audit.cpp
  *
- * Isolated realization checks for BRep wireframes and fast shaded meshes.
+ * Isolated checks for BRep wireframes, display meshes, and certified meshes.
  */
 
 #include "common.h"
@@ -20,6 +20,9 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <map>
+#include <queue>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -36,6 +39,7 @@
 #include "bu/file.h"
 #include "bu/opt.h"
 #include "bu/datetime.h"
+#include "bg/trimesh.h"
 #include "bv/vlist.h"
 #include "brep/cdt.h"
 #include "brep/util.h"
@@ -50,6 +54,25 @@ struct geom_result {
     size_t primitives = 0;
     size_t commands = 0;
     size_t invalid_indices = 0;
+    int diagnostic_result = 0;
+    int diagnostic_stage = 0;
+    int diagnostic_face = -1;
+    std::string diagnostic_message;
+    bool solid_checked = false;
+    bool solid = false;
+    int degenerate_faces = 0;
+    int unmatched_edges = 0;
+    int excess_edges = 0;
+    int misoriented_edges = 0;
+    size_t unique_edges = 0;
+    int connected_components = 0;
+    int invalid_vertex_links = 0;
+    int geometric_degenerate_faces = 0;
+    long long euler_characteristic = 0;
+    double minimum_angle_degrees =
+	std::numeric_limits<double>::quiet_NaN();
+    double maximum_aspect_ratio =
+	std::numeric_limits<double>::quiet_NaN();
     int requested_items = 0;
     int completed_items = 0;
     int failed_items = 0;
@@ -415,6 +438,281 @@ shaded_result(struct db_i *dbip, struct directory *dp,
 }
 
 static void
+mesh_quality_metrics(geom_result *result, int vertex_count, int face_count,
+	const fastf_t *vertices, const int *faces, bool require_closed_links)
+{
+    if (!result || vertex_count <= 0 || face_count <= 0 || !vertices ||
+	    !faces)
+	return;
+    typedef std::pair<int, int> mesh_edge;
+    std::map<mesh_edge, std::vector<int>> edge_faces;
+    std::vector<std::vector<int>> vertex_faces((size_t)vertex_count);
+    std::vector<std::vector<int>> face_neighbors((size_t)face_count);
+    double minimum_angle = std::numeric_limits<double>::infinity();
+    double maximum_aspect = 0.0;
+    for (int fi = 0; fi < face_count; ++fi) {
+	const int *triangle = &faces[3 * fi];
+	point_t p[3];
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int vertex = triangle[corner];
+	    if (vertex < 0 || vertex >= vertex_count)
+		return;
+	    VSET(p[corner], vertices[3 * vertex],
+		vertices[3 * vertex + 1], vertices[3 * vertex + 2]);
+	    vertex_faces[(size_t)vertex].push_back(fi);
+	    const int other = triangle[(corner + 1) % 3];
+	    edge_faces[vertex < other ? mesh_edge(vertex, other) :
+		mesh_edge(other, vertex)].push_back(fi);
+	}
+	vect_t ab;
+	vect_t ac;
+	VSUB2(ab, p[1], p[0]);
+	VSUB2(ac, p[2], p[0]);
+	vect_t cross;
+	VCROSS(cross, ab, ac);
+	const double doubled_area = MAGNITUDE(cross);
+	double lengths[3] = {
+	    DIST_PNT_PNT(p[0], p[1]),
+	    DIST_PNT_PNT(p[1], p[2]),
+	    DIST_PNT_PNT(p[2], p[0])
+	};
+	const double longest = std::max(lengths[0],
+	    std::max(lengths[1], lengths[2]));
+	if (!(longest > 0.0) || doubled_area <=
+		64.0 * std::numeric_limits<double>::epsilon() *
+		longest * longest) {
+	    result->geometric_degenerate_faces++;
+	    continue;
+	}
+	maximum_aspect = std::max(maximum_aspect,
+	    longest * longest / doubled_area);
+	for (int corner = 0; corner < 3; ++corner) {
+	    const double adjacent_a = lengths[corner];
+	    const double adjacent_b = lengths[(corner + 2) % 3];
+	    const double opposite = lengths[(corner + 1) % 3];
+	    double cosine = (adjacent_a * adjacent_a +
+		adjacent_b * adjacent_b - opposite * opposite) /
+		(2.0 * adjacent_a * adjacent_b);
+	    cosine = std::max(-1.0, std::min(1.0, cosine));
+	    minimum_angle = std::min(minimum_angle, acos(cosine) *
+		180.0 / M_PI);
+	}
+    }
+    result->unique_edges = edge_faces.size();
+    result->euler_characteristic = (long long)vertex_count -
+	(long long)result->unique_edges + (long long)face_count;
+    if (std::isfinite(minimum_angle))
+	result->minimum_angle_degrees = minimum_angle;
+    if (maximum_aspect > 0.0)
+	result->maximum_aspect_ratio = maximum_aspect;
+
+    for (const auto &entry : edge_faces) {
+	const std::vector<int> &incident = entry.second;
+	for (size_t i = 0; i < incident.size(); ++i) {
+	    for (size_t j = i + 1; j < incident.size(); ++j) {
+		face_neighbors[(size_t)incident[i]].push_back(incident[j]);
+		face_neighbors[(size_t)incident[j]].push_back(incident[i]);
+	    }
+	}
+    }
+    std::vector<bool> visited_faces((size_t)face_count, false);
+    for (int seed = 0; seed < face_count; ++seed) {
+	if (visited_faces[(size_t)seed])
+	    continue;
+	result->connected_components++;
+	std::queue<int> work;
+	work.push(seed);
+	visited_faces[(size_t)seed] = true;
+	while (!work.empty()) {
+	    const int current = work.front();
+	    work.pop();
+	    for (int neighbor : face_neighbors[(size_t)current]) {
+		if (!visited_faces[(size_t)neighbor]) {
+		    visited_faces[(size_t)neighbor] = true;
+		    work.push(neighbor);
+		}
+	    }
+	}
+    }
+
+    if (!require_closed_links)
+	return;
+    for (int vertex = 0; vertex < vertex_count; ++vertex) {
+	const std::vector<int> &incident = vertex_faces[(size_t)vertex];
+	if (incident.empty())
+	    continue;
+	const std::set<int> incident_set(incident.begin(), incident.end());
+	bool valid_link = true;
+	std::set<int> reached;
+	std::queue<int> work;
+	work.push(incident[0]);
+	reached.insert(incident[0]);
+	while (!work.empty()) {
+	    const int current = work.front();
+	    work.pop();
+	    const int *triangle = &faces[3 * current];
+	    int degree = 0;
+	    for (int corner = 0; corner < 3; ++corner) {
+		if (triangle[corner] != vertex)
+		    continue;
+		for (int offset : {1, 2}) {
+		    const int other = triangle[(corner + offset) % 3];
+		    const mesh_edge edge = vertex < other ?
+			mesh_edge(vertex, other) : mesh_edge(other, vertex);
+		    const auto edge_entry = edge_faces.find(edge);
+		    if (edge_entry == edge_faces.end() ||
+			    edge_entry->second.size() != 2)
+			continue;
+		    const int neighbor = edge_entry->second[0] == current ?
+			edge_entry->second[1] : edge_entry->second[0];
+		    if (incident_set.find(neighbor) == incident_set.end())
+			continue;
+		    ++degree;
+		    if (reached.insert(neighbor).second)
+			work.push(neighbor);
+		}
+		break;
+	    }
+	    valid_link = valid_link && degree == 2;
+	}
+	if (!valid_link || reached.size() != incident_set.size())
+	    result->invalid_vertex_links++;
+    }
+}
+
+static geom_result
+quality_result(struct db_i *dbip, struct directory *dp,
+	const struct bg_tess_tol *ttol, int face_index)
+{
+    geom_result result;
+    struct rt_db_internal intern;
+    if (load_brep(dbip, dp, &intern) != BRLCAD_OK) {
+	result.issues.push_back("database_internal_load_failed");
+	return result;
+    }
+    struct rt_brep_internal *bi = (struct rt_brep_internal *)intern.idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+    result.requested_items = face_index >= 0 ? 1 : bi->brep->m_F.Count();
+    if (face_index >= bi->brep->m_F.Count()) {
+	result.issues.push_back("face_index_out_of_range");
+	rt_db_free_internal(&intern);
+	return result;
+    }
+
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(bi->brep,
+	dp->d_namep);
+    if (!state) {
+	result.issues.push_back("state_creation_failed");
+	rt_db_free_internal(&intern);
+	return result;
+    }
+    ON_Brep_CDT_Tol_Set(state, ttol);
+    int selected_face = face_index;
+    const int selected_count = face_index >= 0 ? 1 : 0;
+    int64_t start = bu_gettime();
+    result.ret = ON_Brep_CDT_Tessellate(state, selected_count,
+	selected_count ? &selected_face : NULL);
+
+    struct brep_cdt_diagnostic diagnostic = {};
+    if (ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0) {
+	result.diagnostic_result = diagnostic.result;
+	result.diagnostic_stage = diagnostic.stage;
+	result.diagnostic_face = diagnostic.face_index;
+	result.diagnostic_message = diagnostic.message;
+	result.completed_items = diagnostic.completed_faces;
+	result.failed_items = diagnostic.failed_faces;
+	if (diagnostic.face_index >= 0 && diagnostic.failed_faces > 0)
+	    capture_index(&result.failed_faces,
+		&result.omitted_failed_faces, diagnostic.face_index);
+    }
+    const int failed_face_count = ON_Brep_CDT_Failed_Faces(NULL, 0,
+	state);
+    if (failed_face_count > 0) {
+	std::vector<int> failed_face_indices((size_t)failed_face_count);
+	ON_Brep_CDT_Failed_Faces(failed_face_indices.data(),
+	    failed_face_count, state);
+	result.failed_faces.clear();
+	result.omitted_failed_faces = 0;
+	for (int failed_face : failed_face_indices)
+	    capture_index(&result.failed_faces,
+		&result.omitted_failed_faces, failed_face);
+    }
+
+    const bool tessellated = face_index >= 0 ? result.ret == 1 :
+	result.ret == 0;
+    int *faces = NULL;
+    int face_count = 0;
+    fastf_t *vertices = NULL;
+    int vertex_count = 0;
+    if (tessellated && ON_Brep_CDT_Mesh(&faces, &face_count, &vertices,
+	    &vertex_count, NULL, NULL, NULL, NULL, state, selected_count,
+	    selected_count ? &selected_face : NULL) < 0) {
+	result.issues.push_back("mesh_export_failed");
+    }
+    result.seconds = (bu_gettime() - start) / 1000000.0;
+    result.peak_rss_bytes = peak_rss_bytes();
+    result.primitives = face_count > 0 ? (size_t)face_count : 0;
+    result.vertices = vertex_count > 0 ? (size_t)vertex_count : 0;
+
+    for (int i = 0; vertices && i < vertex_count; ++i) {
+	point_t point;
+	VSET(point, vertices[3 * i], vertices[3 * i + 1],
+	    vertices[3 * i + 2]);
+	if (!std::isfinite(point[X]) || !std::isfinite(point[Y]) ||
+		!std::isfinite(point[Z])) {
+	    result.finite = false;
+	    continue;
+	}
+	bbox_add(result.bmin, result.bmax, &result.have_bbox, point);
+    }
+    for (int i = 0; faces && i < face_count * 3; ++i) {
+	if (faces[i] < 0 || faces[i] >= vertex_count)
+	    result.invalid_indices++;
+    }
+
+    if (!result.invalid_indices && result.finite && faces && vertices)
+	mesh_quality_metrics(&result, vertex_count, face_count, vertices,
+	    faces, face_index < 0);
+
+    if (face_index < 0 && tessellated && !result.invalid_indices &&
+	    result.finite && faces && vertices) {
+	struct bg_trimesh_solid_errors errors =
+	    BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+	result.solid_checked = true;
+	result.solid = bg_trimesh_solid2(vertex_count, face_count, vertices,
+	    faces, &errors) == 0;
+	result.degenerate_faces = errors.degenerate.count;
+	result.unmatched_edges = errors.unmatched.count;
+	result.excess_edges = errors.excess.count;
+	result.misoriented_edges = errors.misoriented.count;
+	bg_free_trimesh_solid_errors(&errors);
+    }
+
+    if (!tessellated)
+	result.issues.push_back("generation_failed");
+    if (!result.vertices || !result.primitives)
+	result.issues.push_back("empty_geometry");
+    if (result.invalid_indices)
+	result.issues.push_back("invalid_face_indices");
+    if (!result.finite)
+	result.issues.push_back("non_finite_coordinates");
+    if (!result.have_bbox)
+	result.issues.push_back("missing_bbox");
+    if (result.solid_checked && !result.solid)
+	result.issues.push_back("non_solid_mesh");
+    if (result.solid_checked && result.invalid_vertex_links)
+	result.issues.push_back("invalid_vertex_links");
+    if (result.geometric_degenerate_faces)
+	result.issues.push_back("geometric_degenerate_faces");
+
+    bu_free(faces, "brep quality audit faces");
+    bu_free(vertices, "brep quality audit vertices");
+    ON_Brep_CDT_Destroy(state);
+    rt_db_free_internal(&intern);
+    return result;
+}
+
+static void
 dims(vect_t d, const point_t bmin, const point_t bmax)
 {
     VSUB2(d, bmax, bmin);
@@ -512,6 +810,29 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< ",\"commands\":" << result.commands
 	<< ",\"peak_rss_bytes\":" << result.peak_rss_bytes
 	<< ",\"invalid_indices\":" << result.invalid_indices
+	<< ",\"diagnostic\":{\"result\":" << result.diagnostic_result
+	<< ",\"stage\":" << result.diagnostic_stage
+	<< ",\"face_index\":" << result.diagnostic_face
+	<< ",\"message\":"
+	<< json_quote(result.diagnostic_message.c_str()) << "}"
+	<< ",\"solid_validation\":{\"checked\":"
+	<< (result.solid_checked ? "true" : "false")
+	<< ",\"solid\":" << (result.solid ? "true" : "false")
+	<< ",\"degenerate_faces\":" << result.degenerate_faces
+	<< ",\"unmatched_edges\":" << result.unmatched_edges
+	<< ",\"excess_edges\":" << result.excess_edges
+	<< ",\"misoriented_edges\":" << result.misoriented_edges << "}"
+	<< ",\"mesh_metrics\":{\"unique_edges\":" << result.unique_edges
+	<< ",\"connected_components\":" << result.connected_components
+	<< ",\"invalid_vertex_links\":" << result.invalid_vertex_links
+	<< ",\"geometric_degenerate_faces\":"
+	<< result.geometric_degenerate_faces
+	<< ",\"euler_characteristic\":" << result.euler_characteristic
+	<< ",\"minimum_angle_degrees\":";
+    print_num(result.minimum_angle_degrees);
+    std::cout << ",\"maximum_aspect_ratio\":";
+    print_num(result.maximum_aspect_ratio);
+    std::cout << "}"
 	<< ",\"requested_items\":" << result.requested_items
 	<< ",\"completed_items\":" << result.completed_items
 	<< ",\"failed_items\":" << result.failed_items
@@ -681,10 +1002,15 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	top_issues.push_back("database_internal_load_failed");
     }
 
-    const bool run_wireframe = !BU_STR_EQUAL(mode_name, "shaded");
-    const bool run_shaded = !BU_STR_EQUAL(mode_name, "wireframe");
+    const bool run_wireframe = BU_STR_EQUAL(mode_name, "wireframe") ||
+	BU_STR_EQUAL(mode_name, "both") || BU_STR_EQUAL(mode_name, "all");
+    const bool run_shaded = BU_STR_EQUAL(mode_name, "shaded") ||
+	BU_STR_EQUAL(mode_name, "both") || BU_STR_EQUAL(mode_name, "all");
+    const bool run_quality = BU_STR_EQUAL(mode_name, "quality") ||
+	BU_STR_EQUAL(mode_name, "all");
     geom_result wire;
     geom_result shaded;
+    geom_result quality;
     if (run_wireframe) {
 	std::cerr << "brep-audit: phase=wireframe" << std::endl;
 	wire = wireframe_result(dbip, dp, &ttol, &tol, &draw_options);
@@ -692,6 +1018,11 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     if (run_shaded) {
 	std::cerr << "brep-audit: phase=shaded" << std::endl;
 	shaded = shaded_result(dbip, dp, &ttol, &tol, &fast_options,
+	    (int)config.face_index);
+    }
+    if (run_quality) {
+	std::cerr << "brep-audit: phase=quality" << std::endl;
+	quality = quality_result(dbip, dp, &ttol,
 	    (int)config.face_index);
     }
     vect_t ref_dims = VINIT_ZERO;
@@ -705,10 +1036,14 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	if (run_shaded)
 	    check_dimensions(&shaded, ref_dims, ref_diag,
 		config.ratio_min, config.ratio_max, "shaded");
+	if (run_quality)
+	    check_dimensions(&quality, ref_dims, ref_diag,
+		config.ratio_min, config.ratio_max, "quality");
     }
     bool okay = ref_valid && top_issues.empty() &&
 	(!run_wireframe || wire.issues.empty()) &&
-	(!run_shaded || shaded.issues.empty());
+	(!run_shaded || shaded.issues.empty()) &&
+	(!run_quality || quality.issues.empty());
 
     std::cerr << "brep-audit: phase=report" << std::endl;
     std::cout << "{\"format\":\"brlcad-brep-realization-audit-v1\",\"database\":"
@@ -732,7 +1067,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	<< ",\"max_result_bytes\":" << draw_options.max_result_bytes
 	<< ",\"max_points\":" << draw_options.max_points << "}"
 	<< ",\"generators\":{\"wireframe\":\"rt_brep_plot\""
-	<< ",\"shaded\":\"brep_cdt_fast\"}"
+	<< ",\"shaded\":\"brep_cdt_fast\""
+	<< ",\"quality\":\"ON_Brep_CDT_Tessellate\"}"
 	<< ",\"reference\":{\"method\":\"face_GetBoundingBox_trim_parameter_envelopes\""
 	<< ",\"face_count\":" << ref_faces
 	<< ",\"failed_faces\":" << ref_face_failures
@@ -751,6 +1087,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     if (run_wireframe) print_result(wire, ref_dims); else std::cout << "null";
     std::cout << ",\"shaded\":";
     if (run_shaded) print_result(shaded, ref_dims); else std::cout << "null";
+    std::cout << ",\"quality\":";
+    if (run_quality) print_result(quality, ref_dims); else std::cout << "null";
     std::cout << ",\"issues\":";
     print_issues(top_issues);
     std::cout << "}" << std::endl;
@@ -792,7 +1130,7 @@ main(int argc, const char **argv)
     BU_OPT(d[5], "", "tess-rel", "#", &bu_opt_fastf_t, &tess_rel, "Relative shaded tessellation tolerance");
     BU_OPT(d[6], "", "tess-norm", "#", &bu_opt_fastf_t, &tess_norm, "Normal shaded tessellation tolerance");
     BU_OPT(d[7], "", "memory-limit-mib", "#", &bu_opt_long, &memory_limit_mib, "Process address-space limit in MiB (zero disables)");
-    BU_OPT(d[8], "m", "mode", "wireframe|shaded|both", &bu_opt_str, &mode_name, "Select one generator so resource measurements are independent");
+    BU_OPT(d[8], "m", "mode", "wireframe|shaded|quality|both|all", &bu_opt_str, &mode_name, "Select generators; quality runs the conversion CDT");
     BU_OPT(d[9], "j", "jobs", "#", &bu_opt_long, &jobs, "Maximum shaded face workers (zero selects the default)");
     BU_OPT(d[10], "", "max-time-ms", "#", &bu_opt_long, &max_time_ms, "Shaded generation deadline checked between faces");
     BU_OPT(d[11], "", "max-result-mib", "#", &bu_opt_long, &max_result_mib, "Maximum retained shaded result size");
@@ -814,7 +1152,9 @@ main(int argc, const char **argv)
 	    (face_index != -1 && BU_STR_EQUAL(mode_name, "wireframe")) ||
 	    (!BU_STR_EQUAL(mode_name, "wireframe") &&
 	     !BU_STR_EQUAL(mode_name, "shaded") &&
-	     !BU_STR_EQUAL(mode_name, "both"))) {
+	     !BU_STR_EQUAL(mode_name, "quality") &&
+	     !BU_STR_EQUAL(mode_name, "both") &&
+	     !BU_STR_EQUAL(mode_name, "all"))) {
 	std::cerr << usage;
 	return print_help ? 0 : 2;
     }
@@ -852,10 +1192,17 @@ main(int argc, const char **argv)
 		return std::string(a->d_namep) < std::string(b->d_namep);
 	    });
 	std::vector<const char *> modes;
-	if (!BU_STR_EQUAL(mode_name, "shaded"))
+	if (BU_STR_EQUAL(mode_name, "wireframe") ||
+		BU_STR_EQUAL(mode_name, "both") ||
+		BU_STR_EQUAL(mode_name, "all"))
 	    modes.push_back("wireframe");
-	if (!BU_STR_EQUAL(mode_name, "wireframe"))
+	if (BU_STR_EQUAL(mode_name, "shaded") ||
+		BU_STR_EQUAL(mode_name, "both") ||
+		BU_STR_EQUAL(mode_name, "all"))
 	    modes.push_back("shaded");
+	if (BU_STR_EQUAL(mode_name, "quality") ||
+		BU_STR_EQUAL(mode_name, "all"))
+	    modes.push_back("quality");
 	long task_index = 0;
 	for (struct directory *brep : breps) {
 	    for (const char *task_mode : modes) {
