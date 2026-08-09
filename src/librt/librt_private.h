@@ -491,6 +491,7 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY 2
 #define RT_BREP_TRACE_BOX_RESOLVED_CONTACT 3
 #define RT_BREP_TRACE_BOX_RESOLVED_REGULAR_PAIR 4
+#define RT_BREP_TRACE_BOX_RESOLVED_REGULAR_STREAM 5
 #define RT_BREP_TRACE_EVENT_REGULAR_INTERIOR 1
 #define RT_BREP_TRACE_EVENT_BOUNDARY_FOLD 2
 #define RT_BREP_TRACE_EVENT_SEAM_EXISTING 3
@@ -903,6 +904,12 @@ struct rt_brep_shot_trace {
     size_t physical_event_regular_pair_complement_visited;
     size_t physical_event_regular_pair_complement_high_water;
     int physical_event_regular_pair_failure_stage;
+    size_t physical_event_regular_stream_attempts;
+    size_t physical_event_regular_stream_certified;
+    size_t physical_event_regular_stream_components;
+    size_t physical_event_regular_stream_boxes;
+    size_t physical_event_regular_stream_roots;
+    int physical_event_regular_stream_failure_stage;
     size_t physical_event_singular_attempts;
     size_t physical_event_singular_candidates;
     size_t physical_event_singular_certified;
@@ -1176,7 +1183,9 @@ struct rt_brep_local_root_test_result {
 };
 
 struct rt_brep_prep_stats {
+    /* Adaptive depth after mandatory closed-seam and knot decomposition. */
     int surface_tree_depth_limit;
+    /* Physical depth including both structural and adaptive levels. */
     int surface_tree_maximum_depth;
     size_t surface_tree_nodes;
     size_t surface_tree_leaves;

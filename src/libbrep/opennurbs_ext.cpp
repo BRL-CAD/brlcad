@@ -1637,7 +1637,13 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     usplit = u.Mid();
     vsplit = v.Mid();
 
-    if (divDepth >= depthLimit) {
+    /* Closed seams and interior knot boundaries define the domains on which
+     * the subsequent flatness tests and ray seeds are meaningful.  They are
+     * structural decomposition, not optional density refinement, and must be
+     * exhausted before applying the adaptive depth budget.  The knot phase
+     * is finite (hasSplit chooses an interior span boundary); when it is done
+     * the existing transition below resets divDepth for the adaptive phase. */
+    if (!prev_knot && divDepth >= depthLimit) {
 	return surfaceBBox(localsurf, true, frames, u, v, divDepth,
 	    within_distance_tol);
     }

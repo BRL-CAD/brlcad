@@ -41,6 +41,11 @@ brlcad_add_test(NAME brep_cdt_hole_face27 COMMAND test_brep_cdt_hole_face27)
 brlcad_addexec(test_pullback_context pullback_context.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_pullback_context COMMAND test_pullback_context)
 
+# The adaptive SurfaceTree depth budget starts only after closed seams and all
+# internal NURBS knot boundaries have established well-behaved subdomains.
+brlcad_addexec(test_surfacetree_knots surfacetree_knots.cpp "libbrep" TEST)
+brlcad_add_test(NAME brep_surfacetree_knots COMMAND test_surfacetree_knots)
+
 cmakefiles(
   CMakeLists.txt
   ayam_hyperbolid.3dm
@@ -59,6 +64,7 @@ cmakefiles(
   plate_mode_samples_rhino.stp
   pullback_context.cpp
   single_bad_edge.cdtmesh
+  surfacetree_knots.cpp
   test_curve_intersect.cpp
   test_point_intersect.cpp
   vsp.stp
