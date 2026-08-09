@@ -28,6 +28,8 @@
 #include "common.h"
 #include "./cdt.h"
 
+#define MAX_INITIAL_SURFACE_PATCHES 65536
+
 struct cdt_surf_info {
     std::set<ON_2dPoint *> on_surf_points;
     std::set<ON_2dPoint *> on_trim_points;
@@ -331,6 +333,10 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
     double wv2 = 0.0;
     double umid = 0.0;
     double vmid = 0.0;
+    const double domain_umid = sinfo->u1 +
+	(sinfo->u2 - sinfo->u1) / 2.0;
+    const double domain_vmid = sinfo->v1 +
+	(sinfo->v2 - sinfo->v1) / 2.0;
 
     /* u_lower */
     if (c1 == 0 && c2 == 0) {
@@ -338,7 +344,7 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
 	wu2 = sinfo->u2;
 	wv1 = sinfo->v1;
 	wv2 = sinfo->v1;
-	umid = (sinfo->u2 - sinfo->u1)/2.0;
+	umid = domain_umid;
 	vmid = sinfo->v1;
 	line_set = 1;
     }
@@ -347,10 +353,10 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
     if (c1 == 1 && c2 == 0) {
 	wu1 = sinfo->u1;
 	wu2 = sinfo->u2;
-	wv1 = (sinfo->v2 - sinfo->v1)/2.0;
-	wv2 = (sinfo->v2 - sinfo->v1)/2.0;
-	umid = (sinfo->u2 - sinfo->u1)/2.0;
-	vmid = (sinfo->v2 - sinfo->v1)/2.0;
+	wv1 = domain_vmid;
+	wv2 = domain_vmid;
+	umid = domain_umid;
+	vmid = domain_vmid;
 	line_set = 1;
     }
 
@@ -360,7 +366,7 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
 	wu2 = sinfo->u2;
 	wv1 = sinfo->v2;
 	wv2 = sinfo->v2;
-	umid = (sinfo->u2 - sinfo->u1)/2.0;
+	umid = domain_umid;
 	vmid = sinfo->v2;
 	line_set = 1;
     }
@@ -372,18 +378,18 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
 	wv1 = sinfo->v1;
 	wv2 = sinfo->v2;
 	umid = sinfo->u1;
-	vmid = (sinfo->v2 - sinfo->v1)/2.0;
+	vmid = domain_vmid;
 	line_set = 1;
     }
 
     /* v_lmid */
     if (c1 == 1 && c2 == 1) {
-	wu1 = (sinfo->u2 - sinfo->u1)/2.0;
-	wu2 = (sinfo->u2 - sinfo->u1)/2.0;
+	wu1 = domain_umid;
+	wu2 = domain_umid;
 	wv1 = sinfo->v1;
 	wv2 = sinfo->v2;
-	umid = (sinfo->u2 - sinfo->u1)/2.0;
-	vmid = (sinfo->v2 - sinfo->v1)/2.0;
+	umid = domain_umid;
+	vmid = domain_vmid;
 	line_set = 1;
     }
 
@@ -394,7 +400,7 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
 	wv1 = sinfo->v1;
 	wv2 = sinfo->v2;
 	umid = sinfo->u2;
-	vmid = (sinfo->v2 - sinfo->v1)/2.0;
+	vmid = domain_vmid;
 	line_set = 1;
     }
 
@@ -536,7 +542,6 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     // we want the surface interiors to reflect the edges so they aren't too
     // dissimilar.
     sinfo_tol_calc(sinfo);
-
 }
 
 
@@ -806,7 +811,7 @@ getSurfacePoint(
     return false;
 }
 
-void
+bool
 GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 {
     ON_BrepFace &face = s_cdt->brep->m_F[face_index];
@@ -816,7 +821,7 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
     if (s->GetSurfaceSize(&sinfo.surface_width, &sinfo.surface_height)) {
 
 	if ((sinfo.surface_width < ON_ZERO_TOLERANCE) || (sinfo.surface_height < ON_ZERO_TOLERANCE)) {
-	    return;
+	    return true;
 	}
 
 	sinfo_init(&sinfo, s_cdt, face_index);
@@ -1013,6 +1018,9 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 		split_depth++;
 		//std::cout << "split_depth: " << split_depth << "\n";
 	    }
+	    if (sinfo.leaf_bboxes.size() + wq->size() + nq->size() >
+		    MAX_INITIAL_SURFACE_PATCHES)
+		return false;
 	}
 
 	std::set<ON_BoundingBox *>::iterator b_it;
@@ -1038,6 +1046,7 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	filter_surface_pnts(&sinfo);
 
     }
+    return true;
 }
 
 

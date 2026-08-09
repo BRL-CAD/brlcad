@@ -42,6 +42,8 @@
 
 #define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
+#define MAX_CHART_REFINEMENT_ATTEMPTS 16
+#define MAX_CHART_REFINEMENT_POINTS 4096
 
 static bool
 cdt_tolerance_valid(const struct bg_tess_tol &tol)
@@ -526,9 +528,44 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
     // not need the legacy UV repair heuristics.  In particular, applying a
     // best-fit-plane reparameterization to a valid singular chart can
     // reintroduce the degeneracy the chart was constructed to remove.
-    if (cdt_face_uses_cone_chart(s_cdt->brep->m_F[fmesh->f_id]) &&
-	    fmesh->valid(0))
+
+    const bool topology_chart = cdt_face_uses_topology_chart(
+	s_cdt->brep->m_F[fmesh->f_id]);
+    if (fmesh->valid(0))
 	return true;
+
+    if (topology_chart) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_CHART_FAILED,
+	    BREP_CDT_STAGE_CHART_CONSTRUCTION, fmesh->f_id, 0, 1,
+	    "topology chart did not preserve the face validity invariants");
+	return false;
+    }
+    size_t refinement_points = 0;
+    for (int attempt = 0; attempt < MAX_CHART_REFINEMENT_ATTEMPTS;
+	    ++attempt) {
+	const size_t remaining = MAX_CHART_REFINEMENT_POINTS -
+	    refinement_points;
+	const size_t inserted = fmesh->refine_incorrect_normals(remaining);
+	if (!inserted)
+	    break;
+	refinement_points += inserted;
+	if (!fmesh->cdt()) {
+	    bu_log("Face %d: chart refinement retriangulation failed\n",
+		fmesh->f_id);
+	    return false;
+	}
+	if (fmesh->valid(0)) {
+	    bu_log("Face %d: chart refinement certified after %zu "
+		"inserted points\n", fmesh->f_id, refinement_points);
+	    return true;
+	}
+    }
+    if (refinement_points) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REFINEMENT_LIMIT,
+	    BREP_CDT_STAGE_ADAPTIVE_REFINEMENT, fmesh->f_id, 0, 1,
+	    "folded surface chords exceeded the chart refinement limit");
+	return false;
+    }
 
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
@@ -608,7 +645,12 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 
     // Sample the surface, independent of the trimming curves, to get points that
     // will tie the mesh to the interior surface.
-    GetInteriorPoints(s_cdt, face.m_face_index);
+    if (!GetInteriorPoints(s_cdt, face.m_face_index)) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REFINEMENT_LIMIT,
+	    BREP_CDT_STAGE_ADAPTIVE_REFINEMENT, face.m_face_index, 0, 1,
+	    "initial surface subdivision exceeded the face point limit");
+	return false;
+    }
 
     cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
     fmesh->brep = s_cdt->brep;
@@ -644,8 +686,21 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     fmesh->boundary_edges_update();
 
     /* The libbg triangulation is not guaranteed to have all the properties
-     * we want out of the box - trigger a series of checks */
-    return refine_triangulation(s_cdt, fmesh, 0, 0);
+     * we want out of the box - trigger a series of checks. */
+    if (!refine_triangulation(s_cdt, fmesh, 0, 0))
+	return false;
+    const size_t geometric_degenerates =
+	fmesh->geometric_degenerate_count();
+    if (geometric_degenerates) {
+	const std::string message = "face mesh contains " +
+	    std::to_string(geometric_degenerates) +
+	    " scale-aware zero-area triangles";
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_CERTIFICATION_FAILED,
+	    BREP_CDT_STAGE_FACE_TRIANGULATION, face.m_face_index, 0, 1,
+	    message.c_str());
+	return false;
+    }
+    return true;
 }
 
 ON_3dVector
@@ -809,6 +864,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     if (s_cdt->brep || s_cdt->w3dpnts->size())
 	cdt_state_reset(s_cdt);
     s_cdt->status = BREP_CDT_FAILED;
+    s_cdt->failed_face_indices.clear();
     cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INITIALIZATION_FAILED,
 	BREP_CDT_STAGE_INPUT, -1, 0, 0, "tessellation started");
 
@@ -890,19 +946,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// Translate global relative tolerances into physical dimensions based
 	// on the BRep bounding box
 	cdt_tol_global_calc(s_cdt);
-
-	// Reparameterize the face's surface and transform the "u" and "v"
-	// coordinates of all the face's parameter space trimming curves to
-	// minimize distortion in the map from parameter space to 3d.
-	for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
-	    ON_BrepFace *face = brep->Face(face_index);
-	    const ON_Surface *s = face->SurfaceOf();
-	    double surface_width, surface_height;
-	    if (s->GetSurfaceSize(&surface_width, &surface_height)) {
-		face->SetDomain(0, 0.0, surface_width);
-		face->SetDomain(1, 0.0, surface_height);
-	    }
-	}
 
 	/* We want to use ON_3dPoint pointers and BrepVertex points, but
 	 * vert->Point() produces a temporary address.  If this is our first time
@@ -1043,6 +1086,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	if (do_triangulation(s_cdt, fi)) {
 	    face_successes++;
 	} else {
+	    s_cdt->failed_face_indices.push_back(fi);
 	    if (first_failed_face < 0)
 		first_failed_face = fi;
 	    face_failures++;
@@ -1056,7 +1100,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    s_cdt->diagnostic.result == BREP_CDT_RESULT_CHART_FAILED ||
 	    s_cdt->diagnostic.result == BREP_CDT_RESULT_INVALID_PSLG ||
 	    s_cdt->diagnostic.result == BREP_CDT_RESULT_DETRIA_FAILED ||
-	    s_cdt->diagnostic.result == BREP_CDT_RESULT_CERTIFICATION_FAILED;
+	    s_cdt->diagnostic.result == BREP_CDT_RESULT_CERTIFICATION_FAILED ||
+	    s_cdt->diagnostic.result == BREP_CDT_RESULT_REFINEMENT_LIMIT;
 	if (face_successes) {
 	    s_cdt->status = face_successes;
 	    if (specific_failure) {
