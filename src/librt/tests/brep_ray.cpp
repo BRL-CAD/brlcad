@@ -6353,6 +6353,153 @@ check_brep_fold_interval_classifier()
 
 
 static int
+check_brep_source_union_solver()
+{
+    const fastf_t coefficient_error[2] = {0.0, 0.0};
+    int failures = 0;
+    size_t systems = 0;
+    size_t certified = 0;
+    size_t rejected = 0;
+
+    const auto set_box = [](struct rt_brep_source_union_test_box &box,
+	    double u_minimum, double u_maximum, double v_minimum,
+	    double v_maximum, double t_minimum, double t_maximum, int role) {
+	box.uv_minimum[0] = u_minimum;
+	box.uv_maximum[0] = u_maximum;
+	box.uv_minimum[1] = v_minimum;
+	box.uv_maximum[1] = v_maximum;
+	box.t_minimum = t_minimum;
+	box.t_maximum = t_maximum;
+	box.role = role;
+    };
+    const auto run_case = [&](const char *name,
+	    const fastf_t *first_coefficients,
+	    const fastf_t *second_coefficients, int order,
+	    const struct rt_brep_source_union_test_box *boxes,
+	    size_t box_count, const fastf_t root[2], size_t expected_eligible,
+	    size_t expected_component, bool expected_complete,
+	    bool expected_attempted, bool expected_certified) {
+	struct rt_brep_source_union_test_result result = {};
+	systems++;
+	if (!_rt_brep_source_union_test(first_coefficients,
+		second_coefficients, order, order, coefficient_error, boxes,
+		box_count, root, &result) ||
+		result.eligible_boxes != expected_eligible ||
+		result.root_boxes != 1 ||
+		result.component_boxes != expected_component ||
+		result.component_complete != (expected_complete ? 1 : 0) ||
+		result.krawczyk_attempted != (expected_attempted ? 1 : 0) ||
+		result.certified != (expected_certified ? 1 : 0)) {
+	    std::printf("FAIL: source-union solver %s "
+		"eligible/root/component=%zu/%zu/%zu expected=%zu/1/%zu "
+		"complete/attempted/certified=%d/%d/%d expected=%d/%d/%d\n",
+		name, result.eligible_boxes, result.root_boxes,
+		result.component_boxes, expected_eligible, expected_component,
+		result.component_complete, result.krawczyk_attempted,
+		result.certified, expected_complete ? 1 : 0,
+		expected_attempted ? 1 : 0, expected_certified ? 1 : 0);
+	    failures++;
+	    return;
+	}
+	if (result.certified)
+	    certified++;
+	else
+	    rejected++;
+    };
+
+    fastf_t higher_order[2][16] = {};
+    const double higher_u[4] = {
+	-17.0 / 32.0, -13.0 / 96.0, 13.0 / 96.0, 17.0 / 32.0
+    };
+    const double linear_v[4] = {-0.5, -1.0 / 6.0, 1.0 / 6.0, 0.5};
+    for (int i = 0; i < 4; ++i) {
+	for (int j = 0; j < 4; ++j) {
+	    const size_t index = (size_t)i * 4 + j;
+	    higher_order[0][index] = higher_u[i];
+	    higher_order[1][index] = linear_v[j];
+	}
+    }
+    const fastf_t centered_root[2] = {0.5, 0.5};
+    struct rt_brep_source_union_test_box connected[2] = {};
+    set_box(connected[0], 0.46875, 0.53125, 0.46875, 0.53125,
+	1.0, 1.125, RT_BREP_SOURCE_UNION_TEST_ROOT);
+    set_box(connected[1], 0.53125, 0.5625, 0.46875, 0.53125,
+	1.0625, 1.1875, RT_BREP_SOURCE_UNION_TEST_CANDIDATE);
+    run_case("higher-order-unique", higher_order[0], higher_order[1], 4,
+	connected, 2, centered_root, 2, 2, true, true, true);
+
+    struct rt_brep_source_union_test_box uv_disconnected[2] = {
+	connected[0], connected[1]
+    };
+    uv_disconnected[1].uv_minimum[0] = 0.625;
+    uv_disconnected[1].uv_maximum[0] = 0.6875;
+    run_case("uv-disconnected", higher_order[0], higher_order[1], 4,
+	uv_disconnected, 2, centered_root, 2, 1, false, false, false);
+
+    struct rt_brep_source_union_test_box t_disconnected[2] = {
+	connected[0], connected[1]
+    };
+    t_disconnected[1].t_minimum = 1.25;
+    t_disconnected[1].t_maximum = 1.375;
+    run_case("t-disconnected", higher_order[0], higher_order[1], 4,
+	t_disconnected, 2, centered_root, 2, 1, false, false, false);
+
+    fastf_t multiple_root[2][9] = {};
+    const double multiple_u[3] = {15.0 / 64.0, -17.0 / 64.0,
+	15.0 / 64.0};
+    const double linear_quadratic_v[3] = {-0.5, 0.0, 0.5};
+    for (int i = 0; i < 3; ++i) {
+	for (int j = 0; j < 3; ++j) {
+	    const size_t index = (size_t)i * 3 + j;
+	    multiple_root[0][index] = multiple_u[i];
+	    multiple_root[1][index] = linear_quadratic_v[j];
+	}
+    }
+    const fastf_t first_multiple_root[2] = {0.375, 0.5};
+    struct rt_brep_source_union_test_box multiple_boxes[2] = {};
+    set_box(multiple_boxes[0], 0.3125, 0.4375, 0.4375, 0.5625,
+	1.0, 1.125, RT_BREP_SOURCE_UNION_TEST_ROOT);
+    set_box(multiple_boxes[1], 0.4375, 0.6875, 0.4375, 0.5625,
+	1.0625, 1.1875, RT_BREP_SOURCE_UNION_TEST_CANDIDATE);
+    run_case("multiple-root-hull", multiple_root[0], multiple_root[1], 3,
+	multiple_boxes, 2, first_multiple_root, 2, 2, true, true, false);
+
+    fastf_t singular[2][9] = {};
+    const double singular_u[3] = {0.25, -0.25, 0.25};
+    for (int i = 0; i < 3; ++i) {
+	for (int j = 0; j < 3; ++j) {
+	    const size_t index = (size_t)i * 3 + j;
+	    singular[0][index] = singular_u[i];
+	    singular[1][index] = linear_quadratic_v[j];
+	}
+    }
+    struct rt_brep_source_union_test_box singular_boxes[3] = {};
+    set_box(singular_boxes[0], 0.46875, 0.53125, 0.46875, 0.53125,
+	1.0, 1.125, RT_BREP_SOURCE_UNION_TEST_ROOT);
+    set_box(singular_boxes[1], 0.4375, 0.46875, 0.46875, 0.53125,
+	1.0625, 1.1875, RT_BREP_SOURCE_UNION_TEST_CANDIDATE);
+    set_box(singular_boxes[2], 0.53125, 0.5625, 0.46875, 0.53125,
+	1.0625, 1.1875, RT_BREP_SOURCE_UNION_TEST_CANDIDATE);
+    run_case("singular-root", singular[0], singular[1], 3,
+	singular_boxes, 3, centered_root, 3, 3, true, true, false);
+
+    const fastf_t invalid_root[2] = {0.75, 0.5};
+    struct rt_brep_source_union_test_result invalid_result = {};
+    if (_rt_brep_source_union_test(higher_order[0], higher_order[1], 4, 4,
+	    coefficient_error, connected, 2, invalid_root, &invalid_result)) {
+	std::printf("FAIL: source-union solver invalid root-box provenance\n");
+	failures++;
+    }
+
+    if (!failures)
+	std::printf("BREP source-union solver corpus: PASS systems=%zu "
+	    "certified/rejected=%zu/%zu invalid=1\n", systems, certified,
+	    rejected);
+    return failures;
+}
+
+
+static int
 check_brep_fold_solver()
 {
     const double equation_transform[][2][2] = {
@@ -13215,6 +13362,8 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--affine-only");
     const bool interval_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--interval-only");
+    const bool source_union_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--source-union-only");
     const bool fold_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--fold-only");
     const bool core_only = argc == 2 &&
@@ -13229,18 +13378,23 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--endpoint-only");
     if (argc != 1 && !report_grazing && !report_cobb &&
 	    !report_cobb_oblique && !affine_only &&
-	    !interval_only && !fold_only && !core_only && !directed_only &&
+	    !interval_only && !source_union_only && !fold_only && !core_only &&
+	    !directed_only &&
 	    !crofton_only && !seam_only && !endpoint_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
 	    "--cobb-oblique-report|"
-	    "--affine-only|--interval-only|--fold-only|--core-only|"
+	    "--affine-only|--interval-only|--source-union-only|--fold-only|"
+	    "--core-only|"
 	    "--directed-only|--crofton-only|--seam-only|--endpoint-only]\n",
 	    argv[0]);
     if (interval_only) {
 	const int interval_failures = check_brep_interval_enclosures() +
-	    check_brep_fold_interval_classifier();
+	    check_brep_fold_interval_classifier() +
+	    check_brep_source_union_solver();
 	return interval_failures ? 1 : 0;
     }
+    if (source_union_only)
+	return check_brep_source_union_solver() ? 1 : 0;
     if (fold_only)
 	return check_brep_fold_solver() ? 1 : 0;
     const bool split_core = directed_only || crofton_only || seam_only ||
@@ -13345,6 +13499,7 @@ main(int argc, char **argv)
     if (!core_only && !split_core) {
 	failures += check_brep_interval_enclosures();
 	failures += check_brep_fold_interval_classifier();
+	failures += check_brep_source_union_solver();
 	failures += check_brep_fold_solver();
     }
     if (run_directed) {
