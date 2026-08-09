@@ -116,6 +116,17 @@ particular, BBNode::Stl contains a std::vector of children and a std::list of
 trim nodes above the leaf.  Dense subdivision magnifies the cost of all of
 these structures, not just bounding boxes.
 
+Tree construction also needs an explicit failure contract.  A rational
+surface can have finite, positive control weights yet be numerically singular
+under the OpenNURBS normal threshold at a required local midpoint.  A failed
+midpoint normal or bounding node must return an invalid SurfaceTree, not call
+`bu_bomb` and not silently omit that child.  Propagate any child failure to
+the root, validate every per-face tree after the parallel builders join, and
+transfer no root or CurveTree unless the complete face set is valid.  If one
+face is unavailable, fail preparation for the entire BREP; tracing an
+incomplete solid is not a conservative fallback.  Public SurfaceTree queries
+and plotting helpers must tolerate the resulting invalid builder state.
+
 2.2 Prepared-object ownership problems
 
 brep_build_bvh constructs one SurfaceTree per face in parallel.  It adds each
@@ -2753,11 +2764,13 @@ with equal weights, the same face with a `2^20` control-weight ratio and
 reversed ray, and that weighted face after `10,000x` scale plus large
 translation must all certify a boundary-crossing root, a positive weight
 interval, and a finite complete model-image bound.  This is a conditioning
-test, not authority for numerically singular parameterizations: a trial
-`2^400` weight ratio makes the current OpenNURBS midpoint-normal evaluation
+test, not authority for numerically singular parameterizations.  A permanent
+`2^400` weight-ratio control makes OpenNURBS midpoint-normal evaluation
 unavailable during SurfaceTree construction, before the local certificate is
-called.  Track that prep failure separately and do not weaken surface
-regularity or root-proof obligations to admit it.
+called.  The complete BREP prep must reject that surface without a process
+abort, partial BVH, leaked ownership, or attempted ray solve.  Keep this prep
+failure separate and do not weaken surface regularity or root-proof
+obligations to admit it.
 
 The real Cobb replay extracts the actual prepared projected coefficient
 intervals for all sixteen similarity/reversal cases.  Every real miss

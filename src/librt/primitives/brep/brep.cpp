@@ -2253,6 +2253,19 @@ brep_build_bvh(struct brep_specific* bs)
     //start = bu_gettime();
     bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
 
+    bool complete = true;
+    for (size_t i = 0; i < faceCount; ++i) {
+	SurfaceTree *st = bbbp.faces[i];
+	if (!st || !st->Valid())
+	    complete = false;
+    }
+    if (!complete) {
+	for (size_t i = 0; i < faceCount; ++i)
+	    delete bbbp.faces[i];
+	bu_free(bbbp.faces, "free incomplete face array");
+	return -1;
+    }
+
     bs->ctrees.reserve(faceCount);
     for (int i = 0; (size_t)i < faceCount; i++) {
 	SurfaceTree *st = bbbp.faces[i];
@@ -18045,6 +18058,8 @@ plot_BBNode(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, cons
 static void
 plot_face_from_surface_tree(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, int isocurveres, int gridres)
 {
+    if (!st || !st->Valid())
+	return;
     const BBNode *root = st->getRootNode();
     plot_BBNode(vlfree, vhead, st, root, isocurveres, gridres);
 }
