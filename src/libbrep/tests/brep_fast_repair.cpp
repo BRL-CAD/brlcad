@@ -520,7 +520,7 @@ collapsed_closed_pcurve_test()
 }
 
 static bool
-misclassified_periodic_boundaries_test()
+misclassified_periodic_boundaries_case(bool declare_cutout_outer)
 {
     ON_Brep brep;
     ON_Circle base(ON_xy_plane, 1.0);
@@ -535,7 +535,8 @@ misclassified_periodic_boundaries_test()
     const ON_Interval udom = surface->Domain(0);
     const ON_Interval vdom = surface->Domain(1);
 
-    ON_BrepLoop &outer = brep.NewLoop(ON_BrepLoop::outer, face);
+    ON_BrepLoop &cutout = brep.NewLoop(declare_cutout_outer ?
+	ON_BrepLoop::outer : ON_BrepLoop::inner, face);
     const ON_2dPoint corners[4] = {
 	ON_2dPoint(udom.ParameterAt(0.30), vdom.ParameterAt(0.40)),
 	ON_2dPoint(udom.ParameterAt(0.30), vdom.ParameterAt(0.60)),
@@ -548,7 +549,7 @@ misclassified_periodic_boundaries_test()
 	    corners[i].y)).m_vertex_index;
     for (int i = 0; i < 4; ++i) {
 	const int next = (i + 1) % 4;
-	add_surface_iso_trim(brep, outer, *surface, vertices[i],
+	add_surface_iso_trim(brep, cutout, *surface, vertices[i],
 	    vertices[next], corners[i], corners[next]);
     }
 
@@ -558,6 +559,67 @@ misclassified_periodic_boundaries_test()
     ON_BrepLoop &upper = brep.NewLoop(ON_BrepLoop::inner, face);
     add_periodic_trim(brep, upper, *surface, vdom.ParameterAt(0.80),
 	false, ON_BrepLoop::inner);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
+misclassified_periodic_boundaries_test()
+{
+    return misclassified_periodic_boundaries_case(true) &&
+	misclassified_periodic_boundaries_case(false);
+}
+
+static bool
+inner_only_planar_loop_test()
+{
+    ON_Brep brep;
+    ON_PlaneSurface *surface = large_plane();
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::inner, face);
+    const ON_2dPoint corners[4] = {
+	ON_2dPoint(-2.0, -1.0), ON_2dPoint(2.0, -1.0),
+	ON_2dPoint(2.0, 1.0), ON_2dPoint(-2.0, 1.0)
+    };
+    int vertices[4];
+    for (int i = 0; i < 4; ++i)
+	vertices[i] = brep.NewVertex(surface->PointAt(corners[i].x,
+	    corners[i].y)).m_vertex_index;
+    for (int i = 0; i < 4; ++i) {
+	const int next = (i + 1) % 4;
+	add_surface_iso_trim(brep, loop, *surface, vertices[i],
+	    vertices[next], corners[i], corners[next]);
+    }
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
+empty_periodic_boundary_test()
+{
+    ON_Brep brep;
+    ON_Circle base(ON_xy_plane, 1.0);
+    ON_Cylinder cylinder(base, 1.0);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &boundary = brep.NewLoop(ON_BrepLoop::inner, face);
+    add_periodic_trim(brep, boundary, *surface,
+	surface->Domain(1).Max(), false, ON_BrepLoop::inner);
+    brep.NewLoop(ON_BrepLoop::inner, face);
 
     fast_result *result = run_fast(brep);
     const bool valid = result->ret == BREP_CDT_FAST_OK &&
@@ -942,6 +1004,7 @@ main(int argc, const char **argv)
 	paired_periodic_strip_test() &&
 	collapsed_closed_pcurve_test() &&
 	misclassified_periodic_boundaries_test() &&
+	inner_only_planar_loop_test() && empty_periodic_boundary_test() &&
 	full_periodic_hole_test() && periodic_singular_domain_test() &&
 	full_periodic_face_test() && untrimmed_planar_face_test() &&
 	skinny_planar_strip_test() && near_closed_planar_loop_test() &&
