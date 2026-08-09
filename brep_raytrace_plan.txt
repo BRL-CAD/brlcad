@@ -2077,6 +2077,135 @@ lies in a vertex neighborhood, prove a curved vertex fan, authorize arbitrary
 endpoint overlap root graphs, or bound an oblique contact interval whose edge
 frame varies along the ray.  Those remain separate fail-closed theorems.
 
+6.4.1.3 Bounded oblique contact intervals
+
+The first oblique extension keeps Finding 69's root topology and publication
+transaction unchanged but replaces its single frozen edge frame with a
+complete interval proof.  It is not an angular-threshold relaxation.  A
+nonzero tangent component means that one fixed mapped edge UV and one fixed
+sector no longer own the entire unresolved contact lobe.  In particular, a
+ray projection can share a t value with an edge point that is physically far
+along the seam.  Projection overlap is therefore not a valid box-ownership
+theorem.
+
+Prepare the additional proof data as follows:
+
+  1. Preserve every terminal edge/trim pair produced by the strict seam-gap
+     partition.  A retained record contains the exact edge-domain interval,
+     its constrained trim-domain interval, the prepared rational Bezier edge
+     span, and the trim index.  Install these records only after both incident
+     trims complete a strict `SEAM_GAP_INSIDE` proof.  Outside, ambiguous,
+     unavailable, or budget-exhausted edges retain no production frame
+     partition.
+
+  2. Initially support frame intervals only when both trim correspondences
+     were certified by the exact isoparametric theorem.  The more general
+     injective/oriented correspondence proof remains valid for gap bounding,
+     but endpoint UV hulls alone do not yet bound a curved non-isoparametric
+     trim.  Such edges keep the old whole-ray fallback.
+
+  3. Sort each side's terminal cells by edge parameter and retain their exact
+     oriented correspondence.  Cached prep rebuilds these process-local
+     records from the BREP and existing cached acceleration data; the cache
+     serialization format does not change.
+
+At shot time, consider only the already qualified two-root incident-face
+contact subtype.  Preserve the perpendicular branch byte-for-byte in policy:
+it still requires the frozen mapped UV/t ownership and the fixed-frame angular
+segment proof.  For a finite nonparallel ray with
+`1e-10 < abs(dot(D_unit,T_unit)) < 1-1e-10`, require all of the following:
+
+  1. Intersect the two sorted prepared edge partitions and remap every local
+     edge subdivision endpoint to each trim within its parent interval.  Use a
+     fixed 32-cell stack, maximum local depth 20, and at most 8,192 visited
+     cells over the complete contact transaction.  Mapping, interval
+     evaluation, sorting, and coverage use fixed storage; any mapping failure,
+     unsupported span, nonfinite result, or capacity limit aborts without
+     publishing events.
+
+  2. Link each unresolved zero-determinant contact box to a nonempty trim
+     interval on that box's own incident face.  The complete interval UV hull,
+     not just a nominal root or ray projection, must be contained in the box's
+     outward UV rectangle.  A disjoint cell is skipped; a partially contained
+     cell is subdivided.  Every contact box needs a link, and the linked box t
+     intervals must cover the complete contact t hull with no gap.  Thus a
+     broad or shifted solver box cannot be silently assigned to a distant
+     point on the seam.
+
+  3. Bound the rational edge point and tangent over the edge interval by
+     outward Bernstein restriction.  Bound both incident surface partials
+     over containing UV neighborhoods and form interval outward normals and
+     interior conormals.  Compute the rational quotient-rule numerator
+     `X'W-XW'` coefficient by coefficient using Bernstein products before
+     taking a convex hull.  Taking independent hull products loses the shared
+     control-net cancellation and becomes unbounded after rescaling a small
+     parameter interval.  A small containing parameter-width floor prevents
+     roundoff amplification; because it only widens the evaluated
+     neighborhood, it cannot exclude a real frame.
+
+  4. Reject every interval that approaches either edge vertex within the
+     authorized edge tolerance plus coordinate-scaled roundoff.  This is an
+     edge-interior theorem, not a vertex-neighborhood policy.  Prove that the
+     interval tangent has nonzero length and that its dot with the ray has one
+     strict, consistent sign on every box-owning interval.  Exact or interval
+     parallelism remains fallback.
+
+  5. Use homogeneous determinant signs rather than normalized vectors or
+     angles.  Let A be the topology-oriented edge tangent, C0 and C1 the two
+     interior conormals, N0 and N1 their outward normals, and V(t) the ray
+     point minus the interval edge point.  Require strict signs for
+     `(T x C0).N0` and `(A x C1).N1`.  The sector orientation is
+     `A.(C0 x C1)`; the boundary predicates are `A.(C0 x V)` and
+     `A.(V x C1)`.  Project the conormal dot test into the edge-normal plane
+     with the sign-equivalent expression
+     `|T|^2(C0.C1) - (C0.T)(C1.T)`.
+
+  6. For each fixed edge parameter, both boundary predicates are affine in
+     ray t.  Strict interval signs at both box-t endpoints therefore prove the
+     same sign on the complete segment.  A convex sector requires both
+     boundary predicates positive throughout.  A reflex sector requires at
+     least one predicate to remain positive throughout; this stronger
+     condition prevents the segment from crossing the complementary convex
+     cone.  When sector turn straddles zero but the projected conormal dot is
+     strictly negative, treat the frame as a smooth pi sector and require both
+     predicates.  Any zero-containing determinant remains fallback.
+
+  7. Prefer the local subdivision child containing the already prepared
+     closest-edge witness.  This changes search order only.  The same interval
+     obligations apply, and failure to find a certificate within the fixed
+     bounds remains fallback.  A blind low-parameter-first traversal can
+     exhaust the work budget inside a wide UV box before reaching the valid
+     local frame.
+
+Only after every contact box is linked and every interval predicate succeeds
+may the unchanged contact transaction resolve boxes and publish the two outer
+events.  Record one oblique pair, the number of certified frame cells, and the
+number of box links.  Prepared production eligibility requires exactly one
+oblique pair, at least one frame cell, and a box-link count equal to the
+contact-box count.  Perpendicular contact requires all oblique counters to be
+zero, as do ordinary seam pairs.
+
+The Cobb ratchet uses rays whose direction is the normalized sum of the seam
+conormal and a signed tangent component while preserving the analytic sphere
+clearance and chord.  Required production cases use components 1e-4, 0.01,
+0.25, 0.5, and 1 in both directions.  A separate similarity gate repeats the
+0.25 case under identity, nonlinear trim reparameterization, translation,
+cyclic and arbitrary-axis rotations, 0.01x scale, and 10,000x scale.  All
+outer event boxes must contain the similarity-scaled implicit-sphere chord.
+Components 1e-6, 10, and 1e6 in both directions are explicit fail-closed
+threshold controls.  Components 1e-3, 0.05, and 0.1 remain observational
+because surface isolation currently changes box topology there; they may move
+from fallback to certified but must never publish without the complete
+evidence ledger.
+
+This theorem does not authorize arbitrary root counts, roots on multiple
+contact faces or spans, non-isoparametric frame intervals, trim-only or
+edge-only defects, a sector-boundary tangent, a vertex neighborhood, a
+non-manifold edge, or an exact tangent ray.  It changes neither SurfaceTree
+density nor cache format and adds no dynamic shot-time allocation.  Those
+limits are deliberate qualification boundaries for the later local-isolation
+pipeline, not claims that the remaining cases are geometrically invalid.
+
 6.4.2 Cyclic planar vertex-fan theorem
 
 A BREP vertex can be one physical boundary crossing even though three or more

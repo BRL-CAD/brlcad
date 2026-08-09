@@ -3118,6 +3118,112 @@ ESTABLISHED FINDINGS
     edge frames, sector-boundary tangency, and non-manifold topology remain
     fail-closed targets.
 
+71. The first bounded oblique contact-lobe subtype is now a qualified
+    production path.  It preserves Finding 69's exact two-root incident-face
+    topology and outer-event publication, but replaces the perpendicular
+    branch's frozen edge UV, ray t, and material frame with a complete local
+    interval certificate.  The perpendicular branch and its original tests
+    remain unchanged.
+
+    Prep retains the terminal cells from each strict edge/trim discrepancy
+    proof.  Each `brep_edge_trim_cell` records the exact edge interval,
+    constrained trim interval, prepared Bezier edge span, and trim index.
+    Cells are installed only for a completed strict `SEAM_GAP_INSIDE` edge
+    whose two correspondences passed the exact isoparametric theorem.  Generic
+    injective/oriented correspondence, unavailable/ambiguous/outside gap
+    proofs, and exhausted budgets retain no frame-interval authority.  The
+    target bowed-Cobb edge currently exposes 566 two-sided terminal cells.
+    Cached prep rebuilds this process-local vector without changing the cache
+    format.
+
+    Shot-time proof is fixed-work and transactional.  For every unresolved
+    zero-determinant contact box, it intersects the paired prepared partitions
+    and locally remaps both trim intervals inside their parents.  A complete
+    trim UV interval on the box's incident face must be contained in that
+    box's UV rectangle.  The complete box t interval must be inside every
+    material sector frame on the interval.  Every box needs one certificate,
+    linked box t intervals must cover the contact hull, and the edge tangent
+    dot ray must have one nonzero consistent sign.  Vertex neighborhoods,
+    exact/interval parallelism, unsupported spans, mapping failures, and every
+    work/depth/capacity limit return whole-ray fallback before any box or event
+    mutation.  The proof uses a 32-cell stack, depth 20, at most 8,192 visited
+    cells, fixed coverage storage, and insertion sorting; it performs no shot-
+    time allocation.
+
+    Edge points, tangents, both surface derivative frames, outward normals,
+    and interior conormals are outward interval bounds over the complete cell.
+    The rational derivative quotient-rule numerator is now formed as
+    Bernstein product coefficients before taking a hull.  This preserves the
+    shared `X'W-XW'` cancellation that independent numerator/weight hulls lost
+    and avoids amplifying that dependency error when a small restriction is
+    rescaled.  Surface derivative evaluation uses a small containing
+    parameter neighborhood to keep outward arithmetic stable; widening cannot
+    exclude the actual UV interval.
+
+    Sector classification uses homogeneous determinant signs and the same
+    edge-normal projection as the fixed-frame theorem.  For each fixed edge
+    parameter, a boundary determinant is affine in ray t, so strict interval
+    signs at both box endpoints prove the complete segment.  Convex sectors
+    require both boundary predicates throughout; reflex sectors require one
+    predicate throughout, preventing the segment from crossing the
+    complementary convex cone.  A turn interval containing zero is accepted
+    only as a smooth pi sector when the projected conormal dot is strictly
+    negative and both boundary predicates pass.  Every determinant containing
+    zero otherwise fails closed.
+
+    The first exploratory projection-linked implementation was removed.  It
+    could associate a box with an edge point that merely had the same ray
+    projection while lying physically far along the seam.  A second blind
+    low-parameter-first search exhausted its budget before reaching the
+    prepared closest-edge witness.  The final proof links by incident-face UV
+    containment and only prioritizes the witness-containing child as a search
+    order; all interval obligations remain unchanged.
+
+    Tracing records `frame_interval_supported/cells` on the edge plus one
+    oblique pair, certified frame-cell count, and box-link count.  Production
+    eligibility requires one oblique pair, at least one frame cell, and links
+    equal to contact boxes.  Perpendicular contact and ordinary seam pairs
+    require all oblique counters to be zero.  The immutable validator accepts
+    oblique ownership only with that evidence and still independently checks
+    roots, boxes, outer events, and the implicit sphere chord.
+
+    The permanent trend uses seam-tangent components 1e-4, 0.01, 0.25, 0.5,
+    and 1 in both ray directions: all ten require production certification and
+    analytic chord agreement.  Components 1e-6, 10, and 1e6 require six safe
+    fallbacks.  Components 1e-3, 0.05, and 0.1 are observational because the
+    current surface isolator changes box topology there; one direction
+    currently certifies and five fall back.  A separate 14-case gate repeats
+    component 0.25 forward/reverse under identity, nonlinear trim
+    reparameterization, translation, cyclic and arbitrary-axis rotation,
+    0.01x scale, and 10,000x scale.  Every case selects production and contains
+    the scaled analytic sphere endpoints.
+
+    Optimized verification:
+
+      cmake --build .build --target rt_brep_ray -j8
+      ctest --test-dir .build --parallel 7 \
+        -R '^rt_brep_ray($|_)' --output-on-failure
+
+    PASS: 7/7 in 147.19 seconds (seam 96.07, interval 147.15, complete
+    process 57.56, Crofton 69.50).  The focused optimized cache/conversion/NURBS
+    matrix passes 11/11 in 4.15 seconds.
+
+      env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+        UBSAN_OPTIONS=halt_on_error=1 \
+        ctest --test-dir .build-asan --parallel 2 \
+          -R '^rt_brep_ray_(seam|endpoint)$' --output-on-failure
+
+    PASS: 2/2 in 451.32 seconds (endpoint 8.69, seam 451.28) with no
+    sanitizer diagnostic.  The ASan/UBSan cache/conversion/NURBS matrix passes
+    11/11 in 13.13 seconds.
+
+    This checkpoint does not change SurfaceTree density, acceleration-cache
+    serialization, the two-root contact topology, or fixed shot workspace
+    capacities.  Arbitrary/multiface/multispan contacts, non-isoparametric
+    frame intervals, trim-only and edge-only errors, exact tangency,
+    sector-boundary contact, vertex neighborhoods, and non-manifold topology
+    remain fallback targets.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -3235,6 +3341,12 @@ IMPLEMENTATION CHECKLIST
         with distinct certificates, complete UV/t box ownership, whole-sector
         segment proof, analytic endpoints, reversal, trim-reparameterization,
         and 0.01x/10,000x similarity gates.
+    [x] Extend that exact subtype to nonparallel edge motion only through
+        prep-retained isoparametric correspondence cells, outward rational
+        edge/surface frame intervals, complete incident-box UV/t ownership,
+        affine whole-segment sector signs, monotone edge sweep, reversal,
+        analytic chord, threshold, and full similarity gates.  All unsupported
+        frame, vertex-neighborhood, determinant, and capacity cases fail closed.
     [x] Remove the equal-normalized-speed assumption for regular two-trim edge
         correspondence and gate opposite nonlinear trim reparameterizations.
     [x] Add vertex-fan and ambiguous-correspondence gates.
@@ -4335,19 +4447,50 @@ Endpoint-moving topological closure checkpoint (Finding 70):
     PASS: the final rebuild and rerun passes 7/7 in 16.00 seconds with no
     ThreadSanitizer diagnostic.
 
+Bounded oblique contact checkpoint (Finding 71):
+
+  cmake --build .build --target rt_brep_ray -j8
+  ctest --test-dir .build --parallel 7 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+    PASS: 7/7 in 147.19 seconds.  The expanded seam shard passes in 96.07
+    seconds and includes ten required oblique certifications, six required
+    fail-closed threshold controls, six observational transition cases, and
+    fourteen similarity/reparameterization/reversal certifications.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 2 \
+      -R '^rt_brep_ray_(seam|endpoint)$' --output-on-failure
+    PASS: 2/2 in 451.32 seconds with no sanitizer diagnostic.
+
+  ctest --test-dir .build --parallel 6 \
+    -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 11/11 in 4.15 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 6 \
+      -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+      --output-on-failure
+    PASS: 11/11 in 13.13 seconds with no sanitizer diagnostic.
+
 
 NEXT ACTIONS
 ------------
 
-1. Extend tolerance-near seam resolution beyond Finding 69's separately
-   certified perpendicular two-root incident-face contact subtype and Finding
-   70's endpoint-moving boundary closure.  Qualify oblique contact intervals
-   only with bounded edge-frame variation; keep arbitrary root counts, faces,
-   spans, sector-boundary tangency, and edge/vertex neighborhood interactions fail-
-   closed until each has its own theorem.  Keep the exact edge and original
-   one-existing/one-continuation paths unchanged as narrow production subsets,
-   and never let the model envelope manufacture the exact witness used by
-   Finding 68.
+1. Study the observational oblique transition cases at tangent components
+   1e-3, 0.05, and 0.1.  Separate surface-isolator box-topology instability
+   from contact ownership: if redundant overlapping terminal boxes can be
+   proved to form one complete root-owning component, qualify that as a new
+   theorem rather than weakening the one-box/one-link transaction.  Extend
+   frame intervals to non-isoparametric trims only with a complete rational UV
+   locus and derivative bound.  Keep arbitrary root counts, faces, spans,
+   sector-boundary tangency, exact tangency, and edge/vertex neighborhood
+   interactions fail-closed until each has its own theorem.  Keep the exact
+   edge, perpendicular contact, and original one-existing/one-continuation
+   paths unchanged as narrow production subsets, and never let the model
+   envelope manufacture the exact witness used by Finding 68.
 2. Extend vertex classification only through a separately certified curved
    differential-link theorem.  Bound surface-normal and tangent variation over
    a local neighborhood before replacing the planar cyclic link.  Define exact
