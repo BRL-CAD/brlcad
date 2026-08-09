@@ -1886,6 +1886,124 @@ vertex fans remain separate theorems rather than relaxations of this one.  The
 initial vertex theorem is Section 6.4.2; curved and tolerance-near fans remain
 future extensions of that theorem.
 
+6.4.1.1 Tolerance-near incident-face contact-lobe subtype
+
+The first tolerance-near extension is a separate subtype of the paired seam-
+continuation theorem, not a relaxation of its tangent-witness rule and not a
+t-distance merge.  The endpoint-preserving bowed Cobb matrix contains six
+inward-displacement rays for which the old narrow theorem found one valid
+outer endpoint and its certified continuation, but also retained two clean,
+non-tangent roots on the other incident face.  They occur at g/T = h/T = 0.5,
+0.9, and 1.0 in both directions.  In increasing ray parameter those two roots
+are ENTER then LEAVE, lie inside the intended outer sphere chord, and surround
+the projection of the mated topological edge.  They describe a small incident-
+surface lobe inside the topological material sector; they are neither tangent
+witnesses nor additional solid boundaries.  Treating them as either case
+without a distinct proof would be incorrect.
+
+Keep all input and continuation obligations in Section 6.4.1.  After the
+ordinary tangent-witness ownership branch rejects an extra non-tangent root,
+the contact-lobe subtype may proceed only as follows:
+
+  1. Require a non-exact edge observation.  The measured ray/edge distance
+     must be strictly greater than the coordinate-scaled line-roundoff
+     envelope used by the exact manifold-edge theorem.  The existing strict
+     global edge/lift correspondence and `SEAM_GAP_INSIDE` discrepancy proof
+     must already authorize the model corridor.  Both lifted-trim distances
+     and the conservatively bounded discrepancy must remain inside that
+     independently declared/certified envelope.  Thus model tolerance cannot
+     turn an exact edge crossing into this case or authorize itself from the
+     observed lobe.
+
+  2. Initially restrict the ray to the edge-normal cross-section,
+     `abs(dot(D_unit, edge_tangent)) <= 1e-10`.  This is a deliberately narrow
+     production subset.  A future oblique theorem must bound edge-frame
+     variation over the complete projected interval rather than increasing
+     this angular threshold.
+
+  3. Require exactly two roots other than the selected outer endpoint.  Both
+     must belong to the other incident face and the same prepared surface
+     span, classify CLEAN_HIT or NEAR_HIT on the retained side of the trim,
+     have finite non-tangent normals, and sort as ENTER followed by LEAVE.
+     Their representatives must be strictly inside the selected existing/
+     continuation endpoint representatives.  Do not demand that binary64
+     corrected representatives themselves bracket the edge projection: at
+     0.01x scale a representative can move approximately 1.6e-12 past it.
+     The outward terminal boxes, not nominal points, carry that proof.
+
+  4. Map the certified edge parameter to the contact face's trim using the
+     globally certified geometric edge/trim correspondence.  Do not assume
+     equal normalized parameter speed.  Every contact terminal box must own
+     at least one of the two roots, have the same face/span, remain an
+     unresolved determinant box, contain the mapped trim UV in both
+     coordinates, and contain the projected edge ray parameter in its outward
+     t interval.  This box rule is representation-invariant under the existing
+     rational Möbius trim reparameterization gate.
+
+  5. Give every retained box exactly one role: selected outer-endpoint source,
+     old tangent witness, or contact-lobe source.  Give every retained local
+     root an owning box.  A box with two roles, no role, the wrong face/span,
+     a nonzero determinant certificate, missing UV/t containment, or an
+     unowned root aborts the entire subtype before mutation.  The contact box
+     t hull must be nonempty and lie strictly between the two outer physical
+     endpoint representatives.
+
+  6. Prove the complete contact-box t hull remains in the oriented material
+     sector at the certified edge parameter.  Project both hull endpoints
+     perpendicular to the edge tangent and reject a segment whose closest
+     projected point reaches the coordinate-roundoff neighborhood of the
+     edge.  Each nonzero projected segment sweeps a monotone angular interval
+     shorter than pi.  Compute its signed minor turn with `atan2`, unwrap the
+     second endpoint relative to the first, and require the full minimum/
+     maximum angular interval to remain strictly between the two oriented
+     sector boundaries.  Checking endpoints alone is insufficient for a
+     reflex sector because a chord with two inside endpoints can cross the
+     complementary convex cone.
+
+  7. The two contact roots emit no transition.  After the complete proof,
+     mark their boxes `RESOLVED_CONTACT`; mark the selected outer source boxes
+     `RESOLVED_BOUNDARY`; and publish the same two outer physical endpoints as
+     Section 6.4.1 using the distinct paired certificate classes
+     `SEAM_CONTACT_EXISTING` and `SEAM_CONTACT_CONTINUATION`.  Record one
+     contact pair, the actual number of contact boxes, and exactly two contact
+     roots.  The global state/minimum-size machine must still prove one outer
+     ENTER/LEAVE interval.  Check event capacity before changing any box
+     disposition, so overflow is atomic for both the old and new subtypes.
+
+  8. Production eligibility must require a matched pair of contact-specific
+     certificates and contact counters of 1/>0/2, four direction checks, no
+     tangent-witness or edge-only counters, and `physical_event_near_trim`
+     equal to the contact-box count.  The original seam pair must conversely
+     have zero contact counters and retain its original tangent-witness or
+     edge-only accounting.  A mixed or partially published pair is invalid.
+
+The independent Cobb validator reconstructs source/root/box ownership from
+the immutable ledger, independently evaluates the fixture's exact trim
+reparameterization, requires the contact box hull to remain strictly within
+the analytic implicit-sphere chord, and checks the final outer endpoints.
+The six original cases publish six pairs, twelve contact roots, and twelve
+contact boxes.  A second gate repeats one contact case in both directions
+under identity, nonlinear trim reparameterization, translation, two arbitrary
+rotations plus translation, 0.01x scale, and 10,000x scale with large
+translation.  All fourteen cases preserve the analytic normalized chord;
+terminal subdivision legitimately produces one or two contact boxes without
+changing the physical result.
+
+This subtype does not authorize endpoint-moving defects, arbitrary numbers of
+overlap roots, roots on several faces or spans, an oblique edge interval,
+sector-boundary tangency, a vertex neighborhood, or non-manifold topology.
+The new endpoint-moving Cobb family deliberately moves the entire boundary
+row, measures every affected edge and endpoint-vertex discrepancy, and
+calibrates g/T at 0.25, 0.9, and 1.1 with both signs, five tangent-clearance
+states, and ray reversal.  Its first 60-ray ratchet reports all
+target discrepancy proofs UNAVAILABLE rather than exhausted, no seam-contact
+certificate, no difference outside the explicit model/clearance uncertainty
+band, and at most the two observed below-envelope no-partition leaks.  This is
+a preserved capability boundary, not a correctness claim.  The registered
+`rt_brep_ray_endpoint` process keeps that family parallel with the main seam
+matrix until endpoint/vertex correspondence and closure receive their own
+proof.
+
 6.4.2 Cyclic planar vertex-fan theorem
 
 A BREP vertex can be one physical boundary crossing even though three or more

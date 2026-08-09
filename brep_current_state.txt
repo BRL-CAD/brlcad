@@ -86,6 +86,20 @@ matrix.  A source box must enclose the exact topological ray parameter; model
 tolerance cannot manufacture the witness.  Tolerance-near rays, arbitrary
 gap/overlap clusters, sector-boundary tangency, non-manifold edges, and edge
 endpoint neighborhoods remain explicit fallback or future theorems.
+A separate tolerance-near seam-contact subtype now resolves the six known
+inward bowed-Cobb incident-face lobes that formerly failed ownership.  Exactly
+two clean non-tangent roots on the other incident face may be consumed as an
+internal contact only when their terminal boxes contain the geometrically
+mapped trim parameter and projected edge t, every root/box has one role, the
+complete box t hull remains inside the oriented material sector, and the
+outer existing/continuation pair independently forms the analytic solid
+interval.  Distinct contact certificates and counters prevent confusion with
+the older tangent-witness theorem.  The subtype is invariant in fourteen
+directed identity, trim-reparameterized, translated, rotated, 0.01x, and
+10,000x cases.  A new 60-ray endpoint-moving Cobb family remains explicit
+fallback/trend evidence: its edge correspondence is supported but its gap
+proof is unavailable, it publishes no seam contact, and its two current
+below-envelope leaks remain a recorded future correctness target.
 Exact-parameter positive-weight surface spans and conservative ray-plane
 coefficient exclusion are prepared, and a bounded adjacent-support
 continuation solve recovers the missing bowed-seam endpoints.
@@ -2830,6 +2844,176 @@ ESTABLISHED FINDINGS
     or non-manifold topology.  Those remain separate proof and corpus targets;
     the narrow paired seam-continuation theorem remains unchanged.
 
+69. A separately certified tolerance-near incident-face contact-lobe subtype
+    now resolves the six non-tangent ownership failures deliberately excluded
+    by Finding 66.  The endpoint-preserving bowed-Cobb matrix identifies them
+    precisely on the inward-displaced face at g/T = h/T = 0.5, 0.9, and 1.0
+    in both ray directions.  Each trace contains the ordinary selected outer
+    endpoint and independently isolated continuation plus two clean,
+    non-tangent roots on the other incident face.  Those two roots sort as
+    ENTER/LEAVE inside the analytic sphere chord.  They are a tolerance-near
+    incident-surface lobe within intended material, not tangent witnesses and
+    not two extra solid transitions.
+
+    The implementation leaves the original paired seam theorem first and
+    unchanged.  Only when its tangent-witness ownership rejects extra non-
+    tangent roots does `brep_trace_seam_contact_roots` try the new fixed-work
+    subtype.  Qualification requires:
+
+      * a ray/edge distance strictly above the coordinate-scaled exact-line
+        envelope, preserving the exact manifold-edge theorem's authority;
+
+      * an already supported global edge/lift correspondence and completed
+        strict `SEAM_GAP_INSIDE` proof, with the measured discrepancy and both
+        trim lifts inside the independently authorized model envelope;
+
+      * an initially perpendicular edge cross-section,
+        `abs(ray_edge_dot) <= 1e-10`;
+
+      * exactly two other CLEAN_HIT or NEAR_HIT roots, on the other incident
+        face and one span, retained by trim classification, finite and non-
+        tangent, ordered ENTER then LEAVE, and strictly between the two outer
+        physical representatives;
+
+      * exact geometric mapping of the certified edge parameter to the
+        contact trim, rather than equal normalized parameter speed;
+
+      * complete single-role ownership of all roots and boxes.  Each contact
+        box must be an unresolved zero-determinant box on that face/span,
+        contain at least one contact root, contain the mapped trim UV, and
+        contain the projected edge t in its outward interval; and
+
+      * a nonempty union of contact-box t intervals strictly inside the outer
+        endpoints and wholly inside the oriented material sector.
+
+    The final sector condition is a whole-segment test, not two point
+    classifications.  Both t-hull endpoints are projected into the certified
+    edge-normal plane; a projected segment reaching the roundoff neighborhood
+    of the edge is rejected.  Otherwise its direction makes one monotone
+    angular sweep shorter than pi.  The code computes the signed minor turn
+    with `atan2`, unwraps that sweep, and requires its complete angular range
+    to stay strictly between the oriented sector boundaries.  This matters
+    for reflex sectors, where two inside endpoints alone do not prove the
+    chord avoids the complementary cone.
+
+    Corrected scalar root representatives no longer have to bracket the edge
+    projection.  The initial version did so with a binary64 roundoff margin;
+    the 0.01x reverse-similarity case placed one representative about 1.6e-12
+    past the projection while its certified terminal box still enclosed it.
+    Representative ordering is not a proof.  The final rule uses the outward
+    terminal boxes for edge-t containment and retains strict representative
+    ordering only against the outer material endpoints.  This restores ray-
+    reversal and scale invariance without introducing a model-tolerance t
+    merge.
+
+    Contact roots emit no transition.  Only after the full transaction and an
+    event-capacity check do their boxes become `RESOLVED_CONTACT`; outer source
+    boxes become `RESOLVED_BOUNDARY`.  The two real endpoints receive distinct
+    `SEAM_CONTACT_EXISTING` and `SEAM_CONTACT_CONTINUATION` certificates.  The
+    trace records one contact pair, the actual box count, and exactly two
+    roots.  Publication eligibility requires the matched certificate pair,
+    contact counters 1/>0/2, four direction checks, no old tangent-witness or
+    edge-only evidence, and matching near-trim box accounting.  Ordinary seam
+    pairs conversely require zero contact counters and their original witness
+    accounting.  Moving the event-capacity check ahead of disposition changes
+    also closes a latent non-atomic overflow path in the older seam subtype.
+
+    The immutable test validator independently reconstructs both contact
+    roots, their ordering, trim state, normal state, source/contact box roles,
+    root coverage, UV/t containment, contact-box hull, and the two outer
+    analytic sphere endpoints.  Its Möbius-reparameterized Cobb oracle applies
+    the exact fixture mapping rather than calling production mapping logic.
+    The 416-ray matrix changes from 16 to 22 certified seam pairs, 32 to 44
+    seam events, 118 to 124 selected prepared partitions, and six ownership/
+    witness failures to zero.  The new aggregate is six contact pairs, twelve
+    boxes, and twelve roots.  Implicit-oracle differences fall from 268 to 264;
+    all 208 tolerance-band differences and 56 outside-band differences remain
+    explicitly classified, with zero below-envelope leaks in this endpoint-
+    preserving family.
+
+    The existing classifier similarity gate now adds the exact contact state
+    to identity, nonlinear trim reparameterization, translation, cyclic and
+    arbitrary-axis rotations plus translation, 0.01x scale, and 10,000x scale
+    with large translation.  Both directions pass in all seven forms: fourteen
+    contact certificates preserve the analytic normalized sphere chord.  The
+    adaptive surface isolator legitimately represents a contact pair with one
+    or two terminal boxes depending on transform; physical ownership and the
+    final interval remain invariant.
+
+    A first endpoint-moving family now moves the complete rational boundary
+    row while preserving weights, measures the resulting target/adjacent-edge
+    and endpoint-vertex lift discrepancies, and sets each affected declared
+    tolerance from that independent measurement.  It covers g/T = 0.25, 0.9,
+    and 1.1,
+    inward/outward signs, h/T = 2.0, 0.9, 0.25, 0, and -0.25, and reversal: 60
+    rays total.  All target edges retain supported correspondence but report
+    `SEAM_GAP_UNAVAILABLE` before adaptive gap traversal (zero cells and no
+    exhaustion), so the new contact subtype publishes none.  The baseline has
+    16 legacy one-hit cases, eight unrelated ordinary prepared selections, 48
+    implicit/variant differences all inside the explicit uncertainty band,
+    and two below-envelope no-partition leaks.  `rt_brep_ray_endpoint` makes
+    this a parallel monotone ratchet: those counts may improve but may not
+    increase, and any difference outside the uncertainty band fails.  This is
+    preserved evidence of the endpoint/vertex correspondence gap, not a claim
+    that endpoint-moving crack handling is correct.
+
+    Optimized verification after the final segment and representation gates:
+
+      cmake --build .build --target rt_brep_ray -j6
+      ctest --test-dir .build --parallel 7 \
+        -R '^rt_brep_ray($|_)' --output-on-failure
+
+    PASS: 7/7 in 132.22 seconds.  The new endpoint shard passes in 3.19
+    seconds, the expanded seam shard in 27.33 seconds, the complete main
+    process in 46.63 seconds, the Crofton process in 56.94 seconds, and the
+    exhaustive interval shard remains the 132.18-second critical path.
+    A final focused optimized rerun after endpoint-vertex metadata and
+    coordinate-scale hardening passes seam plus endpoint 2/2 in 24.15
+    seconds (endpoint 1.53, seam 24.11).
+
+      env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+        UBSAN_OPTIONS=halt_on_error=1 \
+        ctest --test-dir .build-asan --parallel 2 \
+          -R '^rt_brep_ray_(seam|endpoint)$' --output-on-failure
+
+    PASS: the final post-hardening rerun passes 2/2 in 114.16 seconds
+    (endpoint 7.69, seam 114.12) with no
+    sanitizer diagnostic.
+
+      env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+        UBSAN_OPTIONS=halt_on_error=1 \
+        ctest --test-dir .build-asan --parallel 4 \
+          -R '^rt_brep_ray($|_(crofton|fold|affine)$)' \
+          --output-on-failure
+
+    PASS: the remaining four affected/non-interval shards in 318.88 seconds
+    (fold 1.12, affine 18.46, main 300.43, Crofton 318.84), again with no
+    ASan/UBSan diagnostic.  The unchanged exhaustive arithmetic shard remains
+    covered by the earlier sanitizer checkpoint and the fresh optimized gate.
+
+      ctest --test-dir .build --parallel 6 \
+        -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+        --output-on-failure
+
+    PASS: 11/11 in 4.26 seconds.  The same matrix passes 11/11 under
+    ASan/UBSan with halt-on-error in 12.69 seconds.
+
+      cmake --build .build-tsan --target librt rt_cache -j6
+      env TSAN_OPTIONS=halt_on_error=1:second_deadlock_stack=1 \
+        ctest --test-dir .build-tsan --parallel 4 \
+          -R '^rt_cache_.*$' --output-on-failure
+
+    PASS: the final rebuild and rerun passes 7/7 in 14.62 seconds with no
+    ThreadSanitizer diagnostic.  No
+    SurfaceTree density, cache format, dynamic shot allocation, or serialized
+    prep representation changed.
+
+    This checkpoint resolves one exact two-root incident-face contact shape,
+    not arbitrary overlaps.  More than two roots, multiple contact faces or
+    spans, oblique edge motion, endpoint-moving discrepancy, trim-only or
+    edge-only errors, sector-boundary tangency, vertex neighborhoods, and
+    non-manifold topology remain fail-closed targets.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -2943,6 +3127,10 @@ IMPLEMENTATION CHECKLIST
     [x] Publish the controlled existing/continuation pair through immutable
         physical events only after complete edge, box, root, interval, and
         solid-state qualification; retain whole-ray fallback otherwise.
+    [x] Add the narrow tolerance-near two-root incident-face contact subtype
+        with distinct certificates, complete UV/t box ownership, whole-sector
+        segment proof, analytic endpoints, reversal, trim-reparameterization,
+        and 0.01x/10,000x similarity gates.
     [x] Remove the equal-normalized-speed assumption for regular two-trim edge
         correspondence and gate opposite nonlinear trim reparameterizations.
     [x] Add vertex-fan and ambiguous-correspondence gates.
@@ -2972,9 +3160,13 @@ IMPLEMENTATION CHECKLIST
             implicit-oracle lines for the pristine sewn form.
         [x] Add a calibrated, endpoint-preserving bowed support-seam family
             with signed inward/outward displacement and g/T sweep.
+        [x] Add the first endpoint-moving boundary-row family with measured
+            target/adjacent-edge discrepancy, explicit unsupported-gap
+            fallback, reversal, uncertainty-band, and monotone leak ratchets.
         [x] Add seam-crossing tangent-limit rays, reversal checks, CSV output,
             and a ratchet around the measured current crack envelope.
-        [ ] Add controlled gap, overlap, trim, and tangent perturbation sweeps.
+        [ ] Certify endpoint-moving gap/overlap handling and add trim-only,
+            edge-only, combined-error, vertex, G1, and tangent sweeps.
 
 [ ] Local adaptive solve
     [x] Prepare exact-parameter positive-weight rational Bezier surface spans
@@ -3958,19 +4150,58 @@ Exact certified manifold-edge checkpoint:
     PASS: 7/7 in 20.44 seconds with no ThreadSanitizer diagnostic after the
     final fail-closed exact-edge accounting and sector-boundary ratchet.
 
+Tolerance-near contact-lobe checkpoint (Finding 69):
+
+  cmake --build .build --target rt_brep_ray -j6
+  ctest --test-dir .build --parallel 7 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+    PASS: 7/7 in 132.22 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 2 \
+    -R '^rt_brep_ray_(seam|endpoint)$' --output-on-failure
+    PASS: the final post-hardening rerun passes 2/2 in 114.16 seconds
+    (endpoint 7.69, seam 114.12) with no diagnostic.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 4 \
+    -R '^rt_brep_ray($|_(crofton|fold|affine)$)' --output-on-failure
+    PASS: 4/4 in 318.88 seconds with no diagnostic.
+
+  ctest --test-dir .build --parallel 6 \
+    -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 11/11 in 4.26 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 6 \
+    -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 11/11 in 12.69 seconds with no diagnostic.
+
+  cmake --build .build-tsan --target librt rt_cache -j6
+  env TSAN_OPTIONS=halt_on_error=1:second_deadlock_stack=1 \
+    ctest --test-dir .build-tsan --parallel 4 \
+    -R '^rt_cache_.*$' --output-on-failure
+    PASS: the final rebuild and rerun passes 7/7 in 14.62 seconds with no
+    ThreadSanitizer diagnostic.
+
 
 NEXT ACTIONS
 ------------
 
-1. Extend the exact interior manifold-edge theorem only through a separately
-   certified tolerance-near resolver.  Independently qualify a ray that does
-   not contain the topological edge but should close an authorized intended
-   crack, endpoint-moving gaps/overlaps, sector-boundary tangency, and
-   edge/vertex neighborhood interactions.  Keep both the exact edge theorem
-   and the one-existing/one-continuation theorem unchanged as narrow
-   production subsets.  Preserve whole-ray fallback for every incompatible or
-   unowned root/box, and never let the model envelope manufacture the exact
-   witness used by Finding 68.
+1. Extend tolerance-near seam resolution beyond Finding 69's separately
+   certified perpendicular two-root incident-face contact subtype.  Qualify
+   endpoint-moving gaps/overlaps and then oblique contact intervals only with
+   bounded edge-frame variation; keep arbitrary root counts/faces/spans,
+   sector-boundary tangency, and edge/vertex neighborhood interactions fail-
+   closed until each has its own theorem.  Keep the exact edge and original
+   one-existing/one-continuation paths unchanged as narrow production subsets,
+   and never let the model envelope manufacture the exact witness used by
+   Finding 68.
 2. Extend vertex classification only through a separately certified curved
    differential-link theorem.  Bound surface-normal and tangent variation over
    a local neighborhood before replacing the planar cyclic link.  Define exact
@@ -4012,10 +4243,11 @@ NEXT ACTIONS
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
    BREP-to-CSG recognition as later, separately classified qualification tiers.
-6. Add endpoint-moving gap/overlap, trim-only, edge-only, vertex, G1, and
-   combined-error Cobb families, then remove the remaining duplicated Cobb
-   control net from brep_invalid.cpp while independently gating its invalid
-   topology behavior.
+6. Use the new endpoint-moving gap/overlap baseline to implement its missing
+   endpoint/vertex correspondence and closure proof.  Then add trim-only,
+   edge-only, vertex, G1, tangent, and combined-error Cobb families, and remove
+   the remaining duplicated Cobb control net from brep_invalid.cpp while
+   independently gating its invalid topology behavior.
 7. Use the registered directed, Crofton, seam, interval, fold, and affine
    CTest processes with `ctest -j`; retain the no-argument full executable for
    compatibility qualification.  Keep pure arithmetic counters deterministic
