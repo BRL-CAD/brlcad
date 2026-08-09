@@ -2761,6 +2761,217 @@ cdt_mesh_t::incorrect_normal_count()
 }
 
 bool
+cdt_mesh_t::repair_incorrect_normal_edges()
+{
+    if (m_face_charts.empty() || self_intersections(NULL, 1))
+	return false;
+    boundary_edges_update();
+    std::vector<triangle_t> folded = interior_incorrect_normals();
+    if (folded.empty())
+	return true;
+
+    const std::vector<triangle_t> saved_triangles = tris_vect;
+    const std::vector<triangle_t> saved_triangles_2d = tris_2d;
+    const decltype(v2edges) saved_v2edges = v2edges;
+    const decltype(v2tris) saved_v2tris = v2tris;
+    const decltype(edges2tris) saved_edges2tris = edges2tris;
+    const decltype(uedges2tris) saved_uedges2tris = uedges2tris;
+    const decltype(boundary_edges) saved_boundary_edges = boundary_edges;
+    const decltype(problem_edges) saved_problem_edges = problem_edges;
+    std::vector<size_t> saved_active;
+    RTree<size_t, double, 3>::Iterator saved_it;
+    tris_tree.GetFirst(saved_it);
+    while (!saved_it.IsNull()) {
+	saved_active.push_back(*saved_it);
+	++saved_it;
+    }
+    const auto restore = [&]() {
+	tris_vect = saved_triangles;
+	tris_2d = saved_triangles_2d;
+	v2edges = saved_v2edges;
+	v2tris = saved_v2tris;
+	edges2tris = saved_edges2tris;
+	uedges2tris = saved_uedges2tris;
+	boundary_edges = saved_boundary_edges;
+	problem_edges = saved_problem_edges;
+	tris_tree.RemoveAll();
+	for (size_t triangle_index : saved_active) {
+	    if (triangle_index >= tris_vect.size())
+		continue;
+	    triangle_t &triangle = tris_vect[triangle_index];
+	    triangle.m = this;
+	    ON_BoundingBox bounds(*pnts[(size_t)triangle.v[0]],
+		*pnts[(size_t)triangle.v[0]]);
+	    for (int corner = 1; corner < 3; ++corner)
+		bounds.Set(*pnts[(size_t)triangle.v[corner]], true);
+	    const double minimum[3] = {bounds.Min().x, bounds.Min().y,
+		bounds.Min().z};
+	    const double maximum[3] = {bounds.Max().x, bounds.Max().y,
+		bounds.Max().z};
+	    tris_tree.Insert(minimum, maximum, triangle_index);
+	}
+	boundary_edges_stale = true;
+	bounding_box_stale = true;
+    };
+    const auto native_triangle = [&](const triangle_t &triangle,
+	    long native[3]) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const auto mapped = p3d2d.find(triangle.v[corner]);
+	    if (mapped == p3d2d.end() || mapped->second < 0 ||
+		    ambiguous_p3d2d.find(triangle.v[corner]) !=
+		    ambiguous_p3d2d.end())
+		return false;
+	    native[corner] = mapped->second;
+	}
+	return true;
+    };
+    const auto chart_orientation = [&](const long native[3]) {
+	for (const cdt_face_chart &chart : m_face_charts) {
+	    const int orientation = chart.triangle_orientation(native);
+	    if (orientation)
+		return orientation;
+	}
+	return 0;
+    };
+    const auto acceptable_triangle = [&](triangle_t &triangle) {
+	const ON_3dVector triangle_normal = tnorm(triangle);
+	const ON_3dVector surface_normal = bnorm(triangle);
+	return triangle_normal.Length() > 0.0 &&
+	    surface_normal.Length() > 0.0 &&
+	    ON_DotProduct(triangle_normal, surface_normal) >= 0.1;
+    };
+    const auto erase_native_triangle = [&](const long native[3]) {
+	long wanted[3] = {native[0], native[1], native[2]};
+	std::sort(wanted, wanted + 3);
+	for (auto triangle = tris_2d.begin(); triangle != tris_2d.end();
+		triangle++) {
+	    long candidate[3] = {
+		triangle->v[0], triangle->v[1], triangle->v[2]
+	    };
+	    std::sort(candidate, candidate + 3);
+	    if (std::equal(candidate, candidate + 3, wanted)) {
+		tris_2d.erase(triangle);
+		return;
+	    }
+	}
+    };
+
+    const size_t flip_limit = 4 * folded.size() + 32;
+    size_t flip_count = 0;
+    while (!folded.empty() && flip_count < flip_limit) {
+	bool changed = false;
+	for (const triangle_t &folded_triangle : folded) {
+	    if (!tri_active(folded_triangle.ind))
+		continue;
+	    triangle_t first = tris_vect[folded_triangle.ind];
+	    std::vector<std::pair<double, int>> candidates;
+	    for (int edge = 0; edge < 3; ++edge) {
+		const ON_3dPoint &a = *pnts[(size_t)first.v[edge]];
+		const ON_3dPoint &b = *pnts[(size_t)first.v[(edge + 1) % 3]];
+		candidates.push_back(std::make_pair(
+		    a.DistanceTo(b), edge));
+	    }
+	    std::sort(candidates.begin(), candidates.end(),
+		[](const auto &a, const auto &b) { return a.first > b.first; });
+	    for (const std::pair<double, int> &candidate : candidates) {
+		const int edge = candidate.second;
+		const long a = first.v[edge];
+		const long b = first.v[(edge + 1) % 3];
+		const long c = first.v[(edge + 2) % 3];
+		const uedge_t shared(a, b);
+		if (boundary_edges.find(shared) != boundary_edges.end())
+		    continue;
+		const auto incident = uedges2tris.find(shared);
+		if (incident == uedges2tris.end() ||
+			incident->second.size() != 2)
+		    continue;
+		size_t neighbor_index = *incident->second.begin();
+		if (neighbor_index == first.ind)
+		    neighbor_index = *incident->second.rbegin();
+		if (neighbor_index == first.ind || !tri_active(neighbor_index))
+		    continue;
+		triangle_t second = tris_vect[neighbor_index];
+		long d = -1;
+		for (int corner = 0; corner < 3; ++corner) {
+		    if (second.v[corner] != a && second.v[corner] != b) {
+			d = second.v[corner];
+			break;
+		    }
+		}
+		if (d < 0 || d == c ||
+			uedges2tris.find(uedge_t(c, d)) != uedges2tris.end())
+		    continue;
+		long first_native[3];
+		long second_native[3];
+		if (!native_triangle(first, first_native) ||
+			!native_triangle(second, second_native))
+		    continue;
+		const int orientation = chart_orientation(first_native);
+		if (!orientation || chart_orientation(second_native) !=
+			orientation)
+		    continue;
+		triangle_t replacement_first;
+		replacement_first.v[0] = c;
+		replacement_first.v[1] = a;
+		replacement_first.v[2] = d;
+		triangle_t replacement_second;
+		replacement_second.v[0] = c;
+		replacement_second.v[1] = d;
+		replacement_second.v[2] = b;
+		long replacement_first_native[3];
+		long replacement_second_native[3];
+		if (!native_triangle(replacement_first,
+			replacement_first_native) ||
+			!native_triangle(replacement_second,
+			replacement_second_native) ||
+			chart_orientation(replacement_first_native) !=
+			orientation ||
+			chart_orientation(replacement_second_native) !=
+			orientation ||
+			!acceptable_triangle(replacement_first) ||
+			!acceptable_triangle(replacement_second))
+		    continue;
+
+		tri_remove(first);
+		tri_remove(second);
+		tri_add(replacement_first);
+		tri_add(replacement_second);
+		erase_native_triangle(first_native);
+		erase_native_triangle(second_native);
+		triangle_t native_first;
+		triangle_t native_second;
+		for (int corner = 0; corner < 3; ++corner) {
+		    native_first.v[corner] = replacement_first_native[corner];
+		    native_second.v[corner] = replacement_second_native[corner];
+		}
+		tris_2d.push_back(native_first);
+		tris_2d.push_back(native_second);
+		flip_count++;
+		changed = true;
+		break;
+	    }
+	    if (changed)
+		break;
+	}
+	if (!changed)
+	    break;
+	folded = interior_incorrect_normals();
+    }
+    boundary_edges_update();
+    if (flip_count && problem_edges.empty() &&
+	    !self_intersections(NULL, 1)) {
+	if (folded.empty() && valid(0))
+	    return true;
+	/* The remaining folds can still be refined in the chart.  Retain
+	 * successful flips: tris_2d was updated with their native identities,
+	 * so subsequent point insertion remains structurally consistent. */
+	return false;
+    }
+    restore();
+    return false;
+}
+
+bool
 cdt_mesh_t::toleranced_boundary_triangle(const triangle_t &triangle)
 {
     if (!brep || f_id < 0 || f_id >= brep->m_F.Count())
@@ -3937,6 +4148,7 @@ triangulate_chart_component(cdt_mesh_t *mesh, const ON_BrepFace &face,
 bool
 cdt_mesh_t::cdt()
 {
+    m_face_charts.clear();
     if (!outer_loop.closed()) {
 	bu_log("%d: outer loop reports not closed!\n", f_id);
 	return false;
@@ -4312,6 +4524,7 @@ cdt_mesh_t::cdt()
 		    sv.insert(atlas_singular_points.begin(),
 			atlas_singular_points.end());
 		    tris_2d.swap(atlas_triangles);
+		    m_face_charts.swap(atlas);
 		    return true;
 		}
 		atlas_failure = "cone face atlas produced no 3-D triangles";
@@ -4910,6 +5123,9 @@ cdt_mesh_t::cdt()
 	return false;
     }
 
+    if (result)
+	m_face_charts.push_back(std::move(chart));
+
     return result;
 }
 
@@ -5030,35 +5246,49 @@ cdt_mesh_t::refine_problem_triangles(
 	}
 	if (!mapped)
 	    continue;
-	/* Split the folded triangle from a point strictly inside it.  Inserting
-	 * the midpoint of an unconstrained edge leaves a skinny boundary chord
-	 * unsplit and can reproduce the same folded triangle indefinitely.  The
-	 * incenter in the approximate surface metric maximizes clearance from
-	 * all three sides while remaining a convex combination in native UV. */
-	double opposite_length[3] = {0.0, 0.0, 0.0};
-	double weight_sum = 0.0;
-	for (int vertex = 0; vertex < 3; ++vertex) {
-	    const int first = (vertex + 1) % 3;
-	    const int second = (vertex + 2) % 3;
-	    const double du = (uv[second].x - uv[first].x) *
-		metric_scale[0];
-	    const double dv = (uv[second].y - uv[first].y) *
-		metric_scale[1];
-	    opposite_length[vertex] = std::sqrt(du * du + dv * dv);
-	    weight_sum += opposite_length[vertex];
-	}
+	/* Split the folded triangle from a point strictly inside it.  Use the
+	 * active triangulation chart when available: a convex combination in
+	 * native UV need not remain inside a nonlinear polar chart triangle. */
 	ON_2dPoint sample;
-	if (weight_sum > 0.0 && std::isfinite(weight_sum)) {
-	    sample = ON_2dPoint(
-		(opposite_length[0] * uv[0].x +
-		 opposite_length[1] * uv[1].x +
-		 opposite_length[2] * uv[2].x) / weight_sum,
-		(opposite_length[0] * uv[0].y +
-		 opposite_length[1] * uv[1].y +
-		 opposite_length[2] * uv[2].y) / weight_sum);
-	} else {
-	    sample = ON_2dPoint((uv[0].x + uv[1].x + uv[2].x) / 3.0,
-		(uv[0].y + uv[1].y + uv[2].y) / 3.0);
+	bool chart_sample = false;
+	if (have_native_triangle) {
+	    const long native_vertices[3] = {
+		native_triangle.v[0], native_triangle.v[1],
+		native_triangle.v[2]
+	    };
+	    for (const cdt_face_chart &chart : m_face_charts) {
+		if (chart.triangle_interior_sample(native_vertices, sample)) {
+		    chart_sample = true;
+		    break;
+		}
+	    }
+	}
+	if (!chart_sample) {
+	    double opposite_length[3] = {0.0, 0.0, 0.0};
+	    double weight_sum = 0.0;
+	    for (int vertex = 0; vertex < 3; ++vertex) {
+		const int first = (vertex + 1) % 3;
+		const int second = (vertex + 2) % 3;
+		const double du = (uv[second].x - uv[first].x) *
+		    metric_scale[0];
+		const double dv = (uv[second].y - uv[first].y) *
+		    metric_scale[1];
+		opposite_length[vertex] = std::sqrt(du * du + dv * dv);
+		weight_sum += opposite_length[vertex];
+	    }
+	    if (weight_sum > 0.0 && std::isfinite(weight_sum)) {
+		sample = ON_2dPoint(
+		    (opposite_length[0] * uv[0].x +
+		     opposite_length[1] * uv[1].x +
+		     opposite_length[2] * uv[2].x) / weight_sum,
+		    (opposite_length[0] * uv[0].y +
+		     opposite_length[1] * uv[1].y +
+		     opposite_length[2] * uv[2].y) / weight_sum);
+	    } else {
+		sample = ON_2dPoint(
+		    (uv[0].x + uv[1].x + uv[2].x) / 3.0,
+		    (uv[0].y + uv[1].y + uv[2].y) / 3.0);
+	    }
 	}
 	/* Surface evaluation and the CDT point set use the canonical native
 	 * domain, so fold the locally unwrapped sample back into that domain. */
