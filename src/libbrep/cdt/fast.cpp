@@ -4470,6 +4470,95 @@ fast_split_touching_periodic_loop(const ON_Surface *surface,
 }
 
 static bool
+fast_split_bridged_inner_loop(const ON_Surface *surface,
+	const ON_BrepLoop *loop, ON_SimpleArray<BrepTrimPoint> &points,
+	std::vector<ON_SimpleArray<BrepTrimPoint>> &extra_holes)
+{
+    /* STEP conversion can encode several hole rings as one Euler walk,
+     * connected by edges which are immediately retraced.  Detria requires
+     * disjoint simple hole constraints.  Extract the closed topological
+     * cycles and discard the zero-area bridge cycles. */
+    if (!surface || !loop || loop->m_type != ON_BrepLoop::inner ||
+	    loop->TrimCount() < 4 || points.Count() < 6)
+	return false;
+
+    std::vector<int> path_vertices;
+    std::vector<int> path_trims;
+    std::vector<std::vector<int>> cycles;
+    const ON_BrepTrim *first = loop->Trim(0);
+    if (!first)
+	return false;
+    path_vertices.push_back(first->m_vi[0]);
+    for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	const ON_BrepTrim *trim = loop->Trim(ti);
+	if (!trim || path_vertices.empty() ||
+		trim->m_vi[0] != path_vertices.back())
+	    return false;
+	path_trims.push_back(ti);
+	std::vector<int>::const_iterator repeated = std::find(
+	    path_vertices.begin(), path_vertices.end(), trim->m_vi[1]);
+	if (repeated == path_vertices.end()) {
+	    path_vertices.push_back(trim->m_vi[1]);
+	    continue;
+	}
+	const size_t cycle_start = repeated - path_vertices.begin();
+	cycles.emplace_back(path_trims.begin() + cycle_start,
+	    path_trims.end());
+	path_trims.resize(cycle_start);
+	path_vertices.resize(cycle_start + 1);
+    }
+    if (!path_trims.empty() || cycles.size() < 2)
+	return false;
+
+    const double parameter_scale = std::max(1.0,
+	std::max(surface->Domain(0).Length(),
+	    surface->Domain(1).Length()));
+    const double minimum_area =
+	BREP_SAME_POINT_TOLERANCE * parameter_scale;
+    std::vector<ON_SimpleArray<BrepTrimPoint>> nonzero_cycles;
+    for (const std::vector<int> &cycle_trims : cycles) {
+	ON_SimpleArray<BrepTrimPoint> cycle;
+	for (int ti : cycle_trims) {
+	    const ON_BrepTrim *trim = loop->Trim(ti);
+	    if (!trim)
+		return false;
+	    bool found_trim = false;
+	    for (int pi = 0; pi < points.Count(); ++pi) {
+		if (points[pi].trim_ind != trim->m_trim_index)
+		    continue;
+		found_trim = true;
+		if (!cycle.Count() || !V2NEAR_EQUAL(
+			cycle[cycle.Count() - 1].p2d, points[pi].p2d,
+			BREP_SAME_POINT_TOLERANCE))
+		    cycle.Append(points[pi]);
+	    }
+	    if (!found_trim)
+		return false;
+	}
+	if (cycle.Count() < 3)
+	    continue;
+	if (!V2NEAR_EQUAL(cycle[0].p2d,
+		cycle[cycle.Count() - 1].p2d,
+		BREP_SAME_POINT_TOLERANCE))
+	    cycle.Append(cycle[0]);
+	double twice_area = 0.0;
+	for (int pi = 0; pi < cycle.Count() - 1; ++pi) {
+	    twice_area += cycle[pi].p2d.x * cycle[pi + 1].p2d.y -
+		cycle[pi + 1].p2d.x * cycle[pi].p2d.y;
+	}
+	if (std::isfinite(twice_area) &&
+		fabs(0.5 * twice_area) > minimum_area)
+	    nonzero_cycles.push_back(cycle);
+    }
+    if (nonzero_cycles.size() < 2)
+	return false;
+    points = nonzero_cycles[0];
+    for (size_t ci = 1; ci < nonzero_cycles.size(); ++ci)
+	extra_holes.push_back(nonzero_cycles[ci]);
+    return true;
+}
+
+static bool
 fast_loop_is_provably_degenerate(const ON_Surface *surface,
 	const ON_BrepLoop *loop);
 
@@ -4567,6 +4656,13 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     const bool split_touching_loop = loop_cnt == 1 &&
 	fast_split_touching_periodic_loop(s, face, *brep_loop_points[0],
 	    reconstructed_hole);
+    std::vector<ON_SimpleArray<BrepTrimPoint>> bridged_inner_holes;
+    for (int li = 0; li < loop_cnt; ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (loop && loop->m_type == ON_BrepLoop::inner)
+	    fast_split_bridged_inner_loop(s, loop, *brep_loop_points[li],
+		bridged_inner_holes);
+    }
     const int implicit_outer_index = fast_implicit_outer_loop(face,
 	brep_loop_points);
 
@@ -4662,6 +4758,12 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    reconstructed_hole[reconstructed_hole.Count() - 1].p2d,
 	    BREP_SAME_POINT_TOLERANCE);
 	if (!append_boundary(reconstructed_hole, hole_uv_closed, false))
+	    return false;
+    }
+    for (ON_SimpleArray<BrepTrimPoint> &hole : bridged_inner_holes) {
+	const bool uv_closed = V2NEAR_EQUAL(hole[0].p2d,
+	    hole[hole.Count() - 1].p2d, BREP_SAME_POINT_TOLERANCE);
+	if (!append_boundary(hole, uv_closed, false))
 	    return false;
     }
 
@@ -4965,6 +5067,9 @@ fast_loop_is_provably_degenerate(const ON_Surface *surface,
 	 * provided neither one traverses a complete period. */
 	const bool closed_surface =
 	    surface->IsClosed(0) || surface->IsClosed(1);
+	const double parameter_scale = std::max(1.0,
+	    std::max(surface->Domain(0).Length(),
+		surface->Domain(1).Length()));
 	if (closed_surface && loop->TrimCount() != 2)
 	    return false;
 	if (closed_surface) {
@@ -4982,8 +5087,18 @@ fast_loop_is_provably_degenerate(const ON_Surface *surface,
 	for (int ti = 0; ti < loop->TrimCount(); ++ti) {
 	    const ON_BrepTrim *candidate = loop->Trim(ti);
 	    if (!candidate || candidate->m_type == ON_BrepTrim::singular ||
-		    candidate->Degree() != 1 || candidate->SpanCount() < 1 ||
+		    candidate->SpanCount() < 1 ||
 		    candidate->SpanCount() > 4096)
+		return false;
+	    const double candidate_tolerance = std::max(
+		BREP_SAME_POINT_TOLERANCE,
+		std::min(std::max(candidate->m_tolerance[0],
+			candidate->m_tolerance[1]),
+		    parameter_scale * 1.0e-4));
+	    /* Converted straight pcurves are often represented as high-degree
+	     * NURBS with many collinear control points. */
+	    if (candidate->Degree() != 1 &&
+		    !candidate->IsLinear(candidate_tolerance))
 		return false;
 	    std::vector<double> spans(candidate->SpanCount() + 1);
 	    if (!candidate->GetSpanVector(spans.data()))
@@ -5016,9 +5131,6 @@ fast_loop_is_provably_degenerate(const ON_Surface *surface,
 		}
 	    }
 	}
-	const double parameter_scale = std::max(1.0,
-	    std::max(surface->Domain(0).Length(),
-		surface->Domain(1).Length()));
 	trim_parameter_tolerance = std::min(trim_parameter_tolerance,
 	    parameter_scale * 1.0e-4);
 	const double parameter_tolerance = std::max(
