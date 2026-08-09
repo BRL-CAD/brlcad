@@ -185,7 +185,8 @@ degenerate_collinear_loop_test()
 static ON_BrepTrim &
 add_periodic_trim(ON_Brep &brep, ON_BrepLoop &loop,
 	const ON_Surface &surface, double v, bool decreasing,
-	ON_BrepLoop::TYPE loop_type, bool collapsed_parameter = false)
+	ON_BrepLoop::TYPE loop_type, bool collapsed_parameter = false,
+	bool extra_winding = false)
 {
     const ON_Interval udom = surface.Domain(0);
     const ON_2dPoint start(decreasing ? udom.Max() : udom.Min(), v);
@@ -210,6 +211,14 @@ add_periodic_trim(ON_Brep &brep, ON_BrepLoop &loop,
 	    ON_3dPoint(seam, v + wobble, 0.0),
 	    ON_3dPoint(seam, v - wobble, 0.0),
 	    ON_3dPoint(seam, v, 0.0)
+	});
+    } else if (extra_winding) {
+	const double period = udom.Length();
+	trim_curve = nurbs_curve(2, 3, {
+	    ON_3dPoint(start.x, v, 0.0),
+	    ON_3dPoint(start.x + 2.0 * period, v, 0.0),
+	    ON_3dPoint(end.x - 2.0 * period, v, 0.0),
+	    ON_3dPoint(end.x, v, 0.0)
 	});
     } else {
 	trim_curve = new ON_LineCurve(start, end);
@@ -299,6 +308,155 @@ periodic_strip_test()
 }
 
 static bool
+redundant_periodic_boundaries_test()
+{
+    ON_Brep brep;
+    ON_Circle base(ON_xy_plane, 1.0);
+    ON_Cylinder cylinder(base, 1.0);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    const ON_Interval vdom = surface->Domain(1);
+    ON_BrepLoop &low = brep.NewLoop(ON_BrepLoop::inner, face);
+    add_periodic_trim(brep, low, *surface, vdom.ParameterAt(0.15),
+	false, ON_BrepLoop::inner);
+    ON_BrepLoop &middle = brep.NewLoop(ON_BrepLoop::inner, face);
+    add_periodic_trim(brep, middle, *surface, vdom.ParameterAt(0.50),
+	false, ON_BrepLoop::inner, false, true);
+    ON_BrepLoop &high = brep.NewLoop(ON_BrepLoop::inner, face);
+    add_periodic_trim(brep, high, *surface, vdom.ParameterAt(0.85),
+	false, ON_BrepLoop::inner);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
+periodic_rectangle_test()
+{
+    ON_Brep brep;
+    ON_Circle base(ON_xy_plane, 1.0);
+    ON_Cylinder cylinder(base, 1.0);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    const double low_v = vdom.ParameterAt(0.15);
+    const double high_v = vdom.ParameterAt(0.85);
+    const int low = brep.NewVertex(surface->PointAt(udom.Min(),
+	low_v)).m_vertex_index;
+    const int high = brep.NewVertex(surface->PointAt(udom.Min(),
+	high_v)).m_vertex_index;
+
+    auto add_trim = [&](ON_Curve *edge_curve, int first, int second,
+	    const ON_2dPoint &start, const ON_2dPoint &end,
+	    ON_BrepTrim::TYPE type) {
+	ON_BrepEdge &edge = brep.NewEdge(brep.m_V[first],
+	    brep.m_V[second], brep.AddEdgeCurve(edge_curve));
+	edge.m_tolerance = 1.0e-6;
+	ON_LineCurve *trim_curve = new ON_LineCurve(start, end);
+	trim_curve->SetDomain(0.0, 1.0);
+	ON_BrepTrim &trim = brep.NewTrim(edge, false, loop,
+	    brep.AddTrimCurve(trim_curve));
+	trim.m_type = type;
+	trim.m_iso = surface->IsIsoparametric(*trim_curve);
+	trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-6;
+    };
+    add_trim(surface->IsoCurve(0, low_v), low, low,
+	ON_2dPoint(udom.Min(), low_v), ON_2dPoint(udom.Max(), low_v),
+	ON_BrepTrim::boundary);
+    ON_Curve *east = surface->IsoCurve(1, udom.Max());
+    east->Trim(ON_Interval(low_v, high_v));
+    add_trim(east, low, high, ON_2dPoint(udom.Max(), low_v),
+	ON_2dPoint(udom.Max(), high_v), ON_BrepTrim::seam);
+    ON_Curve *top = surface->IsoCurve(0, high_v);
+    top->Reverse();
+    add_trim(top, high, high, ON_2dPoint(udom.Max(), high_v),
+	ON_2dPoint(udom.Min(), high_v), ON_BrepTrim::boundary);
+    ON_Curve *west = surface->IsoCurve(1, udom.Min());
+    west->Trim(ON_Interval(low_v, high_v));
+    west->Reverse();
+    add_trim(west, high, low, ON_2dPoint(udom.Min(), high_v),
+	ON_2dPoint(udom.Min(), low_v), ON_BrepTrim::seam);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
+overlapping_periodic_pcurves_test()
+{
+    ON_Brep brep;
+    ON_Circle base(ON_xy_plane, 1.0);
+    ON_Cylinder cylinder(base, 1.0);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &outer = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    const double seam = udom.Min();
+    const double middle = udom.Mid();
+    const double low_v = vdom.ParameterAt(0.20);
+    const double high_v = vdom.ParameterAt(0.80);
+    const int seam_vertex = brep.NewVertex(surface->PointAt(seam,
+	low_v)).m_vertex_index;
+    const int middle_vertex = brep.NewVertex(surface->PointAt(middle,
+	low_v)).m_vertex_index;
+
+    auto add_half = [&](const ON_Interval &edge_interval, int first,
+	    int second, const ON_2dPoint &start, const ON_2dPoint &end) {
+	ON_Curve *edge_curve = surface->IsoCurve(0, low_v);
+	edge_curve->Trim(edge_interval);
+	ON_BrepEdge &edge = brep.NewEdge(brep.m_V[first],
+	    brep.m_V[second], brep.AddEdgeCurve(edge_curve));
+	edge.m_tolerance = 1.0e-6;
+	ON_LineCurve *trim_curve = new ON_LineCurve(start, end);
+	trim_curve->SetDomain(0.0, 1.0);
+	ON_BrepTrim &trim = brep.NewTrim(edge, false, outer,
+	    brep.AddTrimCurve(trim_curve));
+	trim.m_type = ON_BrepTrim::boundary;
+	trim.m_iso = ON_Surface::x_iso;
+	trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-6;
+    };
+    add_half(ON_Interval(udom.Min(), middle), seam_vertex,
+	middle_vertex, ON_2dPoint(seam, low_v),
+	ON_2dPoint(middle, low_v));
+    add_half(ON_Interval(middle, udom.Max()), middle_vertex,
+	seam_vertex, ON_2dPoint(middle, low_v),
+	ON_2dPoint(seam, low_v));
+    ON_BrepLoop &inner = brep.NewLoop(ON_BrepLoop::inner, face);
+    add_periodic_trim(brep, inner, *surface, high_v, true,
+	ON_BrepLoop::inner);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
 paired_periodic_strip_case(bool single_high_boundary)
 {
     ON_Brep brep;
@@ -358,6 +516,7 @@ paired_periodic_strip_case(bool single_high_boundary)
     const int seam_c3i = brep.AddEdgeCurve(seam_curve);
     ON_BrepEdge &seam_edge = brep.NewEdge(brep.m_V[low_mid],
 	brep.m_V[high_mid], seam_c3i);
+    const int seam_edge_index = seam_edge.m_edge_index;
     seam_edge.m_tolerance = 1.0e-6;
     ON_LineCurve *up_curve = new ON_LineCurve(
 	ON_2dPoint(seam_u, low_v), ON_2dPoint(seam_u, high_v));
@@ -398,7 +557,7 @@ paired_periodic_strip_case(bool single_high_boundary)
     ON_LineCurve *down_curve = new ON_LineCurve(
 	ON_2dPoint(seam_u, high_v), ON_2dPoint(seam_u, low_v));
     down_curve->SetDomain(0.0, 1.0);
-    ON_BrepTrim &down = brep.NewTrim(seam_edge, true, loop,
+    ON_BrepTrim &down = brep.NewTrim(brep.m_E[seam_edge_index], true, loop,
 	brep.AddTrimCurve(down_curve));
     down.m_type = ON_BrepTrim::seam;
     down.m_iso = ON_Surface::W_iso;
@@ -1075,9 +1234,12 @@ main(int argc, const char **argv)
     bu_setprogname(argv[0]);
     if (argc != 1)
 	return 2;
+
     return thin_lens_test() && degenerate_line_test() &&
 	degenerate_collinear_loop_test() &&
 	singular_cap_test() && periodic_strip_test() &&
+	redundant_periodic_boundaries_test() &&
+	periodic_rectangle_test() && overlapping_periodic_pcurves_test() &&
 	paired_periodic_strip_test() &&
 	collapsed_closed_pcurve_test() &&
 	misclassified_periodic_boundaries_test() &&
