@@ -45,6 +45,7 @@
 #include "bg/polygon.h"
 #include "bg/tri_tri.h"
 #include "brep/defines.h"
+#include "./chart.h"
 
 extern "C" {
     struct ctriangle_t {
@@ -649,6 +650,7 @@ public:
     bool cdt();
     std::vector<triangle_t> tris_2d;
     std::vector<std::pair<double, double> > m_pnts_2d;
+    std::vector<cdt_face_chart> m_face_charts;
     std::map<long, long> p2d3d;
     cpolygon_t outer_loop;
     std::map<int, cpolygon_t*> inner_loops;
@@ -668,6 +670,7 @@ public:
     bool brep_edge_pnt(long v);
     size_t geometric_degenerate_count();
     size_t incorrect_normal_count();
+    bool repair_incorrect_normal_edges();
     bool toleranced_boundary_triangle(const triangle_t &t);
 
     // Triangle geometry information
