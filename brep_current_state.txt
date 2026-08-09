@@ -6639,15 +6639,232 @@ STEP ray-prep observability and dense-tree census (Finding 80):
   prevents LeakSanitizer qualification.
 
 
+Imported solid winding and overlap cleanup (Finding 81):
+
+  This increment follows local commit `0ab3ea838f` (`Audit imported BREP ray
+  depth and status-2 poles`).  It is not yet committed at the time this note
+  is written.  Modified sources are:
+
+    src/gtools/brep-audit.cpp
+    src/librt/librt_private.h
+    src/librt/primitives/brep/brep.cpp
+    src/librt/tests/CMakeLists.txt
+    src/librt/tests/brep_ray.cpp
+    brep_raytrace_plan.txt
+    brep_current_state.txt
+
+  The first three additional stratified manifest objects passed 70-ray fresh
+  depth-three/depth-eight partition and reversal comparison:
+
+    non_grabcad/recurta/step_ap203/0353-24-03.g Product_step46_item.s
+      22 segments, one prepared selection, 16 surface-box overflows;
+    non_grabcad/recurta/step_ap203/0353-70-13.g Product_step18_item.s
+      12 segments, 14 prepared selections; and
+    non_grabcad/recurta/step_ap203/0353-97-15.g Product_step46_item.s
+      12 segments, 23 prepared selections, 16,440 surface-box overflows.
+
+  All have zero depth or reversal differences.  The next object,
+  `second/bearings/UCP-206.g`, `UCP_206_item.s`, exposed a real legacy solid
+  assembly failure.  It is a valid, solid 127-face BREP with three face
+  components.  Both requested tree depths returned the same raw roots, so the
+  failure was not caused by insufficient SurfaceTree density.
+
+  Exact deterministic witnesses:
+
+    pair 3
+      origin=(111.69115224698913, 7.5836018757108423,
+              52.269242654264914)
+      direction=(-0.94416363033127593, -0.21463855715332145,
+                 -0.24997065616349057)
+      chord=232.45171770344157
+
+      The post-trim stream was ENTER, LEAVE, ENTER forward and LEAVE, ENTER,
+      LEAVE in reverse.  Direction-dependent odd-tail removal selected
+      different intervals.
+
+    pair 0, the +X axis chord
+      origin=(-123.77915341990379, 18.274326988514922,
+              -9.2370555648813024e-14)
+      direction=(1,0,0)
+      chord=247.55830683980759
+
+      Accepted directions were LEAVE, ENTER, ENTER, LEAVE, LEAVE, ENTER.
+      Historical same-direction cleanup kept the last ENTER and first LEAVE,
+      effectively intersecting overlapping shell ranges.  It published two
+      segments with inverted endpoint normals.  Tightening `brep-audit` so a
+      solid entry normal dot must be negative and an exit dot positive made
+      this a hard failure instead of telemetry only.
+
+    pair 26
+      origin=(-109.55455871766632, -18.860350561763859,
+              -44.046489176349951)
+      direction=(0.97624929252184156, 0.17547275793085171,
+                 0.12706939078607674)
+      chord=238.1312905423778
+
+      This distinguished true overlap from duplicate observations of one
+      seam event.  Same-direction face-67/104 roots differ by about 2.4e-5,
+      within the object's 5e-4 model tolerance.  Treating them as independent
+      winding changes made the reverse ray lose its interval.
+
+  A second concrete bug existed in both allocating and fixed cleanup loops.
+  Each initialized an entering sign but attempted to replace it only under an
+  iterator/index condition that was unreachable because iteration began at
+  the second hit.  The direct fix and first-hit sign regression were useful,
+  but raw-root tracing proved they were not the complete behavioral solution.
+
+  New audit diagnostics in `brep-audit`:
+
+    --ray-pair=N
+      Select one indexed deterministic chord pair.  With `--ray-count=0`,
+      pairs 0..2 are the three axis chords and later values select the same
+      fixed-seed random chord stream used by the full audit.
+
+    --legacy-only
+      Build fresh requested-depth SurfaceTrees and run the legacy solve only,
+      omitting expensive prepared local-box tracing.  This makes cleanup and
+      depth questions separable without using a cache.
+
+  Failure records now preserve selected pair index, trace mode, all raw roots
+  and final intervals, intersected leaves, solver calls, cleanup-stage counts,
+  overflow, face component, UV, normal dot, trim status/distance, hit class,
+  direction and adjacent face.  Filtering maps failure records to the correct
+  selected ray.  `_rt_brep_shot_legacy_trace` is exported internally so the
+  detailed audit can retain telemetry while explicitly bypassing the prepared
+  attempt.
+
+  The final legacy solid rule has two separate operations:
+
+    1. Same-event coalescence at model resolution.  Its ray-parameter envelope
+       is max(BREP_SAME_POINT_TOLERANCE, tol.dist/|D|), widened by 128 epsilon
+       at parameter scale.  Only consecutive same-direction observations are
+       coalesced.  Keep the first ENTER and last LEAVE, which are the union
+       extrema and map into each other under ray reversal.  Opposite
+       directions are never coalesced because they can bound a real close
+       grazing interval.
+
+    2. Nonzero-winding material assembly.  Starting outside, retain the first
+       ENTER changing winding 0->1 and the LEAVE changing 1->0.  Nested outward
+       shells raise winding and therefore produce a union envelope.  Disjoint
+       shells return to zero and produce separate intervals.  Inward-oriented
+       cavities produce the expected temporary zero winding.  Leading LEAVEs
+       and an unclosed trailing ENTER are not bridged to material.  A sole
+       unmatched observation is retained for the later certified seam/closure
+       resolver; dropping it broke all intended Cobb crack repairs and was
+       caught before promotion.
+
+  `brep_hit_workspace` compacts in place with no allocation.  The allocating
+  list performs exactly the same choices for equivalence testing.  Plate and
+  non-solid paths keep their previous first-hit convention.  The prepared
+  pipeline remains stricter: it publishes only a complete owned event ledger
+  and falls back atomically on unresolved winding/event identity.  General
+  prepared winding above one still needs explicit independently owned shell
+  events; the legacy parameter-local policy is not used as a proof.
+
+  `_rt_brep_direction_cleanup_test` now accepts a model-distance tolerance and
+  covers:
+
+    * nested ENTER/ENTER/ENTER/LEAVE/LEAVE/LEAVE union envelopes;
+    * reversal of the complete envelope;
+    * odd ENTER/LEAVE/ENTER and reversed LEAVE/ENTER/LEAVE streams;
+    * leading/trailing unmatched events bracketing nested material;
+    * same-direction tolerance clusters with reversal; and
+    * a coalesced singleton retained as a seam-closure witness.
+
+  The independent analytic fixture constructs radius-five implicit spheres at
+  x=-3 and x=+3, converts each to BREP, and appends the two closed shells into
+  one BREP primitive.  The oracle remains the implicit CSG union.  Its x-axis
+  interval is [12,28].  Before the fix the BREP returned the intersection
+  [18,22] in both directions; after the fix both directions return [12,28].
+  The existing disjoint-sphere union continues to return distinct intervals.
+  This isolates solid assembly from STEP, trim, tree density, and BREP Boolean
+  conversion.
+
+  An intermediate version that discarded every unmatched leading/trailing
+  event passed UCP but failed the seam gate.  Cobb classifier cases lost their
+  singleton closure candidate, all 14 below-envelope production repairs
+  disappeared, and two prepared promotions became regressions.  Retaining a
+  single witness restored:
+
+    * Cobb classifier similarity/parameter invariance;
+    * ambiguous trim-correspondence fallback;
+    * 14/14 below-envelope repairs with zero crack leaks;
+    * two prepared promotions and zero regressions;
+    * 322/322 prepared selections in the bowed matrix; and
+    * the complete 416-ray bowed seam matrix.
+
+  Final optimized validation on the exact source:
+
+    .build/src/librt/tests/rt_brep_ray --seam-only
+
+  PASS in about 383 seconds.  All seam, closure, overlap, similarity, defect,
+  prepared-promotion, and isolated trim/edge checks pass.
+
+    ctest --test-dir .build -R '^rt_brep_ray($|_)' \
+      -E '^rt_brep_ray_seam$' -j14 --output-on-failure
+
+  PASS: 17/17 in 156.82 seconds.  Together with the standalone seam result,
+  the complete registered 18-shard gate passes.  Cleanup and hard Crofton pass
+  independently; the new combined-overlapping-sphere fixture reports two
+  directed cases and zero failures.
+
+    .build/bin/brep-audit --ray-depth-compare --ray-count=32 \
+      /home/cyapp/step_corpus_g/second/bearings/UCP-206.g UCP_206_item.s
+
+  PASS: 70 rays, 16 hit rays, 20 segments, zero invalid rays, orientation
+  anomalies, depth differences, or reversal mismatches.  Maximum depth-three
+  versus depth-eight endpoint difference is 7.19e-10.  Eight rays select
+  prepared production, six fall back for box capacity and 56 as uncertified.
+
+  UCP performance/capacity baseline:
+
+    depth 3: 7,620 nodes, 5,139 leaves, about 1.02 seconds wall prep;
+    depth 8: 170,816 nodes, 84,360 leaves, about 16.92 seconds wall prep;
+    prepared trace: 821,770 subdivisions, 105,414 isolated boxes,
+      104,323 fold attempts, 103,100 surface-box overflow attempts;
+    peak optimized audit RSS: about 244 MB.
+
+  Final ASAN+UBSAN validation, with leak scanning disabled because of the host
+  ptrace wrapper:
+
+    env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+      UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+      .build-asan/src/librt/tests/rt_brep_ray --cleanup-only
+
+    env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+      UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+      .build-asan/src/librt/tests/rt_brep_ray --crofton-hard-only
+
+    env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+      UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+      .build-asan/bin/brep-audit --ray-depth-compare --ray-count=0 \
+        --ray-pair=N --legacy-only \
+        /home/cyapp/step_corpus_g/second/bearings/UCP-206.g UCP_206_item.s
+
+  PASS for cleanup, hard analytic/Crofton, and N=0,3,26 with no sanitizer
+  diagnostic.  The three imported processes were intentionally parallel and
+  each peaked near 1.13 GB RSS under instrumentation.
+
+  Performance direction remains correctness first, optimization second.  The
+  UCP trace now supplies a concrete workload for the later Abert-informed
+  phase: eliminate flat/global face-span work, reduce dense seed trees, compact
+  immutable data, vectorize conservative projection/rejection, implement a
+  real batched vshot, and profile the corrector before changing it.  Do not
+  optimize away the exact partition, crack, reversal, Crofton, or grazing
+  gates established here.
+
+
 NEXT ACTIONS
 ------------
 
 Current priority after the structural-knot/regular-stream checkpoint:
 
 A. Keep the production adaptive depth at eight.  The first reproducible
-   14-database depth-three/eight prep stratum and the first three imported
-   identical-ray comparisons are recorded above.  Run `--ray-depth-compare`
-   across the remaining strata, retaining complete partition/reversal results,
+   14-database depth-three/eight prep stratum, six clean imported comparisons,
+   the status-2 pole repair, and the UCP winding/overlap repair are recorded
+   above.  Continue `--ray-depth-compare` across the remaining strata, using
+   `--ray-pair` and `--legacy-only` to ratchet every failure before paying for
+   a full trace.  Retain complete partition/reversal results, orientation,
    prepared selection and fallback populations, face/span/status-2/trim/scale
    fields, actual requested-depth prep statistics, RSS, and cache behavior.
    Add feature-targeted rays so a high miss fraction does not masquerade as
@@ -6659,12 +6876,13 @@ B. Preserve adaptive depth three as the present conservative experimental
    18-shard optimized ray gate, the seven rebuilt-cache cases, sanitizer
    qualification, and exact identical-line partition results.
 C. Use the deterministic hard replay as the seed of the difficult-solver C/C++
-   corpus.  The first genuine STEP failure is now captured as the status-2
-   analytic-revolution sphere pole and ratcheted under scale, translation,
-   rotation, and reversal.  Add every subsequent imported discrepancy with
-   its complete geometry, ray, tolerance, span, box, root, event, and fallback
-   evidence; do not tune against an unnamed `.g` model or replace one failure
-   with another.
+   corpus.  The status-2 analytic-revolution sphere pole is ratcheted under
+   scale, translation, rotation, and reversal.  The UCP solid-assembly failure
+   is ratcheted by pure hit streams, an appended-overlapping-sphere CSG-union
+   oracle, exact imported pairs 0/3/26, and the complete 70-ray audit.  Add
+   every subsequent imported discrepancy with its complete geometry, ray,
+   tolerance, span, box, root, event, and fallback evidence; do not tune
+   against an unnamed `.g` model or replace one failure with another.
 D. Extend prepared authority only with separate complete proofs for the
    remaining categories: mixed fold/regular streams, trim-near and
    topology-boundary events, contact-only rays, curved vertex links, and
