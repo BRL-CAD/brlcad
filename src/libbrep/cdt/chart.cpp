@@ -678,6 +678,85 @@ cdt_face_chart::chart_to_native(const ON_2dPoint &chart_uv,
     return native_uv.IsValid();
 }
 
+bool
+cdt_face_chart::triangle_interior_sample(const long native_triangle[3],
+	ON_2dPoint &native_uv) const
+{
+    if (!native_triangle)
+	return false;
+    ON_2dPoint triangle[3];
+    for (int corner = 0; corner < 3; ++corner) {
+	bool found = false;
+	for (const cdt_chart_vertex &vertex : vertices) {
+	    if (vertex.native_point != native_triangle[corner] ||
+		    vertex.id < 0 || (size_t)vertex.id >= points.size())
+		continue;
+	    triangle[corner] = ON_2dPoint(
+		points[(size_t)vertex.id].first,
+		points[(size_t)vertex.id].second);
+	    found = true;
+	    break;
+	}
+	if (!found)
+	    return false;
+    }
+
+    const long double abx = (long double)triangle[1].x - triangle[0].x;
+    const long double aby = (long double)triangle[1].y - triangle[0].y;
+    const long double acx = (long double)triangle[2].x - triangle[0].x;
+    const long double acy = (long double)triangle[2].y - triangle[0].y;
+    if (!(std::fabs(abx * acy - aby * acx) > 0.0L))
+	return false;
+
+    double opposite_length[3];
+    double length_sum = 0.0;
+    for (int corner = 0; corner < 3; ++corner) {
+	const ON_2dPoint &first = triangle[(corner + 1) % 3];
+	const ON_2dPoint &second = triangle[(corner + 2) % 3];
+	opposite_length[corner] = first.DistanceTo(second);
+	length_sum += opposite_length[corner];
+    }
+    if (!(length_sum > 0.0) || !std::isfinite(length_sum))
+	return false;
+    const ON_2dPoint chart_uv(
+	(opposite_length[0] * triangle[0].x +
+	 opposite_length[1] * triangle[1].x +
+	 opposite_length[2] * triangle[2].x) / length_sum,
+	(opposite_length[0] * triangle[0].y +
+	 opposite_length[1] * triangle[1].y +
+	 opposite_length[2] * triangle[2].y) / length_sum);
+    return chart_to_native(chart_uv, native_uv);
+}
+
+int
+cdt_face_chart::triangle_orientation(const long native_triangle[3]) const
+{
+    if (!native_triangle)
+	return 0;
+    ON_2dPoint triangle[3];
+    for (int corner = 0; corner < 3; ++corner) {
+	bool found = false;
+	for (const cdt_chart_vertex &vertex : vertices) {
+	    if (vertex.native_point != native_triangle[corner] ||
+		    vertex.id < 0 || (size_t)vertex.id >= points.size())
+		continue;
+	    triangle[corner] = ON_2dPoint(
+		points[(size_t)vertex.id].first,
+		points[(size_t)vertex.id].second);
+	    found = true;
+	    break;
+	}
+	if (!found)
+	    return 0;
+    }
+    const long double abx = (long double)triangle[1].x - triangle[0].x;
+    const long double aby = (long double)triangle[1].y - triangle[0].y;
+    const long double acx = (long double)triangle[2].x - triangle[0].x;
+    const long double acy = (long double)triangle[2].y - triangle[0].y;
+    const long double cross = abx * acy - aby * acx;
+    return (cross > 0.0L) - (cross < 0.0L);
+}
+
 long
 cdt_face_chart::native_point(int chart_point) const
 {

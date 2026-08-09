@@ -846,6 +846,8 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	s_cdt->brep->m_F[fmesh->f_id]);
     if (fmesh->valid(0))
 	return true;
+    if (fmesh->repair_incorrect_normal_edges() && fmesh->valid(0))
+	return true;
 
     const size_t initial_folds = fmesh->incorrect_normal_count();
     const size_t initial_intersections = fmesh->self_intersections(NULL,
@@ -877,7 +879,8 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 		fmesh->f_id);
 	    return false;
 	}
-	if (fmesh->valid(0)) {
+	if (fmesh->valid(0) || (fmesh->repair_incorrect_normal_edges() &&
+		fmesh->valid(0))) {
 	    bu_log("Face %d: chart refinement certified after %zu "
 		"inserted points\n", fmesh->f_id, refinement_points);
 	    return true;
