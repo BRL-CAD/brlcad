@@ -701,6 +701,28 @@ report_grazing_trace(const char *label, double chord_ratio, int reverse,
 	trace.physical_event_regular_pair_complement_visited,
 	trace.physical_event_regular_pair_complement_high_water,
 	trace.physical_event_regular_pair_failure_stage);
+    std::printf("  singular attempts/line/collapsed/excluded/sign/resolved/"
+	"failed/stored/overflow=%zu/%zu/%zu/%zu/%zu/%zu/%zu/%zu/%zu "
+	"events=%zu/%zu/%zu/%zu owned/normals/mismatch=%zu/%zu/%zu "
+	"max-line/residual=%.3g/%.3g\n",
+	trace.surface_singular_attempts,
+	trace.surface_singular_line_candidates,
+	trace.surface_singular_collapsed_sides,
+	trace.surface_singular_deflated_exclusions,
+	trace.surface_singular_determinant_signed,
+	trace.surface_singular_resolved_spans,
+	trace.surface_singular_span_failures,
+	trace.stored_surface_singular_spans,
+	trace.surface_singular_span_overflow,
+	trace.physical_event_singular_attempts,
+	trace.physical_event_singular_candidates,
+	trace.physical_event_singular_certified,
+	trace.physical_event_singular_failures,
+	trace.physical_event_singular_owned_spans,
+	trace.physical_event_singular_normal_checks,
+	trace.physical_event_singular_normal_mismatches,
+	trace.surface_singular_max_line_distance,
+	trace.surface_singular_max_boundary_residual);
     for (size_t box_index = 0; box_index < trace.stored_surface_boxes;
 	    ++box_index) {
 	const struct rt_brep_trace_surface_box &box =
@@ -743,6 +765,116 @@ report_grazing_trace(const char *label, double chord_ratio, int reverse,
 	    ++status)
 	std::printf(" %zu", trace.solver_status[status]);
     std::printf("\n");
+}
+
+
+static void
+report_pole_trace(const char *label, const struct rt_brep_shot_trace &trace)
+{
+    std::printf("%s pole trace: spans candidate/excluded=%zu/%zu "
+	"singular attempts/line/collapse/exclude/sign/resolved/stored/fail="
+	"%zu/%zu/%zu/%zu/%zu/%zu/%zu/%zu "
+	"events attempts/candidates/certified/fail/owned/normals/mismatch="
+	"%zu/%zu/%zu/%zu/%zu/%zu/%zu "
+	"physical stored/complete/material=%zu/%zu/%zu "
+	"prepared selected/fallback/hits=%zu/%d/%zu boxes/local=%zu/%zu\n",
+	label, trace.candidate_surface_spans, trace.excluded_surface_spans,
+	trace.surface_singular_attempts,
+	trace.surface_singular_line_candidates,
+	trace.surface_singular_collapsed_sides,
+	trace.surface_singular_deflated_exclusions,
+	trace.surface_singular_determinant_signed,
+	trace.surface_singular_resolved_spans,
+	trace.stored_surface_singular_spans,
+	trace.surface_singular_span_failures,
+	trace.physical_event_singular_attempts,
+	trace.physical_event_singular_candidates,
+	trace.physical_event_singular_certified,
+	trace.physical_event_singular_failures,
+	trace.physical_event_singular_owned_spans,
+	trace.physical_event_singular_normal_checks,
+	trace.physical_event_singular_normal_mismatches,
+	trace.stored_physical_events, trace.physical_event_complete,
+	trace.physical_event_material_segments,
+	trace.prepared_production_selected,
+	trace.prepared_production_fallback,
+	trace.prepared_production_hits,
+	trace.stored_surface_boxes, trace.stored_local_roots);
+}
+
+
+static int
+check_pole_prepared_trace(const char *label, struct soltab *brep_stp,
+    struct rt_i *rtip, struct resource *resp, const point_t origin,
+    const vect_t direction, double expected_in, double expected_out)
+{
+    sampled_ray ray;
+    VMOVE(ray.origin, origin);
+    VMOVE(ray.direction, direction);
+    struct rt_brep_shot_trace trace;
+    const int hits = shoot_brep_trace(brep_stp, rtip, resp, ray, trace);
+    const double distance_tolerance = std::max(1.0e-9,
+	rtip->rti_tol.dist);
+    bool valid = hits == 2 && trace.prepared_production_selected == 1 &&
+	trace.prepared_production_fallback == RT_BREP_PREPARED_FALLBACK_NONE &&
+	trace.prepared_production_hits == 2 &&
+	trace.candidate_surface_spans > 0 &&
+	trace.surface_singular_attempts == trace.candidate_surface_spans &&
+	trace.surface_singular_line_candidates ==
+	    trace.candidate_surface_spans &&
+	trace.surface_singular_collapsed_sides ==
+	    trace.candidate_surface_spans &&
+	trace.surface_singular_deflated_exclusions ==
+	    trace.candidate_surface_spans &&
+	trace.surface_singular_determinant_signed ==
+	    trace.candidate_surface_spans &&
+	trace.surface_singular_resolved_spans ==
+	    trace.candidate_surface_spans &&
+	trace.stored_surface_singular_spans ==
+	    trace.candidate_surface_spans &&
+	!trace.surface_singular_span_failures &&
+	!trace.surface_singular_span_overflow &&
+	!trace.surface_subdivision_boxes && !trace.surface_isolated_boxes &&
+	!trace.stored_surface_boxes && !trace.stored_local_roots &&
+	trace.physical_event_singular_attempts == 1 &&
+	trace.physical_event_singular_candidates == 2 &&
+	trace.physical_event_singular_certified == 1 &&
+	!trace.physical_event_singular_failures &&
+	trace.physical_event_singular_owned_spans ==
+	    trace.candidate_surface_spans &&
+	trace.physical_event_singular_normal_checks ==
+	    trace.candidate_surface_spans &&
+	!trace.physical_event_singular_normal_mismatches &&
+	trace.stored_physical_events == 2 &&
+	trace.physical_event_complete == 1 &&
+	trace.physical_event_material_segments == 1 &&
+	!trace.physical_event_state_failures &&
+	!trace.physical_event_subminimum_contacts &&
+	!trace.physical_event_tolerance_ambiguous;
+    for (size_t event_index = 0; valid && event_index < 2; ++event_index) {
+	const struct rt_brep_trace_physical_event &event =
+	    trace.physical_events[event_index];
+	const double expected = event_index ? expected_out : expected_in;
+	const double normal_dot = event.normal[0] * direction[0] +
+	    event.normal[1] * direction[1] +
+	    event.normal[2] * direction[2];
+	valid = event.certificate == RT_BREP_TRACE_EVENT_SINGULAR_POLE &&
+	    event.source_kind == RT_BREP_TRACE_EVENT_SOURCE_SINGULAR_POLE &&
+	    event.source_box_count > 0 &&
+	    event.source_root < trace.stored_surface_singular_spans &&
+	    event.edge_index == -1 && event.vertex_index == -1 &&
+	    event.hit_class == 0 && event.trim_status == 0 &&
+	    event.determinant_sign != 0 && std::isfinite(normal_dot) &&
+	    fabs(event.dist - expected) <= distance_tolerance &&
+	    (event_index ?
+		(event.direction == RT_BREP_TRACE_LEAVING && normal_dot > 0.0) :
+		(event.direction == RT_BREP_TRACE_ENTERING && normal_dot < 0.0));
+    }
+    if (valid)
+	return 0;
+    std::printf("FAIL: %-18s pole prepared-path ratchet\n", label);
+    report_pole_trace(label, trace);
+    return 1;
 }
 
 
@@ -3517,7 +3649,8 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 
 static int
 check_transformed_sphere(struct rt_i *rtip, struct resource *resp,
-    const char *fixture_name, const point_t center, double radius)
+    const char *fixture_name, const point_t center, double radius,
+    bool pole_only = false)
 {
     int failures = 0;
     struct rt_ell_internal ell = {};
@@ -3588,14 +3721,23 @@ check_transformed_sphere(struct rt_i *rtip, struct resource *resp,
     rays[2].expected_in = -radius;
     rays[2].expected_out = radius;
 
-    for (int repeat = 0; repeat < 4; ++repeat) {
-	for (size_t i = 0; i < sizeof(rays) / sizeof(rays[0]); ++i) {
+    const int repeats = pole_only ? 1 : 4;
+    const size_t ray_count = pole_only ? 1 :
+	sizeof(rays) / sizeof(rays[0]);
+    for (int repeat = 0; repeat < repeats; ++repeat) {
+	for (size_t i = 0; i < ray_count; ++i) {
 	    char label[128];
 	    std::snprintf(label, sizeof(label), "%s %s", fixture_name,
 		rays[i].name);
-	    failures += check_ray(label, implicit_stp, brep_stp, rtip, resp,
+	    const int case_failures = check_ray(label, implicit_stp, brep_stp,
+		rtip, resp,
 		rays[i].origin, rays[i].direction, rays[i].expected_in,
 		rays[i].expected_out);
+	    failures += case_failures;
+	    if (pole_only)
+		failures += check_pole_prepared_trace(label, brep_stp, rtip,
+		    resp, rays[i].origin, rays[i].direction,
+		    rays[i].expected_in, rays[i].expected_out);
 	}
     }
 
@@ -16983,6 +17125,7 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(mode, "--source-union-only");
     const bool fold_only = mode && BU_STR_EQUAL(mode, "--fold-only");
     const bool core_only = mode && BU_STR_EQUAL(mode, "--core-only");
+    const bool pole_only = mode && BU_STR_EQUAL(mode, "--pole-only");
     const bool directed_only = mode && BU_STR_EQUAL(mode, "--directed-only");
     const bool crofton_only = mode && BU_STR_EQUAL(mode, "--crofton-only");
     const bool seam_only = mode && BU_STR_EQUAL(mode, "--seam-only");
@@ -16997,7 +17140,7 @@ main(int argc, char **argv)
 	    !interval_only && !local_root_only && !grazing_root_only &&
 	    !trim_interval_only &&
 	    !source_union_only &&
-	    !fold_only && !core_only &&
+	    !fold_only && !core_only && !pole_only &&
 	    !directed_only &&
 	    !crofton_only && !seam_only && !endpoint_only &&
 	    !nonisoparametric_only && !contact_trim_only && !defect_only)
@@ -17007,7 +17150,7 @@ main(int argc, char **argv)
 	    "--grazing-root-only|"
 	    "--trim-interval-only|"
 	    "--source-union-only|--fold-only|"
-	    "--core-only|"
+	    "--core-only|--pole-only|"
 	    "--directed-only|--crofton-only|--seam-only|--endpoint-only|"
 	    "--nonisoparametric-only|--contact-trim-only|--defect-only] "
 	    "[--surface-tree-depth=0..%d]\n",
@@ -17030,7 +17173,7 @@ main(int argc, char **argv)
 	return check_brep_source_union_solver() ? 1 : 0;
     if (fold_only)
 	return check_brep_fold_solver() ? 1 : 0;
-    const bool split_core = directed_only || grazing_root_only ||
+    const bool split_core = pole_only || directed_only || grazing_root_only ||
 	crofton_only || seam_only || endpoint_only;
     const bool run_directed = !split_core || directed_only;
     const bool run_grazing_root = !split_core || directed_only ||
@@ -17187,6 +17330,29 @@ main(int argc, char **argv)
 
 	if (report_grazing)
 	    grazing_report(implicit_stp, brep_stp, rtip, &resp, radius);
+    }
+    if (pole_only) {
+	const size_t pole_ray[] = {0, 1, 4};
+	for (size_t pole_index = 0;
+		pole_index < sizeof(pole_ray) / sizeof(pole_ray[0]);
+		++pole_index) {
+	    const size_t ray_index = pole_ray[pole_index];
+	    const int case_failures = check_ray(rays[ray_index].label,
+		implicit_stp, brep_stp, rtip, &resp, rays[ray_index].origin,
+		rays[ray_index].direction, rays[ray_index].expected_in,
+		rays[ray_index].expected_out);
+	    failures += case_failures;
+	    failures += check_pole_prepared_trace(rays[ray_index].label,
+		brep_stp, rtip, &resp, rays[ray_index].origin,
+		rays[ray_index].direction, rays[ray_index].expected_in,
+		rays[ray_index].expected_out);
+	}
+	point_t small_center = {1.25, -2.5, 5.0};
+	failures += check_transformed_sphere(rtip, &resp,
+	    "small-translated", small_center, 0.01, true);
+	point_t large_center = {1.0e6, -2.0e6, 3.0e6};
+	failures += check_transformed_sphere(rtip, &resp,
+	    "large-translated", large_center, 1.0e4, true);
     }
     if (run_grazing_root) {
 	const ON_3dPoint grazing_center(0.0, 0.0, 0.0);

@@ -536,6 +536,12 @@ brep_build_surface_data(struct brep_specific *bs)
 	}
 
 	bool complete = true;
+	const ON_Interval nurbs_domain[2] = {
+	    nurbs.Domain(0), nurbs.Domain(1)
+	};
+	const auto same_parameter = [](double first, double second) {
+	    return !(first < second) && !(second < first);
+	};
 	for (int u_span = 0;
 		u_span <= nurbs.m_cv_count[0] - nurbs.m_order[0]; ++u_span) {
 	    const double u_lower =
@@ -563,6 +569,25 @@ brep_build_surface_data(struct brep_specific *bs)
 		span.surface_domain[1] = ON_Interval(v_lower, v_upper);
 		span.face_index = face_index;
 		span.span_index = (int)bs->surface_spans.size();
+		/* OpenNURBS side numbering is south/east/north/west.  A
+		 * status-1 NURBS form has the surface's parameterization, so a
+		 * Bezier span on one of its singular outer sides carries the
+		 * collapsed-boundary assertion into the direct solver.  Status 2
+		 * needs an interval parameter-map proof and remains unsupported. */
+		if (record.nurb_form_status == 1) {
+		    if (same_parameter(v_lower, nurbs_domain[1].Min()) &&
+			    surface->IsSingular(0))
+			span.singular_side_mask |= 1u << 0;
+		    if (same_parameter(u_upper, nurbs_domain[0].Max()) &&
+			    surface->IsSingular(1))
+			span.singular_side_mask |= 1u << 1;
+		    if (same_parameter(v_upper, nurbs_domain[1].Max()) &&
+			    surface->IsSingular(2))
+			span.singular_side_mask |= 1u << 2;
+		    if (same_parameter(u_lower, nurbs_domain[0].Min()) &&
+			    surface->IsSingular(3))
+			span.singular_side_mask |= 1u << 3;
+		}
 		bs->surface_spans.push_back(span);
 	    }
 	    if (!complete)
@@ -8029,6 +8054,183 @@ brep_expansion_rotated_surface_hull_status(
 
 
 static bool
+brep_singular_side_parameter(int side, int &direction, bool &maximum_side)
+{
+    if (side == 0 || side == 2) {
+	direction = 1;
+	maximum_side = side == 2;
+	return true;
+    }
+    if (side == 1 || side == 3) {
+	direction = 0;
+	maximum_side = side == 1;
+	return true;
+    }
+    return false;
+}
+
+
+/* If a Bernstein polynomial is zero on one parameter boundary, remove the
+ * corresponding v, (1-v), u, or (1-u) factor.  For example,
+ * p_j B_j^n(v) / v = (n/j) p_j B_{j-1}^{n-1}(v).  Interval division keeps
+ * the non-power-of-two factors outward. */
+static bool
+brep_interval_surface_deflate_boundary(const brep_interval *input,
+    const int input_order[2], int direction, bool maximum_side,
+    brep_interval *output, int output_order[2])
+{
+    if (!input || !input_order || !output || !output_order ||
+	    (direction != 0 && direction != 1) || input_order[0] < 2 ||
+	    input_order[1] < 2 ||
+	    input_order[0] > RT_BREP_DETERMINANT_TEST_MAX_ORDER ||
+	    input_order[1] > RT_BREP_DETERMINANT_TEST_MAX_ORDER)
+	return false;
+    output_order[0] = input_order[0] - (direction == 0 ? 1 : 0);
+    output_order[1] = input_order[1] - (direction == 1 ? 1 : 0);
+    const int degree = input_order[direction] - 1;
+    for (int i = 0; i < output_order[0]; ++i) {
+	for (int j = 0; j < output_order[1]; ++j) {
+	    const int output_parameter = direction == 0 ? i : j;
+	    const int input_parameter = maximum_side ? output_parameter :
+		output_parameter + 1;
+	    const int denominator = maximum_side ?
+		degree - output_parameter : input_parameter;
+	    const int input_i = direction == 0 ? input_parameter : i;
+	    const int input_j = direction == 1 ? input_parameter : j;
+	    const brep_interval scaled = brep_interval_scale((double)degree,
+		input[(size_t)input_i * input_order[1] + input_j]);
+	    brep_interval coefficient;
+	    if (denominator <= 0 || !brep_interval_divide_nonzero(scaled,
+		    {(double)denominator, (double)denominator}, coefficient))
+		return false;
+	    output[(size_t)i * output_order[1] + j] = coefficient;
+	}
+    }
+    return true;
+}
+
+
+static void
+brep_interval_surface_zero_boundary(
+    brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const int order[2], int direction, bool maximum_side)
+{
+    const int fixed = maximum_side ? order[direction] - 1 : 0;
+    const int count = order[1 - direction];
+    for (int equation = 0; equation < 2; ++equation) {
+	for (int i = 0; i < count; ++i) {
+	    const int u = direction == 0 ? fixed : i;
+	    const int v = direction == 1 ? fixed : i;
+	    values[equation][(size_t)u * order[1] + v] = {0.0, 0.0};
+	}
+    }
+}
+
+
+static bool
+brep_interval_vector_hull_excluded(
+    const brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    size_t count, size_t &high_water)
+{
+    if (!values || !count || count > BREP_DIRECT_BEZIER_MAX_CVS)
+	return false;
+    const auto separated = [&](double axis_x, double axis_y) {
+	if (!std::isfinite(axis_x) || !std::isfinite(axis_y) ||
+		!(hypot(axis_x, axis_y) > DBL_MIN))
+	    return false;
+	bool positive = true;
+	bool negative = true;
+	for (size_t i = 0; i < count; ++i) {
+	    const brep_interval projection = brep_interval_add(
+		brep_interval_scale(axis_x, values[0][i]),
+		brep_interval_scale(axis_y, values[1][i]));
+	    positive = positive && projection.minimum > 0.0;
+	    negative = negative && projection.maximum < 0.0;
+	    if (!positive && !negative)
+		return false;
+	}
+	return positive || negative;
+    };
+
+    double sum_x = 0.0;
+    double sum_y = 0.0;
+    for (size_t i = 0; i < count; ++i) {
+	const double midpoint_x = 0.5 * values[0][i].minimum +
+	    0.5 * values[0][i].maximum;
+	const double midpoint_y = 0.5 * values[1][i].minimum +
+	    0.5 * values[1][i].maximum;
+	sum_x += midpoint_x;
+	sum_y += midpoint_y;
+    }
+    if (separated(sum_x, sum_y))
+	return true;
+    for (size_t i = 0; i < count; ++i) {
+	const double midpoint_x = 0.5 * values[0][i].minimum +
+	    0.5 * values[0][i].maximum;
+	const double midpoint_y = 0.5 * values[1][i].minimum +
+	    0.5 * values[1][i].maximum;
+	if (separated(midpoint_x, midpoint_y))
+	    return true;
+    }
+    (void)high_water;
+    return false;
+}
+
+
+static bool
+brep_singular_deflated_excluded(
+    const brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const int order[2], int direction, bool maximum_side,
+    size_t &high_water)
+{
+    brep_interval deflated[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    int deflated_order[2] = {0, 0};
+    for (int equation = 0; equation < 2; ++equation) {
+	int equation_order[2];
+	if (!brep_interval_surface_deflate_boundary(values[equation], order,
+		direction, maximum_side, deflated[equation],
+		equation_order))
+	    return false;
+	if (!equation)
+	    std::copy(equation_order, equation_order + 2, deflated_order);
+	else if (equation_order[0] != deflated_order[0] ||
+		equation_order[1] != deflated_order[1])
+	    return false;
+    }
+    const size_t count = (size_t)deflated_order[0] * deflated_order[1];
+    for (int equation = 0; equation < 2; ++equation)
+	if (brep_interval_coefficient_hull_excluded(deflated[equation], count))
+	    return true;
+    if (brep_interval_vector_hull_excluded(deflated, count, high_water))
+	return true;
+    return brep_expansion_rotated_surface_hull_status(deflated,
+	deflated_order, high_water) == BREP_ROTATED_HULL_EXCLUDED;
+}
+
+
+static bool
+brep_singular_deflated_determinant_sign(
+    const brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const int order[2], int direction, bool maximum_side,
+    int &determinant_sign)
+{
+    brep_interval determinant[RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+    int determinant_order[2];
+    if (!brep_interval_surface_determinant_coefficients(values, order[0],
+	    order[1], determinant, determinant_order))
+	return false;
+    brep_interval deflated[RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+    int deflated_order[2];
+    if (!brep_interval_surface_deflate_boundary(determinant,
+	    determinant_order, direction, maximum_side, deflated,
+	    deflated_order))
+	return false;
+    return brep_interval_determinant_sign_from_coefficients(deflated,
+	deflated_order, determinant_sign) && determinant_sign;
+}
+
+
+static bool
 brep_fold_scalar_surface_evaluate(const double *values, int u_order,
     int v_order, const double parameter[2], double &value)
 {
@@ -9959,6 +10161,188 @@ brep_trace_fold_certificates(struct rt_brep_shot_trace *trace,
 }
 
 
+/* Resolve one Bezier span whose only intersection with the line is a
+ * collapsed singular side.  IsSingular supplies the exact topological
+ * boundary assertion.  The line-to-pole and collapsed-control checks bound
+ * its binary64 realization, after which both ray-plane residual boundaries
+ * are set to the asserted zero and their common Bernstein factor is removed.
+ * Exclusion of the deflated residual pair proves there is no distinct
+ * interior root in this span.  Deflating the Jacobian determinant proves a
+ * constant oriented crossing sign despite the singular UV Jacobian itself. */
+static bool
+brep_trace_singular_span(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs,
+    const brep_surface_coefficients &coefficients,
+    const brep_surface_span &span, const ON_Ray &ray, int side)
+{
+    if (!trace || !bs || !bs->brep || side < 0 || side > 3 ||
+	    span.face_index < 0 || span.face_index >= bs->brep->m_F.Count() ||
+	    !(span.singular_side_mask & (1u << side)) ||
+	    !coefficients.expansion_available)
+	return false;
+    trace->surface_singular_attempts++;
+
+    int direction = -1;
+    bool maximum_side = false;
+    if (!brep_singular_side_parameter(side, direction, maximum_side))
+	return false;
+    const int fixed = maximum_side ? coefficients.order[direction] - 1 : 0;
+    const int free_count = coefficients.order[1 - direction];
+    ON_3dPoint pole = ON_3dPoint::UnsetPoint;
+    double coordinate_scale = 1.0;
+    double maximum_boundary_residual = 0.0;
+    double maximum_collapse_distance = 0.0;
+    for (int i = 0; i < free_count; ++i) {
+	const int u = direction == 0 ? fixed : i;
+	const int v = direction == 1 ? fixed : i;
+	const size_t index = (size_t)u * coefficients.order[1] + v;
+	ON_4dPoint cv;
+	if (!span.surface.GetCV(u, v, cv) || !cv.IsValid() ||
+		!(cv.w > 0.0) || !std::isfinite(cv.w))
+	    return false;
+	const ON_3dPoint point(cv.x / cv.w, cv.y / cv.w, cv.z / cv.w);
+	if (!point.IsValid())
+	    return false;
+	if (!pole.IsValid())
+	    pole = point;
+	else
+	    maximum_collapse_distance = std::max(maximum_collapse_distance,
+		point.DistanceTo(pole));
+	coordinate_scale = std::max(coordinate_scale,
+	    std::max(fabs(point.x), std::max(fabs(point.y), fabs(point.z))));
+	for (int equation = 0; equation < 2; ++equation) {
+	    const brep_interval value =
+		coefficients.value_expansion_interval[equation][index];
+	    maximum_boundary_residual = std::max(maximum_boundary_residual,
+		brep_interval_absolute_upper(value) / cv.w);
+	}
+    }
+    if (!pole.IsValid())
+	return false;
+    coordinate_scale = std::max(coordinate_scale,
+	std::max(fabs(ray.m_origin.x), std::max(fabs(ray.m_origin.y),
+	    fabs(ray.m_origin.z))));
+    const double span_scale = span.bbox.IsValid() ?
+	span.bbox.Diagonal().Length() : 0.0;
+    coordinate_scale = std::max(coordinate_scale, span_scale);
+    const double line_tolerance = std::max(ON_ZERO_TOLERANCE,
+	4096.0 * DBL_EPSILON * coordinate_scale);
+    if (!std::isfinite(maximum_collapse_distance) ||
+	    maximum_collapse_distance > line_tolerance ||
+	    !std::isfinite(maximum_boundary_residual) ||
+	    maximum_boundary_residual > line_tolerance)
+	return false;
+    trace->surface_singular_collapsed_sides++;
+
+    const double direction_squared = ray.m_dir * ray.m_dir;
+    if (!(direction_squared > DBL_MIN) || !std::isfinite(direction_squared))
+	return false;
+    const double parameter = ((pole - ray.m_origin) * ray.m_dir) /
+	direction_squared;
+    const ON_3dPoint closest = ray.m_origin + parameter * ray.m_dir;
+    const double line_distance = closest.DistanceTo(pole);
+    if (!std::isfinite(parameter) || !closest.IsValid() ||
+	    !std::isfinite(line_distance) || line_distance > line_tolerance)
+	return false;
+    trace->surface_singular_line_candidates++;
+
+    brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    const size_t coefficient_count =
+	(size_t)coefficients.order[0] * coefficients.order[1];
+    for (int equation = 0; equation < 2; ++equation)
+	for (size_t i = 0; i < coefficient_count; ++i)
+	    values[equation][i] =
+		coefficients.value_expansion_interval[equation][i];
+    brep_interval_surface_zero_boundary(values, coefficients.order,
+	direction, maximum_side);
+    size_t high_water = coefficients.expansion_high_water;
+    if (!brep_singular_deflated_excluded(values, coefficients.order,
+	    direction, maximum_side, high_water))
+	return false;
+    trace->surface_singular_deflated_exclusions++;
+
+    int determinant_sign = 0;
+    if (!brep_singular_deflated_determinant_sign(values,
+	    coefficients.order, direction, maximum_side, determinant_sign))
+	return false;
+    trace->surface_singular_determinant_signed++;
+
+    const double interior_offset = 1.0 / 4096.0;
+    double local_uv[2] = {0.5, 0.5};
+    local_uv[direction] = maximum_side ? 1.0 - interior_offset :
+	interior_offset;
+    const ON_2dPoint normal_uv(
+	span.surface_domain[0].ParameterAt(local_uv[0]),
+	span.surface_domain[1].ParameterAt(local_uv[1]));
+    ON_3dPoint normal_point;
+    ON_3dVector normal;
+
+    const ON_Surface *face_surface =
+	bs->brep->m_F[span.face_index].SurfaceOf();
+    if (!face_surface || !surface_EvNormal(face_surface, normal_uv.x,
+	    normal_uv.y, normal_point, normal) || !normal_point.IsValid() ||
+	    !normal.IsValid() ||
+	    !normal.Unitize())
+	return false;
+    if (bs->brep->m_F[span.face_index].m_bRev)
+	normal.Reverse();
+    int oriented_sign = determinant_sign;
+    if (bs->brep->m_F[span.face_index].m_bRev)
+	oriented_sign = -oriented_sign;
+    const int event_direction = oriented_sign < 0 ? brep_hit::ENTERING :
+	brep_hit::LEAVING;
+    const double normal_dot = normal * ray.m_dir;
+    if (!std::isfinite(normal_dot) ||
+	    fabs(normal_dot) <= BREP_GRAZING_DOT_TOL ||
+	    (normal_dot < 0.0 ? brep_hit::ENTERING : brep_hit::LEAVING) !=
+		event_direction)
+	return false;
+
+    const double ray_length = sqrt(direction_squared);
+    const double t_tolerance = std::nextafter(
+	line_tolerance / ray_length + 4096.0 * DBL_EPSILON *
+	    std::max(1.0, fabs(parameter)), INFINITY);
+    if (!std::isfinite(t_tolerance) || !(t_tolerance > 0.0) ||
+	    trace->stored_surface_singular_spans >=
+		RT_BREP_TRACE_MAX_SINGULAR_SPANS) {
+	if (trace->stored_surface_singular_spans >=
+		RT_BREP_TRACE_MAX_SINGULAR_SPANS)
+	    trace->surface_singular_span_overflow++;
+	return false;
+    }
+
+    struct rt_brep_trace_singular_span &stored =
+	trace->surface_singular_spans[trace->stored_surface_singular_spans++];
+    stored.dist = parameter;
+    stored.t_min = parameter - t_tolerance;
+    stored.t_max = parameter + t_tolerance;
+    stored.uv[0] = span.surface_domain[0].Mid();
+    stored.uv[1] = span.surface_domain[1].Mid();
+    stored.uv[direction] = maximum_side ?
+	span.surface_domain[direction].Max() :
+	span.surface_domain[direction].Min();
+    stored.normal[0] = normal.x;
+    stored.normal[1] = normal.y;
+    stored.normal[2] = normal.z;
+    stored.line_distance = line_distance;
+    stored.boundary_residual = maximum_boundary_residual;
+    stored.face_index = span.face_index;
+    stored.span_index = span.span_index;
+    stored.side = side;
+    stored.determinant_sign = determinant_sign;
+    stored.direction = event_direction;
+    trace->surface_singular_resolved_spans++;
+    trace->surface_singular_expansion_high_water = std::max(
+	trace->surface_singular_expansion_high_water, high_water);
+    trace->surface_singular_max_line_distance = std::max(
+	(double)trace->surface_singular_max_line_distance, line_distance);
+    trace->surface_singular_max_boundary_residual = std::max(
+	(double)trace->surface_singular_max_boundary_residual,
+	maximum_boundary_residual);
+    return true;
+}
+
+
 static void
 brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
     const brep_surface_coefficients &coefficients,
@@ -10434,13 +10818,29 @@ brep_trace_surface_spans(struct rt_brep_shot_trace *trace,
 	    } else {
 		trace->candidate_surface_spans++;
 		brep_surface_coefficients coefficients;
-		if (brep_surface_coefficients_init(coefficients,
-			bs->surface_spans[span_index], ray, first, second))
-		    brep_trace_surface_isolation(trace, coefficients,
-			bs->surface_spans[span_index], ray, adaptive, true,
-			target_t_width, record.nurb_form_status == 2);
-		else
+		const brep_surface_span &span = bs->surface_spans[span_index];
+		if (brep_surface_coefficients_init(coefficients, span, ray,
+			first, second)) {
+		    bool singular_resolved = false;
+		    int singular_side = -1;
+		    for (int side = 0; side < 4; ++side) {
+			if (!(span.singular_side_mask & (1u << side)))
+			    continue;
+			singular_side = singular_side == -1 ? side : -2;
+		    }
+		    if (singular_side >= 0)
+			singular_resolved = brep_trace_singular_span(trace, bs,
+			    coefficients, span, ray, singular_side);
+		    if (!singular_resolved) {
+			if (span.singular_side_mask)
+			    trace->surface_singular_span_failures++;
+			brep_trace_surface_isolation(trace, coefficients, span,
+			    ray, adaptive, true, target_t_width,
+			    record.nurb_form_status == 2);
+		    }
+		} else {
 		    trace->surface_workspace_exhausted++;
+		}
 	    }
 	}
     }
@@ -13685,7 +14085,7 @@ static bool
 brep_trace_make_hit(const struct brep_specific *bs, const ON_Ray &ray,
 	int face_index, double dist, const double uv[2], int trim_status,
 	int hit_class, int direction, int adjacency, bool nurbs_parameter,
-	brep_hit &hit)
+	brep_hit &hit, const fastf_t *normal_override = NULL)
 {
     if (!bs || !bs->brep || face_index < 0 ||
 	    face_index >= bs->brep->m_F.Count() ||
@@ -13698,13 +14098,19 @@ brep_trace_make_hit(const struct brep_specific *bs, const ON_Ray &ray,
     if (nurbs_parameter &&
 	    !brep_surface_parameter_from_nurbs(bs, face_index, uv, surface_uv))
 	return false;
-    ON_3dPoint surface_point;
     ON_3dVector normal;
-    if (!surface || !surface_EvNormal(surface, surface_uv.x, surface_uv.y,
-	    surface_point, normal) || !normal.Unitize())
-	return false;
-    if (face.m_bRev)
-	normal.Reverse();
+    if (normal_override) {
+	normal.Set(normal_override[0], normal_override[1], normal_override[2]);
+	if (!normal.IsValid() || !normal.Unitize())
+	    return false;
+    } else {
+	ON_3dPoint surface_point;
+	if (!surface || !surface_EvNormal(surface, surface_uv.x, surface_uv.y,
+		surface_point, normal) || !normal.Unitize())
+	    return false;
+	if (face.m_bRev)
+	    normal.Reverse();
+    }
     const double normal_dot = normal * ray.m_dir;
     const int evaluated_direction = normal_dot < 0.0 ?
 	brep_hit::ENTERING : brep_hit::LEAVING;
@@ -18465,6 +18871,164 @@ brep_trace_mixed_fold_physical_events(struct rt_brep_shot_trace *trace,
 }
 
 
+/* Combine every span on one collapsed surface side into a single geometric
+ * pole event.  This first production theorem is intentionally complete-line
+ * only: every candidate surface span must have been discharged by singular
+ * deflation, and no ordinary root or terminal box may remain.  Mixed pole and
+ * regular streams therefore fail closed for a later theorem. */
+static void
+brep_trace_singular_physical_events(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const ON_Ray &ray,
+    const struct bn_tol *tol)
+{
+    if (!trace || !bs || !bs->brep || !trace->stored_surface_singular_spans)
+	return;
+    trace->physical_event_singular_attempts++;
+    bool complete = bs->is_solid && !bs->plate_mode &&
+	trace->prepared_surface_spans && !trace->unsupported_surface_faces &&
+	trace->supported_surface_faces == bs->face_records.size() &&
+	trace->candidate_surface_spans + trace->excluded_surface_spans ==
+	    trace->prepared_surface_spans &&
+	trace->candidate_surface_spans == trace->surface_singular_resolved_spans &&
+	trace->surface_singular_resolved_spans ==
+	    trace->stored_surface_singular_spans &&
+	!trace->surface_singular_span_overflow &&
+	!trace->surface_singular_span_failures &&
+	!trace->surface_workspace_exhausted &&
+	!trace->surface_clip_restriction_failures &&
+	!trace->surface_box_overflow && !trace->stored_surface_boxes &&
+	!trace->stored_local_roots && !trace->stored_surface_fold_roots &&
+	!trace->local_root_overflow && !trace->local_trim_failures &&
+	!trace->stored_physical_events;
+
+    bool owned[RT_BREP_TRACE_MAX_SINGULAR_SPANS] = {};
+    struct rt_brep_trace_physical_event
+	candidate[RT_BREP_TRACE_MAX_PHYSICAL_EVENTS] = {};
+    size_t candidate_count = 0;
+    for (size_t first_index = 0; complete && first_index <
+	    trace->stored_surface_singular_spans; ++first_index) {
+	if (owned[first_index])
+	    continue;
+	const struct rt_brep_trace_singular_span &first =
+	    trace->surface_singular_spans[first_index];
+	trace->physical_event_singular_candidates++;
+	if (first.face_index < 0 || first.face_index >= bs->brep->m_F.Count() ||
+		first.span_index < 0 ||
+		(size_t)first.span_index >= bs->surface_spans.size() ||
+		first.side < 0 || first.side > 3 || !first.determinant_sign ||
+		(first.direction != brep_hit::ENTERING &&
+		 first.direction != brep_hit::LEAVING) ||
+		!std::isfinite(first.dist) || !std::isfinite(first.t_min) ||
+		!std::isfinite(first.t_max) || first.t_min > first.dist ||
+		first.dist > first.t_max) {
+	    complete = false;
+	    break;
+	}
+
+	size_t expected_spans = 0;
+	for (std::vector<brep_surface_span>::const_iterator span_it =
+		bs->surface_spans.begin(); span_it != bs->surface_spans.end();
+		++span_it)
+	    if (span_it->face_index == first.face_index &&
+		    (span_it->singular_side_mask & (1u << first.side)))
+		expected_spans++;
+
+	size_t group_count = 0;
+	double distance_sum = 0.0;
+	double t_minimum = -DBL_MAX;
+	double t_maximum = DBL_MAX;
+	ON_3dVector normal_sum(0.0, 0.0, 0.0);
+	const ON_3dVector first_normal(first.normal[0], first.normal[1],
+	    first.normal[2]);
+	bool group_complete = first_normal.IsValid();
+	for (size_t record_index = first_index; group_complete &&
+		record_index < trace->stored_surface_singular_spans;
+		++record_index) {
+	    const struct rt_brep_trace_singular_span &record =
+		trace->surface_singular_spans[record_index];
+	    if (record.face_index != first.face_index ||
+		    record.side != first.side)
+		continue;
+	    if (owned[record_index] || record.determinant_sign !=
+		    first.determinant_sign || record.direction != first.direction ||
+		    !std::isfinite(record.dist) || !std::isfinite(record.t_min) ||
+		    !std::isfinite(record.t_max)) {
+		group_complete = false;
+		break;
+	    }
+	    const ON_3dVector normal(record.normal[0], record.normal[1],
+		record.normal[2]);
+	    trace->physical_event_singular_normal_checks++;
+	    if (!normal.IsValid() ||
+		    first_normal * normal < 1.0 - 1.0e-4) {
+		trace->physical_event_singular_normal_mismatches++;
+		group_complete = false;
+		break;
+	    }
+	    owned[record_index] = true;
+	    group_count++;
+	    distance_sum += record.dist;
+	    t_minimum = std::max(t_minimum, (double)record.t_min);
+	    t_maximum = std::min(t_maximum, (double)record.t_max);
+	    normal_sum += normal;
+	}
+	if (!group_complete || !expected_spans || group_count != expected_spans ||
+		!(t_minimum <= t_maximum) || !normal_sum.Unitize() ||
+		candidate_count >= RT_BREP_TRACE_MAX_PHYSICAL_EVENTS) {
+	    complete = false;
+	    break;
+	}
+	const double distance = distance_sum / group_count;
+	if (!std::isfinite(distance) || distance < t_minimum ||
+		distance > t_maximum) {
+	    complete = false;
+	    break;
+	}
+
+	struct rt_brep_trace_physical_event &event =
+	    candidate[candidate_count++];
+	event.dist = distance;
+	event.t_min = t_minimum;
+	event.t_max = t_maximum;
+	event.uv[0] = first.uv[0];
+	event.uv[1] = first.uv[1];
+	event.normal[0] = normal_sum.x;
+	event.normal[1] = normal_sum.y;
+	event.normal[2] = normal_sum.z;
+	event.source_box = 0;
+	event.source_box_count = group_count;
+	event.source_root = first_index;
+	event.source_kind = RT_BREP_TRACE_EVENT_SOURCE_SINGULAR_POLE;
+	event.edge_index = -1;
+	event.vertex_index = -1;
+	event.face_index = first.face_index;
+	event.span_index = first.span_index;
+	event.certificate = RT_BREP_TRACE_EVENT_SINGULAR_POLE;
+	event.determinant_sign = first.determinant_sign;
+	event.hit_class = brep_hit::CLEAN_HIT;
+	event.trim_status = 0;
+	event.adjacent_face_index = -99;
+	event.direction = first.direction;
+	trace->physical_event_singular_owned_spans += group_count;
+    }
+    for (size_t i = 0; complete && i <
+	    trace->stored_surface_singular_spans; ++i)
+	if (!owned[i])
+	    complete = false;
+    if (!candidate_count || candidate_count % 2)
+	complete = false;
+    if (!complete) {
+	trace->physical_event_singular_failures++;
+	return;
+    }
+    for (size_t i = 0; i < candidate_count; ++i)
+	trace->physical_events[trace->stored_physical_events++] = candidate[i];
+    trace->physical_event_attempts += candidate_count;
+    trace->physical_event_singular_certified++;
+    brep_trace_finalize_physical_events(trace, ray, tol, true);
+}
+
+
 static void
 brep_trace_regular_direction_counts(const struct rt_brep_shot_trace *trace,
     size_t &entering, size_t &leaving)
@@ -18496,6 +19060,10 @@ brep_trace_physical_events(struct rt_brep_shot_trace *trace,
     const struct brep_specific *bs, const ON_Ray &ray,
     const struct bn_tol *tol)
 {
+    if (trace && trace->stored_surface_singular_spans) {
+	brep_trace_singular_physical_events(trace, bs, ray, tol);
+	return;
+    }
     size_t regular_entering = 0;
     size_t regular_leaving = 0;
     brep_trace_regular_direction_counts(trace, regular_entering,
@@ -18703,6 +19271,60 @@ brep_prepared_regular_pair_eligible(const struct rt_brep_shot_trace *trace)
 
 
 static bool
+brep_prepared_singular_events_eligible(
+    const struct rt_brep_shot_trace *trace)
+{
+    if (!trace || trace->physical_event_complete != 1 ||
+	trace->physical_event_singular_attempts != 1 ||
+	trace->physical_event_singular_certified != 1 ||
+	trace->physical_event_singular_failures ||
+	!trace->surface_singular_resolved_spans ||
+	trace->surface_singular_resolved_spans !=
+	    trace->stored_surface_singular_spans ||
+	trace->physical_event_singular_owned_spans !=
+	    trace->stored_surface_singular_spans ||
+	trace->physical_event_singular_normal_mismatches ||
+	trace->surface_singular_span_overflow ||
+	trace->physical_event_unresolved ||
+	trace->physical_event_direction_mismatches ||
+	trace->physical_event_overflow ||
+	trace->physical_event_state_failures ||
+	!trace->physical_event_material_segments ||
+	trace->physical_event_subminimum_contacts ||
+	trace->physical_event_tolerance_ambiguous ||
+	trace->stored_physical_events !=
+	    2 * trace->physical_event_material_segments)
+	return false;
+    for (size_t event_index = 0;
+	    event_index < trace->stored_physical_events; ++event_index) {
+	const struct rt_brep_trace_physical_event &event =
+	    trace->physical_events[event_index];
+	if (event.certificate != RT_BREP_TRACE_EVENT_SINGULAR_POLE ||
+		event.source_kind !=
+		    RT_BREP_TRACE_EVENT_SOURCE_SINGULAR_POLE ||
+		!event.source_box_count ||
+		event.source_root >= trace->stored_surface_singular_spans ||
+		event.edge_index != -1 || event.vertex_index != -1 ||
+		event.hit_class != brep_hit::CLEAN_HIT ||
+		event.trim_status != 0 || !event.determinant_sign ||
+		(event.direction != brep_hit::ENTERING &&
+		 event.direction != brep_hit::LEAVING) ||
+		!std::isfinite(event.normal[0]) ||
+		!std::isfinite(event.normal[1]) ||
+		!std::isfinite(event.normal[2]))
+	    return false;
+	const double normal_length = sqrt(event.normal[0] * event.normal[0] +
+	    event.normal[1] * event.normal[1] +
+	    event.normal[2] * event.normal[2]);
+	if (!std::isfinite(normal_length) ||
+		fabs(normal_length - 1.0) > 1.0e-7)
+	    return false;
+    }
+    return true;
+}
+
+
+static bool
 brep_prepared_vertex_events_eligible(const struct rt_brep_shot_trace *trace)
 {
     if (!trace || trace->physical_event_complete != 1 ||
@@ -18800,6 +19422,7 @@ brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
     size_t seam_continuation_events = 0;
     size_t vertex_events = 0;
     size_t edge_events = 0;
+    size_t singular_events = 0;
     for (size_t event_index = 0;
 	    event_index < trace->stored_physical_events; ++event_index) {
 	const struct rt_brep_trace_physical_event &event =
@@ -18811,7 +19434,15 @@ brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
 		!std::isfinite(event.t_max) ||
 		event.t_min > event.dist || event.dist > event.t_max)
 	    return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
-	if (event.certificate == RT_BREP_TRACE_EVENT_REGULAR_INTERIOR ||
+	if (event.certificate == RT_BREP_TRACE_EVENT_SINGULAR_POLE) {
+	    if (event.hit_class != brep_hit::CLEAN_HIT ||
+		    event.trim_status != 0 || event.edge_index != -1 ||
+		    event.vertex_index != -1 || !event.source_box_count ||
+		    event.source_kind !=
+			RT_BREP_TRACE_EVENT_SOURCE_SINGULAR_POLE)
+		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	    singular_events++;
+	} else if (event.certificate == RT_BREP_TRACE_EVENT_REGULAR_INTERIOR ||
 		event.certificate == RT_BREP_TRACE_EVENT_BOUNDARY_FOLD) {
 	    if (event.hit_class != brep_hit::CLEAN_HIT ||
 		    event.trim_status == 1 || event.edge_index != -1 ||
@@ -18857,9 +19488,12 @@ brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
 	    return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
 	}
 	brep_hit hit;
+	const fastf_t *normal_override =
+	    event.certificate == RT_BREP_TRACE_EVENT_SINGULAR_POLE ?
+	    event.normal : NULL;
 	if (!brep_trace_make_hit(bs, ray, event.face_index, event.dist,
 		event.uv, event.trim_status, event.hit_class, event.direction,
-		event.adjacent_face_index, true, hit))
+		event.adjacent_face_index, true, hit, normal_override))
 	    return RT_BREP_PREPARED_FALLBACK_HIT_BUILD;
 	hits.push_back(hit);
 	if (event.certificate == RT_BREP_TRACE_EVENT_BOUNDARY_FOLD)
@@ -18899,6 +19533,10 @@ brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
 	    (edge_events != trace->physical_event_edge ||
 	     !brep_prepared_edge_events_eligible(trace)))
 	return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+    if (singular_events &&
+	    (singular_events != trace->stored_physical_events ||
+	     !brep_prepared_singular_events_eligible(trace)))
+	return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
     return RT_BREP_PREPARED_FALLBACK_NONE;
 }
 
@@ -18930,11 +19568,13 @@ brep_build_prepared_partition(struct rt_brep_shot_trace *trace,
     const bool mixed_fold_pair = trace->surface_fold_mixed_pairs == 1;
     const bool seam_pair = brep_prepared_seam_pair_eligible(trace);
     const bool regular_pair = brep_prepared_regular_pair_eligible(trace);
+    const bool singular_events =
+	brep_prepared_singular_events_eligible(trace);
     const bool vertex_events = brep_prepared_vertex_events_eligible(trace);
     const bool edge_events = brep_prepared_edge_events_eligible(trace);
     if (trace->surface_isolated_boxes != trace->surface_krawczyk_boxes &&
 	    !fold_pair && !mixed_fold_pair && !seam_pair && !regular_pair &&
-	    !vertex_events && !edge_events)
+	    !singular_events && !vertex_events && !edge_events)
 	return RT_BREP_PREPARED_FALLBACK_UNCERTIFIED;
     if (trace->local_root_overflow || trace->local_trim_failures ||
 	    trace->local_cluster_overflow ||

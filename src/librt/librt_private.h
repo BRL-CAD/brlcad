@@ -466,6 +466,7 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_MAX_SURFACE_BOXES 64
 #define RT_BREP_TRACE_MAX_FOLD_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
+#define RT_BREP_TRACE_MAX_SINGULAR_SPANS 64
 #define RT_BREP_TRACE_MAX_LOCAL_CLUSTERS 64
 #define RT_BREP_TRACE_MAX_PHYSICAL_EVENTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_SEGMENTS 8
@@ -498,11 +499,13 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_EVENT_MANIFOLD_EDGE 6
 #define RT_BREP_TRACE_EVENT_SEAM_CONTACT_EXISTING 7
 #define RT_BREP_TRACE_EVENT_SEAM_CONTACT_CONTINUATION 8
+#define RT_BREP_TRACE_EVENT_SINGULAR_POLE 9
 #define RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT 1
 #define RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT 2
 #define RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION 3
 #define RT_BREP_TRACE_EVENT_SOURCE_VERTEX_FAN 4
 #define RT_BREP_TRACE_EVENT_SOURCE_MANIFOLD_EDGE 5
+#define RT_BREP_TRACE_EVENT_SOURCE_SINGULAR_POLE 6
 /* Seam-gap and fold-gap values classify separate trace fields. */
 #define RT_BREP_SEAM_GAP_UNAVAILABLE 0
 #define RT_BREP_SEAM_GAP_INSIDE 1
@@ -634,11 +637,27 @@ struct rt_brep_trace_local_root {
     int direction;
 };
 
+struct rt_brep_trace_singular_span {
+    fastf_t dist;
+    fastf_t t_min;
+    fastf_t t_max;
+    fastf_t uv[2];
+    fastf_t normal[3];
+    fastf_t line_distance;
+    fastf_t boundary_residual;
+    int face_index;
+    int span_index;
+    int side;
+    int determinant_sign;
+    int direction;
+};
+
 struct rt_brep_trace_physical_event {
     fastf_t dist;
     fastf_t t_min;
     fastf_t t_max;
     fastf_t uv[2];
+    fastf_t normal[3];
     size_t source_box;
     size_t source_box_count;
     size_t source_root;
@@ -856,6 +875,20 @@ struct rt_brep_shot_trace {
     size_t local_trim_failures;
     struct rt_brep_trace_local_root
 	local_roots[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    size_t surface_singular_attempts;
+    size_t surface_singular_line_candidates;
+    size_t surface_singular_collapsed_sides;
+    size_t surface_singular_deflated_exclusions;
+    size_t surface_singular_determinant_signed;
+    size_t surface_singular_resolved_spans;
+    size_t surface_singular_span_failures;
+    size_t stored_surface_singular_spans;
+    size_t surface_singular_span_overflow;
+    size_t surface_singular_expansion_high_water;
+    fastf_t surface_singular_max_line_distance;
+    fastf_t surface_singular_max_boundary_residual;
+    struct rt_brep_trace_singular_span
+	surface_singular_spans[RT_BREP_TRACE_MAX_SINGULAR_SPANS];
     size_t physical_event_attempts;
     size_t physical_event_regular;
     size_t physical_event_regular_component_attempts;
@@ -870,6 +903,13 @@ struct rt_brep_shot_trace {
     size_t physical_event_regular_pair_complement_visited;
     size_t physical_event_regular_pair_complement_high_water;
     int physical_event_regular_pair_failure_stage;
+    size_t physical_event_singular_attempts;
+    size_t physical_event_singular_candidates;
+    size_t physical_event_singular_certified;
+    size_t physical_event_singular_failures;
+    size_t physical_event_singular_owned_spans;
+    size_t physical_event_singular_normal_checks;
+    size_t physical_event_singular_normal_mismatches;
     size_t physical_event_boundary;
     size_t physical_event_seam;
     size_t physical_event_seam_attempts;
