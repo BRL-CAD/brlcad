@@ -79,7 +79,9 @@ main(int argc, const char **argv)
     bool first_ok = ON_Brep_CDT_Tessellate(state, 0, NULL) == 0 &&
 	ON_Brep_CDT_Status(state) == 0 &&
 	ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0 &&
-	diagnostic.result == BREP_CDT_RESULT_SUCCESS;
+	diagnostic.result == BREP_CDT_RESULT_SUCCESS &&
+	ON_Brep_CDT_Failed_Faces(NULL, 0, state) == 0 &&
+	ON_Brep_CDT_Failed_Faces(NULL, -1, state) == -1;
     mesh_output first;
     first_ok = first_ok && mesh_get(first, state) && !first.faces.empty();
 
@@ -123,4 +125,3 @@ main(int argc, const char **argv)
     return initial && first_ok && second_ok && invalidated &&
 	invalid_tolerance && invalid_face && invalid_input ? 0 : 1;
 }
-

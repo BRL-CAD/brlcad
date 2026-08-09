@@ -563,6 +563,21 @@ cdt_diagnostic_set(struct ON_Brep_CDT_State *s_cdt, int result, int stage,
 	    sizeof(s_cdt->diagnostic.message));
 }
 
+int
+ON_Brep_CDT_Failed_Faces(int *faces, int capacity,
+	const struct ON_Brep_CDT_State *s_cdt)
+{
+    if (!s_cdt || capacity < 0)
+	return -1;
+    const int count = (int)s_cdt->failed_face_indices.size();
+    if (faces) {
+	const int copy_count = std::min(count, capacity);
+	for (int i = 0; i < copy_count; ++i)
+	    faces[i] = s_cdt->failed_face_indices[(size_t)i];
+    }
+    return count;
+}
+
 static void
 cdt_polygon_clear(cpolygon_t *polygon)
 {
@@ -646,6 +661,7 @@ cdt_state_reset(struct ON_Brep_CDT_State *s_cdt)
     s_cdt->face_ovlp_tris.clear();
     s_cdt->face_ovlps.clear();
     s_cdt->faces_to_update.clear();
+    s_cdt->failed_face_indices.clear();
     s_cdt->absmax = -1;
     s_cdt->absmin = -1;
     s_cdt->cos_within_ang = -1;

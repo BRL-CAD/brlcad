@@ -64,6 +64,7 @@
 #include "bv/plot3.h"
 #include "bg/polygon.h"
 #include "bg/plane.h"
+#include "RTree.h"
 
 static bool
 clipper_same_point(const ClipperLib::IntPoint &a,
@@ -766,11 +767,16 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
     struct input_segment {
 	int a;
 	int b;
+	size_t ring;
     };
     std::vector<input_segment> segments;
+    std::vector<double> ring_max_x(nholes + 1,
+	-std::numeric_limits<double>::infinity());
     auto register_ring = [&](const std::vector<int> &ring, size_t ring_id) {
 	for (size_t i = 0; i < ring.size(); ++i) {
 	    const int index = ring[i];
+	    ring_max_x[ring_id] = std::max(ring_max_x[ring_id],
+		pts[index][X]);
 	    const std::pair<double, double> coordinate(pts[index][X],
 		pts[index][Y]);
 	    const auto old_coordinate = constraint_coordinates.find(coordinate);
@@ -787,7 +793,7 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 		std::make_pair(index, next) : std::make_pair(next, index);
 	    if (!constraint_edges.insert(edge).second)
 		return false;
-	    segments.push_back({index, next});
+	    segments.push_back({index, next, ring_id});
 	}
 	return true;
     };
@@ -818,8 +824,28 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	    constraint_coordinates[coordinate] = index;
 	}
 	manual_constraints.push_back(std::make_pair(first, second));
-	segments.push_back({first, second});
+	segments.push_back({first, second,
+	    std::numeric_limits<size_t>::max()});
     }
+
+    RTree<size_t, double, 2> segment_index;
+    for (size_t i = 0; i < segments.size(); ++i) {
+	const input_segment &segment = segments[i];
+	double minimum[2] = {
+	    std::min(pts[segment.a][X], pts[segment.b][X]),
+	    std::min(pts[segment.a][Y], pts[segment.b][Y])
+	};
+	double maximum[2] = {
+	    std::max(pts[segment.a][X], pts[segment.b][X]),
+	    std::max(pts[segment.a][Y], pts[segment.b][Y])
+	};
+	segment_index.Insert(minimum, maximum, i);
+    }
+    auto collect_segment = [](size_t segment, void *context) {
+	std::vector<size_t> *matches = (std::vector<size_t> *)context;
+	matches->push_back(segment);
+	return true;
+    };
 
     auto orient = [&](int ia, int ib, int ic) {
 	const long double abx = (long double)pts[ib][X] - pts[ia][X];
@@ -856,7 +882,21 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	return o1 * o2 < 0 && o3 * o4 < 0;
     };
     for (size_t i = 0; i < segments.size(); ++i) {
-	for (size_t j = i + 1; j < segments.size(); ++j) {
+	const input_segment &segment = segments[i];
+	double minimum[2] = {
+	    std::min(pts[segment.a][X], pts[segment.b][X]),
+	    std::min(pts[segment.a][Y], pts[segment.b][Y])
+	};
+	double maximum[2] = {
+	    std::max(pts[segment.a][X], pts[segment.b][X]),
+	    std::max(pts[segment.a][Y], pts[segment.b][Y])
+	};
+	std::vector<size_t> candidates;
+	segment_index.Search(minimum, maximum, collect_segment,
+	    &candidates);
+	for (size_t j : candidates) {
+	    if (j <= i)
+		continue;
 	    if (segments[i].a == segments[j].a ||
 		    segments[i].a == segments[j].b ||
 		    segments[i].b == segments[j].a ||
@@ -871,11 +911,22 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	}
     }
 
-    auto point_in_ring = [&](int point, const std::vector<int> &ring) {
+    auto point_in_ring = [&](int point, size_t ring_id) {
+	if (ring_id >= ring_max_x.size() ||
+		pts[point][X] > ring_max_x[ring_id])
+	    return false;
+	double minimum[2] = {pts[point][X], pts[point][Y]};
+	double maximum[2] = {ring_max_x[ring_id], pts[point][Y]};
+	std::vector<size_t> candidates;
+	segment_index.Search(minimum, maximum, collect_segment,
+	    &candidates);
 	int winding = 0;
-	for (size_t i = 0; i < ring.size(); ++i) {
-	    const int a = ring[i];
-	    const int b = ring[(i + 1) % ring.size()];
+	for (size_t candidate : candidates) {
+	    const input_segment &segment = segments[candidate];
+	    if (segment.ring != ring_id)
+		continue;
+	    const int a = segment.a;
+	    const int b = segment.b;
 	    if (pts[a][Y] <= pts[point][Y]) {
 		if (pts[b][Y] > pts[point][Y] && orient(a, b, point) > 0)
 		    ++winding;
@@ -887,7 +938,7 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	return winding != 0;
     };
     for (size_t h = 0; h < hole_rings.size(); ++h) {
-	if (!point_in_ring(hole_rings[h][0], outer)) {
+	if (!point_in_ring(hole_rings[h][0], 0)) {
 	    bg_triangulation_report_set(report,
 		BG_TRIANGULATION_INVALID_NESTING, (int)h,
 		"hole is not contained by the chart outline");
@@ -895,7 +946,7 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	}
 	for (size_t other = 0; other < hole_rings.size(); ++other) {
 	    if (h != other && point_in_ring(hole_rings[h][0],
-		    hole_rings[other])) {
+		    other + 1)) {
 		bg_triangulation_report_set(report,
 		    BG_TRIANGULATION_INVALID_NESTING, (int)h,
 		    "nested hole requires an explicit island outline");
@@ -907,10 +958,10 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	for (int index : {edge.first, edge.second}) {
 	    if (constraint_ring.find(index) != constraint_ring.end())
 		continue;
-	    if (!point_in_ring(index, outer))
+	    if (!point_in_ring(index, 0))
 		return BRLCAD_ERROR;
-	    for (const std::vector<int> &hole : hole_rings) {
-		if (point_in_ring(index, hole))
+	    for (size_t h = 0; h < hole_rings.size(); ++h) {
+		if (point_in_ring(index, h + 1))
 		    return BRLCAD_ERROR;
 	    }
 	}
@@ -928,17 +979,20 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	if (active_coordinates.find(coordinate) != active_coordinates.end())
 	    continue;
 	bool on_constraint = false;
-	for (const input_segment &segment : segments) {
-	    if (on_segment(index, segment)) {
+	double query[2] = {pts[index][X], pts[index][Y]};
+	std::vector<size_t> candidates;
+	segment_index.Search(query, query, collect_segment, &candidates);
+	for (size_t candidate : candidates) {
+	    if (on_segment(index, segments[candidate])) {
 		on_constraint = true;
 		break;
 	    }
 	}
-	if (on_constraint || !point_in_ring(index, outer))
+	if (on_constraint || !point_in_ring(index, 0))
 	    continue;
 	bool in_hole = false;
-	for (const std::vector<int> &hole : hole_rings) {
-	    if (point_in_ring(index, hole)) {
+	for (size_t h = 0; h < hole_rings.size(); ++h) {
+	    if (point_in_ring(index, h + 1)) {
 		in_hole = true;
 		break;
 	    }
