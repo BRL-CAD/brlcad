@@ -3261,8 +3261,12 @@ fast_periodic_boundary_loop(const ON_Surface *surface,
 	}
 	const double delta = points[points.Count() - 1].p2d[dir] -
 	    points[0].p2d[dir];
+	/* A one-turn boundary may locally backtrack across a converted trim
+	 * junction.  Keep enough headroom for that excursion without accepting
+	 * a second winding. */
+	const double maximum_extent = 1.25 * period;
 	if (closed_max - closed_min < 0.90 * period ||
-		closed_max - closed_min > 1.10 * period ||
+		closed_max - closed_min > maximum_extent ||
 		fabs(delta) < 0.90 * period ||
 		open_max - open_min > 0.50 * open_length)
 	    continue;
