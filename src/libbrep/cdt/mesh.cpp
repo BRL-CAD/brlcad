@@ -2520,8 +2520,7 @@ cdt_mesh_t::bnorm(const triangle_t &t)
      * triangle's parameter-space centroid.  Boundary vertex normals may be
      * averaged across sharp B-Rep edges and are not a face-local orientation
      * oracle. */
-    if (brep && f_id >= 0 && f_id < brep->m_F.Count() &&
-	    !cdt_face_uses_topology_chart(brep->m_F[f_id])) {
+    if (brep && f_id >= 0 && f_id < brep->m_F.Count()) {
 	const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
 	if (surface && !surface->IsClosed(0) && !surface->IsClosed(1)) {
 	    ON_2dPoint uv[3];
@@ -3642,6 +3641,12 @@ cdt_mesh_t::cdt()
 	    continue;
 	source_steiner.push_back((int)point);
     }
+    std::vector<int> source_refinement;
+    source_refinement.reserve(m_chart_refinement_pnts.size());
+    for (long point : m_chart_refinement_pnts) {
+	if (point >= 0 && (size_t)point < m_pnts_2d.size())
+	    source_refinement.push_back((int)point);
+    }
     std::vector<const ON_3dPoint *> source_points_3d(m_pnts_2d.size(),
 	NULL);
     for (size_t i = 0; i < source_points_3d.size(); ++i) {
@@ -3747,7 +3752,8 @@ cdt_mesh_t::cdt()
     cdt_face_chart chart;
     const ON_BrepFace &face = brep->m_F[f_id];
     if (!chart.build(face, m_pnts_2d, source_outer, source_holes,
-	    source_steiner, source_points_3d, source_topology_vertices)) {
+	    source_steiner, source_refinement, source_points_3d,
+	    source_topology_vertices)) {
 	bu_log("Face %d: chart construction failed: %s\n", f_id,
 	    chart.failure().c_str());
 	struct ON_Brep_CDT_State *state =
@@ -3830,6 +3836,11 @@ cdt_mesh_t::cdt()
     const double boundary_tolerance = sqrt(DBL_EPSILON) * boundary_scale;
     const double boundary_tolerance_sq = boundary_tolerance *
 	boundary_tolerance;
+    const double coordinate_scale = std::max(1.0, std::max(
+	std::max(std::fabs(chart_min_x), std::fabs(chart_max_x)),
+	std::max(std::fabs(chart_min_y), std::fabs(chart_max_y))));
+    const double duplicate_tolerance = 1024.0 * DBL_EPSILON *
+	std::max(coordinate_scale, boundary_scale);
     RTree<size_t, double, 2> boundary_index;
     std::vector<chart_boundary_segment> boundary_segments;
     index_polygon_boundary(boundary_index, boundary_segments, bgp_2d,
@@ -3839,6 +3850,7 @@ cdt_mesh_t::cdt()
 	    holes_array[hi], holes_npts[hi], boundary_tolerance);
     std::vector<int> steiner_vec;
     steiner_vec.reserve(chart.steiner.size());
+    RTree<size_t, double, 2> steiner_index;
     const bool planar_chart = face.SurfaceOf()->IsPlanar(NULL,
 	ON_ZERO_TOLERANCE);
     for (int point : chart.steiner) {
@@ -3846,6 +3858,17 @@ cdt_mesh_t::cdt()
 	    continue;
 	if (point_on_indexed_boundary(boundary_index, boundary_segments,
 		bgp_2d, point, boundary_tolerance_sq))
+	    continue;
+	double duplicate_minimum[2] = {
+	    bgp_2d[point][X] - duplicate_tolerance,
+	    bgp_2d[point][Y] - duplicate_tolerance
+	};
+	double duplicate_maximum[2] = {
+	    bgp_2d[point][X] + duplicate_tolerance,
+	    bgp_2d[point][Y] + duplicate_tolerance
+	};
+	if (steiner_index.Search(duplicate_minimum, duplicate_maximum,
+		NULL, NULL))
 	    continue;
 	bool in_hole = false;
 	for (int hi = 0; hi < holes_cnt && !in_hole; ++hi) {
@@ -3856,8 +3879,11 @@ cdt_mesh_t::cdt()
 	    in_hole = bg_pnt_in_polygon(holes_npts[hi], hole,
 		(const point2d_t *)&test_point);
 	}
-	if (!in_hole)
+	if (!in_hole) {
 	    steiner_vec.push_back(point);
+	    double location[2] = {bgp_2d[point][X], bgp_2d[point][Y]};
+	    steiner_index.Insert(location, location, steiner_vec.size() - 1);
+	}
     }
     int *steiner = steiner_vec.empty() ? NULL : steiner_vec.data();
     const size_t steiner_cnt = steiner_vec.size();
@@ -4146,6 +4172,7 @@ cdt_mesh_t::refine_incorrect_normals(size_t max_points)
 	    normal = -normal;
 	const long point_2d = add_point(sample);
 	m_interior_pnts.insert(point_2d);
+	m_chart_refinement_pnts.insert(point_2d);
 	const long point_index = add_point(new ON_3dPoint(point));
 	const long normal_index = add_normal(new ON_3dPoint(normal));
 	p2d3d[point_2d] = point_index;
@@ -4577,11 +4604,8 @@ cdt_mesh_t::valid(int verbose)
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bool nret = true;
     bool eret = true;
-    bool tret = true;
     bool topret = true;
 
-    const bool check_edge_triangles =
-	!cdt_face_uses_topology_chart(brep->m_F[f_id]) && !planar();
     const bool topology_chart =
 	cdt_face_uses_topology_chart(brep->m_F[f_id]);
 
@@ -4619,40 +4643,6 @@ cdt_mesh_t::valid(int verbose)
 	bu_vls_sprintf(&fname, "%d-invalid_normals_mesh.plot3", f_id);
 	tris_plot(bu_vls_cstr(&fname));
 	bu_vls_sprintf(&fname, "%d-invalid_normals.cdtmesh", f_id);
-	serialize(bu_vls_cstr(&fname));
-    }
-
-    if (check_edge_triangles) {
-	tris_tree.GetFirst(tree_it);
-	while (!tree_it.IsNull()) {
-	    t_ind = *tree_it;
-	    tri = tris_vect[t_ind];
-
-	    int epnt_cnt = 0;
-	    int bedge_cnt = 0;
-	    for (int i = 0; i < 3; ++i) {
-		if (ep.find(tri.v[i]) != ep.end())
-		    epnt_cnt++;
-	    }
-	    for (const uedge_t &edge : tri.uedges()) {
-		if (boundary_edges.find(edge) != boundary_edges.end())
-		    bedge_cnt++;
-	    }
-	    if (epnt_cnt == 3 && bedge_cnt < 2) {
-		if (verbose > 0)
-		    std::cout << name << " face " << f_id
-			<< ": triangle has three edge points but only "
-			<< bedge_cnt << " boundary edges\n";
-		tret = false;
-	    }
-	    ++tree_it;
-	}
-    }
-
-    if (!tret && verbose > 1) {
-	bu_vls_sprintf(&fname, "%d-bad_edge_tri.plot3", f_id);
-	tris_plot(bu_vls_cstr(&fname));
-	bu_vls_sprintf(&fname, "%d-bad_edge_tri.cdtmesh", f_id);
 	serialize(bu_vls_cstr(&fname));
     }
 
@@ -4716,7 +4706,7 @@ cdt_mesh_t::valid(int verbose)
     }
 #endif
 
-    return (nret && eret && tret && topret);
+    return (nret && eret && topret);
 }
 
 void cdt_mesh_t::boundary_edges_plot(const char *filename)

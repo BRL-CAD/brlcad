@@ -489,6 +489,7 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	const std::vector<int> &source_outer,
 	const std::vector<std::vector<int>> &source_holes,
 	const std::vector<int> &source_steiner,
+	const std::vector<int> &source_refinement,
 	const std::vector<const ON_3dPoint *> &points_3d,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices, bool ruled)
 {
@@ -499,9 +500,12 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
     const double pole_tolerance = parameter_tolerance(m_open_domain);
     std::vector<int> source_to_chart(native_points.size(), -1);
     std::vector<bool> inactive_ruled_point(native_points.size(), false);
+    const std::set<int> refinement_points(source_refinement.begin(),
+	source_refinement.end());
     if (ruled) {
 	for (int point : source_steiner) {
-	    if (point >= 0 && (size_t)point < inactive_ruled_point.size())
+	    if (point >= 0 && (size_t)point < inactive_ruled_point.size() &&
+		    refinement_points.find(point) == refinement_points.end())
 		inactive_ruled_point[(size_t)point] = true;
 	}
 	for (int point : source_outer) {
@@ -643,13 +647,14 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
      * surface triangle.  Do not offer those samples to the cone prototype;
      * later metric refinement can add chart-aware samples transactionally. */
     steiner.clear();
-    if (!ruled) {
-	std::set<int> unique_steiner;
-	for (int point : source_steiner) {
-	    const int mapped = source_to_chart[(size_t)point];
-	    if (mapped != apex && unique_steiner.insert(mapped).second)
-		steiner.push_back(mapped);
-	}
+    std::set<int> unique_steiner;
+    for (int point : source_steiner) {
+	if (ruled && refinement_points.find(point) ==
+		refinement_points.end())
+	    continue;
+	const int mapped = source_to_chart[(size_t)point];
+	if (mapped != apex && unique_steiner.insert(mapped).second)
+	    steiner.push_back(mapped);
     }
 
     if (ruled && holes.empty()) {
@@ -831,12 +836,13 @@ cdt_face_chart::build_cone(const ON_BrepFace &face,
 	const std::vector<int> &source_outer,
 	const std::vector<std::vector<int>> &source_holes,
 	const std::vector<int> &source_steiner,
+	const std::vector<int> &source_refinement,
 	const std::vector<const ON_3dPoint *> &points_3d,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices)
 {
     m_type = CDT_FACE_CHART_CONE_WEDGE;
     return build_pole_wedge(face, native_points, source_outer, source_holes,
-	source_steiner, points_3d, topology_vertices, true);
+	source_steiner, source_refinement, points_3d, topology_vertices, true);
 }
 
 bool
@@ -851,8 +857,8 @@ cdt_face_chart::build_polar(const ON_BrepFace &face,
     m_type = CDT_FACE_CHART_POLAR;
     if (m_second_singular_side < 0)
 	return build_pole_wedge(face, native_points, source_outer,
-	    source_holes, source_steiner, points_3d, topology_vertices,
-	    false);
+	    source_holes, source_steiner, std::vector<int>(), points_3d,
+	    topology_vertices, false);
 
     const double open_tolerance = parameter_tolerance(m_open_domain);
     std::vector<int> source_to_chart(native_points.size(), -1);
@@ -1243,6 +1249,7 @@ cdt_face_chart::build(const ON_BrepFace &face,
 	const std::vector<int> &source_outer,
 	const std::vector<std::vector<int>> &source_holes,
 	const std::vector<int> &source_steiner,
+	const std::vector<int> &source_refinement,
 	const std::vector<const ON_3dPoint *> &points_3d,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices)
 {
@@ -1275,7 +1282,8 @@ cdt_face_chart::build(const ON_BrepFace &face,
 	m_open_domain = face.SurfaceOf()->Domain(m_open_dir);
 	m_pole_topology_vertex = pole_vertex;
 	return build_cone(face, native_points, source_outer, source_holes,
-	    source_steiner, points_3d, topology_vertices);
+	    source_steiner, source_refinement, points_3d,
+	    topology_vertices);
     }
 
     polar_chart_info polar_info;

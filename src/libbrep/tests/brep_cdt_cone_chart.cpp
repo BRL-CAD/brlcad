@@ -77,14 +77,23 @@ exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
 	}
     }
     outer.push_back(outer[0]);
+    const ON_Surface *surface = cone_face->SurfaceOf();
+    const ON_2dPoint refinement_uv(surface->Domain(0).Mid(),
+	surface->Domain(1).Mid());
+    const int refinement_point = (int)native_points.size();
+    native_points.push_back(std::make_pair(refinement_uv.x,
+	refinement_uv.y));
+    points_3d.push_back(NULL);
+    topology_vertices.push_back(CDT_TOPOLOGY_ID_NONE);
+    const std::vector<int> refinement(1, refinement_point);
 
     cdt_face_chart chart;
     if (!chart.build(*cone_face, native_points, outer,
-	    std::vector<std::vector<int>>(), std::vector<int>(), points_3d,
-	    topology_vertices) ||
+	    std::vector<std::vector<int>>(), refinement, refinement,
+	    points_3d, topology_vertices) ||
 	    chart.type() != CDT_FACE_CHART_CONE_WEDGE ||
 	    chart.pole_topology_vertex() < 0 || chart.outer.size() < 3 ||
-	    chart.constraints.empty()) {
+	    chart.constraints.empty() || chart.steiner.size() != 1) {
 	std::cerr << "cone chart build failed: " << chart.failure()
 	    << std::endl;
 	return false;
@@ -113,7 +122,6 @@ exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
 	}
     }
 
-    const ON_Surface *surface = cone_face->SurfaceOf();
     for (size_t i = 0; i < chart.outer.size(); ++i) {
 	const int first = chart.outer[i];
 	const int second = chart.outer[(i + 1) % chart.outer.size()];
