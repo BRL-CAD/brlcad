@@ -3791,6 +3791,12 @@ cdt_mesh_t::cdt()
     for (size_t i = 0; i < chart.outer.size(); ++i)
 	opoly[i] = chart.outer[i];
     opoly[chart.outer.size()] = chart.outer[0];
+    std::vector<double> outer_poly_flat(opoly_count * 2);
+    for (size_t pi = 0; pi < opoly_count; ++pi) {
+	const int point = opoly[pi];
+	outer_poly_flat[pi * 2] = bgp_2d[point][X];
+	outer_poly_flat[pi * 2 + 1] = bgp_2d[point][Y];
+    }
 
     const int holes_cnt = (int)chart.holes.size();
     const int **holes_array = NULL;
@@ -3859,6 +3865,13 @@ cdt_mesh_t::cdt()
 	if (point_on_indexed_boundary(boundary_index, boundary_segments,
 		bgp_2d, point, boundary_tolerance_sq))
 	    continue;
+	point2d_t test_point;
+	V2SET(test_point, bgp_2d[point][X], bgp_2d[point][Y]);
+	const point2d_t *outer_polygon = (const point2d_t *)
+	    outer_poly_flat.data();
+	if (!bg_pnt_in_polygon(opoly_count, outer_polygon,
+		(const point2d_t *)&test_point))
+	    continue;
 	double duplicate_minimum[2] = {
 	    bgp_2d[point][X] - duplicate_tolerance,
 	    bgp_2d[point][Y] - duplicate_tolerance
@@ -3872,8 +3885,6 @@ cdt_mesh_t::cdt()
 	    continue;
 	bool in_hole = false;
 	for (int hi = 0; hi < holes_cnt && !in_hole; ++hi) {
-	    point2d_t test_point;
-	    V2SET(test_point, bgp_2d[point][X], bgp_2d[point][Y]);
 	    const point2d_t *hole = (const point2d_t *)
 		hole_polys_flat[(size_t)hi].data();
 	    in_hole = bg_pnt_in_polygon(holes_npts[hi], hole,
