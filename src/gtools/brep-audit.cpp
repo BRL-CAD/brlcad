@@ -876,7 +876,7 @@ main(int argc, const char **argv)
     BU_OPT(d[7], "", "memory-limit-mib", "#", &bu_opt_long, &memory_limit_mib, "Process address-space limit in MiB (zero disables)");
     BU_OPT(d[8], "", "prep-only", "", NULL, &prep_only, "Audit raytrace preparation only");
     BU_OPT(d[9], "", "surface-trees-only", "", NULL, &surface_trees_only, "Profile raytrace SurfaceTrees serially");
-    BU_OPT(d[10], "", "surface-tree-depth", "#", &bu_opt_long, &surface_tree_depth, "SurfaceTree depth for serial profiling");
+    BU_OPT(d[10], "", "surface-tree-depth", "#", &bu_opt_long, &surface_tree_depth, "Adaptive SurfaceTree depth after structural splits");
     BU_OPT_NULL(d[11]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage = "Usage: brep-audit [options] [--list|--prep-only|--surface-trees-only] file.g [brep]\n";
