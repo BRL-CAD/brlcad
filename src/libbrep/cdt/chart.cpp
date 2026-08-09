@@ -701,7 +701,17 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 		inactive_ruled_point[(size_t)point] = false;
 	}
     }
-    for (size_t i = 0; i < native_points.size(); ++i) {
+
+    std::set<int> active_points(source_outer.begin(), source_outer.end());
+    for (const std::vector<int> &hole : source_holes)
+	active_points.insert(hole.begin(), hole.end());
+    active_points.insert(source_steiner.begin(), source_steiner.end());
+    active_points.insert(source_refinement.begin(),
+	source_refinement.end());
+    for (int point : active_points) {
+	if (point < 0 || (size_t)point >= native_points.size())
+	    continue;
+	const size_t i = (size_t)point;
 	const ON_2dPoint native_uv(native_points[i].first,
 	    native_points[i].second);
 	if (std::fabs(native_uv[m_open_dir] - pole_coordinate) <=
@@ -755,16 +765,51 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	    continue;
 	const ON_2dPoint native_uv(native_points[i].first,
 	    native_points[i].second);
-	const bool at_pole = topology_vertices[i] ==
-	    m_pole_topology_vertex ||
-	    std::fabs(native_uv[m_open_dir] - pole_coordinate) <=
-	    pole_tolerance;
+	const bool authoritative_pole_copy = m_authoritative_cone_points &&
+	    topology_vertices[i] == CDT_TOPOLOGY_ID_NONE &&
+	    i < points_3d.size() && pole_source < points_3d.size() &&
+	    points_3d[i] && points_3d[pole_source] &&
+	    points_3d[i] == points_3d[pole_source];
+	bool at_pole = topology_vertices[i] == m_pole_topology_vertex;
+	if (topology_vertices[i] == CDT_TOPOLOGY_ID_NONE) {
+	    at_pole = m_authoritative_cone_points ?
+		authoritative_pole_copy :
+		std::fabs(native_uv[m_open_dir] - pole_coordinate) <=
+		pole_tolerance;
+	}
 	if (at_pole) {
 	    source_to_chart[i] = apex;
 	    continue;
 	}
 	ON_2dPoint chart_uv;
-	if (!native_to_chart(native_uv, chart_uv)) {
+	bool mapped_to_chart = native_to_chart(native_uv, chart_uv);
+	if (mapped_to_chart && ruled && m_authoritative_cone_points &&
+		m_cone.IsValid() &&
+		i < points_3d.size() && points_3d[i]) {
+	    double angle = 0.0;
+	    double height = 0.0;
+	    mapped_to_chart = m_cone.ClosestPointTo(*points_3d[i],
+		&angle, &height) && std::fabs(m_cone.height) > DBL_MIN;
+	    if (mapped_to_chart) {
+		double turn = m_cone_orientation > 0 ?
+		    angle - m_cone_seam_angle :
+		    m_cone_seam_angle - angle;
+		while (turn < 0.0)
+		    turn += 2.0 * ON_PI;
+		while (turn >= 2.0 * ON_PI)
+		    turn -= 2.0 * ON_PI;
+		turn /= 2.0 * ON_PI;
+		const double desired =
+		    (native_uv[m_closed_dir] - m_closed_domain.Min()) /
+		    m_closed_domain.Length();
+		turn += std::nearbyint(desired - turn);
+		const double radial = height / m_cone.height;
+		chart_uv.x = radial * (turn - 0.5);
+		chart_uv.y = radial;
+		mapped_to_chart = chart_uv.IsValid();
+	    }
+	}
+	if (!mapped_to_chart) {
 	    m_failure = std::string(chart_name) +
 		" point lies outside the chart domain";
 	    return false;
@@ -1029,6 +1074,35 @@ cdt_face_chart::build_cone(const ON_BrepFace &face,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices)
 {
     m_type = CDT_FACE_CHART_CONE_WEDGE;
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!surface || !surface->IsCone(&m_cone, CDT_CONIC_TOLERANCE) ||
+	    !m_cone.IsValid()) {
+	m_failure = "cone chart has no valid analytic surface";
+	return false;
+    }
+    ON_2dPoint native;
+    native[m_closed_dir] = m_closed_domain.Min();
+    native[m_open_dir] = m_open_domain.Mid();
+    double base_height = 0.0;
+    if (!m_cone.ClosestPointTo(surface->PointAt(native.x, native.y),
+	    &m_cone_seam_angle, &base_height)) {
+	m_failure = "cone chart could not establish its analytic seam";
+	return false;
+    }
+    native[m_closed_dir] = m_closed_domain.ParameterAt(0.01);
+    double next_angle = 0.0;
+    double next_height = 0.0;
+    if (!m_cone.ClosestPointTo(surface->PointAt(native.x, native.y),
+	    &next_angle, &next_height)) {
+	m_failure = "cone chart could not establish its analytic orientation";
+	return false;
+    }
+    double angular_delta = next_angle - m_cone_seam_angle;
+    while (angular_delta <= -ON_PI)
+	angular_delta += 2.0 * ON_PI;
+    while (angular_delta > ON_PI)
+	angular_delta -= 2.0 * ON_PI;
+    m_cone_orientation = angular_delta < 0.0 ? -1 : 1;
     return build_pole_wedge(face, native_points, source_outer, source_holes,
 	source_steiner, source_refinement, points_3d, topology_vertices, true);
 }
@@ -1383,6 +1457,12 @@ cdt_face_chart::validate_boundary(const ON_BrepFace &face,
 	if (first < 0 || second < 0 || (size_t)first >= vertices.size() ||
 		(size_t)second >= vertices.size() || first == second)
 	    return true;
+	if (m_authoritative_cone_points) {
+	    if ((size_t)first >= points.size() ||
+		    (size_t)second >= points.size())
+		return true;
+	    return points[(size_t)first] == points[(size_t)second];
+	}
 	const long native_first = vertices[(size_t)first].native_point;
 	const long native_second = vertices[(size_t)second].native_point;
 	if (native_first < 0 || native_second < 0 ||
@@ -1439,7 +1519,8 @@ cdt_face_chart::build(const ON_BrepFace &face,
 	const std::vector<int> &source_steiner,
 	const std::vector<int> &source_refinement,
 	const std::vector<const ON_3dPoint *> &points_3d,
-	const std::vector<cdt_topo_vertex_id> &topology_vertices)
+	const std::vector<cdt_topo_vertex_id> &topology_vertices,
+	cdt_topo_vertex_id preferred_pole)
 {
     points.clear();
     vertices.clear();
@@ -1458,6 +1539,11 @@ cdt_face_chart::build(const ON_BrepFace &face,
     m_pole_topology_vertex = CDT_TOPOLOGY_ID_NONE;
     m_second_pole_topology_vertex = CDT_TOPOLOGY_ID_NONE;
     m_surface = NULL;
+    m_cone = ON_Cone();
+    m_cone_seam_angle = 0.0;
+    m_cone_orientation = 1;
+    m_authoritative_cone_points =
+	preferred_pole != CDT_TOPOLOGY_ID_NONE;
     m_cylinder = ON_Cylinder();
     m_cylinder_cut = 0.0;
     m_source_native_points.clear();
@@ -1476,7 +1562,8 @@ cdt_face_chart::build(const ON_BrepFace &face,
 	    &m_singular_side, &pole_vertex, &m_periodic)) {
 	m_closed_domain = face.SurfaceOf()->Domain(m_closed_dir);
 	m_open_domain = face.SurfaceOf()->Domain(m_open_dir);
-	m_pole_topology_vertex = pole_vertex;
+	m_pole_topology_vertex = preferred_pole != CDT_TOPOLOGY_ID_NONE ?
+	    preferred_pole : pole_vertex;
 	return build_cone(face, native_points, source_outer, source_holes,
 	    source_steiner, source_refinement, points_3d,
 	    topology_vertices);

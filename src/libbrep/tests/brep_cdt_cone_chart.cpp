@@ -10,6 +10,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -111,6 +112,71 @@ exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
 	std::cerr << "cone chart did not collapse to one pole" << std::endl;
 	return false;
     }
+
+    /* A damaged pcurve can report its pole parameter for a legitimate
+     * interior sample of a radial edge.  An atlas chart with an explicit
+     * topological pole must recover that sample from the authoritative 3-D
+     * edge point instead of collapsing it into the apex. */
+    size_t radial_position = outer.size();
+    for (size_t i = 0; i + 1 < outer.size(); ++i) {
+	const int first = outer[i];
+	const int second = outer[i + 1];
+	const bool first_pole = topology_vertices[(size_t)first] ==
+	    chart.pole_topology_vertex();
+	const bool second_pole = topology_vertices[(size_t)second] ==
+	    chart.pole_topology_vertex();
+	if (first_pole == second_pole || !points_3d[(size_t)first] ||
+		!points_3d[(size_t)second])
+	    continue;
+	radial_position = i;
+	break;
+    }
+    if (radial_position == outer.size()) {
+	std::cerr << "cone fixture has no radial pole edge" << std::endl;
+	return false;
+    }
+    const int radial_first = outer[radial_position];
+    const int radial_second = outer[radial_position + 1];
+    const int pole_native = topology_vertices[(size_t)radial_first] ==
+	chart.pole_topology_vertex() ? radial_first : radial_second;
+    ON_3dPoint repaired_point = 0.5 *
+	(*points_3d[(size_t)radial_first] +
+	 *points_3d[(size_t)radial_second]);
+    std::vector<std::pair<double, double>> repaired_native =
+	native_points;
+    std::vector<int> repaired_outer = outer;
+    std::vector<const ON_3dPoint *> repaired_points_3d = points_3d;
+    std::vector<cdt_topo_vertex_id> repaired_topology =
+	topology_vertices;
+    const int repaired_sample = (int)repaired_native.size();
+    repaired_native.push_back(native_points[(size_t)pole_native]);
+    repaired_points_3d.push_back(&repaired_point);
+    repaired_topology.push_back(CDT_TOPOLOGY_ID_NONE);
+    repaired_outer.insert(repaired_outer.begin() + radial_position + 1,
+	repaired_sample);
+    cdt_face_chart repaired_chart;
+    if (!repaired_chart.build(*cone_face, repaired_native, repaired_outer,
+	    std::vector<std::vector<int>>(), refinement, refinement,
+	    repaired_points_3d, repaired_topology,
+	    chart.pole_topology_vertex())) {
+	std::cerr << "authoritative cone repair failed: "
+	    << repaired_chart.failure() << std::endl;
+	return false;
+    }
+    bool retained_repaired_sample = false;
+    for (int boundary_point : repaired_chart.outer) {
+	if (repaired_chart.native_point(boundary_point) != repaired_sample)
+	    continue;
+	retained_repaired_sample = !repaired_chart.vertices[
+	    (size_t)boundary_point].singular && repaired_chart.points[
+	    (size_t)boundary_point] != std::make_pair(0.0, 0.0);
+    }
+    if (!retained_repaired_sample) {
+	std::cerr << "authoritative cone repair collapsed an edge sample"
+	    << std::endl;
+	return false;
+    }
+
     for (const std::pair<int, int> &constraint : chart.constraints) {
 	if (constraint.first < 0 || constraint.second < 0 ||
 		(size_t)constraint.first >= chart.vertices.size() ||
