@@ -522,6 +522,14 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	return false;
     }
 
+    // A chart triangulation which already satisfies the face invariants does
+    // not need the legacy UV repair heuristics.  In particular, applying a
+    // best-fit-plane reparameterization to a valid singular chart can
+    // reintroduce the degeneracy the chart was constructed to remove.
+    if (cdt_face_uses_cone_chart(s_cdt->brep->m_F[fmesh->f_id]) &&
+	    fmesh->valid(0))
+	return true;
+
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
     if (!fmesh->repair()) {
@@ -544,8 +552,10 @@ loop_edges(cdt_mesh_t *fmesh, cpolygon_t *loop)
     long p2_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[pe->v2d[1]]]]];
     fmesh->ep.insert(p1_ind);
     fmesh->ep.insert(p2_ind);
-    fmesh->brep_edges.insert(uedge_t(p1_ind, p2_ind));
-    fmesh->ue2b_map[uedge_t(p1_ind, p2_ind)] = pe->eseg;
+    if (p1_ind != p2_ind) {
+	fmesh->brep_edges.insert(uedge_t(p1_ind, p2_ind));
+	fmesh->ue2b_map[uedge_t(p1_ind, p2_ind)] = pe->eseg;
+    }
 
     while (first != next) {
 	vcnt++;
@@ -553,8 +563,10 @@ loop_edges(cdt_mesh_t *fmesh, cpolygon_t *loop)
 	p2_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[next->v2d[1]]]]];
 	fmesh->ep.insert(p1_ind);
 	fmesh->ep.insert(p2_ind);
-	fmesh->brep_edges.insert(uedge_t(p1_ind, p2_ind));
-	fmesh->ue2b_map[uedge_t(p1_ind, p2_ind)] = next->eseg;
+	if (p1_ind != p2_ind) {
+	    fmesh->brep_edges.insert(uedge_t(p1_ind, p2_ind));
+	    fmesh->ue2b_map[uedge_t(p1_ind, p2_ind)] = next->eseg;
+	}
 	next = next->next;
 	if (vcnt > loop->poly.size()) {
 	    std::cerr << "infinite loop when reading loop edges\n";
@@ -605,17 +617,20 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     fmesh->f_id = face.m_face_index;
     fmesh->m_bRev = face.m_bRev;
 
-    if (!fmesh->cdt()) {
-	bu_log("Face %d: initial CDT (fmesh->cdt) FAILED\n", face.m_face_index);
-	return false;
-    }
-
-    // List singularities
+    // Mark singular vertices before orienting the initial triangles.  Their
+    // averaged vertex normals are not a reliable face-local orientation
+    // signal at a pole.
+    fmesh->sv.clear();
     for (size_t i = 0; i < fmesh->pnts.size(); i++) {
 	ON_3dPoint *p3d = fmesh->pnts[i];
 	if (s_cdt->singular_vert_to_norms->find(p3d) != s_cdt->singular_vert_to_norms->end()) {
 	    fmesh->sv.insert(fmesh->p2ind[p3d]);
 	}
+    }
+
+    if (!fmesh->cdt()) {
+	bu_log("Face %d: initial CDT (fmesh->cdt) FAILED\n", face.m_face_index);
+	return false;
     }
 
     // List edges
@@ -1038,6 +1053,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     // full solid mesh yet (by definition).  Return accordingly.
     if (face_failures || !face_successes || face_successes < s_cdt->brep->m_F.Count()) {
 	const bool specific_failure =
+	    s_cdt->diagnostic.result == BREP_CDT_RESULT_CHART_FAILED ||
 	    s_cdt->diagnostic.result == BREP_CDT_RESULT_INVALID_PSLG ||
 	    s_cdt->diagnostic.result == BREP_CDT_RESULT_DETRIA_FAILED ||
 	    s_cdt->diagnostic.result == BREP_CDT_RESULT_CERTIFICATION_FAILED;
