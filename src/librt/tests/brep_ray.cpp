@@ -692,6 +692,15 @@ report_grazing_trace(const char *label, double chord_ratio, int reverse,
 	trace.surface_fold_direction_mismatches,
 	trace.surface_fold_trim_queries,
 	trace.surface_fold_trim_failures);
+    std::printf("  regular pair attempt/certified/boxes/roots=%zu/%zu/"
+	"%zu/%zu complement=%zu/%zu failure-stage=%d\n",
+	trace.physical_event_regular_pair_attempts,
+	trace.physical_event_regular_pair_certified,
+	trace.physical_event_regular_pair_boxes,
+	trace.physical_event_regular_pair_roots,
+	trace.physical_event_regular_pair_complement_visited,
+	trace.physical_event_regular_pair_complement_high_water,
+	trace.physical_event_regular_pair_failure_stage);
     for (size_t box_index = 0; box_index < trace.stored_surface_boxes;
 	    ++box_index) {
 	const struct rt_brep_trace_surface_box &box =
@@ -1710,6 +1719,12 @@ struct brep_root_event_summary {
     size_t surface_regular_orientation_failures = 0;
     size_t physical_event_attempts = 0;
     size_t physical_event_regular = 0;
+    size_t physical_event_regular_pair_attempts = 0;
+    size_t physical_event_regular_pair_certified = 0;
+    size_t physical_event_regular_pair_boxes = 0;
+    size_t physical_event_regular_pair_roots = 0;
+    size_t physical_event_regular_pair_complement_visited = 0;
+    size_t physical_event_regular_pair_complement_high_water = 0;
     size_t physical_event_boundary = 0;
     size_t physical_event_seam = 0;
     size_t physical_event_seam_attempts = 0;
@@ -1841,6 +1856,19 @@ brep_accumulate_root_events(brep_root_event_summary &summary,
 	trace.surface_regular_orientation_failures;
     summary.physical_event_attempts += trace.physical_event_attempts;
     summary.physical_event_regular += trace.physical_event_regular;
+    summary.physical_event_regular_pair_attempts +=
+	trace.physical_event_regular_pair_attempts;
+    summary.physical_event_regular_pair_certified +=
+	trace.physical_event_regular_pair_certified;
+    summary.physical_event_regular_pair_boxes +=
+	trace.physical_event_regular_pair_boxes;
+    summary.physical_event_regular_pair_roots +=
+	trace.physical_event_regular_pair_roots;
+    summary.physical_event_regular_pair_complement_visited +=
+	trace.physical_event_regular_pair_complement_visited;
+    summary.physical_event_regular_pair_complement_high_water = std::max(
+	summary.physical_event_regular_pair_complement_high_water,
+	trace.physical_event_regular_pair_complement_high_water);
     summary.physical_event_boundary += trace.physical_event_boundary;
     summary.physical_event_seam += trace.physical_event_seam;
     summary.physical_event_seam_attempts +=
@@ -2052,6 +2080,14 @@ brep_print_prepared_event_summary(const char *label,
 	summary.physical_event_seam_oblique_pairs,
 	summary.physical_event_seam_oblique_cells,
 	summary.physical_event_seam_oblique_box_links);
+    std::printf("%s regular-pair components: attempt/certified="
+	"%zu/%zu boxes/roots=%zu/%zu complement=%zu/%zu\n", label,
+	summary.physical_event_regular_pair_attempts,
+	summary.physical_event_regular_pair_certified,
+	summary.physical_event_regular_pair_boxes,
+	summary.physical_event_regular_pair_roots,
+	summary.physical_event_regular_pair_complement_visited,
+	summary.physical_event_regular_pair_complement_high_water);
     std::printf("%s prepared production: selected=%zu/%zu/%zu "
 	"fallback=none:%zu non-solid:%zu plate:%zu unsupported:%zu "
 	"surface-work:%zu boxes:%zu uncertified:%zu local-work:%zu "
@@ -2232,6 +2268,10 @@ check_grazing_local_root_certificate_trend(struct soltab *brep_stp,
     size_t subtolerance_miss_roots = 0;
     size_t resolved_solid_matches = 0;
     size_t resolved_prepared_selections = 0;
+    size_t resolved_regular_pair_selections = 0;
+    size_t resolved_regular_pair_boxes = 0;
+    size_t resolved_regular_pair_complement_visited = 0;
+    size_t resolved_regular_pair_complement_high_water = 0;
     size_t terminal_expansion_ratchets = 0;
     size_t minimum_boundary_ambiguities = 0;
     size_t subtolerance_solid_hits = 0;
@@ -2326,14 +2366,28 @@ check_grazing_local_root_certificate_trend(struct soltab *brep_stp,
 		     solid_trace.surface_terminal_expansion_refinements > 0 &&
 		     !solid_trace.surface_terminal_expansion_failures &&
 		     !solid_trace.surface_terminal_expansion_budget_exhausted);
+		const bool pair_required =
+		    brep_test_surface_tree_depth <= 6 &&
+		    BU_STR_EQUAL(label, "Sphere") &&
+		    (ratio_index == 1 || ratio_index == 2 || ratio_index == 3);
+		const bool pair_ratchet = !pair_required ||
+		    (solid_trace.physical_event_regular_pair_attempts == 1 &&
+		     solid_trace.physical_event_regular_pair_certified == 1 &&
+		     solid_trace.physical_event_regular_pair_boxes ==
+			solid_trace.stored_surface_boxes &&
+		     solid_trace.physical_event_regular_pair_roots == 2 &&
+		     solid_trace.physical_event_regular_pair_complement_visited > 0 &&
+		     solid_trace.physical_event_regular_pair_complement_high_water > 0 &&
+		     !solid_trace.physical_event_regular_pair_failure_stage);
 		if (solid_brep_result.segments != 1 ||
 			solid_error > rtip->rti_tol.dist ||
 			(require_prepared_selection && !prepared_selected) ||
-			!terminal_ratchet) {
+			!terminal_ratchet || !pair_ratchet) {
 		    std::printf("FAIL: %s grazing solid BREP "
 			"ratio/reverse=%.17g/%d segments=%d error=%.17g "
 			"selected/fallback/complete=%zu/%d/%zu "
-			"expansion=%zu/%zu/%zu refine/fail/budget=%zu/%zu/%zu\n",
+			"expansion=%zu/%zu/%zu refine/fail/budget=%zu/%zu/%zu "
+			"pair=%zu/%zu/%zu/%zu/%d\n",
 			label, chord_ratio, reverse,
 			solid_brep_result.segments, solid_error,
 			solid_trace.prepared_production_selected,
@@ -2344,13 +2398,32 @@ check_grazing_local_root_certificate_trend(struct soltab *brep_stp,
 			solid_trace.surface_terminal_expansion_exclusions,
 			solid_trace.surface_terminal_expansion_refinements,
 			solid_trace.surface_terminal_expansion_failures,
-			solid_trace.surface_terminal_expansion_budget_exhausted);
+			solid_trace.surface_terminal_expansion_budget_exhausted,
+			solid_trace.physical_event_regular_pair_attempts,
+			solid_trace.physical_event_regular_pair_certified,
+			solid_trace.physical_event_regular_pair_boxes,
+			solid_trace.physical_event_regular_pair_roots,
+			solid_trace.physical_event_regular_pair_failure_stage);
 		    report_grazing_trace(label, chord_ratio, reverse,
 			solid_trace);
 		    failures++;
 		} else {
 		    resolved_solid_matches++;
 		    resolved_prepared_selections += prepared_selected ? 1 : 0;
+		    resolved_regular_pair_selections += pair_required ? 1 : 0;
+		    if (pair_required) {
+			const size_t pair_visits = solid_trace.
+			    physical_event_regular_pair_complement_visited;
+			const size_t pair_high_water = solid_trace.
+			    physical_event_regular_pair_complement_high_water;
+			resolved_regular_pair_boxes +=
+			    solid_trace.physical_event_regular_pair_boxes;
+			resolved_regular_pair_complement_visited +=
+			    pair_visits;
+			resolved_regular_pair_complement_high_water = std::max(
+			    resolved_regular_pair_complement_high_water,
+			    pair_high_water);
+		    }
 		    if (terminal_case)
 			terminal_expansion_ratchets++;
 		}
@@ -2632,6 +2705,12 @@ check_grazing_local_root_certificate_trend(struct soltab *brep_stp,
 	    label, resolved_prepared_selections);
 	failures++;
     }
+    if (brep_test_surface_tree_depth <= 6 && BU_STR_EQUAL(label, "Sphere") &&
+	    resolved_regular_pair_selections != 6) {
+	std::printf("FAIL: %s grazing regular-pair selections=%zu/6\n",
+	    label, resolved_regular_pair_selections);
+	failures++;
+    }
     const size_t expected_terminal_ratchets =
 	require_terminal_expansion ? 4 : 0;
     if (terminal_expansion_ratchets != expected_terminal_ratchets) {
@@ -2665,7 +2744,7 @@ check_grazing_local_root_certificate_trend(struct soltab *brep_stp,
 	std::printf("%s grazing local certificates: PASS resolved=%zu "
 	    "sub-T=%zu unavailable=%zu tangent/miss=%zu/%zu miss-roots=%zu "
 	    "solid=%zu sub-T-solid=%zu "
-	    "prepared=%zu expansion=%zu boundary=%zu "
+	    "prepared=%zu pair=%zu/%zu/%zu/%zu expansion=%zu boundary=%zu "
 	    "implicit tangent/outside=%zu/%zu "
 	    "min-separation=%.3g "
 	    "max-radius/separation=%.3g attempts=%zu contraction=%.3g "
@@ -2673,7 +2752,11 @@ check_grazing_local_root_certificate_trend(struct soltab *brep_stp,
 	    resolved_pairs, subtolerance_pairs, subtolerance_unavailable,
 	    tangent_rejections, miss_side_cases, subtolerance_miss_roots,
 	    resolved_solid_matches, subtolerance_solid_hits,
-	    resolved_prepared_selections, terminal_expansion_ratchets,
+	    resolved_prepared_selections, resolved_regular_pair_selections,
+	    resolved_regular_pair_boxes,
+	    resolved_regular_pair_complement_visited,
+	    resolved_regular_pair_complement_high_water,
+	    terminal_expansion_ratchets,
 	    minimum_boundary_ambiguities, implicit_tangent_segments,
 	    implicit_outside_segments,
 	    minimum_separation, maximum_radius_ratio,
@@ -13157,8 +13240,13 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 			      trace.physical_event_edge_joint_components == 1 &&
 			      trace.physical_event_edge == 1 &&
 			      !trace.physical_event_edge_contacts));
+			const bool regular_pair_inactive =
+			    !trace.physical_event_regular_pair_attempts &&
+			    !trace.physical_event_regular_pair_certified &&
+			    !trace.physical_event_regular_pair_failure_stage;
 			if (!brep_trace_fixed_workspaces_match(trace) || !edge_valid ||
 				!joint_metadata_valid || !tolerance_transition_valid ||
+				!regular_pair_inactive ||
 				implicit_result.segments != expected_segments ||
 				variant_result.segments != expected_segments ||
 				trace.final_segments != (size_t)expected_segments ||

@@ -489,6 +489,7 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_BOX_RESOLVED_REGULAR 1
 #define RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY 2
 #define RT_BREP_TRACE_BOX_RESOLVED_CONTACT 3
+#define RT_BREP_TRACE_BOX_RESOLVED_REGULAR_PAIR 4
 #define RT_BREP_TRACE_EVENT_REGULAR_INTERIOR 1
 #define RT_BREP_TRACE_EVENT_BOUNDARY_FOLD 2
 #define RT_BREP_TRACE_EVENT_SEAM_EXISTING 3
@@ -862,6 +863,13 @@ struct rt_brep_shot_trace {
     size_t physical_event_regular_component_boxes;
     size_t physical_event_regular_component_roots;
     int physical_event_regular_component_failure_stage;
+    size_t physical_event_regular_pair_attempts;
+    size_t physical_event_regular_pair_certified;
+    size_t physical_event_regular_pair_boxes;
+    size_t physical_event_regular_pair_roots;
+    size_t physical_event_regular_pair_complement_visited;
+    size_t physical_event_regular_pair_complement_high_water;
+    int physical_event_regular_pair_failure_stage;
     size_t physical_event_boundary;
     size_t physical_event_seam;
     size_t physical_event_seam_attempts;

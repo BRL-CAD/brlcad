@@ -11,6 +11,89 @@ as the authoritative continuation log until all acceptance gates pass.
 CURRENT PHASE
 -------------
 
+2026-08-09 ACTIVE CERTIFIED REGULAR-ROOT-PAIR CHECKPOINT
+
+The controlled SurfaceTree measurement increment is committed locally as
+ad9cc18119, "Measure controlled BREP SurfaceTree depth".  It was not pushed.
+This checkpoint's increment, "Certify close BREP regular root pairs", closes
+the exact depth-six grazing gap identified by that experiment.  It is also a
+local-only commit and was not pushed.  The production SurfaceTree default
+remains eight and the cache format remains version zero.
+
+The ordinary physical-event dispatcher previously required each terminal box
+to have one Krawczyk-certified root and one determinant sign.  The newer
+component theorem was reachable only as cleanup around an exact edge event.
+Consequently a near-tangent sphere ray could have two correct, independently
+converged ENTER/LEAVE roots in one face/span and still publish no event: all
+three coarse boxes were unresolved, while the sparse legacy fallback retained
+only one hit.
+
+A new regular/regular theorem handles this case before the fold dispatcher.
+Its first production scope is deliberately narrow.  It requires exactly two
+finite, non-grazing CLEAN_HIT observations on one face and Bezier span, with
+opposite directions and ray-parameter separation strictly greater than the
+BRL-CAD minimum segment tolerance plus scale-aware roundoff.  It owns the
+entire shot's terminal-box ledger; every box must belong to that face/span and
+must either observe one of the roots or be an unresolved rootless box.  It is
+not used for status-2 reparameterized surfaces, exact tangency, minimum-size
+contacts, trim-near roots, or a ray with additional components.
+
+The two roots receive independent local certificates with radii smaller than
+0.2 times their normalized L-infinity separation.  Their boxes are therefore
+disjoint.  The complete rectangle spanning all terminal boxes is then split
+at both local-box boundaries, and direct/rotated Bernstein bounds exclude
+every remaining part with the existing fixed 64-entry stack, depth-24 limit,
+and 8192-visit cap.  Stored terminal boxes need not touch: an earlier certified
+exclusion may omit the root-free gap between them, and this theorem re-proves
+that gap over the complete hull rather than trusting the omission.
+
+Each root then receives a smaller nested event box which independently passes
+coefficient restriction, strict Krawczyk inclusion, constant determinant
+sign, outward t enclosure, face-reversal direction agreement, and the
+minimum-segment gap classification.  The whole transaction is committed only
+after both roots, every box, the complement, and the ordered ENTER/LEAVE stream
+pass.  Component boxes receive a distinct RESOLVED_REGULAR_PAIR disposition
+with no single determinant sign, since the two roots necessarily have
+opposite signs.  New telemetry records attempts, certificates, owned boxes and
+roots, complement visits/high-water, and a bounded failure stage.  No ray-time
+allocation, random perturbation, or mutable global state was added.
+
+The sphere/torus grazing gate now passes at every controlled SurfaceTree depth
+from six through zero.  At depth zero the sphere's six formerly missing
+material rays certify six root-pair components owning 18 boxes; complement
+proofs visit 254 boxes in aggregate with stack high-water nine.  All eight
+resolved sphere lines are selected by the prepared production pipeline.  The
+exact tangent remains a miss/contact observation, the chord exactly equal to
+T retains its conservative boundary fallback, all mirrored outside rays
+remain misses, and the status-2 torus similarity path is unchanged.
+
+Broader depth-two probing now identifies the next independent work rather
+than another grazing-pair defect.  Endpoint, non-isoparametric, contact/trim,
+affine, isolated-defect, and the focused grazing gates pass.  The directed
+gate exposes sphere-pole behavior; Crofton finds small grazing misses on RCC,
+cone, and torus conversions; and four seam transform cases still depend on
+denser legacy leaves.  Pole behavior is especially diagnostic and
+non-monotonic: the directed suite misses poles at depth two, passes at depth
+three, returns geometrically wrong pole normals at depth four, misses the
+large translated pole at depths five and six, and passed at depth seven in
+the preceding checkpoint.  This confirms that selecting a lucky tree depth
+is not a sound solution.  The next theorem/test corpus should explicitly own
+degenerate parameter-space pole events and reconstruct their geometric normal
+independently of the arbitrary UV representative.
+
+All eleven optimized default-depth shards pass in the final state.  During
+validation an initially broad dispatch screen intercepted 198 two-observation
+Cobb seam rays before rejecting their different-face roots; narrowing the
+screen to the theorem's exact same-face/span, clean-root, compatible-box domain
+restored the established edge/seam paths.  The complete seam shard then passes
+and reports zero regular-pair attempts for the Cobb matrix.  ASAN/UBSAN grazing
+and isolated-defect gates pass at depth zero with leak scanning disabled and
+halt-on-error enabled; neither reports a sanitizer diagnostic.  Do not change
+the default based on the new grazing result alone.  The pole,
+primitive-Crofton, and transformed seam gaps must first move onto certified
+prepared paths and the broad matrix must pass at a common reduced depth.
+
+
 2026-08-09 ACTIVE CONTROLLED SURFACETREE-DENSITY CHECKPOINT
 
 The tolerance-healed edge-transition increment is committed locally as
