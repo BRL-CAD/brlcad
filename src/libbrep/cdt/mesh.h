@@ -625,6 +625,7 @@ public:
     long add_point(ON_3dPoint *on_3dp);
     long add_normal(ON_3dPoint *on_3dn);
     bool repair();
+    size_t refine_incorrect_normals(size_t max_points);
     bool optimize(double deg = 10);
     bool optimize(std::set<triangle_t> &seeds);
     bool optimize(std::set<triangle_t> &seeds, ON_Plane &pplane);
@@ -653,6 +654,7 @@ public:
     /* Tests */
     bool self_intersecting_mesh();
     bool brep_edge_pnt(long v);
+    size_t geometric_degenerate_count();
 
     // Triangle geometry information
     ON_3dPoint tcenter(const triangle_t &t);

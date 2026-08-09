@@ -1246,7 +1246,7 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt)
 		    // A null eseg will indicate a singularity and a need for special case
 		    // splitting of the 2D edge only
 		    ne->eseg = NULL;
-		    if (!cdt_face_uses_cone_chart(face))
+		    if (!cdt_face_uses_topology_chart(face))
 			s_cdt->unsplit_singular_edges.insert(ne);
 		    fmesh->has_singularities = true;
 		}
@@ -1505,7 +1505,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
-	const bool cone_chart = cdt_face_uses_cone_chart(face);
+	const bool topology_chart = cdt_face_uses_topology_chart(face);
 	//std::cout << "Face " << face_index << " of " << brep->m_F.Count()-1 << " close edge check...\n";
 
 	std::vector<cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face_index);
@@ -1601,7 +1601,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 		} else {
 		    // Trim only, no edge.
 		    ws_s.erase(pe);
-		    if (cone_chart) {
+		    if (topology_chart) {
 			pe->split_status = 0;
 			current_trims.push_back(pe);
 			continue;
