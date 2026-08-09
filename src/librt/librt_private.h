@@ -911,7 +911,9 @@ struct rt_brep_shot_trace {
     size_t physical_event_edge_candidates;
     size_t physical_event_edge_certified;
     size_t physical_event_edge_failures;
+    int physical_event_edge_candidate_failure_stage;
     size_t physical_event_edge_lift_witnesses;
+    size_t physical_event_edge_tolerance_transitions;
     size_t physical_event_edge_joint_attempts;
     size_t physical_event_edge_joint_components;
     size_t physical_event_edge_joint_boxes;
