@@ -7,6 +7,142 @@ Repository studied: /home/cyapp/brlcad
 STEP test corpus: /home/cyapp/step_corpus_g
 
 
+IMPLEMENTATION CHECKPOINT: ORIENTED SOLID HIT-RUN ASSEMBLY (2026-08-09)
+-----------------------------------------------------------------------
+
+The next stratified imported audit found a solid-assembly defect rather than
+a SurfaceTree-density or numerical-root defect.  The witness is
+`second/bearings/UCP-206.g`, `UCP_206_item.s`: a valid, solid 127-face BREP
+with three topological face components.  The same deterministic rays were
+shot with freshly built depth-three and depth-eight trees.  Both depths
+produced the same raw roots, including under reversal, but the historical
+ordered-hit cleanup selected different final intervals.  This is important:
+making the initial boxes denser cannot repair a direction-dependent fill rule.
+
+Three exact ray-pair witnesses now cover the distinct failure modes:
+
+  * pair 3 exposed an odd stream.  Forward cleanup saw ENTER, LEAVE, ENTER;
+    the reversed line saw LEAVE, ENTER, LEAVE.  The old tail deletion chose a
+    different interval depending on traversal direction;
+  * axis pair 0 exposed an overlapping-boundary run.  Its accepted directions
+    were LEAVE, ENTER, ENTER, LEAVE, LEAVE, ENTER.  The historical rule
+    retained the last entry and first exit, which is intersection semantics,
+    and published two intervals with inverted endpoint normals; and
+  * pair 26 exposed the distinction between a true nested shell and multiple
+    observations of one seam event.  Its same-direction roots differed by
+    about `2.4e-5`, below the model tolerance `5e-4`.  Counting those as two
+    independent shell crossings made one ray direction lose the interval.
+
+There was also a concrete initialization bug in both allocating and fixed
+cleanup implementations: the code intended to establish the entering sign at
+the first processed hit, but tested an iterator/index state that could never
+be true.  Correcting that line alone was necessary but insufficient.  The raw
+root trace proved that the governing behavioral error was the fill contract.
+
+`brep-audit --ray-depth-compare` now has two diagnostic controls used to make
+these cases cheap and reproducible:
+
+  brep-audit --ray-depth-compare --ray-count=0 --ray-pair=N \
+    --legacy-only file.g brep
+
+`--ray-pair` replays one indexed deterministic chord pair, and
+`--legacy-only` retains direct fresh depth-three/depth-eight SurfaceTree prep
+while omitting the prepared local-box solve.  Failure records include every
+stored raw root, face component, UV, trim class and distance, normal dot,
+direction, adjacency, cleanup-stage count, solver call, and final interval.
+The pass gate now treats a nonnegative entry normal or nonpositive exit normal
+as an invalid solid partition instead of merely reporting an orientation
+counter.  These controls are diagnostic only and do not alter production
+shooting.
+
+The legacy solid fallback now applies the following allocation-free rule after
+the existing near-miss, near-hit, grazing, and exact-duplicate stages:
+
+  1. Sort retained observations by ray parameter.  Direction is the oriented
+     surface result: outward normal dot ray below zero is ENTER and above zero
+     is LEAVE.
+
+  2. Define a same-event parameter envelope as
+
+       max(BREP_SAME_POINT_TOLERANCE, rti_tol.dist / |D|)
+
+     plus a 128-epsilon parameter-scale floor.  Consecutive observations with
+     the same direction inside this envelope represent one boundary event at
+     BRL-CAD model resolution.  Retain the first ENTER and last LEAVE.  Those
+     choices exchange under ray reversal and are the outward extrema for
+     union occupancy.  Never coalesce opposite directions: they may be a real
+     minimum-size grazing interval.
+
+  3. Scan the remaining oriented events with a nonnegative winding depth.
+     The first ENTER taking the depth from zero to one is a material entry.
+     Nested ENTER events raise the depth.  The LEAVE returning depth from one
+     to zero is the material exit.  Thus disjoint shells produce separate
+     intervals, overlapping outward shells produce their union envelope, and
+     a correctly inward-oriented cavity opens and closes a void.
+
+  4. Ignore unmatched exterior LEAVEs and an unclosed trailing ENTER only
+     without bridging them to another interval.  Preserve a sole unmatched
+     observation for the separately certified seam/closure transaction; the
+     Cobb crack resolver needs that existing boundary witness.  A prepared
+     result does not use this heuristic: incomplete event ownership or final
+     winding still causes atomic whole-ray fallback.
+
+  5. Compact the bounded `brep_hit_workspace` in place.  The allocating list
+     path implements the identical event choices for equivalence checking,
+     but no new allocation was introduced into the fixed production cleanup.
+     Plate and non-solid contracts retain their historical first-hit behavior
+     and do not use solid winding.
+
+The independent analytic oracle is deliberately stronger than replaying an
+imported model.  The C++ hard corpus converts two radius-five implicit spheres
+centered at x=-3 and x=+3 to BREP, appends both closed shells into one BREP
+primitive, and compares it with the implicit CSG union.  Along the x axis the
+oracle interval is `[12,28]`.  The old cleanup returned only the intersection
+`[18,22]` in both directions; the nonzero-winding rule returns `[12,28]` in
+both.  A separate disjoint-sphere union continues to return multiple
+intervals.  Pure cleanup tests ratchet nested, odd, leading/trailing,
+tolerance-clustered, reversed, and singleton-closure streams.
+
+The tolerance/healing boundary is explicit.  Same-direction observations
+inside model resolution are one event; true shell crossings farther apart are
+counted.  This is the best available legacy fallback policy, not permission to
+erase uncertain topology.  The prepared pipeline should ultimately replace
+parameter-only coalescence with certified root/event identity from face,
+edge, trim, and source-box ownership, then apply the same nonzero-winding
+occupancy contract.  Any unsupported identity remains whole-ray fallback.
+
+The complete Cobb seam gate initially caught an over-aggressive version that
+discarded a singleton.  Retaining it restored all 14 below-envelope repairs,
+both prepared partition promotions, classifier/similarity invariance,
+ambiguous-correspondence fallback, and the 416-ray bowed-seam matrix.  The
+final optimized gate passes all 18 registered ray shards.  The standalone
+seam shard completed in 383 seconds on this host; the other 17 shards passed
+in 157 seconds when run concurrently.
+
+The final 70-ray UCP audit has zero depth differences, reversal mismatches,
+invalid rays, or orientation anomalies at both requested depths.  It returns
+20 material segments on 16 hit rays.  Eight rays select the prepared path;
+six fall back for surface-box capacity and 56 for incomplete certification.
+Depth three builds 7,620 nodes/5,139 leaves, while depth eight builds 170,816
+nodes/84,360 leaves.  The prepared trace visits 821,770 subdivision boxes,
+isolates 105,414 boxes, attempts 104,323 folds, and records 103,100 box
+overflow attempts.  Those figures are now the performance baseline, not a
+reason to weaken the correctness gate.
+
+Final ASAN/UBSAN replay passes the pure cleanup corpus, the hard analytic and
+Cauchy-Crofton corpus, and imported pairs 0, 3, and 26 without a diagnostic.
+The three parallel instrumented UCP replays each peak near 1.13 GB, so keep
+them as separate sanitizer shards when memory is constrained.  Leak scanning
+remains disabled because of the host ptrace wrapper.
+
+Correctness remains the immediate authority.  Once the event/root corpus and
+prepared fallback boundaries are sufficiently locked down, follow through on
+the Abert-informed performance phase in Section 10: profile first, eliminate
+global face/span work and dense seed trees, compact immutable data, add
+conservative SIMD and real batched traversal, and optimize the corrector only
+if it remains hot.  The UCP workload supplies a concrete before/after target.
+
+
 IMPLEMENTATION CHECKPOINT: IMPORTED PARTITIONS AND STATUS-2 POLES (2026-08-09)
 -----------------------------------------------------------------------------
 
@@ -1286,11 +1422,14 @@ pipeline.  Its stages and authority are:
 
   6. Ordered solid-state assembly.  Starting outside at negative infinity,
      process the complete event stream by outward t intervals.  A valid
-     oriented manifold boundary changes state only through resolved ENTER and
-     LEAVE events; CONTACT has zero state change.  Form material intervals
-     from state transitions and apply the model minimum-size policy with
-     outward interval comparisons.  Negative state, an invalid winding/state,
-     ambiguous event ordering, or an unresolved final state selects fallback.
+     oriented manifold boundary changes winding only through resolved ENTER
+     and LEAVE events; CONTACT has zero change.  Form union material intervals
+     where the signed winding is positive and apply the model minimum-size
+     policy with outward interval comparisons.  Negative winding, ambiguous
+     event identity/order, or a nonzero final winding selects fallback.  A
+     value above one is valid only when separately certified events establish
+     genuinely overlapping outward shells; duplicate seam observations must
+     resolve to one physical event before assembly.
 
   7. Atomic publication.  Only after the ledger proves complete span/box/root
      coverage, complete event resolution, valid solid state, finite endpoint
@@ -3574,13 +3713,25 @@ nonzero state, a negative state, an unresolved non-manifold cluster, or
 incompatible interval ordering is a structured failure and invokes the old
 path during rollout.
 
-For a well-defined oriented solid, the state must remain in {0,1}; disjoint
-shells may return to zero between intervals, and inward-oriented cavity faces
-produce the expected LEAVE/ENTER transitions.  A transition to a negative
-state or above one indicates an orientation, overlap, ordering, or event-
-identity problem and is not repaired by deleting hits.  If overlapping shell
-semantics are later desired, they need an explicit winding contract and their
-own oracle corpus.
+For a well-defined oriented BREP volume, winding must remain nonnegative.
+Disjoint shells return to zero between intervals.  Overlapping outward shells
+may raise winding above one while their union remains material; the first
+zero-to-one ENTER and final one-to-zero LEAVE are the published union
+boundaries.  An inward-oriented cavity produces a LEAVE to zero followed by
+an ENTER back to one.  A negative state, an unresolved final nonzero state, or
+an event whose identity/order is ambiguous is a structured failure.  Do not
+repair it by deleting an arbitrary hit.
+
+This nonzero-winding contract is now independently gated by one BREP primitive
+containing two appended overlapping converted-sphere shells and an implicit
+CSG-union oracle.  It is distinct from tolerance-local duplicate-event
+coalescence: same-direction seam observations inside the model-resolution
+envelope resolve to one event, whereas certified shell boundaries farther
+apart each change winding.  The current prepared selector still restricts
+publication to its already-certified alternating {0,1} event classes and
+falls back on general overlap.  Extend prepared authority to winding above one
+only after complete event ownership proves those shell crossings; the legacy
+fallback's parameter-local rule is not that proof.
 
 Do not decide interval existence from nominal endpoint separation.  Subtract
 the outward event t intervals and compare them with an outward bound for
@@ -4020,6 +4171,15 @@ is unavailable.  The initial set should include:
   * box minus cylinder, producing planar/non-planar trimmed faces;
   * nested union/subtraction with multiple entry and exit events; and
   * shells and thin walls at several multiples of rti_tol.dist.
+
+The first overlap gate is now implemented one level below Boolean BREP
+conversion so it isolates ray assembly: convert two implicit spheres, append
+the two closed BREP shells into one valid solid BREP primitive, and compare its
+directed axis interval with the original implicit CSG union in both ray
+directions.  This fixture distinguishes union `[12,28]` from the historical
+intersection `[18,22]` without involving STEP import, trimming, tree depth, or
+a BREP Boolean implementation.  Keep it permanently, then add an evaluated
+topology-identical BREP union as the stronger later hierarchy case.
 
 Begin with operands separated from coincident and sub-tolerance degeneracies
 so the conversion has one clear intended result.  Then introduce deliberate

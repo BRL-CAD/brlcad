@@ -163,6 +163,18 @@ struct ray_audit_shot {
     bool valid = true;
     bool prepared_selected = false;
     int fallback = RT_BREP_PREPARED_FALLBACK_UNSUPPORTED;
+    size_t intersected_leaves = 0;
+    size_t solver_calls = 0;
+    size_t stored_roots = 0;
+    size_t root_overflow = 0;
+    size_t raw_hits = 0;
+    size_t after_near_miss = 0;
+    size_t after_near_hit = 0;
+    size_t after_grazing = 0;
+    size_t after_duplicates = 0;
+    size_t after_direction_cleanup = 0;
+    size_t final_hits = 0;
+    std::vector<struct rt_brep_trace_root> roots;
     std::vector<ray_audit_interval> intervals;
 };
 
@@ -776,7 +788,7 @@ ray_audit_distance_tolerance(const ray_audit_sample &sample,
 static ray_audit_shot
 ray_audit_shoot(audit_prepared_brep &prepared,
     const ray_audit_sample &sample, const struct bn_tol *tol,
-    struct rt_brep_shot_trace *trace)
+    struct rt_brep_shot_trace *trace, bool legacy_only)
 {
     ray_audit_shot result;
     struct application ap;
@@ -790,10 +802,25 @@ ray_audit_shoot(audit_prepared_brep &prepared,
     VMOVE(ray.r_dir, sample.direction);
     ray.magic = RT_RAY_MAGIC;
     BU_LIST_INIT(&seghead.l);
-    result.hit_count = _rt_brep_shot_trace(prepared.stp, &ray, &ap,
-	&seghead, trace);
+    result.hit_count = legacy_only ?
+	_rt_brep_shot_legacy_trace(prepared.stp, &ray, &ap, &seghead, trace) :
+	_rt_brep_shot_trace(prepared.stp, &ray, &ap, &seghead, trace);
     result.prepared_selected = trace->prepared_production_selected == 1;
     result.fallback = trace->prepared_production_fallback;
+    result.intersected_leaves = trace->intersected_leaves;
+    result.solver_calls = trace->solver_calls;
+    result.stored_roots = trace->stored_roots;
+    result.root_overflow = trace->root_overflow;
+    result.raw_hits = trace->raw_hits;
+    result.after_near_miss = trace->after_near_miss;
+    result.after_near_hit = trace->after_near_hit;
+    result.after_grazing = trace->after_grazing;
+    result.after_duplicates = trace->after_duplicates;
+    result.after_direction_cleanup = trace->after_direction_cleanup;
+    result.final_hits = trace->final_hits;
+    result.roots.assign(trace->roots,
+	trace->roots + std::min(trace->stored_roots,
+	    (size_t)RT_BREP_TRACE_MAX_ROOTS));
 
     struct seg *segp;
     for (BU_LIST_FOR(segp, seg, &seghead.l)) {
@@ -833,6 +860,8 @@ ray_audit_shoot(audit_prepared_brep &prepared,
 		!std::isfinite(interval.out_dist) ||
 		!std::isfinite(interval.in_normal_dot) ||
 		!std::isfinite(interval.out_normal_dot) ||
+		interval.in_normal_dot > 1.0e-8 ||
+		interval.out_normal_dot < -1.0e-8 ||
 		interval.in_dist > interval.out_dist + distance_tolerance ||
 		(i && interval.in_dist <
 		    result.intervals[i - 1].out_dist - distance_tolerance))
@@ -896,7 +925,8 @@ ray_audit_accumulate(ray_audit_telemetry &total,
 
 static ray_audit_depth_run
 ray_audit_run_depth(struct db_i *dbip, struct directory *dp, int depth,
-    const struct bn_tol *tol, const std::vector<ray_audit_sample> &samples)
+    const struct bn_tol *tol, const std::vector<ray_audit_sample> &samples,
+    bool legacy_only)
 {
     ray_audit_depth_run run;
     audit_prepared_brep prepared;
@@ -908,7 +938,7 @@ ray_audit_run_depth(struct db_i *dbip, struct directory *dp, int depth,
 	    "brep ray audit trace");
     for (size_t i = 0; i < samples.size(); ++i) {
 	ray_audit_shot shot = ray_audit_shoot(prepared, samples[i], tol,
-	    trace);
+	    trace, legacy_only);
 	ray_audit_accumulate(run.telemetry, shot, *trace);
 	run.shots.push_back(shot);
     }
@@ -1098,7 +1128,8 @@ print_ray_audit_indices(const std::vector<size_t> &indices)
 }
 
 static void
-print_ray_audit_shot(const ray_audit_shot &shot)
+print_ray_audit_shot(const ray_audit_shot &shot,
+    const std::vector<int> &face_components)
 {
     std::cout << "{\"valid\":" << (shot.valid ? "true" : "false")
 	<< ",\"hit_count\":" << shot.hit_count
@@ -1106,6 +1137,35 @@ print_ray_audit_shot(const ray_audit_shot &shot)
 	<< (shot.prepared_selected ? "true" : "false")
 	<< ",\"fallback\":" << json_quote(
 	    ray_audit_fallback_name(shot.fallback))
+	<< ",\"intersected_leaves\":" << shot.intersected_leaves
+	<< ",\"solver_calls\":" << shot.solver_calls
+	<< ",\"cleanup\":{\"raw\":" << shot.raw_hits
+	<< ",\"after_near_miss\":" << shot.after_near_miss
+	<< ",\"after_near_hit\":" << shot.after_near_hit
+	<< ",\"after_grazing\":" << shot.after_grazing
+	<< ",\"after_duplicates\":" << shot.after_duplicates
+	<< ",\"after_direction\":" << shot.after_direction_cleanup
+	<< ",\"final\":" << shot.final_hits << "}"
+	<< ",\"root_overflow\":" << shot.root_overflow
+	<< ",\"roots\":[";
+    for (size_t i = 0; i < shot.roots.size(); ++i) {
+	const struct rt_brep_trace_root &root = shot.roots[i];
+	if (i)
+	    std::cout << ",";
+	std::cout << "{\"dist\":" << root.dist
+	    << ",\"face\":" << root.face_index
+	    << ",\"component\":" << (root.face_index >= 0 &&
+		(size_t)root.face_index < face_components.size() ?
+		face_components[root.face_index] : -1)
+	    << ",\"uv\":[" << root.uv[0] << "," << root.uv[1] << "]"
+	    << ",\"normal_dot\":" << root.normal_dot
+	    << ",\"trim_status\":" << root.trim_status
+	    << ",\"trim_distance\":" << root.trim_distance
+	    << ",\"hit_class\":" << root.hit_class
+	    << ",\"direction\":" << root.direction
+	    << ",\"adjacent_face\":" << root.adjacent_face_index << "}";
+    }
+    std::cout << "],\"stored_roots\":" << shot.stored_roots
 	<< ",\"intervals\":[";
     for (size_t i = 0; i < shot.intervals.size(); ++i) {
 	if (i)
@@ -1126,11 +1186,15 @@ print_ray_audit_failure_records(
     const std::vector<ray_audit_sample> &samples,
     const ray_audit_depth_run &candidate,
     const ray_audit_depth_run &reference,
-    const ray_audit_comparison &comparison)
+    const ray_audit_comparison &comparison,
+    const std::vector<int> &face_components)
 {
     std::vector<size_t> pairs;
-    for (size_t i = 0; i < comparison.differing_ray_indices.size(); ++i)
-	pairs.push_back(comparison.differing_ray_indices[i] / 2);
+    for (size_t i = 0; i < comparison.differing_ray_indices.size(); ++i) {
+	const size_t ray_index = comparison.differing_ray_indices[i];
+	if (ray_index < samples.size())
+	    pairs.push_back(samples[ray_index].pair_index);
+    }
     pairs.insert(pairs.end(), comparison.candidate_reversal_indices.begin(),
 	comparison.candidate_reversal_indices.end());
     pairs.insert(pairs.end(), comparison.reference_reversal_indices.begin(),
@@ -1143,10 +1207,22 @@ print_ray_audit_failure_records(
     for (size_t record_index = 0; record_index < pairs.size();
 	    ++record_index) {
 	const size_t pair = pairs[record_index];
-	const size_t forward = 2 * pair;
-	const size_t reverse = forward + 1;
-	if (forward >= samples.size() ||
+	size_t forward = SIZE_MAX;
+	size_t reverse = SIZE_MAX;
+	for (size_t sample_index = 0; sample_index < samples.size();
+		sample_index++) {
+	    if (samples[sample_index].pair_index != pair)
+		continue;
+	    if (samples[sample_index].reverse)
+		reverse = sample_index;
+	    else
+		forward = sample_index;
+	}
+	if (forward == SIZE_MAX || reverse == SIZE_MAX ||
+		forward >= samples.size() ||
+		forward >= candidate.shots.size() ||
 		reverse >= candidate.shots.size() ||
+		forward >= reference.shots.size() ||
 		reverse >= reference.shots.size())
 	    continue;
 	if (record_index)
@@ -1162,22 +1238,68 @@ print_ray_audit_failure_records(
 	    << samples[forward].direction[Z] << "]"
 	    << ",\"chord_length\":" << samples[forward].chord_length
 	    << ",\"candidate_forward\":";
-	print_ray_audit_shot(candidate.shots[forward]);
+	print_ray_audit_shot(candidate.shots[forward], face_components);
 	std::cout << ",\"candidate_reverse\":";
-	print_ray_audit_shot(candidate.shots[reverse]);
+	print_ray_audit_shot(candidate.shots[reverse], face_components);
 	std::cout << ",\"reference_forward\":";
-	print_ray_audit_shot(reference.shots[forward]);
+	print_ray_audit_shot(reference.shots[forward], face_components);
 	std::cout << ",\"reference_reverse\":";
-	print_ray_audit_shot(reference.shots[reverse]);
+	print_ray_audit_shot(reference.shots[reverse], face_components);
 	std::cout << "}";
     }
     std::cout << "]";
 }
 
+static std::vector<int>
+ray_audit_face_components(const ON_Brep &brep, size_t &component_count)
+{
+    const size_t face_count = (size_t)brep.m_F.Count();
+    std::vector<std::vector<int> > adjacency(face_count);
+    for (int edge_index = 0; edge_index < brep.m_E.Count(); ++edge_index) {
+	const ON_BrepEdge &edge = brep.m_E[edge_index];
+	std::vector<int> faces;
+	for (int trim_slot = 0; trim_slot < edge.m_ti.Count(); ++trim_slot) {
+	    const int trim_index = edge.m_ti[trim_slot];
+	    if (trim_index < 0 || trim_index >= brep.m_T.Count())
+		continue;
+	    const int face_index = brep.m_T[trim_index].FaceIndexOf();
+	    if (face_index >= 0 && (size_t)face_index < face_count &&
+		    std::find(faces.begin(), faces.end(), face_index) ==
+			faces.end())
+		faces.push_back(face_index);
+	}
+	for (size_t first = 0; first < faces.size(); ++first)
+	    for (size_t second = first + 1; second < faces.size(); ++second) {
+		adjacency[faces[first]].push_back(faces[second]);
+		adjacency[faces[second]].push_back(faces[first]);
+	    }
+    }
+    std::vector<int> components(face_count, -1);
+    component_count = 0;
+    for (size_t seed = 0; seed < face_count; ++seed) {
+	if (components[seed] >= 0)
+	    continue;
+	std::vector<size_t> pending(1, seed);
+	components[seed] = (int)component_count;
+	for (size_t next = 0; next < pending.size(); ++next) {
+	    const size_t face = pending[next];
+	    for (size_t i = 0; i < adjacency[face].size(); ++i) {
+		const size_t neighbor = (size_t)adjacency[face][i];
+		if (components[neighbor] >= 0)
+		    continue;
+		components[neighbor] = (int)component_count;
+		pending.push_back(neighbor);
+	    }
+	}
+	component_count++;
+    }
+    return components;
+}
+
 static int
 ray_depth_compare(struct db_i *dbip, const char *db_path,
     struct directory *dp, int candidate_depth, int reference_depth,
-    size_t random_chords)
+    size_t random_chords, long selected_pair, bool legacy_only)
 {
     struct rt_db_internal intern;
     bool solid = false;
@@ -1185,12 +1307,16 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
     point_t bmin = VINIT_ZERO;
     point_t bmax = VINIT_ZERO;
     bool have_bbox = false;
+    size_t component_count = 0;
+    std::vector<int> face_components;
     if (load_brep(dbip, dp, &intern) == BRLCAD_OK) {
 	struct rt_brep_internal *bi =
 	    (struct rt_brep_internal *)intern.idb_ptr;
 	RT_BREP_CK_MAGIC(bi);
 	face_count = bi->brep->m_F.Count();
 	solid = bi->brep->IsSolid();
+	face_components = ray_audit_face_components(*bi->brep,
+	    component_count);
 	const ON_BoundingBox bbox = bi->brep->BoundingBox();
 	if (bbox.IsValid()) {
 	    VMOVE(bmin, bbox.m_min);
@@ -1200,20 +1326,27 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
 	rt_db_free_internal(&intern);
     }
     struct bn_tol tol = BN_TOL_INIT_TOL;
-    const std::vector<ray_audit_sample> samples = have_bbox && solid ?
-	ray_audit_samples(bmin, bmax, random_chords,
+    const size_t generated_random_chords = selected_pair >= 3 ?
+	std::max(random_chords, (size_t)selected_pair - 2) : random_chords;
+    std::vector<ray_audit_sample> samples = have_bbox && solid ?
+	ray_audit_samples(bmin, bmax, generated_random_chords,
 	    std::max(100.0 * tol.dist, 1.0e-6)) :
 	std::vector<ray_audit_sample>();
+    if (selected_pair >= 0)
+	samples.erase(std::remove_if(samples.begin(), samples.end(),
+	    [selected_pair](const ray_audit_sample &sample) {
+		return sample.pair_index != (size_t)selected_pair;
+	    }), samples.end());
     ray_audit_depth_run reference;
     ray_audit_depth_run candidate;
     if (!samples.empty()) {
 	/* Direct primitive prep is deliberate: the persistent prep-cache key
 	 * does not currently encode an explicitly requested adaptive depth. */
 	reference = ray_audit_run_depth(dbip, dp, reference_depth, &tol,
-	    samples);
+	    samples, legacy_only);
 	if (reference.prep.ret == BRLCAD_OK)
 	    candidate = ray_audit_run_depth(dbip, dp, candidate_depth, &tol,
-		samples);
+		samples, legacy_only);
     }
     const ray_audit_comparison comparison =
 	(candidate.prep.ret == BRLCAD_OK && reference.prep.ret == BRLCAD_OK) ?
@@ -1237,13 +1370,20 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
 	<< ",\"status\":" << json_quote(status)
 	<< ",\"solid\":" << (solid ? "true" : "false")
 	<< ",\"faces\":" << face_count
+	<< ",\"face_components\":" << component_count
 	<< ",\"tolerance\":{\"distance\":" << tol.dist
 	<< ",\"distance_squared\":" << tol.dist_sq
 	<< ",\"perpendicular\":" << tol.perp
 	<< ",\"parallel\":" << tol.para << "}"
+	<< ",\"trace_mode\":" << json_quote(legacy_only ?
+	    "legacy_only" : "prepared_and_legacy")
 	<< ",\"sampling\":{\"seed\":\"0x9e3779b97f4a7c15\""
-	<< ",\"axis_chord_pairs\":3,\"random_chord_pairs\":"
-	<< random_chords << ",\"total_chord_pairs\":"
+	<< ",\"selected_pair_index\":" << selected_pair
+	<< ",\"axis_chord_pairs\":"
+	<< (selected_pair < 0 ? 3 : selected_pair < 3 ? 1 : 0)
+	<< ",\"random_chord_pairs\":"
+	<< (selected_pair < 0 ? random_chords : selected_pair >= 3 ? 1 : 0)
+	<< ",\"total_chord_pairs\":"
 	<< samples.size() / 2 << ",\"rays\":" << samples.size() << "}"
 	<< ",\"reference\":{\"prep\":";
     print_ray_audit_prep(reference.prep);
@@ -1274,9 +1414,9 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
     print_ray_audit_indices(comparison.candidate_reversal_indices);
     std::cout << ",\"reference_reversal_pair_indices\":";
     print_ray_audit_indices(comparison.reference_reversal_indices);
-	std::cout << ",\"failure_records\":";
+    std::cout << ",\"failure_records\":";
     print_ray_audit_failure_records(samples, candidate, reference,
-	comparison);
+	comparison, face_components);
     std::cout << "},\"process_peak_rss_bytes\":" << peak_rss_bytes()
 	<< "}\n";
     return pass ? 0 : 1;
@@ -1984,7 +2124,9 @@ main(int argc, const char **argv)
     long candidate_depth = 3;
     long reference_depth = RT_BREP_DEFAULT_SURFACE_TREE_DEPTH;
     long ray_count = 64;
-    struct bu_opt_desc d[17];
+    long ray_pair = -1;
+    int legacy_only = 0;
+    struct bu_opt_desc d[19];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -2001,7 +2143,9 @@ main(int argc, const char **argv)
     BU_OPT(d[13], "", "candidate-depth", "#", &bu_opt_long, &candidate_depth, "Candidate adaptive SurfaceTree depth");
     BU_OPT(d[14], "", "reference-depth", "#", &bu_opt_long, &reference_depth, "Reference adaptive SurfaceTree depth");
     BU_OPT(d[15], "", "ray-count", "#", &bu_opt_long, &ray_count, "Deterministic random chord pairs (three axis pairs are added)");
-    BU_OPT_NULL(d[16]);
+    BU_OPT(d[16], "", "ray-pair", "#", &bu_opt_long, &ray_pair, "Shoot only one deterministic axis/random pair by index");
+    BU_OPT(d[17], "", "legacy-only", "", NULL, &legacy_only, "Skip prepared solving while tracing the legacy SurfaceTree path");
+    BU_OPT_NULL(d[18]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage = "Usage: brep-audit [options] "
 	"[--list|--prep-only|--surface-trees-only|--surface-trees-all|"
@@ -2023,10 +2167,11 @@ main(int argc, const char **argv)
 	    candidate_depth < 0 || candidate_depth > BREP_MAX_FT_DEPTH ||
 	    reference_depth < 0 || reference_depth > BREP_MAX_FT_DEPTH ||
 	    ray_count < 0 || ray_count > 1000000 ||
+	    ray_pair < -1 || ray_pair > 1000002 ||
 	    (!ray_depth_compare_only &&
 	     (candidate_depth != 3 ||
 	      reference_depth != RT_BREP_DEFAULT_SURFACE_TREE_DEPTH ||
-	      ray_count != 64))) {
+	      ray_count != 64 || ray_pair != -1 || legacy_only))) {
 	std::cerr << usage;
 	return print_help ? 0 : 2;
     }
@@ -2076,7 +2221,8 @@ main(int argc, const char **argv)
 
     if (ray_depth_compare_only) {
 	const int ret = ray_depth_compare(dbip, argv[0], dp,
-	    (int)candidate_depth, (int)reference_depth, (size_t)ray_count);
+	    (int)candidate_depth, (int)reference_depth, (size_t)ray_count,
+	    ray_pair, legacy_only != 0);
 	db_close(dbip);
 	return ret;
     }

@@ -13844,10 +13844,169 @@ brep_resolved_grazing_pair(const brep_hit &first, const brep_hit &second,
 }
 
 
+static double
+brep_solid_event_parameter_tolerance(const struct xray &ray,
+	const struct bn_tol *tol)
+{
+    const double ray_length = MAGNITUDE(ray.r_dir);
+    double parameter_tolerance = BREP_SAME_POINT_TOLERANCE;
+    if (tol && tol->dist > 0.0 && std::isfinite(tol->dist) &&
+	    ray_length > DBL_MIN && std::isfinite(ray_length))
+	parameter_tolerance = std::max(parameter_tolerance,
+	    tol->dist / ray_length);
+    return parameter_tolerance;
+}
+
+
+static bool
+brep_solid_events_coincident(const brep_hit &first, const brep_hit &second,
+	double parameter_tolerance)
+{
+    if (!std::isfinite(first.dist) || !std::isfinite(second.dist) ||
+	    !std::isfinite(parameter_tolerance) || parameter_tolerance < 0.0 ||
+	    second.dist < first.dist)
+	return false;
+    const double scale = std::max(1.0,
+	std::max(fabs(first.dist), fabs(second.dist)));
+    return second.dist - first.dist <= parameter_tolerance +
+	128.0 * DBL_EPSILON * scale;
+}
+
+
+/* Coalesce same-direction observations of one boundary event at model
+ * resolution.  Opposite directions remain distinct so a small certified
+ * grazing interval is not erased.  The first entry and last exit are the
+ * nonzero-winding union extrema; ray reversal exchanges those choices. */
+static void
+coalesce_fixed_solid_hit_events(brep_hit_workspace &hits,
+	const struct xray &ray, const struct bn_tol *tol)
+{
+    const double parameter_tolerance =
+	brep_solid_event_parameter_tolerance(ray, tol);
+    size_t first = 0;
+    size_t current = 1;
+    while (current < hits.size()) {
+	if (hits[first].direction == hits[current].direction &&
+		brep_solid_events_coincident(hits[first], hits[current],
+		    parameter_tolerance)) {
+	    if (hits[current].direction == brep_hit::LEAVING)
+		hits[first] = hits[current];
+	    hits.erase(current);
+	    continue;
+	}
+	first = current++;
+    }
+}
+
+
+static void
+coalesce_solid_hit_events(std::list<brep_hit> &hits,
+	const struct xray &ray, const struct bn_tol *tol)
+{
+    if (hits.empty())
+	return;
+    const double parameter_tolerance =
+	brep_solid_event_parameter_tolerance(ray, tol);
+    std::list<brep_hit>::iterator first = hits.begin();
+    std::list<brep_hit>::iterator current = first;
+    ++current;
+    while (current != hits.end()) {
+	if (first->direction == current->direction &&
+		brep_solid_events_coincident(*first, *current,
+		    parameter_tolerance)) {
+	    if (current->direction == brep_hit::LEAVING)
+		*first = *current;
+	    current = hits.erase(current);
+	    continue;
+	}
+	first = current++;
+    }
+}
+
+
+/* Reduce an oriented solid boundary stream to its nonzero-winding material
+ * intervals.  The first ENTERING transition from zero winding and the
+ * LEAVING transition back to zero are the union boundary.  This differs from
+ * the historical same-direction collapse, which retained the last entry and
+ * first exit and consequently returned the intersection of overlapping
+ * closed shells.  Leading exits and an unclosed trailing entry are incomplete
+ * observations from an exterior ray and are discarded without bridging a
+ * gap.  A lone observation is retained for the later certified seam/closure
+ * transaction, which requires the unmatched boundary witness.  Compaction is
+ * in place and does not allocate during ray tracing. */
+static void
+cleanup_fixed_solid_hit_runs(brep_hit_workspace &hits)
+{
+    if (hits.size() < 2)
+	return;
+    size_t material_depth = 0;
+    size_t segment_start = SIZE_MAX;
+    size_t retained = 0;
+
+    for (size_t hit_index = 0; hit_index < hits.size(); ++hit_index) {
+	if (hits[hit_index].direction == brep_hit::ENTERING) {
+	    if (!material_depth)
+		segment_start = hit_index;
+	    ++material_depth;
+	    continue;
+	}
+	if (!material_depth)
+	    continue;
+	--material_depth;
+	if (material_depth)
+	    continue;
+	hits[retained++] = hits[segment_start];
+	hits[retained++] = hits[hit_index];
+	segment_start = SIZE_MAX;
+    }
+    while (hits.size() > retained)
+	hits.pop_back();
+}
+
+
+static void
+cleanup_solid_hit_runs(std::list<brep_hit> &hits)
+{
+    if (hits.size() < 2)
+	return;
+    size_t material_depth = 0;
+    std::list<brep_hit>::iterator segment_start = hits.end();
+    std::list<brep_hit>::iterator hit = hits.begin();
+
+    while (hit != hits.end()) {
+	if (hit->direction == brep_hit::ENTERING) {
+	    if (!material_depth) {
+		segment_start = hit;
+		++material_depth;
+		++hit;
+	    } else {
+		++material_depth;
+		hit = hits.erase(hit);
+	    }
+	    continue;
+	}
+	if (!material_depth) {
+	    hit = hits.erase(hit);
+	    continue;
+	}
+	--material_depth;
+	if (!material_depth) {
+	    segment_start = hits.end();
+	    ++hit;
+	} else {
+	    hit = hits.erase(hit);
+	}
+    }
+    if (material_depth && segment_start != hits.end())
+	hits.erase(segment_start, hits.end());
+}
+
+
 static brep_hit_cleanup_state
 cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray,
 	const struct bn_tol *tol,
-	brep_cleanup_observation *observation = NULL)
+	brep_cleanup_observation *observation = NULL,
+	bool solid_orientation = false)
 {
     brep_hit_cleanup_state state = {};
 
@@ -14038,15 +14197,16 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray,
 	observe_brep_cleanup(hits, observation->stages[3], ray,
 	    observation->tolerance);
 
-    if (!hits.empty()) {
+    if (solid_orientation) {
+	coalesce_fixed_solid_hit_events(hits, ray, tol);
+	cleanup_fixed_solid_hit_runs(hits);
+    } else if (!hits.empty()) {
 	size_t last = 0;
 	size_t i = 1;
-	int entering = 1;
+	const int entering = sign(VDOT(hits.front().normal, ray.r_dir));
 	while (i < hits.size()) {
 	    const double last_dot = VDOT(hits[last].normal, ray.r_dir);
 	    const double current_dot = VDOT(hits[i].normal, ray.r_dir);
-	    if (!i)
-		entering = sign(current_dot);
 	    if (sign(last_dot) == sign(current_dot)) {
 		if (sign(current_dot) == entering) {
 		    hits.erase(last);
@@ -14063,7 +14223,7 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray,
 	}
     }
 
-    if (hits.size() > 1 && hits.size() % 2 != 0) {
+    if (!solid_orientation && hits.size() > 1 && hits.size() % 2 != 0) {
 	const double first_dot = VDOT(hits.front().normal, ray.r_dir);
 	const double last_dot = VDOT(hits.back().normal, ray.r_dir);
 	if (sign(first_dot) == sign(last_dot))
@@ -14074,6 +14234,47 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray,
 	observe_brep_cleanup(hits, observation->stages[4], ray,
 	    observation->tolerance);
     return state;
+}
+
+
+size_t
+_rt_brep_direction_cleanup_test(const fastf_t *distances,
+    const int *normal_signs, size_t count, fastf_t distance_tolerance,
+    fastf_t *retained_distances, size_t retained_capacity)
+{
+    if ((!distances && count) || (!normal_signs && count) ||
+	    (!retained_distances && retained_capacity) ||
+	    distance_tolerance < 0.0 || !std::isfinite(distance_tolerance))
+	return SIZE_MAX;
+    brep_hit_workspace hits;
+    struct xray ray = {};
+    ray.magic = RT_RAY_MAGIC;
+    VSET(ray.r_dir, 1.0, 0.0, 0.0);
+    for (size_t i = 0; i < count; ++i) {
+	if (!std::isfinite(distances[i]) ||
+		(normal_signs[i] != -1 && normal_signs[i] != 1))
+	    return SIZE_MAX;
+	brep_hit hit = {};
+	hit.dist = distances[i];
+	VSET(hit.normal, normal_signs[i], 0.0, 0.0);
+	hit.hit = brep_hit::CLEAN_HIT;
+	hit.direction = normal_signs[i] < 0 ? brep_hit::ENTERING :
+	    brep_hit::LEAVING;
+	hits.push_back(hit);
+    }
+    if (hits.overflow())
+	return SIZE_MAX;
+    hits.sort();
+    struct bn_tol tol = {};
+    tol.dist = distance_tolerance;
+    tol.dist_sq = distance_tolerance * distance_tolerance;
+    (void)cleanup_fixed_brep_hits(hits, ray,
+	distance_tolerance > 0.0 ? &tol : NULL, NULL, true);
+    if (hits.size() > retained_capacity)
+	return SIZE_MAX;
+    for (size_t i = 0; i < hits.size(); ++i)
+	retained_distances[i] = hits[i].dist;
+    return hits.size();
 }
 
 
@@ -14243,9 +14444,9 @@ brep_trace_prepared_event_cleanup(struct rt_brep_shot_trace *trace,
 	legacy_observation.tolerance = tolerance;
 	const brep_hit_cleanup_state candidate_cleanup =
 	    cleanup_fixed_brep_hits(candidate_hits, xray, tol,
-		&local_observation);
+		&local_observation, bs->is_solid && !bs->plate_mode);
 	(void)cleanup_fixed_brep_hits(legacy_candidate_hits, xray, tol,
-	    &legacy_observation);
+	    &legacy_observation, bs->is_solid && !bs->plate_mode);
 	trace->local_candidate_after_near_miss =
 	    candidate_cleanup.after_near_miss;
 	trace->local_candidate_after_near_hit =
@@ -14324,7 +14525,8 @@ brep_trace_prepared_event_cleanup(struct rt_brep_shot_trace *trace,
 	return;
 
     const brep_hit_cleanup_state local_cleanup =
-	cleanup_fixed_brep_hits(local_hits, xray, tol);
+	cleanup_fixed_brep_hits(local_hits, xray, tol, NULL,
+	    bs->is_solid && !bs->plate_mode);
     trace->local_event_after_near_miss = local_cleanup.after_near_miss;
     trace->local_event_after_near_hit = local_cleanup.after_near_hit;
     trace->local_event_after_grazing = local_cleanup.after_grazing;
@@ -20454,7 +20656,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     const struct bn_tol *tol = stp->st_rtip ? &stp->st_rtip->rti_tol : NULL;
     brep_hit_workspace prepared_hits;
     int prepared_fallback = RT_BREP_PREPARED_FALLBACK_UNSUPPORTED;
-    if (trace)
+    if (trace && allow_prepared)
 	prepared_fallback = brep_try_prepared_partition(trace, bs, r, *rp,
 	    tol, prepared_hits);
     else if (allow_prepared)
@@ -20524,7 +20726,8 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     brep_trace_root_coverage(trace);
 
     if (!trace && !fixed_hits.overflow()) {
-	(void)cleanup_fixed_brep_hits(fixed_hits, *rp, tol);
+	(void)cleanup_fixed_brep_hits(fixed_hits, *rp, tol, NULL,
+	    bs->is_solid && !bs->plate_mode);
 	(void)repair_fixed_brep_crack(fixed_hits, bs, r);
 	return emit_fixed_brep_hits(fixed_hits, stp, rp, ap, seghead, bs);
     }
@@ -20818,29 +21021,22 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     if (trace)
 	trace->after_duplicates = hits.size();
 
-    // remove multiple "INs" in a row assume last "IN" is the actual
-    // entering hit, for multiple "OUTs" in a row assume first "OUT"
-    // is the actual exiting hit, remove unused "INs/OUTs" from hit
-    // list.
+    const bool solid_orientation = bs->is_solid && !bs->plate_mode;
 
-    //if (!hits.empty() && ((hits.size() % 2) != 0)) {
-    if (!hits.empty()) {
+    if (solid_orientation) {
+	coalesce_solid_hit_events(hits, *rp, tol);
+	cleanup_solid_hit_runs(hits);
+    } else if (!hits.empty()) {
+	/* Preserve the historical first-hit convention for plates and open
+	 * surfaces, whose hits do not define an oriented solid winding. */
 	// we should have "valid" points now, remove duplicates or grazes
 	std::list<brep_hit>::iterator last = hits.begin();
 	std::list<brep_hit>::iterator i = hits.begin();
 	++i;
-	int entering = 1;
+	const int entering = sign(VDOT(hits.front().normal, rp->r_dir));
 	while (i != hits.end()) {
 	    double lastDot = VDOT(last->normal, rp->r_dir);
 	    double iDot = VDOT(i->normal, rp->r_dir);
-
-	    if (i == hits.begin()) {
-		// take this as the entering sign for now, should be
-		// checking solid for inward or outward facing normals
-		// and make determination there but to much unsolid
-		// geom right now.
-		entering = sign(iDot);
-	    }
 	    if (sign(lastDot) == sign(iDot)) {
 		if (sign(iDot) == entering) {
 		    i = hits.erase(last);
@@ -20858,7 +21054,8 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	}
     }
 
-    if ((hits.size() > 1) && ((hits.size() % 2) != 0)) {
+    if (!solid_orientation && (hits.size() > 1) &&
+	    ((hits.size() % 2) != 0)) {
 	const brep_hit &first_hit = hits.front();
 	const brep_hit &last_hit = hits.back();
 	double firstDot = VDOT(first_hit.normal, rp->r_dir);
@@ -20872,7 +21069,8 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	trace->after_direction_cleanup = hits.size();
 	trace->final_hits = hits.size();
 	const brep_hit_cleanup_state fixed_cleanup =
-	    cleanup_fixed_brep_hits(fixed_hits, *rp, tol);
+	    cleanup_fixed_brep_hits(fixed_hits, *rp, tol, NULL,
+		bs->is_solid && !bs->plate_mode);
 	trace->fixed_after_near_miss = fixed_cleanup.after_near_miss;
 	trace->fixed_after_near_hit = fixed_cleanup.after_near_hit;
 	trace->fixed_after_grazing = fixed_cleanup.after_grazing;
@@ -21035,6 +21233,18 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap,
 }
 
 
+static void
+brep_shot_trace_init(struct rt_brep_shot_trace *trace)
+{
+    *trace = {};
+    trace->closure_edge_index = -1;
+    trace->closure_missing_direction = -1;
+    trace->continuation_face_index = -1;
+    trace->continuation_span_index = -1;
+    trace->continuation_adjacent_face_index = -99;
+}
+
+
 int
 _rt_brep_shot_trace(struct soltab *stp, struct xray *rp,
     struct application *ap, struct seg *seghead,
@@ -21042,13 +21252,22 @@ _rt_brep_shot_trace(struct soltab *stp, struct xray *rp,
 {
     if (!trace)
 	return rt_brep_shot_impl(stp, rp, ap, seghead, NULL, true);
-    *trace = {};
-    trace->closure_edge_index = -1;
-    trace->closure_missing_direction = -1;
-    trace->continuation_face_index = -1;
-    trace->continuation_span_index = -1;
-    trace->continuation_adjacent_face_index = -99;
+    brep_shot_trace_init(trace);
     return rt_brep_shot_impl(stp, rp, ap, seghead, trace, true);
+}
+
+
+int
+_rt_brep_shot_legacy_trace(struct soltab *stp, struct xray *rp,
+    struct application *ap, struct seg *seghead,
+    struct rt_brep_shot_trace *trace)
+{
+    if (!trace)
+	return rt_brep_shot_impl(stp, rp, ap, seghead, NULL, false);
+    brep_shot_trace_init(trace);
+    trace->prepared_production_fallback =
+	RT_BREP_PREPARED_FALLBACK_UNSUPPORTED;
+    return rt_brep_shot_impl(stp, rp, ap, seghead, trace, false);
 }
 
 
