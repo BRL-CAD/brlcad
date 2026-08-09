@@ -655,6 +655,7 @@ public:
     bool self_intersecting_mesh();
     bool brep_edge_pnt(long v);
     size_t geometric_degenerate_count();
+    size_t incorrect_normal_count();
 
     // Triangle geometry information
     ON_3dPoint tcenter(const triangle_t &t);
@@ -783,6 +784,8 @@ public:
 private:
     /* Data containers */
     std::map<edge_t, size_t> edges2tris;
+    std::map<long, long> p3d2d;
+    std::set<long> ambiguous_p3d2d;
 
     // For situations where we need to process using Brep data
     std::set<ON_3dPoint *> *edge_pnts;

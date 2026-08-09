@@ -81,7 +81,9 @@ main(int argc, const char **argv)
 	ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0 &&
 	diagnostic.result == BREP_CDT_RESULT_SUCCESS &&
 	ON_Brep_CDT_Failed_Faces(NULL, 0, state) == 0 &&
-	ON_Brep_CDT_Failed_Faces(NULL, -1, state) == -1;
+	ON_Brep_CDT_Failed_Faces(NULL, -1, state) == -1 &&
+	ON_Brep_CDT_Face_Diagnostic(&diagnostic, 0, state) == -1 &&
+	ON_Brep_CDT_Face_Diagnostic(NULL, 0, state) == -1;
     mesh_output first;
     first_ok = first_ok && mesh_get(first, state) && !first.faces.empty();
 

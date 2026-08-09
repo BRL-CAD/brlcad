@@ -578,6 +578,19 @@ ON_Brep_CDT_Failed_Faces(int *faces, int capacity,
     return count;
 }
 
+int
+ON_Brep_CDT_Face_Diagnostic(struct brep_cdt_diagnostic *diagnostic,
+	int face_index, const struct ON_Brep_CDT_State *s_cdt)
+{
+    if (!diagnostic || !s_cdt || face_index < 0)
+	return -1;
+    const auto found = s_cdt->failed_face_diagnostics.find(face_index);
+    if (found == s_cdt->failed_face_diagnostics.end())
+	return -1;
+    *diagnostic = found->second;
+    return 0;
+}
+
 static void
 cdt_polygon_clear(cpolygon_t *polygon)
 {
@@ -662,6 +675,7 @@ cdt_state_reset(struct ON_Brep_CDT_State *s_cdt)
     s_cdt->face_ovlps.clear();
     s_cdt->faces_to_update.clear();
     s_cdt->failed_face_indices.clear();
+    s_cdt->failed_face_diagnostics.clear();
     s_cdt->absmax = -1;
     s_cdt->absmin = -1;
     s_cdt->cos_within_ang = -1;
