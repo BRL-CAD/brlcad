@@ -343,7 +343,8 @@ plot_pnt_3d(FILE *plot_file, ON_3dPoint *p, double r, int dir)
 double
 ang_deg(const ON_3dVector &v1, const ON_3dVector &v2)
 {
-    double tdp = fabs(ON_DotProduct(v1, v2));
+    double tdp = ON_DotProduct(v1, v2);
+    tdp = std::max(-1.0, std::min(1.0, tdp));
     double d_ang = (NEAR_EQUAL(tdp, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(tdp);
     return d_ang * 180.0/ON_PI;
 }
@@ -385,6 +386,7 @@ on_closest_point(ON_3dPoint &s_p, ON_3dVector &s_n, struct ON_Brep_CDT_State *s_
 		} else {
 		    c_normal = s_norm;
 		}
+		cpdist = cdist;
 		have_pnt = true;
 	    }
 	}
@@ -503,6 +505,9 @@ ON_Brep_CDT_Create(void *bv, const char *objname)
 
     /* Set status to "never evaluated" */
     cdt->status = BREP_CDT_UNTESSELLATED;
+    cdt_diagnostic_set(cdt, BREP_CDT_RESULT_UNATTEMPTED,
+	    BREP_CDT_STAGE_NONE, -1, 0, 0, "not attempted");
+    cdt->tolerance_changed = true;
 
     ON_Brep *brep = (ON_Brep *)bv;
     cdt->orig_brep = brep;
@@ -518,6 +523,10 @@ ON_Brep_CDT_Create(void *bv, const char *objname)
     cdt->tol.relmin = -1;
     cdt->tol.rel_lmax = -1;
     cdt->tol.rel_lmin = -1;
+    cdt->absmax = -1;
+    cdt->absmin = -1;
+    cdt->cos_within_ang = -1;
+    cdt->ovlp_max_len = -1;
 
     cdt->w3dpnts = new std::vector<ON_3dPoint *>;
     cdt->w3dnorms = new std::vector<ON_3dPoint *>;
@@ -538,20 +547,123 @@ ON_Brep_CDT_Create(void *bv, const char *objname)
     return cdt;
 }
 
+void
+cdt_diagnostic_set(struct ON_Brep_CDT_State *s_cdt, int result, int stage,
+	int face_index, int completed_faces, int failed_faces,
+	const char *message)
+{
+    if (!s_cdt)
+	return;
+    s_cdt->diagnostic.result = result;
+    s_cdt->diagnostic.stage = stage;
+    s_cdt->diagnostic.face_index = face_index;
+    s_cdt->diagnostic.completed_faces = completed_faces;
+    s_cdt->diagnostic.failed_faces = failed_faces;
+    bu_strlcpy(s_cdt->diagnostic.message, message ? message : "",
+	    sizeof(s_cdt->diagnostic.message));
+}
+
+static void
+cdt_polygon_clear(cpolygon_t *polygon)
+{
+    if (!polygon)
+	return;
+    for (std::set<cpolyedge_t *>::iterator edge = polygon->poly.begin();
+	    edge != polygon->poly.end(); ++edge)
+	delete *edge;
+    polygon->poly.clear();
+}
+
+/* Clear everything derived from the input B-Rep and tolerances while keeping
+ * the public state object, its source B-Rep, name, and tolerance settings. */
+void
+cdt_state_reset(struct ON_Brep_CDT_State *s_cdt)
+{
+    if (!s_cdt)
+	return;
+
+    std::set<ON_NurbsCurve *> edge_curves;
+    for (std::map<int, std::set<bedge_seg_t *>>::iterator edge =
+	    s_cdt->e2polysegs.begin(); edge != s_cdt->e2polysegs.end(); ++edge) {
+	for (std::set<bedge_seg_t *>::iterator segment = edge->second.begin();
+		segment != edge->second.end(); ++segment) {
+	    if ((*segment)->nc)
+		edge_curves.insert((*segment)->nc);
+	    delete *segment;
+	}
+    }
+    s_cdt->e2polysegs.clear();
+    for (std::set<ON_NurbsCurve *>::iterator curve = edge_curves.begin();
+	    curve != edge_curves.end(); ++curve)
+	delete *curve;
+
+    for (std::map<int, cdt_mesh_t>::iterator face = s_cdt->fmeshes.begin();
+	    face != s_cdt->fmeshes.end(); ++face) {
+	cdt_polygon_clear(&face->second.outer_loop);
+	for (std::map<int, cpolygon_t *>::iterator loop =
+		face->second.inner_loops.begin();
+		loop != face->second.inner_loops.end(); ++loop) {
+	    cdt_polygon_clear(loop->second);
+	    delete loop->second;
+	}
+	face->second.inner_loops.clear();
+    }
+    s_cdt->fmeshes.clear();
+
+    for (std::map<ON_3dPoint *, struct cdt_audit_info *>::iterator audit =
+	    s_cdt->pnt_audit_info->begin();
+	    audit != s_cdt->pnt_audit_info->end(); ++audit)
+	delete audit->second;
+    s_cdt->pnt_audit_info->clear();
+
+    for (size_t i = 0; i < s_cdt->w3dpnts->size(); i++)
+	delete (*(s_cdt->w3dpnts))[i];
+    for (size_t i = 0; i < s_cdt->w3dnorms->size(); i++)
+	delete (*(s_cdt->w3dnorms))[i];
+    s_cdt->w3dpnts->clear();
+    s_cdt->w3dnorms->clear();
+
+    delete s_cdt->brep;
+    s_cdt->brep = NULL;
+
+    s_cdt->vert_pnts->clear();
+    s_cdt->vert_avg_norms->clear();
+    s_cdt->singular_vert_to_norms->clear();
+    s_cdt->edge_pnts->clear();
+    s_cdt->fedges.clear();
+    s_cdt->min_edge_seg_len->clear();
+    s_cdt->max_edge_seg_len->clear();
+    s_cdt->on_brep_edge_pnts->clear();
+    s_cdt->v_min_seg_len.clear();
+    s_cdt->l_median_len.clear();
+    s_cdt->unsplit_singular_edges.clear();
+    s_cdt->bot_pnt_to_on_pnt->clear();
+    s_cdt->face_rtrees_2d.clear();
+    s_cdt->face_rtrees_3d.clear();
+    s_cdt->strim_pnts.clear();
+    s_cdt->strim_norms.clear();
+    s_cdt->face_tri_ovlps.clear();
+    s_cdt->face_ovlp_tris.clear();
+    s_cdt->face_ovlps.clear();
+    s_cdt->faces_to_update.clear();
+    s_cdt->absmax = -1;
+    s_cdt->absmin = -1;
+    s_cdt->cos_within_ang = -1;
+    s_cdt->ovlp_max_len = -1;
+    s_cdt->status = BREP_CDT_UNTESSELLATED;
+}
+
 
 void
 ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
 {
-    for (size_t i = 0; i < s_cdt->w3dpnts->size(); i++) {
-	delete (*(s_cdt->w3dpnts))[i];
-    }
-    for (size_t i = 0; i < s_cdt->w3dnorms->size(); i++) {
-	delete (*(s_cdt->w3dnorms))[i];
-    }
+    if (!s_cdt)
+	return;
 
-    if (s_cdt->brep) {
-	delete s_cdt->brep;
-    }
+    cdt_state_reset(s_cdt);
+
+    delete s_cdt->w3dpnts;
+    delete s_cdt->w3dnorms;
 
     delete s_cdt->vert_pnts;
     delete s_cdt->vert_avg_norms;
@@ -578,7 +690,17 @@ ON_Brep_CDT_ObjName(struct ON_Brep_CDT_State *s_cdt)
 int
 ON_Brep_CDT_Status(struct ON_Brep_CDT_State *s_cdt)
 {
-    return s_cdt->status;
+    return s_cdt ? s_cdt->status : BREP_CDT_FAILED;
+}
+
+int
+ON_Brep_CDT_Diagnostic(struct brep_cdt_diagnostic *diagnostic,
+	const struct ON_Brep_CDT_State *s_cdt)
+{
+    if (!diagnostic || !s_cdt)
+	return -1;
+    *diagnostic = s_cdt->diagnostic;
+    return 0;
 }
 
 
@@ -673,6 +795,16 @@ ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t)
 	return;
     }
 
+    /* Every derived edge sample, chart constraint, and triangle depends on
+     * these values.  Discard them immediately rather than mixing old and new
+     * tolerance state on the next call. */
+    if (s->brep || s->w3dpnts->size())
+	cdt_state_reset(s);
+    s->tolerance_changed = true;
+    s->status = BREP_CDT_UNTESSELLATED;
+    cdt_diagnostic_set(s, BREP_CDT_RESULT_UNATTEMPTED,
+	BREP_CDT_STAGE_NONE, -1, 0, 0, "tolerances changed");
+
     if (!t) {
 	/* reset to defaults */
 	s->tol.abs = -1;
@@ -687,9 +819,6 @@ ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t)
 	s->absmax = -1;
 	s->absmin = -1;
 	s->cos_within_ang = -1;
-	if (s->brep) {
-	    cdt_tol_global_calc(s);
-	}
 	return;
     }
 
@@ -697,9 +826,6 @@ ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t)
     s->absmax = -1;
     s->absmin = -1;
     s->cos_within_ang = -1;
-    if (s->brep) {
-	cdt_tol_global_calc(s);
-    }
 }
 
 void

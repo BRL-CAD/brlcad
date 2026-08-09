@@ -29,6 +29,18 @@ brlcad_add_test(NAME brep_cdt_boundary_steiner COMMAND test_brep_cdt_boundary_st
 brlcad_addexec(test_brep_cdt_spurious_components brep_cdt_spurious_components.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_cdt_spurious_components COMMAND test_brep_cdt_spurious_components)
 
+brlcad_addexec(test_brep_cdt_local_defects brep_cdt_local_defects.cpp "libbrep" TEST)
+brlcad_add_test(NAME brep_cdt_local_defects COMMAND test_brep_cdt_local_defects)
+
+# Conversion-quality tessellation is a fail-closed transaction: status and
+# diagnostics must describe every attempt, tolerance changes invalidate all
+# derived state, and rebuilding the same input must produce identical arrays.
+brlcad_addexec(test_brep_cdt_contract brep_cdt_contract.cpp "libbrep;librt" TEST)
+brlcad_add_test(
+  NAME brep_cdt_contract
+  COMMAND test_brep_cdt_contract "${CMAKE_CURRENT_SOURCE_DIR}/cyl_hole.g" CUBE.s
+)
+
 # Fast display tessellation must be deterministic across worker counts, leave
 # its const BRep input untouched, and stop cleanly at configured limits.
 brlcad_addexec(test_brep_fast brep_fast.cpp "libbrep;librt" TEST)
@@ -73,6 +85,8 @@ cmakefiles(
   brep_cdt_hole_face27.c
   brep_cdt_boundary_start.cpp
   brep_cdt_boundary_steiner.cpp
+  brep_cdt_contract.cpp
+  brep_cdt_local_defects.cpp
   brep_cdt_spurious_components.cpp
   brep_fast.cpp
   brep_fast_repair.cpp

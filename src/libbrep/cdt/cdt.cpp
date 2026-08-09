@@ -27,6 +27,7 @@
 
 #include "common.h"
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <map>
 #include <numeric>
@@ -41,6 +42,31 @@
 
 #define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
+
+static bool
+cdt_tolerance_valid(const struct bg_tess_tol &tol)
+{
+    const fastf_t values[] = {
+	tol.abs, tol.rel, tol.norm, tol.absmax, tol.absmin,
+	tol.relmax, tol.relmin, tol.rel_lmax, tol.rel_lmin
+    };
+    for (size_t i = 0; i < sizeof(values) / sizeof(values[0]); ++i) {
+	if (!std::isfinite(values[i]) || values[i] < -1.0)
+	    return false;
+    }
+    if (tol.norm > ON_PI)
+	return false;
+    if (tol.absmax > 0.0 && tol.absmin > 0.0 &&
+	    tol.absmax < tol.absmin)
+	return false;
+    if (tol.relmax > 0.0 && tol.relmin > 0.0 &&
+	    tol.relmax < tol.relmin)
+	return false;
+    if (tol.rel_lmax > 0.0 && tol.rel_lmin > 0.0 &&
+	    tol.rel_lmax < tol.rel_lmin)
+	return false;
+    return true;
+}
 
 /* cpolyedge_t containers historically used the default pointer comparator.
  * That is adequate for membership, but it must not determine the order of
@@ -760,6 +786,39 @@ int
 ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces)
 {
 
+    if (!s_cdt || !s_cdt->orig_brep)
+	return -1;
+
+    /* A call is a new transaction.  Never retain a previous mesh after a
+     * failed retry or mix it with newly requested faces. */
+    if (s_cdt->brep || s_cdt->w3dpnts->size())
+	cdt_state_reset(s_cdt);
+    s_cdt->status = BREP_CDT_FAILED;
+    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INITIALIZATION_FAILED,
+	BREP_CDT_STAGE_INPUT, -1, 0, 0, "tessellation started");
+
+    if (!cdt_tolerance_valid(s_cdt->tol)) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INVALID_TOLERANCE,
+	    BREP_CDT_STAGE_INPUT, -1, 0, 0,
+	    "invalid or contradictory tessellation tolerance");
+	return -1;
+    }
+
+    if (face_cnt < 0 || (face_cnt > 0 && !faces)) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INVALID_BREP,
+	    BREP_CDT_STAGE_INPUT, -1, 0, 0,
+	    "invalid face selection");
+	return -1;
+    }
+    for (int i = 0; i < face_cnt; ++i) {
+	if (faces[i] < 0 || faces[i] >= s_cdt->orig_brep->m_F.Count()) {
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INVALID_BREP,
+		BREP_CDT_STAGE_INPUT, faces[i], 0, 0,
+		"selected face index is out of range");
+	    return -1;
+	}
+    }
+
     ON_wString wstr;
     ON_TextLog tl(wstr);
 
@@ -768,6 +827,18 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     ON_TextLog vout(wonstr);
     if (!s_cdt->orig_brep->IsValid(&vout)) {
 	bu_log("brep is NOT valid, cannot produce watertight mesh\n");
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INVALID_BREP,
+	    BREP_CDT_STAGE_TOPOLOGY, -1, 0, 0,
+	    "input B-Rep failed OpenNURBS validity checks");
+	return -1;
+    }
+    bool oriented = false;
+    bool boundary = true;
+    if (!s_cdt->orig_brep->IsManifold(&oriented, &boundary) || boundary ||
+	    !oriented || !s_cdt->orig_brep->IsSolid()) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INVALID_BREP,
+	    BREP_CDT_STAGE_TOPOLOGY, -1, 0, 0,
+	    "input B-Rep is not a closed oriented manifold solid");
 	return -1;
     }
 
@@ -776,6 +847,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	ON_BrepEdge& edge = s_cdt->orig_brep->m_E[index];
 	if (edge.TrimCount() != 2) {
 	    bu_log("Edge %d trim count: %d - can't (yet) do watertight meshing\n", edge.m_edge_index, edge.TrimCount());
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INVALID_BREP,
+		BREP_CDT_STAGE_TOPOLOGY, -1, 0, 0,
+		"B-Rep edge does not have exactly two trims");
 	    return -1;
 	}
     }
@@ -848,6 +922,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// loop polygons.  Note there is no splitting of edges at this point -
 	// we are simply establishing the initial closed polygons.
 	if (!initialize_loop_polygons(s_cdt)) {
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INITIALIZATION_FAILED,
+		BREP_CDT_STAGE_EDGE_INITIALIZATION, -1, 0, 0,
+		"failed to initialize trim loop polygons");
 	    return -1;
 	}
 
@@ -870,6 +947,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// Do the non-tolerance based initialization splits.
 	if (!initialize_edge_segs(s_cdt)) {
 	    std::cout << "Initialization failed for edges\n";
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INITIALIZATION_FAILED,
+		BREP_CDT_STAGE_EDGE_INITIALIZATION, -1, 0, 0,
+		"failed to initialize shared edge segments");
 	    return -1;
 	}
 
@@ -932,6 +1012,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
 	// Rebuild finalized 2D RTrees for faces (needed for surface processing)
 	finalize_rtrees(s_cdt);
+	s_cdt->tolerance_changed = false;
     } else {
 	/* Clear the mesh state, if this container was previously used */
     }
@@ -940,22 +1021,35 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     // Keep track of failures and successes.
     int face_failures = 0;
     int face_successes = 0;
+    int first_failed_face = -1;
     int fc = ((face_cnt == 0) || !faces) ? s_cdt->brep->m_F.Count() : face_cnt;
     for (int i = 0; i < fc; i++) {
 	int fi = ((face_cnt == 0) || !faces) ? i : faces[i];
-	if (fi < s_cdt->brep->m_F.Count()) {
-	    if (do_triangulation(s_cdt, fi)) {
-		face_successes++;
-	    } else {
-		face_failures++;
-	    }
+	if (do_triangulation(s_cdt, fi)) {
+	    face_successes++;
+	} else {
+	    if (first_failed_face < 0)
+		first_failed_face = fi;
+	    face_failures++;
 	}
     }
 
     // If we only tessellated some of the faces, we don't have the
     // full solid mesh yet (by definition).  Return accordingly.
     if (face_failures || !face_successes || face_successes < s_cdt->brep->m_F.Count()) {
-	return (face_successes) ? 1 : -1;
+	if (face_successes) {
+	    s_cdt->status = face_successes;
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_PARTIAL,
+		BREP_CDT_STAGE_FACE_TRIANGULATION, first_failed_face,
+		face_successes, face_failures,
+		"only a subset of B-Rep faces was triangulated");
+	    return face_successes;
+	}
+	s_cdt->status = BREP_CDT_FAILED;
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_FACE_FAILED,
+	    BREP_CDT_STAGE_FACE_TRIANGULATION, first_failed_face,
+	    0, face_failures, "no B-Rep faces were triangulated");
+	return -1;
     }
 
     /* We've got face meshes and no reported failures - check to see if we have a
@@ -965,6 +1059,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     fastf_t *valid_vertices = NULL;
 
     if (ON_Brep_CDT_Mesh(&valid_faces, &valid_fcnt, &valid_vertices, &valid_vcnt, NULL, NULL, NULL, NULL, s_cdt, 0, NULL) < 0) {
+	s_cdt->status = BREP_CDT_FAILED;
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_MESH_EXPORT_FAILED,
+	    BREP_CDT_STAGE_MESH_ASSEMBLY, -1, face_successes, 0,
+	    "failed to assemble indexed triangle mesh");
 	return -1;
     }
 
@@ -981,9 +1079,17 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     bu_free(valid_vertices, "vertices");
 
     if (invalid) {
+	s_cdt->status = BREP_CDT_NON_SOLID;
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_NON_SOLID,
+	    BREP_CDT_STAGE_SOLID_VALIDATION, -1, face_successes, 0,
+	    "assembled mesh failed closed-solid validation");
 	return 1;
     }
 
+    s_cdt->status = BREP_CDT_SOLID;
+    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_SUCCESS,
+	BREP_CDT_STAGE_SOLID_VALIDATION, -1, face_successes, 0,
+	"certified closed indexed manifold mesh");
     return 0;
 
 }
@@ -1018,8 +1124,29 @@ ON_Brep_CDT_Mesh(
 	}
     } else {
 	for (int i = 0; i < exp_face_cnt; i++) {
+	    if (exp_faces[i] < 0 || exp_faces[i] >= s_cdt->brep->m_F.Count())
+		return -1;
 	    active_faces.push_back(exp_faces[i]);
 	}
+    }
+    std::sort(active_faces.begin(), active_faces.end());
+    active_faces.erase(std::unique(active_faces.begin(), active_faces.end()),
+	active_faces.end());
+
+    /* RTree traversal order is an implementation detail.  Snapshot active
+     * triangle IDs and order them by stable face and creation IDs. */
+    std::map<int, std::vector<size_t>> active_triangles;
+    for (size_t fi = 0; fi < active_faces.size(); fi++) {
+	cdt_mesh_t *fmesh = &s_cdt->fmeshes[active_faces[fi]];
+	RTree<size_t, double, 3>::Iterator tree_it;
+	fmesh->tris_tree.GetFirst(tree_it);
+	while (!tree_it.IsNull()) {
+	    active_triangles[active_faces[fi]].push_back(*tree_it);
+	    ++tree_it;
+	}
+	std::sort(active_triangles[active_faces[fi]].begin(),
+	    active_triangles[active_faces[fi]].end());
+	triangle_cnt += active_triangles[active_faces[fi]].size();
     }
 
     /* We know now the final triangle set.  We need to build up the set of
@@ -1030,13 +1157,10 @@ ON_Brep_CDT_Mesh(
     std::set<ON_3dPoint *> flip_normals;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
 	cdt_mesh_t *fmesh = &s_cdt->fmeshes[active_faces[fi]];
-	RTree<size_t, double, 3>::Iterator tree_it;
-	fmesh->tris_tree.GetFirst(tree_it);
-	size_t t_ind;
-	triangle_t tri;
-	while (!tree_it.IsNull()) {
-	    t_ind = *tree_it;
-	    tri = fmesh->tris_vect[t_ind];
+	const std::vector<size_t> &face_triangles =
+	    active_triangles[active_faces[fi]];
+	for (size_t ti = 0; ti < face_triangles.size(); ++ti) {
+	    triangle_t tri = fmesh->tris_vect[face_triangles[ti]];
 	    for (size_t j = 0; j < 3; j++) {
 		ON_3dPoint *p3d = fmesh->pnts[tri.v[j]];
 		vfpnts.insert(p3d);
@@ -1054,8 +1178,6 @@ ON_Brep_CDT_Mesh(
 		    }
 		}
 	    }
-	    triangle_cnt++;
-	    ++tree_it;
 	}
     }
 
@@ -1074,13 +1196,45 @@ ON_Brep_CDT_Mesh(
     }
 
     // Populate the arrays and map the ON containers to their corresponding BoT array entries
-    std::set<ON_3dPoint *>::iterator p_it;
+    std::map<ON_3dPoint *, size_t> point_order;
+    for (size_t i = 0; i < s_cdt->w3dpnts->size(); ++i)
+	point_order[(*s_cdt->w3dpnts)[i]] = i;
+    std::map<ON_3dPoint *, size_t> normal_order;
+    for (size_t i = 0; i < s_cdt->w3dnorms->size(); ++i)
+	normal_order[(*s_cdt->w3dnorms)[i]] = i;
+
+    const auto stable_point_less = [&point_order](ON_3dPoint *a,
+	    ON_3dPoint *b) {
+	if (a->x < b->x) return true;
+	if (b->x < a->x) return false;
+	if (a->y < b->y) return true;
+	if (b->y < a->y) return false;
+	if (a->z < b->z) return true;
+	if (b->z < a->z) return false;
+	return point_order.at(a) < point_order.at(b);
+    };
+    const auto stable_normal_less = [&normal_order](ON_3dPoint *a,
+	    ON_3dPoint *b) {
+	if (a->x < b->x) return true;
+	if (b->x < a->x) return false;
+	if (a->y < b->y) return true;
+	if (b->y < a->y) return false;
+	if (a->z < b->z) return true;
+	if (b->z < a->z) return false;
+	return normal_order.at(a) < normal_order.at(b);
+    };
+    std::vector<ON_3dPoint *> ordered_points(vfpnts.begin(), vfpnts.end());
+    std::sort(ordered_points.begin(), ordered_points.end(), stable_point_less);
+    std::vector<ON_3dPoint *> ordered_normals(vfnormals.begin(),
+	vfnormals.end());
+    std::sort(ordered_normals.begin(), ordered_normals.end(),
+	stable_normal_less);
 
     // Index vertex points and assign them to the BoT array
     std::map<ON_3dPoint *, int> on_pnt_to_bot_pnt;
     int pnt_ind = 0;
-    for (p_it = vfpnts.begin(); p_it != vfpnts.end(); p_it++) {
-	ON_3dPoint *vp = *p_it;
+    for (size_t pi = 0; pi < ordered_points.size(); ++pi) {
+	ON_3dPoint *vp = ordered_points[pi];
 	(*vertices)[pnt_ind*3] = vp->x;
 	(*vertices)[pnt_ind*3+1] = vp->y;
 	(*vertices)[pnt_ind*3+2] = vp->z;
@@ -1101,8 +1255,8 @@ ON_Brep_CDT_Mesh(
     std::map<ON_3dPoint *, int> on_norm_to_bot_norm;
     size_t norm_ind = 0;
     if (normals) {
-	for (p_it = vfnormals.begin(); p_it != vfnormals.end(); p_it++) {
-	    ON_3dPoint *vn = *p_it;
+	for (size_t ni = 0; ni < ordered_normals.size(); ++ni) {
+	    ON_3dPoint *vn = ordered_normals[ni];
 	    ON_3dVector vnf(*vn);
 	    if (flip_normals.find(vn) != flip_normals.end()) {
 		vnf = -1 *vnf;
@@ -1122,13 +1276,10 @@ ON_Brep_CDT_Mesh(
     output_face_ids.reserve(triangle_cnt);
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
 	cdt_mesh_t *fmesh = &s_cdt->fmeshes[active_faces[fi]];
-	RTree<size_t, double, 3>::Iterator tree_it;
-	fmesh->tris_tree.GetFirst(tree_it);
-	size_t t_ind;
-	triangle_t tri;
-	while (!tree_it.IsNull()) {
-	    t_ind = *tree_it;
-	    tri = fmesh->tris_vect[t_ind];
+	const std::vector<size_t> &face_triangles =
+	    active_triangles[active_faces[fi]];
+	for (size_t ti = 0; ti < face_triangles.size(); ++ti) {
+	    triangle_t tri = fmesh->tris_vect[face_triangles[ti]];
 	    for (size_t j = 0; j < 3; j++) {
 		ON_3dPoint *op = fmesh->pnts[tri.v[j]];
 		(*faces)[face_cnt*3 + j] = on_pnt_to_bot_pnt[op];
@@ -1148,7 +1299,6 @@ ON_Brep_CDT_Mesh(
 
 	    output_face_ids.push_back(fmesh->f_id);
 	    face_cnt++;
-	    ++tree_it;
 	}
     }
 
