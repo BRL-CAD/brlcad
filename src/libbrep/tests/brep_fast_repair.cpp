@@ -702,6 +702,44 @@ add_surface_iso_trim(ON_Brep &brep, ON_BrepLoop &loop,
 }
 
 static bool
+degenerate_closed_surface_slit_test()
+{
+    ON_Brep brep;
+    ON_Circle base(ON_xy_plane, 1.0);
+    ON_Cylinder cylinder(base, 1.0);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const double u = surface->Domain(0).Mid();
+    const double low_v = surface->Domain(1).ParameterAt(0.2);
+    const double high_v = surface->Domain(1).ParameterAt(0.8);
+    const ON_2dPoint low(u, low_v);
+    const ON_2dPoint high(u, high_v);
+    const int low_vertex = brep.NewVertex(
+	surface->PointAt(low.x, low.y)).m_vertex_index;
+    const int high_vertex = brep.NewVertex(
+	surface->PointAt(high.x, high.y)).m_vertex_index;
+    add_surface_iso_trim(brep, loop, *surface, low_vertex, high_vertex,
+	low, high);
+    add_surface_iso_trim(brep, loop, *surface, high_vertex, low_vertex,
+	high, low);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.completed_faces == 1 &&
+	result->report.failed_faces == 0 &&
+	result->report.skipped_degenerate_faces == 1 &&
+	result->face_count == 0 && result->point_count == 0;
+    delete result;
+    return valid;
+}
+
+static bool
 collapsed_closed_pcurve_test()
 {
     ON_Brep brep;
@@ -1338,6 +1376,7 @@ main(int argc, const char **argv)
 	periodic_rectangle_test() && periodic_zero_area_subcycle_test() &&
 	overlapping_periodic_pcurves_test() &&
 	paired_periodic_strip_test() &&
+	degenerate_closed_surface_slit_test() &&
 	collapsed_closed_pcurve_test() &&
 	misclassified_periodic_boundaries_test() &&
 	touching_periodic_subloops_test() &&
