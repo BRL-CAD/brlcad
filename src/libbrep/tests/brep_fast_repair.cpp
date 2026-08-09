@@ -575,6 +575,83 @@ misclassified_periodic_boundaries_test()
 }
 
 static bool
+touching_periodic_subloops_test()
+{
+    ON_Brep brep;
+    ON_Circle base(ON_xy_plane, 1.0);
+    ON_Cylinder cylinder(base, 1.0);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    const double u0 = udom.ParameterAt(0.20);
+    const double u1 = udom.ParameterAt(0.80);
+    const double v0 = vdom.ParameterAt(0.20);
+    const double v1 = vdom.ParameterAt(0.80);
+    const ON_2dPoint shared(u0, v0);
+    const ON_2dPoint hole_a(udom.ParameterAt(0.32),
+	vdom.ParameterAt(0.44));
+    const ON_2dPoint hole_b(udom.ParameterAt(0.44),
+	vdom.ParameterAt(0.32));
+    const ON_2dPoint outer_b(u1, v0);
+    const ON_2dPoint outer_c(u1, v1);
+    const ON_2dPoint outer_d(u0, v1);
+    const ON_2dPoint parameters[7] = {
+	shared, hole_a, hole_b, shared,
+	outer_b, outer_c, outer_d
+    };
+    int vertices[7];
+    vertices[0] = brep.NewVertex(surface->PointAt(shared.x,
+	shared.y)).m_vertex_index;
+    vertices[1] = brep.NewVertex(surface->PointAt(hole_a.x,
+	hole_a.y)).m_vertex_index;
+    vertices[2] = brep.NewVertex(surface->PointAt(hole_b.x,
+	hole_b.y)).m_vertex_index;
+    vertices[3] = vertices[0];
+    vertices[4] = brep.NewVertex(surface->PointAt(outer_b.x,
+	outer_b.y)).m_vertex_index;
+    vertices[5] = brep.NewVertex(surface->PointAt(outer_c.x,
+	outer_c.y)).m_vertex_index;
+    vertices[6] = brep.NewVertex(surface->PointAt(outer_d.x,
+	outer_d.y)).m_vertex_index;
+
+    auto add_line_trim = [&](int first, int second,
+	    const ON_2dPoint &start, const ON_2dPoint &end) {
+	ON_LineCurve *edge_curve = new ON_LineCurve(
+	    surface->PointAt(start.x, start.y),
+	    surface->PointAt(end.x, end.y));
+	edge_curve->SetDomain(0.0, 1.0);
+	ON_BrepEdge &edge = brep.NewEdge(brep.m_V[first],
+	    brep.m_V[second], brep.AddEdgeCurve(edge_curve));
+	edge.m_tolerance = 1.0e-6;
+	ON_LineCurve *trim_curve = new ON_LineCurve(start, end);
+	trim_curve->SetDomain(0.0, 1.0);
+	ON_BrepTrim &trim = brep.NewTrim(edge, false, loop,
+	    brep.AddTrimCurve(trim_curve));
+	trim.m_type = ON_BrepTrim::boundary;
+	trim.m_iso = surface->IsIsoparametric(*trim_curve);
+	trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-6;
+    };
+    for (int i = 0; i < 7; ++i) {
+	const int next = (i + 1) % 7;
+	add_line_trim(vertices[i], vertices[next], parameters[i],
+	    parameters[next]);
+    }
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
 inner_only_planar_loop_test()
 {
     ON_Brep brep;
@@ -1004,6 +1081,7 @@ main(int argc, const char **argv)
 	paired_periodic_strip_test() &&
 	collapsed_closed_pcurve_test() &&
 	misclassified_periodic_boundaries_test() &&
+	touching_periodic_subloops_test() &&
 	inner_only_planar_loop_test() && empty_periodic_boundary_test() &&
 	full_periodic_hole_test() && periodic_singular_domain_test() &&
 	full_periodic_face_test() && untrimmed_planar_face_test() &&
