@@ -10829,9 +10829,12 @@ brep_classify_edge_sector(struct rt_brep_trace_edge &observation,
     };
     observation.line_before_state = line_state(-cross_ray);
     observation.line_after_state = line_state(cross_ray);
-    if (observation.line_before_state && observation.line_after_state &&
-	    fabs(observation.face_normal_dot[0]) > BREP_GRAZING_DOT_TOL &&
-	    fabs(observation.face_normal_dot[1]) > BREP_GRAZING_DOT_TOL) {
+    /* The wedge states are angular/topological.  Do not invalidate them with
+     * the legacy fixed grazing cutoff evaluated at a discrepant trim lift.
+     * Event publication separately requires non-grazing surface roots and a
+     * complete root/box transaction; coupled roots additionally require the
+     * certified local component, which is the relevant conditioning test. */
+    if (observation.line_before_state && observation.line_after_state) {
 	observation.line_state_valid = 1;
 	if (observation.line_before_state < 0 &&
 		observation.line_after_state > 0)
@@ -15291,8 +15294,8 @@ brep_trace_regular_root_component(
 /* Split a connected coarse component that jointly contains one exact
  * manifold-edge observation and one nearby regular root.  Independent local
  * contraction boxes certify both surface roots; fixed-stack Bernstein work
- * excludes their complete complement.  The regular box also supplies a
- * constant orientation and tight t enclosure. */
+ * excludes their complete complement.  Both local boxes supply constant
+ * orientations; the regular box also supplies a tight t enclosure. */
 static bool
 brep_trace_edge_joint_root_component(
     const struct rt_brep_shot_trace *trace, const struct brep_specific *bs,
@@ -15301,7 +15304,8 @@ brep_trace_edge_joint_root_component(
     bool component_box[RT_BREP_TRACE_MAX_SURFACE_BOXES],
     size_t &first_box, size_t &regular_roots, size_t &box_count,
     double &regular_t_minimum, double &regular_t_maximum,
-    int &determinant_sign, size_t &complement_visited,
+    int &boundary_determinant_sign, int &determinant_sign,
+    size_t &complement_visited,
     size_t &complement_high_water, int &failure_stage)
 {
     first_box = (size_t)-1;
@@ -15309,6 +15313,7 @@ brep_trace_edge_joint_root_component(
     box_count = 0;
     regular_t_minimum = DBL_MAX;
     regular_t_maximum = -DBL_MAX;
+    boundary_determinant_sign = 0;
     determinant_sign = 0;
     complement_visited = 0;
     complement_high_water = 0;
@@ -15536,6 +15541,23 @@ brep_trace_edge_joint_root_component(
 	return false;
 
     failure_stage = 5;
+    double boundary_restricted[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    double boundary_error[2] = {0.0, 0.0};
+    for (int equation = 0; equation < 2; ++equation) {
+	if (!brep_scalar_surface_restrict_bounded(
+		coefficients.value[equation], coefficients.order[0],
+		coefficients.order[1], coefficients.error[equation],
+		local_box[0].minimum[0], local_box[0].maximum[0],
+		local_box[0].minimum[1], local_box[0].maximum[1],
+		boundary_restricted[equation], boundary_error[equation]))
+	    return false;
+    }
+    if (!brep_surface_determinant_sign(boundary_restricted,
+	    coefficients.order, boundary_error, boundary_determinant_sign) ||
+	    !boundary_determinant_sign)
+	return false;
+
+    failure_stage = 6;
     const double root_scale = std::max(1.0,
 	std::max(fabs(normalized[1][0]), fabs(normalized[1][1])));
     double event_radius = std::max(std::nextafter(
@@ -15668,6 +15690,7 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 	int direction = -1;
 	bool contact = false;
 	bool lift_witness = false;
+	bool requires_joint_transition = false;
     } candidates[RT_BREP_TRACE_MAX_PHYSICAL_EVENTS];
     bool selected_root[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
     bool selected_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
@@ -15678,6 +15701,8 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
     bool candidate_conflict = false;
     bool saw_exact_edge = false;
     bool exact_edge_unresolved = false;
+    bool tolerance_transition_candidate = false;
+    int candidate_failure_stage = 0;
 
     for (size_t observation_index = 0;
 	    observation_index < edge_trace.stored_edges;
@@ -15696,6 +15721,7 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 	    continue;
 	saw_exact_edge = true;
 	if (!observation.sector_valid || !observation.line_state_valid) {
+	    candidate_failure_stage = std::max(candidate_failure_stage, 1);
 	    exact_edge_unresolved = true;
 	    continue;
 	}
@@ -15703,8 +15729,10 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 	const bool contact = direction != brep_hit::ENTERING &&
 	    direction != brep_hit::LEAVING;
 	if (contact && observation.line_before_state !=
-		observation.line_after_state)
+		observation.line_after_state) {
+	    candidate_failure_stage = std::max(candidate_failure_stage, 2);
 	    continue;
+	}
 
 	bool candidate_roots[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
 	bool candidate_boxes[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
@@ -15715,6 +15743,8 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 	double t_min = parameter;
 	double t_max = parameter;
 	bool complete = true;
+	bool root_direction_consistent = true;
+	int incident_root_direction = -1;
 	int face_root_count[2] = {0, 0};
 	for (size_t root_index = 0; complete &&
 		root_index < trace->stored_local_roots; ++root_index) {
@@ -15748,6 +15778,7 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 		    box.disposition == RT_BREP_TRACE_BOX_RESOLVED_REGULAR &&
 		    box.determinant_sign;
 		if (candidate_boxes[box_index] || (!unresolved && !regular)) {
+		    candidate_failure_stage = std::max(candidate_failure_stage, 3);
 		    complete = false;
 		    break;
 		}
@@ -15761,6 +15792,7 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 	    if (!std::isfinite(root.normal_dot) ||
 		    fabs(root.normal_dot) <= BREP_GRAZING_DOT_TOL ||
 		    (!contact && root.direction != direction)) {
+		candidate_failure_stage = std::max(candidate_failure_stage, 4);
 		complete = false;
 		break;
 	    }
@@ -15770,9 +15802,14 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 		(canonical_root == (size_t)-1 ||
 		 root.direction !=
 		     trace->local_roots[canonical_root].direction)) {
+		candidate_failure_stage = std::max(candidate_failure_stage, 5);
 		complete = false;
 		break;
 	    }
+	    if (incident_root_direction == -1)
+		incident_root_direction = root.direction;
+	    else if (incident_root_direction != root.direction)
+		root_direction_consistent = false;
 	    face_root_count[face_slot]++;
 	    for (size_t box_index = 0;
 		    box_index < trace->stored_surface_boxes; ++box_index) {
@@ -15807,11 +15844,15 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 		continue;
 	    if ((box.face_index == observation.face_index[0] ||
 		 box.face_index == observation.face_index[1]) &&
-		!candidate_boxes[box_index])
+		!candidate_boxes[box_index]) {
+		candidate_failure_stage = std::max(candidate_failure_stage, 6);
 		complete = false;
+	    }
 	}
 	if (!complete || !root_count || !box_count ||
 		canonical_root == (size_t)-1 || first_box == (size_t)-1) {
+	    if (!candidate_failure_stage)
+		candidate_failure_stage = 7;
 	    if (!contact || !complete || root_count || box_count)
 		exact_edge_unresolved = true;
 	    continue;
@@ -15819,6 +15860,7 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 
 	trace->physical_event_edge_candidates++;
 	if (candidate_count >= RT_BREP_TRACE_MAX_PHYSICAL_EVENTS) {
+	    candidate_failure_stage = std::max(candidate_failure_stage, 8);
 	    candidate_conflict = true;
 	    continue;
 	}
@@ -15830,8 +15872,19 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 		box_index < trace->stored_surface_boxes; ++box_index)
 	    if (candidate_boxes[box_index] && selected_box[box_index])
 		candidate_conflict = true;
-	if (candidate_conflict)
+	if (candidate_conflict) {
+	    candidate_failure_stage = std::max(candidate_failure_stage, 8);
 	    continue;
+	}
+	/* A sub-tolerance trim displacement can make the literal trim-frame
+	 * wedge call an exact edge line a contact even though both incident
+	 * surface roots consistently cross the represented solid boundary.  Keep
+	 * that transition provisional: it may publish only after the joint local
+	 * theorem separates and certifies the nearby opposite regular root. */
+	const bool tolerance_transition = contact && root_direction_consistent &&
+	    (incident_root_direction == brep_hit::ENTERING ||
+	     incident_root_direction == brep_hit::LEAVING) &&
+	    face_root_count[0] > 0 && face_root_count[1] > 0;
 	edge_event_candidate &candidate = candidates[candidate_count++];
 	candidate.observation = observation_index;
 	candidate.canonical_root = canonical_root;
@@ -15843,9 +15896,13 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 	candidate.t_max = t_max;
 	candidate.witness_parameter_tolerance =
 	    witness_parameter_tolerance;
-	candidate.direction = direction;
-	candidate.contact = contact;
+	candidate.direction = tolerance_transition ? incident_root_direction :
+	    direction;
+	candidate.contact = contact && !tolerance_transition;
 	candidate.lift_witness = lift_witness;
+	candidate.requires_joint_transition = tolerance_transition;
+	tolerance_transition_candidate = tolerance_transition_candidate ||
+	    tolerance_transition;
 	selected_roots += root_count;
 	selected_boxes += box_count;
 	for (size_t root_index = 0;
@@ -15857,13 +15914,15 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 	    if (!candidate_boxes[box_index])
 		continue;
 	    selected_box[box_index] = true;
-	    selected_contact_box[box_index] = contact;
+	    selected_contact_box[box_index] = candidate.contact;
 	}
     }
     if (!saw_exact_edge)
 	return false;
     trace->physical_event_edge_attempts++;
     if (!candidate_count || candidate_conflict || exact_edge_unresolved) {
+	trace->physical_event_edge_candidate_failure_stage =
+	    candidate_failure_stage;
 	trace->physical_event_edge_failures++;
 	return true;
     }
@@ -15925,6 +15984,7 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
     }
 
     bool complete = true;
+    bool joint_transition_certified = false;
     size_t regular_events = 0;
     size_t regular_roots = 0;
     size_t clean_outside = 0;
@@ -15971,6 +16031,7 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 	size_t source_boxes = 0;
 	double t_min = DBL_MAX;
 	double t_max = -DBL_MAX;
+	int boundary_determinant_sign = 0;
 	int determinant_sign = 0;
 	int component_failure_stage = 0;
 	bool component_boxes[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
@@ -16015,14 +16076,46 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 	    size_t joint_complement_visited = 0;
 	    size_t joint_complement_high_water = 0;
 	    trace->physical_event_edge_joint_attempts++;
-	    if (boundary_roots != 1 || candidate_count != 1 ||
-		    candidates[0].contact || candidate_event[0] == (size_t)-1 ||
-		    !brep_trace_edge_joint_root_component(trace, bs, ray, tol,
+	    if (boundary_roots != 1)
+		joint_failure_stage = 10;
+	    else if (candidate_count != 1)
+		joint_failure_stage = 11;
+	    else if (candidates[0].contact)
+		joint_failure_stage = 12;
+	    else if (candidate_event[0] == (size_t)-1)
+		joint_failure_stage = 13;
+	    const bool joint_preconditions = joint_failure_stage == 1;
+	    const bool joint_certified = joint_preconditions &&
+		brep_trace_edge_joint_root_component(trace, bs, ray, tol,
 			boundary_root, duplicate_root, component_boxes, first_box,
 			certified_roots, source_boxes, t_min, t_max,
-			determinant_sign, joint_complement_visited,
-			joint_complement_high_water, joint_failure_stage) ||
-		    certified_roots != duplicate_count) {
+			boundary_determinant_sign, determinant_sign,
+			joint_complement_visited,
+			joint_complement_high_water, joint_failure_stage);
+	    if (joint_certified && certified_roots != duplicate_count)
+		joint_failure_stage = 14;
+	    bool boundary_direction_certified = joint_certified &&
+		boundary_determinant_sign;
+	    if (boundary_direction_certified) {
+		int oriented_sign = boundary_determinant_sign;
+		const int boundary_face =
+		    trace->local_roots[boundary_root].face_index;
+		if (boundary_face < 0 ||
+			boundary_face >= bs->brep->m_F.Count()) {
+		    boundary_direction_certified = false;
+		} else {
+		    if (bs->brep->m_F[boundary_face].m_bRev)
+			oriented_sign = -oriented_sign;
+		    const int boundary_direction = oriented_sign < 0 ?
+			brep_hit::ENTERING : brep_hit::LEAVING;
+		    boundary_direction_certified =
+			boundary_direction == candidates[0].direction;
+		}
+	    }
+	    if (joint_certified && !boundary_direction_certified)
+		joint_failure_stage = 15;
+	    if (!joint_certified || certified_roots != duplicate_count ||
+		    !boundary_direction_certified) {
 		trace->physical_event_edge_joint_complement_visited +=
 		    joint_complement_visited;
 		trace->physical_event_edge_joint_complement_high_water =
@@ -16050,6 +16143,9 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 	    trace->physical_event_edge_joint_components++;
 	    trace->physical_event_edge_joint_boxes += source_boxes;
 	    trace->physical_event_edge_joint_roots += certified_roots + 1;
+	    joint_transition_certified =
+		joint_transition_certified ||
+		candidates[0].requires_joint_transition;
 	} else {
 	    trace->physical_event_regular_component_attempts++;
 	    if (!brep_trace_regular_root_component(trace, bs, ray, tol,
@@ -16141,6 +16237,8 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 	    box_index < trace->stored_surface_boxes; ++box_index)
 	if (!box_owned[box_index])
 	    complete = false;
+    if (tolerance_transition_candidate && !joint_transition_certified)
+	complete = false;
     if (!complete || event_count > RT_BREP_TRACE_MAX_PHYSICAL_EVENTS) {
 	trace->physical_event_edge_failures++;
 	return true;
@@ -16176,6 +16274,8 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
     trace->physical_event_edge += transition_count;
     trace->physical_event_edge_contacts += contact_count;
     trace->physical_event_edge_lift_witnesses += lift_witness_count;
+    trace->physical_event_edge_tolerance_transitions +=
+	tolerance_transition_candidate ? 1 : 0;
     trace->physical_event_edge_owned_boxes += selected_boxes;
     trace->physical_event_edge_owned_roots += selected_roots;
     brep_trace_finalize_physical_events(trace, ray, tol, true);

@@ -7,6 +7,60 @@ Repository studied: /home/cyapp/brlcad
 STEP test corpus: /home/cyapp/step_corpus_g
 
 
+IMPLEMENTATION CHECKPOINT: TOLERANCE-HEALED EDGE TRANSITIONS (2026-08-09)
+------------------------------------------------------------------------
+
+The isolated valid-model Cobb matrix now routes every material ray through
+the prepared production pipeline: 96 material selections and 24 deliberate
+exact-contact fallbacks.  This is a progression from the original 0/120
+baseline through the 36/84 and 90/30 component checkpoints.  No analytic
+sphere interval changed while the proof coverage increased.
+
+The final six material fallbacks exposed two distinctions which are now part
+of the production design:
+
+  1. An edge sector's line_before_state and line_after_state are angular,
+     topological observations.  Their validity must not be vetoed by the
+     legacy fixed grazing cutoff applied to a face normal at a discrepant trim
+     lift.  Conditioning is checked where authority is published: every
+     incident surface root must be finite and non-grazing and every relevant
+     local component must pass its bounded analytic proof.
+
+  2. A sub-T trim displacement may make the literal trim frame report contact
+     even though the complete roots on both incident faces agree on one solid
+     crossing direction.  Such a result is only a provisional
+     tolerance-healed transition.  It requires the strict prep-time seam-gap
+     authorization, an exact represented-edge witness, complete and
+     conflict-free incident root/box ownership, non-grazing roots on both
+     faces, and a common ENTER or LEAVE direction.  It may publish only when
+     the joint boundary/regular component theorem proves exactly two local
+     roots, excludes the component complement, certifies a constant
+     determinant sign in the boundary root's own contraction box, applies
+     m_bRev, and obtains the same direction.  Any failure preserves the
+     whole-ray fallback.
+
+This rule does not turn a geometrically near ray into an edge ray, does not
+classify an exact tangent as a crossing, and does not infer orientation from
+root iteration alone.  Promoted ownership boxes are boundary boxes, not
+contact boxes.  Dedicated telemetry records candidate failure stages and
+published tolerance transitions.
+
+The new transition is invariant under the first required similarity matrix:
+both ray directions pass after arbitrary rotations and translations at scales
+0.01, 1, and 10,000, with a worst normalized endpoint error of 6.22e-9.  The
+complete isolated matrix reports 36 ordinary regular components, 60 joint
+components, 64 trim-lift edge witnesses, and two tolerance-healed transitions.
+The optimized eleven-shard BREP ray suite and the ASAN/UBSAN defect/similarity
+gate pass.
+
+This is the last correctness checkpoint before controlled SurfaceTree-density
+experiments.  Reduce density one level at a time, record prep time, node count,
+cache size, local-proof attempts/successes/exhaustions, and fallbacks, and
+require unchanged directed partitions, grazing-limit trends, crack policy,
+similarity behavior, and paired Cauchy-Crofton comparisons before retaining
+each reduction.
+
+
 IMPLEMENTATION CHECKPOINT: CERTIFIED LOCAL COMPONENTS (2026-08-09)
 -----------------------------------------------------------------
 
