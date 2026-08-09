@@ -135,6 +135,13 @@ extern BREP_EXPORT int
 ON_Brep_CDT_Failed_Faces(int *faces, int capacity,
 	const struct ON_Brep_CDT_State *s);
 
+/* Copy the diagnostic recorded for a failed face in the most recent
+ * tessellation.  Returns zero on success and -1 if no failure was recorded
+ * for face_index. */
+extern BREP_EXPORT int
+ON_Brep_CDT_Face_Diagnostic(struct brep_cdt_diagnostic *diagnostic,
+	int face_index, const struct ON_Brep_CDT_State *s);
+
 /* Construct a vlist plot from the tessellation.  Modes are:
  *
  * 0 - shaded 3D triangles

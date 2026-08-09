@@ -100,6 +100,7 @@ struct ON_Brep_CDT_State {
     int status;
     struct brep_cdt_diagnostic diagnostic;
     std::vector<int> failed_face_indices;
+    std::map<int, struct brep_cdt_diagnostic> failed_face_diagnostics;
     bool tolerance_changed;
     ON_Brep *orig_brep;
     ON_Brep *brep;

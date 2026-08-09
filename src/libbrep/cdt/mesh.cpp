@@ -2516,6 +2516,42 @@ cdt_mesh_t::bnorm(const triangle_t &t)
     // Can't calculate this without some key Brep data
     if (!nmap.size() && !sv.size()) return avgnorm;
 
+    /* For a regular nonperiodic chart, evaluate the original surface at the
+     * triangle's parameter-space centroid.  Boundary vertex normals may be
+     * averaged across sharp B-Rep edges and are not a face-local orientation
+     * oracle. */
+    if (brep && f_id >= 0 && f_id < brep->m_F.Count() &&
+	    !cdt_face_uses_topology_chart(brep->m_F[f_id])) {
+	const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
+	if (surface && !surface->IsClosed(0) && !surface->IsClosed(1)) {
+	    ON_2dPoint uv[3];
+	    bool mapped = true;
+	    for (int corner = 0; corner < 3; ++corner) {
+		const long vertex = t.v[corner];
+		const auto native = p3d2d.find(vertex);
+		if (native == p3d2d.end() || native->second < 0 ||
+			ambiguous_p3d2d.find(vertex) !=
+			ambiguous_p3d2d.end() ||
+			(size_t)native->second >= m_pnts_2d.size()) {
+		    mapped = false;
+		    break;
+		}
+		uv[corner] = ON_2dPoint(
+		    m_pnts_2d[(size_t)native->second].first,
+		    m_pnts_2d[(size_t)native->second].second);
+	    }
+	    if (mapped) {
+		const ON_2dPoint center((uv[0].x + uv[1].x + uv[2].x) /
+		    3.0, (uv[0].y + uv[1].y + uv[2].y) / 3.0);
+		ON_3dPoint point;
+		ON_3dVector normal;
+		if (surface_EvNormal(surface, center.x, center.y, point,
+			normal) && normal.Unitize())
+		    return normal;
+	    }
+	}
+    }
+
     double norm_cnt = 0.0;
 
     // First pass: average normals from non-singularity vertices, as they
@@ -2597,6 +2633,12 @@ cdt_mesh_t::geometric_degenerate_count()
 	++tree_it;
     }
     return count;
+}
+
+size_t
+cdt_mesh_t::incorrect_normal_count()
+{
+    return interior_incorrect_normals().size();
 }
 
 void cdt_mesh_t::reset()
@@ -3678,6 +3720,30 @@ cdt_mesh_t::cdt()
 	return false;
     }
 
+    /* Build a deterministic reverse map for regular charts.  Periodic seams
+     * and singularities intentionally give one 3-D vertex more than one
+     * native UV identity; mark those vertices ambiguous instead of choosing
+     * whichever mapping happens to be visited first. */
+    p3d2d.clear();
+    ambiguous_p3d2d.clear();
+    for (const auto &point_map : p2d3d) {
+	const long native_point = point_map.first;
+	const long point_3d = point_map.second;
+	if (native_point < 0 || (size_t)native_point >= m_pnts_2d.size() ||
+		point_3d < 0 || (size_t)point_3d >= pnts.size())
+	    continue;
+	const auto canonical = p2ind.find(pnts[(size_t)point_3d]);
+	if (canonical == p2ind.end())
+	    continue;
+	const auto old = p3d2d.find(canonical->second);
+	if (old == p3d2d.end())
+	    p3d2d[canonical->second] = native_point;
+	else if (old->second != native_point &&
+		m_pnts_2d[(size_t)old->second] !=
+		m_pnts_2d[(size_t)native_point])
+	    ambiguous_p3d2d.insert(canonical->second);
+    }
+
     cdt_face_chart chart;
     const ON_BrepFace &face = brep->m_F[f_id];
     if (!chart.build(face, m_pnts_2d, source_outer, source_holes,
@@ -4024,25 +4090,18 @@ cdt_mesh_t::refine_incorrect_normals(size_t max_points)
 	ON_2dPoint uv[3];
 	bool mapped = true;
 	for (int corner = 0; corner < 3; ++corner) {
-	    bool found = false;
-	    for (const auto &point_map : p2d3d) {
-		const long native_point = point_map.first;
-		const long point_3d = point_map.second;
-		if (native_point < 0 ||
-			(size_t)native_point >= m_pnts_2d.size() ||
-			point_3d < 0 || (size_t)point_3d >= pnts.size())
-		    continue;
-		const auto canonical = p2ind.find(pnts[(size_t)point_3d]);
-		if (canonical == p2ind.end() ||
-			canonical->second != triangle.v[corner])
-		    continue;
-		uv[corner] = ON_2dPoint(
-		    m_pnts_2d[(size_t)native_point].first,
-		    m_pnts_2d[(size_t)native_point].second);
-		found = true;
-		break;
+	    const long vertex = triangle.v[corner];
+	    const auto native = p3d2d.find(vertex);
+	    if (native == p3d2d.end() ||
+		    ambiguous_p3d2d.find(vertex) != ambiguous_p3d2d.end() ||
+		    native->second < 0 ||
+		    (size_t)native->second >= m_pnts_2d.size()) {
+		mapped = false;
+		continue;
 	    }
-	    mapped = mapped && found;
+	    uv[corner] = ON_2dPoint(
+		m_pnts_2d[(size_t)native->second].first,
+		m_pnts_2d[(size_t)native->second].second);
 	}
 	if (!mapped)
 	    continue;

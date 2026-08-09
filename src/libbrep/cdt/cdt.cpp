@@ -541,13 +541,20 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	return false;
     }
     size_t refinement_points = 0;
+    int refinement_attempts = 0;
+    bool refinement_stalled = false;
     for (int attempt = 0; attempt < MAX_CHART_REFINEMENT_ATTEMPTS;
 	    ++attempt) {
 	const size_t remaining = MAX_CHART_REFINEMENT_POINTS -
 	    refinement_points;
-	const size_t inserted = fmesh->refine_incorrect_normals(remaining);
-	if (!inserted)
+	if (!remaining)
 	    break;
+	refinement_attempts++;
+	const size_t inserted = fmesh->refine_incorrect_normals(remaining);
+	if (!inserted) {
+	    refinement_stalled = true;
+	    break;
+	}
 	refinement_points += inserted;
 	if (!fmesh->cdt()) {
 	    bu_log("Face %d: chart refinement retriangulation failed\n",
@@ -561,9 +568,20 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	}
     }
     if (refinement_points) {
+	const size_t remaining_folds = fmesh->incorrect_normal_count();
+	const std::string message = refinement_stalled ?
+	    "adaptive chart refinement stalled after " +
+		std::to_string(refinement_points) + " points with " +
+		std::to_string(remaining_folds) +
+		" inconsistent triangles" :
+	    "adaptive chart refinement reached its limit after " +
+		std::to_string(refinement_attempts) + " rounds and " +
+		std::to_string(refinement_points) + " points with " +
+		std::to_string(remaining_folds) +
+		" inconsistent triangles";
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REFINEMENT_LIMIT,
 	    BREP_CDT_STAGE_ADAPTIVE_REFINEMENT, fmesh->f_id, 0, 1,
-	    "folded surface chords exceeded the chart refinement limit");
+	    message.c_str());
 	return false;
     }
 
@@ -865,6 +883,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	cdt_state_reset(s_cdt);
     s_cdt->status = BREP_CDT_FAILED;
     s_cdt->failed_face_indices.clear();
+    s_cdt->failed_face_diagnostics.clear();
     cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INITIALIZATION_FAILED,
 	BREP_CDT_STAGE_INPUT, -1, 0, 0, "tessellation started");
 
@@ -1086,7 +1105,14 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	if (do_triangulation(s_cdt, fi)) {
 	    face_successes++;
 	} else {
+	    if (s_cdt->diagnostic.face_index != fi ||
+		    s_cdt->diagnostic.result >= 0) {
+		cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_FACE_FAILED,
+		    BREP_CDT_STAGE_FACE_TRIANGULATION, fi, 0, 1,
+		    "face triangulation failed without a specific diagnostic");
+	    }
 	    s_cdt->failed_face_indices.push_back(fi);
+	    s_cdt->failed_face_diagnostics[fi] = s_cdt->diagnostic;
 	    if (first_failed_face < 0)
 		first_failed_face = fi;
 	    face_failures++;
