@@ -32,7 +32,8 @@ enum cdt_face_chart_type {
     CDT_FACE_CHART_NATIVE_UV = 0,
     CDT_FACE_CHART_CONE_WEDGE = 1,
     CDT_FACE_CHART_POLAR = 2,
-    CDT_FACE_CHART_SURFACE_METRIC = 3
+    CDT_FACE_CHART_SURFACE_METRIC = 3,
+    CDT_FACE_CHART_CYLINDER = 4
 };
 
 struct cdt_chart_vertex {
@@ -113,6 +114,14 @@ private:
 	const std::vector<int> &source_steiner,
 	const std::vector<const ON_3dPoint *> &points_3d,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices);
+    bool build_cylinder(const ON_BrepFace &face,
+	const std::vector<std::pair<double, double>> &native_points,
+	const std::vector<int> &source_outer,
+	const std::vector<std::vector<int>> &source_holes,
+	const std::vector<int> &source_steiner,
+	const std::vector<const ON_3dPoint *> &points_3d,
+	const std::vector<cdt_topo_vertex_id> &topology_vertices,
+	const ON_Cylinder &cylinder);
     bool validate_boundary(const ON_BrepFace &face,
 	const std::vector<std::pair<double, double>> &native_points);
 
@@ -130,11 +139,16 @@ private:
     ON_Interval m_open_domain;
     ON_Interval m_native_domain[2];
     double m_metric_scale[2] = {1.0, 1.0};
+    const ON_Surface *m_surface = NULL;
+    ON_Cylinder m_cylinder;
+    double m_cylinder_cut = 0.0;
+    std::vector<ON_2dPoint> m_source_native_points;
     std::string m_failure;
 };
 
 BREP_EXPORT bool cdt_face_uses_cone_chart(const ON_BrepFace &face);
 BREP_EXPORT bool cdt_face_uses_polar_chart(const ON_BrepFace &face);
+BREP_EXPORT bool cdt_face_uses_cylinder_chart(const ON_BrepFace &face);
 BREP_EXPORT bool cdt_face_uses_topology_chart(const ON_BrepFace &face);
 
 #endif /* LIBBREP_CDT_CHART_H */
