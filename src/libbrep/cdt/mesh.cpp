@@ -3695,6 +3695,107 @@ point_on_indexed_boundary(RTree<size_t, double, 2> &index,
     return false;
 }
 
+/* Triangulate one disk in a face atlas.  The strict libbg entry point owns
+ * duplicate and boundary-Steiner filtering; this wrapper retains the chart's
+ * native identities.  Boundary state is committed only after every atlas
+ * component has succeeded. */
+static bool
+triangulate_chart_component(cdt_mesh_t *mesh, const ON_BrepFace &face,
+	const cdt_face_chart &chart, std::vector<triangle_t> &triangles)
+{
+    if (!mesh)
+	return false;
+    const auto diagnose = [&](int result, int stage, const char *message) {
+	struct ON_Brep_CDT_State *state =
+	    (struct ON_Brep_CDT_State *)mesh->p_cdt;
+	if (state)
+	    cdt_diagnostic_set(state, result, stage, mesh->f_id, 0, 1,
+		message);
+    };
+    if (chart.outer.size() < 3 || chart.points.size() < 3) {
+	diagnose(BREP_CDT_RESULT_CHART_FAILED,
+	    BREP_CDT_STAGE_CHART_CONSTRUCTION,
+	    "cone atlas component has no disk boundary");
+	return false;
+    }
+    std::vector<point2d_t> points(chart.points.size());
+    for (size_t i = 0; i < chart.points.size(); ++i)
+	V2SET(points[i], chart.points[i].first, chart.points[i].second);
+    std::vector<int> outline(chart.outer.begin(), chart.outer.end());
+    outline.push_back(chart.outer.front());
+    std::vector<std::vector<int>> holes(chart.holes);
+    std::vector<const int *> hole_arrays;
+    std::vector<size_t> hole_counts;
+    for (std::vector<int> &hole : holes) {
+	hole.push_back(hole.front());
+	hole_arrays.push_back(hole.data());
+	hole_counts.push_back(hole.size());
+    }
+    std::vector<int> constraints;
+    constraints.reserve(chart.constraints.size() * 2);
+    for (const std::pair<int, int> &constraint : chart.constraints) {
+	constraints.push_back(constraint.first);
+	constraints.push_back(constraint.second);
+    }
+    const std::vector<int> no_steiner;
+    const std::vector<int> &steiner = face.SurfaceOf()->IsPlanar(NULL,
+	ON_ZERO_TOLERANCE) ? no_steiner : chart.steiner;
+    int *faces = NULL;
+    int face_count = 0;
+    struct bg_triangulation_report report = {0, -1, {0}};
+    const int status = bg_nested_poly_triangulate_constraints_strict(&faces,
+	&face_count, NULL, NULL, outline.data(), outline.size(),
+	hole_arrays.empty() ? NULL : hole_arrays.data(),
+	hole_counts.empty() ? NULL : hole_counts.data(), hole_arrays.size(),
+	steiner.empty() ? NULL : steiner.data(), steiner.size(),
+	constraints.empty() ? NULL : constraints.data(),
+	chart.constraints.size(), points.data(), points.size(), &report);
+    if (status != BRLCAD_OK) {
+	bu_log("Face %d: atlas component triangulation failed: %s\n",
+	    mesh->f_id, report.message);
+	struct ON_Brep_CDT_State *state =
+	    (struct ON_Brep_CDT_State *)mesh->p_cdt;
+	if (state) {
+	    int result = BREP_CDT_RESULT_INVALID_PSLG;
+	    int stage = BREP_CDT_STAGE_PSLG_VALIDATION;
+	    if (report.reason == BG_TRIANGULATION_DETRIA_FAILED) {
+		result = BREP_CDT_RESULT_DETRIA_FAILED;
+		stage = BREP_CDT_STAGE_DETRIA;
+	    } else if (report.reason ==
+		    BG_TRIANGULATION_POSTCONDITION_FAILED) {
+		result = BREP_CDT_RESULT_CERTIFICATION_FAILED;
+		stage = BREP_CDT_STAGE_DETRIA;
+	    }
+	    cdt_diagnostic_set(state, result, stage, mesh->f_id, 0, 1,
+		report.message);
+	}
+	bu_free(faces, "atlas component faces");
+	return false;
+    }
+    const size_t original_count = triangles.size();
+    for (int i = 0; i < face_count; ++i) {
+	triangle_t triangle;
+	for (int corner = 0; corner < 3; ++corner)
+	    triangle.v[corner] = chart.native_point(faces[3 * i + corner]);
+	if (triangle.v[0] < 0 || triangle.v[1] < 0 ||
+		triangle.v[2] < 0) {
+	    triangles.resize(original_count);
+	    bu_free(faces, "atlas component faces");
+	    diagnose(BREP_CDT_RESULT_CERTIFICATION_FAILED,
+		BREP_CDT_STAGE_DETRIA,
+		"cone atlas output lost a native boundary identity");
+	    return false;
+	}
+	triangles.push_back(triangle);
+    }
+    bu_free(faces, "atlas component faces");
+    if (face_count > 0)
+	return true;
+    diagnose(BREP_CDT_RESULT_CERTIFICATION_FAILED, BREP_CDT_STAGE_DETRIA,
+	"cone atlas component produced no chart triangles");
+    return false;
+}
+
 bool
 cdt_mesh_t::cdt()
 {
@@ -3794,20 +3895,6 @@ cdt_mesh_t::cdt()
 		assign_topology_vertex(first, trim.m_vi[0]);
 	    if (!edge->next || edge->next->trim_ind != edge->trim_ind)
 		assign_topology_vertex(second, trim.m_vi[1]);
-	    const ON_Interval domain = trim.Domain();
-	    const double magnitude = std::max(std::fabs(domain.Min()),
-		std::fabs(domain.Max()));
-	    const double tolerance = 256.0 *
-		std::numeric_limits<double>::epsilon() *
-		std::max(magnitude, domain.Length());
-	    if (std::fabs(edge->trim_start - domain.Min()) <= tolerance)
-		assign_topology_vertex(first, trim.m_vi[0]);
-	    if (std::fabs(edge->trim_start - domain.Max()) <= tolerance)
-		assign_topology_vertex(first, trim.m_vi[1]);
-	    if (std::fabs(edge->trim_end - domain.Min()) <= tolerance)
-		assign_topology_vertex(second, trim.m_vi[0]);
-	    if (std::fabs(edge->trim_end - domain.Max()) <= tolerance)
-		assign_topology_vertex(second, trim.m_vi[1]);
 	}
     };
     assign_loop_topology(&outer_loop);
@@ -3822,7 +3909,6 @@ cdt_mesh_t::cdt()
 		"chart point has conflicting B-Rep vertex identities");
 	return false;
     }
-
     /* Build a deterministic reverse map for regular charts.  Periodic seams
      * and singularities intentionally give one 3-D vertex more than one
      * native UV identity; mark those vertices ambiguous instead of choosing
@@ -3847,8 +3933,271 @@ cdt_mesh_t::cdt()
 	    ambiguous_p3d2d.insert(canonical->second);
     }
 
-    cdt_face_chart chart;
     const ON_BrepFace &face = brep->m_F[f_id];
+    std::vector<std::vector<int>> atlas_outlines;
+    std::vector<cdt_topo_vertex_id> atlas_poles;
+    ON_Cone analytic_cone;
+    const ON_Surface *face_surface = face.SurfaceOf();
+    if (source_holes.empty() && face_surface &&
+	    face_surface->IsCone(&analytic_cone, BREP_PLANAR_TOL)) {
+	int singular_side = -1;
+	int singular_count = 0;
+	for (int side = 0; side < 4; ++side) {
+	    if (face_surface->IsSingular(side)) {
+		singular_side = side;
+		singular_count++;
+	    }
+	}
+	if (singular_count == 1) {
+	    const int open_direction = (singular_side == 0 ||
+		singular_side == 2) ? 1 : 0;
+	    const ON_Interval open_domain =
+		face_surface->Domain(open_direction);
+	    const double pole_coordinate = (singular_side == 0 ||
+		singular_side == 3) ? open_domain.Min() :
+		open_domain.Max();
+	    const double magnitude = std::max(std::fabs(open_domain.Min()),
+		std::fabs(open_domain.Max()));
+	    const double pole_tolerance = 256.0 *
+		std::numeric_limits<double>::epsilon() *
+		std::max(magnitude, open_domain.Length());
+	    std::vector<int> ring = source_outer;
+	    if (ring.size() > 1 && ring.front() == ring.back())
+		ring.pop_back();
+	    std::set<cdt_topo_vertex_id> pole_ids;
+	    std::map<cdt_topo_vertex_id, std::vector<size_t>> occurrences;
+	    for (size_t i = 0; i < ring.size(); ++i) {
+		const int point = ring[i];
+		if (point < 0 || (size_t)point >= m_pnts_2d.size() ||
+			(size_t)point >= source_topology_vertices.size())
+		    continue;
+		const cdt_topo_vertex_id topology =
+		    source_topology_vertices[(size_t)point];
+		if (topology == CDT_TOPOLOGY_ID_NONE)
+		    continue;
+		const std::pair<double, double> &uv =
+		    m_pnts_2d[(size_t)point];
+		if (std::fabs((open_direction ? uv.second : uv.first) -
+			pole_coordinate) <= pole_tolerance)
+		    pole_ids.insert(topology);
+		occurrences[topology].push_back(i);
+	    }
+	    if (pole_ids.size() > 1) {
+		for (const auto &entry : occurrences) {
+		    if (pole_ids.find(entry.first) != pole_ids.end() ||
+			    entry.second.size() != 2)
+			continue;
+		    const size_t first = entry.second[0];
+		    const size_t second = entry.second[1];
+		    std::vector<int> components[2];
+		    components[0].insert(components[0].end(),
+			ring.begin() + first, ring.begin() + second + 1);
+		    components[1].insert(components[1].end(),
+			ring.begin() + second, ring.end());
+		    components[1].insert(components[1].end(), ring.begin(),
+			ring.begin() + first + 1);
+		    std::set<cdt_topo_vertex_id> component_poles[2];
+		    for (int component = 0; component < 2; ++component) {
+			for (int point : components[component]) {
+			    if (point < 0 || (size_t)point >=
+				    source_topology_vertices.size())
+				continue;
+			    const cdt_topo_vertex_id topology =
+				source_topology_vertices[(size_t)point];
+			    if (pole_ids.find(topology) != pole_ids.end())
+				component_poles[component].insert(topology);
+			}
+		    }
+		    if (components[0].size() >= 3 &&
+			    components[1].size() >= 3 &&
+			    component_poles[0].size() == 1 &&
+			    component_poles[1].size() == 1 &&
+			    *component_poles[0].begin() !=
+			    *component_poles[1].begin()) {
+			atlas_outlines.push_back(components[0]);
+			atlas_outlines.push_back(components[1]);
+			atlas_poles.push_back(*component_poles[0].begin());
+			atlas_poles.push_back(*component_poles[1].begin());
+			break;
+		    }
+		}
+	    }
+	}
+    }
+
+    if (atlas_outlines.size() == 2 && atlas_poles.size() == 2) {
+	std::vector<cdt_face_chart> atlas(2);
+	bool atlas_built = true;
+	std::string atlas_failure;
+	for (size_t component = 0; component < atlas.size(); ++component) {
+	    const bool component_built = atlas[component].build(face,
+		m_pnts_2d,
+		atlas_outlines[component], std::vector<std::vector<int>>(),
+		source_steiner, source_refinement, source_points_3d,
+		source_topology_vertices, atlas_poles[component]);
+	    if (!component_built && atlas_failure.empty())
+		atlas_failure = atlas[component].failure();
+	    atlas_built = component_built && atlas_built;
+	}
+	std::set<long> atlas_edge_points;
+	std::set<long> atlas_singular_points;
+	std::set<uedge_t> atlas_boundary_edges;
+	const auto stage_boundary = [&](const std::vector<int> &ring,
+		const cdt_face_chart &component) {
+	    if (ring.size() < 2)
+		return false;
+	    for (size_t i = 0; i < ring.size(); ++i) {
+		const long first_native = component.native_point(ring[i]);
+		const long second_native = component.native_point(
+		    ring[(i + 1) % ring.size()]);
+		const auto first_3d = p2d3d.find(first_native);
+		const auto second_3d = p2d3d.find(second_native);
+		if (first_3d == p2d3d.end() || second_3d == p2d3d.end() ||
+			first_3d->second < 0 || second_3d->second < 0 ||
+			(size_t)first_3d->second >= pnts.size() ||
+			(size_t)second_3d->second >= pnts.size())
+		    return false;
+		const auto first_mesh = p2ind.find(
+		    pnts[(size_t)first_3d->second]);
+		const auto second_mesh = p2ind.find(
+		    pnts[(size_t)second_3d->second]);
+		if (first_mesh == p2ind.end() || second_mesh == p2ind.end())
+		    return false;
+		atlas_edge_points.insert(first_mesh->second);
+		atlas_edge_points.insert(second_mesh->second);
+		if (first_mesh->second != second_mesh->second)
+		    atlas_boundary_edges.insert(uedge_t(first_mesh->second,
+			second_mesh->second));
+	    }
+	    return true;
+	};
+	if (atlas_built) {
+	    for (const cdt_face_chart &component : atlas) {
+		bool boundary_mapped = stage_boundary(component.outer,
+		    component);
+		for (const std::vector<int> &hole : component.holes)
+		    boundary_mapped = stage_boundary(hole, component) &&
+			boundary_mapped;
+		for (const cdt_chart_vertex &vertex : component.vertices) {
+		    if (!vertex.singular)
+			continue;
+		    const auto point_3d = p2d3d.find(vertex.native_point);
+		    if (vertex.native_point < 0 || point_3d == p2d3d.end() ||
+			    point_3d->second < 0 ||
+			    (size_t)point_3d->second >= pnts.size()) {
+			boundary_mapped = false;
+			continue;
+		    }
+		    const auto mesh_point = p2ind.find(
+			pnts[(size_t)point_3d->second]);
+		    if (mesh_point == p2ind.end()) {
+			boundary_mapped = false;
+			continue;
+		    }
+		    atlas_singular_points.insert(mesh_point->second);
+		}
+		if (!boundary_mapped) {
+		    atlas_built = false;
+		    atlas_failure =
+			"cone atlas boundary did not map to mesh vertices";
+		    break;
+		}
+	    }
+	}
+	std::vector<triangle_t> atlas_triangles;
+	if (atlas_built) {
+	    for (const cdt_face_chart &component : atlas) {
+		if (!triangulate_chart_component(this, face, component,
+			atlas_triangles)) {
+		    atlas_built = false;
+		    atlas_failure.clear();
+		    break;
+		}
+	    }
+	}
+	if (atlas_built && !atlas_triangles.empty()) {
+	    std::vector<triangle_t> mapped_triangles;
+	    size_t forward_count = 0;
+	    size_t reverse_count = 0;
+	    for (const triangle_t &triangle_2d : atlas_triangles) {
+		triangle_t triangle_3d;
+		bool mapped = true;
+		for (int corner = 0; corner < 3; ++corner) {
+		    const auto point_3d = p2d3d.find(
+			triangle_2d.v[corner]);
+		    if (point_3d == p2d3d.end() || point_3d->second < 0 ||
+			    (size_t)point_3d->second >= pnts.size()) {
+			mapped = false;
+			break;
+		    }
+		    const auto mesh_point = p2ind.find(
+			pnts[(size_t)point_3d->second]);
+		    if (mesh_point == p2ind.end()) {
+			mapped = false;
+			break;
+		    }
+		    triangle_3d.v[corner] = mesh_point->second;
+		}
+		if (!mapped) {
+		    atlas_built = false;
+		    atlas_failure =
+			"cone atlas triangle did not map to mesh vertices";
+		    break;
+		}
+		const ON_3dVector triangle_normal = tnorm(triangle_3d);
+		const ON_3dVector surface_normal = bnorm(triangle_3d);
+		if (triangle_normal.Length() > 0 &&
+			surface_normal.Length() > 0) {
+		    if (ON_DotProduct(triangle_normal, surface_normal) > 0.0)
+			forward_count++;
+		    else
+			reverse_count++;
+		}
+		mapped_triangles.push_back(triangle_3d);
+	    }
+	    if (atlas_built) {
+		const bool reverse_atlas = reverse_count > forward_count;
+		reset();
+		for (triangle_t &triangle : mapped_triangles) {
+		    if (reverse_atlas)
+			std::swap(triangle.v[1], triangle.v[2]);
+		    tri_add(triangle);
+		}
+		if (!tris_vect.empty()) {
+		    for (const uedge_t &edge : chart_boundary_edges)
+			brep_edges.erase(edge);
+		    chart_boundary_edges = atlas_boundary_edges;
+		    brep_edges.insert(atlas_boundary_edges.begin(),
+			atlas_boundary_edges.end());
+		    ep.insert(atlas_edge_points.begin(),
+			atlas_edge_points.end());
+		    sv.insert(atlas_singular_points.begin(),
+			atlas_singular_points.end());
+		    tris_2d.swap(atlas_triangles);
+		    return true;
+		}
+		atlas_failure = "cone face atlas produced no 3-D triangles";
+	    }
+	}
+	if (atlas_built && atlas_triangles.empty())
+	    atlas_failure = "cone face atlas produced no chart triangles";
+	if (!atlas_built && atlas_failure.empty()) {
+	    /* A component triangulation has already installed its precise
+	     * diagnostic. */
+	    return false;
+	}
+	struct ON_Brep_CDT_State *state =
+	    (struct ON_Brep_CDT_State *)p_cdt;
+	if (state)
+	    cdt_diagnostic_set(state, BREP_CDT_RESULT_CHART_FAILED,
+		BREP_CDT_STAGE_CHART_CONSTRUCTION, f_id, 0, 1,
+		atlas_failure.empty() ?
+		"cone face atlas did not produce certified disk components" :
+		atlas_failure.c_str());
+	return false;
+    }
+
+    cdt_face_chart chart;
     if (!chart.build(face, m_pnts_2d, source_outer, source_holes,
 	    source_steiner, source_refinement, source_points_3d,
 	    source_topology_vertices)) {
@@ -3862,7 +4211,6 @@ cdt_mesh_t::cdt()
 		chart.failure().c_str());
 	return false;
     }
-
     /* An iso trim from a cone pole is a straight ray in the cone chart.  A
      * valid B-Rep may let its trim pullback wander within the edge tolerance;
      * near the pole that harmless native-UV noise otherwise becomes a chart
