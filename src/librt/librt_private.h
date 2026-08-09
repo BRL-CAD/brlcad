@@ -861,6 +861,18 @@ struct rt_brep_shot_trace {
     size_t physical_event_seam_contact_boxes;
     size_t physical_event_seam_contact_roots;
     size_t physical_event_seam_contact_miss_roots;
+    size_t physical_event_seam_declared_contact_pairs;
+    size_t physical_event_seam_local_root_attempts;
+    size_t physical_event_seam_local_root_available;
+    size_t physical_event_seam_local_root_certified;
+    size_t physical_event_seam_local_root_extensions;
+    size_t physical_event_seam_local_root_tube_failures;
+    fastf_t physical_event_seam_local_root_radius;
+    fastf_t physical_event_seam_local_root_model_image;
+    fastf_t physical_event_seam_local_root_edge_upper;
+    fastf_t physical_event_seam_local_root_trim_upper;
+    fastf_t physical_event_seam_local_root_tube_tolerance;
+    fastf_t physical_event_seam_local_root_tube_roundoff;
     size_t physical_event_seam_oblique_pairs;
     size_t physical_event_seam_oblique_cells;
     size_t physical_event_seam_oblique_box_links;
@@ -1064,6 +1076,27 @@ struct rt_brep_krawczyk_test_result {
     fastf_t image_maximum[2];
 };
 
+struct rt_brep_local_root_test_result {
+    int available;
+    int certified;
+    int model_image_available;
+    size_t attempts;
+    size_t expansion_high_water;
+    size_t model_expansion_high_water;
+    fastf_t normalized_root[2];
+    fastf_t span_minimum[2];
+    fastf_t span_maximum[2];
+    fastf_t determinant_ratio;
+    fastf_t radius;
+    fastf_t correction_bound;
+    fastf_t contraction_bound;
+    fastf_t model_image_displacement;
+    fastf_t weight_minimum;
+    fastf_t weight_maximum;
+    fastf_t image_minimum[2];
+    fastf_t image_maximum[2];
+};
+
 #define RT_BREP_SOURCE_UNION_TEST_ROOT 1
 #define RT_BREP_SOURCE_UNION_TEST_CANDIDATE 2
 
@@ -1182,6 +1215,20 @@ RT_EXPORT extern int _rt_brep_expansion_krawczyk_test(
     int u_order, int v_order, const fastf_t root[2],
     struct rt_brep_krawczyk_test_result *result,
     size_t *expansion_high_water);
+RT_EXPORT extern int _rt_brep_local_root_test(
+    const fastf_t *first_minimum, const fastf_t *first_maximum,
+    const fastf_t *second_minimum, const fastf_t *second_maximum,
+    int u_order, int v_order, const fastf_t root[2], fastf_t maximum_radius,
+    struct rt_brep_local_root_test_result *result);
+RT_EXPORT extern int _rt_brep_surface_local_root_test(
+    const struct soltab *stp, const fastf_t ray_origin[3],
+    const fastf_t ray_direction[3], int face_index, int span_index,
+    const fastf_t uv[2], fastf_t maximum_radius,
+    struct rt_brep_local_root_test_result *result);
+RT_EXPORT extern int _rt_brep_local_root_tube_test(
+    fastf_t image_displacement, fastf_t edge_distance,
+    fastf_t trim_distance, fastf_t tolerance, fastf_t roundoff,
+    fastf_t upper_bound[2]);
 RT_EXPORT extern int _rt_brep_source_union_test(
     const fastf_t *first_coefficients,
     const fastf_t *second_coefficients, int u_order, int v_order,

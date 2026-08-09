@@ -6308,6 +6308,204 @@ check_brep_interval_enclosures()
 
 
 static int
+check_brep_local_root_solver()
+{
+    int failures = 0;
+    size_t cases = 0;
+    size_t certified = 0;
+    size_t rejected = 0;
+    size_t maximum_attempts = 0;
+    size_t maximum_high_water = 0;
+    double maximum_radius = 0.0;
+
+    const auto run = [&](const char *name, const fastf_t *first_minimum,
+	    const fastf_t *first_maximum, const fastf_t *second_minimum,
+	    const fastf_t *second_maximum, int u_order, int v_order,
+	    const fastf_t root[2], double radius_limit,
+	    bool expected_available, bool expected_certified) {
+	struct rt_brep_local_root_test_result result = {};
+	cases++;
+	const bool called = _rt_brep_local_root_test(first_minimum,
+	    first_maximum, second_minimum, second_maximum, u_order, v_order,
+	    root, radius_limit, &result);
+	const bool bad = !called || result.available !=
+	    (expected_available ? 1 : 0) || result.certified !=
+	    (expected_certified ? 1 : 0) ||
+	    (result.certified &&
+	     (!(result.radius > 0.0) || result.radius > radius_limit ||
+	      !(result.contraction_bound < 1.0) ||
+	      !(result.image_minimum[0] > -result.radius) ||
+	      !(result.image_maximum[0] < result.radius) ||
+	      !(result.image_minimum[1] > -result.radius) ||
+	      !(result.image_maximum[1] < result.radius)));
+	if (bad) {
+	    std::printf("FAIL: local root %s call/available/certified="
+		"%d/%d/%d expected=1/%d/%d attempts=%zu radius=%.17g "
+		"correction/contraction=%.17g/%.17g image=[%.17g %.17g]x"
+		"[%.17g %.17g]\n", name, called ? 1 : 0,
+		result.available, result.certified,
+		expected_available ? 1 : 0, expected_certified ? 1 : 0,
+		result.attempts, result.radius, result.correction_bound,
+		result.contraction_bound, result.image_minimum[0],
+		result.image_maximum[0], result.image_minimum[1],
+		result.image_maximum[1]);
+	    failures++;
+	} else if (result.certified) {
+	    certified++;
+	} else {
+	    rejected++;
+	}
+	maximum_attempts = std::max(maximum_attempts, result.attempts);
+	maximum_high_water = std::max(maximum_high_water,
+	    result.expansion_high_water);
+	maximum_radius = std::max(maximum_radius, (double)result.radius);
+    };
+
+    const int scale_exponents[] = {-100, 0, 100};
+    const double boundary_shift = std::ldexp(1.0, -42);
+    const fastf_t boundary_root[2] = {1.0, 0.5};
+    for (size_t scale_index = 0;
+	    scale_index < sizeof(scale_exponents) /
+	    sizeof(scale_exponents[0]); ++scale_index) {
+	const double scale = std::ldexp(1.0, scale_exponents[scale_index]);
+	fastf_t minimum[2][4] = {};
+	fastf_t maximum[2][4] = {};
+	for (int i = 0; i < 2; ++i) {
+	    for (int j = 0; j < 2; ++j) {
+		const size_t index = (size_t)i * 2 + j;
+		const double f = i - (1.0 + boundary_shift);
+		const double g = j - 0.5;
+		minimum[0][index] = maximum[0][index] =
+		    scale * (f + 0.25 * g);
+		minimum[1][index] = maximum[1][index] =
+		    scale * (-0.5 * f + g);
+	    }
+	}
+	char name[64];
+	std::snprintf(name, sizeof(name), "affine-boundary-%d",
+	    scale_exponents[scale_index]);
+	run(name, minimum[0], maximum[0], minimum[1], maximum[1], 2, 2,
+	    boundary_root, 1.0e-6, true, true);
+    }
+
+    const double near_root = 1.0 + std::ldexp(1.0, -42);
+    const double other_root = 1.0 - std::ldexp(1.0, -12);
+    const double quadratic[3] = {
+	other_root * near_root,
+	other_root * near_root - 0.5 * (other_root + near_root),
+	(1.0 - other_root) * (1.0 - near_root)
+    };
+    for (size_t scale_index = 0;
+	    scale_index < sizeof(scale_exponents) /
+	    sizeof(scale_exponents[0]); ++scale_index) {
+	const double scale = std::ldexp(1.0, scale_exponents[scale_index]);
+	fastf_t minimum[2][6] = {};
+	fastf_t maximum[2][6] = {};
+	for (int i = 0; i < 3; ++i) {
+	    for (int j = 0; j < 2; ++j) {
+		const size_t index = (size_t)i * 2 + j;
+		minimum[0][index] = maximum[0][index] =
+		    scale * quadratic[i];
+		minimum[1][index] = maximum[1][index] =
+		    scale * (j - 0.5);
+	    }
+	}
+	char name[64];
+	std::snprintf(name, sizeof(name), "nearby-boundary-pair-%d",
+	    scale_exponents[scale_index]);
+	run(name, minimum[0], maximum[0], minimum[1], maximum[1], 3, 2,
+	    boundary_root, 0.25 * (1.0 - other_root), true, true);
+    }
+
+    {
+	const double first_root = 1.0 - std::ldexp(1.0, -10);
+	const double second_root = 1.0 + std::ldexp(1.0, -11);
+	const double coefficients[3] = {
+	    first_root * second_root,
+	    first_root * second_root - 0.5 * (first_root + second_root),
+	    (1.0 - first_root) * (1.0 - second_root)
+	};
+	fastf_t minimum[2][6] = {};
+	fastf_t maximum[2][6] = {};
+	for (int i = 0; i < 3; ++i) {
+	    for (int j = 0; j < 2; ++j) {
+		const size_t index = (size_t)i * 2 + j;
+		minimum[0][index] = maximum[0][index] = coefficients[i];
+		minimum[1][index] = maximum[1][index] = j - 0.5;
+	    }
+	}
+	run("two-roots-in-box", minimum[0], maximum[0], minimum[1],
+	    maximum[1], 3, 2, boundary_root,
+	    2.0 * (second_root - first_root), true, false);
+    }
+
+    {
+	fastf_t minimum[2][6] = {};
+	fastf_t maximum[2][6] = {};
+	const double square[3] = {1.0, 0.0, 0.0};
+	for (int i = 0; i < 3; ++i) {
+	    for (int j = 0; j < 2; ++j) {
+		const size_t index = (size_t)i * 2 + j;
+		minimum[0][index] = maximum[0][index] = square[i];
+		minimum[1][index] = maximum[1][index] = j - 0.5;
+	    }
+	}
+	run("singular-boundary", minimum[0], maximum[0], minimum[1],
+	    maximum[1], 3, 2, boundary_root, 1.0e-4, false, false);
+    }
+
+    {
+	fastf_t minimum[2][4] = {};
+	fastf_t maximum[2][4] = {};
+	for (int i = 0; i < 2; ++i) {
+	    for (int j = 0; j < 2; ++j) {
+		const size_t index = (size_t)i * 2 + j;
+		minimum[0][index] = i - 1.25;
+		maximum[0][index] = i - 0.75;
+		minimum[1][index] = j - 0.75;
+		maximum[1][index] = j - 0.25;
+	    }
+	}
+	run("uncertain-affine", minimum[0], maximum[0], minimum[1],
+	    maximum[1], 2, 2, boundary_root, 1.0e-3, true, false);
+    }
+
+    fastf_t valid_minimum[4] = {-1.0, -1.0, 0.0, 0.0};
+    fastf_t valid_maximum[4] = {-1.0, -1.0, 0.0, 0.0};
+    fastf_t reversed_minimum[4] = {1.0, -1.0, 0.0, 0.0};
+    struct rt_brep_local_root_test_result invalid = {};
+    if (_rt_brep_local_root_test(reversed_minimum, valid_maximum,
+	    valid_minimum, valid_maximum, 2, 2, boundary_root, 1.0e-3,
+	    &invalid) ||
+	    _rt_brep_local_root_test(valid_minimum, valid_maximum,
+		valid_minimum, valid_maximum, 2, 2, boundary_root, -1.0,
+		&invalid)) {
+	std::printf("FAIL: local root invalid-input rejection\n");
+	failures++;
+    }
+
+    fastf_t tube_upper[2] = {0.0, 0.0};
+    if (!_rt_brep_local_root_tube_test(0.25, 0.5, 0.25, 0.751, 0.0,
+	    tube_upper) || !(tube_upper[0] > 0.75) ||
+	    !(tube_upper[1] > 0.5) ||
+	    _rt_brep_local_root_tube_test(0.25, 0.5, 0.25, 0.74, 0.0,
+		tube_upper) ||
+	    _rt_brep_local_root_tube_test(-0.25, 0.5, 0.25, 0.751, 0.0,
+		tube_upper)) {
+	std::printf("FAIL: local root tube containment controls\n");
+	failures++;
+    }
+
+    if (!failures)
+	std::printf("BREP local root solver: PASS cases=%zu certified=%zu "
+	    "rejected=%zu max-attempts=%zu radius=%.3g high-water=%zu\n",
+	    cases, certified, rejected, maximum_attempts, maximum_radius,
+	    maximum_high_water);
+    return failures;
+}
+
+
+static int
 check_brep_fold_interval_classifier()
 {
     struct interval_case {
@@ -9918,6 +10116,74 @@ check_cobb_oblique_contact_trend(const struct bn_tol *tol, bool emit_report)
 
 
 static int
+brep_trace_contact_local_root_certificate(const struct soltab *stp,
+    const sampled_ray &ray, const struct rt_brep_shot_trace &trace,
+    struct rt_brep_local_root_test_result &result, double &root_separation,
+    bool &analytic_extension, size_t &miss_count, size_t &hit_count)
+{
+    const struct rt_brep_trace_local_root *miss = NULL;
+    miss_count = 0;
+    for (size_t root_index = 0; root_index < trace.stored_local_roots;
+	    ++root_index) {
+	const struct rt_brep_trace_local_root &root =
+	    trace.local_roots[root_index];
+	if (root.trim_status == 1 &&
+		(root.hit_class == 1 || root.hit_class == 3)) {
+	    if (!miss)
+		miss = &root;
+	    miss_count++;
+	}
+    }
+    if (miss_count != 1 || !miss)
+	return 0;
+
+    const struct rt_brep_trace_local_root *hit = NULL;
+    hit_count = 0;
+    for (size_t root_index = 0; root_index < trace.stored_local_roots;
+	    ++root_index) {
+	const struct rt_brep_trace_local_root &root =
+	    trace.local_roots[root_index];
+	if (root.face_index == miss->face_index &&
+		root.span_index == miss->span_index && root.trim_status != 1 &&
+		(root.hit_class == 0 || root.hit_class == 2)) {
+	    if (!hit)
+		hit = &root;
+	    hit_count++;
+	}
+    }
+    if (hit_count != 1 || !hit ||
+	    !_rt_brep_surface_local_root_test(stp, ray.origin, ray.direction,
+		miss->face_index, miss->span_index, miss->uv, 1.0, &result) ||
+	    !result.available || !result.certified ||
+	    !result.model_image_available || !(result.weight_minimum > 0.0) ||
+	    !std::isfinite(result.model_image_displacement))
+	return 0;
+
+    fastf_t normalized_hit[2];
+    root_separation = 0.0;
+    analytic_extension = false;
+    for (int direction = 0; direction < 2; ++direction) {
+	const double span_length = result.span_maximum[direction] -
+	    result.span_minimum[direction];
+	if (!(span_length > 0.0) || !std::isfinite(span_length))
+	    return 0;
+	normalized_hit[direction] = (hit->uv[direction] -
+	    result.span_minimum[direction]) / span_length;
+	if (!std::isfinite(normalized_hit[direction]))
+	    return 0;
+	root_separation = std::max(root_separation,
+	    fabs(normalized_hit[direction] -
+		result.normalized_root[direction]));
+	analytic_extension = analytic_extension ||
+	    result.normalized_root[direction] - result.radius < 0.0 ||
+	    result.normalized_root[direction] + result.radius > 1.0;
+    }
+    return root_separation > 0.0 &&
+	result.radius < 0.25 * root_separation;
+}
+
+
+static int
 check_cobb_nonisoparametric_oblique_side(const struct bn_tol *tol,
     bool contact_face_trim)
 {
@@ -9984,6 +10250,14 @@ check_cobb_nonisoparametric_oblique_side(const struct bn_tol *tol,
     size_t source_unions = 0;
     size_t miss_roots = 0;
     size_t threshold_fallbacks = 0;
+    size_t local_root_certificates = 0;
+    size_t local_root_extensions = 0;
+    size_t local_root_maximum_attempts = 0;
+    size_t local_root_maximum_high_water = 0;
+    double local_root_maximum_radius = 0.0;
+    double local_root_maximum_correction = 0.0;
+    double local_root_maximum_contraction = 0.0;
+    double local_root_maximum_image = 0.0;
     for (size_t case_index = 0;
 	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
 	const transform_case &test = cases[case_index];
@@ -10060,6 +10334,32 @@ check_cobb_nonisoparametric_oblique_side(const struct bn_tol *tol,
 			ray, trace);
 		    const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
 			frame.edge_index);
+		    struct rt_brep_local_root_test_result local_root = {};
+		    double local_root_separation = 0.0;
+		    bool local_root_extension = false;
+		    size_t local_root_misses = 0;
+		    size_t local_root_hits = 0;
+		    const bool local_root_evidence = !contact_face_trim ||
+			brep_trace_contact_local_root_certificate(stp, ray, trace,
+			    local_root, local_root_separation,
+			    local_root_extension, local_root_misses,
+			    local_root_hits);
+		    local_root_maximum_attempts = std::max(
+			local_root_maximum_attempts, local_root.attempts);
+		    local_root_maximum_high_water = std::max(
+			local_root_maximum_high_water,
+			local_root.expansion_high_water);
+		    local_root_maximum_radius = std::max(
+			local_root_maximum_radius, (double)local_root.radius);
+		    local_root_maximum_correction = std::max(
+			local_root_maximum_correction,
+			(double)local_root.correction_bound);
+		    local_root_maximum_contraction = std::max(
+			local_root_maximum_contraction,
+			(double)local_root.contraction_bound);
+		    local_root_maximum_image = std::max(
+			local_root_maximum_image,
+			(double)local_root.model_image_displacement);
 		    const double transformed_radius = radius * test.scale;
 		    const double half_chord = sqrt(2.0 * transformed_radius *
 			case_tol.dist - case_tol.dist * case_tol.dist);
@@ -10089,6 +10389,19 @@ check_cobb_nonisoparametric_oblique_side(const struct bn_tol *tol,
 			 edge->measured_discrepancy > edge->model_tolerance &&
 			 trace.physical_event_seam_closure_candidates == 1 &&
 			 trace.physical_event_seam_continuation_candidates == 1);
+		    const bool local_root_transaction = !contact_face_trim ||
+			(trace.physical_event_seam_declared_contact_pairs == 1 &&
+			 trace.physical_event_seam_local_root_attempts == 1 &&
+			 trace.physical_event_seam_local_root_available == 1 &&
+			 trace.physical_event_seam_local_root_certified == 1 &&
+			 trace.physical_event_seam_local_root_extensions == 1 &&
+			 !trace.physical_event_seam_local_root_tube_failures &&
+			 trace.physical_event_seam_local_root_edge_upper <=
+			    trace.physical_event_seam_local_root_tube_tolerance +
+			    trace.physical_event_seam_local_root_tube_roundoff &&
+			 trace.physical_event_seam_local_root_trim_upper <=
+			    trace.physical_event_seam_local_root_tube_tolerance +
+			    trace.physical_event_seam_local_root_tube_roundoff);
 		    const bool bad = !brep_trace_fixed_workspaces_match(trace) ||
 			!edge || !edge->correspondence_supported ||
 			edge->correspondence_exhausted ||
@@ -10106,6 +10419,8 @@ check_cobb_nonisoparametric_oblique_side(const struct bn_tol *tol,
 			    trace.physical_event_seam_contact_boxes ||
 			trace.physical_event_seam_contact_miss_roots !=
 			    (contact_face_trim ? 1 : 0) ||
+			!local_root_evidence ||
+			!local_root_transaction ||
 			!contact_closure_split ||
 			!source_union_evidence ||
 			trace.prepared_production_selected != 1 ||
@@ -10120,6 +10435,8 @@ check_cobb_nonisoparametric_oblique_side(const struct bn_tol *tol,
 			    "hits/segments=%d/%zu/%d oblique=%zu/%zu/%zu "
 			    "closure=%zu/%zu/%zu "
 			    "union=%zu/%zu/%zu selected/fallback=%zu/%d "
+			    "root-proof=%d/%d/%zu/%zu/%.3g/%.3g "
+			    "transaction=%zu/%zu/%zu/%zu/%zu/%zu "
 			    "failures=%zu/%zu/%zu/%zu/%zu\n", test.name,
 			    component, reverse, edge != NULL,
 			    edge ? edge->correspondence_supported : 0,
@@ -10137,6 +10454,15 @@ check_cobb_nonisoparametric_oblique_side(const struct bn_tol *tol,
 			    trace.physical_event_seam_source_union_boxes,
 			    trace.prepared_production_selected,
 			    trace.prepared_production_fallback,
+			    local_root.available, local_root.certified,
+			    local_root_misses, local_root_hits,
+			    local_root.radius, local_root_separation,
+			    trace.physical_event_seam_declared_contact_pairs,
+			    trace.physical_event_seam_local_root_attempts,
+			    trace.physical_event_seam_local_root_available,
+			    trace.physical_event_seam_local_root_certified,
+			    trace.physical_event_seam_local_root_extensions,
+			    trace.physical_event_seam_local_root_tube_failures,
 			    trace.physical_event_seam_failures,
 			    trace.physical_event_seam_ownership_failures,
 			    trace.physical_event_seam_witness_failures,
@@ -10148,6 +10474,11 @@ check_cobb_nonisoparametric_oblique_side(const struct bn_tol *tol,
 			source_unions += valid_source_union ? 1 : 0;
 			miss_roots +=
 			    trace.physical_event_seam_contact_miss_roots;
+			if (contact_face_trim) {
+			    local_root_certificates++;
+			    local_root_extensions +=
+				local_root_extension ? 1 : 0;
+			}
 		    }
 		}
 	    }
@@ -10232,6 +10563,12 @@ check_cobb_nonisoparametric_oblique_side(const struct bn_tol *tol,
 			trace.physical_event_seam_contact_boxes ||
 			trace.physical_event_seam_contact_roots ||
 			trace.physical_event_seam_contact_miss_roots ||
+			trace.physical_event_seam_declared_contact_pairs ||
+			trace.physical_event_seam_local_root_attempts ||
+			trace.physical_event_seam_local_root_available ||
+			trace.physical_event_seam_local_root_certified ||
+			trace.physical_event_seam_local_root_extensions ||
+			trace.physical_event_seam_local_root_tube_failures ||
 			trace.physical_event_seam_oblique_pairs ||
 			trace.physical_event_seam_source_union_certified ||
 			trace.physical_event_seam_source_union_root_boxes ||
@@ -10262,15 +10599,29 @@ check_cobb_nonisoparametric_oblique_side(const struct bn_tol *tol,
 	}
     }
 
+    if (contact_face_trim &&
+	    (local_root_certificates != 16 || local_root_extensions != 16)) {
+	std::printf("FAIL: Cobb contact-trim local root certificates="
+	    "%zu/16 extensions=%zu/16\n", local_root_certificates,
+	    local_root_extensions);
+	failures++;
+    }
+
     delete variant;
     if (!failures)
 	std::printf("Cobb non-isoparametric %s oblique seam: PASS "
 	    "cases=%zu certified=%zu source-unions=%zu "
 	    "miss-roots=%zu threshold-fallbacks=%zu "
+	    "local-root=%zu/%zu attempts/high-water=%zu/%zu "
+	    "radius/correction/contraction/image=%.3g/%.3g/%.3g/%.3g "
 	    "lift/T=%.6g gap/T=%.6g\n",
 	    contact_face_trim ? "contact-face" : "opposite-face",
 	    sizeof(cases) / sizeof(cases[0]),
 	    certified, source_unions, miss_roots, threshold_fallbacks,
+	    local_root_certificates, local_root_extensions,
+	    local_root_maximum_attempts, local_root_maximum_high_water,
+	    local_root_maximum_radius, local_root_maximum_correction,
+	    local_root_maximum_contraction, local_root_maximum_image,
 	    maximum_lift_shift / tol->dist,
 	    measured_gap / tol->dist);
     return failures;
@@ -14192,6 +14543,8 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--affine-only");
     const bool interval_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--interval-only");
+    const bool local_root_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--local-root-only");
     const bool trim_interval_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--trim-interval-only");
     const bool source_union_only = argc == 2 &&
@@ -14214,14 +14567,16 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--contact-trim-only");
     if (argc != 1 && !report_grazing && !report_cobb &&
 	    !report_cobb_oblique && !affine_only &&
-	    !interval_only && !trim_interval_only && !source_union_only &&
+	    !interval_only && !local_root_only && !trim_interval_only &&
+	    !source_union_only &&
 	    !fold_only && !core_only &&
 	    !directed_only &&
 	    !crofton_only && !seam_only && !endpoint_only &&
 	    !nonisoparametric_only && !contact_trim_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
 	    "--cobb-oblique-report|"
-	    "--affine-only|--interval-only|--trim-interval-only|"
+	    "--affine-only|--interval-only|--local-root-only|"
+	    "--trim-interval-only|"
 	    "--source-union-only|--fold-only|"
 	    "--core-only|"
 	    "--directed-only|--crofton-only|--seam-only|--endpoint-only|"
@@ -14229,11 +14584,14 @@ main(int argc, char **argv)
 	    argv[0]);
     if (interval_only) {
 	const int interval_failures = check_brep_interval_enclosures() +
+	    check_brep_local_root_solver() +
 	    check_brep_fold_interval_classifier() +
 	    check_brep_source_union_solver() +
 	    check_brep_trim_interval_solver();
 	return interval_failures ? 1 : 0;
     }
+    if (local_root_only)
+	return check_brep_local_root_solver() ? 1 : 0;
     if (trim_interval_only)
 	return check_brep_trim_interval_solver() ? 1 : 0;
     if (source_union_only)
@@ -14359,6 +14717,7 @@ main(int argc, char **argv)
     int failures = 0;
     if (!core_only && !split_core) {
 	failures += check_brep_interval_enclosures();
+	failures += check_brep_local_root_solver();
 	failures += check_brep_fold_interval_classifier();
 	failures += check_brep_source_union_solver();
 	failures += check_brep_trim_interval_solver();

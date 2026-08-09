@@ -6272,6 +6272,637 @@ _rt_brep_expansion_krawczyk_test(const fastf_t *first_coefficients,
 }
 
 
+static bool
+brep_expansion_surface_taylor_term(
+    const brep_interval *input, int u_order, int v_order,
+    int u_derivatives, int v_derivatives, const double root[2],
+    brep_interval &term, size_t &high_water)
+{
+    if (!input || !root || u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER || u_derivatives < 0 ||
+	    v_derivatives < 0 || u_derivatives >= u_order ||
+	    v_derivatives >= v_order || root[0] < 0.0 || root[0] > 1.0 ||
+	    root[1] < 0.0 || root[1] > 1.0)
+	return false;
+
+    brep_interval first[BREP_DIRECT_BEZIER_MAX_CVS];
+    brep_interval second[BREP_DIRECT_BEZIER_MAX_CVS];
+    const size_t count = (size_t)u_order * v_order;
+    for (size_t i = 0; i < count; ++i)
+	first[i] = input[i];
+    brep_interval *current = first;
+    brep_interval *next = second;
+    int current_u_order = u_order;
+    int current_v_order = v_order;
+    for (int derivative = 0; derivative < u_derivatives; ++derivative) {
+	const double scale = current_u_order - 1;
+	for (int i = 0; i < current_u_order - 1; ++i) {
+	    for (int j = 0; j < current_v_order; ++j) {
+		const size_t output = (size_t)i * current_v_order + j;
+		const size_t previous = (size_t)i * current_v_order + j;
+		const size_t following =
+		    (size_t)(i + 1) * current_v_order + j;
+		if (!brep_expansion_difference_scaled(current[following],
+			current[previous], scale, next[output], high_water))
+		    return false;
+	    }
+	}
+	current_u_order--;
+	std::swap(current, next);
+    }
+    for (int derivative = 0; derivative < v_derivatives; ++derivative) {
+	const double scale = current_v_order - 1;
+	for (int i = 0; i < current_u_order; ++i) {
+	    for (int j = 0; j < current_v_order - 1; ++j) {
+		const size_t output =
+		    (size_t)i * (current_v_order - 1) + j;
+		const size_t previous = (size_t)i * current_v_order + j;
+		const size_t following = previous + 1;
+		if (!brep_expansion_difference_scaled(current[following],
+			current[previous], scale, next[output], high_water))
+		    return false;
+	    }
+	}
+	current_v_order--;
+	std::swap(current, next);
+    }
+
+    brep_interval derivative_value;
+    if (!brep_expansion_surface_evaluate_coefficients(current,
+	    current_u_order, current_v_order, root, derivative_value,
+	    high_water))
+	return false;
+    term = derivative_value;
+    for (int i = 2; i <= u_derivatives; ++i) {
+	if (std::fpclassify(term.minimum) == FP_ZERO &&
+		std::fpclassify(term.maximum) == FP_ZERO)
+	    continue;
+	brep_interval quotient;
+	if (!brep_interval_divide_nonzero(term, {(double)i, (double)i},
+		quotient))
+	    return false;
+	term = quotient;
+    }
+    for (int i = 2; i <= v_derivatives; ++i) {
+	if (std::fpclassify(term.minimum) == FP_ZERO &&
+		std::fpclassify(term.maximum) == FP_ZERO)
+	    continue;
+	brep_interval quotient;
+	if (!brep_interval_divide_nonzero(term, {(double)i, (double)i},
+		quotient))
+	    return false;
+	term = quotient;
+    }
+    return true;
+}
+
+
+static double
+brep_interval_absolute_upper(const brep_interval &value)
+{
+    return std::max(fabs(value.minimum), fabs(value.maximum));
+}
+
+
+static bool
+brep_local_root_monomial(double radius, int u_power, int v_power,
+    brep_interval &monomial)
+{
+    if (!(radius > 0.0) || !std::isfinite(radius) || u_power < 0 ||
+	    v_power < 0)
+	return false;
+    const int degree = u_power + v_power;
+    if (!degree) {
+	monomial = {1.0, 1.0};
+	return true;
+    }
+    double magnitude = 1.0;
+    for (int i = 0; i < degree; ++i) {
+	magnitude = std::nextafter(magnitude * radius, INFINITY);
+	if (!std::isfinite(magnitude))
+	    return false;
+    }
+    if (!(u_power % 2) && !(v_power % 2))
+	monomial = {0.0, magnitude};
+    else
+	monomial = {-magnitude, magnitude};
+    return true;
+}
+
+
+/* Certify one regular root in a small infinity-norm box around an existing
+ * numerical solution.  The bivariate Bernstein system is converted to an
+ * exact finite Taylor expansion at that solution.  A fixed binary64 inverse
+ * supplies a contraction map, while fixed expansions make every function,
+ * image, and derivative bound outward.  The Taylor box may straddle a span
+ * boundary; callers must separately authorize and bound any such analytic
+ * extension in model space. */
+static bool
+brep_expansion_local_root(
+    const brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    int u_order, int v_order, const double root[2], double maximum_radius,
+    struct rt_brep_local_root_test_result &result)
+{
+    result = {};
+    if (!values || !root || u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER || root[0] < 0.0 ||
+	    root[0] > 1.0 || root[1] < 0.0 || root[1] > 1.0 ||
+	    !(maximum_radius > 0.0) || !std::isfinite(maximum_radius))
+	return false;
+    result.normalized_root[0] = root[0];
+    result.normalized_root[1] = root[1];
+
+    brep_interval taylor[2][BREP_DIRECT_BEZIER_MAX_ORDER]
+	[BREP_DIRECT_BEZIER_MAX_ORDER] = {};
+    size_t high_water = 0;
+    for (int equation = 0; equation < 2; ++equation) {
+	for (int u_power = 0; u_power < u_order; ++u_power) {
+	    for (int v_power = 0; v_power < v_order; ++v_power) {
+		if (!brep_expansion_surface_taylor_term(values[equation],
+			u_order, v_order, u_power, v_power, root,
+			taylor[equation][u_power][v_power], high_water))
+		    return false;
+	    }
+	}
+    }
+
+    double midpoint[2][2];
+    for (int equation = 0; equation < 2; ++equation) {
+	const brep_interval derivative[2] = {
+	    taylor[equation][1][0], taylor[equation][0][1]
+	};
+	for (int direction = 0; direction < 2; ++direction) {
+	    midpoint[equation][direction] =
+		0.5 * derivative[direction].minimum +
+		0.5 * derivative[direction].maximum;
+	}
+    }
+    const double determinant = std::fma(midpoint[0][0], midpoint[1][1],
+	-midpoint[0][1] * midpoint[1][0]);
+    const double first_scale = hypot(midpoint[0][0], midpoint[1][0]);
+    const double second_scale = hypot(midpoint[0][1], midpoint[1][1]);
+    if (!std::isfinite(determinant) || !(fabs(determinant) > 0.0) ||
+	    !(first_scale > DBL_MIN) || !(second_scale > DBL_MIN)) {
+	result.expansion_high_water = high_water;
+	return true;
+    }
+    const double inverse[2][2] = {
+	{midpoint[1][1] / determinant, -midpoint[0][1] / determinant},
+	{-midpoint[1][0] / determinant, midpoint[0][0] / determinant}
+    };
+    for (int row = 0; row < 2; ++row)
+	for (int equation = 0; equation < 2; ++equation)
+	    if (!std::isfinite(inverse[row][equation]))
+		return false;
+    brep_interval inverse_first;
+    brep_interval inverse_second;
+    brep_interval inverse_negative_second;
+    brep_interval inverse_determinant;
+    if (!brep_expansion_interval_multiply_tight(
+	    {inverse[0][0], inverse[0][0]},
+	    {inverse[1][1], inverse[1][1]}, inverse_first, high_water) ||
+	!brep_expansion_interval_multiply_tight(
+	    {inverse[0][1], inverse[0][1]},
+	    {inverse[1][0], inverse[1][0]}, inverse_second, high_water) ||
+	!brep_expansion_interval_scale_tight(-1.0, inverse_second,
+	    inverse_negative_second, high_water) ||
+	!brep_expansion_interval_add_tight(inverse_first,
+	    inverse_negative_second, inverse_determinant, high_water))
+	return false;
+    if (inverse_determinant.minimum <= 0.0 &&
+	    inverse_determinant.maximum >= 0.0) {
+	result.expansion_high_water = high_water;
+	return true;
+    }
+
+    brep_interval correction[2];
+    double correction_bound = 0.0;
+    for (int row = 0; row < 2; ++row) {
+	brep_interval sum = {0.0, 0.0};
+	for (int equation = 0; equation < 2; ++equation) {
+	    brep_interval term;
+	    brep_interval next;
+	    if (!brep_expansion_interval_scale_tight(
+		    -inverse[row][equation], taylor[equation][0][0], term,
+		    high_water) ||
+		    !brep_expansion_interval_add_tight(sum, term, next,
+			high_water))
+		return false;
+	    sum = next;
+	}
+	correction[row] = sum;
+	correction_bound = std::max(correction_bound,
+	    brep_interval_absolute_upper(sum));
+    }
+    if (!std::isfinite(correction_bound))
+	return false;
+
+    brep_interval linear[2][2];
+    for (int row = 0; row < 2; ++row) {
+	for (int direction = 0; direction < 2; ++direction) {
+	    brep_interval value = {
+		row == direction ? 1.0 : 0.0,
+		row == direction ? 1.0 : 0.0
+	    };
+	    for (int equation = 0; equation < 2; ++equation) {
+		const brep_interval &derivative = direction ?
+		    taylor[equation][0][1] : taylor[equation][1][0];
+		brep_interval product;
+		brep_interval next;
+		if (!brep_expansion_interval_scale_tight(
+			-inverse[row][equation], derivative, product,
+			high_water) ||
+		    !brep_expansion_interval_add_tight(value, product, next,
+			high_water))
+		    return false;
+		value = next;
+	    }
+	    linear[row][direction] = value;
+	}
+    }
+
+    result.available = 1;
+    result.determinant_ratio =
+	fabs(determinant / first_scale) / second_scale;
+    result.correction_bound = correction_bound;
+    const double root_scale = std::max(1.0,
+	std::max(fabs(root[0]), fabs(root[1])));
+    double radius = std::max(
+	std::nextafter(4.0 * correction_bound, INFINITY),
+	1024.0 * DBL_EPSILON * root_scale);
+    for (size_t attempt = 0; attempt < 48 &&
+	    radius <= maximum_radius; ++attempt) {
+	result.attempts++;
+	brep_interval image[2] = {correction[0], correction[1]};
+	brep_interval contraction[2][2];
+	for (int row = 0; row < 2; ++row) {
+	    for (int direction = 0; direction < 2; ++direction) {
+		brep_interval delta = {-radius, radius};
+		brep_interval product;
+		brep_interval next;
+		if (!brep_expansion_interval_multiply_tight(
+			linear[row][direction], delta, product, high_water) ||
+		    !brep_expansion_interval_add_tight(image[row], product,
+			next, high_water))
+		    return false;
+		image[row] = next;
+	    }
+	    for (int direction = 0; direction < 2; ++direction) {
+		brep_interval value = {
+		    row == direction ? 1.0 : 0.0,
+		    row == direction ? 1.0 : 0.0
+		};
+		for (int equation = 0; equation < 2; ++equation) {
+		    brep_interval derivative = {0.0, 0.0};
+		    for (int u_power = 0; u_power < u_order; ++u_power) {
+			for (int v_power = 0; v_power < v_order;
+				++v_power) {
+			    const int exponent = direction ? v_power : u_power;
+			    if (!exponent)
+				continue;
+			    brep_interval coefficient;
+			    brep_interval monomial;
+			    brep_interval product;
+			    brep_interval next;
+			    if (!brep_expansion_interval_scale_tight(exponent,
+				    taylor[equation][u_power][v_power],
+				    coefficient, high_water) ||
+				!brep_local_root_monomial(radius,
+				    u_power - (direction ? 0 : 1),
+				    v_power - (direction ? 1 : 0),
+				    monomial) ||
+				!brep_expansion_interval_multiply_tight(
+				    coefficient, monomial, product, high_water) ||
+				!brep_expansion_interval_add_tight(derivative,
+				    product, next, high_water))
+				return false;
+			    derivative = next;
+			}
+		    }
+		    brep_interval product;
+		    brep_interval next;
+		    if (!brep_expansion_interval_scale_tight(
+			    -inverse[row][equation], derivative, product,
+			    high_water) ||
+			!brep_expansion_interval_add_tight(value, product, next,
+			    high_water))
+			return false;
+		    value = next;
+		}
+		contraction[row][direction] = value;
+	    }
+	    for (int equation = 0; equation < 2; ++equation) {
+		for (int u_power = 0; u_power < u_order; ++u_power) {
+		    for (int v_power = 0; v_power < v_order; ++v_power) {
+			if (u_power + v_power < 2)
+			    continue;
+			brep_interval monomial;
+			brep_interval term;
+			brep_interval transformed;
+			brep_interval next;
+			if (!brep_local_root_monomial(radius, u_power,
+				v_power, monomial) ||
+			    !brep_expansion_interval_multiply_tight(
+				taylor[equation][u_power][v_power],
+				monomial, term, high_water) ||
+			    !brep_expansion_interval_scale_tight(
+				-inverse[row][equation], term, transformed,
+				high_water) ||
+			    !brep_expansion_interval_add_tight(image[row],
+				transformed, next, high_water))
+			    return false;
+			image[row] = next;
+		    }
+		}
+	    }
+	}
+
+	double contraction_bound = 0.0;
+	for (int row = 0; row < 2; ++row) {
+	    double row_bound = 0.0;
+	    for (int direction = 0; direction < 2; ++direction)
+		row_bound = std::nextafter(row_bound +
+		    brep_interval_absolute_upper(
+			contraction[row][direction]), INFINITY);
+	    contraction_bound = std::max(contraction_bound, row_bound);
+	}
+	result.radius = radius;
+	result.contraction_bound = contraction_bound;
+	for (int direction = 0; direction < 2; ++direction) {
+	    result.image_minimum[direction] = image[direction].minimum;
+	    result.image_maximum[direction] = image[direction].maximum;
+	}
+	const double inclusion_margin = 512.0 * DBL_EPSILON * radius;
+	const bool included = image[0].minimum > -radius + inclusion_margin &&
+	    image[0].maximum < radius - inclusion_margin &&
+	    image[1].minimum > -radius + inclusion_margin &&
+	    image[1].maximum < radius - inclusion_margin;
+	if (included && contraction_bound < 1.0) {
+	    result.certified = 1;
+	    break;
+	}
+	if (radius > 0.5 * maximum_radius)
+	    break;
+	radius *= 2.0;
+    }
+    result.expansion_high_water = high_water;
+    return true;
+}
+
+
+static bool
+brep_expansion_surface_local_box(const brep_interval *input, int u_order,
+    int v_order, const double root[2], double radius, brep_interval &bound,
+    size_t &high_water)
+{
+    if (!input || !root || u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER || !(radius > 0.0) ||
+	    !std::isfinite(radius))
+	return false;
+    bound = {0.0, 0.0};
+    for (int u_power = 0; u_power < u_order; ++u_power) {
+	for (int v_power = 0; v_power < v_order; ++v_power) {
+	    brep_interval coefficient;
+	    brep_interval monomial;
+	    brep_interval term;
+	    brep_interval next;
+	    if (!brep_expansion_surface_taylor_term(input, u_order, v_order,
+		    u_power, v_power, root, coefficient, high_water) ||
+		!brep_local_root_monomial(radius, u_power, v_power,
+		    monomial) ||
+		!brep_expansion_interval_multiply_tight(coefficient, monomial,
+		    term, high_water) ||
+		!brep_expansion_interval_add_tight(bound, term, next,
+		    high_water))
+		return false;
+	    bound = next;
+	}
+    }
+    return std::isfinite(bound.minimum) && std::isfinite(bound.maximum) &&
+	bound.minimum <= bound.maximum;
+}
+
+
+/* Bound the complete rational image of the local analytic root box relative
+ * to the nominal surface point.  Homogeneous coordinate differences and the
+ * weight polynomial are evaluated as exact finite Taylor enclosures, so the
+ * bound remains valid when the box extends beyond a Bezier span boundary.
+ * Strictly positive weight is required throughout that extended box. */
+static bool
+brep_surface_local_image_bound(const brep_surface_span &span,
+    const double root[2], double radius,
+    struct rt_brep_local_root_test_result &result)
+{
+    const int u_order = span.surface.Order(0);
+    const int v_order = span.surface.Order(1);
+    if (!root || u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER || root[0] < 0.0 ||
+	    root[0] > 1.0 || root[1] < 0.0 || root[1] > 1.0 ||
+	    !(radius > 0.0) || !std::isfinite(radius))
+	return false;
+    const ON_3dPoint center = span.surface.PointAt(root[0], root[1]);
+    if (!center.IsValid())
+	return false;
+    const double center_coordinate[3] = {center.x, center.y, center.z};
+    brep_interval difference[3][BREP_DIRECT_BEZIER_MAX_CVS];
+    brep_interval weight[BREP_DIRECT_BEZIER_MAX_CVS];
+    size_t high_water = 0;
+    for (int i = 0; i < u_order; ++i) {
+	for (int j = 0; j < v_order; ++j) {
+	    ON_4dPoint cv;
+	    if (!span.surface.GetCV(i, j, cv) || !cv.IsValid() ||
+		    !(cv.w > 0.0) || !std::isfinite(cv.w))
+		return false;
+	    const size_t index = (size_t)i * v_order + j;
+	    const double coordinate[3] = {cv.x, cv.y, cv.z};
+	    weight[index] = {cv.w, cv.w};
+	    for (int component = 0; component < 3; ++component) {
+		brep_interval centered_weight;
+		if (!brep_expansion_interval_scale_tight(
+			-center_coordinate[component], weight[index],
+			centered_weight, high_water) ||
+		    !brep_expansion_interval_add_tight(
+			{coordinate[component], coordinate[component]},
+			centered_weight, difference[component][index],
+			high_water))
+		    return false;
+	    }
+	}
+    }
+
+    brep_interval weight_bound;
+    if (!brep_expansion_surface_local_box(weight, u_order, v_order, root,
+	    radius, weight_bound, high_water) ||
+	    !(weight_bound.minimum > 0.0))
+	return false;
+    brep_interval squared_displacement = {0.0, 0.0};
+    for (int component = 0; component < 3; ++component) {
+	brep_interval numerator;
+	brep_interval quotient;
+	if (!brep_expansion_surface_local_box(difference[component], u_order,
+		v_order, root, radius, numerator, high_water) ||
+	    !brep_interval_divide_nonzero(numerator, weight_bound, quotient))
+	    return false;
+	const double absolute = brep_interval_absolute_upper(quotient);
+	const brep_interval square = brep_interval_multiply(
+	    {absolute, absolute}, {absolute, absolute});
+	squared_displacement = brep_interval_add(squared_displacement, square);
+    }
+    if (!(squared_displacement.maximum >= 0.0) ||
+	    !std::isfinite(squared_displacement.maximum))
+	return false;
+    const double displacement = std::nextafter(
+	sqrt(squared_displacement.maximum), INFINITY);
+    if (!std::isfinite(displacement))
+	return false;
+    result.model_image_available = 1;
+    result.model_expansion_high_water = high_water;
+    result.model_image_displacement = displacement;
+    result.weight_minimum = weight_bound.minimum;
+    result.weight_maximum = weight_bound.maximum;
+    return true;
+}
+
+
+static bool
+brep_surface_local_root_certificate(const brep_surface_span &span,
+    const ON_Ray &ray, const double uv[2], double maximum_radius,
+    struct rt_brep_local_root_test_result &result)
+{
+    result = {};
+    if (!uv || !span.surface_domain[0].IsIncreasing() ||
+	    !span.surface_domain[1].IsIncreasing() ||
+	    !(maximum_radius > 0.0) || !std::isfinite(maximum_radius))
+	return false;
+    const double root[2] = {
+	span.surface_domain[0].NormalizedParameterAt(uv[0]),
+	span.surface_domain[1].NormalizedParameterAt(uv[1])
+    };
+    if (!std::isfinite(root[0]) || !std::isfinite(root[1]) ||
+	    root[0] < 0.0 || root[0] > 1.0 || root[1] < 0.0 ||
+	    root[1] > 1.0)
+	return false;
+    ON_3dVector first;
+    ON_3dVector second;
+    brep_surface_coefficients coefficients;
+    if (!brep_ray_plane_frame(ray, first, second) ||
+	!brep_surface_coefficients_init(coefficients, span, ray, first,
+	    second))
+	return false;
+    if (!coefficients.expansion_available)
+	return true;
+    if (!brep_expansion_local_root(
+	    coefficients.value_expansion_interval, coefficients.order[0],
+	    coefficients.order[1], root, maximum_radius, result))
+	return false;
+    for (int direction = 0; direction < 2; ++direction) {
+	result.span_minimum[direction] =
+	    span.surface_domain[direction].Min();
+	result.span_maximum[direction] =
+	    span.surface_domain[direction].Max();
+    }
+    if (result.certified)
+	(void)brep_surface_local_image_bound(span, root, result.radius, result);
+    return true;
+}
+
+
+static bool
+brep_local_root_tube_contained(double image_displacement,
+    double edge_distance, double trim_distance, double tolerance,
+    double roundoff, double upper_bound[2])
+{
+    if (!upper_bound || !std::isfinite(image_displacement) ||
+	    !std::isfinite(edge_distance) || !std::isfinite(trim_distance) ||
+	    !std::isfinite(tolerance) || !std::isfinite(roundoff) ||
+	    image_displacement < 0.0 || edge_distance < 0.0 ||
+	    trim_distance < 0.0 || tolerance < 0.0 || roundoff < 0.0)
+	return false;
+    upper_bound[0] = std::nextafter(edge_distance + image_displacement,
+	INFINITY);
+    upper_bound[1] = std::nextafter(trim_distance + image_displacement,
+	INFINITY);
+    const double allowed = brep_interval_add({tolerance, tolerance},
+	{roundoff, roundoff}).minimum;
+    return std::isfinite(upper_bound[0]) &&
+	std::isfinite(upper_bound[1]) && std::isfinite(allowed) &&
+	upper_bound[0] <= allowed && upper_bound[1] <= allowed;
+}
+
+
+extern "C" int
+_rt_brep_local_root_tube_test(fastf_t image_displacement,
+    fastf_t edge_distance, fastf_t trim_distance, fastf_t tolerance,
+    fastf_t roundoff, fastf_t upper_bound[2])
+{
+    return brep_local_root_tube_contained(image_displacement, edge_distance,
+	trim_distance, tolerance, roundoff, upper_bound) ? 1 : 0;
+}
+
+
+extern "C" int
+_rt_brep_local_root_test(const fastf_t *first_minimum,
+    const fastf_t *first_maximum, const fastf_t *second_minimum,
+    const fastf_t *second_maximum, int u_order, int v_order,
+    const fastf_t root[2], fastf_t maximum_radius,
+    struct rt_brep_local_root_test_result *result)
+{
+    if (!first_minimum || !first_maximum || !second_minimum ||
+	    !second_maximum || !root || !result || u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	return 0;
+    brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    const fastf_t *minimum[2] = {first_minimum, second_minimum};
+    const fastf_t *maximum[2] = {first_maximum, second_maximum};
+    const size_t count = (size_t)u_order * v_order;
+    for (int equation = 0; equation < 2; ++equation) {
+	for (size_t i = 0; i < count; ++i) {
+	    if (!std::isfinite(minimum[equation][i]) ||
+		    !std::isfinite(maximum[equation][i]) ||
+		    minimum[equation][i] > maximum[equation][i])
+		return 0;
+	    values[equation][i] = {
+		minimum[equation][i], maximum[equation][i]
+	    };
+	}
+    }
+    return brep_expansion_local_root(values, u_order, v_order, root,
+	maximum_radius, *result) ? 1 : 0;
+}
+
+
+extern "C" int
+_rt_brep_surface_local_root_test(const struct soltab *stp,
+    const fastf_t ray_origin[3], const fastf_t ray_direction[3],
+    int face_index, int span_index, const fastf_t uv[2],
+    fastf_t maximum_radius, struct rt_brep_local_root_test_result *result)
+{
+    if (!stp || !stp->st_specific || !ray_origin || !ray_direction ||
+	    !uv || !result || span_index < 0 || !(maximum_radius > 0.0) ||
+	    !std::isfinite(maximum_radius))
+	return 0;
+    *result = {};
+    const struct brep_specific *bs =
+	(const struct brep_specific *)stp->st_specific;
+    if (!bs->brep || (size_t)span_index >= bs->surface_spans.size())
+	return 0;
+    const brep_surface_span &span = bs->surface_spans[span_index];
+    if (span.face_index != face_index)
+	return 0;
+    ON_3dPoint origin(ray_origin[0], ray_origin[1], ray_origin[2]);
+    ON_3dVector ray_vector(ray_direction[0], ray_direction[1],
+	ray_direction[2]);
+    const ON_Ray ray(origin, ray_vector);
+    return brep_surface_local_root_certificate(span, ray, uv,
+	maximum_radius, *result) ? 1 : 0;
+}
+
+
 extern "C" int
 _rt_brep_expansion_interval_product_test(const fastf_t first[2],
     const fastf_t second[2], fastf_t result[2],
@@ -14380,6 +15011,108 @@ brep_trace_seam_contact_miss_screen(
 }
 
 
+/* Certify that the one classifier miss in a declared-tolerance repair is a
+ * unique regular root of the analytically extended Bezier system.  The root
+ * box is capped well below the neighboring root separation.  Extrapolation
+ * across a span boundary is authorized only when the complete positive-weight
+ * rational image of that box remains inside both the shared-edge and lifted-
+ * trim tolerance tubes. */
+static bool
+brep_trace_declared_contact_local_root(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const ON_Ray &ray,
+    const struct rt_brep_trace_local_root &miss,
+    const struct rt_brep_trace_local_root &other,
+    const ON_3dPoint &edge_point, const ON_3dPoint &trim_lift,
+    double closure_tolerance)
+{
+    if (!trace || !bs || !edge_point.IsValid() || !trim_lift.IsValid() ||
+	    miss.face_index != other.face_index ||
+	    miss.span_index != other.span_index || miss.span_index < 0 ||
+	    (size_t)miss.span_index >= bs->surface_spans.size() ||
+	    !std::isfinite(closure_tolerance) || closure_tolerance < 0.0)
+	return false;
+    const brep_surface_span &span = bs->surface_spans[miss.span_index];
+    if (span.face_index != miss.face_index ||
+	    !span.surface_domain[0].IsIncreasing() ||
+	    !span.surface_domain[1].IsIncreasing())
+	return false;
+    double normalized_miss[2];
+    double normalized_other[2];
+    double separation = 0.0;
+    for (int direction = 0; direction < 2; ++direction) {
+	normalized_miss[direction] = span.surface_domain[direction].
+	    NormalizedParameterAt(miss.uv[direction]);
+	normalized_other[direction] = span.surface_domain[direction].
+	    NormalizedParameterAt(other.uv[direction]);
+	if (!std::isfinite(normalized_miss[direction]) ||
+		!std::isfinite(normalized_other[direction]) ||
+		normalized_miss[direction] < 0.0 ||
+		normalized_miss[direction] > 1.0 ||
+		normalized_other[direction] < 0.0 ||
+		normalized_other[direction] > 1.0)
+	    return false;
+	const double difference = std::nextafter(fabs(
+	    normalized_miss[direction] - normalized_other[direction]), 0.0);
+	separation = std::max(separation, difference);
+    }
+    const double maximum_radius = std::nextafter(0.25 * separation, 0.0);
+    if (!(maximum_radius > 0.0) || !std::isfinite(maximum_radius))
+	return false;
+
+    trace->physical_event_seam_local_root_attempts++;
+    struct rt_brep_local_root_test_result result = {};
+    if (!brep_surface_local_root_certificate(span, ray, miss.uv,
+	    maximum_radius, result))
+	return false;
+    if (result.available)
+	trace->physical_event_seam_local_root_available++;
+    if (!result.available || !result.certified ||
+	    !(result.radius < maximum_radius))
+	return false;
+    trace->physical_event_seam_local_root_certified++;
+    trace->physical_event_seam_local_root_radius = result.radius;
+    trace->physical_event_seam_local_root_model_image =
+	result.model_image_displacement;
+    bool extension = false;
+    for (int direction = 0; direction < 2; ++direction)
+	extension = extension || result.normalized_root[direction] -
+	    result.radius < 0.0 || result.normalized_root[direction] +
+	    result.radius > 1.0;
+    if (extension)
+	trace->physical_event_seam_local_root_extensions++;
+
+    const ON_3dPoint root_point = span.surface.PointAt(
+	result.normalized_root[0], result.normalized_root[1]);
+    if (!result.model_image_available || !root_point.IsValid() ||
+	    !(result.weight_minimum > 0.0) ||
+	    !std::isfinite(result.model_image_displacement)) {
+	trace->physical_event_seam_local_root_tube_failures++;
+	return false;
+    }
+    const double coordinate_scale = std::max(1.0,
+	std::max(fabs(root_point.x), std::max(fabs(root_point.y),
+	std::max(fabs(root_point.z), std::max(fabs(edge_point.x),
+	std::max(fabs(edge_point.y), std::max(fabs(edge_point.z),
+	std::max(fabs(trim_lift.x), std::max(fabs(trim_lift.y),
+	    fabs(trim_lift.z))))))))));
+    const double roundoff = std::max(ON_ZERO_TOLERANCE,
+	4096.0 * DBL_EPSILON * coordinate_scale);
+    fastf_t upper[2] = {0.0, 0.0};
+    const bool tube_contained = brep_local_root_tube_contained(
+	result.model_image_displacement, root_point.DistanceTo(edge_point),
+	root_point.DistanceTo(trim_lift), closure_tolerance, roundoff, upper);
+    trace->physical_event_seam_local_root_edge_upper = upper[0];
+    trace->physical_event_seam_local_root_trim_upper = upper[1];
+    trace->physical_event_seam_local_root_tube_tolerance = closure_tolerance;
+    trace->physical_event_seam_local_root_tube_roundoff = roundoff;
+    if (!tube_contained) {
+	trace->physical_event_seam_local_root_tube_failures++;
+	return false;
+    }
+    return true;
+}
+
+
 /* Qualify the root portion of a tolerance-near incident-face contact.  The
  * accepted pair is not merged by t distance: it must be a complete ordered
  * ENTER/LEAVE lobe on the other incident face, lie strictly inside the
@@ -14390,10 +15123,10 @@ brep_trace_seam_contact_miss_screen(
  * Complete box ownership and the constant material-sector proof are
  * completed below. */
 static bool
-brep_trace_seam_contact_roots(const struct rt_brep_shot_trace *trace,
+brep_trace_seam_contact_roots(struct rt_brep_shot_trace *trace,
     const struct brep_specific *bs, const ON_Ray &ray, size_t selected_root,
     const struct rt_brep_trace_edge &edge_observation,
-    double continuation_dist,
+    double continuation_dist, bool declared_contact_closure,
     bool contact_root[RT_BREP_TRACE_MAX_LOCAL_ROOTS],
     int &contact_face, int &contact_span, ON_2dPoint &edge_uv,
     size_t &contact_miss_roots)
@@ -14517,6 +15250,8 @@ brep_trace_seam_contact_roots(const struct rt_brep_shot_trace *trace,
 	surface->PointAt(edge_uv.x, edge_uv.y) : ON_3dPoint::UnsetPoint;
     size_t trim_hits = 0;
     size_t trim_misses = 0;
+    size_t trim_hit_root = (size_t)-1;
+    size_t trim_miss_root = (size_t)-1;
     const size_t contact_roots[2] = {roots[0], roots[1]};
     for (size_t root_offset = 0; root_offset < 2; ++root_offset) {
 	const struct rt_brep_trace_local_root &root =
@@ -14525,6 +15260,7 @@ brep_trace_seam_contact_roots(const struct rt_brep_shot_trace *trace,
 		(root.hit_class == brep_hit::CLEAN_HIT ||
 		 root.hit_class == brep_hit::NEAR_HIT)) {
 	    trim_hits++;
+	    trim_hit_root = contact_roots[root_offset];
 	    continue;
 	}
 	const ON_3dPoint root_point = surface ?
@@ -14543,8 +15279,17 @@ brep_trace_seam_contact_roots(const struct rt_brep_shot_trace *trace,
 		closure_tolerance + tube_roundoff)
 	    return false;
 	trim_misses++;
+	trim_miss_root = contact_roots[root_offset];
     }
     if (trim_hits + trim_misses != 2 || trim_misses > 1)
+	return false;
+    if (declared_contact_closure &&
+	    (trim_hits != 1 || trim_misses != 1 ||
+	     trim_hit_root == (size_t)-1 || trim_miss_root == (size_t)-1 ||
+	     !brep_trace_declared_contact_local_root(trace, bs, ray,
+		 trace->local_roots[trim_miss_root],
+		 trace->local_roots[trim_hit_root], edge_point, trim_lift,
+		 closure_tolerance)))
 	return false;
     contact_miss_roots = trim_misses;
     contact_root[roots[0]] = true;
@@ -15137,8 +15882,9 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 	    witness_root[root_index] = false;
 	witness_roots = 0;
 	contact_pair = brep_trace_seam_contact_roots(trace, bs, ray,
-	    selected_root, selected_edge, continuation_dist, contact_root,
-	    contact_face, contact_span, contact_edge_uv,
+	    selected_root, selected_edge, continuation_dist,
+	    selected_declared_contact_closure, contact_root, contact_face,
+	    contact_span, contact_edge_uv,
 	    contact_miss_roots);
 	if (!contact_pair) {
 	    if (!selected_declared_contact_closure) {
@@ -15157,6 +15903,7 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
     if (selected_declared_contact_closure) {
 	trace->physical_event_seam_closure_candidates++;
 	trace->physical_event_seam_continuation_candidates++;
+	trace->physical_event_seam_declared_contact_pairs++;
     }
     if (narrow_witness && !witness_roots) {
 	trace->physical_event_seam_edge_only_candidates++;
@@ -15749,8 +16496,33 @@ brep_prepared_seam_pair_eligible(const struct rt_brep_shot_trace *trace)
 	 trace->physical_event_seam_source_union_root_boxes > 0 &&
 	 trace->physical_event_seam_source_union_root_boxes <
 	    trace->physical_event_seam_source_union_boxes);
+    const bool matching_local_root_evidence =
+	trace->physical_event_seam_declared_contact_pairs ?
+	(trace->physical_event_seam_declared_contact_pairs == 1 &&
+	 contact_pair &&
+	 trace->physical_event_seam_contact_miss_roots == 1 &&
+	 trace->physical_event_seam_local_root_attempts == 1 &&
+	 trace->physical_event_seam_local_root_available == 1 &&
+	 trace->physical_event_seam_local_root_certified == 1 &&
+	 trace->physical_event_seam_local_root_extensions <= 1 &&
+	 !trace->physical_event_seam_local_root_tube_failures &&
+	 trace->physical_event_seam_local_root_radius > 0.0 &&
+	 trace->physical_event_seam_local_root_model_image >= 0.0 &&
+	 std::isfinite(trace->physical_event_seam_local_root_edge_upper) &&
+	 std::isfinite(trace->physical_event_seam_local_root_trim_upper) &&
+	 trace->physical_event_seam_local_root_edge_upper <=
+	    trace->physical_event_seam_local_root_tube_tolerance +
+	    trace->physical_event_seam_local_root_tube_roundoff &&
+	 trace->physical_event_seam_local_root_trim_upper <=
+	    trace->physical_event_seam_local_root_tube_tolerance +
+	    trace->physical_event_seam_local_root_tube_roundoff) :
+	(!trace->physical_event_seam_local_root_attempts &&
+	 !trace->physical_event_seam_local_root_available &&
+	 !trace->physical_event_seam_local_root_certified &&
+	 !trace->physical_event_seam_local_root_extensions &&
+	 !trace->physical_event_seam_local_root_tube_failures);
     return matching_certificates && matching_contact_evidence &&
-	matching_source_union_evidence &&
+	matching_source_union_evidence && matching_local_root_evidence &&
 	existing->edge_index >= 0 &&
 	existing->edge_index == continuation->edge_index &&
 	existing->source_kind == RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT &&
