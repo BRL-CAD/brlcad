@@ -74,6 +74,18 @@ classified by spherical winding.  Convex and reentrant fans publish immutable
 events, including multiple vertex events and mixed regular events on one ray;
 exact face-tangent, near-but-not-on-vertex, curved, disconnected, ambiguous,
 unsupported, and capacity-limited fans retain whole-ray fallback.
+Exact interior crossings of certified two-trim manifold edges now have their
+own atomic event theorem.  A coordinate-roundoff ray/edge witness is required
+before the authorized seam envelope may associate incident surface evidence.
+The oriented cross-section publishes convex or reentrant ENTER/LEAVE events
+and consumes unchanged-state CONTACT clusters without a transition.  Multiple
+disjoint edge events, mixed edge/ordinary streams, duplicate Bezier-span
+observations, and periodic same-surface seams are supported with complete
+root/box ownership in both ray directions and across the qualified similarity
+matrix.  A source box must enclose the exact topological ray parameter; model
+tolerance cannot manufacture the witness.  Tolerance-near rays, arbitrary
+gap/overlap clusters, sector-boundary tangency, non-manifold edges, and edge
+endpoint neighborhoods remain explicit fallback or future theorems.
 Exact-parameter positive-weight surface spans and conservative ray-plane
 coefficient exclusion are prepared, and a bounded adjacent-support
 continuation solve recovers the missing bowed-seam endpoints.
@@ -2683,8 +2695,140 @@ ESTABLISHED FINDINGS
     qualification passes all seven serial and parallel cases in 26.13 seconds
     without a race or lock diagnostic.
     Curved differential vertex links, tolerance-near intended vertex closure,
-    non-manifold fans, and general manifold-edge clusters remain explicit
-    future theorems rather than relaxations of this planar gate.
+    and non-manifold fans remain explicit future theorems rather than
+    relaxations of this planar gate.  Finding 68 adds the separate exact
+    interior manifold-edge theorem; non-exact tolerance-near edge/vertex
+    neighborhoods remain outside both the planar vertex and exact edge gates.
+
+68. Exact interior crossings of supported two-trim manifold edges now publish
+    immutable physical events without relying on which incident surface root
+    Newton retained.  The existing prep-time edge record remains the authority:
+    its rational edge/lift correspondence must be globally injective and
+    consistently oriented, its conservative gap calculation must finish
+    without budget exhaustion, and its proof class must be strictly
+    `SEAM_GAP_INSIDE`.  Sampled discrepancy remains telemetry only.
+
+    The shot theorem first proves that the mathematical ray line contains the
+    evaluated topological edge point within a coordinate-scaled binary64
+    envelope,
+
+        max(ON_ZERO_TOLERANCE,
+            4096 * DBL_EPSILON * coordinate_scale).
+
+    This exact witness is independent of model tolerance.  Points inside the
+    edge envelope of either endpoint are excluded so the cyclic vertex theorem
+    or whole-ray fallback retains authority.  Only after the exact witness is
+    established does the declared/certified edge envelope associate redundant
+    roots on the incident trimmed surfaces.
+
+    The oriented edge cross-section now records two classifications separate
+    from its older closest-offset diagnostic.  Projecting the ray across the
+    edge produces `line_before_state` from the negative cross-ray direction
+    and `line_after_state` from the positive direction.  The complete oriented
+    material sector, including a reflex sector at a reentrant edge, decides
+    OUTSIDE-to-INSIDE ENTER, INSIDE-to-OUTSIDE LEAVE, or unchanged CONTACT.
+    A direction on a sector boundary or tangent to either incident face does
+    not acquire a guessed direction.
+
+    Exact witness tolerance and root association tolerance are intentionally
+    distinct.  The wider authorized edge/lift envelope admits corrected roots
+    whose representative t values differ slightly among trimmed
+    representations or solver runs.  Every source terminal box must still
+    contain the exact topological parameter within coordinate roundoff.  Thus
+    a nearby independent root whose box does not contain the witness is left
+    for the ordinary theorem rather than merged by geometric proximity.  Both
+    unresolved boundary boxes and already Krawczyk-certified regular boxes may
+    become edge sources, but a regular box is topologically reclassified only
+    after the complete edge proof succeeds.
+
+    Every associated root must belong to an incident face, match a lifted trim
+    frame inside the authorized spatial envelope, be finite and non-tangent,
+    and agree with the sector transition when one exists.  Multiple roots and
+    boxes from adjacent surface spans are one physical event only when their
+    boxes independently enclose the same exact parameter and their directions
+    agree.  This includes a periodic same-surface edge whose two trims belong
+    to one face.  Duplicate ownership, an unowned incident box at the witness,
+    a conflicting root, unsupported topology, or any capacity/failure state
+    aborts the theorem before mutation.
+
+    All disjoint exact edge clusters are collected in one fixed-capacity
+    transaction.  A transition appends one `MANIFOLD_EDGE` event at the exact
+    topological parameter, with `MANIFOLD_EDGE` source kind, valid edge
+    identity, invalid vertex identity, `CRACK_HIT` class, direction, canonical
+    root, representative box, complete source-box count, and the union of
+    source intervals.  A CONTACT appends no transition but owns its roots and
+    changes its boxes to `RESOLVED_CONTACT`.  Transition boxes become
+    `RESOLVED_BOUNDARY`.  Remaining ordinary roots, including strictly
+    identical same-face duplicate observations, must independently own only
+    regular Krawczyk boxes.  Clean outside groups are consumed without an
+    event.  No trace disposition or event changes until every root and box is
+    owned, the {0,1} state stream and outward minimum-size proof complete, and
+    fixed-workspace hit reconstruction succeeds.
+
+    The edge theorem runs even when all terminal boxes initially have
+    Krawczyk certificates.  This matters when an exact near-trim root was
+    numerically certified as a surface root but ordinary trim finalization
+    cannot establish the physical topology.  Vertex-source matching was made
+    consistent with this rule as well: an exact planar vertex cluster may own
+    an already regular box, and one remaining ordinary root may own several
+    disjoint matching regular boxes.  Neither change broadens the vertex line
+    witness or winding theorem.
+
+    The permanent exact L-shaped implicit EXTRUDE fixture supplies three edge
+    line families, each shot in both directions.  The first line produces a
+    convex outer ENTER and reentrant LEAVE.  The second produces two outer
+    transitions plus one reentrant CONTACT, which owns its evidence but leaves
+    one continuous material segment.  The third mixes one regular bottom-face
+    event with one reentrant edge event.  All production endpoints match the
+    analytic L profile to at most 3.55e-15.  Transverse cases also match the
+    implicit EXTRUDE.  On the exact reentrant-contact line, the implicit
+    primitive reports three hits and drops the final endpoint; this is a
+    separate measure-zero EXTRUDE defect, so the analytic profile is the
+    authoritative oracle for that one contact case.
+
+    A separate line through the reentrant edge lies exactly on an incident
+    face-sector boundary.  It observes two exact ambiguous edge encounters,
+    publishes no edge event, and cannot select a prepared partition.  The
+    current surface isolator reaches its conservative box-capacity fallback
+    before the edge theorem; the ratchet also permits the theorem's explicit
+    unresolved rejection if earlier isolation later improves.  In either
+    path, no other even-looking event stream may hide the ambiguity.
+
+    Translation, arbitrary rotation plus translation, 0.01x scale, and
+    10,000x scale plus large translation repeat all three families in both
+    directions with scaled model tolerances.  The classifier, event stream,
+    contact result, complete source ownership, and analytic partition are
+    invariant.  A converted rational sphere adds a periodic same-surface seam
+    case.  An oblique line crosses the seam exactly, with four independently
+    converged seam roots/four enclosing boxes, then exits at an ordinary point;
+    both directions publish one edge event and one regular event and match the
+    analytic sphere endpoints to at most 7.23e-9.
+
+    The complete optimized six-shard corpus passes 6/6 in 167.30 seconds, with
+    the exhaustive interval shard the 166.93-second critical path.  The five
+    affected ASan/UBSan shards pass concurrently with halt-on-error in 628.08
+    seconds and no diagnostic.  The focused cache, primitive-conversion, and
+    NIST regression matrix passes 11/11 normally in 4.72 seconds and 11/11
+    under ASan/UBSan in 14.55 seconds.  Rebuilt ThreadSanitizer cache
+    qualification passes all seven serial and parallel cases in 18.28 seconds
+    without a race or lock diagnostic.  No SurfaceTree density, cache format,
+    or serialized prep representation changed.  After the final independent
+    assertion that the unchanged-state edge-sector classification itself is
+    similarity-invariant even when a redundant contact solve is absent, the
+    rebuilt seam shard passes in 24.93 seconds optimized and 178.92 seconds
+    under ASan/UBSan without a diagnostic.  After adding the final
+    sector-boundary fallback ratchet and fail-closed exact-edge accounting,
+    the rebuilt seam shard passes in 45.84 seconds optimized and 92.77 seconds
+    under ASan/UBSan; the complete optimized main corpus also passes in 49.88
+    seconds.
+
+    This checkpoint resolves exact interior manifold-edge transitions,
+    unchanged-state contacts, multiple clusters, mixed ordinary streams, and
+    periodic same-surface representation duplication.  It does not yet
+    authorize non-exact tolerance-near lines, arbitrary endpoint-moving
+    gaps/overlaps, sector-boundary tangency, edge/vertex neighborhood overlap,
+    or non-manifold topology.  Those remain separate proof and corpus targets;
+    the narrow paired seam-continuation theorem remains unchanged.
 
 
 IMPLEMENTATION CHECKLIST
@@ -3008,8 +3152,12 @@ IMPLEMENTATION CHECKLIST
             [x] Integrate closed manifold planar cyclic vertex fans with exact
                 line witnesses, complete source ownership, and mixed ordinary
                 event streams.
-            [ ] Integrate general manifold-edge clusters, direct contacts,
-                overlaps, and mixed ordinary/crack streams.
+            [x] Integrate exact interior two-trim manifold-edge clusters,
+                unchanged-state contacts, multiple edge events, periodic
+                same-surface duplicates, and mixed ordinary/edge streams.
+            [ ] Integrate non-exact tolerance-near edge clusters, arbitrary
+                gaps/overlaps, sector-boundary tangency, and edge/vertex
+                neighborhood interactions.
         [ ] Assemble a complete {0,1} solid-state stream and apply the outward
             minimum-segment classifier before atomic publication.
             [x] Assemble and publish resolved clean regular/fold material
@@ -3766,16 +3914,63 @@ Legacy cleanup:
   cmake --build .build --target librt -j8
     PASS
 
+Exact certified manifold-edge checkpoint:
+
+  cmake --build .build --target rt_brep_ray -j6
+  ctest --test-dir .build --parallel 6 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+    PASS: 6/6 in 167.30 seconds.  The seam shard includes convex and
+    reentrant transitions, direct contact, mixed regular/edge streams,
+    periodic same-surface duplication, reversal, and the complete similarity
+    matrix.  After strengthening the transformed contact-classifier assertion,
+    the rebuilt seam shard passes independently in 24.93 seconds.
+    After the final exact sector-boundary fallback ratchet, it passes again in
+    45.84 seconds and the complete main process passes in 49.88 seconds.
+
+  cmake --build .build-asan --target rt_brep_ray rt_cache -j6
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 5 \
+    -R '^rt_brep_ray($|_(crofton|seam|fold|affine)$)' \
+    --output-on-failure
+    PASS: 5/5 in 628.08 seconds with no sanitizer diagnostic.
+    The rebuilt seam shard with the final classifier assertion passes
+    independently in 178.92 seconds with no diagnostic.  With the subsequent
+    fail-closed exact-edge rule and sector-boundary ratchet it passes again in
+    92.77 seconds without a diagnostic.
+
+  ctest --test-dir .build --parallel 6 \
+    -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 11/11 in 4.72 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 6 \
+    -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 11/11 in 14.55 seconds with no sanitizer diagnostic.
+
+  cmake --build .build-tsan --target librt rt_cache -j6
+  env TSAN_OPTIONS=halt_on_error=1:second_deadlock_stack=1 \
+    ctest --test-dir .build-tsan --parallel 4 \
+    -R '^rt_cache_.*$' --output-on-failure
+    PASS: 7/7 in 20.44 seconds with no ThreadSanitizer diagnostic after the
+    final fail-closed exact-edge accounting and sector-boundary ratchet.
+
 
 NEXT ACTIONS
 ------------
 
-1. Extend the certified seam pair into general manifold-edge clustering.
-   Independently qualify direct contacts, overlapping incident
-   representations, mixed ordinary/crack rays, and multiple edge events before
-   they can publish.  Keep the current one-existing/one-continuation theorem
-   unchanged as the narrow production subset, and preserve whole-ray fallback
-   for every incompatible or unowned root/box.
+1. Extend the exact interior manifold-edge theorem only through a separately
+   certified tolerance-near resolver.  Independently qualify a ray that does
+   not contain the topological edge but should close an authorized intended
+   crack, endpoint-moving gaps/overlaps, sector-boundary tangency, and
+   edge/vertex neighborhood interactions.  Keep both the exact edge theorem
+   and the one-existing/one-continuation theorem unchanged as narrow
+   production subsets.  Preserve whole-ray fallback for every incompatible or
+   unowned root/box, and never let the model envelope manufacture the exact
+   witness used by Finding 68.
 2. Extend vertex classification only through a separately certified curved
    differential-link theorem.  Bound surface-normal and tangent variation over
    a local neighborhood before replacing the planar cyclic link.  Define exact
