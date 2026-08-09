@@ -489,10 +489,12 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_EVENT_SEAM_EXISTING 3
 #define RT_BREP_TRACE_EVENT_SEAM_CONTINUATION 4
 #define RT_BREP_TRACE_EVENT_VERTEX_FAN 5
+#define RT_BREP_TRACE_EVENT_MANIFOLD_EDGE 6
 #define RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT 1
 #define RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT 2
 #define RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION 3
 #define RT_BREP_TRACE_EVENT_SOURCE_VERTEX_FAN 4
+#define RT_BREP_TRACE_EVENT_SOURCE_MANIFOLD_EDGE 5
 /* Seam-gap and fold-gap values classify separate trace fields. */
 #define RT_BREP_SEAM_GAP_UNAVAILABLE 0
 #define RT_BREP_SEAM_GAP_INSIDE 1
@@ -550,6 +552,10 @@ struct rt_brep_trace_edge {
     int within_edge_tolerance;
     int sector_valid;
     int closest_state;
+    int line_state_valid;
+    int line_before_state;
+    int line_after_state;
+    int line_transition_direction;
     int discrepancy_measured;
     int correspondence_screened;
     int correspondence_supported;
@@ -857,6 +863,14 @@ struct rt_brep_shot_trace {
     size_t physical_event_vertex_winding_ambiguous;
     size_t physical_event_vertex_owned_boxes;
     size_t physical_event_vertex_owned_roots;
+    size_t physical_event_edge;
+    size_t physical_event_edge_contacts;
+    size_t physical_event_edge_attempts;
+    size_t physical_event_edge_candidates;
+    size_t physical_event_edge_certified;
+    size_t physical_event_edge_failures;
+    size_t physical_event_edge_owned_boxes;
+    size_t physical_event_edge_owned_roots;
     size_t physical_event_clean_outside;
     size_t physical_event_near_trim;
     size_t physical_event_unresolved;
