@@ -14393,6 +14393,17 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 	    contact = true;
 	    root_box_owned[root_index] = true;
 	}
+	/* An oblique contact lobe may leave adjacent terminal boxes unresolved
+	 * without a nominal root.  Admit the complete same-face/span determinant
+	 * corridor to the interval proof below; every admitted box must still own
+	 * a seam UV interval and its complete t hull must pass the material-sector
+	 * theorem before any publication. */
+	if (!source && !witness && !contact && contact_pair &&
+		!perpendicular_contact && box.face_index == contact_face &&
+		box.span_index == contact_span &&
+		box.disposition == RT_BREP_TRACE_BOX_UNRESOLVED &&
+		!box.determinant_sign)
+	    contact = true;
 	const double u_scale = std::max(1.0,
 	    std::max(fabs(box.uv_min[0]), fabs(box.uv_max[0])));
 	const double v_scale = std::max(1.0,
@@ -15153,8 +15164,23 @@ brep_build_prepared_partition(struct rt_brep_shot_trace *trace,
 
     for (size_t box_index = 0; box_index < trace->stored_surface_boxes;
 	    ++box_index) {
-	if (!brep_prepared_box_has_root(trace,
-		trace->surface_boxes[box_index], ray, tol))
+	const struct rt_brep_trace_surface_box &box =
+	    trace->surface_boxes[box_index];
+	if (brep_prepared_box_has_root(trace, box, ray, tol))
+	    continue;
+	/* A rootless terminal box is normally incomplete surface evidence.  The
+	 * sole exception is a box already resolved by the complete oblique
+	 * contact transaction: every such box owns a certified seam/frame cell,
+	 * and the link count covers the complete contact-box set. */
+	const bool certified_contact_corridor =
+	    box.disposition == RT_BREP_TRACE_BOX_RESOLVED_CONTACT &&
+	    !box.determinant_sign &&
+	    trace->physical_event_seam_oblique_pairs == 1 &&
+	    trace->physical_event_seam_oblique_cells > 0 &&
+	    trace->physical_event_seam_oblique_box_links ==
+		trace->physical_event_seam_contact_boxes &&
+	    trace->physical_event_seam_contact_boxes > 0;
+	if (!certified_contact_corridor)
 	    return RT_BREP_PREPARED_FALLBACK_ROOT_COVERAGE;
     }
 
