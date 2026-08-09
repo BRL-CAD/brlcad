@@ -275,7 +275,8 @@ singular_cap_test()
 }
 
 static bool
-periodic_strip_case(bool collapsed_inner)
+periodic_strip_case(bool collapsed_inner,
+	ON_BrepLoop::TYPE second_type = ON_BrepLoop::inner)
 {
     ON_Brep brep;
     ON_Circle base(ON_xy_plane, 1.0);
@@ -290,9 +291,9 @@ periodic_strip_case(bool collapsed_inner)
     ON_BrepLoop &outer = brep.NewLoop(ON_BrepLoop::outer, face);
     add_periodic_trim(brep, outer, *surface, surface->Domain(1).Min(),
 	false, ON_BrepLoop::outer);
-    ON_BrepLoop &inner = brep.NewLoop(ON_BrepLoop::inner, face);
-    add_periodic_trim(brep, inner, *surface, surface->Domain(1).Max(),
-	false, ON_BrepLoop::inner, collapsed_inner);
+    ON_BrepLoop &second = brep.NewLoop(second_type, face);
+    add_periodic_trim(brep, second, *surface, surface->Domain(1).Max(),
+	false, second_type, collapsed_inner);
 
     fast_result *result = run_fast(brep);
     const bool valid = result->ret == BREP_CDT_FAST_OK &&
@@ -304,7 +305,8 @@ periodic_strip_case(bool collapsed_inner)
 static bool
 periodic_strip_test()
 {
-    return periodic_strip_case(false) && periodic_strip_case(true);
+    return periodic_strip_case(false) && periodic_strip_case(true) &&
+	periodic_strip_case(false, ON_BrepLoop::outer);
 }
 
 static bool
