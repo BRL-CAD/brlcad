@@ -185,22 +185,36 @@ degenerate_collinear_loop_test()
 static ON_BrepTrim &
 add_periodic_trim(ON_Brep &brep, ON_BrepLoop &loop,
 	const ON_Surface &surface, double v, bool decreasing,
-	ON_BrepLoop::TYPE loop_type)
+	ON_BrepLoop::TYPE loop_type, bool collapsed_parameter = false)
 {
     const ON_Interval udom = surface.Domain(0);
     const ON_2dPoint start(decreasing ? udom.Max() : udom.Min(), v);
     const ON_2dPoint end(decreasing ? udom.Min() : udom.Max(), v);
-    const ON_3dPoint point = surface.PointAt(start.x, start.y);
+    ON_Curve *edge_curve = surface.IsoCurve(0, v);
+    if (collapsed_parameter)
+	edge_curve->ChangeClosedCurveSeam(udom.Mid());
+    const ON_3dPoint point = edge_curve->PointAt(
+	edge_curve->Domain().Min());
     const int vertex = brep.NewVertex(point).m_vertex_index;
 
-    ON_Circle circle(ON_xy_plane, 1.0);
-    circle.plane.origin.z = v;
-    ON_ArcCurve *edge_curve = new ON_ArcCurve(circle, 0.0, 1.0);
     const int c3i = brep.AddEdgeCurve(edge_curve);
     ON_BrepEdge &edge = brep.NewEdge(brep.m_V[vertex],
 	brep.m_V[vertex], c3i);
-    ON_LineCurve *trim_curve = new ON_LineCurve(start, end);
-    trim_curve->SetDomain(0.0, 1.0);
+    edge.m_tolerance = 1.0e-6;
+    ON_Curve *trim_curve = NULL;
+    if (collapsed_parameter) {
+	const double seam = udom.Mid();
+	const double wobble = surface.Domain(1).Length() * 2.0e-4;
+	trim_curve = nurbs_curve(2, 3, {
+	    ON_3dPoint(seam, v, 0.0),
+	    ON_3dPoint(seam, v + wobble, 0.0),
+	    ON_3dPoint(seam, v - wobble, 0.0),
+	    ON_3dPoint(seam, v, 0.0)
+	});
+    } else {
+	trim_curve = new ON_LineCurve(start, end);
+	trim_curve->SetDomain(0.0, 1.0);
+    }
     const int c2i = brep.AddTrimCurve(trim_curve);
     loop.m_type = loop_type;
     ON_BrepTrim &trim = brep.NewTrim(edge, decreasing, loop, c2i);
@@ -252,7 +266,7 @@ singular_cap_test()
 }
 
 static bool
-periodic_strip_test()
+periodic_strip_case(bool collapsed_inner)
 {
     ON_Brep brep;
     ON_Circle base(ON_xy_plane, 1.0);
@@ -269,7 +283,189 @@ periodic_strip_test()
 	false, ON_BrepLoop::outer);
     ON_BrepLoop &inner = brep.NewLoop(ON_BrepLoop::inner, face);
     add_periodic_trim(brep, inner, *surface, surface->Domain(1).Max(),
-	false, ON_BrepLoop::inner);
+	false, ON_BrepLoop::inner, collapsed_inner);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
+periodic_strip_test()
+{
+    return periodic_strip_case(false) && periodic_strip_case(true);
+}
+
+static void
+add_surface_iso_trim(ON_Brep &brep, ON_BrepLoop &loop,
+	const ON_Surface &surface, int start_vertex, int end_vertex,
+	const ON_2dPoint &start, const ON_2dPoint &end)
+{
+    const bool vary_u = fabs(end.x - start.x) > fabs(end.y - start.y);
+    const int direction = vary_u ? 0 : 1;
+    const double constant = vary_u ? start.y : start.x;
+    ON_Curve *edge_curve = surface.IsoCurve(direction, constant);
+    const double first = start[direction];
+    const double second = end[direction];
+    edge_curve->Trim(ON_Interval(std::min(first, second),
+	std::max(first, second)));
+    if (second < first)
+	edge_curve->Reverse();
+    const int c3i = brep.AddEdgeCurve(edge_curve);
+    ON_BrepEdge &edge = brep.NewEdge(brep.m_V[start_vertex],
+	brep.m_V[end_vertex], c3i);
+    edge.m_tolerance = 1.0e-6;
+    ON_LineCurve *trim_curve = new ON_LineCurve(start, end);
+    trim_curve->SetDomain(0.0, 1.0);
+    const int c2i = brep.AddTrimCurve(trim_curve);
+    ON_BrepTrim &trim = brep.NewTrim(edge, false, loop, c2i);
+    trim.m_type = ON_BrepTrim::boundary;
+    trim.m_iso = surface.IsIsoparametric(*trim_curve);
+    trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-6;
+}
+
+static bool
+full_periodic_hole_test()
+{
+    ON_Brep brep;
+    ON_Circle base(ON_xy_plane, 1.0);
+    ON_Cylinder cylinder(base, 1.0);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &outer = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    const double seam_u = udom.Mid();
+    const ON_2dPoint seam_low(seam_u, vdom.Min());
+    const ON_2dPoint seam_high(seam_u, vdom.Max());
+    const int low_vertex = brep.NewVertex(surface->PointAt(
+	seam_low.x, seam_low.y)).m_vertex_index;
+    const int high_vertex = brep.NewVertex(surface->PointAt(
+	seam_high.x, seam_high.y)).m_vertex_index;
+    ON_Curve *seam_curve = surface->IsoCurve(1, seam_u);
+    const int seam_c3i = brep.AddEdgeCurve(seam_curve);
+    ON_BrepEdge &seam_edge = brep.NewEdge(brep.m_V[low_vertex],
+	brep.m_V[high_vertex], seam_c3i);
+    seam_edge.m_tolerance = 1.0e-6;
+    ON_LineCurve *up_curve = new ON_LineCurve(seam_low, seam_high);
+    up_curve->SetDomain(0.0, 1.0);
+    ON_BrepTrim &up = brep.NewTrim(seam_edge, false, outer,
+	brep.AddTrimCurve(up_curve));
+    up.m_type = ON_BrepTrim::seam;
+    up.m_iso = ON_Surface::W_iso;
+    up.m_tolerance[0] = up.m_tolerance[1] = 1.0e-6;
+    ON_LineCurve *down_curve = new ON_LineCurve(seam_high, seam_low);
+    down_curve->SetDomain(0.0, 1.0);
+    ON_BrepTrim &down = brep.NewTrim(seam_edge, true, outer,
+	brep.AddTrimCurve(down_curve));
+    down.m_type = ON_BrepTrim::seam;
+    down.m_iso = ON_Surface::W_iso;
+    down.m_tolerance[0] = down.m_tolerance[1] = 1.0e-6;
+
+    ON_BrepLoop &hole = brep.NewLoop(ON_BrepLoop::inner, face);
+    const double u0 = udom.ParameterAt(0.65);
+    const double u1 = udom.ParameterAt(0.80);
+    const double v0 = vdom.ParameterAt(0.35);
+    const double v1 = vdom.ParameterAt(0.65);
+    const ON_2dPoint corners[4] = {
+	ON_2dPoint(u0, v0), ON_2dPoint(u0, v1),
+	ON_2dPoint(u1, v1), ON_2dPoint(u1, v0)
+    };
+    int vertices[4];
+    for (int i = 0; i < 4; ++i)
+	vertices[i] = brep.NewVertex(surface->PointAt(corners[i].x,
+	    corners[i].y)).m_vertex_index;
+    for (int i = 0; i < 4; ++i) {
+	const int next = (i + 1) % 4;
+	add_surface_iso_trim(brep, hole, *surface, vertices[i],
+	    vertices[next], corners[i], corners[next]);
+    }
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
+periodic_singular_domain_test()
+{
+    ON_Brep brep;
+    ON_Sphere sphere(ON_3dPoint::Origin, 1.0);
+    ON_RevSurface *surface = sphere.RevSurfaceForm(false);
+    if (!surface)
+	return false;
+    const ON_Interval original_vdom = surface->Domain(1);
+    if (!surface->Trim(1, ON_Interval(original_vdom.Mid(),
+	    original_vdom.Max()))) {
+	delete surface;
+	return false;
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    const ON_2dPoint seam_low(udom.Min(), vdom.Min());
+    const ON_2dPoint seam_high(udom.Min(), vdom.Max());
+    const int low_vertex = brep.NewVertex(surface->PointAt(
+	seam_low.x, seam_low.y)).m_vertex_index;
+    const int pole_vertex = brep.NewVertex(surface->PointAt(
+	seam_high.x, seam_high.y)).m_vertex_index;
+    ON_Curve *seam_curve = surface->IsoCurve(1, udom.Min());
+    const int seam_c3i = brep.AddEdgeCurve(seam_curve);
+    ON_BrepEdge &seam_edge = brep.NewEdge(brep.m_V[low_vertex],
+	brep.m_V[pole_vertex], seam_c3i);
+    seam_edge.m_tolerance = 1.0e-6;
+
+    ON_LineCurve *up_curve = new ON_LineCurve(seam_low, seam_high);
+    up_curve->SetDomain(0.0, 1.0);
+    ON_BrepTrim &up = brep.NewTrim(seam_edge, false, loop,
+	brep.AddTrimCurve(up_curve));
+    up.m_type = ON_BrepTrim::seam;
+    up.m_iso = ON_Surface::W_iso;
+    up.m_tolerance[0] = up.m_tolerance[1] = 1.0e-6;
+
+    ON_LineCurve *pole_curve = new ON_LineCurve(
+	ON_2dPoint(udom.Min(), vdom.Max()),
+	ON_2dPoint(udom.Max(), vdom.Max()));
+    pole_curve->SetDomain(0.0, 1.0);
+    ON_BrepTrim &pole = brep.NewSingularTrim(brep.m_V[pole_vertex], loop,
+	ON_Surface::N_iso, brep.AddTrimCurve(pole_curve));
+    pole.m_tolerance[0] = pole.m_tolerance[1] = 1.0e-6;
+
+    ON_LineCurve *down_curve = new ON_LineCurve(
+	ON_2dPoint(udom.Max(), vdom.Max()),
+	ON_2dPoint(udom.Max(), vdom.Min()));
+    down_curve->SetDomain(0.0, 1.0);
+    ON_BrepTrim &down = brep.NewTrim(seam_edge, true, loop,
+	brep.AddTrimCurve(down_curve));
+    down.m_type = ON_BrepTrim::seam;
+    down.m_iso = ON_Surface::E_iso;
+    down.m_tolerance[0] = down.m_tolerance[1] = 1.0e-6;
+
+    ON_Curve *bottom_edge_curve = surface->IsoCurve(0, vdom.Min());
+    const int bottom_c3i = brep.AddEdgeCurve(bottom_edge_curve);
+    ON_BrepEdge &bottom_edge = brep.NewEdge(brep.m_V[low_vertex],
+	brep.m_V[low_vertex], bottom_c3i);
+    bottom_edge.m_tolerance = 1.0e-6;
+    ON_LineCurve *bottom_curve = new ON_LineCurve(
+	ON_2dPoint(udom.Max(), vdom.Min()),
+	ON_2dPoint(udom.Min(), vdom.Min()));
+    bottom_curve->SetDomain(0.0, 1.0);
+    ON_BrepTrim &bottom = brep.NewTrim(bottom_edge, true, loop,
+	brep.AddTrimCurve(bottom_curve));
+    bottom.m_type = ON_BrepTrim::boundary;
+    bottom.m_iso = ON_Surface::S_iso;
+    bottom.m_tolerance[0] = bottom.m_tolerance[1] = 1.0e-6;
 
     fast_result *result = run_fast(brep);
     const bool valid = result->ret == BREP_CDT_FAST_OK &&
@@ -455,6 +651,7 @@ main(int argc, const char **argv)
     return thin_lens_test() && degenerate_line_test() &&
 	degenerate_collinear_loop_test() &&
 	singular_cap_test() && periodic_strip_test() &&
+	full_periodic_hole_test() && periodic_singular_domain_test() &&
 	full_periodic_face_test() && untrimmed_planar_face_test() &&
 	skinny_planar_strip_test() && malformed_pcurve_test() ? 0 : 1;
 }
