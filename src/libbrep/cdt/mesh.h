@@ -668,7 +668,7 @@ public:
     bool brep_edge_pnt(long v);
     size_t geometric_degenerate_count();
     size_t incorrect_normal_count();
-    bool toleranced_chart_boundary_triangle(const triangle_t &t);
+    bool toleranced_boundary_triangle(const triangle_t &t);
 
     // Triangle geometry information
     ON_3dPoint tcenter(const triangle_t &t);
