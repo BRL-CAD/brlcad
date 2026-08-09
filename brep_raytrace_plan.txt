@@ -4071,3 +4071,155 @@ This produces an independently reviewable correctness and memory-management
 improvement.  The Cobb seam framework and tolerance resolver should be the
 next change set, followed by local Bezier isolation.  Only then should the
 default surface-tree depth be reduced.
+
+
+15. STATUS-2 SURFACES AND LOCAL GRAZING REFINEMENT CHECKPOINT
+------------------------------------------------------------
+
+The rational torus work identified two production requirements which were not
+visible in the initial sphere-only stages.
+
+OpenNURBS NURBS-form status
+
+  ON_Surface::GetNurbForm does not return a Boolean.  Status 1 means the NURBS
+  form has the original parameterization; status 2 means it has the same
+  geometric locus with a parameter map.  ON_RevSurface commonly returns 2.
+  Rejecting every value except 1 omits ordinary analytic surfaces produced by
+  STEP conversion, not merely exotic representations.
+
+  Prepared face records therefore retain the exact status.  Coefficient
+  construction, subdivision boxes, Krawczyk proofs, determinant proofs, and
+  root ownership remain in the returned NURBS parameter space.  Before using
+  a root with the original BREP topology, map it with
+  GetSurfaceParameterFromNurbFormParameter and require:
+
+    * a finite mapped parameter;
+    * a successful inverse
+      GetNurbFormParameterFromSurfaceParameter round trip;
+    * round-trip agreement at a scale-aware floating-point bound; and
+    * agreement between the original-surface point and certified NURBS point
+      at the numeric model-distance bound.
+
+  Evaluate the original surface normal and trim classifier only after that
+  point check.  Publish original-surface UV, never the private NURBS-form UV.
+  Apply the same 3D locus-agreement check to regular corrector roots and
+  singular-fold representatives; a successful parameter round trip alone is
+  not evidence that the two evaluated points agree at raytracing precision.
+  This is a point-map theorem, not an interval-map theorem.  Status-2 seam,
+  edge, vertex, or near-trim events must continue to fail closed until an
+  enclosure of the parameter map proves their complete source-box and trim
+  corridor relationships.
+
+  `brep-audit --surface-trees-only` now reports each integer status and object
+  totals.  Product_step46_item.s in non_grabcad/0353/0353-10-12.g has 175
+  faces: 33 status-1 and 142 status-2.  Its dense trees have 98,758 leaves and
+  individual 4,096-leaf faces.  This concrete sample makes status-2 support
+  central to the STEP corpus: the old equality-to-1 check omitted 81.1 percent
+  of those faces from the prepared solver.
+
+Bounded exact local refinement
+
+  At a tube-direction torus chord only 2T long, depth-24 isolation retained
+  three boxes.  Two allocation-free local correctors found the analytic
+  endpoints, and expansion Krawczyk proved two local root neighborhoods, but
+  the ordinary isolation net represented every coefficient with the worst
+  error of its equation.  This error floor kept a rootless box and a box
+  spanning the nearby fold neighborhood.  The dense legacy SurfaceTree path
+  visited 24 leaves yet returned only one physical root in either ray
+  direction.
+
+  Reuse the exact per-coefficient expansion intervals already built for the
+  equation coefficients.  The first production gate enables this tier only
+  for status-2 faces and only permits its clean interior regular/fold results
+  to publish.  This preserves the already-qualified status-1 seam, edge, and
+  vertex source-box transactions until dedicated repartition-invariance tests
+  exist for them.  When ordinary isolation reaches its depth budget:
+
+    1. Restrict every interval Bernstein coefficient to the terminal box with
+       exact dyadic blossoms and outward expansion bounds.
+
+    2. Apply both individual equation hull exclusion and an invertible
+       conditioned two-equation transform.  Form every transformed coefficient
+       with error-free expansions before testing its Bernstein hull.  A
+       transformed hull strictly separated from zero excludes the box without
+       assuming that either original equation is separately signed.
+
+    3. Try the tight expansion-valued Krawczyk inclusion and require a strict
+       determinant sign before treating a root as a regular crossing.
+
+    4. If the exact rotated hull retains an unresolved box, split only that
+       box.  Use the existing fixed 64-entry stack, at most eight extra levels
+       per box, and at most 64 exact refinements over the ray.  Exhaustion is
+       explicit fallback; it is never permission to publish.
+
+    5. If a regular proof appears but its outward ray-parameter interval is
+       still wider than 0.01*T/|D|, continue the same bounded local refinement.
+       This makes event separation, rather than mere point convergence, the
+       termination objective.  Reprove both children; do not assume a parent
+       root belongs to one child based on the floating candidate alone.
+
+  Exact coefficient-hull recovery for an unresolved box runs only after the
+  old ordinary depth budget.  The event-separation rule in step 5 may begin
+  earlier when ordinary Krawczyk proves uniqueness before that depth but leaves
+  a ray interval wider than 0.01T.  Both cases use the same fixed refinement
+  count and stack and allocate no memory.  They do not change the prepared
+  SurfaceTree or its serialization.  The 2T torus case uses the rotated hull
+  to remove the false retained box.  At 1.1T, further local splits isolate two
+  signed regular boxes tightly enough that the outward event gap is strictly
+  greater than T.  Both ray directions now publish the analytic interval at
+  100T, 10T, 2T, and 1.1T.
+
+Minimum-size boundary behavior
+
+  Use three categories, not a binary hit/miss expectation:
+
+    * gap.minimum > T.maximum: RESOLVED material interval;
+    * gap.maximum < T.minimum: SUBMINIMUM contact/nonmaterial; and
+    * overlapping/equal bounds: AMBIGUOUS whole-ray fallback.
+
+  Equality at exactly 1T must not be called resolved.  The status-2 torus
+  stream marks it ambiguous.  The unchanged status-1 sphere path reaches its
+  prior UNCERTIFIED fallback before the new tier.  Legacy fallback sometimes
+  returns a tolerance-sized segment and sometimes a miss, so the ratchet
+  records that result without claiming a resolved certificate.  Below T the
+  prepared stream may find two surface roots, but it must not publish a
+  material interval.
+
+  Exact tangency likewise may produce one or more contact candidates but must
+  not receive a simple-root material certificate.  Analytic outside lines
+  must not publish BREP material even if a candidate corrector lands within a
+  sub-tolerance numerical neighborhood.
+
+Oracle qualification
+
+  The implicit TOR quartic currently emits a small segment on both exact
+  tangent directions and on 16 of 18 directed analytic outside samples for
+  each tested normal section.  Therefore use the analytic circle at the
+  grazing boundary.  Keep the implicit TOR as a positive-clearance endpoint
+  comparison and record its tangent/outside artifacts as a separate solver
+  defect.  Do not train BREP acceptance to reproduce that defect.
+
+Rejected proof path
+
+  Joining the opposite root box to a connected rootless source component did
+  prove complete component ownership, but ordinary and expansion Krawczyk both
+  rejected the union because it contained the singular fold neighborhood.
+  That is the correct mathematical result.  The experimental publication path
+  had no positive controlled case and was removed rather than retained as OBE
+  production work.  Candidate roots still never substitute for complete box
+  coverage.
+
+Current deterministic gate
+
+  `rt_brep_ray --grazing-root-only` covers sphere plus both torus normal
+  sections, both directions, nine signed chord scales, exact tangency, and
+  mirrored outside clearances.  For each torus section, all eight directed
+  100T/10T/2T/1.1T cases must select the prepared production stream and publish
+  one complete material interval.  The four tube-section 2T/1.1T cases must
+  also record exact expansion availability, a rigorous exclusion, and bounded
+  local refinement with no arithmetic failure or budget exhaustion.  This
+  prevents a later legacy solver success from concealing loss of the new
+  production theorem.  The interval, fold, and local-root partitions
+  independently exercise the expansion arithmetic and proof primitives.  Keep
+  these gates green before changing the base depth, exact-refinement budgets,
+  trim policy, or SurfaceTree fallback.

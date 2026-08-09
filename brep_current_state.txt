@@ -1,7 +1,7 @@
 BREP RAYTRACE IMPLEMENTATION CURRENT STATE
 ==========================================
 
-Last updated: 2026-08-08
+Last updated: 2026-08-09
 Repository: /home/cyapp/brlcad
 Implementation specification: brep_raytrace_plan.txt
 Active objective: Implement the complete specification, preserving this file
@@ -10,6 +10,149 @@ as the authoritative continuation log until all acceptance gates pass.
 
 CURRENT PHASE
 -------------
+
+2026-08-09 ACTIVE GRAZING CHECKPOINT
+
+The current uncommitted checkpoint adds a rational torus normal-section
+ratchet and the first production use of bounded, on-demand exact refinement.
+The authoritative modified files are src/librt/librt_private.h,
+src/librt/primitives/brep/brep.cpp, src/librt/primitives/brep/brep_local.h,
+and src/librt/tests/brep_ray.cpp.  Inspect git status and diff before resuming;
+do not discard this work.
+
+The full torus conversion is an ON_RevSurface.  Its GetNurbForm return value is
+2, meaning the converted NURBS has the same locus but a nonidentity parameter
+map.  The prepared-span builder now accepts status 2 and records the status per
+face.  Solver boxes and certificates remain in NURBS parameter space.  Final
+root points are mapped with GetSurfaceParameterFromNurbFormParameter, checked
+by the inverse map and by model-space point agreement, then classified against
+the original face's normal and trims.  Published hit UV is in original-surface
+space.  Status-2 seam, edge, and vertex publication still fails closed because
+there is not yet an interval enclosure for that parameter map; only clean
+interior regular or complete fold events may publish.
+
+The torus ratchet uses two analytic circular normal sections away from seams:
+the tube circle and a major-direction circle.  It shoots both ray directions
+at chord lengths 100T, 10T, 2T, 1.1T, 1T, 0.9T, 0.5T, 0.1T, and 0.01T, where T
+is the model minimum distance.  The analytic circle is authoritative at the
+boundary.  All 100T, 10T, 2T, and 1.1T cases now publish the correct full-solid
+BREP interval in both directions.  Exactly 1T is deliberately classified
+ambiguous by the certified event stream and falls back: legacy returns a
+tolerance-sized segment for the sphere and torus major section but no segment
+for the torus tube section.  Below T no prepared material interval publishes.
+Exact tangency has contact roots but no prepared material interval, and all
+analytic outside cases have no BREP material interval.
+
+The improvement is local and allocation-free; SurfaceTree density is
+unchanged.  Ordinary isolation still has its depth-24 budget.  At this
+checkpoint the extra tier is enabled only for status-2 faces, whose production
+gate already permits clean interior regular/fold events and rejects seam,
+edge, and vertex publication.  A terminal status-2 box which remains
+unresolved uses the exact per-coefficient expansion intervals already prepared
+for the ray/surface equations.  It applies direct
+and conditioned/rotated Bernstein hull exclusion and a tight expansion
+Krawczyk attempt.  If the exact rotated hull retains the box, a fixed local
+refinement may split it for at most eight additional per-box levels and 64
+total per-ray refinements.  A certified regular box reached through this path
+is refined further when its ray-parameter interval exceeds 0.01T, so two roots
+only 1.1T apart can still prove a strictly resolved outward gap.  All work uses
+the existing 64-entry stack and fixed coefficient arrays; there is no malloc
+in the ray path.  At the 2T torus tube case the exact rotated hull eliminates
+the spurious middle/far box that the worst-common-error representation could
+not separate.  At 1.1T further local splits isolate two signed Krawczyk boxes
+whose outward t gap exceeds T.
+
+An experimental theorem which joined the opposite root box with a connected
+rootless box was removed.  Component ownership succeeded, but both ordinary
+and expansion-valued Krawczyk correctly refused the union because it included
+the singular fold neighborhood.  It certified no controlled positive case
+and would only have added production cost.  The narrower two-box mixed
+fold/regular theorem remains: it resolves the previously observed 10T case
+when one complete fold parent and one regular parent own the two roots.
+
+The dense legacy SurfaceTree path on the original tube-direction torus case
+visits 24 leaves and returns only one of the two physical roots in either ray
+direction, hence no solid segment.  This confirms that the problem is missing
+root isolation, not later hit cleanup.  The new prepared path now supplies the
+analytic interval above T without changing the tree.
+
+The implicit TOR quartic is not a trustworthy boundary oracle: this fixture
+currently observes one false tolerance-sized segment on each exact tangent
+and 16 false outside segments across the 18 directed outside samples for each
+normal-section family.  These are recorded telemetry.  Positive-clearance
+implicit endpoints still match the analytic section.  The analytic circle,
+not the implicit quartic near zero clearance, gates BREP correctness.
+
+Verified at this checkpoint:
+
+  cmake --build .build --target rt_brep_ray -j8
+  .build/src/librt/tests/rt_brep_ray --grazing-root-only
+  .build/src/librt/tests/rt_brep_ray --interval-only
+  .build/src/librt/tests/rt_brep_ray --fold-only
+  .build/src/librt/tests/rt_brep_ray --local-root-only
+  .build/src/librt/tests/rt_brep_ray --seam-only
+  .build/src/librt/tests/rt_brep_ray --nonisoparametric-only
+  .build/src/librt/tests/rt_brep_ray --contact-trim-only
+  .build/src/librt/tests/rt_brep_ray --directed-only
+  .build/src/librt/tests/rt_brep_ray --affine-only
+  .build/src/librt/tests/rt_brep_ray --endpoint-only
+  .build/src/librt/tests/rt_brep_ray --crofton-only
+  cmake --build .build --target brep-audit -j8
+
+All of those commands pass.  They are the independently runnable partitions
+of the current corpus and include the pole, transformed-similarity, affine,
+seam/crack, endpoint, CSG-leaf, and shared-line Crofton gates.  A first
+unpartitioned run was stopped after diagnosing the now-fixed status-1 box-
+ownership regression; it must not be cited as a completed full run.  The
+independent partitions were rerun after the status-2 gate was installed.
+
+The torus test now traces every above-tolerance full BREP result rather than
+accepting a legacy success.  Both normal-section families require all eight
+100T/10T/2T/1.1T directed cases to select the prepared production stream with
+one complete physical material interval.  The four tube-section 2T/1.1T cases
+also require exact expansion availability, exclusion, and refinement with no
+arithmetic failure or budget exhaustion.  Fold roots now receive the same
+status-2 3D locus-agreement test already required of regular roots.  A regular
+Krawczyk box is locally refined even when it certifies before the ordinary
+depth limit if its ray interval remains wider than 0.01T; the eight-level and
+64-refinement limits still bound all work.
+
+Before committing, rerun the independent partitions after the final code
+audit, retain the GetNurbForm corpus telemetry below, and decide whether a
+dedicated transformed-similarity matrix for the status-2 torus belongs in this
+increment or the next one.  Existing sphere and ellipsoid tests already cover
+translation, rotation, 0.01x/10,000x uniform scale, and nonuniform affine
+conditioning, but they use status-1 surface forms.
+
+A first attempt enabled exact terminal refinement on every supported face.
+The full run correctly exposed that as too broad: it repartitioned status-1
+Cobb seam and vertex source boxes, invalidating their existing atomic ownership
+theorems even though legacy final answers remained correct.  The run was
+stopped after the repeated failure pattern was established.  The implementation
+now enables the new tier only for status-2 faces.  This is aligned with the
+current point-map publication theorem (clean interior regular/fold only), and
+preserves every established status-1 seam/edge/vertex transaction.  After this
+gate was added, --seam-only, --nonisoparametric-only, and --contact-trim-only
+all pass again; the 416-ray Cobb matrix reports zero regressions.  Do not expand
+the tier to status-1 boundary topology without dedicated box-repartition
+invariance tests and an updated ownership theorem.
+
+The GetNurbForm telemetry is now implemented in src/gtools/brep-audit.cpp and
+the brep-audit target builds.  A real STEP-corpus sample gives a strong reason
+to retain status-2 support:
+
+  brep-audit --surface-trees-only \
+    /home/cyapp/step_corpus_g/non_grabcad/0353/0353-10-12.g \
+    Product_step46_item.s
+
+This 175-face object reports 33 exact/status-1 forms, 142 reparameterized/
+status-2 forms, no unavailable/other forms, 98,758 SurfaceTree leaves, and a
+4,096-leaf maximum face.  Thus the prior status==1 prepared-span gate excluded
+81.1 percent of the faces in this representative revolved STEP model even
+though all have convertible NURBS loci.  The per-face JSON now records
+nurb_form_status and the object summary records unavailable, exact,
+reparameterized, and other counts.
+
 
 Phase 1 ownership repair and the first deterministic Newton hardening pass are
 implemented.  Directed implicit-sphere/converted-BREP pole rays now pass.  An
