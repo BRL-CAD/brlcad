@@ -36,6 +36,14 @@ struct brep_edge_span {
 };
 
 
+struct brep_edge_trim_cell {
+    ON_Interval edge_domain;
+    ON_Interval trim_domain;
+    size_t edge_span = 0;
+    int trim_index = -1;
+};
+
+
 struct brep_edge_record {
     size_t span_begin = 0;
     size_t span_count = 0;
@@ -50,6 +58,8 @@ struct brep_edge_record {
     size_t correspondence_depth = 0;
     size_t discrepancy_bound_cells = 0;
     size_t discrepancy_bound_depth = 0;
+    size_t trim_cell_begin[2] = {0, 0};
+    size_t trim_cell_count[2] = {0, 0};
     int edge_index = -1;
     int face_index[2] = {-1, -1};
     bool supported = false;
@@ -60,6 +70,7 @@ struct brep_edge_record {
     bool discrepancy_bounded = false;
     bool discrepancy_bound_exhausted = false;
     bool discrepancy_endpoints_certified = false;
+    bool frame_interval_supported = false;
     bool discrepancy_sample_authorized = false;
     int discrepancy_proof_class = 0;
     bool discrepancy_authorized = false;
@@ -117,6 +128,7 @@ struct brep_specific {
     std::vector<const brlcad::CurveTree *> ctrees;
     std::vector<brep_edge_record> edge_records;
     std::vector<brep_edge_span> edge_spans;
+    std::vector<brep_edge_trim_cell> edge_trim_cells;
     std::vector<brep_face_record> face_records;
     std::vector<brep_surface_span> surface_spans;
     std::vector<brep_vertex_record> vertex_records;
