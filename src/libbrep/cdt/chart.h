@@ -65,6 +65,9 @@ public:
 	ON_2dPoint &chart_uv) const;
     bool chart_to_native(const ON_2dPoint &chart_uv,
 	ON_2dPoint &native_uv) const;
+    bool triangle_interior_sample(const long native_triangle[3],
+	ON_2dPoint &native_uv) const;
+    int triangle_orientation(const long native_triangle[3]) const;
 
     long native_point(int chart_point) const;
     cdt_face_chart_id id() const { return m_id; }
