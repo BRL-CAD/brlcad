@@ -673,6 +673,60 @@ paired_periodic_strip_test()
 	paired_periodic_strip_case(true);
 }
 
+static bool
+split_periodic_boundary_test()
+{
+    ON_Brep brep;
+    ON_Circle base(ON_xy_plane, 1.0);
+    ON_Cylinder cylinder(base, 1.0);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    ON_BrepLoop &low = brep.NewLoop(ON_BrepLoop::outer, face);
+    add_periodic_trim(brep, low, *surface, vdom.ParameterAt(0.2),
+	false, ON_BrepLoop::outer);
+
+    ON_BrepLoop &high = brep.NewLoop(ON_BrepLoop::outer, face);
+    const double v = vdom.ParameterAt(0.8);
+    const double middle = udom.Mid();
+    const int middle_vertex = brep.NewVertex(surface->PointAt(
+	middle, v)).m_vertex_index;
+    const int seam_vertex = brep.NewVertex(surface->PointAt(
+	udom.Min(), v)).m_vertex_index;
+    auto add_boundary = [&](const ON_Interval &edge_domain,
+	    int first_vertex, int second_vertex, const ON_2dPoint &start,
+	    const ON_2dPoint &end) {
+	ON_Curve *edge_curve = surface->IsoCurve(0, v);
+	edge_curve->Trim(edge_domain);
+	ON_BrepEdge &edge = brep.NewEdge(brep.m_V[first_vertex],
+	    brep.m_V[second_vertex], brep.AddEdgeCurve(edge_curve));
+	edge.m_tolerance = 1.0e-6;
+	ON_LineCurve *trim_curve = new ON_LineCurve(start, end);
+	trim_curve->SetDomain(0.0, 1.0);
+	ON_BrepTrim &trim = brep.NewTrim(edge, false, high,
+	    brep.AddTrimCurve(trim_curve));
+	trim.m_type = ON_BrepTrim::boundary;
+	trim.m_iso = ON_Surface::x_iso;
+	trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-6;
+    };
+    add_boundary(ON_Interval(middle, udom.Max()), middle_vertex,
+	seam_vertex, ON_2dPoint(middle, v), ON_2dPoint(udom.Max(), v));
+    add_boundary(ON_Interval(udom.Min(), middle), seam_vertex,
+	middle_vertex, ON_2dPoint(udom.Min(), v), ON_2dPoint(middle, v));
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
 static void
 add_surface_iso_trim(ON_Brep &brep, ON_BrepLoop &loop,
 	const ON_Surface &surface, int start_vertex, int end_vertex,
@@ -1376,6 +1430,7 @@ main(int argc, const char **argv)
 	periodic_rectangle_test() && periodic_zero_area_subcycle_test() &&
 	overlapping_periodic_pcurves_test() &&
 	paired_periodic_strip_test() &&
+	split_periodic_boundary_test() &&
 	degenerate_closed_surface_slit_test() &&
 	collapsed_closed_pcurve_test() &&
 	misclassified_periodic_boundaries_test() &&
