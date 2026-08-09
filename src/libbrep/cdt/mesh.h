@@ -642,6 +642,7 @@ public:
     cpolygon_t outer_loop;
     std::map<int, cpolygon_t*> inner_loops;
     std::set<long> m_interior_pnts;
+    std::set<long> m_chart_refinement_pnts;
     bool initialize_interior_pnts(std::set<ON_2dPoint *>);
 
     /* Mesh data set accessors */
