@@ -7,6 +7,130 @@ Repository studied: /home/cyapp/brlcad
 STEP test corpus: /home/cyapp/step_corpus_g
 
 
+IMPLEMENTATION CHECKPOINT: IMPORTED PARTITIONS AND STATUS-2 POLES (2026-08-09)
+-----------------------------------------------------------------------------
+
+Preparation counts establish cost and buildability, but not solid-ray
+correctness.  `brep-audit` now provides the paired imported-object gate:
+
+  brep-audit --ray-depth-compare --candidate-depth=3 \
+    --reference-depth=8 --ray-count=N file.g brep
+
+It generates three centered axis chords and N fixed-seed random sphere chords,
+shoots both orientations of every line, and compares every returned material
+interval rather than only the first hit.  Each requested depth receives a
+fresh database internal, `rt_i`, and direct BREP `ft_prep`; the depth-eight
+tree is freed before depth three is built.  `_rt_brep_prep_stats` must report
+the requested depth.  This deliberately bypasses the librt prep cache: its key
+currently includes geometry and transform but not an explicit adaptive depth,
+so an `rt_gettree` audit could unknowingly compare one cached hierarchy with
+itself.  Revisit cache identity or serialization before changing the
+production default.
+
+The core pass gate requires finite ordered solid intervals, matching complete
+depth-three/depth-eight streams within `bn_tol.dist` plus a binary64
+coordinate-scale floor, and forward/reverse equality under
+`t_reverse = chord_length - t_forward`.  Depth eight is a continuity
+reference, not a correctness oracle.  Analytic implicit-to-BREP partitions and
+Cauchy-Crofton surface-area/volume convergence remain the stronger truth gate.
+JSON telemetry records the actual tree sizes and depths, hit/miss/segment
+population, prepared selection and every fallback reason, proof and workspace
+counts, orientation anomalies, and legacy-equivalence diagnostics.  Trace mode
+intentionally runs the old SurfaceTree solve after a prepared selection for
+comparison; its legacy `solver_calls` and wall time are not normal production
+performance measurements.
+
+The first 70-ray imported trials cover a 186-face STEP solid and a 495-face
+NIST solid with zero depth or reversal differences.  The former returned 20
+segments on 16 hit rays and selected ten prepared streams; the latter returned
+20 segments on 14 hit rays and selected all 14, with maximum endpoint shift
+`9.17e-9`.  Their candidate/reference SurfaceTree node counts were
+2,633/77,858 and 32,460/659,363 respectively.  Surface-box and uncertified
+fallbacks remain substantial, so selection distribution is now an explicit
+qualification metric rather than a hidden implementation detail.
+
+The third imported object found the remembered pole defect.  In
+`non_grabcad/recurta/step_ap203/10145.g`, `id2_item.s`, the +Y ray from
+`(0,-2.3815698604072066,0)` returned the radius-1.25 sphere interval
+`[1.1315698604072066,3.6315698604072066]`, while the identical line from the
+opposite endpoint in the -Y direction missed.  Depths three and eight agreed
+with each other, proving this was not a reduced-density regression.  Both
+prepared attempts exhausted the 32,768 surface-box capacity and selected the
+direction-dependent Utah fallback.
+
+This sphere differs from the earlier converted-ELL pole fixture in the way
+that matters: it is an analytic `ON_RevSurface` whose rational order-3-by-3,
+9-by-5, four-by-two-span NURBS form returns status 2.  Its STEP converter
+domains are `[0,2.5*pi]` and `[-1.25*pi,1.25*pi]`.  Status-1 converted ELLs
+already carried singular-side metadata into the exact collapsed-fiber
+theorem; status-2 faces were deliberately limited to regular/fold point-map
+publication and therefore could not use it.
+
+The extension is class-specific rather than a general point-map waiver.
+OpenNURBS builds an `ON_RevSurface` NURBS form as the tensor product of an
+angular arc and the profile curve, transposing the result when requested.
+Consequently a profile endpoint on the revolution axis remains the same
+collapsed NURBS boundary.  Prep records this authority only for a valid
+revolution surface when both the original surface and converted NURBS declare
+the same singular side.  The ray-time theorem still requires:
+
+  * homogeneous controls collapsed within a scale-aware binary64 enclosure;
+  * the pole within the certified line-distance enclosure;
+  * exact outward deflation of both ray-plane residuals and exclusion of every
+    distinct interior root;
+  * a strict deflated determinant sign and complete span/fiber ownership;
+  * pointwise NURBS-to-surface parameter round trip, with the mapped pole and
+    an interior one-sided normal sample agreeing with the NURBS locus in 3-D;
+  * face CurveTree inclusion, accepting a trimmed classification only when its
+    measured trim distance is within the established edge-miss tolerance; and
+  * a complete alternating event stream with every material interval above
+    BRL-CAD's minimum-size boundary.
+
+A genuinely trimmed-away pole, unmatched singular declarations, any other
+status-2 surface class, seam/edge/vertex map, incomplete ownership, ambiguous
+normal, or exhausted workspace still falls back.  In particular this does not
+generalize status-2 pointwise mapping into interval authority around trims.
+
+The singular deflation proof now gets first refusal before accepting a strict
+coefficient-hull exclusion.  Small or distant rotated similarities can move a
+mathematically axial collapsed control across one floating ray-plane hull even
+though its independently bounded pole-to-line distance is valid.  If the
+singular proof fails, the original hull exclusion remains authoritative; no
+ordinary excluded span is promoted merely because it has a singular side.
+
+The C/C++ pole corpus now constructs STEP-style analytic revolution spheres
+and transforms the completed BREP as a whole.  Both pole directions must
+select the status-2 singular theorem at scale 1.25, at scale 0.01 with a
+translated/rotated axis, and at scale 10,000 after million-unit translation
+and a different rotation.  All six pass at adaptive depth two.  The repaired
+imported object passes all 70 audit rays with 22 hit rays, 66 prepared
+selections, four uncertified clean misses, no depth or reversal difference,
+and no surface-box overflow.  Its depth-three/eight trees contain 343/16,215
+nodes and 256/8,192 leaves.  The 32-random-chord trace replay now takes about
+0.66 seconds on this host instead of driving the exhaustive box fallback for
+tens of seconds.
+
+Focused optimized validation passes directed analytic, pole, grazing, hard
+Crofton, regular-stream, complete seam/Cobb, and both audit gates; the full
+eight-test group is 8/8, with the final-source seam grid completing in 280.46
+seconds (280.50 seconds for the parallel group).
+Focused ASAN/UBSAN runs of the transformed status-2 fixture, converted sphere
+audit, and imported failure replay report no diagnostic with leak scanning
+disabled.  Keep the production adaptive default at eight while extending
+identical-ray records across the stratified STEP manifest.  Add feature-
+targeted pole, seam, face-normal, and controlled grazing lines because random
+chords alone have a high miss rate and almost never exercise exact degeneracy.
+
+Once those correctness, cache, and sanitizer gates justify the reduced tree,
+measure normal production without trace equivalence.  Then proceed with the
+planned Abert-informed but not Abert-constrained performance phase: remove
+global traversal, build a real face/span BVH, compact immutable span and trim
+records, vectorize conservative coefficient projection/rejection, implement a
+true batched `rt_brep_vshot`, and optimize evaluator/Newton work only when
+profiles show it remains hot.  Every speedup must retain the same complete
+partition, grazing trend, crack-tolerance, similarity, and Crofton gates.
+
+
 IMPLEMENTATION CHECKPOINT: STRATIFIED SURFACETREE PROFILING (2026-08-09)
 ---------------------------------------------------------------------------
 

@@ -11,6 +11,134 @@ as the authoritative continuation log until all acceptance gates pass.
 CURRENT PHASE
 -------------
 
+2026-08-09 ACTIVE IMPORTED-RAY DEPTH COMPARISON AND STATUS-2 POLES
+
+The preceding database profiling checkpoint is committed locally as
+56363b08b6, "Profile BREP SurfaceTrees across databases".  It was not pushed.
+The current checkpoint adds the missing ray-partition gate between the
+experimental adaptive depth three and the production default eight, then uses
+the first genuine imported failure it finds to extend prepared authority.
+
+`brep-audit` now accepts
+
+  --ray-depth-compare --candidate-depth=3 --reference-depth=8 \
+    --ray-count=N file.g brep
+
+and emits one `brlcad-brep-ray-depth-comparison-v1` JSON record.  Three
+centered axis chords and N fixed-seed random sphere chords are shot in both
+directions.  Each depth is prepared independently with direct primitive prep,
+the complete returned segment list is sorted and validated, and the deeper
+tree is destroyed before the shallower tree is built.  The core gate requires
+finite ordered solid intervals, equality between depths within the active
+model tolerance plus a coordinate-roundoff floor, and exact forward/reverse
+line invariance under `t_reverse = chord_length - t_forward`.  Failure records
+include the line and both depth/direction interval streams.
+
+Direct prep is a correctness requirement, not merely an audit convenience.
+The persistent librt prep-cache key currently hashes the object and transform
+but not an explicitly requested adaptive SurfaceTree depth, and serialized
+version-one BREP prep data does not record that request.  An `rt_gettree`
+comparison could therefore load the same cached tree twice.  This audit calls
+`ft_prep` on a freshly loaded BREP for each depth, verifies
+`_rt_brep_prep_stats.surface_tree_depth_limit`, and never opens the prep cache.
+Any future production-default change must revisit cache identity/versioning.
+
+The JSON separately reports nodes, leaves, physical depth, CurveTree size,
+prep time, hit/miss/segment counts, normal-orientation anomalies, prepared
+attempt/selection and every fallback reason, surface boxes and proof work,
+fixed-workspace exhaustion, physical-event state, seam/singular/regular/edge/
+vertex certificates, and fixed-versus-allocating and local-versus-legacy
+diagnostics.  In trace mode a selected prepared result is still followed by
+the legacy solve for equivalence telemetry; `solver_calls` is therefore audit
+work and must not be reported as normal production cost.  Normal production
+returns immediately after a prepared selection.
+
+The first three 70-ray imported runs establish useful but still small
+continuity evidence:
+
+  * `non_grabcad/0353/0353-02-57.g`, `Product_step18_item.s`: 186 faces,
+    20 segments on 16 hit rays, ten prepared selections, 19 surface-box and
+    41 uncertified fallbacks, zero depth or reversal differences.  Depth
+    three/eight uses 2,633/77,858 nodes and 1,749/39,378 leaves.
+  * `nist/NIST_MBE_PMI_4.g`, `Document_item.s`: 495 faces, 20 segments on
+    14 hit rays, 14 selections, eight surface-box and 48 uncertified
+    fallbacks, zero depth or reversal differences, and maximum depth-to-depth
+    endpoint shift `9.17e-9`.  Depth three/eight uses 32,460/659,363 nodes and
+    18,918/333,584 leaves.
+  * `non_grabcad/recurta/step_ap203/10145.g`, `id2_item.s`: depth three and
+    eight returned identical results, but the first run exposed one shared
+    reversal failure.  The +Y line from `(0,-2.3815698604072066,0)` returned
+    `[1.1315698604072066,3.6315698604072066]`; the same line from the opposite
+    endpoint in the -Y direction missed.  Both depths overflowed the prepared
+    32,768-box surface workspace and fell back to the legacy Utah path.  This
+    is the concrete imported version of the remembered sphere-pole failure.
+
+`10145.g` is a one-face solid radius-1.25 `ON_RevSurface` sphere.  Its rational
+order-3-by-3, 9-by-5 NURBS form returns status 2, with four-by-two spans and
+domains `[0,2.5*pi]` and `[-1.25*pi,1.25*pi]`.  The earlier pole theorem only
+marked status-1 NURBS singular sides; the converted-ELL C/C++ fixtures could
+not exercise this representation.  The fallback result was direction
+dependent even though SurfaceTree density was not.
+
+Prepared pole authority is now extended narrowly to valid `ON_RevSurface`
+status-2 forms.  OpenNURBS constructs that form as the tensor product of an
+angular arc and the profile curve, optionally transposed, so a singular
+profile endpoint remains the corresponding collapsed NURBS boundary.  Prep
+records this class-specific map only when both the original surface and the
+converted NURBS declare the same singular side.  Ray time still validates
+collapsed homogeneous controls, the scale-aware line witness, exact outward
+deflation/exclusion and determinant sign, a pointwise parameter round trip,
+3-D locus agreement for both the mapped pole and an interior one-sided normal
+sample, and face CurveTree inclusion.  A classifier result marked trimmed is
+accepted only within the existing edge-miss tolerance; a genuinely
+trimmed-away pole still fails closed.  The complete fiber and
+alternating/minimum-segment theorem remains unchanged.
+
+A singular deflation proof now gets first refusal before a coefficient-hull
+exclusion.  This is needed after small or distant rotated similarities, where
+construction roundoff can place one ray-plane hull strictly on one side even
+though its collapsed pole is within the separately proved line bound.  A
+failed singular proof leaves the original hull exclusion intact; it does not
+turn an ordinary miss into a candidate.  General status-2 seams, trim edges,
+vertices, folds outside the existing clean policies, and arbitrary surface
+classes remain unsupported without their own interval or class-specific map
+proof.
+
+The permanent in-memory pole corpus now builds analytic `ON_RevSurface`
+spheres with the STEP-style arc-length domains and transforms the completed
+BREP as a whole.  It shoots both revolution-axis directions at scale 1.25,
+scale 0.01 after translation and arbitrary rotation, and scale 10,000 after
+million-unit translation and another rotation.  All six rays must observe a
+status-2 face and select the exact prepared singular theorem at adaptive depth
+two.  They pass.  The repaired imported object now passes all 70 rays: 22 hit
+rays, 66 prepared selections, four uncertified clean-miss fallbacks, zero
+depth/reversal differences, zero maximum endpoint difference, no box
+overflow, and 343/16,215 depth-three/eight nodes.  Its 32-random-chord audit
+falls from the earlier pathological tens of seconds to about 0.66 seconds on
+this host, primarily because the certified pole pair no longer drives the
+trace into exhaustive local boxing and legacy fallback.
+
+Focused optimized gates pass 8/8: directed analytic rays, status-1/status-2
+poles, grazing trend, hard Crofton replay, regular stream, complete seam/Cobb
+grid, and both audit modes.  The final-source seam grid took 280.46 seconds
+(280.50 seconds for the parallel group).  ASAN/UBSAN
+with leak scanning disabled passes the transformed pole fixture, the 14-ray
+converted sphere audit, and the six-ray imported failure replay with no
+diagnostic.  The production adaptive default remains eight.  Depth eight is
+a continuity reference here, not a truth oracle; analytic implicit/BREP
+Cauchy-Crofton tests remain the ground truth for shapes with exact
+conversions.
+
+Next extend this direct comparison across the recorded STEP strata, retaining
+identical deterministic rays and fallback distributions.  Add face- and
+feature-targeted lines because random chords undersample sparse parts and
+almost never hit exact seams, poles, or grazes.  Promote each new discrepancy
+into the C/C++ hard corpus with its line and event trace.  Only after the
+partition, cache, sanitizer, and analytic-oracle gates are broad enough should
+adaptive depth three replace eight.  Then profile normal (non-trace) prepared
+production to prioritize face/span BVHs, compact trim data, vectorized
+coefficient rejection, batched `vshot`, and only then evaluator/Newton tuning.
+
 2026-08-09 ACTIVE STRATIFIED SURFACETREE CORPUS PROFILING
 
 The structural-knot/regular-stream checkpoint is committed locally as
@@ -6517,31 +6645,38 @@ NEXT ACTIONS
 Current priority after the structural-knot/regular-stream checkpoint:
 
 A. Keep the production adaptive depth at eight.  The first reproducible
-   14-database depth-three/eight stratum is complete and recorded above.
-   Extend it across file and geometry quantiles, retaining face/span count,
-   status-2 prevalence, trim density, scale, prep time, physical depth,
-   node/leaf count, RSS, preparation failure, and cache behavior.  Add ray
-   selection/fallback and exact-partition evidence; successful tree builds do
-   not establish an arbitrary-BREP default by themselves.
+   14-database depth-three/eight prep stratum and the first three imported
+   identical-ray comparisons are recorded above.  Run `--ray-depth-compare`
+   across the remaining strata, retaining complete partition/reversal results,
+   prepared selection and fallback populations, face/span/status-2/trim/scale
+   fields, actual requested-depth prep statistics, RSS, and cache behavior.
+   Add feature-targeted rays so a high miss fraction does not masquerade as
+   coverage.  Successful tree builds and agreement with depth eight do not by
+   themselves establish an arbitrary-BREP default.
 B. Preserve adaptive depth three as the present conservative experimental
    plateau.  Do not spend correctness effort forcing special fixtures to
    depth zero.  Any candidate production reduction must retain the complete
    18-shard optimized ray gate, the seven rebuilt-cache cases, sanitizer
    qualification, and exact identical-line partition results.
 C. Use the deterministic hard replay as the seed of the difficult-solver C/C++
-   corpus.  Add the first genuine STEP ray failure with its complete geometry,
-   ray, tolerance, span, box, root, event, and fallback evidence; do not tune
-   against an unnamed `.g` model or replace one failure with another.
+   corpus.  The first genuine STEP failure is now captured as the status-2
+   analytic-revolution sphere pole and ratcheted under scale, translation,
+   rotation, and reversal.  Add every subsequent imported discrepancy with
+   its complete geometry, ray, tolerance, span, box, root, event, and fallback
+   evidence; do not tune against an unnamed `.g` model or replace one failure
+   with another.
 D. Extend prepared authority only with separate complete proofs for the
    remaining categories: mixed fold/regular streams, trim-near and
    topology-boundary events, contact-only rays, curved vertex links, and
    many-to-many edge clusters.  Preserve tolerance-healed seam behavior and
    the whole-ray fallback; never reinterpret unresolved as miss.
 E. Once the density/default and cache decision is qualified, begin the plan's
-   certified-pipeline performance phase.  Profile phase costs first, then
-   prioritize the object-level face/span BVH, compact immutable span/trim
-   arrays, conservative SIMD coefficient work, and a real batched vshot.
-   Optimize Newton/OpenNURBS evaluation only if profiles identify it as hot.
+   certified-pipeline performance phase.  Measure normal production separately
+   from trace mode, because trace deliberately reruns the legacy path after a
+   prepared selection.  Profile phase costs first, then prioritize the
+   object-level face/span BVH, compact immutable span/trim arrays,
+   conservative SIMD coefficient work, and a real batched vshot.  Optimize
+   Newton/OpenNURBS evaluation only if profiles identify it as hot.
 
 The numbered items below remain the detailed longer-term backlog.  The
 current ordering above supersedes their older references to dense-tree

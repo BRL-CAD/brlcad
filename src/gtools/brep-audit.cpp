@@ -16,10 +16,13 @@
 #include "common.h"
 
 #include <algorithm>
+#include <cfloat>
 #include <cmath>
+#include <cstdint>
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -39,6 +42,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/primitives/brep.h"
+#include "../librt/librt_private.h"
 
 struct geom_result {
     int ret = BRLCAD_ERROR;
@@ -143,6 +147,98 @@ struct surface_tree_totals {
     int maximum_nurb_form_cv_count[2] = {0, 0};
     int maximum_nurb_form_span_count[2] = {0, 0};
     double seconds = 0.0;
+};
+
+struct ray_audit_interval {
+    double in_dist = 0.0;
+    double out_dist = 0.0;
+    double in_normal_dot = 0.0;
+    double out_normal_dot = 0.0;
+    int in_face = -1;
+    int out_face = -1;
+};
+
+struct ray_audit_shot {
+    int hit_count = 0;
+    bool valid = true;
+    bool prepared_selected = false;
+    int fallback = RT_BREP_PREPARED_FALLBACK_UNSUPPORTED;
+    std::vector<ray_audit_interval> intervals;
+};
+
+struct ray_audit_sample {
+    point_t origin = VINIT_ZERO;
+    vect_t direction = VINIT_ZERO;
+    double chord_length = 0.0;
+    size_t pair_index = 0;
+    bool reverse = false;
+};
+
+struct ray_audit_prep {
+    int ret = BRLCAD_ERROR;
+    int requested_depth = -1;
+    struct rt_brep_prep_stats stats = {};
+    double wall_seconds = 0.0;
+};
+
+struct ray_audit_telemetry {
+    size_t rays = 0;
+    size_t hit_rays = 0;
+    size_t miss_rays = 0;
+    size_t invalid_rays = 0;
+    size_t segments = 0;
+    size_t orientation_anomalies = 0;
+    size_t prepared_eligible = 0;
+    size_t prepared_selected = 0;
+    size_t fallback[RT_BREP_PREPARED_FALLBACK_COUNT] = {};
+    size_t solver_calls = 0;
+    size_t candidate_surface_spans = 0;
+    size_t surface_subdivision_boxes = 0;
+    size_t surface_isolated_boxes = 0;
+    size_t surface_fold_attempts = 0;
+    size_t surface_fold_certified = 0;
+    size_t surface_workspace_exhausted = 0;
+    size_t surface_box_overflow = 0;
+    size_t local_root_overflow = 0;
+    size_t physical_event_overflow = 0;
+    size_t physical_complete = 0;
+    size_t physical_unresolved = 0;
+    size_t physical_state_failures = 0;
+    size_t seam_certified = 0;
+    size_t singular_certified = 0;
+    size_t regular_pair_certified = 0;
+    size_t regular_stream_certified = 0;
+    size_t edge_certified = 0;
+    size_t vertex_certified = 0;
+    size_t fixed_equivalence_mismatch_rays = 0;
+    size_t local_legacy_mismatch_rays = 0;
+};
+
+struct ray_audit_depth_run {
+    ray_audit_prep prep;
+    ray_audit_telemetry telemetry;
+    std::vector<ray_audit_shot> shots;
+};
+
+struct ray_audit_comparison {
+    size_t differing_rays = 0;
+    size_t candidate_invalid_rays = 0;
+    size_t reference_invalid_rays = 0;
+    size_t candidate_reversal_mismatches = 0;
+    size_t reference_reversal_mismatches = 0;
+    size_t disposition_differences = 0;
+    size_t face_differences = 0;
+    double maximum_distance_delta = 0.0;
+    std::vector<size_t> differing_ray_indices;
+    std::vector<size_t> candidate_reversal_indices;
+    std::vector<size_t> reference_reversal_indices;
+};
+
+struct audit_prepared_brep {
+    struct rt_i *rtip = NULL;
+    struct soltab *stp = NULL;
+    struct resource resource = {};
+    bool resource_initialized = false;
 };
 
 
@@ -483,6 +579,707 @@ surface_tree_profile_result(struct db_i *dbip, struct directory *dp,
     result.peak_rss_bytes = peak_rss_bytes();
     rt_db_free_internal(&intern);
     return result;
+}
+
+static const char *
+ray_audit_fallback_name(int fallback)
+{
+    switch (fallback) {
+	case RT_BREP_PREPARED_FALLBACK_NONE: return "none";
+	case RT_BREP_PREPARED_FALLBACK_NON_SOLID: return "non_solid";
+	case RT_BREP_PREPARED_FALLBACK_PLATE: return "plate";
+	case RT_BREP_PREPARED_FALLBACK_UNSUPPORTED: return "unsupported";
+	case RT_BREP_PREPARED_FALLBACK_SURFACE_WORKSPACE:
+	    return "surface_workspace";
+	case RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES:
+	    return "surface_boxes";
+	case RT_BREP_PREPARED_FALLBACK_UNCERTIFIED: return "uncertified";
+	case RT_BREP_PREPARED_FALLBACK_LOCAL_WORKSPACE:
+	    return "local_workspace";
+	case RT_BREP_PREPARED_FALLBACK_ROOT_COVERAGE:
+	    return "root_coverage";
+	case RT_BREP_PREPARED_FALLBACK_EVENT_CLASS: return "event_class";
+	case RT_BREP_PREPARED_FALLBACK_HIT_BUILD: return "hit_build";
+	case RT_BREP_PREPARED_FALLBACK_HIT_WORKSPACE:
+	    return "hit_workspace";
+	case RT_BREP_PREPARED_FALLBACK_PARTITION: return "partition";
+    }
+    return "invalid";
+}
+
+static void
+ray_audit_free_prepared(audit_prepared_brep &prepared)
+{
+    if (prepared.stp) {
+	if (prepared.stp->st_specific && prepared.stp->st_meth &&
+		prepared.stp->st_meth->ft_free)
+	    prepared.stp->st_meth->ft_free(prepared.stp);
+	bu_free(prepared.stp, "brep ray audit soltab");
+	prepared.stp = NULL;
+    }
+    if (prepared.resource_initialized && prepared.rtip) {
+	rt_clean_resource_basic(prepared.rtip, &prepared.resource);
+	BU_PTBL_SET(&prepared.rtip->rti_resources, 0, NULL);
+	prepared.resource_initialized = false;
+    }
+    if (prepared.rtip) {
+	rt_i_destroy(prepared.rtip);
+	prepared.rtip = NULL;
+    }
+}
+
+static bool
+ray_audit_prepare(struct db_i *dbip, struct directory *dp, int depth,
+    const struct bn_tol *tol, audit_prepared_brep &prepared,
+    ray_audit_prep &result)
+{
+    result.requested_depth = depth;
+    struct rt_db_internal intern;
+    if (!tol || load_brep(dbip, dp, &intern) != BRLCAD_OK)
+	return false;
+    prepared.rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+    if (!prepared.rtip ||
+	    !_rt_brep_set_surface_tree_depth(prepared.rtip, depth)) {
+	rt_db_free_internal(&intern);
+	ray_audit_free_prepared(prepared);
+	return false;
+    }
+    prepared.rtip->rti_tol = *tol;
+    prepared.stp = (struct soltab *)bu_calloc(1, sizeof(struct soltab),
+	"brep ray audit soltab");
+    prepared.stp->l.magic = RT_SOLTAB_MAGIC;
+    prepared.stp->l2.magic = RT_SOLTAB2_MAGIC;
+    prepared.stp->st_rtip = prepared.rtip;
+    prepared.stp->st_dp = dp;
+    prepared.stp->st_id = ID_BREP;
+    prepared.stp->st_meth = &OBJ[ID_BREP];
+
+    const int64_t start = bu_gettime();
+    result.ret = OBJ[ID_BREP].ft_prep(prepared.stp, &intern,
+	prepared.rtip);
+    result.wall_seconds = (bu_gettime() - start) / 1000000.0;
+    rt_db_free_internal(&intern);
+    if (result.ret != BRLCAD_OK ||
+	    !_rt_brep_prep_stats(prepared.stp, &result.stats) ||
+	    result.stats.surface_tree_depth_limit != depth) {
+	result.ret = BRLCAD_ERROR;
+	ray_audit_free_prepared(prepared);
+	return false;
+    }
+    rt_init_resource(&prepared.resource, 0, prepared.rtip);
+    prepared.resource_initialized = true;
+    return true;
+}
+
+static double
+ray_audit_rand01(std::mt19937_64 &rng)
+{
+    return std::generate_canonical<double, 53>(rng);
+}
+
+static void
+ray_audit_point_on_sphere(double radius, const point_t center, point_t point,
+    std::mt19937_64 &rng)
+{
+    const double theta = 2.0 * M_PI * ray_audit_rand01(rng);
+    const double z = 2.0 * ray_audit_rand01(rng) - 1.0;
+    const double radial = sqrt(std::max(0.0, 1.0 - z * z));
+    VSET(point, center[X] + radius * radial * cos(theta),
+	center[Y] + radius * radial * sin(theta), center[Z] + radius * z);
+}
+
+static void
+ray_audit_add_chord(std::vector<ray_audit_sample> &samples,
+    const point_t first, const point_t second, size_t pair_index)
+{
+    vect_t delta;
+    VSUB2(delta, second, first);
+    const double length = MAGNITUDE(delta);
+    if (!(length > SMALL_FASTF) || !std::isfinite(length))
+	return;
+    VSCALE(delta, delta, 1.0 / length);
+    ray_audit_sample forward;
+    VMOVE(forward.origin, first);
+    VMOVE(forward.direction, delta);
+    forward.chord_length = length;
+    forward.pair_index = pair_index;
+    samples.push_back(forward);
+    ray_audit_sample reverse;
+    VMOVE(reverse.origin, second);
+    VREVERSE(reverse.direction, delta);
+    reverse.chord_length = length;
+    reverse.pair_index = pair_index;
+    reverse.reverse = true;
+    samples.push_back(reverse);
+}
+
+static std::vector<ray_audit_sample>
+ray_audit_samples(const point_t bmin, const point_t bmax,
+    size_t random_chords, double minimum_radius)
+{
+    static const uint64_t seed = UINT64_C(0x9e3779b97f4a7c15);
+    point_t center;
+    vect_t diagonal;
+    VADD2SCALE(center, bmin, bmax, 0.5);
+    VSUB2(diagonal, bmax, bmin);
+    const double radius = std::max(0.55 * MAGNITUDE(diagonal),
+	minimum_radius);
+    std::vector<ray_audit_sample> samples;
+    samples.reserve(2 * (random_chords + 3));
+    size_t pair_index = 0;
+    for (int axis = 0; axis < 3; ++axis) {
+	point_t first;
+	point_t second;
+	VMOVE(first, center);
+	VMOVE(second, center);
+	first[axis] -= radius;
+	second[axis] += radius;
+	ray_audit_add_chord(samples, first, second, pair_index++);
+    }
+    std::mt19937_64 rng(seed);
+    while (pair_index < random_chords + 3) {
+	point_t first;
+	point_t second;
+	ray_audit_point_on_sphere(radius, center, first, rng);
+	ray_audit_point_on_sphere(radius, center, second, rng);
+	const size_t before = samples.size();
+	ray_audit_add_chord(samples, first, second, pair_index);
+	if (samples.size() != before)
+	    pair_index++;
+    }
+    return samples;
+}
+
+static double
+ray_audit_distance_tolerance(const ray_audit_sample &sample,
+    const ray_audit_shot *first, const ray_audit_shot *second,
+    const struct bn_tol *tol)
+{
+    double scale = std::max(1.0, sample.chord_length);
+    for (int coordinate = 0; coordinate < 3; ++coordinate)
+	scale = std::max(scale, fabs(sample.origin[coordinate]));
+    const ray_audit_shot *shots[2] = {first, second};
+    for (int shot_index = 0; shot_index < 2; ++shot_index) {
+	if (!shots[shot_index])
+	    continue;
+	for (size_t i = 0; i < shots[shot_index]->intervals.size(); ++i) {
+	    scale = std::max(scale,
+		fabs(shots[shot_index]->intervals[i].in_dist));
+	    scale = std::max(scale,
+		fabs(shots[shot_index]->intervals[i].out_dist));
+	}
+    }
+    return std::max(tol ? (double)tol->dist : 0.0,
+	65536.0 * DBL_EPSILON * scale);
+}
+
+static ray_audit_shot
+ray_audit_shoot(audit_prepared_brep &prepared,
+    const ray_audit_sample &sample, const struct bn_tol *tol,
+    struct rt_brep_shot_trace *trace)
+{
+    ray_audit_shot result;
+    struct application ap;
+    struct seg seghead;
+    struct xray ray;
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = prepared.rtip;
+    ap.a_resource = &prepared.resource;
+    ap.a_onehit = 0;
+    VMOVE(ray.r_pt, sample.origin);
+    VMOVE(ray.r_dir, sample.direction);
+    ray.magic = RT_RAY_MAGIC;
+    BU_LIST_INIT(&seghead.l);
+    result.hit_count = _rt_brep_shot_trace(prepared.stp, &ray, &ap,
+	&seghead, trace);
+    result.prepared_selected = trace->prepared_production_selected == 1;
+    result.fallback = trace->prepared_production_fallback;
+
+    struct seg *segp;
+    for (BU_LIST_FOR(segp, seg, &seghead.l)) {
+	ray_audit_interval interval;
+	interval.in_dist = segp->seg_in.hit_dist;
+	interval.out_dist = segp->seg_out.hit_dist;
+	interval.in_normal_dot = VDOT(segp->seg_in.hit_normal,
+	    sample.direction);
+	interval.out_normal_dot = VDOT(segp->seg_out.hit_normal,
+	    sample.direction);
+	interval.in_face = segp->seg_in.hit_surfno;
+	interval.out_face = segp->seg_out.hit_surfno;
+	result.intervals.push_back(interval);
+    }
+    while (BU_LIST_WHILE(segp, seg, &seghead.l)) {
+	BU_LIST_DEQUEUE(&segp->l);
+	struct resource *resource = &prepared.resource;
+	RT_FREE_SEG(segp, resource);
+    }
+    std::sort(result.intervals.begin(), result.intervals.end(),
+	[](const ray_audit_interval &first, const ray_audit_interval &second) {
+	    if (first.in_dist < second.in_dist)
+		return true;
+	    if (second.in_dist < first.in_dist)
+		return false;
+	    return first.out_dist < second.out_dist;
+	});
+    const double distance_tolerance = ray_audit_distance_tolerance(sample,
+	&result, NULL, tol);
+    if (result.hit_count < 0 ||
+	    (size_t)result.hit_count != 2 * result.intervals.size() ||
+	    trace->final_segments != result.intervals.size())
+	result.valid = false;
+    for (size_t i = 0; i < result.intervals.size(); ++i) {
+	const ray_audit_interval &interval = result.intervals[i];
+	if (!std::isfinite(interval.in_dist) ||
+		!std::isfinite(interval.out_dist) ||
+		!std::isfinite(interval.in_normal_dot) ||
+		!std::isfinite(interval.out_normal_dot) ||
+		interval.in_dist > interval.out_dist + distance_tolerance ||
+		(i && interval.in_dist <
+		    result.intervals[i - 1].out_dist - distance_tolerance))
+	    result.valid = false;
+    }
+    return result;
+}
+
+static void
+ray_audit_accumulate(ray_audit_telemetry &total,
+    const ray_audit_shot &shot, const struct rt_brep_shot_trace &trace)
+{
+    total.rays++;
+    if (shot.intervals.empty())
+	total.miss_rays++;
+    else
+	total.hit_rays++;
+    total.invalid_rays += shot.valid ? 0 : 1;
+    total.segments += shot.intervals.size();
+    for (size_t i = 0; i < shot.intervals.size(); ++i)
+	if (shot.intervals[i].in_normal_dot > 1.0e-8 ||
+		shot.intervals[i].out_normal_dot < -1.0e-8)
+	    total.orientation_anomalies++;
+    total.prepared_eligible += trace.prepared_production_eligible;
+    total.prepared_selected += trace.prepared_production_selected;
+    if (trace.prepared_production_fallback >= 0 &&
+	    trace.prepared_production_fallback <
+		RT_BREP_PREPARED_FALLBACK_COUNT)
+	total.fallback[trace.prepared_production_fallback]++;
+    total.solver_calls += trace.solver_calls;
+    total.candidate_surface_spans += trace.candidate_surface_spans;
+    total.surface_subdivision_boxes += trace.surface_subdivision_boxes;
+    total.surface_isolated_boxes += trace.surface_isolated_boxes;
+    total.surface_fold_attempts += trace.surface_fold_attempts;
+    total.surface_fold_certified += trace.surface_fold_complete;
+    total.surface_workspace_exhausted += trace.surface_workspace_exhausted;
+    total.surface_box_overflow += trace.surface_box_overflow;
+    total.local_root_overflow += trace.local_root_overflow;
+    total.physical_event_overflow += trace.physical_event_overflow;
+    total.physical_complete += trace.physical_event_complete;
+    total.physical_unresolved += trace.physical_event_unresolved;
+    total.physical_state_failures += trace.physical_event_state_failures;
+    total.seam_certified += trace.physical_event_seam_certified;
+    total.singular_certified += trace.physical_event_singular_certified;
+    total.regular_pair_certified +=
+	trace.physical_event_regular_pair_certified;
+    total.regular_stream_certified +=
+	trace.physical_event_regular_stream_certified;
+    total.edge_certified += trace.physical_event_edge_certified;
+    total.vertex_certified += trace.physical_event_vertex_certified;
+    if (trace.fixed_leaf_mismatches || trace.fixed_hit_mismatches ||
+	    trace.fixed_cleanup_mismatches ||
+	    trace.trim_equivalence_mismatches ||
+	    trace.face_trim_equivalence_mismatches)
+	total.fixed_equivalence_mismatch_rays++;
+    if (trace.root_event_mismatches || trace.local_event_stage_mismatches ||
+	    trace.local_event_hit_mismatches ||
+	    trace.local_event_final_mismatches)
+	total.local_legacy_mismatch_rays++;
+}
+
+static ray_audit_depth_run
+ray_audit_run_depth(struct db_i *dbip, struct directory *dp, int depth,
+    const struct bn_tol *tol, const std::vector<ray_audit_sample> &samples)
+{
+    ray_audit_depth_run run;
+    audit_prepared_brep prepared;
+    if (!ray_audit_prepare(dbip, dp, depth, tol, prepared, run.prep))
+	return run;
+    run.shots.reserve(samples.size());
+    struct rt_brep_shot_trace *trace =
+	(struct rt_brep_shot_trace *)bu_calloc(1, sizeof(*trace),
+	    "brep ray audit trace");
+    for (size_t i = 0; i < samples.size(); ++i) {
+	ray_audit_shot shot = ray_audit_shoot(prepared, samples[i], tol,
+	    trace);
+	ray_audit_accumulate(run.telemetry, shot, *trace);
+	run.shots.push_back(shot);
+    }
+    bu_free(trace, "brep ray audit trace");
+    ray_audit_free_prepared(prepared);
+    return run;
+}
+
+static bool
+ray_audit_shots_equivalent(const ray_audit_sample &sample,
+    const ray_audit_shot &first, const ray_audit_shot &second,
+    const struct bn_tol *tol, double &maximum_delta, size_t &face_differences)
+{
+    if (!first.valid || !second.valid ||
+	    first.intervals.size() != second.intervals.size())
+	return false;
+    const double distance_tolerance = ray_audit_distance_tolerance(sample,
+	&first, &second, tol);
+    bool equivalent = true;
+    for (size_t i = 0; i < first.intervals.size(); ++i) {
+	const double in_delta = fabs(first.intervals[i].in_dist -
+	    second.intervals[i].in_dist);
+	const double out_delta = fabs(first.intervals[i].out_dist -
+	    second.intervals[i].out_dist);
+	maximum_delta = std::max(maximum_delta, std::max(in_delta, out_delta));
+	if (in_delta > distance_tolerance || out_delta > distance_tolerance)
+	    equivalent = false;
+	if (first.intervals[i].in_face != second.intervals[i].in_face ||
+		first.intervals[i].out_face != second.intervals[i].out_face)
+	    face_differences++;
+    }
+    return equivalent;
+}
+
+static bool
+ray_audit_reversal_equivalent(const ray_audit_sample &forward_sample,
+    const ray_audit_shot &forward, const ray_audit_shot &reverse,
+    const struct bn_tol *tol)
+{
+    if (!forward.valid || !reverse.valid ||
+	    forward.intervals.size() != reverse.intervals.size())
+	return false;
+    const double distance_tolerance = ray_audit_distance_tolerance(
+	forward_sample, &forward, &reverse, tol);
+    for (size_t i = 0; i < forward.intervals.size(); ++i) {
+	const ray_audit_interval &first = forward.intervals[i];
+	const ray_audit_interval &second =
+	    reverse.intervals[reverse.intervals.size() - i - 1];
+	if (fabs(second.in_dist -
+		(forward_sample.chord_length - first.out_dist)) >
+		distance_tolerance ||
+		fabs(second.out_dist -
+		    (forward_sample.chord_length - first.in_dist)) >
+		distance_tolerance)
+	    return false;
+    }
+    return true;
+}
+
+static void
+ray_audit_store_example(std::vector<size_t> &examples, size_t index)
+{
+    if (examples.size() < 16)
+	examples.push_back(index);
+}
+
+static ray_audit_comparison
+ray_audit_compare(const std::vector<ray_audit_sample> &samples,
+    const ray_audit_depth_run &candidate,
+    const ray_audit_depth_run &reference, const struct bn_tol *tol)
+{
+    ray_audit_comparison result;
+    const size_t count = std::min(candidate.shots.size(),
+	reference.shots.size());
+    for (size_t i = 0; i < count; ++i) {
+	result.candidate_invalid_rays += candidate.shots[i].valid ? 0 : 1;
+	result.reference_invalid_rays += reference.shots[i].valid ? 0 : 1;
+	if (!ray_audit_shots_equivalent(samples[i], candidate.shots[i],
+		reference.shots[i], tol, result.maximum_distance_delta,
+		result.face_differences)) {
+	    result.differing_rays++;
+	    ray_audit_store_example(result.differing_ray_indices, i);
+	}
+	if (candidate.shots[i].prepared_selected !=
+		reference.shots[i].prepared_selected ||
+		candidate.shots[i].fallback != reference.shots[i].fallback)
+	    result.disposition_differences++;
+    }
+    if (candidate.shots.size() != reference.shots.size() ||
+	    count != samples.size())
+	result.differing_rays++;
+    for (size_t i = 0; i + 1 < count; i += 2) {
+	if (!ray_audit_reversal_equivalent(samples[i], candidate.shots[i],
+		candidate.shots[i + 1], tol)) {
+	    result.candidate_reversal_mismatches++;
+	    ray_audit_store_example(result.candidate_reversal_indices,
+		samples[i].pair_index);
+	}
+	if (!ray_audit_reversal_equivalent(samples[i], reference.shots[i],
+		reference.shots[i + 1], tol)) {
+	    result.reference_reversal_mismatches++;
+	    ray_audit_store_example(result.reference_reversal_indices,
+		samples[i].pair_index);
+	}
+    }
+    return result;
+}
+
+static void
+print_ray_audit_prep(const ray_audit_prep &prep)
+{
+    std::cout << "{\"status\":" << json_quote(
+	prep.ret == BRLCAD_OK ? "ok" : "failed")
+	<< ",\"requested_adaptive_depth\":" << prep.requested_depth
+	<< ",\"recorded_adaptive_depth\":"
+	<< prep.stats.surface_tree_depth_limit
+	<< ",\"physical_maximum_depth\":"
+	<< prep.stats.surface_tree_maximum_depth
+	<< ",\"surface_tree_nodes\":" << prep.stats.surface_tree_nodes
+	<< ",\"surface_tree_leaves\":" << prep.stats.surface_tree_leaves
+	<< ",\"curve_trees\":" << prep.stats.curve_trees
+	<< ",\"curve_tree_leaves\":" << prep.stats.curve_tree_leaves
+	<< ",\"reported_build_seconds\":"
+	<< prep.stats.surface_tree_build_microseconds / 1000000.0
+	<< ",\"wall_seconds\":" << prep.wall_seconds << "}";
+}
+
+static void
+print_ray_audit_telemetry(const ray_audit_telemetry &total)
+{
+    std::cout << "{\"rays\":" << total.rays
+	<< ",\"hit_rays\":" << total.hit_rays
+	<< ",\"miss_rays\":" << total.miss_rays
+	<< ",\"invalid_rays\":" << total.invalid_rays
+	<< ",\"segments\":" << total.segments
+	<< ",\"orientation_anomalies\":" << total.orientation_anomalies
+	<< ",\"prepared_eligible\":" << total.prepared_eligible
+	<< ",\"prepared_selected\":" << total.prepared_selected
+	<< ",\"fallbacks\":{";
+    for (int fallback = 0; fallback < RT_BREP_PREPARED_FALLBACK_COUNT;
+	    ++fallback) {
+	if (fallback)
+	    std::cout << ",";
+	std::cout << json_quote(ray_audit_fallback_name(fallback)) << ":"
+	    << total.fallback[fallback];
+    }
+    std::cout << "},\"solver_calls\":" << total.solver_calls
+	<< ",\"candidate_surface_spans\":"
+	<< total.candidate_surface_spans
+	<< ",\"surface_subdivision_boxes\":"
+	<< total.surface_subdivision_boxes
+	<< ",\"surface_isolated_boxes\":" << total.surface_isolated_boxes
+	<< ",\"surface_fold_attempts\":" << total.surface_fold_attempts
+	<< ",\"surface_fold_certified\":" << total.surface_fold_certified
+	<< ",\"workspace\":{\"surface_exhausted\":"
+	<< total.surface_workspace_exhausted
+	<< ",\"surface_box_overflow\":" << total.surface_box_overflow
+	<< ",\"local_root_overflow\":" << total.local_root_overflow
+	<< ",\"physical_event_overflow\":"
+	<< total.physical_event_overflow
+	<< "},\"physical_events\":{\"complete\":"
+	<< total.physical_complete << ",\"unresolved\":"
+	<< total.physical_unresolved << ",\"state_failures\":"
+	<< total.physical_state_failures << "},\"certificates\":{\"seam\":"
+	<< total.seam_certified << ",\"singular\":"
+	<< total.singular_certified << ",\"regular_pair\":"
+	<< total.regular_pair_certified << ",\"regular_stream\":"
+	<< total.regular_stream_certified << ",\"edge\":"
+	<< total.edge_certified << ",\"vertex\":"
+	<< total.vertex_certified
+	<< "},\"fixed_equivalence_mismatch_rays\":"
+	<< total.fixed_equivalence_mismatch_rays
+	<< ",\"local_legacy_mismatch_rays\":"
+	<< total.local_legacy_mismatch_rays << "}";
+}
+
+static void
+print_ray_audit_indices(const std::vector<size_t> &indices)
+{
+    std::cout << "[";
+    for (size_t i = 0; i < indices.size(); ++i) {
+	if (i)
+	    std::cout << ",";
+	std::cout << indices[i];
+    }
+    std::cout << "]";
+}
+
+static void
+print_ray_audit_shot(const ray_audit_shot &shot)
+{
+    std::cout << "{\"valid\":" << (shot.valid ? "true" : "false")
+	<< ",\"hit_count\":" << shot.hit_count
+	<< ",\"prepared_selected\":"
+	<< (shot.prepared_selected ? "true" : "false")
+	<< ",\"fallback\":" << json_quote(
+	    ray_audit_fallback_name(shot.fallback))
+	<< ",\"intervals\":[";
+    for (size_t i = 0; i < shot.intervals.size(); ++i) {
+	if (i)
+	    std::cout << ",";
+	const ray_audit_interval &interval = shot.intervals[i];
+	std::cout << "{\"in\":" << interval.in_dist
+	    << ",\"out\":" << interval.out_dist
+	    << ",\"in_face\":" << interval.in_face
+	    << ",\"out_face\":" << interval.out_face
+	    << ",\"in_normal_dot\":" << interval.in_normal_dot
+	    << ",\"out_normal_dot\":" << interval.out_normal_dot << "}";
+    }
+    std::cout << "]}";
+}
+
+static void
+print_ray_audit_failure_records(
+    const std::vector<ray_audit_sample> &samples,
+    const ray_audit_depth_run &candidate,
+    const ray_audit_depth_run &reference,
+    const ray_audit_comparison &comparison)
+{
+    std::vector<size_t> pairs;
+    for (size_t i = 0; i < comparison.differing_ray_indices.size(); ++i)
+	pairs.push_back(comparison.differing_ray_indices[i] / 2);
+    pairs.insert(pairs.end(), comparison.candidate_reversal_indices.begin(),
+	comparison.candidate_reversal_indices.end());
+    pairs.insert(pairs.end(), comparison.reference_reversal_indices.begin(),
+	comparison.reference_reversal_indices.end());
+    std::sort(pairs.begin(), pairs.end());
+    pairs.erase(std::unique(pairs.begin(), pairs.end()), pairs.end());
+    if (pairs.size() > 16)
+	pairs.resize(16);
+    std::cout << "[";
+    for (size_t record_index = 0; record_index < pairs.size();
+	    ++record_index) {
+	const size_t pair = pairs[record_index];
+	const size_t forward = 2 * pair;
+	const size_t reverse = forward + 1;
+	if (forward >= samples.size() ||
+		reverse >= candidate.shots.size() ||
+		reverse >= reference.shots.size())
+	    continue;
+	if (record_index)
+	    std::cout << ",";
+	std::cout << "{\"pair_index\":" << pair
+	    << ",\"forward_ray_index\":" << forward
+	    << ",\"reverse_ray_index\":" << reverse
+	    << ",\"origin\":[" << samples[forward].origin[X] << ","
+	    << samples[forward].origin[Y] << ","
+	    << samples[forward].origin[Z] << "]"
+	    << ",\"direction\":[" << samples[forward].direction[X] << ","
+	    << samples[forward].direction[Y] << ","
+	    << samples[forward].direction[Z] << "]"
+	    << ",\"chord_length\":" << samples[forward].chord_length
+	    << ",\"candidate_forward\":";
+	print_ray_audit_shot(candidate.shots[forward]);
+	std::cout << ",\"candidate_reverse\":";
+	print_ray_audit_shot(candidate.shots[reverse]);
+	std::cout << ",\"reference_forward\":";
+	print_ray_audit_shot(reference.shots[forward]);
+	std::cout << ",\"reference_reverse\":";
+	print_ray_audit_shot(reference.shots[reverse]);
+	std::cout << "}";
+    }
+    std::cout << "]";
+}
+
+static int
+ray_depth_compare(struct db_i *dbip, const char *db_path,
+    struct directory *dp, int candidate_depth, int reference_depth,
+    size_t random_chords)
+{
+    struct rt_db_internal intern;
+    bool solid = false;
+    int face_count = 0;
+    point_t bmin = VINIT_ZERO;
+    point_t bmax = VINIT_ZERO;
+    bool have_bbox = false;
+    if (load_brep(dbip, dp, &intern) == BRLCAD_OK) {
+	struct rt_brep_internal *bi =
+	    (struct rt_brep_internal *)intern.idb_ptr;
+	RT_BREP_CK_MAGIC(bi);
+	face_count = bi->brep->m_F.Count();
+	solid = bi->brep->IsSolid();
+	const ON_BoundingBox bbox = bi->brep->BoundingBox();
+	if (bbox.IsValid()) {
+	    VMOVE(bmin, bbox.m_min);
+	    VMOVE(bmax, bbox.m_max);
+	    have_bbox = true;
+	}
+	rt_db_free_internal(&intern);
+    }
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    const std::vector<ray_audit_sample> samples = have_bbox && solid ?
+	ray_audit_samples(bmin, bmax, random_chords,
+	    std::max(100.0 * tol.dist, 1.0e-6)) :
+	std::vector<ray_audit_sample>();
+    ray_audit_depth_run reference;
+    ray_audit_depth_run candidate;
+    if (!samples.empty()) {
+	/* Direct primitive prep is deliberate: the persistent prep-cache key
+	 * does not currently encode an explicitly requested adaptive depth. */
+	reference = ray_audit_run_depth(dbip, dp, reference_depth, &tol,
+	    samples);
+	if (reference.prep.ret == BRLCAD_OK)
+	    candidate = ray_audit_run_depth(dbip, dp, candidate_depth, &tol,
+		samples);
+    }
+    const ray_audit_comparison comparison =
+	(candidate.prep.ret == BRLCAD_OK && reference.prep.ret == BRLCAD_OK) ?
+	ray_audit_compare(samples, candidate, reference, &tol) :
+	ray_audit_comparison();
+    const bool pass = solid && have_bbox && face_count > 0 &&
+	!samples.empty() && candidate.prep.ret == BRLCAD_OK &&
+	reference.prep.ret == BRLCAD_OK && !comparison.differing_rays &&
+	!comparison.candidate_invalid_rays &&
+	!comparison.reference_invalid_rays &&
+	!comparison.candidate_reversal_mismatches &&
+	!comparison.reference_reversal_mismatches;
+    const char *status = pass ? "pass" : !face_count ? "empty_brep" :
+	!solid ? "non_solid" : !have_bbox ? "invalid_bbox" :
+	"comparison_failed";
+
+    std::cout << std::setprecision(17)
+	<< "{\"format\":\"brlcad-brep-ray-depth-comparison-v1\""
+	<< ",\"database\":" << json_quote(db_path)
+	<< ",\"object\":" << json_quote(dp->d_namep)
+	<< ",\"status\":" << json_quote(status)
+	<< ",\"solid\":" << (solid ? "true" : "false")
+	<< ",\"faces\":" << face_count
+	<< ",\"tolerance\":{\"distance\":" << tol.dist
+	<< ",\"distance_squared\":" << tol.dist_sq
+	<< ",\"perpendicular\":" << tol.perp
+	<< ",\"parallel\":" << tol.para << "}"
+	<< ",\"sampling\":{\"seed\":\"0x9e3779b97f4a7c15\""
+	<< ",\"axis_chord_pairs\":3,\"random_chord_pairs\":"
+	<< random_chords << ",\"total_chord_pairs\":"
+	<< samples.size() / 2 << ",\"rays\":" << samples.size() << "}"
+	<< ",\"reference\":{\"prep\":";
+    print_ray_audit_prep(reference.prep);
+    std::cout << ",\"trace\":";
+    print_ray_audit_telemetry(reference.telemetry);
+    std::cout << "},\"candidate\":{\"prep\":";
+    print_ray_audit_prep(candidate.prep);
+    std::cout << ",\"trace\":";
+    print_ray_audit_telemetry(candidate.telemetry);
+    std::cout << "},\"comparison\":{\"differing_rays\":"
+	<< comparison.differing_rays
+	<< ",\"candidate_invalid_rays\":"
+	<< comparison.candidate_invalid_rays
+	<< ",\"reference_invalid_rays\":"
+	<< comparison.reference_invalid_rays
+	<< ",\"candidate_reversal_mismatches\":"
+	<< comparison.candidate_reversal_mismatches
+	<< ",\"reference_reversal_mismatches\":"
+	<< comparison.reference_reversal_mismatches
+	<< ",\"disposition_differences\":"
+	<< comparison.disposition_differences
+	<< ",\"face_differences\":" << comparison.face_differences
+	<< ",\"maximum_distance_delta\":"
+	<< comparison.maximum_distance_delta
+	<< ",\"differing_ray_indices\":";
+    print_ray_audit_indices(comparison.differing_ray_indices);
+    std::cout << ",\"candidate_reversal_pair_indices\":";
+    print_ray_audit_indices(comparison.candidate_reversal_indices);
+    std::cout << ",\"reference_reversal_pair_indices\":";
+    print_ray_audit_indices(comparison.reference_reversal_indices);
+	std::cout << ",\"failure_records\":";
+    print_ray_audit_failure_records(samples, candidate, reference,
+	comparison);
+    std::cout << "},\"process_peak_rss_bytes\":" << peak_rss_bytes()
+	<< "}\n";
+    return pass ? 0 : 1;
 }
 
 static geom_result
@@ -1176,6 +1973,7 @@ main(int argc, const char **argv)
     int prep_only = 0;
     int surface_trees_only = 0;
     int surface_trees_all = 0;
+    int ray_depth_compare_only = 0;
     double ratio_min = 0.5;
     double ratio_max = 2.0;
     double tess_abs = 0.0;
@@ -1183,7 +1981,10 @@ main(int argc, const char **argv)
     double tess_norm = 0.0;
     long memory_limit_mib = 0;
     long surface_tree_depth = BREP_MAX_FT_DEPTH;
-    struct bu_opt_desc d[13];
+    long candidate_depth = 3;
+    long reference_depth = RT_BREP_DEFAULT_SURFACE_TREE_DEPTH;
+    long ray_count = 64;
+    struct bu_opt_desc d[17];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -1196,23 +1997,36 @@ main(int argc, const char **argv)
     BU_OPT(d[9], "", "surface-trees-only", "", NULL, &surface_trees_only, "Profile raytrace SurfaceTrees serially");
     BU_OPT(d[10], "", "surface-trees-all", "", NULL, &surface_trees_all, "Summarize SurfaceTrees for every BREP in a database");
     BU_OPT(d[11], "", "surface-tree-depth", "#", &bu_opt_long, &surface_tree_depth, "Adaptive SurfaceTree depth after structural splits");
-    BU_OPT_NULL(d[12]);
+    BU_OPT(d[12], "", "ray-depth-compare", "", NULL, &ray_depth_compare_only, "Compare uncached BREP partitions at two SurfaceTree depths");
+    BU_OPT(d[13], "", "candidate-depth", "#", &bu_opt_long, &candidate_depth, "Candidate adaptive SurfaceTree depth");
+    BU_OPT(d[14], "", "reference-depth", "#", &bu_opt_long, &reference_depth, "Reference adaptive SurfaceTree depth");
+    BU_OPT(d[15], "", "ray-count", "#", &bu_opt_long, &ray_count, "Deterministic random chord pairs (three axis pairs are added)");
+    BU_OPT_NULL(d[16]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage = "Usage: brep-audit [options] "
-	"[--list|--prep-only|--surface-trees-only|--surface-trees-all] "
+	"[--list|--prep-only|--surface-trees-only|--surface-trees-all|"
+	"--ray-depth-compare] "
 	"file.g [brep]\n";
     const bool database_only = list_only || surface_trees_all;
     if (print_help || (database_only && ac != 1) ||
 	    (!database_only && ac != 2) ||
 	    ((list_only ? 1 : 0) + (prep_only ? 1 : 0) +
 	     (surface_trees_only ? 1 : 0) +
-	     (surface_trees_all ? 1 : 0) > 1) ||
+	     (surface_trees_all ? 1 : 0) +
+	     (ray_depth_compare_only ? 1 : 0) > 1) ||
 	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
 	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0 ||
 	    surface_tree_depth < 0 ||
 	    surface_tree_depth > BREP_MAX_FT_DEPTH ||
 	    (!surface_trees_only && !surface_trees_all &&
-	     surface_tree_depth != BREP_MAX_FT_DEPTH)) {
+	     surface_tree_depth != BREP_MAX_FT_DEPTH) ||
+	    candidate_depth < 0 || candidate_depth > BREP_MAX_FT_DEPTH ||
+	    reference_depth < 0 || reference_depth > BREP_MAX_FT_DEPTH ||
+	    ray_count < 0 || ray_count > 1000000 ||
+	    (!ray_depth_compare_only &&
+	     (candidate_depth != 3 ||
+	      reference_depth != RT_BREP_DEFAULT_SURFACE_TREE_DEPTH ||
+	      ray_count != 64))) {
 	std::cerr << usage;
 	return print_help ? 0 : 2;
     }
@@ -1258,6 +2072,13 @@ main(int argc, const char **argv)
 	print_surface_tree_result(argv[0], argv[1], trees);
 	db_close(dbip);
 	return trees.ret == BRLCAD_OK ? 0 : 1;
+    }
+
+    if (ray_depth_compare_only) {
+	const int ret = ray_depth_compare(dbip, argv[0], dp,
+	    (int)candidate_depth, (int)reference_depth, (size_t)ray_count);
+	db_close(dbip);
+	return ret;
     }
 
     struct bn_tol tol = BN_TOL_INIT_TOL;
