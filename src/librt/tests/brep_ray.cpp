@@ -516,8 +516,17 @@ report_grazing_trace(const char *label, double chord_ratio, int reverse,
 	    trace.surface_fold_strip_arithmetic_failures +
 	    trace.surface_fold_strip_depth_exhausted +
 	    trace.surface_fold_strip_workspace_exhausted);
-    std::printf("  fold mixed pairs=%zu\n",
-	trace.surface_fold_mixed_pairs);
+    std::printf("  fold mixed pairs=%zu localization=%zu/%zu/%zu "
+	"unmatched=%zu direction=%zu/%zu trim=%zu/%zu\n",
+	trace.surface_fold_mixed_pairs,
+	trace.surface_fold_localization_attempts,
+	trace.surface_fold_localization_certified,
+	trace.surface_fold_localization_failures,
+	trace.surface_fold_unmatched_roots,
+	trace.surface_fold_direction_checks,
+	trace.surface_fold_direction_mismatches,
+	trace.surface_fold_trim_queries,
+	trace.surface_fold_trim_failures);
     for (size_t box_index = 0; box_index < trace.stored_surface_boxes;
 	    ++box_index) {
 	const struct rt_brep_trace_surface_box &box =
@@ -5002,6 +5011,260 @@ cobb_transform_vector(const ON_Xform &xform, const ON_3dVector &vector)
 	xform[1][2] * vector.z,
 	xform[2][0] * vector.x + xform[2][1] * vector.y +
 	xform[2][2] * vector.z);
+}
+
+
+static int
+check_torus_status2_similarity(const struct bn_tol *tol)
+{
+    if (!tol || !(tol->dist > 0.0) || !std::isfinite(tol->dist))
+	return 1;
+    struct similarity_case {
+	const char *name;
+	double scale;
+	ON_3dVector translation;
+	ON_3dVector axis;
+	double angle;
+    } cases[] = {
+	{"translated-rotated", 1.0, ON_3dVector(-31.25, 47.5, 103.75),
+	    ON_3dVector(1.0, -2.0, 0.5), 0.731},
+	{"small", 0.01, ON_3dVector(1.25, -2.5, 5.0),
+	    ON_3dVector(-0.3, 1.0, 0.7), -1.113},
+	{"large", 1.0e4, ON_3dVector(1.0e6, -2.0e6, 3.0e6),
+	    ON_3dVector(2.0, 0.25, -1.0), 2.017}
+    };
+    const double chord_ratios[] = {2.0, 1.1};
+    const double theta = 0.731;
+    const double phi = 0.647;
+    const ON_3dVector base_major_radial(cos(theta), sin(theta), 0.0);
+    const ON_3dVector base_tube_radial =
+	cos(phi) * base_major_radial + sin(phi) * ON_3dVector::ZAxis;
+    const ON_3dVector base_tube_tangent =
+	-sin(phi) * base_major_radial + cos(phi) * ON_3dVector::ZAxis;
+    const ON_3dPoint base_tube_center = 12.0 * base_major_radial;
+    int failures = 0;
+    size_t rays = 0;
+    size_t selected = 0;
+    size_t expansion_ratchets = 0;
+    size_t implicit_artifacts = 0;
+    size_t maximum_refinements = 0;
+    size_t maximum_high_water = 0;
+    double maximum_implicit_error = 0.0;
+    double maximum_brep_error = 0.0;
+
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const similarity_case &test = cases[case_index];
+	const ON_Xform xform = cobb_axis_angle_similarity_transform(
+	    test.scale, test.translation, test.axis, test.angle);
+	const ON_3dPoint center = cobb_transform_point(xform,
+	    ON_3dPoint::Origin);
+	ON_3dVector h = cobb_transform_vector(xform,
+	    ON_3dVector::ZAxis);
+	const ON_3dVector a = cobb_transform_vector(xform,
+	    ON_3dVector(12.0, 0.0, 0.0));
+	const ON_3dVector b = cobb_transform_vector(xform,
+	    ON_3dVector(0.0, 12.0, 0.0));
+	if (!h.Unitize()) {
+	    failures++;
+	    continue;
+	}
+	struct rt_tor_internal torus = {};
+	torus.magic = RT_TOR_INTERNAL_MAGIC;
+	VSET(torus.v, center.x, center.y, center.z);
+	VSET(torus.h, h.x, h.y, h.z);
+	torus.r_a = 12.0 * test.scale;
+	torus.r_h = 3.0 * test.scale;
+	torus.r_b = torus.r_a;
+	VSET(torus.a, a.x, a.y, a.z);
+	VSET(torus.b, b.x, b.y, b.z);
+	struct rt_db_internal torus_intern;
+	RT_DB_INTERNAL_INIT(&torus_intern);
+	torus_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	torus_intern.idb_type = ID_TOR;
+	torus_intern.idb_meth = &OBJ[ID_TOR];
+	torus_intern.idb_ptr = &torus;
+
+	struct bn_tol case_tol = *tol;
+	case_tol.dist = tol->dist * test.scale;
+	case_tol.dist_sq = case_tol.dist * case_tol.dist;
+	struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+	if (!rtip) {
+	    std::printf("FAIL: status-2 torus %s rt_i construction\n",
+		test.name);
+	    failures++;
+	    continue;
+	}
+	rtip->rti_tol = case_tol;
+	struct resource resource = {};
+	rt_init_resource(&resource, 0, rtip);
+	struct soltab *implicit_stp = prep_solid(rtip, &torus_intern, ID_TOR);
+	ON_Brep *brep = ON_Brep::New();
+	OBJ[ID_TOR].ft_brep(&brep, &torus_intern, &case_tol);
+	ON_NurbsSurface nurbs;
+	const ON_Surface *surface = brep && brep->m_F.Count() == 1 ?
+	    brep->m_F[0].SurfaceOf() : NULL;
+	const int nurb_form_status = surface ?
+	    surface->GetNurbForm(nurbs) : 0;
+	struct rt_brep_internal brep_internal = {};
+	brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	brep_internal.brep = brep;
+	struct rt_db_internal brep_intern;
+	RT_DB_INTERNAL_INIT(&brep_intern);
+	brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	brep_intern.idb_type = ID_BREP;
+	brep_intern.idb_meth = &OBJ[ID_BREP];
+	brep_intern.idb_ptr = &brep_internal;
+	struct soltab *brep_stp = nurb_form_status == 2 ?
+	    prep_solid(rtip, &brep_intern, ID_BREP) : NULL;
+	if (!implicit_stp || !brep_stp) {
+	    std::printf("FAIL: status-2 torus %s prep/status=%d/%d/%d\n",
+		test.name, implicit_stp != NULL, brep_stp != NULL,
+		nurb_form_status);
+	    failures++;
+	} else {
+	    const double radius = 3.0 * test.scale;
+	    const ON_3dPoint tube_center = cobb_transform_point(xform,
+		base_tube_center);
+	    ON_3dVector tube_radial = cobb_transform_vector(xform,
+		base_tube_radial);
+	    ON_3dVector tube_tangent = cobb_transform_vector(xform,
+		base_tube_tangent);
+	    if (!tube_radial.Unitize() || !tube_tangent.Unitize()) {
+		failures++;
+	    } else {
+		for (size_t ratio_index = 0; ratio_index <
+			sizeof(chord_ratios) / sizeof(chord_ratios[0]);
+			++ratio_index) {
+		    const double chord_ratio = chord_ratios[ratio_index];
+		    const double half_chord = 0.5 * chord_ratio * case_tol.dist;
+		    const double closest_distance = sqrt(std::max(0.0,
+			radius * radius - half_chord * half_chord));
+		    const double clearance = (half_chord * half_chord) /
+			(radius + closest_distance);
+		    const ON_3dPoint closest = tube_center +
+			(radius - clearance) * tube_radial;
+		    for (int reverse = 0; reverse <= 1; ++reverse) {
+			const ON_3dVector direction = reverse ?
+			    -tube_tangent : tube_tangent;
+			const ON_3dPoint origin = closest -
+			    2.0 * radius * direction;
+			sampled_ray ray;
+			VSET(ray.origin, origin.x, origin.y, origin.z);
+			VSET(ray.direction, direction.x, direction.y,
+			    direction.z);
+			const double expected[2] = {
+			    2.0 * radius - half_chord,
+			    2.0 * radius + half_chord
+			};
+			const ray_result implicit_result = shoot_solid(
+			    implicit_stp, rtip, &resource, ray.origin,
+			    ray.direction);
+			const ray_result brep_result = shoot_solid(brep_stp,
+			    rtip, &resource, ray.origin, ray.direction);
+			struct rt_brep_shot_trace trace;
+			(void)shoot_brep_trace(brep_stp, rtip, &resource, ray,
+			    trace);
+			const double implicit_error =
+			    implicit_result.segments == 1 ? std::max(
+			    fabs(implicit_result.in_dist - expected[0]),
+			    fabs(implicit_result.out_dist - expected[1])) :
+			    INFINITY;
+			const double brep_error = brep_result.segments == 1 ?
+			    std::max(fabs(brep_result.in_dist - expected[0]),
+			    fabs(brep_result.out_dist - expected[1])) : INFINITY;
+			const double coordinate_scale = std::max(radius,
+			    std::max(fabs(origin.x), std::max(fabs(origin.y),
+			    fabs(origin.z))));
+			const double error_limit = std::max(0.01 * case_tol.dist,
+			    32768.0 * DBL_EPSILON * coordinate_scale);
+			if (implicit_result.segments == 1 &&
+				implicit_error <= error_limit)
+			    maximum_implicit_error = std::max(
+				maximum_implicit_error,
+				implicit_error / test.scale);
+			else
+			    implicit_artifacts++;
+			maximum_brep_error = std::max(maximum_brep_error,
+			    brep_error / test.scale);
+			maximum_refinements = std::max(maximum_refinements,
+			    trace.surface_terminal_expansion_refinements);
+			maximum_high_water = std::max(maximum_high_water,
+			    trace.surface_terminal_expansion_high_water);
+			const bool good = brep_result.segments == 1 &&
+			    brep_error <= case_tol.dist &&
+			    trace.reparameterized_surface_faces == 1 &&
+			    trace.prepared_production_selected == 1 &&
+			    trace.prepared_production_fallback ==
+				RT_BREP_PREPARED_FALLBACK_NONE &&
+			    trace.prepared_production_hits == 2 &&
+			    trace.final_segments == 1 &&
+			    trace.physical_event_complete == 1 &&
+			    !trace.physical_event_unresolved &&
+			    !trace.physical_event_state_failures &&
+			    trace.surface_terminal_expansion_attempts > 0 &&
+			    trace.surface_terminal_expansion_available > 0 &&
+			    trace.surface_terminal_expansion_exclusions > 0 &&
+			    trace.surface_terminal_expansion_refinements > 0 &&
+			    !trace.surface_terminal_expansion_failures &&
+			    !trace.surface_terminal_expansion_budget_exhausted &&
+			    !trace.surface_fold_root_failures &&
+			    !trace.local_trim_failures &&
+			    brep_trace_fixed_workspaces_match(trace);
+			rays++;
+			if (good) {
+			    selected++;
+			    expansion_ratchets++;
+			} else {
+			    std::printf("FAIL: status-2 torus similarity %s "
+				"ratio/reverse=%.3g/%d segments=%d/%d "
+				"errors=%.3g/%.3g limit=%.3g "
+				"selected/fallback/complete=%zu/%d/%zu "
+				"expansion=%zu/%zu/%zu/%zu/%zu/%zu\n",
+				test.name, chord_ratio, reverse,
+				implicit_result.segments, brep_result.segments,
+				implicit_error, brep_error, error_limit,
+				trace.prepared_production_selected,
+				trace.prepared_production_fallback,
+				trace.physical_event_complete,
+				trace.surface_terminal_expansion_attempts,
+				trace.surface_terminal_expansion_available,
+				trace.surface_terminal_expansion_exclusions,
+				trace.surface_terminal_expansion_refinements,
+				trace.surface_terminal_expansion_failures,
+				trace.surface_terminal_expansion_budget_exhausted);
+			    report_grazing_trace(test.name, chord_ratio, reverse,
+				trace);
+			    failures++;
+			}
+		    }
+		}
+	    }
+	}
+
+	free_solid(brep_stp);
+	if (!brep_stp && brep_internal.brep)
+	    delete brep_internal.brep;
+	free_solid(implicit_stp);
+	rt_clean_resource_basic(rtip, &resource);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+    }
+
+    if (rays != 12 || selected != rays || expansion_ratchets != rays) {
+	std::printf("FAIL: status-2 torus similarity coverage="
+	    "%zu/%zu/%zu expected=12\n", rays, selected,
+	    expansion_ratchets);
+	failures++;
+    }
+    if (!failures)
+	std::printf("Status-2 torus similarity invariance: PASS "
+	    "rays=%zu selected=%zu expansion=%zu implicit-artifacts=%zu "
+	    "max-refine/high=%zu/%zu max-errors=%.3g/%.3g\n", rays,
+	    selected, expansion_ratchets, implicit_artifacts,
+	    maximum_refinements, maximum_high_water, maximum_implicit_error,
+	    maximum_brep_error);
+    return failures;
 }
 
 
@@ -15713,6 +15976,7 @@ main(int argc, char **argv)
 	    false, false, false);
 	failures += check_torus_grazing_local_root_certificate_trend(rtip,
 	    &resp);
+	failures += check_torus_status2_similarity(&rtip->rti_tol);
     }
 
     free_solid(brep_stp);
