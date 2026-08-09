@@ -34,6 +34,7 @@
 #include "bu/datetime.h"
 #include "bv/vlist.h"
 #include "brep/cdt.h"
+#include "brep/surfacetree.h"
 #include "brep/util.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -52,6 +53,56 @@ struct geom_result {
     double seconds = 0.0;
     size_t peak_rss_bytes = 0;
     std::vector<std::string> issues;
+};
+
+struct prep_face_failure {
+    int face_index = -1;
+    brlcad::SurfaceTree::FailureReason reason =
+	brlcad::SurfaceTree::FAILURE_NONE;
+    ON_Interval u = ON_Interval(ON_UNSET_VALUE, ON_UNSET_VALUE);
+    ON_Interval v = ON_Interval(ON_UNSET_VALUE, ON_UNSET_VALUE);
+    int depth = -1;
+};
+
+struct prep_result {
+    int ret = BRLCAD_ERROR;
+    int face_count = 0;
+    const char *failure_reason = "database_internal_load";
+    double seconds = 0.0;
+    size_t peak_rss_bytes = 0;
+    bool have_bbox = false;
+    point_t bmin = VINIT_ZERO;
+    point_t bmax = VINIT_ZERO;
+    std::vector<prep_face_failure> failures;
+};
+
+struct surface_tree_profile {
+    prep_face_failure failure;
+    int surface_index = -1;
+    int loop_count = 0;
+    int trim_count = 0;
+    double seconds = 0.0;
+    size_t leaves = 0;
+    const char *surface_type = "none";
+    bool native_nurbs = false;
+    bool rational = false;
+    int order[2] = {0, 0};
+    int cv_count[2] = {0, 0};
+    int span_count[2] = {0, 0};
+    ON_Interval domain[2];
+    bool nurb_form_available = false;
+    bool nurb_form_rational = false;
+    int nurb_form_order[2] = {0, 0};
+    int nurb_form_cv_count[2] = {0, 0};
+    int nurb_form_span_count[2] = {0, 0};
+};
+
+struct surface_tree_result {
+    int ret = BRLCAD_ERROR;
+    int face_count = 0;
+    double seconds = 0.0;
+    size_t peak_rss_bytes = 0;
+    std::vector<surface_tree_profile> faces;
 };
 
 static size_t
@@ -177,6 +228,178 @@ load_brep(struct db_i *dbip, struct directory *dp, struct rt_db_internal *intern
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
+}
+
+static const char *
+surface_tree_failure_name(brlcad::SurfaceTree::FailureReason reason)
+{
+    switch (reason) {
+	case brlcad::SurfaceTree::FAILURE_NONE:
+	    return "none";
+	case brlcad::SurfaceTree::FAILURE_NULL_SURFACE:
+	    return "null_surface";
+	case brlcad::SurfaceTree::FAILURE_BOUNDING_BOX:
+	    return "bounding_box";
+	case brlcad::SurfaceTree::FAILURE_NORMAL_EVALUATION:
+	    return "normal_evaluation";
+	case brlcad::SurfaceTree::FAILURE_SUBDIVISION:
+	    return "subdivision";
+    }
+    return "unknown";
+}
+
+static void
+diagnose_surface_tree_failures(struct db_i *dbip, struct directory *dp,
+	prep_result *result)
+{
+    struct rt_db_internal intern;
+    if (load_brep(dbip, dp, &intern) != BRLCAD_OK)
+	return;
+    struct rt_brep_internal *bi =
+	(struct rt_brep_internal *)intern.idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+    result->face_count = bi->brep->m_F.Count();
+    for (int i = 0; i < result->face_count; ++i) {
+	brlcad::SurfaceTree tree(&bi->brep->m_F[i], true, 8);
+	if (tree.Valid())
+	    continue;
+	prep_face_failure failure;
+	failure.face_index = i;
+	failure.reason = tree.Failure();
+	failure.u = tree.FailureDomain(0);
+	failure.v = tree.FailureDomain(1);
+	failure.depth = tree.FailureDepth();
+	result->failures.push_back(failure);
+    }
+    rt_db_free_internal(&intern);
+}
+
+static prep_result
+raytrace_prep_result(struct db_i *dbip, struct directory *dp)
+{
+    prep_result result;
+    struct rt_db_internal intern;
+    if (load_brep(dbip, dp, &intern) != BRLCAD_OK)
+	return result;
+    result.failure_reason = "none";
+    struct rt_brep_internal *bi =
+	(struct rt_brep_internal *)intern.idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+    result.face_count = bi->brep->m_F.Count();
+
+    struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+    struct soltab *stp = (struct soltab *)bu_calloc(1,
+	sizeof(struct soltab), "brep audit prep soltab");
+    stp->l.magic = RT_SOLTAB_MAGIC;
+    stp->l2.magic = RT_SOLTAB2_MAGIC;
+    stp->st_rtip = rtip;
+    stp->st_id = ID_BREP;
+    stp->st_meth = &OBJ[ID_BREP];
+
+    int64_t start = bu_gettime();
+    result.ret = rtip ? OBJ[ID_BREP].ft_prep(stp, &intern, rtip) :
+	BRLCAD_ERROR;
+    result.seconds = (bu_gettime() - start) / 1000000.0;
+    result.peak_rss_bytes = peak_rss_bytes();
+    if (result.ret == BRLCAD_OK) {
+	VMOVE(result.bmin, stp->st_min);
+	VMOVE(result.bmax, stp->st_max);
+	result.have_bbox = true;
+    }
+    if (stp->st_specific && stp->st_meth && stp->st_meth->ft_free)
+	stp->st_meth->ft_free(stp);
+    bu_free(stp, "brep audit prep soltab");
+    if (rtip)
+	rt_i_destroy(rtip);
+    rt_db_free_internal(&intern);
+
+    if (result.ret != BRLCAD_OK)
+	diagnose_surface_tree_failures(dbip, dp, &result);
+    if (result.ret != BRLCAD_OK) {
+	if (result.face_count == 0)
+	    result.failure_reason = "empty_brep";
+	else if (!result.failures.empty())
+	    result.failure_reason = "surface_tree";
+	else
+	    result.failure_reason = "unknown_prep";
+    }
+    return result;
+}
+
+static surface_tree_result
+surface_tree_profile_result(struct db_i *dbip, struct directory *dp)
+{
+    surface_tree_result result;
+    struct rt_db_internal intern;
+    if (load_brep(dbip, dp, &intern) != BRLCAD_OK)
+	return result;
+    struct rt_brep_internal *bi =
+	(struct rt_brep_internal *)intern.idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+    result.face_count = bi->brep->m_F.Count();
+    result.ret = result.face_count ? BRLCAD_OK : BRLCAD_ERROR;
+    int64_t total_start = bu_gettime();
+    result.faces.reserve((size_t)result.face_count);
+    for (int i = 0; i < result.face_count; ++i) {
+	const ON_BrepFace &face = bi->brep->m_F[i];
+	const ON_Surface *surface = face.SurfaceOf();
+	surface_tree_profile profile;
+	profile.failure.face_index = i;
+	profile.surface_index = face.m_si;
+	profile.loop_count = face.LoopCount();
+	for (int loop_index = 0; loop_index < profile.loop_count;
+		++loop_index)
+	    profile.trim_count += face.Loop(loop_index)->TrimCount();
+	if (surface) {
+	    const ON_ClassId *class_id = surface->ClassId();
+	    profile.surface_type = class_id ? class_id->ClassName() :
+		"unknown";
+	    profile.domain[0] = surface->Domain(0);
+	    profile.domain[1] = surface->Domain(1);
+	    const ON_NurbsSurface *nurbs = ON_NurbsSurface::Cast(surface);
+	    if (nurbs) {
+		profile.native_nurbs = true;
+		profile.rational = nurbs->IsRational();
+		for (int direction = 0; direction < 2; ++direction) {
+		    profile.order[direction] = nurbs->Order(direction);
+		    profile.cv_count[direction] = nurbs->CVCount(direction);
+		    profile.span_count[direction] = nurbs->SpanCount(direction);
+		}
+	    }
+	    ON_NurbsSurface nurb_form;
+	    if (surface->GetNurbForm(nurb_form) > 0) {
+		profile.nurb_form_available = true;
+		profile.nurb_form_rational = nurb_form.IsRational();
+		for (int direction = 0; direction < 2; ++direction) {
+		    profile.nurb_form_order[direction] =
+			nurb_form.Order(direction);
+		    profile.nurb_form_cv_count[direction] =
+			nurb_form.CVCount(direction);
+		    profile.nurb_form_span_count[direction] =
+			nurb_form.SpanCount(direction);
+		}
+	    }
+	}
+	int64_t start = bu_gettime();
+	brlcad::SurfaceTree tree(&face, true, 8);
+	profile.seconds = (bu_gettime() - start) / 1000000.0;
+	if (tree.Valid()) {
+	    std::list<const brlcad::BBNode *> leaves;
+	    tree.getLeaves(leaves);
+	    profile.leaves = leaves.size();
+	} else {
+	    result.ret = BRLCAD_ERROR;
+	    profile.failure.reason = tree.Failure();
+	    profile.failure.u = tree.FailureDomain(0);
+	    profile.failure.v = tree.FailureDomain(1);
+	    profile.failure.depth = tree.FailureDepth();
+	}
+	result.faces.push_back(profile);
+    }
+    result.seconds = (bu_gettime() - total_start) / 1000000.0;
+    result.peak_rss_bytes = peak_rss_bytes();
+    rt_db_free_internal(&intern);
+    return result;
 }
 
 static geom_result
@@ -404,6 +627,146 @@ print_result(const geom_result &result, const vect_t ref_dims)
     std::cout << "}";
 }
 
+static void
+print_interval(const ON_Interval &interval)
+{
+    std::cout << "[";
+    print_num(interval.Min());
+    std::cout << ",";
+    print_num(interval.Max());
+    std::cout << "]";
+}
+
+static void
+print_prep_result(const char *db_path, const char *object,
+	const prep_result &result)
+{
+    std::cout << "{\"format\":\"brlcad-brep-ray-prep-audit-v1\""
+	<< ",\"database\":" << json_quote(db_path)
+	<< ",\"object\":" << json_quote(object)
+	<< ",\"status\":" << json_quote(result.ret == BRLCAD_OK ?
+	    "ok" : "fail")
+	<< ",\"return_code\":" << result.ret
+	<< ",\"failure_reason\":" << json_quote(result.failure_reason)
+	<< ",\"seconds\":";
+    print_num(result.seconds);
+    std::cout << ",\"peak_rss_bytes\":" << result.peak_rss_bytes
+	<< ",\"face_count\":" << result.face_count
+	<< ",\"bbox_valid\":" << (result.have_bbox ? "true" : "false")
+	<< ",\"bbox_min\":";
+    if (result.have_bbox) print_vec(result.bmin); else std::cout << "null";
+    std::cout << ",\"bbox_max\":";
+    if (result.have_bbox) print_vec(result.bmax); else std::cout << "null";
+    std::cout << ",\"surface_tree_failures\":[";
+    for (size_t i = 0; i < result.failures.size(); ++i) {
+	if (i)
+	    std::cout << ",";
+	const prep_face_failure &failure = result.failures[i];
+	std::cout << "{\"face_index\":" << failure.face_index
+	    << ",\"reason\":" << json_quote(
+		surface_tree_failure_name(failure.reason))
+	    << ",\"depth\":" << failure.depth << ",\"u\":";
+	print_interval(failure.u);
+	std::cout << ",\"v\":";
+	print_interval(failure.v);
+	std::cout << "}";
+    }
+    std::cout << "]}\n";
+}
+
+static void
+print_surface_tree_result(const char *db_path, const char *object,
+	const surface_tree_result &result)
+{
+    size_t total_leaves = 0;
+    size_t maximum_leaves = 0;
+    int maximum_leaves_face = -1;
+    double maximum_seconds = 0.0;
+    int maximum_seconds_face = -1;
+    for (size_t i = 0; i < result.faces.size(); ++i) {
+	const surface_tree_profile &profile = result.faces[i];
+	total_leaves += profile.leaves;
+	if (profile.leaves > maximum_leaves) {
+	    maximum_leaves = profile.leaves;
+	    maximum_leaves_face = profile.failure.face_index;
+	}
+	if (profile.seconds > maximum_seconds) {
+	    maximum_seconds = profile.seconds;
+	    maximum_seconds_face = profile.failure.face_index;
+	}
+    }
+    std::cout << "{\"format\":\"brlcad-brep-surface-tree-audit-v1\""
+	<< ",\"database\":" << json_quote(db_path)
+	<< ",\"object\":" << json_quote(object)
+	<< ",\"status\":" << json_quote(result.ret == BRLCAD_OK ?
+	    "ok" : "fail")
+	<< ",\"return_code\":" << result.ret
+	<< ",\"seconds\":";
+    print_num(result.seconds);
+    std::cout << ",\"peak_rss_bytes\":" << result.peak_rss_bytes
+	<< ",\"face_count\":" << result.face_count
+	<< ",\"total_leaves\":" << total_leaves
+	<< ",\"maximum_leaves\":" << maximum_leaves
+	<< ",\"maximum_leaves_face\":" << maximum_leaves_face
+	<< ",\"maximum_face_seconds\":";
+    print_num(maximum_seconds);
+    std::cout << ",\"maximum_seconds_face\":" << maximum_seconds_face
+	<< ",\"faces\":[";
+    for (size_t i = 0; i < result.faces.size(); ++i) {
+	if (i)
+	    std::cout << ",";
+	const surface_tree_profile &profile = result.faces[i];
+	std::cout << "{\"face_index\":" << profile.failure.face_index
+	    << ",\"surface_index\":" << profile.surface_index
+	    << ",\"loop_count\":" << profile.loop_count
+	    << ",\"trim_count\":" << profile.trim_count
+	    << ",\"status\":" << json_quote(
+		profile.failure.reason == brlcad::SurfaceTree::FAILURE_NONE ?
+		"ok" : "fail")
+	    << ",\"seconds\":";
+	print_num(profile.seconds);
+	std::cout << ",\"leaves\":" << profile.leaves
+	    << ",\"surface_type\":" << json_quote(profile.surface_type)
+	    << ",\"native_nurbs\":" <<
+		(profile.native_nurbs ? "true" : "false")
+	    << ",\"rational\":" << (profile.rational ? "true" : "false")
+	    << ",\"order\":[" << profile.order[0] << ","
+	    << profile.order[1] << "]"
+	    << ",\"cv_count\":[" << profile.cv_count[0] << ","
+	    << profile.cv_count[1] << "]"
+	    << ",\"span_count\":[" << profile.span_count[0] << ","
+	    << profile.span_count[1] << "]"
+	    << ",\"nurb_form_available\":" <<
+		(profile.nurb_form_available ? "true" : "false")
+	    << ",\"nurb_form_rational\":" <<
+		(profile.nurb_form_rational ? "true" : "false")
+	    << ",\"nurb_form_order\":[" << profile.nurb_form_order[0]
+	    << "," << profile.nurb_form_order[1] << "]"
+	    << ",\"nurb_form_cv_count\":[" <<
+		profile.nurb_form_cv_count[0] << "," <<
+		profile.nurb_form_cv_count[1] << "]"
+	    << ",\"nurb_form_span_count\":[" <<
+		profile.nurb_form_span_count[0] << "," <<
+		profile.nurb_form_span_count[1] << "]"
+	    << ",\"domain\":[";
+	print_interval(profile.domain[0]);
+	std::cout << ",";
+	print_interval(profile.domain[1]);
+	std::cout << "]";
+	if (profile.failure.reason != brlcad::SurfaceTree::FAILURE_NONE) {
+	    std::cout << ",\"failure_reason\":" << json_quote(
+		surface_tree_failure_name(profile.failure.reason))
+		<< ",\"failure_depth\":" << profile.failure.depth
+		<< ",\"failure_u\":";
+	    print_interval(profile.failure.u);
+	    std::cout << ",\"failure_v\":";
+	    print_interval(profile.failure.v);
+	}
+	std::cout << "}";
+    }
+    std::cout << "]}\n";
+}
+
 static int
 list_breps(const char *db_path)
 {
@@ -431,13 +794,15 @@ main(int argc, const char **argv)
 
     int print_help = 0;
     int list_only = 0;
+    int prep_only = 0;
+    int surface_trees_only = 0;
     double ratio_min = 0.5;
     double ratio_max = 2.0;
     double tess_abs = 0.0;
     double tess_rel = 0.01;
     double tess_norm = 0.0;
     long memory_limit_mib = 0;
-    struct bu_opt_desc d[9];
+    struct bu_opt_desc d[11];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -446,10 +811,15 @@ main(int argc, const char **argv)
     BU_OPT(d[5], "", "tess-rel", "#", &bu_opt_fastf_t, &tess_rel, "Relative shaded tessellation tolerance");
     BU_OPT(d[6], "", "tess-norm", "#", &bu_opt_fastf_t, &tess_norm, "Normal shaded tessellation tolerance");
     BU_OPT(d[7], "", "memory-limit-mib", "#", &bu_opt_long, &memory_limit_mib, "Process address-space limit in MiB (zero disables)");
-    BU_OPT_NULL(d[8]);
+    BU_OPT(d[8], "", "prep-only", "", NULL, &prep_only, "Audit raytrace preparation only");
+    BU_OPT(d[9], "", "surface-trees-only", "", NULL, &surface_trees_only, "Profile raytrace SurfaceTrees serially");
+    BU_OPT_NULL(d[10]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
-    const char *usage = "Usage: brep-audit [options] [--list] file.g [brep]\n";
-    if (print_help || (list_only && ac != 1) || (!list_only && ac != 2) ||
+    const char *usage = "Usage: brep-audit [options] [--list|--prep-only|--surface-trees-only] file.g [brep]\n";
+    if (print_help || (list_only && ac != 1) ||
+	    (!list_only && ac != 2) ||
+	    ((list_only ? 1 : 0) + (prep_only ? 1 : 0) +
+	     (surface_trees_only ? 1 : 0) > 1) ||
 	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
 	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0) {
 	std::cerr << usage;
@@ -476,6 +846,20 @@ main(int argc, const char **argv)
 	std::cerr << "Not a BRep primitive: " << argv[1] << "\n";
 	db_close(dbip);
 	return 2;
+    }
+
+    if (prep_only) {
+	prep_result prep = raytrace_prep_result(dbip, dp);
+	print_prep_result(argv[0], argv[1], prep);
+	db_close(dbip);
+	return prep.ret == BRLCAD_OK ? 0 : 1;
+    }
+
+    if (surface_trees_only) {
+	surface_tree_result trees = surface_tree_profile_result(dbip, dp);
+	print_surface_tree_result(argv[0], argv[1], trees);
+	db_close(dbip);
+	return trees.ret == BRLCAD_OK ? 0 : 1;
     }
 
     struct bn_tol tol = BN_TOL_INIT_TOL;
