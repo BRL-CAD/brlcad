@@ -4832,10 +4832,22 @@ fast_face_is_provably_degenerate(const ON_BrepFace &face)
 	return false;
     if (loop->TrimCount() > 1) {
 	/* Collinear trim loops have exactly zero parametric area.  Closed
-	 * surfaces are excluded because a coincident seam pair can bound an
-	 * entire surface on the quotient domain. */
-	if (surface->IsClosed(0) || surface->IsClosed(1))
+	 * surfaces need additional checks because a coincident seam pair can
+	 * bound an entire surface on the quotient domain.  Two native-UV
+	 * segments which directly retrace one another are still zero area,
+	 * provided neither one traverses a complete period. */
+	const bool closed_surface =
+	    surface->IsClosed(0) || surface->IsClosed(1);
+	if (closed_surface && loop->TrimCount() != 2)
 	    return false;
+	if (closed_surface) {
+	    const ON_BrepTrim *first = loop->Trim(0);
+	    const ON_BrepTrim *second = loop->Trim(1);
+	    if (!first || !second || first->m_type == ON_BrepTrim::seam ||
+		    second->m_type == ON_BrepTrim::seam ||
+		    first->m_ei == second->m_ei)
+		return false;
+	}
 	std::vector<ON_2dPoint> endpoints;
 	for (int ti = 0; ti < loop->TrimCount(); ++ti) {
 	    const ON_BrepTrim *candidate = loop->Trim(ti);
@@ -4847,6 +4859,19 @@ fast_face_is_provably_degenerate(const ON_BrepFace &face)
 	    const ON_2dPoint end = candidate->PointAt(domain.Max());
 	    if (!start.IsValid() || !end.IsValid())
 		return false;
+	    if (closed_surface) {
+		for (int dir = 0; dir < 2; ++dir) {
+		    if (!surface->IsClosed(dir))
+			continue;
+		    const double period = surface->Domain(dir).Length();
+		    const double period_tolerance = std::max(
+			BREP_SAME_POINT_TOLERANCE, period * 1.0e-4);
+		    if (period > ON_ZERO_TOLERANCE &&
+			    fabs(fabs(end[dir] - start[dir]) - period) <=
+			    period_tolerance)
+			return false;
+		}
+	    }
 	    endpoints.push_back(start);
 	    endpoints.push_back(end);
 	}
@@ -4855,6 +4880,10 @@ fast_face_is_provably_degenerate(const ON_BrepFace &face)
 		surface->Domain(1).Length()));
 	const double parameter_tolerance = std::max(
 	    BREP_SAME_POINT_TOLERANCE, parameter_scale * 1.0e-9);
+	if (closed_surface &&
+		(endpoints[0].DistanceTo(endpoints[3]) > parameter_tolerance ||
+		 endpoints[1].DistanceTo(endpoints[2]) > parameter_tolerance))
+	    return false;
 	size_t direction_index = 1;
 	while (direction_index < endpoints.size() &&
 		endpoints[0].DistanceTo(endpoints[direction_index]) <=
