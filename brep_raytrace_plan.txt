@@ -3171,6 +3171,41 @@ declared tolerances.  This represents realistic imported geometry and tests
 that UV and model-space errors are accumulated conservatively rather than
 compared as one scalar.
 
+Implementation checkpoint (2026-08-09): the first isolated E and F fixtures
+are now implemented in src/librt/tests/brep_ray.cpp and registered as
+rt_brep_ray_defect.  The trim-only case bows one incident 2-D trim while both
+surfaces and the shared 3-D edge remain exact.  It measures U and V changes
+separately and records the resulting anisotropic trim metadata.  The edge-only
+case bows only the interior rational 3-D edge controls, preserving its
+endpoints, both trims, and both surface lifts.  Dense independent samples
+calibrate each requested 3-D discrepancy; neither generator uses a requested
+control displacement as the oracle.
+
+For these defects, a tangent-centered line is the wrong isolation tool: its
+two roots lie O(sqrt(R*h)) away from the seam.  The permanent ray constructor
+instead pins one analytic sphere endpoint to the seam midpoint and chooses the
+ray direction from the desired endpoint separation L.  It tests L/T = 100,
+10, 2, 1.1, and exact contact, toward both incident faces and in both ray
+directions.  With g/T = 0.25 and 0.9, the initial matrix contains 40 valid
+trim-only and 80 valid edge-only rays.  All 120 final results match the
+implicit ELL and analytic endpoints within 7.08e-8, while all 120 prepared
+attempts conservatively select whole-ray fallback.  This is the intentional
+pre-theorem baseline.
+
+The trace localizes rather than conceals the missing authority.  At a seam
+endpoint, one incident face may contribute a trim miss while its mate
+contributes a tolerance-near hit at the same physical event.  The adaptive
+surface isolator also retains duplicate unresolved terminal boxes on either
+side of an internal subdivision boundary.  Trim-only cases reach the exact
+manifold-edge resolver but cannot own those boxes; edge-only cases no longer
+possess an exact geometric edge witness and reach declared-tolerance seam
+resolution.  The production extension must prove a complete connected
+terminal-box component has exactly the intended root, certify one orientation
+over its enclosure, bind the actual root to the authorized trim/edge tube, and
+publish the full event stream atomically.  Do not resolve this baseline by
+merging nearby hits or by accepting a point sample as proof of box/root
+completeness.
+
 7.5 Perturbation sweep
 
 For every family, adapt the requested CV/trim change until the measured

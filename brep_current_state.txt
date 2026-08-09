@@ -11,6 +11,79 @@ as the authoritative continuation log until all acceptance gates pass.
 CURRENT PHASE
 -------------
 
+2026-08-09 ACTIVE ISOLATED TRIM/EDGE DEFECT CHECKPOINT
+
+The nested CSG-leaf increment is committed locally as e60c0fbcc7, "Test
+nested transformed BREP-leaf CSG".  It was not pushed.  The current increment
+adds the first independently isolated trim-only and edge-only Cobb
+representations and registers them as the parallel rt_brep_ray_defect CTest
+shard.
+
+The trim-only generator leaves all six rational sphere surfaces and the shared
+3-D edge fixed, bows only one incident 2-D trim toward its face interior, and
+records the independently measured U/V displacement in the corresponding
+anisotropic ON_BrepTrim tolerance fields.  Because the pristine Cobb face uses
+its natural surface boundary, the opposite bow would leave the valid surface
+domain; this first valid-model matrix therefore covers the inward trim sign.
+The edge-only generator leaves both surface lifts and both trims fixed, copies
+the shared rational edge curve, and bows only its interior control points
+radially inward or outward while preserving its endpoints and weights.  Both
+generators calibrate the maximum 3-D edge/lift discrepancy by dense sampling,
+preserve roundoff-level surface radial error, and set the target edge's
+declared tolerance to the unchanged model T only after calibration.
+
+The ray geometry was corrected during development.  A line centered under the
+seam by h has roots O(sqrt(R*h)) away from the seam and primarily tests generic
+grazing isolation.  It does not isolate a sub-T seam defect.  The permanent
+fixture instead fixes one analytic sphere endpoint exactly at the target seam
+midpoint.  If the desired chord is L, it chooses a unit conormal/radial
+direction D satisfying N dot D = -L/(2R), so the other endpoint is P+L*D.
+The expected directed interval is exactly [2R,2R+L].  It uses L/T = 100, 10,
+2, and 1.1 plus exact contact L=0, both conormal signs, and ray reversal.
+
+The complete valid-model matrix has g/T = 0.25 and 0.9: 40 trim-only rays and
+80 edge-only rays, 120 total including 24 exact contacts.  Every final BREP
+answer matches the analytic sphere and the implicit ELL oracle; maximum BREP
+endpoint error is 7.08e-8.  The discrepancy calibration error is at most
+9.32e-6 relative.  All strict prep-time correspondence, endpoint, and gap
+bounds pass.  The baseline deliberately records zero prepared selections and
+120 explicit UNCERTIFIED whole-ray fallbacks, so a later theorem can ratchet
+that count upward without hiding a final-answer regression.
+
+The failure population is localized.  Trim-only rays invoke the exact
+manifold-edge resolver 40 times but form no publishable candidate because the
+surface terminal boxes at the seam endpoint are still unresolved.  Edge-only
+rays cannot use an exact edge witness after the 3-D edge locus moves; they make
+80 seam attempts with 192 eligible local-root observations, all conservatively
+falling back.  A representative 100T chord has three local observations at
+the seam endpoint (one trim miss and one tolerance-near incident-face hit) and
+the second material endpoint, with six terminal boxes.  Boxes duplicate about
+the surface subdivision boundary v=0.5 and have neither Krawczyk orientation
+nor a complete fold certificate.  This identifies the next authority needed:
+a bounded component/root theorem which can own all duplicate terminal boxes,
+certify orientation and trim/edge containment, and publish the seam endpoint
+transactionally.  Merely loosening hit cleanup or proximity tests is not an
+acceptable fix.
+
+Verified so far in this increment:
+
+  cmake --build .build --target rt_brep_ray -j8
+  .build/src/librt/tests/rt_brep_ray --defect-only
+  .build/src/librt/tests/rt_brep_ray --nonisoparametric-only
+  .build/src/librt/tests/rt_brep_ray --contact-trim-only
+  .build/src/librt/tests/rt_brep_ray --seam-only
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+    .build-asan/src/librt/tests/rt_brep_ray --defect-only
+
+All pass with no sanitizer diagnostic.  The full optimized --seam-only shard
+also passes, including the preceding 416-ray bowed, non-isoparametric,
+contact-trim, endpoint/vertex, and tolerance-policy matrices followed by this
+new defect corpus.  Leak scanning remains disabled for the documented host
+ptrace-wrapper reason.  No SurfaceTree density, cache format, or production
+ray logic has changed in this increment.
+
+
 2026-08-09 ACTIVE NESTED CSG-LEAF CHECKPOINT
 
 The status-2 similarity increment is committed locally as 8fea341aa0,
@@ -4162,8 +4235,13 @@ IMPLEMENTATION CHECKLIST
             repaired pair under reversal and qualified similarities.
         [x] Add seam-crossing tangent-limit rays, reversal checks, CSV output,
             and a ratchet around the measured current crack envelope.
-        [ ] Add trim-only, edge-only, combined-error, vertex-neighborhood, G1,
-            tangent, and arbitrary endpoint-overlap graph sweeps and theorems.
+        [x] Add the first valid-model isolated trim-only and edge-only
+            representations, exact seam-endpoint 100T through 1.1T chord
+            sweeps, contact/reversal/conormal-side gates, anisotropic trim
+            metadata, and an explicit zero-selection fallback baseline.
+        [ ] Add their bounded component/root ownership theorem, then add
+            combined-error, vertex-neighborhood, G1, tangent, and arbitrary
+            endpoint-overlap graph sweeps and theorems.
 
 [ ] Local adaptive solve
     [x] Prepare exact-parameter positive-weight rational Bezier surface spans
@@ -5747,14 +5825,16 @@ NEXT ACTIONS
    from 24.07 to about 69 seconds.  Do not lower density until every fallback
    population remains correct without relying on a tree that is no longer
    dense enough.
-5. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
-   transformations, noncoincident production-style trees, and tolerance-
-   scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
+5. Build from the committed nested multi-interval, transformed, reused BREP-
+   leaf hierarchy into tolerance-scaled thin walls and larger noncoincident
+   production-style trees.  Keep evaluated ON_Boolean solids and reverse NIST
    BREP-to-CSG recognition as later, separately classified qualification tiers.
-6. Build on the endpoint-moving topological closure proof with trim-only,
-   edge-only, vertex-neighborhood, G1, tangent, combined-error, and arbitrary
-   endpoint-overlap graph Cobb families, and remove the remaining duplicated
-   Cobb control net from brep_invalid.cpp while
+6. Use the new isolated trim-only and edge-only zero-selection baseline to
+   prove complete duplicate-terminal-box/root ownership, interval orientation,
+   and trim/edge-tube containment before publication.  Then extend the Cobb
+   corpus to vertex-neighborhood, G1, tangent, combined-error, and arbitrary
+   endpoint-overlap graphs, and remove the remaining duplicated Cobb control
+   net from brep_invalid.cpp while
    independently gating its invalid topology behavior.
 7. Use the registered directed, Crofton, seam, interval, fold, and affine
    CTest processes with `ctest -j`; retain the no-argument full executable for
