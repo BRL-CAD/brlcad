@@ -164,6 +164,10 @@ brlcad_add_test(
   NAME rt_brep_ray_contact_trim
   COMMAND rt_brep_ray --contact-trim-only
 )
+brlcad_add_test(
+  NAME rt_brep_ray_defect
+  COMMAND rt_brep_ray --defect-only
+)
 brlcad_add_test(NAME rt_brep_ray_interval COMMAND rt_brep_ray --interval-only)
 brlcad_add_test(
   NAME rt_brep_ray_local_root
