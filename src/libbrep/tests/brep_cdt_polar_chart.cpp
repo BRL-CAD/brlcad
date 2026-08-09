@@ -98,8 +98,9 @@ exercise_sphere(const ON_3dPoint &center, double radius)
 
     cdt_face_chart chart;
     if (!chart.build(face, native_points, outer,
-	    std::vector<std::vector<int>>(), steiner, points_3d,
-	    topology_vertices) || chart.type() != CDT_FACE_CHART_POLAR ||
+	    std::vector<std::vector<int>>(), steiner, std::vector<int>(),
+	    points_3d, topology_vertices) ||
+	    chart.type() != CDT_FACE_CHART_POLAR ||
 	    chart.pole_topology_vertex() < 0 ||
 	    chart.second_pole_topology_vertex() < 0 ||
 	    chart.constraints.empty()) {

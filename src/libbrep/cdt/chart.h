@@ -55,6 +55,7 @@ public:
 	const std::vector<int> &outer,
 	const std::vector<std::vector<int>> &holes,
 	const std::vector<int> &steiner,
+	const std::vector<int> &refinement,
 	const std::vector<const ON_3dPoint *> &points_3d,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices);
 
@@ -93,6 +94,7 @@ private:
 	const std::vector<int> &source_outer,
 	const std::vector<std::vector<int>> &source_holes,
 	const std::vector<int> &source_steiner,
+	const std::vector<int> &source_refinement,
 	const std::vector<const ON_3dPoint *> &points_3d,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices);
     bool build_pole_wedge(const ON_BrepFace &face,
@@ -100,6 +102,7 @@ private:
 	const std::vector<int> &source_outer,
 	const std::vector<std::vector<int>> &source_holes,
 	const std::vector<int> &source_steiner,
+	const std::vector<int> &source_refinement,
 	const std::vector<const ON_3dPoint *> &points_3d,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices,
 	bool ruled);
