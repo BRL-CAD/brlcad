@@ -4936,13 +4936,18 @@ brep_trace_edge_cluster_owned(const struct rt_brep_shot_trace &trace,
 	    edge.face_index[0] < 0 || edge.face_index[1] < 0)
 	return false;
     const bool contact = edge.line_before_state == edge.line_after_state;
-    if (contact != (event == NULL))
+    const bool tolerance_transition = contact && event &&
+	trace.physical_event_edge_tolerance_transitions == 1 &&
+	trace.physical_event_edge_joint_components == 1 &&
+	trace.physical_event_edge_contacts == 0;
+    if (!tolerance_transition && contact != (event == NULL))
 	return false;
     if (event && (event->certificate !=
 		RT_BREP_TRACE_EVENT_MANIFOLD_EDGE ||
 	    event->source_kind != RT_BREP_TRACE_EVENT_SOURCE_MANIFOLD_EDGE ||
 	    event->edge_index != edge.edge_index || event->vertex_index != -1 ||
-	    event->direction != edge.line_transition_direction ||
+	    (!tolerance_transition &&
+	     event->direction != edge.line_transition_direction) ||
 	    !event->source_box_count ||
 	    event->source_root >= trace.stored_local_roots ||
 	    event->source_box >= trace.stored_surface_boxes))
@@ -4978,7 +4983,7 @@ brep_trace_edge_cluster_owned(const struct rt_brep_shot_trace &trace,
 		    edge.ray_dist < box.t_min - witness_tolerance ||
 		    edge.ray_dist > box.t_max + witness_tolerance)
 		continue;
-	    const int expected_disposition = contact ?
+	    const int expected_disposition = contact && !tolerance_transition ?
 		RT_BREP_TRACE_BOX_RESOLVED_CONTACT :
 		RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY;
 	    if (box_owned[box_index] ||
@@ -4990,7 +4995,7 @@ brep_trace_edge_cluster_owned(const struct rt_brep_shot_trace &trace,
 	if (!root_boxes)
 	    continue;
 	if (!std::isfinite(root.normal_dot) ||
-		(!contact && event && root.direction != event->direction) ||
+		(event && root.direction != event->direction) ||
 		(face_roots[face_slot] &&
 		 root.direction != face_direction[face_slot]))
 	    return false;
@@ -12617,6 +12622,206 @@ check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
 
 
 static int
+check_cobb_isolated_trim_transition_similarity(const struct bn_tol *tol)
+{
+    if (!tol || !(tol->dist > 0.0))
+	return 1;
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    if (!pristine) {
+	std::printf("FAIL: isolated trim transition similarity pristine\n");
+	return 1;
+    }
+    cobb_seam_frame frame;
+    double measured_gap = INFINITY;
+    double applied_displacement = INFINITY;
+    double maximum_u_shift = INFINITY;
+    double maximum_v_shift = INFINITY;
+    ON_Brep *base = cobb_trim_only_variant(pristine, origin,
+	0.9 * tol->dist, frame, measured_gap, applied_displacement,
+	maximum_u_shift, maximum_v_shift);
+    delete pristine;
+    if (!base || !std::isfinite(measured_gap) ||
+	    fabs(measured_gap - 0.9 * tol->dist) > 0.01 * tol->dist) {
+	std::printf("FAIL: isolated trim transition similarity construction\n");
+	delete base;
+	return 1;
+    }
+    base->m_E[frame.edge_index].m_tolerance = tol->dist;
+
+    struct transform_case {
+	const char *name;
+	double scale;
+	ON_3dVector translation;
+	ON_3dVector axis;
+	double angle;
+    } cases[] = {
+	{"oblique", 1.0, ON_3dVector(-19.0, 23.0, 41.0),
+	    ON_3dVector(1.0, -2.0, 0.5), 0.731},
+	{"small", 0.01, ON_3dVector(1.25, -2.5, 5.0),
+	    ON_3dVector(-0.3, 1.0, 0.7), -1.113},
+	{"large", 1.0e4, ON_3dVector(1.0e6, -2.0e6, 3.0e6),
+	    ON_3dVector(2.0, 0.25, -1.0), 2.017}
+    };
+    int failures = 0;
+    size_t rays = 0;
+    double maximum_normalized_error = 0.0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const transform_case &test = cases[case_index];
+	const ON_Xform xform = cobb_axis_angle_similarity_transform(test.scale,
+	    test.translation, test.axis, test.angle);
+	ON_Brep *variant = new ON_Brep(*base);
+	if (!variant->Transform(xform)) {
+	    std::printf("FAIL: isolated trim transition %s transform\n",
+		test.name);
+	    delete variant;
+	    failures++;
+	    continue;
+	}
+	for (int vertex_index = 0; vertex_index < variant->m_V.Count();
+		++vertex_index)
+	    variant->m_V[vertex_index].m_tolerance =
+		base->m_V[vertex_index].m_tolerance * test.scale;
+	for (int edge_index = 0; edge_index < variant->m_E.Count();
+		++edge_index)
+	    variant->m_E[edge_index].m_tolerance =
+		base->m_E[edge_index].m_tolerance * test.scale;
+	struct bn_tol case_tol = *tol;
+	case_tol.dist = tol->dist * test.scale;
+	case_tol.dist_sq = case_tol.dist * case_tol.dist;
+	struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+	if (!rtip) {
+	    delete variant;
+	    failures++;
+	    continue;
+	}
+	rtip->rti_tol = case_tol;
+	struct resource resource = {};
+	rt_init_resource(&resource, 0, rtip);
+	struct rt_brep_internal variant_internal = {};
+	variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	variant_internal.brep = variant;
+	struct rt_db_internal variant_intern;
+	RT_DB_INTERNAL_INIT(&variant_intern);
+	variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	variant_intern.idb_type = ID_BREP;
+	variant_intern.idb_meth = &OBJ[ID_BREP];
+	variant_intern.idb_ptr = &variant_internal;
+	struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+	if (!stp) {
+	    std::printf("FAIL: isolated trim transition %s prep\n",
+		test.name);
+	    failures++;
+	} else {
+	    for (int reverse = 0; reverse <= 1; ++reverse) {
+		sampled_ray base_ray;
+		const double chord = 1.1 * tol->dist;
+		const bool ray_valid = cobb_seam_endpoint_chord_ray(frame, origin,
+		    radius, chord, 1, reverse != 0, base_ray);
+		if (!ray_valid) {
+		    std::printf("FAIL: isolated trim transition %s reverse=%d "
+			"ray construction\n", test.name, reverse);
+		    failures++;
+		    continue;
+		}
+		const ON_3dPoint transformed_origin = cobb_transform_point(xform,
+		    ON_3dPoint(base_ray.origin));
+		ON_3dVector transformed_direction = cobb_transform_vector(xform,
+		    ON_3dVector(base_ray.direction));
+		const bool direction_valid = transformed_direction.Unitize();
+		sampled_ray ray;
+		VSET(ray.origin, transformed_origin.x, transformed_origin.y,
+		    transformed_origin.z);
+		VSET(ray.direction, transformed_direction.x,
+		    transformed_direction.y, transformed_direction.z);
+		const ray_result result = shoot_solid(stp, rtip, &resource,
+		    ray.origin, ray.direction);
+		struct rt_brep_shot_trace trace;
+		const int trace_hits = shoot_brep_trace(stp, rtip, &resource,
+		    ray, trace);
+		const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+		    frame.edge_index);
+		const double expected_in = 2.0 * radius * test.scale;
+		const double expected_out = (2.0 * radius + chord) * test.scale;
+		const double normalized_error = std::max(
+		    fabs(result.in_dist - expected_in),
+		    fabs(result.out_dist - expected_out)) / test.scale;
+		maximum_normalized_error = std::max(maximum_normalized_error,
+		    normalized_error);
+		if (!direction_valid || !edge ||
+			!edge->correspondence_supported ||
+			edge->correspondence_exhausted ||
+			!edge->discrepancy_endpoints_certified ||
+			!edge->discrepancy_bounded ||
+			edge->discrepancy_bound_exhausted ||
+			!edge->discrepancy_authorized ||
+			edge->discrepancy_proof_class !=
+			    RT_BREP_SEAM_GAP_INSIDE ||
+			!brep_trace_fixed_workspaces_match(trace) ||
+			trace_hits != 2 || trace.final_segments != 1 ||
+			result.segments != 1 ||
+			trace.physical_event_edge_attempts != 1 ||
+			trace.physical_event_edge_candidates != 1 ||
+			trace.physical_event_edge != 1 ||
+			trace.physical_event_edge_contacts ||
+			trace.physical_event_edge_tolerance_transitions != 1 ||
+			trace.physical_event_edge_joint_components != 1 ||
+			trace.physical_event_edge_joint_failure_stage ||
+			trace.physical_event_edge_certified != 1 ||
+			trace.physical_event_edge_failures ||
+			trace.physical_event_complete != 1 ||
+			trace.physical_event_material_segments != 1 ||
+			trace.prepared_production_selected != 1 ||
+			trace.prepared_production_fallback !=
+			    RT_BREP_PREPARED_FALLBACK_NONE ||
+			!finite_unit_vector(result.in_normal) ||
+			!finite_unit_vector(result.out_normal) ||
+			VDOT(result.in_normal, ray.direction) >= 0.0 ||
+			VDOT(result.out_normal, ray.direction) <= 0.0 ||
+			normalized_error > tol->dist) {
+		    std::printf("FAIL: isolated trim transition %s reverse=%d "
+			"edge/auth=%d/%d hits/segments=%d/%zu/%d "
+			"candidate/event/tolerance/joint/cert/fail="
+			"%zu/%zu/%zu/%zu/%zu/%zu selected/fallback=%zu/%d "
+			"error=%.17g\n", test.name, reverse, edge != NULL,
+			edge ? edge->discrepancy_authorized : -1, trace_hits,
+			trace.final_segments, result.segments,
+			trace.physical_event_edge_candidates,
+			trace.physical_event_edge,
+			trace.physical_event_edge_tolerance_transitions,
+			trace.physical_event_edge_joint_components,
+			trace.physical_event_edge_certified,
+			trace.physical_event_edge_failures,
+			trace.prepared_production_selected,
+			trace.prepared_production_fallback, normalized_error);
+		    failures++;
+		} else {
+		    rays++;
+		}
+	    }
+	    free_solid(stp);
+	}
+	rt_clean_resource_basic(rtip, &resource);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+    }
+    delete base;
+    if (rays != 6) {
+	std::printf("FAIL: isolated trim transition similarity coverage=%zu/6\n",
+	    rays);
+	failures++;
+    }
+    if (!failures)
+	std::printf("Cobb isolated trim transition similarity: PASS "
+	    "rays=%zu max-normalized-error=%.3g\n", rays,
+	    maximum_normalized_error);
+    return failures;
+}
+
+
+static int
 check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
     struct rt_i *rtip, struct resource *resource)
 {
@@ -12683,13 +12888,15 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
     size_t family_edge_candidates[2] = {0, 0};
     size_t family_edge_failures[2] = {0, 0};
     size_t family_edge_lift_witnesses[2] = {0, 0};
+    size_t family_edge_tolerance_transitions[2] = {0, 0};
+    size_t family_edge_candidate_failure_stage[2][9] = {};
     size_t family_joint_attempts[2] = {0, 0};
     size_t family_joint_certified[2] = {0, 0};
     size_t family_joint_boxes[2] = {0, 0};
     size_t family_joint_roots[2] = {0, 0};
     size_t family_joint_complement_visited[2] = {0, 0};
     size_t family_joint_complement_high_water[2] = {0, 0};
-    size_t family_joint_failure_stage[2][10] = {};
+    size_t family_joint_failure_stage[2][16] = {};
     size_t family_component_attempts[2] = {0, 0};
     size_t family_component_certified[2] = {0, 0};
     size_t family_component_boxes[2] = {0, 0};
@@ -12850,8 +13057,15 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 			    ((trace.physical_event_edge_joint_attempts >
 			      trace.physical_event_edge_joint_components) ==
 			     (trace.physical_event_edge_joint_failure_stage > 0));
+			const bool tolerance_transition_valid =
+			    trace.physical_event_edge_tolerance_transitions <= 1 &&
+			    (!trace.physical_event_edge_tolerance_transitions ||
+			     (family.trim_only && expected_segments && selected &&
+			      trace.physical_event_edge_joint_components == 1 &&
+			      trace.physical_event_edge == 1 &&
+			      !trace.physical_event_edge_contacts));
 			if (!brep_trace_fixed_workspaces_match(trace) || !edge_valid ||
-				!joint_metadata_valid ||
+				!joint_metadata_valid || !tolerance_transition_valid ||
 				implicit_result.segments != expected_segments ||
 				variant_result.segments != expected_segments ||
 				trace.final_segments != (size_t)expected_segments ||
@@ -12912,6 +13126,13 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 				trace.physical_event_edge_failures;
 			    family_edge_lift_witnesses[family_index] +=
 				trace.physical_event_edge_lift_witnesses;
+			    family_edge_tolerance_transitions[family_index] +=
+				trace.physical_event_edge_tolerance_transitions;
+			    if (trace.physical_event_edge_failures &&
+				trace.physical_event_edge_candidate_failure_stage > 0 &&
+				trace.physical_event_edge_candidate_failure_stage < 9)
+				family_edge_candidate_failure_stage[family_index]
+				    [trace.physical_event_edge_candidate_failure_stage]++;
 			    family_joint_attempts[family_index] +=
 				trace.physical_event_edge_joint_attempts;
 			    family_joint_certified[family_index] +=
@@ -12928,7 +13149,7 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 			    if (trace.physical_event_edge_joint_attempts >
 				    trace.physical_event_edge_joint_components &&
 				trace.physical_event_edge_joint_failure_stage > 0 &&
-				trace.physical_event_edge_joint_failure_stage < 10)
+				trace.physical_event_edge_joint_failure_stage < 16)
 				family_joint_failure_stage[family_index]
 				    [trace.physical_event_edge_joint_failure_stage]++;
 			    family_component_attempts[family_index] +=
@@ -12971,16 +13192,19 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 	    family_rays[0], family_rays[1], contacts);
 	failures++;
     }
-    if (family_prepared[0] < 26 || family_prepared[1] < 64 ||
-	    prepared < 90 || family_edge_lift_witnesses[1] < 64 ||
-	    family_joint_certified[0] + family_joint_certified[1] < 54 ||
+    if (family_prepared[0] < 32 || family_prepared[1] < 64 ||
+	    prepared < 96 || family_edge_lift_witnesses[1] < 64 ||
+	    family_edge_tolerance_transitions[0] < 2 ||
+	    family_joint_certified[0] + family_joint_certified[1] < 60 ||
 	    family_component_certified[0] +
 		family_component_certified[1] < 36) {
 	std::printf("FAIL: Cobb isolated defect prepared ratchet "
-	    "families=%zu/26,%zu/64 total=%zu/90 lift=%zu/64 "
-	    "joint=%zu/54 components=%zu/36\n", family_prepared[0],
+	    "families=%zu/32,%zu/64 total=%zu/96 lift=%zu/64 "
+	    "tolerance-transition=%zu/2 joint=%zu/60 components=%zu/36\n",
+	    family_prepared[0],
 	    family_prepared[1],
 	    prepared, family_edge_lift_witnesses[1],
+	    family_edge_tolerance_transitions[0],
 	    family_joint_certified[0] + family_joint_certified[1],
 	    family_component_certified[0] + family_component_certified[1]);
 	failures++;
@@ -13008,7 +13232,8 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 	    std::printf("  events regular/near/unresolved=%zu/%zu/%zu "
 		"seam attempt/candidate/failure=%zu/%zu/%zu "
 		"failure-kind=%zu/%zu/%zu/%zu "
-		"edge attempt/candidate/failure/lift=%zu/%zu/%zu/%zu\n",
+		"edge attempt/candidate/failure/lift/tolerance-transition="
+		"%zu/%zu/%zu/%zu/%zu\n",
 		family_regular[family_index], family_near_trim[family_index],
 		family_unresolved[family_index],
 		family_seam_attempts[family_index],
@@ -13021,7 +13246,18 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 		family_edge_attempts[family_index],
 		family_edge_candidates[family_index],
 		family_edge_failures[family_index],
-		family_edge_lift_witnesses[family_index]);
+		family_edge_lift_witnesses[family_index],
+		family_edge_tolerance_transitions[family_index]);
+	    std::printf("  edge candidate failure-stage=");
+	    bool first_edge_stage = true;
+	    for (int stage = 0; stage < 9; ++stage) {
+		if (!family_edge_candidate_failure_stage[family_index][stage])
+		    continue;
+		std::printf("%s%d:%zu", first_edge_stage ? "" : ",", stage,
+		    family_edge_candidate_failure_stage[family_index][stage]);
+		first_edge_stage = false;
+	    }
+	    std::printf("\n");
 	    std::printf("  joint attempt/certified/boxes/roots="
 		"%zu/%zu/%zu/%zu complement visited/high-water=%zu/%zu "
 		"failure-stage=", family_joint_attempts[family_index],
@@ -13030,7 +13266,7 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 		family_joint_complement_visited[family_index],
 		family_joint_complement_high_water[family_index]);
 	    bool first_joint_stage = true;
-	    for (int stage = 0; stage < 10; ++stage) {
+	    for (int stage = 0; stage < 16; ++stage) {
 		if (!family_joint_failure_stage[family_index][stage])
 		    continue;
 		std::printf("%s%d:%zu", first_joint_stage ? "" : ",", stage,
@@ -13060,6 +13296,7 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 	    fallback, contacts, maximum_gap_calibration,
 	    maximum_endpoint_error);
     }
+    failures += check_cobb_isolated_trim_transition_similarity(tol);
     return failures;
 }
 
