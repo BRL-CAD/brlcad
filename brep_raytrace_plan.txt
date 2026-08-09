@@ -3538,6 +3538,28 @@ directed and Crofton lines through both, and retain ordered final partitions.
 Classify unsupported leaves explicitly and begin with fully replaceable trees;
 mixed trees can follow once the all-BREP-leaf case is understood.
 
+Implementation checkpoint (2026-08-09): the first topology-identical nested
+fixture is now in src/librt/tests/brep_ray.cpp.  It defines one radius-5 ELL
+leaf, reuses it under translations to -8 and +8 on X in a nested union
+combination, and subtracts a translated radius-2 ELL from the left component.
+The comparison database replaces only the two leaf definitions with their
+exact ft_brep results; it preserves the combination nesting, reuse, member
+matrices, region subtraction, tolerance, and ray set.  This exercises a
+hollow left component plus a solid right component, including three ordered
+material intervals along the X axis.  Four analytic directed rays check the
+forward and reverse three-interval answers and transverse shell/solid answers.
+
+Its exact independent measures are 216*pi surface area and (968/3)*pi volume.
+On the fixed 8,000-line shared Crofton sample the implicit and BREP-leaf trees
+have zero differing lines and zero tangent-band exceptions; maximum paired
+endpoint error is 3.84e-8.  Both independent estimators pass the confidence
+bands around the analytic measures.  This satisfies the first nondegenerate
+nested/reused/transformed BREP-leaf hierarchy gate.  It does not yet qualify
+near-coincident members, thin walls near rti_tol.dist, partially replaceable
+mixed trees, arbitrary region attributes/overlap policies, or the reverse
+BREP-to-CSG recognizer.  Those remain separate tiers so a failure can still be
+localized to leaf solving, Boolean assembly, tolerance policy, or recognition.
+
 The second comparison runs in the opposite direction.  BRL-CAD's experimental
 BREP shape recognizer, exposed by the libged `brep csg` command, calls
 brep_to_csg() and may reconstruct either a complete implicit CSG tree or a
