@@ -6911,17 +6911,23 @@ check_brep_weighted_local_root_solver()
 	double scale;
 	ON_3dVector translation;
 	bool reverse;
+	bool expect_prep;
     } cases[] = {
-	{"balanced", 1.0, 1.0, 1.0, ON_3dVector(0.0, 0.0, 0.0), false},
+	{"balanced", 1.0, 1.0, 1.0, ON_3dVector(0.0, 0.0, 0.0), false,
+	    true},
 	{"extreme-weight", std::ldexp(1.0, -10),
 	    std::ldexp(1.0, 10), 1.0,
-	    ON_3dVector(0.0, 0.0, 0.0), true},
+	    ON_3dVector(0.0, 0.0, 0.0), true, true},
 	{"extreme-weight-similarity", std::ldexp(1.0, -10),
 	    std::ldexp(1.0, 10), 1.0e4,
-	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), false}
+	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), false, true},
+	{"singular-weight-prep", std::ldexp(1.0, -200),
+	    std::ldexp(1.0, 200), 1.0,
+	    ON_3dVector(0.0, 0.0, 0.0), false, false}
     };
     int failures = 0;
     size_t certified = 0;
+    size_t prep_rejected = 0;
     double maximum_image = 0.0;
     size_t maximum_root_high_water = 0;
     size_t maximum_model_high_water = 0;
@@ -6964,6 +6970,20 @@ check_brep_weighted_local_root_solver()
 	intern.idb_meth = &OBJ[ID_BREP];
 	intern.idb_ptr = &brep_internal;
 	struct soltab *stp = prep_solid(rtip, &intern, ID_BREP);
+	if (!test.expect_prep) {
+	    if (stp) {
+		std::printf("FAIL: weighted local root %s prep succeeded\n",
+		    test.name);
+		free_solid(stp);
+		failures++;
+	    } else {
+		prep_rejected++;
+	    }
+	    rt_clean_resource_basic(rtip, &resource);
+	    BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	    rt_i_destroy(rtip);
+	    continue;
+	}
 	struct rt_brep_local_root_test_result result = {};
 	bool called = false;
 	if (stp && point.IsValid()) {
@@ -7004,9 +7024,10 @@ check_brep_weighted_local_root_solver()
     }
     if (!failures)
 	std::printf("BREP weighted local root: PASS cases=%zu certified=%zu "
-	    "root/model-high-water=%zu/%zu max-image=%.3g\n",
+	    "prep-rejected=%zu root/model-high-water=%zu/%zu max-image=%.3g\n",
 	    sizeof(cases) / sizeof(cases[0]), certified,
-	    maximum_root_high_water, maximum_model_high_water, maximum_image);
+	    prep_rejected, maximum_root_high_water, maximum_model_high_water,
+	    maximum_image);
     return failures;
 }
 
