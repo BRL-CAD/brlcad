@@ -168,6 +168,36 @@ foreach(_bg_target libbg libbg-obj libbg-static libbg-brlcad-obj)
   endif()
 endforeach()
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+# Detria's adaptive predicates rely on the floating-point expression tree in
+# detria.hpp.  Keep its single translation unit out of unity builds and forbid
+# contraction, reassociation, and unsafe finite-only assumptions.
+if(MSVC)
+  set_source_files_properties(
+    polygon_triangulate.cpp
+    PROPERTIES COMPILE_OPTIONS "/fp:strict"
+  )
+else()
+  set(_detria_strict_options)
+  foreach(_detria_flag
+      -ffp-contract=off
+      -frounding-math
+      -fno-associative-math
+      -fno-finite-math-only
+      -fno-unsafe-math-optimizations)
+    string(MAKE_C_IDENTIFIER "${_detria_flag}" _detria_flag_id)
+    set(_detria_check_var "HAVE_${_detria_flag_id}")
+    check_cxx_compiler_flag("${_detria_flag}" ${_detria_check_var})
+    if(${_detria_check_var})
+      list(APPEND _detria_strict_options "${_detria_flag}")
+    endif()
+  endforeach()
+  set_source_files_properties(
+    polygon_triangulate.cpp
+    PROPERTIES COMPILE_OPTIONS "${_detria_strict_options}"
+  )
+endif()
+
 check_linker_flag("CXX" "-Wno-error=maybe-uninitialized" BG_LINKER_WNO_MAYBE_UNINITIALIZED)
 if(BG_LINKER_WNO_MAYBE_UNINITIALIZED)
   target_link_options(libbg PRIVATE -Wno-maybe-uninitialized)
