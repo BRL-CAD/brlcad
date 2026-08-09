@@ -3629,18 +3629,37 @@ ESTABLISHED FINDINGS
     Ordinary model-tolerance and zero-miss paths require an empty local-proof
     ledger.  The proof performs no allocation during ray tracing.
 
-    The focused C/C++ arithmetic corpus has nine classified systems: three
-    affine boundary roots and three nearby quadratic root pairs at equation
-    scales `2^-100`, `1`, and `2^100`, plus multi-root, singular, and uncertain
-    interval systems.  Invalid-input and explicit tube pass/reject controls
-    are additional gates.  The real Cobb test independently replays the
-    actual prepared coefficient intervals for all sixteen transformations and
-    reversals.  All sixteen certify in one attempt, all sixteen root boxes
-    cross the analytic support boundary, all exclude the neighboring root,
-    and all have positive weight and complete image containment.  Maxima are
-    radius `9.13e-11`, correction `2.28e-11`, contraction `2.54e-6`, model
-    image `2.16e-5`, and fixed-expansion high-water 26.  The image maximum is
-    from the `10,000x` similarity and scales as model-space length.
+    The focused C/C++ arithmetic corpus now has thirteen classified systems.
+    The original layer has three affine boundary roots and three nearby
+    quadratic root pairs at equation scales `2^-100`, `1`, and `2^100`, plus
+    multi-root, singular, and uncertain interval systems.  The conditioning
+    layer adds a degree-elevated order-9-by-9 affine system, a coupled
+    degree-15-by-7 boundary root, and nearly singular affine systems with
+    Jacobian determinants `2^-20` and `2^-40`.  Ten cases certify uniquely in
+    one attempt and the three ambiguous/singular cases fail closed.
+    Invalid-input and explicit tube pass/reject controls are additional gates.
+
+    Three actual prepared rational bilinear surfaces independently exercise
+    coefficient extraction and the complete model-image theorem: equal
+    weights; a `2^20` control-weight ratio with ray reversal; and the same
+    ratio after `10,000x` scale and a large translation.  All three certify a
+    support-boundary-crossing root with positive weight and finite complete
+    image.  Maximum image displacement is `2.27e-9`; root and model expansion
+    high-water are both 2.  A diagnostic `2^400` ratio was intentionally not
+    retained: the parameter derivative is numerically singular under the
+    current OpenNURBS normal threshold, and SurfaceTree preparation calls
+    `bu_bomb` when its initial midpoint normal cannot be evaluated.  That is a
+    separate prep fail-closed robustness issue, not a local-certificate
+    failure and not a reason to relax the theorem.
+
+    The real Cobb test independently replays the actual prepared coefficient
+    intervals for all sixteen transformations and reversals.  All sixteen
+    certify in one attempt, all sixteen root boxes cross the analytic support
+    boundary, all exclude the neighboring root, and all have positive weight
+    and complete image containment.  Maxima are radius `9.13e-11`, correction
+    `2.28e-11`, contraction `2.54e-6`, model image `2.16e-5`, and
+    fixed-expansion high-water 26.  The image maximum is from the `10,000x`
+    similarity and scales as model-space length.
 
 
 IMPLEMENTATION CHECKLIST
@@ -5175,19 +5194,50 @@ Boundary-root contraction and rational tube checkpoint (Finding 77):
   Leak scanning remains disabled because this host's ptrace wrapper makes
   LeakSanitizer terminate before reporting test results.
 
+Difficult local-root corpus expansion (Finding 77):
+
+  .build/src/librt/tests/rt_brep_ray --local-root-only
+  PASS: thirteen classified arithmetic systems: ten unique-root certificates
+  and three fail-closed multi-root/singular/uncertain results.  The new cases
+  are an order-9-by-9 degree-elevated affine system, a coupled
+  degree-15-by-7 boundary root, and nearly singular affine systems with
+  determinant gaps `2^-20` and `2^-40`.  Every positive case certifies in one
+  attempt.  Maximum radius is `9.09e-13` and expansion high-water is 3.
+
+  PASS: three prepared rational bilinear surfaces certify complete model
+  images: equal weights, a reversed-ray `2^20` weight ratio, and the same
+  weighted face after `10,000x` scale plus large translation.  Root/model
+  expansion high-water is 2/2 and maximum image displacement is `2.27e-9`.
+  The optimized direct process completed with both PASS summaries.
+
+  ctest --test-dir .build --parallel 12 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+  PASS: 12/12 in 186.02 seconds on the final source.  The expanded local-root
+  shard took 0.48 seconds, contact trim 42.07, complete directed process
+  58.92, Crofton 68.57, interval 159.14, and seam 185.98 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+      .build-asan/src/librt/tests/rt_brep_ray --local-root-only
+  PASS with the same thirteen arithmetic and three prepared-surface cases;
+  no AddressSanitizer diagnostic appeared.  Leak scanning remains disabled
+  because this host's ptrace wrapper prevents LeakSanitizer qualification.
+
 
 NEXT ACTIONS
 ------------
 
 1. Preserve the new local-root certificate as narrow declared-contact
-   authority while expanding its difficult-system corpus.  Capture
-   unavailable, singular, multiple-root, high-order, extreme-weight, and
-   near-tangent coefficient systems from analytic fixtures and the STEP corpus
-   before considering the theorem for ordinary seams, vertices, or general
-   grazing dispatch.  Profile the fixed-expansion Taylor cost separately from
+   authority while continuing to expand its difficult-system corpus.  The
+   analytic ratchet now covers singular, multiple-root, high-order,
+   determinant-`2^-40`, `2^20` rational-weight-range, similarity, and reversal
+   cases.  Next capture unavailable systems and real near-tangent coefficient
+   systems from the implicit-to-BREP fixtures and STEP corpus before
+   considering the theorem for ordinary seams, vertices, or general grazing
+   dispatch.  Profile the fixed-expansion Taylor cost separately from
    continuation and material-sector work.  Keep arbitrary root counts, exact
    tangency, vertex neighborhoods, inferred tolerance authority, and every
-   nonunique or non-positive-weight box fail-closed.
+   nonunique, non-positive-weight, or numerically singular surface fail-closed.
 2. Extend vertex classification only through a separately certified curved
    differential-link theorem.  Bound surface-normal and tangent variation over
    a local neighborhood before replacing the planar cyclic link.  Define exact
