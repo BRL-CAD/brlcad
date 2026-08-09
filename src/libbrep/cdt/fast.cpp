@@ -3097,7 +3097,7 @@ fast_reconstruct_periodic_strip(const ON_Surface *surface,
 	    boundary_info.push_back(candidate);
 	}
     }
-    if (outer_index < 0 || boundary_indices.size() != 2 ||
+    if (boundary_indices.size() != 2 ||
 	    boundary_info[0].closed_dir != boundary_info[1].closed_dir)
 	return false;
 
@@ -3120,7 +3120,7 @@ fast_reconstruct_periodic_strip(const ON_Surface *surface,
     ON_SimpleArray<BrepTrimPoint> &second =
 	*brep_loop_points[opposite_index];
     ON_SimpleArray<BrepTrimPoint> original_outer;
-    if (first_index != outer_index)
+    if (outer_index >= 0 && first_index != outer_index)
 	original_outer = *brep_loop_points[outer_index];
 
     const int closed_dir = first_info.closed_dir;
@@ -3200,10 +3200,81 @@ fast_reconstruct_periodic_strip(const ON_Surface *surface,
 
     first.Append(opposite.Count(), opposite.Array());
     second.Empty();
-    if (first_index != outer_index) {
+    if (outer_index >= 0 && first_index != outer_index) {
 	*brep_loop_points[outer_index] = first;
 	first = original_outer;
     }
+    return true;
+}
+
+static bool
+fast_reconstruct_periodic_empty_boundary(const ON_Surface *surface,
+	const ON_BrepFace &face,
+	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
+	double tolerance, fast_face_scratch &scratch, int *closed_direction,
+	int *outer_loop_index)
+{
+    if (!surface || face.LoopCount() != 2 || !brep_loop_points)
+	return false;
+    int boundary_index = -1;
+    int empty_index = -1;
+    for (int li = 0; li < 2; ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop || !brep_loop_points[li])
+	    return false;
+	if (loop->TrimCount() == 0 && brep_loop_points[li]->Count() == 0)
+	    empty_index = li;
+	else if (loop->TrimCount() == 1 &&
+		brep_loop_points[li]->Count() >= 2)
+	    boundary_index = li;
+	else
+	    return false;
+    }
+    if (boundary_index < 0 || empty_index < 0)
+	return false;
+
+    const ON_BrepTrim *trim = face.Loop(boundary_index)->Trim(0);
+    if (!trim || !trim->Edge() || trim->m_vi[0] != trim->m_vi[1])
+	return false;
+    fast_periodic_loop_info info;
+    ON_SimpleArray<BrepTrimPoint> &boundary =
+	*brep_loop_points[boundary_index];
+    if (!fast_periodic_boundary_loop(surface, boundary, info))
+	return false;
+
+    const ON_Interval closed_domain = surface->Domain(info.closed_dir);
+    const ON_Interval open_domain = surface->Domain(info.open_dir);
+    const double parameter_tolerance = std::max(tolerance,
+	open_domain.Length() * 1.0e-4);
+    if (fabs(info.open_coordinate - open_domain.Min()) >
+	    parameter_tolerance &&
+	    fabs(info.open_coordinate - open_domain.Max()) >
+	    parameter_tolerance)
+	return false;
+
+    ON_2dPoint corners[5];
+    for (int ci = 0; ci < 5; ++ci)
+	corners[ci] = boundary[0].p2d;
+    corners[0][info.closed_dir] = corners[1][info.closed_dir] =
+	corners[4][info.closed_dir] = closed_domain.Min();
+    corners[2][info.closed_dir] = corners[3][info.closed_dir] =
+	closed_domain.Max();
+    corners[0][info.open_dir] = corners[3][info.open_dir] =
+	corners[4][info.open_dir] = open_domain.Min();
+    corners[1][info.open_dir] = corners[2][info.open_dir] =
+	open_domain.Max();
+
+    ON_SimpleArray<BrepTrimPoint> replacement;
+    for (int ci = 0; ci < 5; ++ci) {
+	if (!fast_append_synthetic_uv(replacement, surface, corners[ci], -1,
+		scratch))
+	    return false;
+    }
+    boundary = replacement;
+    if (closed_direction)
+	*closed_direction = info.closed_dir;
+    if (outer_loop_index)
+	*outer_loop_index = boundary_index;
     return true;
 }
 
@@ -3910,6 +3981,52 @@ fast_loop_uv_closed(const ON_Surface *surface, const ON_BrepLoop *loop,
 	model_tolerance;
 }
 
+static int
+fast_implicit_outer_loop(const ON_BrepFace &face,
+	ON_SimpleArray<BrepTrimPoint> **brep_loop_points)
+{
+    if (!brep_loop_points)
+	return -1;
+    for (int li = 0; li < face.LoopCount(); ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (loop && loop->m_type == ON_BrepLoop::outer)
+	    return -1;
+    }
+
+    int largest_index = -1;
+    double largest_area = 0.0;
+    for (int li = 0; li < face.LoopCount(); ++li) {
+	ON_SimpleArray<BrepTrimPoint> *points = brep_loop_points[li];
+	if (!points || points->Count() < 3)
+	    continue;
+	double twice_area = 0.0;
+	for (int pi = 0; pi < points->Count(); ++pi) {
+	    const ON_2dPoint &first = (*points)[pi].p2d;
+	    const ON_2dPoint &second =
+		(*points)[(pi + 1) % points->Count()].p2d;
+	    twice_area += first.x * second.y - second.x * first.y;
+	}
+	const double area = fabs(twice_area);
+	if (std::isfinite(area) && area > largest_area) {
+	    largest_area = area;
+	    largest_index = li;
+	}
+    }
+    if (largest_index < 0 || !(largest_area > 0.0))
+	return -1;
+
+    ON_SimpleArray<BrepTrimPoint> &candidate =
+	*brep_loop_points[largest_index];
+    for (int li = 0; li < face.LoopCount(); ++li) {
+	if (li == largest_index || !brep_loop_points[li] ||
+		brep_loop_points[li]->Count() < 3)
+	    continue;
+	if (!PointInPolygon((*brep_loop_points[li])[0].p2d, candidate))
+	    return -1;
+    }
+    return largest_index;
+}
+
 static bool
 bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	std::vector<fastf_t> &pnts,
@@ -3985,8 +4102,14 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
     if (!full_periodic_face)
+	full_periodic_face = fast_reconstruct_periodic_empty_boundary(s, face,
+	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
+	    &full_periodic_closed_dir, &full_periodic_outer_index);
+    if (!full_periodic_face)
 	fast_reconstruct_periodic_strip(s, face, brep_loop_points,
 	    model_diagonal, scratch);
+    const int implicit_outer_index = fast_implicit_outer_loop(face,
+	brep_loop_points);
 
     // process through loops building polygons.
     std::vector<detria::PointD> tpnts;
@@ -4051,7 +4174,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    rt_trims.Insert2d(bb.Min(), bb.Max(), line);
 	}
 	if (face_loop->m_type == ON_BrepLoop::outer ||
-		(singular_cap_face && li == 0)) {
+		(singular_cap_face && li == 0) ||
+		li == implicit_outer_index) {
 	    if (have_outer)
 		return false;
 	    outer_polyline = polyline;
