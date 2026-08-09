@@ -3661,6 +3661,46 @@ ESTABLISHED FINDINGS
     fixed-expansion high-water 26.  The image maximum is from the `10,000x`
     similarity and scales as model-space length.
 
+78. Real near-grazing sphere roots now ratchet the local certificate down to
+    one tenth of model tolerance without granting general grazing authority.
+
+    The existing signed sphere matrix already sweeps hit-side clearances from
+    `2^-1` through `2^-50`, tolerance-targeted chords, exact tangency, mirrored
+    misses, reversal, and similarity; the affine matrix separately covers
+    anisotropic conditioning.  What was missing was a direct bridge from real
+    close curved-surface roots into the fixed-expansion uniqueness and
+    rational-image theorem introduced by Finding 77.
+
+    The focused bridge chooses the generic unit radial `(2,3,6)/7` and unit
+    tangent `(3,-2,0)/sqrt(13)`, away from the converted sphere's seams and
+    span boundaries.  In both ray directions it constructs analytic chords of
+    `100`, `10`, `2`, `1.1`, `1`, `0.9`, `0.5`, `0.1`, and `0.01` times model
+    distance tolerance.  Each raw local root is matched to
+    `2R +/- chord/2`, and its measured absolute normal dot is compared to
+    `chord/(2R)`.  Both roots must be on one prepared face/span.  The test
+    first obtains their normalized UV separation, then reruns each complete
+    root/model-image certificate with a downward-rounded radius cap below one
+    quarter of that separation.  Every accepted root box must remain strictly
+    inside the analytic span with positive rational weight.
+
+    All ten resolved directed pairs through one tolerance certify.  Six more
+    sub-tolerance pairs at `0.9T`, `0.5T`, and `0.1T` certify.  At `0.01T` the
+    two candidate pairs are unavailable, with no later restart.  Both exact
+    tangent directions retain a raw contact observation but correctly refuse
+    a unique-root certificate, and all eighteen mirrored miss-side rays have
+    no local root or final segment.  Minimum normalized root separation is
+    `5.92e-6`; maximum certificate-radius/separation is `0.00239`, contraction
+    `0.0258`, model-image displacement `3.87e-7`, normal-dot error `3.47e-9`,
+    and fixed-expansion high-water 10.  Every certificate takes one attempt.
+
+    This result proves that the new local theorem remains effective as two
+    real rational-surface roots converge and become ill-conditioned.  It does
+    not prove candidate completeness over the parent region, absence of other
+    roots, material pairing, or exact-double-root classification.  Those are
+    independent obligations for the intended production grazing pipeline.
+    The focused `rt_brep_ray_grazing_root` CTest shard makes this distinction a
+    permanent, independently parallelizable ratchet.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -3698,9 +3738,10 @@ IMPLEMENTATION CHECKLIST
     [x] Record rejection reasons and provenance in this continuation log.
 
 [ ] Paired correctness harness
-    [x] Register directed, Crofton, seam, interval, fold, and affine
-        correctness partitions as independent deterministic CTest processes;
-        retain the no-argument complete-corpus executable.
+    [x] Register directed, Crofton, seam, interval, fold, affine, local-root,
+        and grazing-certificate correctness partitions as independent
+        deterministic CTest processes; retain the no-argument complete-corpus
+        executable.
     [ ] Compare implicit/CSG and converted BREP ordered partitions.
         [x] Seed in-memory C++ corpus with paired sphere raw segments and
             normal rt_shootray partitions.
@@ -5223,6 +5264,29 @@ Difficult local-root corpus expansion (Finding 77):
   no AddressSanitizer diagnostic appeared.  Leak scanning remains disabled
   because this host's ptrace wrapper prevents LeakSanitizer qualification.
 
+Near-grazing local-certificate bridge (Finding 78):
+
+  .build/src/librt/tests/rt_brep_ray --grazing-root-only
+  PASS: ten resolved and six sub-tolerance directed root pairs certify; the
+  two `0.01T` pairs are unavailable without a capability restart.  Both exact
+  tangencies reject uniqueness, and all eighteen mirrored misses have no root
+  or interval.  Minimum normalized separation is `5.92e-6`; maxima are
+  radius/separation `0.00239`, contraction `0.0258`, model image `3.87e-7`,
+  normal-dot error `3.47e-9`, one attempt, and expansion high-water 10.
+
+  ctest --test-dir .build --parallel 13 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+  PASS: 13/13 in 177.16 seconds.  The new grazing-root shard took 2.37
+  seconds, local root 0.46, contact trim 44.19, directed 54.92, Crofton 70.76,
+  interval 140.13, and seam 177.11 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+      .build-asan/src/librt/tests/rt_brep_ray --grazing-root-only
+  PASS in 6.62 seconds with the same capability boundary and no sanitizer
+  diagnostic.  Leak scanning remains disabled because of the host ptrace
+  wrapper.
+
 
 NEXT ACTIONS
 ------------
@@ -5231,10 +5295,12 @@ NEXT ACTIONS
    authority while continuing to expand its difficult-system corpus.  The
    analytic ratchet now covers singular, multiple-root, high-order,
    determinant-`2^-40`, `2^20` rational-weight-range, similarity, and reversal
-   cases.  Next capture unavailable systems and real near-tangent coefficient
-   systems from the implicit-to-BREP fixtures and STEP corpus before
-   considering the theorem for ordinary seams, vertices, or general grazing
-   dispatch.  Profile the fixed-expansion Taylor cost separately from
+   cases.  The generic converted-sphere bridge now adds real near-tangent
+   rational coefficients through `0.1T`, exact-double-root rejection, and
+   mirrored misses.  Next capture unavailable systems from the STEP corpus
+   and prove complete parent coverage/candidate accounting before considering
+   the theorem for ordinary seams, vertices, or general grazing dispatch.
+   Profile the fixed-expansion Taylor cost separately from
    continuation and material-sector work.  Keep arbitrary root counts, exact
    tangency, vertex neighborhoods, inferred tolerance authority, and every
    nonunique, non-positive-weight, or numerically singular surface fail-closed.

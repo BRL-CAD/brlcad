@@ -2770,6 +2770,13 @@ policies.  Register the arithmetic and weighted-surface corpus as
 compatibility processes, and keep the real production replay in
 `rt_brep_ray_contact_trim` so CTest can schedule both independently.
 
+The generic sphere grazing bridge in Section 7.7 is the first real close-root
+extension of this corpus.  It reuses actual roots and prepared rational
+coefficients rather than manufacturing a pair of affine equations.  Keep it
+separate from the declared-contact production replay: successful local
+certificates establish only isolated simple roots, while a general grazing
+transaction still needs complete parent coverage and event/material proofs.
+
 6.4.2 Cyclic planar vertex-fan theorem
 
 A BREP vertex can be one physical boundary crossing even though three or more
@@ -3222,6 +3229,31 @@ The expected trend from the hit side is:
 
   * at exact tangency the candidate is a CONTACT_TANGENT with zero winding
     change, followed by a stable miss on the negative-h side.
+
+Keep a focused certificate bridge independent of the full signed sweep.  At a
+generic sphere point away from seams and surface-span boundaries, use radial
+direction `(2,3,6)/7` and tangent direction `(3,-2,0)/sqrt(13)`.  Construct
+chords whose separations are `100`, `10`, `2`, `1.1`, `1`, `0.9`, `0.5`,
+`0.1`, and `0.01` times `rti_tol.dist`, in both ray directions.  Match the two
+raw local roots to the analytic endpoints and replay their actual prepared
+face, span, and UV values through the fixed-expansion local-root certificate.
+Require both roots to occupy one analytic span, remain strictly inside it,
+retain positive rational weight, and certify again with a radius cap strictly
+below one quarter of their normalized UV separation.  Root separation and
+`|N dot D|` must follow the analytic monotone trend, and certification must not
+restart after becoming unavailable.  Exact tangency must refuse a unique-root
+certificate, and the mirrored miss cases must produce neither local roots nor
+solid intervals.
+
+This bridge tests a theorem about already located simple roots.  It is not a
+coverage proof for the parent surface region, does not prove absence of other
+roots, and does not authorize a general grazing partition.  In particular,
+the exact double root remains outside the unique-contraction theorem.  Keep
+candidate completeness, physical-event pairing, and minimum-segment policy as
+separate obligations before using these certificates in the production
+grazing dispatcher.  Register the bridge as `rt_brep_ray_grazing_root` so its
+small difficult-system matrix runs in parallel with the full directed,
+interval, and seam sweeps.
 
 Do not impose a fixed grazing-normal cutoff as the expected transition.  The
 meaningful transition is governed by root isolation, analytic geometry, and
