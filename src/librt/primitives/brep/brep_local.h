@@ -142,6 +142,12 @@ struct brep_specific {
     std::vector<brep_face_record> face_records;
     std::vector<brep_surface_span> surface_spans;
     std::vector<brep_vertex_record> vertex_records;
+    int surface_tree_depth_limit = 0;
+    int surface_tree_maximum_depth = 0;
+    size_t surface_tree_nodes = 0;
+    size_t surface_tree_leaves = 0;
+    size_t curve_tree_leaves = 0;
+    size_t surface_tree_build_microseconds = 0;
     int is_solid = 0;
     int plate_mode = 0;
     int plate_mode_nocos = 0;
