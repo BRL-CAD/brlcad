@@ -480,6 +480,8 @@ static const size_t BREP_DIRECT_BEZIER_MAX_CVS =
 static const size_t BREP_DIRECT_SUBDIVISION_CAPACITY = 64;
 static const int BREP_DIRECT_SUBDIVISION_MAX_DEPTH = 24;
 static const int BREP_DIRECT_SUBDIVISION_MIN_ADAPTIVE_DEPTH = 4;
+static const int BREP_DIRECT_EXACT_REFINEMENT_LEVELS = 8;
+static const size_t BREP_DIRECT_EXACT_REFINEMENT_BUDGET = 64;
 static const double BREP_DIRECT_CLIP_MINIMUM_FRACTION = 1.0 / 16.0;
 static const double BREP_DIRECT_CLIP_MINIMUM_RETAINED_FRACTION = 0.5;
 static const double BREP_DIRECT_ROOT_RELATIVE_TOLERANCE = 5.0e-9;
@@ -511,9 +513,13 @@ brep_build_surface_data(struct brep_specific *bs)
 	}
 
 	ON_NurbsSurface nurbs;
-	/* Preserve both the surface locus and its parameterization.  A
-	 * reparameterized form cannot safely share the face's trim domains. */
-	if (surface->GetNurbForm(nurbs) != 1 || nurbs.m_order[0] < 2 ||
+	/* Status 2 preserves the exact locus but requires an explicit
+	 * point-parameter map before trim or normal evaluation.  Its prepared
+	 * eligibility is restricted to regular interior events below; mapped
+	 * seam, edge, and vertex boxes need separate interval certificates. */
+	record.nurb_form_status = surface->GetNurbForm(nurbs);
+	if (record.nurb_form_status < 1 || record.nurb_form_status > 2 ||
+		nurbs.m_order[0] < 2 ||
 		nurbs.m_order[1] < 2 ||
 		nurbs.m_order[0] > BREP_DIRECT_BEZIER_MAX_ORDER ||
 		nurbs.m_order[1] > BREP_DIRECT_BEZIER_MAX_ORDER ||
@@ -564,6 +570,58 @@ brep_build_surface_data(struct brep_specific *bs)
 	}
 	bs->face_records.push_back(record);
     }
+}
+
+
+static const brep_face_record *
+brep_face_surface_record(const struct brep_specific *bs, int face_index)
+{
+    if (!bs || face_index < 0)
+	return NULL;
+    for (std::vector<brep_face_record>::const_iterator record =
+	    bs->face_records.begin(); record != bs->face_records.end(); ++record)
+	if (record->face_index == face_index)
+	    return &*record;
+    return NULL;
+}
+
+
+static bool
+brep_surface_parameter_from_nurbs(const struct brep_specific *bs,
+    int face_index, const double nurbs_uv[2], ON_2dPoint &surface_uv)
+{
+    if (!bs || !bs->brep || !nurbs_uv || face_index < 0 ||
+	    face_index >= bs->brep->m_F.Count() ||
+	    !std::isfinite(nurbs_uv[0]) || !std::isfinite(nurbs_uv[1]))
+	return false;
+    const brep_face_record *record = brep_face_surface_record(bs,
+	face_index);
+    const ON_Surface *surface = bs->brep->m_F[face_index].SurfaceOf();
+    if (!record || !record->supported || !surface)
+	return false;
+    if (record->nurb_form_status == 1) {
+	surface_uv.Set(nurbs_uv[0], nurbs_uv[1]);
+	return surface_uv.IsValid();
+    }
+    if (record->nurb_form_status != 2 ||
+	    !surface->GetSurfaceParameterFromNurbFormParameter(nurbs_uv[0],
+		nurbs_uv[1], &surface_uv.x, &surface_uv.y) ||
+	    !surface_uv.IsValid())
+	return false;
+
+    double round_trip[2] = {ON_UNSET_VALUE, ON_UNSET_VALUE};
+    if (!surface->GetNurbFormParameterFromSurfaceParameter(surface_uv.x,
+	    surface_uv.y, &round_trip[0], &round_trip[1]) ||
+	    !std::isfinite(round_trip[0]) || !std::isfinite(round_trip[1]))
+	return false;
+    for (int direction = 0; direction < 2; ++direction) {
+	const double scale = std::max(1.0, std::max(fabs(nurbs_uv[direction]),
+	    fabs(round_trip[direction])));
+	if (fabs(round_trip[direction] - nurbs_uv[direction]) >
+		4096.0 * DBL_EPSILON * scale)
+	    return false;
+    }
+    return true;
 }
 
 
@@ -7700,6 +7758,7 @@ struct brep_subdivision_box {
     double minimum[2];
     double maximum[2];
     int depth;
+    int exact_depth = 0;
 };
 
 
@@ -7771,6 +7830,64 @@ brep_rotated_surface_hull_status(
     for (int equation = 0; equation < 2; ++equation) {
 	if (hull[equation].minimum > 0.0 ||
 		hull[equation].maximum < 0.0)
+	    return BREP_ROTATED_HULL_EXCLUDED;
+    }
+    return BREP_ROTATED_HULL_RETAINED;
+}
+
+
+static bool
+brep_interval_conditioned_surface_frame_init(
+    const brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const int order[2], brep_conditioned_surface_frame &frame)
+{
+    brep_interval derivative[2][2];
+    double midpoint[2][2];
+    for (int equation = 0; equation < 2; ++equation) {
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!brep_interval_surface_derivative_hull(values[equation],
+		    order[0], order[1], direction,
+		    derivative[equation][direction]))
+		return false;
+	    midpoint[equation][direction] =
+		0.5 * derivative[equation][direction].minimum +
+		0.5 * derivative[equation][direction].maximum;
+	}
+    }
+    const double scale[2] = {
+	hypot(midpoint[0][0], midpoint[1][0]),
+	hypot(midpoint[0][1], midpoint[1][1])
+    };
+    frame.regular_direction = scale[0] >= scale[1] ? 0 : 1;
+    const double regular_scale = scale[frame.regular_direction];
+    if (!(regular_scale > DBL_MIN) || !std::isfinite(regular_scale))
+	return false;
+    frame.transform[0][0] =
+	midpoint[0][frame.regular_direction] / regular_scale;
+    frame.transform[0][1] =
+	midpoint[1][frame.regular_direction] / regular_scale;
+    frame.transform[1][0] = -frame.transform[0][1];
+    frame.transform[1][1] = frame.transform[0][0];
+    return std::isfinite(frame.transform[0][0]) &&
+	std::isfinite(frame.transform[0][1]);
+}
+
+
+static brep_rotated_hull_status
+brep_expansion_rotated_surface_hull_status(
+    const brep_interval values[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const int order[2], size_t &high_water)
+{
+    brep_conditioned_surface_frame frame;
+    if (!brep_interval_conditioned_surface_frame_init(values, order, frame))
+	return BREP_ROTATED_HULL_INCONCLUSIVE;
+    brep_interval rotated[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    const size_t count = (size_t)order[0] * order[1];
+    if (!brep_expansion_linear_coefficients(values, count, frame.transform,
+	    rotated, high_water))
+	return BREP_ROTATED_HULL_INCONCLUSIVE;
+    for (int equation = 0; equation < 2; ++equation) {
+	if (brep_interval_coefficient_hull_excluded(rotated[equation], count))
 	    return BREP_ROTATED_HULL_EXCLUDED;
     }
     return BREP_ROTATED_HULL_RETAINED;
@@ -9712,7 +9829,8 @@ static void
 brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
     const brep_surface_coefficients &coefficients,
     const brep_surface_span &span, const ON_Ray &ray,
-    bool adaptive, bool clipping)
+    bool adaptive, bool clipping, double target_t_width,
+    bool exact_refinement)
 {
     brep_subdivision_box pending[BREP_DIRECT_SUBDIVISION_CAPACITY];
     size_t pending_count = 1;
@@ -9721,6 +9839,7 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
     pending[0].maximum[0] = 1.0;
     pending[0].maximum[1] = 1.0;
     pending[0].depth = 0;
+    pending[0].exact_depth = 0;
     trace->surface_workspace_high_water = std::max(
 	trace->surface_workspace_high_water, pending_count);
 
@@ -9827,6 +9946,8 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 	bool have_t_range = false;
 	bool krawczyk_terminated = false;
 	int determinant_sign = 0;
+	bool have_corrected_root = false;
+	double corrected_local_root[2] = {0.0, 0.0};
 	if (adaptive &&
 		box.depth >= BREP_DIRECT_SUBDIVISION_MIN_ADAPTIVE_DEPTH) {
 	    const ON_2dPoint seed(
@@ -9839,31 +9960,20 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 		trace->surface_corrector_status[root.status]++;
 	    if (root.converged) {
 		trace->surface_corrector_converged++;
-		const double local_root[2] = {
+		corrected_local_root[0] =
 		    (root.uv.x - box.minimum[0]) /
-			(box.maximum[0] - box.minimum[0]),
+		    (box.maximum[0] - box.minimum[0]);
+		corrected_local_root[1] =
 		    (root.uv.y - box.minimum[1]) /
-			(box.maximum[1] - box.minimum[1])
-		};
+		    (box.maximum[1] - box.minimum[1]);
+		have_corrected_root = true;
 		krawczyk_terminated = brep_surface_krawczyk_certified(
 		    restricted, coefficients.order[0], coefficients.order[1],
-		    restricted_error, local_root);
+		    restricted_error, corrected_local_root);
 	    }
 	    if (krawczyk_terminated)
 		have_t_range = brep_surface_box_t_range(coefficients, box,
 		    minimum_t, maximum_t);
-	}
-	if (krawczyk_terminated) {
-	    trace->surface_regular_orientation_attempts++;
-	    if (!brep_surface_determinant_sign(restricted,
-		    coefficients.order, restricted_error,
-		    determinant_sign)) {
-		trace->surface_regular_orientation_failures++;
-	    } else if (determinant_sign) {
-		trace->surface_regular_orientation_signed++;
-	    } else {
-		trace->surface_regular_orientation_uncertain++;
-	    }
 	}
 	const double midpoint[2] = {
 	    0.5 * (box.minimum[0] + box.maximum[0]),
@@ -9873,9 +9983,113 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 	    midpoint[0] > box.minimum[0] && midpoint[0] < box.maximum[0],
 	    midpoint[1] > box.minimum[1] && midpoint[1] < box.maximum[1]
 	};
-	if (krawczyk_terminated ||
-		box.depth >= BREP_DIRECT_SUBDIVISION_MAX_DEPTH ||
-		(!splittable[0] && !splittable[1])) {
+	bool terminal = box.depth >= BREP_DIRECT_SUBDIVISION_MAX_DEPTH ||
+	    (!splittable[0] && !splittable[1]);
+	bool exact_refine_box = false;
+	brep_interval exact_values[2][BREP_DIRECT_BEZIER_MAX_CVS];
+	bool have_exact_values = false;
+	if (!krawczyk_terminated && adaptive && exact_refinement && terminal &&
+		coefficients.expansion_available) {
+	    trace->surface_terminal_expansion_attempts++;
+	    have_exact_values = true;
+	    size_t high_water = coefficients.expansion_high_water;
+	    for (int equation = 0; have_exact_values && equation < 2;
+		    ++equation) {
+		have_exact_values = brep_expansion_surface_restrict(
+		    coefficients.value_expansion_interval[equation],
+		    coefficients.order[0], coefficients.order[1],
+		    box.minimum[0], box.maximum[0], box.minimum[1],
+		    box.maximum[1], true, exact_values[equation], high_water);
+	    }
+	    trace->surface_terminal_expansion_high_water = std::max(
+		trace->surface_terminal_expansion_high_water, high_water);
+	    if (!have_exact_values) {
+		trace->surface_terminal_expansion_failures++;
+	    } else {
+		trace->surface_terminal_expansion_available++;
+		bool exact_excluded = false;
+		for (int equation = 0; equation < 2; ++equation) {
+		    if (brep_interval_coefficient_hull_excluded(
+			    exact_values[equation], count)) {
+			exact_excluded = true;
+			break;
+		    }
+		}
+		const brep_rotated_hull_status exact_rotated_hull =
+		    exact_excluded ? BREP_ROTATED_HULL_EXCLUDED :
+		    brep_expansion_rotated_surface_hull_status(exact_values,
+			coefficients.order, high_water);
+		if (exact_rotated_hull == BREP_ROTATED_HULL_EXCLUDED)
+		    exact_excluded = true;
+		if (exact_excluded) {
+		    trace->surface_terminal_expansion_exclusions++;
+		    continue;
+		}
+		if (have_corrected_root) {
+		    struct rt_brep_krawczyk_test_result result = {};
+		    if (brep_expansion_surface_krawczyk(exact_values,
+			    coefficients.order[0], coefficients.order[1],
+			    corrected_local_root, result, high_water) &&
+			    result.certified) {
+			krawczyk_terminated = true;
+			trace->surface_terminal_expansion_krawczyk++;
+			have_t_range = brep_surface_box_t_range(coefficients,
+			    box, minimum_t, maximum_t);
+		    }
+		    trace->surface_terminal_expansion_high_water = std::max(
+			trace->surface_terminal_expansion_high_water,
+			high_water);
+		}
+		if (!krawczyk_terminated &&
+			exact_rotated_hull == BREP_ROTATED_HULL_RETAINED &&
+			box.exact_depth < BREP_DIRECT_EXACT_REFINEMENT_LEVELS &&
+			(splittable[0] || splittable[1])) {
+		    if (trace->surface_terminal_expansion_refinements <
+			    BREP_DIRECT_EXACT_REFINEMENT_BUDGET) {
+			trace->surface_terminal_expansion_refinements++;
+			terminal = false;
+			exact_refine_box = true;
+		    } else {
+			trace->surface_terminal_expansion_budget_exhausted++;
+		    }
+		}
+	    }
+	}
+	/* A uniqueness proof may succeed well before the ordinary depth limit.
+	 * Keep locally refining a status-2 box whose certified ray interval is
+	 * still too wide to separate model-tolerance-scale neighboring roots. */
+	if (krawczyk_terminated && adaptive && exact_refinement &&
+	    target_t_width > 0.0 && have_t_range &&
+	    maximum_t - minimum_t > target_t_width &&
+	    box.exact_depth < BREP_DIRECT_EXACT_REFINEMENT_LEVELS &&
+	    (splittable[0] || splittable[1])) {
+	    if (trace->surface_terminal_expansion_refinements <
+		BREP_DIRECT_EXACT_REFINEMENT_BUDGET) {
+		trace->surface_terminal_expansion_refinements++;
+		krawczyk_terminated = false;
+		have_t_range = false;
+		terminal = false;
+		exact_refine_box = true;
+	    } else {
+		trace->surface_terminal_expansion_budget_exhausted++;
+	    }
+	}
+	if (krawczyk_terminated) {
+	    trace->surface_regular_orientation_attempts++;
+	    if (have_exact_values ?
+		!brep_interval_surface_determinant_sign(exact_values,
+		    coefficients.order[0], coefficients.order[1],
+		    determinant_sign) :
+		!brep_surface_determinant_sign(restricted,
+		    coefficients.order, restricted_error, determinant_sign)) {
+		trace->surface_regular_orientation_failures++;
+	    } else if (determinant_sign) {
+		trace->surface_regular_orientation_signed++;
+	    } else {
+		trace->surface_regular_orientation_uncertain++;
+	    }
+	}
+	if (krawczyk_terminated || terminal) {
 	    if (!krawczyk_terminated && adaptive &&
 		    rotated_hull == BREP_ROTATED_HULL_RETAINED)
 		brep_trace_fold_certificates(trace, coefficients, span, restricted,
@@ -9943,10 +10157,12 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 	second = box;
 	second.minimum[direction] = midpoint[direction];
 	second.depth++;
+	second.exact_depth += exact_refine_box ? 1 : 0;
 	brep_subdivision_box &first = pending[pending_count++];
 	first = box;
 	first.maximum[direction] = midpoint[direction];
 	first.depth++;
+	first.exact_depth += exact_refine_box ? 1 : 0;
 	trace->surface_workspace_high_water = std::max(
 	    trace->surface_workspace_high_water, pending_count);
     }
@@ -9980,7 +10196,7 @@ brep_continuation_certificate(struct rt_brep_shot_trace *trace,
 	    span.surface_domain[direction].ParameterAt(maximum[direction]));
     struct rt_brep_shot_trace certificate = {};
     brep_trace_surface_isolation(&certificate, extension, extension_span,
-	ray, false, false);
+	ray, false, false, 0.0, false);
     trace->continuation_certificate_boxes +=
 	certificate.surface_subdivision_boxes;
     trace->continuation_certificate_isolated +=
@@ -10062,6 +10278,8 @@ brep_trace_surface_spans(struct rt_brep_shot_trace *trace,
     const bool adaptive = tol && tol->dist > 0.0 &&
 	std::isfinite(tol->dist) && ray_length > DBL_MIN &&
 	std::isfinite(ray_length);
+    const double target_t_width = adaptive ?
+	0.01 * tol->dist / ray_length : 0.0;
     for (std::vector<brep_face_record>::const_iterator record_it =
 	    bs->face_records.begin(); record_it != bs->face_records.end();
 	    ++record_it) {
@@ -10071,6 +10289,8 @@ brep_trace_surface_spans(struct rt_brep_shot_trace *trace,
 	    continue;
 	}
 	trace->supported_surface_faces++;
+	if (record.nurb_form_status == 2)
+	    trace->reparameterized_surface_faces++;
 	for (size_t span_index = record.span_begin;
 		span_index < record.span_begin + record.span_count;
 		++span_index) {
@@ -10083,7 +10303,8 @@ brep_trace_surface_spans(struct rt_brep_shot_trace *trace,
 		if (brep_surface_coefficients_init(coefficients,
 			bs->surface_spans[span_index], ray, first, second))
 		    brep_trace_surface_isolation(trace, coefficients,
-			bs->surface_spans[span_index], ray, adaptive, true);
+			bs->surface_spans[span_index], ray, adaptive, true,
+			target_t_width, record.nurb_form_status == 2);
 		else
 		    trace->surface_workspace_exhausted++;
 	    }
@@ -10237,11 +10458,45 @@ brep_trace_fold_events(struct rt_brep_shot_trace *trace,
 	    return;
 	}
 	const ON_BrepFace &face = bs->brep->m_F[root.face_index];
+	const brep_surface_span &span = bs->surface_spans[root.span_index];
+	if (span.face_index != root.face_index) {
+	    trace->surface_fold_root_failures++;
+	    return;
+	}
 	const ON_Surface *surface = face.SurfaceOf();
+	const double nurbs_uv[2] = {root.uv[0], root.uv[1]};
+	ON_2dPoint surface_uv;
 	ON_3dPoint point;
 	ON_3dVector normal;
-	if (!surface || !surface_EvNormal(surface, root.uv[0], root.uv[1],
-		point, normal) || !normal.Unitize()) {
+	const double local_u =
+	    span.surface_domain[0].NormalizedParameterAt(root.uv[0]);
+	const double local_v =
+	    span.surface_domain[1].NormalizedParameterAt(root.uv[1]);
+	const double parameter_epsilon = 4096.0 * DBL_EPSILON;
+	const ON_3dPoint nurbs_point = span.surface.PointAt(local_u, local_v);
+	if (!std::isfinite(local_u) || !std::isfinite(local_v) ||
+		local_u < -parameter_epsilon ||
+		local_u > 1.0 + parameter_epsilon ||
+		local_v < -parameter_epsilon ||
+		local_v > 1.0 + parameter_epsilon || !nurbs_point.IsValid() ||
+		!brep_surface_parameter_from_nurbs(bs, root.face_index, nurbs_uv,
+		surface_uv) || !surface ||
+		!surface_EvNormal(surface, surface_uv.x, surface_uv.y, point,
+		    normal) || !normal.Unitize()) {
+	    trace->surface_fold_root_failures++;
+	    return;
+	}
+	const double span_scale = span.bbox.IsValid() ?
+	    span.bbox.Diagonal().Length() : 0.0;
+	const double coordinate_scale = std::max(span_scale,
+	    std::max(fabs(point.x), std::max(fabs(point.y),
+	    std::max(fabs(point.z), std::max(fabs(nurbs_point.x),
+	    std::max(fabs(nurbs_point.y), fabs(nurbs_point.z)))))));
+	const double distance_tolerance = std::max(
+	    BREP_DIRECT_ROOT_RELATIVE_TOLERANCE * span_scale,
+	    BREP_DIRECT_EVALUATION_ULPS * DBL_EPSILON * coordinate_scale);
+	if (!std::isfinite(distance_tolerance) ||
+		point.DistanceTo(nurbs_point) > 4.0 * distance_tolerance) {
 	    trace->surface_fold_root_failures++;
 	    return;
 	}
@@ -10269,7 +10524,7 @@ brep_trace_fold_events(struct rt_brep_shot_trace *trace,
 	size_t trim_candidates = 0;
 	trace->surface_fold_trim_queries++;
 	root.trim_status = bs->ctrees[root.face_index]->isTrimmed(
-	    ON_2dPoint(root.uv[0], root.uv[1]), &trim_node,
+	    surface_uv, &trim_node,
 	    root.trim_distance, BREP_EDGE_MISS_TOLERANCE,
 	    &trim_candidates);
 	trace->surface_fold_trim_candidates += trim_candidates;
@@ -12243,6 +12498,26 @@ brep_trace_isolated_roots(struct rt_brep_shot_trace *trace,
 		trace->local_root_failures++;
 		continue;
 	    }
+	    const double nurbs_uv[2] = {
+		span.surface_domain[0].ParameterAt(result.uv.x),
+		span.surface_domain[1].ParameterAt(result.uv.y)
+	    };
+	    ON_2dPoint surface_uv;
+	    ON_3dPoint mapped_point;
+	    ON_3dVector mapped_normal;
+	    const ON_BrepFace *face = box.face_index >= 0 &&
+		box.face_index < bs->brep->m_F.Count() ?
+		&bs->brep->m_F[box.face_index] : NULL;
+	    const ON_Surface *original_surface = face ? face->SurfaceOf() : NULL;
+	    if (!brep_surface_parameter_from_nurbs(bs, box.face_index,
+		    nurbs_uv, surface_uv) || !original_surface ||
+		    !surface_EvNormal(original_surface, surface_uv.x, surface_uv.y,
+			mapped_point, mapped_normal) || !mapped_normal.Unitize() ||
+		    mapped_point.DistanceTo(result.point) >
+			4.0 * distance_tolerance) {
+		trace->local_trim_failures++;
+		continue;
+	    }
 
 	    bool duplicate = false;
 	    for (size_t root_index = 0;
@@ -12269,12 +12544,11 @@ brep_trace_isolated_roots(struct rt_brep_shot_trace *trace,
 	    struct rt_brep_trace_local_root &root =
 		trace->local_roots[trace->stored_local_roots++];
 	    root.dist = result.dist;
-	    root.uv[0] = span.surface_domain[0].ParameterAt(result.uv.x);
-	    root.uv[1] = span.surface_domain[1].ParameterAt(result.uv.y);
+	    root.uv[0] = nurbs_uv[0];
+	    root.uv[1] = nurbs_uv[1];
 	    root.residual = result.residual;
-	    ON_3dVector normal = result.normal;
-	    if (box.face_index >= 0 && box.face_index < bs->brep->m_F.Count() &&
-		    bs->brep->m_F[box.face_index].m_bRev)
+	    ON_3dVector normal = mapped_normal;
+	    if (face->m_bRev)
 		normal.Reverse();
 	    root.normal_dot = normal * ray.m_dir;
 	    root.iterations = result.iterations;
@@ -12296,7 +12570,7 @@ brep_trace_isolated_roots(struct rt_brep_shot_trace *trace,
 	    size_t trim_candidates = 0;
 	    trace->local_trim_queries++;
 	    root.trim_status = bs->ctrees[box.face_index]->isTrimmed(
-		ON_2dPoint(root.uv[0], root.uv[1]), &trim_node,
+		surface_uv, &trim_node,
 		root.trim_distance, BREP_EDGE_MISS_TOLERANCE,
 		&trim_candidates);
 	    trace->local_trim_candidates += trim_candidates;
@@ -13273,7 +13547,8 @@ brep_trace_hits_equivalent(const brep_hit &legacy, const brep_hit &local,
 static bool
 brep_trace_make_hit(const struct brep_specific *bs, const ON_Ray &ray,
 	int face_index, double dist, const double uv[2], int trim_status,
-	int hit_class, int direction, int adjacency, brep_hit &hit)
+	int hit_class, int direction, int adjacency, bool nurbs_parameter,
+	brep_hit &hit)
 {
     if (!bs || !bs->brep || face_index < 0 ||
 	    face_index >= bs->brep->m_F.Count() ||
@@ -13282,9 +13557,13 @@ brep_trace_make_hit(const struct brep_specific *bs, const ON_Ray &ray,
 	return false;
     const ON_BrepFace &face = bs->brep->m_F[face_index];
     const ON_Surface *surface = face.SurfaceOf();
+    ON_2dPoint surface_uv(uv[0], uv[1]);
+    if (nurbs_parameter &&
+	    !brep_surface_parameter_from_nurbs(bs, face_index, uv, surface_uv))
+	return false;
     ON_3dPoint surface_point;
     ON_3dVector normal;
-    if (!surface || !surface_EvNormal(surface, uv[0], uv[1],
+    if (!surface || !surface_EvNormal(surface, surface_uv.x, surface_uv.y,
 	    surface_point, normal) || !normal.Unitize())
 	return false;
     if (face.m_bRev)
@@ -13299,7 +13578,7 @@ brep_trace_make_hit(const struct brep_specific *bs, const ON_Ray &ray,
 
     point_t point;
     vect_t hit_normal;
-    pt2d_t hit_uv = {uv[0], uv[1]};
+    pt2d_t hit_uv = {surface_uv.x, surface_uv.y};
     const ON_3dPoint ray_point = ray.m_origin + ray.m_dir * dist;
     VMOVE(point, ray_point);
     VMOVE(hit_normal, normal);
@@ -13344,7 +13623,7 @@ brep_trace_prepared_event_cleanup(struct rt_brep_shot_trace *trace,
 	brep_hit hit;
 	if (!brep_trace_make_hit(bs, ray, root.face_index, root.dist, root.uv,
 		root.trim_status, root.hit_class, root.direction,
-		root.adjacent_face_index, hit)) {
+		root.adjacent_face_index, true, hit)) {
 	    trace->local_candidate_failures++;
 	    continue;
 	}
@@ -13363,7 +13642,7 @@ brep_trace_prepared_event_cleanup(struct rt_brep_shot_trace *trace,
 	brep_hit hit;
 	if (!brep_trace_make_hit(bs, ray, root.face_index, root.dist, root.uv,
 		root.trim_status, root.hit_class, root.direction,
-		root.adjacent_face_index, hit)) {
+		root.adjacent_face_index, false, hit)) {
 	    trace->local_candidate_failures++;
 	    continue;
 	}
@@ -13447,7 +13726,7 @@ brep_trace_prepared_event_cleanup(struct rt_brep_shot_trace *trace,
 	brep_hit hit;
 	if (!brep_trace_make_hit(bs, ray, group.face_index, group.dist,
 		group.uv, group.trim_status, group.hit_class,
-		group.direction_class, group.adjacency, hit)) {
+		group.direction_class, group.adjacency, true, hit)) {
 	    trace->local_event_failures++;
 	    continue;
 	}
@@ -15744,7 +16023,7 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 	brep_hit existing_hit;
 	if (!brep_trace_make_hit(bs, ray, root.face_index, root.dist,
 		root.uv, root.trim_status, root.hit_class, root.direction,
-		root.adjacent_face_index, existing_hit))
+		root.adjacent_face_index, true, existing_hit))
 	    continue;
 	trace->physical_event_seam_root_candidates++;
 
@@ -16355,6 +16634,242 @@ brep_trace_fold_physical_events(struct rt_brep_shot_trace *trace,
 }
 
 
+static bool
+brep_prepared_mixed_fold_pair_indices(
+    const struct rt_brep_shot_trace *trace, const ON_Ray &ray,
+    const struct bn_tol *tol, size_t &fold_box_index,
+    size_t &regular_box_index, size_t &fold_local_index,
+    size_t &regular_local_index, brep_interval &gap)
+{
+    if (!trace || trace->surface_isolated_boxes != 2 ||
+	    trace->stored_surface_boxes != 2 ||
+	    trace->surface_krawczyk_boxes != 1 ||
+	    trace->surface_fold_complete != 1 ||
+	    trace->surface_fold_roots != 1 ||
+	    trace->stored_surface_fold_roots != 1 ||
+	    trace->surface_fold_root_overflow ||
+	    trace->surface_fold_root_failures ||
+	    trace->surface_fold_localization_failures ||
+	    trace->surface_fold_direction_checks != 1 ||
+	    trace->surface_fold_direction_mismatches ||
+	    trace->surface_fold_trim_queries != 1 ||
+	    trace->surface_fold_trim_failures ||
+	    trace->surface_fold_topology_pairs ||
+	    trace->surface_fold_duplicate_events ||
+	    trace->surface_fold_material_pairs ||
+	    trace->surface_fold_void_pairs ||
+	    trace->surface_fold_resolved_pairs ||
+	    trace->surface_fold_subminimum_contacts ||
+	    trace->surface_fold_tolerance_ambiguous ||
+	    trace->surface_fold_unmatched_roots != 1 ||
+	    trace->stored_local_roots != 2 || trace->stored_physical_events)
+	return false;
+
+    const struct rt_brep_trace_fold_root &fold =
+	trace->surface_fold_roots_data[0];
+    if (fold.trim_status != 0 || fold.hit_class != brep_hit::CLEAN_HIT ||
+	    !fold.determinant_sign || !std::isfinite(fold.dist) ||
+	    !std::isfinite(fold.t_min) || !std::isfinite(fold.t_max) ||
+	    fold.t_min > fold.dist || fold.dist > fold.t_max)
+	return false;
+
+    size_t fold_boxes = 0;
+    size_t regular_boxes = 0;
+    for (size_t box_index = 0; box_index < 2; ++box_index) {
+	const struct rt_brep_trace_surface_box &box =
+	    trace->surface_boxes[box_index];
+	if (brep_prepared_box_matches_fold_root(box, fold, ray, tol)) {
+	    fold_box_index = box_index;
+	    fold_boxes++;
+	}
+	if (box.disposition == RT_BREP_TRACE_BOX_RESOLVED_REGULAR &&
+		box.determinant_sign) {
+	    regular_box_index = box_index;
+	    regular_boxes++;
+	}
+    }
+    if (fold_boxes != 1 || regular_boxes != 1 ||
+	    fold_box_index == regular_box_index ||
+	    trace->surface_boxes[fold_box_index].disposition !=
+		RT_BREP_TRACE_BOX_UNRESOLVED)
+	return false;
+
+    size_t fold_locals = 0;
+    size_t regular_locals = 0;
+    for (size_t local_index = 0; local_index < 2; ++local_index) {
+	const struct rt_brep_trace_local_root &local =
+	    trace->local_roots[local_index];
+	/* The safeguarded corrector is only a representative and may not land
+	 * inside the much tighter certified fold-root t interval.  Ownership is
+	 * by the complete fold parent box: its corridor theorem proves one root
+	 * and its adjacent strip proof excludes another. */
+	const bool matches_fold = brep_prepared_box_matches_local_root(
+	    trace->surface_boxes[fold_box_index], local, ray, tol);
+	const bool matches_regular = brep_prepared_box_matches_local_root(
+	    trace->surface_boxes[regular_box_index], local, ray, tol);
+	if (matches_fold) {
+	    fold_local_index = local_index;
+	    fold_locals++;
+	}
+	if (matches_regular) {
+	    regular_local_index = local_index;
+	    regular_locals++;
+	}
+	if (matches_fold == matches_regular || local.trim_status != 0 ||
+		local.hit_class != brep_hit::CLEAN_HIT)
+	    return false;
+    }
+    if (fold_locals != 1 || regular_locals != 1 ||
+	    fold_local_index == regular_local_index)
+	return false;
+    const struct rt_brep_trace_local_root &regular =
+	trace->local_roots[regular_local_index];
+    if (regular.face_index != fold.face_index ||
+	    regular.span_index != fold.span_index ||
+	    regular.direction == fold.direction)
+	return false;
+
+    const brep_interval fold_interval = {fold.t_min, fold.t_max};
+    const struct rt_brep_trace_surface_box &regular_box =
+	trace->surface_boxes[regular_box_index];
+    const brep_interval regular_interval = {
+	regular_box.t_min, regular_box.t_max
+    };
+    const brep_interval *lower = &fold_interval;
+    const brep_interval *upper = &regular_interval;
+    int lower_direction = fold.direction;
+    int upper_direction = regular.direction;
+    if (regular.dist < fold.dist) {
+	lower = &regular_interval;
+	upper = &fold_interval;
+	lower_direction = regular.direction;
+	upper_direction = fold.direction;
+    }
+    brep_interval minimum_t;
+    if (lower_direction != brep_hit::ENTERING ||
+	    upper_direction != brep_hit::LEAVING ||
+	    !brep_fold_minimum_t_interval(ray, tol, minimum_t) ||
+	    brep_fold_gap_classify(*lower, *upper, minimum_t, gap) !=
+		RT_BREP_FOLD_GAP_RESOLVED)
+	return false;
+    return true;
+}
+
+
+static bool
+brep_prepared_mixed_fold_pair_eligible(
+    const struct rt_brep_shot_trace *trace, const ON_Ray &ray,
+    const struct bn_tol *tol)
+{
+    size_t fold_box_index = 0;
+    size_t regular_box_index = 0;
+    size_t fold_local_index = 0;
+    size_t regular_local_index = 0;
+    brep_interval gap;
+    return brep_prepared_mixed_fold_pair_indices(trace, ray, tol,
+	fold_box_index, regular_box_index, fold_local_index,
+	regular_local_index, gap);
+}
+
+
+static void
+brep_trace_mixed_fold_physical_events(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const ON_Ray &ray,
+    const struct bn_tol *tol)
+{
+    if (!trace || !bs || !bs->brep)
+	return;
+    size_t fold_box_index = 0;
+    size_t regular_box_index = 0;
+    size_t fold_local_index = 0;
+    size_t regular_local_index = 0;
+    brep_interval gap;
+    if (!brep_prepared_mixed_fold_pair_indices(trace, ray, tol,
+	    fold_box_index, regular_box_index, fold_local_index,
+	    regular_local_index, gap))
+	return;
+
+    const struct rt_brep_trace_fold_root &fold =
+	trace->surface_fold_roots_data[0];
+    const struct rt_brep_trace_local_root &regular =
+	trace->local_roots[regular_local_index];
+    struct rt_brep_trace_surface_box &fold_box =
+	trace->surface_boxes[fold_box_index];
+    const struct rt_brep_trace_surface_box &regular_box =
+	trace->surface_boxes[regular_box_index];
+    int regular_sign = regular_box.determinant_sign;
+    if (regular.face_index < 0 ||
+	    regular.face_index >= bs->brep->m_F.Count())
+	return;
+    if (bs->brep->m_F[regular.face_index].m_bRev)
+	regular_sign = -regular_sign;
+    const int regular_direction = regular_sign < 0 ?
+	brep_hit::ENTERING : brep_hit::LEAVING;
+    trace->physical_event_direction_checks += 2;
+    if (regular.direction != regular_direction) {
+	trace->physical_event_direction_mismatches++;
+	return;
+    }
+
+    fold_box.disposition = RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY;
+    fold_box.determinant_sign = fold.determinant_sign;
+    struct rt_brep_trace_physical_event &fold_event =
+	trace->physical_events[trace->stored_physical_events++];
+    fold_event = {};
+    fold_event.dist = fold.dist;
+    fold_event.t_min = fold.t_min;
+    fold_event.t_max = fold.t_max;
+    fold_event.uv[0] = fold.uv[0];
+    fold_event.uv[1] = fold.uv[1];
+    fold_event.source_box = fold_box_index;
+    fold_event.source_box_count = 1;
+    fold_event.source_root = 0;
+    fold_event.source_kind = RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT;
+    fold_event.edge_index = -1;
+    fold_event.vertex_index = -1;
+    fold_event.face_index = fold.face_index;
+    fold_event.span_index = fold.span_index;
+    fold_event.certificate = RT_BREP_TRACE_EVENT_BOUNDARY_FOLD;
+    fold_event.determinant_sign = fold.determinant_sign;
+    fold_event.hit_class = fold.hit_class;
+    fold_event.trim_status = fold.trim_status;
+    fold_event.adjacent_face_index = fold.adjacent_face_index;
+    fold_event.direction = fold.direction;
+
+    struct rt_brep_trace_physical_event &regular_event =
+	trace->physical_events[trace->stored_physical_events++];
+    regular_event = {};
+    regular_event.dist = regular.dist;
+    regular_event.t_min = regular_box.t_min;
+    regular_event.t_max = regular_box.t_max;
+    regular_event.uv[0] = regular.uv[0];
+    regular_event.uv[1] = regular.uv[1];
+    regular_event.source_box = regular_box_index;
+    regular_event.source_box_count = 1;
+    regular_event.source_root = regular_local_index;
+    regular_event.source_kind = RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT;
+    regular_event.edge_index = -1;
+    regular_event.vertex_index = -1;
+    regular_event.face_index = regular.face_index;
+    regular_event.span_index = regular.span_index;
+    regular_event.certificate = RT_BREP_TRACE_EVENT_REGULAR_INTERIOR;
+    regular_event.determinant_sign = regular_box.determinant_sign;
+    regular_event.hit_class = regular.hit_class;
+    regular_event.trim_status = regular.trim_status;
+    regular_event.adjacent_face_index = regular.adjacent_face_index;
+    regular_event.direction = regular_direction;
+
+    trace->physical_event_attempts += 2;
+    trace->physical_event_boundary++;
+    trace->physical_event_regular++;
+    trace->surface_fold_pair_gap_min = gap.minimum;
+    trace->surface_fold_pair_gap_max = gap.maximum;
+    brep_trace_finalize_physical_events(trace, ray, tol, true);
+    if (trace->physical_event_complete == 1)
+	trace->surface_fold_mixed_pairs++;
+}
+
+
 static void
 brep_trace_regular_direction_counts(const struct rt_brep_shot_trace *trace,
     size_t &entering, size_t &leaving)
@@ -16399,6 +16914,8 @@ brep_trace_physical_events(struct rt_brep_shot_trace *trace,
 	 regular_entering != regular_leaving);
     if (brep_prepared_fold_pair_eligible(trace))
 	brep_trace_fold_physical_events(trace, bs, ray, tol);
+    else if (brep_prepared_mixed_fold_pair_eligible(trace, ray, tol))
+	brep_trace_mixed_fold_physical_events(trace, bs, ray, tol);
     else if (trace && trace->surface_isolated_boxes !=
 	    trace->surface_krawczyk_boxes &&
 	    brep_trace_vertex_physical_events(trace, bs, ray, tol))
@@ -16704,7 +17221,7 @@ brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
 	brep_hit hit;
 	if (!brep_trace_make_hit(bs, ray, event.face_index, event.dist,
 		event.uv, event.trim_status, event.hit_class, event.direction,
-		event.adjacent_face_index, hit))
+		event.adjacent_face_index, true, hit))
 	    return RT_BREP_PREPARED_FALLBACK_HIT_BUILD;
 	hits.push_back(hit);
 	if (event.certificate == RT_BREP_TRACE_EVENT_BOUNDARY_FOLD)
@@ -16725,7 +17242,10 @@ brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
 	    return RT_BREP_PREPARED_FALLBACK_PARTITION;
     }
     if (fold_events) {
-	if (fold_events != 2 || hits.size() != 2)
+	const bool full_fold_pair = fold_events == 2 && hits.size() == 2;
+	const bool mixed_fold_pair = fold_events == 1 && hits.size() == 2 &&
+	    trace->surface_fold_mixed_pairs == 1;
+	if (!full_fold_pair && !mixed_fold_pair)
 	    return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
 	trace->surface_fold_promoted_pairs++;
     }
@@ -16769,11 +17289,13 @@ brep_build_prepared_partition(struct rt_brep_shot_trace *trace,
 	    trace->surface_isolated_boxes != trace->stored_surface_boxes)
 	return RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES;
     const bool fold_pair = brep_prepared_fold_pair_eligible(trace);
+    const bool mixed_fold_pair = trace->surface_fold_mixed_pairs == 1;
     const bool seam_pair = brep_prepared_seam_pair_eligible(trace);
     const bool vertex_events = brep_prepared_vertex_events_eligible(trace);
     const bool edge_events = brep_prepared_edge_events_eligible(trace);
     if (trace->surface_isolated_boxes != trace->surface_krawczyk_boxes &&
-	    !fold_pair && !seam_pair && !vertex_events && !edge_events)
+	    !fold_pair && !mixed_fold_pair && !seam_pair && !vertex_events &&
+	    !edge_events)
 	return RT_BREP_PREPARED_FALLBACK_UNCERTIFIED;
     if (trace->local_root_overflow || trace->local_trim_failures ||
 	    trace->local_cluster_overflow ||
@@ -16786,6 +17308,55 @@ brep_build_prepared_partition(struct rt_brep_shot_trace *trace,
 	    trace->physical_event_state_failures ||
 	    trace->physical_event_tolerance_ambiguous)
 	return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+
+    /* A status-2 NURBS form has an exact common locus, but its parameter map
+     * is currently certified only pointwise.  Regular and complete clean-
+     * interior fold proofs live entirely in NURBS parameter space and map only
+     * the final point for trim, normal, and hit publication.  Seam, edge, and
+     * vertex events need interval enclosures of the map and fail closed here. */
+    if (trace->reparameterized_surface_faces) {
+	for (size_t box_index = 0;
+		box_index < trace->stored_surface_boxes; ++box_index) {
+	    const struct rt_brep_trace_surface_box &box =
+		trace->surface_boxes[box_index];
+	    const brep_face_record *record = brep_face_surface_record(bs,
+		box.face_index);
+	    if (record && record->nurb_form_status == 2 &&
+		    (box.disposition != RT_BREP_TRACE_BOX_RESOLVED_REGULAR &&
+		     box.disposition != RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY))
+		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	    if (record && record->nurb_form_status == 2 &&
+		    !box.determinant_sign)
+		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	}
+	for (size_t root_index = 0;
+		root_index < trace->stored_local_roots; ++root_index) {
+	    const struct rt_brep_trace_local_root &root =
+		trace->local_roots[root_index];
+	    const brep_face_record *record = brep_face_surface_record(bs,
+		root.face_index);
+	    if (record && record->nurb_form_status == 2 &&
+		    (root.hit_class != brep_hit::CLEAN_HIT &&
+		     root.hit_class != brep_hit::CLEAN_MISS))
+		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	}
+	for (size_t event_index = 0;
+		event_index < trace->stored_physical_events; ++event_index) {
+	    const struct rt_brep_trace_physical_event &event =
+		trace->physical_events[event_index];
+	    const brep_face_record *record = brep_face_surface_record(bs,
+		event.face_index);
+	    if (record && record->nurb_form_status == 2 &&
+		    (event.certificate !=
+			RT_BREP_TRACE_EVENT_REGULAR_INTERIOR &&
+		     event.certificate !=
+			RT_BREP_TRACE_EVENT_BOUNDARY_FOLD))
+		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	    if (record && record->nurb_form_status == 2 &&
+		    (event.edge_index != -1 || event.vertex_index != -1))
+		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	}
+    }
 
     for (size_t box_index = 0; box_index < trace->stored_surface_boxes;
 	    ++box_index) {

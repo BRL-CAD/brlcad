@@ -99,6 +99,7 @@ struct brep_face_record {
     size_t span_begin = 0;
     size_t span_count = 0;
     int face_index = -1;
+    int nurb_form_status = 0;
     bool supported = false;
 };
 
