@@ -135,6 +135,7 @@ struct ON_Brep_CDT_State {
 
     /* Audit data */
     std::map<int, ON_3dPoint *> *bot_pnt_to_on_pnt;
+    std::vector<int> bot_face_to_brep_face;
     std::map<ON_3dPoint *, struct cdt_audit_info *> *pnt_audit_info;
 
     /* Face specific data */
@@ -172,6 +173,8 @@ void cdt_state_reset(struct ON_Brep_CDT_State *s_cdt);
 void cdt_diagnostic_set(struct ON_Brep_CDT_State *s_cdt, int result,
 	int stage, int face_index, int completed_faces, int failed_faces,
 	const char *message);
+bool cdt_tri_tri_intersection(const point_t first[3],
+	const point_t second[3]);
 
 /* debug */
 void trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_vcnt, int *valid_faces, fastf_t *valid_vertices, struct bg_trimesh_solid_errors *se);

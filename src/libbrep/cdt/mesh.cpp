@@ -2650,6 +2650,102 @@ cdt_mesh_t::geometric_degenerate_count()
 }
 
 size_t
+cdt_mesh_t::self_intersections(std::vector<triangle_t> *problematic,
+	size_t max_pairs)
+{
+    if (problematic)
+	problematic->clear();
+    if (!max_pairs)
+	return 0;
+
+    std::vector<size_t> active;
+    RTree<size_t, double, 3>::Iterator tree_it;
+    tris_tree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	active.push_back(*tree_it);
+	++tree_it;
+    }
+    std::sort(active.begin(), active.end());
+
+    size_t intersections = 0;
+    std::set<size_t> problem_ids;
+    RTree<size_t, double, 3> prior_triangles;
+    for (size_t triangle_id : active) {
+	if (triangle_id >= tris_vect.size())
+	    continue;
+	const triangle_t &first = tris_vect[triangle_id];
+	double minimum[3] = {
+	    std::numeric_limits<double>::infinity(),
+	    std::numeric_limits<double>::infinity(),
+	    std::numeric_limits<double>::infinity()
+	};
+	double maximum[3] = {
+	    -std::numeric_limits<double>::infinity(),
+	    -std::numeric_limits<double>::infinity(),
+	    -std::numeric_limits<double>::infinity()
+	};
+	point_t first_points[3];
+	for (int corner = 0; corner < 3; ++corner) {
+	    const ON_3dPoint &point = *pnts[(size_t)first.v[corner]];
+	    VSET(first_points[corner], point.x, point.y, point.z);
+	    for (int axis = 0; axis < 3; ++axis) {
+		minimum[axis] = std::min(minimum[axis],
+		    (double)first_points[corner][axis]);
+		maximum[axis] = std::max(maximum[axis],
+		    (double)first_points[corner][axis]);
+	    }
+	}
+	std::vector<size_t> candidates;
+	prior_triangles.Search(minimum, maximum,
+	    [](size_t data, void *context) {
+		std::vector<size_t> *found =
+		    (std::vector<size_t> *)context;
+		found->push_back(data);
+		return true;
+	    }, &candidates);
+	std::sort(candidates.begin(), candidates.end());
+	for (size_t candidate_id : candidates) {
+	    if (candidate_id >= tris_vect.size())
+		continue;
+	    const triangle_t &second = tris_vect[candidate_id];
+	    bool adjacent = false;
+	    for (int i = 0; i < 3 && !adjacent; ++i) {
+		for (int j = 0; j < 3; ++j) {
+		    if (first.v[i] == second.v[j]) {
+			adjacent = true;
+			break;
+		    }
+		}
+	    }
+	    if (adjacent)
+		continue;
+	    point_t second_points[3];
+	    for (int corner = 0; corner < 3; ++corner) {
+		const ON_3dPoint &point = *pnts[(size_t)second.v[corner]];
+		VSET(second_points[corner], point.x, point.y, point.z);
+	    }
+	    int intersects = cdt_tri_tri_intersection(first_points,
+		second_points);
+	    if (!intersects)
+		continue;
+	    intersections++;
+	    problem_ids.insert(triangle_id);
+	    problem_ids.insert(candidate_id);
+	    if (intersections >= max_pairs)
+		break;
+	}
+	if (intersections >= max_pairs)
+	    break;
+	prior_triangles.Insert(minimum, maximum, triangle_id);
+    }
+    if (problematic) {
+	for (size_t triangle_id : problem_ids)
+	    problematic->push_back(tris_vect[triangle_id]);
+    }
+    return intersections;
+}
+
+size_t
 cdt_mesh_t::incorrect_normal_count()
 {
     return interior_incorrect_normals().size();
@@ -4704,16 +4800,18 @@ cdt_mesh_t::cdt()
 }
 
 size_t
-cdt_mesh_t::refine_incorrect_normals(size_t max_points)
+cdt_mesh_t::refine_problem_triangles(
+	const std::vector<triangle_t> &triangles, size_t max_points)
 {
     if (!max_points || !brep || f_id < 0 || f_id >= brep->m_F.Count())
 	return 0;
     const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
-    if (!surface || surface->IsClosed(0) || surface->IsClosed(1))
+
+    if (!surface)
 	return 0;
 
-    std::vector<triangle_t> folded = interior_incorrect_normals();
-    std::sort(folded.begin(), folded.end(), [](const triangle_t &first,
+    std::vector<triangle_t> targets = triangles;
+    std::sort(targets.begin(), targets.end(), [](const triangle_t &first,
 	    const triangle_t &second) { return first.ind < second.ind; });
     std::set<std::pair<double, double>> existing(m_pnts_2d.begin(),
 	m_pnts_2d.end());
@@ -4733,7 +4831,7 @@ cdt_mesh_t::refine_incorrect_normals(size_t max_points)
     }
     size_t inserted = 0;
 
-    for (const triangle_t &triangle : folded) {
+    for (const triangle_t &triangle : targets) {
 	if (inserted >= max_points)
 	    break;
 	ON_2dPoint uv[3];
@@ -4751,6 +4849,28 @@ cdt_mesh_t::refine_incorrect_normals(size_t max_points)
 	    uv[corner] = ON_2dPoint(
 		m_pnts_2d[(size_t)native->second].first,
 		m_pnts_2d[(size_t)native->second].second);
+	}
+	if (!mapped)
+	    continue;
+	/* Work in a continuous local image of a periodic domain.  The native
+	 * parameters on opposite sides of a seam may be almost a full period
+	 * apart even though their surface points are close. */
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!surface->IsClosed(direction))
+		continue;
+	    const double period = surface->Domain(direction).Length();
+	    if (!(period > 0.0) || !std::isfinite(period)) {
+		mapped = false;
+		break;
+	    }
+	    const double reference = direction ? uv[0].y : uv[0].x;
+	    for (int corner = 1; corner < 3; ++corner) {
+		double &coordinate = direction ? uv[corner].y : uv[corner].x;
+		while (coordinate - reference > 0.5 * period)
+		    coordinate -= period;
+		while (coordinate - reference < -0.5 * period)
+		    coordinate += period;
+	    }
 	}
 	if (!mapped)
 	    continue;
@@ -4784,6 +4904,19 @@ cdt_mesh_t::refine_incorrect_normals(size_t max_points)
 	    sample = ON_2dPoint((uv[0].x + uv[1].x + uv[2].x) / 3.0,
 		(uv[0].y + uv[1].y + uv[2].y) / 3.0);
 	}
+	/* Surface evaluation and the CDT point set use the canonical native
+	 * domain, so fold the locally unwrapped sample back into that domain. */
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!surface->IsClosed(direction))
+		continue;
+	    const ON_Interval domain = surface->Domain(direction);
+	    const double period = domain.Length();
+	    double &coordinate = direction ? sample.y : sample.x;
+	    coordinate = domain.Min() + std::fmod(coordinate - domain.Min(),
+		period);
+	    if (coordinate < domain.Min())
+		coordinate += period;
+	}
 	const std::pair<double, double> sample_key(sample.x, sample.y);
 	if (!sample.IsValid() || !existing.insert(sample_key).second)
 	    continue;
@@ -4811,6 +4944,25 @@ cdt_mesh_t::refine_incorrect_normals(size_t max_points)
 	inserted++;
     }
     return inserted;
+}
+
+size_t
+cdt_mesh_t::refine_incorrect_normals(size_t max_points)
+{
+    if (!brep || f_id < 0 || f_id >= brep->m_F.Count())
+	return 0;
+    const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
+    if (!surface)
+	return 0;
+    return refine_problem_triangles(interior_incorrect_normals(), max_points);
+}
+
+size_t
+cdt_mesh_t::refine_self_intersections(size_t max_points)
+{
+    std::vector<triangle_t> problematic;
+    self_intersections(&problematic, std::max((size_t)1, max_points));
+    return refine_problem_triangles(problematic, max_points);
 }
 
 bool
@@ -5230,6 +5382,13 @@ cdt_mesh_t::valid(int verbose)
     bool eret = true;
     bool topret = true;
 
+    const size_t intersections = self_intersections(NULL, 1);
+    const bool iret = intersections == 0;
+    if (!iret && verbose > 0) {
+	std::cout << name << " face " << f_id
+	    << ": nonadjacent triangles intersect in mesh\n";
+    }
+
     const bool topology_chart =
 	cdt_face_uses_topology_chart(brep->m_F[f_id]);
 
@@ -5331,7 +5490,7 @@ cdt_mesh_t::valid(int verbose)
     }
 #endif
 
-    return (nret && eret && topret);
+    return (nret && eret && topret && iret);
 }
 
 void cdt_mesh_t::boundary_edges_plot(const char *filename)
