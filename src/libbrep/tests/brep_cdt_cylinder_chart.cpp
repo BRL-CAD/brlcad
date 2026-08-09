@@ -16,6 +16,8 @@
 #include <memory>
 #include <vector>
 
+#include "bg/trimesh.h"
+#include "brep/cdt.h"
 #include "../cdt/chart.h"
 
 static bool
@@ -183,6 +185,71 @@ exercise_cylinder(const ON_3dPoint &origin, ON_3dVector axis,
     return true;
 }
 
+static bool
+exercise_full_cylinder(const ON_3dPoint &origin, ON_3dVector axis,
+	double radius, double height)
+{
+    if (!axis.Unitize())
+	return false;
+    const ON_Plane plane(origin, axis);
+    const ON_Cylinder cylinder(ON_Circle(plane, radius), height);
+    std::unique_ptr<ON_Brep> brep(ON_BrepCylinder(cylinder, true, true));
+    if (!brep || !brep->IsValid() || !brep->IsSolid()) {
+	std::cerr << "invalid full cylinder B-Rep" << std::endl;
+	return false;
+    }
+    const ON_BrepFace *side = NULL;
+    for (int face_index = 0; face_index < brep->m_F.Count(); ++face_index) {
+	const ON_BrepFace &face = brep->m_F[face_index];
+	if (face.SurfaceOf() && face.SurfaceOf()->IsCylinder(NULL, 0.05)) {
+	    side = &face;
+	    break;
+	}
+    }
+    if (!side || !cdt_face_has_seam(*side) ||
+	    !cdt_face_uses_cylinder_chart(*side)) {
+	std::cerr << "full cylinder seam was not classified"
+	    << (side ? std::string(": closed=") +
+		(side->SurfaceOf()->IsClosed(0) ? "u" : "") +
+		(side->SurfaceOf()->IsClosed(1) ? "v" : "") +
+		", seam=" + (cdt_face_has_seam(*side) ? "yes" : "no") :
+		": no cylinder face") << std::endl;
+	return false;
+    }
+
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(brep.get(),
+	"full cylinder chart fixture");
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.05;
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    if (ON_Brep_CDT_Tessellate(state, 0, NULL) != 0) {
+	struct brep_cdt_diagnostic diagnostic;
+	ON_Brep_CDT_Diagnostic(&diagnostic, state);
+	std::cerr << "full cylinder tessellation failed at stage "
+	    << diagnostic.stage << ": " << diagnostic.message << std::endl;
+	ON_Brep_CDT_Destroy(state);
+	return false;
+    }
+    int *mesh_faces = NULL;
+    fastf_t *mesh_vertices = NULL;
+    int mesh_face_count = 0;
+    int mesh_vertex_count = 0;
+    const int mesh_status = ON_Brep_CDT_Mesh(&mesh_faces,
+	&mesh_face_count, &mesh_vertices, &mesh_vertex_count, NULL, NULL,
+	NULL, NULL, state, 0, NULL);
+    const bool solid = mesh_status >= 0 && mesh_face_count > 0 &&
+	mesh_vertex_count > 0 && bg_trimesh_solid2(mesh_vertex_count,
+	    mesh_face_count, mesh_vertices, mesh_faces, NULL) == 0;
+    bu_free(mesh_faces, "full cylinder chart fixture faces");
+    bu_free(mesh_vertices, "full cylinder chart fixture vertices");
+    ON_Brep_CDT_Destroy(state);
+    if (!solid) {
+	std::cerr << "full cylinder chart output was not solid" << std::endl;
+	return false;
+    }
+    return true;
+}
+
 int
 main()
 {
@@ -195,5 +262,15 @@ main()
     if (!exercise_cylinder(ON_3dPoint(1.0e-5, -2.0e-5, 3.0e-5),
 	    ON_3dVector(-2.0, 1.0, 4.0), 2.0e-6, 7.0e-6))
 	return 3;
+    if (!exercise_full_cylinder(ON_3dPoint::Origin,
+	    ON_3dVector(0.0, 0.0, 1.0), 2.0, 5.0))
+	return 4;
+    if (!exercise_full_cylinder(ON_3dPoint(1.0e6, -2.0e6, 3.0e6),
+	    ON_3dVector(1.0, 2.0, 3.0), 1.0e3, 4.0e3))
+	return 5;
+    if (!exercise_full_cylinder(
+	    ON_3dPoint(1.0e-5, -2.0e-5, 3.0e-5),
+	    ON_3dVector(-2.0, 1.0, 4.0), 2.0e-6, 7.0e-6))
+	return 6;
     return 0;
 }

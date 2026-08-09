@@ -27,6 +27,7 @@
 
 #include "common.h"
 #include "./cdt.h"
+#include "./chart.h"
 
 #define MAX_INITIAL_SURFACE_PATCHES 65536
 
@@ -491,6 +492,9 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     // and assemble an rtree for them.  We can't insert points from the general
     // build too close to them or we run the risk of duplicate points and very small
     // triangles.
+    const bool topology_chart = cdt_face_uses_topology_chart(face);
+    const bool polar_seam_chart = cdt_face_uses_polar_chart(face) &&
+	cdt_face_has_seam(face);
     std::vector<cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face.m_face_index);
     std::vector<cpolyedge_t *>::iterator w_it;
     for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
@@ -505,6 +509,22 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 
 	double px = tseg->spnt.x;
 	double py = tseg->spnt.y;
+	if (topology_chart) {
+	    const double parameter[2] = {px, py};
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (s->IsClosed(direction))
+		    continue;
+		const ON_Interval domain = s->Domain(direction);
+		const double magnitude = std::max(std::fabs(domain.Min()),
+		    std::fabs(domain.Max()));
+		const double tolerance = 256.0 *
+		    std::numeric_limits<double>::epsilon() *
+		    std::max(magnitude, domain.Length());
+		if (parameter[direction] < domain.Min() - tolerance ||
+			parameter[direction] > domain.Max() + tolerance)
+		    include_pnt = false;
+	    }
+	}
 
 	double tMin[2];
 	tMin[0] = px - ON_ZERO_TOLERANCE;
@@ -515,7 +535,10 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 
 	s_cdt->face_rtrees_2d[face.m_face_index].Search(tMin, tMax, UseTrimPntCallback, (void *)&a_context);
 
-	if (include_pnt) {
+	/* A one-pole periodic chart supplies explicit pole rays.  A legacy
+	 * raw-UV normal offset from its seam boundary has no unambiguous chart
+	 * image and can fold those rays across the pole. */
+	if (include_pnt && !polar_seam_chart) {
 	    //std::cout << "Accept\n";
 	    sinfo->rtree_trim_spnts_2d.Insert(tMin, tMax, (void *)tseg);
 
@@ -565,6 +588,28 @@ void
 filter_surface_pnts(struct cdt_surf_info *sinfo)
 {
 
+    cdt_mesh_t *fmesh =
+	&sinfo->s_cdt->fmeshes[sinfo->f->m_face_index];
+
+    /* Patch centers and edge-derived candidates are generated from a UV
+     * envelope, not from the trimmed region itself.  Keep only points inside
+     * the outer loop and outside every hole before evaluating the surface.
+     * This is especially important for periodic faces, where a single trim
+     * segment can cover a complete parameter period. */
+    /* A topology chart performs this test after periodic lifting.  Its raw UV
+     * boundary need not be a simple polygon when equivalent seam images are
+     * mixed in the stored p-curves. */
+    if (!cdt_face_uses_topology_chart(*sinfo->f)) {
+	fmesh->outer_loop.rm_points_in_polygon(&sinfo->on_surf_points, true);
+	fmesh->outer_loop.rm_points_in_polygon(&sinfo->on_trim_points, true);
+	for (const auto &inner : fmesh->inner_loops) {
+	    inner.second->rm_points_in_polygon(&sinfo->on_surf_points,
+		false);
+	    inner.second->rm_points_in_polygon(&sinfo->on_trim_points,
+		false);
+	}
+    }
+
     // Remove points that are troublesome per 2D filtering criteria
     std::set<ON_2dPoint *> rm_pnts;
     std::set<ON_2dPoint *>::iterator osp_it;
@@ -595,9 +640,6 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 	const ON_2dPoint *p = *osp_it;
 	sinfo->on_surf_points.erase((ON_2dPoint *)p);
     }
-
-    cdt_mesh_t *fmesh = &sinfo->s_cdt->fmeshes[sinfo->f->m_face_index];
-
     // Populate m_interior_pnts with the final set
     for (osp_it = sinfo->on_surf_points.begin(); osp_it != sinfo->on_surf_points.end(); osp_it++) {
 	ON_2dPoint n2dp(**osp_it);
@@ -849,6 +891,33 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	face.OuterLoop()->GetBoundingBox(lbox);
 	ON_3dPoint min = lbox.Min();
 	ON_3dPoint max = lbox.Max();
+	/* Periodic p-curves may mix equivalent images and make their raw UV
+	 * envelope span several periods.  Sampling that envelope duplicates one
+	 * physical region and can leave another with no interior support.  Use one
+	 * native period when the trim envelope is wider than the surface domain;
+	 * open directions are always bounded by their actual surface domain. */
+	const double parameter_min[2] = {sinfo.u1, sinfo.v1};
+	const double parameter_max[2] = {sinfo.u2, sinfo.v2};
+	for (int direction = 0; direction < 2; ++direction) {
+	    double &lower = direction ? min.y : min.x;
+	    double &upper = direction ? max.y : max.x;
+	    const double domain_length = parameter_max[direction] -
+		parameter_min[direction];
+	    const double tolerance = 256.0 *
+		std::numeric_limits<double>::epsilon() *
+		std::max(std::max(std::fabs(parameter_min[direction]),
+		    std::fabs(parameter_max[direction])), domain_length);
+	    if (s->IsClosed(direction) &&
+		    upper - lower > domain_length + tolerance) {
+		lower = parameter_min[direction];
+		upper = parameter_max[direction];
+	    } else if (!s->IsClosed(direction)) {
+		lower = std::max(lower, parameter_min[direction]);
+		upper = std::min(upper, parameter_max[direction]);
+	    }
+	}
+	if (!(max.x > min.x) || !(max.y > min.y))
+	    return false;
 
 	std::queue<SPatch> spq1, spq2;
 
