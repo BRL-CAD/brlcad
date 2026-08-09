@@ -2528,6 +2528,187 @@ fast_reconstruct_periodic_singular_face(const ON_Surface *surface,
     return false;
 }
 
+static bool
+fast_reconstruct_paired_periodic_strip(const ON_Surface *surface,
+	const ON_BrepFace &face,
+	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
+	double tolerance, fast_face_scratch &scratch, int *closed_direction,
+	int *outer_loop_index)
+{
+    if (!surface || face.LoopCount() != 1 || !brep_loop_points ||
+	    !brep_loop_points[0] || brep_loop_points[0]->Count() < 6)
+	return false;
+    const ON_BrepLoop *loop = face.Loop(0);
+    if (!loop || loop->m_type != ON_BrepLoop::outer ||
+	    loop->TrimCount() != 6)
+	return false;
+
+    std::vector<const ON_BrepTrim *> seam_trims;
+    std::vector<const ON_BrepTrim *> boundary_trims;
+    for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	const ON_BrepTrim *trim = loop->Trim(ti);
+	if (!trim || trim->m_type == ON_BrepTrim::singular)
+	    return false;
+	if (trim->m_type == ON_BrepTrim::seam)
+	    seam_trims.push_back(trim);
+	else
+	    boundary_trims.push_back(trim);
+    }
+    if (seam_trims.size() != 2 || boundary_trims.size() != 4 ||
+	    !seam_trims[0]->Edge() ||
+	    seam_trims[0]->Edge() != seam_trims[1]->Edge())
+	return false;
+
+    struct boundary_info {
+	const ON_BrepTrim *trim;
+	double open_coordinate;
+    };
+    ON_SimpleArray<BrepTrimPoint> &points = *brep_loop_points[0];
+    for (int closed_dir = 0; closed_dir < 2; ++closed_dir) {
+	if (!surface->IsClosed(closed_dir))
+	    continue;
+	const int open_dir = 1 - closed_dir;
+	const double period = surface->Domain(closed_dir).Length();
+	const double open_length = surface->Domain(open_dir).Length();
+	if (!(period > ON_ZERO_TOLERANCE) ||
+		!(open_length > ON_ZERO_TOLERANCE))
+	    continue;
+	const double parameter_tolerance = std::max(tolerance,
+	    std::max(period, open_length) * 1.0e-4);
+	const double isocurve_tolerance = std::max(parameter_tolerance,
+	    open_length * 1.0e-3);
+
+	bool seams_valid = true;
+	for (const ON_BrepTrim *trim : seam_trims) {
+	    const ON_Interval domain = trim->Domain();
+	    const ON_2dPoint start = trim->PointAt(domain.Min());
+	    const ON_2dPoint end = trim->PointAt(domain.Max());
+	    if (!start.IsValid() || !end.IsValid() ||
+		    fabs(end[closed_dir] - start[closed_dir]) >
+			parameter_tolerance ||
+		    fabs(end[open_dir] - start[open_dir]) <=
+			parameter_tolerance) {
+		seams_valid = false;
+		break;
+	    }
+	}
+	if (!seams_valid)
+	    continue;
+
+	std::vector<boundary_info> boundaries;
+	boundaries.reserve(boundary_trims.size());
+	bool boundaries_valid = true;
+	for (const ON_BrepTrim *trim : boundary_trims) {
+	    const ON_Interval domain = trim->Domain();
+	    const ON_2dPoint start = trim->PointAt(domain.Min());
+	    const ON_2dPoint end = trim->PointAt(domain.Max());
+	    if (!start.IsValid() || !end.IsValid() ||
+		    fabs(end[open_dir] - start[open_dir]) >
+			isocurve_tolerance || !trim->Edge()) {
+		boundaries_valid = false;
+		break;
+	    }
+	    boundaries.push_back({trim,
+		0.5 * (start[open_dir] + end[open_dir])});
+	}
+	if (!boundaries_valid)
+	    continue;
+	std::sort(boundaries.begin(), boundaries.end(),
+	    [](const boundary_info &a, const boundary_info &b) {
+		return a.open_coordinate < b.open_coordinate;
+	    });
+	if (fabs(boundaries[0].open_coordinate -
+		boundaries[1].open_coordinate) > isocurve_tolerance ||
+		fabs(boundaries[2].open_coordinate -
+		    boundaries[3].open_coordinate) > isocurve_tolerance)
+	    continue;
+	const double open_low = 0.5 * (boundaries[0].open_coordinate +
+	    boundaries[1].open_coordinate);
+	const double open_high = 0.5 * (boundaries[2].open_coordinate +
+	    boundaries[3].open_coordinate);
+	if (open_high - open_low <= isocurve_tolerance)
+	    continue;
+
+	auto reversed_pair = [](const ON_BrepTrim *first,
+		const ON_BrepTrim *second) {
+	    return first->Edge() != second->Edge() &&
+		first->m_vi[0] == second->m_vi[1] &&
+		first->m_vi[1] == second->m_vi[0];
+	};
+	if (!reversed_pair(boundaries[0].trim, boundaries[1].trim) ||
+		!reversed_pair(boundaries[2].trim, boundaries[3].trim))
+	    continue;
+
+	bool seam_joins_boundaries = true;
+	for (const ON_BrepTrim *trim : seam_trims) {
+	    const ON_Interval domain = trim->Domain();
+	    const double first = trim->PointAt(domain.Min())[open_dir];
+	    const double second = trim->PointAt(domain.Max())[open_dir];
+	    if (fabs(std::min(first, second) - open_low) >
+		    isocurve_tolerance ||
+		    fabs(std::max(first, second) - open_high) >
+			isocurve_tolerance) {
+		seam_joins_boundaries = false;
+		break;
+	    }
+	}
+	if (!seam_joins_boundaries)
+	    continue;
+
+	double closed_min[2] = {INFINITY, INFINITY};
+	double closed_max[2] = {-INFINITY, -INFINITY};
+	const double open_coordinates[2] = {open_low, open_high};
+	for (int pi = 0; pi < points.Count(); ++pi) {
+	    for (int bi = 0; bi < 2; ++bi) {
+		if (fabs(points[pi].p2d[open_dir] -
+			open_coordinates[bi]) > isocurve_tolerance)
+		    continue;
+		closed_min[bi] = std::min(closed_min[bi],
+		    points[pi].p2d[closed_dir]);
+		closed_max[bi] = std::max(closed_max[bi],
+		    points[pi].p2d[closed_dir]);
+	    }
+	}
+	if (closed_max[0] - closed_min[0] < 0.90 * period ||
+		closed_max[0] - closed_min[0] > 1.10 * period ||
+		closed_max[1] - closed_min[1] < 0.90 * period ||
+		closed_max[1] - closed_min[1] > 1.10 * period)
+	    continue;
+
+	const ON_BrepTrim *seam = seam_trims[0];
+	const ON_Interval seam_domain = seam->Domain();
+	const ON_2dPoint seam_start = seam->PointAt(seam_domain.Min());
+	const ON_2dPoint seam_end = seam->PointAt(seam_domain.Max());
+	const int open_winding = seam_end[open_dir] >
+	    seam_start[open_dir] ? 1 : -1;
+	const double closed_start = seam_start[closed_dir];
+	const double closed_end = closed_start - open_winding * period;
+	ON_2dPoint corners[5];
+	for (int ci = 0; ci < 5; ++ci)
+	    corners[ci] = seam_start;
+	corners[0][closed_dir] = corners[1][closed_dir] =
+	    corners[4][closed_dir] = closed_start;
+	corners[2][closed_dir] = corners[3][closed_dir] = closed_end;
+	corners[0][open_dir] = corners[3][open_dir] =
+	    corners[4][open_dir] = seam_start[open_dir];
+	corners[1][open_dir] = corners[2][open_dir] = seam_end[open_dir];
+
+	ON_SimpleArray<BrepTrimPoint> replacement;
+	for (int ci = 0; ci < 5; ++ci) {
+	    if (!fast_append_synthetic_uv(replacement, surface, corners[ci],
+		    -1, scratch))
+		return false;
+	}
+	points = replacement;
+	if (closed_direction)
+	    *closed_direction = closed_dir;
+	if (outer_loop_index)
+	    *outer_loop_index = 0;
+	return true;
+    }
+    return false;
+}
+
 static void
 fast_seed_full_periodic_face(const ON_Surface *surface,
 	const ON_SimpleArray<BrepTrimPoint> &boundary,
@@ -3382,6 +3563,50 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 }
 
 static bool
+fast_loop_uv_closed(const ON_Surface *surface, const ON_BrepLoop *loop,
+	const ON_SimpleArray<BrepTrimPoint> &points,
+	const struct bn_tol *tol)
+{
+    if (points.Count() < 2)
+	return false;
+    const BrepTrimPoint &first_point = points[0];
+    const BrepTrimPoint &last_point = points[points.Count() - 1];
+    if (V2NEAR_EQUAL(first_point.p2d, last_point.p2d,
+	    BREP_SAME_POINT_TOLERANCE))
+	return true;
+    if (!surface || !loop || loop->TrimCount() < 1 ||
+	    !first_point.p3d || !last_point.p3d)
+	return false;
+
+    const ON_BrepTrim *first_trim = loop->Trim(0);
+    const ON_BrepTrim *last_trim = loop->Trim(loop->TrimCount() - 1);
+    if (!first_trim || !last_trim ||
+	    first_trim->m_vi[0] != last_trim->m_vi[1])
+	return false;
+    for (int dir = 0; dir < 2; ++dir) {
+	const double domain_length = surface->Domain(dir).Length();
+	const double parameter_tolerance = std::max(
+	    BREP_SAME_POINT_TOLERANCE,
+	    std::isfinite(domain_length) ? domain_length * 1.0e-4 : 0.0);
+	if (fabs(first_point.p2d[dir] - last_point.p2d[dir]) >
+		parameter_tolerance)
+	    return false;
+    }
+
+    double model_tolerance = tol ? tol->dist : ON_ZERO_TOLERANCE;
+    const ON_BrepTrim *endpoint_trims[2] = {first_trim, last_trim};
+    for (const ON_BrepTrim *trim : endpoint_trims) {
+	model_tolerance = std::max(model_tolerance,
+	    std::max(trim->m_tolerance[0], trim->m_tolerance[1]));
+	if (trim->Edge())
+	    model_tolerance = std::max(model_tolerance,
+		trim->Edge()->m_tolerance);
+    }
+    return first_point.p3d->DistanceTo(*last_point.p3d) <=
+	model_tolerance;
+}
+
+static bool
 bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	std::vector<fastf_t> &pnts,
 	const ON_BrepFace &face,
@@ -3440,6 +3665,10 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	full_periodic_face = fast_reconstruct_periodic_singular_face(s, face,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
+    if (!full_periodic_face)
+	full_periodic_face = fast_reconstruct_paired_periodic_strip(s, face,
+	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
+	    &full_periodic_closed_dir, &full_periodic_outer_index);
     const bool singular_cap_face = fast_reconstruct_singular_cap(s, face,
 	brep_loop_points,
 	BREP_SAME_POINT_TOLERANCE, model_diagonal, scratch);
@@ -3467,10 +3696,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	int num_loop_points = brep_loop_points[li]->Count();
 	if (num_loop_points <= 2)
 	    continue;
-	const bool uv_closed = V2NEAR_EQUAL(
-	    (*brep_loop_points[li])[0].p2d,
-	    (*brep_loop_points[li])[num_loop_points - 1].p2d,
-	    BREP_SAME_POINT_TOLERANCE);
+	const bool uv_closed = fast_loop_uv_closed(s, face_loop,
+	    *brep_loop_points[li], tol);
 	const int first_point = uv_closed ? 1 : 0;
 	for (int i = first_point; i < num_loop_points; i++) {
 	    // map point to last entry to 3d point
