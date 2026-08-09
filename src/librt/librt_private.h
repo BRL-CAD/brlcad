@@ -852,6 +852,11 @@ struct rt_brep_shot_trace {
 	local_roots[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
     size_t physical_event_attempts;
     size_t physical_event_regular;
+    size_t physical_event_regular_component_attempts;
+    size_t physical_event_regular_component_certified;
+    size_t physical_event_regular_component_boxes;
+    size_t physical_event_regular_component_roots;
+    int physical_event_regular_component_failure_stage;
     size_t physical_event_boundary;
     size_t physical_event_seam;
     size_t physical_event_seam_attempts;
@@ -906,6 +911,14 @@ struct rt_brep_shot_trace {
     size_t physical_event_edge_candidates;
     size_t physical_event_edge_certified;
     size_t physical_event_edge_failures;
+    size_t physical_event_edge_lift_witnesses;
+    size_t physical_event_edge_joint_attempts;
+    size_t physical_event_edge_joint_components;
+    size_t physical_event_edge_joint_boxes;
+    size_t physical_event_edge_joint_roots;
+    size_t physical_event_edge_joint_complement_visited;
+    size_t physical_event_edge_joint_complement_high_water;
+    int physical_event_edge_joint_failure_stage;
     size_t physical_event_edge_owned_boxes;
     size_t physical_event_edge_owned_roots;
     size_t physical_event_clean_outside;
