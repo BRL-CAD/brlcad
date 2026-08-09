@@ -11,6 +11,95 @@ as the authoritative continuation log until all acceptance gates pass.
 CURRENT PHASE
 -------------
 
+2026-08-09 ACTIVE DEGENERATE-POLE CORPUS AND THEOREM
+
+The regular-root-pair increment is committed locally as 146a61a9cb,
+"Certify close BREP regular root pairs".  It was not pushed.  The current
+increment, "Certify collapsed BREP pole events", is also committed locally
+and was not pushed.  It implements and tests a complete-line collapsed-pole
+theorem.  The production SurfaceTree default remains eight and the version-zero
+cache payload is unchanged.
+
+Controlled-depth results isolate a parameter-degeneracy defect rather than a
+generic nonlinear convergence failure.  The full directed sphere suite fails
+at depth two, passes at depth three, produces invalid normals at depth four,
+misses the large translated pole at depths five and six, and passes at depth
+seven.  At the failing depths, a sphere pole appears as many roots with
+different U values and one boundary V value even though all those UV pairs
+map to one 3-D point.  Arbitrary representatives yield inconsistent limiting
+normals and ENTER/LEAVE directions.  At depth two the prepared isolator visits
+16384 terminal/fold boxes, retains only the fixed 64-box trace prefix, and
+cannot Krawczyk-certify the singular Jacobian.  At depths five and six its fold
+logic can find the two geometric endpoint locations, but the ordinary root
+and direction ledgers still contain the collapsed fiber's multiplicity and
+cannot publish a partition.
+
+Prepared status-1 Bezier spans now record which outer sides inherit an
+ON_Surface::IsSingular assertion.  Status-2 parameter remaps remain excluded
+because they need an interval proof of the side mapping.  At shot time a
+candidate singular span is considered only when it has exactly one singular
+side.  Its homogeneous control points must collapse to one finite pole within
+a 4096-ulp coordinate-scale allowance; both ray-plane boundary residuals and
+the line-to-pole distance must satisfy the same bound.  These checks qualify
+the binary64 realization before the OpenNURBS singular-side assertion is used
+to set the residual boundary coefficients to exact zero.
+
+If a degree-n Bernstein polynomial is zero at its minimum side, division by
+the boundary parameter maps coefficient p_j to (n/j)p_j; the maximum-side
+formula uses n/(n-j).  New outward interval deflation applies this identity to
+both ray-plane residual surfaces.  A direct coefficient sign, a derivative-
+free separating axis over the two-dimensional interval coefficient hull, or
+the established rotated-hull test must then exclude zero from the deflated
+pair.  This proves that the span contains no line root distinct from the
+collapsed side.  The residual Jacobian determinant has the same positive
+interior boundary factor; deflating it and requiring every resulting
+coefficient to have one strict sign proves the crossing orientation without
+using the singular UV Jacobian at the pole.
+
+One-sided normals are sampled at a fixed 1/4096 normalized interior offset and
+oriented by the face.  They are not used to establish root existence or
+direction: the determinant sign is authoritative.  Before publication every
+span belonging to one face/side must be present, have the same determinant
+direction, have overlapping ray-parameter enclosures, and have one-sided unit
+normals in a common narrow cone.  Their normals are averaged only for the hit
+record.  All candidate spans on the entire line must be singular-owned, with
+no ordinary terminal box, local root, or fold root left over.  The resulting
+pole groups must form a complete alternating ENTER/LEAVE stream with every
+gap larger than BRL-CAD's minimum-segment tolerance.  Mixed pole/regular
+streams, multiple singular sides on one span, non-smooth or inconsistent
+normal cones, status-2 surfaces, incomplete ownership, workspace overflow, or
+any unexcluded deflated root fail closed to the established path.
+
+The implementation adds no ray-time allocation, random perturbation, mutable
+global state, or SurfaceTree dependency.  Fixed trace workspaces record each
+singular span, all line/collapse/exclusion/determinant stages, ownership,
+normal agreement, and final pole events.  Singular events carry their
+qualified normal explicitly so hit construction never reevaluates an
+arbitrary UV pole normal.  Prepared face/span metadata is rebuilt after cache
+deserialization, so this nonserialized addition does not require a cache
+version change.
+
+The focused --pole-only C/C++ corpus covers base north and south pole lines,
+an inside-to-pole line, a radius-0.01 translated sphere, and a radius-10000
+sphere translated to million-scale coordinates.  It requires prepared-path
+selection, all eight sphere spans to pass every deflation stage, exactly two
+owned singular events, no ordinary subdivision boxes or local roots, correct
+analytic distances, and finite outward normals.  CTest runs it at SurfaceTree
+depth two, the clearest former failure.  It passes independently at every
+depth zero through eight; at depth zero the three BREP fixtures have only
+three SurfaceTree nodes total.  The full directed suite now passes at depth
+two.  All fifteen optimized default-depth rt_brep_ray shards pass, including
+the seam, defect, contact/trim, grazing, paired Crofton, and interval gates.
+ASAN/UBSAN pole runs at depths zero and two pass with leak scanning disabled
+and halt-on-error enabled.
+
+Do not reduce the production SurfaceTree default yet.  The next independent
+reduced-depth work remains the RCC/cone/torus paired-Crofton grazing misses and
+four transformed seam cases previously observed at depth two.  General mixed
+pole/regular event authority and an interval-certified limiting-normal cone
+are later extensions; the current complete-line theorem intentionally does
+not claim them.
+
 2026-08-09 ACTIVE CERTIFIED REGULAR-ROOT-PAIR CHECKPOINT
 
 The controlled SurfaceTree measurement increment is committed locally as
