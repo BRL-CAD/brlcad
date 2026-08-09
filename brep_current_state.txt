@@ -11,7 +11,93 @@ as the authoritative continuation log until all acceptance gates pass.
 CURRENT PHASE
 -------------
 
-2026-08-09 ACTIVE CERTIFIED SEAM/REGULAR COMPONENT CHECKPOINT
+2026-08-09 ACTIVE TOLERANCE-HEALED EDGE TRANSITION CHECKPOINT
+
+The preceding certified-component increment is committed locally as
+1ae947e957, "Certify local BREP seam root components".  It was not pushed.
+The current uncommitted increment classifies and resolves all six material
+trim-only Cobb fallbacks that remained at that checkpoint.  SurfaceTree
+density, cache data, and allocation behavior are still unchanged.
+
+Four cases were rejected at the edge-candidate entry point.  Their angular
+edge-sector states were finite and opposite, and their actual incident
+surface roots were non-grazing, but line_state_valid was also conditioned on
+the fixed BREP_GRAZING_DOT_TOL applied to a face normal evaluated at a
+displaced trim-frame lift.  That mixed a topological wedge question with a
+conditioning estimate from a discrepant location.  line_state_valid now
+depends only on the nonzero angular wedge states.  This does not publish a hit
+by itself: the complete incident root/box transaction still requires finite,
+non-grazing surface roots, exact represented-edge authorization, and the
+applicable local component theorem.
+
+The other two cases are the g/T=0.9, chord/T=1.1, inward trim-bow rays in both
+directions.  The literal displaced trim frame says contact on both sides, but
+the complete incident root set has one root on each face and every root gives
+the same ENTER or LEAVE direction.  A nearby opposite regular root lies more
+than T away and shares the same coarse terminal component.  The edge
+candidate may now record this as a provisional tolerance-healed transition,
+but only under all of these conditions:
+
+  * prep established the strict edge correspondence and discrepancy envelope;
+  * the ray has an exact represented-edge witness rather than a near-edge snap;
+  * both incident faces contribute complete, finite, non-grazing root/box
+    observations with one common crossing direction;
+  * no selected root or box conflicts with another candidate; and
+  * the joint boundary/regular theorem contracts both local roots, excludes
+    the complete remainder of their connected hull, certifies the boundary
+    box's determinant sign, applies face reversal, and agrees with the
+    proposed crossing direction.
+
+The transition remains unpublished if any joint precondition or proof fails.
+Promoted boxes receive RESOLVED_BOUNDARY rather than RESOLVED_CONTACT.  New
+trace fields record edge-candidate failure stages and the count of successfully
+published tolerance transitions, so later changes cannot silently broaden
+this policy.
+
+The isolated defect ratchet now has 96 prepared selections and 24 explicit
+UNCERTIFIED fallbacks.  Trim-only selects 32/40 and edge-only selects 64/80.
+Thus every one of the 96 material rays is handled by the prepared production
+pipeline; the only fallbacks are the 24 exact zero-length contacts.  The
+matrix publishes 36 ordinary regular components, 60 joint edge/regular
+components, 64 common-lift exact witnesses, and two tolerance-healed
+transitions.  Its fixed complement stacks visit 1,068 boxes in aggregate and
+reach high-water four.  Maximum endpoint error is 2.02e-8 and maximum relative
+defect calibration error is 9.32e-6.
+
+A separate transform-invariance gate replays the newly healed transition in
+both ray directions after arbitrary rotation and translation at scales 0.01,
+1, and 10,000.  All six rays require exact discrepancy authorization, one
+joint component, one published edge transition, the tolerance-transition
+marker, a valid directed material interval, and prepared-production
+selection.  All pass.  The worst endpoint error normalized back to base model
+units is 6.22e-9.
+
+Optimized verification for this production state:
+
+  cmake --build .build --target rt_brep_ray -j8
+  .build/src/librt/tests/rt_brep_ray --defect-only
+  ctest --test-dir .build -j8 --output-on-failure -R
+    '^(rt_brep_ray|rt_brep_ray_(crofton|seam|endpoint|
+    nonisoparametric|contact_trim|defect|interval|grazing_root|fold|
+    affine))$'
+
+All eleven CTest shards pass.  The comprehensive seam shard took 225.66
+seconds and the parallel batch took 225.71 seconds.  The ASAN/UBSAN
+--defect-only run, including the six similarity rays, also passes with
+detect_leaks=0 and halt-on-error enabled and no sanitizer diagnostic.
+
+There is still no evidence of an uncontrolled or non-convergent numerical
+search.  Each remaining material failure reduced to a finite, observable
+classification or proof-authority gap, and the ratchet improved from 0/120 to
+96/120 without changing any analytic interval.  The tractable engineering
+target is a certified common path plus an explicit bounded fallback for true
+degeneracies, not unconditional success on every singular parametrization.
+The next production task is to profile and reduce initial SurfaceTree density
+one level at a time, preserving the directed, grazing, seam, transform, and
+paired Cauchy-Crofton gates at every step.
+
+
+2026-08-09 CERTIFIED SEAM/REGULAR COMPONENT CHECKPOINT
 
 The isolated Cobb defect corpus is committed locally as 6afabb5efd, "Add
 isolated Cobb trim and edge defects".  The certified component increment is
