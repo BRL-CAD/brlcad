@@ -2385,12 +2385,13 @@ Extend the prepared seam transaction as follows:
      original trim parameter is a positive scalar and cannot change any
      homogeneous sign predicate.
 
-  3. Union all overlapping span hulls and require their parameter lengths to
-     cover the complete mapped trim cell, allowing only coordinate-scaled
-     binary64 roundoff.  Reject missing span indices, zero coverage, invalid
-     orders, nonfinite bounds, a parameter outside `[0,1]`, or incomplete
-     coverage.  Do not reconstruct an OpenNURBS curve and do not allocate at
-     shot time.
+  3. Union all overlapping span hulls and require their exact closed parameter
+     union to cover the complete mapped trim cell.  The retained span
+     boundaries originate in one knot vector; do not turn a parameter-space
+     roundoff allowance into geometric authority.  Reject missing span
+     indices, zero coverage, invalid orders, nonfinite bounds, a parameter
+     outside `[0,1]`, or incomplete coverage.  Do not reconstruct an
+     OpenNURBS curve and do not allocate at shot time.
 
   4. Require the complete UV hull to fit exactly one prepared positive-weight
      rational surface span.  A cell crossing a surface-span boundary is not
@@ -2451,6 +2452,81 @@ allocation.  Unsupported rational data, incomplete span or surface coverage,
 changed contact-root topology, arbitrary root counts/faces/spans, exact
 tangency, sector-boundary tangency, vertex neighborhoods, and non-manifold
 topology remain fail-closed.
+
+6.4.1.7 Solver-level rational trim interval qualification
+
+The real Cobb matrix proves that one curved-trim configuration reaches the
+complete material-sector transaction, but it does not independently isolate
+the rational interval machinery from OpenNURBS topology, adaptive surface-root
+boxes, or the surrounding closure proof.  Treat the interval restriction as a
+solver component with its own permanent synthetic corpus before expanding its
+production authority.
+
+Expose a private test hook that constructs prepared `brep_trim_span` records
+from fixed Euclidean rational controls and then calls
+`brep_interval_trim_cell_geometry` itself.  The hook may allocate while
+constructing its test-local prepared object; the production helper and every
+shot-time caller remain allocation free.  Keep interface validity separate
+from theorem availability: null, nonfinite, malformed-domain, and unsupported
+order inputs reject the call, while missing cell provenance, incomplete
+coverage, OpenNURBS refusal, and nonpositive rational weights are valid test
+requests whose result is explicitly unavailable.
+
+The complete corpus is:
+
+  * A positive-weight rational quadratic with weights `[1,2,1]`, restricted
+    to a monotone subinterval.  Independently evaluate the rational curve and
+    quotient-rule derivative at dense deterministic samples.  Every UV value
+    and derivative must lie in the production interval.  Because restriction
+    reparameterizes the selected subinterval to `[0,1]`, compare the original
+    normalized derivative after multiplying it by the positive restricted
+    width.  Both derivative components must have the expected strict sign.
+
+  * Two joined linear rational spans with a cell crossing their shared
+    parameter.  The output must contain both locus pieces, maintain the strict
+    common-direction derivative, and enclose both signs of the turning
+    component.  The same spans supplied in reverse storage order must produce
+    a complete enclosure.  A cell ending exactly at the shared span boundary
+    must also succeed; the zero-length intersection with the following span
+    is not evidence of missing coverage.
+
+  * A reversed-control linear span whose first derivative component is
+    strictly negative and second is strictly positive.  This guards the
+    material-frame orientation convention rather than just the UV hull.
+
+  * Missing and zero-count span provenance, a true gap between two spans, and
+    nonpositive rational weights.  Each must return unavailable without
+    manufacturing a partial locus.
+
+  * An overlap-masked gap: two duplicate spans cover the same first interval
+    and a third covers the final interval.  The sum of intersection lengths is
+    at least the cell length even though the middle is absent.  This is a
+    required rejection and specifically forbids using accumulated length as
+    an interval-union proof.
+
+  * A symmetric rational quadratic spanning its turning point.  Its
+    derivative enclosure must contain zero, so downstream frame logic cannot
+    infer a strict direction merely because endpoint values differ.
+
+  * Nonfinite control and cell-domain controls rejected at the test interface.
+
+Production coverage is an actual closed interval-union theorem.  Starting at
+the cell minimum, repeatedly select the farthest upper endpoint reachable from
+the current covered prefix.  Retained span boundaries come from the same knot
+vector, so adjacency must be exact; any representable gap fails closed rather
+than becoming geometric authority.  Complete coverage reaches the cell
+maximum; failure to advance is a gap.  This bounded quadratic scan makes no
+span-order assumption, uses no dynamic storage, and prevents overlapping spans
+from concealing missing parameter values.  Continue to union the UV and
+derivative hulls of every positive-length intersection; coverage alone never
+repairs invalid rational data.
+
+Register the focused corpus as `rt_brep_ray_trim_interval`, also call it from
+the exhaustive interval shard and the unsharded compatibility process, and
+run it independently under ASan/UBSan.  This qualifies only complete rational
+trim locus and derivative enclosures.  It does not authorize tolerance-near
+contact-root association, fabricate surface roots, loosen contact-face box
+ownership, or broaden the material-sector topology in Section 6.4.1.6.
 
 6.4.2 Cyclic planar vertex-fan theorem
 
