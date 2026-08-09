@@ -1037,18 +1037,32 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     // If we only tessellated some of the faces, we don't have the
     // full solid mesh yet (by definition).  Return accordingly.
     if (face_failures || !face_successes || face_successes < s_cdt->brep->m_F.Count()) {
+	const bool specific_failure =
+	    s_cdt->diagnostic.result == BREP_CDT_RESULT_INVALID_PSLG ||
+	    s_cdt->diagnostic.result == BREP_CDT_RESULT_DETRIA_FAILED ||
+	    s_cdt->diagnostic.result == BREP_CDT_RESULT_CERTIFICATION_FAILED;
 	if (face_successes) {
 	    s_cdt->status = face_successes;
-	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_PARTIAL,
-		BREP_CDT_STAGE_FACE_TRIANGULATION, first_failed_face,
-		face_successes, face_failures,
-		"only a subset of B-Rep faces was triangulated");
+	    if (specific_failure) {
+		s_cdt->diagnostic.completed_faces = face_successes;
+		s_cdt->diagnostic.failed_faces = face_failures;
+	    } else {
+		cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_PARTIAL,
+		    BREP_CDT_STAGE_FACE_TRIANGULATION, first_failed_face,
+		    face_successes, face_failures,
+		    "only a subset of B-Rep faces was triangulated");
+	    }
 	    return face_successes;
 	}
 	s_cdt->status = BREP_CDT_FAILED;
-	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_FACE_FAILED,
-	    BREP_CDT_STAGE_FACE_TRIANGULATION, first_failed_face,
-	    0, face_failures, "no B-Rep faces were triangulated");
+	if (specific_failure) {
+	    s_cdt->diagnostic.completed_faces = 0;
+	    s_cdt->diagnostic.failed_faces = face_failures;
+	} else {
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_FACE_FAILED,
+		BREP_CDT_STAGE_FACE_TRIANGULATION, first_failed_face,
+		0, face_failures, "no B-Rep faces were triangulated");
+	}
 	return -1;
     }
 
