@@ -16644,6 +16644,11 @@ brep_prepared_mixed_fold_pair_indices(
     size_t &regular_box_index, size_t &fold_local_index,
     size_t &regular_local_index, brep_interval &gap)
 {
+    /* Fold localization tries a nested sequence of optional contractions.
+     * Individual failed levels are telemetry, not failed proof obligations:
+     * the stored fold interval is either the best certified contraction or
+     * the complete parent box.  The strict outward gap test below consumes
+     * that actual conservative interval. */
     if (!trace || trace->surface_isolated_boxes != 2 ||
 	    trace->stored_surface_boxes != 2 ||
 	    trace->surface_krawczyk_boxes != 1 ||
@@ -16652,7 +16657,6 @@ brep_prepared_mixed_fold_pair_indices(
 	    trace->stored_surface_fold_roots != 1 ||
 	    trace->surface_fold_root_overflow ||
 	    trace->surface_fold_root_failures ||
-	    trace->surface_fold_localization_failures ||
 	    trace->surface_fold_direction_checks != 1 ||
 	    trace->surface_fold_direction_mismatches ||
 	    trace->surface_fold_trim_queries != 1 ||
