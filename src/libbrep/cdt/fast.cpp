@@ -4949,6 +4949,16 @@ enum fast_face_outcome {
 static bool
 fast_face_is_provably_degenerate(const ON_BrepFace &face)
 {
+    bool all_loops_empty = face.LoopCount() > 0;
+    for (int li = 0; li < face.LoopCount(); ++li) {
+	const ON_BrepLoop *candidate = face.Loop(li);
+	if (!candidate || candidate->TrimCount() != 0) {
+	    all_loops_empty = false;
+	    break;
+	}
+    }
+    if (all_loops_empty && face.LoopCount() > 1)
+	return true;
     if (face.LoopCount() != 1)
 	return false;
     const ON_BrepLoop *loop = face.Loop(0);
@@ -4974,17 +4984,33 @@ fast_face_is_provably_degenerate(const ON_BrepFace &face)
 		return false;
 	}
 	std::vector<ON_2dPoint> endpoints;
+	std::vector<ON_2dPoint> trim_starts;
+	std::vector<ON_2dPoint> trim_ends;
+	double trim_parameter_tolerance = 0.0;
 	for (int ti = 0; ti < loop->TrimCount(); ++ti) {
 	    const ON_BrepTrim *candidate = loop->Trim(ti);
 	    if (!candidate || candidate->m_type == ON_BrepTrim::singular ||
-		    candidate->Degree() != 1 || candidate->SpanCount() != 1)
+		    candidate->Degree() != 1 || candidate->SpanCount() < 1 ||
+		    candidate->SpanCount() > 4096)
 		return false;
-	    const ON_Interval domain = candidate->Domain();
-	    const ON_2dPoint start = candidate->PointAt(domain.Min());
-	    const ON_2dPoint end = candidate->PointAt(domain.Max());
-	    if (!start.IsValid() || !end.IsValid())
+	    std::vector<double> spans(candidate->SpanCount() + 1);
+	    if (!candidate->GetSpanVector(spans.data()))
 		return false;
+	    for (double parameter : spans) {
+		const ON_2dPoint point = candidate->PointAt(parameter);
+		if (!point.IsValid())
+		    return false;
+		endpoints.push_back(point);
+	    }
+	    trim_starts.push_back(endpoints[
+		endpoints.size() - spans.size()]);
+	    trim_ends.push_back(endpoints.back());
+	    trim_parameter_tolerance = std::max(trim_parameter_tolerance,
+		std::max(candidate->m_tolerance[0],
+		    candidate->m_tolerance[1]));
 	    if (closed_surface) {
+		const ON_2dPoint &start = trim_starts.back();
+		const ON_2dPoint &end = trim_ends.back();
 		for (int dir = 0; dir < 2; ++dir) {
 		    if (!surface->IsClosed(dir))
 			continue;
@@ -4997,17 +5023,20 @@ fast_face_is_provably_degenerate(const ON_BrepFace &face)
 			return false;
 		}
 	    }
-	    endpoints.push_back(start);
-	    endpoints.push_back(end);
 	}
 	const double parameter_scale = std::max(1.0,
 	    std::max(surface->Domain(0).Length(),
 		surface->Domain(1).Length()));
+	trim_parameter_tolerance = std::min(trim_parameter_tolerance,
+	    parameter_scale * 1.0e-4);
 	const double parameter_tolerance = std::max(
-	    BREP_SAME_POINT_TOLERANCE, parameter_scale * 1.0e-9);
+	    trim_parameter_tolerance, std::max(BREP_SAME_POINT_TOLERANCE,
+		parameter_scale * 1.0e-9));
 	if (closed_surface &&
-		(endpoints[0].DistanceTo(endpoints[3]) > parameter_tolerance ||
-		 endpoints[1].DistanceTo(endpoints[2]) > parameter_tolerance))
+		(trim_starts[0].DistanceTo(trim_ends[1]) >
+		    parameter_tolerance ||
+		 trim_ends[0].DistanceTo(trim_starts[1]) >
+		    parameter_tolerance))
 	    return false;
 	size_t direction_index = 1;
 	while (direction_index < endpoints.size() &&
