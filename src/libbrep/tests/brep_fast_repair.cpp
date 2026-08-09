@@ -740,7 +740,8 @@ split_periodic_boundary_test()
 static void
 add_surface_iso_trim(ON_Brep &brep, ON_BrepLoop &loop,
 	const ON_Surface &surface, int start_vertex, int end_vertex,
-	const ON_2dPoint &start, const ON_2dPoint &end)
+	const ON_2dPoint &start, const ON_2dPoint &end,
+	double tolerance = 1.0e-6, bool segmented_pcurve = false)
 {
     const bool vary_u = fabs(end.x - start.x) > fabs(end.y - start.y);
     const int direction = vary_u ? 0 : 1;
@@ -755,14 +756,24 @@ add_surface_iso_trim(ON_Brep &brep, ON_BrepLoop &loop,
     const int c3i = brep.AddEdgeCurve(edge_curve);
     ON_BrepEdge &edge = brep.NewEdge(brep.m_V[start_vertex],
 	brep.m_V[end_vertex], c3i);
-    edge.m_tolerance = 1.0e-6;
-    ON_LineCurve *trim_curve = new ON_LineCurve(start, end);
-    trim_curve->SetDomain(0.0, 1.0);
+    edge.m_tolerance = tolerance;
+    ON_Curve *trim_curve = NULL;
+    if (segmented_pcurve) {
+	const ON_2dPoint middle = 0.5 * (start + end);
+	trim_curve = nurbs_curve(2, 1, {
+	    ON_3dPoint(start.x, start.y, 0.0),
+	    ON_3dPoint(middle.x, middle.y, 0.0),
+	    ON_3dPoint(end.x, end.y, 0.0)
+	});
+    } else {
+	trim_curve = new ON_LineCurve(start, end);
+	trim_curve->SetDomain(0.0, 1.0);
+    }
     const int c2i = brep.AddTrimCurve(trim_curve);
     ON_BrepTrim &trim = brep.NewTrim(edge, false, loop, c2i);
     trim.m_type = ON_BrepTrim::boundary;
     trim.m_iso = surface.IsIsoparametric(*trim_curve);
-    trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-6;
+    trim.m_tolerance[0] = trim.m_tolerance[1] = tolerance;
 }
 
 static bool
@@ -790,8 +801,30 @@ degenerate_closed_surface_slit_test()
 	surface->PointAt(high.x, high.y)).m_vertex_index;
     add_surface_iso_trim(brep, loop, *surface, low_vertex, high_vertex,
 	low, high);
+    const double pcurve_tolerance = 1.0e-5;
+    const ON_2dPoint perturbed_high(u + 0.5 * pcurve_tolerance, high_v);
+    const ON_2dPoint perturbed_low(u + 0.5 * pcurve_tolerance, low_v);
     add_surface_iso_trim(brep, loop, *surface, high_vertex, low_vertex,
-	high, low);
+	perturbed_high, perturbed_low, pcurve_tolerance, true);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.completed_faces == 1 &&
+	result->report.failed_faces == 0 &&
+	result->report.skipped_degenerate_faces == 1 &&
+	result->face_count == 0 && result->point_count == 0;
+    delete result;
+    return valid;
+}
+
+static bool
+multiple_empty_loops_test()
+{
+    ON_Brep brep;
+    const int si = brep.AddSurface(large_plane());
+    ON_BrepFace &face = brep.NewFace(si);
+    brep.NewLoop(ON_BrepLoop::outer, face);
+    brep.NewLoop(ON_BrepLoop::inner, face);
 
     fast_result *result = run_fast(brep);
     const bool valid = result->ret == BREP_CDT_FAST_OK &&
@@ -1442,6 +1475,7 @@ main(int argc, const char **argv)
 	paired_periodic_strip_test() &&
 	split_periodic_boundary_test() &&
 	degenerate_closed_surface_slit_test() &&
+	multiple_empty_loops_test() &&
 	collapsed_closed_pcurve_test() &&
 	misclassified_periodic_boundaries_test() &&
 	touching_periodic_subloops_test() &&
