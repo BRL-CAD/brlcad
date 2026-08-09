@@ -6656,11 +6656,11 @@ Imported solid winding and overlap cleanup (Finding 81):
   The first three additional stratified manifest objects passed 70-ray fresh
   depth-three/depth-eight partition and reversal comparison:
 
-    non_grabcad/recurta/step_ap203/0353-24-03.g Product_step46_item.s
+    non_grabcad/0353/0353-24-03.g Product_step46_item.s
       22 segments, one prepared selection, 16 surface-box overflows;
-    non_grabcad/recurta/step_ap203/0353-70-13.g Product_step18_item.s
+    non_grabcad/0353/0353-70-13.g Product_step18_item.s
       12 segments, 14 prepared selections; and
-    non_grabcad/recurta/step_ap203/0353-97-15.g Product_step46_item.s
+    non_grabcad/0353/0353-97-15.g Product_step46_item.s
       12 segments, 23 prepared selections, 16,440 surface-box overflows.
 
   All have zero depth or reversal differences.  The next object,
@@ -6854,35 +6854,139 @@ Imported solid winding and overlap cleanup (Finding 81):
   gates established here.
 
 
+Trim endpoint classification and NIST depth discrepancy (Finding 82):
+
+  The next broader imported checks produced these legacy-only 70-ray results:
+
+    non_grabcad/recurta/step_ap203/10077.g id2_item.s
+      PASS, 5,458/138,371 depth-three/eight nodes, 22 segments;
+    nist/NIST_MBE_PMI_1.g Document_item.s
+      PASS, 1,763/53,051 nodes, 20 segments;
+    second/case_fan_120mm.g case_fan_120mm_v3_item.s
+      PASS, 682 faces, 31,388/744,484 nodes, 24 segments; and
+    non_grabcad/a.g A_item.s
+      correctly reported non-solid for its 471 faces.
+
+  `nist/NIST_MBE_PMI_11.g`, `Document_item.s`, then exposed a real
+  density-dependent result.  Exact deterministic pair 1 is:
+
+    origin=(-7.1054273576010019e-15, -58.828516522601504,
+            -0.075000000000000622)
+    direction=(0, 0.99999999999999989, 0)
+    chord=117.65703304520302
+
+  Before repair, adaptive depths zero through seven returned only interval
+  `[74.828516522601504,90.328516522601504]`; depth eight also returned
+  `[27.328516522601504,42.828516522601504]`.  Both depths were reversal
+  stable.  All depths found the same surface root on face 7 at
+  `t=27.328516522601504`, UV approximately
+  `(4.71238898038469,1.695)`, normal dot `-1`.  The difference was trim
+  classification, not root convergence.
+
+  At depths zero through seven the leaf and full face CurveTree called this a
+  clean miss.  At depth eight the leaf had
+  `m_checkTrim=false,m_trimmed=false`, accepted the root without evaluating
+  the point, and disagreed with the full CurveTree.  The dense tree was
+  accidentally masking a classifier defect.  This is direct evidence that
+  depth eight is a reference for detecting change, not ground truth.
+
+  Face topology establishes the intended answer.  Face 7 is a cylindrical
+  patch with outer loop 9 covering approximately
+  `u=[pi,2*pi],v=[0.27,1.77]`; the root is plainly inside.  The upper boundary
+  is split between trims 39 and 40.  Trim 39 ends about `2.2e-8` in u beyond
+  the query, while trim 40 begins roughly `1.6e-4` on the other side.  The
+  two intervals are also the physically symmetric cross section of the
+  annular model.
+
+  The defect was a tolerance inconsistency inside the CurveTree classifier.
+  `CurveTree::isTrimmed` selected candidates with the structural
+  `BREP_UV_DIST_FUZZ` envelope (`1e-6`), but `BRNode::isTrimmed` repeated the u
+  bounding-box test exactly.  The correct upper trim was counted as a
+  candidate and then rejected before curve evaluation, leaving only lower
+  crossings and the wrong winding.  `BRNode::isTrimmed` now uses the same UV
+  envelope and clamps the admitted u coordinate to the leaf endpoint before
+  curve evaluation.  This does not expand `BREP_EDGE_MISS_TOLERANCE`,
+  model-distance closure, or hit-event coalescence, and a query beyond the UV
+  envelope is still outside.
+
+  `brep-audit` failure records now include fixed cleanup stage counts and
+  per-root leaf/full-face trim status, distance, candidate count, hit class,
+  and aggregate equivalence counters.  These fields made the accidental
+  depth-eight shortcut visible without changing production behavior.
+
+  A new source-only fixture, available as
+  `rt_brep_ray --trim-classifier-only`, constructs a planar outer loop with a
+  split upper trim reproducing the endpoint discrepancy.  It requires a
+  query inside the `BREP_UV_DIST_FUZZ` envelope to be classified inside with
+  the expected crossing distance, and a query beyond that envelope to remain
+  outside.  It is registered as `rt_brep_ray_trim_classifier`, following the
+  rule that difficult imported failures are reduced into the C/C++ corpus.
+
+  Validation on the exact source:
+
+    .build/src/librt/tests/rt_brep_ray --trim-classifier-only
+
+  PASS.  Exact NIST pair 1 passes for every candidate depth zero through
+  seven against depth eight, with four hits, two intervals, zero classifier
+  equivalence differences, and reversal equality.  The complete audit:
+
+    .build/bin/brep-audit --ray-depth-compare --ray-count=32 \
+      /home/cyapp/step_corpus_g/nist/NIST_MBE_PMI_11.g Document_item.s
+
+  PASS: 70 rays, 10 hit rays, 14 segments, zero invalid rays, orientation
+  anomalies, depth differences, or reversal mismatches; maximum endpoint
+  delta `1.42e-14`; 44 prepared selections at both depths.  Depth three uses
+  2,146 nodes/1,556 leaves and depth eight 62,790/31,932.
+
+  Final optimized validation on the exact clamped source is 19/19 registered
+  ray shards.  The new classifier plus complete seam/crack matrix passed 2/2
+  in 234.82 seconds; all other 17 shards passed concurrently in 175.53
+  seconds.  Rebuilt ASAN/UBSAN runs of the classifier fixture and exact NIST
+  depth-three/depth-eight pair pass without a diagnostic.  Leak scanning
+  remains disabled for the established host ptrace limitation.
+
+  This repair removes an accidental dependency on the densest tree, but does
+  not justify lowering the production depth yet.  Complete the remaining
+  imported strata and analytic/seam/grazing gates first.  Once correct answers
+  and fallback authority are stable, the planned Abert-informed performance
+  phase remains an explicit deliverable: profile normal production, then
+  optimize broadly applicable face/span traversal, immutable data layout,
+  conservative vectorized rejection, batched vshot, and the corrector if it
+  is measurably hot.  Matching Abert exactly is not a requirement.
+
+
 NEXT ACTIONS
 ------------
 
 Current priority after the structural-knot/regular-stream checkpoint:
 
 A. Keep the production adaptive depth at eight.  The first reproducible
-   14-database depth-three/eight prep stratum, six clean imported comparisons,
-   the status-2 pole repair, and the UCP winding/overlap repair are recorded
-   above.  Continue `--ray-depth-compare` across the remaining strata, using
-   `--ray-pair` and `--legacy-only` to ratchet every failure before paying for
-   a full trace.  Retain complete partition/reversal results, orientation,
-   prepared selection and fallback populations, face/span/status-2/trim/scale
-   fields, actual requested-depth prep statistics, RSS, and cache behavior.
-   Add feature-targeted rays so a high miss fraction does not masquerade as
-   coverage.  Successful tree builds and agreement with depth eight do not by
-   themselves establish an arbitrary-BREP default.
+   14-database depth-three/eight prep stratum, the imported comparisons, the
+   status-2 pole repair, UCP winding/overlap repair, and NIST trim-endpoint
+   repair are recorded above.  Continue `--ray-depth-compare` across the
+   remaining strata, using `--ray-pair` and `--legacy-only` to ratchet every
+   failure before paying for a full trace.  Retain complete partition/reversal
+   results, orientation, prepared selection and fallback populations,
+   face/span/status-2/trim/scale fields, actual requested-depth prep
+   statistics, RSS, and cache behavior.  Add feature-targeted rays so a high
+   miss fraction does not masquerade as coverage.  Successful tree builds and
+   agreement with depth eight do not by themselves establish an
+   arbitrary-BREP default.
 B. Preserve adaptive depth three as the present conservative experimental
    plateau.  Do not spend correctness effort forcing special fixtures to
    depth zero.  Any candidate production reduction must retain the complete
-   18-shard optimized ray gate, the seven rebuilt-cache cases, sanitizer
+   19-shard optimized ray gate, the seven rebuilt-cache cases, sanitizer
    qualification, and exact identical-line partition results.
 C. Use the deterministic hard replay as the seed of the difficult-solver C/C++
    corpus.  The status-2 analytic-revolution sphere pole is ratcheted under
    scale, translation, rotation, and reversal.  The UCP solid-assembly failure
    is ratcheted by pure hit streams, an appended-overlapping-sphere CSG-union
-   oracle, exact imported pairs 0/3/26, and the complete 70-ray audit.  Add
-   every subsequent imported discrepancy with its complete geometry, ray,
-   tolerance, span, box, root, event, and fallback evidence; do not tune
-   against an unnamed `.g` model or replace one failure with another.
+   oracle, exact imported pairs 0/3/26, and the complete 70-ray audit.  The
+   NIST depth discrepancy is ratcheted by a split-trim endpoint fixture and
+   exact pair 1 at every adaptive depth.  Add every subsequent imported
+   discrepancy with its complete geometry, ray, tolerance, span, box, root,
+   event, and fallback evidence; do not tune against an unnamed `.g` model or
+   replace one failure with another.
 D. Extend prepared authority only with separate complete proofs for the
    remaining categories: mixed fold/regular streams, trim-near and
    topology-boundary events, contact-only rays, curved vertex links, and

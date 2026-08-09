@@ -292,9 +292,17 @@ BRNode::isTrimmed(const ON_2dPoint &uv, double &trimdist) const
 {
     point_t bmin, bmax;
     BRNode::GetBBox(bmin, bmax);
-    if ((bmin[X] <= uv[X]) && (uv[X] <= bmax[X]))   /* if check trim and in BBox */
+    /* CurveTree candidate selection admits this same UV fuzz.  Preserve it
+     * here so a candidate just beyond a split or imported trim endpoint is
+     * classified instead of being silently discarded by a stricter second
+     * bounding-box test.
+     */
+    if ((bmin[X] - BREP_UV_DIST_FUZZ <= uv[X]) &&
+	    (uv[X] <= bmax[X] + BREP_UV_DIST_FUZZ))
     {
-	fastf_t v = getCurveEstimateOfV(uv[X], 0.0000001);
+	const fastf_t query_u = std::max(bmin[X],
+	    std::min(uv[X], bmax[X]));
+	fastf_t v = getCurveEstimateOfV(query_u, 0.0000001);
 	trimdist = v - uv[Y];
 	if (uv[Y] <= v) {
 	    if (m_XIncreasing) {

@@ -115,7 +115,8 @@ The complete Cobb seam gate initially caught an over-aggressive version that
 discarded a singleton.  Retaining it restored all 14 below-envelope repairs,
 both prepared partition promotions, classifier/similarity invariance,
 ambiguous-correspondence fallback, and the 416-ray bowed-seam matrix.  The
-final optimized gate passes all 18 registered ray shards.  The standalone
+final optimized gate before the trim-endpoint addition passed all 18
+registered ray shards.  The standalone
 seam shard completed in 383 seconds on this host; the other 17 shards passed
 in 157 seconds when run concurrently.
 
@@ -141,6 +142,96 @@ the Abert-informed performance phase in Section 10: profile first, eliminate
 global face/span work and dense seed trees, compact immutable data, add
 conservative SIMD and real batched traversal, and optimize the corrector only
 if it remains hot.  The UCP workload supplies a concrete before/after target.
+
+
+IMPLEMENTATION CHECKPOINT: TRIM-ENDPOINT CLASSIFICATION (2026-08-09)
+-------------------------------------------------------------------
+
+The next imported comparison demonstrated why depth eight must be treated as
+a continuity reference rather than a truth oracle.  In
+`nist/NIST_MBE_PMI_11.g`, `Document_item.s`, deterministic axis pair 1 is
+
+  origin=(-7.1054273576010019e-15, -58.828516522601504,
+          -0.075000000000000622)
+  direction=(0, 0.99999999999999989, 0)
+  chord=117.65703304520302
+
+Before repair, adaptive depths zero through seven returned only
+`[74.828516522601504,90.328516522601504]`; depth eight also returned the
+physically symmetric first interval
+`[27.328516522601504,42.828516522601504]`.  Both results were independently
+stable under ray reversal.  The discrepancy was therefore not detectable by
+the reversal invariant alone, and the dense answer was not automatically
+entitled to win.
+
+Raw-root tracing localized the difference to face 7 at
+`t=27.328516522601504`, UV approximately
+`(4.71238898038469,1.695)`, with normal dot `-1`.  Every tree depth found the
+same surface root.  At depths zero through seven the leaf and full CurveTree
+called it a clean trimmed miss.  At depth eight a leaf marked
+`m_checkTrim=false,m_trimmed=false` accepted it without a point query, while
+the full CurveTree still called it outside.  Thus the deep tree happened to
+mask a trim-classifier defect; it did not improve the nonlinear solve.
+
+Topology and geometry establish the intended result.  Face 7 is a cylindrical
+patch with outer loop 9 and UV domain `u=[0,2*pi], v=[0,2.04]`.  Its loop
+covers approximately `u=[pi,2*pi], v=[0.27,1.77]`, placing the root plainly
+inside.  The upper boundary is split between trims 39 and 40.  Trim 39 ends
+only about `2.2e-8` in u beyond the query, while trim 40 begins about `1.6e-4`
+on the other side.  This is a real imported endpoint discrepancy of the sort
+the solid classifier must tolerate without turning arbitrary outside points
+into hits.
+
+The specific implementation bug was a contradictory two-stage screen.
+`CurveTree::isTrimmed` admitted trim leaves whose u bounding boxes were within
+`BREP_UV_DIST_FUZZ` (`1e-6`) of the query.  `BRNode::isTrimmed` then repeated
+the u test with exact bounds.  Trim 39 was therefore counted as a candidate
+but silently converted to an under-trim result rather than evaluated at its
+near endpoint.  Only lower crossings remained, producing the wrong winding.
+
+`BRNode::isTrimmed` now uses the same `BREP_UV_DIST_FUZZ` envelope as candidate
+selection and clamps the admitted u value to the leaf endpoint before curve
+evaluation.  This is deliberately a narrow structural-UV consistency rule.
+It does not widen
+`BREP_EDGE_MISS_TOLERANCE`, the model tolerance, or same-event hit
+coalescence; points beyond the structural envelope remain outside.
+
+A fast C++ regression, `rt_brep_ray --trim-classifier-only`, builds a planar
+outer loop with the same split-upper-trim discrepancy.  It requires the
+near-endpoint scanline to be inside with two candidates and a trim distance of
+0.5, while a scanline more than `BREP_UV_DIST_FUZZ` beyond the endpoint must
+remain outside.  This turns the imported observation into a source fixture
+rather than depending indefinitely on one `.g` file.  `brep-audit` failure
+records now also expose fixed-cleanup stages plus leaf/full-face trim status,
+distance, candidate population, hit class, and equivalence counts.
+
+After repair, exact pair 1 agrees at every candidate depth zero through seven
+against depth eight: four hits, two material intervals, no invalid rays,
+orientation anomalies, reversal mismatches, or leaf/full-face classifier
+differences.  The complete depth-three/depth-eight 70-ray audit also passes:
+10 hit rays, 14 segments, maximum endpoint delta `1.42e-14`, and 44 prepared
+selections at each depth.  Depth three uses 2,146 nodes/1,556 leaves versus
+62,790/31,932 at depth eight.  The reduced classifier test is a permanent
+CTest shard.
+
+The final optimized validation is 19/19 registered ray shards on the exact
+clamped implementation.  The classifier plus comprehensive seam/crack matrix
+passed 2/2 in 234.82 seconds; the other 17 shards passed concurrently in
+175.53 seconds, including the exhaustive interval, Crofton, pole, grazing,
+endpoint, contact, non-isoparametric, and defect gates.  The rebuilt
+ASAN/UBSAN classifier fixture and exact NIST depth-three/depth-eight pair also
+pass with no diagnostic.  Leak scanning remains disabled for the established
+host ptrace limitation.
+
+This result strengthens, rather than reverses, the staged performance plan.
+First remove answer dependence on accidental leaf preclassification, complete
+the imported and analytic correctness gates, and retain depth eight in
+production.  Then profile the certified pipeline and pursue the broadly
+applicable Abert-informed work: face/span acceleration, compact immutable
+data, conservative batched rejection, a true `vshot`, and corrector
+optimization where measurement justifies it.  No requirement exists to match
+Abert's implementation exactly, and no tree-depth reduction is accepted
+merely because this one classifier case now works at depth zero.
 
 
 IMPLEMENTATION CHECKPOINT: IMPORTED PARTITIONS AND STATUS-2 POLES (2026-08-09)
