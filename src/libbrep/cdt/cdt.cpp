@@ -1263,6 +1263,10 @@ refine_assembled_intersection(struct ON_Brep_CDT_State *s_cdt,
 	    !validation.intersecting_triangle_pairs)
 	return 0;
     int source_faces[2] = {-1, -1};
+    bool prefer_triangle_edge_split = false;
+    ON_3dPoint intersection(validation.first_intersection_point[0],
+	validation.first_intersection_point[1],
+	validation.first_intersection_point[2]);
     for (int pair_index = 0; pair_index < 2; ++pair_index) {
 	const int bot_triangle = validation.first_intersection[pair_index];
 	if (bot_triangle >= 0 && (size_t)bot_triangle <
@@ -1302,13 +1306,48 @@ refine_assembled_intersection(struct ON_Brep_CDT_State *s_cdt,
 	std::set_intersection(first_edges.begin(), first_edges.end(),
 	    second_edges.begin(), second_edges.end(),
 	    std::back_inserter(shared_edges));
+	const std::set<int> shared_edge_set(shared_edges.begin(),
+	    shared_edges.end());
+	bool pair_incident_to_shared_edge = !shared_edge_set.empty();
+	for (int pair_index = 0; pair_index < 2; ++pair_index) {
+	    const int bot_triangle = validation.first_intersection[pair_index];
+	    const int face = source_faces[pair_index];
+	    bool incident = false;
+	    if (bot_triangle >= 0 && face >= 0 &&
+		    (size_t)bot_triangle <
+		    s_cdt->bot_face_to_cdt_triangle.size()) {
+		const auto mesh_entry = s_cdt->fmeshes.find(face);
+		const size_t local_triangle =
+		    s_cdt->bot_face_to_cdt_triangle[(size_t)bot_triangle];
+		if (mesh_entry != s_cdt->fmeshes.end() &&
+			local_triangle < mesh_entry->second.tris_vect.size()) {
+		    const triangle_t &triangle =
+			mesh_entry->second.tris_vect[local_triangle];
+		    for (int edge = 0; edge < 3; ++edge) {
+			const uedge_t candidate(triangle.v[edge],
+			    triangle.v[(edge + 1) % 3]);
+			const auto boundary =
+			    mesh_entry->second.ue2b_map.find(candidate);
+			if (boundary != mesh_entry->second.ue2b_map.end() &&
+				boundary->second &&
+				shared_edge_set.find(
+				boundary->second->edge_ind) !=
+				shared_edge_set.end()) {
+			    incident = true;
+			    break;
+			}
+		    }
+		}
+	    }
+	    pair_incident_to_shared_edge =
+		pair_incident_to_shared_edge && incident;
+	}
+	prefer_triangle_edge_split = !pair_incident_to_shared_edge;
 	bedge_seg_t *nearest = NULL;
 	double nearest_distance = DBL_MAX;
-	const ON_3dPoint intersection(
-	    validation.first_intersection_point[0],
-	    validation.first_intersection_point[1],
-	    validation.first_intersection_point[2]);
 	for (int edge : shared_edges) {
+	    if (!pair_incident_to_shared_edge)
+		break;
 	    const auto segments = s_cdt->e2polysegs.find(edge);
 	    if (segments == s_cdt->e2polysegs.end())
 		continue;
@@ -1371,6 +1410,19 @@ refine_assembled_intersection(struct ON_Brep_CDT_State *s_cdt,
 
     size_t inserted = 0;
     std::vector<int> changed_faces;
+    if (prefer_triangle_edge_split) {
+	for (auto &entry : targets) {
+	    cdt_mesh_t &mesh = s_cdt->fmeshes[entry.first];
+	    inserted = mesh.split_problem_triangle_edges(entry.second, 1,
+		validation.first_intersection_point_valid ? &intersection : NULL);
+	    if (!inserted)
+		continue;
+	    if (mesh.valid(0) || (mesh.repair_incorrect_normal_edges() &&
+		    mesh.valid(0)))
+		return inserted;
+	    return 0;
+	}
+    }
     for (auto &entry : targets) {
 	if (inserted >= max_points)
 	    break;
