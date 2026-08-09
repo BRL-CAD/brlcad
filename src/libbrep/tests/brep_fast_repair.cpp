@@ -1318,6 +1318,35 @@ untrimmed_planar_face_test()
 }
 
 static bool
+untrimmed_curved_surface_test()
+{
+    ON_Brep brep;
+    ON_NurbsSurface *surface = new ON_NurbsSurface(
+	3, false, 3, 3, 3, 3);
+    if (!surface->MakeClampedUniformKnotVector(0) ||
+	    !surface->MakeClampedUniformKnotVector(1)) {
+	delete surface;
+	return false;
+    }
+    for (int u = 0; u < 3; ++u) {
+	for (int v = 0; v < 3; ++v) {
+	    const double height = u == 1 && v == 1 ? 0.5 : 0.0;
+	    surface->SetCV(u, v, ON_3dPoint(u, v, height));
+	}
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    brep.NewLoop(ON_BrepLoop::outer, face);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0 &&
+	result->point_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
 skinny_planar_strip_test()
 {
     ON_Brep brep;
@@ -1482,6 +1511,7 @@ main(int argc, const char **argv)
 	inner_only_planar_loop_test() && empty_periodic_boundary_test() &&
 	full_periodic_hole_test() && periodic_singular_domain_test() &&
 	full_periodic_face_test() && untrimmed_planar_face_test() &&
+	untrimmed_curved_surface_test() &&
 	skinny_planar_strip_test() && near_closed_planar_loop_test() &&
 	malformed_pcurve_test() ? 0 : 1;
 }
