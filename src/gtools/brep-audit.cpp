@@ -248,6 +248,46 @@ bbox_add(point_t bmin, point_t bmax, bool *have_bbox, const point_t p)
 }
 
 static bool
+face_boundary_bbox(const ON_BrepFace &face, ON_BoundingBox &bbox)
+{
+    bbox = ON_BoundingBox::EmptyBoundingBox;
+    const auto include_point = [&](const ON_3dPoint &point) {
+	if (!point.IsValid())
+	    return;
+	if (bbox.IsValid())
+	    bbox.Set(point, true);
+	else
+	    bbox = ON_BoundingBox(point, point);
+    };
+    for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
+	const ON_BrepLoop *loop = face.Loop(loop_index);
+	if (!loop)
+	    continue;
+	for (int trim_index = 0; trim_index < loop->TrimCount(); ++trim_index) {
+	    const ON_BrepTrim *trim = loop->Trim(trim_index);
+	    if (!trim)
+		continue;
+	    const ON_BrepVertex *first = trim->Vertex(0);
+	    const ON_BrepVertex *second = trim->Vertex(1);
+	    if (first)
+		include_point(first->Point());
+	    if (second)
+		include_point(second->Point());
+	    const ON_BrepEdge *edge = trim->Edge();
+	    ON_BoundingBox edge_bbox = ON_BoundingBox::EmptyBoundingBox;
+	    if (edge && edge->GetTightBoundingBox(edge_bbox) &&
+		    edge_bbox.IsValid()) {
+		if (bbox.IsValid())
+		    bbox.Union(edge_bbox);
+		else
+		    bbox = edge_bbox;
+	    }
+	}
+    }
+    return bbox.IsValid();
+}
+
+static bool
 drawable_vlist_cmd(int cmd)
 {
     switch (cmd) {
@@ -985,6 +1025,9 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     point_t ref_min = VINIT_ZERO;
     point_t ref_max = VINIT_ZERO;
     bool ref_valid = false;
+    point_t boundary_min = VINIT_ZERO;
+    point_t boundary_max = VINIT_ZERO;
+    bool boundary_valid = false;
     int ref_faces = 0;
     int ref_face_failures = 0;
     std::vector<int> ref_failed_faces;
@@ -993,6 +1036,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     if (load_brep(dbip, dp, &intern) == BRLCAD_OK) {
 	struct rt_brep_internal *bi = (struct rt_brep_internal *)intern.idb_ptr;
 	ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
+	ON_BoundingBox boundary_bbox = ON_BoundingBox::EmptyBoundingBox;
 	const int brep_faces = bi->brep->m_F.Count();
 	int first_ref_face = 0;
 	int end_ref_face = brep_faces;
@@ -1018,6 +1062,13 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 		bbox.Union(face_bbox);
 	    else
 		bbox = face_bbox;
+	    ON_BoundingBox face_boundary = ON_BoundingBox::EmptyBoundingBox;
+	    if (face_boundary_bbox(bi->brep->m_F[i], face_boundary)) {
+		if (boundary_bbox.IsValid())
+		    boundary_bbox.Union(face_boundary);
+		else
+		    boundary_bbox = face_boundary;
+	    }
 	}
 	if (bbox.IsValid()) {
 	    VMOVE(ref_min, bbox.m_min);
@@ -1025,6 +1076,11 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	    ref_valid = true;
 	} else {
 	    top_issues.push_back("trimmed_bbox_failed");
+	}
+	if (boundary_bbox.IsValid()) {
+	    VMOVE(boundary_min, boundary_bbox.m_min);
+	    VMOVE(boundary_max, boundary_bbox.m_max);
+	    boundary_valid = true;
 	}
 	if (ref_face_failures)
 	    top_issues.push_back("trimmed_bbox_face_failures");
@@ -1057,19 +1113,33 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	    (int)config.face_index);
     }
     vect_t ref_dims = VINIT_ZERO;
+    vect_t boundary_dims = VINIT_ZERO;
     double ref_diag = 0.0;
+    double boundary_diag = 0.0;
+    if (boundary_valid) {
+	dims(boundary_dims, boundary_min, boundary_max);
+	boundary_diag = MAGNITUDE(boundary_dims);
+    }
     if (ref_valid) {
 	dims(ref_dims, ref_min, ref_max);
 	ref_diag = MAGNITUDE(ref_dims);
 	if (run_wireframe)
 	    check_dimensions(&wire, ref_dims, ref_diag, 0.0,
 		config.ratio_max, "wireframe");
-	if (run_shaded)
-	    check_dimensions(&shaded, ref_dims, ref_diag,
-		config.ratio_min, config.ratio_max, "shaded");
-	if (run_quality)
-	    check_dimensions(&quality, ref_dims, ref_diag,
-		config.ratio_min, config.ratio_max, "quality");
+	if (run_shaded) {
+	    check_dimensions(&shaded, ref_dims, ref_diag, 0.0,
+		config.ratio_max, "shaded");
+	    if (boundary_valid)
+		check_dimensions(&shaded, boundary_dims, boundary_diag,
+		    config.ratio_min, DBL_MAX, "shaded_boundary");
+	}
+	if (run_quality) {
+	    check_dimensions(&quality, ref_dims, ref_diag, 0.0,
+		config.ratio_max, "quality");
+	    if (boundary_valid)
+		check_dimensions(&quality, boundary_dims, boundary_diag,
+		    config.ratio_min, DBL_MAX, "quality_boundary");
+	}
     }
     bool okay = ref_valid && top_issues.empty() &&
 	(!run_wireframe || wire.issues.empty()) &&
@@ -1100,7 +1170,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	<< ",\"generators\":{\"wireframe\":\"rt_brep_plot\""
 	<< ",\"shaded\":\"brep_cdt_fast\""
 	<< ",\"quality\":\"ON_Brep_CDT_Tessellate\"}"
-	<< ",\"reference\":{\"method\":\"face_GetBoundingBox_trim_parameter_envelopes\""
+	<< ",\"reference\":{\"method\":\"face_GetBoundingBox_trim_parameter_envelope\""
 	<< ",\"face_count\":" << ref_faces
 	<< ",\"failed_faces\":" << ref_face_failures
 	<< ",\"failed_face_indices\":";
@@ -1114,6 +1184,18 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     if (ref_valid) print_vec(ref_dims); else std::cout << "null";
     std::cout << ",\"diagonal\":";
     if (ref_valid) print_num(ref_diag); else std::cout << "null";
+    std::cout << ",\"role\":\"upper_extent_guard\""
+	<< ",\"boundary_method\":\"brep_edge_tight_bounding_boxes\""
+	<< ",\"boundary_bbox_valid\":"
+	<< (boundary_valid ? "true" : "false")
+	<< ",\"boundary_bbox_min\":";
+    if (boundary_valid) print_vec(boundary_min); else std::cout << "null";
+    std::cout << ",\"boundary_bbox_max\":";
+    if (boundary_valid) print_vec(boundary_max); else std::cout << "null";
+    std::cout << ",\"boundary_dimensions\":";
+    if (boundary_valid) print_vec(boundary_dims); else std::cout << "null";
+    std::cout << ",\"boundary_diagonal\":";
+    if (boundary_valid) print_num(boundary_diag); else std::cout << "null";
     std::cout << "},\"wireframe\":";
     if (run_wireframe) print_result(wire, ref_dims); else std::cout << "null";
     std::cout << ",\"shaded\":";

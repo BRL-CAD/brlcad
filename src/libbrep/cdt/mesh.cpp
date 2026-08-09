@@ -132,6 +132,13 @@ plot_pnt_2d(FILE *plot_file, ON_2dPoint *p, double r, int dir)
     }
 }
 
+static bool
+cdt_failure_dumps_enabled()
+{
+    const char *setting = getenv("BRLCAD_CDT_DUMP_FAILURES");
+    return setting && setting[0] && !BU_STR_EQUAL(setting, "0");
+}
+
 static void
 plot_vec_3d(FILE *plot_file, ON_3dPoint *p, ON_3dVector *v, double elen)
 {
@@ -1236,7 +1243,7 @@ cpolygon_t::cdt(triangulation_t ttype)
 		  steiner_cnt, bgp_2d, pnts_2d.size(),
 		  ttype);
 
-    if (!result) {
+    if (!result && cdt_failure_dumps_enabled()) {
 	// Dump a stand-alone C test file so the failure can be reproduced
 	// independently of the full CDT pipeline.
 	static int patch_fail_cnt = 0;
@@ -4644,69 +4651,105 @@ cdt_mesh_t::cdt()
 		tri_report.message);
 	}
 
-	// Dump a stand-alone C test program so the failure can be reproduced
-	// and scrutinised independently of the full CDT pipeline.
-	struct bu_vls fname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&fname, "cdt_face%d_fail.c", f_id);
-	FILE *df = fopen(bu_vls_cstr(&fname), "w");
-	if (df) {
-	    fprintf(df, "#include <stdio.h>\n");
-	    fprintf(df, "#include \"bu/malloc.h\"\n");
-	    fprintf(df, "#include \"bg/polygon.h\"\n");
-	    fprintf(df, "int main() {\n");
-	    size_t np = chart.points.size();
-	    fprintf(df, "    point2d_t *bgp_2d = (point2d_t *)bu_calloc(%zu, sizeof(point2d_t), \"2d pts\");\n", np);
-	    for (size_t i = 0; i < np; i++) {
-		fprintf(df, "    bgp_2d[%zu][X] = %.17g;\n", i, chart.points[i].first);
-		fprintf(df, "    bgp_2d[%zu][Y] = %.17g;\n", i, chart.points[i].second);
-	    }
-	    // The polygon array for bg_nested_poly_triangulate uses a closed format:
-	    // the first vertex index is repeated as the last entry (size = edge_count + 1).
-	    size_t on = opoly_count;
-	    fprintf(df, "    int *opoly = (int *)bu_calloc(%zu, sizeof(int), \"opoly\");\n", on);
-	    for (size_t i = 0; i < on; i++)
-		fprintf(df, "    opoly[%zu] = %d;\n", i, opoly[i]);
-	    if (holes_cnt) {
-		fprintf(df, "    const int **holes = (const int **)bu_calloc(%d+1, sizeof(int *), \"holes\");\n", holes_cnt);
-		fprintf(df, "    size_t *holes_npts = (size_t *)bu_calloc(%d+1, sizeof(size_t), \"hnpts\");\n", holes_cnt);
-		for (int hi = 0; hi < holes_cnt; hi++) {
-		    size_t hn = holes_npts[hi];
-		    fprintf(df, "    int *hole%d = (int *)bu_calloc(%zu, sizeof(int), \"h%d\");\n", hi, hn, hi);
-		    for (size_t hj = 0; hj < hn; hj++)
-			fprintf(df, "    hole%d[%zu] = %d;\n", hi, hj, holes_array[hi][hj]);
-		    fprintf(df, "    holes[%d] = hole%d; holes_npts[%d] = %zu;\n", hi, hi, hi, hn);
+	if (cdt_failure_dumps_enabled()) {
+	    // Dump a stand-alone C test program so the failure can be reproduced
+	    // and scrutinised independently of the full CDT pipeline.
+	    struct bu_vls fname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&fname, "cdt_face%d_fail.c", f_id);
+	    FILE *df = fopen(bu_vls_cstr(&fname), "w");
+	    if (df) {
+		fprintf(df, "#include <stdio.h>\n");
+		fprintf(df, "#include \"bu/malloc.h\"\n");
+		fprintf(df, "#include \"bg/polygon.h\"\n");
+		fprintf(df, "int main() {\n");
+		size_t np = chart.points.size();
+		fprintf(df,
+			"    point2d_t *bgp_2d = (point2d_t *)bu_calloc(%zu, "
+			"sizeof(point2d_t), \"2d pts\");\n",
+			np);
+		for (size_t i = 0; i < np; i++) {
+		    fprintf(df, "    bgp_2d[%zu][X] = %.17g;\n", i,
+			    chart.points[i].first);
+		    fprintf(df, "    bgp_2d[%zu][Y] = %.17g;\n", i,
+			    chart.points[i].second);
 		}
-	    } else {
-		fprintf(df, "    const int **holes = NULL;\n");
-		fprintf(df, "    size_t *holes_npts = NULL;\n");
+		// The polygon array for bg_nested_poly_triangulate uses a closed
+		// format: the first vertex index is repeated as the last entry
+		// (size = edge_count + 1).
+		size_t on = opoly_count;
+		fprintf(df,
+			"    int *opoly = (int *)bu_calloc(%zu, sizeof(int), "
+			"\"opoly\");\n",
+			on);
+		for (size_t i = 0; i < on; i++)
+		    fprintf(df, "    opoly[%zu] = %d;\n", i, opoly[i]);
+		if (holes_cnt) {
+		    fprintf(df,
+			    "    const int **holes = (const int **)bu_calloc(%d+1, "
+			    "sizeof(int *), \"holes\");\n",
+			    holes_cnt);
+		    fprintf(df,
+			    "    size_t *holes_npts = (size_t *)bu_calloc(%d+1, "
+			    "sizeof(size_t), \"hnpts\");\n",
+			    holes_cnt);
+		    for (int hi = 0; hi < holes_cnt; hi++) {
+			size_t hn = holes_npts[hi];
+			fprintf(df,
+				"    int *hole%d = (int *)bu_calloc(%zu, "
+				"sizeof(int), \"h%d\");\n",
+				hi, hn, hi);
+			for (size_t hj = 0; hj < hn; hj++)
+			    fprintf(df, "    hole%d[%zu] = %d;\n", hi, hj,
+				    holes_array[hi][hj]);
+			fprintf(df, "    holes[%d] = hole%d; holes_npts[%d] = %zu;\n",
+				hi, hi, hi, hn);
+		    }
+		} else {
+		    fprintf(df, "    const int **holes = NULL;\n");
+		    fprintf(df, "    size_t *holes_npts = NULL;\n");
+		}
+		if (steiner_cnt) {
+		    fprintf(df,
+			    "    int *steiner = (int *)bu_calloc(%zu, sizeof(int), "
+			    "\"stei\");\n",
+			    steiner_cnt);
+		    for (size_t si = 0; si < steiner_cnt; si++)
+			fprintf(df, "    steiner[%zu] = %d;\n", si, steiner[si]);
+		} else {
+		    fprintf(df, "    int *steiner = NULL;\n");
+		}
+		if (!constraint_vec.empty()) {
+		    fprintf(df,
+			    "    int *constraints = (int *)bu_calloc(%zu, "
+			    "sizeof(int), \"constraints\");\n",
+			    constraint_vec.size());
+		    for (size_t ci = 0; ci < constraint_vec.size(); ++ci)
+			fprintf(df, "    constraints[%zu] = %d;\n", ci,
+				constraint_vec[ci]);
+		} else {
+		    fprintf(df, "    int *constraints = NULL;\n");
+		}
+		fprintf(df, "    int *faces = NULL; int num_faces = 0;\n");
+		fprintf(df, "    int r = "
+			    "!bg_nested_poly_triangulate_constraints_strict(&"
+			    "faces, &num_faces,\n");
+		fprintf(
+		    df,
+		    "        NULL, NULL, opoly, %zu, holes, holes_npts, %d,\n",
+		    on, holes_cnt);
+		fprintf(df,
+			"        steiner, %zu, constraints, %zu, bgp_2d, %zu, "
+			"NULL);\n",
+			steiner_cnt, chart.constraints.size(), np);
+		fprintf(df, "    if (r) printf(\"success\\n\"); else "
+			    "printf(\"FAIL\\n\");\n");
+		fprintf(df, "    return !r;\n}\n");
+		fclose(df);
+		bu_log("Face %d: CDT failure inputs written to %s\n", f_id,
+		       bu_vls_cstr(&fname));
 	    }
-	    if (steiner_cnt) {
-		fprintf(df, "    int *steiner = (int *)bu_calloc(%zu, sizeof(int), \"stei\");\n", steiner_cnt);
-		for (size_t si = 0; si < steiner_cnt; si++)
-		    fprintf(df, "    steiner[%zu] = %d;\n", si, steiner[si]);
-	    } else {
-		fprintf(df, "    int *steiner = NULL;\n");
-	    }
-	    if (!constraint_vec.empty()) {
-		fprintf(df, "    int *constraints = (int *)bu_calloc(%zu, sizeof(int), \"constraints\");\n",
-		    constraint_vec.size());
-		for (size_t ci = 0; ci < constraint_vec.size(); ++ci)
-		    fprintf(df, "    constraints[%zu] = %d;\n", ci,
-			constraint_vec[ci]);
-	    } else {
-		fprintf(df, "    int *constraints = NULL;\n");
-	    }
-	    fprintf(df, "    int *faces = NULL; int num_faces = 0;\n");
-	    fprintf(df, "    int r = !bg_nested_poly_triangulate_constraints_strict(&faces, &num_faces,\n");
-	    fprintf(df, "        NULL, NULL, opoly, %zu, holes, holes_npts, %d,\n", on, holes_cnt);
-	    fprintf(df, "        steiner, %zu, constraints, %zu, bgp_2d, %zu, NULL);\n",
-		steiner_cnt, chart.constraints.size(), np);
-	    fprintf(df, "    if (r) printf(\"success\\n\"); else printf(\"FAIL\\n\");\n");
-	    fprintf(df, "    return !r;\n}\n");
-	    fclose(df);
-	    bu_log("Face %d: CDT failure inputs written to %s\n", f_id, bu_vls_cstr(&fname));
+	    bu_vls_free(&fname);
 	}
-	bu_vls_free(&fname);
     }
 
     tris_2d.clear();
@@ -4794,6 +4837,42 @@ cdt_mesh_t::cdt()
 	if (reverse_chart)
 	    std::swap(tri3d.v[1], tri3d.v[2]);
 	tri_add(tri3d);
+    }
+
+    /* Collapsing periodic seam copies can turn a valid chart triangle into a
+     * zero-area 3-D triangle.  Such triangles are intentionally discarded,
+     * but every distinct model-space boundary vertex must still be incident
+     * to an exported triangle.  In particular, this prevents a one-pole face
+     * from losing its pole through a single degenerate seam ear. */
+    const auto boundary_vertex_used = [&](int chart_point) {
+	const long native = chart.native_point(chart_point);
+	const auto point_3d = p2d3d.find(native);
+	if (native < 0 || point_3d == p2d3d.end() || point_3d->second < 0 ||
+		(size_t)point_3d->second >= pnts.size())
+	    return false;
+	const auto mesh_point = p2ind.find(pnts[(size_t)point_3d->second]);
+	if (mesh_point == p2ind.end())
+	    return false;
+	const auto incident = v2tris.find(mesh_point->second);
+	return incident != v2tris.end() && !incident->second.empty();
+    };
+    bool complete_boundary = true;
+    for (int point : chart.outer)
+	complete_boundary = boundary_vertex_used(point) && complete_boundary;
+    for (const std::vector<int> &hole : chart.holes) {
+	for (int point : hole)
+	    complete_boundary = boundary_vertex_used(point) &&
+		complete_boundary;
+    }
+    if (result && !complete_boundary) {
+	struct ON_Brep_CDT_State *state =
+	    (struct ON_Brep_CDT_State *)p_cdt;
+	if (state)
+	    cdt_diagnostic_set(state,
+		BREP_CDT_RESULT_CERTIFICATION_FAILED,
+		BREP_CDT_STAGE_DETRIA, f_id, 0, 1,
+		"3-D seam collapse left a boundary vertex unused");
+	return false;
     }
 
     return result;
@@ -5477,7 +5556,11 @@ cdt_mesh_t::valid(int verbose)
 		topret = false;
 	    }
 	    if (uedges2tris[ue[ind]].size() != 2 && brep_edges.find(ue[ind]) == brep_edges.end()) {
-		std::cout << "not enough triangles for edge?\n";
+		if (verbose > 0)
+		    std::cout << "face " << f_id << ": unclassified mesh edge "
+			<< ue[ind].v[0] << "-" << ue[ind].v[1] << " has "
+			<< uedges2tris[ue[ind]].size()
+			<< " incident triangles\n";
 		topret = false;
 	    }
 	}
