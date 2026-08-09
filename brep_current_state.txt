@@ -11,13 +11,64 @@ as the authoritative continuation log until all acceptance gates pass.
 CURRENT PHASE
 -------------
 
+2026-08-09 ACTIVE NESTED CSG-LEAF CHECKPOINT
+
+The status-2 similarity increment is committed locally as 8fea341aa0,
+"Qualify status-2 grazing under similarities".  It was not pushed.  The
+current increment extends the topology-identical implicit-leaf versus
+BREP-leaf CSG oracle in src/librt/tests/brep_ray.cpp.
+
+The new in-memory fixture preserves one nested Boolean tree in both models:
+
+  oracle.r = (outer.s translated -8 union outer.s translated +8)
+             subtract (inner.s translated -8)
+
+outer.s is one reused radius-5 sphere definition and inner.s is a radius-2
+sphere.  One model exports the original ELL leaves; the other replaces those
+same definitions with their exact ft_brep conversions before applying the
+identical member matrices and Boolean operators.  It therefore tests a reused
+transformed BREP leaf, a non-region nested union combination, subtraction,
+an internal cavity, two disconnected material components, and three ordered
+partitions on one ray without conflating those checks with evaluated
+region-to-one-BREP conversion.
+
+The independent analytic oracles are:
+
+  area   = 2(4*pi*5^2) + 4*pi*2^2 = 216*pi
+  volume = 2(4*pi*5^3/3) - 4*pi*2^3/3 = (968/3)*pi
+  bounds = [-13,-5,-5] through [13,5,5]
+
+Four directed rays require the exact forward three-interval partition, its
+reverse, the left shell's two intervals, and the right solid's one interval.
+The shared fixed-seed Cauchy-Crofton run then shoots 8,000 identical lines
+through the implicit and BREP-leaf hierarchies.  It passes with zero differing
+lines, zero tangent-band exceptions, maximum paired endpoint error 3.84e-8,
+signed total chord difference 5.80e-6, and absolute total chord difference
+6.88e-6.  At 8,000 lines both representations estimate area 697.640914
+(standard error 15.1) and volume 1059.37503 (standard error 23.5), within the
+predeclared confidence bands around 216*pi and (968/3)*pi.  Equality of the
+paired estimates is not accepted in place of the analytic gate; both are
+checked independently.
+
+Verified in this increment:
+
+  cmake --build .build --target rt_brep_ray -j8
+  .build/src/librt/tests/rt_brep_ray --crofton-only
+
+Both pass.  The cache-object warnings printed during the run are the known
+pre-existing cache diagnostic and do not fail the suite.  The fixture's
+in-memory database ownership was inspected and git diff --check passes.  The
+next hierarchy tier is the reverse BREP-to-CSG recognizer qualification;
+additional thin-wall and near-coincident hierarchy cases remain tolerance
+policy work and must not be folded into this nondegenerate baseline.
+
+
 2026-08-09 ACTIVE STATUS-2 SIMILARITY CHECKPOINT
 
 The preceding grazing increment is committed locally as 14d4c7c65a,
-"Resolve status-2 BREP grazing roots locally".  It was not pushed.  The
-current uncommitted work begins a dedicated similarity matrix in
-src/librt/tests/brep_ray.cpp and makes one narrow eligibility correction in
-src/librt/primitives/brep/brep.cpp.  Inspect git status before resuming.
+"Resolve status-2 BREP grazing roots locally".  The similarity increment
+described below was subsequently committed as 8fea341aa0, "Qualify status-2
+grazing under similarities".  Neither commit was pushed.
 
 The new matrix transforms the difficult status-2 torus tube section by an
 arbitrary rotation plus translation at scales 1, 0.01, and 10,000.  It scales

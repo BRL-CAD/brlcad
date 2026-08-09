@@ -305,6 +305,78 @@ prep_binary_csg_model(prepared_model &model,
 }
 
 
+static bool
+prep_nested_sphere_csg_model(prepared_model &model,
+    const struct bn_tol *tol, bool brep_leaves)
+{
+    if (!tol)
+	return false;
+    model.dbip = db_open_inmem();
+    if (!model.dbip)
+	return false;
+    struct rt_wdb *wdbp = wdb_dbopen(model.dbip, RT_WDB_TYPE_DB_INMEM);
+    if (!wdbp)
+	return false;
+
+    struct rt_ell_internal outer = {};
+    outer.magic = RT_ELL_INTERNAL_MAGIC;
+    VSET(outer.v, 0.0, 0.0, 0.0);
+    VSET(outer.a, 5.0, 0.0, 0.0);
+    VSET(outer.b, 0.0, 5.0, 0.0);
+    VSET(outer.c, 0.0, 0.0, 5.0);
+    struct rt_db_internal outer_intern;
+    RT_DB_INTERNAL_INIT(&outer_intern);
+    outer_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    outer_intern.idb_type = ID_ELL;
+    outer_intern.idb_meth = &OBJ[ID_ELL];
+    outer_intern.idb_ptr = &outer;
+
+    struct rt_ell_internal inner = {};
+    inner.magic = RT_ELL_INTERNAL_MAGIC;
+    VSET(inner.v, 0.0, 0.0, 0.0);
+    VSET(inner.a, 2.0, 0.0, 0.0);
+    VSET(inner.b, 0.0, 2.0, 0.0);
+    VSET(inner.c, 0.0, 0.0, 2.0);
+    struct rt_db_internal inner_intern;
+    RT_DB_INTERNAL_INIT(&inner_intern);
+    inner_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    inner_intern.idb_type = ID_ELL;
+    inner_intern.idb_meth = &OBJ[ID_ELL];
+    inner_intern.idb_ptr = &inner;
+
+    const bool outer_ok = brep_leaves ?
+	export_brep_conversion(model.dbip, wdbp, &outer_intern, "outer.s", tol) :
+	export_internal_object(model.dbip, wdbp, &outer_intern, "outer.s");
+    const bool inner_ok = brep_leaves ?
+	export_brep_conversion(model.dbip, wdbp, &inner_intern, "inner.s", tol) :
+	export_internal_object(model.dbip, wdbp, &inner_intern, "inner.s");
+
+    mat_t left;
+    mat_t right;
+    MAT_IDN(left);
+    MAT_IDN(right);
+    MAT_DELTAS(left, -8.0, 0.0, 0.0);
+    MAT_DELTAS(right, 8.0, 0.0, 0.0);
+    struct wmember pair_members;
+    BU_LIST_INIT(&pair_members.l);
+    const bool pair_ok = outer_ok && inner_ok &&
+	mk_addmember("outer.s", &pair_members.l, left, WMOP_UNION) &&
+	mk_addmember("outer.s", &pair_members.l, right, WMOP_UNION) &&
+	!mk_lcomb(wdbp, "outer_pair.c", &pair_members, 0, NULL, NULL, NULL, 0);
+
+    struct wmember region_members;
+    BU_LIST_INIT(&region_members.l);
+    if (!pair_ok ||
+	    !mk_addmember("outer_pair.c", &region_members.l, NULL,
+		WMOP_UNION) ||
+	    !mk_addmember("inner.s", &region_members.l, left,
+		WMOP_SUBTRACT) ||
+	    mk_lcomb(wdbp, "oracle.r", &region_members, 1, NULL, NULL, NULL, 0))
+	return false;
+    return prep_region_model(model, "oracle.r", tol);
+}
+
+
 static int
 partition_hit(struct application *ap, struct partition *head,
     struct seg *UNUSED(segs))
@@ -3781,6 +3853,42 @@ check_brep_leaf_csg_fixture(const char *label,
 
 
 static int
+check_nested_brep_leaf_csg_fixture(const struct bn_tol *tol)
+{
+    prepared_model implicit_model;
+    prepared_model brep_model;
+    if (!prep_nested_sphere_csg_model(implicit_model, tol, false) ||
+	    !prep_nested_sphere_csg_model(brep_model, tol, true)) {
+	std::printf("FAIL: nested transformed sphere shell preparation\n");
+	free_prepared_model(brep_model);
+	free_prepared_model(implicit_model);
+	return 1;
+    }
+
+    point_t bbox_min = {-13.0, -5.0, -5.0};
+    point_t bbox_max = {13.0, 5.0, 5.0};
+    const directed_partition_ray rays[] = {
+	{"three intervals", {-20.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, 3,
+	    {7.0, 10.0, 14.0, 17.0, 23.0, 33.0}},
+	{"three intervals reverse", {20.0, 0.0, 0.0},
+	    {-1.0, 0.0, 0.0}, 3,
+	    {7.0, 17.0, 23.0, 26.0, 30.0, 33.0}},
+	{"left shell", {-8.0, -10.0, 0.0}, {0.0, 1.0, 0.0}, 2,
+	    {5.0, 8.0, 12.0, 15.0}},
+	{"right solid", {8.0, -10.0, 0.0}, {0.0, 1.0, 0.0}, 1,
+	    {5.0, 15.0}}
+    };
+    const int failures = check_shared_crofton_fixture(
+	"nested-transformed-sphere-shell", NULL, tol, bbox_min, bbox_max,
+	216.0 * M_PI, (968.0 / 3.0) * M_PI, 8000, rays,
+	sizeof(rays) / sizeof(rays[0]), &implicit_model, &brep_model);
+    free_prepared_model(brep_model);
+    free_prepared_model(implicit_model);
+    return failures;
+}
+
+
+static int
 check_shared_primitive_corpus(const struct bn_tol *tol)
 {
     int failures = 0;
@@ -4072,6 +4180,8 @@ check_brep_leaf_csg_corpus(const struct bn_tol *tol)
 	drilled_box_max, 1152.0 + 42.0 * M_PI, 2560.0 - 90.0 * M_PI,
 	drilled_box_rays,
 	sizeof(drilled_box_rays) / sizeof(drilled_box_rays[0]));
+
+    failures += check_nested_brep_leaf_csg_fixture(tol);
 
     return failures;
 }
