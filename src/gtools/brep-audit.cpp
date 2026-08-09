@@ -988,6 +988,7 @@ struct audit_config {
     long max_result_mib;
     long max_points;
     long face_index;
+    bool valid_solids_only;
 };
 
 static int
@@ -1032,9 +1033,33 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     int ref_face_failures = 0;
     std::vector<int> ref_failed_faces;
     std::vector<std::string> top_issues;
+    bool input_loaded = false;
+    bool input_valid = false;
+    bool input_manifold = false;
+    bool input_oriented = false;
+    bool input_has_boundary = true;
+    bool input_solid = false;
+    bool input_two_trim_edges = false;
+    bool quality_eligible = false;
     struct rt_db_internal intern;
     if (load_brep(dbip, dp, &intern) == BRLCAD_OK) {
 	struct rt_brep_internal *bi = (struct rt_brep_internal *)intern.idb_ptr;
+	input_loaded = true;
+	ON_wString validity_log;
+	ON_TextLog validity_output(validity_log);
+	input_valid = bi->brep->IsValid(&validity_output);
+	input_manifold = bi->brep->IsManifold(&input_oriented,
+	    &input_has_boundary);
+	input_solid = bi->brep->IsSolid();
+	input_two_trim_edges = true;
+	for (int edge = 0; edge < bi->brep->m_E.Count(); ++edge) {
+	    if (bi->brep->m_E[edge].TrimCount() != 2) {
+		input_two_trim_edges = false;
+		break;
+	    }
+	}
+	quality_eligible = input_valid && input_manifold && input_oriented &&
+	    !input_has_boundary && input_solid && input_two_trim_edges;
 	ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
 	ON_BoundingBox boundary_bbox = ON_BoundingBox::EmptyBoundingBox;
 	const int brep_faces = bi->brep->m_F.Count();
@@ -1050,7 +1075,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	    }
 	}
 	ref_faces = end_ref_face - first_ref_face;
-	for (int i = first_ref_face; i < end_ref_face; i++) {
+	const bool excluded = config.valid_solids_only && !quality_eligible;
+	for (int i = first_ref_face; !excluded && i < end_ref_face; i++) {
 	    ON_BoundingBox face_bbox = ON_BoundingBox::EmptyBoundingBox;
 	    if (!face_GetBoundingBox(bi->brep->m_F[i], face_bbox, false) ||
 		    !face_bbox.IsValid()) {
@@ -1074,7 +1100,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	    VMOVE(ref_min, bbox.m_min);
 	    VMOVE(ref_max, bbox.m_max);
 	    ref_valid = true;
-	} else {
+	} else if (!excluded) {
 	    top_issues.push_back("trimmed_bbox_failed");
 	}
 	if (boundary_bbox.IsValid()) {
@@ -1095,19 +1121,21 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	BU_STR_EQUAL(mode_name, "both") || BU_STR_EQUAL(mode_name, "all");
     const bool run_quality = BU_STR_EQUAL(mode_name, "quality") ||
 	BU_STR_EQUAL(mode_name, "all");
+    const bool excluded = config.valid_solids_only && input_loaded &&
+	!quality_eligible;
     geom_result wire;
     geom_result shaded;
     geom_result quality;
-    if (run_wireframe) {
+    if (run_wireframe && !excluded) {
 	std::cerr << "brep-audit: phase=wireframe" << std::endl;
 	wire = wireframe_result(dbip, dp, &ttol, &tol, &draw_options);
     }
-    if (run_shaded) {
+    if (run_shaded && !excluded) {
 	std::cerr << "brep-audit: phase=shaded" << std::endl;
 	shaded = shaded_result(dbip, dp, &ttol, &tol, &fast_options,
 	    (int)config.face_index);
     }
-    if (run_quality) {
+    if (run_quality && !excluded) {
 	std::cerr << "brep-audit: phase=quality" << std::endl;
 	quality = quality_result(dbip, dp, &ttol,
 	    (int)config.face_index);
@@ -1141,7 +1169,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 		    config.ratio_min, DBL_MAX, "quality_boundary");
 	}
     }
-    bool okay = ref_valid && top_issues.empty() &&
+
+    bool okay = !excluded && ref_valid && top_issues.empty() &&
 	(!run_wireframe || wire.issues.empty()) &&
 	(!run_shaded || shaded.issues.empty()) &&
 	(!run_quality || quality.issues.empty());
@@ -1150,7 +1179,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     std::cout << "{\"format\":\"brlcad-brep-realization-audit-v1\",\"database\":"
 	<< json_quote(db_path) << ",\"object\":" << json_quote(dp->d_namep)
 	<< ",\"task_index\":" << task_index
-	<< ",\"status\":" << json_quote(okay ? "ok" : "fail")
+	<< ",\"status\":" << json_quote(excluded ? "excluded" :
+	    (okay ? "ok" : "fail"))
 	<< ",\"ratio_limits\":[" << std::setprecision(17)
 	<< config.ratio_min << "," << config.ratio_max << "]"
 	<< ",\"tessellation_tolerance\":{\"abs\":" << config.tess_abs
@@ -1159,6 +1189,16 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	<< ",\"memory_limit_mib\":" << config.memory_limit_mib
 	<< ",\"mode\":" << json_quote(mode_name)
 	<< ",\"face_index\":" << config.face_index
+	<< ",\"input\":{\"loaded\":" << (input_loaded ? "true" : "false")
+	<< ",\"valid\":" << (input_valid ? "true" : "false")
+	<< ",\"manifold\":" << (input_manifold ? "true" : "false")
+	<< ",\"oriented\":" << (input_oriented ? "true" : "false")
+	<< ",\"has_boundary\":" << (input_has_boundary ? "true" : "false")
+	<< ",\"solid\":" << (input_solid ? "true" : "false")
+	<< ",\"two_trim_edges\":" <<
+	    (input_two_trim_edges ? "true" : "false")
+	<< ",\"quality_eligible\":" <<
+	    (quality_eligible ? "true" : "false") << "}"
 	<< ",\"fast_options\":{\"jobs\":" << fast_options.max_workers
 	<< ",\"max_time_ms\":" << fast_options.max_time_ms
 	<< ",\"max_result_bytes\":" << fast_options.max_result_bytes
@@ -1197,11 +1237,14 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     std::cout << ",\"boundary_diagonal\":";
     if (boundary_valid) print_num(boundary_diag); else std::cout << "null";
     std::cout << "},\"wireframe\":";
-    if (run_wireframe) print_result(wire, ref_dims); else std::cout << "null";
+    if (run_wireframe && !excluded) print_result(wire, ref_dims);
+    else std::cout << "null";
     std::cout << ",\"shaded\":";
-    if (run_shaded) print_result(shaded, ref_dims); else std::cout << "null";
+    if (run_shaded && !excluded) print_result(shaded, ref_dims);
+    else std::cout << "null";
     std::cout << ",\"quality\":";
-    if (run_quality) print_result(quality, ref_dims); else std::cout << "null";
+    if (run_quality && !excluded) print_result(quality, ref_dims);
+    else std::cout << "null";
     std::cout << ",\"issues\":";
     print_issues(top_issues);
     std::cout << "}" << std::endl;
@@ -1209,7 +1252,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 #ifdef __GLIBC__
     malloc_trim(0);
 #endif
-    return okay ? 0 : 1;
+    return excluded || okay ? 0 : 1;
 }
 
 int
@@ -1233,8 +1276,9 @@ main(int argc, const char **argv)
     long max_points = 0;
     long batch_start = 0;
     long face_index = -1;
+    int valid_solids_only = 0;
     const char *mode_name = "both";
-    struct bu_opt_desc d[17];
+    struct bu_opt_desc d[18];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -1251,7 +1295,10 @@ main(int argc, const char **argv)
     BU_OPT(d[13], "", "batch", "", NULL, &batch, "Audit all BReps in one database process");
     BU_OPT(d[14], "", "batch-start", "#", &bu_opt_long, &batch_start, "First flattened batch task index");
     BU_OPT(d[15], "", "face-index", "#", &bu_opt_long, &face_index, "Shade only one BRep face (non-batch mode)");
-    BU_OPT_NULL(d[16]);
+    BU_OPT(d[16], "", "valid-solids-only", "", NULL,
+	&valid_solids_only,
+	"Exclude inputs outside the rigorous CDT topology contract");
+    BU_OPT_NULL(d[17]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -1290,7 +1337,7 @@ main(int argc, const char **argv)
     audit_config config = {
 	ratio_min, ratio_max, tess_abs, tess_rel, tess_norm,
 	memory_limit_mib, jobs, max_time_ms, max_result_mib, max_points,
-	face_index
+	face_index, valid_solids_only != 0
     };
 
     if (batch) {
