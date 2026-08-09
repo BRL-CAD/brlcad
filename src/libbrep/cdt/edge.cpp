@@ -865,16 +865,58 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
     }
 
     // The new trim segments are then associated with the new bounding edge
-    // segments.
-    // NOTE: the m_bRev3d logic below is CRITICALLY important when it comes to
-    // associating the correct portion of the edge curve with the correct part
-    // of the polygon in parametric space.  If this is NOT correct, the 3D
-    // polycurves manifested by the 2D polygon will be self intersecting, as
-    // will the 3D triangles generated from the 2D CDT.
-    bseg1->tseg1 = (trim1->m_bRev3d) ? poly1_ne2 : poly1_ne1;
-    bseg1->tseg2 = (trim2->m_bRev3d) ? poly2_ne2 : poly2_ne1;
-    bseg2->tseg1 = (trim1->m_bRev3d) ? poly1_ne1 : poly1_ne2;
-    bseg2->tseg2 = (trim2->m_bRev3d) ? poly2_ne1 : poly2_ne2;
+    // segments.  Open edges have distinct endpoints, so m_bRev3d supplies the
+    // required correspondence.  A closed edge has the same endpoint at both
+    // ends and its edge curve and p-curves may choose different periodic
+    // phases.  In that case m_bRev3d alone cannot identify the matching half.
+    // Compare a point strictly inside the first child edge with both candidate
+    // trim intervals and choose the geometrically matching interval.  Repeat
+    // this at every subdivision so the established phase is preserved.
+    const bool closed_root = edge.IsClosed() ||
+	bseg->e_root_start == bseg->e_root_end;
+    const auto first_child_uses_first = [&](ON_BrepTrim *trim,
+	    cpolyedge_t *first, cpolyedge_t *second) {
+	if (!closed_root)
+	    return !trim->m_bRev3d;
+	const double edge_parameter = 0.5 * (bseg1->edge_start +
+	    bseg1->edge_end);
+	ON_3dPoint edge_point = bseg1->nc->PointAt(edge_parameter);
+	const double edge_length = 0.5 *
+	    (edge_point.DistanceTo(*bseg1->e_start) +
+	     edge_point.DistanceTo(*bseg1->e_end));
+	const auto miss = [&](cpolyedge_t *candidate) {
+	    fastf_t trim_parameter = 0.0;
+	    ON_2dPoint uv = get_trim_midpt(&trim_parameter, s_cdt,
+		candidate, edge_point, edge_length,
+		edge.m_tolerance);
+	    const ON_Surface *surface = trim->SurfaceOf();
+	    if (!surface || !uv.IsValid())
+		return DBL_MAX;
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (surface->IsClosed(direction))
+		    uv[direction] = periodic_surface_parameter(uv[direction],
+			surface->Domain(direction));
+	    }
+	    const ON_3dPoint surface_point = surface->PointAt(uv.x, uv.y);
+	    return surface_point.IsValid() ?
+		surface_point.DistanceTo(edge_point) : DBL_MAX;
+	};
+	const double first_miss = miss(first);
+	const double second_miss = miss(second);
+	if (!std::isfinite(first_miss) && !std::isfinite(second_miss))
+	    return !trim->m_bRev3d;
+	if (NEAR_EQUAL(first_miss, second_miss, ON_ZERO_TOLERANCE))
+	    return !trim->m_bRev3d;
+	return first_miss < second_miss;
+    };
+    const bool trim1_direct = first_child_uses_first(trim1, poly1_ne1,
+	poly1_ne2);
+    const bool trim2_direct = first_child_uses_first(trim2, poly2_ne1,
+	poly2_ne2);
+    bseg1->tseg1 = trim1_direct ? poly1_ne1 : poly1_ne2;
+    bseg1->tseg2 = trim2_direct ? poly2_ne1 : poly2_ne2;
+    bseg2->tseg1 = trim1_direct ? poly1_ne2 : poly1_ne1;
+    bseg2->tseg2 = trim2_direct ? poly2_ne2 : poly2_ne1;
 
     // Associated the trim segments with the edge segment they actually
     // wound up assigned to
@@ -1177,7 +1219,11 @@ initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt)
 	bseg->edge_start = 0.0;
 	bseg->edge_end = bseg->cp_len;
 
-	// Get the trims and normalize their domains as well.
+	// Get the trims and verify that both have parameter-space curves.  Keep
+	// their native domains: edge and trim segments track their parameters
+	// independently and are paired geometrically when they split.  Replacing
+	// a trim domain with the 3-D edge control-polygon length corrupts
+	// reversed and otherwise non-identically parameterized p-curves.
 	// NOTE - another point where this won't work if we don't have a 1->2 edge to trims relationship
 	ON_BrepTrim *trim1 = edge.Trim(0);
 	ON_BrepTrim *trim2 = edge.Trim(1);
@@ -1191,9 +1237,6 @@ initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt)
 	    delete bseg;
 	    continue;
 	}
-	s_cdt->brep->m_T[t1cind].SetDomain(bseg->edge_start, bseg->edge_end);
-	s_cdt->brep->m_T[t2cind].SetDomain(bseg->edge_start, bseg->edge_end);
-
 	// The 3D start and endpoints will be vertex points (they are shared with other edges).
 	bseg->e_start = (*s_cdt->vert_pnts)[edge.Vertex(0)->m_vertex_index];
 	bseg->e_end = (*s_cdt->vert_pnts)[edge.Vertex(1)->m_vertex_index];
