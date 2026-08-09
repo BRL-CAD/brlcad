@@ -11070,6 +11070,20 @@ brep_observe_edges(struct rt_brep_shot_trace *trace,
 }
 
 
+static bool
+brep_seam_closure_tolerance(const struct rt_brep_trace_edge &edge,
+    double &tolerance)
+{
+    if (!ON_IsValid(edge.model_tolerance) || edge.model_tolerance < 0.0)
+	return false;
+    tolerance = edge.model_tolerance;
+    if (ON_IsValid(edge.declared_tolerance) &&
+	edge.declared_tolerance >= 0.0)
+	tolerance = std::max(tolerance, (double)edge.declared_tolerance);
+    return std::isfinite(tolerance) && tolerance >= 0.0;
+}
+
+
 static void
 brep_classify_closure(struct rt_brep_shot_trace *trace,
     const struct brep_specific *bs, const brep_hit *hit)
@@ -11080,14 +11094,18 @@ brep_classify_closure(struct rt_brep_shot_trace *trace,
     for (size_t edge_index = 0; edge_index < trace->stored_edges;
 	    ++edge_index) {
 	const struct rt_brep_trace_edge &edge = trace->edges[edge_index];
+	const double closure_tolerance = edge.model_tolerance;
+	const bool closure_tolerance_valid =
+	    ON_IsValid(closure_tolerance) && closure_tolerance >= 0.0;
 	const double roundoff = std::max(ON_ZERO_TOLERANCE,
 	    128.0 * DBL_EPSILON * std::max(1.0,
 	    edge.measured_discrepancy));
 	if (!edge.within_edge_tolerance || !edge.sector_valid ||
 		edge.closest_state != 1 || !edge.discrepancy_measured ||
-		edge.measured_discrepancy > edge.model_tolerance + roundoff ||
+		!closure_tolerance_valid ||
+		edge.measured_discrepancy > closure_tolerance + roundoff ||
 		std::max(edge.lift_distance[0], edge.lift_distance[1]) >
-		edge.model_tolerance + roundoff ||
+		closure_tolerance + roundoff ||
 		(hit->face->m_face_index != edge.face_index[0] &&
 		 hit->face->m_face_index != edge.face_index[1]))
 	    continue;
@@ -11103,6 +11121,57 @@ brep_classify_closure(struct rt_brep_shot_trace *trace,
 	trace->closure_existing_dist = hit->dist;
 	trace->closure_edge_index = edge.edge_index;
 	trace->closure_missing_direction = hit->direction == brep_hit::ENTERING ?
+	    brep_hit::LEAVING : brep_hit::ENTERING;
+    }
+}
+
+
+/* This classifier supplies a provisional seed only to the prepared contact
+ * transaction.  Unlike ordinary and legacy closure, it may use a valid
+ * tolerance explicitly declared on the edge.  It must never be applied to a
+ * user-visible legacy trace or used directly to publish a boundary event;
+ * its caller must subsequently prove the exact one-hit/one-miss contact
+ * pattern and the complete box/material transaction. */
+static void
+brep_classify_declared_contact_closure(struct rt_brep_shot_trace *trace,
+    const struct brep_specific *bs, const brep_hit *hit)
+{
+    if (!trace || !bs || !bs->is_solid || bs->plate_mode || !hit)
+	return;
+    for (size_t edge_index = 0; edge_index < trace->stored_edges;
+	    ++edge_index) {
+	const struct rt_brep_trace_edge &edge = trace->edges[edge_index];
+	double closure_tolerance = 0.0;
+	const bool explicitly_expanded = !edge.tolerance_inferred &&
+	    ON_IsValid(edge.model_tolerance) && edge.model_tolerance >= 0.0 &&
+	    ON_IsValid(edge.declared_tolerance) &&
+	    edge.declared_tolerance > edge.model_tolerance &&
+	    brep_seam_closure_tolerance(edge, closure_tolerance);
+	const double roundoff = std::max(ON_ZERO_TOLERANCE,
+	    128.0 * DBL_EPSILON * std::max(1.0,
+	    edge.measured_discrepancy));
+	if (!edge.within_edge_tolerance || !edge.sector_valid ||
+		edge.closest_state != 1 || !edge.discrepancy_measured ||
+		!explicitly_expanded ||
+		edge.measured_discrepancy > closure_tolerance + roundoff ||
+		std::max(edge.lift_distance[0], edge.lift_distance[1]) >
+		closure_tolerance + roundoff ||
+		(hit->face->m_face_index != edge.face_index[0] &&
+		 hit->face->m_face_index != edge.face_index[1]))
+	    continue;
+	const bool ordered = hit->direction == brep_hit::ENTERING ?
+	    edge.ray_dist > hit->dist + BREP_SAME_POINT_TOLERANCE :
+	    edge.ray_dist < hit->dist - BREP_SAME_POINT_TOLERANCE;
+	if (!ordered)
+	    continue;
+	trace->closure_candidates++;
+	if (trace->closure_edge_index >= 0)
+	    continue;
+	trace->closure_edge_dist = edge.ray_dist;
+	trace->closure_existing_dist = hit->dist;
+	trace->closure_edge_index = edge.edge_index;
+	trace->closure_missing_direction =
+	    hit->direction == brep_hit::ENTERING ?
 	    brep_hit::LEAVING : brep_hit::ENTERING;
     }
 }
@@ -14252,21 +14321,84 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 }
 
 
+/* A declared-tolerance closure is worth a continuation solve only when the
+ * immutable surface-root ledger already has the narrow classifier pattern it
+ * is intended to repair.  This is a screening condition, not authority: the
+ * complete theorem below must repeat these checks after continuation and
+ * prove the edge/trim tube, ordering, ownership, and material sector. */
+static bool
+brep_trace_seam_contact_miss_screen(
+    const struct rt_brep_shot_trace *trace, size_t selected_root,
+    const struct rt_brep_trace_edge &edge_observation)
+{
+    if (!trace || selected_root >= trace->stored_local_roots)
+	return false;
+    const struct rt_brep_trace_local_root &existing =
+	trace->local_roots[selected_root];
+    if (existing.face_index != edge_observation.face_index[0] &&
+	    existing.face_index != edge_observation.face_index[1])
+	return false;
+
+    const struct rt_brep_trace_local_root *contact[2] = {NULL, NULL};
+    size_t contact_count = 0;
+    size_t trim_hits = 0;
+    size_t trim_misses = 0;
+    for (size_t root_index = 0;
+	    root_index < trace->stored_local_roots; ++root_index) {
+	if (root_index == selected_root)
+	    continue;
+	if (contact_count >= 2)
+	    return false;
+	const struct rt_brep_trace_local_root &root =
+	    trace->local_roots[root_index];
+	const bool incident =
+	    root.face_index == edge_observation.face_index[0] ||
+	    root.face_index == edge_observation.face_index[1];
+	const bool trim_hit = root.trim_status != 1 &&
+	    (root.hit_class == brep_hit::CLEAN_HIT ||
+	     root.hit_class == brep_hit::NEAR_HIT);
+	const bool trim_miss = root.trim_status == 1 &&
+	    (root.hit_class == brep_hit::CLEAN_MISS ||
+	     root.hit_class == brep_hit::NEAR_MISS);
+	if (!incident || root.face_index == existing.face_index ||
+		(!trim_hit && !trim_miss) || !std::isfinite(root.normal_dot) ||
+		fabs(root.normal_dot) <= BREP_GRAZING_DOT_TOL)
+	    return false;
+	contact[contact_count++] = &root;
+	trim_hits += trim_hit ? 1 : 0;
+	trim_misses += trim_miss ? 1 : 0;
+    }
+    if (contact_count != 2 || trim_hits != 1 || trim_misses != 1)
+	return false;
+    if (contact[1]->dist < contact[0]->dist)
+	std::swap(contact[0], contact[1]);
+    return contact[0]->face_index == contact[1]->face_index &&
+	contact[0]->span_index == contact[1]->span_index &&
+	contact[0]->direction == brep_hit::ENTERING &&
+	contact[1]->direction == brep_hit::LEAVING &&
+	contact[0]->dist < contact[1]->dist;
+}
+
+
 /* Qualify the root portion of a tolerance-near incident-face contact.  The
  * accepted pair is not merged by t distance: it must be a complete ordered
  * ENTER/LEAVE lobe on the other incident face, lie strictly inside the
  * existing/continuation material segment, and arise from a non-exact but
- * model-authorized edge corridor.  Its terminal boxes must enclose the
- * projected edge parameter; ownership and the constant material-sector proof
- * are completed below. */
+ * explicitly authorized edge corridor.  At most one member may be a trim
+ * classifier miss, and then its surface point must lie in the declared
+ * closure tube of both the shared edge and corresponding lifted trim.
+ * Complete box ownership and the constant material-sector proof are
+ * completed below. */
 static bool
 brep_trace_seam_contact_roots(const struct rt_brep_shot_trace *trace,
     const struct brep_specific *bs, const ON_Ray &ray, size_t selected_root,
     const struct rt_brep_trace_edge &edge_observation,
     double continuation_dist,
     bool contact_root[RT_BREP_TRACE_MAX_LOCAL_ROOTS],
-    int &contact_face, int &contact_span, ON_2dPoint &edge_uv)
+    int &contact_face, int &contact_span, ON_2dPoint &edge_uv,
+    size_t &contact_miss_roots)
 {
+    contact_miss_roots = 0;
     if (!trace || !bs || !bs->brep ||
 	    selected_root >= trace->stored_local_roots ||
 	    edge_observation.edge_index < 0 ||
@@ -14292,17 +14424,20 @@ brep_trace_seam_contact_roots(const struct rt_brep_shot_trace *trace,
     const double model_roundoff = std::max(ON_ZERO_TOLERANCE,
 	128.0 * DBL_EPSILON * std::max(1.0,
 	    edge_observation.measured_discrepancy));
+    double closure_tolerance = 0.0;
     if (!(edge_observation.distance > line_roundoff) ||
 	    !ON_IsValid(edge_observation.model_tolerance) ||
 	    edge_observation.model_tolerance < 0.0 ||
+	    !brep_seam_closure_tolerance(edge_observation,
+		closure_tolerance) ||
 	    !std::isfinite(edge_observation.measured_discrepancy) ||
 	    !std::isfinite(edge_observation.lift_distance[0]) ||
 	    !std::isfinite(edge_observation.lift_distance[1]) ||
 	    edge_observation.measured_discrepancy >
-		edge_observation.model_tolerance + model_roundoff ||
+		closure_tolerance + model_roundoff ||
 	    std::max(edge_observation.lift_distance[0],
 		edge_observation.lift_distance[1]) >
-		edge_observation.model_tolerance + model_roundoff)
+		closure_tolerance + model_roundoff)
 	return false;
 
     const struct rt_brep_trace_local_root &existing =
@@ -14319,10 +14454,14 @@ brep_trace_seam_contact_roots(const struct rt_brep_shot_trace *trace,
 	    trace->local_roots[root_index];
 	const bool incident = root.face_index == edge_observation.face_index[0] ||
 	    root.face_index == edge_observation.face_index[1];
+	const bool trim_hit = root.trim_status != 1 &&
+	    (root.hit_class == brep_hit::CLEAN_HIT ||
+	     root.hit_class == brep_hit::NEAR_HIT);
+	const bool trim_miss = root.trim_status == 1 &&
+	    (root.hit_class == brep_hit::CLEAN_MISS ||
+	     root.hit_class == brep_hit::NEAR_MISS);
 	if (!incident || root.face_index == existing.face_index ||
-		root.trim_status == 1 ||
-		(root.hit_class != brep_hit::CLEAN_HIT &&
-		 root.hit_class != brep_hit::NEAR_HIT) ||
+		(!trim_hit && !trim_miss) ||
 		!std::isfinite(root.normal_dot) ||
 		fabs(root.normal_dot) <= BREP_GRAZING_DOT_TOL)
 	    return false;
@@ -14371,6 +14510,43 @@ brep_trace_seam_contact_roots(const struct rt_brep_shot_trace *trace,
     edge_uv = ON_2dPoint(trim_uv.x, trim_uv.y);
     contact_face = lower.face_index;
     contact_span = lower.span_index;
+    if (contact_face < 0 || contact_face >= bs->brep->m_F.Count())
+	return false;
+    const ON_Surface *surface = bs->brep->m_F[contact_face].SurfaceOf();
+    const ON_3dPoint trim_lift = surface ?
+	surface->PointAt(edge_uv.x, edge_uv.y) : ON_3dPoint::UnsetPoint;
+    size_t trim_hits = 0;
+    size_t trim_misses = 0;
+    const size_t contact_roots[2] = {roots[0], roots[1]};
+    for (size_t root_offset = 0; root_offset < 2; ++root_offset) {
+	const struct rt_brep_trace_local_root &root =
+	    trace->local_roots[contact_roots[root_offset]];
+	if (root.trim_status != 1 &&
+		(root.hit_class == brep_hit::CLEAN_HIT ||
+		 root.hit_class == brep_hit::NEAR_HIT)) {
+	    trim_hits++;
+	    continue;
+	}
+	const ON_3dPoint root_point = surface ?
+	    surface->PointAt(root.uv[0], root.uv[1]) :
+	    ON_3dPoint::UnsetPoint;
+	if (!root_point.IsValid() || !trim_lift.IsValid())
+	    return false;
+	const double root_scale = std::max(coordinate_scale,
+	    std::max(fabs(root_point.x), std::max(fabs(root_point.y),
+		fabs(root_point.z))));
+	const double tube_roundoff = std::max(ON_ZERO_TOLERANCE,
+	    4096.0 * DBL_EPSILON * root_scale);
+	if (root_point.DistanceTo(edge_point) >
+		closure_tolerance + tube_roundoff ||
+		root_point.DistanceTo(trim_lift) >
+		closure_tolerance + tube_roundoff)
+	    return false;
+	trim_misses++;
+    }
+    if (trim_hits + trim_misses != 2 || trim_misses > 1)
+	return false;
+    contact_miss_roots = trim_misses;
     contact_root[roots[0]] = true;
     contact_root[roots[1]] = true;
     return true;
@@ -14799,6 +14975,7 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
     int continuation_span = -1;
     int continuation_adjacency = -99;
     int continuation_direction = -1;
+    bool selected_declared_contact_closure = false;
     for (size_t root_index = 0;
 	    root_index < trace->stored_local_roots; ++root_index) {
 	const struct rt_brep_trace_local_root &root =
@@ -14827,10 +15004,34 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 		edge_index < edge_trace.stored_edges; ++edge_index)
 	    candidate.edges[edge_index] = edge_trace.edges[edge_index];
 	brep_classify_closure(&candidate, bs, &existing_hit);
+	bool declared_contact_closure = false;
+	if (!candidate.closure_candidates &&
+		candidate.closure_edge_index < 0) {
+	    brep_classify_declared_contact_closure(&candidate, bs,
+		&existing_hit);
+	    declared_contact_closure = candidate.closure_candidates == 1 &&
+		candidate.closure_edge_index >= 0;
+	}
 	if (candidate.closure_candidates != 1 ||
 		candidate.closure_edge_index < 0)
 	    continue;
-	trace->physical_event_seam_closure_candidates++;
+	if (declared_contact_closure) {
+	    const struct rt_brep_trace_edge *declared_observation = NULL;
+	    for (size_t edge_index = 0;
+		    edge_index < candidate.stored_edges; ++edge_index) {
+		if (candidate.edges[edge_index].edge_index ==
+			candidate.closure_edge_index) {
+		    declared_observation = &candidate.edges[edge_index];
+		    break;
+		}
+	    }
+	    if (!declared_observation ||
+		    !brep_trace_seam_contact_miss_screen(trace, root_index,
+			*declared_observation))
+		continue;
+	} else {
+	    trace->physical_event_seam_closure_candidates++;
+	}
 	brep_resolve_continuation(&candidate, bs, ray, &existing_hit, NULL);
 	if (candidate.closure_shadow_segments != 1 ||
 		candidate.continuation_candidates != 1 ||
@@ -14870,7 +15071,8 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 		RT_BREP_SEAM_GAP_INSIDE ||
 		!observation->discrepancy_authorized)
 	    continue;
-	trace->physical_event_seam_continuation_candidates++;
+	if (!declared_contact_closure)
+	    trace->physical_event_seam_continuation_candidates++;
 	certified_candidates++;
 	if (certified_candidates != 1)
 	    continue;
@@ -14886,6 +15088,7 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 	continuation_adjacency =
 	    candidate.continuation_adjacent_face_index;
 	continuation_direction = candidate.closure_missing_direction;
+	selected_declared_contact_closure = declared_contact_closure;
     }
     if (certified_candidates != 1) {
 	trace->physical_event_seam_failures++;
@@ -14927,6 +15130,7 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
     int contact_face = -1;
     int contact_span = -1;
     ON_2dPoint contact_edge_uv(0.0, 0.0);
+    size_t contact_miss_roots = 0;
     if (!narrow_witness) {
 	for (size_t root_index = 0;
 		root_index < RT_BREP_TRACE_MAX_LOCAL_ROOTS; ++root_index)
@@ -14934,13 +15138,25 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 	witness_roots = 0;
 	contact_pair = brep_trace_seam_contact_roots(trace, bs, ray,
 	    selected_root, selected_edge, continuation_dist, contact_root,
-	    contact_face, contact_span, contact_edge_uv);
+	    contact_face, contact_span, contact_edge_uv,
+	    contact_miss_roots);
 	if (!contact_pair) {
-	    trace->physical_event_seam_ownership_failures++;
-	    trace->physical_event_seam_witness_failures++;
+	    if (!selected_declared_contact_closure) {
+		trace->physical_event_seam_ownership_failures++;
+		trace->physical_event_seam_witness_failures++;
+	    }
 	    trace->physical_event_seam_failures++;
 	    return false;
 	}
+    }
+    if (selected_declared_contact_closure &&
+	    (!contact_pair || contact_miss_roots != 1)) {
+	trace->physical_event_seam_failures++;
+	return false;
+    }
+    if (selected_declared_contact_closure) {
+	trace->physical_event_seam_closure_candidates++;
+	trace->physical_event_seam_continuation_candidates++;
     }
     if (narrow_witness && !witness_roots) {
 	trace->physical_event_seam_edge_only_candidates++;
@@ -15175,6 +15391,7 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 	trace->physical_event_seam_contact_pairs++;
 	trace->physical_event_seam_contact_boxes += contact_boxes;
 	trace->physical_event_seam_contact_roots += 2;
+	trace->physical_event_seam_contact_miss_roots += contact_miss_roots;
 	if (!perpendicular_contact) {
 	    trace->physical_event_seam_oblique_pairs++;
 	    trace->physical_event_seam_oblique_cells += oblique_frame_cells;
@@ -15492,6 +15709,7 @@ brep_prepared_seam_pair_eligible(const struct rt_brep_shot_trace *trace)
 	(trace->physical_event_seam_contact_pairs == 1 &&
 	 trace->physical_event_seam_contact_boxes > 0 &&
 	 trace->physical_event_seam_contact_roots == 2 &&
+	 trace->physical_event_seam_contact_miss_roots <= 1 &&
 	 !trace->physical_event_seam_witness_boxes &&
 	 !trace->physical_event_seam_witness_roots &&
 	 !trace->physical_event_seam_edge_only_candidates &&
@@ -15508,6 +15726,7 @@ brep_prepared_seam_pair_eligible(const struct rt_brep_shot_trace *trace)
 	(!trace->physical_event_seam_contact_pairs &&
 	 !trace->physical_event_seam_contact_boxes &&
 	 !trace->physical_event_seam_contact_roots &&
+	 !trace->physical_event_seam_contact_miss_roots &&
 	 !trace->physical_event_seam_oblique_pairs &&
 	 !trace->physical_event_seam_oblique_cells &&
 	 !trace->physical_event_seam_oblique_box_links &&

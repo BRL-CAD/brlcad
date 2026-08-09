@@ -2528,6 +2528,164 @@ trim locus and derivative enclosures.  It does not authorize tolerance-near
 contact-root association, fabricate surface roots, loosen contact-face box
 ownership, or broaden the material-sector topology in Section 6.4.1.6.
 
+6.4.1.8 Explicit contact-face closure and one-miss ownership
+
+Moving the non-isoparametric trim from the face opposite the contact roots to
+the contact-root face exposes a distinction that the earlier theorem did not
+need to make.  The ray/surface solver can still isolate the same three exact
+surface roots and the same three terminal boxes, but the face trim classifier
+can change one member of the inner two-root lobe from `CLEAN_HIT` to
+`CLEAN_MISS`.  Rejecting that mathematical surface root solely because the
+lifted trim moved a small authorized amount reopens the intended solid at the
+seam.  Conversely, accepting arbitrary misses or using a measured crack to
+enlarge its own tolerance would manufacture solid topology.
+
+Separate the tolerance roles before changing root ownership.  Let `T` be the
+model tolerance and `D` the valid nonnegative tolerance explicitly stored on
+the shared BREP edge.  Ordinary closure, including the legacy repair path and
+the final diagnostic classifier, must continue to use the hard limit `T`.
+This preserves the existing rule that a modeled discrepancy above the minimum
+valid size is not silently repaired just because edge metadata is larger.
+
+Only a provisional candidate local to the prepared contact-event transaction
+may use
+
+    C = max(T, D)
+
+and then only when `D` is valid, explicit, and strictly expands `T`.  Before
+spending work on the continuation solve, the immutable root ledger must
+already contain exactly the intended other-face one-hit/one-miss transverse
+ENTER/LEAVE pattern.  The provisional classifier writes only a private
+candidate trace.  It cannot alter the legacy result, increment a published
+candidate ledger, resolve a box, or emit an event unless the complete theorem
+below succeeds.
+
+The provisional path must not use the effective prep tolerance wholesale.
+That effective value can also contain vertex metadata or an inferred measured
+discrepancy.  In particular, an unset edge tolerance currently lets prep
+retain candidate evidence by expanding to the observed gap; that inferred
+value must never authorize closure or a trim miss.  Invalid model tolerance is
+unavailable, invalid/unset edge tolerance contributes nothing, and every
+comparison keeps only a coordinate-scaled binary64 roundoff allowance.  The
+strict global edge/trim correspondence and discrepancy-bound transactions
+remain separate prerequisites; `C` does not repair an outside, ambiguous,
+incomplete, or exhausted prep proof.
+
+Do not collapse the two classifiers.  An implementation that substituted `C`
+for `T` in general closure activated 34 additional bowed-seam transactions at
+complete discrepancies `g/T=1.1`, `2`, and `10`, producing 31 exhaustive seam
+test failures and changing the established pair/selection/event totals from
+`22/124/44` to `56/158/112`.  The intended contact-face case is not evidence
+that every edge declaration grants solid-repair authority.  The permanent
+ratchet therefore requires the old bowed totals and zero ordinary closure
+candidates above `T`, alongside the new private one-miss certifications.
+
+The first production extension is deliberately limited to one classifier
+miss in the already narrow incident-face contact-lobe theorem:
+
+  1. Preserve all Section 6.4.1 input obligations.  There must be exactly one
+     selected clean source root and exactly two other incident-face surface
+     roots.  The two contact roots must lie on one other face and one prepared
+     surface span, be strictly transverse, form an ordered ENTER/LEAVE pair,
+     and lie strictly inside the source/continuation material interval.  No
+     t-distance merge, nearest-root selection, or arbitrary count is allowed.
+     When ordinary `T`-bounded closure did not qualify, require exactly one
+     trim hit and one trim miss both in the pre-continuation screen and again
+     in the authoritative post-continuation theorem.
+
+  2. Each contact member must be either a mathematical trim hit
+     (`CLEAN_HIT`/`NEAR_HIT` with non-miss trim state) or a mathematical trim
+     miss (`CLEAN_MISS`/`NEAR_MISS` with miss trim state).  Require at least
+     one hit and permit at most one miss.  The root already exists because the
+     ray/surface solve returned it; this rule never creates, moves, reflects,
+     or changes the ray distance of a surface root.
+
+  3. Map the observed shared-edge parameter to the contact trim through the
+     globally certified edge/trim correspondence.  Evaluate the shared 3D
+     edge point `E`, the contact surface at the corresponding trim UV `L`, and
+     the same contact surface at the miss-root UV `R`.  The miss is eligible
+     only when both
+
+         |R-E| <= C + roundoff
+         |R-L| <= C + roundoff.
+
+     These are two distinct model-space checks.  Proximity to the edge alone
+     cannot excuse an unrelated trim miss, and proximity to the trim alone
+     cannot pull an interior root into the seam corridor.  A nonfinite point,
+     invalid face, missing surface, or second miss fails the whole ray closed.
+
+  4. Treat the point test only as root association inside the existing
+     solver contract.  It grants no boundary event by itself.  Every source
+     box, every contact-root box, and every rootless determinant-corridor box
+     must still have exactly one role.  The complete connected source-union
+     proof, rational trim-cell ownership, full contact t-hull coverage,
+     outward material-sector frame signs, monotone edge sweep, event order,
+     and minimum-segment checks remain unchanged.  Publish the two outer
+     source/continuation events and the miss ledger atomically only after the
+     complete transaction succeeds.  The inner contact lobe remains hidden
+     evidence and is never emitted as a solid boundary.
+
+  5. Record the number of admitted classifier misses independently from the
+     two contact roots.  A noncontact certificate requires zero contact and
+     miss ledgers.  A contact certificate requires exactly two contact roots
+     and at most one miss.  Existing opposite-face, isoparametric, oblique,
+     bowed-seam, and contact-trend tests require zero misses, so the extension
+     cannot silently take over their successful classifications.
+
+The real-geometry ratchet uses the same radius-10 sewn Cobb sphere and bowed
+support seam as Finding 74, but bows the endpoint-preserving quadratic trim on
+the contact-root face.  Set its measured maximum trim-lift change to `0.1*T`.
+The resulting complete two-lift discrepancy is `1.00498*T`; explicitly
+declare `1.01` times that measured gap on the target edge.  Shoot tangent
+components `0.001` and `0.1` in both directions for identity, arbitrary-axis
+rotation plus translation, `0.01x` similarity, and `10,000x` similarity plus
+large translation.  All sixteen rays must match the analytic sphere chord,
+select production, carry the complete oblique/source ledgers, and report
+exactly one admitted trim miss.  They must also report zero ordinary/legacy
+closure candidates and exactly one prepared closure/continuation candidate,
+proving that the explicit envelope remains confined to the transaction.
+Identity component `0.1` still requires its connected source-union proof.
+
+Add six threshold controls from forward/reverse component `0.001`.  An edge
+declaration equal only to `T`, a declaration exactly equal to the sampled
+measured gap without strict proof margin, and an unset/inferred declaration
+must all remain on legacy fallback with no published contact, miss, oblique,
+source-union, provisional-closure, or provisional-continuation ledger.  Legacy
+may return the small mathematical lobe cut by the perturbed trim in these
+intentionally unauthorized cases; do not compare those fallback endpoints to
+the sphere oracle as if the solid-intent policy had been authorized.
+
+The observed classifier transition is itself a permanent diagnostic fact.
+At trim lift `0.05*T`, the exact edge-coincident contact root remains a trim
+hit.  At `0.1*T`, root isolation, box count, correspondence, closure, and
+outer continuation are unchanged, but that root becomes a trim miss.  An
+outward signed version of this particular outer-loop construction is not a
+valid BREP because it moves the loop outside the surface domain; use a
+different valid fixture before drawing conclusions about negative amplitude.
+
+An exploratory stronger tube proof also records the next boundary rather
+than hiding it.  The complete terminal surface boxes are intentionally much
+wider than `C`: in the identity component-0.001 case, an interval surface hull
+was about `0.00335` from the edge while `C` was about `0.0005075`.  Requiring
+the whole existing box inside the tube is therefore too strong.  Bounded
+local contraction around the nominal root was then tried with ordinary and
+fixed-expansion Krawczyk tests, Krawczyk image contraction, conditioned
+equations, and the regular-graph boundary-existence theorem.  Only four of
+the sixteen similarity/reversal cases obtained an invariant local tube
+certificate.  That experimental authority is not retained in production.
+
+The implemented point witness is an intentionally narrow extension of the
+current exact-root solver contract, not the final general tube theorem.  A
+future broader rule must produce a similarity- and reversal-invariant local
+box that both contains exactly one surface root and whose complete surface
+image lies in the edge/trim tube.  Likely routes are a better-conditioned
+interval Newton/regular-graph contraction, a residual-to-root error theorem,
+or direct coupled surface/ray/trim subdivision.  Keep that work allocation
+free and ratchet every difficult coefficient system in a C/C++ corpus.  Do
+not broaden beyond one hit plus one miss, reuse inferred tolerances, or remove
+the downstream complete material-sector theorem while that stronger local
+certificate is unresolved.
+
 6.4.2 Cyclic planar vertex-fan theorem
 
 A BREP vertex can be one physical boundary crossing even though three or more

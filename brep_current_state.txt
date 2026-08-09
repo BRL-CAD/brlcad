@@ -3487,6 +3487,100 @@ ESTABLISHED FINDINGS
     theorem; proximity samples and tolerance-manufactured roots remain
     forbidden.
 
+76. A contact-face trim may now contribute one explicitly tube-qualified
+    classifier miss to the narrow incident-face contact-lobe theorem.
+
+    Contact-face perturbation isolated the earlier failure stage.  With a
+    `0.05*T` trim lift, the contact face still reports two mathematical trim
+    hits.  At `0.1*T`, the same three ray/surface roots, three terminal boxes,
+    correspondence proof, closure candidate, continuation, and material
+    ordering remain, but the exact edge-coincident root changes from
+    `CLEAN_HIT` to `CLEAN_MISS`.  Hard model-tolerance closure also rejected
+    the complete discrepancy `1.00498*T` even when the edge explicitly
+    declared a larger accuracy envelope.
+
+    Ordinary and legacy closure still use the hard model tolerance `T`.
+    Declared edge metadata must not broaden that classifier: the bowed-seam
+    matrix deliberately requires every complete discrepancy above `T` to
+    report zero ordinary closure candidates, even when the edge declaration
+    is larger.
+
+    A separate provisional classifier exists only inside the prepared
+    contact-event transaction.  After hard closure fails, it may compute
+    `C=max(model_tolerance, declared_edge_tolerance)` only when the edge
+    declaration is valid, explicit, and strictly larger than `T`.  A cheap
+    immutable-ledger screen first requires exactly two transverse roots on the
+    other incident face/span, ordered ENTER/LEAVE with exactly one trim hit and
+    one trim miss.  Only then is the continuation solve attempted.  The
+    provisional state remains private and its prepared candidate counters are
+    deferred until the authoritative contact theorem proves the same one-miss
+    pattern.  A zero-miss contact, arbitrary miss layout, or failed later proof
+    discards it without changing legacy closure or publishing a transaction.
+
+    This separation is a tested correction, not just documentation.  The
+    first implementation put `C` directly in the general closure classifier.
+    It caused 31 failures in the exhaustive seam shard by activating bowed
+    discrepancies at `g/T=1.1`, `2`, and `10`; aggregate certified seam pairs,
+    prepared selections, and seam events moved from `22/124/44` to
+    `56/158/112`.  Restoring hard `T` closure and screening the private
+    declared-tolerance path before continuation restores the exact
+    `22/124/44` ratchets while retaining all sixteen intended contact-face
+    certifications.
+
+    The explicit path does not use the prep record's effective tolerance,
+    because that value can contain vertex metadata and, for an unset edge
+    tolerance, the measured discrepancy itself.  Inferred tolerance therefore
+    remains useful for candidate observation but cannot authorize closure or a
+    trim miss.  Invalid model tolerance fails closed, and an invalid/unset edge
+    declaration contributes no expansion beyond model tolerance.
+
+    The contact-root theorem still requires exactly two transverse roots on
+    one other incident face and span, ordered ENTER then LEAVE strictly inside
+    the outer source/continuation segment.  Both must be exact ray/surface
+    solver results.  At least one must remain a clean/near trim hit; at most
+    one may be a clean/near trim miss.  For that miss, the production code maps
+    the certified shared-edge parameter to the contact trim and evaluates the
+    shared edge point, corresponding surface-lifted trim point, and miss-root
+    surface point.  The root point must lie within `C` of both model-space
+    references.  No root is fabricated, reflected, merged by t distance, or
+    moved to the edge.
+
+    The new point witness only associates an already solved root with the
+    authorized seam corridor.  It cannot publish an event independently.
+    Complete source and contact box ownership, connected source-union where
+    needed, complete rational trim-cell coverage, outward material-sector
+    intervals over every contact box, monotone edge sweep, event order, and
+    minimum material segment remain mandatory.  The miss count is published
+    atomically with the two hidden contact roots only after that full
+    transaction succeeds.  All older seam/contact tests explicitly require
+    zero misses.
+
+    The focused `rt_brep_ray_contact_trim` shard bows the valid
+    endpoint-preserving quadratic trim on the contact face by `0.1*T`.  It
+    requires the analytic sphere chord, production selection, the complete
+    oblique ledger, and exactly one miss for tangent components `0.001` and
+    `0.1`, both ray directions, and identity, rotated/translated, `0.01x`, and
+    `10,000x` similarities.  Direct output reports 16/16 certifications, 16
+    miss roots, two identity source unions, lift `0.1*T`, and gap
+    `1.00498*T`.  Every positive ray now also requires zero ordinary closure
+    candidates and one prepared closure/continuation candidate.  Six
+    forward/reverse controls with a model-only declaration, an exact-gap
+    declaration without strict proof margin, and an unset/inferred declaration
+    require zero ordinary and prepared closure/continuation candidates and
+    remain on fallback with no published seam transaction.
+
+    A stronger interval-root tube was explored and removed rather than being
+    allowed to create transform-dependent authority.  The existing terminal
+    root box had a complete surface hull about `0.00335` from the shared edge
+    against `C=0.0005075`.  Local ordinary/fixed-expansion Krawczyk,
+    Krawczyk-image contraction, conditioned equations, and regular-graph
+    boundary existence certified a contracted tube in only four of sixteen
+    similarity/reversal cases.  The current point witness is therefore a
+    narrow extension of the existing exact-root solver contract, not a
+    general interval root-existence theorem.  Broader miss policies must first
+    obtain an invariant local box containing exactly one root whose complete
+    surface image lies inside both tubes.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -3620,6 +3714,13 @@ IMPLEMENTATION CHECKLIST
             rational quadratic/multispan solver corpus, and replace summed
             coverage lengths with a no-allocation interval-union proof that
             rejects overlap-masked gaps.
+    [x] Extend the narrow contact-face theorem to one already solved trim miss
+        only when explicit edge metadata authorizes both the complete seam gap
+        and the root-to-edge/root-to-lift tube.  Keep inferred tolerances out
+        of authority, keep ordinary closure hard at model tolerance, confine
+        the expanded envelope to a private prepared-event candidate, require
+        the unchanged complete box/material transaction, and gate all
+        similarities/reversals in a focused shard.
     [x] Remove the equal-normalized-speed assumption for regular two-trim edge
         correspondence and gate opposite nonlinear trim reparameterizations.
     [x] Add vertex-fan and ambiguous-correspondence gates.
@@ -4911,20 +5012,54 @@ Rational trim interval solver checkpoint (Finding 75):
   PASS: 12/12 in 12.96 seconds; the rational trim shard took 0.17 seconds and
   no sanitizer reported a diagnostic.
 
+Contact-face trim miss checkpoint (Finding 76):
+
+  .build/src/librt/tests/rt_brep_ray --contact-trim-only
+  PASS: four similarity cases, sixteen certifications, sixteen one-miss
+  transactions, two identity source unions, and six threshold fallbacks.
+  The unset-edge threshold control intentionally emits OpenNURBS invalid-edge
+  diagnostics before proving fallback.
+
+  ctest --test-dir .build \
+    -R '^rt_brep_ray_seam$' --output-on-failure
+  PASS: 1/1 in 168.34 seconds.  This independently restored the complete
+  bowed-seam model-tolerance envelope after rejecting the initial broad
+  declared-tolerance classifier.
+
+  ctest --test-dir .build --parallel 11 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+  PASS: 11/11 in 185.89 seconds (source union 0.01, trim interval 0.01,
+  fold 0.31, endpoint 3.06, affine 5.32, non-isoparametric 27.00,
+  contact trim 33.82, complete directed process 45.67, Crofton 61.05,
+  interval 160.58, seam 185.84).
+
+  ctest --test-dir .build --parallel 12 \
+    -R '^(rt_brep_ray_contact_trim|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+  PASS: 12/12 in 32.93 seconds; the contact shard took 32.89 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 12 \
+      -R '^(rt_brep_ray_contact_trim|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+      --output-on-failure
+  PASS: 12/12 in 162.11 seconds; the instrumented contact shard took 162.02
+  seconds and no sanitizer reported a diagnostic.
+
 
 NEXT ACTIONS
 ------------
 
-1. Perturb the trim on the Cobb contact-root face across signed amplitude/T.
-   The current experiment shows that this can change which roots the earlier
-   closure stage admits before the new frame theorem is reached.  If those
-   cases are to represent the intended solid, give closure a locally
-   convergent, allocation-free surface/trim/edge tube and root-ownership proof;
-   do not substitute a proximity sample or let model tolerance manufacture a
-   missing exact root.  Keep arbitrary root counts, faces, spans,
-   sector-boundary or exact tangency, and edge/vertex neighborhoods fail-closed
-   until separately proved.  Do not reuse Finding 72 outside the narrow seam
-   transaction without an equally explicit root-count theorem.
+1. Strengthen the one-miss contact witness from the current exact-root point
+   contract to a similarity- and reversal-invariant local interval box.  The
+   complete terminal boxes are too wide, and the first conditioned
+   expansion-Krawczyk/regular-graph contraction certified only four of sixteen
+   transformed cases.  Preserve those difficult coefficient systems in a
+   C/C++ corpus and develop a better-conditioned contraction, residual-to-root
+   bound, or coupled surface/ray/trim subdivision that proves exactly one root
+   and places its complete surface image inside both explicit tubes.  Keep the
+   present one-hit/one-miss count, arbitrary faces/spans, exact tangency,
+   vertex neighborhoods, and inferred tolerance authority fail-closed.
 2. Extend vertex classification only through a separately certified curved
    differential-link theorem.  Bound surface-normal and tangent variation over
    a local neighborhood before replacing the planar cyclic link.  Define exact
