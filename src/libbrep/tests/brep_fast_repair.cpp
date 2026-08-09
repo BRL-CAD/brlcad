@@ -699,11 +699,16 @@ split_periodic_boundary_test()
 	middle, v)).m_vertex_index;
     const int seam_vertex = brep.NewVertex(surface->PointAt(
 	udom.Min(), v)).m_vertex_index;
+    const double excursion = udom.ParameterAt(0.68);
+    const int excursion_vertex = brep.NewVertex(surface->PointAt(
+	excursion, v)).m_vertex_index;
     auto add_boundary = [&](const ON_Interval &edge_domain,
 	    int first_vertex, int second_vertex, const ON_2dPoint &start,
 	    const ON_2dPoint &end) {
 	ON_Curve *edge_curve = surface->IsoCurve(0, v);
 	edge_curve->Trim(edge_domain);
+	if (end.x < start.x)
+	    edge_curve->Reverse();
 	ON_BrepEdge &edge = brep.NewEdge(brep.m_V[first_vertex],
 	    brep.m_V[second_vertex], brep.AddEdgeCurve(edge_curve));
 	edge.m_tolerance = 1.0e-6;
@@ -719,6 +724,11 @@ split_periodic_boundary_test()
 	seam_vertex, ON_2dPoint(middle, v), ON_2dPoint(udom.Max(), v));
     add_boundary(ON_Interval(udom.Min(), middle), seam_vertex,
 	middle_vertex, ON_2dPoint(udom.Min(), v), ON_2dPoint(middle, v));
+    add_boundary(ON_Interval(middle, excursion), middle_vertex,
+	excursion_vertex, ON_2dPoint(middle, v),
+	ON_2dPoint(excursion, v));
+    add_boundary(ON_Interval(middle, excursion), excursion_vertex,
+	middle_vertex, ON_2dPoint(excursion, v), ON_2dPoint(middle, v));
 
     fast_result *result = run_fast(brep);
     const bool valid = result->ret == BREP_CDT_FAST_OK &&
