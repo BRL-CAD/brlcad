@@ -48,6 +48,13 @@
 #include "rt/primitives/brep.h"
 #include "rt/vlist.h"
 
+struct face_failure {
+    int face_index = -1;
+    int result = 0;
+    int stage = 0;
+    std::string message;
+};
+
 struct geom_result {
     int ret = BRLCAD_ERROR;
     size_t vertices = 0;
@@ -87,6 +94,7 @@ struct geom_result {
     double seconds = 0.0;
     size_t peak_rss_bytes = 0;
     std::vector<int> failed_faces;
+    std::vector<face_failure> face_failures;
     std::vector<int> skipped_faces;
     std::vector<int> unprocessed_faces;
     std::vector<int> failed_edges;
@@ -636,6 +644,18 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	for (int failed_face : failed_face_indices)
 	    capture_index(&result.failed_faces,
 		&result.omitted_failed_faces, failed_face);
+	for (int failed_face : failed_face_indices) {
+	    struct brep_cdt_diagnostic face_diagnostic = {};
+	    if (ON_Brep_CDT_Face_Diagnostic(&face_diagnostic,
+		    failed_face, state) != 0)
+		continue;
+	    face_failure detail;
+	    detail.face_index = failed_face;
+	    detail.result = face_diagnostic.result;
+	    detail.stage = face_diagnostic.stage;
+	    detail.message = face_diagnostic.message;
+	    result.face_failures.push_back(detail);
+	}
     }
 
     const bool tessellated = face_index >= 0 ? result.ret == 1 :
@@ -840,7 +860,18 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< ",\"failed_faces\":";
     print_indices(result.failed_faces);
     std::cout << ",\"failed_faces_omitted\":"
-	<< result.omitted_failed_faces << ",\"skipped_faces\":";
+	<< result.omitted_failed_faces << ",\"failure_details\":[";
+    for (size_t i = 0; i < result.face_failures.size(); ++i) {
+	if (i)
+	    std::cout << ",";
+	const face_failure &failure = result.face_failures[i];
+	std::cout << "{\"face_index\":" << failure.face_index
+	    << ",\"result\":" << failure.result
+	    << ",\"stage\":" << failure.stage
+	    << ",\"message\":" << json_quote(failure.message.c_str())
+	    << "}";
+    }
+    std::cout << "],\"skipped_faces\":";
     print_indices(result.skipped_faces);
     std::cout << ",\"skipped_faces_omitted\":"
 	<< result.omitted_skipped_faces << ",\"unprocessed_faces\":";
