@@ -1485,6 +1485,11 @@ curved_edges_refine(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepEdge& edge = brep->m_E[index];
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	if (!crv || crv->IsLinear(BN_TOL_DIST)) continue;
+	/* A closed edge has the same topological vertex at both ends.  A short
+	 * curve incident at that seam does not justify imposing its segment
+	 * length uniformly around the entire closed edge.  The curve and chord
+	 * tolerances have already supplied the required geometric refinement. */
+	if (edge.m_vi[0] == edge.m_vi[1]) continue;
 	bool refine = false;
 	double target_len = DBL_MAX;
 	double lmed = edge_median_seg_len(s_cdt, edge.m_edge_index);
@@ -1592,6 +1597,65 @@ tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt)
 
 }
 
+static bool
+periodic_trim_has_inconsistent_image(const ON_BrepFace &face,
+	const ON_Surface &surface, int closed_direction)
+{
+    const ON_Interval domain = surface.Domain(closed_direction);
+    const double period = domain.Length();
+    if (!(period > 0.0))
+	return false;
+    const double scale = std::max(1.0, std::max(std::fabs(domain.Min()),
+	std::fabs(domain.Max())));
+    const double tolerance = 4096.0 *
+	std::numeric_limits<double>::epsilon() * scale;
+    const auto seam_side = [&](double parameter) {
+	if (std::fabs(parameter - domain.Min()) <= tolerance)
+	    return -1;
+	if (std::fabs(parameter - domain.Max()) <= tolerance)
+	    return 1;
+	return 0;
+    };
+
+    for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
+	const ON_BrepLoop *loop = face.Loop(loop_index);
+	if (!loop)
+	    continue;
+	for (int trim_index = 0; trim_index < loop->TrimCount();
+		++trim_index) {
+	    const ON_BrepTrim *trim = loop->Trim(trim_index);
+	    if (!trim)
+		continue;
+	    const ON_Interval trim_domain = trim->Domain();
+	    const double first = trim->PointAt(
+		trim_domain.Min())[closed_direction];
+	    const double last = trim->PointAt(
+		trim_domain.Max())[closed_direction];
+	    const int first_side = seam_side(first);
+	    const int last_side = seam_side(last);
+	    if (!first_side || !last_side || first_side == last_side)
+		continue;
+
+	    double winding = 0.0;
+	    double previous = first;
+	    for (int sample = 1; sample <= 16; ++sample) {
+		const double current = trim->PointAt(trim_domain.ParameterAt(
+		    (double)sample / 16.0))[closed_direction];
+		double delta = current - previous;
+		delta -= std::nearbyint(delta / period) * period;
+		winding += delta;
+		previous = current;
+	    }
+	    const double endpoint_winding = last_side > first_side ?
+		period : -period;
+	    if (std::fabs(winding) > 0.5 * period &&
+		    winding * endpoint_winding < 0.0)
+		return true;
+	}
+    }
+    return false;
+}
+
 void
 refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 {
@@ -1604,14 +1668,22 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 
 	/*
 	 * Native surface parameters are not a valid planar proximity metric for
-	 * a complete cylinder.  Pcurves which run along its identification seam
-	 * may overlap after wrapping even though their 3D edges are well separated.
-	 * The curve, chord, and normal tolerances have already refined these edges;
-	 * any further proximity checks must be done in chart coordinates.
+	 * a periodic face when a pcurve traverses one periodic image but stores
+	 * endpoints on the opposite seam images.  Its native-UV segments then cross
+	 * the rest of the loop and cause unbounded false proximity refinement.  The
+	 * topology chart repairs that winding later; until this check operates in
+	 * chart coordinates, rely on the curve, chord, and normal refinement.
 	 */
+	const ON_Surface *surface = face.SurfaceOf();
 	const bool cylinder_seam = cdt_face_uses_cylinder_chart(face) &&
 	    cdt_face_has_seam(face);
-	if (cylinder_seam)
+	const int closed_direction = surface && surface->IsClosed(0) ? 0 :
+	    (surface && surface->IsClosed(1) ? 1 : -1);
+	const bool inconsistent_periodic_image = !cylinder_seam && surface &&
+	    closed_direction >= 0 && cdt_face_has_seam(face) &&
+	    periodic_trim_has_inconsistent_image(face, *surface,
+		closed_direction);
+	if (cylinder_seam || inconsistent_periodic_image)
 	    continue;
 
 	std::vector<cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face_index);
