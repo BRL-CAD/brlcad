@@ -590,6 +590,8 @@ class cdt_mesh_t
 public:
 
     cdt_mesh_t() {
+	f_id = -1;
+	has_singularities = false;
 	pnts.clear();
 	p2ind.clear();
 	normals.clear();
@@ -605,6 +607,10 @@ public:
 	v2tris.clear();
 	edges2tris.clear();
 
+	m_bRev = false;
+	brep = NULL;
+	name = NULL;
+	p_cdt = NULL;
 	omesh = NULL;
     };
 

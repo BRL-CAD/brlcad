@@ -32,6 +32,7 @@
 #include <map>
 #include <numeric>
 #include <queue>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -45,6 +46,156 @@
 #define MAX_CHART_REFINEMENT_ATTEMPTS 16
 #define MAX_CHART_REFINEMENT_POINTS 4096
 #define MAX_CHART_REFINEMENT_STAGNANT_ATTEMPTS 4
+
+struct assembled_mesh_validation {
+    size_t invalid_indices = 0;
+    size_t nonfinite_vertices = 0;
+    size_t unused_vertices = 0;
+    size_t degenerate_faces = 0;
+    size_t invalid_vertex_links = 0;
+};
+
+static bool
+assembled_mesh_validate(int vertex_count, int face_count,
+	const fastf_t *vertices, const int *faces,
+	assembled_mesh_validation *validation)
+{
+    if (!validation || vertex_count <= 0 || face_count <= 0 ||
+	    !vertices || !faces)
+	return false;
+    *validation = assembled_mesh_validation();
+
+    typedef std::pair<int, int> mesh_edge;
+    std::vector<std::vector<mesh_edge>> vertex_link_edges(
+	(size_t)vertex_count);
+    std::vector<bool> used_vertices((size_t)vertex_count, false);
+    for (int vertex = 0; vertex < vertex_count; ++vertex) {
+	for (int coordinate = 0; coordinate < 3; ++coordinate) {
+	    if (!std::isfinite(vertices[3 * vertex + coordinate])) {
+		validation->nonfinite_vertices++;
+		break;
+	    }
+	}
+    }
+
+    for (int face = 0; face < face_count; ++face) {
+	ON_3dPoint points[3];
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int vertex = faces[3 * face + corner];
+	    if (vertex < 0 || vertex >= vertex_count) {
+		validation->invalid_indices++;
+		return false;
+	    }
+	    used_vertices[(size_t)vertex] = true;
+	    points[corner] = ON_3dPoint(vertices[3 * vertex],
+		vertices[3 * vertex + 1], vertices[3 * vertex + 2]);
+	}
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int vertex = faces[3 * face + corner];
+	    vertex_link_edges[(size_t)vertex].push_back(mesh_edge(
+		faces[3 * face + (corner + 1) % 3],
+		faces[3 * face + (corner + 2) % 3]));
+	}
+	const ON_3dVector ab = points[1] - points[0];
+	const ON_3dVector ac = points[2] - points[0];
+	const ON_3dVector bc = points[2] - points[1];
+	const double longest_sq = std::max(ab.LengthSquared(),
+	    std::max(ac.LengthSquared(), bc.LengthSquared()));
+	const double doubled_area = ON_CrossProduct(ab, ac).Length();
+	if (!(longest_sq > 0.0) || !std::isfinite(doubled_area) ||
+		doubled_area <= 64.0 *
+		std::numeric_limits<double>::epsilon() * longest_sq)
+	    validation->degenerate_faces++;
+    }
+
+    for (bool used : used_vertices) {
+	if (!used)
+	    validation->unused_vertices++;
+    }
+
+    for (int vertex = 0; vertex < vertex_count; ++vertex) {
+	const std::vector<mesh_edge> &links =
+	    vertex_link_edges[(size_t)vertex];
+	if (links.empty())
+	    continue;
+	std::map<int, std::vector<int>> adjacency;
+	for (const mesh_edge &link : links) {
+	    adjacency[link.first].push_back(link.second);
+	    adjacency[link.second].push_back(link.first);
+	}
+	std::set<int> reached;
+	std::queue<int> work;
+	work.push(adjacency.begin()->first);
+	reached.insert(adjacency.begin()->first);
+	bool valid_link = true;
+	while (!work.empty()) {
+	    const int current = work.front();
+	    work.pop();
+	    const std::vector<int> &neighbors = adjacency[current];
+	    valid_link = valid_link && neighbors.size() == 2;
+	    for (int neighbor : neighbors) {
+		if (reached.insert(neighbor).second)
+		    work.push(neighbor);
+	    }
+	}
+	if (!valid_link || reached.size() != adjacency.size())
+	    validation->invalid_vertex_links++;
+    }
+
+    return !validation->invalid_indices && !validation->nonfinite_vertices &&
+	!validation->unused_vertices && !validation->degenerate_faces &&
+	!validation->invalid_vertex_links;
+}
+
+int
+cdt_test_assembled_mesh_validation(void)
+{
+    fastf_t vertices[] = {
+	0.0, 0.0, 0.0,
+	1.0, 0.0, 0.0,
+	0.0, 1.0, 0.0,
+	0.0, 0.0, 1.0,
+	-1.0, 0.0, 0.0,
+	0.0, -1.0, 0.0,
+	0.0, 0.0, -1.0
+    };
+    int tetrahedron[] = {
+	0, 2, 1, 0, 1, 3, 0, 3, 2, 1, 2, 3
+    };
+    assembled_mesh_validation validation;
+    if (!assembled_mesh_validate(4, 4, vertices, tetrahedron,
+	    &validation))
+	return 1;
+
+    /* Two otherwise closed tetrahedra meeting only at vertex zero have two
+     * disjoint cycles in that vertex's link.  Edge-incidence checks alone do
+     * not detect this bow-tie topology. */
+    int bow_tie[] = {
+	0, 2, 1, 0, 1, 3, 0, 3, 2, 1, 2, 3,
+	0, 5, 4, 0, 4, 6, 0, 6, 5, 4, 5, 6
+    };
+    if (assembled_mesh_validate(7, 8, vertices, bow_tie, &validation) ||
+	    validation.invalid_vertex_links != 1)
+	return 2;
+
+    fastf_t vertices_with_unused[24];
+    std::copy(vertices, vertices + 21, vertices_with_unused);
+    vertices_with_unused[21] = 2.0;
+    vertices_with_unused[22] = 2.0;
+    vertices_with_unused[23] = 2.0;
+    if (assembled_mesh_validate(8, 4, vertices_with_unused, tetrahedron,
+	    &validation) || validation.unused_vertices != 4)
+	return 3;
+
+    int degenerate[] = {
+	0, 2, 1, 0, 1, 3, 0, 3, 2, 0, 0, 1
+    };
+    if (assembled_mesh_validate(4, 4, vertices, degenerate, &validation) ||
+	    validation.degenerate_faces != 1)
+	return 4;
+
+    return 0;
+}
 
 static bool
 cdt_tolerance_valid(const struct bg_tess_tol &tol)
@@ -1193,6 +1344,29 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	return -1;
     }
 
+    assembled_mesh_validation mesh_validation;
+    if (!assembled_mesh_validate(valid_vcnt, valid_fcnt, valid_vertices,
+	    valid_faces, &mesh_validation)) {
+	const std::string message =
+	    "assembled mesh failed geometric/link validation: indices " +
+	    std::to_string(mesh_validation.invalid_indices) +
+	    ", nonfinite vertices " +
+	    std::to_string(mesh_validation.nonfinite_vertices) +
+	    ", unused vertices " +
+	    std::to_string(mesh_validation.unused_vertices) +
+	    ", degenerate faces " +
+	    std::to_string(mesh_validation.degenerate_faces) +
+	    ", invalid vertex links " +
+	    std::to_string(mesh_validation.invalid_vertex_links);
+	bu_free(valid_faces, "faces");
+	bu_free(valid_vertices, "vertices");
+	s_cdt->status = BREP_CDT_FAILED;
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_CERTIFICATION_FAILED,
+	    BREP_CDT_STAGE_SOLID_VALIDATION, -1, face_successes, 0,
+	    message.c_str());
+	return -1;
+    }
+
     struct bg_trimesh_solid_errors se = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
     int invalid = bg_trimesh_solid2(valid_vcnt, valid_fcnt, valid_vertices, valid_faces, &se);
 
@@ -1216,7 +1390,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     s_cdt->status = BREP_CDT_SOLID;
     cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_SUCCESS,
 	BREP_CDT_STAGE_SOLID_VALIDATION, -1, face_successes, 0,
-	"certified closed indexed manifold mesh");
+	"closed indexed mesh passed incidence, link, and area validation");
     return 0;
 
 }
