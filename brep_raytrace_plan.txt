@@ -7,6 +7,80 @@ Repository studied: /home/cyapp/brlcad
 STEP test corpus: /home/cyapp/step_corpus_g
 
 
+IMPLEMENTATION CHECKPOINT: STRUCTURAL KNOTS AND A DEPTH PLATEAU (2026-08-09)
+----------------------------------------------------------------------------
+
+SurfaceTree construction must distinguish structural decomposition from
+adaptive density.  Closed-surface seams and all interior NURBS span knots are
+correctness boundaries: a leaf that crosses one may combine derivative,
+parameterization, bounding, or root behavior from distinct Bezier-like
+subdomains.  They therefore cannot share the optional flatness-depth budget.
+Construction now exhausts seam and knot splits first, then restarts recursion
+at zero for adaptive flatness/straightness refinement.  The requested
+--surface-tree-depth value is an adaptive budget only; measured BBNode depth
+includes structural and adaptive levels and may exceed it.
+
+This corrects an ordering defect in the earlier controlled-depth experiment.
+The common recursion limit was tested before the structural-knot branch, so a
+small limit could terminate a leaf before all interior knots were split.  A
+new libbrep regression constructs a smooth NURBS surface with six U spans and
+five V spans at adaptive depth zero.  It requires 30 leaves and directly
+checks that none crosses an interior span boundary.  This contract is
+shape-independent and is a precondition for interpreting any reduced-density
+ray result.  A future resource guard may bound malformed input, but it must
+report invalid preparation rather than silently make a knot-crossing leaf.
+
+The current clean-interior regular-stream theorem provides complete ownership
+of independently certified regular events without taking parameter-space
+hulls across faces or spans.  Each same-face/span physical component must own
+all of its terminal boxes and roots, exclude its local complement with fixed
+workspace Bernstein/Krawczyk work, and supply a separate tight event and
+determinant enclosure.  The complete stream must alternate ENTER/LEAVE and
+respect BRL-CAD's minimum material-segment size before it atomically replaces
+legacy results.  Trim-near, fold/regular mixed, singular, and unresolved
+topological cases fail closed into existing paths.  The theorem performs no
+ray-time allocation and is ratcheted with deterministic exact-line replays.
+
+After mandatory structural splitting, all hard torus cases—including exact
+periodic/seam directions—pass at adaptive depth one.  The deliberately
+near-trim disjoint-sphere-union crack case is the sole hard failure through
+adaptive depth two.  Adaptive depth three passes the complete 24-case hard
+corpus with 2,513 nodes, 1,844 leaves, and physical maximum depth five.  It
+also passes the full identical-line Cauchy-Crofton comparison: 21 BREP solids,
+zero implicit/BREP partition differences, 10,410 nodes, 7,682 leaves, and
+physical maximum depth five.  The 78-solid seam/crack/classifier shard passes
+with 26,637 nodes, 17,676 leaves, physical maximum depth five, two intended
+prepared promotions, and no regression or ambiguity.  The grazing/tangent
+trend and transformed status-2 gates pass at the same setting.
+
+These results make adaptive depth three a plausible conservative plateau for
+the current analytic and adversarial corpus, not a universal-minimum claim.
+The goal is arbitrary-BREP reliability, so do not spend correctness effort
+forcing depth zero or special-casing these fixtures.  Before changing the
+production default of eight, retain the now-green broad optimized, sanitizer,
+and cache gates, and profile representative STEP-corpus distributions with
+structural depth reported separately.  The construction-semantic decision is
+already made:
+the BREP prep cache version is bumped from zero to one even though the byte
+layout is unchanged, and version-zero SurfaceTrees are rejected and rebuilt
+because they may violate the structural-knot contract.  Qualify the rebuilt
+serial/parallel cache paths before relying on the new format.  All seven
+optimized cache cases now pass, including parallel identical, different, and
+hierarchical object preparation.  Any later reduction should be justified by
+the same exact partition gates and by corpus-wide prep/memory measurements.
+
+The first two imported STEP measurements after this semantic correction are
+consistent with that hypothesis.  The 462-face Product_step18_item.s drops
+from 123,919 to 5,392 nodes, 62,451 to 3,263 leaves, 2.577 to 0.154 serial
+build seconds, and 59.8 to 46.9 MB peak RSS between adaptive depths eight and
+three.  The 175-face Product_step46_item.s, whose faces are 81.1 percent
+status-2 NURBS forms, drops from 199,958 to 7,755 nodes, 98,758 to 4,888
+leaves, 5.930 to 0.364 seconds, and 87.2 to 41.9 MB.  Their CurveTree leaf
+counts remain 13,060 and 36,385 respectively, exposing trim data as a larger
+fraction of the residual cost.  These are smoke samples, not a replacement
+for the required stratified distribution or full FRAME.g gate.
+
+
 IMPLEMENTATION CHECKPOINT: CERTIFIED COLLAPSED POLE EVENTS (2026-08-09)
 ------------------------------------------------------------------------
 
@@ -114,7 +188,8 @@ unknown requested construction depth when old data is deserialized.
 On the nine BREP preparations in the isolated Cobb trim/edge-defect gate,
 reducing the limit from eight to seven reduces BBNodes from 136566 to 68094,
 leaves from 68796 to 34560, and measured SurfaceTree construction from 0.308
-to 0.155 seconds.  Limit zero has only the 54 mandatory face roots.  Every
+to 0.155 seconds.  Limit zero has only the 54 face roots for these one-span
+Cobb fixtures.  Every
 level from eight through zero nevertheless produces the same 96 prepared
 material selections, 24 deliberate exact-contact fallbacks, two healed edge
 transitions, and analytic intervals.  This is direct evidence that bounded
@@ -129,6 +204,14 @@ implicit primitives, nontrivial CSG trees, transformed nested BREP leaves,
 and the sewn Cobb sphere and observes zero differing implicit/BREP
 partitions.  This exact paired-line result is stronger than merely observing
 overlapping Cauchy-Crofton area and volume confidence intervals.
+
+Historical correction: this checkpoint described the requested value as an
+adaptive limit, but the then-current termination check ran before the
+structural knot branch.  It could truncate internal-knot decomposition when
+the requested value was small.  The newer structural-knot checkpoint above
+makes the intended two-phase semantics true and adds a direct multi-span
+depth-zero regression.  Preserve the numeric table as a measurement of these
+fixtures, not as evidence about arbitrary multi-span surfaces.
 
 The complete seam/classifier shard also passes at limit seven.  A first
 462-face STEP-corpus object reduces from 123919 to 66943 BBNodes, 62451 to
@@ -381,9 +464,12 @@ Current source locations:
     SurfaceTree::hasSplit
   * include/brep/defines.h, BREP_MAX_FT_DEPTH (currently 8)
 
-SurfaceTree subdivides at surface knots and according to sampled flatness and
-straightness.  A maximum depth of eight can produce a large number of BBNodes
-per face.  CurveTree data and per-leaf trim lists add additional memory.  In
+SurfaceTree first subdivides at closed seams and surface knots, then according
+to sampled flatness and straightness.  Structural splits must be exhausted;
+the configured maximum applies only to the subsequent adaptive phase.  The
+reported physical BBNode depth includes both phases.  An adaptive maximum of
+eight can produce a large number of BBNodes per face.  CurveTree data and
+per-leaf trim lists add additional memory.  In
 particular, BBNode::Stl contains a std::vector of children and a std::list of
 trim nodes above the leaf.  Dense subdivision magnifies the cost of all of
 these structures, not just bounding boxes.
@@ -438,10 +524,14 @@ then be destroyed.  Deserialization must populate the same owner containers
 as ordinary prep.  Delete the BVH before deleting CurveTrees so no BBNode can
 observe an already destroyed tree during teardown.
 
-The prep cache in rt_brep_prep_serialize is currently version 0.  It writes a
-CurveTree followed by a BBNode tree for every face.  Any new span, tolerance,
-or adjacency data requires a version bump.  Old cache entries must be rejected
-and rebuilt, not partially interpreted.
+At the time of the original source study, the prep cache in
+rt_brep_prep_serialize was version zero.  It writes a CurveTree followed by a
+BBNode tree for every face.  The structural-knot checkpoint bumps that version
+to one without changing the byte layout: version-zero trees may have stopped
+before an internal knot and are therefore rejected and rebuilt.  Any later
+span, tolerance, adjacency, or serialization-layout change requires another
+version bump.  Old cache entries must be rejected and rebuilt, not partially
+interpreted.
 
 2.3 Measured prep cost
 
@@ -4088,7 +4178,77 @@ Phase 5: Reduce prepared density and update cache
 Gate: Large prep/RSS reduction on FRAME.g with no accepted partition delta;
 bounded fallback rate and acceptable ray throughput.
 
-Phase 6: Drawing and corpus expansion
+Phase 6: Certified-pipeline performance
+
+Correctness gates remain authoritative, but the final production pipeline
+must also address the performance work that the original Abert-derived
+implementation never completed.  Optimize the certified representation and
+event solver rather than recreating the 2006 implementation literally.
+
+  * Establish phase-level profiles before changing mechanisms.  Measure
+    object/face/span traversal, ray-plane coefficient formation, hull and
+    interval exclusion, local subdivision, Newton correction, trim queries,
+    event certification, and fallback separately.  Report prep, cache, and
+    complete render time as well as isolated intersection throughput for
+    coherent primary rays, incoherent rays, grazing rays, and seam/crack
+    cases.  Preserve identical test rays and partitions in every comparison.
+
+  * Remove avoidable global work first.  Replace the current flat fan of face
+    SurfaceTree roots with a compact object-level BVH over immutable face or
+    span bounds, and measure a surface-area heuristic or an existing librt
+    builder against simpler median construction.  Keep mandatory knot/span
+    decomposition, but do not require dense adaptive leaves solely to create
+    Newton seeds.
+
+  * Make prepared spans cache-friendly.  Store exact homogeneous rational
+    Bezier control data, derivative metadata, bounds, face/span ownership,
+    and trim references in compact indexed arrays.  Compare array-of-
+    structures, structure-of-arrays, and small AoSoA layouts with actual
+    cache and vectorization measurements.  Do not retain OpenNURBS virtual
+    evaluation in a demonstrated hot loop merely for historical similarity.
+
+  * Vectorize the operations the certified solver actually performs.  The
+    first candidates are projection of homogeneous control coefficients onto
+    the two ray planes, conservative convex-hull rejection, child-box bound
+    formation, and repeated local surface/derivative evaluation.  Retain the
+    scalar implementation as the correctness reference.  SIMD rounding and
+    interval widening must remain conservative; a faster false exclusion is
+    not acceptable.
+
+  * Implement a real batched rt_brep_vshot rather than delegating every lane
+    to scalar rt_brep_shot.  Compare packet traversal for coherent rays with
+    lane compaction or independent scalar continuation for divergent rays.
+    Benchmark secondary/random rays explicitly so primary-ray coherence does
+    not hide a regression.
+
+  * Profile trimming independently.  Evaluate a compact two-dimensional
+    trim kd-tree or comparable indexed broad phase, as demonstrated by Sloup
+    and Havran, while retaining BRL-CAD edge identity, adjacency, declared
+    tolerance, discrepancy proof, and near-trim evidence.  Their renderer's
+    point-location optimization is relevant, but its visual trimming policy
+    is not a substitute for the solid crack/transition contracts here.
+
+  * Revisit the Newton corrector only after the preceding profiles.  Compare
+    precomputed rational-Bezier evaluation, de Casteljau variants, and the
+    existing OpenNURBS evaluator.  Safeguarded Newton remains a local
+    corrector, never the completeness proof.  Revive Abert-style precomputed
+    Cox-de Boor items only if direct NURBS evaluation is still measurably
+    preferable to the span representation needed by certification.
+
+  * Treat GPU execution as an optional later backend, not a prerequisite for
+    the CPU production path.  Immutable indexed span/trim data and bounded
+    work queues should be designed so GPU experiments are possible.  Measure
+    double-precision cost, divergent certification, transfer/cache cost, and
+    mixed GPU broad-phase/CPU certification before claiming a benefit.
+
+Gate: all analytic, grazing, seam, nested-CSG, and paired-Crofton partitions
+are unchanged; no new shot allocation or unreported overflow is introduced;
+hot/cold prep and shot profiles are reproducible; representative STEP and
+FRAME.g total time and memory improve materially; and both coherent and
+incoherent ray throughput improve or have a documented tradeoff.  Promote
+each optimization independently so regressions can be bisected.
+
+Phase 7: Drawing and corpus expansion
 
   * Improve adaptive edges and general trimmed surface indication.
 
@@ -4313,6 +4473,28 @@ OpenNURBS source/API documentation:
     build copy is at .build/include/OpenNURBS/opennurbs_brep.h.
 
 Algorithm and geometry references:
+
+  * O. Abert, M. Geimer, and S. Muller, "Direct and Fast Ray Tracing
+    of NURBS Surfaces," IEEE Symposium on Interactive Ray Tracing, 2006,
+    https://doi.org/10.1109/RT.2006.280227 and
+    https://apps.fz-juelich.de/jsc-pubsystem/aigaion/attachments/abert_ea2006nurbs.pdf-e6c31ac58695423b6f5786ec8f8a7774.pdf .  The
+    legacy BRL-CAD solver retains its two-ray-plane Newton system, UV-center
+    BVH seeds, and a flatness threshold from this lineage.  The paper's main
+    performance contribution was instead a precomputed SIMD Cox-de Boor
+    evaluator and four-ray packets, which BRL-CAD did not adopt.  It also
+    explicitly identifies a user-chosen flatness stop as a possible source of
+    missed or wrong intersections.  The certified pipeline must remove that
+    correctness dependency before selectively reusing its performance ideas.
+
+  * J. Sloup and V. Havran, "Optimizing Ray Tracing of Trimmed NURBS
+    Surfaces on the GPU," Computer Graphics Forum 40(7), 2021,
+    https://doi.org/10.1111/cgf.14410 and
+    https://diglib.eg.org/items/446a9054-9446-48c3-b0a7-f1526cb16ff7 .
+    Their compact two-dimensional kd-tree work shows that trim point-location
+    and data layout remain important performance targets, and their GPU
+    results demonstrate that direct trimmed-NURBS throughput can be
+    production-relevant.  Their rendering objective and arithmetic are not
+    treated as proof of BRL-CAD solid-event or crack-tolerance correctness.
 
   * J. E. Cobb, "Tiling the Sphere with Rational Bezier Patches,"
     University of Utah Technical Report UUCS-88-009, 1988.  This is the basis
