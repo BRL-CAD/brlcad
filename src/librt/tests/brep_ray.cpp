@@ -18,8 +18,10 @@
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <cerrno>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <random>
 #include <vector>
@@ -45,6 +47,71 @@ struct ray_result {
 
 
 static const size_t MAX_TEST_PARTITIONS = 8;
+static int brep_test_surface_tree_depth =
+    RT_BREP_DEFAULT_SURFACE_TREE_DEPTH;
+static bool brep_test_surface_tree_depth_requested = false;
+
+struct brep_test_prep_summary {
+    size_t solids = 0;
+    size_t surface_nodes = 0;
+    size_t surface_leaves = 0;
+    size_t curve_trees = 0;
+    size_t curve_leaves = 0;
+    size_t build_microseconds = 0;
+    int maximum_depth = 0;
+};
+
+static brep_test_prep_summary brep_test_prep_totals;
+
+
+static bool
+record_brep_test_prep(const struct soltab *stp)
+{
+    struct rt_brep_prep_stats stats = {};
+    if (!_rt_brep_prep_stats(stp, &stats) ||
+	    stats.surface_tree_depth_limit != brep_test_surface_tree_depth ||
+	    !stats.surface_tree_nodes || !stats.surface_tree_leaves)
+	return false;
+    brep_test_prep_totals.solids++;
+    brep_test_prep_totals.surface_nodes += stats.surface_tree_nodes;
+    brep_test_prep_totals.surface_leaves += stats.surface_tree_leaves;
+    brep_test_prep_totals.curve_trees += stats.curve_trees;
+    brep_test_prep_totals.curve_leaves += stats.curve_tree_leaves;
+    brep_test_prep_totals.build_microseconds +=
+	stats.surface_tree_build_microseconds;
+    brep_test_prep_totals.maximum_depth = std::max(
+	brep_test_prep_totals.maximum_depth,
+	stats.surface_tree_maximum_depth);
+    return true;
+}
+
+
+static void
+record_brep_test_rtip(struct rt_i *rtip)
+{
+    if (!rtip)
+	return;
+    struct soltab *stp;
+    RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
+	if (stp->st_id == ID_BREP)
+	    (void)record_brep_test_prep(stp);
+    } RT_VISIT_ALL_SOLTABS_END;
+}
+
+
+static void
+report_brep_test_prep()
+{
+    std::printf("BREP SurfaceTree prep: depth-limit=%d solids=%zu "
+	"nodes/leaves=%zu/%zu max-depth=%d curve-trees/leaves=%zu/%zu "
+	"build-seconds=%.6f\n", brep_test_surface_tree_depth,
+	brep_test_prep_totals.solids, brep_test_prep_totals.surface_nodes,
+	brep_test_prep_totals.surface_leaves,
+	brep_test_prep_totals.maximum_depth,
+	brep_test_prep_totals.curve_trees,
+	brep_test_prep_totals.curve_leaves,
+	brep_test_prep_totals.build_microseconds / 1000000.0);
+}
 
 
 struct partition_interval {
@@ -101,12 +168,28 @@ prep_solid(struct rt_i *rtip, struct rt_db_internal *intern, int type)
     stp->st_id = type;
     stp->st_meth = &OBJ[type];
 
+    if (type == ID_BREP &&
+	    !_rt_brep_set_surface_tree_depth(rtip,
+		brep_test_surface_tree_depth)) {
+	bu_free((void *)stp->st_dp, "direct ray test directory");
+	bu_free(stp, "direct ray test soltab");
+	return NULL;
+    }
     if (OBJ[type].ft_prep(stp, intern, rtip)) {
 	if (stp->st_specific && stp->st_meth && stp->st_meth->ft_free)
 	    stp->st_meth->ft_free(stp);
 	bu_free((void *)stp->st_dp, "direct ray test directory");
 	bu_free(stp, "direct ray test soltab");
 	return NULL;
+    }
+    if (type == ID_BREP) {
+	if (!record_brep_test_prep(stp)) {
+	    if (stp->st_specific && stp->st_meth && stp->st_meth->ft_free)
+		stp->st_meth->ft_free(stp);
+	    bu_free((void *)stp->st_dp, "direct ray test directory");
+	    bu_free(stp, "direct ray test soltab");
+	    return NULL;
+	}
     }
     return stp;
 }
@@ -189,12 +272,18 @@ prep_partition_model(prepared_model &model,
 	free_prepared_model(model);
 	return false;
     }
+    if (!_rt_brep_set_surface_tree_depth(model.rtip,
+	    brep_test_surface_tree_depth)) {
+	free_prepared_model(model);
+	return false;
+    }
     model.rtip->rti_tol = *tol;
     if (rt_gettree(model.rtip, name) < 0) {
 	free_prepared_model(model);
 	return false;
     }
     rt_prep_parallel(model.rtip, 1);
+    record_brep_test_rtip(model.rtip);
     rt_init_resource(&model.resp, 0, model.rtip);
     model.resource_initialized = true;
     return true;
@@ -265,10 +354,14 @@ prep_region_model(prepared_model &model, const char *region_name,
     model.rtip = rt_i_create(model.dbip);
     if (!model.rtip)
 	return false;
+    if (!_rt_brep_set_surface_tree_depth(model.rtip,
+	    brep_test_surface_tree_depth))
+	return false;
     model.rtip->rti_tol = *tol;
     if (rt_gettree(model.rtip, region_name) < 0)
 	return false;
     rt_prep_parallel(model.rtip, 1);
+    record_brep_test_rtip(model.rtip);
     rt_init_resource(&model.resp, 0, model.rtip);
     model.resource_initialized = true;
     return true;
@@ -16763,43 +16856,55 @@ int
 main(int argc, char **argv)
 {
     bu_setprogname(argv[0]);
-    const bool report_grazing = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--grazing-report");
-    const bool report_cobb = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--cobb-report");
-    const bool report_cobb_oblique = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--cobb-oblique-report");
-    const bool affine_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--affine-only");
-    const bool interval_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--interval-only");
-    const bool local_root_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--local-root-only");
-    const bool grazing_root_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--grazing-root-only");
-    const bool trim_interval_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--trim-interval-only");
-    const bool source_union_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--source-union-only");
-    const bool fold_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--fold-only");
-    const bool core_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--core-only");
-    const bool directed_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--directed-only");
-    const bool crofton_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--crofton-only");
-    const bool seam_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--seam-only");
-    const bool endpoint_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--endpoint-only");
-    const bool nonisoparametric_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--nonisoparametric-only");
-    const bool contact_trim_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--contact-trim-only");
-    const bool defect_only = argc == 2 &&
-	BU_STR_EQUAL(argv[1], "--defect-only");
-    if (argc != 1 && !report_grazing && !report_cobb &&
+    const char *mode = NULL;
+    const char depth_prefix[] = "--surface-tree-depth=";
+    for (int arg_index = 1; arg_index < argc; ++arg_index) {
+	if (strncmp(argv[arg_index], depth_prefix,
+		sizeof(depth_prefix) - 1) == 0) {
+	    brep_test_surface_tree_depth_requested = true;
+	    const char *value = argv[arg_index] + sizeof(depth_prefix) - 1;
+	    char *end = NULL;
+	    errno = 0;
+	    const long depth = strtol(value, &end, 10);
+	    if (errno || !end || end == value || *end || depth < 0 ||
+		    depth > BREP_MAX_FT_DEPTH)
+		bu_exit(1, "Invalid BREP SurfaceTree depth: %s\n", value);
+	    brep_test_surface_tree_depth = (int)depth;
+	} else if (!mode) {
+	    mode = argv[arg_index];
+	} else {
+	    mode = "--invalid";
+	}
+    }
+    if (brep_test_surface_tree_depth_requested)
+	std::atexit(report_brep_test_prep);
+    const bool report_grazing = mode &&
+	BU_STR_EQUAL(mode, "--grazing-report");
+    const bool report_cobb = mode && BU_STR_EQUAL(mode, "--cobb-report");
+    const bool report_cobb_oblique = mode &&
+	BU_STR_EQUAL(mode, "--cobb-oblique-report");
+    const bool affine_only = mode && BU_STR_EQUAL(mode, "--affine-only");
+    const bool interval_only = mode && BU_STR_EQUAL(mode, "--interval-only");
+    const bool local_root_only = mode &&
+	BU_STR_EQUAL(mode, "--local-root-only");
+    const bool grazing_root_only = mode &&
+	BU_STR_EQUAL(mode, "--grazing-root-only");
+    const bool trim_interval_only = mode &&
+	BU_STR_EQUAL(mode, "--trim-interval-only");
+    const bool source_union_only = mode &&
+	BU_STR_EQUAL(mode, "--source-union-only");
+    const bool fold_only = mode && BU_STR_EQUAL(mode, "--fold-only");
+    const bool core_only = mode && BU_STR_EQUAL(mode, "--core-only");
+    const bool directed_only = mode && BU_STR_EQUAL(mode, "--directed-only");
+    const bool crofton_only = mode && BU_STR_EQUAL(mode, "--crofton-only");
+    const bool seam_only = mode && BU_STR_EQUAL(mode, "--seam-only");
+    const bool endpoint_only = mode && BU_STR_EQUAL(mode, "--endpoint-only");
+    const bool nonisoparametric_only = mode &&
+	BU_STR_EQUAL(mode, "--nonisoparametric-only");
+    const bool contact_trim_only = mode &&
+	BU_STR_EQUAL(mode, "--contact-trim-only");
+    const bool defect_only = mode && BU_STR_EQUAL(mode, "--defect-only");
+    if (mode && !report_grazing && !report_cobb &&
 	    !report_cobb_oblique && !affine_only &&
 	    !interval_only && !local_root_only && !grazing_root_only &&
 	    !trim_interval_only &&
@@ -16816,8 +16921,9 @@ main(int argc, char **argv)
 	    "--source-union-only|--fold-only|"
 	    "--core-only|"
 	    "--directed-only|--crofton-only|--seam-only|--endpoint-only|"
-	    "--nonisoparametric-only|--contact-trim-only|--defect-only]\n",
-	    argv[0]);
+	    "--nonisoparametric-only|--contact-trim-only|--defect-only] "
+	    "[--surface-tree-depth=0..%d]\n",
+	    argv[0], BREP_MAX_FT_DEPTH);
     if (interval_only) {
 	const int interval_failures = check_brep_interval_enclosures() +
 	    check_brep_local_root_solver() +

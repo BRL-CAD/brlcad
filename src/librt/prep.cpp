@@ -75,6 +75,7 @@ rt_i_internal_create(void)
     struct rt_i_internal *ip;
     BU_GET(ip, struct rt_i_internal);
     memset(ip, 0, sizeof(struct rt_i_internal));
+    ip->rti_brep_surface_tree_depth = RT_BREP_DEFAULT_SURFACE_TREE_DEPTH;
 
     for (int i=0; i < RT_DBNHASH; i++) {
 	BU_LIST_INIT(&(ip->rti_solidheads[i]));
