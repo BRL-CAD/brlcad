@@ -1642,9 +1642,125 @@ before and after the clustered event in this oriented 2D cross-section:
   * unchanged state is a tangent/contact and produces no transition.
 
 This symbolic local perturbation handles a ray exactly on the edge without
-depending on which face Newton happened to find.  It also works for convex
+ depending on which face Newton happened to find.  It also works for convex
 and concave manifold edges.  Vertex clusters use the cyclic fan of incident
 faces in the same spirit; unsupported/non-manifold fans fall back initially.
+
+6.3.1 Exact certified interior-edge theorem
+
+The first production realization of Section 6.3 resolves exact crossings of
+supported interior two-trim manifold edges.  It is deliberately an exact-line
+theorem, not a general permission to merge anything within model tolerance.
+The mathematical ray line must first contain a point on the topological edge
+within a coordinate-scaled binary64 roundoff envelope.  Only after that
+independent witness exists may the authorized edge envelope associate the
+redundant incident-surface roots.  This ordering is essential: model tolerance
+may explain representational disagreement at a known boundary, but must not
+move a ray onto a boundary it did not intersect.
+
+Evaluate every prepared edge in a fresh fixed-capacity observation record and
+require all of the following before considering a cluster:
+
+  1. The object is a non-plate solid and all face/span, surface-box, local-root,
+     trim, and workspace accounting is complete.  The topological edge has
+     exactly two trims, supported positive-weight rational data, certified
+     global edge/lift injectivity and orientation, and a completed conservative
+     gap proof whose class is strictly `SEAM_GAP_INSIDE`.  Sampled discrepancy
+     remains diagnostic and cannot authorize the theorem.
+
+  2. Evaluate the topological edge at its closest observed parameter, project
+     that point onto the ray, and require both the evaluated ray/edge distance
+     and direct point distance to fit
+
+         max(ON_ZERO_TOLERANCE,
+             4096 * DBL_EPSILON * coordinate_scale).
+
+     This is the exact line/edge witness.  Reject an edge point within the
+     declared edge envelope of either endpoint; the cyclic vertex theorem or
+     whole-ray fallback owns that neighborhood.
+
+  3. Construct the two oriented incident-face frames at the certified edge
+     parameter.  Project the ray into the plane normal to the edge tangent and
+     classify `-D_cross` as the state immediately before the event and
+     `+D_cross` as the state immediately after it.  The full oriented material
+     sector handles both convex and reflex/reentrant edges.  Outside-to-inside
+     is ENTER, inside-to-outside is LEAVE, and equal states are CONTACT.  A
+     direction on either sector boundary, tangent to either incident face, or
+     with an invalid frame remains unresolved.
+
+  4. Keep the strict witness tolerance and the wider association tolerance
+     separate.  The former is derived only from coordinate roundoff and is
+     used to require that every source terminal box actually contains the
+     exact topological ray parameter.  The latter is the authorized edge/lift
+     envelope converted to ray parameter and may associate corrected roots
+     whose representative `t` values differ because the trimmed surface
+     representations and iterative solves are not identical.  A nearby root
+     whose box does not enclose the exact parameter remains an independent
+     ordinary root; it is not swallowed by the edge cluster.
+
+  5. Every associated root must belong to an incident face, lie in the
+     authorized spatial and ray-parameter envelope, match a lifted trim frame,
+     have a finite non-tangent normal, and agree with the sector direction for
+     a transition.  Every matching terminal box must be either an unresolved
+     boundary candidate or an already Krawczyk-certified regular box.  A
+     regular box may be reclassified as boundary evidence only after the exact
+     topological proof succeeds.  Multiple roots and boxes from adjacent
+     Bezier spans or from the two trims of a periodic same-surface seam are
+     allowed when they independently enclose the same exact parameter and have
+     compatible directions.  Duplicate use of one root or box is forbidden.
+
+  6. Collect every disjoint exact edge cluster on the ray before mutation.
+     Conflicting observations, overlapping ownership, capacity exhaustion, an
+     unowned incident box covering an exact event, or an unowned local root
+     invalidates the complete attempt.  CONTACT clusters own their evidence
+     but emit no transition.  ENTER/LEAVE clusters append one immutable
+     `MANIFOLD_EDGE`/`CRACK_HIT` event at the topological edge parameter, with
+     edge identity, canonical root, representative box, total source-box
+     count, direction, and the union of source t intervals.
+
+  7. Resolve every remaining ordinary root and terminal box in the same
+     temporary transaction.  Several exactly duplicate local roots on one
+     face may form one ordinary event only when their face, direction,
+     hit/trim class, determinant orientation, and binary64-scale t identity
+     agree and every associated box has a regular Krawczyk certificate.
+     Clean outside groups own their boxes without emitting an event.  Any
+     other remainder invokes fallback.
+
+Only after all clusters and ordinary evidence are owned, the event stream
+passes the global {0,1} state machine, outward minimum-segment classifier, and
+fixed-workspace hit reconstruction, mark transition boxes
+`RESOLVED_BOUNDARY`, contact boxes `RESOLVED_CONTACT`, append the temporary
+events, and select the result atomically.  A failed attempt publishes neither
+dispositions nor events and runs the complete dense SurfaceTree path.
+
+The permanent directed gate converts an exact L-shaped implicit EXTRUDE to a
+BREP and checks three line families in both directions: two disjoint convex
+and reentrant edge transitions; a reentrant CONTACT between two outer
+transitions; and a mixed ordinary-face/edge stream.  A fourth line lies on an
+incident face-sector boundary and must publish no edge event or prepared
+partition; either an earlier conservative surface-work gate or the edge
+theorem itself may select whole-ray fallback.  Translation, arbitrary
+rotation plus translation, 0.01x similarity, and 10,000x similarity plus
+large translation repeat all three families with scaled model tolerances.  A
+converted rational sphere adds a periodic same-surface seam crossing with four
+independently converged incident roots/boxes and an unrelated ordinary exit.
+Tests reconstruct edge identity, before/after state, every source root and
+box, contact ownership, reversal, event counts, final partition, and analytic
+endpoints from immutable trace data rather than trusting production counters.
+
+The exact reentrant-contact line revealed a separate implicit EXTRUDE endpoint
+artifact: that primitive reports three hits and discards its last endpoint on
+this measure-zero line.  The permanent contact test therefore uses the exact
+analytic L-profile interval as its oracle while all transverse cases continue
+to compare the implicit EXTRUDE and converted BREP directly.
+
+This theorem does not yet authorize a ray merely near an edge, an arbitrary
+gap/overlap cluster whose source boxes do not enclose one exact topological
+parameter, a face-tangent sector boundary, a non-manifold edge, or an edge
+endpoint/curved-vertex neighborhood.  Those remain separately specified
+tolerance-near, overlap, contact, or vertex theorems.  The narrow paired
+continuation theorem below also remains independent because its emitted
+physical endpoints are not the intermediate topological edge parameter.
 
 6.4 Crack closure
 
@@ -2624,11 +2740,12 @@ Phase 4: Certified physical events and atomic solid assembly
   * Derive ordinary interior ENTER/LEAVE from bounded oriented determinant
     evidence and retain roots separately from resolved events.
 
-  * Integrate the certified same-face fold pair, manifold edge sectors, and
-    authorized crack continuation as distinct event theorems.  Integrate the
-    cyclic planar vertex theorem only through its complete topology,
-    orientation, winding, and ownership gate; leave curved and tolerance-near
-    fans for separate later theorems.
+  * Integrate the certified same-face fold pair, exact interior manifold-edge
+    theorem from Section 6.3.1, and authorized crack continuation as distinct
+    event theorems.  Keep non-exact tolerance-near edge closure separate from
+    the exact line witness.  Integrate the cyclic planar vertex theorem only
+    through its complete topology, orientation, winding, and ownership gate;
+    leave curved and tolerance-near fans for separate later theorems.
 
   * Replace destructive hit cleanup with topology-first event clustering,
     outward minimum-segment classification, and state-machine solid assembly.
