@@ -185,6 +185,7 @@ brlcad_add_test(
   NAME rt_brep_ray_local_root
   COMMAND rt_brep_ray --local-root-only
 )
+brlcad_add_test(NAME rt_brep_ray_cleanup COMMAND rt_brep_ray --cleanup-only)
 brlcad_add_test(
   NAME rt_brep_ray_grazing_root
   COMMAND rt_brep_ray --grazing-root-only

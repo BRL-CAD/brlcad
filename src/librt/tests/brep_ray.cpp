@@ -833,6 +833,160 @@ report_pole_trace(const char *label, const struct rt_brep_shot_trace &trace)
 
 
 static int
+check_brep_direction_cleanup()
+{
+    const fastf_t forward_distances[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+    const int forward_signs[] = {-1, -1, -1, 1, 1, 1};
+    fastf_t forward_retained[6] = {};
+    const size_t forward_count = _rt_brep_direction_cleanup_test(
+	forward_distances, forward_signs, 6, 0.0, forward_retained, 6);
+    if (forward_count != 2 ||
+	    !NEAR_EQUAL(forward_retained[0], 1.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(forward_retained[1], 6.0, SMALL_FASTF)) {
+	std::printf("FAIL: BREP direction cleanup forward count=%zu "
+	    "retained=[%.17g %.17g]\n", forward_count,
+	    forward_retained[0], forward_retained[1]);
+	return 1;
+    }
+
+    const fastf_t reverse_distances[] = {4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
+    const int reverse_signs[] = {-1, -1, -1, 1, 1, 1};
+    fastf_t reverse_retained[6] = {};
+    const size_t reverse_count = _rt_brep_direction_cleanup_test(
+	reverse_distances, reverse_signs, 6, 0.0, reverse_retained, 6);
+    const double chord_length = 10.0;
+    if (reverse_count != 2 ||
+	    !NEAR_EQUAL(reverse_retained[0], 4.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(reverse_retained[1], 9.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(reverse_retained[0],
+		chord_length - forward_retained[1], SMALL_FASTF) ||
+	    !NEAR_EQUAL(reverse_retained[1],
+		chord_length - forward_retained[0], SMALL_FASTF)) {
+	std::printf("FAIL: BREP direction cleanup reverse count=%zu "
+	    "retained=[%.17g %.17g]\n", reverse_count,
+	    reverse_retained[0], reverse_retained[1]);
+	return 1;
+    }
+
+    const fastf_t odd_forward_distances[] = {1.0, 2.0, 3.0};
+    const int odd_forward_signs[] = {-1, 1, -1};
+    fastf_t odd_forward_retained[3] = {};
+    const size_t odd_forward_count = _rt_brep_direction_cleanup_test(
+	odd_forward_distances, odd_forward_signs, 3,
+	0.0, odd_forward_retained, 3);
+    const fastf_t odd_reverse_distances[] = {7.0, 8.0, 9.0};
+    const int odd_reverse_signs[] = {1, -1, 1};
+    fastf_t odd_reverse_retained[3] = {};
+    const size_t odd_reverse_count = _rt_brep_direction_cleanup_test(
+	odd_reverse_distances, odd_reverse_signs, 3,
+	0.0, odd_reverse_retained, 3);
+    if (odd_forward_count != 2 || odd_reverse_count != 2 ||
+	    !NEAR_EQUAL(odd_forward_retained[0], 1.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(odd_forward_retained[1], 2.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(odd_reverse_retained[0], 8.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(odd_reverse_retained[1], 9.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(odd_reverse_retained[0],
+		chord_length - odd_forward_retained[1], SMALL_FASTF) ||
+	    !NEAR_EQUAL(odd_reverse_retained[1],
+		chord_length - odd_forward_retained[0], SMALL_FASTF)) {
+	std::printf("FAIL: BREP odd direction cleanup forward=%zu "
+	    "[%.17g %.17g] reverse=%zu [%.17g %.17g]\n",
+	    odd_forward_count, odd_forward_retained[0],
+	    odd_forward_retained[1], odd_reverse_count,
+	    odd_reverse_retained[0], odd_reverse_retained[1]);
+	return 1;
+    }
+
+    /* This is the imported-bearing pattern: incomplete exterior events
+     * bracket two nested entries and exits.  The unmatched ends are ignored
+     * and the nonzero-winding union interval is reversal invariant. */
+    const fastf_t bracketed_distances[] =
+	{1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+    const int bracketed_signs[] = {1, -1, -1, 1, 1, -1};
+    fastf_t bracketed_retained[6] = {};
+    const size_t bracketed_count = _rt_brep_direction_cleanup_test(
+	bracketed_distances, bracketed_signs, 6, 0.0,
+	bracketed_retained, 6);
+    const double bracketed_chord = 7.0;
+    if (bracketed_count != 2 ||
+	    !NEAR_EQUAL(bracketed_retained[0], 2.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(bracketed_retained[1], 5.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(bracketed_retained[0],
+		bracketed_chord - bracketed_retained[1], SMALL_FASTF) ||
+	    !NEAR_EQUAL(bracketed_retained[1],
+		bracketed_chord - bracketed_retained[0], SMALL_FASTF)) {
+	std::printf("FAIL: BREP bracketed direction cleanup count=%zu "
+	    "retained=[%.17g %.17g]\n", bracketed_count,
+	    bracketed_retained[0], bracketed_retained[1]);
+	return 1;
+    }
+
+    const fastf_t clustered_forward_distances[] =
+	{1.0, 2.0, 2.0002, 4.0};
+    const int clustered_forward_signs[] = {-1, 1, 1, -1};
+    fastf_t clustered_forward_retained[4] = {};
+    const size_t clustered_forward_count =
+	_rt_brep_direction_cleanup_test(clustered_forward_distances,
+	    clustered_forward_signs, 4, 0.001,
+	    clustered_forward_retained, 4);
+    const fastf_t clustered_reverse_distances[] =
+	{1.0, 2.9998, 3.0, 4.0};
+    const int clustered_reverse_signs[] = {1, -1, -1, 1};
+    fastf_t clustered_reverse_retained[4] = {};
+    const size_t clustered_reverse_count =
+	_rt_brep_direction_cleanup_test(clustered_reverse_distances,
+	    clustered_reverse_signs, 4, 0.001,
+	    clustered_reverse_retained, 4);
+    const double clustered_chord = 5.0;
+    if (clustered_forward_count != 2 || clustered_reverse_count != 2 ||
+	    !NEAR_EQUAL(clustered_forward_retained[0], 1.0,
+		SMALL_FASTF) ||
+	    !NEAR_EQUAL(clustered_forward_retained[1], 2.0002,
+		SMALL_FASTF) ||
+	    !NEAR_EQUAL(clustered_reverse_retained[0], 2.9998,
+		SMALL_FASTF) ||
+	    !NEAR_EQUAL(clustered_reverse_retained[1], 4.0,
+		SMALL_FASTF) ||
+	    !NEAR_EQUAL(clustered_reverse_retained[0], clustered_chord -
+		clustered_forward_retained[1], SMALL_FASTF) ||
+	    !NEAR_EQUAL(clustered_reverse_retained[1], clustered_chord -
+		clustered_forward_retained[0], SMALL_FASTF)) {
+	std::printf("FAIL: BREP clustered direction cleanup forward=%zu "
+	    "[%.17g %.17g] reverse=%zu [%.17g %.17g]\n",
+	    clustered_forward_count, clustered_forward_retained[0],
+	    clustered_forward_retained[1], clustered_reverse_count,
+	    clustered_reverse_retained[0], clustered_reverse_retained[1]);
+	return 1;
+    }
+
+    const fastf_t witness_forward_distances[] = {1.0, 1.0002};
+    const int witness_forward_signs[] = {-1, -1};
+    fastf_t witness_forward_retained[2] = {};
+    const size_t witness_forward_count = _rt_brep_direction_cleanup_test(
+	witness_forward_distances, witness_forward_signs, 2, 0.001,
+	witness_forward_retained, 2);
+    const fastf_t witness_reverse_distances[] = {3.9998, 4.0};
+    const int witness_reverse_signs[] = {1, 1};
+    fastf_t witness_reverse_retained[2] = {};
+    const size_t witness_reverse_count = _rt_brep_direction_cleanup_test(
+	witness_reverse_distances, witness_reverse_signs, 2, 0.001,
+	witness_reverse_retained, 2);
+    if (witness_forward_count != 1 || witness_reverse_count != 1 ||
+	    !NEAR_EQUAL(witness_forward_retained[0], 1.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(witness_reverse_retained[0], 4.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(witness_reverse_retained[0],
+		clustered_chord - witness_forward_retained[0], SMALL_FASTF)) {
+	std::printf("FAIL: BREP closure witness cleanup forward=%zu "
+	    "[%.17g] reverse=%zu [%.17g]\n", witness_forward_count,
+	    witness_forward_retained[0], witness_reverse_count,
+	    witness_reverse_retained[0]);
+	return 1;
+    }
+    return 0;
+}
+
+
+static int
 check_pole_prepared_trace(const char *label, struct soltab *brep_stp,
     struct rt_i *rtip, struct resource *resp, const point_t origin,
     const vect_t direction, double expected_in, double expected_out,
@@ -4911,6 +5065,52 @@ check_crofton_hard_case_corpus(const struct bn_tol *tol,
     }
     free_prepared_model(union_brep_model);
     free_prepared_model(union_implicit_model);
+
+    point_t overlap_left_center = {-3.0, 0.0, 0.0};
+    point_t overlap_right_center = {3.0, 0.0, 0.0};
+    init_sphere_internal(left_sphere, left_intern, overlap_left_center, 5.0);
+    init_sphere_internal(right_sphere, right_intern, overlap_right_center,
+	5.0);
+    ON_Brep *left_brep = ON_Brep::New();
+    ON_Brep *right_brep = ON_Brep::New();
+    OBJ[ID_ELL].ft_brep(&left_brep, &left_intern, tol);
+    OBJ[ID_ELL].ft_brep(&right_brep, &right_intern, tol);
+    if (left_brep && right_brep)
+	left_brep->Append(*right_brep);
+    delete right_brep;
+    struct rt_brep_internal combined_internal = {};
+    combined_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    combined_internal.brep = left_brep;
+    struct rt_db_internal combined_intern;
+    RT_DB_INTERNAL_INIT(&combined_intern);
+    combined_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    combined_intern.idb_type = ID_BREP;
+    combined_intern.idb_meth = &OBJ[ID_BREP];
+    combined_intern.idb_ptr = &combined_internal;
+    prepared_model overlap_implicit_model;
+    prepared_model overlap_combined_model;
+    if (!left_brep || !left_brep->IsValid() || !left_brep->IsSolid() ||
+	    !prep_binary_csg_model(overlap_implicit_model, &left_intern,
+		&right_intern, WMOP_UNION, tol, false) ||
+	    !prep_partition_model(overlap_combined_model, &combined_intern,
+		"hard_combined_overlap_brep.s", tol)) {
+	std::printf("FAIL: combined overlapping-sphere BREP preparation\n");
+	failures++;
+    } else {
+	const directed_partition_ray overlap_rays[] = {
+	    {"merged shell interval", {-20.0, 0.0, 0.0},
+		{1.0, 0.0, 0.0}, 1, {12.0, 28.0}},
+	    {"merged shell interval reverse", {20.0, 0.0, 0.0},
+		{-1.0, 0.0, 0.0}, 1, {12.0, 28.0}}
+	};
+	failures += replay_directed_crofton_rays(
+	    "combined-overlapping-sphere-union", overlap_implicit_model,
+	    overlap_combined_model, tol, overlap_rays,
+	    sizeof(overlap_rays) / sizeof(overlap_rays[0]));
+    }
+    free_prepared_model(overlap_combined_model);
+    free_prepared_model(overlap_implicit_model);
+    delete left_brep;
 
     return failures;
 }
@@ -17659,6 +17859,7 @@ main(int argc, char **argv)
     const bool interval_only = mode && BU_STR_EQUAL(mode, "--interval-only");
     const bool local_root_only = mode &&
 	BU_STR_EQUAL(mode, "--local-root-only");
+    const bool cleanup_only = mode && BU_STR_EQUAL(mode, "--cleanup-only");
     const bool grazing_root_only = mode &&
 	BU_STR_EQUAL(mode, "--grazing-root-only");
     const bool trim_interval_only = mode &&
@@ -17683,7 +17884,8 @@ main(int argc, char **argv)
     const bool defect_only = mode && BU_STR_EQUAL(mode, "--defect-only");
     if (mode && !report_grazing && !report_cobb &&
 	    !report_cobb_oblique && !affine_only &&
-	    !interval_only && !local_root_only && !grazing_root_only &&
+	    !interval_only && !local_root_only && !cleanup_only &&
+	    !grazing_root_only &&
 	    !trim_interval_only &&
 	    !source_union_only &&
 	    !fold_only && !core_only && !pole_only &&
@@ -17693,7 +17895,7 @@ main(int argc, char **argv)
 	    !nonisoparametric_only && !contact_trim_only && !defect_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
 	    "--cobb-oblique-report|"
-	    "--affine-only|--interval-only|--local-root-only|"
+	    "--affine-only|--interval-only|--local-root-only|--cleanup-only|"
 	    "--grazing-root-only|"
 	    "--trim-interval-only|"
 	    "--source-union-only|--fold-only|"
@@ -17716,6 +17918,8 @@ main(int argc, char **argv)
     if (local_root_only)
 	return (check_brep_local_root_solver() +
 	    check_brep_weighted_local_root_solver()) ? 1 : 0;
+    if (cleanup_only)
+	return check_brep_direction_cleanup() ? 1 : 0;
     if (trim_interval_only)
 	return check_brep_trim_interval_solver() ? 1 : 0;
     if (source_union_only)
@@ -17867,6 +18071,7 @@ main(int argc, char **argv)
 	failures += check_brep_source_union_solver();
 	failures += check_brep_trim_interval_solver();
 	failures += check_brep_fold_solver();
+	failures += check_brep_direction_cleanup();
     }
     if (run_directed) {
 	for (size_t repeat = 0; repeat < 16; ++repeat) {

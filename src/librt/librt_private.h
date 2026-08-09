@@ -1386,8 +1386,15 @@ RT_EXPORT extern int _rt_brep_fold_interval_test(
     const fastf_t lower[2], const fastf_t upper[2],
     const fastf_t direction[3], fastf_t model_tolerance,
     struct rt_brep_fold_interval_test_result *result);
+RT_EXPORT extern size_t _rt_brep_direction_cleanup_test(
+    const fastf_t *distances, const int *normal_signs, size_t count,
+    fastf_t distance_tolerance, fastf_t *retained_distances,
+    size_t retained_capacity);
 
 RT_EXPORT extern int _rt_brep_shot_trace(
+    struct soltab *stp, struct xray *rp, struct application *ap,
+    struct seg *seghead, struct rt_brep_shot_trace *trace);
+RT_EXPORT extern int _rt_brep_shot_legacy_trace(
     struct soltab *stp, struct xray *rp, struct application *ap,
     struct seg *seghead, struct rt_brep_shot_trace *trace);
 RT_EXPORT extern int _rt_brep_shot_legacy(
