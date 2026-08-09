@@ -14,12 +14,17 @@ brlcad_add_test(NAME brep_cdt_hole_face17 COMMAND test_brep_cdt_hole_face17)
 brlcad_addexec(test_brep_cdt_hole_face27 brep_cdt_hole_face27.c "libbg;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME brep_cdt_hole_face27 COMMAND test_brep_cdt_hole_face27)
 
+brlcad_addexec(test_brep_cdt_invalid brep_cdt_invalid.cpp "libbrep;libbu" TEST)
+brlcad_add_test(NAME brep_cdt_invalid COMMAND test_brep_cdt_invalid)
+set_tests_properties(brep_cdt_invalid PROPERTIES TIMEOUT 10)
+
 brlcad_addexec(test_pullback_context pullback_context.cpp "libbrep;Threads::Threads" TEST)
 brlcad_add_test(NAME brep_pullback_context COMMAND test_pullback_context)
 
 cmakefiles(
   CMakeLists.txt
   ayam_hyperbolid.3dm
+  brep_cdt_invalid.cpp
   brep_cdt_hole_face17.c
   brep_cdt_hole_face27.c
   brep_cdt_mesh.cpp

@@ -392,6 +392,43 @@ set_if_unset GED mged
 set_if_unset SEARCH $GED
 set_if_unset MAXTIME 300
 
+# Run database commands from the input database's directory.  Some primitive
+# types resolve external data files relative to the process working directory,
+# so running from the report directory can make valid DSP, EBM, and VOL inputs
+# appear to be missing.
+in_file_dir ( ) {
+    (cd "$file_dir" && "$@")
+}
+
+# Kill children before their parent so a facetize subprocess cannot be
+# orphaned while retaining the output pipe the caller is waiting to drain.
+kill_process_tree ( ) (
+    tree_pid="$1"
+    tree_children=`ps -eo pid=,ppid= | awk -v parent="$tree_pid" '$2 == parent {print $1}'`
+    for tree_child in $tree_children ; do
+	kill_process_tree "$tree_child"
+    done
+    kill -9 "$tree_pid" >/dev/null 2>&1
+)
+
+start_limit_timer ( ) {
+    timer_command="$1"
+    timer_match="$2"
+    timer_marker="$3"
+    {
+	sleep $MAXTIME
+	timer_pids=`ps auxwww | grep "$work" | grep "$timer_command" | grep "$timer_match" | grep -v grep | awk '{print $2}'`
+	if test "x$timer_pids" != "x" ; then
+	    rm -f "$timer_marker"
+	    touch "$timer_marker"
+	    for timer_pid in $timer_pids ; do
+		kill_process_tree "$timer_pid"
+	    done
+	fi
+    } 2>/dev/null &
+    spid=$!
+}
+
 # commands that this script expects, make sure we can find MGED
 MGED="`which $GED`"
 if test ! -f "$MGED" ; then
@@ -426,14 +463,13 @@ nmg_facetize ( ) {
     # leaving orphaned 'sleep' processes that accumulate, this
     # method had to be executed in the current shell environment.
 
-    { sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && rm -f "./${obj}.nmg.timeout" && touch "./${obj}.nmg.timeout" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-    spid=$!
+    start_limit_timer facetize "${obj}.nmg" "./${obj}.nmg.timeout"
 
     # convert NMG
     nmg=$fail
-    cmd="$GED -c \"$work\" facetize -n \"${obj}.nmg\" \"${obj}\""
+    cmd="(cd \"$file_dir\" && \"$GED\" -c \"$work\" facetize -n \"${obj}.nmg\" \"${obj}\")"
     $VERBOSE_ECHO "\$ $cmd"
-    output=`eval time -p "$cmd" 2>&1 | grep -v Using`
+    output=`time -p sh -c 'cd "$1" && shift && exec "$@"' conversion.sh "$file_dir" "$GED" -c "$work" facetize -n "${obj}.nmg" "${obj}" 2>&1 | grep -v Using`
 
     # stop the limit timer.  when we get here, see if there is a
     # sleep process still running.  if any found, the sleep
@@ -454,7 +490,7 @@ nmg_facetize ( ) {
     real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
     # verify NMG
-    found=`$SGED -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
+    found=`in_file_dir "$SGED" -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
     if test "x$found" = "x${object}.nmg" ; then
         nmg=$pass
         nmg_pass_count=`expr $nmg_pass_count + 1`
@@ -469,14 +505,13 @@ bot_facetize ( ) {
     obj="$1" ; shift
 
     # start the limit timer
-    { sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && rm -f "./${obj}.bot.timeout" && touch "./${obj}.bot.timeout" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-    spid=$!
+    start_limit_timer facetize "${obj}.bot" "./${obj}.bot.timeout"
 
     # convert BoT
     bot=$fail
-    cmd="$GED -c \"$work\" facetize \"${obj}.bot\" \"${obj}\""
+    cmd="(cd \"$file_dir\" && \"$GED\" -c \"$work\" facetize \"${obj}.bot\" \"${obj}\")"
     $VERBOSE_ECHO "\$ $cmd"
-    output=`eval time -p "$cmd" 2>&1 | grep -v Using`
+    output=`time -p sh -c 'cd "$1" && shift && exec "$@"' conversion.sh "$file_dir" "$GED" -c "$work" facetize "${obj}.bot" "${obj}" 2>&1 | grep -v Using`
 
     # stop the limit timer
     for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
@@ -492,7 +527,7 @@ bot_facetize ( ) {
     real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
     # verify BoT
-    found=`$SGED -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
+    found=`in_file_dir "$SGED" -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
     if test "x$found" = "x${object}.bot" ; then
         bot=$pass
         bot_pass_count=`expr $bot_pass_count + 1`
@@ -507,14 +542,13 @@ brep_facetize ( ) {
     obj="$1" ; shift
 
     # start the limit timer
-    { sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'`" != "x" && rm -f "./${obj}.brep.timeout" && touch "./${obj}.brep.timeout" && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-    spid=$!
+    start_limit_timer brep "${obj}.brep" "./${obj}.brep.timeout"
 
     # convert Brep
     brep=$fail
-    cmd="$GED -c \"$work\" brep \"${obj}\" brep \"${obj}.brep\""
+    cmd="(cd \"$file_dir\" && \"$GED\" -c \"$work\" brep \"${obj}\" brep \"${obj}.brep\")"
     $VERBOSE_ECHO "\$ $cmd"
-    output=`eval time -p "$cmd" 2>&1 | grep -v Using`
+    output=`time -p sh -c 'cd "$1" && shift && exec "$@"' conversion.sh "$file_dir" "$GED" -c "$work" brep "${obj}" brep "${obj}.brep" 2>&1 | grep -v Using`
 
     # stop the limit timer
     for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
@@ -530,7 +564,7 @@ brep_facetize ( ) {
     real_brep="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
     # verify Brep
-    found=`$SGED -c "$work" search . -name \"${obj}.brep\" 2>&1 | grep -v Using`
+    found=`in_file_dir "$SGED" -c "$work" search . -name \"${obj}.brep\" 2>&1 | grep -v Using`
     if [ -e "./${obj}.brep.timeout" ] ; then
         rm -f "./${obj}.brep.timeout"
         brep=$time
@@ -540,7 +574,7 @@ brep_facetize ( ) {
         brep_pass_count=`expr $brep_pass_count + 1`
     else
         # (unconfirmed) what results when brep-evaluating comb objects
-        found2=`$SGED -c "$work" search . -name \"${obj}.${obj}.brep\" 2>&1 | grep -v Using`
+        found2=`in_file_dir "$SGED" -c "$work" search . -name \"${obj}.${obj}.brep\" 2>&1 | grep -v Using`
         if test "x$found2" = "x${object}.${object}.brep" ; then
            brep=$pass
            brep_pass_count=`expr $brep_pass_count + 1`
@@ -634,6 +668,13 @@ while test $# -gt 0 ; do
 	continue
     fi
 
+    # Use an absolute database path so changing to its directory does not
+    # change which file database commands operate on.
+    file_dir=`dirname "$file"`
+    file_name=`basename "$file"`
+    file_dir=`cd "$file_dir" && pwd`
+    file="$file_dir/$file_name"
+
     work="${file}.conversion.g"
     cmd="cp \"$file\" \"$work\""
     $VERBOSE_ECHO "\$ $cmd"
@@ -641,7 +682,7 @@ while test $# -gt 0 ; do
 
     # execute in a coprocess
     if test "x$OBJECTS" = "x" ; then OBJECTS='-print' ; fi
-    cmd="$SGED -c \"$work\" search $OPATH $OBJECTS"
+    cmd="in_file_dir \"$SGED\" -c \"$work\" search $OPATH $OBJECTS"
     objects=`eval "$cmd" 2>&1 | grep -v Using`
     $VERBOSE_ECHO "\$ $cmd"
     $VERBOSE_ECHO "$objects"
@@ -658,15 +699,15 @@ EOF
     while read object ; do
 
 	obj="`basename \"$object\"`"
-	found=`$SGED -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
+	found=`in_file_dir "$SGED" -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
 	if test "x$found" != "x$object" ; then
 	    $ECHO "INTERNAL ERROR: Failed to find [$object] with [$obj] (got [$found])\n"
 	    continue
 	fi
-	object_type=`$SGED -c "$work" db get_type \"${obj}\" 2>&1 | grep -v Using`
+	object_type=`in_file_dir "$SGED" -c "$work" db get_type \"${obj}\" 2>&1 | grep -v Using`
 	if test "x$object_type" = "xcomb" ; then
 	    # identify regions specifically
-	    region=`$SGED -c "$work" get \"${obj}\" region 2>&1 | grep -v Using`
+	    region=`in_file_dir "$SGED" -c "$work" get \"${obj}\" region 2>&1 | grep -v Using`
 	    if test "x$region" = "xyes" ; then
 		object_type="region"
 		reg_count=`expr $reg_count + 1`
@@ -677,17 +718,17 @@ EOF
 
 	if ([ $TEST_NMG -eq 1 ]) ;
 	then
-	    nmg_facetize ${obj}
+	    nmg_facetize "${obj}"
 	fi
 
 	if ([ $TEST_BOT -eq 1 ]) ;
 	then
-	    bot_facetize ${obj}
+	    bot_facetize "${obj}"
 	fi
 
 	if ([ $TEST_BREP -eq 1 ]) ;
 	then
-	    brep_facetize ${obj}
+	    brep_facetize "${obj}"
 	fi
 
 	# calculate stats for this object
@@ -749,8 +790,17 @@ else
     nmg_percent=`echo $nmg_pass_count $obj_count | awk '{print ($1/$2)*100.0}'`
     bot_percent=`echo $bot_pass_count $obj_count | awk '{print ($1/$2)*100.0}'`
     brep_percent=`echo $brep_pass_count $obj_count | awk '{print ($1/$2)*100.0}'`
-    prim_percent=`echo $prim_pass_count $prim_count | awk '{print ($1/$2)*100.0}'`
-    reg_percent=`echo $reg_pass_count $reg_count | awk '{print ($1/$2)*100.0}'`
+
+    if test $prim_count -eq 0 ; then
+	prim_percent=0
+    else
+	prim_percent=`echo $prim_pass_count $prim_count | awk '{print ($1/$2)*100.0}'`
+    fi
+    if test $reg_count -eq 0 ; then
+	reg_percent=0
+    else
+	reg_percent=`echo $reg_pass_count $reg_count | awk '{print ($1/$2)*100.0}'`
+    fi
 
     # this is the individual obj->nmg+bot+brep conversion rate
     # rate=`echo $nmg_count $bot_count $brep_count $obj_count | awk '{print ($1+$2+$3)/($4+$4+$4)*100.0}'`

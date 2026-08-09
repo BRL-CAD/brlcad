@@ -359,7 +359,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     ON_TextLog vout(wonstr);
     if (!s_cdt->orig_brep->IsValid(&vout)) {
 	bu_log("brep is NOT valid, cannot produce watertight mesh\n");
-	//return -1;
+	return -1;
     }
 
     // For now, edges must have 2 and only 2 trims for this to work.
@@ -815,4 +815,3 @@ CDT_Audit(struct ON_Brep_CDT_State *s_cdt)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
