@@ -2736,16 +2736,36 @@ material-sector, order, and minimum-segment obligation described above.
 Ordinary model-tolerance contacts and all zero-miss paths retain their prior
 logic and must report no local-certificate ledger.
 
-The permanent C/C++ corpus contains three affine boundary roots and three
-nearby quadratic root pairs at equation scales `2^-100`, `1`, and `2^100`,
-plus multi-root, singular, uncertain-coefficient, invalid-input, and explicit
-tube-containment rejection controls.  The real Cobb replay extracts the
-actual prepared projected coefficient intervals for all sixteen
-similarity/reversal cases.  Every real miss certifies in one radius attempt,
-crosses the analytic span boundary, excludes the neighboring root, retains
-positive rational weight, and bounds the full image inside both tubes.  Keep
-these difficult systems as a ratchet before generalizing the local theorem to
-other seam, vertex, or grazing policies.  Register the arithmetic corpus as
+The permanent C/C++ arithmetic corpus begins with three affine boundary roots
+and three nearby quadratic root pairs at equation scales `2^-100`, `1`, and
+`2^100`, plus multi-root, singular, uncertain-coefficient, invalid-input, and
+explicit tube-containment rejection controls.  Its next conditioning layer
+contains a degree-elevated bi-affine order-9-by-9 system, a coupled
+degree-15-by-7 system whose root lies just beyond the support boundary, and
+two nearly singular affine systems whose Jacobian determinants are `2^-20`
+and `2^-40`.  These make thirteen classified systems: ten unique-root
+certificates and three deliberate fail-closed results.  All positive cases
+must certify in one radius attempt without capacity exhaustion.
+
+Exercise the rational model-image half of the theorem through actual prepared
+surfaces as well as extracted coefficient arrays.  A rational bilinear face
+with equal weights, the same face with a `2^20` control-weight ratio and
+reversed ray, and that weighted face after `10,000x` scale plus large
+translation must all certify a boundary-crossing root, a positive weight
+interval, and a finite complete model-image bound.  This is a conditioning
+test, not authority for numerically singular parameterizations: a trial
+`2^400` weight ratio makes the current OpenNURBS midpoint-normal evaluation
+unavailable during SurfaceTree construction, before the local certificate is
+called.  Track that prep failure separately and do not weaken surface
+regularity or root-proof obligations to admit it.
+
+The real Cobb replay extracts the actual prepared projected coefficient
+intervals for all sixteen similarity/reversal cases.  Every real miss
+certifies in one radius attempt, crosses the analytic span boundary, excludes
+the neighboring root, retains positive rational weight, and bounds the full
+image inside both tubes.  Keep all of these difficult systems as a ratchet
+before generalizing the local theorem to other seam, vertex, or grazing
+policies.  Register the arithmetic and weighted-surface corpus as
 `rt_brep_ray_local_root`, include it in the exhaustive interval and unsharded
 compatibility processes, and keep the real production replay in
 `rt_brep_ray_contact_trim` so CTest can schedule both independently.
