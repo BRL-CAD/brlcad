@@ -1025,13 +1025,14 @@ brep_build_edge_data(struct brep_specific *bs, const struct bn_tol *tol)
 }
 
 
-/* Prep-time shadow certificate for the geometric seam gap.  For each
+/* Prep-time certificate for the geometric seam gap.  For each
  * incident face it bounds the symmetric Hausdorff separation between the
  * shared 3D edge locus and the surface-lifted trim locus.  Positive rational
- * Bezier control hulls bound both loci relative to endpoint chords.  These
- * fields are diagnostic only until exact-looking, unsupported, and exhausted
- * cases have complete fallback coverage; production authorization above
- * deliberately continues to use the established sampled policy. */
+ * Bezier control hulls bound both loci relative to endpoint chords.  A
+ * complete strict INSIDE result authorizes the edge corridor only after the
+ * global parameter correspondence and both topological endpoint contracts
+ * are also certified; unavailable, ambiguous, outside, and exhausted cases
+ * remain on fallback. */
 struct brep_trim_span {
     ON_BezierCurve curve;
     ON_Interval trim_domain;
@@ -1422,10 +1423,69 @@ brep_discrepancy_cell_bounds(const struct brep_specific *bs,
 }
 
 
+/* Nearest-point correspondence is not required to map a tolerance-displaced
+ * lifted trim endpoint back to the edge-domain endpoint.  Establish those two
+ * boundary pairs from BREP topology instead: orientation must select the same
+ * vertex, and both the 3-D edge endpoint and surface lift must satisfy that
+ * specific vertex's declared/model tolerance. */
+static bool
+brep_certify_edge_trim_endpoints(const struct brep_specific *bs,
+    const brep_edge_record &record, const ON_BrepEdge &edge,
+    const ON_BrepTrim &trim, double trim_parameter[2])
+{
+    if (!bs || !bs->brep || !trim_parameter ||
+	    edge.m_edge_index != record.edge_index ||
+	    trim.m_ei != edge.m_edge_index || !edge.Domain().IsIncreasing() ||
+	    !trim.Domain().IsIncreasing())
+	return false;
+    const ON_Brep &brep = *bs->brep;
+    const ON_Interval edge_domain = edge.Domain();
+    const ON_Interval trim_domain = trim.Domain();
+    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+	const int trim_endpoint = trim.m_bRev3d ? 1 - endpoint : endpoint;
+	const int vertex_index = edge.m_vi[endpoint];
+	if (vertex_index < 0 || vertex_index >= brep.m_V.Count() ||
+		trim.m_vi[trim_endpoint] != vertex_index)
+	    return false;
+	const ON_BrepVertex &vertex = brep.m_V[vertex_index];
+	const double vertex_tolerance =
+	    ON_IsValid(vertex.m_tolerance) && vertex.m_tolerance >= 0.0 ?
+	    std::max(record.model_tolerance, vertex.m_tolerance) :
+	    record.model_tolerance;
+	if (!ON_IsValid(vertex_tolerance) || vertex_tolerance < 0.0)
+	    return false;
+	trim_parameter[endpoint] = trim_endpoint ? trim_domain.Max() :
+	    trim_domain.Min();
+	const ON_3dPoint edge_point = edge.PointAt(endpoint ?
+	    edge_domain.Max() : edge_domain.Min());
+	ON_3dPoint trim_lift;
+	if (!vertex.point.IsValid() || !edge_point.IsValid() ||
+		!brep_trim_lift_at(trim, trim_parameter[endpoint], trim_lift,
+		    NULL))
+	    return false;
+	const double coordinate_scale = std::max(1.0,
+	    std::max(fabs(vertex.point.x), std::max(fabs(vertex.point.y),
+	    std::max(fabs(vertex.point.z), std::max(fabs(edge_point.x),
+	    std::max(fabs(edge_point.y), std::max(fabs(edge_point.z),
+	    std::max(fabs(trim_lift.x), std::max(fabs(trim_lift.y),
+		fabs(trim_lift.z))))))))));
+	const double roundoff = std::max(ON_ZERO_TOLERANCE,
+	    512.0 * DBL_EPSILON * coordinate_scale);
+	if (vertex.point.DistanceTo(edge_point) >
+		vertex_tolerance + roundoff ||
+	    vertex.point.DistanceTo(trim_lift) >
+		vertex_tolerance + roundoff)
+	    return false;
+    }
+    return true;
+}
+
+
 static bool
 brep_bound_edge_trim_discrepancy(const struct brep_specific *bs,
     const brep_edge_record &record, const ON_BrepEdge &edge,
-    const ON_BrepTrim &trim, double envelope, double target_width,
+    const ON_BrepTrim &trim, const double certified_endpoint[2],
+    double envelope, double target_width,
     size_t cell_budget, double &lower, double &upper, int &proof_class,
     size_t &cell_count, size_t &maximum_depth, bool &exhausted)
 {
@@ -1437,16 +1497,21 @@ brep_bound_edge_trim_discrepancy(const struct brep_specific *bs,
 	return false;
     std::vector<brep_discrepancy_cell> stack;
     stack.reserve(128);
+    const ON_Interval edge_domain = edge.Domain();
     const ON_Interval trim_domain = trim.Domain();
-    if (!trim_domain.IsIncreasing())
+    if (!edge_domain.IsIncreasing() || !trim_domain.IsIncreasing())
 	return false;
+    const double edge_parameter_tolerance = 512.0 * DBL_EPSILON *
+	std::max(1.0, std::max(fabs(edge_domain.Min()),
+	    fabs(edge_domain.Max())));
     const double parameter_tolerance = 512.0 * DBL_EPSILON *
 	std::max(1.0, std::max(fabs(trim_domain.Min()),
 	    fabs(trim_domain.Max())));
-    const double expected_start = trim.m_bRev3d ? trim_domain.Max() :
-	trim_domain.Min();
-    const double expected_end = trim.m_bRev3d ? trim_domain.Min() :
-	trim_domain.Max();
+    if (!certified_endpoint || !std::isfinite(certified_endpoint[0]) ||
+	    !std::isfinite(certified_endpoint[1]))
+	return false;
+    const double expected_start = certified_endpoint[0];
+    const double expected_end = certified_endpoint[1];
     double previous_end = expected_start;
     for (size_t span_index = record.span_begin;
 	    span_index < record.span_begin + record.span_count; ++span_index) {
@@ -1454,22 +1519,34 @@ brep_bound_edge_trim_discrepancy(const struct brep_specific *bs,
 	brep_discrepancy_cell cell;
 	cell.edge_curve = span.curve;
 	cell.edge_domain = span.edge_domain;
-	if (!brep_edge_trim_parameter(edge, trim, cell.edge_domain.Min(),
-		cell.trim_parameter[0]) ||
-		!brep_edge_trim_parameter(edge, trim, cell.edge_domain.Max(),
-		cell.trim_parameter[1]))
-	    return false;
+	cell.trim_parameter[0] = previous_end;
+	const bool final_span = span_index + 1 ==
+	    record.span_begin + record.span_count;
+	if (final_span) {
+	    cell.trim_parameter[1] = expected_end;
+	} else {
+	    const ON_Interval remaining_trim(
+		std::min(previous_end, expected_end),
+		std::max(previous_end, expected_end));
+	    if (!brep_edge_trim_parameter_in_domain(edge, trim,
+		    cell.edge_domain.Max(), remaining_trim, 33,
+		    cell.trim_parameter[1]))
+		return false;
+	}
 	const double directed_span = trim.m_bRev3d ?
 	    cell.trim_parameter[0] - cell.trim_parameter[1] :
 	    cell.trim_parameter[1] - cell.trim_parameter[0];
-	if (!(directed_span > 0.0) ||
-		fabs(cell.trim_parameter[0] - previous_end) >
-		parameter_tolerance)
+	if (!(directed_span > parameter_tolerance))
 	    return false;
 	previous_end = cell.trim_parameter[1];
 	stack.push_back(cell);
     }
-    if (stack.empty() || fabs(stack.front().trim_parameter[0] -
+    if (stack.empty() ||
+	    fabs(stack.front().edge_domain.Min() - edge_domain.Min()) >
+		edge_parameter_tolerance ||
+	    fabs(stack.back().edge_domain.Max() - edge_domain.Max()) >
+		edge_parameter_tolerance ||
+	    fabs(stack.front().trim_parameter[0] -
 	    expected_start) > parameter_tolerance ||
 	    fabs(previous_end - expected_end) > parameter_tolerance)
 	return false;
@@ -1628,6 +1705,7 @@ brep_bound_edge_discrepancies(struct brep_specific *bs)
 	size_t total_cells = 0;
 	size_t total_depth = 0;
 	bool complete = true;
+	size_t endpoint_certified_sides = 0;
 	int total_class = RT_BREP_SEAM_GAP_INSIDE;
 	for (int side = 0; side < 2; ++side) {
 	    const int trim_index = edge.m_ti[side];
@@ -1641,8 +1719,17 @@ brep_bound_edge_discrepancies(struct brep_specific *bs)
 	    size_t side_depth = 0;
 	    int side_class = RT_BREP_SEAM_GAP_UNAVAILABLE;
 	    bool side_exhausted = false;
+	    double endpoint_parameter[2] = {0.0, 0.0};
+	    const bool side_endpoints_certified =
+		brep_certify_edge_trim_endpoints(bs, record, edge,
+		    brep.m_T[trim_index], endpoint_parameter);
+	    if (!side_endpoints_certified) {
+		complete = false;
+		break;
+	    }
+	    endpoint_certified_sides++;
 	    if (!brep_bound_edge_trim_discrepancy(bs, record, edge,
-		    brep.m_T[trim_index], record.tolerance,
+		    brep.m_T[trim_index], endpoint_parameter, record.tolerance,
 		    record.discrepancy_bound_tolerance, remaining_cells,
 		    side_lower, side_upper, side_class, side_cells, side_depth,
 		    side_exhausted)) {
@@ -1666,6 +1753,8 @@ brep_bound_edge_discrepancies(struct brep_specific *bs)
 	}
 	record.discrepancy_bound_cells = total_cells;
 	record.discrepancy_bound_depth = total_depth;
+	record.discrepancy_endpoints_certified =
+	    endpoint_certified_sides == 2;
 	if (complete) {
 	    record.discrepancy_lower_bound = total_lower;
 	    record.discrepancy_upper_bound = total_upper;
@@ -9898,6 +9987,8 @@ brep_observe_edges(struct rt_brep_shot_trace *trace,
 	observation.discrepancy_bounded = record.discrepancy_bounded;
 	observation.discrepancy_bound_exhausted =
 	    record.discrepancy_bound_exhausted;
+	observation.discrepancy_endpoints_certified =
+	    record.discrepancy_endpoints_certified;
 	observation.discrepancy_sample_authorized =
 	    record.discrepancy_sample_authorized;
 	observation.discrepancy_proof_class = record.discrepancy_proof_class;
@@ -12532,6 +12623,7 @@ brep_edge_exact_line_witness(const struct brep_specific *bs,
 	    !observation.correspondence_screened ||
 	    !observation.correspondence_supported ||
 	    observation.correspondence_exhausted ||
+	    !observation.discrepancy_endpoints_certified ||
 	    !observation.discrepancy_bounded ||
 	    observation.discrepancy_bound_exhausted ||
 	    !observation.discrepancy_authorized ||
@@ -13342,6 +13434,7 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 		!observation->sector_valid || observation->closest_state != 1 ||
 		!observation->correspondence_supported ||
 		observation->correspondence_exhausted ||
+		!observation->discrepancy_endpoints_certified ||
 		!observation->discrepancy_bounded ||
 		observation->discrepancy_bound_exhausted ||
 		observation->discrepancy_proof_class !=
@@ -13817,10 +13910,47 @@ brep_trace_fold_physical_events(struct rt_brep_shot_trace *trace,
 
 
 static void
+brep_trace_regular_direction_counts(const struct rt_brep_shot_trace *trace,
+    size_t &entering, size_t &leaving)
+{
+    entering = 0;
+    leaving = 0;
+    if (!trace)
+	return;
+    for (size_t root_index = 0;
+	    root_index < trace->stored_local_roots; ++root_index) {
+	const struct rt_brep_trace_local_root &root =
+	    trace->local_roots[root_index];
+	if (root.trim_status == 1 ||
+		(root.hit_class != brep_hit::CLEAN_HIT &&
+		 root.hit_class != brep_hit::NEAR_HIT) ||
+		!std::isfinite(root.normal_dot) ||
+		fabs(root.normal_dot) <= BREP_GRAZING_DOT_TOL)
+	    continue;
+	if (root.direction == brep_hit::ENTERING)
+	    entering++;
+	else if (root.direction == brep_hit::LEAVING)
+	    leaving++;
+    }
+}
+
+
+static void
 brep_trace_physical_events(struct rt_brep_shot_trace *trace,
     const struct brep_specific *bs, const ON_Ray &ray,
     const struct bn_tol *tol)
 {
+    size_t regular_entering = 0;
+    size_t regular_leaving = 0;
+    brep_trace_regular_direction_counts(trace, regular_entering,
+	regular_leaving);
+    /* Krawczyk certifies a surface root, not completeness of the solid
+     * boundary stream.  If the clean non-tangent directions are imbalanced,
+     * give the seam-continuation theorem the same opportunity regardless of
+     * which representation isolated the surviving root. */
+    const bool seam_completion_needed = trace &&
+	(trace->surface_isolated_boxes != trace->surface_krawczyk_boxes ||
+	 regular_entering != regular_leaving);
     if (brep_prepared_fold_pair_eligible(trace))
 	brep_trace_fold_physical_events(trace, bs, ray, tol);
     else if (trace && trace->surface_isolated_boxes !=
@@ -13830,8 +13960,7 @@ brep_trace_physical_events(struct rt_brep_shot_trace *trace,
     else if (trace &&
 	    brep_trace_edge_physical_events(trace, bs, ray, tol))
 	return;
-    else if (trace && trace->surface_isolated_boxes !=
-	    trace->surface_krawczyk_boxes &&
+    else if (seam_completion_needed &&
 	    brep_trace_seam_physical_events(trace, bs, ray, tol))
 	return;
     else

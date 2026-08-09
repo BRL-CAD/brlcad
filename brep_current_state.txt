@@ -96,10 +96,15 @@ outer existing/continuation pair independently forms the analytic solid
 interval.  Distinct contact certificates and counters prevent confusion with
 the older tangent-witness theorem.  The subtype is invariant in fourteen
 directed identity, trim-reparameterized, translated, rotated, 0.01x, and
-10,000x cases.  A new 60-ray endpoint-moving Cobb family remains explicit
-fallback/trend evidence: its edge correspondence is supported but its gap
-proof is unavailable, it publishes no seam contact, and its two current
-below-envelope leaks remain a recorded future correctness target.
+10,000x cases.  The 60-ray endpoint-moving Cobb family now has a separate
+topological endpoint certificate: both oriented trim endpoints must name the
+edge's exact vertices, and both edge and lifted-trim endpoints must satisfy
+the corresponding vertex tolerance before they seed the complete discrepancy
+partition.  All 60 target edges now receive strict INSIDE gap proofs.  Two
+inward rays use the original seam theorem, eliminate the two prior below-
+envelope leaks, and remain invariant under eight additional directed
+translation/rotation/0.01x/10,000x cases.  This does not extend the two-root
+contact-lobe subtype or authorize a vertex neighborhood.
 Exact-parameter positive-weight surface spans and conservative ray-plane
 coefficient exclusion are prepared, and a bounded adjacent-support
 continuation solve recovers the missing bowed-seam endpoints.
@@ -3014,6 +3019,105 @@ ESTABLISHED FINDINGS
     edge-only errors, sector-boundary tangency, vertex neighborhoods, and
     non-manifold topology remain fail-closed targets.
 
+70. Endpoint-moving discrepancy now has a topological boundary certificate,
+    and seam dispatch no longer depends on which solver isolated the root.
+
+    Finding 69's endpoint family stopped before its first discrepancy-bound
+    cell even though the shared-projection correspondence theorem succeeded.
+    The failure was a stronger assumption than BREP topology provides:
+    `brep_bound_edge_trim_discrepancy` used a geometric nearest-point solve for
+    the edge-domain endpoints and then required the resulting trim parameters
+    to equal the trim domain endpoints to binary64 parameter roundoff.  Once a
+    complete boundary row and its surface-lifted endpoints move within declared
+    tolerance, the trim endpoint remains topologically paired to the edge
+    vertex but need not be the nearest lifted point to the edge endpoint.
+    Consequently every target returned `SEAM_GAP_UNAVAILABLE` with zero cells;
+    this was a parameter-boundary assumption, not a failure of the global
+    injectivity/orientation certificate or the rational Hausdorff bounds.
+
+    Prep now certifies each of the four edge/trim endpoint incidences before
+    bounding discrepancy.  For edge endpoint e, trim endpoint
+    `m_bRev3d ? 1-e : e` must name exactly `edge.m_vi[e]`.  The 3-D edge endpoint
+    and the surface lift of that exact trim-domain endpoint must both be within
+    the same `ON_BrepVertex` point by the maximum of the BRL-CAD model distance
+    tolerance and that vertex's valid declared tolerance, plus a coordinate-
+    scaled 512-epsilon/`ON_ZERO_TOLERANCE` roundoff envelope.  The test follows
+    the OpenNURBS tolerance contract directly and reconstructs these distances
+    without calling production code.  A large edge tolerance or the other
+    endpoint's tolerance cannot satisfy this per-vertex proof.
+
+    The two certified topological trim parameters now seed the complete gap
+    partition.  The first cell starts at the oriented trim-domain endpoint;
+    each following Bezier edge span inherits the preceding trim endpoint
+    exactly; and the last cell ends at the other topological endpoint.  Only
+    interior span boundaries use the geometric nearest-point map, constrained
+    to the remaining directed trim interval.  Adaptive midpoint solves remain
+    constrained to their parent interval.  This covers both complete loci,
+    avoids a boundary hole, and preserves the earlier nonlinear Möbius trim-
+    reparameterization theorem.  The same positive-weight control hulls and
+    strict gap comparison remain in force.  A new
+    `discrepancy_endpoints_certified` record/trace field is required explicitly
+    by closure and seam consumers; unavailable, ambiguous, outside, and
+    exhausted proofs remain fallback.
+
+    The first transformed endpoint check then exposed a second independent
+    representation dependency.  Identity and pure translation produced one
+    ordinary seam pair, but arbitrary rotation or uniform scaling isolated the
+    one surviving surface root with Krawczyk.  Physical dispatch equated "all
+    boxes Krawczyk-qualified" with "regular solid boundary stream" and never
+    attempted seam completion, even though the single clean ENTER or LEAVE was
+    unbalanced.  Krawczyk proves local surface-root uniqueness, not completeness
+    of a closed solid's physical transitions.  Dispatch now counts retained
+    clean/near non-tangent ENTER and LEAVE roots before mutation.  A direction
+    imbalance lets the unchanged seam theorem run regardless of the root-box
+    solver; balanced all-Krawczyk streams still go directly to the regular
+    theorem.  The existing endpoint/continuation, edge-sector, root/box
+    ownership, event-capacity, and global material-state gates are unchanged.
+
+    The primary endpoint-moving matrix still covers 60 rays: g/T = 0.25, 0.9,
+    and 1.1; inward/outward displacement; h/T = 2.0, 0.9, 0.25, 0, and -0.25;
+    and reversal.  All 60 independently satisfy their topological endpoint
+    contract and now report a complete strict INSIDE discrepancy proof, with a
+    maximum 1,598 cells and no exhaustion.  The original narrow seam theorem
+    certifies the inward g/T=0.9, h/T=0.25 case in both directions using the
+    standard existing/continuation certificates, not Finding 69's two-root
+    contact-lobe certificates.  Both immutable event enclosures contain the
+    implicit-sphere endpoints and their representatives agree within 2.5e-4 T.
+    The two former below-envelope no-partition leaks disappear.  The new
+    monotone baseline is 16 legacy one-hit cases, at least two independently
+    oracle-validated certified pairs, ten current prepared selections, at most
+    46 implicit/variant differences all within the declared uncertainty band,
+    zero outside-band differences, and zero below-envelope leaks.
+
+    A separate endpoint-specific similarity gate repeats that repaired state
+    forward and backward under translation, arbitrary-axis rotation plus
+    translation, 0.01x scale, and 10,000x scale with large translation.  All
+    eight cases reconstruct the endpoint contract, obtain strict INSIDE gap
+    proofs (1,278 cells in the current fixtures), publish the standard seam
+    pair, contain the scaled implicit endpoints in their certified t boxes,
+    and preserve representative accuracy.  Two in-memory g/T=2 controls lower
+    one endpoint tolerance at a time and are rejected by the independent
+    endpoint oracle.  They are deliberately not sent through BREP prep because
+    the metadata is invalid; malformed-model prep robustness is separate from
+    valid-model ray classification.
+
+    The endpoint shard passes with this new 60-ray ratchet, eight transformed
+    directions, and two metadata controls.  The full seam shard also passes;
+    its endpoint-preserving bowed matrix improves from 264 to 262 implicit
+    differences and from 208 to 206 uncertainty-band differences, while the
+    56 outside-band cases, 22 certified pairs, and zero below-envelope leaks
+    remain unchanged.  This checkpoint changes prep-time edge certificates and
+    allocation-free shot dispatch only.  It does not change SurfaceTree
+    density, cache serialization, fixed shot workspace sizes, or add shot-time
+    allocation.
+
+    This proves complete endpoint association for an edge discrepancy
+    corridor; it is not a vertex-neighborhood transition theorem.  Rays whose
+    relevant edge parameter lies in a vertex neighborhood, curved vertex fans,
+    arbitrary endpoint overlap graphs, oblique contact intervals with varying
+    edge frames, sector-boundary tangency, and non-manifold topology remain
+    fail-closed targets.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -3161,12 +3265,15 @@ IMPLEMENTATION CHECKLIST
         [x] Add a calibrated, endpoint-preserving bowed support-seam family
             with signed inward/outward displacement and g/T sweep.
         [x] Add the first endpoint-moving boundary-row family with measured
-            target/adjacent-edge discrepancy, explicit unsupported-gap
-            fallback, reversal, uncertainty-band, and monotone leak ratchets.
+            target/adjacent-edge and endpoint-vertex discrepancy, reversal,
+            uncertainty-band, and monotone leak ratchets.
+        [x] Certify its oriented topological endpoints, seed a complete strict
+            gap proof, remove the two below-envelope leaks, and gate the
+            repaired pair under reversal and qualified similarities.
         [x] Add seam-crossing tangent-limit rays, reversal checks, CSV output,
             and a ratchet around the measured current crack envelope.
-        [ ] Certify endpoint-moving gap/overlap handling and add trim-only,
-            edge-only, combined-error, vertex, G1, and tangent sweeps.
+        [ ] Add trim-only, edge-only, combined-error, vertex-neighborhood, G1,
+            tangent, and arbitrary endpoint-overlap graph sweeps and theorems.
 
 [ ] Local adaptive solve
     [x] Prepare exact-parameter positive-weight rational Bezier surface spans
@@ -4189,15 +4296,54 @@ Tolerance-near contact-lobe checkpoint (Finding 69):
     PASS: the final rebuild and rerun passes 7/7 in 14.62 seconds with no
     ThreadSanitizer diagnostic.
 
+Endpoint-moving topological closure checkpoint (Finding 70):
+
+  cmake --build .build --target rt_brep_ray -j6
+  ctest --test-dir .build --parallel 7 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+    PASS: 7/7 in 194.90 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 2 \
+    -R '^rt_brep_ray_(seam|endpoint)$' --output-on-failure
+    PASS: 2/2 in 196.92 seconds (endpoint 9.66, seam 196.67) with no
+    diagnostic.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 4 \
+    -R '^rt_brep_ray($|_(crofton|fold|affine)$)' --output-on-failure
+    PASS: 4/4 in 310.11 seconds with no diagnostic.
+
+  ctest --test-dir .build --parallel 6 \
+    -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 11/11 in 4.62 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 6 \
+    -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 11/11 in 14.00 seconds with no diagnostic.
+
+  cmake --build .build-tsan --target librt rt_cache -j6
+  env TSAN_OPTIONS=halt_on_error=1:second_deadlock_stack=1 \
+    ctest --test-dir .build-tsan --parallel 4 \
+    -R '^rt_cache_.*$' --output-on-failure
+    PASS: the final rebuild and rerun passes 7/7 in 16.00 seconds with no
+    ThreadSanitizer diagnostic.
+
 
 NEXT ACTIONS
 ------------
 
 1. Extend tolerance-near seam resolution beyond Finding 69's separately
-   certified perpendicular two-root incident-face contact subtype.  Qualify
-   endpoint-moving gaps/overlaps and then oblique contact intervals only with
-   bounded edge-frame variation; keep arbitrary root counts/faces/spans,
-   sector-boundary tangency, and edge/vertex neighborhood interactions fail-
+   certified perpendicular two-root incident-face contact subtype and Finding
+   70's endpoint-moving boundary closure.  Qualify oblique contact intervals
+   only with bounded edge-frame variation; keep arbitrary root counts, faces,
+   spans, sector-boundary tangency, and edge/vertex neighborhood interactions fail-
    closed until each has its own theorem.  Keep the exact edge and original
    one-existing/one-continuation paths unchanged as narrow production subsets,
    and never let the model envelope manufacture the exact witness used by
@@ -4243,10 +4389,10 @@ NEXT ACTIONS
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
    BREP-to-CSG recognition as later, separately classified qualification tiers.
-6. Use the new endpoint-moving gap/overlap baseline to implement its missing
-   endpoint/vertex correspondence and closure proof.  Then add trim-only,
-   edge-only, vertex, G1, tangent, and combined-error Cobb families, and remove
-   the remaining duplicated Cobb control net from brep_invalid.cpp while
+6. Build on the endpoint-moving topological closure proof with trim-only,
+   edge-only, vertex-neighborhood, G1, tangent, combined-error, and arbitrary
+   endpoint-overlap graph Cobb families, and remove the remaining duplicated
+   Cobb control net from brep_invalid.cpp while
    independently gating its invalid topology behavior.
 7. Use the registered directed, Crofton, seam, interval, fold, and affine
    CTest processes with `ctest -j`; retain the no-argument full executable for
