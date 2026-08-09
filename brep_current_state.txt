@@ -3569,17 +3569,78 @@ ESTABLISHED FINDINGS
     require zero ordinary and prepared closure/continuation candidates and
     remain on fallback with no published seam transaction.
 
-    A stronger interval-root tube was explored and removed rather than being
-    allowed to create transform-dependent authority.  The existing terminal
-    root box had a complete surface hull about `0.00335` from the shared edge
-    against `C=0.0005075`.  Local ordinary/fixed-expansion Krawczyk,
-    Krawczyk-image contraction, conditioned equations, and regular-graph
-    boundary existence certified a contracted tube in only four of sixteen
-    similarity/reversal cases.  The current point witness is therefore a
-    narrow extension of the existing exact-root solver contract, not a
-    general interval root-existence theorem.  Broader miss policies must first
-    obtain an invariant local box containing exactly one root whose complete
-    surface image lies inside both tubes.
+    At this checkpoint, a stronger interval-root tube had been explored and
+    removed rather than being allowed to create transform-dependent authority.
+    The existing terminal root box had a complete surface hull about `0.00335`
+    from the shared edge against `C=0.0005075`, and the first strict-interior
+    Krawczyk variants certified only four of sixteen transformations.  Finding
+    77 supersedes that point-only limitation with a boundary-capable local
+    contraction and complete rational image proof; the historical failure is
+    retained because it explains why terminal boxes and ordinary Krawczyk are
+    not suitable authority.
+
+77. Declared contact-face repair now requires a unique local analytic root
+    whose complete rational image is inside both model-space tubes.
+
+    Inspection of the actual identity/component-0.001 coefficient system
+    showed that the miss root is exactly at normalized support boundary
+    `u=1`, while the neighboring hit is about `1.7e-4` away in normalized
+    infinity norm.  Both roots occupy the same terminal surface box.  A proof
+    requiring strict parameter-domain interior, or the complete terminal box
+    to fit the seam tube, therefore rejects the intended geometry for reasons
+    unrelated to root existence.
+
+    The new fixed-work solver converts both homogeneous ray-plane Bernstein
+    equations into complete finite Taylor expansions at the already solved
+    miss.  Bernstein finite differences, derivative evaluation, fixed-point
+    images, and derivative bounds use outward fixed-expansion arithmetic;
+    factorial scaling successively divides by exactly representable small
+    integers with outward intervals.  A binary64 midpoint Jacobian inverse is
+    only a preconditioner.  Starting at the larger of four times the correction
+    bound and `1024 eps` of root scale, the solver tries at most 48 doubling
+    radii.  It accepts only strict self-map inclusion with a `512 eps r`
+    margin and infinity-norm contraction below one.  Production caps the
+    radius below one quarter of the neighboring contact-root separation.
+    Singular, nonfinite, expansion-capacity, inclusion, contraction, or radius
+    failures leave the complete ray on legacy fallback.
+
+    This contraction proves exactly one root of the analytic Bezier extension,
+    but crossing a span boundary is not automatically geometric authority.
+    A second theorem forms each homogeneous coordinate difference
+    `X_i-P_i W` relative to the nominal rational point and encloses all three
+    difference polynomials plus `W` over the complete symmetric root box with
+    the same Taylor arithmetic.  The weight lower bound must remain strictly
+    positive.  After outward rational division and Euclidean combination, the
+    resulting model-image displacement `B` must satisfy
+
+        |P-E| + B <= C + coordinate roundoff
+        |P-L| + B <= C + coordinate roundoff.
+
+    Thus the whole unique-root image, including its analytically extended
+    portion, lies inside both the certified shared-edge and lifted-trim tubes.
+    The nominal point checks remain useful screening evidence but no longer
+    supply the final authority.
+
+    The production transaction records declared-contact pairs, root attempts,
+    availability, uniqueness, boundary extension, radius, image displacement,
+    both tube upper bounds, tolerance, roundoff, and tube failures.  A selected
+    declared repair requires exactly one attempt, one available unique root,
+    no tube failure, and the unchanged full box/source/material/event theorem.
+    Ordinary model-tolerance and zero-miss paths require an empty local-proof
+    ledger.  The proof performs no allocation during ray tracing.
+
+    The focused C/C++ arithmetic corpus has nine classified systems: three
+    affine boundary roots and three nearby quadratic root pairs at equation
+    scales `2^-100`, `1`, and `2^100`, plus multi-root, singular, and uncertain
+    interval systems.  Invalid-input and explicit tube pass/reject controls
+    are additional gates.  The real Cobb test independently replays the
+    actual prepared coefficient intervals for all sixteen transformations and
+    reversals.  All sixteen certify in one attempt, all sixteen root boxes
+    cross the analytic support boundary, all exclude the neighboring root,
+    and all have positive weight and complete image containment.  Maxima are
+    radius `9.13e-11`, correction `2.28e-11`, contraction `2.54e-6`, model
+    image `2.16e-5`, and fixed-expansion high-water 26.  The image maximum is
+    from the `10,000x` similarity and scales as model-space length.
 
 
 IMPLEMENTATION CHECKLIST
@@ -3721,6 +3782,13 @@ IMPLEMENTATION CHECKLIST
         the expanded envelope to a private prepared-event candidate, require
         the unchanged complete box/material transaction, and gate all
         similarities/reversals in a focused shard.
+        [x] Replace nominal-point authority with an allocation-free
+            fixed-expansion contraction proving one analytic boundary root,
+            cap its radius below one quarter of the neighboring-root
+            separation, and bound the complete positive-weight rational image
+            inside both model-space tubes.  Gate scaled affine and quadratic
+            coefficient systems, ambiguity/singularity rejection, explicit
+            tube rejection, and all sixteen real Cobb coefficient replays.
     [x] Remove the equal-normalized-speed assumption for regular two-trim edge
         correspondence and gate opposite nonlinear trim reparameterizations.
     [x] Add vertex-fan and ambiguous-correspondence gates.
@@ -5046,20 +5114,80 @@ Contact-face trim miss checkpoint (Finding 76):
   PASS: 12/12 in 162.11 seconds; the instrumented contact shard took 162.02
   seconds and no sanitizer reported a diagnostic.
 
+Boundary-root contraction and rational tube checkpoint (Finding 77):
+
+  .build/src/librt/tests/rt_brep_ray --local-root-only
+  PASS: nine classified coefficient systems: six unique-root certificates and
+  three fail-closed multi-root/singular/uncertain results.  Three affine and
+  three nearby-quadratic boundary cases span equation scales `2^-100`, `1`,
+  and `2^100`.  Invalid input and positive/negative tube-containment controls
+  also pass.  Maximum synthetic radius is `9.09e-13` and expansion high-water
+  is 2.
+
+  .build/src/librt/tests/rt_brep_ray --contact-trim-only
+  PASS: 16/16 production root/tube certificates and 16/16 analytic support-
+  boundary extensions, with one attempt per root, positive rational weights,
+  neighbor exclusion, complete two-tube image containment, two identity source
+  unions, sixteen admitted misses, and six unchanged threshold fallbacks.
+  Maxima are radius/correction/contraction/image
+  `9.13e-11/2.28e-11/2.54e-6/2.16e-5`; fixed-expansion high-water is 26.
+  The unset-edge threshold control intentionally emits the existing OpenNURBS
+  invalid-edge diagnostic before proving fallback.
+
+  ctest --test-dir .build --parallel 8 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+  PASS: 12/12 in 193.26 seconds on the final source, including the rounded-
+  preconditioner determinant certificate (local root 0.01, trim interval 0.01,
+  source union 0.01, fold 0.21, endpoint 3.05, affine 6.66,
+  non-isoparametric 27.17, contact trim 34.78, complete directed process
+  45.90, Crofton 57.34, interval 150.28, seam 193.21).
+
+  ctest --test-dir .build --parallel 12 \
+    -R '^(rt_brep_ray_local_root|rt_brep_ray_contact_trim|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+  PASS: 13/13 in 35.12 seconds; the contact shard took 35.08 seconds.
+
+  Before the final preconditioner-determinant audit, the complete ASan/UBSan
+  12-shard BREP matrix passed 12/12 in 987.62 seconds (interval 564.19 and seam
+  843.30) with no sanitizer diagnostic.  The determinant guard only adds
+  outward fixed-expansion products plus a fail-closed zero test.  Its
+  instrumented path was then requalified with:
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+    ctest --test-dir .build-asan --parallel 12 \
+      -R '^(rt_brep_ray_local_root|rt_brep_ray_contact_trim|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+      --output-on-failure
+  PASS: 13/13 in 174.57 seconds; the instrumented contact shard took 174.53
+  seconds and no AddressSanitizer or UBSan diagnostic appeared.  The exact
+  final source then made the radius cap and tube allowance one-ulp more
+  conservative and replaced rounded reciprocal-factorial multiplication with
+  successive outward divisions by exact small integers.  It requalified the
+  directly affected shards with:
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+    ctest --test-dir .build-asan --parallel 2 \
+      -R '^(rt_brep_ray_local_root|rt_brep_ray_contact_trim)$' \
+      --output-on-failure
+  PASS: 2/2 in 179.93 seconds on the exact final source; local root took 0.15
+  seconds and contact trim 179.89, with no sanitizer diagnostic.
+  Leak scanning remains disabled because this host's ptrace wrapper makes
+  LeakSanitizer terminate before reporting test results.
+
 
 NEXT ACTIONS
 ------------
 
-1. Strengthen the one-miss contact witness from the current exact-root point
-   contract to a similarity- and reversal-invariant local interval box.  The
-   complete terminal boxes are too wide, and the first conditioned
-   expansion-Krawczyk/regular-graph contraction certified only four of sixteen
-   transformed cases.  Preserve those difficult coefficient systems in a
-   C/C++ corpus and develop a better-conditioned contraction, residual-to-root
-   bound, or coupled surface/ray/trim subdivision that proves exactly one root
-   and places its complete surface image inside both explicit tubes.  Keep the
-   present one-hit/one-miss count, arbitrary faces/spans, exact tangency,
-   vertex neighborhoods, and inferred tolerance authority fail-closed.
+1. Preserve the new local-root certificate as narrow declared-contact
+   authority while expanding its difficult-system corpus.  Capture
+   unavailable, singular, multiple-root, high-order, extreme-weight, and
+   near-tangent coefficient systems from analytic fixtures and the STEP corpus
+   before considering the theorem for ordinary seams, vertices, or general
+   grazing dispatch.  Profile the fixed-expansion Taylor cost separately from
+   continuation and material-sector work.  Keep arbitrary root counts, exact
+   tangency, vertex neighborhoods, inferred tolerance authority, and every
+   nonunique or non-positive-weight box fail-closed.
 2. Extend vertex classification only through a separately certified curved
    differential-link theorem.  Bound surface-normal and tangent variation over
    a local neighborhood before replacing the planar cyclic link.  Define exact
