@@ -44,6 +44,7 @@
 #define MAX_TRIANGULATION_ATTEMPTS 5
 #define MAX_CHART_REFINEMENT_ATTEMPTS 16
 #define MAX_CHART_REFINEMENT_POINTS 4096
+#define MAX_CHART_REFINEMENT_STAGNANT_ATTEMPTS 4
 
 static bool
 cdt_tolerance_valid(const struct bg_tess_tol &tol)
@@ -534,9 +535,13 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
     if (fmesh->valid(0))
 	return true;
 
+    const size_t initial_folds = fmesh->incorrect_normal_count();
     size_t refinement_points = 0;
     int refinement_attempts = 0;
     bool refinement_stalled = false;
+    bool refinement_no_progress = false;
+    size_t best_folds = initial_folds;
+    int stagnant_attempts = 0;
     for (int attempt = 0; attempt < MAX_CHART_REFINEMENT_ATTEMPTS;
 	    ++attempt) {
 	const size_t remaining = MAX_CHART_REFINEMENT_POINTS -
@@ -560,19 +565,39 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 		"inserted points\n", fmesh->f_id, refinement_points);
 	    return true;
 	}
+	const size_t current_folds = fmesh->incorrect_normal_count();
+	if (current_folds < best_folds) {
+	    best_folds = current_folds;
+	    stagnant_attempts = 0;
+	} else {
+	    stagnant_attempts++;
+	    if (stagnant_attempts >=
+		    MAX_CHART_REFINEMENT_STAGNANT_ATTEMPTS) {
+		refinement_no_progress = true;
+		break;
+	    }
+	}
     }
     if (refinement_points) {
 	const size_t remaining_folds = fmesh->incorrect_normal_count();
-	const std::string message = refinement_stalled ?
+	const std::string message = refinement_no_progress ?
+	    "adaptive chart refinement made no progress after " +
+		std::to_string(refinement_attempts) + " rounds and " +
+		std::to_string(refinement_points) + " points; best " +
+		std::to_string(best_folds) + ", remaining " +
+		std::to_string(remaining_folds) +
+		" inconsistent triangles" : refinement_stalled ?
 	    "adaptive chart refinement stalled after " +
 		std::to_string(refinement_points) + " points with " +
 		std::to_string(remaining_folds) +
-		" inconsistent triangles" :
+		" inconsistent triangles (initially " +
+		std::to_string(initial_folds) + ")" :
 	    "adaptive chart refinement reached its limit after " +
 		std::to_string(refinement_attempts) + " rounds and " +
 		std::to_string(refinement_points) + " points with " +
 		std::to_string(remaining_folds) +
-		" inconsistent triangles";
+		" inconsistent triangles (initially " +
+		std::to_string(initial_folds) + ")";
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REFINEMENT_LIMIT,
 	    BREP_CDT_STAGE_ADAPTIVE_REFINEMENT, fmesh->f_id, 0, 1,
 	    message.c_str());
