@@ -435,6 +435,59 @@ fast_free_pullback(PBCData *data)
 }
 
 static bool
+fast_collapsed_closed_pcurve(const ON_BrepLoop *loop,
+	const ON_BrepTrim &trim,
+	const struct bn_tol *tol, double model_diagonal)
+{
+    if (!loop || trim.m_type == ON_BrepTrim::singular || !trim.Edge() ||
+	    !trim.Edge()->EdgeCurveOf() || loop->TrimCount() != 1 ||
+	    trim.m_vi[0] != trim.m_vi[1])
+	return false;
+
+    /* A closed 3D edge represented by a collapsed singleton pcurve is a
+     * recurring STEP conversion failure.  Compare the spatial extents of
+     * the pcurve lifted onto the surface and the edge itself.  This avoids
+     * relying on the (often equally corrupt) declared trim tolerance. */
+    const ON_Surface *surface = trim.Face() ?
+	static_cast<const ON_Surface *>(trim.Face()) : trim.SurfaceOf();
+    const ON_Curve *edge_curve = trim.Edge()->EdgeCurveOf();
+    const ON_Interval trim_domain = trim.Domain();
+    const ON_Interval edge_domain = edge_curve->Domain();
+    if (!surface || !trim_domain.IsIncreasing() ||
+	    !edge_domain.IsIncreasing())
+	return false;
+
+    const ON_2dPoint start_uv = trim.PointAt(trim_domain.Min());
+    const ON_3dPoint trim_start = surface->PointAt(start_uv.x,
+	start_uv.y);
+    const ON_3dPoint edge_start = edge_curve->PointAt(edge_domain.Min());
+    double trim_extent = 0.0;
+    double edge_extent = 0.0;
+    bool samples_valid = trim_start.IsValid() && edge_start.IsValid();
+    for (int si = 1; samples_valid && si <= 16; ++si) {
+	const double fraction = (double)si / 16.0;
+	const ON_2dPoint uv = trim.PointAt(
+	    trim_domain.ParameterAt(fraction));
+	const ON_3dPoint trim_point = surface->PointAt(uv.x, uv.y);
+	const ON_3dPoint edge_point = edge_curve->PointAt(
+	    edge_domain.ParameterAt(fraction));
+	samples_valid = uv.IsValid() && trim_point.IsValid() &&
+	    edge_point.IsValid();
+	if (samples_valid) {
+	    trim_extent = std::max(trim_extent,
+		trim_start.DistanceTo(trim_point));
+	    edge_extent = std::max(edge_extent,
+		edge_start.DistanceTo(edge_point));
+	}
+    }
+
+    const double model_floor = std::max(tol->dist,
+	std::max(model_diagonal, 1.0) * 1.0e-10);
+    return samples_valid && edge_extent > 16.0 * model_floor &&
+	trim_extent < 0.01 * edge_extent;
+}
+
+static bool
 fast_pullback_candidate(const ON_BrepLoop *loop, const ON_BrepTrim &trim,
 	const struct bn_tol *tol, double model_diagonal)
 {
@@ -442,6 +495,9 @@ fast_pullback_candidate(const ON_BrepLoop *loop, const ON_BrepTrim &trim,
 	    !trim.Edge()->EdgeCurveOf() || !std::isfinite(trim.m_tolerance[0]) ||
 	    trim.m_tolerance[0] <= 0.0)
 	return false;
+
+    if (fast_collapsed_closed_pcurve(loop, trim, tol, model_diagonal))
+	return true;
 
     std::vector<double> tolerances;
     tolerances.reserve((size_t)loop->TrimCount());
@@ -530,9 +586,13 @@ fast_append_pullback_samples(ON_SimpleArray<BrepTrimPoint> *points,
 	source_end.DistanceTo(pullback_end);
     const double reverse_error = source_start.DistanceTo(pullback_end) +
 	source_end.DistanceTo(pullback_start);
-    if (reverse_error < forward_error)
+    const bool collapsed_pcurve = fast_collapsed_closed_pcurve(trim.Loop(),
+	trim, tol, model_diagonal);
+    if (reverse_error < forward_error || (collapsed_pcurve &&
+	    trim.m_bRev3d))
 	std::reverse(samples.begin(), samples.end());
-    if (std::min(forward_error, reverse_error) > 2.0 * repair_tolerance)
+    if (!collapsed_pcurve && std::min(forward_error, reverse_error) >
+	    2.0 * repair_tolerance)
 	return false;
 
     const size_t append_count = samples.size() - (omit_last ? 1 : 0);
@@ -2925,7 +2985,7 @@ fast_periodic_boundary_loop(const ON_Surface *surface,
 	if (closed_max - closed_min < 0.90 * period ||
 		closed_max - closed_min > 1.10 * period ||
 		fabs(delta) < 0.90 * period ||
-		open_max - open_min > 0.01 * open_length)
+		open_max - open_min > 0.50 * open_length)
 	    continue;
 	info.closed_dir = dir;
 	info.open_dir = open_dir;
@@ -2937,25 +2997,131 @@ fast_periodic_boundary_loop(const ON_Surface *surface,
 }
 
 static bool
+fast_rotate_periodic_boundary(const ON_Surface *surface,
+	ON_SimpleArray<BrepTrimPoint> &points, int closed_dir,
+	double period, double target_start, fast_face_scratch &scratch)
+{
+    if (!surface || points.Count() < 2 || !(period > 0.0))
+	return false;
+    const double start = points[0].p2d[closed_dir];
+    const double end = points[points.Count() - 1].p2d[closed_dir];
+    const int winding = end > start ? 1 : -1;
+    double cut = target_start;
+    if (winding > 0) {
+	cut += ceil((start - cut) / period) * period;
+	if (cut > end + 0.05 * period)
+	    return false;
+    } else {
+	cut += floor((start - cut) / period) * period;
+	if (cut < end - 0.05 * period)
+	    return false;
+    }
+
+    int cut_segment = -1;
+    double fraction = 0.0;
+    for (int pi = 0; pi < points.Count() - 1; ++pi) {
+	const double first = points[pi].p2d[closed_dir];
+	const double second = points[pi + 1].p2d[closed_dir];
+	if ((winding > 0 && first <= cut && cut <= second) ||
+		(winding < 0 && first >= cut && cut >= second)) {
+	    const double delta = second - first;
+	    if (fabs(delta) <= ON_ZERO_TOLERANCE)
+		continue;
+	    cut_segment = pi;
+	    fraction = (cut - first) / delta;
+	    break;
+	}
+    }
+    if (cut_segment < 0)
+	return false;
+
+    ON_2dPoint cut_uv = points[cut_segment].p2d + fraction *
+	(points[cut_segment + 1].p2d - points[cut_segment].p2d);
+    cut_uv[closed_dir] = target_start;
+    ON_SimpleArray<BrepTrimPoint> replacement;
+    if (!fast_append_synthetic_uv(replacement, surface, cut_uv, -1,
+	    scratch))
+	return false;
+
+    auto append_shifted = [&](const BrepTrimPoint &source, double shift) {
+	BrepTrimPoint point = source;
+	point.p2d[closed_dir] += shift;
+	if (!V2NEAR_EQUAL(replacement[replacement.Count() - 1].p2d,
+		point.p2d, BREP_SAME_POINT_TOLERANCE))
+	    replacement.Append(point);
+    };
+    const double first_shift = target_start - cut;
+    for (int pi = cut_segment + 1; pi < points.Count(); ++pi)
+	append_shifted(points[pi], first_shift);
+    const double wrapped_shift = first_shift + winding * period;
+    for (int pi = 1; pi <= cut_segment; ++pi)
+	append_shifted(points[pi], wrapped_shift);
+
+    cut_uv[closed_dir] = target_start + winding * period;
+    if (!V2NEAR_EQUAL(replacement[replacement.Count() - 1].p2d,
+	    cut_uv, BREP_SAME_POINT_TOLERANCE) &&
+	    !fast_append_synthetic_uv(replacement, surface, cut_uv, -1,
+		scratch))
+	return false;
+    points = replacement;
+    return points.Count() >= 2;
+}
+
+static bool
 fast_reconstruct_periodic_strip(const ON_Surface *surface,
 	const ON_BrepFace &face,
 	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
-	double model_diagonal)
+	double model_diagonal, fast_face_scratch &scratch)
 {
-    if (!surface || face.LoopCount() != 2 || !brep_loop_points ||
-	    !brep_loop_points[0] || !brep_loop_points[1])
+    if (!surface || face.LoopCount() < 2 || !brep_loop_points)
 	return false;
 
+    int outer_index = -1;
+    std::vector<int> boundary_indices;
+    std::vector<fast_periodic_loop_info> boundary_info;
     fast_periodic_loop_info first_info;
     fast_periodic_loop_info second_info;
-    ON_SimpleArray<BrepTrimPoint> &first = *brep_loop_points[0];
-    ON_SimpleArray<BrepTrimPoint> &second = *brep_loop_points[1];
-    if (!fast_periodic_boundary_loop(surface, first, first_info) ||
-	    !fast_periodic_boundary_loop(surface, second, second_info) ||
-	    first_info.closed_dir != second_info.closed_dir ||
-	    fabs(first_info.open_coordinate - second_info.open_coordinate) <=
-		BREP_SAME_POINT_TOLERANCE)
+    for (int li = 0; li < face.LoopCount(); ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop || !brep_loop_points[li])
+	    return false;
+	if (loop->m_type == ON_BrepLoop::outer) {
+	    if (outer_index >= 0)
+		return false;
+	    outer_index = li;
+	}
+	fast_periodic_loop_info candidate;
+	if (fast_periodic_boundary_loop(surface, *brep_loop_points[li],
+		candidate)) {
+	    boundary_indices.push_back(li);
+	    boundary_info.push_back(candidate);
+	}
+    }
+    if (outer_index < 0 || boundary_indices.size() != 2 ||
+	    boundary_info[0].closed_dir != boundary_info[1].closed_dir)
 	return false;
+
+    int first_index = boundary_indices[0];
+    int opposite_index = boundary_indices[1];
+    first_info = boundary_info[0];
+    second_info = boundary_info[1];
+    if (boundary_indices[1] == outer_index) {
+	first_index = boundary_indices[1];
+	opposite_index = boundary_indices[0];
+	first_info = boundary_info[1];
+	second_info = boundary_info[0];
+    }
+    if (fabs(first_info.open_coordinate -
+	    second_info.open_coordinate) <= BREP_SAME_POINT_TOLERANCE)
+	return false;
+
+    ON_SimpleArray<BrepTrimPoint> &first =
+	*brep_loop_points[first_index];
+    ON_SimpleArray<BrepTrimPoint> &second =
+	*brep_loop_points[opposite_index];
+    ON_SimpleArray<BrepTrimPoint> original_outer;
+    if (first_index != outer_index)
+	original_outer = *brep_loop_points[outer_index];
 
     const int closed_dir = first_info.closed_dir;
     const double period = surface->Domain(closed_dir).Length();
@@ -2991,11 +3157,9 @@ fast_reconstruct_periodic_strip(const ON_Surface *surface,
 	    second_start.DistanceTo(second_end) > closure_tolerance)
 	return false;
 
-    const double shift = std::round((
-	first[first.Count() - 1].p2d[closed_dir] -
-	opposite[0].p2d[closed_dir]) / period) * period;
-    for (int i = 0; i < opposite.Count(); ++i)
-	opposite[i].p2d[closed_dir] += shift;
+    if (!fast_rotate_periodic_boundary(surface, opposite, closed_dir,
+	    period, first[first.Count() - 1].p2d[closed_dir], scratch))
+	return false;
     const double seam_tolerance = 0.05 * period;
     if (fabs(first[first.Count() - 1].p2d[closed_dir] -
 	    opposite[0].p2d[closed_dir]) > seam_tolerance ||
@@ -3036,6 +3200,10 @@ fast_reconstruct_periodic_strip(const ON_Surface *surface,
 
     first.Append(opposite.Count(), opposite.Array());
     second.Empty();
+    if (first_index != outer_index) {
+	*brep_loop_points[outer_index] = first;
+	first = original_outer;
+    }
     return true;
 }
 
@@ -3818,7 +3986,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
     if (!full_periodic_face)
 	fast_reconstruct_periodic_strip(s, face, brep_loop_points,
-	    model_diagonal);
+	    model_diagonal, scratch);
 
     // process through loops building polygons.
     std::vector<detria::PointD> tpnts;
@@ -4270,15 +4438,31 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 {
     if (fast_face_is_provably_degenerate(face))
 	return FAST_FACE_SKIPPED_DEGENERATE;
+
+    bool repair_first = false;
+    for (int li = 0; !repair_first && li < face.LoopCount(); ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop)
+	    continue;
+	for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	    const ON_BrepTrim *trim = loop->Trim(ti);
+	    if (trim && fast_pullback_candidate(loop, *trim, tol,
+		    model_diagonal)) {
+		repair_first = true;
+		break;
+	    }
+	}
+    }
     if (bg_CDT_attempt(faces, pnt_norms, pnts, face, ttol, tol,
-	    model_diagonal, false))
+	    model_diagonal, repair_first))
 	return FAST_FACE_COMPLETED;
 
     faces.clear();
     pnt_norms.clear();
     pnts.clear();
     return bg_CDT_attempt(faces, pnt_norms, pnts, face, ttol, tol,
-	model_diagonal, true) ? FAST_FACE_COMPLETED : FAST_FACE_FAILED;
+	    model_diagonal, !repair_first) ? FAST_FACE_COMPLETED :
+	FAST_FACE_FAILED;
 }
 
 
