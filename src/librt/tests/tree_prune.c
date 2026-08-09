@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -207,12 +208,14 @@ done:
 
 
 int
-main(int UNUSED(argc), char **UNUSED(argv))
+main(int UNUSED(argc), const char **argv)
 {
     struct db_i *tol_dbip = db_create_inmem();
     struct rt_i *tol_rtip;
     fastf_t tol;
     int failures = 0;
+
+    bu_setprogname(argv[0]);
 
     if (!tol_dbip)
 	return 1;
