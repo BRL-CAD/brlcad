@@ -155,6 +155,10 @@ brlcad_add_test(
   COMMAND rt_brep_ray --local-root-only
 )
 brlcad_add_test(
+  NAME rt_brep_ray_grazing_root
+  COMMAND rt_brep_ray --grazing-root-only
+)
+brlcad_add_test(
   NAME rt_brep_ray_trim_interval
   COMMAND rt_brep_ray --trim-interval-only
 )
