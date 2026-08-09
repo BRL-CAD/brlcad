@@ -5130,6 +5130,226 @@ cdt_mesh_t::cdt()
 }
 
 size_t
+cdt_mesh_t::split_problem_triangle_edges(
+	const std::vector<triangle_t> &triangles, size_t max_points,
+	const ON_3dPoint *near_point)
+{
+    if (!max_points || !brep || f_id < 0 || f_id >= brep->m_F.Count() ||
+	    m_face_charts.empty())
+	return 0;
+    const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
+    if (!surface)
+	return 0;
+    boundary_edges_update();
+    std::vector<triangle_t> targets = triangles;
+    std::sort(targets.begin(), targets.end(), [](const triangle_t &first,
+	    const triangle_t &second) { return first.ind < second.ind; });
+    std::set<std::pair<double, double>> existing(m_pnts_2d.begin(),
+	m_pnts_2d.end());
+    struct ON_Brep_CDT_State *state =
+	(struct ON_Brep_CDT_State *)p_cdt;
+    size_t inserted = 0;
+    const auto mesh_vertex = [&](long native_point) {
+	const auto point_3d = p2d3d.find(native_point);
+	if (point_3d == p2d3d.end() || point_3d->second < 0 ||
+		(size_t)point_3d->second >= pnts.size())
+	    return -1L;
+	const auto canonical = p2ind.find(pnts[(size_t)point_3d->second]);
+	return canonical == p2ind.end() ? -1L : canonical->second;
+    };
+
+    for (const triangle_t &target : targets) {
+	if (inserted >= max_points || !tri_active(target.ind))
+	    break;
+	const triangle_t triangle = tris_vect[target.ind];
+	std::vector<std::pair<double, uedge_t>> edges;
+	for (int edge = 0; edge < 3; ++edge) {
+	    uedge_t candidate(triangle.v[edge],
+		triangle.v[(edge + 1) % 3]);
+	    if (boundary_edges.find(candidate) != boundary_edges.end() ||
+		    brep_edges.find(candidate) != brep_edges.end())
+		continue;
+	    const auto incident = uedges2tris.find(candidate);
+	    if (incident == uedges2tris.end() || incident->second.size() != 2)
+		continue;
+	    double priority = pnts[(size_t)candidate.v[0]]->DistanceTo(
+		*pnts[(size_t)candidate.v[1]]);
+	    if (near_point) {
+		ON_3dPoint target_point = *near_point;
+		priority = uedge_dist(candidate, target_point);
+	    }
+	    edges.push_back(std::make_pair(priority, candidate));
+	}
+	std::sort(edges.begin(), edges.end(), [near_point](const auto &first,
+		const auto &second) {
+	    return near_point ? first.first < second.first :
+		first.first > second.first;
+	});
+	for (const auto &edge_entry : edges) {
+	    uedge_t edge = edge_entry.second;
+	    long native_edge[2] = {-1, -1};
+	    std::vector<long> native_candidates[2];
+	    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+		for (const auto &mapping : p2d3d) {
+		    if (mesh_vertex(mapping.first) == edge.v[endpoint])
+			native_candidates[endpoint].push_back(mapping.first);
+		}
+	    }
+	    if (native_candidates[0].empty() || native_candidates[1].empty())
+		continue;
+	    ON_2dPoint sample;
+	    ON_2dPoint chart_sample;
+	    cdt_face_chart *active_chart = NULL;
+	    for (cdt_face_chart &chart : m_face_charts) {
+		for (long first : native_candidates[0]) {
+		    for (long second : native_candidates[1]) {
+			long candidate[2] = {first, second};
+			if (!chart.edge_midpoint_sample(candidate, sample,
+				chart_sample))
+			    continue;
+			native_edge[0] = first;
+			native_edge[1] = second;
+			active_chart = &chart;
+			break;
+		    }
+		    if (active_chart)
+			break;
+		}
+		if (active_chart)
+		    break;
+	    }
+	    if (!active_chart)
+		continue;
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (!surface->IsClosed(direction))
+		    continue;
+		const ON_Interval domain = surface->Domain(direction);
+		const double period = domain.Length();
+		double &coordinate = direction ? sample.y : sample.x;
+		coordinate = domain.Min() + std::fmod(
+		    coordinate - domain.Min(), period);
+		if (coordinate < domain.Min())
+		    coordinate += period;
+	    }
+	    const std::pair<double, double> sample_key(sample.x, sample.y);
+	    if (!sample.IsValid() || !existing.insert(sample_key).second)
+		continue;
+
+	    const auto incident = uedges2tris.find(edge);
+	    if (incident == uedges2tris.end() || incident->second.size() != 2)
+		continue;
+	    std::vector<triangle_t> old_triangles;
+	    std::vector<triangle_t> old_native_triangles;
+	    std::set<size_t> used_native_triangles;
+	    uedge_t native_split(native_edge[0], native_edge[1]);
+	    bool complete = true;
+	    for (size_t triangle_index : incident->second) {
+		if (!tri_active(triangle_index)) {
+		    complete = false;
+		    break;
+		}
+		const triangle_t old_triangle = tris_vect[triangle_index];
+		long sorted_wanted[3] = {old_triangle.v[0],
+		    old_triangle.v[1], old_triangle.v[2]};
+		std::sort(sorted_wanted, sorted_wanted + 3);
+		bool found = false;
+		for (size_t native_index = 0; native_index < tris_2d.size();
+			native_index++) {
+		    if (used_native_triangles.find(native_index) !=
+			    used_native_triangles.end())
+			continue;
+		    const triangle_t &native_triangle = tris_2d[native_index];
+		    const std::set<uedge_t> native_edges = {
+			uedge_t(native_triangle.v[0], native_triangle.v[1]),
+			uedge_t(native_triangle.v[1], native_triangle.v[2]),
+			uedge_t(native_triangle.v[2], native_triangle.v[0])
+		    };
+		    if (native_edges.find(native_split) == native_edges.end())
+			continue;
+		    long candidate[3] = {
+			mesh_vertex(native_triangle.v[0]),
+			mesh_vertex(native_triangle.v[1]),
+			mesh_vertex(native_triangle.v[2])
+		    };
+		    if (candidate[0] < 0 || candidate[1] < 0 ||
+			    candidate[2] < 0)
+			continue;
+		    std::sort(candidate, candidate + 3);
+		    if (!std::equal(candidate, candidate + 3,
+			    sorted_wanted))
+			continue;
+		    old_triangles.push_back(old_triangle);
+		    old_native_triangles.push_back(native_triangle);
+		    used_native_triangles.insert(native_index);
+		    found = true;
+		    break;
+		}
+		if (!found) {
+		    complete = false;
+		    break;
+		}
+	    }
+	    if (!complete || old_triangles.size() != 2)
+		continue;
+
+	    ON_3dPoint point;
+	    ON_3dVector normal = ON_3dVector::UnsetVector;
+	    if (!surface_EvNormal(surface, sample.x, sample.y, point, normal))
+		continue;
+	    if (m_bRev)
+		normal = -normal;
+	    const long point_2d = add_point(sample);
+	    const long point_3d = add_point(new ON_3dPoint(point));
+	    const long normal_3d = add_normal(new ON_3dPoint(normal));
+	    p2d3d[point_2d] = point_3d;
+	    p3d2d[point_3d] = point_2d;
+	    nmap[point_3d] = normal_3d;
+	    m_interior_pnts.insert(point_2d);
+	    m_chart_refinement_pnts.insert(point_2d);
+	    active_chart->add_refinement_point(point_2d, sample,
+		chart_sample, native_edge);
+	    if (state) {
+		CDT_Add3DPnt(state, pnts[(size_t)point_3d], f_id, -1, -1,
+		    -1, sample.x, sample.y);
+		CDT_Add3DNorm(state, normals[(size_t)normal_3d],
+		    pnts[(size_t)point_3d], f_id, -1, -1, -1,
+		    sample.x, sample.y);
+	    }
+
+	    const long mesh_point = p2ind[pnts[(size_t)point_3d]];
+	    for (size_t i = 0; i < old_triangles.size(); ++i) {
+		tri_remove(old_triangles[i]);
+		std::set<triangle_t> replacements = old_triangles[i].split(
+		    edge, mesh_point, false);
+		for (triangle_t replacement : replacements)
+		    tri_add(replacement);
+
+		long wanted[3] = {old_native_triangles[i].v[0],
+		    old_native_triangles[i].v[1],
+		    old_native_triangles[i].v[2]};
+		std::sort(wanted, wanted + 3);
+		for (auto old = tris_2d.begin(); old != tris_2d.end(); ++old) {
+		    long candidate[3] = {old->v[0], old->v[1], old->v[2]};
+		    std::sort(candidate, candidate + 3);
+		    if (std::equal(candidate, candidate + 3, wanted)) {
+			tris_2d.erase(old);
+			break;
+		    }
+		}
+		std::set<triangle_t> native_replacements =
+		    old_native_triangles[i].split(native_split, point_2d,
+			false);
+		tris_2d.insert(tris_2d.end(), native_replacements.begin(),
+		    native_replacements.end());
+	    }
+	    inserted++;
+	    break;
+	}
+    }
+    return inserted;
+}
+
+size_t
 cdt_mesh_t::refine_problem_triangles(
 	const std::vector<triangle_t> &triangles, size_t max_points)
 {
