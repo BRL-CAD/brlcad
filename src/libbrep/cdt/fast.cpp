@@ -757,7 +757,6 @@ getSurfacePoints(const ON_Surface *s,
 	return;
     fast_recursion_guard guard(recursion_depth);
 
-    double ldfactor = 2.0;
     ON_2dPoint p2d(0.0, 0.0);
     ON_3dPoint p[4] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
     ON_3dVector norm[4] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
@@ -775,88 +774,12 @@ getSurfacePoints(const ON_Surface *s,
 	return;
     }
 
-    if (u_metric_dist > ldfactor * v_metric_dist) {
-	const double requested = u_metric_dist / v_metric_dist / ldfactor * 2.0;
-	const int remaining = FAST_CDT_MAX_SURFACE_SAMPLES -
-	    on_surf_points.Count();
-	if (!std::isfinite(requested) || remaining < 2)
-	    return;
-	int isteps = (int)std::min(requested, (double)(remaining / 2));
-	if (isteps < 1)
-	    return;
-	fastf_t step = udist / (fastf_t) isteps;
-
-	fastf_t step_u;
-	for (int i = 1; i <= isteps; i++) {
-	    if (on_surf_points.Count() >= FAST_CDT_MAX_SURFACE_SAMPLES)
-		return;
-	    step_u = u1 + i * step;
-	    if ((below) && (i < isteps)) {
-		p2d.Set(step_u, v1);
-		on_surf_points.Append(p2d);
-	    }
-	    if (i == 1) {
-		getSurfacePoints(s, u1, u1 + step, v1, v2, min_dist,
-				 within_dist, cos_within_ang, metrics, on_surf_points, left,
-				 below);
-	    } else if (i == isteps) {
-		getSurfacePoints(s, u2 - step, u2, v1, v2, min_dist,
-				 within_dist, cos_within_ang, metrics, on_surf_points, left,
-				 below);
-	    } else {
-		getSurfacePoints(s, step_u - step, step_u, v1, v2, min_dist, within_dist,
-				 cos_within_ang, metrics, on_surf_points, left, below);
-	    }
-	    left = false;
-
-	    if (i < isteps) {
-		//top
-		p2d.Set(step_u, v2);
-		on_surf_points.Append(p2d);
-	    }
-	}
-    } else if (v_metric_dist > ldfactor * u_metric_dist) {
-	const double requested = v_metric_dist / u_metric_dist / ldfactor * 2.0;
-	const int remaining = FAST_CDT_MAX_SURFACE_SAMPLES -
-	    on_surf_points.Count();
-	if (!std::isfinite(requested) || remaining < 2)
-	    return;
-	int isteps = (int)std::min(requested, (double)(remaining / 2));
-	if (isteps < 1)
-	    return;
-	fastf_t step = vdist / (fastf_t) isteps;
-	fastf_t step_v;
-	for (int i = 1; i <= isteps; i++) {
-	    if (on_surf_points.Count() >= FAST_CDT_MAX_SURFACE_SAMPLES)
-		return;
-	    step_v = v1 + i * step;
-	    if ((left) && (i < isteps)) {
-		p2d.Set(u1, step_v);
-		on_surf_points.Append(p2d);
-	    }
-
-	    if (i == 1) {
-		getSurfacePoints(s, u1, u2, v1, v1 + step, min_dist,
-				 within_dist, cos_within_ang, metrics, on_surf_points, left,
-				 below);
-	    } else if (i == isteps) {
-		getSurfacePoints(s, u1, u2, v2 - step, v2, min_dist,
-				 within_dist, cos_within_ang, metrics, on_surf_points, left,
-				 below);
-	    } else {
-		getSurfacePoints(s, u1, u2, step_v - step, step_v, min_dist, within_dist,
-				 cos_within_ang, metrics, on_surf_points, left, below);
-	    }
-
-	    below = false;
-
-	    if (i < isteps) {
-		//right
-		p2d.Set(u2, step_v);
-		on_surf_points.Append(p2d);
-	    }
-	}
-    } else if ((surface_EvNormal(s, u1, v1, p[0], norm[0]))
+    /* Do not split a parameter rectangle merely to make its cells square.
+     * A geometrically flat, narrow strip may have an arbitrarily large
+     * aspect ratio, and filling it with isotropic cells is unrelated to the
+     * requested distance or normal tolerances.  The tests below subdivide
+     * only when surface evaluation demonstrates geometric error. */
+    if ((surface_EvNormal(s, u1, v1, p[0], norm[0]))
 	       && (surface_EvNormal(s, u2, v1, p[1], norm[1])) // for u
 	       && (surface_EvNormal(s, u2, v2, p[2], norm[2]))
 	       && (surface_EvNormal(s, u1, v2, p[3], norm[3]))

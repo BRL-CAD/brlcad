@@ -336,7 +336,7 @@ wireframe_result(struct db_i *dbip, struct directory *dp,
 static geom_result
 shaded_result(struct db_i *dbip, struct directory *dp,
 	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
-	const struct brep_cdt_fast_options *options)
+	const struct brep_cdt_fast_options *options, int face_index)
 {
     geom_result result;
     struct rt_db_internal intern;
@@ -358,7 +358,8 @@ shaded_result(struct db_i *dbip, struct directory *dp,
     int64_t start = bu_gettime();
     struct brep_cdt_fast_report report = {};
     result.ret = brep_cdt_fast_ex(&faces, &face_cnt, &normals, &points,
-	    &point_cnt, bi->brep, -1, ttol, tol, &active_options, &report);
+	    &point_cnt, bi->brep, face_index, ttol, tol, &active_options,
+	    &report);
     result.seconds = (bu_gettime() - start) / 1000000.0;
     result.peak_rss_bytes = peak_rss_bytes();
     result.requested_items = report.requested_faces;
@@ -594,6 +595,7 @@ struct audit_config {
     long max_time_ms;
     long max_result_mib;
     long max_points;
+    long face_index;
 };
 
 static int
@@ -677,7 +679,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     }
     if (run_shaded) {
 	std::cerr << "brep-audit: phase=shaded" << std::endl;
-	shaded = shaded_result(dbip, dp, &ttol, &tol, &fast_options);
+	shaded = shaded_result(dbip, dp, &ttol, &tol, &fast_options,
+	    (int)config.face_index);
     }
     vect_t ref_dims = VINIT_ZERO;
     double ref_diag = 0.0;
@@ -707,6 +710,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	<< config.tess_norm << "}"
 	<< ",\"memory_limit_mib\":" << config.memory_limit_mib
 	<< ",\"mode\":" << json_quote(mode_name)
+	<< ",\"face_index\":" << config.face_index
 	<< ",\"fast_options\":{\"jobs\":" << fast_options.max_workers
 	<< ",\"max_time_ms\":" << fast_options.max_time_ms
 	<< ",\"max_result_bytes\":" << fast_options.max_result_bytes
@@ -765,8 +769,9 @@ main(int argc, const char **argv)
     long max_result_mib = 0;
     long max_points = 0;
     long batch_start = 0;
+    long face_index = -1;
     const char *mode_name = "both";
-    struct bu_opt_desc d[16];
+    struct bu_opt_desc d[17];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -782,7 +787,8 @@ main(int argc, const char **argv)
     BU_OPT(d[12], "", "max-points", "#", &bu_opt_long, &max_points, "Maximum retained shaded points");
     BU_OPT(d[13], "", "batch", "", NULL, &batch, "Audit all BReps in one database process");
     BU_OPT(d[14], "", "batch-start", "#", &bu_opt_long, &batch_start, "First flattened batch task index");
-    BU_OPT_NULL(d[15]);
+    BU_OPT(d[15], "", "face-index", "#", &bu_opt_long, &face_index, "Shade only one BRep face (non-batch mode)");
+    BU_OPT_NULL(d[16]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -791,7 +797,9 @@ main(int argc, const char **argv)
 	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
 	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0 ||
 	    jobs < 0 || max_time_ms < 0 || max_result_mib < 0 ||
-	    max_points < 0 || batch_start < 0 ||
+	    max_points < 0 || batch_start < 0 || face_index < -1 ||
+	    (batch && face_index != -1) ||
+	    (face_index != -1 && BU_STR_EQUAL(mode_name, "wireframe")) ||
 	    (!BU_STR_EQUAL(mode_name, "wireframe") &&
 	     !BU_STR_EQUAL(mode_name, "shaded") &&
 	     !BU_STR_EQUAL(mode_name, "both"))) {
@@ -816,7 +824,8 @@ main(int argc, const char **argv)
     }
     audit_config config = {
 	ratio_min, ratio_max, tess_abs, tess_rel, tess_norm,
-	memory_limit_mib, jobs, max_time_ms, max_result_mib, max_points
+	memory_limit_mib, jobs, max_time_ms, max_result_mib, max_points,
+	face_index
     };
 
     if (batch) {
