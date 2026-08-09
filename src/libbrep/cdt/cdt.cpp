@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <numeric>
 #include <queue>
@@ -38,6 +39,7 @@
 #include <vector>
 #include "bg/chull.h"
 #include "bg/tri_pt.h"
+#include "bg/tri_tri.h"
 #include "./cdt.h"
 
 #define BREP_PLANAR_TOL 0.05
@@ -45,6 +47,8 @@
 #define MAX_CHART_REFINEMENT_ATTEMPTS 16
 #define MAX_CHART_REFINEMENT_POINTS 4096
 #define MAX_CHART_REFINEMENT_STAGNANT_ATTEMPTS 4
+#define MAX_ASSEMBLED_REFINEMENT_ATTEMPTS 16
+#define MAX_ASSEMBLED_REFINEMENT_POINTS 4096
 
 struct assembled_mesh_validation {
     size_t invalid_indices = 0;
@@ -54,6 +58,8 @@ struct assembled_mesh_validation {
     size_t invalid_vertex_links = 0;
     size_t intersecting_triangle_pairs = 0;
     int first_intersection[2] = {-1, -1};
+    bool first_intersection_point_valid = false;
+    double first_intersection_point[3] = {0.0, 0.0, 0.0};
 };
 
 static bool
@@ -215,6 +221,18 @@ assembled_mesh_validate(int vertex_count, int face_count,
 		validation->intersecting_triangle_pairs = 1;
 		validation->first_intersection[0] = (int)candidate;
 		validation->first_intersection[1] = face;
+		int coplanar = 0;
+		point_t start = VINIT_ZERO;
+		point_t end = VINIT_ZERO;
+		if (bg_tri_tri_isect_with_line(first_points[0],
+			first_points[1], first_points[2], second_points[0],
+			second_points[1], second_points[2], &coplanar,
+			&start, &end) && !coplanar) {
+		    for (int axis = 0; axis < 3; ++axis)
+			validation->first_intersection_point[axis] =
+			    0.5 * (start[axis] + end[axis]);
+		    validation->first_intersection_point_valid = true;
+		}
 		break;
 	    }
 	    if (validation->intersecting_triangle_pairs)
@@ -290,7 +308,8 @@ cdt_test_assembled_mesh_validation(void)
 	    crossing_tetrahedra, &validation) ||
 	    validation.intersecting_triangle_pairs != 1 ||
 	    validation.first_intersection[0] < 0 ||
-	    validation.first_intersection[1] < 0)
+	    validation.first_intersection[1] < 0 ||
+	    !validation.first_intersection_point_valid)
 	return 5;
 
     /* Adjacent face chords can have touching bounding boxes and separated,
@@ -502,7 +521,8 @@ static int
 closed_mesh_component_filter(int *faces, int *face_count,
 	fastf_t *vertices, int vertex_count, int *face_normals,
 	int *source_faces = NULL, double overlap_tolerance = 0.0,
-	bool source_is_solid = true, bool emit_diagnostics = true)
+	bool source_is_solid = true, bool emit_diagnostics = true,
+	size_t *source_triangles = NULL)
 {
     if (!faces || !face_count || !vertices || *face_count < 2 ||
 	    vertex_count < 4)
@@ -526,11 +546,14 @@ closed_mesh_component_filter(int *faces, int *face_count,
     std::vector<int> compact_faces;
     std::vector<int> compact_normals;
     std::vector<int> compact_sources;
+    std::vector<size_t> compact_triangles;
     compact_faces.reserve((size_t)original_face_count * 3);
     if (face_normals)
 	compact_normals.reserve((size_t)original_face_count * 3);
     if (source_faces)
 	compact_sources.reserve((size_t)original_face_count);
+    if (source_triangles)
+	compact_triangles.reserve((size_t)original_face_count);
     for (int face = 0; face < original_face_count; ++face) {
 	const size_t offset = (size_t)face * 3;
 	if (faces[offset] == faces[offset + 1] ||
@@ -544,6 +567,8 @@ closed_mesh_component_filter(int *faces, int *face_count,
 	}
 	if (source_faces)
 	    compact_sources.push_back(source_faces[face]);
+	if (source_triangles)
+	    compact_triangles.push_back(source_triangles[face]);
     }
     int removed_count = original_face_count -
 	(int)(compact_faces.size() / 3);
@@ -556,6 +581,9 @@ closed_mesh_component_filter(int *faces, int *face_count,
 	if (source_faces)
 	    std::copy(compact_sources.begin(), compact_sources.end(),
 		source_faces);
+	if (source_triangles)
+	    std::copy(compact_triangles.begin(), compact_triangles.end(),
+		source_triangles);
     }
     if (*face_count < 2)
 	return removed_count;
@@ -716,11 +744,14 @@ closed_mesh_component_filter(int *faces, int *face_count,
     std::vector<int> candidate_faces;
     std::vector<int> candidate_normals;
     std::vector<int> candidate_sources;
+    std::vector<size_t> candidate_triangles;
     candidate_faces.reserve(retained_face_count * 3);
     if (face_normals)
 	candidate_normals.reserve(retained_face_count * 3);
     if (source_faces)
 	candidate_sources.reserve(retained_face_count);
+    if (source_triangles)
+	candidate_triangles.reserve(retained_face_count);
     for (int face = 0; face < *face_count; ++face) {
 	if (!retain[(size_t)component_id[(size_t)face]])
 	    continue;
@@ -732,6 +763,8 @@ closed_mesh_component_filter(int *faces, int *face_count,
 	}
 	if (source_faces)
 	    candidate_sources.push_back(source_faces[face]);
+	if (source_triangles)
+	    candidate_triangles.push_back(source_triangles[face]);
     }
     if (!source_faces &&
 	    bg_trimesh_solid2(vertex_count, (int)retained_face_count,
@@ -747,6 +780,9 @@ closed_mesh_component_filter(int *faces, int *face_count,
     if (source_faces)
 	std::copy(candidate_sources.begin(), candidate_sources.end(),
 	    source_faces);
+    if (source_triangles)
+	std::copy(candidate_triangles.begin(), candidate_triangles.end(),
+	    source_triangles);
     *face_count = (int)retained_face_count;
     return removed;
 }
@@ -1210,6 +1246,157 @@ calc_singular_vert_norm(struct ON_Brep_CDT_State *s_cdt, int index)
 
 }
 
+/* The face-local certificates cannot detect chords from distinct faces that
+ * cross in model space.  Once final assembly identifies such a pair, feed the
+ * exact source triangles back into their native surface charts.  Inserting an
+ * interior surface sample shortens only those chords; genuine intersections
+ * therefore remain and exhaust the bounded refinement budget, while
+ * approximation-induced crossings converge without changing B-Rep topology. */
+static size_t
+refine_assembled_intersection(struct ON_Brep_CDT_State *s_cdt,
+	const assembled_mesh_validation &validation, size_t max_points)
+{
+    if (!s_cdt || !max_points ||
+	    !validation.intersecting_triangle_pairs)
+	return 0;
+    int source_faces[2] = {-1, -1};
+    for (int pair_index = 0; pair_index < 2; ++pair_index) {
+	const int bot_triangle = validation.first_intersection[pair_index];
+	if (bot_triangle >= 0 && (size_t)bot_triangle <
+		s_cdt->bot_face_to_brep_face.size())
+	    source_faces[pair_index] = s_cdt->bot_face_to_brep_face[
+		(size_t)bot_triangle];
+    }
+
+    /* Adjacent surface approximations most often cross in a thin layer next
+     * to their shared curved edge.  Splitting the nearest shared master-edge
+     * segment is preferable to perturbing either face interior: both charts
+     * receive the same authoritative 3-D point and watertightness is retained
+     * by construction. */
+    if (validation.first_intersection_point_valid && source_faces[0] >= 0 &&
+	    source_faces[1] >= 0 && source_faces[0] != source_faces[1]) {
+	const auto face_edges = [&](int face_index) {
+	    std::set<int> result;
+	    const ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+	    for (int loop_index = 0; loop_index < face.LoopCount();
+		    ++loop_index) {
+		const ON_BrepLoop *loop = face.Loop(loop_index);
+		if (!loop)
+		    continue;
+		for (int trim_index = 0; trim_index < loop->TrimCount();
+			++trim_index) {
+		    const ON_BrepTrim *trim = loop->Trim(trim_index);
+		    const ON_BrepEdge *edge = trim ? trim->Edge() : NULL;
+		    if (edge)
+			result.insert(edge->m_edge_index);
+		}
+	    }
+	    return result;
+	};
+	const std::set<int> first_edges = face_edges(source_faces[0]);
+	const std::set<int> second_edges = face_edges(source_faces[1]);
+	std::vector<int> shared_edges;
+	std::set_intersection(first_edges.begin(), first_edges.end(),
+	    second_edges.begin(), second_edges.end(),
+	    std::back_inserter(shared_edges));
+	bedge_seg_t *nearest = NULL;
+	double nearest_distance = DBL_MAX;
+	const ON_3dPoint intersection(
+	    validation.first_intersection_point[0],
+	    validation.first_intersection_point[1],
+	    validation.first_intersection_point[2]);
+	for (int edge : shared_edges) {
+	    const auto segments = s_cdt->e2polysegs.find(edge);
+	    if (segments == s_cdt->e2polysegs.end())
+		continue;
+	    for (bedge_seg_t *segment : segments->second) {
+		if (!segment || !segment->e_start || !segment->e_end)
+		    continue;
+		const ON_3dPoint closest = ON_Line(*segment->e_start,
+		    *segment->e_end).ClosestPointTo(intersection);
+		const double distance = closest.DistanceTo(intersection);
+		if (distance < nearest_distance) {
+		    nearest_distance = distance;
+		    nearest = segment;
+		}
+	    }
+	}
+	if (nearest) {
+	    const std::set<bedge_seg_t *> split = split_edge_seg(s_cdt,
+		nearest, 1, NULL, 1);
+	    if (!split.empty()) {
+		std::set<int> changed_faces = {
+		    source_faces[0], source_faces[1]
+		};
+		for (int face : changed_faces) {
+		    cdt_mesh_t &mesh = s_cdt->fmeshes[face];
+		    mesh.brep_edges.clear();
+		    mesh.chart_boundary_edges.clear();
+		    mesh.ue2b_map.clear();
+		    if (!mesh.cdt())
+			return 0;
+		    bool mapped = loop_edges(&mesh, &mesh.outer_loop);
+		    for (const auto &inner : mesh.inner_loops)
+			mapped = loop_edges(&mesh, inner.second) && mapped;
+		    if (!mapped || !refine_triangulation(s_cdt, &mesh, 0, 0) ||
+			    mesh.geometric_degenerate_count())
+			return 0;
+		}
+		return 1;
+	    }
+	}
+    }
+
+    std::map<int, std::vector<triangle_t>> targets;
+    for (int pair_index = 0; pair_index < 2; ++pair_index) {
+	const int bot_triangle = validation.first_intersection[pair_index];
+	if (bot_triangle < 0 || (size_t)bot_triangle >=
+		s_cdt->bot_face_to_brep_face.size() ||
+		(size_t)bot_triangle >=
+		s_cdt->bot_face_to_cdt_triangle.size())
+	    continue;
+	const int face = s_cdt->bot_face_to_brep_face[
+	    (size_t)bot_triangle];
+	const size_t local_triangle = s_cdt->bot_face_to_cdt_triangle[
+	    (size_t)bot_triangle];
+	auto mesh = s_cdt->fmeshes.find(face);
+	if (mesh == s_cdt->fmeshes.end() ||
+		local_triangle >= mesh->second.tris_vect.size())
+	    continue;
+	targets[face].push_back(mesh->second.tris_vect[local_triangle]);
+    }
+
+    size_t inserted = 0;
+    std::vector<int> changed_faces;
+    for (auto &entry : targets) {
+	if (inserted >= max_points)
+	    break;
+	cdt_mesh_t &mesh = s_cdt->fmeshes[entry.first];
+	const size_t face_inserted = mesh.refine_problem_triangles(
+	    entry.second, max_points - inserted);
+	if (!face_inserted)
+	    continue;
+	inserted += face_inserted;
+	changed_faces.push_back(entry.first);
+    }
+    if (!inserted)
+	return 0;
+
+    for (int face : changed_faces) {
+	cdt_mesh_t &mesh = s_cdt->fmeshes[face];
+	if (!mesh.cdt()) {
+	    return 0;
+	}
+	if (!refine_triangulation(s_cdt, &mesh, 0, 0)) {
+	    return 0;
+	}
+	if (mesh.geometric_degenerate_count()) {
+	    return 0;
+	}
+    }
+    return inserted;
+}
+
 int
 ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces)
 {
@@ -1498,18 +1685,48 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     int valid_fcnt, valid_vcnt;
     int *valid_faces = NULL;
     fastf_t *valid_vertices = NULL;
-
-    if (ON_Brep_CDT_Mesh(&valid_faces, &valid_fcnt, &valid_vertices, &valid_vcnt, NULL, NULL, NULL, NULL, s_cdt, 0, NULL) < 0) {
-	s_cdt->status = BREP_CDT_FAILED;
-	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_MESH_EXPORT_FAILED,
-	    BREP_CDT_STAGE_MESH_ASSEMBLY, -1, face_successes, 0,
-	    "failed to assemble indexed triangle mesh");
-	return -1;
-    }
-
     assembled_mesh_validation mesh_validation;
-    if (!assembled_mesh_validate(valid_vcnt, valid_fcnt, valid_vertices,
-	    valid_faces, &mesh_validation)) {
+    size_t assembled_refinement_points = 0;
+    int assembled_refinement_attempts = 0;
+    while (true) {
+	if (ON_Brep_CDT_Mesh(&valid_faces, &valid_fcnt, &valid_vertices,
+		&valid_vcnt, NULL, NULL, NULL, NULL, s_cdt, 0, NULL) < 0) {
+	    s_cdt->status = BREP_CDT_FAILED;
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_MESH_EXPORT_FAILED,
+		BREP_CDT_STAGE_MESH_ASSEMBLY, -1, face_successes, 0,
+		"failed to assemble indexed triangle mesh");
+	    return -1;
+	}
+	if (assembled_mesh_validate(valid_vcnt, valid_fcnt, valid_vertices,
+		valid_faces, &mesh_validation))
+	    break;
+
+	const bool only_intersection =
+	    mesh_validation.intersecting_triangle_pairs &&
+	    !mesh_validation.invalid_indices &&
+	    !mesh_validation.nonfinite_vertices &&
+	    !mesh_validation.unused_vertices &&
+	    !mesh_validation.degenerate_faces &&
+	    !mesh_validation.invalid_vertex_links;
+	size_t inserted = 0;
+	if (only_intersection && assembled_refinement_attempts <
+		MAX_ASSEMBLED_REFINEMENT_ATTEMPTS &&
+		assembled_refinement_points <
+		MAX_ASSEMBLED_REFINEMENT_POINTS) {
+	    inserted = refine_assembled_intersection(s_cdt, mesh_validation,
+		MAX_ASSEMBLED_REFINEMENT_POINTS -
+		assembled_refinement_points);
+	}
+	if (inserted) {
+	    assembled_refinement_points += inserted;
+	    assembled_refinement_attempts++;
+	    bu_free(valid_faces, "faces");
+	    bu_free(valid_vertices, "vertices");
+	    valid_faces = NULL;
+	    valid_vertices = NULL;
+	    continue;
+	}
+
 	std::string message =
 	    "assembled mesh failed geometric/link validation: indices " +
 	    std::to_string(mesh_validation.invalid_indices) +
@@ -1541,6 +1758,11 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		std::to_string(s_cdt->bot_face_to_brep_face[(size_t)
 		mesh_validation.first_intersection[1]]);
 	}
+	if (assembled_refinement_points)
+	    message += " after " + std::to_string(
+		assembled_refinement_attempts) + " refinement rounds and " +
+		std::to_string(assembled_refinement_points) +
+		" inserted points";
 	bu_free(valid_faces, "faces");
 	bu_free(valid_vertices, "vertices");
 	s_cdt->status = BREP_CDT_FAILED;
@@ -1554,6 +1776,11 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    -1, face_successes, 0, message.c_str());
 	return -1;
     }
+    if (assembled_refinement_points)
+	bu_log("%s: assembled mesh certified after %d cross-face refinement "
+	    "rounds and %zu inserted points\n",
+	    s_cdt->name ? s_cdt->name : "BREP",
+	    assembled_refinement_attempts, assembled_refinement_points);
 
     struct bg_trimesh_solid_errors se = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
     int invalid = bg_trimesh_solid2(valid_vcnt, valid_fcnt, valid_vertices, valid_faces, &se);
@@ -1598,6 +1825,7 @@ ON_Brep_CDT_Mesh(
 	return -1;
     }
     s_cdt->bot_face_to_brep_face.clear();
+    s_cdt->bot_face_to_cdt_triangle.clear();
 
     /* We can ignore the face normals if we want, but if some of the
      * return variables are non-NULL they all need to be non-NULL */
@@ -1763,7 +1991,9 @@ ON_Brep_CDT_Mesh(
     // 3D points should be geometrically unique in this final container.
     int face_cnt = 0;
     std::vector<int> output_face_ids;
+    std::vector<size_t> output_triangle_ids;
     output_face_ids.reserve(triangle_cnt);
+    output_triangle_ids.reserve(triangle_cnt);
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
 	cdt_mesh_t *fmesh = &s_cdt->fmeshes[active_faces[fi]];
 	const std::vector<size_t> &face_triangles =
@@ -1788,6 +2018,7 @@ ON_Brep_CDT_Mesh(
 	    }
 
 	    output_face_ids.push_back(fmesh->f_id);
+	    output_triangle_ids.push_back(face_triangles[ti]);
 	    face_cnt++;
 	}
     }
@@ -1803,7 +2034,8 @@ ON_Brep_CDT_Mesh(
 	const int removed = closed_mesh_component_filter(*faces, fcnt,
 	    *vertices, *vcnt, face_normals ? *face_normals : NULL,
 	    output_face_ids.data(), std::max(s_cdt->absmin,
-		ON_ZERO_TOLERANCE), source_is_solid);
+		ON_ZERO_TOLERANCE), source_is_solid, true,
+	    output_triangle_ids.data());
 	if (removed > 0) {
 	    bu_log("%s: removed %d redundant open triangle artifact%s after "
 		"transactional component validation\n",
@@ -1821,7 +2053,9 @@ ON_Brep_CDT_Mesh(
     }
 
     output_face_ids.resize((size_t)*fcnt);
+    output_triangle_ids.resize((size_t)*fcnt);
     s_cdt->bot_face_to_brep_face = output_face_ids;
+    s_cdt->bot_face_to_cdt_triangle = output_triangle_ids;
 
     return 0;
 }
@@ -1879,10 +2113,13 @@ cdt_test_spurious_components(void)
 	0, 1, 2, 0, 2, 3, 4, 5, 6
     };
     int open_duplicate_sources[] = {7, 7, 7};
+    size_t open_duplicate_triangles[] = {10, 11, 12};
     face_count = 3;
     if (closed_mesh_component_filter(open_duplicate_faces, &face_count,
 	    open_duplicate_vertices, 7, NULL, open_duplicate_sources,
-	    1.0e-12) != 1 || face_count != 2)
+	    1.0e-12, true, true, open_duplicate_triangles) != 1 ||
+	    face_count != 2 || open_duplicate_triangles[0] != 10 ||
+	    open_duplicate_triangles[1] != 11)
 	return 4;
 
     open_duplicate_vertices[20] = 0.1;
