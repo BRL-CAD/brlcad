@@ -20,13 +20,14 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "raytrace.h"
 #include "rt/calc.h"
 #include "wdb.h"
 
 
 int
-main(int UNUSED(argc), char **UNUSED(argv))
+main(int UNUSED(argc), const char **argv)
 {
     struct db_i *dbip = db_create_inmem();
     struct rt_wdb *wdbp;
@@ -37,6 +38,8 @@ main(int UNUSED(argc), char **UNUSED(argv))
     point_t expected_min = {-1.0, -1.0, -1.0};
     point_t expected_max = { 1.0,  1.0,  1.0};
     int ret = 1;
+
+    bu_setprogname(argv[0]);
 
     if (!dbip)
 	return 1;

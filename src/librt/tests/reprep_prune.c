@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "raytrace.h"
 #include "rt/prep.h"
 #include "wdb.h"
@@ -71,7 +72,7 @@ move_sphere(struct db_i *dbip, const char *name, const point_t center)
 
 
 int
-main(int UNUSED(argc), char **UNUSED(argv))
+main(int UNUSED(argc), const char **argv)
 {
     struct db_i *dbip = db_create_inmem();
     struct rt_wdb *wdbp;
@@ -85,6 +86,8 @@ main(int UNUSED(argc), char **UNUSED(argv))
     char *topobjs[] = {(char *)"test.r"};
     char *unprepped[] = {(char *)"right.s"};
     int failures = 0;
+
+    bu_setprogname(argv[0]);
 
     if (!dbip)
 	return 1;
