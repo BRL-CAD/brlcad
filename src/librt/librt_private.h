@@ -566,6 +566,7 @@ struct rt_brep_trace_edge {
     int correspondence_exhausted;
     int discrepancy_bounded;
     int discrepancy_bound_exhausted;
+    int discrepancy_endpoints_certified;
     int discrepancy_sample_authorized;
     int discrepancy_proof_class;
     int discrepancy_authorized;

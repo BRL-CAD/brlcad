@@ -813,10 +813,16 @@ brep_trace_seam_event_stream_valid(
     const struct rt_brep_shot_trace &trace,
     const struct rt_brep_trace_edge *edge,
     const ON_Brep *brep, const partition_result &oracle,
-    double model_tolerance, bool cobb_reparameterized = false)
+    double model_tolerance, bool cobb_reparameterized = false,
+    double endpoint_tolerance_scale = 2.0e-4)
 {
     if (!edge || !brep || edge->edge_index < 0 ||
 	    edge->edge_index >= brep->m_E.Count() ||
+	    !edge->correspondence_supported || edge->correspondence_exhausted ||
+	    !edge->discrepancy_endpoints_certified ||
+	    !edge->discrepancy_bounded || edge->discrepancy_bound_exhausted ||
+	    !edge->discrepancy_authorized ||
+	    edge->discrepancy_proof_class != RT_BREP_SEAM_GAP_INSIDE ||
 	    oracle.partitions != 1 || oracle.overflow ||
 	    trace.physical_event_seam_attempts != 1 ||
 	    trace.physical_event_seam != 2 ||
@@ -870,7 +876,8 @@ brep_trace_seam_event_stream_valid(
 	    RT_BREP_TRACE_EVENT_SEAM_CONTACT_EXISTING &&
 	  continuation->certificate ==
 	    RT_BREP_TRACE_EVENT_SEAM_CONTACT_CONTINUATION));
-    const double endpoint_tolerance = std::max(2.0e-4 * model_tolerance,
+    const double endpoint_tolerance = std::max(
+	endpoint_tolerance_scale * model_tolerance,
 	4096.0 * DBL_EPSILON * std::max(1.0,
 	    fabs(trace.physical_events[1].dist)));
     if (!matching_certificates ||
@@ -896,6 +903,14 @@ brep_trace_seam_event_stream_valid(
 	    continuation->hit_class != 4 || continuation->trim_status != 1 ||
 	    continuation->span_index < 0 ||
 	    trace.physical_events[0].t_max >= trace.physical_events[1].t_min ||
+	    oracle.intervals[0].in_dist <
+		trace.physical_events[0].t_min - endpoint_tolerance ||
+	    oracle.intervals[0].in_dist >
+		trace.physical_events[0].t_max + endpoint_tolerance ||
+	    oracle.intervals[0].out_dist <
+		trace.physical_events[1].t_min - endpoint_tolerance ||
+	    oracle.intervals[0].out_dist >
+		trace.physical_events[1].t_max + endpoint_tolerance ||
 	    fabs(trace.physical_events[0].dist -
 		oracle.intervals[0].in_dist) > endpoint_tolerance ||
 	    fabs(trace.physical_events[1].dist -
@@ -3272,6 +3287,64 @@ cobb_seam_discrepancy(const ON_Brep *brep, int edge_index)
 	maximum = std::max(maximum, first_lift.DistanceTo(second_lift));
     }
     return maximum;
+}
+
+
+static bool
+cobb_edge_endpoint_contract(const ON_Brep *brep, int edge_index,
+    double model_tolerance, double &maximum_edge_vertex_gap,
+    double &maximum_lift_vertex_gap)
+{
+    maximum_edge_vertex_gap = 0.0;
+    maximum_lift_vertex_gap = 0.0;
+    if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count() ||
+	    !ON_IsValid(model_tolerance) || model_tolerance < 0.0)
+	return false;
+    const ON_BrepEdge &edge = brep->m_E[edge_index];
+    if (edge.m_ti.Count() != 2 || !edge.Domain().IsIncreasing())
+	return false;
+    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+	const int vertex_index = edge.m_vi[endpoint];
+	if (vertex_index < 0 || vertex_index >= brep->m_V.Count())
+	    return false;
+	const ON_BrepVertex &vertex = brep->m_V[vertex_index];
+	const double vertex_tolerance =
+	    ON_IsValid(vertex.m_tolerance) && vertex.m_tolerance >= 0.0 ?
+	    std::max(model_tolerance, vertex.m_tolerance) : model_tolerance;
+	const ON_3dPoint edge_point = edge.PointAt(endpoint ?
+	    edge.Domain().Max() : edge.Domain().Min());
+	if (!vertex.point.IsValid() || !edge_point.IsValid())
+	    return false;
+	const double edge_vertex_gap = vertex.point.DistanceTo(edge_point);
+	maximum_edge_vertex_gap = std::max(maximum_edge_vertex_gap,
+	    edge_vertex_gap);
+	for (int side = 0; side < 2; ++side) {
+	    const int trim_index = edge.m_ti[side];
+	    if (trim_index < 0 || trim_index >= brep->m_T.Count())
+		return false;
+	    const ON_BrepTrim &trim = brep->m_T[trim_index];
+	    const int trim_endpoint = trim.m_bRev3d ? 1 - endpoint : endpoint;
+	    ON_3dPoint lift;
+	    if (trim.m_vi[trim_endpoint] != vertex_index ||
+		    !cobb_trim_lift(trim, endpoint, lift))
+		return false;
+	    const double lift_vertex_gap = vertex.point.DistanceTo(lift);
+	    maximum_lift_vertex_gap = std::max(maximum_lift_vertex_gap,
+		lift_vertex_gap);
+	    const double coordinate_scale = std::max(1.0,
+		std::max(fabs(vertex.point.x), std::max(fabs(vertex.point.y),
+		std::max(fabs(vertex.point.z), std::max(fabs(edge_point.x),
+		std::max(fabs(edge_point.y), std::max(fabs(edge_point.z),
+		std::max(fabs(lift.x), std::max(fabs(lift.y),
+		    fabs(lift.z))))))))));
+	    const double roundoff = std::max(ON_ZERO_TOLERANCE,
+		512.0 * DBL_EPSILON * coordinate_scale);
+	    if (edge_vertex_gap > vertex_tolerance + roundoff ||
+		    lift_vertex_gap > vertex_tolerance + roundoff)
+		return false;
+	}
+    }
+    return true;
 }
 
 
@@ -10754,7 +10827,8 @@ check_cobb_endpoint_moving_seam_corpus(const struct bn_tol *tol,
     const double gap_ratios[] = {0.25, 0.9, 1.1};
     const double clearance_ratios[] = {2.0, 0.9, 0.25, 0.0, -0.25};
     size_t rays = 0;
-    size_t unavailable_gap_proofs = 0;
+    size_t endpoint_certificates = 0;
+    size_t inside_gap_proofs = 0;
     size_t legacy_one_hit = 0;
     size_t certified_pairs = 0;
     size_t selected = 0;
@@ -10767,6 +10841,12 @@ check_cobb_endpoint_moving_seam_corpus(const struct bn_tol *tol,
     size_t maximum_gap_cells = 0;
     double maximum_calibration_error = 0.0;
     double maximum_outside_error = 0.0;
+    double maximum_edge_vertex_gap = 0.0;
+    double maximum_lift_vertex_gap = 0.0;
+    size_t endpoint_tolerance_rejections = 0;
+    size_t endpoint_similarity_cases = 0;
+    size_t minimum_similarity_cells = (size_t)-1;
+    size_t maximum_similarity_cells = 0;
 
     for (size_t ratio_index = 0;
 	    ratio_index < sizeof(gap_ratios) / sizeof(gap_ratios[0]);
@@ -10790,14 +10870,28 @@ check_cobb_endpoint_moving_seam_corpus(const struct bn_tol *tol,
 		applied_displacement);
 	    const double calibration_error = variant ?
 		fabs(measured_gap - target_gap) : INFINITY;
+	    double edge_vertex_gap = INFINITY;
+	    double lift_vertex_gap = INFINITY;
+	    const bool endpoint_contract = variant &&
+		cobb_edge_endpoint_contract(variant, frame.edge_index,
+		    tol->dist, edge_vertex_gap, lift_vertex_gap);
 	    maximum_calibration_error = std::max(maximum_calibration_error,
 		calibration_error);
-	    if (!variant || !variant->IsValid() || !variant->IsSolid() ||
+	    if (endpoint_contract) {
+		maximum_edge_vertex_gap = std::max(maximum_edge_vertex_gap,
+		    edge_vertex_gap);
+		maximum_lift_vertex_gap = std::max(maximum_lift_vertex_gap,
+		    lift_vertex_gap);
+	    }
+	    if (!variant || !endpoint_contract || !variant->IsValid() ||
+		    !variant->IsSolid() ||
 		    calibration_error > 1.0e-3 * target_gap) {
 		std::printf("FAIL: endpoint-moving Cobb construction sign=%d "
-		    "g/T=%.3g measured=%.17g target=%.17g move=%.17g\n",
+		    "g/T=%.3g measured=%.17g target=%.17g move=%.17g "
+		    "endpoint=%d edge/trim-gap=%.17g/%.17g\n",
 		    sign, gap_ratios[ratio_index], measured_gap, target_gap,
-		    applied_displacement);
+		    applied_displacement, endpoint_contract, edge_vertex_gap,
+		    lift_vertex_gap);
 		delete variant;
 		failures++;
 		continue;
@@ -10869,33 +10963,80 @@ check_cobb_endpoint_moving_seam_corpus(const struct bn_tol *tol,
 			if (target_edge->discrepancy_bound_exhausted)
 			    exhausted_gap_proofs++;
 		    }
-		    if (target_edge && target_edge->correspondence_supported &&
-			    !target_edge->discrepancy_authorized &&
+		    if (target_edge &&
+			target_edge->discrepancy_endpoints_certified)
+			endpoint_certificates++;
+		    if (target_edge && target_edge->discrepancy_bounded &&
+			    !target_edge->discrepancy_bound_exhausted &&
+			    target_edge->discrepancy_authorized &&
 			    target_edge->discrepancy_proof_class ==
-			    RT_BREP_SEAM_GAP_UNAVAILABLE)
-			unavailable_gap_proofs++;
+			    RT_BREP_SEAM_GAP_INSIDE)
+			inside_gap_proofs++;
 		    if (!target_edge || !target_edge->correspondence_supported ||
-			    target_edge->discrepancy_authorized ||
+			    !target_edge->discrepancy_endpoints_certified ||
+			    !target_edge->discrepancy_bounded ||
+			    target_edge->discrepancy_bound_exhausted ||
+			    !target_edge->discrepancy_authorized ||
 			    target_edge->discrepancy_proof_class !=
-			    RT_BREP_SEAM_GAP_UNAVAILABLE) {
-			std::printf("FAIL: endpoint-moving Cobb fallback "
+			    RT_BREP_SEAM_GAP_INSIDE ||
+			    !target_edge->discrepancy_bound_cells) {
+			std::printf("FAIL: endpoint-moving Cobb proof "
 			    "sign=%d g/T=%.3g h/T=%.3g reverse=%d "
-			    "edge=%d correspondence=%d proof=%d authorized=%d\n",
+			    "edge=%d correspondence/endpoints=%d/%d "
+			    "proof=%d bounded/authorized=%d/%d cells=%zu\n",
 			    sign,
 			    gap_ratios[ratio_index],
 			    clearance_ratios[clearance_index], reverse,
 			    target_edge != NULL, target_edge ?
 			    target_edge->correspondence_supported : -1,
 			    target_edge ?
+			    target_edge->discrepancy_endpoints_certified : -1,
+			    target_edge ?
 			    target_edge->discrepancy_proof_class : -1,
 			    target_edge ?
-			    target_edge->discrepancy_authorized : -1);
+			    target_edge->discrepancy_bounded : -1,
+			    target_edge ?
+			    target_edge->discrepancy_authorized : -1,
+			    target_edge ?
+			    target_edge->discrepancy_bound_cells : 0);
 			failures++;
 		    }
 		    if (trace.final_hits == 1)
 			legacy_one_hit++;
-		    if (trace.physical_event_seam_certified)
+		    if (trace.physical_event_seam_certified) {
 			certified_pairs++;
+			if (!brep_trace_seam_event_stream_valid(trace,
+				target_edge, variant, implicit_result, tol->dist,
+				false, 2.5e-4)) {
+			    std::printf("FAIL: endpoint-moving Cobb certified "
+				"stream sign=%d g/T=%.3g h/T=%.3g reverse=%d\n",
+				sign, gap_ratios[ratio_index],
+				clearance_ratios[clearance_index], reverse);
+			    std::printf("  oracle=[%.17g %.17g] events=%zu "
+				"roots/boxes=%zu/%zu contact=%zu/%zu/%zu\n",
+				implicit_result.intervals[0].in_dist,
+				implicit_result.intervals[0].out_dist,
+				trace.stored_physical_events,
+				trace.stored_local_roots,
+				trace.stored_surface_boxes,
+				trace.physical_event_seam_contact_pairs,
+				trace.physical_event_seam_contact_boxes,
+				trace.physical_event_seam_contact_roots);
+			    for (size_t event_index = 0;
+				event_index < trace.stored_physical_events;
+				++event_index) {
+				const struct rt_brep_trace_physical_event &event =
+				    trace.physical_events[event_index];
+				std::printf("  event[%zu] t=[%.17g %.17g %.17g] "
+				    "cert/dir/face/span=%d/%d/%d/%d\n",
+				    event_index, event.t_min, event.dist,
+				    event.t_max, event.certificate,
+				    event.direction, event.face_index,
+				    event.span_index);
+			    }
+			    failures++;
+			}
+		    }
 		    if (trace.prepared_production_selected)
 			selected++;
 		    if (gap_ratios[ratio_index] > 1.0 &&
@@ -10973,31 +11114,283 @@ check_cobb_endpoint_moving_seam_corpus(const struct bn_tol *tol,
     }
 
 
-    if (rays != 60 || above_envelope_pairs || certified_pairs ||
-	    unavailable_gap_proofs != rays || exhausted_gap_proofs ||
-	    maximum_gap_cells || legacy_one_hit > 16 || selected > 8 ||
-	    oracle_differences > 48 || uncertainty_differences > 48 ||
-	    outside_uncertainty_differences || below_envelope_leaks > 2) {
+    /* The endpoint/topology certificate and the resulting physical pair are
+     * similarity invariants.  Exercise the one newly certified endpoint-
+     * moving state independently of the endpoint-preserving classifier
+     * matrix, including ray reversal and extreme scale/translation. */
+    {
+	cobb_seam_frame frame;
+	int minimum_edge_index = pristine->m_E.Count();
+	for (int side = 0; side < 4; ++side) {
+	    int edge_index = -1;
+	    if (cobb_target_edge(pristine, frame.face_index, side, edge_index) &&
+		    edge_index < minimum_edge_index) {
+		minimum_edge_index = edge_index;
+		frame.side_index = side;
+	    }
+	}
+	double measured_gap = 0.0;
+	double applied_displacement = 0.0;
+	ON_Brep *base = cobb_endpoint_moving_seam_variant(pristine, origin,
+	    -0.9 * tol->dist, frame, measured_gap, applied_displacement);
+	struct endpoint_transform_case {
+	    const char *name;
+	    double scale;
+	    ON_3dVector translation;
+	    ON_3dVector axis;
+	    double angle;
+	} transform_cases[] = {
+	    {"translated", 1.0, ON_3dVector(-31.25, 47.5, 103.75),
+		ON_3dVector(0.0, 0.0, 1.0), 0.0},
+	    {"oblique-rotated-translated", 1.0,
+		ON_3dVector(-19.0, 23.0, 41.0),
+		ON_3dVector(1.0, -2.0, 0.5), 0.731},
+	    {"small-similarity", 0.01,
+		ON_3dVector(1.25, -2.5, 5.0),
+		ON_3dVector(-0.3, 1.0, 0.7), -1.113},
+	    {"large-similarity", 1.0e4,
+		ON_3dVector(1.0e6, -2.0e6, 3.0e6),
+		ON_3dVector(2.0, 0.25, -1.0), 2.017}
+	};
+	if (!base) {
+	    std::printf("FAIL: endpoint-moving similarity construction\n");
+	    failures++;
+	} else {
+	    for (size_t case_index = 0; case_index <
+		    sizeof(transform_cases) / sizeof(transform_cases[0]);
+		    ++case_index) {
+		const endpoint_transform_case &test = transform_cases[case_index];
+		const ON_Xform xform = cobb_axis_angle_similarity_transform(
+		    test.scale, test.translation, test.axis, test.angle);
+		ON_Brep *variant = new ON_Brep(*base);
+		bool transformed = variant->Transform(xform);
+		for (int vertex_index = 0;
+			transformed && vertex_index < variant->m_V.Count();
+			++vertex_index)
+		    variant->m_V[vertex_index].m_tolerance =
+			base->m_V[vertex_index].m_tolerance * test.scale;
+		for (int edge_index = 0;
+			transformed && edge_index < variant->m_E.Count();
+			++edge_index)
+		    variant->m_E[edge_index].m_tolerance =
+			base->m_E[edge_index].m_tolerance * test.scale;
+		struct bn_tol case_tol = *tol;
+		case_tol.dist = tol->dist * test.scale;
+		case_tol.dist_sq = case_tol.dist * case_tol.dist;
+		double edge_vertex_gap = 0.0;
+		double lift_vertex_gap = 0.0;
+		if (!transformed || !variant->IsValid() || !variant->IsSolid() ||
+			!cobb_edge_endpoint_contract(variant, frame.edge_index,
+			    case_tol.dist, edge_vertex_gap, lift_vertex_gap)) {
+		    std::printf("FAIL: endpoint-moving similarity %s "
+			"geometry endpoint=%.17g/%.17g\n", test.name,
+			edge_vertex_gap, lift_vertex_gap);
+		    delete variant;
+		    failures++;
+		    continue;
+		}
+
+		struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+		if (!rtip) {
+		    std::printf("FAIL: endpoint-moving similarity %s rt_i\n",
+			test.name);
+		    delete variant;
+		    failures++;
+		    continue;
+		}
+		rtip->rti_tol = case_tol;
+		struct resource resource = {};
+		rt_init_resource(&resource, 0, rtip);
+		struct rt_brep_internal variant_internal = {};
+		variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+		variant_internal.brep = variant;
+		struct rt_db_internal variant_intern;
+		RT_DB_INTERNAL_INIT(&variant_intern);
+		variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		variant_intern.idb_type = ID_BREP;
+		variant_intern.idb_meth = &OBJ[ID_BREP];
+		variant_intern.idb_ptr = &variant_internal;
+		struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+		if (!stp) {
+		    std::printf("FAIL: endpoint-moving similarity %s prep\n",
+			test.name);
+		    failures++;
+		} else {
+		    for (int reverse = 0; reverse <= 1; ++reverse) {
+			const sampled_ray base_ray = cobb_seam_grazing_ray(frame,
+			    origin, radius, 0.25 * tol->dist, reverse != 0);
+			const partition_result base_oracle = shoot_partitions(
+			    implicit_model, base_ray);
+			partition_result oracle = base_oracle;
+			if (oracle.partitions == 1) {
+			    oracle.intervals[0].in_dist *= test.scale;
+			    oracle.intervals[0].out_dist *= test.scale;
+			}
+			const ON_3dPoint transformed_origin =
+			    cobb_transform_point(xform, ON_3dPoint(base_ray.origin));
+			ON_3dVector transformed_direction = cobb_transform_vector(
+			    xform, ON_3dVector(base_ray.direction));
+			sampled_ray ray;
+			const bool direction_valid = transformed_direction.Unitize();
+			VSET(ray.origin, transformed_origin.x,
+			    transformed_origin.y, transformed_origin.z);
+			VSET(ray.direction, transformed_direction.x,
+			    transformed_direction.y, transformed_direction.z);
+			struct rt_brep_shot_trace trace;
+			(void)shoot_brep_trace(stp, rtip, &resource, ray, trace);
+			const struct rt_brep_trace_edge *target_edge =
+			    brep_trace_edge(trace, frame.edge_index);
+			if (!direction_valid || !target_edge ||
+				!target_edge->correspondence_supported ||
+				!target_edge->discrepancy_endpoints_certified ||
+				!target_edge->discrepancy_bounded ||
+				target_edge->discrepancy_bound_exhausted ||
+				!target_edge->discrepancy_authorized ||
+				target_edge->discrepancy_proof_class !=
+				    RT_BREP_SEAM_GAP_INSIDE ||
+				!trace.physical_event_seam_certified ||
+				!brep_trace_seam_event_stream_valid(trace,
+				    target_edge, variant, oracle, case_tol.dist,
+				    false, 2.5e-4)) {
+			    std::printf("FAIL: endpoint-moving similarity %s "
+				"reverse=%d edge/endpoints/bounded/authorized="
+				"%d/%d/%d/%d proof=%d certified=%zu cells=%zu\n",
+				test.name, reverse, target_edge != NULL,
+				target_edge ?
+				target_edge->discrepancy_endpoints_certified : -1,
+				target_edge ?
+				target_edge->discrepancy_bounded : -1,
+				target_edge ?
+				target_edge->discrepancy_authorized : -1,
+				target_edge ?
+				target_edge->discrepancy_proof_class : -1,
+				trace.physical_event_seam_certified,
+				target_edge ?
+				target_edge->discrepancy_bound_cells : 0);
+			    std::printf("  seam attempt/root/closure/continuation/"
+				"cert/fail=%zu/%zu/%zu/%zu/%zu/%zu "
+				"roots/boxes/final/selected=%zu/%zu/%zu/%zu "
+				"sector/state/ray-dot=%d/%d/%.17g\n",
+				trace.physical_event_seam_attempts,
+				trace.physical_event_seam_root_candidates,
+				trace.physical_event_seam_closure_candidates,
+				trace.physical_event_seam_continuation_candidates,
+				trace.physical_event_seam_certified,
+				trace.physical_event_seam_failures,
+				trace.stored_local_roots,
+				trace.stored_surface_boxes, trace.final_segments,
+				trace.prepared_production_selected,
+				target_edge ? target_edge->sector_valid : -1,
+				target_edge ? target_edge->closest_state : -1,
+				target_edge ? target_edge->ray_edge_dot : NAN);
+			    failures++;
+			} else {
+			    endpoint_similarity_cases++;
+			    minimum_similarity_cells = std::min(
+				minimum_similarity_cells,
+				target_edge->discrepancy_bound_cells);
+			    maximum_similarity_cells = std::max(
+				maximum_similarity_cells,
+				target_edge->discrepancy_bound_cells);
+			}
+		    }
+		    free_solid(stp);
+		}
+		rt_clean_resource_basic(rtip, &resource);
+		BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+		rt_i_destroy(rtip);
+	    }
+	}
+	delete base;
+    }
+
+
+    /* A large edge tolerance or the opposite endpoint's vertex tolerance
+     * must not make the independent endpoint oracle accept an under-declared
+     * endpoint.  Do not send this intentionally invalid metadata through
+     * BREP prep; malformed-model prep hardening is a separate concern. */
+    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+	cobb_seam_frame frame;
+	int minimum_edge_index = pristine->m_E.Count();
+	for (int side = 0; side < 4; ++side) {
+	    int edge_index = -1;
+	    if (cobb_target_edge(pristine, frame.face_index, side, edge_index) &&
+		    edge_index < minimum_edge_index) {
+		minimum_edge_index = edge_index;
+		frame.side_index = side;
+	    }
+	}
+	double measured_gap = 0.0;
+	double applied_displacement = 0.0;
+	ON_Brep *variant = cobb_endpoint_moving_seam_variant(pristine, origin,
+	    2.0 * tol->dist, frame, measured_gap, applied_displacement);
+	if (!variant || frame.edge_index < 0 ||
+		frame.edge_index >= variant->m_E.Count()) {
+	    std::printf("FAIL: endpoint-moving under-declared construction\n");
+	    delete variant;
+	    failures++;
+	    continue;
+	}
+	const int vertex_index =
+	    variant->m_E[frame.edge_index].m_vi[endpoint];
+	if (vertex_index < 0 || vertex_index >= variant->m_V.Count()) {
+	    std::printf("FAIL: endpoint-moving under-declared vertex\n");
+	    delete variant;
+	    failures++;
+	    continue;
+	}
+	variant->m_V[vertex_index].m_tolerance = 0.5 * tol->dist;
+	double edge_vertex_gap = 0.0;
+	double lift_vertex_gap = 0.0;
+	if (cobb_edge_endpoint_contract(variant, frame.edge_index, tol->dist,
+		edge_vertex_gap, lift_vertex_gap)) {
+	    std::printf("FAIL: endpoint-moving under-declared endpoint=%d "
+		"edge/trim-gap=%.17g/%.17g\n", endpoint,
+		edge_vertex_gap, lift_vertex_gap);
+	    failures++;
+	} else {
+	    endpoint_tolerance_rejections++;
+	}
+	delete variant;
+    }
+
+
+    if (rays != 60 || endpoint_certificates != rays ||
+	    inside_gap_proofs != rays || exhausted_gap_proofs ||
+	    !maximum_gap_cells || certified_pairs < 2 || legacy_one_hit > 16 ||
+	    selected < certified_pairs || oracle_differences > 46 ||
+	    uncertainty_differences > 46 || outside_uncertainty_differences ||
+	    below_envelope_leaks || endpoint_tolerance_rejections != 2 ||
+	    endpoint_similarity_cases != 8) {
 	std::printf("FAIL: endpoint-moving Cobb ratchet rays=%zu/60 "
-	    "certified/above=%zu/%zu unavailable=%zu/%zu exhausted/cells="
+	    "certified/above=%zu/%zu endpoints/inside=%zu/%zu exhausted/cells="
 	    "%zu/%zu legacy/selected=%zu/%zu differences=%zu/%zu/%zu "
-	    "leaks=%zu\n", rays, certified_pairs, above_envelope_pairs,
-	    unavailable_gap_proofs, rays, exhausted_gap_proofs,
+	    "leaks=%zu endpoint-rejections=%zu/2 similarity=%zu/8\n", rays,
+	    certified_pairs,
+	    above_envelope_pairs,
+	    endpoint_certificates, inside_gap_proofs, exhausted_gap_proofs,
 	    maximum_gap_cells, legacy_one_hit, selected, oracle_differences,
 	    uncertainty_differences, outside_uncertainty_differences,
-	    below_envelope_leaks);
+	    below_envelope_leaks, endpoint_tolerance_rejections,
+	    endpoint_similarity_cases);
 	failures++;
     }
-    std::printf("Cobb endpoint-moving seam trend: rays=%zu unavailable=%zu "
+    std::printf("Cobb endpoint-moving seam trend: rays=%zu "
+	"endpoint/inside=%zu/%zu "
 	"legacy-one-hit=%zu certified=%zu selected=%zu "
 	"oracle-differences=%zu uncertainty=%zu outside=%zu leaks=%zu "
 	"gap-exhausted=%zu max-gap-cells=%zu max-oracle-error=%.3g "
-	"max-calibration=%.3g\n", rays,
-	unavailable_gap_proofs, legacy_one_hit, certified_pairs, selected,
+	"max-calibration=%.3g endpoint-edge/lift=%.3g/%.3g "
+	"endpoint-rejections=%zu similarity=%zu cells=%zu/%zu\n", rays,
+	endpoint_certificates, inside_gap_proofs, legacy_one_hit,
+	certified_pairs, selected,
 	oracle_differences, uncertainty_differences,
 	outside_uncertainty_differences, below_envelope_leaks,
 	exhausted_gap_proofs, maximum_gap_cells, maximum_outside_error,
-	maximum_calibration_error);
+	maximum_calibration_error, maximum_edge_vertex_gap,
+	maximum_lift_vertex_gap, endpoint_tolerance_rejections,
+	endpoint_similarity_cases, minimum_similarity_cells,
+	maximum_similarity_cells);
     free_prepared_model(implicit_model);
     delete pristine;
     return failures;
