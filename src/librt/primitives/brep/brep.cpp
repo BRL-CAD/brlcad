@@ -1033,12 +1033,6 @@ brep_build_edge_data(struct brep_specific *bs, const struct bn_tol *tol)
  * global parameter correspondence and both topological endpoint contracts
  * are also certified; unavailable, ambiguous, outside, and exhausted cases
  * remain on fallback. */
-struct brep_trim_span {
-    ON_BezierCurve curve;
-    ON_Interval trim_domain;
-};
-
-
 struct brep_discrepancy_cell {
     ON_BezierCurve edge_curve;
     ON_Interval edge_domain;
@@ -1489,13 +1483,14 @@ brep_bound_edge_trim_discrepancy(const struct brep_specific *bs,
     double envelope, double target_width,
     size_t cell_budget, double &lower, double &upper, int &proof_class,
     size_t &cell_count, size_t &maximum_depth, bool &exhausted,
-    std::vector<brep_edge_trim_cell> &bounded_cells)
+    std::vector<brep_edge_trim_cell> &bounded_cells,
+    std::vector<brep_trim_span> &bounded_spans)
 {
     const size_t maximum_subdivision_depth = 24;
     exhausted = false;
     proof_class = RT_BREP_SEAM_GAP_UNAVAILABLE;
-    std::vector<brep_trim_span> trim_spans;
-    if (!brep_prepare_trim_spans(trim, trim_spans))
+    bounded_spans.clear();
+    if (!brep_prepare_trim_spans(trim, bounded_spans))
 	return false;
     std::vector<brep_discrepancy_cell> stack;
     stack.reserve(128);
@@ -1567,6 +1562,7 @@ brep_bound_edge_trim_discrepancy(const struct brep_specific *bs,
 	    std::min(cell.trim_parameter[0], cell.trim_parameter[1]),
 	    std::max(cell.trim_parameter[0], cell.trim_parameter[1]));
 	retained.edge_span = cell.edge_span;
+	retained.trim_span_count = bounded_spans.size();
 	retained.trim_index = trim.m_trim_index;
 	bounded_cells.push_back(retained);
     };
@@ -1581,7 +1577,7 @@ brep_bound_edge_trim_discrepancy(const struct brep_specific *bs,
 	maximum_depth = std::max(maximum_depth, cell.depth);
 	double cell_lower = 0.0;
 	double cell_upper = 0.0;
-	if (!brep_discrepancy_cell_bounds(bs, edge, trim, trim_spans, cell,
+	if (!brep_discrepancy_cell_bounds(bs, edge, trim, bounded_spans, cell,
 		cell_lower, cell_upper))
 	    return false;
 	/* Once one cell is strictly outside, its lower bound is enough to
@@ -1692,6 +1688,7 @@ brep_bound_edge_discrepancies(struct brep_specific *bs)
     if (!bs || !bs->brep)
 	return;
     bs->edge_trim_cells.clear();
+    bs->edge_trim_spans.clear();
     const ON_Brep &brep = *bs->brep;
     size_t remaining_cells = BREP_SEAM_BOUND_CELL_BUDGET;
     for (std::vector<brep_edge_record>::iterator record_it =
@@ -1733,6 +1730,7 @@ brep_bound_edge_discrepancies(struct brep_specific *bs)
 	bool complete = true;
 	size_t endpoint_certified_sides = 0;
 	std::vector<brep_edge_trim_cell> retained_side_cells[2];
+	std::vector<brep_trim_span> retained_side_spans[2];
 	int total_class = RT_BREP_SEAM_GAP_INSIDE;
 	for (int side = 0; side < 2; ++side) {
 	    const int trim_index = edge.m_ti[side];
@@ -1759,7 +1757,8 @@ brep_bound_edge_discrepancies(struct brep_specific *bs)
 		    brep.m_T[trim_index], endpoint_parameter, record.tolerance,
 		    record.discrepancy_bound_tolerance, remaining_cells,
 		    side_lower, side_upper, side_class, side_cells, side_depth,
-		    side_exhausted, retained_side_cells[side])) {
+		    side_exhausted, retained_side_cells[side],
+		    retained_side_spans[side])) {
 		total_cells += side_cells;
 		total_depth = std::max(total_depth, side_depth);
 		remaining_cells -= std::min(remaining_cells, side_cells);
@@ -1792,6 +1791,8 @@ brep_bound_edge_discrepancies(struct brep_specific *bs)
 	    if (record.discrepancy_authorized &&
 		    record.frame_interval_supported) {
 		for (int side = 0; side < 2; ++side) {
+		    const size_t trim_span_begin =
+			bs->edge_trim_spans.size();
 		    std::sort(retained_side_cells[side].begin(),
 			retained_side_cells[side].end(),
 			[](const brep_edge_trim_cell &first,
@@ -1799,6 +1800,14 @@ brep_bound_edge_discrepancies(struct brep_specific *bs)
 			    return first.edge_domain.Min() <
 				second.edge_domain.Min();
 			});
+		    for (std::vector<brep_edge_trim_cell>::iterator cell_it =
+			    retained_side_cells[side].begin();
+			    cell_it != retained_side_cells[side].end(); ++cell_it) {
+			cell_it->trim_span_begin += trim_span_begin;
+		    }
+		    bs->edge_trim_spans.insert(bs->edge_trim_spans.end(),
+			retained_side_spans[side].begin(),
+			retained_side_spans[side].end());
 		    record.trim_cell_begin[side] = bs->edge_trim_cells.size();
 		    record.trim_cell_count[side] =
 			retained_side_cells[side].size();
@@ -5061,7 +5070,6 @@ brep_certify_edge_correspondences(struct brep_specific *bs)
 	const bool edge_certified = brep_certify_projected_edge(bs, record,
 	    axis, remaining_cells, visited, exhausted);
 	bool trim_certified[2] = {false, false};
-	bool trim_isoparametric[2] = {false, false};
 	for (int side = 0; edge_certified && side < 2; ++side) {
 	    const int trim_index = edge.m_ti[side];
 	    if (trim_index < 0 || trim_index >= brep.m_T.Count())
@@ -5077,7 +5085,6 @@ brep_certify_edge_correspondences(struct brep_specific *bs)
 	    const int orientation = trim.m_bRev3d ? -1 : 1;
 	    trim_certified[side] = brep_certify_isoparametric_trim(bs, trim,
 		axis, orientation, remaining_cells, visited, exhausted);
-	    trim_isoparametric[side] = trim_certified[side];
 	    if (!trim_certified[side] && !exhausted) {
 		trim_certified[side] = brep_certify_correspondence_cells(
 		    trim_spans.size(),
@@ -5093,8 +5100,7 @@ brep_certify_edge_correspondences(struct brep_specific *bs)
 	record.correspondence_exhausted = exhausted;
 	record.correspondence_supported = edge_certified &&
 	    trim_certified[0] && trim_certified[1] && !exhausted;
-	record.frame_interval_supported = record.correspondence_supported &&
-	    trim_isoparametric[0] && trim_isoparametric[1];
+	record.frame_interval_supported = record.correspondence_supported;
     }
 }
 
@@ -10001,6 +10007,18 @@ brep_interval_vector_scale(double scale, const brep_interval_vector &value)
 
 
 static brep_interval_vector
+brep_interval_vector_scale(const brep_interval &scale,
+    const brep_interval_vector &value)
+{
+    brep_interval_vector result;
+    for (int component = 0; component < 3; ++component)
+	result.component[component] = brep_interval_multiply(scale,
+	    value.component[component]);
+    return result;
+}
+
+
+static brep_interval_vector
 brep_interval_vector_add(const brep_interval_vector &first,
     const brep_interval_vector &second)
 {
@@ -10215,6 +10233,93 @@ brep_interval_surface_derivatives(const brep_surface_span &span,
 }
 
 
+/* Bound a complete retained trim interval directly from its positive-weight
+ * rational Bezier spans.  Derivatives are taken in each restricted span's
+ * increasing local parameter.  That differs from the original trim parameter
+ * only by a positive scalar, which preserves every homogeneous frame sign
+ * used by the seam theorem. */
+static bool
+brep_interval_trim_cell_geometry(const struct brep_specific *bs,
+    const brep_edge_trim_cell &cell, brep_interval uv[2],
+    brep_interval derivative[2])
+{
+    if (!bs || !uv || !derivative || !cell.trim_domain.IsIncreasing() ||
+	cell.trim_span_begin > bs->edge_trim_spans.size() ||
+	cell.trim_span_count >
+	    bs->edge_trim_spans.size() - cell.trim_span_begin ||
+	!cell.trim_span_count)
+	return false;
+    for (int direction = 0; direction < 2; ++direction) {
+	uv[direction] = {DBL_MAX, -DBL_MAX};
+	derivative[direction] = {DBL_MAX, -DBL_MAX};
+    }
+    const ON_2dPoint reference(0.0, 0.0);
+    double covered = 0.0;
+    size_t pieces = 0;
+    for (size_t span_offset = 0;
+	    span_offset < cell.trim_span_count; ++span_offset) {
+	const brep_trim_span &span = bs->edge_trim_spans[
+	    cell.trim_span_begin + span_offset];
+	const double lower = std::max(cell.trim_domain.Min(),
+	    span.trim_domain.Min());
+	const double upper = std::min(cell.trim_domain.Max(),
+	    span.trim_domain.Max());
+	if (!(lower < upper))
+	    continue;
+	const double minimum =
+	    span.trim_domain.NormalizedParameterAt(lower);
+	const double maximum =
+	    span.trim_domain.NormalizedParameterAt(upper);
+	const int order = span.curve.CVCount();
+	if (!std::isfinite(minimum) || !std::isfinite(maximum) ||
+		!(minimum < maximum) || minimum < 0.0 || maximum > 1.0 ||
+		order < 2 || order > BREP_DIRECT_BEZIER_MAX_ORDER)
+	    return false;
+	brep_interval numerator[2][BREP_DIRECT_BEZIER_MAX_ORDER];
+	brep_interval weight[BREP_DIRECT_BEZIER_MAX_ORDER];
+	brep_interval piece_uv[2];
+	brep_interval piece_derivative[2];
+	if (!brep_interval_trim_curve_data(span.curve, reference, minimum,
+		maximum, numerator, weight) ||
+		!brep_interval_trim_uv_hull(numerator, weight, order, reference,
+		    piece_uv))
+	    return false;
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!brep_interval_rational_curve_derivative_hull(
+		    numerator[direction], weight, order,
+		    piece_derivative[direction]))
+		return false;
+	    uv[direction].minimum = std::min(uv[direction].minimum,
+		piece_uv[direction].minimum);
+	    uv[direction].maximum = std::max(uv[direction].maximum,
+		piece_uv[direction].maximum);
+	    derivative[direction].minimum = std::min(
+		derivative[direction].minimum,
+		piece_derivative[direction].minimum);
+	    derivative[direction].maximum = std::max(
+		derivative[direction].maximum,
+		piece_derivative[direction].maximum);
+	}
+	covered += upper - lower;
+	pieces++;
+    }
+    const double coverage_tolerance = 256.0 * DBL_EPSILON *
+	std::max(1.0, cell.trim_domain.Length());
+    if (!pieces || covered + coverage_tolerance < cell.trim_domain.Length())
+	return false;
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!std::isfinite(uv[direction].minimum) ||
+		!std::isfinite(uv[direction].maximum) ||
+		!std::isfinite(derivative[direction].minimum) ||
+		!std::isfinite(derivative[direction].maximum) ||
+		uv[direction].minimum > uv[direction].maximum ||
+		derivative[direction].minimum > derivative[direction].maximum)
+	    return false;
+    }
+    return true;
+}
+
+
 struct brep_interval_edge_face_frame {
     brep_interval_vector outward_normal;
     brep_interval_vector interior_conormal;
@@ -10237,6 +10342,9 @@ brep_interval_edge_face_frame_at(const struct brep_specific *bs,
     if (!face || !surface)
 	return false;
     int fixed_direction = -1;
+    int varying_direction = -1;
+    double varying_delta = 0.0;
+    brep_interval trim_derivative[2];
     switch (trim.m_iso) {
 	case ON_Surface::W_iso:
 	case ON_Surface::E_iso:
@@ -10247,23 +10355,28 @@ brep_interval_edge_face_frame_at(const struct brep_specific *bs,
 	    fixed_direction = 1;
 	    break;
 	default:
+	    break;
+    }
+    if (fixed_direction >= 0) {
+	varying_direction = 1 - fixed_direction;
+	const ON_3dPoint start = trim.PointAt(cell.trim_domain.Min());
+	const ON_3dPoint end = trim.PointAt(cell.trim_domain.Max());
+	if (!start.IsValid() || !end.IsValid())
 	    return false;
-    }
-    const int varying_direction = 1 - fixed_direction;
-    const ON_3dPoint start = trim.PointAt(cell.trim_domain.Min());
-    const ON_3dPoint end = trim.PointAt(cell.trim_domain.Max());
-    if (!start.IsValid() || !end.IsValid())
+	for (int direction = 0; direction < 2; ++direction) {
+	    frame.uv[direction] = brep_interval_expanded(
+		std::min(start[direction], end[direction]),
+		std::max(start[direction], end[direction]));
+	}
+	varying_delta = end[varying_direction] -
+	    start[varying_direction];
+	if (!std::isfinite(varying_delta) ||
+		std::fpclassify(varying_delta) == FP_ZERO)
+	    return false;
+    } else if (!brep_interval_trim_cell_geometry(bs, cell, frame.uv,
+	    trim_derivative)) {
 	return false;
-    for (int direction = 0; direction < 2; ++direction) {
-	frame.uv[direction] = brep_interval_expanded(
-	    std::min(start[direction], end[direction]),
-	    std::max(start[direction], end[direction]));
     }
-    const double varying_delta = end[varying_direction] -
-	start[varying_direction];
-    if (!std::isfinite(varying_delta) ||
-	    std::fpclassify(varying_delta) == FP_ZERO)
-	return false;
 
     const brep_face_record *face_record = brep_prepared_face(bs,
 	face->m_face_index);
@@ -10303,9 +10416,14 @@ brep_interval_edge_face_frame_at(const struct brep_specific *bs,
     frame.outward_normal = face->m_bRev ?
 	brep_interval_vector_scale(-1.0, parameter_normal) :
 	parameter_normal;
-    const brep_interval_vector loop_tangent =
+    const brep_interval_vector loop_tangent = fixed_direction >= 0 ?
 	brep_interval_vector_scale(varying_delta > 0.0 ? 1.0 : -1.0,
-	    surface_derivative[varying_direction]);
+	    surface_derivative[varying_direction]) :
+	brep_interval_vector_add(
+	    brep_interval_vector_scale(trim_derivative[0],
+		surface_derivative[0]),
+	    brep_interval_vector_scale(trim_derivative[1],
+		surface_derivative[1]));
     frame.interior_conormal = brep_interval_vector_cross(parameter_normal,
 	loop_tangent);
     frame.face_index = face->m_face_index;
@@ -10589,17 +10707,27 @@ brep_edge_sector_oblique_contact_inside(
 			    continue;
 			if (box_side >= 0)
 			    return false;
-			const ON_3dPoint start = trim.PointAt(
-			    cell.side[side].trim_domain.Min());
-			const ON_3dPoint end = trim.PointAt(
-			    cell.side[side].trim_domain.Max());
-			if (!start.IsValid() || !end.IsValid())
-			    return false;
 			box_side = side;
-			for (int direction = 0; direction < 2; ++direction)
-			    trim_uv[direction] = brep_interval_expanded(
-				std::min(start[direction], end[direction]),
-				std::max(start[direction], end[direction]));
+			if (trim.m_iso == ON_Surface::W_iso ||
+				trim.m_iso == ON_Surface::E_iso ||
+				trim.m_iso == ON_Surface::S_iso ||
+				trim.m_iso == ON_Surface::N_iso) {
+			    const ON_3dPoint start = trim.PointAt(
+				cell.side[side].trim_domain.Min());
+			    const ON_3dPoint end = trim.PointAt(
+				cell.side[side].trim_domain.Max());
+			    if (!start.IsValid() || !end.IsValid())
+				return false;
+			    for (int direction = 0; direction < 2; ++direction)
+				trim_uv[direction] = brep_interval_expanded(
+				    std::min(start[direction], end[direction]),
+				    std::max(start[direction], end[direction]));
+			} else {
+			    brep_interval trim_derivative[2];
+			    if (!brep_interval_trim_cell_geometry(bs,
+				    cell.side[side], trim_uv, trim_derivative))
+				return false;
+			}
 		    }
 		    if (box_side < 0)
 			continue;
