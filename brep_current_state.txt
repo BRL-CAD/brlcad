@@ -11,6 +11,98 @@ as the authoritative continuation log until all acceptance gates pass.
 CURRENT PHASE
 -------------
 
+2026-08-09 ACTIVE CERTIFIED SEAM/REGULAR COMPONENT CHECKPOINT
+
+The isolated Cobb defect corpus is committed locally as 6afabb5efd, "Add
+isolated Cobb trim and edge defects".  The certified component increment is
+this checkpoint's local commit, "Certify local BREP seam root components".
+Neither was pushed.  The latter replaces most of the corpus's deliberately
+recorded whole-ray fallbacks with fixed-workspace proofs.  SurfaceTree density
+and cache format are unchanged.
+
+The first new theorem owns a connected many-boxes-to-one-root component on one
+face and Bezier span.  Seed boxes must match immutable numerical observations
+of one regular root and have a regular or unresolved disposition.  Rootless
+unresolved boxes may join only by UV/t adjacency.  The complete component hull
+is restricted with outward coefficient error and accepted either by one
+strict Krawczyk inclusion or by a smaller expansion-valued contraction box
+whose entire hull complement is excluded by direct/rotated Bernstein bounds.
+A constant determinant sign and outward ray-parameter interval are then
+certified before any box disposition or physical event is committed.
+
+The exact manifold-edge theorem now also accepts a displaced 3-D edge only
+when both independently evaluated incident trim lifts coincide with each
+other and with the represented ray to coordinate roundoff.  Both lifts must
+remain inside the edge discrepancy tolerance established by the prep-time
+global correspondence and strict gap-bound proof.  This does not move a
+merely near ray onto an edge.  It supplies a topologically exact witness for
+the isolated edge-only Cobb variants, whose surface seam and trims agree but
+whose 3-D edge curve is bowed by less than T.  A CLEAN_MISS surface observation
+may participate only when trim classification explicitly says it is within
+the authorized near-trim band; arbitrary outside roots remain ineligible.
+
+The difficult close-graze case contains two physical roots in the same coarse
+terminal boxes: one exact seam/edge root and one nearby regular root of the
+opposite direction.  A joint theorem now collects the complete connected
+component and independently contracts both roots.  Each ownership box is at
+most 0.2 times their normalized L-infinity separation, so the two certified
+neighborhoods are disjoint.  The contraction routine retains the largest
+successfully certified neighborhood for complement ownership.  A generalized
+fixed-stack complement walk aligns subdivisions to both local boxes and proves
+that there is no third root.  The regular event then uses the smallest nested
+box which independently passes coefficient restriction, strict Krawczyk
+inclusion, constant determinant sign, duplicate-observation containment, and
+outward t enclosure.  The boundary event uses only the exact topological
+witness's roundoff t interval.  This separation of wide ownership from tight
+event enclosure is necessary: tiny boxes can be dominated by restriction
+roundoff, while the widest unique-root box may produce overlapping event
+intervals.
+
+All new ray-time arrays are fixed capacity.  The complement walk has a
+64-entry stack, a depth-24 limit, and an 8,192-box visit limit.  On the current
+positive matrix it visits 954 boxes in aggregate and reaches stack high-water
+four.  No allocation, random perturbation, or mutable global surface state was
+introduced.
+
+The isolated defect ratchet now passes with 90 prepared selections and 30
+explicit UNCERTIFIED fallbacks, improved from the original 0/120 baseline and
+the intermediate 36/84 regular-component checkpoint.  Trim-only selects 26 of
+40 rays; edge-only selects 64 of 80.  All 64 material edge-only rays use the
+common-lift exact witness.  The proofs publish 36 ordinary regular components
+and 54 joint edge/regular components.  All 24 exact-contact rays continue to
+fall back deliberately, leaving only six material trim-only fallbacks.  Two of
+those reach but fail the joint preconditions; four do not yet form an exact
+edge candidate.  Every final interval still matches the analytic sphere and
+implicit ELL oracle.  Maximum endpoint error is 4.78e-8 and maximum relative
+defect calibration error is 9.32e-6.
+
+Focused optimized verification completed so far:
+
+  cmake --build .build --target rt_brep_ray -j8
+  .build/src/librt/tests/rt_brep_ray --defect-only
+  ctest --test-dir .build -j8 --output-on-failure -R
+    '^(rt_brep_ray_(defect|grazing_root|affine|crofton|seam|local_root|
+    source_union|trim_interval|interval))$'
+
+All nine shards pass.  The comprehensive seam sweep took 199.93 seconds and
+the whole parallel batch took 199.98 seconds, demonstrating that independent
+test-process parallelism captures essentially all of the shorter shards'
+wall-clock cost.  The final ASAN/UBSAN defect run also passes with
+detect_leaks=0 and halt-on-error enabled, with no sanitizer diagnostic.  Leak
+scanning remains disabled for the previously documented host ptrace-wrapper
+reason.
+
+This result strengthens the tractability assessment.  The observed failure
+was a finite proof-partition problem rather than uncontrolled iteration: the
+first complement failed after only 41--46 visits, wider certified ownership
+boxes moved it past that stage, and separating ownership from event enclosure
+raised prepared selection monotonically to 90/120 without changing the final
+oracle answer.  The next local task is to classify the six material trim-only
+fallbacks.  The broader next task remains reducing initial SurfaceTree density
+and measuring when these bounded on-demand proofs can replace its deepest
+levels.
+
+
 2026-08-09 ACTIVE ISOLATED TRIM/EDGE DEFECT CHECKPOINT
 
 The nested CSG-leaf increment is committed locally as e60c0fbcc7, "Test

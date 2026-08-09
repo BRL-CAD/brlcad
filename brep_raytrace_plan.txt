@@ -7,6 +7,54 @@ Repository studied: /home/cyapp/brlcad
 STEP test corpus: /home/cyapp/step_corpus_g
 
 
+IMPLEMENTATION CHECKPOINT: CERTIFIED LOCAL COMPONENTS (2026-08-09)
+-----------------------------------------------------------------
+
+The first production form of the proposed local, allocation-free pipeline is
+now present in src/librt/primitives/brep/brep.cpp, with trace telemetry in
+src/librt/librt_private.h and its isolated Cobb ratchet in
+src/librt/tests/brep_ray.cpp.  brep_current_state.txt contains exact current
+counts, verification status, and continuation instructions.
+
+Three related authorities must remain distinct in subsequent work:
+
+  1. A regular component theorem may replace several connected coarse
+     terminal boxes by one physical root only after strict Krawczyk inclusion
+     over their full hull, or a local contraction plus complete Bernstein
+     exclusion of the remaining hull.  It separately certifies determinant
+     sign and an outward ray-parameter interval.  Numerical roots and coarse
+     boxes are observations, not authority.
+
+  2. A manifold-edge event requires an exact represented-line witness.  The
+     preferred witness is the 3-D edge locus.  When that locus is discrepant,
+     coincident incident trim lifts may supply the witness only if both are on
+     the ray to coordinate roundoff and both lie inside the independently
+     certified prep-time edge discrepancy envelope.  Model tolerance may
+     authorize this topological representation choice; it may not snap a
+     merely near ray onto the edge.
+
+  3. When one exact boundary root and one nearby regular root occupy the same
+     terminal boxes, a joint theorem uses two disjoint local contraction
+     neighborhoods and excludes their complete component complement.  A wide
+     certified neighborhood is useful for root ownership, but the published
+     regular event needs the smallest nested box that independently certifies
+     root existence/uniqueness, orientation, duplicate observations, and t
+     enclosure.  The exact boundary event receives its own roundoff-scale t
+     interval.  Reusing one box for both jobs is either numerically fragile
+     when too small or topologically ambiguous when too large.
+
+The generalized complement walk aligns boxes with certified-neighborhood
+boundaries before applying direct and rotated Bernstein exclusion.  It is
+bounded by the existing 64-entry fixed subdivision stack, depth 24, and 8,192
+visits.  All decisions are transactional: no source-box disposition or event
+is published until every observed root and box has exactly one proved role.
+This checkpoint deliberately does not alter SurfaceTree density.  It first
+establishes the right local authority and a regression ratchet; later prep
+experiments may remove dense levels only where this authority preserves the
+same directed partitions, grazing trend, seam policy, and paired
+Cauchy-Crofton results.
+
+
 1. PURPOSE AND SUCCESS CRITERIA
 -------------------------------
 

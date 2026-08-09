@@ -12682,6 +12682,19 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
     size_t family_edge_attempts[2] = {0, 0};
     size_t family_edge_candidates[2] = {0, 0};
     size_t family_edge_failures[2] = {0, 0};
+    size_t family_edge_lift_witnesses[2] = {0, 0};
+    size_t family_joint_attempts[2] = {0, 0};
+    size_t family_joint_certified[2] = {0, 0};
+    size_t family_joint_boxes[2] = {0, 0};
+    size_t family_joint_roots[2] = {0, 0};
+    size_t family_joint_complement_visited[2] = {0, 0};
+    size_t family_joint_complement_high_water[2] = {0, 0};
+    size_t family_joint_failure_stage[2][10] = {};
+    size_t family_component_attempts[2] = {0, 0};
+    size_t family_component_certified[2] = {0, 0};
+    size_t family_component_boxes[2] = {0, 0};
+    size_t family_component_roots[2] = {0, 0};
+    size_t family_component_failure_stage[2][7] = {};
     size_t family_fallback_reason[2][RT_BREP_PREPARED_FALLBACK_COUNT] = {};
     double maximum_endpoint_error = 0.0;
     double maximum_gap_calibration = 0.0;
@@ -12828,7 +12841,17 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 				edge_limit &&
 			    fabs(edge->edge_tolerance - tol->dist) <= edge_limit;
 			const bool selected = trace.prepared_production_selected > 0;
+			const bool joint_metadata_valid =
+			    trace.physical_event_edge_joint_components <=
+				trace.physical_event_edge_joint_attempts &&
+			    (!trace.physical_event_edge_joint_components ||
+			     (trace.physical_event_edge_joint_boxes > 0 &&
+			      trace.physical_event_edge_joint_roots >= 2)) &&
+			    ((trace.physical_event_edge_joint_attempts >
+			      trace.physical_event_edge_joint_components) ==
+			     (trace.physical_event_edge_joint_failure_stage > 0));
 			if (!brep_trace_fixed_workspaces_match(trace) || !edge_valid ||
+				!joint_metadata_valid ||
 				implicit_result.segments != expected_segments ||
 				variant_result.segments != expected_segments ||
 				trace.final_segments != (size_t)expected_segments ||
@@ -12887,6 +12910,41 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 				trace.physical_event_edge_candidates;
 			    family_edge_failures[family_index] +=
 				trace.physical_event_edge_failures;
+			    family_edge_lift_witnesses[family_index] +=
+				trace.physical_event_edge_lift_witnesses;
+			    family_joint_attempts[family_index] +=
+				trace.physical_event_edge_joint_attempts;
+			    family_joint_certified[family_index] +=
+				trace.physical_event_edge_joint_components;
+			    family_joint_boxes[family_index] +=
+				trace.physical_event_edge_joint_boxes;
+			    family_joint_roots[family_index] +=
+				trace.physical_event_edge_joint_roots;
+			    family_joint_complement_visited[family_index] +=
+				trace.physical_event_edge_joint_complement_visited;
+			    family_joint_complement_high_water[family_index] = std::max(
+				family_joint_complement_high_water[family_index],
+				trace.physical_event_edge_joint_complement_high_water);
+			    if (trace.physical_event_edge_joint_attempts >
+				    trace.physical_event_edge_joint_components &&
+				trace.physical_event_edge_joint_failure_stage > 0 &&
+				trace.physical_event_edge_joint_failure_stage < 10)
+				family_joint_failure_stage[family_index]
+				    [trace.physical_event_edge_joint_failure_stage]++;
+			    family_component_attempts[family_index] +=
+				trace.physical_event_regular_component_attempts;
+			    family_component_certified[family_index] +=
+				trace.physical_event_regular_component_certified;
+			    family_component_boxes[family_index] +=
+				trace.physical_event_regular_component_boxes;
+			    family_component_roots[family_index] +=
+				trace.physical_event_regular_component_roots;
+			    if (trace.physical_event_regular_component_attempts >
+				    trace.physical_event_regular_component_certified &&
+				    trace.physical_event_regular_component_failure_stage > 0 &&
+				    trace.physical_event_regular_component_failure_stage < 7)
+				family_component_failure_stage[family_index]
+				    [trace.physical_event_regular_component_failure_stage]++;
 			    if (!selected && trace.prepared_production_fallback >= 0 &&
 				    trace.prepared_production_fallback <
 					RT_BREP_PREPARED_FALLBACK_COUNT)
@@ -12913,6 +12971,20 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 	    family_rays[0], family_rays[1], contacts);
 	failures++;
     }
+    if (family_prepared[0] < 26 || family_prepared[1] < 64 ||
+	    prepared < 90 || family_edge_lift_witnesses[1] < 64 ||
+	    family_joint_certified[0] + family_joint_certified[1] < 54 ||
+	    family_component_certified[0] +
+		family_component_certified[1] < 36) {
+	std::printf("FAIL: Cobb isolated defect prepared ratchet "
+	    "families=%zu/26,%zu/64 total=%zu/90 lift=%zu/64 "
+	    "joint=%zu/54 components=%zu/36\n", family_prepared[0],
+	    family_prepared[1],
+	    prepared, family_edge_lift_witnesses[1],
+	    family_joint_certified[0] + family_joint_certified[1],
+	    family_component_certified[0] + family_component_certified[1]);
+	failures++;
+    }
     if (!failures) {
 	for (size_t family_index = 0;
 		family_index < sizeof(families) / sizeof(families[0]);
@@ -12936,7 +13008,7 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 	    std::printf("  events regular/near/unresolved=%zu/%zu/%zu "
 		"seam attempt/candidate/failure=%zu/%zu/%zu "
 		"failure-kind=%zu/%zu/%zu/%zu "
-		"edge attempt/candidate/failure=%zu/%zu/%zu\n",
+		"edge attempt/candidate/failure/lift=%zu/%zu/%zu/%zu\n",
 		family_regular[family_index], family_near_trim[family_index],
 		family_unresolved[family_index],
 		family_seam_attempts[family_index],
@@ -12948,7 +13020,39 @@ check_cobb_isolated_defect_corpus(const struct bn_tol *tol,
 		family_seam_root_failures[family_index],
 		family_edge_attempts[family_index],
 		family_edge_candidates[family_index],
-		family_edge_failures[family_index]);
+		family_edge_failures[family_index],
+		family_edge_lift_witnesses[family_index]);
+	    std::printf("  joint attempt/certified/boxes/roots="
+		"%zu/%zu/%zu/%zu complement visited/high-water=%zu/%zu "
+		"failure-stage=", family_joint_attempts[family_index],
+		family_joint_certified[family_index],
+		family_joint_boxes[family_index], family_joint_roots[family_index],
+		family_joint_complement_visited[family_index],
+		family_joint_complement_high_water[family_index]);
+	    bool first_joint_stage = true;
+	    for (int stage = 0; stage < 10; ++stage) {
+		if (!family_joint_failure_stage[family_index][stage])
+		    continue;
+		std::printf("%s%d:%zu", first_joint_stage ? "" : ",", stage,
+		    family_joint_failure_stage[family_index][stage]);
+		first_joint_stage = false;
+	    }
+	    std::printf("\n");
+	    std::printf("  components attempt/certified/boxes/roots="
+		"%zu/%zu/%zu/%zu failure-stage=",
+		family_component_attempts[family_index],
+		family_component_certified[family_index],
+		family_component_boxes[family_index],
+		family_component_roots[family_index]);
+	    bool first_stage = true;
+	    for (int stage = 0; stage < 7; ++stage) {
+		if (!family_component_failure_stage[family_index][stage])
+		    continue;
+		std::printf("%s%d:%zu", first_stage ? "" : ",", stage,
+		    family_component_failure_stage[family_index][stage]);
+		first_stage = false;
+	    }
+	    std::printf("\n");
 	}
 	std::printf("Cobb isolated trim/edge defects: PASS rays=%zu "
 	    "selected/fallback=%zu/%zu contacts=%zu "
