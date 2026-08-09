@@ -273,6 +273,7 @@ extern BREP_EXPORT int cdt_test_boundary_steiner_filter(void);
 extern BREP_EXPORT int cdt_test_spurious_components(void);
 extern BREP_EXPORT int cdt_test_local_defects(void);
 extern BREP_EXPORT int cdt_test_edge_singular_pair(void);
+extern BREP_EXPORT int cdt_test_assembled_mesh_validation(void);
 
 __END_DECLS
 
