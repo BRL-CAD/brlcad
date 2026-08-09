@@ -8523,6 +8523,141 @@ cobb_reparameterize_edge_trims(ON_Brep *brep, int edge_index,
 
 
 static bool
+cobb_curve_edge_trim(ON_Brep *brep, int edge_index, int face_index,
+    double target_lift_shift, double &maximum_lift_shift)
+{
+    maximum_lift_shift = INFINITY;
+    if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count() ||
+	face_index < 0 || face_index >= brep->m_F.Count() ||
+	!(target_lift_shift > 0.0) || !std::isfinite(target_lift_shift))
+	return false;
+    const ON_BrepEdge &edge = brep->m_E[edge_index];
+    if (edge.m_ti.Count() != 2)
+	return false;
+    int trim_index = -1;
+    for (int side = 0; side < edge.m_ti.Count(); ++side) {
+	const int candidate = edge.m_ti[side];
+	if (candidate >= 0 && candidate < brep->m_T.Count() &&
+		brep->m_T[candidate].FaceIndexOf() == face_index) {
+	    trim_index = candidate;
+	    break;
+	}
+    }
+    if (trim_index < 0)
+	return false;
+    ON_BrepTrim &trim = brep->m_T[trim_index];
+    const ON_Curve *trim_curve = trim.TrimCurveOf();
+    const ON_Surface *surface = trim.Face() ? trim.Face()->SurfaceOf() : NULL;
+    if (!trim_curve || !surface || !trim_curve->Domain().IsIncreasing())
+	return false;
+    const ON_Curve *original_curve = trim_curve->DuplicateCurve();
+    if (!original_curve)
+	return false;
+    const ON_Interval domain = original_curve->Domain();
+    const ON_3dPoint start = original_curve->PointAt(domain.Min());
+    const ON_3dPoint end = original_curve->PointAt(domain.Max());
+    const ON_2dPoint midpoint(0.5 * (start.x + end.x),
+	0.5 * (start.y + end.y));
+    ON_2dVector inward(-(end.y - start.y), end.x - start.x);
+    const ON_2dPoint face_center(surface->Domain(0).Mid(),
+	surface->Domain(1).Mid());
+    if (!start.IsValid() || !end.IsValid() || !inward.Unitize()) {
+	delete original_curve;
+	return false;
+    }
+    if (inward * (face_center - midpoint) < 0.0)
+	inward.Reverse();
+
+    ON_3dPoint surface_point;
+    ON_3dVector surface_u;
+    ON_3dVector surface_v;
+    if (!surface->Ev1Der(midpoint.x, midpoint.y, surface_point,
+	    surface_u, surface_v)) {
+	delete original_curve;
+	return false;
+    }
+    const ON_3dVector lift_derivative =
+	inward.x * surface_u + inward.y * surface_v;
+    const double lift_rate = lift_derivative.Length();
+    if (!(lift_rate > DBL_MIN) || !std::isfinite(lift_rate)) {
+	delete original_curve;
+	return false;
+    }
+    /* A quadratic Bezier reaches half its middle-control displacement at
+     * t=1/2.  Use the surface directional derivative only to size a subtle
+     * perturbation; the independently sampled 3D lift below is the fixture's
+     * measured fact. */
+    const double control_displacement =
+	2.0 * target_lift_shift / lift_rate;
+    const ON_3dPoint control(midpoint.x + control_displacement * inward.x,
+	midpoint.y + control_displacement * inward.y, 0.0);
+    ON_NurbsCurve *curved = ON_NurbsCurve::New(2, false, 3, 3);
+    const bool controls_set = curved && curved->SetCV(0, start) &&
+	curved->SetCV(1, control) && curved->SetCV(2, end);
+    if (!controls_set || !curved->MakeClampedUniformKnotVector() ||
+	    !curved->SetDomain(domain.Min(), domain.Max())) {
+	delete original_curve;
+	delete curved;
+	return false;
+    }
+
+    maximum_lift_shift = 0.0;
+    double maximum_chord_error = 0.0;
+    for (int sample = 0; sample <= 128; ++sample) {
+	const double fraction = (double)sample / 128.0;
+	const double parameter = domain.ParameterAt(fraction);
+	const ON_3dPoint old_uv = original_curve->PointAt(parameter);
+	const ON_3dPoint new_uv = curved->PointAt(parameter);
+	const ON_2dPoint chord((1.0 - fraction) * start.x + fraction * end.x,
+	    (1.0 - fraction) * start.y + fraction * end.y);
+	const ON_3dPoint old_lift = surface->PointAt(old_uv.x, old_uv.y);
+	const ON_3dPoint new_lift = surface->PointAt(new_uv.x, new_uv.y);
+	if (!old_uv.IsValid() || !new_uv.IsValid() || !old_lift.IsValid() ||
+		!new_lift.IsValid()) {
+	    delete original_curve;
+	    delete curved;
+	    return false;
+	}
+	maximum_chord_error = std::max(maximum_chord_error,
+	    old_uv.DistanceTo(ON_3dPoint(chord.x, chord.y, 0.0)));
+	maximum_lift_shift = std::max(maximum_lift_shift,
+	    old_lift.DistanceTo(new_lift));
+    }
+    const double uv_scale = std::max(1.0,
+	std::max(fabs(start.x), std::max(fabs(start.y),
+	std::max(fabs(end.x), fabs(end.y)))));
+    const double uv_roundoff = 4096.0 * DBL_EPSILON * uv_scale;
+    if (maximum_chord_error > uv_roundoff ||
+	    !(maximum_lift_shift > 0.01 * target_lift_shift) ||
+	    maximum_lift_shift > 2.0 * target_lift_shift) {
+	delete original_curve;
+	delete curved;
+	return false;
+    }
+
+    const int curve_index = brep->AddTrimCurve(curved);
+    if (curve_index < 0 || !brep->SetTrimCurve(trim, curve_index)) {
+	delete original_curve;
+	if (curve_index < 0)
+	    delete curved;
+	return false;
+    }
+    brep->SetTrimIsoFlags(trim);
+    brep->DestroyRuntimeCache(true);
+    const ON_3dPoint installed_start = trim.PointAt(domain.Min());
+    const ON_3dPoint installed_end = trim.PointAt(domain.Max());
+    delete original_curve;
+    return installed_start.IsValid() && installed_end.IsValid() &&
+	installed_start.DistanceTo(start) <= uv_roundoff &&
+	installed_end.DistanceTo(end) <= uv_roundoff &&
+	trim.m_iso != ON_Surface::W_iso &&
+	trim.m_iso != ON_Surface::E_iso &&
+	trim.m_iso != ON_Surface::S_iso &&
+	trim.m_iso != ON_Surface::N_iso && brep->IsValid();
+}
+
+
+static bool
 cobb_make_ambiguous_edge_trim(ON_Brep *brep, int edge_index)
 {
     if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count())
@@ -9459,6 +9594,236 @@ check_cobb_oblique_contact_trend(const struct bn_tol *tol, bool emit_report)
 	std::printf("Cobb oblique contact trend: PASS certified=%zu "
 	    "fail-closed=%zu observed=%zu/%zu\n", certified, fail_closed,
 	    observed_certified, observed_fallback);
+    return failures;
+}
+
+
+static int
+check_cobb_nonisoparametric_oblique(const struct bn_tol *tol)
+{
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    cobb_seam_frame frame;
+    double measured_gap = 0.0;
+    double displacement = 0.0;
+    ON_Brep *variant = cobb_bowed_seam_variant(pristine, origin,
+	-tol->dist, frame, measured_gap, displacement);
+    delete pristine;
+    double maximum_lift_shift = INFINITY;
+    const double target_lift_shift = 0.05 * tol->dist;
+    int curved_face = -1;
+    if (variant) {
+	const ON_BrepEdge &edge = variant->m_E[frame.edge_index];
+	for (int side = 0; side < edge.m_ti.Count(); ++side) {
+	    const int trim_index = edge.m_ti[side];
+	    if (trim_index >= 0 && trim_index < variant->m_T.Count() &&
+		    variant->m_T[trim_index].FaceIndexOf() != frame.face_index) {
+		curved_face = variant->m_T[trim_index].FaceIndexOf();
+		break;
+	    }
+	}
+    }
+    if (!variant || !cobb_curve_edge_trim(variant, frame.edge_index,
+	    curved_face, target_lift_shift, maximum_lift_shift)) {
+	std::printf("FAIL: Cobb non-isoparametric trim construction\n");
+	delete variant;
+	return 1;
+    }
+    measured_gap = cobb_seam_discrepancy(variant, frame.edge_index);
+    if (!std::isfinite(measured_gap) || !(measured_gap > 0.0)) {
+	std::printf("FAIL: Cobb non-isoparametric seam measurement\n");
+	delete variant;
+	return 1;
+    }
+    variant->m_E[frame.edge_index].m_tolerance = std::max(
+	1.01 * measured_gap, 1.01 * tol->dist);
+
+    struct transform_case {
+	const char *name;
+	double scale;
+	ON_3dVector translation;
+	ON_3dVector axis;
+	double angle;
+    } cases[] = {
+	{"identity", 1.0, ON_3dVector(0.0, 0.0, 0.0),
+	    ON_3dVector(1.0, 0.0, 0.0), 0.0},
+	{"oblique", 1.0, ON_3dVector(-19.0, 23.0, 41.0),
+	    ON_3dVector(1.0, -2.0, 0.5), 0.731},
+	{"small", 0.01, ON_3dVector(1.25, -2.5, 5.0),
+	    ON_3dVector(-0.3, 1.0, 0.7), -1.113},
+	{"large", 1.0e4, ON_3dVector(1.0e6, -2.0e6, 3.0e6),
+	    ON_3dVector(2.0, 0.25, -1.0), 2.017}
+    };
+    const double tangent_components[] = {0.001, 0.1};
+    int failures = 0;
+    size_t certified = 0;
+    size_t source_unions = 0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const transform_case &test = cases[case_index];
+	const ON_Xform xform = cobb_axis_angle_similarity_transform(test.scale,
+	    test.translation, test.axis, test.angle);
+	ON_Brep *transformed = new ON_Brep(*variant);
+	if (!transformed->Transform(xform)) {
+	    std::printf("FAIL: Cobb non-isoparametric %s transform\n",
+		test.name);
+	    delete transformed;
+	    failures++;
+	    continue;
+	}
+	for (int vertex_index = 0; vertex_index < transformed->m_V.Count();
+		++vertex_index)
+	    transformed->m_V[vertex_index].m_tolerance =
+		variant->m_V[vertex_index].m_tolerance * test.scale;
+	for (int edge_index = 0; edge_index < transformed->m_E.Count();
+		++edge_index)
+	    transformed->m_E[edge_index].m_tolerance =
+		variant->m_E[edge_index].m_tolerance * test.scale;
+	struct bn_tol case_tol = *tol;
+	case_tol.dist = tol->dist * test.scale;
+	case_tol.dist_sq = case_tol.dist * case_tol.dist;
+	struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+	if (!rtip) {
+	    delete transformed;
+	    failures++;
+	    continue;
+	}
+	rtip->rti_tol = case_tol;
+	struct resource resource = {};
+	rt_init_resource(&resource, 0, rtip);
+	struct rt_brep_internal transformed_internal = {};
+	transformed_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	transformed_internal.brep = transformed;
+	struct rt_db_internal transformed_intern;
+	RT_DB_INTERNAL_INIT(&transformed_intern);
+	transformed_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	transformed_intern.idb_type = ID_BREP;
+	transformed_intern.idb_meth = &OBJ[ID_BREP];
+	transformed_intern.idb_ptr = &transformed_internal;
+	struct soltab *stp = prep_solid(rtip, &transformed_intern, ID_BREP);
+	if (!stp) {
+	    std::printf("FAIL: Cobb non-isoparametric %s prep\n",
+		test.name);
+	    failures++;
+	} else {
+	    for (size_t component_index = 0; component_index <
+		    sizeof(tangent_components) /
+		    sizeof(tangent_components[0]); ++component_index) {
+		const double component = tangent_components[component_index];
+		const bool expect_source_union = component_index == 1;
+		for (int reverse = 0; reverse <= 1; ++reverse) {
+		    const sampled_ray base_ray = cobb_seam_oblique_ray(frame,
+			origin, radius, tol->dist, component, reverse != 0);
+		    const ON_3dPoint transformed_origin = cobb_transform_point(
+			xform, ON_3dPoint(base_ray.origin));
+		    ON_3dVector transformed_direction = cobb_transform_vector(
+			xform, ON_3dVector(base_ray.direction));
+		    if (!transformed_direction.Unitize()) {
+			failures++;
+			continue;
+		    }
+		    sampled_ray ray;
+		    VSET(ray.origin, transformed_origin.x, transformed_origin.y,
+			transformed_origin.z);
+		    VSET(ray.direction, transformed_direction.x,
+			transformed_direction.y, transformed_direction.z);
+		    const ray_result production_result = shoot_solid(stp, rtip,
+			&resource, ray.origin, ray.direction);
+		    struct rt_brep_shot_trace trace;
+		    const int trace_hits = shoot_brep_trace(stp, rtip, &resource,
+			ray, trace);
+		    const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+			frame.edge_index);
+		    const double transformed_radius = radius * test.scale;
+		    const double half_chord = sqrt(2.0 * transformed_radius *
+			case_tol.dist - case_tol.dist * case_tol.dist);
+		    partition_result oracle;
+		    oracle.partitions = 1;
+		    oracle.intervals[0].in_dist = 2.0 * transformed_radius -
+			half_chord;
+		    oracle.intervals[0].out_dist = 2.0 * transformed_radius +
+			half_chord;
+		    const bool no_source_union =
+			!trace.physical_event_seam_source_union_certified &&
+			!trace.physical_event_seam_source_union_root_boxes &&
+			!trace.physical_event_seam_source_union_boxes;
+		    const bool valid_source_union =
+			trace.physical_event_seam_source_union_certified == 1 &&
+			trace.physical_event_seam_source_union_root_boxes > 0 &&
+			trace.physical_event_seam_source_union_root_boxes <
+			    trace.physical_event_seam_source_union_boxes;
+		    const bool source_union_evidence = expect_source_union ?
+			(case_index ? (no_source_union || valid_source_union) :
+			 valid_source_union) : no_source_union;
+		    const bool bad = !brep_trace_fixed_workspaces_match(trace) ||
+			!edge || !edge->correspondence_supported ||
+			edge->correspondence_exhausted ||
+			!edge->discrepancy_authorized ||
+			edge->discrepancy_proof_class !=
+			    RT_BREP_SEAM_GAP_INSIDE ||
+			!edge->frame_interval_supported ||
+			!edge->frame_interval_cells ||
+			!edge->within_edge_tolerance || !edge->sector_valid ||
+			trace_hits != 2 || trace.final_segments != 1 ||
+			production_result.segments != 1 ||
+			trace.physical_event_seam_oblique_pairs != 1 ||
+			!trace.physical_event_seam_oblique_cells ||
+			trace.physical_event_seam_oblique_box_links !=
+			    trace.physical_event_seam_contact_boxes ||
+			!source_union_evidence ||
+			trace.prepared_production_selected != 1 ||
+			trace.prepared_production_fallback !=
+			    RT_BREP_PREPARED_FALLBACK_NONE ||
+			!brep_trace_seam_event_stream_valid(trace, edge,
+			    transformed, oracle, case_tol.dist);
+		    if (bad) {
+			std::printf("FAIL: Cobb non-isoparametric %s "
+			    "component=%.17g reverse=%d "
+			    "edge/correspondence/frame=%d/%d/%d "
+			    "hits/segments=%d/%zu/%d oblique=%zu/%zu/%zu "
+			    "union=%zu/%zu/%zu selected/fallback=%zu/%d "
+			    "failures=%zu/%zu/%zu/%zu/%zu\n", test.name,
+			    component, reverse, edge != NULL,
+			    edge ? edge->correspondence_supported : 0,
+			    edge ? edge->frame_interval_supported : 0,
+			    trace_hits, trace.final_segments,
+			    production_result.segments,
+			    trace.physical_event_seam_oblique_pairs,
+			    trace.physical_event_seam_oblique_cells,
+			    trace.physical_event_seam_oblique_box_links,
+			    trace.physical_event_seam_source_union_certified,
+			    trace.physical_event_seam_source_union_root_boxes,
+			    trace.physical_event_seam_source_union_boxes,
+			    trace.prepared_production_selected,
+			    trace.prepared_production_fallback,
+			    trace.physical_event_seam_failures,
+			    trace.physical_event_seam_ownership_failures,
+			    trace.physical_event_seam_witness_failures,
+			    trace.physical_event_seam_box_failures,
+			    trace.physical_event_seam_root_coverage_failures);
+			failures++;
+		    } else {
+			certified++;
+			source_unions += valid_source_union ? 1 : 0;
+		    }
+		}
+	    }
+	    free_solid(stp);
+	}
+	rt_clean_resource_basic(rtip, &resource);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+    }
+
+    delete variant;
+    if (!failures)
+	std::printf("Cobb non-isoparametric oblique seam: PASS "
+	    "cases=%zu certified=%zu source-unions=%zu "
+	    "lift/T=%.6g gap/T=%.6g\n",
+	    sizeof(cases) / sizeof(cases[0]),
+	    certified, source_unions, maximum_lift_shift / tol->dist,
+	    measured_gap / tol->dist);
     return failures;
 }
 
@@ -13376,16 +13741,20 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--seam-only");
     const bool endpoint_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--endpoint-only");
+    const bool nonisoparametric_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--nonisoparametric-only");
     if (argc != 1 && !report_grazing && !report_cobb &&
 	    !report_cobb_oblique && !affine_only &&
 	    !interval_only && !source_union_only && !fold_only && !core_only &&
 	    !directed_only &&
-	    !crofton_only && !seam_only && !endpoint_only)
+	    !crofton_only && !seam_only && !endpoint_only &&
+	    !nonisoparametric_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
 	    "--cobb-oblique-report|"
 	    "--affine-only|--interval-only|--source-union-only|--fold-only|"
 	    "--core-only|"
-	    "--directed-only|--crofton-only|--seam-only|--endpoint-only]\n",
+	    "--directed-only|--crofton-only|--seam-only|--endpoint-only|"
+	    "--nonisoparametric-only]\n",
 	    argv[0]);
     if (interval_only) {
 	const int interval_failures = check_brep_interval_enclosures() +
@@ -13430,6 +13799,15 @@ main(int argc, char **argv)
 
     struct resource resp = {};
     rt_init_resource(&resp, 0, rtip);
+
+    if (nonisoparametric_only) {
+	const int nonisoparametric_failures =
+	    check_cobb_nonisoparametric_oblique(&rtip->rti_tol);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return nonisoparametric_failures ? 1 : 0;
+    }
 
     if (report_cobb_oblique) {
 	const int oblique_failures = check_cobb_oblique_contact_trend(
@@ -13557,6 +13935,7 @@ main(int argc, char **argv)
 	    &resp);
 	failures += check_cobb_classifier_invariance(&rtip->rti_tol);
 	failures += check_cobb_oblique_contact_trend(&rtip->rti_tol, false);
+	failures += check_cobb_nonisoparametric_oblique(&rtip->rti_tol);
 	failures += check_cobb_ambiguous_correspondence(&rtip->rti_tol, rtip,
 	    &resp);
 	failures += check_cobb_discrepancy_bound_budget(&rtip->rti_tol, rtip,

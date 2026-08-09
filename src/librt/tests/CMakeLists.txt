@@ -156,6 +156,10 @@ brlcad_add_test(NAME rt_brep_ray COMMAND rt_brep_ray --directed-only)
 brlcad_add_test(NAME rt_brep_ray_crofton COMMAND rt_brep_ray --crofton-only)
 brlcad_add_test(NAME rt_brep_ray_seam COMMAND rt_brep_ray --seam-only)
 brlcad_add_test(NAME rt_brep_ray_endpoint COMMAND rt_brep_ray --endpoint-only)
+brlcad_add_test(
+  NAME rt_brep_ray_nonisoparametric
+  COMMAND rt_brep_ray --nonisoparametric-only
+)
 brlcad_add_test(NAME rt_brep_ray_interval COMMAND rt_brep_ray --interval-only)
 brlcad_add_test(
   NAME rt_brep_ray_source_union
