@@ -28,10 +28,12 @@
 #include "bio.h"
 
 #include <array>
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include <map>
 #include <set>
 #include <vector>
-#include <unordered_map>
 
 #include "clipper.hpp"
 
@@ -58,6 +60,7 @@
 #  define PLOT_PREFIX_STR bg_plot3_
 #endif
 #include "bu/malloc.h"
+#include "bu/str.h"
 #include "bv/plot3.h"
 #include "bg/polygon.h"
 #include "bg/plane.h"
@@ -117,6 +120,135 @@ clipper_input_path(ClipperLib::Path &path, const int *indices,
     return path.size() >= 3;
 }
 
+static bool
+detria_condition_points(const std::vector<detria::PointD> &points,
+	std::vector<detria::PointD> &conditioned)
+{
+    if (points.size() < 3)
+	return false;
+    double min_x = std::numeric_limits<double>::infinity();
+    double min_y = std::numeric_limits<double>::infinity();
+    double max_x = -std::numeric_limits<double>::infinity();
+    double max_y = -std::numeric_limits<double>::infinity();
+    for (const detria::PointD &point : points) {
+	if (!std::isfinite(point.x) || !std::isfinite(point.y))
+	    return false;
+	min_x = std::min(min_x, point.x);
+	min_y = std::min(min_y, point.y);
+	max_x = std::max(max_x, point.x);
+	max_y = std::max(max_y, point.y);
+    }
+    const long double center_x = ((long double)min_x + max_x) * 0.5L;
+    const long double center_y = ((long double)min_y + max_y) * 0.5L;
+    const long double span = std::max((long double)max_x - min_x,
+	(long double)max_y - min_y);
+    if (!(span > 0.0L) || !std::isfinite(span))
+	return false;
+    int exponent = 0;
+    (void)std::frexp(span, &exponent);
+    const long double scale = std::ldexp(1.0L, -exponent);
+    conditioned.resize(points.size());
+    for (size_t i = 0; i < points.size(); ++i) {
+	conditioned[i].x = (double)(((long double)points[i].x - center_x) *
+	    scale);
+	conditioned[i].y = (double)(((long double)points[i].y - center_y) *
+	    scale);
+    }
+    return true;
+}
+
+static bool
+detria_postconditions(const std::vector<detria::PointD> &points,
+	const std::vector<std::vector<int>> &outlines,
+	const std::vector<std::vector<int>> &holes,
+	const std::vector<int> &triangles)
+{
+    if (triangles.empty() || triangles.size() % 3)
+	return false;
+    typedef std::pair<int, int> constraint_edge;
+    auto edge_key = [](int a, int b) {
+	return (a < b) ? constraint_edge(a, b) : constraint_edge(b, a);
+    };
+    std::set<constraint_edge> required_edges;
+    auto add_ring_edges = [&](const std::vector<int> &ring) {
+	if (ring.size() < 3)
+	    return false;
+	for (size_t i = 0; i < ring.size(); ++i) {
+	    const int a = ring[i];
+	    const int b = ring[(i + 1) % ring.size()];
+	    if (a < 0 || b < 0 || (size_t)a >= points.size() ||
+		    (size_t)b >= points.size() || a == b ||
+		    !required_edges.insert(edge_key(a, b)).second)
+		return false;
+	}
+	return true;
+    };
+    for (const std::vector<int> &outline : outlines) {
+	if (!add_ring_edges(outline))
+	    return false;
+    }
+    for (const std::vector<int> &hole : holes) {
+	if (!add_ring_edges(hole))
+	    return false;
+    }
+
+    std::map<constraint_edge, int> edge_uses;
+    long double triangle_area2 = 0.0L;
+    for (size_t i = 0; i < triangles.size(); i += 3) {
+	const int a = triangles[i];
+	const int b = triangles[i + 1];
+	const int c = triangles[i + 2];
+	if (a < 0 || b < 0 || c < 0 || (size_t)a >= points.size() ||
+		(size_t)b >= points.size() || (size_t)c >= points.size() ||
+		a == b || b == c || c == a)
+	    return false;
+	const long double abx = (long double)points[b].x - points[a].x;
+	const long double aby = (long double)points[b].y - points[a].y;
+	const long double acx = (long double)points[c].x - points[a].x;
+	const long double acy = (long double)points[c].y - points[a].y;
+	const long double cross = abx * acy - aby * acx;
+	if (!(cross < 0.0L))
+	    return false;
+	triangle_area2 -= cross;
+	edge_uses[edge_key(a, b)]++;
+	edge_uses[edge_key(b, c)]++;
+	edge_uses[edge_key(c, a)]++;
+    }
+    for (const auto &edge : edge_uses) {
+	if (edge.second < 1 || edge.second > 2)
+	    return false;
+	const bool required = required_edges.find(edge.first) !=
+	    required_edges.end();
+	if ((edge.second == 1) != required)
+	    return false;
+    }
+    for (const constraint_edge &edge : required_edges) {
+	if (edge_uses[edge] != 1)
+	    return false;
+    }
+
+    auto ring_area2 = [&](const std::vector<int> &ring) {
+	long double area = 0.0L;
+	for (size_t i = 0; i < ring.size(); ++i) {
+	    const detria::PointD &a = points[ring[i]];
+	    const detria::PointD &b = points[ring[(i + 1) % ring.size()]];
+	    area += (long double)a.x * b.y - (long double)a.y * b.x;
+	}
+	return std::fabs(area);
+    };
+    long double expected_area2 = 0.0L;
+    for (const std::vector<int> &outline : outlines)
+	expected_area2 += ring_area2(outline);
+    for (const std::vector<int> &hole : holes)
+	expected_area2 -= ring_area2(hole);
+    const long double area_scale = std::max(1.0L,
+	std::fabs(expected_area2));
+    const long double area_tolerance = 1024.0L *
+	std::numeric_limits<double>::epsilon() * area_scale;
+    return expected_area2 > 0.0L &&
+	std::fabs(triangle_area2 - expected_area2) <= area_tolerance;
+}
+
 
 static int
 detria_result(int **faces, int *num_faces, point2d_t **out_pts,
@@ -127,8 +259,12 @@ detria_result(int **faces, int *num_faces, point2d_t **out_pts,
     if (points.size() < 3 || outlines.empty())
 	return BRLCAD_ERROR;
 
+    std::vector<detria::PointD> conditioned;
+    if (!detria_condition_points(points, conditioned))
+	return BRLCAD_ERROR;
+
     detria::Triangulation<detria::PointD, int> tri;
-    tri.setPoints(points);
+    tri.setPoints(conditioned);
     for (const std::vector<int> &outline : outlines)
 	tri.addOutline(outline);
     for (const std::vector<int> &hole : holes)
@@ -150,6 +286,9 @@ detria_result(int **faces, int *num_faces, point2d_t **out_pts,
 	triangles.push_back(triangle.z);
     }, true);
     if (triangles.empty())
+	return BRLCAD_ERROR;
+
+    if (!detria_postconditions(conditioned, outlines, holes, triangles))
 	return BRLCAD_ERROR;
 
     int *new_faces = (int *)bu_calloc(triangles.size(), sizeof(int),
@@ -535,124 +674,324 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts,
 	steiner, steiner_npts, pts, npts);
 }
 
-int
+static int
+bg_triangulation_report_set(struct bg_triangulation_report *report,
+	int reason, int input_index, const char *message)
+{
+    if (report) {
+	report->reason = reason;
+	report->input_index = input_index;
+	bu_strlcpy(report->message, message ? message : "",
+	    sizeof(report->message));
+    }
+    return reason == BG_TRIANGULATION_OK ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
+static int
 bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const int *poly, const size_t poly_pnts,
 	const int **holes_array, const size_t *holes_npts, const size_t nholes,
 	const int *steiner, const size_t steiner_npts,
-	const point2d_t *pts)
+	const point2d_t *pts, const size_t npts,
+	struct bg_triangulation_report *report)
 {
-    std::unordered_map<int, int> det2pts, pts2det;
-    std::set<int> active_pts;
+    bg_triangulation_report_set(report, BG_TRIANGULATION_INVALID_INPUT, -1,
+	"invalid constrained triangulation input");
+    if (!faces || !num_faces)
+	return BRLCAD_ERROR;
+    *faces = NULL;
+    *num_faces = 0;
+    if (out_pts)
+	*out_pts = NULL;
+    if (num_outpts)
+	*num_outpts = 0;
+    if (!poly || poly_pnts < 3 || !pts ||
+	    npts < 3 || (nholes && (!holes_array || !holes_npts)) ||
+	    (steiner_npts && !steiner))
+	return BRLCAD_ERROR;
 
-    // Find active points
-    for (size_t i = 0; i < poly_pnts; i++)
-	active_pts.insert(poly[i]);
-    for (size_t i = 0; i < nholes; i++) {
-	for (size_t j = 0; j < holes_npts[i]; j++)
-	    active_pts.insert(holes_array[i][j]);
+    auto valid_index = [&](int index) {
+	return index >= 0 && (size_t)index < npts &&
+	    std::isfinite(pts[index][X]) && std::isfinite(pts[index][Y]);
+    };
+    auto normalize_ring = [&](const int *indices, size_t count,
+	    std::vector<int> &ring) {
+	if (!indices || count < 3)
+	    return false;
+	for (size_t i = 0; i < count; ++i) {
+	    if (!valid_index(indices[i]))
+		return false;
+	    if (ring.empty() || ring.back() != indices[i])
+		ring.push_back(indices[i]);
+	}
+	if (ring.size() > 1 && ring.front() == ring.back())
+	    ring.pop_back();
+	std::set<int> unique(ring.begin(), ring.end());
+	return ring.size() >= 3 && unique.size() == ring.size();
+    };
+
+    std::vector<int> outer;
+    if (!normalize_ring(poly, poly_pnts, outer))
+	return BRLCAD_ERROR;
+    std::vector<std::vector<int>> hole_rings(nholes);
+    for (size_t h = 0; h < nholes; ++h) {
+	if (!normalize_ring(holes_array[h], holes_npts[h], hole_rings[h]))
+	    return BRLCAD_ERROR;
     }
-    // Note - for detria, all points added that are not part of a polygon are
-    // steiner points - so the only thing we need to do with them is flag them
-    // as active in the set.
-    for (size_t i = 0; i < steiner_npts; i++)
-	active_pts.insert(steiner[i]);
+    bg_triangulation_report_set(report, BG_TRIANGULATION_INVALID_PSLG, -1,
+	"invalid or duplicate chart constraint topology");
 
-    // Set up a points array holding the active points
-    std::vector<detria::PointD> tpnts;
-    std::set<int>::iterator a_it;
-    for (a_it = active_pts.begin(); a_it != active_pts.end(); a_it++) {
-	detria::PointD npt;
-	npt.x = pts[*a_it][X];
-	npt.y = pts[*a_it][Y];
-	tpnts.push_back(npt);
-	int detind = (int)tpnts.size() - 1;
-	det2pts[detind] = *a_it;
-	pts2det[*a_it] = detind;
+    std::map<std::pair<double, double>, int> constraint_coordinates;
+    std::map<int, size_t> constraint_ring;
+    std::set<std::pair<int, int>> constraint_edges;
+    struct input_segment {
+	int a;
+	int b;
+    };
+    std::vector<input_segment> segments;
+    auto register_ring = [&](const std::vector<int> &ring, size_t ring_id) {
+	for (size_t i = 0; i < ring.size(); ++i) {
+	    const int index = ring[i];
+	    const std::pair<double, double> coordinate(pts[index][X],
+		pts[index][Y]);
+	    const auto old_coordinate = constraint_coordinates.find(coordinate);
+	    if (old_coordinate != constraint_coordinates.end() &&
+		    old_coordinate->second != index)
+		return false;
+	    constraint_coordinates[coordinate] = index;
+	    const auto old_ring = constraint_ring.find(index);
+	    if (old_ring != constraint_ring.end() && old_ring->second != ring_id)
+		return false;
+	    constraint_ring[index] = ring_id;
+	    const int next = ring[(i + 1) % ring.size()];
+	    const std::pair<int, int> edge = (index < next) ?
+		std::make_pair(index, next) : std::make_pair(next, index);
+	    if (!constraint_edges.insert(edge).second)
+		return false;
+	    segments.push_back({index, next});
+	}
+	return true;
+    };
+    if (!register_ring(outer, 0))
+	return BRLCAD_ERROR;
+    for (size_t h = 0; h < nholes; ++h) {
+	if (!register_ring(hole_rings[h], h + 1))
+	    return BRLCAD_ERROR;
     }
 
-    // Let the triangulation structure know about the points
-    detria::Triangulation<detria::PointD, int> tri;
-    tri.setPoints(tpnts);
+    auto orient = [&](int ia, int ib, int ic) {
+	const long double abx = (long double)pts[ib][X] - pts[ia][X];
+	const long double aby = (long double)pts[ib][Y] - pts[ia][Y];
+	const long double acx = (long double)pts[ic][X] - pts[ia][X];
+	const long double acy = (long double)pts[ic][Y] - pts[ia][Y];
+	const long double cross = abx * acy - aby * acx;
+	return (cross > 0.0L) - (cross < 0.0L);
+    };
+    auto on_segment = [&](int ip, const input_segment &segment) {
+	if (orient(segment.a, segment.b, ip))
+	    return false;
+	const long double px = pts[ip][X];
+	const long double py = pts[ip][Y];
+	return px >= std::min((long double)pts[segment.a][X],
+		(long double)pts[segment.b][X]) &&
+	    px <= std::max((long double)pts[segment.a][X],
+		(long double)pts[segment.b][X]) &&
+	    py >= std::min((long double)pts[segment.a][Y],
+		(long double)pts[segment.b][Y]) &&
+	    py <= std::max((long double)pts[segment.a][Y],
+		(long double)pts[segment.b][Y]);
+    };
+    auto segments_intersect = [&](const input_segment &a,
+	    const input_segment &b) {
+	const int o1 = orient(a.a, a.b, b.a);
+	const int o2 = orient(a.a, a.b, b.b);
+	const int o3 = orient(b.a, b.b, a.a);
+	const int o4 = orient(b.a, b.b, a.b);
+	if (!o1 && on_segment(b.a, a)) return true;
+	if (!o2 && on_segment(b.b, a)) return true;
+	if (!o3 && on_segment(a.a, b)) return true;
+	if (!o4 && on_segment(a.b, b)) return true;
+	return o1 * o2 < 0 && o3 * o4 < 0;
+    };
+    for (size_t i = 0; i < segments.size(); ++i) {
+	for (size_t j = i + 1; j < segments.size(); ++j) {
+	    if (segments[i].a == segments[j].a ||
+		    segments[i].a == segments[j].b ||
+		    segments[i].b == segments[j].a ||
+		    segments[i].b == segments[j].b)
+		continue;
+	    if (segments_intersect(segments[i], segments[j])) {
+		bg_triangulation_report_set(report,
+		    BG_TRIANGULATION_CROSSING_CONSTRAINTS, -1,
+		    "nonincident chart constraints intersect");
+		return BRLCAD_ERROR;
+	    }
+	}
+    }
 
-    // Outer polygon is defined first
+    auto point_in_ring = [&](int point, const std::vector<int> &ring) {
+	int winding = 0;
+	for (size_t i = 0; i < ring.size(); ++i) {
+	    const int a = ring[i];
+	    const int b = ring[(i + 1) % ring.size()];
+	    if (pts[a][Y] <= pts[point][Y]) {
+		if (pts[b][Y] > pts[point][Y] && orient(a, b, point) > 0)
+		    ++winding;
+	    } else if (pts[b][Y] <= pts[point][Y] &&
+		    orient(a, b, point) < 0) {
+		--winding;
+	    }
+	}
+	return winding != 0;
+    };
+    for (size_t h = 0; h < hole_rings.size(); ++h) {
+	if (!point_in_ring(hole_rings[h][0], outer)) {
+	    bg_triangulation_report_set(report,
+		BG_TRIANGULATION_INVALID_NESTING, (int)h,
+		"hole is not contained by the chart outline");
+	    return BRLCAD_ERROR;
+	}
+	for (size_t other = 0; other < hole_rings.size(); ++other) {
+	    if (h != other && point_in_ring(hole_rings[h][0],
+		    hole_rings[other])) {
+		bg_triangulation_report_set(report,
+		    BG_TRIANGULATION_INVALID_NESTING, (int)h,
+		    "nested hole requires an explicit island outline");
+		return BRLCAD_ERROR;
+	    }
+	}
+    }
+
+    std::vector<int> accepted_steiner;
+    std::map<std::pair<double, double>, int> active_coordinates =
+	constraint_coordinates;
+    for (size_t i = 0; i < steiner_npts; ++i) {
+	const int index = steiner[i];
+	if (!valid_index(index))
+	    return BRLCAD_ERROR;
+	const std::pair<double, double> coordinate(pts[index][X],
+	    pts[index][Y]);
+	if (active_coordinates.find(coordinate) != active_coordinates.end())
+	    continue;
+	bool on_constraint = false;
+	for (const input_segment &segment : segments) {
+	    if (on_segment(index, segment)) {
+		on_constraint = true;
+		break;
+	    }
+	}
+	if (on_constraint || !point_in_ring(index, outer))
+	    continue;
+	bool in_hole = false;
+	for (const std::vector<int> &hole : hole_rings) {
+	    if (point_in_ring(index, hole)) {
+		in_hole = true;
+		break;
+	    }
+	}
+	if (!in_hole) {
+	    active_coordinates[coordinate] = index;
+	    accepted_steiner.push_back(index);
+	}
+    }
+
+    std::set<int> active_pts(outer.begin(), outer.end());
+    for (const std::vector<int> &hole : hole_rings)
+	active_pts.insert(hole.begin(), hole.end());
+    active_pts.insert(accepted_steiner.begin(), accepted_steiner.end());
+
+    std::map<int, int> det2pts;
+    std::map<int, int> pts2det;
+    std::vector<detria::PointD> raw_points;
+    for (int index : active_pts) {
+	detria::PointD point;
+	point.x = pts[index][X];
+	point.y = pts[index][Y];
+	const int detria_index = (int)raw_points.size();
+	raw_points.push_back(point);
+	det2pts[detria_index] = index;
+	pts2det[index] = detria_index;
+    }
+    std::vector<detria::PointD> conditioned;
+    if (!detria_condition_points(raw_points, conditioned)) {
+	bg_triangulation_report_set(report, BG_TRIANGULATION_INVALID_INPUT, -1,
+	    "chart coordinates cannot be conditioned safely");
+	return BRLCAD_ERROR;
+    }
+
     std::vector<int> outer_polyline;
-    for (size_t i = 0; i < poly_pnts; i++)
-	outer_polyline.push_back(pts2det[poly[i]]);
+    for (int index : outer)
+	outer_polyline.push_back(pts2det[index]);
+    std::vector<std::vector<int>> inner_holes(hole_rings.size());
+    for (size_t h = 0; h < hole_rings.size(); ++h) {
+	for (int index : hole_rings[h])
+	    inner_holes[h].push_back(pts2det[index]);
+    }
+
+    detria::Triangulation<detria::PointD, int> tri;
+    tri.setPoints(conditioned);
     tri.addOutline(outer_polyline);
+    for (const std::vector<int> &hole : inner_holes)
+	tri.addHole(hole);
 
-    // Next are the holes.
-    // IMPORTANT: detria's addHole() stores a ReadonlySpan (raw pointer) into the
-    // provided vector.  The vector must outlive the tri.triangulate() call.
-    // Pre-populate inner_holes before registering any hole so that no
-    // reallocation invalidates previously stored data() pointers.
-    std::vector<std::vector<int>> inner_holes(nholes);
-    for (size_t i = 0; i < nholes; i++) {
-	std::vector<int> &hv = inner_holes[i];
-	hv.reserve(holes_npts[i]);
-	for (size_t j = 0; j < holes_npts[i]; j++)
-	    hv.push_back(pts2det[holes_array[i][j]]);
-    }
-    for (size_t i = 0; i < nholes; i++) {
-	tri.addHole(inner_holes[i]);
-    }
-
-    // Run the core triangulation routine
+    bg_triangulation_report_set(report, BG_TRIANGULATION_DETRIA_FAILED, -1,
+	"detria rejected the validated chart");
     bool tri_success = false;
-    {
-	try {
-	    tri_success = tri.triangulate(true);
-	}
-	catch (...) {
-	    return 1;
-	}
+    try {
+	tri_success = tri.triangulate(true);
+    } catch (...) {
+	return BRLCAD_ERROR;
     }
-
-    // Did we succeed?
     if (!tri_success) {
 	bu_log("bg_detria: triangulation failed: %s\n", tri.getErrorMessage().c_str());
-	return 1;
+	bg_triangulation_report_set(report, BG_TRIANGULATION_DETRIA_FAILED, -1,
+	    tri.getErrorMessage().c_str());
+	return BRLCAD_ERROR;
     }
 
-    // Should the result triangles be in CW order?
-    bool cwTriangles = true;
+    std::vector<int> triangles;
+    tri.forEachTriangle([&](const detria::Triangle<int> triangle) {
+	triangles.push_back(triangle.x);
+	triangles.push_back(triangle.y);
+	triangles.push_back(triangle.z);
+    }, true);
+    std::vector<std::vector<int>> outlines(1, outer_polyline);
+    if (!detria_postconditions(conditioned, outlines, inner_holes,
+	    triangles)) {
+	bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_POSTCONDITION_FAILED, -1,
+	    "detria output failed chart certification");
+	return BRLCAD_ERROR;
+	}
 
-    // Count the number of interior triangles so we can allocate an output array
-    int tri_cnt = 0;
-    tri.forEachTriangle([&](const detria::Triangle<int> &){tri_cnt++;}, cwTriangles);
-
-    (*num_faces) = tri_cnt;
-    int *nfaces = (int *)bu_calloc(*num_faces * 3, sizeof(int), "faces array");
-
-    // We may want to report the number of unique active points, so
-    // track this as we iterate the triangles
-    active_pts.clear();
-
-    int tri_ind = 0;
-    tri.forEachTriangle([&](const detria::Triangle<int> triangle)
-	    {
-	    // `triangle` contains the point indices
-	    nfaces[3*tri_ind] = det2pts[triangle.x];
-	    nfaces[3*tri_ind+1] = det2pts[triangle.y];
-	    nfaces[3*tri_ind+2] = det2pts[triangle.z];
-	    active_pts.insert(nfaces[3*tri_ind]);
-	    active_pts.insert(nfaces[3*tri_ind+1]);
-	    active_pts.insert(nfaces[3*tri_ind+2]);
-	    tri_ind++;
-	    }, cwTriangles);
-
-    (*faces) = nfaces;
-
-    // We're not generating a new points array, so if out_pts exists set it to the
-    // input points array
-    if (out_pts) {
-	(*out_pts) = (point2d_t *)pts;
+    *num_faces = (int)(triangles.size() / 3);
+    *faces = (int *)bu_calloc(triangles.size(), sizeof(int), "faces array");
+    std::set<int> output_points;
+    for (size_t i = 0; i < triangles.size(); ++i) {
+	(*faces)[i] = det2pts[triangles[i]];
+	output_points.insert((*faces)[i]);
     }
-    if (num_outpts) {
-	(*num_outpts) = (int)active_pts.size();
-    }
+    if (out_pts)
+	*out_pts = (point2d_t *)pts;
+    if (num_outpts)
+	*num_outpts = (int)output_points.size();
+    bg_triangulation_report_set(report, BG_TRIANGULATION_OK, -1,
+	"certified constrained triangulation");
+    return BRLCAD_OK;
+}
 
-    return 0;
+extern "C" int
+bg_nested_poly_triangulate_strict(int **faces, int *num_faces,
+	point2d_t **out_pts, int *num_outpts,
+	const int *poly, const size_t poly_pnts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const point2d_t *pts, const size_t npts,
+	struct bg_triangulation_report *report)
+{
+    return bg_detria(faces, num_faces, out_pts, num_outpts, poly,
+	poly_pnts, holes_array, holes_npts, nholes, steiner, steiner_npts,
+	pts, npts, report);
 }
 
 extern "C" int
@@ -672,7 +1011,9 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
     //if (type == TRI_DELAUNAY && (!out_pts || !num_outpts)) return 1;
 
     if (type == TRI_ANY || type == TRI_CONSTRAINED_DELAUNAY) {
-	int detria_ret = bg_detria(faces, num_faces, out_pts, num_outpts, poly, poly_pnts, holes_array, holes_npts, nholes, steiner, steiner_npts, pts);
+	int detria_ret = bg_detria(faces, num_faces, out_pts, num_outpts,
+	    poly, poly_pnts, holes_array, holes_npts, nholes, steiner,
+	    steiner_npts, pts, npts, NULL);
 	return detria_ret;
     }
 

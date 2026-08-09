@@ -222,6 +222,35 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	const int *steiner, const size_t steiner_npts,
 	const point2d_t *pts, const size_t npts);
 
+#define BG_TRIANGULATION_OK 0
+#define BG_TRIANGULATION_INVALID_INPUT 1
+#define BG_TRIANGULATION_INVALID_PSLG 2
+#define BG_TRIANGULATION_CROSSING_CONSTRAINTS 3
+#define BG_TRIANGULATION_INVALID_NESTING 4
+#define BG_TRIANGULATION_DETRIA_FAILED 5
+#define BG_TRIANGULATION_POSTCONDITION_FAILED 6
+
+struct bg_triangulation_report {
+    int reason;
+    int input_index;
+    char message[128];
+};
+
+/**
+ * Strict constrained-Delaunay entry point.  In addition to the validation
+ * performed by bg_nested_poly_triangulate, this function reports the failure
+ * class and certifies the returned constraints, orientation, incidence, and
+ * chart coverage.  out_pts aliases pts on success and must not be freed.
+ */
+BG_EXPORT extern int
+bg_nested_poly_triangulate_strict(int **faces, int *num_faces,
+	point2d_t **out_pts, int *num_outpts,
+	const int *poly, const size_t poly_npts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const point2d_t *pts, const size_t npts,
+	struct bg_triangulation_report *report);
+
 /**
  * @brief
  * Triangulate a 2D polygon without holes.

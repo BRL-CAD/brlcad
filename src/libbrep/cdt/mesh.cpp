@@ -3616,14 +3616,33 @@ cdt_mesh_t::cdt()
 	}
     }
 
-    bool result = (bool)!bg_nested_poly_triangulate(&faces, &num_faces,
-		  NULL, NULL, opoly, outer_loop.poly.size()+1, holes_array, holes_npts, holes_cnt,
-		  steiner, steiner_cnt, bgp_2d, m_pnts_2d.size(),
-		  TRI_CONSTRAINED_DELAUNAY);
+    struct bg_triangulation_report tri_report = {0, -1, {0}};
+    bool result = (bool)!bg_nested_poly_triangulate_strict(&faces,
+	&num_faces, NULL, NULL, opoly, outer_loop.poly.size() + 1,
+	(const int **)holes_array, holes_npts, holes_cnt, steiner, steiner_cnt,
+	bgp_2d, m_pnts_2d.size(), &tri_report);
 
     if (!result) {
-	bu_log("Face %d: bg_nested_poly_triangulate FAILED (bnd_pnts=%zu steiner=%zu/%zu holes=%d)\n",
-	    f_id, outer_loop.poly.size(), steiner_cnt, m_interior_pnts.size(), holes_cnt);
+	bu_log("Face %d: constrained triangulation failed: %s "
+	    "(bnd_pnts=%zu steiner=%zu/%zu holes=%d)\n", f_id,
+	    tri_report.message, outer_loop.poly.size(), steiner_cnt,
+	    m_interior_pnts.size(), holes_cnt);
+	struct ON_Brep_CDT_State *state =
+	    (struct ON_Brep_CDT_State *)p_cdt;
+	if (state) {
+	    int brep_result = BREP_CDT_RESULT_INVALID_PSLG;
+	    int brep_stage = BREP_CDT_STAGE_PSLG_VALIDATION;
+	    if (tri_report.reason == BG_TRIANGULATION_DETRIA_FAILED) {
+		brep_result = BREP_CDT_RESULT_DETRIA_FAILED;
+		brep_stage = BREP_CDT_STAGE_DETRIA;
+	    } else if (tri_report.reason ==
+		    BG_TRIANGULATION_POSTCONDITION_FAILED) {
+		brep_result = BREP_CDT_RESULT_CERTIFICATION_FAILED;
+		brep_stage = BREP_CDT_STAGE_DETRIA;
+	    }
+	    cdt_diagnostic_set(state, brep_result, brep_stage, f_id, 0, 1,
+		tri_report.message);
+	}
 
 	// Dump a stand-alone C test program so the failure can be reproduced
 	// and scrutinised independently of the full CDT pipeline.

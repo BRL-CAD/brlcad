@@ -330,9 +330,11 @@ brlcad_add_test(NAME bg_polygon COMMAND bg_polygon)
 
 brlcad_addexec(bg_polygon_triangulate polygon_triangulate.c "${BG_TEST_LIBS}" TEST)
 brlcad_addexec(bg_polygon_triangulate_clean polygon_triangulate_clean.c "${BG_TEST_LIBS}" TEST)
+brlcad_addexec(bg_polygon_triangulate_strict polygon_triangulate_strict.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_polygon_triangulate	    COMMAND bg_polygon_triangulate)
 brlcad_add_test(NAME bg_polygon_triangulate_clean COMMAND bg_polygon_triangulate_clean)
+brlcad_add_test(NAME bg_polygon_triangulate_strict COMMAND bg_polygon_triangulate_strict)
 
 #  ************ chull.c tests ***********
 # 2D Convex Hull tests
@@ -522,6 +524,7 @@ cmakefiles(
   plane_dist.c
   plane_isect.c
   plane_pt.c
+  polygon_triangulate_strict.c
   CMakeLists.txt
 )
 
