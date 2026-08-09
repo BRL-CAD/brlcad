@@ -6388,6 +6388,74 @@ check_brep_local_root_solver()
 	    boundary_root, 1.0e-6, true, true);
     }
 
+    {
+	const int u_order = 9;
+	const int v_order = 9;
+	fastf_t minimum[2][81] = {};
+	fastf_t maximum[2][81] = {};
+	for (int i = 0; i < u_order; ++i) {
+	    for (int j = 0; j < v_order; ++j) {
+		const size_t index = (size_t)i * v_order + j;
+		const double f = (double)i / (u_order - 1) -
+		    (1.0 + boundary_shift);
+		const double g = (double)j / (v_order - 1) - 0.5;
+		minimum[0][index] = maximum[0][index] = f + 0.25 * g;
+		minimum[1][index] = maximum[1][index] = -0.5 * f + g;
+	    }
+	}
+	run("high-order-affine", minimum[0], maximum[0],
+	    minimum[1], maximum[1], u_order, v_order, boundary_root,
+	    1.0e-6, true, true);
+    }
+
+    {
+	const int u_order = 16;
+	const int v_order = 8;
+	fastf_t minimum[2][128] = {};
+	fastf_t maximum[2][128] = {};
+	const double root_power = pow(1.0 + boundary_shift, 15.0);
+	for (int i = 0; i < u_order; ++i) {
+	    for (int j = 0; j < v_order; ++j) {
+		const size_t index = (size_t)i * v_order + j;
+		const double u = (double)i / (u_order - 1);
+		const double v = (double)j / (v_order - 1);
+		minimum[0][index] = maximum[0][index] =
+		    (i == u_order - 1 ? 1.0 : 0.0) - root_power +
+		    0.125 * (v - 0.5);
+		minimum[1][index] = maximum[1][index] =
+		    -0.25 * (u - (1.0 + boundary_shift)) + v - 0.5;
+	    }
+	}
+	run("degree-fifteen-boundary", minimum[0], maximum[0], minimum[1],
+	    maximum[1], u_order, v_order, boundary_root, 1.0e-6, true,
+	    true);
+    }
+
+    const int determinant_exponents[] = {-20, -40};
+    for (size_t exponent_index = 0;
+	    exponent_index < sizeof(determinant_exponents) /
+	    sizeof(determinant_exponents[0]); ++exponent_index) {
+	const double delta = std::ldexp(1.0,
+	    determinant_exponents[exponent_index]);
+	fastf_t minimum[2][4] = {};
+	fastf_t maximum[2][4] = {};
+	for (int i = 0; i < 2; ++i) {
+	    for (int j = 0; j < 2; ++j) {
+		const size_t index = (size_t)i * 2 + j;
+		const double u = i - (1.0 + boundary_shift);
+		const double v = j - 0.5;
+		minimum[0][index] = maximum[0][index] = u + v;
+		minimum[1][index] = maximum[1][index] =
+		    u + (1.0 + delta) * v;
+	    }
+	}
+	char name[64];
+	std::snprintf(name, sizeof(name), "near-singular-affine-%d",
+	    determinant_exponents[exponent_index]);
+	run(name, minimum[0], maximum[0], minimum[1], maximum[1], 2, 2,
+	    boundary_root, 1.0e-6, true, true);
+    }
+
     const double near_root = 1.0 + std::ldexp(1.0, -42);
     const double other_root = 1.0 - std::ldexp(1.0, -12);
     const double quadratic[3] = {
@@ -6501,6 +6569,152 @@ check_brep_local_root_solver()
 	    "rejected=%zu max-attempts=%zu radius=%.3g high-water=%zu\n",
 	    cases, certified, rejected, maximum_attempts, maximum_radius,
 	    maximum_high_water);
+    return failures;
+}
+
+
+static ON_Brep *
+weighted_bilinear_patch(double low_weight, double high_weight, double scale,
+    const ON_3dVector &translation)
+{
+    if (!(low_weight > 0.0) || !(high_weight > 0.0) ||
+	    !std::isfinite(low_weight) || !std::isfinite(high_weight) ||
+	    !(scale > 0.0) || !std::isfinite(scale) ||
+	    !translation.IsValid())
+	return NULL;
+    ON_BezierSurface bezier(3, true, 2, 2);
+    for (int i = 0; i < 2; ++i) {
+	for (int j = 0; j < 2; ++j) {
+	    const double weight = i ? high_weight : low_weight;
+	    const ON_3dPoint point(translation.x + scale * i,
+		translation.y + scale * j, translation.z);
+	    if (!bezier.SetCV(i, j, ON_4dPoint(weight * point.x,
+		    weight * point.y, weight * point.z, weight)))
+		return NULL;
+	}
+    }
+    ON_NurbsSurface nurbs;
+    if (!bezier.GetNurbForm(nurbs))
+	return NULL;
+    ON_Brep *brep = ON_Brep::New();
+    ON_BrepFace *face = brep ? brep->NewFace(nurbs) : NULL;
+    if (!face) {
+	delete brep;
+	return NULL;
+    }
+    face->m_bRev = false;
+    brep->Standardize();
+    brep->Compact();
+    return brep;
+}
+
+
+static int
+check_brep_weighted_local_root_solver()
+{
+    struct weighted_case {
+	const char *name;
+	double low_weight;
+	double high_weight;
+	double scale;
+	ON_3dVector translation;
+	bool reverse;
+    } cases[] = {
+	{"balanced", 1.0, 1.0, 1.0, ON_3dVector(0.0, 0.0, 0.0), false},
+	{"extreme-weight", std::ldexp(1.0, -10),
+	    std::ldexp(1.0, 10), 1.0,
+	    ON_3dVector(0.0, 0.0, 0.0), true},
+	{"extreme-weight-similarity", std::ldexp(1.0, -10),
+	    std::ldexp(1.0, 10), 1.0e4,
+	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), false}
+    };
+    int failures = 0;
+    size_t certified = 0;
+    double maximum_image = 0.0;
+    size_t maximum_root_high_water = 0;
+    size_t maximum_model_high_water = 0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const weighted_case &test = cases[case_index];
+	ON_Brep *brep = weighted_bilinear_patch(test.low_weight,
+	    test.high_weight, test.scale, test.translation);
+	struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+	if (!brep || !rtip) {
+	    std::printf("FAIL: weighted local root %s construction\n",
+		test.name);
+	    delete brep;
+	    if (rtip)
+		rt_i_destroy(rtip);
+	    failures++;
+	    continue;
+	}
+	rtip->rti_tol.magic = BN_TOL_MAGIC;
+	rtip->rti_tol.dist = 0.0005 * test.scale;
+	rtip->rti_tol.dist_sq = rtip->rti_tol.dist * rtip->rti_tol.dist;
+	rtip->rti_tol.perp = 1.0e-6;
+	rtip->rti_tol.para = 1.0 - rtip->rti_tol.perp;
+	struct resource resource = {};
+	rt_init_resource(&resource, 0, rtip);
+	struct rt_brep_internal brep_internal = {};
+	brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	brep_internal.brep = brep;
+	ON_3dPoint point = ON_3dPoint::UnsetPoint;
+	if (brep->m_F.Count() == 1 && brep->m_F[0].SurfaceOf())
+	    point = brep->m_F[0].SurfaceOf()->PointAt(1.0, 0.5);
+	fastf_t ray_origin[3] = {point.x, point.y,
+	    point.z + (test.reverse ? -test.scale : test.scale)};
+	fastf_t ray_direction[3] = {0.0, 0.0,
+	    test.reverse ? 1.0 : -1.0};
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_BREP;
+	intern.idb_meth = &OBJ[ID_BREP];
+	intern.idb_ptr = &brep_internal;
+	struct soltab *stp = prep_solid(rtip, &intern, ID_BREP);
+	struct rt_brep_local_root_test_result result = {};
+	bool called = false;
+	if (stp && point.IsValid()) {
+	    fastf_t uv[2] = {1.0, 0.5};
+	    called = _rt_brep_surface_local_root_test(stp,
+		ray_origin, ray_direction, 0, 0, uv, 1.0e-6, &result);
+	}
+	const bool extension = result.normalized_root[0] + result.radius > 1.0;
+	const bool bad = !stp || !called || !result.available ||
+	    !result.certified || !result.model_image_available ||
+	    !extension || !(result.radius > 0.0) ||
+	    !(result.weight_minimum > 0.0) ||
+	    !(result.weight_maximum >= result.weight_minimum) ||
+	    !std::isfinite(result.model_image_displacement);
+	if (bad) {
+	    std::printf("FAIL: weighted local root %s "
+		"prep/call/root/image/extension=%d/%d/%d/%d/%d "
+		"radius=%.17g weight=%.17g/%.17g displacement=%.17g\n",
+		test.name, stp != NULL, called ? 1 : 0, result.certified,
+		result.model_image_available, extension ? 1 : 0,
+		result.radius, result.weight_minimum, result.weight_maximum,
+		result.model_image_displacement);
+	    failures++;
+	} else {
+	    certified++;
+	    maximum_image = std::max(maximum_image,
+		(double)result.model_image_displacement);
+	    maximum_root_high_water = std::max(maximum_root_high_water,
+		result.expansion_high_water);
+	    maximum_model_high_water = std::max(maximum_model_high_water,
+		result.model_expansion_high_water);
+	}
+	if (stp)
+	    free_solid(stp);
+	rt_clean_resource_basic(rtip, &resource);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+    }
+    if (!failures)
+	std::printf("BREP weighted local root: PASS cases=%zu certified=%zu "
+	    "root/model-high-water=%zu/%zu max-image=%.3g\n",
+	    sizeof(cases) / sizeof(cases[0]), certified,
+	    maximum_root_high_water, maximum_model_high_water, maximum_image);
     return failures;
 }
 
@@ -14585,13 +14799,15 @@ main(int argc, char **argv)
     if (interval_only) {
 	const int interval_failures = check_brep_interval_enclosures() +
 	    check_brep_local_root_solver() +
+	    check_brep_weighted_local_root_solver() +
 	    check_brep_fold_interval_classifier() +
 	    check_brep_source_union_solver() +
 	    check_brep_trim_interval_solver();
 	return interval_failures ? 1 : 0;
     }
     if (local_root_only)
-	return check_brep_local_root_solver() ? 1 : 0;
+	return (check_brep_local_root_solver() +
+	    check_brep_weighted_local_root_solver()) ? 1 : 0;
     if (trim_interval_only)
 	return check_brep_trim_interval_solver() ? 1 : 0;
     if (source_union_only)
@@ -14718,6 +14934,7 @@ main(int argc, char **argv)
     if (!core_only && !split_core) {
 	failures += check_brep_interval_enclosures();
 	failures += check_brep_local_root_solver();
+	failures += check_brep_weighted_local_root_solver();
 	failures += check_brep_fold_interval_classifier();
 	failures += check_brep_source_union_solver();
 	failures += check_brep_trim_interval_solver();
