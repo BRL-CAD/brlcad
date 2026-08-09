@@ -772,39 +772,52 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
     return true;
 }
 
-static void
+static bool
 loop_edges(cdt_mesh_t *fmesh, cpolygon_t *loop)
 {
-    size_t vcnt = 1;
-    cpolyedge_t *pe = (*loop->poly.begin());
-    cpolyedge_t *first = pe;
-    cpolyedge_t *next = pe->next;
+    if (!fmesh || !loop)
+	return false;
+    cpolyedge_t *edge = loop->first_edge();
+    if (!edge)
+	return false;
+    cpolyedge_t *first = edge;
+    size_t edge_count = 0;
+    const auto mesh_point = [&](long polygon_point) {
+	const auto native = loop->p2o.find(polygon_point);
+	if (native == loop->p2o.end())
+	    return -1L;
+	const auto point_3d = fmesh->p2d3d.find(native->second);
+	if (point_3d == fmesh->p2d3d.end() || point_3d->second < 0 ||
+		(size_t)point_3d->second >= fmesh->pnts.size())
+	    return -1L;
+	const auto canonical = fmesh->p2ind.find(
+	    fmesh->pnts[(size_t)point_3d->second]);
+	return canonical == fmesh->p2ind.end() ? -1L : canonical->second;
+    };
 
-    long p1_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[pe->v2d[0]]]]];
-    long p2_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[pe->v2d[1]]]]];
-    fmesh->ep.insert(p1_ind);
-    fmesh->ep.insert(p2_ind);
-    if (p1_ind != p2_ind) {
-	fmesh->brep_edges.insert(uedge_t(p1_ind, p2_ind));
-	fmesh->ue2b_map[uedge_t(p1_ind, p2_ind)] = pe->eseg;
-    }
-
-    while (first != next) {
-	vcnt++;
-	p1_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[next->v2d[0]]]]];
-	p2_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[next->v2d[1]]]]];
-	fmesh->ep.insert(p1_ind);
-	fmesh->ep.insert(p2_ind);
-	if (p1_ind != p2_ind) {
-	    fmesh->brep_edges.insert(uedge_t(p1_ind, p2_ind));
-	    fmesh->ue2b_map[uedge_t(p1_ind, p2_ind)] = next->eseg;
+    do {
+	const long start = mesh_point(edge->v2d[0]);
+	const long end = mesh_point(edge->v2d[1]);
+	if (start < 0 || end < 0) {
+	    bu_log("face %d has an incomplete boundary point mapping\n",
+		fmesh->f_id);
+	    return false;
 	}
-	next = next->next;
-	if (vcnt > loop->poly.size()) {
+	fmesh->ep.insert(start);
+	fmesh->ep.insert(end);
+	if (start != end) {
+	    const uedge_t boundary_edge(start, end);
+	    fmesh->brep_edges.insert(boundary_edge);
+	    fmesh->ue2b_map[boundary_edge] = edge->eseg;
+	}
+	edge = edge->next;
+	edge_count++;
+	if (!edge || edge_count > loop->poly.size()) {
 	    std::cerr << "infinite loop when reading loop edges\n";
-	    return;
+	    return false;
 	}
-    }
+    } while (edge != first);
+    return true;
 }
 
 static bool
@@ -854,6 +867,13 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     fmesh->f_id = face.m_face_index;
     fmesh->m_bRev = face.m_bRev;
 
+    // cdt() records the final topology-chart boundary.  Clear stale native
+    // loop data first, then add the original segment associations below for
+    // edges that still have a one-to-one B-Rep representation.
+    fmesh->brep_edges.clear();
+    fmesh->chart_boundary_edges.clear();
+    fmesh->ue2b_map.clear();
+
     // Mark singular vertices before orienting the initial triangles.  Their
     // averaged vertex normals are not a reliable face-local orientation
     // signal at a pole.
@@ -870,13 +890,17 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 	return false;
     }
 
-    // List edges
-    fmesh->brep_edges.clear();
-    fmesh->ue2b_map.clear();
-    loop_edges(fmesh, &fmesh->outer_loop);
+    // List native loop edges in addition to the chart boundary.
+    bool loops_mapped = loop_edges(fmesh, &fmesh->outer_loop);
     std::map<int, cpolygon_t*>::iterator i_it;
     for (i_it = fmesh->inner_loops.begin(); i_it != fmesh->inner_loops.end(); i_it++) {
-	loop_edges(fmesh, i_it->second);
+	loops_mapped = loop_edges(fmesh, i_it->second) && loops_mapped;
+    }
+    if (!loops_mapped) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_CERTIFICATION_FAILED,
+	    BREP_CDT_STAGE_FACE_TRIANGULATION, face.m_face_index, 0, 1,
+	    "native loop boundary did not map to mesh vertices");
+	return false;
     }
     fmesh->boundary_edges_update();
 
