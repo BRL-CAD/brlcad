@@ -641,8 +641,20 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     if (load_brep(dbip, dp, &intern) == BRLCAD_OK) {
 	struct rt_brep_internal *bi = (struct rt_brep_internal *)intern.idb_ptr;
 	ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
-	ref_faces = bi->brep->m_F.Count();
-	for (int i = 0; i < ref_faces; i++) {
+	const int brep_faces = bi->brep->m_F.Count();
+	int first_ref_face = 0;
+	int end_ref_face = brep_faces;
+	if (config.face_index >= 0) {
+	    if (config.face_index >= brep_faces) {
+		top_issues.push_back("face_index_out_of_range");
+		end_ref_face = 0;
+	    } else {
+		first_ref_face = (int)config.face_index;
+		end_ref_face = first_ref_face + 1;
+	    }
+	}
+	ref_faces = end_ref_face - first_ref_face;
+	for (int i = first_ref_face; i < end_ref_face; i++) {
 	    ON_BoundingBox face_bbox = ON_BoundingBox::EmptyBoundingBox;
 	    if (!face_GetBoundingBox(bi->brep->m_F[i], face_bbox, false) ||
 		    !face_bbox.IsValid()) {
