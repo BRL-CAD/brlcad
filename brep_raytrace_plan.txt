@@ -2614,8 +2614,16 @@ miss in the already narrow incident-face contact-lobe theorem:
      cannot pull an interior root into the seam corridor.  A nonfinite point,
      invalid face, missing surface, or second miss fails the whole ray closed.
 
-  4. Treat the point test only as root association inside the existing
-     solver contract.  It grants no boundary event by itself.  Every source
+  4. Treat the point test only as the cheap association screen.  Before it can
+     authorize a declared-tolerance repair, prove a unique root in a local
+     normalized box whose radius is less than one quarter of the other root's
+     separation.  Bound the complete positive-weight rational surface image
+     of that box, including any analytic continuation beyond the span, and
+     require that whole image inside both the `E` and `L` tubes.  The detailed
+     fixed-expansion contraction and rational image theorem below is
+     mandatory; nominal-point proximity alone is not authority.
+
+  5. The local root/tube proof grants no boundary event by itself.  Every source
      box, every contact-root box, and every rootless determinant-corridor box
      must still have exactly one role.  The complete connected source-union
      proof, rational trim-cell ownership, full contact t-hull coverage,
@@ -2625,7 +2633,7 @@ miss in the already narrow incident-face contact-lobe theorem:
      complete transaction succeeds.  The inner contact lobe remains hidden
      evidence and is never emitted as a solid boundary.
 
-  5. Record the number of admitted classifier misses independently from the
+  6. Record the number of admitted classifier misses independently from the
      two contact roots.  A noncontact certificate requires zero contact and
      miss ledgers.  A contact certificate requires exactly two contact roots
      and at most one miss.  Existing opposite-face, isoparametric, oblique,
@@ -2663,28 +2671,84 @@ outward signed version of this particular outer-loop construction is not a
 valid BREP because it moves the loop outside the surface domain; use a
 different valid fixture before drawing conclusions about negative amplitude.
 
-An exploratory stronger tube proof also records the next boundary rather
-than hiding it.  The complete terminal surface boxes are intentionally much
-wider than `C`: in the identity component-0.001 case, an interval surface hull
-was about `0.00335` from the edge while `C` was about `0.0005075`.  Requiring
-the whole existing box inside the tube is therefore too strong.  Bounded
-local contraction around the nominal root was then tried with ordinary and
-fixed-expansion Krawczyk tests, Krawczyk image contraction, conditioned
-equations, and the regular-graph boundary-existence theorem.  Only four of
-the sixteen similarity/reversal cases obtained an invariant local tube
-certificate.  That experimental authority is not retained in production.
+The complete terminal surface boxes are intentionally much wider than `C`:
+in the identity component-0.001 case, their surface hull was about `0.00335`
+from the edge while `C` was about `0.0005075`.  Requiring an existing terminal
+box to fit in the tube is therefore too strong.  The relevant miss root is at
+the normalized support boundary `u=1`, while the neighboring hit is only
+about `1.7e-4` away in normalized infinity norm and both occupy the same
+terminal box.  This also explains why an ordinary strict-interior Krawczyk
+test was the wrong theorem: the root that must be qualified lies on, and its
+roundoff enclosure may cross, the prepared span boundary.
 
-The implemented point witness is an intentionally narrow extension of the
-current exact-root solver contract, not the final general tube theorem.  A
-future broader rule must produce a similarity- and reversal-invariant local
-box that both contains exactly one surface root and whose complete surface
-image lies in the edge/trim tube.  Likely routes are a better-conditioned
-interval Newton/regular-graph contraction, a residual-to-root error theorem,
-or direct coupled surface/ray/trim subdivision.  Keep that work allocation
-free and ratchet every difficult coefficient system in a C/C++ corpus.  Do
-not broaden beyond one hit plus one miss, reuse inferred tolerances, or remove
-the downstream complete material-sector theorem while that stronger local
-certificate is unresolved.
+Use a local fixed-expansion contraction around the already solved miss
+instead.  For each of the two homogeneous ray-plane equations, derive the
+complete finite bivariate Taylor polynomial at the nominal normalized root.
+Obtain every partial derivative by exact finite differences of the Bernstein
+coefficients, evaluate it with outward fixed-expansion arithmetic, and apply
+factorial scaling as successive outward divisions by exactly representable
+small integers.  Invert the midpoint Jacobian only as a
+binary64 preconditioner `A`; all subsequent function, derivative, and image
+bounds remain outward intervals.  For the symmetric infinity-norm box
+`X=[-r,r]^2`, bound the fixed-point map
+
+    N(d) = -A F(0) + (I - A J(0)) d - A F_higher(d)
+
+and the complete derivative `I-AJ(X)`.  Start with
+
+    r = max(next_up(4 |A F(0)|_inf), 1024 eps max(1, |uv|_inf))
+
+and double at most 48 times.  Accept only strict inclusion
+`N(X) subset interior(X)` with a `512 eps r` margin and infinity-norm
+contraction below one.  Cap the permitted radius at one quarter of the
+normalized separation to the other contact root.  A singular midpoint,
+nonfinite expansion, capacity exhaustion, inability to reach inclusion, or a
+radius reaching that cap is unavailable and leaves the whole ray on fallback.
+This proves existence and uniqueness for the analytic Bezier extension; it
+does not by itself authorize a point outside the prepared support domain.
+
+Authorize that extension with a separate complete model-space image theorem.
+Let `P` be the nominal rational surface point, and write each homogeneous
+coordinate difference as `X_i(u,v)-P_i W(u,v)`.  Apply the same exact Taylor
+box evaluator to all three difference polynomials and to `W` over the
+certified root box, including the portion beyond `[0,1]^2`.  Require a
+strictly positive lower weight bound.  Divide each difference enclosure by
+the weight enclosure and combine their outward squares to obtain a Euclidean
+surface-image displacement bound `B`.  The analytic extension is eligible
+only when
+
+    |P-E| + B <= C + coordinate_roundoff
+    |P-L| + B <= C + coordinate_roundoff,
+
+where `E` and `L` are the same certified shared-edge and lifted-trim points
+used by the earlier association test.  Thus every possible root in the
+unique contraction box remains inside both declared model-space tubes.  No
+parameter-domain extrapolation receives authority merely from proximity, and
+positive weight, uniqueness, edge proximity, and trim proximity are
+independent fail-closed obligations.
+
+Run this proof only for the explicit-declaration one-hit/one-miss transaction.
+It performs no allocation during ray tracing and records attempts,
+availability, uniqueness, support-boundary extension, image bounds, and tube
+failure separately.  Publication additionally requires exactly one attempt,
+one available unique root, no tube failure, and every unchanged box,
+material-sector, order, and minimum-segment obligation described above.
+Ordinary model-tolerance contacts and all zero-miss paths retain their prior
+logic and must report no local-certificate ledger.
+
+The permanent C/C++ corpus contains three affine boundary roots and three
+nearby quadratic root pairs at equation scales `2^-100`, `1`, and `2^100`,
+plus multi-root, singular, uncertain-coefficient, invalid-input, and explicit
+tube-containment rejection controls.  The real Cobb replay extracts the
+actual prepared projected coefficient intervals for all sixteen
+similarity/reversal cases.  Every real miss certifies in one radius attempt,
+crosses the analytic span boundary, excludes the neighboring root, retains
+positive rational weight, and bounds the full image inside both tubes.  Keep
+these difficult systems as a ratchet before generalizing the local theorem to
+other seam, vertex, or grazing policies.  Register the arithmetic corpus as
+`rt_brep_ray_local_root`, include it in the exhaustive interval and unsharded
+compatibility processes, and keep the real production replay in
+`rt_brep_ray_contact_trim` so CTest can schedule both independently.
 
 6.4.2 Cyclic planar vertex-fan theorem
 
