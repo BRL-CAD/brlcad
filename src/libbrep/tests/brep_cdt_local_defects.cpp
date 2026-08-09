@@ -18,5 +18,8 @@ main(int argc, const char **UNUSED(argv))
     if (argc != 1)
 	return 1;
     int result = cdt_test_edge_singular_pair();
-    return result ? result : cdt_test_local_defects();
+    if (result)
+	return result;
+    result = cdt_test_local_defects();
+    return result ? result : cdt_test_assembled_mesh_validation();
 }
