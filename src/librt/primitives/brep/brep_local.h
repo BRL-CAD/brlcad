@@ -36,10 +36,18 @@ struct brep_edge_span {
 };
 
 
+struct brep_trim_span {
+    ON_BezierCurve curve;
+    ON_Interval trim_domain;
+};
+
+
 struct brep_edge_trim_cell {
     ON_Interval edge_domain;
     ON_Interval trim_domain;
     size_t edge_span = 0;
+    size_t trim_span_begin = 0;
+    size_t trim_span_count = 0;
     int trim_index = -1;
 };
 
@@ -129,6 +137,7 @@ struct brep_specific {
     std::vector<brep_edge_record> edge_records;
     std::vector<brep_edge_span> edge_spans;
     std::vector<brep_edge_trim_cell> edge_trim_cells;
+    std::vector<brep_trim_span> edge_trim_spans;
     std::vector<brep_face_record> face_records;
     std::vector<brep_surface_span> surface_spans;
     std::vector<brep_vertex_record> vertex_records;

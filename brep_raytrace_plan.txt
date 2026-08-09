@@ -2102,7 +2102,9 @@ Prepare the additional proof data as follows:
      were certified by the exact isoparametric theorem.  The more general
      injective/oriented correspondence proof remains valid for gap bounding,
      but endpoint UV hulls alone do not yet bound a curved non-isoparametric
-     trim.  Such edges keep the old whole-ray fallback.
+     trim.  Such edges keep the old whole-ray fallback.  This was the staged
+     Finding 71 boundary; Section 6.4.1.6 lifts it only with complete retained
+     rational trim loci and derivatives.
 
   3. Sort each side's terminal cells by edge parameter and retain their exact
      oriented correspondence.  Cached prep rebuilds these process-local
@@ -2349,6 +2351,106 @@ before restriction rather than proceeding until the later global ownership
 gate; both routes fail the whole ray closed, so this is a stricter early exit,
 not a new production classification.  The shared graph retains fixed-capacity
 stack arrays and introduces no shot-time allocation.
+
+6.4.1.6 Rational non-isoparametric trim frames
+
+The exact isoparametric restriction in Finding 71 was a representation
+boundary, not a material-sector requirement.  The global correspondence proof
+already establishes that each trim follows the shared edge once, with a strict
+consistent orientation.  To use that fact for a curved trim, prep must also
+retain the complete trim locus and differential data that endpoint UV values
+cannot supply.
+
+Extend the prepared seam transaction as follows:
+
+  1. Preserve the positive-weight rational Bezier spans produced by
+     `brep_prepare_trim_spans` for both incident trims.  Each installed
+     `brep_edge_trim_cell` records the beginning and count of its immutable
+     side-local span set.  Build cells and spans in temporary vectors and
+     append neither unless both endpoint contracts, both global
+     correspondences, and the complete two-sided strict discrepancy proof
+     succeed.  An unavailable conversion, nonpositive weight, outside or
+     ambiguous discrepancy, correspondence failure, or exhausted budget
+     therefore installs no partial frame authority.
+
+  2. Keep the exact isoparametric path as the tight fast path.  Its fixed
+     coordinate and endpoint hull remain unchanged.  For a generic trim,
+     intersect the mapped cell domain with every retained span, normalize the
+     overlap into that span, and restrict its homogeneous numerator and weight
+     controls with outward interval De Casteljau arithmetic.  Divide
+     coefficient intervals by positive weights for a complete UV convex hull.
+     Form `X'W-XW'` coefficient by coefficient and divide by `W^2` for both UV
+     derivative components.  Derivatives are with respect to each restricted
+     span's increasing local coordinate; the omitted conversion to the
+     original trim parameter is a positive scalar and cannot change any
+     homogeneous sign predicate.
+
+  3. Union all overlapping span hulls and require their parameter lengths to
+     cover the complete mapped trim cell, allowing only coordinate-scaled
+     binary64 roundoff.  Reject missing span indices, zero coverage, invalid
+     orders, nonfinite bounds, a parameter outside `[0,1]`, or incomplete
+     coverage.  Do not reconstruct an OpenNURBS curve and do not allocate at
+     shot time.
+
+  4. Require the complete UV hull to fit exactly one prepared positive-weight
+     rational surface span.  A cell crossing a surface-span boundary is not
+     guessed: the existing fixed local edge subdivision may isolate it, and
+     failure at the depth/work bounds remains whole-ray fallback.  Bound `Su`
+     and `Sv` on the containing UV neighborhood.  For trim derivative
+     `(du,dv)`, construct the loop tangent by the interval chain rule
+
+         L = Su * du + Sv * dv.
+
+     Continue to form outward normals, interior conormals, oriented edge
+     tangent, full ray-t boundary signs, sector turn, projected conormal dot,
+     monotone sweep, complete box links, and atomic event publication exactly
+     as in Finding 71.  A generic trim changes only how its complete UV locus
+     and loop tangent are enclosed; it does not weaken any topology,
+     discrepancy, root, box, sector, or transaction obligation.
+
+  5. Where a generic trim is on the selected contact face, use its complete
+     rational UV hull for solver-box ownership.  Endpoint hulls are forbidden.
+     A disjoint hull is skipped, a partially contained hull is subdivided, and
+     a broad or shifted box fails closed at the existing bounds.  This theorem
+     does not yet replace earlier closure/root association with a model-space
+     tolerance tube.  A trim perturbation that changes which contact roots are
+     admitted needs a separate locally convergent ownership theorem rather
+     than an inferred hit.
+
+The real-geometry ratchet begins with a valid radius-10 sewn Cobb sphere.  Bow
+one surface boundary inward by exactly model tolerance, then replace the trim
+on the opposite incident face with an endpoint-preserving quadratic Bezier
+whose middle control moves toward the face interior.  Calibrate its maximum
+3D lift change to `0.05*T`, remeasure the complete two-lift discrepancy, and
+declare an edge tolerance with strict margin.  The curve must be genuinely
+non-isoparametric, preserve both topological endpoints, and leave the BREP
+valid.  This deliberately separates tolerance roles: the two lifted trims are
+`1.00125*T` apart at maximum, while their independently bounded distances to
+the shared modeling edge are `T` and `0.05*T`; the declared edge tolerance is
+`1.01` times the measured two-lift gap.  Shoot seam-tangent components `0.001`
+and `0.1` in both directions.
+Both must select production, carry the oblique ledger, and match the analytic
+sphere chord; identity component `0.1` must also carry the connected
+source-root union ledger.
+
+Repeat those four rays after an arbitrary-axis rotation plus translation,
+`0.01x` scale plus translation, and `10,000x` scale plus large translation,
+with all model, edge, and vertex tolerances scaled.  Physical classification
+and analytic endpoints must be invariant.  As in Finding 72, adaptive solver
+box topology need not be invariant: transformed component-0.1 cases may use
+either the ordinary one-root proof or a valid connected source-union proof.
+Keep the existing noninjective degree-15 trim control as a required global
+correspondence fallback.  Register the focused positive matrix as
+`rt_brep_ray_nonisoparametric` so it can run in parallel with the much larger
+seam and interval shards.
+
+This extension adds process-local prep memory proportional to retained trim
+Bezier spans on strictly authorized seam edges.  It changes neither the
+SurfaceTree density nor cache serialization, and it performs no shot-time
+allocation.  Unsupported rational data, incomplete span or surface coverage,
+changed contact-root topology, arbitrary root counts/faces/spans, exact
+tangency, sector-boundary tangency, vertex neighborhoods, and non-manifold
+topology remain fail-closed.
 
 6.4.2 Cyclic planar vertex-fan theorem
 
