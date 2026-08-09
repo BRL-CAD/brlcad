@@ -4915,19 +4915,61 @@ cdt_mesh_t::refine_problem_triangles(
 	    break;
 	ON_2dPoint uv[3];
 	bool mapped = true;
-	for (int corner = 0; corner < 3; ++corner) {
-	    const long vertex = triangle.v[corner];
-	    const auto native = p3d2d.find(vertex);
-	    if (native == p3d2d.end() ||
-		    ambiguous_p3d2d.find(vertex) != ambiguous_p3d2d.end() ||
-		    native->second < 0 ||
-		    (size_t)native->second >= m_pnts_2d.size()) {
-		mapped = false;
-		continue;
+	triangle_t native_triangle;
+	bool have_native_triangle = false;
+	long target_vertices[3] = {
+	    triangle.v[0], triangle.v[1], triangle.v[2]
+	};
+	std::sort(target_vertices, target_vertices + 3);
+	for (const triangle_t &candidate : tris_2d) {
+	    long candidate_vertices[3] = {-1, -1, -1};
+	    int candidate_count = 0;
+	    for (int corner = 0; corner < 3; ++corner) {
+		const auto point_3d = p2d3d.find(candidate.v[corner]);
+		if (point_3d == p2d3d.end() || point_3d->second < 0 ||
+			(size_t)point_3d->second >= pnts.size())
+		    break;
+		const auto canonical = p2ind.find(
+		    pnts[(size_t)point_3d->second]);
+		if (canonical == p2ind.end())
+		    break;
+		candidate_vertices[candidate_count++] = canonical->second;
 	    }
-	    uv[corner] = ON_2dPoint(
-		m_pnts_2d[(size_t)native->second].first,
-		m_pnts_2d[(size_t)native->second].second);
+	    if (candidate_count != 3)
+		continue;
+	    std::sort(candidate_vertices, candidate_vertices + 3);
+	    if (std::equal(candidate_vertices, candidate_vertices + 3,
+		    target_vertices)) {
+		native_triangle = candidate;
+		have_native_triangle = true;
+		break;
+	    }
+	}
+	if (have_native_triangle) {
+	    for (int corner = 0; corner < 3; ++corner) {
+		const long native = native_triangle.v[corner];
+		if (native < 0 || (size_t)native >= m_pnts_2d.size()) {
+		    mapped = false;
+		    continue;
+		}
+		uv[corner] = ON_2dPoint(
+		    m_pnts_2d[(size_t)native].first,
+		    m_pnts_2d[(size_t)native].second);
+	    }
+	} else {
+	    for (int corner = 0; corner < 3; ++corner) {
+		const long vertex = triangle.v[corner];
+		const auto native = p3d2d.find(vertex);
+		if (native == p3d2d.end() || ambiguous_p3d2d.find(vertex) !=
+			ambiguous_p3d2d.end() || native->second < 0 ||
+			(size_t)native->second >= m_pnts_2d.size()) {
+		    mapped = false;
+		    continue;
+		}
+		uv[corner] = ON_2dPoint(
+		    m_pnts_2d[(size_t)native->second].first,
+		    m_pnts_2d[(size_t)native->second].second);
+	    }
 	}
 	if (!mapped)
 	    continue;
