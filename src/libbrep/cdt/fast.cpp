@@ -3249,11 +3249,8 @@ fast_reconstruct_periodic_strip(const ON_Surface *surface,
 	const ON_BrepLoop *loop = face.Loop(li);
 	if (!loop || !brep_loop_points[li])
 	    return false;
-	if (loop->m_type == ON_BrepLoop::outer) {
-	    if (outer_index >= 0)
-		return false;
+	if (loop->m_type == ON_BrepLoop::outer && outer_index < 0)
 	    outer_index = li;
-	}
 	fast_periodic_loop_info candidate;
 	if (fast_periodic_boundary_loop(surface, *brep_loop_points[li],
 		candidate)) {
