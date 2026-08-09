@@ -602,7 +602,15 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
 
     double max_allowed = (s_cdt->tol.absmax > ON_ZERO_TOLERANCE) ? s_cdt->tol.absmax : 1.1*bseg->cp_len;
     double min_allowed = (s_cdt->tol.rel > ON_ZERO_TOLERANCE) ? s_cdt->tol.rel * bseg->cp_len : 0.0;
-    double max_edgept_dist_from_edge = (s_cdt->tol.abs > ON_ZERO_TOLERANCE) ? s_cdt->tol.abs : seg_len;
+    double max_edgept_dist_from_edge = seg_len;
+    if (s_cdt->tol.abs > ON_ZERO_TOLERANCE)
+	max_edgept_dist_from_edge = s_cdt->tol.abs;
+    if (s_cdt->tol.rel > ON_ZERO_TOLERANCE) {
+	const double relative_tolerance = s_cdt->tol.rel * bseg->cp_len;
+	max_edgept_dist_from_edge = s_cdt->tol.abs > ON_ZERO_TOLERANCE ?
+	    std::min(max_edgept_dist_from_edge, relative_tolerance) :
+	    relative_tolerance;
+    }
     ON_BrepLoop *l1 = s_cdt->brep->m_T[bseg->tseg1->trim_ind].Loop();
     ON_BrepLoop *l2 = s_cdt->brep->m_T[bseg->tseg2->trim_ind].Loop();
     const ON_Surface *s1= l1->SurfaceOf();
