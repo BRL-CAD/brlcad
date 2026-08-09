@@ -4470,6 +4470,10 @@ fast_split_touching_periodic_loop(const ON_Surface *surface,
 }
 
 static bool
+fast_loop_is_provably_degenerate(const ON_Surface *surface,
+	const ON_BrepLoop *loop);
+
+static bool
 bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	std::vector<fastf_t> &pnts,
 	const ON_BrepFace &face,
@@ -4641,6 +4645,9 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     for (int li = 0; li < loop_cnt; li++) {
 	const ON_BrepLoop *face_loop = face.Loop(li);
 	if (!face_loop)
+	    continue;
+	if (face_loop->m_type != ON_BrepLoop::outer &&
+		fast_loop_is_provably_degenerate(s, face_loop))
 	    continue;
 	const bool uv_closed = fast_loop_uv_closed(s, face_loop,
 	    *brep_loop_points[li], tol);
@@ -4945,22 +4952,9 @@ enum fast_face_outcome {
 };
 
 static bool
-fast_face_is_provably_degenerate(const ON_BrepFace &face)
+fast_loop_is_provably_degenerate(const ON_Surface *surface,
+	const ON_BrepLoop *loop)
 {
-    bool all_loops_empty = face.LoopCount() > 0;
-    for (int li = 0; li < face.LoopCount(); ++li) {
-	const ON_BrepLoop *candidate = face.Loop(li);
-	if (!candidate || candidate->TrimCount() != 0) {
-	    all_loops_empty = false;
-	    break;
-	}
-    }
-    if (all_loops_empty && face.LoopCount() > 1)
-	return true;
-    if (face.LoopCount() != 1)
-	return false;
-    const ON_BrepLoop *loop = face.Loop(0);
-    const ON_Surface *surface = face.SurfaceOf();
     if (!loop || !surface || loop->TrimCount() < 1)
 	return false;
     if (loop->TrimCount() > 1) {
@@ -5083,6 +5077,24 @@ fast_face_is_provably_degenerate(const ON_BrepFace &face)
 	    return false;
     }
     return true;
+}
+
+static bool
+fast_face_is_provably_degenerate(const ON_BrepFace &face)
+{
+    bool all_loops_empty = face.LoopCount() > 0;
+    for (int li = 0; li < face.LoopCount(); ++li) {
+	const ON_BrepLoop *candidate = face.Loop(li);
+	if (!candidate || candidate->TrimCount() != 0) {
+	    all_loops_empty = false;
+	    break;
+	}
+    }
+    if (all_loops_empty && face.LoopCount() > 1)
+	return true;
+    if (face.LoopCount() != 1)
+	return false;
+    return fast_loop_is_provably_degenerate(face.SurfaceOf(), face.Loop(0));
 }
 
 static fast_face_outcome

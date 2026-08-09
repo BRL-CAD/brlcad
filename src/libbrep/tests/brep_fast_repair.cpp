@@ -837,6 +837,47 @@ multiple_empty_loops_test()
 }
 
 static bool
+degenerate_inner_loop_test()
+{
+    ON_Brep brep;
+    ON_PlaneSurface *surface = large_plane();
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &outer = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_2dPoint corners[4] = {
+	ON_2dPoint(-2.0, -2.0), ON_2dPoint(2.0, -2.0),
+	ON_2dPoint(2.0, 2.0), ON_2dPoint(-2.0, 2.0)
+    };
+    int vertices[4];
+    for (int i = 0; i < 4; ++i)
+	vertices[i] = brep.NewVertex(surface->PointAt(corners[i].x,
+	    corners[i].y)).m_vertex_index;
+    for (int i = 0; i < 4; ++i) {
+	const int next = (i + 1) % 4;
+	add_surface_iso_trim(brep, outer, *surface, vertices[i],
+	    vertices[next], corners[i], corners[next]);
+    }
+
+    ON_BrepLoop &inner = brep.NewLoop(ON_BrepLoop::inner, face);
+    const ON_2dPoint low(0.0, -1.0);
+    const ON_2dPoint high(0.0, 1.0);
+    const int low_vertex = brep.NewVertex(
+	surface->PointAt(low.x, low.y)).m_vertex_index;
+    const int high_vertex = brep.NewVertex(
+	surface->PointAt(high.x, high.y)).m_vertex_index;
+    add_surface_iso_trim(brep, inner, *surface, low_vertex, high_vertex,
+	low, high);
+    add_surface_iso_trim(brep, inner, *surface, high_vertex, low_vertex,
+	high, low);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
 collapsed_closed_pcurve_test()
 {
     ON_Brep brep;
@@ -1505,6 +1546,7 @@ main(int argc, const char **argv)
 	split_periodic_boundary_test() &&
 	degenerate_closed_surface_slit_test() &&
 	multiple_empty_loops_test() &&
+	degenerate_inner_loop_test() &&
 	collapsed_closed_pcurve_test() &&
 	misclassified_periodic_boundaries_test() &&
 	touching_periodic_subloops_test() &&
