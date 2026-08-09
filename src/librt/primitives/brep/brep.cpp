@@ -14182,6 +14182,230 @@ brep_trace_surface_boxes_connected(
 }
 
 
+/* Build the complete terminal-box component seeded by boxes already known to
+ * contain one root.  Role qualification is deliberately supplied by the
+ * caller: production derives it from immutable root/box provenance, while the
+ * private test hook supplies synthetic roles. */
+static bool
+brep_source_union_component(
+    const struct rt_brep_trace_surface_box *boxes, size_t box_count,
+    const bool *root_box, const bool *candidate_box, bool *component_box,
+    size_t &eligible_boxes, size_t &root_boxes, size_t &component_boxes,
+    double uv_minimum[2], double uv_maximum[2])
+{
+    eligible_boxes = 0;
+    root_boxes = 0;
+    component_boxes = 0;
+    uv_minimum[0] = uv_minimum[1] = DBL_MAX;
+    uv_maximum[0] = uv_maximum[1] = -DBL_MAX;
+    if (!boxes || !root_box || !candidate_box || !component_box ||
+	!box_count || box_count > RT_BREP_TRACE_MAX_SURFACE_BOXES)
+	return false;
+
+    int face_index = -1;
+    int span_index = -1;
+    for (size_t box_index = 0; box_index < box_count; ++box_index) {
+	component_box[box_index] = false;
+	if (root_box[box_index] && candidate_box[box_index])
+	    return false;
+	if (!root_box[box_index] && !candidate_box[box_index])
+	    continue;
+	const struct rt_brep_trace_surface_box &box = boxes[box_index];
+	if (!std::isfinite(box.uv_min[0]) ||
+		!std::isfinite(box.uv_min[1]) ||
+		!std::isfinite(box.uv_max[0]) ||
+		!std::isfinite(box.uv_max[1]) ||
+		!std::isfinite(box.t_min) || !std::isfinite(box.t_max) ||
+		!(box.uv_min[0] < box.uv_max[0]) ||
+		!(box.uv_min[1] < box.uv_max[1]) || box.t_min > box.t_max ||
+		box.face_index < 0 || box.span_index < 0)
+	    return false;
+	if (face_index < 0) {
+	    face_index = box.face_index;
+	    span_index = box.span_index;
+	} else if (box.face_index != face_index ||
+		box.span_index != span_index) {
+	    return false;
+	}
+	eligible_boxes++;
+	if (!root_box[box_index])
+	    continue;
+	component_box[box_index] = true;
+	root_boxes++;
+	component_boxes++;
+    }
+    if (!root_boxes || eligible_boxes <= root_boxes)
+	return false;
+
+    bool changed = true;
+    while (changed) {
+	changed = false;
+	for (size_t candidate_index = 0;
+		candidate_index < box_count; ++candidate_index) {
+	    if (!candidate_box[candidate_index] ||
+		    component_box[candidate_index])
+		continue;
+	    for (size_t component_index = 0;
+		    component_index < box_count; ++component_index) {
+		if (!component_box[component_index] ||
+			!brep_trace_surface_boxes_connected(
+			    boxes[candidate_index], boxes[component_index]))
+		    continue;
+		component_box[candidate_index] = true;
+		component_boxes++;
+		changed = true;
+		break;
+	    }
+	}
+    }
+
+    for (size_t box_index = 0; box_index < box_count; ++box_index) {
+	if (!component_box[box_index])
+	    continue;
+	for (int direction = 0; direction < 2; ++direction) {
+	    uv_minimum[direction] = std::min(uv_minimum[direction],
+		(double)boxes[box_index].uv_min[direction]);
+	    uv_maximum[direction] = std::max(uv_maximum[direction],
+		(double)boxes[box_index].uv_max[direction]);
+	}
+    }
+    return std::isfinite(uv_minimum[0]) &&
+	std::isfinite(uv_minimum[1]) && std::isfinite(uv_maximum[0]) &&
+	std::isfinite(uv_maximum[1]) &&
+	uv_minimum[0] < uv_maximum[0] &&
+	uv_minimum[1] < uv_maximum[1];
+}
+
+
+extern "C" int
+_rt_brep_source_union_test(const fastf_t *first_coefficients,
+    const fastf_t *second_coefficients, int u_order, int v_order,
+    const fastf_t coefficient_error[2],
+    const struct rt_brep_source_union_test_box *input_boxes,
+    size_t box_count, const fastf_t root[2],
+    struct rt_brep_source_union_test_result *result)
+{
+    if (!first_coefficients || !second_coefficients || !coefficient_error ||
+	!input_boxes || !root || !result || u_order < 2 || v_order < 2 ||
+	u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	v_order > BREP_DIRECT_BEZIER_MAX_ORDER || !box_count ||
+	box_count > RT_BREP_TRACE_MAX_SURFACE_BOXES ||
+	!std::isfinite(coefficient_error[0]) ||
+	!std::isfinite(coefficient_error[1]) || coefficient_error[0] < 0.0 ||
+	coefficient_error[1] < 0.0 || !std::isfinite(root[0]) ||
+	!std::isfinite(root[1]) || root[0] < 0.0 || root[0] > 1.0 ||
+	root[1] < 0.0 || root[1] > 1.0)
+	return 0;
+    *result = {};
+
+    double values[2][BREP_DIRECT_BEZIER_MAX_CVS] = {};
+    const fastf_t *input[2] = {first_coefficients, second_coefficients};
+    const size_t coefficient_count = (size_t)u_order * v_order;
+    for (int equation = 0; equation < 2; ++equation) {
+	for (size_t coefficient_index = 0;
+		coefficient_index < coefficient_count; ++coefficient_index) {
+	    if (!std::isfinite(input[equation][coefficient_index]))
+		return 0;
+	    values[equation][coefficient_index] =
+		input[equation][coefficient_index];
+	}
+    }
+
+    struct rt_brep_trace_surface_box
+	boxes[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    bool root_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    bool candidate_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    bool component_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    for (size_t box_index = 0; box_index < box_count; ++box_index) {
+	const struct rt_brep_source_union_test_box &input_box =
+	    input_boxes[box_index];
+	if (input_box.role != RT_BREP_SOURCE_UNION_TEST_ROOT &&
+		input_box.role != RT_BREP_SOURCE_UNION_TEST_CANDIDATE)
+	    return 0;
+	struct rt_brep_trace_surface_box &box = boxes[box_index];
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!std::isfinite(input_box.uv_minimum[direction]) ||
+		    !std::isfinite(input_box.uv_maximum[direction]) ||
+		    input_box.uv_minimum[direction] < 0.0 ||
+		    input_box.uv_maximum[direction] > 1.0 ||
+		    !(input_box.uv_minimum[direction] <
+			input_box.uv_maximum[direction]))
+		return 0;
+	    box.uv_min[direction] = input_box.uv_minimum[direction];
+	    box.uv_max[direction] = input_box.uv_maximum[direction];
+	}
+	if (!std::isfinite(input_box.t_minimum) ||
+		!std::isfinite(input_box.t_maximum) ||
+		input_box.t_minimum > input_box.t_maximum)
+	    return 0;
+	box.t_min = input_box.t_minimum;
+	box.t_max = input_box.t_maximum;
+	box.face_index = 0;
+	box.span_index = 0;
+	if (input_box.role == RT_BREP_SOURCE_UNION_TEST_ROOT) {
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (root[direction] < box.uv_min[direction] ||
+			root[direction] > box.uv_max[direction])
+		    return 0;
+	    }
+	    root_box[box_index] = true;
+	} else {
+	    candidate_box[box_index] = true;
+	}
+    }
+
+    size_t eligible_boxes = 0;
+    size_t root_boxes = 0;
+    size_t component_boxes = 0;
+    double uv_minimum[2];
+    double uv_maximum[2];
+    if (!brep_source_union_component(boxes, box_count, root_box,
+	    candidate_box, component_box, eligible_boxes, root_boxes,
+	    component_boxes, uv_minimum, uv_maximum))
+	return 0;
+    result->eligible_boxes = eligible_boxes;
+    result->root_boxes = root_boxes;
+    result->component_boxes = component_boxes;
+    result->component_complete = component_boxes == eligible_boxes;
+    for (int direction = 0; direction < 2; ++direction) {
+	result->uv_minimum[direction] = uv_minimum[direction];
+	result->uv_maximum[direction] = uv_maximum[direction];
+    }
+    if (!result->component_complete)
+	return 1;
+
+    double minimum[2];
+    double maximum[2];
+    double local_root[2];
+    for (int direction = 0; direction < 2; ++direction) {
+	minimum[direction] = std::max(0.0,
+	    std::nextafter(uv_minimum[direction], -INFINITY));
+	maximum[direction] = std::min(1.0,
+	    std::nextafter(uv_maximum[direction], INFINITY));
+	if (!(minimum[direction] < maximum[direction]) ||
+		root[direction] < minimum[direction] ||
+		root[direction] > maximum[direction])
+	    return 0;
+	local_root[direction] = (root[direction] - minimum[direction]) /
+	    (maximum[direction] - minimum[direction]);
+    }
+
+    double restricted[2][BREP_DIRECT_BEZIER_MAX_CVS] = {};
+    double restricted_error[2] = {};
+    result->krawczyk_attempted = 1;
+    for (int equation = 0; equation < 2; ++equation) {
+	if (!brep_scalar_surface_restrict_bounded(values[equation], u_order,
+		v_order, coefficient_error[equation], minimum[0], maximum[0],
+		minimum[1], maximum[1], restricted[equation],
+		restricted_error[equation]))
+	    return 1;
+    }
+    result->certified = brep_surface_krawczyk_certified(restricted,
+	u_order, v_order, restricted_error, local_root);
+    return 1;
+}
+
+
 /*
  * A strict Krawczyk inclusion over the rectangular hull of a connected
  * terminal-box component proves that the component contains exactly the one
@@ -14215,8 +14439,8 @@ brep_trace_seam_source_union(
 	!span.surface_domain[1].IsIncreasing())
 	return false;
 
-    bool candidate[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
-    bool have_candidate = false;
+    bool root_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    bool candidate_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
     int determinant_sign = 0;
     for (size_t box_index = 0;
 	    box_index < trace->stored_surface_boxes; ++box_index) {
@@ -14229,9 +14453,7 @@ brep_trace_seam_source_union(
 		 box.determinant_sign != determinant_sign))
 		return false;
 	    determinant_sign = box.determinant_sign;
-	    component_box[box_index] = true;
-	    root_boxes++;
-	    component_boxes++;
+	    root_box[box_index] = true;
 	    continue;
 	}
 	if (box.face_index != root.face_index ||
@@ -14240,54 +14462,16 @@ brep_trace_seam_source_union(
 		box.determinant_sign ||
 		brep_prepared_box_has_root(trace, box, ray, tol))
 	    continue;
-	candidate[box_index] = true;
-	have_candidate = true;
+	candidate_box[box_index] = true;
     }
-    if (!root_boxes || !have_candidate)
+    size_t eligible_boxes = 0;
+    double uv_minimum[2];
+    double uv_maximum[2];
+    if (!brep_source_union_component(trace->surface_boxes,
+	    trace->stored_surface_boxes, root_box, candidate_box, component_box,
+	    eligible_boxes, root_boxes, component_boxes, uv_minimum,
+	    uv_maximum) || component_boxes != eligible_boxes)
 	return false;
-
-    bool changed = true;
-    while (changed) {
-	changed = false;
-	for (size_t candidate_index = 0;
-		candidate_index < trace->stored_surface_boxes;
-		++candidate_index) {
-	    if (!candidate[candidate_index] ||
-		    component_box[candidate_index])
-		continue;
-	    for (size_t component_index = 0;
-		    component_index < trace->stored_surface_boxes;
-		    ++component_index) {
-		if (!component_box[component_index] ||
-			!brep_trace_surface_boxes_connected(
-			    trace->surface_boxes[candidate_index],
-			    trace->surface_boxes[component_index]))
-		    continue;
-		component_box[candidate_index] = true;
-		component_boxes++;
-		changed = true;
-		break;
-	    }
-	}
-    }
-    if (component_boxes <= root_boxes)
-	return false;
-
-    double uv_minimum[2] = {DBL_MAX, DBL_MAX};
-    double uv_maximum[2] = {-DBL_MAX, -DBL_MAX};
-    for (size_t box_index = 0;
-	    box_index < trace->stored_surface_boxes; ++box_index) {
-	if (!component_box[box_index])
-	    continue;
-	const struct rt_brep_trace_surface_box &box =
-	    trace->surface_boxes[box_index];
-	for (int direction = 0; direction < 2; ++direction) {
-	    uv_minimum[direction] = std::min(uv_minimum[direction],
-		(double)box.uv_min[direction]);
-	    uv_maximum[direction] = std::max(uv_maximum[direction],
-		(double)box.uv_max[direction]);
-	}
-    }
 
     double minimum[2];
     double maximum[2];
