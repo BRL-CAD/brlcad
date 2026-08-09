@@ -466,7 +466,6 @@ surface_EvNormal(// returns false if unable to evaluate
 
 
 struct PullbackSurfaceScratch {
-    ON_RevSurface *rev_surface;
     ON_NurbsSurface *nurbs_surface;
     ON_Extrusion *extr_surface;
     ON_PlaneSurface *plane_surface;
@@ -474,8 +473,7 @@ struct PullbackSurfaceScratch {
     ON_SurfaceProxy *proxy_surface;
 
     PullbackSurfaceScratch()
-	: rev_surface(ON_RevSurface::New()),
-	  nurbs_surface(ON_NurbsSurface::New()),
+	: nurbs_surface(ON_NurbsSurface::New()),
 	  extr_surface(new ON_Extrusion()),
 	  plane_surface(new ON_PlaneSurface()),
 	  sum_surface(ON_SumSurface::New()),
@@ -485,7 +483,6 @@ struct PullbackSurfaceScratch {
 
     ~PullbackSurfaceScratch()
     {
-	delete rev_surface;
 	delete nurbs_surface;
 	delete extr_surface;
 	delete plane_surface;
@@ -643,13 +640,13 @@ surface_GetBoundingBox(
 	for (int j=0; j<2; j++) {
 	    if (domSplits[1][j] != ON_Interval::EmptyInterval) {
 		if (dynamic_cast<ON_RevSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *scratch.rev_surface = *dynamic_cast<ON_RevSurface * >(const_cast<ON_Surface *>(surf));
-		    if (scratch.rev_surface->Trim(0, domSplits[0][i]) && scratch.rev_surface->Trim(1, domSplits[1][j])) {
-			if (!scratch.rev_surface->GetBoundingBox(bbox, growcurrent)) {
-			    return false;
-			}
-			growcurrent = true;
-		    }
+		    ON_NurbsSurface *bounded = surf->NurbsSurface(
+			scratch.nurbs_surface, 0.0, &domSplits[0][i],
+			&domSplits[1][j]);
+		    if (!bounded ||
+			    !bounded->GetBoundingBox(bbox, growcurrent))
+			return false;
+		    growcurrent = true;
 		} else if (dynamic_cast<ON_NurbsSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
 		    *scratch.nurbs_surface = *dynamic_cast<ON_NurbsSurface * >(const_cast<ON_Surface *>(surf));
 		    if (scratch.nurbs_surface->Trim(0, domSplits[0][i]) && scratch.nurbs_surface->Trim(1, domSplits[1][j])) {
