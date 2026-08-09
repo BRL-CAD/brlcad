@@ -26,6 +26,9 @@
  */
 
 #include "common.h"
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include <queue>
 #include <numeric>
 #include <iterator>
@@ -464,43 +467,104 @@ trim_normal(ON_BrepTrim *trim, ON_2dPoint &cp)
 }
 
 static ON_2dPoint
-get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen, double brep_edge_tol)
+get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt,
+	cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen,
+	double brep_edge_tol)
 {
-    int verbose = 1;
-    double tol;
-    if (!NEAR_EQUAL(brep_edge_tol, ON_UNSET_VALUE, ON_ZERO_TOLERANCE)) {
-	tol = brep_edge_tol;
-    } else {
-	tol = (elen < BN_TOL_DIST) ? 0.01*elen : 0.1*BN_TOL_DIST;
-    }
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
     ON_Interval domain(pe->trim_start, pe->trim_end);
     double tparam;
-    ON_2dPoint trim_mid_2d;
     bool cpoint = ON_TrimCurve_GetClosestPoint(&tparam, &trim, edge_mid_3d, 0, &domain);
-    if (verbose && !cpoint) {
-	bu_log("Warning - could not find suitable trim point\n");
-    }
     if (!cpoint) {
 	tparam = (pe->trim_start + pe->trim_end) / 2.0;
     }
-    trim_mid_2d = trim.PointAt(tparam);
-    if (verbose && !cpoint) {
-	double dist = trim.SurfaceOf()->PointAt(trim_mid_2d.x, trim_mid_2d.y).DistanceTo(edge_mid_3d);
-	if (verbose && (dist > BN_TOL_DIST) && (dist > tol)) {
-	    if (trim.m_bRev3d) {
-		//bu_log("Reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
-	    } else {
-		//bu_log("Non-reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
+
+    const ON_Surface *surface = trim.SurfaceOf();
+    auto distance_squared = [&](double parameter) {
+	const ON_2dPoint uv = trim.PointAt(parameter);
+	if (!uv.IsValid() || !surface)
+	    return std::numeric_limits<double>::infinity();
+	const ON_3dPoint point = surface->PointAt(uv.x, uv.y);
+	if (!point.IsValid())
+	    return std::numeric_limits<double>::infinity();
+	const double distance = point.DistanceTo(edge_mid_3d);
+	return distance * distance;
+    };
+    double best_parameter = tparam;
+    double best_distance_squared = distance_squared(tparam);
+    double coordinate_scale = std::max(1.0, std::max(
+	std::max(std::fabs(edge_mid_3d.x), std::fabs(edge_mid_3d.y)),
+	std::fabs(edge_mid_3d.z)));
+    const double numerical_tolerance = 1024.0 *
+	std::numeric_limits<double>::epsilon() *
+	std::max(coordinate_scale, elen);
+    double correction_tolerance = std::max(numerical_tolerance,
+	0.01 * std::max(elen, numerical_tolerance));
+    if (std::isfinite(brep_edge_tol) && brep_edge_tol > 0.0 &&
+	    !NEAR_EQUAL(brep_edge_tol, ON_UNSET_VALUE,
+	    ON_ZERO_TOLERANCE))
+	correction_tolerance = std::max(numerical_tolerance,
+	    std::min(correction_tolerance, 0.01 * brep_edge_tol));
+
+    /* The legacy recursive search can report a local stationary point as a
+     * success even when it maps far from the requested shared edge point.
+     * Only pay for a bounded global search when that postcondition fails. */
+    if (!std::isfinite(best_distance_squared) ||
+	    best_distance_squared > correction_tolerance *
+	    correction_tolerance) {
+	const int sample_count = 32;
+	for (int sample = 0; sample <= sample_count; ++sample) {
+	    const double fraction = (double)sample / sample_count;
+	    const double parameter = domain.ParameterAt(fraction);
+	    const double candidate = distance_squared(parameter);
+	    if (candidate < best_distance_squared) {
+		best_distance_squared = candidate;
+		best_parameter = parameter;
 	    }
-	    if (dist > 10*tol) {
-		ON_TrimCurve_GetClosestPoint(&tparam, &trim, edge_mid_3d, 0, &domain);
+	}
+	if (std::isfinite(best_distance_squared)) {
+	    const double best_fraction =
+		domain.NormalizedParameterAt(best_parameter);
+	    double low = std::max(0.0,
+		best_fraction - 1.0 / sample_count);
+	    double high = std::min(1.0,
+		best_fraction + 1.0 / sample_count);
+	    const double golden = 0.5 * (std::sqrt(5.0) - 1.0);
+	    double left = high - golden * (high - low);
+	    double right = low + golden * (high - low);
+	    double left_distance = distance_squared(domain.ParameterAt(left));
+	    double right_distance = distance_squared(domain.ParameterAt(right));
+	    for (int iteration = 0; iteration < 48; ++iteration) {
+		if (left_distance < right_distance) {
+		    high = right;
+		    right = left;
+		    right_distance = left_distance;
+		    left = high - golden * (high - low);
+		    left_distance = distance_squared(
+			domain.ParameterAt(left));
+		} else {
+		    low = left;
+		    left = right;
+		    left_distance = right_distance;
+		    right = low + golden * (high - low);
+		    right_distance = distance_squared(
+			domain.ParameterAt(right));
+		}
+	    }
+	    const double refined_fraction = 0.5 * (low + high);
+	    const double refined_parameter =
+		domain.ParameterAt(refined_fraction);
+	    const double refined_distance =
+		distance_squared(refined_parameter);
+	    if (refined_distance < best_distance_squared) {
+		best_distance_squared = refined_distance;
+		best_parameter = refined_parameter;
 	    }
 	}
     }
 
-    (*t) = tparam;
-    return trim_mid_2d;
+    (*t) = best_parameter;
+    return trim.PointAt(best_parameter);
 }
 
 static bool
@@ -652,12 +716,6 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
 	return nedges;
     }
 
-    // edge_mid_3d is a new point in the cdt and the fmesh, as well as a new
-    // edge point - add it to the appropriate containers
-    ON_3dPoint *mid_3d = new ON_3dPoint(edge_mid_3d);
-    CDT_Add3DPnt(s_cdt, mid_3d, -1, -1, -1, edge.m_edge_index, 0, 0);
-    s_cdt->edge_pnts->insert(mid_3d);
-
     // Find the 2D points
     double elen1 = (bseg->nc->PointAt(bseg->edge_start)).DistanceTo(bseg->nc->PointAt(emid));
     double elen2 = (bseg->nc->PointAt(emid)).DistanceTo(bseg->nc->PointAt(bseg->edge_end));
@@ -666,6 +724,14 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
     ON_2dPoint trim1_mid_2d, trim2_mid_2d;
     trim1_mid_2d = get_trim_midpt(&t1mid, s_cdt, bseg->tseg1, edge_mid_3d, elen, edge.m_tolerance);
     trim2_mid_2d = get_trim_midpt(&t2mid, s_cdt, bseg->tseg2, edge_mid_3d, elen, edge.m_tolerance);
+
+    /* UV samples must remain on their trims so adjacent faces retain exactly
+     * the same boundary subdivision.  The shared master-edge point remains
+     * the watertight 3-D authority even when a face pullback differs within
+     * the B-Rep edge tolerance. */
+    ON_3dPoint *mid_3d = new ON_3dPoint(edge_mid_3d);
+    CDT_Add3DPnt(s_cdt, mid_3d, -1, -1, -1, edge.m_edge_index, 0, 0);
+    s_cdt->edge_pnts->insert(mid_3d);
 
     // Update the 2D and 2D->3D info in the fmeshes
     long f1_ind2d = fmesh1->add_point(trim1_mid_2d);

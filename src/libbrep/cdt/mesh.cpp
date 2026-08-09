@@ -2034,7 +2034,9 @@ cdt_mesh_t::interior_incorrect_normals()
 
 	ON_3dVector tdir = tnorm(tri);
 	ON_3dVector bdir = bnorm(tri);
-	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
+	if (tdir.Length() > 0 && bdir.Length() > 0 &&
+		ON_DotProduct(tdir, bdir) < 0.1 &&
+		!toleranced_chart_boundary_triangle(tri)) {
 	    int epnt_cnt = 0;
 	    for (int i = 0; i < 3; i++) {
 		epnt_cnt = (ep.find((tri).v[i]) == ep.end()) ? epnt_cnt : epnt_cnt + 1;
@@ -2516,13 +2518,15 @@ cdt_mesh_t::bnorm(const triangle_t &t)
     // Can't calculate this without some key Brep data
     if (!nmap.size() && !sv.size()) return avgnorm;
 
-    /* For a regular nonperiodic chart, evaluate the original surface at the
-     * triangle's parameter-space centroid.  Boundary vertex normals may be
-     * averaged across sharp B-Rep edges and are not a face-local orientation
-     * oracle. */
+    /* For a triangle with one local native-UV image, evaluate the original
+     * surface at its parameter-space centroid.  Boundary vertex normals may
+     * be averaged across sharp B-Rep edges and are not a face-local
+     * orientation oracle.  A periodic surface is also safe when the triangle
+     * spans less than half of every closed domain; a wider span crosses the
+     * chart cut and its arithmetic centroid is on the opposite side. */
     if (brep && f_id >= 0 && f_id < brep->m_F.Count()) {
 	const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
-	if (surface && !surface->IsClosed(0) && !surface->IsClosed(1)) {
+	if (surface) {
 	    ON_2dPoint uv[3];
 	    bool mapped = true;
 	    for (int corner = 0; corner < 3; ++corner) {
@@ -2538,6 +2542,17 @@ cdt_mesh_t::bnorm(const triangle_t &t)
 		uv[corner] = ON_2dPoint(
 		    m_pnts_2d[(size_t)native->second].first,
 		    m_pnts_2d[(size_t)native->second].second);
+	    }
+	    for (int direction = 0; mapped && direction < 2; ++direction) {
+		if (!surface->IsClosed(direction))
+		    continue;
+		const double period = surface->Domain(direction).Length();
+		const double minimum = std::min(uv[0][direction],
+		    std::min(uv[1][direction], uv[2][direction]));
+		const double maximum = std::max(uv[0][direction],
+		    std::max(uv[1][direction], uv[2][direction]));
+		if (!(period > 0.0) || maximum - minimum >= 0.5 * period)
+		    mapped = false;
 	    }
 	    if (mapped) {
 		const ON_2dPoint center((uv[0].x + uv[1].x + uv[2].x) /
@@ -2638,6 +2653,85 @@ size_t
 cdt_mesh_t::incorrect_normal_count()
 {
     return interior_incorrect_normals().size();
+}
+
+bool
+cdt_mesh_t::toleranced_chart_boundary_triangle(const triangle_t &triangle)
+{
+    if (!brep || f_id < 0 || f_id >= brep->m_F.Count() ||
+	    !cdt_face_uses_topology_chart(brep->m_F[f_id]))
+	return false;
+    bool incident_to_singularity = false;
+    bool all_boundary = true;
+    for (int corner = 0; corner < 3; ++corner) {
+	incident_to_singularity = incident_to_singularity ||
+	    sv.find(triangle.v[corner]) != sv.end();
+	all_boundary = all_boundary &&
+	    ep.find(triangle.v[corner]) != ep.end();
+    }
+    if (!incident_to_singularity && !all_boundary)
+	return false;
+
+    const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
+    struct ON_Brep_CDT_State *state =
+	(struct ON_Brep_CDT_State *)p_cdt;
+    if (!surface || !state)
+	return false;
+    for (int corner = 0; corner < 3; ++corner) {
+	const long vertex = triangle.v[corner];
+	if (sv.find(vertex) != sv.end())
+	    continue;
+	if (vertex < 0 || (size_t)vertex >= pnts.size())
+	    return false;
+	const ON_3dPoint *point = pnts[(size_t)vertex];
+	double minimum_distance = DBL_MAX;
+	for (const auto &mapping : p2d3d) {
+	    if (mapping.second < 0 || (size_t)mapping.second >= pnts.size() ||
+		pnts[(size_t)mapping.second] != point || mapping.first < 0 ||
+		(size_t)mapping.first >= m_pnts_2d.size())
+		continue;
+	    const std::pair<double, double> &uv =
+		m_pnts_2d[(size_t)mapping.first];
+	    const ON_3dPoint surface_point = surface->PointAt(uv.first,
+		uv.second);
+	    if (surface_point.IsValid())
+		minimum_distance = std::min(minimum_distance,
+		    surface_point.DistanceTo(*point));
+	}
+	if (!std::isfinite(minimum_distance))
+	    return false;
+	const double coordinate_scale = std::max(1.0, std::max(
+	    std::max(std::fabs(point->x), std::fabs(point->y)),
+	    std::fabs(point->z)));
+	double allowed = 1024.0 *
+	    std::numeric_limits<double>::epsilon() * coordinate_scale;
+	const auto audit = state->pnt_audit_info->find(
+	    const_cast<ON_3dPoint *>(point));
+	if (audit != state->pnt_audit_info->end() && audit->second) {
+	    const int edge_index = audit->second->edge_index;
+	    if (edge_index >= 0 && edge_index < brep->m_E.Count()) {
+		const double edge_tolerance =
+		    brep->m_E[edge_index].m_tolerance;
+		if (std::isfinite(edge_tolerance) && edge_tolerance > 0.0 &&
+			!NEAR_EQUAL(edge_tolerance, ON_UNSET_VALUE,
+			ON_ZERO_TOLERANCE))
+		    allowed = std::max(allowed, edge_tolerance);
+	    }
+	    const int vertex_index = audit->second->vert_index;
+	    if (vertex_index >= 0 && vertex_index < brep->m_V.Count()) {
+		const double vertex_tolerance =
+		    brep->m_V[vertex_index].m_tolerance;
+		if (std::isfinite(vertex_tolerance) &&
+			vertex_tolerance > 0.0 &&
+			!NEAR_EQUAL(vertex_tolerance, ON_UNSET_VALUE,
+			ON_ZERO_TOLERANCE))
+		    allowed = std::max(allowed, vertex_tolerance);
+	    }
+	}
+	if (minimum_distance > allowed)
+	    return false;
+    }
+    return true;
 }
 
 void cdt_mesh_t::reset()
@@ -3482,7 +3576,11 @@ loop_to_bgpoly(cpolygon_t *loop)
     int *opoly = (int *)bu_calloc(loop->poly.size()+1, sizeof(int), "polygon points");
 
     size_t vcnt = 1;
-    cpolyedge_t *pe = (*loop->poly.begin());
+    cpolyedge_t *pe = loop->first_edge();
+    if (!pe) {
+	bu_free(opoly, "free libbg 2d points array)");
+	return NULL;
+    }
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
 
@@ -3764,6 +3862,172 @@ cdt_mesh_t::cdt()
 		chart.failure().c_str());
 	return false;
     }
+
+    /* An iso trim from a cone pole is a straight ray in the cone chart.  A
+     * valid B-Rep may let its trim pullback wander within the edge tolerance;
+     * near the pole that harmless native-UV noise otherwise becomes a chart
+     * zigzag and produces zero-area 3-D ears.  Straighten the chart image of
+     * each such trim while preserving every native sample and its shared 3-D
+     * edge point. */
+    if (chart.type() == CDT_FACE_CHART_CONE_WEDGE) {
+	std::map<int, std::map<double, long>> trim_samples;
+	const auto collect_trim_samples = [&](const cpolygon_t *loop) {
+	    if (!loop)
+		return;
+	    for (const cpolyedge_t *edge : loop->poly) {
+		if (!edge || edge->trim_ind < 0)
+		    continue;
+		const auto first = loop->p2o.find(edge->v2d[0]);
+		const auto second = loop->p2o.find(edge->v2d[1]);
+		if (first == loop->p2o.end() || second == loop->p2o.end())
+		    continue;
+		trim_samples[edge->trim_ind][edge->trim_start] =
+		    first->second;
+		trim_samples[edge->trim_ind][edge->trim_end] =
+		    second->second;
+	    }
+	};
+	collect_trim_samples(&outer_loop);
+	for (const auto &loop : inner_loops)
+	    collect_trim_samples(loop.second);
+
+	std::map<long, int> native_to_chart;
+	int pole_chart_point = -1;
+	for (const cdt_chart_vertex &vertex : chart.vertices) {
+	    if (vertex.native_point >= 0)
+		native_to_chart[vertex.native_point] = vertex.id;
+	    if (vertex.singular && vertex.topo_vertex ==
+		    chart.pole_topology_vertex())
+		pole_chart_point = vertex.id;
+	}
+	const auto chart_point = [&](long native) {
+	    const auto mapped = native_to_chart.find(native);
+	    if (mapped != native_to_chart.end())
+		return mapped->second;
+	    if (native >= 0 && (size_t)native <
+		    source_topology_vertices.size() &&
+		    source_topology_vertices[(size_t)native] ==
+		    chart.pole_topology_vertex())
+		return pole_chart_point;
+	    return -1;
+	};
+	for (const auto &trim_entry : trim_samples) {
+	    if (trim_entry.first < 0 ||
+		    trim_entry.first >= brep->m_T.Count())
+		continue;
+	    const ON_BrepTrim &trim = brep->m_T[trim_entry.first];
+	    const ON_BrepEdge *brep_edge = trim.Edge();
+	    const ON_Curve *edge_curve = brep_edge ?
+		brep_edge->EdgeCurveOf() : NULL;
+	    double linear_tolerance = BN_TOL_DIST;
+	    if (brep_edge && std::isfinite(brep_edge->m_tolerance) &&
+		    brep_edge->m_tolerance > 0.0 &&
+		    !NEAR_EQUAL(brep_edge->m_tolerance, ON_UNSET_VALUE,
+		    ON_ZERO_TOLERANCE))
+		linear_tolerance = std::max(linear_tolerance,
+		    brep_edge->m_tolerance);
+	    const bool radial_trim = trim.m_iso != ON_Surface::not_iso ||
+		(edge_curve && edge_curve->IsLinear(linear_tolerance));
+	    if (trim.m_type == ON_BrepTrim::singular || !radial_trim)
+		continue;
+	    std::vector<std::pair<int, long>> samples;
+	    for (const auto &sample : trim_entry.second) {
+		const int mapped = chart_point(sample.second);
+		if (mapped < 0)
+		    continue;
+		if (samples.empty() || samples.back().first != mapped)
+		    samples.push_back(std::make_pair(mapped, sample.second));
+	    }
+	    if (samples.size() < 3 ||
+		    (samples.front().first != pole_chart_point &&
+		    samples.back().first != pole_chart_point))
+		continue;
+	    std::vector<double> distance(samples.size(), 0.0);
+	    bool mapped_3d = true;
+	    for (size_t i = 1; i < samples.size(); ++i) {
+		const long first_native = samples[i - 1].second;
+		const long second_native = samples[i].second;
+		if (first_native < 0 || second_native < 0 ||
+			(size_t)first_native >= source_points_3d.size() ||
+			(size_t)second_native >= source_points_3d.size() ||
+			!source_points_3d[(size_t)first_native] ||
+			!source_points_3d[(size_t)second_native]) {
+		    mapped_3d = false;
+		    break;
+		}
+		distance[i] = distance[i - 1] +
+		    source_points_3d[(size_t)first_native]->DistanceTo(
+		    *source_points_3d[(size_t)second_native]);
+	    }
+	    const double total = distance.back();
+	    if (!mapped_3d || !(total > 0.0))
+		continue;
+	    const std::pair<double, double> first =
+		chart.points[(size_t)samples.front().first];
+	    const std::pair<double, double> last =
+		chart.points[(size_t)samples.back().first];
+	    for (size_t i = 1; i + 1 < samples.size(); ++i) {
+		const double fraction = distance[i] / total;
+		std::pair<double, double> &point =
+		    chart.points[(size_t)samples[i].first];
+		point.first = first.first + fraction *
+		    (last.first - first.first);
+		point.second = first.second + fraction *
+		    (last.second - first.second);
+	    }
+	}
+    }
+
+    /* The chart boundary is the boundary the triangulator actually sees.
+     * At a pole it can replace a subdivided singular trim with one edge, so
+     * native loop segments alone are not a sufficient validity oracle. */
+    for (const uedge_t &edge : chart_boundary_edges)
+	brep_edges.erase(edge);
+    chart_boundary_edges.clear();
+    const auto record_chart_boundary = [&](const std::vector<int> &ring) {
+	if (ring.size() < 2)
+	    return false;
+	for (size_t i = 0; i < ring.size(); ++i) {
+	    const long first_native = chart.native_point(ring[i]);
+	    const long second_native = chart.native_point(
+		ring[(i + 1) % ring.size()]);
+	    const auto first_3d = p2d3d.find(first_native);
+	    const auto second_3d = p2d3d.find(second_native);
+	    if (first_3d == p2d3d.end() || second_3d == p2d3d.end() ||
+		first_3d->second < 0 || second_3d->second < 0 ||
+		(size_t)first_3d->second >= pnts.size() ||
+		(size_t)second_3d->second >= pnts.size())
+		return false;
+	    const auto first_mesh = p2ind.find(
+		pnts[(size_t)first_3d->second]);
+	    const auto second_mesh = p2ind.find(
+		pnts[(size_t)second_3d->second]);
+	    if (first_mesh == p2ind.end() || second_mesh == p2ind.end())
+		return false;
+	    ep.insert(first_mesh->second);
+	    ep.insert(second_mesh->second);
+	    if (first_mesh->second == second_mesh->second)
+		continue;
+	    const uedge_t edge(first_mesh->second, second_mesh->second);
+	    chart_boundary_edges.insert(edge);
+	    brep_edges.insert(edge);
+	}
+	return true;
+    };
+    bool chart_boundary_mapped = record_chart_boundary(chart.outer);
+    for (const std::vector<int> &hole : chart.holes)
+	chart_boundary_mapped = record_chart_boundary(hole) &&
+	    chart_boundary_mapped;
+    if (!chart_boundary_mapped) {
+	struct ON_Brep_CDT_State *state =
+	    (struct ON_Brep_CDT_State *)p_cdt;
+	if (state)
+	    cdt_diagnostic_set(state, BREP_CDT_RESULT_CHART_FAILED,
+		BREP_CDT_STAGE_CHART_CONSTRUCTION, f_id, 0, 1,
+		"chart boundary did not map to mesh vertices");
+	return false;
+    }
+
     // Carry explicit chart singularity identity into the 3-D mesh.  The
     // legacy global singular-normal map is incomplete when a pole has no
     // usable evaluated normal, but that must not make the pole masquerade as
@@ -4142,31 +4406,32 @@ cdt_mesh_t::refine_incorrect_normals(size_t max_points)
 	}
 	if (!mapped)
 	    continue;
-
-	int split_first = -1;
-	int split_second = -1;
-	double longest = -1.0;
-	for (int first = 0; first < 3; ++first) {
-	    const int second = (first + 1) % 3;
-	    if (brep_edges.find(uedge_t(triangle.v[first],
-		    triangle.v[second])) != brep_edges.end())
-		continue;
+	/* Split the folded triangle from a point strictly inside it.  Inserting
+	 * the midpoint of an unconstrained edge leaves a skinny boundary chord
+	 * unsplit and can reproduce the same folded triangle indefinitely.  The
+	 * incenter in the approximate surface metric maximizes clearance from
+	 * all three sides while remaining a convex combination in native UV. */
+	double opposite_length[3] = {0.0, 0.0, 0.0};
+	double weight_sum = 0.0;
+	for (int vertex = 0; vertex < 3; ++vertex) {
+	    const int first = (vertex + 1) % 3;
+	    const int second = (vertex + 2) % 3;
 	    const double du = (uv[second].x - uv[first].x) *
 		metric_scale[0];
 	    const double dv = (uv[second].y - uv[first].y) *
 		metric_scale[1];
-	    const double length_sq = du * du + dv * dv;
-	    if (length_sq > longest) {
-		longest = length_sq;
-		split_first = first;
-		split_second = second;
-	    }
+	    opposite_length[vertex] = std::sqrt(du * du + dv * dv);
+	    weight_sum += opposite_length[vertex];
 	}
 	ON_2dPoint sample;
-	if (split_first >= 0) {
+	if (weight_sum > 0.0 && std::isfinite(weight_sum)) {
 	    sample = ON_2dPoint(
-		0.5 * (uv[split_first].x + uv[split_second].x),
-		0.5 * (uv[split_first].y + uv[split_second].y));
+		(opposite_length[0] * uv[0].x +
+		 opposite_length[1] * uv[1].x +
+		 opposite_length[2] * uv[2].x) / weight_sum,
+		(opposite_length[0] * uv[0].y +
+		 opposite_length[1] * uv[1].y +
+		 opposite_length[2] * uv[2].y) / weight_sum);
 	} else {
 	    sample = ON_2dPoint((uv[0].x + uv[1].x + uv[2].x) / 3.0,
 		(uv[0].y + uv[1].y + uv[2].y) / 3.0);
@@ -4632,7 +4897,8 @@ cdt_mesh_t::valid(int verbose)
 	ON_3dVector tdir = tnorm(tri);
 	ON_3dVector bdir = bnorm(tri);
 	const double normal_dot = ON_DotProduct(tdir, bdir);
-	const bool invalid_normal = topology_chart ? !(normal_dot > 0.0) :
+	const bool invalid_normal = topology_chart ? (!(normal_dot > 0.0) &&
+	    !toleranced_chart_boundary_triangle(tri)) :
 	    normal_dot < 0.1;
 	if (tdir.Length() > 0 && bdir.Length() > 0 && invalid_normal) {
 	    if (verbose > 0) {
