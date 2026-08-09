@@ -6353,6 +6353,262 @@ check_brep_fold_interval_classifier()
 
 
 static int
+check_brep_trim_interval_solver()
+{
+    int failures = 0;
+    size_t cases = 0;
+    size_t enclosures = 0;
+    size_t rejected = 0;
+
+    const auto set_cv = [](struct rt_brep_trim_interval_test_span &span,
+	    int index, double x, double y, double weight) {
+	span.control[index][0] = x;
+	span.control[index][1] = y;
+	span.control[index][2] = weight;
+    };
+    const auto set_line = [&](struct rt_brep_trim_interval_test_span &span,
+	    double domain_minimum, double domain_maximum, double x0,
+	    double y0, double x1, double y1) {
+	span = {};
+	span.order = 2;
+	span.domain_minimum = domain_minimum;
+	span.domain_maximum = domain_maximum;
+	set_cv(span, 0, x0, y0, 1.0);
+	set_cv(span, 1, x1, y1, 1.0);
+    };
+    const auto run = [&](const char *name,
+	    const struct rt_brep_trim_interval_test_span *spans,
+	    size_t span_count, size_t span_begin, size_t cell_span_count,
+	    const fastf_t domain[2], bool expected_call,
+	    bool expected_available,
+	    struct rt_brep_trim_interval_test_result &result) {
+	result = {};
+	cases++;
+	const bool called = _rt_brep_trim_interval_test(spans, span_count,
+	    span_begin, cell_span_count, domain, &result);
+	if (called != expected_call ||
+		(called && result.available !=
+		    (expected_available ? 1 : 0))) {
+	    std::printf("FAIL: trim interval %s call/available=%d/%d "
+		"expected=%d/%d\n", name, called ? 1 : 0,
+		result.available, expected_call ? 1 : 0,
+		expected_available ? 1 : 0);
+	    failures++;
+	    return false;
+	}
+	if (called && result.available)
+	    enclosures++;
+	else if (called)
+	    rejected++;
+	return true;
+    };
+    const auto enclosed = [](double value, double minimum,
+	    double maximum) {
+	const double scale = std::max(1.0, fabs(value));
+	const double allowance = 128.0 * DBL_EPSILON * scale;
+	return value >= minimum - allowance && value <= maximum + allowance;
+    };
+    const auto evaluate = [](const struct rt_brep_trim_interval_test_span &s,
+	    double parameter, double value[2], double derivative[2]) {
+	double homogeneous[RT_BREP_TRIM_INTERVAL_TEST_MAX_ORDER][3] = {};
+	double difference[RT_BREP_TRIM_INTERVAL_TEST_MAX_ORDER][3] = {};
+	const double normalized = (parameter - s.domain_minimum) /
+	    (s.domain_maximum - s.domain_minimum);
+	for (int i = 0; i < s.order; ++i) {
+	    const double weight = s.control[i][2];
+	    homogeneous[i][0] = s.control[i][0] * weight;
+	    homogeneous[i][1] = s.control[i][1] * weight;
+	    homogeneous[i][2] = weight;
+	}
+	for (int i = 0; i < s.order - 1; ++i) {
+	    for (int component = 0; component < 3; ++component) {
+		difference[i][component] = (s.order - 1) *
+		    (homogeneous[i + 1][component] -
+		    homogeneous[i][component]);
+	    }
+	}
+	for (int level = s.order - 1; level > 0; --level) {
+	    for (int i = 0; i < level; ++i) {
+		for (int component = 0; component < 3; ++component) {
+		    homogeneous[i][component] =
+			(1.0 - normalized) * homogeneous[i][component] +
+			normalized * homogeneous[i + 1][component];
+		}
+	    }
+	}
+	for (int level = s.order - 2; level > 0; --level) {
+	    for (int i = 0; i < level; ++i) {
+		for (int component = 0; component < 3; ++component) {
+		    difference[i][component] =
+			(1.0 - normalized) * difference[i][component] +
+			normalized * difference[i + 1][component];
+		}
+	    }
+	}
+	if (!(homogeneous[0][2] > 0.0))
+	    return false;
+	const double weight_squared = homogeneous[0][2] *
+	    homogeneous[0][2];
+	for (int direction = 0; direction < 2; ++direction) {
+	    value[direction] = homogeneous[0][direction] /
+		homogeneous[0][2];
+	    derivative[direction] =
+		(difference[0][direction] * homogeneous[0][2] -
+		 homogeneous[0][direction] * difference[0][2]) /
+		weight_squared;
+	}
+	return true;
+    };
+
+    struct rt_brep_trim_interval_test_span rational[1] = {};
+    rational[0].order = 3;
+    rational[0].domain_minimum = 0.0;
+    rational[0].domain_maximum = 1.0;
+    set_cv(rational[0], 0, 0.0, 0.0, 1.0);
+    set_cv(rational[0], 1, 0.5, 1.0, 2.0);
+    set_cv(rational[0], 2, 1.0, 0.0, 1.0);
+    const fastf_t restricted_domain[2] = {0.1, 0.3};
+    struct rt_brep_trim_interval_test_result rational_result = {};
+    if (run("positive-rational", rational, 1, 0, 1,
+	    restricted_domain, true, true, rational_result)) {
+	if (!(rational_result.derivative_minimum[0] > 0.0) ||
+		!(rational_result.derivative_minimum[1] > 0.0)) {
+	    std::printf("FAIL: trim interval positive rational signs\n");
+	    failures++;
+	}
+	for (size_t sample = 0; sample <= 64; ++sample) {
+	    const double parameter = restricted_domain[0] +
+		(restricted_domain[1] - restricted_domain[0]) * sample / 64.0;
+	    double value[2];
+	    double derivative[2];
+	    if (!evaluate(rational[0], parameter, value, derivative)) {
+		std::printf("FAIL: trim interval rational evaluation\n");
+		failures++;
+		break;
+	    }
+	    const double local_scale =
+		(restricted_domain[1] - restricted_domain[0]) /
+		(rational[0].domain_maximum - rational[0].domain_minimum);
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (!enclosed(value[direction],
+			rational_result.uv_minimum[direction],
+			rational_result.uv_maximum[direction]) ||
+			!enclosed(local_scale * derivative[direction],
+			rational_result.derivative_minimum[direction],
+			rational_result.derivative_maximum[direction])) {
+		    std::printf("FAIL: trim interval rational sample=%zu "
+			"direction=%d value=%.17g in=[%.17g %.17g] "
+			"derivative=%.17g in=[%.17g %.17g]\n", sample,
+			direction, value[direction],
+			rational_result.uv_minimum[direction],
+			rational_result.uv_maximum[direction],
+			local_scale * derivative[direction],
+			rational_result.derivative_minimum[direction],
+			rational_result.derivative_maximum[direction]);
+		    failures++;
+		    sample = 65;
+		    break;
+		}
+	    }
+	}
+    }
+
+    struct rt_brep_trim_interval_test_span joined[2] = {};
+    set_line(joined[0], 0.0, 0.5, 0.0, 0.0, 0.5, 0.5);
+    set_line(joined[1], 0.5, 1.0, 0.5, 0.5, 1.0, 0.0);
+    const fastf_t joined_domain[2] = {0.25, 0.75};
+    struct rt_brep_trim_interval_test_result joined_result = {};
+    if (run("complete-multispan", joined, 2, 0, 2, joined_domain,
+	    true, true, joined_result) &&
+	    (!enclosed(0.25, joined_result.uv_minimum[0],
+		joined_result.uv_maximum[0]) ||
+	    !enclosed(0.75, joined_result.uv_minimum[0],
+		joined_result.uv_maximum[0]) ||
+	    !enclosed(0.25, joined_result.uv_minimum[1],
+		joined_result.uv_maximum[1]) ||
+	    !enclosed(0.5, joined_result.uv_minimum[1],
+		joined_result.uv_maximum[1]) ||
+	    !(joined_result.derivative_minimum[0] > 0.0) ||
+	    !(joined_result.derivative_minimum[1] < 0.0) ||
+	    !(joined_result.derivative_maximum[1] > 0.0))) {
+	std::printf("FAIL: trim interval multispan hull/signs\n");
+	failures++;
+    }
+    struct rt_brep_trim_interval_test_span unordered[2] = {
+	joined[1], joined[0]
+    };
+    struct rt_brep_trim_interval_test_result result = {};
+    run("unordered-complete-multispan", unordered, 2, 0, 2,
+	joined_domain, true, true, result);
+
+    struct rt_brep_trim_interval_test_span reversed[1] = {};
+    set_line(reversed[0], 0.0, 1.0, 1.0, 0.0, 0.0, 1.0);
+    const fastf_t full_domain[2] = {0.0, 1.0};
+    struct rt_brep_trim_interval_test_result reversed_result = {};
+    if (run("reversed-direction", reversed, 1, 0, 1, full_domain,
+	    true, true, reversed_result) &&
+	    (!(reversed_result.derivative_maximum[0] < 0.0) ||
+	    !(reversed_result.derivative_minimum[1] > 0.0))) {
+	std::printf("FAIL: trim interval reversed derivative signs\n");
+	failures++;
+    }
+
+    const fastf_t boundary_domain[2] = {0.25, 0.5};
+    run("exact-span-boundary", joined, 2, 0, 2, boundary_domain,
+	true, true, result);
+    run("missing-provenance", joined, 2, 2, 1, joined_domain,
+	true, false, result);
+    run("zero-span-provenance", joined, 2, 0, 0, joined_domain,
+	true, false, result);
+
+    struct rt_brep_trim_interval_test_span incomplete[2] = {};
+    set_line(incomplete[0], 0.0, 0.4, 0.0, 0.0, 0.4, 0.4);
+    set_line(incomplete[1], 0.6, 1.0, 0.6, 0.4, 1.0, 0.0);
+    const fastf_t incomplete_domain[2] = {0.3, 0.7};
+    run("incomplete-coverage", incomplete, 2, 0, 2,
+	incomplete_domain, true, false, result);
+
+    struct rt_brep_trim_interval_test_span overlap[3] = {};
+    set_line(overlap[0], 0.0, 0.35, 0.0, 0.0, 0.35, 0.0);
+    set_line(overlap[1], 0.0, 0.35, 0.0, 0.1, 0.35, 0.1);
+    set_line(overlap[2], 0.65, 1.0, 0.65, 0.0, 1.0, 0.0);
+    run("overlap-does-not-mask-gap", overlap, 3, 0, 3, full_domain,
+	true, false, result);
+
+    struct rt_brep_trim_interval_test_span bad_weight[1] = {rational[0]};
+    bad_weight[0].control[1][2] = 0.0;
+    run("zero-weight", bad_weight, 1, 0, 1, full_domain,
+	true, false, result);
+    bad_weight[0] = rational[0];
+    bad_weight[0].control[1][2] = -1.0;
+    run("negative-weight", bad_weight, 1, 0, 1, full_domain,
+	true, false, result);
+
+    struct rt_brep_trim_interval_test_result turning_result = {};
+    if (run("turning-derivative", rational, 1, 0, 1, full_domain,
+	    true, true, turning_result) &&
+	    (turning_result.derivative_minimum[1] > 0.0 ||
+	    turning_result.derivative_maximum[1] < 0.0)) {
+	std::printf("FAIL: trim interval turning derivative excludes zero\n");
+	failures++;
+    }
+
+    struct rt_brep_trim_interval_test_span nonfinite[1] = {rational[0]};
+    nonfinite[0].control[0][0] = INFINITY;
+    run("nonfinite-control", nonfinite, 1, 0, 1, full_domain,
+	false, false, result);
+    fastf_t nonfinite_domain[2] = {NAN, 1.0};
+    run("nonfinite-domain", rational, 1, 0, 1, nonfinite_domain,
+	false, false, result);
+
+    if (!failures)
+	std::printf("BREP rational trim interval corpus: PASS cases=%zu "
+	    "enclosures=%zu rejected=%zu\n", cases, enclosures, rejected);
+    return failures;
+}
+
+
+static int
 check_brep_source_union_solver()
 {
     const fastf_t coefficient_error[2] = {0.0, 0.0};
@@ -13727,6 +13983,8 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--affine-only");
     const bool interval_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--interval-only");
+    const bool trim_interval_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--trim-interval-only");
     const bool source_union_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--source-union-only");
     const bool fold_only = argc == 2 &&
@@ -13745,13 +14003,15 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--nonisoparametric-only");
     if (argc != 1 && !report_grazing && !report_cobb &&
 	    !report_cobb_oblique && !affine_only &&
-	    !interval_only && !source_union_only && !fold_only && !core_only &&
+	    !interval_only && !trim_interval_only && !source_union_only &&
+	    !fold_only && !core_only &&
 	    !directed_only &&
 	    !crofton_only && !seam_only && !endpoint_only &&
 	    !nonisoparametric_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
 	    "--cobb-oblique-report|"
-	    "--affine-only|--interval-only|--source-union-only|--fold-only|"
+	    "--affine-only|--interval-only|--trim-interval-only|"
+	    "--source-union-only|--fold-only|"
 	    "--core-only|"
 	    "--directed-only|--crofton-only|--seam-only|--endpoint-only|"
 	    "--nonisoparametric-only]\n",
@@ -13759,9 +14019,12 @@ main(int argc, char **argv)
     if (interval_only) {
 	const int interval_failures = check_brep_interval_enclosures() +
 	    check_brep_fold_interval_classifier() +
-	    check_brep_source_union_solver();
+	    check_brep_source_union_solver() +
+	    check_brep_trim_interval_solver();
 	return interval_failures ? 1 : 0;
     }
+    if (trim_interval_only)
+	return check_brep_trim_interval_solver() ? 1 : 0;
     if (source_union_only)
 	return check_brep_source_union_solver() ? 1 : 0;
     if (fold_only)
@@ -13878,6 +14141,7 @@ main(int argc, char **argv)
 	failures += check_brep_interval_enclosures();
 	failures += check_brep_fold_interval_classifier();
 	failures += check_brep_source_union_solver();
+	failures += check_brep_trim_interval_solver();
 	failures += check_brep_fold_solver();
     }
     if (run_directed) {

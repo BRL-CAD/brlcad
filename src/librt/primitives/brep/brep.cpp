@@ -1197,13 +1197,55 @@ brep_prepare_trim_spans(const ON_BrepTrim &trim,
 
 
 static bool
+brep_trim_spans_cover(const std::vector<brep_trim_span> &spans,
+    size_t span_begin, size_t span_count, const ON_Interval &domain)
+{
+    if (!domain.IsIncreasing() || span_begin > spans.size() ||
+	span_count > spans.size() - span_begin || !span_count)
+	return false;
+    const double domain_length = domain.Length();
+    if (!(domain_length > 0.0) || !std::isfinite(domain_length))
+	return false;
+    for (size_t span_offset = 0; span_offset < span_count; ++span_offset) {
+	const ON_Interval &span_domain =
+	    spans[span_begin + span_offset].trim_domain;
+	if (!span_domain.IsIncreasing() ||
+		!std::isfinite(span_domain.Min()) ||
+		!std::isfinite(span_domain.Max()))
+	    return false;
+    }
+    /* Grow the union prefix by the farthest reachable endpoint.  Summed
+     * lengths are not a coverage proof because overlap can conceal a gap.
+     * Span boundaries originate in the same retained knot vector, so require
+     * an exact closed union rather than turning parameter roundoff into
+     * geometric authority. */
+    double coverage_end = domain.Min();
+    for (size_t step = 0;
+	    step < span_count && coverage_end < domain.Max(); ++step) {
+	double next_end = coverage_end;
+	for (size_t span_offset = 0; span_offset < span_count; ++span_offset) {
+	    const ON_Interval &span_domain =
+		spans[span_begin + span_offset].trim_domain;
+	    const double lower = std::max(domain.Min(), span_domain.Min());
+	    const double upper = std::min(domain.Max(), span_domain.Max());
+	    if (lower <= coverage_end && upper > next_end)
+		next_end = upper;
+	}
+	if (!(next_end > coverage_end))
+	    return false;
+	coverage_end = next_end;
+    }
+    return coverage_end >= domain.Max();
+}
+
+
+static bool
 brep_trim_segment_uv_bbox(const std::vector<brep_trim_span> &spans,
     const ON_Interval &trim_interval, ON_BoundingBox &bbox)
 {
-    if (!trim_interval.IsIncreasing())
+    if (!brep_trim_spans_cover(spans, 0, spans.size(), trim_interval))
 	return false;
     bool grow = false;
-    double covered = 0.0;
     for (std::vector<brep_trim_span>::const_iterator span_it = spans.begin();
 	    span_it != spans.end(); ++span_it) {
 	const double lower = std::max(trim_interval.Min(),
@@ -1237,12 +1279,8 @@ brep_trim_segment_uv_bbox(const std::vector<brep_trim_span> &spans,
 		return false;
 	    grow = true;
 	}
-	covered += upper - lower;
     }
-    const double coverage_tolerance = 256.0 * DBL_EPSILON *
-	std::max(1.0, trim_interval.Length());
-    return grow && bbox.IsValid() &&
-	covered + coverage_tolerance >= trim_interval.Length();
+    return grow && bbox.IsValid();
 }
 
 
@@ -10250,15 +10288,15 @@ brep_interval_trim_cell_geometry(const struct brep_specific *bs,
 	cell.trim_span_begin > bs->edge_trim_spans.size() ||
 	cell.trim_span_count >
 	    bs->edge_trim_spans.size() - cell.trim_span_begin ||
-	!cell.trim_span_count)
+	!cell.trim_span_count ||
+	!brep_trim_spans_cover(bs->edge_trim_spans, cell.trim_span_begin,
+	    cell.trim_span_count, cell.trim_domain))
 	return false;
     for (int direction = 0; direction < 2; ++direction) {
 	uv[direction] = {DBL_MAX, -DBL_MAX};
 	derivative[direction] = {DBL_MAX, -DBL_MAX};
     }
     const ON_2dPoint reference(0.0, 0.0);
-    double covered = 0.0;
-    size_t pieces = 0;
     for (size_t span_offset = 0;
 	    span_offset < cell.trim_span_count; ++span_offset) {
 	const brep_trim_span &span = bs->edge_trim_spans[
@@ -10303,13 +10341,7 @@ brep_interval_trim_cell_geometry(const struct brep_specific *bs,
 		derivative[direction].maximum,
 		piece_derivative[direction].maximum);
 	}
-	covered += upper - lower;
-	pieces++;
     }
-    const double coverage_tolerance = 256.0 * DBL_EPSILON *
-	std::max(1.0, cell.trim_domain.Length());
-    if (!pieces || covered + coverage_tolerance < cell.trim_domain.Length())
-	return false;
     for (int direction = 0; direction < 2; ++direction) {
 	if (!std::isfinite(uv[direction].minimum) ||
 		!std::isfinite(uv[direction].maximum) ||
@@ -10320,6 +10352,71 @@ brep_interval_trim_cell_geometry(const struct brep_specific *bs,
 	    return false;
     }
     return true;
+}
+
+
+extern "C" int
+_rt_brep_trim_interval_test(
+    const struct rt_brep_trim_interval_test_span *input_spans,
+    size_t span_count, size_t cell_span_begin, size_t cell_span_count,
+    const fastf_t cell_domain[2],
+    struct rt_brep_trim_interval_test_result *result)
+{
+    if (!input_spans || !span_count ||
+	span_count > RT_BREP_TRIM_INTERVAL_TEST_MAX_SPANS || !cell_domain ||
+	!result || !std::isfinite(cell_domain[0]) ||
+	!std::isfinite(cell_domain[1]) ||
+	!(cell_domain[0] < cell_domain[1]))
+	return 0;
+    *result = {};
+
+    brep_specific bs;
+    bs.edge_trim_spans.reserve(span_count);
+    for (size_t span_index = 0; span_index < span_count; ++span_index) {
+	const struct rt_brep_trim_interval_test_span &input =
+	    input_spans[span_index];
+	if (input.order < 2 ||
+		input.order > RT_BREP_TRIM_INTERVAL_TEST_MAX_ORDER ||
+		!std::isfinite(input.domain_minimum) ||
+		!std::isfinite(input.domain_maximum) ||
+		!(input.domain_minimum < input.domain_maximum))
+	    return 0;
+	ON_BezierCurve curve(2, true, input.order);
+	for (int cv_index = 0; cv_index < input.order; ++cv_index) {
+	    for (int component = 0; component < 3; ++component) {
+		if (!std::isfinite(input.control[cv_index][component]))
+		    return 0;
+	    }
+	    if (!curve.SetCV(cv_index, ON::euclidean_rational,
+		    input.control[cv_index]))
+		return 1;
+	}
+	brep_trim_span span;
+	span.curve = curve;
+	span.trim_domain = ON_Interval(input.domain_minimum,
+	    input.domain_maximum);
+	bs.edge_trim_spans.push_back(span);
+    }
+
+    brep_edge_trim_cell cell;
+    cell.trim_domain = ON_Interval(cell_domain[0], cell_domain[1]);
+    cell.trim_span_begin = cell_span_begin;
+    cell.trim_span_count = cell_span_count;
+    brep_interval uv[2];
+    brep_interval derivative[2];
+    result->available = brep_interval_trim_cell_geometry(&bs, cell, uv,
+	derivative);
+    if (result->available) {
+	for (int direction = 0; direction < 2; ++direction) {
+	    result->uv_minimum[direction] = uv[direction].minimum;
+	    result->uv_maximum[direction] = uv[direction].maximum;
+	    result->derivative_minimum[direction] =
+		derivative[direction].minimum;
+	    result->derivative_maximum[direction] =
+		derivative[direction].maximum;
+	}
+    }
+    return 1;
 }
 
 
