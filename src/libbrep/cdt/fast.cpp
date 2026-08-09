@@ -327,6 +327,8 @@ getEdgePoints(const ON_BrepTrim &trim,
 	nbtp->normal = mid_norm;
 	nbtp->tangent = mid_tang;
 	nbtp->t = t;
+	nbtp->trim_ind = trim.m_trim_index;
+	nbtp->edge_ind = trim.m_ei;
 	param_points[nbtp->t] = nbtp;
 	getEdgePoints(trim, sbtp, nbtp, cdt_tol, param_points, scratch);
 	getEdgePoints(trim, nbtp, ebtp, cdt_tol, param_points, scratch);
@@ -350,6 +352,8 @@ getEdgePoints(const ON_BrepTrim &trim,
 		nbtp->p3d = new ON_3dPoint(seam_3d);
 		nbtp->n3d = NULL;
 		nbtp->p2d = seam_2d;
+		nbtp->trim_ind = trim.m_trim_index;
+		nbtp->edge_ind = trim.m_ei;
 		// Note - by this point we shouldn't need tangents and normals...
 		nbtp->t = seam_t;
 		param_points[nbtp->t] = nbtp;
@@ -695,6 +699,8 @@ getEdgePoints(ON_BrepTrim &trim,
     sbtp->tangent = start_tang;
     sbtp->normal = start_norm;
     sbtp->t = range.m_t[0];
+    sbtp->trim_ind = trim.m_trim_index;
+    sbtp->edge_ind = trim.m_ei;
     (*param_points)[sbtp->t] = sbtp;
 
     BrepTrimPoint *ebtp = new BrepTrimPoint;
@@ -704,6 +710,8 @@ getEdgePoints(ON_BrepTrim &trim,
     ebtp->tangent = end_tang;
     ebtp->normal = end_norm;
     ebtp->t = range.m_t[1];
+    ebtp->trim_ind = trim.m_trim_index;
+    ebtp->edge_ind = trim.m_ei;
     (*param_points)[ebtp->t] = ebtp;
 
 
@@ -729,6 +737,8 @@ getEdgePoints(ON_BrepTrim &trim,
 	mbtp->tangent = mid_tang;
 	mbtp->normal = mid_norm;
 	mbtp->t = mid_range;
+	mbtp->trim_ind = trim.m_trim_index;
+	mbtp->edge_ind = trim.m_ei;
 	(*param_points)[mbtp->t] = mbtp;
 
 	getEdgePoints(trim, sbtp, mbtp, &cdt_tol, *param_points, scratch);
@@ -1549,6 +1559,8 @@ get_loop_sample_points(
 	    BrepTrimPoint btp;
 	    const ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
 	    ON_3dPoint *p3d = scratch.make_point(v1.Point());
+	    btp.trim_ind = trim->m_trim_index;
+	    btp.edge_ind = trim->m_ei;
 	    //ON_2dPoint p2d_begin = trim->PointAt(trim->Domain().m_t[0]);
 	    //ON_2dPoint p2d_end = trim->PointAt(trim->Domain().m_t[1]);
 	    double delta =  trim->Domain().Length() / 10.0;
@@ -4028,6 +4040,96 @@ fast_implicit_outer_loop(const ON_BrepFace &face,
 }
 
 static bool
+fast_split_touching_periodic_loop(const ON_Surface *surface,
+	const ON_BrepFace &face, ON_SimpleArray<BrepTrimPoint> &points,
+	ON_SimpleArray<BrepTrimPoint> &hole)
+{
+    /* Some converted periodic faces encode an outer boundary and a cutout as
+     * one topological loop: each closed walk starts at the same seam vertex.
+     * The resulting figure eight is not a valid triangulation outline.  Split
+     * the two walks before the Clipper fallback so it can resolve the shared
+     * boundary point as an outer polygon plus a hole. */
+    if (!surface || face.LoopCount() != 1 || points.Count() < 6 ||
+	    (!surface->IsClosed(0) && !surface->IsClosed(1)))
+	return false;
+    const ON_BrepLoop *loop = face.Loop(0);
+    if (!loop || loop->m_type != ON_BrepLoop::outer ||
+	    loop->TrimCount() < 4)
+	return false;
+    const ON_BrepTrim *first_trim = loop->Trim(0);
+    if (!first_trim)
+	return false;
+    const int start_vertex = first_trim->m_vi[0];
+    int split_trim_index = -1;
+    for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	const ON_BrepTrim *trim = loop->Trim(ti);
+	const ON_BrepTrim *next = loop->Trim(
+	    (ti + 1) % loop->TrimCount());
+	if (!trim || !next || trim->m_vi[1] != next->m_vi[0])
+	    return false;
+	if (ti < loop->TrimCount() - 1 && trim->m_vi[1] == start_vertex) {
+	    if (split_trim_index >= 0)
+		return false;
+	    split_trim_index = ti + 1;
+	}
+    }
+    if (split_trim_index <= 0)
+	return false;
+
+    const ON_BrepTrim *split_trim = loop->Trim(split_trim_index);
+    int split_point_index = -1;
+    for (int pi = 1; pi < points.Count() - 1; ++pi) {
+	if (split_trim && points[pi].trim_ind == split_trim->m_trim_index) {
+	    split_point_index = pi;
+	    break;
+	}
+    }
+    if (split_point_index < 2 ||
+	    points.Count() - split_point_index < 3)
+	return false;
+
+    ON_SimpleArray<BrepTrimPoint> first_cycle;
+    ON_SimpleArray<BrepTrimPoint> second_cycle;
+    for (int pi = 0; pi <= split_point_index; ++pi)
+	first_cycle.Append(points[pi]);
+    for (int pi = split_point_index; pi < points.Count(); ++pi)
+	second_cycle.Append(points[pi]);
+
+    auto signed_area = [](const ON_SimpleArray<BrepTrimPoint> &cycle) {
+	double twice_area = 0.0;
+	for (int pi = 0; pi < cycle.Count(); ++pi) {
+	    const ON_2dPoint &first = cycle[pi].p2d;
+	    const ON_2dPoint &second =
+		cycle[(pi + 1) % cycle.Count()].p2d;
+	    twice_area += first.x * second.y - second.x * first.y;
+	}
+	return 0.5 * twice_area;
+    };
+    const double first_area = signed_area(first_cycle);
+    const double second_area = signed_area(second_cycle);
+    if (!std::isfinite(first_area) || !std::isfinite(second_area) ||
+	    first_area * second_area >= 0.0)
+	return false;
+
+    ON_SimpleArray<BrepTrimPoint> *outer = &first_cycle;
+    ON_SimpleArray<BrepTrimPoint> *inner = &second_cycle;
+    if (fabs(second_area) > fabs(first_area)) {
+	outer = &second_cycle;
+	inner = &first_cycle;
+    }
+    ON_2dPoint centroid(0.0, 0.0);
+    for (int pi = 0; pi < inner->Count(); ++pi)
+	centroid += (*inner)[pi].p2d;
+    centroid /= (double)inner->Count();
+    if (!PointInPolygon(centroid, *outer))
+	return false;
+
+    points = *outer;
+    hole = *inner;
+    return true;
+}
+
+static bool
 bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	std::vector<fastf_t> &pnts,
 	const ON_BrepFace &face,
@@ -4108,6 +4210,10 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     if (!full_periodic_face)
 	fast_reconstruct_periodic_strip(s, face, brep_loop_points,
 	    model_diagonal, scratch);
+    ON_SimpleArray<BrepTrimPoint> reconstructed_hole;
+    const bool split_touching_loop = loop_cnt == 1 &&
+	fast_split_touching_periodic_loop(s, face, *brep_loop_points[0],
+	    reconstructed_hole);
     const int implicit_outer_index = fast_implicit_outer_loop(face,
 	brep_loop_points);
 
@@ -4119,34 +4225,33 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     std::unordered_map<int, size_t> pind_map;
     bool have_outer = false;
 
-    for (int li = 0; li < loop_cnt; li++) {
-	const ON_BrepLoop *face_loop = face.Loop(li);
-	if (!face_loop)
-	    continue;
+    auto append_boundary = [&](ON_SimpleArray<BrepTrimPoint> &boundary_points,
+	    bool uv_closed, bool is_outer) {
 	std::vector<int> polyline;
-	int num_loop_points = brep_loop_points[li]->Count();
+	const int num_loop_points = boundary_points.Count();
 	if (num_loop_points <= 2)
-	    continue;
-	const bool uv_closed = fast_loop_uv_closed(s, face_loop,
-	    *brep_loop_points[li], tol);
+	    return true;
 	const int first_point = uv_closed ? 1 : 0;
 	for (int i = first_point; i < num_loop_points; i++) {
+	    if (!boundary_points[i].p3d)
+		return false;
 	    // map point to last entry to 3d point
 	    detria::PointD npt;
-	    npt.x = (*brep_loop_points[li])[i].p2d.x;
-	    npt.y = (*brep_loop_points[li])[i].p2d.y;
+	    npt.x = boundary_points[i].p2d.x;
+	    npt.y = boundary_points[i].p2d.y;
 	    tpnts.push_back(npt);
-	    pointmap[tpnts.size()-1] = &((*brep_loop_points[li])[i]);
+	    pointmap[tpnts.size()-1] = &boundary_points[i];
 	    polyline.push_back(tpnts.size()-1);
-	    pnts.push_back((*brep_loop_points[li])[i].p3d->x);
-	    pnts.push_back((*brep_loop_points[li])[i].p3d->y);
-	    pnts.push_back((*brep_loop_points[li])[i].p3d->z);
+	    pnts.push_back(boundary_points[i].p3d->x);
+	    pnts.push_back(boundary_points[i].p3d->y);
+	    pnts.push_back(boundary_points[i].p3d->z);
 	    pind_map[tpnts.size()-1] = pnts.size()/3 - 1;
 	}
-	for (int i = 1; i < brep_loop_points[li]->Count(); i++) {
+	for (int i = 1; i < boundary_points.Count(); i++) {
 	    // Add the polylines to the tree so we can ensure no points from
 	    // the surface sample end up on them
-	    ON_Line *line = new ON_Line((*brep_loop_points[li])[i - 1].p2d, (*brep_loop_points[li])[i].p2d);
+	    ON_Line *line = new ON_Line(boundary_points[i - 1].p2d,
+		boundary_points[i].p2d);
 	    line_store.lines.push_back(line);
 	    ON_BoundingBox bb = line->BoundingBox();
 
@@ -4161,8 +4266,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	}
 	if (!uv_closed) {
 	    ON_Line *line = new ON_Line(
-		(*brep_loop_points[li])[num_loop_points - 1].p2d,
-		(*brep_loop_points[li])[0].p2d);
+		boundary_points[num_loop_points - 1].p2d,
+		boundary_points[0].p2d);
 	    line_store.lines.push_back(line);
 	    ON_BoundingBox bb = line->BoundingBox();
 	    bb.m_max.x += ON_ZERO_TOLERANCE;
@@ -4173,9 +4278,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    bb.m_min.z -= ON_ZERO_TOLERANCE;
 	    rt_trims.Insert2d(bb.Min(), bb.Max(), line);
 	}
-	if (face_loop->m_type == ON_BrepLoop::outer ||
-		(singular_cap_face && li == 0) ||
-		li == implicit_outer_index) {
+	if (is_outer) {
 	    if (have_outer)
 		return false;
 	    outer_polyline = polyline;
@@ -4183,6 +4286,26 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	} else {
 	    holes.push_back(polyline);
 	}
+	return true;
+    };
+
+    for (int li = 0; li < loop_cnt; li++) {
+	const ON_BrepLoop *face_loop = face.Loop(li);
+	if (!face_loop)
+	    continue;
+	const bool uv_closed = fast_loop_uv_closed(s, face_loop,
+	    *brep_loop_points[li], tol);
+	const bool is_outer = face_loop->m_type == ON_BrepLoop::outer ||
+	    (singular_cap_face && li == 0) || li == implicit_outer_index;
+	if (!append_boundary(*brep_loop_points[li], uv_closed, is_outer))
+	    return false;
+    }
+    if (split_touching_loop) {
+	const bool hole_uv_closed = V2NEAR_EQUAL(reconstructed_hole[0].p2d,
+	    reconstructed_hole[reconstructed_hole.Count() - 1].p2d,
+	    BREP_SAME_POINT_TOLERANCE);
+	if (!append_boundary(reconstructed_hole, hole_uv_closed, false))
+	    return false;
     }
 
     if (!have_outer) {

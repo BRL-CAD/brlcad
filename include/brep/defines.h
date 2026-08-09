@@ -199,19 +199,19 @@ typedef struct _on_brep_placeholder {
 extern "C++" {
 struct BrepTrimPoint
 {
-    int edge_ind;
-    double e;     /* corresponding edge curve parameter (ON_UNSET_VALUE if using trim not edge) */
-    ON_3dPoint *p3d; /* 3d edge/trim point depending on whether we're using the 3d edge to generate points or the trims */
-    ON_3dPoint *n3d; /* normal on edge, average of the normals from the two surfaces at this point, or of all surface points associated with a vertex if this is a vertex point. */
-    ON_3dVector tangent; /* Tangent from the curve, or from the surfaces if the curve wasn't usable at this point. */
+    int edge_ind = -1;
+    double e = ON_UNSET_VALUE; /* corresponding edge curve parameter (ON_UNSET_VALUE if using trim not edge) */
+    ON_3dPoint *p3d = NULL; /* 3d edge/trim point depending on whether we're using the 3d edge to generate points or the trims */
+    ON_3dPoint *n3d = NULL; /* normal on edge, average of the normals from the two surfaces at this point, or of all surface points associated with a vertex if this is a vertex point. */
+    ON_3dVector tangent = ON_3dVector::UnsetVector; /* Tangent from the curve, or from the surfaces if the curve wasn't usable at this point. */
 
-    int trim_ind;
-    double t;     /* corresponding trim curve parameter (ON_UNSET_VALUE if unknown or not pulled back) */
-    ON_2dPoint p2d; /* 2d surface parameter space point */
-    ON_3dVector normal; /* normal as calculated by this trim */
+    int trim_ind = -1;
+    double t = ON_UNSET_VALUE; /* corresponding trim curve parameter (ON_UNSET_VALUE if unknown or not pulled back) */
+    ON_2dPoint p2d = ON_2dPoint::UnsetPoint; /* 2d surface parameter space point */
+    ON_3dVector normal = ON_3dVector::UnsetVector; /* normal as calculated by this trim */
 
-    BrepTrimPoint *other_face_trim_pnt;
-    int from_singular;
+    BrepTrimPoint *other_face_trim_pnt = NULL;
+    int from_singular = -1;
 };}
 #endif
 
