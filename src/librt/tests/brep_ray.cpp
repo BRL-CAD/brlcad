@@ -1922,6 +1922,298 @@ grazing_report(struct soltab *implicit_stp, struct soltab *brep_stp,
 
 
 static int
+check_grazing_local_root_certificate_trend(struct soltab *brep_stp,
+    struct rt_i *rtip, struct resource *resp, double radius)
+{
+    /* This ratchets the local theorem for already found simple roots.  It
+     * deliberately does not claim complete root search or grazing-event
+     * publication authority. */
+    const double chord_ratios[] = {100.0, 10.0, 2.0, 1.1, 1.0, 0.9,
+	0.5, 0.1, 0.01};
+    ON_3dVector radial(2.0, 3.0, 6.0);
+    ON_3dVector tangent(3.0, -2.0, 0.0);
+    if (!brep_stp || !rtip || !resp || !(radius > 0.0) ||
+	    !radial.Unitize() || !tangent.Unitize())
+	return 1;
+
+    int failures = 0;
+    size_t resolved_pairs = 0;
+    size_t subtolerance_pairs = 0;
+    size_t subtolerance_unavailable = 0;
+    size_t tangent_rejections = 0;
+    size_t miss_side_cases = 0;
+    size_t maximum_attempts = 0;
+    size_t maximum_high_water = 0;
+    double minimum_separation = INFINITY;
+    double maximum_radius_ratio = 0.0;
+    double maximum_contraction = 0.0;
+    double maximum_image = 0.0;
+    double maximum_normal_error = 0.0;
+    for (int reverse = 0; reverse <= 1; ++reverse) {
+	double previous_separation = INFINITY;
+	bool unavailable = false;
+	for (size_t ratio_index = 0;
+		ratio_index < sizeof(chord_ratios) /
+		sizeof(chord_ratios[0]); ++ratio_index) {
+	    const double chord_ratio = chord_ratios[ratio_index];
+	    const double half_chord = 0.5 * chord_ratio *
+		rtip->rti_tol.dist;
+	    const double closest_distance = sqrt(std::max(0.0,
+		radius * radius - half_chord * half_chord));
+	    const double clearance = (half_chord * half_chord) /
+		(radius + closest_distance);
+	    const ON_3dPoint closest(radial.x * (radius - clearance),
+		radial.y * (radius - clearance),
+		radial.z * (radius - clearance));
+	    const ON_3dVector direction = reverse ? -tangent : tangent;
+	    const ON_3dPoint origin = closest - 2.0 * radius * direction;
+	    sampled_ray ray;
+	    VSET(ray.origin, origin.x, origin.y, origin.z);
+	    VSET(ray.direction, direction.x, direction.y, direction.z);
+	    struct rt_brep_shot_trace trace;
+	    (void)shoot_brep_trace(brep_stp, rtip, resp, ray, trace);
+
+	    const double expected[2] = {2.0 * radius - half_chord,
+		2.0 * radius + half_chord};
+	    size_t root_index[2] = {SIZE_MAX, SIZE_MAX};
+	    double root_error[2] = {INFINITY, INFINITY};
+	    for (size_t local_index = 0;
+		    local_index < trace.stored_local_roots; ++local_index) {
+		for (int endpoint = 0; endpoint < 2; ++endpoint) {
+		    const double error = fabs(
+			trace.local_roots[local_index].dist - expected[endpoint]);
+		    if (error < root_error[endpoint]) {
+			root_error[endpoint] = error;
+			root_index[endpoint] = local_index;
+		    }
+		}
+	    }
+	    const bool pair_found = root_index[0] != SIZE_MAX &&
+		root_index[1] != SIZE_MAX && root_index[0] != root_index[1] &&
+		root_error[0] <= 1.0e-7 && root_error[1] <= 1.0e-7;
+	    const bool resolved = chord_ratio >= 1.0;
+	    if (!pair_found) {
+		if (resolved) {
+		    std::printf("FAIL: grazing local certificate pair "
+			"ratio/reverse=%.17g/%d roots=%zu errors=%.17g/%.17g\n",
+			chord_ratio, reverse, trace.stored_local_roots,
+			root_error[0], root_error[1]);
+		    failures++;
+		} else {
+		    unavailable = true;
+		    subtolerance_unavailable++;
+		}
+		continue;
+	    }
+
+	    const struct rt_brep_trace_local_root &first =
+		trace.local_roots[root_index[0]];
+	    const struct rt_brep_trace_local_root &second =
+		trace.local_roots[root_index[1]];
+	    const double expected_normal_dot = half_chord / radius;
+	    const double normal_error = std::max(
+		fabs(fabs(first.normal_dot) - expected_normal_dot),
+		fabs(fabs(second.normal_dot) - expected_normal_dot));
+	    maximum_normal_error = std::max(maximum_normal_error, normal_error);
+	    if (!(first.normal_dot * second.normal_dot < 0.0) ||
+		    normal_error > 1.0e-7) {
+		std::printf("FAIL: grazing local normal trend "
+		    "ratio/reverse=%.17g/%d dots=%.17g/%.17g expected=%.17g\n",
+		    chord_ratio, reverse, first.normal_dot, second.normal_dot,
+		    expected_normal_dot);
+		failures++;
+	    }
+	    struct rt_brep_local_root_test_result result[2] = {};
+	    const struct rt_brep_trace_local_root *roots[2] = {&first, &second};
+	    /* Get the common span normalization, then repeat with the production
+	     * neighbor-exclusion cap. */
+	    bool certified = first.face_index == second.face_index &&
+		first.span_index == second.span_index;
+	    for (int endpoint = 0; endpoint < 2 && certified; ++endpoint) {
+		certified = _rt_brep_surface_local_root_test(brep_stp,
+		    ray.origin, ray.direction, roots[endpoint]->face_index,
+		    roots[endpoint]->span_index, roots[endpoint]->uv, 1.0,
+		    &result[endpoint]) && result[endpoint].available &&
+		    result[endpoint].certified &&
+		    result[endpoint].model_image_available &&
+		    result[endpoint].weight_minimum > 0.0;
+	    }
+	    double separation = INFINITY;
+	    if (certified) {
+		separation = 0.0;
+		for (int direction_index = 0; direction_index < 2;
+			direction_index++)
+		    separation = std::max(separation, fabs(
+			result[1].normalized_root[direction_index] -
+			result[0].normalized_root[direction_index]));
+		certified = separation > 0.0 && std::isfinite(separation);
+	    }
+	    const double radius_cap = certified ?
+		std::nextafter(0.25 * separation, 0.0) : 0.0;
+	    for (int endpoint = 0; endpoint < 2 && certified; ++endpoint) {
+		struct rt_brep_local_root_test_result capped = {};
+		certified = radius_cap > 0.0 &&
+		    _rt_brep_surface_local_root_test(brep_stp, ray.origin,
+			ray.direction, roots[endpoint]->face_index,
+			roots[endpoint]->span_index, roots[endpoint]->uv,
+			radius_cap, &capped) && capped.available &&
+		    capped.certified && capped.model_image_available &&
+		    capped.weight_minimum > 0.0 &&
+		    capped.radius < 0.25 * separation;
+		for (int direction_index = 0;
+			direction_index < 2 && certified; ++direction_index)
+		    certified = capped.normalized_root[direction_index] -
+			capped.radius >= 0.0 &&
+			capped.normalized_root[direction_index] +
+			capped.radius <= 1.0;
+		if (certified)
+		    result[endpoint] = capped;
+	    }
+	    if (!certified) {
+		if (resolved || unavailable) {
+		    std::printf("FAIL: grazing local certificate trend "
+			"ratio/reverse=%.17g/%d face/span=%d/%d,%d/%d "
+			"separation=%.17g cap=%.17g\n", chord_ratio, reverse,
+			first.face_index, first.span_index, second.face_index,
+			second.span_index, separation, radius_cap);
+		    failures++;
+		}
+		unavailable = true;
+		subtolerance_unavailable += resolved ? 0 : 1;
+		continue;
+	    }
+	    if (unavailable) {
+		std::printf("FAIL: grazing local certificate restarted "
+		    "ratio/reverse=%.17g/%d\n", chord_ratio, reverse);
+		failures++;
+	    }
+	    if (separation > previous_separation +
+		    512.0 * DBL_EPSILON * std::max(1.0, previous_separation)) {
+		std::printf("FAIL: grazing normalized root separation grew "
+		    "ratio/reverse=%.17g/%d %.17g > %.17g\n", chord_ratio,
+		    reverse, separation, previous_separation);
+		failures++;
+	    }
+	    previous_separation = separation;
+	    if (resolved)
+		resolved_pairs++;
+	    else
+		subtolerance_pairs++;
+	    minimum_separation = std::min(minimum_separation, separation);
+	    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+		maximum_attempts = std::max(maximum_attempts,
+		    result[endpoint].attempts);
+		maximum_high_water = std::max(maximum_high_water,
+		    result[endpoint].expansion_high_water);
+		maximum_radius_ratio = std::max(maximum_radius_ratio,
+		    (double)result[endpoint].radius / separation);
+		maximum_contraction = std::max(maximum_contraction,
+		    (double)result[endpoint].contraction_bound);
+		maximum_image = std::max(maximum_image,
+		    (double)result[endpoint].model_image_displacement);
+	    }
+	}
+
+	/* A double root must not pass the simple-root theorem. */
+	const ON_3dPoint tangent_point(radial.x * radius,
+	    radial.y * radius, radial.z * radius);
+	const ON_3dVector direction = reverse ? -tangent : tangent;
+	const ON_3dPoint origin = tangent_point - 2.0 * radius * direction;
+	sampled_ray ray;
+	VSET(ray.origin, origin.x, origin.y, origin.z);
+	VSET(ray.direction, direction.x, direction.y, direction.z);
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(brep_stp, rtip, resp, ray, trace);
+	bool tangent_certified = false;
+	for (size_t root_index = 0; root_index < trace.stored_local_roots;
+		++root_index) {
+	    struct rt_brep_local_root_test_result result = {};
+	    const struct rt_brep_trace_local_root &root =
+		trace.local_roots[root_index];
+	    if (_rt_brep_surface_local_root_test(brep_stp, ray.origin,
+		    ray.direction, root.face_index, root.span_index, root.uv,
+		    1.0e-3, &result) && result.available && result.certified)
+		tangent_certified = true;
+	}
+	if (tangent_certified) {
+	    std::printf("FAIL: exact tangent received a unique-root "
+		"certificate reverse=%d\n", reverse);
+	    failures++;
+	} else if (!trace.stored_local_roots || trace.final_segments) {
+	    std::printf("FAIL: exact tangent root/final state=%zu/%zu "
+		"reverse=%d\n", trace.stored_local_roots,
+		trace.final_segments, reverse);
+	    failures++;
+	} else {
+	    tangent_rejections++;
+	}
+
+	/* Matching negative clearances must remain root-free. */
+	for (size_t ratio_index = 0;
+		ratio_index < sizeof(chord_ratios) /
+		sizeof(chord_ratios[0]); ++ratio_index) {
+	    const double half_chord = 0.5 * chord_ratios[ratio_index] *
+		rtip->rti_tol.dist;
+	    const double closest_distance = sqrt(std::max(0.0,
+		radius * radius - half_chord * half_chord));
+	    const double clearance = (half_chord * half_chord) /
+		(radius + closest_distance);
+	    const ON_3dPoint outside(radial.x * (radius + clearance),
+		radial.y * (radius + clearance),
+		radial.z * (radius + clearance));
+	    const ON_3dPoint outside_origin =
+		outside - 2.0 * radius * direction;
+	    sampled_ray outside_ray;
+	    VSET(outside_ray.origin, outside_origin.x, outside_origin.y,
+		outside_origin.z);
+	    VSET(outside_ray.direction, direction.x, direction.y, direction.z);
+	    struct rt_brep_shot_trace outside_trace;
+	    (void)shoot_brep_trace(brep_stp, rtip, resp, outside_ray,
+		outside_trace);
+	    if (outside_trace.stored_local_roots ||
+		    outside_trace.final_segments) {
+		std::printf("FAIL: grazing local miss side ratio/reverse="
+		    "%.17g/%d roots/final=%zu/%zu\n", chord_ratios[ratio_index],
+		    reverse, outside_trace.stored_local_roots,
+		    outside_trace.final_segments);
+		failures++;
+	    } else {
+		miss_side_cases++;
+	    }
+	}
+    }
+
+    if (resolved_pairs != 10) {
+	std::printf("FAIL: grazing local resolved certificates=%zu/10\n",
+	    resolved_pairs);
+	failures++;
+    }
+    if (subtolerance_pairs < 6 || subtolerance_unavailable > 2) {
+	std::printf("FAIL: grazing local sub-tolerance capability="
+	    "%zu/6 unavailable=%zu/2\n", subtolerance_pairs,
+	    subtolerance_unavailable);
+	failures++;
+    }
+    if (tangent_rejections != 2 || miss_side_cases != 18) {
+	std::printf("FAIL: grazing local tangent/miss coverage=%zu/2 %zu/18\n",
+	    tangent_rejections, miss_side_cases);
+	failures++;
+    }
+    if (!failures)
+	std::printf("Sphere grazing local certificates: PASS resolved=%zu "
+	    "sub-T=%zu unavailable=%zu tangent/miss=%zu/%zu "
+	    "min-separation=%.3g "
+	    "max-radius/separation=%.3g attempts=%zu contraction=%.3g "
+	    "image=%.3g normal-error=%.3g high-water=%zu\n", resolved_pairs,
+	    subtolerance_pairs, subtolerance_unavailable, tangent_rejections,
+	    miss_side_cases, minimum_separation, maximum_radius_ratio,
+	    maximum_attempts, maximum_contraction, maximum_image,
+	    maximum_normal_error, maximum_high_water);
+    return failures;
+}
+
+
+static int
 check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     struct rt_i *rtip, struct resource *resp, double radius)
 {
@@ -14759,6 +15051,8 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--interval-only");
     const bool local_root_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--local-root-only");
+    const bool grazing_root_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--grazing-root-only");
     const bool trim_interval_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--trim-interval-only");
     const bool source_union_only = argc == 2 &&
@@ -14781,7 +15075,8 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--contact-trim-only");
     if (argc != 1 && !report_grazing && !report_cobb &&
 	    !report_cobb_oblique && !affine_only &&
-	    !interval_only && !local_root_only && !trim_interval_only &&
+	    !interval_only && !local_root_only && !grazing_root_only &&
+	    !trim_interval_only &&
 	    !source_union_only &&
 	    !fold_only && !core_only &&
 	    !directed_only &&
@@ -14790,6 +15085,7 @@ main(int argc, char **argv)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
 	    "--cobb-oblique-report|"
 	    "--affine-only|--interval-only|--local-root-only|"
+	    "--grazing-root-only|"
 	    "--trim-interval-only|"
 	    "--source-union-only|--fold-only|"
 	    "--core-only|"
@@ -14814,9 +15110,11 @@ main(int argc, char **argv)
 	return check_brep_source_union_solver() ? 1 : 0;
     if (fold_only)
 	return check_brep_fold_solver() ? 1 : 0;
-    const bool split_core = directed_only || crofton_only || seam_only ||
-	endpoint_only;
+    const bool split_core = directed_only || grazing_root_only ||
+	crofton_only || seam_only || endpoint_only;
     const bool run_directed = !split_core || directed_only;
+    const bool run_grazing_root = !split_core || directed_only ||
+	grazing_root_only;
     const bool run_crofton = !split_core || crofton_only;
     const bool run_seam = !split_core || seam_only;
     const bool run_endpoint = !split_core || endpoint_only;
@@ -14961,6 +15259,9 @@ main(int argc, char **argv)
 	if (report_grazing)
 	    grazing_report(implicit_stp, brep_stp, rtip, &resp, radius);
     }
+    if (run_grazing_root)
+	failures += check_grazing_local_root_certificate_trend(brep_stp, rtip,
+	    &resp, radius);
 
     free_solid(brep_stp);
     free_solid(implicit_stp);
