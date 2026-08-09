@@ -38,6 +38,12 @@ brlcad_add_test(NAME brep_cdt_local_defects COMMAND test_brep_cdt_local_defects)
 brlcad_addexec(test_brep_cdt_cone_chart brep_cdt_cone_chart.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_cdt_cone_chart COMMAND test_brep_cdt_cone_chart)
 
+# A closed two-pole surface is a diamond after cutting its periodic seam.
+# Verify explicit pole identities, chart/native round trips, constrained
+# meridians, scale independence, and certified solid assembly.
+brlcad_addexec(test_brep_cdt_polar_chart brep_cdt_polar_chart.cpp "libbrep" TEST)
+brlcad_add_test(NAME brep_cdt_polar_chart COMMAND test_brep_cdt_polar_chart)
+
 # Conversion-quality tessellation is a fail-closed transaction: status and
 # diagnostics must describe every attempt, tolerance changes invalidate all
 # derived state, and rebuilding the same input must produce identical arrays.
@@ -91,6 +97,7 @@ cmakefiles(
   brep_cdt_boundary_steiner.cpp
   brep_cdt_contract.cpp
   brep_cdt_cone_chart.cpp
+  brep_cdt_polar_chart.cpp
   brep_cdt_local_defects.cpp
   brep_cdt_spurious_components.cpp
   brep_fast.cpp

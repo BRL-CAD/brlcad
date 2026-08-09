@@ -99,6 +99,7 @@ struct ON_Brep_CDT_State {
 
     int status;
     struct brep_cdt_diagnostic diagnostic;
+    std::vector<int> failed_face_indices;
     bool tolerance_changed;
     ON_Brep *orig_brep;
     ON_Brep *brep;
@@ -158,7 +159,7 @@ std::vector<cpolyedge_t *> cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, i
 void CDT_Add3DNorm(struct ON_Brep_CDT_State *s, ON_3dPoint *norm, ON_3dPoint *vert, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);
 void CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);
 void CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, double t_rel, double t_dist);
-void GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index);
+bool GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index);
 void cdt_tol_global_calc(struct ON_Brep_CDT_State *s);
 void curved_edges_refine(struct ON_Brep_CDT_State *s_cdt);
 void finalize_rtrees(struct ON_Brep_CDT_State *s_cdt);

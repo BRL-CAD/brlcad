@@ -57,6 +57,7 @@ struct ON_Brep_CDT_State;
 #define BREP_CDT_RESULT_DETRIA_FAILED -8
 #define BREP_CDT_RESULT_CERTIFICATION_FAILED -9
 #define BREP_CDT_RESULT_CHART_FAILED -10
+#define BREP_CDT_RESULT_REFINEMENT_LIMIT -11
 
 #define BREP_CDT_STAGE_NONE 0
 #define BREP_CDT_STAGE_INPUT 1
@@ -68,6 +69,7 @@ struct ON_Brep_CDT_State;
 #define BREP_CDT_STAGE_PSLG_VALIDATION 7
 #define BREP_CDT_STAGE_DETRIA 8
 #define BREP_CDT_STAGE_CHART_CONSTRUCTION 9
+#define BREP_CDT_STAGE_ADAPTIVE_REFINEMENT 10
 
 /* A snapshot of the most recent tessellation attempt.  message is always
  * NUL-terminated.  face_index is -1 when no individual face is responsible. */
@@ -125,6 +127,12 @@ ON_Brep_CDT_Status(struct ON_Brep_CDT_State *s);
  * Returns 0 on success and -1 for invalid arguments. */
 extern BREP_EXPORT int
 ON_Brep_CDT_Diagnostic(struct brep_cdt_diagnostic *diagnostic,
+	const struct ON_Brep_CDT_State *s);
+
+/* Return the number of faces which failed in the most recent tessellation.
+ * If faces is non-NULL, copy at most capacity stable face indices. */
+extern BREP_EXPORT int
+ON_Brep_CDT_Failed_Faces(int *faces, int capacity,
 	const struct ON_Brep_CDT_State *s);
 
 /* Construct a vlist plot from the tessellation.  Modes are:
