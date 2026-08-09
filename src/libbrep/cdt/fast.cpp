@@ -1796,15 +1796,12 @@ get_loop_sample_points(
 }
 
 static bool
-fast_reconstruct_planar_domain_loop(const ON_Surface *surface,
+fast_reconstruct_untrimmed_domain_loop(const ON_Surface *surface,
 	const ON_BrepFace &face, ON_SimpleArray<BrepTrimPoint> &points,
 	fast_face_scratch &scratch)
 {
-    const ON_Brep *brep = face.Brep();
     const ON_BrepLoop *loop = face.LoopCount() == 1 ? face.Loop(0) : NULL;
-    if (!surface || !brep || !loop || loop->TrimCount() != 0 ||
-	    brep->m_F.Count() != 1 || points.Count() != 0 ||
-	    !surface->IsPlanar(NULL, BREP_PLANAR_TOL))
+    if (!surface || !loop || loop->TrimCount() != 0 || points.Count() != 0)
 	return false;
     const ON_Interval u = surface->Domain(0);
     const ON_Interval v = surface->Domain(1);
@@ -4512,7 +4509,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 		ttol, tol, scratch, model_diagonal, repair_pcurves);
     }
     if (loop_cnt == 1)
-	fast_reconstruct_planar_domain_loop(s, face, *brep_loop_points[0],
+	fast_reconstruct_untrimmed_domain_loop(s, face,
+	    *brep_loop_points[0],
 	    scratch);
     if (scratch.hit_sample_limit) {
 	return false;
