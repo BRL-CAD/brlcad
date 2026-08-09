@@ -92,6 +92,7 @@ struct brep_surface_span {
     ON_Interval surface_domain[2];
     int face_index = -1;
     int span_index = -1;
+    unsigned int singular_side_mask = 0;
 };
 
 
