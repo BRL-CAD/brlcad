@@ -634,6 +634,9 @@ public:
     bool repair();
     size_t refine_problem_triangles(const std::vector<triangle_t> &triangles,
 	size_t max_points);
+    size_t split_problem_triangle_edges(
+	const std::vector<triangle_t> &triangles, size_t max_points,
+	const ON_3dPoint *near_point = NULL);
     size_t refine_incorrect_normals(size_t max_points);
     size_t refine_self_intersections(size_t max_points);
     size_t self_intersections(std::vector<triangle_t> *problematic = NULL,

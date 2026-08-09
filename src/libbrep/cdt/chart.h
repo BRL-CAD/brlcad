@@ -68,6 +68,11 @@ public:
     bool triangle_interior_sample(const long native_triangle[3],
 	ON_2dPoint &native_uv) const;
     int triangle_orientation(const long native_triangle[3]) const;
+    bool edge_midpoint_sample(const long native_edge[2],
+	ON_2dPoint &native_uv, ON_2dPoint &chart_uv) const;
+    void add_refinement_point(long native_point,
+	const ON_2dPoint &native_uv, const ON_2dPoint &chart_uv,
+	const long native_edge[2] = NULL);
 
     long native_point(int chart_point) const;
     cdt_face_chart_id id() const { return m_id; }

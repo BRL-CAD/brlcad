@@ -170,6 +170,51 @@ exercise_sphere(const ON_3dPoint &center, double radius)
 	}
     }
 
+    const std::pair<int, int> split_constraint = chart.constraints.front();
+    const long split_edge[2] = {
+	chart.native_point(split_constraint.first),
+	chart.native_point(split_constraint.second)
+    };
+    ON_2dPoint edge_native;
+    ON_2dPoint edge_chart;
+    ON_2dPoint edge_chart_endpoints[2];
+    const size_t old_point_count = chart.points.size();
+    const size_t old_constraint_count = chart.constraints.size();
+    if (split_edge[0] < 0 || split_edge[1] < 0 ||
+	    !chart_coordinate(split_edge[0], edge_chart_endpoints[0]) ||
+	    !chart_coordinate(split_edge[1], edge_chart_endpoints[1]) ||
+	    !chart.edge_midpoint_sample(split_edge, edge_native,
+		edge_chart)) {
+	std::cerr << "polar chart edge sampling failed" << std::endl;
+	return false;
+    }
+    const ON_2dPoint expected_edge_chart(
+	0.5 * (edge_chart_endpoints[0].x + edge_chart_endpoints[1].x),
+	0.5 * (edge_chart_endpoints[0].y + edge_chart_endpoints[1].y));
+    if (edge_chart.DistanceTo(expected_edge_chart) > 1.0e-12)
+	return false;
+    chart.add_refinement_point((long)native_points.size(), edge_native,
+	edge_chart, split_edge);
+    bool retained_constraint = false;
+    int replacement_constraints = 0;
+    for (const auto &constraint : chart.constraints) {
+	retained_constraint = retained_constraint ||
+	    ((constraint.first == split_constraint.first &&
+	      constraint.second == split_constraint.second) ||
+	     (constraint.first == split_constraint.second &&
+	      constraint.second == split_constraint.first));
+	replacement_constraints +=
+	    constraint.first == (int)old_point_count ||
+	    constraint.second == (int)old_point_count;
+    }
+    if (chart.points.size() != old_point_count + 1 ||
+	    chart.vertices.size() != old_point_count + 1 ||
+	    chart.constraints.size() != old_constraint_count + 1 ||
+	    retained_constraint || replacement_constraints != 2) {
+	std::cerr << "polar chart constraint split failed" << std::endl;
+	return false;
+    }
+
     for (size_t i = 0; i < native_points.size(); ++i) {
 	const ON_2dPoint native_uv(native_points[i].first,
 	    native_points[i].second);

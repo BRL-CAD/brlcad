@@ -757,6 +757,75 @@ cdt_face_chart::triangle_orientation(const long native_triangle[3]) const
     return (cross > 0.0L) - (cross < 0.0L);
 }
 
+bool
+cdt_face_chart::edge_midpoint_sample(const long native_edge[2],
+	ON_2dPoint &native_uv, ON_2dPoint &chart_uv) const
+{
+    if (!native_edge)
+	return false;
+    int chart_vertex[2] = {-1, -1};
+    ON_2dPoint edge[2];
+    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+	for (const cdt_chart_vertex &vertex : vertices) {
+	    if (vertex.native_point != native_edge[endpoint] ||
+		    vertex.id < 0 || (size_t)vertex.id >= points.size())
+		continue;
+	    chart_vertex[endpoint] = (int)vertex.id;
+	    edge[endpoint] = ON_2dPoint(points[(size_t)vertex.id].first,
+		points[(size_t)vertex.id].second);
+	    break;
+	}
+	if (chart_vertex[endpoint] < 0)
+	    return false;
+    }
+    chart_uv = ON_2dPoint(0.5 * (edge[0].x + edge[1].x),
+	0.5 * (edge[0].y + edge[1].y));
+    return chart_to_native(chart_uv, native_uv);
+}
+
+void
+cdt_face_chart::add_refinement_point(long source_point,
+	const ON_2dPoint &native_uv, const ON_2dPoint &chart_uv,
+	const long native_edge[2])
+{
+    if (source_point < 0 || !native_uv.IsValid() || !chart_uv.IsValid())
+	return;
+    int edge_vertices[2] = {-1, -1};
+    if (native_edge) {
+	for (int endpoint = 0; endpoint < 2; ++endpoint) {
+	    for (const cdt_chart_vertex &candidate : vertices) {
+		if (candidate.native_point == native_edge[endpoint]) {
+		    edge_vertices[endpoint] = (int)candidate.id;
+		    break;
+		}
+	    }
+	}
+    }
+    cdt_chart_vertex vertex;
+    vertex.id = (cdt_chart_vertex_id)points.size();
+    vertex.native_point = source_point;
+    points.push_back(std::make_pair(chart_uv.x, chart_uv.y));
+    vertices.push_back(vertex);
+    m_source_native_points.push_back(native_uv);
+    if (edge_vertices[0] < 0 || edge_vertices[1] < 0)
+	return;
+    for (auto constraint = constraints.begin();
+	    constraint != constraints.end(); ++constraint) {
+	const bool forward = constraint->first == edge_vertices[0] &&
+	    constraint->second == edge_vertices[1];
+	const bool reverse = constraint->first == edge_vertices[1] &&
+	    constraint->second == edge_vertices[0];
+	if (!forward && !reverse)
+	    continue;
+	const int first = constraint->first;
+	const int second = constraint->second;
+	constraints.erase(constraint);
+	constraints.push_back(std::make_pair(first, (int)vertex.id));
+	constraints.push_back(std::make_pair((int)vertex.id, second));
+	break;
+    }
+}
+
 long
 cdt_face_chart::native_point(int chart_point) const
 {
