@@ -3057,7 +3057,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ol
     /* Used the libged tolerances */
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     opts->tol = &(wdbp->wdb_ttol);
-    struct bg_tess_tol cdttol;
+    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
     cdttol.abs = opts->tol->abs;
     cdttol.rel = opts->tol->rel;
     cdttol.norm = opts->tol->norm;
@@ -3232,7 +3232,16 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ol
     }
 
     for (size_t i = 0; i < ss_cdt.size(); i++) {
-	ON_Brep_CDT_Tessellate(ss_cdt[i], 0, NULL);
+	if (ON_Brep_CDT_Tessellate(ss_cdt[i], 0, NULL) != 0) {
+	    struct brep_cdt_diagnostic diagnostic;
+	    ON_Brep_CDT_Diagnostic(&diagnostic, ss_cdt[i]);
+	    bu_vls_printf(gedp->ged_result_str,
+		"Error: %s tessellation failed: %s\n",
+		ON_Brep_CDT_ObjName(ss_cdt[i]), diagnostic.message);
+	    for (size_t j = 0; j < ss_cdt.size(); ++j)
+		ON_Brep_CDT_Destroy(ss_cdt[j]);
+	    return BRLCAD_ERROR;
+	}
     }
 
     // Do comparison/resolution
@@ -3268,7 +3277,17 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ol
 	int *face_normals = NULL;
 	fastf_t *normals = NULL;
 
-	ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, ss_cdt[i], 0, NULL);
+	if (ON_Brep_CDT_Status(ss_cdt[i]) != 0 ||
+		ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt,
+		    &face_normals, &fncnt, &normals, &ncnt,
+		    ss_cdt[i], 0, NULL) < 0) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"Error: %s did not produce a certified solid mesh.\n",
+		ON_Brep_CDT_ObjName(ss_cdt[i]));
+	    for (size_t j = 0; j < ss_cdt.size(); ++j)
+		ON_Brep_CDT_Destroy(ss_cdt[j]);
+	    return BRLCAD_ERROR;
+	}
 
 	struct rt_bot_internal *bot;
 	BU_GET(bot, struct rt_bot_internal);

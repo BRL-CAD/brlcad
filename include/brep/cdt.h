@@ -41,6 +41,38 @@ __BEGIN_DECLS
 /* Container that holds the state of a triangulation */
 struct ON_Brep_CDT_State;
 
+/* Conversion-quality tessellation result categories.  These supplement the
+ * legacy integer return from ON_Brep_CDT_Tessellate with a stable reason for
+ * failure. */
+#define BREP_CDT_RESULT_UNATTEMPTED 0
+#define BREP_CDT_RESULT_SUCCESS 1
+#define BREP_CDT_RESULT_PARTIAL 2
+#define BREP_CDT_RESULT_INVALID_BREP -1
+#define BREP_CDT_RESULT_INVALID_TOLERANCE -2
+#define BREP_CDT_RESULT_INITIALIZATION_FAILED -3
+#define BREP_CDT_RESULT_FACE_FAILED -4
+#define BREP_CDT_RESULT_MESH_EXPORT_FAILED -5
+#define BREP_CDT_RESULT_NON_SOLID -6
+
+#define BREP_CDT_STAGE_NONE 0
+#define BREP_CDT_STAGE_INPUT 1
+#define BREP_CDT_STAGE_TOPOLOGY 2
+#define BREP_CDT_STAGE_EDGE_INITIALIZATION 3
+#define BREP_CDT_STAGE_FACE_TRIANGULATION 4
+#define BREP_CDT_STAGE_MESH_ASSEMBLY 5
+#define BREP_CDT_STAGE_SOLID_VALIDATION 6
+
+/* A snapshot of the most recent tessellation attempt.  message is always
+ * NUL-terminated.  face_index is -1 when no individual face is responsible. */
+struct brep_cdt_diagnostic {
+    int result;
+    int stage;
+    int face_index;
+    int completed_faces;
+    int failed_faces;
+    char message[256];
+};
+
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
 extern BREP_EXPORT struct ON_Brep_CDT_State *
@@ -81,6 +113,12 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s, int face_cnt, int *faces);
  * been tessellated but not the full brep. */
 extern BREP_EXPORT int
 ON_Brep_CDT_Status(struct ON_Brep_CDT_State *s);
+
+/* Retrieve structured information about the most recent tessellation attempt.
+ * Returns 0 on success and -1 for invalid arguments. */
+extern BREP_EXPORT int
+ON_Brep_CDT_Diagnostic(struct brep_cdt_diagnostic *diagnostic,
+	const struct ON_Brep_CDT_State *s);
 
 /* Construct a vlist plot from the tessellation.  Modes are:
  *
@@ -211,6 +249,8 @@ extern BREP_EXPORT int cdt_bmesh_repair(struct cdt_bmesh *m);
 extern BREP_EXPORT int cdt_test_boundary_start(void);
 extern BREP_EXPORT int cdt_test_boundary_steiner_filter(void);
 extern BREP_EXPORT int cdt_test_spurious_components(void);
+extern BREP_EXPORT int cdt_test_local_defects(void);
+extern BREP_EXPORT int cdt_test_edge_singular_pair(void);
 
 __END_DECLS
 

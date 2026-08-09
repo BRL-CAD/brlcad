@@ -1725,18 +1725,14 @@ cdt_mesh_t::tri_add(triangle_t &tri)
 		// candidate.  If the original is flipped and the new one
 		// isn't, swap them out - this will help with subsequent
 		// processing.
-		std::cout << "Dup: orig: " << orig.v[0] << "," << orig.v[1] << "," << orig.v[2] << "\n";
-		std::cout << "Dup:  new: " << tri.v[0] << "," << tri.v[1] << "," << tri.v[2] << "\n";
 		ON_3dVector torig_dir = tnorm(orig);
 		ON_3dVector tnew_dir = tnorm(tri);
-		ON_3dVector bdir = tnorm(orig);
+		ON_3dVector bdir = bnorm(orig);
 		bool f1 = (ON_DotProduct(torig_dir, bdir) < 0);
 		bool f2 = (ON_DotProduct(tnew_dir, bdir) < 0);
 		if (f1 && !f2) {
 		    tri_remove(orig);
-		    std::cout << "remove dup\n";
 		} else {
-		    std::cout << "skip dup\n";
 		    return true;
 		}
 		break;
@@ -1799,6 +1795,58 @@ cdt_mesh_t::tri_add(triangle_t &tri)
     bounding_box_stale = true;
 
     return true;
+}
+
+int
+cdt_test_local_defects(void)
+{
+    const ON_3dVector up(0.0, 0.0, 1.0);
+    const ON_3dVector down(0.0, 0.0, -1.0);
+    if (!NEAR_EQUAL(ang_deg(up, down), 180.0, ON_ZERO_TOLERANCE))
+	return 1;
+
+    ON_3dPoint p0(0.0, 0.0, 0.0);
+    ON_3dPoint p1(1.0, 0.0, 0.0);
+    ON_3dPoint p2(0.0, 1.0, 0.0);
+    ON_3dPoint n0(up);
+    ON_3dPoint n1(up);
+    ON_3dPoint n2(up);
+    cdt_mesh_t mesh;
+    mesh.m_bRev = false;
+    mesh.pnts.push_back(&p0);
+    mesh.pnts.push_back(&p1);
+    mesh.pnts.push_back(&p2);
+    mesh.p2ind[&p0] = 0;
+    mesh.p2ind[&p1] = 1;
+    mesh.p2ind[&p2] = 2;
+    mesh.normals.push_back(&n0);
+    mesh.normals.push_back(&n1);
+    mesh.normals.push_back(&n2);
+    mesh.nmap[0] = 0;
+    mesh.nmap[1] = 1;
+    mesh.nmap[2] = 2;
+
+    triangle_t reversed;
+    reversed.v[0] = 0;
+    reversed.v[1] = 2;
+    reversed.v[2] = 1;
+    if (!mesh.tri_add(reversed))
+	return 2;
+    triangle_t oriented;
+    oriented.v[0] = 0;
+    oriented.v[1] = 1;
+    oriented.v[2] = 2;
+    if (!mesh.tri_add(oriented))
+	return 3;
+
+    RTree<size_t, double, 3>::Iterator triangle;
+    mesh.tris_tree.GetFirst(triangle);
+    if (triangle.IsNull() || *triangle != 1)
+	return 4;
+    ++triangle;
+    if (!triangle.IsNull())
+	return 5;
+    return 0;
 }
 
 void cdt_mesh_t::tri_remove(triangle_t &tri)

@@ -26,7 +26,6 @@
  */
 
 #include "common.h"
-#include "bn/rand.h"
 #include "./cdt.h"
 
 struct cdt_surf_info {
@@ -56,6 +55,19 @@ struct cdt_surf_info {
     double surface_width;
     double surface_height;
     std::set<ON_BoundingBox *> leaf_bboxes;
+
+    ~cdt_surf_info()
+    {
+	for (std::set<ON_2dPoint *>::iterator point = on_surf_points.begin();
+		point != on_surf_points.end(); ++point)
+	    delete *point;
+	for (std::set<ON_2dPoint *>::iterator point = on_trim_points.begin();
+		point != on_trim_points.end(); ++point)
+	    delete *point;
+	for (std::set<ON_BoundingBox *>::iterator box = leaf_bboxes.begin();
+		box != leaf_bboxes.end(); ++box)
+	    delete *box;
+    }
 };
 
 void
@@ -473,8 +485,6 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     // triangles.
     std::vector<cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face.m_face_index);
     std::vector<cpolyedge_t *>::iterator w_it;
-    float *prand;
-    bn_rand_init(prand, 0);
     for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
 	cpolyedge_t *tseg = *w_it;
 	if (!tseg->defines_spnt) continue;
@@ -485,10 +495,8 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 	a_context.cseg = tseg;
 	a_context.use = &include_pnt;
 
-	double dlen = tseg->bb.Diagonal().Length();
-	dlen = 0.01 * dlen;
-	double px = tseg->spnt.x + (bn_rand_half(prand) * dlen);
-	double py = tseg->spnt.y + (bn_rand_half(prand) * dlen);
+	double px = tseg->spnt.x;
+	double py = tseg->spnt.y;
 
 	double tMin[2];
 	tMin[0] = px - ON_ZERO_TOLERANCE;
@@ -509,7 +517,7 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 	// While we're at it, put boxes around the trim points too
 	const ON_BrepTrim &trim = brep->m_T[tseg->trim_ind];
 	ON_2dPoint pstart = trim.PointAt(tseg->trim_start);
-	dlen = 0.25*tseg->bb.Diagonal().Length();
+	double dlen = 0.25*tseg->bb.Diagonal().Length();
     	tMin[0] = pstart.x - dlen;
 	tMin[1] = pstart.y - dlen;
 	tMax[0] = pstart.x + dlen;
@@ -1007,18 +1015,11 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    }
 	}
 
-	float *prand;
 	std::set<ON_BoundingBox *>::iterator b_it;
-	/* We want to jitter sampled 2D points out of linearity */
-	bn_rand_init(prand, 0);
 	for (b_it = sinfo.leaf_bboxes.begin(); b_it != sinfo.leaf_bboxes.end(); b_it++) {
 	    ON_3dPoint p2d = (*b_it)->Center();
-	    ON_3dPoint pmax = (*b_it)->Max();
-	    ON_3dPoint pmin = (*b_it)->Min();
-	    double ulen = pmax.x - pmin.x;
-	    double vlen = pmax.y - pmin.y;
-	    double px = p2d.x + (bn_rand_half(prand) * 0.3*ulen);
-	    double py = p2d.y + (bn_rand_half(prand) * 0.3*vlen);
+	    double px = p2d.x;
+	    double py = p2d.y;
 
 	    double tMin[2];
 	    tMin[0] = (*b_it)->Min().x;
