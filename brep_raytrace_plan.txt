@@ -2124,13 +2124,19 @@ segment proof.  For a finite nonparallel ray with
      publishing events.
 
   2. Link each unresolved zero-determinant contact box to a nonempty trim
-     interval on that box's own incident face.  The complete interval UV hull,
-     not just a nominal root or ray projection, must be contained in the box's
-     outward UV rectangle.  A disjoint cell is skipped; a partially contained
-     cell is subdivided.  Every contact box needs a link, and the linked box t
-     intervals must cover the complete contact t hull with no gap.  Thus a
-     broad or shifted solver box cannot be silently assigned to a distant
-     point on the seam.
+     interval on that box's own incident face.  Once the exact contact face
+     and surface span have been selected from the two qualified roots, also
+     admit adjacent rootless unresolved zero-determinant boxes on that same
+     face and span to the proof attempt.  These are contact-corridor candidates,
+     not accepted hits.  The complete interval UV hull, not just a nominal
+     root or ray projection, must be contained in each box's outward UV
+     rectangle.  A disjoint cell is skipped; a partially contained cell is
+     subdivided.  Every contact box, including every rootless candidate, needs
+     a link, and the linked box t intervals must cover the complete contact t
+     hull with no gap.  Thus a broad or shifted solver box cannot be silently
+     assigned to a distant point on the seam.  Never admit a rootless box on
+     the source outer face or on another span: the contact material-sector
+     theorem says nothing about an omitted physical surface root there.
 
   3. Bound the rational edge point and tangent over the edge interval by
      outward Bernstein restriction.  Bound both incident surface partials
@@ -2183,20 +2189,26 @@ events.  Record one oblique pair, the number of certified frame cells, and the
 number of box links.  Prepared production eligibility requires exactly one
 oblique pair, at least one frame cell, and a box-link count equal to the
 contact-box count.  Perpendicular contact requires all oblique counters to be
-zero, as do ordinary seam pairs.
+zero, as do ordinary seam pairs.  The later global surface-root coverage gate
+normally rejects every rootless terminal box.  Its only exception is a box
+already atomically marked resolved-contact by this completed oblique
+transaction, with the one-pair ledger and complete box-link equality.  This
+ordering is essential: proximity, face identity, or determinant zero alone
+must not waive root coverage.
 
 The Cobb ratchet uses rays whose direction is the normalized sum of the seam
 conormal and a signed tangent component while preserving the analytic sphere
-clearance and chord.  Required production cases use components 1e-4, 0.01,
-0.25, 0.5, and 1 in both directions.  A separate similarity gate repeats the
-0.25 case under identity, nonlinear trim reparameterization, translation,
-cyclic and arbitrary-axis rotations, 0.01x scale, and 10,000x scale.  All
-outer event boxes must contain the similarity-scaled implicit-sphere chord.
-Components 1e-6, 10, and 1e6 in both directions are explicit fail-closed
-threshold controls.  Components 1e-3, 0.05, and 0.1 remain observational
-because surface isolation currently changes box topology there; they may move
-from fallback to certified but must never publish without the complete
-evidence ledger.
+clearance and chord.  Required production cases use components 1e-4, 1e-3,
+0.01, 0.05, 0.25, 0.5, and 1 in both directions.  The 1e-3 and 0.05 cases
+exercise the rootless contact-corridor path.  A separate similarity gate
+repeats the 1e-3 case under identity, nonlinear trim reparameterization,
+translation, cyclic and arbitrary-axis rotations, 0.01x scale, and 10,000x
+scale.  All outer event boxes must contain the similarity-scaled implicit-
+sphere chord.  Components 1e-6, 10, and 1e6 in both directions are explicit
+fail-closed threshold controls.  Component 0.1 remains observational in both
+directions: its extra rootless terminal boxes occur on the source outer
+boundary, beyond the contact-sector theorem, so both rays must remain whole-
+ray fallback until a separate surface-root completeness proof is available.
 
 This theorem does not authorize arbitrary root counts, roots on multiple
 contact faces or spans, non-isoparametric frame intervals, trim-only or

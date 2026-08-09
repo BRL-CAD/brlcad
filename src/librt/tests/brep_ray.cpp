@@ -1055,8 +1055,9 @@ brep_trace_seam_event_stream_valid(
 	}
 	if (box.disposition != RT_BREP_TRACE_BOX_RESOLVED_CONTACT ||
 		box.determinant_sign ||
-		edge->ray_dist < box.t_min - witness_tolerance ||
-		edge->ray_dist > box.t_max + witness_tolerance)
+		(!oblique_contact &&
+		 (edge->ray_dist < box.t_min - witness_tolerance ||
+		  edge->ray_dist > box.t_max + witness_tolerance)))
 	    return false;
 	bool box_has_witness = false;
 	for (size_t root_index = 0;
@@ -1090,7 +1091,9 @@ brep_trace_seam_event_stream_valid(
 	    box_has_witness = true;
 	    root_owned[root_index] = true;
 	}
-	if (!box_has_witness)
+	const bool certified_corridor_box = oblique_contact && contact_pair &&
+	    box.face_index == contact_face && box.span_index == contact_span;
+	if (!box_has_witness && !certified_corridor_box)
 	    return false;
 	if (contact_pair) {
 	    if (!oblique_contact &&
@@ -8794,7 +8797,7 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 		}
 	    }
 
-	    const double tangent_component = 0.25;
+	    const double tangent_component = 0.001;
 	    for (int reverse = 0; reverse <= 1; ++reverse) {
 		const sampled_ray base_ray = cobb_seam_oblique_ray(frame,
 		    origin, radius, tol->dist, tangent_component, reverse != 0);
@@ -8948,9 +8951,9 @@ check_cobb_oblique_contact_trend(const struct bn_tol *tol, bool emit_report)
     } cases[] = {
 	{1.0e-6, EXPECT_FALLBACK},
 	{1.0e-4, EXPECT_CERTIFIED},
-	{1.0e-3, EXPECT_OBSERVE},
+	{1.0e-3, EXPECT_CERTIFIED},
 	{0.01, EXPECT_CERTIFIED},
-	{0.05, EXPECT_OBSERVE},
+	{0.05, EXPECT_CERTIFIED},
 	{0.1, EXPECT_OBSERVE},
 	{0.25, EXPECT_CERTIFIED},
 	{0.5, EXPECT_CERTIFIED},

@@ -3138,17 +3138,20 @@ ESTABLISHED FINDINGS
 
     Shot-time proof is fixed-work and transactional.  For every unresolved
     zero-determinant contact box, it intersects the paired prepared partitions
-    and locally remaps both trim intervals inside their parents.  A complete
-    trim UV interval on the box's incident face must be contained in that
-    box's UV rectangle.  The complete box t interval must be inside every
-    material sector frame on the interval.  Every box needs one certificate,
-    linked box t intervals must cover the contact hull, and the edge tangent
-    dot ray must have one nonzero consistent sign.  Vertex neighborhoods,
-    exact/interval parallelism, unsupported spans, mapping failures, and every
-    work/depth/capacity limit return whole-ray fallback before any box or event
-    mutation.  The proof uses a 32-cell stack, depth 20, at most 8,192 visited
-    cells, fixed coverage storage, and insertion sorting; it performs no shot-
-    time allocation.
+    and locally remaps both trim intervals inside their parents.  Adjacent
+    rootless unresolved zero-determinant boxes are attempted only when they
+    share the already selected contact face and surface span.  A complete trim
+    UV interval on that incident face must be contained in each box's UV
+    rectangle.  The complete box t interval must be inside every material
+    sector frame on the interval.  Every box, including a rootless corridor
+    candidate, needs one certificate; linked box t intervals must cover the
+    contact hull, and the edge tangent dot ray must have one nonzero consistent
+    sign.  Rootless boxes on the source outer face or another span are not
+    candidates.  Vertex neighborhoods, exact/interval parallelism,
+    unsupported spans, mapping failures, and every work/depth/capacity limit
+    return whole-ray fallback before any box or event mutation.  The proof
+    uses a 32-cell stack, depth 20, at most 8,192 visited cells, fixed coverage
+    storage, and insertion sorting; it performs no shot-time allocation.
 
     Edge points, tangents, both surface derivative frames, outward normals,
     and interior conormals are outward interval bounds over the complete cell.
@@ -3185,18 +3188,24 @@ ESTABLISHED FINDINGS
     equal to contact boxes.  Perpendicular contact and ordinary seam pairs
     require all oblique counters to be zero.  The immutable validator accepts
     oblique ownership only with that evidence and still independently checks
-    roots, boxes, outer events, and the implicit sphere chord.
+    roots, boxes, outer events, and the implicit sphere chord.  The global
+    root-coverage gate normally rejects any rootless terminal box.  Its sole
+    exception is a box already resolved by a completed oblique transaction
+    whose one-pair ledger links every contact box.  A rootless box cannot gain
+    production authority merely from its location, determinant, or proximity.
 
-    The permanent trend uses seam-tangent components 1e-4, 0.01, 0.25, 0.5,
-    and 1 in both ray directions: all ten require production certification and
-    analytic chord agreement.  Components 1e-6, 10, and 1e6 require six safe
-    fallbacks.  Components 1e-3, 0.05, and 0.1 are observational because the
-    current surface isolator changes box topology there; one direction
-    currently certifies and five fall back.  A separate 14-case gate repeats
-    component 0.25 forward/reverse under identity, nonlinear trim
-    reparameterization, translation, cyclic and arbitrary-axis rotation,
-    0.01x scale, and 10,000x scale.  Every case selects production and contains
-    the scaled analytic sphere endpoints.
+    The permanent trend uses seam-tangent components 1e-4, 1e-3, 0.01, 0.05,
+    0.25, 0.5, and 1 in both ray directions: all fourteen require production
+    certification and analytic chord agreement.  The 1e-3 and 0.05 cases
+    require certification of one or two contact boxes despite only one box
+    owning a nominal surface root.  Components 1e-6, 10, and 1e6 require six
+    safe fallbacks.  Component 0.1 is observational in both directions and
+    remains fallback because its extra unresolved box is on the source outer
+    face, where the contact theorem cannot prove surface-root completeness.  A
+    separate 14-case gate repeats component 1e-3 forward/reverse under
+    identity, nonlinear trim reparameterization, translation, cyclic and
+    arbitrary-axis rotation, 0.01x scale, and 10,000x scale.  Every case
+    selects production and contains the scaled analytic sphere endpoints.
 
     Optimized verification:
 
@@ -3204,18 +3213,18 @@ ESTABLISHED FINDINGS
       ctest --test-dir .build --parallel 7 \
         -R '^rt_brep_ray($|_)' --output-on-failure
 
-    PASS: 7/7 in 147.19 seconds (seam 96.07, interval 147.15, complete
-    process 57.56, Crofton 69.50).  The focused optimized cache/conversion/NURBS
-    matrix passes 11/11 in 4.15 seconds.
+    PASS: 7/7 in 153.86 seconds (seam 80.38, interval 153.81, complete
+    process 45.64, Crofton 56.00).  The focused optimized
+    cache/conversion/NURBS matrix passes 11/11 in 8.93 seconds.
 
       env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
         UBSAN_OPTIONS=halt_on_error=1 \
         ctest --test-dir .build-asan --parallel 2 \
           -R '^rt_brep_ray_(seam|endpoint)$' --output-on-failure
 
-    PASS: 2/2 in 451.32 seconds (endpoint 8.69, seam 451.28) with no
+    PASS: 2/2 in 392.94 seconds (endpoint 16.01, seam 392.81) with no
     sanitizer diagnostic.  The ASan/UBSan cache/conversion/NURBS matrix passes
-    11/11 in 13.13 seconds.
+    11/11 in 15.41 seconds.
 
     This checkpoint does not change SurfaceTree density, acceleration-cache
     serialization, the two-root contact topology, or fixed shot workspace
@@ -4475,22 +4484,57 @@ Bounded oblique contact checkpoint (Finding 71):
       --output-on-failure
     PASS: 11/11 in 13.13 seconds with no sanitizer diagnostic.
 
+Rootless oblique contact-corridor checkpoint (Finding 71):
+
+  cmake --build .build --target rt_brep_ray -j8
+  ctest --test-dir .build --parallel 7 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+    PASS: 7/7 in 153.86 seconds.  The seam shard passes in 80.38 seconds
+    with fourteen required oblique certifications, six required fail-closed
+    threshold controls, two observational source-boundary fallbacks, and
+    fourteen component-1e-3 similarity/reparameterization/reversal
+    certifications.  The interval shard passes in 153.81 seconds, the complete
+    process in 45.64 seconds, and Cauchy-Crofton in 56.00 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 2 \
+      -R '^rt_brep_ray_(seam|endpoint)$' --output-on-failure
+    PASS: 2/2 in 392.94 seconds with no sanitizer diagnostic.
+    After the final root-coverage gate was tightened to require a nonzero
+    frame-cell count, the exact-revision standalone ASan/UBSan seam shard
+    passes in 410.62 seconds with no diagnostic; the exact-revision optimized
+    seam shard passes in 85.26 seconds.
+
+  ctest --test-dir .build --parallel 6 \
+    -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 11/11 in 8.93 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 6 \
+      -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+      --output-on-failure
+    PASS: 11/11 in 15.41 seconds with no sanitizer diagnostic.
+
 
 NEXT ACTIONS
 ------------
 
-1. Study the observational oblique transition cases at tangent components
-   1e-3, 0.05, and 0.1.  Separate surface-isolator box-topology instability
-   from contact ownership: if redundant overlapping terminal boxes can be
-   proved to form one complete root-owning component, qualify that as a new
-   theorem rather than weakening the one-box/one-link transaction.  Extend
-   frame intervals to non-isoparametric trims only with a complete rational UV
-   locus and derivative bound.  Keep arbitrary root counts, faces, spans,
-   sector-boundary tangency, exact tangency, and edge/vertex neighborhood
-   interactions fail-closed until each has its own theorem.  Keep the exact
-   edge, perpendicular contact, and original one-existing/one-continuation
-   paths unchanged as narrow production subsets, and never let the model
-   envelope manufacture the exact witness used by Finding 68.
+1. Isolate the component-0.1 source-boundary terminal boxes and seek a bounded
+   surface-root completeness/count theorem.  The oblique contact-sector proof
+   now safely absorbs same-contact-face/span rootless boxes at components
+   1e-3 and 0.05, but it deliberately cannot authorize a rootless box on the
+   outer source face.  Prove whether that box is a redundant isolator corridor
+   or can contain an omitted physical boundary root before changing policy.
+   Extend frame intervals to non-isoparametric trims only with a complete
+   rational UV locus and derivative bound.  Keep arbitrary root counts, faces,
+   spans, sector-boundary tangency, exact tangency, and edge/vertex
+   neighborhood interactions fail-closed until each has its own theorem.  Keep
+   the exact edge, perpendicular contact, and original one-existing/one-
+   continuation paths unchanged as narrow production subsets, and never let
+   the model envelope manufacture the exact witness used by Finding 68.
 2. Extend vertex classification only through a separately certified curved
    differential-link theorem.  Bound surface-normal and tangent variation over
    a local neighborhood before replacing the planar cyclic link.  Define exact
