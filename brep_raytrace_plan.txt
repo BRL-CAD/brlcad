@@ -4169,6 +4169,36 @@ Bounded exact local refinement
   greater than T.  Both ray directions now publish the analytic interval at
   100T, 10T, 2T, and 1.1T.
 
+Status-2 similarity qualification
+
+  Pointwise NURBS-form mapping and close-root separation must be invariant
+  under the same similarities already required of status-1 sphere and seam
+  logic.  A focused torus matrix therefore applies arbitrary rotation and
+  translation at scales 1, 0.01, and 10,000, scaling T with the geometry.  It
+  shoots the exact-tier tube-section cases at 2T and 1.1T in both directions.
+  Every one of the 12 rays must:
+
+    * observe exactly one status-2 face;
+    * select a complete two-event prepared material interval;
+    * match the analytic circular section within T;
+    * exercise exact expansion availability, exclusion, and refinement; and
+    * avoid arithmetic failure, fixed-workspace exhaustion, or fallback.
+
+  This matrix passes.  It also clarifies the fold-localization contract.  The
+  localization routine tries many nested optional contractions and records a
+  failure for each level that cannot improve the box.  A failed optional level
+  does not invalidate a complete fold proof.  Mixed fold/regular publication
+  consumes the actual stored fold interval: the best certified contraction if
+  one exists, otherwise the complete parent interval.  Its strict outward-gap
+  classifier then proves or rejects separation from the regular box.  Do not
+  use a zero localization-failure counter as a substitute for that interval
+  proof.
+
+  The large transformed implicit TOR returns two quartic segments on all four
+  positive analytic section rays in this matrix.  Record those as oracle
+  artifacts and continue to use the analytic circle for the grazing boundary;
+  transform invariance must not train the BREP solver to reproduce them.
+
 Minimum-size boundary behavior
 
   Use three categories, not a binary hit/miss expectation:

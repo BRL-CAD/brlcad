@@ -11,6 +11,50 @@ as the authoritative continuation log until all acceptance gates pass.
 CURRENT PHASE
 -------------
 
+2026-08-09 ACTIVE STATUS-2 SIMILARITY CHECKPOINT
+
+The preceding grazing increment is committed locally as 14d4c7c65a,
+"Resolve status-2 BREP grazing roots locally".  It was not pushed.  The
+current uncommitted work begins a dedicated similarity matrix in
+src/librt/tests/brep_ray.cpp and makes one narrow eligibility correction in
+src/librt/primitives/brep/brep.cpp.  Inspect git status before resuming.
+
+The new matrix transforms the difficult status-2 torus tube section by an
+arbitrary rotation plus translation at scales 1, 0.01, and 10,000.  It scales
+the model tolerance with the geometry and shoots the 2T and 1.1T chords in
+both directions.  All 12 rays now require one analytic BREP interval, status-2
+mapping, selected prepared production events, exact expansion availability,
+rigorous exclusion, bounded refinement, and no arithmetic or workspace
+exhaustion.  The matrix passes with all 12 selected.  Maximum normalized BREP
+endpoint error is 1.34e-5 model units; maximum refinement/high-water is 17/15,
+well below the fixed 64-refinement and expansion capacities.
+
+The test exposed two distinct transform effects.  First, the implicit TOR
+quartic returns two segments rather than the one analytic normal-section
+interval on all four large-scale cases.  These are recorded as four implicit
+artifacts; the analytic circle remains the boundary oracle.  Second, the
+large 1.1T status-2 BREP reaches one regular box plus one complete fold box.
+Its conservative box intervals prove a strict gap greater than T, but optional
+nested fold-localization attempts report some failed levels.  The mixed
+fold/regular eligibility check previously treated any failed optional level as
+a failed theorem and fell back.  It now consumes the actual stored fold
+interval (either the best certified contraction or the complete parent box)
+and lets the existing strict outward gap proof decide.  This is conservative
+and restores similarity invariance; localization failures remain telemetry.
+
+Verified after this change:
+
+  cmake --build .build --target rt_brep_ray -j8
+  .build/src/librt/tests/rt_brep_ray --grazing-root-only
+  .build/src/librt/tests/rt_brep_ray --fold-only
+  .build/src/librt/tests/rt_brep_ray --directed-only
+  .build/src/librt/tests/rt_brep_ray --affine-only
+
+All pass.  The directed partition includes the new status-2 transform matrix
+and the existing status-1 sphere similarity matrix.  Before the next commit,
+run git diff --check and review the focused diff for cleanup and ownership.
+
+
 2026-08-09 ACTIVE GRAZING CHECKPOINT
 
 The current uncommitted checkpoint adds a rational torus normal-section
