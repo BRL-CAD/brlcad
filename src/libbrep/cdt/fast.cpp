@@ -1546,7 +1546,11 @@ extend_over_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint
     for (int i = 1; i < num_points; i++) {
 	if (surf->IsClosed(0)) {
 	    double delta = brep_loop_points[i].p2d.x - brep_loop_points[i - 1].p2d.x;
-	    const bool full_period_step = fabs(fabs(delta) - ulength) <=
+	    const bool same_trim = brep_loop_points[i].trim_ind >= 0 &&
+		brep_loop_points[i].trim_ind ==
+		brep_loop_points[i - 1].trim_ind;
+	    const bool full_period_step = same_trim &&
+		fabs(fabs(delta) - ulength) <=
 		std::max(BREP_SAME_POINT_TOLERANCE, ulength * 1.0e-4);
 	    int shifts = 0;
 	    while (!full_period_step && std::isfinite(delta) &&
@@ -1565,7 +1569,11 @@ extend_over_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint
 	}
 	if (surf->IsClosed(1)) {
 	    double delta = brep_loop_points[i].p2d.y - brep_loop_points[i - 1].p2d.y;
-	    const bool full_period_step = fabs(fabs(delta) - vlength) <=
+	    const bool same_trim = brep_loop_points[i].trim_ind >= 0 &&
+		brep_loop_points[i].trim_ind ==
+		brep_loop_points[i - 1].trim_ind;
+	    const bool full_period_step = same_trim &&
+		fabs(fabs(delta) - vlength) <=
 		std::max(BREP_SAME_POINT_TOLERANCE, vlength * 1.0e-4);
 	    int shifts = 0;
 	    while (!full_period_step && std::isfinite(delta) &&
@@ -1585,6 +1593,116 @@ extend_over_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint
     }
 
     return true;
+}
+
+static bool
+fast_normalize_periodic_trim_sequence(const ON_Surface *surface,
+	const ON_BrepLoop *loop, ON_SimpleArray<BrepTrimPoint> &points)
+{
+    if (!surface || !loop || loop->TrimCount() < 2 || points.Count() < 2)
+	return false;
+    bool normalized = false;
+    for (int closed_dir = 0; closed_dir < 2; ++closed_dir) {
+	if (!surface->IsClosed(closed_dir))
+	    continue;
+	const int open_dir = 1 - closed_dir;
+	const double period = surface->Domain(closed_dir).Length();
+	const double open_length = surface->Domain(open_dir).Length();
+	if (!(period > ON_ZERO_TOLERANCE) ||
+		!(open_length > ON_ZERO_TOLERANCE))
+	    continue;
+	const double open_join_tolerance = std::max(
+	    BREP_SAME_POINT_TOLERANCE, open_length * 1.0e-2);
+	const double closed_join_tolerance = std::max(
+	    BREP_SAME_POINT_TOLERANCE, period * 0.25);
+	ON_2dPoint first_start = ON_2dPoint::UnsetPoint;
+	double current_closed = ON_UNSET_VALUE;
+	double current_open = ON_UNSET_VALUE;
+	std::unordered_map<int, double> trim_shifts;
+	bool valid = true;
+	for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	    const ON_BrepTrim *trim = loop->Trim(ti);
+	    const ON_BrepTrim *next = loop->Trim(
+		(ti + 1) % loop->TrimCount());
+	    if (!trim || !next ||
+		    trim->m_type == ON_BrepTrim::singular ||
+		    trim->m_vi[1] != next->m_vi[0]) {
+		valid = false;
+		break;
+	    }
+	    const ON_Interval domain = trim->Domain();
+	    if (!domain.IsIncreasing()) {
+		valid = false;
+		break;
+	    }
+	    const ON_2dPoint start = trim->PointAt(domain.Min());
+	    const ON_2dPoint end = trim->PointAt(domain.Max());
+	    if (!start.IsValid() || !end.IsValid()) {
+		valid = false;
+		break;
+	    }
+	    if (ti == 0) {
+		first_start = start;
+		current_closed = start[closed_dir];
+		current_open = start[open_dir];
+	    }
+	    if (fabs(start[open_dir] - current_open) >
+		    open_join_tolerance) {
+		valid = false;
+		break;
+	    }
+	    const double aligned_start = start[closed_dir] +
+		std::round((current_closed - start[closed_dir]) / period) *
+		period;
+	    if (fabs(aligned_start - current_closed) >
+		    closed_join_tolerance) {
+		valid = false;
+		break;
+	    }
+	    trim_shifts[trim->m_trim_index] =
+		aligned_start - start[closed_dir];
+	    current_closed = aligned_start +
+		end[closed_dir] - start[closed_dir];
+	    current_open = end[open_dir];
+	}
+	if (!valid || fabs(current_open - first_start[open_dir]) >
+		open_join_tolerance)
+	    continue;
+	const long turns = std::lround(
+	    (current_closed - first_start[closed_dir]) / period);
+	const double winding_tolerance = std::max(
+	    BREP_SAME_POINT_TOLERANCE, period * 1.0e-2);
+	if (labs(turns) != 1 ||
+		fabs(current_closed - first_start[closed_dir] -
+		    turns * period) > winding_tolerance)
+	    continue;
+
+	int previous_trim = -1;
+	double previous_coordinate = ON_UNSET_VALUE;
+	for (int pi = 0; pi < points.Count(); ++pi) {
+	    std::unordered_map<int, double>::const_iterator shift =
+		trim_shifts.find(points[pi].trim_ind);
+	    if (shift == trim_shifts.end()) {
+		previous_trim = -1;
+		continue;
+	    }
+	    points[pi].p2d[closed_dir] += shift->second;
+	    if (points[pi].trim_ind == previous_trim) {
+		const double delta = points[pi].p2d[closed_dir] -
+		    previous_coordinate;
+		const bool full_period_step =
+		    fabs(fabs(delta) - period) <= winding_tolerance;
+		if (!full_period_step)
+		    points[pi].p2d[closed_dir] += std::round(
+			(previous_coordinate -
+			 points[pi].p2d[closed_dir]) / period) * period;
+	    }
+	    previous_trim = points[pi].trim_ind;
+	    previous_coordinate = points[pi].p2d[closed_dir];
+	}
+	normalized = true;
+    }
+    return normalized;
 }
 
 static void
@@ -4396,9 +4514,12 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	return false;
     }
     if (s->IsClosed(0) || s->IsClosed(1)) {
-	for (int li = 0; li < loop_cnt; ++li)
+	for (int li = 0; li < loop_cnt; ++li) {
 	    fast_reconstruct_periodic_trim_boundary(s, face.Loop(li),
 		*brep_loop_points[li], BREP_SAME_POINT_TOLERANCE, scratch);
+	    fast_normalize_periodic_trim_sequence(s, face.Loop(li),
+		*brep_loop_points[li]);
+	}
     }
 
     fast_bridge_store bridgePoints;
