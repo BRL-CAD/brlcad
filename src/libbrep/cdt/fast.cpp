@@ -424,6 +424,59 @@ fast_ensure_topology_samples(const ON_BrepTrim &trim,
 }
 
 static void
+fast_ensure_periodic_winding_samples(const ON_BrepTrim &trim,
+	fast_trim_point_map &param_points, fast_face_scratch &scratch)
+{
+    const ON_Surface *surface = trim.Face() ?
+	static_cast<const ON_Surface *>(trim.Face()) : trim.SurfaceOf();
+    if (!surface)
+	return;
+
+    ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
+    if (!trim.GetBoundingBox(bbox, false))
+	return;
+    double maximum_windings = 0.0;
+    for (int dir = 0; dir < 2; ++dir) {
+	if (!surface->IsClosed(dir))
+	    continue;
+	const double period = surface->Domain(dir).Length();
+	const double extent = bbox.m_max[dir] - bbox.m_min[dir];
+	if (!(period > ON_ZERO_TOLERANCE) || !std::isfinite(extent))
+	    return;
+	maximum_windings = std::max(maximum_windings, extent / period);
+    }
+    if (maximum_windings <= 0.5)
+	return;
+    if (maximum_windings > 64.0) {
+	scratch.hit_sample_limit = true;
+	return;
+    }
+
+    /* Midpoint flatness tests can alias an integral number of turns: the
+     * endpoints and midpoint of a many-turn helix may be collinear even
+     * though the curve is not.  Guarantee angular coverage independently of
+     * that geometric recursion. */
+    const size_t segment_count = std::max((size_t)8,
+	(size_t)ceil(maximum_windings * 16.0));
+    if (segment_count + 1 >= FAST_CDT_MAX_TRIM_SAMPLES) {
+	scratch.hit_sample_limit = true;
+	return;
+    }
+    const ON_Interval domain = trim.Domain();
+    if (!domain.IsIncreasing())
+	return;
+    for (size_t sample = 1; sample < segment_count; ++sample) {
+	if (param_points.size() >= FAST_CDT_MAX_TRIM_SAMPLES) {
+	    scratch.hit_sample_limit = true;
+	    return;
+	}
+	fast_add_trim_sample(trim,
+	    domain.ParameterAt((double)sample / (double)segment_count),
+	    param_points);
+    }
+}
+
+static void
 fast_free_pullback(PBCData *data)
 {
     if (!data)
@@ -696,7 +749,17 @@ getEdgePoints(ON_BrepTrim &trim,
     }
 
     /* Establish tolerances */
-    if (trim.GetBoundingBox(min, max, bGrowBox)) {
+    /* UV extents do not measure model-space tessellation error.  A helical
+     * trim may span dozens of periods in parameter space while occupying a
+     * small model-space box; scaling its tolerance from the UV box can reduce
+     * the entire helix to its endpoints. */
+    const ON_BrepEdge *metric_edge = trim.Edge();
+    const ON_Curve *metric_curve = metric_edge ?
+	metric_edge->EdgeCurveOf() : NULL;
+    if (metric_curve && metric_curve->GetBoundingBox(min, max,
+	    bGrowBox)) {
+	dist = DIST_PNT_PNT(min, max);
+    } else if (trim.GetBoundingBox(min, max, bGrowBox)) {
 	dist = DIST_PNT_PNT(min, max);
     }
     CDT_Tol_Set(&cdt_tol, dist, max_dist, ttol, tol);
@@ -790,6 +853,7 @@ getEdgePoints(ON_BrepTrim &trim,
 
     }
 
+    fast_ensure_periodic_winding_samples(trim, *param_points, scratch);
     fast_ensure_topology_samples(trim, *param_points);
 
     /* Boundary points shared by two faces must be taken from their common
@@ -3905,6 +3969,156 @@ fast_reconstruct_periodic_boundary_loops(const ON_Surface *surface,
     return false;
 }
 
+static bool
+fast_reconstruct_winding_periodic_strip(const ON_Surface *surface,
+	const ON_BrepFace &face,
+	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
+	double tolerance, fast_face_scratch &scratch, int *closed_direction,
+	int *outer_loop_index)
+{
+    /* An essential inner loop may backtrack through many periods while its
+     * net winding still matches a one-turn outer boundary.  Such a loop is a
+     * second boundary of a strip on the quotient surface, not a planar hole.
+     * Cut both loops at the same physical parameter and stitch them into one
+     * outline in the universal cover. */
+    if (!surface || face.LoopCount() != 2 || !brep_loop_points)
+	return false;
+    int outer_index = -1;
+    int inner_index = -1;
+    for (int li = 0; li < 2; ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop || !brep_loop_points[li] ||
+		brep_loop_points[li]->Count() < 2)
+	    return false;
+	if (loop->m_type == ON_BrepLoop::outer && loop->TrimCount() == 1)
+	    outer_index = li;
+	else if (loop->m_type == ON_BrepLoop::inner)
+	    inner_index = li;
+    }
+    if (outer_index < 0 || inner_index < 0)
+	return false;
+
+    const ON_BrepLoop *inner_loop = face.Loop(inner_index);
+    if (!inner_loop || inner_loop->TrimCount() < 2)
+	return false;
+    for (int ti = 0; ti < inner_loop->TrimCount(); ++ti) {
+	const ON_BrepTrim *trim = inner_loop->Trim(ti);
+	const ON_BrepTrim *next = inner_loop->Trim(
+	    (ti + 1) % inner_loop->TrimCount());
+	if (!trim || !next || trim->m_vi[1] != next->m_vi[0])
+	    return false;
+    }
+
+    fast_periodic_loop_info outer_info;
+    ON_SimpleArray<BrepTrimPoint> &outer =
+	*brep_loop_points[outer_index];
+    ON_SimpleArray<BrepTrimPoint> &inner =
+	*brep_loop_points[inner_index];
+    if (!fast_periodic_boundary_loop(surface, outer, outer_info) ||
+	    inner.Count() < 4)
+	return false;
+
+    const int closed_dir = outer_info.closed_dir;
+    const int open_dir = outer_info.open_dir;
+    const double period = surface->Domain(closed_dir).Length();
+    const double open_length = surface->Domain(open_dir).Length();
+    const double parameter_tolerance = std::max(tolerance,
+	std::max(period, open_length) * 1.0e-4);
+    /* Seam snapping may make the sampled endpoints numerically equal.  The
+     * sum of the directed trim displacements retains the topological winding
+     * and tells us which endpoint copy belongs in the universal cover. */
+    double topology_delta = 0.0;
+    for (int ti = 0; ti < inner_loop->TrimCount(); ++ti) {
+	const ON_BrepTrim *trim = inner_loop->Trim(ti);
+	const ON_Interval domain = trim->Domain();
+	if (!domain.IsIncreasing())
+	    return false;
+	const ON_2dPoint start = trim->PointAt(domain.Min());
+	const ON_2dPoint end = trim->PointAt(domain.Max());
+	if (!start.IsValid() || !end.IsValid())
+	    return false;
+	topology_delta += end[closed_dir] - start[closed_dir];
+    }
+    const long topology_winding = std::lround(topology_delta / period);
+    if (labs(topology_winding) != 1 ||
+	    fabs(topology_delta - topology_winding * period) >
+		parameter_tolerance)
+	return false;
+
+    double inner_delta =
+	inner[inner.Count() - 1].p2d[closed_dir] -
+	inner[0].p2d[closed_dir];
+    const int inner_winding = topology_winding > 0 ? 1 : -1;
+    bool lift_inner_end = false;
+    if (fabs(inner_delta) <= parameter_tolerance) {
+	lift_inner_end = true;
+	inner_delta = inner_winding * period;
+    }
+    if (inner_winding != outer_info.winding ||
+	    fabs(inner_delta - inner_winding * period) >
+		parameter_tolerance ||
+	    fabs(inner[inner.Count() - 1].p2d[open_dir] -
+		inner[0].p2d[open_dir]) > parameter_tolerance)
+	return false;
+
+    double inner_open_min = INFINITY;
+    double inner_open_max = -INFINITY;
+    double inner_closed_min = INFINITY;
+    double inner_closed_max = -INFINITY;
+    for (int pi = 0; pi < inner.Count(); ++pi) {
+	if (!inner[pi].p2d.IsValid())
+	    return false;
+	const double closed_coordinate =
+	    lift_inner_end && pi == inner.Count() - 1 ?
+	    inner[0].p2d[closed_dir] + inner_winding * period :
+	    inner[pi].p2d[closed_dir];
+	inner_closed_min = std::min(inner_closed_min,
+	    closed_coordinate);
+	inner_closed_max = std::max(inner_closed_max,
+	    closed_coordinate);
+	inner_open_min = std::min(inner_open_min,
+	    inner[pi].p2d[open_dir]);
+	inner_open_max = std::max(inner_open_max,
+	    inner[pi].p2d[open_dir]);
+    }
+    if (outer_info.open_coordinate >
+	    inner_open_min - parameter_tolerance &&
+	    outer_info.open_coordinate <
+		inner_open_max + parameter_tolerance)
+	return false;
+
+    if (inner_closed_max - inner_closed_min > 64.0 * period)
+	return false;
+
+    const double shift = std::round((outer[0].p2d[closed_dir] -
+	inner[0].p2d[closed_dir]) / period) * period;
+    const double target_start = inner[0].p2d[closed_dir] + shift;
+    if (!fast_rotate_periodic_boundary(surface, outer, closed_dir, period,
+	    target_start, scratch))
+	return false;
+
+    ON_SimpleArray<BrepTrimPoint> replacement = outer;
+    for (int pi = inner.Count() - 1; pi >= 0; --pi) {
+	BrepTrimPoint point = inner[pi];
+	if (lift_inner_end && pi == inner.Count() - 1)
+	    point.p2d[closed_dir] = inner[0].p2d[closed_dir] +
+		inner_winding * period;
+	point.p2d[closed_dir] += shift;
+	if (!V2NEAR_EQUAL(replacement[replacement.Count() - 1].p2d,
+		point.p2d, BREP_SAME_POINT_TOLERANCE))
+	    replacement.Append(point);
+    }
+    if (replacement.Count() < 6)
+	return false;
+    outer = replacement;
+    inner.Empty();
+    if (closed_direction)
+	*closed_direction = closed_dir;
+    if (outer_loop_index)
+	*outer_loop_index = outer_index;
+    return true;
+}
+
 void
 detria_CDT(struct bu_list *vhead,
 	     const ON_BrepFace &face,
@@ -4643,6 +4857,10 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
     if (!full_periodic_face)
 	full_periodic_face = fast_reconstruct_periodic_boundary_loops(s, face,
+	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
+	    &full_periodic_closed_dir, &full_periodic_outer_index);
+    if (!full_periodic_face)
+	full_periodic_face = fast_reconstruct_winding_periodic_strip(s, face,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
     if (!full_periodic_face)
