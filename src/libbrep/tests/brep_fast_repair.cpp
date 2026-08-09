@@ -954,6 +954,84 @@ bridged_inner_loop_test()
 }
 
 static bool
+winding_periodic_strip_test()
+{
+    ON_Brep brep;
+    ON_Circle base(ON_xy_plane, 1.0);
+    ON_Cylinder cylinder(base, 1.0);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    const double period = udom.Length();
+    const double low_v = vdom.ParameterAt(0.25);
+    const double high_v = vdom.ParameterAt(0.80);
+
+    ON_BrepLoop &outer = brep.NewLoop(ON_BrepLoop::outer, face);
+    add_periodic_trim(brep, outer, *surface,
+	vdom.ParameterAt(0.10), false, ON_BrepLoop::outer);
+
+    const ON_2dPoint walk[5] = {
+	ON_2dPoint(udom.Min(), low_v),
+	ON_2dPoint(udom.Min() + 0.75 * period, low_v),
+	ON_2dPoint(udom.Min() + 28.75 * period, high_v),
+	ON_2dPoint(udom.Min() + 29.0 * period, high_v),
+	ON_2dPoint(udom.Min() + period, low_v)
+    };
+    int vertices[4];
+    for (int i = 0; i < 4; ++i) {
+	double wrapped_u = udom.Min() +
+	    fmod(walk[i].x - udom.Min(), period);
+	if (wrapped_u < udom.Min())
+	    wrapped_u += period;
+	vertices[i] = brep.NewVertex(surface->PointAt(wrapped_u,
+	    walk[i].y)).m_vertex_index;
+    }
+
+    ON_BrepLoop &inner = brep.NewLoop(ON_BrepLoop::inner, face);
+    for (int i = 0; i < 4; ++i) {
+	const int next = (i + 1) % 4;
+	const ON_2dPoint start = walk[i];
+	const ON_2dPoint end = walk[i + 1];
+	const int sample_count = std::max(8,
+	    (int)ceil(fabs(end.x - start.x) / period * 64.0));
+	ON_3dPointArray edge_points;
+	for (int sample = 0; sample <= sample_count; ++sample) {
+	    const ON_2dPoint uv = start +
+		(double)sample / (double)sample_count * (end - start);
+	    double wrapped_u = udom.Min() +
+		fmod(uv.x - udom.Min(), period);
+	    if (wrapped_u < udom.Min())
+		wrapped_u += period;
+	    edge_points.Append(surface->PointAt(wrapped_u, uv.y));
+	}
+	ON_PolylineCurve *edge_curve = new ON_PolylineCurve(edge_points);
+	ON_BrepEdge &edge = brep.NewEdge(brep.m_V[vertices[i]],
+	    brep.m_V[vertices[next]], brep.AddEdgeCurve(edge_curve));
+	edge.m_tolerance = 1.0e-6;
+	ON_LineCurve *trim_curve = new ON_LineCurve(start, end);
+	trim_curve->SetDomain(0.0, 1.0);
+	ON_BrepTrim &trim = brep.NewTrim(edge, false, inner,
+	    brep.AddTrimCurve(trim_curve));
+	trim.m_type = ON_BrepTrim::boundary;
+	trim.m_iso = surface->IsIsoparametric(*trim_curve);
+	trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-6;
+    }
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0 &&
+	result->point_count > 512;
+    delete result;
+    return valid;
+}
+
+static bool
 collapsed_closed_pcurve_test()
 {
     ON_Brep brep;
@@ -1624,6 +1702,7 @@ main(int argc, const char **argv)
 	multiple_empty_loops_test() &&
 	degenerate_inner_loop_test() &&
 	bridged_inner_loop_test() &&
+	winding_periodic_strip_test() &&
 	collapsed_closed_pcurve_test() &&
 	misclassified_periodic_boundaries_test() &&
 	touching_periodic_subloops_test() &&
