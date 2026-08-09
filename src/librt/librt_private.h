@@ -860,6 +860,7 @@ struct rt_brep_shot_trace {
     size_t physical_event_seam_contact_pairs;
     size_t physical_event_seam_contact_boxes;
     size_t physical_event_seam_contact_roots;
+    size_t physical_event_seam_contact_miss_roots;
     size_t physical_event_seam_oblique_pairs;
     size_t physical_event_seam_oblique_cells;
     size_t physical_event_seam_oblique_box_links;

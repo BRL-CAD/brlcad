@@ -145,6 +145,10 @@ brlcad_add_test(
   NAME rt_brep_ray_nonisoparametric
   COMMAND rt_brep_ray --nonisoparametric-only
 )
+brlcad_add_test(
+  NAME rt_brep_ray_contact_trim
+  COMMAND rt_brep_ray --contact-trim-only
+)
 brlcad_add_test(NAME rt_brep_ray_interval COMMAND rt_brep_ray --interval-only)
 brlcad_add_test(
   NAME rt_brep_ray_trim_interval
