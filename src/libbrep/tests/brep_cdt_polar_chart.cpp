@@ -116,6 +116,60 @@ exercise_sphere(const ON_3dPoint &center, double radius)
 	return false;
     }
 
+    const long sample_triangle[3] = {
+	steiner[0], steiner[4], steiner[8]
+    };
+    const int sample_orientation =
+	chart.triangle_orientation(sample_triangle);
+    const long reversed_triangle[3] = {
+	sample_triangle[0], sample_triangle[2], sample_triangle[1]
+    };
+    ON_2dPoint interior_native;
+    if (!sample_orientation ||
+	    chart.triangle_orientation(reversed_triangle) !=
+	    -sample_orientation ||
+	    !chart.triangle_interior_sample(sample_triangle,
+		interior_native)) {
+	std::cerr << "polar chart triangle sampling failed" << std::endl;
+	return false;
+    }
+    ON_2dPoint interior_chart;
+    if (!chart.native_to_chart(interior_native, interior_chart))
+	return false;
+    const auto chart_coordinate = [&](long native, ON_2dPoint &point) {
+	for (const cdt_chart_vertex &vertex : chart.vertices) {
+	    if (vertex.native_point != native || vertex.id < 0 ||
+		    (size_t)vertex.id >= chart.points.size())
+		continue;
+	    point = ON_2dPoint(chart.points[(size_t)vertex.id].first,
+		chart.points[(size_t)vertex.id].second);
+	    return true;
+	}
+	return false;
+    };
+    ON_2dPoint sample_chart[3];
+    for (int corner = 0; corner < 3; ++corner) {
+	if (!chart_coordinate(sample_triangle[corner],
+		sample_chart[corner]))
+	    return false;
+    }
+    for (int corner = 0; corner < 3; ++corner) {
+	const int next = (corner + 1) % 3;
+	const long double edge_x =
+	    (long double)sample_chart[next].x - sample_chart[corner].x;
+	const long double edge_y =
+	    (long double)sample_chart[next].y - sample_chart[corner].y;
+	const long double point_x =
+	    (long double)interior_chart.x - sample_chart[corner].x;
+	const long double point_y =
+	    (long double)interior_chart.y - sample_chart[corner].y;
+	const long double side = edge_x * point_y - edge_y * point_x;
+	if ((side > 0.0L) - (side < 0.0L) != sample_orientation) {
+	    std::cerr << "polar chart sample left its triangle" << std::endl;
+	    return false;
+	}
+    }
+
     for (size_t i = 0; i < native_points.size(); ++i) {
 	const ON_2dPoint native_uv(native_points[i].first,
 	    native_points[i].second);
