@@ -466,6 +466,28 @@ trim_normal(ON_BrepTrim *trim, ON_2dPoint &cp)
     return norm;
 }
 
+static double
+periodic_surface_parameter(double parameter, const ON_Interval &domain)
+{
+    const double period = domain.Length();
+    if (!(period > 0.0) || !std::isfinite(parameter))
+	return parameter;
+    const double magnitude = std::max(std::fabs(domain.Min()),
+	std::fabs(domain.Max()));
+    const double tolerance = 256.0 *
+	std::numeric_limits<double>::epsilon() *
+	std::max(magnitude, period);
+    if (parameter >= domain.Min() - tolerance &&
+	    parameter <= domain.Max() + tolerance)
+	return std::max(domain.Min(), std::min(domain.Max(), parameter));
+    double remainder = std::fmod(parameter - domain.Min(), period);
+    if (remainder < 0.0)
+	remainder += period;
+    if (std::fabs(remainder) <= tolerance && parameter > domain.Min())
+	return domain.Max();
+    return domain.Min() + remainder;
+}
+
 static ON_2dPoint
 get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt,
 	cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen,
@@ -481,9 +503,14 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt,
 
     const ON_Surface *surface = trim.SurfaceOf();
     auto distance_squared = [&](double parameter) {
-	const ON_2dPoint uv = trim.PointAt(parameter);
+	ON_2dPoint uv = trim.PointAt(parameter);
 	if (!uv.IsValid() || !surface)
 	    return std::numeric_limits<double>::infinity();
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (surface->IsClosed(direction))
+		uv[direction] = periodic_surface_parameter(uv[direction],
+		    surface->Domain(direction));
+	}
 	const ON_3dPoint point = surface->PointAt(uv.x, uv.y);
 	if (!point.IsValid())
 	    return std::numeric_limits<double>::infinity();
@@ -1574,6 +1601,18 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	const bool topology_chart = cdt_face_uses_topology_chart(face);
 	//std::cout << "Face " << face_index << " of " << brep->m_F.Count()-1 << " close edge check...\n";
+
+	/*
+	 * Native surface parameters are not a valid planar proximity metric for
+	 * a complete cylinder.  Pcurves which run along its identification seam
+	 * may overlap after wrapping even though their 3D edges are well separated.
+	 * The curve, chord, and normal tolerances have already refined these edges;
+	 * any further proximity checks must be done in chart coordinates.
+	 */
+	const bool cylinder_seam = cdt_face_uses_cylinder_chart(face) &&
+	    cdt_face_has_seam(face);
+	if (cylinder_seam)
+	    continue;
 
 	std::vector<cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face_index);
 
