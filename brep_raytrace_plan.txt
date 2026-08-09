@@ -2304,6 +2304,52 @@ coverage, or authorize an arbitrary regular event stream.  It is deliberately
 nested inside the narrow seam-contact theorem until broader physical-event
 classification has equally strong topology and material-state obligations.
 
+6.4.1.5 Synthetic source-union theorem corpus
+
+Do not rely on the Cobb case alone to validate the source-union argument.  A
+small solver-level corpus exercises the theorem with exact Bernstein systems
+and artificial terminal boxes, independent of trims, model construction, and
+the current adaptive subdivision topology.  Production and the private test
+hook share `brep_source_union_component`: it validates finite ordered UV/t
+boxes on one face/span, seeds the graph only with boxes already known to own
+the selected root, grows through the same closed UV plus outward-t overlap
+predicate, and returns the component's complete rectangular UV hull.  The
+production caller derives root and candidate roles from immutable trace
+provenance.  The test hook assigns roles explicitly, but uses the same graph,
+outward bounded Bernstein restriction, and strict production Krawczyk test.
+
+The permanent synthetic systems are:
+
+  * A connected cubic unique-root system
+    `F=(u-1/2)+(u-1/2)^3/4`, `G=v-1/2`.  Its two-box component must be complete
+    and the full widened hull must certify.  This proves the path is not tied
+    to the Cobb span's degree or coefficients.
+
+  * Copies of that system with either a UV gap or a ray-t gap between the
+    root box and candidate.  Each graph must contain only the root box, must
+    report the eligible component incomplete, and must not attempt Krawczyk.
+
+  * The two-root system `F=(u-3/8)(u-5/8)`, `G=v-1/2`, with the selected root
+    in one box and the second root in a connected candidate box.  The graph is
+    complete, but strict Krawczyk inclusion over its hull must fail.  This is
+    the direct guard against treating connectivity as a root-count proof.
+
+  * The singular system `F=(u-1/2)^2`, `G=v-1/2`, with two rootless boxes
+    flanking the root box so the complete hull is symmetric.  Its midpoint
+    Jacobian is singular and certification must fail.
+
+  * An invalid provenance control supplies a nominal root outside the box
+    marked as root-owning.  The test interface must reject the input before
+    any theorem is attempted.
+
+Give this corpus its own `rt_brep_ray_source_union` CTest shard for fast,
+specific diagnosis and also run it within the complete interval suite.  A
+disconnected eligible candidate now causes the production helper to stop
+before restriction rather than proceeding until the later global ownership
+gate; both routes fail the whole ray closed, so this is a stricter early exit,
+not a new production classification.  The shared graph retains fixed-capacity
+stack arrays and introduces no shot-time allocation.
+
 6.4.2 Cyclic planar vertex-fan theorem
 
 A BREP vertex can be one physical boundary crossing even though three or more

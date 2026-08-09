@@ -1063,6 +1063,28 @@ struct rt_brep_krawczyk_test_result {
     fastf_t image_maximum[2];
 };
 
+#define RT_BREP_SOURCE_UNION_TEST_ROOT 1
+#define RT_BREP_SOURCE_UNION_TEST_CANDIDATE 2
+
+struct rt_brep_source_union_test_box {
+    fastf_t uv_minimum[2];
+    fastf_t uv_maximum[2];
+    fastf_t t_minimum;
+    fastf_t t_maximum;
+    int role;
+};
+
+struct rt_brep_source_union_test_result {
+    int component_complete;
+    int krawczyk_attempted;
+    int certified;
+    size_t eligible_boxes;
+    size_t root_boxes;
+    size_t component_boxes;
+    fastf_t uv_minimum[2];
+    fastf_t uv_maximum[2];
+};
+
 struct rt_brep_corridor_test_result {
     int available;
     int regular_derivative_signed;
@@ -1141,6 +1163,12 @@ RT_EXPORT extern int _rt_brep_expansion_krawczyk_test(
     int u_order, int v_order, const fastf_t root[2],
     struct rt_brep_krawczyk_test_result *result,
     size_t *expansion_high_water);
+RT_EXPORT extern int _rt_brep_source_union_test(
+    const fastf_t *first_coefficients,
+    const fastf_t *second_coefficients, int u_order, int v_order,
+    const fastf_t coefficient_error[2],
+    const struct rt_brep_source_union_test_box *boxes, size_t box_count,
+    const fastf_t root[2], struct rt_brep_source_union_test_result *result);
 RT_EXPORT extern int _rt_brep_corridor_test(
     const fastf_t *first_coefficients, const fastf_t *first_error,
     const fastf_t *second_coefficients, const fastf_t *second_error,

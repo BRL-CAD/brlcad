@@ -3321,6 +3321,43 @@ ESTABLISHED FINDINGS
     density, cache serialization, and fixed workspace capacities are
     unchanged.
 
+73. A solver-level source-union corpus now tests the root-count theorem
+    independently of Cobb geometry and adaptive box topology.
+
+    `brep_source_union_component` is shared by production and the private test
+    hook.  It validates finite ordered UV/t boxes on exactly one face/span,
+    seeds only boxes already known to own the selected root, grows through the
+    production closed-UV plus outward-t connectivity predicate, and computes
+    the complete rectangular hull.  Production still derives root and
+    candidate roles from immutable root/box provenance.  The synthetic hook
+    supplies roles directly, but then uses the same one-step outward hull
+    widening, bounded Bernstein restriction, and strict production Krawczyk
+    inclusion.  A disconnected eligible candidate now stops the production
+    helper before restriction; the former path reached the global unowned-box
+    rejection instead, so both behavior and authority remain fail-closed.
+
+    Five exact systems are permanent:
+
+      * cubic `F=(u-1/2)+(u-1/2)^3/4`, `G=v-1/2` over a connected two-box
+        hull certifies one root;
+      * UV-disconnected and t-disconnected copies each retain only the root
+        box and do not attempt Krawczyk;
+      * `F=(u-3/8)(u-5/8)`, `G=v-1/2` has one selected root and a second root
+        in the connected candidate box, so complete-hull Krawczyk fails;
+      * singular `F=(u-1/2)^2`, `G=v-1/2` uses rootless boxes on both sides of
+        the root box and fails certification over its symmetric hull.
+
+    A sixth invalid-input control marks a box as root-owning while supplying
+    a nominal root outside it; provenance validation rejects it before graph
+    or Krawczyk work.  The fast `rt_brep_ray_source_union` shard passes in
+    0.02 seconds optimized and 0.15 seconds under ASan/UBSan.  The final exact
+    optimized eight-shard matrix passes in 154.89 seconds, with the real seam
+    and interval paths at 119.61 and 154.84 seconds.  The corpus is also called
+    by the interval and unsharded complete tests.  The exact-code ASan/UBSan
+    seam companion passes in 745.40 seconds with no diagnostic; it overlapped
+    an optimized rebuild and is not a performance baseline.  All graph storage
+    remains fixed-capacity stack memory.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -3663,6 +3700,9 @@ IMPLEMENTATION CHECKLIST
                 [x] Prove one connected rootless source-box component contains
                     only the existing regular root by strict Krawczyk inclusion
                     over its complete rectangular UV hull.
+                    [x] Ratchet the shared component/hull proof with connected
+                        higher-order, UV/t-disconnected, multiple-root,
+                        singular-Jacobian, and invalid-provenance systems.
             [x] Integrate closed manifold planar cyclic vertex fans with exact
                 line witnesses, complete source ownership, and mixed ordinary
                 event streams.
@@ -4643,6 +4683,40 @@ Connected source-root union checkpoint (Finding 72):
       --output-on-failure
     PASS: 11/11 in 13.71 seconds with no sanitizer diagnostic.
 
+Synthetic source-union theorem checkpoint (Finding 73):
+
+  ctest --test-dir .build \
+    -R '^rt_brep_ray_source_union$' --output-on-failure
+    PASS: 1/1 in 0.02 seconds.  Direct output reports five systems, one
+    certification, four required rejections, and one invalid-provenance
+    rejection.
+
+  ctest --test-dir .build --parallel 8 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+    PASS: 8/8 in 154.89 seconds (source union 0.02, fold 0.23, endpoint
+    2.31, affine 5.06, complete directed process 46.52, Crofton 64.25,
+    seam 119.61, interval 154.84).
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 2 \
+      -R '^rt_brep_ray_(source_union|seam)$' --output-on-failure
+    PASS: 2/2 in 745.44 seconds (source union 0.15, seam 745.40) with
+    no sanitizer diagnostic.  The run overlapped an optimized rebuild, so its
+    seam time is not a performance baseline.
+
+  ctest --test-dir .build --parallel 6 \
+    -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 11/11 in 4.68 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 6 \
+      -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+      --output-on-failure
+    PASS: 11/11 in 23.25 seconds with no sanitizer diagnostic.
+
 
 NEXT ACTIONS
 ------------
@@ -4651,15 +4725,16 @@ NEXT ACTIONS
    retains a complete rational UV locus and derivative enclosure for every
    mapped edge cell.  Prove parameter coverage/orientation, bound the curved
    trim hull inside each solver box, and preserve the existing edge/surface
-   frame and full-t material-sector predicates.  Add synthetic disconnected,
-   multiple-root, singular-Jacobian, and higher-order source-union systems to
-   the focused C/C++ solver corpus before reusing Finding 72 outside the narrow
-   seam-contact transaction.  Keep arbitrary root counts, faces, spans,
-   sector-boundary tangency, exact tangency, and edge/vertex neighborhood
-   interactions fail-closed until each has its own theorem.  Keep the exact
-   edge, perpendicular contact, and original one-existing/one-continuation
-   paths unchanged as narrow production subsets, and never let the model
-   envelope manufacture the exact witness used by Finding 68.
+   frame and full-t material-sector predicates.  Finding 73 now supplies the
+   required disconnected, multiple-root, singular-Jacobian, and higher-order
+   source-union ratchets; do not reuse Finding 72 outside the narrow
+   seam-contact transaction without an equally explicit topology/ownership
+   theorem.  Keep arbitrary root counts, faces, spans, sector-boundary
+   tangency, exact tangency, and edge/vertex neighborhood interactions
+   fail-closed until each has its own theorem.  Keep the exact edge,
+   perpendicular contact, and original one-existing/one-continuation paths
+   unchanged as narrow production subsets, and never let the model envelope
+   manufacture the exact witness used by Finding 68.
 2. Extend vertex classification only through a separately certified curved
    differential-link theorem.  Bound surface-normal and tangent variation over
    a local neighborhood before replacing the planar cyclic link.  Define exact
