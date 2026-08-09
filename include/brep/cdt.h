@@ -58,6 +58,7 @@ struct ON_Brep_CDT_State;
 #define BREP_CDT_RESULT_CERTIFICATION_FAILED -9
 #define BREP_CDT_RESULT_CHART_FAILED -10
 #define BREP_CDT_RESULT_REFINEMENT_LIMIT -11
+#define BREP_CDT_RESULT_GEOMETRIC_FAILED -12
 
 #define BREP_CDT_STAGE_NONE 0
 #define BREP_CDT_STAGE_INPUT 1
@@ -70,6 +71,7 @@ struct ON_Brep_CDT_State;
 #define BREP_CDT_STAGE_DETRIA 8
 #define BREP_CDT_STAGE_CHART_CONSTRUCTION 9
 #define BREP_CDT_STAGE_ADAPTIVE_REFINEMENT 10
+#define BREP_CDT_STAGE_GEOMETRIC_VALIDATION 11
 
 /* A snapshot of the most recent tessellation attempt.  message is always
  * NUL-terminated.  face_index is -1 when no individual face is responsible. */
