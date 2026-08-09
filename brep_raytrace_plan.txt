@@ -7,6 +7,51 @@ Repository studied: /home/cyapp/brlcad
 STEP test corpus: /home/cyapp/step_corpus_g
 
 
+IMPLEMENTATION CHECKPOINT: CERTIFIED COLLAPSED POLE EVENTS (2026-08-09)
+------------------------------------------------------------------------
+
+The non-monotonic sphere-pole failures are now handled independently of the
+SurfaceTree.  Status-1 prepared Bezier spans inherit exact singular-side
+metadata from ON_Surface::IsSingular.  For a line within a scale-aware
+binary64 bound of the collapsed control point, the two homogeneous ray-plane
+residuals are set to their asserted zero on that boundary and their common
+u, 1-u, v, or 1-v Bernstein factor is removed with outward interval
+arithmetic.  A direct sign, derivative-free interval separating axis, or the
+existing rotated-hull proof must exclude every distinct interior root.
+Deflating the residual Jacobian determinant by the same positive interior
+factor supplies a strict, face-oriented ENTER/LEAVE sign without evaluating
+the singular UV Jacobian.
+
+The first production authority is deliberately a complete-line theorem.  It
+requires every candidate span to be one of these singular witnesses, complete
+ownership of every span on each face/side fiber, consistent determinant
+directions and overlapping t enclosures, a narrow common cone of finite
+one-sided normals, no ordinary terminal boxes or local/fold roots, and a
+complete alternating solid event stream whose intervals are separated by
+BRL-CAD's minimum-segment tolerance.  One-sided normals are averaged for the
+published hit only; they do not decide root existence or direction.  Mixed
+pole/regular lines, status-2 remaps, multiple singular sides on one span,
+incomplete ownership, an unexcluded deflated root, or an inconsistent normal
+cone fail closed.  The path is fixed-workspace and allocation-free.
+
+A new rt_brep_ray --pole-only shard compares implicit and converted BREP
+spheres at both base poles, from inside, at radius 0.01 after translation, and
+at radius 10000 after million-scale translation.  The CTest gate fixes the
+SurfaceTree at depth two and requires the exact prepared singular-event
+telemetry, so a lucky legacy hit cannot satisfy it.  The gate passes at every
+controlled depth zero through eight; the full directed suite now passes at
+depth two.  All fifteen optimized default-depth ray shards pass, and focused
+depth-zero/two ASAN/UBSAN pole runs report no diagnostics.  Cache version zero
+and the production depth-eight default remain unchanged because singular span
+metadata is rebuilt from the BREP after deserialization.
+
+The next reduced-density frontier is not pole handling: it is the small
+grazing-chord paired-Crofton discrepancies on converted RCC, cone, and torus
+solids plus the transformed seam cases observed at depth two.  General
+pole-plus-regular streams and a fully interval-certified limiting-normal cone
+remain explicit later extensions.
+
+
 IMPLEMENTATION CHECKPOINT: CERTIFIED CLOSE REGULAR ROOT PAIRS (2026-08-09)
 ----------------------------------------------------------------------------
 
@@ -4537,3 +4582,32 @@ Current deterministic gate
   independently exercise the expansion arithmetic and proof primitives.  Keep
   these gates green before changing the base depth, exact-refinement budgets,
   trim policy, or SurfaceTree fallback.
+2026-08-09 IMPLEMENTATION NOTE: DEGENERATE SURFACE POLES
+
+This design note records the observation that led to the implemented
+"CERTIFIED COLLAPSED POLE EVENTS" checkpoint near the start of this document.
+The checkpoint states the narrower final authority and validation results.
+
+Controlled SurfaceTree depths show that sphere-pole behavior is not monotonic:
+the directed suite fails at depth two, passes at three, returns invalid pole
+normals at four, misses the large translated pole at five and six, and passes
+at seven.  The failing traces expose the same geometric pole as a continuum of
+UV roots along a collapsed parameter boundary.  Tree density merely changes
+which UV representatives and ill-conditioned derivative normals survive.
+
+Treat a smooth collapsed boundary as one geometric event, not as many ordinary
+surface roots.  For a ray through the pole, both homogeneous ray-plane
+Bernstein residuals have the collapsed-boundary factor.  A proposed certified
+path is to remove that known factor, use the existing outward interval and
+rotated-hull machinery to exclude every distinct interior root on each
+touching span, and remove the corresponding factor from the residual
+Jacobian determinant to certify a constant crossing orientation.  Publication
+requires complete ownership of all spans forming the singular fiber,
+consistent pole point and oriented sign, a scale-aware line-to-pole roundoff
+or modeling-tolerance qualification, and a valid alternating solid event
+stream.  Ambiguous singularities, inconsistent limiting orientation, or an
+unexcluded deflated root fail closed to the existing path.  This construction
+avoids arbitrary UV normal selection, dynamic allocation, and dependence on
+SurfaceTree depth.  A focused C/C++ pole corpus must ratchet base, reversed,
+inside-origin, small translated/scaled, and large translated/scaled sphere
+cases before this theorem is generalized.

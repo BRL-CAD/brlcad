@@ -138,6 +138,10 @@ brlcad_add_test(NAME rt_primitive_brep COMMAND rt_primitive_brep)
 # Directed analytic primitive vs converted-BRep ray intersections
 brlcad_addexec(rt_brep_ray brep_ray.cpp "librt;libbrep;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_brep_ray COMMAND rt_brep_ray --directed-only)
+brlcad_add_test(
+  NAME rt_brep_ray_pole
+  COMMAND rt_brep_ray --pole-only --surface-tree-depth=2
+)
 brlcad_add_test(NAME rt_brep_ray_crofton COMMAND rt_brep_ray --crofton-only)
 brlcad_add_test(NAME rt_brep_ray_seam COMMAND rt_brep_ray --seam-only)
 brlcad_add_test(NAME rt_brep_ray_endpoint COMMAND rt_brep_ray --endpoint-only)
