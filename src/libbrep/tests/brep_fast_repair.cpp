@@ -145,6 +145,42 @@ degenerate_line_test()
     return valid;
 }
 
+static bool
+degenerate_collinear_loop_test()
+{
+    ON_Brep brep;
+    const int si = brep.AddSurface(large_plane());
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const int v0 = brep.NewVertex(
+	ON_3dPoint(0.0, 0.0, 0.0)).m_vertex_index;
+    const int v1 = brep.NewVertex(
+	ON_3dPoint(1.0, 0.0, 0.0)).m_vertex_index;
+    const int v2 = brep.NewVertex(
+	ON_3dPoint(2.0, 0.0, 0.0)).m_vertex_index;
+    add_nurbs_trim(brep, loop, v0, v1, {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0)
+    }, 1.0e-6);
+    add_nurbs_trim(brep, loop, v1, v2, {
+	ON_3dPoint(1.0, 0.0, 0.0), ON_3dPoint(2.0, 0.0, 0.0)
+    }, 1.0e-6);
+    add_nurbs_trim(brep, loop, v2, v1, {
+	ON_3dPoint(2.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0)
+    }, 1.0e-6);
+    add_nurbs_trim(brep, loop, v1, v0, {
+	ON_3dPoint(1.0, 0.0, 0.0), ON_3dPoint(0.0, 0.0, 0.0)
+    }, 1.0e-6);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.completed_faces == 1 &&
+	result->report.failed_faces == 0 &&
+	result->report.skipped_degenerate_faces == 1 &&
+	result->face_count == 0 && result->point_count == 0;
+    delete result;
+    return valid;
+}
+
 static ON_BrepTrim &
 add_periodic_trim(ON_Brep &brep, ON_BrepLoop &loop,
 	const ON_Surface &surface, double v, bool decreasing,
@@ -242,6 +278,80 @@ periodic_strip_test()
 }
 
 static bool
+full_periodic_face_test()
+{
+    ON_Brep brep;
+    ON_Sphere sphere(ON_3dPoint::Origin, 1.0);
+    ON_RevSurface *surface = sphere.RevSurfaceForm(false);
+    if (!surface)
+	return false;
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    const double seam_u = udom.Mid();
+    const ON_3dPoint north = surface->PointAt(seam_u, vdom.Max());
+    const ON_3dPoint south = surface->PointAt(seam_u, vdom.Min());
+    const int north_vertex = brep.NewVertex(north).m_vertex_index;
+    const int south_vertex = brep.NewVertex(south).m_vertex_index;
+    ON_LineCurve *edge_curve = new ON_LineCurve(north, south);
+    edge_curve->SetDomain(0.0, 1.0);
+    const int c3i = brep.AddEdgeCurve(edge_curve);
+    ON_BrepEdge &edge = brep.NewEdge(brep.m_V[north_vertex],
+	brep.m_V[south_vertex], c3i);
+
+    const ON_2dPoint north_uv(seam_u, vdom.Max());
+    const ON_2dPoint south_uv(seam_u, vdom.Min());
+    ON_LineCurve *down_curve = new ON_LineCurve(north_uv, south_uv);
+    down_curve->SetDomain(0.0, 1.0);
+    const int down_c2i = brep.AddTrimCurve(down_curve);
+    ON_BrepTrim &down = brep.NewTrim(edge, false, loop, down_c2i);
+    down.m_type = ON_BrepTrim::seam;
+    down.m_iso = ON_Surface::W_iso;
+    down.m_tolerance[0] = down.m_tolerance[1] = 1.0e-6;
+
+    ON_LineCurve *up_curve = new ON_LineCurve(south_uv, north_uv);
+    up_curve->SetDomain(0.0, 1.0);
+    const int up_c2i = brep.AddTrimCurve(up_curve);
+    ON_BrepTrim &up = brep.NewTrim(edge, true, loop, up_c2i);
+    up.m_type = ON_BrepTrim::seam;
+    up.m_iso = ON_Surface::W_iso;
+    up.m_tolerance[0] = up.m_tolerance[1] = 1.0e-6;
+
+    fast_result *result = run_fast(brep);
+    bool found_north = false;
+    bool found_south = false;
+    for (int i = 0; result->points && i < result->point_count; ++i) {
+	const ON_3dPoint point(result->points[i][X], result->points[i][Y],
+	    result->points[i][Z]);
+	found_north = found_north || point.DistanceTo(north) < 1.0e-6;
+	found_south = found_south || point.DistanceTo(south) < 1.0e-6;
+    }
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0 &&
+	found_north && found_south;
+    delete result;
+    return valid;
+}
+
+static bool
+untrimmed_planar_face_test()
+{
+    ON_Brep brep;
+    const int si = brep.AddSurface(large_plane());
+    ON_BrepFace &face = brep.NewFace(si);
+    brep.NewLoop(ON_BrepLoop::outer, face);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count == 2 &&
+	result->point_count == 4;
+    delete result;
+    return valid;
+}
+
+static bool
 malformed_pcurve_test()
 {
     ON_Brep brep;
@@ -295,6 +405,8 @@ main(int argc, const char **argv)
     if (argc != 1)
 	return 2;
     return thin_lens_test() && degenerate_line_test() &&
+	degenerate_collinear_loop_test() &&
 	singular_cap_test() && periodic_strip_test() &&
+	full_periodic_face_test() && untrimmed_planar_face_test() &&
 	malformed_pcurve_test() ? 0 : 1;
 }
