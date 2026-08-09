@@ -663,6 +663,7 @@ public:
     bool brep_edge_pnt(long v);
     size_t geometric_degenerate_count();
     size_t incorrect_normal_count();
+    bool toleranced_chart_boundary_triangle(const triangle_t &t);
 
     // Triangle geometry information
     ON_3dPoint tcenter(const triangle_t &t);
@@ -757,6 +758,10 @@ public:
 
     // cdt_mesh index versions of Brep data
     std::set<uedge_t> brep_edges;
+    /* Boundary edges after topology-chart seam and pole collapse.  These may
+     * span several native trim segments and therefore need not have a single
+     * corresponding bedge_seg_t. */
+    std::set<uedge_t> chart_boundary_edges;
     std::map<uedge_t, bedge_seg_t *> ue2b_map;
     std::set<long> ep; // Brep edge point vertex indices
     std::set<long> sv; // Singularity vertex indices

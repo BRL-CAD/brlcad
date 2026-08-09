@@ -17,6 +17,7 @@
 #include <set>
 
 #include "brep/util.h"
+#include "brep/pullback.h"
 #include "chart.h"
 
 static const double CDT_CONIC_TOLERANCE = 0.05;
@@ -239,10 +240,34 @@ cdt_face_uses_polar_chart(const ON_BrepFace &face)
 }
 
 bool
+cdt_face_uses_cylinder_chart(const ON_BrepFace &face)
+{
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!surface || !surface->IsCylinder(NULL, CDT_CONIC_TOLERANCE))
+	return false;
+    /* A full periodic cylinder needs two explicit chart copies of every seam
+     * sample.  Keep those faces on the established native path until that
+     * identification is represented; the analytic chart below handles
+     * ordinary trimmed cylinder patches with no self-seam. */
+    for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
+	const ON_BrepLoop *loop = face.Loop(loop_index);
+	if (!loop)
+	    continue;
+	for (int trim_index = 0; trim_index < loop->TrimCount(); ++trim_index) {
+	    const ON_BrepTrim *trim = loop->Trim(trim_index);
+	    if (trim && trim->m_type == ON_BrepTrim::seam)
+		return false;
+	}
+    }
+    return true;
+}
+
+bool
 cdt_face_uses_topology_chart(const ON_BrepFace &face)
 {
     return cdt_face_uses_cone_chart(face) ||
-	cdt_face_uses_polar_chart(face);
+	cdt_face_uses_polar_chart(face) ||
+	cdt_face_uses_cylinder_chart(face);
 }
 
 static bool
@@ -306,6 +331,26 @@ cdt_face_chart::native_to_chart(const ON_2dPoint &native_uv,
 		m_metric_scale[direction];
 	return chart_uv.IsValid();
     }
+    if (m_type == CDT_FACE_CHART_CYLINDER) {
+	if (!m_surface || !m_cylinder.IsValid() ||
+		!(m_cylinder.circle.radius > 0.0))
+	    return false;
+	const ON_3dPoint point = m_surface->PointAt(native_uv.x,
+	    native_uv.y);
+	double angular = 0.0;
+	double height = 0.0;
+	if (!point.IsValid() ||
+		!m_cylinder.ClosestPointTo(point, &angular, &height))
+	    return false;
+	double unwrapped = angular - m_cylinder_cut;
+	while (unwrapped < 0.0)
+	    unwrapped += 2.0 * ON_PI;
+	while (unwrapped >= 2.0 * ON_PI)
+	    unwrapped -= 2.0 * ON_PI;
+	chart_uv.x = m_cylinder.circle.radius * unwrapped;
+	chart_uv.y = height;
+	return chart_uv.IsValid();
+    }
     if ((m_type != CDT_FACE_CHART_CONE_WEDGE &&
 	    m_type != CDT_FACE_CHART_POLAR) ||
 	    m_closed_dir < 0 || m_open_dir < 0)
@@ -367,6 +412,47 @@ cdt_face_chart::chart_to_native(const ON_2dPoint &chart_uv,
 		chart_uv[direction] / m_metric_scale[direction];
 	}
 	return native_uv.IsValid();
+    }
+    if (m_type == CDT_FACE_CHART_CYLINDER) {
+	if (!m_surface || !m_cylinder.IsValid() ||
+		!(m_cylinder.circle.radius > 0.0))
+	    return false;
+	double angular = m_cylinder_cut +
+	    chart_uv.x / m_cylinder.circle.radius;
+	while (angular < 0.0)
+	    angular += 2.0 * ON_PI;
+	while (angular >= 2.0 * ON_PI)
+	    angular -= 2.0 * ON_PI;
+	const ON_3dPoint target = m_cylinder.PointAt(angular, chart_uv.y);
+	brlcad::PullbackContext context;
+	ON_3dPoint lifted = ON_3dPoint::UnsetPoint;
+	double distance = DBL_MAX;
+	double nearest_distance = DBL_MAX;
+	ON_2dPoint seed = ON_2dPoint::UnsetPoint;
+	for (size_t i = 0; i < points.size() &&
+		i < m_source_native_points.size(); ++i) {
+	    const double dx = points[i].first - chart_uv.x;
+	    const double dy = points[i].second - chart_uv.y;
+	    const double candidate = dx * dx + dy * dy;
+	    if (candidate < nearest_distance) {
+		nearest_distance = candidate;
+		seed = m_source_native_points[i];
+	    }
+	}
+	const double coordinate_scale = std::max(1.0, std::max(
+	    std::max(std::fabs(target.x), std::fabs(target.y)),
+	    std::fabs(target.z)));
+	const double tolerance = 2048.0 *
+	    std::numeric_limits<double>::epsilon() * coordinate_scale;
+	bool mapped = seed.IsValid() &&
+	    context.SurfaceClosestPointFromSeed(m_surface, target, seed,
+		native_uv, lifted, distance, tolerance, NULL, NULL,
+		tolerance);
+	if (!mapped)
+	    mapped = context.SurfaceClosestPoint(m_surface, target, native_uv,
+		lifted, distance, 0, tolerance, tolerance);
+	return mapped && native_uv.IsValid() &&
+	    distance <= 4.0 * tolerance;
     }
     if ((m_type != CDT_FACE_CHART_CONE_WEDGE &&
 	    m_type != CDT_FACE_CHART_POLAR) ||
@@ -475,6 +561,108 @@ cdt_face_chart::build_native(const ON_BrepFace &face,
     for (int point : source_steiner) {
 	if (point < 0 || (size_t)point >= points.size()) {
 	    m_failure = "invalid native-UV chart Steiner point";
+	    return false;
+	}
+	if (unique_steiner.insert(point).second)
+	    steiner.push_back(point);
+    }
+    return validate_boundary(face, native_points);
+}
+
+bool
+cdt_face_chart::build_cylinder(const ON_BrepFace &face,
+	const std::vector<std::pair<double, double>> &native_points,
+	const std::vector<int> &source_outer,
+	const std::vector<std::vector<int>> &source_holes,
+	const std::vector<int> &source_steiner,
+	const std::vector<const ON_3dPoint *> &points_3d,
+	const std::vector<cdt_topo_vertex_id> &topology_vertices,
+	const ON_Cylinder &cylinder)
+{
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!surface || !cylinder.IsValid() ||
+	    !(cylinder.circle.radius > 0.0)) {
+	m_failure = "cylinder chart has no valid analytic surface";
+	return false;
+    }
+    m_type = CDT_FACE_CHART_CYLINDER;
+    m_surface = surface;
+    m_cylinder = cylinder;
+
+    std::vector<double> analytic_angles(native_points.size(), 0.0);
+    std::vector<double> analytic_heights(native_points.size(), 0.0);
+    for (size_t i = 0; i < native_points.size(); ++i) {
+	const ON_3dPoint point = i < points_3d.size() && points_3d[i] ?
+	    *points_3d[i] : surface->PointAt(native_points[i].first,
+	    native_points[i].second);
+	if (!point.IsValid() || !cylinder.ClosestPointTo(point,
+		&analytic_angles[i], &analytic_heights[i])) {
+	    m_failure = "native point could not be mapped to its cylinder";
+	    return false;
+	}
+    }
+
+    std::vector<double> boundary_angles;
+    const auto collect_angles = [&](const std::vector<int> &ring) {
+	for (int point : ring) {
+	    if (point >= 0 && (size_t)point < analytic_angles.size())
+		boundary_angles.push_back(analytic_angles[(size_t)point]);
+	}
+    };
+    collect_angles(source_outer);
+    for (const std::vector<int> &hole : source_holes)
+	collect_angles(hole);
+    if (boundary_angles.empty()) {
+	m_failure = "cylinder chart has no boundary angles";
+	return false;
+    }
+    std::sort(boundary_angles.begin(), boundary_angles.end());
+    boundary_angles.erase(std::unique(boundary_angles.begin(),
+	boundary_angles.end()), boundary_angles.end());
+    double largest_gap = -1.0;
+    for (size_t i = 0; i < boundary_angles.size(); ++i) {
+	const size_t next = (i + 1) % boundary_angles.size();
+	const double next_angle = next ? boundary_angles[next] :
+	    boundary_angles[0] + 2.0 * ON_PI;
+	const double gap = next_angle - boundary_angles[i];
+	if (gap > largest_gap) {
+	    largest_gap = gap;
+	    m_cylinder_cut = std::fmod(boundary_angles[i] + 0.5 * gap,
+		2.0 * ON_PI);
+	}
+    }
+
+    points.reserve(native_points.size());
+    for (size_t i = 0; i < native_points.size(); ++i) {
+	double unwrapped = analytic_angles[i] - m_cylinder_cut;
+	while (unwrapped < 0.0)
+	    unwrapped += 2.0 * ON_PI;
+	while (unwrapped >= 2.0 * ON_PI)
+	    unwrapped -= 2.0 * ON_PI;
+	points.push_back(std::make_pair(cylinder.circle.radius * unwrapped,
+	    analytic_heights[i]));
+    }
+    vertices.resize(points.size());
+    for (size_t i = 0; i < points.size(); ++i) {
+	vertices[i].id = (cdt_chart_vertex_id)i;
+	vertices[i].native_point = (long)i;
+	vertices[i].topo_vertex = topology_vertices[i];
+    }
+    if (!normalize_ring(source_outer, points.size(), outer)) {
+	m_failure = "invalid cylinder chart outline";
+	return false;
+    }
+    holes.resize(source_holes.size());
+    for (size_t hi = 0; hi < source_holes.size(); ++hi) {
+	if (!normalize_ring(source_holes[hi], points.size(), holes[hi])) {
+	    m_failure = "invalid cylinder chart hole";
+	    return false;
+	}
+    }
+    std::set<int> unique_steiner;
+    for (int point : source_steiner) {
+	if (point < 0 || (size_t)point >= points.size()) {
+	    m_failure = "invalid cylinder chart Steiner point";
 	    return false;
 	}
 	if (unique_steiner.insert(point).second)
@@ -1269,11 +1457,19 @@ cdt_face_chart::build(const ON_BrepFace &face,
     m_periodic = false;
     m_pole_topology_vertex = CDT_TOPOLOGY_ID_NONE;
     m_second_pole_topology_vertex = CDT_TOPOLOGY_ID_NONE;
+    m_surface = NULL;
+    m_cylinder = ON_Cylinder();
+    m_cylinder_cut = 0.0;
+    m_source_native_points.clear();
 
     if (topology_vertices.size() != native_points.size()) {
 	m_failure = "chart topology metadata does not match its point array";
 	return false;
     }
+    m_source_native_points.reserve(native_points.size());
+    for (const std::pair<double, double> &point : native_points)
+	m_source_native_points.push_back(ON_2dPoint(point.first,
+	    point.second));
 
     int pole_vertex = -1;
     if (cone_chart_properties(face, &m_closed_dir, &m_open_dir,
@@ -1300,6 +1496,11 @@ cdt_face_chart::build(const ON_BrepFace &face,
 	return build_polar(face, native_points, source_outer, source_holes,
 	    source_steiner, points_3d, topology_vertices);
     }
+    ON_Cylinder cylinder;
+    if (cdt_face_uses_cylinder_chart(face) && face.SurfaceOf() &&
+	    face.SurfaceOf()->IsCylinder(&cylinder, CDT_CONIC_TOLERANCE))
+	return build_cylinder(face, native_points, source_outer, source_holes,
+	    source_steiner, points_3d, topology_vertices, cylinder);
     return build_native(face, native_points, source_outer, source_holes,
 	source_steiner, topology_vertices);
 }
