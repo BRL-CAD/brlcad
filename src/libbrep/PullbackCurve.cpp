@@ -470,14 +470,12 @@ struct PullbackSurfaceScratch {
     ON_Extrusion *extr_surface;
     ON_PlaneSurface *plane_surface;
     ON_SumSurface *sum_surface;
-    ON_SurfaceProxy *proxy_surface;
 
     PullbackSurfaceScratch()
 	: nurbs_surface(ON_NurbsSurface::New()),
 	  extr_surface(new ON_Extrusion()),
 	  plane_surface(new ON_PlaneSurface()),
-	  sum_surface(ON_SumSurface::New()),
-	  proxy_surface(new ON_SurfaceProxy())
+	  sum_surface(ON_SumSurface::New())
     {
     }
 
@@ -487,7 +485,6 @@ struct PullbackSurfaceScratch {
 	delete extr_surface;
 	delete plane_surface;
 	delete sum_surface;
-	delete proxy_surface;
     }
 
     PullbackSurfaceScratch(const PullbackSurfaceScratch &) = delete;
@@ -680,9 +677,16 @@ surface_GetBoundingBox(
 		    }
 		    growcurrent = true;
 		} else if (dynamic_cast<ON_SurfaceProxy * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *scratch.proxy_surface = *dynamic_cast<ON_SurfaceProxy * >(const_cast<ON_Surface *>(surf));
-		    if (scratch.proxy_surface->Trim(0, domSplits[0][i]) && scratch.proxy_surface->Trim(1, domSplits[1][j])) {
-			if (!scratch.proxy_surface->GetBoundingBox(bbox, growcurrent)) {
+		    /* An ON_SurfaceProxy does not own its underlying surface.  A
+		     * thread-local proxy would therefore retain a pointer into the
+		     * caller's B-Rep after this operation returns.  Keep this copy
+		     * local so it is destroyed while the source B-Rep is alive. */
+		    ON_SurfaceProxy bounded =
+			*dynamic_cast<ON_SurfaceProxy *>(
+			    const_cast<ON_Surface *>(surf));
+		    if (bounded.Trim(0, domSplits[0][i]) &&
+			    bounded.Trim(1, domSplits[1][j])) {
+			if (!bounded.GetBoundingBox(bbox, growcurrent)) {
 			    return false;
 			}
 		    }
