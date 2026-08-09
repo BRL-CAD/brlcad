@@ -578,36 +578,37 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
 
     if (seg_len < min_allowed) return false;
 
-    // If we're linear and not already split, tangents and normals won't change that
-    if (bseg->edge_type > 1) return false;
-
-    double dist3d = edge_mid_3d.DistanceTo(line3d.ClosestPointTo(edge_mid_3d));
-
-    if (dist3d > max_edgept_dist_from_edge) return true;
-
-    if ((bseg->tan_start * bseg->tan_end) < s_cdt->cos_within_ang) return true;
-
-    ON_3dPoint *n1, *n2;
-
-    ON_BrepEdge& edge = s_cdt->brep->m_E[bseg->edge_ind];
-    ON_BrepTrim *trim1 = edge.Trim(0);
-    ON_BrepFace *face1 = trim1->Face();
-    cdt_mesh_t *fmesh1 = &s_cdt->fmeshes[face1->m_face_index];
-    n1 = fmesh1->normals[fmesh1->nmap[fmesh1->p2ind[bseg->e_start]]];
-    n2 = fmesh1->normals[fmesh1->nmap[fmesh1->p2ind[bseg->e_end]]];
-
-    if (ON_3dVector(*n1) != ON_3dVector::UnsetVector && ON_3dVector(*n2) != ON_3dVector::UnsetVector) {
-	if ((ON_3dVector(*n1) * ON_3dVector(*n2)) < s_cdt->cos_within_ang - VUNITIZE_TOL) return true;
+    /* A straight B-Rep edge may bound a strongly curved surface.  Its curve
+     * chord and tangent need no refinement, but the shared edge sequence must
+     * still resolve the adjacent face normals.  Otherwise no face-interior
+     * insertion can repair triangles folded over the fixed boundary chord. */
+    if (bseg->edge_type <= 1) {
+	double dist3d =
+	    edge_mid_3d.DistanceTo(line3d.ClosestPointTo(edge_mid_3d));
+	if (dist3d > max_edgept_dist_from_edge)
+	    return true;
+	if ((bseg->tan_start * bseg->tan_end) < s_cdt->cos_within_ang)
+	    return true;
     }
 
-    ON_BrepTrim *trim2 = edge.Trim(1);
-    ON_BrepFace *face2 = trim2->Face();
-    cdt_mesh_t *fmesh2 = &s_cdt->fmeshes[face2->m_face_index];
-    n1 = fmesh2->normals[fmesh2->nmap[fmesh2->p2ind[bseg->e_start]]];
-    n2 = fmesh2->normals[fmesh2->nmap[fmesh2->p2ind[bseg->e_end]]];
-
-    if (ON_3dVector(*n1) != ON_3dVector::UnsetVector && ON_3dVector(*n2) != ON_3dVector::UnsetVector) {
-	if ((ON_3dVector(*n1) * ON_3dVector(*n2)) < s_cdt->cos_within_ang - VUNITIZE_TOL) return true;
+    /* Even when the caller does not request a normal tolerance, constrain a
+     * shared segment to at most 30 degrees of endpoint-normal change.  This
+     * is an orientation-safety bound; retain any stricter caller limit. */
+    const double orientation_cos = cos(ON_PI / 6.0);
+    const double normal_cos = (s_cdt->cos_within_ang > -1.0 +
+	ON_ZERO_TOLERANCE) ?
+	std::max(s_cdt->cos_within_ang, orientation_cos) : orientation_cos;
+    cpolyedge_t *trim_segments[2] = {bseg->tseg1, bseg->tseg2};
+    for (int i = 0; i < 2; ++i) {
+	ON_BrepTrim *trim =
+	    &s_cdt->brep->m_T[trim_segments[i]->trim_ind];
+	ON_2dPoint uv_start = trim->PointAt(trim_segments[i]->trim_start);
+	ON_2dPoint uv_end = trim->PointAt(trim_segments[i]->trim_end);
+	ON_3dVector normal_start = trim_normal(trim, uv_start);
+	ON_3dVector normal_end = trim_normal(trim, uv_end);
+	if (normal_start.Unitize() && normal_end.Unitize() &&
+		(normal_start * normal_end) < normal_cos - VUNITIZE_TOL)
+	    return true;
     }
 
     return false;
