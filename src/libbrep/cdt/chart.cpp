@@ -240,15 +240,8 @@ cdt_face_uses_polar_chart(const ON_BrepFace &face)
 }
 
 bool
-cdt_face_uses_cylinder_chart(const ON_BrepFace &face)
+cdt_face_has_seam(const ON_BrepFace &face)
 {
-    const ON_Surface *surface = face.SurfaceOf();
-    if (!surface || !surface->IsCylinder(NULL, CDT_CONIC_TOLERANCE))
-	return false;
-    /* A full periodic cylinder needs two explicit chart copies of every seam
-     * sample.  Keep those faces on the established native path until that
-     * identification is represented; the analytic chart below handles
-     * ordinary trimmed cylinder patches with no self-seam. */
     for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
 	const ON_BrepLoop *loop = face.Loop(loop_index);
 	if (!loop)
@@ -256,9 +249,20 @@ cdt_face_uses_cylinder_chart(const ON_BrepFace &face)
 	for (int trim_index = 0; trim_index < loop->TrimCount(); ++trim_index) {
 	    const ON_BrepTrim *trim = loop->Trim(trim_index);
 	    if (trim && trim->m_type == ON_BrepTrim::seam)
-		return false;
+		return true;
 	}
     }
+    return false;
+}
+
+bool
+cdt_face_uses_cylinder_chart(const ON_BrepFace &face)
+{
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!surface || !surface->IsCylinder(NULL, CDT_CONIC_TOLERANCE))
+	return false;
+    if (cdt_face_has_seam(face))
+	return surface->IsClosed(0) || surface->IsClosed(1);
     return true;
 }
 
@@ -342,7 +346,8 @@ cdt_face_chart::native_to_chart(const ON_2dPoint &native_uv,
 	if (!point.IsValid() ||
 		!m_cylinder.ClosestPointTo(point, &angular, &height))
 	    return false;
-	double unwrapped = angular - m_cylinder_cut;
+	double unwrapped = m_cylinder_orientation > 0 ?
+	    angular - m_cylinder_cut : m_cylinder_cut - angular;
 	while (unwrapped < 0.0)
 	    unwrapped += 2.0 * ON_PI;
 	while (unwrapped >= 2.0 * ON_PI)
@@ -417,7 +422,7 @@ cdt_face_chart::chart_to_native(const ON_2dPoint &chart_uv,
 	if (!m_surface || !m_cylinder.IsValid() ||
 		!(m_cylinder.circle.radius > 0.0))
 	    return false;
-	double angular = m_cylinder_cut +
+	double angular = m_cylinder_cut + m_cylinder_orientation *
 	    chart_uv.x / m_cylinder.circle.radius;
 	while (angular < 0.0)
 	    angular += 2.0 * ON_PI;
@@ -589,6 +594,20 @@ cdt_face_chart::build_cylinder(const ON_BrepFace &face,
     m_surface = surface;
     m_cylinder = cylinder;
 
+    const bool has_seam = cdt_face_has_seam(face);
+    m_closed_dir = surface->IsClosed(0) ? 0 :
+	(surface->IsClosed(1) ? 1 : -1);
+    if (has_seam && m_closed_dir < 0) {
+	m_failure = "cylinder chart seam requires a closed surface";
+	return false;
+    }
+    if (m_closed_dir >= 0) {
+	m_open_dir = 1 - m_closed_dir;
+	m_closed_domain = surface->Domain(m_closed_dir);
+	m_open_domain = surface->Domain(m_open_dir);
+	m_periodic = true;
+    }
+
     std::vector<double> analytic_angles(native_points.size(), 0.0);
     std::vector<double> analytic_heights(native_points.size(), 0.0);
     for (size_t i = 0; i < native_points.size(); ++i) {
@@ -616,29 +635,81 @@ cdt_face_chart::build_cylinder(const ON_BrepFace &face,
 	m_failure = "cylinder chart has no boundary angles";
 	return false;
     }
-    std::sort(boundary_angles.begin(), boundary_angles.end());
-    boundary_angles.erase(std::unique(boundary_angles.begin(),
-	boundary_angles.end()), boundary_angles.end());
-    double largest_gap = -1.0;
-    for (size_t i = 0; i < boundary_angles.size(); ++i) {
-	const size_t next = (i + 1) % boundary_angles.size();
-	const double next_angle = next ? boundary_angles[next] :
-	    boundary_angles[0] + 2.0 * ON_PI;
-	const double gap = next_angle - boundary_angles[i];
-	if (gap > largest_gap) {
-	    largest_gap = gap;
-	    m_cylinder_cut = std::fmod(boundary_angles[i] + 0.5 * gap,
-		2.0 * ON_PI);
+    if (has_seam) {
+	ON_2dPoint seam_uv;
+	seam_uv[m_closed_dir] = m_closed_domain.Min();
+	seam_uv[m_open_dir] = m_open_domain.Mid();
+	double seam_height = 0.0;
+	if (!cylinder.ClosestPointTo(surface->PointAt(seam_uv.x, seam_uv.y),
+		&m_cylinder_cut, &seam_height)) {
+	    m_failure = "cylinder seam could not be mapped analytically";
+	    return false;
+	}
+	ON_2dPoint quarter_uv = seam_uv;
+	quarter_uv[m_closed_dir] = m_closed_domain.ParameterAt(0.25);
+	double quarter_angle = 0.0;
+	double quarter_height = 0.0;
+	if (!cylinder.ClosestPointTo(surface->PointAt(quarter_uv.x,
+		quarter_uv.y), &quarter_angle, &quarter_height)) {
+	    m_failure = "cylinder orientation sample could not be mapped";
+	    return false;
+	}
+	double delta = quarter_angle - m_cylinder_cut;
+	while (delta < 0.0)
+	    delta += 2.0 * ON_PI;
+	while (delta >= 2.0 * ON_PI)
+	    delta -= 2.0 * ON_PI;
+	m_cylinder_orientation = delta <= ON_PI ? 1 : -1;
+    } else {
+	std::sort(boundary_angles.begin(), boundary_angles.end());
+	boundary_angles.erase(std::unique(boundary_angles.begin(),
+	    boundary_angles.end()), boundary_angles.end());
+	double largest_gap = -1.0;
+	for (size_t i = 0; i < boundary_angles.size(); ++i) {
+	    const size_t next = (i + 1) % boundary_angles.size();
+	    const double next_angle = next ? boundary_angles[next] :
+		boundary_angles[0] + 2.0 * ON_PI;
+	    const double gap = next_angle - boundary_angles[i];
+	    if (gap > largest_gap) {
+		largest_gap = gap;
+		m_cylinder_cut = std::fmod(boundary_angles[i] +
+		    0.5 * gap, 2.0 * ON_PI);
+	    }
 	}
     }
 
+    const ON_3dPoint cylinder_origin = cylinder.circle.plane.origin;
+    const double cylinder_coordinate_scale = std::max(1.0, std::max(
+	std::max(std::fabs(cylinder_origin.x),
+	    std::fabs(cylinder_origin.y)), std::fabs(cylinder_origin.z)));
     points.reserve(native_points.size());
     for (size_t i = 0; i < native_points.size(); ++i) {
-	double unwrapped = analytic_angles[i] - m_cylinder_cut;
+	double unwrapped = m_cylinder_orientation > 0 ?
+	    analytic_angles[i] - m_cylinder_cut :
+	    m_cylinder_cut - analytic_angles[i];
 	while (unwrapped < 0.0)
 	    unwrapped += 2.0 * ON_PI;
 	while (unwrapped >= 2.0 * ON_PI)
 	    unwrapped -= 2.0 * ON_PI;
+	if (has_seam) {
+	    const double native_closed = m_closed_dir ?
+		native_points[i].second : native_points[i].first;
+	    const double seam_tolerance =
+		parameter_tolerance(m_closed_domain);
+	    const double angular_tolerance = 4096.0 *
+		std::numeric_limits<double>::epsilon() *
+		std::max(1.0, cylinder_coordinate_scale /
+		    cylinder.circle.radius);
+	    const bool at_analytic_seam =
+		unwrapped <= angular_tolerance ||
+		2.0 * ON_PI - unwrapped <= angular_tolerance;
+	    if (at_analytic_seam && std::fabs(native_closed -
+		    m_closed_domain.Min()) <= seam_tolerance)
+		unwrapped = 0.0;
+	    else if (at_analytic_seam && std::fabs(native_closed -
+		    m_closed_domain.Max()) <= seam_tolerance)
+		unwrapped = 2.0 * ON_PI;
+	}
 	points.push_back(std::make_pair(cylinder.circle.radius * unwrapped,
 	    analytic_heights[i]));
     }
@@ -747,6 +818,86 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	return false;
     }
 
+    /* A pullback on a periodic surface may use different equivalent images
+     * for an interior edge sample and its nominal trim endpoint.  Mapping
+     * each point independently into the native period can therefore reverse
+     * and retrace an otherwise ordered boundary.  Lift the complete sphere
+     * boundary continuously, resetting only at the pole where longitude is
+     * genuinely undefined.  Analytic cone mapping already selects its lift
+     * from the authoritative 3-D point below. */
+    std::vector<double> lifted_closed(native_points.size(),
+	std::numeric_limits<double>::quiet_NaN());
+    if (!ruled && m_periodic && cdt_face_has_seam(face)) {
+	const double period = m_closed_domain.Length();
+	const auto is_pole_source = [&](int point) {
+	    if (point < 0 || (size_t)point >= native_points.size())
+		return false;
+	    const ON_2dPoint uv(native_points[(size_t)point].first,
+		native_points[(size_t)point].second);
+	    if (topology_vertices[(size_t)point] == m_pole_topology_vertex)
+		return true;
+	    return topology_vertices[(size_t)point] ==
+		CDT_TOPOLOGY_ID_NONE &&
+		std::fabs(uv[m_open_dir] - pole_coordinate) <=
+		pole_tolerance;
+	};
+	const auto lift_ring = [&](const std::vector<int> &ring,
+		double initial_anchor) {
+	    double previous = initial_anchor;
+	    bool have_previous = std::isfinite(previous);
+	    for (int point : ring) {
+		if (point < 0 || (size_t)point >= native_points.size())
+		    continue;
+		if (is_pole_source(point)) {
+		    have_previous = false;
+		    continue;
+		}
+		double angular = m_closed_dir == 0 ?
+		    native_points[(size_t)point].first :
+		    native_points[(size_t)point].second;
+		if (std::isfinite(lifted_closed[(size_t)point]))
+		    angular = lifted_closed[(size_t)point];
+		else if (have_previous)
+		    angular += std::nearbyint((previous - angular) / period) *
+			period;
+		lifted_closed[(size_t)point] = angular;
+		previous = angular;
+		have_previous = true;
+	    }
+	};
+
+	lift_ring(source_outer, std::numeric_limits<double>::quiet_NaN());
+	double angular_sum = 0.0;
+	size_t angular_count = 0;
+	for (int point : source_outer) {
+	    if (point < 0 || (size_t)point >= lifted_closed.size() ||
+		    !std::isfinite(lifted_closed[(size_t)point]))
+		continue;
+	    angular_sum += lifted_closed[(size_t)point];
+	    angular_count++;
+	}
+	const double angular_center = angular_count ?
+	    angular_sum / angular_count : m_closed_domain.Mid();
+	const double image_shift = std::nearbyint((m_closed_domain.Mid() -
+	    angular_center) / period) * period;
+	for (double &angular : lifted_closed) {
+	    if (std::isfinite(angular))
+		angular += image_shift;
+	}
+	const double image_anchor = angular_center + image_shift;
+	for (const std::vector<int> &hole : source_holes)
+	    lift_ring(hole, image_anchor);
+	for (size_t i = 0; i < native_points.size(); ++i) {
+	    if (std::isfinite(lifted_closed[i]) || is_pole_source((int)i))
+		continue;
+	    double angular = m_closed_dir == 0 ? native_points[i].first :
+		native_points[i].second;
+	    angular += std::nearbyint((image_anchor - angular) / period) *
+		period;
+	    lifted_closed[i] = angular;
+	}
+    }
+
     const ON_2dPoint pole_chart_uv(0.0, 0.0);
     points.push_back(std::make_pair(pole_chart_uv.x, pole_chart_uv.y));
     cdt_chart_vertex pole_vertex;
@@ -813,6 +964,11 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	    m_failure = std::string(chart_name) +
 		" point lies outside the chart domain";
 	    return false;
+	}
+	if (!ruled && m_periodic &&
+		std::isfinite(lifted_closed[i])) {
+	    chart_uv.x = chart_uv.y * (lifted_closed[i] -
+		m_closed_domain.Mid()) / m_closed_domain.Length();
 	}
 	const int chart_index = (int)points.size();
 	points.push_back(std::make_pair(chart_uv.x, chart_uv.y));
@@ -890,7 +1046,14 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	    steiner.push_back(mapped);
     }
 
-    if (ruled && holes.empty()) {
+    /* A one-pole chart is a disk cut open along a seam.  Without interior
+     * rays, a planar triangulation may use only the triangle between the pole
+     * and the two seam copies adjacent to it.  Those copies are one 3-D
+     * point, so the triangle disappears when the chart is mapped back to the
+     * surface and leaves the pole uncovered.  Constrain every unobstructed
+     * radial connection from the pole.  This is the natural ruling for a
+     * cone and a topology-preserving fan for a spherical cap. */
+    if (holes.empty() && (ruled || cdt_face_has_seam(face))) {
 	const auto apex_position = std::find(outer.begin(), outer.end(), apex);
 	if (apex_position == outer.end()) {
 	    m_failure = "cone chart outline does not contain its apex";
@@ -1546,6 +1709,7 @@ cdt_face_chart::build(const ON_BrepFace &face,
 	preferred_pole != CDT_TOPOLOGY_ID_NONE;
     m_cylinder = ON_Cylinder();
     m_cylinder_cut = 0.0;
+    m_cylinder_orientation = 1;
     m_source_native_points.clear();
 
     if (topology_vertices.size() != native_points.size()) {

@@ -147,6 +147,7 @@ private:
     bool m_authoritative_cone_points = false;
     ON_Cylinder m_cylinder;
     double m_cylinder_cut = 0.0;
+    int m_cylinder_orientation = 1;
     std::vector<ON_2dPoint> m_source_native_points;
     std::string m_failure;
 };
@@ -155,5 +156,6 @@ BREP_EXPORT bool cdt_face_uses_cone_chart(const ON_BrepFace &face);
 BREP_EXPORT bool cdt_face_uses_polar_chart(const ON_BrepFace &face);
 BREP_EXPORT bool cdt_face_uses_cylinder_chart(const ON_BrepFace &face);
 BREP_EXPORT bool cdt_face_uses_topology_chart(const ON_BrepFace &face);
+BREP_EXPORT bool cdt_face_has_seam(const ON_BrepFace &face);
 
 #endif /* LIBBREP_CDT_CHART_H */
