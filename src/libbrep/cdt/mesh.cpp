@@ -2043,7 +2043,7 @@ cdt_mesh_t::interior_incorrect_normals()
 	ON_3dVector bdir = bnorm(tri);
 	if (tdir.Length() > 0 && bdir.Length() > 0 &&
 		ON_DotProduct(tdir, bdir) < 0.1 &&
-		!toleranced_chart_boundary_triangle(tri)) {
+		!toleranced_boundary_triangle(tri)) {
 	    int epnt_cnt = 0;
 	    for (int i = 0; i < 3; i++) {
 		epnt_cnt = (ep.find((tri).v[i]) == ep.end()) ? epnt_cnt : epnt_cnt + 1;
@@ -2075,7 +2075,9 @@ cdt_mesh_t::interior_incorrect_normals()
 	tri = tris_vect[t_ind];
 	ON_3dVector tdir = tnorm(tri);
 	ON_3dVector bdir = bnorm(tri);
-	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
+	if (tdir.Length() > 0 && bdir.Length() > 0 &&
+		ON_DotProduct(tdir, bdir) < 0.1 &&
+		!toleranced_boundary_triangle(tri)) {
 	    results.push_back(tri);
 	}
 	++tree_it;
@@ -2759,20 +2761,25 @@ cdt_mesh_t::incorrect_normal_count()
 }
 
 bool
-cdt_mesh_t::toleranced_chart_boundary_triangle(const triangle_t &triangle)
+cdt_mesh_t::toleranced_boundary_triangle(const triangle_t &triangle)
 {
-    if (!brep || f_id < 0 || f_id >= brep->m_F.Count() ||
-	    !cdt_face_uses_topology_chart(brep->m_F[f_id]))
+    if (!brep || f_id < 0 || f_id >= brep->m_F.Count())
 	return false;
+    const bool topology_chart =
+	cdt_face_uses_topology_chart(brep->m_F[f_id]);
     bool incident_to_singularity = false;
+    bool incident_to_boundary = false;
     bool all_boundary = true;
     for (int corner = 0; corner < 3; ++corner) {
 	incident_to_singularity = incident_to_singularity ||
 	    sv.find(triangle.v[corner]) != sv.end();
+	incident_to_boundary = incident_to_boundary ||
+	    ep.find(triangle.v[corner]) != ep.end();
 	all_boundary = all_boundary &&
 	    ep.find(triangle.v[corner]) != ep.end();
     }
-    if (!incident_to_singularity && !all_boundary)
+    if (!incident_to_singularity &&
+	    (topology_chart ? !all_boundary : !incident_to_boundary))
 	return false;
 
     const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
@@ -2780,6 +2787,7 @@ cdt_mesh_t::toleranced_chart_boundary_triangle(const triangle_t &triangle)
 	(struct ON_Brep_CDT_State *)p_cdt;
     if (!surface || !state)
 	return false;
+    bool used_model_tolerance = false;
     for (int corner = 0; corner < 3; ++corner) {
 	const long vertex = triangle.v[corner];
 	if (sv.find(vertex) != sv.end())
@@ -2808,33 +2816,60 @@ cdt_mesh_t::toleranced_chart_boundary_triangle(const triangle_t &triangle)
 	    std::fabs(point->z)));
 	double allowed = 1024.0 *
 	    std::numeric_limits<double>::epsilon() * coordinate_scale;
-	const auto audit = state->pnt_audit_info->find(
-	    const_cast<ON_3dPoint *>(point));
-	if (audit != state->pnt_audit_info->end() && audit->second) {
-	    const int edge_index = audit->second->edge_index;
-	    if (edge_index >= 0 && edge_index < brep->m_E.Count()) {
-		const double edge_tolerance =
-		    brep->m_E[edge_index].m_tolerance;
-		if (std::isfinite(edge_tolerance) && edge_tolerance > 0.0 &&
-			!NEAR_EQUAL(edge_tolerance, ON_UNSET_VALUE,
-			ON_ZERO_TOLERANCE))
-		    allowed = std::max(allowed, edge_tolerance);
-	    }
-	    const int vertex_index = audit->second->vert_index;
-	    if (vertex_index >= 0 && vertex_index < brep->m_V.Count()) {
-		const double vertex_tolerance =
-		    brep->m_V[vertex_index].m_tolerance;
-		if (std::isfinite(vertex_tolerance) &&
-			vertex_tolerance > 0.0 &&
-			!NEAR_EQUAL(vertex_tolerance, ON_UNSET_VALUE,
-			ON_ZERO_TOLERANCE))
-		    allowed = std::max(allowed, vertex_tolerance);
+	const double numerical_allowed = allowed;
+	if (state->pnt_audit_info) {
+	    const auto audit = state->pnt_audit_info->find(
+		const_cast<ON_3dPoint *>(point));
+	    if (audit != state->pnt_audit_info->end() && audit->second) {
+		const int edge_index = audit->second->edge_index;
+		if (edge_index >= 0 && edge_index < brep->m_E.Count()) {
+		    const double edge_tolerance =
+			brep->m_E[edge_index].m_tolerance;
+		    if (std::isfinite(edge_tolerance) &&
+			    edge_tolerance > 0.0 &&
+			    !NEAR_EQUAL(edge_tolerance, ON_UNSET_VALUE,
+			    ON_ZERO_TOLERANCE))
+			allowed = std::max(allowed, edge_tolerance);
+		}
+		const int vertex_index = audit->second->vert_index;
+		if (vertex_index >= 0 && vertex_index < brep->m_V.Count()) {
+		    const ON_BrepVertex &brep_vertex =
+			brep->m_V[vertex_index];
+		    const double vertex_tolerance = brep_vertex.m_tolerance;
+		    if (std::isfinite(vertex_tolerance) &&
+			    vertex_tolerance > 0.0 &&
+			    !NEAR_EQUAL(vertex_tolerance, ON_UNSET_VALUE,
+			    ON_ZERO_TOLERANCE))
+			allowed = std::max(allowed, vertex_tolerance);
+		    /* A shared vertex may be recorded with any one incident
+		     * edge in the point audit.  Honor every incident edge's
+		     * declared tolerance rather than depending on that arbitrary
+		     * representative. */
+		    for (int edge_offset = 0;
+			    edge_offset < brep_vertex.m_ei.Count();
+			    ++edge_offset) {
+			const int incident_edge =
+			    brep_vertex.m_ei[edge_offset];
+			if (incident_edge < 0 ||
+				incident_edge >= brep->m_E.Count())
+			    continue;
+			const double edge_tolerance =
+			    brep->m_E[incident_edge].m_tolerance;
+			if (std::isfinite(edge_tolerance) &&
+				edge_tolerance > 0.0 &&
+				!NEAR_EQUAL(edge_tolerance, ON_UNSET_VALUE,
+				ON_ZERO_TOLERANCE))
+			    allowed = std::max(allowed, edge_tolerance);
+		    }
+		}
 	    }
 	}
 	if (minimum_distance > allowed)
 	    return false;
+	used_model_tolerance = used_model_tolerance ||
+	    minimum_distance > numerical_allowed;
     }
-    return true;
+    return topology_chart || used_model_tolerance;
 }
 
 void cdt_mesh_t::reset()
@@ -5525,9 +5560,9 @@ cdt_mesh_t::valid(int verbose)
 	ON_3dVector tdir = tnorm(tri);
 	ON_3dVector bdir = bnorm(tri);
 	const double normal_dot = ON_DotProduct(tdir, bdir);
-	const bool invalid_normal = topology_chart ? (!(normal_dot > 0.0) &&
-	    !toleranced_chart_boundary_triangle(tri)) :
-	    normal_dot < 0.1;
+	const bool invalid_normal = (topology_chart ?
+	    !(normal_dot > 0.0) : normal_dot < 0.1) &&
+	    !toleranced_boundary_triangle(tri);
 	if (tdir.Length() > 0 && bdir.Length() > 0 && invalid_normal) {
 	    if (verbose > 0) {
 		std::cout << name << " face " << f_id
