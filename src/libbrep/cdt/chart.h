@@ -58,7 +58,8 @@ public:
 	const std::vector<int> &steiner,
 	const std::vector<int> &refinement,
 	const std::vector<const ON_3dPoint *> &points_3d,
-	const std::vector<cdt_topo_vertex_id> &topology_vertices);
+	const std::vector<cdt_topo_vertex_id> &topology_vertices,
+	cdt_topo_vertex_id preferred_pole = CDT_TOPOLOGY_ID_NONE);
 
     bool native_to_chart(const ON_2dPoint &native_uv,
 	ON_2dPoint &chart_uv) const;
@@ -140,6 +141,10 @@ private:
     ON_Interval m_native_domain[2];
     double m_metric_scale[2] = {1.0, 1.0};
     const ON_Surface *m_surface = NULL;
+    ON_Cone m_cone;
+    double m_cone_seam_angle = 0.0;
+    int m_cone_orientation = 1;
+    bool m_authoritative_cone_points = false;
     ON_Cylinder m_cylinder;
     double m_cylinder_cut = 0.0;
     std::vector<ON_2dPoint> m_source_native_points;
