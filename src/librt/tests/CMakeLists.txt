@@ -151,6 +151,10 @@ brlcad_add_test(
 )
 brlcad_add_test(NAME rt_brep_ray_interval COMMAND rt_brep_ray --interval-only)
 brlcad_add_test(
+  NAME rt_brep_ray_local_root
+  COMMAND rt_brep_ray --local-root-only
+)
+brlcad_add_test(
   NAME rt_brep_ray_trim_interval
   COMMAND rt_brep_ray --trim-interval-only
 )
