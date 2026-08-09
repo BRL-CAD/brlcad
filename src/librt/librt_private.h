@@ -551,6 +551,7 @@ struct rt_brep_trace_edge {
     size_t candidate_spans;
     size_t discrepancy_bound_cells;
     size_t discrepancy_bound_depth;
+    size_t frame_interval_cells;
     int within_edge_tolerance;
     int sector_valid;
     int closest_state;
@@ -567,6 +568,7 @@ struct rt_brep_trace_edge {
     int discrepancy_bounded;
     int discrepancy_bound_exhausted;
     int discrepancy_endpoints_certified;
+    int frame_interval_supported;
     int discrepancy_sample_authorized;
     int discrepancy_proof_class;
     int discrepancy_authorized;
@@ -858,6 +860,9 @@ struct rt_brep_shot_trace {
     size_t physical_event_seam_contact_pairs;
     size_t physical_event_seam_contact_boxes;
     size_t physical_event_seam_contact_roots;
+    size_t physical_event_seam_oblique_pairs;
+    size_t physical_event_seam_oblique_cells;
+    size_t physical_event_seam_oblique_box_links;
     size_t prepared_vertex_records;
     size_t supported_vertex_records;
     size_t physical_event_vertex;
