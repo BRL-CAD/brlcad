@@ -97,9 +97,10 @@ def audit_one(audit, args, run_dir, database_name, object_name, mode):
         str(args.max_points),
         "--memory-limit-mib",
         str(args.memory_limit_mib),
-        database_name,
-        object_name,
     ]
+    if args.valid_solids_only:
+        command.append("--valid-solids-only")
+    command.extend((database_name, object_name))
     start = time.monotonic()
     try:
         result = run(command, args.object_timeout, cwd=run_dir)
@@ -222,8 +223,10 @@ def audit_database(audit, args, run_dir, database, start_index, sink):
             str(args.max_points),
             "--memory-limit-mib",
             str(args.memory_limit_mib),
-            database_name,
         ]
+        if args.valid_solids_only:
+            command.append("--valid-solids-only")
+        command.append(database_name)
         try:
             process = subprocess.Popen(
                 command,
@@ -457,6 +460,14 @@ def parse_args():
         help="Stop after this many databases; zero audits the full corpus",
     )
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument(
+        "--valid-solids-only",
+        action="store_true",
+        help=(
+            "Classify inputs first and exclude B-Reps outside the valid "
+            "closed-solid quality contract"
+        ),
+    )
     args = parser.parse_args()
     numeric = (
         args.jobs,
