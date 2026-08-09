@@ -32,6 +32,12 @@ brlcad_add_test(NAME brep_cdt_spurious_components COMMAND test_brep_cdt_spurious
 brlcad_addexec(test_brep_cdt_local_defects brep_cdt_local_defects.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_cdt_local_defects COMMAND test_brep_cdt_local_defects)
 
+# A conical pole is one chart vertex even though its native rectangular UV
+# domain has two periodic seam copies.  Exercise scale, rotation, translation,
+# explicit pole identity, and chart/native evaluation round trips.
+brlcad_addexec(test_brep_cdt_cone_chart brep_cdt_cone_chart.cpp "libbrep" TEST)
+brlcad_add_test(NAME brep_cdt_cone_chart COMMAND test_brep_cdt_cone_chart)
+
 # Conversion-quality tessellation is a fail-closed transaction: status and
 # diagnostics must describe every attempt, tolerance changes invalidate all
 # derived state, and rebuilding the same input must produce identical arrays.
@@ -86,6 +92,7 @@ cmakefiles(
   brep_cdt_boundary_start.cpp
   brep_cdt_boundary_steiner.cpp
   brep_cdt_contract.cpp
+  brep_cdt_cone_chart.cpp
   brep_cdt_local_defects.cpp
   brep_cdt_spurious_components.cpp
   brep_fast.cpp

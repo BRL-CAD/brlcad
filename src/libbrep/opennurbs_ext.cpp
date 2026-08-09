@@ -27,6 +27,7 @@
 
 #include "bio.h"
 #include <assert.h>
+#include <cmath>
 #include <vector>
 
 #include "vmath.h"
@@ -453,11 +454,26 @@ ON_NurbsCurve_ClosestPointToLineSegment(
 static double
 trim_binary_search(fastf_t *tparam, const ON_BrepTrim *trim, double tstart, double tend, const ON_3dPoint &edge_3d, double tol, int depth, int force)
 {
-    double tcparam = (tstart + tend) / 2.0;
+    if (!std::isfinite(tstart) || !std::isfinite(tend))
+	return -2;
+
+    double tcparam = tstart + 0.5 * (tend - tstart);
     ON_3dPoint trim_2d = trim->PointAt(tcparam);
     const ON_Surface *s = trim->SurfaceOf();
     ON_3dPoint trim_3d = s->PointAt(trim_2d.x, trim_2d.y);
     double dist = edge_3d.DistanceTo(trim_3d);
+
+    // Once midpoint rounding reaches an endpoint, another recursive call
+    // receives the same interval and can never make progress.  A depth bound
+    // is a second guard for malformed curves whose evaluations do not guide
+    // the search to a shrinking span.
+    const bool midpoint_is_interior = (tstart < tend) ?
+	(tcparam > tstart && tcparam < tend) :
+	(tcparam < tstart && tcparam > tend);
+    if (!midpoint_is_interior || depth >= 64) {
+	(*tparam) = tcparam;
+	return dist;
+    }
 
     if (dist > tol && !force) {
 	ON_3dPoint trim_start_2d = trim->PointAt(tstart);
