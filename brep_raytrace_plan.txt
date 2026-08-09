@@ -2218,6 +2218,92 @@ density nor cache format and adds no dynamic shot-time allocation.  Those
 limits are deliberate qualification boundaries for the later local-isolation
 pipeline, not claims that the remaining cases are geometrically invalid.
 
+6.4.1.4 Connected source-root union certificate
+
+An isolator terminal box is coverage evidence, not necessarily a distinct
+root.  In the bowed Cobb component-0.1 rays, the outer source surface produced
+one ordinary Krawczyk root box plus an adjacent depth-limit box without a
+nominal root.  The two boxes overlap in their outward ray-t intervals and
+touch along a UV boundary.  Treating the second box as an independent unknown
+forces fallback, while accepting it merely because it is adjacent could hide
+a second physical surface root.  Resolve this only with a fresh root-count
+proof over the complete connected component:
+
+  1. Attempt this extension only inside the already qualified finite,
+     nonparallel oblique contact-lobe transaction.  The source root must be on
+     a different face/span from the contact pair.  Every terminal box that
+     contains the source root must already be a regular Krawczyk box with one
+     nonzero, consistent determinant sign.  Thus the extension starts from an
+     independently established surface root and does not replace ordinary
+     root isolation.
+
+  2. A possible additional member must be on exactly the source face and
+     Bezier span, have unresolved disposition and zero determinant sign, and
+     contain no local or fold root.  Grow a component from the root-owning
+     boxes with fixed boolean arrays.  Two boxes connect only when their closed
+     UV rectangles intersect in both coordinates and their outward ray-t
+     intervals overlap, allowing only 256-epsilon coordinate roundoff.  Iterate
+     to a fixed point.  Disconnected boxes, other roots, faces, or spans remain
+     unowned and therefore force whole-ray fallback.
+
+  3. Form the complete rectangular UV hull of the connected component.  Map it
+     into the prepared Bezier span's normalized parameter domain and widen its
+     two boundaries outward by one binary64 step.  Rebuild the two ray-plane
+     Bernstein systems directly from the prepared positive-weight Bezier span,
+     restrict both systems to that hull with the audited outward bounded
+     restriction arithmetic, and map the existing source-root representative
+     into the restricted unit square.  All coefficient and interval storage is
+     fixed-size stack data; this proof performs no shot-time allocation.
+
+  4. Require strict interval Krawczyk inclusion over the entire rectangular
+     hull.  The inclusion theorem supplies existence and uniqueness of one
+     ray/surface root in that hull.  Since a root already exists in the
+     root-owning sub-box, it is the same unique root; every connected rootless
+     terminal box is therefore redundant isolation coverage and cannot hide a
+     second solid transition.  A failed restriction, singular midpoint frame,
+     nonfinite value, or non-strict Krawczyk image leaves the boxes unresolved.
+
+  5. Only after the contact-sector proof and all other seam obligations pass
+     may the transaction mark the complete source component
+     `RESOLVED_BOUNDARY`.  The existing event keeps a root-owning box as its
+     representative, records the complete component box count, and takes the
+     union of all component t intervals as its outward event interval.  Record
+     one source-union certificate, the number of root-owning boxes, and the
+     total number of component boxes.  Eligibility requires one certificate,
+     `0 < root_boxes < total_boxes`, and `total_boxes` equal to the immutable
+     event's source-box count.  All three fields must otherwise be zero.
+
+  6. The global root-coverage gate retains its blanket rejection of rootless
+     boxes.  Its only new exception is a zero-determinant box already marked
+     resolved-boundary by an eligible seam transaction carrying the complete
+     source-union ledger.  Consequently adjacency, t overlap, a numerical
+     root, or even a successful contact proof alone cannot waive surface-root
+     completeness.
+
+The permanent component-0.1 Cobb trend requires this exact `1/1/2` source
+ledger in both ray directions and checks the resulting event boxes and
+representatives against the analytic sphere chord.  The similarity matrix now
+shoots both component 1e-3 (rootless contact corridor) and component 0.1
+(source-root union) forward and backward under identity, nonlinear trim
+reparameterization, translation, cyclic and arbitrary-axis rotation, 0.01x
+scale, and 10,000x scale.  All 28 classifications and analytic chords must be
+invariant.  Because valid transformed isolation topology sometimes produces
+only one source box, component 0.1 accepts either an all-zero source-union
+ledger or a complete ledger; the identity trend independently forces the
+union path.  The current matrix uses the union proof in eight cases.
+For each identity direction, three copied-trace controls must also be rejected:
+one moves the rootless box away from the UV-connected component, one claims
+that every union box owns the root, and one makes the rootless box the event
+representative.  These controls ratchet graph connectivity, strict ledger
+inequality, and representative provenance independently of the successful
+analytic comparison.
+
+This certificate does not merge boxes across spans, accept a component with
+another reported root, prove a fold or tangent root, absorb disconnected
+coverage, or authorize an arbitrary regular event stream.  It is deliberately
+nested inside the narrow seam-contact theorem until broader physical-event
+classification has equally strong topology and material-state obligations.
+
 6.4.2 Cyclic planar vertex-fan theorem
 
 A BREP vertex can be one physical boundary crossing even though three or more
