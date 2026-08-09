@@ -531,6 +531,10 @@ brep_build_surface_data(struct brep_specific *bs)
 	    bs->face_records.push_back(record);
 	    continue;
 	}
+	const ON_RevSurface *revolution = ON_RevSurface::Cast(surface);
+	record.status2_revolution_singular_map =
+	    record.nurb_form_status == 2 && revolution &&
+	    revolution->IsValid() && revolution->m_curve;
 
 	bool complete = true;
 	const ON_Interval nurbs_domain[2] = {
@@ -566,23 +570,26 @@ brep_build_surface_data(struct brep_specific *bs)
 		span.surface_domain[1] = ON_Interval(v_lower, v_upper);
 		span.face_index = face_index;
 		span.span_index = (int)bs->surface_spans.size();
-		/* OpenNURBS side numbering is south/east/north/west.  A
-		 * status-1 NURBS form has the surface's parameterization, so a
-		 * Bezier span on one of its singular outer sides carries the
-		 * collapsed-boundary assertion into the direct solver.  Status 2
-		 * needs an interval parameter-map proof and remains unsupported. */
-		if (record.nurb_form_status == 1) {
+		/* OpenNURBS side numbering is south/east/north/west.  Status 1
+		 * preserves parameters.  For ON_RevSurface status 2, GetNurbForm
+		 * is a tensor product of an angular arc and the profile curve; its
+		 * profile endpoint is therefore the same singular NURBS boundary,
+		 * including the transposed case.  Requiring both declarations and
+		 * later validating collapsed controls, the mapped normal, and face
+		 * trim inclusion keeps this class-specific extension fail closed. */
+		if (record.nurb_form_status == 1 ||
+			record.status2_revolution_singular_map) {
 		    if (same_parameter(v_lower, nurbs_domain[1].Min()) &&
-			    surface->IsSingular(0))
+			    surface->IsSingular(0) && nurbs.IsSingular(0))
 			span.singular_side_mask |= 1u << 0;
 		    if (same_parameter(u_upper, nurbs_domain[0].Max()) &&
-			    surface->IsSingular(1))
+			    surface->IsSingular(1) && nurbs.IsSingular(1))
 			span.singular_side_mask |= 1u << 1;
 		    if (same_parameter(v_upper, nurbs_domain[1].Max()) &&
-			    surface->IsSingular(2))
+			    surface->IsSingular(2) && nurbs.IsSingular(2))
 			span.singular_side_mask |= 1u << 2;
 		    if (same_parameter(u_lower, nurbs_domain[0].Min()) &&
-			    surface->IsSingular(3))
+			    surface->IsSingular(3) && nurbs.IsSingular(3))
 			span.singular_side_mask |= 1u << 3;
 		}
 		bs->surface_spans.push_back(span);
@@ -3481,19 +3488,6 @@ brep_surface_coefficients_excluded(
 	    return true;
     }
     return false;
-}
-
-
-static bool
-brep_surface_span_excluded(const brep_surface_span &span,
-    const ON_Ray &ray, const ON_3dVector &first,
-    const ON_3dVector &second)
-{
-    brep_surface_coefficients coefficients;
-    if (!brep_surface_coefficients_init(coefficients, span, ray, first,
-	    second))
-	return false;
-    return brep_surface_coefficients_excluded(coefficients);
 }
 
 
@@ -10273,15 +10267,58 @@ brep_trace_singular_span(struct rt_brep_shot_trace *trace,
     const ON_2dPoint normal_uv(
 	span.surface_domain[0].ParameterAt(local_uv[0]),
 	span.surface_domain[1].ParameterAt(local_uv[1]));
-    ON_3dPoint normal_point;
-    ON_3dVector normal;
+    const double normal_nurbs_uv[2] = {normal_uv.x, normal_uv.y};
+    ON_2dPoint surface_normal_uv;
+    if (!brep_surface_parameter_from_nurbs(bs, span.face_index,
+	    normal_nurbs_uv, surface_normal_uv))
+	return false;
 
+    double pole_nurbs_uv[2] = {
+	span.surface_domain[0].Mid(), span.surface_domain[1].Mid()
+    };
+    pole_nurbs_uv[direction] = maximum_side ?
+	span.surface_domain[direction].Max() :
+	span.surface_domain[direction].Min();
+    ON_2dPoint surface_pole_uv;
+    if (!brep_surface_parameter_from_nurbs(bs, span.face_index,
+	    pole_nurbs_uv, surface_pole_uv) ||
+	    (size_t)span.face_index >= bs->ctrees.size() ||
+	    !bs->ctrees[span.face_index])
+	return false;
     const ON_Surface *face_surface =
 	bs->brep->m_F[span.face_index].SurfaceOf();
-    if (!face_surface || !surface_EvNormal(face_surface, normal_uv.x,
-	    normal_uv.y, normal_point, normal) || !normal_point.IsValid() ||
+    const ON_3dPoint mapped_pole = face_surface ?
+	face_surface->PointAt(surface_pole_uv.x, surface_pole_uv.y) :
+	ON_3dPoint::UnsetPoint;
+    const double locus_tolerance = std::max(line_tolerance,
+	4.0 * std::max(BREP_DIRECT_ROOT_RELATIVE_TOLERANCE * span_scale,
+	    BREP_DIRECT_EVALUATION_ULPS * DBL_EPSILON * coordinate_scale));
+    if (!mapped_pole.IsValid() || !std::isfinite(locus_tolerance) ||
+	    pole.DistanceTo(mapped_pole) > locus_tolerance)
+	return false;
+    const BRNode *trim_node = NULL;
+    double trim_distance = -1.0;
+    size_t trim_candidates = 0;
+    const int trim_status = bs->ctrees[span.face_index]->isTrimmed(
+	surface_pole_uv, &trim_node, trim_distance,
+	BREP_EDGE_MISS_TOLERANCE, &trim_candidates);
+    if (trim_status == 1 &&
+	    (!(trim_distance >= 0.0) ||
+	     trim_distance > BREP_EDGE_MISS_TOLERANCE))
+	return false;
+
+    ON_3dPoint normal_point;
+    ON_3dVector normal;
+    if (!face_surface || !surface_EvNormal(face_surface, surface_normal_uv.x,
+	    surface_normal_uv.y, normal_point, normal) ||
+	    !normal_point.IsValid() ||
 	    !normal.IsValid() ||
 	    !normal.Unitize())
+	return false;
+    const ON_3dPoint nurbs_normal_point =
+	span.surface.PointAt(local_uv[0], local_uv[1]);
+    if (!nurbs_normal_point.IsValid() ||
+	    normal_point.DistanceTo(nurbs_normal_point) > locus_tolerance)
 	return false;
     if (bs->brep->m_F[span.face_index].m_bRev)
 	normal.Reverse();
@@ -10811,35 +10848,41 @@ brep_trace_surface_spans(struct rt_brep_shot_trace *trace,
 	for (size_t span_index = record.span_begin;
 		span_index < record.span_begin + record.span_count;
 		++span_index) {
-	    if (brep_surface_span_excluded(bs->surface_spans[span_index], ray,
-		    first, second)) {
+	    const brep_surface_span &span = bs->surface_spans[span_index];
+	    brep_surface_coefficients coefficients;
+	    const bool coefficients_available = brep_surface_coefficients_init(
+		coefficients, span, ray, first, second);
+	    const bool hull_excluded = coefficients_available &&
+		brep_surface_coefficients_excluded(coefficients);
+	    bool singular_resolved = false;
+	    int singular_side = -1;
+	    for (int side = 0; side < 4; ++side) {
+		if (!(span.singular_side_mask & (1u << side)))
+		    continue;
+		singular_side = singular_side == -1 ? side : -2;
+	    }
+	    /* A line through a collapsed boundary can be displaced from one
+	     * ray-plane coefficient hull by construction roundoff, especially
+	     * after a small or distant similarity.  Give the exact singular
+	     * deflation proof first refusal before accepting that hull exclusion. */
+	    if (coefficients_available && singular_side >= 0)
+		singular_resolved = brep_trace_singular_span(trace, bs,
+		    coefficients, span, ray, singular_side);
+	    if (hull_excluded && !singular_resolved) {
 		trace->excluded_surface_spans++;
-	    } else {
-		trace->candidate_surface_spans++;
-		brep_surface_coefficients coefficients;
-		const brep_surface_span &span = bs->surface_spans[span_index];
-		if (brep_surface_coefficients_init(coefficients, span, ray,
-			first, second)) {
-		    bool singular_resolved = false;
-		    int singular_side = -1;
-		    for (int side = 0; side < 4; ++side) {
-			if (!(span.singular_side_mask & (1u << side)))
-			    continue;
-			singular_side = singular_side == -1 ? side : -2;
-		    }
-		    if (singular_side >= 0)
-			singular_resolved = brep_trace_singular_span(trace, bs,
-			    coefficients, span, ray, singular_side);
-		    if (!singular_resolved) {
-			if (span.singular_side_mask)
-			    trace->surface_singular_span_failures++;
-			brep_trace_surface_isolation(trace, coefficients, span,
-			    ray, adaptive, true, target_t_width,
-			    record.nurb_form_status == 2);
-		    }
-		} else {
-		    trace->surface_workspace_exhausted++;
-		}
+		continue;
+	    }
+	    trace->candidate_surface_spans++;
+	    if (!coefficients_available) {
+		trace->surface_workspace_exhausted++;
+		continue;
+	    }
+	    if (!singular_resolved) {
+		if (span.singular_side_mask)
+		    trace->surface_singular_span_failures++;
+		brep_trace_surface_isolation(trace, coefficients, span, ray,
+		    adaptive, true, target_t_width,
+		    record.nurb_form_status == 2);
 	    }
 	}
     }
@@ -20049,11 +20092,14 @@ brep_build_prepared_partition(struct rt_brep_shot_trace *trace,
 	    trace->physical_event_tolerance_ambiguous)
 	return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
 
-    /* A status-2 NURBS form has an exact common locus, but its parameter map
-     * is currently certified only pointwise.  Regular and complete clean-
-     * interior fold proofs live entirely in NURBS parameter space and map only
-     * the final point for trim, normal, and hit publication.  Seam, edge, and
-     * vertex events need interval enclosures of the map and fail closed here. */
+    /* A status-2 NURBS form has an exact common locus, but its general
+     * parameter map is currently certified only pointwise.  Regular and
+     * complete clean-interior fold proofs live in NURBS parameter space and
+     * map only the final point for trim, normal, and hit publication.  The
+     * ON_RevSurface singular exception is certified during prep from its
+     * tensor-product construction, collapsed boundaries, mapped normal, and
+     * face trim inclusion.  Other seam, edge, vertex, and singular events
+     * still need class-specific or interval map enclosures and fail closed. */
     if (trace->reparameterized_surface_faces) {
 	for (size_t box_index = 0;
 		box_index < trace->stored_surface_boxes; ++box_index) {
@@ -20088,11 +20134,16 @@ brep_build_prepared_partition(struct rt_brep_shot_trace *trace,
 		trace->physical_events[event_index];
 	    const brep_face_record *record = brep_face_surface_record(bs,
 		event.face_index);
+	    const bool certified_revolution_singular = record &&
+		record->nurb_form_status == 2 &&
+		record->status2_revolution_singular_map &&
+		event.certificate == RT_BREP_TRACE_EVENT_SINGULAR_POLE;
 	    if (record && record->nurb_form_status == 2 &&
 		    (event.certificate !=
 			RT_BREP_TRACE_EVENT_REGULAR_INTERIOR &&
 		     event.certificate !=
-			RT_BREP_TRACE_EVENT_BOUNDARY_FOLD))
+			 RT_BREP_TRACE_EVENT_BOUNDARY_FOLD &&
+		     !certified_revolution_singular))
 		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
 	    if (record && record->nurb_form_status == 2 &&
 		    (event.edge_index != -1 || event.vertex_index != -1))

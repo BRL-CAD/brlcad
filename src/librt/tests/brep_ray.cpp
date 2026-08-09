@@ -835,7 +835,8 @@ report_pole_trace(const char *label, const struct rt_brep_shot_trace &trace)
 static int
 check_pole_prepared_trace(const char *label, struct soltab *brep_stp,
     struct rt_i *rtip, struct resource *resp, const point_t origin,
-    const vect_t direction, double expected_in, double expected_out)
+    const vect_t direction, double expected_in, double expected_out,
+    bool require_reparameterized = false)
 {
     sampled_ray ray;
     VMOVE(ray.origin, origin);
@@ -847,6 +848,8 @@ check_pole_prepared_trace(const char *label, struct soltab *brep_stp,
     bool valid = hits == 2 && trace.prepared_production_selected == 1 &&
 	trace.prepared_production_fallback == RT_BREP_PREPARED_FALLBACK_NONE &&
 	trace.prepared_production_hits == 2 &&
+	(!require_reparameterized ||
+	 trace.reparameterized_surface_faces == 1) &&
 	trace.candidate_surface_spans > 0 &&
 	trace.surface_singular_attempts == trace.candidate_surface_spans &&
 	trace.surface_singular_line_candidates ==
@@ -3772,6 +3775,139 @@ check_transformed_sphere(struct rt_i *rtip, struct resource *resp,
 
     free_solid(brep_stp);
     free_solid(implicit_stp);
+    return failures;
+}
+
+
+static int
+check_status2_revolution_sphere_case(struct rt_i *rtip,
+    struct resource *resp, const char *case_name, const point_t center,
+    double radius, const vect_t requested_axis)
+{
+    if (!rtip || !resp || !case_name || !(radius > 0.0))
+	return 1;
+    ON_3dVector axis(requested_axis);
+    ON_3dVector plane_x;
+    if (!axis.Unitize() || !plane_x.PerpendicularTo(axis) ||
+	    !plane_x.Unitize())
+	return 1;
+    ON_3dVector plane_y = ON_CrossProduct(axis, plane_x);
+    if (!plane_y.Unitize())
+	return 1;
+    struct rt_ell_internal ell = {};
+    ell.magic = RT_ELL_INTERNAL_MAGIC;
+    VMOVE(ell.v, center);
+    VSET(ell.a, radius, 0.0, 0.0);
+    VSET(ell.b, 0.0, radius, 0.0);
+    VSET(ell.c, 0.0, 0.0, radius);
+    struct rt_db_internal ell_intern;
+    RT_DB_INTERNAL_INIT(&ell_intern);
+    ell_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    ell_intern.idb_type = ID_ELL;
+    ell_intern.idb_meth = &OBJ[ID_ELL];
+    ell_intern.idb_ptr = &ell;
+    struct soltab *implicit_stp = prep_solid(rtip, &ell_intern, ID_ELL);
+    if (!implicit_stp) {
+	std::printf("FAIL: status-2 revolution sphere %s implicit prep\n",
+	    case_name);
+	return 1;
+    }
+
+    ON_Sphere sphere(ON_3dPoint::Origin, 1.0);
+    ON_RevSurface *revolution = sphere.IsValid() ?
+	sphere.RevSurfaceForm(false, NULL) : NULL;
+    const double arc_domain = radius * ON_PI;
+    if (revolution) {
+	revolution->SetDomain(0, 0.0, 2.0 * arc_domain);
+	revolution->SetDomain(1, -arc_domain, arc_domain);
+    }
+    ON_Brep *brep = revolution ?
+	ON_BrepRevSurface(revolution, false, false, NULL) : NULL;
+    if (!brep && revolution)
+	delete revolution;
+    if (brep) {
+	ON_Xform similarity(ON_Xform::IdentityTransformation);
+	const ON_3dVector basis[3] = {plane_x, plane_y, axis};
+	for (int row = 0; row < 3; ++row)
+	    for (int column = 0; column < 3; ++column)
+		similarity[row][column] = radius * basis[column][row];
+	similarity[0][3] = center[X];
+	similarity[1][3] = center[Y];
+	similarity[2][3] = center[Z];
+	if (!brep->Transform(similarity)) {
+	    delete brep;
+	    brep = NULL;
+	}
+    }
+    ON_NurbsSurface nurbs;
+    const ON_Surface *surface = brep && brep->m_F.Count() == 1 ?
+	brep->m_F[0].SurfaceOf() : NULL;
+    const int nurb_form_status = surface ? surface->GetNurbForm(nurbs) : 0;
+    struct rt_brep_internal brep_internal = {};
+    brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal.brep = brep;
+    struct rt_db_internal brep_intern;
+    RT_DB_INTERNAL_INIT(&brep_intern);
+    brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    brep_intern.idb_type = ID_BREP;
+    brep_intern.idb_meth = &OBJ[ID_BREP];
+    brep_intern.idb_ptr = &brep_internal;
+    struct soltab *brep_stp = nurb_form_status == 2 ?
+	prep_solid(rtip, &brep_intern, ID_BREP) : NULL;
+    if (!brep_stp) {
+	std::printf("FAIL: status-2 revolution sphere %s BREP "
+	    "prep/status=%d\n", case_name, nurb_form_status);
+	if (brep_internal.brep)
+	    delete brep_internal.brep;
+	free_solid(implicit_stp);
+	return 1;
+    }
+    int failures = 0;
+    for (int reverse = 0; reverse <= 1; ++reverse) {
+	point_t origin;
+	vect_t direction;
+	VJOIN1(origin, center, reverse ? 2.0 * radius : -2.0 * radius,
+	    axis);
+	if (reverse)
+	    VREVERSE(direction, axis);
+	else
+	    VMOVE(direction, axis);
+	char label[128];
+	std::snprintf(label, sizeof(label),
+	    "status-2 revolution sphere %s pole %s", case_name,
+	    reverse ? "reverse" : "forward");
+	failures += check_ray(label, implicit_stp, brep_stp, rtip, resp,
+	    origin, direction, radius, 3.0 * radius);
+	failures += check_pole_prepared_trace(label, brep_stp, rtip, resp,
+	    origin, direction, radius, 3.0 * radius, true);
+    }
+    free_solid(brep_stp);
+    free_solid(implicit_stp);
+    return failures;
+}
+
+
+static int
+check_status2_revolution_sphere_poles(struct rt_i *rtip,
+    struct resource *resp)
+{
+    struct status2_sphere_case {
+	const char *name;
+	point_t center;
+	double radius;
+	vect_t axis;
+    } cases[] = {
+	{"imported-scale", {2.75, -4.5, 7.25}, 1.25,
+	    {0.0, 1.0, 0.0}},
+	{"small", {1.25, -2.5, 5.0}, 0.01,
+	    {-0.3, 1.0, 0.7}},
+	{"large", {1.0e6, -2.0e6, 3.0e6}, 1.0e4,
+	    {2.0, 0.25, -1.0}}
+    };
+    int failures = 0;
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i)
+	failures += check_status2_revolution_sphere_case(rtip, resp,
+	    cases[i].name, cases[i].center, cases[i].radius, cases[i].axis);
     return failures;
 }
 
@@ -17775,6 +17911,7 @@ main(int argc, char **argv)
 	point_t large_center = {1.0e6, -2.0e6, 3.0e6};
 	failures += check_transformed_sphere(rtip, &resp,
 	    "large-translated", large_center, 1.0e4, true);
+	failures += check_status2_revolution_sphere_poles(rtip, &resp);
     }
     if (run_grazing_root) {
 	const ON_3dPoint grazing_center(0.0, 0.0, 0.0);

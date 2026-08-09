@@ -101,6 +101,7 @@ struct brep_face_record {
     size_t span_count = 0;
     int face_index = -1;
     int nurb_form_status = 0;
+    bool status2_revolution_singular_map = false;
     bool supported = false;
 };
 

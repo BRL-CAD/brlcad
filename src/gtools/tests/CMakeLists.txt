@@ -7,6 +7,13 @@ brlcad_add_test(
     ${CMAKE_SOURCE_DIR}/regress/nurbs/sph.g
 )
 
+brlcad_add_test(
+  NAME brep_audit_ray_depth_compare
+  COMMAND
+    brep-audit --ray-depth-compare --ray-count=4
+    ${CMAKE_SOURCE_DIR}/regress/nurbs/sph.g sph.brep
+)
+
 brlcad_add_test(NAME slow-bigdb_1gb COMMAND bigdb 1)
 if(TARGET slow-bigdb_1gb)
   set_property(TEST slow-bigdb_1gb PROPERTY SKIP_RETURN_CODE 123)
