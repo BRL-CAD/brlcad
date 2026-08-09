@@ -282,8 +282,10 @@ static bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dP
     // from the edge we're willing to have point to a single interior point. Too
     // many and we'll end up with a lot of long, thin triangles.
     if (nhits > 5) {
-	// Lot of edges, probably a high level box we need to split - just return the overall min_edge
-	(*min_edge) = sinfo->min_edge;
+	/* Boundary density is not a surface-error tolerance.  Do not force
+	 * the whole patch down to the shortest shared-edge segment; adaptive
+	 * geometry checks can add local points after triangulation. */
+	(*min_edge) = std::max(sinfo->min_edge, sinfo->within_dist);
 	return true;
     }
 
@@ -300,7 +302,7 @@ static bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dP
 	    }
 	}
     }
-    (*min_edge) = min_edge_dist;
+    (*min_edge) = std::max(min_edge_dist, sinfo->within_dist);
 
     return true;
 }
@@ -542,6 +544,20 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     // we want the surface interiors to reflect the edges so they aren't too
     // dissimilar.
     sinfo_tol_calc(sinfo);
+
+    /* Edge samples establish the shared boundary, but the smallest edge
+     * segment must not become an implicit global surface-error tolerance.
+     * Digest the caller's explicit tolerance at the face scale and retain
+     * edge-derived values only when they permit a coarser interior. */
+    const double face_scale = s->BoundingBox().Diagonal().Length();
+    const double edge_within_dist = sinfo->within_dist;
+    struct brep_cdt_tol face_tolerance = BREP_CDT_TOL_ZERO;
+    CDT_Tol_Set(&face_tolerance, face_scale, sinfo->max_edge,
+	s_cdt->tol.abs, s_cdt->tol.rel, s_cdt->absmin);
+    sinfo->min_edge = face_tolerance.min_dist;
+    sinfo->max_edge = face_tolerance.max_dist;
+    sinfo->within_dist = std::max(edge_within_dist,
+	face_tolerance.within_dist);
 }
 
 
