@@ -269,7 +269,10 @@ cdt_face_uses_cylinder_chart(const ON_BrepFace &face)
 bool
 cdt_face_uses_topology_chart(const ON_BrepFace &face)
 {
-    return cdt_face_uses_cone_chart(face) ||
+    const ON_Surface *surface = face.SurfaceOf();
+    const bool periodic_seam = surface && cdt_face_has_seam(face) &&
+	(surface->IsClosed(0) || surface->IsClosed(1));
+    return periodic_seam || cdt_face_uses_cone_chart(face) ||
 	cdt_face_uses_polar_chart(face) ||
 	cdt_face_uses_cylinder_chart(face);
 }
@@ -318,6 +321,177 @@ periodic_parameter(double parameter, const ON_Interval &domain)
     return domain.Min() + remainder;
 }
 
+static int
+periodic_seam_side(double parameter, const ON_Interval &domain)
+{
+    const double tolerance = parameter_tolerance(domain);
+    if (std::fabs(parameter - domain.Min()) <= tolerance)
+	return -1;
+    if (std::fabs(parameter - domain.Max()) <= tolerance)
+	return 1;
+    return 0;
+}
+
+/* A closed edge may have coincident 3-D endpoints stored on opposite sides of
+ * a periodic surface domain.  Some STEP p-curves traverse the edge through
+ * the opposite periodic image while retaining those endpoint parameters.  In
+ * that case, reverse the interior samples of the closed path.  This preserves
+ * exactly the same undirected 3-D edge segments while making its chart winding
+ * agree with its seam endpoints. */
+static std::vector<int>
+orient_periodic_closed_paths(const std::vector<int> &source,
+	std::vector<double> &canonical,
+	const std::vector<const ON_3dPoint *> &points_3d,
+	const ON_Interval &domain, const std::vector<double> *open_parameters)
+{
+    std::vector<int> ring(source);
+    while (ring.size() > 1 && ring.front() == ring.back())
+	ring.pop_back();
+    if (ring.size() < 3 || !(domain.Length() > 0.0))
+	return source;
+
+    size_t start = ring.size();
+    for (size_t i = 0; i < ring.size(); ++i) {
+	const int point = ring[i];
+	const int next = ring[(i + 1) % ring.size()];
+	if (point < 0 || next < 0 || (size_t)point >= canonical.size() ||
+		(size_t)next >= canonical.size())
+	    return source;
+	if (periodic_seam_side(canonical[(size_t)point], domain) &&
+		!periodic_seam_side(canonical[(size_t)next], domain)) {
+	    start = i;
+	    break;
+	}
+    }
+    if (start == ring.size())
+	return source;
+    std::rotate(ring.begin(), ring.begin() + start, ring.end());
+    ring.push_back(ring.front());
+
+    const double period = domain.Length();
+    size_t i = 0;
+    size_t collapsed_path_count = 0;
+
+    const auto coincident = [&](int first, int last) {
+	if (first < 0 || last < 0 || (size_t)first >= points_3d.size() ||
+		(size_t)last >= points_3d.size() || !points_3d[(size_t)first] ||
+		!points_3d[(size_t)last])
+	    return false;
+	const ON_3dPoint &first_3d = *points_3d[(size_t)first];
+	const ON_3dPoint &last_3d = *points_3d[(size_t)last];
+	const double coordinate_scale = std::max(1.0, std::max(
+	    std::max(std::fabs(first_3d.x), std::fabs(first_3d.y)),
+	    std::max(std::fabs(first_3d.z), std::max(
+	    std::max(std::fabs(last_3d.x), std::fabs(last_3d.y)),
+	    std::fabs(last_3d.z)))));
+	const double tolerance = std::max(
+	    (double)BREP_EDGE_MISS_TOLERANCE, 4096.0 *
+	    std::numeric_limits<double>::epsilon() * coordinate_scale);
+	return first_3d.DistanceTo(last_3d) <= tolerance;
+    };
+
+    while (i + 1 < ring.size()) {
+	const int first = ring[i];
+	const int first_side = periodic_seam_side(
+	    canonical[(size_t)first], domain);
+	if (!first_side || periodic_seam_side(
+		canonical[(size_t)ring[i + 1]], domain)) {
+	    ++i;
+	    continue;
+	}
+	size_t end = i + 1;
+	while (end < ring.size()) {
+	    while (end < ring.size() && !periodic_seam_side(
+		    canonical[(size_t)ring[end]], domain))
+		++end;
+	    if (end >= ring.size() || coincident(first, ring[end]))
+		break;
+	    ++end;
+	}
+	if (end >= ring.size())
+	    break;
+	const int last = ring[end];
+	const int last_side = periodic_seam_side(
+	    canonical[(size_t)last], domain);
+	double winding = 0.0;
+	bool duplicate_parameter = false;
+	std::vector<std::pair<double, int>> path_parameters;
+	for (size_t sample = i + 1; sample <= end; ++sample) {
+	    const double previous = canonical[(size_t)ring[sample - 1]];
+	    const double current = canonical[(size_t)ring[sample]];
+	    double delta = current - previous;
+	    delta -= std::nearbyint(delta / period) * period;
+	    winding += delta;
+	    if (sample < end) {
+		for (const std::pair<double, int> &parameter :
+			path_parameters) {
+		    bool same_open_parameter = false;
+		    if (open_parameters &&
+			    open_parameters->size() == canonical.size()) {
+			const double first_open =
+			    (*open_parameters)[(size_t)ring[sample]];
+			const double second_open =
+			    (*open_parameters)[(size_t)parameter.second];
+			const double open_scale = std::max(1.0, std::max(
+			    std::fabs(first_open), std::fabs(second_open)));
+			same_open_parameter = std::fabs(first_open - second_open) <=
+			    4096.0 * std::numeric_limits<double>::epsilon() *
+			    open_scale;
+		    }
+		    if (std::fabs(current - parameter.first) <=
+			    parameter_tolerance(domain) &&
+			    (same_open_parameter ||
+			    coincident(ring[sample], parameter.second))) {
+			duplicate_parameter = true;
+			break;
+		    }
+		}
+		path_parameters.push_back(std::make_pair(current,
+		    ring[sample]));
+	    }
+	}
+	double desired = 0.0;
+	if (last_side != first_side)
+	    desired = last_side > first_side ? period : -period;
+	else
+	    desired = collapsed_path_count++ % 2 ? -period : period;
+	const bool reconstruct = std::fabs(winding) <= 0.5 * period ||
+	    duplicate_parameter;
+	if (!reconstruct && winding * desired < 0.0) {
+	    std::reverse(ring.begin() + i + 1, ring.begin() + end);
+	} else if (reconstruct) {
+	    std::vector<double> distance(end - i + 1, 0.0);
+	    bool complete = true;
+	    for (size_t sample = i + 1; sample <= end; ++sample) {
+		const int previous = ring[sample - 1];
+		const int current = ring[sample];
+		if (previous < 0 || current < 0 ||
+			(size_t)previous >= points_3d.size() ||
+			(size_t)current >= points_3d.size() ||
+			!points_3d[(size_t)previous] ||
+			!points_3d[(size_t)current]) {
+		    complete = false;
+		    break;
+		}
+		distance[sample - i] = distance[sample - i - 1] +
+		    points_3d[(size_t)previous]->DistanceTo(
+		    *points_3d[(size_t)current]);
+	    }
+	    const double total = distance.back();
+	    if (complete && total > 0.0) {
+		for (size_t sample = i; sample <= end; ++sample) {
+		    const double fraction = distance[sample - i] / total;
+		    canonical[(size_t)ring[sample]] = desired > 0.0 ?
+			domain.Min() + fraction * period :
+			domain.Max() - fraction * period;
+		}
+	    }
+	}
+	i = end;
+    }
+    return ring;
+}
+
 bool
 cdt_face_chart::native_to_chart(const ON_2dPoint &native_uv,
 	ON_2dPoint &chart_uv) const
@@ -329,10 +503,14 @@ cdt_face_chart::native_to_chart(const ON_2dPoint &native_uv,
 	return true;
     }
     if (m_type == CDT_FACE_CHART_SURFACE_METRIC) {
-	for (int direction = 0; direction < 2; ++direction)
-	    chart_uv[direction] = (native_uv[direction] -
+	for (int direction = 0; direction < 2; ++direction) {
+	    const double parameter = m_periodic && direction == m_closed_dir ?
+		periodic_parameter(native_uv[direction],
+		    m_native_domain[direction]) : native_uv[direction];
+	    chart_uv[direction] = (parameter -
 		m_native_domain[direction].Min()) *
 		m_metric_scale[direction];
+	}
 	return chart_uv.IsValid();
     }
     if (m_type == CDT_FACE_CHART_CYLINDER) {
@@ -415,6 +593,9 @@ cdt_face_chart::chart_to_native(const ON_2dPoint &chart_uv,
 		return false;
 	    native_uv[direction] = m_native_domain[direction].Min() +
 		chart_uv[direction] / m_metric_scale[direction];
+	    if (m_periodic && direction == m_closed_dir)
+		native_uv[direction] = periodic_parameter(
+		    native_uv[direction], m_native_domain[direction]);
 	}
 	return native_uv.IsValid();
     }
@@ -511,6 +692,7 @@ cdt_face_chart::build_native(const ON_BrepFace &face,
 	const std::vector<int> &source_outer,
 	const std::vector<std::vector<int>> &source_holes,
 	const std::vector<int> &source_steiner,
+	const std::vector<const ON_3dPoint *> &points_3d,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices)
 {
     const ON_Surface *surface = face.SurfaceOf();
@@ -520,6 +702,7 @@ cdt_face_chart::build_native(const ON_BrepFace &face,
     }
 
     m_type = CDT_FACE_CHART_SURFACE_METRIC;
+    m_surface = surface;
     m_native_domain[0] = surface->Domain(0);
     m_native_domain[1] = surface->Domain(1);
     double surface_size[2] = {0.0, 0.0};
@@ -535,11 +718,133 @@ cdt_face_chart::build_native(const ON_BrepFace &face,
 		domain_length;
     }
 
+    std::vector<double> lifted_closed(native_points.size(),
+	std::numeric_limits<double>::quiet_NaN());
+    m_closed_dir = surface->IsClosed(0) ? 0 :
+	(surface->IsClosed(1) ? 1 : -1);
+    m_periodic = m_closed_dir >= 0 && cdt_face_has_seam(face);
+    if (m_periodic) {
+	const double period = m_native_domain[m_closed_dir].Length();
+	if (!(period > 0.0)) {
+	    m_failure = "periodic metric chart has no valid period";
+	    return false;
+	}
+	std::vector<double> canonical(native_points.size(), 0.0);
+	std::vector<double> open_parameter(native_points.size(), 0.0);
+	bool closed[2] = {surface->IsClosed(0), surface->IsClosed(1)};
+	ON_Interval domains[2] = {surface->Domain(0), surface->Domain(1)};
+	brlcad::PullbackContext context;
+	for (size_t i = 0; i < native_points.size(); ++i) {
+	    ON_2dPoint seed(native_points[i].first, native_points[i].second);
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (closed[direction])
+		    seed[direction] = periodic_parameter(seed[direction],
+			domains[direction]);
+		else
+		    seed[direction] = std::max(domains[direction].Min(),
+			std::min(domains[direction].Max(), seed[direction]));
+	    }
+	    ON_2dPoint projected = seed;
+	    if (i < points_3d.size() && points_3d[i]) {
+		ON_3dPoint lifted = ON_3dPoint::UnsetPoint;
+		double distance = DBL_MAX;
+		const ON_3dPoint &target = *points_3d[i];
+		const double coordinate_scale = std::max(1.0, std::max(
+		    std::max(std::fabs(target.x), std::fabs(target.y)),
+		    std::fabs(target.z)));
+		const double tolerance = std::max(
+		    (double)BREP_EDGE_MISS_TOLERANCE, 4096.0 *
+		    std::numeric_limits<double>::epsilon() *
+		    coordinate_scale);
+		if (!context.SurfaceClosestPointFromSeed(surface, target, seed,
+			projected, lifted, distance, tolerance, closed,
+			domains, tolerance))
+		    projected = seed;
+	    }
+	    canonical[i] = periodic_parameter(projected[m_closed_dir],
+		m_native_domain[m_closed_dir]);
+	    open_parameter[i] = projected[1 - m_closed_dir];
+	}
+	const auto lift_ring = [&](const std::vector<int> &ring,
+		double initial_anchor) {
+	    double previous = initial_anchor;
+	    bool have_previous = std::isfinite(previous);
+	    for (int point : ring) {
+		if (point < 0 || (size_t)point >= canonical.size())
+		    continue;
+		double parameter = canonical[(size_t)point];
+		if (have_previous)
+		    parameter += std::nearbyint((previous - parameter) /
+			period) * period;
+		lifted_closed[(size_t)point] = parameter;
+		previous = parameter;
+		have_previous = true;
+	    }
+	};
+	const std::vector<int> oriented_outer = orient_periodic_closed_paths(
+	    source_outer, canonical, points_3d,
+	    m_native_domain[m_closed_dir], &open_parameter);
+	std::vector<std::vector<int>> oriented_holes;
+	oriented_holes.reserve(source_holes.size());
+	for (const std::vector<int> &hole : source_holes)
+	    oriented_holes.push_back(orient_periodic_closed_paths(hole,
+		canonical, points_3d, m_native_domain[m_closed_dir],
+		&open_parameter));
+	lift_ring(oriented_outer, std::numeric_limits<double>::quiet_NaN());
+	double parameter_sum = 0.0;
+	size_t parameter_count = 0;
+	for (int point : oriented_outer) {
+	    if (point < 0 || (size_t)point >= lifted_closed.size() ||
+		    !std::isfinite(lifted_closed[(size_t)point]))
+		continue;
+	    parameter_sum += lifted_closed[(size_t)point];
+	    parameter_count++;
+	}
+	const double parameter_center = parameter_count ?
+	    parameter_sum / parameter_count :
+	    m_native_domain[m_closed_dir].Mid();
+	const double image_shift = std::nearbyint((
+	    m_native_domain[m_closed_dir].Mid() - parameter_center) /
+	    period) * period;
+	for (double &parameter : lifted_closed) {
+	    if (std::isfinite(parameter))
+		parameter += image_shift;
+	}
+	const double image_anchor = parameter_center + image_shift;
+	for (const std::vector<int> &hole : oriented_holes)
+	    lift_ring(hole, image_anchor);
+	for (size_t i = 0; i < native_points.size(); ++i) {
+	    if (std::isfinite(lifted_closed[i]))
+		continue;
+	    lifted_closed[i] = canonical[i] + std::nearbyint((image_anchor -
+		canonical[i]) / period) * period;
+	}
+	if (!normalize_ring(oriented_outer, native_points.size(), outer)) {
+	    m_failure = "invalid periodic metric chart outline";
+	    return false;
+	}
+	holes.resize(oriented_holes.size());
+	for (size_t hi = 0; hi < oriented_holes.size(); ++hi) {
+	    if (!normalize_ring(oriented_holes[hi], native_points.size(),
+		    holes[hi])) {
+		m_failure = "invalid periodic metric chart hole";
+		return false;
+	    }
+	}
+    }
+
     points.reserve(native_points.size());
-    for (const auto &point : native_points) {
-	ON_2dPoint chart_point;
-	if (!native_to_chart(ON_2dPoint(point.first, point.second),
-		chart_point)) {
+
+    for (size_t i = 0; i < native_points.size(); ++i) {
+	ON_2dPoint chart_point(native_points[i].first,
+	    native_points[i].second);
+	if (m_periodic)
+	    chart_point[m_closed_dir] = lifted_closed[i];
+	for (int direction = 0; direction < 2; ++direction)
+	    chart_point[direction] = (chart_point[direction] -
+		m_native_domain[direction].Min()) *
+		m_metric_scale[direction];
+	if (!chart_point.IsValid()) {
 	    m_failure = "native point could not be mapped to its metric chart";
 	    return false;
 	}
@@ -551,12 +856,13 @@ cdt_face_chart::build_native(const ON_BrepFace &face,
 	vertices[i].native_point = (long)i;
 	vertices[i].topo_vertex = topology_vertices[i];
     }
-    if (!normalize_ring(source_outer, points.size(), outer)) {
+    if (!m_periodic && !normalize_ring(source_outer, points.size(), outer)) {
 	m_failure = "invalid native-UV chart outline";
 	return false;
     }
-    holes.resize(source_holes.size());
-    for (size_t hi = 0; hi < source_holes.size(); ++hi) {
+    if (!m_periodic)
+	holes.resize(source_holes.size());
+    for (size_t hi = 0; !m_periodic && hi < source_holes.size(); ++hi) {
 	if (!normalize_ring(source_holes[hi], points.size(), holes[hi])) {
 	    m_failure = "invalid native-UV chart hole";
 	    return false;
@@ -719,13 +1025,29 @@ cdt_face_chart::build_cylinder(const ON_BrepFace &face,
 	vertices[i].native_point = (long)i;
 	vertices[i].topo_vertex = topology_vertices[i];
     }
-    if (!normalize_ring(source_outer, points.size(), outer)) {
+    std::vector<int> oriented_outer(source_outer);
+    std::vector<std::vector<int>> oriented_holes(source_holes);
+    if (has_seam) {
+	std::vector<double> angular(points.size(), 0.0);
+	for (size_t i = 0; i < points.size(); ++i)
+	    angular[i] = points[i].first / cylinder.circle.radius;
+	const ON_Interval angular_domain(0.0, 2.0 * ON_PI);
+	oriented_outer = orient_periodic_closed_paths(source_outer, angular,
+	    points_3d, angular_domain, &analytic_heights);
+	for (size_t hi = 0; hi < source_holes.size(); ++hi)
+	    oriented_holes[hi] = orient_periodic_closed_paths(
+		source_holes[hi], angular, points_3d, angular_domain,
+		&analytic_heights);
+	for (size_t i = 0; i < points.size(); ++i)
+	    points[i].first = cylinder.circle.radius * angular[i];
+    }
+    if (!normalize_ring(oriented_outer, points.size(), outer)) {
 	m_failure = "invalid cylinder chart outline";
 	return false;
     }
-    holes.resize(source_holes.size());
-    for (size_t hi = 0; hi < source_holes.size(); ++hi) {
-	if (!normalize_ring(source_holes[hi], points.size(), holes[hi])) {
+    holes.resize(oriented_holes.size());
+    for (size_t hi = 0; hi < oriented_holes.size(); ++hi) {
+	if (!normalize_ring(oriented_holes[hi], points.size(), holes[hi])) {
 	    m_failure = "invalid cylinder chart hole";
 	    return false;
 	}
@@ -1674,6 +1996,56 @@ cdt_face_chart::validate_boundary(const ON_BrepFace &face,
     return true;
 }
 
+void
+cdt_face_chart::repair_nesting()
+{
+    if (m_type != CDT_FACE_CHART_SURFACE_METRIC || !m_surface ||
+	    !m_surface->IsPlanar(NULL, BN_TOL_DIST) || outer.size() < 3 ||
+	    holes.size() != 1 || holes[0].size() < 3)
+	return;
+
+    const auto contains = [&](const std::vector<int> &ring, int point) {
+	if (point < 0 || (size_t)point >= points.size())
+	    return false;
+	const long double px = points[(size_t)point].first;
+	const long double py = points[(size_t)point].second;
+	bool inside = false;
+	for (size_t i = 0, j = ring.size() - 1; i < ring.size();
+		j = i++) {
+	    const int ia = ring[i];
+	    const int ib = ring[j];
+	    if (ia < 0 || ib < 0 || (size_t)ia >= points.size() ||
+		    (size_t)ib >= points.size())
+		return false;
+	    const long double ax = points[(size_t)ia].first;
+	    const long double ay = points[(size_t)ia].second;
+	    const long double bx = points[(size_t)ib].first;
+	    const long double by = points[(size_t)ib].second;
+	    if ((ay > py) != (by > py) && px < (bx - ax) *
+		    (py - ay) / (by - ay) + ax)
+		inside = !inside;
+	}
+	return inside;
+    };
+
+    const auto area = [&](const std::vector<int> &ring) {
+	long double twice_area = 0.0;
+	for (size_t i = 0; i < ring.size(); ++i) {
+	    const std::pair<double, double> &first =
+		points[(size_t)ring[i]];
+	    const std::pair<double, double> &second =
+		points[(size_t)ring[(i + 1) % ring.size()]];
+	    twice_area += (long double)first.first * second.second -
+		(long double)second.first * first.second;
+	}
+	return std::fabs(twice_area);
+    };
+
+    if (area(holes[0]) > area(outer) &&
+	    !contains(outer, holes[0][0]) && contains(holes[0], outer[0]))
+	outer.swap(holes[0]);
+}
+
 bool
 cdt_face_chart::build(const ON_BrepFace &face,
 	const std::vector<std::pair<double, double>> &native_points,
@@ -1721,6 +2093,7 @@ cdt_face_chart::build(const ON_BrepFace &face,
 	m_source_native_points.push_back(ON_2dPoint(point.first,
 	    point.second));
 
+    bool built = false;
     int pole_vertex = -1;
     if (cone_chart_properties(face, &m_closed_dir, &m_open_dir,
 	    &m_singular_side, &pole_vertex, &m_periodic)) {
@@ -1728,9 +2101,12 @@ cdt_face_chart::build(const ON_BrepFace &face,
 	m_open_domain = face.SurfaceOf()->Domain(m_open_dir);
 	m_pole_topology_vertex = preferred_pole != CDT_TOPOLOGY_ID_NONE ?
 	    preferred_pole : pole_vertex;
-	return build_cone(face, native_points, source_outer, source_holes,
+	built = build_cone(face, native_points, source_outer, source_holes,
 	    source_steiner, source_refinement, points_3d,
 	    topology_vertices);
+	if (built)
+	    repair_nesting();
+	return built;
     }
 
     polar_chart_info polar_info;
@@ -1744,14 +2120,22 @@ cdt_face_chart::build(const ON_BrepFace &face,
 	m_second_pole_topology_vertex = polar_info.second_vertex;
 	m_closed_domain = face.SurfaceOf()->Domain(m_closed_dir);
 	m_open_domain = face.SurfaceOf()->Domain(m_open_dir);
-	return build_polar(face, native_points, source_outer, source_holes,
+	built = build_polar(face, native_points, source_outer, source_holes,
 	    source_steiner, points_3d, topology_vertices);
+	if (built)
+	    repair_nesting();
+	return built;
     }
     ON_Cylinder cylinder;
     if (cdt_face_uses_cylinder_chart(face) && face.SurfaceOf() &&
-	    face.SurfaceOf()->IsCylinder(&cylinder, CDT_CONIC_TOLERANCE))
-	return build_cylinder(face, native_points, source_outer, source_holes,
+	    face.SurfaceOf()->IsCylinder(&cylinder, CDT_CONIC_TOLERANCE)) {
+	built = build_cylinder(face, native_points, source_outer, source_holes,
 	    source_steiner, points_3d, topology_vertices, cylinder);
-    return build_native(face, native_points, source_outer, source_holes,
-	source_steiner, topology_vertices);
+    } else {
+	built = build_native(face, native_points, source_outer, source_holes,
+	    source_steiner, points_3d, topology_vertices);
+    }
+    if (built)
+	repair_nesting();
+    return built;
 }
