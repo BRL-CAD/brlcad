@@ -19,7 +19,9 @@ set(LAST "${TEST_DIR}/rtwizard_cut_last.pix")
 set(PREFIX "${TEST_DIR}/rtwizard_cut_frame_")
 file(REMOVE "${ANIM}" "${STILL}" "${FIRST}" "${LAST}")
 file(GLOB OLD_FRAMES "${PREFIX}*")
-file(REMOVE ${OLD_FRAMES})
+if(OLD_FRAMES)
+  file(REMOVE ${OLD_FRAMES})
+endif()
 
 execute_process(
   COMMAND "${RTWIZ}" --no-gui -i "${SRCFILE}" -o "${ANIM}"
