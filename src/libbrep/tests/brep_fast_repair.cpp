@@ -741,7 +741,8 @@ static void
 add_surface_iso_trim(ON_Brep &brep, ON_BrepLoop &loop,
 	const ON_Surface &surface, int start_vertex, int end_vertex,
 	const ON_2dPoint &start, const ON_2dPoint &end,
-	double tolerance = 1.0e-6, bool segmented_pcurve = false)
+	double tolerance = 1.0e-6, bool segmented_pcurve = false,
+	bool cubic_pcurve = false)
 {
     const bool vary_u = fabs(end.x - start.x) > fabs(end.y - start.y);
     const int direction = vary_u ? 0 : 1;
@@ -759,12 +760,15 @@ add_surface_iso_trim(ON_Brep &brep, ON_BrepLoop &loop,
     edge.m_tolerance = tolerance;
     ON_Curve *trim_curve = NULL;
     if (segmented_pcurve) {
-	const ON_2dPoint middle = 0.5 * (start + end);
-	trim_curve = nurbs_curve(2, 1, {
-	    ON_3dPoint(start.x, start.y, 0.0),
-	    ON_3dPoint(middle.x, middle.y, 0.0),
-	    ON_3dPoint(end.x, end.y, 0.0)
-	});
+	std::vector<ON_3dPoint> control_points;
+	const int count = cubic_pcurve ? 7 : 3;
+	for (int i = 0; i < count; ++i) {
+	    const ON_2dPoint point = start +
+		(double)i / (double)(count - 1) * (end - start);
+	    control_points.push_back(ON_3dPoint(point.x, point.y, 0.0));
+	}
+	trim_curve = nurbs_curve(2, cubic_pcurve ? 3 : 1,
+	    control_points);
     } else {
 	trim_curve = new ON_LineCurve(start, end);
 	trim_curve->SetDomain(0.0, 1.0);
@@ -805,7 +809,7 @@ degenerate_closed_surface_slit_test()
     const ON_2dPoint perturbed_high(u + 0.5 * pcurve_tolerance, high_v);
     const ON_2dPoint perturbed_low(u + 0.5 * pcurve_tolerance, low_v);
     add_surface_iso_trim(brep, loop, *surface, high_vertex, low_vertex,
-	perturbed_high, perturbed_low, pcurve_tolerance, true);
+	perturbed_high, perturbed_low, pcurve_tolerance, true, true);
 
     fast_result *result = run_fast(brep);
     const bool valid = result->ret == BREP_CDT_FAST_OK &&
@@ -873,6 +877,78 @@ degenerate_inner_loop_test()
     fast_result *result = run_fast(brep);
     const bool valid = result->ret == BREP_CDT_FAST_OK &&
 	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
+bridged_inner_loop_test()
+{
+    ON_Brep brep;
+    ON_PlaneSurface *surface = large_plane();
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &outer = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_2dPoint outer_corners[4] = {
+	ON_2dPoint(-2.0, -2.0), ON_2dPoint(2.0, -2.0),
+	ON_2dPoint(2.0, 4.0), ON_2dPoint(-2.0, 4.0)
+    };
+    int outer_vertices[4];
+    for (int i = 0; i < 4; ++i)
+	outer_vertices[i] = brep.NewVertex(surface->PointAt(
+	    outer_corners[i].x, outer_corners[i].y)).m_vertex_index;
+    for (int i = 0; i < 4; ++i) {
+	const int next = (i + 1) % 4;
+	add_surface_iso_trim(brep, outer, *surface, outer_vertices[i],
+	    outer_vertices[next], outer_corners[i], outer_corners[next]);
+    }
+
+    const ON_2dPoint walk[10] = {
+	ON_2dPoint(0.0, 0.0), ON_2dPoint(-1.0, 0.0),
+	ON_2dPoint(-1.0, -1.0), ON_2dPoint(0.0, -1.0),
+	ON_2dPoint(0.0, 0.0), ON_2dPoint(0.0, 2.0),
+	ON_2dPoint(-1.0, 2.0), ON_2dPoint(-1.0, 3.0),
+	ON_2dPoint(0.0, 3.0), ON_2dPoint(0.0, 2.0)
+    };
+    int walk_vertices[10];
+    for (int i = 0; i < 10; ++i) {
+	if (i == 4)
+	    walk_vertices[i] = walk_vertices[0];
+	else if (i == 9)
+	    walk_vertices[i] = walk_vertices[5];
+	else
+	    walk_vertices[i] = brep.NewVertex(surface->PointAt(
+		walk[i].x, walk[i].y)).m_vertex_index;
+    }
+    ON_BrepLoop &inner = brep.NewLoop(ON_BrepLoop::inner, face);
+    for (int i = 0; i < 10; ++i) {
+	const int next = (i + 1) % 10;
+	add_surface_iso_trim(brep, inner, *surface, walk_vertices[i],
+	    walk_vertices[next], walk[i], walk[next]);
+    }
+
+    fast_result *result = run_fast(brep);
+    const double expected_area = 22.0;
+    double triangulated_area = 0.0;
+    for (int fi = 0; result->faces && result->points &&
+	    fi < result->face_count; ++fi) {
+	const int ia = result->faces[3 * fi];
+	const int ib = result->faces[3 * fi + 1];
+	const int ic = result->faces[3 * fi + 2];
+	if (ia < 0 || ib < 0 || ic < 0 || ia >= result->point_count ||
+		ib >= result->point_count || ic >= result->point_count) {
+	    triangulated_area = -1.0;
+	    break;
+	}
+	const double ab_x = result->points[ib][X] - result->points[ia][X];
+	const double ab_y = result->points[ib][Y] - result->points[ia][Y];
+	const double ac_x = result->points[ic][X] - result->points[ia][X];
+	const double ac_y = result->points[ic][Y] - result->points[ia][Y];
+	triangulated_area += 0.5 * fabs(ab_x * ac_y - ab_y * ac_x);
+    }
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0 &&
+	NEAR_EQUAL(triangulated_area, expected_area, 1.0e-6);
     delete result;
     return valid;
 }
@@ -1547,6 +1623,7 @@ main(int argc, const char **argv)
 	degenerate_closed_surface_slit_test() &&
 	multiple_empty_loops_test() &&
 	degenerate_inner_loop_test() &&
+	bridged_inner_loop_test() &&
 	collapsed_closed_pcurve_test() &&
 	misclassified_periodic_boundaries_test() &&
 	touching_periodic_subloops_test() &&
