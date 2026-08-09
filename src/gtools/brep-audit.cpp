@@ -105,9 +105,44 @@ struct surface_tree_result {
     int ret = BRLCAD_ERROR;
     int face_count = 0;
     int depth_limit = BREP_MAX_FT_DEPTH;
+    const char *failure_reason = "database_internal_load";
     double seconds = 0.0;
     size_t peak_rss_bytes = 0;
+    bool have_bbox = false;
+    point_t bmin = VINIT_ZERO;
+    point_t bmax = VINIT_ZERO;
     std::vector<surface_tree_profile> faces;
+};
+
+struct surface_tree_totals {
+    size_t objects = 0;
+    size_t successful_objects = 0;
+    size_t failed_objects = 0;
+    size_t faces = 0;
+    size_t failed_faces = 0;
+    size_t loops = 0;
+    size_t trims = 0;
+    size_t nodes = 0;
+    size_t leaves = 0;
+    size_t curve_leaves = 0;
+    size_t native_nurbs_faces = 0;
+    size_t rational_faces = 0;
+    size_t nurb_form_unavailable = 0;
+    size_t nurb_form_status_one = 0;
+    size_t nurb_form_status_two = 0;
+    size_t nurb_form_status_other = 0;
+    int maximum_depth = 0;
+    size_t maximum_leaves = 0;
+    int maximum_leaves_face = -1;
+    double maximum_seconds = 0.0;
+    int maximum_seconds_face = -1;
+    int maximum_order[2] = {0, 0};
+    int maximum_cv_count[2] = {0, 0};
+    int maximum_span_count[2] = {0, 0};
+    int maximum_nurb_form_order[2] = {0, 0};
+    int maximum_nurb_form_cv_count[2] = {0, 0};
+    int maximum_nurb_form_span_count[2] = {0, 0};
+    double seconds = 0.0;
 };
 
 
@@ -310,6 +345,12 @@ raytrace_prep_result(struct db_i *dbip, struct directory *dp)
     struct rt_brep_internal *bi =
 	(struct rt_brep_internal *)intern.idb_ptr;
     RT_BREP_CK_MAGIC(bi);
+    const ON_BoundingBox bbox = bi->brep->BoundingBox();
+    if (bbox.IsValid()) {
+	VMOVE(result.bmin, bbox.m_min);
+	VMOVE(result.bmax, bbox.m_max);
+	result.have_bbox = true;
+    }
     result.face_count = bi->brep->m_F.Count();
 
     struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
@@ -360,11 +401,20 @@ surface_tree_profile_result(struct db_i *dbip, struct directory *dp,
     struct rt_db_internal intern;
     if (load_brep(dbip, dp, &intern) != BRLCAD_OK)
 	return result;
+    result.failure_reason = "none";
     struct rt_brep_internal *bi =
 	(struct rt_brep_internal *)intern.idb_ptr;
     RT_BREP_CK_MAGIC(bi);
+    const ON_BoundingBox bbox = bi->brep->BoundingBox();
+    if (bbox.IsValid()) {
+	VMOVE(result.bmin, bbox.m_min);
+	VMOVE(result.bmax, bbox.m_max);
+	result.have_bbox = true;
+    }
     result.face_count = bi->brep->m_F.Count();
     result.ret = result.face_count ? BRLCAD_OK : BRLCAD_ERROR;
+    if (!result.face_count)
+	result.failure_reason = "empty_brep";
     int64_t total_start = bu_gettime();
     result.faces.reserve((size_t)result.face_count);
     for (int i = 0; i < result.face_count; ++i) {
@@ -421,6 +471,7 @@ surface_tree_profile_result(struct db_i *dbip, struct directory *dp,
 	    }
 	} else {
 	    result.ret = BRLCAD_ERROR;
+	    result.failure_reason = "surface_tree";
 	    profile.failure.reason = tree.Failure();
 	    profile.failure.u = tree.FailureDomain(0);
 	    profile.failure.v = tree.FailureDomain(1);
@@ -706,6 +757,213 @@ print_prep_result(const char *db_path, const char *object,
     std::cout << "]}\n";
 }
 
+static surface_tree_totals
+surface_tree_collect_totals(const surface_tree_result &result)
+{
+    surface_tree_totals totals;
+    totals.objects = 1;
+    totals.successful_objects = result.ret == BRLCAD_OK ? 1 : 0;
+    totals.failed_objects = result.ret == BRLCAD_OK ? 0 : 1;
+    totals.faces = result.faces.size();
+    totals.seconds = result.seconds;
+    for (size_t i = 0; i < result.faces.size(); ++i) {
+	const surface_tree_profile &profile = result.faces[i];
+	if (profile.failure.reason != brlcad::SurfaceTree::FAILURE_NONE)
+	    totals.failed_faces++;
+	totals.loops += (size_t)std::max(0, profile.loop_count);
+	totals.trims += (size_t)std::max(0, profile.trim_count);
+	totals.nodes += profile.nodes;
+	totals.leaves += profile.leaves;
+	totals.curve_leaves += profile.curve_leaves;
+	totals.native_nurbs_faces += profile.native_nurbs ? 1 : 0;
+	totals.rational_faces += profile.rational ||
+	    profile.nurb_form_rational ? 1 : 0;
+	if (profile.nurb_form_status <= 0)
+	    totals.nurb_form_unavailable++;
+	else if (profile.nurb_form_status == 1)
+	    totals.nurb_form_status_one++;
+	else if (profile.nurb_form_status == 2)
+	    totals.nurb_form_status_two++;
+	else
+	    totals.nurb_form_status_other++;
+	totals.maximum_depth = std::max(totals.maximum_depth,
+	    profile.maximum_depth);
+	if (profile.leaves > totals.maximum_leaves) {
+	    totals.maximum_leaves = profile.leaves;
+	    totals.maximum_leaves_face = profile.failure.face_index;
+	}
+	if (profile.seconds > totals.maximum_seconds) {
+	    totals.maximum_seconds = profile.seconds;
+	    totals.maximum_seconds_face = profile.failure.face_index;
+	}
+	for (int direction = 0; direction < 2; ++direction) {
+	    totals.maximum_order[direction] = std::max(
+		totals.maximum_order[direction], profile.order[direction]);
+	    totals.maximum_cv_count[direction] = std::max(
+		totals.maximum_cv_count[direction], profile.cv_count[direction]);
+	    totals.maximum_span_count[direction] = std::max(
+		totals.maximum_span_count[direction],
+		profile.span_count[direction]);
+	    totals.maximum_nurb_form_order[direction] = std::max(
+		totals.maximum_nurb_form_order[direction],
+		profile.nurb_form_order[direction]);
+	    totals.maximum_nurb_form_cv_count[direction] = std::max(
+		totals.maximum_nurb_form_cv_count[direction],
+		profile.nurb_form_cv_count[direction]);
+	    totals.maximum_nurb_form_span_count[direction] = std::max(
+		totals.maximum_nurb_form_span_count[direction],
+		profile.nurb_form_span_count[direction]);
+	}
+    }
+    return totals;
+}
+
+static void
+surface_tree_add_totals(surface_tree_totals &aggregate,
+    const surface_tree_totals &object)
+{
+    aggregate.objects += object.objects;
+    aggregate.successful_objects += object.successful_objects;
+    aggregate.failed_objects += object.failed_objects;
+    aggregate.faces += object.faces;
+    aggregate.failed_faces += object.failed_faces;
+    aggregate.loops += object.loops;
+    aggregate.trims += object.trims;
+    aggregate.nodes += object.nodes;
+    aggregate.leaves += object.leaves;
+    aggregate.curve_leaves += object.curve_leaves;
+    aggregate.native_nurbs_faces += object.native_nurbs_faces;
+    aggregate.rational_faces += object.rational_faces;
+    aggregate.nurb_form_unavailable += object.nurb_form_unavailable;
+    aggregate.nurb_form_status_one += object.nurb_form_status_one;
+    aggregate.nurb_form_status_two += object.nurb_form_status_two;
+    aggregate.nurb_form_status_other += object.nurb_form_status_other;
+    aggregate.maximum_depth = std::max(aggregate.maximum_depth,
+	object.maximum_depth);
+    aggregate.maximum_leaves = std::max(aggregate.maximum_leaves,
+	object.maximum_leaves);
+    aggregate.maximum_seconds = std::max(aggregate.maximum_seconds,
+	object.maximum_seconds);
+    aggregate.seconds += object.seconds;
+    for (int direction = 0; direction < 2; ++direction) {
+	aggregate.maximum_order[direction] = std::max(
+	    aggregate.maximum_order[direction], object.maximum_order[direction]);
+	aggregate.maximum_cv_count[direction] = std::max(
+	    aggregate.maximum_cv_count[direction],
+	    object.maximum_cv_count[direction]);
+	aggregate.maximum_span_count[direction] = std::max(
+	    aggregate.maximum_span_count[direction],
+	    object.maximum_span_count[direction]);
+	aggregate.maximum_nurb_form_order[direction] = std::max(
+	    aggregate.maximum_nurb_form_order[direction],
+	    object.maximum_nurb_form_order[direction]);
+	aggregate.maximum_nurb_form_cv_count[direction] = std::max(
+	    aggregate.maximum_nurb_form_cv_count[direction],
+	    object.maximum_nurb_form_cv_count[direction]);
+	aggregate.maximum_nurb_form_span_count[direction] = std::max(
+	    aggregate.maximum_nurb_form_span_count[direction],
+	    object.maximum_nurb_form_span_count[direction]);
+    }
+}
+
+static void
+print_surface_tree_totals(const surface_tree_totals &totals)
+{
+    std::cout << "{\"objects\":" << totals.objects
+	<< ",\"successful_objects\":" << totals.successful_objects
+	<< ",\"failed_objects\":" << totals.failed_objects
+	<< ",\"faces\":" << totals.faces
+	<< ",\"failed_faces\":" << totals.failed_faces
+	<< ",\"loops\":" << totals.loops
+	<< ",\"trims\":" << totals.trims
+	<< ",\"nodes\":" << totals.nodes
+	<< ",\"leaves\":" << totals.leaves
+	<< ",\"curve_leaves\":" << totals.curve_leaves
+	<< ",\"native_nurbs_faces\":" << totals.native_nurbs_faces
+	<< ",\"rational_faces\":" << totals.rational_faces
+	<< ",\"nurb_form_status_counts\":{\"unavailable\":"
+	<< totals.nurb_form_unavailable << ",\"exact\":"
+	<< totals.nurb_form_status_one << ",\"reparameterized\":"
+	<< totals.nurb_form_status_two << ",\"other\":"
+	<< totals.nurb_form_status_other << "}"
+	<< ",\"maximum_depth\":" << totals.maximum_depth
+	<< ",\"maximum_leaves\":" << totals.maximum_leaves
+	<< ",\"maximum_face_seconds\":";
+    print_num(totals.maximum_seconds);
+    std::cout << ",\"maximum_order\":[" << totals.maximum_order[0]
+	<< "," << totals.maximum_order[1] << "]"
+	<< ",\"maximum_cv_count\":[" << totals.maximum_cv_count[0]
+	<< "," << totals.maximum_cv_count[1] << "]"
+	<< ",\"maximum_span_count\":[" << totals.maximum_span_count[0]
+	<< "," << totals.maximum_span_count[1] << "]"
+	<< ",\"maximum_nurb_form_order\":["
+	<< totals.maximum_nurb_form_order[0] << ","
+	<< totals.maximum_nurb_form_order[1] << "]"
+	<< ",\"maximum_nurb_form_cv_count\":["
+	<< totals.maximum_nurb_form_cv_count[0] << ","
+	<< totals.maximum_nurb_form_cv_count[1] << "]"
+	<< ",\"maximum_nurb_form_span_count\":["
+	<< totals.maximum_nurb_form_span_count[0] << ","
+	<< totals.maximum_nurb_form_span_count[1] << "]"
+	<< ",\"seconds\":";
+    print_num(totals.seconds);
+    std::cout << "}";
+}
+
+static void
+print_surface_tree_summary(const char *object,
+    const surface_tree_result &result)
+{
+    const surface_tree_totals totals = surface_tree_collect_totals(result);
+    vect_t dimensions = VINIT_ZERO;
+    if (result.have_bbox)
+	dims(dimensions, result.bmin, result.bmax);
+    std::cout << "{\"object\":" << json_quote(object)
+	<< ",\"status\":" << json_quote(result.ret == BRLCAD_OK ?
+	    "ok" : "fail")
+	<< ",\"return_code\":" << result.ret
+	<< ",\"failure_reason\":" << json_quote(result.failure_reason)
+	<< ",\"adaptive_depth_limit\":" << result.depth_limit
+	<< ",\"process_peak_rss_bytes\":" << result.peak_rss_bytes
+	<< ",\"bbox_valid\":" << (result.have_bbox ? "true" : "false")
+	<< ",\"bbox_min\":";
+    if (result.have_bbox) print_vec(result.bmin); else std::cout << "null";
+    std::cout << ",\"bbox_max\":";
+    if (result.have_bbox) print_vec(result.bmax); else std::cout << "null";
+    std::cout << ",\"dimensions\":";
+    if (result.have_bbox) print_vec(dimensions); else std::cout << "null";
+    std::cout << ",\"diagonal\":";
+    if (result.have_bbox) print_num(MAGNITUDE(dimensions));
+    else std::cout << "null";
+    std::cout << ",\"maximum_leaves_face\":"
+	<< totals.maximum_leaves_face
+	<< ",\"maximum_seconds_face\":"
+	<< totals.maximum_seconds_face
+	<< ",\"face_failures\":[";
+    bool first_failure = true;
+    for (size_t face_index = 0; face_index < result.faces.size();
+	    ++face_index) {
+	const prep_face_failure &failure = result.faces[face_index].failure;
+	if (failure.reason == brlcad::SurfaceTree::FAILURE_NONE)
+	    continue;
+	if (!first_failure)
+	    std::cout << ",";
+	first_failure = false;
+	std::cout << "{\"face_index\":" << failure.face_index
+	    << ",\"reason\":" << json_quote(
+		surface_tree_failure_name(failure.reason))
+	    << ",\"depth\":" << failure.depth << ",\"u\":";
+	print_interval(failure.u);
+	std::cout << ",\"v\":";
+	print_interval(failure.v);
+	std::cout << "}";
+    }
+    std::cout << "]";
+    std::cout << ",\"totals\":";
+    print_surface_tree_totals(totals);
+    std::cout << "}";
+}
+
 static void
 print_surface_tree_result(const char *db_path, const char *object,
 	const surface_tree_result &result)
@@ -745,17 +1003,32 @@ print_surface_tree_result(const char *db_path, const char *object,
 	    maximum_seconds_face = profile.failure.face_index;
 	}
     }
+    vect_t dimensions = VINIT_ZERO;
+    if (result.have_bbox)
+	dims(dimensions, result.bmin, result.bmax);
     std::cout << "{\"format\":\"brlcad-brep-surface-tree-audit-v2\""
 	<< ",\"database\":" << json_quote(db_path)
 	<< ",\"object\":" << json_quote(object)
 	<< ",\"status\":" << json_quote(result.ret == BRLCAD_OK ?
 	    "ok" : "fail")
 	<< ",\"return_code\":" << result.ret
+	<< ",\"failure_reason\":" << json_quote(result.failure_reason)
 	<< ",\"seconds\":";
     print_num(result.seconds);
     std::cout << ",\"peak_rss_bytes\":" << result.peak_rss_bytes
 	<< ",\"face_count\":" << result.face_count
 	<< ",\"depth_limit\":" << result.depth_limit
+	<< ",\"bbox_valid\":" << (result.have_bbox ? "true" : "false")
+	<< ",\"bbox_min\":";
+    if (result.have_bbox) print_vec(result.bmin); else std::cout << "null";
+    std::cout << ",\"bbox_max\":";
+    if (result.have_bbox) print_vec(result.bmax); else std::cout << "null";
+    std::cout << ",\"dimensions\":";
+    if (result.have_bbox) print_vec(dimensions); else std::cout << "null";
+    std::cout << ",\"diagonal\":";
+    if (result.have_bbox) print_num(MAGNITUDE(dimensions));
+    else std::cout << "null";
+    std::cout
 	<< ",\"maximum_depth\":" << maximum_depth
 	<< ",\"total_nodes\":" << total_nodes
 	<< ",\"total_leaves\":" << total_leaves
@@ -848,6 +1121,50 @@ list_breps(const char *db_path)
     return 0;
 }
 
+static int
+profile_all_surface_trees(struct db_i *dbip, const char *db_path,
+    int depth_limit)
+{
+    if (dbip == DBI_NULL || !db_path)
+	return 2;
+    std::vector<std::string> names;
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, dbip) {
+	if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP)
+	    names.push_back(dp->d_namep);
+    } FOR_ALL_DIRECTORY_END;
+    std::sort(names.begin(), names.end());
+
+    surface_tree_totals aggregate;
+    size_t failed_objects = 0;
+    std::cout << "{\"format\":"
+	<< "\"brlcad-brep-surface-tree-database-summary-v1\""
+	<< ",\"database\":" << json_quote(db_path)
+	<< ",\"database_file_bytes\":" << bu_file_size(db_path)
+	<< ",\"adaptive_depth_limit\":" << depth_limit
+	<< ",\"objects\":[";
+    for (size_t object_index = 0; object_index < names.size();
+	    ++object_index) {
+	if (object_index)
+	    std::cout << ",";
+	dp = db_lookup(dbip, names[object_index].c_str(), LOOKUP_QUIET);
+	surface_tree_result result;
+	if (dp != RT_DIR_NULL)
+	    result = surface_tree_profile_result(dbip, dp, depth_limit);
+	print_surface_tree_summary(names[object_index].c_str(), result);
+	const surface_tree_totals totals = surface_tree_collect_totals(result);
+	surface_tree_add_totals(aggregate, totals);
+	failed_objects += result.ret == BRLCAD_OK ? 0 : 1;
+    }
+    std::cout << "],\"totals\":";
+    print_surface_tree_totals(aggregate);
+    std::cout << ",\"process_peak_rss_bytes\":" << peak_rss_bytes()
+	<< "}\n";
+    if (names.empty())
+	return 1;
+    return failed_objects ? 1 : 0;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -858,6 +1175,7 @@ main(int argc, const char **argv)
     int list_only = 0;
     int prep_only = 0;
     int surface_trees_only = 0;
+    int surface_trees_all = 0;
     double ratio_min = 0.5;
     double ratio_max = 2.0;
     double tess_abs = 0.0;
@@ -865,7 +1183,7 @@ main(int argc, const char **argv)
     double tess_norm = 0.0;
     long memory_limit_mib = 0;
     long surface_tree_depth = BREP_MAX_FT_DEPTH;
-    struct bu_opt_desc d[12];
+    struct bu_opt_desc d[13];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -876,19 +1194,25 @@ main(int argc, const char **argv)
     BU_OPT(d[7], "", "memory-limit-mib", "#", &bu_opt_long, &memory_limit_mib, "Process address-space limit in MiB (zero disables)");
     BU_OPT(d[8], "", "prep-only", "", NULL, &prep_only, "Audit raytrace preparation only");
     BU_OPT(d[9], "", "surface-trees-only", "", NULL, &surface_trees_only, "Profile raytrace SurfaceTrees serially");
-    BU_OPT(d[10], "", "surface-tree-depth", "#", &bu_opt_long, &surface_tree_depth, "Adaptive SurfaceTree depth after structural splits");
-    BU_OPT_NULL(d[11]);
+    BU_OPT(d[10], "", "surface-trees-all", "", NULL, &surface_trees_all, "Summarize SurfaceTrees for every BREP in a database");
+    BU_OPT(d[11], "", "surface-tree-depth", "#", &bu_opt_long, &surface_tree_depth, "Adaptive SurfaceTree depth after structural splits");
+    BU_OPT_NULL(d[12]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
-    const char *usage = "Usage: brep-audit [options] [--list|--prep-only|--surface-trees-only] file.g [brep]\n";
-    if (print_help || (list_only && ac != 1) ||
-	    (!list_only && ac != 2) ||
+    const char *usage = "Usage: brep-audit [options] "
+	"[--list|--prep-only|--surface-trees-only|--surface-trees-all] "
+	"file.g [brep]\n";
+    const bool database_only = list_only || surface_trees_all;
+    if (print_help || (database_only && ac != 1) ||
+	    (!database_only && ac != 2) ||
 	    ((list_only ? 1 : 0) + (prep_only ? 1 : 0) +
-	     (surface_trees_only ? 1 : 0) > 1) ||
+	     (surface_trees_only ? 1 : 0) +
+	     (surface_trees_all ? 1 : 0) > 1) ||
 	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
 	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0 ||
 	    surface_tree_depth < 0 ||
 	    surface_tree_depth > BREP_MAX_FT_DEPTH ||
-	    (!surface_trees_only && surface_tree_depth != BREP_MAX_FT_DEPTH)) {
+	    (!surface_trees_only && !surface_trees_all &&
+	     surface_tree_depth != BREP_MAX_FT_DEPTH)) {
 	std::cerr << usage;
 	return print_help ? 0 : 2;
     }
@@ -907,6 +1231,12 @@ main(int argc, const char **argv)
     if (dbip == DBI_NULL) {
 	std::cerr << "Unable to open database: " << argv[0] << "\n";
 	return 2;
+    }
+    if (surface_trees_all) {
+	const int ret = profile_all_surface_trees(dbip, argv[0],
+	    (int)surface_tree_depth);
+	db_close(dbip);
+	return ret;
     }
     struct directory *dp = db_lookup(dbip, argv[1], LOOKUP_QUIET);
     if (dp == RT_DIR_NULL || dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {

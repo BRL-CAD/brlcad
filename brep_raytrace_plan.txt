@@ -7,6 +7,85 @@ Repository studied: /home/cyapp/brlcad
 STEP test corpus: /home/cyapp/step_corpus_g
 
 
+IMPLEMENTATION CHECKPOINT: STRATIFIED SURFACETREE PROFILING (2026-08-09)
+---------------------------------------------------------------------------
+
+The corpus contains 1,002 `.g` databases, so one-object face-dump commands are
+not a reproducible basis for a depth/default decision.  brep-audit now has a
+database-wide compact mode:
+
+  brep-audit --surface-trees-all --surface-tree-depth=N file.g
+
+It emits a versioned JSON document with per-object and database totals for
+scale, object/failure status, failure face/domain, loops, trims, native and
+rational NURBS makeup, exact/status-2 forms, maximum orders/CVs/spans,
+requested adaptive and observed physical depth, SurfaceTree nodes/leaves,
+CurveTree leaves, build time, and process peak RSS.  It builds objects
+serially so a database census does not intentionally retain all SurfaceTrees
+at once.  Empty BREP directory objects are separate from face-level
+SurfaceTree failures.  A small CTest exercises the mode at adaptive depth zero
+and focused one- and 21-object ASAN/UBSAN runs report no diagnostic.
+
+The first paired sample spans 14 databases, 75 objects, 5,778 faces, 28,798
+trims, object diagonals from 4.33 to 1,197, 1,910 native NURBS faces, 3,650
+rational forms, 3,473 exact forms, and 2,305 status-2 forms.  It includes tiny
+and planar parts, NIST cases, mixed imported analytic surfaces, a trim-heavy
+bearing, multi-object files, order-six/high-span native surfaces, the SC
+solid, and all 40 FRAME BREP objects.  All faces build at adaptive depths
+three and eight.  Depth three versus eight changes aggregate SurfaceTree
+nodes from 15,165,658 to 664,796 (22.81x reduction), leaves from 7,637,698 to
+419,208 (18.22x), and summed observed build time from 339.180 to 18.630
+seconds (18.21x).  The 884,649 CurveTree leaves are unchanged.  Per-database
+node reductions range from 4.79x to 47.27x, with median 23.32x.  Timings are
+directional because moderate pairs shared bounded process groups; structural
+counts and failure results are exact.
+
+The exact paired manifest, relative to /home/cyapp/step_corpus_g, is:
+
+  non_grabcad/recurta/step_ap203/10145.g
+  nist/NIST_MBE_PMI_4.g
+  non_grabcad/0353/0353-02-57.g
+  second/bearings/UCP-206.g
+  non_grabcad/0353/0353-24-03.g
+  non_grabcad/0353/0353-70-13.g
+  non_grabcad/0353/0353-97-15.g
+  non_grabcad/recurta/step_ap203/10077.g
+  nist/NIST_MBE_PMI_1.g
+  nist/NIST_MBE_PMI_11.g
+  second/case_fan_120mm.g
+  non_grabcad/a.g
+  original/SC_solid_stp_20260429.g
+  second/FRAME.g
+
+For each path, run the database-wide command once with N=3 and once with N=8
+and compare the top-level `totals`.  The additional depth-three-only stress
+paths are `third/Antikythera Mechanism 3dprint.g` and
+`non_grabcad/tork.g`.  Do not substitute file-size quantiles for the recorded
+geometry fields when extending the manifest: file size is only one stratum.
+
+The largest paired cases establish why this is not a cosmetic optimization.
+At depths three/eight, the 848-face order-six SC solid uses
+264,544/3,274,514 nodes, 167,741/1,669,855 leaves, physical depth 10/14,
+4.064/52.420 seconds, and 156/942 MB peak RSS.  FRAME uses
+281,379/9,420,969 nodes, 179,608/4,727,854 leaves, physical depth 11/16,
+6.298/153.138 seconds, and 260 MB/2.45 GB.  In both, structural splitting is
+visible and mandatory; it does not negate the much larger adaptive-density
+cost.
+
+Additional depth-three stress coverage builds all 11,575 faces in 75 BREP
+objects from Antikythera Mechanism 3dprint.g, including order-six surfaces and
+240 spans in one parameter direction.  tork.g builds all 529 real faces; one
+additional BREP directory object is empty and is reported as an object-input
+failure, not a tree failure.
+
+This is sufficient evidence to retain adaptive depth three as the current
+experimental plateau and to prioritize trim costs after density reduction.
+It is not sufficient evidence to change the production default: SurfaceTree
+construction success is not ray partition correctness.  Expand the manifest
+across file/geometry quantiles and add prepared-ray selection, fallback, and
+exact shared-line comparison distributions before making that decision.
+
+
 IMPLEMENTATION CHECKPOINT: STRUCTURAL KNOTS AND A DEPTH PLATEAU (2026-08-09)
 ----------------------------------------------------------------------------
 
