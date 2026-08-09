@@ -57,6 +57,14 @@ namespace brlcad {
      */
     class BREP_EXPORT SurfaceTree {
     public:
+	enum FailureReason {
+	    FAILURE_NONE = 0,
+	    FAILURE_NULL_SURFACE,
+	    FAILURE_BOUNDING_BOX,
+	    FAILURE_NORMAL_EVALUATION,
+	    FAILURE_SUBDIVISION
+	};
+
 	explicit SurfaceTree(const ON_BrepFace *face, bool removeTrimmed = true, int depthLimit = BREP_MAX_FT_DEPTH, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
 	~SurfaceTree();
 
@@ -66,6 +74,12 @@ namespace brlcad {
 		return false;
 	    return true;
 	};
+	/* The first deterministic construction failure and its local cell. */
+	FailureReason Failure() const { return m_failure; };
+	ON_Interval FailureDomain(int direction) const {
+	    return direction == 0 ? m_failure_u : m_failure_v;
+	};
+	int FailureDepth() const { return m_failure_depth; };
 
 	BBNode *getRootNode() const;
 
@@ -114,14 +128,20 @@ namespace brlcad {
 	bool isFlatU(const ON_Plane frames[9]) const;
 	bool isFlatV(const ON_Plane frames[9]) const;
 	bool hasSplit(const ON_Surface *surf, int dir, const ON_Interval &interval, double &split) const;
+	BBNode *initialBBox(const CurveTree *ctree, const ON_Surface *surf, const ON_Interval &u, const ON_Interval &v, int depth) const;
 	BBNode *subdivideSurface(const ON_Surface *localsurf, const ON_Interval &u, const ON_Interval &v, ON_Plane frames[9], int depth, int depthLimit, int prev_knot, double within_distance_tol) const;
-	BBNode *surfaceBBox(const ON_Surface *localsurf, bool leaf, const ON_Plane frames[9], const ON_Interval &u, const ON_Interval &v, double within_distance_tol) const;
+	BBNode *surfaceBBox(const ON_Surface *localsurf, bool leaf, const ON_Plane frames[9], const ON_Interval &u, const ON_Interval &v, int depth, double within_distance_tol) const;
+	void recordFailure(FailureReason reason, const ON_Interval &u, const ON_Interval &v, int depth) const;
 
 	const bool m_removeTrimmed;
 	const ON_BrepFace * const m_face;
 	BBNode *m_root;
 	std::queue<ON_Plane *> * const m_f_queue;
 	SurfaceSplitCache * const m_split_cache;
+	mutable FailureReason m_failure;
+	mutable ON_Interval m_failure_u;
+	mutable ON_Interval m_failure_v;
+	mutable int m_failure_depth;
     };
 
 } /* namespace brlcad */
