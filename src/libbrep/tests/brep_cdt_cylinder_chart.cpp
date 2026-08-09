@@ -250,6 +250,137 @@ exercise_full_cylinder(const ON_3dPoint &origin, ON_3dVector axis,
     return true;
 }
 
+static bool
+exercise_periodic_metric_chart()
+{
+    ON_Circle major(ON_xy_plane, 9.0);
+    ON_Torus torus(major, 2.5);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (!torus.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+
+    std::unique_ptr<ON_Brep> brep(new ON_Brep);
+    ON_BrepFace &face = brep->NewFace(brep->AddSurface(surface));
+    ON_BrepLoop &loop = brep->NewLoop(ON_BrepLoop::outer, face);
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    const double low = vdom.ParameterAt(0.2);
+    const double high = vdom.ParameterAt(0.4);
+    const int low_vertex = brep->NewVertex(surface->PointAt(
+	udom.Min(), low)).m_vertex_index;
+    const int high_vertex = brep->NewVertex(surface->PointAt(
+	udom.Min(), high)).m_vertex_index;
+    if (!add_iso_trim(*brep, loop, *surface, low_vertex, low_vertex,
+	    ON_2dPoint(udom.Min(), low), ON_2dPoint(udom.Max(), low)) ||
+	    !add_iso_trim(*brep, loop, *surface, low_vertex, high_vertex,
+	    ON_2dPoint(udom.Max(), low), ON_2dPoint(udom.Max(), high)) ||
+	    !add_iso_trim(*brep, loop, *surface, high_vertex, high_vertex,
+	    ON_2dPoint(udom.Max(), high), ON_2dPoint(udom.Min(), high)) ||
+	    !add_iso_trim(*brep, loop, *surface, high_vertex, low_vertex,
+	    ON_2dPoint(udom.Min(), high), ON_2dPoint(udom.Min(), low)))
+	return false;
+    loop.Trim(1)->m_type = ON_BrepTrim::seam;
+    loop.Trim(3)->m_type = ON_BrepTrim::seam;
+    if (cdt_face_uses_cylinder_chart(face) ||
+	    !cdt_face_uses_topology_chart(face)) {
+	std::cerr << "generic periodic surface was not classified"
+	    << std::endl;
+	return false;
+    }
+
+    const double period = udom.Length();
+    const double parameters[10] = {
+	udom.Min(), udom.Min() - 0.25 * period,
+	udom.Min() - 0.5 * period, udom.Min() - 0.75 * period,
+	udom.Max(), udom.Max(), udom.ParameterAt(0.75),
+	udom.ParameterAt(0.5), udom.ParameterAt(0.25), udom.Min()
+    };
+    const double heights[10] = {
+	low, low, low, low, low, high, high, high, high, high
+    };
+    std::vector<std::pair<double, double>> native_points;
+    std::vector<ON_3dPoint> point_storage;
+    std::vector<const ON_3dPoint *> points_3d;
+    std::vector<cdt_topo_vertex_id> topology_vertices(10,
+	CDT_TOPOLOGY_ID_NONE);
+    std::vector<int> outer;
+    native_points.reserve(10);
+    point_storage.reserve(10);
+    points_3d.reserve(10);
+    for (int i = 0; i < 10; ++i) {
+	outer.push_back(i);
+	native_points.push_back(std::make_pair(parameters[i], heights[i]));
+	double wrapped = std::fmod(parameters[i] - udom.Min(), period);
+	if (wrapped < 0.0)
+	    wrapped += period;
+	point_storage.push_back(surface->PointAt(udom.Min() + wrapped,
+	    heights[i]));
+    }
+    for (const ON_3dPoint &point : point_storage)
+	points_3d.push_back(&point);
+    outer.push_back(0);
+
+    cdt_face_chart chart;
+    if (!chart.build(face, native_points, outer,
+	    std::vector<std::vector<int>>(), std::vector<int>(),
+	    std::vector<int>(), points_3d, topology_vertices) ||
+	    chart.type() != CDT_FACE_CHART_SURFACE_METRIC ||
+	    chart.outer.size() != 10) {
+	std::cerr << "periodic metric chart build failed: "
+	    << chart.failure() << std::endl;
+	return false;
+    }
+    const int low_path[5] = {0, 3, 2, 1, 4};
+    for (int i = 1; i < 5; ++i) {
+	if (!(chart.points[(size_t)low_path[i - 1]].first <
+		chart.points[(size_t)low_path[i]].first)) {
+	    std::cerr << "periodic metric winding was not repaired"
+		<< std::endl;
+	    return false;
+	}
+    }
+    return true;
+}
+
+static bool
+exercise_planar_nesting_repair()
+{
+    std::unique_ptr<ON_Brep> brep(new ON_Brep);
+    ON_PlaneSurface *surface = new ON_PlaneSurface(ON_xy_plane);
+    surface->SetExtents(0, ON_Interval(-10.0, 10.0), true);
+    surface->SetExtents(1, ON_Interval(-10.0, 10.0), true);
+    ON_BrepFace &face = brep->NewFace(brep->AddSurface(surface));
+    const std::pair<double, double> coordinates[8] = {
+	std::make_pair(-1.0, -1.0), std::make_pair(1.0, -1.0),
+	std::make_pair(1.0, 1.0), std::make_pair(-1.0, 1.0),
+	std::make_pair(-5.0, -5.0), std::make_pair(5.0, -5.0),
+	std::make_pair(5.0, 5.0), std::make_pair(-5.0, 5.0)
+    };
+    std::vector<std::pair<double, double>> native_points(
+	coordinates, coordinates + 8);
+    const int outer_indices[5] = {0, 1, 2, 3, 0};
+    const int hole_indices[5] = {4, 5, 6, 7, 4};
+    std::vector<int> outer(outer_indices, outer_indices + 5);
+    std::vector<std::vector<int>> holes(1,
+	std::vector<int>(hole_indices, hole_indices + 5));
+    std::vector<const ON_3dPoint *> points_3d(8, NULL);
+    std::vector<cdt_topo_vertex_id> topology_vertices(8,
+	CDT_TOPOLOGY_ID_NONE);
+    cdt_face_chart chart;
+    if (!chart.build(face, native_points, outer, holes,
+	    std::vector<int>(), std::vector<int>(), points_3d,
+	    topology_vertices) || chart.outer.size() != 4 ||
+	    chart.holes.size() != 1 || chart.holes[0].size() != 4 ||
+	    chart.outer[0] < 4 || chart.holes[0][0] >= 4) {
+	std::cerr << "planar outer/hole nesting was not repaired"
+	    << std::endl;
+	return false;
+    }
+    return true;
+}
+
 int
 main()
 {
@@ -272,5 +403,9 @@ main()
 	    ON_3dPoint(1.0e-5, -2.0e-5, 3.0e-5),
 	    ON_3dVector(-2.0, 1.0, 4.0), 2.0e-6, 7.0e-6))
 	return 6;
+    if (!exercise_periodic_metric_chart())
+	return 7;
+    if (!exercise_planar_nesting_repair())
+	return 8;
     return 0;
 }

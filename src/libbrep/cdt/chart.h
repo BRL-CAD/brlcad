@@ -90,6 +90,7 @@ private:
 	const std::vector<int> &source_outer,
 	const std::vector<std::vector<int>> &source_holes,
 	const std::vector<int> &source_steiner,
+	const std::vector<const ON_3dPoint *> &points_3d,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices);
     bool build_cone(const ON_BrepFace &face,
 	const std::vector<std::pair<double, double>> &native_points,
@@ -125,6 +126,7 @@ private:
 	const ON_Cylinder &cylinder);
     bool validate_boundary(const ON_BrepFace &face,
 	const std::vector<std::pair<double, double>> &native_points);
+    void repair_nesting();
 
     cdt_face_chart_id m_id = CDT_TOPOLOGY_ID_NONE;
     enum cdt_face_chart_type m_type = CDT_FACE_CHART_NATIVE_UV;
