@@ -82,7 +82,10 @@ struct surface_tree_profile {
     int loop_count = 0;
     int trim_count = 0;
     double seconds = 0.0;
+    size_t nodes = 0;
     size_t leaves = 0;
+    size_t curve_leaves = 0;
+    int maximum_depth = 0;
     const char *surface_type = "none";
     bool native_nurbs = false;
     bool rational = false;
@@ -101,10 +104,31 @@ struct surface_tree_profile {
 struct surface_tree_result {
     int ret = BRLCAD_ERROR;
     int face_count = 0;
+    int depth_limit = BREP_MAX_FT_DEPTH;
     double seconds = 0.0;
     size_t peak_rss_bytes = 0;
     std::vector<surface_tree_profile> faces;
 };
+
+
+static void
+surface_tree_node_counts(const brlcad::BBNode *node, int depth,
+    size_t &nodes, size_t &leaves, int &maximum_depth)
+{
+    if (!node)
+	return;
+    nodes++;
+    maximum_depth = std::max(maximum_depth, depth);
+    const std::vector<brlcad::BBNode *> &children = node->get_children();
+    if (children.empty()) {
+	leaves++;
+	return;
+    }
+    for (std::vector<brlcad::BBNode *>::const_iterator child =
+	    children.begin(); child != children.end(); ++child)
+	surface_tree_node_counts(*child, depth + 1, nodes, leaves,
+	    maximum_depth);
+}
 
 static size_t
 peak_rss_bytes()
@@ -328,9 +352,11 @@ raytrace_prep_result(struct db_i *dbip, struct directory *dp)
 }
 
 static surface_tree_result
-surface_tree_profile_result(struct db_i *dbip, struct directory *dp)
+surface_tree_profile_result(struct db_i *dbip, struct directory *dp,
+    int depth_limit)
 {
     surface_tree_result result;
+    result.depth_limit = depth_limit;
     struct rt_db_internal intern;
     if (load_brep(dbip, dp, &intern) != BRLCAD_OK)
 	return result;
@@ -383,12 +409,16 @@ surface_tree_profile_result(struct db_i *dbip, struct directory *dp)
 	    }
 	}
 	int64_t start = bu_gettime();
-	brlcad::SurfaceTree tree(&face, true, 8);
+	brlcad::SurfaceTree tree(&face, true, depth_limit);
 	profile.seconds = (bu_gettime() - start) / 1000000.0;
 	if (tree.Valid()) {
-	    std::list<const brlcad::BBNode *> leaves;
-	    tree.getLeaves(leaves);
-	    profile.leaves = leaves.size();
+	    surface_tree_node_counts(tree.getRootNode(), 0, profile.nodes,
+		profile.leaves, profile.maximum_depth);
+	    if (tree.m_ctree) {
+		std::list<const brlcad::BRNode *> curve_leaves;
+		tree.m_ctree->getLeaves(curve_leaves);
+		profile.curve_leaves = curve_leaves.size();
+	    }
 	} else {
 	    result.ret = BRLCAD_ERROR;
 	    profile.failure.reason = tree.Failure();
@@ -680,7 +710,10 @@ static void
 print_surface_tree_result(const char *db_path, const char *object,
 	const surface_tree_result &result)
 {
+    size_t total_nodes = 0;
     size_t total_leaves = 0;
+    size_t total_curve_leaves = 0;
+    int maximum_depth = 0;
     size_t maximum_leaves = 0;
     int maximum_leaves_face = -1;
     double maximum_seconds = 0.0;
@@ -699,7 +732,10 @@ print_surface_tree_result(const char *db_path, const char *object,
 	    nurb_form_status_two++;
 	else
 	    nurb_form_status_other++;
+	total_nodes += profile.nodes;
 	total_leaves += profile.leaves;
+	total_curve_leaves += profile.curve_leaves;
+	maximum_depth = std::max(maximum_depth, profile.maximum_depth);
 	if (profile.leaves > maximum_leaves) {
 	    maximum_leaves = profile.leaves;
 	    maximum_leaves_face = profile.failure.face_index;
@@ -709,7 +745,7 @@ print_surface_tree_result(const char *db_path, const char *object,
 	    maximum_seconds_face = profile.failure.face_index;
 	}
     }
-    std::cout << "{\"format\":\"brlcad-brep-surface-tree-audit-v1\""
+    std::cout << "{\"format\":\"brlcad-brep-surface-tree-audit-v2\""
 	<< ",\"database\":" << json_quote(db_path)
 	<< ",\"object\":" << json_quote(object)
 	<< ",\"status\":" << json_quote(result.ret == BRLCAD_OK ?
@@ -719,7 +755,11 @@ print_surface_tree_result(const char *db_path, const char *object,
     print_num(result.seconds);
     std::cout << ",\"peak_rss_bytes\":" << result.peak_rss_bytes
 	<< ",\"face_count\":" << result.face_count
+	<< ",\"depth_limit\":" << result.depth_limit
+	<< ",\"maximum_depth\":" << maximum_depth
+	<< ",\"total_nodes\":" << total_nodes
 	<< ",\"total_leaves\":" << total_leaves
+	<< ",\"total_curve_leaves\":" << total_curve_leaves
 	<< ",\"maximum_leaves\":" << maximum_leaves
 	<< ",\"maximum_leaves_face\":" << maximum_leaves_face
 	<< ",\"nurb_form_status_counts\":{\"unavailable\":"
@@ -743,7 +783,10 @@ print_surface_tree_result(const char *db_path, const char *object,
 		"ok" : "fail")
 	    << ",\"seconds\":";
 	print_num(profile.seconds);
-	std::cout << ",\"leaves\":" << profile.leaves
+	std::cout << ",\"nodes\":" << profile.nodes
+	    << ",\"leaves\":" << profile.leaves
+	    << ",\"curve_leaves\":" << profile.curve_leaves
+	    << ",\"maximum_depth\":" << profile.maximum_depth
 	    << ",\"surface_type\":" << json_quote(profile.surface_type)
 	    << ",\"native_nurbs\":" <<
 		(profile.native_nurbs ? "true" : "false")
@@ -821,7 +864,8 @@ main(int argc, const char **argv)
     double tess_rel = 0.01;
     double tess_norm = 0.0;
     long memory_limit_mib = 0;
-    struct bu_opt_desc d[11];
+    long surface_tree_depth = BREP_MAX_FT_DEPTH;
+    struct bu_opt_desc d[12];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -832,7 +876,8 @@ main(int argc, const char **argv)
     BU_OPT(d[7], "", "memory-limit-mib", "#", &bu_opt_long, &memory_limit_mib, "Process address-space limit in MiB (zero disables)");
     BU_OPT(d[8], "", "prep-only", "", NULL, &prep_only, "Audit raytrace preparation only");
     BU_OPT(d[9], "", "surface-trees-only", "", NULL, &surface_trees_only, "Profile raytrace SurfaceTrees serially");
-    BU_OPT_NULL(d[10]);
+    BU_OPT(d[10], "", "surface-tree-depth", "#", &bu_opt_long, &surface_tree_depth, "SurfaceTree depth for serial profiling");
+    BU_OPT_NULL(d[11]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage = "Usage: brep-audit [options] [--list|--prep-only|--surface-trees-only] file.g [brep]\n";
     if (print_help || (list_only && ac != 1) ||
@@ -840,7 +885,10 @@ main(int argc, const char **argv)
 	    ((list_only ? 1 : 0) + (prep_only ? 1 : 0) +
 	     (surface_trees_only ? 1 : 0) > 1) ||
 	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
-	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0) {
+	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0 ||
+	    surface_tree_depth < 0 ||
+	    surface_tree_depth > BREP_MAX_FT_DEPTH ||
+	    (!surface_trees_only && surface_tree_depth != BREP_MAX_FT_DEPTH)) {
 	std::cerr << usage;
 	return print_help ? 0 : 2;
     }
@@ -875,7 +923,8 @@ main(int argc, const char **argv)
     }
 
     if (surface_trees_only) {
-	surface_tree_result trees = surface_tree_profile_result(dbip, dp);
+	surface_tree_result trees = surface_tree_profile_result(dbip, dp,
+	    (int)surface_tree_depth);
 	print_surface_tree_result(argv[0], argv[1], trees);
 	db_close(dbip);
 	return trees.ret == BRLCAD_OK ? 0 : 1;

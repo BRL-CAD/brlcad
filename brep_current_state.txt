@@ -11,6 +11,113 @@ as the authoritative continuation log until all acceptance gates pass.
 CURRENT PHASE
 -------------
 
+2026-08-09 ACTIVE CONTROLLED SURFACETREE-DENSITY CHECKPOINT
+
+The tolerance-healed edge-transition increment is committed locally as
+e67336b607, "Certify tolerance-healed BREP edge transitions".  It was not
+pushed.  The current uncommitted increment adds measurement and per-rt_i
+control of BREP SurfaceTree construction depth.  It deliberately leaves the
+production default at BREP_MAX_FT_DEPTH, currently eight, and does not change
+the version-zero cache payload.
+
+The control is an rt_i property rather than an environment variable or
+mutable library global.  _rt_brep_set_surface_tree_depth accepts depths zero
+through eight before prep, and each rt_brep_prep passes that immutable choice
+to brep_build_bvh.  The resulting brep_specific records the requested limit,
+observed maximum BBNode depth, SurfaceTree node and leaf counts, CurveTree
+count and leaf count, and SurfaceTree construction time.  Cache version zero
+can report the deserialized hierarchy sizes but reports the requested depth
+as unknown, because that fact was not stored by the old format.  Any eventual
+production-default or cache-layout change must bump or explicitly migrate the
+cache version.
+
+rt_brep_ray accepts --surface-tree-depth=0..8 with any focused mode and prints
+aggregate prep measurements at process exit.  Direct test solids and in-memory
+database models use the same per-instance control; no shot-time allocation or
+thread-global setting was introduced.  brep-audit accepts
+--surface-tree-depth with --surface-trees-only and includes the requested and
+observed depths plus total/per-face node counts in its serial profile.  A
+compile-time assertion prevents the librt test default from silently
+disagreeing with libbrep's BREP_MAX_FT_DEPTH.
+
+The isolated Cobb trim/edge defect gate passes unchanged at every controlled
+depth from eight through zero.  At all nine levels it selects all 96 material
+rays, deliberately falls back for the same 24 exact contacts, publishes the
+same two tolerance-healed transitions, and has the same 2.02e-8 maximum
+endpoint error.  Its nine-solid prep measurements are:
+
+  limit   BBNodes   leaves   SurfaceTree seconds
+    8      136566    68796          0.308134
+    7       68094    34560          0.155170
+    6       33534    17280          0.077380
+    5       16254     8640          0.035225
+    4        7614     4320          0.021501
+    3        3294     2160          0.011600
+    2        1134      864          0.008249
+    1         270      216          0.006677
+    0          54       54          0.006135
+
+The 54 CurveTrees and 221 CurveTree leaves are unchanged.  This proves that
+the new certified seam/trim component path does not depend on dense initial
+surface boxes for this deliberately defective corpus.  Observed BBNode depth
+may exceed the requested adaptive limit because mandatory surface-knot
+subdivision still occurs; for example, some limit-seven models reach depth
+nine.  The option therefore controls adaptive density, not the mathematical
+Bezier-span decomposition.
+
+The broader experiments locate a concrete current boundary:
+
+  * non-isoparametric and contact/trim gates pass at limit zero;
+  * the complete affine and affine-grazing gate passes at limit two;
+  * limits zero through six fail the same six material near-grazing sphere
+    rays, at h/T ratios 10, 2, and 1.1 in both directions;
+  * limit seven passes the complete sphere and torus grazing/status-2 gate.
+
+For those six limit-six failures, the prepared path finds the two correct
+opposite-direction local roots in three coarse boxes.  They occupy one
+connected face/span component, however, so the existing single-regular-root
+theorem cannot exclude the component complement.  No complete physical event
+transaction is published, and the conservative whole-ray fallback sees only
+one root in the sparse legacy leaves.  The correct next step is a bounded
+same-face two-regular-root theorem: independently contract disjoint root
+neighborhoods, prove determinant direction and outward t enclosure for each,
+and exclude the remainder of the shared hull before atomically publishing the
+ENTER/LEAVE pair.  Simply lowering the default to seven would preserve this
+known proof gap and is not yet justified.
+
+At limit seven, the directed correctness shard passes with 13 BREP preps and
+203149/108055 BBNodes/leaves.  The paired Cauchy-Crofton gate passes 128000
+identical implicit/BREP lines across the sphere, ellipsoid, box, cylinder,
+cone, torus, CSG unions/intersections/subtractions, transformed nested sphere
+shell, and sewn Cobb sphere with zero differing lines.  Maximum endpoint
+error is 1.07e-7; the aggregate estimates and checkpoint confidence intervals
+also agree.  Endpoint, non-isoparametric, contact/trim, affine, defect, and
+grazing shards pass at limit seven.  The long comprehensive seam shard also
+passes with 78 BREP preps, 560493/285828 BBNodes/leaves, and all classifier,
+vertex, crack, isolated-defect, and transform ratchets unchanged.
+
+A brep-audit smoke comparison on the 462-face Product_step18_item.s from
+step_corpus_g/non_grabcad/0353/0353-00-24.g validates the same measurement path
+on imported geometry.  Limit eight reports 123919/62451 nodes/leaves, maximum
+depth ten, 2.51 seconds, and 59.4 MB peak RSS.  Limit seven reports
+66943/33985, maximum depth nine, 1.43 seconds, and 48.0 MB peak RSS.  The 13060
+CurveTree leaves are unchanged.  This single-object result is evidence that
+the synthetic reduction is relevant, but it is not yet a corpus-wide timing
+or memory claim.  The ASAN/UBSAN defect and grazing gates both pass at limit
+seven with leak scanning disabled and halt-on-error enabled; neither reports
+a sanitizer diagnostic.
+
+There is no sign that the intended solution is failing to converge.  Sparse
+tree failures have become smaller and more classifiable as local proof
+coverage grows.  Exact tangency is necessarily a topological transition from
+two crossings to one contact to a miss, so the contract is stable
+tolerance-relative classification and monotone limiting behavior, not a
+continuous raw hit count at the singular point.  The tractable target is
+valid and tolerance-healable solid BREPs.  Arbitrarily defective topology or
+singular parametrizations cannot be assigned a unique solid meaning without
+an explicit policy and remain bounded-fallback cases.
+
+
 2026-08-09 ACTIVE TOLERANCE-HEALED EDGE TRANSITION CHECKPOINT
 
 The preceding certified-component increment is committed locally as
@@ -5870,7 +5977,7 @@ STEP ray-prep observability and dense-tree census (Finding 80):
   audit did not call ray prep and could not observe this state.
 
   `brep-audit --surface-trees-only file.g primitive` serially profiles each
-  face tree and emits `brlcad-brep-surface-tree-audit-v1` JSON with total and
+  face tree and emits `brlcad-brep-surface-tree-audit-v2` JSON with total and
   per-face time/leaves, source surface class and topology, domain, native
   NURBS dimensions, converted NURBS dimensions, and failure cell.  Building
   one face at a time bounds diagnostic retained memory and localizes a dense

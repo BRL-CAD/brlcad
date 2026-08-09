@@ -429,6 +429,7 @@ brep_specific_delete(struct brep_specific* bs)
 struct brep_build_bvh_parallel {
     struct brep_specific *bs;
     SurfaceTree**faces;
+    int depth_limit;
 };
 
 
@@ -492,6 +493,8 @@ static const double BREP_DIRECT_EVALUATION_ULPS = 32.0;
 static const double BREP_SEAM_BOUND_RELATIVE_TOLERANCE = 0.01;
 static const size_t BREP_SEAM_BOUND_CELL_BUDGET = 4096;
 static const size_t BREP_SEAM_CORRESPONDENCE_CELL_BUDGET = 4096;
+static_assert(RT_BREP_DEFAULT_SURFACE_TREE_DEPTH == BREP_MAX_FT_DEPTH,
+    "librt and libbrep SurfaceTree depth defaults must agree");
 
 
 static void
@@ -2256,7 +2259,8 @@ brep_build_bvh_surface_tree(int cpu, void *data)
 
 	if (index != -1) {
 	    /* bu_log("thread %d: preparing face %d of %d\n", cpu, index+1, faceCount); */
-	    SurfaceTree* st = new SurfaceTree(&faces[index], true, 8);
+	    SurfaceTree* st = new SurfaceTree(&faces[index], true,
+		bbbp->depth_limit);
 	    bbbp->faces[index] = st;
 	}
 
@@ -2265,8 +2269,54 @@ brep_build_bvh_surface_tree(int cpu, void *data)
 }
 
 
+static void
+brep_accumulate_surface_tree_stats(struct brep_specific *bs,
+    const BBNode *node, int depth)
+{
+    if (!bs || !node)
+	return;
+    bs->surface_tree_nodes++;
+    bs->surface_tree_maximum_depth = std::max(
+	bs->surface_tree_maximum_depth, depth);
+    const std::vector<BBNode *> &children = node->get_children();
+    if (children.empty()) {
+	bs->surface_tree_leaves++;
+	return;
+    }
+    for (std::vector<BBNode *>::const_iterator child = children.begin();
+	    child != children.end(); ++child)
+	brep_accumulate_surface_tree_stats(bs, *child, depth + 1);
+}
+
+
+static void
+brep_collect_bvh_stats(struct brep_specific *bs)
+{
+    if (!bs)
+	return;
+    bs->surface_tree_maximum_depth = 0;
+    bs->surface_tree_nodes = 0;
+    bs->surface_tree_leaves = 0;
+    bs->curve_tree_leaves = 0;
+    if (bs->bvh) {
+	const std::vector<BBNode *> &roots = bs->bvh->get_children();
+	for (std::vector<BBNode *>::const_iterator root = roots.begin();
+		root != roots.end(); ++root)
+	    brep_accumulate_surface_tree_stats(bs, *root, 0);
+    }
+    for (std::vector<const CurveTree *>::const_iterator tree =
+	    bs->ctrees.begin(); tree != bs->ctrees.end(); ++tree) {
+	if (!*tree)
+	    continue;
+	std::list<const BRNode *> leaves;
+	(*tree)->getLeaves(leaves);
+	bs->curve_tree_leaves += leaves.size();
+    }
+}
+
+
 static int
-brep_build_bvh(struct brep_specific* bs)
+brep_build_bvh(struct brep_specific* bs, int depth_limit)
 {
     // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
@@ -2277,6 +2327,10 @@ brep_build_bvh(struct brep_specific* bs)
 	bu_log("NULL Brep");
 	return -1;
     }
+    if (depth_limit < 0 || depth_limit > BREP_MAX_FT_DEPTH)
+	return -1;
+    const int64_t build_start = bu_gettime();
+    bs->surface_tree_depth_limit = depth_limit;
 
     /* Initialize the top level Bounding Box node for the entire
      * surface tree.  The purpose of this node is to provide a parent
@@ -2295,6 +2349,7 @@ brep_build_bvh(struct brep_specific* bs)
     struct brep_build_bvh_parallel bbbp;
     bbbp.bs = bs;
     bbbp.faces = (SurfaceTree**)bu_calloc(faceCount, sizeof(SurfaceTree*), "alloc face array");
+    bbbp.depth_limit = depth_limit;
 
     /* For each face in the brep, build its surface tree and add the
      * root node of that tree as a child of the bvh master node
@@ -2339,6 +2394,10 @@ brep_build_bvh(struct brep_specific* bs)
     bu_free(bbbp.faces, "free face array");
 
     bs->bvh->BuildBBox();
+    brep_collect_bvh_stats(bs);
+    const int64_t elapsed = bu_gettime() - build_start;
+    bs->surface_tree_build_microseconds = elapsed > 0 ?
+	(size_t)elapsed : 0;
     return 0;
 }
 
@@ -2376,6 +2435,37 @@ rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
  * matrix, determine if this is a valid NURB, and if so, prepare the
  * surface so the intersections will work.
  */
+int
+_rt_brep_set_surface_tree_depth(struct rt_i *rtip, int depth_limit)
+{
+    if (!rtip || !rtip->i || !rtip->needprep || depth_limit < 0 ||
+	    depth_limit > BREP_MAX_FT_DEPTH)
+	return 0;
+    rtip->i->rti_brep_surface_tree_depth = depth_limit;
+    return 1;
+}
+
+
+int
+_rt_brep_prep_stats(const struct soltab *stp,
+    struct rt_brep_prep_stats *result)
+{
+    if (!stp || !result || stp->st_id != ID_BREP || !stp->st_specific)
+	return 0;
+    const struct brep_specific *bs =
+	(const struct brep_specific *)stp->st_specific;
+    result->surface_tree_depth_limit = bs->surface_tree_depth_limit;
+    result->surface_tree_maximum_depth = bs->surface_tree_maximum_depth;
+    result->surface_tree_nodes = bs->surface_tree_nodes;
+    result->surface_tree_leaves = bs->surface_tree_leaves;
+    result->curve_trees = bs->ctrees.size();
+    result->curve_tree_leaves = bs->curve_tree_leaves;
+    result->surface_tree_build_microseconds =
+	bs->surface_tree_build_microseconds;
+    return 1;
+}
+
+
 int
 rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 {
@@ -2429,7 +2519,10 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
     //start = bu_gettime();
     /* do the majority of real work here */
-    if (brep_build_bvh(bs) < 0) {
+    const int depth_limit = rtip && rtip->i ?
+	rtip->i->rti_brep_surface_tree_depth :
+	RT_BREP_DEFAULT_SURFACE_TREE_DEPTH;
+    if (brep_build_bvh(bs, depth_limit) < 0) {
 	return -1;
     }
     //bu_log("!!! BUILD BVH: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
@@ -21024,6 +21117,10 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 	}
 
 	specific->bvh->BuildBBox();
+	/* Version 0 did not serialize the construction depth.  Preserve that
+	 * fact while still reporting the hierarchy actually loaded. */
+	specific->surface_tree_depth_limit = -1;
+	brep_collect_bvh_stats(specific);
 
 	{
 	    /* Once a proper SurfaceTree is built, finalize the bounding
