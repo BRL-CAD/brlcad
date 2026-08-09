@@ -490,6 +490,8 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_EVENT_SEAM_CONTINUATION 4
 #define RT_BREP_TRACE_EVENT_VERTEX_FAN 5
 #define RT_BREP_TRACE_EVENT_MANIFOLD_EDGE 6
+#define RT_BREP_TRACE_EVENT_SEAM_CONTACT_EXISTING 7
+#define RT_BREP_TRACE_EVENT_SEAM_CONTACT_CONTINUATION 8
 #define RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT 1
 #define RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT 2
 #define RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION 3
@@ -852,6 +854,9 @@ struct rt_brep_shot_trace {
     size_t physical_event_seam_root_coverage_failures;
     size_t physical_event_seam_witness_boxes;
     size_t physical_event_seam_witness_roots;
+    size_t physical_event_seam_contact_pairs;
+    size_t physical_event_seam_contact_boxes;
+    size_t physical_event_seam_contact_roots;
     size_t prepared_vertex_records;
     size_t supported_vertex_records;
     size_t physical_event_vertex;
