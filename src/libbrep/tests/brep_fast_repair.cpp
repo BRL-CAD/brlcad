@@ -400,6 +400,100 @@ periodic_rectangle_test()
 }
 
 static bool
+periodic_zero_area_subcycle_test()
+{
+    ON_Brep brep;
+    ON_Circle base(ON_xy_plane, 17.5);
+    ON_Cylinder cylinder(base, 105.65675393633153);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    surface->SetDomain(0, 54.977868507454808, 164.93361138309757);
+    surface->SetDomain(1, 0.0, 105.65675393633153);
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_Interval udom = surface->Domain(0);
+    const double low_v = 46.828376968165784;
+    const double high_v = 58.828376968165784;
+
+    int low_vertices[4];
+    int high_vertices[4];
+    for (int i = 0; i < 4; ++i) {
+	const double u = udom.ParameterAt((double)i / 4.0);
+	low_vertices[i] = brep.NewVertex(surface->PointAt(u,
+	    low_v)).m_vertex_index;
+	high_vertices[i] = brep.NewVertex(surface->PointAt(u,
+	    high_v)).m_vertex_index;
+    }
+
+    auto add_trim = [&](ON_Curve *edge_curve, int first, int second,
+	    const ON_2dPoint &start, const ON_2dPoint &end,
+	    ON_BrepTrim::TYPE type) {
+	ON_BrepEdge &edge = brep.NewEdge(brep.m_V[first],
+	    brep.m_V[second], brep.AddEdgeCurve(edge_curve));
+	edge.m_tolerance = 1.0e-6;
+	ON_LineCurve *trim_curve = new ON_LineCurve(start, end);
+	trim_curve->SetDomain(0.0, 1.0);
+	ON_BrepTrim &trim = brep.NewTrim(edge, false, loop,
+	    brep.AddTrimCurve(trim_curve));
+	trim.m_type = type;
+	trim.m_iso = surface->IsIsoparametric(*trim_curve);
+	trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-6;
+	return trim.m_trim_index;
+    };
+
+    ON_Curve *west = surface->IsoCurve(1, udom.Min());
+    west->Trim(ON_Interval(low_v, high_v));
+    west->Reverse();
+    const int west_trim_index = add_trim(west, high_vertices[0],
+	low_vertices[0], ON_2dPoint(udom.Min(), high_v),
+	ON_2dPoint(udom.Min(), low_v), ON_BrepTrim::seam);
+    const int seam_edge_index = brep.m_T[west_trim_index].m_ei;
+
+    for (int i = 0; i < 4; ++i) {
+	const int next = (i + 1) % 4;
+	const double start_u = udom.ParameterAt((double)i / 4.0);
+	const double end_u = udom.ParameterAt((double)(i + 1) / 4.0);
+	ON_Curve *edge_curve = surface->IsoCurve(0, low_v);
+	edge_curve->Trim(ON_Interval(start_u, end_u));
+	add_trim(edge_curve, low_vertices[i], low_vertices[next],
+	    ON_2dPoint(start_u, low_v), ON_2dPoint(end_u, low_v),
+	    ON_BrepTrim::boundary);
+    }
+
+    ON_LineCurve *east_trim_curve = new ON_LineCurve(
+	ON_2dPoint(udom.Max(), low_v), ON_2dPoint(udom.Max(), high_v));
+    east_trim_curve->SetDomain(0.0, 1.0);
+    ON_BrepTrim &east = brep.NewTrim(brep.m_E[seam_edge_index], true,
+	loop, brep.AddTrimCurve(east_trim_curve));
+    east.m_type = ON_BrepTrim::seam;
+    east.m_iso = surface->IsIsoparametric(*east_trim_curve);
+    east.m_tolerance[0] = east.m_tolerance[1] = 1.0e-6;
+
+    for (int i = 4; i > 0; --i) {
+	const int first = i % 4;
+	const int second = (i - 1) % 4;
+	const double start_u = udom.ParameterAt((double)i / 4.0);
+	const double end_u = udom.ParameterAt((double)(i - 1) / 4.0);
+	ON_Curve *edge_curve = surface->IsoCurve(0, high_v);
+	edge_curve->Trim(ON_Interval(end_u, start_u));
+	edge_curve->Reverse();
+	add_trim(edge_curve, high_vertices[first], high_vertices[second],
+	    ON_2dPoint(start_u, high_v), ON_2dPoint(end_u, high_v),
+	    ON_BrepTrim::boundary);
+    }
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
 overlapping_periodic_pcurves_test()
 {
     ON_Brep brep;
@@ -1239,7 +1333,8 @@ main(int argc, const char **argv)
 	degenerate_collinear_loop_test() &&
 	singular_cap_test() && periodic_strip_test() &&
 	redundant_periodic_boundaries_test() &&
-	periodic_rectangle_test() && overlapping_periodic_pcurves_test() &&
+	periodic_rectangle_test() && periodic_zero_area_subcycle_test() &&
+	overlapping_periodic_pcurves_test() &&
 	paired_periodic_strip_test() &&
 	collapsed_closed_pcurve_test() &&
 	misclassified_periodic_boundaries_test() &&

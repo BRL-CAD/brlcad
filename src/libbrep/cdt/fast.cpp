@@ -4324,7 +4324,14 @@ fast_split_touching_periodic_loop(const ON_Surface *surface,
     };
     const double first_area = signed_area(first_cycle);
     const double second_area = signed_area(second_cycle);
+    const double parameter_scale = std::max(1.0,
+	std::max(surface->Domain(0).Length(),
+	    surface->Domain(1).Length()));
+    const double minimum_cycle_area =
+	BREP_SAME_POINT_TOLERANCE * parameter_scale;
     if (!std::isfinite(first_area) || !std::isfinite(second_area) ||
+	    fabs(first_area) <= minimum_cycle_area ||
+	    fabs(second_area) <= minimum_cycle_area ||
 	    first_area * second_area >= 0.0)
 	return false;
 
