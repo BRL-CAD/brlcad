@@ -38,7 +38,6 @@
 #include <vector>
 #include "bg/chull.h"
 #include "bg/tri_pt.h"
-#include "bg/tri_tri.h"
 #include "./cdt.h"
 
 #define BREP_PLANAR_TOL 0.05
@@ -53,7 +52,18 @@ struct assembled_mesh_validation {
     size_t unused_vertices = 0;
     size_t degenerate_faces = 0;
     size_t invalid_vertex_links = 0;
+    size_t intersecting_triangle_pairs = 0;
+    int first_intersection[2] = {-1, -1};
 };
+
+static bool
+assembled_mesh_collect_candidate(size_t triangle, void *context)
+{
+    std::vector<size_t> *candidates =
+	(std::vector<size_t> *)context;
+    candidates->push_back(triangle);
+    return true;
+}
 
 static bool
 assembled_mesh_validate(int vertex_count, int face_count,
@@ -142,9 +152,81 @@ assembled_mesh_validate(int vertex_count, int face_count,
 	    validation->invalid_vertex_links++;
     }
 
+    /* Edge incidence and vertex links do not detect two otherwise valid
+     * closed sheets crossing away from shared topology.  Query an R-tree of
+     * prior triangle bounds and apply the validated library predicate only to
+     * nonadjacent candidates.  One certified counterexample is sufficient
+     * to fail closed and bounds work on malformed, heavily overlapping
+     * meshes. */
+    if (!validation->nonfinite_vertices && !validation->degenerate_faces) {
+	RTree<size_t, double, 3> triangle_index;
+	for (int face = 0; face < face_count; ++face) {
+	    double minimum[3] = {
+		std::numeric_limits<double>::infinity(),
+		std::numeric_limits<double>::infinity(),
+		std::numeric_limits<double>::infinity()
+	    };
+	    double maximum[3] = {
+		-std::numeric_limits<double>::infinity(),
+		-std::numeric_limits<double>::infinity(),
+		-std::numeric_limits<double>::infinity()
+	    };
+	    point_t first_points[3];
+	    for (int corner = 0; corner < 3; ++corner) {
+		const int vertex = faces[3 * face + corner];
+		VSET(first_points[corner], vertices[3 * vertex],
+		    vertices[3 * vertex + 1], vertices[3 * vertex + 2]);
+		for (int axis = 0; axis < 3; ++axis) {
+		    minimum[axis] = std::min(minimum[axis],
+			(double)first_points[corner][axis]);
+		    maximum[axis] = std::max(maximum[axis],
+			(double)first_points[corner][axis]);
+		}
+	    }
+	    std::vector<size_t> candidates;
+	    triangle_index.Search(minimum, maximum,
+		assembled_mesh_collect_candidate, &candidates);
+	    std::sort(candidates.begin(), candidates.end());
+	    for (size_t candidate : candidates) {
+		const int *first = &faces[3 * face];
+		const int *second = &faces[3 * candidate];
+		bool adjacent = false;
+		for (int i = 0; i < 3 && !adjacent; ++i) {
+		    for (int j = 0; j < 3; ++j) {
+			if (first[i] == second[j]) {
+			    adjacent = true;
+			    break;
+			}
+		    }
+		}
+		if (adjacent)
+		    continue;
+		point_t second_points[3];
+		for (int corner = 0; corner < 3; ++corner) {
+		    const int vertex = second[corner];
+		    VSET(second_points[corner], vertices[3 * vertex],
+			vertices[3 * vertex + 1],
+			vertices[3 * vertex + 2]);
+		}
+		const bool intersects = cdt_tri_tri_intersection(first_points,
+		    second_points);
+		if (!intersects)
+		    continue;
+		validation->intersecting_triangle_pairs = 1;
+		validation->first_intersection[0] = (int)candidate;
+		validation->first_intersection[1] = face;
+		break;
+	    }
+	    if (validation->intersecting_triangle_pairs)
+		break;
+	    triangle_index.Insert(minimum, maximum, (size_t)face);
+	}
+    }
+
     return !validation->invalid_indices && !validation->nonfinite_vertices &&
 	!validation->unused_vertices && !validation->degenerate_faces &&
-	!validation->invalid_vertex_links;
+	!validation->invalid_vertex_links &&
+	!validation->intersecting_triangle_pairs;
 }
 
 int
@@ -193,6 +275,40 @@ cdt_test_assembled_mesh_validation(void)
     if (assembled_mesh_validate(4, 4, vertices, degenerate, &validation) ||
 	    validation.degenerate_faces != 1)
 	return 4;
+
+    fastf_t crossing_vertices[] = {
+	0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+	0.25, 0.25, 0.25, 1.25, 0.25, 0.25,
+	0.25, 1.25, 0.25, 0.25, 0.25, 1.25
+    };
+    int crossing_tetrahedra[] = {
+	0, 2, 1, 0, 1, 3, 0, 3, 2, 1, 2, 3,
+	4, 6, 5, 4, 5, 7, 4, 7, 6, 5, 6, 7
+    };
+    if (assembled_mesh_validate(8, 8, crossing_vertices,
+	    crossing_tetrahedra, &validation) ||
+	    validation.intersecting_triangle_pairs != 1 ||
+	    validation.first_intersection[0] < 0 ||
+	    validation.first_intersection[1] < 0)
+	return 5;
+
+    /* Adjacent face chords can have touching bounding boxes and separated,
+     * collinear boundary intervals.  The base predicate's coarse epsilon
+     * reports this NIST-derived configuration as an intersection, but its
+     * reported endpoint does not lie on both triangles. */
+    point_t separated_first[3] = {
+	{514.97292083479124, -327.29326229964499, 77.978026208414306},
+	{515.54826425965757, -326.98097089301785, 78.005348166208819},
+	{515.6018756882213, -326.66867948639072, 78.032670124003332}
+    };
+    point_t separated_second[3] = {
+	{515.45117516473545, -327.29326229964499, 77.978026208414306},
+	{515.45520000264924, -327.36064849937765, 77.971900884443286},
+	{515.46589947082487, -327.3585443137215, 77.97209910798874}
+    };
+    if (cdt_tri_tri_intersection(separated_first, separated_second))
+	return 6;
 
     return 0;
 }
@@ -385,7 +501,7 @@ closed_mesh_orientation_sync(int *faces, int face_count,
 static int
 closed_mesh_component_filter(int *faces, int *face_count,
 	fastf_t *vertices, int vertex_count, int *face_normals,
-	const int *source_faces = NULL, double overlap_tolerance = 0.0,
+	int *source_faces = NULL, double overlap_tolerance = 0.0,
 	bool source_is_solid = true, bool emit_diagnostics = true)
 {
     if (!faces || !face_count || !vertices || *face_count < 2 ||
@@ -438,7 +554,8 @@ closed_mesh_component_filter(int *faces, int *face_count,
 		face_normals);
 	*face_count = (int)(compact_faces.size() / 3);
 	if (source_faces)
-	    source_faces = compact_sources.data();
+	    std::copy(compact_sources.begin(), compact_sources.end(),
+		source_faces);
     }
     if (*face_count < 2)
 	return removed_count;
@@ -598,9 +715,12 @@ closed_mesh_component_filter(int *faces, int *face_count,
 
     std::vector<int> candidate_faces;
     std::vector<int> candidate_normals;
+    std::vector<int> candidate_sources;
     candidate_faces.reserve(retained_face_count * 3);
     if (face_normals)
 	candidate_normals.reserve(retained_face_count * 3);
+    if (source_faces)
+	candidate_sources.reserve(retained_face_count);
     for (int face = 0; face < *face_count; ++face) {
 	if (!retain[(size_t)component_id[(size_t)face]])
 	    continue;
@@ -610,6 +730,8 @@ closed_mesh_component_filter(int *faces, int *face_count,
 	    if (face_normals)
 		candidate_normals.push_back(face_normals[offset + corner]);
 	}
+	if (source_faces)
+	    candidate_sources.push_back(source_faces[face]);
     }
     if (!source_faces &&
 	    bg_trimesh_solid2(vertex_count, (int)retained_face_count,
@@ -622,6 +744,9 @@ closed_mesh_component_filter(int *faces, int *face_count,
     if (face_normals)
 	std::copy(candidate_normals.begin(), candidate_normals.end(),
 	    face_normals);
+    if (source_faces)
+	std::copy(candidate_sources.begin(), candidate_sources.end(),
+	    source_faces);
     *face_count = (int)retained_face_count;
     return removed;
 }
@@ -687,11 +812,14 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	return true;
 
     const size_t initial_folds = fmesh->incorrect_normal_count();
+    const size_t initial_intersections = fmesh->self_intersections(NULL,
+	MAX_CHART_REFINEMENT_POINTS);
+    const size_t initial_defects = initial_folds + initial_intersections;
     size_t refinement_points = 0;
     int refinement_attempts = 0;
     bool refinement_stalled = false;
     bool refinement_no_progress = false;
-    size_t best_folds = initial_folds;
+    size_t best_defects = initial_defects;
     int stagnant_attempts = 0;
     for (int attempt = 0; attempt < MAX_CHART_REFINEMENT_ATTEMPTS;
 	    ++attempt) {
@@ -700,7 +828,9 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	if (!remaining)
 	    break;
 	refinement_attempts++;
-	const size_t inserted = fmesh->refine_incorrect_normals(remaining);
+	size_t inserted = fmesh->refine_self_intersections(remaining);
+	if (inserted < remaining)
+	    inserted += fmesh->refine_incorrect_normals(remaining - inserted);
 	if (!inserted) {
 	    refinement_stalled = true;
 	    break;
@@ -717,8 +847,11 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	    return true;
 	}
 	const size_t current_folds = fmesh->incorrect_normal_count();
-	if (current_folds < best_folds) {
-	    best_folds = current_folds;
+	const size_t current_intersections = fmesh->self_intersections(NULL,
+	    MAX_CHART_REFINEMENT_POINTS);
+	const size_t current_defects = current_folds + current_intersections;
+	if (current_defects < best_defects) {
+	    best_defects = current_defects;
 	    stagnant_attempts = 0;
 	} else {
 	    stagnant_attempts++;
@@ -731,24 +864,30 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
     }
     if (refinement_points) {
 	const size_t remaining_folds = fmesh->incorrect_normal_count();
+	const size_t remaining_intersections = fmesh->self_intersections(NULL,
+	    MAX_CHART_REFINEMENT_POINTS);
+	const std::string remaining_summary = std::to_string(remaining_folds) +
+	    " folded triangles and " +
+	    std::to_string(remaining_intersections) +
+	    " intersecting triangle pairs";
+	const std::string initial_summary = std::to_string(initial_folds) +
+	    " folded triangles and " +
+	    std::to_string(initial_intersections) +
+	    " intersecting triangle pairs";
 	const std::string message = refinement_no_progress ?
 	    "adaptive chart refinement made no progress after " +
 		std::to_string(refinement_attempts) + " rounds and " +
 		std::to_string(refinement_points) + " points; best " +
-		std::to_string(best_folds) + ", remaining " +
-		std::to_string(remaining_folds) +
-		" inconsistent triangles" : refinement_stalled ?
+		std::to_string(best_defects) +
+		" geometric defects, remaining " + remaining_summary :
+	    refinement_stalled ?
 	    "adaptive chart refinement stalled after " +
 		std::to_string(refinement_points) + " points with " +
-		std::to_string(remaining_folds) +
-		" inconsistent triangles (initially " +
-		std::to_string(initial_folds) + ")" :
+		remaining_summary + " (initially " + initial_summary + ")" :
 	    "adaptive chart refinement reached its limit after " +
 		std::to_string(refinement_attempts) + " rounds and " +
 		std::to_string(refinement_points) + " points with " +
-		std::to_string(remaining_folds) +
-		" inconsistent triangles (initially " +
-		std::to_string(initial_folds) + ")";
+		remaining_summary + " (initially " + initial_summary + ")";
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REFINEMENT_LIMIT,
 	    BREP_CDT_STAGE_ADAPTIVE_REFINEMENT, fmesh->f_id, 0, 1,
 	    message.c_str());
@@ -1371,7 +1510,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     assembled_mesh_validation mesh_validation;
     if (!assembled_mesh_validate(valid_vcnt, valid_fcnt, valid_vertices,
 	    valid_faces, &mesh_validation)) {
-	const std::string message =
+	std::string message =
 	    "assembled mesh failed geometric/link validation: indices " +
 	    std::to_string(mesh_validation.invalid_indices) +
 	    ", nonfinite vertices " +
@@ -1381,13 +1520,38 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    ", degenerate faces " +
 	    std::to_string(mesh_validation.degenerate_faces) +
 	    ", invalid vertex links " +
-	    std::to_string(mesh_validation.invalid_vertex_links);
+	    std::to_string(mesh_validation.invalid_vertex_links) +
+	    ", intersecting triangle pairs " +
+	    std::to_string(mesh_validation.intersecting_triangle_pairs) +
+	    (mesh_validation.intersecting_triangle_pairs ?
+	    " (first " + std::to_string(
+		mesh_validation.first_intersection[0]) + ", " +
+		std::to_string(mesh_validation.first_intersection[1]) + ")" :
+	    "");
+	if (mesh_validation.intersecting_triangle_pairs &&
+		mesh_validation.first_intersection[0] >= 0 &&
+		mesh_validation.first_intersection[1] >= 0 &&
+		(size_t)mesh_validation.first_intersection[0] <
+		s_cdt->bot_face_to_brep_face.size() &&
+		(size_t)mesh_validation.first_intersection[1] <
+		s_cdt->bot_face_to_brep_face.size()) {
+	    message += " from B-Rep faces " + std::to_string(
+		s_cdt->bot_face_to_brep_face[(size_t)
+		mesh_validation.first_intersection[0]]) + ", " +
+		std::to_string(s_cdt->bot_face_to_brep_face[(size_t)
+		mesh_validation.first_intersection[1]]);
+	}
 	bu_free(valid_faces, "faces");
 	bu_free(valid_vertices, "vertices");
 	s_cdt->status = BREP_CDT_FAILED;
-	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_CERTIFICATION_FAILED,
-	    BREP_CDT_STAGE_SOLID_VALIDATION, -1, face_successes, 0,
-	    message.c_str());
+	cdt_diagnostic_set(s_cdt,
+	    mesh_validation.intersecting_triangle_pairs ?
+	    BREP_CDT_RESULT_GEOMETRIC_FAILED :
+	    BREP_CDT_RESULT_CERTIFICATION_FAILED,
+	    mesh_validation.intersecting_triangle_pairs ?
+	    BREP_CDT_STAGE_GEOMETRIC_VALIDATION :
+	    BREP_CDT_STAGE_SOLID_VALIDATION,
+	    -1, face_successes, 0, message.c_str());
 	return -1;
     }
 
@@ -1433,6 +1597,7 @@ ON_Brep_CDT_Mesh(
     if (!faces || !fcnt || !vertices || !vcnt || !s_cdt || !s_cdt->brep) {
 	return -1;
     }
+    s_cdt->bot_face_to_brep_face.clear();
 
     /* We can ignore the face normals if we want, but if some of the
      * return variables are non-NULL they all need to be non-NULL */
@@ -1655,6 +1820,9 @@ ON_Brep_CDT_Mesh(
 	}
     }
 
+    output_face_ids.resize((size_t)*fcnt);
+    s_cdt->bot_face_to_brep_face = output_face_ids;
+
     return 0;
 }
 
@@ -1710,7 +1878,7 @@ cdt_test_spurious_components(void)
     int open_duplicate_faces[] = {
 	0, 1, 2, 0, 2, 3, 4, 5, 6
     };
-    const int open_duplicate_sources[] = {7, 7, 7};
+    int open_duplicate_sources[] = {7, 7, 7};
     face_count = 3;
     if (closed_mesh_component_filter(open_duplicate_faces, &face_count,
 	    open_duplicate_vertices, 7, NULL, open_duplicate_sources,

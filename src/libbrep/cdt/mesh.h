@@ -631,7 +631,12 @@ public:
     long add_point(ON_3dPoint *on_3dp);
     long add_normal(ON_3dPoint *on_3dn);
     bool repair();
+    size_t refine_problem_triangles(const std::vector<triangle_t> &triangles,
+	size_t max_points);
     size_t refine_incorrect_normals(size_t max_points);
+    size_t refine_self_intersections(size_t max_points);
+    size_t self_intersections(std::vector<triangle_t> *problematic = NULL,
+	size_t max_pairs = 1);
     bool optimize(double deg = 10);
     bool optimize(std::set<triangle_t> &seeds);
     bool optimize(std::set<triangle_t> &seeds, ON_Plane &pplane);

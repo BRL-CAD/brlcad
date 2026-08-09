@@ -26,9 +26,53 @@
  */
 
 #include "common.h"
+#include <cmath>
+#include <limits>
 #include "bu/str.h"
+#include "bg/tri_pt.h"
 #include "bg/tri_ray.h"
+#include "bg/tri_tri.h"
 #include "./cdt.h"
+
+bool
+cdt_tri_tri_intersection(const point_t first[3], const point_t second[3])
+{
+    int coplanar = 0;
+    point_t intersection_start = VINIT_ZERO;
+    point_t intersection_end = VINIT_ZERO;
+    const int candidate = bg_tri_tri_isect_with_line(first[0], first[1],
+	first[2], second[0], second[1], second[2], &coplanar,
+	&intersection_start, &intersection_end);
+    if (!candidate)
+	return false;
+    if (coplanar)
+	return bg_tri_tri_isect_coplanar(first[0], first[1], first[2],
+	    second[0], second[1], second[2], 1) > 0;
+
+    double coordinate_scale = 1.0;
+    for (int triangle = 0; triangle < 2; ++triangle) {
+	const point_t *points = triangle ? second : first;
+	for (int corner = 0; corner < 3; ++corner) {
+	    for (int axis = 0; axis < 3; ++axis)
+		coordinate_scale = std::max(coordinate_scale,
+		    std::fabs((double)points[corner][axis]));
+	}
+    }
+    const double endpoint_tolerance = 1024.0 *
+	std::numeric_limits<double>::epsilon() * coordinate_scale;
+    const auto endpoint_on_both = [&](const point_t endpoint) {
+	const double first_distance = bg_tri_closest_pt(NULL, endpoint,
+	    first[0], first[1], first[2]);
+	const double second_distance = bg_tri_closest_pt(NULL, endpoint,
+	    second[0], second[1], second[2]);
+	return std::isfinite(first_distance) &&
+	    std::isfinite(second_distance) &&
+	    first_distance <= endpoint_tolerance &&
+	    second_distance <= endpoint_tolerance;
+    };
+    return endpoint_on_both(intersection_start) ||
+	endpoint_on_both(intersection_end);
+}
 
 /***************************************************
  * debugging routines
