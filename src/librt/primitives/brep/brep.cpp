@@ -3054,7 +3054,9 @@ static void
 brep_trace_root(struct rt_brep_shot_trace *trace, const ON_BrepFace *face,
     double dist, const ON_2dPoint &uv, const ON_3dVector &surface_normal,
     const ON_Ray &ray, int trim_status, double trim_distance,
-    const BRNode *trim_node, int hit_class)
+    const BRNode *trim_node, size_t trim_candidates, int hit_class,
+    int face_trim_status, double face_trim_distance,
+    size_t face_trim_candidates, int face_hit_class)
 {
     if (!trace)
 	return;
@@ -3072,10 +3074,15 @@ brep_trace_root(struct rt_brep_shot_trace *trace, const ON_BrepFace *face,
     root.uv[1] = uv.y;
     root.normal_dot = normal * ray.m_dir;
     root.trim_distance = trim_distance;
+    root.face_trim_distance = face_trim_distance;
+    root.trim_candidates = trim_candidates;
+    root.face_trim_candidates = face_trim_candidates;
     root.face_index = face->m_face_index;
     root.adjacent_face_index = trim_node ? trim_node->m_adj_face_index : -99;
     root.trim_status = trim_status;
+    root.face_trim_status = face_trim_status;
     root.hit_class = hit_class;
+    root.face_hit_class = face_hit_class;
     root.direction = root.normal_dot < 0.0 ? brep_hit::ENTERING :
 	brep_hit::LEAVING;
 }
@@ -13498,6 +13505,11 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
 	    size_t trim_candidates = 0;
 	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim,
 		BREP_EDGE_MISS_TOLERANCE, &trim_candidates);
+	    int face_trim_status = -1;
+	    int face_hit_class = -1;
+	    double face_trim_distance = -1.0;
+	    const BRNode *face_trim_node = NULL;
+	    size_t face_trim_candidates = 0;
 	    if (trace) {
 		double allocating_closesttrim;
 		const BRNode *allocating_trimBR = NULL;
@@ -13534,17 +13546,14 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
 		if (!sbv->m_ctree) {
 		    trace->face_trim_equivalence_mismatches++;
 		} else {
-		    const BRNode *face_trim_node = NULL;
-		    double face_trim_distance = -1.0;
-		    size_t face_trim_candidates = 0;
 		    trace->face_trim_queries++;
-		    const int face_trim_status = sbv->m_ctree->isTrimmed(
+		    face_trim_status = sbv->m_ctree->isTrimmed(
 			ouv[i], &face_trim_node, face_trim_distance,
 			BREP_EDGE_MISS_TOLERANCE, &face_trim_candidates);
 		    trace->face_trim_candidates += face_trim_candidates;
 		    const int leaf_hit_class = brep_initial_hit_class(
 			trim_status, closesttrim);
-		    const int face_hit_class = brep_initial_hit_class(
+		    face_hit_class = brep_initial_hit_class(
 			face_trim_status, face_trim_distance);
 		    if (trim_status != face_trim_status) {
 			trace->face_trim_status_mismatches++;
@@ -13605,7 +13614,9 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
 		    bh.hit = brep_hit::CLEAN_HIT;
 		}
 		brep_trace_root(trace, face, t[i], ouv[i], N[i], ray,
-		    trim_status, closesttrim, trimBR, bh.hit);
+		    trim_status, closesttrim, trimBR, trim_candidates, bh.hit,
+		    face_trim_status, face_trim_distance,
+		    face_trim_candidates, face_hit_class);
 		if (VDOT(ray.m_dir, vnorm) < 0.0)
 		    bh.direction = brep_hit::ENTERING;
 		else
@@ -13640,7 +13651,9 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
 		}
 		bh.hit = brep_hit::NEAR_MISS;
 		brep_trace_root(trace, face, t[i], ouv[i], N[i], ray,
-		    trim_status, closesttrim, trimBR, bh.hit);
+		    trim_status, closesttrim, trimBR, trim_candidates, bh.hit,
+		    face_trim_status, face_trim_distance,
+		    face_trim_candidates, face_hit_class);
 		if (VDOT(ray.m_dir, vnorm) < 0.0)
 		    bh.direction = brep_hit::ENTERING;
 		else
@@ -13653,7 +13666,9 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
 		found = BREP_INTERSECT_FOUND;
 	    } else {
 		brep_trace_root(trace, face, t[i], ouv[i], N[i], ray,
-		    trim_status, closesttrim, trimBR, brep_hit::CLEAN_MISS);
+		    trim_status, closesttrim, trimBR, trim_candidates,
+		    brep_hit::CLEAN_MISS, face_trim_status,
+		    face_trim_distance, face_trim_candidates, face_hit_class);
 	    }
 	}
     }

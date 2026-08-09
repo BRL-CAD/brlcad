@@ -535,10 +535,15 @@ struct rt_brep_trace_root {
     fastf_t uv[2];
     fastf_t normal_dot;
     fastf_t trim_distance;
+    fastf_t face_trim_distance;
+    size_t trim_candidates;
+    size_t face_trim_candidates;
     int face_index;
     int adjacent_face_index;
     int trim_status;
+    int face_trim_status;
     int hit_class;
+    int face_hit_class;
     int direction;
 };
 

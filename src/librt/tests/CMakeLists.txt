@@ -195,6 +195,10 @@ brlcad_add_test(
   COMMAND rt_brep_ray --trim-interval-only
 )
 brlcad_add_test(
+  NAME rt_brep_ray_trim_classifier
+  COMMAND rt_brep_ray --trim-classifier-only
+)
+brlcad_add_test(
   NAME rt_brep_ray_source_union
   COMMAND rt_brep_ray --source-union-only
 )
