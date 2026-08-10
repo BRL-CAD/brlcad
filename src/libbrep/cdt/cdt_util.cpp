@@ -706,6 +706,8 @@ cdt_state_reset(struct ON_Brep_CDT_State *s_cdt)
     s_cdt->min_edge_seg_len->clear();
     s_cdt->max_edge_seg_len->clear();
     s_cdt->on_brep_edge_pnts->clear();
+    s_cdt->collapsed_edge_pnts.clear();
+    s_cdt->collapsed_edges.clear();
     s_cdt->v_min_seg_len.clear();
     s_cdt->l_median_len.clear();
     s_cdt->unsplit_singular_edges.clear();

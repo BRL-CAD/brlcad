@@ -1100,6 +1100,342 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     return true;
 }
 
+/* Collapse only explicit B-Rep edges whose complete curve is contained in
+ * the fixed modeling tolerance.  Endpoint proximity alone is insufficient:
+ * a long curve may close back on itself or join two otherwise unrelated
+ * sheets.  The NURBS control-polygon length and curve bounding box are both
+ * conservative guards for the whole edge.
+ *
+ * This is derived mesh state.  It deliberately leaves the source and working
+ * B-Reps untouched and welds the already shared edge samples in every
+ * incident face mesh.  Components retain a bounded envelope so a chain of
+ * individually short edges cannot transitively collapse a wider feature. */
+static size_t
+collapse_subtolerance_brep_edges(struct ON_Brep_CDT_State *s_cdt)
+{
+    if (!s_cdt || !s_cdt->brep || !s_cdt->w3dpnts ||
+	    s_cdt->w3dpnts->empty())
+	return 0;
+
+    /* BN_TOL_DIST is an absolute modeling tolerance and can exceed an entire
+     * valid micron-scale solid.  Never weld across a distance larger than the
+     * minimum feature resolution derived from the caller's tolerance. */
+    if (!std::isfinite(s_cdt->absmin) || s_cdt->absmin <= 0.0)
+	return 0;
+    const double collapse_tolerance = std::min((double)BN_TOL_DIST,
+	(double)s_cdt->absmin);
+    struct collapse_candidate {
+	int edge_index;
+	ON_BoundingBox curve_bounds;
+	std::vector<ON_3dPoint *> points;
+    };
+    std::vector<collapse_candidate> candidates;
+    std::set<ON_3dPoint *> candidate_point_set;
+    for (int edge_index = 0; edge_index < s_cdt->brep->m_E.Count();
+	    ++edge_index) {
+	ON_BrepEdge &edge = s_cdt->brep->m_E[edge_index];
+	if (edge.m_vi[0] < 0 || edge.m_vi[1] < 0 ||
+		edge.m_vi[0] == edge.m_vi[1])
+	    continue;
+	const auto segments = s_cdt->e2polysegs.find(edge_index);
+	if (segments == s_cdt->e2polysegs.end() ||
+		segments->second.empty())
+	    continue;
+	bedge_seg_t *first_segment = *segments->second.begin();
+	if (!first_segment || !first_segment->nc ||
+		!std::isfinite(first_segment->cp_len) ||
+		first_segment->cp_len <= 0.0 ||
+		first_segment->cp_len > collapse_tolerance)
+	    continue;
+	const ON_BoundingBox curve_bounds =
+	    first_segment->nc->BoundingBox();
+	if (!curve_bounds.IsValid())
+	    continue;
+	const double envelope = curve_bounds.Diagonal().Length();
+	if (!std::isfinite(envelope) || envelope > collapse_tolerance)
+	    continue;
+
+	ON_3dPoint *first_vertex = (*s_cdt->vert_pnts)[edge.m_vi[0]];
+	ON_3dPoint *second_vertex = (*s_cdt->vert_pnts)[edge.m_vi[1]];
+	if (!first_vertex || !second_vertex ||
+		s_cdt->singular_vert_to_norms->find(first_vertex) !=
+		s_cdt->singular_vert_to_norms->end() ||
+		s_cdt->singular_vert_to_norms->find(second_vertex) !=
+		s_cdt->singular_vert_to_norms->end())
+	    continue;
+
+	std::set<ON_3dPoint *> members;
+	for (bedge_seg_t *segment : segments->second) {
+	    if (!segment || !segment->e_start || !segment->e_end)
+		continue;
+	    members.insert(segment->e_start);
+	    members.insert(segment->e_end);
+	}
+	if (members.size() < 2)
+	    continue;
+	collapse_candidate candidate = {edge_index, curve_bounds,
+	    std::vector<ON_3dPoint *>(members.begin(), members.end())};
+	candidates.push_back(candidate);
+	candidate_point_set.insert(members.begin(), members.end());
+    }
+
+    if (candidates.empty())
+	return 0;
+
+    /* Tiny explicit edges are rare.  Allocate union-find state only for
+     * samples referenced by pre-screened candidates, not for every surface
+     * and refinement point in a potentially million-point tessellation. */
+    std::vector<ON_3dPoint *> candidate_points;
+    candidate_points.reserve(candidate_point_set.size());
+    for (ON_3dPoint *point : *s_cdt->w3dpnts) {
+	if (candidate_point_set.find(point) != candidate_point_set.end())
+	    candidate_points.push_back(point);
+    }
+    if (candidate_points.size() != candidate_point_set.size())
+	return 0;
+    const size_t point_count = candidate_points.size();
+    std::map<ON_3dPoint *, size_t> point_index;
+    for (size_t i = 0; i < point_count; ++i)
+	point_index[candidate_points[i]] = i;
+
+    std::vector<size_t> parent(point_count);
+    std::vector<size_t> component_size(point_count, 1);
+    std::vector<ON_BoundingBox> component_bounds;
+    component_bounds.reserve(point_count);
+    for (size_t i = 0; i < point_count; ++i) {
+	parent[i] = i;
+	component_bounds.push_back(ON_BoundingBox(*candidate_points[i],
+	    *candidate_points[i]));
+    }
+    const auto root = [&](size_t point) {
+	size_t current = point;
+	while (parent[current] != current)
+	    current = parent[current];
+	return current;
+    };
+    const auto grow_bounds = [](ON_BoundingBox &target,
+	    const ON_BoundingBox &source) {
+	target.Set(source.Min(), true);
+	target.Set(source.Max(), true);
+    };
+
+    std::set<int> accepted_edges;
+    for (const collapse_candidate &candidate : candidates) {
+	std::set<size_t> members;
+	for (ON_3dPoint *point : candidate.points) {
+	    const auto index = point_index.find(point);
+	    if (index != point_index.end())
+		members.insert(index->second);
+	}
+	if (members.size() < 2)
+	    continue;
+
+	std::set<size_t> roots;
+	ON_BoundingBox combined = candidate.curve_bounds;
+	for (size_t member : members)
+	    roots.insert(root(member));
+	for (size_t component : roots)
+	    grow_bounds(combined, component_bounds[component]);
+	const double combined_envelope = combined.Diagonal().Length();
+	if (!std::isfinite(combined_envelope) ||
+		combined_envelope > collapse_tolerance)
+	    continue;
+
+	const size_t combined_root = *roots.begin();
+	for (size_t component : roots) {
+	    if (component == combined_root)
+		continue;
+	    parent[component] = combined_root;
+	    component_size[combined_root] += component_size[component];
+	}
+	component_bounds[combined_root] = combined;
+	accepted_edges.insert(candidate.edge_index);
+    }
+
+    if (accepted_edges.empty())
+	return 0;
+
+    std::map<ON_3dPoint *, int> topology_vertex;
+    for (const auto &vertex : *s_cdt->vert_pnts)
+	topology_vertex[vertex.second] = vertex.first;
+    std::map<size_t, std::vector<size_t>> components;
+    for (size_t i = 0; i < point_count; ++i) {
+	const size_t component = root(i);
+	if (component_size[component] > 1)
+	    components[component].push_back(i);
+    }
+
+    s_cdt->collapsed_edge_pnts.clear();
+    for (const auto &component : components) {
+	size_t representative = component.second.front();
+	int representative_vertex = std::numeric_limits<int>::max();
+	for (size_t member : component.second) {
+	    ON_3dPoint *point = candidate_points[member];
+	    const auto vertex = topology_vertex.find(point);
+	    if (vertex != topology_vertex.end() &&
+		    vertex->second < representative_vertex) {
+		representative = member;
+		representative_vertex = vertex->second;
+	    } else if (representative_vertex ==
+		    std::numeric_limits<int>::max() &&
+		    member < representative) {
+		representative = member;
+	    }
+	}
+	ON_3dPoint *representative_point = candidate_points[representative];
+	for (size_t member : component.second)
+	    s_cdt->collapsed_edge_pnts[candidate_points[member]] =
+		representative_point;
+    }
+    s_cdt->collapsed_edges = accepted_edges;
+
+    for (auto &vertex : *s_cdt->vert_pnts) {
+	const auto canonical = s_cdt->collapsed_edge_pnts.find(vertex.second);
+	if (canonical != s_cdt->collapsed_edge_pnts.end())
+	    vertex.second = canonical->second;
+    }
+    std::set<ON_3dPoint *> canonical_edge_points;
+    for (ON_3dPoint *point : *s_cdt->edge_pnts) {
+	const auto canonical = s_cdt->collapsed_edge_pnts.find(point);
+	canonical_edge_points.insert(canonical ==
+		s_cdt->collapsed_edge_pnts.end() ? point : canonical->second);
+    }
+    s_cdt->edge_pnts->swap(canonical_edge_points);
+    for (auto &face : s_cdt->fmeshes) {
+	cdt_mesh_t &mesh = face.second;
+	for (ON_3dPoint *&point : mesh.pnts) {
+	    const auto canonical = s_cdt->collapsed_edge_pnts.find(point);
+	    if (canonical != s_cdt->collapsed_edge_pnts.end())
+		point = canonical->second;
+	}
+	mesh.p2ind.clear();
+	for (size_t i = 0; i < mesh.pnts.size(); ++i)
+	    mesh.p2ind[mesh.pnts[i]] = (long)i;
+    }
+
+    /* Adjacent ordinary edges share the collapsed topology vertices.  Weld
+     * every segment endpoint that references one of those vertices, not just
+     * the segments belonging to the tiny edge itself, so later shared-edge
+     * refinement cannot reintroduce the discarded point identity. */
+    for (auto &edge_segments : s_cdt->e2polysegs) {
+	for (bedge_seg_t *segment : edge_segments.second) {
+	    if (!segment)
+		continue;
+	    const auto start = s_cdt->collapsed_edge_pnts.find(
+		segment->e_start);
+	    const auto end = s_cdt->collapsed_edge_pnts.find(segment->e_end);
+	    const auto root_start = s_cdt->collapsed_edge_pnts.find(
+		segment->e_root_start);
+	    const auto root_end = s_cdt->collapsed_edge_pnts.find(
+		segment->e_root_end);
+	    if (start != s_cdt->collapsed_edge_pnts.end())
+		segment->e_start = start->second;
+	    if (end != s_cdt->collapsed_edge_pnts.end())
+		segment->e_end = end->second;
+	    if (root_start != s_cdt->collapsed_edge_pnts.end())
+		segment->e_root_start = root_start->second;
+	    if (root_end != s_cdt->collapsed_edge_pnts.end())
+		segment->e_root_end = root_end->second;
+	}
+    }
+    for (int edge_index : accepted_edges) {
+	const ON_BrepEdge &edge = s_cdt->brep->m_E[edge_index];
+	const bedge_seg_t *segment = *s_cdt->e2polysegs[edge_index].begin();
+	bu_log("%s: collapsed sub-tolerance B-Rep edge %d (V%d/V%d, "
+	    "control polygon %.17g, envelope %.17g, effective tolerance "
+	    "%.17g, BN_TOL_DIST %.17g)\n",
+	    s_cdt->name ? s_cdt->name : "BREP", edge_index,
+	    edge.m_vi[0], edge.m_vi[1], segment->cp_len,
+	    segment->nc->BoundingBox().Diagonal().Length(),
+	    collapse_tolerance, (double)BN_TOL_DIST);
+    }
+    return accepted_edges.size();
+}
+
+int
+cdt_test_subtolerance_edge_collapse(void)
+{
+    ON_Brep source;
+    source.NewVertex(ON_3dPoint(0.0, 0.0, 0.0));
+    source.NewVertex(ON_3dPoint(0.0004, 0.0, 0.0));
+    source.NewVertex(ON_3dPoint(0.0008, 0.0, 0.0));
+    source.NewVertex(ON_3dPoint(100.0, 0.0, 0.0));
+    source.NewVertex(ON_3dPoint(200.0, 0.0, 0.0));
+    source.NewVertex(ON_3dPoint(200.0001, 0.0, 0.0));
+    ON_BrepVertex &v0 = source.m_V[0];
+    ON_BrepVertex &v1 = source.m_V[1];
+    ON_BrepVertex &v2 = source.m_V[2];
+    ON_BrepVertex &v3 = source.m_V[3];
+    ON_BrepVertex &v4 = source.m_V[4];
+    ON_BrepVertex &v5 = source.m_V[5];
+    source.NewEdge(v1, v0, source.AddEdgeCurve(new ON_LineCurve(
+	v1.Point(), v0.Point())));
+    source.NewEdge(v1, v2, source.AddEdgeCurve(new ON_LineCurve(
+	v1.Point(), v2.Point())));
+    source.NewEdge(v2, v3, source.AddEdgeCurve(new ON_LineCurve(
+	v2.Point(), v3.Point())));
+    /* These endpoints are close, but the curve takes a long detour.  Whole
+     * curve bounds must reject it despite endpoint proximity. */
+    ON_3dPointArray detour_points;
+    detour_points.Append(v4.Point());
+    detour_points.Append(ON_3dPoint(300.0, 100.0, 0.0));
+    detour_points.Append(v5.Point());
+    source.NewEdge(v4, v5, source.AddEdgeCurve(new ON_PolylineCurve(
+	detour_points)));
+
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(&source,
+	"sub-tolerance edge test");
+    state->brep = new ON_Brep(source);
+    for (int vertex_index = 0; vertex_index < state->brep->m_V.Count();
+	    ++vertex_index) {
+	ON_3dPoint *point = new ON_3dPoint(
+	    state->brep->m_V[vertex_index].Point());
+	(*state->vert_pnts)[vertex_index] = point;
+	CDT_Add3DPnt(state, point, -1, vertex_index, -1, -1, -1, -1);
+	state->edge_pnts->insert(point);
+    }
+    for (int edge_index = 0; edge_index < state->brep->m_E.Count();
+	    ++edge_index) {
+	ON_BrepEdge &edge = state->brep->m_E[edge_index];
+	bedge_seg_t *segment = new bedge_seg_t;
+	segment->edge_ind = edge_index;
+	segment->brep = state->brep;
+	segment->p_cdt = state;
+	segment->nc = edge.EdgeCurveOf()->NurbsCurve();
+	segment->cp_len = segment->nc->ControlPolygonLength();
+	segment->e_start = (*state->vert_pnts)[edge.m_vi[0]];
+	segment->e_end = (*state->vert_pnts)[edge.m_vi[1]];
+	segment->e_root_start = segment->e_start;
+	segment->e_root_end = segment->e_end;
+	state->e2polysegs[edge_index].insert(segment);
+    }
+
+    ON_3dPoint *expected = (*state->vert_pnts)[0];
+    bedge_seg_t *adjacent = *state->e2polysegs[1].begin();
+    state->absmin = 1.0e-5;
+    if (collapse_subtolerance_brep_edges(state) != 0) {
+	ON_Brep_CDT_Destroy(state);
+	return 4;
+    }
+    state->absmin = BN_TOL_DIST;
+    const size_t collapsed = collapse_subtolerance_brep_edges(state);
+    int result = 0;
+    if (collapsed != 1 || state->collapsed_edges.size() != 1 ||
+	    state->collapsed_edges.find(0) == state->collapsed_edges.end() ||
+	    state->collapsed_edges.find(3) != state->collapsed_edges.end())
+	result = 1;
+    else if ((*state->vert_pnts)[0] != expected ||
+	    (*state->vert_pnts)[1] != expected ||
+	    (*state->vert_pnts)[2] == expected)
+	result = 2;
+    else if (adjacent->e_start != expected ||
+	    adjacent->e_root_start != expected)
+	result = 3;
+
+    ON_Brep_CDT_Destroy(state);
+    return result;
+}
+
 ON_3dVector
 calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
 {
@@ -1668,6 +2004,12 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		}
 	    }
 	}
+
+	/* A valid solid may contain a distinct topology edge whose complete
+	 * curve is smaller than the fixed modeling tolerance.  Weld only those
+	 * explicitly proven edges in derived mesh state, before any face chart
+	 * is built. */
+	collapse_subtolerance_brep_edges(s_cdt);
 
 	// Rebuild finalized 2D RTrees for faces (needed for surface processing)
 	finalize_rtrees(s_cdt);
@@ -2243,6 +2585,10 @@ CDT_Audit(struct ON_Brep_CDT_State *s_cdt)
     int bedge_cnt = 0;
 
     for (ps_it = s_cdt->e2polysegs.begin(); ps_it != s_cdt->e2polysegs.end(); ps_it++) {
+	/* A mesh-only collapsed edge has no triangle edge by construction. */
+	if (s_cdt->collapsed_edges.find(ps_it->first) !=
+		s_cdt->collapsed_edges.end())
+	    continue;
 	std::set<bedge_seg_t *>::iterator b_it;
 	for (b_it = ps_it->second.begin(); b_it != ps_it->second.end(); b_it++) {
 	    bedge_seg_t *eseg = *b_it;
