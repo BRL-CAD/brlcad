@@ -129,6 +129,11 @@ struct ON_Brep_CDT_State {
     std::map<int, double> *max_edge_seg_len;
     std::map<ON_3dPoint *, std::set<BrepTrimPoint *>> *on_brep_edge_pnts;
     std::map<int, std::set<bedge_seg_t *>> e2polysegs;
+    /* Derived mesh-only welding for explicit B-Rep edges whose complete
+     * curve is smaller than the modeling tolerance.  Source B-Rep topology
+     * and geometry are never changed. */
+    std::map<ON_3dPoint *, ON_3dPoint *> collapsed_edge_pnts;
+    std::set<int> collapsed_edges;
     std::map<ON_3dPoint *, double> v_min_seg_len;
     std::map<int, double> l_median_len;
     std::set<cpolyedge_t *> unsplit_singular_edges;

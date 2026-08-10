@@ -32,6 +32,13 @@ brlcad_add_test(NAME brep_cdt_spurious_components COMMAND test_brep_cdt_spurious
 brlcad_addexec(test_brep_cdt_local_defects brep_cdt_local_defects.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_cdt_local_defects COMMAND test_brep_cdt_local_defects)
 
+# Explicit B-Rep edges wholly below min(BN_TOL_DIST, absmin) may be welded in
+# derived mesh state.  Guard whole-curve selection, bounded non-transitive
+# components, deterministic endpoint choice, adjacent edge propagation, and
+# seam-copy provenance during zero-length constraint removal.
+brlcad_addexec(test_brep_cdt_subtolerance brep_cdt_subtolerance.cpp "libbrep" TEST)
+brlcad_add_test(NAME brep_cdt_subtolerance COMMAND test_brep_cdt_subtolerance)
+
 # A conical pole is one chart vertex even though its native rectangular UV
 # domain has two periodic seam copies.  Exercise scale, rotation, translation,
 # explicit pole identity, and chart/native evaluation round trips.
@@ -107,6 +114,7 @@ cmakefiles(
   brep_cdt_polar_chart.cpp
   brep_cdt_local_defects.cpp
   brep_cdt_spurious_components.cpp
+  brep_cdt_subtolerance.cpp
   brep_fast.cpp
   brep_fast_repair.cpp
   brep_cdt_mesh.cpp

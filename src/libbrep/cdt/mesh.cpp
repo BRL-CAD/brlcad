@@ -3950,6 +3950,117 @@ loop_to_bgpoly(cpolygon_t *loop)
     return opoly;
 }
 
+/* Remove cyclic boundary constraints explicitly identified as belonging to
+ * one accepted sub-tolerance edge component.  The component labels carry
+ * the native constraint provenance; welded 3-D pointer equality by itself
+ * must never collapse periodic seam copies. */
+static void
+simplify_subtolerance_ring(std::vector<int> &ring,
+	const std::vector<const ON_3dPoint *> &points_3d,
+	const std::vector<cdt_topo_vertex_id> &topology_vertices,
+	const std::vector<long> &constraint_components)
+{
+    const auto collapsed_pair = [&](int first, int second) {
+	if (first < 0 || second < 0 ||
+		(size_t)first >= points_3d.size() ||
+		(size_t)second >= points_3d.size() ||
+		(size_t)first >= constraint_components.size() ||
+		(size_t)second >= constraint_components.size() ||
+		constraint_components[(size_t)first] < 0 ||
+		constraint_components[(size_t)first] !=
+		constraint_components[(size_t)second])
+	    return false;
+	const ON_3dPoint *first_point = points_3d[(size_t)first];
+	const ON_3dPoint *second_point = points_3d[(size_t)second];
+	return first_point && first_point == second_point;
+    };
+    const auto preferred_point = [&](int first, int second) {
+	const cdt_topo_vertex_id first_topology = first >= 0 &&
+		(size_t)first < topology_vertices.size() ?
+	    topology_vertices[(size_t)first] : CDT_TOPOLOGY_ID_NONE;
+	const cdt_topo_vertex_id second_topology = second >= 0 &&
+		(size_t)second < topology_vertices.size() ?
+	    topology_vertices[(size_t)second] : CDT_TOPOLOGY_ID_NONE;
+	if (first_topology != CDT_TOPOLOGY_ID_NONE &&
+		second_topology == CDT_TOPOLOGY_ID_NONE)
+	    return first;
+	if (second_topology != CDT_TOPOLOGY_ID_NONE &&
+		first_topology == CDT_TOPOLOGY_ID_NONE)
+	    return second;
+	if (first_topology != second_topology)
+	    return first_topology < second_topology ? first : second;
+	return std::min(first, second);
+    };
+
+    if (ring.size() > 1 && ring.front() == ring.back())
+	ring.pop_back();
+    std::vector<int> simplified;
+    simplified.reserve(ring.size());
+    for (int point : ring) {
+	if (!simplified.empty() && collapsed_pair(simplified.back(), point)) {
+	    simplified.back() = preferred_point(simplified.back(), point);
+	    continue;
+	}
+	simplified.push_back(point);
+    }
+    while (simplified.size() > 1 &&
+	    collapsed_pair(simplified.back(), simplified.front())) {
+	const int preferred = preferred_point(simplified.back(),
+	    simplified.front());
+	simplified.front() = preferred;
+	simplified.pop_back();
+    }
+    ring.swap(simplified);
+}
+
+int
+cdt_test_subtolerance_ring(void)
+{
+    ON_3dPoint welded(0.0, 0.0, 0.0);
+    ON_3dPoint second(1.0, 0.0, 0.0);
+    ON_3dPoint third(0.0, 1.0, 0.0);
+    std::vector<const ON_3dPoint *> points = {
+	&welded, &welded, &second, &third, &welded
+    };
+    std::vector<cdt_topo_vertex_id> topology = {
+	146, 49, 2, 3, 49
+    };
+    std::vector<long> components = {7, 7, -1, -1, -1};
+
+    std::vector<int> forward = {0, 1, 2, 3, 0};
+    simplify_subtolerance_ring(forward, points, topology, components);
+    const std::vector<int> expected_forward = {1, 2, 3};
+    if (forward != expected_forward)
+	return 1;
+
+    /* Reversing the ring must retain the same lower topology endpoint. */
+    std::vector<int> reverse = {0, 3, 2, 1, 0};
+    simplify_subtolerance_ring(reverse, points, topology, components);
+    const std::vector<int> expected_reverse = {1, 3, 2};
+    if (reverse != expected_reverse)
+	return 2;
+
+    /* A pointer-equal periodic copy without accepted-edge constraint
+     * provenance is not part of the collapse component. */
+    std::vector<int> seam_adjacent = {0, 4, 2, 3, 0};
+    simplify_subtolerance_ring(seam_adjacent, points, topology,
+	components);
+    const std::vector<int> expected_seam = {0, 4, 2, 3};
+    if (seam_adjacent != expected_seam)
+	return 3;
+
+    /* Prefer a topology endpoint over an intermediate sample. */
+    topology[0] = CDT_TOPOLOGY_ID_NONE;
+    components[4] = 7;
+    std::vector<int> sampled = {0, 4, 2, 3, 0};
+    simplify_subtolerance_ring(sampled, points, topology, components);
+    const std::vector<int> expected_sampled = {4, 2, 3};
+    if (sampled != expected_sampled)
+	return 4;
+
+    return 0;
+}
+
 static bool
 point_on_segment(const point2d_t *points, int point_index, int first,
 	int second, double tolerance_sq)
@@ -4259,6 +4370,75 @@ cdt_mesh_t::cdt()
 		"chart point has conflicting B-Rep vertex identities");
 	return false;
     }
+    /* Remove only zero-length constraints introduced by the explicit
+     * mesh-only collapse of a proven sub-tolerance B-Rep edge.  Pointer
+     * equality alone is not enough: periodic seams and singularities also
+     * have multiple native UV copies of one legitimate model-space point.
+     *
+     * Prefer an identified topology vertex over an edge sample, then the
+     * lowest topology ID (and finally native point ID).  That choice is
+     * stable when trim or ring orientation is reversed and agrees with the
+     * global collapse representative. */
+    struct ON_Brep_CDT_State *collapse_state =
+	(struct ON_Brep_CDT_State *)p_cdt;
+    std::vector<long> collapsed_source_parent(m_pnts_2d.size(), -1);
+    const auto collapsed_source_root = [&](long point) {
+	long current = point;
+	while (current >= 0 && collapsed_source_parent[(size_t)current] !=
+		current)
+	    current = collapsed_source_parent[(size_t)current];
+	return current;
+    };
+    const auto index_collapsed_constraints = [&](const cpolygon_t *loop) {
+	if (!collapse_state || !loop)
+	    return;
+	for (const cpolyedge_t *edge : loop->poly) {
+	    if (!edge || edge->trim_ind < 0 ||
+		    edge->trim_ind >= brep->m_T.Count())
+		continue;
+	    const int edge_index = brep->m_T[edge->trim_ind].m_ei;
+	    if (collapse_state->collapsed_edges.find(edge_index) ==
+		    collapse_state->collapsed_edges.end())
+		continue;
+	    const auto first_native = loop->p2o.find(edge->v2d[0]);
+	    const auto second_native = loop->p2o.find(edge->v2d[1]);
+	    if (first_native == loop->p2o.end() ||
+		    second_native == loop->p2o.end() ||
+		    first_native->second < 0 || second_native->second < 0 ||
+		    (size_t)first_native->second >=
+		    collapsed_source_parent.size() ||
+		    (size_t)second_native->second >=
+		    collapsed_source_parent.size())
+		continue;
+	    long first = first_native->second;
+	    long second = second_native->second;
+	    if (collapsed_source_parent[(size_t)first] < 0)
+		collapsed_source_parent[(size_t)first] = first;
+	    if (collapsed_source_parent[(size_t)second] < 0)
+		collapsed_source_parent[(size_t)second] = second;
+	    first = collapsed_source_root(first);
+	    second = collapsed_source_root(second);
+	    if (first == second)
+		continue;
+	    const long representative = std::min(first, second);
+	    const long discarded = std::max(first, second);
+	    collapsed_source_parent[(size_t)discarded] = representative;
+	}
+    };
+    index_collapsed_constraints(&outer_loop);
+    for (const auto &loop : inner_loops)
+	index_collapsed_constraints(loop.second);
+    std::vector<long> collapsed_source_components(m_pnts_2d.size(), -1);
+    for (size_t i = 0; i < collapsed_source_parent.size(); ++i) {
+	if (collapsed_source_parent[i] >= 0)
+	    collapsed_source_components[i] = collapsed_source_root((long)i);
+    }
+    simplify_subtolerance_ring(source_outer, source_points_3d,
+	source_topology_vertices, collapsed_source_components);
+    for (std::vector<int> &hole : source_holes)
+	simplify_subtolerance_ring(hole, source_points_3d,
+	    source_topology_vertices, collapsed_source_components);
+
     /* Build a deterministic reverse map for regular charts.  Periodic seams
      * and singularities intentionally give one 3-D vertex more than one
      * native UV identity; mark those vertices ambiguous instead of choosing
