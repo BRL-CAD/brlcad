@@ -13856,13 +13856,20 @@ static bool
 brep_resolved_grazing_pair(const brep_hit &first, const brep_hit &second,
 	const struct xray &ray, const struct bn_tol *tol)
 {
+    /* Both observations must be grazing.  A zero-normal root adjacent to an
+     * ordinary transverse boundary may be one sample from a coplanar
+     * continuum, not the second boundary of an affine-thinned interval. */
     const double ray_length = MAGNITUDE(ray.r_dir);
     if (!(ray_length > DBL_MIN) || !std::isfinite(ray_length) ||
 	    !std::isfinite(first.dist) || !std::isfinite(second.dist) ||
 	    (first.trimmed && !first.closeToEdge) || first.oob ||
 	    (second.trimmed && !second.closeToEdge) || second.oob ||
 	    first.direction != brep_hit::ENTERING ||
-	    second.direction != brep_hit::LEAVING)
+	    second.direction != brep_hit::LEAVING ||
+	    !NEAR_ZERO(VDOT(first.normal, ray.r_dir),
+		BREP_GRAZING_DOT_TOL) ||
+	    !NEAR_ZERO(VDOT(second.normal, ray.r_dir),
+		BREP_GRAZING_DOT_TOL))
 	return false;
     const double minimum_segment = tol && tol->dist > 0.0 &&
 	std::isfinite(tol->dist) ? tol->dist / ray_length :
@@ -14195,12 +14202,6 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray,
 	    ++curr;
 	}
 
-	if (!hits.empty() && hits.size() % 2 != 0 &&
-		hits.back().hit == brep_hit::NEAR_MISS)
-	    hits.pop_back();
-	if (!hits.empty() && hits.size() % 2 != 0 &&
-		hits.front().hit == brep_hit::NEAR_MISS)
-	    hits.pop_front();
     }
     state.after_near_miss = hits.size();
     if (observation)
@@ -14255,8 +14256,6 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray,
     if (!hits.empty()) {
 	/* Angular grazing is not affine invariant.  A separated entering/leaving
 	 * pair still represents material and is retained at model resolution. */
-	/* Preserve the list loop's advancement after erasing its first node:
-	 * the new first node is skipped, while later returned nodes are tested. */
 	size_t i = 0;
 	while (i < hits.size()) {
 	    const brep_hit &hit = hits[i];
@@ -14269,12 +14268,6 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray,
 		brep_resolved_grazing_pair(hit, hits[i + 1], ray, tol);
 	    if (invalid || (grazing && !resolved_before && !resolved_after)) {
 		hits.erase(i);
-		if (!i) {
-		    if (!hits.empty())
-			++i;
-		} else {
-		    /* erase returned i; --i and the loop's ++i cancel. */
-		}
 		continue;
 	    }
 	    ++i;
@@ -14410,7 +14403,7 @@ _rt_brep_cleanup_stream_test(const fastf_t *distances,
     VSET(ray.r_dir, 1.0, 0.0, 0.0);
     for (size_t i = 0; i < count; ++i) {
 	if (!std::isfinite(distances[i]) ||
-		(normal_signs[i] != -1 && normal_signs[i] != 1) ||
+		(normal_signs[i] < -1 || normal_signs[i] > 1) ||
 		hit_classes[i] < brep_hit::CLEAN_HIT ||
 		hit_classes[i] > brep_hit::CRACK_HIT)
 	    return SIZE_MAX;
@@ -21074,20 +21067,6 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	    curr++;
 	}
 
-	if (!hits.empty() && ((hits.size() % 2) != 0)) {
-	    const brep_hit &curr_hit = hits.back();
-	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
-		hits.pop_back();
-	    }
-	}
-
-	if (!hits.empty() && ((hits.size() % 2) != 0)) {
-	    const brep_hit &curr_hit = hits.front();
-	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
-		hits.pop_front();
-	    }
-	}
-
     }
 
     if (trace)
@@ -21164,7 +21143,8 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	 * normals nearly perpendicular to the ray. */
 	TRACE("-- Remove grazing hits --");
 	//int num = 0;
-	for (std::list<brep_hit>::iterator i = hits.begin(); i != hits.end(); ++i) {
+	std::list<brep_hit>::iterator i = hits.begin();
+	while (i != hits.end()) {
 	    const brep_hit &curr_hit = *i;
 	    std::list<brep_hit>::const_iterator grazing_prev = i;
 	    const bool have_prev = i != hits.begin();
@@ -21187,14 +21167,11 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 		    TRACE("\toob v: " << i->uv[1] << ", " << IVAL(i->sbv->m_v));
 		}
 		i = hits.erase(i);
-
-		if (i != hits.begin())
-		    --i;
-
 		continue;
 	    }
 	    //TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal, rp->r_dir) << "]");
 	    //++num;
+	    ++i;
 	}
     }
 
