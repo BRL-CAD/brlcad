@@ -74,7 +74,7 @@ public:
 	const ON_2dPoint &native_uv, const ON_2dPoint &chart_uv,
 	const long native_edge[2] = NULL);
     /* Separate non-topological edge samples whose trim pullback has stalled
-     * at an endpoint within the edge's declared modeling tolerance. */
+     * at or crossed an endpoint within the edge's modeling tolerance. */
     size_t repair_toleranced_edge_endpoint_samples(
 	const std::vector<int> &native_path,
 	const std::vector<const ON_3dPoint *> &points_3d,
@@ -140,6 +140,7 @@ private:
 	const std::vector<const ON_3dPoint *> &points_3d,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices,
 	const ON_Cylinder &cylinder);
+    size_t repair_cylinder_seam_holes();
     bool validate_boundary(const ON_BrepFace &face,
 	const std::vector<std::pair<double, double>> &native_points);
     void repair_nesting();
@@ -156,6 +157,7 @@ private:
 	CDT_TOPOLOGY_ID_NONE;
     ON_Interval m_closed_domain;
     ON_Interval m_open_domain;
+    double m_polar_cut = 0.0;
     ON_Interval m_native_domain[2];
     double m_metric_scale[2] = {1.0, 1.0};
     const ON_Surface *m_surface = NULL;

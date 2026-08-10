@@ -11,6 +11,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <cfloat>
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -312,6 +313,10 @@ exercise_offset_full_cylinder_seam()
     }
     for (const ON_3dPoint &point : point_storage)
 	points_3d.push_back(&point);
+    topology_vertices[0] = 10;
+    topology_vertices[4] = 10;
+    topology_vertices[5] = 11;
+    topology_vertices[9] = 11;
     outer.push_back(0);
 
     cdt_face_chart chart;
@@ -329,6 +334,93 @@ exercise_offset_full_cylinder_seam()
 	boundary_coordinates.insert(chart.points[(size_t)point]);
     if (boundary_coordinates.size() != chart.outer.size()) {
 	std::cerr << "offset cylinder seam copies collapsed" << std::endl;
+	return false;
+    }
+
+    cdt_face_chart loose_sample_chart = chart;
+    const std::vector<int> loose_edge_path = {0, 1, 2};
+    loose_sample_chart.points[1].first =
+	loose_sample_chart.points[0].first - 0.1;
+    if (loose_sample_chart.repair_toleranced_edge_endpoint_samples(
+	    loose_edge_path, points_3d, 20.0) != 1 ||
+	    !(loose_sample_chart.points[1].first >
+	    loose_sample_chart.points[0].first) ||
+	    !(loose_sample_chart.points[1].first <
+	    loose_sample_chart.points[2].first)) {
+	std::cerr << "loose cylinder seam sample was not separated"
+	    << std::endl;
+	return false;
+    }
+    cdt_face_chart protected_sample_chart = chart;
+    protected_sample_chart.points[1].first =
+	protected_sample_chart.points[0].first - 0.1;
+    protected_sample_chart.vertices[1].topo_vertex = 12;
+    if (protected_sample_chart.repair_toleranced_edge_endpoint_samples(
+	    loose_edge_path, points_3d, 20.0) != 0) {
+	std::cerr << "cylinder seam repair moved a topology vertex"
+	    << std::endl;
+	return false;
+    }
+
+    std::vector<std::pair<double, double>> seam_hole_points = native_points;
+    std::vector<ON_3dPoint> seam_hole_storage = point_storage;
+    std::vector<cdt_topo_vertex_id> seam_hole_topology = topology_vertices;
+    std::vector<int> seam_hole;
+    const double hole_closed_radius = 0.03 * closed_domain.Length();
+    const double hole_open_center = open_domain.Mid();
+    const double hole_open_radius = 0.1 * open_domain.Length();
+    for (int i = 0; i < 16; ++i) {
+	const double angle = 2.0 * ON_PI * i / 16.0;
+	ON_2dPoint native;
+	native[closed_direction] = closed_domain.Min() +
+	    hole_closed_radius * std::sin(angle);
+	native[open_direction] = hole_open_center +
+	    hole_open_radius * std::cos(angle);
+	seam_hole.push_back((int)seam_hole_points.size());
+	seam_hole_points.push_back(std::make_pair(native.x, native.y));
+	double wrapped = native[closed_direction];
+	while (wrapped < closed_domain.Min())
+	    wrapped += closed_domain.Length();
+	while (wrapped > closed_domain.Max())
+	    wrapped -= closed_domain.Length();
+	native[closed_direction] = wrapped;
+	seam_hole_storage.push_back(surface->PointAt(native.x, native.y));
+	seam_hole_topology.push_back(CDT_TOPOLOGY_ID_NONE);
+    }
+    seam_hole.push_back(seam_hole.front());
+    std::vector<const ON_3dPoint *> seam_hole_3d;
+    seam_hole_3d.reserve(seam_hole_storage.size());
+    for (const ON_3dPoint &point : seam_hole_storage)
+	seam_hole_3d.push_back(&point);
+    cdt_face_chart seam_hole_chart;
+    if (!seam_hole_chart.build(*side, seam_hole_points, outer,
+	    std::vector<std::vector<int>>(1, seam_hole),
+	    std::vector<int>(), std::vector<int>(), seam_hole_3d,
+	    seam_hole_topology) || !seam_hole_chart.holes.empty() ||
+	    seam_hole_chart.outer.size() <= chart.outer.size()) {
+	std::cerr << "cylinder seam hole was not opened into the outline"
+	    << std::endl;
+	return false;
+    }
+    std::vector<point2d_t> seam_hole_chart_points(
+	seam_hole_chart.points.size());
+    for (size_t i = 0; i < seam_hole_chart.points.size(); ++i)
+	V2SET(seam_hole_chart_points[i], seam_hole_chart.points[i].first,
+	    seam_hole_chart.points[i].second);
+    std::vector<int> seam_hole_outline(seam_hole_chart.outer);
+    seam_hole_outline.push_back(seam_hole_outline.front());
+    int *seam_hole_faces = NULL;
+    int seam_hole_face_count = 0;
+    struct bg_triangulation_report seam_hole_report = {0, -1, {0}};
+    const int seam_hole_status = bg_nested_poly_triangulate_strict(
+	&seam_hole_faces, &seam_hole_face_count, NULL, NULL,
+	seam_hole_outline.data(), seam_hole_outline.size(), NULL, NULL, 0,
+	NULL, 0, seam_hole_chart_points.data(), seam_hole_chart_points.size(),
+	&seam_hole_report);
+    bu_free(seam_hole_faces, "cylinder seam hole triangles");
+    if (seam_hole_status != BRLCAD_OK || seam_hole_face_count <= 0) {
+	std::cerr << "opened cylinder seam hole did not triangulate: "
+	    << seam_hole_report.message << std::endl;
 	return false;
     }
 
@@ -422,6 +514,10 @@ exercise_periodic_metric_chart()
     }
     for (const ON_3dPoint &point : point_storage)
 	points_3d.push_back(&point);
+    topology_vertices[0] = low_vertex;
+    topology_vertices[4] = low_vertex;
+    topology_vertices[5] = high_vertex;
+    topology_vertices[9] = high_vertex;
     outer.push_back(0);
 
     cdt_face_chart chart;
@@ -902,6 +998,73 @@ exercise_toleranced_endpoint_sample_repair()
     return true;
 }
 
+static bool
+exercise_unbounded_cylinder_axis()
+{
+    const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, 2.0), 5.0);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (!cylinder.IsValid() || 2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    std::unique_ptr<ON_Brep> brep(new ON_Brep);
+    ON_BrepFace &face = brep->NewFace(brep->AddSurface(surface));
+
+    /* Boundary samples may be collected before a face surface is shrunk.
+     * The fitted finite cylinder then describes only the shrunken surface,
+     * but its lateral chart remains valid for authoritative samples beyond
+     * either cap. */
+    const double angles[4] = {0.5, 1.5, 1.5, 0.5};
+    const double heights[4] = {-2.0, -2.0, 7.0, 7.0};
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    std::vector<std::pair<double, double>> native_points;
+    std::vector<ON_3dPoint> point_storage;
+    std::vector<const ON_3dPoint *> points_3d;
+    std::vector<int> outer;
+    point_storage.reserve(4);
+    for (int i = 0; i < 4; ++i) {
+	native_points.push_back(std::make_pair(
+	    udom.ParameterAt(i == 0 || i == 3 ? 0.2 : 0.4),
+	    vdom.ParameterAt(i < 2 ? 0.0 : 1.0)));
+	point_storage.push_back(cylinder.PointAt(angles[i], heights[i]));
+	outer.push_back(i);
+    }
+    for (const ON_3dPoint &point : point_storage)
+	points_3d.push_back(&point);
+    outer.push_back(outer.front());
+    std::vector<cdt_topo_vertex_id> topology_vertices(4,
+	CDT_TOPOLOGY_ID_NONE);
+
+    cdt_face_chart chart;
+    if (!chart.build(face, native_points, outer,
+	    std::vector<std::vector<int>>(), std::vector<int>(),
+	    std::vector<int>(), points_3d, topology_vertices) ||
+	    chart.type() != CDT_FACE_CHART_CYLINDER) {
+	std::cerr << "unbounded cylinder chart failed: " << chart.failure()
+	    << std::endl;
+	return false;
+    }
+    double minimum_height = DBL_MAX;
+    double maximum_height = -DBL_MAX;
+    for (const std::pair<double, double> &point : chart.points) {
+	minimum_height = std::min(minimum_height, point.second);
+	maximum_height = std::max(maximum_height, point.second);
+    }
+    if (std::fabs((maximum_height - minimum_height) - 9.0) > 1.0e-12) {
+	std::cerr << "cylinder chart clamped samples to fitted caps"
+	    << std::endl;
+	return false;
+    }
+    return true;
+}
+
+static bool
+exercise_weakly_simple_cylinder()
+{
+    return cdt_test_developable_clean() == 0;
+}
+
 int
 main()
 {
@@ -940,5 +1103,9 @@ main()
 	return 13;
     if (!exercise_toleranced_endpoint_sample_repair())
 	return 14;
+    if (!exercise_unbounded_cylinder_axis())
+	return 15;
+    if (!exercise_weakly_simple_cylinder())
+	return 16;
     return 0;
 }

@@ -72,6 +72,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <memory>
 #include <sstream>
 #include <limits>
 #include <stack>
@@ -1860,6 +1861,73 @@ cdt_test_local_defects(void)
     ++triangle;
     if (!triangle.IsNull())
 	return 5;
+
+    const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, 2.0), 5.0);
+    std::unique_ptr<ON_Brep> brep(ON_BrepCylinder(cylinder, true, true));
+    if (!brep || !brep->IsValid())
+	return 6;
+    int side_index = -1;
+    for (int face_index = 0; face_index < brep->m_F.Count(); ++face_index) {
+	const ON_Surface *candidate = brep->m_F[face_index].SurfaceOf();
+	if (candidate && candidate->IsClosed(0)) {
+	    side_index = face_index;
+	    break;
+	}
+    }
+    if (side_index < 0)
+	return 7;
+    const ON_Surface *surface = brep->m_F[side_index].SurfaceOf();
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    const ON_2dPoint seam_uv[3] = {
+	ON_2dPoint(udom.Min(), vdom.ParameterAt(0.30)),
+	ON_2dPoint(udom.ParameterAt(0.01), vdom.ParameterAt(0.31)),
+	ON_2dPoint(udom.Max(), vdom.ParameterAt(0.32))
+    };
+    ON_3dPoint seam_points[3] = {
+	surface->PointAt(seam_uv[0].x, seam_uv[0].y),
+	surface->PointAt(seam_uv[1].x, seam_uv[1].y),
+	surface->PointAt(seam_uv[2].x, seam_uv[2].y)
+    };
+    const ON_2dPoint center(udom.ParameterAt(0.01 / 3.0),
+	vdom.ParameterAt(0.31));
+    ON_3dPoint center_point;
+    ON_3dVector expected_normal;
+    if (!surface_EvNormal(surface, center.x, center.y, center_point,
+	    expected_normal) || !expected_normal.Unitize())
+	return 8;
+    ON_3dPoint wrong_normal(-expected_normal.x, -expected_normal.y,
+	-expected_normal.z);
+    cdt_mesh_t periodic_mesh;
+    periodic_mesh.brep = brep.get();
+    periodic_mesh.f_id = side_index;
+    periodic_mesh.normals.push_back(&wrong_normal);
+    for (int vertex = 0; vertex < 3; ++vertex) {
+	periodic_mesh.pnts.push_back(&seam_points[vertex]);
+	periodic_mesh.p2ind[&seam_points[vertex]] = vertex;
+	periodic_mesh.p3d2d[vertex] = vertex;
+	periodic_mesh.nmap[vertex] = 0;
+	periodic_mesh.m_pnts_2d.push_back(std::make_pair(
+	    seam_uv[vertex].x, seam_uv[vertex].y));
+    }
+    periodic_mesh.ambiguous_p3d2d.insert(0);
+    periodic_mesh.ambiguous_p3d2d.insert(2);
+    periodic_mesh.periodic_ambiguous_p3d2d.insert(0);
+    periodic_mesh.periodic_ambiguous_p3d2d.insert(2);
+    triangle_t seam_triangle;
+    seam_triangle.v[0] = 0;
+    seam_triangle.v[1] = 1;
+    seam_triangle.v[2] = 2;
+    const ON_3dVector recovered_normal = periodic_mesh.bnorm(
+	seam_triangle);
+    if (ON_DotProduct(recovered_normal, expected_normal) < 0.999)
+	return 9;
+    periodic_mesh.periodic_ambiguous_p3d2d.clear();
+    const ON_3dVector conservative_normal = periodic_mesh.bnorm(
+	seam_triangle);
+    if (ON_DotProduct(conservative_normal, ON_3dVector(wrong_normal)) <
+	    0.999)
+	return 10;
     return 0;
 }
 
@@ -2526,16 +2594,17 @@ ON_3dVector
 cdt_mesh_t::bnorm(const triangle_t &t)
 {
     ON_3dPoint avgnorm(0,0,0);
+    bool ambiguous_native_image = false;
+    bool certified_periodic_image = true;
 
     // Can't calculate this without some key Brep data
     if (!nmap.size() && !sv.size()) return avgnorm;
 
-    /* For a triangle with one local native-UV image, evaluate the original
-     * surface at its parameter-space centroid.  Boundary vertex normals may
-     * be averaged across sharp B-Rep edges and are not a face-local
-     * orientation oracle.  A periodic surface is also safe when the triangle
-     * spans less than half of every closed domain; a wider span crosses the
-     * chart cut and its arithmetic centroid is on the opposite side. */
+    /* Evaluate the original surface at the triangle's local UV centroid.
+     * Boundary vertex normals may be averaged across sharp B-Rep edges and
+     * are not a face-local orientation oracle.  Unwrap periodic coordinates
+     * first: seam copies share one model vertex, but the third vertex selects
+     * the local surface image on either side of the cut. */
     if (brep && f_id >= 0 && f_id < brep->m_F.Count()) {
 	const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
 	if (surface) {
@@ -2543,10 +2612,14 @@ cdt_mesh_t::bnorm(const triangle_t &t)
 	    bool mapped = true;
 	    for (int corner = 0; corner < 3; ++corner) {
 		const long vertex = t.v[corner];
+		ambiguous_native_image = ambiguous_native_image ||
+		    ambiguous_p3d2d.find(vertex) != ambiguous_p3d2d.end();
+		if (ambiguous_p3d2d.find(vertex) != ambiguous_p3d2d.end() &&
+			periodic_ambiguous_p3d2d.find(vertex) ==
+			periodic_ambiguous_p3d2d.end())
+		    certified_periodic_image = false;
 		const auto native = p3d2d.find(vertex);
 		if (native == p3d2d.end() || native->second < 0 ||
-			ambiguous_p3d2d.find(vertex) !=
-			ambiguous_p3d2d.end() ||
 			(size_t)native->second >= m_pnts_2d.size()) {
 		    mapped = false;
 		    break;
@@ -2559,16 +2632,34 @@ cdt_mesh_t::bnorm(const triangle_t &t)
 		if (!surface->IsClosed(direction))
 		    continue;
 		const double period = surface->Domain(direction).Length();
-		const double minimum = std::min(uv[0][direction],
-		    std::min(uv[1][direction], uv[2][direction]));
-		const double maximum = std::max(uv[0][direction],
-		    std::max(uv[1][direction], uv[2][direction]));
-		if (!(period > 0.0) || maximum - minimum >= 0.5 * period)
+		if (!(period > 0.0) || !std::isfinite(period)) {
 		    mapped = false;
+		    break;
+		}
+		const double reference = uv[0][direction];
+		for (int corner = 1; corner < 3; ++corner) {
+		    while (uv[corner][direction] - reference > 0.5 * period) {
+			uv[corner][direction] -= period;
+		    }
+		    while (uv[corner][direction] - reference < -0.5 * period) {
+			uv[corner][direction] += period;
+		    }
+		}
 	    }
-	    if (mapped) {
-		const ON_2dPoint center((uv[0].x + uv[1].x + uv[2].x) /
+	    if (mapped && (!ambiguous_native_image ||
+		    certified_periodic_image)) {
+		ON_2dPoint center((uv[0].x + uv[1].x + uv[2].x) /
 		    3.0, (uv[0].y + uv[1].y + uv[2].y) / 3.0);
+		for (int direction = 0; direction < 2; ++direction) {
+		    if (!surface->IsClosed(direction))
+			continue;
+		    const ON_Interval domain = surface->Domain(direction);
+		    const double period = domain.Length();
+		    center[direction] = domain.Min() + std::fmod(
+			center[direction] - domain.Min(), period);
+		    if (center[direction] < domain.Min())
+			center[direction] += period;
+		}
 		ON_3dPoint point;
 		ON_3dVector normal;
 		if (surface_EvNormal(surface, center.x, center.y, point,
@@ -4158,6 +4249,17 @@ point_on_indexed_boundary(RTree<size_t, double, 2> &index,
     return false;
 }
 
+static bool
+cleanable_developable_chart(const ON_BrepFace &face,
+	const cdt_face_chart &chart)
+{
+    if (chart.closed_direction() >= 0 || !face.SurfaceOf())
+	return false;
+    return (chart.type() == CDT_FACE_CHART_SURFACE_METRIC &&
+	face.SurfaceOf()->IsPlanar(NULL, BN_TOL_DIST)) ||
+	chart.type() == CDT_FACE_CHART_CYLINDER;
+}
+
 /* Clipper can normalize weakly-simple planar loop topology, but conversion
  * quality may not invent, remove, or move a shared B-Rep boundary sample.
  * Accept its result only when every cleaned point maps back to one original
@@ -4354,6 +4456,80 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
     std::copy(mapped_faces.begin(), mapped_faces.end(), *faces);
     *face_count = clean_face_count;
     return true;
+}
+
+int
+cdt_test_developable_clean(void)
+{
+    const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, 3.0), 6.0);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (!cylinder.IsValid() || 2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return 1;
+    }
+    const ON_Interval angular = surface->Domain(0);
+    if (!surface->Trim(0, ON_Interval(angular.ParameterAt(0.1),
+	    angular.ParameterAt(0.9)))) {
+	delete surface;
+	return 2;
+    }
+
+    ON_Brep brep;
+    ON_BrepFace &face = brep.NewFace(brep.AddSurface(surface));
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    const double middle_u = udom.Mid();
+    const double middle_v = vdom.Mid();
+    const ON_2dPoint route[9] = {
+	ON_2dPoint(middle_u, middle_v),
+	ON_2dPoint(udom.ParameterAt(0.15), middle_v),
+	ON_2dPoint(udom.ParameterAt(0.15), vdom.ParameterAt(0.15)),
+	ON_2dPoint(middle_u, vdom.ParameterAt(0.15)),
+	ON_2dPoint(middle_u, middle_v),
+	ON_2dPoint(udom.ParameterAt(0.85), middle_v),
+	ON_2dPoint(udom.ParameterAt(0.85), vdom.ParameterAt(0.85)),
+	ON_2dPoint(middle_u, vdom.ParameterAt(0.85)),
+	ON_2dPoint(middle_u, middle_v)
+    };
+    std::vector<std::pair<double, double>> native_points;
+    std::vector<int> outer;
+    std::vector<ON_3dPoint> point_storage(9);
+    std::vector<const ON_3dPoint *> points_3d;
+    std::vector<cdt_topo_vertex_id> topology_vertices;
+    ON_3dPoint shared = surface->PointAt(middle_u, middle_v);
+    for (int i = 0; i < 9; ++i) {
+	outer.push_back(i);
+	native_points.push_back(std::make_pair(route[i].x, route[i].y));
+	point_storage[(size_t)i] = surface->PointAt(route[i].x, route[i].y);
+	const bool shared_point = i == 0 || i == 4 || i == 8;
+	points_3d.push_back(shared_point ? &shared :
+	    &point_storage[(size_t)i]);
+	topology_vertices.push_back(shared_point ? 12 : 20 + i);
+    }
+
+    cdt_face_chart chart;
+    if (!chart.build(face, native_points, outer,
+	    std::vector<std::vector<int>>(), std::vector<int>(),
+	    std::vector<int>(), points_3d, topology_vertices))
+	return 3;
+    if (chart.type() != CDT_FACE_CHART_CYLINDER ||
+	    chart.closed_direction() >= 0 ||
+	    !cleanable_developable_chart(face, chart))
+	return 4;
+
+    std::vector<point2d_t> points(chart.points.size());
+    for (size_t i = 0; i < chart.points.size(); ++i)
+	V2SET(points[i], chart.points[i].first, chart.points[i].second);
+    std::vector<int> outline(chart.outer.begin(), chart.outer.end());
+    outline.push_back(chart.outer.front());
+    int *faces = NULL;
+    int face_count = 0;
+    const bool cleaned = topology_preserving_clean_triangulation(&faces,
+	&face_count, chart, points_3d, outline.data(), outline.size(), NULL,
+	NULL, 0, NULL, 0, points.data());
+    if (faces)
+	bu_free(faces, "developable clean test faces");
+    return cleaned && face_count > 0 ? 0 : 5;
 }
 
 /* Triangulate one disk in a face atlas.  The strict libbg entry point owns
@@ -4786,6 +4962,7 @@ cdt_mesh_t::cdt()
      * whichever mapping happens to be visited first. */
     p3d2d.clear();
     ambiguous_p3d2d.clear();
+    periodic_ambiguous_p3d2d.clear();
     for (const auto &point_map : p2d3d) {
 	const long native_point = point_map.first;
 	const long point_3d = point_map.second;
@@ -4803,12 +4980,81 @@ cdt_mesh_t::cdt()
 		m_pnts_2d[(size_t)native_point])
 	    ambiguous_p3d2d.insert(canonical->second);
     }
+    std::map<long, std::vector<long>> ambiguous_native_images;
+    for (const auto &point_map : p2d3d) {
+	const long native_point = point_map.first;
+	const long point_3d = point_map.second;
+	if (native_point < 0 || (size_t)native_point >= m_pnts_2d.size() ||
+		point_3d < 0 || (size_t)point_3d >= pnts.size())
+	    continue;
+	const auto canonical = p2ind.find(pnts[(size_t)point_3d]);
+	if (canonical == p2ind.end() || ambiguous_p3d2d.find(
+		canonical->second) == ambiguous_p3d2d.end())
+	    continue;
+	ambiguous_native_images[canonical->second].push_back(native_point);
+    }
 
     const ON_BrepFace &face = brep->m_F[f_id];
     std::vector<std::vector<int>> atlas_outlines;
     std::vector<cdt_topo_vertex_id> atlas_poles;
     ON_Cone analytic_cone;
     const ON_Surface *face_surface = face.SurfaceOf();
+    if (face_surface) {
+	for (long vertex : ambiguous_p3d2d) {
+	    const auto chosen = p3d2d.find(vertex);
+	    if (chosen == p3d2d.end() || chosen->second < 0 ||
+		    (size_t)chosen->second >= m_pnts_2d.size() || vertex < 0 ||
+		    (size_t)vertex >= pnts.size())
+		continue;
+	    const std::pair<double, double> &reference =
+		m_pnts_2d[(size_t)chosen->second];
+	    const auto images = ambiguous_native_images.find(vertex);
+	    if (images == ambiguous_native_images.end())
+		continue;
+	    bool has_periodic_alias = false;
+	    bool aliases_safe = true;
+	    for (long native_point : images->second) {
+		if (native_point == chosen->second || native_point < 0 ||
+			(size_t)native_point >= m_pnts_2d.size())
+		    continue;
+		const std::pair<double, double> &candidate =
+		    m_pnts_2d[(size_t)native_point];
+		for (int direction = 0; direction < 2; ++direction) {
+		    const double first = direction ? reference.second :
+			reference.first;
+		    const double second = direction ? candidate.second :
+			candidate.first;
+		    const double difference = second - first;
+		    double residual = difference;
+		    double scale = std::max(1.0, std::max(std::fabs(first),
+			std::fabs(second)));
+		    if (face_surface->IsClosed(direction)) {
+			const double period =
+			    face_surface->Domain(direction).Length();
+			if (!(period > 0.0) || !std::isfinite(period)) {
+			    aliases_safe = false;
+			    break;
+			}
+			residual = std::remainder(difference, period);
+			scale = std::max(scale, period);
+			if (std::fabs(difference) > 4096.0 *
+				std::numeric_limits<double>::epsilon() * scale)
+			    has_periodic_alias = true;
+		    }
+		    const double tolerance = 4096.0 *
+			std::numeric_limits<double>::epsilon() * scale;
+		    if (std::fabs(residual) > tolerance) {
+			aliases_safe = false;
+			break;
+		    }
+		}
+		if (!aliases_safe)
+		    break;
+	    }
+	    if (aliases_safe && has_periodic_alias)
+		periodic_ambiguous_p3d2d.insert(vertex);
+	}
+    }
     if (source_holes.empty() && face_surface &&
 	    face_surface->IsCone(&analytic_cone, BREP_PLANAR_TOL)) {
 	int singular_side = -1;
@@ -5339,9 +5585,7 @@ cdt_mesh_t::cdt()
 	chart.constraints.size(), bgp_2d, chart.points.size(), &tri_report);
 
     if (!result && constraint_vec.empty() &&
-	    chart.type() == CDT_FACE_CHART_SURFACE_METRIC &&
-	    chart.closed_direction() < 0 && face.SurfaceOf() &&
-	    face.SurfaceOf()->IsPlanar(NULL, BN_TOL_DIST)) {
+	    cleanable_developable_chart(face, chart)) {
 	if (faces) {
 	    bu_free(faces, "failed strict chart faces");
 	    faces = NULL;
@@ -5351,7 +5595,8 @@ cdt_mesh_t::cdt()
 	    (const int **)holes_array, holes_npts, holes_cnt, steiner,
 	    steiner_cnt, bgp_2d);
 	if (result)
-	    bu_log("Face %d: normalized weakly-simple planar chart topology "
+	    bu_log("Face %d: normalized weakly-simple developable chart "
+		"topology "
 		"without changing its B-Rep boundary\n", f_id);
     }
 

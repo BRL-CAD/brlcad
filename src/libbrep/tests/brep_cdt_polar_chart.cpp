@@ -20,6 +20,110 @@
 #include "../cdt/chart.h"
 
 static bool
+exercise_coincident_seams()
+{
+    const ON_Sphere sphere(ON_3dPoint(4.0, -3.0, 2.0), 2.5);
+    std::unique_ptr<ON_Brep> source(ON_BrepSphere(sphere));
+    if (!source || !source->IsValid() || source->m_S.Count() != 1)
+	return false;
+    ON_Surface *surface = source->m_S[0]->DuplicateSurface();
+    if (!surface)
+	return false;
+
+    std::unique_ptr<ON_Brep> brep(new ON_Brep);
+    ON_BrepFace &face = brep->NewFace(brep->AddSurface(surface));
+    face.m_bRev = source->m_F[0].m_bRev;
+    ON_BrepLoop &loop = brep->NewLoop(ON_BrepLoop::outer, face);
+    int open_dir = -1;
+    for (int side = 0; side < 4; ++side) {
+	if (surface->IsSingular(side)) {
+	    open_dir = (side == 0 || side == 2) ? 1 : 0;
+	    break;
+	}
+    }
+    if (open_dir < 0)
+	return false;
+    const int angular_dir = 1 - open_dir;
+    const ON_Interval open_domain = surface->Domain(open_dir);
+    const ON_Interval angular_domain = surface->Domain(angular_dir);
+    const double seam = angular_domain.Mid();
+    ON_2dPoint low_uv;
+    ON_2dPoint high_uv;
+    low_uv[angular_dir] = high_uv[angular_dir] = seam;
+    low_uv[open_dir] = open_domain.Min();
+    high_uv[open_dir] = open_domain.Max();
+    const int low_vertex = brep->NewVertex(surface->PointAt(low_uv.x,
+	low_uv.y), 1.0e-8).m_vertex_index;
+    const int high_vertex = brep->NewVertex(surface->PointAt(high_uv.x,
+	high_uv.y), 1.0e-8).m_vertex_index;
+    ON_Curve *edge_curve = surface->IsoCurve(open_dir, seam);
+    if (!edge_curve)
+	return false;
+    if (edge_curve->PointAtStart().DistanceTo(
+	    brep->m_V[low_vertex].Point()) >
+		edge_curve->PointAtEnd().DistanceTo(
+		brep->m_V[low_vertex].Point()))
+	edge_curve->Reverse();
+    ON_BrepEdge &edge = brep->NewEdge(brep->m_V[low_vertex],
+	brep->m_V[high_vertex], brep->AddEdgeCurve(edge_curve));
+    edge.m_tolerance = 1.0e-8;
+    const auto add_seam = [&](bool reversed) {
+	const ON_2dPoint start = reversed ? high_uv : low_uv;
+	const ON_2dPoint end = reversed ? low_uv : high_uv;
+	ON_LineCurve *trim_curve = new ON_LineCurve(start, end);
+	trim_curve->SetDomain(0.0, 1.0);
+	ON_BrepTrim &trim = brep->NewTrim(edge, reversed, loop,
+	    brep->AddTrimCurve(trim_curve));
+	trim.m_type = ON_BrepTrim::seam;
+	trim.m_iso = surface->IsIsoparametric(*trim_curve);
+	trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-8;
+    };
+    add_seam(false);
+    add_seam(true);
+
+    ON_TextLog validation_log(stderr);
+    const bool valid_brep = brep->IsValid(&validation_log);
+    const bool solid_brep = brep->IsSolid();
+    const bool polar_face = cdt_face_uses_polar_chart(face);
+    if (!valid_brep || !solid_brep || !polar_face) {
+	std::cerr << "invalid coincident-seam sphere fixture: valid="
+	    << valid_brep << " solid=" << solid_brep << " polar="
+	    << polar_face << std::endl;
+	return false;
+    }
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(brep.get(),
+	"coincident polar seam fixture");
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.01;
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    if (ON_Brep_CDT_Tessellate(state, 0, NULL) != 0) {
+	struct brep_cdt_diagnostic diagnostic;
+	ON_Brep_CDT_Diagnostic(&diagnostic, state);
+	std::cerr << "coincident-seam sphere tessellation failed at stage "
+	    << diagnostic.stage << ": " << diagnostic.message << std::endl;
+	ON_Brep_CDT_Destroy(state);
+	return false;
+    }
+    int *mesh_faces = NULL;
+    fastf_t *mesh_vertices = NULL;
+    int mesh_face_count = 0;
+    int mesh_vertex_count = 0;
+    const int mesh_status = ON_Brep_CDT_Mesh(&mesh_faces,
+	&mesh_face_count, &mesh_vertices, &mesh_vertex_count, NULL, NULL,
+	NULL, NULL, state, 0, NULL);
+    const bool solid = mesh_status >= 0 && mesh_face_count > 0 &&
+	mesh_vertex_count > 0 && bg_trimesh_solid2(mesh_vertex_count,
+	    mesh_face_count, mesh_vertices, mesh_faces, NULL) == 0;
+    bu_free(mesh_faces, "coincident polar seam faces");
+    bu_free(mesh_vertices, "coincident polar seam vertices");
+    ON_Brep_CDT_Destroy(state);
+    if (!solid)
+	std::cerr << "coincident-seam sphere output was not solid"
+	    << std::endl;
+    return solid;
+}
+
+static bool
 exercise_sphere(const ON_3dPoint &center, double radius)
 {
     ON_Sphere sphere(center, radius);
@@ -272,6 +376,9 @@ exercise_sphere(const ON_3dPoint &center, double radius)
 int
 main()
 {
+
+    if (!exercise_coincident_seams())
+	return 1;
     const ON_3dPoint centers[6] = {
 	ON_3dPoint::Origin,
 	ON_3dPoint(10.0, -20.0, 30.0),
@@ -285,7 +392,7 @@ main()
     };
     for (int i = 0; i < 6; ++i) {
 	if (!exercise_sphere(centers[i], radii[i]))
-	    return i + 1;
+	    return i + 2;
     }
     return 0;
 }

@@ -143,6 +143,79 @@ exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
 	return false;
     }
 
+    /* A partial cone can begin on the native high bound and continue into
+     * the next unwrapped period.  The chart must put that radial boundary
+     * on the side selected by the adjacent rim, not blindly on the numeric
+     * high side of the surface domain. */
+    const int partial_closed = chart.closed_direction();
+    const int partial_open = 1 - partial_closed;
+    const ON_Interval partial_closed_domain =
+	surface->Domain(partial_closed);
+    const ON_Interval partial_open_domain = surface->Domain(partial_open);
+    const bool partial_low_pole = chart.singular_side() == 0 ||
+	chart.singular_side() == 3;
+    const double partial_pole = partial_low_pole ?
+	partial_open_domain.Min() : partial_open_domain.Max();
+    const double partial_rim = partial_low_pole ?
+	partial_open_domain.Max() : partial_open_domain.Min();
+    const double partial_middle =
+	0.5 * (partial_pole + partial_rim);
+    const double partial_period = partial_closed_domain.Length();
+    std::vector<std::pair<double, double>> partial_native(6);
+    const auto set_partial = [&](size_t point, double angular,
+	    double radial) {
+	ON_2dPoint uv;
+	uv[partial_closed] = angular;
+	uv[partial_open] = radial;
+	partial_native[point] = std::make_pair(uv.x, uv.y);
+    };
+    set_partial(0, partial_closed_domain.Max(), partial_pole);
+    set_partial(1, partial_closed_domain.Max(), partial_middle);
+    set_partial(2, partial_closed_domain.Max(), partial_rim);
+    set_partial(3, partial_closed_domain.Max() +
+	0.25 * partial_period, partial_rim);
+    set_partial(4, partial_closed_domain.Max() +
+	0.5 * partial_period, partial_rim);
+    set_partial(5, partial_closed_domain.Max() +
+	0.5 * partial_period, partial_middle);
+    const std::vector<int> partial_outer = {0, 1, 2, 3, 4, 5, 0};
+    std::vector<ON_3dPoint> partial_model(6);
+    std::vector<const ON_3dPoint *> partial_points_3d(6);
+    for (size_t i = 0; i < partial_native.size(); ++i) {
+	ON_2dPoint uv(partial_native[i].first, partial_native[i].second);
+	uv[partial_closed] = partial_closed_domain.Min() +
+	    std::fmod(uv[partial_closed] - partial_closed_domain.Min(),
+		partial_period);
+	partial_model[i] = surface->PointAt(uv.x, uv.y);
+	partial_points_3d[i] = &partial_model[i];
+    }
+    std::vector<cdt_topo_vertex_id> partial_topology(6,
+	CDT_TOPOLOGY_ID_NONE);
+    partial_topology[0] = chart.pole_topology_vertex();
+    partial_topology[2] = 1001;
+    partial_topology[4] = 1002;
+    cdt_face_chart partial_chart;
+    if (!partial_chart.build(*cone_face, partial_native, partial_outer,
+	    std::vector<std::vector<int>>(), std::vector<int>(),
+	    std::vector<int>(), partial_points_3d, partial_topology)) {
+	std::cerr << "partial cone wedge chart failed: "
+	    << partial_chart.failure() << std::endl;
+	return false;
+    }
+    bool oriented_partial_seam = true;
+    for (const cdt_chart_vertex &vertex : partial_chart.vertices) {
+	if (vertex.native_point != 1 && vertex.native_point != 2)
+	    continue;
+	oriented_partial_seam = oriented_partial_seam &&
+	    vertex.seam_side < 0 &&
+	    partial_chart.points[(size_t)vertex.id].first < 0.0;
+    }
+    if (!oriented_partial_seam) {
+	std::cerr << "partial cone seam ignored boundary continuity"
+	    << std::endl;
+	return false;
+    }
+
     /* A damaged pcurve can report its pole parameter for a legitimate
      * interior sample of a radial edge.  An atlas chart with an explicit
      * topological pole must recover that sample from the authoritative 3-D

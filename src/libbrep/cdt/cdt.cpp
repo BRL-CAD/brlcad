@@ -663,25 +663,38 @@ closed_mesh_component_filter(int *faces, int *face_count,
     if (retained_face_count == (size_t)*face_count)
 	return removed_count;
 
-    /* A partial display tessellation may not itself be closed (for example,
-     * another BREP face may have independently failed to tessellate).  We can
-     * still remove a disconnected local-remesh island when every one of its
-     * vertices and its centroid lies on retained triangles from the same
-     * source face.  This is an exact redundancy proof within the tessellation
-     * tolerance, not a largest-component guess. */
-    if (!retained_face_count && source_faces &&
-	    overlap_tolerance > 0.0) {
+    /* Closed sub-shells are not by themselves proof that every open
+     * component is redundant.  In particular, a valid multi-face solid can
+     * contain a small independently closed feature alongside a much larger
+     * component whose shared-edge assembly is defective.  Preserve the full
+     * candidate unless the same-face overlap proof below can account for
+     * every discarded triangle. */
+    if (retained_face_count && (!source_faces || !(overlap_tolerance > 0.0)))
+	return removed_count;
+
+    /* Open local-remesh islands may be removed only when every vertex and
+     * centroid lies on retained triangles from the same source face.  This is
+     * an explicit redundancy proof within the tessellation tolerance, whether
+     * the retained reference is a certified closed shell or, for a partial
+     * display mesh, the largest open component. */
+    if (source_faces && overlap_tolerance > 0.0) {
 	size_t largest = 0;
-	for (size_t component = 1; component < components.size(); ++component) {
-	    if (components[component].size() > components[largest].size())
-		largest = component;
+	if (!retained_face_count) {
+	    for (size_t component = 1; component < components.size(); ++component) {
+		if (components[component].size() > components[largest].size())
+		    largest = component;
+	    }
+	    retain[largest] = true;
+	    retained_face_count = components[largest].size();
 	}
 	double minimum_failed_distance = DBL_MAX;
 	int failed_source_face = -1;
 	const auto point_covered =
 	    [&](const point_t point, int source_face) {
 		double minimum_distance = DBL_MAX;
-		for (int candidate : components[largest]) {
+		for (int candidate = 0; candidate < *face_count; ++candidate) {
+		    if (!retain[(size_t)component_id[(size_t)candidate]])
+			continue;
 		    if (source_faces[candidate] != source_face)
 			continue;
 		    point_t triangle[3];
@@ -704,7 +717,7 @@ closed_mesh_component_filter(int *faces, int *face_count,
 	bool redundant = true;
 	for (size_t component = 0;
 		component < components.size() && redundant; ++component) {
-	    if (component == largest)
+	    if (retain[component])
 		continue;
 	    for (int face : components[component]) {
 		point_t centroid = VINIT_ZERO;
@@ -735,8 +748,6 @@ closed_mesh_component_filter(int *faces, int *face_count,
 		minimum_failed_distance, overlap_tolerance);
 	    return removed_count;
 	}
-	retain[largest] = true;
-	retained_face_count = components[largest].size();
     }
     if (!retained_face_count)
 	return removed_count;
@@ -1130,10 +1141,12 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 }
 
 /* Collapse only explicit B-Rep edges whose complete curve is contained in
- * the fixed modeling tolerance.  Endpoint proximity alone is insufficient:
- * a long curve may close back on itself or join two otherwise unrelated
- * sheets.  The NURBS control-polygon length and curve bounding box are both
- * conservative guards for the whole edge.
+ * the effective modeling tolerance.  Honor a larger finite tolerance
+ * declared by the edge, but never exceed the caller's feature resolution.
+ * Endpoint proximity alone is insufficient: a long curve may close back on
+ * itself or join two otherwise unrelated sheets.  The NURBS control-polygon
+ * length and curve bounding box are both conservative guards for the whole
+ * edge.
  *
  * This is derived mesh state.  It deliberately leaves the source and working
  * B-Reps untouched and welds the already shared edge samples in every
@@ -1146,17 +1159,16 @@ collapse_subtolerance_brep_edges(struct ON_Brep_CDT_State *s_cdt)
 	    s_cdt->w3dpnts->empty())
 	return 0;
 
-    /* BN_TOL_DIST is an absolute modeling tolerance and can exceed an entire
-     * valid micron-scale solid.  Never weld across a distance larger than the
+    /* BN_TOL_DIST and imported edge tolerances can exceed an entire valid
+     * micron-scale solid.  Never weld across a distance larger than the
      * minimum feature resolution derived from the caller's tolerance. */
     if (!std::isfinite(s_cdt->absmin) || s_cdt->absmin <= 0.0)
 	return 0;
-    const double collapse_tolerance = std::min((double)BN_TOL_DIST,
-	(double)s_cdt->absmin);
     struct collapse_candidate {
 	int edge_index;
 	ON_BoundingBox curve_bounds;
 	std::vector<ON_3dPoint *> points;
+	double tolerance;
     };
     std::vector<collapse_candidate> candidates;
     std::set<ON_3dPoint *> candidate_point_set;
@@ -1171,6 +1183,14 @@ collapse_subtolerance_brep_edges(struct ON_Brep_CDT_State *s_cdt)
 		segments->second.empty())
 	    continue;
 	bedge_seg_t *first_segment = *segments->second.begin();
+	double modeling_tolerance = BN_TOL_DIST;
+	if (std::isfinite(edge.m_tolerance) && edge.m_tolerance > 0.0 &&
+		!NEAR_EQUAL(edge.m_tolerance, ON_UNSET_VALUE,
+		    ON_ZERO_TOLERANCE))
+	    modeling_tolerance = std::max(modeling_tolerance,
+		(double)edge.m_tolerance);
+	const double collapse_tolerance = std::min(
+	    (double)s_cdt->absmin, modeling_tolerance);
 	if (!first_segment || !first_segment->nc ||
 		!std::isfinite(first_segment->cp_len) ||
 		first_segment->cp_len <= 0.0 ||
@@ -1203,7 +1223,8 @@ collapse_subtolerance_brep_edges(struct ON_Brep_CDT_State *s_cdt)
 	if (members.size() < 2)
 	    continue;
 	collapse_candidate candidate = {edge_index, curve_bounds,
-	    std::vector<ON_3dPoint *>(members.begin(), members.end())};
+	    std::vector<ON_3dPoint *>(members.begin(), members.end()),
+	    collapse_tolerance};
 	candidates.push_back(candidate);
 	candidate_point_set.insert(members.begin(), members.end());
     }
@@ -1229,6 +1250,7 @@ collapse_subtolerance_brep_edges(struct ON_Brep_CDT_State *s_cdt)
 
     std::vector<size_t> parent(point_count);
     std::vector<size_t> component_size(point_count, 1);
+    std::vector<double> component_tolerance(point_count, DBL_MAX);
     std::vector<ON_BoundingBox> component_bounds;
     component_bounds.reserve(point_count);
     for (size_t i = 0; i < point_count; ++i) {
@@ -1248,7 +1270,7 @@ collapse_subtolerance_brep_edges(struct ON_Brep_CDT_State *s_cdt)
 	target.Set(source.Max(), true);
     };
 
-    std::set<int> accepted_edges;
+    std::map<int, double> accepted_edges;
     for (const collapse_candidate &candidate : candidates) {
 	std::set<size_t> members;
 	for (ON_3dPoint *point : candidate.points) {
@@ -1261,13 +1283,17 @@ collapse_subtolerance_brep_edges(struct ON_Brep_CDT_State *s_cdt)
 
 	std::set<size_t> roots;
 	ON_BoundingBox combined = candidate.curve_bounds;
+	double combined_tolerance = candidate.tolerance;
 	for (size_t member : members)
 	    roots.insert(root(member));
-	for (size_t component : roots)
+	for (size_t component : roots) {
 	    grow_bounds(combined, component_bounds[component]);
+	    combined_tolerance = std::min(combined_tolerance,
+		component_tolerance[component]);
+	}
 	const double combined_envelope = combined.Diagonal().Length();
 	if (!std::isfinite(combined_envelope) ||
-		combined_envelope > collapse_tolerance)
+		combined_envelope > combined_tolerance)
 	    continue;
 
 	const size_t combined_root = *roots.begin();
@@ -1278,7 +1304,8 @@ collapse_subtolerance_brep_edges(struct ON_Brep_CDT_State *s_cdt)
 	    component_size[combined_root] += component_size[component];
 	}
 	component_bounds[combined_root] = combined;
-	accepted_edges.insert(candidate.edge_index);
+	component_tolerance[combined_root] = combined_tolerance;
+	accepted_edges[candidate.edge_index] = candidate.tolerance;
     }
 
     if (accepted_edges.empty())
@@ -1316,7 +1343,9 @@ collapse_subtolerance_brep_edges(struct ON_Brep_CDT_State *s_cdt)
 	    s_cdt->collapsed_edge_pnts[candidate_points[member]] =
 		representative_point;
     }
-    s_cdt->collapsed_edges = accepted_edges;
+    s_cdt->collapsed_edges.clear();
+    for (const auto &accepted : accepted_edges)
+	s_cdt->collapsed_edges.insert(accepted.first);
 
     for (auto &vertex : *s_cdt->vert_pnts) {
 	const auto canonical = s_cdt->collapsed_edge_pnts.find(vertex.second);
@@ -1367,7 +1396,8 @@ collapse_subtolerance_brep_edges(struct ON_Brep_CDT_State *s_cdt)
 		segment->e_root_end = root_end->second;
 	}
     }
-    for (int edge_index : accepted_edges) {
+    for (const auto &accepted : accepted_edges) {
+	const int edge_index = accepted.first;
 	const ON_BrepEdge &edge = s_cdt->brep->m_E[edge_index];
 	const bedge_seg_t *segment = *s_cdt->e2polysegs[edge_index].begin();
 	bu_log("%s: collapsed sub-tolerance B-Rep edge %d (V%d/V%d, "
@@ -1376,7 +1406,7 @@ collapse_subtolerance_brep_edges(struct ON_Brep_CDT_State *s_cdt)
 	    s_cdt->name ? s_cdt->name : "BREP", edge_index,
 	    edge.m_vi[0], edge.m_vi[1], segment->cp_len,
 	    segment->nc->BoundingBox().Diagonal().Length(),
-	    collapse_tolerance, (double)BN_TOL_DIST);
+	    accepted.second, (double)BN_TOL_DIST);
     }
     return accepted_edges.size();
 }
@@ -1391,12 +1421,16 @@ cdt_test_subtolerance_edge_collapse(void)
     source.NewVertex(ON_3dPoint(100.0, 0.0, 0.0));
     source.NewVertex(ON_3dPoint(200.0, 0.0, 0.0));
     source.NewVertex(ON_3dPoint(200.0001, 0.0, 0.0));
+    source.NewVertex(ON_3dPoint(400.0, 0.0, 0.0));
+    source.NewVertex(ON_3dPoint(400.001, 0.0, 0.0));
     ON_BrepVertex &v0 = source.m_V[0];
     ON_BrepVertex &v1 = source.m_V[1];
     ON_BrepVertex &v2 = source.m_V[2];
     ON_BrepVertex &v3 = source.m_V[3];
     ON_BrepVertex &v4 = source.m_V[4];
     ON_BrepVertex &v5 = source.m_V[5];
+    ON_BrepVertex &v6 = source.m_V[6];
+    ON_BrepVertex &v7 = source.m_V[7];
     source.NewEdge(v1, v0, source.AddEdgeCurve(new ON_LineCurve(
 	v1.Point(), v0.Point())));
     source.NewEdge(v1, v2, source.AddEdgeCurve(new ON_LineCurve(
@@ -1411,6 +1445,9 @@ cdt_test_subtolerance_edge_collapse(void)
     detour_points.Append(v5.Point());
     source.NewEdge(v4, v5, source.AddEdgeCurve(new ON_PolylineCurve(
 	detour_points)));
+    ON_BrepEdge &declared_tolerant = source.NewEdge(v6, v7,
+	source.AddEdgeCurve(new ON_LineCurve(v6.Point(), v7.Point())));
+    declared_tolerant.m_tolerance = 0.01;
 
     struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(&source,
 	"sub-tolerance edge test");
@@ -1440,22 +1477,26 @@ cdt_test_subtolerance_edge_collapse(void)
     }
 
     ON_3dPoint *expected = (*state->vert_pnts)[0];
+    ON_3dPoint *expected_declared = (*state->vert_pnts)[6];
     bedge_seg_t *adjacent = *state->e2polysegs[1].begin();
     state->absmin = 1.0e-5;
     if (collapse_subtolerance_brep_edges(state) != 0) {
 	ON_Brep_CDT_Destroy(state);
 	return 4;
     }
-    state->absmin = BN_TOL_DIST;
+    state->absmin = 0.02;
     const size_t collapsed = collapse_subtolerance_brep_edges(state);
     int result = 0;
-    if (collapsed != 1 || state->collapsed_edges.size() != 1 ||
+    if (collapsed != 2 || state->collapsed_edges.size() != 2 ||
 	    state->collapsed_edges.find(0) == state->collapsed_edges.end() ||
-	    state->collapsed_edges.find(3) != state->collapsed_edges.end())
+	    state->collapsed_edges.find(3) != state->collapsed_edges.end() ||
+	    state->collapsed_edges.find(4) == state->collapsed_edges.end())
 	result = 1;
     else if ((*state->vert_pnts)[0] != expected ||
 	    (*state->vert_pnts)[1] != expected ||
-	    (*state->vert_pnts)[2] == expected)
+	    (*state->vert_pnts)[2] == expected ||
+	    (*state->vert_pnts)[6] != expected_declared ||
+	    (*state->vert_pnts)[7] != expected_declared)
 	result = 2;
     else if (adjacent->e_start != expected ||
 	    adjacent->e_root_start != expected)
@@ -2482,6 +2523,44 @@ ON_Brep_CDT_Mesh(
 		    s_cdt->name ? s_cdt->name : "BREP", synchronized);
 	    }
 	}
+
+	/* Component filtering intentionally keeps vertex indices stable while it
+	 * edits the face array.  Once that transaction and orientation repair are
+	 * complete, compact the exported vertex array and its source-point map so
+	 * rigorous assembled validation does not mistake legal stale BoT entries
+	 * for a geometric failure. */
+	std::vector<int> vertex_remap((size_t)*vcnt, -1);
+	int compact_vertex_count = 0;
+	for (int face = 0; face < *fcnt; ++face) {
+	    for (int corner = 0; corner < 3; ++corner) {
+		const int vertex = (*faces)[(size_t)face * 3 + corner];
+		if (vertex >= 0 && vertex < *vcnt &&
+			vertex_remap[(size_t)vertex] < 0)
+		    vertex_remap[(size_t)vertex] = compact_vertex_count++;
+	    }
+	}
+	if (compact_vertex_count < *vcnt) {
+	    std::map<int, ON_3dPoint *> compact_point_map;
+	    for (int old_vertex = 0; old_vertex < *vcnt; ++old_vertex) {
+		const int new_vertex = vertex_remap[(size_t)old_vertex];
+		if (new_vertex < 0)
+		    continue;
+		for (int axis = 0; axis < 3; ++axis)
+		    (*vertices)[(size_t)new_vertex * 3 + axis] =
+			(*vertices)[(size_t)old_vertex * 3 + axis];
+		const auto source = s_cdt->bot_pnt_to_on_pnt->find(old_vertex);
+		if (source != s_cdt->bot_pnt_to_on_pnt->end())
+		    compact_point_map[new_vertex] = source->second;
+	    }
+	    for (int face = 0; face < *fcnt; ++face) {
+		for (int corner = 0; corner < 3; ++corner) {
+		    int &vertex = (*faces)[(size_t)face * 3 + corner];
+		    vertex = vertex_remap[(size_t)vertex];
+		}
+	    }
+	    s_cdt->bot_pnt_to_on_pnt->swap(compact_point_map);
+	    *vcnt = compact_vertex_count;
+	}
     }
 
     output_face_ids.resize((size_t)*fcnt);
@@ -2511,7 +2590,7 @@ cdt_test_spurious_components(void)
     };
     int face_count = 5;
     if (closed_mesh_component_filter(tetra_and_open, &face_count, vertices,
-	    8, NULL) != 1 || face_count != 4)
+	    8, NULL) != 0 || face_count != 5)
 	return 1;
 
     int two_open_components[] = {0, 1, 2, 4, 5, 6};
@@ -2562,11 +2641,10 @@ cdt_test_spurious_components(void)
 	    1.0e-6, true, false) != 0 || face_count != 3)
 	return 5;
 
-    /* A redundant triangle attached to a closed shell through an edge with
-     * three uses is not part of that manifold shell.  This is the compact
-     * form of the NIST spherical-cap shading regression: treating the
-     * non-manifold edge as ordinary adjacency hid the extra component from
-     * the cleanup audit even though downstream BoT topology detected it. */
+    /* An open triangle attached to a closed shell through an edge with three
+     * uses is not enough by itself to prove redundancy.  Without source-face
+     * coverage metadata the cleanup must preserve the candidate and let the
+     * rigorous topology audit reject it. */
     fastf_t nonmanifold_vertices[] = {
 	0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
 	0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
@@ -2578,7 +2656,7 @@ cdt_test_spurious_components(void)
     };
     face_count = 5;
     if (closed_mesh_component_filter(nonmanifold_faces, &face_count,
-	    nonmanifold_vertices, 5, NULL) != 1 || face_count != 4)
+	    nonmanifold_vertices, 5, NULL) != 0 || face_count != 5)
 	return 6;
 
     /* Face-local vertices can collapse to one shared output vertex.  The
