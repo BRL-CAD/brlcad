@@ -747,6 +747,10 @@ struct rt_brep_shot_trace {
     size_t prepared_surface_spans;
     size_t candidate_surface_spans;
     size_t excluded_surface_spans;
+    size_t surface_coefficient_expansion_requests;
+    size_t surface_coefficient_expansion_available;
+    size_t surface_coefficient_expansion_failures;
+    size_t surface_coefficient_expansion_avoided;
     size_t surface_subdivision_boxes;
     size_t surface_rotated_hull_attempts;
     size_t surface_rotated_hull_exclusions;
