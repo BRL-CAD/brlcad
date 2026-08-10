@@ -501,6 +501,7 @@ RT_EXPORT extern void rt_vshot_via_shot(
 #define RT_BREP_TRACE_EVENT_SEAM_CONTACT_EXISTING 7
 #define RT_BREP_TRACE_EVENT_SEAM_CONTACT_CONTINUATION 8
 #define RT_BREP_TRACE_EVENT_SINGULAR_POLE 9
+#define RT_BREP_TRACE_EVENT_REGULAR_NEAR_TRIM 10
 #define RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT 1
 #define RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT 2
 #define RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION 3
@@ -1012,6 +1013,7 @@ struct rt_brep_shot_trace {
     size_t root_event_mismatches;
     size_t root_trim_status_mismatches;
     size_t root_hit_class_mismatches;
+    size_t root_near_side_equivalences;
     size_t root_direction_mismatches;
     size_t root_adjacency_mismatches;
     fastf_t root_match_max_t_error;

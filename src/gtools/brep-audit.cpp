@@ -16,9 +16,11 @@
 #include "common.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <cfloat>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -264,6 +266,45 @@ struct audit_prepared_brep {
     bool resource_initialized = false;
 };
 
+struct trim_query_spec {
+    int face_index = -1;
+    ON_2dPoint uv = ON_2dPoint::UnsetPoint;
+};
+
+struct trim_polygon_range {
+    int trim_index = -1;
+    bool have_points = false;
+    ON_2dPoint raw_start = ON_2dPoint::UnsetPoint;
+    ON_2dPoint raw_end = ON_2dPoint::UnsetPoint;
+    ON_2dPoint curve_start = ON_2dPoint::UnsetPoint;
+    ON_2dPoint curve_end = ON_2dPoint::UnsetPoint;
+    ON_2dPoint cover_start = ON_2dPoint::UnsetPoint;
+    ON_2dPoint cover_end = ON_2dPoint::UnsetPoint;
+    ON_2dPoint cover_min = ON_2dPoint::UnsetPoint;
+    ON_2dPoint cover_max = ON_2dPoint::UnsetPoint;
+};
+
+struct trim_polygon_loop {
+    int loop_index = -1;
+    ON_BrepLoop::TYPE type = ON_BrepLoop::unknown;
+    size_t trim_count = 0;
+    size_t invalid_samples = 0;
+    double maximum_join_gap = 0.0;
+    double closing_gap = 0.0;
+    double cover_closing_gap = 0.0;
+    double signed_area = 0.0;
+    double minimum_boundary_distance = INFINITY;
+    size_t crossings = 0;
+    size_t vertical_crossings = 0;
+    bool inside = false;
+    bool have_bbox = false;
+    ON_2dPoint bbox_min = ON_2dPoint::UnsetPoint;
+    ON_2dPoint bbox_max = ON_2dPoint::UnsetPoint;
+    ON_2dPoint query_image = ON_2dPoint::UnsetPoint;
+    std::vector<trim_polygon_range> trim_ranges;
+    std::vector<ON_2dPoint> points;
+};
+
 
 static void
 surface_tree_node_counts(const brlcad::BBNode *node, int depth,
@@ -407,6 +448,538 @@ load_brep(struct db_i *dbip, struct directory *dp, struct rt_db_internal *intern
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
+}
+
+static bool
+parse_trim_query(const char *arg, trim_query_spec &query)
+{
+    if (!arg || !arg[0])
+	return false;
+    char *end = NULL;
+    errno = 0;
+    const long face_index = strtol(arg, &end, 10);
+    if (errno || end == arg || *end != ',' || face_index < 0 ||
+	    face_index > INT_MAX)
+	return false;
+    const char *u_start = end + 1;
+    errno = 0;
+    const double u = strtod(u_start, &end);
+    if (errno || end == u_start || *end != ',' || !std::isfinite(u))
+	return false;
+    const char *v_start = end + 1;
+    errno = 0;
+    const double v = strtod(v_start, &end);
+    if (errno || end == v_start || *end || !std::isfinite(v))
+	return false;
+    query.face_index = (int)face_index;
+    query.uv = ON_2dPoint(u, v);
+    return true;
+}
+
+static const char *
+trim_loop_type_name(ON_BrepLoop::TYPE type)
+{
+    switch (type) {
+	case ON_BrepLoop::outer: return "outer";
+	case ON_BrepLoop::inner: return "inner";
+	case ON_BrepLoop::slit: return "slit";
+	case ON_BrepLoop::crvonsrf: return "curve_on_surface";
+	case ON_BrepLoop::ptonsrf: return "point_on_surface";
+	case ON_BrepLoop::unknown: return "unknown";
+	case ON_BrepLoop::type_count: return "type_count";
+    }
+    return "invalid";
+}
+
+static double
+trim_periodic_delta(double first, double second, bool closed,
+    double period)
+{
+    double delta = first - second;
+    if (closed && period > 0.0 && std::isfinite(period))
+	delta -= nearbyint(delta / period) * period;
+    return delta;
+}
+
+static double
+trim_periodic_distance(const ON_2dPoint &first, const ON_2dPoint &second,
+    const bool closed[2], const double period[2])
+{
+    const double du = trim_periodic_delta(first.x, second.x, closed[0],
+	period[0]);
+    const double dv = trim_periodic_delta(first.y, second.y, closed[1],
+	period[1]);
+    return hypot(du, dv);
+}
+
+static ON_2dPoint
+trim_unwrap_after(const ON_2dPoint &point, const ON_2dPoint &previous,
+    const bool closed[2], const double period[2])
+{
+    ON_2dPoint unwrapped(point);
+    if (closed[0] && period[0] > 0.0)
+	unwrapped.x += nearbyint((previous.x - unwrapped.x) / period[0]) *
+	    period[0];
+    if (closed[1] && period[1] > 0.0)
+	unwrapped.y += nearbyint((previous.y - unwrapped.y) / period[1]) *
+	    period[1];
+    return unwrapped;
+}
+
+static double
+trim_point_segment_distance(const ON_2dPoint &query,
+    const ON_2dPoint &first, const ON_2dPoint &second)
+{
+    const double dx = second.x - first.x;
+    const double dy = second.y - first.y;
+    const double length_squared = dx * dx + dy * dy;
+    if (!(length_squared > 0.0))
+	return query.DistanceTo(first);
+    const double parameter = std::max(0.0, std::min(1.0,
+	((query.x - first.x) * dx + (query.y - first.y) * dy) /
+	length_squared));
+    return hypot(query.x - (first.x + parameter * dx),
+	query.y - (first.y + parameter * dy));
+}
+
+static void
+trim_polygon_classify(trim_polygon_loop &result, const ON_2dPoint &query,
+    const bool closed[2], const double period[2])
+{
+    if (result.points.size() < 2)
+	return;
+    result.bbox_min = result.points[0];
+    result.bbox_max = result.points[0];
+    for (size_t i = 1; i < result.points.size(); ++i) {
+	result.bbox_min.x = std::min(result.bbox_min.x, result.points[i].x);
+	result.bbox_min.y = std::min(result.bbox_min.y, result.points[i].y);
+	result.bbox_max.x = std::max(result.bbox_max.x, result.points[i].x);
+	result.bbox_max.y = std::max(result.bbox_max.y, result.points[i].y);
+    }
+    result.have_bbox = true;
+    result.query_image = query;
+    if (closed[0] && period[0] > 0.0) {
+	const double center = 0.5 * (result.bbox_min.x + result.bbox_max.x);
+	result.query_image.x += nearbyint((center - result.query_image.x) /
+	    period[0]) * period[0];
+    }
+    if (closed[1] && period[1] > 0.0) {
+	const double center = 0.5 * (result.bbox_min.y + result.bbox_max.y);
+	result.query_image.y += nearbyint((center - result.query_image.y) /
+	    period[1]) * period[1];
+    }
+
+    const size_t count = result.points.size();
+    for (size_t current = 0, previous = count - 1; current < count;
+	    previous = current++) {
+	const ON_2dPoint &first = result.points[previous];
+	const ON_2dPoint &second = result.points[current];
+	result.minimum_boundary_distance = std::min(
+	    result.minimum_boundary_distance,
+	    trim_point_segment_distance(result.query_image, first, second));
+	result.signed_area += first.x * second.y - second.x * first.y;
+	if (((second.y <= result.query_image.y &&
+		result.query_image.y < first.y) ||
+		(first.y <= result.query_image.y &&
+		result.query_image.y < second.y)) &&
+		result.query_image.x <
+		(first.x - second.x) *
+		(result.query_image.y - second.y) /
+		(first.y - second.y) + second.x)
+	    result.crossings++;
+	if (((second.x <= result.query_image.x &&
+		result.query_image.x < first.x) ||
+		(first.x <= result.query_image.x &&
+		 result.query_image.x < second.x)) &&
+		result.query_image.y <
+		(first.y - second.y) *
+		(result.query_image.x - second.x) /
+		(first.x - second.x) + second.y)
+	    result.vertical_crossings++;
+    }
+    result.signed_area *= 0.5;
+    result.inside = (result.crossings & 1U) != 0;
+}
+
+static trim_polygon_loop
+trim_sample_loop(const ON_BrepFace &face, const ON_BrepLoop &loop,
+    size_t segments_per_trim, const ON_2dPoint &query,
+    const bool closed[2], const double period[2])
+{
+    trim_polygon_loop result;
+    result.loop_index = loop.m_loop_index;
+    result.type = loop.m_type;
+    result.trim_count = (size_t)std::max(0, loop.TrimCount());
+    result.trim_ranges.reserve(result.trim_count);
+    result.points.reserve(result.trim_count * (segments_per_trim + 1));
+    ON_2dPoint first_raw = ON_2dPoint::UnsetPoint;
+    ON_2dPoint previous_raw_end = ON_2dPoint::UnsetPoint;
+    bool have_first = false;
+    bool have_previous_end = false;
+
+    for (int trim_index = 0; trim_index < loop.TrimCount(); ++trim_index) {
+	const ON_BrepTrim *trim = loop.Trim(trim_index);
+	if (!trim) {
+	    result.invalid_samples += segments_per_trim + 1;
+	    continue;
+	}
+	const ON_Interval domain = trim->Domain();
+	trim_polygon_range range;
+	range.trim_index = trim->m_trim_index;
+	const ON_Curve *trim_curve = trim->TrimCurveOf();
+	if (trim_curve) {
+	    const ON_Interval curve_domain = trim_curve->Domain();
+	    const ON_3dPoint curve_start = trim_curve->PointAt(
+		curve_domain.Min());
+	    const ON_3dPoint curve_end = trim_curve->PointAt(
+		curve_domain.Max());
+	    range.curve_start = ON_2dPoint(curve_start.x, curve_start.y);
+	    range.curve_end = ON_2dPoint(curve_end.x, curve_end.y);
+	}
+	ON_2dPoint trim_start = ON_2dPoint::UnsetPoint;
+	ON_2dPoint trim_end = ON_2dPoint::UnsetPoint;
+	bool have_trim_start = false;
+	bool have_trim_end = false;
+	for (size_t sample = 0; sample <= segments_per_trim; ++sample) {
+	    const double fraction = (double)sample /
+		(double)segments_per_trim;
+	    const ON_3dPoint evaluated = trim->PointAt(
+		domain.ParameterAt(fraction));
+	    const ON_2dPoint raw(evaluated.x, evaluated.y);
+	    if (!std::isfinite(raw.x) || !std::isfinite(raw.y)) {
+		result.invalid_samples++;
+		continue;
+	    }
+	    if (!have_trim_start) {
+		trim_start = raw;
+		have_trim_start = true;
+	    }
+	    trim_end = raw;
+	    have_trim_end = true;
+	    ON_2dPoint unwrapped(raw);
+	    if (!result.points.empty())
+		unwrapped = trim_unwrap_after(raw, result.points.back(), closed,
+		    period);
+	    result.points.push_back(unwrapped);
+	    if (!range.have_points) {
+		range.raw_start = raw;
+		range.cover_start = unwrapped;
+		range.cover_min = unwrapped;
+		range.cover_max = unwrapped;
+		range.have_points = true;
+	    }
+	    range.raw_end = raw;
+	    range.cover_end = unwrapped;
+	    range.cover_min.x = std::min(range.cover_min.x, unwrapped.x);
+	    range.cover_min.y = std::min(range.cover_min.y, unwrapped.y);
+	    range.cover_max.x = std::max(range.cover_max.x, unwrapped.x);
+	    range.cover_max.y = std::max(range.cover_max.y, unwrapped.y);
+	}
+	result.trim_ranges.push_back(range);
+	if (have_trim_start) {
+	    if (!have_first) {
+		first_raw = trim_start;
+		have_first = true;
+	    }
+	    if (have_previous_end)
+		result.maximum_join_gap = std::max(result.maximum_join_gap,
+		    trim_periodic_distance(previous_raw_end, trim_start, closed,
+			period));
+	}
+	if (have_trim_end) {
+	    previous_raw_end = trim_end;
+	    have_previous_end = true;
+	}
+    }
+    if (have_first && have_previous_end) {
+	result.closing_gap = trim_periodic_distance(previous_raw_end,
+	    first_raw, closed, period);
+	result.maximum_join_gap = std::max(result.maximum_join_gap,
+	    result.closing_gap);
+    }
+    if (result.points.size() > 1)
+	result.cover_closing_gap = result.points.front().DistanceTo(
+	    result.points.back());
+    trim_polygon_classify(result, query, closed, period);
+    (void)face;
+    return result;
+}
+
+static int
+trim_query(struct db_i *dbip, const char *db_path, struct directory *dp,
+    const trim_query_spec &query)
+{
+    struct rt_db_internal intern;
+    if (load_brep(dbip, dp, &intern) != BRLCAD_OK)
+	return 2;
+    struct rt_brep_internal *bi =
+	(struct rt_brep_internal *)intern.idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+    if (query.face_index < 0 || query.face_index >= bi->brep->m_F.Count()) {
+	std::cerr << "Face index is out of range: " << query.face_index << "\n";
+	rt_db_free_internal(&intern);
+	return 2;
+    }
+    const ON_BrepFace &face = bi->brep->m_F[query.face_index];
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!surface) {
+	std::cerr << "Face has no surface: " << query.face_index << "\n";
+	rt_db_free_internal(&intern);
+	return 2;
+    }
+    const ON_Interval domain[2] = {surface->Domain(0), surface->Domain(1)};
+    const bool closed[2] = {surface->IsClosed(0), surface->IsClosed(1)};
+    const double period[2] = {domain[0].Length(), domain[1].Length()};
+
+    brlcad::CurveTree curve_tree(&face);
+    const brlcad::BRNode *closest = NULL;
+    double closest_distance = -1.0;
+    size_t candidates = 0;
+    const bool production_trimmed = curve_tree.isTrimmed(query.uv,
+	&closest, closest_distance, BREP_EDGE_MISS_TOLERANCE, &candidates);
+    const brlcad::BRNode *exact_closest = NULL;
+    double exact_closest_distance = -1.0;
+    size_t exact_candidates = 0;
+    const bool exact_trimmed = curve_tree.isTrimmed(query.uv,
+	&exact_closest, exact_closest_distance, BREP_EDGE_MISS_TOLERANCE,
+	&exact_candidates, false);
+
+    ON_2dPoint crossing_query(query.uv);
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!closed[direction] || !(period[direction] > 0.0))
+	    continue;
+	crossing_query[direction] -= floor(
+	    (crossing_query[direction] - domain[direction].Min()) /
+	    period[direction]) * period[direction];
+	if (crossing_query[direction] >= domain[direction].Max())
+	    crossing_query[direction] = domain[direction].Min();
+    }
+    struct curve_crossing {
+	int trim_index;
+	int adjoining_face;
+	bool inner;
+	bool vertical;
+	double distance;
+	ON_Interval parameter;
+	ON_Interval curve_domain;
+	ON_3dPoint start;
+	ON_3dPoint end;
+	point_t minimum;
+	point_t maximum;
+    };
+    std::vector<curve_crossing> curve_crossings;
+    const bool horizontal_classification_ray = closed[1];
+    std::list<const brlcad::BRNode *> curve_leaves;
+    curve_tree.getLeaves(curve_leaves);
+    for (std::list<const brlcad::BRNode *>::const_iterator leaf =
+	    curve_leaves.begin(); leaf != curve_leaves.end(); ++leaf) {
+	curve_crossing event;
+	event.distance = -1.0;
+	if (!(horizontal_classification_ray ?
+		(*leaf)->crossesRight(crossing_query, event.distance, 0.0) :
+		(*leaf)->crossesAbove(crossing_query, event.distance, 0.0)))
+	    continue;
+	event.trim_index = (*leaf)->trimIndex();
+	event.adjoining_face = (*leaf)->m_adj_face_index;
+	event.inner = (*leaf)->m_innerTrim;
+	event.vertical = (*leaf)->m_Vertical;
+	event.parameter = (*leaf)->parameterInterval();
+	event.curve_domain = (*leaf)->curveDomain();
+	event.start = (*leaf)->startPoint();
+	event.end = (*leaf)->endPoint();
+	(*leaf)->GetBBox(event.minimum, event.maximum);
+	curve_crossings.push_back(event);
+    }
+
+    static const size_t levels[] = {16, 64, 256, 1024, 4096};
+    bool classifications[sizeof(levels) / sizeof(levels[0])] = {};
+    bool level_valid[sizeof(levels) / sizeof(levels[0])] = {};
+    std::cout << std::setprecision(17)
+	<< "{\"format\":\"brlcad-brep-trim-query-v1\""
+	<< ",\"database\":" << json_quote(db_path)
+	<< ",\"object\":" << json_quote(dp->d_namep)
+	<< ",\"face\":" << query.face_index
+	<< ",\"query_uv\":[" << query.uv.x << "," << query.uv.y << "]"
+	<< ",\"surface\":{\"domain_u\":[" << domain[0].Min() << ","
+	<< domain[0].Max() << "],\"domain_v\":[" << domain[1].Min()
+	<< "," << domain[1].Max() << "],\"closed_u\":"
+	<< (closed[0] ? "true" : "false") << ",\"closed_v\":"
+	<< (closed[1] ? "true" : "false") << "}"
+	<< ",\"production\":{\"trimmed\":"
+	<< (production_trimmed ? "true" : "false")
+	<< ",\"closest_distance\":" << closest_distance
+	<< ",\"candidates\":" << candidates
+	<< ",\"prepared_leaf_images\":"
+	<< curve_tree.preparedLeafImageCount()
+	<< ",\"closest_adjoining_face\":"
+	<< (closest ? closest->m_adj_face_index : -1) << "}"
+	<< ",\"exact\":{\"trimmed\":"
+	<< (exact_trimmed ? "true" : "false")
+	<< ",\"closest_distance\":" << exact_closest_distance
+	<< ",\"candidates\":" << exact_candidates
+	<< ",\"closest_adjoining_face\":"
+	<< (exact_closest ? exact_closest->m_adj_face_index : -1) << "}"
+	<< ",\"crossing_query_uv\":[" << crossing_query.x << ","
+	<< crossing_query.y << "]"
+	<< ",\"classification_ray\":" << json_quote(
+	    horizontal_classification_ray ? "positive_u" : "positive_v")
+	<< ",\"curve_crossings_mode\":\"exact_native_half_open\""
+	<< ",\"curve_crossings\":[";
+    for (size_t crossing_index = 0;
+	    crossing_index < curve_crossings.size(); ++crossing_index) {
+	if (crossing_index)
+	    std::cout << ",";
+	const curve_crossing &event = curve_crossings[crossing_index];
+	std::cout << "{\"trim\":" << event.trim_index
+	    << ",\"adjoining_face\":" << event.adjoining_face
+	    << ",\"inner\":" << (event.inner ? "true" : "false")
+	    << ",\"vertical\":" << (event.vertical ? "true" : "false")
+	    << ",\"distance\":" << event.distance
+	    << ",\"parameter\":[" << event.parameter.Min() << ","
+	    << event.parameter.Max() << "]"
+	    << ",\"curve_domain\":[" << event.curve_domain.Min() << ","
+	    << event.curve_domain.Max() << "]"
+	    << ",\"start\":[" << event.start.x << "," << event.start.y
+	    << "]"
+	    << ",\"end\":[" << event.end.x << "," << event.end.y << "]"
+	    << ",\"bbox\":[[" << event.minimum[X] << ","
+	    << event.minimum[Y] << "],[" << event.maximum[X] << ","
+	    << event.maximum[Y] << "]]}";
+    }
+    std::cout << "]"
+	<< ",\"levels\":[";
+
+    for (size_t level = 0; level < sizeof(levels) / sizeof(levels[0]);
+	    ++level) {
+	if (level)
+	    std::cout << ",";
+	std::vector<trim_polygon_loop> loops;
+	loops.reserve((size_t)face.LoopCount());
+	bool any_outer = false;
+	bool inside_outer = false;
+	bool inside_inner = false;
+	bool parity = false;
+	bool valid = true;
+	double minimum_distance = INFINITY;
+	for (int loop_slot = 0; loop_slot < face.LoopCount(); ++loop_slot) {
+	    const ON_BrepLoop *loop = face.Loop(loop_slot);
+	    if (!loop)
+		continue;
+	    loops.push_back(trim_sample_loop(face, *loop, levels[level],
+		query.uv, closed, period));
+	    const trim_polygon_loop &sampled = loops.back();
+	    valid = valid && sampled.invalid_samples == 0 &&
+		sampled.points.size() >= 3 &&
+		sampled.cover_closing_gap <= BREP_EDGE_MISS_TOLERANCE;
+	    minimum_distance = std::min(minimum_distance,
+		sampled.minimum_boundary_distance);
+	    if (sampled.type == ON_BrepLoop::outer) {
+		any_outer = true;
+		inside_outer = inside_outer || sampled.inside;
+	    } else if (sampled.type == ON_BrepLoop::inner) {
+		inside_inner = inside_inner || sampled.inside;
+	    }
+	    if (sampled.type == ON_BrepLoop::outer ||
+		    sampled.type == ON_BrepLoop::inner ||
+		    sampled.type == ON_BrepLoop::unknown)
+		parity = parity != sampled.inside;
+	}
+	const bool polygon_inside = any_outer ?
+	    inside_outer && !inside_inner : parity;
+	classifications[level] = polygon_inside;
+	level_valid[level] = valid;
+	std::cout << "{\"segments_per_trim\":" << levels[level]
+	    << ",\"valid\":" << (valid ? "true" : "false")
+	    << ",\"inside\":" << (polygon_inside ? "true" : "false")
+	    << ",\"trimmed\":" << (polygon_inside ? "false" : "true")
+	    << ",\"matches_production\":";
+	if (valid)
+	    std::cout << (production_trimmed != polygon_inside ?
+		"true" : "false");
+	else
+	    std::cout << "null";
+	std::cout << ",\"minimum_boundary_distance\":" << minimum_distance
+	    << ",\"stable_from_previous\":"
+	    << (level > 0 && classifications[level] ==
+		classifications[level - 1] ? "true" : "false")
+	    << ",\"loops\":[";
+	for (size_t loop_index = 0; loop_index < loops.size(); ++loop_index) {
+	    const trim_polygon_loop &sampled = loops[loop_index];
+	    if (loop_index)
+		std::cout << ",";
+	    std::cout << "{\"loop\":" << sampled.loop_index
+		<< ",\"type\":" << json_quote(
+		    trim_loop_type_name(sampled.type))
+		<< ",\"trims\":" << sampled.trim_count
+		<< ",\"points\":" << sampled.points.size()
+		<< ",\"invalid_samples\":" << sampled.invalid_samples
+		<< ",\"inside\":" << (sampled.inside ? "true" : "false")
+		<< ",\"crossings\":" << sampled.crossings
+		<< ",\"vertical_crossings\":"
+		<< sampled.vertical_crossings
+		<< ",\"signed_area\":" << sampled.signed_area
+		<< ",\"minimum_boundary_distance\":"
+		<< sampled.minimum_boundary_distance
+		<< ",\"maximum_topology_join_gap\":"
+		<< sampled.maximum_join_gap
+		<< ",\"closing_gap\":" << sampled.closing_gap
+		<< ",\"cover_closing_gap\":" << sampled.cover_closing_gap
+		<< ",\"lift_closed\":" <<
+		(sampled.cover_closing_gap <= BREP_EDGE_MISS_TOLERANCE ?
+		 "true" : "false")
+		<< ",\"query_image\":[" << sampled.query_image.x << ","
+		<< sampled.query_image.y << "]"
+		<< ",\"bbox\":[[" << sampled.bbox_min.x << ","
+		<< sampled.bbox_min.y << "],[" << sampled.bbox_max.x << ","
+		<< sampled.bbox_max.y << "]]"
+		<< ",\"trim_ranges\":[";
+	    for (size_t range_index = 0;
+		    range_index < sampled.trim_ranges.size(); ++range_index) {
+		if (range_index)
+		    std::cout << ",";
+		const trim_polygon_range &range =
+		    sampled.trim_ranges[range_index];
+		std::cout << "{\"trim\":" << range.trim_index
+		    << ",\"valid\":" << (range.have_points ? "true" : "false");
+		if (range.have_points) {
+		    std::cout << ",\"raw_start\":[" << range.raw_start.x << ","
+			<< range.raw_start.y << "]"
+		    << ",\"raw_end\":[" << range.raw_end.x << ","
+			<< range.raw_end.y << "]"
+			<< ",\"curve_start\":[" << range.curve_start.x << ","
+			<< range.curve_start.y << "]"
+			<< ",\"curve_end\":[" << range.curve_end.x << ","
+			<< range.curve_end.y << "]"
+			<< ",\"cover_start\":[" << range.cover_start.x << ","
+			<< range.cover_start.y << "]"
+			<< ",\"cover_end\":[" << range.cover_end.x << ","
+			<< range.cover_end.y << "]"
+			<< ",\"cover_bbox\":[[" << range.cover_min.x << ","
+			<< range.cover_min.y << "],[" << range.cover_max.x << ","
+			<< range.cover_max.y << "]]";
+		}
+		std::cout << "}";
+	    }
+	    std::cout << "]}";
+	}
+	std::cout << "]}";
+    }
+    const size_t level_count = sizeof(levels) / sizeof(levels[0]);
+    const bool converged = level_valid[level_count - 1] &&
+	level_valid[level_count - 2] && level_valid[level_count - 3] &&
+	classifications[level_count - 1] == classifications[level_count - 2] &&
+	classifications[level_count - 2] == classifications[level_count - 3];
+    std::cout << "],\"converged\":" << (converged ? "true" : "false")
+	<< ",\"oracle_applicable\":" << (converged ? "true" : "false")
+	<< ",\"final_matches_production\":";
+    if (converged)
+	std::cout << (production_trimmed != classifications[level_count - 1] ?
+	    "true" : "false");
+    else
+	std::cout << "null";
+    std::cout << "}\n";
+    rt_db_free_internal(&intern);
+    return converged ? 0 : 1;
 }
 
 static const char *
@@ -1464,7 +2037,14 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
     std::cout << ",\"failure_records\":";
     print_ray_audit_failure_records(samples, candidate, reference,
 	comparison, face_components);
-    std::cout << "},\"process_peak_rss_bytes\":" << peak_rss_bytes()
+    std::cout << "},\"selected_pair_records\":";
+    ray_audit_comparison selected_record;
+    if (selected_pair >= 0)
+	selected_record.candidate_reversal_indices.push_back(
+	    (size_t)selected_pair);
+    print_ray_audit_failure_records(samples, candidate, reference,
+	selected_record, face_components);
+    std::cout << ",\"process_peak_rss_bytes\":" << peak_rss_bytes()
 	<< "}\n";
     return pass ? 0 : 1;
 }
@@ -2173,7 +2753,8 @@ main(int argc, const char **argv)
     long ray_count = 64;
     long ray_pair = -1;
     int legacy_only = 0;
-    struct bu_opt_desc d[19];
+    const char *trim_query_arg = NULL;
+    struct bu_opt_desc d[20];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -2192,11 +2773,16 @@ main(int argc, const char **argv)
     BU_OPT(d[15], "", "ray-count", "#", &bu_opt_long, &ray_count, "Deterministic random chord pairs (three axis pairs are added)");
     BU_OPT(d[16], "", "ray-pair", "#", &bu_opt_long, &ray_pair, "Shoot only one deterministic axis/random pair by index");
     BU_OPT(d[17], "", "legacy-only", "", NULL, &legacy_only, "Skip prepared solving while tracing the legacy SurfaceTree path");
-    BU_OPT_NULL(d[18]);
+    BU_OPT(d[18], "", "trim-query", "face,u,v", &bu_opt_str, &trim_query_arg, "Compare production and sampled-polygon trim classification");
+    BU_OPT_NULL(d[19]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
+    trim_query_spec parsed_trim_query;
+    const bool trim_query_only = trim_query_arg != NULL;
+    const bool trim_query_valid = !trim_query_only ||
+	parse_trim_query(trim_query_arg, parsed_trim_query);
     const char *usage = "Usage: brep-audit [options] "
 	"[--list|--prep-only|--surface-trees-only|--surface-trees-all|"
-	"--ray-depth-compare] "
+	"--ray-depth-compare|--trim-query face,u,v] "
 	"file.g [brep]\n";
     const bool database_only = list_only || surface_trees_all;
     if (print_help || (database_only && ac != 1) ||
@@ -2204,7 +2790,8 @@ main(int argc, const char **argv)
 	    ((list_only ? 1 : 0) + (prep_only ? 1 : 0) +
 	     (surface_trees_only ? 1 : 0) +
 	     (surface_trees_all ? 1 : 0) +
-	     (ray_depth_compare_only ? 1 : 0) > 1) ||
+	     (ray_depth_compare_only ? 1 : 0) +
+	     (trim_query_only ? 1 : 0) > 1) || !trim_query_valid ||
 	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
 	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0 ||
 	    surface_tree_depth < 0 ||
@@ -2270,6 +2857,12 @@ main(int argc, const char **argv)
 	const int ret = ray_depth_compare(dbip, argv[0], dp,
 	    (int)candidate_depth, (int)reference_depth, (size_t)ray_count,
 	    ray_pair, legacy_only != 0);
+	db_close(dbip);
+	return ret;
+    }
+
+    if (trim_query_only) {
+	const int ret = trim_query(dbip, argv[0], dp, parsed_trim_query);
 	db_close(dbip);
 	return ret;
     }

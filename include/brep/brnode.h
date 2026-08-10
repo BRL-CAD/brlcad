@@ -92,6 +92,28 @@ namespace brlcad {
 	void GetBBox(fastf_t *min, fastf_t *max) const;
 
 	bool isTrimmed(const ON_2dPoint &uv, double &trimdist) const;
+	/** Test a vertical +V parameter-space ray against this monotone
+	 * trim leaf.  Endpoint fuzz bridges small imported loop gaps while
+	 * the exact test uses a half-open interval to avoid double counting
+	 * shared vertices. */
+	bool crossesAbove(const ON_2dPoint &uv, double &distance,
+		double endpoint_tolerance = 0.0) const;
+	/** Test a horizontal +U parameter-space ray using the same half-open
+	 * endpoint ownership as crossesAbove(). */
+	bool crossesRight(const ON_2dPoint &uv, double &distance,
+		double endpoint_tolerance = 0.0) const;
+	/** Return a fixed-workspace estimate of the shortest UV distance from
+	 * a point to this trim leaf. */
+	double curveDistance(const ON_2dPoint &uv) const;
+	/** Lower bound from the leaf's sampled UV bounding box. */
+	double curveBBoxDistance(const ON_2dPoint &uv) const;
+	int trimIndex() const { return m_trim_index; }
+	ON_Interval parameterInterval() const { return m_t; }
+	ON_Interval curveDomain() const {
+	    return m_trim ? m_trim->Domain() : ON_Interval::EmptyInterval;
+	}
+	const ON_3dPoint &startPoint() const { return m_start; }
+	const ON_3dPoint &endPoint() const { return m_end; }
 
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt) const;
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const;
