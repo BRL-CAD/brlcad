@@ -1031,7 +1031,8 @@ cpolygon_t::point_in_polygon(long v, bool flip)
 }
 
 void
-cpolygon_t::rm_points_in_polygon(std::set<ON_2dPoint *> *pnts, bool flip)
+cpolygon_t::rm_points_in_polygon(std::set<ON_2dPoint *> *pnts, bool flip,
+	bool delete_removed)
 {
     if (!closed() || !pnts || !pnts->size()) return;
 
@@ -1074,6 +1075,8 @@ cpolygon_t::rm_points_in_polygon(std::set<ON_2dPoint *> *pnts, bool flip)
     }
     for (p_it = rm_pnts.begin(); p_it != rm_pnts.end(); p_it++) {
 	pnts->erase(*p_it);
+	if (delete_removed)
+	    delete *p_it;
     }
 
     bu_free(polypnts, "polyline");
