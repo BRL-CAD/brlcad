@@ -5813,6 +5813,79 @@ brep_expansion_bezier_blossom(const brep_expansion_interval *input,
 }
 
 
+/* A restriction touching a curve endpoint is one ordinary de Casteljau
+ * split.  Retain all boundary entries of its triangle so every restricted
+ * coefficient is produced in O(n^2) expansion lerps, rather than evaluating
+ * an independent O(n^2) blossom for each of the n outputs.  Unlike the
+ * general two-endpoint restriction, this requires no parameter division. */
+static bool
+brep_expansion_bezier_endpoint_restrict(
+    const brep_expansion_interval *input, int order, double minimum,
+    double maximum, brep_expansion_interval *output, size_t &high_water)
+{
+    const bool at_lower_endpoint = std::fpclassify(minimum) == FP_ZERO;
+    const bool at_upper_endpoint = fabs(maximum - 1.0) <= DBL_MIN;
+    if (!input || !output || order < 2 ||
+	order > BREP_DIRECT_BEZIER_MAX_ORDER || minimum < 0.0 ||
+	maximum > 1.0 || !(minimum < maximum) ||
+	(!at_lower_endpoint && !at_upper_endpoint))
+	return false;
+    if (at_lower_endpoint && at_upper_endpoint) {
+	for (int i = 0; i < order; ++i)
+	    output[i] = input[i];
+	return true;
+    }
+
+    brep_expansion_interval work[BREP_DIRECT_BEZIER_MAX_ORDER];
+    for (int i = 0; i < order; ++i)
+	work[i] = input[i];
+    const int degree = order - 1;
+    const bool left = at_lower_endpoint;
+    const double parameter = left ? maximum : minimum;
+    output[left ? 0 : degree] = work[left ? 0 : degree];
+    for (int level = 1; level <= degree; ++level) {
+	for (int i = 0; i <= degree - level; ++i) {
+	    brep_expansion_interval next = {};
+	    if (!brep_expansion_interval_lerp(work[i], work[i + 1],
+		    parameter, next, high_water))
+		return false;
+	    work[i] = next;
+	}
+	const int output_index = left ? level : degree - level;
+	const int work_index = left ? 0 : degree - level;
+	output[output_index] = work[work_index];
+    }
+    return true;
+}
+
+
+static bool
+brep_expansion_restriction_bounds(
+    const brep_expansion_interval &restricted,
+    const brep_interval &ordinary, int equation_exponent,
+    bool normalized_output, brep_interval &result)
+{
+    brep_interval lower_bounds;
+    brep_interval upper_bounds;
+    if (!brep_expansion_bounds(restricted.minimum, lower_bounds) ||
+	    !brep_expansion_bounds(restricted.maximum, upper_bounds) ||
+	    lower_bounds.minimum > upper_bounds.maximum)
+	return false;
+    result = {lower_bounds.minimum, upper_bounds.maximum};
+    result.minimum = std::max(result.minimum, ordinary.minimum);
+    result.maximum = std::min(result.maximum, ordinary.maximum);
+    if (result.minimum > result.maximum)
+	return false;
+    if (!normalized_output &&
+	    (!brep_expansion_outward_ldexp(result.minimum,
+		equation_exponent, true, result.minimum) ||
+	     !brep_expansion_outward_ldexp(result.maximum,
+		equation_exponent, false, result.maximum)))
+	return false;
+    return true;
+}
+
+
 static bool
 brep_expansion_surface_restrict(const brep_interval *input, int u_order,
     int v_order, double u_minimum, double u_maximum, double v_minimum,
@@ -5858,8 +5931,58 @@ brep_expansion_surface_restrict(const brep_interval *input, int u_order,
 	fabs(u_maximum - 1.0) <= DBL_MIN;
     const bool complete_v = fabs(v_minimum) <= DBL_MIN &&
 	fabs(v_maximum - 1.0) <= DBL_MIN;
+    const bool u_endpoint = std::fpclassify(u_minimum) == FP_ZERO ||
+	fabs(u_maximum - 1.0) <= DBL_MIN;
+    const bool v_endpoint = std::fpclassify(v_minimum) == FP_ZERO ||
+	fabs(v_maximum - 1.0) <= DBL_MIN;
     brep_expansion_interval source[BREP_DIRECT_BEZIER_MAX_ORDER];
     brep_expansion_interval u_control[BREP_DIRECT_BEZIER_MAX_ORDER];
+
+    /* The fold graph repeatedly restricts one normalized coordinate while
+     * retaining the other whole.  Endpoint slabs can share one complete
+     * split triangle and avoid the general per-output blossom path. */
+    if (complete_v && u_endpoint) {
+	for (int j = 0; j < v_order; ++j) {
+	    for (int i = 0; i < u_order; ++i) {
+		if (!brep_expansion_interval_from_interval(normalized_input[
+			(size_t)i * v_order + j], source[i], high_water))
+		    return false;
+	    }
+	    if (!brep_expansion_bezier_endpoint_restrict(source, u_order,
+		    u_minimum, u_maximum, u_control, high_water))
+		return false;
+	    for (int output_u = 0; output_u < u_order; ++output_u) {
+		const size_t output_index =
+		    (size_t)output_u * v_order + j;
+		if (!brep_expansion_restriction_bounds(u_control[output_u],
+			ordinary[output_index], equation_exponent,
+			normalized_output, output[output_index]))
+		    return false;
+	    }
+	}
+	return true;
+    }
+    if (complete_u && v_endpoint) {
+	for (int i = 0; i < u_order; ++i) {
+	    for (int j = 0; j < v_order; ++j) {
+		if (!brep_expansion_interval_from_interval(normalized_input[
+			(size_t)i * v_order + j], source[j], high_water))
+		    return false;
+	    }
+	    if (!brep_expansion_bezier_endpoint_restrict(source, v_order,
+		    v_minimum, v_maximum, u_control, high_water))
+		return false;
+	    for (int output_v = 0; output_v < v_order; ++output_v) {
+		const size_t output_index = (size_t)i * v_order + output_v;
+		if (!brep_expansion_restriction_bounds(u_control[output_v],
+			ordinary[output_index], equation_exponent,
+			normalized_output, output[output_index]))
+		    return false;
+	    }
+	}
+	return true;
+    }
+
     for (int output_u = 0; output_u < u_order; ++output_u) {
 	for (int j = 0; j < v_order; ++j) {
 	    if (complete_u) {
@@ -5888,31 +6011,12 @@ brep_expansion_surface_restrict(const brep_interval *input, int u_order,
 		    v_minimum, v_maximum, output_v, restricted, high_water)) {
 		return false;
 	    }
-	    brep_interval lower_bounds;
-	    brep_interval upper_bounds;
-	    if (!brep_expansion_bounds(restricted.minimum, lower_bounds) ||
-		    !brep_expansion_bounds(restricted.maximum, upper_bounds) ||
-		    lower_bounds.minimum > upper_bounds.maximum)
-		return false;
-	    brep_interval result = {
-		lower_bounds.minimum, upper_bounds.maximum
-	    };
 	    const size_t output_index =
 		(size_t)output_u * v_order + output_v;
-	    result.minimum = std::max(result.minimum,
-		ordinary[output_index].minimum);
-	    result.maximum = std::min(result.maximum,
-		ordinary[output_index].maximum);
-	    if (result.minimum > result.maximum)
+	    if (!brep_expansion_restriction_bounds(restricted,
+		    ordinary[output_index], equation_exponent,
+		    normalized_output, output[output_index]))
 		return false;
-	    if (!normalized_output) {
-		if (!brep_expansion_outward_ldexp(result.minimum,
-			equation_exponent, true, result.minimum) ||
-			!brep_expansion_outward_ldexp(result.maximum,
-			    equation_exponent, false, result.maximum))
-		    return false;
-	    }
-	    output[output_index] = result;
 	}
     }
     return true;
