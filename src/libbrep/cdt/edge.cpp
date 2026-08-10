@@ -218,15 +218,44 @@ rtree_bbox_2d_remove(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe)
     double p2[2];
     p2[0] = bb.Max().x;
     p2[1] = bb.Max().y;
-    int rtree_cnt = s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Count();
-    if (rtree_cnt) {
-	s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
-	int rtree_cnt_after = s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Count();
-	if (rtree_cnt_after != rtree_cnt - 1) {
-	    std::cout << "2D count before: " << s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Count() << "\n";
-	    std::cout << "2D count after: " << s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Count() << "\n";
+
+    s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Remove(p1, p2,
+	(void *)pe);
+}
+
+static bool
+rebuild_face_rtree_2d(struct ON_Brep_CDT_State *s_cdt, int face_index,
+	int tight)
+{
+    ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+    cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
+    s_cdt->face_rtrees_2d[face_index].RemoveAll();
+
+    for (int li = 0; li < face.LoopCount(); li++) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	const bool is_outer = face.OuterLoop()->m_loop_index ==
+	    loop->m_loop_index;
+	cpolygon_t *cpoly = is_outer ? &fmesh->outer_loop :
+	    fmesh->inner_loops[li];
+	if (!cpoly || cpoly->poly.empty())
+	    return false;
+
+	size_t ecnt = 1;
+	cpolyedge_t *first = *cpoly->poly.begin();
+	cpolyedge_t *next = first->next;
+	rtree_bbox_2d(s_cdt, first, tight);
+	while (first != next) {
+	    ecnt++;
+	    if (!next)
+		return false;
+	    rtree_bbox_2d(s_cdt, next, tight);
+	    next = next->next;
+	    if (ecnt > cpoly->poly.size())
+		return false;
 	}
     }
+
+    return true;
 }
 
 static void
@@ -295,74 +324,6 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe)
     p2[2] = p3d1->z + 0.5*bdist;
 
     s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
-}
-
-static void
-rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe)
-{
-    if (!pe->eseg) return;
-    ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
-    double tcparam = (pe->trim_start + pe->trim_end) / 2.0;
-    ON_3dPoint trim_2d = trim.PointAt(tcparam);
-    const ON_Surface *s = trim.SurfaceOf();
-    ON_3dPoint trim_3d = s->PointAt(trim_2d.x, trim_2d.y);
-
-    ON_3dPoint *p3d1 = pe->eseg->e_start;
-    ON_3dPoint *p3d2 = pe->eseg->e_end;
-    ON_Line line(*p3d1, *p3d2);
-
-    double arc_dist = 2*trim_3d.DistanceTo(line.ClosestPointTo(trim_3d));
-
-    ON_BoundingBox bb = line.BoundingBox();
-    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
-    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
-    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
-    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
-    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
-    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
-
-    double dist = p3d1->DistanceTo(*p3d2);
-    double bdist = (0.5*dist > arc_dist) ? 0.5*dist : arc_dist;
-    double xdist = bb.m_max.x - bb.m_min.x;
-    double ydist = bb.m_max.y - bb.m_min.y;
-    double zdist = bb.m_max.z - bb.m_min.z;
-    // Be slightly more aggressive in the size of this bbox than when adding,
-    // since we want to avoid floating point weirdness when it comes to the
-    // RTree Remove routine looking for this box
-    if (xdist < bdist) {
-	bb.m_min.x = bb.m_min.x - 0.51*bdist;
-	bb.m_max.x = bb.m_max.x + 0.51*bdist;
-    }
-    if (ydist < bdist) {
-	bb.m_min.y = bb.m_min.y - 0.51*bdist;
-	bb.m_max.y = bb.m_max.y + 0.51*bdist;
-    }
-    if (zdist < bdist) {
-	bb.m_min.z = bb.m_min.z - 0.51*bdist;
-	bb.m_max.z = bb.m_max.z + 0.51*bdist;
-    }
-
-    double p1[3];
-    p1[0] = bb.Min().x;
-    p1[1] = bb.Min().y;
-    p1[2] = bb.Min().z;
-    double p2[3];
-    p2[0] = bb.Max().x;
-    p2[1] = bb.Max().y;
-    p2[2] = bb.Max().z;
-
-    s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
-
-    // Also remove box around the start point - if we don't a stale (deleted)
-    // cpolyedge may crop up in subsequent processing...
-    p1[0] = p3d1->x - 0.5*bdist;
-    p1[1] = p3d1->y - 0.5*bdist;
-    p1[2] = p3d1->z - 0.5*bdist;
-    p2[0] = p3d1->x + 0.5*bdist;
-    p2[1] = p3d1->y + 0.5*bdist;
-    p2[2] = p3d1->z + 0.5*bdist;
-
-    s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
 }
 
 struct rtree_minsplit_context {
@@ -596,22 +557,30 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt,
 }
 
 static bool
-linear_edge_spacing(double *spacing, double absmin, double local_min)
+edge_spacing_floor(double *spacing, double absmin, double local_min)
 {
     if (!spacing || !std::isfinite(absmin) || absmin <= 0.0)
 	return false;
 
     /* A zero chord is valid for a closed curved segment, but it is not a
-     * useful length scale to propagate onto an incident straight edge.  The
-     * globally digested absmin is the caller's smallest requested mesh
-     * dimension.  A relative, edge-local floor also bounds subdivision when
-     * a pathological B-Rep bounding box makes that global scale unreliable. */
+     * useful length scale to propagate onto another edge.  The globally
+     * digested absmin is the caller's smallest requested mesh dimension.  An
+     * edge-local floor also bounds subdivision when a pathological B-Rep
+     * bounding box makes that global scale unreliable. */
     double floor = absmin;
     if (std::isfinite(local_min) && local_min > floor)
 	floor = local_min;
     if (!std::isfinite(*spacing) || *spacing < floor)
 	*spacing = floor;
     return true;
+}
+
+static bool
+shape_refinement_spacing(double *spacing, double absmin, double cp_len)
+{
+    const double local_min = std::isfinite(cp_len) && cp_len > 0.0 ?
+	cp_len / 256.0 : 0.0;
+    return edge_spacing_floor(spacing, absmin, local_min);
 }
 
 static bool
@@ -626,6 +595,29 @@ edge_split_midpoint(double start, double end, double *midpoint)
 	return false;
     *midpoint = candidate;
     return true;
+}
+
+static bool
+close_edge_split_worthwhile(const struct ON_Brep_CDT_State *s_cdt,
+	const bedge_seg_t *bseg)
+{
+    if (!s_cdt || !bseg || !bseg->nc || !bseg->e_start || !bseg->e_end ||
+	!std::isfinite(s_cdt->absmin) || s_cdt->absmin <= 0.0)
+	return true;
+
+    double midpoint = 0.0;
+    if (!edge_split_midpoint(bseg->edge_start, bseg->edge_end, &midpoint))
+	return false;
+
+    const ON_3dPoint mid = bseg->nc->PointAt(midpoint);
+    if (!mid.IsValid())
+	return true;
+    const double span = bseg->e_start->DistanceTo(mid) +
+	mid.DistanceTo(*bseg->e_end);
+    double min_span = 0.0;
+    if (!shape_refinement_spacing(&min_span, s_cdt->absmin, bseg->cp_len))
+	return true;
+    return !std::isfinite(span) || span > min_span;
 }
 
 /* Return 1 when a representable split exists, 0 when the unsplittable
@@ -656,27 +648,27 @@ cdt_test_linear_edge_spacing(void)
 {
     const double floor = 0.25;
     double spacing = 0.0;
-    if (!linear_edge_spacing(&spacing, floor, 0.0) ||
+    if (!edge_spacing_floor(&spacing, floor, 0.0) ||
 	    std::fabs(spacing - floor) > ON_ZERO_TOLERANCE)
 	return 1;
 
     spacing = -1.0;
-    if (!linear_edge_spacing(&spacing, floor, 0.0) ||
+    if (!edge_spacing_floor(&spacing, floor, 0.0) ||
 	    std::fabs(spacing - floor) > ON_ZERO_TOLERANCE)
 	return 2;
 
     spacing = std::numeric_limits<double>::quiet_NaN();
-    if (!linear_edge_spacing(&spacing, floor, 0.0) ||
+    if (!edge_spacing_floor(&spacing, floor, 0.0) ||
 	    std::fabs(spacing - floor) > ON_ZERO_TOLERANCE)
 	return 3;
 
     spacing = 0.5;
-    if (!linear_edge_spacing(&spacing, floor, 0.0) ||
+    if (!edge_spacing_floor(&spacing, floor, 0.0) ||
 	    std::fabs(spacing - 0.5) > ON_ZERO_TOLERANCE)
 	return 4;
 
     spacing = 0.5;
-    if (!linear_edge_spacing(&spacing, floor, 0.75) ||
+    if (!edge_spacing_floor(&spacing, floor, 0.75) ||
 	    std::fabs(spacing - 0.75) > ON_ZERO_TOLERANCE)
 	return 5;
 
@@ -697,7 +689,12 @@ cdt_test_linear_edge_spacing(void)
 	    &midpoint, &residual) != -1)
 	return 9;
 
-    return linear_edge_spacing(&spacing, -1.0, 0.0) ? 10 : 0;
+    spacing = 0.0;
+    if (!shape_refinement_spacing(&spacing, floor, 256.0) ||
+	std::fabs(spacing - 1.0) > ON_ZERO_TOLERANCE)
+	return 10;
+
+    return edge_spacing_floor(&spacing, -1.0, 0.0) ? 11 : 0;
 }
 
 static bool
@@ -746,7 +743,7 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
 	    }
 	    s_len = (len_1 > 0) ? len_1 : len_2;
 	    s_len = (len_2 > 0 && len_2 < s_len) ? len_2 : s_len;
-	    if (!linear_edge_spacing(&s_len, s_cdt->absmin, local_min))
+	    if (!edge_spacing_floor(&s_len, s_cdt->absmin, local_min))
 		return false;
 	    max_allowed = 5*s_len;
 	    min_allowed = 0.2*s_len;
@@ -769,7 +766,7 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
 	    }
 	    s_len = (len_1 > 0) ? len_1 : len_2;
 	    s_len = (len_2 > 0 && len_2 < s_len) ? len_2 : s_len;
-	    if (!linear_edge_spacing(&s_len, s_cdt->absmin, local_min))
+	    if (!edge_spacing_floor(&s_len, s_cdt->absmin, local_min))
 		return false;
 	    if (s_len > 0) {
 		max_allowed = 2*s_len;
@@ -938,8 +935,6 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
     if (update_rtrees) {
 	rtree_bbox_2d_remove(s_cdt, bseg->tseg1);
 	rtree_bbox_2d_remove(s_cdt, bseg->tseg2);
-	rtree_bbox_3d_remove(s_cdt, bseg->tseg1);
-	rtree_bbox_3d_remove(s_cdt, bseg->tseg2);
     }
 
     // Using the 2d mid points, update the polygons associated with tseg1 and tseg2.
@@ -1057,10 +1052,6 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
 	rtree_bbox_2d(s_cdt, bseg1->tseg2, 0);
 	rtree_bbox_2d(s_cdt, bseg2->tseg1, 0);
 	rtree_bbox_2d(s_cdt, bseg2->tseg2, 0);
-	rtree_bbox_3d(s_cdt, bseg1->tseg1);
-	rtree_bbox_3d(s_cdt, bseg1->tseg2);
-	rtree_bbox_3d(s_cdt, bseg2->tseg1);
-	rtree_bbox_3d(s_cdt, bseg2->tseg2);
 #if 0
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	int face_index = s_cdt->brep->m_T[bseg1->tseg1->trim_ind].Face()->m_face_index;
@@ -1509,7 +1500,6 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt)
 			eseg->tseg1 = ne;
 		    }
 
-		    rtree_bbox_3d(s_cdt, ne);
 		} else {
 		    // A null eseg will indicate a singularity and a need for special case
 		    // splitting of the 2D edge only
@@ -1690,6 +1680,16 @@ curved_edges_refine(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepEdge& edge = brep->m_E[r_it->first];
 	double split_tol = r_it->second;
 	std::set<bedge_seg_t *> &epsegs = s_cdt->e2polysegs[r_it->first];
+	/* This vertex-neighborhood pass improves element sizing after the
+	 * geometric curve and chord tolerances have already been satisfied.  A
+	 * tiny incident edge must not impose its scale uniformly across an
+	 * unrelated long curve.  Bound the inherited spacing by both the global
+	 * minimum mesh dimension and a per-source-edge subdivision limit. */
+	if (epsegs.empty())
+	    continue;
+	if (!shape_refinement_spacing(&split_tol, s_cdt->absmin,
+		(*epsegs.begin())->cp_len))
+	    continue;
 	std::set<bedge_seg_t *>::iterator e_it;
 	std::set<bedge_seg_t *> new_segs;
 	std::set<bedge_seg_t *> ws1, ws2;
@@ -1962,6 +1962,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	int split_cnt = 0;
 	while (ws.size() && split_cnt < 10) {
 	    std::vector<cpolyedge_t *> current_trims;
+	    std::set<int> dirty_rtrees;
 
 	    bool split_check = false;
 
@@ -2025,7 +2026,23 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 		    ws_s.erase(b->tseg1);
 		    ws_s.erase(b->tseg2);
 		    if (pe->split_status == 2) {
-			std::set<bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1, NULL, 1);
+			/* This proximity pass improves triangle shape; it does not
+			 * define the requested geometric accuracy.  Do not force a
+			 * shared edge below the globally digested minimum mesh
+			 * dimension, or use this heuristic alone to create more than
+			 * approximately 256 spans along one source edge.  The later
+			 * curve and chord passes still enforce the actual
+			 * tessellation tolerances. */
+			if (!close_edge_split_worthwhile(s_cdt, b)) {
+			    pe->split_status = 0;
+			    continue;
+			}
+			dirty_rtrees.insert(s_cdt->brep->m_T[
+			    b->tseg1->trim_ind].Face()->m_face_index);
+			dirty_rtrees.insert(s_cdt->brep->m_T[
+			    b->tseg2->trim_ind].Face()->m_face_index);
+			std::set<bedge_seg_t *> esegs_split = split_edge_seg(
+			    s_cdt, b, 1, NULL, 0);
 			if (esegs_split.size()) {
 			    split_check = true;
 			    // Pick up the new trim segments from the edges for the next iteration.  Only
@@ -2053,7 +2070,10 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 			continue;
 		    }
 		    if (pe->split_status == 2) {
-			std::set<cpolyedge_t *> ntrims = split_singular_seg(s_cdt, pe, 1);
+			dirty_rtrees.insert(s_cdt->brep->m_T[
+			    pe->trim_ind].Face()->m_face_index);
+			std::set<cpolyedge_t *> ntrims = split_singular_seg(
+			    s_cdt, pe, 0);
 			if (ntrims.size()) {
 			    std::copy(ntrims.begin(), ntrims.end(), std::back_inserter(current_trims));
 			    split_check = true;
@@ -2073,6 +2093,13 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	    split_cnt++;
 
 	    if (split_check) {
+		for (int dirty_face : dirty_rtrees) {
+		    if (!rebuild_face_rtree_2d(s_cdt, dirty_face, 0)) {
+			bu_log("Unable to rebuild face %d close-edge RTree\n",
+			    dirty_face);
+			return;
+		    }
+		}
 		ws = current_trims;
 		for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
 		    // We don't want to zero this status information if this is
@@ -2094,39 +2121,9 @@ finalize_rtrees(struct ON_Brep_CDT_State *s_cdt)
 {
     ON_Brep* brep = s_cdt->brep;
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
-	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
-	s_cdt->face_rtrees_2d[face.m_face_index].RemoveAll();
-	cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
-
-	std::vector<cpolyedge_t *> ws;
-
-	int loop_cnt = face.LoopCount();
-	for (int li = 0; li < loop_cnt; li++) {
-	    const ON_BrepLoop *loop = face.Loop(li);
-	    bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
-	    cpolygon_t *cpoly = NULL;
-	    if (is_outer) {
-		cpoly = &fmesh->outer_loop;
-	    } else {
-		cpoly = fmesh->inner_loops[li];
-	    }
-
-	    size_t ecnt = 1;
-	    cpolyedge_t *pe = (*cpoly->poly.begin());
-	    cpolyedge_t *first = pe;
-	    cpolyedge_t *next = pe->next;
-	    rtree_bbox_2d(s_cdt, first, 1);
-	    // Walk the loop
-	    while (first != next) {
-		ecnt++;
-		if (!next) break;
-		rtree_bbox_2d(s_cdt, next, 1);
-		next = next->next;
-		if (ecnt > cpoly->poly.size()) {
-		    std::cerr << "\nfinalize_2d_rtrees: ERROR! encountered infinite loop\n";
-		    return;
-		}
-	    }
+	if (!rebuild_face_rtree_2d(s_cdt, face_index, 1)) {
+	    bu_log("Unable to finalize face %d 2D RTree\n", face_index);
+	    return;
 	}
     }
 
