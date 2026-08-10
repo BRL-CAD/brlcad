@@ -8037,6 +8037,138 @@ Complete-axis exact restriction elision (Finding 94):
   the dominant cost.
 
 
+Deferred exact fold-strip construction (Finding 95):
+
+  `brep_trace_fold_certificates` formerly restricted and transformed both the
+  candidate corridor and its complementary strip before testing corridor
+  uniqueness or root existence.  A strip exclusion can authorize publication
+  only after those two prerequisites, so the eager strip net was dead work on
+  every candidate that failed either one.
+
+  The proof now constructs only the exact corridor source and transformed net
+  initially.  It runs the unchanged corridor and graph tests, followed by the
+  unchanged boundary-existence test for a unique corridor.  Only when the
+  corridor is unique and either expansion Krawczyk or boundary existence has
+  proved a root does it construct and transform the exact strip net.  The
+  final publication rule still requires that same root proof, corridor
+  uniqueness, and a successful strip exclusion.  A required but unavailable
+  strip remains an inconclusive whole-ray fallback.  This is proof scheduling,
+  not new authority or a work cap.
+
+  Trace telemetry now records strip-build attempts, successful availability,
+  and builds avoided after a corridor decision.  The synthetic affine-fold
+  ratchet requires two builds, two available nets, and zero avoidance when its
+  two fold roots complete.  The prepared-once throughput fixture requires the
+  exact-contact family to avoid at least one build and checks build accounting.
+  Its contact trace records corridor `1/0/0`, graph `1/0/1`, boundary
+  `0/0/0`, strip-build `0/0/1`, strip `0/0/0`, and localization `0/0/0`.
+  It retains two candidate spans of six, 62 subdivision boxes, four isolated
+  boxes, fold contraction `36/29/0/7`, graph interval `12/3/0/9/9`,
+  uncertified fallback reason 6, and the correct one-segment legacy result in
+  both directions.
+
+  Five interleaved hardware-counter comparisons against a preserved eager-
+  strip binary average 6.252 billion versus 6.906 billion cycles for the
+  complete fixed 32-shot process, about 9.5 percent fewer.  Instructions fall
+  from about 7.244 to 6.829 billion, or 5.7 percent.  Uncontended current
+  samples are about 35--36 process milliseconds per contact ray rather than
+  roughly 39--40 ms for the eager binary.  This is still not production-ready;
+  the graph and corridor paths continue to recompute noncomplete exact
+  restrictions from their full source nets.
+
+  The warnings-as-errors build succeeds.  Eleven focused release gates pass
+  11/11 in 14.93 seconds: directed, pole, throughput, local root, cleanup,
+  grazing root, trim interval/classifier, source union, fold, and contact trim.
+  The exhaustive interval enclosure matrix passes with all 1,020 complete-axis
+  identity checks.  Rebuilt ASan/UBSan with leak scanning disabled passes
+  directed, pole, throughput, fold, and contact trim 5/5 in 91.93 seconds with
+  no diagnostic.
+
+  At this checkpoint the full seam shard reproduced the 52 prepared
+  contact/oblique authority failures recorded at Finding 90, while all
+  affected production shots returned their correct one-segment answer through
+  conservative legacy fallback.  A complete run of the preserved eager-strip
+  binary reproduced the same 52 failures and exactly the same 274/142
+  selected/uncertified population, 18 certified seam pairs, 16 repairs,
+  event-ledger counts, isolation maxima, and defect-corpus results.  That A/B
+  result established that deferred strip construction did not cause the
+  failures.  Finding 96 repairs their independent continuation-ownership cause
+  without changing the strip proof or weakening fallback.
+
+
+Candidate-specific seam population screening (Finding 96):
+
+  The 52 remaining prepared failures were not missing surface roots or failed
+  continuation solves.  In the affected oblique contact cases, two different
+  source roots each produced a locally valid closure/continuation candidate.
+  The physical-event resolver counted both before asking whether the other
+  retained roots could form the complete physical population for that
+  particular outer source/continuation interval.  The later uniqueness check
+  therefore rejected the whole ray even though only one candidate could own
+  the inner contact lobe.  Successful cases already had one candidate.
+
+  A candidate-specific necessary-condition screen now runs after each bounded
+  continuation solve but before it contributes to the authoritative candidate
+  count.  It accepts only the two root-population forms already consumed by
+  the unchanged final theorem:
+
+    * every other retained root is a finite incident grazing witness at the
+      same edge event, using the final theorem's model-tolerance/ray-length and
+      coordinate-roundoff bound; or
+    * exactly two other roots are transverse mathematical trim hits/misses on
+      the other incident face and one prepared span, form an ordered
+      ENTER/LEAVE pair, and lie strictly inside this candidate's outer
+      source/continuation interval with the final theorem's t roundoff.  At
+      most one trim miss is allowed; an explicitly declared contact closure
+      requires exactly one hit and one miss.
+
+  This screen grants no ray-intersection authority.  It can only discard an
+  impossible candidate and thereby force fallback if no unique candidate
+  remains.  The survivor still executes the existing local-root/tube proof,
+  complete terminal-box and root ownership, connected source union, edge-gap
+  and correspondence proof, material-sector test, ordering, minimum-segment
+  check, and atomic physical-event publication.  No angle, crack, model, or
+  numerical tolerance was increased.  Trace telemetry records population
+  screens and rejections independently from accepted continuation candidates.
+
+  The focused oblique trend now certifies 16 supported rays and leaves all six
+  deliberately unsupported controls fail-closed.  Components 0.0001 through
+  0.25 in both directions permanently require two screened candidates and one
+  structural rejection; the component-0.5 forward case has the same observed
+  disambiguation, while its reverse and both component-1 rays remain naturally
+  unique.  The non-isoparametric opposite-face gate certifies all 16 cases.
+  A new `--seam-authority-only`/`rt_brep_ray_seam_authority` shard combines the
+  transformed classifier-invariance and oblique trend gates so this authority
+  can be diagnosed without running the complete 416-position bowed matrix.
+
+  The complete optimized release matrix on the final source passes 21/21 in
+  174.22 seconds.  The full seam shard passes in 150.23 seconds and restores
+  the prepared-production ratchet: 280 selected, 136 conservative uncertified
+  fallbacks, and 24 certified seam transactions.  The bowed matrix retains all
+  16 below-envelope repairs, zero below-envelope leaks, zero reversal
+  inconsistencies, and the analytic material partitions.  Thus all 52 prior
+  prepared contact/oblique failures are eliminated without converting an
+  unsupported case into authority.
+
+  Rebuilt ASan/UBSan initially terminated every process in LeakSanitizer with
+  the host-runtime diagnostic that leak scanning does not work under ptrace;
+  even the independent one-second fold arithmetic test showed it.  With leak
+  scanning disabled for that established environment limitation, seam
+  authority, non-isoparametric contact, contact-trim, and fold pass 4/4 in
+  204.55 seconds with no ASan or UBSan diagnostic.  The full release run and
+  focused uncontended authority run remain the performance references; the
+  sanitizer timings include four-way instrumentation contention.  After the
+  final finite-distance fail-closed guards, a rebuilt sanitizer authority run
+  also passes 1/1 in 193.32 seconds without a diagnostic.
+
+  Correctness is now green, but exact-contact latency remains a production
+  defect.  The six-span Cobb tree contributes less than one percent of its
+  profile; exact expansion add/scale and repeated noncomplete Bernstein
+  restrictions dominate.  Continue with already-restricted net reuse and
+  stronger inexpensive certified exits.  Keep that local arithmetic work
+  separate from the large-STEP missing object/face/span BVH problem.
+
+
 NEXT ACTIONS
 ------------
 
@@ -8061,7 +8193,7 @@ A. Keep the production adaptive depth at eight.  The first reproducible
 B. Preserve adaptive depth three as the present conservative experimental
    plateau.  Do not spend correctness effort forcing special fixtures to
    depth zero.  Any candidate production reduction must retain the complete
-   19-shard optimized ray gate, the seven rebuilt-cache cases, sanitizer
+   21-shard optimized ray gate, the seven rebuilt-cache cases, sanitizer
    qualification, and exact identical-line partition results.
 C. Use the deterministic hard replay as the seed of the difficult-solver C/C++
    corpus.  The status-2 analytic-revolution sphere pole is ratcheted under
@@ -8110,9 +8242,13 @@ F. Once the memory representation and density/default decision are qualified,
    correctness/memory checkpoints.  Separately, the six-span Cobb seam profile
    spends about 70 percent in exact expansion add/scale, not in BVH traversal.
    The registered prepared-once Cobb fixture now stages ordinary fold-graph
-   contraction ahead of exact work and constructs exact ray-plane
-   coefficients lazily.  Continue that staging through fold corridor/strip
-   restriction without weakening ambiguous contact authority.  Address
+   contraction ahead of exact work, constructs exact ray-plane coefficients
+   lazily, and defers the complementary exact fold strip until corridor
+   uniqueness and root existence make its exclusion relevant.  The seam
+   authority shard now ratchets candidate-specific population disambiguation.
+   Continue by reusing already restricted corridor/graph nets and staging
+   cheaper certified exits without weakening ambiguous contact authority.
+   Address
    compact immutable span/trim arrays,
    conservative SIMD coefficient work, and a real batched vshot after those
    two distinct bottlenecks are measurable.  Optimize Newton/OpenNURBS

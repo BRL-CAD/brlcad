@@ -10258,7 +10258,6 @@ brep_trace_fold_certificates(struct rt_brep_shot_trace *trace,
 		strip_minimum[weak_direction] = split;
 	    }
 	    brep_interval corridor_source[2][BREP_DIRECT_BEZIER_MAX_CVS];
-	    brep_interval strip_source[2][BREP_DIRECT_BEZIER_MAX_CVS];
 	    const double corridor_parameter_scale[2] = {
 		(corridor_maximum[0] - corridor_minimum[0]) / box_width[0],
 		(corridor_maximum[1] - corridor_minimum[1]) / box_width[1]
@@ -10270,13 +10269,7 @@ brep_trace_fold_certificates(struct rt_brep_shot_trace *trace,
 			    coefficients.order[0], coefficients.order[1],
 			    corridor_minimum[0], corridor_maximum[0],
 			    corridor_minimum[1], corridor_maximum[1], false,
-			    corridor_source[equation], corridor_high_water) ||
-			!brep_expansion_surface_restrict(
-			    coefficients.value_expansion_interval[equation],
-			    coefficients.order[0], coefficients.order[1],
-			    strip_minimum[0], strip_maximum[0],
-			    strip_minimum[1], strip_maximum[1], false,
-			    strip_source[equation], corridor_high_water)) {
+			    corridor_source[equation], corridor_high_water)) {
 		    restriction_available = false;
 		    break;
 		}
@@ -10290,16 +10283,12 @@ brep_trace_fold_certificates(struct rt_brep_shot_trace *trace,
 	    trace->surface_fold_corridor_attempts++;
 	    brep_conditioned_surface_frame local_candidate_frame;
 	    brep_interval corridor_values[2][BREP_DIRECT_BEZIER_MAX_CVS];
-	    brep_interval strip_values[2][BREP_DIRECT_BEZIER_MAX_CVS];
 	    if (!brep_conditioned_surface_frame_point_init(restricted,
 		    coefficients.order, refined_root, corridor_parameter_scale,
 		    candidate_frame.regular_direction, local_candidate_frame) ||
 		    !brep_expansion_linear_coefficients(corridor_source,
 			coefficient_count, local_candidate_frame.transform,
-			corridor_values, corridor_high_water) ||
-		    !brep_expansion_linear_coefficients(strip_source,
-			coefficient_count, local_candidate_frame.transform,
-			strip_values, corridor_high_water)) {
+			corridor_values, corridor_high_water)) {
 		trace->surface_fold_corridor_failures++;
 		continue;
 	    }
@@ -10358,7 +10347,43 @@ brep_trace_fold_certificates(struct rt_brep_shot_trace *trace,
 		    trace->surface_fold_boundary_existence_failures++;
 	    }
 	    bool strip_excluded = false;
-	    if (corridor.unique) {
+	    const bool strip_needed =
+		(expansion_candidate_certified || boundary_existence) &&
+		corridor.unique;
+	    trace->surface_fold_strip_build_avoided += strip_needed ? 0 : 1;
+	    if (strip_needed) {
+		/* The strip is only an exclusion obligation for an otherwise
+		 * complete root proof.  Constructing its exact restricted net
+		 * before corridor uniqueness or existence is known cannot affect
+		 * publication and is especially costly at tangent contact. */
+		trace->surface_fold_strip_build_attempts++;
+		brep_interval strip_source[2][BREP_DIRECT_BEZIER_MAX_CVS];
+		brep_interval strip_values[2][BREP_DIRECT_BEZIER_MAX_CVS];
+		bool strip_available = true;
+		for (int equation = 0; equation < 2; ++equation) {
+		    if (!brep_expansion_surface_restrict(
+			    coefficients.value_expansion_interval[equation],
+			    coefficients.order[0], coefficients.order[1],
+			    strip_minimum[0], strip_maximum[0],
+			    strip_minimum[1], strip_maximum[1], false,
+			    strip_source[equation], corridor_high_water)) {
+			strip_available = false;
+			break;
+		    }
+		}
+		if (strip_available)
+		    strip_available = brep_expansion_linear_coefficients(
+			strip_source, coefficient_count,
+			local_candidate_frame.transform, strip_values,
+			corridor_high_water);
+		trace->surface_fold_corridor_high_water = std::max(
+		    trace->surface_fold_corridor_high_water,
+		    corridor_high_water);
+		if (!strip_available) {
+		    trace->surface_fold_corridor_failures++;
+		    continue;
+		}
+		trace->surface_fold_strip_build_available++;
 		strip_excluded = brep_fold_strip_excluded(strip_values,
 		    coefficients.order, local_candidate_frame.regular_direction,
 		    trace, corridor_high_water);
@@ -10367,9 +10392,7 @@ brep_trace_fold_certificates(struct rt_brep_shot_trace *trace,
 		    corridor_high_water);
 		trace->surface_fold_strip_excluded += strip_excluded ? 1 : 0;
 	    }
-	    if ((expansion_candidate_certified || boundary_existence) &&
-		    corridor.unique &&
-		    strip_excluded) {
+	    if (strip_needed && strip_excluded) {
 		trace->surface_fold_complete++;
 		double candidate_parameter[2];
 		for (int direction = 0; direction < 2; ++direction) {
@@ -18706,6 +18729,8 @@ brep_trace_seam_contact_miss_screen(
 	return false;
     const struct rt_brep_trace_local_root &existing =
 	trace->local_roots[selected_root];
+    if (!std::isfinite(existing.dist))
+	return false;
     if (existing.face_index != edge_observation.face_index[0] &&
 	    existing.face_index != edge_observation.face_index[1])
 	return false;
@@ -19406,6 +19431,111 @@ brep_trace_seam_source_union(
 }
 
 
+/* A continuation candidate cannot become a complete seam transaction unless
+ * every other retained root has one of the two population forms consumed by
+ * the final theorem: grazing witnesses at the same edge event, or an ordered
+ * two-root contact lobe on the other incident face.  This is only a necessary
+ * condition used to discard an impossible continuation when several local
+ * continuations exist.  The surviving candidate still has to prove the full
+ * local-root tube, box ownership, material sector, and event partition below. */
+static bool
+brep_trace_seam_candidate_population_possible(
+    const struct rt_brep_shot_trace *trace, const ON_Ray &ray,
+    size_t selected_root, const struct rt_brep_trace_edge &edge,
+    double continuation_dist, bool declared_contact_closure)
+{
+    if (!trace || selected_root >= trace->stored_local_roots ||
+	!std::isfinite(continuation_dist))
+	return false;
+    const struct rt_brep_trace_local_root &existing =
+	trace->local_roots[selected_root];
+    if (!std::isfinite(existing.dist))
+	return false;
+    const double ray_length = ray.m_dir.Length();
+    if (!(ray_length > DBL_MIN) || !std::isfinite(ray_length) ||
+	!std::isfinite(edge.ray_dist) ||
+	!std::isfinite(edge.model_tolerance) || edge.model_tolerance < 0.0)
+	return false;
+    const double t_scale = std::max(1.0,
+	std::max(fabs(edge.ray_dist), fabs(continuation_dist)));
+    const double witness_tolerance = std::max(
+	(double)edge.model_tolerance / ray_length,
+	128.0 * DBL_EPSILON * t_scale);
+
+    bool narrow_witness = true;
+    for (size_t root_index = 0;
+	    root_index < trace->stored_local_roots; ++root_index) {
+	if (root_index == selected_root)
+	    continue;
+	const struct rt_brep_trace_local_root &root =
+	    trace->local_roots[root_index];
+	const bool incident = root.face_index == edge.face_index[0] ||
+	    root.face_index == edge.face_index[1];
+	if (!incident || !std::isfinite(root.dist) ||
+		!std::isfinite(root.normal_dot) ||
+		fabs(root.normal_dot) > BREP_GRAZING_DOT_TOL ||
+		fabs(root.dist - edge.ray_dist) > witness_tolerance) {
+	    narrow_witness = false;
+	    break;
+	}
+    }
+    if (narrow_witness)
+	return !declared_contact_closure;
+
+    size_t roots[2] = {(size_t)-1, (size_t)-1};
+    size_t root_count = 0;
+    size_t trim_hits = 0;
+    size_t trim_misses = 0;
+    for (size_t root_index = 0;
+	    root_index < trace->stored_local_roots; ++root_index) {
+	if (root_index == selected_root)
+	    continue;
+	if (root_count >= 2)
+	    return false;
+	const struct rt_brep_trace_local_root &root =
+	    trace->local_roots[root_index];
+	const bool incident = root.face_index == edge.face_index[0] ||
+	    root.face_index == edge.face_index[1];
+	const bool trim_hit = root.trim_status != 1 &&
+	    (root.hit_class == brep_hit::CLEAN_HIT ||
+	     root.hit_class == brep_hit::NEAR_HIT);
+	const bool trim_miss = root.trim_status == 1 &&
+	    (root.hit_class == brep_hit::CLEAN_MISS ||
+	     root.hit_class == brep_hit::NEAR_MISS);
+	if (!incident || root.face_index == existing.face_index ||
+		(!trim_hit && !trim_miss) || !std::isfinite(root.dist) ||
+		!std::isfinite(root.normal_dot) ||
+		fabs(root.normal_dot) <= BREP_GRAZING_DOT_TOL)
+	    return false;
+	roots[root_count++] = root_index;
+	trim_hits += trim_hit ? 1 : 0;
+	trim_misses += trim_miss ? 1 : 0;
+    }
+    if (root_count != 2 || trim_misses > 1 ||
+	(declared_contact_closure && (trim_hits != 1 || trim_misses != 1)))
+	return false;
+    if (trace->local_roots[roots[1]].dist <
+	    trace->local_roots[roots[0]].dist)
+	std::swap(roots[0], roots[1]);
+    const struct rt_brep_trace_local_root &lower =
+	trace->local_roots[roots[0]];
+    const struct rt_brep_trace_local_root &upper =
+	trace->local_roots[roots[1]];
+    const double root_t_scale = std::max(1.0,
+	std::max(fabs(existing.dist), std::max(fabs(continuation_dist),
+	    std::max(fabs(lower.dist), fabs(upper.dist)))));
+    const double t_roundoff = 4096.0 * DBL_EPSILON * root_t_scale;
+    const double outer_minimum = std::min(existing.dist, continuation_dist);
+    const double outer_maximum = std::max(existing.dist, continuation_dist);
+    return lower.face_index == upper.face_index &&
+	lower.span_index == upper.span_index &&
+	lower.direction == brep_hit::ENTERING &&
+	upper.direction == brep_hit::LEAVING && lower.dist < upper.dist &&
+	lower.dist > outer_minimum + t_roundoff &&
+	upper.dist < outer_maximum - t_roundoff;
+}
+
+
 /* A crack continuation is a separate boundary theorem, not a weakened
  * regular-root certificate.  The accepted case has one non-tangent root, one
  * authorized manifold-edge witness, and one independently isolated
@@ -19557,6 +19687,13 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 		RT_BREP_SEAM_GAP_INSIDE ||
 		!observation->discrepancy_authorized)
 	    continue;
+	trace->physical_event_seam_population_screens++;
+	if (!brep_trace_seam_candidate_population_possible(trace, ray,
+		root_index, *observation, candidate.continuation_dist,
+		declared_contact_closure)) {
+	    trace->physical_event_seam_population_rejected++;
+	    continue;
+	}
 	if (!declared_contact_closure)
 	    trace->physical_event_seam_continuation_candidates++;
 	certified_candidates++;
@@ -19602,7 +19739,8 @@ brep_trace_seam_physical_events(struct rt_brep_shot_trace *trace,
 	    trace->local_roots[root_index];
 	const bool incident = root.face_index == selected_edge.face_index[0] ||
 	    root.face_index == selected_edge.face_index[1];
-	if (!incident || !std::isfinite(root.normal_dot) ||
+	if (!incident || !std::isfinite(root.dist) ||
+		!std::isfinite(root.normal_dot) ||
 		fabs(root.normal_dot) > BREP_GRAZING_DOT_TOL ||
 		fabs(root.dist - selected_edge.ray_dist) > witness_tolerance) {
 	    narrow_witness = false;
