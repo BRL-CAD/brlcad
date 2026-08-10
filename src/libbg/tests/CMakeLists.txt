@@ -315,6 +315,11 @@ brlcad_add_test(NAME bg_polygon_triangulate	    COMMAND bg_polygon_triangulate)
 brlcad_add_test(NAME bg_polygon_triangulate_clean COMMAND bg_polygon_triangulate_clean)
 brlcad_add_test(NAME bg_polygon_triangulate_strict COMMAND bg_polygon_triangulate_strict)
 
+#  ************ RTree tests *************
+brlcad_addexec(bg_rtree rtree.cpp "${BG_TEST_LIBS}" TEST)
+
+brlcad_add_test(NAME bg_rtree_large_identical_rects COMMAND bg_rtree)
+
 #  ************ chull.c tests ***********
 # 2D Convex Hull tests
 brlcad_addexec(bg_chull chull.c "${BG_TEST_LIBS}" TEST)
@@ -490,6 +495,7 @@ cmakefiles(
   plane_isect.c
   plane_pt.c
   polygon_triangulate_strict.c
+  rtree.cpp
   CMakeLists.txt
 )
 
