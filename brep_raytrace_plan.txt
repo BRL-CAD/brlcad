@@ -5633,6 +5633,16 @@ event solver rather than recreating the 2006 implementation literally.
     faster corpus run cannot conceal a shift from certification to legacy
     fallback.
 
+    Implementation checkpoint: regular-graph interval-Newton contraction now
+    precedes expansion restriction, and the main span scan defers exact
+    ray-plane coefficients until singular, terminal-refinement, or fold proof
+    consumption.  Hull-excluded and ordinary-resolved spans avoid exact
+    construction; continuation and physical-event paths no longer build exact
+    arrays they never read.  The next increment must stage ordinary corridor
+    and strip restriction/linear transformation before the still-eager exact
+    fold-corridor path.  Preserve the existing exact replay as authority for
+    every inconclusive contact.
+
   * Profile trimming independently.  Evaluate a compact two-dimensional
     trim kd-tree or comparable indexed broad phase, as demonstrated by Sloup
     and Havran, while retaining BRL-CAD edge identity, adjacency, declared
