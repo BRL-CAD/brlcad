@@ -364,6 +364,87 @@ gates pass 4/4.  The broader seam shard still contains unfinished prepared
 contact/oblique selection failures and remains a separate active gate.
 
 
+IMPLEMENTATION CHECKPOINT: TIERED EXACT SEAM ARITHMETIC (2026-08-10)
+-------------------------------------------------------------------
+
+Profiling the prepared-once Cobb fixture separates proof arithmetic from both
+SurfaceTree density and the missing large-object span index.  The Cobb BREP
+has six algebraic spans and only two ray candidates.  A tolerance-contact ray
+visits 62 subdivision boxes, but its repeated exact Bernstein restrictions,
+fold determinant construction, and regular-graph contractions cost roughly
+50 ms per prepared production shot.  Exact expansion addition and scaling,
+not BVH traversal or allocation, dominate this path.  It is a real production
+defect even though the 416-position seam proof matrix amplifies it with 1,248
+BREP calls, 416 implicit calls, 32 preps, dual prepared/legacy trace work, and
+thirteen auxiliary corpora.
+
+The first scheduling tier applies outward interval-Newton contraction before
+expansion-valued contraction on a regular fold graph.  Strict ordinary
+exclusion is sound because the input coefficients and every derivative,
+de Casteljau restriction, quotient, and range operation enclose the exact
+values.  A successful ordinary contraction carries a sound smaller enclosure
+forward.  Inconclusive or nonfinite arithmetic executes the former exact path
+unchanged.  The tolerance-contact trace performs 36 ordinary attempts, accepts
+29 contractions, and needs exact fallback for seven; it preserves the same
+material segment and fixed-work/no-malloc contract.
+
+The second tier makes exact ray-plane coefficient construction lazy.  Every
+candidate still receives scalar coefficients, outward coefficient intervals,
+weights, and ray-parameter bounds.  Expansion arrays are initialized only if
+a singular-boundary proof, terminal exact refinement, or fold proof actually
+consumes them.  Exact consumers recompute the same error-free expansions and
+failure remains whole-ray fallback.  A regular diameter avoids all six exact
+builds; ordinary grazing and tangent cases request one and avoid five; exact
+seam contact requests two and avoids four.  This reduced representative
+regular-ray latency from about 1.47 to 0.62 ms and contact latency from about
+51.57 to 48.67 ms without changing a proof theorem.
+
+The third tier screens each weak-coordinate fold-graph slab before exact
+surface restriction.  It ordinarily restricts the two ray-plane Bernstein
+nets, forms their outward determinant, and accepts only a strict sign.  If
+needed, one ordinary graph contraction restricts that original determinant to
+the graph enclosure and tests again.  A strict graph exclusion or sign is
+authoritative.  Every ambiguous result rebuilds from the unchanged slab input
+and follows the exact implementation.  One step is a deliberate bound: exact
+fallback does not reuse the ordinary contracted net, so additional speculative
+steps penalize all unresolved slabs.
+
+The exact-contact trace screens 12 graph slabs, signs three after nine total
+ordinary contractions, and falls back exactly on the other nine.  A fixed
+32-shot `--throughput-contact-only` diagnostic reports wall and process CPU
+time without turning host-dependent time into a pass threshold.  Interleaved
+hardware-counter A/B measurements average 8.226 billion complete-process
+cycles with the screen versus 8.778 billion for exact-only, about 6.3 percent
+fewer cycles.  The result is incremental; the remaining contact path is still
+far from the intended production rate.
+
+Telemetry for all three tiers is part of correctness, not just profiling.
+The throughput fixture checks coefficient-request accounting, ordinary fold
+contraction accounting, graph attempts/signs/exclusions/fallbacks, exact
+contact execution, reversal, segment count, and proof provenance.  The
+synthetic fold bridge requires the graph screen across dyadic epsilon, equation
+scale, parameter orientation, and determinant-sign variants.  Eleven focused
+release gates and the 149.64-second exhaustive interval matrix pass at this
+checkpoint.  Rebuilt ASan/UBSan passes directed, pole, prepared throughput,
+fold, and contact trim 5/5 with leak scanning disabled for the established
+host-runtime limitation and no diagnostic.  Exact ambiguity remains fallback
+authority; a time/depth cap may not be substituted for a proof because doing
+so would reopen tolerance-scale seam cracks.
+
+Do not replace the fixed expansion primitive solely because a general robust
+predicate algorithm is newer.  An experiment based on Shewchuk's fast
+expansion sum and compression, using
+`https://people.eecs.berkeley.edu/~jrs/papers/robustr.pdf` and
+`https://www.cs.cmu.edu/~quake/robust.html`, raised this small,
+cancellation-heavy contact workload from roughly 49 ms to 94 ms without
+compression and 66 ms with compression.  It was reverted.  The higher-value
+next design is to avoid recomputing exact slab restrictions from the complete
+source: retain or split immutable exact Bernstein nets through graph
+subdivision, and stage the complete ordinary corridor/boundary/strip proofs
+before exact transformed nets.  Any cache must be per-shot or immutable
+prepared data with explicit lifetime, bounded storage, and no ray-time malloc.
+
+
 IMPLEMENTATION CHECKPOINT: COPLANAR EVENT AUTHORITY (2026-08-09)
 ----------------------------------------------------------------
 
