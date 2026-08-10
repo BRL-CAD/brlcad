@@ -1076,6 +1076,47 @@ check_brep_direction_cleanup()
 	return 1;
     }
 
+    /* Reduced Recurta 10057 pair 3: each real transverse boundary is
+     * accompanied by roots from faces containing the ray.  A zero-normal
+     * observation's direction bit is arbitrary and must not erase the
+     * transverse near-trim witness.  Ray reversal must retain the same
+     * interval. */
+    const fastf_t shadow_forward_distances[] =
+	{1.0, 1.0, 1.0, 2.0, 2.0};
+    const int shadow_forward_signs[] = {-1, 0, 0, 1, 0};
+    const int shadow_forward_classes[] = {cleanup_near_miss,
+	cleanup_near_miss, cleanup_near_miss, cleanup_near_miss,
+	cleanup_near_hit};
+    fastf_t shadow_forward_retained[5] = {};
+    const size_t shadow_forward_count = _rt_brep_cleanup_stream_test(
+	shadow_forward_distances, shadow_forward_signs,
+	shadow_forward_classes, 5, 0.001, shadow_forward_retained, 5);
+    const fastf_t shadow_reverse_distances[] =
+	{3.0, 3.0, 4.0, 4.0, 4.0};
+    const int shadow_reverse_signs[] = {-1, 0, 1, 0, 0};
+    const int shadow_reverse_classes[] = {cleanup_near_miss,
+	cleanup_near_hit, cleanup_near_miss, cleanup_near_miss,
+	cleanup_near_miss};
+    fastf_t shadow_reverse_retained[5] = {};
+    const size_t shadow_reverse_count = _rt_brep_cleanup_stream_test(
+	shadow_reverse_distances, shadow_reverse_signs,
+	shadow_reverse_classes, 5, 0.001, shadow_reverse_retained, 5);
+    const double shadow_chord = 5.0;
+    if (shadow_forward_count != 2 || shadow_reverse_count != 2 ||
+	    !NEAR_EQUAL(shadow_forward_retained[0], 1.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(shadow_forward_retained[1], 2.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(shadow_reverse_retained[0],
+		shadow_chord - shadow_forward_retained[1], SMALL_FASTF) ||
+	    !NEAR_EQUAL(shadow_reverse_retained[1],
+		shadow_chord - shadow_forward_retained[0], SMALL_FASTF)) {
+	std::printf("FAIL: BREP coplanar shadow cleanup forward=%zu "
+	    "[%.17g %.17g] reverse=%zu [%.17g %.17g]\n",
+	    shadow_forward_count, shadow_forward_retained[0],
+	    shadow_forward_retained[1], shadow_reverse_count,
+	    shadow_reverse_retained[0], shadow_reverse_retained[1]);
+	return 1;
+    }
+
     const fastf_t clustered_forward_distances[] =
 	{1.0, 2.0, 2.0002, 4.0};
     const int clustered_forward_signs[] = {-1, 1, 1, -1};
