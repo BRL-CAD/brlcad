@@ -473,17 +473,22 @@ CurveTree::isTrimmed(const ON_2dPoint &uv, const BRNode **closest,
 	*candidate_count = 0;
 
     const ON_Surface *surface = m_face ? m_face->SurfaceOf() : NULL;
+    const double period[2] = {
+	surface ? surface->Domain(0).Length() : 0.0,
+	surface ? surface->Domain(1).Length() : 0.0
+    };
     ON_2dPoint query(uv);
     if (surface) {
 	for (int direction = 0; direction < 2; ++direction) {
 	    if (!surface->IsClosed(direction))
 		continue;
 	    const ON_Interval domain = surface->Domain(direction);
-	    const double period = domain.Length();
-	    if (!(period > 0.0))
+	    const double direction_period = domain.Length();
+	    if (!(direction_period > 0.0))
 		continue;
 	    query[direction] -= floor(
-		(query[direction] - domain.Min()) / period) * period;
+		(query[direction] - domain.Min()) / direction_period) *
+		direction_period;
 	    if (query[direction] >= domain.Max())
 		query[direction] = domain.Min();
 	}
@@ -501,31 +506,32 @@ CurveTree::isTrimmed(const ON_2dPoint &uv, const BRNode **closest,
 
     for (std::vector<Stl::Loop>::const_iterator loop =
 	    m_stl->m_loops.begin(); loop != m_stl->m_loops.end(); ++loop) {
-	if (!loop->have_bbox || loop->sortedX.empty())
+	if (!loop->have_bbox || loop->sorted.empty())
 	    continue;
 	ON_2dPoint loop_query(query);
 	if (surface && surface->IsClosed(ray_axis)) {
-	    const double period = surface->Domain(ray_axis).Length();
-	    if (period > 0.0) {
+	    const double ray_period = surface->Domain(ray_axis).Length();
+	    if (ray_period > 0.0) {
 		const double center = 0.5 *
 		    (loop->minimum[ray_axis] + loop->maximum[ray_axis]);
 		loop_query[ray_axis] += nearbyint(
-		    (center - loop_query[ray_axis]) / period) * period;
+		    (center - loop_query[ray_axis]) / ray_period) * ray_period;
 	    }
 	}
 	TrimClassificationState loop_state(NULL);
-	const std::vector<Stl::Loop::Leaf> &sorted = horizontal_ray ?
-	    loop->sortedY : loop->sortedX;
 	for (std::vector<Stl::Loop::Leaf>::const_iterator leaf =
-		sorted.begin(); leaf != sorted.end(); ++leaf) {
-	    const BRNode *br = leaf->node;
-	    const ON_2dPoint local_query(loop_query.x - leaf->offset.x,
-		loop_query.y - leaf->offset.y);
+		loop->sorted.begin(); leaf != loop->sorted.end(); ++leaf) {
+	    const BRNode *br = &m_stl->m_leaves[leaf->node_index];
+	    const ON_2dVector offset(
+		(double)leaf->image[0] * period[0],
+		(double)leaf->image[1] * period[1]);
+	    const ON_2dPoint local_query(loop_query.x - offset.x,
+		loop_query.y - offset.y);
 	    point_t bmin, bmax;
 	    br->GetBBox(bmin, bmax);
 	    const double envelope = std::max(BREP_UV_DIST_FUZZ,
 		std::max(0.0, within_distance_tol));
-	    if (bmin[fixed_coordinate] + leaf->offset[fixed_coordinate] >
+	    if (bmin[fixed_coordinate] + offset[fixed_coordinate] >
 		    loop_query[fixed_coordinate] + envelope)
 		break;
 	    if (!trim_candidate_on_coordinate(br, local_query,
@@ -574,6 +580,10 @@ CurveTree::classifyCell(const ON_Interval &u, const ON_Interval &v,
     const double envelope = std::max(BREP_UV_DIST_FUZZ,
 	std::max(0.0, within_distance_tol));
     const ON_Surface *surface = m_face ? m_face->SurfaceOf() : NULL;
+    const double period[2] = {
+	surface ? surface->Domain(0).Length() : 0.0,
+	surface ? surface->Domain(1).Length() : 0.0
+    };
     const bool horizontal_ray = surface && surface->IsClosed(1);
     const int ray_axis = horizontal_ray ? 0 : 1;
     const int fixed_coordinate = horizontal_ray ? 1 : 0;
@@ -582,17 +592,18 @@ CurveTree::classifyCell(const ON_Interval &u, const ON_Interval &v,
 	    m_stl->m_loops.begin(); loop != m_stl->m_loops.end(); ++loop) {
 	if (!loop->have_bbox)
 	    continue;
-	const std::vector<Stl::Loop::Leaf> &sorted = horizontal_ray ?
-	    loop->sortedY : loop->sortedX;
 	for (std::vector<Stl::Loop::Leaf>::const_iterator leaf =
-		sorted.begin(); leaf != sorted.end(); ++leaf) {
-	    const BRNode *br = leaf->node;
+		loop->sorted.begin(); leaf != loop->sorted.end(); ++leaf) {
+	    const BRNode *br = &m_stl->m_leaves[leaf->node_index];
+	    const ON_2dVector offset(
+		(double)leaf->image[0] * period[0],
+		(double)leaf->image[1] * period[1]);
 	    point_t bmin, bmax;
 	    br->GetBBox(bmin, bmax);
-	    bmin[X] += leaf->offset.x;
-	    bmax[X] += leaf->offset.x;
-	    bmin[Y] += leaf->offset.y;
-	    bmax[Y] += leaf->offset.y;
+	    bmin[X] += offset.x;
+	    bmax[X] += offset.x;
+	    bmin[Y] += offset.y;
+	    bmax[Y] += offset.y;
 	    if (bmax[fixed_coordinate] + envelope <
 		    cell[fixed_coordinate].Min())
 		continue;
@@ -606,20 +617,21 @@ CurveTree::classifyCell(const ON_Interval &u, const ON_Interval &v,
 	     * even when its curve is far along the ray axis.  Exact joins do not:
 	     * their two incident crossings retain parity. */
 	    if (leaf->extend_minimum[fixed_coordinate]) {
-		const ON_3dPoint &start = br->startPoint();
-		const ON_3dPoint &end = br->endPoint();
+		const ON_3dPoint start = br->startPoint();
+		const ON_3dPoint end = br->endPoint();
 		const double endpoint = std::min(start[fixed_coordinate],
-		    end[fixed_coordinate]) + leaf->offset[fixed_coordinate];
+		    end[fixed_coordinate]) + offset[fixed_coordinate];
 		if (endpoint >= cell[fixed_coordinate].Min() - envelope &&
 			endpoint <= cell[fixed_coordinate].Max() + envelope)
 		    return false;
 	    }
 
-	    const ON_BoundingBox &bbox = br->m_node;
-	    const double bbox_min_u = bbox.m_min.x + leaf->offset.x;
-	    const double bbox_max_u = bbox.m_max.x + leaf->offset.x;
-	    const double bbox_min_v = bbox.m_min.y + leaf->offset.y;
-	    const double bbox_max_v = bbox.m_max.y + leaf->offset.y;
+	    const ON_2dPoint bbox_min = br->bboxMinimum();
+	    const ON_2dPoint bbox_max = br->bboxMaximum();
+	    const double bbox_min_u = bbox_min.x + offset.x;
+	    const double bbox_max_u = bbox_max.x + offset.x;
+	    const double bbox_min_v = bbox_min.y + offset.y;
+	    const double bbox_max_v = bbox_max.y + offset.y;
 	    double du = 0.0;
 	    double dv = 0.0;
 	    if (bbox_max_u < u.Min())

@@ -2337,9 +2337,7 @@ brep_collect_bvh_stats(struct brep_specific *bs)
 	    bs->ctrees.begin(); tree != bs->ctrees.end(); ++tree) {
 	if (!*tree)
 	    continue;
-	std::list<const BRNode *> leaves;
-	(*tree)->getLeaves(leaves);
-	bs->curve_tree_leaves += leaves.size();
+	bs->curve_tree_leaves += (*tree)->preparedLeafCount();
     }
 }
 
@@ -23165,10 +23163,10 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
     BU_CK_EXTERNAL(external);
 
     /* Version 1 requires SurfaceTrees to complete closed-seam and internal-knot
-     * partitioning before applying the adaptive depth limit.  The serialized
-     * byte layout is unchanged, but version 0 trees do not satisfy that
-     * structural contract and must not be reused. */
-    const size_t current_version = 1;
+     * partitioning before applying the adaptive depth limit.  Version 2 stores
+     * the production CurveTree's compact leaves rather than a redundant binary
+     * construction hierarchy. */
+    const size_t current_version = 2;
 
     RT_CK_SOLTAB(stp);
     BU_CK_EXTERNAL(external);
