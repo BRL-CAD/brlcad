@@ -7745,6 +7745,7 @@ check_brep_interval_enclosures()
     size_t expansion_restriction_checks = 0;
     size_t expansion_restriction_contractions = 0;
     size_t expansion_restriction_high_water = 0;
+    size_t expansion_identity_checks = 0;
     size_t expansion_normalization_fallbacks = 0;
     size_t reparameterization_checks = 0;
     size_t clip_checks = 0;
@@ -7952,6 +7953,100 @@ check_brep_interval_enclosures()
 			expansion_observed[0] <
 			(long double)observed[1] - observed[0])
 		    expansion_product_contractions++;
+	    }
+	}
+    }
+
+    {
+	const int identity_orders[] = {2, 4, 8, 16};
+	const int identity_restrictions[][4] = {
+	    {0, 1, 4, 2},
+	    {1, 0, 2, 4},
+	    {0, 0, 4, 4}
+	};
+	for (size_t order_index = 0; order_index < sizeof(identity_orders) /
+		sizeof(identity_orders[0]); ++order_index) {
+	    const int order = identity_orders[order_index];
+	    const size_t count = (size_t)order * order;
+	    fastf_t input[256] = {};
+	    fastf_t input_error[256] = {};
+	    exact_dyadic lower_input[256];
+	    exact_dyadic upper_input[256];
+	    for (size_t i = 0; i < count; ++i) {
+		const exact_dyadic nominal = {
+		    (int64_t)((7 * i + order) % 19) - 9, -8
+		};
+		const exact_dyadic error = {
+		    (int64_t)(i % 3 + 1), -24
+		};
+		input[i] = (fastf_t)exact_dyadic_value(nominal);
+		input_error[i] = (fastf_t)exact_dyadic_value(error);
+		if (!exact_dyadic_subtract(nominal, error, lower_input[i]) ||
+			!exact_dyadic_add(nominal, error, upper_input[i])) {
+		    std::printf("FAIL: expansion identity source order=%d "
+			"coefficient=%zu\n", order, i);
+		    failures++;
+		}
+	    }
+	    for (size_t restriction = 0; restriction <
+		    sizeof(identity_restrictions) /
+		    sizeof(identity_restrictions[0]); ++restriction) {
+		const int minimum_quarters[2] = {
+		    identity_restrictions[restriction][0],
+		    identity_restrictions[restriction][1]
+		};
+		const int maximum_quarters[2] = {
+		    identity_restrictions[restriction][2],
+		    identity_restrictions[restriction][3]
+		};
+		const fastf_t minimum[2] = {
+		    0.25 * minimum_quarters[0],
+		    0.25 * minimum_quarters[1]
+		};
+		const fastf_t maximum[2] = {
+		    0.25 * maximum_quarters[0],
+		    0.25 * maximum_quarters[1]
+		};
+		exact_dyadic expected_minimum[256];
+		exact_dyadic expected_maximum[256];
+		fastf_t observed_minimum[256] = {};
+		fastf_t observed_maximum[256] = {};
+		size_t high_water = 0;
+		if (!exact_dyadic_surface_restrict_quarters(lower_input,
+			order, order, minimum_quarters, maximum_quarters,
+			expected_minimum) ||
+			!exact_dyadic_surface_restrict_quarters(upper_input,
+			    order, order, minimum_quarters, maximum_quarters,
+			    expected_maximum) ||
+			!_rt_brep_expansion_restrict_test(input, input_error,
+			    order, order, minimum, maximum, observed_minimum,
+			    observed_maximum, &high_water)) {
+		    std::printf("FAIL: expansion identity restriction "
+			"order=%d case=%zu\n", order, restriction);
+		    failures++;
+		    continue;
+		}
+		expansion_restriction_high_water = std::max(
+		    expansion_restriction_high_water, high_water);
+		for (size_t i = 0; i < count; ++i) {
+		    const long double exact_minimum =
+			exact_dyadic_value(expected_minimum[i]);
+		    const long double exact_maximum =
+			exact_dyadic_value(expected_maximum[i]);
+		    expansion_identity_checks++;
+		    if ((long double)observed_minimum[i] > exact_minimum ||
+			    (long double)observed_maximum[i] < exact_maximum ||
+			    high_water >= RT_BREP_EXPANSION_CAPACITY) {
+			std::printf("FAIL: expansion identity enclosure "
+			    "order=%d case=%zu coefficient=%zu "
+			    "bounds=%.17Lg/%.17Lg:%.17Lg/%.17Lg high=%zu\n",
+			    order, restriction, i,
+			    (long double)observed_minimum[i], exact_minimum,
+			    (long double)observed_maximum[i], exact_maximum,
+			    high_water);
+			failures++;
+		    }
+		}
 	    }
 	}
     }
@@ -9041,7 +9136,7 @@ check_brep_interval_enclosures()
 	    "product=%zu+%zu/%zu/%zu+%zu quotient=%zu "
 	    "linear-hull=%zu determinant=%zu/%zu+%zu restrict=%zu "
 	    "coefficient=%zu+%zu/%zu/%zu "
-	    "restriction=%zu+%zu+%zu/%zu/%zu "
+	    "restriction=%zu+%zu+%zu/%zu/%zu identity=%zu "
 	    "normalization-fallback=%zu "
 	    "reparameterization=%zu "
 	    "clip=%zu/%zu "
@@ -9061,6 +9156,7 @@ check_brep_interval_enclosures()
 	    expansion_restriction_checks,
 	    expansion_restriction_contractions,
 	    expansion_restriction_high_water,
+	    expansion_identity_checks,
 	    expansion_normalization_fallbacks,
 	    reparameterization_checks, clip_contractions, clip_checks,
 	    maximum_function_width_ratio,
