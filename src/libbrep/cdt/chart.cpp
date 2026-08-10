@@ -2382,8 +2382,12 @@ cdt_face_chart::validate_boundary(const ON_BrepFace &face,
 void
 cdt_face_chart::repair_nesting()
 {
-    if (m_type != CDT_FACE_CHART_SURFACE_METRIC || !m_surface ||
-	    !m_surface->IsPlanar(NULL, BN_TOL_DIST) || outer.size() < 3 ||
+    /* Both charts are planar embeddings of the surface parameter domain.
+     * Surface curvature does not change loop containment in a valid chart. */
+    const bool planar_embedding =
+	m_type == CDT_FACE_CHART_SURFACE_METRIC ||
+	m_type == CDT_FACE_CHART_CYLINDER;
+    if (!planar_embedding || outer.size() < 3 ||
 	    holes.size() != 1 || holes[0].size() < 3)
 	return;
 
