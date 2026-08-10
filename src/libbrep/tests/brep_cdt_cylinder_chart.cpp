@@ -593,6 +593,92 @@ exercise_planar_nesting_repair()
     return true;
 }
 
+static bool
+exercise_toleranced_endpoint_sample_repair()
+{
+    std::unique_ptr<ON_Brep> brep(new ON_Brep);
+    ON_PlaneSurface *surface = new ON_PlaneSurface(ON_xy_plane);
+    surface->SetDomain(0, 0.0, 2.0);
+    surface->SetDomain(1, 0.0, 2.0);
+    surface->SetExtents(0, surface->Domain(0), true);
+    surface->SetExtents(1, surface->Domain(1), true);
+    ON_BrepFace &face = brep->NewFace(brep->AddSurface(surface));
+    const std::pair<double, double> coordinates[5] = {
+	std::make_pair(0.0, 0.0), std::make_pair(2.0, 0.0),
+	std::make_pair(2.0, 2.0), std::make_pair(2.0, 2.0),
+	std::make_pair(0.0, 2.0)
+    };
+    std::vector<std::pair<double, double>> native_points(
+	coordinates, coordinates + 5);
+    const int outer_indices[6] = {0, 1, 2, 3, 4, 0};
+    std::vector<int> outer(outer_indices, outer_indices + 6);
+    ON_3dPoint source_points[5] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(2.0, 0.0, 0.0),
+	ON_3dPoint(2.0, 1.0, 0.0), ON_3dPoint(2.0, 2.0, 0.0),
+	ON_3dPoint(0.0, 2.0, 0.0)
+    };
+    std::vector<const ON_3dPoint *> points_3d;
+    for (const ON_3dPoint &point : source_points)
+	points_3d.push_back(&point);
+    std::vector<cdt_topo_vertex_id> topology_vertices(5,
+	CDT_TOPOLOGY_ID_NONE);
+    topology_vertices[0] = 10;
+    topology_vertices[1] = 11;
+    topology_vertices[3] = 12;
+    topology_vertices[4] = 13;
+    cdt_face_chart chart;
+    if (!chart.build(face, native_points, outer,
+	    std::vector<std::vector<int>>(), std::vector<int>(),
+	    std::vector<int>(), points_3d, topology_vertices) ||
+	    chart.points[2] != chart.points[3]) {
+	std::cerr << "endpoint sample fixture did not retain its source "
+	    "coincidence" << std::endl;
+	return false;
+    }
+    const std::vector<int> edge_path = {1, 2, 3};
+    if (chart.repair_toleranced_edge_endpoint_samples(edge_path,
+	    points_3d, 0.5) != 0 || chart.points[2] != chart.points[3]) {
+	std::cerr << "endpoint sample repair exceeded its tolerance"
+	    << std::endl;
+	return false;
+    }
+    cdt_face_chart protected_chart = chart;
+    protected_chart.vertices[2].topo_vertex = 14;
+    if (protected_chart.repair_toleranced_edge_endpoint_samples(
+	    edge_path, points_3d, 1.1) != 0) {
+	std::cerr << "endpoint sample repair moved a topology vertex"
+	    << std::endl;
+	return false;
+    }
+    if (chart.repair_toleranced_edge_endpoint_samples(edge_path,
+	    points_3d, 1.1) != 1 ||
+	    std::fabs(chart.points[2].first - 2.0) > 1.0e-12 ||
+	    std::fabs(chart.points[2].second - 1.0) > 1.0e-12) {
+	std::cerr << "endpoint sample was not redistributed by source length"
+	    << std::endl;
+	return false;
+    }
+
+    std::vector<point2d_t> chart_points(chart.points.size());
+    for (size_t i = 0; i < chart.points.size(); ++i)
+	V2SET(chart_points[i], chart.points[i].first, chart.points[i].second);
+    std::vector<int> outline(chart.outer);
+    outline.push_back(chart.outer.front());
+    int *faces = NULL;
+    int face_count = 0;
+    struct bg_triangulation_report report = {0, -1, {0}};
+    const int status = bg_nested_poly_triangulate_strict(&faces,
+	&face_count, NULL, NULL, outline.data(), outline.size(), NULL, NULL,
+	0, NULL, 0, chart_points.data(), chart_points.size(), &report);
+    bu_free(faces, "endpoint sample repair triangles");
+    if (status != BRLCAD_OK || face_count != 3) {
+	std::cerr << "repaired endpoint sample did not triangulate: "
+	    << report.message << std::endl;
+	return false;
+    }
+    return true;
+}
+
 int
 main()
 {
@@ -623,5 +709,7 @@ main()
 	return 9;
     if (!exercise_planar_nesting_repair())
 	return 10;
+    if (!exercise_toleranced_endpoint_sample_repair())
+	return 11;
     return 0;
 }
