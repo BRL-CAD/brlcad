@@ -33,8 +33,7 @@
 #ifdef __cplusplus
 extern "C++" {
 /* @cond */
-#  include <vector>
-#  include <list>
+#  include <algorithm>
 /* @endcond */
 }
 #endif
@@ -49,33 +48,18 @@ extern "C++" {
 namespace brlcad {
 
     /**
-     * Bounding Rectangle Hierarchy
+     * Compact prepared trim-curve leaf.
      */
-    class BREP_EXPORT BRNode : public PooledObject<BRNode> {
+    class BREP_EXPORT BRNode {
     public:
-	explicit BRNode(const ON_BoundingBox &node);
 	BRNode(const ON_Curve *curve,
 	       int trim_index,
 	       int adj_face_index,
 	       const ON_BoundingBox &node,
-	       const ON_BrepFace *face,
 	       const ON_Interval &t,
-	       bool innerTrim,
-	       bool checkTrim,
-	       bool trimmed);
-	~BRNode();
-
+	       bool innerTrim);
 	BRNode(Deserializer &deserializer, const ON_Brep &brep);
 	void serialize(Serializer &serializer) const;
-
-	/** Node management functions */
-	void addChild(BRNode *child);
-
-	/** Return a list of all nodes below this node that are leaf nodes */
-	void getLeaves(std::list<const BRNode *> &out_leaves) const;
-
-	/** Report the depth of this node in the hierarchy */
-	int depth() const;
 
 	/**
 	 * Get 2 points defining bounding box:
@@ -91,7 +75,6 @@ namespace brlcad {
 	 */
 	void GetBBox(fastf_t *min, fastf_t *max) const;
 
-	bool isTrimmed(const ON_2dPoint &uv, double &trimdist) const;
 	/** Test a vertical +V parameter-space ray against this monotone
 	 * trim leaf.  Endpoint fuzz bridges small imported loop gaps while
 	 * the exact test uses a half-open interval to avoid double counting
@@ -112,19 +95,21 @@ namespace brlcad {
 	ON_Interval curveDomain() const {
 	    return m_trim ? m_trim->Domain() : ON_Interval::EmptyInterval;
 	}
-	const ON_3dPoint &startPoint() const { return m_start; }
-	const ON_3dPoint &endPoint() const { return m_end; }
+	ON_3dPoint startPoint() const {
+	    return ON_3dPoint(m_start[0], m_start[1], 0.0);
+	}
+	ON_3dPoint endPoint() const {
+	    return ON_3dPoint(m_end[0], m_end[1], 0.0);
+	}
+	ON_2dPoint bboxMinimum() const {
+	    return ON_2dPoint(m_bbox_min[0], m_bbox_min[1]);
+	}
+	ON_2dPoint bboxMaximum() const {
+	    return ON_2dPoint(m_bbox_max[0], m_bbox_max[1]);
+	}
 
-	ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt) const;
-	ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const;
 	fastf_t getCurveEstimateOfV(fastf_t u, fastf_t tol) const;
 	fastf_t getCurveEstimateOfU(fastf_t v, fastf_t tol) const;
-
-	/** Bounding Box */
-	ON_BoundingBox m_node;
-
-	/** Surface Information */
-	ON_Interval m_v;
 
 	/** Trim Curve Information */
 	int m_adj_face_index;
@@ -136,85 +121,23 @@ namespace brlcad {
 	bool m_innerTrim;
 
     private:
-	BRNode(const BRNode &source);
-	BRNode &operator=(const BRNode &source);
-
-	void removeChild(BRNode *child);
-
-	/** Test if this node is a leaf node (i.e. m_children is empty) */
-	bool isLeaf() const;
-
-	fastf_t getLinearEstimateOfV(fastf_t u) const;
-	const BRNode *closer(const ON_3dPoint &pt, const BRNode *left, const BRNode *right) const;
-
-	struct Stl : public PooledObject<Stl> {
-	Stl() : m_children() {}
-
-	    std::vector<const BRNode *> m_children;
-	} * const m_stl;
-
-	const ON_BrepFace *m_face;
-	ON_Interval m_u;
 	const ON_Curve *m_trim;
 	int m_trim_index;
 	ON_Interval m_t;
-	bool m_checkTrim;
-	bool m_trimmed;
-	ON_3dPoint m_estimate;
-	fastf_t m_slope;
-	fastf_t m_bb_diag;
-	ON_3dPoint m_start;
-	ON_3dPoint m_end;
+	double m_bbox_min[2];
+	double m_bbox_max[2];
+	double m_start[2];
+	double m_end[2];
     };
-
-    inline void
-    BRNode::addChild(BRNode *child)
-    {
-	if (LIKELY(child != NULL)) {
-	    m_stl->m_children.push_back(child);
-	}
-    }
-
-    inline void
-    BRNode::removeChild(BRNode *child)
-    {
-	std::vector<const BRNode *>::iterator i;
-	for (i = m_stl->m_children.begin(); i != m_stl->m_children.end();) {
-	    if (*i == child) {
-		delete *i;
-		i = m_stl->m_children.erase(i);
-	    } else {
-		++i;
-	    }
-	}
-    }
-
-    inline bool
-    BRNode::isLeaf() const
-    {
-	if (m_stl->m_children.empty()) {
-	    return true;
-	}
-	return false;
-    }
 
     inline void
     BRNode::GetBBox(fastf_t *min, fastf_t *max) const
     {
-	VSETALL(min, INFINITY);
-	VSETALL(max, -INFINITY);
-	if (m_start != ON_3dPoint::UnsetPoint) {
-	    VMINMAX(min, max, m_start);
-	}
-	if (m_end != ON_3dPoint::UnsetPoint) {
-	    VMINMAX(min, max, m_end);
-	}
+	VSET(min, std::min(m_start[X], m_end[X]),
+	    std::min(m_start[Y], m_end[Y]), 0.0);
+	VSET(max, std::max(m_start[X], m_end[X]),
+	    std::max(m_start[Y], m_end[Y]), 0.0);
     }
-
-    extern bool sortX(const BRNode *first, const BRNode *second);
-    extern bool sortY(const BRNode *first, const BRNode *second);
-
-
 } /* namespace brlcad */
 } /* extern C++ */
 

@@ -35,32 +35,27 @@ BRNode::BRNode(
     int trim_index,
     int adj_face_index,
     const ON_BoundingBox &node,
-    const ON_BrepFace *face,
     const ON_Interval &t,
-    bool innerTrim,
-    bool checkTrim,
-    bool trimmed) :
-    m_node(node),
-    m_v(),
+    bool innerTrim) :
     m_adj_face_index(adj_face_index),
     m_XIncreasing(false),
     m_Horizontal(false),
     m_Vertical(false),
     m_innerTrim(innerTrim),
-    m_stl(new Stl),
-    m_face(face),
-    m_u(),
     m_trim(curve),
     m_trim_index(trim_index),
     m_t(t),
-    m_checkTrim(checkTrim),
-    m_trimmed(trimmed),
-    m_estimate(),
-    m_slope(0.0),
-    m_bb_diag(0.0),
-    m_start(curve->PointAt(m_t[0])),
-    m_end(curve->PointAt(m_t[1]))
+    m_bbox_min{node.m_min.x, node.m_min.y},
+    m_bbox_max{node.m_max.x, node.m_max.y},
+    m_start{0.0, 0.0},
+    m_end{0.0, 0.0}
 {
+    const ON_3dPoint start = curve->PointAt(m_t[0]);
+    const ON_3dPoint end = curve->PointAt(m_t[1]);
+    m_start[0] = start.x;
+    m_start[1] = start.y;
+    m_end[0] = end.x;
+    m_end[1] = end.y;
     /* check for vertical segments they can be removed from trims
      * above (can't tell direction and don't need
      */
@@ -70,21 +65,6 @@ BRNode::BRNode(
     /*
      * should be okay since we split on Horz/Vert tangents
      */
-    if (m_end[X] < m_start[X]) {
-	m_u[0] = m_end[X];
-	m_u[1] = m_start[X];
-    } else {
-	m_u[0] = m_start[X];
-	m_u[1] = m_end[X];
-    }
-    if (m_end[Y] < m_start[Y]) {
-	m_v[0] = m_end[Y];
-	m_v[1] = m_start[Y];
-    } else {
-	m_v[0] = m_start[Y];
-	m_v[1] = m_end[Y];
-    }
-
     if (NEAR_EQUAL(m_end[X], m_start[X], BREP_UV_DIST_FUZZ)) {
 	m_Vertical = true;
 	if (m_innerTrim) {
@@ -99,192 +79,74 @@ BRNode::BRNode(
 	} else {
 	    m_XIncreasing = false;
 	}
-	m_slope = 0.0;
     } else {
 	if ((m_end[X] - m_start[X]) > 0.0) {
 	    m_XIncreasing = true;
 	} else {
 	    m_XIncreasing = false;
 	}
-	m_slope = (m_end[Y] - m_start[Y]) / (m_end[X] - m_start[X]);
     }
-    m_bb_diag = DIST_PNT_PNT(m_start, m_end);
-}
-
-
-BRNode::BRNode(const ON_BoundingBox &node) :
-    m_node(node),
-    m_v(),
-    m_adj_face_index(-1),
-    m_XIncreasing(false),
-    m_Horizontal(false),
-    m_Vertical(false),
-    m_innerTrim(false),
-    m_stl(new Stl),
-    m_face(NULL),
-    m_u(),
-    m_trim(NULL),
-    m_trim_index(-1),
-    m_t(),
-    m_checkTrim(true),
-    m_trimmed(false),
-    m_estimate(),
-    m_slope(0.0),
-    m_bb_diag(0.0),
-    m_start(ON_3dPoint::UnsetPoint),
-    m_end(ON_3dPoint::UnsetPoint)
-{
-    for (int i = 0; i < 3; i++) {
-	double d = m_node.m_max[i] - m_node.m_min[i];
-	if (NEAR_ZERO(d, ON_ZERO_TOLERANCE)) {
-	    m_node.m_min[i] -= 0.001;
-	    m_node.m_max[i] += 0.001;
-	}
-    }
-    m_start = m_node.m_min;
-    m_end = m_node.m_max;
-}
-
-
-BRNode::~BRNode()
-{
-    /* delete the children */
-    for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	delete m_stl->m_children[i];
-    }
-
-    delete m_stl;
 }
 
 
 BRNode::BRNode(Deserializer &deserializer, const ON_Brep &brep) :
-    m_node(),
-    m_v(),
     m_adj_face_index(-1),
     m_XIncreasing(false),
     m_Horizontal(false),
     m_Vertical(false),
     m_innerTrim(false),
-    m_stl(new Stl),
-    m_face(NULL),
-    m_u(),
     m_trim(NULL),
     m_trim_index(-1),
     m_t(),
-    m_checkTrim(false),
-    m_trimmed(false),
-    m_estimate(),
-    m_slope(0.0),
-    m_bb_diag(0.0),
-    m_start(ON_3dPoint::UnsetPoint),
-    m_end(ON_3dPoint::UnsetPoint)
+    m_bbox_min{0.0, 0.0},
+    m_bbox_max{0.0, 0.0},
+    m_start{0.0, 0.0},
+    m_end{0.0, 0.0}
 {
-    deserializer.read(m_node);
-    deserializer.read(m_u);
-    deserializer.read(m_v);
     deserializer.read(m_t);
-    deserializer.read(m_start);
-    deserializer.read(m_end);
-    deserializer.read(m_estimate);
-
-    m_slope = deserializer.read_double();
-    m_bb_diag = deserializer.read_double();
+    for (int direction = 0; direction < 2; ++direction) {
+	m_bbox_min[direction] = deserializer.read_double();
+	m_bbox_max[direction] = deserializer.read_double();
+	m_start[direction] = deserializer.read_double();
+	m_end[direction] = deserializer.read_double();
+    }
 
     const uint8_t bool_flags = deserializer.read_uint8();
-    const int face_index = deserializer.read_int32();
     m_trim_index = deserializer.read_int32();
-    m_adj_face_index = deserializer.read_uint32();
-    const std::size_t num_children = deserializer.read_uint32();
+    m_adj_face_index = deserializer.read_int32();
 
     m_XIncreasing = bool_flags & (1 << 0);
     m_Horizontal = bool_flags & (1 << 1);
     m_Vertical = bool_flags & (1 << 2);
     m_innerTrim = bool_flags & (1 << 3);
-    m_checkTrim = bool_flags & (1 << 4);
-    m_trimmed = bool_flags & (1 << 5);
-
-    if (face_index != -1) {
-	if (const ON_BrepFace * const face = brep.m_F.At(face_index))
-	    m_face = face;
-	else
-	    bu_bomb("invalid face index");
-    }
 
     if (m_trim_index != -1) {
 	if (const ON_BrepTrim * const trim = brep.m_T.At(m_trim_index))
 	    m_trim = trim->TrimCurveOf();
 	else
-	    bu_bomb("invalid face index");
+	    bu_bomb("invalid trim index");
     }
-
-    m_stl->m_children.resize(num_children);
-    for (std::vector<const BRNode *>::iterator it = m_stl->m_children.begin(); it != m_stl->m_children.end(); ++it)
-	*it = new BRNode(deserializer, brep);
 }
 
 
 void
 BRNode::serialize(Serializer &serializer) const
 {
-    const uint8_t bool_flags = (m_XIncreasing << 0) | (m_Horizontal << 1) | (m_Vertical << 2) | (m_innerTrim << 3) | (m_checkTrim << 4) | (m_trimmed << 5);
+    const uint8_t bool_flags = (m_XIncreasing << 0) |
+	(m_Horizontal << 1) | (m_Vertical << 2) |
+	(m_innerTrim << 3);
 
-    serializer.write(m_node);
-    serializer.write(m_u);
-    serializer.write(m_v);
     serializer.write(m_t);
-    serializer.write(m_start);
-    serializer.write(m_end);
-    serializer.write(m_estimate);
-
-    serializer.write_double(m_slope);
-    serializer.write_double(m_bb_diag);
+    for (int direction = 0; direction < 2; ++direction) {
+	serializer.write_double(m_bbox_min[direction]);
+	serializer.write_double(m_bbox_max[direction]);
+	serializer.write_double(m_start[direction]);
+	serializer.write_double(m_end[direction]);
+    }
 
     serializer.write_uint8(bool_flags);
-    serializer.write_int32(m_face ? m_face->m_face_index : -1);
     serializer.write_int32(m_trim_index);
-    serializer.write_uint32(m_adj_face_index);
-    serializer.write_uint32(m_stl->m_children.size());
-
-    for (std::vector<const BRNode *>::const_iterator it = m_stl->m_children.begin(); it != m_stl->m_children.end(); ++it)
-	(*it)->serialize(serializer);
-}
-
-
-int
-BRNode::depth() const
-{
-    int d = 0;
-    for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	d = 1 + std::max(d, m_stl->m_children[i]->depth());
-    }
-    return d;
-}
-
-
-void
-BRNode::getLeaves(std::list<const BRNode *> &out_leaves) const
-{
-    if (!m_stl->m_children.empty()) {
-	for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	    m_stl->m_children[i]->getLeaves(out_leaves);
-	}
-    } else {
-	out_leaves.push_back(this);
-    }
-}
-
-
-const BRNode *
-BRNode::closer(const ON_3dPoint &pt, const BRNode *left, const BRNode *right) const
-{
-    double ldist = pt.DistanceTo(left->m_estimate);
-    double rdist = pt.DistanceTo(right->m_estimate);
-    TRACE("\t" << ldist << " < " << rdist);
-    if (ldist < rdist) {
-	return left;
-    } else {
-	return right;
-    }
+    serializer.write_int32(m_adj_face_index);
 }
 
 
@@ -293,14 +155,14 @@ BRNode::curveBBoxDistance(const ON_2dPoint &uv) const
 {
     double du = 0.0;
     double dv = 0.0;
-    if (uv.x < m_node.m_min.x)
-	du = m_node.m_min.x - uv.x;
-    else if (uv.x > m_node.m_max.x)
-	du = uv.x - m_node.m_max.x;
-    if (uv.y < m_node.m_min.y)
-	dv = m_node.m_min.y - uv.y;
-    else if (uv.y > m_node.m_max.y)
-	dv = uv.y - m_node.m_max.y;
+    if (uv.x < m_bbox_min[X])
+	du = m_bbox_min[X] - uv.x;
+    else if (uv.x > m_bbox_max[X])
+	du = uv.x - m_bbox_max[X];
+    if (uv.y < m_bbox_min[Y])
+	dv = m_bbox_min[Y] - uv.y;
+    else if (uv.y > m_bbox_max[Y])
+	dv = uv.y - m_bbox_max[Y];
     return hypot(du, dv);
 }
 
@@ -370,8 +232,8 @@ BRNode::crossesAbove(const ON_2dPoint &uv, double &distance,
     distance = -1.0;
     if (!m_trim || m_Vertical)
 	return false;
-    const double first_u = m_start.x;
-    const double second_u = m_end.x;
+    const double first_u = m_start[X];
+    const double second_u = m_end[X];
     const bool exact =
 	((first_u <= uv.x && uv.x < second_u) ||
 	 (second_u <= uv.x && uv.x < first_u));
@@ -415,8 +277,8 @@ BRNode::crossesRight(const ON_2dPoint &uv, double &distance,
     distance = -1.0;
     if (!m_trim || m_Horizontal)
 	return false;
-    const double first_v = m_start.y;
-    const double second_v = m_end.y;
+    const double first_v = m_start[Y];
+    const double second_v = m_end[Y];
     const bool exact =
 	((first_v <= uv.y && uv.y < second_v) ||
 	 (second_v <= uv.y && uv.y < first_v));
@@ -450,121 +312,6 @@ BRNode::crossesRight(const ON_2dPoint &uv, double &distance,
 }
 
 
-bool
-BRNode::isTrimmed(const ON_2dPoint &uv, double &trimdist) const
-{
-    point_t bmin, bmax;
-    BRNode::GetBBox(bmin, bmax);
-    /* CurveTree candidate selection admits this same UV fuzz.  Preserve it
-     * here so a candidate just beyond a split or imported trim endpoint is
-     * classified instead of being silently discarded by a stricter second
-     * bounding-box test.
-     */
-    if ((bmin[X] - BREP_UV_DIST_FUZZ <= uv[X]) &&
-	    (uv[X] <= bmax[X] + BREP_UV_DIST_FUZZ))
-    {
-	const fastf_t query_u = std::max(bmin[X],
-	    std::min(uv[X], bmax[X]));
-	fastf_t v = getCurveEstimateOfV(query_u, 0.0000001);
-	trimdist = v - uv[Y];
-	if (uv[Y] <= v) {
-	    if (m_XIncreasing) {
-		return true;
-	    } else {
-		return false;
-	    }
-	} else if (uv[Y] > v) {
-	    if (!m_XIncreasing) {
-		return true;
-	    } else {
-		return false;
-	    }
-	} else {
-	    return true;
-	}
-    } else {
-	trimdist = -1.0;
-	if (m_trimmed) {
-	    return true;
-	} else {
-	    return false;
-	}
-    }
-}
-
-
-ON_2dPoint
-BRNode::getClosestPointEstimate(const ON_3dPoint &pt) const
-{
-    ON_Interval u, v;
-    return getClosestPointEstimate(pt, u, v);
-}
-
-
-ON_2dPoint
-BRNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const
-{
-    if (isLeaf()) {
-	double uvs[5][2] = {{m_u.Min(), m_v.Min()},  /* include the corners for an easy refinement */
-			    {m_u.Max(), m_v.Min()},
-			    {m_u.Max(), m_v.Max()},
-			    {m_u.Min(), m_v.Max()},
-			    {m_u.Mid(), m_v.Mid()}
-	}; /* include the estimate */
-	ON_3dPoint corners[5];
-	const ON_Surface *surf = m_face->SurfaceOf();
-
-	u = m_u;
-	v = m_v;
-
-	/* ??? should we pass these in from SurfaceTree::curveBBox()
-	 * to avoid this recalculation?
-	 */
-	if (!surf->EvPoint(uvs[0][0], uvs[0][1], corners[0]) ||
-	    !surf->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
-	    !surf->EvPoint(uvs[2][0], uvs[2][1], corners[2]) ||
-	    !surf->EvPoint(uvs[3][0], uvs[3][1], corners[3]))
-	{
-	    throw std::exception(); /* FIXME */
-	}
-	corners[4] = BRNode::m_estimate;
-
-	/* find the point on the curve closest to pt */
-	size_t mini = 0;
-	double mindist = pt.DistanceTo(corners[mini]);
-	double tmpdist;
-	for (size_t i = 1; i < 5; i++) {
-	    tmpdist = pt.DistanceTo(corners[i]);
-	    TRACE("\t" << mindist << " < " << tmpdist);
-	    if (tmpdist < mindist) {
-		mini = i;
-		mindist = tmpdist;
-	    }
-	}
-	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
-	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
-    } else {
-	if (!m_stl->m_children.empty()) {
-	    const BRNode *closestNode = m_stl->m_children[0];
-	    for (size_t i = 1; i < m_stl->m_children.size(); i++) {
-		closestNode = closer(pt, closestNode, m_stl->m_children[i]);
-	    }
-	    return closestNode->getClosestPointEstimate(pt, u, v);
-	} else {
-	    throw std::exception();
-	}
-    }
-}
-
-
-fastf_t
-BRNode::getLinearEstimateOfV(fastf_t u) const
-{
-    fastf_t v = m_start[Y] + m_slope * (u - m_start[X]);
-    return v;
-}
-
-
 fastf_t
 BRNode::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
 {
@@ -572,13 +319,13 @@ BRNode::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
     double Ta, Tb;
 
     if (m_start[X] < m_end[X]) {
-	VMOVE(A, m_start);
-	VMOVE(B, m_end);
+	VSET(A, m_start[X], m_start[Y], 0.0);
+	VSET(B, m_end[X], m_end[Y], 0.0);
 	Ta = m_t[0];
 	Tb = m_t[1];
     } else {
-	VMOVE(A, m_end);
-	VMOVE(B, m_start);
+	VSET(A, m_end[X], m_end[Y], 0.0);
+	VSET(B, m_start[X], m_start[Y], 0.0);
 	Ta = m_t[1];
 	Tb = m_t[0];
     }
@@ -664,13 +411,13 @@ BRNode::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
     double Ta, Tb;
 
     if (m_start[Y] < m_end[Y]) {
-	VMOVE(A, m_start);
-	VMOVE(B, m_end);
+	VSET(A, m_start[X], m_start[Y], 0.0);
+	VSET(B, m_end[X], m_end[Y], 0.0);
 	Ta = m_t[0];
 	Tb = m_t[1];
     } else {
-	VMOVE(A, m_end);
-	VMOVE(B, m_start);
+	VSET(A, m_end[X], m_end[Y], 0.0);
+	VSET(B, m_start[X], m_start[Y], 0.0);
 	Ta = m_t[1];
 	Tb = m_t[0];
     }

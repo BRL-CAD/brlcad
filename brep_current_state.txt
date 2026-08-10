@@ -7518,6 +7518,78 @@ Transverse ownership of coincident coplanar roots (Finding 86):
   established host-runtime limitation and no sanitizer diagnostic.
 
 
+Compact CurveTree ownership and cache layout (Finding 87):
+
+  The memory audit found that `bu_heap` is a size-classed, per-
+  `bu_parallel_id()` bump allocator whose small-object `bu_heap_put` path is a
+  no-op.  `PooledObject<T>` routed CurveTree, BRNode, BBNode, and their
+  separately allocated STL holders through it.  Deleted per-face trees
+  therefore left all small-object pages resident.  Adding an ordinary free
+  list is not a safe local fix: returned objects do not carry allocating-
+  thread/page ownership, destruction may occur on another thread, and page
+  liveness/reclamation is undefined.  `src/libbu/heap.c` now has a detailed
+  TODO for those generic requirements.  BREP bulk-lifetime storage must not
+  depend on that future design.
+
+  Production CurveTree trim classification never traversed its recursive
+  binary BRNode construction hierarchy.  It used only the prepared per-loop
+  leaf indices.  Curve subdivision now preserves the same knot, horizontal/
+  vertical-tangent, `isLinear`, and maximum-depth decisions but appends only
+  terminal intervals to a CurveTree-owned vector.  Internal BRNodes and their
+  child vectors are not retained.  The old global sorted pointer vector is
+  gone, and each loop stores only the fixed-coordinate ordering selected by
+  its surface's one parity-ray orientation rather than duplicate X and Y
+  indices.
+
+  The compact BRNode keeps its source `ON_Curve`, parameter interval, UV
+  sampled bounding rectangle, UV endpoints, trim/adjacent-face indices, and
+  four classification flags.  Exact crossing and proximity methods still
+  evaluate the native curve.  It is 104 bytes rather than the prior 232-byte
+  object plus a separately allocated 24-byte STL holder.  A periodic leaf
+  image is 16 bytes and stores a checked 32-bit leaf index, two integer image
+  numbers, and endpoint-extension bits; offsets are reconstructed from the
+  immutable surface periods.  `CurveTree`, its holder, and its leaf vectors
+  now have ordinary owning lifetimes and release storage normally.
+
+  Prep-cache version 2 serializes the flat leaf population and recorded
+  construction depth.  Version-1 recursive records are rejected.  A compact
+  leaf needs 89 serialized bytes and no internal-node record.  Both serial and
+  parallel BREP sphere cache round-trip tests pass.
+
+  Recurta `10057.g/id2_item.s` retains 482,684 curve leaves, 6,603 shallow
+  surface leaves, and 315,415 depth-eight surface leaves.  Its exact 15-pair,
+  two-depth feature audit now peaks at 372,117,504 bytes versus the preceding
+  approximately 585.0-MiB checkpoint, about a 230-MiB/39-percent reduction.  All
+  30 rays pass with no reversal, disposition, partition, or face-owner
+  difference; maximum depth delta remains `2.9734749773524527e-8`.  The serial
+  depth-three per-face profile falls from 205,426,688 to 164,495,360 bytes and
+  completes in 1.56 seconds on the final warm repetition.  Timing varied
+  substantially between repetitions and is not yet a formal benchmark.
+
+  The high-topology `10088.g/id2_item.s` check covers 5,771 faces, 108,433
+  curve leaves, and 52,213 deep surface leaves.  All 30 feature rays pass with
+  maximum delta `6.6577683810464805e-8`; peak is 283,979,776 bytes versus the
+  prior approximate 310.0-MiB checkpoint.  Its smaller percentage reduction
+  is consistent with OpenNURBS topology and imported-model storage dominating
+  more strongly than CurveTree leaves.
+
+  Qualification also passes the trim-classifier, cleanup, endpoint, contact-
+  trim, distorted-defect, cache, and 416-ray seam suites.  The representation
+  change does not alter leaf counts, curve intervals, trim tolerance, or exact
+  native-curve solving.
+
+  SurfaceTree storage is now the next major prep-memory target.  The deep
+  10057 run retains 618,445 BBNodes; every BBNode still uses process-lifetime
+  pooled allocation and a separate holder.  Unlike CurveTree, its hierarchy
+  is used for ray traversal, so the next design must pack child relationships
+  into compact immutable/indexed nodes or transfer a per-prep arena into
+  `brep_specific`.  Structural seam/knot splits, parallel ownership, fresh/
+  cached identity, and allocation-free shooting remain mandatory.  Whole-
+  model OpenNURBS topology, immutable span sharing, vector capacity, cache
+  streaming, and smaller per-object savings must also be attributed because
+  large top-level STEP assemblies will combine all costs.
+
+
 NEXT ACTIONS
 ------------
 
@@ -7566,15 +7638,16 @@ D. Extend prepared authority only with separate complete proofs for the
    topology-boundary events, contact-only rays, curved vertex links, and
    many-to-many edge clusters.  Preserve tolerance-healed seam behavior and
    the whole-ray fallback; never reinterpret unresolved as miss.
-E. Before general solve optimization, audit retained and peak prep memory in
-   SurfaceTree, CurveTree, per-face NURBS forms, trim polylines, and temporary
-   construction work.  Reconstruct the removed static-`ON_Surface` change and
-   its correctness failure, but do not restore shared mutable surface state.
-   Attribute bytes and wall time by structure on 10007/10057/10062/10088,
-   distinguish ownership from duplication, and test safe immutable sharing,
-   arenas, flat/compact post-build arrays, lazy local trim refinement, and
-   cache serialization effects.  Curve leaves are already the dominant
-   retained count on 10057 and are independent of surface depth.
+E. Continue the prep-memory audit from the qualified compact CurveTree
+   checkpoint.  Curve storage is now flat, explicitly owned, and cache version
+   2; 10057's two-depth peak is down about 39 percent without changing its
+   482,684 leaf intervals.  Next attribute and compact SurfaceTree/BBNode
+   storage, then per-face NURBS forms, OpenNURBS topology, immutable span data,
+   vector capacity, and cache streaming.  Do not restore shared mutable
+   surface state.  Compare per-face arenas, compact indexed runtime nodes, and
+   build-then-pack designs on 10007/10057/10062/10088 and larger top-level
+   corpus objects.  Preserve seam/knot structural splits, safe parallel
+   ownership, fresh/cache identity, and allocation-free ray shooting.
 F. Once the memory representation and density/default decision are qualified,
    begin the plan's certified-pipeline performance phase.  Measure normal
    production separately from trace mode, because trace deliberately reruns

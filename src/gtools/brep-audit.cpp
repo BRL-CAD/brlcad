@@ -1176,11 +1176,8 @@ surface_tree_profile_result(struct db_i *dbip, struct directory *dp,
 	if (tree.Valid()) {
 	    surface_tree_node_counts(tree.getRootNode(), 0, profile.nodes,
 		profile.leaves, profile.maximum_depth);
-	    if (tree.m_ctree) {
-		std::list<const brlcad::BRNode *> curve_leaves;
-		tree.m_ctree->getLeaves(curve_leaves);
-		profile.curve_leaves = curve_leaves.size();
-	    }
+	    if (tree.m_ctree)
+		profile.curve_leaves = tree.m_ctree->preparedLeafCount();
 	} else {
 	    result.ret = BRLCAD_ERROR;
 	    result.failure_reason = "surface_tree";
