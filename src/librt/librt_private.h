@@ -815,6 +815,11 @@ struct rt_brep_shot_trace {
     size_t surface_fold_corridor_graph_sign_conflicts;
     size_t surface_fold_corridor_graph_depth_exhausted;
     size_t surface_fold_corridor_graph_workspace_exhausted;
+    size_t surface_fold_corridor_graph_interval_attempts;
+    size_t surface_fold_corridor_graph_interval_signed;
+    size_t surface_fold_corridor_graph_interval_excluded;
+    size_t surface_fold_corridor_graph_interval_contractions;
+    size_t surface_fold_corridor_graph_exact_fallbacks;
     size_t surface_fold_interval_contract_attempts;
     size_t surface_fold_interval_contractions;
     size_t surface_fold_interval_exclusions;
@@ -1276,6 +1281,11 @@ struct rt_brep_fold_graph_test_result {
     int system_excluded;
     size_t graph_boxes;
     size_t graph_contractions;
+    size_t graph_interval_attempts;
+    size_t graph_interval_signed;
+    size_t graph_interval_excluded;
+    size_t graph_interval_contractions;
+    size_t graph_exact_fallbacks;
     size_t graph_restriction_failures;
     size_t graph_determinant_failures;
     size_t graph_sign_conflicts;

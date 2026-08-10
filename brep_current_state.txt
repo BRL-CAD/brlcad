@@ -7922,6 +7922,72 @@ Lazy exact ray-plane coefficients (Finding 92):
   the exact residue: that would exchange latency for seam cracks.
 
 
+Ordinary fold-graph determinant screening (Finding 93):
+
+  Each weak-coordinate slab in `brep_fold_graph_determinant_signed` now
+  restricts the two ray-plane Bernstein surfaces with ordinary outward
+  intervals and forms their determinant before constructing expansion-valued
+  restrictions.  A direct strict determinant sign is authoritative.  If the
+  determinant is not yet signed, one ordinary interval-Newton contraction
+  encloses the regular graph; the original ordinary determinant is restricted
+  to that graph enclosure and tested again.  A strict exclusion or common
+  strict sign can therefore finish the slab without exact expansions.  Every
+  unavailable, nonfinite, zero-containing, or otherwise inconclusive result
+  rebuilds the slab from the unchanged input and executes the former exact
+  path.  No ambiguous result is interpreted as empty or signed.
+
+  The screen is deliberately limited to one contraction.  Exact fallback
+  rebuilds from the slab input rather than consuming the ordinary contracted
+  coefficients, so further speculative contractions add work to every
+  fallback.  The exact-contact Cobb trace proves three of twelve graph slabs
+  after nine total ordinary contractions and sends the other nine slabs to
+  exact arithmetic.  It retains the same 62 surface boxes, four isolated
+  boxes, two fold-expansion requests, 36 outer fold contractions, one material
+  segment in both directions, and no allocation at ray time.
+
+  Trace telemetry records graph ordinary attempts, strict signs, exclusions,
+  contractions, and exact fallbacks.  The prepared-once throughput fixture
+  checks complete accounting and requires the exact-contact family to exercise
+  the new screen.  The synthetic fold-graph bridge exposes the same telemetry
+  and now requires an accounted ordinary graph certificate across every
+  dyadic epsilon, equation scale, parameter orientation, and determinant sign;
+  it no longer assumes that a correct proof must have followed the exact
+  contraction implementation.
+
+  `--throughput-contact-only` selects the exact-contact family, performs 32
+  fixed prepared production shots, and reports both wall and process CPU time.
+  This diagnostic mode is intentionally not a registered timing threshold.
+  An interleaved A/B against a preserved exact-only library measured about
+  47.14 versus 50.68 process milliseconds per shot before the host throttled.
+  Hardware counters provide the more stable comparison: three prepass runs
+  averaged 8.226 billion cycles for the complete 32-shot process versus 8.778
+  billion for exact-only, about 6.3 percent fewer cycles.  The prepass retired
+  about 0.4 percent more instructions, consistent with replacing a smaller
+  amount of dependency-heavy expansion arithmetic with ordinary interval
+  work.  This is an incremental gain, not a claim that the roughly 50-ms
+  contact path is production-ready.
+
+  A separate experiment replaced the existing fixed-expansion addition with
+  Shewchuk's fast expansion sum, first directly and then with explicit
+  compression, using the primary paper and reference software descriptions at
+  `https://people.eecs.berkeley.edu/~jrs/papers/robustr.pdf` and
+  `https://www.cs.cmu.edu/~quake/robust.html`.  Direct use raised the contact
+  sample from roughly 49 to 94 ms; compression improved that to roughly 66 ms
+  but remained slower and changed expansion populations.  These small,
+  cancellation-heavy fixed arrays do not exhibit the workload assumed by that
+  otherwise sound general algorithm, so the arithmetic experiment was fully
+  reverted.  Optimize reuse and scheduling of exact restricted nets before
+  revisiting their primitive representation.
+
+  The warnings-as-errors build succeeds.  Eleven focused release gates pass
+  11/11: directed, pole, prepared throughput, local root, cleanup,
+  grazing-root, trim interval/classifier, source union, fold, and contact trim.
+  The exhaustive interval gate passes in 149.64 seconds.  Rebuilt ASan/UBSan
+  with leak scanning disabled for the established host-runtime limitation
+  passes directed, pole, prepared throughput, fold, and contact trim 5/5 with
+  no diagnostic.
+
+
 NEXT ACTIONS
 ------------
 
