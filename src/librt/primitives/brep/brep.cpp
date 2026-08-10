@@ -5854,25 +5854,40 @@ brep_expansion_surface_restrict(const brep_interval *input, int u_order,
 	    u_minimum, u_maximum, v_minimum, v_maximum, ordinary))
 	return false;
 
+    const bool complete_u = fabs(u_minimum) <= DBL_MIN &&
+	fabs(u_maximum - 1.0) <= DBL_MIN;
+    const bool complete_v = fabs(v_minimum) <= DBL_MIN &&
+	fabs(v_maximum - 1.0) <= DBL_MIN;
     brep_expansion_interval source[BREP_DIRECT_BEZIER_MAX_ORDER];
     brep_expansion_interval u_control[BREP_DIRECT_BEZIER_MAX_ORDER];
     for (int output_u = 0; output_u < u_order; ++output_u) {
 	for (int j = 0; j < v_order; ++j) {
-	    for (int i = 0; i < u_order; ++i) {
-		if (!brep_expansion_interval_from_interval(
-			normalized_input[(size_t)i * v_order + j], source[i],
+	    if (complete_u) {
+		if (!brep_expansion_interval_from_interval(normalized_input[
+			(size_t)output_u * v_order + j], u_control[j],
+			high_water))
+		    return false;
+	    } else {
+		for (int i = 0; i < u_order; ++i) {
+		    if (!brep_expansion_interval_from_interval(
+			    normalized_input[(size_t)i * v_order + j],
+			    source[i], high_water))
+			return false;
+		}
+		if (!brep_expansion_bezier_blossom(source, u_order,
+			u_minimum, u_maximum, output_u, u_control[j],
 			high_water))
 		    return false;
 	    }
-	    if (!brep_expansion_bezier_blossom(source, u_order, u_minimum,
-		    u_maximum, output_u, u_control[j], high_water))
-		return false;
 	}
 	for (int output_v = 0; output_v < v_order; ++output_v) {
 	    brep_expansion_interval restricted = {};
-	    if (!brep_expansion_bezier_blossom(u_control, v_order,
-		    v_minimum, v_maximum, output_v, restricted, high_water))
+	    if (complete_v) {
+		restricted = u_control[output_v];
+	    } else if (!brep_expansion_bezier_blossom(u_control, v_order,
+		    v_minimum, v_maximum, output_v, restricted, high_water)) {
 		return false;
+	    }
 	    brep_interval lower_bounds;
 	    brep_interval upper_bounds;
 	    if (!brep_expansion_bounds(restricted.minimum, lower_bounds) ||
