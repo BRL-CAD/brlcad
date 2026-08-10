@@ -594,6 +594,135 @@ exercise_planar_nesting_repair()
 }
 
 static bool
+exercise_cylinder_nesting_repair()
+{
+    const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, 5.0), 10.0);
+    std::unique_ptr<ON_Brep> brep(ON_BrepCylinder(cylinder, true, true));
+    if (!brep || !brep->IsValid() || !brep->IsSolid())
+	return false;
+    const ON_BrepFace *side = NULL;
+    for (int face_index = 0; face_index < brep->m_F.Count(); ++face_index) {
+	const ON_BrepFace &face = brep->m_F[face_index];
+	if (face.SurfaceOf() && face.SurfaceOf()->IsCylinder(NULL, 0.05)) {
+	    side = &face;
+	    break;
+	}
+    }
+    if (!side || !side->SurfaceOf())
+	return false;
+
+    const ON_Surface *surface = side->SurfaceOf();
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    const auto uv = [&](double u, double v) {
+	return std::make_pair(udom.ParameterAt(u), vdom.ParameterAt(v));
+    };
+    const std::pair<double, double> coordinates[8] = {
+	uv(0.22, 0.40), uv(0.28, 0.40), uv(0.28, 0.60),
+	uv(0.22, 0.60), uv(0.15, 0.20), uv(0.35, 0.20),
+	uv(0.35, 0.80), uv(0.15, 0.80)
+    };
+    std::vector<std::pair<double, double>> native_points(
+	coordinates, coordinates + 8);
+    const int outer_indices[5] = {0, 1, 2, 3, 0};
+    const int hole_indices[5] = {4, 5, 6, 7, 4};
+    std::vector<int> outer(outer_indices, outer_indices + 5);
+    std::vector<std::vector<int>> holes(1,
+	std::vector<int>(hole_indices, hole_indices + 5));
+    std::vector<const ON_3dPoint *> points_3d(8, NULL);
+    std::vector<cdt_topo_vertex_id> topology_vertices(8,
+	CDT_TOPOLOGY_ID_NONE);
+    cdt_face_chart chart;
+    if (!chart.build(*side, native_points, outer, holes,
+	    std::vector<int>(), std::vector<int>(), points_3d,
+	    topology_vertices) || chart.type() != CDT_FACE_CHART_CYLINDER ||
+	    chart.outer.size() != 4 || chart.holes.size() != 1 ||
+	    chart.holes[0].size() != 4 || chart.outer[0] < 4 ||
+	    chart.holes[0][0] >= 4) {
+	std::cerr << "cylinder outer/hole nesting was not repaired"
+	    << std::endl;
+	return false;
+    }
+
+    std::vector<point2d_t> chart_points(chart.points.size());
+    for (size_t i = 0; i < chart.points.size(); ++i)
+	V2SET(chart_points[i], chart.points[i].first, chart.points[i].second);
+    const int *hole_data[1] = {chart.holes[0].data()};
+    const size_t hole_counts[1] = {chart.holes[0].size()};
+    int *faces = NULL;
+    int face_count = 0;
+    struct bg_triangulation_report report = {0, -1, {0}};
+    const int status = bg_nested_poly_triangulate_strict(&faces,
+	&face_count, NULL, NULL, chart.outer.data(), chart.outer.size(),
+	hole_data, hole_counts, 1, NULL, 0, chart_points.data(),
+	chart_points.size(), &report);
+    bu_free(faces, "cylinder nesting repair triangles");
+    if (status != BRLCAD_OK || face_count <= 0) {
+	std::cerr << "repaired cylinder nesting did not triangulate: "
+	    << report.message << std::endl;
+	return false;
+    }
+    return true;
+}
+
+static bool
+exercise_curved_metric_nesting_repair()
+{
+    std::unique_ptr<ON_Brep> brep(new ON_Brep);
+    ON_NurbsSurface *surface = new ON_NurbsSurface(
+	3, false, 3, 3, 3, 3);
+    if (!surface->MakeClampedUniformKnotVector(0) ||
+	    !surface->MakeClampedUniformKnotVector(1)) {
+	delete surface;
+	return false;
+    }
+    for (int u = 0; u < 3; ++u) {
+	for (int v = 0; v < 3; ++v) {
+	    const double height = u == 1 && v == 1 ? 1.0 : 0.0;
+	    surface->SetCV(u, v, ON_3dPoint(u, v, height));
+	}
+    }
+    if (!surface->IsValid() || surface->IsPlanar(NULL, BN_TOL_DIST)) {
+	delete surface;
+	return false;
+    }
+    ON_BrepFace &face = brep->NewFace(brep->AddSurface(surface));
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+    const auto uv = [&](double u, double v) {
+	return std::make_pair(udom.ParameterAt(u), vdom.ParameterAt(v));
+    };
+    const std::pair<double, double> coordinates[8] = {
+	uv(0.40, 0.40), uv(0.60, 0.40), uv(0.60, 0.60),
+	uv(0.40, 0.60), uv(0.10, 0.10), uv(0.90, 0.10),
+	uv(0.90, 0.90), uv(0.10, 0.90)
+    };
+    std::vector<std::pair<double, double>> native_points(
+	coordinates, coordinates + 8);
+    const int outer_indices[5] = {0, 1, 2, 3, 0};
+    const int hole_indices[5] = {4, 5, 6, 7, 4};
+    std::vector<int> outer(outer_indices, outer_indices + 5);
+    std::vector<std::vector<int>> holes(1,
+	std::vector<int>(hole_indices, hole_indices + 5));
+    std::vector<const ON_3dPoint *> points_3d(8, NULL);
+    std::vector<cdt_topo_vertex_id> topology_vertices(8,
+	CDT_TOPOLOGY_ID_NONE);
+    cdt_face_chart chart;
+    if (!chart.build(face, native_points, outer, holes,
+	    std::vector<int>(), std::vector<int>(), points_3d,
+	    topology_vertices) ||
+	    chart.type() != CDT_FACE_CHART_SURFACE_METRIC ||
+	    chart.outer.size() != 4 || chart.holes.size() != 1 ||
+	    chart.holes[0].size() != 4 || chart.outer[0] < 4 ||
+	    chart.holes[0][0] >= 4) {
+	std::cerr << "curved metric outer/hole nesting was not repaired"
+	    << std::endl;
+	return false;
+    }
+    return true;
+}
+
+static bool
 exercise_toleranced_endpoint_sample_repair()
 {
     std::unique_ptr<ON_Brep> brep(new ON_Brep);
@@ -709,7 +838,11 @@ main()
 	return 9;
     if (!exercise_planar_nesting_repair())
 	return 10;
-    if (!exercise_toleranced_endpoint_sample_repair())
+    if (!exercise_cylinder_nesting_repair())
 	return 11;
+    if (!exercise_curved_metric_nesting_repair())
+	return 12;
+    if (!exercise_toleranced_endpoint_sample_repair())
+	return 13;
     return 0;
 }
