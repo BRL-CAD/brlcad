@@ -140,7 +140,8 @@ namespace brlcad {
 		std::size_t *candidate_count = NULL) const;
 
 	void BuildBBox();
-	bool prepTrims();
+	bool prepTrims(double within_distance_tol =
+		BREP_EDGE_MISS_TOLERANCE);
 
 	const std::vector<BBNode *> &get_children() const;
 
@@ -179,14 +180,12 @@ namespace brlcad {
 	 */
 	bool containsUV(const ON_2dPoint &uv) const;
 
-	void getTrimsAbove(const ON_2dPoint &uv, std::list<const BRNode *> &out_leaves) const;
 	const BBNode *closer(const ON_3dPoint &pt, const BBNode *left, const BBNode *right) const;
 
 	struct Stl : public PooledObject<Stl> {
-	Stl() : m_children(), m_trims_above() {}
+	Stl() : m_children() {}
 
 	    std::vector<BBNode *> m_children;
-	    std::list<const BRNode *> m_trims_above;
 	} * const m_stl;
     };
 
