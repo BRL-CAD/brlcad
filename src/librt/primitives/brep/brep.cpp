@@ -8902,16 +8902,18 @@ brep_fold_regular_graph_contract(
     const int order[2], int regular_direction, bool &excluded,
     brep_interval *regular_range,
     size_t &contractions, size_t &high_water,
-    struct rt_brep_shot_trace *trace)
+    struct rt_brep_shot_trace *trace, bool allow_exact = true,
+    int maximum_iterations = 4)
 {
     if (!current || !order ||
-	    (regular_direction != 0 && regular_direction != 1))
+	    (regular_direction != 0 && regular_direction != 1) ||
+	    maximum_iterations < 1 || maximum_iterations > 4)
 	return false;
     excluded = false;
     if (regular_range)
 	*regular_range = {0.0, 1.0};
     const size_t count = (size_t)order[0] * order[1];
-    for (int iteration = 0; iteration < 4; ++iteration) {
+    for (int iteration = 0; iteration < maximum_iterations; ++iteration) {
 	if (brep_interval_coefficient_hull_excluded(current[0], count)) {
 	    excluded = true;
 	    return true;
@@ -8929,6 +8931,8 @@ brep_fold_regular_graph_contract(
 	    return true;
 	}
 	if (status != BREP_FOLD_CONTRACT_RESTRICTED) {
+	    if (!allow_exact)
+		break;
 	    if (trace)
 		trace->surface_fold_exact_contract_fallbacks++;
 	    status = brep_fold_regular_graph_step(current, order,
@@ -9105,57 +9109,120 @@ brep_fold_graph_determinant_signed(
 	double maximum[2] = {1.0, 1.0};
 	minimum[weak_direction] = box.minimum;
 	maximum[weak_direction] = box.maximum;
-	brep_interval current[2][BREP_DIRECT_BEZIER_MAX_CVS];
-	for (int equation = 0; equation < 2; ++equation) {
-	    if (!brep_expansion_surface_restrict(input[equation], order[0],
+	int box_sign = 0;
+	trace->surface_fold_corridor_graph_interval_attempts++;
+	brep_interval ordinary[2][BREP_DIRECT_BEZIER_MAX_CVS];
+	bool ordinary_available = true;
+	for (int equation = 0; ordinary_available && equation < 2; ++equation) {
+	    if (!brep_interval_surface_restrict(input[equation], order[0],
 		    order[1], minimum[0], maximum[0], minimum[1], maximum[1],
-		    true, current[equation], high_water)) {
-		trace->surface_fold_corridor_graph_restriction_failures++;
-		return false;
+		    ordinary[equation])) {
+		ordinary_available = false;
+		break;
 	    }
 	}
-	brep_interval determinant[RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
-	int determinant_order[2];
-	if (!brep_interval_surface_determinant_coefficients(current, order[0],
-		order[1], determinant, determinant_order)) {
-	    trace->surface_fold_corridor_graph_determinant_failures++;
-	    return false;
-	}
-	int box_sign = 0;
-	if (!brep_interval_determinant_sign_from_coefficients(determinant,
-		determinant_order, box_sign)) {
-	    trace->surface_fold_corridor_graph_determinant_failures++;
-	    return false;
-	}
-	if (!box_sign) {
+	brep_interval ordinary_determinant[
+	    RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+	int ordinary_determinant_order[2];
+	if (ordinary_available &&
+		!brep_interval_surface_determinant_coefficients(ordinary,
+		    order[0], order[1], ordinary_determinant,
+		    ordinary_determinant_order))
+	    ordinary_available = false;
+	if (ordinary_available &&
+		!brep_interval_determinant_sign_from_coefficients(
+		    ordinary_determinant, ordinary_determinant_order, box_sign))
+	    ordinary_available = false;
+	if (ordinary_available && !box_sign) {
 	    bool graph_excluded = false;
 	    brep_interval regular_range;
-	    if (!brep_fold_regular_graph_contract(current, order,
-		    regular_direction, graph_excluded, &regular_range,
-		    trace->surface_fold_corridor_graph_contractions,
-		    high_water, trace))
-		return false;
-	    if (graph_excluded)
+	    size_t ordinary_contractions = 0;
+	    size_t ordinary_high_water = 0;
+	    /* This is only a screen.  Exact fallback rebuilds the slab from
+	     * input, so bound speculative ordinary contraction to one step. */
+	    ordinary_available = brep_fold_regular_graph_contract(ordinary,
+		order, regular_direction, graph_excluded, &regular_range,
+		ordinary_contractions, ordinary_high_water, NULL, false, 1);
+	    trace->surface_fold_corridor_graph_interval_contractions +=
+		ordinary_contractions;
+	    if (ordinary_available && graph_excluded) {
+		trace->surface_fold_corridor_graph_interval_excluded++;
 		continue;
-	    double contracted_minimum[2] = {0.0, 0.0};
-	    double contracted_maximum[2] = {1.0, 1.0};
-	    contracted_minimum[regular_direction] = regular_range.minimum;
-	    contracted_maximum[regular_direction] = regular_range.maximum;
-	    brep_interval restricted_determinant[
+	    }
+	    if (ordinary_available) {
+		double contracted_minimum[2] = {0.0, 0.0};
+		double contracted_maximum[2] = {1.0, 1.0};
+		contracted_minimum[regular_direction] = regular_range.minimum;
+		contracted_maximum[regular_direction] = regular_range.maximum;
+		brep_interval restricted_determinant[
+		    RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+		if (!brep_interval_determinant_surface_restrict(
+			ordinary_determinant, ordinary_determinant_order[0],
+			ordinary_determinant_order[1], contracted_minimum[0],
+			contracted_maximum[0], contracted_minimum[1],
+			contracted_maximum[1], restricted_determinant) ||
+			!brep_interval_determinant_sign_from_coefficients(
+			restricted_determinant, ordinary_determinant_order,
+			box_sign))
+		    ordinary_available = false;
+	    }
+	}
+	if (ordinary_available && box_sign)
+	    trace->surface_fold_corridor_graph_interval_signed++;
+	if (!box_sign) {
+	    trace->surface_fold_corridor_graph_exact_fallbacks++;
+	    brep_interval current[2][BREP_DIRECT_BEZIER_MAX_CVS];
+	    for (int equation = 0; equation < 2; ++equation) {
+		if (!brep_expansion_surface_restrict(input[equation], order[0],
+			order[1], minimum[0], maximum[0], minimum[1],
+			maximum[1], true, current[equation], high_water)) {
+		    trace->surface_fold_corridor_graph_restriction_failures++;
+		    return false;
+		}
+	    }
+	    brep_interval determinant[
 		RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
-	    if (!brep_interval_determinant_surface_restrict(determinant,
-		    determinant_order[0], determinant_order[1],
-		    contracted_minimum[0], contracted_maximum[0],
-		    contracted_minimum[1], contracted_maximum[1],
-		    restricted_determinant)) {
-		trace->surface_fold_corridor_graph_restriction_failures++;
+	    int determinant_order[2];
+	    if (!brep_interval_surface_determinant_coefficients(current,
+		    order[0], order[1], determinant, determinant_order)) {
 		trace->surface_fold_corridor_graph_determinant_failures++;
 		return false;
 	    }
-	    if (!brep_interval_determinant_sign_from_coefficients(
-		    restricted_determinant, determinant_order, box_sign)) {
+	    if (!brep_interval_determinant_sign_from_coefficients(determinant,
+		    determinant_order, box_sign)) {
 		trace->surface_fold_corridor_graph_determinant_failures++;
 		return false;
+	    }
+	    if (!box_sign) {
+		bool graph_excluded = false;
+		brep_interval regular_range;
+		if (!brep_fold_regular_graph_contract(current, order,
+			regular_direction, graph_excluded, &regular_range,
+			trace->surface_fold_corridor_graph_contractions,
+			high_water, trace))
+		    return false;
+		if (graph_excluded)
+		    continue;
+		double contracted_minimum[2] = {0.0, 0.0};
+		double contracted_maximum[2] = {1.0, 1.0};
+		contracted_minimum[regular_direction] = regular_range.minimum;
+		contracted_maximum[regular_direction] = regular_range.maximum;
+		brep_interval restricted_determinant[
+		    RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+		if (!brep_interval_determinant_surface_restrict(determinant,
+			determinant_order[0], determinant_order[1],
+			contracted_minimum[0], contracted_maximum[0],
+			contracted_minimum[1], contracted_maximum[1],
+			restricted_determinant)) {
+		    trace->surface_fold_corridor_graph_restriction_failures++;
+		    trace->surface_fold_corridor_graph_determinant_failures++;
+		    return false;
+		}
+		if (!brep_interval_determinant_sign_from_coefficients(
+			restricted_determinant, determinant_order, box_sign)) {
+		    trace->surface_fold_corridor_graph_determinant_failures++;
+		    return false;
+		}
 	    }
 	}
 	if (box_sign) {
@@ -9457,6 +9524,16 @@ _rt_brep_fold_graph_test(const fastf_t *first_minimum,
     result->graph_boxes = trace.surface_fold_corridor_graph_boxes;
     result->graph_contractions =
 	trace.surface_fold_corridor_graph_contractions;
+    result->graph_interval_attempts =
+	trace.surface_fold_corridor_graph_interval_attempts;
+    result->graph_interval_signed =
+	trace.surface_fold_corridor_graph_interval_signed;
+    result->graph_interval_excluded =
+	trace.surface_fold_corridor_graph_interval_excluded;
+    result->graph_interval_contractions =
+	trace.surface_fold_corridor_graph_interval_contractions;
+    result->graph_exact_fallbacks =
+	trace.surface_fold_corridor_graph_exact_fallbacks;
     result->graph_restriction_failures =
 	trace.surface_fold_corridor_graph_restriction_failures;
     result->graph_determinant_failures =
