@@ -800,9 +800,9 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
     }
 
     /* Even when the caller does not request a normal tolerance, constrain a
-     * shared segment to at most 30 degrees of endpoint-normal change.  This
+     * shared segment to at most 22.5 degrees of endpoint-normal change.  This
      * is an orientation-safety bound; retain any stricter caller limit. */
-    const double orientation_cos = cos(ON_PI / 6.0);
+    const double orientation_cos = cos(ON_PI / 8.0);
     const double normal_cos = (s_cdt->cos_within_ang > -1.0 +
 	ON_ZERO_TOLERANCE) ?
 	std::max(s_cdt->cos_within_ang, orientation_cos) : orientation_cos;
