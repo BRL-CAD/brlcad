@@ -584,17 +584,58 @@ shape_refinement_spacing(double *spacing, double absmin, double cp_len)
 }
 
 static bool
+split_parameter_interior(double start, double end, double candidate)
+{
+    if (!std::isfinite(start) || !std::isfinite(end) ||
+	    !std::isfinite(candidate))
+	return false;
+    const double lower = std::min(start, end);
+    const double upper = std::max(start, end);
+    return candidate > lower && candidate < upper;
+}
+
+static bool
 edge_split_midpoint(double start, double end, double *midpoint)
 {
     if (!midpoint || !std::isfinite(start) || !std::isfinite(end))
 	return false;
     const double candidate = start + 0.5 * (end - start);
-    const double lower = std::min(start, end);
-    const double upper = std::max(start, end);
-    if (!(candidate > lower && candidate < upper))
+    if (!split_parameter_interior(start, end, candidate))
 	return false;
     *midpoint = candidate;
     return true;
+}
+
+static bool
+split_point_progress(const ON_3dPoint &start, const ON_3dPoint &midpoint,
+	const ON_3dPoint &end)
+{
+    if (!start.IsValid() || !midpoint.IsValid() || !end.IsValid())
+	return false;
+    const double scale = std::max(1.0, std::max({
+	std::fabs(start.x), std::fabs(start.y), std::fabs(start.z),
+	std::fabs(midpoint.x), std::fabs(midpoint.y),
+	std::fabs(midpoint.z), std::fabs(end.x), std::fabs(end.y),
+	std::fabs(end.z)}));
+    const double tolerance = 64.0 *
+	std::numeric_limits<double>::epsilon() * scale;
+    return midpoint.DistanceTo(start) > tolerance &&
+	midpoint.DistanceTo(end) > tolerance;
+}
+
+static bool
+split_point_progress(const ON_2dPoint &start, const ON_2dPoint &midpoint,
+	const ON_2dPoint &end)
+{
+    if (!start.IsValid() || !midpoint.IsValid() || !end.IsValid())
+	return false;
+    const double scale = std::max(1.0, std::max({
+	std::fabs(start.x), std::fabs(start.y), std::fabs(midpoint.x),
+	std::fabs(midpoint.y), std::fabs(end.x), std::fabs(end.y)}));
+    const double tolerance = 64.0 *
+	std::numeric_limits<double>::epsilon() * scale;
+    return midpoint.DistanceTo(start) > tolerance &&
+	midpoint.DistanceTo(end) > tolerance;
 }
 
 static bool
@@ -694,7 +735,30 @@ cdt_test_linear_edge_spacing(void)
 	std::fabs(spacing - 1.0) > ON_ZERO_TOLERANCE)
 	return 10;
 
-    return edge_spacing_floor(&spacing, -1.0, 0.0) ? 11 : 0;
+    if (edge_spacing_floor(&spacing, -1.0, 0.0))
+	return 11;
+
+    if (!split_parameter_interior(0.0, 10.0, 5.0) ||
+	    !split_parameter_interior(10.0, 0.0, 5.0) ||
+	    split_parameter_interior(0.0, 10.0, 0.0) ||
+	    split_parameter_interior(0.0, 10.0, 10.0))
+	return 12;
+
+    const ON_3dPoint start_3d(1.0, 2.0, 3.0);
+    const ON_3dPoint middle_3d(2.0, 2.0, 3.0);
+    const ON_3dPoint end_3d(3.0, 2.0, 3.0);
+    if (!split_point_progress(start_3d, middle_3d, end_3d) ||
+	    split_point_progress(start_3d, start_3d, end_3d))
+	return 13;
+
+    const ON_2dPoint start_2d(1.0, 2.0);
+    const ON_2dPoint middle_2d(2.0, 2.0);
+    const ON_2dPoint end_2d(3.0, 2.0);
+    if (!split_point_progress(start_2d, middle_2d, end_2d) ||
+	    split_point_progress(start_2d, end_2d, end_2d))
+	return 14;
+
+    return 0;
 }
 
 static bool
@@ -864,6 +928,9 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
 	edge_mid_3d = bseg->nc->PointAt(emid);
 	edge_mid_tan = ON_3dVector::UnsetVector;
     }
+    if (!split_point_progress(*bseg->e_start, edge_mid_3d,
+	    *bseg->e_end))
+	return nedges;
 
     // Unless we're forcing a split this is the point at which we do tolerance
     // based testing to determine whether to proceed with the split or halt.
@@ -879,6 +946,23 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
     ON_2dPoint trim1_mid_2d, trim2_mid_2d;
     trim1_mid_2d = get_trim_midpt(&t1mid, s_cdt, bseg->tseg1, edge_mid_3d, elen, edge.m_tolerance);
     trim2_mid_2d = get_trim_midpt(&t2mid, s_cdt, bseg->tseg2, edge_mid_3d, elen, edge.m_tolerance);
+
+    /* A closest-point correction may land on a child trim endpoint when an
+     * edge and pullback disagree.  Accepting that result creates a zero-span
+     * child and repeatedly inserts the same boundary coordinate.  Require
+     * parameter and geometric progress on both face representations before
+     * mutating either mesh. */
+    const ON_2dPoint trim1_start = trim1->PointAt(bseg->tseg1->trim_start);
+    const ON_2dPoint trim1_end = trim1->PointAt(bseg->tseg1->trim_end);
+    const ON_2dPoint trim2_start = trim2->PointAt(bseg->tseg2->trim_start);
+    const ON_2dPoint trim2_end = trim2->PointAt(bseg->tseg2->trim_end);
+    if (!split_parameter_interior(bseg->tseg1->trim_start,
+	    bseg->tseg1->trim_end, t1mid) ||
+	    !split_parameter_interior(bseg->tseg2->trim_start,
+	    bseg->tseg2->trim_end, t2mid) ||
+	    !split_point_progress(trim1_start, trim1_mid_2d, trim1_end) ||
+	    !split_point_progress(trim2_start, trim2_mid_2d, trim2_end))
+	return nedges;
 
     /* UV samples must remain on their trims so adjacent faces retain exactly
      * the same boundary subdivision.  The shared master-edge point remains
@@ -2054,8 +2138,12 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 				current_trims.push_back(ce);
 			    }
 			} else {
-			    // This is probably fatal...
-			    std::cerr << "Forced edge split failed???\n";
+			    /* Proximity refinement is heuristic.  If either the
+			     * master curve or a pullback cannot make representable
+			     * progress, retain the current segment and do not request
+			     * it again on a later proximity pass. */
+			    b->tseg1->split_status = 0;
+			    b->tseg2->split_status = 0;
 			    current_trims.push_back(pe);
 			}
 		    } else if (pe->split_status == 1) {
