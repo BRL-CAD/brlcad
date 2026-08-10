@@ -7579,15 +7579,72 @@ Compact CurveTree ownership and cache layout (Finding 87):
   native-curve solving.
 
   SurfaceTree storage is now the next major prep-memory target.  The deep
-  10057 run retains 618,445 BBNodes; every BBNode still uses process-lifetime
-  pooled allocation and a separate holder.  Unlike CurveTree, its hierarchy
-  is used for ray traversal, so the next design must pack child relationships
-  into compact immutable/indexed nodes or transfer a per-prep arena into
-  `brep_specific`.  Structural seam/knot splits, parallel ownership, fresh/
-  cached identity, and allocation-free shooting remain mandatory.  Whole-
-  model OpenNURBS topology, immutable span sharing, vector capacity, cache
-  streaming, and smaller per-object savings must also be attributed because
-  large top-level STEP assemblies will combine all costs.
+  10057 run retains 618,445 BBNodes.  At this checkpoint every BBNode still
+  uses process-lifetime pooled allocation and a separate holder; Finding 88
+  removes the holder while preserving the tree.  The subsequent design must
+  pack child relationships into compact immutable/indexed nodes or transfer a
+  per-prep arena into `brep_specific`.  Structural seam/knot splits, parallel
+  ownership, fresh/cache identity, and allocation-free shooting remain
+  mandatory.  Whole-model OpenNURBS topology, immutable span sharing, vector
+  capacity, cache streaming, and smaller per-object savings must also be
+  attributed because large top-level STEP assemblies will combine all costs.
+
+
+Compact BBNode child ownership and all-span scaling (Finding 88):
+
+  The first SurfaceTree memory step replaces every separately allocated,
+  pooled 24-byte `BBNode::Stl` vector holder with a directly owned child-buffer
+  pointer and 32-bit count/capacity.  The buffer supports two/four-way surface
+  nodes and the many-face object root, preserves insertion and traversal order,
+  and is normally freed.  The cache's recursive child-count/preorder format is
+  unchanged.  `sizeof(BBNode)` rises from 152 to 160 bytes, but eliminating the
+  holder reduces every childless leaf from 176 to 160 retained bytes before
+  allocator metadata and removes one allocation from every internal node.
+  `BBNode` itself remains on the unreclaimed generic pool pending a per-prep
+  arena or immutable indexed/build-then-pack representation.
+
+  Recurta `10057.g/id2_item.s` retains identical populations at both depths:
+  618,445 nodes/315,415 leaves at depth eight, 12,107 nodes/6,603 leaves at
+  depth three, and 482,684 curve leaves.  Its exact 30-ray prepared-and-legacy
+  feature comparison passes with no depth, reversal, disposition, partition,
+  or face-owner difference and the unchanged
+  `2.9734749773524527e-8` maximum delta.  Peak falls from 372,117,504 to
+  363,761,664 bytes, an 8,355,840-byte (7.97-MiB, 2.25-percent) incremental
+  reduction.
+
+  The 5,771-face `10088.g/id2_item.s` depth-eight prep succeeds in 17.24
+  seconds at 236,576,768 bytes.  Its complete 30-ray legacy-only comparison
+  passes with 96,787/12,387 deep/shallow nodes, 52,213/9,373 leaves, zero
+  invalid rays, zero partition or reversal differences, and the unchanged
+  `6.6577683810464805e-8` maximum delta; peak is 281,817,088 bytes.  Cache,
+  trim-classifier, cleanup, endpoint, and the complete 416-ray seam gate also
+  pass.  The seam gate takes 229.89 seconds.  Rebuilt ASan/UBSan serial and
+  parallel cache destruction plus cleanup pass 3/3 with leak scanning disabled
+  for the established host-runtime limitation and no sanitizer diagnostic.
+
+  The seam time is not 416 ordinary rays through one prepared solid.  The
+  bowed-Cobb portion builds 16 distorted variants and performs two BREP preps
+  per variant.  Each of its 416 matrix positions runs one implicit shot, two
+  production BREP shots for determinism, and one instrumented BREP trace: 1,664
+  calls, 1,248 of them BREP.  The trace itself runs prepared certification and
+  the legacy path, observes all 12 manifold edges, and records adaptive gap,
+  correspondence, trim, local-root, closure, and continuation evidence.  The
+  shard also runs thirteen other seam/vertex/contact/defect corpora.  Its Cobb
+  geometry has only six faces/spans, so this is not 10088's missing span BVH.
+  Add an already-prepared non-trace throughput fixture; do not quote the proof
+  matrix wall time as production ray latency.
+
+  A full prepared-and-legacy 10088 audit was stopped after more than ten
+  minutes.  Selected axis pair zero alone exceeded a two-minute bound, while
+  its legacy-only form completed correctly and reported only 13/19 intersected
+  leaves and 26/38 solver calls at shallow/deep depth.  The cost is the
+  independent prepared path: `brep_trace_surface_spans` scans every algebraic
+  span in all 5,771 faces and interval-isolates every coefficient-hull
+  candidate without using the BBNode hierarchy.  This confirms the planned
+  conservative object/face/span BVH as a high-value performance requirement.
+  Keep prep-memory benchmarks and hierarchy qualification separate from that
+  diagnostic all-span cost; use bounded selected prepared traces until an
+  object-level span index exists.
 
 
 NEXT ACTIONS
@@ -7638,24 +7695,30 @@ D. Extend prepared authority only with separate complete proofs for the
    topology-boundary events, contact-only rays, curved vertex links, and
    many-to-many edge clusters.  Preserve tolerance-healed seam behavior and
    the whole-ray fallback; never reinterpret unresolved as miss.
-E. Continue the prep-memory audit from the qualified compact CurveTree
-   checkpoint.  Curve storage is now flat, explicitly owned, and cache version
-   2; 10057's two-depth peak is down about 39 percent without changing its
-   482,684 leaf intervals.  Next attribute and compact SurfaceTree/BBNode
-   storage, then per-face NURBS forms, OpenNURBS topology, immutable span data,
-   vector capacity, and cache streaming.  Do not restore shared mutable
-   surface state.  Compare per-face arenas, compact indexed runtime nodes, and
-   build-then-pack designs on 10007/10057/10062/10088 and larger top-level
-   corpus objects.  Preserve seam/knot structural splits, safe parallel
-   ownership, fresh/cache identity, and allocation-free ray shooting.
+E. Continue the prep-memory audit from the qualified compact CurveTree and
+   direct BBNode-child checkpoints.  Curve storage is flat, explicitly owned,
+   and cache version 2; 10057's two-depth peak is down about 39 percent from
+   the pre-compaction baseline, then another 7.97 MiB after removing each
+   surface node's pooled child holder.  Next compare per-face arenas, compact
+   indexed runtime nodes, and build-then-pack designs, then attribute per-face
+   NURBS forms, OpenNURBS topology, immutable span data, vector capacity, and
+   cache streaming.  Do not restore shared mutable surface state.  Exercise
+   10007/10057/10062/10088 and larger top-level corpus objects while preserving
+   seam/knot structural splits, safe parallel ownership, fresh/cache identity,
+   and allocation-free ray shooting.
 F. Once the memory representation and density/default decision are qualified,
    begin the plan's certified-pipeline performance phase.  Measure normal
    production separately from trace mode, because trace deliberately reruns
-   the legacy path after a prepared selection.  Profile phase costs first,
-   then prioritize the
-   object-level face/span BVH, compact immutable span/trim arrays,
+   the legacy path after a prepared selection.  The unindexed prepared span
+   scan already makes one 10088 axis pair exceed two minutes while legacy-only
+   tracing is bounded, so prioritize the object-level face/span BVH after the
+   correctness/memory checkpoints.  Then address compact immutable span/trim
+   arrays,
    conservative SIMD coefficient work, and a real batched vshot.  Optimize
-   Newton/OpenNURBS evaluation only if profiles identify it as hot.
+   Newton/OpenNURBS evaluation only if profiles identify it as hot.  Establish
+   already-prepared, non-trace Cobb and imported-object rays/second before and
+   after each performance change so exhaustive proof-corpus setup is not
+   mistaken for production latency.
 
 The numbered items below remain the detailed longer-term backlog.  The
 current ordering above supersedes their older references to dense-tree

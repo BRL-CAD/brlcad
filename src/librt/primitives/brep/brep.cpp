@@ -2307,14 +2307,15 @@ brep_accumulate_surface_tree_stats(struct brep_specific *bs,
     bs->surface_tree_nodes++;
     bs->surface_tree_maximum_depth = std::max(
 	bs->surface_tree_maximum_depth, depth);
-    const std::vector<BBNode *> &children = node->get_children();
-    if (children.empty()) {
+    const std::size_t child_count = node->childCount();
+    if (!child_count) {
 	bs->surface_tree_leaves++;
 	return;
     }
-    for (std::vector<BBNode *>::const_iterator child = children.begin();
-	    child != children.end(); ++child)
-	brep_accumulate_surface_tree_stats(bs, *child, depth + 1);
+    for (std::size_t child_index = 0; child_index < child_count;
+	    ++child_index)
+	brep_accumulate_surface_tree_stats(bs, node->child(child_index),
+	    depth + 1);
 }
 
 
@@ -2328,10 +2329,10 @@ brep_collect_bvh_stats(struct brep_specific *bs)
     bs->surface_tree_leaves = 0;
     bs->curve_tree_leaves = 0;
     if (bs->bvh) {
-	const std::vector<BBNode *> &roots = bs->bvh->get_children();
-	for (std::vector<BBNode *>::const_iterator root = roots.begin();
-		root != roots.end(); ++root)
-	    brep_accumulate_surface_tree_stats(bs, *root, 0);
+	for (std::size_t root_index = 0;
+		root_index < bs->bvh->childCount(); ++root_index)
+	    brep_accumulate_surface_tree_stats(bs,
+		bs->bvh->child(root_index), 0);
     }
     for (std::vector<const CurveTree *>::const_iterator tree =
 	    bs->ctrees.begin(); tree != bs->ctrees.end(); ++tree) {
@@ -21916,9 +21917,10 @@ plot_BBNode(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, cons
 	    return;
 	}
     } else {
-	for (std::vector<BBNode*>::const_iterator childnode = node->get_children().begin(); childnode != node->get_children().end(); ++childnode) {
-	    plot_BBNode(vlfree, vhead, st, *childnode, isocurveres, gridres);
-	}
+	for (std::size_t child_index = 0; child_index < node->childCount();
+		++child_index)
+	    plot_BBNode(vlfree, vhead, st, node->child(child_index),
+		isocurveres, gridres);
     }
 }
 
@@ -23177,11 +23179,13 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 	const brep_specific &specific = *static_cast<brep_specific *>(stp->st_specific);
 
 	Serializer serializer;
-	serializer.write_uint32(specific.bvh->get_children().size());
+	serializer.write_uint32(specific.bvh->childCount());
 
-	for (std::vector<BBNode *>::const_iterator it = specific.bvh->get_children().begin(); it != specific.bvh->get_children().end(); ++it) {
-	    (*it)->m_ctree->serialize(serializer);
-	    (*it)->serialize(serializer);
+	for (std::size_t child_index = 0;
+		child_index < specific.bvh->childCount(); ++child_index) {
+	    const BBNode *child = specific.bvh->child(child_index);
+	    child->m_ctree->serialize(serializer);
+	    child->serialize(serializer);
 	}
 
 	*version = current_version;

@@ -31,8 +31,8 @@
 
 #ifdef __cplusplus
 extern "C++" {
+#  include <cstdint>
 #  include <list>
-#  include <vector>
 }
 #endif
 
@@ -150,7 +150,8 @@ namespace brlcad {
 	bool prepTrims(double within_distance_tol =
 		BREP_EDGE_MISS_TOLERANCE);
 
-	const std::vector<BBNode *> &get_children() const;
+	std::size_t childCount() const;
+	BBNode *child(std::size_t index) const;
 
 	/** Bounding Box */
 	ON_BoundingBox m_node;
@@ -179,7 +180,6 @@ namespace brlcad {
 	BBNode(const BBNode &source);
 	BBNode &operator=(const BBNode &source);
 
-	void removeChild(BBNode *child);
 	bool intersectedBy(const ON_Ray &ray, double *tnear = NULL, double *tfar = NULL) const;
 
 	/** Report if a given uv point is within the uv boundaries defined
@@ -189,35 +189,10 @@ namespace brlcad {
 
 	const BBNode *closer(const ON_3dPoint &pt, const BBNode *left, const BBNode *right) const;
 
-	struct Stl : public PooledObject<Stl> {
-	Stl() : m_children() {}
-
-	    std::vector<BBNode *> m_children;
-	} * const m_stl;
+	BBNode **m_children;
+	uint32_t m_child_count;
+	uint32_t m_child_capacity;
     };
-
-    inline void
-    BBNode::addChild(BBNode *child)
-    {
-	if (LIKELY(child != NULL)) {
-	    m_stl->m_children.push_back(child);
-	}
-    }
-
-    inline void
-    BBNode::removeChild(BBNode *child)
-    {
-	std::vector<BBNode *>::iterator i;
-	for (i = m_stl->m_children.begin(); i != m_stl->m_children.end();) {
-	    if (*i == child) {
-		delete *i;
-		i = m_stl->m_children.erase(i);
-	    } else {
-		++i;
-	    }
-	}
-    }
-
 
     inline const ON_BrepFace &
     BBNode::get_face() const
@@ -225,16 +200,22 @@ namespace brlcad {
 	return *m_ctree->m_face;
     }
 
-    inline const std::vector<BBNode *> &
-    BBNode::get_children() const
+    inline std::size_t
+    BBNode::childCount() const
     {
-	return m_stl->m_children;
+	return m_child_count;
+    }
+
+    inline BBNode *
+    BBNode::child(std::size_t index) const
+    {
+	return index < m_child_count ? m_children[index] : NULL;
     }
 
     inline bool
     BBNode::isLeaf() const
     {
-	return m_stl->m_children.empty();
+	return m_child_count == 0;
     }
 
     inline void

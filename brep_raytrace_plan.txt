@@ -123,9 +123,10 @@ and the 416-ray seam suite.  All pass.  Leaf counts and exact curve intervals
 are unchanged.
 
 This does not complete prep-memory work.  The next high-value structure is the
-SurfaceTree.  A depth-eight 10057 prep retains 618,445 `BBNode`s, and each node
-still uses the process-lifetime pool plus a separate child-vector holder.
-Surface nodes require hierarchical traversal, so their compact design is not
+SurfaceTree.  A depth-eight 10057 prep retains 618,445 `BBNode`s.  The first
+subsequent step, recorded below, removes each node's separate child-vector
+holder, but `BBNode` itself still uses the process-lifetime pool.  Surface
+nodes require hierarchical traversal, so their final compact design is not
 identical to the flat CurveTree solution.  Candidate directions are a
 per-prep/per-face arena with explicit transfer into `brep_specific`, a compact
 index-based node array, or a build hierarchy that is packed into immutable
@@ -135,6 +136,85 @@ ownership, and allocation-free shooting.  Smaller wins—shared immutable span
 metadata, topology/reference compaction, cache streaming, and vector capacity
 accounting—remain worthwhile because multi-gigabyte top-level STEP objects
 will combine all of these costs.
+
+
+IMPLEMENTATION CHECKPOINT: COMPACT SURFACE CHILD STORAGE (2026-08-10)
+--------------------------------------------------------------------
+
+The first SurfaceTree representation step removes an allocation layer without
+changing any surface bounds, UV domains, seed estimates, normals, trim flags,
+tree topology, or traversal order.  A `BBNode` formerly held a pointer to a
+separately allocated 24-byte pooled STL holder, which in turn held a
+`std::vector<BBNode *>`.  Leaves paid for the empty holder even though they had
+no children.  Internal nodes and the object-level root paid for the holder and
+the vector's separate pointer buffer.  Since the holder inherited
+`PooledObject`, its storage was not reclaimed by the current `bu_heap_put`.
+
+`BBNode` now stores a child-buffer pointer and checked 32-bit count/capacity
+directly.  The buffer retains vector-style geometric growth, supports both the
+two/four-way surface splits and a top-level root with thousands of face roots,
+and is released with the node.  Cache serialization remains byte-compatible:
+it still records the same child count followed by the same preorder node
+records.  Cache reconstruction uses the same `addChild` path.  Repository
+consumers now traverse through bounded `childCount()` and `child()` accessors.
+
+The old `BBNode` itself was 152 bytes and required the separate 24-byte holder,
+or 176 bytes before any child-pointer buffer or allocator metadata.  The new
+node is 160 bytes including its child pointer, count, and capacity.  Every leaf
+therefore saves 16 retained bytes before allocator overhead, and every
+internal node also removes one allocation.  This is intentionally an
+incremental, low-risk win; the node object remains `PooledObject<BBNode>` and
+still needs a per-prep arena, indexed array, or build-then-pack replacement to
+make complete-tree lifetime reclamation possible.
+
+The exact Recurta `10057.g/id2_item.s` two-depth audit retains the same 618,445
+deep-tree nodes, 315,415 deep leaves, 12,107 shallow-tree nodes, 6,603 shallow
+leaves, and 482,684 curve leaves.  All 30 axis/feature rays pass with no depth,
+reversal, disposition, partition, or face-owner difference; maximum endpoint
+delta remains `2.9734749773524527e-8`.  Peak RSS falls from 372,117,504 to
+363,761,664 bytes, a reduction of 8,355,840 bytes (7.97 MiB, 2.25 percent) from
+this child-storage change alone.
+
+The 5,771-face `10088.g/id2_item.s` scale check separates the changed legacy
+hierarchy from the experimental prepared solver.  Depth-eight prep succeeds
+in 17.24 seconds at a 236,576,768-byte process peak.  The full 30-ray
+legacy-only depth comparison passes with 96,787/12,387 deep/shallow nodes,
+52,213/9,373 leaves, zero invalid rays, zero partition or reversal differences,
+and the unchanged `6.6577683810464805e-8` maximum endpoint delta.  It peaks at
+281,817,088 bytes.  Serial/parallel cache reloads and focused trim, cleanup,
+and endpoint tests also pass.  The 416-ray seam shard passes in 229.89 seconds,
+and ASan/UBSan cache destruction plus focused cleanup pass without a diagnostic.
+
+The seam wall time is not 416 ordinary production shots through one prepared
+solid.  Its bowed-Cobb matrix builds 16 distorted variants and performs two
+BREP preps per variant.  At each of 416 matrix positions it shoots an implicit
+oracle once, the BREP twice for determinism, and a fully instrumented BREP
+trace once: 1,664 calls, including 1,248 BREP shots.  The trace call executes
+both prepared certification and legacy solving, evaluates all 12 manifold
+edges, and records adaptive gap, correspondence, trim, local-root, closure,
+and continuation evidence.  The `--seam-only` shard also runs thirteen other
+seam, vertex, contact, non-isoparametric, and defect checks.  Its primary Cobb
+objects have only six faces/spans, so this wall time is not the 10088 all-face
+index problem.  It is correctness-proof workload plus repeated prep.  It must
+not substitute for a throughput benchmark that excludes prep and trace,
+reuses one prepared object, and reports ordinary production rays per second.
+
+This run exposed a separate performance issue that must not be misattributed
+to SurfaceTree storage.  The complete prepared-and-legacy 10088 audit was
+stopped after more than ten minutes, and even selected axis pair zero exceeded
+a two-minute bound.  The same pair in legacy-only mode completed correctly;
+the complete 30-ray legacy-only run was also bounded and correct.  Inspection
+shows that the prepared path calls `brep_trace_surface_spans`, which scans
+every prepared span of all 5,771 faces and interval-isolates each ray-plane
+coefficient-hull candidate before whole-ray certification can reject or
+publish the result.  It does not use the BBNode hierarchy.  A face/span BVH or
+equivalent conservative object-level index is therefore a concrete later
+performance requirement, not merely a speculative optimization.  Until that
+index exists, use prep-only/SurfaceTree-only measurements for representation
+work and legacy-only rays for direct hierarchy qualification; reserve full
+prepared trace mode for targeted certificate tests and bounded samples.  Add
+an already-prepared, non-trace Cobb and imported-object throughput fixture so
+production shot cost remains visible independently of these proof matrices.
 
 
 IMPLEMENTATION CHECKPOINT: COPLANAR EVENT AUTHORITY (2026-08-09)
