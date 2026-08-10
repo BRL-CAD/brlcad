@@ -217,6 +217,120 @@ an already-prepared, non-trace Cobb and imported-object throughput fixture so
 production shot cost remains visible independently of these proof matrices.
 
 
+IMPLEMENTATION CHECKPOINT: RECLAIMABLE SURFACE-TREE ARENAS (2026-08-10)
+----------------------------------------------------------------------
+
+The retained SurfaceTree nodes no longer depend on the generic `bu_heap`
+pool.  Each face now builds its `BBNode` hierarchy in a private
+`BBNodeArena`, transfers one ordinary root node through the existing
+`SurfaceTree::releaseRootNode` interface, and attaches the arena's lifetime
+to that root.  Deleting the root therefore destroys every node and frees every
+arena block.  The top-level BREP BVH root remains an ordinary node and owns
+the transferred face roots recursively, so existing `brep_specific`
+ownership and public raw-root transfer semantics do not change.
+
+The first node allocated for a face is an ordinary transferable anchor.
+Subsequent nodes use placement construction in blocks sized 4, 16, 64, and
+256 nodes, after which 256 remains the maximum block size.  Those capacities
+pack the first complete levels of the four-way SurfaceTree while bounding
+tail waste on small or aggressively trimmed faces.  Some surfaces first
+construct a knot-partition parent and later replace it with an adaptive root.
+In that case the final logical root is adopted into the original anchor;
+there is still exactly one ordinary root per face and no special case in
+`releaseRootNode`.  Structural closed-seam and internal-knot splits, node
+order, bounds, UV domains, estimates, normals, and trim preparation are
+unchanged.
+
+Arena nodes are destroyed shallowly because their children are owned by the
+same arena.  The transferable root owns the arena through a hidden prefix on
+its child-pointer allocation; the serialized node representation and cache
+format are unchanged.  Cache deserialization now reconstructs each face tree
+through the same arena path.  Ordinary standalone deserialization remains
+available and recursively owned for API compatibility.  A node attached by a
+caller after arena construction retains ordinary ownership and is deleted
+normally.
+
+Failure cleanup is deliberately part of the design.  A bounding-box,
+evaluation, split, or recursive-child failure can abandon a partially built
+face without walking and deleting individual nodes.  The arena destroys the
+anchor and every constructed block node and then releases the blocks.  The
+local-root test includes an intentional `FAILURE_NORMAL_EVALUATION` case and
+passes under ASan/UBSan.  Sanitizer testing also found and corrected an
+important destruction-order error in the first implementation: blocks were
+linked newest-first, and freeing them in that order let a parent destructor
+inspect an already freed child.  Teardown now restores allocation order and
+destroys parents before children while all referenced child storage is live.
+
+`sizeof(BBNode)` remains 160 bytes with 8-byte alignment.  The arena flag uses
+existing padding.  The exact Recurta `10057.g/id2_item.s` two-depth audit
+retains the same 618,445/12,107 deep/shallow node populations, the same
+315,415/6,603 leaves, and 482,684 CurveTree leaves.  All 30 rays pass with no
+depth, reversal, disposition, partition, or face-owner difference and the
+unchanged `2.9734749773524527e-8` maximum endpoint delta.  The measured
+process peak is 359,940,096 bytes versus 363,761,664 at the direct-child
+checkpoint, a 3,821,568-byte (3.64-MiB, about 1.05-percent) reduction.  This
+is a useful ownership repair and small retained-memory win, not a claim that
+all allocator high-water behavior is solved.
+
+The 5,771-face `10088.g/id2_item.s` depth-eight prep succeeds in 15.47 seconds
+at 236,707,840 bytes, essentially neutral relative to the preceding
+236,576,768-byte run.  Its isolated 30-ray legacy depth comparison remains
+correct with unchanged node/leaf populations and maximum endpoint delta, but
+peaks at 294,780,928 bytes.  That comparison constructs and frees the deep
+model before constructing the shallow model and records process high water,
+so allocator-retained pages from the first phase and feature-sampling storage
+can be counted again during the second.  Do not interpret this one process
+peak as live arena ownership or as a reliable arena regression; prep-only,
+logical population, repeated unload, and sanitizer evidence must be considered
+together.
+
+`brep-audit --prep-only --prep-repeat=N` now exercises complete preparation
+and destruction repeatedly and emits one JSON record per cycle.  Six normal-
+allocator 10057 cycles peak at 283,414,528, 388,243,456, 409,079,808,
+418,910,208, 424,792,064, and 428,048,384 bytes.  The increments shrink from
+about 100 MiB to 3 MiB rather than adding another live tree population each
+time.  With `MALLOC_ARENA_MAX=1`, four cycles peak at 264,671,232,
+296,349,696, 303,284,224, and 303,538,176 bytes, but prep time approximately
+doubles.  Together with sanitizer-clean teardown, this indicates that the
+remaining repeated-process RSS is primarily glibc per-thread arena retention
+and fragmentation rather than unreleased `BBNodeArena` ownership.  It is
+still operationally relevant for long-lived and very large applications.
+`MALLOC_ARENA_MAX=1` is a diagnostic, not a proposed production default.
+
+The next memory representation step should evaluate a reclaimable larger
+region or exact compact/indexed runtime layout, and should distinguish live
+bytes from allocator-retained pages.  A global block free list would recreate
+the process-lifetime maximum-retention behavior this change removes.  A
+build-then-pack design must also account for transiently holding both build
+and packed nodes.  Continue with per-face NURBS/topology attribution,
+immutable span/reference compaction, and cache streaming before selecting a
+more invasive design.
+
+The 229.89-second seam result also received a bounded CPU profile.  It is not
+the high-face-count span-index problem: the Cobb solid has six faces and six
+surface spans, and SurfaceTree build, bounding boxes, and BVH traversal account
+for less than one percent of the sampled time.  `brep_expansion_add` accounts
+for 45.76 percent and `brep_expansion_scale` for 25.09 percent; exact Bezier
+restriction/blossoming and fold-determinant certification dominate most of
+the remainder.  These expansions use fixed 128-component workspaces and do
+not allocate during shooting.  Near seam and grazing configurations make the
+ordinary floating-point and interval predicates inconclusive, after which
+the prepared solver repeatedly restricts exact expansions while isolating and
+certifying contacts.  Both ordinary production shots and diagnostic trace
+shots reach this path.  The trace multiplier explains why the proof matrix is
+especially slow, but the production path itself remains too expensive.
+
+Before changing the exact predicates, add an already-prepared, non-trace Cobb
+throughput fixture with separate ordinary, near-grazing, and exact-tangent
+populations.  Then introduce a tiered conservative dispatch: cheap control-
+hull/double bounds first, outward interval bounds next, and fixed-expansion
+restriction only for the ambiguous residue.  Preserve exact expansion as the
+authority for genuinely unresolved tangent, fold, seam, and crack cases and
+keep the existing fixed-work/no-malloc contract.  Record stage counters and
+selected/fallback populations so a speedup cannot silently become a missed-
+root or crack regression.
+
+
 IMPLEMENTATION CHECKPOINT: COPLANAR EVENT AUTHORITY (2026-08-09)
 ----------------------------------------------------------------
 
