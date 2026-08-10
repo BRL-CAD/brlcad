@@ -177,5 +177,6 @@ BREP_EXPORT bool cdt_face_uses_polar_chart(const ON_BrepFace &face);
 BREP_EXPORT bool cdt_face_uses_cylinder_chart(const ON_BrepFace &face);
 BREP_EXPORT bool cdt_face_uses_topology_chart(const ON_BrepFace &face);
 BREP_EXPORT bool cdt_face_has_seam(const ON_BrepFace &face);
+BREP_EXPORT int cdt_test_pole_wedge_seam_orientation(void);
 
 #endif /* LIBBREP_CDT_CHART_H */
