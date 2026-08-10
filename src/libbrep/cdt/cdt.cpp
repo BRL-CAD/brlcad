@@ -849,6 +849,35 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
     if (fmesh->repair_incorrect_normal_edges() && fmesh->valid(0))
 	return true;
 
+    /* Periodic seam copies can make distinct chart cells share the same
+     * three model-space vertices.  Separate those cells before geometric
+     * fold and intersection refinement works on the stitched mesh. */
+    size_t collapsed_chart_points = 0;
+    for (int attempt = 0; attempt < MAX_CHART_REFINEMENT_ATTEMPTS;
+	    ++attempt) {
+	const size_t remaining = MAX_CHART_REFINEMENT_POINTS -
+	    collapsed_chart_points;
+	if (!remaining)
+	    break;
+	const size_t inserted =
+	    fmesh->refine_collapsed_chart_triangles(remaining);
+	if (!inserted)
+	    break;
+	collapsed_chart_points += inserted;
+	if (!fmesh->cdt()) {
+	    bu_log("Face %d: collapsed chart cell retriangulation failed\n",
+		fmesh->f_id);
+	    return false;
+	}
+	if (fmesh->valid(0) || (fmesh->repair_incorrect_normal_edges() &&
+		fmesh->valid(0))) {
+	    bu_log("Face %d: separated collapsed periodic chart cells after "
+		"%zu inserted points\n", fmesh->f_id,
+		collapsed_chart_points);
+	    return true;
+	}
+    }
+
     const size_t initial_folds = fmesh->incorrect_normal_count();
     const size_t initial_intersections = fmesh->self_intersections(NULL,
 	MAX_CHART_REFINEMENT_POINTS);

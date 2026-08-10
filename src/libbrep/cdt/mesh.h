@@ -642,6 +642,7 @@ public:
 	const ON_3dPoint *near_point = NULL);
     size_t refine_incorrect_normals(size_t max_points);
     size_t refine_self_intersections(size_t max_points);
+    BREP_EXPORT size_t refine_collapsed_chart_triangles(size_t max_points);
     size_t self_intersections(std::vector<triangle_t> *problematic = NULL,
 	size_t max_pairs = 1);
     bool optimize(double deg = 10);
