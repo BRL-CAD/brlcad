@@ -7814,6 +7814,52 @@ Root-centered seam continuation and prepared throughput (Finding 90):
   low work cap would trade time for crack leaks.
 
 
+Ordinary fold-graph contraction before expansion (Finding 91):
+
+  The first exact-arithmetic performance increment is implemented.  Every
+  regular-graph contraction now tries the same interval-Newton step with
+  ordinary outward-rounded interval Bernstein evaluation and restriction
+  before invoking expansion-valued evaluation.  A strict ordinary exclusion
+  is authoritative because its input coefficients and every de Casteljau,
+  derivative, quotient, and range operation enclose the exact values.  An
+  ordinary contraction replaces the current coefficient enclosure only with
+  a sound restricted enclosure.  Any unavailable, nonfinite, zero-containing,
+  or noncontracting result remains inconclusive and executes the former exact
+  expansion path unchanged.  Thus the new tier can avoid work but cannot turn
+  an ambiguous contact into a miss or a material interval.
+
+  Shot telemetry records ordinary contraction attempts, contractions, strict
+  exclusions, and exact fallbacks.  Their accounting is checked by the
+  prepared-once throughput fixture.  A new exact tolerance-contact family
+  shoots the inward-bowed Cobb seam at clearance exactly T in both directions,
+  requires the production answer to remain one segment, and requires the
+  ordinary contraction tier to execute.  Its representative trace performs
+  36 ordinary attempts, accepts 29 contractions, and retains seven exact
+  fallbacks.  It visits 62 surface boxes from two candidate spans out of six;
+  this is a fold/contact arithmetic workload, not a BVH workload.
+
+  With no competing test process, one optimized run measures approximately
+  1.47 ms/ray for the regular diameter, 3.16 ms for the 100T chord, 3.88 ms
+  for 2T, 4.02 ms for 1.1T, 2.69 ms for the tangent, and 51.57 ms for exact
+  seam contact.  The exact-contact number is still far from a production
+  target.  The focused fold, grazing-root, and throughput gates pass.  The
+  complete interval matrix also passes in 177.20 seconds; that exhaustive
+  combinatorial arithmetic test is a correctness gate, not a production
+  latency measurement.  ASan/UBSan with leak scanning disabled passes the
+  directed, pole, throughput, and fold gates 4/4.
+
+  Earlier representative whole-test timings fell from 0.23 to 0.18 seconds
+  for the fold fixture, 11.20 to 6.83 seconds for grazing-root, and 13.45 to
+  9.44 seconds for directed rays.  These are useful stage-level improvements,
+  but the exact-contact trace shows the next bottleneck clearly.  Exact
+  coefficient expansions are still constructed eagerly for every candidate
+  span in `brep_surface_coefficients_init`, before ordinary hull rejection
+  knows whether they will be needed.  The next increment should split cheap
+  coefficient/enclosure construction from lazy exact expansion construction,
+  retain exact arithmetic as the fail-closed authority for ambiguous residue,
+  and measure how many candidate spans and boxes actually request it.
+
+
 NEXT ACTIONS
 ------------
 
