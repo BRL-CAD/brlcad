@@ -1204,6 +1204,73 @@ cdt_face_chart::build_cylinder(const ON_BrepFace &face,
 		&analytic_heights);
 	for (size_t i = 0; i < points.size(); ++i)
 	    points[i].first = cylinder.circle.radius * angular[i];
+	} else if (m_closed_dir >= 0) {
+	/* A boundary without an explicit seam trim can still cross an
+	 * arbitrary analytic cylinder cut many times.  Lift each connected
+	 * ring through adjacent periodic images instead of turning every cut
+	 * crossing into a circumference-long chord.  A contractible ring must
+	 * return to its initial image; a nonzero winding needs a real atlas cut
+	 * and cannot be represented by this single disk chart. */
+	const double period = 2.0 * ON_PI;
+	std::vector<double> angular(points.size(), 0.0);
+	std::vector<bool> boundary_point(points.size(), false);
+	for (size_t i = 0; i < points.size(); ++i)
+	    angular[i] = points[i].first / cylinder.circle.radius;
+	const auto lift_ring = [&](const std::vector<int> &source,
+		double anchor, double *center) {
+	    std::vector<int> ring(source);
+	    while (ring.size() > 1 && ring.front() == ring.back())
+		ring.pop_back();
+	    if (ring.size() < 3)
+		return false;
+	    const int first = ring.front();
+	    if (first < 0 || (size_t)first >= angular.size())
+		return false;
+	    if (std::isfinite(anchor))
+		angular[(size_t)first] += std::nearbyint((anchor -
+		    angular[(size_t)first]) / period) * period;
+	    boundary_point[(size_t)first] = true;
+	    double sum = angular[(size_t)first];
+	    for (size_t i = 1; i < ring.size(); ++i) {
+		const int previous = ring[i - 1];
+		const int current = ring[i];
+		if (previous < 0 || current < 0 ||
+			(size_t)previous >= angular.size() ||
+			(size_t)current >= angular.size())
+		    return false;
+		angular[(size_t)current] += std::nearbyint((
+		    angular[(size_t)previous] - angular[(size_t)current]) /
+		    period) * period;
+		boundary_point[(size_t)current] = true;
+		sum += angular[(size_t)current];
+	    }
+	    const int last = ring.back();
+	    const double winding = std::nearbyint((angular[(size_t)last] -
+		angular[(size_t)first]) / period);
+	    if (std::fabs(winding) > 0.5)
+		return false;
+	    if (center)
+		*center = sum / ring.size();
+	    return true;
+	};
+	double chart_center = 0.0;
+	if (!lift_ring(oriented_outer,
+		std::numeric_limits<double>::quiet_NaN(), &chart_center)) {
+	    m_failure = "cylinder outline has nonzero periodic winding";
+	    return false;
+	}
+	for (const std::vector<int> &hole : oriented_holes) {
+	    if (!lift_ring(hole, chart_center, NULL)) {
+		m_failure = "cylinder hole has nonzero periodic winding";
+		return false;
+	    }
+	}
+	for (size_t i = 0; i < angular.size(); ++i) {
+	    if (!boundary_point[i])
+		angular[i] += std::nearbyint((chart_center - angular[i]) /
+		    period) * period;
+	    points[i].first = cylinder.circle.radius * angular[i];
+	}
     }
     if (!normalize_ring(oriented_outer, points.size(), outer)) {
 	m_failure = "invalid cylinder chart outline";
