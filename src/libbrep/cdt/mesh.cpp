@@ -4745,6 +4745,62 @@ cdt_mesh_t::cdt()
 		chart.failure().c_str());
 	return false;
     }
+    /* A loose B-Rep edge may have distinct master-curve samples whose p-curve
+     * rounds to its endpoint.  Recover a strictly ordered chart path only
+     * when the collapsed residual is within the model's own tolerance. */
+    const struct ON_Brep_CDT_State *chart_state =
+	(const struct ON_Brep_CDT_State *)p_cdt;
+    const double mesh_tolerance = chart_state &&
+	std::isfinite(chart_state->absmin) && chart_state->absmin > 0.0 ?
+	std::min((double)BN_TOL_DIST, chart_state->absmin) : 0.0;
+    size_t repaired_endpoint_samples = 0;
+    const auto repair_loop_endpoint_samples = [&](const cpolygon_t *loop) {
+	if (!loop)
+	    return;
+	for (const cpolyedge_t *start : loop->poly) {
+	    if (!start || start->trim_ind < 0 ||
+		    start->trim_ind >= brep->m_T.Count() ||
+		    (start->prev &&
+		    start->prev->trim_ind == start->trim_ind))
+		continue;
+	    const ON_BrepTrim &trim = brep->m_T[start->trim_ind];
+	    const ON_BrepEdge *edge = trim.Edge();
+	    if (!edge || edge->IsClosed() ||
+		    trim.m_type == ON_BrepTrim::singular)
+		continue;
+	    std::vector<int> native_path;
+	    const cpolyedge_t *segment = start;
+	    do {
+		const auto first = loop->p2o.find(segment->v2d[0]);
+		const auto second = loop->p2o.find(segment->v2d[1]);
+		if (first == loop->p2o.end() || second == loop->p2o.end() ||
+			(!native_path.empty() &&
+			native_path.back() != first->second)) {
+		    native_path.clear();
+		    break;
+		}
+		if (native_path.empty())
+		    native_path.push_back((int)first->second);
+		native_path.push_back((int)second->second);
+		segment = segment->next;
+	    } while (segment && segment != start &&
+		segment->trim_ind == start->trim_ind);
+	    if (native_path.size() < 3)
+		continue;
+	    const double tolerance = std::max(mesh_tolerance,
+		std::isfinite(edge->m_tolerance) ? edge->m_tolerance : 0.0);
+	    repaired_endpoint_samples +=
+		chart.repair_toleranced_edge_endpoint_samples(native_path,
+		    source_points_3d, tolerance);
+	}
+    };
+    repair_loop_endpoint_samples(&outer_loop);
+    for (const auto &loop : inner_loops)
+	repair_loop_endpoint_samples(loop.second);
+    if (repaired_endpoint_samples)
+	bu_log("Face %d: separated %zu toleranced B-Rep edge endpoint "
+	    "sample%s in the chart\n", f_id, repaired_endpoint_samples,
+	    repaired_endpoint_samples == 1 ? "" : "s");
     /* An iso trim from a cone pole is a straight ray in the cone chart.  A
      * valid B-Rep may let its trim pullback wander within the edge tolerance;
      * near the pole that harmless native-UV noise otherwise becomes a chart

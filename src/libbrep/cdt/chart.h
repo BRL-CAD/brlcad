@@ -73,6 +73,12 @@ public:
     void add_refinement_point(long native_point,
 	const ON_2dPoint &native_uv, const ON_2dPoint &chart_uv,
 	const long native_edge[2] = NULL);
+    /* Separate non-topological edge samples whose trim pullback has stalled
+     * at an endpoint within the edge's declared modeling tolerance. */
+    size_t repair_toleranced_edge_endpoint_samples(
+	const std::vector<int> &native_path,
+	const std::vector<const ON_3dPoint *> &points_3d,
+	double tolerance);
 
     long native_point(int chart_point) const;
     cdt_face_chart_id id() const { return m_id; }
