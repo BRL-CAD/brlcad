@@ -723,6 +723,100 @@ exercise_curved_metric_nesting_repair()
 }
 
 static bool
+exercise_metric_component_partition()
+{
+    std::unique_ptr<ON_Brep> brep(new ON_Brep);
+    ON_PlaneSurface *surface = new ON_PlaneSurface(ON_xy_plane);
+    surface->SetExtents(0, ON_Interval(0.0, 10.0), true);
+    surface->SetExtents(1, ON_Interval(0.0, 10.0), true);
+    ON_BrepFace &face = brep->NewFace(brep->AddSurface(surface));
+    const std::pair<double, double> coordinates[18] = {
+	std::make_pair(0.0, 0.0), std::make_pair(4.0, 0.0),
+	std::make_pair(4.0, 4.0), std::make_pair(0.0, 4.0),
+	std::make_pair(1.0, 1.0), std::make_pair(1.0, 3.0),
+	std::make_pair(3.0, 3.0), std::make_pair(3.0, 1.0),
+	std::make_pair(1.5, 1.5), std::make_pair(2.5, 1.5),
+	std::make_pair(2.5, 2.5), std::make_pair(1.5, 2.5),
+	std::make_pair(6.0, 0.0), std::make_pair(8.0, 0.0),
+	std::make_pair(8.0, 2.0), std::make_pair(6.0, 2.0),
+	std::make_pair(0.5, 0.5), std::make_pair(7.0, 1.0)
+    };
+    std::vector<std::pair<double, double>> native_points(
+	coordinates, coordinates + 18);
+    const int outer_indices[5] = {0, 1, 2, 3, 0};
+    const int first_hole_indices[5] = {4, 5, 6, 7, 4};
+    const int island_indices[5] = {8, 9, 10, 11, 8};
+    const int disjoint_indices[5] = {12, 13, 14, 15, 12};
+    std::vector<int> outer(outer_indices, outer_indices + 5);
+    std::vector<std::vector<int>> holes;
+    holes.push_back(std::vector<int>(first_hole_indices,
+	first_hole_indices + 5));
+    holes.push_back(std::vector<int>(island_indices,
+	island_indices + 5));
+    holes.push_back(std::vector<int>(disjoint_indices,
+	disjoint_indices + 5));
+    const std::vector<int> steiner = {16, 17};
+    std::vector<const ON_3dPoint *> points_3d(18, NULL);
+    std::vector<cdt_topo_vertex_id> topology_vertices(18,
+	CDT_TOPOLOGY_ID_NONE);
+    cdt_face_chart chart;
+    if (!chart.build(face, native_points, outer, holes, steiner,
+	    std::vector<int>(), points_3d, topology_vertices)) {
+	std::cerr << "component partition chart build failed: "
+	    << chart.failure() << std::endl;
+	return false;
+    }
+    std::vector<cdt_face_chart> components;
+    std::string failure;
+    if (!chart.partition_components(components, &failure) ||
+	    components.size() != 3 || components[0].holes.size() != 1 ||
+	    !components[1].holes.empty() || !components[2].holes.empty() ||
+	    components[0].outer[0] != 0 ||
+	    components[0].holes[0][0] != 4 ||
+	    components[1].outer[0] != 8 || components[2].outer[0] != 12 ||
+	    components[0].steiner != std::vector<int>(1, 16) ||
+	    !components[1].steiner.empty() ||
+	    components[2].steiner != std::vector<int>(1, 17)) {
+	std::cerr << "metric chart components were not partitioned: "
+	    << failure << std::endl;
+	return false;
+    }
+
+    std::vector<point2d_t> chart_points(chart.points.size());
+    for (size_t i = 0; i < chart.points.size(); ++i)
+	V2SET(chart_points[i], chart.points[i].first, chart.points[i].second);
+    for (const cdt_face_chart &component : components) {
+	std::vector<int> outline(component.outer);
+	outline.push_back(outline.front());
+	std::vector<std::vector<int>> component_holes(component.holes);
+	std::vector<const int *> hole_data;
+	std::vector<size_t> hole_counts;
+	for (std::vector<int> &hole : component_holes) {
+	    hole.push_back(hole.front());
+	    hole_data.push_back(hole.data());
+	    hole_counts.push_back(hole.size());
+	}
+	int *faces = NULL;
+	int face_count = 0;
+	struct bg_triangulation_report report = {0, -1, {0}};
+	const int status = bg_nested_poly_triangulate_strict(&faces,
+	    &face_count, NULL, NULL, outline.data(), outline.size(),
+	    hole_data.empty() ? NULL : hole_data.data(),
+	    hole_counts.empty() ? NULL : hole_counts.data(),
+	    hole_data.size(), component.steiner.empty() ? NULL :
+	    component.steiner.data(), component.steiner.size(),
+	    chart_points.data(), chart_points.size(), &report);
+	bu_free(faces, "metric component partition triangles");
+	if (status != BRLCAD_OK || face_count <= 0) {
+	    std::cerr << "metric chart component did not triangulate: "
+		<< report.message << std::endl;
+	    return false;
+	}
+    }
+    return true;
+}
+
+static bool
 exercise_toleranced_endpoint_sample_repair()
 {
     std::unique_ptr<ON_Brep> brep(new ON_Brep);
@@ -842,7 +936,9 @@ main()
 	return 11;
     if (!exercise_curved_metric_nesting_repair())
 	return 12;
-    if (!exercise_toleranced_endpoint_sample_repair())
+    if (!exercise_metric_component_partition())
 	return 13;
+    if (!exercise_toleranced_endpoint_sample_repair())
+	return 14;
     return 0;
 }

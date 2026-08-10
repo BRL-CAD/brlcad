@@ -81,6 +81,8 @@ public:
 	double tolerance);
 
     long native_point(int chart_point) const;
+    bool partition_components(std::vector<cdt_face_chart> &components,
+	std::string *failure = NULL) const;
     cdt_face_chart_id id() const { return m_id; }
     enum cdt_face_chart_type type() const { return m_type; }
     int singular_side() const { return m_singular_side; }
