@@ -30,6 +30,7 @@
 #include <array>
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <limits>
 #include <map>
 #include <set>
@@ -781,18 +782,39 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 		pts[index][Y]);
 	    const auto old_coordinate = constraint_coordinates.find(coordinate);
 	    if (old_coordinate != constraint_coordinates.end() &&
-		    old_coordinate->second != index)
+		    old_coordinate->second != index) {
+		char message[128];
+		std::snprintf(message, sizeof(message),
+		    "chart vertices %d and %d share a constraint coordinate",
+		    old_coordinate->second, index);
+		bg_triangulation_report_set(report,
+		    BG_TRIANGULATION_INVALID_PSLG, index, message);
 		return false;
+	    }
 	    constraint_coordinates[coordinate] = index;
 	    const auto old_ring = constraint_ring.find(index);
-	    if (old_ring != constraint_ring.end() && old_ring->second != ring_id)
+	    if (old_ring != constraint_ring.end() && old_ring->second != ring_id) {
+		char message[128];
+		std::snprintf(message, sizeof(message),
+		    "chart vertex %d belongs to rings %zu and %zu", index,
+		    old_ring->second, ring_id);
+		bg_triangulation_report_set(report,
+		    BG_TRIANGULATION_INVALID_PSLG, index, message);
 		return false;
+	    }
 	    constraint_ring[index] = ring_id;
 	    const int next = ring[(i + 1) % ring.size()];
 	    const std::pair<int, int> edge = (index < next) ?
 		std::make_pair(index, next) : std::make_pair(next, index);
-	    if (!constraint_edges.insert(edge).second)
+	    if (!constraint_edges.insert(edge).second) {
+		char message[128];
+		std::snprintf(message, sizeof(message),
+		    "constraint edge %d-%d is duplicated", edge.first,
+		    edge.second);
+		bg_triangulation_report_set(report,
+		    BG_TRIANGULATION_INVALID_PSLG, index, message);
 		return false;
+	    }
 	    segments.push_back({index, next, ring_id});
 	}
 	return true;
@@ -812,15 +834,29 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	    return BRLCAD_ERROR;
 	const std::pair<int, int> edge = (first < second) ?
 	    std::make_pair(first, second) : std::make_pair(second, first);
-	if (!constraint_edges.insert(edge).second)
+	if (!constraint_edges.insert(edge).second) {
+	    char message[128];
+	    std::snprintf(message, sizeof(message),
+		"constraint edge %d-%d is duplicated", edge.first,
+		edge.second);
+	    bg_triangulation_report_set(report,
+		BG_TRIANGULATION_INVALID_PSLG, (int)i, message);
 	    return BRLCAD_ERROR;
+	}
 	for (int index : {first, second}) {
 	    const std::pair<double, double> coordinate(pts[index][X],
 		pts[index][Y]);
 	    const auto old_coordinate = constraint_coordinates.find(coordinate);
 	    if (old_coordinate != constraint_coordinates.end() &&
-		    old_coordinate->second != index)
+		    old_coordinate->second != index) {
+		char message[128];
+		std::snprintf(message, sizeof(message),
+		    "chart vertices %d and %d share a constraint coordinate",
+		    old_coordinate->second, index);
+		bg_triangulation_report_set(report,
+		    BG_TRIANGULATION_INVALID_PSLG, (int)i, message);
 		return BRLCAD_ERROR;
+	    }
 	    constraint_coordinates[coordinate] = index;
 	}
 	manual_constraints.push_back(std::make_pair(first, second));
@@ -903,9 +939,14 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 		    segments[i].b == segments[j].b)
 		continue;
 	    if (segments_intersect(segments[i], segments[j])) {
+		char message[128];
+		std::snprintf(message, sizeof(message),
+		    "constraints %d-%d and %d-%d intersect",
+		    segments[i].a, segments[i].b, segments[j].a,
+		    segments[j].b);
 		bg_triangulation_report_set(report,
-		    BG_TRIANGULATION_CROSSING_CONSTRAINTS, -1,
-		    "nonincident chart constraints intersect");
+		    BG_TRIANGULATION_CROSSING_CONSTRAINTS, (int)i,
+		    message);
 		return BRLCAD_ERROR;
 	    }
 	}
