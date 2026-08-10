@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <cfloat>
 
 #include "bu/log.h"
 #include "brep/brnode.h"
@@ -284,6 +285,168 @@ BRNode::closer(const ON_3dPoint &pt, const BRNode *left, const BRNode *right) co
     } else {
 	return right;
     }
+}
+
+
+double
+BRNode::curveBBoxDistance(const ON_2dPoint &uv) const
+{
+    double du = 0.0;
+    double dv = 0.0;
+    if (uv.x < m_node.m_min.x)
+	du = m_node.m_min.x - uv.x;
+    else if (uv.x > m_node.m_max.x)
+	du = uv.x - m_node.m_max.x;
+    if (uv.y < m_node.m_min.y)
+	dv = m_node.m_min.y - uv.y;
+    else if (uv.y > m_node.m_max.y)
+	dv = uv.y - m_node.m_max.y;
+    return hypot(du, dv);
+}
+
+
+double
+BRNode::curveDistance(const ON_2dPoint &uv) const
+{
+    if (!m_trim)
+	return INFINITY;
+    const size_t sample_count = 8;
+    size_t best_sample = 0;
+    double best_squared = INFINITY;
+    for (size_t sample = 0; sample <= sample_count; ++sample) {
+	const double fraction = (double)sample / (double)sample_count;
+	const ON_3dPoint point = m_trim->PointAt(m_t.ParameterAt(fraction));
+	const double dx = point.x - uv.x;
+	const double dy = point.y - uv.y;
+	const double squared = dx * dx + dy * dy;
+	if (squared < best_squared) {
+	    best_squared = squared;
+	    best_sample = sample;
+	}
+    }
+
+    double low = best_sample ?
+	(double)(best_sample - 1) / (double)sample_count : 0.0;
+    double high = best_sample < sample_count ?
+	(double)(best_sample + 1) / (double)sample_count : 1.0;
+    const double golden = 0.6180339887498948482;
+    double first = high - golden * (high - low);
+    double second = low + golden * (high - low);
+    auto squared_distance = [this, &uv](double fraction) {
+	const ON_3dPoint point = m_trim->PointAt(m_t.ParameterAt(fraction));
+	const double dx = point.x - uv.x;
+	const double dy = point.y - uv.y;
+	return dx * dx + dy * dy;
+    };
+    double first_squared = squared_distance(first);
+    double second_squared = squared_distance(second);
+    for (int iteration = 0; iteration < 24; ++iteration) {
+	best_squared = std::min(best_squared,
+	    std::min(first_squared, second_squared));
+	if (first_squared < second_squared) {
+	    high = second;
+	    second = first;
+	    second_squared = first_squared;
+	    first = high - golden * (high - low);
+	    first_squared = squared_distance(first);
+	} else {
+	    low = first;
+	    first = second;
+	    first_squared = second_squared;
+	    second = low + golden * (high - low);
+	    second_squared = squared_distance(second);
+	}
+    }
+    best_squared = std::min(best_squared,
+	std::min(first_squared, second_squared));
+    return sqrt(std::max(0.0, best_squared));
+}
+
+
+bool
+BRNode::crossesAbove(const ON_2dPoint &uv, double &distance,
+	double endpoint_tolerance) const
+{
+    distance = -1.0;
+    if (!m_trim || m_Vertical)
+	return false;
+    const double first_u = m_start.x;
+    const double second_u = m_end.x;
+    const bool exact =
+	((first_u <= uv.x && uv.x < second_u) ||
+	 (second_u <= uv.x && uv.x < first_u));
+    double query_u = uv.x;
+    if (!exact) {
+	if (!(endpoint_tolerance > 0.0))
+	    return false;
+	/* A closed trim owns both coincident curve-domain endpoints.  Its exact
+	 * half-open test already gives that vertex to one incident branch; the
+	 * imported-loop gap allowance must not admit the other branch too. */
+	if (m_trim->IsClosed())
+	    return false;
+	const double minimum_u = std::min(first_u, second_u);
+	const double minimum_t = first_u < second_u ? m_t[0] : m_t[1];
+	const ON_Interval curve_domain = m_trim->Domain();
+	const double parameter_scale = std::max(1.0,
+	    std::max(fabs(curve_domain.Min()), fabs(curve_domain.Max())));
+	const double parameter_fuzz = 64.0 * DBL_EPSILON * parameter_scale;
+	const bool minimum_is_trim_endpoint =
+	    fabs(minimum_t - curve_domain.Min()) <= parameter_fuzz ||
+	    fabs(minimum_t - curve_domain.Max()) <= parameter_fuzz;
+	const double endpoint_fuzz = std::max(BREP_UV_DIST_FUZZ,
+	    std::max(0.0, endpoint_tolerance));
+	if (uv.x < minimum_u &&
+		minimum_u - uv.x <= endpoint_fuzz &&
+		minimum_is_trim_endpoint)
+	    query_u = minimum_u;
+	else
+	    return false;
+    }
+    const double curve_v = getCurveEstimateOfV(query_u, 1.0e-7);
+    distance = curve_v - uv.y;
+    return distance >= 0.0;
+}
+
+
+bool
+BRNode::crossesRight(const ON_2dPoint &uv, double &distance,
+	double endpoint_tolerance) const
+{
+    distance = -1.0;
+    if (!m_trim || m_Horizontal)
+	return false;
+    const double first_v = m_start.y;
+    const double second_v = m_end.y;
+    const bool exact =
+	((first_v <= uv.y && uv.y < second_v) ||
+	 (second_v <= uv.y && uv.y < first_v));
+    double query_v = uv.y;
+    if (!exact) {
+	if (!(endpoint_tolerance > 0.0))
+	    return false;
+	if (m_trim->IsClosed())
+	    return false;
+	const double minimum_v = std::min(first_v, second_v);
+	const double minimum_t = first_v < second_v ? m_t[0] : m_t[1];
+	const ON_Interval curve_domain = m_trim->Domain();
+	const double parameter_scale = std::max(1.0,
+	    std::max(fabs(curve_domain.Min()), fabs(curve_domain.Max())));
+	const double parameter_fuzz = 64.0 * DBL_EPSILON * parameter_scale;
+	const bool minimum_is_trim_endpoint =
+	    fabs(minimum_t - curve_domain.Min()) <= parameter_fuzz ||
+	    fabs(minimum_t - curve_domain.Max()) <= parameter_fuzz;
+	const double endpoint_fuzz = std::max(BREP_UV_DIST_FUZZ,
+	    std::max(0.0, endpoint_tolerance));
+	if (uv.y < minimum_v &&
+		minimum_v - uv.y <= endpoint_fuzz &&
+		minimum_is_trim_endpoint)
+	    query_v = minimum_v;
+	else
+	    return false;
+    }
+    const double curve_u = getCurveEstimateOfU(query_v, 1.0e-7);
+    distance = curve_u - uv.x;
+    return distance >= 0.0;
 }
 
 

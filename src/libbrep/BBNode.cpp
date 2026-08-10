@@ -116,25 +116,17 @@ BBNode::BBNode(Deserializer &deserializer, const CurveTree &ctree) :
     for (std::vector<BBNode *>::iterator it = m_stl->m_children.begin(); it != m_stl->m_children.end(); ++it)
 	*it = new BBNode(deserializer, ctree);
 
-    std::size_t buffer[8];
-    std::size_t *leaves_keys = buffer;
-    if (num_leaves_keys > sizeof(buffer) / sizeof(buffer[0]))
-	leaves_keys = new std::size_t[num_leaves_keys];
-
+    /* Older cache records stored per-leaf trim indices here.  Consume them
+     * for backward compatibility; current classification uses the owning
+     * CurveTree's immutable per-loop index. */
     for (std::size_t i = 0; i < num_leaves_keys; ++i)
-	leaves_keys[i] = deserializer.read_uint32();
-
-    m_stl->m_trims_above = m_ctree->serialize_get_leaves(leaves_keys, num_leaves_keys);
-
-    if (leaves_keys != buffer)
-	delete[] leaves_keys;
+	(void)deserializer.read_uint32();
 }
 
 
 void
 BBNode::serialize(Serializer &serializer) const
 {
-    const std::vector<std::size_t> leaves_keys = m_ctree->serialize_get_leaves_keys(m_stl->m_trims_above);
     const uint8_t bool_flags = (m_checkTrim << 0) | (m_trimmed << 1);
 
     serializer.write(m_node);
@@ -144,11 +136,8 @@ BBNode::serialize(Serializer &serializer) const
     serializer.write(m_normal);
 
     serializer.write_uint8(bool_flags);
-    serializer.write_uint32(leaves_keys.size());
+    serializer.write_uint32(0);
     serializer.write_uint32(m_stl->m_children.size());
-
-    for (std::vector<std::size_t>::const_iterator it = leaves_keys.begin(); it != leaves_keys.end(); ++it)
-	serializer.write_uint32(*it);
 
     for (std::vector<BBNode *>::const_iterator it = m_stl->m_children.begin(); it != m_stl->m_children.end(); ++it)
 	(*it)->serialize(serializer);
@@ -378,106 +367,95 @@ namespace {
 struct TrimClassificationState {
     explicit TrimClassificationState(const BRNode **closest_node) :
 	closest(closest_node),
-	vclosest(NULL),
-	uclosest(NULL),
-	curr_height(0.0),
-	curr_trim_status(false),
-	vertical_trim(false),
-	under_trim(false),
-	vdist(0.0),
-	udist(0.0)
+	crossing_closest(NULL),
+	proximity_closest(NULL),
+	crossings(0),
+	crossing_distance(INFINITY),
+	proximity_distance(INFINITY)
     {
     }
 
     const BRNode **closest;
-    const BRNode *vclosest;
-    const BRNode *uclosest;
-    fastf_t curr_height;
-    bool curr_trim_status;
-    bool vertical_trim;
-    bool under_trim;
-    double vdist;
-    double udist;
+    const BRNode *crossing_closest;
+    const BRNode *proximity_closest;
+    size_t crossings;
+    double crossing_distance;
+    double proximity_distance;
 };
+
+
+static bool
+trim_candidate_on_coordinate(const BRNode *br, const ON_2dPoint &uv,
+	int coordinate, double within_distance_tol)
+{
+    point_t bmin, bmax;
+    br->GetBBox(bmin, bmax);
+    const double envelope = std::max(BREP_UV_DIST_FUZZ,
+	std::max(0.0, within_distance_tol));
+    return uv[coordinate] >= bmin[coordinate] - envelope &&
+	uv[coordinate] <= bmax[coordinate] + envelope;
+}
 
 
 static void
 classify_trim_candidate(TrimClassificationState &state, const BRNode *br,
-	const ON_2dPoint &uv, double within_distance_tol)
+	const ON_2dPoint &uv, double within_distance_tol, bool horizontal_ray,
+	bool extend_minimum)
 {
-    /* skip if trim below */
-    if (br->m_node.m_max[1] + within_distance_tol < uv[Y])
-	return;
-
-    if (br->m_Vertical) {
-	if ((br->m_v[0] <= uv[Y]) && (br->m_v[1] >= uv[Y])) {
-	    double dist = fabs(uv[X] - br->m_v[0]);
-	    if (!state.vertical_trim || dist < state.vdist) {
-		state.vertical_trim = true;
-		state.vdist = dist;
-		state.vclosest = br;
-	    }
+    double crossing_distance = -1.0;
+    const double endpoint_tolerance = extend_minimum ?
+	within_distance_tol : 0.0;
+    if ((horizontal_ray ? br->crossesRight(uv, crossing_distance,
+		endpoint_tolerance) :
+	    br->crossesAbove(uv, crossing_distance, endpoint_tolerance))) {
+	state.crossings++;
+	if (crossing_distance < state.crossing_distance) {
+	    state.crossing_distance = crossing_distance;
+	    state.crossing_closest = br;
 	}
-	return;
     }
 
-    double v;
-    bool trim_status = br->isTrimmed(uv, v);
-    if (v >= 0.0) {
-	if (state.closest && *state.closest == NULL) {
-	    state.curr_height = v;
-	    state.curr_trim_status = trim_status;
-	    *state.closest = br;
-	} else if (v < state.curr_height) {
-	    state.curr_height = v;
-	    state.curr_trim_status = trim_status;
-	    if (state.closest)
-		*state.closest = br;
-	}
-    } else {
-	double dist = fabs(v);
-	if (!state.under_trim) {
-	    state.under_trim = true;
-	    state.udist = dist;
-	    state.uclosest = br;
-	} else {
-	    /* Preserve the legacy closest-node selection exactly. */
-	    V_MIN(state.udist, dist);
-	    state.uclosest = br;
+    const double proximity_limit = std::max(0.0, within_distance_tol);
+    if (br->curveBBoxDistance(uv) <= proximity_limit +
+	    BREP_UV_DIST_FUZZ) {
+	const double proximity_distance = br->curveDistance(uv);
+	if (proximity_distance < state.proximity_distance) {
+	    state.proximity_distance = proximity_distance;
+	    state.proximity_closest = br;
 	}
     }
 }
 
 
-static bool
-finish_trim_classification(TrimClassificationState &state,
+static void
+merge_trim_classification(TrimClassificationState &target,
+	const TrimClassificationState &source)
+{
+    target.crossings += source.crossings;
+    if (source.crossing_distance < target.crossing_distance) {
+	target.crossing_distance = source.crossing_distance;
+	target.crossing_closest = source.crossing_closest;
+    }
+    if (source.proximity_distance < target.proximity_distance) {
+	target.proximity_distance = source.proximity_distance;
+	target.proximity_closest = source.proximity_closest;
+    }
+}
+
+
+static void
+finish_trim_distance(TrimClassificationState &state,
 	double &closesttrim)
 {
-    if (state.closest && *state.closest == NULL) {
-	if (state.vertical_trim) {
-	    closesttrim = state.vdist;
-	    *state.closest = state.vclosest;
-	}
-	if (state.under_trim &&
-		(!state.vertical_trim || state.udist < closesttrim)) {
-	    closesttrim = state.udist;
-	    *state.closest = state.uclosest;
-	}
-	return true;
-    }
-
-    closesttrim = state.curr_height;
-    if (state.vertical_trim && state.vdist < closesttrim) {
-	closesttrim = state.vdist;
+    if (state.proximity_closest) {
+	closesttrim = state.proximity_distance;
 	if (state.closest)
-	    *state.closest = state.vclosest;
+	    *state.closest = state.proximity_closest;
+    } else if (state.crossing_closest) {
+	closesttrim = state.crossing_distance;
+	if (state.closest)
+	    *state.closest = state.crossing_closest;
     }
-	if (state.under_trim && state.udist < closesttrim) {
-	    closesttrim = state.udist;
-	    if (state.closest)
-		*state.closest = state.uclosest;
-	}
-    return state.curr_trim_status;
 }
 
 } /* anonymous namespace */
@@ -486,7 +464,7 @@ finish_trim_classification(TrimClassificationState &state,
 bool
 CurveTree::isTrimmed(const ON_2dPoint &uv, const BRNode **closest,
 	double &closesttrim, double within_distance_tol,
-	std::size_t *candidate_count) const
+	std::size_t *candidate_count, bool heal_join_gaps) const
 {
     closesttrim = -1.0;
     if (closest)
@@ -494,26 +472,174 @@ CurveTree::isTrimmed(const ON_2dPoint &uv, const BRNode **closest,
     if (candidate_count)
 	*candidate_count = 0;
 
+    const ON_Surface *surface = m_face ? m_face->SurfaceOf() : NULL;
+    ON_2dPoint query(uv);
+    if (surface) {
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!surface->IsClosed(direction))
+		continue;
+	    const ON_Interval domain = surface->Domain(direction);
+	    const double period = domain.Length();
+	    if (!(period > 0.0))
+		continue;
+	    query[direction] -= floor(
+		(query[direction] - domain.Min()) / period) * period;
+	    if (query[direction] >= domain.Max())
+		query[direction] = domain.Min();
+	}
+    }
     TrimClassificationState state(closest);
+    const bool horizontal_ray = surface && surface->IsClosed(1);
+    const int ray_axis = horizontal_ray ? 0 : 1;
+    const int fixed_coordinate = horizontal_ray ? 1 : 0;
     std::size_t candidates = 0;
-    for (std::vector<const BRNode *>::const_iterator i =
-	    m_stl->m_sortedX.begin(); i != m_stl->m_sortedX.end(); ++i) {
-	const BRNode *br = *i;
-	point_t bmin, bmax;
-	br->GetBBox(bmin, bmax);
-	const double dist = BREP_UV_DIST_FUZZ;
-	if (uv[X] <= bmin[X] - dist)
-	    break;
-	if (uv[X] < bmax[X] + dist) {
+    bool any_outer = false;
+    bool inside_outer = false;
+    bool inside_inner = false;
+    bool parity = false;
+    bool have_parity_loop = false;
+
+    for (std::vector<Stl::Loop>::const_iterator loop =
+	    m_stl->m_loops.begin(); loop != m_stl->m_loops.end(); ++loop) {
+	if (!loop->have_bbox || loop->sortedX.empty())
+	    continue;
+	ON_2dPoint loop_query(query);
+	if (surface && surface->IsClosed(ray_axis)) {
+	    const double period = surface->Domain(ray_axis).Length();
+	    if (period > 0.0) {
+		const double center = 0.5 *
+		    (loop->minimum[ray_axis] + loop->maximum[ray_axis]);
+		loop_query[ray_axis] += nearbyint(
+		    (center - loop_query[ray_axis]) / period) * period;
+	    }
+	}
+	TrimClassificationState loop_state(NULL);
+	const std::vector<Stl::Loop::Leaf> &sorted = horizontal_ray ?
+	    loop->sortedY : loop->sortedX;
+	for (std::vector<Stl::Loop::Leaf>::const_iterator leaf =
+		sorted.begin(); leaf != sorted.end(); ++leaf) {
+	    const BRNode *br = leaf->node;
+	    const ON_2dPoint local_query(loop_query.x - leaf->offset.x,
+		loop_query.y - leaf->offset.y);
+	    point_t bmin, bmax;
+	    br->GetBBox(bmin, bmax);
+	    const double envelope = std::max(BREP_UV_DIST_FUZZ,
+		std::max(0.0, within_distance_tol));
+	    if (bmin[fixed_coordinate] + leaf->offset[fixed_coordinate] >
+		    loop_query[fixed_coordinate] + envelope)
+		break;
+	    if (!trim_candidate_on_coordinate(br, local_query,
+		    fixed_coordinate, within_distance_tol))
+		continue;
 	    ++candidates;
-	    classify_trim_candidate(state, br, uv, within_distance_tol);
+	    classify_trim_candidate(loop_state, br, local_query,
+		within_distance_tol, horizontal_ray,
+		heal_join_gaps && leaf->extend_minimum[fixed_coordinate]);
+	}
+	merge_trim_classification(state, loop_state);
+	const bool loop_inside = (loop_state.crossings & 1U) != 0;
+	switch (loop->type) {
+	    case ON_BrepLoop::outer:
+		any_outer = true;
+		inside_outer = inside_outer || loop_inside;
+		have_parity_loop = true;
+		parity = parity != loop_inside;
+		break;
+	    case ON_BrepLoop::inner:
+		inside_inner = inside_inner || loop_inside;
+		have_parity_loop = true;
+		parity = parity != loop_inside;
+		break;
+	    case ON_BrepLoop::unknown:
+		have_parity_loop = true;
+		parity = parity != loop_inside;
+		break;
+	    default:
+		break;
 	}
     }
     if (candidate_count)
 	*candidate_count = candidates;
-    if (!candidates)
-	return true;
-    return finish_trim_classification(state, closesttrim);
+    finish_trim_distance(state, closesttrim);
+    const bool inside = any_outer ? inside_outer && !inside_inner :
+	have_parity_loop && parity;
+    return !inside;
+}
+
+
+bool
+CurveTree::classifyCell(const ON_Interval &u, const ON_Interval &v,
+	double within_distance_tol, bool &trimmed) const
+{
+    const double envelope = std::max(BREP_UV_DIST_FUZZ,
+	std::max(0.0, within_distance_tol));
+    const ON_Surface *surface = m_face ? m_face->SurfaceOf() : NULL;
+    const bool horizontal_ray = surface && surface->IsClosed(1);
+    const int ray_axis = horizontal_ray ? 0 : 1;
+    const int fixed_coordinate = horizontal_ray ? 1 : 0;
+    const ON_Interval cell[2] = {u, v};
+    for (std::vector<Stl::Loop>::const_iterator loop =
+	    m_stl->m_loops.begin(); loop != m_stl->m_loops.end(); ++loop) {
+	if (!loop->have_bbox)
+	    continue;
+	const std::vector<Stl::Loop::Leaf> &sorted = horizontal_ray ?
+	    loop->sortedY : loop->sortedX;
+	for (std::vector<Stl::Loop::Leaf>::const_iterator leaf =
+		sorted.begin(); leaf != sorted.end(); ++leaf) {
+	    const BRNode *br = leaf->node;
+	    point_t bmin, bmax;
+	    br->GetBBox(bmin, bmax);
+	    bmin[X] += leaf->offset.x;
+	    bmax[X] += leaf->offset.x;
+	    bmin[Y] += leaf->offset.y;
+	    bmax[Y] += leaf->offset.y;
+	    if (bmax[fixed_coordinate] + envelope <
+		    cell[fixed_coordinate].Min())
+		continue;
+	    if (bmin[fixed_coordinate] - envelope >
+		    cell[fixed_coordinate].Max())
+		break;
+	    if (bmax[ray_axis] + envelope < cell[ray_axis].Min())
+		continue;
+
+	    /* A displaced loop join can change the tolerance-extended parity
+	     * even when its curve is far along the ray axis.  Exact joins do not:
+	     * their two incident crossings retain parity. */
+	    if (leaf->extend_minimum[fixed_coordinate]) {
+		const ON_3dPoint &start = br->startPoint();
+		const ON_3dPoint &end = br->endPoint();
+		const double endpoint = std::min(start[fixed_coordinate],
+		    end[fixed_coordinate]) + leaf->offset[fixed_coordinate];
+		if (endpoint >= cell[fixed_coordinate].Min() - envelope &&
+			endpoint <= cell[fixed_coordinate].Max() + envelope)
+		    return false;
+	    }
+
+	    const ON_BoundingBox &bbox = br->m_node;
+	    const double bbox_min_u = bbox.m_min.x + leaf->offset.x;
+	    const double bbox_max_u = bbox.m_max.x + leaf->offset.x;
+	    const double bbox_min_v = bbox.m_min.y + leaf->offset.y;
+	    const double bbox_max_v = bbox.m_max.y + leaf->offset.y;
+	    double du = 0.0;
+	    double dv = 0.0;
+	    if (bbox_max_u < u.Min())
+		du = u.Min() - bbox_max_u;
+	    else if (bbox_min_u > u.Max())
+		du = bbox_min_u - u.Max();
+	    if (bbox_max_v < v.Min())
+		dv = v.Min() - bbox_max_v;
+	    else if (bbox_min_v > v.Max())
+		dv = bbox_min_v - v.Max();
+	    if (hypot(du, dv) <= envelope)
+		return false;
+	}
+    }
+
+    const BRNode *closest = NULL;
+    double distance = -1.0;
+    trimmed = isTrimmed(ON_2dPoint(u.Mid(), v.Mid()), &closest,
+	distance, envelope, NULL);
+    return true;
 }
 
 
@@ -528,26 +654,8 @@ BBNode::isTrimmed(const ON_2dPoint &uv, const BRNode **closest,
 
     if (!m_checkTrim)
 	return m_trimmed;
-
-    TrimClassificationState state(closest);
-    std::size_t candidates = 0;
-    for (std::list<const BRNode *>::const_iterator i =
-	    m_stl->m_trims_above.begin(); i != m_stl->m_trims_above.end();
-	    ++i) {
-	const BRNode *br = *i;
-	point_t bmin, bmax;
-	br->GetBBox(bmin, bmax);
-	const double dist = BREP_UV_DIST_FUZZ;
-	if ((uv[X] > bmin[X] - dist) && (uv[X] < bmax[X] + dist)) {
-	    ++candidates;
-	    classify_trim_candidate(state, br, uv, within_distance_tol);
-	}
-    }
-    if (candidate_count)
-	*candidate_count = candidates;
-    if (!candidates)
-	return true;
-    return finish_trim_classification(state, closesttrim);
+    return m_ctree ? m_ctree->isTrimmed(uv, closest, closesttrim,
+	within_distance_tol, candidate_count) : true;
 }
 
 
@@ -556,41 +664,14 @@ BBNode::isTrimmedAllocating(const ON_2dPoint &uv, const BRNode **closest,
 	double &closesttrim, double within_distance_tol,
 	std::size_t *candidate_count) const
 {
-    std::list<const BRNode *> trims;
     closesttrim = -1.0;
     if (candidate_count)
 	*candidate_count = 0;
 
     if (!m_checkTrim)
 	return m_trimmed;
-
-    getTrimsAbove(uv, trims);
-    if (candidate_count)
-	*candidate_count = trims.size();
-    if (trims.empty())
-	return true;
-
-    TrimClassificationState state(closest);
-    for (std::list<const BRNode *>::const_iterator i = trims.begin();
-	    i != trims.end(); ++i)
-	classify_trim_candidate(state, *i, uv, within_distance_tol);
-    return finish_trim_classification(state, closesttrim);
-}
-
-
-void
-BBNode::getTrimsAbove(const ON_2dPoint &uv, std::list<const BRNode *> &out_leaves) const
-{
-    point_t bmin, bmax;
-    double dist;
-    for (std::list<const BRNode *>::const_iterator i = m_stl->m_trims_above.begin(); i != m_stl->m_trims_above.end(); i++) {
-	const BRNode *br = *i;
-	br->GetBBox(bmin, bmax);
-	dist = BREP_UV_DIST_FUZZ; /* 0.03*DIST_PNT_PNT(bmin, bmax); */
-	if ((uv[X] > bmin[X] - dist) && (uv[X] < bmax[X] + dist)) {
-	    out_leaves.push_back(br);
-	}
-    }
+    return m_ctree ? m_ctree->isTrimmed(uv, closest, closesttrim,
+	within_distance_tol, candidate_count) : true;
 }
 
 
@@ -615,92 +696,24 @@ void BBNode::BuildBBox()
 
 
 bool
-BBNode::prepTrims()
+BBNode::prepTrims(double within_distance_tol)
 {
     const CurveTree *ct = m_ctree;
-    std::list<const BRNode *>::iterator i;
-    const BRNode *br;
-    point_t curvemin, curvemax;
-    double dist = BREP_UV_DIST_FUZZ;
-    bool trim_already_assigned = false;
-
-    m_stl->m_trims_above.clear();
-
-    if (LIKELY(ct != NULL)) {
-	ct->getLeavesAbove(m_stl->m_trims_above, m_u, m_v);
+    if (!ct) {
+	m_checkTrim = false;
+	m_trimmed = false;
+	return true;
     }
-
-    m_stl->m_trims_above.sort(sortY);
-
-    if (!m_stl->m_trims_above.empty()) {
-	i = m_stl->m_trims_above.begin();
-	while (i != m_stl->m_trims_above.end()) {
-	    br = *i;
-	    if (br->m_Vertical) { /* check V to see if trim possibly overlaps */
-		br->GetBBox(curvemin, curvemax);
-		if (curvemin[Y] - dist <= m_v[1]) {
-		    /* possibly contains trim can't rule out check
-		     * closer */
-		    m_checkTrim = true;
-		    trim_already_assigned = true;
-		    i++;
-		} else {
-		    i = m_stl->m_trims_above.erase(i);
-		}
-	    } else {
-		i++;
-	    }
-	}
+    const double envelope = std::max(BREP_UV_DIST_FUZZ,
+	std::max(0.0, within_distance_tol));
+    bool classification = false;
+    if (!ct->classifyCell(m_u, m_v, envelope, classification)) {
+	m_checkTrim = true;
+	m_trimmed = false;
+	return true;
     }
-
-    if (!trim_already_assigned) { /* already contains possible vertical trim */
-	if (m_stl->m_trims_above.empty() /*|| m_trims_right.empty()*/) {
-	    m_trimmed = true;
-	    m_checkTrim = false;
-	} else if (!m_stl->m_trims_above.empty()) { /*trimmed above check contains */
-	    i = m_stl->m_trims_above.begin();
-	    br = *i;
-	    br->GetBBox(curvemin, curvemax);
-	    dist = BREP_UV_DIST_FUZZ; /* 0.03*DIST_PNT_PNT(curvemin, curvemax); */
-	    if (curvemin[Y] - dist > m_v[1]) {
-		i++;
-
-		if (i == m_stl->m_trims_above.end()) { /* easy only trim in above list */
-		    if (br->m_XIncreasing) {
-			m_trimmed = true;
-			m_checkTrim = false;
-		    } else {
-			m_trimmed = false;
-			m_checkTrim = false;
-		    }
-		} else {
-		    /* check for trim bbox overlap TODO: look for
-		     * multiple overlaps.
-		     */
-		    const BRNode *bs;
-		    bs = *i;
-		    point_t smin, smax;
-		    bs->GetBBox(smin, smax);
-		    if ((smin[Y] >= curvemax[Y]) || (smin[X] >= curvemax[X]) || (smax[X] <= curvemin[X])) { /* can determine inside/outside without closer inspection */
-			if (br->m_XIncreasing) {
-			    m_trimmed = true;
-			    m_checkTrim = false;
-			} else {
-			    m_trimmed = false;
-			    m_checkTrim = false;
-			}
-		    } else {
-			m_checkTrim = true;
-		    }
-		}
-	    } else {
-		m_checkTrim = true;
-	    }
-	} else { /* something wrong here */
-	    bu_log("Error prepping trims");
-	    return false;
-	}
-    }
+    m_checkTrim = false;
+    m_trimmed = classification;
     return true;
 }
 }
