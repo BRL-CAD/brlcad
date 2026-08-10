@@ -14,8 +14,10 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
+#include <set>
 #include <vector>
 
+#include "bg/polygon.h"
 #include "bg/trimesh.h"
 #include "brep/cdt.h"
 #include "../cdt/chart.h"
@@ -251,6 +253,106 @@ exercise_full_cylinder(const ON_3dPoint &origin, ON_3dVector axis,
 }
 
 static bool
+exercise_offset_full_cylinder_seam()
+{
+    const double radius = 2.0;
+    const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, radius), 5.0);
+    std::unique_ptr<ON_Brep> brep(ON_BrepCylinder(cylinder, true, true));
+    if (!brep || !brep->IsValid() || !brep->IsSolid())
+	return false;
+    const ON_BrepFace *side = NULL;
+    for (int face_index = 0; face_index < brep->m_F.Count(); ++face_index) {
+	const ON_BrepFace &face = brep->m_F[face_index];
+	if (face.SurfaceOf() && face.SurfaceOf()->IsCylinder(NULL, 0.05)) {
+	    side = &face;
+	    break;
+	}
+    }
+    if (!side || !cdt_face_has_seam(*side))
+	return false;
+    const ON_Surface *surface = side->SurfaceOf();
+    const int closed_direction = surface->IsClosed(0) ? 0 : 1;
+    const int open_direction = 1 - closed_direction;
+    const ON_Interval closed_domain = surface->Domain(closed_direction);
+    const ON_Interval open_domain = surface->Domain(open_direction);
+    const double low = open_domain.ParameterAt(0.25);
+    const double high = open_domain.ParameterAt(0.75);
+    const double closed_parameters[10] = {
+	closed_domain.Min(), closed_domain.ParameterAt(0.25),
+	closed_domain.ParameterAt(0.5), closed_domain.ParameterAt(0.75),
+	/* Model a STEP p-curve whose closed-edge endpoint and following seam
+	 * trim both retain the same equivalent native parameter bound. */
+	closed_domain.Min(), closed_domain.Min(),
+	closed_domain.ParameterAt(0.75), closed_domain.ParameterAt(0.5),
+	closed_domain.ParameterAt(0.25), closed_domain.Min()
+    };
+    const double open_parameters[10] = {
+	low, low, low, low, low, high, high, high, high, high
+    };
+    std::vector<std::pair<double, double>> native_points;
+    std::vector<ON_3dPoint> point_storage;
+    std::vector<const ON_3dPoint *> points_3d;
+    std::vector<cdt_topo_vertex_id> topology_vertices(10,
+	CDT_TOPOLOGY_ID_NONE);
+    std::vector<int> outer;
+    native_points.reserve(10);
+    point_storage.reserve(10);
+    points_3d.reserve(10);
+    const double offset = closed_domain.ParameterAt(1.0e-5);
+    for (int i = 0; i < 10; ++i) {
+	ON_2dPoint native;
+	native[closed_direction] = closed_parameters[i];
+	native[open_direction] = open_parameters[i];
+	native_points.push_back(std::make_pair(native.x, native.y));
+	outer.push_back(i);
+	ON_2dPoint sample = native;
+	if (i == 0 || i == 4 || i == 5 || i == 9)
+	    sample[closed_direction] = offset;
+	point_storage.push_back(surface->PointAt(sample.x, sample.y));
+    }
+    for (const ON_3dPoint &point : point_storage)
+	points_3d.push_back(&point);
+    outer.push_back(0);
+
+    cdt_face_chart chart;
+    if (!chart.build(*side, native_points, outer,
+	    std::vector<std::vector<int>>(), std::vector<int>(),
+	    std::vector<int>(), points_3d, topology_vertices) ||
+	    chart.type() != CDT_FACE_CHART_CYLINDER ||
+	    chart.outer.size() != 10) {
+	std::cerr << "offset cylinder seam chart failed: "
+	    << chart.failure() << std::endl;
+	return false;
+    }
+    std::set<std::pair<double, double>> boundary_coordinates;
+    for (int point : chart.outer)
+	boundary_coordinates.insert(chart.points[(size_t)point]);
+    if (boundary_coordinates.size() != chart.outer.size()) {
+	std::cerr << "offset cylinder seam copies collapsed" << std::endl;
+	return false;
+    }
+
+    std::vector<point2d_t> chart_points(chart.points.size());
+    for (size_t i = 0; i < chart.points.size(); ++i)
+	V2SET(chart_points[i], chart.points[i].first, chart.points[i].second);
+    std::vector<int> outline(chart.outer);
+    outline.push_back(chart.outer.front());
+    int *faces = NULL;
+    int face_count = 0;
+    struct bg_triangulation_report report = {0, -1, {0}};
+    const int status = bg_nested_poly_triangulate_strict(&faces,
+	&face_count, NULL, NULL, outline.data(), outline.size(), NULL, NULL,
+	0, NULL, 0, chart_points.data(), chart_points.size(), &report);
+    bu_free(faces, "offset cylinder seam triangles");
+    if (status != BRLCAD_OK || face_count <= 0) {
+	std::cerr << "offset cylinder seam triangulation failed: "
+	    << report.message << std::endl;
+	return false;
+    }
+    return true;
+}
+
+static bool
 exercise_periodic_metric_chart()
 {
     ON_Circle major(ON_xy_plane, 9.0);
@@ -403,9 +505,11 @@ main()
 	    ON_3dPoint(1.0e-5, -2.0e-5, 3.0e-5),
 	    ON_3dVector(-2.0, 1.0, 4.0), 2.0e-6, 7.0e-6))
 	return 6;
-    if (!exercise_periodic_metric_chart())
+    if (!exercise_offset_full_cylinder_seam())
 	return 7;
-    if (!exercise_planar_nesting_repair())
+    if (!exercise_periodic_metric_chart())
 	return 8;
+    if (!exercise_planar_nesting_repair())
+	return 9;
     return 0;
 }

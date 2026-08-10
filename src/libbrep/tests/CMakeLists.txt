@@ -45,7 +45,8 @@ brlcad_addexec(test_brep_cdt_polar_chart brep_cdt_polar_chart.cpp "libbrep" TEST
 brlcad_add_test(NAME brep_cdt_polar_chart COMMAND test_brep_cdt_polar_chart)
 
 # A trimmed cylinder is unwrapped in physical angle-height coordinates.  Keep
-# full periodic seams on the native path until both seam copies are explicit.
+# full periodic seams explicit despite fit offsets and equivalent-bound
+# p-curves.
 brlcad_addexec(test_brep_cdt_cylinder_chart brep_cdt_cylinder_chart.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_cdt_cylinder_chart COMMAND test_brep_cdt_cylinder_chart)
 
