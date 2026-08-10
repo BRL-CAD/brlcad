@@ -846,6 +846,14 @@ cpolygon_t::ucv_angle(triangle_t &t)
 }
 
 
+static bool
+collect_polygon_segment(size_t segment, void *context)
+{
+    std::vector<size_t> *segments = (std::vector<size_t> *)context;
+    segments->push_back(segment);
+    return true;
+}
+
 bool
 cpolygon_t::self_intersecting()
 {
@@ -868,27 +876,52 @@ cpolygon_t::self_intersecting()
 	}
     }
 
-    // Check the projected segments against each other as well.  Store any
-    // self-intersecting edges for use in later repair attempts.
+    // Check the projected segments against each other as well.
     std::vector<cpolyedge_t *> pv(poly.begin(), poly.end());
+    RTree<size_t, double, 2> edge_index;
+    for (size_t i = 0; i < pv.size(); i++) {
+	cpolyedge_t *pe = pv[i];
+	const std::pair<double, double> &p1 = pnts_2d[pe->v2d[0]];
+	const std::pair<double, double> &p2 = pnts_2d[pe->v2d[1]];
+	double minimum[2] = {
+	    std::min(p1.first, p2.first),
+	    std::min(p1.second, p2.second)
+	};
+	double maximum[2] = {
+	    std::max(p1.first, p2.first),
+	    std::max(p1.second, p2.second)
+	};
+	edge_index.Insert(minimum, maximum, i);
+    }
     for (size_t i = 0; i < pv.size(); i++) {
 	cpolyedge_t *pe1 = pv[i];
 	ON_2dPoint p1_1(pnts_2d[pe1->v2d[0]].first, pnts_2d[pe1->v2d[0]].second);
 	ON_2dPoint p1_2(pnts_2d[pe1->v2d[1]].first, pnts_2d[pe1->v2d[1]].second);
-	struct uedge2d_t ue1(pe1->v2d[0], pe1->v2d[1]);
-	// if we already know this segment intersects at least one other segment, we
-	// don't need to re-test it - it's already "active"
-	if (self_isect_edges.find(ue1) != self_isect_edges.end()) continue;
 	ON_BoundingBox e1b(p1_1, p1_2);
 	ON_Line e1(p1_1, p1_2);
-	for (size_t j = i+1; j < pv.size(); j++) {
+	double minimum[2] = {
+	    std::min(p1_1.x, p1_2.x),
+	    std::min(p1_1.y, p1_2.y)
+	};
+	double maximum[2] = {
+	    std::max(p1_1.x, p1_2.x),
+	    std::max(p1_1.y, p1_2.y)
+	};
+	std::vector<size_t> candidates;
+	edge_index.Search(minimum, maximum, collect_polygon_segment,
+	    &candidates);
+	std::sort(candidates.begin(), candidates.end());
+	for (size_t j : candidates) {
+	    if (j <= i) {
+		continue;
+	    }
 	    cpolyedge_t *pe2 = pv[j];
 	    ON_2dPoint p2_1(pnts_2d[pe2->v2d[0]].first, pnts_2d[pe2->v2d[0]].second);
 	    ON_2dPoint p2_2(pnts_2d[pe2->v2d[1]].first, pnts_2d[pe2->v2d[1]].second);
-	    struct uedge_t ue2(pe2->v2d[0], pe2->v2d[1]);
 	    ON_BoundingBox e2b(p2_1, p2_2);
 	    ON_Line e2(p2_1, p2_2);
-
+	    // The RTree is only a coarse filter.  Preserve the legacy bounding
+	    // box and exact intersection predicates for candidate pairs.
 	    if (e1b.IsDisjoint(e2b)) {
 		continue;
 	    }
@@ -1928,6 +1961,26 @@ cdt_test_local_defects(void)
     if (ON_DotProduct(conservative_normal, ON_3dVector(wrong_normal)) <
 	    0.999)
 	return 10;
+
+    const auto release_polygon_edges = [](cpolygon_t &polygon) {
+	for (cpolyedge_t *edge : polygon.poly)
+	    delete edge;
+	polygon.poly.clear();
+    };
+
+    cpolygon_t large_polygon;
+    const int large_point_count = 2048;
+    for (int point = 0; point < large_point_count; ++point) {
+	const double angle = 2.0 * ON_PI * point / large_point_count;
+	ON_2dPoint p(cos(angle), sin(angle));
+	large_polygon.add_point(p, point);
+	large_polygon.add_ordered_edge(edge2d_t(point,
+		(point + 1) % large_point_count));
+    }
+    const bool large_self_intersection = large_polygon.self_intersecting();
+    release_polygon_edges(large_polygon);
+    if (large_self_intersection)
+	return 11;
     return 0;
 }
 
