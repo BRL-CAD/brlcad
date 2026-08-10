@@ -600,13 +600,15 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
      * boundary need not be a simple polygon when equivalent seam images are
      * mixed in the stored p-curves. */
     if (!cdt_face_uses_topology_chart(*sinfo->f)) {
-	fmesh->outer_loop.rm_points_in_polygon(&sinfo->on_surf_points, true);
-	fmesh->outer_loop.rm_points_in_polygon(&sinfo->on_trim_points, true);
+	fmesh->outer_loop.rm_points_in_polygon(&sinfo->on_surf_points, true,
+	    true);
+	fmesh->outer_loop.rm_points_in_polygon(&sinfo->on_trim_points, true,
+	    true);
 	for (const auto &inner : fmesh->inner_loops) {
 	    inner.second->rm_points_in_polygon(&sinfo->on_surf_points,
-		false);
+		false, true);
 	    inner.second->rm_points_in_polygon(&sinfo->on_trim_points,
-		false);
+		false, true);
 	}
     }
 
@@ -637,8 +639,9 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
     }
 
     for (osp_it = rm_pnts.begin(); osp_it != rm_pnts.end(); osp_it++) {
-	const ON_2dPoint *p = *osp_it;
-	sinfo->on_surf_points.erase((ON_2dPoint *)p);
+	ON_2dPoint *p = *osp_it;
+	sinfo->on_surf_points.erase(p);
+	delete p;
     }
     // Populate m_interior_pnts with the final set
     for (osp_it = sinfo->on_surf_points.begin(); osp_it != sinfo->on_surf_points.end(); osp_it++) {
