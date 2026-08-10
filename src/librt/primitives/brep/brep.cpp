@@ -13907,6 +13907,92 @@ brep_solid_events_coincident(const brep_hit &first, const brep_hit &second,
 }
 
 
+/* A coplanar observation has no reliable entering/leaving direction: the
+ * stored direction is necessarily chosen from the sign of a numerically zero
+ * dot product.  If the same physical event also has a transverse observation,
+ * retain the transverse witness and remove the coincident coplanar shadows
+ * before trim-nearness cleanup can compare their arbitrary direction bits.
+ * Entirely grazing clusters and separated grazing pairs are left for the
+ * grazing resolver below. */
+static void
+remove_fixed_coincident_grazing_observations(brep_hit_workspace &hits,
+	const struct xray &ray, const struct bn_tol *tol)
+{
+    const double parameter_tolerance =
+	brep_solid_event_parameter_tolerance(ray, tol);
+    size_t cluster_start = 0;
+    while (cluster_start < hits.size()) {
+	size_t cluster_end = cluster_start + 1;
+	while (cluster_end < hits.size() &&
+		brep_solid_events_coincident(hits[cluster_start],
+		    hits[cluster_end], parameter_tolerance))
+	    ++cluster_end;
+	bool transverse = false;
+	for (size_t i = cluster_start; i < cluster_end; ++i) {
+	    if (!NEAR_ZERO(VDOT(hits[i].normal, ray.r_dir),
+		    BREP_GRAZING_DOT_TOL)) {
+		transverse = true;
+		break;
+	    }
+	}
+	if (!transverse) {
+	    cluster_start = cluster_end;
+	    continue;
+	}
+	size_t removed = 0;
+	for (size_t i = cluster_end; i > cluster_start;) {
+	    --i;
+	    if (NEAR_ZERO(VDOT(hits[i].normal, ray.r_dir),
+		    BREP_GRAZING_DOT_TOL)) {
+		hits.erase(i);
+		++removed;
+	    }
+	}
+	cluster_start = cluster_end - removed;
+    }
+}
+
+
+static void
+remove_coincident_grazing_observations(std::list<brep_hit> &hits,
+	const struct xray &ray, const struct bn_tol *tol)
+{
+    const double parameter_tolerance =
+	brep_solid_event_parameter_tolerance(ray, tol);
+    std::list<brep_hit>::iterator cluster_start = hits.begin();
+    while (cluster_start != hits.end()) {
+	const brep_hit anchor = *cluster_start;
+	std::list<brep_hit>::iterator cluster_end = cluster_start;
+	++cluster_end;
+	while (cluster_end != hits.end() &&
+		brep_solid_events_coincident(anchor, *cluster_end,
+		    parameter_tolerance))
+	    ++cluster_end;
+	bool transverse = false;
+	for (std::list<brep_hit>::const_iterator i = cluster_start;
+		i != cluster_end; ++i) {
+	    if (!NEAR_ZERO(VDOT(i->normal, ray.r_dir),
+		    BREP_GRAZING_DOT_TOL)) {
+		transverse = true;
+		break;
+	    }
+	}
+	if (transverse) {
+	    std::list<brep_hit>::iterator i = cluster_start;
+	    while (i != cluster_end) {
+		if (NEAR_ZERO(VDOT(i->normal, ray.r_dir),
+			BREP_GRAZING_DOT_TOL)) {
+		    i = hits.erase(i);
+		    continue;
+		}
+		++i;
+	    }
+	}
+	cluster_start = cluster_end;
+    }
+}
+
+
 /* Coalesce same-direction observations of one boundary event at model
  * resolution.  Opposite directions remain distinct so a small certified
  * grazing interval is not erased.  The first entry and last exit are the
@@ -14105,6 +14191,9 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray,
 	bool solid_orientation = false)
 {
     brep_hit_cleanup_state state = {};
+
+    if (solid_orientation && hits.size() > 1)
+	remove_fixed_coincident_grazing_observations(hits, ray, tol);
 
     if (hits.size() > 1 &&
 	    fixed_hits_contain(hits, brep_hit::NEAR_MISS)) {
@@ -20934,6 +21023,10 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     std::list<brep_hit> orig = hits;
 #endif
 
+    const bool solid_orientation = bs->is_solid && !bs->plate_mode;
+    if (solid_orientation && hits.size() > 1)
+	remove_coincident_grazing_observations(hits, *rp, tol);
+
     ////////////////////////
     if ((hits.size() > 1) && containsNearMiss(&hits)) { //&& ((hits.size() % 2) != 0)) {
 
@@ -21207,8 +21300,6 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 
     if (trace)
 	trace->after_duplicates = hits.size();
-
-    const bool solid_orientation = bs->is_solid && !bs->plate_mode;
 
     if (solid_orientation) {
 	coalesce_solid_hit_events(hits, *rp, tol);

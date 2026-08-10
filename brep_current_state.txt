@@ -7423,6 +7423,101 @@ Feature-targeted chords and coplanar grazing cleanup (Finding 85):
   crack policy; no one sampling mode substitutes for the others.
 
 
+Transverse ownership of coincident coplanar roots (Finding 86):
+
+  The next independent feature-ray slice used four Recurta AP203 solids that
+  were previously measured only by the prep census.  Each run used fresh
+  adaptive-depth-three and depth-eight trees, the legacy solver, three axis
+  pairs, and a stratified total of 12 feature pairs: four face-normal, four
+  edge-normal, and four edge-grazing pairs.  Every chord was shot in both
+  directions.  Three objects passed immediately:
+
+    * `10007.g/id2_item.s`, 15 faces, passes all 30 rays with maximum endpoint
+      delta `3.1835818425918205e-9`.  One reverse edge-normal endpoint changes
+      owning seam face without changing the material partition.
+    * `10062.g/id2_item.s`, 3,623 faces, passes all 30 rays with maximum
+      endpoint delta `5.504829658775634e-8` and no face-owner difference.
+    * `10088.g/id2_item.s`, 5,771 faces, passes all 30 rays with maximum
+      endpoint delta `6.6577683810464805e-8` and no face-owner difference.
+
+  `10057.g/id2_item.s`, a 301-face solid, initially had no depth-dependent
+  partition difference but failed reversal at both depths on global pair 3.
+  This face-normal chord targets face 37 and has origin
+
+    (-4.25, -42.493022533117163, -96)
+
+  direction `(0,1,0)`, and chord length `84.986045066234325`.  The forward
+  solve returned no material while reversal returned a 9.7-unit interval.
+  Both depths produced the same underlying roots, so this was neither a tree
+  density problem nor a nonlinear-solve discrepancy.
+
+  At each physical endpoint, one near-trim root was transverse to the ray and
+  one or more roots came from planar faces containing the ray.  A coplanar
+  root has zero normal dot, but `brep_hit::direction` must still contain one of
+  ENTERING or LEAVING and historically obtains the LEAVING value from the
+  nonnegative sign of zero.  Early NEAR_MISS cleanup compared that arbitrary
+  bit before the grazing stage.  In one ray order it paired a transverse
+  NEAR_MISS with a coincident zero-normal root and erased the real boundary;
+  reversal changed the arbitrary comparison and retained it.
+
+  Solid cleanup now establishes local event authority before any near-trim
+  pairing.  Within one model-distance event cluster, if at least one
+  observation is transverse, the fixed workspace and allocating list both
+  remove coincident observations whose normal dot is within
+  `BREP_GRAZING_DOT_TOL`.  The transverse witness owns the material state
+  transition.  Entirely grazing clusters are unchanged, as are separated
+  entering/leaving grazing pairs and all plate/open-surface cleanup.  The
+  cluster envelope is the existing model-space parameter tolerance, including
+  ray-direction scaling and floating-point slack; sorted adjacency alone does
+  not establish identity.  Production remains allocation-free on the fixed
+  path.
+
+  A pure C++ stream at `src/librt/tests/brep_ray.cpp:1079` reduces the imported
+  arrangement to a transverse NEAR_MISS plus coincident zero-normal NEAR_MISS
+  and NEAR_HIT shadows at each endpoint.  It requires the same interval after
+  reversal.  The production helpers are at
+  `src/librt/primitives/brep/brep.cpp:13918` and `:13957`; both are called before
+  near-miss cleanup.  Exact imported pair 3 now returns
+  `[35.643022533117161,45.343022533117164]` forward and
+  `[39.643022533117161,49.343022533117164]` in reverse at both depths, with
+  zero fixed/list discrepancy on those rays.  The complete 15-pair object run
+  passes all 30 rays, has no face-owner difference, and has maximum depth delta
+  `2.9734749773524527e-8`.
+
+  This slice also sharpens the prep scaling problem.  The depth-three and
+  depth-eight results respectively retained:
+
+    * `10007`: 1,484/61,268 surface leaves and 37,016 curve leaves, 75.2 MiB
+      process peak;
+    * `10062`: 8,916/48,170 surface leaves and 118,694 curve leaves, 348.1 MiB
+      process peak;
+    * `10088`: 9,373/52,213 surface leaves and 108,433 curve leaves, 310.0 MiB
+      process peak; and
+    * `10057`: 6,603/315,415 surface leaves and 482,684 curve leaves at either
+      surface depth, 585.0 MiB process peak.
+
+  Curve-tree population does not respond to the adaptive surface-depth knob.
+  On `10057`, curve leaves outnumber shallow surface leaves by 73 to 1 and even
+  outnumber dense surface leaves.  In the first concurrent high-face-count
+  pass, end-to-end prep wall time was about 44--48 seconds at depth three and
+  71 seconds at depth eight, while reported surface-tree build time was only
+  0.88 and 15--17 seconds.  A repeat under different concurrent scheduling
+  reported about 21--30 seconds of wall time and 0.31--5.95 seconds of surface
+  build time.  Do not treat either concurrent pass as a serial benchmark; the
+  variability itself requires isolated phase and allocation counters.  In
+  every run, substantial wall work is outside the reported surface build and
+  the curve population is unchanged.  These measurements make CurveTree
+  design, per-face setup, and retained/temporary ownership part of the
+  required prep-memory audit; surface-tree compaction alone cannot solve
+  scaling.
+
+  Qualification is green.  `rt_brep_ray --cleanup-only` passes.  The optimized
+  non-seam gate passes 18/18 in 168.01 seconds.  The 416-ray seam gate passes in
+  251.46 seconds.  Rebuilt ASAN/UBSAN cleanup-only and feature-enabled
+  `brep_audit_ray_depth_compare` pass with leak scanning disabled for the
+  established host-runtime limitation and no sanitizer diagnostic.
+
+
 NEXT ACTIONS
 ------------
 
@@ -7433,7 +7528,9 @@ A. Keep the production adaptive depth at eight.  The first reproducible
    status-2 pole repair, UCP winding/overlap repair, NIST trim-endpoint repair,
    and SC local-cleanup repair are recorded above.  The selected objects in
    that initial stratum now have sampled ray comparisons.  Expand into new
-   strata with `--ray-depth-compare`, using `--ray-pair` and `--legacy-only`
+   strata with `--ray-depth-compare`; the new Recurta 10007/10057/10062/10088
+   slice passes after the 10057 coplanar-shadow repair.  Use `--ray-pair` and
+   `--legacy-only`
    to ratchet every failure before paying for a full trace.  Retain complete
    partition/reversal results, orientation, prepared selection and fallback
    populations,
@@ -7458,6 +7555,9 @@ C. Use the deterministic hard replay as the seed of the difficult-solver C/C++
    plus exact imported and complete 70-ray replay.  The first targeted 0353
    discrepancy is ratcheted by near-side-representation and coplanar-continuum
    streams plus exact pairs 10/11 and the complete 24-feature replay.  Add
+   Recurta 10057 pair 3 as the coplanar-shadow stream: coincident zero-normal
+   observations may not use an arbitrary direction bit to erase a transverse
+   near-trim boundary.  Its complete 15-pair replay is the imported gate.  Add
    every subsequent imported discrepancy with its complete geometry, ray,
    tolerance, span, box, root, event, and fallback evidence; do not tune
    against an unnamed `.g` model or replace one failure with another.
@@ -7466,10 +7566,20 @@ D. Extend prepared authority only with separate complete proofs for the
    topology-boundary events, contact-only rays, curved vertex links, and
    many-to-many edge clusters.  Preserve tolerance-healed seam behavior and
    the whole-ray fallback; never reinterpret unresolved as miss.
-E. Once the density/default and cache decision is qualified, begin the plan's
-   certified-pipeline performance phase.  Measure normal production separately
-   from trace mode, because trace deliberately reruns the legacy path after a
-   prepared selection.  Profile phase costs first, then prioritize the
+E. Before general solve optimization, audit retained and peak prep memory in
+   SurfaceTree, CurveTree, per-face NURBS forms, trim polylines, and temporary
+   construction work.  Reconstruct the removed static-`ON_Surface` change and
+   its correctness failure, but do not restore shared mutable surface state.
+   Attribute bytes and wall time by structure on 10007/10057/10062/10088,
+   distinguish ownership from duplication, and test safe immutable sharing,
+   arenas, flat/compact post-build arrays, lazy local trim refinement, and
+   cache serialization effects.  Curve leaves are already the dominant
+   retained count on 10057 and are independent of surface depth.
+F. Once the memory representation and density/default decision are qualified,
+   begin the plan's certified-pipeline performance phase.  Measure normal
+   production separately from trace mode, because trace deliberately reruns
+   the legacy path after a prepared selection.  Profile phase costs first,
+   then prioritize the
    object-level face/span BVH, compact immutable span/trim arrays,
    conservative SIMD coefficient work, and a real batched vshot.  Optimize
    Newton/OpenNURBS evaluation only if profiles identify it as hot.

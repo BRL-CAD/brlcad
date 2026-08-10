@@ -7,6 +7,96 @@ Repository studied: /home/cyapp/brlcad
 STEP test corpus: /home/cyapp/step_corpus_g
 
 
+IMPLEMENTATION CHECKPOINT: COPLANAR EVENT AUTHORITY (2026-08-09)
+----------------------------------------------------------------
+
+The second feature-targeted imported slice covers Recurta AP203 models 10007,
+10057, 10062, and 10088.  Each object was audited with fresh adaptive-depth-
+three and depth-eight preps, three axis chord pairs, and 12 stratified feature
+pairs divided evenly among face normals, edge normals, and locally grazing
+edge conormals.  All lines were shot in both directions through the legacy
+solver.  This adds 120 directed rays across solids ranging from 15 to 5,771
+faces.
+
+Models 10007, 10062, and 10088 passed immediately.  Their maximum depth-
+comparison endpoint deltas were respectively `3.1835818425918205e-9`,
+`5.504829658775634e-8`, and `6.6577683810464805e-8`.  The 10007 edge-normal
+sample has one explicitly reported choice between coincident seam faces but
+no material-partition change.  The other two have no face-owner difference.
+
+Model `10057.g/id2_item.s` initially exposed a reversal failure shared by both
+tree depths.  Global pair 3 targets face 37 along the exact line
+
+  origin    = (-4.25, -42.493022533117163, -96)
+  direction = (0, 1, 0)
+  chord     = 84.986045066234325
+
+The line is transverse to the solid at two near-trim boundaries but lies in
+several planar faces.  Each physical endpoint therefore has one transverse
+observation and coincident zero-normal observations.  The latter have no
+mathematically meaningful entering/leaving direction, yet the legacy hit
+record must store one of those two enum values and derives LEAVING from the
+nonnegative sign of zero.  The near-miss stage consumed that arbitrary bit
+before grazing cleanup.  Forward order erased both true transverse boundaries
+and returned a miss; reverse order retained them and returned one interval.
+Identical behavior at both depths proved this was event cleanup, not surface
+isolation.
+
+For oriented solids, both cleanup containers now resolve authority inside one
+model-tolerance parameter cluster before any NEAR_MISS comparison.  If the
+cluster contains a transverse root, coincident roots with normal dot inside
+`BREP_GRAZING_DOT_TOL` are coplanar shadows and are removed.  The transverse
+root retains material-transition authority.  This rule is deliberately
+narrow:
+
+  * the event cluster uses model distance divided by ray length plus the
+    established floating-point slack;
+  * at least one transverse witness is required;
+  * wholly grazing clusters are unchanged;
+  * separated grazing entry/exit pairs remain available to the qualified
+    minimum-size resolver; and
+  * plate and open-surface historical cleanup is unchanged.
+
+The fixed implementation allocates nothing during ray shooting.  The legacy
+list implements the same policy and remains the trace equivalence oracle.  A
+reduced C++ stream places zero-normal NEAR_MISS and NEAR_HIT shadows beside
+transverse near-trim endpoints and requires forward/reverse interval equality.
+Exact imported pair 3 now returns
+`[35.643022533117161,45.343022533117164]` forward and
+`[39.643022533117161,49.343022533117164]` in reverse at both depths.  The full
+10057 feature audit passes all 30 rays with maximum depth delta
+`2.9734749773524527e-8`.
+
+The full optimized non-seam gate passes 18/18, the 416-ray seam gate passes,
+and rebuilt ASAN/UBSAN cleanup and feature-depth audits report no diagnostic.
+This repair is a general local event rule backed by an imported witness and a
+source-level reduction; it does not tune tree depth or loosen trim tolerance.
+
+The same stratum makes prep-memory work urgent.  Curve leaves are unchanged
+between surface depths and number 37,016 on 10007, 118,694 on 10062, 108,433
+on 10088, and 482,684 on 10057.  For 10057, depth three needs only 6,603
+surface leaves while curve leaves exceed that count by 73 times; process peak
+RSS is about 585 MiB.  The large-topology 10062 and 10088 cases peak around
+348 and 310 MiB.  In the first concurrent pass their end-to-end shallow prep
+took about 44--48 seconds despite reported surface-tree construction below one
+second.  A repeated concurrent pass produced materially different 21--30
+second wall measurements.  These are coverage runs, not reliable serial
+benchmarks; use isolated phase and allocation counters.  Both runs nevertheless
+show that retained CurveTrees, per-face setup, and non-surface construction
+costs must be measured separately.
+
+The next work phase must reconstruct the motivation and failure of the removed
+static `ON_Surface` reuse, then attribute prep bytes, allocation counts,
+lifetimes, and wall time to surfaces, SurfaceTrees, CurveTrees, trim data,
+temporary build structures, and cache serialization.  Shared mutable
+OpenNURBS objects are not an acceptable optimization.  Candidate designs to
+evaluate include immutable ownership with explicit lifetime, construction
+arenas, post-build flat/compact node arrays, deduplicated immutable geometry,
+and lazy allocation-free local refinement.  Curve-tree correctness remains
+part of crack handling, so any simplification must preserve exact trim/edge
+classification and the existing analytic, reversal, seam, and Crofton gates.
+
+
 IMPLEMENTATION CHECKPOINT: FEATURE-TARGETED CHORDS (2026-08-09)
 ----------------------------------------------------------------
 
