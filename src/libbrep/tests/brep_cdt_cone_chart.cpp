@@ -113,6 +113,35 @@ exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
 	return false;
     }
 
+    bool matched_seam_copies = false;
+    for (const cdt_chart_vertex &low : chart.vertices) {
+	if (low.seam_side >= 0 || low.native_point < 0 ||
+		(size_t)low.native_point >= points_3d.size() ||
+		!points_3d[(size_t)low.native_point])
+	    continue;
+	for (const cdt_chart_vertex &high : chart.vertices) {
+	    if (high.seam_side <= 0 || high.native_point < 0 ||
+		    (size_t)high.native_point >= points_3d.size() ||
+		    points_3d[(size_t)high.native_point] !=
+		    points_3d[(size_t)low.native_point])
+		continue;
+	    if (!(chart.points[(size_t)low.id].second > 0.0))
+		continue;
+	    matched_seam_copies = true;
+	    if (!(chart.points[(size_t)low.id].first < 0.0) ||
+		    !(chart.points[(size_t)high.id].first > 0.0)) {
+		std::cerr << "cone seam copies occupy the same chart side"
+		    << std::endl;
+		return false;
+	    }
+	}
+    }
+    if (!matched_seam_copies) {
+	std::cerr << "cone chart did not retain a matching seam sample"
+	    << std::endl;
+	return false;
+    }
+
     /* A damaged pcurve can report its pole parameter for a legitimate
      * interior sample of a radial edge.  An atlas chart with an explicit
      * topological pole must recover that sample from the authoritative 3-D
@@ -173,6 +202,86 @@ exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
     }
     if (!retained_repaired_sample) {
 	std::cerr << "authoritative cone repair collapsed an edge sample"
+	    << std::endl;
+	return false;
+    }
+
+    /* Exercise non-topological copies of one sample on both native seam
+     * bounds.  Analytic closest-point projection is free to return either
+     * periodic image, but the bounds must remain opposite chart sides. */
+    std::vector<std::pair<double, double>> seam_native = native_points;
+    std::vector<const ON_3dPoint *> seam_points_3d = points_3d;
+    std::vector<cdt_topo_vertex_id> seam_topology = topology_vertices;
+    std::vector<int> seam_outer;
+    std::vector<int> seam_samples;
+    ON_3dPoint seam_point = ON_3dPoint::UnsetPoint;
+    const int closed_direction = chart.closed_direction();
+    const int open_direction = 1 - closed_direction;
+    const ON_Interval closed_domain = surface->Domain(closed_direction);
+    const double seam_tolerance = 256.0 * DBL_EPSILON *
+	std::max(std::max(std::fabs(closed_domain.Min()),
+	    std::fabs(closed_domain.Max())), closed_domain.Length());
+    const auto seam_side = [&](double parameter) {
+	if (std::fabs(parameter - closed_domain.Min()) <= seam_tolerance)
+	    return -1;
+	if (std::fabs(parameter - closed_domain.Max()) <= seam_tolerance)
+	    return 1;
+	return 0;
+    };
+    for (size_t i = 0; i + 1 < outer.size(); ++i) {
+	const int first = outer[i];
+	const int second = outer[i + 1];
+	seam_outer.push_back(first);
+	const int first_side = seam_side(closed_direction ?
+	    native_points[(size_t)first].second :
+	    native_points[(size_t)first].first);
+	const int second_side = seam_side(closed_direction ?
+	    native_points[(size_t)second].second :
+	    native_points[(size_t)second].first);
+	if (!first_side || first_side != second_side)
+	    continue;
+	ON_2dPoint sample;
+	sample[closed_direction] = first_side < 0 ? closed_domain.Min() :
+	    closed_domain.Max();
+	sample[open_direction] = 0.5 *
+	    ((open_direction ? native_points[(size_t)first].second :
+	    native_points[(size_t)first].first) +
+	    (open_direction ? native_points[(size_t)second].second :
+	    native_points[(size_t)second].first));
+	if (seam_samples.empty())
+	    seam_point = surface->PointAt(sample.x, sample.y);
+	const int sample_index = (int)seam_native.size();
+	seam_native.push_back(std::make_pair(sample.x, sample.y));
+	seam_points_3d.push_back(&seam_point);
+	seam_topology.push_back(CDT_TOPOLOGY_ID_NONE);
+	seam_samples.push_back(sample_index);
+	seam_outer.push_back(sample_index);
+    }
+    seam_outer.push_back(seam_outer.front());
+    if (seam_samples.size() != 2 || !seam_point.IsValid()) {
+	std::cerr << "cone fixture did not expose two seam paths" << std::endl;
+	return false;
+    }
+    cdt_face_chart seam_chart;
+    if (!seam_chart.build(*cone_face, seam_native, seam_outer,
+	    std::vector<std::vector<int>>(), refinement, refinement,
+	    seam_points_3d, seam_topology, chart.pole_topology_vertex())) {
+	std::cerr << "sampled cone seam chart failed: "
+	    << seam_chart.failure() << std::endl;
+	return false;
+    }
+    bool low_sample = false;
+    bool high_sample = false;
+    for (const cdt_chart_vertex &vertex : seam_chart.vertices) {
+	if (vertex.native_point != seam_samples[0] &&
+		vertex.native_point != seam_samples[1])
+	    continue;
+	const double x = seam_chart.points[(size_t)vertex.id].first;
+	low_sample = low_sample || (vertex.seam_side < 0 && x < 0.0);
+	high_sample = high_sample || (vertex.seam_side > 0 && x > 0.0);
+    }
+    if (!low_sample || !high_sample) {
+	std::cerr << "authoritative cone seam samples share one chart side"
 	    << std::endl;
 	return false;
     }
