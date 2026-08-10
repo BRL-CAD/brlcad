@@ -23275,7 +23275,8 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 	for (uint32_t i = 0; i < num_children; ++i) {
 	    const CurveTree * const ctree = new CurveTree(deserializer, *specific->brep->m_F.At(i));
 	    specific->ctrees.push_back(ctree);
-	    specific->bvh->addChild(new BBNode(deserializer, *ctree));
+	    specific->bvh->addChild(BBNode::deserializeTree(deserializer,
+		*ctree));
 	}
 
 	specific->bvh->BuildBBox();

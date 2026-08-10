@@ -1269,6 +1269,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     m_removeTrimmed(removeTrimmed),
     m_face(face),
     m_root(NULL),
+    m_node_arena(new BBNodeArena),
     m_f_queue(new std::queue<ON_Plane *>),
     m_split_cache(new SurfaceSplitCache),
     m_failure(FAILURE_NONE),
@@ -1340,7 +1341,12 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     surf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
     surf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
 
-    m_root = subdivideSurface(surf, u, v, frames, 0, depthLimit, 1, within_distance_tol);
+    BBNode *built_root = subdivideSurface(surf, u, v, frames, 0,
+	depthLimit, 1, within_distance_tol);
+    if (built_root) {
+	m_root = m_node_arena->finish(built_root);
+	m_node_arena = NULL;
+    }
 
     if (!m_root && m_failure == FAILURE_NONE)
 	recordFailure(FAILURE_SUBDIVISION, u, v, 0);
@@ -1362,6 +1368,7 @@ SurfaceTree::~SurfaceTree()
 {
     delete m_ctree;
     delete m_root;
+    delete m_node_arena;
     delete m_f_queue;
     delete m_split_cache;
 }
@@ -1624,11 +1631,14 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 	*/
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() <<
 	      ") v(" << v.Min() << ", " << v.Max() << ")");
-	node = new BBNode(m_ctree, ON_BoundingBox(ON_3dPoint(min), ON_3dPoint(max)), u, v, false, false);
+	node = m_node_arena->make(m_ctree,
+	    ON_BoundingBox(ON_3dPoint(min), ON_3dPoint(max)), u, v,
+	    false, false);
 	node->prepTrims(within_distance_tol);
 
     } else {
-	node = new BBNode(ON_BoundingBox(ON_3dPoint(min), ON_3dPoint(max)), m_ctree);
+	node = m_node_arena->make(
+	    ON_BoundingBox(ON_3dPoint(min), ON_3dPoint(max)), m_ctree);
     }
 
     node->m_estimate = estimate;
@@ -1648,14 +1658,13 @@ SurfaceTree::initialBBox(const CurveTree* ctree, const ON_Surface* surf,
 	recordFailure(FAILURE_BOUNDING_BOX, u, v, depth);
 	return NULL;
     }
-    BBNode* node = new BBNode(ctree, bb, u, v, false, false);
     ON_3dPoint estimate;
     ON_3dVector normal;
     if (!surface_EvNormal(surf, u.Mid(), v.Mid(), estimate, normal)) {
 	recordFailure(FAILURE_NORMAL_EVALUATION, u, v, depth);
-	delete node;
 	return NULL;
     }
+    BBNode* node = m_node_arena->make(ctree, bb, u, v, false, false);
     node->m_estimate = estimate;
     node->m_normal = normal;
     node->m_u = u;
@@ -1948,9 +1957,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	for (int i = 0; i < 4; ++i) {
 	    if (quads[i])
 		continue;
-	    for (int child = 0; child < 4; ++child)
-		delete quads[child];
-	    delete parent;
+	    /* The face arena reclaims this incomplete construction in bulk. */
 	    return NULL;
 	}
 
@@ -2111,9 +2118,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
 	if (!quads[0] || !quads[1]) {
-	    delete quads[0];
-	    delete quads[1];
-	    delete parent;
 	    return NULL;
 	}
 
@@ -2254,9 +2258,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
 	if (!quads[0] || !quads[1]) {
-	    delete quads[0];
-	    delete quads[1];
-	    delete parent;
 	    return NULL;
 	}
 
@@ -2295,7 +2296,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
     if (!do_both_splits && !do_u_split && !do_v_split) {
 	(const_cast<ON_Surface *>(localsurf))->ClearBoundingBox();
-	delete parent;
 	return subdivideSurface(localsurf, u, v, frames, 0, depthLimit, 0, within_distance_tol);
     }
 

@@ -8,6 +8,13 @@ brlcad_add_test(
 )
 
 brlcad_add_test(
+  NAME brep_audit_prep_repeat
+  COMMAND
+    brep-audit --prep-only --prep-repeat=3
+    ${CMAKE_SOURCE_DIR}/regress/nurbs/sph.g sph.brep
+)
+
+brlcad_add_test(
   NAME brep_audit_ray_depth_compare
   COMMAND
     brep-audit --ray-depth-compare --ray-count=4 --feature-ray-count=3

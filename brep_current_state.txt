@@ -7647,6 +7647,90 @@ Compact BBNode child ownership and all-span scaling (Finding 88):
   object-level span index exists.
 
 
+Reclaimable per-face SurfaceTree arenas and seam profiling (Finding 89):
+
+  `BBNode` no longer inherits the process-lifetime `PooledObject` allocator.
+  Each `SurfaceTree` now owns a `BBNodeArena` during construction.  The first
+  face node is an ordinary anchor suitable for the existing raw-root transfer
+  API; later nodes use placement construction in blocks of 4, 16, 64, and at
+  most 256 nodes.  If knot partitioning makes the final logical root differ
+  from the first node, its fields and child storage are adopted into the
+  anchor.  Finishing attaches the arena to that one transferable root.  The
+  ordinary object-level BVH root recursively owns all face roots, so deleting
+  `brep_specific` now destroys and frees every retained surface-node block.
+
+  Bounds, UV intervals, estimates, normals, trim flags, split topology, child
+  order, closed-seam and internal-knot splits, and traversal are unchanged.
+  Cache serialization is byte-compatible; cache loading now uses the same
+  per-face arena representation.  The ordinary recursive deserializer remains
+  available for API compatibility.  Partial tree failures are reclaimed in
+  bulk rather than relying on error-site deletion of selected parents and
+  children.
+
+  ASan/UBSan found a use-after-free in the first arena teardown: the newest
+  block was freed first even though parents are allocated before children and
+  a parent destructor still inspects child ownership.  Teardown now restores
+  block allocation order and destroys parents before children while all child
+  storage is live.  Cache serial/parallel destruction, cleanup, endpoint, and
+  `--local-root-only` all pass under ASan/UBSan.  The latter includes the
+  deliberate `FAILURE_NORMAL_EVALUATION` construction failure, directly
+  exercising partial-arena cleanup.  Focused release tests pass 12/12;
+  `brep_audit_prep_repeat` and the all-face SurfaceTree audit pass 2/2.
+
+  `sizeof(BBNode)` remains 160 bytes at alignment eight.  The full 10057
+  depth-three/eight comparison preserves 618,445/12,107 nodes,
+  315,415/6,603 leaves, 482,684 curve leaves, all 30 ray answers, and the
+  `2.9734749773524527e-8` maximum endpoint delta.  Its observed process peak
+  is 359,940,096 bytes versus 363,761,664 at Finding 88, a 3,821,568-byte
+  (3.64-MiB, about 1.05-percent) reduction.  The 5,771-face 10088 prep-only
+  run is essentially neutral at 236,707,840 bytes and succeeds in 15.47
+  seconds.  Its isolated legacy-only two-depth comparison remains exactly
+  correct but records a 294,780,928-byte process peak.  Because the audit
+  frees one depth before building the other, that high-water number includes
+  allocator-retained pages and later feature/second-prep allocations; it is
+  not a count of simultaneously live arena nodes.
+
+  `brep-audit --prep-only --prep-repeat=N` now performs complete repeated prep
+  and unload cycles and labels every JSON record with repeat index/count.  Six
+  normal-allocator 10057 cycles report peaks of 283,414,528, 388,243,456,
+  409,079,808, 418,910,208, 424,792,064, and 428,048,384 bytes.  Growth falls
+  from roughly 100 MiB after the first unload to 3 MiB at the sixth.  Four
+  `MALLOC_ARENA_MAX=1` cycles plateau at 264,671,232, 296,349,696,
+  303,284,224, and 303,538,176 bytes, but take roughly twice as long.  This,
+  plus sanitizer-clean logical teardown, implicates glibc per-thread arena
+  retention/fragmentation in the remaining RSS trend rather than live
+  `BBNodeArena` ownership.  The retained RSS still matters at production
+  scale; forcing one malloc arena is diagnostic evidence, not the solution.
+
+  The next representation decision should compare a reclaimable larger region
+  with a compact indexed or build-then-pack runtime tree and must measure both
+  live bytes and process high water.  Do not introduce a global BREP block
+  cache that retains the largest model indefinitely.  Continue smaller
+  topology/span/reference/vector/cache-streaming wins as well, since large
+  top-level STEP assemblies accumulate them.
+
+  A 15-second CPU profile explains the 229.89-second seam shard independently
+  of this memory work.  The primary Cobb geometry has only six faces/spans;
+  SurfaceTree build, BBox work, and BVH traversal consume less than one percent
+  of the sample.  `brep_expansion_add` consumes 45.76 percent and
+  `brep_expansion_scale` 25.09 percent, with exact Bezier restriction,
+  blossoming, and fold determinant certification taking most of the balance.
+  The fixed 128-component expansions do not malloc.  Near-tangent seam rays
+  make cheap predicates inconclusive, so exact restriction is repeated during
+  subdivision and contact certification.  Ordinary production and trace
+  stacks both contain this work.  The test magnifies it by running 1,248 BREP
+  shots, 416 implicit shots, 32 BREP preps, and thirteen auxiliary corpora;
+  trace mode also runs prepared and legacy equivalence paths.  Nevertheless,
+  the prepared production cost is a real defect, not merely test overhead.
+
+  Establish an already-prepared, non-trace Cobb benchmark before optimization.
+  Gate exact expansion behind conservative control-hull/double and outward-
+  interval decisions, retaining it for the genuinely ambiguous tangent/fold/
+  seam residue.  Measure regular, near-grazing, and exact-tangent populations
+  separately and preserve fixed workspaces, no ray-time malloc, stage counters,
+  selected/fallback populations, crack handling, and every correctness oracle.
+
+
 NEXT ACTIONS
 ------------
 
@@ -7695,14 +7779,19 @@ D. Extend prepared authority only with separate complete proofs for the
    topology-boundary events, contact-only rays, curved vertex links, and
    many-to-many edge clusters.  Preserve tolerance-healed seam behavior and
    the whole-ray fallback; never reinterpret unresolved as miss.
-E. Continue the prep-memory audit from the qualified compact CurveTree and
-   direct BBNode-child checkpoints.  Curve storage is flat, explicitly owned,
-   and cache version 2; 10057's two-depth peak is down about 39 percent from
-   the pre-compaction baseline, then another 7.97 MiB after removing each
-   surface node's pooled child holder.  Next compare per-face arenas, compact
-   indexed runtime nodes, and build-then-pack designs, then attribute per-face
-   NURBS forms, OpenNURBS topology, immutable span data, vector capacity, and
-   cache streaming.  Do not restore shared mutable surface state.  Exercise
+E. Continue the prep-memory audit from the qualified compact CurveTree,
+   direct BBNode-child, and reclaimable per-face BBNode-arena checkpoints.
+   Curve storage is flat, explicitly owned, and cache version 2; 10057's
+   two-depth peak is down about 39 percent from the pre-compaction baseline,
+   then another 7.97 MiB after removing each surface node's pooled child
+   holder.  Surface nodes now have complete prep ownership and sanitizer-clean
+   teardown.  Repeated-prep evidence distinguishes logical release from glibc
+   per-thread arena retention, which still raises long-lived process RSS.
+   Next compare reclaimable larger regions, compact indexed runtime nodes, and
+   build-then-pack designs while accounting for transient duplication.  Then
+   attribute per-face NURBS forms, OpenNURBS topology, immutable span data,
+   vector capacity, and cache streaming.  Do not restore shared mutable
+   surface state or a global maximum-retaining node cache.  Exercise
    10007/10057/10062/10088 and larger top-level corpus objects while preserving
    seam/knot structural splits, safe parallel ownership, fresh/cache identity,
    and allocation-free ray shooting.
@@ -7712,12 +7801,16 @@ F. Once the memory representation and density/default decision are qualified,
    the legacy path after a prepared selection.  The unindexed prepared span
    scan already makes one 10088 axis pair exceed two minutes while legacy-only
    tracing is bounded, so prioritize the object-level face/span BVH after the
-   correctness/memory checkpoints.  Then address compact immutable span/trim
-   arrays,
-   conservative SIMD coefficient work, and a real batched vshot.  Optimize
-   Newton/OpenNURBS evaluation only if profiles identify it as hot.  Establish
-   already-prepared, non-trace Cobb and imported-object rays/second before and
-   after each performance change so exhaustive proof-corpus setup is not
+   correctness/memory checkpoints.  Separately, the six-span Cobb seam profile
+   spends about 71 percent in exact expansion add/scale, not in BVH traversal.
+   Establish already-prepared, non-trace regular/near-grazing/exact-tangent
+   Cobb throughput first, then gate exact expansion behind conservative cheap
+   hull/double and outward-interval decisions without weakening ambiguous
+   contact authority.  Address compact immutable span/trim arrays,
+   conservative SIMD coefficient work, and a real batched vshot after those
+   two distinct bottlenecks are measurable.  Optimize Newton/OpenNURBS
+   evaluation only if profiles identify it as hot.  Report rays/second before
+   and after each performance change so exhaustive proof-corpus setup is not
    mistaken for production latency.
 
 The numbered items below remain the detailed longer-term backlog.  The
