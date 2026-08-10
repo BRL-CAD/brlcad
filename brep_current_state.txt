@@ -7860,6 +7860,68 @@ Ordinary fold-graph contraction before expansion (Finding 91):
   and measure how many candidate spans and boxes actually request it.
 
 
+Lazy exact ray-plane coefficients (Finding 92):
+
+  Ray-plane coefficient construction is now split into a mandatory cheap tier
+  and an on-demand expansion tier.  The cheap initializer forms scalar
+  coefficients, outward binary64 coefficient intervals, ray-parameter
+  numerators, weights, and their error bounds.  It leaves the fixed expansion
+  arrays uninitialized.  A retained span requests the exact tier only when a
+  singular-boundary proof, terminal exact refinement, or fold certificate
+  actually consumes it.  The initialized/available state is per-shot stack
+  data; there is no allocation, shared mutable cache, or lifetime change.
+
+  This is a scheduling change, not a weaker proof.  The exact initializer
+  recomputes the same error-free coefficient expansions as before and
+  intersects them with the already-valid ordinary intervals.  Every exact
+  consumer still requires `expansion_available`; failure remains an
+  inconclusive whole-ray fallback.  Ordinary hull exclusion can now discard a
+  span before exact construction.  If ordinary isolation proves and orients a
+  regular root without reaching terminal refinement, that candidate likewise
+  never constructs expansions.
+
+  The audit also removed six dead exact builds.  The continuation certificate
+  reparameterizes only ordinary scalar/interval coefficient data, so its
+  source expansions had always been discarded.  Regular-pair, regular-root,
+  tight-event, edge-joint, and seam-source-union checks likewise consumed only
+  scalar/interval data after separately invoking any exact local-root
+  certificate they required.  Those initializers now explicitly request the
+  cheap tier.  Reparameterized coefficient records explicitly reset exact
+  state so later code cannot mistake discarded arrays for initialized data.
+
+  Trace telemetry records exact coefficient requests, successful
+  availability, failures, and spans that complete without a build.  The Cobb
+  throughput fixture requires requests to equal available plus failures and
+  requires every family to avoid at least one build.  A regular diameter
+  requests 0 and avoids all 6 span builds.  The 100T, 2T, 1.1T, and tangent
+  families request 1 and avoid 5; exact seam contact requests 2 and avoids 4.
+  All requests are available and no build fails in this fixture.
+
+  Relative to Finding 91's uncontended optimized sample, one representative
+  run changes regular diameter from about 1.47 to 0.62 ms/ray, 100T from 3.16
+  to 2.60 ms, 2T from 3.88 to 3.23 ms, 1.1T from 4.02 to 3.39 ms, tangent from
+  2.69 to 2.11 ms, and exact seam contact from 51.57 to 48.67 ms.  The normal
+  ray improves about 58 percent; the exact-contact path improves only about 6
+  percent because its dominant work is later exact fold-corridor restriction.
+
+  Ten focused optimized gates pass: directed, pole, throughput, local-root,
+  cleanup, grazing-root, trim interval/classifier, source union, and fold.
+  The complete interval arithmetic matrix passes again (222.19 seconds on a
+  variable-load run).  Contact-trim passes.  The non-isoparametric shard
+  retains its already-recorded six conservative prepared-selection failures;
+  all six production answers remain the correct two hits and one segment.
+  ASan/UBSan with leak scanning disabled passes directed, pole, throughput,
+  fold, and contact-trim 5/5 with no diagnostic.
+
+  The next seam-latency step is inside `brep_trace_fold_certificates`.
+  Exact contact still constructs exact corridor and strip restrictions and
+  their transformed coefficient nets before the ordinary contraction screen.
+  Stage ordinary restriction/linear transformation and the complete corridor,
+  boundary-existence, and strip proofs first, then replay the unchanged exact
+  path only when the ordinary enclosure is inconclusive.  Do not cap or skip
+  the exact residue: that would exchange latency for seam cracks.
+
+
 NEXT ACTIONS
 ------------
 
@@ -7932,10 +7994,11 @@ F. Once the memory representation and density/default decision are qualified,
    tracing is bounded, so prioritize the object-level face/span BVH after the
    correctness/memory checkpoints.  Separately, the six-span Cobb seam profile
    spends about 70 percent in exact expansion add/scale, not in BVH traversal.
-   Use the registered already-prepared regular/near-grazing/exact-tangent Cobb
-   fixture to stage ordinary outward-interval contraction and exclusion ahead
-   of exact fold-graph restriction without weakening ambiguous contact
-   authority.  Address compact immutable span/trim arrays,
+   The registered prepared-once Cobb fixture now stages ordinary fold-graph
+   contraction ahead of exact work and constructs exact ray-plane
+   coefficients lazily.  Continue that staging through fold corridor/strip
+   restriction without weakening ambiguous contact authority.  Address
+   compact immutable span/trim arrays,
    conservative SIMD coefficient work, and a real batched vshot after those
    two distinct bottlenecks are measurable.  Optimize Newton/OpenNURBS
    evaluation only if profiles identify it as hot.  Report rays/second before

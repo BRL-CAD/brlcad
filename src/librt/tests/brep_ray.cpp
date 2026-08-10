@@ -652,12 +652,18 @@ report_grazing_trace(const char *label, double chord_ratio, int reverse,
 	trace.solver_calls, trace.stored_roots);
     std::printf("  prepared isolation boxes/krawczyk/fold="
 	"%zu/%zu/%zu fold roots/complete=%zu/%zu "
+	"coefficient-expansion=%zu/%zu/%zu/%zu "
 	"events complete/unresolved/state=%zu/%zu/%zu "
 	"terminal expansion=%zu/%zu/%zu/%zu/%zu refine/budget=%zu/%zu "
 	"high-water=%zu\n",
 	trace.surface_isolated_boxes, trace.surface_krawczyk_boxes,
 	trace.surface_fold_attempts, trace.stored_surface_fold_roots,
-	trace.surface_fold_complete, trace.physical_event_complete,
+	trace.surface_fold_complete,
+	trace.surface_coefficient_expansion_requests,
+	trace.surface_coefficient_expansion_available,
+	trace.surface_coefficient_expansion_failures,
+	trace.surface_coefficient_expansion_avoided,
+	trace.physical_event_complete,
 	trace.physical_event_unresolved, trace.physical_event_state_failures,
 	trace.surface_terminal_expansion_attempts,
 	trace.surface_terminal_expansion_available,
@@ -6213,6 +6219,12 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	const bool contact_contracts = family_index != contact_index ||
 	    (trace.surface_fold_interval_contract_attempts > 0 &&
 	     trace.surface_fold_interval_contractions > 0);
+	const bool coefficient_expansions_accounted =
+	    trace.surface_coefficient_expansion_requests ==
+	    trace.surface_coefficient_expansion_available +
+	    trace.surface_coefficient_expansion_failures;
+	const bool coefficient_expansions_deferred =
+	    trace.surface_coefficient_expansion_avoided > 0;
 	if (trace.final_segments != (size_t)test.expected_segments) {
 	    std::printf("FAIL: Cobb production-throughput trace %s "
 		"segments=%zu/%d fallback=%d\n", test.name,
@@ -6276,13 +6288,20 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 		trace.closure_shadow_segments);
 	    failures++;
 	}
-	if (!contraction_accounted || !contact_contracts) {
+	if (!contraction_accounted || !contact_contracts ||
+		!coefficient_expansions_accounted ||
+		!coefficient_expansions_deferred) {
 	    std::printf("FAIL: Cobb production-throughput fold contraction %s "
-		"attempt/contract/exclude/fallback=%zu/%zu/%zu/%zu\n",
+		"attempt/contract/exclude/fallback=%zu/%zu/%zu/%zu "
+		"coefficient-expansion=%zu/%zu/%zu/%zu\n",
 		test.name, trace.surface_fold_interval_contract_attempts,
 		trace.surface_fold_interval_contractions,
 		trace.surface_fold_interval_exclusions,
-		trace.surface_fold_exact_contract_fallbacks);
+		trace.surface_fold_exact_contract_fallbacks,
+		trace.surface_coefficient_expansion_requests,
+		trace.surface_coefficient_expansion_available,
+		trace.surface_coefficient_expansion_failures,
+		trace.surface_coefficient_expansion_avoided);
 	    failures++;
 	}
 
@@ -6306,7 +6325,8 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	std::printf("Cobb production throughput: family=%s chord/T=%.9g "
 	    "shots=%zu seconds=%.6f rays/s=%.3f us/ray=%.3f "
 	    "segment-sink=%zu prepared=%zu fallback=%d "
-	    "spans=%zu/%zu boxes=%zu isolated/krawczyk=%zu/%zu "
+	    "spans=%zu/%zu coefficient-expansion=%zu/%zu/%zu/%zu "
+	    "boxes=%zu isolated/krawczyk=%zu/%zu "
 	    "terminal-expansion="
 	    "%zu/%zu/%zu fold-expansion=%zu/%zu/%zu high-water=%zu/%zu "
 	    "fold-contract=%zu/%zu/%zu/%zu "
@@ -6317,6 +6337,10 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	    trace.prepared_production_selected,
 	    trace.prepared_production_fallback,
 	    trace.candidate_surface_spans, trace.prepared_surface_spans,
+	    trace.surface_coefficient_expansion_requests,
+	    trace.surface_coefficient_expansion_available,
+	    trace.surface_coefficient_expansion_failures,
+	    trace.surface_coefficient_expansion_avoided,
 	    trace.surface_subdivision_boxes, trace.surface_isolated_boxes,
 	    trace.surface_krawczyk_boxes,
 	    trace.surface_terminal_expansion_attempts,
