@@ -15,6 +15,8 @@
 #include <utility>
 
 #include <sdai.h>
+#include <Registry.h>
+#include <instmgr.h>
 
 /** Schema-bound entities and schema-neutral lookup state shared by the four
  * mechanical exporters.  Include this only after the selected schema's
