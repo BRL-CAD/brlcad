@@ -5365,6 +5365,12 @@ cdt_mesh_t::cdt()
 		fprintf(df, "#include \"bg/polygon.h\"\n");
 		fprintf(df, "/* chart type %d, closed direction %d */\n",
 		    (int)chart.type(), chart.closed_direction());
+		if (face.SurfaceOf() && chart.closed_direction() >= 0) {
+		    const ON_Interval domain = face.SurfaceOf()->Domain(
+			chart.closed_direction());
+		    fprintf(df, "/* closed domain %.17g %.17g */\n",
+			domain.Min(), domain.Max());
+		}
 		std::map<long, std::set<std::pair<int, int>>>
 		    source_boundary_provenance;
 		const auto collect_boundary_provenance =
@@ -5403,6 +5409,11 @@ cdt_mesh_t::cdt()
 		    if (point)
 			fprintf(df, " point %.17g %.17g %.17g", point->x,
 			    point->y, point->z);
+		    if (vertex.native_point >= 0 &&
+			    (size_t)vertex.native_point < m_pnts_2d.size())
+			fprintf(df, " uv %.17g %.17g",
+			    m_pnts_2d[(size_t)vertex.native_point].first,
+			    m_pnts_2d[(size_t)vertex.native_point].second);
 		    const auto provenance =
 			source_boundary_provenance.find(vertex.native_point);
 		    if (provenance != source_boundary_provenance.end()) {
