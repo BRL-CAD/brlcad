@@ -418,18 +418,35 @@ cycles with the screen versus 8.778 billion for exact-only, about 6.3 percent
 fewer cycles.  The result is incremental; the remaining contact path is still
 far from the intended production rate.
 
+Exact restriction now recognizes a complete `[0,1]` parameter direction as an
+algebraic identity.  It directly converts that normalized control interval
+rather than running an expansion blossom, then applies the same expansion
+bounds, ordinary-enclosure intersection, and optional outward rescaling.
+Noncomplete directions are unchanged.  This is general through order 16 and
+is especially valuable for graph and strip slabs, which keep the regular
+direction complete.  Exact-dyadic tests cover complete U, complete V, and both
+complete at orders 2, 4, 8, and 16.  They add 1,020 checked coefficient
+enclosures.
+
+A preserved-binary hardware-counter A/B measures 6.804 versus 8.013 billion
+cycles for the complete fixed-shot contact process, about 15.1 percent fewer,
+with identical proof populations.  Graph exact restriction falls from 24.64
+to 13.66 percent of sampled cycles.  Aggregate exact restriction remains hot
+because noncomplete corridor, strip, localization, and terminal boxes still
+restart from full source nets; those are the next scheduling/reuse targets.
+
 Telemetry for all three tiers is part of correctness, not just profiling.
 The throughput fixture checks coefficient-request accounting, ordinary fold
 contraction accounting, graph attempts/signs/exclusions/fallbacks, exact
 contact execution, reversal, segment count, and proof provenance.  The
 synthetic fold bridge requires the graph screen across dyadic epsilon, equation
 scale, parameter orientation, and determinant-sign variants.  Eleven focused
-release gates and the 149.64-second exhaustive interval matrix pass at this
-checkpoint.  Rebuilt ASan/UBSan passes directed, pole, prepared throughput,
-fold, and contact trim 5/5 with leak scanning disabled for the established
-host-runtime limitation and no diagnostic.  Exact ambiguity remains fallback
-authority; a time/depth cap may not be substituted for a proof because doing
-so would reopen tolerance-scale seam cracks.
+release gates and the expanded 166.01-second exhaustive interval matrix pass
+at this checkpoint.  Rebuilt ASan/UBSan passes directed, pole, prepared
+throughput, fold, and contact trim 5/5 with leak scanning disabled for the
+established host-runtime limitation and no diagnostic.  Exact ambiguity
+remains fallback authority; a time/depth cap may not be substituted for a
+proof because doing so would reopen tolerance-scale seam cracks.
 
 Do not replace the fixed expansion primitive solely because a general robust
 predicate algorithm is newer.  An experiment based on Shewchuk's fast

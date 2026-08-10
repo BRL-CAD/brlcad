@@ -7988,6 +7988,55 @@ Ordinary fold-graph determinant screening (Finding 93):
   no diagnostic.
 
 
+Complete-axis exact restriction elision (Finding 94):
+
+  `brep_expansion_surface_restrict` no longer runs an expansion-valued blossom
+  along a parameter direction whose requested interval is the complete
+  `[0,1]` domain.  After the unchanged equation power-of-two normalization,
+  it converts the corresponding normalized source control interval directly
+  into the intermediate expansion interval.  A complete second direction
+  likewise selects the intermediate control interval directly.  Noncomplete
+  directions execute the former blossom exactly.  Every output still obtains
+  expansion bounds, intersects them with the same ordinary outward restriction,
+  and is rescaled outward when the caller requests original equation scale.
+
+  The complete-domain test uses the existing `DBL_MIN` endpoint convention to
+  satisfy the warnings-as-errors floating-equality policy.  Treating a
+  subnormal displacement from an endpoint as complete can only retain the
+  larger source domain and widen the enclosure; it cannot exclude a root or
+  create a strict sign.  The change is valid for every supported order and is
+  not specialized to Cobb geometry.  Graph and strip subdivisions benefit
+  especially because they restrict only the weak direction while retaining
+  the complete regular direction.
+
+  The interval corpus now adds exact-dyadic lower and upper coefficient
+  oracles for complete-U, complete-V, and complete-both restrictions at orders
+  2, 4, 8, and 16.  All 1,020 new coefficient enclosures contain their exact
+  results below expansion capacity.  The complete exhaustive interval matrix
+  passes in 166.01 seconds.  The ordinary production/proof matrix passes 11/11
+  and rebuilt ASan/UBSan passes directed, pole, prepared throughput, fold, and
+  contact trim 5/5 with no diagnostic.
+
+  Against a preserved Finding-93 binary, three interleaved hardware-counter
+  samples average 6.804 billion cycles for the fixed 32-shot exact-contact
+  process versus 8.013 billion, a 15.1-percent reduction.  Retired instructions
+  fall from about 7.700 to 7.242 billion, or 5.9 percent.  Unprofiled fixed-shot
+  samples fall from roughly 45--46 to 39 ms per production contact while
+  retaining identical 62-box, root, fold, graph, fallback, and segment
+  populations.
+
+  A fresh call-graph profile moves exact restriction beneath
+  `brep_fold_graph_determinant_signed` from 24.64 to 13.66 percent of total
+  sampled cycles and complete graph certification from 31.48 to 21.51 percent.
+  Aggregate exact restriction remains the largest stack at 46.84 percent
+  because the now-exposed corridor/strip, Krawczyk-contraction, localization,
+  and terminal restriction calls still blossom noncomplete domains from their
+  full source.  Next stage an ordinary complete corridor/boundary/strip proof
+  or reuse/split already restricted exact nets; do not spend effort on
+  OpenNURBS point evaluation while profiles identify Bernstein restriction as
+  the dominant cost.
+
+
 NEXT ACTIONS
 ------------
 
