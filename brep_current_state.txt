@@ -8169,6 +8169,63 @@ Candidate-specific seam population screening (Finding 96):
   separate from the large-STEP missing object/face/span BVH problem.
 
 
+Shared exact endpoint restrictions (Finding 97):
+
+  A fresh prepared-once contact profile confirms that exact Bernstein
+  restriction remains the local hotspot after strip scheduling and seam
+  correctness.  Of about 6,000 sampled cycles, expansion addition has 39.05
+  percent self time and expansion scaling 18.66 percent; about 53.05 percent
+  of all cycles descend through the per-coefficient blossom.  Surface-tree
+  construction/traversal remains about one percent.  This is independent from
+  the missing object/face/span BVH that dominates large imported objects.
+
+  The general exact curve restriction evaluated an independent O(n^2)
+  blossom for each of n output coefficients.  When the restricted interval
+  touches parameter 0 or 1, all outputs are instead one boundary of a single
+  de Casteljau triangle and can share O(n^2) expansion lerps in total.  The
+  new endpoint kernel retains every triangle boundary value, uses the same
+  fixed expansion add/scale operations, and requires no parameter division.
+  `brep_expansion_surface_restrict` selects it only when one coordinate is
+  complete and the other touches an endpoint; all interior and two-coordinate
+  restrictions retain the general blossom.  Both routes use one factored
+  expansion-bound/ordinary-bound intersection and the unchanged power-of-two
+  normalization/rescaling.  The implementation remains allocation-free.
+
+  The exact dyadic restriction oracle now covers left and right endpoint
+  slabs in both parameter directions at square orders 2, 4, 8, and 16.  These
+  add 1,360 coefficient enclosures to the full interval matrix, raising its
+  complete-axis/endpoint identity population from 1,020 to 2,380.  A new
+  `--restriction-only`/`rt_brep_ray_restriction` shard runs the endpoint 1,360
+  independently; it passes in 0.04 release seconds and 0.32 ASan/UBSan seconds
+  with expansion high-water three.
+
+  A controlled ten-process hardware-counter A/B disabled only the endpoint
+  dispatch while retaining the same source and oracle.  The general blossom
+  averaged 899,665,821 cycles, 372,382,130 instructions, and 212.41 ms of task
+  time.  The shared triangle averages 152,428,492 cycles, 59,760,221
+  instructions, and 35.65 ms: about 83 percent fewer cycles/task time, 84
+  percent fewer instructions, and a 5.96x kernel speedup.  Both paths pass all
+  1,360 exact dyadic enclosure checks and report the same expansion-capacity
+  high-water of three; bitwise bound identity is not required or claimed.
+
+  This is a qualified general kernel improvement, not yet the exact-contact
+  solution.  The Cobb contact fixture remains about 34--35 CPU ms/ray with
+  identical two-of-six candidates, 62 boxes, four isolated boxes, fold/graph
+  counters, fallback provenance, and one material segment.  Its remaining
+  expensive restrictions are predominantly interior intervals, so the next
+  exact stage must reuse/split already restricted immutable nets or derive a
+  division-free shared interior transform.  Do not hide loss of tightness by
+  accepting a wider proof or by shifting cases to legacy fallback.
+
+  The final optimized release matrix passes 22/22 in 173.33 seconds; the full
+  seam shard passes in 149.54 seconds.  The focused restriction, throughput,
+  fold, affine, non-isoparametric, and seam-authority set passes 6/6 in 36.79
+  seconds.  Rebuilt ASan/UBSan with leak scanning disabled passes restriction,
+  throughput, and fold 3/3 in 3.14 seconds with no diagnostic.  Temporary perf
+  recordings created for the profile were removed from `/tmp`; they are
+  reproducible from the registered prepared-once and restriction shards.
+
+
 NEXT ACTIONS
 ------------
 
@@ -8193,7 +8250,7 @@ A. Keep the production adaptive depth at eight.  The first reproducible
 B. Preserve adaptive depth three as the present conservative experimental
    plateau.  Do not spend correctness effort forcing special fixtures to
    depth zero.  Any candidate production reduction must retain the complete
-   21-shard optimized ray gate, the seven rebuilt-cache cases, sanitizer
+   22-shard optimized ray gate, the seven rebuilt-cache cases, sanitizer
    qualification, and exact identical-line partition results.
 C. Use the deterministic hard replay as the seed of the difficult-solver C/C++
    corpus.  The status-2 analytic-revolution sphere pole is ratcheted under
@@ -8246,8 +8303,10 @@ F. Once the memory representation and density/default decision are qualified,
    lazily, and defers the complementary exact fold strip until corridor
    uniqueness and root existence make its exclusion relevant.  The seam
    authority shard now ratchets candidate-specific population disambiguation.
-   Continue by reusing already restricted corridor/graph nets and staging
-   cheaper certified exits without weakening ambiguous contact authority.
+   One-axis endpoint restrictions now share a complete exact de Casteljau
+   triangle and have their own high-order oracle shard.  Continue by reusing
+   already restricted interior corridor/graph nets and staging cheaper
+   certified exits without weakening ambiguous contact authority.
    Address
    compact immutable span/trim arrays,
    conservative SIMD coefficient work, and a real batched vshot after those
