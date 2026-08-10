@@ -2855,8 +2855,8 @@ write_demo_airplane(const options &airplane_opts, struct rt_wdb *fp)
 	airplane_opts.offset_y,
 	airplane_opts.offset_z);
     VSET(body_height, 1.70 * airplane_opts.root_chord, 0.0, 0.0);
-    VSET(nose_vertex, body_base[X] - nose_length, body_base[Y], body_base[Z]);
-    VSET(nose_height, nose_length, 0.0, 0.0);
+    VSET(nose_vertex, body_base[X], body_base[Y], body_base[Z]);
+    VSET(nose_height, -nose_length, 0.0, 0.0);
     VSET(nose_breadth, 0.0, 0.0, 1.0);
 
     if (mk_rcc(fp, fuselage_solid.c_str(), body_base, body_height, body_radius) != 0 ||
