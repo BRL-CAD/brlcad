@@ -643,12 +643,11 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 CurveTree::CurveTree(const ON_BrepFace* face) :
     m_face(face),
     m_root(new BRNode(initialLoopBBox(*face))),
-    m_stl(new Stl),
-    m_sortedX_indices(NULL)
+    m_stl(new Stl)
 {
     for (int li = 0; li < face->LoopCount(); li++) {
-	bool innerLoop = (li > 0) ? true : false;
 	const ON_BrepLoop* loop = face->Loop(li);
+	const bool innerLoop = loop->m_type == ON_BrepLoop::inner;
 	// for each trim
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    int adj_face_index = -1;
@@ -758,6 +757,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
     getLeaves(temp);
     temp.sort(sortX);
     m_stl->m_sortedX.insert(m_stl->m_sortedX.end(), temp.begin(), temp.end());
+    prepareLoopLeaves();
 
     return;
 }
@@ -767,15 +767,13 @@ CurveTree::~CurveTree()
 {
     delete m_root;
     delete m_stl;
-    delete m_sortedX_indices;
 }
 
 
 CurveTree::CurveTree(Deserializer &deserializer, const ON_BrepFace &face) :
     m_face(&face),
     m_root(NULL),
-    m_stl(new Stl),
-    m_sortedX_indices(NULL)
+    m_stl(new Stl)
 {
     m_root = new BRNode(deserializer, *m_face->Brep());
 
@@ -783,6 +781,195 @@ CurveTree::CurveTree(Deserializer &deserializer, const ON_BrepFace &face) :
     getLeaves(temp);
     temp.sort(sortX);
     m_stl->m_sortedX.insert(m_stl->m_sortedX.end(), temp.begin(), temp.end());
+    prepareLoopLeaves();
+}
+
+
+void
+CurveTree::prepareLoopLeaves()
+{
+    m_stl->m_loops.clear();
+    if (!m_face || !m_face->Brep())
+	return;
+
+    m_stl->m_loops.reserve((size_t)std::max(0, m_face->LoopCount()));
+    for (int loop_slot = 0; loop_slot < m_face->LoopCount(); ++loop_slot) {
+	const ON_BrepLoop *loop = m_face->Loop(loop_slot);
+	if (!loop)
+	    continue;
+	m_stl->m_loops.push_back(Stl::Loop());
+	Stl::Loop &prepared = m_stl->m_loops.back();
+	prepared.index = loop->m_loop_index;
+	prepared.type = loop->m_type;
+    }
+
+    const ON_Brep *brep = m_face->Brep();
+    const ON_Surface *surface = m_face->SurfaceOf();
+    const bool closed[2] = {
+	surface ? surface->IsClosed(0) : false,
+	surface ? surface->IsClosed(1) : false
+    };
+    const double period[2] = {
+	surface ? surface->Domain(0).Length() : 0.0,
+	surface ? surface->Domain(1).Length() : 0.0
+    };
+    const ON_Interval domain[2] = {
+	surface ? surface->Domain(0) : ON_Interval::EmptyInterval,
+	surface ? surface->Domain(1) : ON_Interval::EmptyInterval
+    };
+    const double periodic_envelope = std::max(BREP_UV_DIST_FUZZ,
+	(double)BREP_EDGE_MISS_TOLERANCE);
+    const int classification_axis = surface && surface->IsClosed(1) ? 0 : 1;
+
+    /* Endpoint tolerance is a crack repair, not a general enlargement of
+     * every half-open trim interval.  Record only joins whose next endpoint
+     * is genuinely displaced toward the lower fixed coordinate.  Exact
+     * joins already have one owner and extending both incident trims changes
+     * parity. */
+    std::vector<unsigned char> endpoint_extension(
+	(size_t)std::max(0, brep->m_T.Count()), 0);
+    for (int loop_slot = 0; loop_slot < m_face->LoopCount(); ++loop_slot) {
+	const ON_BrepLoop *loop = m_face->Loop(loop_slot);
+	if (!loop || loop->m_ti.Count() == 0)
+	    continue;
+	for (int trim_slot = 0; trim_slot < loop->m_ti.Count(); ++trim_slot) {
+	    const int current_index = loop->m_ti[trim_slot];
+	    const int previous_index = loop->m_ti[
+		(trim_slot + loop->m_ti.Count() - 1) % loop->m_ti.Count()];
+	    const int next_index = loop->m_ti[
+		(trim_slot + 1) % loop->m_ti.Count()];
+	    if (current_index < 0 || current_index >= brep->m_T.Count() ||
+		    previous_index < 0 || previous_index >= brep->m_T.Count() ||
+		    next_index < 0 || next_index >= brep->m_T.Count())
+		continue;
+	    const ON_Curve *current = brep->m_T[current_index].TrimCurveOf();
+	    const ON_Curve *previous = brep->m_T[previous_index].TrimCurveOf();
+	    const ON_Curve *next = brep->m_T[next_index].TrimCurveOf();
+	    if (!current || !previous || !next)
+		continue;
+	    const ON_3dPoint current_start = current->PointAtStart();
+	    const ON_3dPoint current_end = current->PointAtEnd();
+	    const ON_3dPoint previous_end = previous->PointAtEnd();
+	    const ON_3dPoint next_start = next->PointAtStart();
+	    for (int direction = 0; direction < 2; ++direction) {
+		auto signed_gap = [&](double first, double second) {
+		    double gap = first - second;
+		    if (closed[direction] && period[direction] > 0.0)
+			gap = remainder(gap, period[direction]);
+		    return gap;
+		};
+		if (signed_gap(current_start[direction],
+			previous_end[direction]) > BREP_UV_DIST_FUZZ)
+		    endpoint_extension[(size_t)current_index] |=
+			(unsigned char)(1U << (2 * direction));
+		if (signed_gap(current_end[direction],
+			next_start[direction]) > BREP_UV_DIST_FUZZ)
+		    endpoint_extension[(size_t)current_index] |=
+			(unsigned char)(1U << (2 * direction + 1));
+	    }
+	}
+    }
+
+    for (std::vector<const BRNode *>::const_iterator leaf =
+	    m_stl->m_sortedX.begin(); leaf != m_stl->m_sortedX.end(); ++leaf) {
+	const int trim_index = (*leaf)->trimIndex();
+	if (trim_index < 0 || trim_index >= brep->m_T.Count())
+	    continue;
+	const int loop_index = brep->m_T[trim_index].m_li;
+	for (std::vector<Stl::Loop>::iterator loop = m_stl->m_loops.begin();
+		loop != m_stl->m_loops.end(); ++loop) {
+	    if (loop->index != loop_index)
+		continue;
+	    const ON_BoundingBox &bbox = (*leaf)->m_node;
+	    bool extend_minimum[2] = {false, false};
+	    const ON_Interval leaf_parameter = (*leaf)->parameterInterval();
+	    const ON_Interval curve_domain = (*leaf)->curveDomain();
+	    const double parameter_scale = std::max(1.0,
+		std::max(fabs(curve_domain.Min()), fabs(curve_domain.Max())));
+	    const double parameter_fuzz = 64.0 * DBL_EPSILON *
+		parameter_scale;
+	    const ON_3dPoint leaf_start = (*leaf)->startPoint();
+	    const ON_3dPoint leaf_end = (*leaf)->endPoint();
+	    const unsigned char extension = endpoint_extension[(size_t)trim_index];
+	    for (int direction = 0; direction < 2; ++direction) {
+		const double minimum_parameter =
+		    leaf_start[direction] < leaf_end[direction] ?
+		    leaf_parameter[0] : leaf_parameter[1];
+		if (fabs(minimum_parameter - curve_domain.Min()) <=
+			parameter_fuzz &&
+			(extension &
+			 (unsigned char)(1U << (2 * direction))))
+		    extend_minimum[direction] = true;
+		if (fabs(minimum_parameter - curve_domain.Max()) <=
+			parameter_fuzz &&
+			(extension &
+			 (unsigned char)(1U << (2 * direction + 1))))
+		    extend_minimum[direction] = true;
+	    }
+	    long long minimum_image[2] = {0, 0};
+	    long long maximum_image[2] = {0, 0};
+	    bool have_image = true;
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (direction == classification_axis || !closed[direction] ||
+			!(period[direction] > 0.0))
+		    continue;
+		minimum_image[direction] = (long long)ceil(
+		    (domain[direction].Min() - periodic_envelope -
+		     bbox.m_max[direction]) / period[direction]);
+		maximum_image[direction] = (long long)floor(
+		    (domain[direction].Max() + periodic_envelope -
+		     bbox.m_min[direction]) / period[direction]);
+		if (minimum_image[direction] > maximum_image[direction])
+		    have_image = false;
+	    }
+	    if (!have_image)
+		break;
+	    for (long long u_image = minimum_image[0];
+		    u_image <= maximum_image[0]; ++u_image) {
+		for (long long v_image = minimum_image[1];
+			v_image <= maximum_image[1]; ++v_image) {
+		    const ON_2dVector offset(
+			(double)u_image * period[0],
+			(double)v_image * period[1]);
+		    loop->sortedX.push_back(Stl::Loop::Leaf(*leaf, offset,
+			extend_minimum[0], extend_minimum[1]));
+		    const ON_2dPoint shifted_min(bbox.m_min.x + offset.x,
+			bbox.m_min.y + offset.y);
+		    const ON_2dPoint shifted_max(bbox.m_max.x + offset.x,
+			bbox.m_max.y + offset.y);
+		    if (!loop->have_bbox) {
+			loop->minimum = shifted_min;
+			loop->maximum = shifted_max;
+			loop->have_bbox = true;
+		    } else {
+			loop->minimum.x = std::min(loop->minimum.x,
+			    shifted_min.x);
+			loop->minimum.y = std::min(loop->minimum.y,
+			    shifted_min.y);
+			loop->maximum.x = std::max(loop->maximum.x,
+			    shifted_max.x);
+			loop->maximum.y = std::max(loop->maximum.y,
+			    shifted_max.y);
+		    }
+		}
+	    }
+	    break;
+	}
+    }
+    for (std::vector<Stl::Loop>::iterator loop = m_stl->m_loops.begin();
+	    loop != m_stl->m_loops.end(); ++loop) {
+	std::sort(loop->sortedX.begin(), loop->sortedX.end(),
+	    [](const Stl::Loop::Leaf &first, const Stl::Loop::Leaf &second) {
+		return first.node->m_node.m_min.x + first.offset.x <
+		    second.node->m_node.m_min.x + second.offset.x;
+	    });
+	loop->sortedY = loop->sortedX;
+	std::sort(loop->sortedY.begin(), loop->sortedY.end(),
+	    [](const Stl::Loop::Leaf &first, const Stl::Loop::Leaf &second) {
+		return first.node->m_node.m_min.y + first.offset.y <
+		    second.node->m_node.m_min.y + second.offset.y;
+	    });
+    }
 }
 
 
@@ -790,46 +977,6 @@ void
 CurveTree::serialize(Serializer &serializer) const
 {
     m_root->serialize(serializer);
-}
-
-
-std::vector<std::size_t>
-CurveTree::serialize_get_leaves_keys(const std::list<const BRNode *> &leaves) const
-{
-    if (!m_sortedX_indices) {
-	m_sortedX_indices = new std::map<const BRNode *, std::size_t>;
-	std::size_t index = 0;
-
-	for (std::vector<const BRNode *>::const_iterator it = m_stl->m_sortedX.begin(); it != m_stl->m_sortedX.end(); ++it, ++index)
-	    m_sortedX_indices->insert(std::make_pair(*it, index));
-    }
-
-    std::vector<std::size_t> result;
-
-    for (std::list<const BRNode *>::const_iterator it = leaves.begin(); it != leaves.end(); ++it)
-	result.push_back(m_sortedX_indices->at(*it));
-
-    return result;
-}
-
-
-std::list<const BRNode *>
-CurveTree::serialize_get_leaves(const std::size_t *keys, std::size_t num_keys) const
-{
-    std::list<const BRNode *> result;
-
-    for (std::size_t i = 0; i < num_keys; ++i)
-	result.push_back(m_stl->m_sortedX.at(keys[i]));
-
-    return result;
-}
-
-
-void
-CurveTree::serialize_cleanup() const
-{
-    delete m_sortedX_indices;
-    m_sortedX_indices = NULL;
 }
 
 
@@ -868,16 +1015,27 @@ CurveTree::getLeaves(std::list<const BRNode*>& out_leaves) const
 }
 
 
+std::size_t
+CurveTree::preparedLeafImageCount() const
+{
+    std::size_t count = 0;
+    for (std::vector<Stl::Loop>::const_iterator loop =
+	    m_stl->m_loops.begin(); loop != m_stl->m_loops.end(); ++loop)
+	count += loop->sortedX.size();
+    return count;
+}
+
+
 void
-CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v) const
+CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves,
+	const ON_Interval& u, const ON_Interval& v, fastf_t tol) const
 {
     point_t bmin, bmax;
-    double dist;
+    const double dist = std::max(0.0, (double)tol);
     for (std::vector<const BRNode*>::const_iterator i = m_stl->m_sortedX.begin(); i != m_stl->m_sortedX.end(); i++) {
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
-	dist = BREP_UV_DIST_FUZZ;//0.03*DIST_PNT_PNT(bmin, bmax);
 	if (bmax[X]+dist < u[0])
 	    continue;
 	if (bmin[X]-dist < u[1]) {
@@ -989,11 +1147,11 @@ BRNode*
 CurveTree::curveBBox(const ON_Curve* curve, int trim_index, int adj_face_index, const ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb) const
 {
     BRNode* node;
-    bool vdot = true;
 
     if (isLeaf) {
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() << ") v(" << v.Min() << ", " << v.Max() << ")");
-	node = new BRNode(curve, trim_index, adj_face_index, bb, m_face, t, vdot, innerTrim, false);
+	node = new BRNode(curve, trim_index, adj_face_index, bb, m_face, t,
+	    innerTrim, true, false);
     } else {
 	node = new BRNode(bb);
     }
@@ -1495,7 +1653,7 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() <<
 	      ") v(" << v.Min() << ", " << v.Max() << ")");
 	node = new BBNode(m_ctree, ON_BoundingBox(ON_3dPoint(min), ON_3dPoint(max)), u, v, false, false);
-	node->prepTrims();
+	node->prepTrims(within_distance_tol);
 
     } else {
 	node = new BBNode(ON_BoundingBox(ON_3dPoint(min), ON_3dPoint(max)), m_ctree);

@@ -13427,23 +13427,35 @@ brep_trace_root_coverage(struct rt_brep_shot_trace *trace)
 	trace->root_match_max_normal_dot_error = std::max(
 	    (double)trace->root_match_max_normal_dot_error,
 	    fabs(legacy.normal_dot - local.normal_dot));
+	const bool legacy_near = legacy.hit_class == brep_hit::NEAR_HIT ||
+	    legacy.hit_class == brep_hit::NEAR_MISS;
+	const bool local_near = local.hit_class == brep_hit::NEAR_HIT ||
+	    local.hit_class == brep_hit::NEAR_MISS;
+	/* A numerical root on a trim has no stable binary inside/outside side:
+	 * two valid correctors may land on opposite sides by a few ulps.  Once
+	 * both observations independently establish trim proximity, retain the
+	 * raw side counters but compare them as the same boundary event.  Solid
+	 * authority still comes from the later seam/edge transaction. */
+	const bool near_side_equivalent = legacy_near && local_near;
+	const bool near_side_difference =
+	    legacy.trim_status != local.trim_status ||
+	    legacy.hit_class != local.hit_class;
+	if (near_side_equivalent && near_side_difference)
+	    trace->root_near_side_equivalences++;
 	bool event_mismatch = false;
 	if (legacy.trim_status != local.trim_status) {
 	    trace->root_trim_status_mismatches++;
-	    event_mismatch = true;
+	    event_mismatch = !near_side_equivalent;
 	}
 	if (legacy.hit_class != local.hit_class) {
 	    trace->root_hit_class_mismatches++;
-	    event_mismatch = true;
+	    event_mismatch = event_mismatch || !near_side_equivalent;
 	}
 	if (legacy.direction_class != local.direction_class) {
 	    trace->root_direction_mismatches++;
 	    event_mismatch = true;
 	}
-	const bool near_trim = legacy.hit_class == brep_hit::NEAR_HIT ||
-	    legacy.hit_class == brep_hit::NEAR_MISS ||
-	    local.hit_class == brep_hit::NEAR_HIT ||
-	    local.hit_class == brep_hit::NEAR_MISS;
+	const bool near_trim = legacy_near || local_near;
 	if (near_trim)
 	    trace->root_match_max_trim_error = std::max(
 		(double)trace->root_match_max_trim_error,
@@ -14119,18 +14131,24 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray,
 	    observation->tolerance);
 
     if (hits.size() > 1 && fixed_hits_contain(hits, brep_hit::NEAR_HIT)) {
+	const double parameter_tolerance =
+	    brep_solid_event_parameter_tolerance(ray, tol);
 	size_t curr = 0;
 	while (curr < hits.size()) {
 	    if (hits[curr].hit == brep_hit::NEAR_HIT) {
 		if (curr > 0 &&
 			hits[curr - 1].hit != brep_hit::NEAR_HIT &&
-			hits[curr - 1].direction == hits[curr].direction) {
+			hits[curr - 1].direction == hits[curr].direction &&
+			brep_solid_events_coincident(hits[curr - 1], hits[curr],
+			    parameter_tolerance)) {
 		    hits.erase(curr);
 		    continue;
 		}
 		if (curr + 1 < hits.size() &&
 			hits[curr + 1].hit != brep_hit::NEAR_HIT &&
-			hits[curr + 1].direction == hits[curr].direction) {
+			hits[curr + 1].direction == hits[curr].direction &&
+			brep_solid_events_coincident(hits[curr], hits[curr + 1],
+			    parameter_tolerance)) {
 		    hits.erase(curr);
 		    continue;
 		}
@@ -14142,7 +14160,9 @@ cleanup_fixed_brep_hits(brep_hit_workspace &hits, const struct xray &ray,
 	while (curr < hits.size()) {
 	    if (curr > 0 && hits[curr].hit == brep_hit::NEAR_HIT &&
 		    hits[curr - 1].hit == brep_hit::NEAR_HIT &&
-		    hits[curr - 1].direction == hits[curr].direction) {
+		    hits[curr - 1].direction == hits[curr].direction &&
+		    brep_solid_events_coincident(hits[curr - 1], hits[curr],
+			parameter_tolerance)) {
 		hits[curr - 1].hit = brep_hit::CRACK_HIT;
 		hits.erase(curr);
 		continue;
@@ -17816,7 +17836,14 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 	    clean_outside++;
 	    continue;
 	}
-	if (root.hit_class != brep_hit::CLEAN_HIT ||
+	/* This path is active only after an edge transaction has selected its
+	 * boundary roots and the disjoint regular-component proof has isolated
+	 * every remaining root and box.  Trim proximity therefore remains useful
+	 * evidence but is not, by itself, grounds to discard a parity-inside
+	 * crossing.  Give that event a distinct certificate so ordinary regular
+	 * streams remain clean-interior only. */
+	if ((root.hit_class != brep_hit::CLEAN_HIT &&
+	     root.hit_class != brep_hit::NEAR_HIT) ||
 		root.trim_status == 1 ||
 		event_count >= RT_BREP_TRACE_MAX_PHYSICAL_EVENTS) {
 	    complete = false;
@@ -17836,13 +17863,17 @@ brep_trace_edge_physical_events(struct rt_brep_shot_trace *trace,
 	event.vertex_index = -1;
 	event.face_index = root.face_index;
 	event.span_index = root.span_index;
-	event.certificate = RT_BREP_TRACE_EVENT_REGULAR_INTERIOR;
+	event.certificate = root.hit_class == brep_hit::NEAR_HIT ?
+	    RT_BREP_TRACE_EVENT_REGULAR_NEAR_TRIM :
+	    RT_BREP_TRACE_EVENT_REGULAR_INTERIOR;
 	event.determinant_sign = determinant_sign;
 	event.hit_class = root.hit_class;
 	event.trim_status = root.trim_status;
 	event.adjacent_face_index = root.adjacent_face_index;
 	event.direction = direction;
 	regular_events++;
+	if (root.hit_class == brep_hit::NEAR_HIT)
+	    trace->physical_event_near_trim++;
     }
     for (size_t root_index = 0; complete &&
 	    root_index < trace->stored_local_roots; ++root_index)
@@ -20170,6 +20201,13 @@ brep_build_prepared_event_partition(struct rt_brep_shot_trace *trace,
 		    event.vertex_index != -1)
 		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
 	} else if (event.certificate ==
+		RT_BREP_TRACE_EVENT_REGULAR_NEAR_TRIM) {
+	    if (event.hit_class != brep_hit::NEAR_HIT ||
+		    event.trim_status == 1 || event.edge_index != -1 ||
+		    event.vertex_index != -1 || !event.source_box_count ||
+		    event.source_kind != RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT)
+		return RT_BREP_PREPARED_FALLBACK_EVENT_CLASS;
+	} else if (event.certificate ==
 		RT_BREP_TRACE_EVENT_SEAM_EXISTING ||
 	    event.certificate ==
 		RT_BREP_TRACE_EVENT_SEAM_CONTACT_EXISTING) {
@@ -20911,6 +20949,8 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 
     ///////////// handle near hit
     if ((hits.size() > 1) && containsNearHit(&hits)) { //&& ((hits.size() % 2) != 0)) {
+	const double parameter_tolerance =
+	    brep_solid_event_parameter_tolerance(*rp, tol);
 	std::list<brep_hit>::iterator prev;
 	std::list<brep_hit>::const_iterator next;
 	std::list<brep_hit>::iterator curr = hits.begin();
@@ -20921,7 +20961,10 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 		    prev = curr;
 		    prev--;
 		    const brep_hit &prev_hit = (*prev);
-		    if ((prev_hit.hit != brep_hit::NEAR_HIT) && (prev_hit.direction == curr_hit.direction)) {
+		    if ((prev_hit.hit != brep_hit::NEAR_HIT) &&
+			    (prev_hit.direction == curr_hit.direction) &&
+			    brep_solid_events_coincident(prev_hit, curr_hit,
+				parameter_tolerance)) {
 			//remove current miss
 			curr = hits.erase(curr);
 			continue;
@@ -20931,7 +20974,10 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 		next++;
 		if (next != hits.end()) {
 		    const brep_hit &next_hit = (*next);
-		    if ((next_hit.hit != brep_hit::NEAR_HIT) && (next_hit.direction == curr_hit.direction)) {
+		    if ((next_hit.hit != brep_hit::NEAR_HIT) &&
+			    (next_hit.direction == curr_hit.direction) &&
+			    brep_solid_events_coincident(curr_hit, next_hit,
+				parameter_tolerance)) {
 			//remove current miss
 			curr = hits.erase(curr);
 			continue;
@@ -20948,7 +20994,10 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 		    prev = curr;
 		    prev--;
 		    brep_hit &prev_hit = (*prev);
-		    if ((prev_hit.hit == brep_hit::NEAR_HIT) && (prev_hit.direction == curr_hit.direction)) {
+		    if ((prev_hit.hit == brep_hit::NEAR_HIT) &&
+			    (prev_hit.direction == curr_hit.direction) &&
+			    brep_solid_events_coincident(prev_hit, curr_hit,
+				parameter_tolerance)) {
 			//remove current near hit
 			prev_hit.hit = brep_hit::CRACK_HIT;
 			curr = hits.erase(curr);
