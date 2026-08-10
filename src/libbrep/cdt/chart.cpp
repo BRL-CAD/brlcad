@@ -2379,6 +2379,262 @@ cdt_face_chart::validate_boundary(const ON_BrepFace &face,
     return true;
 }
 
+bool
+cdt_face_chart::partition_components(
+	std::vector<cdt_face_chart> &components, std::string *failure) const
+{
+    /* Interpret nested loops with the even-odd fill rule.  This recovers
+     * valid faces with disjoint outer regions and hole-within-hole islands
+     * without changing boundary points or source identities. */
+    components.clear();
+    if (failure)
+	failure->clear();
+    if (outer.size() < 3) {
+	if (failure)
+	    *failure = "chart has no valid component outline";
+	return false;
+    }
+
+    std::vector<std::vector<int>> rings;
+    rings.reserve(holes.size() + 1);
+    rings.push_back(outer);
+    rings.insert(rings.end(), holes.begin(), holes.end());
+    for (const std::vector<int> &ring : rings) {
+	if (ring.size() < 3) {
+	    if (failure)
+		*failure = "chart has an invalid component boundary";
+	    return false;
+	}
+	for (int point : ring) {
+	    if (point < 0 || (size_t)point >= points.size()) {
+		if (failure)
+		    *failure = "chart component boundary index is invalid";
+		return false;
+	    }
+	}
+    }
+
+    struct ring_bounds {
+	double min_x = DBL_MAX;
+	double min_y = DBL_MAX;
+	double max_x = -DBL_MAX;
+	double max_y = -DBL_MAX;
+    };
+    std::vector<ring_bounds> bounds(rings.size());
+    for (size_t ring = 0; ring < rings.size(); ++ring) {
+	for (int point : rings[ring]) {
+	    bounds[ring].min_x = std::min(bounds[ring].min_x,
+		points[(size_t)point].first);
+	    bounds[ring].min_y = std::min(bounds[ring].min_y,
+		points[(size_t)point].second);
+	    bounds[ring].max_x = std::max(bounds[ring].max_x,
+		points[(size_t)point].first);
+	    bounds[ring].max_y = std::max(bounds[ring].max_y,
+		points[(size_t)point].second);
+	}
+    }
+
+    const auto orient = [&](int ia, int ib, int ic) {
+	const long double abx = (long double)points[(size_t)ib].first -
+	    points[(size_t)ia].first;
+	const long double aby = (long double)points[(size_t)ib].second -
+	    points[(size_t)ia].second;
+	const long double acx = (long double)points[(size_t)ic].first -
+	    points[(size_t)ia].first;
+	const long double acy = (long double)points[(size_t)ic].second -
+	    points[(size_t)ia].second;
+	const long double cross = abx * acy - aby * acx;
+	return (cross > 0.0L) - (cross < 0.0L);
+    };
+    const auto on_segment = [&](int point, int first, int second) {
+	if (orient(first, second, point))
+	    return false;
+	return points[(size_t)point].first >= std::min(
+	    points[(size_t)first].first, points[(size_t)second].first) &&
+	    points[(size_t)point].first <= std::max(
+	    points[(size_t)first].first, points[(size_t)second].first) &&
+	    points[(size_t)point].second >= std::min(
+	    points[(size_t)first].second, points[(size_t)second].second) &&
+	    points[(size_t)point].second <= std::max(
+	    points[(size_t)first].second, points[(size_t)second].second);
+    };
+    const auto segments_intersect = [&](int a, int b, int c, int d) {
+	const int o1 = orient(a, b, c);
+	const int o2 = orient(a, b, d);
+	const int o3 = orient(c, d, a);
+	const int o4 = orient(c, d, b);
+	if (!o1 && on_segment(c, a, b)) return true;
+	if (!o2 && on_segment(d, a, b)) return true;
+	if (!o3 && on_segment(a, c, d)) return true;
+	if (!o4 && on_segment(b, c, d)) return true;
+	return o1 * o2 < 0 && o3 * o4 < 0;
+    };
+    const auto contains = [&](const std::vector<int> &ring, int point) {
+	const long double px = points[(size_t)point].first;
+	const long double py = points[(size_t)point].second;
+	bool inside = false;
+	for (size_t i = 0, j = ring.size() - 1; i < ring.size(); j = i++) {
+	    const long double ax = points[(size_t)ring[i]].first;
+	    const long double ay = points[(size_t)ring[i]].second;
+	    const long double bx = points[(size_t)ring[j]].first;
+	    const long double by = points[(size_t)ring[j]].second;
+	    if ((ay > py) != (by > py) && px < (bx - ax) *
+		    (py - ay) / (by - ay) + ax)
+		inside = !inside;
+	}
+	return inside;
+    };
+    const auto area = [&](const std::vector<int> &ring) {
+	long double twice_area = 0.0;
+	for (size_t i = 0; i < ring.size(); ++i) {
+	    const std::pair<double, double> &first =
+		points[(size_t)ring[i]];
+	    const std::pair<double, double> &second =
+		points[(size_t)ring[(i + 1) % ring.size()]];
+	    twice_area += (long double)first.first * second.second -
+		(long double)second.first * first.second;
+	}
+	return std::fabs(twice_area);
+    };
+
+    std::vector<long double> areas;
+    areas.reserve(rings.size());
+    for (const std::vector<int> &ring : rings)
+	areas.push_back(area(ring));
+    std::vector<int> parent(rings.size(), -1);
+    for (size_t child = 0; child < rings.size(); ++child) {
+	long double parent_area = std::numeric_limits<long double>::infinity();
+	for (size_t candidate = 0; candidate < rings.size(); ++candidate) {
+	    if (candidate == child || areas[candidate] <= areas[child] ||
+		    areas[candidate] >= parent_area ||
+		    bounds[candidate].min_x > bounds[child].min_x ||
+		    bounds[candidate].min_y > bounds[child].min_y ||
+		    bounds[candidate].max_x < bounds[child].max_x ||
+		    bounds[candidate].max_y < bounds[child].max_y ||
+		    !contains(rings[candidate], rings[child][0]))
+		continue;
+	    bool contains_all = true;
+	    for (int point : rings[child]) {
+		if (!contains(rings[candidate], point)) {
+		    contains_all = false;
+		    break;
+		}
+	    }
+	    if (contains_all) {
+		parent[child] = (int)candidate;
+		parent_area = areas[candidate];
+	    }
+	}
+    }
+
+    std::vector<int> depth(rings.size(), 0);
+    size_t roots = 0;
+    bool nested_island = false;
+    for (size_t ring = 0; ring < rings.size(); ++ring) {
+	std::set<int> ancestors;
+	int current = parent[ring];
+	while (current >= 0) {
+	    if (!ancestors.insert(current).second) {
+		if (failure)
+		    *failure = "chart component nesting contains a cycle";
+		return false;
+	    }
+	    depth[ring]++;
+	    current = parent[(size_t)current];
+	}
+	if (!depth[ring])
+	    roots++;
+	if (depth[ring] > 1)
+	    nested_island = true;
+    }
+    if (roots == 1 && !nested_island && parent[0] < 0) {
+	components.push_back(*this);
+	return true;
+    }
+
+    for (size_t first = 0; first < rings.size(); ++first) {
+	for (size_t second = first + 1; second < rings.size(); ++second) {
+	    if (bounds[first].max_x < bounds[second].min_x ||
+		    bounds[second].max_x < bounds[first].min_x ||
+		    bounds[first].max_y < bounds[second].min_y ||
+		    bounds[second].max_y < bounds[first].min_y)
+		continue;
+	    for (size_t i = 0; i < rings[first].size(); ++i) {
+		const int a = rings[first][i];
+		const int b = rings[first][(i + 1) % rings[first].size()];
+		for (size_t j = 0; j < rings[second].size(); ++j) {
+		    const int c = rings[second][j];
+		    const int d = rings[second][
+			(j + 1) % rings[second].size()];
+		    if (segments_intersect(a, b, c, d)) {
+			/* Preserve touching and crossing inputs for the strict
+			 * triangulator's more specific diagnostics and repairs. */
+			components.push_back(*this);
+			return true;
+		    }
+		}
+	    }
+	}
+    }
+
+    const auto boundary_has = [](const cdt_face_chart &component,
+	    int point) {
+	if (std::find(component.outer.begin(), component.outer.end(), point) !=
+		component.outer.end())
+	    return true;
+	for (const std::vector<int> &hole : component.holes) {
+	    if (std::find(hole.begin(), hole.end(), point) != hole.end())
+		return true;
+	}
+	return false;
+    };
+    const auto interior_has = [&](const cdt_face_chart &component,
+	    int point) {
+	if (point < 0 || (size_t)point >= points.size())
+	    return false;
+	if (!contains(component.outer, point))
+	    return false;
+	for (const std::vector<int> &hole : component.holes) {
+	    if (contains(hole, point))
+		return false;
+	}
+	return true;
+    };
+    for (size_t ring = 0; ring < rings.size(); ++ring) {
+	if (depth[ring] % 2)
+	    continue;
+	cdt_face_chart component(*this);
+	component.outer = rings[ring];
+	component.holes.clear();
+	for (size_t child = 0; child < rings.size(); ++child) {
+	    if (parent[child] == (int)ring)
+		component.holes.push_back(rings[child]);
+	}
+	component.steiner.clear();
+	for (int point : steiner) {
+	    if (point >= 0 && (size_t)point < points.size() &&
+		    interior_has(component, point))
+		component.steiner.push_back(point);
+	}
+	component.constraints.clear();
+	for (const std::pair<int, int> &constraint : constraints) {
+	    const bool first = boundary_has(component, constraint.first) ||
+		interior_has(component, constraint.first);
+	    const bool second = boundary_has(component, constraint.second) ||
+		interior_has(component, constraint.second);
+	    if (first && second)
+		component.constraints.push_back(constraint);
+	}
+	components.push_back(component);
+    }
+    if (components.empty()) {
+	if (failure)
+	    *failure = "chart component partition produced no filled regions";
+	return false;
+    }
+    return true;
+}
+
 void
 cdt_face_chart::repair_nesting()
 {
