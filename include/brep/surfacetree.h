@@ -136,6 +136,7 @@ namespace brlcad {
 	const bool m_removeTrimmed;
 	const ON_BrepFace * const m_face;
 	BBNode *m_root;
+	BBNodeArena *m_node_arena;
 	std::queue<ON_Plane *> * const m_f_queue;
 	SurfaceSplitCache * const m_split_cache;
 	mutable FailureReason m_failure;
