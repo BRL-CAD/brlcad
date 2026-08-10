@@ -5814,11 +5814,23 @@ event solver rather than recreating the 2006 implementation literally.
     the synthetic affine-fold corpus prove that required strips are retained.
     Candidate-specific seam population screening then restores all 52 former
     prepared oblique/contact failures while retaining the complete final
-    ownership theorem and conservative fallback.  The optimized 21-test ray
-    matrix, complete transformed seam gate, and focused authority shard are
-    green.  Continue by reusing restricted exact nets and adding stronger
-    interval exits; exact expansion replay remains mandatory for every
-    inconclusive case.
+    ownership theorem and conservative fallback.  The then-21-test ray matrix,
+    complete transformed seam gate, and focused authority shard are green.
+
+    Endpoint-restriction checkpoint: when one surface coordinate is complete
+    and the other restricted interval touches 0 or 1, retain the full boundary
+    of one exact de Casteljau triangle instead of evaluating an independent
+    blossom for every output coefficient.  This is division-free, fixed-work,
+    and leaves interior/two-axis restrictions on the general exact path.  The
+    order-2/4/8/16 dyadic oracle adds 1,360 endpoint enclosures and a focused
+    restriction shard.  Controlled A/B measurement reduces that kernel from
+    about 900 million to 152 million cycles and from 372 million to 60 million
+    instructions, while the complete 22-test matrix and seam authority remain
+    green.  The contact fixture is unchanged at about 34--35 ms/ray because
+    its residual work is predominantly interior.  Continue by reusing or
+    splitting restricted interior exact nets and adding stronger interval
+    exits; exact expansion replay remains mandatory for every inconclusive
+    case.
 
   * Profile trimming independently.  Evaluate a compact two-dimensional
     trim kd-tree or comparable indexed broad phase, as demonstrated by Sloup
