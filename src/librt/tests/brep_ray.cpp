@@ -921,6 +921,91 @@ check_brep_direction_cleanup()
 	return 1;
     }
 
+    /* A missing exterior mate can leave one extra entry at the beginning in
+     * one direction and one extra exit at the end after reversal.  Retain the
+     * same maximal balanced interior run rather than deleting the complete
+     * suffix in only one direction. */
+    const fastf_t unmatched_forward_distances[] = {1.0, 2.0, 3.0, 4.0, 5.0};
+    const int unmatched_forward_signs[] = {-1, -1, -1, 1, 1};
+    fastf_t unmatched_forward_retained[5] = {};
+    const size_t unmatched_forward_count = _rt_brep_direction_cleanup_test(
+	unmatched_forward_distances, unmatched_forward_signs, 5, 0.0,
+	unmatched_forward_retained, 5);
+    const fastf_t unmatched_reverse_distances[] = {1.0, 2.0, 3.0, 4.0, 5.0};
+    const int unmatched_reverse_signs[] = {-1, -1, 1, 1, 1};
+    fastf_t unmatched_reverse_retained[5] = {};
+    const size_t unmatched_reverse_count = _rt_brep_direction_cleanup_test(
+	unmatched_reverse_distances, unmatched_reverse_signs, 5, 0.0,
+	unmatched_reverse_retained, 5);
+    const double unmatched_chord = 6.0;
+    if (unmatched_forward_count != 2 || unmatched_reverse_count != 2 ||
+	    !NEAR_EQUAL(unmatched_forward_retained[0], 2.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(unmatched_forward_retained[1], 5.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(unmatched_reverse_retained[0], 1.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(unmatched_reverse_retained[1], 4.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(unmatched_reverse_retained[0], unmatched_chord -
+		unmatched_forward_retained[1], SMALL_FASTF) ||
+	    !NEAR_EQUAL(unmatched_reverse_retained[1], unmatched_chord -
+		unmatched_forward_retained[0], SMALL_FASTF)) {
+	std::printf("FAIL: BREP unmatched direction cleanup forward=%zu "
+	    "[%.17g %.17g] reverse=%zu [%.17g %.17g]\n",
+	    unmatched_forward_count, unmatched_forward_retained[0],
+	    unmatched_forward_retained[1], unmatched_reverse_count,
+	    unmatched_reverse_retained[0], unmatched_reverse_retained[1]);
+	return 1;
+    }
+
+    /* Reduced SC pair 22: a coincident near-hit/near-miss duplicate is local,
+     * but the next near miss and clean event are several tolerance units
+     * apart.  They must not erase or relabel each other merely because they
+     * are adjacent in the sorted stream. */
+    enum cleanup_hit_class {
+	cleanup_clean_hit = 0,
+	cleanup_near_hit = 2,
+	cleanup_near_miss = 3
+    };
+    const fastf_t near_forward_distances[] =
+	{2.0, 2.0002, 3.0, 6.0, 7.0, 8.0, 9.0, 10.0};
+    const int near_forward_signs[] = {-1, -1, 1, -1, -1, -1, 1, 1};
+    const int near_forward_classes[] = {cleanup_near_hit, cleanup_near_miss,
+	cleanup_near_miss, cleanup_clean_hit, cleanup_clean_hit,
+	cleanup_clean_hit, cleanup_clean_hit, cleanup_clean_hit};
+    fastf_t near_forward_retained[8] = {};
+    const size_t near_forward_count = _rt_brep_cleanup_stream_test(
+	near_forward_distances, near_forward_signs, near_forward_classes, 8,
+	0.001, near_forward_retained, 8);
+    const fastf_t near_reverse_distances[] =
+	{2.0, 3.0, 4.0, 5.0, 6.0, 9.0, 9.9998, 10.0};
+    const int near_reverse_signs[] = {-1, -1, 1, 1, 1, -1, 1, 1};
+    const int near_reverse_classes[] = {cleanup_clean_hit, cleanup_clean_hit,
+	cleanup_clean_hit, cleanup_clean_hit, cleanup_clean_hit,
+	cleanup_near_miss, cleanup_near_miss, cleanup_near_hit};
+    fastf_t near_reverse_retained[8] = {};
+    const size_t near_reverse_count = _rt_brep_cleanup_stream_test(
+	near_reverse_distances, near_reverse_signs, near_reverse_classes, 8,
+	0.001, near_reverse_retained, 8);
+    const double near_chord = 12.0;
+    bool near_match = near_forward_count == 4 && near_reverse_count == 4;
+    for (size_t hit_index = 0; near_match && hit_index < 4; ++hit_index) {
+	near_match = NEAR_EQUAL(near_reverse_retained[hit_index],
+	    near_chord - near_forward_retained[3 - hit_index], SMALL_FASTF);
+    }
+    if (!near_match ||
+	    !NEAR_EQUAL(near_forward_retained[0], 2.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(near_forward_retained[1], 3.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(near_forward_retained[2], 7.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(near_forward_retained[3], 10.0, SMALL_FASTF)) {
+	std::printf("FAIL: BREP near-miss locality cleanup forward=%zu "
+	    "[%.17g %.17g %.17g %.17g] reverse=%zu "
+	    "[%.17g %.17g %.17g %.17g]\n", near_forward_count,
+	    near_forward_retained[0], near_forward_retained[1],
+	    near_forward_retained[2], near_forward_retained[3],
+	    near_reverse_count, near_reverse_retained[0],
+	    near_reverse_retained[1], near_reverse_retained[2],
+	    near_reverse_retained[3]);
+	return 1;
+    }
+
     const fastf_t clustered_forward_distances[] =
 	{1.0, 2.0, 2.0002, 4.0};
     const int clustered_forward_signs[] = {-1, 1, 1, -1};

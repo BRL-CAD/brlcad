@@ -1397,6 +1397,10 @@ RT_EXPORT extern size_t _rt_brep_direction_cleanup_test(
     const fastf_t *distances, const int *normal_signs, size_t count,
     fastf_t distance_tolerance, fastf_t *retained_distances,
     size_t retained_capacity);
+RT_EXPORT extern size_t _rt_brep_cleanup_stream_test(
+    const fastf_t *distances, const int *normal_signs,
+    const int *hit_classes, size_t count, fastf_t distance_tolerance,
+    fastf_t *retained_distances, size_t retained_capacity);
 
 RT_EXPORT extern int _rt_brep_shot_trace(
     struct soltab *stp, struct xray *rp, struct application *ap,
