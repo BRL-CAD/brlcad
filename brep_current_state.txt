@@ -1,7 +1,7 @@
 BREP RAYTRACE IMPLEMENTATION CURRENT STATE
 ==========================================
 
-Last updated: 2026-08-09
+Last updated: 2026-08-10
 Repository: /home/cyapp/brlcad
 Implementation specification: brep_raytrace_plan.txt
 Active objective: Implement the complete specification, preserving this file
@@ -7731,6 +7731,89 @@ Reclaimable per-face SurfaceTree arenas and seam profiling (Finding 89):
   selected/fallback populations, crack handling, and every correctness oracle.
 
 
+Root-centered seam continuation and prepared throughput (Finding 90):
+
+  `rt_brep_ray --throughput-only` now prepares one inward-bowed Cobb sphere
+  once and times ordinary production shots separately from one untimed trace.
+  It covers a regular diameter, 100T, 2T, and 1.1T grazing chords in both
+  directions, and the exact zero-chord tangent.  Timing is informational; the
+  gate is correctness, reversal symmetry, and proof provenance.  It is
+  registered as `rt_brep_ray_throughput` and does not rebuild geometry inside
+  a timed loop.
+
+  The first fixture exposed two distinct failures in the old outside-span
+  continuation certificate.  The 2T and 1.1T analytic sphere chords should
+  each have one material interval, but the BREP path retained only one
+  endpoint and then rejected its Newton continuation because a depth-24 box's
+  conservative ray-t hull overlapped the existing endpoint.  A 100T case was
+  worse: the certificate disabled adaptive correction, clipping, and
+  Krawczyk termination over the complete extension.  It visited 82,013 boxes,
+  produced 40,960 ambiguous terminals, overflowed the 64-box trace ledger by
+  40,896, and spent several seconds before failing closed.  The six-span Cobb
+  BVH considered two spans and excluded four; it was not responsible.
+
+  The replacement proves the complete local root population without deeper
+  global subdivision.  The certificate rectangle now includes the known
+  existing UV as well as the reflected seed, edge point, and Newton
+  continuation.  Both endpoint parameters are normalized into its outward
+  interval reparameterization.  Along their strongest separating coordinate,
+  centered boxes are limited to 20 percent of the endpoint separation and
+  then contracted by powers of two.  Outward interval restriction plus strict
+  Krawczyk inclusion proves exactly one root in each disjoint box.  The
+  outward-rounded Krawczyk images are converted to rational surface ray-t
+  hulls; each must contain its own representative and the two hulls must be
+  disjoint.
+
+  The two full Krawczyk boxes induce at most a 5-by-5 U/V grid over the local
+  extension.  Cells covered by either unique-root box need no further work.
+  Every other cell is recursively excluded by coordinate and vector Bernstein
+  hulls.  The search is depth first in a 64-entry fixed stack, with an 8,192-
+  box budget and the existing depth-24 arithmetic limit.  Any failed root
+  certificate, interval overlap, third root, inconclusive complement,
+  arithmetic failure, or exhausted budget rejects the repair.  There is no
+  ray-time allocation.  Successful telemetry records two isolated/root boxes,
+  Krawczyk attempts/availability/certification, complement boxes/exclusions,
+  depth, and workspace.
+
+  On the release fixture the 100T, 2T, and 1.1T cases require respectively
+  2, 5, and 7 Krawczyk attempts.  Each complement consists of 13 cells, all
+  excluded without further splitting.  Both ray directions now return one
+  segment; the exact tangent returns none and invokes no continuation.  One
+  representative optimized run measured approximately 1.47 ms/ray for the
+  regular chord, 3.36 ms for 100T, 4.38 ms for 2T, 4.28 ms for 1.1T, and
+  2.77 ms for the tangent.  These are not acceptance thresholds, but replace
+  the former multi-second continuation behavior with bounded millisecond
+  work.
+
+  The full bowed 416-position matrix retains all 16 authorized below-envelope
+  repairs, zero below-envelope leaks, zero reversal inconsistencies, and a
+  maximum continuation proof of 15 boxes.  The complete current `--seam-only`
+  shard still takes 233.94 seconds and reports 52 failures in unfinished
+  prepared contact/oblique selection expectations; many of those diagnostics
+  already report the correct production `2 hits / 1 segment`, and cases with
+  zero continuation calls cannot be attributed to this certificate.  Keep
+  this nonzero broad-shard result explicit rather than treating the 416-ray
+  submatrix as the entire test.
+
+  Focused optimized tests pass 11/11: directed, pole, throughput, interval,
+  local-root, cleanup, grazing-root, trim interval/classifier, source union,
+  and fold.  ASan/UBSan with leak scanning disabled passes directed, pole,
+  throughput, and fold 4/4.  `git diff --check` is clean.
+
+  A fresh 20-second, 199-Hz profile confirms the remaining seam cost.  Exact
+  expansion addition accounts for 47.10 percent and scaling for 22.66
+  percent.  During the early classifier family, 78.68 percent of complete
+  stacks are in prepared surface proof work: 45.40 percent beneath ordinary
+  production shots and 33.00 percent beneath the duplicate trace shots.
+  `brep_fold_graph_determinant_signed` and
+  `brep_fold_regular_graph_contract` repeatedly perform exact Bernstein
+  restriction.  The next performance increment should stage ordinary outward
+  interval contraction/exclusion ahead of this exact fold-graph tier and
+  retain exact arithmetic only for residue that remains inconclusive.  It
+  must preserve every fold/contact theorem and fail closed; merely imposing a
+  low work cap would trade time for crack leaks.
+
+
 NEXT ACTIONS
 ------------
 
@@ -7802,11 +7885,11 @@ F. Once the memory representation and density/default decision are qualified,
    scan already makes one 10088 axis pair exceed two minutes while legacy-only
    tracing is bounded, so prioritize the object-level face/span BVH after the
    correctness/memory checkpoints.  Separately, the six-span Cobb seam profile
-   spends about 71 percent in exact expansion add/scale, not in BVH traversal.
-   Establish already-prepared, non-trace regular/near-grazing/exact-tangent
-   Cobb throughput first, then gate exact expansion behind conservative cheap
-   hull/double and outward-interval decisions without weakening ambiguous
-   contact authority.  Address compact immutable span/trim arrays,
+   spends about 70 percent in exact expansion add/scale, not in BVH traversal.
+   Use the registered already-prepared regular/near-grazing/exact-tangent Cobb
+   fixture to stage ordinary outward-interval contraction and exclusion ahead
+   of exact fold-graph restriction without weakening ambiguous contact
+   authority.  Address compact immutable span/trim arrays,
    conservative SIMD coefficient work, and a real batched vshot after those
    two distinct bottlenecks are measurable.  Optimize Newton/OpenNURBS
    evaluation only if profiles identify it as hot.  Report rays/second before

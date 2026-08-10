@@ -10733,10 +10733,232 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 
 
 static bool
+brep_continuation_root_enclosure(
+    struct rt_brep_shot_trace *trace,
+    const brep_surface_coefficients &coefficients,
+    const double root[2], const double initial_half_width[2], int level,
+    brep_subdivision_box &root_box, brep_subdivision_box &image_box,
+    double &minimum_t, double &maximum_t)
+{
+    if (!trace || !root || !initial_half_width || level < 0)
+	return false;
+    double local_root[2];
+    for (int direction = 0; direction < 2; ++direction) {
+	const double half_width = std::ldexp(initial_half_width[direction],
+	    -level);
+	root_box.minimum[direction] = root[direction] - half_width;
+	root_box.maximum[direction] = root[direction] + half_width;
+	if (!(root_box.minimum[direction] > 0.0) ||
+		!(root_box.maximum[direction] < 1.0) ||
+		!(root_box.minimum[direction] < root[direction]) ||
+		!(root[direction] < root_box.maximum[direction]))
+	    return false;
+	local_root[direction] =
+	    (root[direction] - root_box.minimum[direction]) /
+	    (root_box.maximum[direction] - root_box.minimum[direction]);
+    }
+    root_box.depth = level;
+    root_box.exact_depth = 0;
+
+    brep_interval restricted[2][BREP_DIRECT_BEZIER_MAX_CVS];
+    for (int equation = 0; equation < 2; ++equation) {
+	if (!brep_interval_surface_restrict(
+		coefficients.value_interval[equation], coefficients.order[0],
+		coefficients.order[1], root_box.minimum[0],
+		root_box.maximum[0], root_box.minimum[1],
+		root_box.maximum[1], restricted[equation])) {
+	    trace->continuation_certificate_exhausted++;
+	    return false;
+	}
+    }
+
+    struct rt_brep_krawczyk_test_result result = {};
+    trace->continuation_certificate_boxes++;
+    trace->continuation_certificate_krawczyk_attempts++;
+    if (!brep_interval_surface_krawczyk(restricted,
+	    coefficients.order[0], coefficients.order[1], local_root,
+	    result))
+	return false;
+    if (result.available)
+	trace->continuation_certificate_krawczyk_available++;
+    if (!result.certified)
+	return false;
+    trace->continuation_certificate_krawczyk_certified++;
+
+    for (int direction = 0; direction < 2; ++direction) {
+	const double width = root_box.maximum[direction] -
+	    root_box.minimum[direction];
+	const double image_minimum = std::fma(width,
+	    result.image_minimum[direction], root_box.minimum[direction]);
+	const double image_maximum = std::fma(width,
+	    result.image_maximum[direction], root_box.minimum[direction]);
+	image_box.minimum[direction] = std::max(root_box.minimum[direction],
+	    std::nextafter(image_minimum, -INFINITY));
+	image_box.maximum[direction] = std::min(root_box.maximum[direction],
+	    std::nextafter(image_maximum, INFINITY));
+	if (!(image_box.minimum[direction] < image_box.maximum[direction])) {
+	    trace->continuation_certificate_exhausted++;
+	    return false;
+	}
+    }
+    image_box.depth = level;
+    image_box.exact_depth = 0;
+    if (!brep_surface_box_t_range(coefficients, image_box, minimum_t,
+	    maximum_t)) {
+	trace->continuation_certificate_exhausted++;
+	return false;
+    }
+    return true;
+}
+
+
+/* The two certified root boxes below are deliberately removed before this
+ * search.  Strict Krawczyk inclusion proves exactly one root in each removed
+ * box.  Bernstein convex-hull exclusion over every cell in the remaining
+ * grid then proves there is no third root in the bounded seam neighborhood.
+ * Splitting is depth first in fixed storage; an inconclusive or exhausted
+ * complement rejects the repair rather than changing solid parity. */
+static bool
+brep_continuation_complement_excluded(
+    struct rt_brep_shot_trace *trace,
+    const brep_surface_coefficients &coefficients,
+    const brep_subdivision_box root_box[2])
+{
+    if (!trace || !root_box)
+	return false;
+    double boundary[2][6] = {
+	{0.0, 1.0, root_box[0].minimum[0], root_box[0].maximum[0],
+	    root_box[1].minimum[0], root_box[1].maximum[0]},
+	{0.0, 1.0, root_box[0].minimum[1], root_box[0].maximum[1],
+	    root_box[1].minimum[1], root_box[1].maximum[1]}
+    };
+    size_t boundary_count[2] = {6, 6};
+    for (int direction = 0; direction < 2; ++direction) {
+	std::sort(boundary[direction], boundary[direction] +
+	    boundary_count[direction]);
+	size_t unique_count = 0;
+	for (size_t i = 0; i < boundary_count[direction]; ++i) {
+	    if (!unique_count || boundary[direction][i] >
+		    boundary[direction][unique_count - 1])
+		boundary[direction][unique_count++] = boundary[direction][i];
+	}
+	boundary_count[direction] = unique_count;
+    }
+
+    brep_subdivision_box pending[BREP_DIRECT_SUBDIVISION_CAPACITY];
+    size_t pending_count = 0;
+    for (size_t u = 0; u + 1 < boundary_count[0]; ++u) {
+	for (size_t v = 0; v + 1 < boundary_count[1]; ++v) {
+	    brep_subdivision_box box;
+	    box.minimum[0] = boundary[0][u];
+	    box.maximum[0] = boundary[0][u + 1];
+	    box.minimum[1] = boundary[1][v];
+	    box.maximum[1] = boundary[1][v + 1];
+	    box.depth = 0;
+	    box.exact_depth = 0;
+	    bool covered = false;
+	    for (int root_index = 0; root_index < 2; ++root_index) {
+		covered = covered ||
+		    (box.minimum[0] >= root_box[root_index].minimum[0] &&
+		     box.maximum[0] <= root_box[root_index].maximum[0] &&
+		     box.minimum[1] >= root_box[root_index].minimum[1] &&
+		     box.maximum[1] <= root_box[root_index].maximum[1]);
+	    }
+	    if (covered)
+		continue;
+	    if (pending_count == BREP_DIRECT_SUBDIVISION_CAPACITY) {
+		trace->continuation_certificate_exhausted++;
+		return false;
+	    }
+	    pending[pending_count++] = box;
+	}
+    }
+    trace->continuation_certificate_workspace = std::max(
+	trace->continuation_certificate_workspace, pending_count);
+
+    const size_t work_budget = 8192;
+    while (pending_count) {
+	const brep_subdivision_box box = pending[--pending_count];
+	trace->continuation_certificate_boxes++;
+	trace->continuation_certificate_complement_boxes++;
+	trace->continuation_certificate_complement_max_depth = std::max(
+	    trace->continuation_certificate_complement_max_depth,
+	    (size_t)box.depth);
+	if (trace->continuation_certificate_complement_boxes > work_budget) {
+	    trace->continuation_certificate_exhausted++;
+	    return false;
+	}
+
+	brep_interval restricted[2][BREP_DIRECT_BEZIER_MAX_CVS];
+	bool excluded = false;
+	for (int equation = 0; equation < 2; ++equation) {
+	    if (!brep_interval_surface_restrict(
+		    coefficients.value_interval[equation],
+		    coefficients.order[0], coefficients.order[1],
+		    box.minimum[0], box.maximum[0], box.minimum[1],
+		    box.maximum[1], restricted[equation])) {
+		trace->continuation_certificate_exhausted++;
+		return false;
+	    }
+	    if (brep_interval_coefficient_hull_excluded(restricted[equation],
+		    (size_t)coefficients.order[0] * coefficients.order[1])) {
+		excluded = true;
+		break;
+	    }
+	}
+	if (!excluded) {
+	    size_t high_water = 0;
+	    excluded = brep_interval_vector_hull_excluded(restricted,
+		(size_t)coefficients.order[0] * coefficients.order[1],
+		high_water);
+	}
+	if (excluded) {
+	    trace->continuation_certificate_complement_excluded++;
+	    continue;
+	}
+
+	const double midpoint[2] = {
+	    0.5 * (box.minimum[0] + box.maximum[0]),
+	    0.5 * (box.minimum[1] + box.maximum[1])
+	};
+	const bool splittable[2] = {
+	    midpoint[0] > box.minimum[0] && midpoint[0] < box.maximum[0],
+	    midpoint[1] > box.minimum[1] && midpoint[1] < box.maximum[1]
+	};
+	if (box.depth >= BREP_DIRECT_SUBDIVISION_MAX_DEPTH ||
+		(!splittable[0] && !splittable[1])) {
+	    trace->continuation_certificate_exhausted++;
+	    return false;
+	}
+	int direction = box.maximum[0] - box.minimum[0] >=
+	    box.maximum[1] - box.minimum[1] ? 0 : 1;
+	if (!splittable[direction])
+	    direction = 1 - direction;
+	if (pending_count + 2 > BREP_DIRECT_SUBDIVISION_CAPACITY) {
+	    trace->continuation_certificate_exhausted++;
+	    return false;
+	}
+	brep_subdivision_box &second = pending[pending_count++];
+	second = box;
+	second.minimum[direction] = midpoint[direction];
+	second.depth++;
+	brep_subdivision_box &first = pending[pending_count++];
+	first = box;
+	first.maximum[direction] = midpoint[direction];
+	first.depth++;
+	trace->continuation_certificate_workspace = std::max(
+	    trace->continuation_certificate_workspace, pending_count);
+    }
+    return true;
+}
+
+
+static bool
 brep_continuation_certificate(struct rt_brep_shot_trace *trace,
     const brep_surface_span &span, const ON_Ray &ray,
     const double minimum[2], const double maximum[2],
-    const ON_2dPoint &root_uv, double root_dist, double existing_dist)
+    const ON_2dPoint &root_uv, double root_dist,
+    const ON_2dPoint &existing_uv, double existing_dist)
 {
     ON_3dVector first;
     ON_3dVector second;
@@ -10757,28 +10979,26 @@ brep_continuation_certificate(struct rt_brep_shot_trace *trace,
 	extension_span.surface_domain[direction] = ON_Interval(
 	    span.surface_domain[direction].ParameterAt(minimum[direction]),
 	    span.surface_domain[direction].ParameterAt(maximum[direction]));
-    struct rt_brep_shot_trace certificate = {};
-    brep_trace_surface_isolation(&certificate, extension, extension_span,
-	ray, false, false, 0.0, false);
-    trace->continuation_certificate_boxes +=
-	certificate.surface_subdivision_boxes;
-    trace->continuation_certificate_isolated +=
-	certificate.surface_isolated_boxes;
-    trace->continuation_certificate_workspace = std::max(
-	trace->continuation_certificate_workspace,
-	certificate.surface_workspace_high_water);
-    trace->continuation_certificate_exhausted +=
-	certificate.surface_workspace_exhausted +
-	certificate.surface_box_overflow;
-    if (certificate.surface_workspace_exhausted ||
-	    certificate.surface_box_overflow)
-	return false;
+    double normalized_root[2];
+    double normalized_existing[2];
+    const double parameter_tolerance = 1024.0 * DBL_EPSILON;
+    for (int direction = 0; direction < 2; ++direction) {
+	normalized_root[direction] = extension_span.surface_domain[direction].
+	    NormalizedParameterAt(root_uv[direction]);
+	normalized_existing[direction] =
+	    extension_span.surface_domain[direction].NormalizedParameterAt(
+		existing_uv[direction]);
+	if (!std::isfinite(normalized_root[direction]) ||
+		!std::isfinite(normalized_existing[direction]) ||
+		normalized_root[direction] <= parameter_tolerance ||
+		normalized_root[direction] >= 1.0 - parameter_tolerance ||
+		normalized_existing[direction] <= parameter_tolerance ||
+		normalized_existing[direction] >= 1.0 - parameter_tolerance) {
+	    trace->continuation_certificate_exhausted++;
+	    return false;
+	}
+    }
 
-    size_t root_boxes = 0;
-    size_t existing_overlap = 0;
-    double minimum_t = DBL_MAX;
-    double maximum_t = -DBL_MAX;
-    const double parameter_tolerance = 1.0e-12;
     const double ray_length = ray.m_dir.Length();
     const double span_scale = span.bbox.IsValid() ?
 	span.bbox.Diagonal().Length() : 0.0;
@@ -10796,33 +11016,91 @@ brep_continuation_certificate(struct rt_brep_shot_trace *trace,
 	BREP_DIRECT_EVALUATION_ULPS * DBL_EPSILON * coordinate_scale) /
 	ray_length + 128.0 * DBL_EPSILON * std::max(1.0,
 	std::max(fabs(root_dist), fabs(existing_dist)));
-    for (size_t i = 0; i < certificate.stored_surface_boxes; ++i) {
-	const struct rt_brep_trace_surface_box &box =
-	    certificate.surface_boxes[i];
-	const bool contains_root = box.face_index == span.face_index &&
-	    root_uv.x >= box.uv_min[0] - parameter_tolerance &&
-	    root_uv.x <= box.uv_max[0] + parameter_tolerance &&
-	    root_uv.y >= box.uv_min[1] - parameter_tolerance &&
-	    root_uv.y <= box.uv_max[1] + parameter_tolerance &&
-	    root_dist >= box.t_min - distance_tolerance &&
-	    root_dist <= box.t_max + distance_tolerance;
-	if (!contains_root)
+
+    int separation_direction = 0;
+    if (fabs(normalized_root[1] - normalized_existing[1]) >
+	    fabs(normalized_root[0] - normalized_existing[0]))
+	separation_direction = 1;
+    const double separation = fabs(normalized_root[separation_direction] -
+	normalized_existing[separation_direction]);
+    if (!(separation > 4.0 * parameter_tolerance)) {
+	trace->continuation_certificate_existing_overlap++;
+	return false;
+    }
+
+    const double root[2][2] = {
+	{normalized_root[0], normalized_root[1]},
+	{normalized_existing[0], normalized_existing[1]}
+    };
+    double initial_half_width[2][2];
+    for (int root_index = 0; root_index < 2; ++root_index) {
+	for (int direction = 0; direction < 2; ++direction) {
+	    const double boundary_distance = std::min(root[root_index][direction],
+		1.0 - root[root_index][direction]);
+	    initial_half_width[root_index][direction] = std::min(0.125,
+		0.5 * boundary_distance);
+	}
+	initial_half_width[root_index][separation_direction] = std::min(
+	    initial_half_width[root_index][separation_direction],
+	    0.2 * separation);
+    }
+
+    /* Certify both physical chord endpoints on this analytic surface
+     * extension.  Center the widest boxes that remain strictly internal and
+     * disjoint along their strongest separating parameter.  K(X) inside X
+     * proves existence and uniqueness; its smaller outward-rounded image is
+     * used only to bound ray t.  The full X boxes remain reserved while their
+     * complement is excluded, so no assumption about the root's exact
+     * position inside the Krawczyk image is needed for coverage. */
+    brep_subdivision_box root_box[2];
+    brep_subdivision_box image_box[2];
+    double t_minimum[2] = {0.0, 0.0};
+    double t_maximum[2] = {0.0, 0.0};
+    bool roots_certified = false;
+    const int maximum_root_levels = 24;
+    for (int level = 0; level < maximum_root_levels; ++level) {
+	bool level_certified = true;
+	for (int root_index = 0; root_index < 2; ++root_index) {
+	    const size_t previous_exhausted =
+		trace->continuation_certificate_exhausted;
+	    if (!brep_continuation_root_enclosure(trace, extension,
+		    root[root_index], initial_half_width[root_index], level,
+		    root_box[root_index], image_box[root_index],
+		    t_minimum[root_index], t_maximum[root_index])) {
+		if (trace->continuation_certificate_exhausted >
+			previous_exhausted)
+		    return false;
+		level_certified = false;
+		break;
+	    }
+	}
+	if (!level_certified)
 	    continue;
-	root_boxes++;
-	minimum_t = std::min(minimum_t, box.t_min);
-	maximum_t = std::max(maximum_t, box.t_max);
-	if (existing_dist >= box.t_min - distance_tolerance &&
-		existing_dist <= box.t_max + distance_tolerance)
-	    existing_overlap++;
+	const bool root_contains_t =
+	    root_dist >= t_minimum[0] - distance_tolerance &&
+	    root_dist <= t_maximum[0] + distance_tolerance;
+	const bool existing_contains_t =
+	    existing_dist >= t_minimum[1] - distance_tolerance &&
+	    existing_dist <= t_maximum[1] + distance_tolerance;
+	const bool t_disjoint = t_maximum[0] + distance_tolerance <
+	    t_minimum[1] || t_maximum[1] + distance_tolerance < t_minimum[0];
+	if (root_contains_t && existing_contains_t && t_disjoint) {
+	    roots_certified = true;
+	    break;
+	}
     }
-    trace->continuation_certificate_root_boxes += root_boxes;
-    trace->continuation_certificate_existing_overlap += existing_overlap;
-    if (root_boxes) {
-	trace->continuation_certificate_t_min = minimum_t;
-	trace->continuation_certificate_t_max = maximum_t;
+    if (!roots_certified) {
+	trace->continuation_certificate_existing_overlap++;
+	return false;
     }
-    return root_boxes > 0 &&
-	root_boxes == certificate.surface_isolated_boxes && !existing_overlap;
+    if (!brep_continuation_complement_excluded(trace, extension, root_box))
+	return false;
+
+    trace->continuation_certificate_isolated += 2;
+    trace->continuation_certificate_root_boxes += 2;
+    trace->continuation_certificate_t_min = t_minimum[0];
+    trace->continuation_certificate_t_max = t_maximum[0];
+    return true;
 }
 
 
@@ -12929,12 +13207,16 @@ brep_resolve_continuation(struct rt_brep_shot_trace *trace,
 		span.surface_domain[1].ParameterAt(result.uv.y));
 	    const double padding = std::max(1.0 / 4096.0, 0.25 * outside);
 	    double certificate_minimum[2] = {
-		std::min(local_edge.x, std::min(seed.x, result.uv.x)) - padding,
-		std::min(local_edge.y, std::min(seed.y, result.uv.y)) - padding
+		std::min(local_hit.x, std::min(local_edge.x,
+		    std::min(seed.x, result.uv.x))) - padding,
+		std::min(local_hit.y, std::min(local_edge.y,
+		    std::min(seed.y, result.uv.y))) - padding
 	    };
 	    double certificate_maximum[2] = {
-		std::max(local_edge.x, std::max(seed.x, result.uv.x)) + padding,
-		std::max(local_edge.y, std::max(seed.y, result.uv.y)) + padding
+		std::max(local_hit.x, std::max(local_edge.x,
+		    std::max(seed.x, result.uv.x))) + padding,
+		std::max(local_hit.y, std::max(local_edge.y,
+		    std::max(seed.y, result.uv.y))) + padding
 	    };
 	    for (int parameter_direction = 0; parameter_direction < 2;
 		    ++parameter_direction) {
@@ -12946,7 +13228,7 @@ brep_resolve_continuation(struct rt_brep_shot_trace *trace,
 	    trace->continuation_candidates++;
 	    if (brep_continuation_certificate(trace, span, ray,
 		    certificate_minimum, certificate_maximum, root_uv,
-		    result.dist, hit->dist))
+		    result.dist, hit_uv, hit->dist))
 		trace->continuation_certified_candidates++;
 	    if (trace->continuation_face_index >= 0)
 		continue;
