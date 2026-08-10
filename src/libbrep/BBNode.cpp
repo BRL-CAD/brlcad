@@ -38,7 +38,9 @@ BBNode::BBNode(const ON_BoundingBox &node, const CurveTree *ct) :
     m_estimate(),
     m_normal(),
     m_ctree(ct),
-    m_stl(new Stl)
+    m_children(NULL),
+    m_child_count(0),
+    m_child_capacity(0)
 {
     for (int i = 0; i < 3; i++) {
 	double d = m_node.m_max[i] - m_node.m_min[i];
@@ -65,7 +67,9 @@ BBNode::BBNode(
     m_estimate(),
     m_normal(),
     m_ctree(ct),
-    m_stl(new Stl)
+    m_children(NULL),
+    m_child_count(0),
+    m_child_capacity(0)
 {
     for (int i = 0; i < 3; i++) {
 	double d = m_node.m_max[i] - m_node.m_min[i];
@@ -80,11 +84,10 @@ BBNode::BBNode(
 BBNode::~BBNode()
 {
     /* delete the children */
-    for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	delete m_stl->m_children[i];
-    }
-
-    delete m_stl;
+    for (std::size_t i = 0; i < m_child_count; ++i)
+	delete m_children[i];
+    if (m_children)
+	bu_free(m_children, "BBNode child pointers");
 }
 
 
@@ -97,7 +100,9 @@ BBNode::BBNode(Deserializer &deserializer, const CurveTree &ctree) :
     m_estimate(),
     m_normal(),
     m_ctree(&ctree),
-    m_stl(new Stl)
+    m_children(NULL),
+    m_child_count(0),
+    m_child_capacity(0)
 {
     deserializer.read(m_node);
     deserializer.read(m_u);
@@ -112,9 +117,8 @@ BBNode::BBNode(Deserializer &deserializer, const CurveTree &ctree) :
     m_checkTrim = bool_flags & (1 << 0);
     m_trimmed = bool_flags & (1 << 1);
 
-    m_stl->m_children.resize(num_children);
-    for (std::vector<BBNode *>::iterator it = m_stl->m_children.begin(); it != m_stl->m_children.end(); ++it)
-	*it = new BBNode(deserializer, ctree);
+    for (std::size_t i = 0; i < num_children; ++i)
+	addChild(new BBNode(deserializer, ctree));
 
     /* Older cache records stored per-leaf trim indices here.  Consume them
      * for backward compatibility; current classification uses the owning
@@ -137,10 +141,30 @@ BBNode::serialize(Serializer &serializer) const
 
     serializer.write_uint8(bool_flags);
     serializer.write_uint32(0);
-    serializer.write_uint32(m_stl->m_children.size());
+    serializer.write_uint32(m_child_count);
 
-    for (std::vector<BBNode *>::const_iterator it = m_stl->m_children.begin(); it != m_stl->m_children.end(); ++it)
-	(*it)->serialize(serializer);
+    for (std::size_t i = 0; i < m_child_count; ++i)
+	m_children[i]->serialize(serializer);
+}
+
+
+void
+BBNode::addChild(BBNode *node)
+{
+    if (!node)
+	return;
+    if (m_child_count == UINT32_MAX)
+	bu_bomb("BBNode child count exceeds compact storage");
+    if (m_child_count == m_child_capacity) {
+	uint32_t new_capacity = m_child_capacity ? m_child_capacity * 2 : 1;
+	if (new_capacity < m_child_capacity || new_capacity < m_child_count + 1)
+	    new_capacity = m_child_count + 1;
+	m_children = static_cast<BBNode **>(bu_realloc(m_children,
+	    (std::size_t)new_capacity * sizeof(BBNode *),
+	    "BBNode child pointers"));
+	m_child_capacity = new_capacity;
+    }
+    m_children[m_child_count++] = node;
 }
 
 
@@ -195,9 +219,8 @@ BBNode::intersectsHierarchy(const ON_Ray &ray, std::list<const BBNode *> &result
     if (intersects && isLeaf()) {
 	results_opt.push_back(this);
     } else if (intersects) {
-	for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	    m_stl->m_children[i]->intersectsHierarchy(ray, results_opt);
-	}
+	for (std::size_t i = 0; i < m_child_count; ++i)
+	    m_children[i]->intersectsHierarchy(ray, results_opt);
     }
     return intersects;
 }
@@ -217,10 +240,9 @@ BBNode::intersectsHierarchy(const ON_Ray &ray, const BBNode **results,
 	}
 	count++;
     } else if (intersects) {
-	for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	    m_stl->m_children[i]->intersectsHierarchy(ray, results, capacity,
+	for (std::size_t i = 0; i < m_child_count; ++i)
+	    m_children[i]->intersectsHierarchy(ray, results, capacity,
 		count, overflow);
-	}
     }
     return intersects;
 }
@@ -241,9 +263,8 @@ int
 BBNode::depth() const
 {
     int d = 0;
-    for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	d = 1 + std::max(d, m_stl->m_children[i]->depth());
-    }
+    for (std::size_t i = 0; i < m_child_count; ++i)
+	d = 1 + std::max(d, m_children[i]->depth());
     return d;
 }
 
@@ -251,10 +272,9 @@ BBNode::depth() const
 void
 BBNode::getLeaves(std::list<const BBNode *> &out_leaves) const
 {
-    if (!m_stl->m_children.empty()) {
-	for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	    m_stl->m_children[i]->getLeaves(out_leaves);
-	}
+    if (m_child_count) {
+	for (std::size_t i = 0; i < m_child_count; ++i)
+	    m_children[i]->getLeaves(out_leaves);
     } else {
 	out_leaves.push_back(this);
     }
@@ -324,10 +344,10 @@ BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
 	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
     } else {
-	if (!m_stl->m_children.empty()) {
-	    const BBNode *closestNode = m_stl->m_children[0];
-	    for (size_t i = 1; i < m_stl->m_children.size(); i++) {
-		closestNode = closer(pt, closestNode, m_stl->m_children[i]);
+	if (m_child_count) {
+	    const BBNode *closestNode = m_children[0];
+	    for (std::size_t i = 1; i < m_child_count; ++i) {
+		closestNode = closer(pt, closestNode, m_children[i]);
 		TRACE("\t" << PT(closestNode->m_estimate));
 	    }
 	    return closestNode->getClosestPointEstimate(pt, u, v);
@@ -354,9 +374,8 @@ BBNode::getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<const BBNode *> &
 	return 0;
     } else {
 	int sum = 0;
-	for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	    sum += m_stl->m_children[i]->getLeavesBoundingPoint(pt, out);
-	}
+	for (std::size_t i = 0; i < m_child_count; ++i)
+	    sum += m_children[i]->getLeavesBoundingPoint(pt, out);
 	return sum;
     }
 }
@@ -689,17 +708,20 @@ BBNode::isTrimmedAllocating(const ON_2dPoint &uv, const BRNode **closest,
 
 void BBNode::BuildBBox()
 {
-    if (!m_stl->m_children.empty()) {
-	for (std::vector<BBNode *>::const_iterator childnode = m_stl->m_children.begin(); childnode != m_stl->m_children.end(); childnode++) {
-	    if (!(*childnode)->isLeaf()) {
-		(*childnode)->BuildBBox();
+    if (m_child_count) {
+	for (std::size_t child_index = 0; child_index < m_child_count;
+		++child_index) {
+	    BBNode *child_node = m_children[child_index];
+	    if (!child_node->isLeaf()) {
+		child_node->BuildBBox();
 	    }
-	    if (childnode == m_stl->m_children.begin()) {
-		m_node = ON_BoundingBox((*childnode)->m_node.m_min, (*childnode)->m_node.m_max);
+	    if (child_index == 0) {
+		m_node = ON_BoundingBox(child_node->m_node.m_min,
+		    child_node->m_node.m_max);
 	    } else {
 		for (int j = 0; j < 3; j++) {
-		    V_MIN(m_node.m_min[j], (*childnode)->m_node.m_min[j]);
-		    V_MAX(m_node.m_max[j], (*childnode)->m_node.m_max[j]);
+		    V_MIN(m_node.m_min[j], child_node->m_node.m_min[j]);
+		    V_MAX(m_node.m_max[j], child_node->m_node.m_max[j]);
 		}
 	    }
 	}
