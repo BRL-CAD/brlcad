@@ -668,7 +668,8 @@ report_grazing_trace(const char *label, double chord_ratio, int reverse,
 	trace.surface_terminal_expansion_budget_exhausted,
 	trace.surface_terminal_expansion_high_water);
     std::printf("  fold proof expansion/corridor/unique/graph/boundary/strip="
-	"%zu/%zu/%zu/%zu/%zu/%zu failures=%zu/%zu/%zu/%zu\n",
+	"%zu/%zu/%zu/%zu/%zu/%zu failures=%zu/%zu/%zu/%zu "
+	"interval-contract=%zu/%zu/%zu exact-fallback=%zu\n",
 	trace.surface_fold_expansion_certified,
 	trace.surface_fold_corridor_available,
 	trace.surface_fold_corridor_unique,
@@ -681,7 +682,11 @@ report_grazing_trace(const char *label, double chord_ratio, int reverse,
 	trace.surface_fold_strip_restriction_failures +
 	    trace.surface_fold_strip_arithmetic_failures +
 	    trace.surface_fold_strip_depth_exhausted +
-	    trace.surface_fold_strip_workspace_exhausted);
+	    trace.surface_fold_strip_workspace_exhausted,
+	trace.surface_fold_interval_contract_attempts,
+	trace.surface_fold_interval_contractions,
+	trace.surface_fold_interval_exclusions,
+	trace.surface_fold_exact_contract_fallbacks);
     std::printf("  fold mixed pairs=%zu localization=%zu/%zu/%zu "
 	"unmatched=%zu direction=%zu/%zu trim=%zu/%zu\n",
 	trace.surface_fold_mixed_pairs,
@@ -6077,6 +6082,7 @@ struct cobb_throughput_family {
     sampled_ray ray[2];
     double chord_ratio = 0.0;
     int expected_segments = 0;
+    bool require_continuation = false;
 };
 
 
@@ -6117,7 +6123,7 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	return 1;
     }
 
-    cobb_throughput_family family[5];
+    cobb_throughput_family family[6];
     family[0].name = "regular";
     family[0].chord_ratio = 2.0 * radius / tol->dist;
     family[0].expected_segments = 1;
@@ -6147,10 +6153,21 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	family[i + 1].name = name[i];
 	family[i + 1].chord_ratio = chord_ratio[i];
 	family[i + 1].expected_segments = chord_ratio[i] > 1.0 ? 1 : 0;
+	family[i + 1].require_continuation = chord_ratio[i] > 1.0;
 	for (int reverse = 0; reverse <= 1; ++reverse)
 	    family[i + 1].ray[reverse] = cobb_seam_grazing_ray(frame,
 		origin, radius, clearance, reverse != 0);
     }
+    const size_t contact_index = 5;
+    const double contact_clearance = tol->dist;
+    family[contact_index].name = "seam-contact-1T";
+    family[contact_index].chord_ratio =
+	2.0 * sqrt(2.0 * radius * contact_clearance -
+	    contact_clearance * contact_clearance) / tol->dist;
+    family[contact_index].expected_segments = 1;
+    for (int reverse = 0; reverse <= 1; ++reverse)
+	family[contact_index].ray[reverse] = cobb_seam_grazing_ray(frame,
+	    origin, radius, contact_clearance, reverse != 0);
 
     int failures = 0;
     const int64_t minimum_microseconds = 250000;
@@ -6171,8 +6188,7 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 
 	struct rt_brep_shot_trace trace;
 	(void)shoot_brep_trace(stp, rtip, resource, test.ray[0], trace);
-	const bool expect_continuation = family_index > 0 &&
-	    test.expected_segments == 1;
+	const bool expect_continuation = test.require_continuation;
 	const bool certificate_valid = !expect_continuation ||
 	    (trace.continuation_candidates == 1 &&
 	     trace.continuation_certified_candidates == 1 &&
@@ -6189,6 +6205,14 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	const bool tangent_valid = test.expected_segments != 0 ||
 	    (trace.continuation_certified_candidates == 0 &&
 	     trace.closure_shadow_segments == 0);
+	const bool contraction_accounted =
+	    trace.surface_fold_interval_contract_attempts ==
+	    trace.surface_fold_interval_contractions +
+	    trace.surface_fold_interval_exclusions +
+	    trace.surface_fold_exact_contract_fallbacks;
+	const bool contact_contracts = family_index != contact_index ||
+	    (trace.surface_fold_interval_contract_attempts > 0 &&
+	     trace.surface_fold_interval_contractions > 0);
 	if (trace.final_segments != (size_t)test.expected_segments) {
 	    std::printf("FAIL: Cobb production-throughput trace %s "
 		"segments=%zu/%d fallback=%d\n", test.name,
@@ -6252,6 +6276,15 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 		trace.closure_shadow_segments);
 	    failures++;
 	}
+	if (!contraction_accounted || !contact_contracts) {
+	    std::printf("FAIL: Cobb production-throughput fold contraction %s "
+		"attempt/contract/exclude/fallback=%zu/%zu/%zu/%zu\n",
+		test.name, trace.surface_fold_interval_contract_attempts,
+		trace.surface_fold_interval_contractions,
+		trace.surface_fold_interval_exclusions,
+		trace.surface_fold_exact_contract_fallbacks);
+	    failures++;
+	}
 
 	size_t shots = 0;
 	size_t segment_sink = 0;
@@ -6276,6 +6309,7 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	    "spans=%zu/%zu boxes=%zu isolated/krawczyk=%zu/%zu "
 	    "terminal-expansion="
 	    "%zu/%zu/%zu fold-expansion=%zu/%zu/%zu high-water=%zu/%zu "
+	    "fold-contract=%zu/%zu/%zu/%zu "
 	    "certificate-Krawczyk=%zu/%zu/%zu "
 	    "certificate-complement=%zu/%zu/%zu\n",
 	    test.name, test.chord_ratio, shots, seconds, rays_per_second,
@@ -6293,6 +6327,10 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	    trace.surface_fold_expansion_certified,
 	    trace.surface_terminal_expansion_high_water,
 	    trace.surface_fold_expansion_high_water,
+	    trace.surface_fold_interval_contract_attempts,
+	    trace.surface_fold_interval_contractions,
+	    trace.surface_fold_interval_exclusions,
+	    trace.surface_fold_exact_contract_fallbacks,
 	    trace.continuation_certificate_krawczyk_attempts,
 	    trace.continuation_certificate_krawczyk_available,
 	    trace.continuation_certificate_krawczyk_certified,

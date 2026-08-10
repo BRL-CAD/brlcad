@@ -811,6 +811,10 @@ struct rt_brep_shot_trace {
     size_t surface_fold_corridor_graph_sign_conflicts;
     size_t surface_fold_corridor_graph_depth_exhausted;
     size_t surface_fold_corridor_graph_workspace_exhausted;
+    size_t surface_fold_interval_contract_attempts;
+    size_t surface_fold_interval_contractions;
+    size_t surface_fold_interval_exclusions;
+    size_t surface_fold_exact_contract_fallbacks;
     size_t surface_fold_boundary_existence_attempts;
     size_t surface_fold_boundary_existence_available;
     size_t surface_fold_boundary_existence_certified;

@@ -8741,12 +8741,111 @@ brep_surface_clip_range(
 }
 
 
+/* Evaluate only the fixed parameter of an interval Bernstein surface.  The
+ * coefficients left in the other direction form a convex hull for the whole
+ * parameter line.  This ordinary outward-interval tier is deliberately less
+ * expensive and no stronger than the expansion implementation below. */
+static bool
+brep_interval_surface_fixed_parameter_hull(const brep_interval *input,
+    int u_order, int v_order, int direction, double parameter,
+    brep_interval &hull)
+{
+    if (!input || (direction != 0 && direction != 1) ||
+	    u_order < 2 || v_order < 2 ||
+	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
+	    parameter < 0.0 || parameter > 1.0)
+	return false;
+    const int direction_order = direction == 0 ? u_order : v_order;
+    const int other_order = direction == 0 ? v_order : u_order;
+    hull = {DBL_MAX, -DBL_MAX};
+    for (int other = 0; other < other_order; ++other) {
+	brep_interval work[BREP_DIRECT_BEZIER_MAX_ORDER];
+	for (int i = 0; i < direction_order; ++i) {
+	    const int u = direction == 0 ? i : other;
+	    const int v = direction == 0 ? other : i;
+	    work[i] = input[(size_t)u * v_order + v];
+	}
+	for (int level = 1; level < direction_order; ++level) {
+	    for (int i = 0; i < direction_order - level; ++i) {
+		work[i] = brep_interval_add(
+		    brep_interval_scale(1.0 - parameter, work[i]),
+		    brep_interval_scale(parameter, work[i + 1]));
+	    }
+	}
+	hull.minimum = std::min(hull.minimum, work[0].minimum);
+	hull.maximum = std::max(hull.maximum, work[0].maximum);
+    }
+    return std::isfinite(hull.minimum) && std::isfinite(hull.maximum) &&
+	hull.minimum <= hull.maximum;
+}
+
+
+enum brep_fold_contract_status {
+    BREP_FOLD_CONTRACT_INCONCLUSIVE = 0,
+    BREP_FOLD_CONTRACT_EXCLUDED,
+    BREP_FOLD_CONTRACT_RESTRICTED
+};
+
+
+static brep_fold_contract_status
+brep_fold_regular_graph_step(
+    const brep_interval current[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    const int order[2], int regular_direction, bool exact,
+    brep_interval next[2][BREP_DIRECT_BEZIER_MAX_CVS],
+    brep_interval &range, size_t &high_water)
+{
+    brep_interval center_value;
+    brep_interval derivative;
+    brep_interval quotient;
+    const bool bounds_available = exact ?
+	(brep_expansion_surface_fixed_parameter_hull(current[0], order[0],
+	    order[1], regular_direction, 0.5, center_value, high_water) &&
+	 brep_expansion_surface_derivative_hull(current[0], order[0],
+	    order[1], regular_direction, derivative, high_water)) :
+	(brep_interval_surface_fixed_parameter_hull(current[0], order[0],
+	    order[1], regular_direction, 0.5, center_value) &&
+	 brep_interval_surface_derivative_hull(current[0], order[0],
+	    order[1], regular_direction, derivative));
+    if (!bounds_available ||
+	    !brep_interval_divide_nonzero(center_value, derivative, quotient))
+	return BREP_FOLD_CONTRACT_INCONCLUSIVE;
+    range = brep_interval_add({0.5, 0.5},
+	brep_interval_scale(-1.0, quotient));
+    if (range.maximum < 0.0 || range.minimum > 1.0)
+	return BREP_FOLD_CONTRACT_EXCLUDED;
+    range.minimum = std::max(0.0, range.minimum);
+    range.maximum = std::min(1.0, range.maximum);
+    if (!(range.minimum < range.maximum) ||
+	    (!(range.minimum > 0.0) && !(range.maximum < 1.0)))
+	return BREP_FOLD_CONTRACT_INCONCLUSIVE;
+
+    double minimum[2] = {0.0, 0.0};
+    double maximum[2] = {1.0, 1.0};
+    minimum[regular_direction] = range.minimum;
+    maximum[regular_direction] = range.maximum;
+    for (int equation = 0; equation < 2; ++equation) {
+	const bool restricted = exact ?
+	    brep_expansion_surface_restrict(current[equation], order[0],
+		order[1], minimum[0], maximum[0], minimum[1], maximum[1],
+		true, next[equation], high_water) :
+	    brep_interval_surface_restrict(current[equation], order[0],
+		order[1], minimum[0], maximum[0], minimum[1], maximum[1],
+		next[equation]);
+	if (!restricted)
+	    return BREP_FOLD_CONTRACT_INCONCLUSIVE;
+    }
+    return BREP_FOLD_CONTRACT_RESTRICTED;
+}
+
+
 static bool
 brep_fold_regular_graph_contract(
     brep_interval current[2][BREP_DIRECT_BEZIER_MAX_CVS],
     const int order[2], int regular_direction, bool &excluded,
     brep_interval *regular_range,
-    size_t &contractions, size_t &high_water)
+    size_t &contractions, size_t &high_water,
+    struct rt_brep_shot_trace *trace)
 {
     if (!current || !order ||
 	    (regular_direction != 0 && regular_direction != 1))
@@ -8760,44 +8859,32 @@ brep_fold_regular_graph_contract(
 	    excluded = true;
 	    return true;
 	}
-	brep_interval center_value;
-	brep_interval derivative;
-	brep_interval quotient;
-	if (!brep_expansion_surface_fixed_parameter_hull(current[0],
-		order[0], order[1], regular_direction, 0.5, center_value,
-		high_water) ||
-		!brep_expansion_surface_derivative_hull(current[0], order[0],
-		    order[1], regular_direction, derivative, high_water) ||
-		!brep_interval_divide_nonzero(center_value, derivative,
-		    quotient))
-	    break;
-	brep_interval range = brep_interval_add({0.5, 0.5},
-	    brep_interval_scale(-1.0, quotient));
-	if (range.maximum < 0.0 || range.minimum > 1.0) {
+	brep_interval next[2][BREP_DIRECT_BEZIER_MAX_CVS];
+	brep_interval range;
+	if (trace)
+	    trace->surface_fold_interval_contract_attempts++;
+	brep_fold_contract_status status = brep_fold_regular_graph_step(current,
+	    order, regular_direction, false, next, range, high_water);
+	if (status == BREP_FOLD_CONTRACT_EXCLUDED) {
+	    if (trace)
+		trace->surface_fold_interval_exclusions++;
 	    excluded = true;
 	    return true;
 	}
-	range.minimum = std::max(0.0, range.minimum);
-	range.maximum = std::min(1.0, range.maximum);
-	if (!(range.minimum < range.maximum) ||
-		(!(range.minimum > 0.0) && !(range.maximum < 1.0)))
-	    break;
-	double minimum[2] = {0.0, 0.0};
-	double maximum[2] = {1.0, 1.0};
-	minimum[regular_direction] = range.minimum;
-	maximum[regular_direction] = range.maximum;
-	brep_interval next[2][BREP_DIRECT_BEZIER_MAX_CVS];
-	bool restriction_available = true;
-	for (int equation = 0; equation < 2; ++equation) {
-	    if (!brep_expansion_surface_restrict(current[equation], order[0],
-		    order[1], minimum[0], maximum[0], minimum[1], maximum[1],
-		    true, next[equation], high_water)) {
-		restriction_available = false;
-		break;
+	if (status != BREP_FOLD_CONTRACT_RESTRICTED) {
+	    if (trace)
+		trace->surface_fold_exact_contract_fallbacks++;
+	    status = brep_fold_regular_graph_step(current, order,
+		regular_direction, true, next, range, high_water);
+	    if (status == BREP_FOLD_CONTRACT_EXCLUDED) {
+		excluded = true;
+		return true;
 	    }
+	    if (status != BREP_FOLD_CONTRACT_RESTRICTED)
+		break;
+	} else if (trace) {
+	    trace->surface_fold_interval_contractions++;
 	}
-	if (!restriction_available)
-	    break;
 	brep_interval mapped_range = {0.0, 1.0};
 	if (regular_range) {
 	    const brep_interval previous = *regular_range;
@@ -8883,7 +8970,7 @@ brep_fold_strip_excluded(
 	bool box_excluded = false;
 	if (!brep_fold_regular_graph_contract(current, order,
 		regular_direction, box_excluded, NULL,
-		trace->surface_fold_strip_contractions, high_water)) {
+		trace->surface_fold_strip_contractions, high_water, trace)) {
 	    trace->surface_fold_strip_arithmetic_failures++;
 	    return false;
 	}
@@ -8989,7 +9076,7 @@ brep_fold_graph_determinant_signed(
 	    if (!brep_fold_regular_graph_contract(current, order,
 		    regular_direction, graph_excluded, &regular_range,
 		    trace->surface_fold_corridor_graph_contractions,
-		    high_water))
+		    high_water, trace))
 		return false;
 	    if (graph_excluded)
 		continue;
@@ -9600,7 +9687,7 @@ brep_trace_localize_fold_root(struct rt_brep_shot_trace *trace,
 	size_t regular_contractions = 0;
 	if (!brep_fold_regular_graph_contract(contracted, order,
 		regular_direction, excluded, &regular_range,
-		regular_contractions, high_water) || excluded) {
+		regular_contractions, high_water, trace) || excluded) {
 	    trace->surface_fold_localization_failures++;
 	    continue;
 	}
