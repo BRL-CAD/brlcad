@@ -49,6 +49,7 @@
 #define MAX_CHART_REFINEMENT_STAGNANT_ATTEMPTS 4
 #define MAX_ASSEMBLED_REFINEMENT_ATTEMPTS 16
 #define MAX_ASSEMBLED_REFINEMENT_POINTS 4096
+#define MAX_SHARED_EDGE_REFINEMENT_DISTANCE_RATIO 0.05
 
 struct assembled_mesh_validation {
     size_t invalid_indices = 0;
@@ -1715,6 +1716,7 @@ refine_assembled_intersection(struct ON_Brep_CDT_State *s_cdt,
 	const std::set<int> shared_edge_set(shared_edges.begin(),
 	    shared_edges.end());
 	bool pair_incident_to_shared_edge = !shared_edge_set.empty();
+	double pair_triangle_scale = 0.0;
 	for (int pair_index = 0; pair_index < 2; ++pair_index) {
 	    const int bot_triangle = validation.first_intersection[pair_index];
 	    const int face = source_faces[pair_index];
@@ -1732,6 +1734,20 @@ refine_assembled_intersection(struct ON_Brep_CDT_State *s_cdt,
 		    for (int edge = 0; edge < 3; ++edge) {
 			const uedge_t candidate(triangle.v[edge],
 			    triangle.v[(edge + 1) % 3]);
+			if (candidate.v[0] >= 0 && candidate.v[1] >= 0 &&
+				(size_t)candidate.v[0] <
+				mesh_entry->second.pnts.size() &&
+				(size_t)candidate.v[1] <
+				mesh_entry->second.pnts.size()) {
+			    const ON_3dPoint *first_point =
+				mesh_entry->second.pnts[(size_t)candidate.v[0]];
+			    const ON_3dPoint *second_point =
+				mesh_entry->second.pnts[(size_t)candidate.v[1]];
+			    if (first_point && second_point)
+				pair_triangle_scale = std::max(
+				    pair_triangle_scale,
+				    first_point->DistanceTo(*second_point));
+			}
 			const auto boundary =
 			    mesh_entry->second.ue2b_map.find(candidate);
 			if (boundary != mesh_entry->second.ue2b_map.end() &&
@@ -1752,8 +1768,6 @@ refine_assembled_intersection(struct ON_Brep_CDT_State *s_cdt,
 	bedge_seg_t *nearest = NULL;
 	double nearest_distance = DBL_MAX;
 	for (int edge : shared_edges) {
-	    if (!pair_incident_to_shared_edge)
-		break;
 	    const auto segments = s_cdt->e2polysegs.find(edge);
 	    if (segments == s_cdt->e2polysegs.end())
 		continue;
@@ -1769,7 +1783,16 @@ refine_assembled_intersection(struct ON_Brep_CDT_State *s_cdt,
 		}
 	    }
 	}
-	if (nearest) {
+	/* The intersecting chords can be one element inward from their common
+	 * boundary, so requiring direct incidence misses precisely the coarse
+	 * approximation that this retry is meant to repair.  Still reject a
+	 * remote shared edge: an intersection farther away than the local chord's
+	 * sag scale is not plausibly caused by that boundary approximation. */
+	const bool near_shared_edge = nearest &&
+	    (pair_incident_to_shared_edge ||
+	    nearest_distance <= MAX_SHARED_EDGE_REFINEMENT_DISTANCE_RATIO *
+	    pair_triangle_scale + BN_TOL_DIST);
+	if (near_shared_edge) {
 	    const std::set<bedge_seg_t *> split = split_edge_seg(s_cdt,
 		nearest, 1, NULL, 1);
 	    if (!split.empty()) {
