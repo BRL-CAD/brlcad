@@ -146,6 +146,13 @@ enum class tip_style_mode {
 };
 
 
+enum class wing_selection {
+    right,
+    left,
+    pair
+};
+
+
 struct tip_specification {
     tip_style_mode style = tip_style_mode::rounded;
     bool from_file = false;
@@ -205,6 +212,7 @@ struct options {
     output_mode mode = output_mode::bot;
     brep_surface_mode brep_surface = brep_surface_mode::ruled;
     tip_style_mode tip_style = tip_style_mode::rounded;
+    wing_selection wing = wing_selection::right;
     tip_specification tip_spec;
     fastf_t semi_span = 1000.0;
     fastf_t full_span = 2000.0;
@@ -292,6 +300,22 @@ tip_style_name(tip_style_mode mode)
     }
 
     return "rounded";
+}
+
+
+static std::string
+wing_selection_name(wing_selection wing)
+{
+    switch (wing) {
+	case wing_selection::right:
+	    return "right";
+	case wing_selection::left:
+	    return "left";
+	case wing_selection::pair:
+	    return "pair";
+    }
+
+    return "right";
 }
 
 
@@ -670,40 +694,41 @@ parse_airfoil(const std::string &code, double six_a_param)
 
 
 static struct bu_opt_desc *
-option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct bu_vls &airfoil, struct bu_vls &tip_airfoil, struct bu_vls &mode, struct bu_vls &brep_surface, struct bu_vls &tip_style, struct bu_vls &tip_spec_file, struct bu_vls &demo_file, struct bu_vls &section_file, bool &help)
+option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct bu_vls &airfoil, struct bu_vls &tip_airfoil, struct bu_vls &mode, struct bu_vls &brep_surface, struct bu_vls &tip_style, struct bu_vls &wing, struct bu_vls &tip_spec_file, struct bu_vls &demo_file, struct bu_vls &section_file, bool &help)
 {
-    static struct bu_opt_desc d[30];
+    static struct bu_opt_desc d[31];
 
     BU_OPT(d[0], "h", "help", "", NULL, &help, "Print help and exit");
     BU_OPT(d[1], "?", "", "", NULL, &help, "");
-    BU_OPT(d[2], "o", "output", "file.g", &bu_opt_vls, &outfile, "Output .g file for a single wing");
+    BU_OPT(d[2], "o", "output", "file.g", &bu_opt_vls, &outfile, "Output .g file for the selected wing geometry");
     BU_OPT(d[3], "n", "name", "name", &bu_opt_vls, &name, "Base object name");
     BU_OPT(d[4], "a", "airfoil", "code", &bu_opt_vls, &airfoil, "Root NACA airfoil code");
     BU_OPT(d[5], "A", "tip-airfoil", "code", &bu_opt_vls, &tip_airfoil, "Tip NACA airfoil code");
     BU_OPT(d[6], "m", "mode", "bot|brep", &bu_opt_vls, &mode, "Output geometry type");
     BU_OPT(d[7], "", "brep-surface", "ruled|smooth", &bu_opt_vls, &brep_surface, "BREP side-surface construction mode");
     BU_OPT(d[8], "", "tip-style", "rounded|flat", &bu_opt_vls, &tip_style, "Wing tip closure style");
-    BU_OPT(d[9], "", "tip-specification", "file.json", &bu_opt_vls, &tip_spec_file, "Advanced JSON tip specification");
-    BU_OPT(d[10], "s", "semi-span", "length", &bu_opt_fastf_t, &opts.semi_span, "Root-to-tip semi-span length");
-    BU_OPT(d[11], "r", "root-chord", "length", &bu_opt_fastf_t, &opts.root_chord, "Root chord length");
-    BU_OPT(d[12], "t", "tip-chord", "length", &bu_opt_fastf_t, &opts.tip_chord, "Tip chord length");
-    BU_OPT(d[13], "w", "sweep-angle", "degrees", &bu_opt_fastf_t, &opts.sweep_angle_deg, "Tip leading-edge sweep angle");
-    BU_OPT(d[14], "d", "dihedral", "degrees", &bu_opt_fastf_t, &opts.dihedral_deg, "Tip dihedral angle");
-    BU_OPT(d[15], "T", "tip-twist", "degrees", &bu_opt_fastf_t, &opts.tip_twist_deg, "Tip twist angle");
-    BU_OPT(d[16], "u", "six-a", "a", &bu_opt_fastf_t, &opts.six_a_param, "6-series mean-line loading parameter");
-    BU_OPT(d[17], "S", "stations", "count", &bu_opt_int, &opts.stations, "Spanwise station count");
-    BU_OPT(d[18], "c", "samples", "count", &bu_opt_int, &opts.samples, "Chordwise sample count");
-    BU_OPT(d[19], "x", "x-offset", "offset", &bu_opt_fastf_t, &opts.offset_x, "Model X offset");
-    BU_OPT(d[20], "y", "y-offset", "offset", &bu_opt_fastf_t, &opts.offset_y, "Model Y offset");
-    BU_OPT(d[21], "z", "z-offset", "offset", &bu_opt_fastf_t, &opts.offset_z, "Model Z offset");
-    BU_OPT(d[22], "p", "sharp-te", "", NULL, &opts.sharp_te, "Use sharp trailing-edge coefficient for 4/5-series thickness");
-    BU_OPT(d[23], "f", "force", "", NULL, &opts.overwrite, "Overwrite output file");
-    BU_OPT(d[24], "j", "append", "", NULL, &opts.append, "Append objects to an existing output .g file");
-    BU_OPT(d[25], "", "demo-file", "file.g", &bu_opt_vls, &demo_file, "Write a 36-wing BoT/BREP sampler database");
-    BU_OPT(d[26], "", "section-file", "file.tsv", &bu_opt_vls, &section_file, "Write normalized section coordinates for regression/reference checks");
-    BU_OPT(d[27], "", "full-span", "length", &bu_opt_fastf_t, &opts.full_span, "Full aircraft span; generated semi-span is half this value");
-    BU_OPT(d[28], "", "sweep-offset", "length", &bu_opt_fastf_t, &opts.sweep_offset, "Tip leading-edge X offset");
-    BU_OPT_NULL(d[29]);
+    BU_OPT(d[9], "", "wing", "right|left|pair", &bu_opt_vls, &wing, "Generate the right wing, left wing, or both");
+    BU_OPT(d[10], "", "tip-specification", "file.json", &bu_opt_vls, &tip_spec_file, "Advanced JSON tip specification");
+    BU_OPT(d[11], "s", "semi-span", "length", &bu_opt_fastf_t, &opts.semi_span, "Root-to-tip semi-span length");
+    BU_OPT(d[12], "r", "root-chord", "length", &bu_opt_fastf_t, &opts.root_chord, "Root chord length");
+    BU_OPT(d[13], "t", "tip-chord", "length", &bu_opt_fastf_t, &opts.tip_chord, "Tip chord length");
+    BU_OPT(d[14], "w", "sweep-angle", "degrees", &bu_opt_fastf_t, &opts.sweep_angle_deg, "Tip leading-edge sweep angle");
+    BU_OPT(d[15], "d", "dihedral", "degrees", &bu_opt_fastf_t, &opts.dihedral_deg, "Tip dihedral angle");
+    BU_OPT(d[16], "T", "tip-twist", "degrees", &bu_opt_fastf_t, &opts.tip_twist_deg, "Tip twist angle");
+    BU_OPT(d[17], "u", "six-a", "a", &bu_opt_fastf_t, &opts.six_a_param, "6-series mean-line loading parameter");
+    BU_OPT(d[18], "S", "stations", "count", &bu_opt_int, &opts.stations, "Spanwise station count");
+    BU_OPT(d[19], "c", "samples", "count", &bu_opt_int, &opts.samples, "Chordwise sample count");
+    BU_OPT(d[20], "x", "x-offset", "offset", &bu_opt_fastf_t, &opts.offset_x, "Model X offset");
+    BU_OPT(d[21], "y", "y-offset", "offset", &bu_opt_fastf_t, &opts.offset_y, "Model Y offset");
+    BU_OPT(d[22], "z", "z-offset", "offset", &bu_opt_fastf_t, &opts.offset_z, "Model Z offset");
+    BU_OPT(d[23], "p", "sharp-te", "", NULL, &opts.sharp_te, "Use sharp trailing-edge coefficient for 4/5-series thickness");
+    BU_OPT(d[24], "f", "force", "", NULL, &opts.overwrite, "Overwrite output file");
+    BU_OPT(d[25], "j", "append", "", NULL, &opts.append, "Append objects to an existing output .g file");
+    BU_OPT(d[26], "", "demo-file", "file.g", &bu_opt_vls, &demo_file, "Write a 36-airplane BoT/BREP sampler database");
+    BU_OPT(d[27], "", "section-file", "file.tsv", &bu_opt_vls, &section_file, "Write normalized section coordinates for regression/reference checks");
+    BU_OPT(d[28], "", "full-span", "length", &bu_opt_fastf_t, &opts.full_span, "Full aircraft span; generated semi-span is half this value");
+    BU_OPT(d[29], "", "sweep-offset", "length", &bu_opt_fastf_t, &opts.sweep_offset, "Tip leading-edge X offset");
+    BU_OPT_NULL(d[30]);
 
     return d;
 }
@@ -720,11 +745,12 @@ parse_args(int argc, char **argv)
     struct bu_vls mode = BU_VLS_INIT_ZERO;
     struct bu_vls brep_surface = BU_VLS_INIT_ZERO;
     struct bu_vls tip_style = BU_VLS_INIT_ZERO;
+    struct bu_vls wing = BU_VLS_INIT_ZERO;
     struct bu_vls tip_spec_file = BU_VLS_INIT_ZERO;
     struct bu_vls demo_file = BU_VLS_INIT_ZERO;
     struct bu_vls section_file = BU_VLS_INIT_ZERO;
     bool help = false;
-    struct bu_opt_desc *d = option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, tip_style, tip_spec_file, demo_file, section_file, help);
+    struct bu_opt_desc *d = option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, tip_style, wing, tip_spec_file, demo_file, section_file, help);
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     const int parsed = bu_opt_parse(&msg, argc - 1, (const char **)(argv + 1), d);
 
@@ -739,6 +765,7 @@ parse_args(int argc, char **argv)
 	bu_vls_free(&mode);
 	bu_vls_free(&brep_surface);
 	bu_vls_free(&tip_style);
+	bu_vls_free(&wing);
 	bu_vls_free(&tip_spec_file);
 	bu_vls_free(&demo_file);
 	bu_vls_free(&section_file);
@@ -768,6 +795,7 @@ parse_args(int argc, char **argv)
     std::string mode_str = bu_vls_strlen(&mode) > 0 ? bu_vls_cstr(&mode) : "bot";
     std::string brep_surface_str = bu_vls_strlen(&brep_surface) > 0 ? bu_vls_cstr(&brep_surface) : "ruled";
     std::string tip_style_str = bu_vls_strlen(&tip_style) > 0 ? bu_vls_cstr(&tip_style) : "rounded";
+    std::string wing_str = bu_vls_strlen(&wing) > 0 ? bu_vls_cstr(&wing) : "right";
 
     bu_vls_free(&outfile);
     bu_vls_free(&name);
@@ -776,6 +804,7 @@ parse_args(int argc, char **argv)
     bu_vls_free(&mode);
     bu_vls_free(&brep_surface);
     bu_vls_free(&tip_style);
+    bu_vls_free(&wing);
     bu_vls_free(&tip_spec_file);
     bu_vls_free(&demo_file);
     bu_vls_free(&section_file);
@@ -805,6 +834,15 @@ parse_args(int argc, char **argv)
 	opts.tip_spec.style = tip_style_mode::flat;
     } else {
 	throw std::runtime_error("tip style must be rounded or flat");
+    }
+    if (wing_str == "right") {
+	opts.wing = wing_selection::right;
+    } else if (wing_str == "left") {
+	opts.wing = wing_selection::left;
+    } else if (wing_str == "pair") {
+	opts.wing = wing_selection::pair;
+    } else {
+	throw std::runtime_error("wing selection must be right, left, or pair");
     }
     opts.tip_style_explicit = option_supplied(argc, argv, '\0', "tip-style");
     const bool have_semi_span = option_supplied(argc, argv, 's', "semi-span");
@@ -854,6 +892,8 @@ parse_args(int argc, char **argv)
     }
 
     if (!opts.demo_file.empty()) {
+	if (option_supplied(argc, argv, '\0', "wing"))
+	    throw std::runtime_error("--wing cannot be combined with --demo-file");
 	if (opts.append)
 	    throw std::runtime_error("--demo-file cannot be combined with append mode");
 	if (!opts.section_file.empty())
@@ -865,6 +905,8 @@ parse_args(int argc, char **argv)
     if (!opts.tip_airfoil.empty())
 	parse_airfoil(opts.tip_airfoil, opts.six_a_param);
     if (!opts.section_file.empty()) {
+	if (option_supplied(argc, argv, '\0', "wing"))
+	    throw std::runtime_error("--wing cannot be combined with --section-file");
 	if (opts.append)
 	    throw std::runtime_error("--section-file cannot be combined with append mode");
 	if (!opts.tip_airfoil.empty())
@@ -1668,7 +1710,8 @@ station_point(const point2d &section_pt, const options &opts, const wing_station
 
     point3d p;
     p.x = opts.offset_x + le_x + toed_x;
-    p.y = opts.offset_y + y + station.y_offset + toed_y;
+    const double side_sign = opts.wing == wing_selection::left ? -1.0 : 1.0;
+    p.y = opts.offset_y + side_sign * (y + station.y_offset + toed_y);
     p.z = opts.offset_z + dihedral + station.z_offset + rolled_z;
     return p;
 }
@@ -2000,47 +2043,53 @@ set_attr(struct rt_wdb *fp, const std::string &obj_name, const char *key, const 
 
 
 static void
-write_metadata(struct rt_wdb *fp, const std::string &solid_name, const std::string &region_name, const options &opts)
+write_metadata_object(struct rt_wdb *fp, const std::string &obj_name, const options &opts)
 {
     const std::string tip_airfoil = opts.tip_airfoil.empty() ? opts.airfoil : opts.tip_airfoil;
-    const std::vector<std::string> objects = {solid_name, region_name};
 
-    for (const std::string &obj_name : objects) {
-	set_attr(fp, obj_name, "naca456::generator", "naca456");
-	set_attr(fp, obj_name, "naca456::metadata_version", "1");
-	set_attr(fp, obj_name, "naca456::algorithm_source", "PDAS NACA456 nacax.f90 epspsi.f90 splprocs.f90");
-	set_attr(fp, obj_name, "naca456::geometry_mode", mode_name(opts.mode));
-	set_attr(fp, obj_name, "naca456::brep_surface", brep_surface_name(opts.brep_surface));
-	set_attr(fp, obj_name, "naca456::tip_style", tip_style_name(opts.tip_style));
-	set_attr(fp, obj_name, "naca456::tip_segments", num_string(opts.tip_spec.segments));
-	if (!opts.tip_spec.json.empty()) {
-	    if (opts.tip_spec.from_file)
-		set_attr(fp, obj_name, "naca456::tip_specification_file", opts.tip_spec.file);
-	    set_attr(fp, obj_name, "naca456::tip_specification_json", opts.tip_spec.json);
-	}
-	set_attr(fp, obj_name, "naca456::root_airfoil", opts.airfoil);
-	set_attr(fp, obj_name, "naca456::tip_airfoil", tip_airfoil);
-	set_attr(fp, obj_name, "naca456::semi_span", num_string(opts.semi_span));
-	set_attr(fp, obj_name, "naca456::full_span", num_string(2.0 * opts.semi_span));
-	set_attr(fp, obj_name, "naca456::root_chord", num_string(opts.root_chord));
-	set_attr(fp, obj_name, "naca456::tip_chord", num_string(opts.tip_chord));
-	set_attr(fp, obj_name, "naca456::sweep_offset", num_string(opts.sweep_offset));
-	set_attr(fp, obj_name, "naca456::sweep_angle_deg", num_string(std::atan2(opts.sweep_offset, opts.semi_span) * 180.0 / M_PI));
-	set_attr(fp, obj_name, "naca456::dihedral_deg", num_string(opts.dihedral_deg));
-	set_attr(fp, obj_name, "naca456::tip_twist_deg", num_string(opts.tip_twist_deg));
-	set_attr(fp, obj_name, "naca456::six_a", num_string(opts.six_a_param));
-	set_attr(fp, obj_name, "naca456::stations", num_string(opts.stations));
-	set_attr(fp, obj_name, "naca456::samples", num_string(opts.samples));
-	set_attr(fp, obj_name, "naca456::sharp_te", bool_name(opts.sharp_te));
-	set_attr(fp, obj_name, "naca456::x_offset", num_string(opts.offset_x));
-	set_attr(fp, obj_name, "naca456::y_offset", num_string(opts.offset_y));
-	set_attr(fp, obj_name, "naca456::z_offset", num_string(opts.offset_z));
+    set_attr(fp, obj_name, "naca456::generator", "naca456");
+    set_attr(fp, obj_name, "naca456::metadata_version", "1");
+    set_attr(fp, obj_name, "naca456::algorithm_source", "PDAS NACA456 nacax.f90 epspsi.f90 splprocs.f90");
+    set_attr(fp, obj_name, "naca456::geometry_mode", mode_name(opts.mode));
+    set_attr(fp, obj_name, "naca456::wing_side", wing_selection_name(opts.wing));
+    set_attr(fp, obj_name, "naca456::brep_surface", brep_surface_name(opts.brep_surface));
+    set_attr(fp, obj_name, "naca456::tip_style", tip_style_name(opts.tip_style));
+    set_attr(fp, obj_name, "naca456::tip_segments", num_string(opts.tip_spec.segments));
+    if (!opts.tip_spec.json.empty()) {
+	if (opts.tip_spec.from_file)
+	    set_attr(fp, obj_name, "naca456::tip_specification_file", opts.tip_spec.file);
+	set_attr(fp, obj_name, "naca456::tip_specification_json", opts.tip_spec.json);
     }
+    set_attr(fp, obj_name, "naca456::root_airfoil", opts.airfoil);
+    set_attr(fp, obj_name, "naca456::tip_airfoil", tip_airfoil);
+    set_attr(fp, obj_name, "naca456::semi_span", num_string(opts.semi_span));
+    set_attr(fp, obj_name, "naca456::full_span", num_string(2.0 * opts.semi_span));
+    set_attr(fp, obj_name, "naca456::root_chord", num_string(opts.root_chord));
+    set_attr(fp, obj_name, "naca456::tip_chord", num_string(opts.tip_chord));
+    set_attr(fp, obj_name, "naca456::sweep_offset", num_string(opts.sweep_offset));
+    set_attr(fp, obj_name, "naca456::sweep_angle_deg", num_string(std::atan2(opts.sweep_offset, opts.semi_span) * 180.0 / M_PI));
+    set_attr(fp, obj_name, "naca456::dihedral_deg", num_string(opts.dihedral_deg));
+    set_attr(fp, obj_name, "naca456::tip_twist_deg", num_string(opts.tip_twist_deg));
+    set_attr(fp, obj_name, "naca456::six_a", num_string(opts.six_a_param));
+    set_attr(fp, obj_name, "naca456::stations", num_string(opts.stations));
+    set_attr(fp, obj_name, "naca456::samples", num_string(opts.samples));
+    set_attr(fp, obj_name, "naca456::sharp_te", bool_name(opts.sharp_te));
+    set_attr(fp, obj_name, "naca456::x_offset", num_string(opts.offset_x));
+    set_attr(fp, obj_name, "naca456::y_offset", num_string(opts.offset_y));
+    set_attr(fp, obj_name, "naca456::z_offset", num_string(opts.offset_z));
+}
+
+
+static void
+write_metadata(struct rt_wdb *fp, const std::string &solid_name, const std::string &region_name, const options &opts)
+{
+    write_metadata_object(fp, solid_name, opts);
+    write_metadata_object(fp, region_name, opts);
 }
 
 
 static int
-write_bot(const options &opts, const std::vector<wing_station> &stations)
+write_bot(const options &opts, const std::vector<wing_station> &stations, struct rt_wdb *fp = nullptr, bool validate_geometry = true)
 {
     std::vector<fastf_t> vertices;
     std::vector<int> faces;
@@ -2079,14 +2128,22 @@ write_bot(const options &opts, const std::vector<wing_station> &stations)
     for (const std::array<int32_t, 3> &tri : cap_tris)
 	add_face(faces, tip_offset + tri[0], tip_offset + tri[1], tip_offset + tri[2]);
 
-    validate_bot_mesh(vertices, faces);
+    if (opts.wing == wing_selection::left) {
+	for (size_t i = 0; i < faces.size(); i += 3)
+	    std::swap(faces[i + 1], faces[i + 2]);
+    }
+
+    if (validate_geometry)
+	validate_bot_mesh(vertices, faces);
     std::vector<fastf_t> normals;
     std::vector<int> face_normals;
     build_bot_normals(vertices, faces, smooth_face_count, normals, face_normals);
 
     const std::string solid_name = opts.name + ".bot";
     const std::string region_name = opts.name + ".r";
-    struct rt_wdb *fp = open_output_database(opts);
+    const bool close_fp = fp == nullptr;
+    if (!fp)
+	fp = open_output_database(opts);
     check_output_names_available(fp, solid_name, region_name);
     if (mk_bot_w_normals(fp, solid_name.c_str(), RT_BOT_SOLID, RT_BOT_CCW,
 	    RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
@@ -2099,7 +2156,8 @@ write_bot(const options &opts, const std::vector<wing_station> &stations)
     unsigned char rgb[] = {180, 190, 205};
     mk_region1(fp, region_name.c_str(), solid_name.c_str(), "plastic", "", rgb);
     write_metadata(fp, solid_name, region_name, opts);
-    db_close(fp->dbip);
+    if (close_fp)
+	db_close(fp->dbip);
 
     bu_log("Wrote %s with %zu vertices and %zu triangles\n", opts.outfile.c_str(), vertices.size() / 3, faces.size() / 3);
     return EXIT_SUCCESS;
@@ -2490,7 +2548,7 @@ validate_brep_closure_triangles(const brep_builder &builder, int outline_cnt, in
 
 
 static int
-write_brep(const options &opts, const std::vector<wing_station> &stations)
+write_brep(const options &opts, const std::vector<wing_station> &stations, struct rt_wdb *fp = nullptr, bool validate_geometry = true)
 {
     ON::Begin();
     brep_builder builder;
@@ -2537,37 +2595,43 @@ write_brep(const options &opts, const std::vector<wing_station> &stations)
 
     builder.brep->Standardize();
     builder.brep->Compact();
+    if (opts.wing == wing_selection::left)
+	builder.brep->Flip();
 
-    ON_TextLog error_log;
-    if (!builder.brep->IsValid(&error_log)) {
-	error_log.Print("Invalid NACA wing BREP\n");
-	delete builder.brep;
-	ON::End();
-	bu_exit(EXIT_FAILURE, "ERROR: generated BREP did not pass OpenNURBS validation\n");
-    }
+    if (validate_geometry) {
+	ON_TextLog error_log;
+	if (!builder.brep->IsValid(&error_log)) {
+	    error_log.Print("Invalid NACA wing BREP\n");
+	    delete builder.brep;
+	    ON::End();
+	    bu_exit(EXIT_FAILURE, "ERROR: generated BREP did not pass OpenNURBS validation\n");
+	}
 
-    if (!builder.brep->IsSolid()) {
-	delete builder.brep;
-	ON::End();
-	bu_exit(EXIT_FAILURE, "ERROR: generated BREP is valid but not classified as a solid\n");
-    }
+	if (!builder.brep->IsSolid()) {
+	    delete builder.brep;
+	    ON::End();
+	    bu_exit(EXIT_FAILURE, "ERROR: generated BREP is valid but not classified as a solid\n");
+	}
 
-    struct bu_vls quality_log = BU_VLS_INIT_ZERO;
-    struct brep_quality_options quality_opts;
-    ON_Brep_Quality_Defaults(&quality_opts);
-    const int quality_errors = ON_Brep_Quality_Check(builder.brep, &quality_log, &quality_opts);
-    if (bu_vls_strlen(&quality_log) > 0)
-	bu_log("%s", bu_vls_cstr(&quality_log));
-    bu_vls_free(&quality_log);
-    if (quality_errors > 0) {
-	delete builder.brep;
-	ON::End();
-	bu_exit(EXIT_FAILURE, "ERROR: generated BREP failed libbrep quality checks\n");
+	struct bu_vls quality_log = BU_VLS_INIT_ZERO;
+	struct brep_quality_options quality_opts;
+	ON_Brep_Quality_Defaults(&quality_opts);
+	const int quality_errors = ON_Brep_Quality_Check(builder.brep, &quality_log, &quality_opts);
+	if (bu_vls_strlen(&quality_log) > 0)
+	    bu_log("%s", bu_vls_cstr(&quality_log));
+	bu_vls_free(&quality_log);
+	if (quality_errors > 0) {
+	    delete builder.brep;
+	    ON::End();
+	    bu_exit(EXIT_FAILURE, "ERROR: generated BREP failed libbrep quality checks\n");
+	}
     }
 
     const std::string solid_name = opts.name + ".brep";
     const std::string region_name = opts.name + ".r";
-    struct rt_wdb *fp = open_output_database(opts);
+    const bool close_fp = fp == nullptr;
+    if (!fp)
+	fp = open_output_database(opts);
     check_output_names_available(fp, solid_name, region_name);
     if (mk_brep(fp, solid_name.c_str(), builder.brep) != 0) {
 	db_close(fp->dbip);
@@ -2579,7 +2643,8 @@ write_brep(const options &opts, const std::vector<wing_station> &stations)
     unsigned char rgb[] = {180, 190, 205};
     mk_region1(fp, region_name.c_str(), solid_name.c_str(), "plastic", "", rgb);
     write_metadata(fp, solid_name, region_name, opts);
-    db_close(fp->dbip);
+    if (close_fp)
+	db_close(fp->dbip);
     delete builder.brep;
     ON::End();
 
@@ -2591,6 +2656,9 @@ write_brep(const options &opts, const std::vector<wing_station> &stations)
 static int
 write_single_wing(const options &opts)
 {
+    if (opts.wing == wing_selection::pair)
+	throw std::runtime_error("internal pair selection passed to single-wing writer");
+
     const std::vector<wing_station> stations = wing_stations(opts);
     validate_wing_stations(opts, stations);
 
@@ -2602,6 +2670,85 @@ write_single_wing(const options &opts)
     }
 
     return EXIT_FAILURE;
+}
+
+
+static void
+check_pair_output_names(struct rt_wdb *fp, const options &opts)
+{
+    const std::string primitive_suffix = opts.mode == output_mode::bot ? ".bot" : ".brep";
+    const std::vector<std::string> names = {
+	opts.name,
+	opts.name + "_right" + primitive_suffix,
+	opts.name + "_right.r",
+	opts.name + "_left" + primitive_suffix,
+	opts.name + "_left.r"
+    };
+
+    for (const std::string &name : names) {
+	if (db_lookup(fp->dbip, name.c_str(), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    db_close(fp->dbip);
+	    bu_exit(EXIT_FAILURE, "ERROR: object %s already exists in output database\n", name.c_str());
+	}
+    }
+}
+
+
+static int
+write_wing_pair(const options &opts, struct rt_wdb *fp = nullptr, bool validate_left = true)
+{
+    const std::vector<wing_station> stations = wing_stations(opts);
+    validate_wing_stations(opts, stations);
+
+    const bool close_fp = fp == nullptr;
+    if (!fp)
+	fp = open_output_database(opts);
+    check_pair_output_names(fp, opts);
+
+    options right_opts = opts;
+    right_opts.name = opts.name + "_right";
+    right_opts.wing = wing_selection::right;
+    right_opts.append = true;
+    right_opts.overwrite = false;
+
+    options left_opts = opts;
+    left_opts.name = opts.name + "_left";
+    left_opts.wing = wing_selection::left;
+    left_opts.append = true;
+    left_opts.overwrite = false;
+
+    int ret = opts.mode == output_mode::bot ? write_bot(right_opts, stations, fp) : write_brep(right_opts, stations, fp);
+    if (ret != EXIT_SUCCESS)
+	return ret;
+    ret = opts.mode == output_mode::bot ? write_bot(left_opts, stations, fp, validate_left) : write_brep(left_opts, stations, fp, validate_left);
+    if (ret != EXIT_SUCCESS)
+	return ret;
+
+    struct wmember pair_head = WMEMBER_INIT_ZERO;
+    BU_LIST_INIT(&pair_head.l);
+    const std::string right_region = right_opts.name + ".r";
+    const std::string left_region = left_opts.name + ".r";
+    if (mk_addmember(right_region.c_str(), &pair_head.l, NULL, WMOP_UNION) == WMEMBER_NULL ||
+	    mk_addmember(left_region.c_str(), &pair_head.l, NULL, WMOP_UNION) == WMEMBER_NULL) {
+	db_close(fp->dbip);
+	bu_exit(EXIT_FAILURE, "ERROR: unable to assemble wing pair combination\n");
+    }
+    if (mk_lcomb(fp, opts.name.c_str(), &pair_head, 0, NULL, NULL, NULL, 0) != 0) {
+	db_close(fp->dbip);
+	bu_exit(EXIT_FAILURE, "ERROR: unable to write wing pair combination %s\n", opts.name.c_str());
+    }
+    set_attr(fp, opts.name, "naca456::generator", "naca456");
+    set_attr(fp, opts.name, "naca456::metadata_version", "1");
+    set_attr(fp, opts.name, "naca456::wing_configuration", "pair");
+    set_attr(fp, opts.name, "naca456::right_region", right_region);
+    set_attr(fp, opts.name, "naca456::left_region", left_region);
+    set_attr(fp, opts.name, "naca456::semi_span", num_string(opts.semi_span));
+    set_attr(fp, opts.name, "naca456::full_span", num_string(2.0 * opts.semi_span));
+    if (close_fp)
+	db_close(fp->dbip);
+
+    bu_log("Wrote %s with left and right wings in combination %s\n", opts.outfile.c_str(), opts.name.c_str());
+    return EXIT_SUCCESS;
 }
 
 
@@ -2637,8 +2784,8 @@ static options
 demo_options(const options &demo_opts, const demo_spec &spec, int index)
 {
     const int cols = 6;
-    const double dx = 650.0;
-    const double dy = 1400.0;
+    const double dx = 800.0;
+    const double dy = 2600.0;
 
     options opts;
     opts.outfile = demo_opts.demo_file;
@@ -2672,6 +2819,85 @@ demo_options(const options &demo_opts, const demo_spec &spec, int index)
     opts.overwrite = index == 0;
     opts.append = index != 0;
     return opts;
+}
+
+
+static int
+write_demo_wing_pair(const options &opts, struct rt_wdb *fp)
+{
+    return write_wing_pair(opts, fp, false);
+}
+
+
+static int
+write_demo_airplane(const options &airplane_opts, struct rt_wdb *fp)
+{
+    const std::string airplane_name = airplane_opts.name;
+    options wing_opts = airplane_opts;
+    wing_opts.name = airplane_name + "_wings";
+    wing_opts.wing = wing_selection::pair;
+    const int ret = write_demo_wing_pair(wing_opts, fp);
+    if (ret != EXIT_SUCCESS)
+	return ret;
+
+    const std::string fuselage_solid = airplane_name + "_fuselage.s";
+    const std::string nose_solid = airplane_name + "_nose.s";
+    const std::string fuselage_region = airplane_name + "_fuselage.r";
+    point_t body_base;
+    vect_t body_height;
+    point_t nose_vertex;
+    vect_t nose_height;
+    vect_t nose_breadth;
+    const double body_radius = 0.12 * airplane_opts.root_chord;
+    const double nose_length = 0.55 * airplane_opts.root_chord;
+    VSET(body_base,
+	airplane_opts.offset_x - 0.35 * airplane_opts.root_chord,
+	airplane_opts.offset_y,
+	airplane_opts.offset_z);
+    VSET(body_height, 1.70 * airplane_opts.root_chord, 0.0, 0.0);
+    VSET(nose_vertex, body_base[X] - nose_length, body_base[Y], body_base[Z]);
+    VSET(nose_height, nose_length, 0.0, 0.0);
+    VSET(nose_breadth, 0.0, 0.0, 1.0);
+
+    if (mk_rcc(fp, fuselage_solid.c_str(), body_base, body_height, body_radius) != 0 ||
+	    mk_epa(fp, nose_solid.c_str(), nose_vertex, nose_height, nose_breadth, body_radius, body_radius) != 0) {
+	db_close(fp->dbip);
+	bu_exit(EXIT_FAILURE, "ERROR: unable to write demo fuselage geometry for %s\n", airplane_name.c_str());
+    }
+
+    struct wmember fuselage_head = WMEMBER_INIT_ZERO;
+    BU_LIST_INIT(&fuselage_head.l);
+    if (mk_addmember(fuselage_solid.c_str(), &fuselage_head.l, NULL, WMOP_UNION) == WMEMBER_NULL ||
+	    mk_addmember(nose_solid.c_str(), &fuselage_head.l, NULL, WMOP_UNION) == WMEMBER_NULL) {
+	db_close(fp->dbip);
+	bu_exit(EXIT_FAILURE, "ERROR: unable to assemble demo fuselage for %s\n", airplane_name.c_str());
+    }
+    unsigned char fuselage_rgb[] = {205, 205, 215};
+    if (mk_lcomb(fp, fuselage_region.c_str(), &fuselage_head, 1, "plastic", "", fuselage_rgb, 0) != 0) {
+	db_close(fp->dbip);
+	bu_exit(EXIT_FAILURE, "ERROR: unable to write demo fuselage region for %s\n", airplane_name.c_str());
+    }
+
+    struct wmember airplane_head = WMEMBER_INIT_ZERO;
+    BU_LIST_INIT(&airplane_head.l);
+    if (mk_addmember(wing_opts.name.c_str(), &airplane_head.l, NULL, WMOP_UNION) == WMEMBER_NULL ||
+	    mk_addmember(fuselage_region.c_str(), &airplane_head.l, NULL, WMOP_UNION) == WMEMBER_NULL) {
+	db_close(fp->dbip);
+	bu_exit(EXIT_FAILURE, "ERROR: unable to assemble demo airplane %s\n", airplane_name.c_str());
+    }
+    if (mk_lcomb(fp, airplane_name.c_str(), &airplane_head, 0, NULL, NULL, NULL, 0) != 0) {
+	db_close(fp->dbip);
+	bu_exit(EXIT_FAILURE, "ERROR: unable to write demo airplane combination %s\n", airplane_name.c_str());
+    }
+    set_attr(fp, airplane_name, "naca456::generator", "naca456");
+    set_attr(fp, airplane_name, "naca456::metadata_version", "1");
+    set_attr(fp, airplane_name, "naca456::demo_airplane", "1");
+    set_attr(fp, airplane_name, "naca456::wing_combination", wing_opts.name);
+    set_attr(fp, airplane_name, "naca456::fuselage_region", fuselage_region);
+    set_attr(fp, fuselage_solid, "naca456::demo_component", "fuselage_cylinder");
+    set_attr(fp, nose_solid, "naca456::demo_component", "epa_nose");
+
+    return EXIT_SUCCESS;
 }
 
 
@@ -2717,19 +2943,20 @@ write_demo_file(const options &demo_opts)
 	{output_mode::brep, "brep_35_high_resolution", "63-212", nullptr, 820, 240, 115, 100, 3, -2, 1, 9, 33, false}
     };
 
+    options output_opts = demo_opts;
+    output_opts.outfile = demo_opts.demo_file;
+    output_opts.overwrite = true;
+    output_opts.append = false;
+    struct rt_wdb *fp = open_output_database(output_opts);
+
     for (size_t i = 0; i < specs.size(); ++i) {
 	options opts = demo_options(demo_opts, specs[i], static_cast<int>(i));
 	bu_log("[%zu] %s %s\n", i, opts.mode == output_mode::bot ? "bot" : "brep", opts.name.c_str());
-	const int ret = write_single_wing(opts);
+	const int ret = write_demo_airplane(opts, fp);
 	if (ret != EXIT_SUCCESS)
 	    return ret;
     }
 
-    options all_opts = demo_opts;
-    all_opts.outfile = demo_opts.demo_file;
-    all_opts.append = true;
-    all_opts.overwrite = false;
-    struct rt_wdb *fp = open_output_database(all_opts);
     if (db_lookup(fp->dbip, "all", LOOKUP_QUIET) != RT_DIR_NULL) {
 	db_close(fp->dbip);
 	bu_exit(EXIT_FAILURE, "ERROR: object all already exists in output database\n");
@@ -2738,10 +2965,9 @@ write_demo_file(const options &demo_opts)
     struct wmember all_head = WMEMBER_INIT_ZERO;
     BU_LIST_INIT(&all_head.l);
     for (const demo_spec &spec : specs) {
-	const std::string region_name = std::string(spec.name) + ".r";
-	if (mk_addmember(region_name.c_str(), &all_head.l, NULL, WMOP_UNION) == WMEMBER_NULL) {
+	if (mk_addmember(spec.name, &all_head.l, NULL, WMOP_UNION) == WMEMBER_NULL) {
 	    db_close(fp->dbip);
-	    bu_exit(EXIT_FAILURE, "ERROR: unable to add %s to demo all comb\n", region_name.c_str());
+	    bu_exit(EXIT_FAILURE, "ERROR: unable to add %s to demo all comb\n", spec.name);
 	}
     }
     if (mk_lcomb(fp, "all", &all_head, 0, NULL, NULL, NULL, 0) != 0) {
@@ -2750,10 +2976,11 @@ write_demo_file(const options &demo_opts)
     }
     set_attr(fp, "all", "naca456::generator", "naca456");
     set_attr(fp, "all", "naca456::metadata_version", "1");
-    set_attr(fp, "all", "naca456::demo_wing_count", std::to_string(specs.size()));
+    set_attr(fp, "all", "naca456::demo_airplane_count", std::to_string(specs.size()));
+    set_attr(fp, "all", "naca456::demo_wing_count", std::to_string(2 * specs.size()));
     db_close(fp->dbip);
 
-    bu_log("Wrote %s with %zu sample wings and all comb\n", demo_opts.demo_file.c_str(), specs.size());
+    bu_log("Wrote %s with %zu sample airplanes and all comb\n", demo_opts.demo_file.c_str(), specs.size());
     return EXIT_SUCCESS;
 }
 
@@ -2769,6 +2996,8 @@ main(int argc, char **argv)
 	    return write_section_file(opts);
 	if (!opts.demo_file.empty())
 	    return write_demo_file(opts);
+	if (opts.wing == wing_selection::pair)
+	    return write_wing_pair(opts);
 	return write_single_wing(opts);
     } catch (const std::exception &e) {
 	bu_log("ERROR: %s\n", e.what());
@@ -2780,11 +3009,12 @@ main(int argc, char **argv)
 	struct bu_vls mode = BU_VLS_INIT_ZERO;
 	struct bu_vls brep_surface = BU_VLS_INIT_ZERO;
 	struct bu_vls tip_style = BU_VLS_INIT_ZERO;
+	struct bu_vls wing = BU_VLS_INIT_ZERO;
 	struct bu_vls tip_spec_file = BU_VLS_INIT_ZERO;
 	struct bu_vls demo_file = BU_VLS_INIT_ZERO;
 	struct bu_vls section_file = BU_VLS_INIT_ZERO;
 	bool help = false;
-	usage(argv[0], option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, tip_style, tip_spec_file, demo_file, section_file, help));
+	usage(argv[0], option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, tip_style, wing, tip_spec_file, demo_file, section_file, help));
 	bu_vls_free(&outfile);
 	bu_vls_free(&name);
 	bu_vls_free(&airfoil);
@@ -2792,6 +3022,7 @@ main(int argc, char **argv)
 	bu_vls_free(&mode);
 	bu_vls_free(&brep_surface);
 	bu_vls_free(&tip_style);
+	bu_vls_free(&wing);
 	bu_vls_free(&tip_spec_file);
 	bu_vls_free(&demo_file);
 	bu_vls_free(&section_file);

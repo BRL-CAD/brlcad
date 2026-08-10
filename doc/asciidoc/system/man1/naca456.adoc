@@ -12,7 +12,8 @@ naca456 - generate BRL-CAD wing geometry from NACA 4-, 5-, and 6-series airfoils
 ----
 naca456 [-m _bot|brep_] [-a _code_] [-A _code_] [-s _length_] [-r _length_]
         [-t _length_] [-w _degrees_] [-d _degrees_] [-T _degrees_]
-        [-S _count_] [-c _count_] [-f] [-o _file.g_] [-n _name_] [options]
+        [-S _count_] [-c _count_] [--wing _right|left|pair_]
+        [-f] [-o _file.g_] [-n _name_] [options]
 naca456 --demo-file _file.g_
 naca456 --airfoil _code_ --section-file _file.tsv_
 ----
@@ -20,10 +21,11 @@ naca456 --airfoil _code_ --section-file _file.tsv_
 [[description]]
 == DESCRIPTION
 
-*naca456* creates a semi-span wing model in a BRL-CAD `.g` database using
-NACA airfoil section definitions.  The output may be a closed Bag of Triangles
-(BoT) mesh or a boundary representation (BREP).  In both modes the generated
-object is written as a solid plus a region comb using the requested base name.
+*naca456* creates right, left, or paired wing geometry in a BRL-CAD `.g`
+database using NACA airfoil section definitions.  Each wing is a semi-span
+model and may be output as a closed Bag of Triangles (BoT) mesh or a boundary
+representation (BREP).  A single wing is written as a solid plus a region comb;
+a pair also receives a top-level combination containing both wing regions.
 
 The implemented section math covers classic 4-digit NACA airfoils, 5-digit
 mean-line sections, 5-digit reflex mean-line sections, and the NACA 6/6A
@@ -75,13 +77,23 @@ behavior from NACA456, where `a` is fixed at 0.8.
 Print option help and exit.
 
 *-o* _file.g_, *--output* _file.g_::
-Write a single generated wing to _file.g_.  The default is
+Write the selected wing geometry to _file.g_.  The default is
 `naca456-wing.g`.
 
 *-n* _name_, *--name* _name_::
 Use _name_ as the base object name.  The solid is written as _name_`.bot` or
 _name_`.brep`, and the region is written as _name_`.r`.  The default is
-`naca456_wing`.
+`naca456_wing`.  For a pair, the solids and regions instead use
+_name_`_right` and _name_`_left` as their bases, and the top-level combination
+is named _name_.
+
+*--wing* _right|left|pair_::
+Select which wing geometry to generate.  `right`, the default, extends from the
+root into positive model Y.  `left` is its exact reflection about the plane
+Y = *--y-offset* and extends into negative Y relative to that plane.  `pair`
+generates both reflected wings and places their regions in one combination.
+Sweep, dihedral, twist, and advanced tip geometry are reflected consistently;
+positive dihedral therefore raises both tips.
 
 *-a* _code_, *--airfoil* _code_::
 Set the root airfoil.  The default is `2412`.
@@ -119,12 +131,12 @@ exclusive with *--tip-style*.  Version 1 supports `rounded`, `flat`, `raked`,
 `hoerner`, `winglet`, and `blended_winglet` styles.
 
 *-s* _length_, *--semi-span* _length_::
-Set the root-to-tip semi-span length of the generated half-wing.  The default
-is 1000.
+Set the root-to-tip semi-span length of each generated wing.  The default is
+1000.
 
 *--full-span* _length_::
-Set the full aircraft span.  The generated semi-span wing uses half this value.
-This option is mutually exclusive with *--semi-span*.
+Set the full aircraft span.  Each generated wing uses half this value as its
+semi-span.  This option is mutually exclusive with *--semi-span*.
 
 *-r* _length_, *--root-chord* _length_::
 Set the root chord length.  The default is 250.
@@ -184,8 +196,9 @@ Append objects to an existing output database.  Object name collisions are
 rejected.
 
 *--demo-file* _file.g_::
-Write a 36-wing sampler database to _file.g_ and exit.  The first 24 examples
-are BoT wings and the final 12 examples are BREP wings.  The sampler covers
+Write a 36-airplane sampler database to _file.g_ and exit.  Every sample has a
+left/right wing pair, a cylindrical fuselage, and an EPA nose.  The first 24
+examples use BoT wings and the final 12 use BREP wings.  The sampler covers
 4-digit, 5-digit, 5-digit reflex, 6-series, 6A-series, sharp trailing-edge,
 sweep, taper, dihedral, twist, mixed root/tip section cases, and the supported
 tip styles.  The BREP sampler rows honor *--brep-surface*.  If *--tip-style*
@@ -413,12 +426,16 @@ root/tip cases.
 
 Each generated solid and region receives `naca456::` attributes recording the
 inputs used to create it.  These include generator name, metadata version,
-algorithm source, geometry mode, BREP surface mode, root and tip airfoil
+algorithm source, geometry mode, wing side, BREP surface mode, root and tip airfoil
 designations, tip style, semi-span, full span, root and tip chord, sweep
 offset, sweep angle, dihedral, tip twist, 6-series loading parameter,
 station/sample counts, trailing-edge mode, and model-space offsets.  When
 a JSON tip specification is used, the compact JSON payload is recorded; when it
 comes from *--tip-specification*, the filename is recorded as well.
+
+For paired output, the top-level combination records the `pair` configuration,
+the left and right region names, and the semi-span and full-span values.  Its
+two solids and regions each record their own `left` or `right` wing side.
 
 For example:
 
@@ -441,10 +458,11 @@ change BREP construction details.
 aerodynamic analysis, structural analysis, aeroelastic analysis, certification
 checks, or optimization.
 
-The generated model is a semi-span wing only.  The tool does not currently
-generate wing-body blends, mirrored full-span assemblies, control surfaces,
-flaps, slats, spars, ribs, skins with physical thickness, fuel volumes,
-fasteners, or manufacturing features.
+Each generated wing is a semi-span solid.  A pair is two independently capped
+solids that meet at the center plane; it is not a fused solid or a wing-body
+blend.  The tool does not currently generate control surfaces, flaps, slats,
+spars, ribs, skins with physical thickness, fuel volumes, fasteners, or
+manufacturing features.
 
 The simple *--tip-style* option intentionally exposes only the default rounded
 closure and flat fallback.  More parameterized tips are available through
@@ -465,8 +483,9 @@ particular manufactured, wind-tunnel, or proprietary derivative airfoil.
 All length inputs are BRL-CAD model-space values.  They are intentionally
 unitless at the command line: a value of 1000 means 1000 database model units,
 whatever unit system the receiving `.g` database is interpreted to use.  The
-generated shape is a semi-span wing; use *--semi-span* to specify that length
-directly, or *--full-span* when starting from a full aircraft span.  Sweep is
+generated shape uses a semi-span per wing; use *--semi-span* to specify that
+length directly, or *--full-span* when starting from a full aircraft span.
+Sweep is
 available either as *--sweep-angle* for an aerodynamic planform description or
 as *--sweep-offset* for exact model-space placement.
 
@@ -520,6 +539,21 @@ https://www.pdas.com/naca456refs.html
 [[examples]]
 == EXAMPLES
 
+.Paired airplane wings
+====
+[source,bash]
+----
+naca456 --mode bot --force --output airplane-wings.g --name main_wing \
+  --wing pair --airfoil 2412 --full-span 2000 --root-chord 250 \
+  --tip-chord 125 --sweep-angle 4.6 --dihedral 5 --tip-twist -2
+
+mged airplane-wings.g "l main_wing"
+----
+Generates matching right and left wings as `main_wing_right.r` and
+`main_wing_left.r`.  The top-level `main_wing` combination contains both, so it
+can be drawn or referenced as one airplane wing assembly.
+====
+
 .Swept, dihedral, tapered BoT wing
 ====
 [source,bash]
@@ -528,7 +562,7 @@ naca456 --mode bot --force --output wing.g --name wing_2412 \
   --airfoil 2412 --semi-span 1000 --root-chord 250 --tip-chord 125 \
   --sweep-angle 4.6 --dihedral 5 --tip-twist -2 --stations 9 --samples 65
 ----
-Generates a closed Bag-of-Triangles half-wing from a NACA 2412 section with
+Generates the default right-side closed Bag-of-Triangles half-wing from a NACA 2412 section with
 4.6 degrees of leading-edge sweep, 5 degrees of dihedral, and -2 degrees of
 tip washout into `wing.g` as the solid `wing_2412.bot` and region `wing_2412.r`,
 ready to be raytraced with *rt*(1) or edited in *mged*(1).
@@ -570,16 +604,17 @@ specification, then reads back the `naca456::tip_style` attribute that
 *naca456* records on every generated region for auditability.
 ====
 
-.Built-in sampler database
+.Built-in airplane sampler database
 ====
 [source,bash]
 ----
 naca456 --demo-file naca456-demo.g
 mged naca456-demo.g "l all"
 ----
-Writes a 36-wing sampler (24 BoT and 12 BREP wings) covering the 4-digit,
-5-digit, 5-digit reflex, 6-series, and 6A-series families together with a
-top-level `all` combination that unions every generated wing region.
+Writes a 36-airplane sampler (24 with BoT wings and 12 with BREP wings)
+covering the 4-digit, 5-digit, 5-digit reflex, 6-series, and 6A-series families.
+Each sample combines a paired wing set with a cylindrical fuselage and EPA
+nose, and the top-level `all` combination collects all 36 airplane assemblies.
 ====
 
 [[diagnostics]]

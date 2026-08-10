@@ -165,11 +165,12 @@ fi
 
 log "=== TESTING naca456 procedural wing generation ==="
 
-rm -f naca456-bot.g naca456-five-bot.g naca456-sharp-brep.g naca456-smooth-brep.g
+rm -f naca456-bot.g naca456-left-bot.g naca456-pair-bot.g naca456-pair-brep.g
+rm -f naca456-five-bot.g naca456-sharp-brep.g naca456-smooth-brep.g
 rm -f naca456-five-reflex-brep.g naca456-six-bot.g naca456-sixa-brep.g
 rm -f naca456-tip-rounded.g naca456-tip-raked.g naca456-tip-hoerner.g
 rm -f naca456-tip-winglet.g naca456-tip-blended-winglet.g
-rm -f naca456-append.g naca456-demo.g naca456-demo-smooth.g naca456-demo-flat.g
+rm -f naca456-append.g naca456-demo.g
 rm -f naca456-brep-matrix-ruled.g naca456-brep-matrix-smooth.g
 rm -f naca456-sections.tsv naca456-section-2412.tsv naca456-section-23012.tsv
 rm -f naca456-section-23112.tsv naca456-section-63-206.tsv naca456-section-63a210.tsv
@@ -188,6 +189,29 @@ run "$MGED" -c naca456-bot.g "attr get naca_bot_2412.r naca456::sweep_offset"
 expect_grep "80" "$LOGFILE"
 run "$MGED" -c naca456-bot.g "attr get naca_bot_2412.r naca456::tip_style"
 expect_grep "rounded" "$LOGFILE"
+
+run "$NACA456" --mode bot --force --output naca456-left-bot.g --name naca_left --wing left --airfoil 2412 --semi-span 500 --root-chord 180 --tip-chord 90 --dihedral 4 --stations 5 --samples 17
+run "$MGED" -c naca456-left-bot.g "attr get naca_left.r naca456::wing_side"
+expect_grep "left" "$LOGFILE"
+run "$MGED" -c naca456-left-bot.g "bb -e naca_left.r"
+expect_grep "min {.* -500\.000000" "$LOGFILE"
+
+run "$NACA456" --mode bot --force --output naca456-pair-bot.g --name naca_pair --wing pair --airfoil 2412 --semi-span 500 --root-chord 180 --tip-chord 90 --dihedral 4 --stations 5 --samples 17
+run "$MGED" -c naca456-pair-bot.g "l naca_pair"
+expect_grep "naca_pair_right.r" "$LOGFILE"
+expect_grep "naca_pair_left.r" "$LOGFILE"
+run "$MGED" -c naca456-pair-bot.g "attr get naca_pair naca456::wing_configuration"
+expect_grep "pair" "$LOGFILE"
+run "$MGED" -c naca456-pair-bot.g "attr get naca_pair_right.r naca456::wing_side"
+expect_grep "right" "$LOGFILE"
+run "$MGED" -c naca456-pair-bot.g "attr get naca_pair_left.r naca456::wing_side"
+expect_grep "left" "$LOGFILE"
+
+run "$NACA456" --mode brep --tip-style flat --force --output naca456-pair-brep.g --name naca_pair_brep --wing pair --airfoil 0012 --semi-span 400 --root-chord 160 --tip-chord 80 --stations 4 --samples 13
+run "$MGED" -c naca456-pair-brep.g "l naca_pair_brep_right.brep"
+expect_grep "Boundary Representation" "$LOGFILE"
+run "$MGED" -c naca456-pair-brep.g "l naca_pair_brep_left.brep"
+expect_grep "Boundary Representation" "$LOGFILE"
 
 run "$NACA456" --mode bot --force --output naca456-five-bot.g --name naca_five_23012 --airfoil 23012 --semi-span 650 --root-chord 200 --tip-chord 110 --sweep-offset 60 --dihedral 3 --stations 6 --samples 31
 run "$MGED" -c naca456-five-bot.g "l naca_five_23012.bot"
@@ -265,28 +289,23 @@ run "$NACA456" --demo-file naca456-demo.g
 run "$MGED" -c naca456-demo.g "tops -n"
 expect_grep "all" "$LOGFILE"
 run "$MGED" -c naca456-demo.g "l all"
-expect_grep "bot_00_baseline_2412.r" "$LOGFILE"
-expect_grep "bot_23_compound.r" "$LOGFILE"
-expect_grep "brep_24_baseline_2412.r" "$LOGFILE"
-expect_grep "brep_35_high_resolution.r" "$LOGFILE"
-run "$MGED" -c naca456-demo.g "attr get brep_24_baseline_2412.r naca456::brep_surface"
+expect_grep "bot_00_baseline_2412" "$LOGFILE"
+expect_grep "bot_23_compound" "$LOGFILE"
+expect_grep "brep_24_baseline_2412" "$LOGFILE"
+expect_grep "brep_35_high_resolution" "$LOGFILE"
+run "$MGED" -c naca456-demo.g "l bot_00_baseline_2412"
+expect_grep "bot_00_baseline_2412_wings" "$LOGFILE"
+expect_grep "bot_00_baseline_2412_fuselage.r" "$LOGFILE"
+run "$MGED" -c naca456-demo.g "attr get bot_00_baseline_2412_nose.s naca456::demo_component"
+expect_grep "epa_nose" "$LOGFILE"
+run "$MGED" -c naca456-demo.g "attr get brep_24_baseline_2412_wings_right.r naca456::brep_surface"
 expect_grep "ruled" "$LOGFILE"
-run "$MGED" -c naca456-demo.g "attr get brep_28_six_lowload.r naca456::tip_style"
+run "$MGED" -c naca456-demo.g "attr get brep_28_six_lowload_wings_right.r naca456::tip_style"
 expect_grep "winglet" "$LOGFILE"
-run "$MGED" -c naca456-demo.g "attr get brep_28_six_lowload.r naca456::tip_specification_json"
+run "$MGED" -c naca456-demo.g "attr get brep_28_six_lowload_wings_right.r naca456::tip_specification_json"
 expect_grep "\"cant_angle\":64.0" "$LOGFILE"
-run "$MGED" -c naca456-demo.g "attr get brep_29_sixa_64a210.r naca456::tip_style"
+run "$MGED" -c naca456-demo.g "attr get brep_29_sixa_64a210_wings_right.r naca456::tip_style"
 expect_grep "blended_winglet" "$LOGFILE"
-
-run "$NACA456" --brep-surface smooth --demo-file naca456-demo-smooth.g
-run "$MGED" -c naca456-demo-smooth.g "attr get brep_24_baseline_2412.r naca456::brep_surface"
-expect_grep "smooth" "$LOGFILE"
-run "$MGED" -c naca456-demo-smooth.g "attr get bot_00_baseline_2412.r naca456::brep_surface"
-expect_grep "ruled" "$LOGFILE"
-
-run "$NACA456" --tip-style flat --demo-file naca456-demo-flat.g
-run "$MGED" -c naca456-demo-flat.g "attr get brep_24_baseline_2412.r naca456::tip_style"
-expect_grep "flat" "$LOGFILE"
 
 run_brep_matrix_surface ruled
 run_brep_matrix_surface smooth
