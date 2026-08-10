@@ -4376,7 +4376,7 @@ triangulate_chart_component(cdt_mesh_t *mesh, const ON_BrepFace &face,
     if (chart.outer.size() < 3 || chart.points.size() < 3) {
 	diagnose(BREP_CDT_RESULT_CHART_FAILED,
 	    BREP_CDT_STAGE_CHART_CONSTRUCTION,
-	    "cone atlas component has no disk boundary");
+	    "face atlas component has no disk boundary");
 	return false;
     }
     std::vector<point2d_t> points(chart.points.size());
@@ -4444,7 +4444,7 @@ triangulate_chart_component(cdt_mesh_t *mesh, const ON_BrepFace &face,
 	    bu_free(faces, "atlas component faces");
 	    diagnose(BREP_CDT_RESULT_CERTIFICATION_FAILED,
 		BREP_CDT_STAGE_DETRIA,
-		"cone atlas output lost a native boundary identity");
+		"face atlas output lost a native boundary identity");
 	    return false;
 	}
 	triangles.push_back(triangle);
@@ -4453,8 +4453,148 @@ triangulate_chart_component(cdt_mesh_t *mesh, const ON_BrepFace &face,
     if (face_count > 0)
 	return true;
     diagnose(BREP_CDT_RESULT_CERTIFICATION_FAILED, BREP_CDT_STAGE_DETRIA,
-	"cone atlas component produced no chart triangles");
+	"face atlas component produced no chart triangles");
     return false;
+}
+
+static bool
+install_face_chart_atlas(cdt_mesh_t *mesh, const ON_BrepFace &face,
+	std::vector<cdt_face_chart> &atlas, std::string &failure)
+{
+    if (!mesh || atlas.empty()) {
+	failure = "face atlas has no chart components";
+	return false;
+    }
+    std::set<long> atlas_edge_points;
+    std::set<long> atlas_singular_points;
+    std::set<uedge_t> atlas_boundary_edges;
+    const auto stage_boundary = [&](const std::vector<int> &ring,
+	    const cdt_face_chart &component) {
+	if (ring.size() < 2)
+	    return false;
+	for (size_t i = 0; i < ring.size(); ++i) {
+	    const long first_native = component.native_point(ring[i]);
+	    const long second_native = component.native_point(
+		ring[(i + 1) % ring.size()]);
+	    const auto first_3d = mesh->p2d3d.find(first_native);
+	    const auto second_3d = mesh->p2d3d.find(second_native);
+	    if (first_3d == mesh->p2d3d.end() ||
+		    second_3d == mesh->p2d3d.end() || first_3d->second < 0 ||
+		    second_3d->second < 0 ||
+		    (size_t)first_3d->second >= mesh->pnts.size() ||
+		    (size_t)second_3d->second >= mesh->pnts.size())
+		return false;
+	    const auto first_mesh = mesh->p2ind.find(
+		mesh->pnts[(size_t)first_3d->second]);
+	    const auto second_mesh = mesh->p2ind.find(
+		mesh->pnts[(size_t)second_3d->second]);
+	    if (first_mesh == mesh->p2ind.end() ||
+		    second_mesh == mesh->p2ind.end())
+		return false;
+	    atlas_edge_points.insert(first_mesh->second);
+	    atlas_edge_points.insert(second_mesh->second);
+	    if (first_mesh->second != second_mesh->second)
+		atlas_boundary_edges.insert(uedge_t(first_mesh->second,
+		    second_mesh->second));
+	}
+	return true;
+    };
+    for (const cdt_face_chart &component : atlas) {
+	bool boundary_mapped = stage_boundary(component.outer, component);
+	for (const std::vector<int> &hole : component.holes)
+	    boundary_mapped = stage_boundary(hole, component) &&
+		boundary_mapped;
+	for (const cdt_chart_vertex &vertex : component.vertices) {
+	    if (!vertex.singular)
+		continue;
+	    const auto point_3d = mesh->p2d3d.find(vertex.native_point);
+	    if (vertex.native_point < 0 ||
+		    point_3d == mesh->p2d3d.end() || point_3d->second < 0 ||
+		    (size_t)point_3d->second >= mesh->pnts.size()) {
+		boundary_mapped = false;
+		continue;
+	    }
+	    const auto mesh_point = mesh->p2ind.find(
+		mesh->pnts[(size_t)point_3d->second]);
+	    if (mesh_point == mesh->p2ind.end()) {
+		boundary_mapped = false;
+		continue;
+	    }
+	    atlas_singular_points.insert(mesh_point->second);
+	}
+	if (!boundary_mapped) {
+	    failure = "face atlas boundary did not map to mesh vertices";
+	    return false;
+	}
+    }
+
+    std::vector<triangle_t> atlas_triangles;
+    for (const cdt_face_chart &component : atlas) {
+	if (!triangulate_chart_component(mesh, face, component,
+		atlas_triangles)) {
+	    failure.clear();
+	    return false;
+	}
+    }
+    if (atlas_triangles.empty()) {
+	failure = "face atlas produced no chart triangles";
+	return false;
+    }
+
+    std::vector<triangle_t> mapped_triangles;
+    size_t forward_count = 0;
+    size_t reverse_count = 0;
+    for (const triangle_t &triangle_2d : atlas_triangles) {
+	triangle_t triangle_3d;
+	for (int corner = 0; corner < 3; ++corner) {
+	    const auto point_3d = mesh->p2d3d.find(
+		triangle_2d.v[corner]);
+	    if (point_3d == mesh->p2d3d.end() || point_3d->second < 0 ||
+		    (size_t)point_3d->second >= mesh->pnts.size()) {
+		failure = "face atlas triangle did not map to mesh vertices";
+		return false;
+	    }
+	    const auto mesh_point = mesh->p2ind.find(
+		mesh->pnts[(size_t)point_3d->second]);
+	    if (mesh_point == mesh->p2ind.end()) {
+		failure = "face atlas triangle did not map to mesh vertices";
+		return false;
+	    }
+	    triangle_3d.v[corner] = mesh_point->second;
+	}
+	const ON_3dVector triangle_normal = mesh->tnorm(triangle_3d);
+	const ON_3dVector surface_normal = mesh->bnorm(triangle_3d);
+	if (triangle_normal.Length() > 0 && surface_normal.Length() > 0) {
+	    if (ON_DotProduct(triangle_normal, surface_normal) > 0.0)
+		forward_count++;
+	    else
+		reverse_count++;
+	}
+	mapped_triangles.push_back(triangle_3d);
+    }
+
+    const bool reverse_atlas = reverse_count > forward_count;
+    mesh->reset();
+    for (triangle_t &triangle : mapped_triangles) {
+	if (reverse_atlas)
+	    std::swap(triangle.v[1], triangle.v[2]);
+	mesh->tri_add(triangle);
+    }
+    if (mesh->tris_vect.empty()) {
+	failure = "face atlas produced no 3-D triangles";
+	return false;
+    }
+    for (const uedge_t &edge : mesh->chart_boundary_edges)
+	mesh->brep_edges.erase(edge);
+    mesh->chart_boundary_edges = atlas_boundary_edges;
+    mesh->brep_edges.insert(atlas_boundary_edges.begin(),
+	atlas_boundary_edges.end());
+    mesh->ep.insert(atlas_edge_points.begin(), atlas_edge_points.end());
+    mesh->sv.insert(atlas_singular_points.begin(),
+	atlas_singular_points.end());
+    mesh->tris_2d.swap(atlas_triangles);
+    mesh->m_face_charts.swap(atlas);
+    return true;
 }
 
 bool
@@ -4770,161 +4910,16 @@ cdt_mesh_t::cdt()
 		atlas_failure = atlas[component].failure();
 	    atlas_built = component_built && atlas_built;
 	}
-	std::set<long> atlas_edge_points;
-	std::set<long> atlas_singular_points;
-	std::set<uedge_t> atlas_boundary_edges;
-	const auto stage_boundary = [&](const std::vector<int> &ring,
-		const cdt_face_chart &component) {
-	    if (ring.size() < 2)
-		return false;
-	    for (size_t i = 0; i < ring.size(); ++i) {
-		const long first_native = component.native_point(ring[i]);
-		const long second_native = component.native_point(
-		    ring[(i + 1) % ring.size()]);
-		const auto first_3d = p2d3d.find(first_native);
-		const auto second_3d = p2d3d.find(second_native);
-		if (first_3d == p2d3d.end() || second_3d == p2d3d.end() ||
-			first_3d->second < 0 || second_3d->second < 0 ||
-			(size_t)first_3d->second >= pnts.size() ||
-			(size_t)second_3d->second >= pnts.size())
-		    return false;
-		const auto first_mesh = p2ind.find(
-		    pnts[(size_t)first_3d->second]);
-		const auto second_mesh = p2ind.find(
-		    pnts[(size_t)second_3d->second]);
-		if (first_mesh == p2ind.end() || second_mesh == p2ind.end())
-		    return false;
-		atlas_edge_points.insert(first_mesh->second);
-		atlas_edge_points.insert(second_mesh->second);
-		if (first_mesh->second != second_mesh->second)
-		    atlas_boundary_edges.insert(uedge_t(first_mesh->second,
-			second_mesh->second));
-	    }
+	if (atlas_built && install_face_chart_atlas(this, face, atlas,
+		atlas_failure))
 	    return true;
-	};
-	if (atlas_built) {
-	    for (const cdt_face_chart &component : atlas) {
-		bool boundary_mapped = stage_boundary(component.outer,
-		    component);
-		for (const std::vector<int> &hole : component.holes)
-		    boundary_mapped = stage_boundary(hole, component) &&
-			boundary_mapped;
-		for (const cdt_chart_vertex &vertex : component.vertices) {
-		    if (!vertex.singular)
-			continue;
-		    const auto point_3d = p2d3d.find(vertex.native_point);
-		    if (vertex.native_point < 0 || point_3d == p2d3d.end() ||
-			    point_3d->second < 0 ||
-			    (size_t)point_3d->second >= pnts.size()) {
-			boundary_mapped = false;
-			continue;
-		    }
-		    const auto mesh_point = p2ind.find(
-			pnts[(size_t)point_3d->second]);
-		    if (mesh_point == p2ind.end()) {
-			boundary_mapped = false;
-			continue;
-		    }
-		    atlas_singular_points.insert(mesh_point->second);
-		}
-		if (!boundary_mapped) {
-		    atlas_built = false;
-		    atlas_failure =
-			"cone atlas boundary did not map to mesh vertices";
-		    break;
-		}
-	    }
-	}
-	std::vector<triangle_t> atlas_triangles;
-	if (atlas_built) {
-	    for (const cdt_face_chart &component : atlas) {
-		if (!triangulate_chart_component(this, face, component,
-			atlas_triangles)) {
-		    atlas_built = false;
-		    atlas_failure.clear();
-		    break;
-		}
-	    }
-	}
-	if (atlas_built && !atlas_triangles.empty()) {
-	    std::vector<triangle_t> mapped_triangles;
-	    size_t forward_count = 0;
-	    size_t reverse_count = 0;
-	    for (const triangle_t &triangle_2d : atlas_triangles) {
-		triangle_t triangle_3d;
-		bool mapped = true;
-		for (int corner = 0; corner < 3; ++corner) {
-		    const auto point_3d = p2d3d.find(
-			triangle_2d.v[corner]);
-		    if (point_3d == p2d3d.end() || point_3d->second < 0 ||
-			    (size_t)point_3d->second >= pnts.size()) {
-			mapped = false;
-			break;
-		    }
-		    const auto mesh_point = p2ind.find(
-			pnts[(size_t)point_3d->second]);
-		    if (mesh_point == p2ind.end()) {
-			mapped = false;
-			break;
-		    }
-		    triangle_3d.v[corner] = mesh_point->second;
-		}
-		if (!mapped) {
-		    atlas_built = false;
-		    atlas_failure =
-			"cone atlas triangle did not map to mesh vertices";
-		    break;
-		}
-		const ON_3dVector triangle_normal = tnorm(triangle_3d);
-		const ON_3dVector surface_normal = bnorm(triangle_3d);
-		if (triangle_normal.Length() > 0 &&
-			surface_normal.Length() > 0) {
-		    if (ON_DotProduct(triangle_normal, surface_normal) > 0.0)
-			forward_count++;
-		    else
-			reverse_count++;
-		}
-		mapped_triangles.push_back(triangle_3d);
-	    }
-	    if (atlas_built) {
-		const bool reverse_atlas = reverse_count > forward_count;
-		reset();
-		for (triangle_t &triangle : mapped_triangles) {
-		    if (reverse_atlas)
-			std::swap(triangle.v[1], triangle.v[2]);
-		    tri_add(triangle);
-		}
-		if (!tris_vect.empty()) {
-		    for (const uedge_t &edge : chart_boundary_edges)
-			brep_edges.erase(edge);
-		    chart_boundary_edges = atlas_boundary_edges;
-		    brep_edges.insert(atlas_boundary_edges.begin(),
-			atlas_boundary_edges.end());
-		    ep.insert(atlas_edge_points.begin(),
-			atlas_edge_points.end());
-		    sv.insert(atlas_singular_points.begin(),
-			atlas_singular_points.end());
-		    tris_2d.swap(atlas_triangles);
-		    m_face_charts.swap(atlas);
-		    return true;
-		}
-		atlas_failure = "cone face atlas produced no 3-D triangles";
-	    }
-	}
-	if (atlas_built && atlas_triangles.empty())
-	    atlas_failure = "cone face atlas produced no chart triangles";
-	if (!atlas_built && atlas_failure.empty()) {
-	    /* A component triangulation has already installed its precise
-	     * diagnostic. */
+	if (atlas_failure.empty())
 	    return false;
-	}
 	struct ON_Brep_CDT_State *state =
 	    (struct ON_Brep_CDT_State *)p_cdt;
 	if (state)
 	    cdt_diagnostic_set(state, BREP_CDT_RESULT_CHART_FAILED,
 		BREP_CDT_STAGE_CHART_CONSTRUCTION, f_id, 0, 1,
-		atlas_failure.empty() ?
-		"cone face atlas did not produce certified disk components" :
 		atlas_failure.c_str());
 	return false;
     }
@@ -5112,6 +5107,35 @@ cdt_mesh_t::cdt()
 		    (last.second - first.second);
 	    }
 	}
+    }
+
+    std::vector<cdt_face_chart> chart_components;
+    std::string component_failure;
+    if (!chart.partition_components(chart_components,
+	    &component_failure)) {
+	struct ON_Brep_CDT_State *state =
+	    (struct ON_Brep_CDT_State *)p_cdt;
+	if (state)
+	    cdt_diagnostic_set(state, BREP_CDT_RESULT_CHART_FAILED,
+		BREP_CDT_STAGE_CHART_CONSTRUCTION, f_id, 0, 1,
+		component_failure.c_str());
+	return false;
+    }
+    if (chart_components.size() > 1) {
+	bu_log("Face %d: partitioned disconnected chart loops into %zu "
+	    "filled components\n", f_id, chart_components.size());
+	if (install_face_chart_atlas(this, face, chart_components,
+		component_failure))
+	    return true;
+	if (component_failure.empty())
+	    return false;
+	struct ON_Brep_CDT_State *state =
+	    (struct ON_Brep_CDT_State *)p_cdt;
+	if (state)
+	    cdt_diagnostic_set(state, BREP_CDT_RESULT_CHART_FAILED,
+		BREP_CDT_STAGE_CHART_CONSTRUCTION, f_id, 0, 1,
+		component_failure.c_str());
+	return false;
     }
 
     /* The chart boundary is the boundary the triangulator actually sees.
