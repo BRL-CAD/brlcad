@@ -5649,6 +5649,116 @@ cdt_mesh_t::cdt()
 }
 
 size_t
+cdt_mesh_t::refine_collapsed_chart_triangles(size_t max_points)
+{
+    if (!max_points || !brep || f_id < 0 || f_id >= brep->m_F.Count() ||
+	    m_face_charts.empty())
+	return 0;
+    const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
+    if (!surface)
+	return 0;
+
+    /* Group nondegenerate chart triangles by their stitched model-space
+     * image.  More than one chart cell in a group means a periodic quotient
+     * has hidden the cells behind one coarse triangle. */
+    std::map<std::array<long, 3>, std::vector<triangle_t>> images;
+    for (const triangle_t &native_triangle : tris_2d) {
+	std::array<long, 3> image;
+	bool mapped = true;
+	for (int corner = 0; corner < 3; ++corner) {
+	    const auto point_3d = p2d3d.find(native_triangle.v[corner]);
+	    if (point_3d == p2d3d.end() || point_3d->second < 0 ||
+		    (size_t)point_3d->second >= pnts.size()) {
+		mapped = false;
+		break;
+	    }
+	    const auto mesh_point = p2ind.find(
+		pnts[(size_t)point_3d->second]);
+	    if (mesh_point == p2ind.end()) {
+		mapped = false;
+		break;
+	    }
+	    image[(size_t)corner] = mesh_point->second;
+	}
+	if (!mapped)
+	    continue;
+	std::sort(image.begin(), image.end());
+	if (image[0] == image[1] || image[1] == image[2])
+	    continue;
+	images[image].push_back(native_triangle);
+    }
+
+    std::set<std::pair<double, double>> existing(m_pnts_2d.begin(),
+	m_pnts_2d.end());
+    struct ON_Brep_CDT_State *state =
+	(struct ON_Brep_CDT_State *)p_cdt;
+    size_t inserted = 0;
+    for (const auto &image : images) {
+	if (image.second.size() < 2)
+	    continue;
+	for (const triangle_t &native_triangle : image.second) {
+	    if (inserted >= max_points)
+		return inserted;
+	    ON_2dPoint sample = ON_2dPoint::UnsetPoint;
+	    bool chart_sample = false;
+	    const long native_vertices[3] = {
+		native_triangle.v[0], native_triangle.v[1],
+		native_triangle.v[2]
+	    };
+	    for (const cdt_face_chart &chart : m_face_charts) {
+		if (chart.triangle_interior_sample(native_vertices, sample)) {
+		    chart_sample = true;
+		    break;
+		}
+	    }
+	    if (!chart_sample)
+		continue;
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (!surface->IsClosed(direction))
+		    continue;
+		const ON_Interval domain = surface->Domain(direction);
+		const double period = domain.Length();
+		if (!(period > 0.0)) {
+		    sample = ON_2dPoint::UnsetPoint;
+		    break;
+		}
+		double &coordinate = direction ? sample.y : sample.x;
+		coordinate = domain.Min() + std::fmod(
+		    coordinate - domain.Min(), period);
+		if (coordinate < domain.Min())
+		    coordinate += period;
+	    }
+	    const std::pair<double, double> sample_key(sample.x, sample.y);
+	    if (!sample.IsValid() || !existing.insert(sample_key).second)
+		continue;
+
+	    ON_3dPoint point;
+	    ON_3dVector normal = ON_3dVector::UnsetVector;
+	    if (!surface_EvNormal(surface, sample.x, sample.y, point, normal))
+		continue;
+	    if (m_bRev)
+		normal = -normal;
+	    const long point_2d = add_point(sample);
+	    m_interior_pnts.insert(point_2d);
+	    m_chart_refinement_pnts.insert(point_2d);
+	    const long point_3d = add_point(new ON_3dPoint(point));
+	    const long normal_3d = add_normal(new ON_3dPoint(normal));
+	    p2d3d[point_2d] = point_3d;
+	    nmap[point_3d] = normal_3d;
+	    if (state) {
+		CDT_Add3DPnt(state, pnts[(size_t)point_3d], f_id, -1, -1,
+		    -1, sample.x, sample.y);
+		CDT_Add3DNorm(state, normals[(size_t)normal_3d],
+		    pnts[(size_t)point_3d], f_id, -1, -1, -1,
+		    sample.x, sample.y);
+	    }
+	    inserted++;
+	}
+    }
+    return inserted;
+}
+
+size_t
 cdt_mesh_t::split_problem_triangle_edges(
 	const std::vector<triangle_t> &triangles, size_t max_points,
 	const ON_3dPoint *near_point)
