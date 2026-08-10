@@ -4158,6 +4158,204 @@ point_on_indexed_boundary(RTree<size_t, double, 2> &index,
     return false;
 }
 
+/* Clipper can normalize weakly-simple planar loop topology, but conversion
+ * quality may not invent, remove, or move a shared B-Rep boundary sample.
+ * Accept its result only when every cleaned point maps back to one original
+ * chart coordinate and the triangle boundary is exactly the original set of
+ * nonzero constraints.  Duplicate coordinates are mergeable only when they
+ * identify the same explicit B-Rep topology vertex and 3-D point. */
+static bool
+topology_preserving_clean_triangulation(int **faces, int *face_count,
+	const cdt_face_chart &chart,
+	const std::vector<const ON_3dPoint *> &source_points_3d,
+	const int *outer, size_t outer_count, const int **holes,
+	const size_t *hole_counts, size_t hole_count, const int *steiner,
+	size_t steiner_count, const point2d_t *points)
+{
+    if (!faces || !face_count || !outer || outer_count < 4 || !points)
+	return false;
+    *faces = NULL;
+    *face_count = 0;
+
+    std::set<int> active;
+    for (size_t i = 0; i < outer_count; ++i)
+	active.insert(outer[i]);
+    for (size_t hole = 0; hole < hole_count; ++hole) {
+	for (size_t i = 0; i < hole_counts[hole]; ++i)
+	    active.insert(holes[hole][i]);
+    }
+    for (size_t i = 0; i < steiner_count; ++i)
+	active.insert(steiner[i]);
+    double minimum[2] = {DBL_MAX, DBL_MAX};
+    double maximum[2] = {-DBL_MAX, -DBL_MAX};
+    for (int point : active) {
+	if (point < 0 || (size_t)point >= chart.points.size() ||
+		!std::isfinite(points[point][X]) ||
+		!std::isfinite(points[point][Y]))
+	    return false;
+	minimum[X] = std::min(minimum[X], points[point][X]);
+	minimum[Y] = std::min(minimum[Y], points[point][Y]);
+	maximum[X] = std::max(maximum[X], points[point][X]);
+	maximum[Y] = std::max(maximum[Y], points[point][Y]);
+    }
+    const double span = std::max(maximum[X] - minimum[X],
+	maximum[Y] - minimum[Y]);
+    if (!(span > SMALL_FASTF) || !std::isfinite(span))
+	return false;
+    const double origin[2] = {
+	0.5 * (minimum[X] + maximum[X]),
+	0.5 * (minimum[Y] + maximum[Y])
+    };
+    const double scale = (double)CLIPPER_MAX / span;
+    typedef std::pair<int64_t, int64_t> snapped_point;
+    const auto snap = [&](double x, double y) {
+	return snapped_point(
+	    (int64_t)std::llround((x - origin[X]) * scale),
+	    (int64_t)std::llround((y - origin[Y]) * scale));
+    };
+
+    std::map<snapped_point, std::vector<int>> input_points;
+    for (int point : active)
+	input_points[snap(points[point][X], points[point][Y])].push_back(
+	    point);
+    std::map<int, const cdt_chart_vertex *> chart_vertices;
+    for (const cdt_chart_vertex &vertex : chart.vertices) {
+	if (vertex.id >= 0 && (size_t)vertex.id < chart.points.size())
+	    chart_vertices[(int)vertex.id] = &vertex;
+    }
+    std::map<snapped_point, int> representative;
+    for (const auto &entry : input_points) {
+	int selected = -1;
+	cdt_topo_vertex_id topology = CDT_TOPOLOGY_ID_NONE;
+	const ON_3dPoint *point_3d = NULL;
+	for (int point : entry.second) {
+	    const auto vertex_entry = chart_vertices.find(point);
+	    if (vertex_entry == chart_vertices.end())
+		return false;
+	    const cdt_chart_vertex &vertex = *vertex_entry->second;
+	    const ON_3dPoint *candidate_3d = vertex.native_point >= 0 &&
+		    (size_t)vertex.native_point < source_points_3d.size() ?
+		source_points_3d[(size_t)vertex.native_point] : NULL;
+	    if (selected < 0) {
+		selected = point;
+		topology = vertex.topo_vertex;
+		point_3d = candidate_3d;
+		continue;
+	    }
+	    if (entry.second.size() > 1 &&
+		    (topology == CDT_TOPOLOGY_ID_NONE ||
+		    vertex.topo_vertex != topology || !point_3d ||
+		    candidate_3d != point_3d))
+		return false;
+	    if (point < selected)
+		selected = point;
+	}
+	representative[entry.first] = selected;
+    }
+
+    int *clean_faces = NULL;
+    int clean_face_count = 0;
+    point2d_t *clean_points = NULL;
+    int clean_point_count = 0;
+    const int clean_status = bg_nested_poly_triangulate_clean(&clean_faces,
+	&clean_face_count, &clean_points, &clean_point_count, outer,
+	outer_count, holes, hole_counts, hole_count, steiner, steiner_count,
+	points, chart.points.size());
+    if (clean_status != BRLCAD_OK || !clean_faces || !clean_points ||
+	    clean_face_count <= 0 || clean_point_count <= 0) {
+	if (clean_faces)
+	    bu_free(clean_faces, "topology-preserving clean faces");
+	if (clean_points)
+	    bu_free(clean_points, "topology-preserving clean points");
+	return false;
+    }
+
+    bool valid = true;
+    std::vector<int> clean_to_chart((size_t)clean_point_count, -1);
+    std::set<snapped_point> output_points;
+    for (int i = 0; i < clean_point_count; ++i) {
+	const snapped_point key = snap(clean_points[i][X], clean_points[i][Y]);
+	const auto source = representative.find(key);
+	if (source == representative.end()) {
+	    valid = false;
+	    break;
+	}
+	clean_to_chart[(size_t)i] = source->second;
+	output_points.insert(key);
+    }
+    for (const auto &entry : input_points) {
+	if (output_points.find(entry.first) == output_points.end())
+	    valid = false;
+    }
+
+    typedef std::pair<int, int> clean_edge;
+    const auto edge_key = [](int first, int second) {
+	return first < second ? clean_edge(first, second) :
+	    clean_edge(second, first);
+    };
+    std::set<clean_edge> required_boundary;
+    const auto require_ring = [&](const int *ring, size_t count) {
+	for (size_t i = 0; i + 1 < count; ++i) {
+	    const int first = representative[snap(points[ring[i]][X],
+		points[ring[i]][Y])];
+	    const int second = representative[snap(points[ring[i + 1]][X],
+		points[ring[i + 1]][Y])];
+	    if (first != second &&
+		    !required_boundary.insert(edge_key(first, second)).second)
+		return false;
+	}
+	return true;
+    };
+    valid = valid && require_ring(outer, outer_count);
+    for (size_t hole = 0; valid && hole < hole_count; ++hole)
+	valid = require_ring(holes[hole], hole_counts[hole]);
+
+    std::map<clean_edge, int> edge_uses;
+    std::vector<int> mapped_faces((size_t)clean_face_count * 3, -1);
+    for (size_t i = 0; valid && i < mapped_faces.size(); i += 3) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int clean_point = clean_faces[i + (size_t)corner];
+	    if (clean_point < 0 || clean_point >= clean_point_count ||
+		    clean_to_chart[(size_t)clean_point] < 0) {
+		valid = false;
+		break;
+	    }
+	    mapped_faces[i + (size_t)corner] =
+		clean_to_chart[(size_t)clean_point];
+	}
+	if (!valid || mapped_faces[i] == mapped_faces[i + 1] ||
+		mapped_faces[i + 1] == mapped_faces[i + 2] ||
+		mapped_faces[i + 2] == mapped_faces[i]) {
+	    valid = false;
+	    break;
+	}
+	edge_uses[edge_key(mapped_faces[i], mapped_faces[i + 1])]++;
+	edge_uses[edge_key(mapped_faces[i + 1], mapped_faces[i + 2])]++;
+	edge_uses[edge_key(mapped_faces[i + 2], mapped_faces[i])]++;
+    }
+    for (const auto &edge : edge_uses) {
+	const bool boundary = required_boundary.find(edge.first) !=
+	    required_boundary.end();
+	if ((boundary && edge.second != 1) ||
+		(!boundary && edge.second != 2))
+	    valid = false;
+    }
+    for (const clean_edge &edge : required_boundary) {
+	if (edge_uses[edge] != 1)
+	    valid = false;
+    }
+
+    bu_free(clean_faces, "topology-preserving clean faces");
+    bu_free(clean_points, "topology-preserving clean points");
+    if (!valid)
+	return false;
+    *faces = (int *)bu_calloc(mapped_faces.size(), sizeof(int),
+	"topology-preserving chart faces");
+    std::copy(mapped_faces.begin(), mapped_faces.end(), *faces);
+    *face_count = clean_face_count;
+    return true;
+}
+
 /* Triangulate one disk in a face atlas.  The strict libbg entry point owns
  * duplicate and boundary-Steiner filtering; this wrapper retains the chart's
  * native identities.  Boundary state is committed only after every atlas
@@ -5115,6 +5313,23 @@ cdt_mesh_t::cdt()
 	(const int **)holes_array, holes_npts, holes_cnt, steiner, steiner_cnt,
 	constraint_vec.empty() ? NULL : constraint_vec.data(),
 	chart.constraints.size(), bgp_2d, chart.points.size(), &tri_report);
+
+    if (!result && constraint_vec.empty() &&
+	    chart.type() == CDT_FACE_CHART_SURFACE_METRIC &&
+	    chart.closed_direction() < 0 && face.SurfaceOf() &&
+	    face.SurfaceOf()->IsPlanar(NULL, BN_TOL_DIST)) {
+	if (faces) {
+	    bu_free(faces, "failed strict chart faces");
+	    faces = NULL;
+	}
+	result = topology_preserving_clean_triangulation(&faces, &num_faces,
+	    chart, source_points_3d, opoly, opoly_count,
+	    (const int **)holes_array, holes_npts, holes_cnt, steiner,
+	    steiner_cnt, bgp_2d);
+	if (result)
+	    bu_log("Face %d: normalized weakly-simple planar chart topology "
+		"without changing its B-Rep boundary\n", f_id);
+    }
 
     if (!result) {
 	bu_log("Face %d: constrained triangulation failed: %s "
