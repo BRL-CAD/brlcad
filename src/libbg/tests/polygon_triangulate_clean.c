@@ -118,6 +118,20 @@ main(int argc, const char **argv)
 	    return 1;
     }
 
+    {
+	/* A weakly-simple ring may encode a hole touching its outline at one
+	 * topology vertex.  Strictly-simple Clipper output must retain the
+	 * intended outer-minus-hole area. */
+	point2d_t points[8] = {
+	    {0.0, 0.0}, {10.0, 0.0}, {10.0, 10.0}, {0.0, 10.0},
+	    {0.0, 0.0}, {0.0, 4.0}, {4.0, 4.0}, {4.0, 0.0}
+	};
+	const int outer[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+	if (check_clean_triangulation((const point2d_t *)points, 8, outer,
+		8, NULL, NULL, 0, NULL, 0, 84.0))
+	    return 1;
+    }
+
     return 0;
 }
 
