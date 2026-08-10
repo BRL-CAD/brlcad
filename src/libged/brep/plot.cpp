@@ -678,12 +678,9 @@ drawBBNode(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vlblock *vbp
 	    return;
 	}
     } else {
-	if (!node->get_children().empty()) {
-	    for (std::vector<BBNode*>::const_iterator childnode = node->get_children().begin(); childnode
-		 != node->get_children().end(); childnode++) {
-		drawBBNode(st, vlfree, vbp, *childnode);
-	    }
-	}
+	for (std::size_t child_index = 0; child_index < node->childCount();
+		++child_index)
+	    drawBBNode(st, vlfree, vbp, node->child(child_index));
     }
 }
 
