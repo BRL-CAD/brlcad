@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/datetime.h"
 #include "bu/malloc.h"
 #include "brep/surfacetree.h"
 #include "raytrace.h"
@@ -6056,6 +6057,254 @@ cobb_seam_grazing_ray(const cobb_seam_frame &frame,
     VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
     VSET(ray.direction, direction.x, direction.y, direction.z);
     return ray;
+}
+
+
+static double
+cobb_grazing_clearance(double radius, double chord)
+{
+    if (!(radius > 0.0) || chord < 0.0 || chord >= 2.0 * radius)
+	return INFINITY;
+    const double half_chord = 0.5 * chord;
+    const double radial = sqrt((radius - half_chord) *
+	(radius + half_chord));
+    return half_chord * half_chord / (radius + radial);
+}
+
+
+struct cobb_throughput_family {
+    const char *name = NULL;
+    sampled_ray ray[2];
+    double chord_ratio = 0.0;
+    int expected_segments = 0;
+};
+
+
+static int
+check_cobb_production_throughput(const struct bn_tol *tol,
+    struct rt_i *rtip, struct resource *resource)
+{
+    if (!tol || !rtip || !resource || !(tol->dist > 0.0))
+	return 1;
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    cobb_seam_frame frame;
+    double measured_gap = 0.0;
+    double displacement = 0.0;
+    ON_Brep *variant = cobb_bowed_seam_variant(pristine, origin,
+	-tol->dist, frame, measured_gap, displacement);
+    delete pristine;
+    if (!variant || !variant->IsValid() || !variant->IsSolid()) {
+	std::printf("FAIL: Cobb production-throughput construction\n");
+	delete variant;
+	return 1;
+    }
+
+    struct rt_brep_internal variant_internal = {};
+    variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    variant_internal.brep = variant;
+    struct rt_db_internal variant_intern;
+    RT_DB_INTERNAL_INIT(&variant_intern);
+    variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    variant_intern.idb_type = ID_BREP;
+    variant_intern.idb_meth = &OBJ[ID_BREP];
+    variant_intern.idb_ptr = &variant_internal;
+    struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+    if (!stp) {
+	std::printf("FAIL: Cobb production-throughput prep\n");
+	delete variant;
+	return 1;
+    }
+
+    cobb_throughput_family family[5];
+    family[0].name = "regular";
+    family[0].chord_ratio = 2.0 * radius / tol->dist;
+    family[0].expected_segments = 1;
+    ON_3dVector regular_direction(2.0, 3.0, 6.0);
+    regular_direction.Unitize();
+    const ON_3dPoint regular_start = origin -
+	2.0 * radius * regular_direction;
+    const ON_3dPoint regular_end = origin +
+	2.0 * radius * regular_direction;
+    VSET(family[0].ray[0].origin, regular_start.x, regular_start.y,
+	regular_start.z);
+    VSET(family[0].ray[0].direction, regular_direction.x,
+	regular_direction.y, regular_direction.z);
+    VSET(family[0].ray[1].origin, regular_end.x, regular_end.y,
+	regular_end.z);
+    VSET(family[0].ray[1].direction, -regular_direction.x,
+	-regular_direction.y, -regular_direction.z);
+
+    const double chord_ratio[] = {100.0, 2.0, 1.1, 0.0};
+    const char *name[] = {
+	"grazing-100T", "grazing-2T", "grazing-1.1T", "tangent"
+    };
+    for (size_t i = 0; i < sizeof(chord_ratio) /
+	    sizeof(chord_ratio[0]); ++i) {
+	const double chord = chord_ratio[i] * tol->dist;
+	const double clearance = cobb_grazing_clearance(radius, chord);
+	family[i + 1].name = name[i];
+	family[i + 1].chord_ratio = chord_ratio[i];
+	family[i + 1].expected_segments = chord_ratio[i] > 1.0 ? 1 : 0;
+	for (int reverse = 0; reverse <= 1; ++reverse)
+	    family[i + 1].ray[reverse] = cobb_seam_grazing_ray(frame,
+		origin, radius, clearance, reverse != 0);
+    }
+
+    int failures = 0;
+    const int64_t minimum_microseconds = 250000;
+    const size_t maximum_shots = 4096;
+    for (size_t family_index = 0; family_index < sizeof(family) /
+	    sizeof(family[0]); ++family_index) {
+	const cobb_throughput_family &test = family[family_index];
+	for (int reverse = 0; reverse <= 1; ++reverse) {
+	    const ray_result result = shoot_solid(stp, rtip, resource,
+		test.ray[reverse].origin, test.ray[reverse].direction);
+	    if (result.segments != test.expected_segments) {
+		std::printf("FAIL: Cobb production-throughput %s reverse=%d "
+		    "segments=%d/%d hits=%d\n", test.name, reverse,
+		    result.segments, test.expected_segments, result.shot_hits);
+		failures++;
+	    }
+	}
+
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(stp, rtip, resource, test.ray[0], trace);
+	const bool expect_continuation = family_index > 0 &&
+	    test.expected_segments == 1;
+	const bool certificate_valid = !expect_continuation ||
+	    (trace.continuation_candidates == 1 &&
+	     trace.continuation_certified_candidates == 1 &&
+	     trace.continuation_certificate_krawczyk_attempts >= 2 &&
+	     trace.continuation_certificate_krawczyk_available >= 2 &&
+	     trace.continuation_certificate_krawczyk_certified >= 2 &&
+	     trace.continuation_certificate_root_boxes == 2 &&
+	     trace.continuation_certificate_isolated == 2 &&
+	     trace.continuation_certificate_complement_boxes > 0 &&
+	     trace.continuation_certificate_complement_excluded > 0 &&
+	     trace.continuation_certificate_exhausted == 0 &&
+	     trace.continuation_certificate_existing_overlap == 0 &&
+	     trace.closure_shadow_segments == 1);
+	const bool tangent_valid = test.expected_segments != 0 ||
+	    (trace.continuation_certified_candidates == 0 &&
+	     trace.closure_shadow_segments == 0);
+	if (trace.final_segments != (size_t)test.expected_segments) {
+	    std::printf("FAIL: Cobb production-throughput trace %s "
+		"segments=%zu/%d fallback=%d\n", test.name,
+		trace.final_segments, test.expected_segments,
+		trace.prepared_production_fallback);
+	    report_grazing_trace("Cobb production-throughput",
+		test.chord_ratio, 0, trace);
+	    brep_trace_root_coverage_diagnostic(test.name, trace);
+	    const struct rt_brep_trace_edge *target_edge = NULL;
+	    for (size_t edge_index = 0; edge_index < trace.stored_edges;
+		    ++edge_index) {
+		if (trace.edges[edge_index].edge_index == frame.edge_index) {
+		    target_edge = &trace.edges[edge_index];
+		    break;
+		}
+	    }
+	    std::printf("  target-edge=%d observed=%d distance=%.17g "
+		"ray-t=%.17g tolerance=%.17g within/sector/state=%d/%d/%d "
+		"lifts=%.17g/%.17g closure=%zu edge-index=%d "
+		"continuation=%zu/%zu shadow=%zu certificate="
+		"%zu/%zu/%zu/%zu/%zu t=[%.17g,%.17g]\n", frame.edge_index,
+		target_edge != NULL,
+		target_edge ? target_edge->distance : INFINITY,
+		target_edge ? target_edge->ray_dist : INFINITY,
+		target_edge ? target_edge->edge_tolerance : INFINITY,
+		target_edge ? target_edge->within_edge_tolerance : -1,
+		target_edge ? target_edge->sector_valid : -1,
+		target_edge ? target_edge->closest_state : -99,
+		target_edge ? target_edge->lift_distance[0] : INFINITY,
+		target_edge ? target_edge->lift_distance[1] : INFINITY,
+		trace.closure_candidates, trace.closure_edge_index,
+		trace.continuation_candidates,
+		trace.continuation_certified_candidates,
+		trace.closure_shadow_segments,
+		trace.continuation_certificate_boxes,
+		trace.continuation_certificate_isolated,
+		trace.continuation_certificate_root_boxes,
+		trace.continuation_certificate_existing_overlap,
+		trace.continuation_certificate_exhausted,
+		trace.continuation_certificate_t_min,
+		trace.continuation_certificate_t_max);
+	    failures++;
+	}
+	if (!certificate_valid || !tangent_valid) {
+	    std::printf("FAIL: Cobb production-throughput certificate %s "
+		"continuation=%zu/%zu Krawczyk=%zu/%zu/%zu "
+		"root/isolated=%zu/%zu complement=%zu/%zu depth=%zu "
+		"exhausted/overlap/shadow=%zu/%zu/%zu\n", test.name,
+		trace.continuation_candidates,
+		trace.continuation_certified_candidates,
+		trace.continuation_certificate_krawczyk_attempts,
+		trace.continuation_certificate_krawczyk_available,
+		trace.continuation_certificate_krawczyk_certified,
+		trace.continuation_certificate_root_boxes,
+		trace.continuation_certificate_isolated,
+		trace.continuation_certificate_complement_boxes,
+		trace.continuation_certificate_complement_excluded,
+		trace.continuation_certificate_complement_max_depth,
+		trace.continuation_certificate_exhausted,
+		trace.continuation_certificate_existing_overlap,
+		trace.closure_shadow_segments);
+	    failures++;
+	}
+
+	size_t shots = 0;
+	size_t segment_sink = 0;
+	const int64_t start = bu_gettime();
+	int64_t elapsed = 0;
+	do {
+	    for (int reverse = 0; reverse <= 1; ++reverse) {
+		const ray_result result = shoot_solid(stp, rtip, resource,
+		    test.ray[reverse].origin, test.ray[reverse].direction);
+		segment_sink += (size_t)result.segments;
+		shots++;
+	    }
+	    elapsed = bu_gettime() - start;
+	} while (elapsed < minimum_microseconds && shots < maximum_shots);
+	const double seconds = elapsed / 1000000.0;
+	const double rays_per_second = seconds > 0.0 ? shots / seconds : 0.0;
+	const double microseconds_per_ray = shots ?
+	    (double)elapsed / shots : INFINITY;
+	std::printf("Cobb production throughput: family=%s chord/T=%.9g "
+	    "shots=%zu seconds=%.6f rays/s=%.3f us/ray=%.3f "
+	    "segment-sink=%zu prepared=%zu fallback=%d "
+	    "spans=%zu/%zu boxes=%zu isolated/krawczyk=%zu/%zu "
+	    "terminal-expansion="
+	    "%zu/%zu/%zu fold-expansion=%zu/%zu/%zu high-water=%zu/%zu "
+	    "certificate-Krawczyk=%zu/%zu/%zu "
+	    "certificate-complement=%zu/%zu/%zu\n",
+	    test.name, test.chord_ratio, shots, seconds, rays_per_second,
+	    microseconds_per_ray, segment_sink,
+	    trace.prepared_production_selected,
+	    trace.prepared_production_fallback,
+	    trace.candidate_surface_spans, trace.prepared_surface_spans,
+	    trace.surface_subdivision_boxes, trace.surface_isolated_boxes,
+	    trace.surface_krawczyk_boxes,
+	    trace.surface_terminal_expansion_attempts,
+	    trace.surface_terminal_expansion_available,
+	    trace.surface_terminal_expansion_exclusions,
+	    trace.surface_fold_expansion_attempts,
+	    trace.surface_fold_expansion_available,
+	    trace.surface_fold_expansion_certified,
+	    trace.surface_terminal_expansion_high_water,
+	    trace.surface_fold_expansion_high_water,
+	    trace.continuation_certificate_krawczyk_attempts,
+	    trace.continuation_certificate_krawczyk_available,
+	    trace.continuation_certificate_krawczyk_certified,
+	    trace.continuation_certificate_complement_boxes,
+	    trace.continuation_certificate_complement_excluded,
+	    trace.continuation_certificate_complement_max_depth);
+    }
+
+    free_solid(stp);
+    if (!failures)
+	std::printf("Cobb production throughput fixture: PASS\n");
+    return failures;
 }
 
 
@@ -16968,6 +17217,12 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "iterations,certificate_boxes,certificate_isolated,"
 	    "certificate_root_boxes,certificate_workspace,"
 	    "certificate_exhausted,certificate_existing_overlap,"
+	    "certificate_krawczyk_attempts,"
+	    "certificate_krawczyk_available,"
+	    "certificate_krawczyk_certified,"
+	    "certificate_complement_boxes,"
+	    "certificate_complement_excluded,"
+	    "certificate_complement_max_depth,"
 	    "certified_candidates,certificate_t_min,certificate_t_max,"
 	    "shadow_segments,shadow_in,shadow_out\n");
 	std::printf("cobb_box_columns,direction,g_over_T,h_over_T,reverse,"
@@ -17744,7 +17999,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.closure_missing_direction);
 			std::printf("cobb_continuation,%s,%.9g,%.9g,%d,%zu,%zu,"
 			    "%d,%.17g,%.17g,%.17g,%.17g,%.17g,%zu,%zu,%zu,"
-			    "%zu,%zu,%zu,%zu,%zu,%.17g,%.17g,%zu,%.17g,"
+			    "%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,"
+			    "%zu,%.17g,%.17g,%zu,%.17g,"
 			    "%.17g\n",
 			    sign > 0 ? "outward" : "inward",
 			    measured_gap / tol->dist, clearance / tol->dist,
@@ -17762,6 +18018,12 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.continuation_certificate_workspace,
 			    trace.continuation_certificate_exhausted,
 			    trace.continuation_certificate_existing_overlap,
+			    trace.continuation_certificate_krawczyk_attempts,
+			    trace.continuation_certificate_krawczyk_available,
+			    trace.continuation_certificate_krawczyk_certified,
+			    trace.continuation_certificate_complement_boxes,
+			    trace.continuation_certificate_complement_excluded,
+			    trace.continuation_certificate_complement_max_depth,
 			    trace.continuation_certified_candidates,
 			    trace.continuation_certificate_t_min,
 			    trace.continuation_certificate_t_max,
@@ -18426,6 +18688,8 @@ main(int argc, char **argv)
     const bool contact_trim_only = mode &&
 	BU_STR_EQUAL(mode, "--contact-trim-only");
     const bool defect_only = mode && BU_STR_EQUAL(mode, "--defect-only");
+    const bool throughput_only = mode &&
+	BU_STR_EQUAL(mode, "--throughput-only");
     if (mode && !report_grazing && !report_cobb &&
 	    !report_cobb_oblique && !affine_only &&
 	    !interval_only && !local_root_only && !cleanup_only &&
@@ -18436,7 +18700,8 @@ main(int argc, char **argv)
 	    !directed_only &&
 	    !crofton_only && !crofton_hard_only && !regular_stream_only &&
 	    !seam_only && !endpoint_only &&
-	    !nonisoparametric_only && !contact_trim_only && !defect_only)
+	    !nonisoparametric_only && !contact_trim_only && !defect_only &&
+	    !throughput_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
 	    "--cobb-oblique-report|"
 	    "--affine-only|--interval-only|--local-root-only|--cleanup-only|"
@@ -18448,7 +18713,8 @@ main(int argc, char **argv)
 	    "--directed-only|--crofton-only|--crofton-hard-only|"
 	    "--regular-stream-only|"
 	    "--seam-only|--endpoint-only|"
-	    "--nonisoparametric-only|--contact-trim-only|--defect-only] "
+	    "--nonisoparametric-only|--contact-trim-only|--defect-only|"
+	    "--throughput-only] "
 	    "[--surface-tree-depth=0..%d]\n",
 	    argv[0], BREP_MAX_FT_DEPTH);
     if (interval_only) {
@@ -18510,6 +18776,15 @@ main(int argc, char **argv)
 
     struct resource resp = {};
     rt_init_resource(&resp, 0, rtip);
+
+    if (throughput_only) {
+	const int throughput_failures = check_cobb_production_throughput(
+	    &rtip->rti_tol, rtip, &resp);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return throughput_failures ? 1 : 0;
+    }
 
     if (nonisoparametric_only) {
 	const int nonisoparametric_failures =

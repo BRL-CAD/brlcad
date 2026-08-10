@@ -213,8 +213,9 @@ performance requirement, not merely a speculative optimization.  Until that
 index exists, use prep-only/SurfaceTree-only measurements for representation
 work and legacy-only rays for direct hierarchy qualification; reserve full
 prepared trace mode for targeted certificate tests and bounded samples.  Add
-an already-prepared, non-trace Cobb and imported-object throughput fixture so
-production shot cost remains visible independently of these proof matrices.
+an imported-object counterpart to the registered already-prepared, non-trace
+Cobb throughput fixture so production shot cost remains visible independently
+of these proof matrices.
 
 
 IMPLEMENTATION CHECKPOINT: RECLAIMABLE SURFACE-TREE ARENAS (2026-08-10)
@@ -320,15 +321,47 @@ certifying contacts.  Both ordinary production shots and diagnostic trace
 shots reach this path.  The trace multiplier explains why the proof matrix is
 especially slow, but the production path itself remains too expensive.
 
-Before changing the exact predicates, add an already-prepared, non-trace Cobb
-throughput fixture with separate ordinary, near-grazing, and exact-tangent
-populations.  Then introduce a tiered conservative dispatch: cheap control-
-hull/double bounds first, outward interval bounds next, and fixed-expansion
-restriction only for the ambiguous residue.  Preserve exact expansion as the
-authority for genuinely unresolved tangent, fold, seam, and crack cases and
-keep the existing fixed-work/no-malloc contract.  Record stage counters and
-selected/fallback populations so a speedup cannot silently become a missed-
-root or crack regression.
+The registered `rt_brep_ray_throughput` fixture now prepares one inward-bowed
+Cobb sphere once and measures separate regular, 100T, 2T, 1.1T, and exact-
+tangent families.  Use it while introducing a tiered conservative dispatch:
+cheap control-hull/double bounds first, outward interval bounds next, and
+fixed-expansion restriction only for the ambiguous residue.  Preserve exact
+expansion as the authority for genuinely unresolved tangent, fold, seam, and
+crack cases and keep the existing fixed-work/no-malloc contract.  Record stage
+counters and selected/fallback populations so a speedup cannot silently become
+a missed-root or crack regression.
+
+
+IMPLEMENTATION CHECKPOINT: ROOT-CENTERED SEAM CONTINUATION (2026-08-10)
+-----------------------------------------------------------------------
+
+The prepared-once fixture exposed a correctness and work-amplification defect
+in the original outside-span continuation proof.  The 2T and 1.1T grazing
+chords missed because the only continuation terminal box had a ray-t hull wide
+enough to overlap the existing endpoint.  A 100T chord visited 82,013 boxes,
+retained 40,960 ambiguous depth-24 terminals, overflowed trace storage by
+40,896, and spent seconds before rejecting the repair.  Increasing depth or
+storage would worsen the defect.
+
+The replacement includes both known endpoint parameters in one bounded
+reparameterized extension.  It establishes disjoint strict Krawczyk boxes for
+the existing root and Newton continuation, uses their outward-rounded images
+for disjoint ray-t enclosures, and proves every cell in the boxes' gridded
+complement root-free with coordinate/vector Bernstein hull exclusion.  The
+proof is depth first in fixed storage and rejects every arithmetic, ambiguity,
+third-root, depth, or work-budget failure.  It therefore proves exactly the
+known pair without allocation or global depth growth.
+
+The 100T, 2T, and 1.1T fixture cases need 2, 5, and 7 Krawczyk attempts and 13
+immediately excluded complement cells.  They return one interval in both
+directions; the exact tangent returns none and never invokes continuation.
+The complete bowed matrix retains all 16 authorized repairs, has no crack leak
+or reversal inconsistency, and observes at most 15 continuation boxes.  A
+representative optimized run records approximately 1.5 ms for a regular ray
+and 3.4--4.4 ms for the repaired grazing rays.  These numbers are diagnostic,
+not acceptance thresholds.  Focused release gates pass 11/11 and ASan/UBSan
+gates pass 4/4.  The broader seam shard still contains unfinished prepared
+contact/oblique selection failures and remains a separate active gate.
 
 
 IMPLEMENTATION CHECKPOINT: COPLANAR EVENT AUTHORITY (2026-08-09)
@@ -2558,12 +2591,27 @@ every generated coefficient and every function/Jacobian interval encloses the
 corresponding exact polynomial quantity.  Until then, a successful shadow
 test may reduce comparison work but may not alter production hit publication.
 
-The current continuation certificate deliberately does not use clipping.
-That certificate must show that its bounded outside-span region isolates only
-the proposed missing seam root.  Early experiments with conservative
-clipping retained extra terminal ambiguity boxes and therefore weakened that
-single-component proof even though the intended root remained covered.
-Revisit continuation clipping only with a separate component/exclusion gate.
+The continuation certificate deliberately does not use heuristic clipping.
+Its bounded reparameterized neighborhood includes the existing endpoint and
+the proposed missing seam root.  It first constructs disjoint boxes centered
+on the two corrected parameters.  Outward interval restriction followed by
+strict Krawczyk inclusion proves exactly one root in each box.  The Krawczyk
+images provide smaller outward ray-parameter enclosures, which must contain
+their respective representatives and remain disjoint.  The two full certified
+boxes are then removed from a grid induced by their U/V boundaries; every
+remaining cell is recursively proved root-free by outward Bernstein hull and
+vector-hull exclusion.  Thus the local extension contains exactly the known
+endpoint pair and no third root.  Failure to certify either root, separate
+their ray intervals, exclude the complete complement, or remain within the
+fixed work budget rejects the repair.
+
+This root-centered decomposition replaces an earlier fixed-depth isolation of
+the entire extension.  The old method disabled adaptive correction and
+Krawczyk termination, so a shallow grazing chord could retain 40,960 ambiguous
+terminal boxes, overflow the 64-box trace ledger, and spend seconds before
+failing.  Increasing the global depth or storage limit is not an acceptable
+remedy.  Revisit continuation clipping only if it is independently proved to
+preserve the two root components and complete complement exclusion.
 
 Audit the layers separately.  For already bounded Bernstein coefficients,
 evaluate F(x) with interval de Casteljau operations and form derivative
@@ -3584,14 +3632,19 @@ fixed-capacity evaluation of the prepared manifold edges.  Qualification is:
      the opposite ENTER/LEAVE direction and the correct ordering about the
      edge observation.
 
-  5. Certify the continuation over a bounded outside-span reparameterization.
-     Exactly one continuation candidate and one certified candidate are
-     allowed.  Every isolated certificate box must contain the corrected root;
-     no certificate box may overlap the existing endpoint; the root must lie
-     inside the outward ray-t hull; and its oriented normal must be finite and
-     non-tangent.  Store the exact face, Bezier span, UV, adjacent face,
-     direction, representative t, and certificate interval produced by this
-     proof.
+  5. Certify the endpoint pair over a bounded outside-span
+     reparameterization.  Exactly one continuation candidate and one certified
+     candidate are allowed.  Place the existing and corrected continuation
+     parameters in disjoint interior boxes and require strict outward-interval
+     Krawczyk inclusion for both.  Their contracted ray-t images must contain
+     their respective representatives and be disjoint.  Partition the rest of
+     the extension at the two boxes' U/V boundaries and prove every complement
+     cell root-free with bounded Bernstein hull exclusion.  This establishes
+     exactly the known pair in the local extension; any third root, ambiguous
+     cell, arithmetic failure, or work exhaustion rejects the repair.  The
+     continuation's oriented normal must also be finite and non-tangent.  Store
+     the exact face, Bezier span, UV, adjacent face, direction, representative
+     t, and contracted certificate interval produced by this proof.
 
   6. Prove global source ownership before changing a disposition.  Every
      retained box that contains the selected existing root is a boundary
