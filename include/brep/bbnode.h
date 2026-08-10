@@ -29,6 +29,13 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C++" {
+#  include <list>
+#  include <vector>
+}
+#endif
+
 #include "brep/defines.h"
 #include "brep/curvetree.h"
 #include "brep/ray.h"

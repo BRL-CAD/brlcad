@@ -258,7 +258,14 @@ bu_heap_put(void *ptr, size_t sz)
 	return;
     }
 
-    /* TODO: actually do something useful :) */
+	/* TODO: This bump allocator cannot safely reuse individual objects yet.
+	 * Allocations are selected by bu_parallel_id(), but put has no owner or
+	 * page metadata and objects may be destroyed by a different thread.
+	 * Any implementation must define cross-thread return, page liveness and
+	 * reclamation/compaction semantics before adding per-bin free lists.
+	 * Bulk-lifetime clients should use an owning arena or compact container
+	 * instead of relying on this process-lifetime storage.
+	 */
 
     return;
 }
