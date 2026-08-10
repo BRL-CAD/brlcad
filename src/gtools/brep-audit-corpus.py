@@ -82,6 +82,38 @@ def write_record(output, record):
     output.flush()
 
 
+def repair_output_tail(path):
+    """Remove only an incomplete final JSONL record before resuming."""
+    if not path.exists() or not path.stat().st_size:
+        return
+    with path.open("rb+") as output:
+        output.seek(0, os.SEEK_END)
+        end = output.tell()
+        output.seek(end - 1)
+        if output.read(1) == b"\n":
+            return
+        record_start = 0
+        scan_end = end
+        while scan_end > 0:
+            scan_start = max(0, scan_end - 64 * 1024)
+            output.seek(scan_start)
+            chunk = output.read(scan_end - scan_start)
+            newline = chunk.rfind(b"\n")
+            if newline >= 0:
+                record_start = scan_start + newline + 1
+                break
+            scan_end = scan_start
+        output.seek(record_start)
+        record = output.read(end - record_start)
+        try:
+            json.loads(record.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            output.truncate(record_start)
+            return
+        output.seek(0, os.SEEK_END)
+        output.write(b"\n")
+
+
 def audit_one(audit, args, run_dir, database_name, object_name, mode):
     command = [
         audit,
@@ -512,6 +544,8 @@ def main():
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_mode = "a" if args.resume else "w"
+    if args.resume:
+        repair_output_tail(output_path)
 
     if args.batch_databases:
         starts = resume_batch_starts(output_path) if args.resume else {}
