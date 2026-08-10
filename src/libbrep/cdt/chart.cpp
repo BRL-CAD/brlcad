@@ -332,12 +332,11 @@ periodic_seam_side(double parameter, const ON_Interval &domain)
     return 0;
 }
 
-/* A closed edge may have coincident 3-D endpoints stored on opposite sides of
- * a periodic surface domain.  Some STEP p-curves traverse the edge through
- * the opposite periodic image while retaining those endpoint parameters.  In
- * that case, reverse the interior samples of the closed path.  This preserves
- * exactly the same undirected 3-D edge segments while making its chart winding
- * agree with its seam endpoints. */
+/* A closed edge may have coincident 3-D endpoints stored on either the same or
+ * opposite sides of a periodic surface domain.  Some STEP p-curves traverse
+ * the edge through the opposite periodic image, retain the same parameter for
+ * both endpoints, or switch bounds along a seam trim.  Orient closed paths and
+ * propagate each seam side without changing the undirected 3-D edge segments. */
 static std::vector<int>
 orient_periodic_closed_paths(const std::vector<int> &source,
 	std::vector<double> &canonical,
@@ -394,8 +393,28 @@ orient_periodic_closed_paths(const std::vector<int> &source,
 	const int first = ring[i];
 	const int first_side = periodic_seam_side(
 	    canonical[(size_t)first], domain);
-	if (!first_side || periodic_seam_side(
-		canonical[(size_t)ring[i + 1]], domain)) {
+	const int next = ring[i + 1];
+	const int next_side = periodic_seam_side(
+	    canonical[(size_t)next], domain);
+	if (!first_side) {
+	    ++i;
+	    continue;
+	}
+	/* Consecutive seam samples with changing open coordinates belong to
+	 * one side of the chart cut.  Imported p-curves may switch equivalent
+	 * periodic parameter bounds partway along that topological seam. */
+	if (next_side) {
+	    if (next_side != first_side && open_parameters &&
+		    open_parameters->size() == canonical.size()) {
+		const double first_open = (*open_parameters)[(size_t)first];
+		const double next_open = (*open_parameters)[(size_t)next];
+		const double open_scale = std::max(1.0, std::max(
+		    std::fabs(first_open), std::fabs(next_open)));
+		if (std::fabs(next_open - first_open) > 4096.0 *
+			std::numeric_limits<double>::epsilon() * open_scale)
+		    canonical[(size_t)next] = first_side < 0 ?
+			domain.Min() : domain.Max();
+	    }
 	    ++i;
 	    continue;
 	}
@@ -459,7 +478,11 @@ orient_periodic_closed_paths(const std::vector<int> &source,
 	    duplicate_parameter;
 	if (!reconstruct && winding * desired < 0.0) {
 	    std::reverse(ring.begin() + i + 1, ring.begin() + end);
-	} else if (reconstruct) {
+	}
+	if (!reconstruct && last_side == first_side)
+	    canonical[(size_t)last] = desired > 0.0 ?
+		domain.Max() : domain.Min();
+	if (reconstruct) {
 	    std::vector<double> distance(end - i + 1, 0.0);
 	    bool complete = true;
 	    for (size_t sample = i + 1; sample <= end; ++sample) {
@@ -1132,10 +1155,6 @@ cdt_face_chart::build_cylinder(const ON_BrepFace &face,
 	}
     }
 
-    const ON_3dPoint cylinder_origin = cylinder.circle.plane.origin;
-    const double cylinder_coordinate_scale = std::max(1.0, std::max(
-	std::max(std::fabs(cylinder_origin.x),
-	    std::fabs(cylinder_origin.y)), std::fabs(cylinder_origin.z)));
     points.reserve(native_points.size());
     for (size_t i = 0; i < native_points.size(); ++i) {
 	double unwrapped = m_cylinder_orientation > 0 ?
@@ -1150,17 +1169,14 @@ cdt_face_chart::build_cylinder(const ON_BrepFace &face,
 		native_points[i].second : native_points[i].first;
 	    const double seam_tolerance =
 		parameter_tolerance(m_closed_domain);
-	    const double angular_tolerance = 4096.0 *
-		std::numeric_limits<double>::epsilon() *
-		std::max(1.0, cylinder_coordinate_scale /
-		    cylinder.circle.radius);
-	    const bool at_analytic_seam =
-		unwrapped <= angular_tolerance ||
-		2.0 * ON_PI - unwrapped <= angular_tolerance;
-	    if (at_analytic_seam && std::fabs(native_closed -
+	    /* The two native parameter bounds are distinct sides of the
+	     * topological seam even when an imported NURBS cylinder only agrees
+	     * with its fitted analytic cylinder within modeling tolerance.  Do
+	     * not let that geometric fitting error collapse both chart copies. */
+	    if (std::fabs(native_closed -
 		    m_closed_domain.Min()) <= seam_tolerance)
 		unwrapped = 0.0;
-	    else if (at_analytic_seam && std::fabs(native_closed -
+	    else if (std::fabs(native_closed -
 		    m_closed_domain.Max()) <= seam_tolerance)
 		unwrapped = 2.0 * ON_PI;
 	}
