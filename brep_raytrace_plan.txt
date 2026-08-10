@@ -435,10 +435,34 @@ to 13.66 percent of sampled cycles.  Aggregate exact restriction remains hot
 because noncomplete corridor, strip, localization, and terminal boxes still
 restart from full source nets; those are the next scheduling/reuse targets.
 
-Telemetry for all three tiers is part of correctness, not just profiling.
+The next scheduling step defers the exact strip net until it can participate
+in a complete fold proof.  A split first restricts and transforms only its
+corridor, then establishes corridor uniqueness and either an expansion
+Krawczyk or boundary-existence proof.  Only that positive residue constructs,
+transforms, and excludes the complementary strip.  The unchanged final rule
+still requires root existence, uniqueness, and strip exclusion before storing
+a fold root.  Failure constructing a required strip remains whole-ray
+fallback.  Thus the change removes dead proof work without interpreting an
+ambiguous corridor as empty or relaxing contact authority.
+
+The tolerance-contact trace reaches one corridor decision, cannot establish
+uniqueness, and now records one avoided strip build with zero strip builds,
+boundary proofs, strip boxes, localizations, or published fold roots.  It
+retains the same two candidates of six spans, 62 subdivision boxes, four
+isolated boxes, 36/29/0/7 interval fold
+attempts/contractions/exclusions/exact fallbacks, 12/3/0/9/9 graph interval
+attempts/signs/exclusions/contractions/exact fallbacks, uncertified fallback,
+and one legacy material segment.  Five interleaved preserved-binary samples
+average about 6.252 versus 6.906 billion cycles, a 9.5-percent reduction, and
+6.829 versus 7.244 billion instructions, a 5.7-percent reduction.  A complete
+preserved eager-strip seam run has the same selected/fallback, repair, event,
+box, root, and known-failure populations as the deferred implementation.
+
+Telemetry for these tiers is part of correctness, not just profiling.
 The throughput fixture checks coefficient-request accounting, ordinary fold
 contraction accounting, graph attempts/signs/exclusions/fallbacks, exact
-contact execution, reversal, segment count, and proof provenance.  The
+contact execution, deferred strip builds, reversal, segment count, and proof
+provenance.  The
 synthetic fold bridge requires the graph screen across dyadic epsilon, equation
 scale, parameter orientation, and determinant-sign variants.  Eleven focused
 release gates and the expanded 166.01-second exhaustive interval matrix pass
@@ -457,7 +481,7 @@ cancellation-heavy contact workload from roughly 49 ms to 94 ms without
 compression and 66 ms with compression.  It was reverted.  The higher-value
 next design is to avoid recomputing exact slab restrictions from the complete
 source: retain or split immutable exact Bernstein nets through graph
-subdivision, and stage the complete ordinary corridor/boundary/strip proofs
+subdivision, and stage more of the complete ordinary corridor/boundary proof
 before exact transformed nets.  Any cache must be per-shot or immutable
 prepared data with explicit lifetime, bounded storage, and no ray-time malloc.
 
@@ -4643,6 +4667,49 @@ material-sector, order, and minimum-segment obligation described above.
 Ordinary model-tolerance contacts and all zero-miss paths retain their prior
 logic and must report no local-certificate ledger.
 
+6.4.1.9 Candidate-specific continuation population
+
+A locally certified continuation is not yet a physical seam-event candidate.
+When more than one source root can independently produce a continuation, each
+candidate must first prove that the immutable retained-root population could
+be owned by that candidate's particular outer source/continuation interval.
+Counting every local continuation and rejecting the ray merely because the
+count exceeds one loses otherwise complete oblique contact transactions.
+
+Use only a necessary-condition population screen at this stage.  It may reject
+a candidate, but it may not resolve a box, relabel a root, emit an event, or
+grant tolerance authority.  A candidate is structurally possible only when
+all other retained roots have one of the two forms consumed by the final
+physical-event theorem:
+
+  1. Every other root is finite, belongs to an incident face, is grazing, and
+     lies at the same edge event under the final witness tolerance.  This form
+     is unavailable to an explicit-declaration contact transaction.
+
+  2. There are exactly two other roots.  Both are transverse mathematical
+     trim hits or permitted trim misses on the other incident face and the
+     same prepared span.  After ordering by ray distance they form
+     ENTER/LEAVE and lie strictly inside this candidate's outer interval using
+     the final contact theorem's coordinate-scaled binary64 roundoff.  Permit
+     at most one trim miss; require exactly one hit and one miss when the
+     candidate uses explicit declared-contact authority.
+
+Only population-qualified continuations contribute to the candidate count.
+Exactly one must remain.  The survivor must then repeat the authoritative root
+classification and complete every existing local-root/tube, terminal-box/root
+ownership, connected-source, edge/correspondence, material-sector, order,
+minimum-segment, and atomic-publication obligation.  The prefilter deliberately
+duplicates the cheap structural predicates rather than sharing or mutating the
+final ledger: a disagreement can only make the whole ray fall back.
+
+Record raw population screens and rejections separately from qualified
+continuation candidates.  The oblique Cobb trend must include cases with two
+locally certified candidates of which exactly one survives, along with cases
+that are naturally unique and cases that remain unsupported.  Repeat under
+reversal and similarity transforms.  This is a topology/ownership filter, not
+a t-distance merge, nearest-root heuristic, widened trim tolerance, or new
+root solver.
+
 The permanent C/C++ arithmetic corpus begins with three affine boundary roots
 and three nearby quadratic root pairs at equation scales `2^-100`, `1`, and
 `2^100`, plus multi-root, singular, uncertain-coefficient, invalid-input, and
@@ -5736,10 +5803,22 @@ event solver rather than recreating the 2006 implementation literally.
     ray-plane coefficients until singular, terminal-refinement, or fold proof
     consumption.  Hull-excluded and ordinary-resolved spans avoid exact
     construction; continuation and physical-event paths no longer build exact
-    arrays they never read.  The next increment must stage ordinary corridor
-    and strip restriction/linear transformation before the still-eager exact
-    fold-corridor path.  Preserve the existing exact replay as authority for
-    every inconclusive contact.
+    arrays they never read.  At that checkpoint the next increment was to
+    stage ordinary corridor and strip restriction/linear transformation before
+    the still-eager exact fold-corridor path.  Preserve the existing exact
+    replay as authority for every inconclusive contact.
+
+    Subsequent checkpoint: the complementary exact fold strip is now built
+    only after corridor uniqueness and either expansion Krawczyk or boundary
+    existence has proved a root.  Build/availability/avoidance telemetry and
+    the synthetic affine-fold corpus prove that required strips are retained.
+    Candidate-specific seam population screening then restores all 52 former
+    prepared oblique/contact failures while retaining the complete final
+    ownership theorem and conservative fallback.  The optimized 21-test ray
+    matrix, complete transformed seam gate, and focused authority shard are
+    green.  Continue by reusing restricted exact nets and adding stronger
+    interval exits; exact expansion replay remains mandatory for every
+    inconclusive case.
 
   * Profile trimming independently.  Evaluate a compact two-dimensional
     trim kd-tree or comparable indexed broad phase, as demonstrated by Sloup
