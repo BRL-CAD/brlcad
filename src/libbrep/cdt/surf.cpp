@@ -894,11 +894,26 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	face.OuterLoop()->GetBoundingBox(lbox);
 	ON_3dPoint min = lbox.Min();
 	ON_3dPoint max = lbox.Max();
+	/* Some importers encode an untrimmed two-pole surface with two seam
+	 * trims whose p-curves occupy the same periodic image.  Those two trims
+	 * are a topological cut, not a boundary of a partial surface. */
+	bool seam_only_polar = cdt_face_uses_polar_chart(face) &&
+	    face.LoopCount() == 1;
+	const ON_BrepLoop *outer = face.OuterLoop();
+	if (!outer || outer->TrimCount() < 2)
+	    seam_only_polar = false;
+	for (int trim_index = 0; seam_only_polar &&
+		trim_index < outer->TrimCount(); ++trim_index) {
+	    const ON_BrepTrim *trim = outer->Trim(trim_index);
+	    if (!trim || trim->m_type != ON_BrepTrim::seam)
+		seam_only_polar = false;
+	}
 	/* Periodic p-curves may mix equivalent images and make their raw UV
 	 * envelope span several periods.  Sampling that envelope duplicates one
 	 * physical region and can leave another with no interior support.  Use one
-	 * native period when the trim envelope is wider than the surface domain;
-	 * open directions are always bounded by their actual surface domain. */
+	 * native period when the trim envelope is wider than the surface domain.
+	 * Sample one complete period only for this seam-only polar case when its
+	 * trim envelope has collapsed in the closed direction. */
 	const double parameter_min[2] = {sinfo.u1, sinfo.v1};
 	const double parameter_max[2] = {sinfo.u2, sinfo.v2};
 	for (int direction = 0; direction < 2; ++direction) {
@@ -911,7 +926,8 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 		std::max(std::max(std::fabs(parameter_min[direction]),
 		    std::fabs(parameter_max[direction])), domain_length);
 	    if (s->IsClosed(direction) &&
-		    upper - lower > domain_length + tolerance) {
+		    (upper - lower > domain_length + tolerance ||
+		    (seam_only_polar && upper - lower <= tolerance))) {
 		lower = parameter_min[direction];
 		upper = parameter_max[direction];
 	    } else if (!s->IsClosed(direction)) {
