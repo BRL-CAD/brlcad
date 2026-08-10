@@ -7,6 +7,136 @@ Repository studied: /home/cyapp/brlcad
 STEP test corpus: /home/cyapp/step_corpus_g
 
 
+IMPLEMENTATION CHECKPOINT: COMPACT RETAINED CURVE TREES (2026-08-09)
+------------------------------------------------------------------
+
+The first prep-memory implementation checkpoint addresses the highest-value
+CurveTree waste without changing trim subdivision or classification policy.
+This is important: the current trim leaf population is still conservative and
+may itself need algorithmic improvement, but crack handling, half-open endpoint
+ownership, periodic images, and exact native-curve crossing solves already have
+qualified behavior.  Memory representation can be improved independently of
+the later decision about how many leaves are actually necessary.
+
+The historical allocation path compounded three costs.  Every `BRNode`, every
+`BBNode`, each node's separately allocated STL holder, and each `CurveTree`
+inherited `PooledObject<T>`.  `PooledObject` calls `bu_heap_get` and
+`bu_heap_put`.  The current `bu_heap` implementation has 256 size classes,
+allocates 64-KiB bump pages per `bu_parallel_id()`, and does nothing when a
+small allocation is returned.  Consequently deleted CurveTrees were logically
+destroyed but their node storage could not be reused or reclaimed.  A serial
+per-face profiler therefore accumulated process-lifetime pages even though it
+owned only one live face tree at a time.
+
+Finishing `bu_heap_put` with a simple free list is not safe or sufficient.
+Allocation is routed by the caller's parallel id, deletion can occur on a
+different thread, and the returned pointer has no owner/page metadata.  A
+correct generic implementation must define cross-thread returns, page
+liveness, and compaction or page-reclamation semantics.  Even a correct free
+list would leave the much larger active-representation problem unchanged.
+`src/libbu/heap.c` now records that design TODO explicitly.  BREP no longer
+depends on solving it for retained CurveTree storage.
+
+The former CurveTree was a recursive binary construction hierarchy.  A
+232-byte `BRNode` and a separately allocated 24-byte STL holder were retained
+for every internal node and every leaf.  After construction it also built a
+global pointer index and, per loop, two complete image indices sorted in X and
+Y.  Production `CurveTree::isTrimmed` and `classifyCell` did not traverse the
+binary hierarchy.  They consumed only the per-loop prepared leaves.  The
+hierarchy survived for old closest-estimate helpers, plotting access, and cache
+serialization; repository-wide call analysis found no production consumer
+that needed internal curve nodes.
+
+Curve construction now follows exactly the same control flow through span and
+horizontal/vertical-tangent splits and exactly the same `isLinear` stopping
+test.  At a terminal interval it appends one compact `BRNode` value to a
+CurveTree-owned `std::vector`; recursive calls no longer allocate or retain a
+parent.  All leaf pointers are formed only after subdivision is complete, so
+vector relocation cannot invalidate a prepared index.  The retained leaf has
+only data used by classification and exact curve solving:
+
+  * its source trim pointer and trim/adjacent-face indices;
+  * the native curve parameter interval;
+  * UV endpoint coordinates and sampled UV bounding rectangle; and
+  * monotonic-direction, horizontal, vertical, and inner-loop flags.
+
+Three-dimensional OpenNURBS points and boxes were unnecessary for two-
+dimensional pcurves.  Storing the four UV box coordinates and four UV endpoint
+coordinates directly reduces `sizeof(BRNode)` from 232 bytes, plus the old
+24-byte allocation, to 104 bytes with no secondary allocation.  Its exact
+`getCurveEstimateOfU/V`, crossing, and curve-distance methods still evaluate
+the original `ON_Curve`; this is a storage compaction, not a polygonal
+replacement.
+
+A surface chooses its parity-ray orientation once: closed-V surfaces classify
+with a horizontal +U ray, and all others classify with a vertical +V ray.
+Keeping both per-loop X and Y sorted indices was therefore redundant.  Each
+loop now retains only the ordering for its fixed coordinate.  An indexed image
+stores a 32-bit leaf index, two integer periodic image numbers, and two endpoint
+extension bits in 16 bytes.  Query code reconstructs the UV offset from the
+surface periods.  The 32-bit limit is checked explicitly and matches the
+existing prep-cache leaf-count format.  The obsolete global pointer index is
+also gone; compatibility plotting/list APIs iterate the owned leaf vector.
+
+Prep cache version 2 serializes the compact leaves and their recorded maximum
+construction depth rather than the recursive hierarchy.  Old version-1
+records are rejected normally.  A new leaf record needs 89 serialized bytes
+instead of serializing every heavyweight internal and leaf node, so disk cache
+size and cache-load allocation count should improve substantially as well as
+resident memory.  Serial and parallel librt cache round-trip tests pass.
+
+The primary before/after oracle is Recurta AP203 `10057.g/id2_item.s`.  It has
+301 faces and 482,684 curve leaves at both surface depths.  The same process
+retains a depth-three tree with 6,603 surface leaves and a depth-eight tree with
+315,415 surface leaves.  The earlier 15-pair feature audit peaked near
+585.0 MiB.  With compact CurveTrees it peaks at 372,117,504 bytes (354.9 MiB),
+a reduction of about 230 MiB or 39 percent.  All 30 directed rays pass;
+there are no depth, reversal, disposition, or face-owner differences, and the
+maximum shallow/deep endpoint delta remains
+`2.9734749773524527e-8`.  A six-ray axis-only repetition has maximum delta
+`5.5138116294983774e-12` and peaks at 374,116,352 bytes.
+
+The serial depth-three per-face profile demonstrates both the win and the
+remaining floor.  Peak RSS falls from 205,426,688 to 164,495,360 bytes even
+though all 482,684 leaf constructions are counted.  Since only one CurveTree
+is live in that mode, the remaining peak is largely the 28-MiB imported BREP,
+OpenNURBS topology, process libraries, and unreclaimed SurfaceTree/`BBNode`
+pool pages.  Repeated wall measurements varied from 1.56 to 11.90 seconds as
+the build and system caches warmed; these numbers are not stable performance
+benchmarks.  Whole-object concurrent prep is the relevant production timing
+and must receive an isolated phase benchmark later.
+
+The second scale check is `10088.g/id2_item.s`, a 5,771-face solid with 108,433
+curve leaves and 52,213 depth-eight surface leaves.  Its 15-pair, two-depth
+feature audit passes with the previous maximum delta
+`6.6577683810464805e-8`; peak RSS is 283,979,776 bytes (270.8 MiB), compared
+with the earlier approximately 310.0-MiB checkpoint.  The smaller percentage
+is expected: this model has many more OpenNURBS topology objects but less than
+one quarter of 10057's curve leaves.  It confirms that CurveTree compaction
+does not merely tune the one curve-heavy model and also shows why whole-model
+topology attribution remains necessary.
+
+Qualification for this checkpoint includes the trim-classifier, cleanup,
+endpoint, contact-trim, and distorted-defect suites; serial and parallel BREP
+prep-cache reloads; the complete 10057 and 10088 feature/depth comparisons;
+and the 416-ray seam suite.  All pass.  Leaf counts and exact curve intervals
+are unchanged.
+
+This does not complete prep-memory work.  The next high-value structure is the
+SurfaceTree.  A depth-eight 10057 prep retains 618,445 `BBNode`s, and each node
+still uses the process-lifetime pool plus a separate child-vector holder.
+Surface nodes require hierarchical traversal, so their compact design is not
+identical to the flat CurveTree solution.  Candidate directions are a
+per-prep/per-face arena with explicit transfer into `brep_specific`, a compact
+index-based node array, or a build hierarchy that is packed into immutable
+runtime nodes before temporary storage is released.  The design must preserve
+structural seam and knot splits, cache and fresh-prep identity, parallel
+ownership, and allocation-free shooting.  Smaller wins—shared immutable span
+metadata, topology/reference compaction, cache streaming, and vector capacity
+accounting—remain worthwhile because multi-gigabyte top-level STEP objects
+will combine all of these costs.
+
+
 IMPLEMENTATION CHECKPOINT: COPLANAR EVENT AUTHORITY (2026-08-09)
 ----------------------------------------------------------------
 
