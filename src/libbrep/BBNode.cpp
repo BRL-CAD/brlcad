@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <new>
 
 #include "bu/log.h"
 #include "brep/bbnode.h"
@@ -29,12 +30,30 @@
 namespace brlcad {
 
 
+namespace {
+
+struct BBNodeChildStorage {
+    BBNodeArena *arena;
+};
+
+
+static BBNodeChildStorage *
+bbnode_child_storage(BBNode **children)
+{
+    return children ? reinterpret_cast<BBNodeChildStorage *>(children) - 1 :
+	NULL;
+}
+
+}
+
+
 BBNode::BBNode(const ON_BoundingBox &node, const CurveTree *ct) :
     m_node(node),
     m_u(),
     m_v(),
     m_checkTrim(true),
     m_trimmed(false),
+    m_arena_node(false),
     m_estimate(),
     m_normal(),
     m_ctree(ct),
@@ -64,6 +83,7 @@ BBNode::BBNode(
     m_v(v),
     m_checkTrim(checkTrim),
     m_trimmed(trimmed),
+    m_arena_node(false),
     m_estimate(),
     m_normal(),
     m_ctree(ct),
@@ -83,20 +103,37 @@ BBNode::BBNode(
 
 BBNode::~BBNode()
 {
-    /* delete the children */
-    for (std::size_t i = 0; i < m_child_count; ++i)
-	delete m_children[i];
-    if (m_children)
-	bu_free(m_children, "BBNode child pointers");
+    BBNodeChildStorage *storage = bbnode_child_storage(m_children);
+    BBNodeArena *arena = storage ? storage->arena : NULL;
+
+    /* Ordinary trees own ordinary children recursively.  Arena nodes are
+     * destroyed in bulk, but retain normal ownership of any ordinary node a
+     * caller may have attached after construction. */
+    for (std::size_t i = 0; i < m_child_count; ++i) {
+	if ((!m_arena_node && !arena) || !m_children[i]->m_arena_node)
+	    delete m_children[i];
+    }
+    if (arena)
+	delete arena;
+    if (storage)
+	bu_free(storage, "BBNode child pointers");
 }
 
 
 BBNode::BBNode(Deserializer &deserializer, const CurveTree &ctree) :
+    BBNode(deserializer, ctree, NULL)
+{
+}
+
+
+BBNode::BBNode(Deserializer &deserializer, const CurveTree &ctree,
+	BBNodeArena *arena) :
     m_node(),
     m_u(),
     m_v(),
     m_checkTrim(false),
     m_trimmed(false),
+    m_arena_node(false),
     m_estimate(),
     m_normal(),
     m_ctree(&ctree),
@@ -118,13 +155,67 @@ BBNode::BBNode(Deserializer &deserializer, const CurveTree &ctree) :
     m_trimmed = bool_flags & (1 << 1);
 
     for (std::size_t i = 0; i < num_children; ++i)
-	addChild(new BBNode(deserializer, ctree));
+	addChild(arena ? arena->make(deserializer, ctree) :
+	    new BBNode(deserializer, ctree));
 
     /* Older cache records stored per-leaf trim indices here.  Consume them
      * for backward compatibility; current classification uses the owning
      * CurveTree's immutable per-loop index. */
     for (std::size_t i = 0; i < num_leaves_keys; ++i)
 	(void)deserializer.read_uint32();
+}
+
+
+void
+BBNode::adopt(BBNode &source)
+{
+    if (m_ctree != source.m_ctree || m_child_count)
+	bu_bomb("BBNode arena root adoption is inconsistent");
+    BBNodeChildStorage *storage = bbnode_child_storage(m_children);
+    if (storage) {
+	if (storage->arena)
+	    bu_bomb("BBNode arena root already has an owner");
+	bu_free(storage, "BBNode child pointers");
+    }
+
+    m_node = source.m_node;
+    m_u = source.m_u;
+    m_v = source.m_v;
+    m_checkTrim = source.m_checkTrim;
+    m_trimmed = source.m_trimmed;
+    m_estimate = source.m_estimate;
+    m_normal = source.m_normal;
+    m_children = source.m_children;
+    m_child_count = source.m_child_count;
+    m_child_capacity = source.m_child_capacity;
+    source.m_children = NULL;
+    source.m_child_count = 0;
+    source.m_child_capacity = 0;
+}
+
+
+void
+BBNode::setArenaOwner(BBNodeArena *owner)
+{
+    BBNodeChildStorage *storage = bbnode_child_storage(m_children);
+    if (!storage) {
+	storage = static_cast<BBNodeChildStorage *>(bu_malloc(
+	    sizeof(BBNodeChildStorage), "BBNode child pointers"));
+	m_children = reinterpret_cast<BBNode **>(storage + 1);
+    }
+    storage->arena = owner;
+}
+
+
+BBNode *
+BBNode::deserializeTree(Deserializer &deserializer, const CurveTree &ctree)
+{
+    BBNodeArena *arena = new BBNodeArena();
+    BBNode *root = arena->make(deserializer, ctree);
+    BBNode *result = arena->finish(root);
+    if (!result)
+	delete arena;
+    return result;
 }
 
 
@@ -159,12 +250,164 @@ BBNode::addChild(BBNode *node)
 	uint32_t new_capacity = m_child_capacity ? m_child_capacity * 2 : 1;
 	if (new_capacity < m_child_capacity || new_capacity < m_child_count + 1)
 	    new_capacity = m_child_count + 1;
-	m_children = static_cast<BBNode **>(bu_realloc(m_children,
+	BBNodeChildStorage *storage = bbnode_child_storage(m_children);
+	storage = static_cast<BBNodeChildStorage *>(bu_realloc(storage,
+	    sizeof(BBNodeChildStorage) +
 	    (std::size_t)new_capacity * sizeof(BBNode *),
 	    "BBNode child pointers"));
+	if (!m_children)
+	    storage->arena = NULL;
+	m_children = reinterpret_cast<BBNode **>(storage + 1);
 	m_child_capacity = new_capacity;
     }
     m_children[m_child_count++] = node;
+}
+
+
+struct alignas(BBNode) BBNodeArena::Block {
+    Block *next;
+    std::size_t used;
+    std::size_t capacity;
+};
+
+
+BBNodeArena::BBNodeArena() :
+    m_blocks(NULL),
+    m_anchor(NULL),
+    m_started(false)
+{
+}
+
+
+BBNodeArena::~BBNodeArena()
+{
+    /* The first node uses ordinary storage so it can be transferred through
+     * SurfaceTree::releaseRootNode.  On construction failure it remains an
+     * arena node and is destroyed shallowly while its children are live. */
+    if (m_anchor) {
+	BBNode *anchor = m_anchor;
+	m_anchor = NULL;
+	delete anchor;
+    }
+
+    /* Parents are always allocated before their children.  Restore block
+     * allocation order and destroy each block in forward order so a node's
+     * child pointers remain live while its destructor inspects ownership. */
+    Block *ordered = NULL;
+    while (m_blocks) {
+	Block *block = m_blocks;
+	m_blocks = block->next;
+	block->next = ordered;
+	ordered = block;
+    }
+    while (ordered) {
+	Block *block = ordered;
+	ordered = block->next;
+	unsigned char *nodes = reinterpret_cast<unsigned char *>(block + 1);
+	for (std::size_t i = 0; i < block->used; ++i) {
+	    BBNode *node = reinterpret_cast<BBNode *>(nodes +
+		i * sizeof(BBNode));
+	    node->~BBNode();
+	}
+	bu_free(block, "BBNode arena block");
+    }
+}
+
+
+void *
+BBNodeArena::allocate()
+{
+    static_assert(sizeof(Block) % alignof(BBNode) == 0,
+	"BBNode arena block header must preserve node alignment");
+    if (!m_blocks || m_blocks->used == m_blocks->capacity) {
+	/* Four-way SurfaceTree levels contain 1, 4, 16, 64, ... nodes.
+	 * Growing through 256 and then retaining that block size packs complete
+	 * levels exactly while bounding a trimmed face's final-block waste. */
+	const std::size_t maximum_capacity = 256;
+	std::size_t capacity = m_blocks ? m_blocks->capacity : 4;
+	if (capacity < maximum_capacity) {
+	    const std::size_t grown = capacity * 4;
+	    capacity = std::min(grown, maximum_capacity);
+	}
+	Block *block = static_cast<Block *>(bu_malloc(sizeof(Block) +
+	    capacity * sizeof(BBNode), "BBNode arena block"));
+	block->next = m_blocks;
+	block->used = 0;
+	block->capacity = capacity;
+	m_blocks = block;
+    }
+    unsigned char *nodes = reinterpret_cast<unsigned char *>(m_blocks + 1);
+    void *storage = nodes + m_blocks->used * sizeof(BBNode);
+    m_blocks->used++;
+    return storage;
+}
+
+
+BBNode *
+BBNodeArena::make(const ON_BoundingBox &node, const CurveTree *ct)
+{
+    BBNode *result = NULL;
+    if (!m_started) {
+	m_started = true;
+	result = new BBNode(node, ct);
+	m_anchor = result;
+    } else {
+	result = ::new (allocate()) BBNode(node, ct);
+    }
+    result->m_arena_node = true;
+    return result;
+}
+
+
+BBNode *
+BBNodeArena::make(const CurveTree *ct, const ON_BoundingBox &node,
+	const ON_Interval &u, const ON_Interval &v, bool checkTrim,
+	bool trimmed)
+{
+    BBNode *result = NULL;
+    if (!m_started) {
+	m_started = true;
+	result = new BBNode(ct, node, u, v, checkTrim, trimmed);
+	m_anchor = result;
+    } else {
+	result = ::new (allocate()) BBNode(ct, node, u, v, checkTrim,
+	    trimmed);
+    }
+    result->m_arena_node = true;
+    return result;
+}
+
+
+BBNode *
+BBNodeArena::make(Deserializer &deserializer, const CurveTree &ctree)
+{
+    BBNode *result = NULL;
+    if (!m_started) {
+	m_started = true;
+	result = new BBNode(deserializer, ctree, this);
+	m_anchor = result;
+    } else {
+	result = ::new (allocate()) BBNode(deserializer, ctree, this);
+    }
+    result->m_arena_node = true;
+    return result;
+}
+
+
+BBNode *
+BBNodeArena::finish(BBNode *root)
+{
+    if (!root)
+	return NULL;
+    if (!m_anchor)
+	bu_bomb("BBNode arena has no transferable root");
+    if (root != m_anchor)
+	m_anchor->adopt(*root);
+    root = m_anchor;
+    m_anchor = NULL;
+    root->m_arena_node = false;
+    root->setArenaOwner(this);
+    return root;
 }
 
 

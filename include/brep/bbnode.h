@@ -48,6 +48,7 @@ extern "C++" {
 extern "C++" {
 namespace brlcad {
     class BBNode;
+    class BBNodeArena;
 }
 }
 #endif
@@ -72,7 +73,7 @@ namespace brlcad {
     /**
      * Bounding Box Hierarchy Node
      */
-    class BREP_EXPORT BBNode : public PooledObject<BBNode> {
+    class BREP_EXPORT BBNode {
     public:
 	explicit BBNode(const ON_BoundingBox &node, const CurveTree *ct = NULL);
 	BBNode(const CurveTree *ct,
@@ -84,6 +85,8 @@ namespace brlcad {
 	~BBNode();
 
 	BBNode(Deserializer &deserieralizer, const CurveTree &ctree);
+	static BBNode *deserializeTree(Deserializer &deserializer,
+		const CurveTree &ctree);
 	void serialize(Serializer &serializer) const;
 
 	const ON_BrepFace &get_face() const;
@@ -163,6 +166,8 @@ namespace brlcad {
 	/** Trimming Flags */
 	bool m_checkTrim;
 	bool m_trimmed;
+	/* Arena construction nodes are destroyed shallowly by their arena. */
+	bool m_arena_node;
 
 	/** Point used for closeness testing - usually based on evaluation
 	 * of the curve/surface at the center of the parametric domain
@@ -177,8 +182,14 @@ namespace brlcad {
 
 
     private:
+	friend class BBNodeArena;
+
 	BBNode(const BBNode &source);
 	BBNode &operator=(const BBNode &source);
+	BBNode(Deserializer &deserializer, const CurveTree &ctree,
+		BBNodeArena *arena);
+	void adopt(BBNode &source);
+	void setArenaOwner(BBNodeArena *owner);
 
 	bool intersectedBy(const ON_Ray &ray, double *tnear = NULL, double *tfar = NULL) const;
 
@@ -192,6 +203,35 @@ namespace brlcad {
 	BBNode **m_children;
 	uint32_t m_child_count;
 	uint32_t m_child_capacity;
+    };
+
+    /**
+     * Per-SurfaceTree construction storage.  The first node uses ordinary
+     * transferable storage and subsequent nodes are bulk allocated.  The
+     * final logical root is adopted into that first node, whose lifetime owns
+     * the arena.
+     */
+    class BBNodeArena {
+    public:
+	BBNodeArena();
+	~BBNodeArena();
+
+	BBNode *make(const ON_BoundingBox &node,
+		const CurveTree *ct = NULL);
+	BBNode *make(const CurveTree *ct, const ON_BoundingBox &node,
+		const ON_Interval &u, const ON_Interval &v,
+		bool checkTrim, bool trimmed);
+	BBNode *finish(BBNode *root);
+
+    private:
+	friend class BBNode;
+	struct Block;
+	void *allocate();
+	BBNode *make(Deserializer &deserializer, const CurveTree &ctree);
+
+	Block *m_blocks;
+	BBNode *m_anchor;
+	bool m_started;
     };
 
     inline const ON_BrepFace &

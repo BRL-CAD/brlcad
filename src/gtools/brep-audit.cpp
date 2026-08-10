@@ -2532,7 +2532,8 @@ print_interval(const ON_Interval &interval)
 
 static void
 print_prep_result(const char *db_path, const char *object,
-	const prep_result &result)
+	const prep_result &result, size_t repeat_index = 0,
+	size_t repeat_count = 1)
 {
     std::cout << "{\"format\":\"brlcad-brep-ray-prep-audit-v1\""
 	<< ",\"database\":" << json_quote(db_path)
@@ -2541,6 +2542,8 @@ print_prep_result(const char *db_path, const char *object,
 	    "ok" : "fail")
 	<< ",\"return_code\":" << result.ret
 	<< ",\"failure_reason\":" << json_quote(result.failure_reason)
+	<< ",\"repeat_index\":" << repeat_index
+	<< ",\"repeat_count\":" << repeat_count
 	<< ",\"seconds\":";
     print_num(result.seconds);
     std::cout << ",\"peak_rss_bytes\":" << result.peak_rss_bytes
@@ -2999,9 +3002,10 @@ main(int argc, const char **argv)
     long ray_count = 64;
     long feature_ray_count = 0;
     long ray_pair = -1;
+    long prep_repeat = 1;
     int legacy_only = 0;
     const char *trim_query_arg = NULL;
-    struct bu_opt_desc d[21];
+    struct bu_opt_desc d[22];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -3022,7 +3026,8 @@ main(int argc, const char **argv)
     BU_OPT(d[17], "", "legacy-only", "", NULL, &legacy_only, "Skip prepared solving while tracing the legacy SurfaceTree path");
     BU_OPT(d[18], "", "trim-query", "face,u,v", &bu_opt_str, &trim_query_arg, "Compare production and sampled-polygon trim classification");
     BU_OPT(d[19], "", "feature-ray-count", "#", &bu_opt_long, &feature_ray_count, "Deterministic face-normal, edge-normal, and edge-grazing chord pairs");
-    BU_OPT_NULL(d[20]);
+    BU_OPT(d[20], "", "prep-repeat", "#", &bu_opt_long, &prep_repeat, "Prepare and fully unload the same BREP repeatedly");
+    BU_OPT_NULL(d[21]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     trim_query_spec parsed_trim_query;
     const bool trim_query_only = trim_query_arg != NULL;
@@ -3050,7 +3055,9 @@ main(int argc, const char **argv)
 	    reference_depth < 0 || reference_depth > BREP_MAX_FT_DEPTH ||
 	    ray_count < 0 || ray_count > 1000000 ||
 	    feature_ray_count < 0 || feature_ray_count > 1000000 ||
+	    prep_repeat < 1 || prep_repeat > 1000 ||
 	    ray_pair < -1 || ray_pair > 1000002 ||
+	    (!prep_only && prep_repeat != 1) ||
 	    (!ray_depth_compare_only &&
 	     (candidate_depth != 3 ||
 	      reference_depth != RT_BREP_DEFAULT_SURFACE_TREE_DEPTH ||
@@ -3089,10 +3096,16 @@ main(int argc, const char **argv)
     }
 
     if (prep_only) {
-	prep_result prep = raytrace_prep_result(dbip, dp);
-	print_prep_result(argv[0], argv[1], prep);
+	int ret = 0;
+	for (long repeat = 0; repeat < prep_repeat; ++repeat) {
+	    prep_result prep = raytrace_prep_result(dbip, dp);
+	    print_prep_result(argv[0], argv[1], prep, (size_t)repeat,
+		(size_t)prep_repeat);
+	    if (prep.ret != BRLCAD_OK)
+		ret = 1;
+	}
 	db_close(dbip);
-	return prep.ret == BRLCAD_OK ? 0 : 1;
+	return ret;
     }
 
     if (surface_trees_only) {
