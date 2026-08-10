@@ -397,6 +397,25 @@ periodic_seam_side(double parameter, const ON_Interval &domain)
     return 0;
 }
 
+static double
+periodic_offset(double parameter, double origin, const ON_Interval &domain)
+{
+    const double period = domain.Length();
+    if (!(period > 0.0))
+	return parameter - origin;
+    const double tolerance = parameter_tolerance(domain);
+    double offset = parameter - origin;
+    while (offset < -tolerance)
+	offset += period;
+    while (offset > period + tolerance)
+	offset -= period;
+    if (offset < 0.0)
+	return 0.0;
+    if (offset > period)
+	return period;
+    return offset;
+}
+
 /* A closed edge may have coincident 3-D endpoints stored on either the same or
  * opposite sides of a periodic surface domain.  Some STEP p-curves traverse
  * the edge through the opposite periodic image, retain the same parameter for
@@ -512,6 +531,15 @@ orient_periodic_closed_paths(const std::vector<int> &source,
 	if (end >= ring.size())
 	    break;
 	const int last = ring[end];
+	/* The final entry is the synthetic closing copy added above, not a
+	 * second chart vertex.  Reconstructing the entire loop would assign
+	 * both ends of a full winding to this one point.  The last assignment
+	 * then replaces the first one and leaves the first constraint spanning
+	 * nearly a full period.  Ordinary boundary vertices may legitimately
+	 * lie on a native domain bound even when the B-Rep cut is elsewhere;
+	 * leave those loops to the continuous ring lift below. */
+	if (last == first)
+	    break;
 	const int last_side = periodic_seam_side(
 	    canonical[(size_t)last], domain);
 	double winding = 0.0;
@@ -610,6 +638,47 @@ orient_periodic_closed_paths(const std::vector<int> &source,
     return ring;
 }
 
+int
+cdt_test_periodic_path_orientation(void)
+{
+    const std::vector<int> source = {0, 1, 2, 3};
+    std::vector<double> canonical = {0.0, -1.0, -2.0, -3.0};
+    const std::vector<double> expected(canonical);
+    const ON_3dPoint points[] = {
+	ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(0.0, -1.0, 0.0),
+	ON_3dPoint(-1.0, 0.0, 0.0),
+	ON_3dPoint(0.0, 1.0, 0.0)
+    };
+    std::vector<const ON_3dPoint *> points_3d;
+    for (const ON_3dPoint &point : points)
+	points_3d.push_back(&point);
+    const std::vector<double> open_parameters(4, 0.0);
+    const std::vector<cdt_topo_vertex_id> topology_vertices = {
+	0, CDT_TOPOLOGY_ID_NONE, CDT_TOPOLOGY_ID_NONE,
+	CDT_TOPOLOGY_ID_NONE
+    };
+    const std::vector<int> oriented = orient_periodic_closed_paths(source,
+	canonical, points_3d, ON_Interval(0.0, 2.0 * ON_PI),
+	&open_parameters, &topology_vertices);
+    if (oriented.size() != source.size() + 1 ||
+	oriented.front() != oriented.back())
+	return 1;
+    for (size_t i = 0; i < canonical.size(); ++i) {
+	if (std::fabs(canonical[i] - expected[i]) > DBL_EPSILON)
+	    return 2;
+    }
+    const ON_Interval polar_domain(3.1415926239018583,
+	6.2831853071795898);
+    const double canonical_max = periodic_parameter(
+	6.2831853071795907, polar_domain);
+    const double full_turn = periodic_offset(canonical_max,
+	polar_domain.Min(), polar_domain);
+    if (std::fabs(full_turn - polar_domain.Length()) > DBL_EPSILON)
+	return 3;
+    return 0;
+}
+
 bool
 cdt_face_chart::native_to_chart(const ON_2dPoint &native_uv,
 	ON_2dPoint &chart_uv) const
@@ -673,11 +742,8 @@ cdt_face_chart::native_to_chart(const ON_2dPoint &native_uv,
 	    return false;
 	latitude = std::max(-1.0, std::min(1.0, latitude));
 	const double width = 1.0 - std::fabs(latitude);
-	double turn = angular - m_polar_cut;
-	while (turn < 0.0)
-	    turn += period;
-	while (turn > period)
-	    turn -= period;
+	const double turn = periodic_offset(angular, m_polar_cut,
+	    m_closed_domain);
 	chart_uv.x = width * (turn / period - 0.5);
 	chart_uv.y = latitude;
 	return chart_uv.IsValid();
