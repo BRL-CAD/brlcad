@@ -1965,7 +1965,13 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	curved_edges_refine(s_cdt);
 
 	// Now, process the linear edges
-	tol_linear_edges_split(s_cdt);
+	char message[256] = {0};
+	if (!tol_linear_edges_split(s_cdt, message, sizeof(message))) {
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REFINEMENT_LIMIT,
+		BREP_CDT_STAGE_EDGE_INITIALIZATION, -1, 0, 0,
+		message);
+	    return -1;
+	}
 #endif
 
 	// Split singularity trims in 2D to provide an easier input to the 2D CDT logic.  NOTE: these

@@ -28,6 +28,7 @@
 #include "common.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <limits>
 #include <queue>
 #include <numeric>
@@ -595,6 +596,111 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt,
 }
 
 static bool
+linear_edge_spacing(double *spacing, double absmin, double local_min)
+{
+    if (!spacing || !std::isfinite(absmin) || absmin <= 0.0)
+	return false;
+
+    /* A zero chord is valid for a closed curved segment, but it is not a
+     * useful length scale to propagate onto an incident straight edge.  The
+     * globally digested absmin is the caller's smallest requested mesh
+     * dimension.  A relative, edge-local floor also bounds subdivision when
+     * a pathological B-Rep bounding box makes that global scale unreliable. */
+    double floor = absmin;
+    if (std::isfinite(local_min) && local_min > floor)
+	floor = local_min;
+    if (!std::isfinite(*spacing) || *spacing < floor)
+	*spacing = floor;
+    return true;
+}
+
+static bool
+edge_split_midpoint(double start, double end, double *midpoint)
+{
+    if (!midpoint || !std::isfinite(start) || !std::isfinite(end))
+	return false;
+    const double candidate = start + 0.5 * (end - start);
+    const double lower = std::min(start, end);
+    const double upper = std::max(start, end);
+    if (!(candidate > lower && candidate < upper))
+	return false;
+    *midpoint = candidate;
+    return true;
+}
+
+/* Return 1 when a representable split exists, 0 when the unsplittable
+ * residual is covered by the edge tolerance, and -1 when subdivision has
+ * stalled with a geometrically significant residual. */
+static int
+edge_split_progress(double start, double end, double chord,
+	double start_miss, double end_miss, double edge_tolerance,
+	double *midpoint, double *residual)
+{
+    if (edge_split_midpoint(start, end, midpoint))
+	return 1;
+    if (!std::isfinite(start) || !std::isfinite(end))
+	return -1;
+
+    const double remaining = std::max(chord,
+	std::max(start_miss, end_miss));
+    if (residual)
+	*residual = remaining;
+    if (std::isfinite(remaining) && std::isfinite(edge_tolerance) &&
+	edge_tolerance >= 0.0 && remaining <= edge_tolerance)
+	return 0;
+    return -1;
+}
+
+int
+cdt_test_linear_edge_spacing(void)
+{
+    const double floor = 0.25;
+    double spacing = 0.0;
+    if (!linear_edge_spacing(&spacing, floor, 0.0) ||
+	    std::fabs(spacing - floor) > ON_ZERO_TOLERANCE)
+	return 1;
+
+    spacing = -1.0;
+    if (!linear_edge_spacing(&spacing, floor, 0.0) ||
+	    std::fabs(spacing - floor) > ON_ZERO_TOLERANCE)
+	return 2;
+
+    spacing = std::numeric_limits<double>::quiet_NaN();
+    if (!linear_edge_spacing(&spacing, floor, 0.0) ||
+	    std::fabs(spacing - floor) > ON_ZERO_TOLERANCE)
+	return 3;
+
+    spacing = 0.5;
+    if (!linear_edge_spacing(&spacing, floor, 0.0) ||
+	    std::fabs(spacing - 0.5) > ON_ZERO_TOLERANCE)
+	return 4;
+
+    spacing = 0.5;
+    if (!linear_edge_spacing(&spacing, floor, 0.75) ||
+	    std::fabs(spacing - 0.75) > ON_ZERO_TOLERANCE)
+	return 5;
+
+    double midpoint = 0.0;
+    if (!edge_split_midpoint(0.0, 10.0, &midpoint) ||
+	    std::fabs(midpoint - 5.0) > ON_ZERO_TOLERANCE)
+	return 6;
+    const double adjacent = std::nextafter(10.0, 11.0);
+    if (edge_split_midpoint(10.0, adjacent, &midpoint))
+	return 7;
+
+    double residual = 0.0;
+    if (edge_split_progress(10.0, adjacent, 3.2, 0.0, 3.2, 3.4,
+	    &midpoint, &residual) != 0 ||
+	    std::fabs(residual - 3.2) > ON_ZERO_TOLERANCE)
+	return 8;
+    if (edge_split_progress(10.0, adjacent, 3.2, 0.0, 3.2, 3.0,
+	    &midpoint, &residual) != -1)
+	return 9;
+
+    return linear_edge_spacing(&spacing, -1.0, 0.0) ? 10 : 0;
+}
+
+static bool
 tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &edge_mid_3d)
 {
     ON_Line line3d(*(bseg->e_start), *(bseg->e_end));
@@ -618,6 +724,8 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
     double len_1 = -1;
     double len_2 = -1;
     double s_len;
+    const double local_min = s_cdt->tol.rel > ON_ZERO_TOLERANCE ?
+	s_cdt->tol.rel * bseg->cp_len * 0.01 : 0.0;
 
     switch (bseg->edge_type) {
 	case 0:
@@ -638,6 +746,8 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
 	    }
 	    s_len = (len_1 > 0) ? len_1 : len_2;
 	    s_len = (len_2 > 0 && len_2 < s_len) ? len_2 : s_len;
+	    if (!linear_edge_spacing(&s_len, s_cdt->absmin, local_min))
+		return false;
 	    max_allowed = 5*s_len;
 	    min_allowed = 0.2*s_len;
 	    break;
@@ -659,6 +769,8 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
 	    }
 	    s_len = (len_1 > 0) ? len_1 : len_2;
 	    s_len = (len_2 > 0 && len_2 < s_len) ? len_2 : s_len;
+	    if (!linear_edge_spacing(&s_len, s_cdt->absmin, local_min))
+		return false;
 	    if (s_len > 0) {
 		max_allowed = 2*s_len;
 		min_allowed = 0.5*s_len;
@@ -737,7 +849,18 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
     // Get the 3D midpoint (and tangent, if we can) from the edge curve
     ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
     ON_3dVector edge_mid_tan = ON_3dVector::UnsetVector;
-    fastf_t emid = (t) ? *t : (bseg->edge_start + bseg->edge_end) / 2.0;
+    double midpoint = 0.0;
+    if (t) {
+	midpoint = *t;
+	const double lower = std::min(bseg->edge_start, bseg->edge_end);
+	const double upper = std::max(bseg->edge_start, bseg->edge_end);
+	if (!std::isfinite(midpoint) || !(midpoint > lower && midpoint < upper))
+	    return nedges;
+    } else if (!edge_split_midpoint(bseg->edge_start, bseg->edge_end,
+	    &midpoint)) {
+	return nedges;
+    }
+    fastf_t emid = midpoint;
     bool evtangent_status = bseg->nc->EvTangent(emid, edge_mid_3d, edge_mid_tan);
     if (!evtangent_status) {
 	// EvTangent call failed, get 3d point
@@ -1604,10 +1727,18 @@ curved_edges_refine(struct ON_Brep_CDT_State *s_cdt)
 }
 
 // Split linear edges according to tolerance information
-void
-tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt)
+bool
+tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt,
+	char *failure_message, size_t failure_message_size)
 {
+    /* Binary subdivision past this point is almost certainly a bad inherited
+     * length scale.  It also has a disproportionate memory cost: every split
+     * is represented in two face polygons, their maps, normals, and audit
+     * state.  Fail closed if the absmin floor does not bound an unusual case. */
+    const size_t max_segments_per_edge = 65536;
     ON_Brep* brep = s_cdt->brep;
+    if (failure_message && failure_message_size)
+	failure_message[0] = '\0';
 
     // Calculate loop median segment lengths contributed from the curved edges
     update_loop_median_curved_edge_seg_lengths(s_cdt);
@@ -1629,9 +1760,94 @@ tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt)
 	    while (ws->size()) {
 		bedge_seg_t *b = *ws->begin();
 		ws->erase(ws->begin());
-		std::set<bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 0, NULL, 0);
+		const double parent_chord =
+		    b->e_start->DistanceTo(*b->e_end);
+		const double parent_start = b->edge_start;
+		const double parent_end = b->edge_end;
+		double midpoint = 0.0;
+		double residual = DBL_MAX;
+		int progress = 1;
+		/* Curve endpoint evaluation is only needed in the exhausted
+		 * floating-point interval case.  Keep the ordinary subdivision
+		 * path free of two redundant curve evaluations per segment. */
+		if (!edge_split_midpoint(parent_start, parent_end, &midpoint)) {
+		    const double start_miss = b->nc->PointAt(parent_start).
+			DistanceTo(*b->e_start);
+		    const double end_miss = b->nc->PointAt(parent_end).
+			DistanceTo(*b->e_end);
+		    progress = edge_split_progress(parent_start, parent_end,
+			parent_chord, start_miss, end_miss,
+			edge.m_tolerance, &midpoint, &residual);
+		}
+		if (progress < 0) {
+		    if (failure_message && failure_message_size)
+			std::snprintf(failure_message, failure_message_size,
+			    "linear B-Rep edge %d cannot make parameter "
+			    "progress; residual %.17g exceeds tolerance %.17g",
+			    edge.m_edge_index, residual, edge.m_tolerance);
+		    return false;
+		}
+		std::set<bedge_seg_t *> esegs_split;
+		if (progress)
+		    esegs_split = split_edge_seg(s_cdt, b, 0, &midpoint, 0);
 		if (esegs_split.size()) {
 		    ns->insert(esegs_split.begin(), esegs_split.end());
+		    if (s_cdt->e2polysegs[edge.m_edge_index].size() >
+			    max_segments_per_edge) {
+			double min_chord = DBL_MAX;
+			double max_chord = 0.0;
+			bedge_seg_t *max_segment = NULL;
+			for (bedge_seg_t *segment :
+				s_cdt->e2polysegs[edge.m_edge_index]) {
+			    const double chord = segment->e_start->DistanceTo(
+				*segment->e_end);
+			    min_chord = std::min(min_chord, chord);
+			    if (chord > max_chord) {
+				max_chord = chord;
+				max_segment = segment;
+			    }
+			}
+			const double max_start_miss = max_segment ?
+			    max_segment->nc->PointAt(max_segment->edge_start).
+			    DistanceTo(*max_segment->e_start) : DBL_MAX;
+			const double max_end_miss = max_segment ?
+			    max_segment->nc->PointAt(max_segment->edge_end).
+			    DistanceTo(*max_segment->e_end) : DBL_MAX;
+			double child_max_chord = 0.0;
+			for (bedge_seg_t *segment : esegs_split)
+			    child_max_chord = std::max(child_max_chord,
+				segment->e_start->DistanceTo(*segment->e_end));
+			const double naive_midpoint = 0.5 *
+			    (parent_start + parent_end);
+			bu_log("linear edge subdivision limit: edge=%d "
+			    "type=%d cp_len=%.17g absmin=%.17g segments=%zu "
+			    "min_chord=%.17g max_chord=%.17g "
+			    "parent_chord=%.17g child_max_chord=%.17g "
+			    "max_parameter=[%.17g,%.17g] "
+			    "max_endpoint_miss=[%.17g,%.17g] "
+			    "parameter=[%.17g,%.17g] midpoint=%.17g "
+			    "midpoint_stagnant=%d child_nonreducing=%d\n",
+			    edge.m_edge_index, (*esegs_split.begin())->edge_type,
+			    (*esegs_split.begin())->cp_len, s_cdt->absmin,
+			    s_cdt->e2polysegs[edge.m_edge_index].size(),
+			    min_chord, max_chord, parent_chord,
+			    child_max_chord,
+			    max_segment ? max_segment->edge_start : DBL_MAX,
+			    max_segment ? max_segment->edge_end : DBL_MAX,
+			    max_start_miss, max_end_miss,
+			    parent_start, parent_end, naive_midpoint,
+			    naive_midpoint <= parent_start ||
+				naive_midpoint >= parent_end,
+			    child_max_chord >= parent_chord);
+			if (failure_message && failure_message_size)
+			    std::snprintf(failure_message,
+				failure_message_size,
+				"linear B-Rep edge %d reached %zu segments "
+				"(limit %zu)", edge.m_edge_index,
+				s_cdt->e2polysegs[edge.m_edge_index].size(),
+				max_segments_per_edge);
+			return false;
+		    }
 		} else {
 		    new_segs.insert(b);
 		}
@@ -1646,6 +1862,7 @@ tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
+    return true;
 }
 
 static bool
