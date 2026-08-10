@@ -389,8 +389,6 @@ protected:
 
 	Branch m_branchBuf[_MaxNodeCount + 1];
 	int m_branchCount = 0;
-	Rect m_coverSplit;
-	ElementTypeReal m_coverSplitArea = kElementTypeRealZero;
     };
 
     Node* AllocNode();
@@ -1275,13 +1273,6 @@ void RTREE_QUAL::GetBranches(Node* a_node, const Branch* a_branch, PartitionVars
     }
     a_parVars->m_branchBuf[_MaxNodeCount] = *a_branch;
     a_parVars->m_branchCount = _MaxNodeCount + 1;
-
-    // Calculate rect containing all in the set
-    a_parVars->m_coverSplit = a_parVars->m_branchBuf[0].m_rect;
-    for (int index = 1; index < _MaxNodeCount + 1; ++index) {
-	a_parVars->m_coverSplit = CombineRect(&a_parVars->m_coverSplit, &a_parVars->m_branchBuf[index].m_rect);
-    }
-    a_parVars->m_coverSplitArea = CalcRectVolume(&a_parVars->m_coverSplit);
 }
 
 
@@ -1398,20 +1389,22 @@ void RTREE_QUAL::InitParVars(PartitionVars* a_parVars, int a_maxRects, int a_min
 RTREE_TEMPLATE
 void RTREE_QUAL::PickSeeds(PartitionVars* a_parVars)
 {
-    int seed0 = 0, seed1 = 0;
+    int seed0 = 0, seed1 = 1;
+    bool firstPair = true;
     _ElementTypeReal worst{ 0.0 }, waste{ 0.0 };
     _ElementTypeReal area[_MaxNodeCount + 1] = { 0.0, };
 
     for (int index = 0; index < a_parVars->m_total; ++index) {
 	area[index] = CalcRectVolume(&a_parVars->m_branchBuf[index].m_rect);
     }
-
-    worst = -a_parVars->m_coverSplitArea - 1;
     for (int indexA = 0; indexA < a_parVars->m_total - 1; ++indexA) {
 	for (int indexB = indexA + 1; indexB < a_parVars->m_total; ++indexB) {
 	    auto oneRect = CombineRect(&a_parVars->m_branchBuf[indexA].m_rect, &a_parVars->m_branchBuf[indexB].m_rect);
 	    waste = CalcRectVolume(&oneRect) - area[indexA] - area[indexB];
-	    if (waste > worst) {
+	    // Always accept the first pair.  Deriving a sentinel from the
+	    // cover volume is unsafe when subtracting one is below its ulp.
+	    if (firstPair || waste > worst) {
+		firstPair = false;
 		worst = waste;
 		seed0 = indexA;
 		seed1 = indexB;
