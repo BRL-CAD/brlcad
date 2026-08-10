@@ -5622,6 +5622,17 @@ event solver rather than recreating the 2006 implementation literally.
     Benchmark secondary/random rays explicitly so primary-ray coherence does
     not hide a regression.
 
+  * Stage proof arithmetic by strength.  Run outward-rounded binary64
+    interval hull tests, interval-Newton contraction, and interval Bernstein
+    restriction before expansion-valued arithmetic.  Strict interval
+    exclusions and sound contractions may publish into the next proof stage;
+    every inconclusive result must retain the exact expansion fallback.  Build
+    exact ray-plane coefficient expansions lazily only when an ambiguous box
+    requests them, and keep both tiers allocation-free.  Count attempts,
+    decisions, fallbacks, exact coefficient builds, and exact boxes so a
+    faster corpus run cannot conceal a shift from certification to legacy
+    fallback.
+
   * Profile trimming independently.  Evaluate a compact two-dimensional
     trim kd-tree or comparable indexed broad phase, as demonstrated by Sloup
     and Havran, while retaining BRL-CAD edge identity, adjacency, declared
