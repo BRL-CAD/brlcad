@@ -447,6 +447,116 @@ exercise_periodic_metric_chart()
 }
 
 static bool
+exercise_seamless_cylinder_lift()
+{
+    const double radius = 2.0;
+    const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, radius), 5.0);
+    std::unique_ptr<ON_Brep> brep(ON_BrepCylinder(cylinder, true, true));
+    if (!brep || !brep->IsValid() || !brep->IsSolid())
+	return false;
+    ON_BrepFace *side = NULL;
+    for (int face_index = 0; face_index < brep->m_F.Count(); ++face_index) {
+	ON_BrepFace &face = brep->m_F[face_index];
+	if (face.SurfaceOf() && face.SurfaceOf()->IsCylinder(NULL, 0.05)) {
+	    side = &face;
+	    break;
+	}
+    }
+    if (!side)
+	return false;
+    for (int loop_index = 0; loop_index < side->LoopCount(); ++loop_index) {
+	ON_BrepLoop *loop = side->Loop(loop_index);
+	for (int trim_index = 0; loop && trim_index < loop->TrimCount();
+		++trim_index) {
+	    ON_BrepTrim *trim = loop->Trim(trim_index);
+	    if (trim && trim->m_type == ON_BrepTrim::seam)
+		trim->m_type = ON_BrepTrim::boundary;
+	}
+    }
+    if (cdt_face_has_seam(*side) || !cdt_face_uses_cylinder_chart(*side))
+	return false;
+
+    const ON_Surface *surface = side->SurfaceOf();
+    const int closed_direction = surface->IsClosed(0) ? 0 : 1;
+    const int open_direction = 1 - closed_direction;
+    const ON_Interval closed_domain = surface->Domain(closed_direction);
+    const ON_Interval open_domain = surface->Domain(open_direction);
+    const int path_points = 10;
+    std::vector<std::pair<double, double>> native_points;
+    std::vector<ON_3dPoint> point_storage;
+    std::vector<const ON_3dPoint *> points_3d;
+    std::vector<int> outer;
+    native_points.reserve((size_t)path_points * 2);
+    point_storage.reserve((size_t)path_points * 2);
+    points_3d.reserve((size_t)path_points * 2);
+    const auto add_path_point = [&](double turn, double height) {
+	double wrapped = std::fmod(0.07 + turn, 1.0);
+	if (wrapped < 0.0)
+	    wrapped += 1.0;
+	ON_2dPoint native;
+	native[closed_direction] = closed_domain.ParameterAt(wrapped);
+	native[open_direction] = open_domain.ParameterAt(height);
+	outer.push_back((int)native_points.size());
+	native_points.push_back(std::make_pair(native.x, native.y));
+	point_storage.push_back(surface->PointAt(native.x, native.y));
+    };
+    for (int i = 0; i < path_points; ++i) {
+	const double turn = (double)i / (path_points - 1);
+	add_path_point(turn, 0.2 + 0.2 * turn);
+    }
+    for (int i = path_points - 1; i >= 0; --i) {
+	const double turn = (double)i / (path_points - 1);
+	add_path_point(turn, 0.3 + 0.2 * turn);
+    }
+    for (const ON_3dPoint &point : point_storage)
+	points_3d.push_back(&point);
+    outer.push_back(outer.front());
+    std::vector<cdt_topo_vertex_id> topology_vertices(
+	native_points.size(), CDT_TOPOLOGY_ID_NONE);
+
+    cdt_face_chart chart;
+    if (!chart.build(*side, native_points, outer,
+	    std::vector<std::vector<int>>(), std::vector<int>(),
+	    std::vector<int>(), points_3d, topology_vertices) ||
+	    chart.type() != CDT_FACE_CHART_CYLINDER ||
+	    chart.outer.size() != native_points.size()) {
+	std::cerr << "seamless cylinder lift failed: " << chart.failure()
+	    << std::endl;
+	return false;
+    }
+    const double half_circumference = ON_PI * radius;
+    for (size_t i = 0; i < chart.outer.size(); ++i) {
+	const int first = chart.outer[i];
+	const int second = chart.outer[(i + 1) % chart.outer.size()];
+	if (std::fabs(chart.points[(size_t)second].first -
+		chart.points[(size_t)first].first) >= half_circumference) {
+	    std::cerr << "seamless cylinder chart retained a cut chord"
+		<< std::endl;
+	    return false;
+	}
+    }
+
+    std::vector<point2d_t> chart_points(chart.points.size());
+    for (size_t i = 0; i < chart.points.size(); ++i)
+	V2SET(chart_points[i], chart.points[i].first, chart.points[i].second);
+    std::vector<int> outline(chart.outer);
+    outline.push_back(chart.outer.front());
+    int *faces = NULL;
+    int face_count = 0;
+    struct bg_triangulation_report report = {0, -1, {0}};
+    const int status = bg_nested_poly_triangulate_strict(&faces,
+	&face_count, NULL, NULL, outline.data(), outline.size(), NULL, NULL,
+	0, NULL, 0, chart_points.data(), chart_points.size(), &report);
+    bu_free(faces, "seamless cylinder lift triangles");
+    if (status != BRLCAD_OK || face_count <= 0) {
+	std::cerr << "seamless cylinder lift triangulation failed: "
+	    << report.message << std::endl;
+	return false;
+    }
+    return true;
+}
+
+static bool
 exercise_planar_nesting_repair()
 {
     std::unique_ptr<ON_Brep> brep(new ON_Brep);
@@ -507,9 +617,11 @@ main()
 	return 6;
     if (!exercise_offset_full_cylinder_seam())
 	return 7;
-    if (!exercise_periodic_metric_chart())
+    if (!exercise_seamless_cylinder_lift())
 	return 8;
-    if (!exercise_planar_nesting_repair())
+    if (!exercise_periodic_metric_chart())
 	return 9;
+    if (!exercise_planar_nesting_repair())
+	return 10;
     return 0;
 }
