@@ -1820,6 +1820,133 @@ cdt_face_chart::build_cylinder(const ON_BrepFace &face,
     return validate_boundary(face, native_points);
 }
 
+static void
+orient_pole_wedge_seam_runs(const std::vector<int> &source_outer,
+	const std::vector<int> &source_to_chart,
+	std::vector<std::pair<double, double>> &points,
+	std::vector<cdt_chart_vertex> &vertices)
+{
+    size_t ring_size = source_outer.size();
+    if (ring_size > 1 && source_outer.front() == source_outer.back())
+	--ring_size;
+    if (!ring_size)
+	return;
+    const auto chart_at = [&](size_t position) {
+	const int source_point = source_outer[position];
+	if (source_point < 0 ||
+		(size_t)source_point >= source_to_chart.size())
+	    return -1;
+	const int chart_point = source_to_chart[(size_t)source_point];
+	return chart_point >= 0 && (size_t)chart_point < vertices.size() &&
+		(size_t)chart_point < points.size() ? chart_point : -1;
+    };
+    const auto seam_side_at = [&](size_t position) {
+	const int chart_point = chart_at(position);
+	return chart_point >= 0 ?
+	    vertices[(size_t)chart_point].seam_side : 0;
+    };
+    for (size_t start = 0; start < ring_size; ++start) {
+	const size_t previous_position =
+	    (start + ring_size - 1) % ring_size;
+	const int native_side = seam_side_at(start);
+	if (!native_side ||
+		seam_side_at(previous_position) == native_side)
+	    continue;
+
+	size_t last = start;
+	while (seam_side_at((last + 1) % ring_size) == native_side &&
+		(last + 1) % ring_size != start)
+	    last = (last + 1) % ring_size;
+	const size_t next_position = (last + 1) % ring_size;
+	const int previous = chart_at(previous_position);
+	const int next = chart_at(next_position);
+	const int first_chart = chart_at(start);
+	const int last_chart = chart_at(last);
+	if (previous < 0 || next < 0 || first_chart < 0 ||
+		last_chart < 0)
+	    continue;
+	const bool use_previous = !seam_side_at(previous_position);
+	const bool use_next = !seam_side_at(next_position);
+
+	const auto side_cost = [&](int side) {
+	    const double first_x = 0.5 * side *
+		points[(size_t)first_chart].second;
+	    const double last_x = 0.5 * side *
+		points[(size_t)last_chart].second;
+	    const double first_dx = first_x -
+		points[(size_t)previous].first;
+	    const double first_dy = points[(size_t)first_chart].second -
+		points[(size_t)previous].second;
+	    const double last_dx = last_x - points[(size_t)next].first;
+	    const double last_dy = points[(size_t)last_chart].second -
+		points[(size_t)next].second;
+	    return (use_previous ?
+		first_dx * first_dx + first_dy * first_dy : 0.0) +
+		(use_next ?
+		last_dx * last_dx + last_dy * last_dy : 0.0);
+	};
+	const double low_cost = side_cost(-1);
+	const double high_cost = side_cost(1);
+	const double scale = std::max(1.0,
+	    std::max(std::fabs(low_cost), std::fabs(high_cost)));
+	int side = vertices[(size_t)first_chart].seam_side;
+	if (std::fabs(low_cost - high_cost) >
+		512.0 * DBL_EPSILON * scale)
+	    side = low_cost < high_cost ? -1 : 1;
+	size_t position = start;
+	do {
+	    const int mapped = chart_at(position);
+	    vertices[(size_t)mapped].seam_side = side;
+	    points[(size_t)mapped].first = 0.5 * side *
+		points[(size_t)mapped].second;
+	    if (position == last)
+		break;
+	    position = (position + 1) % ring_size;
+	} while (position != start);
+    }
+}
+
+int
+cdt_test_pole_wedge_seam_orientation(void)
+{
+    const auto exercise = [](bool reversed) {
+	std::vector<int> outer = {0, 1, 2, 3, 4, 5, 6, 7, 0};
+	std::vector<int> source_to_chart = {0, 1, 2, 3, 4, 5, 6, 7};
+	std::vector<std::pair<double, double>> points = {
+	    std::make_pair(-0.5, 1.0),
+	    std::make_pair(reversed ? 0.4375 : -0.4375, 1.0),
+	    std::make_pair(0.0, 1.0),
+	    std::make_pair(reversed ? -0.4375 : 0.4375, 1.0),
+	    std::make_pair(0.5, 1.0),
+	    std::make_pair(0.25, 0.5),
+	    std::make_pair(0.0, 0.0),
+	    std::make_pair(-0.25, 0.5)
+	};
+	std::vector<cdt_chart_vertex> vertices(points.size());
+	for (size_t i = 0; i < vertices.size(); ++i)
+	    vertices[i].id = (cdt_chart_vertex_id)i;
+	vertices[0].seam_side = -1;
+	vertices[4].seam_side = 1;
+	vertices[5].seam_side = 1;
+	vertices[7].seam_side = -1;
+	orient_pole_wedge_seam_runs(outer, source_to_chart, points,
+	    vertices);
+	const int left_side = reversed ? 1 : -1;
+	const int right_side = -left_side;
+	return vertices[0].seam_side == left_side &&
+	    vertices[7].seam_side == left_side &&
+	    vertices[4].seam_side == right_side &&
+	    vertices[5].seam_side == right_side &&
+	    std::fabs(points[0].first - 0.5 * left_side) <= DBL_EPSILON &&
+	    std::fabs(points[4].first - 0.5 * right_side) <= DBL_EPSILON;
+    };
+    if (!exercise(false))
+	return 1;
+    if (!exercise(true))
+	return 2;
+    return 0;
+}
+
 bool
 cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	const std::vector<std::pair<double, double>> &native_points,
@@ -2073,90 +2200,17 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	source_to_chart[i] = chart_index;
     }
 
-    /* A trim on an analytic cone may start on a native periodic bound and
+    /* A trim on a periodic cone or sphere may start on a native bound and
      * then continue through an equivalent unwrapped image outside that
      * domain.  The bound identifies a possible cut side, but it does not
      * identify which side contains this face.  Orient each outer seam run
      * toward its adjacent non-seam boundary samples.  This preserves the
      * native side when both choices are equivalent (notably at the pole),
-     * while keeping partial cone wedges continuous across the arbitrary
+     * while keeping partial pole wedges continuous across the arbitrary
      * analytic cut. */
-    if (ruled && !source_outer.empty()) {
-	size_t ring_size = source_outer.size();
-	if (ring_size > 1 && source_outer.front() == source_outer.back())
-	    --ring_size;
-	const auto chart_at = [&](size_t position) {
-	    const int source_point = source_outer[position];
-	    if (source_point < 0 ||
-		    (size_t)source_point >= source_to_chart.size())
-		return -1;
-	    return source_to_chart[(size_t)source_point];
-	};
-	const auto seam_side_at = [&](size_t position) {
-	    const int chart_point = chart_at(position);
-	    return chart_point >= 0 ?
-		vertices[(size_t)chart_point].seam_side : 0;
-	};
-	for (size_t start = 0; start < ring_size; ++start) {
-	    const size_t previous_position =
-		(start + ring_size - 1) % ring_size;
-	    const int native_side = seam_side_at(start);
-	    if (!native_side ||
-		    seam_side_at(previous_position) == native_side)
-		continue;
-
-	    size_t last = start;
-	    while (seam_side_at((last + 1) % ring_size) == native_side &&
-		    (last + 1) % ring_size != start)
-		last = (last + 1) % ring_size;
-	    const size_t next_position = (last + 1) % ring_size;
-	    const int previous = chart_at(previous_position);
-	    const int next = chart_at(next_position);
-	    const int first_chart = chart_at(start);
-	    const int last_chart = chart_at(last);
-	    if (previous < 0 || next < 0 || first_chart < 0 ||
-		    last_chart < 0)
-		continue;
-	    const bool use_previous = !seam_side_at(previous_position);
-	    const bool use_next = !seam_side_at(next_position);
-
-	    const auto side_cost = [&](int side) {
-		const double first_x = 0.5 * side *
-		    points[(size_t)first_chart].second;
-		const double last_x = 0.5 * side *
-		    points[(size_t)last_chart].second;
-		const double first_dx = first_x -
-		    points[(size_t)previous].first;
-		const double first_dy = points[(size_t)first_chart].second -
-		    points[(size_t)previous].second;
-		const double last_dx = last_x - points[(size_t)next].first;
-		const double last_dy = points[(size_t)last_chart].second -
-		    points[(size_t)next].second;
-		return (use_previous ?
-		    first_dx * first_dx + first_dy * first_dy : 0.0) +
-		    (use_next ?
-		    last_dx * last_dx + last_dy * last_dy : 0.0);
-	    };
-	    const double low_cost = side_cost(-1);
-	    const double high_cost = side_cost(1);
-	    const double scale = std::max(1.0,
-		std::max(std::fabs(low_cost), std::fabs(high_cost)));
-	    int side = vertices[(size_t)first_chart].seam_side;
-	    if (std::fabs(low_cost - high_cost) >
-		    512.0 * DBL_EPSILON * scale)
-		side = low_cost < high_cost ? -1 : 1;
-	    size_t position = start;
-	    do {
-		const int mapped = chart_at(position);
-		vertices[(size_t)mapped].seam_side = side;
-		points[(size_t)mapped].first = 0.5 * side *
-		    points[(size_t)mapped].second;
-		if (position == last)
-		    break;
-		position = (position + 1) % ring_size;
-	    } while (position != start);
-	}
-    }
+    if (m_periodic)
+	orient_pole_wedge_seam_runs(source_outer, source_to_chart, points,
+	    vertices);
 
     auto remap_ring = [&](const std::vector<int> &source,
 	    std::vector<int> &target) {
