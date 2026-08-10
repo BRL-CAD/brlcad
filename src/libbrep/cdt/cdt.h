@@ -174,7 +174,8 @@ void finalize_rtrees(struct ON_Brep_CDT_State *s_cdt);
 void initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt);
 void refine_close_edges(struct ON_Brep_CDT_State *s_cdt);
 void tol_curved_edges_split(struct ON_Brep_CDT_State *s_cdt);
-void tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt);
+bool tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt,
+	char *failure_message, size_t failure_message_size);
 void cdt_state_reset(struct ON_Brep_CDT_State *s_cdt);
 void cdt_diagnostic_set(struct ON_Brep_CDT_State *s_cdt, int result,
 	int stage, int face_index, int completed_faces, int failed_faces,
