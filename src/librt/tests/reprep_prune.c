@@ -85,6 +85,8 @@ main(int UNUSED(argc), const char **argv)
     point_t center = VINIT_ZERO;
     char *topobjs[] = {(char *)"test.r"};
     char *unprepped[] = {(char *)"right.s"};
+    struct application ap;
+    int solid_id;
     int failures = 0;
 
     bu_setprogname(argv[0]);
@@ -164,7 +166,7 @@ main(int UNUSED(argc), const char **argv)
 	bu_log("reprep restored stale Boolean tree metadata\n");
 	failures++;
     }
-    int solid_id = left->st_id;
+    solid_id = left->st_id;
     if (right->st_id != solid_id || rtip->stats.nsolids != 2 ||
 	rtip->i->rti_nsol_by_type[solid_id] != 2 ||
 	!rtip->i->rti_sol_by_type[solid_id]) {
@@ -183,7 +185,6 @@ main(int UNUSED(argc), const char **argv)
     /* Exercise the rebuilt BSP and accelerated soltab tables, not just their
      * pointer values.  The edited right sphere removes the back portion of
      * the left sphere, but leaves a nonempty interval for this ray. */
-    struct application ap;
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = rtip;
     ap.a_resource = &resp;
