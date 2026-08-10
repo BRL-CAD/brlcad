@@ -1684,6 +1684,12 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 		std::fabs(native_uv[m_closed_dir] -
 		m_closed_domain.Max()) <= seam_tolerance)
 	    vertex.seam_side = 1;
+	/* Analytic closest-point angles are periodic and may select the same
+	 * equivalent image for both copies of a seam sample.  The native domain
+	 * bound is the authoritative side of the cut wedge. */
+	if (vertex.seam_side)
+	    points[(size_t)chart_index].first =
+		0.5 * vertex.seam_side * chart_uv.y;
 	vertices.push_back(vertex);
 	source_to_chart[i] = chart_index;
     }
