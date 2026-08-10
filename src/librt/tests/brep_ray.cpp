@@ -7994,6 +7994,10 @@ check_brep_interval_enclosures()
 	const int identity_restrictions[][4] = {
 	    {0, 1, 4, 2},
 	    {1, 0, 2, 4},
+	    {0, 0, 4, 2},
+	    {0, 2, 4, 4},
+	    {0, 0, 2, 4},
+	    {2, 0, 4, 4},
 	    {0, 0, 4, 4}
 	};
 	for (size_t order_index = 0; order_index < sizeof(identity_orders) /
@@ -9195,6 +9199,109 @@ check_brep_interval_enclosures()
 	    maximum_restriction_width_ratio,
 	    maximum_reparameterization_width_ratio);
     }
+    return failures;
+}
+
+
+/* Keep the exact endpoint-restriction kernel independently runnable.  The
+ * complete interval audit repeats these cases as part of its larger matrix;
+ * this shard exists so performance and sanitizer work need not run unrelated
+ * determinant, product, clipping, and local-root corpora. */
+static int
+check_brep_expansion_endpoint_restrictions()
+{
+    const int orders[] = {2, 4, 8, 16};
+    const int restrictions[][4] = {
+	{0, 0, 4, 2},
+	{0, 2, 4, 4},
+	{0, 0, 2, 4},
+	{2, 0, 4, 4}
+    };
+    size_t checks = 0;
+    size_t maximum_high_water = 0;
+    int failures = 0;
+    for (size_t order_index = 0;
+	    order_index < sizeof(orders) / sizeof(orders[0]); ++order_index) {
+	const int order = orders[order_index];
+	const size_t count = (size_t)order * order;
+	fastf_t input[256] = {};
+	fastf_t input_error[256] = {};
+	exact_dyadic lower_input[256];
+	exact_dyadic upper_input[256];
+	for (size_t i = 0; i < count; ++i) {
+	    const exact_dyadic nominal = {
+		(int64_t)((7 * i + order) % 19) - 9, -8
+	    };
+	    const exact_dyadic error = {
+		(int64_t)(i % 3 + 1), -24
+	    };
+	    input[i] = (fastf_t)exact_dyadic_value(nominal);
+	    input_error[i] = (fastf_t)exact_dyadic_value(error);
+	    if (!exact_dyadic_subtract(nominal, error, lower_input[i]) ||
+		    !exact_dyadic_add(nominal, error, upper_input[i])) {
+		std::printf("FAIL: endpoint restriction source order=%d "
+		    "coefficient=%zu\n", order, i);
+		failures++;
+	    }
+	}
+	for (size_t restriction = 0; restriction <
+		sizeof(restrictions) / sizeof(restrictions[0]); ++restriction) {
+	    const int minimum_quarters[2] = {
+		restrictions[restriction][0], restrictions[restriction][1]
+	    };
+	    const int maximum_quarters[2] = {
+		restrictions[restriction][2], restrictions[restriction][3]
+	    };
+	    const fastf_t minimum[2] = {
+		0.25 * minimum_quarters[0], 0.25 * minimum_quarters[1]
+	    };
+	    const fastf_t maximum[2] = {
+		0.25 * maximum_quarters[0], 0.25 * maximum_quarters[1]
+	    };
+	    exact_dyadic expected_minimum[256];
+	    exact_dyadic expected_maximum[256];
+	    fastf_t observed_minimum[256] = {};
+	    fastf_t observed_maximum[256] = {};
+	    size_t high_water = 0;
+	    if (!exact_dyadic_surface_restrict_quarters(lower_input,
+		    order, order, minimum_quarters, maximum_quarters,
+		    expected_minimum) ||
+		    !exact_dyadic_surface_restrict_quarters(upper_input,
+			order, order, minimum_quarters, maximum_quarters,
+			expected_maximum) ||
+		    !_rt_brep_expansion_restrict_test(input, input_error,
+			order, order, minimum, maximum, observed_minimum,
+			observed_maximum, &high_water)) {
+		std::printf("FAIL: endpoint restriction unavailable order=%d "
+		    "case=%zu\n", order, restriction);
+		failures++;
+		continue;
+	    }
+	    maximum_high_water = std::max(maximum_high_water, high_water);
+	    for (size_t i = 0; i < count; ++i) {
+		const long double exact_minimum =
+		    exact_dyadic_value(expected_minimum[i]);
+		const long double exact_maximum =
+		    exact_dyadic_value(expected_maximum[i]);
+		checks++;
+		if ((long double)observed_minimum[i] > exact_minimum ||
+			(long double)observed_maximum[i] < exact_maximum ||
+			high_water >= RT_BREP_EXPANSION_CAPACITY) {
+		    std::printf("FAIL: endpoint restriction enclosure "
+			"order=%d case=%zu coefficient=%zu "
+			"bounds=%.17Lg/%.17Lg:%.17Lg/%.17Lg high=%zu\n",
+			order, restriction, i,
+			(long double)observed_minimum[i], exact_minimum,
+			(long double)observed_maximum[i], exact_maximum,
+			high_water);
+		    failures++;
+		}
+	    }
+	}
+    }
+    if (!failures)
+	std::printf("BREP endpoint expansion restriction: PASS checks=%zu "
+	    "high-water=%zu\n", checks, maximum_high_water);
     return failures;
 }
 
@@ -18939,6 +19046,8 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(mode, "--cobb-oblique-report");
     const bool affine_only = mode && BU_STR_EQUAL(mode, "--affine-only");
     const bool interval_only = mode && BU_STR_EQUAL(mode, "--interval-only");
+    const bool restriction_only = mode &&
+	BU_STR_EQUAL(mode, "--restriction-only");
     const bool local_root_only = mode &&
 	BU_STR_EQUAL(mode, "--local-root-only");
     const bool cleanup_only = mode && BU_STR_EQUAL(mode, "--cleanup-only");
@@ -18974,7 +19083,8 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(mode, "--throughput-contact-only");
     if (mode && !report_grazing && !report_cobb &&
 	    !report_cobb_oblique && !affine_only &&
-	    !interval_only && !local_root_only && !cleanup_only &&
+	    !interval_only && !restriction_only && !local_root_only &&
+	    !cleanup_only &&
 	    !grazing_root_only &&
 	    !trim_interval_only && !trim_classifier_only &&
 	    !source_union_only &&
@@ -18986,7 +19096,8 @@ main(int argc, char **argv)
 	    !throughput_only && !throughput_contact_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
 	    "--cobb-oblique-report|"
-	    "--affine-only|--interval-only|--local-root-only|--cleanup-only|"
+	    "--affine-only|--interval-only|--restriction-only|"
+	    "--local-root-only|--cleanup-only|"
 	    "--grazing-root-only|"
 	    "--trim-interval-only|"
 	    "--trim-classifier-only|"
@@ -19008,6 +19119,8 @@ main(int argc, char **argv)
 	    check_brep_trim_interval_solver();
 	return interval_failures ? 1 : 0;
     }
+    if (restriction_only)
+	return check_brep_expansion_endpoint_restrictions() ? 1 : 0;
     if (local_root_only)
 	return (check_brep_local_root_solver() +
 	    check_brep_weighted_local_root_solver()) ? 1 : 0;
