@@ -7,6 +7,146 @@ Repository studied: /home/cyapp/brlcad
 STEP test corpus: /home/cyapp/step_corpus_g
 
 
+IMPLEMENTATION CHECKPOINT: LOCAL CLEANUP AND REVERSAL INVARIANCE (2026-08-09)
+-----------------------------------------------------------------------------
+
+The last object in the initial 14-database ray stratum exposed a second
+ordered-hit cleanup defect.  The witness is the 848-face order-six object
+`IBEX_SOLID_item.s` in
+`original/SC_solid_stp_20260429.g`.  Deterministic pair 22 has origin
+
+  (95.848591855513888, -55.740815264982629, -11.3876265194396)
+
+direction
+
+  (-0.58941604087522914, 0.74193704918254422,
+   0.31955929936283961)
+
+and chord length `255.39858798473995`.  Fresh adaptive-depth-three and
+depth-eight trees agreed on all nine surface roots.  Before this repair the
+forward legacy solve returned no interval, while the reversed solve returned
+two.  This was neither a tree-density difference nor a root-corrector
+failure.  It was a direction-dependent interpretation of the same boundary
+observations.
+
+There were two independent causes.
+
+  1. Historical NEAR_MISS cleanup treated sorted adjacency as event identity.
+     It could erase or relabel a near miss next to a clean or near hit with
+     the same oriented direction even when their ray parameters were several
+     model units apart.  On the forward SC ray, a leaving near miss at about
+     `71.71510755` interacted with a clean entry at about `75.263`, although
+     they plainly represented different boundaries.  Reversing the ray
+     changed their ordering and therefore changed the cleanup result.
+
+  2. The solid-run cleanup ignored leading unmatched exits but discarded the
+     complete suffix after any unmatched trailing entry.  A retained
+     direction stream equivalent to ENTER, ENTER, ENTER, LEAVE, LEAVE
+     therefore lost a valid balanced interior run.  After reversal the
+     unmatched event was at the opposite end and the corresponding material
+     interval survived.  Prefix/suffix deletion is not invariant under the
+     required map that reverses event order and exchanges ENTER with LEAVE.
+
+The repaired legacy fallback uses two general rules.
+
+First, every NEAR_MISS interaction is local.  Near-miss versus non-miss
+same-direction removal, consecutive near-miss merging, and near-miss versus
+clean/near-hit relabeling all require
+`brep_solid_events_coincident`.  Its parameter envelope is the existing
+model-derived solid-event tolerance: model distance divided by ray-direction
+magnitude plus the established floating-point floor.  Adjacency in a sorted
+stream is only a search ordering; it is never by itself geometric identity.
+The fixed production workspace and allocating equivalence implementation use
+the identical test and allocate no new shot-time storage.
+
+Second, incomplete solid streams retain their maximal balanced observations
+symmetrically.  A reverse scan matches every ENTER to an available later
+LEAVE and removes only unmatched ENTER events.  A forward scan then matches
+every LEAVE to an available earlier ENTER and removes only unmatched LEAVE
+events.  This is fixed-storage parenthesis matching.  The surviving balanced
+stream is compacted with the existing nonzero-winding union rule: the first
+zero-to-one entry and the corresponding one-to-zero exit bound material.
+A lone original observation is still retained for the separately qualified
+seam/closure transaction.  Under ray reversal, the two scans exchange roles,
+so the retained material intervals map exactly under
+`t_reverse = chord_length - t_forward`.
+
+This tolerant rule remains legacy fallback behavior.  It must not become
+prepared authority.  The prepared event ledger still requires complete
+source-box ownership, event identity, orientation, trim/seam disposition,
+and zero final winding; an unresolved or incomplete ledger fails the whole
+ray back to the legacy path.  Parameter coincidence can prevent a known
+local duplicate or crack observation from corrupting a valid fallback, but
+it cannot prove that two arbitrary BREP roots are the same topological event.
+
+The C++ cleanup corpus now has two reduced permanent ratchets in addition to
+the earlier nested-shell, odd-stream, overlap, and tolerance-cluster cases.
+One supplies ENTER/ENTER/ENTER/LEAVE/LEAVE and its exact reversed stream and
+requires the same maximal balanced interval.  The other reproduces the SC
+ordering with a genuinely coincident near-hit/near-miss pair and a later
+noncoincident near-miss/clean pair.  The first pair may be resolved locally;
+the second must remain independent.  Both compare the complete retained
+partition after reversal, rather than testing a single hit count.
+
+Exact imported replay now returns, in both directions and at both depths,
+the two SC pair-22 intervals
+
+  [58.107629653..., 71.715107548...]
+  [93.746252051..., 184.158146005...]
+
+under the reversal map.  The complete 70-ray legacy-only SC audit passes with
+16 hit rays, 54 misses, 26 material segments, zero invalid partitions, zero
+orientation failures, and zero depth or reversal differences.  Its maximum
+depth-three/depth-eight endpoint difference is
+`3.3064736726373667e-8`.  The post-classifier trees contain 270,839 nodes and
+172,669 leaves at adaptive depth three versus 3,494,794 nodes and 1,787,007
+leaves at depth eight, plus 60,527 CurveTree leaves.  Peak resident memory was
+about 973 MB in the depth-eight comparison.
+
+The full prepared-plus-legacy trace also passes all 70 rays and both depths.
+At each depth it reports 35 prepared-eligible rays and 35 attempts, but every
+ray falls back: 31 are uncertified, two exhaust the surface-box workspace,
+and two fail event classification.  Across those attempts it visits 2,498
+candidate spans, constructs 18,336 subdivision boxes, retains 1,235 isolated
+boxes, makes 213 fold attempts with eight fold certificates, and records 225
+unresolved physical events.  The run took about 7 minutes 44 seconds wall,
+559 seconds of CPU, and 950 MB peak RSS on this host.  Trace mode deliberately
+executes the legacy solver after a prepared selection, but there were no
+selections here; this workload principally measures prepared candidate and
+proof work plus dense fallback.
+
+These figures make the later performance ordering more concrete.  Once the
+correctness gates are sufficiently broad, profile normal production without
+trace duplication and attack object/face/span candidate traversal and proof
+volume before micro-optimizing Newton iteration.  A compact immutable
+face/span BVH, conservative vectorized coefficient/box rejection, and batched
+`vshot` can reduce work for arbitrary BREP volumes.  Revive Abert-style
+surface-evaluation or corrector optimizations only where profiles show them
+hot.  Matching Abert exactly is not a goal, and neither this one model nor a
+shallow special case justifies reducing the production depth from eight.
+
+The optimized broad suite passes 18/18 non-seam shards, the complete seam
+suite passes, and the rebuilt ASAN/UBSAN cleanup shard reports no diagnostic.
+The seam matrix still has 280 prepared selections, 136 conservative
+fallbacks, 24 validated seam pairs, zero leaks, and 14/14 known crack repairs.
+The formerly reported two experimental local-cleanup ambiguities are now
+zero, because distant events can no longer alter one another merely through
+sorted adjacency.  This improvement is an incidental confirmation of the
+general locality rule, not authority to weaken seam ownership.
+
+The initial 14-database preparation stratum is now paired with sampled ray
+comparisons for all of its selected representative objects, including the
+largest SC case.  Imported agreement supplies regression and invariance
+evidence, not analytic ground truth.  Before changing the production density
+or declaring the solver generally correct, continue the directed
+implicit-CSG-to-BREP partition corpus, paired implicit/BREP Cauchy-Crofton
+surface-area and volume convergence, signed grazing ladders approaching a
+single-point tangent, Cobb seam/crack perturbations, similarity and reversal
+checks, and feature-targeted imported rays.  Every difficult solve becomes a
+small C/C++ ratchet with its geometry, tolerance, root stream, event stream,
+and expected complete partition.
+
+
 IMPLEMENTATION CHECKPOINT: ORIENTED SOLID HIT-RUN ASSEMBLY (2026-08-09)
 -----------------------------------------------------------------------
 
@@ -80,12 +220,16 @@ the existing near-miss, near-hit, grazing, and exact-duplicate stages:
      intervals, overlapping outward shells produce their union envelope, and
      a correctly inward-oriented cavity opens and closes a void.
 
-  4. Ignore unmatched exterior LEAVEs and an unclosed trailing ENTER only
-     without bridging them to another interval.  Preserve a sole unmatched
-     observation for the separately certified seam/closure transaction; the
-     Cobb crack resolver needs that existing boundary witness.  A prepared
-     result does not use this heuristic: incomplete event ownership or final
-     winding still causes atomic whole-ray fallback.
+  4. Remove only provably unmatched observations, symmetrically: a reverse
+     scan removes ENTER events with no later LEAVE, then a forward scan removes
+     LEAVE events with no earlier retained ENTER.  This retains the maximal
+     balanced observations without bridging a gap, and the scans exchange
+     under reversal.  Preserve a sole unmatched observation for the separately
+     certified seam/closure transaction; the Cobb crack resolver needs that
+     boundary witness.  This rule supersedes the original prefix/suffix
+     deletion described when the UCP checkpoint was first implemented.
+     A prepared result does not use this heuristic: incomplete event ownership
+     or final winding still causes atomic whole-ray fallback.
 
   5. Compact the bounded `brep_hit_workspace` in place.  The allocating list
      path implements the identical event choices for equivalence checking,
