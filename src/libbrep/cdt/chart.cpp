@@ -849,6 +849,152 @@ cdt_face_chart::add_refinement_point(long source_point,
     }
 }
 
+size_t
+cdt_face_chart::repair_toleranced_edge_endpoint_samples(
+	const std::vector<int> &native_path,
+	const std::vector<const ON_3dPoint *> &points_3d,
+	double tolerance)
+{
+    /* This operation changes only the planar triangulation embedding.  Native
+     * UV and the shared 3-D B-Rep edge points remain authoritative.  Restrict
+     * it to ordinary nonperiodic metric charts: cone, cylinder, polar, seam,
+     * and singular charts require their own topology-specific handling. */
+    if (m_type != CDT_FACE_CHART_SURFACE_METRIC || m_periodic ||
+	    m_closed_dir >= 0 ||
+	    native_path.size() < 3 || !(tolerance > 0.0) ||
+	    !std::isfinite(tolerance))
+	return 0;
+
+    std::map<long, int> native_to_chart;
+    std::set<long> ambiguous;
+    for (const cdt_chart_vertex &vertex : vertices) {
+	if (vertex.native_point < 0 || vertex.id < 0 ||
+		(size_t)vertex.id >= points.size())
+	    continue;
+	const auto old = native_to_chart.find(vertex.native_point);
+	if (old == native_to_chart.end())
+	    native_to_chart[vertex.native_point] = (int)vertex.id;
+	else if (old->second != vertex.id)
+	    ambiguous.insert(vertex.native_point);
+    }
+
+    std::vector<int> path;
+    path.reserve(native_path.size());
+    for (int native : native_path) {
+	const auto mapped = native_to_chart.find(native);
+	if (native < 0 || (size_t)native >= points_3d.size() ||
+		!points_3d[(size_t)native] ||
+		!points_3d[(size_t)native]->IsValid() ||
+		mapped == native_to_chart.end() ||
+		ambiguous.find(native) != ambiguous.end())
+	    return 0;
+	path.push_back(mapped->second);
+    }
+
+    const auto same_point = [&](size_t first, size_t second) {
+	return points[(size_t)path[first]] == points[(size_t)path[second]];
+    };
+    const auto source_distance = [&](size_t first, size_t second) {
+	const int first_native = native_path[first];
+	const int second_native = native_path[second];
+	return points_3d[(size_t)first_native]->DistanceTo(
+	    *points_3d[(size_t)second_native]);
+    };
+    const auto movable = [&](size_t first, size_t last) {
+	for (size_t i = first; i < last; ++i) {
+	    const cdt_chart_vertex &vertex = vertices[(size_t)path[i]];
+	    if (vertex.topo_vertex != CDT_TOPOLOGY_ID_NONE ||
+		    vertex.singular || vertex.seam_side)
+		return false;
+	}
+	return true;
+    };
+    const auto redistribute = [&](size_t first, size_t last,
+	    size_t movable_first, size_t movable_last,
+	    double collapsed_length) {
+	if (!(collapsed_length > 0.0) || collapsed_length > tolerance ||
+		movable_first >= movable_last ||
+		!movable(movable_first, movable_last))
+	    return (size_t)0;
+	/* Preserve the master edge's sampling proportions along the existing
+	 * nonzero chart chord.  This turns zero-length endpoint constraints into
+	 * a collinear subdivision without introducing a new boundary route. */
+	std::vector<double> cumulative(last - first + 1, 0.0);
+	for (size_t i = first + 1; i <= last; ++i) {
+	    const double distance = source_distance(i - 1, i);
+	    if (!std::isfinite(distance))
+		return (size_t)0;
+	    cumulative[i - first] = cumulative[i - first - 1] + distance;
+	}
+	const double total = cumulative.back();
+	if (!(total > 0.0) || !std::isfinite(total))
+	    return (size_t)0;
+	const std::pair<double, double> start = points[(size_t)path[first]];
+	const std::pair<double, double> finish = points[(size_t)path[last]];
+	std::vector<std::pair<double, double>> replacements;
+	replacements.reserve(movable_last - movable_first);
+	for (size_t i = movable_first; i < movable_last; ++i) {
+	    const double fraction = cumulative[i - first] / total;
+	    if (!(fraction > 0.0 && fraction < 1.0))
+		return (size_t)0;
+	    const std::pair<double, double> replacement(
+		start.first + fraction * (finish.first - start.first),
+		start.second + fraction * (finish.second - start.second));
+	    if (!std::isfinite(replacement.first) ||
+		    !std::isfinite(replacement.second))
+		return (size_t)0;
+	    const std::pair<double, double> &original =
+		points[(size_t)path[i]];
+	    if (hypot(replacement.first - original.first,
+		    replacement.second - original.second) > tolerance)
+		return (size_t)0;
+	    replacements.push_back(replacement);
+	}
+	for (size_t i = 0; i < replacements.size(); ++i) {
+	    const size_t path_index = movable_first + i;
+	    const std::pair<double, double> &replacement = replacements[i];
+	    const std::pair<double, double> &previous = path_index == first ?
+		points[(size_t)path[first]] :
+		(i ? replacements[i - 1] : points[(size_t)path[first]]);
+	    const std::pair<double, double> &next =
+		path_index + 1 == last ? points[(size_t)path[last]] :
+		(i + 1 < replacements.size() ? replacements[i + 1] :
+		points[(size_t)path[last]]);
+	    if (replacement == previous || replacement == next)
+		return (size_t)0;
+	}
+	for (size_t i = 0; i < replacements.size(); ++i)
+	    points[(size_t)path[movable_first + i]] = replacements[i];
+	return replacements.size();
+    };
+
+    size_t repaired = 0;
+    size_t first_distinct = 1;
+    while (first_distinct < path.size() &&
+	    same_point(0, first_distinct))
+	++first_distinct;
+    if (first_distinct > 1 && first_distinct < path.size()) {
+	double collapsed_length = 0.0;
+	for (size_t i = 1; i < first_distinct; ++i)
+	    collapsed_length += source_distance(i - 1, i);
+	repaired += redistribute(0, first_distinct, 1, first_distinct,
+	    collapsed_length);
+    }
+
+    size_t last_distinct = path.size() - 2;
+    while (last_distinct > 0 &&
+	    same_point(last_distinct, path.size() - 1))
+	--last_distinct;
+    if (last_distinct + 1 < path.size() - 1) {
+	double collapsed_length = 0.0;
+	for (size_t i = last_distinct + 2; i < path.size(); ++i)
+	    collapsed_length += source_distance(i - 1, i);
+	repaired += redistribute(last_distinct, path.size() - 1,
+	    last_distinct + 1, path.size() - 1, collapsed_length);
+    }
+    return repaired;
+}
+
 long
 cdt_face_chart::native_point(int chart_point) const
 {
