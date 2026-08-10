@@ -152,6 +152,10 @@ brlcad_add_test(
   COMMAND rt_brep_ray --crofton-hard-only
 )
 brlcad_add_test(NAME rt_brep_ray_seam COMMAND rt_brep_ray --seam-only)
+brlcad_add_test(
+  NAME rt_brep_ray_throughput
+  COMMAND rt_brep_ray --throughput-only
+)
 brlcad_add_test(NAME rt_brep_ray_endpoint COMMAND rt_brep_ray --endpoint-only)
 brlcad_add_test(
   NAME rt_brep_ray_nonisoparametric

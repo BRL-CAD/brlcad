@@ -1104,6 +1104,12 @@ struct rt_brep_shot_trace {
     size_t continuation_certificate_workspace;
     size_t continuation_certificate_exhausted;
     size_t continuation_certificate_existing_overlap;
+    size_t continuation_certificate_krawczyk_attempts;
+    size_t continuation_certificate_krawczyk_available;
+    size_t continuation_certificate_krawczyk_certified;
+    size_t continuation_certificate_complement_boxes;
+    size_t continuation_certificate_complement_excluded;
+    size_t continuation_certificate_complement_max_depth;
     size_t continuation_certified_candidates;
     fastf_t continuation_certificate_t_min;
     fastf_t continuation_certificate_t_max;
