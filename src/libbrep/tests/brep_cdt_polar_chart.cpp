@@ -379,6 +379,8 @@ main()
 
     if (!exercise_coincident_seams())
 	return 1;
+    if (cdt_test_pole_wedge_seam_orientation())
+	return 2;
     const ON_3dPoint centers[6] = {
 	ON_3dPoint::Origin,
 	ON_3dPoint(10.0, -20.0, 30.0),
@@ -392,7 +394,7 @@ main()
     };
     for (int i = 0; i < 6; ++i) {
 	if (!exercise_sphere(centers[i], radii[i]))
-	    return i + 2;
+	    return i + 3;
     }
     return 0;
 }
