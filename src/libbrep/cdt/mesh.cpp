@@ -5092,6 +5092,60 @@ cdt_mesh_t::cdt()
 		fprintf(df, "#include <stdio.h>\n");
 		fprintf(df, "#include \"bu/malloc.h\"\n");
 		fprintf(df, "#include \"bg/polygon.h\"\n");
+		fprintf(df, "/* chart type %d, closed direction %d */\n",
+		    (int)chart.type(), chart.closed_direction());
+		std::map<long, std::set<std::pair<int, int>>>
+		    source_boundary_provenance;
+		const auto collect_boundary_provenance =
+		    [&](const cpolygon_t *loop) {
+			if (!loop)
+			    return;
+			for (const cpolyedge_t *edge : loop->poly) {
+			    if (!edge)
+				continue;
+			    const int brep_edge = edge->trim_ind >= 0 &&
+				    edge->trim_ind < brep->m_T.Count() ?
+				brep->m_T[edge->trim_ind].m_ei : -1;
+			    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+				const auto native = loop->p2o.find(
+				    edge->v2d[endpoint]);
+				if (native != loop->p2o.end())
+				    source_boundary_provenance[native->second].insert(
+					std::make_pair(edge->trim_ind, brep_edge));
+			    }
+			}
+		    };
+		collect_boundary_provenance(&outer_loop);
+		for (const auto &loop : inner_loops)
+		    collect_boundary_provenance(loop.second);
+		for (const cdt_chart_vertex &vertex : chart.vertices) {
+		    const ON_3dPoint *point = vertex.native_point >= 0 &&
+			(size_t)vertex.native_point < source_points_3d.size() ?
+			source_points_3d[(size_t)vertex.native_point] : NULL;
+		    fprintf(df, "/* chart %lld native %ld topo %lld edge %lld "
+			"sample %lld seam %d singular %d",
+			(long long)vertex.id, vertex.native_point,
+			(long long)vertex.topo_vertex,
+			(long long)vertex.brep_edge,
+			(long long)vertex.edge_sample, vertex.seam_side,
+			vertex.singular ? 1 : 0);
+		    if (point)
+			fprintf(df, " point %.17g %.17g %.17g", point->x,
+			    point->y, point->z);
+		    const auto provenance =
+			source_boundary_provenance.find(vertex.native_point);
+		    if (provenance != source_boundary_provenance.end()) {
+			fprintf(df, " boundary");
+			for (const auto &entry : provenance->second) {
+			    const double tolerance = entry.second >= 0 &&
+				    entry.second < brep->m_E.Count() ?
+				brep->m_E[entry.second].m_tolerance : 0.0;
+			    fprintf(df, " t%d/e%d/tol=%.17g", entry.first,
+				entry.second, tolerance);
+			}
+		    }
+		    fprintf(df, " */\n");
+		}
 		fprintf(df, "int main() {\n");
 		size_t np = chart.points.size();
 		fprintf(df,
