@@ -19,6 +19,7 @@
 #include "bg/trimesh.h"
 #include "brep/cdt.h"
 #include "../cdt/chart.h"
+#include "../cdt/mesh.h"
 
 static bool
 exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
@@ -282,6 +283,120 @@ exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
     }
     if (!low_sample || !high_sample) {
 	std::cerr << "authoritative cone seam samples share one chart side"
+	    << std::endl;
+	return false;
+    }
+
+    /* Two distinct chart cells can use the low and high copies of one seam
+     * sample and collapse onto the same three model-space vertices.  Verify
+     * that the mesh refinement recognizes this quotient collision and adds
+     * one authoritative surface sample inside each chart cell. */
+    long alias_pole_native = -1;
+    long low_native = -1;
+    long high_native = -1;
+    for (const cdt_chart_vertex &vertex : seam_chart.vertices) {
+	if (vertex.singular)
+	    alias_pole_native = vertex.native_point;
+	if (vertex.native_point != seam_samples[0] &&
+		vertex.native_point != seam_samples[1])
+	    continue;
+	if (vertex.seam_side < 0)
+	    low_native = vertex.native_point;
+	if (vertex.seam_side > 0)
+	    high_native = vertex.native_point;
+    }
+    long boundary_native = -1;
+    for (const cdt_chart_vertex &chart_vertex : seam_chart.vertices) {
+	const long candidate = chart_vertex.native_point;
+	if (candidate < 0 || candidate == alias_pole_native ||
+		candidate == low_native || candidate == high_native ||
+		(size_t)candidate >= seam_native.size())
+	    continue;
+	const long low_triangle[3] = {
+	    alias_pole_native, candidate, low_native
+	};
+	const long high_triangle[3] = {
+	    candidate, alias_pole_native, high_native
+	};
+	ON_2dPoint low_interior;
+	ON_2dPoint high_interior;
+	if (seam_chart.triangle_interior_sample(low_triangle,
+		low_interior) &&
+		seam_chart.triangle_interior_sample(high_triangle,
+		high_interior)) {
+	    boundary_native = candidate;
+	    break;
+	}
+    }
+    if (alias_pole_native < 0 || low_native < 0 || high_native < 0 ||
+	    boundary_native < 0) {
+	std::cerr << "cone fixture did not expose aliased chart cells"
+	    << std::endl;
+	return false;
+    }
+    cdt_mesh_t quotient_mesh;
+    quotient_mesh.brep = brep.get();
+    quotient_mesh.f_id = cone_face->m_face_index;
+    quotient_mesh.m_pnts_2d = seam_native;
+    quotient_mesh.m_face_charts.push_back(seam_chart);
+    long shared_seam_point = -1;
+    const long alias_points[4] = {
+	alias_pole_native, boundary_native, low_native, high_native
+    };
+    for (long native : alias_points) {
+	if ((native == low_native || native == high_native) &&
+		shared_seam_point >= 0) {
+	    quotient_mesh.p2d3d[native] = shared_seam_point;
+	    continue;
+	}
+	ON_3dPoint value = seam_points_3d[(size_t)native] ?
+	    *seam_points_3d[(size_t)native] : surface->PointAt(
+		seam_native[(size_t)native].first,
+		seam_native[(size_t)native].second);
+	ON_3dPoint *stored = new ON_3dPoint(value);
+	const long point = (long)quotient_mesh.pnts.size();
+	quotient_mesh.pnts.push_back(stored);
+	quotient_mesh.p2ind[stored] = point;
+	quotient_mesh.p2d3d[native] = point;
+	if (native == low_native || native == high_native)
+	    shared_seam_point = point;
+    }
+    triangle_t low_triangle;
+    low_triangle.v[0] = alias_pole_native;
+    low_triangle.v[1] = boundary_native;
+    low_triangle.v[2] = low_native;
+    quotient_mesh.tris_2d.push_back(low_triangle);
+    triangle_t high_triangle;
+    high_triangle.v[0] = boundary_native;
+    high_triangle.v[1] = alias_pole_native;
+    high_triangle.v[2] = high_native;
+    quotient_mesh.tris_2d.push_back(high_triangle);
+    const size_t quotient_samples =
+	quotient_mesh.refine_collapsed_chart_triangles(8);
+    bool separated_cells = quotient_samples == 2 &&
+	quotient_mesh.m_chart_refinement_pnts.size() == 2;
+    std::vector<const ON_3dPoint *> refined_points;
+    for (long native : quotient_mesh.m_chart_refinement_pnts) {
+	const auto point = quotient_mesh.p2d3d.find(native);
+	if (point == quotient_mesh.p2d3d.end() || point->second < 0 ||
+		(size_t)point->second >= quotient_mesh.pnts.size()) {
+	    separated_cells = false;
+	    continue;
+	}
+	refined_points.push_back(
+	    quotient_mesh.pnts[(size_t)point->second]);
+    }
+    separated_cells = separated_cells && refined_points.size() == 2 &&
+	refined_points[0]->DistanceTo(*refined_points[1]) >
+	ON_ZERO_TOLERANCE;
+    for (ON_3dPoint *point : quotient_mesh.pnts)
+	delete point;
+    for (ON_3dPoint *normal : quotient_mesh.normals)
+	delete normal;
+    quotient_mesh.pnts.clear();
+    quotient_mesh.normals.clear();
+    if (!separated_cells) {
+	std::cerr << "collapsed cone chart cells were not separated"
 	    << std::endl;
 	return false;
     }
