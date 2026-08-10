@@ -808,11 +808,14 @@ public:
     ON_Plane best_fit_plane(std::set<triangle_t> &ts);
     double max_tri_angle(ON_Plane &plane, std::set<triangle_t> &ts);
 
+    friend int cdt_test_local_defects(void);
+
 private:
     /* Data containers */
     std::map<edge_t, size_t> edges2tris;
     std::map<long, long> p3d2d;
     std::set<long> ambiguous_p3d2d;
+    std::set<long> periodic_ambiguous_p3d2d;
 
     // For situations where we need to process using Brep data
     std::set<ON_3dPoint *> *edge_pnts;
