@@ -11,6 +11,37 @@ as the authoritative continuation log until all acceptance gates pass.
 CURRENT PHASE
 -------------
 
+2026-08-09 ACTIVE LOCAL CLEANUP AND SC STRATUM COMPLETION
+
+The loop-topology checkpoint is committed locally as 6e2c6f4ad6, "Make BREP
+trim classification topology aware".  It was not pushed.  The final selected
+object in the initial 14-database ray stratum, the 848-face SC solid, exposed
+a direction-dependent legacy hit-cleanup failure even though adaptive depths
+three and eight found the same nine surface roots.
+
+SC deterministic pair 22 mixed one genuinely coincident near-hit/near-miss
+observation with a later near-miss/clean pair several model units apart.  The
+historical code let sorted adjacency imply event identity and erased or
+reinterpreted the distant pair.  It then deleted a complete trailing suffix
+after an unmatched entry, whereas the reversed stream retained the analogous
+balanced interval.  The fixed and allocating cleanup implementations now
+require the existing model-derived ray-parameter coincidence envelope for
+every near-miss interaction.  They remove unmatched entries in a reverse scan
+and unmatched exits in a forward scan before nonzero-winding compaction.  The
+two scans exchange under ray reversal and retain the maximal balanced stream.
+
+The C++ cleanup corpus contains reduced exact streams for both defects.  Exact
+SC pair 22 and the complete 70-ray legacy-only comparison now pass in both
+directions at depths three and eight.  The full prepared trace also passes,
+but selects none of its 35 eligible rays: 31 are uncertified, two exhaust the
+surface-box workspace, and two fail event classification.  Its 2,498
+candidate spans, 18,336 subdivision boxes, 1,235 isolated boxes, and 225
+unresolved physical events reinforce the planned performance priority:
+profile normal production and reduce face/span candidate and proof work before
+tuning Newton evaluation.  Correctness gates remain authoritative, production
+depth remains eight, and the Abert-informed optimization phase follows only
+after broader analytic and imported qualification.
+
 2026-08-09 ACTIVE IMPORTED-RAY DEPTH COMPARISON AND STATUS-2 POLES
 
 The preceding database profiling checkpoint is committed locally as
@@ -6747,11 +6778,14 @@ Imported solid winding and overlap cleanup (Finding 81):
        ENTER changing winding 0->1 and the LEAVE changing 1->0.  Nested outward
        shells raise winding and therefore produce a union envelope.  Disjoint
        shells return to zero and produce separate intervals.  Inward-oriented
-       cavities produce the expected temporary zero winding.  Leading LEAVEs
-       and an unclosed trailing ENTER are not bridged to material.  A sole
-       unmatched observation is retained for the later certified seam/closure
-       resolver; dropping it broke all intended Cobb crack repairs and was
-       caught before promotion.
+       cavities produce the expected temporary zero winding.  Finding 84
+       supersedes the original asymmetric prefix/suffix handling: a reverse
+       scan removes only entries without a later exit and a forward scan
+       removes only exits without an earlier retained entry.  The maximal
+       balanced stream is therefore retained under reversal without bridging
+       a gap.  A sole unmatched observation is retained for the later
+       certified seam/closure resolver; dropping it broke all intended Cobb
+       crack repairs and was caught before promotion.
 
   `brep_hit_workspace` compacts in place with no allocation.  The allocating
   list performs exactly the same choices for equivalence testing.  Plate and
@@ -7109,11 +7143,14 @@ Loop-topology trim classifier and exact join ownership (Finding 83):
   selections, 136 uncertified fallbacks, and 24 validated seam pairs.  Two
   failed ownership attempts are accounted box failures and publish nothing.
   Eight contact pairs have two source boxes and roots each and one allowable
-  raw half-open miss-side root each.  The experimental local cleanup has two
-  ambiguous comparisons only when both gap and clearance exceed the model
-  tolerance by 10%; no ambiguity occurs inside tolerance and no comparison is
-  an oracle regression.  A 280-selection floor preserves the conservative
-  fallback increase as an explicit performance/certification ratchet.
+  raw half-open miss-side root each.  The experimental local cleanup had two
+  ambiguous comparisons only when both gap and clearance exceeded the model
+  tolerance by 10%; no ambiguity occurred inside tolerance and no comparison
+  was an oracle regression.  Finding 84's event-local near-miss cleanup
+  removes both remaining ambiguities without changing the selection,
+  fallback, or seam-pair populations.  A 280-selection floor preserves the
+  conservative fallback increase as an explicit performance/certification
+  ratchet.
 
     ctest --test-dir .build -R '^rt_brep_ray($|_)' \
       -E '^rt_brep_ray_seam$' -j14 --output-on-failure
@@ -7154,18 +7191,123 @@ Loop-topology trim classifier and exact join ownership (Finding 83):
   orientation.
 
 
+Local near-miss resolution and reversal-invariant balanced runs (Finding 84):
+
+  The 848-face `IBEX_SOLID_item.s` in
+  `original/SC_solid_stp_20260429.g` completed the sampled ray comparison for
+  the largest model in the initial 14-database preparation stratum.  Its
+  deterministic pair 22 has origin
+
+    (95.848591855513888, -55.740815264982629,
+     -11.3876265194396)
+
+  direction
+
+    (-0.58941604087522914, 0.74193704918254422,
+     0.31955929936283961)
+
+  and chord `255.39858798473995`.  Fresh adaptive-depth-three and depth-eight
+  trees found the same nine roots.  Before repair the forward legacy path
+  returned no intervals and the reversed path returned two.  Prepared tracing
+  also failed closed with six unresolved events, so it did not conceal or
+  supply the fallback answer.
+
+  Raw cleanup telemetry isolated two direction-sensitive policies.  First,
+  NEAR_MISS cleanup used sorted adjacency and matching normal direction as if
+  they proved one physical event.  Forward cleanup let a leaving near miss at
+  about 71.715 interact with a clean entry at about 75.263 despite their
+  several-unit separation.  Reversal changed ordering and retained a
+  different stream.  Near-miss versus non-miss removal, consecutive near-miss
+  merging, and near-miss versus clean/near-hit relabeling now all require
+  `brep_solid_events_coincident` using the established model-derived parameter
+  envelope.  The fixed and allocating paths implement the same locality rule.
+
+  Second, the old solid winding code ignored leading unmatched exits but
+  deleted the whole suffix after an unmatched trailing entry.  A stream
+  equivalent to ENTER, ENTER, ENTER, LEAVE, LEAVE consequently lost its
+  balanced interior in one direction while the reversed form retained it.
+  Cleanup now reverse-scans to remove only entries with no later exit, then
+  forward-scans to remove only exits with no earlier retained entry.  This is
+  allocation-free parenthesis matching.  The surviving stream is compacted
+  to the same nonzero-winding union intervals as before.  A lone original
+  observation remains available to the certified crack/closure repair.
+
+  A new source test helper accepts complete synthetic hit-class streams.
+  `--cleanup-only` ratchets both ENTER/ENTER/ENTER/LEAVE/LEAVE and the reduced
+  SC stream, including a locally coincident near-hit/near-miss pair and a
+  distant adjacent near-miss/clean pair.  Each test supplies the exact
+  reversed stream and compares the full retained partition under
+  `t_reverse = chord - t_forward`.  It is deliberately C++ data rather than a
+  model-specific `.g` fixture and joins the difficult-case corpus required to
+  prevent fixed-this/broke-that solver work.
+
+  Exact pair 22 now returns two intervals in both directions and at both
+  depths:
+
+    [58.107629653..., 71.715107548...]
+    [93.746252051..., 184.158146005...]
+
+  The complete 70-ray legacy-only SC comparison passes with 16 hit rays, 54
+  misses, 26 segments, zero invalid/orientation/depth/reversal differences,
+  and maximum depth delta `3.3064736726373667e-8`.  The final depth-three tree
+  has 270,839 nodes and 172,669 leaves; depth eight has 3,494,794 nodes and
+  1,787,007 leaves; both use 60,527 CurveTree leaves.  Peak resident memory was
+  about 973 MB.
+
+  The full prepared-plus-legacy 70-ray trace also passes.  Both requested
+  depths report 35 eligible/attempted rays, zero selections, 31 uncertified
+  fallbacks, two surface-box overflows, and two event-class fallbacks.  Each
+  reports 2,498 candidate spans, 18,336 subdivision boxes, 1,235 isolated
+  boxes, 213 fold attempts, eight fold certificates, 18 surface-box
+  overflows, 35 physically complete ledgers, and 225 unresolved physical
+  events.  Wall time was 7m43.79s, CPU time 559.33s, and peak RSS 950,184 KB
+  on this host.  This is trace instrumentation, not a controlled normal-shot
+  benchmark, but it makes the general optimization target clear: reduce
+  object/face/span candidate traversal and proof work before assuming Newton
+  iteration is the primary cost.
+
+  Optimized validation after the repair is 18/18 non-seam ray shards in
+  150.68 seconds plus a complete passing seam shard.  The seam matrix retains
+  280 selections, 136 uncertified fallbacks, 24 seam pairs, zero leaks, and
+  14/14 known crack repairs.  Its formerly two out-of-tolerance experimental
+  local ambiguities are now zero because distant sorted events cannot modify
+  one another.  Rebuilt ASAN/UBSAN `--cleanup-only` passes with no diagnostic;
+  the exact high-memory SC replay was qualified in the optimized build rather
+  than multiplied under ASAN.
+
+  This repair improves the tolerant legacy fallback; it is not prepared
+  authority.  The prepared ledger still fails the whole ray on incomplete
+  ownership, unresolved event identity, unsupported trim/seam topology, or
+  nonzero final winding.  Parameter coincidence prevents a known local crack
+  observation from corrupting an otherwise usable fallback but does not prove
+  arbitrary roots equivalent.
+
+  Correctness remains the immediate priority.  Production adaptive depth
+  stays eight while analytic implicit-to-BREP partitions, paired
+  Cauchy-Crofton area/volume convergence, signed grazing ladders, Cobb crack
+  perturbations, similarity/reversal invariance, feature-targeted imported
+  rays, and later CSG-tree substitutions expand.  Once these answers and
+  fallback boundaries are stable, the performance phase should profile normal
+  production, prioritize a compact object/face/span BVH and conservative
+  batched rejection, implement a real `vshot`, and optimize OpenNURBS
+  evaluation/Newton correction only when measured hot.  The goal is a broadly
+  applicable certified pipeline, not exact reproduction of Abert et al.
+
+
 NEXT ACTIONS
 ------------
 
-Current priority after the structural-knot/regular-stream checkpoint:
+Current priority after the local-cleanup/initial-stratum checkpoint:
 
 A. Keep the production adaptive depth at eight.  The first reproducible
    14-database depth-three/eight prep stratum, the imported comparisons, the
-   status-2 pole repair, UCP winding/overlap repair, and NIST trim-endpoint
-   repair are recorded above.  Continue `--ray-depth-compare` across the
-   remaining strata, using `--ray-pair` and `--legacy-only` to ratchet every
-   failure before paying for a full trace.  Retain complete partition/reversal
-   results, orientation, prepared selection and fallback populations,
+   status-2 pole repair, UCP winding/overlap repair, NIST trim-endpoint repair,
+   and SC local-cleanup repair are recorded above.  The selected objects in
+   that initial stratum now have sampled ray comparisons.  Expand into new
+   strata with `--ray-depth-compare`, using `--ray-pair` and `--legacy-only`
+   to ratchet every failure before paying for a full trace.  Retain complete
+   partition/reversal results, orientation, prepared selection and fallback
+   populations,
    face/span/status-2/trim/scale fields, actual requested-depth prep
    statistics, RSS, and cache behavior.  Add feature-targeted rays so a high
    miss fraction does not masquerade as coverage.  Successful tree builds and
@@ -7182,10 +7324,12 @@ C. Use the deterministic hard replay as the seed of the difficult-solver C/C++
    is ratcheted by pure hit streams, an appended-overlapping-sphere CSG-union
    oracle, exact imported pairs 0/3/26, and the complete 70-ray audit.  The
    NIST depth discrepancy is ratcheted by a split-trim endpoint fixture and
-   exact pair 1 at every adaptive depth.  Add every subsequent imported
-   discrepancy with its complete geometry, ray, tolerance, span, box, root,
-   event, and fallback evidence; do not tune against an unnamed `.g` model or
-   replace one failure with another.
+   exact pair 1 at every adaptive depth.  SC pair 22 is ratcheted by a pure
+   hit-class stream that distinguishes coincident and merely adjacent events,
+   plus exact imported and complete 70-ray replay.  Add every subsequent
+   imported discrepancy with its complete geometry, ray, tolerance, span,
+   box, root, event, and fallback evidence; do not tune against an unnamed
+   `.g` model or replace one failure with another.
 D. Extend prepared authority only with separate complete proofs for the
    remaining categories: mixed fold/regular streams, trim-near and
    topology-boundary events, contact-only rays, curved vertex links, and
