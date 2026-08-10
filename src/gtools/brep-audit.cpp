@@ -334,15 +334,15 @@ surface_tree_node_counts(const brlcad::BBNode *node, int depth,
 	return;
     nodes++;
     maximum_depth = std::max(maximum_depth, depth);
-    const std::vector<brlcad::BBNode *> &children = node->get_children();
-    if (children.empty()) {
+    const std::size_t child_count = node->childCount();
+    if (!child_count) {
 	leaves++;
 	return;
     }
-    for (std::vector<brlcad::BBNode *>::const_iterator child =
-	    children.begin(); child != children.end(); ++child)
-	surface_tree_node_counts(*child, depth + 1, nodes, leaves,
-	    maximum_depth);
+    for (std::size_t child_index = 0; child_index < child_count;
+	    ++child_index)
+	surface_tree_node_counts(node->child(child_index), depth + 1,
+	    nodes, leaves, maximum_depth);
 }
 
 static size_t
