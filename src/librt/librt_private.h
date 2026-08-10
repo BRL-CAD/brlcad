@@ -829,6 +829,9 @@ struct rt_brep_shot_trace {
     size_t surface_fold_boundary_existence_certified;
     size_t surface_fold_boundary_existence_contractions;
     size_t surface_fold_boundary_existence_failures;
+    size_t surface_fold_strip_build_attempts;
+    size_t surface_fold_strip_build_available;
+    size_t surface_fold_strip_build_avoided;
     size_t surface_fold_strip_excluded;
     size_t surface_fold_strip_boxes;
     size_t surface_fold_strip_contractions;
@@ -942,6 +945,8 @@ struct rt_brep_shot_trace {
     size_t physical_event_seam_root_candidates;
     size_t physical_event_seam_closure_candidates;
     size_t physical_event_seam_continuation_candidates;
+    size_t physical_event_seam_population_screens;
+    size_t physical_event_seam_population_rejected;
     size_t physical_event_seam_certified;
     size_t physical_event_seam_failures;
     size_t physical_event_seam_ownership_failures;
