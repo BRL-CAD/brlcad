@@ -1006,6 +1006,76 @@ check_brep_direction_cleanup()
 	return 1;
     }
 
+    /* A seam representative may change between NEAR_HIT and NEAR_MISS when
+     * two correctors land on opposite sides of the same half-open trim.  Do
+     * not discard a distant endpoint merely because the uncoalesced stream
+     * is odd.  Local coalescence followed by balanced matching must retain
+     * the same outer interval for both representations and under reversal. */
+    const fastf_t side_forward_distances[] = {1.0, 2.0, 2.0002, 3.0, 4.0};
+    const int side_forward_signs[] = {-1, -1, -1, 1, 1};
+    const int side_hit_classes[] = {cleanup_near_miss, cleanup_near_hit,
+	cleanup_near_hit, cleanup_near_miss, cleanup_near_miss};
+    const int side_miss_classes[] = {cleanup_near_miss, cleanup_near_hit,
+	cleanup_near_miss, cleanup_near_miss, cleanup_near_miss};
+    fastf_t side_hit_retained[5] = {};
+    fastf_t side_miss_retained[5] = {};
+    const size_t side_hit_count = _rt_brep_cleanup_stream_test(
+	side_forward_distances, side_forward_signs, side_hit_classes, 5,
+	0.001, side_hit_retained, 5);
+    const size_t side_miss_count = _rt_brep_cleanup_stream_test(
+	side_forward_distances, side_forward_signs, side_miss_classes, 5,
+	0.001, side_miss_retained, 5);
+    const fastf_t side_reverse_distances[] = {1.0, 2.0, 2.9998, 3.0, 4.0};
+    const int side_reverse_signs[] = {-1, -1, 1, 1, 1};
+    const int side_reverse_classes[] = {cleanup_near_miss,
+	cleanup_near_miss, cleanup_near_hit, cleanup_near_hit,
+	cleanup_near_miss};
+    fastf_t side_reverse_retained[5] = {};
+    const size_t side_reverse_count = _rt_brep_cleanup_stream_test(
+	side_reverse_distances, side_reverse_signs, side_reverse_classes, 5,
+	0.001, side_reverse_retained, 5);
+    if (side_hit_count != 2 || side_miss_count != 2 ||
+	    side_reverse_count != 2 ||
+	    !NEAR_EQUAL(side_hit_retained[0], 1.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(side_hit_retained[1], 4.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(side_miss_retained[0], side_hit_retained[0],
+		SMALL_FASTF) ||
+	    !NEAR_EQUAL(side_miss_retained[1], side_hit_retained[1],
+		SMALL_FASTF) ||
+	    !NEAR_EQUAL(side_reverse_retained[0], 5.0 - side_hit_retained[1],
+		SMALL_FASTF) ||
+	    !NEAR_EQUAL(side_reverse_retained[1], 5.0 - side_hit_retained[0],
+		SMALL_FASTF)) {
+	std::printf("FAIL: BREP near-side stream hit=%zu [%.17g %.17g] "
+	    "miss=%zu [%.17g %.17g] reverse=%zu [%.17g %.17g]\n",
+	    side_hit_count, side_hit_retained[0], side_hit_retained[1],
+	    side_miss_count, side_miss_retained[0], side_miss_retained[1],
+	    side_reverse_count, side_reverse_retained[0],
+	    side_reverse_retained[1]);
+	return 1;
+    }
+
+    /* A ray lying in one face can make a dense tree report a continuum of
+     * zero-normal roots between two ordinary transverse solid boundaries.
+     * An isolated zero-normal root is not one endpoint of the affine-grazing
+     * theorem: both endpoints of that theorem must be grazing. */
+    const fastf_t coplanar_distances[] = {1.0, 1.25, 1.5, 1.75, 2.0};
+    const int coplanar_signs[] = {-1, 0, 0, 0, 1};
+    const int coplanar_classes[] = {cleanup_clean_hit, cleanup_clean_hit,
+	cleanup_clean_hit, cleanup_clean_hit, cleanup_clean_hit};
+    fastf_t coplanar_retained[5] = {};
+    const size_t coplanar_count = _rt_brep_cleanup_stream_test(
+	coplanar_distances, coplanar_signs, coplanar_classes, 5, 0.001,
+	coplanar_retained, 5);
+    if (coplanar_count != 2 ||
+	    !NEAR_EQUAL(coplanar_retained[0], 1.0, SMALL_FASTF) ||
+	    !NEAR_EQUAL(coplanar_retained[1], 2.0, SMALL_FASTF)) {
+	std::printf("FAIL: BREP coplanar continuum cleanup count=%zu "
+	    "[%.17g %.17g]\n", coplanar_count, coplanar_retained[0],
+	    coplanar_retained[1]);
+	return 1;
+    }
+
     const fastf_t clustered_forward_distances[] =
 	{1.0, 2.0, 2.0002, 4.0};
     const int clustered_forward_signs[] = {-1, 1, 1, -1};
@@ -17865,14 +17935,10 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	prepared_partition_ambiguous,
 	prepared_partition_ambiguous_beyond_model_tolerance,
 	maximum_prepared_oracle_error);
-    if (prepared_partition_promotions < 2 ||
-	    prepared_partition_regressions ||
-	    prepared_partition_ambiguous > 2 ||
-	    prepared_partition_ambiguous !=
-	    prepared_partition_ambiguous_beyond_model_tolerance) {
+    if (prepared_partition_regressions || prepared_partition_ambiguous) {
 	std::printf("FAIL: experimental Cobb local partitions have %zu "
 	    "regressions and %zu ambiguous changes (%zu beyond model T); "
-	    "promotions=%zu/2-minimum\n", prepared_partition_regressions,
+	    "promotions=%zu\n", prepared_partition_regressions,
 	    prepared_partition_ambiguous,
 	    prepared_partition_ambiguous_beyond_model_tolerance,
 	    prepared_partition_promotions);

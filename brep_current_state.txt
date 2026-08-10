@@ -11,6 +11,33 @@ as the authoritative continuation log until all acceptance gates pass.
 CURRENT PHASE
 -------------
 
+2026-08-09 ACTIVE FEATURE-TARGETED IMPORTED RAYS
+
+The local-cleanup checkpoint is committed locally as 6aac11e5a8, "Make BREP
+hit cleanup reversal invariant".  It was not pushed.  The next increment adds
+deterministic face-normal, edge-normal, and edge-grazing chords to imported
+depth comparison.  The first 24-feature run on the 186-face 0353 STEP object
+found five depth differences and 5/7 reversal failures that its random chord
+run missed.
+
+The failures reduced to two superseded cleanup policies.  Odd NEAR_MISS
+endpoint deletion ran before local representative coalescence, and coplanar
+zero-normal roots could borrow the affine-grazing material theorem from one
+ordinary transverse neighbor.  Endpoint deletion is removed in favor of the
+already qualified symmetric balanced matcher.  Grazing iteration no longer
+skips the element returned by erase, and a resolved grazing interval now
+requires both endpoint normal dots to be grazing.  Reduced C++ streams ratchet
+near-side representative invariance and a coplanar root continuum.
+
+All 24 feature pairs plus three axis controls now pass at adaptive depths three
+and eight in both directions, with maximum endpoint delta 5.38e-8.  One
+coincident endpoint selects face 151 versus 152 at the two depths while
+retaining the same point and oriented normal; it is recorded separately from
+partition equality.  The affine-grazing and broad optimized gates pass.
+Feature rays remain imported invariance probes rather than analytic oracles;
+they supplement the directed implicit-to-BREP, Cauchy-Crofton, grazing-ladder,
+and seam-perturbation truth program.
+
 2026-08-09 ACTIVE LOCAL CLEANUP AND SC STRATUM COMPLETION
 
 The loop-topology checkpoint is committed locally as 6e2c6f4ad6, "Make BREP
@@ -7294,6 +7321,108 @@ Local near-miss resolution and reversal-invariant balanced runs (Finding 84):
   applicable certified pipeline, not exact reproduction of Abert et al.
 
 
+Feature-targeted chords and coplanar grazing cleanup (Finding 85):
+
+  `brep-audit --ray-depth-compare` now accepts
+  `--feature-ray-count=N`.  After the stable three axis and requested random
+  pairs it appends a stratified mix of face-domain-midpoint normal chords,
+  edge-midpoint face-normal chords, and edge-midpoint face-conormal chords.
+  The last category is locally tangent to the incident face and transverse to
+  the edge.  Points, tangents, normals, and conormals come directly from BREP
+  surfaces and trims, not a tessellation.  Bounding-sphere endpoints keep the
+  finite chord outside the object envelope.
+
+  Output separately records requested and actual random/feature populations,
+  every feature category, target face and edge, sample kind, and the exact
+  global pair line.  Existing `--ray-pair` replay remains stable for axis and
+  random pairs when feature count is zero; with feature sampling enabled it
+  selects the recorded global index.  Invalid domains, singular evaluations,
+  and targets outside the envelope are skipped.  Available feature counts can
+  therefore be below the request and are never padded with invented geometry.
+
+  These are coverage and invariance probes, not imported geometric truth.
+  The underlying surface midpoint may be trimmed away, and a local edge graze
+  may correctly be a contact-only miss.  The applicable assertions remain
+  complete finite oriented partitions, fresh depth-three/depth-eight equality,
+  and reversal invariance.  Analytic implicit-to-BREP partitions and paired
+  Cauchy-Crofton convergence retain oracle authority.
+
+  The first feature run targeted `Product_step18_item.s` in
+  `non_grabcad/0353/0353-02-57.g`: eight face-normal, eight edge-normal, and
+  eight edge-graze pairs plus three axis controls, for 54 directed rays.  Its
+  earlier 64-random-pair run passed, but the targeted run initially found five
+  differing rays, five candidate-depth reversal failures, and seven reference-
+  depth reversal failures.  Maximum partition disagreement was 2.5 model
+  units.
+
+  One class was the odd NEAR_MISS endpoint heuristic left ahead of Finding
+  84's symmetric matcher.  Pair 10 placed two coincident entry observations on
+  a seam.  One depth classified them NEAR_HIT/NEAR_HIT and the other
+  NEAR_HIT/NEAR_MISS.  The old odd-count stage discarded a distant outer
+  boundary before the first representation could coalesce.  Removing raw
+  front/back deletion from fixed and allocating cleanup leaves local event
+  identity and balanced matching to make the decision.  A reduced C++ stream
+  now changes only the coincident near-side representative and requires the
+  same outer partition under reversal.
+
+  Pair 11 exposed a distinct dense-tree continuum.  Its edge-normal line is
+  coplanar with face 11.  Depth three reported six raw observations and the
+  correct 0.8-unit interval.  Depth eight reported 130 raw observations, 126
+  after near cleanup, including many CLEAN_HIT samples with zero normal dot
+  along the face.  Cleanup retained one arbitrary sample next to a transverse
+  entry and published a 0.025-unit interval; reversal selected the opposite
+  end of the continuum.
+
+  The fixed grazing loop intentionally copied a historical allocating-list
+  iterator bug: erasing the first item advanced past the new first item.  Both
+  containers now test the returned item immediately.  More importantly,
+  `brep_resolved_grazing_pair` now enforces the premise recorded in Finding 48:
+  both endpoints, not only the currently inspected one, must be grazing before
+  ordered separation can preserve an affine-grazing material interval.  A
+  zero-normal contact cannot borrow authority from a transverse entry.  The
+  existing trim, direction, finite-distance, and minimum-size conditions are
+  unchanged.  A pure C++ stream with three zero-normal coplanar samples between
+  ordinary entry and exit requires all three to disappear.
+
+  Final feature replay passes every pair with zero depth-partition and reversal
+  differences and maximum endpoint delta
+  `5.3813607792108087e-8`.  Pair 11 returns
+  `[19.511658187986882,20.31165818798695]` in both depths and its exact reversed
+  interval.  The depth-eight allocating trace still records 130 raw roots and
+  a 64-root trace capacity overflow, but cleanup reduces the full list to the
+  same two physical endpoints; production's fixed hit workspace falls back to
+  that allocating path on capacity overflow.
+
+  Pair 9 has one explicitly non-semantic face-identity difference.  Coincident
+  faces 151--154 contribute the same two-unit interval.  Depth-three reverse
+  cleanup retains face 151 at entry; depth eight retains a face-152 root about
+  5.7e-14 earlier.  Both normals and endpoints agree and both map to the
+  face-151 forward exit.  `face_difference_ray_indices` now records exact
+  examples and includes them in diagnostic records.  This is a prepared
+  topological-ownership target, not permission to call different material
+  partitions equivalent.
+
+  The registered converted-sphere audit now requests all three feature types.
+  Exact feature pair 5 replay records an edge graze with four raw seam roots
+  and no material interval in either direction.  The focused affine gate
+  passes all 78 directed trend rays after requiring two grazing endpoints.
+  The complete non-seam optimized gate passes 18/18 in 176.33 seconds.  The
+  Cobb local comparison is tightened from its obsolete two-promotion floor to
+  zero regressions and zero ambiguous partition changes: the general legacy
+  cleanup now supplies the two formerly promoted correct answers.  The final
+  seam run passes all 416 matrix rays with 16/16 crack repairs, zero leaks,
+  zero reversal inconsistencies, 280 prepared selections, 136 conservative
+  fallbacks, and 24 certified seam pairs.  Rebuilt ASAN/UBSAN `--cleanup-only`
+  and feature-enabled `brep_audit_ray_depth_compare` pass with no diagnostic.
+
+  Add feature populations to every subsequent imported manifest result.  Use
+  exact selected-pair replay and reduce every failure to a source stream or
+  small analytic BREP before changing production behavior.  Continue random
+  chords for broad occupancy, signed grazing ladders for tangent-limit truth,
+  Cauchy-Crofton sampling for integral convergence, and Cobb perturbations for
+  crack policy; no one sampling mode substitutes for the others.
+
+
 NEXT ACTIONS
 ------------
 
@@ -7309,10 +7438,10 @@ A. Keep the production adaptive depth at eight.  The first reproducible
    partition/reversal results, orientation, prepared selection and fallback
    populations,
    face/span/status-2/trim/scale fields, actual requested-depth prep
-   statistics, RSS, and cache behavior.  Add feature-targeted rays so a high
-   miss fraction does not masquerade as coverage.  Successful tree builds and
-   agreement with depth eight do not by themselves establish an
-   arbitrary-BREP default.
+   statistics, RSS, and cache behavior.  Include stratified face-normal,
+   edge-normal, and edge-grazing populations so a high random miss fraction
+   does not masquerade as coverage.  Successful tree builds and agreement
+   with depth eight do not by themselves establish an arbitrary-BREP default.
 B. Preserve adaptive depth three as the present conservative experimental
    plateau.  Do not spend correctness effort forcing special fixtures to
    depth zero.  Any candidate production reduction must retain the complete
@@ -7326,10 +7455,12 @@ C. Use the deterministic hard replay as the seed of the difficult-solver C/C++
    NIST depth discrepancy is ratcheted by a split-trim endpoint fixture and
    exact pair 1 at every adaptive depth.  SC pair 22 is ratcheted by a pure
    hit-class stream that distinguishes coincident and merely adjacent events,
-   plus exact imported and complete 70-ray replay.  Add every subsequent
-   imported discrepancy with its complete geometry, ray, tolerance, span,
-   box, root, event, and fallback evidence; do not tune against an unnamed
-   `.g` model or replace one failure with another.
+   plus exact imported and complete 70-ray replay.  The first targeted 0353
+   discrepancy is ratcheted by near-side-representation and coplanar-continuum
+   streams plus exact pairs 10/11 and the complete 24-feature replay.  Add
+   every subsequent imported discrepancy with its complete geometry, ray,
+   tolerance, span, box, root, event, and fallback evidence; do not tune
+   against an unnamed `.g` model or replace one failure with another.
 D. Extend prepared authority only with separate complete proofs for the
    remaining categories: mixed fold/regular streams, trim-near and
    topology-boundary events, contact-only rays, curved vertex links, and

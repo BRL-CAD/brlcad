@@ -191,12 +191,31 @@ struct ray_audit_shot {
     std::vector<ray_audit_interval> intervals;
 };
 
+enum ray_audit_sample_kind {
+    RAY_AUDIT_AXIS_CHORD = 0,
+    RAY_AUDIT_RANDOM_CHORD,
+    RAY_AUDIT_FACE_NORMAL_CHORD,
+    RAY_AUDIT_EDGE_NORMAL_CHORD,
+    RAY_AUDIT_EDGE_GRAZE_CHORD
+};
+
 struct ray_audit_sample {
     point_t origin = VINIT_ZERO;
     vect_t direction = VINIT_ZERO;
     double chord_length = 0.0;
     size_t pair_index = 0;
     bool reverse = false;
+    ray_audit_sample_kind kind = RAY_AUDIT_RANDOM_CHORD;
+    int face_index = -1;
+    int edge_index = -1;
+};
+
+struct ray_audit_feature_target {
+    point_t point = VINIT_ZERO;
+    vect_t direction = VINIT_ZERO;
+    ray_audit_sample_kind kind = RAY_AUDIT_FACE_NORMAL_CHORD;
+    int face_index = -1;
+    int edge_index = -1;
 };
 
 struct ray_audit_prep {
@@ -255,6 +274,7 @@ struct ray_audit_comparison {
     size_t face_differences = 0;
     double maximum_distance_delta = 0.0;
     std::vector<size_t> differing_ray_indices;
+    std::vector<size_t> face_difference_ray_indices;
     std::vector<size_t> candidate_reversal_indices;
     std::vector<size_t> reference_reversal_indices;
 };
@@ -1286,7 +1306,8 @@ ray_audit_point_on_sphere(double radius, const point_t center, point_t point,
 
 static void
 ray_audit_add_chord(std::vector<ray_audit_sample> &samples,
-    const point_t first, const point_t second, size_t pair_index)
+    const point_t first, const point_t second, size_t pair_index,
+    ray_audit_sample_kind kind, int face_index = -1, int edge_index = -1)
 {
     vect_t delta;
     VSUB2(delta, second, first);
@@ -1299,6 +1320,9 @@ ray_audit_add_chord(std::vector<ray_audit_sample> &samples,
     VMOVE(forward.direction, delta);
     forward.chord_length = length;
     forward.pair_index = pair_index;
+    forward.kind = kind;
+    forward.face_index = face_index;
+    forward.edge_index = edge_index;
     samples.push_back(forward);
     ray_audit_sample reverse;
     VMOVE(reverse.origin, second);
@@ -1306,6 +1330,9 @@ ray_audit_add_chord(std::vector<ray_audit_sample> &samples,
     reverse.chord_length = length;
     reverse.pair_index = pair_index;
     reverse.reverse = true;
+    reverse.kind = kind;
+    reverse.face_index = face_index;
+    reverse.edge_index = edge_index;
     samples.push_back(reverse);
 }
 
@@ -1330,7 +1357,8 @@ ray_audit_samples(const point_t bmin, const point_t bmax,
 	VMOVE(second, center);
 	first[axis] -= radius;
 	second[axis] += radius;
-	ray_audit_add_chord(samples, first, second, pair_index++);
+	ray_audit_add_chord(samples, first, second, pair_index++,
+	    RAY_AUDIT_AXIS_CHORD);
     }
     std::mt19937_64 rng(seed);
     while (pair_index < random_chords + 3) {
@@ -1339,11 +1367,192 @@ ray_audit_samples(const point_t bmin, const point_t bmax,
 	ray_audit_point_on_sphere(radius, center, first, rng);
 	ray_audit_point_on_sphere(radius, center, second, rng);
 	const size_t before = samples.size();
-	ray_audit_add_chord(samples, first, second, pair_index);
+	ray_audit_add_chord(samples, first, second, pair_index,
+	    RAY_AUDIT_RANDOM_CHORD);
 	if (samples.size() != before)
 	    pair_index++;
     }
     return samples;
+}
+
+static const char *
+ray_audit_sample_kind_name(ray_audit_sample_kind kind)
+{
+    switch (kind) {
+	case RAY_AUDIT_AXIS_CHORD:
+	    return "axis";
+	case RAY_AUDIT_RANDOM_CHORD:
+	    return "random";
+	case RAY_AUDIT_FACE_NORMAL_CHORD:
+	    return "face_normal";
+	case RAY_AUDIT_EDGE_NORMAL_CHORD:
+	    return "edge_normal";
+	case RAY_AUDIT_EDGE_GRAZE_CHORD:
+	    return "edge_graze";
+    }
+    return "unknown";
+}
+
+static bool
+ray_audit_add_feature_chord(std::vector<ray_audit_sample> &samples,
+    const ray_audit_feature_target &target, const point_t center,
+    double radius, size_t pair_index)
+{
+    vect_t offset;
+    VSUB2(offset, target.point, center);
+    const double projection = VDOT(offset, target.direction);
+    const double discriminant = projection * projection -
+	(VDOT(offset, offset) - radius * radius);
+    if (!(discriminant > 0.0) || !std::isfinite(discriminant))
+	return false;
+    const double root = sqrt(discriminant);
+    const double lower = -projection - root;
+    const double upper = -projection + root;
+    point_t first;
+    point_t second;
+    VJOIN1(first, target.point, lower, target.direction);
+    VJOIN1(second, target.point, upper, target.direction);
+    const size_t before = samples.size();
+    ray_audit_add_chord(samples, first, second, pair_index, target.kind,
+	target.face_index, target.edge_index);
+    return samples.size() != before;
+}
+
+static void
+ray_audit_add_feature_target(std::vector<ray_audit_feature_target> &targets,
+    const ON_3dPoint &point, const ON_3dVector &direction,
+    ray_audit_sample_kind kind, int face_index, int edge_index)
+{
+    ON_3dVector unit = direction;
+    if (!point.IsValid() || !unit.IsValid() || !unit.Unitize())
+	return;
+    ray_audit_feature_target target;
+    VSET(target.point, point.x, point.y, point.z);
+    VSET(target.direction, unit.x, unit.y, unit.z);
+    target.kind = kind;
+    target.face_index = face_index;
+    target.edge_index = edge_index;
+    targets.push_back(target);
+}
+
+static void
+ray_audit_select_feature_targets(
+    std::vector<ray_audit_feature_target> &selected,
+    const std::vector<ray_audit_feature_target> &available, size_t count)
+{
+    if (!count || available.empty())
+	return;
+    count = std::min(count, available.size());
+    selected.reserve(selected.size() + count);
+    for (size_t i = 0; i < count; ++i) {
+	const size_t index = std::min(available.size() - 1,
+	    ((2 * i + 1) * available.size()) / (2 * count));
+	selected.push_back(available[index]);
+    }
+}
+
+static size_t
+ray_audit_add_feature_samples(std::vector<ray_audit_sample> &samples,
+    const ON_Brep &brep, const point_t bmin, const point_t bmax,
+    size_t requested_count, double minimum_radius)
+{
+    if (!requested_count)
+	return 0;
+    std::vector<ray_audit_feature_target> face_targets;
+    std::vector<ray_audit_feature_target> edge_normal_targets;
+    std::vector<ray_audit_feature_target> edge_graze_targets;
+
+    for (int face_index = 0; face_index < brep.m_F.Count(); ++face_index) {
+	const ON_BrepFace &face = brep.m_F[face_index];
+	const ON_Surface *surface = face.SurfaceOf();
+	if (!surface)
+	    continue;
+	const ON_Interval u = surface->Domain(0);
+	const ON_Interval v = surface->Domain(1);
+	if (!u.IsIncreasing() || !v.IsIncreasing())
+	    continue;
+	ON_3dPoint point;
+	ON_3dVector normal;
+	if (!surface_EvNormal(surface, u.Mid(), v.Mid(), point, normal))
+	    continue;
+	if (face.m_bRev)
+	    normal.Reverse();
+	ray_audit_add_feature_target(face_targets, point, normal,
+	    RAY_AUDIT_FACE_NORMAL_CHORD, face_index, -1);
+    }
+
+    for (int edge_index = 0; edge_index < brep.m_E.Count(); ++edge_index) {
+	const ON_BrepEdge &edge = brep.m_E[edge_index];
+	for (int trim_slot = 0; trim_slot < edge.m_ti.Count(); ++trim_slot) {
+	    const int trim_index = edge.m_ti[trim_slot];
+	    if (trim_index < 0 || trim_index >= brep.m_T.Count())
+		continue;
+	    const ON_BrepTrim &trim = brep.m_T[trim_index];
+	    const ON_Surface *surface = trim.SurfaceOf();
+	    const ON_Interval domain = trim.Domain();
+	    const int face_index = trim.FaceIndexOf();
+	    if (!surface || !domain.IsIncreasing() || face_index < 0 ||
+		    face_index >= brep.m_F.Count())
+		continue;
+	    ON_3dPoint uv;
+	    ON_3dVector uv_tangent;
+	    ON_3dPoint point;
+	    ON_3dVector du;
+	    ON_3dVector dv;
+	    if (!trim.Ev1Der(domain.Mid(), uv, uv_tangent) ||
+		    !surface->Ev1Der(uv.x, uv.y, point, du, dv))
+		continue;
+	    ON_3dVector tangent = uv_tangent.x * du + uv_tangent.y * dv;
+	    ON_3dVector normal = ON_CrossProduct(du, dv);
+	    if (!tangent.Unitize() || !normal.Unitize())
+		continue;
+	    if (brep.m_F[face_index].m_bRev)
+		normal.Reverse();
+	    const ON_3dVector conormal = ON_CrossProduct(normal, tangent);
+	    ray_audit_add_feature_target(edge_normal_targets, point, normal,
+		RAY_AUDIT_EDGE_NORMAL_CHORD, face_index, edge_index);
+	    ray_audit_add_feature_target(edge_graze_targets, point, conormal,
+		RAY_AUDIT_EDGE_GRAZE_CHORD, face_index, edge_index);
+	    break;
+	}
+    }
+
+    const std::vector<ray_audit_feature_target> *categories[] = {
+	&face_targets, &edge_normal_targets, &edge_graze_targets
+    };
+    size_t quotas[3] = {};
+    size_t assigned = 0;
+    while (assigned < requested_count) {
+	bool advanced = false;
+	for (size_t category = 0; category < 3 && assigned < requested_count;
+		category++) {
+	    if (quotas[category] >= categories[category]->size())
+		continue;
+	    quotas[category]++;
+	    assigned++;
+	    advanced = true;
+	}
+	if (!advanced)
+	    break;
+    }
+    std::vector<ray_audit_feature_target> selected;
+    for (size_t category = 0; category < 3; ++category)
+	ray_audit_select_feature_targets(selected, *categories[category],
+	    quotas[category]);
+
+    point_t center;
+    vect_t diagonal;
+    VADD2SCALE(center, bmin, bmax, 0.5);
+    VSUB2(diagonal, bmax, bmin);
+    const double radius = std::max(0.55 * MAGNITUDE(diagonal),
+	minimum_radius);
+    size_t pair_index = samples.size() / 2;
+    const size_t before = samples.size();
+    for (size_t i = 0; i < selected.size(); ++i)
+	if (ray_audit_add_feature_chord(samples, selected[i], center, radius,
+		pair_index))
+	    pair_index++;
+    return (samples.size() - before) / 2;
 }
 
 static double
@@ -1616,12 +1825,15 @@ ray_audit_compare(const std::vector<ray_audit_sample> &samples,
     for (size_t i = 0; i < count; ++i) {
 	result.candidate_invalid_rays += candidate.shots[i].valid ? 0 : 1;
 	result.reference_invalid_rays += reference.shots[i].valid ? 0 : 1;
+	const size_t face_differences_before = result.face_differences;
 	if (!ray_audit_shots_equivalent(samples[i], candidate.shots[i],
 		reference.shots[i], tol, result.maximum_distance_delta,
 		result.face_differences)) {
 	    result.differing_rays++;
 	    ray_audit_store_example(result.differing_ray_indices, i);
 	}
+	if (result.face_differences != face_differences_before)
+	    ray_audit_store_example(result.face_difference_ray_indices, i);
 	if (candidate.shots[i].prepared_selected !=
 		reference.shots[i].prepared_selected ||
 		candidate.shots[i].fallback != reference.shots[i].fallback)
@@ -1815,6 +2027,12 @@ print_ray_audit_failure_records(
 	if (ray_index < samples.size())
 	    pairs.push_back(samples[ray_index].pair_index);
     }
+    for (size_t i = 0; i < comparison.face_difference_ray_indices.size();
+	    ++i) {
+	const size_t ray_index = comparison.face_difference_ray_indices[i];
+	if (ray_index < samples.size())
+	    pairs.push_back(samples[ray_index].pair_index);
+    }
     pairs.insert(pairs.end(), comparison.candidate_reversal_indices.begin(),
 	comparison.candidate_reversal_indices.end());
     pairs.insert(pairs.end(), comparison.reference_reversal_indices.begin(),
@@ -1848,6 +2066,10 @@ print_ray_audit_failure_records(
 	if (record_index)
 	    std::cout << ",";
 	std::cout << "{\"pair_index\":" << pair
+	    << ",\"sample_kind\":"
+	    << json_quote(ray_audit_sample_kind_name(samples[forward].kind))
+	    << ",\"target_face\":" << samples[forward].face_index
+	    << ",\"target_edge\":" << samples[forward].edge_index
 	    << ",\"forward_ray_index\":" << forward
 	    << ",\"reverse_ray_index\":" << reverse
 	    << ",\"origin\":[" << samples[forward].origin[X] << ","
@@ -1919,7 +2141,8 @@ ray_audit_face_components(const ON_Brep &brep, size_t &component_count)
 static int
 ray_depth_compare(struct db_i *dbip, const char *db_path,
     struct directory *dp, int candidate_depth, int reference_depth,
-    size_t random_chords, long selected_pair, bool legacy_only)
+    size_t random_chords, size_t feature_chords, long selected_pair,
+    bool legacy_only)
 {
     struct rt_db_internal intern;
     bool solid = false;
@@ -1929,6 +2152,11 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
     bool have_bbox = false;
     size_t component_count = 0;
     std::vector<int> face_components;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    std::vector<ray_audit_sample> samples;
+    const size_t generated_random_chords = selected_pair >= 3 &&
+	!feature_chords ? std::max(random_chords,
+	    (size_t)selected_pair - 2) : random_chords;
     if (load_brep(dbip, dp, &intern) == BRLCAD_OK) {
 	struct rt_brep_internal *bi =
 	    (struct rt_brep_internal *)intern.idb_ptr;
@@ -1943,20 +2171,26 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
 	    VMOVE(bmax, bbox.m_max);
 	    have_bbox = true;
 	}
+	if (have_bbox && solid) {
+	    samples = ray_audit_samples(bmin, bmax,
+		generated_random_chords,
+		std::max(100.0 * tol.dist, 1.0e-6));
+	    (void)ray_audit_add_feature_samples(samples, *bi->brep, bmin,
+		bmax, feature_chords,
+		std::max(100.0 * tol.dist, 1.0e-6));
+	}
 	rt_db_free_internal(&intern);
     }
-    struct bn_tol tol = BN_TOL_INIT_TOL;
-    const size_t generated_random_chords = selected_pair >= 3 ?
-	std::max(random_chords, (size_t)selected_pair - 2) : random_chords;
-    std::vector<ray_audit_sample> samples = have_bbox && solid ?
-	ray_audit_samples(bmin, bmax, generated_random_chords,
-	    std::max(100.0 * tol.dist, 1.0e-6)) :
-	std::vector<ray_audit_sample>();
     if (selected_pair >= 0)
 	samples.erase(std::remove_if(samples.begin(), samples.end(),
 	    [selected_pair](const ray_audit_sample &sample) {
 		return sample.pair_index != (size_t)selected_pair;
 	    }), samples.end());
+    size_t sample_kind_pairs[5] = {};
+    for (size_t i = 0; i < samples.size(); ++i)
+	if (!samples[i].reverse && samples[i].kind >= RAY_AUDIT_AXIS_CHORD &&
+		samples[i].kind <= RAY_AUDIT_EDGE_GRAZE_CHORD)
+	    sample_kind_pairs[samples[i].kind]++;
     ray_audit_depth_run reference;
     ray_audit_depth_run candidate;
     if (!samples.empty()) {
@@ -1999,10 +2233,22 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
 	    "legacy_only" : "prepared_and_legacy")
 	<< ",\"sampling\":{\"seed\":\"0x9e3779b97f4a7c15\""
 	<< ",\"selected_pair_index\":" << selected_pair
+	<< ",\"requested_random_chord_pairs\":" << random_chords
+	<< ",\"requested_feature_chord_pairs\":" << feature_chords
 	<< ",\"axis_chord_pairs\":"
-	<< (selected_pair < 0 ? 3 : selected_pair < 3 ? 1 : 0)
+	<< sample_kind_pairs[RAY_AUDIT_AXIS_CHORD]
 	<< ",\"random_chord_pairs\":"
-	<< (selected_pair < 0 ? random_chords : selected_pair >= 3 ? 1 : 0)
+	<< sample_kind_pairs[RAY_AUDIT_RANDOM_CHORD]
+	<< ",\"face_normal_chord_pairs\":"
+	<< sample_kind_pairs[RAY_AUDIT_FACE_NORMAL_CHORD]
+	<< ",\"edge_normal_chord_pairs\":"
+	<< sample_kind_pairs[RAY_AUDIT_EDGE_NORMAL_CHORD]
+	<< ",\"edge_graze_chord_pairs\":"
+	<< sample_kind_pairs[RAY_AUDIT_EDGE_GRAZE_CHORD]
+	<< ",\"feature_chord_pairs\":"
+	<< (sample_kind_pairs[RAY_AUDIT_FACE_NORMAL_CHORD] +
+	    sample_kind_pairs[RAY_AUDIT_EDGE_NORMAL_CHORD] +
+	    sample_kind_pairs[RAY_AUDIT_EDGE_GRAZE_CHORD])
 	<< ",\"total_chord_pairs\":"
 	<< samples.size() / 2 << ",\"rays\":" << samples.size() << "}"
 	<< ",\"reference\":{\"prep\":";
@@ -2026,6 +2272,9 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
 	<< ",\"disposition_differences\":"
 	<< comparison.disposition_differences
 	<< ",\"face_differences\":" << comparison.face_differences
+	<< ",\"face_difference_ray_indices\":";
+    print_ray_audit_indices(comparison.face_difference_ray_indices);
+    std::cout
 	<< ",\"maximum_distance_delta\":"
 	<< comparison.maximum_distance_delta
 	<< ",\"differing_ray_indices\":";
@@ -2751,10 +3000,11 @@ main(int argc, const char **argv)
     long candidate_depth = 3;
     long reference_depth = RT_BREP_DEFAULT_SURFACE_TREE_DEPTH;
     long ray_count = 64;
+    long feature_ray_count = 0;
     long ray_pair = -1;
     int legacy_only = 0;
     const char *trim_query_arg = NULL;
-    struct bu_opt_desc d[20];
+    struct bu_opt_desc d[21];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -2771,10 +3021,11 @@ main(int argc, const char **argv)
     BU_OPT(d[13], "", "candidate-depth", "#", &bu_opt_long, &candidate_depth, "Candidate adaptive SurfaceTree depth");
     BU_OPT(d[14], "", "reference-depth", "#", &bu_opt_long, &reference_depth, "Reference adaptive SurfaceTree depth");
     BU_OPT(d[15], "", "ray-count", "#", &bu_opt_long, &ray_count, "Deterministic random chord pairs (three axis pairs are added)");
-    BU_OPT(d[16], "", "ray-pair", "#", &bu_opt_long, &ray_pair, "Shoot only one deterministic axis/random pair by index");
+    BU_OPT(d[16], "", "ray-pair", "#", &bu_opt_long, &ray_pair, "Shoot only one deterministic chord pair by global index");
     BU_OPT(d[17], "", "legacy-only", "", NULL, &legacy_only, "Skip prepared solving while tracing the legacy SurfaceTree path");
     BU_OPT(d[18], "", "trim-query", "face,u,v", &bu_opt_str, &trim_query_arg, "Compare production and sampled-polygon trim classification");
-    BU_OPT_NULL(d[19]);
+    BU_OPT(d[19], "", "feature-ray-count", "#", &bu_opt_long, &feature_ray_count, "Deterministic face-normal, edge-normal, and edge-grazing chord pairs");
+    BU_OPT_NULL(d[20]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     trim_query_spec parsed_trim_query;
     const bool trim_query_only = trim_query_arg != NULL;
@@ -2801,11 +3052,13 @@ main(int argc, const char **argv)
 	    candidate_depth < 0 || candidate_depth > BREP_MAX_FT_DEPTH ||
 	    reference_depth < 0 || reference_depth > BREP_MAX_FT_DEPTH ||
 	    ray_count < 0 || ray_count > 1000000 ||
+	    feature_ray_count < 0 || feature_ray_count > 1000000 ||
 	    ray_pair < -1 || ray_pair > 1000002 ||
 	    (!ray_depth_compare_only &&
 	     (candidate_depth != 3 ||
 	      reference_depth != RT_BREP_DEFAULT_SURFACE_TREE_DEPTH ||
-	      ray_count != 64 || ray_pair != -1 || legacy_only))) {
+	      ray_count != 64 || feature_ray_count != 0 ||
+	      ray_pair != -1 || legacy_only))) {
 	std::cerr << usage;
 	return print_help ? 0 : 2;
     }
@@ -2856,7 +3109,7 @@ main(int argc, const char **argv)
     if (ray_depth_compare_only) {
 	const int ret = ray_depth_compare(dbip, argv[0], dp,
 	    (int)candidate_depth, (int)reference_depth, (size_t)ray_count,
-	    ray_pair, legacy_only != 0);
+	    (size_t)feature_ray_count, ray_pair, legacy_only != 0);
 	db_close(dbip);
 	return ret;
     }

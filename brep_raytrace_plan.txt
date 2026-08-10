@@ -7,6 +7,133 @@ Repository studied: /home/cyapp/brlcad
 STEP test corpus: /home/cyapp/step_corpus_g
 
 
+IMPLEMENTATION CHECKPOINT: FEATURE-TARGETED CHORDS (2026-08-09)
+----------------------------------------------------------------
+
+The initial imported comparisons used three centered axis chords and fixed-
+seed random sphere chords.  They established reproducibility, full partition
+comparison, and reversal checks, but they did not establish feature coverage.
+A random line has measure zero probability of passing exactly through a trim,
+seam, pole, or surface-tangent configuration.  A high miss fraction can
+therefore make a large audit look reassuring while systematically omitting the
+events most likely to exercise crack tolerance and grazing cleanup.
+
+`brep-audit --ray-depth-compare` now accepts
+
+  --feature-ray-count=N
+
+and appends up to N deterministic feature chord pairs after the existing axis
+and random pairs.  Candidate features are divided into three categories and
+selected at stratified indices across each available category:
+
+  * one chord through the underlying surface-domain midpoint of a face, along
+    its evaluated oriented normal;
+  * one chord through a topological edge midpoint, along an incident face
+    normal; and
+  * one chord through the same edge point along the face tangent-plane
+    conormal, perpendicular to the edge tangent.  This is locally grazing to
+    that face and deliberately stresses seam/contact behavior.
+
+The generator evaluates edge points and tangents from the trim and its owning
+surface, not from a tessellation.  Thus drawing failures cannot hide a ray
+test.  It uses the object bounding sphere to place both endpoints outside the
+object envelope, shoots both directions, and records `sample_kind`, target
+face, target edge, exact origin, direction, chord length, and global pair
+index.  `--ray-pair` replays any generated global pair.  If a singular
+derivative, invalid domain, or underlying face midpoint lies outside the
+bounding sphere, that candidate is skipped rather than synthesized from
+invalid data.
+
+These lines are coverage probes, not geometric oracles.  An underlying face
+domain midpoint may lie outside a trimmed face, and an exact edge-conormal
+line may correctly be a contact-only miss.  The audit still asks only the
+properties it can prove independently on an imported model: finite oriented
+solid partitions, equality between fresh requested tree depths, and exact
+forward/reverse line invariance.  Analytic implicit-to-BREP and Cauchy-Crofton
+gates remain the truth authority.
+
+The first 24-feature replay used the 186-face
+`Product_step18_item.s` in
+`non_grabcad/0353/0353-02-57.g`.  It added eight face-normal, eight edge-normal,
+and eight edge-grazing pairs to the three axis controls.  The preceding random
+audit had passed, but these 54 directed rays initially found five depth-
+dependent results, five depth-three reversal failures, and seven depth-eight
+reversal failures.  Two general cleanup defects explained the complete set.
+
+First, the near-miss stage still contained an older odd-count heuristic that
+dropped a NEAR_MISS at the front or back before same-event coalescence and the
+new symmetric balanced-run matcher.  A seam root represented twice as
+NEAR_HIT at one depth and as NEAR_HIT/NEAR_MISS at the other therefore changed
+which distant boundary was discarded.  This heuristic is now removed from
+both fixed and allocating paths.  Local coincidence resolution happens first;
+the reversal-invariant matcher, not raw parity, decides which observations are
+unmatched.  A C++ stream ratchet varies the coincident representative between
+NEAR_HIT and NEAR_MISS and requires the same outer interval in both ray
+directions.
+
+Second, an exact edge-normal line lay in planar face 11.  At adaptive depth
+three that face contributed only its endpoints, while depth eight returned a
+130-root sampled continuum along the coplanar face.  The dense cleanup retained
+one arbitrary zero-normal sample beside a transverse entry, producing a
+0.025-unit interval instead of the real 0.8-unit interval and selecting the
+opposite end after reversal.  Two policies combined to cause this:
+
+  * erasing the first invalid/grazing list element advanced over the new first
+    element, and the fixed path deliberately copied that historical skip; and
+  * `brep_resolved_grazing_pair` checked separation and ENTER/LEAVE direction
+    but did not verify its own theorem premise that both endpoint normals are
+    grazing.
+
+Both cleanup containers now re-evaluate the element returned by erase.  A
+resolved affine-grazing interval requires both endpoint normal dots to be
+inside `BREP_GRAZING_DOT_TOL`, in addition to the existing ordered direction,
+valid trim, finite separation, and minimum-material-size checks.  A single
+zero-normal coplanar sample cannot borrow material-boundary authority from a
+transverse hit.  A new C++ continuum stream places three zero-normal samples
+between ordinary entry and exit events and requires their complete removal.
+This does not weaken the qualified anisotropic grazing case: its two actual
+material endpoints are both grazing.
+
+After these repairs all 27 chord pairs on the STEP object pass with zero depth-
+partition or reversal differences; the maximum depth-three/depth-eight
+endpoint delta is
+`5.3813607792108087e-8`.  Exact pair 11 now returns
+`[19.511658187986882,20.31165818798695]` at both depths and maps exactly to the
+reverse interval.  The dense path still observes 130 raw roots and explicitly
+removes the entire coplanar continuum; tree density no longer changes the
+solid result.
+
+One non-semantic face-identity difference remains explicitly recorded.  Pair
+9 crosses several coincident faces 151--154.  At the reverse entry, depth three
+retains face 151 while depth eight retains face 152, whose root is about
+`5.7e-14` earlier.  Both have the same oriented normal and material endpoint,
+and both reverse to the face-151 forward exit.  This is not a partition
+difference or an analytic indication that one face owns the physical event.
+The audit now emits `face_difference_ray_indices` and includes those exact
+pairs in diagnostic records so future prepared topological ownership work can
+ratchet them separately from solid occupancy.
+
+The converted-sphere CTest permanently exercises all three feature categories;
+an exact selected-pair replay checks its metadata.  The focused 78-ray affine-
+grazing trend and the complete 18-shard non-seam optimized suite pass.  The
+Cobb seam gate now
+ratchets zero local partition regressions and zero ambiguous changes.  Its old
+two-promotion minimum is obsolete: the general legacy cleanup itself now
+returns those two correct partitions, leaving nothing for the prepared shadow
+comparison to promote.  Retain the independent 16/16 below-envelope crack
+repair, reversal, prepared selection, and seam-certificate gates.  The final
+416-ray seam run passes with 280 prepared selections, 136 conservative
+fallbacks, 24 certified seam pairs, zero leaks, and zero reversal failures.
+Rebuilt ASAN/UBSAN cleanup and feature-audit gates pass with no diagnostic.
+
+Feature rays should now accompany every imported stratum, with requested and
+actual category populations recorded separately.  They do not replace random
+chords, analytic directed partitions, grazing clearance ladders, or Crofton
+convergence; they close a distinct coverage hole.  Any new discrepancy must be
+replayed by exact global pair and reduced into the C/C++ difficult-event corpus
+before production defaults or performance work change.
+
+
 IMPLEMENTATION CHECKPOINT: LOCAL CLEANUP AND REVERSAL INVARIANCE (2026-08-09)
 -----------------------------------------------------------------------------
 
