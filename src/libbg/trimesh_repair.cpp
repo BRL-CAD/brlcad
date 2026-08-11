@@ -26,15 +26,24 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <array>
+#include <climits>
 #include <cstdint>
 #include <cstring>
+#include <limits>
+#include <map>
+#include <queue>
+#include <set>
+#include <utility>
 #include <vector>
 
 #include <Mathematics/Vector3.h>
 #include <Mathematics/MeshRepair.h>
 #include <Mathematics/MeshHoleFilling.h>
 #include <Mathematics/MeshPreprocessing.h>
+
+#include "manifold/manifold.h"
 
 #include "vmath.h"
 #include "bu/malloc.h"
@@ -78,6 +87,313 @@ trimesh_gte_area(std::vector<gte::Vector3<double>> const& verts,
 	area += gte::Length(cr) * 0.5;
     }
     return area;
+}
+
+static size_t
+trimesh_remove_geometric_degenerate(
+	std::vector<gte::Vector3<double>> const& vertices,
+	std::vector<std::array<int32_t, 3>>& triangles)
+{
+    const size_t before = triangles.size();
+    triangles.erase(std::remove_if(triangles.begin(), triangles.end(),
+	[&vertices](std::array<int32_t, 3> const& triangle) {
+	    gte::Vector3<double> e01 =
+		vertices[triangle[1]] - vertices[triangle[0]];
+	    gte::Vector3<double> e02 =
+		vertices[triangle[2]] - vertices[triangle[0]];
+	    gte::Vector3<double> e12 =
+		vertices[triangle[2]] - vertices[triangle[1]];
+	    double longest_squared = std::max(gte::Dot(e01, e01),
+		std::max(gte::Dot(e02, e02), gte::Dot(e12, e12)));
+	    if (!(longest_squared > 0.0))
+		return true;
+	    double doubled_area = gte::Length(gte::Cross(e01, e02));
+	    return !(doubled_area > 64.0 *
+		std::numeric_limits<double>::epsilon() * longest_squared);
+	}), triangles.end());
+    return before - triangles.size();
+}
+
+static size_t
+trimesh_split_hanging_boundary_edges(
+	std::vector<gte::Vector3<double>> const& vertices,
+	std::vector<std::array<int32_t, 3>>& triangles, double tolerance)
+{
+    if (!(tolerance > 0.0) || triangles.empty())
+	return 0;
+    typedef std::pair<int32_t, int32_t> edge_key;
+    std::map<edge_key, size_t> edge_counts;
+    const auto key = [](int32_t first, int32_t second) {
+	return first < second ? edge_key(first, second) :
+	    edge_key(second, first);
+    };
+    for (std::array<int32_t, 3> const& triangle : triangles) {
+	for (int edge = 0; edge < 3; ++edge)
+	    edge_counts[key(triangle[edge], triangle[(edge + 1) % 3])]++;
+    }
+    std::set<edge_key> unmatched_edges;
+    std::set<int32_t> boundary_vertices;
+    for (auto const& edge : edge_counts) {
+	if (edge.second != 1)
+	    continue;
+	unmatched_edges.insert(edge.first);
+	boundary_vertices.insert(edge.first.first);
+	boundary_vertices.insert(edge.first.second);
+    }
+    if (unmatched_edges.empty())
+	return 0;
+
+    std::vector<std::array<int32_t, 3>> output;
+    output.reserve(triangles.size());
+    size_t added = 0;
+    const double tolerance_squared = tolerance * tolerance;
+    for (std::array<int32_t, 3> const& triangle : triangles) {
+	bool split = false;
+	for (int edge = 0; edge < 3 && !split; ++edge) {
+	    const int32_t first = triangle[edge];
+	    const int32_t second = triangle[(edge + 1) % 3];
+	    const int32_t opposite = triangle[(edge + 2) % 3];
+	    if (unmatched_edges.find(key(first, second)) ==
+		    unmatched_edges.end())
+		continue;
+	    gte::Vector3<double> segment =
+		vertices[second] - vertices[first];
+	    const double length_squared = gte::Dot(segment, segment);
+	    if (!(length_squared > tolerance_squared))
+		continue;
+	    std::vector<std::pair<double, int32_t>> candidates;
+	    for (int32_t point : boundary_vertices) {
+		if (point == first || point == second || point == opposite)
+		    continue;
+		gte::Vector3<double> offset =
+		    vertices[point] - vertices[first];
+		const double parameter = gte::Dot(offset, segment) /
+		    length_squared;
+		if (!(parameter > 0.0) || !(parameter < 1.0))
+		    continue;
+		const double along = parameter * std::sqrt(length_squared);
+		if (along <= tolerance ||
+		    std::sqrt(length_squared) - along <= tolerance)
+		    continue;
+		gte::Vector3<double> separation = offset -
+		    parameter * segment;
+		if (gte::Dot(separation, separation) > tolerance_squared)
+		    continue;
+		candidates.push_back(std::make_pair(parameter, point));
+	    }
+	    if (candidates.empty())
+		continue;
+	    std::sort(candidates.begin(), candidates.end(),
+		[](std::pair<double, int32_t> const& a,
+			std::pair<double, int32_t> const& b) {
+		    if (a.first < b.first)
+			return true;
+		    if (b.first < a.first)
+			return false;
+		    return a.second < b.second;
+		});
+	    int32_t previous = first;
+	    for (auto const& candidate : candidates) {
+		if (candidate.second == previous)
+		    continue;
+		output.push_back({previous, candidate.second, opposite});
+		previous = candidate.second;
+		added++;
+	    }
+	    output.push_back({previous, second, opposite});
+	    split = true;
+	}
+	if (!split)
+	    output.push_back(triangle);
+    }
+    if (added)
+	triangles.swap(output);
+    return added;
+}
+
+static bool
+trimesh_gte_valid_vertex_links(
+	std::vector<std::array<int32_t, 3>> const& triangles,
+	size_t vertex_count)
+{
+    typedef std::pair<int32_t, int32_t> link_edge;
+    std::vector<std::vector<link_edge>> links(vertex_count);
+    for (std::array<int32_t, 3> const& triangle : triangles) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int32_t vertex = triangle[corner];
+	    if (vertex < 0 || (size_t)vertex >= vertex_count)
+		return false;
+	    links[(size_t)vertex].push_back(link_edge(
+		triangle[(corner + 1) % 3], triangle[(corner + 2) % 3]));
+	}
+    }
+    for (std::vector<link_edge> const& vertex_links : links) {
+	if (vertex_links.empty())
+	    continue;
+	std::map<int32_t, std::vector<int32_t>> adjacency;
+	for (link_edge const& edge : vertex_links) {
+	    adjacency[edge.first].push_back(edge.second);
+	    adjacency[edge.second].push_back(edge.first);
+	}
+	std::set<int32_t> reached;
+	std::queue<int32_t> work;
+	work.push(adjacency.begin()->first);
+	reached.insert(adjacency.begin()->first);
+	while (!work.empty()) {
+	    const int32_t current = work.front();
+	    work.pop();
+	    std::vector<int32_t> const& neighbors = adjacency[current];
+	    if (neighbors.size() != 2)
+		return false;
+	    for (int32_t neighbor : neighbors) {
+		if (reached.insert(neighbor).second)
+		    work.push(neighbor);
+	    }
+	}
+	if (reached.size() != adjacency.size())
+	    return false;
+    }
+    return true;
+}
+
+static bool
+trimesh_gte_solid(std::vector<gte::Vector3<double>> const& vertices,
+	std::vector<std::array<int32_t, 3>> const& triangles)
+{
+    if (vertices.empty() || triangles.empty() || vertices.size() > INT_MAX ||
+	    triangles.size() > INT_MAX)
+	return false;
+    std::vector<fastf_t> points(vertices.size() * 3);
+    std::vector<int> faces(triangles.size() * 3);
+    for (size_t vertex = 0; vertex < vertices.size(); ++vertex) {
+	for (int axis = 0; axis < 3; ++axis)
+	    points[vertex * 3 + (size_t)axis] = vertices[vertex][axis];
+    }
+    for (size_t face = 0; face < triangles.size(); ++face) {
+	for (int corner = 0; corner < 3; ++corner)
+	    faces[face * 3 + (size_t)corner] = triangles[face][corner];
+    }
+    return !bg_trimesh_solid2((int)vertices.size(), (int)triangles.size(),
+	points.data(), faces.data(), NULL);
+}
+
+static bool
+trimesh_manifold_union(
+	std::vector<gte::Vector3<double>>& vertices,
+	std::vector<std::array<int32_t, 3>>& triangles)
+{
+    manifold::MeshGL64 mesh;
+    mesh.vertProperties.reserve(vertices.size() * 3);
+    mesh.triVerts.reserve(triangles.size() * 3);
+    for (gte::Vector3<double> const& vertex : vertices) {
+	mesh.vertProperties.push_back(vertex[0]);
+	mesh.vertProperties.push_back(vertex[1]);
+	mesh.vertProperties.push_back(vertex[2]);
+    }
+    for (std::array<int32_t, 3> const& triangle : triangles) {
+	for (int corner = 0; corner < 3; ++corner)
+	    mesh.triVerts.push_back((uint64_t)triangle[corner]);
+    }
+    manifold::Manifold input(mesh);
+    if (input.Status() != manifold::Manifold::Error::NoError)
+	return false;
+    std::vector<manifold::Manifold> components = input.Decompose();
+    if (components.size() < 2)
+	return false;
+    manifold::Manifold united = manifold::Manifold::BatchBoolean(
+	components, manifold::OpType::Add);
+    if (united.Status() != manifold::Manifold::Error::NoError)
+	return false;
+    manifold::MeshGL64 result = united.GetMeshGL64();
+    if (result.numProp < 3 || result.vertProperties.empty() ||
+	    result.triVerts.empty() ||
+	    result.vertProperties.size() % result.numProp ||
+	    result.triVerts.size() % 3 ||
+	    result.vertProperties.size() / result.numProp > INT_MAX ||
+	    result.triVerts.size() / 3 > INT_MAX)
+	return false;
+
+    const size_t property_vertex_count =
+	result.vertProperties.size() / result.numProp;
+    if (result.mergeFromVert.size() != result.mergeToVert.size())
+	return false;
+
+    /* MeshGL may duplicate a geometric vertex when non-position properties
+     * differ.  Its merge vectors are the authoritative indexed topology;
+     * dropping them turns otherwise manifold output into coincident cracks
+     * and false nonadjacent intersections. */
+    std::vector<size_t> parent(property_vertex_count);
+    for (size_t vertex = 0; vertex < property_vertex_count; ++vertex)
+	parent[vertex] = vertex;
+    auto find_root = [&parent](size_t vertex) {
+	size_t root = vertex;
+	while (parent[root] != root)
+	    root = parent[root];
+	while (parent[vertex] != vertex) {
+	    const size_t next = parent[vertex];
+	    parent[vertex] = root;
+	    vertex = next;
+	}
+	return root;
+    };
+    for (size_t merge = 0; merge < result.mergeFromVert.size(); ++merge) {
+	const uint64_t from = result.mergeFromVert[merge];
+	const uint64_t to = result.mergeToVert[merge];
+	if (from >= property_vertex_count || to >= property_vertex_count)
+	    return false;
+	const size_t from_root = find_root((size_t)from);
+	const size_t to_root = find_root((size_t)to);
+	if (from_root != to_root) {
+	    const size_t keep = std::min(from_root, to_root);
+	    const size_t remove = std::max(from_root, to_root);
+	    parent[remove] = keep;
+	}
+    }
+    for (size_t vertex = 0; vertex < property_vertex_count; ++vertex)
+	parent[vertex] = find_root(vertex);
+
+    std::vector<int32_t> compact_index(property_vertex_count, -1);
+    std::vector<gte::Vector3<double>> union_vertices;
+    union_vertices.reserve(property_vertex_count);
+    for (uint64_t index : result.triVerts) {
+	if (index >= property_vertex_count)
+	    return false;
+	const size_t root = parent[(size_t)index];
+	if (compact_index[root] >= 0)
+	    continue;
+	if (union_vertices.size() >= (size_t)INT32_MAX)
+	    return false;
+	compact_index[root] = (int32_t)union_vertices.size();
+	gte::Vector3<double> vertex;
+	for (int axis = 0; axis < 3; ++axis) {
+	    const double coordinate =
+		result.vertProperties[root * result.numProp + (size_t)axis];
+	    if (!std::isfinite(coordinate))
+		return false;
+	    vertex[axis] = coordinate;
+	}
+	union_vertices.push_back(vertex);
+    }
+    std::vector<std::array<int32_t, 3>> union_triangles(
+	result.triVerts.size() / 3);
+    for (size_t face = 0; face < union_triangles.size(); ++face) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const uint64_t index = result.triVerts[face * 3 + (size_t)corner];
+	    union_triangles[face][corner] =
+		compact_index[parent[(size_t)index]];
+	}
+	if (union_triangles[face][0] == union_triangles[face][1] ||
+		union_triangles[face][1] == union_triangles[face][2] ||
+		union_triangles[face][2] == union_triangles[face][0])
+	    return false;
+    }
+    if (!trimesh_gte_solid(union_vertices, union_triangles) ||
+	    !trimesh_gte_valid_vertex_links(union_triangles,
+	    union_vertices.size()))
+	return false;
+    vertices.swap(union_vertices);
+    triangles.swap(union_triangles);
+    return true;
 }
 
 
@@ -140,21 +456,12 @@ bg_trimesh_repair2(
 	    settings->max_iterations < 0)
 	return -1;
 
-    /* Quick check: is the mesh already solid?  Return 1 if so. */
+    /* A topological solid may still contain a triangle whose distinct
+     * vertices are geometrically collinear.  Delay the already-solid return
+     * until that independent condition has also been checked. */
     int not_solid = bg_trimesh_solid2(n_ipnts, n_ifaces,
 				      (fastf_t *)ipnts, (int *)ifaces,
 				      NULL);
-    if (!not_solid) {
-	report->output_vertices = n_ipnts;
-	report->output_faces = n_ifaces;
-	report->solid = 1;
-	report->input_area = bg_trimesh_area(ifaces, (size_t)n_ifaces,
-	    ipnts, (size_t)n_ipnts);
-	report->output_area = report->input_area;
-	report->output_volume = bg_trimesh_volume(ifaces,
-	    (size_t)n_ifaces, ipnts, (size_t)n_ipnts);
-	return 1;
-    }
 
     /* Convert input arrays to GTE types. */
     std::vector<gte::Vector3<double>> verts((size_t)n_ipnts);
@@ -170,21 +477,59 @@ bg_trimesh_repair2(
 	tris[i][2] = ifaces[3*i+2];
     }
     report->input_area = trimesh_gte_area(verts, tris);
+    const size_t initial_geometric_degenerate =
+	trimesh_remove_geometric_degenerate(verts, tris);
+    if (!not_solid && !initial_geometric_degenerate &&
+	    !settings->union_components) {
+	report->output_vertices = n_ipnts;
+	report->output_faces = n_ifaces;
+	report->solid = 1;
+	report->output_area = report->input_area;
+	report->output_volume = bg_trimesh_volume(ifaces,
+	    (size_t)n_ifaces, ipnts, (size_t)n_ipnts);
+	return 1;
+    }
+    report->removed_faces += (int)initial_geometric_degenerate;
+    if (tris.empty())
+	return -1;
 
     /* --- Pass 1: initial colocate + degenerate removal ------------------- */
+    const double bbox_diag = trimesh_gte_bbox_diag(verts);
+    const double vertex_tolerance = settings->vertex_tolerance > 0.0 ?
+	settings->vertex_tolerance :
+	((bbox_diag > 0.0) ? 1e-8 * bbox_diag : 0.0);
     {
-	double bbox_diag = trimesh_gte_bbox_diag(verts);
 	gte::MeshRepair<double>::Parameters rp;
-	rp.epsilon = settings->vertex_tolerance > 0.0 ?
-	    settings->vertex_tolerance :
-	    ((bbox_diag > 0.0) ? 1e-8 * bbox_diag : 0.0);
+	rp.epsilon = vertex_tolerance;
 	const size_t before = tris.size();
 	gte::MeshRepair<double>::Repair(verts, tris, rp);
 	report->removed_faces += (int)(before - tris.size());
     }
+    report->removed_faces +=
+	(int)trimesh_remove_geometric_degenerate(verts, tris);
 
     if (tris.empty())
 	return -1;
+
+    /* A fast fallback face and a rigorous neighboring face can sample their
+     * shared curved edge at different densities.  Colocation alone leaves a
+     * long unmatched edge opposite a chain of shorter edges.  Split such
+     * boundary edges at nearby boundary vertices before classifying holes, so
+     * repair closes T-junctions instead of capping both sides of the same
+     * narrow crack. */
+    const int max_hanging_iterations = settings->max_iterations > 0 ?
+	settings->max_iterations : 10;
+    for (int iteration = 0; iteration < max_hanging_iterations; ++iteration) {
+	const size_t added = trimesh_split_hanging_boundary_edges(verts, tris,
+	    vertex_tolerance);
+	if (!added)
+	    break;
+	report->added_faces += (int)added;
+	report->removed_faces +=
+	    (int)trimesh_remove_geometric_degenerate(verts, tris);
+	if (tris.empty())
+	    return -1;
+    }
 
     /* --- Pass 2: remove small disconnected components -------------------- */
     if (settings->remove_small_components) {
@@ -198,11 +543,12 @@ bg_trimesh_repair2(
 	    if (tris.size() != nf_before) {
 		report->removed_faces += (int)(nf_before - tris.size());
 		/* Re-run basic repair after component removal. */
-		double bbox_diag = trimesh_gte_bbox_diag(verts);
+		double component_bbox_diag = trimesh_gte_bbox_diag(verts);
 		gte::MeshRepair<double>::Parameters rp;
 		rp.epsilon = settings->vertex_tolerance > 0.0 ?
 		    settings->vertex_tolerance :
-		    ((bbox_diag > 0.0) ? 1e-8 * bbox_diag : 0.0);
+		    ((component_bbox_diag > 0.0) ?
+		    1e-8 * component_bbox_diag : 0.0);
 		const size_t before = tris.size();
 		gte::MeshRepair<double>::Repair(verts, tris, rp);
 		report->removed_faces += (int)(before - tris.size());
@@ -270,6 +616,10 @@ bg_trimesh_repair2(
 
 	if (tris.empty())
 	    return -1;
+	report->removed_faces +=
+	    (int)trimesh_remove_geometric_degenerate(verts, tris);
+	if (tris.empty())
+	    return -1;
 
 	/* Pass 4: post-fill topology repair (G4+G5+G6+G8) */
 	{
@@ -285,6 +635,42 @@ bg_trimesh_repair2(
 	/* Convergence: stop when no new faces were added */
 	if (tris.size() == nf_before)
 	    break;
+    }
+
+    /* Splitting a non-manifold boundary vertex before filling gives the hole
+     * tracer simple loops, but it leaves duplicate coordinates after those
+     * loops have been closed.  Re-weld them only when the resulting indexed
+     * mesh is itself a closed solid and every vertex has one circular link.
+     * This reconnects intended patch seams while preserving genuinely
+     * separate shells that merely touch at a point. */
+    {
+	std::vector<gte::Vector3<double>> welded_vertices = verts;
+	std::vector<std::array<int32_t, 3>> welded_triangles = tris;
+	gte::MeshRepair<double>::Parameters rp;
+	rp.epsilon = vertex_tolerance;
+	gte::MeshRepair<double>::Repair(welded_vertices, welded_triangles, rp);
+	if (trimesh_gte_solid(welded_vertices, welded_triangles) &&
+		trimesh_gte_valid_vertex_links(welded_triangles,
+		welded_vertices.size())) {
+	    if (tris.size() > welded_triangles.size())
+		report->removed_faces +=
+		    (int)(tris.size() - welded_triangles.size());
+	    verts.swap(welded_vertices);
+	    tris.swap(welded_triangles);
+	}
+    }
+
+    if (settings->union_components) {
+	const size_t faces_before_union = tris.size();
+	if (trimesh_manifold_union(verts, tris)) {
+	    report->component_union_applied = 1;
+	    if (tris.size() > faces_before_union)
+		report->added_faces +=
+		    (int)(tris.size() - faces_before_union);
+	    else
+		report->removed_faces +=
+		    (int)(faces_before_union - tris.size());
+	}
     }
 
     /* --- Build output arrays --------------------------------------------- */
