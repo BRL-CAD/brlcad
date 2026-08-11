@@ -350,6 +350,7 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
     }
     (*pinfo)->argv[argc] = (char *)NULL;	// sanity check
 
+    int merged_output = (opts & BU_PROCESS_OUT_EQ_ERR);
 #ifdef HAVE_UNISTD_H
     int pret;
     int pid;
@@ -362,9 +363,11 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	perror("pipe");
     }
 
-    pret = pipe(pipe_out);
-    if (pret < 0) {
-	perror("pipe");
+    if (!merged_output) {
+	pret = pipe(pipe_out);
+	if (pret < 0) {
+	    perror("pipe");
+	}
     }
 
     pret = pipe(pipe_err);
@@ -385,7 +388,11 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	    perror("dup");
 	}
 	(void)close(BU_PROCESS_STDOUT);
-	d2 = dup(pipe_out[1]);
+	if (merged_output) {
+	    d2 = dup(pipe_err[1]);
+	} else {
+	    d2 = dup(pipe_out[1]);
+	}
 	if (d2 < 0) {
 	    perror("dup");
 	}
@@ -398,8 +405,10 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	/* close pipes */
 	(void)close(pipe_in[0]);
 	(void)close(pipe_in[1]);
-	(void)close(pipe_out[0]);
-	(void)close(pipe_out[1]);
+	if (!merged_output) {
+	    (void)close(pipe_out[0]);
+	    (void)close(pipe_out[1]);
+	}
 	(void)close(pipe_err[0]);
 	(void)close(pipe_err[1]);
 
@@ -427,12 +436,13 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
     (void)setpgid((pid_t)pid, (pid_t)pid);
 
     (void)close(pipe_in[0]);
-    (void)close(pipe_out[1]);
+    if (!merged_output)
+	(void)close(pipe_out[1]);
     (void)close(pipe_err[1]);
 
     /* Save necessary information for parental process manipulation */
     (*pinfo)->fd_in = pipe_in[1];
-    if (opts & BU_PROCESS_OUT_EQ_ERR) {
+    if (merged_output) {
 	(*pinfo)->fd_out = pipe_err[0];
     } else {
 	(*pinfo)->fd_out = pipe_out[0];
@@ -453,15 +463,17 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
     sa.bInheritHandle = TRUE;
     sa.lpSecurityDescriptor = NULL;
 
-    /* Create a pipe for the child process's STDOUT. */
-    CreatePipe(&pipe_out[0], &pipe_out[1], &sa, 0);
+    if (!merged_output) {
+	/* Create a pipe for the child process's STDOUT. */
+	CreatePipe(&pipe_out[0], &pipe_out[1], &sa, 0);
 
-    /* Create noninheritable read handle and close the inheritable read handle. */
-    DuplicateHandle(GetCurrentProcess(), pipe_out[0],
-		    GetCurrentProcess(),  &pipe_outDup ,
-		    0,  FALSE,
-		    DUPLICATE_SAME_ACCESS);
-    CloseHandle(pipe_out[0]);
+	/* Create noninheritable read handle and close the inheritable read handle. */
+	DuplicateHandle(GetCurrentProcess(), pipe_out[0],
+			GetCurrentProcess(),  &pipe_outDup ,
+			0,  FALSE,
+			DUPLICATE_SAME_ACCESS);
+	CloseHandle(pipe_out[0]);
+    }
 
     /* Create a pipe for the child process's STDERR. */
     CreatePipe(&pipe_err[0], &pipe_err[1], &sa, 0);
@@ -495,7 +507,7 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	si.dwFlags = STARTF_USESTDHANDLES;
     }
     si.hStdInput   = pipe_in[0];
-    if (opts & BU_PROCESS_OUT_EQ_ERR) {
+    if (merged_output) {
 	si.hStdOutput  = pipe_err[1];
     } else {
 	si.hStdOutput  = pipe_out[1];
@@ -524,7 +536,8 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
     bu_vls_free(&cp_cmd);
 
     CloseHandle(pipe_in[0]);
-    CloseHandle(pipe_out[1]);
+    if (!merged_output)
+	CloseHandle(pipe_out[1]);
     CloseHandle(pipe_err[1]);
 
     /* Save necessary information for parental process manipulation.
@@ -533,12 +546,14 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
      * https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/open-osfhandle
      */
     (*pinfo)->fd_in = _open_osfhandle((intptr_t)pipe_inDup, 0);
-    if (opts & BU_PROCESS_OUT_EQ_ERR) {
-	(*pinfo)->fd_out = _open_osfhandle((intptr_t)pipe_errDup, 0);
+    int err_fd = _open_osfhandle((intptr_t)pipe_errDup, 0);
+    if (merged_output) {
+	(*pinfo)->fd_out = err_fd;
+	(*pinfo)->fd_err = err_fd;
     } else {
 	(*pinfo)->fd_out = _open_osfhandle((intptr_t)pipe_outDup, 0);
+	(*pinfo)->fd_err = err_fd;
     }
-    (*pinfo)->fd_err = _open_osfhandle((intptr_t)pipe_errDup, 0);
     (*pinfo)->hProcess = pi.hProcess;
     (*pinfo)->pid = pi.dwProcessId;
     (*pinfo)->aborted = 0;
