@@ -3563,10 +3563,33 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     int repaired_face_count = 0;
     point_t *repaired_points = NULL;
     int repaired_vertex_count = 0;
-    const int repair_result = bg_trimesh_repair2(&repaired_faces,
-	&repaired_face_count, &repaired_points, &repaired_vertex_count,
-	input_faces, input_face_count, (const point_t *)input_vertices,
-	input_vertex_count, &mesh_settings, &report->mesh);
+    /* A reconstructed mesh may already satisfy every topology and geometry
+     * condition.  Preserve it exactly: tolerance welding intended for an
+     * open mixed-source mesh can remove valid, very small Poisson facets and
+     * create a new hole.  The independent fidelity gates still run below. */
+    bool preserve_poisson = false;
+    if (report->poisson_reconstruction_applied) {
+	assembled_mesh_validation poisson_validation;
+	const bool poisson_geometric = assembled_mesh_validate(
+	    input_vertex_count, input_face_count, input_vertices,
+	    input_faces, &poisson_validation);
+	preserve_poisson = poisson_geometric && !bg_trimesh_solid2(
+	    input_vertex_count, input_face_count, input_vertices,
+	    input_faces, NULL);
+    }
+    int repair_result = 1;
+    if (preserve_poisson) {
+	report->mesh.input_vertices = input_vertex_count;
+	report->mesh.input_faces = input_face_count;
+	report->mesh.input_area = repair_mesh_area(input_vertices,
+	    input_faces, input_face_count);
+	report->mesh.solid = 1;
+    } else {
+	repair_result = bg_trimesh_repair2(&repaired_faces,
+	    &repaired_face_count, &repaired_points, &repaired_vertex_count,
+	    input_faces, input_face_count, (const point_t *)input_vertices,
+	    input_vertex_count, &mesh_settings, &report->mesh);
+    }
     if (repair_result == 1) {
 	repaired_face_count = input_face_count;
 	repaired_vertex_count = input_vertex_count;
