@@ -1318,6 +1318,13 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	config.repair_union_components ? 1 : 0;
     repair_settings.use_fast_face_fallback =
 	config.repair_no_fast ? 0 : 1;
+    if (config.max_points > 0)
+	repair_settings.max_fast_points = (size_t)config.max_points;
+    if (config.max_result_mib > 0)
+	repair_settings.max_fast_result_bytes =
+	    (size_t)config.max_result_mib * 1024 * 1024;
+    if (config.max_time_ms > 0)
+	repair_settings.max_fast_time_ms = config.max_time_ms;
     if (run_wireframe && !excluded) {
 	std::cerr << "brep-audit: phase=wireframe" << std::endl;
 	wire = wireframe_result(dbip, dp, &ttol, &tol, &draw_options);
