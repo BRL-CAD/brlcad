@@ -259,6 +259,11 @@ brlcad_addexec(bg_rtree rtree.cpp "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_rtree_large_identical_rects COMMAND bg_rtree)
 
+#  ************ Screened Poisson tests *************
+brlcad_addexec(bg_spsr_boundary spsr.cpp "${BG_TEST_LIBS}" TEST)
+
+brlcad_add_test(NAME bg_spsr_boundary COMMAND bg_spsr_boundary)
+
 #  ************ chull.c tests ***********
 # 2D Convex Hull tests
 brlcad_addexec(bg_chull chull.c "${BG_TEST_LIBS}" TEST)
