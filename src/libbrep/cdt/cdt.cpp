@@ -3365,7 +3365,10 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
     }
 
     RTree<size_t, double, 3> input_triangle_index;
-    for (int face = 0; face < rigorous_input_face_count; ++face) {
+    const int reference_input_face_count =
+	report->full_fast_fallback_used ? input_face_count :
+	rigorous_input_face_count;
+    for (int face = 0; face < reference_input_face_count; ++face) {
 	double minimum[3] = {
 	    std::numeric_limits<double>::infinity(),
 	    std::numeric_limits<double>::infinity(),
@@ -3488,7 +3491,7 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	std::to_string(report->mesh.removed_faces) + " faces removed, " +
 	std::to_string(report->mesh.added_faces) + " added, " +
 	std::to_string(report->changed_faces) +
-	" changed triangles, sampled maximum B-Rep deviation " +
+	" changed triangles, sampled maximum reference deviation " +
 	std::to_string(report->max_surface_deviation);
     cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIRED,
 	BREP_CDT_STAGE_MESH_REPAIR, -1,
