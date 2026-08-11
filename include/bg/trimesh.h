@@ -516,6 +516,9 @@ bg_trimesh_repair(
  * Absolute area limits take precedence over percentage limits.  A zero area
  * limit with fill_holes enabled permits holes of any area, subject to
  * max_hole_edges.  A zero max_hole_edges permits any boundary length.
+ * union_components requests a regularized Manifold union of closed output
+ * components, resolving bounded overlaps and contacts; it is disabled by
+ * default because it may change connectivity and triangulation.
  */
 struct bg_trimesh_repair_settings {
     fastf_t vertex_tolerance;
@@ -527,10 +530,11 @@ struct bg_trimesh_repair_settings {
     fastf_t max_hole_area_percent;
     size_t max_hole_edges;
     int max_iterations;
+    int union_components;
     int require_solid;
 };
 
-#define BG_TRIMESH_REPAIR_SETTINGS_INIT {0.0, 0, 0.0, 0.0, 0, 0.0, 0.0, 0, 10, 1}
+#define BG_TRIMESH_REPAIR_SETTINGS_INIT {0.0, 0, 0.0, 0.0, 0, 0.0, 0.0, 0, 10, 0, 1}
 
 /** Summary of the operations performed by bg_trimesh_repair2. */
 struct bg_trimesh_repair_report {
@@ -541,6 +545,7 @@ struct bg_trimesh_repair_report {
     int removed_faces;
     int added_faces;
     int repair_iterations;
+    int component_union_applied;
     int solid;
     fastf_t input_area;
     fastf_t output_area;
@@ -548,7 +553,7 @@ struct bg_trimesh_repair_report {
     fastf_t max_vertex_displacement;
 };
 
-#define BG_TRIMESH_REPAIR_REPORT_INIT {0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0}
+#define BG_TRIMESH_REPAIR_REPORT_INIT {0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0}
 
 /**
  * Attempt a bounded, explicitly configured triangle mesh repair.
