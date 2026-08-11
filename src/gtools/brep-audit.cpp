@@ -321,13 +321,30 @@ face_boundary_bbox(const ON_BrepFace &face, ON_BoundingBox &bbox)
 	    if (second)
 		include_point(second->Point());
 	    const ON_BrepEdge *edge = trim->Edge();
-	    ON_BoundingBox edge_bbox = ON_BoundingBox::EmptyBoundingBox;
-	    if (edge && edge->GetTightBoundingBox(edge_bbox) &&
-		    edge_bbox.IsValid()) {
-		if (bbox.IsValid())
-		    bbox.Union(edge_bbox);
-		else
-		    bbox = edge_bbox;
+	    if (!edge)
+		continue;
+	    /* GetTightBoundingBox may conservatively retain distant NURBS
+	     * control-hull extents.  The boundary box is the audit's lower
+	     * extent reference, so sample each actual proxy-curve span while
+	     * retaining the independent face box as the upper guard. */
+	    int span_count = std::max(1, edge->SpanCount());
+	    std::vector<double> spans((size_t)span_count + 1);
+	    if (!edge->GetSpanVector(spans.data())) {
+		const ON_Interval domain = edge->Domain();
+		span_count = 1;
+		spans.resize(2);
+		spans[0] = domain.Min();
+		spans[1] = domain.Max();
+	    }
+	    const int samples_per_span = std::max(1,
+		std::min(32, 4096 / span_count));
+	    for (int span = 0; span < span_count; ++span) {
+		const ON_Interval interval(spans[(size_t)span],
+		    spans[(size_t)span + 1]);
+		for (int sample = 0; sample <= samples_per_span; ++sample) {
+		    include_point(edge->PointAt(interval.ParameterAt(
+			(double)sample / (double)samples_per_span)));
+		}
 	    }
 	}
     }
@@ -1508,7 +1525,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     std::cout << ",\"diagonal\":";
     if (ref_valid) print_num(ref_diag); else std::cout << "null";
     std::cout << ",\"role\":\"upper_extent_guard\""
-	<< ",\"boundary_method\":\"brep_edge_tight_bounding_boxes\""
+	<< ",\"boundary_method\":\"brep_edge_parameter_samples\""
 	<< ",\"boundary_bbox_valid\":"
 	<< (boundary_valid ? "true" : "false")
 	<< ",\"boundary_bbox_min\":";
