@@ -398,8 +398,8 @@ class bedge_seg_t {
 	    edge_end = DBL_MAX;
 	    e_start = NULL;
 	    e_end = NULL;
-	    e_root_start = NULL;
-	    e_root_end = NULL;
+	    e_root_start = other->e_root_start;
+	    e_root_end = other->e_root_end;
 	    tan_start = ON_3dVector::UnsetVector;
 	    tan_end = ON_3dVector::UnsetVector;
 	};
