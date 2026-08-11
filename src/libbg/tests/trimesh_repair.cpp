@@ -627,6 +627,40 @@ test_touching_component_separation(void)
 	    }
 	}
     }
+    int separated_inward = 0;
+    for (int vertex = 0; unique_vertices && vertex < n_opnts; ++vertex) {
+	bool near_touch = true;
+	for (int axis = 0; axis < 3; ++axis)
+	    near_touch = near_touch &&
+		std::fabs(opnts[vertex][axis] - 1.0) <=
+		2.0 * settings.vertex_tolerance;
+	if (!near_touch)
+	    continue;
+	point_t neighbors = VINIT_ZERO;
+	int neighbor_count = 0;
+	for (int face = 0; face < n_ofaces; ++face) {
+	    for (int corner = 0; corner < 3; ++corner) {
+		if (ofaces[face * 3 + corner] != vertex)
+		    continue;
+		for (int other = 1; other < 3; ++other) {
+		    const int adjacent =
+			ofaces[face * 3 + (corner + other) % 3];
+		    VADD2(neighbors, neighbors, opnts[adjacent]);
+		    neighbor_count++;
+		}
+	    }
+	}
+	bool inward = neighbor_count > 0;
+	for (int axis = 0; inward && axis < 3; ++axis) {
+	    const double neighbor_average =
+		neighbors[axis] / (double)neighbor_count;
+	    inward = (neighbor_average - 1.0) *
+		(opnts[vertex][axis] - 1.0) > 0.0;
+	}
+	if (inward)
+	    separated_inward++;
+    }
+    unique_vertices = unique_vertices && separated_inward == 2;
     if (ofaces)
 	bu_free(ofaces, "touch separation faces");
     if (opnts)
