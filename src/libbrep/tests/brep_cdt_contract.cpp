@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "brep/cdt.h"
+#include "brep/surfacetree.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/primitives/brep.h"
@@ -47,6 +48,28 @@ empty_mesh_contract()
     ON_Brep_CDT_Destroy(state);
     delete box;
     return rejected;
+}
+
+static bool
+untrimmed_surface_tree_contract()
+{
+    ON_Brep brep;
+    ON_PlaneSurface *surface = new ON_PlaneSurface(ON_xy_plane);
+    surface->SetDomain(0, -1.0, 1.0);
+    surface->SetDomain(1, -1.0, 1.0);
+    surface->SetExtents(0, surface->Domain(0));
+    surface->SetExtents(1, surface->Domain(1));
+    ON_BrepFace &face = brep.NewFace(brep.AddSurface(surface));
+    brlcad::SurfaceTree tree(&face, true);
+    if (!tree.Valid())
+	return false;
+    ON_Interval u, v;
+    const ON_3dPoint point(0.25, -0.5, 0.75);
+    const ON_2dPoint uv = tree.getClosestPointEstimate(point, u, v);
+    const ON_3dPoint projection = surface->PointAt(uv.x, uv.y);
+    return u.Includes(uv.x) && v.Includes(uv.y) &&
+	std::isfinite(projection.x) && std::isfinite(projection.y) &&
+	std::isfinite(projection.z);
 }
 
 static bool
@@ -437,6 +460,7 @@ main(int argc, const char **argv)
 	first.faces == second.faces && first.vertices == second.vertices;
 
     bool empty_rejected = empty_mesh_contract();
+    bool untrimmed_tree = untrimmed_surface_tree_contract();
     bool repaired = repair_contract();
     bool paired_edge = paired_pcurve_edge_contract();
     bool invalid_repaired = invalid_poisson_repair_contract();
@@ -474,7 +498,8 @@ main(int argc, const char **argv)
 	diagnostic.stage == BREP_CDT_STAGE_TOPOLOGY;
     ON_Brep_CDT_Destroy(state);
 
-    return initial && first_ok && second_ok && empty_rejected && repaired &&
+    return initial && first_ok && second_ok && empty_rejected &&
+	untrimmed_tree && repaired &&
 	paired_edge && invalid_repaired && components_repaired &&
 	invalidated && invalid_tolerance && invalid_face && invalid_input ? 0 : 1;
 }

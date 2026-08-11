@@ -41,6 +41,7 @@
 extern "C++" {
 namespace brlcad {
     class BBNode;
+    class SurfaceTree;
 }
 }
 #endif
@@ -152,8 +153,13 @@ namespace brlcad {
 
 
     private:
+	friend class SurfaceTree;
+
 	BBNode(const BBNode &source);
 	BBNode &operator=(const BBNode &source);
+	ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt,
+		ON_Interval &u, ON_Interval &v,
+		const ON_Surface *surface) const;
 
 	void removeChild(BBNode *child);
 	bool intersectedBy(const ON_Ray &ray, double *tnear = NULL, double *tfar = NULL) const;
