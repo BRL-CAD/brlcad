@@ -390,6 +390,97 @@ singular_edge_process_less(const cpolyedge_t *a, const cpolyedge_t *b)
     return a->v2d[1] < b->v2d[1];
 }
 
+struct compact_mesh_edge_use {
+    int first;
+    int second;
+    int face;
+};
+
+static int
+compact_mesh_component_root(std::vector<int> &parents, int item)
+{
+    int root = item;
+    while (parents[(size_t)root] >= 0)
+	root = parents[(size_t)root];
+    while (item != root) {
+	const int next = parents[(size_t)item];
+	parents[(size_t)item] = root;
+	item = next;
+    }
+    return root;
+}
+
+/* Find face components through exactly two-use edges.  Sorting a packed edge
+ * array is substantially smaller than storing millions of edge keys and tiny
+ * neighbor vectors in separately allocated tree nodes. */
+static void
+compact_mesh_face_components(const int *faces, int face_count,
+	std::vector<int> &component_id,
+	std::vector<std::vector<int>> &components)
+{
+    component_id.assign((size_t)face_count, -1);
+    components.clear();
+    if (!faces || face_count <= 0)
+	return;
+
+    std::vector<compact_mesh_edge_use> edge_uses;
+    edge_uses.reserve((size_t)face_count * 3);
+    for (int face = 0; face < face_count; ++face) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    int first = faces[(size_t)face * 3 + corner];
+	    int second = faces[(size_t)face * 3 + (corner + 1) % 3];
+	    if (first > second)
+		std::swap(first, second);
+	    compact_mesh_edge_use use = {first, second, face};
+	    edge_uses.push_back(use);
+	}
+    }
+    std::sort(edge_uses.begin(), edge_uses.end(),
+	[](const compact_mesh_edge_use &a,
+	    const compact_mesh_edge_use &b) {
+	    if (a.first != b.first)
+		return a.first < b.first;
+	    if (a.second != b.second)
+		return a.second < b.second;
+	    return a.face < b.face;
+	});
+
+    std::vector<int> parents((size_t)face_count, -1);
+    for (size_t begin = 0; begin < edge_uses.size();) {
+	size_t end = begin + 1;
+	while (end < edge_uses.size() &&
+		edge_uses[end].first == edge_uses[begin].first &&
+		edge_uses[end].second == edge_uses[begin].second)
+	    ++end;
+	if (end - begin == 2) {
+	    int first_root = compact_mesh_component_root(parents,
+		edge_uses[begin].face);
+	    int second_root = compact_mesh_component_root(parents,
+		edge_uses[begin + 1].face);
+	    if (first_root != second_root) {
+		if (parents[(size_t)first_root] >
+			parents[(size_t)second_root])
+		    std::swap(first_root, second_root);
+		parents[(size_t)first_root] += parents[(size_t)second_root];
+		parents[(size_t)second_root] = first_root;
+	    }
+	}
+	begin = end;
+    }
+
+    std::vector<int> root_component((size_t)face_count, -1);
+    for (int face = 0; face < face_count; ++face) {
+	const int root = compact_mesh_component_root(parents, face);
+	if (root_component[(size_t)root] < 0) {
+	    root_component[(size_t)root] = (int)components.size();
+	    components.push_back(std::vector<int>());
+	}
+	const int component = root_component[(size_t)root];
+	component_id[(size_t)face] = component;
+	components[(size_t)component].push_back(face);
+    }
+}
+
 /* Correct triangle winding only after the complete mesh proves closed and
  * manifold and misorientation is its sole defect.  bg_trimesh_sync establishes
  * a consistent orientation for each connected component, but its seed may
@@ -428,47 +519,10 @@ closed_mesh_orientation_sync(int *faces, int face_count,
 	return -1;
 
     /* Determine the connected closed-shell components from shared edges. */
-    std::vector<std::vector<int>> adjacent((size_t)face_count);
-    std::map<std::pair<int, int>, int> first_edge_face;
-    for (int face = 0; face < face_count; ++face) {
-	for (int edge = 0; edge < 3; ++edge) {
-	    int vertex_a = original[(size_t)face * 3 + edge];
-	    int vertex_b = original[(size_t)face * 3 + (edge + 1) % 3];
-	    if (vertex_a > vertex_b)
-		std::swap(vertex_a, vertex_b);
-	    const std::pair<int, int> key(vertex_a, vertex_b);
-	    auto first = first_edge_face.find(key);
-	    if (first == first_edge_face.end()) {
-		first_edge_face[key] = face;
-		continue;
-	    }
-	    adjacent[(size_t)face].push_back(first->second);
-	    adjacent[(size_t)first->second].push_back(face);
-	}
-    }
-
-    std::vector<int> component_id((size_t)face_count, -1);
+    std::vector<int> component_id;
     std::vector<std::vector<int>> components;
-    for (int seed = 0; seed < face_count; ++seed) {
-	if (component_id[(size_t)seed] >= 0)
-	    continue;
-	const int current_id = (int)components.size();
-	components.push_back(std::vector<int>());
-	std::queue<int> work;
-	work.push(seed);
-	component_id[(size_t)seed] = current_id;
-	while (!work.empty()) {
-	    const int face = work.front();
-	    work.pop();
-	    components[(size_t)current_id].push_back(face);
-	    for (int neighbor : adjacent[(size_t)face]) {
-		if (component_id[(size_t)neighbor] >= 0)
-		    continue;
-		component_id[(size_t)neighbor] = current_id;
-		work.push(neighbor);
-	    }
-	}
-    }
+    compact_mesh_face_components(original.data(), face_count,
+	component_id, components);
 
     for (const std::vector<int> &component : components) {
 	size_t changed = 0;
@@ -590,55 +644,10 @@ closed_mesh_component_filter(int *faces, int *face_count,
     if (*face_count < 2)
 	return removed_count;
 
-    std::map<std::pair<int, int>, std::vector<int>> edge_faces;
-    for (int face = 0; face < *face_count; ++face) {
-	for (int corner = 0; corner < 3; ++corner) {
-	    int first = faces[(size_t)face * 3 + corner];
-	    int second = faces[(size_t)face * 3 + (corner + 1) % 3];
-	    if (first > second)
-		std::swap(first, second);
-	    edge_faces[std::make_pair(first, second)].push_back(face);
-	}
-    }
-
-    std::vector<int> component_id((size_t)*face_count, -1);
+    std::vector<int> component_id;
     std::vector<std::vector<int>> components;
-    for (int seed = 0; seed < *face_count; ++seed) {
-	if (component_id[(size_t)seed] >= 0)
-	    continue;
-	const int current_id = (int)components.size();
-	components.push_back(std::vector<int>());
-	std::queue<int> work;
-	work.push(seed);
-	component_id[(size_t)seed] = current_id;
-	while (!work.empty()) {
-	    const int face = work.front();
-	    work.pop();
-	    components[(size_t)current_id].push_back(face);
-	    for (int corner = 0; corner < 3; ++corner) {
-		int first = faces[(size_t)face * 3 + corner];
-		int second =
-		    faces[(size_t)face * 3 + (corner + 1) % 3];
-		if (first > second)
-		    std::swap(first, second);
-		const std::vector<int> &edge_neighbors =
-		    edge_faces[std::make_pair(first, second)];
-		/* An edge used by more than two triangles is non-manifold.  It
-		 * must not join an otherwise closed shell to a local remesh
-		 * artifact during component discovery.  Restricting adjacency
-		 * to exactly two uses also matches the topological connectivity
-		 * required by a valid solid mesh. */
-		if (edge_neighbors.size() != 2)
-		    continue;
-		for (int neighbor : edge_neighbors) {
-		    if (component_id[(size_t)neighbor] >= 0)
-			continue;
-		    component_id[(size_t)neighbor] = current_id;
-		    work.push(neighbor);
-		}
-	    }
-	}
-    }
+    compact_mesh_face_components(faces, *face_count, component_id,
+	components);
     if (components.size() < 2)
 	return removed_count;
 
@@ -2347,15 +2356,18 @@ cache_certified_normals(struct ON_Brep_CDT_State *s_cdt)
 	for (int corner = 0; corner < 3; ++corner) {
 	    const int output_vertex =
 		s_cdt->certified_faces[(size_t)face * 3 + corner];
-	    const auto source_point =
-		s_cdt->bot_pnt_to_on_pnt->find(output_vertex);
-	    if (source_point == s_cdt->bot_pnt_to_on_pnt->end())
+	    if (output_vertex < 0 || (size_t)output_vertex >=
+		    s_cdt->bot_pnt_to_on_pnt->size())
+		return false;
+	    ON_3dPoint *source_point =
+		(*s_cdt->bot_pnt_to_on_pnt)[(size_t)output_vertex];
+	    if (!source_point)
 		return false;
 	    int local_corner = -1;
 	    for (int candidate = 0; candidate < 3; ++candidate) {
 		const long point_index = triangle.v[candidate];
 		if (point_index >= 0 && (size_t)point_index < mesh.pnts.size() &&
-			mesh.pnts[(size_t)point_index] == source_point->second) {
+			mesh.pnts[(size_t)point_index] == source_point) {
 		    local_corner = candidate;
 		    break;
 		}
@@ -2366,7 +2378,7 @@ cache_certified_normals(struct ON_Brep_CDT_State *s_cdt)
 	    const long point_index = triangle.v[local_corner];
 	    ON_3dPoint *normal = NULL;
 	    const auto singular =
-		s_cdt->singular_vert_to_norms->find(source_point->second);
+		s_cdt->singular_vert_to_norms->find(source_point);
 	    if (singular != s_cdt->singular_vert_to_norms->end()) {
 		normal = singular->second;
 	    } else {
@@ -2518,9 +2530,23 @@ ON_Brep_CDT_Mesh(
     /* We know now the final triangle set.  We need to build up the set of
      * unique points and normals to generate a mesh containing only the
      * information actually used by the final triangle set. */
-    std::set<ON_3dPoint *> vfpnts;
-    std::set<ON_3dPoint *> vfnormals;
-    std::set<ON_3dPoint *> flip_normals;
+    typedef std::pair<ON_3dPoint *, size_t> ordered_point_entry;
+    std::vector<ordered_point_entry> ordered_points;
+    std::vector<ordered_point_entry> ordered_normals;
+    std::unordered_set<ON_3dPoint *> point_seen;
+    std::unordered_set<ON_3dPoint *> normal_seen;
+    std::unordered_set<ON_3dPoint *> flip_normals;
+    const size_t max_corner_count = triangle_cnt > SIZE_MAX / 3 ?
+	SIZE_MAX : triangle_cnt * 3;
+    point_seen.reserve(std::min(max_corner_count, s_cdt->w3dpnts->size()));
+    ordered_points.reserve(std::min(max_corner_count,
+	s_cdt->w3dpnts->size()));
+    if (normals) {
+	normal_seen.reserve(std::min(max_corner_count,
+	    s_cdt->w3dnorms->size()));
+	ordered_normals.reserve(std::min(max_corner_count,
+	    s_cdt->w3dnorms->size()));
+    }
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
 	cdt_mesh_t *fmesh = &s_cdt->fmeshes[active_faces[fi]];
 	const std::vector<size_t> &face_triangles =
@@ -2529,18 +2555,24 @@ ON_Brep_CDT_Mesh(
 	    triangle_t tri = fmesh->tris_vect[face_triangles[ti]];
 	    for (size_t j = 0; j < 3; j++) {
 		ON_3dPoint *p3d = fmesh->pnts[tri.v[j]];
-		vfpnts.insert(p3d);
-		ON_3dPoint *onorm = NULL;
-		if (s_cdt->singular_vert_to_norms->find(p3d) != s_cdt->singular_vert_to_norms->end()) {
-		    // Use calculated normal for singularity points
-		    onorm = (*s_cdt->singular_vert_to_norms)[p3d];
-		} else {
-		    onorm = fmesh->normals[fmesh->nmap[tri.v[j]]];
-		}
-		if (onorm) {
-		    vfnormals.insert(onorm);
-		    if (fmesh->m_bRev) {
-			flip_normals.insert(onorm);
+		if (point_seen.insert(p3d).second)
+		    ordered_points.push_back(std::make_pair(p3d,
+			ordered_points.size()));
+		if (normals) {
+		    ON_3dPoint *onorm = NULL;
+		    if (s_cdt->singular_vert_to_norms->find(p3d) !=
+			    s_cdt->singular_vert_to_norms->end()) {
+			// Use calculated normal for singularity points
+			onorm = (*s_cdt->singular_vert_to_norms)[p3d];
+		    } else {
+			onorm = fmesh->normals[fmesh->nmap[tri.v[j]]];
+		    }
+		    if (onorm) {
+			if (normal_seen.insert(onorm).second)
+			    ordered_normals.push_back(std::make_pair(onorm,
+				ordered_normals.size()));
+			if (fmesh->m_bRev)
+			    flip_normals.insert(onorm);
 		    }
 		}
 	    }
@@ -2549,63 +2581,67 @@ ON_Brep_CDT_Mesh(
 
     //bu_log("tri_cnt: %zd\n", triangle_cnt);
 
-    // We know how many faces, points and normals we need now - initialize BoT containers.
-    *fcnt = (int)triangle_cnt;
-    *faces = (int *)bu_calloc(triangle_cnt*3, sizeof(int), "new faces array");
-    *vcnt = (int)vfpnts.size();
-    *vertices = (fastf_t *)bu_calloc(vfpnts.size()*3, sizeof(fastf_t), "new vert array");
-    if (normals) {
-	*ncnt = (int)vfnormals.size();
-	*normals = (fastf_t *)bu_calloc(vfnormals.size()*3, sizeof(fastf_t), "new normals array");
-	*fn_cnt = (int)triangle_cnt;
-	*face_normals = (int *)bu_calloc(triangle_cnt*3, sizeof(int), "new face_normals array");
-    }
-
-    // Populate the arrays and map the ON containers to their corresponding BoT array entries
-    std::map<ON_3dPoint *, size_t> point_order;
-    for (size_t i = 0; i < s_cdt->w3dpnts->size(); ++i)
-	point_order[(*s_cdt->w3dpnts)[i]] = i;
-    std::map<ON_3dPoint *, size_t> normal_order;
-    for (size_t i = 0; i < s_cdt->w3dnorms->size(); ++i)
-	normal_order[(*s_cdt->w3dnorms)[i]] = i;
-
-    const auto stable_point_less = [&point_order](ON_3dPoint *a,
-	    ON_3dPoint *b) {
+    const auto stable_point_less = [](const ordered_point_entry &a_entry,
+	    const ordered_point_entry &b_entry) {
+	ON_3dPoint *a = a_entry.first;
+	ON_3dPoint *b = b_entry.first;
 	if (a->x < b->x) return true;
 	if (b->x < a->x) return false;
 	if (a->y < b->y) return true;
 	if (b->y < a->y) return false;
 	if (a->z < b->z) return true;
 	if (b->z < a->z) return false;
-	return point_order.at(a) < point_order.at(b);
+	return a_entry.second < b_entry.second;
     };
-    const auto stable_normal_less = [&normal_order](ON_3dPoint *a,
-	    ON_3dPoint *b) {
+    const auto stable_normal_less = [](const ordered_point_entry &a_entry,
+	    const ordered_point_entry &b_entry) {
+	ON_3dPoint *a = a_entry.first;
+	ON_3dPoint *b = b_entry.first;
 	if (a->x < b->x) return true;
 	if (b->x < a->x) return false;
 	if (a->y < b->y) return true;
 	if (b->y < a->y) return false;
 	if (a->z < b->z) return true;
 	if (b->z < a->z) return false;
-	return normal_order.at(a) < normal_order.at(b);
+	return a_entry.second < b_entry.second;
     };
-    std::vector<ON_3dPoint *> ordered_points(vfpnts.begin(), vfpnts.end());
     std::sort(ordered_points.begin(), ordered_points.end(), stable_point_less);
-    std::vector<ON_3dPoint *> ordered_normals(vfnormals.begin(),
-	vfnormals.end());
     std::sort(ordered_normals.begin(), ordered_normals.end(),
 	stable_normal_less);
 
+    /* Release collection hashes before allocating the final arrays and
+     * pointer-to-index maps.  On million-triangle meshes, retaining both
+     * generations at once needlessly adds hundreds of MiB to peak use. */
+    std::unordered_set<ON_3dPoint *>().swap(point_seen);
+    std::unordered_set<ON_3dPoint *>().swap(normal_seen);
+
+    // We know how many faces, points and normals we need now - initialize BoT containers.
+    *fcnt = (int)triangle_cnt;
+    *faces = (int *)bu_calloc(triangle_cnt*3, sizeof(int), "new faces array");
+    *vcnt = (int)ordered_points.size();
+    *vertices = (fastf_t *)bu_calloc(ordered_points.size()*3,
+	sizeof(fastf_t), "new vert array");
+    if (normals) {
+	*ncnt = (int)ordered_normals.size();
+	*normals = (fastf_t *)bu_calloc(ordered_normals.size()*3,
+	    sizeof(fastf_t), "new normals array");
+	*fn_cnt = (int)triangle_cnt;
+	*face_normals = (int *)bu_calloc(triangle_cnt*3, sizeof(int),
+	    "new face_normals array");
+    }
+
     // Index vertex points and assign them to the BoT array
-    std::map<ON_3dPoint *, int> on_pnt_to_bot_pnt;
+    std::unordered_map<ON_3dPoint *, int> on_pnt_to_bot_pnt;
+    on_pnt_to_bot_pnt.reserve(ordered_points.size());
+    s_cdt->bot_pnt_to_on_pnt->assign(ordered_points.size(), NULL);
     int pnt_ind = 0;
     for (size_t pi = 0; pi < ordered_points.size(); ++pi) {
-	ON_3dPoint *vp = ordered_points[pi];
+	ON_3dPoint *vp = ordered_points[pi].first;
 	(*vertices)[pnt_ind*3] = vp->x;
 	(*vertices)[pnt_ind*3+1] = vp->y;
 	(*vertices)[pnt_ind*3+2] = vp->z;
-	on_pnt_to_bot_pnt[vp] = pnt_ind;
-	(*s_cdt->bot_pnt_to_on_pnt)[pnt_ind] = vp;
+	on_pnt_to_bot_pnt.emplace(vp, pnt_ind);
+	(*s_cdt->bot_pnt_to_on_pnt)[(size_t)pnt_ind] = vp;
 	pnt_ind++;
     }
 
@@ -2618,11 +2654,12 @@ ON_Brep_CDT_Mesh(
     //
     // The mapping of 2D triangle point to its associated normal is the
     // responsibility of the  p2t_to_on3_norm_map container
-    std::map<ON_3dPoint *, int> on_norm_to_bot_norm;
+    std::unordered_map<ON_3dPoint *, int> on_norm_to_bot_norm;
     size_t norm_ind = 0;
     if (normals) {
+	on_norm_to_bot_norm.reserve(ordered_normals.size());
 	for (size_t ni = 0; ni < ordered_normals.size(); ++ni) {
-	    ON_3dPoint *vn = ordered_normals[ni];
+	    ON_3dPoint *vn = ordered_normals[ni].first;
 	    ON_3dVector vnf(*vn);
 	    if (flip_normals.find(vn) != flip_normals.end()) {
 		vnf = -1 *vnf;
@@ -2630,7 +2667,7 @@ ON_Brep_CDT_Mesh(
 	    (*normals)[norm_ind*3] = vnf.x;
 	    (*normals)[norm_ind*3+1] = vnf.y;
 	    (*normals)[norm_ind*3+2] = vnf.z;
-	    on_norm_to_bot_norm[vn] = (int)norm_ind;
+	    on_norm_to_bot_norm.emplace(vn, (int)norm_ind);
 	    norm_ind++;
 	}
     }
@@ -2650,7 +2687,10 @@ ON_Brep_CDT_Mesh(
 	    triangle_t tri = fmesh->tris_vect[face_triangles[ti]];
 	    for (size_t j = 0; j < 3; j++) {
 		ON_3dPoint *op = fmesh->pnts[tri.v[j]];
-		(*faces)[face_cnt*3 + j] = on_pnt_to_bot_pnt[op];
+		const auto output_point = on_pnt_to_bot_pnt.find(op);
+		if (output_point == on_pnt_to_bot_pnt.end())
+		    return -1;
+		(*faces)[face_cnt*3 + j] = output_point->second;
 
 		if (normals) {
 		    ON_3dPoint *onorm;
@@ -2661,7 +2701,12 @@ ON_Brep_CDT_Mesh(
 			onorm = fmesh->normals[fmesh->nmap[fmesh->p2ind[op]]];
 		    }
 
-		    (*face_normals)[face_cnt*3 + j] = on_norm_to_bot_norm[onorm];
+		    const auto output_normal =
+			on_norm_to_bot_norm.find(onorm);
+		    if (output_normal == on_norm_to_bot_norm.end())
+			return -1;
+		    (*face_normals)[face_cnt*3 + j] =
+			output_normal->second;
 		}
 	    }
 
@@ -2715,7 +2760,8 @@ ON_Brep_CDT_Mesh(
 	    }
 	}
 	if (compact_vertex_count < *vcnt) {
-	    std::map<int, ON_3dPoint *> compact_point_map;
+	    std::vector<ON_3dPoint *> compact_point_map(
+		(size_t)compact_vertex_count, NULL);
 	    for (int old_vertex = 0; old_vertex < *vcnt; ++old_vertex) {
 		const int new_vertex = vertex_remap[(size_t)old_vertex];
 		if (new_vertex < 0)
@@ -2723,9 +2769,9 @@ ON_Brep_CDT_Mesh(
 		for (int axis = 0; axis < 3; ++axis)
 		    (*vertices)[(size_t)new_vertex * 3 + axis] =
 			(*vertices)[(size_t)old_vertex * 3 + axis];
-		const auto source = s_cdt->bot_pnt_to_on_pnt->find(old_vertex);
-		if (source != s_cdt->bot_pnt_to_on_pnt->end())
-		    compact_point_map[new_vertex] = source->second;
+		if ((size_t)old_vertex < s_cdt->bot_pnt_to_on_pnt->size())
+		    compact_point_map[(size_t)new_vertex] =
+			(*s_cdt->bot_pnt_to_on_pnt)[(size_t)old_vertex];
 	    }
 	    for (int face = 0; face < *fcnt; ++face) {
 		for (int corner = 0; corner < 3; ++corner) {
