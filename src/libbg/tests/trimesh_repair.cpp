@@ -234,6 +234,87 @@ test_open_cube_repair(void)
     return 0;
 }
 
+/* The extended interface is conservative by default: it must not silently
+ * close a hole unless the caller explicitly enables hole filling. */
+static int
+test_repair2_conservative_default(void)
+{
+    point_t *pts;
+    int n_pts;
+    int *faces;
+    int n_faces;
+    make_open_cube(&pts, &n_pts, &faces, &n_faces);
+
+    int *ofaces = NULL;
+    int n_ofaces = 0;
+    point_t *opnts = NULL;
+    int n_opnts = 0;
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts, &n_opnts,
+	faces, n_faces, pts, n_pts, &settings, &report);
+    if (ret != -1 || ofaces || opnts || n_ofaces || n_opnts ||
+	    report.solid) {
+	bu_log("FAIL test_repair2_conservative_default: ret=%d solid=%d\n",
+	    ret, report.solid);
+	if (ofaces) bu_free(ofaces, "ofaces");
+	if (opnts) bu_free(opnts, "opnts");
+	return -1;
+    }
+
+    bu_log("PASS test_repair2_conservative_default\n");
+    return 0;
+}
+
+/* Explicitly permitting the missing cube face should produce a certified
+ * solid and a useful operation report. */
+static int
+test_repair2_report(void)
+{
+    point_t *pts;
+    int n_pts;
+    int *faces;
+    int n_faces;
+    make_open_cube(&pts, &n_pts, &faces, &n_faces);
+
+    int *ofaces = NULL;
+    int n_ofaces = 0;
+    point_t *opnts = NULL;
+    int n_opnts = 0;
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.fill_holes = 1;
+    settings.max_hole_area_percent = 30.0;
+    settings.max_hole_edges = 8;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts, &n_opnts,
+	faces, n_faces, pts, n_pts, &settings, &report);
+    const bool valid_report = ret == 0 && report.solid &&
+	report.input_vertices == n_pts && report.input_faces == n_faces &&
+	report.output_vertices == n_opnts &&
+	report.output_faces == n_ofaces && report.added_faces >= 2 &&
+	report.removed_faces == 0 && report.input_area > 0.0 &&
+	report.output_area > report.input_area && report.output_volume > 0.0 &&
+	NEAR_ZERO(report.max_vertex_displacement, SMALL_FASTF);
+    if (!valid_report || !ofaces || !opnts ||
+	    bg_trimesh_solid2(n_opnts, n_ofaces, (fastf_t *)opnts, ofaces,
+		NULL)) {
+	bu_log("FAIL test_repair2_report: ret=%d solid=%d added=%d\n",
+	    ret, report.solid, report.added_faces);
+	if (ofaces) bu_free(ofaces, "ofaces");
+	if (opnts) bu_free(opnts, "opnts");
+	return -1;
+    }
+
+    bu_free(ofaces, "ofaces");
+    bu_free(opnts, "opnts");
+    bu_log("PASS test_repair2_report\n");
+    return 0;
+}
+
 /* Test specifically for the SplitNonManifoldVertices backward-walk bug.
  *
  * The bug: SplitNonManifoldVertices only triggered its backward walk when
@@ -431,6 +512,8 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_already_solid()             != 0) ? 1 : 0;
     failures += (test_tet_already_solid()         != 0) ? 1 : 0;
     failures += (test_open_cube_repair()          != 0) ? 1 : 0;
+    failures += (test_repair2_conservative_default() != 0) ? 1 : 0;
+    failures += (test_repair2_report()             != 0) ? 1 : 0;
     failures += (test_split_nmv_backward_walk()   != 0) ? 1 : 0;
     failures += (test_split_nmv_cycle_guard()     != 0) ? 1 : 0;
 
