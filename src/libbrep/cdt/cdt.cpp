@@ -2039,11 +2039,21 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		double te1 = bseg->tseg1->trim_end;
 		double te2 = bseg->tseg2->trim_end;
 		bseg->tan_end = bseg_tangent(s_cdt, bseg, bseg->edge_end, te1, te2);
-	    }
 	}
+    }
 
-	// Do the non-tolerance based initialization splits.
-	if (!initialize_edge_segs(s_cdt)) {
+    char pole_split_message[256] = {0};
+    if (!split_edges_at_surface_poles(s_cdt, pole_split_message,
+	    sizeof(pole_split_message))) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INITIALIZATION_FAILED,
+	    BREP_CDT_STAGE_EDGE_INITIALIZATION, -1, 0, 0,
+	    pole_split_message[0] ? pole_split_message :
+	    "failed to split shared edges at surface poles");
+	return -1;
+    }
+
+    // Do the non-tolerance based initialization splits.
+    if (!initialize_edge_segs(s_cdt)) {
 	    std::cout << "Initialization failed for edges\n";
 	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INITIALIZATION_FAILED,
 		BREP_CDT_STAGE_EDGE_INITIALIZATION, -1, 0, 0,
