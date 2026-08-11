@@ -26,6 +26,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <functional>
 #include <limits>
 #include <map>
 #include <memory>
@@ -38,17 +39,16 @@
 // ported from Geogram. It detects boundary loops in a triangle mesh and
 // fills them with new triangles using GTE's robust triangulation algorithms.
 //
-// Supports two triangulation methods (applied as a fallback chain):
+// Supports three triangulation methods (applied as a fallback chain):
+// - PlanarProjection: preserves a nearly planar boundary's concave outline
 // - LSCM:          Arc-length boundary-to-circle mapping + EC; always
 //                  succeeds for any simple closed 3D loop regardless
 //                  of planarity (primary method, default)
 // - EarClipping3D: Ear clipping directly in 3D (last resort fallback)
 //
-// The former planar-projection methods (EarClipping 2D and CDT) have been
-// removed.  Both require projecting the hole boundary onto a best-fit plane,
-// which fails for non-planar or highly curved holes — exactly the cases
-// common in engineering meshes (aircraft skins, compound curves).  LSCM
-// handles all such cases correctly while being no slower in practice.
+// Planar projection is limited to boundaries whose vertices satisfy a strict
+// planarity test.  LSCM and direct 3D ear clipping handle the non-planar and
+// highly curved boundaries common in engineering meshes.
 
 namespace gte
 {
@@ -56,8 +56,14 @@ namespace gte
     class MeshHoleFilling
     {
     public:
+        using TriangleValidator = std::function<bool(
+            std::array<int32_t, 3> const&,
+            std::vector<std::array<int32_t, 3>> const&)>;
+
         // Triangulation method for hole filling.
-        // Only two methods remain after removal of the planar-projection paths:
+        // Available methods:
+        //   PlanarProjection — orthographic projection of a nearly planar
+        //                   boundary followed by exact 2D ear clipping.
         //   LSCM          — primary: maps boundary to circle via arc-length
         //                   parameterisation then ear-clips in 2D; always
         //                   succeeds for any topologically simple boundary loop.
@@ -65,6 +71,7 @@ namespace gte
         //                   any projection; slower but always terminates.
         enum class TriangulationMethod
         {
+            PlanarProjection,
             LSCM,           // Arc-length circle map + EC in 2D; works for any simple
                             // closed 3D boundary regardless of planarity (primary method)
             EarClipping3D   // 3D ear clipping without any projection (last resort)
@@ -81,6 +88,8 @@ namespace gte
             bool validateOutput;                // Validate that output is manifold and non-self-intersecting
             bool requireManifold;               // Fail if output is not manifold
             bool requireNoSelfIntersections;    // Fail if output has self-intersections
+            size_t maxValidatedEdges;            // 0 disables per-ear validation
+            TriangleValidator triangleValidator;// Optional geometric ear gate
 
             Parameters()
                 : maxArea(static_cast<Real>(0))
@@ -91,6 +100,8 @@ namespace gte
                 , validateOutput(false)                     // No validation by default (Geogram-compatible)
                 , requireManifold(false)                    // No manifold requirement by default
                 , requireNoSelfIntersections(false)         // Don't require (can be expensive)
+                , maxValidatedEdges(0)                       // Collision-aware ears are opt-in
+                , triangleValidator()
             {
             }
         };
@@ -203,9 +214,21 @@ namespace gte
                 std::vector<std::array<int32_t, 3>> newTriangles;
                 bool success = false;
 
-                if (params.method == TriangulationMethod::EarClipping3D)
+                if (params.method == TriangulationMethod::PlanarProjection)
                 {
-                    success = TriangulateHole3D(vertices, hole, newTriangles, edgeToThirdVert);
+                    success = TriangulateHolePlanar(vertices, hole, newTriangles);
+                }
+                else if (params.method == TriangulationMethod::EarClipping3D)
+                {
+                    TriangleValidator validator;
+                    if (params.triangleValidator &&
+                        params.maxValidatedEdges > 0 &&
+                        hole.vertices.size() <= params.maxValidatedEdges)
+                    {
+                        validator = params.triangleValidator;
+                    }
+                    success = TriangulateHole3D(vertices, hole, newTriangles,
+                        edgeToThirdVert, validator);
                 }
                 else
                 {
@@ -234,7 +257,8 @@ namespace gte
                     // Fall back to 3D if LSCM fails logically or geometrically.
                     if (!success && params.autoFallback)
                     {
-                        success = TriangulateHole3D(vertices, hole, newTriangles, edgeToThirdVert);
+                        success = TriangulateHole3D(vertices, hole,
+                            newTriangles, edgeToThirdVert);
                     }
                 }
                 
@@ -642,6 +666,125 @@ namespace gte
             return true;
         }
 
+        // Preserve the actual outline of a nearly planar boundary.  LSCM's
+        // circle map deliberately discards concavity, which can restore to
+        // diagonals outside the 3-D polygon.  Dropping the dominant component
+        // of Newell's normal gives a nondegenerate orthographic chart without
+        // introducing new vertex positions.
+        static bool TriangulateHolePlanar(
+            std::vector<Vector3<Real>> const& vertices,
+            HoleBoundary const& hole,
+            std::vector<std::array<int32_t, 3>>& triangles)
+        {
+            if (hole.vertices.size() < 3)
+            {
+                return false;
+            }
+
+            Vector3<Real> normal{};
+            Vector3<Real> minimum = vertices[hole.vertices[0]];
+            Vector3<Real> maximum = minimum;
+            for (size_t i = 0; i < hole.vertices.size(); ++i)
+            {
+                Vector3<Real> const& current = vertices[hole.vertices[i]];
+                Vector3<Real> const& next =
+                    vertices[hole.vertices[(i + 1) % hole.vertices.size()]];
+                normal[0] += (current[1] - next[1]) *
+                    (current[2] + next[2]);
+                normal[1] += (current[2] - next[2]) *
+                    (current[0] + next[0]);
+                normal[2] += (current[0] - next[0]) *
+                    (current[1] + next[1]);
+                for (int axis = 0; axis < 3; ++axis)
+                {
+                    minimum[axis] = std::min(minimum[axis], current[axis]);
+                    maximum[axis] = std::max(maximum[axis], current[axis]);
+                }
+            }
+            Real normalLength = Length(normal);
+            if (!(normalLength > static_cast<Real>(0)))
+            {
+                return false;
+            }
+            normal /= normalLength;
+            Vector3<Real> diagonal = maximum - minimum;
+            Real scale = Length(diagonal);
+            if (!(scale > static_cast<Real>(0)))
+            {
+                return false;
+            }
+            Vector3<Real> const& origin = vertices[hole.vertices[0]];
+            Real maxPlaneMiss = static_cast<Real>(0);
+            for (int32_t index : hole.vertices)
+            {
+                maxPlaneMiss = std::max(maxPlaneMiss,
+                    std::fabs(Dot(vertices[index] - origin, normal)));
+            }
+            if (maxPlaneMiss > static_cast<Real>(1e-6) * scale)
+            {
+                return false;
+            }
+
+            int droppedAxis = 0;
+            if (std::fabs(normal[1]) > std::fabs(normal[droppedAxis]))
+            {
+                droppedAxis = 1;
+            }
+            if (std::fabs(normal[2]) > std::fabs(normal[droppedAxis]))
+            {
+                droppedAxis = 2;
+            }
+            const int firstAxis = (droppedAxis + 1) % 3;
+            const int secondAxis = (droppedAxis + 2) % 3;
+            std::vector<Vector2<Real>> projected;
+            projected.reserve(hole.vertices.size());
+            for (int32_t index : hole.vertices)
+            {
+                projected.push_back({vertices[index][firstAxis],
+                    vertices[index][secondAxis]});
+            }
+            Real signedArea = static_cast<Real>(0);
+            for (size_t i = 0; i < projected.size(); ++i)
+            {
+                Vector2<Real> const& current = projected[i];
+                Vector2<Real> const& next =
+                    projected[(i + 1) % projected.size()];
+                signedArea += current[0] * next[1] -
+                    next[0] * current[1];
+            }
+            if (!(std::fabs(signedArea) > static_cast<Real>(0)))
+            {
+                return false;
+            }
+            if (signedArea < static_cast<Real>(0))
+            {
+                for (auto& point : projected)
+                {
+                    std::swap(point[0], point[1]);
+                }
+            }
+            std::vector<std::array<int32_t, 3>> localTriangles;
+            if (!TriangulateWithEC(projected, localTriangles))
+            {
+                return false;
+            }
+            for (auto const& triangle : localTriangles)
+            {
+                std::array<int32_t, 3> restored = {
+                    hole.vertices[triangle[0]],
+                    hole.vertices[triangle[1]],
+                    hole.vertices[triangle[2]]
+                };
+                if (IsGeometricallyDegenerate(vertices, restored))
+                {
+                    triangles.clear();
+                    return false;
+                }
+                triangles.push_back(restored);
+            }
+            return !triangles.empty();
+        }
+
         // Triangulate a hole working directly in 3D (no projection)
         // Ported from Geogram's ear cutting algorithm (triangulate_hole_ear_cutting)
         //
@@ -660,7 +803,8 @@ namespace gte
             std::vector<Vector3<Real>> const& vertices,
             HoleBoundary const& hole,
             std::vector<std::array<int32_t, 3>>& triangles,
-            std::unordered_map<int64_t, int32_t> const& edgeToThirdVert = {})
+            std::unordered_map<int64_t, int32_t> const& edgeToThirdVert = {},
+            TriangleValidator const& triangleValidator = {})
         {
             if (hole.vertices.size() < 3)
             {
@@ -728,10 +872,15 @@ namespace gte
                     size_t nextIdx = (i + 1) % workingHole.size();
                     std::array<int32_t, 3> candidate = {
                         workingHole[i].v0,
-                        workingHole[nextIdx].v1,
-                        workingHole[i].v1
+                        workingHole[i].v1,
+                        workingHole[nextIdx].v1
                     };
                     if (IsGeometricallyDegenerate(vertices, candidate))
+                    {
+                        continue;
+                    }
+                    if (triangleValidator &&
+                        !triangleValidator(candidate, triangles))
                     {
                         continue;
                     }
@@ -755,8 +904,10 @@ namespace gte
                 // Create triangle from best ear (matches geogram's trindex T)
                 EdgeTriple const& t1 = workingHole[bestIdx];
                 EdgeTriple const& t2 = workingHole[nextIdx];
-                // Triangle = (T1[0], T2[1], T1[1]) in geogram notation
-                triangles.push_back({t1.v0, t2.v1, t1.v1});
+                // Follow the hole boundary through the clipped vertex.  The
+                // final triangle below uses this same winding, and the new
+                // diagonal then opposes the adjacent fill triangle.
+                triangles.push_back({t1.v0, t1.v1, t2.v1});
                 
                 // Update working hole by replacing the clipped position with the
                 // merged triple, then removing the now-redundant successor triple.
@@ -764,7 +915,7 @@ namespace gte
                 // After clipping ear vertex t1.v1:
                 //   - New boundary edge is (t1.v0, t2.v1)
                 //   - The new face adjacent to this edge is the triangle just created:
-                //     (t1.v0, t2.v1, t1.v1) — so its third vertex is t1.v1.
+                //     (t1.v0, t1.v1, t2.v1) — so its third vertex is t1.v1.
                 // This matches geogram's:  hole[best_i1] = T  where T carries
                 //   indices = (T1[0], T2[1], T1[1]).
                 EdgeTriple merged;
@@ -789,6 +940,11 @@ namespace gte
                     workingHole[2].v0
                 };
                 if (IsGeometricallyDegenerate(vertices, finalTriangle))
+                {
+                    return false;
+                }
+                if (triangleValidator &&
+                    !triangleValidator(finalTriangle, triangles))
                 {
                     return false;
                 }

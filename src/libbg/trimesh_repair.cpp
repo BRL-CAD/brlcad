@@ -866,35 +866,130 @@ bg_trimesh_repair2(
 	    gte::MeshHoleFilling<double>::Parameters fp;
 	    fp.maxArea      = hole_limit;
 	    fp.maxEdges     = settings->max_hole_edges;
-	    fp.method       = gte::MeshHoleFilling<double>::TriangulationMethod::LSCM;
-	    fp.autoFallback = true;
+	    fp.method = gte::MeshHoleFilling<double>::
+		TriangulationMethod::PlanarProjection;
+	    fp.autoFallback = false;
 	    const size_t vertex_count_before_fill = verts.size();
 	    gte::MeshHoleFilling<double>::FillHoles(verts, tris, fp);
 	    /* A parameter-space-valid cap can still cut through the surrounding
-	     * mesh.  Keep independent safe caps, then retry only the remaining
-	     * open boundaries with the geometric ear selector.  Rejecting every
-	     * cap because one hole is obstructed needlessly leaves otherwise
-	     * repairable components open. */
-	    const size_t lscm_rejected =
+	     * mesh.  Keep independent safe caps, then retry remaining boundaries
+	     * with circle-mapped and direct 3-D triangulations. */
+	    const size_t planar_rejected =
 		trimesh_reject_intersecting_new_components(verts, tris,
 		    nf_before);
+	    report->rejected_hole_faces += (int)planar_rejected;
+	    if (planar_rejected && tris.size() == nf_before)
+		verts.resize(vertex_count_before_fill);
+
+	    const size_t lscm_face_start = tris.size();
+	    const size_t lscm_vertex_start = verts.size();
+	    fp.method = gte::MeshHoleFilling<double>::
+		TriangulationMethod::LSCM;
+	    fp.autoFallback = false;
+	    gte::MeshHoleFilling<double>::FillHoles(verts, tris, fp);
+	    const size_t lscm_rejected =
+		trimesh_reject_intersecting_new_components(verts, tris,
+		    lscm_face_start);
 	    report->rejected_hole_faces += (int)lscm_rejected;
-	    if (lscm_rejected) {
-		if (tris.size() == nf_before)
-		    verts.resize(vertex_count_before_fill);
-		const size_t ear_face_start = tris.size();
-		const size_t ear_vertex_start = verts.size();
-		fp.method = gte::MeshHoleFilling<double>::
-		    TriangulationMethod::EarClipping3D;
-		fp.autoFallback = false;
-		gte::MeshHoleFilling<double>::FillHoles(verts, tris, fp);
-		const size_t ear_rejected =
-		    trimesh_reject_intersecting_new_components(verts, tris,
-			ear_face_start);
-		report->rejected_hole_faces += (int)ear_rejected;
-		if (ear_rejected && tris.size() == ear_face_start)
-		    verts.resize(ear_vertex_start);
-	    }
+	    if (lscm_rejected && tris.size() == lscm_face_start)
+		verts.resize(lscm_vertex_start);
+
+	    const size_t ear_face_start = tris.size();
+	    const size_t ear_vertex_start = verts.size();
+	    fp.method = gte::MeshHoleFilling<double>::
+		TriangulationMethod::EarClipping3D;
+	    fp.autoFallback = false;
+	    fp.maxValidatedEdges = 2048;
+	    RTree<size_t, double, 3> ear_triangle_index;
+	    size_t indexed_ear_faces = 0;
+	    const auto index_ear_faces = [&]() {
+		while (indexed_ear_faces < tris.size()) {
+		    double minimum[3] = {
+			std::numeric_limits<double>::infinity(),
+			std::numeric_limits<double>::infinity(),
+			std::numeric_limits<double>::infinity()
+		    };
+		    double maximum[3] = {
+			-std::numeric_limits<double>::infinity(),
+			-std::numeric_limits<double>::infinity(),
+			-std::numeric_limits<double>::infinity()
+		    };
+		    for (int corner = 0; corner < 3; ++corner) {
+			const gte::Vector3<double> &point = verts[(size_t)
+			    tris[indexed_ear_faces][corner]];
+			for (int axis = 0; axis < 3; ++axis) {
+			    minimum[axis] = std::min(minimum[axis], point[axis]);
+			    maximum[axis] = std::max(maximum[axis], point[axis]);
+			}
+		    }
+		    ear_triangle_index.Insert(minimum, maximum,
+			indexed_ear_faces);
+		    indexed_ear_faces++;
+		}
+	    };
+	    index_ear_faces();
+	    fp.triangleValidator = [&](const std::array<int32_t, 3> &candidate,
+		    const std::vector<std::array<int32_t, 3>> &accepted) {
+		index_ear_faces();
+		point_t candidate_points[3];
+		double minimum[3] = {
+		    std::numeric_limits<double>::infinity(),
+		    std::numeric_limits<double>::infinity(),
+		    std::numeric_limits<double>::infinity()
+		};
+		double maximum[3] = {
+		    -std::numeric_limits<double>::infinity(),
+		    -std::numeric_limits<double>::infinity(),
+		    -std::numeric_limits<double>::infinity()
+		};
+		for (int corner = 0; corner < 3; ++corner) {
+		    const gte::Vector3<double> &point =
+			verts[(size_t)candidate[corner]];
+		    VSET(candidate_points[corner], point[0], point[1], point[2]);
+		    for (int axis = 0; axis < 3; ++axis) {
+			minimum[axis] = std::min(minimum[axis], point[axis]);
+			maximum[axis] = std::max(maximum[axis], point[axis]);
+		    }
+		}
+		std::vector<size_t> candidates;
+		ear_triangle_index.Search(minimum, maximum,
+		    trimesh_repair_collect_candidate, &candidates);
+		const auto intersects = [&](const std::array<int32_t, 3> &other) {
+		    for (int first_corner = 0; first_corner < 3; ++first_corner) {
+			for (int second_corner = 0; second_corner < 3;
+				++second_corner) {
+			    if (candidate[first_corner] == other[second_corner])
+				return false;
+			}
+		    }
+		    point_t other_points[3];
+		    for (int corner = 0; corner < 3; ++corner) {
+			const gte::Vector3<double> &point =
+			    verts[(size_t)other[corner]];
+			VSET(other_points[corner], point[0], point[1], point[2]);
+		    }
+		    return trimesh_repair_intersection(candidate_points,
+			other_points);
+		};
+		for (size_t face : candidates) {
+		    if (intersects(tris[face]))
+			return false;
+		}
+		for (const std::array<int32_t, 3> &triangle : accepted) {
+		    if (intersects(triangle))
+			return false;
+		}
+		return true;
+	    };
+	    gte::MeshHoleFilling<double>::FillHoles(verts, tris, fp);
+	    const size_t ear_rejected =
+		trimesh_reject_intersecting_new_components(verts, tris,
+		    ear_face_start);
+	    report->rejected_hole_faces += (int)ear_rejected;
+	    if (ear_rejected && tris.size() == ear_face_start)
+		verts.resize(ear_vertex_start);
+	    if (tris.size() == nf_before)
+		verts.resize(vertex_count_before_fill);
 	    report->added_faces += (int)(tris.size() - nf_before);
 	}
 
