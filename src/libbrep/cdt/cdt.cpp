@@ -4163,7 +4163,14 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	active_report->poisson_reconstruction_attempted ? 1 : 0;
     if (result >= 0 || !active_report->poisson_reconstruction_applied)
 	return result;
-    bool coverage_failure_seen = active_report->coverage_failures > 0;
+    const auto sampling_retry_needed = [&](const brep_cdt_repair_report
+	    *candidate) {
+	return candidate->coverage_failures > 0 ||
+	    (settings->max_area_change_percent > 0.0 &&
+	    candidate->reference_area_change_percent >
+	    settings->max_area_change_percent);
+    };
+    bool sampling_failure_seen = sampling_retry_needed(active_report);
 
     attempt_settings.poisson_scale = 1.2;
     result = brep_cdt_repair_attempt(s_cdt, &attempt_settings,
@@ -4172,9 +4179,9 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	active_report->poisson_reconstruction_attempted ? 2 : 1;
     if (result >= 0)
 	return result;
-    coverage_failure_seen = coverage_failure_seen ||
-	active_report->coverage_failures > 0;
-    if (!coverage_failure_seen)
+    sampling_failure_seen = sampling_failure_seen ||
+	sampling_retry_needed(active_report);
+    if (!sampling_failure_seen)
 	return result;
 
     attempt_settings.poisson_scale = 1.1;
