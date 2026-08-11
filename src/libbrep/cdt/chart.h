@@ -160,6 +160,8 @@ private:
     double m_polar_cut = 0.0;
     ON_Interval m_native_domain[2];
     double m_metric_scale[2] = {1.0, 1.0};
+    bool m_planar_metric = false;
+    ON_Plane m_metric_plane;
     const ON_Surface *m_surface = NULL;
     ON_Cone m_cone;
     double m_cone_seam_angle = 0.0;
