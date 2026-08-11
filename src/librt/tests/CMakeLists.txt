@@ -162,6 +162,9 @@ brlcad_add_test(NAME rt_dsp_raytrace_check COMMAND rt_dsp_raytrace_check)
 brlcad_addexec(rt_invalid_inmem invalid_inmem.c "librt;libbn;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_test_invalid_in_memory COMMAND rt_invalid_inmem)
 
+brlcad_addexec(rt_metaball_adjust metaball_adjust.c "${RT_TEST_LIBS}" TEST)
+brlcad_add_test(NAME rt_metaball_adjust COMMAND rt_metaball_adjust)
+
 set(
   distcheck_files
   CMakeLists.txt
@@ -181,6 +184,7 @@ set(
   invalid_inmem.c
   lcomb_large.c
   matrix_tests.g
+  metaball_adjust.c
   nurbs_surfaces.g
   rt_datum.c
   rt_perturb.c
