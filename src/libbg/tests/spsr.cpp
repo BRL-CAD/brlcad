@@ -28,6 +28,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bg/spsr.h"
+#include "bg/trimesh.h"
 
 static int failures = 0;
 
@@ -55,6 +56,72 @@ sphere_samples(size_t count)
         VMOVE(samples[i].normal, samples[i].point);
     }
     return samples;
+}
+
+static void
+test_boundary_modes(void)
+{
+    const int side = 8;
+    const int sample_count = 6 * side * side;
+    point_t *samples = static_cast<point_t *>(bu_calloc(sample_count,
+        sizeof(point_t), "SPSR boundary test samples"));
+    vect_t *normals = static_cast<vect_t *>(bu_calloc(sample_count,
+        sizeof(vect_t), "SPSR boundary test normals"));
+
+    int sample = 0;
+    for (int face = 0; face < 6; face++) {
+        const int axis = face / 2;
+        const fastf_t sign = (face % 2) ? 1.0 : -1.0;
+        for (int first = 0; first < side; first++) {
+            for (int second = 0; second < side; second++) {
+                samples[sample][axis] = sign;
+                samples[sample][(axis + 1) % 3] =
+                    -1.0 + 2.0 * first / (side - 1);
+                samples[sample][(axis + 2) % 3] =
+                    -1.0 + 2.0 * second / (side - 1);
+                normals[sample][axis] = sign;
+                sample++;
+            }
+        }
+    }
+
+    int face_counts[3] = {0, 0, 0};
+    for (int boundary = BG_3D_SPSR_BOUNDARY_FREE;
+        boundary <= BG_3D_SPSR_BOUNDARY_DIRICHLET; boundary++) {
+        struct bg_3d_spsr_opts options = BG_3D_SPSR_OPTS_DEFAULT;
+        options.depth = 5;
+        options.full_depth = 3;
+        options.threads = 1;
+        options.scale = 1.2;
+        options.btype = boundary;
+
+        int *faces = NULL;
+        int face_count = 0;
+        point_t *points = NULL;
+        int point_count = 0;
+        int result = bg_3d_spsr(&faces, &face_count, &points,
+            &point_count, samples, normals, sample_count, &options);
+        bool solid = result == BRLCAD_OK && faces && points &&
+            face_count > 0 && point_count > 0 &&
+            !bg_trimesh_solid2(point_count, face_count,
+                reinterpret_cast<fastf_t *>(points), faces, NULL);
+        if (!solid) {
+            bu_log("SPSR boundary %d failed: result %d, %d points, "
+                "%d faces\n", boundary, result, point_count, face_count);
+        }
+        expect(solid, "each SPSR boundary mode produces a solid mesh");
+        face_counts[boundary - BG_3D_SPSR_BOUNDARY_FREE] = face_count;
+        if (faces)
+            bu_free(faces, "SPSR boundary test faces");
+        if (points)
+            bu_free(points, "SPSR boundary test points");
+    }
+
+    expect(face_counts[0] != face_counts[1] ||
+        face_counts[1] != face_counts[2],
+        "SPSR boundary modes affect reconstruction");
+    bu_free(samples, "SPSR boundary test samples");
+    bu_free(normals, "SPSR boundary test normals");
 }
 
 struct callback_state {
@@ -91,6 +158,8 @@ int
 main(int UNUSED(argc), const char **argv)
 {
     bu_setprogname(argv[0]);
+
+    test_boundary_modes();
 
     std::vector<struct bg_3d_spsr_sample> samples = sphere_samples(256);
     struct bg_3d_spsr_adaptive_opts options =
@@ -174,15 +243,19 @@ main(int UNUSED(argc), const char **argv)
 	bu_free(vertices, "SPSR test vertices");
 
     options.solver.threads = 1;
+    options.max_refinement_passes = 0;
     ret = bg_3d_spsr_adaptive(&faces, &face_count, &vertices,
         &vertex_count, samples.data(), samples.size(), &options,
-        accept_candidate, &state, NULL);
-    expect(ret == BRLCAD_ERROR,
-        "unsupported solver settings are rejected");
+        NULL, NULL, NULL);
+    expect(ret == BRLCAD_OK, "explicit serial reconstruction succeeds");
+    if (faces)
+        bu_free(faces, "SPSR test faces");
+    if (vertices)
+        bu_free(vertices, "SPSR test vertices");
 
     expect(bg_3d_spsr_adaptive(NULL, &face_count, &vertices,
         &vertex_count, samples.data(), samples.size(), &options,
-        accept_candidate, &state, NULL) == BRLCAD_ERROR,
+        NULL, NULL, NULL) == BRLCAD_ERROR,
         "invalid output arguments are rejected");
 
     return failures ? 1 : 0;

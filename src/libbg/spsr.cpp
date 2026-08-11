@@ -182,7 +182,8 @@ static bool
 valid_options(const struct bg_3d_spsr_opts &options)
 {
     if (options.degree != BG_3D_SPSR_DEFAULT_DEGREE ||
-        options.btype != BG_3D_SPSR_BOUNDARY_NEUMANN ||
+        options.btype < BG_3D_SPSR_BOUNDARY_FREE ||
+        options.btype > BG_3D_SPSR_BOUNDARY_DIRICHLET ||
         options.max_memory_GB != BG_3D_SPSR_DEFAULT_MAX_MEM ||
         !NEAR_ZERO(options.confidence, SMALL_FASTF) ||
         !NEAR_ZERO(options.confidence_bias, SMALL_FASTF))
@@ -565,6 +566,39 @@ extract_mesh(spsr_mesh &mesh, const Implicit &implicit,
     return true;
 }
 
+template<unsigned int FemSignature>
+static bool
+solve_with_signature(spsr_mesh &mesh,
+    std::vector<struct bg_3d_spsr_refinement_hint> &hints,
+    const std::vector<struct bg_3d_spsr_sample> &samples,
+    const struct bg_3d_spsr_adaptive_opts &options,
+    Reconstructor::Poisson::SolutionParameters<real_type> &solver_parameters,
+    const Reconstructor::LevelSetExtractionParameters &extraction_parameters)
+{
+    using fem_signatures = IsotropicUIntPack<3, FemSignature>;
+    using implicit_type =
+        Reconstructor::Implicit<real_type, 3, fem_signatures>;
+    using solver_type =
+        Reconstructor::Poisson::Solver<real_type, 3, fem_signatures>;
+
+    point_stream<real_type, 3> points(samples);
+    std::unique_ptr<implicit_type> implicit(
+        solver_type::Solve(points, solver_parameters));
+    if (!implicit || !extract_mesh(mesh, *implicit, extraction_parameters))
+        return false;
+
+    if (options.target_feature_size > 0.0) {
+        sample_hints(hints, samples, *implicit,
+            options.target_feature_size);
+        density_hints(hints, samples, options.target_feature_size);
+        surface_variation_hints(hints, mesh,
+            options.target_feature_size);
+        limit_hints(hints, options.target_feature_size);
+    }
+
+    return true;
+}
+
 static bool
 solve_once(spsr_mesh &mesh,
     std::vector<struct bg_3d_spsr_refinement_hint> &hints,
@@ -573,15 +607,6 @@ solve_once(spsr_mesh &mesh,
 {
     static std::mutex solver_mutex;
     std::lock_guard<std::mutex> guard(solver_mutex);
-
-    static const unsigned int fem_signature =
-        FEMDegreeAndBType<Reconstructor::Poisson::DefaultFEMDegree,
-            Reconstructor::Poisson::DefaultFEMBoundary>::Signature;
-    using fem_signatures = IsotropicUIntPack<3, fem_signature>;
-    using implicit_type =
-        Reconstructor::Implicit<real_type, 3, fem_signatures>;
-    using solver_type =
-        Reconstructor::Poisson::Solver<real_type, 3, fem_signatures>;
 
     Reconstructor::Poisson::SolutionParameters<real_type> solver_parameters;
     Reconstructor::LevelSetExtractionParameters extraction_parameters;
@@ -599,22 +624,26 @@ solve_once(spsr_mesh &mesh,
     } restore_thread_mode = {previous_parallelization};
     ThreadPool::ParallelizationType = options.solver.threads == 1 ?
         ThreadPool::NONE : ThreadPool::ASYNC;
-    point_stream<real_type, 3> points(samples);
-    std::unique_ptr<implicit_type> implicit(
-        solver_type::Solve(points, solver_parameters));
-    if (!implicit || !extract_mesh(mesh, *implicit, extraction_parameters))
-        return false;
 
-    if (options.target_feature_size > 0.0) {
-        sample_hints(hints, samples, *implicit,
-            options.target_feature_size);
-        density_hints(hints, samples, options.target_feature_size);
-        surface_variation_hints(hints, mesh,
-            options.target_feature_size);
-        limit_hints(hints, options.target_feature_size);
+    switch (options.solver.btype) {
+        case BG_3D_SPSR_BOUNDARY_FREE:
+            return solve_with_signature<FEMDegreeAndBType<
+                Reconstructor::Poisson::DefaultFEMDegree,
+                BOUNDARY_FREE>::Signature>(mesh, hints, samples, options,
+                    solver_parameters, extraction_parameters);
+        case BG_3D_SPSR_BOUNDARY_NEUMANN:
+            return solve_with_signature<FEMDegreeAndBType<
+                Reconstructor::Poisson::DefaultFEMDegree,
+                BOUNDARY_NEUMANN>::Signature>(mesh, hints, samples, options,
+                    solver_parameters, extraction_parameters);
+        case BG_3D_SPSR_BOUNDARY_DIRICHLET:
+            return solve_with_signature<FEMDegreeAndBType<
+                Reconstructor::Poisson::DefaultFEMDegree,
+                BOUNDARY_DIRICHLET>::Signature>(mesh, hints, samples, options,
+                    solver_parameters, extraction_parameters);
     }
 
-    return true;
+    return false;
 }
 
 static bool
