@@ -105,9 +105,14 @@ struct brep_cdt_diagnostic {
  * use_full_fast_fallback instead supplies one coherent whole-B-Rep display
  * mesh.  It is intended as a lower-fidelity alternative when mixing rigorous
  * and display face meshes leaves irreparable boundary topology.
- * use_poisson_reconstruction replaces that whole display mesh with a
- * Screened Poisson implicit-surface reconstruction before repair.  This is
- * the most approximate tier and is therefore separately opt-in.  Its depth
+ * With the automatic zero poisson_scale, use_poisson_reconstruction first
+ * gives conservative mesh repair one chance to close the whole display mesh
+ * without replacing its triangles.  Only if that fails does Screened Poisson
+ * replace the display mesh with an implicit-surface reconstruction.  An
+ * internal triangle cap bounds that opportunistic pass; use_full_fast_fallback
+ * without Poisson remains the explicit route for larger local repairs.  An
+ * explicit nonzero scale requests Poisson directly.  This is the most
+ * approximate tier and is therefore separately opt-in.  Its depth
  * is restricted to the bounded range accepted by this API.  A zero
  * poisson_scale tries the upstream 1.1 domain scale followed by a 1.2 retry
  * if the first reconstructed mesh cannot be certified.  If either scale
