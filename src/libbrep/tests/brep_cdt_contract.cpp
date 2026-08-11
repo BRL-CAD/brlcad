@@ -124,6 +124,69 @@ repair_contract()
     return repaired;
 }
 
+static bool
+invalid_poisson_repair_contract()
+{
+    ON_3dPoint corners[8] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 1.0, 0.0), ON_3dPoint(0.0, 1.0, 0.0),
+	ON_3dPoint(0.0, 0.0, 1.0), ON_3dPoint(1.0, 0.0, 1.0),
+	ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(0.0, 1.0, 1.0)
+    };
+    ON_Brep *box = ON_BrepBox(corners);
+    if (!box)
+	return false;
+    ON_BrepVertex &invalid_vertex = box->NewVertex(
+	ON_3dPoint(2.0, 2.0, 2.0));
+    invalid_vertex.m_vertex_index = -1;
+
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(box,
+	"invalid Poisson repair contract");
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.05;
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    struct brep_cdt_diagnostic diagnostic = {};
+    const bool rejected = ON_Brep_CDT_Tessellate(state, 0, NULL) == -1 &&
+	ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0 &&
+	diagnostic.result == BREP_CDT_RESULT_INVALID_BREP;
+
+    struct brep_cdt_repair_settings settings =
+	BREP_CDT_REPAIR_SETTINGS_INIT;
+    settings.mesh.fill_holes = 1;
+    settings.mesh.max_hole_area_percent = 100.0;
+    settings.mesh.max_hole_edges = 4096;
+    settings.mesh.union_components = 1;
+    settings.max_surface_deviation = 0.5;
+    settings.max_area_change_percent = 100.0;
+    settings.allow_untrimmed_surface_match = 1;
+    settings.use_full_fast_fallback = 1;
+    settings.use_poisson_reconstruction = 1;
+    settings.poisson_depth = 5;
+    struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
+    mesh_output output;
+    const bool repaired = rejected &&
+	ON_Brep_CDT_Repair(state, &settings, &report) == 0 &&
+	report.poisson_reconstruction_attempted &&
+	report.poisson_reconstruction_applied && report.mesh.solid &&
+	report.changed_faces > 0 && report.deviation_projection_failures == 0 &&
+	mesh_get(output, state) && !output.faces.empty() &&
+	normal_mesh_get(state);
+    if (!repaired) {
+	ON_Brep_CDT_Diagnostic(&diagnostic, state);
+	bu_log("invalid Poisson repair contract failed: rejected %d, "
+	    "result %d stage %d, Poisson %d/%d, solid %d, changed %d, "
+	    "projection failures %zu: %s\n", (int)rejected,
+	    diagnostic.result, diagnostic.stage,
+	    report.poisson_reconstruction_attempted,
+	    report.poisson_reconstruction_applied, report.mesh.solid,
+	    report.changed_faces, report.deviation_projection_failures,
+	    diagnostic.message);
+    }
+    ON_Brep_CDT_Destroy(state);
+    delete box;
+    return repaired;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -181,6 +244,7 @@ main(int argc, const char **argv)
 	first.faces == second.faces && first.vertices == second.vertices;
 
     bool repaired = repair_contract();
+    bool invalid_repaired = invalid_poisson_repair_contract();
 
     ON_Brep_CDT_Tol_Set(state, &tolerance);
     bool invalidated = ON_Brep_CDT_Status(state) == -1 &&
@@ -214,6 +278,6 @@ main(int argc, const char **argv)
 	diagnostic.stage == BREP_CDT_STAGE_TOPOLOGY;
     ON_Brep_CDT_Destroy(state);
 
-    return initial && first_ok && second_ok && repaired && invalidated &&
-	invalid_tolerance && invalid_face && invalid_input ? 0 : 1;
+    return initial && first_ok && second_ok && repaired && invalid_repaired &&
+	invalidated && invalid_tolerance && invalid_face && invalid_input ? 0 : 1;
 }
