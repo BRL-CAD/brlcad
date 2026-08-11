@@ -32,8 +32,11 @@ check_clean_triangulation(const point2d_t *points, size_t point_count,
 	&out_points, &out_point_count, outer, outer_count, holes,
 	hole_counts, hole_count, steiner, steiner_count, points, point_count);
     if (ret || !faces || !out_points || face_count <= 0 ||
-	    out_point_count <= 0)
+	    out_point_count <= 0) {
+	bu_log("clean test %.17g failed: ret %d faces %d points %d\n",
+	    expected_area, ret, face_count, out_point_count);
 	return 1;
+	}
 
     double area = 0.0;
     for (int i = 0; i < face_count; i++) {
@@ -56,11 +59,74 @@ check_clean_triangulation(const point2d_t *points, size_t point_count,
 	}
 	area += 0.5 * fabs(twice_area);
     }
-    if (fabs(area - expected_area) > 1.0e-6)
+
+    if (fabs(area - expected_area) > 1.0e-6) {
+	bu_log("clean test %.17g area %.17g\n", expected_area, area);
 	ret = 1;
+	}
 
     bu_free(faces, "clean triangulation faces");
     bu_free(out_points, "clean triangulation points");
+    return ret;
+}
+
+static int
+check_clean_constraint(void)
+{
+    point2d_t points[6] = {
+	{0.0, 0.0}, {10.0, 0.0}, {10.0, 10.0}, {0.0, 10.0},
+	{2.0, 5.0}, {8.0, 5.0}
+    };
+    const int outer[4] = {0, 1, 2, 3};
+    const int steiner[2] = {4, 5};
+    const int constraints[2] = {4, 5};
+    int *faces = NULL;
+    int face_count = 0;
+    point2d_t *out_points = NULL;
+    int out_point_count = 0;
+    int ret = bg_nested_poly_triangulate_clean_constraints(&faces,
+	&face_count, &out_points, &out_point_count, outer, 4, NULL, NULL, 0,
+	steiner, 2, constraints, 1, (const point2d_t *)points, 6);
+    if (ret || !faces || !out_points || face_count <= 0 ||
+	    out_point_count <= 0) {
+	bu_log("constrained clean failed: ret %d faces %d points %d\n",
+	    ret, face_count, out_point_count);
+	ret = 1;
+	goto done;
+    }
+
+    int endpoints[2] = {-1, -1};
+    for (int i = 0; i < out_point_count; ++i) {
+	if (V2NEAR_EQUAL(out_points[i], points[4], 1.0e-8))
+	    endpoints[0] = i;
+	if (V2NEAR_EQUAL(out_points[i], points[5], 1.0e-8))
+	    endpoints[1] = i;
+    }
+    if (endpoints[0] < 0 || endpoints[1] < 0) {
+	bu_log("constrained clean omitted an endpoint\n");
+	ret = 1;
+	goto done;
+    }
+    ret = 1;
+    for (int i = 0; i < face_count; ++i) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int first = faces[3 * i + corner];
+	    const int second = faces[3 * i + (corner + 1) % 3];
+	    if ((first == endpoints[0] && second == endpoints[1]) ||
+		    (first == endpoints[1] && second == endpoints[0])) {
+		ret = 0;
+		goto done;
+	    }
+	}
+    }
+
+    bu_log("constrained clean omitted its certified edge\n");
+
+done:
+    if (faces)
+	bu_free(faces, "clean constrained faces");
+    if (out_points)
+	bu_free(out_points, "clean constrained points");
     return ret;
 }
 
@@ -131,6 +197,9 @@ main(int argc, const char **argv)
 		8, NULL, NULL, 0, NULL, 0, 84.0))
 	    return 1;
     }
+
+    if (check_clean_constraint())
+	return 1;
 
     return 0;
 }
