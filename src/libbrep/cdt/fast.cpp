@@ -5627,6 +5627,8 @@ brep_cdt_fast_options_default(struct brep_cdt_fast_options *options)
     options->allow_partial = 1;
     options->face_status = NULL;
     options->face_status_data = NULL;
+    options->face_output = NULL;
+    options->face_output_data = NULL;
 }
 
 int
@@ -5667,6 +5669,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	options.allow_partial = user_options->allow_partial;
 	options.face_status = user_options->face_status;
 	options.face_status_data = user_options->face_status_data;
+	options.face_output = user_options->face_output;
+	options.face_output_data = user_options->face_output_data;
     }
     options.max_workers = std::max((size_t)1,
 	std::min(options.max_workers, (size_t)brep_face_count));
@@ -5774,6 +5778,10 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    options.face_status(fi, BREP_CDT_FAST_FACE_COMPLETED,
 		options.face_status_data);
 	const size_t point_offset = all_pnts.size() / 3;
+	if (options.face_output)
+	    options.face_output(fi, all_faces.size() / 3,
+		result.faces.size() / 3, point_offset,
+		result.pnts.size() / 3, options.face_output_data);
 	for (size_t i = 0; i < result.faces.size(); i++)
 	    all_faces.push_back((int)point_offset + result.faces[i]);
 	all_norms.insert(all_norms.end(), result.norms.begin(),
