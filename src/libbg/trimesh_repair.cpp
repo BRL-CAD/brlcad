@@ -988,6 +988,25 @@ bg_trimesh_repair2(
 	    report->rejected_hole_faces += (int)ear_rejected;
 	    if (ear_rejected && tris.size() == ear_face_start)
 		verts.resize(ear_vertex_start);
+
+	    /* A non-planar hole can require an interior vertex when every
+	     * boundary diagonal intersects the surrounding mesh.  Rebuild the
+	     * collision index after the ear attempt, then try one bounded
+	     * centroid fan before leaving the boundary open. */
+	    ear_triangle_index.RemoveAll();
+	    indexed_ear_faces = 0;
+	    index_ear_faces();
+	    const size_t steiner_face_start = tris.size();
+	    const size_t steiner_vertex_start = verts.size();
+	    fp.method = gte::MeshHoleFilling<double>::
+		TriangulationMethod::SteinerFan;
+	    gte::MeshHoleFilling<double>::FillHoles(verts, tris, fp);
+	    const size_t steiner_rejected =
+		trimesh_reject_intersecting_new_components(verts, tris,
+		    steiner_face_start);
+	    report->rejected_hole_faces += (int)steiner_rejected;
+	    if (steiner_rejected && tris.size() == steiner_face_start)
+		verts.resize(steiner_vertex_start);
 	    if (tris.size() == nf_before)
 		verts.resize(vertex_count_before_fill);
 	    report->added_faces += (int)(tris.size() - nf_before);
