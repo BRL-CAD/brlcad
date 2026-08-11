@@ -1407,6 +1407,17 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	    (int)config.face_index,
 	    config.quality_repair ? &repair_settings : NULL);
     }
+    /* Invalid B-Reps can contain faces whose trimmed bounding boxes cannot be
+     * evaluated even though the remaining faces and all edge bounds establish
+     * usable aggregate references.  Once mesh repair independently certifies
+     * a solid and its bidirectional fidelity, retain the failed face indices
+     * as diagnostics but do not let that expected source defect override the
+     * repaired result. */
+    if (run_quality && quality.repair_succeeded && ref_valid &&
+	    boundary_valid) {
+	top_issues.erase(std::remove(top_issues.begin(), top_issues.end(),
+	    "trimmed_bbox_face_failures"), top_issues.end());
+    }
     vect_t ref_dims = VINIT_ZERO;
     vect_t boundary_dims = VINIT_ZERO;
     double ref_diag = 0.0;
