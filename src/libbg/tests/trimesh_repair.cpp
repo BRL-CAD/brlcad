@@ -30,10 +30,10 @@
 #include <array>
 #include <vector>
 #include <Mathematics/MeshHoleFilling.h>
+#include <Mathematics/MeshRepair.h>
 
 #include "bu.h"
 #include "bg.h"
-#include "Mathematics/MeshRepair.h"
 
 /* --------------------------------------------------------------------------
  * Test geometry helpers
@@ -1013,6 +1013,41 @@ test_split_nmv_backward_walk(void)
     return 0;
 }
 
+/* Malformed facet adjacency can contain a directed cycle that does not
+ * return to the corner where a vertex-fan walk began.  The original walk
+ * trusted adjacency and never checked already visited corners, so the first
+ * fan (which retains the original vertex index) looped forever. */
+static int
+test_split_nmv_cyclic_adjacency(void)
+{
+    std::vector<gte::Vector3<double>> vertices = {
+	{0.0, 0.0, 0.0},
+	{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0},
+	{0.0, 0.0, 1.0}, {-1.0, 0.0, 0.0},
+	{0.0, -1.0, 0.0}, {0.0, 0.0, -1.0}
+    };
+    std::vector<std::array<int32_t, 3>> triangles = {
+	{0, 1, 2}, {0, 3, 4}, {0, 5, 6}
+    };
+    std::vector<int32_t> adjacency(9, -1);
+    adjacency[0] = 1;
+    adjacency[3] = 2;
+    adjacency[6] = 1;
+    gte::MeshRepair<double>::SplitNonManifoldVertices(vertices,
+	triangles, adjacency);
+    const bool valid = vertices.size() == 7 &&
+	triangles[0][0] == 0 && triangles[1][0] == 0 &&
+	triangles[2][0] == 0;
+    if (!valid) {
+	bu_log("FAIL test_split_nmv_cyclic_adjacency: %zu vertices, "
+	    "fan indices %d/%d/%d\n", vertices.size(), triangles[0][0],
+	    triangles[1][0], triangles[2][0]);
+	return -1;
+    }
+    bu_log("PASS test_split_nmv_cyclic_adjacency\n");
+    return 0;
+}
+
 
 /* A malformed/non-manifold fan may produce an adjacency cycle that does not
  * include the facet where the walk began.  The backward fan walk must stop
@@ -1108,6 +1143,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_hanging_boundary_edge_split() != 0) ? 1 : 0;
     failures += (test_split_nmv_backward_walk()   != 0) ? 1 : 0;
     failures += (test_split_nmv_cycle_guard()     != 0) ? 1 : 0;
+    failures += (test_split_nmv_cyclic_adjacency() != 0) ? 1 : 0;
 
     if (failures) {
 	bu_log("%d test(s) FAILED\n", failures);
