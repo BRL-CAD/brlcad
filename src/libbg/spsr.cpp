@@ -169,20 +169,31 @@ finite_vector(const fastf_t *vector)
 }
 
 static bool
+valid_sample(const struct bg_3d_spsr_sample &sample)
+{
+    if (!finite_vector(sample.point) || !finite_vector(sample.normal))
+        return false;
+
+    fastf_t normal_length = MAGNITUDE(sample.normal);
+    return std::isfinite(normal_length) && normal_length > VUNITIZE_TOL;
+}
+
+static bool
 valid_options(const struct bg_3d_spsr_opts &options)
 {
     if (options.degree != BG_3D_SPSR_DEFAULT_DEGREE ||
         options.btype != BG_3D_SPSR_BOUNDARY_NEUMANN ||
         options.max_memory_GB != BG_3D_SPSR_DEFAULT_MAX_MEM ||
-        options.threads != BG_3D_SPSR_DEFAULT_THREADS ||
         !NEAR_ZERO(options.confidence, SMALL_FASTF) ||
         !NEAR_ZERO(options.confidence_bias, SMALL_FASTF))
         return false;
 
     if (options.depth < 1 || options.depth > SPSR_MAX_DEPTH ||
         options.kerneldepth < 0 || options.iterations < 0 ||
-        options.full_depth < 0 || options.base_depth < 0 ||
+        options.full_depth < 0 || options.full_depth > options.depth ||
+        options.base_depth < 0 ||
         options.baseVcycles < 0 || options.samples_per_node <= 0.0 ||
+        !std::isfinite(options.samples_per_node) ||
         options.scale < 1.0 || options.width < 0.0 ||
         options.cgsolver_accuracy <= 0.0 || options.point_weight < 0.0)
         return false;
@@ -251,13 +262,11 @@ class sample_set
 
     bool append(const struct bg_3d_spsr_sample &input)
     {
-        if (!finite_vector(input.point) || !finite_vector(input.normal))
+        if (!valid_sample(input))
             return false;
 
         struct bg_3d_spsr_sample sample = input;
         fastf_t normal_length = MAGNITUDE(sample.normal);
-        if (!std::isfinite(normal_length) || normal_length <= VUNITIZE_TOL)
-            return false;
         VSCALE(sample.normal, sample.normal, 1.0 / normal_length);
 
         double minimum[3];
@@ -527,12 +536,17 @@ extract_mesh(spsr_mesh &mesh, const Implicit &implicit,
     vertex_stream<real_type, 3> vertices(mesh.vertices);
     implicit.extractLevelSet(vertices, faces, parameters);
 
-    if (mesh.vertices.empty() || mesh.vertices.size() % 3 ||
+    if (mesh.vertices.size() < 9 || mesh.vertices.size() % 3 ||
         mesh.vertices.size() / 3 >
             static_cast<size_t>(std::numeric_limits<int>::max()) ||
         polygons.empty() ||
         polygons.size() > static_cast<size_t>(std::numeric_limits<int>::max()))
         return false;
+
+    for (real_type coordinate : mesh.vertices) {
+        if (!std::isfinite(coordinate))
+            return false;
+    }
 
     mesh.faces.reserve(polygons.size() * 3);
     for (const auto &polygon : polygons) {
@@ -572,7 +586,17 @@ solve_once(spsr_mesh &mesh,
     set_solver_options(solver_parameters, extraction_parameters,
         options.solver);
 
-    ThreadPool::ParallelizationType = ThreadPool::ASYNC;
+    const ThreadPool::ParallelType previous_parallelization =
+        ThreadPool::ParallelizationType;
+    struct thread_mode_guard {
+        ThreadPool::ParallelType previous;
+        ~thread_mode_guard()
+        {
+            ThreadPool::ParallelizationType = previous;
+        }
+    } restore_thread_mode = {previous_parallelization};
+    ThreadPool::ParallelizationType = options.solver.threads == 1 ?
+        ThreadPool::NONE : ThreadPool::ASYNC;
     point_stream<real_type, 3> points(samples);
     std::unique_ptr<implicit_type> implicit(
         solver_type::Solve(points, solver_parameters));
@@ -658,6 +682,11 @@ bg_3d_spsr_adaptive(int **faces, int *num_faces, point_t **vertices,
             (!refine || options.target_feature_size <= 0.0)) ||
         (options.max_points && options.max_points < sample_count))
         return BRLCAD_ERROR;
+
+    for (size_t i = 0; i < sample_count; i++) {
+        if (!valid_sample(input_samples[i]))
+            return BRLCAD_ERROR;
+    }
 
     fastf_t extent = 0.0;
     {
@@ -818,7 +847,9 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     const point_t *input_points_3d, const vect_t *input_normals_3d,
     int num_input_pnts, struct bg_3d_spsr_opts *spsr_opts)
 {
-    if (!input_points_3d || !input_normals_3d || num_input_pnts <= 0)
+    initialize_outputs(faces, num_faces, vertices, num_vertices, NULL);
+    if (!faces || !num_faces || !vertices || !num_vertices ||
+        !input_points_3d || !input_normals_3d || num_input_pnts <= 0)
         return BRLCAD_ERROR;
 
     std::vector<struct bg_3d_spsr_sample> samples(
