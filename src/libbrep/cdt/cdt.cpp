@@ -2704,8 +2704,8 @@ repair_mesh_area(const fastf_t *vertices, const int *faces, int face_count)
     return area;
 }
 
-int
-ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
+static int
+brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const struct brep_cdt_repair_settings *settings,
 	struct brep_cdt_repair_report *report)
 {
@@ -2742,7 +2742,10 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	    settings->max_area_change_percent < 0.0 ||
 	    (settings->use_poisson_reconstruction &&
 	    (!settings->use_full_fast_fallback || settings->poisson_depth < 5 ||
-	    settings->poisson_depth > 10)) ||
+	    settings->poisson_depth > 10 ||
+	    !std::isfinite(settings->poisson_scale) ||
+	    settings->poisson_scale < 1.0 ||
+	    settings->poisson_scale > 2.0)) ||
 	    ((settings->use_fast_face_fallback ||
 	    settings->use_full_fast_fallback) &&
 	    (!settings->max_fast_points || !settings->max_fast_result_bytes ||
@@ -2977,6 +2980,8 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	    poisson_options.full_depth = std::min(5,
 		settings->poisson_depth);
 	    poisson_options.threads = 1;
+	    poisson_options.scale = settings->poisson_scale;
+	    report->poisson_scale = settings->poisson_scale;
 	    int *poisson_faces = NULL;
 	    int poisson_face_count = 0;
 	    point_t *poisson_points = NULL;
@@ -3498,6 +3503,45 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	report->source_diagnostic.completed_faces,
 	report->source_failed_faces, message.c_str());
     return 0;
+}
+
+int
+ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
+	const struct brep_cdt_repair_settings *settings,
+	struct brep_cdt_repair_report *report)
+{
+    struct brep_cdt_repair_report local_report =
+	BREP_CDT_REPAIR_REPORT_INIT;
+    struct brep_cdt_repair_report *active_report = report ? report :
+	&local_report;
+    const bool automatic_scale = settings &&
+	settings->use_poisson_reconstruction &&
+	std::isfinite(settings->poisson_scale) &&
+	!(settings->poisson_scale > 0.0) &&
+	!(settings->poisson_scale < 0.0);
+    if (!automatic_scale) {
+	const int result = brep_cdt_repair_attempt(s_cdt, settings,
+	    active_report);
+	if (active_report->poisson_reconstruction_attempted)
+	    active_report->poisson_attempts = 1;
+	return result;
+    }
+
+    struct brep_cdt_repair_settings attempt_settings = *settings;
+    attempt_settings.poisson_scale = 1.1;
+    int result = brep_cdt_repair_attempt(s_cdt, &attempt_settings,
+	active_report);
+    active_report->poisson_attempts =
+	active_report->poisson_reconstruction_attempted ? 1 : 0;
+    if (result >= 0 || !active_report->poisson_reconstruction_applied)
+	return result;
+
+    attempt_settings.poisson_scale = 1.2;
+    result = brep_cdt_repair_attempt(s_cdt, &attempt_settings,
+	active_report);
+    active_report->poisson_attempts =
+	active_report->poisson_reconstruction_attempted ? 2 : 1;
+    return result;
 }
 
 static bool
