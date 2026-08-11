@@ -2808,6 +2808,7 @@ struct repair_poisson_triangle {
     int component;
     double area;
     fastf_t normal[3];
+    fastf_t corner_normals[3][3];
 };
 
 static double
@@ -3055,7 +3056,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	bool valid_fast_mesh =
 	    (fast_result == BREP_CDT_FAST_OK ||
 	    fast_result == BREP_CDT_FAST_PARTIAL) && fast_faces &&
-	    fast_face_count > 0 && fast_points && fast_point_count > 0 &&
+	    fast_face_count > 0 && fast_normals && fast_points &&
+	    fast_point_count > 0 &&
 	    fast_face_count <= INT_MAX / 3 &&
 	    (size_t)fast_point_count <= settings->max_fast_points &&
 	    (!settings->use_poisson_reconstruction ||
@@ -3071,6 +3073,12 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    valid_fast_mesh = std::isfinite(fast_points[point][X]) &&
 		std::isfinite(fast_points[point][Y]) &&
 		std::isfinite(fast_points[point][Z]);
+	}
+	for (int corner = 0; valid_fast_mesh &&
+		corner < fast_face_count * 3; ++corner) {
+	    valid_fast_mesh = std::isfinite(fast_normals[corner][X]) &&
+		std::isfinite(fast_normals[corner][Y]) &&
+		std::isfinite(fast_normals[corner][Z]);
 	}
 	if (!valid_fast_mesh) {
 	    report->fast_fallback_failed_faces =
@@ -3162,8 +3170,37 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    sample_triangle.face = face;
 		    sample_triangle.component = component;
 		    sample_triangle.area = 0.5 * normal_length;
-		    VSCALE(sample_triangle.normal, normal,
-			1.0 / normal_length);
+		    /* Fast-CDT winding is face-local.  Its corner normals include
+		     * the B-Rep face reversal and therefore provide the coherent
+		     * outward orientation Poisson reconstruction requires. */
+		    VSETALL(sample_triangle.normal, 0.0);
+		    for (int corner = 0; corner < 3; ++corner) {
+			VMOVE(sample_triangle.corner_normals[corner],
+			    fast_normals[face * 3 + (size_t)corner]);
+			const fastf_t corner_normal_length = MAGNITUDE(
+			    sample_triangle.corner_normals[corner]);
+			if (corner_normal_length > SMALL_FASTF &&
+				std::isfinite(corner_normal_length)) {
+			    VSCALE(sample_triangle.corner_normals[corner],
+				sample_triangle.corner_normals[corner],
+				1.0 / corner_normal_length);
+			} else {
+			    VSCALE(sample_triangle.corner_normals[corner], normal,
+				1.0 / normal_length);
+			}
+			VADD2(sample_triangle.normal, sample_triangle.normal,
+			    sample_triangle.corner_normals[corner]);
+		    }
+		    const fastf_t surface_normal_length =
+			MAGNITUDE(sample_triangle.normal);
+		    if (surface_normal_length > SMALL_FASTF &&
+			    std::isfinite(surface_normal_length)) {
+			VSCALE(sample_triangle.normal, sample_triangle.normal,
+			    1.0 / surface_normal_length);
+		    } else {
+			VSCALE(sample_triangle.normal, normal,
+			    1.0 / normal_length);
+		    }
 		    poisson_triangle_area += sample_triangle.area;
 		    poisson_triangles.push_back(sample_triangle);
 		}
@@ -3211,6 +3248,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		for (size_t sample_index = 0; sample_index < sample_count;
 			sample_index++) {
 		    repair_poisson_sample sample;
+		    double first_weight = 1.0 / 3.0;
+		    double second_weight = 1.0 / 3.0;
+		    double final_weight = 1.0 / 3.0;
 		    if (sample_count == 1) {
 			VADD3(sample.point, a, b, c);
 			VSCALE(sample.point, sample.point, 1.0 / 3.0);
@@ -3220,17 +3260,32 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 			    (double)sample_count);
 			const double third_weight = repair_radical_inverse(
 			    sample_index);
-			const double first_weight = 1.0 - root;
-			const double second_weight = root *
+			first_weight = 1.0 - root;
+			second_weight = root *
 			    (1.0 - third_weight);
-			const double final_weight = root * third_weight;
+			final_weight = root * third_weight;
 			for (int axis = 0; axis < 3; ++axis) {
 			    sample.point[axis] = first_weight * a[axis] +
 				second_weight * b[axis] +
 				final_weight * c[axis];
 			}
 		    }
-		    VMOVE(sample.normal, sample_triangle.normal);
+		    for (int axis = 0; axis < 3; ++axis) {
+			sample.normal[axis] = first_weight *
+			    sample_triangle.corner_normals[0][axis] +
+			    second_weight *
+			    sample_triangle.corner_normals[1][axis] +
+			    final_weight *
+			    sample_triangle.corner_normals[2][axis];
+		    }
+		    const fastf_t sample_normal_length = MAGNITUDE(sample.normal);
+		    if (sample_normal_length > SMALL_FASTF &&
+			    std::isfinite(sample_normal_length)) {
+			VSCALE(sample.normal, sample.normal,
+			    1.0 / sample_normal_length);
+		    } else {
+			VMOVE(sample.normal, sample_triangle.normal);
+		    }
 		    samples.push_back(sample);
 		}
 	    }
