@@ -622,6 +622,59 @@ test_validated_ear_alternative(void)
     return 0;
 }
 
+/* The final hole fallback may add one interior vertex when boundary-only
+ * diagonals cannot form a usable cap.  Its fan must retain the boundary
+ * winding and produce a closed oriented mesh. */
+static int
+test_steiner_hole_fan(void)
+{
+    point_t *input_points = NULL;
+    int input_point_count = 0;
+    int *input_faces = NULL;
+    int input_face_count = 0;
+    make_open_cube(&input_points, &input_point_count, &input_faces,
+	&input_face_count);
+    std::vector<gte::Vector3<double>> points((size_t)input_point_count);
+    for (int point = 0; point < input_point_count; ++point) {
+	for (int axis = 0; axis < 3; ++axis)
+	    points[(size_t)point][axis] = input_points[point][axis];
+    }
+    std::vector<std::array<int32_t, 3>> faces((size_t)input_face_count);
+    for (int face = 0; face < input_face_count; ++face) {
+	for (int corner = 0; corner < 3; ++corner)
+	    faces[(size_t)face][corner] = input_faces[face * 3 + corner];
+    }
+    gte::MeshHoleFilling<double>::Parameters parameters;
+    parameters.method = gte::MeshHoleFilling<double>::
+	TriangulationMethod::SteinerFan;
+    parameters.autoFallback = false;
+    parameters.maxValidatedEdges = 8;
+    parameters.triangleValidator = [&](const std::array<int32_t, 3> &,
+	    const std::vector<std::array<int32_t, 3>> &) {
+	return points.size() > 8 && std::fabs(points[8][2] - 1.0) > 1.0e-12;
+    };
+    gte::MeshHoleFilling<double>::FillHoles(points, faces, parameters);
+    std::vector<int> flat_faces;
+    flat_faces.reserve(faces.size() * 3);
+    for (const std::array<int32_t, 3> &face : faces)
+	flat_faces.insert(flat_faces.end(), face.begin(), face.end());
+    std::vector<point_t> flat_points(points.size());
+    for (size_t point = 0; point < points.size(); ++point)
+	VSET(flat_points[point], points[point][0], points[point][1],
+	    points[point][2]);
+    const bool valid = points.size() == 9 && faces.size() == 14 &&
+	std::fabs(points[8][2] - 1.0) > 1.0e-12 &&
+	!bg_trimesh_solid2((int)flat_points.size(), (int)faces.size(),
+	    (fastf_t *)flat_points.data(), flat_faces.data(), NULL);
+    if (!valid) {
+	bu_log("FAIL test_steiner_hole_fan: points=%zu faces=%zu\n",
+	    points.size(), faces.size());
+	return -1;
+    }
+    bu_log("PASS test_steiner_hole_fan\n");
+    return 0;
+}
+
 /* Component union is deliberately opt-in.  Two individually closed cubes
  * overlap geometrically but pass an edge-incidence solid check; the Manifold
  * pass must regularize them into one closed boundary. */
@@ -1049,6 +1102,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_collinear_hole_boundary()    != 0) ? 1 : 0;
     failures += (test_concave_planar_hole()         != 0) ? 1 : 0;
     failures += (test_validated_ear_alternative()    != 0) ? 1 : 0;
+    failures += (test_steiner_hole_fan()             != 0) ? 1 : 0;
     failures += (test_overlapping_component_union() != 0) ? 1 : 0;
     failures += (test_touching_component_separation() != 0) ? 1 : 0;
     failures += (test_hanging_boundary_edge_split() != 0) ? 1 : 0;
