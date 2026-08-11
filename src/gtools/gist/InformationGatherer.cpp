@@ -503,9 +503,10 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
 
 
     //Gather DB Version
-    cmd[0] = "dbversion";
-    cmd[1] = NULL;
-    ged_exec_dbversion(g, 1, cmd);
+    cmd[0] = "db";
+    cmd[1] = "version";
+    cmd[2] = NULL;
+    ged_exec_db(g, 2, cmd);
     infoMap["version"] = bu_vls_addr(g->ged_result_str);
 
     // CHECK
