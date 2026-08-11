@@ -274,13 +274,25 @@ BBNode::getClosestPointEstimate(const ON_3dPoint &pt) const
 ON_2dPoint
 BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const
 {
+    const ON_Surface *surface = NULL;
+    if (m_ctree && m_ctree->m_face)
+	surface = m_ctree->m_face->SurfaceOf();
+    return getClosestPointEstimate(pt, u, v, surface);
+}
+
+
+ON_2dPoint
+BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u,
+	ON_Interval &v, const ON_Surface *surface) const
+{
     if (isLeaf()) {
 	double uvs[5][2] = {{m_u.Min(), m_v.Min()}, {m_u.Max(), m_v.Min()},
 			    {m_u.Max(), m_v.Max()}, {m_u.Min(), m_v.Max()},
 			    {m_u.Mid(), m_v.Mid()}
 	}; /* include the estimate */
 	ON_3dPoint corners[5];
-	const ON_Surface *surf = get_face().SurfaceOf();
+	if (!surface)
+	    throw std::exception();
 
 	u = m_u;
 	v = m_v;
@@ -288,10 +300,10 @@ BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 	/* ??? pass these in from SurfaceTree::surfaceBBox() to avoid
 	 * this recalculation?
 	 */
-	if (!surf->EvPoint(uvs[0][0], uvs[0][1], corners[0]) ||
-	    !surf->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
-	    !surf->EvPoint(uvs[2][0], uvs[2][1], corners[2]) ||
-	    !surf->EvPoint(uvs[3][0], uvs[3][1], corners[3]))
+	if (!surface->EvPoint(uvs[0][0], uvs[0][1], corners[0]) ||
+	    !surface->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
+	    !surface->EvPoint(uvs[2][0], uvs[2][1], corners[2]) ||
+	    !surface->EvPoint(uvs[3][0], uvs[3][1], corners[3]))
 	{
 	    throw std::exception(); /* FIXME */
 	}
@@ -318,7 +330,7 @@ BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 		closestNode = closer(pt, closestNode, m_stl->m_children[i]);
 		TRACE("\t" << PT(closestNode->m_estimate));
 	    }
-	    return closestNode->getClosestPointEstimate(pt, u, v);
+	    return closestNode->getClosestPointEstimate(pt, u, v, surface);
 	}
 	throw std::exception();
     }

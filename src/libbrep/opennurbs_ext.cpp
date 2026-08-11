@@ -1254,14 +1254,17 @@ SurfaceTree::depth() const
 ON_2dPoint
 SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt) const
 {
-    return m_root->getClosestPointEstimate(pt);
+    // Untrimmed surface trees intentionally have no CurveTree, so their
+    // BBNodes cannot recover the surface through trimming topology.
+    ON_Interval u, v;
+    return m_root->getClosestPointEstimate(pt, u, v, m_face->SurfaceOf());
 }
 
 
 ON_2dPoint
 SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v) const
 {
-    return m_root->getClosestPointEstimate(pt, u, v);
+    return m_root->getClosestPointEstimate(pt, u, v, m_face->SurfaceOf());
 }
 
 
@@ -1280,9 +1283,11 @@ SurfaceTree::getSurface() const
 
 
 int
-brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const BBNode* node) {
+brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv,
+	const BBNode* node, const ON_Surface *surf) {
     plane_ray pr;
-    const ON_Surface *surf = node->get_face().SurfaceOf();
+    if (!surf)
+	return -1;
     double umin, umax;
     double vmin, vmax;
     surf->GetDomain(0, &umin, &umax);
@@ -1378,7 +1383,7 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
     std::list<const BBNode*>::const_iterator i;
     for (i = nodes.begin(); i != nodes.end(); i++) {
 	const BBNode* node = (*i);
-	if (brep_getSurfacePoint(pt, curr_uv, node)) {
+	if (brep_getSurfacePoint(pt, curr_uv, node, m_face->SurfaceOf())) {
 	    ON_3dPoint fp = m_face->SurfaceOf()->PointAt(curr_uv.x, curr_uv.y);
 	    double dist = fp.DistanceTo(pt);
 	    if (NEAR_ZERO(dist, BREP_SAME_POINT_TOLERANCE)) {
@@ -1401,7 +1406,7 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
     (void)m_root->getLeavesBoundingPoint(pt, nodes);
     for (i = nodes.begin(); i != nodes.end(); i++) {
 	const BBNode* node = (*i);
-	if (brep_getSurfacePoint(pt, curr_uv, node)) {
+	if (brep_getSurfacePoint(pt, curr_uv, node, m_face->SurfaceOf())) {
 	    ON_3dPoint fp = m_face->SurfaceOf()->PointAt(curr_uv.x, curr_uv.y);
 	    double dist = fp.DistanceTo(pt);
 	    if (NEAR_ZERO(dist, BREP_SAME_POINT_TOLERANCE)) {
