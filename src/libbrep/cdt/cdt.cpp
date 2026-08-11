@@ -2844,7 +2844,8 @@ repair_mesh_area(const fastf_t *vertices, const int *faces, int face_count)
 static int
 brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const struct brep_cdt_repair_settings *settings,
-	struct brep_cdt_repair_report *report, bool area_weighted_samples)
+	struct brep_cdt_repair_report *report, bool area_weighted_samples,
+	bool closure_biased_poisson)
 {
     struct brep_cdt_repair_report local_report =
 	BREP_CDT_REPAIR_REPORT_INIT;
@@ -3294,6 +3295,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    report->poisson_components = (int)component_samples.size();
 	    report->poisson_area_sampling_applied =
 		area_weighted_samples ? 1 : 0;
+	    report->poisson_boundary_fallback_applied =
+		closure_biased_poisson ? 1 : 0;
 	    for (const auto &sample_set : component_samples)
 		report->poisson_input_points += (int)sample_set.second.size();
 	    struct bg_3d_spsr_opts poisson_options = BG_3D_SPSR_OPTS_DEFAULT;
@@ -3302,6 +3305,11 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		settings->poisson_depth);
 	    poisson_options.threads = 1;
 	    poisson_options.scale = settings->poisson_scale;
+	    if (closure_biased_poisson) {
+		poisson_options.btype = BG_3D_SPSR_BOUNDARY_DIRICHLET;
+		poisson_options.point_weight = 32.0;
+		poisson_options.exact = 0;
+	    }
 	    report->poisson_scale = settings->poisson_scale;
 	    std::vector<int> combined_poisson_faces;
 	    std::vector<fastf_t> combined_poisson_points;
@@ -4149,20 +4157,25 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	!(settings->poisson_scale < 0.0);
     if (!automatic_scale) {
 	const int result = brep_cdt_repair_attempt(s_cdt, settings,
-	    active_report, false);
+	    active_report, false, false);
 	if (active_report->poisson_reconstruction_attempted)
 	    active_report->poisson_attempts = 1;
 	return result;
     }
 
     struct brep_cdt_repair_settings attempt_settings = *settings;
-    attempt_settings.poisson_scale = 1.1;
-    int result = brep_cdt_repair_attempt(s_cdt, &attempt_settings,
-	active_report, false);
-    active_report->poisson_attempts =
-	active_report->poisson_reconstruction_attempted ? 1 : 0;
-    if (result >= 0 || !active_report->poisson_reconstruction_applied)
-	return result;
+    int attempts = 0;
+    const auto run_attempt = [&](double scale, bool area_weighted,
+	    bool closure_biased) {
+	attempt_settings.poisson_scale = scale;
+	const int attempt_result = brep_cdt_repair_attempt(s_cdt,
+	    &attempt_settings, active_report, area_weighted,
+	    closure_biased);
+	if (active_report->poisson_reconstruction_attempted)
+	    attempts++;
+	active_report->poisson_attempts = attempts;
+	return attempt_result;
+    };
     const auto sampling_retry_needed = [&](const brep_cdt_repair_report
 	    *candidate) {
 	return candidate->coverage_failures > 0 ||
@@ -4170,34 +4183,60 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	    candidate->reference_area_change_percent >
 	    settings->max_area_change_percent);
     };
-    bool sampling_failure_seen = sampling_retry_needed(active_report);
+    const auto closure_retry_needed = [](const brep_cdt_repair_report
+	    *candidate) {
+	return candidate->poisson_reconstruction_applied &&
+	    candidate->mesh.unmatched_edges > 0 &&
+	    !(candidate->reference_area > 0.0);
+    };
 
-    attempt_settings.poisson_scale = 1.2;
-    result = brep_cdt_repair_attempt(s_cdt, &attempt_settings,
-	active_report, false);
-    active_report->poisson_attempts =
-	active_report->poisson_reconstruction_attempted ? 2 : 1;
+    int result = run_attempt(1.1, false, false);
+    if (result >= 0 || !active_report->poisson_reconstruction_applied)
+	return result;
+    bool sampling_failure_seen = sampling_retry_needed(active_report);
+    bool closure_failure_seen = closure_retry_needed(active_report);
+
+    result = run_attempt(1.2, false, false);
     if (result >= 0)
 	return result;
     sampling_failure_seen = sampling_failure_seen ||
 	sampling_retry_needed(active_report);
-    if (!sampling_failure_seen)
+    closure_failure_seen = closure_failure_seen ||
+	closure_retry_needed(active_report);
+    if (sampling_failure_seen) {
+	result = run_attempt(1.1, true, false);
+	if (result >= 0 || !active_report->poisson_reconstruction_applied)
+	    return result;
+	closure_failure_seen = closure_failure_seen ||
+	    closure_retry_needed(active_report);
+	result = run_attempt(1.2, true, false);
+	if (result >= 0)
+	    return result;
+	closure_failure_seen = closure_failure_seen ||
+	    closure_retry_needed(active_report);
+    }
+    if (!closure_failure_seen)
 	return result;
 
-    attempt_settings.poisson_scale = 1.1;
-    result = brep_cdt_repair_attempt(s_cdt, &attempt_settings,
-	active_report, true);
-    active_report->poisson_attempts =
-	active_report->poisson_reconstruction_attempted ? 3 : 2;
+    result = run_attempt(1.1, false, true);
     if (result >= 0 || !active_report->poisson_reconstruction_applied)
 	return result;
+    bool closure_sampling_failure = sampling_retry_needed(active_report) ||
+	closure_retry_needed(active_report);
 
-    attempt_settings.poisson_scale = 1.2;
-    result = brep_cdt_repair_attempt(s_cdt, &attempt_settings,
-	active_report, true);
-    active_report->poisson_attempts =
-	active_report->poisson_reconstruction_attempted ? 4 : 3;
-    return result;
+    result = run_attempt(1.2, false, true);
+    if (result >= 0)
+	return result;
+    closure_sampling_failure = closure_sampling_failure ||
+	sampling_retry_needed(active_report) ||
+	closure_retry_needed(active_report);
+    if (!closure_sampling_failure)
+	return result;
+
+    result = run_attempt(1.1, true, true);
+    if (result >= 0 || !active_report->poisson_reconstruction_applied)
+	return result;
+    return run_attempt(1.2, true, true);
 }
 
 static bool
