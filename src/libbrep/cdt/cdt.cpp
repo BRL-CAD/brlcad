@@ -2809,6 +2809,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     int input_face_count = 0;
     fastf_t *input_vertices = NULL;
     int input_vertex_count = 0;
+    std::vector<int> display_reference_faces;
+    std::vector<fastf_t> display_reference_vertices;
+    int display_reference_face_count = 0;
     if (!usable_faces.empty()) {
 	if (ON_Brep_CDT_Mesh(&input_faces, &input_face_count, &input_vertices,
 	    &input_vertex_count, NULL, NULL, NULL, NULL, s_cdt,
@@ -2947,6 +2950,11 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	if (settings->use_poisson_reconstruction) {
 	    report->poisson_reconstruction_attempted = 1;
 	    report->fast_fallback_triangles = fast_face_count;
+	    display_reference_faces.assign(fast_faces,
+		fast_faces + (size_t)fast_face_count * 3);
+	    display_reference_vertices.assign((fastf_t *)fast_points,
+		(fastf_t *)fast_points + (size_t)fast_point_count * 3);
+	    display_reference_face_count = fast_face_count;
 	    point_t *poisson_samples = (point_t *)bu_malloc(
 		(size_t)fast_face_count * sizeof(point_t),
 		"Poisson centroid samples");
@@ -3180,11 +3188,20 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     } else if (repair_result < 0) {
 	bu_free(input_faces, "repair input faces");
 	bu_free(input_vertices, "repair input vertices");
+	std::string message =
+	    "bounded triangle mesh repair did not produce a solid: " +
+	    std::to_string(report->mesh.unmatched_edges) +
+	    " unmatched, " + std::to_string(report->mesh.excess_edges) +
+	    " excess, " + std::to_string(report->mesh.misoriented_edges) +
+	    " misoriented edges, " +
+	    std::to_string(report->mesh.invalid_vertex_links) +
+	    " invalid vertex links, " +
+	    std::to_string(report->mesh.rejected_hole_faces) +
+	    " intersecting cap faces rejected";
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
 	    BREP_CDT_STAGE_MESH_REPAIR, -1,
 	    report->source_diagnostic.completed_faces,
-	    report->source_failed_faces,
-	    "bounded triangle mesh repair did not produce a solid");
+	    report->source_failed_faces, message.c_str());
 	return -1;
     }
 
@@ -3370,10 +3387,18 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     }
 
     RTree<size_t, double, 3> input_triangle_index;
-    const int reference_input_face_count =
-	report->full_fast_fallback_used ? input_face_count :
-	rigorous_input_face_count;
-    for (int face = 0; face < reference_input_face_count; ++face) {
+    const bool have_display_reference = display_reference_face_count > 0 &&
+	!display_reference_faces.empty() &&
+	!display_reference_vertices.empty();
+    const int *reference_input_faces = have_display_reference ?
+	display_reference_faces.data() : input_faces;
+    const fastf_t *reference_input_vertices = have_display_reference ?
+	display_reference_vertices.data() : input_vertices;
+    const int surface_reference_face_count = have_display_reference ?
+	display_reference_face_count :
+	(report->full_fast_fallback_used ? input_face_count :
+	rigorous_input_face_count);
+    for (int face = 0; face < surface_reference_face_count; ++face) {
 	double minimum[3] = {
 	    std::numeric_limits<double>::infinity(),
 	    std::numeric_limits<double>::infinity(),
@@ -3385,10 +3410,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    -std::numeric_limits<double>::infinity()
 	};
 	for (int corner = 0; corner < 3; ++corner) {
-	    const int vertex = input_faces[(size_t)face * 3 + corner];
+	    const int vertex = reference_input_faces[(size_t)face * 3 + corner];
 	    for (int axis = 0; axis < 3; ++axis) {
 		const double coordinate =
-		    input_vertices[(size_t)vertex * 3 + axis];
+		    reference_input_vertices[(size_t)vertex * 3 + axis];
 		minimum[axis] = std::min(minimum[axis], coordinate);
 		maximum[axis] = std::max(maximum[axis], coordinate);
 	    }
@@ -3432,7 +3457,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    settings->allow_untrimmed_surface_match != 0, &distance,
 		    &used_untrimmed)) {
 		if (!repair_input_mesh_distance(input_triangle_index,
-			input_vertices, input_faces, samples[sample],
+			reference_input_vertices, reference_input_faces,
+			samples[sample],
 			report->allowed_surface_deviation, &distance)) {
 		    report->deviation_projection_failures++;
 		    continue;
@@ -3464,6 +3490,131 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    " projection failures, maximum " +
 	    std::to_string(report->max_surface_deviation) +
 	    " (limit " +
+	    std::to_string(report->allowed_surface_deviation) + ")";
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces, message.c_str());
+	return -1;
+    }
+
+    /* Output-to-source deviation alone can accept a small reconstructed
+     * subset of a much larger model, particularly when matching underlying
+     * untrimmed surfaces is explicitly allowed.  Sample the display or
+     * rigorous input in the reverse direction so missing target regions are
+     * also bounded by the same fidelity limit. */
+    RTree<size_t, double, 3> repaired_triangle_index;
+    for (int face = 0; face < repaired_face_count; ++face) {
+	double minimum[3] = {
+	    std::numeric_limits<double>::infinity(),
+	    std::numeric_limits<double>::infinity(),
+	    std::numeric_limits<double>::infinity()
+	};
+	double maximum[3] = {
+	    -std::numeric_limits<double>::infinity(),
+	    -std::numeric_limits<double>::infinity(),
+	    -std::numeric_limits<double>::infinity()
+	};
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int vertex = repaired_faces[(size_t)face * 3 + corner];
+	    for (int axis = 0; axis < 3; ++axis) {
+		const double coordinate =
+		    repaired_vertices[(size_t)vertex * 3 + axis];
+		minimum[axis] = std::min(minimum[axis], coordinate);
+		maximum[axis] = std::max(maximum[axis], coordinate);
+	    }
+	}
+	repaired_triangle_index.Insert(minimum, maximum, (size_t)face);
+    }
+    std::vector<repair_changed_face> reference_faces;
+    const int coverage_reference_face_count = have_display_reference ?
+	display_reference_face_count : input_face_count;
+    reference_faces.reserve((size_t)coverage_reference_face_count);
+    for (int face = 0; face < coverage_reference_face_count; ++face) {
+	const int *triangle = &reference_input_faces[(size_t)face * 3];
+	const ON_3dPoint a(&reference_input_vertices[
+	    (size_t)triangle[0] * 3]);
+	const ON_3dPoint b(&reference_input_vertices[
+	    (size_t)triangle[1] * 3]);
+	const ON_3dPoint c(&reference_input_vertices[
+	    (size_t)triangle[2] * 3]);
+	reference_faces.push_back({face,
+	    0.5 * ON_CrossProduct(b - a, c - a).Length()});
+    }
+    std::vector<repair_changed_face> sampled_reference_faces;
+    if (reference_faces.size() <= sample_limit) {
+	sampled_reference_faces = reference_faces;
+    } else {
+	sampled_reference_faces.reserve(sample_limit);
+	for (size_t sample = 0; sample < sample_limit; ++sample) {
+	    const long double fraction = ((long double)sample + 0.5L) /
+		(long double)sample_limit;
+	    const size_t position = std::min(reference_faces.size() - 1,
+		(size_t)(fraction * (long double)reference_faces.size()));
+	    sampled_reference_faces.push_back(reference_faces[position]);
+	}
+	const repair_changed_face largest = *std::max_element(
+	    reference_faces.begin(), reference_faces.end(),
+	    [](const repair_changed_face &first,
+		    const repair_changed_face &second) {
+		return first.area < second.area;
+	    });
+	bool sampled_largest = false;
+	for (const repair_changed_face &sampled : sampled_reference_faces)
+	    sampled_largest = sampled_largest || sampled.index == largest.index;
+	if (!sampled_largest)
+	    sampled_reference_faces[0] = largest;
+    }
+    double coverage_squared_distance_sum = 0.0;
+    size_t remaining_coverage_extra =
+	sample_limit - sampled_reference_faces.size();
+    for (const repair_changed_face &reference : sampled_reference_faces) {
+	const int *triangle =
+	    &reference_input_faces[(size_t)reference.index * 3];
+	const ON_3dPoint a(&reference_input_vertices[
+	    (size_t)triangle[0] * 3]);
+	const ON_3dPoint b(&reference_input_vertices[
+	    (size_t)triangle[1] * 3]);
+	const ON_3dPoint c(&reference_input_vertices[
+	    (size_t)triangle[2] * 3]);
+	std::array<ON_3dPoint, 4> samples = {
+	    (a + b + c) / 3.0,
+	    (a + b) / 2.0,
+	    (b + c) / 2.0,
+	    (c + a) / 2.0
+	};
+	const size_t face_sample_count = 1 +
+	    std::min((size_t)3, remaining_coverage_extra);
+	remaining_coverage_extra -= face_sample_count - 1;
+	for (size_t sample = 0; sample < face_sample_count; ++sample) {
+	    double distance = 0.0;
+	    report->coverage_samples++;
+	    if (!repair_input_mesh_distance(repaired_triangle_index,
+		    repaired_vertices, repaired_faces, samples[sample],
+		    report->allowed_surface_deviation, &distance)) {
+		report->coverage_failures++;
+		continue;
+	    }
+	    report->max_coverage_deviation = std::max(
+		report->max_coverage_deviation, (fastf_t)distance);
+	    coverage_squared_distance_sum += distance * distance;
+	}
+    }
+    const size_t covered_samples = report->coverage_samples -
+	report->coverage_failures;
+    if (covered_samples)
+	report->rms_coverage_deviation = std::sqrt(
+	    coverage_squared_distance_sum / (double)covered_samples);
+    if (report->coverage_failures || report->max_coverage_deviation >
+	    report->allowed_surface_deviation) {
+	bu_free(repaired_faces, "certified repaired faces");
+	bu_free(repaired_points, "certified repaired vertices");
+	bu_free(input_faces, "repair input faces");
+	bu_free(input_vertices, "repair input vertices");
+	std::string message = "repaired surface failed input coverage check: " +
+	    std::to_string(report->coverage_failures) +
+	    " coverage failures, maximum " +
+	    std::to_string(report->max_coverage_deviation) + " (limit " +
 	    std::to_string(report->allowed_surface_deviation) + ")";
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
 	    BREP_CDT_STAGE_MESH_REPAIR, -1,

@@ -164,14 +164,56 @@ trimesh_repair_collect_candidate(size_t triangle, void *context)
     return true;
 }
 
-static bool
-trimesh_new_faces_intersect(
+static size_t
+trimesh_reject_intersecting_new_components(
 	std::vector<gte::Vector3<double>> const& vertices,
-	std::vector<std::array<int32_t, 3>> const& triangles,
+	std::vector<std::array<int32_t, 3>>& triangles,
 	size_t first_new_face)
 {
     if (first_new_face >= triangles.size())
-	return false;
+	return 0;
+
+    typedef std::pair<int32_t, int32_t> edge_key;
+    const size_t new_face_count = triangles.size() - first_new_face;
+    std::vector<size_t> parent(new_face_count);
+    for (size_t face = 0; face < new_face_count; ++face)
+	parent[face] = face;
+    auto find_root = [&parent](size_t member) {
+	size_t root = member;
+	while (parent[root] != root)
+	    root = parent[root];
+	while (parent[member] != member) {
+	    const size_t next = parent[member];
+	    parent[member] = root;
+	    member = next;
+	}
+	return root;
+    };
+    const auto key = [](int32_t first, int32_t second) {
+	return first < second ? edge_key(first, second) :
+	    edge_key(second, first);
+    };
+    std::map<edge_key, size_t> edge_owner;
+    for (size_t face = first_new_face; face < triangles.size(); ++face) {
+	const size_t member = face - first_new_face;
+	for (int edge = 0; edge < 3; ++edge) {
+	    const edge_key current = key(triangles[face][edge],
+		triangles[face][(edge + 1) % 3]);
+	    const auto inserted = edge_owner.insert(
+		std::make_pair(current, member));
+	    if (inserted.second)
+		continue;
+	    const size_t first_root = find_root(member);
+	    const size_t second_root = find_root(inserted.first->second);
+	    if (first_root != second_root)
+		parent[std::max(first_root, second_root)] =
+		    std::min(first_root, second_root);
+	}
+    }
+    for (size_t face = 0; face < new_face_count; ++face)
+	parent[face] = find_root(face);
+
+    std::vector<bool> rejected_component(new_face_count, false);
     RTree<size_t, double, 3> triangle_index;
     for (size_t face = 0; face < triangles.size(); ++face) {
 	double minimum[3] = {
@@ -219,13 +261,32 @@ trimesh_new_faces_intersect(
 			vertices[(size_t)triangles[candidate][corner]];
 		    VSET(second_points[corner], point[0], point[1], point[2]);
 		}
-		if (trimesh_repair_intersection(first_points, second_points))
-		    return true;
+		if (!trimesh_repair_intersection(first_points, second_points))
+		    continue;
+		rejected_component[parent[face - first_new_face]] = true;
+		if (candidate >= first_new_face)
+		    rejected_component[parent[candidate - first_new_face]] =
+			true;
 	    }
 	}
 	triangle_index.Insert(minimum, maximum, face);
     }
-    return false;
+
+    std::vector<std::array<int32_t, 3>> accepted;
+    accepted.reserve(triangles.size());
+    accepted.insert(accepted.end(), triangles.begin(),
+	triangles.begin() + (ptrdiff_t)first_new_face);
+    size_t rejected_faces = 0;
+    for (size_t face = first_new_face; face < triangles.size(); ++face) {
+	if (rejected_component[parent[face - first_new_face]]) {
+	    rejected_faces++;
+	    continue;
+	}
+	accepted.push_back(triangles[face]);
+    }
+    if (rejected_faces)
+	triangles.swap(accepted);
+    return rejected_faces;
 }
 
 static size_t
@@ -328,19 +389,23 @@ trimesh_split_hanging_boundary_edges(
 static bool
 trimesh_gte_valid_vertex_links(
 	std::vector<std::array<int32_t, 3>> const& triangles,
-	size_t vertex_count)
+	size_t vertex_count, size_t *invalid_count = NULL)
 {
     typedef std::pair<int32_t, int32_t> link_edge;
     std::vector<std::vector<link_edge>> links(vertex_count);
     for (std::array<int32_t, 3> const& triangle : triangles) {
 	for (int corner = 0; corner < 3; ++corner) {
 	    const int32_t vertex = triangle[corner];
-	    if (vertex < 0 || (size_t)vertex >= vertex_count)
+	    if (vertex < 0 || (size_t)vertex >= vertex_count) {
+		if (invalid_count)
+		    *invalid_count = 1;
 		return false;
+	    }
 	    links[(size_t)vertex].push_back(link_edge(
 		triangle[(corner + 1) % 3], triangle[(corner + 2) % 3]));
 	}
     }
+    size_t invalid_links = 0;
     for (std::vector<link_edge> const& vertex_links : links) {
 	if (vertex_links.empty())
 	    continue;
@@ -353,21 +418,26 @@ trimesh_gte_valid_vertex_links(
 	std::queue<int32_t> work;
 	work.push(adjacency.begin()->first);
 	reached.insert(adjacency.begin()->first);
+	bool valid_link = true;
 	while (!work.empty()) {
 	    const int32_t current = work.front();
 	    work.pop();
 	    std::vector<int32_t> const& neighbors = adjacency[current];
-	    if (neighbors.size() != 2)
-		return false;
+	    if (neighbors.size() != 2) {
+		valid_link = false;
+		break;
+	    }
 	    for (int32_t neighbor : neighbors) {
 		if (reached.insert(neighbor).second)
 		    work.push(neighbor);
 	    }
 	}
-	if (reached.size() != adjacency.size())
-	    return false;
+	if (!valid_link || reached.size() != adjacency.size())
+	    invalid_links++;
     }
-    return true;
+    if (invalid_count)
+	*invalid_count = invalid_links;
+    return !invalid_links;
 }
 
 static size_t
@@ -801,19 +871,29 @@ bg_trimesh_repair2(
 	    const size_t vertex_count_before_fill = verts.size();
 	    gte::MeshHoleFilling<double>::FillHoles(verts, tris, fp);
 	    /* A parameter-space-valid cap can still cut through the surrounding
-	     * mesh.  Retry the geometric ear selector, then preserve the open
-	     * boundary if neither bounded triangulation is safe. */
-	    if (trimesh_new_faces_intersect(verts, tris, nf_before)) {
-		verts.resize(vertex_count_before_fill);
-		tris.resize(nf_before);
+	     * mesh.  Keep independent safe caps, then retry only the remaining
+	     * open boundaries with the geometric ear selector.  Rejecting every
+	     * cap because one hole is obstructed needlessly leaves otherwise
+	     * repairable components open. */
+	    const size_t lscm_rejected =
+		trimesh_reject_intersecting_new_components(verts, tris,
+		    nf_before);
+	    report->rejected_hole_faces += (int)lscm_rejected;
+	    if (lscm_rejected) {
+		if (tris.size() == nf_before)
+		    verts.resize(vertex_count_before_fill);
+		const size_t ear_face_start = tris.size();
+		const size_t ear_vertex_start = verts.size();
 		fp.method = gte::MeshHoleFilling<double>::
 		    TriangulationMethod::EarClipping3D;
 		fp.autoFallback = false;
 		gte::MeshHoleFilling<double>::FillHoles(verts, tris, fp);
-		if (trimesh_new_faces_intersect(verts, tris, nf_before)) {
-		    verts.resize(vertex_count_before_fill);
-		    tris.resize(nf_before);
-		}
+		const size_t ear_rejected =
+		    trimesh_reject_intersecting_new_components(verts, tris,
+			ear_face_start);
+		report->rejected_hole_faces += (int)ear_rejected;
+		if (ear_rejected && tris.size() == ear_face_start)
+		    verts.resize(ear_vertex_start);
 	    }
 	    report->added_faces += (int)(tris.size() - nf_before);
 	}
@@ -914,11 +994,24 @@ bg_trimesh_repair2(
     report->output_area = trimesh_gte_area(verts, tris);
 
     std::vector<std::array<int32_t, 3>> geometric_check = tris;
-    const bool no_geometric_degenerates =
-	!trimesh_remove_geometric_degenerate(verts, geometric_check);
-    report->solid = no_geometric_degenerates &&
-	trimesh_gte_valid_vertex_links(tris, verts.size()) &&
-	!bg_trimesh_solid2(nv, nf, (fastf_t *)out_pts, out_faces, NULL);
+    report->geometric_degenerate_faces =
+	(int)trimesh_remove_geometric_degenerate(verts, geometric_check);
+    size_t invalid_vertex_links = 0;
+    trimesh_gte_valid_vertex_links(tris, verts.size(),
+	&invalid_vertex_links);
+    report->invalid_vertex_links = (int)invalid_vertex_links;
+    struct bg_trimesh_solid_errors solid_errors =
+	BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+    const int final_not_solid = bg_trimesh_solid2(nv, nf,
+	(fastf_t *)out_pts, out_faces, &solid_errors);
+    report->unmatched_edges = solid_errors.unmatched.count;
+    report->excess_edges = solid_errors.excess.count;
+    report->misoriented_edges = solid_errors.misoriented.count;
+    if (solid_errors.degenerate.count > report->geometric_degenerate_faces)
+	report->geometric_degenerate_faces = solid_errors.degenerate.count;
+    bg_free_trimesh_solid_errors(&solid_errors);
+    report->solid = !report->geometric_degenerate_faces &&
+	!report->invalid_vertex_links && !final_not_solid;
     if (settings->require_solid && !report->solid) {
 	bu_free(out_faces, "bg_trimesh_repair faces");
 	bu_free(out_pts, "bg_trimesh_repair verts");
