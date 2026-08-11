@@ -47,7 +47,10 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
+#include "bg/tri_pt.h"
+#include "bg/tri_tri.h"
 #include "bg/trimesh.h"
+#include "RTree.h"
 
 /* --------------------------------------------------------------------------
  * Internal helpers (mirrors analogous helpers in librt/primitives/bot/repair.cpp
@@ -112,6 +115,117 @@ trimesh_remove_geometric_degenerate(
 		std::numeric_limits<double>::epsilon() * longest_squared);
 	}), triangles.end());
     return before - triangles.size();
+}
+
+static bool
+trimesh_repair_intersection(const point_t first[3],
+	const point_t second[3])
+{
+    int coplanar = 0;
+    point_t start = VINIT_ZERO;
+    point_t end = VINIT_ZERO;
+    if (!bg_tri_tri_isect_with_line(first[0], first[1], first[2],
+	    second[0], second[1], second[2], &coplanar, &start, &end))
+	return false;
+    if (coplanar)
+	return bg_tri_tri_isect_coplanar(first[0], first[1], first[2],
+	    second[0], second[1], second[2], 1) > 0;
+
+    double coordinate_scale = 1.0;
+    for (int triangle = 0; triangle < 2; ++triangle) {
+	const point_t *points = triangle ? second : first;
+	for (int corner = 0; corner < 3; ++corner) {
+	    for (int axis = 0; axis < 3; ++axis)
+		coordinate_scale = std::max(coordinate_scale,
+		    std::fabs((double)points[corner][axis]));
+	}
+    }
+    const double endpoint_tolerance = 1024.0 *
+	std::numeric_limits<double>::epsilon() * coordinate_scale;
+    const auto endpoint_on_both = [&](const point_t endpoint) {
+	const double first_distance = bg_tri_closest_pt(NULL, endpoint,
+	    first[0], first[1], first[2]);
+	const double second_distance = bg_tri_closest_pt(NULL, endpoint,
+	    second[0], second[1], second[2]);
+	return std::isfinite(first_distance) &&
+	    std::isfinite(second_distance) &&
+	    first_distance <= endpoint_tolerance &&
+	    second_distance <= endpoint_tolerance;
+    };
+    return endpoint_on_both(start) || endpoint_on_both(end);
+}
+
+static bool
+trimesh_repair_collect_candidate(size_t triangle, void *context)
+{
+    std::vector<size_t> *candidates =
+	(std::vector<size_t> *)context;
+    candidates->push_back(triangle);
+    return true;
+}
+
+static bool
+trimesh_new_faces_intersect(
+	std::vector<gte::Vector3<double>> const& vertices,
+	std::vector<std::array<int32_t, 3>> const& triangles,
+	size_t first_new_face)
+{
+    if (first_new_face >= triangles.size())
+	return false;
+    RTree<size_t, double, 3> triangle_index;
+    for (size_t face = 0; face < triangles.size(); ++face) {
+	double minimum[3] = {
+	    std::numeric_limits<double>::infinity(),
+	    std::numeric_limits<double>::infinity(),
+	    std::numeric_limits<double>::infinity()
+	};
+	double maximum[3] = {
+	    -std::numeric_limits<double>::infinity(),
+	    -std::numeric_limits<double>::infinity(),
+	    -std::numeric_limits<double>::infinity()
+	};
+	point_t first_points[3];
+	for (int corner = 0; corner < 3; ++corner) {
+	    const gte::Vector3<double> &point =
+		vertices[(size_t)triangles[face][corner]];
+	    VSET(first_points[corner], point[0], point[1], point[2]);
+	    for (int axis = 0; axis < 3; ++axis) {
+		minimum[axis] = std::min(minimum[axis], point[axis]);
+		maximum[axis] = std::max(maximum[axis], point[axis]);
+	    }
+	}
+	if (face >= first_new_face) {
+	    std::vector<size_t> candidates;
+	    triangle_index.Search(minimum, maximum,
+		trimesh_repair_collect_candidate, &candidates);
+	    for (size_t candidate : candidates) {
+		bool adjacent = false;
+		for (int first_corner = 0; first_corner < 3 && !adjacent;
+			++first_corner) {
+		    for (int second_corner = 0; second_corner < 3;
+			    ++second_corner) {
+			if (triangles[face][first_corner] ==
+				triangles[candidate][second_corner]) {
+			    adjacent = true;
+			    break;
+			}
+		    }
+		}
+		if (adjacent)
+		    continue;
+		point_t second_points[3];
+		for (int corner = 0; corner < 3; ++corner) {
+		    const gte::Vector3<double> &point =
+			vertices[(size_t)triangles[candidate][corner]];
+		    VSET(second_points[corner], point[0], point[1], point[2]);
+		}
+		if (trimesh_repair_intersection(first_points, second_points))
+		    return true;
+	    }
+	}
+	triangle_index.Insert(minimum, maximum, face);
+    }
+    return false;
 }
 
 static size_t
@@ -684,7 +798,23 @@ bg_trimesh_repair2(
 	    fp.maxEdges     = settings->max_hole_edges;
 	    fp.method       = gte::MeshHoleFilling<double>::TriangulationMethod::LSCM;
 	    fp.autoFallback = true;
+	    const size_t vertex_count_before_fill = verts.size();
 	    gte::MeshHoleFilling<double>::FillHoles(verts, tris, fp);
+	    /* A parameter-space-valid cap can still cut through the surrounding
+	     * mesh.  Retry the geometric ear selector, then preserve the open
+	     * boundary if neither bounded triangulation is safe. */
+	    if (trimesh_new_faces_intersect(verts, tris, nf_before)) {
+		verts.resize(vertex_count_before_fill);
+		tris.resize(nf_before);
+		fp.method = gte::MeshHoleFilling<double>::
+		    TriangulationMethod::EarClipping3D;
+		fp.autoFallback = false;
+		gte::MeshHoleFilling<double>::FillHoles(verts, tris, fp);
+		if (trimesh_new_faces_intersect(verts, tris, nf_before)) {
+		    verts.resize(vertex_count_before_fill);
+		    tris.resize(nf_before);
+		}
+	    }
 	    report->added_faces += (int)(tris.size() - nf_before);
 	}
 

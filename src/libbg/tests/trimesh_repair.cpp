@@ -315,6 +315,56 @@ test_repair2_report(void)
     return 0;
 }
 
+/* A topologically valid cap is not acceptable when it cuts through another
+ * closed component.  Both available triangulations cover the same square, so
+ * repair must leave the hole open and fail instead of returning an
+ * intersecting, incidence-only "solid". */
+static int
+test_intersecting_hole_patch_rejected(void)
+{
+    static point_t pts[12] = {
+	{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
+	{0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1},
+	{0.5, 0.5, 0.8}, {0.4, 0.4, 1.2},
+	{0.6, 0.4, 1.2}, {0.5, 0.6, 1.2}
+    };
+    static int faces[42] = {
+	0, 2, 1, 0, 3, 2,
+	0, 1, 5, 0, 5, 4,
+	1, 2, 6, 1, 6, 5,
+	2, 3, 7, 2, 7, 6,
+	3, 0, 4, 3, 4, 7,
+	8, 10, 9, 8, 9, 11, 9, 10, 11, 8, 11, 10
+    };
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.fill_holes = 1;
+    settings.max_hole_area_percent = 100.0;
+    settings.max_hole_edges = 8;
+    int *ofaces = NULL;
+    int n_ofaces = 0;
+    point_t *opnts = NULL;
+    int n_opnts = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+	&n_opnts, faces, 14, pts, 12, &settings, &report);
+    const bool rejected = ret == -1 && !ofaces && !opnts &&
+	!n_ofaces && !n_opnts && !report.solid;
+    if (ofaces)
+	bu_free(ofaces, "intersecting patch faces");
+    if (opnts)
+	bu_free(opnts, "intersecting patch points");
+    if (!rejected) {
+	bu_log("FAIL test_intersecting_hole_patch_rejected: "
+	    "ret=%d solid=%d added=%d\n", ret, report.solid,
+	    report.added_faces);
+	return -1;
+    }
+    bu_log("PASS test_intersecting_hole_patch_rejected\n");
+    return 0;
+}
+
 /* Imported B-Rep edges normally retain multiple samples on each straight
  * boundary segment.  A circle-parameterized ear can be valid in 2D while its
  * three restored 3D vertices are collinear.  Hole filling must fall back to
@@ -761,6 +811,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_open_cube_repair()          != 0) ? 1 : 0;
     failures += (test_repair2_conservative_default() != 0) ? 1 : 0;
     failures += (test_repair2_report()             != 0) ? 1 : 0;
+    failures += (test_intersecting_hole_patch_rejected() != 0) ? 1 : 0;
     failures += (test_collinear_hole_boundary()    != 0) ? 1 : 0;
     failures += (test_overlapping_component_union() != 0) ? 1 : 0;
     failures += (test_touching_component_separation() != 0) ? 1 : 0;
