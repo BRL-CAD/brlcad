@@ -25,6 +25,12 @@
  */
 
 #include "common.h"
+#include <climits>
+#include <cmath>
+#include <exception>
+#include <memory>
+#include <mutex>
+#include <vector>
 #include "vmath.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -107,24 +113,72 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
 	const point_t *input_points_3d, const vect_t *input_normals_3d,
 	int num_input_pnts, struct bg_3d_spsr_opts *spsr_opts)
 {
+    if (!faces || !num_faces || !points || !num_pnts)
+	return -1;
+    *faces = NULL;
+    *num_faces = 0;
+    *points = NULL;
+    *num_pnts = 0;
+    if (!input_points_3d || !input_normals_3d || num_input_pnts < 1)
+	return -1;
+    if (spsr_opts && (spsr_opts->depth < 1 || spsr_opts->depth > 20 ||
+	    spsr_opts->full_depth < 0 ||
+	    spsr_opts->full_depth > spsr_opts->depth ||
+	    !(spsr_opts->samples_per_node > 0.0) ||
+	    !std::isfinite(spsr_opts->samples_per_node)))
+	return -1;
+    for (int i = 0; i < num_input_pnts; ++i) {
+	double normal_squared = 0.0;
+	for (int axis = 0; axis < 3; ++axis) {
+	    if (!std::isfinite(input_points_3d[i][axis]) ||
+		    !std::isfinite(input_normals_3d[i][axis]))
+		return -1;
+	    normal_squared += input_normals_3d[i][axis] *
+		input_normals_3d[i][axis];
+	}
+	if (!(normal_squared > 0.0) || !std::isfinite(normal_squared))
+	    return -1;
+    }
+
     using Real = fastf_t;
     static const unsigned int FEMSig = FEMDegreeAndBType<Reconstructor::Poisson::DefaultFEMDegree, Reconstructor::Poisson::DefaultFEMBoundary>::Signature;
     using FEMSigs = IsotropicUIntPack<3, FEMSig>;
 
-    // Set up multithreading
-    PoissonRecon::ThreadPool::ParallelizationType = PoissonRecon::ThreadPool::ASYNC;
+    /* The upstream worker configuration and async future storage are global.
+     * Serialize reconstructions so per-call thread modes cannot race. */
+    static std::mutex reconstruction_mutex;
+    std::lock_guard<std::mutex> reconstruction_lock(reconstruction_mutex);
+
+    // A one-thread request can be honored without changing the upstream
+    // thread pool's private worker count.  Other requests use its configured
+    // hardware concurrency.
+    const PoissonRecon::ThreadPool::ParallelType previous_parallelization =
+	PoissonRecon::ThreadPool::ParallelizationType;
+    struct thread_mode_guard {
+	PoissonRecon::ThreadPool::ParallelType previous;
+	~thread_mode_guard()
+	{
+	    PoissonRecon::ThreadPool::ParallelizationType = previous;
+	}
+    } restore_thread_mode = {previous_parallelization};
+    PoissonRecon::ThreadPool::ParallelizationType =
+	(spsr_opts && spsr_opts->threads == 1) ?
+	PoissonRecon::ThreadPool::NONE : PoissonRecon::ThreadPool::ASYNC;
 
     // Solver and extraction parameters
     Reconstructor::Poisson::SolutionParameters<Real> solverParams;
     solverParams.verbose = false;
     solverParams.depth = (spsr_opts) ? spsr_opts->depth : 8;
     solverParams.fullDepth = (spsr_opts) ? spsr_opts->full_depth : 11;
-    solverParams.samplesPerNode = (spsr_opts) ? spsr_opts->samples_per_node : 1.5;
-    solverParams.exactInterpolation = true;
+    solverParams.samplesPerNode =
+	(spsr_opts) ? spsr_opts->samples_per_node : 1.5;
+    solverParams.exactInterpolation =
+	spsr_opts ? spsr_opts->exact != 0 : true;
 
     Reconstructor::LevelSetExtractionParameters extractionParams;
-    extractionParams.forceManifold = true;
-    extractionParams.linearFit = false;
+    extractionParams.forceManifold =
+	spsr_opts ? spsr_opts->nonManifold == 0 : true;
+    extractionParams.linearFit = spsr_opts ? spsr_opts->linearFit != 0 : false;
     extractionParams.polygonMesh = false;
     extractionParams.verbose = false;
 
@@ -132,36 +186,55 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
 
     using Implicit = Reconstructor::Implicit<Real, 3, FEMSigs>;
     using Solver = Reconstructor::Poisson::Solver<Real, 3, FEMSigs>;
-    Implicit *implicit = Solver::Solve(vstream, solverParams);
-
-    if (!implicit) {
-	bu_log("PoissonRecon: Solver::Solve failed\n");
-	return -1;
-    }
-
     std::vector<std::vector<int>> polygons;
     std::vector<Real> vCoordinates;
     PolygonStream<int> pStream(polygons);
     VertexStream<Real, 3> vStream(vCoordinates);
+    std::unique_ptr<Implicit> implicit;
+    try {
+	implicit.reset(Solver::Solve(vstream, solverParams));
+	if (!implicit) {
+	    bu_log("PoissonRecon: Solver::Solve failed\n");
+	    return -1;
+	}
+	implicit->extractLevelSet(vStream, pStream, extractionParams);
+    } catch (const std::exception &error) {
+	bu_log("PoissonRecon failed: %s\n", error.what());
+	return -1;
+    } catch (...) {
+	bu_log("PoissonRecon failed with an unknown exception\n");
+	return -1;
+    }
 
-    implicit->extractLevelSet(vStream, pStream, extractionParams);
+    if (vCoordinates.size() % 3 || polygons.empty() ||
+	    vCoordinates.size() < 9 || polygons.size() > INT_MAX ||
+	    vCoordinates.size() / 3 > INT_MAX)
+	return -1;
+    const size_t point_count = vCoordinates.size() / 3;
+    for (size_t i = 0; i < point_count * 3; ++i) {
+	if (!std::isfinite(vCoordinates[i]))
+	    return -1;
+    }
+    for (const std::vector<int> &polygon : polygons) {
+	if (polygon.size() != 3)
+	    return -1;
+	for (int vertex : polygon) {
+	    if (vertex < 0 || (size_t)vertex >= point_count)
+		return -1;
+	}
+    }
 
-    *num_faces = (int)(polygons.size());
-    *num_pnts = (int)(vCoordinates.size() / 3);
-    bu_log("Point cnt: %d\n", *num_pnts);
-    bu_log("Face cnt: %d\n", *num_faces);
+    *num_faces = (int)polygons.size();
+    *num_pnts = (int)point_count;
 
     // Allocate output arrays
-    (*faces) = (int *)bu_calloc(*num_faces * 3, sizeof(int), "faces array");
-    (*points) = (point_t *)bu_calloc(*num_pnts, sizeof(point_t), "points array");
+    (*faces) = (int *)bu_calloc((size_t)*num_faces * 3, sizeof(int),
+	"faces array");
+    (*points) = (point_t *)bu_calloc((size_t)*num_pnts, sizeof(point_t),
+	"points array");
 
-    // Copy faces (triangulated output expected)
+    // Copy the validated triangulated output.
     for (int i = 0; i < *num_faces; i++) {
-	if (polygons[i].size() != 3) {
-	    bu_log("Warning: polygon %d is not a triangle (has %zu vertices)\n", i, polygons[i].size());
-	    // TODO - triangulate if we don't have a triangle.
-	    continue;
-	}
 	(*faces)[3*i+0] = polygons[i][0];
 	(*faces)[3*i+1] = polygons[i][1];
 	(*faces)[3*i+2] = polygons[i][2];
@@ -172,8 +245,6 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
 	(*points)[i][Y] = vCoordinates[3*i+1];
 	(*points)[i][Z] = vCoordinates[3*i+2];
     }
-
-    delete implicit;
     return 0;
 }
 

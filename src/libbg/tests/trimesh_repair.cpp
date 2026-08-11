@@ -409,12 +409,22 @@ test_overlapping_component_union(void)
     const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
 	&n_opnts, faces, 2 * cube_face_count, points,
 	2 * cube_point_count, &settings, &report);
-    const bool valid = ret == 0 && report.solid &&
+    bool valid = ret == 0 && report.solid &&
 	report.component_union_applied && report.output_volume > 1.4 &&
 	report.output_volume < 1.6 && ofaces && opnts &&
 	!bg_trimesh_solid2(n_opnts, n_ofaces, (fastf_t *)opnts, ofaces,
 	    NULL);
     bool unique_vertices = valid;
+    for (int face = 0; valid && face < n_ofaces; ++face) {
+	const point_t &a = opnts[ofaces[(size_t)face * 3]];
+	const point_t &b = opnts[ofaces[(size_t)face * 3 + 1]];
+	const point_t &c = opnts[ofaces[(size_t)face * 3 + 2]];
+	vect_t ab, ac, cross;
+	VSUB2(ab, b, a);
+	VSUB2(ac, c, a);
+	VCROSS(cross, ab, ac);
+	valid = MAGSQ(cross) > SMALL_FASTF;
+    }
     for (int first = 0; unique_vertices && first < n_opnts; ++first) {
 	for (int second = first + 1; second < n_opnts; ++second) {
 	    if (!memcmp(opnts[first], opnts[second], sizeof(point_t))) {
@@ -435,6 +445,73 @@ test_overlapping_component_union(void)
 	return -1;
     }
     bu_log("PASS test_overlapping_component_union\n");
+    return 0;
+}
+
+/* Two closed components which meet only at a duplicate-coordinate vertex
+ * are topologically solid but not an embedded manifold.  The explicitly
+ * requested separation pass must move their disconnected fans apart by no
+ * more than the configured tolerance. */
+static int
+test_touching_component_separation(void)
+{
+    point_t *cube_points;
+    int cube_point_count;
+    int *cube_faces;
+    int cube_face_count;
+    make_cube(&cube_points, &cube_point_count, &cube_faces,
+	&cube_face_count);
+    point_t points[16];
+    int faces[72];
+    vect_t offset = {1.0, 1.0, 1.0};
+    for (int vertex = 0; vertex < cube_point_count; ++vertex) {
+	VMOVE(points[vertex], cube_points[vertex]);
+	VADD2(points[vertex + cube_point_count], cube_points[vertex],
+	    offset);
+    }
+    for (int corner = 0; corner < cube_face_count * 3; ++corner) {
+	faces[corner] = cube_faces[corner];
+	faces[cube_face_count * 3 + corner] =
+	    cube_faces[corner] + cube_point_count;
+    }
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.vertex_tolerance = 1.0e-5;
+    settings.separate_touching_vertices = 1;
+    int *ofaces = NULL;
+    int n_ofaces = 0;
+    point_t *opnts = NULL;
+    int n_opnts = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+	&n_opnts, faces, 2 * cube_face_count, points,
+	2 * cube_point_count, &settings, &report);
+    bool unique_vertices = ret == 0 && report.solid &&
+	report.separated_vertices >= 2 &&
+	report.max_vertex_displacement > 0.0 &&
+	report.max_vertex_displacement <= settings.vertex_tolerance &&
+	report.output_volume > 1.9 && report.output_volume < 2.1;
+    for (int first = 0; unique_vertices && first < n_opnts; ++first) {
+	for (int second = first + 1; second < n_opnts; ++second) {
+	    if (!memcmp(opnts[first], opnts[second], sizeof(point_t))) {
+		unique_vertices = false;
+		break;
+	    }
+	}
+    }
+    if (ofaces)
+	bu_free(ofaces, "touch separation faces");
+    if (opnts)
+	bu_free(opnts, "touch separation points");
+    if (!unique_vertices) {
+	bu_log("FAIL test_touching_component_separation: ret=%d solid=%d "
+	    "separated=%d displacement=%g volume=%g\n", ret,
+	    report.solid, report.separated_vertices,
+	    report.max_vertex_displacement, report.output_volume);
+	return -1;
+    }
+    bu_log("PASS test_touching_component_separation\n");
     return 0;
 }
 
@@ -686,6 +763,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_repair2_report()             != 0) ? 1 : 0;
     failures += (test_collinear_hole_boundary()    != 0) ? 1 : 0;
     failures += (test_overlapping_component_union() != 0) ? 1 : 0;
+    failures += (test_touching_component_separation() != 0) ? 1 : 0;
     failures += (test_hanging_boundary_edge_split() != 0) ? 1 : 0;
     failures += (test_split_nmv_backward_walk()   != 0) ? 1 : 0;
     failures += (test_split_nmv_cycle_guard()     != 0) ? 1 : 0;

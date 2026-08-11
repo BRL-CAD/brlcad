@@ -85,8 +85,8 @@ struct bg_3d_spsr_opts {
     int full_depth;              /**< full depth */
     int base_depth;              /**< coarse MG solver depth */
     int baseVcycles;             /**< coarse MG solver v-cycles */
-    int max_memory_GB;           /**< maximum memory (in GB) */
-    size_t threads;              /**< number of threads to use (default is max available) */
+    int max_memory_GB;           /**< reserved; currently not enforced */
+    size_t threads;              /**< one selects serial; otherwise uses the configured pool */
     fastf_t samples_per_node;    /**< minimum number of samples per node */
     fastf_t scale;               /**< scale factor */
     fastf_t width;               /**< voxel width */
