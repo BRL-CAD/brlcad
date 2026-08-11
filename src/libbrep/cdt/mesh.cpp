@@ -447,7 +447,6 @@ cpolygon_t::add_point(ON_2dPoint &on_2dp, long orig_index)
     proj_2d.first = on_2dp.x;
     proj_2d.second = on_2dp.y;
     pnts_2d.push_back(proj_2d);
-    p2ind[proj_2d] = pnts_2d.size() - 1;
     p2o[pnts_2d.size() - 1] = orig_index;
     o2p[orig_index] = pnts_2d.size() - 1;
     return (long)(pnts_2d.size() - 1);
@@ -527,8 +526,7 @@ cpolygon_t::remove_ordered_edge(const struct edge2d_t &e)
 {
     cpolyedge_t *cull = NULL;
 
-    const std::map<long, std::set<cpolyedge_t *>>::iterator vertex_entry =
-	v2pe.find(e.v2d[0]);
+    const auto vertex_entry = v2pe.find(e.v2d[0]);
     if (vertex_entry == v2pe.end())
 	return;
     for (std::set<cpolyedge_t *>::const_iterator cp_it =
@@ -3178,8 +3176,8 @@ cdt_mesh_t::toleranced_boundary_triangle(const triangle_t &triangle)
 	if (state->pnt_audit_info) {
 	    const auto audit = state->pnt_audit_info->find(
 		const_cast<ON_3dPoint *>(point));
-	    if (audit != state->pnt_audit_info->end() && audit->second) {
-		const int edge_index = audit->second->edge_index;
+	    if (audit != state->pnt_audit_info->end()) {
+		const int edge_index = audit->second.edge_index;
 		if (edge_index >= 0 && edge_index < brep->m_E.Count()) {
 		    const double edge_tolerance =
 			brep->m_E[edge_index].m_tolerance;
@@ -3189,7 +3187,7 @@ cdt_mesh_t::toleranced_boundary_triangle(const triangle_t &triangle)
 			    ON_ZERO_TOLERANCE))
 			allowed = std::max(allowed, edge_tolerance);
 		}
-		const int vertex_index = audit->second->vert_index;
+		const int vertex_index = audit->second.vert_index;
 		if (vertex_index >= 0 && vertex_index < brep->m_V.Count()) {
 		    const ON_BrepVertex &brep_vertex =
 			brep->m_V[vertex_index];

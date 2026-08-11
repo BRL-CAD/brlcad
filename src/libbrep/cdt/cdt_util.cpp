@@ -484,16 +484,15 @@ cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, int face_index)
     return ws;
 }
 
-struct cdt_audit_info *
-cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d, fastf_t px, fastf_t py, fastf_t pz)
+struct cdt_audit_info
+cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
 {
-    struct cdt_audit_info *a = new struct cdt_audit_info;
-    a->face_index = fid;
-    a->vert_index = vid;
-    a->trim_index = tid;
-    a->edge_index = eid;
-    a->surf_uv = ON_2dPoint(x2d, y2d);
-    a->vert_pnt = ON_3dPoint(px, py, pz);
+    struct cdt_audit_info a;
+    a.face_index = fid;
+    a.vert_index = vid;
+    a.trim_index = tid;
+    a.edge_index = eid;
+    a.surf_uv = ON_2dPoint(x2d, y2d);
     return a;
 }
 
@@ -501,14 +500,20 @@ void
 CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
 {
     s->w3dpnts->push_back(p);
-    (*s->pnt_audit_info)[p] = cdt_ainfo(fid, vid, tid, eid, x2d, y2d, 0.0, 0.0, 0.0);
+    (*s->pnt_audit_info)[p] = cdt_ainfo(fid, vid, tid, eid, x2d, y2d);
 }
 
 void
 CDT_Add3DNorm(struct ON_Brep_CDT_State *s, ON_3dPoint *normal, ON_3dPoint *vert, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
 {
     s->w3dnorms->push_back(normal);
-    (*s->pnt_audit_info)[normal] = cdt_ainfo(fid, vid, tid, eid, x2d, y2d, vert->x, vert->y, vert->z);
+    (void)vert;
+    (void)fid;
+    (void)vid;
+    (void)tid;
+    (void)eid;
+    (void)x2d;
+    (void)y2d;
 }
 
 // Digest tessellation tolerances...
@@ -584,9 +589,19 @@ ON_Brep_CDT_Create(void *bv, const char *objname)
     cdt->max_edge_seg_len = new std::map<int, double>;
     cdt->on_brep_edge_pnts = new std::map<ON_3dPoint *, std::set<BrepTrimPoint *>>;
 
-    cdt->pnt_audit_info = new std::map<ON_3dPoint *, struct cdt_audit_info *>;
+    cdt->pnt_audit_info =
+	new std::unordered_map<ON_3dPoint *, struct cdt_audit_info>;
 
     cdt->bot_pnt_to_on_pnt = new std::map<int, ON_3dPoint *>;
+
+    cdt->certified_faces = NULL;
+    cdt->certified_face_count = 0;
+    cdt->certified_vertices = NULL;
+    cdt->certified_vertex_count = 0;
+    cdt->certified_face_normals = NULL;
+    cdt->certified_face_normal_count = 0;
+    cdt->certified_normals = NULL;
+    cdt->certified_normal_count = 0;
 
     return cdt;
 }
@@ -682,10 +697,6 @@ cdt_state_reset(struct ON_Brep_CDT_State *s_cdt)
     }
     s_cdt->fmeshes.clear();
 
-    for (std::map<ON_3dPoint *, struct cdt_audit_info *>::iterator audit =
-	    s_cdt->pnt_audit_info->begin();
-	    audit != s_cdt->pnt_audit_info->end(); ++audit)
-	delete audit->second;
     s_cdt->pnt_audit_info->clear();
 
     for (size_t i = 0; i < s_cdt->w3dpnts->size(); i++)
@@ -712,6 +723,22 @@ cdt_state_reset(struct ON_Brep_CDT_State *s_cdt)
     s_cdt->l_median_len.clear();
     s_cdt->unsplit_singular_edges.clear();
     s_cdt->bot_pnt_to_on_pnt->clear();
+    if (s_cdt->certified_faces)
+	bu_free(s_cdt->certified_faces, "certified faces");
+    if (s_cdt->certified_vertices)
+	bu_free(s_cdt->certified_vertices, "certified vertices");
+    if (s_cdt->certified_face_normals)
+	bu_free(s_cdt->certified_face_normals, "certified face normals");
+    if (s_cdt->certified_normals)
+	bu_free(s_cdt->certified_normals, "certified normals");
+    s_cdt->certified_faces = NULL;
+    s_cdt->certified_face_count = 0;
+    s_cdt->certified_vertices = NULL;
+    s_cdt->certified_vertex_count = 0;
+    s_cdt->certified_face_normals = NULL;
+    s_cdt->certified_face_normal_count = 0;
+    s_cdt->certified_normals = NULL;
+    s_cdt->certified_normal_count = 0;
     s_cdt->face_rtrees_2d.clear();
     s_cdt->face_rtrees_3d.clear();
     s_cdt->strim_pnts.clear();
