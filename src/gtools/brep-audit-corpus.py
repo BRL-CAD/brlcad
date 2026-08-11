@@ -168,9 +168,14 @@ def selected_objects(path, failures_only, input_class):
             if failures_only and record.get("status") == "ok":
                 continue
             eligible = (record.get("input") or {}).get("quality_eligible")
+            input_valid = (record.get("input") or {}).get("valid")
             if input_class == "valid" and eligible is False:
                 continue
             if input_class == "invalid" and eligible is not False:
+                continue
+            if input_class == "input-valid" and input_valid is not True:
+                continue
+            if input_class == "input-invalid" and input_valid is not False:
                 continue
             database = str(Path(database).resolve())
             selected.setdefault(database, set()).add(object_name)
@@ -580,9 +585,12 @@ def parse_args():
     )
     parser.add_argument(
         "--selection-class",
-        choices=("all", "valid", "invalid"),
+        choices=("all", "valid", "invalid", "input-valid", "input-invalid"),
         default="all",
-        help="Filter selected records by their quality eligibility",
+        help=(
+            "Filter selected records by quality eligibility (valid/invalid) "
+            "or the B-Rep validity flag (input-valid/input-invalid)"
+        ),
     )
     parser.add_argument("--quality-repair", action="store_true")
     parser.add_argument("--repair-hole-area-percent", type=float, default=1.0)
