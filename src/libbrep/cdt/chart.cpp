@@ -2043,6 +2043,103 @@ orient_pole_wedge_seam_runs(const std::vector<int> &source_outer,
     }
 }
 
+static void
+normalize_pole_wedge_seam_intervals(const std::vector<int> &source_ring,
+	const std::vector<int> &source_to_chart,
+	std::vector<std::pair<double, double>> &points,
+	std::vector<cdt_chart_vertex> &vertices,
+	const std::vector<bool> &restored_seam,
+	const std::vector<const ON_3dPoint *> &points_3d, int apex)
+{
+    const size_t ring_size = source_ring.size() > 1 &&
+	source_ring.front() == source_ring.back() ?
+	source_ring.size() - 1 : source_ring.size();
+    if (ring_size < 3)
+	return;
+    const auto mapped_at = [&](size_t position) {
+	const int source = source_ring[position];
+	if (source < 0 || (size_t)source >= source_to_chart.size())
+	    return -1;
+	const int mapped = source_to_chart[(size_t)source];
+	return mapped >= 0 && (size_t)mapped < vertices.size() ? mapped : -1;
+    };
+    const auto source_distance = [&](size_t first, size_t second) {
+	const int first_source = source_ring[first];
+	const int second_source = source_ring[second];
+	if (first_source < 0 || second_source < 0 ||
+		(size_t)first_source >= points_3d.size() ||
+		(size_t)second_source >= points_3d.size() ||
+		!points_3d[(size_t)first_source] ||
+		!points_3d[(size_t)second_source])
+	    return 0.0;
+	const double distance = points_3d[(size_t)first_source]->DistanceTo(
+	    *points_3d[(size_t)second_source]);
+	return std::isfinite(distance) && distance > 0.0 ? distance : 0.0;
+    };
+    for (size_t start = 0; start < ring_size; ++start) {
+	const int start_chart = mapped_at(start);
+	if (start_chart < 0 ||
+		(size_t)start_chart >= restored_seam.size() ||
+		!restored_seam[(size_t)start_chart] ||
+		vertices[(size_t)start_chart].singular)
+	    continue;
+	std::vector<size_t> interval;
+	size_t position = (start + 1) % ring_size;
+	bool ends_at_singular = false;
+	while (position != start) {
+	    const int mapped = mapped_at(position);
+	    if (mapped < 0)
+		break;
+	    if (mapped == apex || vertices[(size_t)mapped].singular) {
+		ends_at_singular = true;
+		break;
+	    }
+	    if ((size_t)mapped < restored_seam.size() &&
+		    restored_seam[(size_t)mapped])
+		break;
+	    interval.push_back(position);
+	    position = (position + 1) % ring_size;
+	}
+	if (interval.empty() || position == start)
+	    continue;
+	const int end_chart = mapped_at(position);
+	if (end_chart < 0 || (!ends_at_singular &&
+		((size_t)end_chart >= restored_seam.size() ||
+		!restored_seam[(size_t)end_chart])))
+	    continue;
+
+	std::vector<double> distances(interval.size(), 0.0);
+	double total_distance = 0.0;
+	size_t previous_position = start;
+	for (size_t i = 0; i < interval.size(); ++i) {
+	    total_distance += source_distance(previous_position, interval[i]);
+	    distances[i] = total_distance;
+	    previous_position = interval[i];
+	}
+	total_distance += source_distance(previous_position, position);
+	const double start_turn = 0.5 *
+	    vertices[(size_t)start_chart].seam_side;
+	const double end_turn = ends_at_singular ? start_turn : 0.5 *
+	    vertices[(size_t)end_chart].seam_side;
+	for (size_t i = 0; i < interval.size(); ++i) {
+	    const int mapped = mapped_at(interval[i]);
+	    const double radial = points[(size_t)mapped].second;
+	    if (!(std::fabs(radial) > DBL_EPSILON))
+		continue;
+	    const double fraction = total_distance > DBL_EPSILON ?
+		distances[i] / total_distance :
+		(double)(i + 1) / (double)(interval.size() + 1);
+	    const double desired = start_turn +
+		fraction * (end_turn - start_turn);
+	    double turn = points[(size_t)mapped].first / radial;
+	    turn += std::nearbyint(desired - turn);
+	    points[(size_t)mapped].first = radial * turn;
+	    if (vertices[(size_t)mapped].seam_side)
+		vertices[(size_t)mapped].seam_side = turn < 0.0 ? -1 : 1;
+	}
+    }
+}
+
 int
 cdt_test_pole_wedge_seam_orientation(void)
 {
@@ -2081,6 +2178,49 @@ cdt_test_pole_wedge_seam_orientation(void)
 	return 1;
     if (!exercise(true))
 	return 2;
+    {
+	std::vector<int> outer = {0, 1, 2, 3, 4, 5, 6, 7, 0};
+	std::vector<int> source_to_chart = {0, 1, 2, 3, 4, 5, 6, 7};
+	std::vector<std::pair<double, double>> points = {
+	    std::make_pair(0.5, 1.0),
+	    std::make_pair(0.25, 1.0),
+	    std::make_pair(0.75, 1.0),
+	    std::make_pair(0.51, 1.0),
+	    std::make_pair(-0.5, 1.0),
+	    std::make_pair(-0.25, 0.5),
+	    std::make_pair(0.0, 0.0),
+	    std::make_pair(0.25, 0.5)
+	};
+	std::vector<cdt_chart_vertex> vertices(points.size());
+	std::vector<bool> restored(points.size(), false);
+	for (size_t i = 0; i < vertices.size(); ++i)
+	    vertices[i].id = (cdt_chart_vertex_id)i;
+	vertices[0].seam_side = 1;
+	vertices[4].seam_side = -1;
+	vertices[5].seam_side = -1;
+	vertices[6].singular = true;
+	vertices[7].seam_side = 1;
+	restored[0] = restored[4] = restored[5] = restored[7] = true;
+	const ON_3dPoint source_points[] = {
+	    ON_3dPoint(0.0, 0.0, 0.0),
+	    ON_3dPoint(1.0, 0.0, 0.0),
+	    ON_3dPoint(2.0, 0.0, 0.0),
+	    ON_3dPoint(3.0, 0.0, 0.0),
+	    ON_3dPoint(4.0, 0.0, 0.0),
+	    ON_3dPoint(4.0, 1.0, 0.0),
+	    ON_3dPoint(2.0, 1.0, 0.0),
+	    ON_3dPoint(0.0, 1.0, 0.0)
+	};
+	std::vector<const ON_3dPoint *> points_3d;
+	for (const ON_3dPoint &point : source_points)
+	    points_3d.push_back(&point);
+	normalize_pole_wedge_seam_intervals(outer, source_to_chart, points,
+	    vertices, restored, points_3d, 6);
+	if (std::fabs(points[1].first - 0.25) > DBL_EPSILON ||
+		std::fabs(points[2].first + 0.25) > DBL_EPSILON ||
+		std::fabs(points[3].first + 0.49) > DBL_EPSILON)
+	    return 3;
+    }
     return 0;
 }
 
@@ -2121,6 +2261,37 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
     active_points.insert(source_steiner.begin(), source_steiner.end());
     active_points.insert(source_refinement.begin(),
 	source_refinement.end());
+    const ON_3dPoint *preferred_pole_point = NULL;
+    for (size_t i = 0; i < topology_vertices.size() &&
+	    i < points_3d.size(); ++i) {
+	if (topology_vertices[i] == m_pole_topology_vertex && points_3d[i]) {
+	    preferred_pole_point = points_3d[i];
+	    break;
+	}
+    }
+    std::set<cdt_topo_vertex_id> coincident_pole_topologies;
+    double nearest_positive_radial = 1.0;
+    for (int point : active_points) {
+	if (point < 0 || (size_t)point >= native_points.size())
+	    continue;
+	const size_t i = (size_t)point;
+	const ON_2dPoint native_uv(native_points[i].first,
+	    native_points[i].second);
+	const double open_distance = std::fabs(
+	    native_uv[m_open_dir] - pole_coordinate);
+	if (open_distance > pole_tolerance)
+	    nearest_positive_radial = std::min(nearest_positive_radial,
+		open_distance / m_open_domain.Length());
+	if (open_distance <= pole_tolerance &&
+		topology_vertices[i] != CDT_TOPOLOGY_ID_NONE &&
+		preferred_pole_point && i < points_3d.size() &&
+		points_3d[i] == preferred_pole_point)
+	    coincident_pole_topologies.insert(topology_vertices[i]);
+    }
+    const bool symbolic_pole_boundary =
+	coincident_pole_topologies.size() > 1;
+    const double symbolic_pole_radius = std::min(1.0e-6,
+	0.1 * nearest_positive_radial);
     for (int point : active_points) {
 	if (point < 0 || (size_t)point >= native_points.size())
 	    continue;
@@ -2130,7 +2301,9 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	if (std::fabs(native_uv[m_open_dir] - pole_coordinate) <=
 		pole_tolerance &&
 		topology_vertices[i] != CDT_TOPOLOGY_ID_NONE &&
-		topology_vertices[i] != m_pole_topology_vertex) {
+		topology_vertices[i] != m_pole_topology_vertex &&
+		(!preferred_pole_point || i >= points_3d.size() ||
+		points_3d[i] != preferred_pole_point)) {
 	    m_failure = std::string(chart_name) +
 		" face has multiple topological pole vertices and requires "
 		"chart decomposition";
@@ -2169,7 +2342,7 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
      * from the authoritative 3-D point below. */
     std::vector<double> lifted_closed(native_points.size(),
 	std::numeric_limits<double>::quiet_NaN());
-    if (!ruled && m_periodic && cdt_face_has_seam(face)) {
+    if (!ruled && m_periodic) {
 	const double period = m_closed_domain.Length();
 	const auto is_pole_source = [&](int point) {
 	    if (point < 0 || (size_t)point >= native_points.size())
@@ -2263,7 +2436,15 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	    i < points_3d.size() && pole_source < points_3d.size() &&
 	    points_3d[i] && points_3d[pole_source] &&
 	    points_3d[i] == points_3d[pole_source];
+	const bool equivalent_topological_pole = symbolic_pole_boundary &&
+	    topology_vertices[i] != CDT_TOPOLOGY_ID_NONE &&
+	    topology_vertices[i] != m_pole_topology_vertex &&
+	    preferred_pole_point && i < points_3d.size() && points_3d[i] ==
+	    preferred_pole_point && std::fabs(native_uv[m_open_dir] -
+	    pole_coordinate) <= pole_tolerance;
 	bool at_pole = topology_vertices[i] == m_pole_topology_vertex;
+	if (m_authoritative_cone_points && equivalent_topological_pole)
+	    at_pole = true;
 	if (topology_vertices[i] == CDT_TOPOLOGY_ID_NONE) {
 	    at_pole = m_authoritative_cone_points ?
 		authoritative_pole_copy :
@@ -2276,6 +2457,15 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	}
 	ON_2dPoint chart_uv;
 	bool mapped_to_chart = native_to_chart(native_uv, chart_uv);
+	if (mapped_to_chart && equivalent_topological_pole) {
+	    const double angular = m_periodic ? periodic_parameter(
+		native_uv[m_closed_dir], m_closed_domain) :
+		native_uv[m_closed_dir];
+	    chart_uv.x = symbolic_pole_radius *
+		(angular - m_closed_domain.Mid()) /
+		m_closed_domain.Length();
+	    chart_uv.y = symbolic_pole_radius;
+	}
 	if (mapped_to_chart && ruled && m_authoritative_cone_points &&
 		m_cone.IsValid() &&
 		i < points_3d.size() && points_3d[i]) {
@@ -2318,6 +2508,7 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	vertex.id = chart_index;
 	vertex.native_point = (long)i;
 	vertex.topo_vertex = topology_vertices[i];
+	vertex.singular = equivalent_topological_pole;
 	const double seam_tolerance = parameter_tolerance(m_closed_domain);
 	if (m_periodic && !at_pole &&
 		std::fabs(native_uv[m_closed_dir] -
@@ -2348,6 +2539,88 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
     if (m_periodic)
 	orient_pole_wedge_seam_runs(source_outer, source_to_chart, points,
 	    vertices);
+
+    /* Local continuity may legitimately move a partial path from one native
+     * seam bound to the other chart side.  When exact copies of the same
+     * authoritative 3-D samples exist on both bounds, however, they are the
+     * two complete sides of the cut and must remain opposite. */
+    if (m_periodic) {
+	std::map<const ON_3dPoint *, std::vector<std::pair<int, int>>>
+	    matching_seam_copies;
+	std::vector<bool> restored_seam(vertices.size(), false);
+	bool restored_matching_seams = false;
+	const double seam_tolerance = parameter_tolerance(m_closed_domain);
+	for (size_t source = 0; source < native_points.size(); ++source) {
+	    if (source >= points_3d.size() || !points_3d[source] ||
+		    source >= source_to_chart.size())
+		continue;
+	    const int mapped = source_to_chart[source];
+	    if (mapped < 0 || (size_t)mapped >= vertices.size() ||
+		    !vertices[(size_t)mapped].seam_side)
+		continue;
+	    const double parameter = m_closed_dir == 0 ?
+		native_points[source].first : native_points[source].second;
+	    int native_side = 0;
+	    if (std::fabs(parameter - m_closed_domain.Min()) <=
+		    seam_tolerance)
+		native_side = -1;
+	    else if (std::fabs(parameter - m_closed_domain.Max()) <=
+		    seam_tolerance)
+		native_side = 1;
+	    if (native_side)
+		matching_seam_copies[points_3d[source]].push_back(
+		    std::make_pair(mapped, native_side));
+	}
+	for (const auto &copies : matching_seam_copies) {
+	    bool have_low = false;
+	    bool have_high = false;
+	    for (const std::pair<int, int> &copy : copies.second) {
+		have_low = have_low || copy.second < 0;
+		have_high = have_high || copy.second > 0;
+	    }
+	    if (!have_low || !have_high)
+		continue;
+	    restored_matching_seams = true;
+	    for (const std::pair<int, int> &copy : copies.second) {
+		vertices[(size_t)copy.first].seam_side = copy.second;
+		restored_seam[(size_t)copy.first] = true;
+		points[(size_t)copy.first].first = 0.5 * copy.second *
+		    points[(size_t)copy.first].second;
+	    }
+	}
+	if (restored_matching_seams) {
+	    normalize_pole_wedge_seam_intervals(source_outer,
+		source_to_chart, points, vertices, restored_seam, points_3d,
+		apex);
+	    for (const std::vector<int> &hole : source_holes)
+		normalize_pole_wedge_seam_intervals(hole, source_to_chart,
+		    points, vertices, restored_seam, points_3d, apex);
+	}
+
+	/* Distinct master edges which approximate one analytic seam may now
+	 * share a globally synchronized 3-D sample.  On the same side of the
+	 * chart cut that pointer identity is authoritative: use one exact chart
+	 * image so harmless pullback error cannot turn a retraced seam into a
+	 * sequence of crossing slivers.  Keep opposite seam sides distinct. */
+	std::map<std::pair<const ON_3dPoint *, int>, int> seam_images;
+	for (size_t source = 0; source < source_to_chart.size(); ++source) {
+	    if (source >= points_3d.size() || !points_3d[source])
+		continue;
+	    const int mapped = source_to_chart[source];
+	    if (mapped < 0 || (size_t)mapped >= vertices.size() ||
+		    vertices[(size_t)mapped].singular ||
+		    !vertices[(size_t)mapped].seam_side)
+		continue;
+	    const std::pair<const ON_3dPoint *, int> key(points_3d[source],
+		vertices[(size_t)mapped].seam_side);
+	    const auto existing = seam_images.find(key);
+	    if (existing == seam_images.end()) {
+		seam_images[key] = mapped;
+		continue;
+	    }
+	    points[(size_t)mapped] = points[(size_t)existing->second];
+	}
+    }
 
     if (ruled && m_periodic && source_outer.size() >= 3) {
 	const size_t ring_size = source_outer.size() > 1 &&
@@ -2535,17 +2808,45 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
     auto remap_ring = [&](const std::vector<int> &source,
 	    std::vector<int> &target) {
 	target.clear();
+	int previous_source = -1;
 	for (int point : source) {
 	    if (point < 0 || (size_t)point >= source_to_chart.size())
 		return false;
 	    const int mapped = source_to_chart[(size_t)point];
 	    if (mapped < 0)
 		return false;
-	    if (target.empty() || target.back() != mapped)
+	    bool redundant = !target.empty() && target.back() == mapped;
+	    if (!redundant && !target.empty() && previous_source >= 0 &&
+		    (size_t)previous_source < points_3d.size() &&
+		    (size_t)point < points_3d.size() &&
+		    points_3d[(size_t)previous_source] &&
+		    points_3d[(size_t)previous_source] ==
+		    points_3d[(size_t)point] &&
+		    !vertices[(size_t)target.back()].singular &&
+		    !vertices[(size_t)mapped].singular &&
+		    points[(size_t)target.back()] == points[(size_t)mapped])
+		redundant = true;
+	    if (!redundant) {
 		target.push_back(mapped);
+		previous_source = point;
+	    }
 	}
-	if (target.size() > 1 && target.front() == target.back())
-	    target.pop_back();
+	if (target.size() > 1) {
+	    const int first_source = source.front();
+	    const int last_source = previous_source;
+	    const bool redundant_closure = target.front() == target.back() ||
+		(first_source >= 0 && last_source >= 0 &&
+		(size_t)first_source < points_3d.size() &&
+		(size_t)last_source < points_3d.size() &&
+		points_3d[(size_t)first_source] &&
+		points_3d[(size_t)first_source] ==
+		points_3d[(size_t)last_source] &&
+		!vertices[(size_t)target.front()].singular &&
+		!vertices[(size_t)target.back()].singular &&
+		points[(size_t)target.front()] == points[(size_t)target.back()]);
+	    if (redundant_closure)
+		target.pop_back();
+	}
 	const std::set<int> unique(target.begin(), target.end());
 	return target.size() >= 3 && unique.size() == target.size();
     };
@@ -2596,7 +2897,8 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
      * surface and leaves the pole uncovered.  Constrain every unobstructed
      * radial connection from the pole.  This is the natural ruling for a
      * cone and a topology-preserving fan for a spherical cap. */
-    if (holes.empty() && (ruled || cdt_face_has_seam(face))) {
+    if (holes.empty() && (ruled || symbolic_pole_boundary ||
+	    cdt_face_has_seam(face))) {
 	const auto apex_position = std::find(outer.begin(), outer.end(), apex);
 	if (apex_position == outer.end()) {
 	    m_failure = "cone chart outline does not contain its apex";
@@ -2701,7 +3003,12 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	    return true;
 	};
 	for (int point : outer) {
-	    if (point == apex || on_boundary_ray(point) ||
+	    /* The two adjacent outline segments are already mandatory polygon
+	     * edges.  Do not submit them a second time as fan constraints: strict
+	     * PSLG validation correctly rejects duplicate constraints. */
+	    if (point == apex || point == ray_points[0] ||
+		    point == ray_points[1] ||
+		    (!symbolic_pole_boundary && on_boundary_ray(point)) ||
 		    !valid_fan_segment(point))
 		continue;
 	    constraints.push_back(std::make_pair(apex, point));
@@ -3266,6 +3573,11 @@ cdt_face_chart::validate_boundary(const ON_BrepFace &face,
 	if (first < 0 || second < 0 || (size_t)first >= vertices.size() ||
 		(size_t)second >= vertices.size() || first == second)
 	    return true;
+	if (vertices[(size_t)first].singular &&
+		vertices[(size_t)second].singular &&
+		(size_t)first < points.size() && (size_t)second < points.size() &&
+		points[(size_t)first] != points[(size_t)second])
+	    return false;
 	if (m_authoritative_cone_points) {
 	    if ((size_t)first >= points.size() ||
 		    (size_t)second >= points.size())

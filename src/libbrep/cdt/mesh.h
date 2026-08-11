@@ -678,6 +678,7 @@ public:
     size_t geometric_degenerate_count();
     size_t incorrect_normal_count();
     bool repair_incorrect_normal_edges();
+    bool repair_toleranced_nonmanifold_edges();
     bool toleranced_boundary_triangle(const triangle_t &t);
 
     // Triangle geometry information

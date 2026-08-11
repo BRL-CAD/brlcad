@@ -556,6 +556,7 @@ ON_Brep_CDT_Create(void *bv, const char *objname)
     cdt->status = BREP_CDT_UNTESSELLATED;
     cdt_diagnostic_set(cdt, BREP_CDT_RESULT_UNATTEMPTED,
 	    BREP_CDT_STAGE_NONE, -1, 0, 0, "not attempted");
+    cdt->repair_source_valid = false;
     cdt->tolerance_changed = true;
 
     ON_Brep *brep = (ON_Brep *)bv;
@@ -602,6 +603,7 @@ ON_Brep_CDT_Create(void *bv, const char *objname)
     cdt->certified_face_normal_count = 0;
     cdt->certified_normals = NULL;
     cdt->certified_normal_count = 0;
+    cdt->certified_repaired = false;
 
     return cdt;
 }
@@ -739,6 +741,7 @@ cdt_state_reset(struct ON_Brep_CDT_State *s_cdt)
     s_cdt->certified_face_normal_count = 0;
     s_cdt->certified_normals = NULL;
     s_cdt->certified_normal_count = 0;
+    s_cdt->certified_repaired = false;
     s_cdt->face_rtrees_2d.clear();
     s_cdt->face_rtrees_3d.clear();
     s_cdt->strim_pnts.clear();
@@ -749,6 +752,7 @@ cdt_state_reset(struct ON_Brep_CDT_State *s_cdt)
     s_cdt->faces_to_update.clear();
     s_cdt->failed_face_indices.clear();
     s_cdt->failed_face_diagnostics.clear();
+    s_cdt->repair_source_valid = false;
     s_cdt->absmax = -1;
     s_cdt->absmin = -1;
     s_cdt->cos_within_ang = -1;
@@ -905,6 +909,7 @@ ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t)
 	cdt_state_reset(s);
     s->tolerance_changed = true;
     s->status = BREP_CDT_UNTESSELLATED;
+    s->repair_source_valid = false;
     cdt_diagnostic_set(s, BREP_CDT_RESULT_UNATTEMPTED,
 	BREP_CDT_STAGE_NONE, -1, 0, 0, "tolerances changed");
 

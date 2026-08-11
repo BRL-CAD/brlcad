@@ -34,6 +34,7 @@
 #include "bv/vlist.h"
 #include "bn/tol.h"
 #include "bg/defines.h"
+#include "bg/trimesh.h"
 #include "brep/defines.h"
 
 __BEGIN_DECLS
@@ -59,6 +60,8 @@ struct ON_Brep_CDT_State;
 #define BREP_CDT_RESULT_CHART_FAILED -10
 #define BREP_CDT_RESULT_REFINEMENT_LIMIT -11
 #define BREP_CDT_RESULT_GEOMETRIC_FAILED -12
+#define BREP_CDT_RESULT_REPAIRED 3
+#define BREP_CDT_RESULT_REPAIR_FAILED -13
 
 #define BREP_CDT_STAGE_NONE 0
 #define BREP_CDT_STAGE_INPUT 1
@@ -72,6 +75,7 @@ struct ON_Brep_CDT_State;
 #define BREP_CDT_STAGE_CHART_CONSTRUCTION 9
 #define BREP_CDT_STAGE_ADAPTIVE_REFINEMENT 10
 #define BREP_CDT_STAGE_GEOMETRIC_VALIDATION 11
+#define BREP_CDT_STAGE_MESH_REPAIR 12
 
 /* A snapshot of the most recent tessellation attempt.  message is always
  * NUL-terminated.  face_index is -1 when no individual face is responsible. */
@@ -83,6 +87,62 @@ struct brep_cdt_diagnostic {
     int failed_faces;
     char message[256];
 };
+
+/**
+ * Explicit controls for the post-tessellation mesh-repair tier.
+ *
+ * Repair is never attempted by ON_Brep_CDT_Tessellate.  Hole and component
+ * operations must also be enabled and bounded explicitly in @p mesh.  A zero
+ * max_surface_deviation uses the tessellation's maximum chord tolerance.  A
+ * zero max_deviation_samples uses the library's bounded default.  The area
+ * change limit applies to the complete repaired mesh; zero disables that
+ * additional aggregate limit.  By default deviation samples must project
+ * inside a trimmed source face.  allow_untrimmed_surface_match permits an
+ * explicitly reported fallback to the source face's underlying analytic
+ * surface when defective trim topology prevents that classification.  The
+ * fast-face fallback supplies display-CDT triangles for failed rigorous faces
+ * before mesh repair; its point, byte, and time limits bound that extra work.
+ * use_full_fast_fallback instead supplies one coherent whole-B-Rep display
+ * mesh.  It is intended as a lower-fidelity alternative when mixing rigorous
+ * and display face meshes leaves irreparable boundary topology.
+ */
+struct brep_cdt_repair_settings {
+    struct bg_trimesh_repair_settings mesh;
+    fastf_t max_surface_deviation;
+    size_t max_deviation_samples;
+    fastf_t max_area_change_percent;
+    int allow_untrimmed_surface_match;
+    int use_fast_face_fallback;
+    int use_full_fast_fallback;
+    size_t max_fast_points;
+    size_t max_fast_result_bytes;
+    long max_fast_time_ms;
+};
+
+#define BREP_CDT_REPAIR_SETTINGS_INIT {BG_TRIMESH_REPAIR_SETTINGS_INIT, 0.0, 4096, 1.0, 0, 1, 0, 1048576, 134217728, 5000}
+
+/** Provenance and quality measurements for a repair attempt. */
+struct brep_cdt_repair_report {
+    struct bg_trimesh_repair_report mesh;
+    struct brep_cdt_diagnostic source_diagnostic;
+    int source_failed_faces;
+    int changed_faces;
+    size_t deviation_samples;
+    size_t deviation_projection_failures;
+    size_t untrimmed_surface_samples;
+    size_t input_mesh_surface_samples;
+    int fast_fallback_attempted_faces;
+    int fast_fallback_used_faces;
+    int fast_fallback_failed_faces;
+    int fast_fallback_triangles;
+    int full_fast_fallback_used;
+    fastf_t max_surface_deviation;
+    fastf_t rms_surface_deviation;
+    fastf_t allowed_surface_deviation;
+    fastf_t area_change_percent;
+};
+
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0}
 
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
@@ -115,6 +175,23 @@ ON_Brep_CDT_Brep(struct ON_Brep_CDT_State *s);
  * last Tessellate call, the old tessellation information will be replaced. */
 extern BREP_EXPORT int
 ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s, int face_cnt, int *faces);
+
+/**
+ * Attempt an explicitly bounded mesh repair after tessellation left a
+ * partial or non-solid mesh.  The original failed-face diagnostics remain
+ * available as repair provenance.  A repaired result is accepted only when
+ * it is a closed, oriented manifold with valid vertex links, nondegenerate
+ * triangles, no nonadjacent triangle intersections, bounded area change, and
+ * sampled deviation from the source B-Rep within the requested tolerance.
+ *
+ * Returns 1 if the state already contains a certified solid, 0 if repair
+ * produced a certified approximation, and -1 if repair was not possible or
+ * did not satisfy all postconditions.
+ */
+extern BREP_EXPORT int
+ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s,
+	const struct brep_cdt_repair_settings *settings,
+	struct brep_cdt_repair_report *report);
 
 /* Given a state, report the status of its triangulation. -3 indicates a
  * failed attempt to tessellate, -2 indicates a non-solid tessellation is
