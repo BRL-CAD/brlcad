@@ -517,8 +517,11 @@ bg_trimesh_repair(
  * limit with fill_holes enabled permits holes of any area, subject to
  * max_hole_edges.  A zero max_hole_edges permits any boundary length.
  * union_components requests a regularized Manifold union of closed output
- * components, resolving bounded overlaps and contacts; it is disabled by
+ * components, resolving compatible bounded overlaps; it is disabled by
  * default because it may change connectivity and triangulation.
+ * separate_touching_vertices moves disconnected duplicate-coordinate fans
+ * apart along their area-weighted normals by no more than vertex_tolerance.
+ * It is disabled by default because it changes vertex positions.
  */
 struct bg_trimesh_repair_settings {
     fastf_t vertex_tolerance;
@@ -530,11 +533,12 @@ struct bg_trimesh_repair_settings {
     fastf_t max_hole_area_percent;
     size_t max_hole_edges;
     int max_iterations;
+    int separate_touching_vertices;
     int union_components;
     int require_solid;
 };
 
-#define BG_TRIMESH_REPAIR_SETTINGS_INIT {0.0, 0, 0.0, 0.0, 0, 0.0, 0.0, 0, 10, 0, 1}
+#define BG_TRIMESH_REPAIR_SETTINGS_INIT {0.0, 0, 0.0, 0.0, 0, 0.0, 0.0, 0, 10, 0, 0, 1}
 
 /** Summary of the operations performed by bg_trimesh_repair2. */
 struct bg_trimesh_repair_report {
@@ -545,6 +549,7 @@ struct bg_trimesh_repair_report {
     int removed_faces;
     int added_faces;
     int repair_iterations;
+    int separated_vertices;
     int component_union_applied;
     int solid;
     fastf_t input_area;
@@ -553,15 +558,16 @@ struct bg_trimesh_repair_report {
     fastf_t max_vertex_displacement;
 };
 
-#define BG_TRIMESH_REPAIR_REPORT_INIT {0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0}
+#define BG_TRIMESH_REPAIR_REPORT_INIT {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0}
 
 /**
  * Attempt a bounded, explicitly configured triangle mesh repair.
  *
- * All current operations preserve input vertex positions: welding selects an
- * existing representative, topology splitting duplicates an existing point,
- * and hole filling triangulates existing boundary vertices.  Consequently
- * max_vertex_displacement is zero for successful results.
+ * Unless separate_touching_vertices is enabled, current operations preserve
+ * input vertex positions: welding selects an existing representative,
+ * topology splitting duplicates an existing point, and hole filling
+ * triangulates existing boundary vertices.  The report records the maximum
+ * displacement when point-contact separation is requested.
  *
  * @return 1 if the input was already solid, 0 if repair produced an accepted
  * output, and -1 on invalid input or if the requested postconditions were not
