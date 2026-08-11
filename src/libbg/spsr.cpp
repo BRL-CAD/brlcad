@@ -127,7 +127,9 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
 	    !(spsr_opts->samples_per_node > 0.0) ||
 	    !std::isfinite(spsr_opts->samples_per_node) ||
 	    !(spsr_opts->scale > 0.0) ||
-	    !std::isfinite(spsr_opts->scale)))
+	    !std::isfinite(spsr_opts->scale) ||
+	    !(spsr_opts->point_weight >= 0.0) ||
+	    !std::isfinite(spsr_opts->point_weight)))
 	return -1;
     for (int i = 0; i < num_input_pnts; ++i) {
 	double normal_squared = 0.0;
@@ -175,6 +177,7 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
     solverParams.samplesPerNode =
 	(spsr_opts) ? spsr_opts->samples_per_node : 1.5;
     solverParams.scale = (spsr_opts) ? spsr_opts->scale : 1.1;
+    solverParams.pointWeight = (spsr_opts) ? spsr_opts->point_weight : 8.0;
     solverParams.exactInterpolation =
 	spsr_opts ? spsr_opts->exact != 0 : true;
 
