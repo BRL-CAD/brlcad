@@ -273,7 +273,8 @@ static int
 detria_result(int **faces, int *num_faces, point2d_t **out_pts,
 	int *num_outpts, const std::vector<detria::PointD> &points,
 	const std::vector<std::vector<int>> &outlines,
-	const std::vector<std::vector<int>> &holes)
+	const std::vector<std::vector<int>> &holes,
+	const std::vector<std::pair<int, int>> &interior_constraints = {})
 {
     if (points.size() < 3 || outlines.empty())
 	return BRLCAD_ERROR;
@@ -288,6 +289,8 @@ detria_result(int **faces, int *num_faces, point2d_t **out_pts,
 	tri.addOutline(outline);
     for (const std::vector<int> &hole : holes)
 	tri.addHole(hole);
+    for (const std::pair<int, int> &constraint : interior_constraints)
+	tri.setConstrainedEdge(constraint.first, constraint.second);
 
     bool success = false;
     try {
@@ -308,7 +311,7 @@ detria_result(int **faces, int *num_faces, point2d_t **out_pts,
 	return BRLCAD_ERROR;
 
     if (!detria_postconditions(conditioned, outlines, holes,
-	    std::vector<std::pair<int, int>>(), triangles))
+	    interior_constraints, triangles))
 	return BRLCAD_ERROR;
 
     int *new_faces = (int *)bu_calloc(triangles.size(), sizeof(int),
@@ -441,11 +444,12 @@ deduplicated_detria(int **faces, int *num_faces, point2d_t **out_pts,
  * collapse duplicates, split intersections, merge overlapping holes, and
  * return an explicit outer/hole hierarchy. */
 int
-bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
+bg_nested_poly_triangulate_clean_constraints(int **faces, int *num_faces,
 	point2d_t **out_pts,
 	int *num_outpts, const int *poly, const size_t poly_pnts,
 	const int **holes_array, const size_t *holes_npts,
 	const size_t nholes, const int *steiner, const size_t steiner_npts,
+	const int *constraints, const size_t constraint_cnt,
 	const point2d_t *pts, const size_t npts)
 {
     if (!faces || !num_faces || !out_pts || !num_outpts || !poly ||
@@ -454,6 +458,8 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
     if (nholes && (!holes_npts || !holes_array))
 	return BRLCAD_ERROR;
     if (steiner_npts && !steiner)
+	return BRLCAD_ERROR;
+    if (constraint_cnt && !constraints)
 	return BRLCAD_ERROR;
 
     *faces = NULL;
@@ -470,6 +476,10 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
     }
     for (size_t i = 0; i < steiner_npts; i++)
 	active.insert(steiner[i]);
+    for (size_t i = 0; i < constraint_cnt; ++i) {
+	active.insert(constraints[2 * i]);
+	active.insert(constraints[2 * i + 1]);
+    }
 
     double min_x = INFINITY;
     double min_y = INFINITY;
@@ -499,7 +509,8 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
      * coordinates and unconstrained samples lying on constrained edges.  Try
      * removing only those points first, preserving all original loop points. */
     const double boundary_tol = 2.0 / scale;
-    if (deduplicated_detria(faces, num_faces, out_pts, num_outpts,
+
+    if (!constraint_cnt && deduplicated_detria(faces, num_faces, out_pts, num_outpts,
 	    poly, poly_pnts, holes_array, holes_npts, nholes, steiner,
 	    steiner_npts, pts, boundary_tol) == BRLCAD_OK)
 	return BRLCAD_OK;
@@ -561,13 +572,11 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
     }
 
     std::vector<detria::PointD> tri_points;
+    std::vector<ClipperLib::IntPoint> tri_integer_points;
     std::map<std::pair<ClipperLib::cInt, ClipperLib::cInt>, int>
 	point_indices;
-    std::vector<std::vector<int>> outlines;
-    std::vector<std::vector<int>> holes;
+    std::map<const ClipperLib::PolyNode *, std::vector<int>> node_contours;
     std::vector<ClipperLib::Path> boundary_paths;
-    outlines.reserve((size_t)clipped.Total());
-    holes.reserve((size_t)clipped.Total());
     boundary_paths.reserve((size_t)clipped.Total());
 
     auto point_index = [&](const ClipperLib::IntPoint &p) {
@@ -580,8 +589,102 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	np.y = (double)p.Y / scale + origin_y;
 	const int index = (int)tri_points.size();
 	tri_points.push_back(np);
+	tri_integer_points.push_back(p);
 	point_indices[key] = index;
 	return index;
+    };
+
+    /* Clipper correctly cancels retraced and overlapping contour segments,
+     * but it may omit collinear vertices from the surviving segment.  Those
+     * vertices are shared B-Rep boundary samples in downstream callers.
+     * Index the original boundary points and reinsert every one which lies
+     * on a cleaned contour edge, in edge order. */
+    std::vector<ClipperLib::IntPoint> input_boundary_points;
+    std::set<std::pair<ClipperLib::cInt, ClipperLib::cInt>>
+	input_boundary_keys;
+    const auto add_input_boundary_point = [&](int input_index) {
+	ClipperLib::IntPoint point(
+	    (ClipperLib::cInt)std::llround(
+		(pts[input_index][X] - origin_x) * scale),
+	    (ClipperLib::cInt)std::llround(
+		(pts[input_index][Y] - origin_y) * scale));
+	const std::pair<ClipperLib::cInt, ClipperLib::cInt> key(
+	    point.X, point.Y);
+	if (input_boundary_keys.insert(key).second)
+	    input_boundary_points.push_back(point);
+    };
+    for (size_t i = 0; i < poly_pnts; ++i)
+	add_input_boundary_point(poly[i]);
+    for (size_t hole = 0; hole < nholes; ++hole) {
+	for (size_t i = 0; i < holes_npts[hole]; ++i)
+	    add_input_boundary_point(holes_array[hole][i]);
+    }
+    RTree<size_t, double, 2> input_boundary_index;
+    for (size_t i = 0; i < input_boundary_points.size(); ++i) {
+	const double location[2] = {
+	    (double)input_boundary_points[i].X,
+	    (double)input_boundary_points[i].Y
+	};
+	input_boundary_index.Insert(location, location, i);
+    }
+    const auto collect_boundary_point = [](size_t point, void *context) {
+	std::vector<size_t> *points = (std::vector<size_t> *)context;
+	points->push_back(point);
+	return true;
+    };
+    const auto append_clean_edge = [&](std::vector<int> &contour,
+	    const ClipperLib::IntPoint &first,
+	    const ClipperLib::IntPoint &second) {
+	const int first_index = point_index(first);
+	if (contour.empty() || contour.back() != first_index)
+	    contour.push_back(first_index);
+	const double minimum[2] = {
+	    (double)std::min(first.X, second.X),
+	    (double)std::min(first.Y, second.Y)
+	};
+	const double maximum[2] = {
+	    (double)std::max(first.X, second.X),
+	    (double)std::max(first.Y, second.Y)
+	};
+	std::vector<size_t> candidates;
+	input_boundary_index.Search(minimum, maximum,
+	    collect_boundary_point, &candidates);
+	struct ordered_point {
+	    long double parameter;
+	    ClipperLib::IntPoint point;
+	};
+	std::vector<ordered_point> ordered;
+	const long double dx = (long double)second.X - first.X;
+	const long double dy = (long double)second.Y - first.Y;
+	for (size_t candidate : candidates) {
+	    if (candidate >= input_boundary_points.size())
+		continue;
+	    const ClipperLib::IntPoint &point =
+		input_boundary_points[candidate];
+	    if (!clipper_point_on_segment(point, first, second) ||
+		    clipper_same_point(point, first) ||
+		    clipper_same_point(point, second))
+		continue;
+	    const long double parameter =
+		((long double)point.X - first.X) * dx +
+		((long double)point.Y - first.Y) * dy;
+	    ordered.push_back({parameter, point});
+	}
+	std::sort(ordered.begin(), ordered.end(),
+	    [](const ordered_point &a, const ordered_point &b) {
+		if (a.parameter < b.parameter)
+		    return true;
+		if (b.parameter < a.parameter)
+		    return false;
+		if (a.point.X != b.point.X)
+		    return a.point.X < b.point.X;
+		return a.point.Y < b.point.Y;
+	    });
+	for (const ordered_point &point : ordered) {
+	    const int index = point_index(point.point);
+	    if (contour.empty() || contour.back() != index)
+		contour.push_back(index);
+	}
     };
 
     for (ClipperLib::PolyNode *node = clipped.GetFirst(); node;
@@ -590,22 +693,33 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	    continue;
 	std::vector<int> contour;
 	contour.reserve(node->Contour.size());
-	for (const ClipperLib::IntPoint &p : node->Contour) {
-	    const int index = point_index(p);
-	    if (contour.empty() || contour.back() != index)
-		contour.push_back(index);
-	}
+	for (size_t i = 0; i < node->Contour.size(); ++i)
+	    append_clean_edge(contour, node->Contour[i],
+		node->Contour[(i + 1) % node->Contour.size()]);
 	if (contour.size() > 1 && contour.front() == contour.back())
 	    contour.pop_back();
+	std::set<int> seen_contour_points;
+	std::vector<int> simple_contour;
+	simple_contour.reserve(contour.size());
+	for (int point : contour) {
+	    if (seen_contour_points.insert(point).second)
+		simple_contour.push_back(point);
+	}
+	contour.swap(simple_contour);
 	if (contour.size() < 3)
 	    continue;
-	if (node->IsHole())
-	    holes.push_back(std::move(contour));
-	else
-	    outlines.push_back(std::move(contour));
+	node_contours[node] = std::move(contour);
 	boundary_paths.push_back(node->Contour);
     }
-    if (outlines.empty())
+
+    bool have_outline = false;
+    for (const auto &entry : node_contours) {
+	if (!entry.first->IsHole()) {
+	    have_outline = true;
+	    break;
+	}
+    }
+    if (!have_outline)
 	return BRLCAD_ERROR;
 
     for (size_t i = 0; i < steiner_npts; i++) {
@@ -656,8 +770,295 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	}
     }
 
-    return detria_result(faces, num_faces, out_pts, num_outpts, tri_points,
-	outlines, holes);
+    /* Retain only constraint endpoints which survived contour cleanup.  An
+     * endpoint on a canceled retrace is intentionally absent.  Component
+     * membership and boundary crossings are checked again below before a
+     * surviving edge is given to detria. */
+    std::vector<std::pair<int, int>> cleaned_constraints;
+    std::set<std::pair<int, int>> unique_cleaned_constraints;
+    for (size_t i = 0; i < constraint_cnt; ++i) {
+	const int first_input = constraints[2 * i];
+	const int second_input = constraints[2 * i + 1];
+	if (first_input < 0 || second_input < 0 ||
+		(size_t)first_input >= npts ||
+		(size_t)second_input >= npts)
+	    return BRLCAD_ERROR;
+	const std::pair<ClipperLib::cInt, ClipperLib::cInt> first_key(
+	    (ClipperLib::cInt)std::llround(
+		(pts[first_input][X] - origin_x) * scale),
+	    (ClipperLib::cInt)std::llround(
+		(pts[first_input][Y] - origin_y) * scale));
+	const std::pair<ClipperLib::cInt, ClipperLib::cInt> second_key(
+	    (ClipperLib::cInt)std::llround(
+		(pts[second_input][X] - origin_x) * scale),
+	    (ClipperLib::cInt)std::llround(
+		(pts[second_input][Y] - origin_y) * scale));
+	const auto first = point_indices.find(first_key);
+	const auto second = point_indices.find(second_key);
+	if (first == point_indices.end() || second == point_indices.end() ||
+		first->second == second->second)
+	    continue;
+	const std::pair<int, int> edge = first->second < second->second ?
+	    std::make_pair(first->second, second->second) :
+	    std::make_pair(second->second, first->second);
+	if (unique_cleaned_constraints.insert(edge).second)
+	    cleaned_constraints.push_back(edge);
+    }
+
+    /* A strictly-simple Clipper result may contain several filled
+     * components which touch at a vertex.  detria's multi-outline mode does
+     * not represent that hierarchy reliably, so triangulate every filled
+     * PolyNode with only its direct hole children.  Islands nested inside a
+     * hole are filled nodes in their own right and are handled separately. */
+    std::vector<int> combined_faces;
+    for (ClipperLib::PolyNode *node = clipped.GetFirst(); node;
+	    node = node->GetNext()) {
+	if (node->IsHole())
+	    continue;
+	const auto outline_entry = node_contours.find(node);
+	if (outline_entry == node_contours.end() ||
+		outline_entry->second.size() < 3)
+	    continue;
+
+	std::vector<const ClipperLib::PolyNode *> hole_nodes;
+	std::vector<std::vector<int>> component_holes;
+	for (ClipperLib::PolyNode *child : node->Childs) {
+	    const auto hole_entry = node_contours.find(child);
+	    if (!child->IsHole() || hole_entry == node_contours.end() ||
+		    hole_entry->second.size() < 3)
+		continue;
+	    hole_nodes.push_back(child);
+	    component_holes.push_back(hole_entry->second);
+	}
+
+	std::vector<int> local_to_global;
+	std::map<int, int> global_to_local;
+	const auto add_component_point = [&](int global_index) {
+	    const auto existing = global_to_local.find(global_index);
+	    if (existing != global_to_local.end())
+		return existing->second;
+	    const int local_index = (int)local_to_global.size();
+	    local_to_global.push_back(global_index);
+	    global_to_local[global_index] = local_index;
+	    return local_index;
+	};
+	std::vector<int> local_outline;
+	local_outline.reserve(outline_entry->second.size());
+	for (int point : outline_entry->second)
+	    local_outline.push_back(add_component_point(point));
+	std::vector<std::vector<int>> local_holes(component_holes.size());
+	for (size_t hole = 0; hole < component_holes.size(); ++hole) {
+	    local_holes[hole].reserve(component_holes[hole].size());
+	    for (int point : component_holes[hole])
+		local_holes[hole].push_back(add_component_point(point));
+	}
+
+	for (size_t point = 0; point < tri_integer_points.size(); ++point) {
+	    if (global_to_local.find((int)point) != global_to_local.end())
+		continue;
+	    if (ClipperLib::PointInPolygon(tri_integer_points[point],
+		    node->Contour) != 1)
+		continue;
+	    bool inside_hole = false;
+	    for (const ClipperLib::PolyNode *hole : hole_nodes) {
+		if (ClipperLib::PointInPolygon(tri_integer_points[point],
+			hole->Contour) == 1) {
+		    inside_hole = true;
+		    break;
+		}
+	    }
+	    if (!inside_hole)
+		(void)add_component_point((int)point);
+	}
+	std::vector<detria::PointD> local_points;
+	local_points.reserve(local_to_global.size());
+	for (int global_index : local_to_global)
+	    local_points.push_back(tri_points[(size_t)global_index]);
+
+	std::set<std::pair<int, int>> local_boundary_edges;
+	std::vector<std::pair<int, int>> local_boundary_segments;
+	const auto index_local_boundary = [&](const std::vector<int> &ring) {
+	    for (size_t i = 0; i < ring.size(); ++i) {
+		const int first = ring[i];
+		const int second = ring[(i + 1) % ring.size()];
+		const std::pair<int, int> edge = first < second ?
+		    std::make_pair(first, second) :
+		    std::make_pair(second, first);
+		local_boundary_edges.insert(edge);
+		local_boundary_segments.push_back(std::make_pair(first, second));
+	    }
+	};
+	index_local_boundary(local_outline);
+	for (const std::vector<int> &hole : local_holes)
+	    index_local_boundary(hole);
+	const auto orient = [&](int first, int second, int point) {
+	    const long double abx = (long double)local_points[second].x -
+		local_points[first].x;
+	    const long double aby = (long double)local_points[second].y -
+		local_points[first].y;
+	    const long double acx = (long double)local_points[point].x -
+		local_points[first].x;
+	    const long double acy = (long double)local_points[point].y -
+		local_points[first].y;
+	    const long double cross = abx * acy - aby * acx;
+	    return (cross > 0.0L) - (cross < 0.0L);
+	};
+	const auto on_segment = [&](int point, int first, int second) {
+	    if (orient(first, second, point))
+		return false;
+	    return local_points[point].x >= std::min(local_points[first].x,
+		local_points[second].x) &&
+		local_points[point].x <= std::max(local_points[first].x,
+		local_points[second].x) &&
+		local_points[point].y >= std::min(local_points[first].y,
+		local_points[second].y) &&
+		local_points[point].y <= std::max(local_points[first].y,
+		local_points[second].y);
+	};
+	const auto segments_intersect = [&](const std::pair<int, int> &first,
+		const std::pair<int, int> &second) {
+	    const int o1 = orient(first.first, first.second, second.first);
+	    const int o2 = orient(first.first, first.second, second.second);
+	    const int o3 = orient(second.first, second.second, first.first);
+	    const int o4 = orient(second.first, second.second, first.second);
+	    if (!o1 && on_segment(second.first, first.first, first.second))
+		return true;
+	    if (!o2 && on_segment(second.second, first.first, first.second))
+		return true;
+	    if (!o3 && on_segment(first.first, second.first, second.second))
+		return true;
+	    if (!o4 && on_segment(first.second, second.first, second.second))
+		return true;
+	    return o1 * o2 < 0 && o3 * o4 < 0;
+	};
+	const auto point_in_ring = [&](long double x, long double y,
+		const std::vector<int> &ring) {
+	    bool inside = false;
+	    for (size_t i = 0, j = ring.size() - 1; i < ring.size();
+		    j = i++) {
+		const detria::PointD &first = local_points[(size_t)ring[i]];
+		const detria::PointD &second = local_points[(size_t)ring[j]];
+		if (((first.y > y) != (second.y > y)) &&
+			x < ((long double)second.x - first.x) *
+			(y - first.y) / ((long double)second.y - first.y) +
+			first.x)
+		    inside = !inside;
+	    }
+	    return inside;
+	};
+	std::vector<std::pair<int, int>> local_constraints;
+	for (const std::pair<int, int> &constraint : cleaned_constraints) {
+	    const auto first = global_to_local.find(constraint.first);
+	    const auto second = global_to_local.find(constraint.second);
+	    if (first == global_to_local.end() ||
+		    second == global_to_local.end() ||
+		    first->second == second->second)
+		continue;
+	    const std::pair<int, int> edge = first->second < second->second ?
+		std::make_pair(first->second, second->second) :
+		std::make_pair(second->second, first->second);
+	    if (local_boundary_edges.find(edge) != local_boundary_edges.end())
+		continue;
+	    const long double midpoint_x = 0.5L *
+		(local_points[(size_t)edge.first].x +
+		local_points[(size_t)edge.second].x);
+	    const long double midpoint_y = 0.5L *
+		(local_points[(size_t)edge.first].y +
+		local_points[(size_t)edge.second].y);
+	    if (!point_in_ring(midpoint_x, midpoint_y, local_outline))
+		continue;
+	    bool rejected = false;
+	    for (const std::vector<int> &hole : local_holes) {
+		if (point_in_ring(midpoint_x, midpoint_y, hole)) {
+		    rejected = true;
+		    break;
+		}
+	    }
+	    for (const std::pair<int, int> &boundary : local_boundary_segments) {
+		if (rejected)
+		    break;
+		if (edge.first == boundary.first ||
+			edge.first == boundary.second ||
+			edge.second == boundary.first ||
+			edge.second == boundary.second)
+		    continue;
+		if (segments_intersect(edge, boundary))
+		    rejected = true;
+	    }
+	    for (const std::pair<int, int> &accepted : local_constraints) {
+		if (rejected)
+		    break;
+		if (edge.first == accepted.first ||
+			edge.first == accepted.second ||
+			edge.second == accepted.first ||
+			edge.second == accepted.second)
+		    continue;
+		if (segments_intersect(edge, accepted))
+		    rejected = true;
+	    }
+	    if (!rejected)
+		local_constraints.push_back(edge);
+	}
+	int *local_faces = NULL;
+	int local_face_count = 0;
+	point2d_t *local_output_points = NULL;
+	int local_output_point_count = 0;
+	const std::vector<std::vector<int>> local_outlines(1,
+	    local_outline);
+	const int status = detria_result(&local_faces, &local_face_count,
+	    &local_output_points, &local_output_point_count, local_points,
+	    local_outlines, local_holes, local_constraints);
+	if (status != BRLCAD_OK || !local_faces || local_face_count <= 0 ||
+		!local_output_points || local_output_point_count !=
+		(int)local_to_global.size()) {
+	    if (local_faces)
+		bu_free(local_faces, "component detria faces");
+	    if (local_output_points)
+		bu_free(local_output_points, "component detria points");
+	    return BRLCAD_ERROR;
+	}
+	for (int i = 0; i < 3 * local_face_count; ++i) {
+	    const int local_index = local_faces[i];
+	    if (local_index < 0 ||
+		    (size_t)local_index >= local_to_global.size()) {
+		bu_free(local_faces, "component detria faces");
+		bu_free(local_output_points, "component detria points");
+		return BRLCAD_ERROR;
+	    }
+	    combined_faces.push_back(local_to_global[(size_t)local_index]);
+	}
+	bu_free(local_faces, "component detria faces");
+	bu_free(local_output_points, "component detria points");
+    }
+    if (combined_faces.empty() || combined_faces.size() % 3 ||
+	    combined_faces.size() >
+	    (size_t)std::numeric_limits<int>::max() * 3 ||
+	    tri_points.size() > (size_t)std::numeric_limits<int>::max())
+	return BRLCAD_ERROR;
+
+    *faces = (int *)bu_calloc(combined_faces.size(), sizeof(int),
+	"sanitized component detria faces");
+    std::copy(combined_faces.begin(), combined_faces.end(), *faces);
+    *num_faces = (int)(combined_faces.size() / 3);
+    *out_pts = (point2d_t *)bu_calloc(tri_points.size(),
+	sizeof(point2d_t), "sanitized component detria points");
+    for (size_t i = 0; i < tri_points.size(); ++i)
+	V2SET((*out_pts)[i], tri_points[i].x, tri_points[i].y);
+    *num_outpts = (int)tri_points.size();
+    return BRLCAD_OK;
+}
+
+int
+bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
+	point2d_t **out_pts, int *num_outpts,
+	const int *poly, const size_t poly_pnts,
+	const int **holes_array, const size_t *holes_npts,
+	const size_t nholes, const int *steiner, const size_t steiner_npts,
+	const point2d_t *pts, const size_t npts)
+{
+    return bg_nested_poly_triangulate_clean_constraints(faces, num_faces,
+	out_pts, num_outpts, poly, poly_pnts, holes_array, holes_npts,
+	nholes, steiner, steiner_npts, NULL, 0, pts, npts);
 }
 
 
