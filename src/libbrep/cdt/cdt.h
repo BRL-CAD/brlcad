@@ -173,7 +173,8 @@ struct ON_Brep_CDT_State {
 };
 
 ON_3dVector calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim);
-bool initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt);
+bool initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, char *message,
+	size_t message_size);
 bool initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt);
 bool split_edges_at_surface_poles(struct ON_Brep_CDT_State *s_cdt,
     char *failure_message, size_t failure_message_size);

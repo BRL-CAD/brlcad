@@ -1107,12 +1107,64 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg,
     const ON_2dPoint trim1_end = trim1->PointAt(bseg->tseg1->trim_end);
     const ON_2dPoint trim2_start = trim2->PointAt(bseg->tseg2->trim_start);
     const ON_2dPoint trim2_end = trim2->PointAt(bseg->tseg2->trim_end);
-    if (!split_parameter_interior(bseg->tseg1->trim_start,
-	    bseg->tseg1->trim_end, t1mid) ||
-	    !split_parameter_interior(bseg->tseg2->trim_start,
-	    bseg->tseg2->trim_end, t2mid) ||
-	    !split_point_progress(trim1_start, trim1_mid_2d, trim1_end) ||
-	    !split_point_progress(trim2_start, trim2_mid_2d, trim2_end))
+    bool trim_progress = split_parameter_interior(
+	    bseg->tseg1->trim_start,
+	    bseg->tseg1->trim_end, t1mid) &&
+	    split_parameter_interior(bseg->tseg2->trim_start,
+	    bseg->tseg2->trim_end, t2mid) &&
+	    split_point_progress(trim1_start, trim1_mid_2d, trim1_end) &&
+	    split_point_progress(trim2_start, trim2_mid_2d, trim2_end);
+
+    /* Some imported edges retain a corrupt 3-D edge curve even though their
+     * two p-curves agree geometrically.  In that case projection of the bad
+     * curve midpoint lands on p-curve endpoints and cannot subdivide either
+     * face.  Use paired p-curve midpoints as the shared geometric authority
+     * only when their surface evaluations agree within the declared edge
+     * tolerance (never more than BN_TOL_DIST). */
+    if (!trim_progress && !shared_point) {
+	const double fallback_t1 = 0.5 * (bseg->tseg1->trim_start +
+	    bseg->tseg1->trim_end);
+	const double fallback_t2 = 0.5 * (bseg->tseg2->trim_start +
+	    bseg->tseg2->trim_end);
+	const ON_2dPoint fallback_uv1 = trim1->PointAt(fallback_t1);
+	const ON_2dPoint fallback_uv2 = trim2->PointAt(fallback_t2);
+	const ON_Surface *surface1 = trim1->SurfaceOf();
+	const ON_Surface *surface2 = trim2->SurfaceOf();
+	const ON_3dPoint fallback_point1 = surface1 && fallback_uv1.IsValid() ?
+	    surface1->PointAt(fallback_uv1.x, fallback_uv1.y) :
+	    ON_3dPoint::UnsetPoint;
+	const ON_3dPoint fallback_point2 = surface2 && fallback_uv2.IsValid() ?
+	    surface2->PointAt(fallback_uv2.x, fallback_uv2.y) :
+	    ON_3dPoint::UnsetPoint;
+	double agreement_tolerance = BN_TOL_DIST;
+	if (std::isfinite(edge.m_tolerance) && edge.m_tolerance > 0.0 &&
+		!NEAR_EQUAL(edge.m_tolerance, ON_UNSET_VALUE,
+		ON_ZERO_TOLERANCE))
+	    agreement_tolerance = std::min(agreement_tolerance,
+		edge.m_tolerance);
+	const ON_3dPoint fallback_point = 0.5 *
+	    (fallback_point1 + fallback_point2);
+	if (split_parameter_interior(bseg->tseg1->trim_start,
+		bseg->tseg1->trim_end, fallback_t1) &&
+		split_parameter_interior(bseg->tseg2->trim_start,
+		bseg->tseg2->trim_end, fallback_t2) &&
+		split_point_progress(trim1_start, fallback_uv1, trim1_end) &&
+		split_point_progress(trim2_start, fallback_uv2, trim2_end) &&
+		fallback_point1.IsValid() && fallback_point2.IsValid() &&
+		fallback_point1.DistanceTo(fallback_point2) <=
+		agreement_tolerance &&
+		split_point_progress(*bseg->e_start, fallback_point,
+		*bseg->e_end)) {
+	    t1mid = fallback_t1;
+	    t2mid = fallback_t2;
+	    trim1_mid_2d = fallback_uv1;
+	    trim2_mid_2d = fallback_uv2;
+	    edge_mid_3d = fallback_point;
+	    edge_mid_tan = ON_3dVector::UnsetVector;
+	    trim_progress = true;
+	}
+    }
+    if (!trim_progress)
 	return nedges;
 
     /* UV samples must remain on their trims so adjacent faces retain exactly
@@ -1379,7 +1431,8 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *ce, int update_
 // beginning regardless of tolerance settings.  Do them up front so the subsequent
 // working set has consistent properties.
 bool
-initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
+initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, char *message,
+	size_t message_size)
 {
     std::map<int, std::set<bedge_seg_t *>>::iterator epoly_it;
     for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
@@ -1394,9 +1447,21 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 	    ON_BrepTrim *trim2 = edge.Trim(1);
 	    std::set<bedge_seg_t *> esegs_closed;
 
-	    if (!trim1 || !trim2) return false;
+	    if (!trim1 || !trim2) {
+		if (message && message_size)
+		    snprintf(message, message_size,
+			"B-Rep edge %d is missing one of its two trims",
+			edge.m_edge_index);
+		return false;
+	    }
 
-	    if (edge_has_singular_trim(trim1, trim2)) return false;
+	    if (edge_has_singular_trim(trim1, trim2)) {
+		if (message && message_size)
+		    snprintf(message, message_size,
+			"B-Rep edge %d has an unexpected singular trim",
+			edge.m_edge_index);
+		return false;
+	    }
 
 	    // 1.  Any edges with at least 1 closed trim are split.
 	    if (trim1->IsClosed() || trim2->IsClosed()) {
@@ -1404,6 +1469,10 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 		if (!esegs_closed.size()) {
 		    // split failed??  On a closed edge this is fatal - we must split it
 		    // to work with it at all
+		    if (message && message_size)
+			snprintf(message, message_size,
+			    "closed B-Rep edge %d could not be split",
+			    edge.m_edge_index);
 		    return false;
 		}
 	    } else {
@@ -1421,6 +1490,10 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 			// split failed??  On a curved edge we must split at least once to
 			// avoid potentially degenerate polygons (if we had to split a closed
 			// loop from step 1, for example;
+			if (message && message_size)
+			    snprintf(message, message_size,
+				"curved B-Rep edge %d could not be split",
+				edge.m_edge_index);
 			return false;
 		    } else {
 			// To avoid representing circles with squares, split curved segments
