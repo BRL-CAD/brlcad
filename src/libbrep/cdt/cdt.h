@@ -37,6 +37,7 @@
 #include <iostream>
 #include <algorithm>
 #include <set>
+#include <unordered_map>
 #include <utility>
 
 #include "../../libbg/RTree.h"
@@ -76,15 +77,13 @@
  * value from the GED 'tol' command */
 #define BREP_CDT_DEFAULT_TOL_REL 0.01
 
-/* this is a debugging structure - it holds origin information for
- * a point added to the CDT state */
+/* Origin information used for tolerance checks and failure diagnostics. */
 struct cdt_audit_info {
     int face_index;
     int vert_index;
     int trim_index;
     int edge_index;
     ON_2dPoint surf_uv;
-    ON_3dPoint vert_pnt; // For auditing normals
 };
 
 struct brep_cdt_tol {
@@ -142,7 +141,20 @@ struct ON_Brep_CDT_State {
     std::map<int, ON_3dPoint *> *bot_pnt_to_on_pnt;
     std::vector<int> bot_face_to_brep_face;
     std::vector<size_t> bot_face_to_cdt_triangle;
-    std::map<ON_3dPoint *, struct cdt_audit_info *> *pnt_audit_info;
+    std::unordered_map<ON_3dPoint *, struct cdt_audit_info> *pnt_audit_info;
+
+    /* A successful full tessellation has already paid for assembly,
+     * orientation synchronization, and solid validation.  Retain that
+     * certified export so callers do not repeat those full-mesh operations
+     * while all face-local state is still resident. */
+    int *certified_faces;
+    int certified_face_count;
+    fastf_t *certified_vertices;
+    int certified_vertex_count;
+    int *certified_face_normals;
+    int certified_face_normal_count;
+    fastf_t *certified_normals;
+    int certified_normal_count;
 
     /* Face specific data */
     std::map<int, cdt_mesh_t> fmeshes;

@@ -40,6 +40,32 @@ mesh_get(mesh_output &output, struct ON_Brep_CDT_State *state)
     return true;
 }
 
+static bool
+normal_mesh_get(struct ON_Brep_CDT_State *state)
+{
+    int *faces = NULL;
+    fastf_t *vertices = NULL;
+    int *face_normals = NULL;
+    fastf_t *normals = NULL;
+    int face_count = 0;
+    int vertex_count = 0;
+    int face_normal_count = 0;
+    int normal_count = 0;
+    if (ON_Brep_CDT_Mesh(&faces, &face_count, &vertices, &vertex_count,
+	    &face_normals, &face_normal_count, &normals, &normal_count,
+	    state, 0, NULL) < 0)
+	return false;
+    bool valid = face_count > 0 && vertex_count > 0 &&
+	face_normal_count == face_count && normal_count > 0;
+    for (int i = 0; valid && i < face_normal_count * 3; ++i)
+	valid = face_normals[i] >= 0 && face_normals[i] < normal_count;
+    bu_free(faces, "contract normal test faces");
+    bu_free(vertices, "contract normal test vertices");
+    bu_free(face_normals, "contract normal test face normals");
+    bu_free(normals, "contract normal test normals");
+    return valid;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -86,6 +112,10 @@ main(int argc, const char **argv)
 	ON_Brep_CDT_Face_Diagnostic(NULL, 0, state) == -1;
     mesh_output first;
     first_ok = first_ok && mesh_get(first, state) && !first.faces.empty();
+    mesh_output repeated;
+    first_ok = first_ok && mesh_get(repeated, state) &&
+	first.faces == repeated.faces && first.vertices == repeated.vertices &&
+	normal_mesh_get(state);
 
     bool second_ok = ON_Brep_CDT_Tessellate(state, 0, NULL) == 0;
     mesh_output second;

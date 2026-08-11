@@ -35,6 +35,7 @@
 #include <queue>
 #include <set>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include "bg/chull.h"
@@ -2287,10 +2288,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
     bg_free_trimesh_solid_errors(&se);
 
-    bu_free(valid_faces, "faces");
-    bu_free(valid_vertices, "vertices");
-
     if (invalid) {
+	bu_free(valid_faces, "faces");
+	bu_free(valid_vertices, "vertices");
 	s_cdt->status = BREP_CDT_NON_SOLID;
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_NON_SOLID,
 	    BREP_CDT_STAGE_SOLID_VALIDATION, -1, face_successes, 0,
@@ -2298,12 +2298,127 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	return 1;
     }
 
+    s_cdt->certified_faces = valid_faces;
+    s_cdt->certified_face_count = valid_fcnt;
+    s_cdt->certified_vertices = valid_vertices;
+    s_cdt->certified_vertex_count = valid_vcnt;
     s_cdt->status = BREP_CDT_SOLID;
     cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_SUCCESS,
 	BREP_CDT_STAGE_SOLID_VALIDATION, -1, face_successes, 0,
 	"closed indexed mesh passed incidence, link, and area validation");
     return 0;
 
+}
+
+static bool
+cache_certified_normals(struct ON_Brep_CDT_State *s_cdt)
+{
+    if (!s_cdt || !s_cdt->certified_faces ||
+	    s_cdt->certified_face_count <= 0 ||
+	    s_cdt->bot_face_to_brep_face.size() !=
+	    (size_t)s_cdt->certified_face_count ||
+	    s_cdt->bot_face_to_cdt_triangle.size() !=
+	    (size_t)s_cdt->certified_face_count)
+	return false;
+    if (s_cdt->certified_face_normals && s_cdt->certified_normals &&
+	    s_cdt->certified_face_normal_count > 0 &&
+	    s_cdt->certified_normal_count > 0)
+	return true;
+
+    const size_t corner_count =
+	(size_t)s_cdt->certified_face_count * 3;
+    std::vector<ON_3dPoint *> corner_normals(corner_count, NULL);
+    std::vector<ON_3dPoint *> ordered_normals;
+    ordered_normals.reserve(s_cdt->w3dnorms->size());
+    std::unordered_map<ON_3dPoint *, size_t> normal_order;
+    normal_order.reserve(s_cdt->w3dnorms->size());
+    std::unordered_set<ON_3dPoint *> flip_normals;
+
+    for (int face = 0; face < s_cdt->certified_face_count; ++face) {
+	const int brep_face = s_cdt->bot_face_to_brep_face[(size_t)face];
+	const size_t triangle_index =
+	    s_cdt->bot_face_to_cdt_triangle[(size_t)face];
+	const auto face_mesh = s_cdt->fmeshes.find(brep_face);
+	if (face_mesh == s_cdt->fmeshes.end() ||
+		triangle_index >= face_mesh->second.tris_vect.size())
+	    return false;
+	const cdt_mesh_t &mesh = face_mesh->second;
+	const triangle_t &triangle = mesh.tris_vect[triangle_index];
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int output_vertex =
+		s_cdt->certified_faces[(size_t)face * 3 + corner];
+	    const auto source_point =
+		s_cdt->bot_pnt_to_on_pnt->find(output_vertex);
+	    if (source_point == s_cdt->bot_pnt_to_on_pnt->end())
+		return false;
+	    int local_corner = -1;
+	    for (int candidate = 0; candidate < 3; ++candidate) {
+		const long point_index = triangle.v[candidate];
+		if (point_index >= 0 && (size_t)point_index < mesh.pnts.size() &&
+			mesh.pnts[(size_t)point_index] == source_point->second) {
+		    local_corner = candidate;
+		    break;
+		}
+	    }
+	    if (local_corner < 0)
+		return false;
+
+	    const long point_index = triangle.v[local_corner];
+	    ON_3dPoint *normal = NULL;
+	    const auto singular =
+		s_cdt->singular_vert_to_norms->find(source_point->second);
+	    if (singular != s_cdt->singular_vert_to_norms->end()) {
+		normal = singular->second;
+	    } else {
+		const auto normal_map = mesh.nmap.find(point_index);
+		if (normal_map == mesh.nmap.end() || normal_map->second < 0 ||
+			(size_t)normal_map->second >= mesh.normals.size())
+		    return false;
+		normal = mesh.normals[(size_t)normal_map->second];
+	    }
+	    if (!normal)
+		return false;
+	    corner_normals[(size_t)face * 3 + corner] = normal;
+	    if (normal_order.emplace(normal, normal_order.size()).second)
+		ordered_normals.push_back(normal);
+	    if (mesh.m_bRev)
+		flip_normals.insert(normal);
+	}
+    }
+
+    std::sort(ordered_normals.begin(), ordered_normals.end(),
+	[&normal_order](ON_3dPoint *a, ON_3dPoint *b) {
+	    if (a->x < b->x) return true;
+	    if (b->x < a->x) return false;
+	    if (a->y < b->y) return true;
+	    if (b->y < a->y) return false;
+	    if (a->z < b->z) return true;
+	    if (b->z < a->z) return false;
+	    return normal_order.at(a) < normal_order.at(b);
+	});
+    for (size_t i = 0; i < ordered_normals.size(); ++i)
+	normal_order[ordered_normals[i]] = i;
+
+    int *face_normals = (int *)bu_malloc(corner_count * sizeof(int),
+	"certified face normals");
+    fastf_t *normals = (fastf_t *)bu_malloc(ordered_normals.size() * 3 *
+	sizeof(fastf_t), "certified normals");
+    for (size_t i = 0; i < corner_count; ++i)
+	face_normals[i] = (int)normal_order.at(corner_normals[i]);
+    for (size_t i = 0; i < ordered_normals.size(); ++i) {
+	ON_3dVector normal(*ordered_normals[i]);
+	if (flip_normals.find(ordered_normals[i]) != flip_normals.end())
+	    normal = -normal;
+	normals[i * 3] = normal.x;
+	normals[i * 3 + 1] = normal.y;
+	normals[i * 3 + 2] = normal.z;
+    }
+
+    s_cdt->certified_face_normals = face_normals;
+    s_cdt->certified_face_normal_count = s_cdt->certified_face_count;
+    s_cdt->certified_normals = normals;
+    s_cdt->certified_normal_count = (int)ordered_normals.size();
+    return true;
 }
 
 // Generate a BoT with normals.
@@ -2320,9 +2435,6 @@ ON_Brep_CDT_Mesh(
     if (!faces || !fcnt || !vertices || !vcnt || !s_cdt || !s_cdt->brep) {
 	return -1;
     }
-    s_cdt->bot_face_to_brep_face.clear();
-    s_cdt->bot_face_to_cdt_triangle.clear();
-
     /* We can ignore the face normals if we want, but if some of the
      * return variables are non-NULL they all need to be non-NULL */
     if (face_normals || fn_cnt || normals || ncnt) {
@@ -2330,6 +2442,46 @@ ON_Brep_CDT_Mesh(
 	    return -1;
 	}
     }
+
+    const bool full_mesh = !exp_face_cnt || !exp_faces;
+    const bool no_normals = !face_normals && !fn_cnt && !normals && !ncnt;
+    if (full_mesh && s_cdt->status == BREP_CDT_SOLID &&
+	    s_cdt->certified_faces && s_cdt->certified_vertices &&
+	    s_cdt->certified_face_count > 0 &&
+	    s_cdt->certified_vertex_count > 0) {
+	if (!no_normals && !cache_certified_normals(s_cdt))
+	    return -1;
+	const size_t face_bytes = (size_t)s_cdt->certified_face_count * 3 *
+	    sizeof(int);
+	const size_t vertex_bytes = (size_t)s_cdt->certified_vertex_count * 3 *
+	    sizeof(fastf_t);
+	*faces = (int *)bu_malloc(face_bytes, "cached certified faces");
+	*vertices = (fastf_t *)bu_malloc(vertex_bytes,
+	    "cached certified vertices");
+	memcpy(*faces, s_cdt->certified_faces, face_bytes);
+	memcpy(*vertices, s_cdt->certified_vertices, vertex_bytes);
+	*fcnt = s_cdt->certified_face_count;
+	*vcnt = s_cdt->certified_vertex_count;
+	if (!no_normals) {
+	    const size_t face_normal_bytes =
+		(size_t)s_cdt->certified_face_normal_count * 3 * sizeof(int);
+	    const size_t normal_bytes =
+		(size_t)s_cdt->certified_normal_count * 3 * sizeof(fastf_t);
+	    *face_normals = (int *)bu_malloc(face_normal_bytes,
+		"cached certified face normals");
+	    *normals = (fastf_t *)bu_malloc(normal_bytes,
+		"cached certified normals");
+	    memcpy(*face_normals, s_cdt->certified_face_normals,
+		face_normal_bytes);
+	    memcpy(*normals, s_cdt->certified_normals, normal_bytes);
+	    *fn_cnt = s_cdt->certified_face_normal_count;
+	    *ncnt = s_cdt->certified_normal_count;
+	}
+	return 0;
+    }
+
+    s_cdt->bot_face_to_brep_face.clear();
+    s_cdt->bot_face_to_cdt_triangle.clear();
 
     std::vector<int> active_faces;
     if (!exp_face_cnt || !exp_faces) {
