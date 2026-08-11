@@ -118,7 +118,7 @@ struct bg_3d_spsr_opts {
 #define BG_3D_SPSR_DEFAULT_MAX_MEM           0
 #define BG_3D_SPSR_DEFAULT_THREADS           0
 #define BG_3D_SPSR_DEFAULT_SAMPLES_PER_NODE  1.1
-#define BG_3D_SPSR_DEFAULT_SCALE             1.0
+#define BG_3D_SPSR_DEFAULT_SCALE             1.1
 #define BG_3D_SPSR_DEFAULT_WIDTH             0.0
 #define BG_3D_SPSR_DEFAULT_CONFIDENCE        0.0
 #define BG_3D_SPSR_DEFAULT_CONFIDENCE_BIAS   0.0

@@ -99,6 +99,8 @@ struct geom_result {
     int repair_poisson_input_points = 0;
     int repair_poisson_output_points = 0;
     int repair_poisson_output_faces = 0;
+    int repair_poisson_attempts = 0;
+    double repair_poisson_scale = 0.0;
     double repair_max_deviation = 0.0;
     double repair_rms_deviation = 0.0;
     double repair_allowed_deviation = 0.0;
@@ -770,6 +772,8 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.poisson_output_points;
 	result.repair_poisson_output_faces =
 	    repair_report.poisson_output_faces;
+	result.repair_poisson_attempts = repair_report.poisson_attempts;
+	result.repair_poisson_scale = repair_report.poisson_scale;
 	result.repair_max_deviation = repair_report.max_surface_deviation;
 	result.repair_rms_deviation = repair_report.rms_surface_deviation;
 	result.repair_allowed_deviation =
@@ -1027,6 +1031,8 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.repair_poisson_output_points
 	<< ",\"poisson_output_faces\":"
 	<< result.repair_poisson_output_faces
+	<< ",\"poisson_attempts\":" << result.repair_poisson_attempts
+	<< ",\"poisson_scale\":" << result.repair_poisson_scale
 	<< ",\"max_surface_deviation\":";
     print_num(result.repair_max_deviation);
     std::cout << ",\"rms_surface_deviation\":";
