@@ -916,11 +916,23 @@ static bool
 exercise_toleranced_endpoint_sample_repair()
 {
     std::unique_ptr<ON_Brep> brep(new ON_Brep);
-    ON_PlaneSurface *surface = new ON_PlaneSurface(ON_xy_plane);
+    ON_NurbsSurface *surface = new ON_NurbsSurface(
+	3, false, 2, 2, 2, 2);
+    if (!surface->MakeClampedUniformKnotVector(0) ||
+	    !surface->MakeClampedUniformKnotVector(1)) {
+	delete surface;
+	return false;
+    }
+    surface->SetCV(0, 0, ON_3dPoint(0.0, 0.0, 0.0));
+    surface->SetCV(0, 1, ON_3dPoint(0.0, 2.0, 0.0));
+    surface->SetCV(1, 0, ON_3dPoint(2.0, 0.0, 0.0));
+    surface->SetCV(1, 1, ON_3dPoint(2.0, 2.0, 0.2));
     surface->SetDomain(0, 0.0, 2.0);
     surface->SetDomain(1, 0.0, 2.0);
-    surface->SetExtents(0, surface->Domain(0), true);
-    surface->SetExtents(1, surface->Domain(1), true);
+    if (!surface->IsValid() || surface->IsPlanar(NULL, BN_TOL_DIST)) {
+	delete surface;
+	return false;
+    }
     ON_BrepFace &face = brep->NewFace(brep->AddSurface(surface));
     const std::pair<double, double> coordinates[5] = {
 	std::make_pair(0.0, 0.0), std::make_pair(2.0, 0.0),
@@ -931,11 +943,11 @@ exercise_toleranced_endpoint_sample_repair()
 	coordinates, coordinates + 5);
     const int outer_indices[6] = {0, 1, 2, 3, 4, 0};
     std::vector<int> outer(outer_indices, outer_indices + 6);
-    ON_3dPoint source_points[5] = {
-	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(2.0, 0.0, 0.0),
-	ON_3dPoint(2.0, 1.0, 0.0), ON_3dPoint(2.0, 2.0, 0.0),
-	ON_3dPoint(0.0, 2.0, 0.0)
-    };
+    ON_3dPoint source_points[5];
+    for (size_t i = 0; i < 5; ++i)
+	source_points[i] = surface->PointAt(coordinates[i].first,
+	    coordinates[i].second);
+    source_points[2] = surface->PointAt(2.0, 1.0);
     std::vector<const ON_3dPoint *> points_3d;
     for (const ON_3dPoint &point : source_points)
 	points_3d.push_back(&point);
@@ -971,8 +983,10 @@ exercise_toleranced_endpoint_sample_repair()
     }
     if (chart.repair_toleranced_edge_endpoint_samples(edge_path,
 	    points_3d, 1.1) != 1 ||
-	    std::fabs(chart.points[2].first - 2.0) > 1.0e-12 ||
-	    std::fabs(chart.points[2].second - 1.0) > 1.0e-12) {
+	    std::fabs(chart.points[2].first - 0.5 *
+		(chart.points[1].first + chart.points[3].first)) > 1.0e-12 ||
+	    std::fabs(chart.points[2].second - 0.5 *
+		(chart.points[1].second + chart.points[3].second)) > 1.0e-12) {
 	std::cerr << "endpoint sample was not redistributed by source length"
 	    << std::endl;
 	return false;
@@ -993,6 +1007,53 @@ exercise_toleranced_endpoint_sample_repair()
     if (status != BRLCAD_OK || face_count != 3) {
 	std::cerr << "repaired endpoint sample did not triangulate: "
 	    << report.message << std::endl;
+	return false;
+    }
+    return true;
+}
+
+static bool
+exercise_planar_master_curve_embedding()
+{
+    std::unique_ptr<ON_Brep> brep(new ON_Brep);
+    ON_PlaneSurface *surface = new ON_PlaneSurface(ON_xy_plane);
+    surface->SetDomain(0, 0.0, 2.0);
+    surface->SetDomain(1, 0.0, 2.0);
+    surface->SetExtents(0, surface->Domain(0), true);
+    surface->SetExtents(1, surface->Domain(1), true);
+    ON_BrepFace &face = brep->NewFace(brep->AddSurface(surface));
+    const std::pair<double, double> coordinates[5] = {
+	std::make_pair(0.0, 0.0), std::make_pair(2.0, 0.0),
+	std::make_pair(2.0, 2.0), std::make_pair(2.0, 2.0),
+	std::make_pair(0.0, 2.0)
+    };
+    std::vector<std::pair<double, double>> native_points(
+	coordinates, coordinates + 5);
+    const int outer_indices[6] = {0, 1, 2, 3, 4, 0};
+    std::vector<int> outer(outer_indices, outer_indices + 6);
+    ON_3dPoint source_points[5] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(2.0, 0.0, 0.0),
+	ON_3dPoint(2.0, 1.0, 0.0), ON_3dPoint(2.0, 2.0, 0.0),
+	ON_3dPoint(0.0, 2.0, 0.0)
+    };
+    std::vector<const ON_3dPoint *> points_3d;
+    for (const ON_3dPoint &point : source_points)
+	points_3d.push_back(&point);
+    std::vector<cdt_topo_vertex_id> topology_vertices(5,
+	CDT_TOPOLOGY_ID_NONE);
+    topology_vertices[0] = 10;
+    topology_vertices[1] = 11;
+    topology_vertices[3] = 12;
+    topology_vertices[4] = 13;
+    cdt_face_chart chart;
+    if (!chart.build(face, native_points, outer,
+	    std::vector<std::vector<int>>(), std::vector<int>(),
+	    std::vector<int>(), points_3d, topology_vertices) ||
+	    chart.points[2] == chart.points[3] ||
+	    std::fabs(chart.points[2].first - 2.0) > 1.0e-12 ||
+	    std::fabs(chart.points[2].second - 1.0) > 1.0e-12) {
+	std::cerr << "planar chart did not preserve its master-curve samples"
+	    << std::endl;
 	return false;
     }
     return true;
@@ -1103,9 +1164,11 @@ main()
 	return 13;
     if (!exercise_toleranced_endpoint_sample_repair())
 	return 14;
-    if (!exercise_unbounded_cylinder_axis())
+    if (!exercise_planar_master_curve_embedding())
 	return 15;
-    if (!exercise_weakly_simple_cylinder())
+    if (!exercise_unbounded_cylinder_axis())
 	return 16;
+    if (!exercise_weakly_simple_cylinder())
+	return 17;
     return 0;
 }
