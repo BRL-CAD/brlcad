@@ -315,6 +315,176 @@ test_repair2_report(void)
     return 0;
 }
 
+/* Imported B-Rep edges normally retain multiple samples on each straight
+ * boundary segment.  A circle-parameterized ear can be valid in 2D while its
+ * three restored 3D vertices are collinear.  Hole filling must fall back to
+ * the geometric ear selector and still use every boundary edge. */
+static int
+test_collinear_hole_boundary(void)
+{
+    static point_t pts[12] = {
+	{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
+	{0, 0, 1}, {0.5, 0, 1}, {1, 0, 1}, {1, 0.5, 1},
+	{1, 1, 1}, {0.5, 1, 1}, {0, 1, 1}, {0, 0.5, 1}
+    };
+    static int faces[42] = {
+	0, 2, 1, 0, 3, 2,
+	0, 1, 6, 0, 6, 5, 0, 5, 4,
+	1, 2, 8, 1, 8, 7, 1, 7, 6,
+	2, 3, 10, 2, 10, 9, 2, 9, 8,
+	3, 0, 4, 3, 4, 11, 3, 11, 10
+    };
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.fill_holes = 1;
+    settings.max_hole_area_percent = 30.0;
+    settings.max_hole_edges = 16;
+    int *ofaces = NULL;
+    int n_ofaces = 0;
+    point_t *opnts = NULL;
+    int n_opnts = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts, &n_opnts,
+	faces, 14, pts, 12, &settings, &report);
+    bool valid = ret == 0 && report.solid && report.added_faces >= 6 &&
+	!bg_trimesh_solid2(n_opnts, n_ofaces, (fastf_t *)opnts, ofaces,
+	    NULL);
+    for (int face = 0; valid && face < n_ofaces; ++face) {
+	const point_t &a = opnts[ofaces[(size_t)face * 3]];
+	const point_t &b = opnts[ofaces[(size_t)face * 3 + 1]];
+	const point_t &c = opnts[ofaces[(size_t)face * 3 + 2]];
+	vect_t ab, ac, cross;
+	VSUB2(ab, b, a);
+	VSUB2(ac, c, a);
+	VCROSS(cross, ab, ac);
+	valid = MAGSQ(cross) > SMALL_FASTF;
+    }
+    if (ofaces)
+	bu_free(ofaces, "collinear repair faces");
+    if (opnts)
+	bu_free(opnts, "collinear repair points");
+    if (!valid) {
+	bu_log("FAIL test_collinear_hole_boundary: ret=%d solid=%d added=%d\n",
+	    ret, report.solid, report.added_faces);
+	return -1;
+    }
+    bu_log("PASS test_collinear_hole_boundary\n");
+    return 0;
+}
+
+/* Component union is deliberately opt-in.  Two individually closed cubes
+ * overlap geometrically but pass an edge-incidence solid check; the Manifold
+ * pass must regularize them into one closed boundary. */
+static int
+test_overlapping_component_union(void)
+{
+    point_t *cube_points;
+    int cube_point_count;
+    int *cube_faces;
+    int cube_face_count;
+    make_cube(&cube_points, &cube_point_count, &cube_faces,
+	&cube_face_count);
+    point_t points[16];
+    int faces[72];
+    for (int vertex = 0; vertex < cube_point_count; ++vertex) {
+	VMOVE(points[vertex], cube_points[vertex]);
+	VMOVE(points[vertex + cube_point_count], cube_points[vertex]);
+	points[vertex + cube_point_count][X] += 0.5;
+    }
+    for (int corner = 0; corner < cube_face_count * 3; ++corner) {
+	faces[corner] = cube_faces[corner];
+	faces[cube_face_count * 3 + corner] =
+	    cube_faces[corner] + cube_point_count;
+    }
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.union_components = 1;
+    int *ofaces = NULL;
+    int n_ofaces = 0;
+    point_t *opnts = NULL;
+    int n_opnts = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+	&n_opnts, faces, 2 * cube_face_count, points,
+	2 * cube_point_count, &settings, &report);
+    const bool valid = ret == 0 && report.solid &&
+	report.component_union_applied && report.output_volume > 1.4 &&
+	report.output_volume < 1.6 && ofaces && opnts &&
+	!bg_trimesh_solid2(n_opnts, n_ofaces, (fastf_t *)opnts, ofaces,
+	    NULL);
+    bool unique_vertices = valid;
+    for (int first = 0; unique_vertices && first < n_opnts; ++first) {
+	for (int second = first + 1; second < n_opnts; ++second) {
+	    if (!memcmp(opnts[first], opnts[second], sizeof(point_t))) {
+		unique_vertices = false;
+		break;
+	    }
+	}
+    }
+    if (ofaces)
+	bu_free(ofaces, "component union faces");
+    if (opnts)
+	bu_free(opnts, "component union points");
+    if (!valid || !unique_vertices) {
+	bu_log("FAIL test_overlapping_component_union: ret=%d applied=%d "
+	    "solid=%d volume=%g unique_vertices=%d\n", ret,
+	    report.component_union_applied, report.solid,
+	    report.output_volume, (int)unique_vertices);
+	return -1;
+    }
+    bu_log("PASS test_overlapping_component_union\n");
+    return 0;
+}
+
+/* A display patch may insert an extra sample on a shared edge while the
+ * rigorous neighbor retains one long edge.  Splitting the long incident
+ * triangle at the hanging vertex must close the seam without hole filling. */
+static int
+test_hanging_boundary_edge_split(void)
+{
+    static point_t points[9] = {
+	{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
+	{0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1},
+	{0.5, 0, 1}
+    };
+    static int faces[39] = {
+	0, 2, 1, 0, 3, 2,
+	4, 8, 6, 8, 5, 6, 4, 6, 7,
+	0, 1, 5, 0, 5, 4,
+	1, 2, 6, 1, 6, 5,
+	2, 3, 7, 2, 7, 6,
+	3, 0, 4, 3, 4, 7
+    };
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.vertex_tolerance = 1.0e-9;
+    int *ofaces = NULL;
+    int n_ofaces = 0;
+    point_t *opnts = NULL;
+    int n_opnts = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+	&n_opnts, faces, 13, points, 9, &settings, &report);
+    const bool valid = ret == 0 && report.solid &&
+	report.added_faces >= 1 && ofaces && opnts &&
+	!bg_trimesh_solid2(n_opnts, n_ofaces, (fastf_t *)opnts, ofaces,
+	    NULL);
+    if (ofaces)
+	bu_free(ofaces, "hanging edge faces");
+    if (opnts)
+	bu_free(opnts, "hanging edge points");
+    if (!valid) {
+	bu_log("FAIL test_hanging_boundary_edge_split: ret=%d added=%d "
+	    "solid=%d\n", ret, report.added_faces, report.solid);
+	return -1;
+    }
+    bu_log("PASS test_hanging_boundary_edge_split\n");
+    return 0;
+}
+
 /* Test specifically for the SplitNonManifoldVertices backward-walk bug.
  *
  * The bug: SplitNonManifoldVertices only triggered its backward walk when
@@ -514,6 +684,9 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_open_cube_repair()          != 0) ? 1 : 0;
     failures += (test_repair2_conservative_default() != 0) ? 1 : 0;
     failures += (test_repair2_report()             != 0) ? 1 : 0;
+    failures += (test_collinear_hole_boundary()    != 0) ? 1 : 0;
+    failures += (test_overlapping_component_union() != 0) ? 1 : 0;
+    failures += (test_hanging_boundary_edge_split() != 0) ? 1 : 0;
     failures += (test_split_nmv_backward_walk()   != 0) ? 1 : 0;
     failures += (test_split_nmv_cycle_guard()     != 0) ? 1 : 0;
 
