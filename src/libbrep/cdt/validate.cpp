@@ -77,11 +77,12 @@ trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int UNUSED
 	    if (!p) {
 		bu_log("unmapped point??? %d\n", pind);
 	    } else {
-		struct cdt_audit_info *paudit = (*s_cdt->pnt_audit_info)[p];
-		if (!paudit) {
+		const auto audit = s_cdt->pnt_audit_info->find(p);
+		if (audit == s_cdt->pnt_audit_info->end()) {
 		    bu_log("point with no audit info??? %d\n", pind);
 		} else {
-		    bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit->face_index, paudit->vert_index, paudit->trim_index, paudit->edge_index, paudit->surf_uv.x, paudit->surf_uv.y);
+		    const struct cdt_audit_info &paudit = audit->second;
+		    bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit.face_index, paudit.vert_index, paudit.trim_index, paudit.edge_index, paudit.surf_uv.x, paudit.surf_uv.y);
 		}
 	    }
 	}
@@ -125,11 +126,12 @@ trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int UNUSED
 	    if (!p) {
 		bu_log("unmapped point??? %d\n", pind);
 	    } else {
-		struct cdt_audit_info *paudit = (*s_cdt->pnt_audit_info)[p];
-		if (!paudit) {
+		const auto audit = s_cdt->pnt_audit_info->find(p);
+		if (audit == s_cdt->pnt_audit_info->end()) {
 		    bu_log("point with no audit info??? %d\n", pind);
 		} else {
-		    bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit->face_index, paudit->vert_index, paudit->trim_index, paudit->edge_index, paudit->surf_uv.x, paudit->surf_uv.y);
+		    const struct cdt_audit_info &paudit = audit->second;
+		    bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit.face_index, paudit.vert_index, paudit.trim_index, paudit.edge_index, paudit.surf_uv.x, paudit.surf_uv.y);
 		}
 	    }
 	}
@@ -170,11 +172,12 @@ trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int UNUSED
 	    if (!p) {
 		bu_log("unmapped point??? %d\n", pind);
 	    } else {
-		struct cdt_audit_info *paudit = (*s_cdt->pnt_audit_info)[p];
-		if (!paudit) {
+		const auto audit = s_cdt->pnt_audit_info->find(p);
+		if (audit == s_cdt->pnt_audit_info->end()) {
 		    bu_log("point with no audit info??? %d\n", pind);
 		} else {
-		    bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit->face_index, paudit->vert_index, paudit->trim_index, paudit->edge_index, paudit->surf_uv.x, paudit->surf_uv.y);
+		    const struct cdt_audit_info &paudit = audit->second;
+		    bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit.face_index, paudit.vert_index, paudit.trim_index, paudit.edge_index, paudit.surf_uv.x, paudit.surf_uv.y);
 		}
 	    }
 	}
@@ -192,4 +195,3 @@ trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int UNUSED
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

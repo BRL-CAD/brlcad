@@ -40,6 +40,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <unordered_map>
 #include "../../libbg/RTree.h"
 #include "bu/color.h"
 #include "bg/polygon.h"
@@ -511,10 +512,10 @@ class cpolygon_t
 	 * are added directly without using add_point, the caller must manually ensure
 	 * that this map has the correct information to go from indexing in the parent's
 	 * original point array to the polygon pnts_2d point array.*/
-	std::map<long, long> p2o;
+	std::unordered_map<long, long> p2o;
 
 	/* Map from points in the source date to the same points in the polygon.*/
-	std::map<long, long> o2p;
+	std::unordered_map<long, long> o2p;
 
 	/* Polygon edge manipulation */
 	cpolyedge_t *add_ordered_edge(const struct edge2d_t &e);
@@ -533,7 +534,6 @@ class cpolygon_t
 	/* Storage container for polygon data */
 	std::set<cpolyedge_t *> poly;
 	std::vector<std::pair<double, double> > pnts_2d;
-	std::map<std::pair<double, double>, long> p2ind;
 
 	/* Validity tests (closed also checks self_intersecting) */
 	bool closed();
@@ -570,7 +570,7 @@ class cpolygon_t
 	double ucv_angle(triangle_t &t);
 	long shared_edge_cnt(triangle_t &t);
 	long unshared_vertex(triangle_t &t);
-	std::map<long, std::set<cpolyedge_t *>> v2pe;
+	std::unordered_map<long, std::set<cpolyedge_t *>> v2pe;
 	std::pair<long,long> shared_vertices(triangle_t &t);
 	std::set<long> brep_edge_pnts;
 	std::set<long> flipped_face;
@@ -763,9 +763,9 @@ public:
     bool has_singularities;
 
     /* Data containers */
-    std::map<ON_3dPoint *, long> p2ind;
+    std::unordered_map<ON_3dPoint *, long> p2ind;
     std::vector<ON_3dPoint *> normals;
-    std::map<ON_3dPoint *, long> n2ind;
+    std::unordered_map<ON_3dPoint *, long> n2ind;
     std::map<long, long> nmap;
     std::map<uedge_t, std::set<size_t>> uedges2tris;
     std::map<long, std::set<edge_t>> v2edges;
