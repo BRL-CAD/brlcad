@@ -3698,8 +3698,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	(size_t)repaired_face_count, repaired_points,
 	(size_t)repaired_vertex_count);
 
-    report->reference_area = display_reference_face_count > 0 &&
-	!display_reference_faces.empty() && !display_reference_vertices.empty() ?
+    const bool have_display_reference = display_reference_face_count > 0 &&
+	!display_reference_faces.empty() &&
+	!display_reference_vertices.empty();
+    report->reference_area = have_display_reference ?
 	repair_mesh_area(display_reference_vertices.data(),
 	    display_reference_faces.data(), display_reference_face_count) :
 	report->mesh.input_area;
@@ -3723,15 +3725,18 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	report->area_change_percent =
 	    std::numeric_limits<fastf_t>::infinity();
     }
+    const fastf_t guarded_area_change = have_display_reference ?
+	report->reference_area_change_percent : report->area_change_percent;
     if (settings->max_area_change_percent > 0.0 &&
-	    (!(report->area_change_percent <=
-	    settings->max_area_change_percent))) {
+	    (!(guarded_area_change <= settings->max_area_change_percent))) {
 	bu_free(repaired_faces, "certified repaired faces");
 	bu_free(repaired_points, "certified repaired vertices");
 	bu_free(input_faces, "repair input faces");
 	bu_free(input_vertices, "repair input vertices");
-	std::string message = "repaired mesh area changed by " +
-	    std::to_string(report->area_change_percent) +
+	std::string message = have_display_reference ?
+	    "repaired mesh area differs from display reference by " :
+	    "repaired mesh area changed by ";
+	message += std::to_string(guarded_area_change) +
 	    "% (limit " +
 	    std::to_string(settings->max_area_change_percent) + "%)";
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
@@ -3788,9 +3793,6 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     }
 
     RTree<size_t, double, 3> input_triangle_index;
-    const bool have_display_reference = display_reference_face_count > 0 &&
-	!display_reference_faces.empty() &&
-	!display_reference_vertices.empty();
     const int *reference_input_faces = have_display_reference ?
 	display_reference_faces.data() : input_faces;
     const fastf_t *reference_input_vertices = have_display_reference ?
