@@ -690,6 +690,17 @@ cdt_face_chart::native_to_chart(const ON_2dPoint &native_uv,
 	return true;
     }
     if (m_type == CDT_FACE_CHART_SURFACE_METRIC) {
+	if (m_planar_metric && m_surface) {
+	    const ON_3dPoint point = m_surface->PointAt(native_uv.x,
+		native_uv.y);
+	    double u = 0.0;
+	    double v = 0.0;
+	    if (!point.IsValid() ||
+		    !m_metric_plane.ClosestPointTo(point, &u, &v))
+		return false;
+	    chart_uv = ON_2dPoint(u, v);
+	    return chart_uv.IsValid();
+	}
 	for (int direction = 0; direction < 2; ++direction) {
 	    const double parameter = m_periodic && direction == m_closed_dir ?
 		periodic_parameter(native_uv[direction],
@@ -776,6 +787,40 @@ cdt_face_chart::chart_to_native(const ON_2dPoint &chart_uv,
 	return true;
     }
     if (m_type == CDT_FACE_CHART_SURFACE_METRIC) {
+	if (m_planar_metric && m_surface) {
+	    const ON_3dPoint target = m_metric_plane.PointAt(chart_uv.x,
+		chart_uv.y);
+	    brlcad::PullbackContext context;
+	    ON_3dPoint lifted = ON_3dPoint::UnsetPoint;
+	    double distance = DBL_MAX;
+	    double nearest_distance = DBL_MAX;
+	    ON_2dPoint seed = ON_2dPoint::UnsetPoint;
+	    for (size_t i = 0; i < points.size() &&
+		    i < m_source_native_points.size(); ++i) {
+		const double dx = points[i].first - chart_uv.x;
+		const double dy = points[i].second - chart_uv.y;
+		const double candidate = dx * dx + dy * dy;
+		if (candidate < nearest_distance) {
+		    nearest_distance = candidate;
+		    seed = m_source_native_points[i];
+		}
+	    }
+	    const double coordinate_scale = std::max(1.0, std::max(
+		std::max(std::fabs(target.x), std::fabs(target.y)),
+		std::fabs(target.z)));
+	    const double tolerance = std::max((double)BN_TOL_DIST,
+		4096.0 * std::numeric_limits<double>::epsilon() *
+		coordinate_scale);
+	    bool mapped = seed.IsValid() &&
+		context.SurfaceClosestPointFromSeed(m_surface, target, seed,
+		    native_uv, lifted, distance, tolerance, NULL, NULL,
+		    tolerance);
+	    if (!mapped)
+		mapped = context.SurfaceClosestPoint(m_surface, target,
+		    native_uv, lifted, distance, 0, tolerance, tolerance);
+	    return mapped && native_uv.IsValid() &&
+		distance <= 4.0 * tolerance;
+	}
 	for (int direction = 0; direction < 2; ++direction) {
 	    if (!(m_metric_scale[direction] > 0.0))
 		return false;
@@ -1235,6 +1280,24 @@ cdt_face_chart::build_native(const ON_BrepFace &face,
 
     m_type = CDT_FACE_CHART_SURFACE_METRIC;
     m_surface = surface;
+
+    /* A planar face's 3-D edge curves are the watertight authority.  STEP
+     * permits their pullbacks to miss the surface within the declared edge
+     * tolerance; two sides of a narrow feature can consequently overlap in
+     * native UV even though their master curves are distinct.  Use the
+     * surface plane as the triangulation embedding so those legal, small
+     * discrepancies do not turn into intersecting constraints. */
+    m_planar_metric = !surface->IsClosed(0) && !surface->IsClosed(1) &&
+	surface->IsPlanar(&m_metric_plane, BN_TOL_DIST) &&
+	points_3d.size() == native_points.size();
+    if (m_planar_metric) {
+	for (const ON_3dPoint *point : points_3d) {
+	    if (!point || !point->IsValid()) {
+		m_planar_metric = false;
+		break;
+	    }
+	}
+    }
     m_native_domain[0] = surface->Domain(0);
     m_native_domain[1] = surface->Domain(1);
     double surface_size[2] = {0.0, 0.0};
@@ -1381,12 +1444,20 @@ cdt_face_chart::build_native(const ON_BrepFace &face,
     for (size_t i = 0; i < native_points.size(); ++i) {
 	ON_2dPoint chart_point(native_points[i].first,
 	    native_points[i].second);
-	if (m_periodic)
-	    chart_point[m_closed_dir] = lifted_closed[i];
-	for (int direction = 0; direction < 2; ++direction)
-	    chart_point[direction] = (chart_point[direction] -
-		m_native_domain[direction].Min()) *
-		m_metric_scale[direction];
+	if (m_planar_metric) {
+	    if (!m_metric_plane.ClosestPointTo(*points_3d[i],
+		    &chart_point.x, &chart_point.y)) {
+		m_failure = "3-D point could not be mapped to its face plane";
+		return false;
+	    }
+	} else {
+	    if (m_periodic)
+		chart_point[m_closed_dir] = lifted_closed[i];
+	    for (int direction = 0; direction < 2; ++direction)
+		chart_point[direction] = (chart_point[direction] -
+		    m_native_domain[direction].Min()) *
+		    m_metric_scale[direction];
+	}
 	if (!chart_point.IsValid()) {
 	    m_failure = "native point could not be mapped to its metric chart";
 	    return false;
@@ -3401,6 +3472,8 @@ cdt_face_chart::build(const ON_BrepFace &face,
     m_singular_side = -1;
     m_second_singular_side = -1;
     m_periodic = false;
+    m_planar_metric = false;
+    m_metric_plane = ON_Plane();
     m_pole_topology_vertex = CDT_TOPOLOGY_ID_NONE;
     m_second_pole_topology_vertex = CDT_TOPOLOGY_ID_NONE;
     m_surface = NULL;
