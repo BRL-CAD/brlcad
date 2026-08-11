@@ -108,6 +108,27 @@ struct VertexStream : public Reconstructor::OutputLevelSetVertexStream<Real, Dim
     std::vector<Real> &_vCoordinates;
 };
 
+template <unsigned int FEMSig, typename Real>
+static bool
+spsr_solve(PtStream<Real, 3> &input,
+	Reconstructor::Poisson::SolutionParameters<Real> &solver_params,
+	Reconstructor::LevelSetExtractionParameters &extraction_params,
+	std::vector<Real> &coordinates,
+	std::vector<std::vector<int>> &polygons)
+{
+    using FEMSigs = IsotropicUIntPack<3, FEMSig>;
+    using Implicit = Reconstructor::Implicit<Real, 3, FEMSigs>;
+    using Solver = Reconstructor::Poisson::Solver<Real, 3, FEMSigs>;
+    PolygonStream<int> polygon_stream(polygons);
+    VertexStream<Real, 3> vertex_stream(coordinates);
+    std::unique_ptr<Implicit> implicit(Solver::Solve(input, solver_params));
+    if (!implicit)
+	return false;
+    implicit->extractLevelSet(vertex_stream, polygon_stream,
+	extraction_params);
+    return true;
+}
+
 extern "C" int
 bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
 	const point_t *input_points_3d, const vect_t *input_normals_3d,
@@ -124,6 +145,8 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
     if (spsr_opts && (spsr_opts->depth < 1 || spsr_opts->depth > 20 ||
 	    spsr_opts->full_depth < 0 ||
 	    spsr_opts->full_depth > spsr_opts->depth ||
+	    spsr_opts->btype < BG_3D_SPSR_BOUNDARY_FREE ||
+	    spsr_opts->btype > BG_3D_SPSR_BOUNDARY_DIRICHLET ||
 	    !(spsr_opts->samples_per_node > 0.0) ||
 	    !std::isfinite(spsr_opts->samples_per_node) ||
 	    !(spsr_opts->scale > 0.0) ||
@@ -145,8 +168,6 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
     }
 
     using Real = fastf_t;
-    static const unsigned int FEMSig = FEMDegreeAndBType<Reconstructor::Poisson::DefaultFEMDegree, Reconstructor::Poisson::DefaultFEMBoundary>::Signature;
-    using FEMSigs = IsotropicUIntPack<3, FEMSig>;
 
     /* The upstream worker configuration and async future storage are global.
      * Serialize reconstructions so per-call thread modes cannot race. */
@@ -190,20 +211,36 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
 
     PtStream<Real, 3> vstream(input_points_3d, input_normals_3d, num_input_pnts);
 
-    using Implicit = Reconstructor::Implicit<Real, 3, FEMSigs>;
-    using Solver = Reconstructor::Poisson::Solver<Real, 3, FEMSigs>;
     std::vector<std::vector<int>> polygons;
     std::vector<Real> vCoordinates;
-    PolygonStream<int> pStream(polygons);
-    VertexStream<Real, 3> vStream(vCoordinates);
-    std::unique_ptr<Implicit> implicit;
     try {
-	implicit.reset(Solver::Solve(vstream, solverParams));
-	if (!implicit) {
+	bool solved = false;
+	const int boundary_type = spsr_opts ? spsr_opts->btype :
+	    BG_3D_SPSR_BOUNDARY_NEUMANN;
+	switch (boundary_type) {
+	    case BG_3D_SPSR_BOUNDARY_FREE:
+		solved = spsr_solve<FEMDegreeAndBType<
+		    Reconstructor::Poisson::DefaultFEMDegree,
+		    BOUNDARY_FREE>::Signature>(vstream, solverParams,
+		    extractionParams, vCoordinates, polygons);
+		break;
+	    case BG_3D_SPSR_BOUNDARY_DIRICHLET:
+		solved = spsr_solve<FEMDegreeAndBType<
+		    Reconstructor::Poisson::DefaultFEMDegree,
+		    BOUNDARY_DIRICHLET>::Signature>(vstream, solverParams,
+		    extractionParams, vCoordinates, polygons);
+		break;
+	    case BG_3D_SPSR_BOUNDARY_NEUMANN:
+		solved = spsr_solve<FEMDegreeAndBType<
+		    Reconstructor::Poisson::DefaultFEMDegree,
+		    BOUNDARY_NEUMANN>::Signature>(vstream, solverParams,
+		    extractionParams, vCoordinates, polygons);
+		break;
+	}
+	if (!solved) {
 	    bu_log("PoissonRecon: Solver::Solve failed\n");
 	    return -1;
 	}
-	implicit->extractLevelSet(vStream, pStream, extractionParams);
     } catch (const std::exception &error) {
 	bu_log("PoissonRecon failed: %s\n", error.what());
 	return -1;
