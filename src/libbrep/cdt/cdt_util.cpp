@@ -592,7 +592,7 @@ ON_Brep_CDT_Create(void *bv, const char *objname)
     cdt->pnt_audit_info =
 	new std::unordered_map<ON_3dPoint *, struct cdt_audit_info>;
 
-    cdt->bot_pnt_to_on_pnt = new std::map<int, ON_3dPoint *>;
+    cdt->bot_pnt_to_on_pnt = new std::vector<ON_3dPoint *>;
 
     cdt->certified_faces = NULL;
     cdt->certified_face_count = 0;
