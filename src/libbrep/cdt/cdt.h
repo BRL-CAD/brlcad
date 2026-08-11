@@ -172,8 +172,12 @@ struct ON_Brep_CDT_State {
 ON_3dVector calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim);
 bool initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt);
 bool initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt);
+bool split_edges_at_surface_poles(struct ON_Brep_CDT_State *s_cdt,
+    char *failure_message, size_t failure_message_size);
 double ang_deg(const ON_3dVector &v1, const ON_3dVector &v2);
-std::set<bedge_seg_t *> split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, double *t, int update_rtrees);
+std::set<bedge_seg_t *> split_edge_seg(struct ON_Brep_CDT_State *s_cdt,
+    bedge_seg_t *bseg, int force, double *t, int update_rtrees,
+    ON_3dPoint *shared_point = NULL);
 std::set<cpolyedge_t *> split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *ce, int update_rtree);
 std::vector<cpolyedge_t *> cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, int face_index);
 void CDT_Add3DNorm(struct ON_Brep_CDT_State *s, ON_3dPoint *norm, ON_3dPoint *vert, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);

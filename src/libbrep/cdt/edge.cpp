@@ -33,6 +33,7 @@
 #include <queue>
 #include <numeric>
 #include <iterator>
+#include <memory>
 #include "bg/chull.h"
 #include "./chart.h"
 #include "./cdt.h"
@@ -452,7 +453,7 @@ periodic_surface_parameter(double parameter, const ON_Interval &domain)
 
 static ON_2dPoint
 get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt,
-	cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen,
+	cpolyedge_t *pe, const ON_3dPoint &edge_mid_3d, double elen,
 	double brep_edge_tol)
 {
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
@@ -639,6 +640,132 @@ split_point_progress(const ON_2dPoint &start, const ON_2dPoint &midpoint,
 }
 
 static bool
+curve_interior_point_parameter_impl(double *parameter,
+	const ON_NurbsCurve *curve, const ON_Interval &domain,
+	const ON_3dPoint &point, double tolerance, bool reject_near_endpoint)
+{
+    if (!parameter || !curve || !point.IsValid() ||
+	    !(domain.Length() > 0.0) || !std::isfinite(tolerance) ||
+	    tolerance < 0.0)
+	return false;
+    const ON_3dPoint start = curve->PointAt(domain.Min());
+    const ON_3dPoint end = curve->PointAt(domain.Max());
+    if (!start.IsValid() || !end.IsValid() ||
+	    (reject_near_endpoint &&
+	    (start.DistanceTo(point) <= tolerance ||
+	    end.DistanceTo(point) <= tolerance)))
+	return false;
+    const auto distance_squared = [&](double candidate_parameter) {
+	const ON_3dPoint curve_point = curve->PointAt(candidate_parameter);
+	if (!curve_point.IsValid())
+	    return std::numeric_limits<double>::infinity();
+	const double distance = curve_point.DistanceTo(point);
+	return distance * distance;
+    };
+    double candidate = DBL_MAX;
+    double candidate_distance = std::numeric_limits<double>::infinity();
+    if (ON_NurbsCurve_GetClosestPoint(&candidate, curve, point,
+	    tolerance, &domain))
+	candidate_distance = distance_squared(candidate);
+    const double parameter_tolerance = 4096.0 *
+	std::numeric_limits<double>::epsilon() * std::max(1.0,
+	std::max(std::fabs(domain.Min()), std::fabs(domain.Max())));
+
+    /* The OpenNURBS closest-point search occasionally fails on a short
+     * interior interval even when a curve passes through the target.  Search
+     * each NURBS span with a bounded set of seeds, then refine the best
+     * bracket.  This is only used for the few shared edges incident to a
+     * singular surface, so the additional evaluations are tightly scoped. */
+    if (!std::isfinite(candidate_distance) ||
+	    candidate_distance > tolerance * tolerance ||
+	    candidate <= domain.Min() + parameter_tolerance ||
+	    candidate >= domain.Max() - parameter_tolerance) {
+	std::vector<double> samples;
+	const int span_count = curve->SpanCount();
+	if (span_count > 0 && span_count <= 4096) {
+	    std::vector<double> spans((size_t)span_count + 1);
+	    if (curve->GetSpanVector(spans.data())) {
+		const int samples_per_span = std::max(2,
+		    std::min(64, 8192 / span_count));
+		for (int span = 0; span < span_count; ++span) {
+		    const double low = std::max(domain.Min(), spans[span]);
+		    const double high = std::min(domain.Max(),
+			spans[span + 1]);
+		    if (!(high > low))
+			continue;
+		    for (int sample = 0; sample <= samples_per_span; ++sample) {
+			const double value = low + (high - low) *
+			    (double)sample / samples_per_span;
+			if (samples.empty() || value > samples.back())
+			    samples.push_back(value);
+		    }
+		}
+	    }
+	}
+	if (samples.size() < 3) {
+	    samples.clear();
+	    for (int sample = 0; sample <= 64; ++sample)
+		samples.push_back(domain.ParameterAt((double)sample / 64.0));
+	}
+	size_t best_sample = 0;
+	double best_distance = std::numeric_limits<double>::infinity();
+	for (size_t sample = 0; sample < samples.size(); ++sample) {
+	    const double distance = distance_squared(samples[sample]);
+	    if (distance < best_distance) {
+		best_distance = distance;
+		best_sample = sample;
+	    }
+	}
+	if (best_sample > 0 && best_sample + 1 < samples.size()) {
+	    double low = samples[best_sample - 1];
+	    double high = samples[best_sample + 1];
+	    const double golden = 0.5 * (std::sqrt(5.0) - 1.0);
+	    double left = high - golden * (high - low);
+	    double right = low + golden * (high - low);
+	    double left_distance = distance_squared(left);
+	    double right_distance = distance_squared(right);
+	    for (int iteration = 0; iteration < 64; ++iteration) {
+		if (left_distance < right_distance) {
+		    high = right;
+		    right = left;
+		    right_distance = left_distance;
+		    left = high - golden * (high - low);
+		    left_distance = distance_squared(left);
+		} else {
+		    low = left;
+		    left = right;
+		    left_distance = right_distance;
+		    right = low + golden * (high - low);
+		    right_distance = distance_squared(right);
+		}
+	    }
+	    const double refined = 0.5 * (low + high);
+	    const double refined_distance = distance_squared(refined);
+	    if (refined_distance < candidate_distance) {
+		candidate = refined;
+		candidate_distance = refined_distance;
+	    }
+	}
+    }
+    if (candidate <= domain.Min() + parameter_tolerance ||
+	    candidate >= domain.Max() - parameter_tolerance)
+	return false;
+    if (!std::isfinite(candidate_distance) ||
+	    candidate_distance > tolerance * tolerance)
+	return false;
+    *parameter = candidate;
+    return true;
+}
+
+static bool
+curve_interior_point_parameter(double *parameter, const ON_NurbsCurve *curve,
+	const ON_Interval &domain, const ON_3dPoint &point, double tolerance)
+{
+    return curve_interior_point_parameter_impl(parameter, curve, domain,
+	point, tolerance, true);
+}
+
+static bool
 close_edge_split_worthwhile(const struct ON_Brep_CDT_State *s_cdt,
 	const bedge_seg_t *bseg)
 {
@@ -757,6 +884,25 @@ cdt_test_linear_edge_spacing(void)
     if (!split_point_progress(start_2d, middle_2d, end_2d) ||
 	    split_point_progress(start_2d, end_2d, end_2d))
 	return 14;
+
+    ON_LineCurve line(ON_3dPoint(-1.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 0.0, 0.0));
+    std::unique_ptr<ON_NurbsCurve> curve(line.NurbsCurve());
+    if (!curve)
+	return 15;
+    double parameter = DBL_MAX;
+    if (!curve_interior_point_parameter(&parameter, curve.get(),
+	    curve->Domain(), ON_3dPoint::Origin, BN_TOL_DIST) ||
+	    !split_parameter_interior(curve->Domain().Min(),
+	    curve->Domain().Max(), parameter))
+	return 16;
+    if (curve_interior_point_parameter(&parameter, curve.get(),
+	    curve->Domain(), curve->PointAt(curve->Domain().Min()),
+	    BN_TOL_DIST))
+	return 17;
+    if (curve_interior_point_parameter(&parameter, curve.get(),
+	    curve->Domain(), ON_3dPoint(0.0, 0.01, 0.0), BN_TOL_DIST))
+	return 18;
 
     return 0;
 }
@@ -887,7 +1033,8 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
 }
 
 std::set<bedge_seg_t *>
-split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, double *t, int update_rtrees)
+split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg,
+	int force, double *t, int update_rtrees, ON_3dPoint *shared_point)
 {
     std::set<bedge_seg_t *> nedges;
 
@@ -944,8 +1091,12 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
     double elen = (elen1 + elen2) * 0.5;
     fastf_t t1mid, t2mid;
     ON_2dPoint trim1_mid_2d, trim2_mid_2d;
-    trim1_mid_2d = get_trim_midpt(&t1mid, s_cdt, bseg->tseg1, edge_mid_3d, elen, edge.m_tolerance);
-    trim2_mid_2d = get_trim_midpt(&t2mid, s_cdt, bseg->tseg2, edge_mid_3d, elen, edge.m_tolerance);
+    const ON_3dPoint &trim_target_3d = shared_point ? *shared_point :
+	edge_mid_3d;
+    trim1_mid_2d = get_trim_midpt(&t1mid, s_cdt, bseg->tseg1,
+	trim_target_3d, elen, edge.m_tolerance);
+    trim2_mid_2d = get_trim_midpt(&t2mid, s_cdt, bseg->tseg2,
+	trim_target_3d, elen, edge.m_tolerance);
 
     /* A closest-point correction may land on a child trim endpoint when an
      * edge and pullback disagree.  Accepting that result creates a zero-span
@@ -968,9 +1119,13 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
      * the same boundary subdivision.  The shared master-edge point remains
      * the watertight 3-D authority even when a face pullback differs within
      * the B-Rep edge tolerance. */
-    ON_3dPoint *mid_3d = new ON_3dPoint(edge_mid_3d);
-    CDT_Add3DPnt(s_cdt, mid_3d, -1, -1, -1, edge.m_edge_index, 0, 0);
-    s_cdt->edge_pnts->insert(mid_3d);
+    ON_3dPoint *mid_3d = shared_point ? shared_point :
+	new ON_3dPoint(edge_mid_3d);
+    if (!shared_point) {
+	CDT_Add3DPnt(s_cdt, mid_3d, -1, -1, -1, edge.m_edge_index,
+	    0, 0);
+	s_cdt->edge_pnts->insert(mid_3d);
+    }
 
     // Update the 2D and 2D->3D info in the fmeshes
     long f1_ind2d = fmesh1->add_point(trim1_mid_2d);
@@ -1601,6 +1756,115 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt)
 	plot_rtree_2d2(s_cdt->face_rtrees_2d[face_index], bu_vls_cstr(&fname));
 	bu_vls_free(&fname);
 #endif
+    }
+    return true;
+}
+
+bool
+split_edges_at_surface_poles(struct ON_Brep_CDT_State *s_cdt,
+	char *failure_message, size_t failure_message_size)
+{
+    if (!s_cdt || !s_cdt->brep)
+	return false;
+    if (failure_message && failure_message_size)
+	failure_message[0] = '\0';
+
+    for (int edge_index = 0; edge_index < s_cdt->brep->m_E.Count();
+	    ++edge_index) {
+	std::set<bedge_seg_t *> &segments =
+	    s_cdt->e2polysegs[edge_index];
+	if (segments.empty())
+	    continue;
+	bedge_seg_t *root = *segments.begin();
+	if (!root || !root->nc || !root->tseg1 || !root->tseg2)
+	    continue;
+	std::set<ON_3dPoint *> pole_points;
+	const cpolyedge_t *trim_segments[2] = {root->tseg1, root->tseg2};
+	for (const cpolyedge_t *trim_segment : trim_segments) {
+	    if (!trim_segment || trim_segment->trim_ind < 0 ||
+		    trim_segment->trim_ind >= s_cdt->brep->m_T.Count())
+		continue;
+	    const ON_BrepFace *face = s_cdt->brep->m_T[
+		trim_segment->trim_ind].Face();
+	    if (!face)
+		continue;
+	    const auto face_poles = s_cdt->strim_pnts.find(
+		face->m_face_index);
+	    if (face_poles == s_cdt->strim_pnts.end())
+		continue;
+	    for (const auto &pole : face_poles->second) {
+		if (pole.second)
+		    pole_points.insert(pole.second);
+	    }
+	}
+	if (pole_points.empty())
+	    continue;
+
+	struct pole_split {
+	    double parameter;
+	    ON_3dPoint *point;
+	};
+	std::vector<pole_split> splits;
+	const ON_Interval root_domain(std::min(root->edge_start,
+	    root->edge_end), std::max(root->edge_start, root->edge_end));
+	for (ON_3dPoint *pole : pole_points) {
+	    const double coordinate_scale = std::max(1.0, std::max(
+		std::max(std::fabs(pole->x), std::fabs(pole->y)),
+		std::fabs(pole->z)));
+	    const double tolerance = std::max((double)BN_TOL_DIST,
+		4096.0 * std::numeric_limits<double>::epsilon() *
+		coordinate_scale);
+	    double parameter = DBL_MAX;
+	    if (curve_interior_point_parameter(&parameter, root->nc,
+		    root_domain, *pole, tolerance))
+		splits.push_back({parameter, pole});
+	}
+	std::sort(splits.begin(), splits.end(), [](const pole_split &first,
+		const pole_split &second) {
+	    if (first.parameter < second.parameter)
+		return true;
+	    if (second.parameter < first.parameter)
+		return false;
+	    return first.point < second.point;
+	});
+	for (size_t split_index = 0; split_index < splits.size(); ++split_index) {
+	    if (split_index && std::fabs(splits[split_index].parameter -
+		    splits[split_index - 1].parameter) <= 4096.0 *
+		    std::numeric_limits<double>::epsilon() * std::max(1.0,
+		    std::fabs(splits[split_index].parameter))) {
+		if (splits[split_index].point !=
+			splits[split_index - 1].point) {
+		    if (failure_message && failure_message_size)
+			std::snprintf(failure_message, failure_message_size,
+			    "B-Rep edge %d crosses coincident surface poles "
+			    "with distinct topology", edge_index);
+		    return false;
+		}
+		continue;
+	    }
+	    bedge_seg_t *target = NULL;
+	    for (bedge_seg_t *segment : segments) {
+		if (split_parameter_interior(segment->edge_start,
+			segment->edge_end, splits[split_index].parameter)) {
+		    target = segment;
+		    break;
+		}
+	    }
+	    if (!target)
+		continue;
+	    double parameter = splits[split_index].parameter;
+	    const std::set<bedge_seg_t *> children = split_edge_seg(s_cdt,
+		target, 1, &parameter, 1, splits[split_index].point);
+	    if (children.empty()) {
+		if (failure_message && failure_message_size)
+		    std::snprintf(failure_message, failure_message_size,
+			"B-Rep edge %d could not be split at a surface pole",
+			edge_index);
+		return false;
+	    }
+	    bu_log("Split B-Rep edge %d at an interior surface pole\n",
+		edge_index);
+	}
     }
     return true;
 }
