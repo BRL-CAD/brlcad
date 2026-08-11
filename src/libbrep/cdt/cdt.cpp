@@ -2239,13 +2239,15 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     }
 
     // Do the non-tolerance based initialization splits.
-    if (!initialize_edge_segs(s_cdt)) {
-	    std::cout << "Initialization failed for edges\n";
-	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INITIALIZATION_FAILED,
-		BREP_CDT_STAGE_EDGE_INITIALIZATION, -1, 0, 0,
-		"failed to initialize shared edge segments");
-	    return -1;
-	}
+    char edge_init_message[256] = {0};
+    if (!initialize_edge_segs(s_cdt, edge_init_message,
+	    sizeof(edge_init_message))) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INITIALIZATION_FAILED,
+	    BREP_CDT_STAGE_EDGE_INITIALIZATION, -1, 0, 0,
+	    edge_init_message[0] ? edge_init_message :
+	    "failed to initialize shared edge segments");
+	return -1;
+    }
 
 	// If edge segments are too close together in 2D space compared to their
 	// length, it is difficult to mesh them successfully.  Refine edges that

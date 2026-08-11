@@ -151,6 +151,57 @@ repair_contract()
 }
 
 static bool
+paired_pcurve_edge_contract()
+{
+    ON_3dPoint corners[8] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 1.0, 0.0), ON_3dPoint(0.0, 1.0, 0.0),
+	ON_3dPoint(0.0, 0.0, 1.0), ON_3dPoint(1.0, 0.0, 1.0),
+	ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(0.0, 1.0, 1.0)
+    };
+    ON_Brep *box = ON_BrepBox(corners);
+    if (!box || box->m_E.Count() <= 0) {
+	delete box;
+	return false;
+    }
+    ON_BrepEdge &edge = box->m_E[0];
+    const ON_3dPoint start = edge.PointAtStart();
+    const ON_3dPoint end = edge.PointAtEnd();
+    ON_NurbsCurve *bad_curve = new ON_NurbsCurve(3, false, 3, 3);
+    bad_curve->MakeClampedUniformKnotVector(1.0);
+    bad_curve->SetCV(0, start);
+    bad_curve->SetCV(1, 0.5 * (start + end) +
+	ON_3dVector(0.0, 0.0, 10.0));
+    bad_curve->SetCV(2, end);
+    const int curve_index = box->AddEdgeCurve(bad_curve);
+    if (curve_index < 0 || !edge.ChangeEdgeCurve(curve_index)) {
+	delete box;
+	return false;
+    }
+    edge.m_tolerance = 1.0e-5;
+
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(box,
+	"paired p-curve edge contract");
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.05;
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    const int tessellation_result = ON_Brep_CDT_Tessellate(state, 0, NULL);
+    struct brep_cdt_diagnostic diagnostic = {};
+    ON_Brep_CDT_Diagnostic(&diagnostic, state);
+    const bool valid = tessellation_result > 0 &&
+	diagnostic.stage > BREP_CDT_STAGE_EDGE_INITIALIZATION &&
+	diagnostic.completed_faces > 0;
+    if (!valid) {
+	bu_log("paired p-curve edge contract failed: result %d stage %d, "
+	    "%d faces completed: %s\n", tessellation_result,
+	    diagnostic.stage, diagnostic.completed_faces, diagnostic.message);
+    }
+    ON_Brep_CDT_Destroy(state);
+    delete box;
+    return valid;
+}
+
+static bool
 invalid_poisson_repair_contract()
 {
     ON_3dPoint corners[8] = {
@@ -361,6 +412,7 @@ main(int argc, const char **argv)
 
     bool empty_rejected = empty_mesh_contract();
     bool repaired = repair_contract();
+    bool paired_edge = paired_pcurve_edge_contract();
     bool invalid_repaired = invalid_poisson_repair_contract();
     bool components_repaired = component_poisson_repair_contract();
 
@@ -397,6 +449,6 @@ main(int argc, const char **argv)
     ON_Brep_CDT_Destroy(state);
 
     return initial && first_ok && second_ok && empty_rejected && repaired &&
-	invalid_repaired && components_repaired &&
+	paired_edge && invalid_repaired && components_repaired &&
 	invalidated && invalid_tolerance && invalid_face && invalid_input ? 0 : 1;
 }
