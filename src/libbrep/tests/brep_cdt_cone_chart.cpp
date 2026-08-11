@@ -16,6 +16,7 @@
 #include <memory>
 #include <vector>
 
+#include "bg/polygon.h"
 #include "bg/trimesh.h"
 #include "brep/cdt.h"
 #include "../cdt/chart.h"
@@ -140,6 +141,84 @@ exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
     if (!matched_seam_copies) {
 	std::cerr << "cone chart did not retain a matching seam sample"
 	    << std::endl;
+	return false;
+    }
+
+    /* A loop through the pole can meet the two chart copies of one seam
+     * point at a radial value crossed by another boundary segment.  Joining
+     * those copies with a false straight chart edge makes an otherwise valid
+     * cone boundary self-intersect.  The chart must instead lift one branch
+     * through an equivalent periodic image and merge the seam copies. */
+    const int cut_closed = chart.closed_direction();
+    const int cut_open = 1 - cut_closed;
+    const ON_Interval cut_closed_domain = surface->Domain(cut_closed);
+    const ON_Interval cut_open_domain = surface->Domain(cut_open);
+    const bool cut_low_pole = chart.singular_side() == 0 ||
+	chart.singular_side() == 3;
+    const double cut_pole = cut_low_pole ? cut_open_domain.Min() :
+	cut_open_domain.Max();
+    const auto cut_uv = [&](double turn, double radial) {
+	ON_2dPoint uv;
+	uv[cut_closed] = cut_closed_domain.ParameterAt(turn);
+	uv[cut_open] = cut_low_pole ?
+	    cut_pole + radial * cut_open_domain.Length() :
+	    cut_pole - radial * cut_open_domain.Length();
+	return uv;
+    };
+    const ON_2dPoint cut_uvs[5] = {
+	cut_uv(1.0, 0.8), cut_uv(0.85, 0.85), cut_uv(0.83, 0.75),
+	cut_uv(0.5, 0.0), cut_uv(0.0, 0.8)
+    };
+    std::vector<std::pair<double, double>> cut_native;
+    std::vector<ON_3dPoint> cut_storage(5);
+    std::vector<const ON_3dPoint *> cut_points_3d(5);
+    for (size_t i = 0; i < 5; ++i) {
+	cut_native.push_back(std::make_pair(cut_uvs[i].x, cut_uvs[i].y));
+	cut_storage[i] = surface->PointAt(cut_uvs[i].x, cut_uvs[i].y);
+	cut_points_3d[i] = &cut_storage[i];
+    }
+    ON_3dPoint shared_cut_point = cut_storage[0];
+    cut_points_3d[0] = &shared_cut_point;
+    cut_points_3d[4] = &shared_cut_point;
+    const std::vector<int> cut_outer = {0, 1, 2, 3, 4, 0};
+    std::vector<cdt_topo_vertex_id> cut_topology(5,
+	CDT_TOPOLOGY_ID_NONE);
+    cut_topology[0] = 2001;
+    cut_topology[3] = chart.pole_topology_vertex();
+    cut_topology[4] = 2001;
+    cdt_face_chart cut_chart;
+    if (!cut_chart.build(*cone_face, cut_native, cut_outer,
+	    std::vector<std::vector<int>>(), std::vector<int>(),
+	    std::vector<int>(), cut_points_3d, cut_topology,
+	    chart.pole_topology_vertex()) || cut_chart.outer.size() != 4) {
+	std::cerr << "crossing cone seam closure was not repaired: "
+	    << cut_chart.failure() << std::endl;
+	return false;
+    }
+    std::vector<point2d_t> cut_chart_points(cut_chart.points.size());
+    for (size_t i = 0; i < cut_chart.points.size(); ++i)
+	V2SET(cut_chart_points[i], cut_chart.points[i].first,
+	    cut_chart.points[i].second);
+    std::vector<int> cut_outline(cut_chart.outer);
+    cut_outline.push_back(cut_outline.front());
+    std::vector<int> cut_constraints;
+    for (const std::pair<int, int> &constraint : cut_chart.constraints) {
+	cut_constraints.push_back(constraint.first);
+	cut_constraints.push_back(constraint.second);
+    }
+    int *cut_faces = NULL;
+    int cut_face_count = 0;
+    struct bg_triangulation_report cut_report = {0, -1, {0}};
+    const int cut_status = bg_nested_poly_triangulate_constraints_strict(
+	&cut_faces, &cut_face_count, NULL, NULL, cut_outline.data(),
+	cut_outline.size(), NULL, NULL, 0, NULL, 0,
+	cut_constraints.empty() ? NULL : cut_constraints.data(),
+	cut_chart.constraints.size(), cut_chart_points.data(),
+	cut_chart_points.size(), &cut_report);
+    bu_free(cut_faces, "crossing cone seam fixture faces");
+    if (cut_status != BRLCAD_OK || cut_face_count <= 0) {
+	std::cerr << "repaired cone seam closure did not triangulate: "
+	    << cut_report.message << std::endl;
 	return false;
     }
 
