@@ -508,6 +508,71 @@ bg_trimesh_repair(
 
 
 /**
+ * Conservative controls for triangle mesh repair.
+ *
+ * Unlike the legacy bg_trimesh_repair_opts interface, component removal and
+ * hole filling are disabled unless their corresponding flags are set.  A
+ * zero vertex_tolerance selects 1e-8 times the input bounding-box diagonal.
+ * Absolute area limits take precedence over percentage limits.  A zero area
+ * limit with fill_holes enabled permits holes of any area, subject to
+ * max_hole_edges.  A zero max_hole_edges permits any boundary length.
+ */
+struct bg_trimesh_repair_settings {
+    fastf_t vertex_tolerance;
+    int remove_small_components;
+    fastf_t max_component_area;
+    fastf_t max_component_area_percent;
+    int fill_holes;
+    fastf_t max_hole_area;
+    fastf_t max_hole_area_percent;
+    size_t max_hole_edges;
+    int max_iterations;
+    int require_solid;
+};
+
+#define BG_TRIMESH_REPAIR_SETTINGS_INIT {0.0, 0, 0.0, 0.0, 0, 0.0, 0.0, 0, 10, 1}
+
+/** Summary of the operations performed by bg_trimesh_repair2. */
+struct bg_trimesh_repair_report {
+    int input_vertices;
+    int input_faces;
+    int output_vertices;
+    int output_faces;
+    int removed_faces;
+    int added_faces;
+    int repair_iterations;
+    int solid;
+    fastf_t input_area;
+    fastf_t output_area;
+    fastf_t output_volume;
+    fastf_t max_vertex_displacement;
+};
+
+#define BG_TRIMESH_REPAIR_REPORT_INIT {0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0}
+
+/**
+ * Attempt a bounded, explicitly configured triangle mesh repair.
+ *
+ * All current operations preserve input vertex positions: welding selects an
+ * existing representative, topology splitting duplicates an existing point,
+ * and hole filling triangulates existing boundary vertices.  Consequently
+ * max_vertex_displacement is zero for successful results.
+ *
+ * @return 1 if the input was already solid, 0 if repair produced an accepted
+ * output, and -1 on invalid input or if the requested postconditions were not
+ * satisfied.
+ */
+BG_EXPORT extern int
+bg_trimesh_repair2(
+	int **ofaces, int *n_ofaces,
+	point_t **opnts, int *n_opnts,
+	const int *ifaces, int n_ifaces,
+	const point_t *ipnts, int n_ipnts,
+	const struct bg_trimesh_repair_settings *settings,
+	struct bg_trimesh_repair_report *report);
+
+
+/**
  * Options governing triangle mesh remeshing operations.
  *
  * Remeshing regenerates the connectivity of a mesh so that its triangles
