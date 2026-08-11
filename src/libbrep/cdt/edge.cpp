@@ -1869,6 +1869,272 @@ split_edges_at_surface_poles(struct ON_Brep_CDT_State *s_cdt,
     return true;
 }
 
+/* Imported analytic seams are sometimes represented by two distinct B-Rep
+ * edges with the same endpoints and curves which agree within modeling
+ * tolerance.  Refining those edges independently produces alternating,
+ * nearly coincident samples and turns an intended retrace into many tiny
+ * chart crossings.  Prove curve coincidence in both directions, then insert
+ * the union of both sample sets into both edges using shared 3-D pointers. */
+size_t
+synchronize_coincident_edge_samples(struct ON_Brep_CDT_State *s_cdt,
+	std::map<ON_3dPoint *, ON_3dPoint *> &welds)
+{
+    if (!s_cdt || !s_cdt->brep || !std::isfinite(s_cdt->absmin) ||
+	    s_cdt->absmin <= 0.0)
+	return 0;
+    const double tolerance = std::min((double)BN_TOL_DIST,
+	(double)s_cdt->absmin);
+    if (!(tolerance > 0.0))
+	return 0;
+
+    typedef std::pair<ON_3dPoint *, ON_3dPoint *> endpoint_pair;
+    std::map<endpoint_pair, std::vector<int>> endpoint_edges;
+    for (const auto &entry : s_cdt->e2polysegs) {
+	if (entry.second.empty())
+	    continue;
+	const bedge_seg_t *segment = *entry.second.begin();
+	if (!segment || !segment->nc || !segment->e_root_start ||
+		!segment->e_root_end ||
+		segment->e_root_start == segment->e_root_end)
+	    continue;
+	ON_3dPoint *first = segment->e_root_start;
+	ON_3dPoint *second = segment->e_root_end;
+	if (std::less<ON_3dPoint *>()(second, first))
+	    std::swap(first, second);
+	endpoint_edges[endpoint_pair(first, second)].push_back(entry.first);
+    }
+
+    const auto root_segment = [&](int edge_index) {
+	const auto entry = s_cdt->e2polysegs.find(edge_index);
+	return entry == s_cdt->e2polysegs.end() || entry->second.empty() ?
+	    (bedge_seg_t *)NULL : *entry->second.begin();
+    };
+    const auto root_domain = [&](int edge_index) {
+	double minimum = DBL_MAX;
+	double maximum = -DBL_MAX;
+	for (const bedge_seg_t *segment : s_cdt->e2polysegs[edge_index]) {
+	    minimum = std::min(minimum, std::min(segment->edge_start,
+		segment->edge_end));
+	    maximum = std::max(maximum, std::max(segment->edge_start,
+		segment->edge_end));
+	}
+	return ON_Interval(minimum, maximum);
+    };
+    const auto curves_coincident = [&](int first_edge, int second_edge) {
+	const bedge_seg_t *first = root_segment(first_edge);
+	const bedge_seg_t *second = root_segment(second_edge);
+	if (!first || !second || !first->nc || !second->nc)
+	    return false;
+	const ON_Interval first_domain = root_domain(first_edge);
+	const ON_Interval second_domain = root_domain(second_edge);
+	if (!first_domain.IsIncreasing() || !second_domain.IsIncreasing())
+	    return false;
+	const bool reversed = first->e_root_start == second->e_root_end &&
+	    first->e_root_end == second->e_root_start;
+	if (!reversed && (first->e_root_start != second->e_root_start ||
+		first->e_root_end != second->e_root_end))
+	    return false;
+	const auto one_direction = [&](const bedge_seg_t *source,
+		const ON_Interval &source_domain, const bedge_seg_t *target,
+		const ON_Interval &target_domain) {
+	    for (int i = 0; i <= 32; ++i) {
+		const double fraction = (double)i / 32.0;
+		const ON_3dPoint point = source->nc->PointAt(
+		    source_domain.ParameterAt(fraction));
+		if (!point.IsValid())
+		    return false;
+		if (i == 0 || i == 32) {
+		    const double target_fraction = reversed ?
+			1.0 - fraction : fraction;
+		    const ON_3dPoint target_point = target->nc->PointAt(
+			target_domain.ParameterAt(target_fraction));
+		    if (!target_point.IsValid() ||
+			    point.DistanceTo(target_point) > tolerance)
+			return false;
+		    continue;
+		}
+		const ON_3dPoint target_start = target->nc->PointAt(
+		    target_domain.Min());
+		const ON_3dPoint target_end = target->nc->PointAt(
+		    target_domain.Max());
+		if ((target_start.IsValid() &&
+			point.DistanceTo(target_start) <= tolerance) ||
+			(target_end.IsValid() &&
+			point.DistanceTo(target_end) <= tolerance))
+		    continue;
+		double parameter = DBL_MAX;
+		if (!curve_interior_point_parameter_impl(&parameter, target->nc,
+			target_domain, point, tolerance, false))
+		    return false;
+	    }
+	    return true;
+	};
+	return one_direction(first, first_domain, second, second_domain) &&
+	    one_direction(second, second_domain, first, first_domain);
+    };
+    const auto sample_points = [&](int edge_index) {
+	std::vector<std::pair<double, ON_3dPoint *>> points;
+	std::vector<std::pair<double, ON_3dPoint *>> ordered;
+	const ON_Interval domain = root_domain(edge_index);
+	for (const bedge_seg_t *segment : s_cdt->e2polysegs[edge_index]) {
+	    if (split_parameter_interior(domain.Min(), domain.Max(),
+		    segment->edge_start))
+		ordered.push_back(std::make_pair(segment->edge_start,
+		    segment->e_start));
+	    if (split_parameter_interior(domain.Min(), domain.Max(),
+		    segment->edge_end))
+		ordered.push_back(std::make_pair(segment->edge_end,
+		    segment->e_end));
+	}
+	std::sort(ordered.begin(), ordered.end(),
+	    [](const std::pair<double, ON_3dPoint *> &first,
+		const std::pair<double, ON_3dPoint *> &second) {
+		if (first.first < second.first)
+		    return true;
+		if (second.first < first.first)
+		    return false;
+		return first.second < second.second;
+	    });
+	std::set<ON_3dPoint *> seen;
+	for (const auto &sample : ordered) {
+	    if (sample.second && seen.insert(sample.second).second)
+		points.push_back(std::make_pair(domain.NormalizedParameterAt(
+		    sample.first), sample.second));
+	}
+	return points;
+    };
+    const auto weld_pair = [&](ON_3dPoint *first, ON_3dPoint *second) {
+	if (!first || !second || first == second)
+	    return;
+	ON_3dPoint *representative = first;
+	ON_3dPoint *removed = second;
+	if (std::less<ON_3dPoint *>()(second, first)) {
+	    representative = second;
+	    removed = first;
+	}
+	welds[removed] = representative;
+    };
+    const auto insert_samples = [&](const std::vector<std::pair<double,
+	    ON_3dPoint *>> &points, int edge_index, bool reversed) {
+	bedge_seg_t *root = root_segment(edge_index);
+	if (!root || !root->nc)
+	    return false;
+	const ON_Interval domain = root_domain(edge_index);
+	for (const auto &sample : points) {
+	    ON_3dPoint *point = sample.second;
+	    bool present = false;
+	    ON_3dPoint *nearest = NULL;
+	    double nearest_distance = DBL_MAX;
+	    for (const bedge_seg_t *segment : s_cdt->e2polysegs[edge_index]) {
+		if (segment->e_start == point || segment->e_end == point) {
+		    present = true;
+		    break;
+		}
+		const double start_distance = point->DistanceTo(
+		    *segment->e_start);
+		const double end_distance = point->DistanceTo(*segment->e_end);
+		if (start_distance < nearest_distance) {
+		    nearest_distance = start_distance;
+		    nearest = segment->e_start;
+		}
+		if (end_distance < nearest_distance) {
+		    nearest_distance = end_distance;
+		    nearest = segment->e_end;
+		}
+	    }
+	    if (present)
+		continue;
+	    /* Independently refined coincident curves normally already have a
+	     * corresponding sample within tolerance.  Weld those samples instead
+	     * of interleaving two almost identical parameter sequences, which
+	     * would create chart slivers and crossings. */
+	    if (nearest && nearest_distance <= tolerance) {
+		weld_pair(point, nearest);
+		continue;
+	    }
+	    ON_3dPoint *root_start = root->e_root_start;
+	    ON_3dPoint *root_end = root->e_root_end;
+	    if (root_start && point->DistanceTo(*root_start) <= tolerance) {
+		weld_pair(point, root_start);
+		continue;
+	    }
+	    if (root_end && point->DistanceTo(*root_end) <= tolerance) {
+		weld_pair(point, root_end);
+		continue;
+	    }
+	    const double target_fraction = reversed ? 1.0 - sample.first :
+		sample.first;
+	    const double parameter = domain.ParameterAt(target_fraction);
+	    if (!split_parameter_interior(domain.Min(), domain.Max(), parameter))
+		return false;
+	    bedge_seg_t *target = NULL;
+	    for (bedge_seg_t *segment : s_cdt->e2polysegs[edge_index]) {
+		if (split_parameter_interior(segment->edge_start,
+			segment->edge_end, parameter)) {
+		    target = segment;
+		    break;
+		}
+	    }
+	    if (!target) {
+		nearest = NULL;
+		nearest_distance = DBL_MAX;
+		for (bedge_seg_t *segment : s_cdt->e2polysegs[edge_index]) {
+		    const double start_distance = point->DistanceTo(
+			*segment->e_start);
+		    const double end_distance = point->DistanceTo(
+			*segment->e_end);
+		    if (start_distance < nearest_distance) {
+			nearest_distance = start_distance;
+			nearest = segment->e_start;
+		    }
+		    if (end_distance < nearest_distance) {
+			nearest_distance = end_distance;
+			nearest = segment->e_end;
+		    }
+		}
+		if (!nearest || nearest_distance > tolerance)
+		    return false;
+		weld_pair(point, nearest);
+		continue;
+	    }
+	    double split_parameter = parameter;
+	    if (split_edge_seg(s_cdt, target, 1, &split_parameter, 1,
+		    point).empty())
+		return false;
+	}
+	return true;
+    };
+
+    size_t synchronized = 0;
+    for (const auto &group : endpoint_edges) {
+	if (group.second.size() != 2)
+	    continue;
+	const int first_edge = group.second[0];
+	const int second_edge = group.second[1];
+	const bool coincident = curves_coincident(first_edge, second_edge);
+	if (!coincident)
+	    continue;
+	const bedge_seg_t *first_root = root_segment(first_edge);
+	const bedge_seg_t *second_root = root_segment(second_edge);
+	if (!first_root || !second_root)
+	    continue;
+	const bool reversed = first_root->e_root_start ==
+	    second_root->e_root_end && first_root->e_root_end ==
+	    second_root->e_root_start;
+	const std::vector<std::pair<double, ON_3dPoint *>> first_points =
+	    sample_points(first_edge);
+	const std::vector<std::pair<double, ON_3dPoint *>> second_points =
+	    sample_points(second_edge);
+	if (!insert_samples(first_points, second_edge, reversed) ||
+		!insert_samples(second_points, first_edge, reversed))
+	    continue;
+	synchronized++;
+	bu_log("Synchronized coincident B-Rep edges %d and %d within %.17g\n",
+	    first_edge, second_edge, tolerance);
+    }
+    return synchronized;
+}
+
 // Split curved edges per tolerance settings
 void
 tol_curved_edges_split(struct ON_Brep_CDT_State *s_cdt)
