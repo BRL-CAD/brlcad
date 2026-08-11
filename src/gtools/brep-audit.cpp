@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -1140,6 +1141,7 @@ struct audit_config {
     long repair_hole_edges;
     double repair_area_change_percent;
     double repair_max_deviation;
+    double repair_max_deviation_rel;
     long repair_deviation_samples;
     bool repair_allow_untrimmed;
     bool repair_full_fast;
@@ -1294,6 +1296,15 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     repair_settings.max_area_change_percent =
 	config.repair_area_change_percent;
     repair_settings.max_surface_deviation = config.repair_max_deviation;
+    if (config.repair_max_deviation_rel > 0.0) {
+	vect_t repair_dimensions;
+	if (boundary_valid)
+	    VSUB2(repair_dimensions, boundary_max, boundary_min);
+	else
+	    VSUB2(repair_dimensions, ref_max, ref_min);
+	repair_settings.max_surface_deviation =
+	    config.repair_max_deviation_rel * MAGNITUDE(repair_dimensions);
+    }
     repair_settings.max_deviation_samples =
 	(size_t)config.repair_deviation_samples;
     repair_settings.allow_untrimmed_surface_match =
@@ -1464,6 +1475,7 @@ main(int argc, const char **argv)
     long repair_hole_edges = 256;
     double repair_area_change_percent = 1.0;
     double repair_max_deviation = 0.0;
+    double repair_max_deviation_rel = 0.0;
     long repair_deviation_samples = 4096;
     int repair_allow_untrimmed = 0;
     int repair_full_fast = 0;
@@ -1471,8 +1483,9 @@ main(int argc, const char **argv)
     long repair_poisson_depth = 8;
     int repair_union_components = 0;
     int repair_no_fast = 0;
+    const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[30];
+    struct bu_opt_desc d[32];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -1524,7 +1537,13 @@ main(int argc, const char **argv)
     BU_OPT(d[28], "", "repair-poisson-depth", "#", &bu_opt_long,
 	&repair_poisson_depth,
 	"Screened Poisson octree depth (5 through 10)");
-    BU_OPT_NULL(d[29]);
+    BU_OPT(d[29], "", "batch-object-file", "file", &bu_opt_str,
+	&batch_object_file,
+	"In batch mode, audit only object names listed one per line");
+    BU_OPT(d[30], "", "repair-max-deviation-rel", "fraction",
+	&bu_opt_fastf_t, &repair_max_deviation_rel,
+	"Maximum repair deviation as a boundary bbox diagonal fraction");
+    BU_OPT_NULL(d[31]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -1536,9 +1555,12 @@ main(int argc, const char **argv)
 	    max_points < 0 || batch_start < 0 || face_index < -1 ||
 	    repair_hole_area_percent <= 0.0 || repair_hole_edges < 3 ||
 	    repair_area_change_percent < 0.0 || repair_max_deviation < 0.0 ||
+	    repair_max_deviation_rel < 0.0 ||
+	    (repair_max_deviation > 0.0 && repair_max_deviation_rel > 0.0) ||
 	    repair_deviation_samples <= 0 ||
 	    repair_poisson_depth < 5 || repair_poisson_depth > 10 ||
 	    (repair_no_fast && (repair_full_fast || repair_poisson)) ||
+	    (batch_object_file && !batch) ||
 	    (batch && face_index != -1) ||
 	    (quality_repair && face_index != -1) ||
 	    (face_index != -1 && BU_STR_EQUAL(mode_name, "wireframe")) ||
@@ -1572,6 +1594,7 @@ main(int argc, const char **argv)
 	face_index, valid_solids_only != 0, quality_repair != 0,
 	repair_hole_area_percent, repair_hole_edges,
 	repair_area_change_percent, repair_max_deviation,
+	repair_max_deviation_rel,
 	repair_deviation_samples, repair_allow_untrimmed != 0,
 	repair_full_fast != 0, repair_poisson != 0,
 	repair_poisson_depth, repair_union_components != 0,
@@ -1579,10 +1602,29 @@ main(int argc, const char **argv)
     };
 
     if (batch) {
+	std::set<std::string> selected_objects;
+	if (batch_object_file) {
+	    std::ifstream selection(batch_object_file);
+	    if (!selection) {
+		std::cerr << "Unable to open batch object file: "
+		    << batch_object_file << "\n";
+		db_close(dbip);
+		return 2;
+	    }
+	    std::string name;
+	    while (std::getline(selection, name)) {
+		if (!name.empty() && name.back() == '\r')
+		    name.pop_back();
+		if (!name.empty())
+		    selected_objects.insert(name);
+	    }
+	}
 	std::vector<struct directory *> breps;
 	struct directory *entry;
 	FOR_ALL_DIRECTORY_START(entry, dbip) {
-	    if (entry->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP)
+	    if (entry->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP &&
+		    (!batch_object_file || selected_objects.find(
+		    entry->d_namep) != selected_objects.end()))
 		breps.push_back(entry);
 	} FOR_ALL_DIRECTORY_END;
 	std::sort(breps.begin(), breps.end(),

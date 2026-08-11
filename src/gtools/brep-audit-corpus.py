@@ -114,6 +114,67 @@ def repair_output_tail(path):
         output.write(b"\n")
 
 
+def append_repair_options(command, args):
+    if not args.quality_repair:
+        return
+    command.extend((
+        "--quality-repair",
+        "--repair-hole-area-percent",
+        str(args.repair_hole_area_percent),
+        "--repair-hole-edges",
+        str(args.repair_hole_edges),
+        "--repair-area-change-percent",
+        str(args.repair_area_change_percent),
+        "--repair-max-deviation",
+        str(args.repair_max_deviation),
+        "--repair-deviation-samples",
+        str(args.repair_deviation_samples),
+        "--repair-poisson-depth",
+        str(args.repair_poisson_depth),
+    ))
+    if args.repair_max_deviation_rel > 0.0:
+        command.extend((
+            "--repair-max-deviation-rel",
+            str(args.repair_max_deviation_rel),
+        ))
+    if args.repair_allow_untrimmed:
+        command.append("--repair-allow-untrimmed")
+    if args.repair_full_fast:
+        command.append("--repair-full-fast")
+    if args.repair_poisson:
+        command.append("--repair-poisson")
+    if args.repair_union_components:
+        command.append("--repair-union-components")
+    if args.repair_no_fast:
+        command.append("--repair-no-fast")
+
+
+def selected_objects(path, failures_only, input_class):
+    selected = {}
+    if path is None:
+        return selected
+    with path.open("r", encoding="utf-8", errors="replace") as source:
+        for line in source:
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            database = record.get("database")
+            object_name = record.get("object")
+            if not database or not object_name:
+                continue
+            if failures_only and record.get("status") == "ok":
+                continue
+            eligible = (record.get("input") or {}).get("quality_eligible")
+            if input_class == "valid" and eligible is False:
+                continue
+            if input_class == "invalid" and eligible is not False:
+                continue
+            database = str(Path(database).resolve())
+            selected.setdefault(database, set()).add(object_name)
+    return selected
+
+
 def audit_one(audit, args, run_dir, database_name, object_name, mode):
     command = [
         audit,
@@ -132,6 +193,7 @@ def audit_one(audit, args, run_dir, database_name, object_name, mode):
     ]
     if args.valid_solids_only:
         command.append("--valid-solids-only")
+    append_repair_options(command, args)
     command.extend((database_name, object_name))
     start = time.monotonic()
     try:
@@ -225,7 +287,8 @@ def stream_reader(stream, stream_name, events):
         events.put((stream_name, None))
 
 
-def audit_database(audit, args, run_dir, database, start_index, sink):
+def audit_database(audit, args, run_dir, database, start_index, sink,
+                   object_file=None):
     database_name = str(database.resolve())
     if len(args.modes) == 1:
         batch_mode = args.modes[0]
@@ -258,6 +321,9 @@ def audit_database(audit, args, run_dir, database, start_index, sink):
         ]
         if args.valid_solids_only:
             command.append("--valid-solids-only")
+        append_repair_options(command, args)
+        if object_file is not None:
+            command.extend(("--batch-object-file", str(object_file)))
         command.append(database_name)
         try:
             process = subprocess.Popen(
@@ -500,6 +566,37 @@ def parse_args():
             "closed-solid quality contract"
         ),
     )
+    parser.add_argument(
+        "--selection-jsonl",
+        type=Path,
+        help="Audit only database/object pairs present in this JSONL file",
+    )
+    parser.add_argument(
+        "--selection-failures-only",
+        action="store_true",
+        help="From the selection JSONL, retain only non-ok records",
+    )
+    parser.add_argument(
+        "--selection-class",
+        choices=("all", "valid", "invalid"),
+        default="all",
+        help="Filter selected records by their quality eligibility",
+    )
+    parser.add_argument("--quality-repair", action="store_true")
+    parser.add_argument("--repair-hole-area-percent", type=float, default=1.0)
+    parser.add_argument("--repair-hole-edges", type=int, default=256)
+    parser.add_argument("--repair-area-change-percent", type=float, default=1.0)
+    parser.add_argument("--repair-max-deviation", type=float, default=0.0)
+    parser.add_argument(
+        "--repair-max-deviation-rel", type=float, default=0.0
+    )
+    parser.add_argument("--repair-deviation-samples", type=int, default=4096)
+    parser.add_argument("--repair-allow-untrimmed", action="store_true")
+    parser.add_argument("--repair-full-fast", action="store_true")
+    parser.add_argument("--repair-poisson", action="store_true")
+    parser.add_argument("--repair-poisson-depth", type=int, default=8)
+    parser.add_argument("--repair-union-components", action="store_true")
+    parser.add_argument("--repair-no-fast", action="store_true")
     args = parser.parse_args()
     numeric = (
         args.jobs,
@@ -516,6 +613,30 @@ def parse_args():
     if args.max_objects < 0 or args.max_databases < 0 or \
             args.batch_restart_rss_mib < 0:
         parser.error("corpus limits cannot be negative")
+    if args.selection_jsonl and not args.selection_jsonl.is_file():
+        parser.error("--selection-jsonl must name an existing file")
+    if args.selection_failures_only and not args.selection_jsonl:
+        parser.error("--selection-failures-only needs --selection-jsonl")
+    if args.selection_class != "all" and not args.selection_jsonl:
+        parser.error("--selection-class needs --selection-jsonl")
+    if args.repair_hole_area_percent <= 0.0 or \
+            args.repair_hole_edges < 3 or \
+            args.repair_area_change_percent < 0.0 or \
+            args.repair_max_deviation < 0.0 or \
+            args.repair_max_deviation_rel < 0.0 or \
+            args.repair_deviation_samples <= 0 or \
+            not 5 <= args.repair_poisson_depth <= 10:
+        parser.error("invalid repair bounds")
+    if args.repair_max_deviation > 0.0 and \
+            args.repair_max_deviation_rel > 0.0:
+        parser.error("absolute and relative repair deviation conflict")
+    if args.repair_no_fast and \
+            (args.repair_full_fast or args.repair_poisson):
+        parser.error("--repair-no-fast conflicts with whole-fast repair")
+    if (args.repair_poisson or args.repair_full_fast or
+            args.repair_union_components or args.repair_no_fast) and \
+            not args.quality_repair:
+        parser.error("repair strategy options need --quality-repair")
     if args.batch_databases and args.max_objects:
         parser.error("--max-objects is not available with --batch-databases")
     selected_modes = set(args.modes)
@@ -541,6 +662,15 @@ def main():
         print("Unable to find brep-audit: {}".format(args.audit), file=sys.stderr)
         return 2
     audit = str(Path(audit).resolve())
+    selection = selected_objects(
+        args.selection_jsonl,
+        args.selection_failures_only,
+        args.selection_class,
+    )
+    if args.selection_jsonl and not selection:
+        print("Selection JSONL did not identify any matching objects",
+              file=sys.stderr)
+        return 2
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_mode = "a" if args.resume else "w"
@@ -549,7 +679,10 @@ def main():
 
     if args.batch_databases:
         starts = resume_batch_starts(output_path) if args.resume else {}
-        database_list = list(databases(corpus))
+        if selection:
+            database_list = [Path(name) for name in sorted(selection)]
+        else:
+            database_list = list(databases(corpus))
         if args.max_databases:
             database_list = database_list[:args.max_databases]
         with tempfile.TemporaryDirectory(
@@ -580,8 +713,16 @@ def main():
                             error=repr(error),
                         ))
 
-            for database in database_list:
+            for database_index, database in enumerate(database_list):
                 database_name = str(database.resolve())
+                object_file = None
+                if selection:
+                    object_file = Path(run_dir) / (
+                        "batch-objects-{}.txt".format(database_index)
+                    )
+                    with object_file.open("w", encoding="utf-8") as names:
+                        for object_name in sorted(selection[database_name]):
+                            names.write(object_name + "\n")
                 future = executor.submit(
                     audit_database,
                     audit,
@@ -590,6 +731,7 @@ def main():
                     database,
                     starts.get(database_name, 0),
                     sink,
+                    object_file,
                 )
                 pending_databases[future] = database
                 if len(pending_databases) >= args.processes * 2:
@@ -632,7 +774,11 @@ def main():
                     )
                 write_record(output, record)
 
-        for database in databases(corpus):
+        if selection:
+            database_iterator = (Path(name) for name in sorted(selection))
+        else:
+            database_iterator = databases(corpus)
+        for database in database_iterator:
             if limit_reached:
                 break
             database_name = str(database.resolve())
@@ -665,6 +811,9 @@ def main():
 
             for object_name in listing.stdout.splitlines():
                 if not object_name:
+                    continue
+                if selection and object_name not in selection.get(
+                        database_name, set()):
                     continue
                 object_pending = any(
                     (database_name, object_name, mode) not in completed
