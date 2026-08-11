@@ -27,10 +27,12 @@
 
 #include "common.h"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <queue>
 #include <set>
@@ -41,6 +43,7 @@
 #include "bg/chull.h"
 #include "bg/tri_pt.h"
 #include "bg/tri_tri.h"
+#include "brep/surfacetree.h"
 #include "./cdt.h"
 
 #define BREP_PLANAR_TOL 0.05
@@ -870,6 +873,8 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	return true;
     if (fmesh->repair_incorrect_normal_edges() && fmesh->valid(0))
 	return true;
+    if (fmesh->repair_toleranced_nonmanifold_edges())
+	return true;
 
     /* Periodic seam copies can make distinct chart cells share the same
      * three model-space vertices.  Separate those cells before geometric
@@ -898,6 +903,8 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 		collapsed_chart_points);
 	    return true;
 	}
+	if (fmesh->repair_toleranced_nonmanifold_edges())
+	    return true;
     }
 
     const size_t initial_folds = fmesh->incorrect_normal_count();
@@ -936,6 +943,8 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 		"inserted points\n", fmesh->f_id, refinement_points);
 	    return true;
 	}
+	if (fmesh->repair_toleranced_nonmanifold_edges())
+	    return true;
 	const size_t current_folds = fmesh->incorrect_normal_count();
 	const size_t current_intersections = fmesh->self_intersections(NULL,
 	    MAX_CHART_REFINEMENT_POINTS);
@@ -952,6 +961,8 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	    }
 	}
     }
+    if (fmesh->repair_toleranced_nonmanifold_edges())
+	return true;
     if (refinement_points) {
 	const size_t remaining_folds = fmesh->incorrect_normal_count();
 	const size_t remaining_intersections = fmesh->self_intersections(NULL,
@@ -1149,6 +1160,178 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 	return false;
     }
     return true;
+}
+
+static void
+apply_derived_point_welds(struct ON_Brep_CDT_State *s_cdt,
+	const std::map<ON_3dPoint *, ON_3dPoint *> &welds)
+{
+    if (!s_cdt || welds.empty())
+	return;
+    const auto canonical = [&](ON_3dPoint *point) {
+	ON_3dPoint *current = point;
+	std::set<ON_3dPoint *> visited;
+	while (current && visited.insert(current).second) {
+	    const auto next = welds.find(current);
+	    if (next == welds.end() || next->second == current)
+		break;
+	    current = next->second;
+	}
+	return current;
+    };
+
+    for (auto &vertex : *s_cdt->vert_pnts)
+	vertex.second = canonical(vertex.second);
+    std::set<ON_3dPoint *> canonical_edge_points;
+    for (ON_3dPoint *point : *s_cdt->edge_pnts)
+	canonical_edge_points.insert(canonical(point));
+    s_cdt->edge_pnts->swap(canonical_edge_points);
+    for (auto &face : s_cdt->fmeshes) {
+	cdt_mesh_t &mesh = face.second;
+	for (ON_3dPoint *&point : mesh.pnts)
+	    point = canonical(point);
+	mesh.p2ind.clear();
+	for (size_t i = 0; i < mesh.pnts.size(); ++i)
+	    mesh.p2ind[mesh.pnts[i]] = (long)i;
+    }
+    for (auto &edge_segments : s_cdt->e2polysegs) {
+	for (bedge_seg_t *segment : edge_segments.second) {
+	    if (!segment)
+		continue;
+	    segment->e_start = canonical(segment->e_start);
+	    segment->e_end = canonical(segment->e_end);
+	    segment->e_root_start = canonical(segment->e_root_start);
+	    segment->e_root_end = canonical(segment->e_root_end);
+	}
+    }
+    for (auto &face_poles : s_cdt->strim_pnts) {
+	for (auto &pole : face_poles.second)
+	    pole.second = canonical(pole.second);
+    }
+    std::map<ON_3dPoint *, ON_3dPoint *> canonical_singular_norms;
+    for (const auto &normal : *s_cdt->singular_vert_to_norms) {
+	ON_3dPoint *point = canonical(normal.first);
+	if (point && canonical_singular_norms.find(point) ==
+		canonical_singular_norms.end())
+	    canonical_singular_norms[point] = normal.second;
+    }
+    s_cdt->singular_vert_to_norms->swap(canonical_singular_norms);
+}
+
+/* Weld distinct topology vertices only when the same trimmed face places
+ * them at one singular side of its surface.  This repairs imported sphere
+ * caps which visit a geometric pole with more than one B-Rep vertex identity.
+ * Proximity alone is not sufficient: candidates must share both a face and
+ * a specific analytic surface singularity, and each component remains inside
+ * the caller's scale-limited modeling tolerance. */
+static size_t
+collapse_coincident_surface_poles(struct ON_Brep_CDT_State *s_cdt)
+{
+    if (!s_cdt || !s_cdt->brep || !s_cdt->vert_pnts ||
+	    !std::isfinite(s_cdt->absmin) || s_cdt->absmin <= 0.0)
+	return 0;
+    const double tolerance = std::min((double)BN_TOL_DIST,
+	(double)s_cdt->absmin);
+    if (!(tolerance > 0.0))
+	return 0;
+
+    std::map<ON_3dPoint *, ON_3dPoint *> welds;
+    size_t welded_vertices = 0;
+    for (int face_index = 0; face_index < s_cdt->brep->m_F.Count();
+	    ++face_index) {
+	const ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+	const ON_Surface *surface = face.SurfaceOf();
+	if (!surface)
+	    continue;
+	for (int side = 0; side < 4; ++side) {
+	    if (!surface->IsSingular(side))
+		continue;
+	    const int open_direction = (side == 0 || side == 2) ? 1 : 0;
+	    const int closed_direction = 1 - open_direction;
+	    ON_2dPoint pole_uv;
+	    pole_uv[open_direction] = (side == 0 || side == 3) ?
+		surface->Domain(open_direction).Min() :
+		surface->Domain(open_direction).Max();
+	    pole_uv[closed_direction] =
+		surface->Domain(closed_direction).Mid();
+	    const ON_3dPoint pole = surface->PointAt(pole_uv.x, pole_uv.y);
+	    if (!pole.IsValid())
+		continue;
+
+	    std::set<int> face_vertices;
+	    for (int loop_index = 0; loop_index < face.LoopCount();
+		    ++loop_index) {
+		const ON_BrepLoop *loop = face.Loop(loop_index);
+		if (!loop)
+		    continue;
+		for (int trim_index = 0; trim_index < loop->TrimCount();
+			++trim_index) {
+		    const ON_BrepTrim *trim = loop->Trim(trim_index);
+		    if (!trim)
+			continue;
+		    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+			const int vertex_index = trim->m_vi[endpoint];
+			const auto point = s_cdt->vert_pnts->find(vertex_index);
+			if (point != s_cdt->vert_pnts->end() && point->second &&
+				point->second->DistanceTo(pole) <= tolerance)
+			    face_vertices.insert(vertex_index);
+		    }
+		}
+	    }
+	    if (face_vertices.size() < 2)
+		continue;
+
+	    struct pole_component {
+		ON_BoundingBox bounds;
+		std::vector<int> vertices;
+	    };
+	    std::vector<pole_component> components;
+	    for (int vertex_index : face_vertices) {
+		ON_3dPoint *point = (*s_cdt->vert_pnts)[vertex_index];
+		bool joined = false;
+		for (pole_component &component : components) {
+		    ON_BoundingBox combined = component.bounds;
+		    combined.Set(*point, true);
+		    if (combined.Diagonal().Length() > tolerance)
+			continue;
+		    component.bounds = combined;
+		    component.vertices.push_back(vertex_index);
+		    joined = true;
+		    break;
+		}
+		if (!joined) {
+		    pole_component component;
+		    component.bounds = ON_BoundingBox(*point, *point);
+		    component.vertices.push_back(vertex_index);
+		    components.push_back(component);
+		}
+	    }
+	    for (const pole_component &component : components) {
+		if (component.vertices.size() < 2)
+		    continue;
+		const int representative_index = *std::min_element(
+		    component.vertices.begin(), component.vertices.end());
+		ON_3dPoint *representative =
+		    (*s_cdt->vert_pnts)[representative_index];
+		for (int vertex_index : component.vertices) {
+		    ON_3dPoint *point = (*s_cdt->vert_pnts)[vertex_index];
+		    if (point != representative) {
+			if (welds.emplace(point, representative).second)
+			    welded_vertices++;
+		    }
+		}
+	    }
+	}
+    }
+    if (welds.empty())
+	return 0;
+    for (const auto &weld : welds)
+	s_cdt->collapsed_edge_pnts[weld.first] = weld.second;
+    apply_derived_point_welds(s_cdt, welds);
+    bu_log("%s: welded %zu coincident surface-pole B-Rep vert%s within "
+	"%.17g\n", s_cdt->name ? s_cdt->name : "BREP",
+	welded_vertices, welded_vertices == 1 ? "ex" : "ices", tolerance);
+    return welded_vertices;
 }
 
 /* Collapse only explicit B-Rep edges whose complete curve is contained in
@@ -1905,6 +2088,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     s_cdt->status = BREP_CDT_FAILED;
     s_cdt->failed_face_indices.clear();
     s_cdt->failed_face_diagnostics.clear();
+    s_cdt->repair_source_valid = false;
     cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INITIALIZATION_FAILED,
 	BREP_CDT_STAGE_INPUT, -1, 0, 0, "tessellation started");
 
@@ -2128,9 +2312,25 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	 * curve is smaller than the fixed modeling tolerance.  Weld only those
 	 * explicitly proven edges in derived mesh state, before any face chart
 	 * is built. */
-	collapse_subtolerance_brep_edges(s_cdt);
+    collapse_subtolerance_brep_edges(s_cdt);
 
-	// Rebuild finalized 2D RTrees for faces (needed for surface processing)
+    /* Some valid imports use distinct B-Rep vertex identities for repeated
+     * visits to one geometric surface pole.  Weld only face-local,
+     * singularity-proven coincidences before constructing pole charts. */
+    collapse_coincident_surface_poles(s_cdt);
+
+    /* When a safely welded pole makes two distinct analytic seam edges share
+     * both endpoints, prove their master curves coincide within modeling
+     * tolerance and give them a common refinement sequence. */
+    std::map<ON_3dPoint *, ON_3dPoint *> coincident_edge_welds;
+    if (synchronize_coincident_edge_samples(s_cdt,
+	    coincident_edge_welds)) {
+	for (const auto &weld : coincident_edge_welds)
+	    s_cdt->collapsed_edge_pnts[weld.first] = weld.second;
+	apply_derived_point_welds(s_cdt, coincident_edge_welds);
+    }
+
+    // Rebuild finalized 2D RTrees for faces (needed for surface processing)
 	finalize_rtrees(s_cdt);
 	s_cdt->tolerance_changed = false;
     } else {
@@ -2321,6 +2521,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     s_cdt->certified_face_count = valid_fcnt;
     s_cdt->certified_vertices = valid_vertices;
     s_cdt->certified_vertex_count = valid_vcnt;
+    s_cdt->certified_repaired = false;
     s_cdt->status = BREP_CDT_SOLID;
     cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_SUCCESS,
 	BREP_CDT_STAGE_SOLID_VALIDATION, -1, face_successes, 0,
@@ -2329,20 +2530,912 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
 }
 
+typedef std::array<double, 3> repair_point_key;
+typedef std::array<repair_point_key, 3> repair_triangle_key;
+
+static repair_triangle_key
+repair_triangle_coordinates(const fastf_t *vertices, const int *face)
+{
+    repair_triangle_key key;
+    for (int corner = 0; corner < 3; ++corner) {
+	const int vertex = face[corner];
+	key[(size_t)corner] = {
+	    vertices[(size_t)vertex * 3],
+	    vertices[(size_t)vertex * 3 + 1],
+	    vertices[(size_t)vertex * 3 + 2]
+	};
+    }
+    std::sort(key.begin(), key.end());
+    return key;
+}
+
+static double
+repair_bbox_distance(const ON_BoundingBox &bbox, const ON_3dPoint &point)
+{
+    double squared = 0.0;
+    for (int axis = 0; axis < 3; ++axis) {
+	double delta = 0.0;
+	if (point[axis] < bbox.m_min[axis])
+	    delta = bbox.m_min[axis] - point[axis];
+	else if (point[axis] > bbox.m_max[axis])
+	    delta = point[axis] - bbox.m_max[axis];
+	squared += delta * delta;
+    }
+    return std::sqrt(squared);
+}
+
+static bool
+repair_surface_distance(const ON_Brep *brep,
+	const std::vector<ON_BoundingBox> &face_bounds,
+	std::vector<std::unique_ptr<brlcad::SurfaceTree>> &face_trees,
+	std::vector<std::unique_ptr<brlcad::PullbackContext>> &face_contexts,
+	const ON_3dPoint &point, double allowed, bool allow_untrimmed,
+	double *distance, bool *used_untrimmed,
+	ON_3dPoint *closest_point = NULL, int *closest_face = NULL,
+	const std::set<int> *face_filter = NULL)
+{
+    if (!brep || !distance || !used_untrimmed || !(allowed > 0.0) ||
+	    !std::isfinite(allowed))
+	return false;
+
+    double closest_distance = std::numeric_limits<double>::infinity();
+    bool closest_was_untrimmed = false;
+    ON_3dPoint closest_projection = ON_3dPoint::UnsetPoint;
+    int closest_face_index = -1;
+    for (int face_index = 0; face_index < brep->m_F.Count(); ++face_index) {
+	if (face_filter && !face_filter->empty() &&
+		face_filter->find(face_index) == face_filter->end())
+	    continue;
+	const ON_BrepFace &face = brep->m_F[face_index];
+	if (!face.SurfaceOf() || !face_bounds[(size_t)face_index].IsValid() ||
+		repair_bbox_distance(face_bounds[(size_t)face_index], point) >
+		allowed)
+	    continue;
+	if (!face_trees[(size_t)face_index]) {
+	    face_trees[(size_t)face_index] =
+		std::unique_ptr<brlcad::SurfaceTree>(
+		    new brlcad::SurfaceTree(&face, true));
+	}
+	brlcad::SurfaceTree *tree = face_trees[(size_t)face_index].get();
+	ON_2dPoint uv;
+	ON_3dPoint projected = ON_3dPoint::UnsetPoint;
+	double candidate_distance =
+	    std::numeric_limits<double>::infinity();
+	bool projected_point = tree->Valid() &&
+	    brlcad::get_closest_point(uv, face, point, tree);
+	if (projected_point) {
+	    projected = face.SurfaceOf()->PointAt(uv.x, uv.y);
+	    candidate_distance = projected.DistanceTo(point);
+	} else {
+	    if (!face_contexts[(size_t)face_index])
+		face_contexts[(size_t)face_index] =
+		    std::unique_ptr<brlcad::PullbackContext>(
+			new brlcad::PullbackContext());
+	    candidate_distance =
+		std::numeric_limits<double>::infinity();
+	    projected_point = face_contexts[(size_t)face_index]->
+		SurfaceClosestPoint(face.SurfaceOf(), point, uv, projected,
+		    candidate_distance, 0, BREP_SAME_POINT_TOLERANCE,
+		    allowed);
+	}
+	if (!projected_point)
+	    continue;
+	if (!std::isfinite(candidate_distance) ||
+		candidate_distance > allowed ||
+		candidate_distance >= closest_distance)
+	    continue;
+	const brlcad::BRNode *closest_trim = NULL;
+	double trim_distance = -1.0;
+	const bool outside_trim = !tree->Valid() ||
+	    tree->getRootNode()->isTrimmed(uv, &closest_trim, trim_distance,
+		BREP_EDGE_MISS_TOLERANCE);
+	if (outside_trim && !allow_untrimmed)
+	    continue;
+	closest_distance = candidate_distance;
+	closest_was_untrimmed = outside_trim;
+	closest_projection = projected;
+	closest_face_index = face_index;
+    }
+
+    if (!std::isfinite(closest_distance))
+	return false;
+    *distance = closest_distance;
+    *used_untrimmed = closest_was_untrimmed;
+    if (closest_point)
+	*closest_point = closest_projection;
+    if (closest_face)
+	*closest_face = closest_face_index;
+    return true;
+}
+
+static bool
+repair_input_mesh_distance(RTree<size_t, double, 3> &triangle_index,
+	const fastf_t *vertices, const int *faces, const ON_3dPoint &point,
+	double allowed, double *distance)
+{
+    if (!vertices || !faces || !distance || !(allowed > 0.0))
+	return false;
+    double minimum[3] = {
+	point.x - allowed, point.y - allowed, point.z - allowed
+    };
+    double maximum[3] = {
+	point.x + allowed, point.y + allowed, point.z + allowed
+    };
+    std::vector<size_t> candidates;
+    triangle_index.Search(minimum, maximum,
+	assembled_mesh_collect_candidate, &candidates);
+    double closest = std::numeric_limits<double>::infinity();
+    point_t test_point;
+    VSET(test_point, point.x, point.y, point.z);
+    for (size_t candidate : candidates) {
+	point_t triangle[3];
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int vertex = faces[candidate * 3 + (size_t)corner];
+	    VSET(triangle[corner], vertices[(size_t)vertex * 3],
+		vertices[(size_t)vertex * 3 + 1],
+		vertices[(size_t)vertex * 3 + 2]);
+	}
+	closest = std::min(closest, bg_tri_closest_pt(NULL, test_point,
+	    triangle[0], triangle[1], triangle[2]));
+    }
+    if (!std::isfinite(closest) || closest > allowed)
+	return false;
+    *distance = closest;
+    return true;
+}
+
+struct repair_changed_face {
+    int index;
+    double area;
+};
+
+static double
+repair_mesh_area(const fastf_t *vertices, const int *faces, int face_count)
+{
+    double area = 0.0;
+    for (int face = 0; face < face_count; ++face) {
+	const int *triangle = &faces[(size_t)face * 3];
+	const ON_3dPoint a(&vertices[(size_t)triangle[0] * 3]);
+	const ON_3dPoint b(&vertices[(size_t)triangle[1] * 3]);
+	const ON_3dPoint c(&vertices[(size_t)triangle[2] * 3]);
+	area += 0.5 * ON_CrossProduct(b - a, c - a).Length();
+    }
+    return area;
+}
+
+int
+ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
+	const struct brep_cdt_repair_settings *settings,
+	struct brep_cdt_repair_report *report)
+{
+    struct brep_cdt_repair_report local_report =
+	BREP_CDT_REPAIR_REPORT_INIT;
+    if (!report)
+	report = &local_report;
+    *report = local_report;
+    if (!s_cdt || !s_cdt->orig_brep)
+	return -1;
+
+    if (!s_cdt->repair_source_valid) {
+	s_cdt->repair_source_diagnostic = s_cdt->diagnostic;
+	s_cdt->repair_source_valid = true;
+    }
+    report->source_diagnostic = s_cdt->repair_source_diagnostic;
+    report->source_failed_faces = (int)s_cdt->failed_face_indices.size();
+    if (s_cdt->status == BREP_CDT_SOLID && s_cdt->certified_faces &&
+	    s_cdt->certified_vertices) {
+	report->mesh.input_vertices = s_cdt->certified_vertex_count;
+	report->mesh.input_faces = s_cdt->certified_face_count;
+	report->mesh.output_vertices = s_cdt->certified_vertex_count;
+	report->mesh.output_faces = s_cdt->certified_face_count;
+	report->mesh.solid = 1;
+	return 1;
+    }
+    struct brep_cdt_repair_settings default_settings =
+	BREP_CDT_REPAIR_SETTINGS_INIT;
+    if (!settings)
+	settings = &default_settings;
+    if (!std::isfinite(settings->max_surface_deviation) ||
+	    settings->max_surface_deviation < 0.0 ||
+	    !std::isfinite(settings->max_area_change_percent) ||
+	    settings->max_area_change_percent < 0.0 ||
+	    ((settings->use_fast_face_fallback ||
+	    settings->use_full_fast_fallback) &&
+	    (!settings->max_fast_points || !settings->max_fast_result_bytes ||
+	    settings->max_fast_time_ms <= 0))) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces, "invalid mesh repair limits");
+	return -1;
+    }
+    if (settings->mesh.fill_holes &&
+	    (settings->mesh.max_hole_edges < 3 ||
+	    (!(settings->mesh.max_hole_area > 0.0) &&
+	    !(settings->mesh.max_hole_area_percent > 0.0)))) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces,
+	    "B-Rep hole repair requires explicit edge and area limits");
+	return -1;
+    }
+    if (settings->mesh.remove_small_components &&
+	    !(settings->mesh.max_component_area > 0.0) &&
+	    !(settings->mesh.max_component_area_percent > 0.0)) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces,
+	    "B-Rep component removal requires an explicit area limit");
+	return -1;
+    }
+
+    const bool have_rigorous_faces = !s_cdt->fmeshes.empty();
+    if (!have_rigorous_faces && !settings->use_full_fast_fallback) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces,
+	    "mesh repair requires usable rigorous faces or the explicit "
+	    "whole-B-Rep fast fallback");
+	return -1;
+    }
+
+    std::set<int> failed_faces(s_cdt->failed_face_indices.begin(),
+	s_cdt->failed_face_indices.end());
+    std::vector<int> usable_faces;
+    for (const auto &face : s_cdt->fmeshes) {
+	if (failed_faces.find(face.first) == failed_faces.end())
+	    usable_faces.push_back(face.first);
+    }
+    if (have_rigorous_faces && usable_faces.empty()) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1, 0,
+	    report->source_failed_faces,
+	    "mesh repair has no successfully triangulated B-Rep faces");
+	return -1;
+    }
+
+    int *input_faces = NULL;
+    int input_face_count = 0;
+    fastf_t *input_vertices = NULL;
+    int input_vertex_count = 0;
+    if (have_rigorous_faces) {
+	if (ON_Brep_CDT_Mesh(&input_faces, &input_face_count, &input_vertices,
+	    &input_vertex_count, NULL, NULL, NULL, NULL, s_cdt,
+	    (int)usable_faces.size(), usable_faces.data()) < 0 ||
+	    input_face_count <= 0 || input_vertex_count <= 0) {
+	    if (input_faces)
+		bu_free(input_faces, "repair input faces");
+	    if (input_vertices)
+		bu_free(input_vertices, "repair input vertices");
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+		BREP_CDT_STAGE_MESH_REPAIR, -1,
+		report->source_diagnostic.completed_faces,
+		report->source_failed_faces,
+		"failed to assemble the usable face meshes for repair");
+	    return -1;
+	}
+
+	/* A failed face previously prevented the final assembled-mesh pass from
+	 * running at all, so repair could close the missing patch only to expose
+	 * an approximation crossing between two otherwise successful faces.
+	 * Refine those rigorous chords before introducing any repair geometry.
+	 * Open-boundary link failures are expected here and ignored; only the
+	 * independently detected nonadjacent triangle intersection drives this
+	 * bounded retry. */
+	size_t partial_refinement_points = 0;
+	int partial_refinement_attempts = 0;
+	while (partial_refinement_attempts <
+	    MAX_ASSEMBLED_REFINEMENT_ATTEMPTS &&
+	    partial_refinement_points < MAX_ASSEMBLED_REFINEMENT_POINTS) {
+	    assembled_mesh_validation partial_validation;
+	    assembled_mesh_validate(input_vertex_count, input_face_count,
+		input_vertices, input_faces, &partial_validation);
+	    if (!partial_validation.intersecting_triangle_pairs)
+		break;
+	    const size_t inserted = refine_assembled_intersection(s_cdt,
+		partial_validation, MAX_ASSEMBLED_REFINEMENT_POINTS -
+		partial_refinement_points);
+	    if (!inserted)
+		break;
+	    partial_refinement_points += inserted;
+	    partial_refinement_attempts++;
+	    bu_free(input_faces, "pre-repair intersecting faces");
+	    bu_free(input_vertices, "pre-repair intersecting vertices");
+	    input_faces = NULL;
+	    input_vertices = NULL;
+	    if (ON_Brep_CDT_Mesh(&input_faces, &input_face_count,
+		&input_vertices, &input_vertex_count, NULL, NULL, NULL,
+		NULL, s_cdt, (int)usable_faces.size(), usable_faces.data()) < 0 ||
+		input_face_count <= 0 || input_vertex_count <= 0) {
+		if (input_faces)
+		    bu_free(input_faces, "failed pre-repair faces");
+		if (input_vertices)
+		    bu_free(input_vertices, "failed pre-repair vertices");
+		cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+		    BREP_CDT_STAGE_MESH_REPAIR, -1,
+		    report->source_diagnostic.completed_faces,
+		    report->source_failed_faces,
+		    "failed to reassemble cross-face refined repair input");
+		return -1;
+	    }
+	}
+    }
+    int rigorous_input_face_count = input_face_count;
+
+    if (settings->use_full_fast_fallback) {
+	report->fast_fallback_attempted_faces =
+	    s_cdt->orig_brep->m_F.Count();
+	struct brep_cdt_fast_options fast_options;
+	brep_cdt_fast_options_default(&fast_options);
+	fast_options.max_workers = 1;
+	fast_options.max_points = settings->max_fast_points;
+	fast_options.max_result_bytes = settings->max_fast_result_bytes;
+	fast_options.max_time_ms = settings->max_fast_time_ms;
+	fast_options.allow_partial = 1;
+	struct brep_cdt_fast_report fast_report = {};
+	int *fast_faces = NULL;
+	int fast_face_count = 0;
+	vect_t *fast_normals = NULL;
+	point_t *fast_points = NULL;
+	int fast_point_count = 0;
+	struct bn_tol model_tolerance = BN_TOL_INIT_TOL;
+	const int fast_result = brep_cdt_fast_ex(&fast_faces,
+	    &fast_face_count, &fast_normals, &fast_points,
+	    &fast_point_count, s_cdt->orig_brep, -1, &s_cdt->tol,
+	    &model_tolerance, &fast_options, &fast_report);
+	bool valid_fast_mesh =
+	    (fast_result == BREP_CDT_FAST_OK ||
+	    fast_result == BREP_CDT_FAST_PARTIAL) && fast_faces &&
+	    fast_face_count > 0 && fast_points && fast_point_count > 0 &&
+	    (size_t)fast_point_count <= settings->max_fast_points &&
+	    fast_report.result_bytes <= settings->max_fast_result_bytes;
+	for (int corner = 0; valid_fast_mesh &&
+		corner < fast_face_count * 3; ++corner) {
+	    valid_fast_mesh = fast_faces[corner] >= 0 &&
+		fast_faces[corner] < fast_point_count;
+	}
+	for (int point = 0; valid_fast_mesh && point < fast_point_count;
+		++point) {
+	    valid_fast_mesh = std::isfinite(fast_points[point][X]) &&
+		std::isfinite(fast_points[point][Y]) &&
+		std::isfinite(fast_points[point][Z]);
+	}
+	bu_free(fast_normals, "repair full fast fallback normals");
+	if (!valid_fast_mesh) {
+	    report->fast_fallback_failed_faces =
+		std::max(1, fast_report.failed_faces);
+	    bu_free(fast_faces, "repair full fast fallback faces");
+	    bu_free(fast_points, "repair full fast fallback points");
+	    bu_free(input_faces, "repair rigorous input faces");
+	    bu_free(input_vertices, "repair rigorous input vertices");
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+		BREP_CDT_STAGE_MESH_REPAIR, -1,
+		report->source_diagnostic.completed_faces,
+		report->source_failed_faces,
+		"whole-B-Rep fast fallback did not produce usable geometry");
+	    return -1;
+	}
+	bu_free(input_faces, "repair rigorous input faces");
+	bu_free(input_vertices, "repair rigorous input vertices");
+	input_faces = fast_faces;
+	input_face_count = fast_face_count;
+	input_vertices = (fastf_t *)fast_points;
+	input_vertex_count = fast_point_count;
+	rigorous_input_face_count = 0;
+	report->fast_fallback_used_faces = fast_report.completed_faces;
+	report->fast_fallback_failed_faces = fast_report.failed_faces;
+	report->fast_fallback_triangles = fast_face_count;
+	report->full_fast_fallback_used = 1;
+    }
+
+    if (!settings->use_full_fast_fallback &&
+	    settings->use_fast_face_fallback && !failed_faces.empty()) {
+	const int64_t fast_start = bu_gettime();
+	size_t fast_points_used = 0;
+	size_t fast_bytes_used = 0;
+	for (int failed_face : failed_faces) {
+	    const int64_t elapsed_ms = (bu_gettime() - fast_start) / 1000;
+	    if (elapsed_ms >= settings->max_fast_time_ms ||
+		    fast_points_used >= settings->max_fast_points ||
+		    fast_bytes_used >= settings->max_fast_result_bytes)
+		break;
+	    report->fast_fallback_attempted_faces++;
+	    struct brep_cdt_fast_options fast_options;
+	    brep_cdt_fast_options_default(&fast_options);
+	    fast_options.max_workers = 1;
+	    fast_options.max_points = settings->max_fast_points -
+		fast_points_used;
+	    fast_options.max_result_bytes = settings->max_fast_result_bytes -
+		fast_bytes_used;
+	    fast_options.max_time_ms = settings->max_fast_time_ms -
+		(long)elapsed_ms;
+	    fast_options.allow_partial = 1;
+	    struct brep_cdt_fast_report fast_report = {};
+	    int *fast_faces = NULL;
+	    int fast_face_count = 0;
+	    vect_t *fast_normals = NULL;
+	    point_t *fast_points = NULL;
+	    int fast_point_count = 0;
+	    struct bn_tol model_tolerance = BN_TOL_INIT_TOL;
+	    const int fast_result = brep_cdt_fast_ex(&fast_faces,
+		&fast_face_count, &fast_normals, &fast_points,
+		&fast_point_count, s_cdt->orig_brep, failed_face,
+		&s_cdt->tol, &model_tolerance, &fast_options,
+		&fast_report);
+	    bool valid_fast_mesh =
+		(fast_result == BREP_CDT_FAST_OK ||
+		 fast_result == BREP_CDT_FAST_PARTIAL) &&
+		fast_faces && fast_face_count > 0 && fast_points &&
+		fast_point_count > 0;
+	    for (int corner = 0; valid_fast_mesh &&
+		    corner < fast_face_count * 3; ++corner) {
+		valid_fast_mesh = fast_faces[corner] >= 0 &&
+		    fast_faces[corner] < fast_point_count;
+	    }
+	    for (int point = 0; valid_fast_mesh &&
+		    point < fast_point_count; ++point) {
+		valid_fast_mesh = std::isfinite(fast_points[point][X]) &&
+		    std::isfinite(fast_points[point][Y]) &&
+		    std::isfinite(fast_points[point][Z]);
+	    }
+	    const bool within_limits = valid_fast_mesh &&
+		(size_t)fast_point_count <=
+		    settings->max_fast_points - fast_points_used &&
+		    fast_report.result_bytes <=
+		    settings->max_fast_result_bytes - fast_bytes_used &&
+		(fast_point_count <= INT_MAX - input_vertex_count &&
+		fast_face_count <= INT_MAX - input_face_count);
+	    if (within_limits) {
+		const int vertex_offset = input_vertex_count;
+		const size_t new_vertex_count = (size_t)input_vertex_count +
+		    (size_t)fast_point_count;
+		const size_t new_face_count = (size_t)input_face_count +
+		    (size_t)fast_face_count;
+		input_vertices = (fastf_t *)bu_realloc(input_vertices,
+		    new_vertex_count * 3 * sizeof(fastf_t),
+		    "repair input vertices with fast fallback");
+		input_faces = (int *)bu_realloc(input_faces,
+		    new_face_count * 3 * sizeof(int),
+		    "repair input faces with fast fallback");
+		memcpy(&input_vertices[(size_t)input_vertex_count * 3],
+		    fast_points, (size_t)fast_point_count * sizeof(point_t));
+		for (int corner = 0; corner < fast_face_count * 3; ++corner)
+		    input_faces[(size_t)input_face_count * 3 + corner] =
+			fast_faces[corner] + vertex_offset;
+		input_vertex_count += fast_point_count;
+		input_face_count += fast_face_count;
+		report->fast_fallback_used_faces++;
+		report->fast_fallback_triangles += fast_face_count;
+		fast_points_used += (size_t)fast_point_count;
+		fast_bytes_used += fast_report.result_bytes;
+	    } else {
+		report->fast_fallback_failed_faces++;
+	    }
+	    bu_free(fast_faces, "repair fast fallback faces");
+	    bu_free(fast_normals, "repair fast fallback normals");
+	    bu_free(fast_points, "repair fast fallback points");
+	}
+    }
+
+    struct bg_trimesh_repair_settings mesh_settings = settings->mesh;
+    mesh_settings.require_solid = 1;
+    if (report->fast_fallback_used_faces &&
+	    !(mesh_settings.vertex_tolerance > 0.0)) {
+	mesh_settings.vertex_tolerance = std::min((fastf_t)BN_TOL_DIST,
+	    s_cdt->absmin);
+	if (!(mesh_settings.vertex_tolerance > 0.0))
+	    mesh_settings.vertex_tolerance = BN_TOL_DIST;
+    }
+    int *repaired_faces = NULL;
+    int repaired_face_count = 0;
+    point_t *repaired_points = NULL;
+    int repaired_vertex_count = 0;
+    const int repair_result = bg_trimesh_repair2(&repaired_faces,
+	&repaired_face_count, &repaired_points, &repaired_vertex_count,
+	input_faces, input_face_count, (const point_t *)input_vertices,
+	input_vertex_count, &mesh_settings, &report->mesh);
+    if (repair_result == 1) {
+	repaired_face_count = input_face_count;
+	repaired_vertex_count = input_vertex_count;
+	repaired_faces = (int *)bu_malloc((size_t)repaired_face_count * 3 *
+	    sizeof(int), "certified repaired faces");
+	repaired_points = (point_t *)bu_malloc(
+	    (size_t)repaired_vertex_count * sizeof(point_t),
+	    "certified repaired vertices");
+	memcpy(repaired_faces, input_faces,
+	    (size_t)repaired_face_count * 3 * sizeof(int));
+	memcpy(repaired_points, input_vertices,
+	    (size_t)repaired_vertex_count * sizeof(point_t));
+    } else if (repair_result < 0) {
+	bu_free(input_faces, "repair input faces");
+	bu_free(input_vertices, "repair input vertices");
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces,
+	    "bounded triangle mesh repair did not produce a solid");
+	return -1;
+    }
+
+    report->allowed_surface_deviation =
+	settings->max_surface_deviation > 0.0 ?
+	settings->max_surface_deviation : s_cdt->absmax;
+    if (!(report->allowed_surface_deviation > 0.0) ||
+	    !std::isfinite(report->allowed_surface_deviation))
+	report->allowed_surface_deviation = BN_TOL_DIST;
+
+    std::vector<ON_BoundingBox> face_bounds(
+	(size_t)s_cdt->orig_brep->m_F.Count());
+    std::vector<std::unique_ptr<brlcad::SurfaceTree>> face_trees(
+	(size_t)s_cdt->orig_brep->m_F.Count());
+    std::vector<std::unique_ptr<brlcad::PullbackContext>> face_contexts(
+	(size_t)s_cdt->orig_brep->m_F.Count());
+    for (int face = 0; face < s_cdt->orig_brep->m_F.Count(); ++face)
+	face_bounds[(size_t)face] =
+	    s_cdt->orig_brep->m_F[face].BoundingBox();
+
+    std::set<repair_triangle_key> rigorous_triangles;
+    for (int face = 0; face < rigorous_input_face_count; ++face)
+	rigorous_triangles.insert(repair_triangle_coordinates(input_vertices,
+	    &input_faces[(size_t)face * 3]));
+    report->mesh.output_vertices = repaired_vertex_count;
+    report->mesh.output_faces = repaired_face_count;
+    report->mesh.output_area = repair_mesh_area(
+	(const fastf_t *)repaired_points, repaired_faces,
+	repaired_face_count);
+
+    assembled_mesh_validation mesh_validation;
+    const fastf_t *repaired_vertices = (const fastf_t *)repaired_points;
+    struct bg_trimesh_solid_errors solid_errors =
+	BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+    const bool geometric_valid = assembled_mesh_validate(
+	repaired_vertex_count, repaired_face_count, repaired_vertices,
+	repaired_faces, &mesh_validation);
+    const int not_solid = bg_trimesh_solid2(repaired_vertex_count,
+	repaired_face_count, (fastf_t *)repaired_vertices, repaired_faces,
+	&solid_errors);
+    bg_free_trimesh_solid_errors(&solid_errors);
+    if (!geometric_valid || not_solid) {
+	std::string message =
+	    "repaired mesh failed final solid/geometric validation: "
+	    "degenerate faces " +
+	    std::to_string(mesh_validation.degenerate_faces) +
+	    ", invalid vertex links " +
+	    std::to_string(mesh_validation.invalid_vertex_links) +
+	    ", intersections " +
+	    std::to_string(mesh_validation.intersecting_triangle_pairs);
+	if (mesh_validation.intersecting_triangle_pairs &&
+		mesh_validation.first_intersection[0] >= 0 &&
+		mesh_validation.first_intersection[1] >= 0) {
+	    std::set<repair_triangle_key> fast_triangles;
+	    for (int face = rigorous_input_face_count;
+		    face < input_face_count; ++face) {
+		const repair_triangle_key key = repair_triangle_coordinates(
+		    input_vertices, &input_faces[(size_t)face * 3]);
+		fast_triangles.insert(key);
+	    }
+	    const auto provenance = [&](int face) {
+		const repair_triangle_key key = repair_triangle_coordinates(
+		    repaired_vertices, &repaired_faces[(size_t)face * 3]);
+		if (rigorous_triangles.find(key) != rigorous_triangles.end()) {
+		    for (int input_face = 0;
+			    input_face < rigorous_input_face_count; ++input_face) {
+			if (key != repair_triangle_coordinates(input_vertices,
+				&input_faces[(size_t)input_face * 3]))
+			    continue;
+			if ((size_t)input_face <
+				s_cdt->bot_face_to_brep_face.size())
+			    return std::string("rigorous B-Rep face ") +
+				std::to_string(s_cdt->bot_face_to_brep_face[
+				(size_t)input_face]);
+			break;
+		    }
+		    return std::string("rigorous");
+		}
+		if (fast_triangles.find(key) != fast_triangles.end())
+		    return std::string("fast");
+		return std::string("repair");
+	    };
+	    message += " (first " + std::to_string(
+		mesh_validation.first_intersection[0]) + " [" +
+		provenance(mesh_validation.first_intersection[0]) + "], " +
+		std::to_string(mesh_validation.first_intersection[1]) + " [" +
+		provenance(mesh_validation.first_intersection[1]) + "])";
+	    if (mesh_validation.first_intersection_point_valid) {
+		message += " near (" + std::to_string(
+		    mesh_validation.first_intersection_point[0]) + ", " +
+		    std::to_string(mesh_validation.first_intersection_point[1]) +
+		    ", " + std::to_string(
+		    mesh_validation.first_intersection_point[2]) + ")";
+	    }
+	}
+	bu_free(repaired_faces, "certified repaired faces");
+	bu_free(repaired_points, "certified repaired vertices");
+	bu_free(input_faces, "repair input faces");
+	bu_free(input_vertices, "repair input vertices");
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces, message.c_str());
+	return -1;
+    }
+
+    report->mesh.output_volume = bg_trimesh_volume(repaired_faces,
+	(size_t)repaired_face_count, repaired_points,
+	(size_t)repaired_vertex_count);
+
+    if (report->mesh.input_area > 0.0 &&
+	    std::isfinite(report->mesh.input_area) &&
+	    std::isfinite(report->mesh.output_area)) {
+	report->area_change_percent = 100.0 * std::fabs(
+	    report->mesh.output_area - report->mesh.input_area) /
+	    report->mesh.input_area;
+    } else {
+	report->area_change_percent =
+	    std::numeric_limits<fastf_t>::infinity();
+    }
+    if (settings->max_area_change_percent > 0.0 &&
+	    (!(report->area_change_percent <=
+	    settings->max_area_change_percent))) {
+	bu_free(repaired_faces, "certified repaired faces");
+	bu_free(repaired_points, "certified repaired vertices");
+	bu_free(input_faces, "repair input faces");
+	bu_free(input_vertices, "repair input vertices");
+	std::string message = "repaired mesh area changed by " +
+	    std::to_string(report->area_change_percent) +
+	    "% (limit " +
+	    std::to_string(settings->max_area_change_percent) + "%)";
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces, message.c_str());
+	return -1;
+    }
+
+    std::vector<repair_changed_face> changed_faces;
+    for (int face = 0; face < repaired_face_count; ++face) {
+	const int *triangle = &repaired_faces[(size_t)face * 3];
+	if (rigorous_triangles.find(repair_triangle_coordinates(repaired_vertices,
+		triangle)) != rigorous_triangles.end())
+	    continue;
+	const ON_3dPoint a(&repaired_vertices[(size_t)triangle[0] * 3]);
+	const ON_3dPoint b(&repaired_vertices[(size_t)triangle[1] * 3]);
+	const ON_3dPoint c(&repaired_vertices[(size_t)triangle[2] * 3]);
+	changed_faces.push_back({face,
+	    0.5 * ON_CrossProduct(b - a, c - a).Length()});
+    }
+    report->changed_faces = (int)changed_faces.size();
+
+    const size_t sample_limit = settings->max_deviation_samples ?
+	settings->max_deviation_samples : 4096;
+    if (changed_faces.size() > sample_limit) {
+	bu_free(repaired_faces, "certified repaired faces");
+	bu_free(repaired_points, "certified repaired vertices");
+	bu_free(input_faces, "repair input faces");
+	bu_free(input_vertices, "repair input vertices");
+	std::string message = "repair changed " +
+	    std::to_string(changed_faces.size()) +
+	    " triangles, exceeding the deviation sample limit " +
+	    std::to_string(sample_limit);
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces, message.c_str());
+	return -1;
+    }
+
+    RTree<size_t, double, 3> input_triangle_index;
+    for (int face = 0; face < rigorous_input_face_count; ++face) {
+	double minimum[3] = {
+	    std::numeric_limits<double>::infinity(),
+	    std::numeric_limits<double>::infinity(),
+	    std::numeric_limits<double>::infinity()
+	};
+	double maximum[3] = {
+	    -std::numeric_limits<double>::infinity(),
+	    -std::numeric_limits<double>::infinity(),
+	    -std::numeric_limits<double>::infinity()
+	};
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int vertex = input_faces[(size_t)face * 3 + corner];
+	    for (int axis = 0; axis < 3; ++axis) {
+		const double coordinate =
+		    input_vertices[(size_t)vertex * 3 + axis];
+		minimum[axis] = std::min(minimum[axis], coordinate);
+		maximum[axis] = std::max(maximum[axis], coordinate);
+	    }
+	}
+	input_triangle_index.Insert(minimum, maximum, (size_t)face);
+    }
+
+    std::sort(changed_faces.begin(), changed_faces.end(),
+	[](const repair_changed_face &first,
+		const repair_changed_face &second) {
+	    if (first.area > second.area)
+		return true;
+	    if (second.area > first.area)
+		return false;
+	    return first.index < second.index;
+	});
+    size_t remaining_extra_samples = sample_limit - changed_faces.size();
+    double squared_distance_sum = 0.0;
+    for (const repair_changed_face &changed : changed_faces) {
+	const int *triangle = &repaired_faces[(size_t)changed.index * 3];
+	const ON_3dPoint a(&repaired_vertices[(size_t)triangle[0] * 3]);
+	const ON_3dPoint b(&repaired_vertices[(size_t)triangle[1] * 3]);
+	const ON_3dPoint c(&repaired_vertices[(size_t)triangle[2] * 3]);
+	std::array<ON_3dPoint, 4> samples = {
+	    (a + b + c) / 3.0,
+	    (a + b) / 2.0,
+	    (b + c) / 2.0,
+	    (c + a) / 2.0
+	};
+	const size_t face_sample_count = 1 +
+	    std::min((size_t)3, remaining_extra_samples);
+	remaining_extra_samples -= face_sample_count - 1;
+	for (size_t sample = 0; sample < face_sample_count; ++sample) {
+	    double distance = 0.0;
+	    bool used_untrimmed = false;
+	    report->deviation_samples++;
+	    if (!repair_surface_distance(s_cdt->orig_brep, face_bounds,
+		    face_trees, face_contexts, samples[sample],
+		    report->allowed_surface_deviation,
+		    settings->allow_untrimmed_surface_match != 0, &distance,
+		    &used_untrimmed)) {
+		if (!repair_input_mesh_distance(input_triangle_index,
+			input_vertices, input_faces, samples[sample],
+			report->allowed_surface_deviation, &distance)) {
+		    report->deviation_projection_failures++;
+		    continue;
+		}
+		report->input_mesh_surface_samples++;
+	    }
+	    if (used_untrimmed)
+		report->untrimmed_surface_samples++;
+	    report->max_surface_deviation = std::max(
+		report->max_surface_deviation, (fastf_t)distance);
+	    squared_distance_sum += distance * distance;
+	}
+    }
+    const size_t projected_samples = report->deviation_samples -
+	report->deviation_projection_failures;
+    if (projected_samples)
+	report->rms_surface_deviation = std::sqrt(
+	    squared_distance_sum / (double)projected_samples);
+
+    if (report->deviation_projection_failures ||
+	    report->max_surface_deviation >
+	    report->allowed_surface_deviation) {
+	bu_free(repaired_faces, "certified repaired faces");
+	bu_free(repaired_points, "certified repaired vertices");
+	bu_free(input_faces, "repair input faces");
+	bu_free(input_vertices, "repair input vertices");
+	std::string message = "repaired surface failed B-Rep deviation check: " +
+	    std::to_string(report->deviation_projection_failures) +
+	    " projection failures, maximum " +
+	    std::to_string(report->max_surface_deviation) +
+	    " (limit " +
+	    std::to_string(report->allowed_surface_deviation) + ")";
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces, message.c_str());
+	return -1;
+    }
+
+    bu_free(input_faces, "repair input faces");
+    bu_free(input_vertices, "repair input vertices");
+    if (s_cdt->certified_faces)
+	bu_free(s_cdt->certified_faces, "certified faces");
+    if (s_cdt->certified_vertices)
+	bu_free(s_cdt->certified_vertices, "certified vertices");
+    if (s_cdt->certified_face_normals)
+	bu_free(s_cdt->certified_face_normals, "certified face normals");
+    if (s_cdt->certified_normals)
+	bu_free(s_cdt->certified_normals, "certified normals");
+    s_cdt->certified_faces = repaired_faces;
+    s_cdt->certified_face_count = repaired_face_count;
+    s_cdt->certified_vertices = (fastf_t *)repaired_points;
+    s_cdt->certified_vertex_count = repaired_vertex_count;
+    s_cdt->certified_face_normals = NULL;
+    s_cdt->certified_face_normal_count = 0;
+    s_cdt->certified_normals = NULL;
+    s_cdt->certified_normal_count = 0;
+    s_cdt->certified_repaired = true;
+    s_cdt->status = BREP_CDT_SOLID;
+    std::string message = "certified repaired mesh: " +
+	std::to_string(report->mesh.removed_faces) + " faces removed, " +
+	std::to_string(report->mesh.added_faces) + " added, " +
+	std::to_string(report->changed_faces) +
+	" changed triangles, sampled maximum B-Rep deviation " +
+	std::to_string(report->max_surface_deviation);
+    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIRED,
+	BREP_CDT_STAGE_MESH_REPAIR, -1,
+	report->source_diagnostic.completed_faces,
+	report->source_failed_faces, message.c_str());
+    return 0;
+}
+
 static bool
 cache_certified_normals(struct ON_Brep_CDT_State *s_cdt)
 {
     if (!s_cdt || !s_cdt->certified_faces ||
 	    s_cdt->certified_face_count <= 0 ||
-	    s_cdt->bot_face_to_brep_face.size() !=
-	    (size_t)s_cdt->certified_face_count ||
-	    s_cdt->bot_face_to_cdt_triangle.size() !=
-	    (size_t)s_cdt->certified_face_count)
+	    !s_cdt->certified_vertices ||
+	    s_cdt->certified_vertex_count <= 0)
 	return false;
     if (s_cdt->certified_face_normals && s_cdt->certified_normals &&
 	    s_cdt->certified_face_normal_count > 0 &&
 	    s_cdt->certified_normal_count > 0)
 	return true;
+
+    if (s_cdt->certified_repaired) {
+	std::vector<ON_3dVector> accumulated(
+	    (size_t)s_cdt->certified_vertex_count, ON_3dVector::ZeroVector);
+	std::vector<ON_3dVector> fallback(
+	    (size_t)s_cdt->certified_vertex_count, ON_3dVector::ZeroVector);
+	for (int face = 0; face < s_cdt->certified_face_count; ++face) {
+	    int indices[3];
+	    ON_3dPoint points[3];
+	    for (int corner = 0; corner < 3; ++corner) {
+		indices[corner] =
+		    s_cdt->certified_faces[(size_t)face * 3 + corner];
+		if (indices[corner] < 0 || indices[corner] >=
+			s_cdt->certified_vertex_count)
+		    return false;
+		points[corner] = ON_3dPoint(
+		    s_cdt->certified_vertices[(size_t)indices[corner] * 3],
+		    s_cdt->certified_vertices[(size_t)indices[corner] * 3 + 1],
+		    s_cdt->certified_vertices[(size_t)indices[corner] * 3 + 2]);
+	    }
+	    const ON_3dVector normal = ON_CrossProduct(points[1] - points[0],
+		points[2] - points[0]);
+	    if (!normal.IsValid() || !(normal.LengthSquared() > 0.0))
+		return false;
+	    for (int corner = 0; corner < 3; ++corner) {
+		accumulated[(size_t)indices[corner]] += normal;
+		if (!(fallback[(size_t)indices[corner]].LengthSquared() > 0.0))
+		    fallback[(size_t)indices[corner]] = normal;
+	    }
+	}
+
+	fastf_t *normals = (fastf_t *)bu_malloc(
+	    (size_t)s_cdt->certified_vertex_count * 3 * sizeof(fastf_t),
+	    "certified repaired normals");
+	for (int vertex = 0; vertex < s_cdt->certified_vertex_count; ++vertex) {
+	    ON_3dVector normal = accumulated[(size_t)vertex];
+	    if (!normal.Unitize()) {
+		normal = fallback[(size_t)vertex];
+		if (!normal.Unitize()) {
+		    bu_free(normals, "certified repaired normals");
+		    return false;
+		}
+	    }
+	    normals[(size_t)vertex * 3] = normal.x;
+	    normals[(size_t)vertex * 3 + 1] = normal.y;
+	    normals[(size_t)vertex * 3 + 2] = normal.z;
+	}
+	const size_t corner_count =
+	    (size_t)s_cdt->certified_face_count * 3;
+	int *face_normals = (int *)bu_malloc(corner_count * sizeof(int),
+	    "certified repaired face normals");
+	memcpy(face_normals, s_cdt->certified_faces,
+	    corner_count * sizeof(int));
+	s_cdt->certified_face_normals = face_normals;
+	s_cdt->certified_face_normal_count = s_cdt->certified_face_count;
+	s_cdt->certified_normals = normals;
+	s_cdt->certified_normal_count = s_cdt->certified_vertex_count;
+	return true;
+    }
+
+    if (s_cdt->bot_face_to_brep_face.size() !=
+	    (size_t)s_cdt->certified_face_count ||
+	    s_cdt->bot_face_to_cdt_triangle.size() !=
+	    (size_t)s_cdt->certified_face_count)
+	return false;
 
     const size_t corner_count =
 	(size_t)s_cdt->certified_face_count * 3;
