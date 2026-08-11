@@ -24,6 +24,32 @@ struct mesh_output {
 };
 
 static bool
+empty_mesh_contract()
+{
+    ON_3dPoint corners[8] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 1.0, 0.0), ON_3dPoint(0.0, 1.0, 0.0),
+	ON_3dPoint(0.0, 0.0, 1.0), ON_3dPoint(1.0, 0.0, 1.0),
+	ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(0.0, 1.0, 1.0)
+    };
+    ON_Brep *box = ON_BrepBox(corners);
+    if (!box)
+	return false;
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(box,
+	"empty mesh contract");
+    int *faces = (int *)1;
+    fastf_t *vertices = (fastf_t *)1;
+    int face_count = 1;
+    int vertex_count = 1;
+    const bool rejected = ON_Brep_CDT_Mesh(&faces, &face_count, &vertices,
+	&vertex_count, NULL, NULL, NULL, NULL, state, 0, NULL) < 0 &&
+	!faces && !vertices && !face_count && !vertex_count;
+    ON_Brep_CDT_Destroy(state);
+    delete box;
+    return rejected;
+}
+
+static bool
 mesh_get(mesh_output &output, struct ON_Brep_CDT_State *state)
 {
     int *faces = NULL;
@@ -243,6 +269,7 @@ main(int argc, const char **argv)
     second_ok = second_ok && mesh_get(second, state) &&
 	first.faces == second.faces && first.vertices == second.vertices;
 
+    bool empty_rejected = empty_mesh_contract();
     bool repaired = repair_contract();
     bool invalid_repaired = invalid_poisson_repair_contract();
 
@@ -278,6 +305,7 @@ main(int argc, const char **argv)
 	diagnostic.stage == BREP_CDT_STAGE_TOPOLOGY;
     ON_Brep_CDT_Destroy(state);
 
-    return initial && first_ok && second_ok && repaired && invalid_repaired &&
+    return initial && first_ok && second_ok && empty_rejected && repaired &&
+	invalid_repaired &&
 	invalidated && invalid_tolerance && invalid_face && invalid_input ? 0 : 1;
 }
