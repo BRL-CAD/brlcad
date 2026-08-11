@@ -81,6 +81,7 @@ unset(_geo_flags)
 find_package_eigen(REQUIRED)
 find_package_gte(REQUIRED)
 find_package_spsr(REQUIRED)
+brlcad_find_package(manifold REQUIRED)
 
 set(
   LIBBG_SOURCES
@@ -123,7 +124,7 @@ set(
 
 # Note - libbg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(BG_PUBLIC_LIBS ${libbg_deps})
-set(BG_PRIVATE_LIBS)
+set(BG_PRIVATE_LIBS manifold::manifold)
 if(UNIX)
   list(APPEND BG_PRIVATE_LIBS pthread dl)
 endif()

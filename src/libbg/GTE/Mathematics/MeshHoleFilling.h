@@ -212,7 +212,26 @@ namespace gte
                     // LSCM (default): arc-length circle mapping, always succeeds for any
                     // simple closed 3D boundary loop regardless of planarity.
                     success = TriangulateHoleLSCM(vertices, hole, newTriangles);
-                    // Fall back to 3D if LSCM somehow fails
+                    // The circle map is nondegenerate in parameter space, but
+                    // a B-Rep boundary commonly retains multiple collinear
+                    // samples on each straight edge.  Ears which are valid on
+                    // the circle can therefore collapse after mapping back to
+                    // 3D.  Treat that as a failed parameterization and let the
+                    // geometric ear selector preserve the same boundary with
+                    // nonzero-area triangles.
+                    if (success)
+                    {
+                        for (auto const& triangle : newTriangles)
+                        {
+                            if (IsGeometricallyDegenerate(vertices, triangle))
+                            {
+                                success = false;
+                                newTriangles.clear();
+                                break;
+                            }
+                        }
+                    }
+                    // Fall back to 3D if LSCM fails logically or geometrically.
                     if (!success && params.autoFallback)
                     {
                         success = TriangulateHole3D(vertices, hole, newTriangles, edgeToThirdVert);
@@ -707,6 +726,15 @@ namespace gte
                 for (size_t i = 0; i < workingHole.size(); ++i)
                 {
                     size_t nextIdx = (i + 1) % workingHole.size();
+                    std::array<int32_t, 3> candidate = {
+                        workingHole[i].v0,
+                        workingHole[nextIdx].v1,
+                        workingHole[i].v1
+                    };
+                    if (IsGeometricallyDegenerate(vertices, candidate))
+                    {
+                        continue;
+                    }
                     Real score = ComputeEarScore3D(vertices, 
                         workingHole[i], workingHole[nextIdx]);
                     
@@ -755,14 +783,40 @@ namespace gte
             // Add final triangle
             if (workingHole.size() == 3)
             {
-                triangles.push_back({
+                std::array<int32_t, 3> finalTriangle = {
                     workingHole[0].v0,
                     workingHole[1].v0,
                     workingHole[2].v0
-                });
+                };
+                if (IsGeometricallyDegenerate(vertices, finalTriangle))
+                {
+                    return false;
+                }
+                triangles.push_back(finalTriangle);
             }
             
             return true;
+        }
+
+        static bool IsGeometricallyDegenerate(
+            std::vector<Vector3<Real>> const& vertices,
+            std::array<int32_t, 3> const& triangle)
+        {
+            Vector3<Real> const& p0 = vertices[triangle[0]];
+            Vector3<Real> const& p1 = vertices[triangle[1]];
+            Vector3<Real> const& p2 = vertices[triangle[2]];
+            Vector3<Real> e01 = p1 - p0;
+            Vector3<Real> e02 = p2 - p0;
+            Vector3<Real> e12 = p2 - p1;
+            Real longestSquared = std::max(Dot(e01, e01),
+                std::max(Dot(e02, e02), Dot(e12, e12)));
+            if (!(longestSquared > static_cast<Real>(0)))
+            {
+                return true;
+            }
+            Real doubledArea = Length(Cross(e01, e02));
+            return !(doubledArea > static_cast<Real>(64) *
+                std::numeric_limits<Real>::epsilon() * longestSquared);
         }
         
         // Compute ear quality score in 3D (ported from Geogram)
