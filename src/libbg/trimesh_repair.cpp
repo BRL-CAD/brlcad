@@ -86,17 +86,36 @@ trimesh_gte_area(std::vector<gte::Vector3<double>> const& verts,
  * -------------------------------------------------------------------------- */
 
 extern "C" int
-bg_trimesh_repair(
+bg_trimesh_repair2(
 	int **ofaces, int *n_ofaces,
 	point_t **opnts, int *n_opnts,
 	const int *ifaces, int n_ifaces,
 	const point_t *ipnts, int n_ipnts,
-	struct bg_trimesh_repair_opts *opts)
+	const struct bg_trimesh_repair_settings *settings,
+	struct bg_trimesh_repair_report *report)
 {
+    struct bg_trimesh_repair_report local_report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    if (!report)
+	report = &local_report;
+    *report = local_report;
+    report->input_vertices = n_ipnts;
+    report->input_faces = n_ifaces;
+
     if (!ofaces || !n_ofaces || !opnts || !n_opnts)
 	return -1;
     if (!ifaces || n_ifaces <= 0 || !ipnts || n_ipnts <= 0)
 	return -1;
+    for (int vertex = 0; vertex < n_ipnts; ++vertex) {
+	if (!std::isfinite(ipnts[vertex][X]) ||
+		!std::isfinite(ipnts[vertex][Y]) ||
+		!std::isfinite(ipnts[vertex][Z]))
+	    return -1;
+    }
+    for (size_t corner = 0; corner < (size_t)n_ifaces * 3; ++corner) {
+	if (ifaces[corner] < 0 || ifaces[corner] >= n_ipnts)
+	    return -1;
+    }
 
     /* Initialize output pointers */
     *ofaces = NULL;
@@ -104,17 +123,38 @@ bg_trimesh_repair(
     *opnts = NULL;
     *n_opnts = 0;
 
-    /* Use caller-supplied opts or fall back to defaults */
-    struct bg_trimesh_repair_opts default_opts = BG_TRIMESH_REPAIR_OPTS_DEFAULT;
-    if (!opts)
-	opts = &default_opts;
+    struct bg_trimesh_repair_settings default_settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    if (!settings)
+	settings = &default_settings;
+    if (!std::isfinite(settings->vertex_tolerance) ||
+	    settings->vertex_tolerance < 0.0 ||
+	    !std::isfinite(settings->max_component_area) ||
+	    settings->max_component_area < 0.0 ||
+	    !std::isfinite(settings->max_component_area_percent) ||
+	    settings->max_component_area_percent < 0.0 ||
+	    !std::isfinite(settings->max_hole_area) ||
+	    settings->max_hole_area < 0.0 ||
+	    !std::isfinite(settings->max_hole_area_percent) ||
+	    settings->max_hole_area_percent < 0.0 ||
+	    settings->max_iterations < 0)
+	return -1;
 
     /* Quick check: is the mesh already solid?  Return 1 if so. */
     int not_solid = bg_trimesh_solid2(n_ipnts, n_ifaces,
 				      (fastf_t *)ipnts, (int *)ifaces,
 				      NULL);
-    if (!not_solid)
+    if (!not_solid) {
+	report->output_vertices = n_ipnts;
+	report->output_faces = n_ifaces;
+	report->solid = 1;
+	report->input_area = bg_trimesh_area(ifaces, (size_t)n_ifaces,
+	    ipnts, (size_t)n_ipnts);
+	report->output_area = report->input_area;
+	report->output_volume = bg_trimesh_volume(ifaces,
+	    (size_t)n_ifaces, ipnts, (size_t)n_ipnts);
 	return 1;
+    }
 
     /* Convert input arrays to GTE types. */
     std::vector<gte::Vector3<double>> verts((size_t)n_ipnts);
@@ -129,31 +169,43 @@ bg_trimesh_repair(
 	tris[i][1] = ifaces[3*i+1];
 	tris[i][2] = ifaces[3*i+2];
     }
+    report->input_area = trimesh_gte_area(verts, tris);
 
     /* --- Pass 1: initial colocate + degenerate removal ------------------- */
     {
 	double bbox_diag = trimesh_gte_bbox_diag(verts);
 	gte::MeshRepair<double>::Parameters rp;
-	rp.epsilon = (bbox_diag > 0.0) ? 1e-6 * (0.01 * bbox_diag) : 0.0;
+	rp.epsilon = settings->vertex_tolerance > 0.0 ?
+	    settings->vertex_tolerance :
+	    ((bbox_diag > 0.0) ? 1e-8 * bbox_diag : 0.0);
+	const size_t before = tris.size();
 	gte::MeshRepair<double>::Repair(verts, tris, rp);
+	report->removed_faces += (int)(before - tris.size());
     }
 
     if (tris.empty())
 	return -1;
 
     /* --- Pass 2: remove small disconnected components -------------------- */
-    {
+    if (settings->remove_small_components) {
 	double area = trimesh_gte_area(verts, tris);
-	double min_comp_area = 0.03 * area;
+	double min_comp_area = settings->max_component_area > SMALL_FASTF ?
+	    settings->max_component_area : area *
+	    (settings->max_component_area_percent / 100.0);
 	if (min_comp_area > 0.0) {
 	    size_t nf_before = tris.size();
 	    gte::MeshPreprocessing<double>::RemoveSmallComponents(verts, tris, min_comp_area);
 	    if (tris.size() != nf_before) {
+		report->removed_faces += (int)(nf_before - tris.size());
 		/* Re-run basic repair after component removal. */
 		double bbox_diag = trimesh_gte_bbox_diag(verts);
 		gte::MeshRepair<double>::Parameters rp;
-		rp.epsilon = (bbox_diag > 0.0) ? 1e-6 * (0.01 * bbox_diag) : 0.0;
+		rp.epsilon = settings->vertex_tolerance > 0.0 ?
+		    settings->vertex_tolerance :
+		    ((bbox_diag > 0.0) ? 1e-8 * bbox_diag : 0.0);
+		const size_t before = tris.size();
 		gte::MeshRepair<double>::Repair(verts, tris, rp);
+		report->removed_faces += (int)(before - tris.size());
 	    }
 	}
     }
@@ -190,25 +242,30 @@ bg_trimesh_repair(
      * where a single pass was sufficient because Geogram's fill_holes handles
      * complex boundary loops natively.  GTE's FillHoles requires the extra
      * G4-G6 steps to untangle the topology between iterations. */
-    for (int iter = 0; iter < 10; ++iter) {
+    const int max_iterations = settings->max_iterations > 0 ?
+	settings->max_iterations : 10;
+    for (int iter = 0; iter < max_iterations; ++iter) {
 	size_t nf_before = tris.size();
 
 	/* Pass 3: hole filling */
-	{
+	if (settings->fill_holes) {
 	    double area = trimesh_gte_area(verts, tris);
 
 	    double hole_limit = 1e30; /* default: attempt to fill all holes */
-	    if (opts->max_hole_area > SMALL_FASTF) {
-		hole_limit = (double)opts->max_hole_area;
-	    } else if (opts->max_hole_area_percent > SMALL_FASTF) {
-		hole_limit = area * ((double)opts->max_hole_area_percent / 100.0);
+	    if (settings->max_hole_area > SMALL_FASTF) {
+		hole_limit = (double)settings->max_hole_area;
+	    } else if (settings->max_hole_area_percent > SMALL_FASTF) {
+		hole_limit = area *
+		    ((double)settings->max_hole_area_percent / 100.0);
 	    }
 
 	    gte::MeshHoleFilling<double>::Parameters fp;
 	    fp.maxArea      = hole_limit;
+	    fp.maxEdges     = settings->max_hole_edges;
 	    fp.method       = gte::MeshHoleFilling<double>::TriangulationMethod::LSCM;
 	    fp.autoFallback = true;
 	    gte::MeshHoleFilling<double>::FillHoles(verts, tris, fp);
+	    report->added_faces += (int)(tris.size() - nf_before);
 	}
 
 	if (tris.empty())
@@ -223,6 +280,7 @@ bg_trimesh_repair(
 	    gte::MeshRepair<double>::SplitNonManifoldVertices(verts, tris, adj);
 	}
 	gte::MeshPreprocessing<double>::OrientNormals(verts, tris);
+	report->repair_iterations = iter + 1;
 
 	/* Convergence: stop when no new faces were added */
 	if (tris.size() == nf_before)
@@ -254,7 +312,51 @@ bg_trimesh_repair(
     *ofaces   = out_faces;
     *n_ofaces = nf;
 
+    report->output_vertices = nv;
+    report->output_faces = nf;
+    report->output_area = trimesh_gte_area(verts, tris);
+    report->max_vertex_displacement = 0.0;
+
+    report->solid = !bg_trimesh_solid2(nv, nf, (fastf_t *)out_pts,
+	out_faces, NULL);
+    if (settings->require_solid && !report->solid) {
+	bu_free(out_faces, "bg_trimesh_repair faces");
+	bu_free(out_pts, "bg_trimesh_repair verts");
+	*ofaces = NULL;
+	*n_ofaces = 0;
+	*opnts = NULL;
+	*n_opnts = 0;
+	return -1;
+    }
+    if (report->solid)
+	report->output_volume = bg_trimesh_volume(out_faces, (size_t)nf,
+	    out_pts, (size_t)nv);
+
     return 0;
+}
+
+extern "C" int
+bg_trimesh_repair(
+	int **ofaces, int *n_ofaces,
+	point_t **opnts, int *n_opnts,
+	const int *ifaces, int n_ifaces,
+	const point_t *ipnts, int n_ipnts,
+	struct bg_trimesh_repair_opts *opts)
+{
+    struct bg_trimesh_repair_opts default_opts =
+	BG_TRIMESH_REPAIR_OPTS_DEFAULT;
+    if (!opts)
+	opts = &default_opts;
+
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.remove_small_components = 1;
+    settings.max_component_area_percent = 3.0;
+    settings.fill_holes = 1;
+    settings.max_hole_area = opts->max_hole_area;
+    settings.max_hole_area_percent = opts->max_hole_area_percent;
+    return bg_trimesh_repair2(ofaces, n_ofaces, opnts, n_opnts,
+	ifaces, n_ifaces, ipnts, n_ipnts, &settings, NULL);
 }
 
 
