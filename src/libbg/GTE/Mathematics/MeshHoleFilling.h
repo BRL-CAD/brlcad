@@ -39,12 +39,13 @@
 // ported from Geogram. It detects boundary loops in a triangle mesh and
 // fills them with new triangles using GTE's robust triangulation algorithms.
 //
-// Supports three triangulation methods (applied as a fallback chain):
+// Supports four triangulation methods (applied as a fallback chain):
 // - PlanarProjection: preserves a nearly planar boundary's concave outline
 // - LSCM:          Arc-length boundary-to-circle mapping + EC; always
 //                  succeeds for any simple closed 3D loop regardless
 //                  of planarity (primary method, default)
 // - EarClipping3D: Ear clipping directly in 3D (last resort fallback)
+// - SteinerFan:    Adds one boundary-centroid vertex for a final bounded fan
 //
 // Planar projection is limited to boundaries whose vertices satisfy a strict
 // planarity test.  LSCM and direct 3D ear clipping handle the non-planar and
@@ -74,7 +75,8 @@ namespace gte
             PlanarProjection,
             LSCM,           // Arc-length circle map + EC in 2D; works for any simple
                             // closed 3D boundary regardless of planarity (primary method)
-            EarClipping3D   // 3D ear clipping without any projection (last resort)
+            EarClipping3D,  // 3D ear clipping without any projection
+            SteinerFan      // One new centroid vertex with collision-gated fan triangles
         };
 
         // Parameters for hole filling operations.
@@ -212,6 +214,7 @@ namespace gte
                 // The former planar-projection paths (EarClipping 2D and CDT) have been
                 // removed — see class-level comment for rationale.
                 std::vector<std::array<int32_t, 3>> newTriangles;
+                size_t const holeVertexStart = vertices.size();
                 bool success = false;
 
                 if (params.method == TriangulationMethod::PlanarProjection)
@@ -229,6 +232,18 @@ namespace gte
                     }
                     success = TriangulateHole3D(vertices, hole, newTriangles,
                         edgeToThirdVert, validator);
+                }
+                else if (params.method == TriangulationMethod::SteinerFan)
+                {
+                    TriangleValidator validator;
+                    if (params.triangleValidator &&
+                        params.maxValidatedEdges > 0 &&
+                        hole.vertices.size() <= params.maxValidatedEdges)
+                    {
+                        validator = params.triangleValidator;
+                    }
+                    success = TriangulateHoleSteinerFan(vertices, hole,
+                        newTriangles, validator);
                 }
                 else
                 {
@@ -284,6 +299,14 @@ namespace gte
                         triangles.insert(triangles.end(), newTriangles.begin(), newTriangles.end());
                         ++numFilled;
                     }
+                    else
+                    {
+                        vertices.resize(holeVertexStart);
+                    }
+                }
+                else
+                {
+                    vertices.resize(holeVertexStart);
                 }
             }
 
@@ -952,6 +975,119 @@ namespace gte
             }
             
             return true;
+        }
+
+        // A non-planar boundary can have no collision-free triangulation using
+        // boundary diagonals alone.  Add one bounded interior candidate and
+        // join it to each directed boundary edge.  The caller's validator and
+        // final mesh certification remain responsible for proving that the fan
+        // is geometrically admissible.
+        static bool TriangulateHoleSteinerFan(
+            std::vector<Vector3<Real>>& vertices,
+            HoleBoundary const& hole,
+            std::vector<std::array<int32_t, 3>>& triangles,
+            TriangleValidator const& triangleValidator = {})
+        {
+            if (hole.vertices.size() < 3)
+            {
+                return false;
+            }
+
+            Vector3<Real> center{};
+            Vector3<Real> normal{};
+            Vector3<Real> minimum = vertices[hole.vertices[0]];
+            Vector3<Real> maximum = minimum;
+            for (int32_t index : hole.vertices)
+            {
+                center += vertices[index];
+                for (int axis = 0; axis < 3; ++axis)
+                {
+                    minimum[axis] = std::min(minimum[axis],
+                        vertices[index][axis]);
+                    maximum[axis] = std::max(maximum[axis],
+                        vertices[index][axis]);
+                }
+            }
+            for (size_t index = 0; index < hole.vertices.size(); ++index)
+            {
+                Vector3<Real> const& current =
+                    vertices[hole.vertices[index]];
+                Vector3<Real> const& next = vertices[hole.vertices[
+                    (index + 1) % hole.vertices.size()]];
+                normal[0] += (current[1] - next[1]) *
+                    (current[2] + next[2]);
+                normal[1] += (current[2] - next[2]) *
+                    (current[0] + next[0]);
+                normal[2] += (current[0] - next[0]) *
+                    (current[1] + next[1]);
+            }
+            center /= static_cast<Real>(hole.vertices.size());
+            for (int axis = 0; axis < 3; ++axis)
+            {
+                if (!std::isfinite(center[axis]))
+                {
+                    return false;
+                }
+            }
+
+            size_t const vertexStart = vertices.size();
+            int32_t const centerIndex = static_cast<int32_t>(vertexStart);
+            if (static_cast<size_t>(centerIndex) != vertexStart)
+            {
+                return false;
+            }
+
+            Real const normalLength = Length(normal);
+            Real const scale = Length(maximum - minimum);
+            std::vector<Real> offsets = {static_cast<Real>(0)};
+            if (triangleValidator && normalLength > static_cast<Real>(0) &&
+                scale > static_cast<Real>(0))
+            {
+                normal /= normalLength;
+                Real const fractions[] = {
+                    static_cast<Real>(1e-8), static_cast<Real>(1e-7),
+                    static_cast<Real>(1e-6), static_cast<Real>(1e-5),
+                    static_cast<Real>(1e-4), static_cast<Real>(1e-3),
+                    static_cast<Real>(1e-2)
+                };
+                for (Real fraction : fractions)
+                {
+                    offsets.push_back(fraction);
+                    offsets.push_back(-fraction);
+                }
+            }
+
+            triangles.reserve(hole.vertices.size());
+            for (Real offset : offsets)
+            {
+                vertices.resize(vertexStart);
+                vertices.push_back(center + offset * scale * normal);
+                triangles.clear();
+                bool valid = true;
+                for (size_t index = 0; index < hole.vertices.size(); ++index)
+                {
+                    std::array<int32_t, 3> candidate = {
+                        hole.vertices[index],
+                        hole.vertices[(index + 1) % hole.vertices.size()],
+                        centerIndex
+                    };
+                    if (IsGeometricallyDegenerate(vertices, candidate) ||
+                        (triangleValidator &&
+                        !triangleValidator(candidate, triangles)))
+                    {
+                        valid = false;
+                        break;
+                    }
+                    triangles.push_back(candidate);
+                }
+                if (valid)
+                {
+                    return true;
+                }
+            }
+            triangles.clear();
+            vertices.resize(vertexStart);
+            return false;
         }
 
         static bool IsGeometricallyDegenerate(
