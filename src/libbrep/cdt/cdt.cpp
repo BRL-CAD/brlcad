@@ -56,6 +56,7 @@
 #define MAX_ASSEMBLED_REFINEMENT_ATTEMPTS 16
 #define MAX_ASSEMBLED_REFINEMENT_POINTS 4096
 #define MAX_SHARED_EDGE_REFINEMENT_DISTANCE_RATIO 0.05
+#define MAX_AUTOMATIC_LOCAL_REPAIR_FACES 8192
 
 struct assembled_mesh_validation {
     size_t invalid_indices = 0;
@@ -2845,7 +2846,7 @@ static int
 brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const struct brep_cdt_repair_settings *settings,
 	struct brep_cdt_repair_report *report, bool area_weighted_samples,
-	bool closure_biased_poisson)
+	bool closure_biased_poisson, bool automatic_local_repair)
 {
     struct brep_cdt_repair_report local_report =
 	BREP_CDT_REPAIR_REPORT_INIT;
@@ -3462,6 +3463,20 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	report->full_fast_fallback_used = 1;
     }
 
+    if (automatic_local_repair && input_face_count >
+	    MAX_AUTOMATIC_LOCAL_REPAIR_FACES) {
+	bu_free(input_faces, "oversized automatic local repair faces");
+	bu_free(input_vertices, "oversized automatic local repair vertices");
+	std::string message = "automatic local mesh repair skipped " +
+	    std::to_string(input_face_count) + " triangles (limit " +
+	    std::to_string(MAX_AUTOMATIC_LOCAL_REPAIR_FACES) + ")";
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces, message.c_str());
+	return -1;
+    }
+
     if (!settings->use_full_fast_fallback &&
 	    settings->use_fast_face_fallback && !failed_faces.empty()) {
 	const int64_t fast_start = bu_gettime();
@@ -3557,8 +3572,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	mesh_settings.separate_touching_vertices = 1;
     if (report->fast_fallback_used_faces &&
 	    !(mesh_settings.vertex_tolerance > 0.0)) {
-	mesh_settings.vertex_tolerance = std::min((fastf_t)BN_TOL_DIST,
-	    s_cdt->absmin);
+	mesh_settings.vertex_tolerance = s_cdt->absmin;
 	if (!(mesh_settings.vertex_tolerance > 0.0))
 	    mesh_settings.vertex_tolerance = BN_TOL_DIST;
     }
@@ -4176,6 +4190,27 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	BREP_CDT_REPAIR_REPORT_INIT;
     struct brep_cdt_repair_report *active_report = report ? report :
 	&local_report;
+    const bool valid_poisson_request = settings &&
+	settings->use_poisson_reconstruction &&
+	settings->use_full_fast_fallback && settings->poisson_depth >= 5 &&
+	settings->poisson_depth <= 10 && settings->max_poisson_components &&
+	settings->max_fast_points && settings->max_fast_result_bytes &&
+	settings->max_fast_time_ms > 0 &&
+	std::isfinite(settings->poisson_scale) &&
+	!(settings->poisson_scale > 0.0) &&
+	!(settings->poisson_scale < 0.0);
+    if (valid_poisson_request) {
+	/* Preserve the display tessellation whenever bounded local repair can
+	 * certify it.  Poisson remains available below for the harder cases, but
+	 * should not replace a close mesh merely because the caller enabled the
+	 * last-resort tier. */
+	struct brep_cdt_repair_settings local_settings = *settings;
+	local_settings.use_poisson_reconstruction = 0;
+	const int local_result = brep_cdt_repair_attempt(s_cdt,
+	    &local_settings, active_report, false, false, true);
+	if (local_result >= 0)
+	    return local_result;
+    }
     const bool automatic_scale = settings &&
 	settings->use_poisson_reconstruction &&
 	std::isfinite(settings->poisson_scale) &&
@@ -4183,7 +4218,7 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	!(settings->poisson_scale < 0.0);
     if (!automatic_scale) {
 	const int result = brep_cdt_repair_attempt(s_cdt, settings,
-	    active_report, false, false);
+	    active_report, false, false, false);
 	if (active_report->poisson_reconstruction_attempted)
 	    active_report->poisson_attempts = 1;
 	return result;
@@ -4196,7 +4231,7 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	attempt_settings.poisson_scale = scale;
 	const int attempt_result = brep_cdt_repair_attempt(s_cdt,
 	    &attempt_settings, active_report, area_weighted,
-	    closure_biased);
+	    closure_biased, false);
 	if (active_report->poisson_reconstruction_attempted)
 	    attempts++;
 	active_report->poisson_attempts = attempts;

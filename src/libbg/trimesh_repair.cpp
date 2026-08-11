@@ -441,6 +441,44 @@ trimesh_gte_valid_vertex_links(
 }
 
 static size_t
+trimesh_topology_defect_score(
+	std::vector<std::array<int32_t, 3>> const& triangles,
+	size_t vertex_count)
+{
+    struct edge_use {
+	size_t count = 0;
+	int direction = 0;
+    };
+    typedef std::pair<int32_t, int32_t> edge_key;
+    std::map<edge_key, edge_use> edges;
+    for (std::array<int32_t, 3> const& triangle : triangles) {
+	for (int edge = 0; edge < 3; ++edge) {
+	    const int32_t first = triangle[edge];
+	    const int32_t second = triangle[(edge + 1) % 3];
+	    const edge_key key = first < second ?
+		edge_key(first, second) : edge_key(second, first);
+	    edge_use &use = edges[key];
+	    use.count++;
+	    use.direction += first < second ? 1 : -1;
+	}
+    }
+    size_t score = 0;
+    for (auto const& edge : edges) {
+	const edge_use &use = edge.second;
+	if (use.count == 1)
+	    score++;
+	else if (use.count > 2)
+	    score += use.count - 2;
+	else if (use.direction != 0)
+	    score++;
+    }
+    size_t invalid_links = 0;
+    trimesh_gte_valid_vertex_links(triangles, vertex_count,
+	&invalid_links);
+    return score + invalid_links;
+}
+
+static size_t
 trimesh_separate_touching_vertices(
 	std::vector<gte::Vector3<double>>& vertices,
 	std::vector<std::array<int32_t, 3>> const& triangles,
@@ -1028,10 +1066,33 @@ bg_trimesh_repair2(
 	    gte::MeshRepair<double>::SplitNonManifoldVertices(verts, tris, adj);
 	}
 	gte::MeshPreprocessing<double>::OrientNormals(verts, tris);
+	bool welded_progress = false;
+	if (!settings->separate_touching_vertices) {
+	    const size_t before_score = trimesh_topology_defect_score(tris,
+		verts.size());
+	    std::vector<gte::Vector3<double>> welded_vertices = verts;
+	    std::vector<std::array<int32_t, 3>> welded_triangles = tris;
+	    gte::MeshRepair<double>::Parameters rp;
+	    rp.epsilon = vertex_tolerance;
+	    gte::MeshRepair<double>::Repair(welded_vertices,
+		welded_triangles, rp);
+	    const size_t after_score = trimesh_topology_defect_score(
+		welded_triangles, welded_vertices.size());
+	    if (after_score < before_score) {
+		if (tris.size() > welded_triangles.size())
+		    report->removed_faces +=
+			(int)(tris.size() - welded_triangles.size());
+		verts.swap(welded_vertices);
+		tris.swap(welded_triangles);
+		welded_progress = true;
+	    }
+	}
 	report->repair_iterations = iter + 1;
 
-	/* Convergence: stop when no new faces were added */
-	if (tris.size() == nf_before)
+	/* A defect-reducing re-weld can expose a simpler boundary without adding
+	 * faces.  Give that boundary one more bounded fill pass before declaring
+	 * convergence. */
+	if (tris.size() == nf_before && !welded_progress)
 	    break;
     }
 

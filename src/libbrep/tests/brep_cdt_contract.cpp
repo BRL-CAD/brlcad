@@ -240,8 +240,33 @@ invalid_poisson_repair_contract()
     settings.use_poisson_reconstruction = 1;
     settings.poisson_depth = 5;
     struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
+    struct ON_Brep_CDT_State *local_state = ON_Brep_CDT_Create(box,
+	"invalid local repair contract");
+    ON_Brep_CDT_Tol_Set(local_state, &tolerance);
+    struct brep_cdt_diagnostic local_diagnostic = {};
+    mesh_output local_output;
+    const bool local_repaired =
+	ON_Brep_CDT_Tessellate(local_state, 0, NULL) == -1 &&
+	ON_Brep_CDT_Repair(local_state, &settings, &report) == 0 &&
+	!report.poisson_reconstruction_attempted &&
+	!report.poisson_reconstruction_applied && !report.poisson_attempts &&
+	report.mesh.solid && report.coverage_samples > 0 &&
+	report.coverage_failures == 0 && mesh_get(local_output, local_state) &&
+	!local_output.faces.empty() && normal_mesh_get(local_state);
+    if (!local_repaired) {
+	ON_Brep_CDT_Diagnostic(&local_diagnostic, local_state);
+	bu_log("invalid local repair contract failed: result %d stage %d, "
+	    "Poisson %d/%d, solid %d: %s\n", local_diagnostic.result,
+	    local_diagnostic.stage, report.poisson_reconstruction_attempted,
+	    report.poisson_reconstruction_applied, report.mesh.solid,
+	    local_diagnostic.message);
+    }
+    ON_Brep_CDT_Destroy(local_state);
+
+    settings.poisson_scale = 1.1;
+    report = BREP_CDT_REPAIR_REPORT_INIT;
     mesh_output output;
-    const bool repaired = rejected &&
+    const bool repaired = local_repaired && rejected &&
 	ON_Brep_CDT_Repair(state, &settings, &report) == 0 &&
 	report.poisson_reconstruction_attempted &&
 	report.poisson_reconstruction_applied &&
@@ -325,6 +350,7 @@ component_poisson_repair_contract()
     settings.use_full_fast_fallback = 1;
     settings.use_poisson_reconstruction = 1;
     settings.poisson_depth = 5;
+    settings.poisson_scale = 1.1;
     settings.max_poisson_components = 1;
     struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
     const bool bounded = rejected &&
