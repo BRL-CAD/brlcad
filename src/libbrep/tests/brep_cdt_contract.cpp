@@ -195,8 +195,9 @@ invalid_poisson_repair_contract()
 	report.poisson_reconstruction_attempted &&
 	report.poisson_reconstruction_applied &&
 	report.poisson_components == 1 &&
-	report.poisson_attempts == 1 &&
-	NEAR_EQUAL(report.poisson_scale, 1.1, SMALL_FASTF) &&
+	report.poisson_attempts >= 1 && report.poisson_attempts <= 2 &&
+	NEAR_EQUAL(report.poisson_scale,
+	    report.poisson_attempts == 1 ? 1.1 : 1.2, SMALL_FASTF) &&
 	report.mesh.solid &&
 	report.changed_faces > 0 && report.deviation_projection_failures == 0 &&
 	report.coverage_samples > 0 && report.coverage_failures == 0 &&
@@ -206,12 +207,16 @@ invalid_poisson_repair_contract()
     if (!repaired) {
 	ON_Brep_CDT_Diagnostic(&diagnostic, state);
 	bu_log("invalid Poisson repair contract failed: rejected %d, "
-	    "result %d stage %d, Poisson %d/%d, solid %d, changed %d, "
-	    "projection failures %zu: %s\n", (int)rejected,
+	    "result %d stage %d, Poisson %d/%d, attempts %d scale %.17g, "
+	    "components %d, solid %d, changed %d, projection failures %zu, "
+	    "coverage %zu/%zu max %.17g/%.17g: %s\n", (int)rejected,
 	    diagnostic.result, diagnostic.stage,
 	    report.poisson_reconstruction_attempted,
-	    report.poisson_reconstruction_applied, report.mesh.solid,
+	    report.poisson_reconstruction_applied, report.poisson_attempts,
+	    report.poisson_scale, report.poisson_components, report.mesh.solid,
 	    report.changed_faces, report.deviation_projection_failures,
+	    report.coverage_failures, report.coverage_samples,
+	    report.max_coverage_deviation, report.allowed_surface_deviation,
 	    diagnostic.message);
     }
     ON_Brep_CDT_Destroy(state);

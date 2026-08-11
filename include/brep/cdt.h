@@ -110,8 +110,10 @@ struct brep_cdt_diagnostic {
  * the most approximate tier and is therefore separately opt-in.  Its depth
  * is restricted to the bounded range accepted by this API.  A zero
  * poisson_scale tries the upstream 1.1 domain scale followed by a 1.2 retry
- * if the first reconstructed mesh cannot be certified.  A value from 1.0
- * through 2.0 requests one fixed scale instead.  Disconnected B-Rep face
+ * if the first reconstructed mesh cannot be certified.  If both omit input
+ * coverage, the same bounded scale pair is retried with one area-weighted
+ * sample budget.  A value from 1.0 through 2.0 requests one fixed scale
+ * without that automatic sampling retry.  Disconnected B-Rep face
  * components are reconstructed independently so a large component cannot
  * erase a smaller one; max_poisson_components bounds that work.
  */
@@ -156,10 +158,13 @@ struct brep_cdt_repair_report {
     int poisson_output_points;
     int poisson_output_faces;
     int poisson_attempts;
+    int poisson_area_sampling_applied;
     fastf_t poisson_scale;
     fastf_t max_surface_deviation;
     fastf_t rms_surface_deviation;
     fastf_t allowed_surface_deviation;
+    fastf_t reference_area;
+    fastf_t reference_area_change_percent;
     fastf_t area_change_percent;
     size_t coverage_samples;
     size_t coverage_failures;
@@ -167,7 +172,7 @@ struct brep_cdt_repair_report {
     fastf_t rms_coverage_deviation;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0}
 
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */

@@ -2796,6 +2796,27 @@ struct repair_poisson_sample {
     fastf_t normal[3];
 };
 
+struct repair_poisson_triangle {
+    size_t face;
+    int component;
+    double area;
+    fastf_t normal[3];
+};
+
+static double
+repair_radical_inverse(size_t index)
+{
+    double inverse = 0.0;
+    double fraction = 0.5;
+    while (index) {
+	if (index & 1)
+	    inverse += fraction;
+	index >>= 1;
+	fraction *= 0.5;
+    }
+    return inverse;
+}
+
 static double
 repair_mesh_area(const fastf_t *vertices, const int *faces, int face_count)
 {
@@ -2813,7 +2834,7 @@ repair_mesh_area(const fastf_t *vertices, const int *faces, int face_count)
 static int
 brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const struct brep_cdt_repair_settings *settings,
-	struct brep_cdt_repair_report *report)
+	struct brep_cdt_repair_report *report, bool area_weighted_samples)
 {
     struct brep_cdt_repair_report local_report =
 	BREP_CDT_REPAIR_REPORT_INIT;
@@ -2918,6 +2939,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     int input_vertex_count = 0;
     std::vector<int> display_reference_faces;
     std::vector<fastf_t> display_reference_vertices;
+    std::vector<int> display_reference_brep_faces;
     int display_reference_face_count = 0;
     if (!usable_faces.empty()) {
 	if (ON_Brep_CDT_Mesh(&input_faces, &input_face_count, &input_vertices,
@@ -3066,12 +3088,26 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    display_reference_vertices.assign((fastf_t *)fast_points,
 		(fastf_t *)fast_points + (size_t)fast_point_count * 3);
 	    display_reference_face_count = fast_face_count;
+	    display_reference_brep_faces.assign((size_t)fast_face_count, -1);
+	    for (size_t brep_face = 0; brep_face < fast_face_ranges.size();
+		    ++brep_face) {
+		const repair_fast_face_range &range =
+		    fast_face_ranges[brep_face];
+		if (!range.present || range.first_face >
+			(size_t)fast_face_count || range.face_count >
+			(size_t)fast_face_count - range.first_face)
+		    continue;
+		for (size_t face = range.first_face;
+			face < range.first_face + range.face_count; ++face)
+		    display_reference_brep_faces[face] = (int)brep_face;
+	    }
 	    std::vector<int> face_components =
 		repair_brep_face_components(s_cdt->orig_brep);
 	    const bool closed_face_components =
 		repair_brep_components_are_closed(s_cdt->orig_brep,
 		    face_components);
-	    std::map<int, std::vector<repair_poisson_sample>> component_samples;
+	    std::vector<repair_poisson_triangle> poisson_triangles;
+	    double poisson_triangle_area = 0.0;
 	    bool valid_component_ranges = face_components.size() ==
 		fast_face_ranges.size();
 	    for (size_t brep_face = 0; valid_component_ranges &&
@@ -3091,8 +3127,6 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		}
 		const int component = closed_face_components ?
 		    face_components[brep_face] : 0;
-		std::vector<repair_poisson_sample> &samples =
-		    component_samples[component];
 		for (size_t face = range.first_face;
 			face < range.first_face + range.face_count; ++face) {
 		    const int *triangle = &fast_faces[face * 3];
@@ -3117,21 +3151,85 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    if (!(normal_length > SMALL_FASTF) ||
 			    !std::isfinite(normal_length))
 			continue;
+		    repair_poisson_triangle sample_triangle;
+		    sample_triangle.face = face;
+		    sample_triangle.component = component;
+		    sample_triangle.area = 0.5 * normal_length;
+		    VSCALE(sample_triangle.normal, normal,
+			1.0 / normal_length);
+		    poisson_triangle_area += sample_triangle.area;
+		    poisson_triangles.push_back(sample_triangle);
+		}
+	    }
+	    std::map<int, std::vector<repair_poisson_sample>> component_samples;
+	    std::vector<size_t> triangle_sample_counts(
+		poisson_triangles.size(), 1);
+	    if (!poisson_triangles.empty() && poisson_triangle_area > 0.0 &&
+		    std::isfinite(poisson_triangle_area)) {
+		const size_t point_capacity = std::min(settings->max_fast_points,
+		    (size_t)INT_MAX);
+		const size_t desired_extra = area_weighted_samples ?
+		    poisson_triangles.size() : 0;
+		const size_t extra_budget = point_capacity >
+		    poisson_triangles.size() ?
+		    std::min(desired_extra, point_capacity -
+			poisson_triangles.size()) : 0;
+		size_t triangle = 0;
+		long double cumulative_area = poisson_triangles[0].area;
+		for (size_t extra = 0; extra < extra_budget; ++extra) {
+		    const long double target =
+			((long double)extra + 0.5L) /
+			(long double)extra_budget *
+			(long double)poisson_triangle_area;
+		    while (triangle + 1 < poisson_triangles.size() &&
+			    cumulative_area <= target) {
+			triangle++;
+			cumulative_area += poisson_triangles[triangle].area;
+		    }
+		    triangle_sample_counts[triangle]++;
+		}
+	    }
+	    for (size_t triangle_index = 0;
+		    triangle_index < poisson_triangles.size(); ++triangle_index) {
+		const repair_poisson_triangle &sample_triangle =
+		    poisson_triangles[triangle_index];
+		const int *triangle = &fast_faces[sample_triangle.face * 3];
+		const point_t &a = fast_points[triangle[0]];
+		const point_t &b = fast_points[triangle[1]];
+		const point_t &c = fast_points[triangle[2]];
+		std::vector<repair_poisson_sample> &samples =
+		    component_samples[sample_triangle.component];
+		const size_t sample_count =
+		    triangle_sample_counts[triangle_index];
+		for (size_t sample_index = 0; sample_index < sample_count;
+			sample_index++) {
 		    repair_poisson_sample sample;
-		    VADD3(sample.point, a, b, c);
-		    VSCALE(sample.point, sample.point, 1.0 / 3.0);
-		    VSCALE(sample.normal, normal, 1.0 / normal_length);
+		    if (sample_count == 1) {
+			VADD3(sample.point, a, b, c);
+			VSCALE(sample.point, sample.point, 1.0 / 3.0);
+		    } else {
+			const double root = std::sqrt(
+			    ((double)sample_index + 0.5) /
+			    (double)sample_count);
+			const double third_weight = repair_radical_inverse(
+			    sample_index);
+			const double first_weight = 1.0 - root;
+			const double second_weight = root *
+			    (1.0 - third_weight);
+			const double final_weight = root * third_weight;
+			for (int axis = 0; axis < 3; ++axis) {
+			    sample.point[axis] = first_weight * a[axis] +
+				second_weight * b[axis] +
+				final_weight * c[axis];
+			}
+		    }
+		    VMOVE(sample.normal, sample_triangle.normal);
 		    samples.push_back(sample);
 		}
 	    }
-	    for (auto sample_set = component_samples.begin();
-		    sample_set != component_samples.end();) {
-		if (sample_set->second.empty())
-		    sample_set = component_samples.erase(sample_set);
-		else
-		    ++sample_set;
-	    }
 	    report->poisson_components = (int)component_samples.size();
+	    report->poisson_area_sampling_applied =
+		area_weighted_samples ? 1 : 0;
 	    for (const auto &sample_set : component_samples)
 		report->poisson_input_points += (int)sample_set.second.size();
 	    struct bg_3d_spsr_opts poisson_options = BG_3D_SPSR_OPTS_DEFAULT;
@@ -3536,6 +3634,21 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	(size_t)repaired_face_count, repaired_points,
 	(size_t)repaired_vertex_count);
 
+    report->reference_area = display_reference_face_count > 0 &&
+	!display_reference_faces.empty() && !display_reference_vertices.empty() ?
+	repair_mesh_area(display_reference_vertices.data(),
+	    display_reference_faces.data(), display_reference_face_count) :
+	report->mesh.input_area;
+    if (report->reference_area > 0.0 &&
+	    std::isfinite(report->reference_area) &&
+	    std::isfinite(report->mesh.output_area)) {
+	report->reference_area_change_percent = 100.0 * std::fabs(
+	    report->mesh.output_area - report->reference_area) /
+	    report->reference_area;
+    } else {
+	report->reference_area_change_percent =
+	    std::numeric_limits<fastf_t>::infinity();
+    }
     if (report->mesh.input_area > 0.0 &&
 	    std::isfinite(report->mesh.input_area) &&
 	    std::isfinite(report->mesh.output_area)) {
@@ -3790,6 +3903,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    sampled_reference_faces[0] = largest;
     }
     double coverage_squared_distance_sum = 0.0;
+    int worst_coverage_brep_face = -1;
     size_t remaining_coverage_extra =
 	sample_limit - sampled_reference_faces.size();
     for (const repair_changed_face &reference : sampled_reference_faces) {
@@ -3814,9 +3928,27 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    double distance = 0.0;
 	    report->coverage_samples++;
 	    if (!repair_input_mesh_distance(repaired_triangle_index,
-		    repaired_vertices, repaired_faces, samples[sample],
-		    report->allowed_surface_deviation, &distance)) {
+			repaired_vertices, repaired_faces, samples[sample],
+			report->allowed_surface_deviation, &distance)) {
 		report->coverage_failures++;
+		const double diagnostic_limit =
+			report->allowed_surface_deviation <=
+			std::numeric_limits<double>::max() / 4.0 ?
+			4.0 * report->allowed_surface_deviation :
+			report->allowed_surface_deviation;
+		if (repair_input_mesh_distance(repaired_triangle_index,
+			    repaired_vertices, repaired_faces, samples[sample],
+			    diagnostic_limit, &distance) && distance >
+			    report->max_coverage_deviation) {
+		    report->max_coverage_deviation = distance;
+		    if (have_display_reference && reference.index >= 0 &&
+				(size_t)reference.index <
+				display_reference_brep_faces.size()) {
+			worst_coverage_brep_face =
+				display_reference_brep_faces[
+				(size_t)reference.index];
+		    }
+		}
 		continue;
 	    }
 	    report->max_coverage_deviation = std::max(
@@ -3840,6 +3972,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    " coverage failures, maximum " +
 	    std::to_string(report->max_coverage_deviation) + " (limit " +
 	    std::to_string(report->allowed_surface_deviation) + ")";
+	if (worst_coverage_brep_face >= 0)
+	    message += ", worst display B-Rep face " +
+		std::to_string(worst_coverage_brep_face);
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
 	    BREP_CDT_STAGE_MESH_REPAIR, -1,
 	    report->source_diagnostic.completed_faces,
@@ -3896,7 +4031,7 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	!(settings->poisson_scale < 0.0);
     if (!automatic_scale) {
 	const int result = brep_cdt_repair_attempt(s_cdt, settings,
-	    active_report);
+	    active_report, false);
 	if (active_report->poisson_reconstruction_attempted)
 	    active_report->poisson_attempts = 1;
 	return result;
@@ -3905,17 +4040,38 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
     struct brep_cdt_repair_settings attempt_settings = *settings;
     attempt_settings.poisson_scale = 1.1;
     int result = brep_cdt_repair_attempt(s_cdt, &attempt_settings,
-	active_report);
+	active_report, false);
     active_report->poisson_attempts =
 	active_report->poisson_reconstruction_attempted ? 1 : 0;
+    if (result >= 0 || !active_report->poisson_reconstruction_applied)
+	return result;
+    bool coverage_failure_seen = active_report->coverage_failures > 0;
+
+    attempt_settings.poisson_scale = 1.2;
+    result = brep_cdt_repair_attempt(s_cdt, &attempt_settings,
+	active_report, false);
+    active_report->poisson_attempts =
+	active_report->poisson_reconstruction_attempted ? 2 : 1;
+    if (result >= 0)
+	return result;
+    coverage_failure_seen = coverage_failure_seen ||
+	active_report->coverage_failures > 0;
+    if (!coverage_failure_seen)
+	return result;
+
+    attempt_settings.poisson_scale = 1.1;
+    result = brep_cdt_repair_attempt(s_cdt, &attempt_settings,
+	active_report, true);
+    active_report->poisson_attempts =
+	active_report->poisson_reconstruction_attempted ? 3 : 2;
     if (result >= 0 || !active_report->poisson_reconstruction_applied)
 	return result;
 
     attempt_settings.poisson_scale = 1.2;
     result = brep_cdt_repair_attempt(s_cdt, &attempt_settings,
-	active_report);
+	active_report, true);
     active_report->poisson_attempts =
-	active_report->poisson_reconstruction_attempted ? 2 : 1;
+	active_report->poisson_reconstruction_attempted ? 4 : 3;
     return result;
 }
 
