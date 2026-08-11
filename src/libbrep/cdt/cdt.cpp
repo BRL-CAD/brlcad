@@ -2653,7 +2653,7 @@ repair_surface_distance(const ON_Brep *brep,
 static bool
 repair_input_mesh_distance(RTree<size_t, double, 3> &triangle_index,
 	const fastf_t *vertices, const int *faces, const ON_3dPoint &point,
-	double allowed, double *distance)
+	double allowed, double *distance, size_t *closest_face = NULL)
 {
     if (!vertices || !faces || !distance || !(allowed > 0.0))
 	return false;
@@ -2667,6 +2667,7 @@ repair_input_mesh_distance(RTree<size_t, double, 3> &triangle_index,
     triangle_index.Search(minimum, maximum,
 	assembled_mesh_collect_candidate, &candidates);
     double closest = std::numeric_limits<double>::infinity();
+    size_t closest_triangle = std::numeric_limits<size_t>::max();
     point_t test_point;
     VSET(test_point, point.x, point.y, point.z);
     for (size_t candidate : candidates) {
@@ -2677,12 +2678,18 @@ repair_input_mesh_distance(RTree<size_t, double, 3> &triangle_index,
 		vertices[(size_t)vertex * 3 + 1],
 		vertices[(size_t)vertex * 3 + 2]);
 	}
-	closest = std::min(closest, bg_tri_closest_pt(NULL, test_point,
-	    triangle[0], triangle[1], triangle[2]));
+	const double candidate_distance = bg_tri_closest_pt(NULL, test_point,
+	    triangle[0], triangle[1], triangle[2]);
+	if (candidate_distance < closest) {
+	    closest = candidate_distance;
+	    closest_triangle = candidate;
+	}
     }
     if (!std::isfinite(closest) || closest > allowed)
 	return false;
     *distance = closest;
+    if (closest_face)
+	*closest_face = closest_triangle;
     return true;
 }
 
@@ -3770,6 +3777,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     size_t remaining_extra_samples =
 	sample_limit - sampled_changed_faces.size();
     double squared_distance_sum = 0.0;
+    int worst_deviation_brep_face = -1;
     for (const repair_changed_face &changed : sampled_changed_faces) {
 	const int *triangle = &repaired_faces[(size_t)changed.index * 3];
 	const ON_3dPoint a(&repaired_vertices[(size_t)triangle[0] * 3]);
@@ -3797,6 +3805,54 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 			reference_input_vertices, reference_input_faces,
 			samples[sample],
 			report->allowed_surface_deviation, &distance)) {
+		    const double diagnostic_limit =
+			report->allowed_surface_deviation <=
+			std::numeric_limits<double>::max() / 4.0 ?
+			4.0 * report->allowed_surface_deviation :
+			report->allowed_surface_deviation;
+		    double surface_distance =
+			std::numeric_limits<double>::infinity();
+		    double mesh_distance =
+			std::numeric_limits<double>::infinity();
+		    bool diagnostic_untrimmed = false;
+		    int surface_face = -1;
+		    size_t mesh_face = std::numeric_limits<size_t>::max();
+		    const bool have_surface_distance = repair_surface_distance(
+			s_cdt->orig_brep, face_bounds, face_trees, face_contexts,
+			samples[sample], diagnostic_limit,
+			settings->allow_untrimmed_surface_match != 0,
+			&surface_distance, &diagnostic_untrimmed, NULL,
+			&surface_face);
+		    const bool have_mesh_distance = repair_input_mesh_distance(
+			input_triangle_index, reference_input_vertices,
+			reference_input_faces, samples[sample], diagnostic_limit,
+			&mesh_distance, &mesh_face);
+		    if (have_surface_distance || have_mesh_distance) {
+			int diagnostic_face = -1;
+			if (have_surface_distance) {
+			    distance = surface_distance;
+			    diagnostic_face = surface_face;
+			} else {
+			    distance = mesh_distance;
+			    if (have_display_reference && mesh_face <
+				    display_reference_brep_faces.size())
+				diagnostic_face = display_reference_brep_faces[
+				    mesh_face];
+			}
+			if (have_surface_distance && have_mesh_distance &&
+				mesh_distance < distance) {
+			    distance = mesh_distance;
+			    diagnostic_face = -1;
+			    if (have_display_reference && mesh_face <
+				    display_reference_brep_faces.size())
+				diagnostic_face = display_reference_brep_faces[
+				    mesh_face];
+			}
+			if (distance > report->max_surface_deviation) {
+			    report->max_surface_deviation = distance;
+			    worst_deviation_brep_face = diagnostic_face;
+			}
+		    }
 		    report->deviation_projection_failures++;
 		    continue;
 		}
@@ -3828,6 +3884,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    std::to_string(report->max_surface_deviation) +
 	    " (limit " +
 	    std::to_string(report->allowed_surface_deviation) + ")";
+	if (worst_deviation_brep_face >= 0)
+	    message += ", nearest display B-Rep face " +
+		std::to_string(worst_deviation_brep_face);
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
 	    BREP_CDT_STAGE_MESH_REPAIR, -1,
 	    report->source_diagnostic.completed_faces,

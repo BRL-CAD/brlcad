@@ -495,7 +495,7 @@ trimesh_separate_touching_vertices(
 	for (size_t use = 0; use < group.size(); ++use) {
 	    const double displacement = distance * (double)(use + 1) /
 		(double)(group.size() + 1);
-	    vertices[(size_t)group[use]] += directions[use] * displacement;
+	    vertices[(size_t)group[use]] -= directions[use] * displacement;
 	    max_moved = std::max(max_moved, displacement);
 	    separated++;
 	}
