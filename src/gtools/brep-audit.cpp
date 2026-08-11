@@ -81,6 +81,7 @@ struct geom_result {
     int repair_source_stage = 0;
     int repair_removed_faces = 0;
     int repair_added_faces = 0;
+    int repair_separated_vertices = 0;
     bool repair_component_union = false;
     int repair_changed_faces = 0;
     size_t repair_deviation_samples = 0;
@@ -92,6 +93,11 @@ struct geom_result {
     int repair_fast_failed_faces = 0;
     int repair_fast_triangles = 0;
     bool repair_full_fast_used = false;
+    bool repair_poisson_attempted = false;
+    bool repair_poisson_applied = false;
+    int repair_poisson_input_points = 0;
+    int repair_poisson_output_points = 0;
+    int repair_poisson_output_faces = 0;
     double repair_max_deviation = 0.0;
     double repair_rms_deviation = 0.0;
     double repair_allowed_deviation = 0.0;
@@ -733,6 +739,8 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	result.repair_source_stage = repair_report.source_diagnostic.stage;
 	result.repair_removed_faces = repair_report.mesh.removed_faces;
 	result.repair_added_faces = repair_report.mesh.added_faces;
+	result.repair_separated_vertices =
+	    repair_report.mesh.separated_vertices;
 	result.repair_component_union =
 	    repair_report.mesh.component_union_applied != 0;
 	result.repair_changed_faces = repair_report.changed_faces;
@@ -751,6 +759,16 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	result.repair_fast_triangles = repair_report.fast_fallback_triangles;
 	result.repair_full_fast_used =
 	    repair_report.full_fast_fallback_used != 0;
+	result.repair_poisson_attempted =
+	    repair_report.poisson_reconstruction_attempted != 0;
+	result.repair_poisson_applied =
+	    repair_report.poisson_reconstruction_applied != 0;
+	result.repair_poisson_input_points =
+	    repair_report.poisson_input_points;
+	result.repair_poisson_output_points =
+	    repair_report.poisson_output_points;
+	result.repair_poisson_output_faces =
+	    repair_report.poisson_output_faces;
 	result.repair_max_deviation = repair_report.max_surface_deviation;
 	result.repair_rms_deviation = repair_report.rms_surface_deviation;
 	result.repair_allowed_deviation =
@@ -976,6 +994,8 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< ",\"source_stage\":" << result.repair_source_stage
 	<< ",\"removed_faces\":" << result.repair_removed_faces
 	<< ",\"added_faces\":" << result.repair_added_faces
+	<< ",\"separated_vertices\":"
+	<< result.repair_separated_vertices
 	<< ",\"component_union_applied\":"
 	<< (result.repair_component_union ? "true" : "false")
 	<< ",\"changed_faces\":" << result.repair_changed_faces
@@ -996,6 +1016,16 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.repair_fast_triangles
 	<< ",\"full_fast_fallback_used\":"
 	<< (result.repair_full_fast_used ? "true" : "false")
+	<< ",\"poisson_reconstruction_attempted\":"
+	<< (result.repair_poisson_attempted ? "true" : "false")
+	<< ",\"poisson_reconstruction_applied\":"
+	<< (result.repair_poisson_applied ? "true" : "false")
+	<< ",\"poisson_input_points\":"
+	<< result.repair_poisson_input_points
+	<< ",\"poisson_output_points\":"
+	<< result.repair_poisson_output_points
+	<< ",\"poisson_output_faces\":"
+	<< result.repair_poisson_output_faces
 	<< ",\"max_surface_deviation\":";
     print_num(result.repair_max_deviation);
     std::cout << ",\"rms_surface_deviation\":";
@@ -1113,6 +1143,8 @@ struct audit_config {
     long repair_deviation_samples;
     bool repair_allow_untrimmed;
     bool repair_full_fast;
+    bool repair_poisson;
+    long repair_poisson_depth;
     bool repair_union_components;
     bool repair_no_fast;
 };
@@ -1267,7 +1299,10 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     repair_settings.allow_untrimmed_surface_match =
 	config.repair_allow_untrimmed ? 1 : 0;
     repair_settings.use_full_fast_fallback =
-	config.repair_full_fast ? 1 : 0;
+	(config.repair_full_fast || config.repair_poisson) ? 1 : 0;
+    repair_settings.use_poisson_reconstruction =
+	config.repair_poisson ? 1 : 0;
+    repair_settings.poisson_depth = (int)config.repair_poisson_depth;
     repair_settings.mesh.union_components =
 	config.repair_union_components ? 1 : 0;
     repair_settings.use_fast_face_fallback =
@@ -1432,10 +1467,12 @@ main(int argc, const char **argv)
     long repair_deviation_samples = 4096;
     int repair_allow_untrimmed = 0;
     int repair_full_fast = 0;
+    int repair_poisson = 0;
+    long repair_poisson_depth = 8;
     int repair_union_components = 0;
     int repair_no_fast = 0;
     const char *mode_name = "both";
-    struct bu_opt_desc d[28];
+    struct bu_opt_desc d[30];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -1482,7 +1519,12 @@ main(int argc, const char **argv)
 	"Regularize closed repair components with a Manifold union");
     BU_OPT(d[26], "", "repair-no-fast", "", NULL, &repair_no_fast,
 	"Repair only the rigorous face meshes, without display fallback faces");
-    BU_OPT_NULL(d[27]);
+    BU_OPT(d[27], "", "repair-poisson", "", NULL, &repair_poisson,
+	"Reconstruct the whole display mesh with Screened Poisson repair");
+    BU_OPT(d[28], "", "repair-poisson-depth", "#", &bu_opt_long,
+	&repair_poisson_depth,
+	"Screened Poisson octree depth (5 through 10)");
+    BU_OPT_NULL(d[29]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -1495,7 +1537,8 @@ main(int argc, const char **argv)
 	    repair_hole_area_percent <= 0.0 || repair_hole_edges < 3 ||
 	    repair_area_change_percent < 0.0 || repair_max_deviation < 0.0 ||
 	    repair_deviation_samples <= 0 ||
-	    (repair_no_fast && repair_full_fast) ||
+	    repair_poisson_depth < 5 || repair_poisson_depth > 10 ||
+	    (repair_no_fast && (repair_full_fast || repair_poisson)) ||
 	    (batch && face_index != -1) ||
 	    (quality_repair && face_index != -1) ||
 	    (face_index != -1 && BU_STR_EQUAL(mode_name, "wireframe")) ||
@@ -1530,7 +1573,8 @@ main(int argc, const char **argv)
 	repair_hole_area_percent, repair_hole_edges,
 	repair_area_change_percent, repair_max_deviation,
 	repair_deviation_samples, repair_allow_untrimmed != 0,
-	repair_full_fast != 0, repair_union_components != 0,
+	repair_full_fast != 0, repair_poisson != 0,
+	repair_poisson_depth, repair_union_components != 0,
 	repair_no_fast != 0
     };
 
