@@ -2952,7 +2952,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     std::vector<fastf_t> display_reference_vertices;
     std::vector<int> display_reference_brep_faces;
     int display_reference_face_count = 0;
-    if (!usable_faces.empty()) {
+    /* Whole-B-Rep fallback replaces every rigorous face mesh.  Do not spend
+     * another bounded refinement cycle assembling those faces after a stage
+     * 11 failure only to discard the result below. */
+    if (!settings->use_full_fast_fallback && !usable_faces.empty()) {
 	if (ON_Brep_CDT_Mesh(&input_faces, &input_face_count, &input_vertices,
 	    &input_vertex_count, NULL, NULL, NULL, NULL, s_cdt,
 	    (int)usable_faces.size(), usable_faces.data()) < 0 ||
