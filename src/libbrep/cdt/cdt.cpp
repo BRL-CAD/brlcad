@@ -2793,7 +2793,8 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	if (failed_faces.find(face.first) == failed_faces.end())
 	    usable_faces.push_back(face.first);
     }
-    if (have_rigorous_faces && usable_faces.empty()) {
+    if (have_rigorous_faces && usable_faces.empty() &&
+	!settings->use_full_fast_fallback) {
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
 	    BREP_CDT_STAGE_MESH_REPAIR, -1, 0,
 	    report->source_failed_faces,
@@ -2805,7 +2806,7 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
     int input_face_count = 0;
     fastf_t *input_vertices = NULL;
     int input_vertex_count = 0;
-    if (have_rigorous_faces) {
+    if (!usable_faces.empty()) {
 	if (ON_Brep_CDT_Mesh(&input_faces, &input_face_count, &input_vertices,
 	    &input_vertex_count, NULL, NULL, NULL, NULL, s_cdt,
 	    (int)usable_faces.size(), usable_faces.data()) < 0 ||
@@ -2814,12 +2815,18 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 		bu_free(input_faces, "repair input faces");
 	    if (input_vertices)
 		bu_free(input_vertices, "repair input vertices");
-	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
-		BREP_CDT_STAGE_MESH_REPAIR, -1,
-		report->source_diagnostic.completed_faces,
-		report->source_failed_faces,
-		"failed to assemble the usable face meshes for repair");
-	    return -1;
+	    input_faces = NULL;
+	    input_vertices = NULL;
+	    input_face_count = 0;
+	    input_vertex_count = 0;
+	    if (!settings->use_full_fast_fallback) {
+		cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+		    BREP_CDT_STAGE_MESH_REPAIR, -1,
+		    report->source_diagnostic.completed_faces,
+		    report->source_failed_faces,
+		    "failed to assemble the usable face meshes for repair");
+		return -1;
+	    }
 	}
 
 	/* A failed face previously prevented the final assembled-mesh pass from
@@ -2831,7 +2838,8 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	 * bounded retry. */
 	size_t partial_refinement_points = 0;
 	int partial_refinement_attempts = 0;
-	while (partial_refinement_attempts <
+	while (input_face_count > 0 && input_vertex_count > 0 &&
+	    partial_refinement_attempts <
 	    MAX_ASSEMBLED_REFINEMENT_ATTEMPTS &&
 	    partial_refinement_points < MAX_ASSEMBLED_REFINEMENT_POINTS) {
 	    assembled_mesh_validation partial_validation;
@@ -2858,12 +2866,20 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 		    bu_free(input_faces, "failed pre-repair faces");
 		if (input_vertices)
 		    bu_free(input_vertices, "failed pre-repair vertices");
-		cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
-		    BREP_CDT_STAGE_MESH_REPAIR, -1,
-		    report->source_diagnostic.completed_faces,
-		    report->source_failed_faces,
-		    "failed to reassemble cross-face refined repair input");
-		return -1;
+		input_faces = NULL;
+		input_vertices = NULL;
+		input_face_count = 0;
+		input_vertex_count = 0;
+		if (!settings->use_full_fast_fallback) {
+		    cdt_diagnostic_set(s_cdt,
+			BREP_CDT_RESULT_REPAIR_FAILED,
+			BREP_CDT_STAGE_MESH_REPAIR, -1,
+			report->source_diagnostic.completed_faces,
+			report->source_failed_faces,
+			"failed to reassemble cross-face refined repair input");
+		    return -1;
+		}
+		break;
 	    }
 	}
     }
@@ -3680,6 +3696,17 @@ ON_Brep_CDT_Mesh(
 	}
     }
 
+    *faces = NULL;
+    *fcnt = 0;
+    *vertices = NULL;
+    *vcnt = 0;
+    if (face_normals) {
+	*face_normals = NULL;
+	*fn_cnt = 0;
+	*normals = NULL;
+	*ncnt = 0;
+    }
+
     const bool full_mesh = !exp_face_cnt || !exp_faces;
     const bool no_normals = !face_normals && !fn_cnt && !normals && !ncnt;
     if (full_mesh && s_cdt->status == BREP_CDT_SOLID &&
@@ -3753,6 +3780,8 @@ ON_Brep_CDT_Mesh(
 	    active_triangles[active_faces[fi]].end());
 	triangle_cnt += active_triangles[active_faces[fi]].size();
     }
+    if (!triangle_cnt || triangle_cnt > INT_MAX)
+	return -1;
 
     /* We know now the final triangle set.  We need to build up the set of
      * unique points and normals to generate a mesh containing only the
@@ -3835,6 +3864,11 @@ ON_Brep_CDT_Mesh(
     std::sort(ordered_points.begin(), ordered_points.end(), stable_point_less);
     std::sort(ordered_normals.begin(), ordered_normals.end(),
 	stable_normal_less);
+
+    if (ordered_points.empty() || ordered_points.size() > INT_MAX ||
+	(normals && (ordered_normals.empty() ||
+	ordered_normals.size() > INT_MAX)))
+	return -1;
 
     /* Release collection hashes before allocating the final arrays and
      * pointer-to-index maps.  On million-triangle meshes, retaining both
