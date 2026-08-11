@@ -196,7 +196,8 @@ valid_options(const struct bg_3d_spsr_opts &options)
         !std::isfinite(options.samples_per_node) ||
         options.scale < 1.0 || !std::isfinite(options.scale) ||
         options.width < 0.0 ||
-        options.cgsolver_accuracy <= 0.0 || options.point_weight < 0.0)
+        options.cgsolver_accuracy <= 0.0 || options.point_weight < 0.0 ||
+        !std::isfinite(options.point_weight))
         return false;
 
     return options.nonManifold >= 0 && options.nonManifold <= 1 &&
