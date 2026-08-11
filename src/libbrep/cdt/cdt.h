@@ -138,7 +138,7 @@ struct ON_Brep_CDT_State {
     std::set<cpolyedge_t *> unsplit_singular_edges;
 
     /* Audit data */
-    std::map<int, ON_3dPoint *> *bot_pnt_to_on_pnt;
+    std::vector<ON_3dPoint *> *bot_pnt_to_on_pnt;
     std::vector<int> bot_face_to_brep_face;
     std::vector<size_t> bot_face_to_cdt_triangle;
     std::unordered_map<ON_3dPoint *, struct cdt_audit_info> *pnt_audit_info;
