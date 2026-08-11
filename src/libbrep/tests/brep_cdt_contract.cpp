@@ -66,6 +66,64 @@ normal_mesh_get(struct ON_Brep_CDT_State *state)
     return valid;
 }
 
+static bool
+repair_contract()
+{
+    ON_3dPoint corners[8] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 1.0, 0.0), ON_3dPoint(0.0, 1.0, 0.0),
+	ON_3dPoint(0.0, 0.0, 1.0), ON_3dPoint(1.0, 0.0, 1.0),
+	ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(0.0, 1.0, 1.0)
+    };
+    ON_Brep *box = ON_BrepBox(corners);
+    if (!box)
+	return false;
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(box,
+	"repair contract");
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.05;
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    std::vector<int> partial_faces;
+    for (int face = 1; face < box->m_F.Count(); ++face)
+	partial_faces.push_back(face);
+    const int partial_result = ON_Brep_CDT_Tessellate(state,
+	(int)partial_faces.size(), partial_faces.data());
+
+    struct brep_cdt_repair_settings settings =
+	BREP_CDT_REPAIR_SETTINGS_INIT;
+    settings.mesh.fill_holes = 1;
+    settings.mesh.max_hole_area_percent = 30.0;
+    settings.mesh.max_hole_edges = 64;
+    settings.max_area_change_percent = 30.0;
+    struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
+    struct brep_cdt_diagnostic diagnostic;
+    bool repaired = partial_result == (int)partial_faces.size() &&
+	ON_Brep_CDT_Repair(state, &settings, &report) == 0 &&
+	ON_Brep_CDT_Status(state) == 0 &&
+	report.source_diagnostic.result == BREP_CDT_RESULT_PARTIAL &&
+	report.mesh.solid && report.mesh.added_faces > 0 &&
+	report.changed_faces > 0 &&
+	report.deviation_projection_failures == 0 &&
+	ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0 &&
+	diagnostic.result == BREP_CDT_RESULT_REPAIRED &&
+	diagnostic.stage == BREP_CDT_STAGE_MESH_REPAIR &&
+	normal_mesh_get(state) &&
+	ON_Brep_CDT_Repair(state, &settings, &report) == 1 &&
+	report.source_diagnostic.result == BREP_CDT_RESULT_PARTIAL;
+    if (!repaired) {
+	ON_Brep_CDT_Diagnostic(&diagnostic, state);
+	bu_log("repair contract failed: partial %d/%zu, result %d stage %d, "
+	    "solid %d, added %d, changed %d, projection failures %zu: %s\n",
+	    partial_result, partial_faces.size(), diagnostic.result,
+	    diagnostic.stage, report.mesh.solid, report.mesh.added_faces,
+	    report.changed_faces, report.deviation_projection_failures,
+	    diagnostic.message);
+    }
+    ON_Brep_CDT_Destroy(state);
+    delete box;
+    return repaired;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -122,6 +180,8 @@ main(int argc, const char **argv)
     second_ok = second_ok && mesh_get(second, state) &&
 	first.faces == second.faces && first.vertices == second.vertices;
 
+    bool repaired = repair_contract();
+
     ON_Brep_CDT_Tol_Set(state, &tolerance);
     bool invalidated = ON_Brep_CDT_Status(state) == -1 &&
 	ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0 &&
@@ -154,6 +214,6 @@ main(int argc, const char **argv)
 	diagnostic.stage == BREP_CDT_STAGE_TOPOLOGY;
     ON_Brep_CDT_Destroy(state);
 
-    return initial && first_ok && second_ok && invalidated &&
+    return initial && first_ok && second_ok && repaired && invalidated &&
 	invalid_tolerance && invalid_face && invalid_input ? 0 : 1;
 }

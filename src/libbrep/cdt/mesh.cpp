@@ -3117,6 +3117,127 @@ cdt_mesh_t::repair_incorrect_normal_edges()
 }
 
 bool
+cdt_mesh_t::repair_toleranced_nonmanifold_edges()
+{
+    if (m_face_charts.empty() || !brep || f_id < 0 ||
+	    f_id >= brep->m_F.Count() ||
+	    !cdt_face_uses_topology_chart(brep->m_F[f_id]))
+	return false;
+
+    const std::vector<triangle_t> saved_triangles = tris_vect;
+    const decltype(v2edges) saved_v2edges = v2edges;
+    const decltype(v2tris) saved_v2tris = v2tris;
+    const decltype(edges2tris) saved_edges2tris = edges2tris;
+    const decltype(uedges2tris) saved_uedges2tris = uedges2tris;
+    const decltype(boundary_edges) saved_boundary_edges = boundary_edges;
+    const decltype(problem_edges) saved_problem_edges = problem_edges;
+    std::vector<size_t> saved_active;
+    RTree<size_t, double, 3>::Iterator saved_it;
+    tris_tree.GetFirst(saved_it);
+    while (!saved_it.IsNull()) {
+	saved_active.push_back(*saved_it);
+	++saved_it;
+    }
+    const auto restore = [&]() {
+	tris_vect = saved_triangles;
+	v2edges = saved_v2edges;
+	v2tris = saved_v2tris;
+	edges2tris = saved_edges2tris;
+	uedges2tris = saved_uedges2tris;
+	boundary_edges = saved_boundary_edges;
+	problem_edges = saved_problem_edges;
+	tris_tree.RemoveAll();
+	for (size_t triangle_index : saved_active) {
+	    if (triangle_index >= tris_vect.size())
+		continue;
+	    triangle_t &triangle = tris_vect[triangle_index];
+	    triangle.m = this;
+	    ON_BoundingBox bounds(*pnts[(size_t)triangle.v[0]],
+		*pnts[(size_t)triangle.v[0]]);
+	    for (int corner = 1; corner < 3; ++corner)
+		bounds.Set(*pnts[(size_t)triangle.v[corner]], true);
+	    const double minimum[3] = {bounds.Min().x, bounds.Min().y,
+		bounds.Min().z};
+	    const double maximum[3] = {bounds.Max().x, bounds.Max().y,
+		bounds.Max().z};
+	    tris_tree.Insert(minimum, maximum, triangle_index);
+	}
+	boundary_edges_stale = true;
+	bounding_box_stale = true;
+    };
+
+    size_t removed = 0;
+    while (true) {
+	uedge_t overused;
+	bool found = false;
+	for (const auto &entry : uedges2tris) {
+	    if (entry.second.size() > 2 &&
+		    brep_edges.find(entry.first) == brep_edges.end()) {
+		overused = entry.first;
+		found = true;
+		break;
+	    }
+	}
+	if (!found)
+	    break;
+	const auto incident = uedges2tris.find(overused);
+	if (incident == uedges2tris.end() || incident->second.size() <= 2) {
+	    restore();
+	    return false;
+	}
+	std::vector<std::pair<double, size_t>> candidates;
+	for (size_t triangle_index : incident->second) {
+	    if (!tri_active(triangle_index) ||
+		    !toleranced_boundary_triangle(
+		    tris_vect[(size_t)triangle_index])) {
+		restore();
+		return false;
+	    }
+	    const triangle_t &triangle = tris_vect[(size_t)triangle_index];
+	    candidates.push_back(std::make_pair(ON_DotProduct(
+		tnorm(triangle), bnorm(triangle)), triangle_index));
+	}
+	std::sort(candidates.begin(), candidates.end());
+	if (candidates.empty()) {
+	    restore();
+	    return false;
+	}
+	triangle_t triangle = tris_vect[candidates.front().second];
+	tri_remove(triangle);
+	removed++;
+    }
+    if (removed) {
+	edges2tris.clear();
+	uedges2tris.clear();
+	v2edges.clear();
+	v2tris.clear();
+	RTree<size_t, double, 3>::Iterator active;
+	tris_tree.GetFirst(active);
+	while (!active.IsNull()) {
+	    const size_t triangle_index = *active;
+	    if (triangle_index < tris_vect.size()) {
+		const triangle_t &triangle = tris_vect[triangle_index];
+		for (int corner = 0; corner < 3; ++corner) {
+		    edge_t edge(triangle.v[corner],
+			triangle.v[(corner + 1) % 3]);
+		    const uedge_t unordered(edge);
+		    edges2tris[edge] = triangle_index;
+		    uedges2tris[unordered].insert(triangle_index);
+		    v2edges[edge.v[0]].insert(edge);
+		    v2tris[triangle.v[corner]].insert(triangle_index);
+		}
+	    }
+	    ++active;
+	}
+    }
+    boundary_edges_stale = true;
+    if (removed && valid(0))
+	return true;
+    restore();
+    return false;
+}
+
+bool
 cdt_mesh_t::toleranced_boundary_triangle(const triangle_t &triangle)
 {
     if (!brep || f_id < 0 || f_id >= brep->m_F.Count())
@@ -4304,7 +4425,11 @@ static bool
 cleanable_developable_chart(const ON_BrepFace &face,
 	const cdt_face_chart &chart)
 {
-    if (chart.closed_direction() >= 0 || !face.SurfaceOf())
+    if (!face.SurfaceOf())
+	return false;
+    if (chart.type() == CDT_FACE_CHART_POLAR)
+	return true;
+    if (chart.closed_direction() >= 0)
 	return false;
     return (chart.type() == CDT_FACE_CHART_SURFACE_METRIC &&
 	face.SurfaceOf()->IsPlanar(NULL, BN_TOL_DIST)) ||
@@ -4315,15 +4440,18 @@ cleanable_developable_chart(const ON_BrepFace &face,
  * quality may not invent, remove, or move a shared B-Rep boundary sample.
  * Accept its result only when every cleaned point maps back to one original
  * chart coordinate and the triangle boundary is exactly the original set of
- * nonzero constraints.  Duplicate coordinates are mergeable only when they
- * identify the same explicit B-Rep topology vertex and 3-D point. */
+ * nonzero constraints.  Duplicate coordinates are mergeable when their
+ * globally shared 3-D point pointer proves they are one derived mesh point,
+ * or when non-topological edge samples agree within the scale-aware modeling
+ * tolerance. */
 static bool
 topology_preserving_clean_triangulation(int **faces, int *face_count,
-	const cdt_face_chart &chart,
-	const std::vector<const ON_3dPoint *> &source_points_3d,
+	cdt_mesh_t *mesh, const ON_BrepFace &face, cdt_face_chart &chart,
+	std::vector<const ON_3dPoint *> &source_points_3d,
 	const int *outer, size_t outer_count, const int **holes,
 	const size_t *hole_counts, size_t hole_count, const int *steiner,
-	size_t steiner_count, const point2d_t *points)
+	size_t steiner_count, const point2d_t *points,
+	std::set<int> *normalized_boundary_vertices)
 {
     if (!faces || !face_count || !outer || outer_count < 4 || !points)
 	return false;
@@ -4377,9 +4505,15 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 	    chart_vertices[(int)vertex.id] = &vertex;
     }
     std::map<snapped_point, int> representative;
+    const struct ON_Brep_CDT_State *cdt_state = mesh ?
+	(const struct ON_Brep_CDT_State *)mesh->p_cdt : NULL;
+    const double merge_tolerance = cdt_state &&
+	std::isfinite(cdt_state->absmin) && cdt_state->absmin > 0.0 ?
+	std::min((double)BN_TOL_DIST, (double)cdt_state->absmin) :
+	(double)BN_TOL_DIST;
     for (const auto &entry : input_points) {
 	int selected = -1;
-	cdt_topo_vertex_id topology = CDT_TOPOLOGY_ID_NONE;
+	cdt_topo_vertex_id selected_topology = CDT_TOPOLOGY_ID_NONE;
 	const ON_3dPoint *point_3d = NULL;
 	for (int point : entry.second) {
 	    const auto vertex_entry = chart_vertices.find(point);
@@ -4391,15 +4525,23 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 		source_points_3d[(size_t)vertex.native_point] : NULL;
 	    if (selected < 0) {
 		selected = point;
-		topology = vertex.topo_vertex;
+		selected_topology = vertex.topo_vertex;
 		point_3d = candidate_3d;
 		continue;
 	    }
-	    if (entry.second.size() > 1 &&
-		    (topology == CDT_TOPOLOGY_ID_NONE ||
-		    vertex.topo_vertex != topology || !point_3d ||
-		    candidate_3d != point_3d))
-		return false;
+	    if (entry.second.size() > 1) {
+		const bool compatible_topology =
+		    (selected_topology == CDT_TOPOLOGY_ID_NONE &&
+		    vertex.topo_vertex == CDT_TOPOLOGY_ID_NONE) ||
+		    (selected_topology != CDT_TOPOLOGY_ID_NONE &&
+		    selected_topology == vertex.topo_vertex);
+		const bool toleranced_match = compatible_topology && point_3d &&
+		    candidate_3d && point_3d->DistanceTo(*candidate_3d) <=
+		    merge_tolerance;
+		if ((!point_3d || candidate_3d != point_3d) &&
+			!toleranced_match)
+		    return false;
+	    }
 	    if (point < selected)
 		selected = point;
 	}
@@ -4410,10 +4552,18 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
     int clean_face_count = 0;
     point2d_t *clean_points = NULL;
     int clean_point_count = 0;
-    const int clean_status = bg_nested_poly_triangulate_clean(&clean_faces,
-	&clean_face_count, &clean_points, &clean_point_count, outer,
-	outer_count, holes, hole_counts, hole_count, steiner, steiner_count,
-	points, chart.points.size());
+    std::vector<int> clean_constraints;
+    clean_constraints.reserve(chart.constraints.size() * 2);
+    for (const std::pair<int, int> &constraint : chart.constraints) {
+	clean_constraints.push_back(constraint.first);
+	clean_constraints.push_back(constraint.second);
+    }
+    const int clean_status = bg_nested_poly_triangulate_clean_constraints(
+	&clean_faces, &clean_face_count, &clean_points, &clean_point_count,
+	outer, outer_count, holes, hole_counts, hole_count, steiner,
+	steiner_count, clean_constraints.empty() ? NULL :
+	clean_constraints.data(), chart.constraints.size(), points,
+	chart.points.size());
     if (clean_status != BRLCAD_OK || !clean_faces || !clean_points ||
 	    clean_face_count <= 0 || clean_point_count <= 0) {
 	if (clean_faces)
@@ -4425,20 +4575,134 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 
     bool valid = true;
     std::vector<int> clean_to_chart((size_t)clean_point_count, -1);
-    std::set<snapped_point> output_points;
+    double maximum_accepted_chart_displacement = 0.0;
+    std::vector<std::pair<double, double>> verification_points =
+	chart.points;
+    struct pending_clean_point {
+	int verification_index;
+	ON_2dPoint chart_uv;
+	ON_2dPoint native_uv;
+	ON_3dPoint point_3d;
+	ON_3dVector normal_3d;
+    };
+    std::vector<pending_clean_point> pending_points;
+    const auto find_representative = [&](const snapped_point &key,
+	    snapped_point &matched_key) {
+	auto exact = representative.find(key);
+	if (exact != representative.end()) {
+	    matched_key = exact->first;
+	    return exact->second;
+	}
+	int selected = -1;
+	int64_t best_distance = std::numeric_limits<int64_t>::max();
+	bool ambiguous = false;
+	for (int64_t dx = -4; dx <= 4; ++dx) {
+	    for (int64_t dy = -4; dy <= 4; ++dy) {
+		const snapped_point nearby(key.first + dx, key.second + dy);
+		const auto candidate = representative.find(nearby);
+		if (candidate == representative.end())
+		    continue;
+		const int64_t distance = dx * dx + dy * dy;
+		if (distance < best_distance) {
+		    best_distance = distance;
+		    selected = candidate->second;
+		    matched_key = candidate->first;
+		    ambiguous = false;
+		} else if (distance == best_distance &&
+			candidate->second != selected) {
+		    ambiguous = true;
+		}
+	    }
+	}
+	return ambiguous ? -1 : selected;
+    };
+    const auto collapse_clean_boundary_point = [&](int clean_point,
+	    snapped_point &matched_key) {
+	if (!face.SurfaceOf())
+	    return -1;
+	const ON_2dPoint chart_uv(clean_points[clean_point][X],
+	    clean_points[clean_point][Y]);
+	ON_2dPoint native_uv;
+	if (!chart.chart_to_native(chart_uv, native_uv))
+	    return -1;
+	ON_3dPoint point_3d;
+	ON_3dVector normal_3d;
+	if (!surface_EvNormal(face.SurfaceOf(), native_uv.x, native_uv.y,
+		point_3d, normal_3d))
+	    return -1;
+	if (face.m_bRev)
+	    normal_3d = -normal_3d;
+	int selected = -1;
+	double best_distance = DBL_MAX;
+	double best_chart_distance = DBL_MAX;
+	for (const auto &candidate : representative) {
+	    const auto vertex = chart_vertices.find(candidate.second);
+	    if (vertex == chart_vertices.end() ||
+		    vertex->second->native_point < 0 ||
+		    (size_t)vertex->second->native_point >=
+		    source_points_3d.size())
+		continue;
+	    const ON_3dPoint *candidate_3d = source_points_3d[
+		(size_t)vertex->second->native_point];
+	    if (!candidate_3d)
+		continue;
+	    const double distance = point_3d.DistanceTo(*candidate_3d);
+	    if (!std::isfinite(distance) || distance > BN_TOL_DIST)
+		continue;
+	    const double chart_distance = std::hypot(
+		points[candidate.second][X] - chart_uv.x,
+		points[candidate.second][Y] - chart_uv.y);
+	    if (distance < best_distance ||
+		    (NEAR_EQUAL(distance, best_distance, ON_ZERO_TOLERANCE) &&
+		    chart_distance < best_chart_distance)) {
+		selected = candidate.second;
+		matched_key = candidate.first;
+		best_distance = distance;
+		best_chart_distance = chart_distance;
+	    }
+	}
+	return selected;
+    };
+    const auto add_pending_point = [&](int clean_point) {
+	if (!mesh || !face.SurfaceOf())
+	    return -1;
+	const ON_2dPoint chart_uv(clean_points[clean_point][X],
+	    clean_points[clean_point][Y]);
+	ON_2dPoint native_uv;
+	if (!chart.chart_to_native(chart_uv, native_uv))
+	    return -1;
+	ON_3dPoint point_3d;
+	ON_3dVector normal_3d;
+	if (!surface_EvNormal(face.SurfaceOf(), native_uv.x, native_uv.y,
+		point_3d, normal_3d))
+	    return -1;
+	if (face.m_bRev)
+	    normal_3d = -normal_3d;
+	const int verification_index = (int)verification_points.size();
+	verification_points.push_back(std::make_pair(chart_uv.x, chart_uv.y));
+	pending_points.push_back({verification_index, chart_uv, native_uv,
+	    point_3d, normal_3d});
+	return verification_index;
+    };
     for (int i = 0; i < clean_point_count; ++i) {
 	const snapped_point key = snap(clean_points[i][X], clean_points[i][Y]);
-	const auto source = representative.find(key);
-	if (source == representative.end()) {
+	snapped_point matched_key;
+	int source = find_representative(key, matched_key);
+	if (source < 0) {
+	    source = collapse_clean_boundary_point(i, matched_key);
+	}
+	if (source < 0) {
+	    source = add_pending_point(i);
+	}
+	if (source < 0) {
 	    valid = false;
 	    break;
 	}
-	clean_to_chart[(size_t)i] = source->second;
-	output_points.insert(key);
-    }
-    for (const auto &entry : input_points) {
-	if (output_points.find(entry.first) == output_points.end())
-	    valid = false;
+	maximum_accepted_chart_displacement = std::max(
+	    maximum_accepted_chart_displacement, std::hypot(
+	    verification_points[(size_t)source].first - clean_points[i][X],
+	    verification_points[(size_t)source].second - clean_points[i][Y]));
+	clean_to_chart[(size_t)i] = source;
     }
 
     typedef std::pair<int, int> clean_edge;
@@ -4446,55 +4710,299 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 	return first < second ? clean_edge(first, second) :
 	    clean_edge(second, first);
     };
-    std::set<clean_edge> required_boundary;
+    std::map<clean_edge, int> input_winding;
     const auto require_ring = [&](const int *ring, size_t count) {
 	for (size_t i = 0; i + 1 < count; ++i) {
 	    const int first = representative[snap(points[ring[i]][X],
 		points[ring[i]][Y])];
 	    const int second = representative[snap(points[ring[i + 1]][X],
 		points[ring[i + 1]][Y])];
-	    if (first != second &&
-		    !required_boundary.insert(edge_key(first, second)).second)
-		return false;
+	    if (first != second) {
+		const clean_edge edge = edge_key(first, second);
+		input_winding[edge] += first < second ? 1 : -1;
+	    }
 	}
 	return true;
     };
     valid = valid && require_ring(outer, outer_count);
     for (size_t hole = 0; valid && hole < hole_count; ++hole)
 	valid = require_ring(holes[hole], hole_counts[hole]);
+    std::vector<clean_edge> input_boundary;
+    for (const auto &edge : input_winding) {
+	if (edge.second)
+	    input_boundary.push_back(edge.first);
+    }
 
     std::map<clean_edge, int> edge_uses;
-    std::vector<int> mapped_faces((size_t)clean_face_count * 3, -1);
-    for (size_t i = 0; valid && i < mapped_faces.size(); i += 3) {
+    std::vector<int> parents((size_t)clean_face_count, 0);
+    for (int face_index = 0; face_index < clean_face_count; ++face_index)
+	parents[(size_t)face_index] = face_index;
+    const auto find_parent = [&](int face_index) {
+	int current = face_index;
+	while (parents[(size_t)current] != current)
+	    current = parents[(size_t)current];
+	return current;
+    };
+    const auto unite_faces = [&](int first, int second) {
+	int first_root = find_parent(first);
+	int second_root = find_parent(second);
+	if (first_root != second_root)
+	    parents[(size_t)second_root] = first_root;
+    };
+    std::map<clean_edge, int> first_edge_face;
+    for (int face_index = 0; face_index < clean_face_count; ++face_index) {
+	const int *triangle = &clean_faces[3 * face_index];
 	for (int corner = 0; corner < 3; ++corner) {
-	    const int clean_point = clean_faces[i + (size_t)corner];
-	    if (clean_point < 0 || clean_point >= clean_point_count ||
-		    clean_to_chart[(size_t)clean_point] < 0) {
+	    const int first = triangle[corner];
+	    const int second = triangle[(corner + 1) % 3];
+	    if (first < 0 || second < 0 || first >= clean_point_count ||
+		    second >= clean_point_count) {
 		valid = false;
+		continue;
+	    }
+	    const clean_edge edge = edge_key(first, second);
+	    const auto existing = first_edge_face.find(edge);
+	    if (existing == first_edge_face.end())
+		first_edge_face[edge] = face_index;
+	    else
+		unite_faces(face_index, existing->second);
+	}
+    }
+    std::vector<bool> component_valid((size_t)clean_face_count, true);
+    for (int face_index = 0; face_index < clean_face_count; ++face_index) {
+	const int root = find_parent(face_index);
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int clean_point = clean_faces[3 * face_index + corner];
+	    if (clean_point < 0 || clean_point >= clean_point_count ||
+		    clean_to_chart[(size_t)clean_point] < 0)
+		component_valid[(size_t)root] = false;
+	}
+    }
+    const auto verification_point_3d = [&](int verification_index,
+	    ON_3dPoint &point) {
+	if (verification_index < 0)
+	    return false;
+	if ((size_t)verification_index < chart.vertices.size()) {
+	    const long native = chart.native_point(verification_index);
+	    if (native < 0 || (size_t)native >= source_points_3d.size() ||
+		    !source_points_3d[(size_t)native])
+		return false;
+	    point = *source_points_3d[(size_t)native];
+	    return point.IsValid();
+	}
+	for (const pending_clean_point &pending : pending_points) {
+	    if (pending.verification_index == verification_index) {
+		point = pending.point_3d;
+		return point.IsValid();
+	    }
+	}
+	return false;
+    };
+    std::map<int, double> component_area;
+    std::map<int, ON_BoundingBox> component_bounds;
+    std::set<int> component_roots;
+    for (int face_index = 0; face_index < clean_face_count; ++face_index) {
+	const int root = find_parent(face_index);
+	component_roots.insert(root);
+	ON_3dPoint triangle[3];
+	bool have_triangle = true;
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int clean_point = clean_faces[3 * face_index + corner];
+	    const int mapped = clean_point >= 0 &&
+		    clean_point < clean_point_count ?
+		clean_to_chart[(size_t)clean_point] : -1;
+	    have_triangle = verification_point_3d(mapped,
+		triangle[corner]) && have_triangle;
+	}
+	if (!have_triangle) {
+	    component_valid[(size_t)root] = false;
+	    continue;
+	}
+	const ON_3dVector first = triangle[1] - triangle[0];
+	const ON_3dVector second = triangle[2] - triangle[0];
+	component_area[root] += 0.5 * ON_CrossProduct(first, second).Length();
+	ON_BoundingBox &bounds = component_bounds[root];
+	for (int corner = 0; corner < 3; ++corner)
+	    bounds.Set(triangle[corner], true);
+    }
+    if (component_roots.size() > 1) {
+	int largest_root = -1;
+	double largest_area = -1.0;
+	for (int root : component_roots) {
+	    if (component_area[root] > largest_area) {
+		largest_area = component_area[root];
+		largest_root = root;
+	    }
+	}
+	const double component_tolerance = cdt_state &&
+	    std::isfinite(cdt_state->absmin) && cdt_state->absmin > 0.0 ?
+	    std::min((double)BN_TOL_DIST, (double)cdt_state->absmin) :
+	    (double)BN_TOL_DIST;
+	for (int root : component_roots) {
+	    if (root == largest_root) {
+		continue;
+	    }
+	    const double diagonal = component_bounds[root].IsValid() ?
+		component_bounds[root].Diagonal().Length() : 0.0;
+	    const double area_limit = 4.0 * component_tolerance *
+		std::max(component_tolerance, diagonal);
+	    if (component_area[root] <= area_limit)
+		component_valid[(size_t)root] = false;
+	}
+    }
+    std::vector<int> mapped_faces;
+    mapped_faces.reserve((size_t)clean_face_count * 3);
+    for (int face_index = 0; valid && face_index < clean_face_count;
+	    ++face_index) {
+	if (!component_valid[(size_t)find_parent(face_index)])
+	    continue;
+	int mapped[3];
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int clean_point = clean_faces[3 * face_index + corner];
+	    mapped[corner] = clean_to_chart[(size_t)clean_point];
+	}
+	if (mapped[0] == mapped[1] || mapped[1] == mapped[2] ||
+		mapped[2] == mapped[0])
+	    continue;
+	mapped_faces.insert(mapped_faces.end(), mapped, mapped + 3);
+	edge_uses[edge_key(mapped[0], mapped[1])]++;
+	edge_uses[edge_key(mapped[1], mapped[2])]++;
+	edge_uses[edge_key(mapped[2], mapped[0])]++;
+    }
+    if (mapped_faces.empty())
+	valid = false;
+    for (const auto &edge : edge_uses) {
+	if (edge.second != 1 && edge.second != 2)
+	    valid = false;
+    }
+    std::set<clean_edge> output_boundary;
+    for (const auto &edge : edge_uses) {
+	if (edge.second == 1)
+	    output_boundary.insert(edge.first);
+    }
+    const double boundary_tolerance = std::max(4096.0 *
+	std::numeric_limits<double>::epsilon() * std::max(1.0, span),
+	2.0 * maximum_accepted_chart_displacement);
+    const double boundary_tolerance_sq = boundary_tolerance *
+	boundary_tolerance;
+    const auto verification_point_on_segment = [&](int point, int first,
+	    int second) {
+	if (point < 0 || first < 0 || second < 0 ||
+		(size_t)point >= verification_points.size() ||
+		(size_t)first >= verification_points.size() ||
+		(size_t)second >= verification_points.size())
+	    return false;
+	const double px = verification_points[(size_t)point].first;
+	const double py = verification_points[(size_t)point].second;
+	const double ax = verification_points[(size_t)first].first;
+	const double ay = verification_points[(size_t)first].second;
+	const double dx = verification_points[(size_t)second].first - ax;
+	const double dy = verification_points[(size_t)second].second - ay;
+	const double length_squared = dx * dx + dy * dy;
+	double parameter = length_squared > DBL_EPSILON ?
+	    ((px - ax) * dx + (py - ay) * dy) / length_squared : 0.0;
+	parameter = std::max(0.0, std::min(1.0, parameter));
+	const double ex = px - (ax + parameter * dx);
+	const double ey = py - (ay + parameter * dy);
+	return ex * ex + ey * ey <= boundary_tolerance_sq;
+    };
+    const auto parameter_on_segment = [&](int point, int first,
+	    int second) {
+	const double dx = verification_points[(size_t)second].first -
+	    verification_points[(size_t)first].first;
+	const double dy = verification_points[(size_t)second].second -
+	    verification_points[(size_t)first].second;
+	const double length_squared = dx * dx + dy * dy;
+	return length_squared > DBL_EPSILON ?
+	    ((verification_points[(size_t)point].first -
+	    verification_points[(size_t)first].first) * dx +
+	    (verification_points[(size_t)point].second -
+	    verification_points[(size_t)first].second) * dy) /
+	    length_squared : 0.0;
+    };
+    const auto model_point_on_output_boundary = [&](const ON_3dPoint &point) {
+	for (const clean_edge &output : output_boundary) {
+	    ON_3dPoint first;
+	    ON_3dPoint second;
+	    if (!verification_point_3d(output.first, first) ||
+		    !verification_point_3d(output.second, second))
+		continue;
+	    const ON_3dVector segment = second - first;
+	    const double length_squared = segment * segment;
+	    double parameter = length_squared > DBL_EPSILON ?
+		((point - first) * segment) / length_squared : 0.0;
+	    parameter = std::max(0.0, std::min(1.0, parameter));
+	    if (point.DistanceTo(first + parameter * segment) <=
+		    merge_tolerance)
+		return true;
+	}
+	return false;
+    };
+    const auto model_edge_on_output_boundary = [&](const clean_edge &edge) {
+	ON_3dPoint first;
+	ON_3dPoint second;
+	if (!verification_point_3d(edge.first, first) ||
+		!verification_point_3d(edge.second, second))
+	    return false;
+	for (int sample = 0; sample <= 4; ++sample) {
+	    const double parameter = 0.25 * sample;
+	    const ON_3dPoint point = first + parameter * (second - first);
+	    if (!model_point_on_output_boundary(point))
+		return false;
+	}
+	return true;
+    };
+    for (const clean_edge &input : input_boundary) {
+	std::vector<std::pair<double, double>> intervals;
+	for (const clean_edge &output : output_boundary) {
+	    if (!verification_point_on_segment(output.first, input.first,
+		    input.second) ||
+		    !verification_point_on_segment(output.second, input.first,
+		    input.second))
+		continue;
+	    double first = parameter_on_segment(output.first, input.first,
+		input.second);
+	    double second = parameter_on_segment(output.second, input.first,
+		input.second);
+	    if (second < first)
+		std::swap(first, second);
+	    intervals.push_back(std::make_pair(first, second));
+	}
+	std::sort(intervals.begin(), intervals.end());
+	double covered = 0.0;
+	const double length = std::hypot(
+	    verification_points[(size_t)input.second].first -
+	    verification_points[(size_t)input.first].first,
+	    verification_points[(size_t)input.second].second -
+	    verification_points[(size_t)input.first].second);
+	const double parameter_tolerance = length > DBL_EPSILON ?
+	    boundary_tolerance / length : boundary_tolerance;
+	for (const auto &interval : intervals) {
+	    if (interval.first > covered + parameter_tolerance)
+		break;
+	    covered = std::max(covered, interval.second);
+	}
+	/* A weakly-simple face may traverse an analytic seam twice in the
+	 * same direction.  Once coincident samples have been proven and mapped
+	 * to one chart edge, that multiplicity is not a second geometric
+	 * boundary and the cleaned filled set must retain only one copy. */
+	if (covered < 1.0 - parameter_tolerance &&
+		std::abs(input_winding[input]) == 1 &&
+		!model_edge_on_output_boundary(input))
+	    valid = false;
+    }
+    for (const clean_edge &output : output_boundary) {
+	bool backed_by_input = false;
+	for (const clean_edge &input : input_boundary) {
+	    if (verification_point_on_segment(output.first, input.first,
+		    input.second) &&
+		    verification_point_on_segment(output.second, input.first,
+		    input.second)) {
+		backed_by_input = true;
 		break;
 	    }
-	    mapped_faces[i + (size_t)corner] =
-		clean_to_chart[(size_t)clean_point];
 	}
-	if (!valid || mapped_faces[i] == mapped_faces[i + 1] ||
-		mapped_faces[i + 1] == mapped_faces[i + 2] ||
-		mapped_faces[i + 2] == mapped_faces[i]) {
-	    valid = false;
-	    break;
-	}
-	edge_uses[edge_key(mapped_faces[i], mapped_faces[i + 1])]++;
-	edge_uses[edge_key(mapped_faces[i + 1], mapped_faces[i + 2])]++;
-	edge_uses[edge_key(mapped_faces[i + 2], mapped_faces[i])]++;
-    }
-    for (const auto &edge : edge_uses) {
-	const bool boundary = required_boundary.find(edge.first) !=
-	    required_boundary.end();
-	if ((boundary && edge.second != 1) ||
-		(!boundary && edge.second != 2))
-	    valid = false;
-    }
-    for (const clean_edge &edge : required_boundary) {
-	if (edge_uses[edge] != 1)
+	if (!backed_by_input)
 	    valid = false;
     }
 
@@ -4502,10 +5010,55 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
     bu_free(clean_points, "topology-preserving clean points");
     if (!valid)
 	return false;
+    for (size_t pending = 0; pending < pending_points.size(); ++pending) {
+	if (pending_points[pending].verification_index !=
+		(int)chart.points.size())
+	    return false;
+	const long native_point = mesh->add_point(
+	    pending_points[pending].native_uv);
+	ON_3dPoint *point_3d = NULL;
+	const auto existing_3d = mesh->p2d3d.find(native_point);
+	if (existing_3d != mesh->p2d3d.end() && existing_3d->second >= 0 &&
+		(size_t)existing_3d->second < mesh->pnts.size()) {
+	    point_3d = mesh->pnts[(size_t)existing_3d->second];
+	} else {
+	    point_3d = new ON_3dPoint(pending_points[pending].point_3d);
+	    const long point_index = mesh->add_point(point_3d);
+	    const long normal_index = mesh->add_normal(new ON_3dPoint(
+		pending_points[pending].normal_3d));
+	    mesh->p2d3d[native_point] = point_index;
+	    mesh->nmap[point_index] = normal_index;
+	    struct ON_Brep_CDT_State *state =
+		(struct ON_Brep_CDT_State *)mesh->p_cdt;
+	    if (state) {
+		CDT_Add3DPnt(state, point_3d, mesh->f_id, -1, -1, -1,
+		    pending_points[pending].native_uv.x,
+		    pending_points[pending].native_uv.y);
+		CDT_Add3DNorm(state, mesh->normals[(size_t)normal_index],
+		    point_3d, mesh->f_id, -1, -1, -1,
+		    pending_points[pending].native_uv.x,
+		    pending_points[pending].native_uv.y);
+	    }
+	}
+	if ((size_t)native_point >= source_points_3d.size())
+	    source_points_3d.resize((size_t)native_point + 1, NULL);
+	source_points_3d[(size_t)native_point] = point_3d;
+	mesh->m_chart_refinement_pnts.insert(native_point);
+	chart.add_refinement_point(native_point,
+	    pending_points[pending].native_uv,
+	    pending_points[pending].chart_uv);
+    }
+    if (normalized_boundary_vertices) {
+	normalized_boundary_vertices->clear();
+	for (const clean_edge &edge : output_boundary) {
+	    normalized_boundary_vertices->insert(edge.first);
+	    normalized_boundary_vertices->insert(edge.second);
+	}
+    }
     *faces = (int *)bu_calloc(mapped_faces.size(), sizeof(int),
 	"topology-preserving chart faces");
     std::copy(mapped_faces.begin(), mapped_faces.end(), *faces);
-    *face_count = clean_face_count;
+    *face_count = (int)(mapped_faces.size() / 3);
     return true;
 }
 
@@ -4575,9 +5128,11 @@ cdt_test_developable_clean(void)
     outline.push_back(chart.outer.front());
     int *faces = NULL;
     int face_count = 0;
+
     const bool cleaned = topology_preserving_clean_triangulation(&faces,
-	&face_count, chart, points_3d, outline.data(), outline.size(), NULL,
-	NULL, 0, NULL, 0, points.data());
+	&face_count, NULL, face, chart, points_3d, outline.data(),
+	outline.size(), NULL,
+	NULL, 0, NULL, 0, points.data(), NULL);
     if (faces)
 	bu_free(faces, "developable clean test faces");
     return cleaned && face_count > 0 ? 0 : 5;
@@ -5747,6 +6302,7 @@ cdt_mesh_t::cdt()
 	constraint_vec.push_back(constraint.second);
     }
 
+    std::set<int> normalized_boundary_vertices;
     int *faces = NULL;
     int num_faces = 0;
     struct bg_triangulation_report tri_report = {0, -1, {0}};
@@ -5756,20 +6312,18 @@ cdt_mesh_t::cdt()
 	constraint_vec.empty() ? NULL : constraint_vec.data(),
 	chart.constraints.size(), bgp_2d, chart.points.size(), &tri_report);
 
-    if (!result && constraint_vec.empty() &&
-	    cleanable_developable_chart(face, chart)) {
+    if (!result && cleanable_developable_chart(face, chart)) {
 	if (faces) {
 	    bu_free(faces, "failed strict chart faces");
 	    faces = NULL;
 	}
 	result = topology_preserving_clean_triangulation(&faces, &num_faces,
-	    chart, source_points_3d, opoly, opoly_count,
+	    this, face, chart, source_points_3d, opoly, opoly_count,
 	    (const int **)holes_array, holes_npts, holes_cnt, steiner,
-	    steiner_cnt, bgp_2d);
+	    steiner_cnt, bgp_2d, &normalized_boundary_vertices);
 	if (result)
 	    bu_log("Face %d: normalized weakly-simple developable chart "
-		"topology "
-		"without changing its B-Rep boundary\n", f_id);
+		"topology while retaining its certified constraints\n", f_id);
     }
 
     if (!result) {
@@ -6065,12 +6619,19 @@ cdt_mesh_t::cdt()
 	return incident != v2tris.end() && !incident->second.empty();
     };
     bool complete_boundary = true;
-    for (int point : chart.outer)
-	complete_boundary = boundary_vertex_used(point) && complete_boundary;
-    for (const std::vector<int> &hole : chart.holes) {
-	for (int point : hole)
+    if (!normalized_boundary_vertices.empty()) {
+	for (int point : normalized_boundary_vertices)
 	    complete_boundary = boundary_vertex_used(point) &&
 		complete_boundary;
+    } else {
+	for (int point : chart.outer)
+	    complete_boundary = boundary_vertex_used(point) &&
+		complete_boundary;
+	for (const std::vector<int> &hole : chart.holes) {
+	    for (int point : hole)
+		complete_boundary = boundary_vertex_used(point) &&
+		    complete_boundary;
+	}
     }
     if (result && !complete_boundary) {
 	struct ON_Brep_CDT_State *state =

@@ -75,6 +75,29 @@ struct geom_result {
     int connected_components = 0;
     int invalid_vertex_links = 0;
     int geometric_degenerate_faces = 0;
+    bool repair_attempted = false;
+    bool repair_succeeded = false;
+    int repair_source_result = 0;
+    int repair_source_stage = 0;
+    int repair_removed_faces = 0;
+    int repair_added_faces = 0;
+    bool repair_component_union = false;
+    int repair_changed_faces = 0;
+    size_t repair_deviation_samples = 0;
+    size_t repair_projection_failures = 0;
+    size_t repair_untrimmed_samples = 0;
+    size_t repair_input_mesh_samples = 0;
+    int repair_fast_attempted_faces = 0;
+    int repair_fast_used_faces = 0;
+    int repair_fast_failed_faces = 0;
+    int repair_fast_triangles = 0;
+    bool repair_full_fast_used = false;
+    double repair_max_deviation = 0.0;
+    double repair_rms_deviation = 0.0;
+    double repair_allowed_deviation = 0.0;
+    double repair_area_change_percent = 0.0;
+    double repair_output_area = 0.0;
+    double repair_output_volume = 0.0;
     long long euler_characteristic = 0;
     double minimum_angle_degrees =
 	std::numeric_limits<double>::quiet_NaN();
@@ -630,7 +653,8 @@ mesh_quality_metrics(geom_result *result, int vertex_count, int face_count,
 
 static geom_result
 quality_result(struct db_i *dbip, struct directory *dp,
-	const struct bg_tess_tol *ttol, int face_index)
+	const struct bg_tess_tol *ttol, int face_index,
+	const struct brep_cdt_repair_settings *repair_settings)
 {
     geom_result result;
     struct rt_db_internal intern;
@@ -695,6 +719,53 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    detail.stage = face_diagnostic.stage;
 	    detail.message = face_diagnostic.message;
 	    result.face_failures.push_back(detail);
+	}
+    }
+
+    if (repair_settings && face_index < 0 && result.ret != 0) {
+	result.repair_attempted = true;
+	struct brep_cdt_repair_report repair_report =
+	    BREP_CDT_REPAIR_REPORT_INIT;
+	const int repair_result = ON_Brep_CDT_Repair(state, repair_settings,
+	    &repair_report);
+	result.repair_succeeded = repair_result == 0;
+	result.repair_source_result = repair_report.source_diagnostic.result;
+	result.repair_source_stage = repair_report.source_diagnostic.stage;
+	result.repair_removed_faces = repair_report.mesh.removed_faces;
+	result.repair_added_faces = repair_report.mesh.added_faces;
+	result.repair_component_union =
+	    repair_report.mesh.component_union_applied != 0;
+	result.repair_changed_faces = repair_report.changed_faces;
+	result.repair_deviation_samples = repair_report.deviation_samples;
+	result.repair_projection_failures =
+	    repair_report.deviation_projection_failures;
+	result.repair_untrimmed_samples =
+	    repair_report.untrimmed_surface_samples;
+	result.repair_input_mesh_samples =
+	    repair_report.input_mesh_surface_samples;
+	result.repair_fast_attempted_faces =
+	    repair_report.fast_fallback_attempted_faces;
+	result.repair_fast_used_faces = repair_report.fast_fallback_used_faces;
+	result.repair_fast_failed_faces =
+	    repair_report.fast_fallback_failed_faces;
+	result.repair_fast_triangles = repair_report.fast_fallback_triangles;
+	result.repair_full_fast_used =
+	    repair_report.full_fast_fallback_used != 0;
+	result.repair_max_deviation = repair_report.max_surface_deviation;
+	result.repair_rms_deviation = repair_report.rms_surface_deviation;
+	result.repair_allowed_deviation =
+	    repair_report.allowed_surface_deviation;
+	result.repair_area_change_percent =
+	    repair_report.area_change_percent;
+	result.repair_output_area = repair_report.mesh.output_area;
+	result.repair_output_volume = repair_report.mesh.output_volume;
+	if (repair_result == 0)
+	    result.ret = 0;
+	if (ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0) {
+	    result.diagnostic_result = diagnostic.result;
+	    result.diagnostic_stage = diagnostic.stage;
+	    result.diagnostic_face = diagnostic.face_index;
+	    result.diagnostic_message = diagnostic.message;
 	}
     }
 
@@ -897,6 +968,46 @@ print_result(const geom_result &result, const vect_t ref_dims)
     print_num(result.minimum_angle_degrees);
     std::cout << ",\"maximum_aspect_ratio\":";
     print_num(result.maximum_aspect_ratio);
+    std::cout << "},\"repair\":{\"attempted\":"
+	<< (result.repair_attempted ? "true" : "false")
+	<< ",\"succeeded\":"
+	<< (result.repair_succeeded ? "true" : "false")
+	<< ",\"source_result\":" << result.repair_source_result
+	<< ",\"source_stage\":" << result.repair_source_stage
+	<< ",\"removed_faces\":" << result.repair_removed_faces
+	<< ",\"added_faces\":" << result.repair_added_faces
+	<< ",\"component_union_applied\":"
+	<< (result.repair_component_union ? "true" : "false")
+	<< ",\"changed_faces\":" << result.repair_changed_faces
+	<< ",\"deviation_samples\":" << result.repair_deviation_samples
+	<< ",\"projection_failures\":"
+	<< result.repair_projection_failures
+	<< ",\"untrimmed_surface_samples\":"
+	<< result.repair_untrimmed_samples
+	<< ",\"input_mesh_surface_samples\":"
+	<< result.repair_input_mesh_samples
+	<< ",\"fast_fallback_attempted_faces\":"
+	<< result.repair_fast_attempted_faces
+	<< ",\"fast_fallback_used_faces\":"
+	<< result.repair_fast_used_faces
+	<< ",\"fast_fallback_failed_faces\":"
+	<< result.repair_fast_failed_faces
+	<< ",\"fast_fallback_triangles\":"
+	<< result.repair_fast_triangles
+	<< ",\"full_fast_fallback_used\":"
+	<< (result.repair_full_fast_used ? "true" : "false")
+	<< ",\"max_surface_deviation\":";
+    print_num(result.repair_max_deviation);
+    std::cout << ",\"rms_surface_deviation\":";
+    print_num(result.repair_rms_deviation);
+    std::cout << ",\"allowed_surface_deviation\":";
+    print_num(result.repair_allowed_deviation);
+    std::cout << ",\"area_change_percent\":";
+    print_num(result.repair_area_change_percent);
+    std::cout << ",\"output_area\":";
+    print_num(result.repair_output_area);
+    std::cout << ",\"output_volume\":";
+    print_num(result.repair_output_volume);
     std::cout << "}"
 	<< ",\"requested_items\":" << result.requested_items
 	<< ",\"completed_items\":" << result.completed_items
@@ -994,6 +1105,16 @@ struct audit_config {
     long max_points;
     long face_index;
     bool valid_solids_only;
+    bool quality_repair;
+    double repair_hole_area_percent;
+    long repair_hole_edges;
+    double repair_area_change_percent;
+    double repair_max_deviation;
+    long repair_deviation_samples;
+    bool repair_allow_untrimmed;
+    bool repair_full_fast;
+    bool repair_union_components;
+    bool repair_no_fast;
 };
 
 static int
@@ -1131,6 +1252,26 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     geom_result wire;
     geom_result shaded;
     geom_result quality;
+    struct brep_cdt_repair_settings repair_settings =
+	BREP_CDT_REPAIR_SETTINGS_INIT;
+    repair_settings.mesh.fill_holes = config.quality_repair ? 1 : 0;
+    repair_settings.mesh.max_hole_area_percent =
+	config.repair_hole_area_percent;
+    repair_settings.mesh.max_hole_edges =
+	(size_t)config.repair_hole_edges;
+    repair_settings.max_area_change_percent =
+	config.repair_area_change_percent;
+    repair_settings.max_surface_deviation = config.repair_max_deviation;
+    repair_settings.max_deviation_samples =
+	(size_t)config.repair_deviation_samples;
+    repair_settings.allow_untrimmed_surface_match =
+	config.repair_allow_untrimmed ? 1 : 0;
+    repair_settings.use_full_fast_fallback =
+	config.repair_full_fast ? 1 : 0;
+    repair_settings.mesh.union_components =
+	config.repair_union_components ? 1 : 0;
+    repair_settings.use_fast_face_fallback =
+	config.repair_no_fast ? 0 : 1;
     if (run_wireframe && !excluded) {
 	std::cerr << "brep-audit: phase=wireframe" << std::endl;
 	wire = wireframe_result(dbip, dp, &ttol, &tol, &draw_options);
@@ -1143,7 +1284,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     if (run_quality && !excluded) {
 	std::cerr << "brep-audit: phase=quality" << std::endl;
 	quality = quality_result(dbip, dp, &ttol,
-	    (int)config.face_index);
+	    (int)config.face_index,
+	    config.quality_repair ? &repair_settings : NULL);
     }
     vect_t ref_dims = VINIT_ZERO;
     vect_t boundary_dims = VINIT_ZERO;
@@ -1282,8 +1424,18 @@ main(int argc, const char **argv)
     long batch_start = 0;
     long face_index = -1;
     int valid_solids_only = 0;
+    int quality_repair = 0;
+    double repair_hole_area_percent = 1.0;
+    long repair_hole_edges = 256;
+    double repair_area_change_percent = 1.0;
+    double repair_max_deviation = 0.0;
+    long repair_deviation_samples = 4096;
+    int repair_allow_untrimmed = 0;
+    int repair_full_fast = 0;
+    int repair_union_components = 0;
+    int repair_no_fast = 0;
     const char *mode_name = "both";
-    struct bu_opt_desc d[18];
+    struct bu_opt_desc d[28];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -1303,7 +1455,34 @@ main(int argc, const char **argv)
     BU_OPT(d[16], "", "valid-solids-only", "", NULL,
 	&valid_solids_only,
 	"Exclude inputs outside the rigorous CDT topology contract");
-    BU_OPT_NULL(d[17]);
+    BU_OPT(d[17], "", "quality-repair", "", NULL, &quality_repair,
+	"Attempt explicitly bounded mesh repair after quality failure");
+    BU_OPT(d[18], "", "repair-hole-area-percent", "#",
+	&bu_opt_fastf_t, &repair_hole_area_percent,
+	"Maximum area of each repair hole as input mesh percentage");
+    BU_OPT(d[19], "", "repair-hole-edges", "#", &bu_opt_long,
+	&repair_hole_edges, "Maximum boundary edges in each repair hole");
+    BU_OPT(d[20], "", "repair-area-change-percent", "#",
+	&bu_opt_fastf_t, &repair_area_change_percent,
+	"Maximum aggregate repaired mesh area change percentage");
+    BU_OPT(d[21], "", "repair-max-deviation", "#", &bu_opt_fastf_t,
+	&repair_max_deviation,
+	"Maximum sampled repair deviation; zero uses tessellation tolerance");
+    BU_OPT(d[22], "", "repair-deviation-samples", "#", &bu_opt_long,
+	&repair_deviation_samples,
+	"Maximum changed-triangle deviation samples");
+    BU_OPT(d[23], "", "repair-allow-untrimmed", "", NULL,
+	&repair_allow_untrimmed,
+	"Permit and report deviation matches to underlying untrimmed surfaces");
+    BU_OPT(d[24], "", "repair-full-fast", "", NULL,
+	&repair_full_fast,
+	"Use one whole-B-Rep display mesh as the repair input");
+    BU_OPT(d[25], "", "repair-union-components", "", NULL,
+	&repair_union_components,
+	"Regularize closed repair components with a Manifold union");
+    BU_OPT(d[26], "", "repair-no-fast", "", NULL, &repair_no_fast,
+	"Repair only the rigorous face meshes, without display fallback faces");
+    BU_OPT_NULL(d[27]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -1313,7 +1492,12 @@ main(int argc, const char **argv)
 	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0 ||
 	    jobs < 0 || max_time_ms < 0 || max_result_mib < 0 ||
 	    max_points < 0 || batch_start < 0 || face_index < -1 ||
+	    repair_hole_area_percent <= 0.0 || repair_hole_edges < 3 ||
+	    repair_area_change_percent < 0.0 || repair_max_deviation < 0.0 ||
+	    repair_deviation_samples <= 0 ||
+	    (repair_no_fast && repair_full_fast) ||
 	    (batch && face_index != -1) ||
+	    (quality_repair && face_index != -1) ||
 	    (face_index != -1 && BU_STR_EQUAL(mode_name, "wireframe")) ||
 	    (!BU_STR_EQUAL(mode_name, "wireframe") &&
 	     !BU_STR_EQUAL(mode_name, "shaded") &&
@@ -1342,7 +1526,12 @@ main(int argc, const char **argv)
     audit_config config = {
 	ratio_min, ratio_max, tess_abs, tess_rel, tess_norm,
 	memory_limit_mib, jobs, max_time_ms, max_result_mib, max_points,
-	face_index, valid_solids_only != 0
+	face_index, valid_solids_only != 0, quality_repair != 0,
+	repair_hole_area_percent, repair_hole_edges,
+	repair_area_change_percent, repair_max_deviation,
+	repair_deviation_samples, repair_allow_untrimmed != 0,
+	repair_full_fast != 0, repair_union_components != 0,
+	repair_no_fast != 0
     };
 
     if (batch) {

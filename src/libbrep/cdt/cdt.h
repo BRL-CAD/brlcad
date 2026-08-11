@@ -100,6 +100,8 @@ struct ON_Brep_CDT_State {
     struct brep_cdt_diagnostic diagnostic;
     std::vector<int> failed_face_indices;
     std::map<int, struct brep_cdt_diagnostic> failed_face_diagnostics;
+    bool repair_source_valid;
+    struct brep_cdt_diagnostic repair_source_diagnostic;
     bool tolerance_changed;
     ON_Brep *orig_brep;
     ON_Brep *brep;
@@ -155,6 +157,7 @@ struct ON_Brep_CDT_State {
     int certified_face_normal_count;
     fastf_t *certified_normals;
     int certified_normal_count;
+    bool certified_repaired;
 
     /* Face specific data */
     std::map<int, cdt_mesh_t> fmeshes;
@@ -174,6 +177,9 @@ bool initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt);
 bool initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt);
 bool split_edges_at_surface_poles(struct ON_Brep_CDT_State *s_cdt,
     char *failure_message, size_t failure_message_size);
+size_t synchronize_coincident_edge_samples(
+    struct ON_Brep_CDT_State *s_cdt,
+    std::map<ON_3dPoint *, ON_3dPoint *> &welds);
 double ang_deg(const ON_3dVector &v1, const ON_3dVector &v2);
 std::set<bedge_seg_t *> split_edge_seg(struct ON_Brep_CDT_State *s_cdt,
     bedge_seg_t *bseg, int force, double *t, int update_rtrees,
