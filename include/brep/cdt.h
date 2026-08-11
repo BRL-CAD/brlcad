@@ -108,7 +108,10 @@ struct brep_cdt_diagnostic {
  * use_poisson_reconstruction replaces that whole display mesh with a
  * Screened Poisson implicit-surface reconstruction before repair.  This is
  * the most approximate tier and is therefore separately opt-in.  Its depth
- * is restricted to the bounded range accepted by this API.
+ * is restricted to the bounded range accepted by this API.  A zero
+ * poisson_scale tries the upstream 1.1 domain scale followed by a 1.2 retry
+ * if the first reconstructed mesh cannot be certified.  A value from 1.0
+ * through 2.0 requests one fixed scale instead.
  */
 struct brep_cdt_repair_settings {
     struct bg_trimesh_repair_settings mesh;
@@ -123,9 +126,10 @@ struct brep_cdt_repair_settings {
     size_t max_fast_points;
     size_t max_fast_result_bytes;
     long max_fast_time_ms;
+    fastf_t poisson_scale;
 };
 
-#define BREP_CDT_REPAIR_SETTINGS_INIT {BG_TRIMESH_REPAIR_SETTINGS_INIT, 0.0, 4096, 1.0, 0, 1, 0, 0, 8, 1048576, 134217728, 5000}
+#define BREP_CDT_REPAIR_SETTINGS_INIT {BG_TRIMESH_REPAIR_SETTINGS_INIT, 0.0, 4096, 1.0, 0, 1, 0, 0, 8, 1048576, 134217728, 5000, 0.0}
 
 /** Provenance and quality measurements for a repair attempt. */
 struct brep_cdt_repair_report {
@@ -147,13 +151,15 @@ struct brep_cdt_repair_report {
     int poisson_input_points;
     int poisson_output_points;
     int poisson_output_faces;
+    int poisson_attempts;
+    fastf_t poisson_scale;
     fastf_t max_surface_deviation;
     fastf_t rms_surface_deviation;
     fastf_t allowed_surface_deviation;
     fastf_t area_change_percent;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */

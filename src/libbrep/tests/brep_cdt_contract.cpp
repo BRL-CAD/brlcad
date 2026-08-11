@@ -193,7 +193,10 @@ invalid_poisson_repair_contract()
     const bool repaired = rejected &&
 	ON_Brep_CDT_Repair(state, &settings, &report) == 0 &&
 	report.poisson_reconstruction_attempted &&
-	report.poisson_reconstruction_applied && report.mesh.solid &&
+	report.poisson_reconstruction_applied &&
+	report.poisson_attempts == 1 &&
+	NEAR_EQUAL(report.poisson_scale, 1.1, SMALL_FASTF) &&
+	report.mesh.solid &&
 	report.changed_faces > 0 && report.deviation_projection_failures == 0 &&
 	mesh_get(output, state) && !output.faces.empty() &&
 	normal_mesh_get(state);

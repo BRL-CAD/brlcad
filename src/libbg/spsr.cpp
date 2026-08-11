@@ -194,7 +194,8 @@ valid_options(const struct bg_3d_spsr_opts &options)
         options.base_depth < 0 ||
         options.baseVcycles < 0 || options.samples_per_node <= 0.0 ||
         !std::isfinite(options.samples_per_node) ||
-        options.scale < 1.0 || options.width < 0.0 ||
+        options.scale < 1.0 || !std::isfinite(options.scale) ||
+        options.width < 0.0 ||
         options.cgsolver_accuracy <= 0.0 || options.point_weight < 0.0)
         return false;
 
