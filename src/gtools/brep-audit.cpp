@@ -84,6 +84,12 @@ struct geom_result {
     int repair_added_faces = 0;
     int repair_separated_vertices = 0;
     bool repair_component_union = false;
+    int repair_rejected_hole_faces = 0;
+    int repair_geometric_degenerate_faces = 0;
+    int repair_unmatched_edges = 0;
+    int repair_excess_edges = 0;
+    int repair_misoriented_edges = 0;
+    int repair_invalid_vertex_links = 0;
     int repair_changed_faces = 0;
     size_t repair_deviation_samples = 0;
     size_t repair_projection_failures = 0;
@@ -107,6 +113,10 @@ struct geom_result {
     double repair_area_change_percent = 0.0;
     double repair_output_area = 0.0;
     double repair_output_volume = 0.0;
+    size_t repair_coverage_samples = 0;
+    size_t repair_coverage_failures = 0;
+    double repair_max_coverage_deviation = 0.0;
+    double repair_rms_coverage_deviation = 0.0;
     long long euler_characteristic = 0;
     double minimum_angle_degrees =
 	std::numeric_limits<double>::quiet_NaN();
@@ -746,6 +756,15 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.mesh.separated_vertices;
 	result.repair_component_union =
 	    repair_report.mesh.component_union_applied != 0;
+	result.repair_rejected_hole_faces =
+	    repair_report.mesh.rejected_hole_faces;
+	result.repair_geometric_degenerate_faces =
+	    repair_report.mesh.geometric_degenerate_faces;
+	result.repair_unmatched_edges = repair_report.mesh.unmatched_edges;
+	result.repair_excess_edges = repair_report.mesh.excess_edges;
+	result.repair_misoriented_edges = repair_report.mesh.misoriented_edges;
+	result.repair_invalid_vertex_links =
+	    repair_report.mesh.invalid_vertex_links;
 	result.repair_changed_faces = repair_report.changed_faces;
 	result.repair_deviation_samples = repair_report.deviation_samples;
 	result.repair_projection_failures =
@@ -782,6 +801,12 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.area_change_percent;
 	result.repair_output_area = repair_report.mesh.output_area;
 	result.repair_output_volume = repair_report.mesh.output_volume;
+	result.repair_coverage_samples = repair_report.coverage_samples;
+	result.repair_coverage_failures = repair_report.coverage_failures;
+	result.repair_max_coverage_deviation =
+	    repair_report.max_coverage_deviation;
+	result.repair_rms_coverage_deviation =
+	    repair_report.rms_coverage_deviation;
 	if (repair_result == 0)
 	    result.ret = 0;
 	if (ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0) {
@@ -1003,6 +1028,15 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.repair_separated_vertices
 	<< ",\"component_union_applied\":"
 	<< (result.repair_component_union ? "true" : "false")
+	<< ",\"rejected_hole_faces\":"
+	<< result.repair_rejected_hole_faces
+	<< ",\"geometric_degenerate_faces\":"
+	<< result.repair_geometric_degenerate_faces
+	<< ",\"unmatched_edges\":" << result.repair_unmatched_edges
+	<< ",\"excess_edges\":" << result.repair_excess_edges
+	<< ",\"misoriented_edges\":" << result.repair_misoriented_edges
+	<< ",\"invalid_vertex_links\":"
+	<< result.repair_invalid_vertex_links
 	<< ",\"changed_faces\":" << result.repair_changed_faces
 	<< ",\"deviation_samples\":" << result.repair_deviation_samples
 	<< ",\"projection_failures\":"
@@ -1045,6 +1079,13 @@ print_result(const geom_result &result, const vect_t ref_dims)
     print_num(result.repair_output_area);
     std::cout << ",\"output_volume\":";
     print_num(result.repair_output_volume);
+    std::cout << ",\"coverage_samples\":"
+	<< result.repair_coverage_samples
+	<< ",\"coverage_failures\":" << result.repair_coverage_failures
+	<< ",\"max_coverage_deviation\":";
+    print_num(result.repair_max_coverage_deviation);
+    std::cout << ",\"rms_coverage_deviation\":";
+    print_num(result.repair_rms_coverage_deviation);
     std::cout << "}"
 	<< ",\"requested_items\":" << result.requested_items
 	<< ",\"completed_items\":" << result.completed_items
@@ -1153,6 +1194,7 @@ struct audit_config {
     bool repair_full_fast;
     bool repair_poisson;
     long repair_poisson_depth;
+    double repair_poisson_scale;
     bool repair_union_components;
     bool repair_no_fast;
 };
@@ -1320,6 +1362,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     repair_settings.use_poisson_reconstruction =
 	config.repair_poisson ? 1 : 0;
     repair_settings.poisson_depth = (int)config.repair_poisson_depth;
+    repair_settings.poisson_scale = config.repair_poisson_scale;
     repair_settings.mesh.union_components =
 	config.repair_union_components ? 1 : 0;
     repair_settings.use_fast_face_fallback =
@@ -1494,11 +1537,12 @@ main(int argc, const char **argv)
     int repair_full_fast = 0;
     int repair_poisson = 0;
     long repair_poisson_depth = 8;
+    double repair_poisson_scale = 0.0;
     int repair_union_components = 0;
     int repair_no_fast = 0;
     const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[32];
+    struct bu_opt_desc d[33];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -1556,7 +1600,10 @@ main(int argc, const char **argv)
     BU_OPT(d[30], "", "repair-max-deviation-rel", "fraction",
 	&bu_opt_fastf_t, &repair_max_deviation_rel,
 	"Maximum repair deviation as a boundary bbox diagonal fraction");
-    BU_OPT_NULL(d[31]);
+    BU_OPT(d[31], "", "repair-poisson-scale", "factor",
+	&bu_opt_fastf_t, &repair_poisson_scale,
+	"Poisson domain scale from 1 through 2; zero uses bounded retries");
+    BU_OPT_NULL(d[32]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -1572,6 +1619,10 @@ main(int argc, const char **argv)
 	    (repair_max_deviation > 0.0 && repair_max_deviation_rel > 0.0) ||
 	    repair_deviation_samples <= 0 ||
 	    repair_poisson_depth < 5 || repair_poisson_depth > 10 ||
+	    !std::isfinite(repair_poisson_scale) ||
+	    (((repair_poisson_scale > 0.0) ||
+	    (repair_poisson_scale < 0.0)) &&
+	    (repair_poisson_scale < 1.0 || repair_poisson_scale > 2.0)) ||
 	    (repair_no_fast && (repair_full_fast || repair_poisson)) ||
 	    (batch_object_file && !batch) ||
 	    (batch && face_index != -1) ||
@@ -1610,7 +1661,8 @@ main(int argc, const char **argv)
 	repair_max_deviation_rel,
 	repair_deviation_samples, repair_allow_untrimmed != 0,
 	repair_full_fast != 0, repair_poisson != 0,
-	repair_poisson_depth, repair_union_components != 0,
+	repair_poisson_depth, repair_poisson_scale,
+	repair_union_components != 0,
 	repair_no_fast != 0
     };
 

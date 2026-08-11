@@ -131,6 +131,8 @@ def append_repair_options(command, args):
         str(args.repair_deviation_samples),
         "--repair-poisson-depth",
         str(args.repair_poisson_depth),
+        "--repair-poisson-scale",
+        str(args.repair_poisson_scale),
     ))
     if args.repair_max_deviation_rel > 0.0:
         command.extend((
@@ -595,6 +597,7 @@ def parse_args():
     parser.add_argument("--repair-full-fast", action="store_true")
     parser.add_argument("--repair-poisson", action="store_true")
     parser.add_argument("--repair-poisson-depth", type=int, default=8)
+    parser.add_argument("--repair-poisson-scale", type=float, default=0.0)
     parser.add_argument("--repair-union-components", action="store_true")
     parser.add_argument("--repair-no-fast", action="store_true")
     args = parser.parse_args()
@@ -625,7 +628,9 @@ def parse_args():
             args.repair_max_deviation < 0.0 or \
             args.repair_max_deviation_rel < 0.0 or \
             args.repair_deviation_samples <= 0 or \
-            not 5 <= args.repair_poisson_depth <= 10:
+            not 5 <= args.repair_poisson_depth <= 10 or \
+            (args.repair_poisson_scale != 0.0 and
+             not 1.0 <= args.repair_poisson_scale <= 2.0):
         parser.error("invalid repair bounds")
     if args.repair_max_deviation > 0.0 and \
             args.repair_max_deviation_rel > 0.0:
