@@ -198,6 +198,8 @@ invalid_poisson_repair_contract()
 	NEAR_EQUAL(report.poisson_scale, 1.1, SMALL_FASTF) &&
 	report.mesh.solid &&
 	report.changed_faces > 0 && report.deviation_projection_failures == 0 &&
+	report.coverage_samples > 0 && report.coverage_failures == 0 &&
+	report.max_coverage_deviation <= report.allowed_surface_deviation &&
 	mesh_get(output, state) && !output.faces.empty() &&
 	normal_mesh_get(state);
     if (!repaired) {

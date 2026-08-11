@@ -365,6 +365,83 @@ test_intersecting_hole_patch_rejected(void)
     return 0;
 }
 
+/* An obstructed hole must not discard an independent safe cap.  Leave the
+ * first cube open because its cap crosses the tetrahedron, but retain the
+ * valid cap on the translated second cube. */
+static int
+test_independent_safe_hole_patch_retained(void)
+{
+    static point_t pts[20] = {
+	{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
+	{0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1},
+	{3, 0, 0}, {4, 0, 0}, {4, 1, 0}, {3, 1, 0},
+	{3, 0, 1}, {4, 0, 1}, {4, 1, 1}, {3, 1, 1},
+	{0.5, 0.5, 0.8}, {0.4, 0.4, 1.2},
+	{0.6, 0.4, 1.2}, {0.5, 0.6, 1.2}
+    };
+    static int faces[72] = {
+	0, 2, 1, 0, 3, 2,
+	0, 1, 5, 0, 5, 4,
+	1, 2, 6, 1, 6, 5,
+	2, 3, 7, 2, 7, 6,
+	3, 0, 4, 3, 4, 7,
+	8, 10, 9, 8, 11, 10,
+	8, 9, 13, 8, 13, 12,
+	9, 10, 14, 9, 14, 13,
+	10, 11, 15, 10, 15, 14,
+	11, 8, 12, 11, 12, 15,
+	16, 18, 17, 16, 17, 19, 17, 18, 19, 16, 19, 18
+    };
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.fill_holes = 1;
+    settings.max_hole_area_percent = 100.0;
+    settings.max_hole_edges = 8;
+    settings.require_solid = 0;
+    int *ofaces = NULL;
+    int n_ofaces = 0;
+    point_t *opnts = NULL;
+    int n_opnts = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+	&n_opnts, faces, 24, pts, 20, &settings, &report);
+    int safe_cap_faces = 0;
+    int obstructed_cap_faces = 0;
+    for (int face = 0; ret == 0 && face < n_ofaces; ++face) {
+	bool on_top = true;
+	double x_sum = 0.0;
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int vertex = ofaces[face * 3 + corner];
+	    on_top = on_top && NEAR_EQUAL(opnts[vertex][Z], 1.0,
+		SMALL_FASTF);
+	    x_sum += opnts[vertex][X];
+	}
+	if (!on_top)
+	    continue;
+	if (x_sum / 3.0 > 2.0)
+	    safe_cap_faces++;
+	else
+	    obstructed_cap_faces++;
+    }
+    const bool retained = ret == 0 && ofaces && opnts && !report.solid &&
+	report.added_faces >= 2 && safe_cap_faces == 2 &&
+	!obstructed_cap_faces;
+    if (ofaces)
+	bu_free(ofaces, "independent cap faces");
+    if (opnts)
+	bu_free(opnts, "independent cap points");
+    if (!retained) {
+	bu_log("FAIL test_independent_safe_hole_patch_retained: "
+	    "ret=%d solid=%d added=%d safe=%d obstructed=%d\n", ret,
+	    report.solid, report.added_faces, safe_cap_faces,
+	    obstructed_cap_faces);
+	return -1;
+    }
+    bu_log("PASS test_independent_safe_hole_patch_retained\n");
+    return 0;
+}
+
 /* Imported B-Rep edges normally retain multiple samples on each straight
  * boundary segment.  A circle-parameterized ear can be valid in 2D while its
  * three restored 3D vertices are collinear.  Hole filling must fall back to
@@ -812,6 +889,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_repair2_conservative_default() != 0) ? 1 : 0;
     failures += (test_repair2_report()             != 0) ? 1 : 0;
     failures += (test_intersecting_hole_patch_rejected() != 0) ? 1 : 0;
+    failures += (test_independent_safe_hole_patch_retained() != 0) ? 1 : 0;
     failures += (test_collinear_hole_boundary()    != 0) ? 1 : 0;
     failures += (test_overlapping_component_union() != 0) ? 1 : 0;
     failures += (test_touching_component_separation() != 0) ? 1 : 0;
