@@ -5106,7 +5106,128 @@ cdt_mesh_t::cdt()
 		periodic_ambiguous_p3d2d.insert(vertex);
 	}
     }
-    if (source_holes.empty() && face_surface &&
+
+    /* Shared-edge initialization inserts the existing topological pole point
+     * when a master curve passes through a surface pole in its interior.  The
+     * resulting boundary touches that point twice and is two chart disks, not
+     * one simple polygon.  Split it at the two pointer-identical occurrences;
+     * the shared edge point remains watertight on the neighboring face. */
+    if (source_holes.empty() && face_surface) {
+	int singular_side = -1;
+	int singular_count = 0;
+	for (int side = 0; side < 4; ++side) {
+	    if (face_surface->IsSingular(side)) {
+		singular_side = side;
+		singular_count++;
+	    }
+	}
+	if (singular_count == 1) {
+	    const int open_direction = (singular_side == 0 ||
+		singular_side == 2) ? 1 : 0;
+	    const ON_Interval open_domain =
+		face_surface->Domain(open_direction);
+	    const double pole_parameter = (singular_side == 0 ||
+		singular_side == 3) ? open_domain.Min() : open_domain.Max();
+	    const double pole_parameter_tolerance = 256.0 *
+		std::numeric_limits<double>::epsilon() * std::max(1.0,
+		std::max(std::fabs(open_domain.Min()),
+		    std::max(std::fabs(open_domain.Max()),
+		    open_domain.Length())));
+	    const auto is_topological_pole = [&](int source) {
+		if (source < 0 || (size_t)source >= m_pnts_2d.size() ||
+			(size_t)source >= source_topology_vertices.size() ||
+			source_topology_vertices[(size_t)source] ==
+			CDT_TOPOLOGY_ID_NONE)
+		    return false;
+		const std::pair<double, double> &uv =
+		    m_pnts_2d[(size_t)source];
+		const double open_parameter = open_direction ? uv.second :
+		    uv.first;
+		return std::fabs(open_parameter - pole_parameter) <=
+		    pole_parameter_tolerance;
+	    };
+	    int pole_source = -1;
+	    const size_t source_ring_size = source_outer.size() > 1 &&
+		source_outer.front() == source_outer.back() ?
+		source_outer.size() - 1 : source_outer.size();
+	    for (size_t i = 0; i < source_ring_size; ++i) {
+		if (is_topological_pole(source_outer[i])) {
+		    pole_source = source_outer[i];
+		    break;
+		}
+	    }
+	    const ON_3dPoint *pole_point = pole_source >= 0 &&
+		(size_t)pole_source < source_points_3d.size() ?
+		source_points_3d[(size_t)pole_source] : NULL;
+	    const auto is_pole_source = [&](int source) {
+		return source >= 0 && pole_point &&
+		    (size_t)source < source_points_3d.size() &&
+		    source_points_3d[(size_t)source] == pole_point;
+	    };
+	    std::vector<int> ring;
+	    ring.reserve(source_outer.size());
+	    for (size_t i = 0; i < source_ring_size; ++i) {
+		const int source = source_outer[i];
+		if (!ring.empty() && is_pole_source(source) &&
+			is_pole_source(ring.back()))
+		    continue;
+		ring.push_back(source);
+	    }
+	    if (ring.size() > 1 && is_pole_source(ring.front()) &&
+		    is_pole_source(ring.back()))
+		ring.pop_back();
+	    std::vector<size_t> pole_positions;
+	    std::set<cdt_topo_vertex_id> pole_topologies;
+	    for (size_t i = 0; i < ring.size(); ++i) {
+		if (is_pole_source(ring[i])) {
+		    pole_positions.push_back(i);
+		    const int source = ring[i];
+		    if (source >= 0 && (size_t)source <
+			    source_topology_vertices.size() &&
+			    source_topology_vertices[(size_t)source] !=
+			    CDT_TOPOLOGY_ID_NONE)
+			pole_topologies.insert(
+			    source_topology_vertices[(size_t)source]);
+		}
+	    }
+	    if (pole_positions.size() == 2 && pole_topologies.size() == 1) {
+		const auto ring_path = [&](size_t first, size_t last) {
+		    std::vector<int> path;
+		    for (size_t i = first;; i = (i + 1) % ring.size()) {
+			path.push_back(ring[i]);
+			if (i == last)
+			    break;
+		    }
+		    return path;
+		};
+		std::vector<int> components[2] = {
+		    ring_path(pole_positions[0], pole_positions[1]),
+		    ring_path(pole_positions[1], pole_positions[0])
+		};
+		if (components[0].size() >= 4 && components[1].size() >= 4) {
+		    atlas_outlines.push_back(components[0]);
+		    atlas_outlines.push_back(components[1]);
+		    const int first_pole = ring[pole_positions[0]];
+		    const int second_pole = ring[pole_positions[1]];
+		    const cdt_topo_vertex_id first_topology =
+			source_topology_vertices[(size_t)first_pole];
+		    const cdt_topo_vertex_id second_topology =
+			source_topology_vertices[(size_t)second_pole];
+		    if (first_topology == CDT_TOPOLOGY_ID_NONE ||
+			    second_topology == CDT_TOPOLOGY_ID_NONE) {
+			atlas_outlines.clear();
+		    } else {
+			atlas_poles.push_back(first_topology);
+			atlas_poles.push_back(second_topology);
+			bu_log("Face %d: decomposed a repeated pole boundary "
+			    "into two chart disks\n", f_id);
+		    }
+		}
+	    }
+	}
+    }
+
+    if (atlas_outlines.empty() && source_holes.empty() && face_surface &&
 	    face_surface->IsCone(&analytic_cone, BREP_PLANAR_TOL)) {
 	int singular_side = -1;
 	int singular_count = 0;
