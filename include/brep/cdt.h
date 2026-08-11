@@ -110,12 +110,17 @@ struct brep_cdt_diagnostic {
  * the most approximate tier and is therefore separately opt-in.  Its depth
  * is restricted to the bounded range accepted by this API.  A zero
  * poisson_scale tries the upstream 1.1 domain scale followed by a 1.2 retry
- * if the first reconstructed mesh cannot be certified.  If both omit input
- * coverage, the same bounded scale pair is retried with one area-weighted
- * sample budget.  A value from 1.0 through 2.0 requests one fixed scale
- * without that automatic sampling retry.  Disconnected B-Rep face
- * components are reconstructed independently so a large component cannot
- * erase a smaller one; max_poisson_components bounds that work.
+ * if the first reconstructed mesh cannot be certified.  If either scale
+ * exceeds the reference-area bound or omits input coverage, the same bounded
+ * scale pair is retried with one area-weighted sample budget.  If the default
+ * Neumann reconstruction remains open, the bounded scale and sampling
+ * attempts are repeated with a Dirichlet boundary
+ * and stronger non-exact screening.  This closure-biased fallback is reported
+ * explicitly and remains subject to every solid, area, deviation, and input
+ * coverage gate.  A value from 1.0 through 2.0 requests one fixed scale
+ * without either automatic retry.  Disconnected B-Rep face components are
+ * reconstructed independently so a large component cannot erase a smaller
+ * one; max_poisson_components bounds that work.
  */
 struct brep_cdt_repair_settings {
     struct bg_trimesh_repair_settings mesh;
@@ -159,6 +164,7 @@ struct brep_cdt_repair_report {
     int poisson_output_faces;
     int poisson_attempts;
     int poisson_area_sampling_applied;
+    int poisson_boundary_fallback_applied;
     fastf_t poisson_scale;
     fastf_t max_surface_deviation;
     fastf_t rms_surface_deviation;
@@ -172,7 +178,7 @@ struct brep_cdt_repair_report {
     fastf_t rms_coverage_deviation;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0}
 
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
