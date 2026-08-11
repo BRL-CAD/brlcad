@@ -2349,6 +2349,189 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	orient_pole_wedge_seam_runs(source_outer, source_to_chart, points,
 	    vertices);
 
+    if (ruled && m_periodic && source_outer.size() >= 3) {
+	const size_t ring_size = source_outer.size() > 1 &&
+	    source_outer.front() == source_outer.back() ?
+	    source_outer.size() - 1 : source_outer.size();
+	const auto mapped_ring = [&](const std::vector<int> &mapping) {
+	    std::vector<int> ring;
+	    ring.reserve(ring_size);
+	    for (size_t i = 0; i < ring_size; ++i) {
+		const int source = source_outer[i];
+		if (source < 0 || (size_t)source >= mapping.size())
+		    return std::vector<int>();
+		const int mapped = mapping[(size_t)source];
+		if (mapped < 0 || (size_t)mapped >= points.size())
+		    return std::vector<int>();
+		if (ring.empty() || ring.back() != mapped)
+		    ring.push_back(mapped);
+	    }
+	    if (ring.size() > 1 && ring.front() == ring.back())
+		ring.pop_back();
+	    return ring;
+	};
+	const auto orient = [](const std::vector<std::pair<double, double>> &p,
+		int ia, int ib, int ic) {
+	    const long double abx = (long double)p[(size_t)ib].first -
+		p[(size_t)ia].first;
+	    const long double aby = (long double)p[(size_t)ib].second -
+		p[(size_t)ia].second;
+	    const long double acx = (long double)p[(size_t)ic].first -
+		p[(size_t)ia].first;
+	    const long double acy = (long double)p[(size_t)ic].second -
+		p[(size_t)ia].second;
+	    const long double cross = abx * acy - aby * acx;
+	    return (cross > 0.0L) - (cross < 0.0L);
+	};
+	const auto segment_intersects = [&](const auto &p,
+		int a, int b, int c, int d) {
+	    const auto on_segment = [&](int point, int first, int second) {
+		if (orient(p, first, second, point))
+		    return false;
+		return p[(size_t)point].first >= std::min(
+		    p[(size_t)first].first, p[(size_t)second].first) &&
+		    p[(size_t)point].first <= std::max(
+		    p[(size_t)first].first, p[(size_t)second].first) &&
+		    p[(size_t)point].second >= std::min(
+		    p[(size_t)first].second, p[(size_t)second].second) &&
+		    p[(size_t)point].second <= std::max(
+		    p[(size_t)first].second, p[(size_t)second].second);
+	    };
+	    const int o1 = orient(p, a, b, c);
+	    const int o2 = orient(p, a, b, d);
+	    const int o3 = orient(p, c, d, a);
+	    const int o4 = orient(p, c, d, b);
+	    if (!o1 && on_segment(c, a, b)) return true;
+	    if (!o2 && on_segment(d, a, b)) return true;
+	    if (!o3 && on_segment(a, c, d)) return true;
+	    if (!o4 && on_segment(b, c, d)) return true;
+	    return o1 * o2 < 0 && o3 * o4 < 0;
+	};
+	const auto ring_intersects = [&](const auto &p,
+		const std::vector<int> &ring) {
+	    if (ring.size() < 3 ||
+		    std::set<int>(ring.begin(), ring.end()).size() != ring.size())
+		return true;
+	    for (size_t i = 0; i < ring.size(); ++i) {
+		const int a = ring[i];
+		const int b = ring[(i + 1) % ring.size()];
+		if (p[(size_t)a] == p[(size_t)b])
+		    return true;
+		for (size_t j = i + 1; j < ring.size(); ++j) {
+		    if (j == i || (j + 1) % ring.size() == i ||
+			    (i + 1) % ring.size() == j)
+			continue;
+		    const int c = ring[j];
+		    const int d = ring[(j + 1) % ring.size()];
+		    if (a == c || a == d || b == c || b == d)
+			continue;
+		    if (segment_intersects(p, a, b, c, d))
+			return true;
+		}
+	    }
+	    return false;
+	};
+
+	for (size_t first = 0; first < ring_size; ++first) {
+	    const size_t second = (first + 1) % ring_size;
+	    const int first_source = source_outer[first];
+	    const int second_source = source_outer[second];
+	    if (first_source < 0 || second_source < 0 ||
+		    (size_t)first_source >= source_to_chart.size() ||
+		    (size_t)second_source >= source_to_chart.size() ||
+		    (size_t)first_source >= points_3d.size() ||
+		    (size_t)second_source >= points_3d.size() ||
+		    !points_3d[(size_t)first_source] ||
+		    points_3d[(size_t)first_source] !=
+			points_3d[(size_t)second_source])
+		continue;
+	    const int first_chart = source_to_chart[(size_t)first_source];
+	    const int second_chart = source_to_chart[(size_t)second_source];
+	    if (first_chart < 0 || second_chart < 0 ||
+		    !vertices[(size_t)first_chart].seam_side ||
+		    vertices[(size_t)first_chart].seam_side !=
+			-vertices[(size_t)second_chart].seam_side)
+		continue;
+	    const std::vector<int> original_ring = mapped_ring(source_to_chart);
+	    bool false_cut_crossing = false;
+	    for (size_t edge = 0; edge < original_ring.size(); ++edge) {
+		const int a = original_ring[edge];
+		const int b = original_ring[(edge + 1) % original_ring.size()];
+		if (!((a == first_chart && b == second_chart) ||
+			(b == first_chart && a == second_chart)))
+		    continue;
+		for (size_t other = 0; other < original_ring.size(); ++other) {
+		    const int c = original_ring[other];
+		    const int d = original_ring[
+			(other + 1) % original_ring.size()];
+		    if (a == c || a == d || b == c || b == d)
+			continue;
+		    if (segment_intersects(points, a, b, c, d)) {
+			false_cut_crossing = true;
+			break;
+		    }
+		}
+		break;
+	    }
+	    if (!false_cut_crossing)
+		continue;
+
+	    const size_t branches[2] = {first, second};
+	    const size_t others[2] = {second, first};
+	    bool repaired = false;
+	    for (int candidate = 0; candidate < 2 && !repaired; ++candidate) {
+		const size_t branch = branches[candidate];
+		const size_t other = others[candidate];
+		const int direction = (branch + 1) % ring_size == other ? -1 : 1;
+		std::vector<std::pair<double, double>> candidate_points(points);
+		std::vector<int> candidate_mapping(source_to_chart);
+		const int branch_chart = candidate_mapping[
+		    (size_t)source_outer[branch]];
+		const int branch_side = vertices[(size_t)branch_chart].seam_side;
+		std::set<int> shifted;
+		size_t position = branch;
+		bool found_apex = false;
+		bool incompatible_seam = false;
+		do {
+		    position = (position + ring_size + direction) % ring_size;
+		    if (position == other)
+			break;
+		    const int source = source_outer[position];
+		    const int mapped = candidate_mapping[(size_t)source];
+		    if (mapped == apex) {
+			found_apex = true;
+			break;
+		    }
+		    if (vertices[(size_t)mapped].seam_side &&
+			    vertices[(size_t)mapped].seam_side != branch_side) {
+			incompatible_seam = true;
+			break;
+		    }
+		    if (shifted.insert(mapped).second)
+			candidate_points[(size_t)mapped].first -=
+			    branch_side * candidate_points[(size_t)mapped].second;
+		} while (position != branch);
+		if (!found_apex || incompatible_seam)
+		    continue;
+		candidate_mapping[(size_t)source_outer[branch]] =
+		    candidate_mapping[(size_t)source_outer[other]];
+		const std::vector<int> candidate_ring =
+		    mapped_ring(candidate_mapping);
+		if (ring_intersects(candidate_points, candidate_ring))
+		    continue;
+		points.swap(candidate_points);
+		source_to_chart.swap(candidate_mapping);
+		for (int mapped : shifted) {
+		    if (vertices[(size_t)mapped].seam_side == branch_side)
+			vertices[(size_t)mapped].seam_side = -branch_side;
+		}
+		repaired = true;
+	    }
+	    if (repaired)
+		break;
+	}
+    }
+
     auto remap_ring = [&](const std::vector<int> &source,
 	    std::vector<int> &target) {
 	target.clear();
