@@ -3702,7 +3702,9 @@ cdt_face_chart::build(const ON_BrepFace &face,
 	m_singular_side = polar_info.first_side;
 	m_second_singular_side = polar_info.second_side;
 	m_periodic = polar_info.periodic;
-	m_pole_topology_vertex = polar_info.first_vertex;
+	m_pole_topology_vertex = preferred_pole != CDT_TOPOLOGY_ID_NONE &&
+	    polar_info.second_side < 0 ? preferred_pole :
+	    polar_info.first_vertex;
 	m_second_pole_topology_vertex = polar_info.second_vertex;
 	m_closed_domain = face.SurfaceOf()->Domain(m_closed_dir);
 	m_open_domain = face.SurfaceOf()->Domain(m_open_dir);
