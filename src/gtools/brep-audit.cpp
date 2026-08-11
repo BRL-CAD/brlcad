@@ -714,6 +714,12 @@ quality_result(struct db_i *dbip, struct directory *dp,
     result.primitives = face_count > 0 ? (size_t)face_count : 0;
     result.vertices = vertex_count > 0 ? (size_t)vertex_count : 0;
 
+    /* The exported arrays own all data needed by the remaining checks.  Drop
+     * the much larger face-local CDT state before allocating independent
+     * topology metrics for million-triangle corpus meshes. */
+    ON_Brep_CDT_Destroy(state);
+    state = NULL;
+
     for (int i = 0; vertices && i < vertex_count; ++i) {
 	point_t point;
 	VSET(point, vertices[3 * i], vertices[3 * i + 1],
@@ -767,7 +773,6 @@ quality_result(struct db_i *dbip, struct directory *dp,
 
     bu_free(faces, "brep quality audit faces");
     bu_free(vertices, "brep quality audit vertices");
-    ON_Brep_CDT_Destroy(state);
     rt_db_free_internal(&intern);
     return result;
 }
