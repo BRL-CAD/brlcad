@@ -256,6 +256,71 @@ trimesh_gte_valid_vertex_links(
     return true;
 }
 
+static size_t
+trimesh_separate_touching_vertices(
+	std::vector<gte::Vector3<double>>& vertices,
+	std::vector<std::array<int32_t, 3>> const& triangles,
+	double distance, double *maximum_displacement)
+{
+    if (vertices.empty() || triangles.empty() || !(distance > 0.0))
+	return 0;
+    typedef std::array<double, 3> coordinate_key;
+    std::map<coordinate_key, std::vector<int32_t>> coordinate_vertices;
+    std::vector<gte::Vector3<double>> normals(vertices.size(),
+	gte::Vector3<double>{0.0, 0.0, 0.0});
+    std::vector<bool> used(vertices.size(), false);
+    for (std::array<int32_t, 3> const& triangle : triangles) {
+	const gte::Vector3<double> normal = gte::Cross(
+	    vertices[(size_t)triangle[1]] - vertices[(size_t)triangle[0]],
+	    vertices[(size_t)triangle[2]] - vertices[(size_t)triangle[0]]);
+	for (int corner = 0; corner < 3; ++corner) {
+	    const size_t vertex = (size_t)triangle[corner];
+	    normals[vertex] += normal;
+	    used[vertex] = true;
+	}
+    }
+    for (size_t vertex = 0; vertex < vertices.size(); ++vertex) {
+	if (!used[vertex])
+	    continue;
+	coordinate_vertices[coordinate_key{
+	    vertices[vertex][0], vertices[vertex][1], vertices[vertex][2]
+	}].push_back((int32_t)vertex);
+    }
+
+    size_t separated = 0;
+    double max_moved = 0.0;
+    for (auto &entry : coordinate_vertices) {
+	std::vector<int32_t> &group = entry.second;
+	if (group.size() < 2)
+	    continue;
+	std::sort(group.begin(), group.end());
+	std::vector<gte::Vector3<double>> directions;
+	directions.reserve(group.size());
+	bool valid_group = true;
+	for (int32_t vertex : group) {
+	    gte::Vector3<double> direction = normals[(size_t)vertex];
+	    const double length = gte::Length(direction);
+	    if (!(length > 0.0) || !std::isfinite(length)) {
+		valid_group = false;
+		break;
+	    }
+	    directions.push_back(direction / length);
+	}
+	if (!valid_group)
+	    continue;
+	for (size_t use = 0; use < group.size(); ++use) {
+	    const double displacement = distance * (double)(use + 1) /
+		(double)(group.size() + 1);
+	    vertices[(size_t)group[use]] += directions[use] * displacement;
+	    max_moved = std::max(max_moved, displacement);
+	    separated++;
+	}
+    }
+    if (maximum_displacement)
+	*maximum_displacement = max_moved;
+    return separated;
+}
+
 static bool
 trimesh_gte_solid(std::vector<gte::Vector3<double>> const& vertices,
 	std::vector<std::array<int32_t, 3>> const& triangles)
@@ -302,6 +367,9 @@ trimesh_manifold_union(
 	return false;
     manifold::Manifold united = manifold::Manifold::BatchBoolean(
 	components, manifold::OpType::Add);
+    if (united.Status() != manifold::Manifold::Error::NoError)
+	return false;
+    united = united.Simplify();
     if (united.Status() != manifold::Manifold::Error::NoError)
 	return false;
     manifold::MeshGL64 result = united.GetMeshGL64();
@@ -387,6 +455,11 @@ trimesh_manifold_union(
 		union_triangles[face][2] == union_triangles[face][0])
 	    return false;
     }
+    std::vector<std::array<int32_t, 3>> nondegenerate_check =
+	union_triangles;
+    if (trimesh_remove_geometric_degenerate(union_vertices,
+	    nondegenerate_check))
+	return false;
     if (!trimesh_gte_solid(union_vertices, union_triangles) ||
 	    !trimesh_gte_valid_vertex_links(union_triangles,
 	    union_vertices.size()))
@@ -480,6 +553,7 @@ bg_trimesh_repair2(
     const size_t initial_geometric_degenerate =
 	trimesh_remove_geometric_degenerate(verts, tris);
     if (!not_solid && !initial_geometric_degenerate &&
+	    !settings->separate_touching_vertices &&
 	    !settings->union_components) {
 	report->output_vertices = n_ipnts;
 	report->output_faces = n_ifaces;
@@ -643,7 +717,7 @@ bg_trimesh_repair2(
      * mesh is itself a closed solid and every vertex has one circular link.
      * This reconnects intended patch seams while preserving genuinely
      * separate shells that merely touch at a point. */
-    {
+    if (!settings->separate_touching_vertices) {
 	std::vector<gte::Vector3<double>> welded_vertices = verts;
 	std::vector<std::array<int32_t, 3>> welded_triangles = tris;
 	gte::MeshRepair<double>::Parameters rp;
@@ -658,6 +732,13 @@ bg_trimesh_repair2(
 	    verts.swap(welded_vertices);
 	    tris.swap(welded_triangles);
 	}
+    }
+
+    if (settings->separate_touching_vertices) {
+	double displacement = 0.0;
+	report->separated_vertices = (int)trimesh_separate_touching_vertices(
+	    verts, tris, vertex_tolerance, &displacement);
+	report->max_vertex_displacement = displacement;
     }
 
     if (settings->union_components) {
@@ -701,10 +782,13 @@ bg_trimesh_repair2(
     report->output_vertices = nv;
     report->output_faces = nf;
     report->output_area = trimesh_gte_area(verts, tris);
-    report->max_vertex_displacement = 0.0;
 
-    report->solid = !bg_trimesh_solid2(nv, nf, (fastf_t *)out_pts,
-	out_faces, NULL);
+    std::vector<std::array<int32_t, 3>> geometric_check = tris;
+    const bool no_geometric_degenerates =
+	!trimesh_remove_geometric_degenerate(verts, geometric_check);
+    report->solid = no_geometric_degenerates &&
+	trimesh_gte_valid_vertex_links(tris, verts.size()) &&
+	!bg_trimesh_solid2(nv, nf, (fastf_t *)out_pts, out_faces, NULL);
     if (settings->require_solid && !report->solid) {
 	bu_free(out_faces, "bg_trimesh_repair faces");
 	bu_free(out_pts, "bg_trimesh_repair verts");
