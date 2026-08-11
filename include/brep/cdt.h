@@ -111,7 +111,9 @@ struct brep_cdt_diagnostic {
  * is restricted to the bounded range accepted by this API.  A zero
  * poisson_scale tries the upstream 1.1 domain scale followed by a 1.2 retry
  * if the first reconstructed mesh cannot be certified.  A value from 1.0
- * through 2.0 requests one fixed scale instead.
+ * through 2.0 requests one fixed scale instead.  Disconnected B-Rep face
+ * components are reconstructed independently so a large component cannot
+ * erase a smaller one; max_poisson_components bounds that work.
  */
 struct brep_cdt_repair_settings {
     struct bg_trimesh_repair_settings mesh;
@@ -123,13 +125,14 @@ struct brep_cdt_repair_settings {
     int use_full_fast_fallback;
     int use_poisson_reconstruction;
     int poisson_depth;
+    size_t max_poisson_components;
     size_t max_fast_points;
     size_t max_fast_result_bytes;
     long max_fast_time_ms;
     fastf_t poisson_scale;
 };
 
-#define BREP_CDT_REPAIR_SETTINGS_INIT {BG_TRIMESH_REPAIR_SETTINGS_INIT, 0.0, 4096, 1.0, 0, 1, 0, 0, 8, 1048576, 134217728, 5000, 0.0}
+#define BREP_CDT_REPAIR_SETTINGS_INIT {BG_TRIMESH_REPAIR_SETTINGS_INIT, 0.0, 4096, 1.0, 0, 1, 0, 0, 8, 64, 1048576, 134217728, 5000, 0.0}
 
 /** Provenance and quality measurements for a repair attempt. */
 struct brep_cdt_repair_report {
@@ -149,6 +152,7 @@ struct brep_cdt_repair_report {
     int poisson_reconstruction_attempted;
     int poisson_reconstruction_applied;
     int poisson_input_points;
+    int poisson_components;
     int poisson_output_points;
     int poisson_output_faces;
     int poisson_attempts;
@@ -163,7 +167,7 @@ struct brep_cdt_repair_report {
     fastf_t rms_coverage_deviation;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0}
 
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
@@ -313,7 +317,9 @@ brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, in
  * zero option value selects the library default.  max_time_ms is checked
  * between faces; the per-face samplers also have fixed progress and recursion
  * guards to prevent non-terminating refinement.  face_status, when non-NULL,
- * is called exactly once per requested face during serial result assembly. */
+ * is called exactly once per requested face during serial result assembly.
+ * face_output, when non-NULL, reports the contiguous output ranges assigned
+ * to each completed face with drawable geometry. */
 struct brep_cdt_fast_options {
     size_t max_workers;
     size_t max_result_bytes;
@@ -322,6 +328,9 @@ struct brep_cdt_fast_options {
     int allow_partial;
     void (*face_status)(int face_index, int status, void *data);
     void *face_status_data;
+    void (*face_output)(int face_index, size_t first_face,
+	size_t face_count, size_t first_point, size_t point_count, void *data);
+    void *face_output_data;
 };
 
 #define BREP_CDT_FAST_FACE_COMPLETED 0

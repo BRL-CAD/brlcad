@@ -37,6 +37,7 @@
 #include <queue>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -2690,6 +2691,111 @@ struct repair_changed_face {
     double area;
 };
 
+struct repair_fast_face_range {
+    size_t first_face = 0;
+    size_t face_count = 0;
+    size_t first_point = 0;
+    size_t point_count = 0;
+    bool present = false;
+};
+
+static void
+repair_fast_face_output(int face_index, size_t first_face,
+	size_t face_count, size_t first_point, size_t point_count, void *data)
+{
+    std::vector<repair_fast_face_range> *ranges =
+	(std::vector<repair_fast_face_range> *)data;
+    if (!ranges || face_index < 0 || (size_t)face_index >= ranges->size())
+	return;
+    repair_fast_face_range &range = (*ranges)[(size_t)face_index];
+    range.first_face = first_face;
+    range.face_count = face_count;
+    range.first_point = first_point;
+    range.point_count = point_count;
+    range.present = face_count > 0 && point_count > 0;
+}
+
+static int
+repair_component_root(std::vector<int> &parents, int face)
+{
+    int root = face;
+    while (parents[(size_t)root] != root)
+	root = parents[(size_t)root];
+    while (parents[(size_t)face] != face) {
+	const int next = parents[(size_t)face];
+	parents[(size_t)face] = root;
+	face = next;
+    }
+    return root;
+}
+
+static std::vector<int>
+repair_brep_face_components(const ON_Brep *brep)
+{
+    const int face_count = brep ? brep->m_F.Count() : 0;
+    std::vector<int> parents((size_t)std::max(0, face_count));
+    std::iota(parents.begin(), parents.end(), 0);
+    if (!brep)
+	return parents;
+
+    std::unordered_map<int, int> edge_owner;
+    for (int trim_index = 0; trim_index < brep->m_T.Count(); ++trim_index) {
+	const ON_BrepTrim &trim = brep->m_T[trim_index];
+	const ON_BrepFace *face = trim.Face();
+	if (trim.m_ei < 0 || trim.m_ei >= brep->m_E.Count() || !face ||
+		face->m_face_index < 0 || face->m_face_index >= face_count)
+	    continue;
+	const int face_index = face->m_face_index;
+	const auto inserted = edge_owner.emplace(trim.m_ei, face_index);
+	if (inserted.second)
+	    continue;
+	const int first_root = repair_component_root(parents,
+	    inserted.first->second);
+	const int second_root = repair_component_root(parents, face_index);
+	if (first_root != second_root)
+	    parents[(size_t)second_root] = first_root;
+    }
+    for (int face = 0; face < face_count; ++face)
+	parents[(size_t)face] = repair_component_root(parents, face);
+    return parents;
+}
+
+static bool
+repair_brep_components_are_closed(const ON_Brep *brep,
+	const std::vector<int> &components)
+{
+    if (!brep || components.size() != (size_t)brep->m_F.Count())
+	return false;
+    std::vector<int> edge_uses((size_t)brep->m_E.Count(), 0);
+    std::vector<int> edge_component((size_t)brep->m_E.Count(), -1);
+    for (int trim_index = 0; trim_index < brep->m_T.Count(); ++trim_index) {
+	const ON_BrepTrim &trim = brep->m_T[trim_index];
+	if (trim.m_type == ON_BrepTrim::singular)
+	    continue;
+	const ON_BrepFace *face = trim.Face();
+	if (trim.m_ei < 0 || trim.m_ei >= brep->m_E.Count() || !face ||
+		face->m_face_index < 0 ||
+		(size_t)face->m_face_index >= components.size())
+	    return false;
+	const int component = components[(size_t)face->m_face_index];
+	if (edge_component[(size_t)trim.m_ei] >= 0 &&
+		edge_component[(size_t)trim.m_ei] != component)
+	    return false;
+	edge_component[(size_t)trim.m_ei] = component;
+	edge_uses[(size_t)trim.m_ei]++;
+    }
+    for (int uses : edge_uses) {
+	if (uses && uses != 2)
+	    return false;
+    }
+    return true;
+}
+
+struct repair_poisson_sample {
+    fastf_t point[3];
+    fastf_t normal[3];
+};
+
 static double
 repair_mesh_area(const fastf_t *vertices, const int *faces, int face_count)
 {
@@ -2743,6 +2849,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    (settings->use_poisson_reconstruction &&
 	    (!settings->use_full_fast_fallback || settings->poisson_depth < 5 ||
 	    settings->poisson_depth > 10 ||
+	    !settings->max_poisson_components ||
 	    !std::isfinite(settings->poisson_scale) ||
 	    settings->poisson_scale < 1.0 ||
 	    settings->poisson_scale > 2.0)) ||
@@ -2901,6 +3008,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	fast_options.max_result_bytes = settings->max_fast_result_bytes;
 	fast_options.max_time_ms = settings->max_fast_time_ms;
 	fast_options.allow_partial = 1;
+	std::vector<repair_fast_face_range> fast_face_ranges(
+	    (size_t)s_cdt->orig_brep->m_F.Count());
+	fast_options.face_output = repair_fast_face_output;
+	fast_options.face_output_data = &fast_face_ranges;
 	struct brep_cdt_fast_report fast_report = {};
 	int *fast_faces = NULL;
 	int fast_face_count = 0;
@@ -2955,34 +3066,74 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    display_reference_vertices.assign((fastf_t *)fast_points,
 		(fastf_t *)fast_points + (size_t)fast_point_count * 3);
 	    display_reference_face_count = fast_face_count;
-	    point_t *poisson_samples = (point_t *)bu_malloc(
-		(size_t)fast_face_count * sizeof(point_t),
-		"Poisson centroid samples");
-	    vect_t *poisson_sample_normals = (vect_t *)bu_malloc(
-		(size_t)fast_face_count * sizeof(vect_t),
-		"Poisson face normals");
-	    int poisson_sample_count = 0;
-	    for (int face = 0; face < fast_face_count; ++face) {
-		const int *triangle = &fast_faces[(size_t)face * 3];
-		const point_t &a = fast_points[triangle[0]];
-		const point_t &b = fast_points[triangle[1]];
-		const point_t &c = fast_points[triangle[2]];
-		vect_t ab, ac, normal;
-		VSUB2(ab, b, a);
-		VSUB2(ac, c, a);
-		VCROSS(normal, ab, ac);
-		const fastf_t normal_length = MAGNITUDE(normal);
-		if (!(normal_length > SMALL_FASTF) ||
-			!std::isfinite(normal_length))
+	    std::vector<int> face_components =
+		repair_brep_face_components(s_cdt->orig_brep);
+	    const bool closed_face_components =
+		repair_brep_components_are_closed(s_cdt->orig_brep,
+		    face_components);
+	    std::map<int, std::vector<repair_poisson_sample>> component_samples;
+	    bool valid_component_ranges = face_components.size() ==
+		fast_face_ranges.size();
+	    for (size_t brep_face = 0; valid_component_ranges &&
+		    brep_face < fast_face_ranges.size(); ++brep_face) {
+		const repair_fast_face_range &range =
+		    fast_face_ranges[brep_face];
+		if (!range.present)
 		    continue;
-		VADD3(poisson_samples[poisson_sample_count], a, b, c);
-		VSCALE(poisson_samples[poisson_sample_count],
-		    poisson_samples[poisson_sample_count], 1.0 / 3.0);
-		VSCALE(poisson_sample_normals[poisson_sample_count], normal,
-		    1.0 / normal_length);
-		poisson_sample_count++;
+		if (range.first_face > (size_t)fast_face_count ||
+			range.face_count > (size_t)fast_face_count -
+			range.first_face ||
+			range.first_point > (size_t)fast_point_count ||
+			range.point_count > (size_t)fast_point_count -
+			range.first_point) {
+		    valid_component_ranges = false;
+		    break;
+		}
+		const int component = closed_face_components ?
+		    face_components[brep_face] : 0;
+		std::vector<repair_poisson_sample> &samples =
+		    component_samples[component];
+		for (size_t face = range.first_face;
+			face < range.first_face + range.face_count; ++face) {
+		    const int *triangle = &fast_faces[face * 3];
+		    for (int corner = 0; corner < 3; ++corner) {
+			if (triangle[corner] < (int)range.first_point ||
+				triangle[corner] >= (int)(range.first_point +
+				range.point_count)) {
+			    valid_component_ranges = false;
+			    break;
+			}
+		    }
+		    if (!valid_component_ranges)
+			break;
+		    const point_t &a = fast_points[triangle[0]];
+		    const point_t &b = fast_points[triangle[1]];
+		    const point_t &c = fast_points[triangle[2]];
+		    vect_t ab, ac, normal;
+		    VSUB2(ab, b, a);
+		    VSUB2(ac, c, a);
+		    VCROSS(normal, ab, ac);
+		    const fastf_t normal_length = MAGNITUDE(normal);
+		    if (!(normal_length > SMALL_FASTF) ||
+			    !std::isfinite(normal_length))
+			continue;
+		    repair_poisson_sample sample;
+		    VADD3(sample.point, a, b, c);
+		    VSCALE(sample.point, sample.point, 1.0 / 3.0);
+		    VSCALE(sample.normal, normal, 1.0 / normal_length);
+		    samples.push_back(sample);
+		}
 	    }
-	    report->poisson_input_points = poisson_sample_count;
+	    for (auto sample_set = component_samples.begin();
+		    sample_set != component_samples.end();) {
+		if (sample_set->second.empty())
+		    sample_set = component_samples.erase(sample_set);
+		else
+		    ++sample_set;
+	    }
+	    report->poisson_components = (int)component_samples.size();
+	    for (const auto &sample_set : component_samples)
+		report->poisson_input_points += (int)sample_set.second.size();
 	    struct bg_3d_spsr_opts poisson_options = BG_3D_SPSR_OPTS_DEFAULT;
 	    poisson_options.depth = settings->poisson_depth;
 	    poisson_options.full_depth = std::min(5,
@@ -2990,43 +3141,103 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    poisson_options.threads = 1;
 	    poisson_options.scale = settings->poisson_scale;
 	    report->poisson_scale = settings->poisson_scale;
-	    int *poisson_faces = NULL;
-	    int poisson_face_count = 0;
-	    point_t *poisson_points = NULL;
-	    int poisson_point_count = 0;
-	    const int poisson_result = poisson_sample_count > 3 ?
-		bg_3d_spsr(&poisson_faces,
-		&poisson_face_count, &poisson_points, &poisson_point_count,
-		poisson_samples, poisson_sample_normals,
-		poisson_sample_count, &poisson_options) : -1;
-	    bu_free(poisson_samples, "Poisson centroid samples");
-	    bu_free(poisson_sample_normals, "Poisson face normals");
-	    size_t poisson_bytes = 0;
-	    bool valid_poisson = poisson_result == 0 && poisson_faces &&
-		poisson_face_count > 0 && poisson_face_count <= INT_MAX / 3 &&
-		poisson_points &&
-		poisson_point_count > 0 && (size_t)poisson_point_count <=
-		settings->max_fast_points;
-	    if (valid_poisson) {
-		poisson_bytes = (size_t)poisson_point_count * sizeof(point_t) +
-		    (size_t)poisson_face_count * 3 * sizeof(int);
-		valid_poisson = poisson_bytes <=
-		    settings->max_fast_result_bytes;
+	    std::vector<int> combined_poisson_faces;
+	    std::vector<fastf_t> combined_poisson_points;
+	    bool valid_poisson = valid_component_ranges &&
+		!component_samples.empty() && component_samples.size() <=
+		settings->max_poisson_components;
+	    std::string poisson_failure =
+		"bounded component Poisson reconstruction did not produce "
+		"usable geometry";
+	    if (valid_component_ranges && component_samples.size() >
+		    settings->max_poisson_components) {
+		poisson_failure = "Poisson reconstruction found " +
+		    std::to_string(component_samples.size()) +
+		    " face components (limit " +
+		    std::to_string(settings->max_poisson_components) + ")";
 	    }
-	    for (int corner = 0; valid_poisson &&
-		    corner < poisson_face_count * 3; ++corner) {
-		valid_poisson = poisson_faces[corner] >= 0 &&
-		    poisson_faces[corner] < poisson_point_count;
-	    }
-	    for (int point = 0; valid_poisson &&
-		    point < poisson_point_count; ++point) {
-		valid_poisson = std::isfinite(poisson_points[point][X]) &&
-		    std::isfinite(poisson_points[point][Y]) &&
-		    std::isfinite(poisson_points[point][Z]);
+	    for (const auto &sample_set : component_samples) {
+		if (!valid_poisson)
+		    break;
+		const std::vector<repair_poisson_sample> &samples =
+		    sample_set.second;
+		if (samples.size() <= 3 || samples.size() > (size_t)INT_MAX) {
+		    valid_poisson = false;
+		    poisson_failure = "a B-Rep face component supplied only " +
+			std::to_string(samples.size()) +
+			" usable Poisson samples";
+		    break;
+		}
+		point_t *poisson_samples = (point_t *)bu_malloc(
+		    samples.size() * sizeof(point_t),
+		    "component Poisson centroid samples");
+		vect_t *poisson_sample_normals = (vect_t *)bu_malloc(
+		    samples.size() * sizeof(vect_t),
+		    "component Poisson face normals");
+		for (size_t sample = 0; sample < samples.size(); ++sample) {
+		    VMOVE(poisson_samples[sample], samples[sample].point);
+		    VMOVE(poisson_sample_normals[sample],
+			samples[sample].normal);
+		}
+		int *component_faces = NULL;
+		int component_face_count = 0;
+		point_t *component_points = NULL;
+		int component_point_count = 0;
+		const int poisson_result = bg_3d_spsr(&component_faces,
+		    &component_face_count, &component_points,
+		    &component_point_count, poisson_samples,
+		    poisson_sample_normals, (int)samples.size(),
+		    &poisson_options);
+		bu_free(poisson_samples,
+		    "component Poisson centroid samples");
+		bu_free(poisson_sample_normals,
+		    "component Poisson face normals");
+		valid_poisson = poisson_result == 0 && component_faces &&
+		    component_face_count > 0 && component_face_count <=
+		    INT_MAX / 3 && component_points && component_point_count > 0;
+		for (int corner = 0; valid_poisson &&
+			corner < component_face_count * 3; ++corner) {
+		    valid_poisson = component_faces[corner] >= 0 &&
+			component_faces[corner] < component_point_count;
+		}
+		for (int point = 0; valid_poisson &&
+			point < component_point_count; ++point) {
+		    valid_poisson = std::isfinite(component_points[point][X]) &&
+			std::isfinite(component_points[point][Y]) &&
+			std::isfinite(component_points[point][Z]);
+		}
+		const size_t combined_point_count =
+		    combined_poisson_points.size() / 3;
+		const size_t combined_face_count =
+		    combined_poisson_faces.size() / 3;
+		const size_t new_point_count = combined_point_count +
+		    (valid_poisson ? (size_t)component_point_count : 0);
+		const size_t new_face_count = combined_face_count +
+		    (valid_poisson ? (size_t)component_face_count : 0);
+		const size_t new_bytes = new_point_count * sizeof(point_t) +
+		    new_face_count * 3 * sizeof(int);
+		valid_poisson = valid_poisson && new_point_count <=
+		    settings->max_fast_points && new_point_count <=
+		    (size_t)INT_MAX && new_face_count <= (size_t)INT_MAX &&
+		    new_bytes <= settings->max_fast_result_bytes;
+		if (valid_poisson) {
+		    for (int corner = 0; corner < component_face_count * 3;
+			    ++corner) {
+			combined_poisson_faces.push_back(
+			    component_faces[corner] +
+			    (int)combined_point_count);
+		    }
+		    const fastf_t *component_coordinates =
+			(const fastf_t *)component_points;
+		    combined_poisson_points.insert(
+			combined_poisson_points.end(), component_coordinates,
+			component_coordinates +
+			(size_t)component_point_count * 3);
+		}
+		bu_free(component_faces, "component Poisson repair faces");
+		bu_free(component_points, "component Poisson repair points");
 	    }
 	    if (!valid_poisson) {
-		bu_free(poisson_faces, "failed Poisson repair faces");
-		bu_free(poisson_points, "failed Poisson repair points");
 		bu_free(fast_faces, "Poisson source faces");
 		bu_free(fast_normals, "Poisson source normals");
 		bu_free(fast_points, "Poisson source points");
@@ -3036,10 +3247,23 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    BREP_CDT_STAGE_MESH_REPAIR, -1,
 		    report->source_diagnostic.completed_faces,
 		    report->source_failed_faces,
-		    "bounded Poisson reconstruction did not produce usable "
-		    "geometry");
+		    poisson_failure.c_str());
 		return -1;
 	    }
+	    int *poisson_faces = (int *)bu_malloc(
+		combined_poisson_faces.size() * sizeof(int),
+		"combined Poisson repair faces");
+	    point_t *poisson_points = (point_t *)bu_malloc(
+		(combined_poisson_points.size() / 3) * sizeof(point_t),
+		"combined Poisson repair points");
+	    memcpy(poisson_faces, combined_poisson_faces.data(),
+		combined_poisson_faces.size() * sizeof(int));
+	    memcpy(poisson_points, combined_poisson_points.data(),
+		combined_poisson_points.size() * sizeof(fastf_t));
+	    const int poisson_face_count =
+		(int)(combined_poisson_faces.size() / 3);
+	    const int poisson_point_count =
+		(int)(combined_poisson_points.size() / 3);
 	    bu_free(fast_faces, "Poisson source faces");
 	    bu_free(fast_points, "Poisson source points");
 	    fast_faces = poisson_faces;

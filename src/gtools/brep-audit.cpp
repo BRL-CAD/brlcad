@@ -103,6 +103,7 @@ struct geom_result {
     bool repair_poisson_attempted = false;
     bool repair_poisson_applied = false;
     int repair_poisson_input_points = 0;
+    int repair_poisson_components = 0;
     int repair_poisson_output_points = 0;
     int repair_poisson_output_faces = 0;
     int repair_poisson_attempts = 0;
@@ -787,6 +788,7 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.poisson_reconstruction_applied != 0;
 	result.repair_poisson_input_points =
 	    repair_report.poisson_input_points;
+	result.repair_poisson_components = repair_report.poisson_components;
 	result.repair_poisson_output_points =
 	    repair_report.poisson_output_points;
 	result.repair_poisson_output_faces =
@@ -1061,6 +1063,8 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< (result.repair_poisson_applied ? "true" : "false")
 	<< ",\"poisson_input_points\":"
 	<< result.repair_poisson_input_points
+	<< ",\"poisson_components\":"
+	<< result.repair_poisson_components
 	<< ",\"poisson_output_points\":"
 	<< result.repair_poisson_output_points
 	<< ",\"poisson_output_faces\":"
