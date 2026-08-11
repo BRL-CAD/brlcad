@@ -222,6 +222,19 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	const int *steiner, const size_t steiner_npts,
 	const point2d_t *pts, const size_t npts);
 
+/** Sanitize and triangulate a polygon while retaining valid noncrossing
+ * interior constraints.  constraints contains two input point indices per
+ * edge.  Constraints removed with canceled contour regions are omitted; each
+ * surviving constraint is certified in its cleaned component. */
+BG_EXPORT extern int
+bg_nested_poly_triangulate_clean_constraints(int **faces, int *num_faces,
+	point2d_t **out_pts, int *num_outpts,
+	const int *poly, const size_t poly_npts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const int *constraints, const size_t constraint_cnt,
+	const point2d_t *pts, const size_t npts);
+
 #define BG_TRIANGULATION_OK 0
 #define BG_TRIANGULATION_INVALID_INPUT 1
 #define BG_TRIANGULATION_INVALID_PSLG 2
