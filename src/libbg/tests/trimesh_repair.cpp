@@ -29,6 +29,7 @@
 
 #include <array>
 #include <vector>
+#include <Mathematics/MeshHoleFilling.h>
 
 #include "bu.h"
 #include "bg.h"
@@ -500,6 +501,127 @@ test_collinear_hole_boundary(void)
     return 0;
 }
 
+/* Circle-parameterizing a concave planar boundary discards its concavity, so
+ * restored 3-D diagonals can leave the polygon and cut its side walls.  Mesh
+ * repair should preserve a planar boundary's actual projected outline. */
+static int
+test_concave_planar_hole(void)
+{
+    static point_t points[10] = {
+	{0, 0, 0}, {2, 0, 0}, {2, 2, 0}, {1, 1, 0}, {0, 2, 0},
+	{0, 0, 1}, {2, 0, 1}, {2, 2, 1}, {1, 1, 1}, {0, 2, 1}
+    };
+    static int faces[39] = {
+	0, 3, 1, 1, 3, 2, 0, 4, 3,
+	0, 1, 6, 0, 6, 5,
+	1, 2, 7, 1, 7, 6,
+	2, 3, 8, 2, 8, 7,
+	3, 4, 9, 3, 9, 8,
+	4, 0, 5, 4, 5, 9
+    };
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.fill_holes = 1;
+    settings.max_hole_area_percent = 100.0;
+    settings.max_hole_edges = 16;
+    int *output_faces = NULL;
+    int output_face_count = 0;
+    point_t *output_points = NULL;
+    int output_point_count = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int result = bg_trimesh_repair2(&output_faces,
+	&output_face_count, &output_points, &output_point_count, faces, 13,
+	points, 10, &settings, &report);
+    const bool valid = result == 0 && report.solid &&
+	report.added_faces >= 3 && output_faces && output_points &&
+	!bg_trimesh_solid2(output_point_count, output_face_count,
+	    (fastf_t *)output_points, output_faces, NULL);
+    if (output_faces)
+	bu_free(output_faces, "concave hole faces");
+    if (output_points)
+	bu_free(output_points, "concave hole points");
+    if (!valid) {
+	bu_log("FAIL test_concave_planar_hole: ret=%d solid=%d "
+	    "added=%d rejected=%d\n", result, report.solid,
+	    report.added_faces, report.rejected_hole_faces);
+	return -1;
+    }
+    bu_log("PASS test_concave_planar_hole\n");
+    return 0;
+}
+
+/* A collision gate must be able to reject one otherwise preferred ear and
+ * let the 3-D filler choose a different valid triangulation. */
+static int
+test_validated_ear_alternative(void)
+{
+    point_t *input_points = NULL;
+    int input_point_count = 0;
+    int *input_faces = NULL;
+    int input_face_count = 0;
+    make_open_cube(&input_points, &input_point_count, &input_faces,
+	&input_face_count);
+    std::vector<gte::Vector3<double>> points((size_t)input_point_count);
+    for (int point = 0; point < input_point_count; ++point) {
+	for (int axis = 0; axis < 3; ++axis)
+	    points[(size_t)point][axis] = input_points[point][axis];
+    }
+    std::vector<std::array<int32_t, 3>> faces((size_t)input_face_count);
+    for (int face = 0; face < input_face_count; ++face) {
+	for (int corner = 0; corner < 3; ++corner)
+	    faces[(size_t)face][corner] = input_faces[face * 3 + corner];
+    }
+    bool rejected_preferred_ear = false;
+    gte::MeshHoleFilling<double>::Parameters parameters;
+    parameters.method = gte::MeshHoleFilling<double>::
+	TriangulationMethod::EarClipping3D;
+    parameters.autoFallback = false;
+    parameters.maxValidatedEdges = 8;
+    parameters.triangleValidator = [&](const std::array<int32_t, 3> &candidate,
+	    const std::vector<std::array<int32_t, 3>> &) {
+	const bool uses_5 = candidate[0] == 5 || candidate[1] == 5 ||
+	    candidate[2] == 5;
+	const bool uses_6 = candidate[0] == 6 || candidate[1] == 6 ||
+	    candidate[2] == 6;
+	const bool uses_7 = candidate[0] == 7 || candidate[1] == 7 ||
+	    candidate[2] == 7;
+	if (uses_5 && uses_6 && uses_7) {
+	    rejected_preferred_ear = true;
+	    return false;
+	}
+	return true;
+    };
+    gte::MeshHoleFilling<double>::FillHoles(points, faces, parameters);
+    std::vector<int> flat_faces;
+    flat_faces.reserve(faces.size() * 3);
+    for (const std::array<int32_t, 3> &face : faces)
+	flat_faces.insert(flat_faces.end(), face.begin(), face.end());
+    std::vector<point_t> flat_points(points.size());
+    for (size_t point = 0; point < points.size(); ++point)
+	VSET(flat_points[point], points[point][0], points[point][1],
+	    points[point][2]);
+    struct bg_trimesh_solid_errors solid_errors =
+	BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+    const int solid_result = bg_trimesh_solid2((int)flat_points.size(),
+	(int)faces.size(), (fastf_t *)flat_points.data(), flat_faces.data(),
+	&solid_errors);
+    const bool valid = rejected_preferred_ear && faces.size() == 12 &&
+	!solid_result;
+    if (!valid) {
+	bu_log("FAIL test_validated_ear_alternative: rejected=%d faces=%zu "
+	    "solid=%d unmatched=%d excess=%d misoriented=%d degenerate=%d\n",
+	    (int)rejected_preferred_ear, faces.size(), solid_result,
+	    solid_errors.unmatched.count, solid_errors.excess.count,
+	    solid_errors.misoriented.count, solid_errors.degenerate.count);
+	bg_free_trimesh_solid_errors(&solid_errors);
+	return -1;
+    }
+    bg_free_trimesh_solid_errors(&solid_errors);
+    bu_log("PASS test_validated_ear_alternative\n");
+    return 0;
+}
+
 /* Component union is deliberately opt-in.  Two individually closed cubes
  * overlap geometrically but pass an edge-incidence solid check; the Manifold
  * pass must regularize them into one closed boundary. */
@@ -925,6 +1047,8 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_intersecting_hole_patch_rejected() != 0) ? 1 : 0;
     failures += (test_independent_safe_hole_patch_retained() != 0) ? 1 : 0;
     failures += (test_collinear_hole_boundary()    != 0) ? 1 : 0;
+    failures += (test_concave_planar_hole()         != 0) ? 1 : 0;
+    failures += (test_validated_ear_alternative()    != 0) ? 1 : 0;
     failures += (test_overlapping_component_union() != 0) ? 1 : 0;
     failures += (test_touching_component_separation() != 0) ? 1 : 0;
     failures += (test_hanging_boundary_edge_split() != 0) ? 1 : 0;
