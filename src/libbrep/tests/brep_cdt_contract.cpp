@@ -194,6 +194,7 @@ invalid_poisson_repair_contract()
 	ON_Brep_CDT_Repair(state, &settings, &report) == 0 &&
 	report.poisson_reconstruction_attempted &&
 	report.poisson_reconstruction_applied &&
+	report.poisson_components == 1 &&
 	report.poisson_attempts == 1 &&
 	NEAR_EQUAL(report.poisson_scale, 1.1, SMALL_FASTF) &&
 	report.mesh.solid &&
@@ -215,6 +216,85 @@ invalid_poisson_repair_contract()
     }
     ON_Brep_CDT_Destroy(state);
     delete box;
+    return repaired;
+}
+
+static bool
+component_poisson_repair_contract()
+{
+    ON_3dPoint large_corners[8] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 1.0, 0.0), ON_3dPoint(0.0, 1.0, 0.0),
+	ON_3dPoint(0.0, 0.0, 1.0), ON_3dPoint(1.0, 0.0, 1.0),
+	ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(0.0, 1.0, 1.0)
+    };
+    ON_3dPoint small_corners[8] = {
+	ON_3dPoint(10.0, 0.0, 0.0), ON_3dPoint(10.1, 0.0, 0.0),
+	ON_3dPoint(10.1, 0.1, 0.0), ON_3dPoint(10.0, 0.1, 0.0),
+	ON_3dPoint(10.0, 0.0, 0.1), ON_3dPoint(10.1, 0.0, 0.1),
+	ON_3dPoint(10.1, 0.1, 0.1), ON_3dPoint(10.0, 0.1, 0.1)
+    };
+    ON_Brep *brep = ON_BrepBox(large_corners);
+    ON_Brep *small = ON_BrepBox(small_corners);
+    if (!brep || !small) {
+	delete brep;
+	delete small;
+	return false;
+    }
+    brep->Append(*small);
+    delete small;
+    ON_BrepVertex &invalid_vertex = brep->NewVertex(
+	ON_3dPoint(20.0, 20.0, 20.0));
+    invalid_vertex.m_vertex_index = -1;
+
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(brep,
+	"component Poisson repair contract");
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.05;
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    struct brep_cdt_diagnostic diagnostic = {};
+    const bool rejected = ON_Brep_CDT_Tessellate(state, 0, NULL) == -1 &&
+	ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0 &&
+	diagnostic.result == BREP_CDT_RESULT_INVALID_BREP;
+
+    struct brep_cdt_repair_settings settings =
+	BREP_CDT_REPAIR_SETTINGS_INIT;
+    settings.mesh.fill_holes = 1;
+    settings.mesh.max_hole_area_percent = 100.0;
+    settings.mesh.max_hole_edges = 4096;
+    settings.mesh.union_components = 1;
+    settings.max_surface_deviation = 0.5;
+    settings.max_area_change_percent = 100.0;
+    settings.allow_untrimmed_surface_match = 1;
+    settings.use_full_fast_fallback = 1;
+    settings.use_poisson_reconstruction = 1;
+    settings.poisson_depth = 5;
+    settings.max_poisson_components = 1;
+    struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
+    const bool bounded = rejected &&
+	ON_Brep_CDT_Repair(state, &settings, &report) == -1 &&
+	report.poisson_reconstruction_attempted &&
+	!report.poisson_reconstruction_applied &&
+	report.poisson_components == 2;
+
+    settings.max_poisson_components = 2;
+    mesh_output output;
+    const bool repaired = bounded &&
+	ON_Brep_CDT_Repair(state, &settings, &report) == 0 &&
+	report.poisson_reconstruction_applied &&
+	report.poisson_components == 2 && report.mesh.solid &&
+	report.coverage_samples > 0 && report.coverage_failures == 0 &&
+	mesh_get(output, state) && !output.faces.empty();
+    if (!repaired) {
+	ON_Brep_CDT_Diagnostic(&diagnostic, state);
+	bu_log("component Poisson repair contract failed: rejected %d, "
+	    "bounded %d, result %d stage %d, components %d, solid %d: %s\n",
+	    (int)rejected, (int)bounded, diagnostic.result,
+	    diagnostic.stage, report.poisson_components, report.mesh.solid,
+	    diagnostic.message);
+    }
+    ON_Brep_CDT_Destroy(state);
+    delete brep;
     return repaired;
 }
 
@@ -277,6 +357,7 @@ main(int argc, const char **argv)
     bool empty_rejected = empty_mesh_contract();
     bool repaired = repair_contract();
     bool invalid_repaired = invalid_poisson_repair_contract();
+    bool components_repaired = component_poisson_repair_contract();
 
     ON_Brep_CDT_Tol_Set(state, &tolerance);
     bool invalidated = ON_Brep_CDT_Status(state) == -1 &&
@@ -311,6 +392,6 @@ main(int argc, const char **argv)
     ON_Brep_CDT_Destroy(state);
 
     return initial && first_ok && second_ok && empty_rejected && repaired &&
-	invalid_repaired &&
+	invalid_repaired && components_repaired &&
 	invalidated && invalid_tolerance && invalid_face && invalid_input ? 0 : 1;
 }
