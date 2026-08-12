@@ -3751,6 +3751,34 @@ repair_fast_trim_sample_get(int face_index, int trim_index,
     return 0;
 }
 
+static const void *
+repair_fast_trim_sample_source(int face_index, int trim_index,
+	size_t sample_index, void *data)
+{
+    const repair_fast_constraint_store *store =
+	(const repair_fast_constraint_store *)data;
+    if (!store || store->face_index != face_index)
+	return NULL;
+    const auto samples = store->trims.find(trim_index);
+    if (samples == store->trims.end() ||
+	    sample_index >= samples->second.size())
+	return NULL;
+    return samples->second[sample_index].source_point;
+}
+
+static void
+repair_fast_point_source(int UNUSED(face_index), size_t point_index,
+	const void *source, void *data)
+{
+    std::vector<ON_3dPoint *> *sources =
+	(std::vector<ON_3dPoint *> *)data;
+    if (!sources)
+	return;
+    if (sources->size() <= point_index)
+	sources->resize(point_index + 1, NULL);
+    (*sources)[point_index] = (ON_3dPoint *)source;
+}
+
 static bool
 repair_fast_trim_sample_append(std::vector<repair_fast_trim_sample> &samples,
 	const cdt_mesh_t &mesh, const cpolyedge_t *segment, int endpoint,
@@ -4325,10 +4353,34 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	!toroidal_seam_strip &&
 	analytic_recognition_tolerance > ON_ZERO_TOLERANCE &&
 	surface->IsCylinder(&strip_cylinder, analytic_recognition_tolerance);
+    const bool generic_closed_seam_strip = explicit_seam_topology &&
+	closed_direction < 0 && !toroidal_seam_strip &&
+	!cylindrical_seam_strip &&
+	(surface->IsClosed(0) || surface->IsClosed(1) ||
+	 ON_RevSurface::Cast(surface) != NULL);
     if (closed_direction < 0 && !toroidal_seam_strip &&
-	    !cylindrical_seam_strip)
+	    !cylindrical_seam_strip && !generic_closed_seam_strip)
 	return reject("explicit nonperiodic seam is not a recognized analytic "
 	    "surface");
+
+    /* A closed surface or revolution may carry an explicit seam while its
+     * damaged boundary paths cover only part of the native period.  The
+     * synthetic strip chart does not require those paths to wind around the
+     * full surface.  Accept the general surface in that case only when every
+     * authoritative boundary sample is already within the caller's fidelity
+     * allowance; the existing adaptive rows and deviation checks then bound
+     * the interpreted interior. */
+    if (generic_closed_seam_strip) {
+	for (const boundary_path &boundary : boundaries) {
+	    for (const repair_fast_trim_sample &sample : boundary.samples) {
+		const ON_3dPoint uv_point = surface->PointAt(sample.uv[X],
+		    sample.uv[Y]);
+		if (!uv_point.IsValid() || uv_point.DistanceTo(
+			ON_3dPoint(sample.point)) > allowed_deviation)
+		    return reject("shared boundary misses the closed surface");
+	    }
+	}
+    }
 
     std::vector<double> first_major;
     std::vector<double> first_minor;
@@ -6439,6 +6491,36 @@ cdt_test_repair_periodic_strip(void)
     barrel->m_curve = profile;
     barrel->DestroyRuntimeCache(true);
     constraints = make_constraints(64, 64);
+    repair_fast_constraint_store partial_constraints = constraints;
+    for (auto &trim_entry : partial_constraints.trims) {
+	std::vector<repair_fast_trim_sample> &samples = trim_entry.second;
+	const size_t segment_count = samples.size() - 1;
+	const double constant_v = samples.front().uv[Y];
+	const ON_Interval angular_domain = barrel->Domain(0);
+	for (size_t point = 0; point <= segment_count; ++point) {
+	    const double fraction = point <= segment_count / 2 ?
+		2.0 * (double)point / (double)segment_count :
+		2.0 * (double)(segment_count - point) /
+		(double)segment_count;
+	    const double u = angular_domain.ParameterAt(0.5 * fraction);
+	    const ON_3dPoint surface_point = barrel->PointAt(u, constant_v);
+	    V2SET(samples[point].uv, u, constant_v);
+	    VSET(samples[point].point, surface_point.x, surface_point.y,
+		surface_point.z);
+	}
+    }
+    repair_boundary_patch partial_patch;
+    const bool partial_revolution = repair_constrained_periodic_strip(state,
+	side_index, partial_constraints, 4096, 10.0, 0, partial_patch);
+    valid = partial_revolution && !partial_patch.analytic_torus_strip &&
+	!partial_patch.analytic_cylinder_strip &&
+	partial_patch.constrained_edges == 2 &&
+	partial_patch.constrained_samples == 130 &&
+	partial_patch.faces.size() == 128 * 3;
+    if (!valid) {
+	ON_Brep_CDT_Destroy(state);
+	return 6;
+    }
     repair_boundary_patch refined_patch;
     const bool refined = repair_constrained_periodic_strip(state,
 	side_index, constraints, 4096, 0.04, 0, refined_patch);
@@ -7353,13 +7435,6 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		approximate_source_points[source] = point;
 	}
     }
-    std::map<repair_point_key, int> approximate_points;
-    for (int point = 0; point < input_vertex_count; ++point) {
-	approximate_points[repair_point_key{
-	    input_vertices[(size_t)point * 3],
-	    input_vertices[(size_t)point * 3 + 1],
-	    input_vertices[(size_t)point * 3 + 2]}] = point;
-    }
     const auto append_approximate_mesh = [&](int face_index,
 	    const int *local_faces, int local_face_count,
 	    const fastf_t *local_vertices, int local_vertex_count,
@@ -7377,6 +7452,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	}
 	std::vector<int> local_to_input((size_t)local_vertex_count, -1);
 	std::vector<fastf_t> novel_vertices;
+	std::map<repair_point_key, int> local_generated_points;
 	novel_vertices.reserve((size_t)local_vertex_count * 3);
 	size_t source_vertices = 0;
 	size_t matched_source_vertices = 0;
@@ -7396,8 +7472,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    continue;
 		}
 	    } else {
-		const auto existing = approximate_points.find(key);
-		if (existing != approximate_points.end()) {
+		const auto existing = local_generated_points.find(key);
+		if (existing != local_generated_points.end()) {
 		    local_to_input[(size_t)point] = existing->second;
 		    continue;
 		}
@@ -7407,7 +7483,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    if (source)
 		approximate_source_points[source] = new_index;
 	    else
-		approximate_points[key] = new_index;
+		local_generated_points[key] = new_index;
 	    local_to_input[(size_t)point] = new_index;
 	    novel_vertices.insert(novel_vertices.end(),
 		&local_vertices[(size_t)point * 3],
@@ -7453,7 +7529,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    return false;
 	std::unordered_map<ON_3dPoint *, int> source_points =
 	    approximate_source_points;
-	std::map<repair_point_key, int> generated_points = approximate_points;
+	std::map<repair_point_key, int> generated_points;
 	std::vector<int> local_to_input((size_t)local_vertex_count, -1);
 	int next_vertex = input_vertex_count;
 	for (int point = 0; point < local_vertex_count; ++point) {
@@ -8209,14 +8285,6 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const int64_t fast_start = bu_gettime();
 	size_t fast_points_used = 0;
 	size_t fast_bytes_used = 0;
-	std::map<repair_point_key, int> assembled_points;
-	for (int point_index = 0; point_index < input_vertex_count;
-		++point_index) {
-	    assembled_points[repair_point_key{
-		input_vertices[(size_t)point_index * 3],
-		input_vertices[(size_t)point_index * 3 + 1],
-		input_vertices[(size_t)point_index * 3 + 2]}] = point_index;
-	}
 	for (int failed_face : failed_faces) {
 	    if (locally_reconstructed_faces.find(failed_face) !=
 		    locally_reconstructed_faces.end())
@@ -8239,11 +8307,26 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    fast_options.allow_partial = 1;
 	    repair_fast_constraint_store constraints =
 		repair_fast_face_constraints(s_cdt, failed_face);
+	    std::vector<ON_3dPoint *> fast_point_sources;
+	    if (getenv("BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY")) {
+		size_t identified_samples = 0;
+		for (const auto &trim : constraints.trims) {
+		    for (const repair_fast_trim_sample &sample : trim.second)
+			identified_samples += sample.source_point ? 1 : 0;
+		}
+		bu_log("Face %d: supplied %zu/%zu authoritative fast face "
+		    "constraint identities\n", failed_face, identified_samples,
+		    constraints.constrained_samples);
+	    }
 	    if (constraints.constrained_edges) {
 		fast_options.trim_sample_count =
 		    repair_fast_trim_sample_count;
 		fast_options.trim_sample = repair_fast_trim_sample_get;
 		fast_options.trim_sample_data = &constraints;
+		fast_options.trim_sample_source =
+		    repair_fast_trim_sample_source;
+		fast_options.point_source = repair_fast_point_source;
+		fast_options.point_source_data = &fast_point_sources;
 	    }
 	    struct brep_cdt_fast_report fast_report = {};
 	    int *fast_faces = NULL;
@@ -8283,24 +8366,47 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    if (within_limits) {
 		std::vector<int> fast_to_input((size_t)fast_point_count, -1);
 		std::vector<fastf_t> novel_vertices;
+		std::map<repair_point_key, int> local_generated_points;
 		novel_vertices.reserve((size_t)fast_point_count * 3);
+		size_t source_vertices = 0;
+		size_t matched_source_vertices = 0;
 		for (int fast_point = 0; fast_point < fast_point_count;
 			++fast_point) {
+		    ON_3dPoint *source = (size_t)fast_point <
+			fast_point_sources.size() ?
+			fast_point_sources[(size_t)fast_point] : NULL;
+		    source_vertices += source ? 1 : 0;
 		    const repair_point_key key = {
 			fast_points[fast_point][X], fast_points[fast_point][Y],
 			fast_points[fast_point][Z]};
-		    const auto existing = assembled_points.find(key);
-		    if (existing != assembled_points.end()) {
-			fast_to_input[(size_t)fast_point] = existing->second;
-			continue;
+		    if (source) {
+			const auto existing = approximate_source_points.find(source);
+			if (existing != approximate_source_points.end()) {
+			    fast_to_input[(size_t)fast_point] = existing->second;
+			    matched_source_vertices++;
+			    continue;
+			}
+		    } else {
+			const auto existing = local_generated_points.find(key);
+			if (existing != local_generated_points.end()) {
+			    fast_to_input[(size_t)fast_point] = existing->second;
+			    continue;
+			}
 		    }
 		    const int new_index = input_vertex_count +
 			(int)(novel_vertices.size() / 3);
-		    assembled_points[key] = new_index;
+		    if (source)
+			approximate_source_points[source] = new_index;
+		    else
+			local_generated_points[key] = new_index;
 		    fast_to_input[(size_t)fast_point] = new_index;
 		    novel_vertices.insert(novel_vertices.end(),
 			&fast_points[fast_point][X], &fast_points[fast_point][X] + 3);
 		}
+		if (getenv("BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY"))
+		    bu_log("Face %d: matched %zu/%zu authoritative fast face "
+			"vertices by CDT point identity\n", failed_face,
+			matched_source_vertices, source_vertices);
 		const size_t new_vertex_count = (size_t)input_vertex_count +
 		    novel_vertices.size() / 3;
 		const size_t new_face_count = (size_t)input_face_count +
