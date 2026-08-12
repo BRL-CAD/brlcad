@@ -243,6 +243,19 @@ main(int UNUSED(argc), const char *argv[])
     if (fcheck("ARB4_face4", arb4_faces_flipped_f4, arb4_faces_ctrl))
 	ret = -1;
 
+    /* A strip whose ends are identified with opposite parity is a Mobius
+     * band.  No sequence of triangle flips can orient it consistently, so
+     * report the contradiction instead of silently leaving a bad cycle. */
+    int mobius_faces[18] = {
+	0,2,3, 0,3,1, 2,4,5,
+	2,5,3, 4,1,0, 4,0,5
+    };
+    int mobius_output[18] = {0};
+    if (bg_trimesh_sync(mobius_output, mobius_faces, 6) >= 0) {
+	bu_log("Mobius strip orientation contradiction was not detected\n");
+	ret = -1;
+    }
+
     return ret;
 }
 

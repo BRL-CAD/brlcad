@@ -1218,6 +1218,25 @@ bg_trimesh_repair2(
     if (tris.empty())
 	return -1;
 
+    /* A caller asking only for Manifold acceptance has not authorized a
+     * geometric rewrite of an already valid indexed solid.  In particular,
+     * coordinate welding can merge distinct topological vertices that happen
+     * to coincide and turn a valid shell into a non-manifold one. */
+    if (!not_solid && !initial_geometric_degenerate &&
+	    !settings->separate_touching_vertices &&
+	    !settings->remove_small_components && !settings->fill_holes &&
+	    !settings->union_components && settings->require_manifold) {
+	bool manifold_accepted = false;
+	std::vector<gte::Vector3<double>> manifold_vertices = verts;
+	std::vector<std::array<int32_t, 3>> manifold_triangles = tris;
+	(void)trimesh_manifold_union(manifold_vertices, manifold_triangles,
+	    &manifold_accepted, false);
+	report->manifold_accepted = manifold_accepted;
+	if (manifold_accepted)
+	    return trimesh_repair_export(ofaces, n_ofaces, opnts, n_opnts,
+		verts, tris, settings, report);
+    }
+
     /* --- Pass 1: initial colocate + degenerate removal ------------------- */
     const double bbox_diag = trimesh_gte_bbox_diag(verts);
     const double vertex_tolerance = settings->vertex_tolerance > 0.0 ?
