@@ -128,6 +128,11 @@ struct geom_result {
     bool repair_full_fast_used = false;
     bool repair_relaxed_tessellation_attempted = false;
     int repair_relaxed_tessellation_completed_faces = 0;
+    bool repair_bounded_edge_retry_attempted = false;
+    int repair_bounded_edge_retry_completed_faces = 0;
+    int repair_bounded_edge_approximation_edges = 0;
+    int repair_bounded_edge_approximation_faces = 0;
+    double repair_max_bounded_edge_deviation = 0.0;
     bool repair_poisson_attempted = false;
     bool repair_poisson_applied = false;
     int repair_poisson_input_points = 0;
@@ -912,6 +917,16 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.relaxed_tessellation_attempted != 0;
 	result.repair_relaxed_tessellation_completed_faces =
 	    repair_report.relaxed_tessellation_completed_faces;
+	result.repair_bounded_edge_retry_attempted =
+	    repair_report.bounded_edge_retry_attempted != 0;
+	result.repair_bounded_edge_retry_completed_faces =
+	    repair_report.bounded_edge_retry_completed_faces;
+	result.repair_bounded_edge_approximation_edges =
+	    repair_report.bounded_edge_approximation_edges;
+	result.repair_bounded_edge_approximation_faces =
+	    repair_report.bounded_edge_approximation_faces;
+	result.repair_max_bounded_edge_deviation =
+	    repair_report.max_bounded_edge_deviation;
 	result.repair_poisson_attempted =
 	    repair_report.poisson_reconstruction_attempted != 0;
 	result.repair_poisson_applied =
@@ -1252,6 +1267,16 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< (result.repair_relaxed_tessellation_attempted ? "true" : "false")
 	<< ",\"relaxed_tessellation_completed_faces\":"
 	<< result.repair_relaxed_tessellation_completed_faces
+	<< ",\"bounded_edge_retry_attempted\":"
+	<< (result.repair_bounded_edge_retry_attempted ? "true" : "false")
+	<< ",\"bounded_edge_retry_completed_faces\":"
+	<< result.repair_bounded_edge_retry_completed_faces
+	<< ",\"bounded_edge_approximation_edges\":"
+	<< result.repair_bounded_edge_approximation_edges
+	<< ",\"bounded_edge_approximation_faces\":"
+	<< result.repair_bounded_edge_approximation_faces
+	<< ",\"max_bounded_edge_deviation\":"
+	<< result.repair_max_bounded_edge_deviation
 	<< ",\"poisson_reconstruction_attempted\":"
 	<< (result.repair_poisson_attempted ? "true" : "false")
 	<< ",\"poisson_reconstruction_applied\":"
