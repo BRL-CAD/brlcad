@@ -1485,8 +1485,14 @@ cdt_face_chart::build_native(const ON_BrepFace &face,
     const double chart_period = m_periodic ?
 	m_native_domain[m_closed_dir].Length() *
 	m_metric_scale[m_closed_dir] : 0.0;
-    const size_t repaired_cut_holes = m_periodic ?
-	repair_periodic_seam_holes(chart_period, m_closed_dir) : 0;
+    size_t repaired_cut_holes = 0;
+    while (m_periodic) {
+	const size_t repaired = repair_periodic_seam_holes(chart_period,
+	    m_closed_dir);
+	if (!repaired)
+	    break;
+	repaired_cut_holes += repaired;
+    }
     if (repaired_cut_holes)
 	bu_log("Face %d: opened %zu periodic metric hole%s across the "
 	    "chart seam\n", face.m_face_index, repaired_cut_holes,
@@ -1525,6 +1531,9 @@ cdt_face_chart::repair_periodic_seam_holes(double period,
 	    (closed_coordinate != 0 && closed_coordinate != 1) ||
 	    holes.empty())
 	return 0;
+    const char *debug_setting = getenv("BRLCAD_CDT_DEBUG_SEAM_HOLES");
+    const bool debug = debug_setting && debug_setting[0] &&
+	!BU_STR_EQUAL(debug_setting, "0");
 
     const double tolerance = std::max((double)BREP_EDGE_MISS_TOLERANCE,
 	4096.0 * std::numeric_limits<double>::epsilon() * period);
@@ -1563,10 +1572,12 @@ cdt_face_chart::repair_periodic_seam_holes(double period,
 	    minimum <= period + tolerance && minimum > tolerance;
 	if (!crosses_low && !crosses_high)
 	    continue;
-	if (candidate != holes.size())
-	    return 0;
+	if (debug)
+	    bu_log("Periodic seam hole %zu spans %.17g to %.17g on a "
+		"period %.17g\n", hi, minimum, maximum, period);
 	candidate = hi;
 	high_crossing = crosses_high;
+	break;
     }
     if (candidate == holes.size())
 	return 0;
@@ -1578,34 +1589,56 @@ cdt_face_chart::repair_periodic_seam_holes(double period,
 	    set_closed(repaired, point, closed(repaired, point) - period);
     }
 
+    const auto clone_at = [&](int source, double coordinate) {
+	cdt_chart_vertex clone = repaired.vertices[(size_t)source];
+	clone.id = (cdt_chart_vertex_id)repaired.points.size();
+	std::pair<double, double> cloned = repaired.points[(size_t)source];
+	if (closed_coordinate)
+	    cloned.second = coordinate;
+	else
+	    cloned.first = coordinate;
+	repaired.points.push_back(cloned);
+	repaired.vertices.push_back(clone);
+	return (int)clone.id;
+    };
+
+    /* Adaptive edge sampling need not land exactly on the arbitrary chart
+     * cut.  When a boundary segment straddles it, split at the nearer sampled
+     * endpoint in chart space.  Cloning keeps every authoritative 3-D point
+     * and topology identity unchanged; only its artificial periodic image is
+     * selected. */
+    const double snap_tolerance = std::max(tolerance,
+	std::min(4.0 * (double)BREP_EDGE_MISS_TOLERANCE,
+	    0.01 * period));
+    for (size_t i = 0; i < hole.size(); ++i) {
+	const size_t next = (i + 1) % hole.size();
+	const double first = closed(repaired, hole[i]);
+	const double second = closed(repaired, hole[next]);
+	if (!((first < -tolerance && second > tolerance) ||
+		(second < -tolerance && first > tolerance)))
+	    continue;
+	const size_t selected = std::fabs(first) <= std::fabs(second) ?
+	    i : next;
+	if (std::fabs(closed(repaired, hole[selected])) > snap_tolerance)
+	    return 0;
+	if (debug)
+	    bu_log("Periodic seam hole snapped chart vertex %d from %.17g "
+		"to the cut\n", hole[selected],
+		closed(repaired, hole[selected]));
+	hole[selected] = clone_at(hole[selected], 0.0);
+    }
+
     const auto on_cut = [&](size_t position) {
 	return std::fabs(closed(repaired, hole[position])) <= tolerance;
     };
     std::vector<size_t> seam_positions;
-    std::vector<size_t> seam_starts;
-    std::vector<size_t> seam_ends;
     for (size_t i = 0; i < hole.size(); ++i) {
-	const size_t previous = (i + hole.size() - 1) % hole.size();
-	const size_t next = (i + 1) % hole.size();
 	if (!on_cut(i))
 	    continue;
 	seam_positions.push_back(i);
-	if (!on_cut(previous))
-	    seam_starts.push_back(i);
-	if (!on_cut(next))
-	    seam_ends.push_back(i);
     }
     if (seam_positions.size() < 2)
 	return 0;
-    const bool sampled_run = seam_positions.size() > 2;
-    if (sampled_run &&
-	    (seam_starts.size() != 1 || seam_ends.size() != 1))
-	return 0;
-    const size_t first_seam = sampled_run ? seam_starts[0] :
-	seam_positions[0];
-    const size_t second_seam = sampled_run ? seam_ends[0] :
-	seam_positions[1];
-
     const auto arc = [&](size_t first, size_t last) {
 	std::vector<int> result;
 	for (size_t i = first;; i = (i + 1) % hole.size()) {
@@ -1615,28 +1648,48 @@ cdt_face_chart::repair_periodic_seam_holes(double period,
 	}
 	return result;
     };
-    std::vector<int> first_arc = arc(first_seam, second_seam);
-    std::vector<int> second_arc = arc(second_seam, first_seam);
     const auto interior_sign = [&](const std::vector<int> &path) {
-	double sum = 0.0;
+	bool negative = false;
+	bool positive = false;
 	for (size_t i = 1; i + 1 < path.size(); ++i)
-	    sum += closed(repaired, path[i]);
-	return (sum > 0.0) - (sum < 0.0);
+	{
+	    const double coordinate = closed(repaired, path[i]);
+	    negative = negative || coordinate < -tolerance;
+	    positive = positive || coordinate > tolerance;
+	}
+	if (negative && positive)
+	    return 2;
+	return positive ? 1 : (negative ? -1 : 0);
     };
-    const int first_sign = interior_sign(first_arc);
-    const int second_sign = interior_sign(second_arc);
     std::vector<int> negative;
     std::vector<int> nonnegative;
-    if (first_sign < 0 && second_sign >= 0) {
-	negative = first_arc;
-	nonnegative = second_arc;
-	} else if (second_sign < 0 && first_sign >= 0) {
-	negative = second_arc;
-	nonnegative = first_arc;
-	} else {
-	return 0;
+    for (size_t first = 0; first + 1 < seam_positions.size() &&
+	    negative.empty(); ++first) {
+	for (size_t second = first + 1; second < seam_positions.size();
+		second++) {
+	    std::vector<int> first_arc = arc(seam_positions[first],
+		seam_positions[second]);
+	    std::vector<int> second_arc = arc(seam_positions[second],
+		seam_positions[first]);
+	    if (first_arc.size() < 3 || second_arc.size() < 3)
+		continue;
+	    const int first_sign = interior_sign(first_arc);
+	    const int second_sign = interior_sign(second_arc);
+	    if (first_sign <= 0 && second_sign >= 0 &&
+		    (first_sign < 0 || second_sign > 0)) {
+		negative = std::move(first_arc);
+		nonnegative = std::move(second_arc);
+		break;
+	    }
+	    if (second_sign <= 0 && first_sign >= 0 &&
+		    (second_sign < 0 || first_sign > 0)) {
+		negative = std::move(second_arc);
+		nonnegative = std::move(first_arc);
+		break;
+	    }
 	}
-    if (negative.size() < 3 || nonnegative.size() < 3)
+    }
+    if (negative.empty() || nonnegative.empty())
 	return 0;
     for (size_t i = 1; i + 1 < negative.size(); ++i) {
 	if (closed(repaired, negative[i]) > tolerance)
@@ -1654,18 +1707,6 @@ cdt_face_chart::repair_periodic_seam_holes(double period,
 	set_closed(repaired, negative[i],
 	    closed(repaired, negative[i]) + period);
 
-    const auto clone_at = [&](int source, double coordinate) {
-	cdt_chart_vertex clone = repaired.vertices[(size_t)source];
-	clone.id = (cdt_chart_vertex_id)repaired.points.size();
-	std::pair<double, double> cloned = repaired.points[(size_t)source];
-	if (closed_coordinate)
-	    cloned.second = coordinate;
-	else
-	    cloned.first = coordinate;
-	repaired.points.push_back(cloned);
-	repaired.vertices.push_back(clone);
-	return (int)clone.id;
-    };
     std::vector<int> high_arc;
     high_arc.reserve(negative.size());
     high_arc.push_back(clone_at(negative.front(), period));
@@ -1686,12 +1727,48 @@ cdt_face_chart::repair_periodic_seam_holes(double period,
 		    !on_side(repaired.outer[previous]))
 		starts.push_back(i);
 	}
-	if (starts.size() != 1)
+	size_t selected_start = repaired.outer.size();
+	std::vector<int> selected_path;
+	for (size_t start : starts) {
+	    size_t side_run = 0;
+	    while (side_run < repaired.outer.size() &&
+		    on_side(repaired.outer[(start + side_run) %
+		    repaired.outer.size()]))
+		side_run++;
+	    if (side_run < 2 || side_run == repaired.outer.size())
+		continue;
+	    const int first = repaired.outer[start];
+	    const int last = repaired.outer[(start + side_run - 1) %
+		repaired.outer.size()];
+	    const double side_direction = open(repaired, last) -
+		open(repaired, first);
+	    if (std::fabs(side_direction) <= tolerance)
+		continue;
+	    const double side_sign = side_direction > 0.0 ? 1.0 : -1.0;
+	    std::vector<int> oriented(path);
+	    if ((open(repaired, oriented.back()) -
+		    open(repaired, oriented.front())) * side_sign < 0.0)
+		std::reverse(oriented.begin(), oriented.end());
+	    const double enter = open(repaired, oriented.front());
+	    const double leave = open(repaired, oriented.back());
+	    if (debug)
+		bu_log("Periodic seam side %.17g run %.17g to %.17g, path "
+		    "%.17g to %.17g\n", side, open(repaired, first),
+		    open(repaired, last), enter, leave);
+	    if ((enter - open(repaired, first)) * side_sign < -tolerance ||
+		    (open(repaired, last) - leave) * side_sign < -tolerance)
+		continue;
+	    if (selected_start != repaired.outer.size())
+		return false;
+	    selected_start = start;
+	    selected_path = std::move(oriented);
+	}
+	if (selected_start == repaired.outer.size())
 	    return false;
 	std::vector<int> rotated;
-	rotated.reserve(repaired.outer.size() + path.size());
+	rotated.reserve(repaired.outer.size() + selected_path.size());
 	for (size_t i = 0; i < repaired.outer.size(); ++i)
-	    rotated.push_back(repaired.outer[(starts[0] + i) %
+	    rotated.push_back(repaired.outer[(selected_start + i) %
 		repaired.outer.size()]);
 	size_t run = 0;
 	while (run < rotated.size() && on_side(rotated[run]))
@@ -1703,20 +1780,18 @@ cdt_face_chart::repair_periodic_seam_holes(double period,
 	if (std::fabs(direction) <= tolerance)
 	    return false;
 	const double sign = direction > 0.0 ? 1.0 : -1.0;
-	if ((open(repaired, path.back()) - open(repaired, path.front())) *
-		sign < 0.0)
-	    std::reverse(path.begin(), path.end());
-	const double enter = open(repaired, path.front());
-	const double leave = open(repaired, path.back());
+	const double enter = open(repaired, selected_path.front());
+	const double leave = open(repaired, selected_path.back());
 	std::vector<int> replacement;
-	replacement.reserve(rotated.size() + path.size());
+	replacement.reserve(rotated.size() + selected_path.size());
 	bool inserted = false;
 	for (size_t i = 0; i < run; ++i) {
 	    const double open_coordinate = open(repaired, rotated[i]);
 	    if ((open_coordinate - enter) * sign < -tolerance)
 		replacement.push_back(rotated[i]);
 	    else if (!inserted) {
-		replacement.insert(replacement.end(), path.begin(), path.end());
+		replacement.insert(replacement.end(), selected_path.begin(),
+		    selected_path.end());
 		inserted = true;
 	    }
 	    if ((open_coordinate - leave) * sign > tolerance)
@@ -2009,8 +2084,13 @@ cdt_face_chart::build_cylinder(const ON_BrepFace &face,
 	}
     }
     const double chart_period = 2.0 * ON_PI * m_cylinder.circle.radius;
-    const size_t repaired_cut_holes = has_seam ?
-	repair_periodic_seam_holes(chart_period, 0) : 0;
+    size_t repaired_cut_holes = 0;
+    while (has_seam) {
+	const size_t repaired = repair_periodic_seam_holes(chart_period, 0);
+	if (!repaired)
+	    break;
+	repaired_cut_holes += repaired;
+    }
     if (repaired_cut_holes)
 	bu_log("Face %d: opened %zu cylinder hole%s across the chart seam\n",
 	    face.m_face_index, repaired_cut_holes,
