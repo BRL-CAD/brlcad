@@ -3028,7 +3028,7 @@ repair_fast_face_constraints(struct ON_Brep_CDT_State *s_cdt,
 		polygon->second->poly.empty())
 	    return store;
     }
-    std::map<int, ON_3dPoint *> trim_last_point;
+    std::map<int, std::map<fastf_t, repair_fast_trim_sample>> trim_points;
     std::set<int> unusable_trims;
     for (cpolyedge_t *segment : cdt_face_polyedges(s_cdt, face_index)) {
 	if (!segment || segment->trim_ind < 0 ||
@@ -3058,33 +3058,60 @@ repair_fast_face_constraints(struct ON_Brep_CDT_State *s_cdt,
 	if (!sampled_neighbor || unusable_trims.find(segment->trim_ind) !=
 		unusable_trims.end())
 	    continue;
-	std::vector<repair_fast_trim_sample> &samples =
-	    store.trims[segment->trim_ind];
-	ON_3dPoint *start = NULL;
-	ON_3dPoint *end = NULL;
 	std::vector<repair_fast_trim_sample> additions;
 	if (!repair_fast_trim_sample_append(additions, mesh, segment, 0,
-		&start) || !repair_fast_trim_sample_append(additions, mesh,
-		segment, 1, &end) ||
-		(!samples.empty() && trim_last_point[segment->trim_ind] != start)) {
+		NULL) || !repair_fast_trim_sample_append(additions, mesh,
+		segment, 1, NULL)) {
 	    store.trims.erase(segment->trim_ind);
-	    trim_last_point.erase(segment->trim_ind);
+	    trim_points.erase(segment->trim_ind);
 	    unusable_trims.insert(segment->trim_ind);
 	    continue;
 	}
-	if (samples.empty())
-	    samples.push_back(additions[0]);
-	samples.push_back(additions[1]);
-	trim_last_point[segment->trim_ind] = end;
-    }
-    for (auto trim = store.trims.begin(); trim != store.trims.end();) {
-	if (trim->second.size() < 2) {
-	    trim = store.trims.erase(trim);
-	    continue;
+	std::map<fastf_t, repair_fast_trim_sample> &points =
+	    trim_points[segment->trim_ind];
+	for (const repair_fast_trim_sample &sample : additions) {
+	    const auto existing = points.find(sample.parameter);
+	    if (existing == points.end()) {
+		points.emplace(sample.parameter, sample);
+		continue;
+	    }
+	    const repair_fast_trim_sample &prior = existing->second;
+	    const double delta_3d = std::hypot(std::hypot(
+		prior.point[X] - sample.point[X],
+		prior.point[Y] - sample.point[Y]),
+		prior.point[Z] - sample.point[Z]);
+	    const double delta_uv = std::hypot(
+		prior.uv[X] - sample.uv[X],
+		prior.uv[Y] - sample.uv[Y]);
+	    if (delta_3d > ON_ZERO_TOLERANCE ||
+		    delta_uv > ON_ZERO_TOLERANCE) {
+		trim_points.erase(segment->trim_ind);
+		unusable_trims.insert(segment->trim_ind);
+		break;
+	    }
 	}
+    }
+    for (const auto &trim_points_entry : trim_points) {
+	if (unusable_trims.find(trim_points_entry.first) !=
+		unusable_trims.end() || trim_points_entry.second.size() < 2)
+	    continue;
+	const ON_BrepTrim &trim = s_cdt->brep->m_T[trim_points_entry.first];
+	const ON_Interval domain = trim.Domain();
+	const double parameter_scale = std::max(1.0, std::max(
+	    std::fabs(domain.Min()), std::fabs(domain.Max())));
+	const double parameter_tolerance = 256.0 *
+	    std::numeric_limits<double>::epsilon() * parameter_scale;
+	if (std::fabs(trim_points_entry.second.begin()->first - domain.Min()) >
+		parameter_tolerance || std::fabs(
+		trim_points_entry.second.rbegin()->first - domain.Max()) >
+		parameter_tolerance)
+	    continue;
+	std::vector<repair_fast_trim_sample> &samples =
+	    store.trims[trim_points_entry.first];
+	for (const auto &sample : trim_points_entry.second)
+	    samples.push_back(sample.second);
 	store.constrained_edges++;
-	store.constrained_samples += trim->second.size();
-	++trim;
+	store.constrained_samples += samples.size();
     }
     return store;
 }
@@ -3393,10 +3420,20 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 
     std::set<int> failed_faces(s_cdt->failed_face_indices.begin(),
 	s_cdt->failed_face_indices.end());
+    std::set<int> approximation_faces(failed_faces.begin(),
+	failed_faces.end());
+    for (int face = 0; face < s_cdt->orig_brep->m_F.Count(); ++face) {
+	if (s_cdt->fmeshes.find(face) == s_cdt->fmeshes.end())
+	    approximation_faces.insert(face);
+    }
     std::vector<int> usable_faces;
     for (const auto &face : s_cdt->fmeshes) {
-	if (failed_faces.find(face.first) == failed_faces.end())
+	if (failed_faces.find(face.first) != failed_faces.end())
+	    continue;
+	if (face.second.tris_tree.Count())
 	    usable_faces.push_back(face.first);
+	else
+	    approximation_faces.insert(face.first);
     }
     if (have_rigorous_faces && usable_faces.empty() &&
 	!settings->use_full_fast_fallback) {
@@ -4072,11 +4109,27 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 
     struct bg_trimesh_repair_settings mesh_settings = settings->mesh;
     mesh_settings.require_solid = 1;
+    /* Authoritative fast-face constraints reuse the rigorous boundary
+     * coordinates exactly.  When the caller did not request a weld radius,
+     * allow only coordinate roundoff: the tessellation spacing is an interior
+     * sampling target, not permission to merge unrelated vertices throughout
+     * every retained rigorous face. */
     if (report->fast_fallback_used_faces &&
 	    !(mesh_settings.vertex_tolerance > 0.0)) {
-	mesh_settings.vertex_tolerance = s_cdt->absmin;
-	if (!(mesh_settings.vertex_tolerance > 0.0))
-	    mesh_settings.vertex_tolerance = BN_TOL_DIST;
+	const ON_BoundingBox bounds = s_cdt->orig_brep->BoundingBox();
+	double coordinate_scale = 1.0;
+	if (bounds.IsValid()) {
+	    coordinate_scale = std::max(coordinate_scale,
+		bounds.Diagonal().Length());
+	    for (int axis = 0; axis < 3; ++axis) {
+		coordinate_scale = std::max(coordinate_scale,
+		    std::fabs(bounds.m_min[axis]));
+		coordinate_scale = std::max(coordinate_scale,
+		    std::fabs(bounds.m_max[axis]));
+	    }
+	}
+	mesh_settings.vertex_tolerance = 256.0 *
+	    std::numeric_limits<double>::epsilon() * coordinate_scale;
     }
     int *repaired_faces = NULL;
     int repaired_face_count = 0;
@@ -4155,7 +4208,6 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    report->source_failed_faces, message.c_str());
 	return -1;
     }
-
     report->allowed_surface_deviation =
 	settings->max_surface_deviation > 0.0 ?
 	settings->max_surface_deviation : s_cdt->absmax;
@@ -4174,9 +4226,13 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    s_cdt->orig_brep->m_F[face].BoundingBox();
 
     std::set<repair_triangle_key> rigorous_triangles;
-    for (int face = 0; face < rigorous_input_face_count; ++face)
-	rigorous_triangles.insert(repair_triangle_coordinates(input_vertices,
-	    &input_faces[(size_t)face * 3]));
+    std::map<repair_triangle_key, size_t> rigorous_triangle_counts;
+    for (int face = 0; face < rigorous_input_face_count; ++face) {
+	const repair_triangle_key key = repair_triangle_coordinates(
+	    input_vertices, &input_faces[(size_t)face * 3]);
+	rigorous_triangles.insert(key);
+	rigorous_triangle_counts[key]++;
+    }
     report->mesh.output_vertices = repaired_vertex_count;
     report->mesh.output_faces = repaired_face_count;
     report->mesh.output_area = repair_mesh_area(
@@ -4334,6 +4390,45 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     repair_added_patch_stats(report, input_vertices, input_faces,
 	input_face_count, repaired_vertices, repaired_faces,
 	repaired_face_count);
+
+    /* A local fallback is allowed to add geometry inside failed-face
+     * neighborhoods, but it may not silently simplify unrelated certified
+     * faces.  Compare triangle coordinates rather than indices so harmless
+     * reindexing, reorientation, and vertex duplication remain acceptable. */
+    std::map<repair_triangle_key, size_t> output_triangle_counts;
+    for (int face = 0; face < repaired_face_count; ++face)
+	output_triangle_counts[repair_triangle_coordinates(repaired_vertices,
+	    &repaired_faces[(size_t)face * 3])]++;
+    size_t missing_rigorous_triangles = 0;
+    for (const auto &required : rigorous_triangle_counts) {
+	const auto found = output_triangle_counts.find(required.first);
+	const size_t available = found == output_triangle_counts.end() ? 0 :
+	    found->second;
+	if (available < required.second)
+	    missing_rigorous_triangles += required.second - available;
+    }
+    report->missing_rigorous_triangles = (int)std::min(
+	missing_rigorous_triangles, (size_t)INT_MAX);
+    report->retained_rigorous_triangles = rigorous_input_face_count -
+	report->missing_rigorous_triangles;
+    if (missing_rigorous_triangles &&
+	    !settings->use_full_fast_fallback &&
+	    !settings->use_poisson_reconstruction &&
+	    !settings->mesh.union_components) {
+	bu_free(repaired_faces, "nonlocal repaired faces");
+	bu_free(repaired_points, "nonlocal repaired vertices");
+	bu_free(input_faces, "nonlocal repair input faces");
+	bu_free(input_vertices, "nonlocal repair input vertices");
+	const std::string message = "local mesh repair would replace " +
+	    std::to_string(missing_rigorous_triangles) +
+	    " certified rigorous triangle" +
+	    (missing_rigorous_triangles == 1 ? "" : "s");
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces, message.c_str());
+	return -1;
+    }
 
     const bool have_display_reference = display_reference_face_count > 0 &&
 	!display_reference_faces.empty() &&
@@ -4757,6 +4852,53 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     s_cdt->certified_normal_count = 0;
     s_cdt->certified_repaired = true;
     s_cdt->status = BREP_CDT_SOLID;
+    if (report->poisson_reconstruction_applied)
+	report->approximation_tier = BREP_CDT_REPAIR_APPROX_POISSON;
+    else if (report->full_fast_fallback_used)
+	report->approximation_tier = BREP_CDT_REPAIR_APPROX_FULL_FAST;
+    else if (report->mesh.added_faces > 0)
+	report->approximation_tier = BREP_CDT_REPAIR_APPROX_LOCAL_MESH;
+    else if (report->fast_fallback_used_faces > 0)
+	report->approximation_tier =
+	    BREP_CDT_REPAIR_APPROX_CONSTRAINED_FACE;
+    if (report->approximation_tier >= BREP_CDT_REPAIR_APPROX_FULL_FAST) {
+	approximation_faces.clear();
+	for (int face = 0; face < s_cdt->orig_brep->m_F.Count(); ++face)
+	    approximation_faces.insert(face);
+    }
+    std::set<int> approximation_edges;
+    for (int face_index : approximation_faces) {
+	if (face_index < 0 || face_index >= s_cdt->orig_brep->m_F.Count())
+	    continue;
+	const ON_BrepFace &face = s_cdt->orig_brep->m_F[face_index];
+	for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
+	    const ON_BrepLoop *loop = face.Loop(loop_index);
+	    if (!loop)
+		continue;
+	    for (int trim_index = 0; trim_index < loop->TrimCount();
+		    ++trim_index) {
+		const ON_BrepTrim *trim = loop->Trim(trim_index);
+		if (trim && trim->m_ei >= 0)
+		    approximation_edges.insert(trim->m_ei);
+	    }
+	}
+    }
+    report->approximation_faces = (int)std::min(
+	approximation_faces.size(), (size_t)INT_MAX);
+    report->approximation_edges = (int)std::min(
+	approximation_edges.size(), (size_t)INT_MAX);
+    if (settings->provenance && report->approximation_tier !=
+	    BREP_CDT_REPAIR_APPROX_NONE) {
+	const std::vector<int> face_indices(approximation_faces.begin(),
+	    approximation_faces.end());
+	const std::vector<int> edge_indices(approximation_edges.begin(),
+	    approximation_edges.end());
+	settings->provenance(report->approximation_tier,
+	    face_indices.empty() ? NULL : face_indices.data(),
+	    face_indices.size(), edge_indices.empty() ? NULL :
+	    edge_indices.data(), edge_indices.size(),
+	    settings->provenance_data);
+    }
     std::string message = "certified repaired mesh: " +
 	std::to_string(report->mesh.removed_faces) + " faces removed, " +
 	std::to_string(report->mesh.added_faces) + " added, " +
