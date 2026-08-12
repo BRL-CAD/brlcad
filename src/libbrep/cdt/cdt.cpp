@@ -57,6 +57,7 @@
 #define MAX_ASSEMBLED_REFINEMENT_POINTS 4096
 #define MAX_SHARED_EDGE_REFINEMENT_DISTANCE_RATIO 0.05
 #define MAX_AUTOMATIC_LOCAL_REPAIR_FACES 8192
+#define MAX_BEST_EFFORT_FOLD_DIVISOR 20
 
 struct assembled_mesh_validation {
     size_t invalid_indices = 0;
@@ -4288,6 +4289,133 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	s_cdt->bot_face_to_brep_face;
     std::set<int> locally_reconstructed_faces;
 
+    std::map<repair_point_key, int> approximate_points;
+    for (int point = 0; point < input_vertex_count; ++point) {
+	approximate_points[repair_point_key{
+	    input_vertices[(size_t)point * 3],
+	    input_vertices[(size_t)point * 3 + 1],
+	    input_vertices[(size_t)point * 3 + 2]}] = point;
+    }
+    const auto append_approximate_face = [&](int face_index) {
+	int *local_faces = NULL;
+	int local_face_count = 0;
+	fastf_t *local_vertices = NULL;
+	int local_vertex_count = 0;
+	int one_face = face_index;
+	const bool assembled = ON_Brep_CDT_Mesh(&local_faces,
+	    &local_face_count, &local_vertices, &local_vertex_count,
+	    NULL, NULL, NULL, NULL, s_cdt, 1, &one_face) == 0 &&
+	    local_faces && local_face_count > 0 && local_vertices &&
+	    local_vertex_count > 0 && local_vertex_count <=
+	    INT_MAX - input_vertex_count && local_face_count <=
+	    INT_MAX - input_face_count;
+	if (!assembled) {
+	    bu_free(local_faces, "approximate face mesh faces");
+	    bu_free(local_vertices, "approximate face mesh vertices");
+	    return 0;
+	}
+	std::vector<int> local_to_input((size_t)local_vertex_count, -1);
+	std::vector<fastf_t> novel_vertices;
+	novel_vertices.reserve((size_t)local_vertex_count * 3);
+	for (int point = 0; point < local_vertex_count; ++point) {
+	    const repair_point_key key = {
+		local_vertices[(size_t)point * 3],
+		local_vertices[(size_t)point * 3 + 1],
+		local_vertices[(size_t)point * 3 + 2]};
+	    const auto existing = approximate_points.find(key);
+	    if (existing != approximate_points.end()) {
+		local_to_input[(size_t)point] = existing->second;
+		continue;
+	    }
+	    const int new_index = input_vertex_count +
+		(int)(novel_vertices.size() / 3);
+	    approximate_points[key] = new_index;
+	    local_to_input[(size_t)point] = new_index;
+	    novel_vertices.insert(novel_vertices.end(),
+		&local_vertices[(size_t)point * 3],
+		&local_vertices[(size_t)point * 3] + 3);
+	}
+	const size_t new_vertex_count = (size_t)input_vertex_count +
+	    novel_vertices.size() / 3;
+	const size_t new_face_count = (size_t)input_face_count +
+	    (size_t)local_face_count;
+	input_vertices = (fastf_t *)bu_realloc(input_vertices,
+	    new_vertex_count * 3 * sizeof(fastf_t),
+	    "repair input vertices with approximate face");
+	input_faces = (int *)bu_realloc(input_faces,
+	    new_face_count * 3 * sizeof(int),
+	    "repair input faces with approximate face");
+	if (!novel_vertices.empty())
+	    memcpy(&input_vertices[(size_t)input_vertex_count * 3],
+		novel_vertices.data(), novel_vertices.size() * sizeof(fastf_t));
+	for (int corner = 0; corner < local_face_count * 3; ++corner)
+	    input_faces[(size_t)input_face_count * 3 + corner] =
+		local_to_input[(size_t)local_faces[corner]];
+	for (int face = 0; face < local_face_count; ++face) {
+	    const repair_triangle_key key = repair_triangle_coordinates(
+		input_vertices,
+		&input_faces[((size_t)input_face_count + face) * 3]);
+	    local_chart_triangle_brep_faces[key].insert(face_index);
+	}
+	input_vertex_count = (int)new_vertex_count;
+	input_face_count = (int)new_face_count;
+	bu_free(local_faces, "approximate face mesh faces");
+	bu_free(local_vertices, "approximate face mesh vertices");
+	return local_face_count;
+    };
+
+    /* Adaptive refinement may stop with a complete, intersection-free face
+     * whose only remaining defect is disagreement with the B-Rep normal.
+     * When the caller explicitly accepts self intersections, retain that
+     * densely sampled surface interpretation as repair input.  It is appended
+     * after the certified prefix and tagged as approximate, so it can never be
+     * reported as rigorous geometry.  Earlier chart and PSLG failures remain
+     * ineligible because they do not provide a trustworthy local topology. */
+    int best_effort_face_count = 0;
+    int best_effort_triangle_count = 0;
+    size_t best_effort_fold_count = 0;
+    std::set<int> best_effort_face_indices;
+    if (!settings->use_full_fast_fallback &&
+	    settings->use_fast_face_fallback &&
+	    settings->mesh.allow_self_intersections) {
+	for (int failed_face : failed_faces) {
+	    const auto diagnostic =
+		s_cdt->failed_face_diagnostics.find(failed_face);
+	    const auto mesh = s_cdt->fmeshes.find(failed_face);
+	    if (diagnostic == s_cdt->failed_face_diagnostics.end() ||
+		    diagnostic->second.stage !=
+		    BREP_CDT_STAGE_ADAPTIVE_REFINEMENT ||
+		    diagnostic->second.result !=
+		    BREP_CDT_RESULT_REFINEMENT_LIMIT ||
+		    mesh == s_cdt->fmeshes.end() ||
+		    !mesh->second.tris_tree.Count() ||
+		    mesh->second.geometric_degenerate_count() ||
+		    mesh->second.self_intersections(NULL, 1))
+		continue;
+	    const size_t folds = mesh->second.incorrect_normal_count();
+	    const size_t triangle_count = mesh->second.tris_tree.Count();
+	    if (folds > std::max((size_t)1, triangle_count /
+		    MAX_BEST_EFFORT_FOLD_DIVISOR))
+		continue;
+	    const int appended = append_approximate_face(failed_face);
+	    if (!appended)
+		continue;
+	    locally_reconstructed_faces.insert(failed_face);
+	    best_effort_face_indices.insert(failed_face);
+	    best_effort_face_count++;
+	    best_effort_triangle_count += appended;
+	    best_effort_fold_count += folds;
+	    bu_log("Face %d: retained the best adaptive surface mesh for "
+		"repair (%d triangles, %zu folded)\n", failed_face,
+		appended, folds);
+	}
+    }
+    const int best_effort_reference_face_count = input_face_count;
+    report->best_effort_faces = best_effort_face_count;
+    report->best_effort_triangles = best_effort_triangle_count;
+    report->best_effort_folded_triangles = (int)std::min(
+	best_effort_fold_count, (size_t)INT_MAX);
+
     /* Before falling back to the display triangulator, retry failed faces by
      * cleaning only their weakly-simple chart boundary.  Successful faces
      * retain the rigorous surface sampling and exact shared-edge points; any
@@ -4296,92 +4424,27 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
      * fidelity accounting continue to distinguish certified input. */
     if (!settings->use_full_fast_fallback &&
 	    settings->use_fast_face_fallback && !failed_faces.empty()) {
-	std::map<repair_point_key, int> assembled_points;
-	for (int point = 0; point < input_vertex_count; ++point) {
-	    assembled_points[repair_point_key{
-		input_vertices[(size_t)point * 3],
-		input_vertices[(size_t)point * 3 + 1],
-		input_vertices[(size_t)point * 3 + 2]}] = point;
-	}
 	const int64_t reconstruction_start = bu_gettime();
 	const double reconstruction_deviation =
 	    settings->max_surface_deviation > 0.0 ?
 	    settings->max_surface_deviation : s_cdt->absmax;
 	for (int failed_face : failed_faces) {
+	    if (locally_reconstructed_faces.find(failed_face) !=
+		    locally_reconstructed_faces.end())
+		continue;
 	    if ((bu_gettime() - reconstruction_start) / 1000 >=
 		    settings->max_fast_time_ms)
 		break;
 	    if (!repair_approximate_face_triangulation(s_cdt, failed_face,
 		    reconstruction_deviation))
 		continue;
-	    int *local_faces = NULL;
-	    int local_face_count = 0;
-	    fastf_t *local_vertices = NULL;
-	    int local_vertex_count = 0;
-	    int one_face = failed_face;
-	    const bool assembled = ON_Brep_CDT_Mesh(&local_faces,
-		&local_face_count, &local_vertices, &local_vertex_count,
-		NULL, NULL, NULL, NULL, s_cdt, 1, &one_face) == 0 &&
-		local_faces && local_face_count > 0 && local_vertices &&
-		local_vertex_count > 0 && local_vertex_count <=
-		INT_MAX - input_vertex_count && local_face_count <=
-		INT_MAX - input_face_count;
-	    if (!assembled) {
-		bu_free(local_faces, "local chart repair faces");
-		bu_free(local_vertices, "local chart repair vertices");
+	    const int local_face_count =
+		append_approximate_face(failed_face);
+	    if (!local_face_count)
 		continue;
-	    }
-	    std::vector<int> local_to_input((size_t)local_vertex_count, -1);
-	    std::vector<fastf_t> novel_vertices;
-	    novel_vertices.reserve((size_t)local_vertex_count * 3);
-	    for (int point = 0; point < local_vertex_count; ++point) {
-		const repair_point_key key = {
-		    local_vertices[(size_t)point * 3],
-		    local_vertices[(size_t)point * 3 + 1],
-		    local_vertices[(size_t)point * 3 + 2]};
-		const auto existing = assembled_points.find(key);
-		if (existing != assembled_points.end()) {
-		    local_to_input[(size_t)point] = existing->second;
-		    continue;
-		}
-		const int new_index = input_vertex_count +
-		    (int)(novel_vertices.size() / 3);
-		assembled_points[key] = new_index;
-		local_to_input[(size_t)point] = new_index;
-		novel_vertices.insert(novel_vertices.end(),
-		    &local_vertices[(size_t)point * 3],
-		    &local_vertices[(size_t)point * 3] + 3);
-	    }
-	    const size_t new_vertex_count = (size_t)input_vertex_count +
-		novel_vertices.size() / 3;
-	    const size_t new_face_count = (size_t)input_face_count +
-		(size_t)local_face_count;
-	    input_vertices = (fastf_t *)bu_realloc(input_vertices,
-		new_vertex_count * 3 * sizeof(fastf_t),
-		"repair input vertices with local chart reconstruction");
-	    input_faces = (int *)bu_realloc(input_faces,
-		new_face_count * 3 * sizeof(int),
-		"repair input faces with local chart reconstruction");
-	    if (!novel_vertices.empty())
-		memcpy(&input_vertices[(size_t)input_vertex_count * 3],
-		    novel_vertices.data(), novel_vertices.size() *
-		    sizeof(fastf_t));
-	    for (int corner = 0; corner < local_face_count * 3; ++corner)
-		input_faces[(size_t)input_face_count * 3 + corner] =
-		    local_to_input[(size_t)local_faces[corner]];
-	    for (int face = 0; face < local_face_count; ++face) {
-		const repair_triangle_key key = repair_triangle_coordinates(
-		    input_vertices,
-		    &input_faces[((size_t)input_face_count + face) * 3]);
-		local_chart_triangle_brep_faces[key].insert(failed_face);
-	    }
-	    input_vertex_count = (int)new_vertex_count;
-	    input_face_count = (int)new_face_count;
 	    locally_reconstructed_faces.insert(failed_face);
 	    bu_log("Face %d: retained a locally cleaned surface chart for "
 		"repair (%d triangles)\n", failed_face, local_face_count);
-	    bu_free(local_faces, "local chart repair faces");
-	    bu_free(local_vertices, "local chart repair vertices");
 	}
     }
 
@@ -5569,7 +5632,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     const int surface_reference_face_count = have_display_reference ?
 	display_reference_face_count :
 	(report->full_fast_fallback_used ? input_face_count :
-	rigorous_input_face_count);
+	best_effort_reference_face_count);
     for (int face = 0; face < surface_reference_face_count; ++face) {
 	double minimum[3] = {
 	    std::numeric_limits<double>::infinity(),
@@ -5701,6 +5764,38 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    continue;
 		}
 		report->input_mesh_surface_samples++;
+		if (changed.source_brep_face >= 0 &&
+			best_effort_face_indices.find(changed.source_brep_face) !=
+			best_effort_face_indices.end()) {
+		    /* The approximation is accepted against the retained surface
+		     * mesh, but still quantify how far its chord samples lie from
+		     * the source face.  A miss means no face projection was found
+		     * within four requested tolerances; report it without confusing
+		     * this explicitly tagged interpretation with an exact match. */
+		    const double support_limit =
+			report->allowed_surface_deviation <=
+			std::numeric_limits<double>::max() / 4.0 ?
+			4.0 * report->allowed_surface_deviation :
+			report->allowed_surface_deviation;
+		    std::set<int> support_filter = {
+			changed.source_brep_face
+		    };
+		    double support_distance =
+			std::numeric_limits<double>::infinity();
+		    bool support_untrimmed = false;
+		    if (!repair_surface_distance(s_cdt->orig_brep,
+			    face_bounds, face_trees, face_contexts,
+			    samples[sample], support_limit, true,
+			    &support_distance, &support_untrimmed, NULL, NULL,
+			    &support_filter)) {
+			report->best_effort_reference_failures++;
+			continue;
+		    }
+		    report->best_effort_reference_samples++;
+		    report->max_best_effort_surface_deviation = std::max(
+			report->max_best_effort_surface_deviation,
+			(fastf_t)support_distance);
+		}
 	    }
 	    if (used_untrimmed)
 		report->untrimmed_surface_samples++;
@@ -5990,6 +6085,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	" rigorous triangles subdivided, " +
 	std::to_string(report->missing_rigorous_triangles) +
 	" rigorously sampled triangles locally replaced, " +
+	std::to_string(report->best_effort_triangles) +
+	" best-effort surface triangles retained, " +
 	std::to_string(report->changed_faces) +
 	" changed triangles, sampled maximum reference deviation " +
 	std::to_string(report->max_surface_deviation);
