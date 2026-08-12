@@ -539,6 +539,68 @@ exercise_periodic_metric_chart()
 	    return false;
 	}
     }
+
+    std::vector<std::pair<double, double>> seam_hole_points =
+	native_points;
+    std::vector<ON_3dPoint> seam_hole_storage = point_storage;
+    std::vector<cdt_topo_vertex_id> seam_hole_topology =
+	topology_vertices;
+    std::vector<int> seam_hole;
+    const double hole_u_radius = 0.04 * period;
+    const double hole_v_center = 0.5 * (low + high);
+    const double hole_v_radius = 0.2 * (high - low);
+    for (int i = 0; i < 16; ++i) {
+	const double angle = 2.0 * ON_PI * i / 16.0;
+	double u = udom.Min() + hole_u_radius * std::sin(angle);
+	const double v = hole_v_center + hole_v_radius * std::cos(angle);
+	seam_hole.push_back((int)seam_hole_points.size());
+	seam_hole_points.push_back(std::make_pair(u, v));
+	while (u < udom.Min())
+	    u += period;
+	while (u > udom.Max())
+	    u -= period;
+	seam_hole_storage.push_back(surface->PointAt(u, v));
+	seam_hole_topology.push_back(CDT_TOPOLOGY_ID_NONE);
+    }
+    seam_hole.push_back(seam_hole.front());
+    std::vector<const ON_3dPoint *> seam_hole_3d;
+    seam_hole_3d.reserve(seam_hole_storage.size());
+    for (const ON_3dPoint &point : seam_hole_storage)
+	seam_hole_3d.push_back(&point);
+    cdt_face_chart seam_hole_chart;
+    if (!seam_hole_chart.build(face, seam_hole_points, outer,
+	    std::vector<std::vector<int>>(1, seam_hole),
+	    std::vector<int>(), std::vector<int>(), seam_hole_3d,
+	    seam_hole_topology) ||
+	    seam_hole_chart.type() != CDT_FACE_CHART_SURFACE_METRIC ||
+	    !seam_hole_chart.holes.empty() ||
+	    seam_hole_chart.outer.size() <= chart.outer.size()) {
+	std::cerr << "periodic metric seam hole was not opened into the "
+	    "outline: " << seam_hole_chart.failure() << std::endl;
+	return false;
+    }
+    std::vector<point2d_t> seam_hole_chart_points(
+	seam_hole_chart.points.size());
+    for (size_t i = 0; i < seam_hole_chart.points.size(); ++i)
+	V2SET(seam_hole_chart_points[i],
+	    seam_hole_chart.points[i].first,
+	    seam_hole_chart.points[i].second);
+    std::vector<int> seam_hole_outline(seam_hole_chart.outer);
+    seam_hole_outline.push_back(seam_hole_outline.front());
+    int *seam_hole_faces = NULL;
+    int seam_hole_face_count = 0;
+    struct bg_triangulation_report seam_hole_report = {0, -1, {0}};
+    const int seam_hole_status = bg_nested_poly_triangulate_strict(
+	&seam_hole_faces, &seam_hole_face_count, NULL, NULL,
+	seam_hole_outline.data(), seam_hole_outline.size(), NULL, NULL, 0,
+	NULL, 0, seam_hole_chart_points.data(),
+	seam_hole_chart_points.size(), &seam_hole_report);
+    bu_free(seam_hole_faces, "periodic metric seam hole triangles");
+    if (seam_hole_status != BRLCAD_OK || seam_hole_face_count <= 0) {
+	std::cerr << "opened periodic metric seam hole did not "
+	    "triangulate: " << seam_hole_report.message << std::endl;
+	return false;
+    }
     return true;
 }
 
