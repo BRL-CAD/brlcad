@@ -1,3 +1,7 @@
+if(POLICY CMP0053)
+  cmake_policy(SET CMP0053 NEW)
+endif()
+
 if(NOT DEFINED CHANGES_RULES_FILE)
   message(FATAL_ERROR "CHANGES_RULES_FILE is not defined")
 endif()
