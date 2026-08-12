@@ -1860,8 +1860,14 @@ get_loop_sample_points(
 		constrained.p2d = ON_2dPoint(uv[X], uv[Y]);
 		constrained.p3d = scratch.make_point(ON_3dPoint(
 		    point[X], point[Y], point[Z]));
-		constrained.n3d = NULL;
 		constrained.t = trim_parameter;
+		if (options->trim_sample_source) {
+		    const void *source = options->trim_sample_source(
+			face.m_face_index, trim->m_trim_index, sample_index,
+			options->trim_sample_data);
+		    constrained.source_id = source;
+		}
+		constrained.n3d = NULL;
 		constrained.e = ON_UNSET_VALUE;
 		points->Append(constrained);
 	    }
@@ -4867,7 +4873,7 @@ fast_loop_is_provably_degenerate(const ON_Surface *surface,
 
 static bool
 bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
-	std::vector<fastf_t> &pnts,
+	std::vector<fastf_t> &pnts, std::vector<const void *> &point_sources,
 	const ON_BrepFace &face,
 	const struct bg_tess_tol *ttol,
 	const struct bn_tol *tol,
@@ -4884,6 +4890,25 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	return false;
     fast_surface_metrics metrics;
     int fi = face.m_face_index;
+    const bool track_point_sources = options && options->point_source;
+    const bool debug_provenance = getenv(
+	"BRLCAD_CDT_DEBUG_FAST_PROVENANCE") != NULL;
+    const auto log_provenance = [&](const char *stage,
+	    ON_SimpleArray<BrepTrimPoint> **loop_points, int loop_count) {
+	if (!debug_provenance)
+	    return;
+	size_t total = 0;
+	size_t identified = 0;
+	for (int li = 0; li < loop_count; ++li) {
+	    if (!loop_points[li])
+		continue;
+	    total += (size_t)loop_points[li]->Count();
+	    for (int pi = 0; pi < loop_points[li]->Count(); ++pi)
+		identified += (*loop_points[li])[pi].source_id ? 1 : 0;
+	}
+	bu_log("Fast face %d: %s retained %zu/%zu constraint identities\n",
+	    fi, stage, identified, total);
+    };
 
     fastf_t max_dist = 0.0;
     fast_surface_metrics_get(s, &metrics);
@@ -4905,6 +4930,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	get_loop_sample_points(brep_loop_points[li], face, loop, max_dist,
 		ttol, tol, scratch, model_diagonal, repair_pcurves, options);
     }
+    log_provenance("sampling", brep_loop_points, loop_cnt);
     if (loop_cnt == 1)
 	fast_reconstruct_untrimmed_domain_loop(s, face,
 	    *brep_loop_points[0],
@@ -4920,11 +4946,13 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 		*brep_loop_points[li]);
 	}
     }
+    log_provenance("periodic normalization", brep_loop_points, loop_cnt);
 
     fast_bridge_store bridgePoints;
     if (s->IsClosed(0) || s->IsClosed(1))
 	PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points,
 	    BREP_SAME_POINT_TOLERANCE, bridgePoints);
+    log_provenance("closed surface checks", brep_loop_points, loop_cnt);
     int full_periodic_closed_dir = -1;
     int full_periodic_outer_index = -1;
     bool full_periodic_face = fast_reconstruct_full_periodic_face(s,
@@ -4960,6 +4988,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     if (!full_periodic_face)
 	fast_reconstruct_periodic_strip(s, face, brep_loop_points,
 	    model_diagonal, scratch, &full_periodic_outer_index);
+    log_provenance("periodic reconstruction", brep_loop_points, loop_cnt);
     ON_SimpleArray<BrepTrimPoint> reconstructed_hole;
     const bool split_touching_loop = loop_cnt == 1 &&
 	fast_split_touching_periodic_loop(s, face, *brep_loop_points[0],
@@ -5002,6 +5031,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    pnts.push_back(boundary_points[i].p3d->x);
 	    pnts.push_back(boundary_points[i].p3d->y);
 	    pnts.push_back(boundary_points[i].p3d->z);
+	    if (track_point_sources)
+		point_sources.push_back(boundary_points[i].source_id);
 	    pind_map[tpnts.size()-1] = pnts.size()/3 - 1;
 	}
 	for (int i = 1; i < boundary_points.Count(); i++) {
@@ -5313,6 +5344,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 		pnts.push_back(triangle_points[j].x);
 		pnts.push_back(triangle_points[j].y);
 		pnts.push_back(triangle_points[j].z);
+		if (track_point_sources)
+		    point_sources.push_back(NULL);
 		pind_map[tris[j]] = pnts.size()/3 - 1;
 		point_index = pind_map[tris[j]];
 		faces.push_back(point_index);
@@ -5352,7 +5385,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     }
 
     return !faces.empty() && faces.size() % 3 == 0 &&
-	pnts.size() % 3 == 0 && pnt_norms.size() == faces.size() * 3;
+	pnts.size() % 3 == 0 && pnt_norms.size() == faces.size() * 3 &&
+	(!track_point_sources || point_sources.size() == pnts.size() / 3);
 }
 
 enum fast_face_outcome {
@@ -5519,7 +5553,8 @@ fast_face_is_provably_degenerate(const ON_BrepFace &face)
 
 static fast_face_outcome
 bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
-	std::vector<fastf_t> &pnts, const ON_BrepFace &face,
+	std::vector<fastf_t> &pnts, std::vector<const void *> &point_sources,
+	const ON_BrepFace &face,
 	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
 	double model_diagonal,
 	const struct brep_cdt_fast_options *options)
@@ -5541,14 +5576,18 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    }
 	}
     }
-    if (bg_CDT_attempt(faces, pnt_norms, pnts, face, ttol, tol,
+
+    if (bg_CDT_attempt(faces, pnt_norms, pnts, point_sources, face, ttol, tol,
 	    model_diagonal, repair_first, options))
 	return FAST_FACE_COMPLETED;
 
     faces.clear();
     pnt_norms.clear();
     pnts.clear();
-    return bg_CDT_attempt(faces, pnt_norms, pnts, face, ttol, tol,
+
+    point_sources.clear();
+    return bg_CDT_attempt(faces, pnt_norms, pnts, point_sources, face,
+	    ttol, tol,
 	    model_diagonal, !repair_first, options) ? FAST_FACE_COMPLETED :
 	FAST_FACE_FAILED;
 }
@@ -5558,6 +5597,7 @@ struct fast_cdt_face_result {
     std::vector<int> faces;
     std::vector<fastf_t> norms;
     std::vector<fastf_t> pnts;
+    std::vector<const void *> point_sources;
     bool completed = false;
     bool failed = false;
     bool skipped_degenerate = false;
@@ -5605,7 +5645,8 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	fast_cdt_face_result &result = (*state->results)[face_index];
 	fast_face_outcome outcome = FAST_FACE_FAILED;
 	try {
-	    outcome = bg_CDT(result.faces, result.norms, result.pnts, face,
+	    outcome = bg_CDT(result.faces, result.norms, result.pnts,
+		result.point_sources, face,
 		state->ttol, state->tol, state->model_diagonal,
 		state->options);
 	} catch (const std::bad_alloc &) {
@@ -5619,6 +5660,7 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	    result.faces.clear();
 	    result.norms.clear();
 	    result.pnts.clear();
+	    result.point_sources.clear();
 	    if (!state->allow_partial)
 		state->stop = true;
 	    continue;
@@ -5630,7 +5672,8 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	}
 
 	const size_t result_bytes = result.faces.size() * sizeof(int) +
-	    (result.norms.size() + result.pnts.size()) * sizeof(fastf_t);
+	    (result.norms.size() + result.pnts.size()) * sizeof(fastf_t) +
+	    result.point_sources.size() * sizeof(const void *);
 	const size_t result_points = result.pnts.size() / 3;
 	if (state->result_bytes.fetch_add(result_bytes) + result_bytes >
 		state->max_result_bytes) {
@@ -5640,6 +5683,7 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	    result.faces.clear();
 	    result.norms.clear();
 	    result.pnts.clear();
+	    result.point_sources.clear();
 	    result.failed = true;
 	    return;
 	}
@@ -5652,6 +5696,7 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	    result.faces.clear();
 	    result.norms.clear();
 	    result.pnts.clear();
+	    result.point_sources.clear();
 	    result.failed = true;
 	    return;
 	}
@@ -5678,6 +5723,9 @@ brep_cdt_fast_options_default(struct brep_cdt_fast_options *options)
     options->trim_sample_count = NULL;
     options->trim_sample = NULL;
     options->trim_sample_data = NULL;
+    options->trim_sample_source = NULL;
+    options->point_source = NULL;
+    options->point_source_data = NULL;
 }
 
 int
@@ -5723,6 +5771,9 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	options.trim_sample_count = user_options->trim_sample_count;
 	options.trim_sample = user_options->trim_sample;
 	options.trim_sample_data = user_options->trim_sample_data;
+	options.trim_sample_source = user_options->trim_sample_source;
+	options.point_source = user_options->point_source;
+	options.point_source_data = user_options->point_source_data;
     }
     options.max_workers = std::max((size_t)1,
 	std::min(options.max_workers, (size_t)brep_face_count));
@@ -5771,7 +5822,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    fast_face_outcome outcome = FAST_FACE_FAILED;
 	    try {
 		outcome = bg_CDT(result.faces, result.norms, result.pnts,
-		    brep->m_F[index], ttol, tol, model_diagonal, &options);
+		    result.point_sources, brep->m_F[index], ttol, tol,
+		    model_diagonal, &options);
 	    } catch (const std::bad_alloc &) {
 		hit_memory_limit = true;
 	    } catch (...) {
@@ -5784,7 +5836,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 		result.skipped_degenerate = true;
 	    } else {
 		const size_t bytes = result.faces.size() * sizeof(int) +
-		    (result.norms.size() + result.pnts.size()) * sizeof(fastf_t);
+		    (result.norms.size() + result.pnts.size()) * sizeof(fastf_t) +
+		    result.point_sources.size() * sizeof(const void *);
 		if (bytes > options.max_result_bytes) {
 		    hit_memory_limit = true;
 		    result.failed = true;
@@ -5800,6 +5853,7 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    result.faces.clear();
 	    result.norms.clear();
 	    result.pnts.clear();
+	    result.point_sources.clear();
 	}
     }
 
@@ -5834,6 +5888,14 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    options.face_output(fi, all_faces.size() / 3,
 		result.faces.size() / 3, point_offset,
 		result.pnts.size() / 3, options.face_output_data);
+	if (options.point_source) {
+	    for (size_t point = 0; point < result.pnts.size() / 3; ++point) {
+		const void *source = point < result.point_sources.size() ?
+		    result.point_sources[point] : NULL;
+		options.point_source(fi, point_offset + point, source,
+		    options.point_source_data);
+	    }
+	}
 	for (size_t i = 0; i < result.faces.size(); i++)
 	    all_faces.push_back((int)point_offset + result.faces[i]);
 	all_norms.insert(all_norms.end(), result.norms.begin(),
