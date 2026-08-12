@@ -259,9 +259,14 @@ struct brep_cdt_repair_report {
     /** Chord samples with no source projection inside that diagnostic bound. */
     size_t best_effort_reference_failures;
     fastf_t max_best_effort_surface_deviation;
+    /** Sparse local periodic strips joining rigorous neighboring boundaries. */
+    int boundary_strip_faces;
+    int boundary_strip_triangles;
+    size_t boundary_strip_constrained_edges;
+    size_t boundary_strip_constrained_samples;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
@@ -494,6 +499,7 @@ extern BREP_EXPORT int cdt_test_assembled_mesh_validation(void);
 extern BREP_EXPORT int cdt_test_repair_edge_tube(void);
 extern BREP_EXPORT int cdt_test_repair_triangle_split(void);
 extern BREP_EXPORT int cdt_test_repair_patch_limits(void);
+extern BREP_EXPORT int cdt_test_repair_periodic_strip(void);
 extern BREP_EXPORT int cdt_test_subtolerance_edge_collapse(void);
 extern BREP_EXPORT int cdt_test_subtolerance_ring(void);
 extern BREP_EXPORT int cdt_test_developable_clean(void);
