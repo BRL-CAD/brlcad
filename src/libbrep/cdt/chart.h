@@ -140,7 +140,8 @@ private:
 	const std::vector<const ON_3dPoint *> &points_3d,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices,
 	const ON_Cylinder &cylinder);
-    size_t repair_cylinder_seam_holes();
+    size_t repair_periodic_seam_holes(double period,
+	int closed_coordinate);
     bool validate_boundary(const ON_BrepFace &face,
 	const std::vector<std::pair<double, double>> &native_points);
     void repair_nesting();
