@@ -402,25 +402,125 @@ exercise_offset_full_cylinder_seam()
 	    << std::endl;
 	return false;
     }
-    std::vector<point2d_t> seam_hole_chart_points(
-	seam_hole_chart.points.size());
-    for (size_t i = 0; i < seam_hole_chart.points.size(); ++i)
-	V2SET(seam_hole_chart_points[i], seam_hole_chart.points[i].first,
-	    seam_hole_chart.points[i].second);
-    std::vector<int> seam_hole_outline(seam_hole_chart.outer);
-    seam_hole_outline.push_back(seam_hole_outline.front());
-    int *seam_hole_faces = NULL;
-    int seam_hole_face_count = 0;
-    struct bg_triangulation_report seam_hole_report = {0, -1, {0}};
-    const int seam_hole_status = bg_nested_poly_triangulate_strict(
-	&seam_hole_faces, &seam_hole_face_count, NULL, NULL,
-	seam_hole_outline.data(), seam_hole_outline.size(), NULL, NULL, 0,
-	NULL, 0, seam_hole_chart_points.data(), seam_hole_chart_points.size(),
-	&seam_hole_report);
-    bu_free(seam_hole_faces, "cylinder seam hole triangles");
-    if (seam_hole_status != BRLCAD_OK || seam_hole_face_count <= 0) {
+    const auto opened_hole_triangulates = [](const cdt_face_chart &candidate,
+	    std::string &failure) {
+	std::vector<point2d_t> chart_points(candidate.points.size());
+	for (size_t i = 0; i < candidate.points.size(); ++i)
+	    V2SET(chart_points[i], candidate.points[i].first,
+		candidate.points[i].second);
+	std::vector<int> outline(candidate.outer);
+	outline.push_back(outline.front());
+	int *faces = NULL;
+	int face_count = 0;
+	struct bg_triangulation_report report = {0, -1, {0}};
+	const int status = bg_nested_poly_triangulate_strict(&faces,
+	    &face_count, NULL, NULL, outline.data(), outline.size(), NULL,
+	    NULL, 0, NULL, 0, chart_points.data(), chart_points.size(),
+	    &report);
+	bu_free(faces, "opened cylinder seam hole triangles");
+	failure = report.message;
+	return status == BRLCAD_OK && face_count > 0;
+    };
+    std::string seam_hole_failure;
+    if (!opened_hole_triangulates(seam_hole_chart,
+	    seam_hole_failure)) {
 	std::cerr << "opened cylinder seam hole did not triangulate: "
-	    << seam_hole_report.message << std::endl;
+	    << seam_hole_failure << std::endl;
+	return false;
+    }
+
+    /* A physical hole edge may coincide with the artificial cut for an
+     * entire sampled run.  The complementary arc still opens on the other
+     * periodic side, and every point in the coincident run must survive. */
+    std::vector<std::pair<double, double>> tangent_hole_points =
+	native_points;
+    std::vector<ON_3dPoint> tangent_hole_storage = point_storage;
+    std::vector<cdt_topo_vertex_id> tangent_hole_topology =
+	topology_vertices;
+    std::vector<int> tangent_hole;
+    const double tangent_closed[6] = {0.0, 0.0, 0.0,
+	-hole_closed_radius, -1.5 * hole_closed_radius,
+	-hole_closed_radius};
+    const double tangent_open[6] = {hole_open_center + hole_open_radius,
+	hole_open_center, hole_open_center - hole_open_radius,
+	hole_open_center - hole_open_radius, hole_open_center,
+	hole_open_center + hole_open_radius};
+    for (int i = 0; i < 6; ++i) {
+	ON_2dPoint native;
+	native[closed_direction] = closed_domain.Min() + tangent_closed[i];
+	native[open_direction] = tangent_open[i];
+	tangent_hole.push_back((int)tangent_hole_points.size());
+	tangent_hole_points.push_back(std::make_pair(native.x, native.y));
+	while (native[closed_direction] < closed_domain.Min())
+	    native[closed_direction] += closed_domain.Length();
+	tangent_hole_storage.push_back(surface->PointAt(native.x, native.y));
+	tangent_hole_topology.push_back(CDT_TOPOLOGY_ID_NONE);
+    }
+    tangent_hole.push_back(tangent_hole.front());
+    std::vector<const ON_3dPoint *> tangent_hole_3d;
+    tangent_hole_3d.reserve(tangent_hole_storage.size());
+    for (const ON_3dPoint &point : tangent_hole_storage)
+	tangent_hole_3d.push_back(&point);
+    cdt_face_chart tangent_hole_chart;
+    if (!tangent_hole_chart.build(*side, tangent_hole_points, outer,
+	    std::vector<std::vector<int>>(1, tangent_hole),
+	    std::vector<int>(), std::vector<int>(), tangent_hole_3d,
+	    tangent_hole_topology) || !tangent_hole_chart.holes.empty() ||
+	    tangent_hole_chart.outer.size() <= chart.outer.size() ||
+	    !opened_hole_triangulates(tangent_hole_chart,
+		seam_hole_failure)) {
+	std::cerr << "cylinder seam-run hole did not open and triangulate: "
+	    << tangent_hole_chart.failure() << " " << seam_hole_failure
+	    << std::endl;
+	return false;
+    }
+    std::set<long> tangent_boundary_sources;
+    for (int point : tangent_hole_chart.outer) {
+	if (point >= 0 && (size_t)point < tangent_hole_chart.vertices.size())
+	    tangent_boundary_sources.insert(
+		tangent_hole_chart.vertices[(size_t)point].native_point);
+    }
+    for (size_t source_index = tangent_hole_points.size() - 6;
+	    source_index < tangent_hole_points.size(); ++source_index) {
+	if (tangent_boundary_sources.find((long)source_index) ==
+		tangent_boundary_sources.end()) {
+	    std::cerr << "cylinder seam-run hole lost a boundary sample"
+		<< std::endl;
+	    return false;
+	}
+    }
+
+    std::vector<std::pair<double, double>> high_tangent_points =
+	native_points;
+    std::vector<ON_3dPoint> high_tangent_storage = point_storage;
+    std::vector<cdt_topo_vertex_id> high_tangent_topology =
+	topology_vertices;
+    std::vector<int> high_tangent_hole;
+    for (int i = 0; i < 6; ++i) {
+	ON_2dPoint native;
+	native[closed_direction] = closed_domain.Max() + tangent_closed[i];
+	native[open_direction] = tangent_open[i];
+	high_tangent_hole.push_back((int)high_tangent_points.size());
+	high_tangent_points.push_back(std::make_pair(native.x, native.y));
+	high_tangent_storage.push_back(surface->PointAt(native.x, native.y));
+	high_tangent_topology.push_back(CDT_TOPOLOGY_ID_NONE);
+    }
+    high_tangent_hole.push_back(high_tangent_hole.front());
+    std::vector<const ON_3dPoint *> high_tangent_3d;
+    high_tangent_3d.reserve(high_tangent_storage.size());
+    for (const ON_3dPoint &point : high_tangent_storage)
+	high_tangent_3d.push_back(&point);
+    cdt_face_chart high_tangent_chart;
+    if (!high_tangent_chart.build(*side, high_tangent_points, outer,
+	    std::vector<std::vector<int>>(1, high_tangent_hole),
+	    std::vector<int>(), std::vector<int>(), high_tangent_3d,
+	    high_tangent_topology) || !high_tangent_chart.holes.empty() ||
+	    high_tangent_chart.outer.size() <= chart.outer.size() ||
+	    !opened_hole_triangulates(high_tangent_chart,
+		seam_hole_failure)) {
+	std::cerr << "high cylinder seam-run hole did not open and "
+	    "triangulate: " << high_tangent_chart.failure() << " "
+	    << seam_hole_failure << std::endl;
 	return false;
     }
 
