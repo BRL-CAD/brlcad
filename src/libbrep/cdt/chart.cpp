@@ -3623,9 +3623,36 @@ cdt_face_chart::build_polar(const ON_BrepFace &face,
 	}
 	begin = end;
     }
+    /* A sphere lune bounded by two distinct meridians is already a complete
+     * disk in this chart.  Interior sample rays improve a whole-sphere chart,
+     * and paired coincident seams need their explicit reconstruction above,
+     * but neither is required to triangulate a nondegenerate physical lune.
+     * Retain the old rejection for an unpaired zero-area cut. */
     if (holes.empty() && !ray_count && !reconstructed_paired_seam) {
-	m_failure = "two-pole sphere chart has no interior cap samples";
-	return false;
+	long double twice_area = 0.0L;
+	double min_x = DBL_MAX;
+	double min_y = DBL_MAX;
+	double max_x = -DBL_MAX;
+	double max_y = -DBL_MAX;
+	for (size_t i = 0; i < outer.size(); ++i) {
+	    const std::pair<double, double> &first =
+		points[(size_t)outer[i]];
+	    const std::pair<double, double> &second =
+		points[(size_t)outer[(i + 1) % outer.size()]];
+	    twice_area += (long double)first.first * second.second -
+		(long double)second.first * first.second;
+	    min_x = std::min(min_x, first.first);
+	    min_y = std::min(min_y, first.second);
+	    max_x = std::max(max_x, first.first);
+	    max_y = std::max(max_y, first.second);
+	}
+	const long double area_scale = std::max(1.0L,
+	    (long double)(max_x - min_x) * (max_y - min_y));
+	if (std::fabs(twice_area) <= 64.0L *
+		std::numeric_limits<double>::epsilon() * area_scale) {
+	    m_failure = "two-pole sphere chart boundary has no enclosed area";
+	    return false;
+	}
     }
     return validate_boundary(face, native_points);
 }
