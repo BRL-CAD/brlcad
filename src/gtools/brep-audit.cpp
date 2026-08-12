@@ -126,6 +126,10 @@ struct geom_result {
     int repair_boundary_strip_triangles = 0;
     size_t repair_boundary_strip_constrained_edges = 0;
     size_t repair_boundary_strip_constrained_samples = 0;
+    int repair_topological_disk_faces = 0;
+    int repair_topological_disk_triangles = 0;
+    size_t repair_topological_disk_constrained_edges = 0;
+    size_t repair_topological_disk_constrained_samples = 0;
     int repair_missing_rigorous_triangles = 0;
     int repair_subdivided_rigorous_triangles = 0;
     int repair_replaced_rigorous_components = 0;
@@ -926,6 +930,14 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.boundary_strip_constrained_edges;
 	result.repair_boundary_strip_constrained_samples =
 	    repair_report.boundary_strip_constrained_samples;
+	result.repair_topological_disk_faces =
+	    repair_report.topological_disk_faces;
+	result.repair_topological_disk_triangles =
+	    repair_report.topological_disk_triangles;
+	result.repair_topological_disk_constrained_edges =
+	    repair_report.topological_disk_constrained_edges;
+	result.repair_topological_disk_constrained_samples =
+	    repair_report.topological_disk_constrained_samples;
 	result.repair_missing_rigorous_triangles =
 	    repair_report.missing_rigorous_triangles;
 	result.repair_subdivided_rigorous_triangles =
@@ -1291,6 +1303,14 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.repair_boundary_strip_constrained_edges
 	<< ",\"boundary_strip_constrained_samples\":"
 	<< result.repair_boundary_strip_constrained_samples
+	<< ",\"topological_disk_faces\":"
+	<< result.repair_topological_disk_faces
+	<< ",\"topological_disk_triangles\":"
+	<< result.repair_topological_disk_triangles
+	<< ",\"topological_disk_constrained_edges\":"
+	<< result.repair_topological_disk_constrained_edges
+	<< ",\"topological_disk_constrained_samples\":"
+	<< result.repair_topological_disk_constrained_samples
 	<< ",\"missing_rigorous_triangles\":"
 	<< result.repair_missing_rigorous_triangles
 	<< ",\"subdivided_rigorous_triangles\":"

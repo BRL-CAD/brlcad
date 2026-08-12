@@ -3884,6 +3884,165 @@ struct repair_boundary_patch {
     bool analytic_cylinder_strip = false;
 };
 
+/* Some imported faces have a trustworthy topological disk boundary but no
+ * globally consistent pullback: loose incident edge curves can cross on the
+ * source surface even though their authoritative 3-D samples form the local
+ * boundary expected by adjacent faces.  Preserve every shared sample and use
+ * the loop order itself as the disk embedding.  A single interior point keeps
+ * the interpretation bounded to this failed face and avoids the unreliable
+ * best-fit-plane projection historically used for this case. */
+static bool
+repair_constrained_topological_disk(struct ON_Brep_CDT_State *s_cdt,
+	int face_index, const repair_fast_constraint_store &constraints,
+	size_t max_points, repair_boundary_patch &patch)
+{
+    patch = repair_boundary_patch();
+    if (!s_cdt || !s_cdt->brep || face_index < 0 ||
+	    face_index >= s_cdt->brep->m_F.Count() || max_points < 4 ||
+	    constraints.face_index != face_index)
+	return false;
+    const ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+    const ON_BrepLoop *outer = face.OuterLoop();
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!outer || !surface || face.LoopCount() != 1 ||
+	    outer->TrimCount() < 3)
+	return false;
+
+    struct disk_point {
+	ON_2dPoint uv;
+	ON_3dPoint point;
+    };
+    std::vector<disk_point> boundary;
+    size_t constrained_edges = 0;
+    size_t constrained_samples = 0;
+    const double coordinate_scale = std::max(1.0,
+	s_cdt->brep->BoundingBox().Diagonal().Length());
+    const double join_tolerance = 4096.0 *
+	std::numeric_limits<double>::epsilon() * coordinate_scale;
+    const auto same_point = [&](const ON_3dPoint &first,
+	    const ON_3dPoint &second) {
+	return first.DistanceTo(second) <= join_tolerance;
+    };
+    for (int trim_index = 0; trim_index < outer->TrimCount();
+	    ++trim_index) {
+	const ON_BrepTrim *trim = outer->Trim(trim_index);
+	if (!trim)
+	    return false;
+	if (trim->m_type == ON_BrepTrim::singular)
+	    return false;
+	const auto stored = constraints.trims.find(trim->m_trim_index);
+	if (stored == constraints.trims.end() || stored->second.size() < 2)
+	    return false;
+	const std::vector<repair_fast_trim_sample> &samples = stored->second;
+	const ON_2dPoint trim_start = trim->PointAt(trim->Domain().Min());
+	const double front_distance = std::hypot(
+	    samples.front().uv[X] - trim_start.x,
+	    samples.front().uv[Y] - trim_start.y);
+	const double back_distance = std::hypot(
+	    samples.back().uv[X] - trim_start.x,
+	    samples.back().uv[Y] - trim_start.y);
+	const bool reverse = back_distance < front_distance;
+	for (size_t i = 0; i < samples.size(); ++i) {
+	    const repair_fast_trim_sample &sample = reverse ?
+		samples[samples.size() - 1 - i] : samples[i];
+	    const disk_point next = {
+		ON_2dPoint(sample.uv[X], sample.uv[Y]),
+		ON_3dPoint(sample.point)
+	    };
+	    if (!next.uv.IsValid() || !next.point.IsValid())
+		return false;
+	    if (i == 0 && !boundary.empty() &&
+		    !same_point(boundary.back().point, next.point))
+		return false;
+	    if (!boundary.empty() && same_point(boundary.back().point,
+		    next.point))
+		continue;
+	    boundary.push_back(next);
+	}
+	constrained_edges++;
+	constrained_samples += samples.size();
+    }
+    const bool closed_boundary = boundary.size() > 1 &&
+	same_point(boundary.front().point, boundary.back().point);
+    if (closed_boundary)
+	boundary.pop_back();
+    if (!closed_boundary || boundary.size() < 3 ||
+	    boundary.size() + 1 > max_points)
+	return false;
+    std::set<repair_point_key> distinct_boundary;
+    for (const disk_point &point : boundary) {
+	const repair_point_key key = {
+	    point.point.x, point.point.y, point.point.z
+	};
+	if (!distinct_boundary.insert(key).second)
+	    return false;
+    }
+
+    ON_2dPoint center_uv(0.0, 0.0);
+    ON_3dPoint boundary_center(0.0, 0.0, 0.0);
+    for (const disk_point &point : boundary) {
+	center_uv += point.uv;
+	boundary_center += point.point;
+    }
+    center_uv /= (double)boundary.size();
+    boundary_center /= (double)boundary.size();
+    ON_3dPoint center = surface->PointAt(center_uv.x, center_uv.y);
+    const double allowed_center_offset = std::isfinite(s_cdt->absmax) &&
+	s_cdt->absmax > 0.0 ? std::max((double)BN_TOL_DIST,
+	(double)s_cdt->absmax) : (double)BN_TOL_DIST;
+    if (!center.IsValid() || center.DistanceTo(boundary_center) >
+	    4.0 * allowed_center_offset)
+	center = boundary_center;
+    if (!center.IsValid())
+	return false;
+
+    patch.vertices.reserve((boundary.size() + 1) * 3);
+    for (const disk_point &point : boundary) {
+	patch.vertices.push_back(point.point.x);
+	patch.vertices.push_back(point.point.y);
+	patch.vertices.push_back(point.point.z);
+    }
+    const int center_index = (int)boundary.size();
+    patch.vertices.push_back(center.x);
+    patch.vertices.push_back(center.y);
+    patch.vertices.push_back(center.z);
+
+    ON_3dVector fan_normal(0.0, 0.0, 0.0);
+    const double area_tolerance = 4096.0 *
+	std::numeric_limits<double>::epsilon() * coordinate_scale *
+	coordinate_scale;
+    for (size_t i = 0; i < boundary.size(); ++i) {
+	const size_t next = (i + 1) % boundary.size();
+	const ON_3dVector normal = ON_CrossProduct(
+	    boundary[next].point - boundary[i].point,
+	    center - boundary[i].point);
+	if (!(normal.Length() > area_tolerance)) {
+	    patch = repair_boundary_patch();
+	    return false;
+	}
+	fan_normal += normal;
+	patch.faces.push_back((int)i);
+	patch.faces.push_back((int)next);
+	patch.faces.push_back(center_index);
+    }
+    ON_3dPoint surface_point;
+    ON_3dVector surface_normal;
+    if (surface_EvNormal(surface, center_uv.x, center_uv.y,
+	    surface_point, surface_normal)) {
+	if (face.m_bRev)
+	    surface_normal = -surface_normal;
+	if (fan_normal * surface_normal < 0.0) {
+	    for (size_t triangle = 0; triangle < patch.faces.size() / 3;
+		    ++triangle)
+		std::swap(patch.faces[triangle * 3 + 1],
+		    patch.faces[triangle * 3 + 2]);
+	}
+    }
+    patch.constrained_edges = constrained_edges;
+    patch.constrained_samples = constrained_samples;
+    return true;
+}
+
 /* A failed periodic side face may still have two authoritative closed edge
  * loops supplied by rigorous neighboring faces.  Join those loops in a
  * synthetic rectangular chart while keeping their exact shared 3-D samples.
@@ -5950,9 +6109,123 @@ repair_closed_periodic_surface(struct ON_Brep_CDT_State *s_cdt,
     return true;
 }
 
+static int
+repair_topological_disk_contract(void)
+{
+    ON_3dPoint corners[8] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(4.0, 0.0, 0.0),
+	ON_3dPoint(4.0, 3.0, 0.0), ON_3dPoint(0.0, 3.0, 0.0),
+	ON_3dPoint(0.0, 0.0, 2.0), ON_3dPoint(4.0, 0.0, 2.0),
+	ON_3dPoint(4.0, 3.0, 2.0), ON_3dPoint(0.0, 3.0, 2.0)
+    };
+    std::unique_ptr<ON_Brep> source(ON_BrepBox(corners));
+    if (!source || source->m_F.Count() < 1)
+	return 1;
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(source.get(),
+	"topological disk contract");
+    if (state)
+	state->brep = new ON_Brep(*source);
+    if (!state || !state->brep) {
+	ON_Brep_CDT_Destroy(state);
+	return 2;
+    }
+    const ON_BrepFace &face = state->brep->m_F[0];
+    const ON_BrepLoop *outer = face.OuterLoop();
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!outer || !surface || outer->TrimCount() < 3) {
+	ON_Brep_CDT_Destroy(state);
+	return 3;
+    }
+
+    repair_fast_constraint_store constraints;
+    constraints.face_index = 0;
+    for (int trim_index = 0; trim_index < outer->TrimCount();
+	    ++trim_index) {
+	const ON_BrepTrim *trim = outer->Trim(trim_index);
+	if (!trim) {
+	    ON_Brep_CDT_Destroy(state);
+	    return 4;
+	}
+	std::vector<repair_fast_trim_sample> &samples =
+	    constraints.trims[trim->m_trim_index];
+	const ON_Interval domain = trim->Domain();
+	for (int sample_index = 0; sample_index < 3; ++sample_index) {
+	    repair_fast_trim_sample sample;
+	    sample.parameter = domain.ParameterAt(0.5 * sample_index);
+	    ON_2dPoint uv = trim->PointAt(sample.parameter);
+	    const ON_3dPoint point = surface->PointAt(uv.x, uv.y);
+	    /* Interior pullbacks are deliberately unusable as a planar polygon.
+	     * The exact 3-D boundary and its B-Rep loop order remain sufficient. */
+	    if (sample_index == 1) {
+		uv.x += trim_index % 2 ? 100.0 : -100.0;
+		uv.y += trim_index % 2 ? -75.0 : 75.0;
+	    }
+	    V2SET(sample.uv, uv.x, uv.y);
+	    VSET(sample.point, point.x, point.y, point.z);
+	    samples.push_back(sample);
+	}
+	constraints.constrained_edges++;
+	constraints.constrained_samples += samples.size();
+    }
+
+    repair_boundary_patch patch;
+    bool valid = repair_constrained_topological_disk(state, 0, constraints,
+	64, patch);
+    const size_t point_count = patch.vertices.size() / 3;
+    const size_t face_count = patch.faces.size() / 3;
+    valid = valid && point_count >= 4 && face_count + 1 == point_count &&
+	patch.constrained_edges == (size_t)outer->TrimCount() &&
+	patch.constrained_samples == (size_t)outer->TrimCount() * 3;
+    std::map<repair_triangle_edge_key, int> edge_uses;
+    const int center = (int)point_count - 1;
+    for (size_t triangle = 0; valid && triangle < face_count; ++triangle) {
+	bool has_center = false;
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int vertex = patch.faces[triangle * 3 + corner];
+	    valid = vertex >= 0 && (size_t)vertex < point_count;
+	    has_center = has_center || vertex == center;
+	    const int next = patch.faces[triangle * 3 + (corner + 1) % 3];
+	    if (!valid || next < 0 || (size_t)next >= point_count)
+		break;
+	    repair_point_key first = {
+		patch.vertices[(size_t)vertex * 3],
+		patch.vertices[(size_t)vertex * 3 + 1],
+		patch.vertices[(size_t)vertex * 3 + 2]
+	    };
+	    repair_point_key second = {
+		patch.vertices[(size_t)next * 3],
+		patch.vertices[(size_t)next * 3 + 1],
+		patch.vertices[(size_t)next * 3 + 2]
+	    };
+	    edge_uses[repair_triangle_edge(first, second)]++;
+	}
+	valid = valid && has_center;
+    }
+    size_t boundary_edges = 0;
+    size_t interior_edges = 0;
+    for (const auto &edge : edge_uses) {
+	boundary_edges += edge.second == 1 ? 1 : 0;
+	interior_edges += edge.second == 2 ? 1 : 0;
+	valid = valid && (edge.second == 1 || edge.second == 2);
+    }
+    valid = valid && boundary_edges == face_count &&
+	interior_edges == face_count;
+
+    repair_fast_constraint_store incomplete = constraints;
+    incomplete.trims.erase(outer->Trim(0)->m_trim_index);
+    repair_boundary_patch rejected;
+    valid = valid && !repair_constrained_topological_disk(state, 0,
+	incomplete, 64, rejected);
+    ON_Brep_CDT_Destroy(state);
+    return valid ? 0 : 5;
+}
+
 int
 cdt_test_repair_periodic_strip(void)
 {
+    const int disk_contract = repair_topological_disk_contract();
+    if (disk_contract)
+	return 20 + disk_contract;
     const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, 5.0), 2.0);
     std::unique_ptr<ON_Brep> source(ON_BrepCylinder(cylinder, true, true));
     if (!source || !source->IsValid() || !source->IsSolid())
@@ -7259,6 +7532,60 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    failed_face, patch.periodic_u_samples,
 		    patch.periodic_v_samples, appended);
 	    }
+	}
+    }
+
+    /* If a one-loop face has no consistent chart triangulation but every
+     * shared edge has authoritative global samples, the loop topology still
+     * defines a disk.  Preserve that exact boundary and span only the missing
+     * face.  This intentionally approximate interpretation is restricted to
+     * constraint-topology failures; later mesh and fidelity checks remain the
+     * acceptance gate. */
+    if (!settings->use_full_fast_fallback &&
+	    settings->use_fast_face_fallback && !failed_faces.empty()) {
+	const int64_t disk_start = bu_gettime();
+	for (int failed_face : failed_faces) {
+	    if (locally_reconstructed_faces.find(failed_face) !=
+		    locally_reconstructed_faces.end())
+		continue;
+	    if ((bu_gettime() - disk_start) / 1000 >=
+		    settings->max_fast_time_ms)
+		break;
+	    const auto diagnostic =
+		s_cdt->failed_face_diagnostics.find(failed_face);
+	    if (diagnostic == s_cdt->failed_face_diagnostics.end() ||
+		    diagnostic->second.stage !=
+		    BREP_CDT_STAGE_PSLG_VALIDATION)
+		continue;
+	    const repair_fast_constraint_store constraints =
+		repair_fast_face_constraints(s_cdt, failed_face);
+	    repair_boundary_patch patch;
+	    if (!repair_constrained_topological_disk(s_cdt, failed_face,
+		    constraints, settings->max_fast_points, patch))
+		continue;
+	    const size_t patch_points = patch.vertices.size() / 3;
+	    const size_t patch_faces = patch.faces.size() / 3;
+	    const size_t patch_bytes = patch.vertices.size() *
+		sizeof(fastf_t) + patch.faces.size() * sizeof(int);
+	    if (patch_bytes > settings->max_fast_result_bytes ||
+		    patch_points > (size_t)INT_MAX ||
+		    patch_faces > (size_t)INT_MAX)
+		continue;
+	    const int appended = append_approximate_mesh(failed_face,
+		patch.faces.data(), (int)patch_faces, patch.vertices.data(),
+		(int)patch_points);
+	    if (!appended)
+		continue;
+	    locally_reconstructed_faces.insert(failed_face);
+	    report->topological_disk_faces++;
+	    report->topological_disk_triangles += appended;
+	    report->topological_disk_constrained_edges +=
+		patch.constrained_edges;
+	    report->topological_disk_constrained_samples +=
+		patch.constrained_samples;
+	    bu_log("Face %d: spanned an inconsistent B-Rep disk with "
+		"%zu authoritative boundary samples (%d triangles)\n",
+		failed_face, patch.constrained_samples, appended);
 	}
     }
 
