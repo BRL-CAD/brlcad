@@ -520,6 +520,8 @@ static int
 closed_mesh_orientation_sync(int *faces, int face_count,
 	fastf_t *vertices, int vertex_count, int *face_normals)
 {
+    const bool debug_repair_topology =
+	getenv("BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY") != NULL;
     if (!faces || !vertices || face_count < 4 || vertex_count < 4)
 	return -1;
 
@@ -534,14 +536,23 @@ closed_mesh_orientation_sync(int *faces, int face_count,
     const bool only_misoriented = errors.misoriented.count > 0 &&
 	errors.degenerate.count == 0 && errors.unmatched.count == 0 &&
 	errors.excess.count == 0;
+    if (debug_repair_topology)
+	bu_log("Orientation sync input: degenerate %d, unmatched %d, "
+	    "excess %d, misoriented %d\n", errors.degenerate.count,
+	    errors.unmatched.count, errors.excess.count,
+	    errors.misoriented.count);
     bg_free_trimesh_solid_errors(&errors);
     if (!only_misoriented)
 	return -1;
 
     std::vector<int> original(faces, faces + 3 * face_count);
     std::vector<int> candidate(original);
-    if (bg_trimesh_sync(candidate.data(), candidate.data(), face_count) <= 0)
+
+    if (bg_trimesh_sync(candidate.data(), candidate.data(), face_count) <= 0) {
+	if (debug_repair_topology)
+	    bu_log("Orientation sync could not establish face adjacency\n");
 	return -1;
+    }
 
     /* Determine the connected closed-shell components from shared edges. */
     std::vector<int> component_id;
@@ -558,8 +569,12 @@ closed_mesh_orientation_sync(int *faces, int face_count,
 		    candidate[offset + 2] != original[offset + 2])
 		changed++;
 	}
-	if (changed * 2 == component.size())
+	if (changed * 2 == component.size()) {
+	    if (debug_repair_topology)
+		bu_log("Orientation sync component tied: %zu/%zu changed\n",
+		    changed, component.size());
 	    return -1;
+	}
 	if (changed * 2 > component.size()) {
 	    for (int face : component)
 		std::swap(candidate[(size_t)face * 3],
@@ -567,9 +582,22 @@ closed_mesh_orientation_sync(int *faces, int face_count,
 	}
     }
 
-    if (bg_trimesh_solid2(vertex_count, face_count, vertices,
-	    candidate.data(), NULL) != 0)
+    struct bg_trimesh_solid_errors candidate_errors =
+	BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+    const int candidate_invalid = bg_trimesh_solid2(vertex_count,
+	face_count, vertices, candidate.data(), &candidate_errors);
+    if (candidate_invalid != 0) {
+	if (debug_repair_topology)
+	    bu_log("Orientation sync candidate remained non-solid: "
+		"degenerate %d, unmatched %d, excess %d, misoriented %d\n",
+		candidate_errors.degenerate.count,
+		candidate_errors.unmatched.count,
+		candidate_errors.excess.count,
+		candidate_errors.misoriented.count);
+	bg_free_trimesh_solid_errors(&candidate_errors);
 	return -1;
+    }
+    bg_free_trimesh_solid_errors(&candidate_errors);
 
     int changed_count = 0;
     for (int face = 0; face < face_count; ++face) {
@@ -3680,6 +3708,7 @@ struct repair_fast_trim_sample {
     fastf_t parameter;
     fastf_t uv[2];
     fastf_t point[3];
+    ON_3dPoint *source_point = NULL;
 };
 
 struct repair_fast_constraint_store {
@@ -3751,6 +3780,7 @@ repair_fast_trim_sample_append(std::vector<repair_fast_trim_sample> &samples,
     sample.parameter = parameter;
     V2SET(sample.uv, p2d.first, p2d.second);
     VSET(sample.point, p3d->x, p3d->y, p3d->z);
+    sample.source_point = p3d;
     samples.push_back(sample);
     if (source_point)
 	*source_point = p3d;
@@ -3874,12 +3904,15 @@ repair_fast_face_constraints(struct ON_Brep_CDT_State *s_cdt,
 struct repair_boundary_patch {
     std::vector<int> faces;
     std::vector<fastf_t> vertices;
+    std::vector<ON_3dPoint *> source_points;
     std::vector<double> direct_surface_deviations;
     size_t constrained_edges = 0;
     size_t constrained_samples = 0;
     size_t periodic_u_samples = 0;
     size_t periodic_v_samples = 0;
     size_t strip_interior_rows = 0;
+    int strip_correspondence_step = 0;
+    size_t strip_correspondence_shift = 0;
     bool analytic_torus_strip = false;
     bool analytic_cylinder_strip = false;
 };
@@ -3911,6 +3944,7 @@ repair_constrained_topological_disk(struct ON_Brep_CDT_State *s_cdt,
     struct disk_point {
 	ON_2dPoint uv;
 	ON_3dPoint point;
+	ON_3dPoint *source_point;
     };
     std::vector<disk_point> boundary;
     size_t constrained_edges = 0;
@@ -3947,7 +3981,8 @@ repair_constrained_topological_disk(struct ON_Brep_CDT_State *s_cdt,
 		samples[samples.size() - 1 - i] : samples[i];
 	    const disk_point next = {
 		ON_2dPoint(sample.uv[X], sample.uv[Y]),
-		ON_3dPoint(sample.point)
+		ON_3dPoint(sample.point),
+		sample.source_point
 	    };
 	    if (!next.uv.IsValid() || !next.point.IsValid())
 		return false;
@@ -3997,15 +4032,18 @@ repair_constrained_topological_disk(struct ON_Brep_CDT_State *s_cdt,
 	return false;
 
     patch.vertices.reserve((boundary.size() + 1) * 3);
+    patch.source_points.reserve(boundary.size() + 1);
     for (const disk_point &point : boundary) {
 	patch.vertices.push_back(point.point.x);
 	patch.vertices.push_back(point.point.y);
 	patch.vertices.push_back(point.point.z);
+	patch.source_points.push_back(point.source_point);
     }
     const int center_index = (int)boundary.size();
     patch.vertices.push_back(center.x);
     patch.vertices.push_back(center.y);
     patch.vertices.push_back(center.z);
+    patch.source_points.push_back(NULL);
 
     ON_3dVector fan_normal(0.0, 0.0, 0.0);
     const double area_tolerance = 4096.0 *
@@ -4055,7 +4093,8 @@ static bool
 repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	int face_index, const repair_fast_constraint_store &constraints,
 	size_t max_points, fastf_t allowed_deviation, int64_t deadline,
-	repair_boundary_patch &patch)
+	repair_boundary_patch &patch, int required_step = 0,
+	size_t required_shift = std::numeric_limits<size_t>::max())
 {
     patch = repair_boundary_patch();
     if (!s_cdt || !s_cdt->brep || face_index < 0 ||
@@ -4209,6 +4248,9 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	return reject("closed boundary sample counts are too small");
     const size_t first_segments = first_samples.size() - 1;
     const size_t second_segments = second_samples.size() - 1;
+    if (debug_strip)
+	bu_log("Face %d: periodic strip boundary segments %zu/%zu\n",
+	    face_index, first_segments, second_segments);
     if (first_segments > max_points ||
 	    second_segments > max_points - first_segments ||
 	    first_segments > (size_t)INT_MAX - 2 ||
@@ -4226,8 +4268,14 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
     long double best_score = std::numeric_limits<long double>::infinity();
     size_t best_shift = 0;
     int best_step = 1;
+
     for (int step : {1, -1}) {
+	if (required_step && step != required_step)
+	    continue;
 	for (size_t shift = 0; shift < second_segments; ++shift) {
+	    if (required_shift != std::numeric_limits<size_t>::max() &&
+		    shift != required_shift % second_segments)
+		continue;
 	    long double score = 0.0L;
 	    for (size_t point = 0; point < first_segments; ++point) {
 		const size_t phase = (size_t)std::llround((long double)point *
@@ -4707,14 +4755,17 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	std::vector<detria::PointD> chart_points;
 	std::vector<ON_2dPoint> source_uv;
 	std::vector<ON_3dPoint> source_points;
+	std::vector<ON_3dPoint *> point_sources;
 	chart_points.reserve(outline_count + interior_count);
 	source_uv.reserve(outline_count + interior_count);
 	source_points.reserve(outline_count + interior_count);
+	point_sources.reserve(outline_count + interior_count);
 	for (size_t point = 0; point <= first_segments; ++point) {
 	    const double phase = (double)point / (double)first_segments;
 	    chart_points.push_back({phase, 0.0});
 	    source_uv.push_back(first_uv[point]);
 	    source_points.emplace_back(first_samples[point].point);
+	    point_sources.push_back(first_samples[point].source_point);
 	}
 	for (size_t point = second_segments + 1; point > 0; --point) {
 	    const size_t phase_index = point - 1;
@@ -4724,6 +4775,8 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	    source_uv.push_back(second_uv[phase_index]);
 	    source_points.emplace_back(second_samples[
 		corresponding_second(phase_index)].point);
+	    point_sources.push_back(second_samples[
+		corresponding_second(phase_index)].source_point);
 	}
 	for (size_t row = 1; row <= interior_rows; ++row) {
 	    const double y = (double)row / (double)(interior_rows + 1);
@@ -4737,6 +4790,7 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 		source_uv.push_back(uv);
 		if (phase >= 1.0 && source_points.size() > row_start) {
 		    source_points.push_back(source_points[row_start]);
+		    point_sources.push_back(NULL);
 		    continue;
 		}
 		if (toroidal_seam_strip) {
@@ -4750,6 +4804,7 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 			return false;
 		    }
 		    source_points.push_back(surface_point);
+		    point_sources.push_back(NULL);
 		    continue;
 		}
 		if (cylindrical_seam_strip) {
@@ -4763,6 +4818,7 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 			return false;
 		    }
 		    source_points.push_back(surface_point);
+		    point_sources.push_back(NULL);
 		    continue;
 		}
 		const ON_2dPoint native_uv = wrapped_uv(uv);
@@ -4773,6 +4829,7 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 		    return false;
 		}
 		source_points.push_back(surface_point);
+		point_sources.push_back(NULL);
 	    }
 	}
 
@@ -4805,22 +4862,39 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	    return false;
 	}
 
-	std::map<repair_point_key, int> local_points;
+	std::map<repair_point_key, int> local_generated_points;
+	std::unordered_map<ON_3dPoint *, int> local_source_points;
 	std::vector<int> chart_to_local(chart_points.size(), -1);
 	for (size_t point = 0; point < source_points.size(); ++point) {
 	    const ON_3dPoint &source = source_points[point];
-	    const repair_point_key key = {source.x, source.y, source.z};
-	    const auto existing = local_points.find(key);
-	    if (existing != local_points.end()) {
-		chart_to_local[point] = existing->second;
+	    ON_3dPoint *source_id = point_sources[point];
+	    int existing_index = -1;
+	    if (source_id) {
+		const auto existing = local_source_points.find(source_id);
+		if (existing != local_source_points.end())
+		    existing_index = existing->second;
+	    } else {
+		const repair_point_key key = {source.x, source.y, source.z};
+		const auto existing = local_generated_points.find(key);
+		if (existing != local_generated_points.end())
+		    existing_index = existing->second;
+	    }
+	    if (existing_index >= 0) {
+		chart_to_local[point] = existing_index;
 		continue;
 	    }
 	    const int local_index = (int)(candidate.vertices.size() / 3);
-	    local_points[key] = local_index;
+	    if (source_id) {
+		local_source_points[source_id] = local_index;
+	    } else {
+		const repair_point_key key = {source.x, source.y, source.z};
+		local_generated_points[key] = local_index;
+	    }
 	    chart_to_local[point] = local_index;
 	    candidate.vertices.push_back(source.x);
 	    candidate.vertices.push_back(source.y);
 	    candidate.vertices.push_back(source.z);
+	    candidate.source_points.push_back(source_id);
 	}
 
 	bool valid = true;
@@ -4974,6 +5048,8 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	    candidate.constrained_samples += boundary.constrained_samples;
 	}
 	candidate.strip_interior_rows = interior_rows;
+	candidate.strip_correspondence_step = best_step;
+	candidate.strip_correspondence_shift = best_shift;
 	candidate.analytic_torus_strip = toroidal_seam_strip;
 	candidate.analytic_cylinder_strip = cylindrical_seam_strip;
 	return true;
@@ -7266,6 +7342,17 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	s_cdt->bot_face_to_brep_face;
     std::set<int> locally_reconstructed_faces;
 
+    std::unordered_map<ON_3dPoint *, int> approximate_source_points;
+    if (s_cdt->bot_pnt_to_on_pnt &&
+	    s_cdt->bot_pnt_to_on_pnt->size() ==
+	    (size_t)input_vertex_count) {
+	for (int point = 0; point < input_vertex_count; ++point) {
+	    ON_3dPoint *source = (*s_cdt->bot_pnt_to_on_pnt)[
+		(size_t)point];
+	    if (source)
+		approximate_source_points[source] = point;
+	}
+    }
     std::map<repair_point_key, int> approximate_points;
     for (int point = 0; point < input_vertex_count; ++point) {
 	approximate_points[repair_point_key{
@@ -7275,11 +7362,13 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     }
     const auto append_approximate_mesh = [&](int face_index,
 	    const int *local_faces, int local_face_count,
-	    const fastf_t *local_vertices, int local_vertex_count) {
+	    const fastf_t *local_vertices, int local_vertex_count,
+	    const std::vector<ON_3dPoint *> *local_source_points = NULL) {
 	if (!local_faces || local_face_count <= 0 || !local_vertices ||
 		local_vertex_count <= 0 || local_vertex_count >
 		INT_MAX - input_vertex_count || local_face_count >
-		INT_MAX - input_face_count)
+		INT_MAX - input_face_count || (local_source_points &&
+		local_source_points->size() != (size_t)local_vertex_count))
 	    return 0;
 	for (int corner = 0; corner < local_face_count * 3; ++corner) {
 	    if (local_faces[corner] < 0 ||
@@ -7289,24 +7378,45 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	std::vector<int> local_to_input((size_t)local_vertex_count, -1);
 	std::vector<fastf_t> novel_vertices;
 	novel_vertices.reserve((size_t)local_vertex_count * 3);
+	size_t source_vertices = 0;
+	size_t matched_source_vertices = 0;
 	for (int point = 0; point < local_vertex_count; ++point) {
+	    ON_3dPoint *source = local_source_points ?
+		(*local_source_points)[(size_t)point] : NULL;
+	    source_vertices += source ? 1 : 0;
 	    const repair_point_key key = {
 		local_vertices[(size_t)point * 3],
 		local_vertices[(size_t)point * 3 + 1],
 		local_vertices[(size_t)point * 3 + 2]};
-	    const auto existing = approximate_points.find(key);
-	    if (existing != approximate_points.end()) {
-		local_to_input[(size_t)point] = existing->second;
-		continue;
+	    if (source) {
+		const auto existing = approximate_source_points.find(source);
+		if (existing != approximate_source_points.end()) {
+		    local_to_input[(size_t)point] = existing->second;
+		    matched_source_vertices++;
+		    continue;
+		}
+	    } else {
+		const auto existing = approximate_points.find(key);
+		if (existing != approximate_points.end()) {
+		    local_to_input[(size_t)point] = existing->second;
+		    continue;
+		}
 	    }
 	    const int new_index = input_vertex_count +
 		(int)(novel_vertices.size() / 3);
-	    approximate_points[key] = new_index;
+	    if (source)
+		approximate_source_points[source] = new_index;
+	    else
+		approximate_points[key] = new_index;
 	    local_to_input[(size_t)point] = new_index;
 	    novel_vertices.insert(novel_vertices.end(),
 		&local_vertices[(size_t)point * 3],
 		&local_vertices[(size_t)point * 3] + 3);
 	}
+	if (getenv("BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY"))
+	    bu_log("Face %d: matched %zu/%zu authoritative repair vertices "
+		"by CDT point identity\n", face_index, matched_source_vertices,
+		source_vertices);
 	const size_t new_vertex_count = (size_t)input_vertex_count +
 	    novel_vertices.size() / 3;
 	const size_t new_face_count = (size_t)input_face_count +
@@ -7332,6 +7442,56 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	input_vertex_count = (int)new_vertex_count;
 	input_face_count = (int)new_face_count;
 	return local_face_count;
+    };
+    const auto approximate_mesh_orientable = [&](const int *local_faces,
+	    int local_face_count, const fastf_t *local_vertices,
+	    int local_vertex_count,
+	    const std::vector<ON_3dPoint *> *local_source_points) {
+	if (!local_faces || local_face_count <= 0 || !local_vertices ||
+		local_vertex_count <= 0 || (local_source_points &&
+		local_source_points->size() != (size_t)local_vertex_count))
+	    return false;
+	std::unordered_map<ON_3dPoint *, int> source_points =
+	    approximate_source_points;
+	std::map<repair_point_key, int> generated_points = approximate_points;
+	std::vector<int> local_to_input((size_t)local_vertex_count, -1);
+	int next_vertex = input_vertex_count;
+	for (int point = 0; point < local_vertex_count; ++point) {
+	    ON_3dPoint *source = local_source_points ?
+		(*local_source_points)[(size_t)point] : NULL;
+	    const repair_point_key key = {
+		local_vertices[(size_t)point * 3],
+		local_vertices[(size_t)point * 3 + 1],
+		local_vertices[(size_t)point * 3 + 2]};
+	    if (source) {
+		const auto existing = source_points.find(source);
+		if (existing != source_points.end()) {
+		    local_to_input[(size_t)point] = existing->second;
+		    continue;
+		}
+		source_points[source] = next_vertex;
+	    } else {
+		const auto existing = generated_points.find(key);
+		if (existing != generated_points.end()) {
+		    local_to_input[(size_t)point] = existing->second;
+		    continue;
+		}
+		generated_points[key] = next_vertex;
+	    }
+	    local_to_input[(size_t)point] = next_vertex++;
+	}
+	std::vector<int> combined(input_faces,
+	    input_faces + (size_t)input_face_count * 3);
+	combined.reserve(combined.size() + (size_t)local_face_count * 3);
+	for (int corner = 0; corner < local_face_count * 3; ++corner) {
+	    const int local = local_faces[corner];
+	    if (local < 0 || local >= local_vertex_count)
+		return false;
+	    combined.push_back(local_to_input[(size_t)local]);
+	}
+	std::vector<int> synchronized(combined.size());
+	return bg_trimesh_sync(synchronized.data(), combined.data(),
+	    input_face_count + local_face_count) >= 0;
     };
     const auto append_approximate_face = [&](int face_index) {
 	int *local_faces = NULL;
@@ -7456,9 +7616,34 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    repair_boundary_patch patch;
 	    const fastf_t allowed_deviation = settings->max_surface_deviation >
 		0.0 ? settings->max_surface_deviation : s_cdt->absmax;
-	    const bool boundary_strip = repair_constrained_periodic_strip(s_cdt,
+	    bool boundary_strip = repair_constrained_periodic_strip(s_cdt,
 		failed_face, constraints, settings->max_fast_points,
 		allowed_deviation, strip_deadline, patch);
+	    if (boundary_strip && !approximate_mesh_orientable(
+		    patch.faces.data(), (int)(patch.faces.size() / 3),
+		    patch.vertices.data(), (int)(patch.vertices.size() / 3),
+		    patch.source_points.empty() ? NULL :
+		    &patch.source_points)) {
+		const int alternate_step = -patch.strip_correspondence_step;
+		repair_boundary_patch alternate;
+		if (alternate_step && repair_constrained_periodic_strip(s_cdt,
+			failed_face, constraints, settings->max_fast_points,
+			allowed_deviation, strip_deadline, alternate,
+			alternate_step, patch.strip_correspondence_shift) &&
+			alternate.strip_correspondence_step == alternate_step &&
+			approximate_mesh_orientable(alternate.faces.data(),
+			    (int)(alternate.faces.size() / 3),
+			    alternate.vertices.data(),
+			    (int)(alternate.vertices.size() / 3),
+			    alternate.source_points.empty() ? NULL :
+			    &alternate.source_points)) {
+		    patch = std::move(alternate);
+		    bu_log("Face %d: selected the orientable periodic boundary "
+			"correspondence\n", failed_face);
+		} else {
+		    boundary_strip = false;
+		}
+	    }
 	    const bool spherical_cap = !boundary_strip &&
 		repair_constrained_spherical_cap(s_cdt, failed_face,
 		    constraints, settings->max_fast_points,
@@ -7489,7 +7674,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		continue;
 	    const int appended = append_approximate_mesh(failed_face,
 		patch.faces.data(), (int)patch_faces, patch.vertices.data(),
-		(int)patch_points);
+		(int)patch_points, patch.source_points.empty() ? NULL :
+		&patch.source_points);
 	    if (!appended)
 		continue;
 	    if (patch.direct_surface_deviations.size() == patch_faces) {
@@ -7573,7 +7759,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		continue;
 	    const int appended = append_approximate_mesh(failed_face,
 		patch.faces.data(), (int)patch_faces, patch.vertices.data(),
-		(int)patch_points);
+		(int)patch_points, patch.source_points.empty() ? NULL :
+		&patch.source_points);
 	    if (!appended)
 		continue;
 	    locally_reconstructed_faces.insert(failed_face);
@@ -8184,6 +8371,37 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    report->source_diagnostic.completed_faces,
 	    report->source_failed_faces, message.c_str());
 	return -1;
+    }
+
+    if (getenv("BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY")) {
+	assembled_mesh_validation input_validation;
+	const bool input_geometric = assembled_mesh_validate(input_vertex_count,
+	    input_face_count, input_vertices, input_faces, &input_validation,
+	    false);
+	struct bg_trimesh_solid_errors input_errors =
+	    BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+	(void)bg_trimesh_solid2(input_vertex_count, input_face_count,
+	    input_vertices, input_faces, &input_errors);
+	bu_log("Repair input: geometric %d, unmatched %d, excess %d, "
+	    "misoriented %d, invalid links %zu\n", (int)input_geometric,
+	    input_errors.unmatched.count, input_errors.excess.count,
+	    input_errors.misoriented.count,
+	    input_validation.invalid_vertex_links);
+	bg_free_trimesh_solid_errors(&input_errors);
+    }
+
+    /* A locally reconstructed face is oriented from its damaged source
+     * surface, whose normals can disagree with the otherwise authoritative
+     * closed shell.  Once exact shared-edge identity proves the assembled
+     * candidate closed, synchronize winding transactionally before invoking
+     * a geometric repair that could split the valid topology. */
+    if (!locally_reconstructed_faces.empty()) {
+	const int synchronized = closed_mesh_orientation_sync(input_faces,
+	    input_face_count, input_vertices, input_vertex_count, NULL);
+	if (synchronized > 0)
+	    bu_log("Synchronized %d locally reconstructed triangle "
+		"orientations after complete closed-mesh validation\n",
+		synchronized);
     }
 
     struct bg_trimesh_repair_settings mesh_settings = settings->mesh;
