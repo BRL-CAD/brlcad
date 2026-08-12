@@ -186,6 +186,8 @@ repair_contract()
 	!report.full_fast_fallback_used &&
 	report.changed_faces > 0 &&
 	report.deviation_projection_failures == 0 &&
+	report.best_effort_faces == 0 &&
+	report.best_effort_triangles == 0 &&
 	approximation_tier == BREP_CDT_REPAIR_APPROX_LOCAL_MESH &&
 	approximation_faces == 1 && approximation_edges == 4 &&
 	!missing_rigorous && provenance.calls == 1 &&
@@ -457,6 +459,7 @@ paired_pcurve_edge_contract()
     valid = valid && report.fast_fallback_used_faces >= 1 &&
 	report.fast_fallback_constrained_edges >= 4 &&
 	report.fast_fallback_constrained_samples > 0 &&
+	report.best_effort_faces == 0 &&
 	report.missing_rigorous_triangles == 0;
     if (!valid) {
 	bu_log("paired p-curve edge contract failed: result %d stage %d, "
