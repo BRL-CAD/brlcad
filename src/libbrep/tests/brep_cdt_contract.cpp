@@ -144,6 +144,7 @@ repair_contract()
     settings.mesh.max_hole_area_percent = 30.0;
     settings.mesh.max_hole_edges = 64;
     settings.max_area_change_percent = 30.0;
+    settings.use_full_fast_fallback_if_needed = 1;
     struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
     struct brep_cdt_diagnostic diagnostic;
     bool repaired = partial_result == (int)partial_faces.size() &&
@@ -151,6 +152,7 @@ repair_contract()
 	ON_Brep_CDT_Status(state) == 0 &&
 	report.source_diagnostic.result == BREP_CDT_RESULT_PARTIAL &&
 	report.mesh.solid && report.mesh.added_faces > 0 &&
+	!report.full_fast_fallback_used &&
 	report.changed_faces > 0 &&
 	report.deviation_projection_failures == 0 &&
 	ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0 &&
@@ -167,6 +169,122 @@ repair_contract()
 	    diagnostic.stage, report.mesh.solid, report.mesh.added_faces,
 	    report.changed_faces, report.deviation_projection_failures,
 	    diagnostic.message);
+    }
+    ON_Brep_CDT_Destroy(state);
+    delete box;
+    return repaired;
+}
+
+static bool
+relaxed_invalid_repair_contract()
+{
+    ON_3dPoint corners[8] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 1.0, 0.0), ON_3dPoint(0.0, 1.0, 0.0),
+	ON_3dPoint(0.0, 0.0, 1.0), ON_3dPoint(1.0, 0.0, 1.0),
+	ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(0.0, 1.0, 1.0)
+    };
+    ON_Brep *box = ON_BrepBox(corners);
+    if (!box)
+	return false;
+    ON_BrepVertex &invalid_vertex = box->NewVertex(
+	ON_3dPoint(0.5, 0.5, 0.5));
+    invalid_vertex.m_vertex_index = -1;
+
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(box,
+	"relaxed invalid repair contract");
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.05;
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    struct brep_cdt_diagnostic diagnostic = {};
+    const bool rejected = ON_Brep_CDT_Tessellate(state, 0, NULL) == -1 &&
+	ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0 &&
+	diagnostic.result == BREP_CDT_RESULT_INVALID_BREP;
+
+    struct brep_cdt_repair_settings settings =
+	BREP_CDT_REPAIR_SETTINGS_INIT;
+    settings.mesh.fill_holes = 1;
+    settings.mesh.max_hole_area_percent = 100.0;
+    settings.mesh.max_hole_edges = 4096;
+    settings.mesh.require_manifold = 1;
+    settings.max_surface_deviation = 0.5;
+    settings.max_area_change_percent = 100.0;
+    settings.allow_untrimmed_surface_match = 1;
+    settings.try_invalid_brep = 1;
+    settings.use_full_fast_fallback_if_needed = 1;
+    struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
+    mesh_output output;
+    const bool repaired = rejected &&
+	ON_Brep_CDT_Repair(state, &settings, &report) == 0 &&
+	report.relaxed_tessellation_attempted &&
+	report.relaxed_tessellation_completed_faces == box->m_F.Count() &&
+	!report.full_fast_fallback_used && report.mesh.solid &&
+	report.mesh.manifold_accepted && mesh_get(output, state) &&
+	!output.faces.empty();
+    if (!repaired) {
+	ON_Brep_CDT_Diagnostic(&diagnostic, state);
+	bu_log("relaxed invalid repair contract failed: result %d stage %d, "
+	    "relaxed %d/%d, full fast %d, solid %d, Manifold %d: %s\n",
+	    diagnostic.result, diagnostic.stage,
+	    report.relaxed_tessellation_attempted,
+	    report.relaxed_tessellation_completed_faces,
+	    report.full_fast_fallback_used, report.mesh.solid,
+	    report.mesh.manifold_accepted, diagnostic.message);
+    }
+    ON_Brep_CDT_Destroy(state);
+    delete box;
+    return repaired;
+}
+
+static bool
+relaxed_missing_outer_repair_contract()
+{
+    ON_3dPoint corners[8] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 1.0, 0.0), ON_3dPoint(0.0, 1.0, 0.0),
+	ON_3dPoint(0.0, 0.0, 1.0), ON_3dPoint(1.0, 0.0, 1.0),
+	ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(0.0, 1.0, 1.0)
+    };
+    ON_Brep *box = ON_BrepBox(corners);
+    if (!box || !box->m_F[0].OuterLoop()) {
+	delete box;
+	return false;
+    }
+    box->m_F[0].OuterLoop()->m_type = ON_BrepLoop::inner;
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(box,
+	"relaxed missing outer contract");
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.05;
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    const bool rejected = ON_Brep_CDT_Tessellate(state, 0, NULL) == -1;
+    struct brep_cdt_repair_settings settings =
+	BREP_CDT_REPAIR_SETTINGS_INIT;
+    settings.mesh.fill_holes = 1;
+    settings.mesh.max_hole_area_percent = 100.0;
+    settings.mesh.max_hole_edges = 4096;
+    settings.mesh.require_manifold = 1;
+    settings.max_surface_deviation = 0.5;
+    settings.max_area_change_percent = 100.0;
+    settings.allow_untrimmed_surface_match = 1;
+    settings.try_invalid_brep = 1;
+    struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
+    mesh_output output;
+    const bool repaired = rejected &&
+	ON_Brep_CDT_Repair(state, &settings, &report) == 0 &&
+	report.relaxed_tessellation_attempted &&
+	report.relaxed_tessellation_completed_faces == box->m_F.Count() &&
+	!report.full_fast_fallback_used && report.mesh.solid &&
+	report.mesh.manifold_accepted && mesh_get(output, state) &&
+	!output.faces.empty();
+    if (!repaired) {
+	struct brep_cdt_diagnostic diagnostic = {};
+	ON_Brep_CDT_Diagnostic(&diagnostic, state);
+	bu_log("relaxed missing outer contract failed: result %d stage %d, "
+	    "relaxed %d/%d, solid %d, Manifold %d: %s\n",
+	    diagnostic.result, diagnostic.stage,
+	    report.relaxed_tessellation_attempted,
+	    report.relaxed_tessellation_completed_faces, report.mesh.solid,
+	    report.mesh.manifold_accepted, diagnostic.message);
     }
     ON_Brep_CDT_Destroy(state);
     delete box;
@@ -211,13 +329,30 @@ paired_pcurve_edge_contract()
     const int tessellation_result = ON_Brep_CDT_Tessellate(state, 0, NULL);
     struct brep_cdt_diagnostic diagnostic = {};
     ON_Brep_CDT_Diagnostic(&diagnostic, state);
-    const bool valid = tessellation_result > 0 &&
+    bool valid = tessellation_result > 0 &&
 	diagnostic.stage > BREP_CDT_STAGE_EDGE_INITIALIZATION &&
 	diagnostic.completed_faces > 0;
+    struct brep_cdt_repair_settings settings =
+	BREP_CDT_REPAIR_SETTINGS_INIT;
+    settings.mesh.fill_holes = 1;
+    settings.mesh.max_hole_area_percent = 100.0;
+    settings.mesh.max_hole_edges = 4096;
+    settings.mesh.allow_self_intersections = 1;
+    settings.max_surface_deviation = 20.0;
+    settings.max_area_change_percent = 100.0;
+    settings.allow_untrimmed_surface_match = 1;
+    struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
+    ON_Brep_CDT_Repair(state, &settings, &report);
+    valid = valid && report.fast_fallback_used_faces == 2 &&
+	report.fast_fallback_constrained_edges >= 7 &&
+	report.fast_fallback_constrained_samples > 0;
     if (!valid) {
 	bu_log("paired p-curve edge contract failed: result %d stage %d, "
-	    "%d faces completed: %s\n", tessellation_result,
-	    diagnostic.stage, diagnostic.completed_faces, diagnostic.message);
+	    "%d faces completed, fast %d constrained %zu/%zu: %s\n",
+	    tessellation_result, diagnostic.stage, diagnostic.completed_faces,
+	    report.fast_fallback_used_faces,
+	    report.fast_fallback_constrained_edges,
+	    report.fast_fallback_constrained_samples, diagnostic.message);
     }
     ON_Brep_CDT_Destroy(state);
     delete box;
@@ -462,6 +597,8 @@ main(int argc, const char **argv)
     bool empty_rejected = empty_mesh_contract();
     bool untrimmed_tree = untrimmed_surface_tree_contract();
     bool repaired = repair_contract();
+    bool relaxed_invalid = relaxed_invalid_repair_contract();
+    bool relaxed_outer = relaxed_missing_outer_repair_contract();
     bool paired_edge = paired_pcurve_edge_contract();
     bool invalid_repaired = invalid_poisson_repair_contract();
     bool components_repaired = component_poisson_repair_contract();
@@ -499,7 +636,7 @@ main(int argc, const char **argv)
     ON_Brep_CDT_Destroy(state);
 
     return initial && first_ok && second_ok && empty_rejected &&
-	untrimmed_tree && repaired &&
+	untrimmed_tree && repaired && relaxed_invalid && relaxed_outer &&
 	paired_edge && invalid_repaired && components_repaired &&
 	invalidated && invalid_tolerance && invalid_face && invalid_input ? 0 : 1;
 }

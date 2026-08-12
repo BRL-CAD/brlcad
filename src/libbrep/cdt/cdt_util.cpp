@@ -35,6 +35,55 @@
 #include "./cdt.h"
 
 bool
+cdt_trim_pcurves_retrace(const ON_BrepTrim *first,
+	const ON_BrepTrim *second)
+{
+    if (!first || !second || !first->Face() ||
+	    first->Face() != second->Face() || !first->TrimCurveOf() ||
+	    !second->TrimCurveOf())
+	return false;
+    const ON_Interval first_domain = first->Domain();
+    const ON_Interval second_domain = second->Domain();
+    if (!first_domain.IsIncreasing() || !second_domain.IsIncreasing())
+	return false;
+    const ON_Surface *surface = first->SurfaceOf();
+    if (!surface)
+	return false;
+
+    double uv_scale = 1.0;
+    for (int direction = 0; direction < 2; ++direction) {
+	const ON_Interval surface_domain = surface->Domain(direction);
+	uv_scale = std::max(uv_scale, std::max(
+	    std::fabs(surface_domain.Min()),
+	    std::fabs(surface_domain.Max())));
+    }
+    const double uv_tolerance = 1.0e-8 * uv_scale;
+    const ON_2dPoint first_start = first->PointAt(first_domain.Min());
+    const ON_2dPoint first_end = first->PointAt(first_domain.Max());
+    const ON_2dPoint second_start = second->PointAt(second_domain.Min());
+    const ON_2dPoint second_end = second->PointAt(second_domain.Max());
+    if (!first_start.IsValid() || !first_end.IsValid() ||
+	    !second_start.IsValid() || !second_end.IsValid())
+	return false;
+    const double forward_error = first_start.DistanceTo(second_start) +
+	first_end.DistanceTo(second_end);
+    const double reverse_error = first_start.DistanceTo(second_end) +
+	first_end.DistanceTo(second_start);
+    const bool reverse = reverse_error < forward_error;
+    for (int sample = 0; sample <= 32; ++sample) {
+	const double fraction = (double)sample / 32.0;
+	const ON_2dPoint first_point = first->PointAt(
+	    first_domain.ParameterAt(fraction));
+	const ON_2dPoint second_point = second->PointAt(
+	    second_domain.ParameterAt(reverse ? 1.0 - fraction : fraction));
+	if (!first_point.IsValid() || !second_point.IsValid() ||
+		first_point.DistanceTo(second_point) > uv_tolerance)
+	    return false;
+    }
+    return true;
+}
+
+bool
 cdt_tri_tri_intersection(const point_t first[3], const point_t second[3])
 {
     int coplanar = 0;

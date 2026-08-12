@@ -842,22 +842,66 @@ trimesh_repair_export(int **ofaces, int *n_ofaces,
 	const struct bg_trimesh_repair_settings *settings,
 	struct bg_trimesh_repair_report *report)
 {
-    const int vertex_count = (int)vertices.size();
-    const int face_count = (int)triangles.size();
+    /* Face removal and a Manifold acceptance-only check can leave vertices
+     * which are no longer referenced.  They are harmless to edge incidence,
+     * but they make the exported indexed mesh fail complete validation.
+     * Compact them here, preserving the original order of all used vertices.
+     * Invalid indices are deliberately left for the normal validation path. */
+    std::vector<gte::Vector3<double>> compact_vertices;
+    std::vector<std::array<int32_t, 3>> compact_triangles;
+    const std::vector<gte::Vector3<double>> *export_vertices = &vertices;
+    const std::vector<std::array<int32_t, 3>> *export_triangles = &triangles;
+    std::vector<bool> used(vertices.size(), false);
+    bool valid_indices = true;
+    size_t used_count = 0;
+    for (const std::array<int32_t, 3> &triangle : triangles) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int32_t index = triangle[(size_t)corner];
+	    if (index < 0 || (size_t)index >= vertices.size()) {
+		valid_indices = false;
+		continue;
+	    }
+	    if (!used[(size_t)index]) {
+		used[(size_t)index] = true;
+		used_count++;
+	    }
+	}
+    }
+    if (valid_indices && used_count < vertices.size()) {
+	std::vector<int32_t> compact_index(vertices.size(), -1);
+	compact_vertices.reserve(used_count);
+	for (size_t vertex = 0; vertex < vertices.size(); ++vertex) {
+	    if (!used[vertex])
+		continue;
+	    compact_index[vertex] = (int32_t)compact_vertices.size();
+	    compact_vertices.push_back(vertices[vertex]);
+	}
+	compact_triangles = triangles;
+	for (std::array<int32_t, 3> &triangle : compact_triangles) {
+	    for (int corner = 0; corner < 3; ++corner)
+		triangle[(size_t)corner] =
+		    compact_index[(size_t)triangle[(size_t)corner]];
+	}
+	export_vertices = &compact_vertices;
+	export_triangles = &compact_triangles;
+    }
+
+    const int vertex_count = (int)export_vertices->size();
+    const int face_count = (int)export_triangles->size();
     point_t *output_points = (point_t *)bu_calloc((size_t)vertex_count,
 	sizeof(point_t), "bg_trimesh_repair verts");
     int *output_faces = (int *)bu_calloc((size_t)face_count * 3,
 	sizeof(int), "bg_trimesh_repair faces");
 
     for (int vertex = 0; vertex < vertex_count; ++vertex) {
-	output_points[vertex][X] = vertices[(size_t)vertex][0];
-	output_points[vertex][Y] = vertices[(size_t)vertex][1];
-	output_points[vertex][Z] = vertices[(size_t)vertex][2];
+	output_points[vertex][X] = (*export_vertices)[(size_t)vertex][0];
+	output_points[vertex][Y] = (*export_vertices)[(size_t)vertex][1];
+	output_points[vertex][Z] = (*export_vertices)[(size_t)vertex][2];
     }
     for (int face = 0; face < face_count; ++face) {
-	output_faces[3 * face] = triangles[(size_t)face][0];
-	output_faces[3 * face + 1] = triangles[(size_t)face][1];
-	output_faces[3 * face + 2] = triangles[(size_t)face][2];
+	output_faces[3 * face] = (*export_triangles)[(size_t)face][0];
+	output_faces[3 * face + 1] = (*export_triangles)[(size_t)face][1];
+	output_faces[3 * face + 2] = (*export_triangles)[(size_t)face][2];
     }
 
     *opnts = output_points;
@@ -866,13 +910,18 @@ trimesh_repair_export(int **ofaces, int *n_ofaces,
     *n_ofaces = face_count;
     report->output_vertices = vertex_count;
     report->output_faces = face_count;
-    report->output_area = trimesh_gte_area(vertices, triangles);
+    report->output_area = trimesh_gte_area(*export_vertices,
+	*export_triangles);
 
-    std::vector<std::array<int32_t, 3>> geometric_check = triangles;
+    std::vector<std::array<int32_t, 3>> geometric_check =
+	*export_triangles;
     report->geometric_degenerate_faces =
-	(int)trimesh_remove_geometric_degenerate(vertices, geometric_check);
+	(int)trimesh_remove_geometric_degenerate(*export_vertices,
+	    geometric_check);
     size_t invalid_vertex_links = 0;
-    trimesh_gte_valid_vertex_links(triangles, vertices.size(),
+
+    trimesh_gte_valid_vertex_links(*export_triangles,
+	export_vertices->size(),
 	&invalid_vertex_links);
     report->invalid_vertex_links = (int)invalid_vertex_links;
     struct bg_trimesh_solid_errors solid_errors =

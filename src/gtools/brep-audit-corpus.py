@@ -143,6 +143,10 @@ def append_repair_options(command, args):
         command.append("--repair-allow-untrimmed")
     if args.repair_full_fast:
         command.append("--repair-full-fast")
+    if args.repair_full_fast_if_needed:
+        command.append("--repair-full-fast-if-needed")
+    if args.repair_try_invalid:
+        command.append("--repair-try-invalid")
     if args.repair_poisson:
         command.append("--repair-poisson")
     if args.repair_union_components:
@@ -607,6 +611,8 @@ def parse_args():
     parser.add_argument("--repair-deviation-samples", type=int, default=4096)
     parser.add_argument("--repair-allow-untrimmed", action="store_true")
     parser.add_argument("--repair-full-fast", action="store_true")
+    parser.add_argument("--repair-full-fast-if-needed", action="store_true")
+    parser.add_argument("--repair-try-invalid", action="store_true")
     parser.add_argument("--repair-poisson", action="store_true")
     parser.add_argument("--repair-poisson-depth", type=int, default=8)
     parser.add_argument("--repair-poisson-scale", type=float, default=0.0)
@@ -652,9 +658,17 @@ def parse_args():
             args.repair_max_deviation_rel > 0.0:
         parser.error("absolute and relative repair deviation conflict")
     if args.repair_no_fast and \
-            (args.repair_full_fast or args.repair_poisson):
+            (args.repair_full_fast or args.repair_full_fast_if_needed or
+             args.repair_poisson):
         parser.error("--repair-no-fast conflicts with whole-fast repair")
+    if args.repair_full_fast_if_needed and \
+            (args.repair_full_fast or args.repair_poisson):
+        parser.error("automatic and forced whole-fast repair conflict")
+    if args.repair_try_invalid and \
+            (args.repair_full_fast or args.repair_poisson):
+        parser.error("invalid rigorous retry conflicts with forced whole-fast")
     if (args.repair_poisson or args.repair_full_fast or
+            args.repair_full_fast_if_needed or args.repair_try_invalid or
             args.repair_union_components or
             args.repair_allow_self_intersections or
             args.repair_require_manifold or args.repair_no_fast) and \
