@@ -388,6 +388,118 @@ trimesh_split_hanging_boundary_edges(
     return added;
 }
 
+/* Fill the smallest unambiguous boundary components before general hole
+ * tracing.  Two otherwise simple holes may touch at one vertex, producing a
+ * figure-eight boundary.  Splitting that non-manifold boundary vertex first
+ * destroys the two closed cycles, while planar or LSCM tracing sees one
+ * self-touching polygon.  A three-edge component needs no parameterization:
+ * its only possible cap is the oppositely oriented triangle using those exact
+ * boundary vertices. */
+static size_t
+trimesh_fill_triangular_boundary_cycles(
+	std::vector<gte::Vector3<double>> const& vertices,
+	std::vector<std::array<int32_t, 3>>& triangles, double max_area,
+	bool allow_self_intersections, size_t *rejected_faces)
+{
+    if (rejected_faces)
+	*rejected_faces = 0;
+    typedef std::pair<int32_t, int32_t> edge_key;
+    struct edge_use {
+	size_t count = 0;
+	int32_t first = -1;
+	int32_t second = -1;
+    };
+    const auto key = [](int32_t first, int32_t second) {
+	return first < second ? edge_key(first, second) :
+	    edge_key(second, first);
+    };
+    std::map<edge_key, edge_use> uses;
+    for (std::array<int32_t, 3> const& triangle : triangles) {
+	for (int edge = 0; edge < 3; ++edge) {
+	    const int32_t first = triangle[(size_t)edge];
+	    const int32_t second = triangle[(size_t)(edge + 1) % 3];
+	    edge_use &use = uses[key(first, second)];
+	    use.count++;
+	    use.first = first;
+	    use.second = second;
+	}
+    }
+    std::map<int32_t, std::set<int32_t>> boundary;
+    for (auto const& entry : uses) {
+	if (entry.second.count != 1)
+	    continue;
+	boundary[entry.first.first].insert(entry.first.second);
+	boundary[entry.first.second].insert(entry.first.first);
+    }
+    if (boundary.size() < 3)
+	return 0;
+
+    std::set<edge_key> used_edges;
+    std::vector<std::array<int32_t, 3>> caps;
+    for (auto const& first_entry : boundary) {
+	const int32_t a = first_entry.first;
+	for (int32_t b : first_entry.second) {
+	    if (b <= a)
+		continue;
+	    const auto b_entry = boundary.find(b);
+	    if (b_entry == boundary.end())
+		continue;
+	    for (int32_t c : b_entry->second) {
+		if (c <= b || !first_entry.second.count(c))
+		    continue;
+		const edge_key ab = key(a, b);
+		const edge_key bc = key(b, c);
+		const edge_key ca = key(c, a);
+		if (used_edges.count(ab) || used_edges.count(bc) ||
+			used_edges.count(ca))
+		    continue;
+		std::map<int32_t, int32_t> outgoing;
+		std::map<int32_t, size_t> incoming;
+		for (edge_key current : {ab, bc, ca}) {
+		    const edge_use &use = uses[current];
+		    if (outgoing.count(use.first)) {
+			outgoing.clear();
+			break;
+		    }
+		    outgoing[use.first] = use.second;
+		    incoming[use.second]++;
+		}
+		if (outgoing.size() != 3 || incoming[a] != 1 ||
+			incoming[b] != 1 || incoming[c] != 1)
+		    continue;
+		const int32_t next = outgoing[a];
+		const auto next_out = outgoing.find(next);
+		if (next_out == outgoing.end() ||
+			outgoing[next_out->second] != a)
+		    continue;
+		const int32_t final = next_out->second;
+		const gte::Vector3<double> ab_vector =
+		    vertices[(size_t)final] - vertices[(size_t)a];
+		const gte::Vector3<double> ac_vector =
+		    vertices[(size_t)next] - vertices[(size_t)a];
+		const double area = 0.5 * gte::Length(gte::Cross(ab_vector,
+		    ac_vector));
+		if (!(area > 0.0) || !std::isfinite(area) ||
+			(max_area > 0.0 && area > max_area))
+		    continue;
+		caps.push_back({a, final, next});
+		used_edges.insert(ab);
+		used_edges.insert(bc);
+		used_edges.insert(ca);
+	    }
+	}
+    }
+    if (caps.empty())
+	return 0;
+    const size_t first_new_face = triangles.size();
+    triangles.insert(triangles.end(), caps.begin(), caps.end());
+    const size_t rejected = trimesh_reject_intersecting_new_components(
+	vertices, triangles, first_new_face, allow_self_intersections);
+    if (rejected_faces)
+	*rejected_faces = rejected;
+    return triangles.size() - first_new_face;
+}
+
 static bool
 trimesh_gte_valid_vertex_links(
 	std::vector<std::array<int32_t, 3>> const& triangles,
@@ -1144,6 +1256,21 @@ bg_trimesh_repair2(
 	std::vector<int32_t> adj;
 	gte::MeshRepair<double>::ConnectFacets(tris, adj);
 	gte::MeshRepair<double>::ReorientFacetsAntiMoebius(verts, tris, adj);
+	if (settings->fill_holes && settings->max_hole_edges >= 3) {
+	    const double area = trimesh_gte_area(verts, tris);
+	    double hole_limit = 1e30;
+	    if (settings->max_hole_area > SMALL_FASTF)
+		hole_limit = settings->max_hole_area;
+	    else if (settings->max_hole_area_percent > SMALL_FASTF)
+		hole_limit = area *
+		    (settings->max_hole_area_percent / 100.0);
+	    size_t rejected = 0;
+	    report->added_faces +=
+		(int)trimesh_fill_triangular_boundary_cycles(verts, tris,
+		    hole_limit,
+		    settings->allow_self_intersections != 0, &rejected);
+	    report->rejected_hole_faces += (int)rejected;
+	}
 
 	gte::MeshRepair<double>::ConnectFacets(tris, adj);
 	gte::MeshRepair<double>::SplitNonManifoldVertices(verts, tris, adj);
