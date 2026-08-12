@@ -335,8 +335,8 @@ BG_EXPORT extern int bg_trimesh_3d_gc(int **ofaces, point_t **opnts, int *n_opnt
  * @param[in]  f    input set of faces.
  * @param[in]  fcnt input face count
  *
- * @return -1 if error, otherwise return the number of times a face flipping
- * operation was performed
+ * @return -1 if the input is invalid or a connected component is
+ * nonorientable, otherwise return the number of face flips performed
  */
 BG_EXPORT extern int
 bg_trimesh_sync(int *of, int *f, int fcnt);
