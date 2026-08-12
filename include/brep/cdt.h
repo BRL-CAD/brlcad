@@ -105,6 +105,11 @@ struct brep_cdt_diagnostic {
  * use_full_fast_fallback instead supplies one coherent whole-B-Rep display
  * mesh.  It is intended as a lower-fidelity alternative when mixing rigorous
  * and display face meshes leaves irreparable boundary topology.
+ * use_full_fast_fallback_if_needed preserves the rigorous-first attempt and
+ * retries with that whole display mesh only if the mixed mesh cannot be
+ * certified.  try_invalid_brep permits the repair entry point to make one
+ * rigorous attempt after broad OpenNURBS validity failure, while retaining
+ * the mesher's closed-manifold and paired-edge topology prerequisites.
  * With the automatic zero poisson_scale, use_poisson_reconstruction first
  * gives conservative mesh repair one chance to close the whole display mesh
  * without replacing its triangles.  Only if that fails does Screened Poisson
@@ -142,9 +147,11 @@ struct brep_cdt_repair_settings {
     size_t max_fast_result_bytes;
     long max_fast_time_ms;
     fastf_t poisson_scale;
+    int use_full_fast_fallback_if_needed;
+    int try_invalid_brep;
 };
 
-#define BREP_CDT_REPAIR_SETTINGS_INIT {BG_TRIMESH_REPAIR_SETTINGS_INIT, 0.0, 4096, 1.0, 0, 1, 0, 0, 8, 64, 1048576, 134217728, 5000, 0.0}
+#define BREP_CDT_REPAIR_SETTINGS_INIT {BG_TRIMESH_REPAIR_SETTINGS_INIT, 0.0, 4096, 1.0, 0, 1, 0, 0, 8, 64, 1048576, 134217728, 5000, 0.0, 0, 0}
 
 /** Provenance and quality measurements for a repair attempt. */
 struct brep_cdt_repair_report {
@@ -181,9 +188,24 @@ struct brep_cdt_repair_report {
     size_t coverage_failures;
     fastf_t max_coverage_deviation;
     fastf_t rms_coverage_deviation;
+    int relaxed_tessellation_attempted;
+    int relaxed_tessellation_completed_faces;
+    size_t fast_fallback_constrained_edges;
+    size_t fast_fallback_constrained_samples;
+    int added_patch_components;
+    int largest_added_patch_faces;
+    fastf_t largest_added_patch_area;
+    int rigorous_first_attempted;
+    int rigorous_first_result;
+    int rigorous_first_fast_faces;
+    size_t rigorous_first_constrained_edges;
+    size_t rigorous_first_constrained_samples;
+    fastf_t rigorous_first_reference_area;
+    fastf_t rigorous_first_output_area;
+    fastf_t rigorous_first_area_change_percent;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0}
 
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
@@ -335,7 +357,11 @@ brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, in
  * guards to prevent non-terminating refinement.  face_status, when non-NULL,
  * is called exactly once per requested face during serial result assembly.
  * face_output, when non-NULL, reports the contiguous output ranges assigned
- * to each completed face with drawable geometry. */
+ * to each completed face with drawable geometry.  The optional trim-sample
+ * callbacks replace sampling for trims where trim_sample_count returns at
+ * least two points.  Samples must be ordered in trim direction and supply
+ * the trim parameter, face UV coordinate, and exact 3D boundary coordinate.
+ * Callbacks may be invoked concurrently when max_workers exceeds one. */
 struct brep_cdt_fast_options {
     size_t max_workers;
     size_t max_result_bytes;
@@ -347,6 +373,10 @@ struct brep_cdt_fast_options {
     void (*face_output)(int face_index, size_t first_face,
 	size_t face_count, size_t first_point, size_t point_count, void *data);
     void *face_output_data;
+    size_t (*trim_sample_count)(int face_index, int trim_index, void *data);
+    int (*trim_sample)(int face_index, int trim_index, size_t sample_index,
+	fastf_t *trim_parameter, point2d_t uv, point_t point, void *data);
+    void *trim_sample_data;
 };
 
 #define BREP_CDT_FAST_FACE_COMPLETED 0

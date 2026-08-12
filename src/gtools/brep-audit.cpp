@@ -101,7 +101,22 @@ struct geom_result {
     int repair_fast_used_faces = 0;
     int repair_fast_failed_faces = 0;
     int repair_fast_triangles = 0;
+    size_t repair_fast_constrained_edges = 0;
+    size_t repair_fast_constrained_samples = 0;
+    int repair_added_patch_components = 0;
+    int repair_largest_added_patch_faces = 0;
+    double repair_largest_added_patch_area = 0.0;
+    bool repair_rigorous_first_attempted = false;
+    int repair_rigorous_first_result = 0;
+    int repair_rigorous_first_fast_faces = 0;
+    size_t repair_rigorous_first_constrained_edges = 0;
+    size_t repair_rigorous_first_constrained_samples = 0;
+    double repair_rigorous_first_reference_area = 0.0;
+    double repair_rigorous_first_output_area = 0.0;
+    double repair_rigorous_first_area_change_percent = 0.0;
     bool repair_full_fast_used = false;
+    bool repair_relaxed_tessellation_attempted = false;
+    int repair_relaxed_tessellation_completed_faces = 0;
     bool repair_poisson_attempted = false;
     bool repair_poisson_applied = false;
     int repair_poisson_input_points = 0;
@@ -694,6 +709,37 @@ mesh_quality_metrics(geom_result *result, int vertex_count, int face_count,
     }
 }
 
+static void
+quality_failed_faces(struct ON_Brep_CDT_State *state, geom_result *result)
+{
+    if (!result)
+	return;
+    const int failed_face_count = ON_Brep_CDT_Failed_Faces(NULL, 0, state);
+    if (failed_face_count <= 0)
+	return;
+    std::vector<int> failed_face_indices((size_t)failed_face_count);
+    ON_Brep_CDT_Failed_Faces(failed_face_indices.data(),
+	failed_face_count, state);
+    result->failed_faces.clear();
+    result->face_failures.clear();
+    result->omitted_failed_faces = 0;
+    for (int failed_face : failed_face_indices)
+	capture_index(&result->failed_faces, &result->omitted_failed_faces,
+	    failed_face);
+    for (int failed_face : failed_face_indices) {
+	struct brep_cdt_diagnostic face_diagnostic = {};
+	if (ON_Brep_CDT_Face_Diagnostic(&face_diagnostic, failed_face,
+		state) != 0)
+	    continue;
+	face_failure detail;
+	detail.face_index = failed_face;
+	detail.result = face_diagnostic.result;
+	detail.stage = face_diagnostic.stage;
+	detail.message = face_diagnostic.message;
+	result->face_failures.push_back(detail);
+    }
+}
+
 static geom_result
 quality_result(struct db_i *dbip, struct directory *dp,
 	const struct bg_tess_tol *ttol, int face_index,
@@ -740,30 +786,7 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    capture_index(&result.failed_faces,
 		&result.omitted_failed_faces, diagnostic.face_index);
     }
-    const int failed_face_count = ON_Brep_CDT_Failed_Faces(NULL, 0,
-	state);
-    if (failed_face_count > 0) {
-	std::vector<int> failed_face_indices((size_t)failed_face_count);
-	ON_Brep_CDT_Failed_Faces(failed_face_indices.data(),
-	    failed_face_count, state);
-	result.failed_faces.clear();
-	result.omitted_failed_faces = 0;
-	for (int failed_face : failed_face_indices)
-	    capture_index(&result.failed_faces,
-		&result.omitted_failed_faces, failed_face);
-	for (int failed_face : failed_face_indices) {
-	    struct brep_cdt_diagnostic face_diagnostic = {};
-	    if (ON_Brep_CDT_Face_Diagnostic(&face_diagnostic,
-		    failed_face, state) != 0)
-		continue;
-	    face_failure detail;
-	    detail.face_index = failed_face;
-	    detail.result = face_diagnostic.result;
-	    detail.stage = face_diagnostic.stage;
-	    detail.message = face_diagnostic.message;
-	    result.face_failures.push_back(detail);
-	}
-    }
+    quality_failed_faces(state, &result);
 
     if (repair_settings && face_index < 0 && result.ret != 0) {
 	result.repair_attempted = true;
@@ -807,8 +830,38 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	result.repair_fast_failed_faces =
 	    repair_report.fast_fallback_failed_faces;
 	result.repair_fast_triangles = repair_report.fast_fallback_triangles;
+	result.repair_fast_constrained_edges =
+	    repair_report.fast_fallback_constrained_edges;
+	result.repair_fast_constrained_samples =
+	    repair_report.fast_fallback_constrained_samples;
+	result.repair_added_patch_components =
+	    repair_report.added_patch_components;
+	result.repair_largest_added_patch_faces =
+	    repair_report.largest_added_patch_faces;
+	result.repair_largest_added_patch_area =
+	    repair_report.largest_added_patch_area;
+	result.repair_rigorous_first_attempted =
+	    repair_report.rigorous_first_attempted != 0;
+	result.repair_rigorous_first_result =
+	    repair_report.rigorous_first_result;
+	result.repair_rigorous_first_fast_faces =
+	    repair_report.rigorous_first_fast_faces;
+	result.repair_rigorous_first_constrained_edges =
+	    repair_report.rigorous_first_constrained_edges;
+	result.repair_rigorous_first_constrained_samples =
+	    repair_report.rigorous_first_constrained_samples;
+	result.repair_rigorous_first_reference_area =
+	    repair_report.rigorous_first_reference_area;
+	result.repair_rigorous_first_output_area =
+	    repair_report.rigorous_first_output_area;
+	result.repair_rigorous_first_area_change_percent =
+	    repair_report.rigorous_first_area_change_percent;
 	result.repair_full_fast_used =
 	    repair_report.full_fast_fallback_used != 0;
+	result.repair_relaxed_tessellation_attempted =
+	    repair_report.relaxed_tessellation_attempted != 0;
+	result.repair_relaxed_tessellation_completed_faces =
+	    repair_report.relaxed_tessellation_completed_faces;
 	result.repair_poisson_attempted =
 	    repair_report.poisson_reconstruction_attempted != 0;
 	result.repair_poisson_applied =
@@ -851,6 +904,7 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    result.diagnostic_face = diagnostic.face_index;
 	    result.diagnostic_message = diagnostic.message;
 	}
+	quality_failed_faces(state, &result);
     }
 
     const bool tessellated = face_index >= 0 ? result.ret == 1 :
@@ -1093,8 +1147,38 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.repair_fast_failed_faces
 	<< ",\"fast_fallback_triangles\":"
 	<< result.repair_fast_triangles
+	<< ",\"fast_fallback_constrained_edges\":"
+	<< result.repair_fast_constrained_edges
+	<< ",\"fast_fallback_constrained_samples\":"
+	<< result.repair_fast_constrained_samples
+	<< ",\"added_patch_components\":"
+	<< result.repair_added_patch_components
+	<< ",\"largest_added_patch_faces\":"
+	<< result.repair_largest_added_patch_faces
+	<< ",\"largest_added_patch_area\":"
+	<< result.repair_largest_added_patch_area
+	<< ",\"rigorous_first_attempted\":"
+	<< (result.repair_rigorous_first_attempted ? "true" : "false")
+	<< ",\"rigorous_first_result\":"
+	<< result.repair_rigorous_first_result
+	<< ",\"rigorous_first_fast_faces\":"
+	<< result.repair_rigorous_first_fast_faces
+	<< ",\"rigorous_first_constrained_edges\":"
+	<< result.repair_rigorous_first_constrained_edges
+	<< ",\"rigorous_first_constrained_samples\":"
+	<< result.repair_rigorous_first_constrained_samples
+	<< ",\"rigorous_first_reference_area\":"
+	<< result.repair_rigorous_first_reference_area
+	<< ",\"rigorous_first_output_area\":"
+	<< result.repair_rigorous_first_output_area
+	<< ",\"rigorous_first_area_change_percent\":"
+	<< result.repair_rigorous_first_area_change_percent
 	<< ",\"full_fast_fallback_used\":"
 	<< (result.repair_full_fast_used ? "true" : "false")
+	<< ",\"relaxed_tessellation_attempted\":"
+	<< (result.repair_relaxed_tessellation_attempted ? "true" : "false")
+	<< ",\"relaxed_tessellation_completed_faces\":"
+	<< result.repair_relaxed_tessellation_completed_faces
 	<< ",\"poisson_reconstruction_attempted\":"
 	<< (result.repair_poisson_attempted ? "true" : "false")
 	<< ",\"poisson_reconstruction_applied\":"
@@ -1242,6 +1326,8 @@ struct audit_config {
     long repair_deviation_samples;
     bool repair_allow_untrimmed;
     bool repair_full_fast;
+    bool repair_full_fast_if_needed;
+    bool repair_try_invalid;
     bool repair_poisson;
     long repair_poisson_depth;
     double repair_poisson_scale;
@@ -1411,6 +1497,9 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	config.repair_allow_untrimmed ? 1 : 0;
     repair_settings.use_full_fast_fallback =
 	(config.repair_full_fast || config.repair_poisson) ? 1 : 0;
+    repair_settings.use_full_fast_fallback_if_needed =
+	config.repair_full_fast_if_needed ? 1 : 0;
+    repair_settings.try_invalid_brep = config.repair_try_invalid ? 1 : 0;
     repair_settings.use_poisson_reconstruction =
 	config.repair_poisson ? 1 : 0;
     repair_settings.poisson_depth = (int)config.repair_poisson_depth;
@@ -1602,6 +1691,8 @@ main(int argc, const char **argv)
     long repair_deviation_samples = 4096;
     int repair_allow_untrimmed = 0;
     int repair_full_fast = 0;
+    int repair_full_fast_if_needed = 0;
+    int repair_try_invalid = 0;
     int repair_poisson = 0;
     long repair_poisson_depth = 8;
     double repair_poisson_scale = 0.0;
@@ -1611,7 +1702,7 @@ main(int argc, const char **argv)
     int repair_no_fast = 0;
     const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[35];
+    struct bu_opt_desc d[37];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -1678,7 +1769,13 @@ main(int argc, const char **argv)
     BU_OPT(d[33], "", "repair-require-manifold", "", NULL,
 	&repair_require_manifold,
 	"Require the bundled Manifold library to import the repaired mesh");
-    BU_OPT_NULL(d[34]);
+    BU_OPT(d[34], "", "repair-full-fast-if-needed", "", NULL,
+	&repair_full_fast_if_needed,
+	"Retry whole-B-Rep display repair only after rigorous repair fails");
+    BU_OPT(d[35], "", "repair-try-invalid", "", NULL,
+	&repair_try_invalid,
+	"Try rigorous faces of structurally safe invalid B-Reps before repair");
+    BU_OPT_NULL(d[36]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -1698,7 +1795,11 @@ main(int argc, const char **argv)
 	    (((repair_poisson_scale > 0.0) ||
 	    (repair_poisson_scale < 0.0)) &&
 	    (repair_poisson_scale < 1.0 || repair_poisson_scale > 2.0)) ||
-	    (repair_no_fast && (repair_full_fast || repair_poisson)) ||
+	    (repair_no_fast && (repair_full_fast ||
+	    repair_full_fast_if_needed || repair_poisson)) ||
+	    (repair_full_fast_if_needed &&
+	    (repair_full_fast || repair_poisson)) ||
+	    (repair_try_invalid && (repair_full_fast || repair_poisson)) ||
 	    (batch_object_file && !batch) ||
 	    (batch && face_index != -1) ||
 	    (quality_repair && face_index != -1) ||
@@ -1735,7 +1836,8 @@ main(int argc, const char **argv)
 	repair_area_change_percent, repair_max_deviation,
 	repair_max_deviation_rel,
 	repair_deviation_samples, repair_allow_untrimmed != 0,
-	repair_full_fast != 0, repair_poisson != 0,
+	repair_full_fast != 0, repair_full_fast_if_needed != 0,
+	repair_try_invalid != 0, repair_poisson != 0,
 	repair_poisson_depth, repair_poisson_scale,
 	repair_union_components != 0,
 	repair_allow_self_intersections != 0,
