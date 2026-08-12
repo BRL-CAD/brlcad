@@ -522,6 +522,10 @@ bg_trimesh_repair(
  * separate_touching_vertices moves disconnected duplicate-coordinate fans
  * apart along their area-weighted normals by no more than vertex_tolerance.
  * It is disabled by default because it changes vertex positions.
+ * allow_self_intersections permits hole caps and repaired surfaces to cross;
+ * topological solid, orientation, degeneracy, and vertex-link checks remain
+ * mandatory.  require_manifold verifies that the bundled Manifold library can
+ * import the final indexed mesh.  Both policies are disabled by default.
  */
 struct bg_trimesh_repair_settings {
     fastf_t vertex_tolerance;
@@ -535,10 +539,12 @@ struct bg_trimesh_repair_settings {
     int max_iterations;
     int separate_touching_vertices;
     int union_components;
+    int allow_self_intersections;
+    int require_manifold;
     int require_solid;
 };
 
-#define BG_TRIMESH_REPAIR_SETTINGS_INIT {0.0, 0, 0.0, 0.0, 0, 0.0, 0.0, 0, 10, 0, 0, 1}
+#define BG_TRIMESH_REPAIR_SETTINGS_INIT {0.0, 0, 0.0, 0.0, 0, 0.0, 0.0, 0, 10, 0, 0, 0, 0, 1}
 
 /** Summary of the operations performed by bg_trimesh_repair2. */
 struct bg_trimesh_repair_report {
@@ -551,6 +557,8 @@ struct bg_trimesh_repair_report {
     int repair_iterations;
     int separated_vertices;
     int component_union_applied;
+    int self_intersections_allowed;
+    int manifold_accepted;
     int solid;
     int rejected_hole_faces;
     int geometric_degenerate_faces;
@@ -564,7 +572,7 @@ struct bg_trimesh_repair_report {
     fastf_t max_vertex_displacement;
 };
 
-#define BG_TRIMESH_REPAIR_REPORT_INIT {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0}
+#define BG_TRIMESH_REPAIR_REPORT_INIT {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0}
 
 /**
  * Attempt a bounded, explicitly configured triangle mesh repair.

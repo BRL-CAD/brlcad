@@ -366,6 +366,63 @@ test_intersecting_hole_patch_rejected(void)
     return 0;
 }
 
+/* The same obstructed cap is usable for consumers which require indexed
+ * manifold topology but permit geometric self-intersections.  The opt-in
+ * policy must retain all topological checks and independently prove that the
+ * bundled Manifold library accepts the result. */
+static int
+test_intersecting_hole_patch_manifold_accepted(void)
+{
+    static point_t pts[12] = {
+	{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
+	{0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1},
+	{0.5, 0.5, 0.8}, {0.4, 0.4, 1.2},
+	{0.6, 0.4, 1.2}, {0.5, 0.6, 1.2}
+    };
+    static int faces[42] = {
+	0, 2, 1, 0, 3, 2,
+	0, 1, 5, 0, 5, 4,
+	1, 2, 6, 1, 6, 5,
+	2, 3, 7, 2, 7, 6,
+	3, 0, 4, 3, 4, 7,
+	8, 10, 9, 8, 9, 11, 9, 10, 11, 8, 11, 10
+    };
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.fill_holes = 1;
+    settings.max_hole_area_percent = 100.0;
+    settings.max_hole_edges = 8;
+    settings.allow_self_intersections = 1;
+    settings.require_manifold = 1;
+    int *ofaces = NULL;
+    int n_ofaces = 0;
+    point_t *opnts = NULL;
+    int n_opnts = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+	&n_opnts, faces, 14, pts, 12, &settings, &report);
+    const bool accepted = ret == 0 && ofaces && opnts && report.solid &&
+	report.self_intersections_allowed && report.manifold_accepted &&
+	!report.unmatched_edges && !report.excess_edges &&
+	!report.misoriented_edges && !report.invalid_vertex_links &&
+	!bg_trimesh_solid2(n_opnts, n_ofaces, (fastf_t *)opnts, ofaces,
+	    NULL);
+    if (ofaces)
+	bu_free(ofaces, "allowed intersecting patch faces");
+    if (opnts)
+	bu_free(opnts, "allowed intersecting patch points");
+    if (!accepted) {
+	bu_log("FAIL test_intersecting_hole_patch_manifold_accepted: "
+	    "ret=%d solid=%d manifold=%d unmatched=%d links=%d\n",
+	    ret, report.solid, report.manifold_accepted,
+	    report.unmatched_edges, report.invalid_vertex_links);
+	return -1;
+    }
+    bu_log("PASS test_intersecting_hole_patch_manifold_accepted\n");
+    return 0;
+}
+
 /* An obstructed hole must not discard an independent safe cap.  Leave the
  * first cube open because its cap crosses the tetrahedron, but retain the
  * valid cap on the translated second cube. */
@@ -1133,6 +1190,8 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_repair2_conservative_default() != 0) ? 1 : 0;
     failures += (test_repair2_report()             != 0) ? 1 : 0;
     failures += (test_intersecting_hole_patch_rejected() != 0) ? 1 : 0;
+    failures +=
+	(test_intersecting_hole_patch_manifold_accepted() != 0) ? 1 : 0;
     failures += (test_independent_safe_hole_patch_retained() != 0) ? 1 : 0;
     failures += (test_collinear_hole_boundary()    != 0) ? 1 : 0;
     failures += (test_concave_planar_hole()         != 0) ? 1 : 0;

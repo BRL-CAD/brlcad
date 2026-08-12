@@ -147,6 +147,10 @@ def append_repair_options(command, args):
         command.append("--repair-poisson")
     if args.repair_union_components:
         command.append("--repair-union-components")
+    if args.repair_allow_self_intersections:
+        command.append("--repair-allow-self-intersections")
+    if args.repair_require_manifold:
+        command.append("--repair-require-manifold")
     if args.repair_no_fast:
         command.append("--repair-no-fast")
 
@@ -607,6 +611,10 @@ def parse_args():
     parser.add_argument("--repair-poisson-depth", type=int, default=8)
     parser.add_argument("--repair-poisson-scale", type=float, default=0.0)
     parser.add_argument("--repair-union-components", action="store_true")
+    parser.add_argument(
+        "--repair-allow-self-intersections", action="store_true"
+    )
+    parser.add_argument("--repair-require-manifold", action="store_true")
     parser.add_argument("--repair-no-fast", action="store_true")
     args = parser.parse_args()
     numeric = (
@@ -647,7 +655,9 @@ def parse_args():
             (args.repair_full_fast or args.repair_poisson):
         parser.error("--repair-no-fast conflicts with whole-fast repair")
     if (args.repair_poisson or args.repair_full_fast or
-            args.repair_union_components or args.repair_no_fast) and \
+            args.repair_union_components or
+            args.repair_allow_self_intersections or
+            args.repair_require_manifold or args.repair_no_fast) and \
             not args.quality_repair:
         parser.error("repair strategy options need --quality-repair")
     if args.batch_databases and args.max_objects:

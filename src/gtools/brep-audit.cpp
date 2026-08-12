@@ -84,6 +84,8 @@ struct geom_result {
     int repair_added_faces = 0;
     int repair_separated_vertices = 0;
     bool repair_component_union = false;
+    bool repair_self_intersections_allowed = false;
+    bool repair_manifold_accepted = false;
     int repair_rejected_hole_faces = 0;
     int repair_geometric_degenerate_faces = 0;
     int repair_unmatched_edges = 0;
@@ -778,6 +780,10 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.mesh.separated_vertices;
 	result.repair_component_union =
 	    repair_report.mesh.component_union_applied != 0;
+	result.repair_self_intersections_allowed =
+	    repair_report.mesh.self_intersections_allowed != 0;
+	result.repair_manifold_accepted =
+	    repair_report.mesh.manifold_accepted != 0;
 	result.repair_rejected_hole_faces =
 	    repair_report.mesh.rejected_hole_faces;
 	result.repair_geometric_degenerate_faces =
@@ -1058,6 +1064,10 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.repair_separated_vertices
 	<< ",\"component_union_applied\":"
 	<< (result.repair_component_union ? "true" : "false")
+	<< ",\"self_intersections_allowed\":"
+	<< (result.repair_self_intersections_allowed ? "true" : "false")
+	<< ",\"manifold_accepted\":"
+	<< (result.repair_manifold_accepted ? "true" : "false")
 	<< ",\"rejected_hole_faces\":"
 	<< result.repair_rejected_hole_faces
 	<< ",\"geometric_degenerate_faces\":"
@@ -1236,6 +1246,8 @@ struct audit_config {
     long repair_poisson_depth;
     double repair_poisson_scale;
     bool repair_union_components;
+    bool repair_allow_self_intersections;
+    bool repair_require_manifold;
     bool repair_no_fast;
 };
 
@@ -1405,6 +1417,10 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     repair_settings.poisson_scale = config.repair_poisson_scale;
     repair_settings.mesh.union_components =
 	config.repair_union_components ? 1 : 0;
+    repair_settings.mesh.allow_self_intersections =
+	config.repair_allow_self_intersections ? 1 : 0;
+    repair_settings.mesh.require_manifold =
+	config.repair_require_manifold ? 1 : 0;
     repair_settings.use_fast_face_fallback =
 	config.repair_no_fast ? 0 : 1;
     if (config.max_points > 0)
@@ -1590,10 +1606,12 @@ main(int argc, const char **argv)
     long repair_poisson_depth = 8;
     double repair_poisson_scale = 0.0;
     int repair_union_components = 0;
+    int repair_allow_self_intersections = 0;
+    int repair_require_manifold = 0;
     int repair_no_fast = 0;
     const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[33];
+    struct bu_opt_desc d[35];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -1654,7 +1672,13 @@ main(int argc, const char **argv)
     BU_OPT(d[31], "", "repair-poisson-scale", "factor",
 	&bu_opt_fastf_t, &repair_poisson_scale,
 	"Poisson domain scale from 1 through 2; zero uses bounded retries");
-    BU_OPT_NULL(d[32]);
+    BU_OPT(d[32], "", "repair-allow-self-intersections", "", NULL,
+	&repair_allow_self_intersections,
+	"Permit repaired manifold topology to contain self-intersections");
+    BU_OPT(d[33], "", "repair-require-manifold", "", NULL,
+	&repair_require_manifold,
+	"Require the bundled Manifold library to import the repaired mesh");
+    BU_OPT_NULL(d[34]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -1714,6 +1738,8 @@ main(int argc, const char **argv)
 	repair_full_fast != 0, repair_poisson != 0,
 	repair_poisson_depth, repair_poisson_scale,
 	repair_union_components != 0,
+	repair_allow_self_intersections != 0,
+	repair_require_manifold != 0,
 	repair_no_fast != 0
     };
 
