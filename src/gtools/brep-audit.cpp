@@ -117,6 +117,7 @@ struct geom_result {
     int repair_approximation_tier = BREP_CDT_REPAIR_APPROX_NONE;
     int repair_retained_rigorous_triangles = 0;
     int repair_missing_rigorous_triangles = 0;
+    int repair_subdivided_rigorous_triangles = 0;
     std::vector<int> repair_approximation_faces;
     std::vector<int> repair_approximation_edges;
     bool repair_full_fast_used = false;
@@ -888,6 +889,8 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.retained_rigorous_triangles;
 	result.repair_missing_rigorous_triangles =
 	    repair_report.missing_rigorous_triangles;
+	result.repair_subdivided_rigorous_triangles =
+	    repair_report.subdivided_rigorous_triangles;
 	result.repair_full_fast_used =
 	    repair_report.full_fast_fallback_used != 0;
 	result.repair_relaxed_tessellation_attempted =
@@ -1211,6 +1214,8 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.repair_retained_rigorous_triangles
 	<< ",\"missing_rigorous_triangles\":"
 	<< result.repair_missing_rigorous_triangles
+	<< ",\"subdivided_rigorous_triangles\":"
+	<< result.repair_subdivided_rigorous_triangles
 	<< ",\"approximation_faces\":";
     print_indices(result.repair_approximation_faces);
     std::cout << ",\"approximation_edges\":";
