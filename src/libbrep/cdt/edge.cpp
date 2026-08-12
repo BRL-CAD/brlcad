@@ -811,6 +811,56 @@ edge_split_progress(double start, double end, double chord,
     return -1;
 }
 
+/* Choose one shared point only when the midpoint between the two face
+ * pullbacks remains close to both pullbacks and the native edge curve. */
+static bool
+bounded_edge_midpoint(ON_3dPoint *midpoint, double *maximum_miss,
+	const ON_3dPoint &point1, const ON_3dPoint &point2,
+	const ON_3dPoint &edge_point, double tolerance)
+{
+    if (!midpoint || !maximum_miss || !point1.IsValid() ||
+	    !point2.IsValid() || !edge_point.IsValid() ||
+	    !(tolerance > 0.0) || !std::isfinite(tolerance))
+	return false;
+
+    const ON_3dPoint candidate = 0.5 * (point1 + point2);
+    if (!candidate.IsValid())
+	return false;
+    const double miss = std::max(candidate.DistanceTo(edge_point),
+	std::max(candidate.DistanceTo(point1), candidate.DistanceTo(point2)));
+    if (!std::isfinite(miss) || miss > tolerance)
+	return false;
+    *midpoint = candidate;
+    *maximum_miss = miss;
+    return true;
+}
+
+int
+cdt_test_bounded_edge_midpoint(void)
+{
+    ON_3dPoint midpoint = ON_3dPoint::UnsetPoint;
+    double miss = 0.0;
+    if (!bounded_edge_midpoint(&midpoint, &miss, ON_3dPoint(0.0, 0.0, 0.0),
+	    ON_3dPoint(2.0, 0.0, 0.0), ON_3dPoint(1.0, 1.0, 0.0), 1.0))
+	return 1;
+    if (midpoint.DistanceTo(ON_3dPoint(1.0, 0.0, 0.0)) >
+	    ON_ZERO_TOLERANCE || std::fabs(miss - 1.0) > ON_ZERO_TOLERANCE)
+	return 2;
+    if (bounded_edge_midpoint(&midpoint, &miss,
+	    ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(2.0, 0.0, 0.0),
+	    ON_3dPoint(1.0, 1.0 + ON_ZERO_TOLERANCE, 0.0), 1.0))
+	return 3;
+    if (bounded_edge_midpoint(&midpoint, &miss,
+	    ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(2.0, 0.0, 0.0),
+	    ON_3dPoint(1.0, 0.0, 0.0), 0.0))
+	return 4;
+    if (bounded_edge_midpoint(&midpoint, &miss,
+	    ON_3dPoint::UnsetPoint, ON_3dPoint(2.0, 0.0, 0.0),
+	    ON_3dPoint(1.0, 0.0, 0.0), 1.0))
+	return 5;
+    return 0;
+}
+
 int
 cdt_test_linear_edge_spacing(void)
 {
@@ -1120,7 +1170,9 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg,
      * curve midpoint lands on p-curve endpoints and cannot subdivide either
      * face.  Use paired p-curve midpoints as the shared geometric authority
      * only when their surface evaluations agree within the declared edge
-     * tolerance (never more than BN_TOL_DIST). */
+     * tolerance (never more than BN_TOL_DIST).  A repair-only retry may use
+     * the average of disagreeing p-curves under the separately bounded
+     * tessellation tolerance; record that source-edge approximation. */
     if (!trim_progress && !shared_point) {
 	const double fallback_t1 = 0.5 * (bseg->tseg1->trim_start +
 	    bseg->tseg1->trim_end);
@@ -1142,19 +1194,39 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg,
 		ON_ZERO_TOLERANCE))
 	    agreement_tolerance = std::min(agreement_tolerance,
 		edge.m_tolerance);
-	const ON_3dPoint fallback_point = 0.5 *
+	ON_3dPoint fallback_point = 0.5 *
 	    (fallback_point1 + fallback_point2);
-	if (split_parameter_interior(bseg->tseg1->trim_start,
+	const bool fallback_trim1_parameter = split_parameter_interior(
+		bseg->tseg1->trim_start,
 		bseg->tseg1->trim_end, fallback_t1) &&
-		split_parameter_interior(bseg->tseg2->trim_start,
+	    split_point_progress(trim1_start, fallback_uv1, trim1_end);
+	const bool fallback_trim2_parameter = split_parameter_interior(
+		bseg->tseg2->trim_start,
 		bseg->tseg2->trim_end, fallback_t2) &&
-		split_point_progress(trim1_start, fallback_uv1, trim1_end) &&
-		split_point_progress(trim2_start, fallback_uv2, trim2_end) &&
-		fallback_point1.IsValid() && fallback_point2.IsValid() &&
-		fallback_point1.DistanceTo(fallback_point2) <=
-		agreement_tolerance &&
-		split_point_progress(*bseg->e_start, fallback_point,
-		*bseg->e_end)) {
+	    split_point_progress(trim2_start, fallback_uv2, trim2_end);
+	const double fallback_agreement = fallback_point1.IsValid() &&
+	    fallback_point2.IsValid() ?
+	    fallback_point1.DistanceTo(fallback_point2) : DBL_MAX;
+	const bool fallback_edge_progress = fallback_point.IsValid() &&
+	    split_point_progress(*bseg->e_start, fallback_point,
+		*bseg->e_end);
+	double relaxed_tolerance =
+	    s_cdt->bounded_edge_approximation_tolerance;
+	if (s_cdt->absmax > 0.0 && std::isfinite(s_cdt->absmax) &&
+		(relaxed_tolerance <= 0.0 ||
+		s_cdt->absmax < relaxed_tolerance))
+	    relaxed_tolerance = s_cdt->absmax;
+	double bounded_edge_miss = DBL_MAX;
+	const bool relaxed_edge_split =
+	    s_cdt->allow_bounded_edge_approximation &&
+	    relaxed_tolerance > 0.0 && std::isfinite(relaxed_tolerance) &&
+	    bounded_edge_midpoint(&fallback_point, &bounded_edge_miss,
+		fallback_point1, fallback_point2, edge_mid_3d,
+		relaxed_tolerance);
+	if (fallback_trim1_parameter && fallback_trim2_parameter &&
+		(fallback_agreement <= agreement_tolerance ||
+		relaxed_edge_split) &&
+		fallback_edge_progress) {
 	    t1mid = fallback_t1;
 	    t2mid = fallback_t2;
 	    trim1_mid_2d = fallback_uv1;
@@ -1162,6 +1234,35 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg,
 	    edge_mid_3d = fallback_point;
 	    edge_mid_tan = ON_3dVector::UnsetVector;
 	    trim_progress = true;
+	    if (relaxed_edge_split) {
+		fastf_t &recorded =
+		    s_cdt->approximated_edges[edge.m_edge_index];
+		recorded = std::max(recorded,
+		    (fastf_t)bounded_edge_miss);
+	    }
+	    if (relaxed_edge_split && getenv("BRLCAD_CDT_DUMP_FAILURES") &&
+		    getenv("BRLCAD_CDT_DUMP_FAILURES")[0] &&
+		    !BU_STR_EQUAL(getenv("BRLCAD_CDT_DUMP_FAILURES"), "0"))
+		bu_log("Edge %d used a shared p-curve midpoint within "
+		    "tessellation tolerance %.17g (surface miss %.17g)\n",
+		    edge.m_edge_index, relaxed_tolerance,
+		    bounded_edge_miss);
+	} else if (getenv("BRLCAD_CDT_DUMP_FAILURES") &&
+		getenv("BRLCAD_CDT_DUMP_FAILURES")[0] &&
+		!BU_STR_EQUAL(getenv("BRLCAD_CDT_DUMP_FAILURES"), "0")) {
+	    bu_log("Edge %d (trims %d/%d, faces %d/%d) split fallback "
+		"rejected: trim progress %d/%d, surface agreement %.17g "
+		"(limit %.17g), edge midpoint misses %.17g/%.17g, 3-D "
+		"progress %d\n", edge.m_edge_index, trim1->m_trim_index,
+		trim2->m_trim_index, face1->m_face_index, face2->m_face_index,
+		fallback_trim1_parameter ? 1 : 0,
+		fallback_trim2_parameter ? 1 : 0, fallback_agreement,
+		agreement_tolerance,
+		fallback_point1.IsValid() ?
+		fallback_point1.DistanceTo(edge_mid_3d) : DBL_MAX,
+		fallback_point2.IsValid() ?
+		fallback_point2.DistanceTo(edge_mid_3d) : DBL_MAX,
+		fallback_edge_progress ? 1 : 0);
 	}
     }
     if (!trim_progress)
