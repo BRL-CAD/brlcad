@@ -867,7 +867,8 @@ bseg_tangent(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, double eparam, 
 
 
 static bool
-refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt, int rebuild)
+refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh,
+	int cnt, int rebuild, bool allow_general_boundary_cleanup = false)
 {
     if (!s_cdt || !fmesh) return false;
 
@@ -879,7 +880,7 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
     // If a previous pass has made changes in which points are active in the
     // surface set, we need to rebuild the whole triangulation.
 
-    if (rebuild && !fmesh->cdt()) {
+    if (rebuild && !fmesh->cdt(allow_general_boundary_cleanup)) {
 	bu_log("Fatal failure attempting full retriangulation of face\n");
 	return false;
     }
@@ -913,7 +914,7 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	if (!inserted)
 	    break;
 	collapsed_chart_points += inserted;
-	if (!fmesh->cdt()) {
+	if (!fmesh->cdt(allow_general_boundary_cleanup)) {
 	    bu_log("Face %d: collapsed chart cell retriangulation failed\n",
 		fmesh->f_id);
 	    return false;
@@ -954,7 +955,7 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	    break;
 	}
 	refinement_points += inserted;
-	if (!fmesh->cdt()) {
+	if (!fmesh->cdt(allow_general_boundary_cleanup)) {
 	    bu_log("Face %d: chart refinement retriangulation failed\n",
 		fmesh->f_id);
 	    return false;
@@ -1518,7 +1519,7 @@ repair_approximate_face_triangulation(struct ON_Brep_CDT_State *s_cdt,
 	if (!loops_mapped)
 	    return false;
 	mesh->boundary_edges_update();
-	return refine_triangulation(s_cdt, mesh, 0, 0) &&
+	return refine_triangulation(s_cdt, mesh, 0, 0, true) &&
 	    !mesh->geometric_degenerate_count();
     };
     if (!rebuild()) {
