@@ -4137,17 +4137,6 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	return -1;
     }
 
-    const bool have_rigorous_faces = !s_cdt->fmeshes.empty();
-    if (!have_rigorous_faces && !settings->use_full_fast_fallback) {
-	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
-	    BREP_CDT_STAGE_MESH_REPAIR, -1,
-	    report->source_diagnostic.completed_faces,
-	    report->source_failed_faces,
-	    "mesh repair requires usable rigorous faces or the explicit "
-	    "whole-B-Rep fast fallback");
-	return -1;
-    }
-
     std::set<int> failed_faces(s_cdt->failed_face_indices.begin(),
 	s_cdt->failed_face_indices.end());
     std::set<int> approximation_faces(failed_faces.begin(),
@@ -4183,15 +4172,6 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	else
 	    approximation_faces.insert(face.first);
     }
-    if (have_rigorous_faces && usable_faces.empty() &&
-	!settings->use_full_fast_fallback) {
-	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
-	    BREP_CDT_STAGE_MESH_REPAIR, -1, 0,
-	    report->source_failed_faces,
-	    "mesh repair has no successfully triangulated B-Rep faces");
-	return -1;
-    }
-
     int *input_faces = NULL;
     int input_face_count = 0;
     fastf_t *input_vertices = NULL;
@@ -4876,20 +4856,6 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	report->full_fast_fallback_used = 1;
     }
 
-    if (automatic_local_repair && input_face_count >
-	    MAX_AUTOMATIC_LOCAL_REPAIR_FACES) {
-	bu_free(input_faces, "oversized automatic local repair faces");
-	bu_free(input_vertices, "oversized automatic local repair vertices");
-	std::string message = "automatic local mesh repair skipped " +
-	    std::to_string(input_face_count) + " triangles (limit " +
-	    std::to_string(MAX_AUTOMATIC_LOCAL_REPAIR_FACES) + ")";
-	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
-	    BREP_CDT_STAGE_MESH_REPAIR, -1,
-	    report->source_diagnostic.completed_faces,
-	    report->source_failed_faces, message.c_str());
-	return -1;
-    }
-
     if (!settings->use_full_fast_fallback &&
 	    settings->use_fast_face_fallback && !failed_faces.empty()) {
 	const int64_t fast_start = bu_gettime();
@@ -5027,6 +4993,36 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    bu_free(fast_normals, "repair fast fallback normals");
 	    bu_free(fast_points, "repair fast fallback points");
 	}
+    }
+
+    /* A failed face may still supply a bounded best-effort surface mesh, a
+     * cleaned local chart, or a constrained fast triangulation.  Do not reject
+     * an empty rigorous prefix until each enabled local recovery path has had
+     * an opportunity to contribute geometry. */
+    if (input_face_count <= 0 || input_vertex_count <= 0 || !input_faces ||
+	    !input_vertices) {
+	bu_free(input_faces, "empty repair input faces");
+	bu_free(input_vertices, "empty repair input vertices");
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces,
+	    "mesh repair did not obtain usable B-Rep face geometry");
+	return -1;
+    }
+
+    if (automatic_local_repair && input_face_count >
+	    MAX_AUTOMATIC_LOCAL_REPAIR_FACES) {
+	bu_free(input_faces, "oversized automatic local repair faces");
+	bu_free(input_vertices, "oversized automatic local repair vertices");
+	std::string message = "automatic local mesh repair skipped " +
+	    std::to_string(input_face_count) + " triangles (limit " +
+	    std::to_string(MAX_AUTOMATIC_LOCAL_REPAIR_FACES) + ")";
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces, message.c_str());
+	return -1;
     }
 
     struct bg_trimesh_repair_settings mesh_settings = settings->mesh;
