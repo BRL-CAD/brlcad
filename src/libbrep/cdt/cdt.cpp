@@ -3720,6 +3720,7 @@ struct repair_boundary_patch {
     size_t periodic_u_samples = 0;
     size_t periodic_v_samples = 0;
     size_t strip_interior_rows = 0;
+    bool analytic_torus_strip = false;
 };
 
 /* A failed periodic side face may still have two authoritative closed edge
@@ -3768,6 +3769,7 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	size_t constrained_samples = 0;
     };
     std::vector<boundary_path> boundaries;
+    std::vector<const ON_BrepTrim *> seam_boundaries;
     int seam_trims = 0;
     bool prior_constrained = false;
     bool first_constrained = false;
@@ -3814,6 +3816,7 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	}
 	if (trim->m_type != ON_BrepTrim::seam)
 	    return reject("unconstrained trim is not a seam");
+	seam_boundaries.push_back(trim);
 	seam_trims++;
 	prior_constrained = false;
 	last_constrained = false;
@@ -3850,8 +3853,18 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	    break;
 	}
     }
-    if (closed_direction < 0)
-	return reject("boundary paths do not span a closed surface direction");
+    /* Some imported NURBS patches encode a cut explicitly with two
+     * oppositely oriented trims of one edge, even though IsClosed() is
+     * false.  The paired seam and two closed shared paths define a strip;
+     * the analytic torus gate below supplies a trustworthy parameterization
+     * without relying on the malformed source p-curves. */
+    const bool explicit_seam_topology = seam_boundaries.size() == 2 &&
+	seam_boundaries[0]->m_ei >= 0 &&
+	seam_boundaries[0]->m_ei == seam_boundaries[1]->m_ei &&
+	seam_boundaries[0]->m_vi[0] == seam_boundaries[1]->m_vi[1] &&
+	seam_boundaries[0]->m_vi[1] == seam_boundaries[1]->m_vi[0];
+    if (closed_direction < 0 && !explicit_seam_topology)
+	return reject("boundary paths do not span a closed or explicit seam");
 
     for (const boundary_path &boundary : boundaries) {
 	const std::vector<repair_fast_trim_sample> &samples =
@@ -3863,6 +3876,10 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	if (first != last)
 	    return reject("closed boundary endpoints use different points");
     }
+
+    const char *strip_debug_setting = getenv("BRLCAD_CDT_DEBUG_STRIP");
+    const bool debug_strip = strip_debug_setting && strip_debug_setting[0] &&
+	!BU_STR_EQUAL(strip_debug_setting, "0");
 
     const std::vector<repair_fast_trim_sample> &first_samples =
 	boundaries[0].samples;
@@ -3917,6 +3934,10 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
     }
     if (!std::isfinite(best_score))
 	return reject("closed boundary correspondence is non-finite");
+    if (debug_strip)
+	bu_log("Face %d: periodic strip correspondence shift %zu, step %d, "
+	    "score %.17g, explicit seam %d\n", face_index, best_shift,
+	    best_step, (double)best_score, explicit_seam_topology);
     const auto corresponding_second = [&](size_t point) {
 	const long signed_index = (long)best_shift +
 	    (long)best_step * (long)(point % second_segments);
@@ -3924,15 +3945,203 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	    (long)second_segments) % (long)second_segments);
     };
 
-    const ON_Interval closed_domain = surface->Domain(closed_direction);
-    const double closed_period = closed_domain.Length();
+    ON_Torus strip_torus;
+    const double torus_recognition_tolerance = std::min(
+	(double)BN_TOL_DIST, 0.25 * (double)allowed_deviation);
+    const bool toroidal_seam_strip = explicit_seam_topology &&
+	torus_recognition_tolerance > ON_ZERO_TOLERANCE &&
+	surface->IsTorus(&strip_torus, torus_recognition_tolerance);
+    if (closed_direction < 0 && !toroidal_seam_strip)
+	return reject("explicit nonperiodic seam is not a recognized torus");
+
+    std::vector<double> first_major;
+    std::vector<double> first_minor;
+    std::vector<double> second_major;
+    std::vector<double> second_minor;
+    std::vector<double> torus_first_phase;
+    std::vector<double> torus_second_phase;
+    double torus_first_cross = 0.0;
+    double torus_second_cross = 0.0;
+    bool torus_phase_is_major = false;
+    double torus_orientation_sign = 1.0;
+    const auto unwrap_angle = [](double angle, double prior) {
+	return angle + std::round((prior - angle) / (2.0 * ON_PI)) *
+	    (2.0 * ON_PI);
+    };
+    const auto torus_angles = [&](const ON_3dPoint &point,
+	    double &major, double &minor) {
+	const ON_3dVector relative = point - strip_torus.Center();
+	const double plane_x = relative * strip_torus.plane.xaxis;
+	const double plane_y = relative * strip_torus.plane.yaxis;
+	const double plane_z = relative * strip_torus.plane.zaxis;
+	if (!std::isfinite(plane_x) || !std::isfinite(plane_y) ||
+		!std::isfinite(plane_z))
+	    return false;
+	major = std::atan2(plane_y, plane_x);
+	minor = std::atan2(plane_z, std::hypot(plane_x, plane_y) -
+	    strip_torus.MajorRadius());
+	return std::isfinite(major) && std::isfinite(minor);
+    };
+    const auto torus_boundary_angles = [&](size_t segment_count,
+	    const auto &sample, std::vector<double> &major,
+	    std::vector<double> &minor) {
+	major.resize(segment_count + 1);
+	minor.resize(segment_count + 1);
+	for (size_t point = 0; point <= segment_count; ++point) {
+	    const ON_3dPoint boundary_point(sample(point).point);
+	    if (!torus_angles(boundary_point, major[point], minor[point]))
+		return false;
+	    const double miss = strip_torus.PointAt(major[point],
+		minor[point]).DistanceTo(boundary_point);
+	    if (debug_strip && miss > torus_recognition_tolerance)
+		bu_log("Face %d: torus boundary point %zu misses by %.17g "
+		    "(limit %.17g, angles %.17g %.17g)\n", face_index,
+		    point, miss, torus_recognition_tolerance, major[point],
+		    minor[point]);
+	    if (miss > torus_recognition_tolerance)
+		return false;
+	    if (point) {
+		major[point] = unwrap_angle(major[point], major[point - 1]);
+		minor[point] = unwrap_angle(minor[point], minor[point - 1]);
+	    }
+	}
+	return true;
+    };
+    if (toroidal_seam_strip) {
+	const auto sample_torus_boundaries = [&]() {
+	    return torus_boundary_angles(first_segments,
+		[&](size_t phase) -> const repair_fast_trim_sample & {
+		    return first_samples[phase];
+		}, first_major, first_minor) &&
+		torus_boundary_angles(second_segments,
+		[&](size_t phase) -> const repair_fast_trim_sample & {
+		    return second_samples[corresponding_second(phase)];
+		}, second_major, second_minor);
+	};
+	if (!sample_torus_boundaries())
+	    return reject("shared boundary misses the recognized torus");
+	const double angular_tolerance = std::max(1.0e-8,
+	    torus_recognition_tolerance /
+	    std::max(strip_torus.MinorRadius(), ON_ZERO_TOLERANCE));
+	const auto angle_range = [](const std::vector<double> &angles) {
+	    const auto range = std::minmax_element(angles.begin(), angles.end());
+	    return *range.second - *range.first;
+	};
+	const double first_major_winding = first_major.back() -
+	    first_major.front();
+	const double first_minor_winding = first_minor.back() -
+	    first_minor.front();
+	const bool major_circle = std::fabs(std::fabs(first_major_winding) -
+	    2.0 * ON_PI) <= 0.1 * ON_PI &&
+	    angle_range(first_minor) <= angular_tolerance;
+	const bool minor_circle = std::fabs(std::fabs(first_minor_winding) -
+	    2.0 * ON_PI) <= 0.1 * ON_PI &&
+	    angle_range(first_major) <= angular_tolerance;
+	if (major_circle == minor_circle)
+	    return reject("first torus boundary is not one simple isocircle");
+	torus_phase_is_major = major_circle;
+	const auto assign_torus_coordinates = [&]() {
+	    torus_first_phase = torus_phase_is_major ? first_major :
+		first_minor;
+	    torus_second_phase = torus_phase_is_major ? second_major :
+		second_minor;
+	    const std::vector<double> &first_cross = torus_phase_is_major ?
+		first_minor : first_major;
+	    const std::vector<double> &second_cross = torus_phase_is_major ?
+		second_minor : second_major;
+	    torus_first_cross = std::accumulate(first_cross.begin(),
+		first_cross.end(), 0.0) / (double)first_cross.size();
+	    torus_second_cross = std::accumulate(second_cross.begin(),
+		second_cross.end(), 0.0) / (double)second_cross.size();
+	    torus_second_cross = unwrap_angle(torus_second_cross,
+		torus_first_cross);
+	    for (double angle : first_cross) {
+		if (std::fabs(angle - torus_first_cross) > angular_tolerance)
+		    return false;
+	    }
+	    for (double angle : second_cross) {
+		angle = unwrap_angle(angle, torus_second_cross);
+		if (std::fabs(angle - torus_second_cross) > angular_tolerance)
+		    return false;
+	    }
+	    torus_second_phase.front() = unwrap_angle(
+		torus_second_phase.front(), torus_first_phase.front());
+	    for (size_t point = 1; point < torus_second_phase.size(); ++point)
+		torus_second_phase[point] = unwrap_angle(
+		    torus_second_phase[point], torus_second_phase[point - 1]);
+	    return true;
+	};
+	if (!assign_torus_coordinates())
+	    return reject("second torus boundary is not the same isocircle type");
+	double first_winding = torus_first_phase.back() -
+	    torus_first_phase.front();
+	double second_winding = torus_second_phase.back() -
+	    torus_second_phase.front();
+	if (first_winding * second_winding <= 0.0) {
+	    best_step = -best_step;
+	    if (!sample_torus_boundaries() || !assign_torus_coordinates())
+		return reject("opposite torus boundary traversal is unusable");
+	    first_winding = torus_first_phase.back() -
+		torus_first_phase.front();
+	    second_winding = torus_second_phase.back() -
+		torus_second_phase.front();
+	}
+	if (debug_strip)
+	    bu_log("Face %d: analytic torus candidate %s cross "
+		"%.17g/%.17g, phase windings %.17g/%.17g\n", face_index,
+		torus_phase_is_major ? "minor" : "major",
+		torus_first_cross, torus_second_cross, first_winding,
+		second_winding);
+	if (std::fabs(std::fabs(first_winding) - 2.0 * ON_PI) >
+		0.1 * ON_PI || std::fabs(std::fabs(second_winding) -
+		2.0 * ON_PI) > 0.1 * ON_PI ||
+		first_winding * second_winding <= 0.0)
+	    return reject("torus boundary phases do not wind together");
+	const double cross_span = torus_second_cross - torus_first_cross;
+	/* Two points on a torus admit a short and a long angular route.  The
+	 * B-Rep's two distinct seam vertices identify the simple imported patch;
+	 * accepting only the route no longer than pi avoids silently choosing a
+	 * complementary wrap when its damaged p-curves cannot disambiguate it. */
+	if (std::fabs(cross_span) <= angular_tolerance ||
+		std::fabs(cross_span) > ON_PI + angular_tolerance)
+	    return reject("toroidal seam span is empty or ambiguous");
+	ON_3dPoint orientation_point;
+	ON_3dVector orientation_normal;
+	double orientation_major = 0.0;
+	double orientation_minor = 0.0;
+	if (!surface_EvNormal(surface, surface->Domain(0).Mid(),
+		surface->Domain(1).Mid(), orientation_point,
+		orientation_normal) || !orientation_normal.IsValid() ||
+		!torus_angles(orientation_point, orientation_major,
+		orientation_minor))
+	    return reject("toroidal seam has no stable surface orientation");
+	if (face.m_bRev)
+	    orientation_normal.Reverse();
+	const ON_3dVector torus_normal = strip_torus.NormalAt(
+	    orientation_major, orientation_minor);
+	if (!torus_normal.IsValid() ||
+		std::fabs(torus_normal * orientation_normal) <=
+		ON_ZERO_TOLERANCE)
+	    return reject("toroidal seam orientation is tangent");
+	torus_orientation_sign = torus_normal * orientation_normal > 0.0 ?
+	    1.0 : -1.0;
+	if (debug_strip)
+	    bu_log("Face %d: analytic torus strip cross span %.17g, "
+		"phase windings %.17g/%.17g\n", face_index, cross_span,
+		first_winding, second_winding);
+    }
+
+    const ON_Interval closed_domain = closed_direction >= 0 ?
+	surface->Domain(closed_direction) : ON_Interval(0.0, 1.0);
+    const double closed_period = closed_direction >= 0 ?
+	closed_domain.Length() : 0.0;
     const auto unwrap_boundary = [&](size_t segment_count,
 	    const auto &sample) {
 	std::vector<ON_2dPoint> result(segment_count + 1);
 	for (size_t phase = 0; phase <= segment_count; ++phase) {
 	    const repair_fast_trim_sample &source = sample(phase);
 	    result[phase] = ON_2dPoint(source.uv[X], source.uv[Y]);
-	    if (!phase)
+	    if (!phase || closed_direction < 0)
 		continue;
 	    double &coordinate = closed_direction ? result[phase].y :
 		result[phase].x;
@@ -3951,15 +4160,17 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	[&](size_t phase) -> const repair_fast_trim_sample & {
 	    return second_samples[corresponding_second(phase)];
 	});
-    double &second_closed_start = closed_direction ? second_uv[0].y :
-	second_uv[0].x;
-    const double first_closed_start = closed_direction ? first_uv[0].y :
-	first_uv[0].x;
-    const double second_shift = std::round((first_closed_start -
-	second_closed_start) / closed_period) * closed_period;
-    for (ON_2dPoint &uv : second_uv) {
-	double &coordinate = closed_direction ? uv.y : uv.x;
-	coordinate += second_shift;
+    if (closed_direction >= 0) {
+	double &second_closed_start = closed_direction ? second_uv[0].y :
+	    second_uv[0].x;
+	const double first_closed_start = closed_direction ? first_uv[0].y :
+	    first_uv[0].x;
+	const double second_shift = std::round((first_closed_start -
+	    second_closed_start) / closed_period) * closed_period;
+	for (ON_2dPoint &uv : second_uv) {
+	    double &coordinate = closed_direction ? uv.y : uv.x;
+	    coordinate += second_shift;
+	}
     }
 
     const auto boundary_uv = [](const std::vector<ON_2dPoint> &samples,
@@ -3977,7 +4188,32 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	    (1.0 - fraction) * samples[first].y +
 	    fraction * samples[first + 1].y);
     };
+    const auto boundary_angle = [](const std::vector<double> &samples,
+	    double phase) {
+	if (phase <= 0.0)
+	    return samples.front();
+	if (phase >= 1.0)
+	    return samples.back();
+	const double position = phase * (double)(samples.size() - 1);
+	const size_t first = std::min(samples.size() - 2,
+	    (size_t)std::floor(position));
+	const double fraction = position - (double)first;
+	return (1.0 - fraction) * samples[first] +
+	    fraction * samples[first + 1];
+    };
+    const auto torus_parameters = [&](double phase, double across,
+	    double &major, double &minor) {
+	const double phase_angle = (1.0 - across) *
+	    boundary_angle(torus_first_phase, phase) + across *
+	    boundary_angle(torus_second_phase, phase);
+	const double cross_angle = (1.0 - across) * torus_first_cross +
+	    across * torus_second_cross;
+	major = torus_phase_is_major ? phase_angle : cross_angle;
+	minor = torus_phase_is_major ? cross_angle : phase_angle;
+    };
     const auto wrapped_uv = [&](ON_2dPoint uv) {
+	if (closed_direction < 0)
+	    return uv;
 	double &coordinate = closed_direction ? uv.y : uv.x;
 	coordinate = closed_domain.Min() + std::fmod(coordinate -
 	    closed_domain.Min(), closed_period);
@@ -4039,6 +4275,19 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 		source_uv.push_back(uv);
 		if (phase >= 1.0 && source_points.size() > row_start) {
 		    source_points.push_back(source_points[row_start]);
+		    continue;
+		}
+		if (toroidal_seam_strip) {
+		    double major = 0.0;
+		    double minor = 0.0;
+		    torus_parameters(phase, y, major, minor);
+		    const ON_3dPoint surface_point =
+			strip_torus.PointAt(major, minor);
+		    if (!surface_point.IsValid()) {
+			strip_build_failure = "invalid analytic torus sample";
+			return false;
+		    }
+		    source_points.push_back(surface_point);
 		    continue;
 		}
 		const ON_2dPoint native_uv = wrapped_uv(uv);
@@ -4116,11 +4365,16 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 		}
 		ON_3dPoint points[3];
 		ON_2dPoint centroid_uv(0.0, 0.0);
+		ON_2dPoint centroid_chart(0.0, 0.0);
 		for (int corner = 0; corner < 3; ++corner) {
 		    points[corner] = ON_3dPoint(&candidate.vertices[
 			(size_t)local[corner] * 3]);
 		    centroid_uv.x += source_uv[(size_t)chart[corner]].x / 3.0;
 		    centroid_uv.y += source_uv[(size_t)chart[corner]].y / 3.0;
+		    centroid_chart.x += chart_points[(size_t)chart[corner]].x /
+			3.0;
+		    centroid_chart.y += chart_points[(size_t)chart[corner]].y /
+			3.0;
 		}
 		const ON_3dVector cross = ON_CrossProduct(points[1] - points[0],
 		    points[2] - points[0]);
@@ -4136,18 +4390,32 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 		    valid = false;
 		    return;
 		}
-		ON_3dPoint normal_point;
 		ON_3dVector surface_normal;
-		const ON_2dPoint normal_uv = wrapped_uv(centroid_uv);
-		if (!surface_EvNormal(surface, normal_uv.x, normal_uv.y,
-			normal_point, surface_normal) ||
-			!surface_normal.IsValid()) {
-		    strip_build_failure = "invalid interior surface normal";
+		if (toroidal_seam_strip) {
+		    double major = 0.0;
+		    double minor = 0.0;
+		    torus_parameters(centroid_chart.x, centroid_chart.y,
+			major, minor);
+		    surface_normal = torus_orientation_sign *
+			strip_torus.NormalAt(major, minor);
+		} else {
+		    ON_3dPoint normal_point;
+		    const ON_2dPoint normal_uv = wrapped_uv(centroid_uv);
+		    if (!surface_EvNormal(surface, normal_uv.x, normal_uv.y,
+			    normal_point, surface_normal) ||
+			    !surface_normal.IsValid()) {
+			strip_build_failure = "invalid interior surface normal";
+			valid = false;
+			return;
+		    }
+		    if (face.m_bRev)
+			surface_normal.Reverse();
+		}
+		if (!surface_normal.IsValid()) {
+		    strip_build_failure = "invalid reconstructed surface normal";
 		    valid = false;
 		    return;
 		}
-		if (face.m_bRev)
-		    surface_normal.Reverse();
 		if (cross * surface_normal < 0.0)
 		    std::swap(local[1], local[2]);
 
@@ -4159,26 +4427,42 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 		double triangle_deviation = 0.0;
 		for (int sample = 0; sample < 4; ++sample) {
 		    ON_2dPoint uv(0.0, 0.0);
+		    ON_2dPoint chart_sample(0.0, 0.0);
 		    ON_3dPoint mesh_point(0.0, 0.0, 0.0);
 		    for (int corner = 0; corner < 3; ++corner) {
 			uv.x += weights[sample][corner] *
 			    source_uv[(size_t)chart[corner]].x;
 			uv.y += weights[sample][corner] *
 			    source_uv[(size_t)chart[corner]].y;
+			chart_sample.x += weights[sample][corner] *
+			    chart_points[(size_t)chart[corner]].x;
+			chart_sample.y += weights[sample][corner] *
+			    chart_points[(size_t)chart[corner]].y;
 			mesh_point.x += weights[sample][corner] * points[corner].x;
 			mesh_point.y += weights[sample][corner] * points[corner].y;
 			mesh_point.z += weights[sample][corner] * points[corner].z;
 		    }
-		    const ON_2dPoint native_uv = wrapped_uv(uv);
-		    const ON_3dPoint surface_point = surface->PointAt(native_uv.x,
-			native_uv.y);
+		    ON_3dPoint surface_point;
+		    if (toroidal_seam_strip) {
+			double major = 0.0;
+			double minor = 0.0;
+			torus_parameters(chart_sample.x, chart_sample.y,
+			    major, minor);
+			surface_point = strip_torus.PointAt(major, minor);
+		    } else {
+			const ON_2dPoint native_uv = wrapped_uv(uv);
+			surface_point = surface->PointAt(native_uv.x, native_uv.y);
+		    }
 		    if (!surface_point.IsValid()) {
 			strip_build_failure = "invalid surface deviation sample";
 			valid = false;
 			return;
 		    }
+		    double deviation = mesh_point.DistanceTo(surface_point);
+		    if (toroidal_seam_strip)
+			deviation += torus_recognition_tolerance;
 		    triangle_deviation = std::max(triangle_deviation,
-			mesh_point.DistanceTo(surface_point));
+			deviation);
 		}
 		maximum_deviation = std::max(maximum_deviation,
 		    triangle_deviation);
@@ -4201,6 +4485,7 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	    candidate.constrained_samples += boundary.constrained_samples;
 	}
 	candidate.strip_interior_rows = interior_rows;
+	candidate.analytic_torus_strip = toroidal_seam_strip;
 	return true;
     };
 
@@ -5106,6 +5391,89 @@ cdt_test_repair_periodic_strip(void)
     ON_Circle major(ON_xy_plane, 9.0);
     ON_Torus torus(major, 2.5);
     ON_Circle minor = torus.MinorCircleRadians(0.0);
+    const auto test_torus_strip = [&](ON_RevSurface *source_surface) {
+	std::unique_ptr<ON_Brep> strip_brep(ON_BrepRevSurface(source_surface,
+	    false, false, NULL));
+	if (!strip_brep) {
+	    delete source_surface;
+	    return false;
+	}
+	struct ON_Brep_CDT_State *strip_state = ON_Brep_CDT_Create(
+	    strip_brep.get(), "explicit torus seam repair contract");
+	if (strip_state)
+	    strip_state->brep = new ON_Brep(*strip_brep);
+	if (!strip_state || !strip_state->brep ||
+		strip_state->brep->m_F.Count() != 1) {
+	    ON_Brep_CDT_Destroy(strip_state);
+	    return false;
+	}
+	const ON_BrepFace &strip_face = strip_state->brep->m_F[0];
+	const ON_BrepLoop *strip_loop = strip_face.OuterLoop();
+	repair_fast_constraint_store strip_constraints;
+	strip_constraints.face_index = 0;
+	for (int trim_index = 0; strip_loop &&
+		trim_index < strip_loop->TrimCount(); ++trim_index) {
+	    const ON_BrepTrim *trim = strip_loop->Trim(trim_index);
+	    const ON_BrepEdge *edge = trim ? trim->Edge() : NULL;
+	    if (!trim || !edge || !edge->IsClosed() ||
+		    trim->m_type == ON_BrepTrim::seam)
+		continue;
+	    std::vector<repair_fast_trim_sample> &samples =
+		strip_constraints.trims[trim->m_trim_index];
+	    const ON_Interval domain = trim->Domain();
+	    for (int sample_index = 0; sample_index <= 32; ++sample_index) {
+		repair_fast_trim_sample sample;
+		sample.parameter = domain.ParameterAt(
+		    (double)sample_index / 32.0);
+		const ON_2dPoint uv = trim->PointAt(sample.parameter);
+		const ON_3dPoint point = strip_face.SurfaceOf()->PointAt(
+		    uv.x, uv.y);
+		V2SET(sample.uv, uv.x, uv.y);
+		VSET(sample.point, point.x, point.y, point.z);
+		if (sample_index == 32)
+		    VMOVE(sample.point, samples.front().point);
+		samples.push_back(sample);
+	    }
+	    strip_constraints.constrained_edges++;
+	    strip_constraints.constrained_samples += samples.size();
+	}
+	repair_boundary_patch strip_patch;
+	const bool strip_reconstructed = repair_constrained_periodic_strip(
+	    strip_state, 0, strip_constraints, 8192, 0.06, 0,
+	    strip_patch);
+	bool strip_valid = strip_reconstructed &&
+	    strip_patch.analytic_torus_strip &&
+	    strip_patch.constrained_edges == 2 &&
+	    strip_patch.constrained_samples == 66 &&
+	    strip_patch.direct_surface_deviations.size() ==
+	    strip_patch.faces.size() / 3;
+	for (double deviation : strip_patch.direct_surface_deviations)
+	    strip_valid = strip_valid && std::isfinite(deviation) &&
+		deviation <= 0.06;
+	ON_Brep_CDT_Destroy(strip_state);
+	return strip_valid;
+    };
+    ON_RevSurface *minor_circle_strip = new ON_RevSurface();
+    minor_circle_strip->m_angle.Set(0.0, 0.5 * ON_PI);
+    minor_circle_strip->m_t = minor_circle_strip->m_angle;
+    minor_circle_strip->m_curve = new ON_ArcCurve(minor);
+    minor_circle_strip->m_axis.from = torus.plane.origin;
+    minor_circle_strip->m_axis.to = torus.plane.origin + torus.plane.zaxis;
+    minor_circle_strip->m_bTransposed = false;
+    if (!test_torus_strip(minor_circle_strip))
+	return 7;
+
+    ON_RevSurface *major_circle_strip = new ON_RevSurface();
+    major_circle_strip->m_angle.Set(0.0, 2.0 * ON_PI);
+    major_circle_strip->m_t = major_circle_strip->m_angle;
+    major_circle_strip->m_curve = new ON_ArcCurve(ON_Arc(minor,
+	ON_Interval(-0.4, 0.7)));
+    major_circle_strip->m_axis.from = torus.plane.origin;
+    major_circle_strip->m_axis.to = torus.plane.origin + torus.plane.zaxis;
+    major_circle_strip->m_bTransposed = false;
+    if (!test_torus_strip(major_circle_strip))
+	return 8;
+
     ON_RevSurface *revolution = new ON_RevSurface();
     revolution->m_angle.Set(0.0, 2.0 * ON_PI);
     revolution->m_t = revolution->m_angle;
@@ -5117,7 +5485,7 @@ cdt_test_repair_periodic_strip(void)
 	false, false, NULL));
     if (!torus_brep) {
 	delete revolution;
-	return 7;
+	return 9;
     }
     state = ON_Brep_CDT_Create(torus_brep.get(),
 	"doubly periodic repair contract");
@@ -5125,7 +5493,7 @@ cdt_test_repair_periodic_strip(void)
 	state->brep = new ON_Brep(*torus_brep);
     if (!state || !state->brep || state->brep->m_F.Count() != 1) {
 	ON_Brep_CDT_Destroy(state);
-	return 8;
+	return 10;
     }
     repair_boundary_patch grid;
     const bool grid_reconstructed = repair_closed_periodic_surface(state, 0,
@@ -5139,7 +5507,7 @@ cdt_test_repair_periodic_strip(void)
     for (double deviation : grid.direct_surface_deviations)
 	valid = valid && std::isfinite(deviation) && deviation <= 0.1;
     ON_Brep_CDT_Destroy(state);
-    return valid ? 0 : 9;
+    return valid ? 0 : 11;
 }
 
 static void
@@ -5958,9 +6326,11 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    patch.constrained_edges;
 		report->boundary_strip_constrained_samples +=
 		    patch.constrained_samples;
-		bu_log("Face %d: joined two rigorous periodic boundaries with "
-		    "a local %d-triangle strip (%zu constrained samples, "
-		    "%zu interior rows)\n", failed_face, appended,
+		bu_log("Face %d: joined two rigorous %s boundaries with a "
+		    "local %d-triangle strip (%zu constrained samples, "
+		    "%zu interior rows)\n", failed_face,
+		    patch.analytic_torus_strip ? "torus-isocircle" :
+		    "periodic", appended,
 		    patch.constrained_samples, patch.strip_interior_rows);
 	    } else if (spherical_cap) {
 		bu_log("Face %d: reconstructed a spherical cap from %zu "
