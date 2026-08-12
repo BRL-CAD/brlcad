@@ -122,6 +122,10 @@ struct geom_result {
     size_t repair_best_effort_reference_samples = 0;
     size_t repair_best_effort_reference_failures = 0;
     double repair_best_effort_max_deviation = 0.0;
+    int repair_boundary_strip_faces = 0;
+    int repair_boundary_strip_triangles = 0;
+    size_t repair_boundary_strip_constrained_edges = 0;
+    size_t repair_boundary_strip_constrained_samples = 0;
     int repair_missing_rigorous_triangles = 0;
     int repair_subdivided_rigorous_triangles = 0;
     int repair_replaced_rigorous_components = 0;
@@ -914,6 +918,14 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.best_effort_reference_failures;
 	result.repair_best_effort_max_deviation =
 	    repair_report.max_best_effort_surface_deviation;
+	result.repair_boundary_strip_faces =
+	    repair_report.boundary_strip_faces;
+	result.repair_boundary_strip_triangles =
+	    repair_report.boundary_strip_triangles;
+	result.repair_boundary_strip_constrained_edges =
+	    repair_report.boundary_strip_constrained_edges;
+	result.repair_boundary_strip_constrained_samples =
+	    repair_report.boundary_strip_constrained_samples;
 	result.repair_missing_rigorous_triangles =
 	    repair_report.missing_rigorous_triangles;
 	result.repair_subdivided_rigorous_triangles =
@@ -1271,6 +1283,14 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.repair_best_effort_reference_failures
 	<< ",\"best_effort_max_surface_deviation\":"
 	<< result.repair_best_effort_max_deviation
+	<< ",\"boundary_strip_faces\":"
+	<< result.repair_boundary_strip_faces
+	<< ",\"boundary_strip_triangles\":"
+	<< result.repair_boundary_strip_triangles
+	<< ",\"boundary_strip_constrained_edges\":"
+	<< result.repair_boundary_strip_constrained_edges
+	<< ",\"boundary_strip_constrained_samples\":"
+	<< result.repair_boundary_strip_constrained_samples
 	<< ",\"missing_rigorous_triangles\":"
 	<< result.repair_missing_rigorous_triangles
 	<< ",\"subdivided_rigorous_triangles\":"
