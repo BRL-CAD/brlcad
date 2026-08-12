@@ -82,7 +82,7 @@ assembled_mesh_collect_candidate(size_t triangle, void *context)
 static bool
 assembled_mesh_validate(int vertex_count, int face_count,
 	const fastf_t *vertices, const int *faces,
-	assembled_mesh_validation *validation)
+	assembled_mesh_validation *validation, bool check_intersections = true)
 {
     if (!validation || vertex_count <= 0 || face_count <= 0 ||
 	    !vertices || !faces)
@@ -172,7 +172,8 @@ assembled_mesh_validate(int vertex_count, int face_count,
      * nonadjacent candidates.  One certified counterexample is sufficient
      * to fail closed and bounds work on malformed, heavily overlapping
      * meshes. */
-    if (!validation->nonfinite_vertices && !validation->degenerate_faces) {
+    if (check_intersections && !validation->nonfinite_vertices &&
+	    !validation->degenerate_faces) {
 	RTree<size_t, double, 3> triangle_index;
 	for (int face = 0; face < face_count; ++face) {
 	    double minimum[3] = {
@@ -2994,7 +2995,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    partial_refinement_points < MAX_ASSEMBLED_REFINEMENT_POINTS) {
 	    assembled_mesh_validation partial_validation;
 	    assembled_mesh_validate(input_vertex_count, input_face_count,
-		input_vertices, input_faces, &partial_validation);
+		input_vertices, input_faces, &partial_validation,
+		!settings->mesh.allow_self_intersections);
 	    if (!partial_validation.intersecting_triangle_pairs)
 		break;
 	    const size_t inserted = refine_assembled_intersection(s_cdt,
@@ -3568,8 +3570,6 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 
     struct bg_trimesh_repair_settings mesh_settings = settings->mesh;
     mesh_settings.require_solid = 1;
-    if (settings->use_poisson_reconstruction)
-	mesh_settings.separate_touching_vertices = 1;
     if (report->fast_fallback_used_faces &&
 	    !(mesh_settings.vertex_tolerance > 0.0)) {
 	mesh_settings.vertex_tolerance = s_cdt->absmin;
@@ -3589,7 +3589,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	assembled_mesh_validation poisson_validation;
 	const bool poisson_geometric = assembled_mesh_validate(
 	    input_vertex_count, input_face_count, input_vertices,
-	    input_faces, &poisson_validation);
+	    input_faces, &poisson_validation,
+	    !settings->mesh.allow_self_intersections);
 	preserve_poisson = poisson_geometric && !bg_trimesh_solid2(
 	    input_vertex_count, input_face_count, input_vertices,
 	    input_faces, NULL);
@@ -3606,6 +3607,20 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    &repaired_face_count, &repaired_points, &repaired_vertex_count,
 	    input_faces, input_face_count, (const point_t *)input_vertices,
 	    input_vertex_count, &mesh_settings, &report->mesh);
+	/* Point-contact separation is useful for Poisson meshes with touching
+	 * shells, but can reopen a seam that tolerance welding just closed.
+	 * Preserve positions first and perturb contacts only when the caller did
+	 * not already request separation and conservative repair cannot produce
+	 * a solid. */
+	if (repair_result < 0 && settings->use_poisson_reconstruction &&
+		!mesh_settings.separate_touching_vertices) {
+	    mesh_settings.separate_touching_vertices = 1;
+	    repair_result = bg_trimesh_repair2(&repaired_faces,
+		&repaired_face_count, &repaired_points,
+		&repaired_vertex_count, input_faces, input_face_count,
+		(const point_t *)input_vertices, input_vertex_count,
+		&mesh_settings, &report->mesh);
+	}
     }
     if (repair_result == 1) {
 	repaired_face_count = input_face_count;
@@ -3667,16 +3682,85 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	repaired_face_count);
 
     assembled_mesh_validation mesh_validation;
-    const fastf_t *repaired_vertices = (const fastf_t *)repaired_points;
+    fastf_t *repaired_vertices = (fastf_t *)repaired_points;
     struct bg_trimesh_solid_errors solid_errors =
 	BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
-    const bool geometric_valid = assembled_mesh_validate(
+    bool geometric_valid = assembled_mesh_validate(
 	repaired_vertex_count, repaired_face_count, repaired_vertices,
-	repaired_faces, &mesh_validation);
-    const int not_solid = bg_trimesh_solid2(repaired_vertex_count,
+	repaired_faces, &mesh_validation,
+	!settings->mesh.allow_self_intersections);
+    int not_solid = bg_trimesh_solid2(repaired_vertex_count,
 	repaired_face_count, (fastf_t *)repaired_vertices, repaired_faces,
 	&solid_errors);
     bg_free_trimesh_solid_errors(&solid_errors);
+    /* Once conservative repair has made an indexed solid, duplicate closed
+     * fans can still touch at one geometric point.  Separate those contacts
+     * only at this stage: doing it before the final weld can reopen seams.
+     * Accept the perturbed candidate only after complete validation. */
+    if (!geometric_valid && !not_solid &&
+	    mesh_validation.intersecting_triangle_pairs &&
+	    !mesh_validation.invalid_indices &&
+	    !mesh_validation.nonfinite_vertices &&
+	    !mesh_validation.unused_vertices &&
+	    !mesh_validation.degenerate_faces &&
+	    !mesh_validation.invalid_vertex_links &&
+	    settings->use_poisson_reconstruction &&
+	    !settings->mesh.separate_touching_vertices) {
+	struct bg_trimesh_repair_settings separation_settings = mesh_settings;
+	separation_settings.fill_holes = 0;
+	separation_settings.max_iterations = 1;
+	separation_settings.separate_touching_vertices = 1;
+	separation_settings.union_components = 0;
+	int *separated_faces = NULL;
+	int separated_face_count = 0;
+	point_t *separated_points = NULL;
+	int separated_vertex_count = 0;
+	struct bg_trimesh_repair_report separated_report =
+	    BG_TRIMESH_REPAIR_REPORT_INIT;
+	const int separated_result = bg_trimesh_repair2(&separated_faces,
+	    &separated_face_count, &separated_points,
+	    &separated_vertex_count, repaired_faces, repaired_face_count,
+	    (const point_t *)repaired_vertices, repaired_vertex_count,
+	    &separation_settings, &separated_report);
+	assembled_mesh_validation separated_validation;
+	const bool separated_geometric = separated_result == 0 &&
+	    assembled_mesh_validate(separated_vertex_count,
+		separated_face_count, (const fastf_t *)separated_points,
+		separated_faces, &separated_validation,
+		!settings->mesh.allow_self_intersections);
+	const bool separated_solid = separated_result == 0 &&
+	    !bg_trimesh_solid2(separated_vertex_count,
+		separated_face_count, (fastf_t *)separated_points,
+		separated_faces, NULL);
+	if (separated_geometric && separated_solid) {
+	    const struct bg_trimesh_repair_report initial_report =
+		report->mesh;
+	    separated_report.input_vertices = initial_report.input_vertices;
+	    separated_report.input_faces = initial_report.input_faces;
+	    separated_report.input_area = initial_report.input_area;
+	    separated_report.removed_faces += initial_report.removed_faces;
+	    separated_report.added_faces += initial_report.added_faces;
+	    separated_report.rejected_hole_faces +=
+		initial_report.rejected_hole_faces;
+	    separated_report.component_union_applied =
+		separated_report.component_union_applied ||
+		initial_report.component_union_applied;
+	    report->mesh = separated_report;
+	    bu_free(repaired_faces, "pre-separation repaired faces");
+	    bu_free(repaired_points, "pre-separation repaired vertices");
+	    repaired_faces = separated_faces;
+	    repaired_face_count = separated_face_count;
+	    repaired_points = separated_points;
+	    repaired_vertex_count = separated_vertex_count;
+	    repaired_vertices = (fastf_t *)repaired_points;
+	    mesh_validation = separated_validation;
+	    geometric_valid = true;
+	    not_solid = 0;
+	} else {
+	    bu_free(separated_faces, "rejected separated faces");
+	    bu_free(separated_points, "rejected separated vertices");
+	}
+    }
     if (!geometric_valid || not_solid) {
 	std::string message =
 	    "repaired mesh failed final solid/geometric validation: "
