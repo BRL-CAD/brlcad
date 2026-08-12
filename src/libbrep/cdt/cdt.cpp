@@ -3136,6 +3136,10 @@ int
 ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt,
 	int *faces)
 {
+    if (s_cdt) {
+	s_cdt->allow_bounded_edge_approximation = false;
+	s_cdt->bounded_edge_approximation_tolerance = 0.0;
+    }
     return brep_cdt_tessellate(s_cdt, face_cnt, faces, false);
 }
 
@@ -4071,10 +4075,16 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     }
     report->source_diagnostic = s_cdt->repair_source_diagnostic;
     report->source_failed_faces = (int)s_cdt->failed_face_indices.size();
+    report->bounded_edge_approximation_edges = (int)std::min(
+	s_cdt->approximated_edges.size(), (size_t)INT_MAX);
+    for (const auto &edge : s_cdt->approximated_edges)
+	report->max_bounded_edge_deviation = std::max(
+	    report->max_bounded_edge_deviation, edge.second);
     if (s_cdt->status == BREP_CDT_SOLID && s_cdt->certified_faces &&
 	    s_cdt->certified_vertices &&
 	    !settings->mesh.require_manifold &&
-	    !settings->mesh.union_components) {
+	    !settings->mesh.union_components &&
+	    s_cdt->approximated_edges.empty()) {
 	report->mesh.input_vertices = s_cdt->certified_vertex_count;
 	report->mesh.input_faces = s_cdt->certified_face_count;
 	report->mesh.output_vertices = s_cdt->certified_vertex_count;
@@ -4141,6 +4151,24 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	s_cdt->failed_face_indices.end());
     std::set<int> approximation_faces(failed_faces.begin(),
 	failed_faces.end());
+    std::set<int> bounded_edge_faces;
+    for (const auto &approximation : s_cdt->approximated_edges) {
+	if (approximation.first < 0 ||
+		approximation.first >= s_cdt->orig_brep->m_E.Count())
+	    continue;
+	ON_BrepEdge &edge =
+	    s_cdt->orig_brep->m_E[approximation.first];
+	for (int trim_index = 0; trim_index < edge.TrimCount(); ++trim_index) {
+	    ON_BrepTrim *trim = edge.Trim(trim_index);
+	    ON_BrepFace *face = trim ? trim->Face() : NULL;
+	    if (face)
+		bounded_edge_faces.insert(face->m_face_index);
+	}
+    }
+    approximation_faces.insert(bounded_edge_faces.begin(),
+	bounded_edge_faces.end());
+    report->bounded_edge_approximation_faces = (int)std::min(
+	bounded_edge_faces.size(), (size_t)INT_MAX);
     for (int face = 0; face < s_cdt->orig_brep->m_F.Count(); ++face) {
 	if (s_cdt->fmeshes.find(face) == s_cdt->fmeshes.end())
 	    approximation_faces.insert(face);
@@ -5911,7 +5939,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	report->approximation_tier = BREP_CDT_REPAIR_APPROX_FULL_FAST;
     else if (report->mesh.added_faces > 0 ||
 	    !locally_reconstructed_faces.empty() ||
-	    bounded_local_replacement)
+	    bounded_local_replacement ||
+	    !s_cdt->approximated_edges.empty())
 	report->approximation_tier = BREP_CDT_REPAIR_APPROX_LOCAL_MESH;
     else if (report->fast_fallback_used_faces > 0)
 	report->approximation_tier =
@@ -5983,6 +6012,38 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
     bool relaxed_tessellation_attempted = false;
     bool relaxed_tessellation_certified = false;
     int relaxed_tessellation_completed_faces = 0;
+    bool bounded_edge_retry_attempted = false;
+    bool bounded_edge_retry_certified = false;
+    int bounded_edge_retry_completed_faces = 0;
+    if (s_cdt && settings && settings->mesh.fill_holes &&
+	    !settings->use_full_fast_fallback && s_cdt->orig_brep &&
+	    s_cdt->diagnostic.result ==
+	    BREP_CDT_RESULT_INITIALIZATION_FAILED &&
+	    s_cdt->diagnostic.stage == BREP_CDT_STAGE_EDGE_INITIALIZATION &&
+	    strstr(s_cdt->diagnostic.message, "could not be split")) {
+	const struct brep_cdt_diagnostic source_diagnostic =
+	    s_cdt->diagnostic;
+	double approximation_tolerance = settings->max_surface_deviation;
+	if (!(approximation_tolerance > 0.0) ||
+		!std::isfinite(approximation_tolerance))
+	    approximation_tolerance = s_cdt->absmax;
+	if (approximation_tolerance > 0.0 &&
+		std::isfinite(approximation_tolerance)) {
+	    bounded_edge_retry_attempted = true;
+	    s_cdt->allow_bounded_edge_approximation = true;
+	    s_cdt->bounded_edge_approximation_tolerance =
+		approximation_tolerance;
+	    const int retry_result = brep_cdt_tessellate(s_cdt, 0, NULL,
+		false);
+	    s_cdt->allow_bounded_edge_approximation = false;
+	    s_cdt->bounded_edge_approximation_tolerance = 0.0;
+	    bounded_edge_retry_certified = retry_result == 0;
+	    bounded_edge_retry_completed_faces =
+		s_cdt->diagnostic.completed_faces;
+	    s_cdt->repair_source_diagnostic = source_diagnostic;
+	    s_cdt->repair_source_valid = true;
+	}
+    }
     if (s_cdt && settings && settings->try_invalid_brep &&
 	    !settings->use_full_fast_fallback && !s_cdt->brep &&
 	    s_cdt->fmeshes.empty() &&
@@ -6012,11 +6073,22 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	    relaxed_tessellation_attempted ? 1 : 0;
 	active_report->relaxed_tessellation_completed_faces =
 	    relaxed_tessellation_completed_faces;
+	active_report->bounded_edge_retry_attempted =
+	    bounded_edge_retry_attempted ? 1 : 0;
+	active_report->bounded_edge_retry_completed_faces =
+	    bounded_edge_retry_completed_faces;
 	if (relaxed_tessellation_certified && result == 1) {
 	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIRED,
 		BREP_CDT_STAGE_MESH_REPAIR, -1,
 		relaxed_tessellation_completed_faces, 0,
 		"relaxed rigorous tessellation certified an invalid B-Rep");
+	    result = 0;
+	}
+	if (bounded_edge_retry_certified && result == 1) {
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIRED,
+		BREP_CDT_STAGE_MESH_REPAIR, -1,
+		bounded_edge_retry_completed_faces, 0,
+		"bounded shared-edge approximation certified the B-Rep");
 	    result = 0;
 	}
 	return result;

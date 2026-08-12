@@ -23,6 +23,9 @@ main(int argc, const char **UNUSED(argv))
     result = cdt_test_linear_edge_spacing();
     if (result)
 	return 10 + result;
+    result = cdt_test_bounded_edge_midpoint();
+    if (result)
+	return 20 + result;
     result = cdt_test_local_defects();
     if (result)
 	return result;

@@ -653,6 +653,8 @@ ON_Brep_CDT_Create(void *bv, const char *objname)
     cdt->certified_normals = NULL;
     cdt->certified_normal_count = 0;
     cdt->certified_repaired = false;
+    cdt->allow_bounded_edge_approximation = false;
+    cdt->bounded_edge_approximation_tolerance = 0.0;
 
     return cdt;
 }
@@ -770,6 +772,7 @@ cdt_state_reset(struct ON_Brep_CDT_State *s_cdt)
     s_cdt->on_brep_edge_pnts->clear();
     s_cdt->collapsed_edge_pnts.clear();
     s_cdt->collapsed_edges.clear();
+    s_cdt->approximated_edges.clear();
     s_cdt->v_min_seg_len.clear();
     s_cdt->l_median_len.clear();
     s_cdt->unsplit_singular_edges.clear();

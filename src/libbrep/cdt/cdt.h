@@ -135,6 +135,11 @@ struct ON_Brep_CDT_State {
      * and geometry are never changed. */
     std::map<ON_3dPoint *, ON_3dPoint *> collapsed_edge_pnts;
     std::set<int> collapsed_edges;
+    /* A repair-only retry may use the midpoint between disagreeing paired
+     * p-curves when both misses stay within this explicit fidelity bound. */
+    bool allow_bounded_edge_approximation;
+    fastf_t bounded_edge_approximation_tolerance;
+    std::map<int, fastf_t> approximated_edges;
     std::map<ON_3dPoint *, double> v_min_seg_len;
     std::map<int, double> l_median_len;
     std::set<cpolyedge_t *> unsplit_singular_edges;
