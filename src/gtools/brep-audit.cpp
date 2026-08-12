@@ -114,6 +114,11 @@ struct geom_result {
     double repair_rigorous_first_reference_area = 0.0;
     double repair_rigorous_first_output_area = 0.0;
     double repair_rigorous_first_area_change_percent = 0.0;
+    int repair_approximation_tier = BREP_CDT_REPAIR_APPROX_NONE;
+    int repair_retained_rigorous_triangles = 0;
+    int repair_missing_rigorous_triangles = 0;
+    std::vector<int> repair_approximation_faces;
+    std::vector<int> repair_approximation_edges;
     bool repair_full_fast_used = false;
     bool repair_relaxed_tessellation_attempted = false;
     int repair_relaxed_tessellation_completed_faces = 0;
@@ -174,6 +179,22 @@ struct geom_result {
     size_t omitted_unprocessed_surface_cues = 0;
     std::vector<std::string> issues;
 };
+
+static void
+quality_repair_provenance(int approximation_tier, const int *face_indices,
+	size_t face_count, const int *edge_indices, size_t edge_count, void *data)
+{
+    geom_result *result = (geom_result *)data;
+    if (!result)
+	return;
+    result->repair_approximation_tier = approximation_tier;
+    if (face_indices && face_count)
+	result->repair_approximation_faces.assign(face_indices,
+	    face_indices + face_count);
+    if (edge_indices && edge_count)
+	result->repair_approximation_edges.assign(edge_indices,
+	    edge_indices + edge_count);
+}
 
 static const size_t MAX_REPORTED_ITEM_INDICES = 16384;
 
@@ -792,7 +813,12 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	result.repair_attempted = true;
 	struct brep_cdt_repair_report repair_report =
 	    BREP_CDT_REPAIR_REPORT_INIT;
-	const int repair_result = ON_Brep_CDT_Repair(state, repair_settings,
+	struct brep_cdt_repair_settings active_repair_settings =
+	    *repair_settings;
+	active_repair_settings.provenance = quality_repair_provenance;
+	active_repair_settings.provenance_data = &result;
+	const int repair_result = ON_Brep_CDT_Repair(state,
+	    &active_repair_settings,
 	    &repair_report);
 	result.repair_succeeded = repair_result == 0;
 	result.repair_source_result = repair_report.source_diagnostic.result;
@@ -856,6 +882,12 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.rigorous_first_output_area;
 	result.repair_rigorous_first_area_change_percent =
 	    repair_report.rigorous_first_area_change_percent;
+	result.repair_approximation_tier =
+	    repair_report.approximation_tier;
+	result.repair_retained_rigorous_triangles =
+	    repair_report.retained_rigorous_triangles;
+	result.repair_missing_rigorous_triangles =
+	    repair_report.missing_rigorous_triangles;
 	result.repair_full_fast_used =
 	    repair_report.full_fast_fallback_used != 0;
 	result.repair_relaxed_tessellation_attempted =
@@ -1173,6 +1205,17 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.repair_rigorous_first_output_area
 	<< ",\"rigorous_first_area_change_percent\":"
 	<< result.repair_rigorous_first_area_change_percent
+	<< ",\"approximation_tier\":"
+	<< result.repair_approximation_tier
+	<< ",\"retained_rigorous_triangles\":"
+	<< result.repair_retained_rigorous_triangles
+	<< ",\"missing_rigorous_triangles\":"
+	<< result.repair_missing_rigorous_triangles
+	<< ",\"approximation_faces\":";
+    print_indices(result.repair_approximation_faces);
+    std::cout << ",\"approximation_edges\":";
+    print_indices(result.repair_approximation_edges);
+    std::cout
 	<< ",\"full_fast_fallback_used\":"
 	<< (result.repair_full_fast_used ? "true" : "false")
 	<< ",\"relaxed_tessellation_attempted\":"
