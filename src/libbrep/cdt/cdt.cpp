@@ -8056,8 +8056,12 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const auto fast_source = fast_triangle_brep_faces.find(key);
 	if (source_brep_face < 0 && fast_source !=
 		fast_triangle_brep_faces.end() &&
-		fast_source->second.size() == 1)
+		fast_source->second.size() == 1) {
 	    source_brep_face = *fast_source->second.begin();
+	    /* The constrained fallback records an unambiguous source face.
+	     * Test that surface first before searching the entire B-Rep. */
+	    local_surface_approximation = true;
+	}
 	const ON_3dPoint a(&repaired_vertices[(size_t)triangle[0] * 3]);
 	const ON_3dPoint b(&repaired_vertices[(size_t)triangle[1] * 3]);
 	const ON_3dPoint c(&repaired_vertices[(size_t)triangle[2] * 3]);
