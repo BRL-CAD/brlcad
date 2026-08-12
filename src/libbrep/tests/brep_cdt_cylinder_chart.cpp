@@ -337,6 +337,46 @@ exercise_offset_full_cylinder_seam()
 	return false;
     }
 
+    /* Sampling and normal checks receive native point identities after CDT.
+     * Ensure they select the coherent local image when a periodic repair has
+     * cloned one of those identities at a distant chart coordinate. */
+    const long image_triangle[3] = {0, 1, 5};
+    const long image_edge[2] = {0, 1};
+    ON_2dPoint expected_sample;
+    ON_2dPoint expected_edge_sample;
+    ON_2dPoint expected_edge_chart;
+    if (!chart.triangle_interior_sample(image_triangle, expected_sample) ||
+	    !chart.edge_midpoint_sample(image_edge, expected_edge_sample,
+		expected_edge_chart)) {
+	std::cerr << "cylinder chart could not sample a local cell"
+	    << std::endl;
+	return false;
+    }
+    cdt_face_chart multiple_image_chart = chart;
+    cdt_chart_vertex distant = multiple_image_chart.vertices[0];
+    distant.id = (cdt_chart_vertex_id)multiple_image_chart.points.size();
+    std::pair<double, double> distant_point =
+	multiple_image_chart.points[(size_t)distant.native_point];
+    distant_point.first += 10.0 * 2.0 * ON_PI * radius;
+    multiple_image_chart.points.push_back(distant_point);
+    multiple_image_chart.vertices.insert(
+	multiple_image_chart.vertices.begin(), distant);
+    ON_2dPoint selected_sample;
+    ON_2dPoint selected_edge_sample;
+    ON_2dPoint selected_edge_chart;
+    if (!multiple_image_chart.triangle_interior_sample(image_triangle,
+	    selected_sample) ||
+	    !multiple_image_chart.edge_midpoint_sample(image_edge,
+		selected_edge_sample, selected_edge_chart) ||
+	    surface->PointAt(expected_sample.x,
+		expected_sample.y).DistanceTo(surface->PointAt(
+		selected_sample.x, selected_sample.y)) > 1.0e-8 ||
+	    expected_edge_chart.DistanceTo(selected_edge_chart) > 1.0e-8) {
+	std::cerr << "cylinder chart selected a distant periodic image"
+	    << std::endl;
+	return false;
+    }
+
     cdt_face_chart loose_sample_chart = chart;
     const std::vector<int> loose_edge_path = {0, 1, 2};
     loose_sample_chart.points[1].first =
@@ -418,7 +458,9 @@ exercise_offset_full_cylinder_seam()
 	    NULL, 0, NULL, 0, chart_points.data(), chart_points.size(),
 	    &report);
 	bu_free(faces, "opened cylinder seam hole triangles");
-	failure = report.message;
+	failure = report.message + std::string(" (status ") +
+	    std::to_string(status) + ", faces " +
+	    std::to_string(face_count) + ")";
 	return status == BRLCAD_OK && face_count > 0;
     };
     std::string seam_hole_failure;
@@ -426,6 +468,64 @@ exercise_offset_full_cylinder_seam()
 	    seam_hole_failure)) {
 	std::cerr << "opened cylinder seam hole did not triangulate: "
 	    << seam_hole_failure << std::endl;
+	return false;
+    }
+
+    /* Sparse imported loops may straddle the artificial cut without a sample
+     * inside the strict edge-miss snap distance.  The explicit repair chart
+     * may relocate the cut to a nearby exact boundary sample, while ordinary
+     * chart construction must retain the strict behavior. */
+    std::vector<std::pair<double, double>> sparse_hole_points =
+	native_points;
+    std::vector<ON_3dPoint> sparse_hole_storage = point_storage;
+    std::vector<cdt_topo_vertex_id> sparse_hole_topology =
+	topology_vertices;
+    std::vector<int> sparse_hole;
+    const double sparse_closed[5] = {
+	-0.015, 0.45, 0.45, -0.015, -0.015
+    };
+    const double sparse_open[5] = {
+	0.6, 0.6, 0.4, 0.4, 0.5
+    };
+    for (int i = 0; i < 5; ++i) {
+	ON_2dPoint native;
+	native[closed_direction] = closed_domain.Min() +
+	    sparse_closed[i] * closed_domain.Length();
+	native[open_direction] = open_domain.ParameterAt(sparse_open[i]);
+	sparse_hole.push_back((int)sparse_hole_points.size());
+	sparse_hole_points.push_back(std::make_pair(native.x, native.y));
+	while (native[closed_direction] < closed_domain.Min())
+	    native[closed_direction] += closed_domain.Length();
+	while (native[closed_direction] > closed_domain.Max())
+	    native[closed_direction] -= closed_domain.Length();
+	sparse_hole_storage.push_back(surface->PointAt(native.x, native.y));
+	sparse_hole_topology.push_back(CDT_TOPOLOGY_ID_NONE);
+    }
+    sparse_hole.push_back(sparse_hole.front());
+    std::vector<const ON_3dPoint *> sparse_hole_3d;
+    sparse_hole_3d.reserve(sparse_hole_storage.size());
+    for (const ON_3dPoint &point : sparse_hole_storage)
+	sparse_hole_3d.push_back(&point);
+    const std::vector<std::vector<int>> sparse_holes(1, sparse_hole);
+    cdt_face_chart strict_sparse_chart;
+    if (!strict_sparse_chart.build(*side, sparse_hole_points, outer,
+	    sparse_holes, std::vector<int>(), std::vector<int>(),
+	    sparse_hole_3d, sparse_hole_topology) ||
+	    strict_sparse_chart.holes.size() != 1) {
+	std::cerr << "strict cylinder chart unexpectedly opened a sparse hole"
+	    << std::endl;
+	return false;
+    }
+    cdt_face_chart relaxed_sparse_chart;
+    if (!relaxed_sparse_chart.build(*side, sparse_hole_points, outer,
+	    sparse_holes, std::vector<int>(), std::vector<int>(),
+	    sparse_hole_3d, sparse_hole_topology, CDT_TOPOLOGY_ID_NONE,
+	    true) || !relaxed_sparse_chart.holes.empty() ||
+	    !opened_hole_triangulates(relaxed_sparse_chart,
+		seam_hole_failure)) {
+	std::cerr << "repair chart did not open a sparse cylinder seam hole: "
+	    << relaxed_sparse_chart.failure() << " " << seam_hole_failure
+	    << std::endl;
 	return false;
     }
 
