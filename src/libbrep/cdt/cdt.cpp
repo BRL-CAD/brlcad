@@ -3899,6 +3899,154 @@ repair_added_patch_stats(struct brep_cdt_repair_report *report,
     }
 }
 
+struct repair_missing_patch_report {
+    int components = 0;
+    int largest_faces = 0;
+    size_t largest_boundary_edges = 0;
+    double total_area = 0.0;
+    double largest_area = 0.0;
+};
+
+/* A local repair may replace a certified triangle neighborhood only under the
+ * same explicit geometric limits used to fill a hole.  Coordinate edges are
+ * intentional here: the repair transaction colocates equivalent boundary
+ * samples before operating, so index identity is no longer authoritative. */
+static bool
+repair_missing_patch_bounded(
+	const std::vector<repair_triangle_key> &triangles,
+	double input_area, const struct bg_trimesh_repair_settings &settings,
+	repair_missing_patch_report *report)
+{
+    if (report)
+	*report = repair_missing_patch_report();
+    if (triangles.empty())
+	return true;
+    if (!settings.fill_holes || settings.max_hole_edges < 3 ||
+	    !(input_area > 0.0) || !std::isfinite(input_area))
+	return false;
+    double area_limit = 0.0;
+    if (settings.max_hole_area > 0.0)
+	area_limit = settings.max_hole_area;
+    else if (settings.max_hole_area_percent > 0.0)
+	area_limit = input_area * settings.max_hole_area_percent / 100.0;
+    if (!(area_limit > 0.0) || !std::isfinite(area_limit))
+	return false;
+
+    std::vector<int> parents(triangles.size(), -1);
+    const auto root = [&](int item) {
+	int result = item;
+	while (parents[(size_t)result] >= 0)
+	    result = parents[(size_t)result];
+	return result;
+    };
+    const auto unite = [&](int first, int second) {
+	int first_root = root(first);
+	int second_root = root(second);
+	if (first_root == second_root)
+	    return;
+	if (parents[(size_t)first_root] > parents[(size_t)second_root])
+	    std::swap(first_root, second_root);
+	parents[(size_t)first_root] += parents[(size_t)second_root];
+	parents[(size_t)second_root] = first_root;
+    };
+    std::map<repair_triangle_edge_key, std::vector<int>> edge_faces;
+    for (size_t face = 0; face < triangles.size(); ++face) {
+	for (int corner = 0; corner < 3; ++corner)
+	    edge_faces[repair_triangle_edge(triangles[face][(size_t)corner],
+		triangles[face][(size_t)((corner + 1) % 3)])].push_back(
+		(int)face);
+    }
+    for (const auto &edge : edge_faces) {
+	/* The neighborhood may be the very non-manifold source topology that
+	 * repair must replace.  Keep the accepted ambiguity local and bounded;
+	 * the independently validated output must still have exactly two uses. */
+	if (edge.second.size() > 4)
+	    return false;
+	for (size_t face = 1; face < edge.second.size(); ++face)
+	    unite(edge.second[0], edge.second[face]);
+    }
+    std::map<int, int> component_faces;
+    std::map<int, size_t> component_boundary_edges;
+    std::map<int, double> component_area;
+    for (size_t face = 0; face < triangles.size(); ++face) {
+	const int component = root((int)face);
+	const double area = repair_triangle_key_area(triangles[face]);
+	if (!(area > 0.0) || !std::isfinite(area))
+	    return false;
+	component_faces[component]++;
+	component_area[component] += area;
+    }
+    for (const auto &edge : edge_faces) {
+	if (edge.second.size() == 1)
+	    component_boundary_edges[root(edge.second[0])]++;
+    }
+    const size_t face_limit = settings.max_hole_edges > SIZE_MAX / 4 ?
+	SIZE_MAX : 4 * settings.max_hole_edges;
+    repair_missing_patch_report result;
+    result.components = (int)component_faces.size();
+    for (const auto &component : component_faces) {
+	const size_t boundary = component_boundary_edges[component.first];
+	const double area = component_area[component.first];
+	if ((size_t)component.second > face_limit || area > area_limit ||
+		(boundary > 0 &&
+		(boundary < 3 || boundary > settings.max_hole_edges)))
+	    return false;
+	result.total_area += area;
+	if (component.second > result.largest_faces)
+	    result.largest_faces = component.second;
+	result.largest_boundary_edges = std::max(
+	    result.largest_boundary_edges, boundary);
+	result.largest_area = std::max(result.largest_area, area);
+    }
+    if (result.total_area > area_limit)
+	return false;
+    if (report)
+	*report = result;
+    return true;
+}
+
+int
+cdt_test_repair_patch_limits(void)
+{
+    repair_triangle_key first = {{{{0.0, 0.0, 0.0}},
+	{{1.0, 0.0, 0.0}}, {{0.0, 1.0, 0.0}}}};
+    repair_triangle_key second = {{{{1.0, 0.0, 0.0}},
+	{{1.0, 1.0, 0.0}}, {{0.0, 1.0, 0.0}}}};
+    std::sort(first.begin(), first.end());
+    std::sort(second.begin(), second.end());
+    const std::vector<repair_triangle_key> patch = {first, second};
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.fill_holes = 1;
+    settings.max_hole_edges = 4;
+    settings.max_hole_area_percent = 2.0;
+    repair_missing_patch_report report;
+    if (!repair_missing_patch_bounded(patch, 100.0, settings, &report) ||
+	    report.components != 1 || report.largest_faces != 2 ||
+	    report.largest_boundary_edges != 4 ||
+	    std::fabs(report.total_area - 1.0) > 1e-12)
+	return 1;
+    settings.max_hole_area_percent = 0.5;
+    if (repair_missing_patch_bounded(patch, 100.0, settings, NULL))
+	return 2;
+    settings.max_hole_area_percent = 2.0;
+    settings.max_hole_edges = 3;
+    if (repair_missing_patch_bounded(patch, 100.0, settings, NULL))
+	return 3;
+    settings.max_hole_edges = 16;
+    settings.max_hole_area_percent = 100.0;
+    std::vector<repair_triangle_key> excessive_valence;
+    for (int triangle = 0; triangle < 5; ++triangle) {
+	repair_triangle_key candidate = {{{{0.0, 0.0, 0.0}},
+	    {{1.0, 0.0, 0.0}},
+	    {{0.5, (double)triangle + 1.0, 0.0}}}};
+	std::sort(candidate.begin(), candidate.end());
+	excessive_valence.push_back(candidate);
+    }
+    return repair_missing_patch_bounded(excessive_valence, 100.0,
+	settings, NULL) ? 4 : 0;
+}
+
 static int
 brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const struct brep_cdt_repair_settings *settings,
@@ -5221,10 +5369,21 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	missing_rigorous_triangles, (size_t)INT_MAX);
     report->retained_rigorous_triangles = rigorous_input_face_count -
 	report->missing_rigorous_triangles;
+    bool bounded_local_replacement = false;
+    repair_missing_patch_report missing_patch_report;
     if (missing_rigorous_triangles &&
 	    !settings->use_full_fast_fallback &&
 	    !settings->use_poisson_reconstruction &&
 	    !settings->mesh.union_components) {
+	bounded_local_replacement = repair_missing_patch_bounded(
+	    unresolved_rigorous_keys, report->mesh.input_area,
+	    settings->mesh, &missing_patch_report);
+    }
+    if (missing_rigorous_triangles &&
+	    !settings->use_full_fast_fallback &&
+	    !settings->use_poisson_reconstruction &&
+	    !settings->mesh.union_components &&
+	    !bounded_local_replacement) {
 	bu_free(repaired_faces, "nonlocal repaired faces");
 	bu_free(repaired_points, "nonlocal repaired vertices");
 	bu_free(input_faces, "nonlocal repair input faces");
@@ -5250,6 +5409,19 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    report->source_diagnostic.completed_faces,
 	    report->source_failed_faces, message.c_str());
 	return -1;
+    }
+    if (bounded_local_replacement) {
+	report->replaced_rigorous_components =
+	    missing_patch_report.components;
+	report->largest_replaced_rigorous_triangles =
+	    missing_patch_report.largest_faces;
+	report->largest_replaced_boundary_edges =
+	    missing_patch_report.largest_boundary_edges;
+	report->replaced_rigorous_area = missing_patch_report.total_area;
+	report->largest_replaced_rigorous_area =
+	    missing_patch_report.largest_area;
+	approximation_faces.insert(missing_rigorous_brep_faces.begin(),
+	    missing_rigorous_brep_faces.end());
     }
 
     const bool have_display_reference = display_reference_face_count > 0 &&
@@ -5607,6 +5779,53 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     }
     double coverage_squared_distance_sum = 0.0;
     int worst_coverage_brep_face = -1;
+    const auto sample_output_coverage = [&](const ON_3dPoint &sample,
+	    int source_brep_face) {
+	double distance = 0.0;
+	report->coverage_samples++;
+	if (!repair_input_mesh_distance(repaired_triangle_index,
+		repaired_vertices, repaired_faces, sample,
+		report->allowed_surface_deviation, &distance)) {
+	    report->coverage_failures++;
+	    const double diagnostic_limit =
+		report->allowed_surface_deviation <=
+		std::numeric_limits<double>::max() / 4.0 ?
+		4.0 * report->allowed_surface_deviation :
+		report->allowed_surface_deviation;
+	    if (repair_input_mesh_distance(repaired_triangle_index,
+		    repaired_vertices, repaired_faces, sample,
+		    diagnostic_limit, &distance) && distance >
+		    report->max_coverage_deviation) {
+		report->max_coverage_deviation = distance;
+		worst_coverage_brep_face = source_brep_face;
+	    }
+	    return;
+	}
+	report->max_coverage_deviation = std::max(
+	    report->max_coverage_deviation, (fastf_t)distance);
+	coverage_squared_distance_sum += distance * distance;
+    };
+
+    /* The ordinary deterministic coverage budget may omit a few triangles
+     * from a large mesh.  A locally replaced neighborhood is exceptional and
+     * small by construction, so explicitly test its centroid and edge
+     * midpoints against the final mesh before accepting the interpretation. */
+    if (bounded_local_replacement) {
+	for (const repair_triangle_key &missing : unresolved_rigorous_keys) {
+	    const ON_3dPoint a(missing[0].data());
+	    const ON_3dPoint b(missing[1].data());
+	    const ON_3dPoint c(missing[2].data());
+	    int source_brep_face = -1;
+	    const auto source = missing_triangle_sources.find(missing);
+	    if (source != missing_triangle_sources.end() &&
+		    source->second.size() == 1)
+		source_brep_face = *source->second.begin();
+	    sample_output_coverage((a + b + c) / 3.0, source_brep_face);
+	    sample_output_coverage((a + b) / 2.0, source_brep_face);
+	    sample_output_coverage((b + c) / 2.0, source_brep_face);
+	    sample_output_coverage((c + a) / 2.0, source_brep_face);
+	}
+    }
     size_t remaining_coverage_extra =
 	sample_limit - sampled_reference_faces.size();
     for (const repair_changed_face &reference : sampled_reference_faces) {
@@ -5627,36 +5846,17 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const size_t face_sample_count = 1 +
 	    std::min((size_t)3, remaining_coverage_extra);
 	remaining_coverage_extra -= face_sample_count - 1;
+	int source_brep_face = -1;
+	if (have_display_reference && reference.index >= 0 &&
+		(size_t)reference.index < display_reference_brep_faces.size())
+	    source_brep_face = display_reference_brep_faces[
+		(size_t)reference.index];
+	else if (!have_display_reference && reference.index >= 0 &&
+		(size_t)reference.index < rigorous_input_brep_faces.size())
+	    source_brep_face = rigorous_input_brep_faces[
+		(size_t)reference.index];
 	for (size_t sample = 0; sample < face_sample_count; ++sample) {
-	    double distance = 0.0;
-	    report->coverage_samples++;
-	    if (!repair_input_mesh_distance(repaired_triangle_index,
-			repaired_vertices, repaired_faces, samples[sample],
-			report->allowed_surface_deviation, &distance)) {
-		report->coverage_failures++;
-		const double diagnostic_limit =
-			report->allowed_surface_deviation <=
-			std::numeric_limits<double>::max() / 4.0 ?
-			4.0 * report->allowed_surface_deviation :
-			report->allowed_surface_deviation;
-		if (repair_input_mesh_distance(repaired_triangle_index,
-			    repaired_vertices, repaired_faces, samples[sample],
-			    diagnostic_limit, &distance) && distance >
-			    report->max_coverage_deviation) {
-		    report->max_coverage_deviation = distance;
-		    if (have_display_reference && reference.index >= 0 &&
-				(size_t)reference.index <
-				display_reference_brep_faces.size()) {
-			worst_coverage_brep_face =
-				display_reference_brep_faces[
-				(size_t)reference.index];
-		    }
-		}
-		continue;
-	    }
-	    report->max_coverage_deviation = std::max(
-		report->max_coverage_deviation, (fastf_t)distance);
-	    coverage_squared_distance_sum += distance * distance;
+	    sample_output_coverage(samples[sample], source_brep_face);
 	}
     }
     const size_t covered_samples = report->coverage_samples -
@@ -5676,7 +5876,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    std::to_string(report->max_coverage_deviation) + " (limit " +
 	    std::to_string(report->allowed_surface_deviation) + ")";
 	if (worst_coverage_brep_face >= 0)
-	    message += ", worst display B-Rep face " +
+	    message += ", worst B-Rep face " +
 		std::to_string(worst_coverage_brep_face);
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
 	    BREP_CDT_STAGE_MESH_REPAIR, -1,
@@ -5710,7 +5910,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     else if (report->full_fast_fallback_used)
 	report->approximation_tier = BREP_CDT_REPAIR_APPROX_FULL_FAST;
     else if (report->mesh.added_faces > 0 ||
-	    !locally_reconstructed_faces.empty())
+	    !locally_reconstructed_faces.empty() ||
+	    bounded_local_replacement)
 	report->approximation_tier = BREP_CDT_REPAIR_APPROX_LOCAL_MESH;
     else if (report->fast_fallback_used_faces > 0)
 	report->approximation_tier =
@@ -5758,6 +5959,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	std::to_string(report->mesh.added_faces) + " added, " +
 	std::to_string(report->subdivided_rigorous_triangles) +
 	" rigorous triangles subdivided, " +
+	std::to_string(report->missing_rigorous_triangles) +
+	" rigorously sampled triangles locally replaced, " +
 	std::to_string(report->changed_faces) +
 	" changed triangles, sampled maximum reference deviation " +
 	std::to_string(report->max_surface_deviation);
