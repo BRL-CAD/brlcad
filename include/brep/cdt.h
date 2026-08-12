@@ -110,6 +110,9 @@ struct brep_cdt_diagnostic {
  * certified.  try_invalid_brep permits the repair entry point to make one
  * rigorous attempt after broad OpenNURBS validity failure, while retaining
  * the mesher's closed-manifold and paired-edge topology prerequisites.
+ * Edge-initialization failures caused by disagreeing paired p-curves may make
+ * one repair-only retry when their shared midpoint stays within the same
+ * maximum surface-deviation bound of both faces and the native edge curve.
  * With the automatic zero poisson_scale, use_poisson_reconstruction first
  * gives conservative mesh repair one chance to close the whole display mesh
  * without replacing its triangles.  Only if that fails does Screened Poisson
@@ -214,6 +217,11 @@ struct brep_cdt_repair_report {
     fastf_t rms_coverage_deviation;
     int relaxed_tessellation_attempted;
     int relaxed_tessellation_completed_faces;
+    int bounded_edge_retry_attempted;
+    int bounded_edge_retry_completed_faces;
+    int bounded_edge_approximation_edges;
+    int bounded_edge_approximation_faces;
+    fastf_t max_bounded_edge_deviation;
     size_t fast_fallback_constrained_edges;
     size_t fast_fallback_constrained_samples;
     int added_patch_components;
@@ -244,7 +252,7 @@ struct brep_cdt_repair_report {
     fastf_t largest_replaced_rigorous_area;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
@@ -472,6 +480,7 @@ extern BREP_EXPORT int cdt_test_spurious_components(void);
 extern BREP_EXPORT int cdt_test_local_defects(void);
 extern BREP_EXPORT int cdt_test_edge_singular_pair(void);
 extern BREP_EXPORT int cdt_test_linear_edge_spacing(void);
+extern BREP_EXPORT int cdt_test_bounded_edge_midpoint(void);
 extern BREP_EXPORT int cdt_test_assembled_mesh_validation(void);
 extern BREP_EXPORT int cdt_test_repair_edge_tube(void);
 extern BREP_EXPORT int cdt_test_repair_triangle_split(void);
