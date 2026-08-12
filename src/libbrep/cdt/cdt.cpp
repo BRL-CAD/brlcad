@@ -74,6 +74,7 @@
 #define MAX_AUTOMATIC_LOCAL_REPAIR_FACES 8192
 #define MAX_BEST_EFFORT_FOLD_DIVISOR 20
 #define MAX_BOUNDARY_STRIP_CORRESPONDENCE_TESTS 16777216
+#define MAX_BOUNDARY_STRIP_REFINEMENT_POINTS 1048576
 
 struct assembled_mesh_validation {
     size_t invalid_indices = 0;
@@ -3718,25 +3719,33 @@ struct repair_boundary_patch {
     size_t constrained_samples = 0;
     size_t periodic_u_samples = 0;
     size_t periodic_v_samples = 0;
+    size_t strip_interior_rows = 0;
 };
 
 /* A failed periodic side face may still have two authoritative closed edge
- * loops supplied by rigorous neighboring faces.  Join those loops directly
- * in the face parameter domain, using only their exact shared 3-D samples.
- * This deliberately omits suspect interior surface samples while retaining
- * the source face's seam topology.  General holed or partly constrained faces
- * remain the responsibility of the other bounded recovery paths. */
+ * loops supplied by rigorous neighboring faces.  Join those loops in a
+ * synthetic rectangular chart while keeping their exact shared 3-D samples.
+ * If the boundary-only chords do not meet the requested fidelity, insert
+ * bounded rows evaluated directly on the failed source surface.  This avoids
+ * projecting a twisted 3-D patch onto one plane while retaining the source
+ * face's seam topology.  General holed or partly constrained faces remain the
+ * responsibility of the other bounded recovery paths. */
 static bool
 repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	int face_index, const repair_fast_constraint_store &constraints,
-	size_t max_points, repair_boundary_patch &patch)
+	size_t max_points, fastf_t allowed_deviation, int64_t deadline,
+	repair_boundary_patch &patch)
 {
     patch = repair_boundary_patch();
     if (!s_cdt || !s_cdt->brep || face_index < 0 ||
 	    face_index >= s_cdt->brep->m_F.Count() ||
 	    constraints.face_index != face_index ||
-	    constraints.trims.size() < 2)
+	    constraints.trims.size() < 2 || !(allowed_deviation > 0.0) ||
+	    !std::isfinite(allowed_deviation))
 	return false;
+
+    max_points = std::min(max_points,
+	(size_t)MAX_BOUNDARY_STRIP_REFINEMENT_POINTS);
 
     const ON_BrepFace &face = s_cdt->brep->m_F[face_index];
     const ON_BrepLoop *outer = face.OuterLoop();
@@ -3844,8 +3853,6 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
     if (closed_direction < 0)
 	return reject("boundary paths do not span a closed surface direction");
 
-    std::vector<detria::PointD> chart_points;
-    std::vector<const repair_fast_trim_sample *> source_points;
     for (const boundary_path &boundary : boundaries) {
 	const std::vector<repair_fast_trim_sample> &samples =
 	    boundary.samples;
@@ -3917,122 +3924,325 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	    (long)second_segments) % (long)second_segments);
     };
 
-    chart_points.reserve(first_segments + second_segments + 2);
-    source_points.reserve(first_segments + second_segments + 2);
-    for (size_t point = 0; point <= first_segments; ++point) {
-	detria::PointD chart;
-	chart.x = (double)point / (double)first_segments;
-	chart.y = 0.0;
-	chart_points.push_back(chart);
-	source_points.push_back(&first_samples[point]);
-    }
-    for (size_t point = second_segments + 1; point > 0; --point) {
-	const size_t phase = point - 1;
-	detria::PointD chart;
-	chart.x = (double)phase / (double)second_segments;
-	chart.y = 1.0;
-	chart_points.push_back(chart);
-	source_points.push_back(&second_samples[
-	    corresponding_second(phase)]);
-    }
-    if (chart_points.size() > (size_t)INT_MAX)
-	return reject("boundary sample count is unusable");
-
-    std::vector<int> outline(chart_points.size());
-    std::iota(outline.begin(), outline.end(), 0);
-    detria::Triangulation<detria::PointD, int> triangulation;
-    triangulation.setPoints(chart_points);
-    triangulation.addOutline(outline);
-    try {
-	if (!triangulation.triangulate(true))
-	    return reject("chart triangulation failed");
-    } catch (...) {
-	return reject("chart triangulation raised an exception");
-    }
-
-    std::map<repair_point_key, int> local_points;
-    std::vector<int> chart_to_local(chart_points.size(), -1);
-    for (size_t point = 0; point < source_points.size(); ++point) {
-	const repair_fast_trim_sample &sample = *source_points[point];
-	const repair_point_key key = {sample.point[X], sample.point[Y],
-	    sample.point[Z]};
-	const auto existing = local_points.find(key);
-	if (existing != local_points.end()) {
-	    chart_to_local[point] = existing->second;
-	    continue;
+    const ON_Interval closed_domain = surface->Domain(closed_direction);
+    const double closed_period = closed_domain.Length();
+    const auto unwrap_boundary = [&](size_t segment_count,
+	    const auto &sample) {
+	std::vector<ON_2dPoint> result(segment_count + 1);
+	for (size_t phase = 0; phase <= segment_count; ++phase) {
+	    const repair_fast_trim_sample &source = sample(phase);
+	    result[phase] = ON_2dPoint(source.uv[X], source.uv[Y]);
+	    if (!phase)
+		continue;
+	    double &coordinate = closed_direction ? result[phase].y :
+		result[phase].x;
+	    const double prior = closed_direction ? result[phase - 1].y :
+		result[phase - 1].x;
+	    coordinate += std::round((prior - coordinate) /
+		closed_period) * closed_period;
 	}
-	const int local_index = (int)(patch.vertices.size() / 3);
-	local_points[key] = local_index;
-	chart_to_local[point] = local_index;
-	patch.vertices.insert(patch.vertices.end(), sample.point,
-	    sample.point + 3);
+	return result;
+    };
+    std::vector<ON_2dPoint> first_uv = unwrap_boundary(first_segments,
+	[&](size_t phase) -> const repair_fast_trim_sample & {
+	    return first_samples[phase];
+	});
+    std::vector<ON_2dPoint> second_uv = unwrap_boundary(second_segments,
+	[&](size_t phase) -> const repair_fast_trim_sample & {
+	    return second_samples[corresponding_second(phase)];
+	});
+    double &second_closed_start = closed_direction ? second_uv[0].y :
+	second_uv[0].x;
+    const double first_closed_start = closed_direction ? first_uv[0].y :
+	first_uv[0].x;
+    const double second_shift = std::round((first_closed_start -
+	second_closed_start) / closed_period) * closed_period;
+    for (ON_2dPoint &uv : second_uv) {
+	double &coordinate = closed_direction ? uv.y : uv.x;
+	coordinate += second_shift;
     }
 
-    bool valid = true;
-    triangulation.forEachTriangle(
-	[&](const detria::Triangle<int> triangle) {
-	    if (!valid)
-		return;
-	    int local[3] = {chart_to_local[(size_t)triangle.x],
-		chart_to_local[(size_t)triangle.y],
-		chart_to_local[(size_t)triangle.z]};
-	    if (local[0] == local[1] || local[1] == local[2] ||
-		    local[2] == local[0]) {
-		valid = false;
-		return;
-	    }
-	    ON_3dPoint points[3];
-	    for (int corner = 0; corner < 3; ++corner)
-		points[corner] = ON_3dPoint(
-		    &patch.vertices[(size_t)local[corner] * 3]);
-	    const ON_3dVector cross = ON_CrossProduct(points[1] - points[0],
-		points[2] - points[0]);
-	    const double longest_squared = std::max(
-		points[0].DistanceToSquared(points[1]), std::max(
-		points[1].DistanceToSquared(points[2]),
-		points[2].DistanceToSquared(points[0])));
-	    if (!(longest_squared > 0.0) || !std::isfinite(cross.Length()) ||
-		    cross.Length() <= 64.0 *
-		    std::numeric_limits<double>::epsilon() * longest_squared) {
-		valid = false;
-		return;
-	    }
-	    ON_3dPoint surface_point;
-	    ON_3dVector surface_normal;
-	    const repair_fast_trim_sample &normal_sample =
-		*source_points[(size_t)triangle.x];
-	    ON_2dPoint surface_uv(normal_sample.uv[X], normal_sample.uv[Y]);
-	    for (int direction = 0; direction < 2; ++direction) {
-		if (!surface->IsClosed(direction))
+    const auto boundary_uv = [](const std::vector<ON_2dPoint> &samples,
+	    double phase) {
+	if (phase <= 0.0)
+	    return samples.front();
+	if (phase >= 1.0)
+	    return samples.back();
+	const double position = phase * (double)(samples.size() - 1);
+	const size_t first = std::min(samples.size() - 2,
+	    (size_t)std::floor(position));
+	const double fraction = position - (double)first;
+	return ON_2dPoint((1.0 - fraction) * samples[first].x +
+	    fraction * samples[first + 1].x,
+	    (1.0 - fraction) * samples[first].y +
+	    fraction * samples[first + 1].y);
+    };
+    const auto wrapped_uv = [&](ON_2dPoint uv) {
+	double &coordinate = closed_direction ? uv.y : uv.x;
+	coordinate = closed_domain.Min() + std::fmod(coordinate -
+	    closed_domain.Min(), closed_period);
+	if (coordinate < closed_domain.Min())
+	    coordinate += closed_period;
+	return uv;
+    };
+
+    std::set<double> interior_phases;
+    for (size_t point = 0; point <= first_segments; ++point)
+	interior_phases.insert((double)point / (double)first_segments);
+    for (size_t point = 0; point <= second_segments; ++point)
+	interior_phases.insert((double)point / (double)second_segments);
+
+    const char *strip_build_failure = NULL;
+    const auto build_strip = [&](size_t interior_rows,
+	    repair_boundary_patch &candidate, double &maximum_deviation) {
+	candidate = repair_boundary_patch();
+	maximum_deviation = 0.0;
+	strip_build_failure = NULL;
+	const size_t outline_count = first_segments + second_segments + 2;
+	const size_t interior_count = interior_rows * interior_phases.size();
+	if (outline_count > max_points || interior_count >
+		max_points - outline_count || outline_count + interior_count >
+		(size_t)INT_MAX) {
+	    strip_build_failure = "point limit";
+	    return false;
+	}
+	std::vector<detria::PointD> chart_points;
+	std::vector<ON_2dPoint> source_uv;
+	std::vector<ON_3dPoint> source_points;
+	chart_points.reserve(outline_count + interior_count);
+	source_uv.reserve(outline_count + interior_count);
+	source_points.reserve(outline_count + interior_count);
+	for (size_t point = 0; point <= first_segments; ++point) {
+	    const double phase = (double)point / (double)first_segments;
+	    chart_points.push_back({phase, 0.0});
+	    source_uv.push_back(first_uv[point]);
+	    source_points.emplace_back(first_samples[point].point);
+	}
+	for (size_t point = second_segments + 1; point > 0; --point) {
+	    const size_t phase_index = point - 1;
+	    const double phase = (double)phase_index /
+		(double)second_segments;
+	    chart_points.push_back({phase, 1.0});
+	    source_uv.push_back(second_uv[phase_index]);
+	    source_points.emplace_back(second_samples[
+		corresponding_second(phase_index)].point);
+	}
+	for (size_t row = 1; row <= interior_rows; ++row) {
+	    const double y = (double)row / (double)(interior_rows + 1);
+	    const size_t row_start = source_points.size();
+	    for (double phase : interior_phases) {
+		const ON_2dPoint lower = boundary_uv(first_uv, phase);
+		const ON_2dPoint upper = boundary_uv(second_uv, phase);
+		const ON_2dPoint uv((1.0 - y) * lower.x + y * upper.x,
+		    (1.0 - y) * lower.y + y * upper.y);
+		chart_points.push_back({phase, y});
+		source_uv.push_back(uv);
+		if (phase >= 1.0 && source_points.size() > row_start) {
+		    source_points.push_back(source_points[row_start]);
 		    continue;
-		const ON_Interval domain = surface->Domain(direction);
-		const double period = domain.Length();
-		double &coordinate = direction ? surface_uv.y : surface_uv.x;
-		coordinate = domain.Min() + std::fmod(coordinate -
-		    domain.Min(), period);
-		if (coordinate < domain.Min())
-		    coordinate += period;
+		}
+		const ON_2dPoint native_uv = wrapped_uv(uv);
+		const ON_3dPoint surface_point = surface->PointAt(native_uv.x,
+		    native_uv.y);
+		if (!surface_point.IsValid()) {
+		    strip_build_failure = "invalid interior surface sample";
+		    return false;
+		}
+		source_points.push_back(surface_point);
 	    }
-	    if (!surface_EvNormal(surface, surface_uv.x, surface_uv.y,
-		    surface_point,
-		    surface_normal) || !surface_normal.IsValid()) {
-		valid = false;
-		return;
+	}
+
+	/* Points at phase zero and one lie on the artificial chart seam.  Make
+	 * them explicit outline vertices; otherwise detria correctly rejects
+	 * them as unconstrained points lying on the two vertical outline edges. */
+	std::vector<int> outline;
+	outline.reserve(outline_count + 2 * interior_rows);
+	for (size_t point = 0; point <= first_segments; ++point)
+	    outline.push_back((int)point);
+	const size_t interior_phase_count = interior_phases.size();
+	for (size_t row = 0; row < interior_rows; ++row)
+	    outline.push_back((int)(outline_count + row *
+		interior_phase_count + interior_phase_count - 1));
+	for (size_t point = 0; point <= second_segments; ++point)
+	    outline.push_back((int)(first_segments + 1 + point));
+	for (size_t row = interior_rows; row > 0; --row)
+	    outline.push_back((int)(outline_count + (row - 1) *
+		interior_phase_count));
+	detria::Triangulation<detria::PointD, int> triangulation;
+	triangulation.setPoints(chart_points);
+	triangulation.addOutline(outline);
+	try {
+	    if (!triangulation.triangulate(true)) {
+		strip_build_failure = "CDT rejected interior samples";
+		return false;
 	    }
-	    if (face.m_bRev)
-		surface_normal.Reverse();
-	    if (cross * surface_normal < 0.0)
-		std::swap(local[1], local[2]);
-	    patch.faces.insert(patch.faces.end(), local, local + 3);
-	}, true);
-    if (!valid || patch.faces.size() / 3 != chart_points.size() - 2) {
-	patch = repair_boundary_patch();
+	} catch (...) {
+	    strip_build_failure = "CDT raised an exception";
+	    return false;
+	}
+
+	std::map<repair_point_key, int> local_points;
+	std::vector<int> chart_to_local(chart_points.size(), -1);
+	for (size_t point = 0; point < source_points.size(); ++point) {
+	    const ON_3dPoint &source = source_points[point];
+	    const repair_point_key key = {source.x, source.y, source.z};
+	    const auto existing = local_points.find(key);
+	    if (existing != local_points.end()) {
+		chart_to_local[point] = existing->second;
+		continue;
+	    }
+	    const int local_index = (int)(candidate.vertices.size() / 3);
+	    local_points[key] = local_index;
+	    chart_to_local[point] = local_index;
+	    candidate.vertices.push_back(source.x);
+	    candidate.vertices.push_back(source.y);
+	    candidate.vertices.push_back(source.z);
+	}
+
+	bool valid = true;
+	triangulation.forEachTriangle(
+	    [&](const detria::Triangle<int> triangle) {
+		if (!valid)
+		    return;
+		const int chart[3] = {triangle.x, triangle.y, triangle.z};
+		int local[3] = {chart_to_local[(size_t)triangle.x],
+		    chart_to_local[(size_t)triangle.y],
+		    chart_to_local[(size_t)triangle.z]};
+		if (local[0] == local[1] || local[1] == local[2] ||
+			local[2] == local[0]) {
+		    strip_build_failure = "collapsed local triangle";
+		    valid = false;
+		    return;
+		}
+		ON_3dPoint points[3];
+		ON_2dPoint centroid_uv(0.0, 0.0);
+		for (int corner = 0; corner < 3; ++corner) {
+		    points[corner] = ON_3dPoint(&candidate.vertices[
+			(size_t)local[corner] * 3]);
+		    centroid_uv.x += source_uv[(size_t)chart[corner]].x / 3.0;
+		    centroid_uv.y += source_uv[(size_t)chart[corner]].y / 3.0;
+		}
+		const ON_3dVector cross = ON_CrossProduct(points[1] - points[0],
+		    points[2] - points[0]);
+		const double longest_squared = std::max(
+		    points[0].DistanceToSquared(points[1]), std::max(
+		    points[1].DistanceToSquared(points[2]),
+		    points[2].DistanceToSquared(points[0])));
+		if (!(longest_squared > 0.0) || !cross.IsValid() ||
+			cross.Length() <= 64.0 *
+			std::numeric_limits<double>::epsilon() *
+			longest_squared) {
+		    strip_build_failure = "geometrically degenerate triangle";
+		    valid = false;
+		    return;
+		}
+		ON_3dPoint normal_point;
+		ON_3dVector surface_normal;
+		const ON_2dPoint normal_uv = wrapped_uv(centroid_uv);
+		if (!surface_EvNormal(surface, normal_uv.x, normal_uv.y,
+			normal_point, surface_normal) ||
+			!surface_normal.IsValid()) {
+		    strip_build_failure = "invalid interior surface normal";
+		    valid = false;
+		    return;
+		}
+		if (face.m_bRev)
+		    surface_normal.Reverse();
+		if (cross * surface_normal < 0.0)
+		    std::swap(local[1], local[2]);
+
+		const double weights[4][3] = {
+		    {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0},
+		    {0.5, 0.5, 0.0}, {0.0, 0.5, 0.5},
+		    {0.5, 0.0, 0.5}
+		};
+		double triangle_deviation = 0.0;
+		for (int sample = 0; sample < 4; ++sample) {
+		    ON_2dPoint uv(0.0, 0.0);
+		    ON_3dPoint mesh_point(0.0, 0.0, 0.0);
+		    for (int corner = 0; corner < 3; ++corner) {
+			uv.x += weights[sample][corner] *
+			    source_uv[(size_t)chart[corner]].x;
+			uv.y += weights[sample][corner] *
+			    source_uv[(size_t)chart[corner]].y;
+			mesh_point.x += weights[sample][corner] * points[corner].x;
+			mesh_point.y += weights[sample][corner] * points[corner].y;
+			mesh_point.z += weights[sample][corner] * points[corner].z;
+		    }
+		    const ON_2dPoint native_uv = wrapped_uv(uv);
+		    const ON_3dPoint surface_point = surface->PointAt(native_uv.x,
+			native_uv.y);
+		    if (!surface_point.IsValid()) {
+			strip_build_failure = "invalid surface deviation sample";
+			valid = false;
+			return;
+		    }
+		    triangle_deviation = std::max(triangle_deviation,
+			mesh_point.DistanceTo(surface_point));
+		}
+		maximum_deviation = std::max(maximum_deviation,
+		    triangle_deviation);
+		candidate.faces.insert(candidate.faces.end(), local, local + 3);
+		candidate.direct_surface_deviations.push_back(
+		    triangle_deviation);
+	    }, true);
+	const size_t boundary_count = outline_count + 2 * interior_rows;
+	const size_t interior_point_count = interior_count -
+	    2 * interior_rows;
+	const size_t expected_faces = boundary_count +
+	    2 * interior_point_count - 2;
+	if (!valid || candidate.faces.size() / 3 != expected_faces) {
+	    if (!strip_build_failure)
+		strip_build_failure = "incomplete interior triangulation";
+	    return false;
+	}
+	for (const boundary_path &boundary : boundaries) {
+	    candidate.constrained_edges += boundary.constrained_edges;
+	    candidate.constrained_samples += boundary.constrained_samples;
+	}
+	candidate.strip_interior_rows = interior_rows;
+	return true;
+    };
+
+    repair_boundary_patch best_patch;
+    double best_deviation = std::numeric_limits<double>::infinity();
+    for (size_t interior_rows = 0; interior_rows <= 255;
+	    interior_rows = 2 * interior_rows + 1) {
+	if (deadline > 0 && bu_gettime() >= deadline)
+	    break;
+	repair_boundary_patch candidate;
+	double maximum_deviation = 0.0;
+	if (!build_strip(interior_rows, candidate, maximum_deviation)) {
+	    if (getenv("BRLCAD_CDT_DEBUG_STRIP") &&
+		    getenv("BRLCAD_CDT_DEBUG_STRIP")[0] &&
+		    !BU_STR_EQUAL(getenv("BRLCAD_CDT_DEBUG_STRIP"), "0"))
+		bu_log("Face %d: periodic strip refinement failed with %zu "
+		    "interior rows: %s\n", face_index, interior_rows,
+		    strip_build_failure ? strip_build_failure : "unknown reason");
+	    if (!interior_rows)
+		return reject("chart triangulation failed");
+	    break;
+	}
+	if (getenv("BRLCAD_CDT_DEBUG_STRIP") &&
+		getenv("BRLCAD_CDT_DEBUG_STRIP")[0] &&
+		!BU_STR_EQUAL(getenv("BRLCAD_CDT_DEBUG_STRIP"), "0"))
+	    bu_log("Face %d: periodic strip %zu interior rows, %zu points, "
+		"%zu triangles, maximum deviation %.17g (limit %.17g)\n",
+		face_index, interior_rows, candidate.vertices.size() / 3,
+		candidate.faces.size() / 3, maximum_deviation,
+		(double)allowed_deviation);
+	if (maximum_deviation < best_deviation) {
+	    best_deviation = maximum_deviation;
+	    best_patch = std::move(candidate);
+	}
+	if (best_deviation <= allowed_deviation) {
+	    patch = std::move(best_patch);
+	    return true;
+	}
+    }
+    if (best_patch.faces.empty())
 	return reject("triangulated strip is incomplete or degenerate");
-    }
-    for (const boundary_path &boundary : boundaries) {
-	patch.constrained_edges += boundary.constrained_edges;
-	patch.constrained_samples += boundary.constrained_samples;
-    }
+    patch = std::move(best_patch);
     return true;
 }
 
@@ -4396,40 +4606,46 @@ cdt_test_repair_periodic_strip(void)
 
     const ON_BrepFace &side = state->brep->m_F[side_index];
     const ON_BrepLoop *outer = side.OuterLoop();
-    const ON_Surface *surface = side.SurfaceOf();
-    repair_fast_constraint_store constraints;
-    constraints.face_index = side_index;
-    for (int trim_index = 0; outer && trim_index < outer->TrimCount();
-	    ++trim_index) {
-	const ON_BrepTrim *trim = outer->Trim(trim_index);
-	const ON_BrepEdge *edge = trim ? trim->Edge() : NULL;
-	if (!trim || !edge || !edge->IsClosed() ||
-		trim->m_type == ON_BrepTrim::seam)
-	    continue;
-	const int segment_count = constraints.trims.empty() ? 8 : 10;
-	std::vector<repair_fast_trim_sample> &samples =
-	    constraints.trims[trim->m_trim_index];
-	const ON_Interval domain = trim->Domain();
-	for (int sample_index = 0; sample_index <= segment_count;
-		sample_index++) {
-	    repair_fast_trim_sample sample;
-	    sample.parameter = domain.ParameterAt(
-		(double)sample_index / (double)segment_count);
-	    const ON_2dPoint uv = trim->PointAt(sample.parameter);
-	    const ON_3dPoint point = surface->PointAt(uv.x, uv.y);
-	    V2SET(sample.uv, uv.x, uv.y);
-	    VSET(sample.point, point.x, point.y, point.z);
-	    if (sample_index == segment_count)
-		VMOVE(sample.point, samples.front().point);
-	    samples.push_back(sample);
+    const auto make_constraints = [&](int first_segments,
+	    int later_segments) {
+	repair_fast_constraint_store result;
+	result.face_index = side_index;
+	const ON_Surface *surface = side.SurfaceOf();
+	for (int trim_index = 0; outer && trim_index < outer->TrimCount();
+		++trim_index) {
+	    const ON_BrepTrim *trim = outer->Trim(trim_index);
+	    const ON_BrepEdge *edge = trim ? trim->Edge() : NULL;
+	    if (!trim || !edge || !edge->IsClosed() ||
+		    trim->m_type == ON_BrepTrim::seam)
+		continue;
+	    const int segment_count = result.trims.empty() ?
+		first_segments : later_segments;
+	    std::vector<repair_fast_trim_sample> &samples =
+		result.trims[trim->m_trim_index];
+	    const ON_Interval domain = trim->Domain();
+	    for (int sample_index = 0; sample_index <= segment_count;
+		    sample_index++) {
+		repair_fast_trim_sample sample;
+		sample.parameter = domain.ParameterAt(
+		    (double)sample_index / (double)segment_count);
+		const ON_2dPoint uv = trim->PointAt(sample.parameter);
+		const ON_3dPoint point = surface->PointAt(uv.x, uv.y);
+		V2SET(sample.uv, uv.x, uv.y);
+		VSET(sample.point, point.x, point.y, point.z);
+		if (sample_index == segment_count)
+		    VMOVE(sample.point, samples.front().point);
+		samples.push_back(sample);
+	    }
+	    result.constrained_edges++;
+	    result.constrained_samples += samples.size();
 	}
-	constraints.constrained_edges++;
-	constraints.constrained_samples += samples.size();
-    }
+	return result;
+    };
+    repair_fast_constraint_store constraints = make_constraints(8, 10);
 
     repair_boundary_patch patch;
     const bool reconstructed = repair_constrained_periodic_strip(state,
-	side_index, constraints, 64, patch);
+	side_index, constraints, 64, 10.0, 0, patch);
     bool valid = reconstructed && patch.faces.size() == 18 * 3 &&
 	patch.vertices.size() == 18 * 3 &&
 	patch.constrained_edges == 2 && patch.constrained_samples == 20;
@@ -4447,9 +4663,42 @@ cdt_test_repair_periodic_strip(void)
 	valid = valid && ON_CrossProduct(points[1] - points[0],
 	    points[2] - points[0]).Length() > ON_ZERO_TOLERANCE;
     }
+    const ON_Surface *old_surface = side.SurfaceOf();
+    if (!valid || side.m_si < 0 || !old_surface) {
+	ON_Brep_CDT_Destroy(state);
+	return 4;
+    }
+    ON_RevSurface *barrel = ON_RevSurface::Cast(
+	state->brep->m_S[side.m_si]);
+    if (!barrel || !barrel->m_curve) {
+	ON_Brep_CDT_Destroy(state);
+	return 4;
+    }
+    const ON_Interval height_domain = old_surface->Domain(1);
+    ON_NurbsCurve *profile = ON_NurbsCurve::New(3, false, 3, 3);
+    profile->MakeClampedUniformKnotVector(1.0);
+    profile->SetCV(0, ON_3dPoint(5.0, 0.0, 0.0));
+    profile->SetCV(1, ON_3dPoint(8.0, 0.0, 1.0));
+    profile->SetCV(2, ON_3dPoint(5.0, 0.0, 2.0));
+    profile->SetDomain(height_domain.Min(), height_domain.Max());
+    delete barrel->m_curve;
+    barrel->m_curve = profile;
+    barrel->DestroyRuntimeCache(true);
+    constraints = make_constraints(64, 64);
+    repair_boundary_patch refined_patch;
+    const bool refined = repair_constrained_periodic_strip(state,
+	side_index, constraints, 4096, 0.04, 0, refined_patch);
+    valid = refined && refined_patch.strip_interior_rows > 0 &&
+	refined_patch.constrained_edges == 2 &&
+	refined_patch.constrained_samples == 130 &&
+	refined_patch.faces.size() > 126 * 3 &&
+	refined_patch.direct_surface_deviations.size() ==
+	refined_patch.faces.size() / 3;
+    for (double deviation : refined_patch.direct_surface_deviations)
+	valid = valid && std::isfinite(deviation) && deviation <= 0.04;
     ON_Brep_CDT_Destroy(state);
     if (!valid)
-	return 4;
+	return 5;
 
     ON_Circle major(ON_xy_plane, 9.0);
     ON_Torus torus(major, 2.5);
@@ -4465,7 +4714,7 @@ cdt_test_repair_periodic_strip(void)
 	false, false, NULL));
     if (!torus_brep) {
 	delete revolution;
-	return 5;
+	return 6;
     }
     state = ON_Brep_CDT_Create(torus_brep.get(),
 	"doubly periodic repair contract");
@@ -4473,7 +4722,7 @@ cdt_test_repair_periodic_strip(void)
 	state->brep = new ON_Brep(*torus_brep);
     if (!state || !state->brep || state->brep->m_F.Count() != 1) {
 	ON_Brep_CDT_Destroy(state);
-	return 6;
+	return 7;
     }
     repair_boundary_patch grid;
     const bool grid_reconstructed = repair_closed_periodic_surface(state, 0,
@@ -4487,7 +4736,7 @@ cdt_test_repair_periodic_strip(void)
     for (double deviation : grid.direct_surface_deviations)
 	valid = valid && std::isfinite(deviation) && deviation <= 0.1;
     ON_Brep_CDT_Destroy(state);
-    return valid ? 0 : 7;
+    return valid ? 0 : 8;
 }
 
 static void
@@ -4981,7 +5230,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     std::map<repair_triangle_key, std::set<int>>
 	local_chart_triangle_brep_faces;
     std::map<repair_triangle_key, double>
-	periodic_grid_triangle_deviations;
+	direct_surface_triangle_deviations;
     std::map<repair_triangle_key, std::set<int>> fast_triangle_brep_faces;
     /* Whole-B-Rep fallback replaces every rigorous face mesh.  Do not spend
      * another bounded refinement cycle assembling those faces after a stage
@@ -5258,10 +5507,11 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    const repair_fast_constraint_store constraints =
 		repair_fast_face_constraints(s_cdt, failed_face);
 	    repair_boundary_patch patch;
-	    const bool boundary_strip = repair_constrained_periodic_strip(s_cdt,
-		failed_face, constraints, settings->max_fast_points, patch);
 	    const fastf_t allowed_deviation = settings->max_surface_deviation >
 		0.0 ? settings->max_surface_deviation : s_cdt->absmax;
+	    const bool boundary_strip = repair_constrained_periodic_strip(s_cdt,
+		failed_face, constraints, settings->max_fast_points,
+		allowed_deviation, strip_deadline, patch);
 	    const bool periodic_grid = !boundary_strip &&
 		repair_closed_periodic_surface(s_cdt, failed_face,
 		    settings->max_fast_points, allowed_deviation,
@@ -5277,7 +5527,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    patch_bytes > settings->max_fast_result_bytes ||
 		    patch_points > (size_t)INT_MAX ||
 		    patch_faces > (size_t)INT_MAX ||
-		    (periodic_grid &&
+		    (!patch.direct_surface_deviations.empty() &&
 		    patch.direct_surface_deviations.size() != patch_faces))
 		continue;
 	    const int appended = append_approximate_mesh(failed_face,
@@ -5285,6 +5535,14 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		(int)patch_points);
 	    if (!appended)
 		continue;
+	    if (patch.direct_surface_deviations.size() == patch_faces) {
+		for (size_t triangle = 0; triangle < patch_faces; ++triangle) {
+		    const repair_triangle_key key = repair_triangle_coordinates(
+			patch.vertices.data(), &patch.faces[triangle * 3]);
+		    direct_surface_triangle_deviations[key] =
+			patch.direct_surface_deviations[triangle];
+		}
+	    }
 	    locally_reconstructed_faces.insert(failed_face);
 	    if (boundary_strip) {
 		report->boundary_strip_faces++;
@@ -5294,15 +5552,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		report->boundary_strip_constrained_samples +=
 		    patch.constrained_samples;
 		bu_log("Face %d: joined two rigorous periodic boundaries with "
-		    "a local %d-triangle strip (%zu constrained samples)\n",
-		    failed_face, appended, patch.constrained_samples);
+		    "a local %d-triangle strip (%zu constrained samples, "
+		    "%zu interior rows)\n", failed_face, appended,
+		    patch.constrained_samples, patch.strip_interior_rows);
 	    } else {
-		for (size_t triangle = 0; triangle < patch_faces; ++triangle) {
-		    const repair_triangle_key key = repair_triangle_coordinates(
-			patch.vertices.data(), &patch.faces[triangle * 3]);
-		    periodic_grid_triangle_deviations[key] =
-			patch.direct_surface_deviations[triangle];
-		}
 		bu_log("Face %d: reconstructed a seam-only doubly periodic "
 		    "surface with a %zux%zu grid (%d triangles)\n",
 		    failed_face, patch.periodic_u_samples,
@@ -6465,12 +6718,12 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const ON_3dPoint a(&repaired_vertices[(size_t)triangle[0] * 3]);
 	const ON_3dPoint b(&repaired_vertices[(size_t)triangle[1] * 3]);
 	const ON_3dPoint c(&repaired_vertices[(size_t)triangle[2] * 3]);
-	const auto direct_surface = periodic_grid_triangle_deviations.find(key);
+	const auto direct_surface = direct_surface_triangle_deviations.find(key);
 	changed_faces.push_back({face,
 	    0.5 * ON_CrossProduct(b - a, c - a).Length(),
 	    source_brep_face, local_surface_approximation,
-	    direct_surface != periodic_grid_triangle_deviations.end(),
-	    direct_surface != periodic_grid_triangle_deviations.end() ?
+	    direct_surface != direct_surface_triangle_deviations.end(),
+	    direct_surface != direct_surface_triangle_deviations.end() ?
 	    direct_surface->second : 0.0});
     }
     report->changed_faces = (int)changed_faces.size();
