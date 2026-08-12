@@ -359,6 +359,54 @@ test_repair2_report(void)
     return 0;
 }
 
+/* Two triangular holes which touch only at one boundary vertex form a
+ * figure-eight boundary.  Each exact three-edge cycle must be capped before
+ * non-manifold boundary splitting destroys the cycles. */
+static int
+test_touching_triangular_holes(void)
+{
+    static point_t points[6] = {
+	{0, 0, 1}, {0, 0, -1}, {1, 0, 0}, {0, 1, 0},
+	{-1, 0, 0}, {0, -1, 0}
+    };
+    static int faces[18] = {
+	0, 3, 4, 0, 5, 2,
+	1, 3, 2, 1, 4, 3, 1, 5, 4, 1, 2, 5
+    };
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.fill_holes = 1;
+    settings.max_hole_area_percent = 100.0;
+    settings.max_hole_edges = 3;
+    settings.require_manifold = 1;
+    int *output_faces = NULL;
+    int output_face_count = 0;
+    point_t *output_points = NULL;
+    int output_point_count = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int result = bg_trimesh_repair2(&output_faces,
+	&output_face_count, &output_points, &output_point_count, faces, 6,
+	points, 6, &settings, &report);
+    const bool valid = result == 0 && report.solid &&
+	report.manifold_accepted && report.added_faces == 2 &&
+	output_face_count == 8 && !bg_trimesh_solid2(output_point_count,
+	output_face_count, (fastf_t *)output_points, output_faces, NULL);
+    if (output_faces)
+	bu_free(output_faces, "touching triangular hole faces");
+    if (output_points)
+	bu_free(output_points, "touching triangular hole points");
+    if (!valid) {
+	bu_log("FAIL test_touching_triangular_holes: ret=%d solid=%d "
+	    "manifold=%d added=%d faces=%d\n", result, report.solid,
+	    report.manifold_accepted, report.added_faces,
+	    output_face_count);
+	return -1;
+    }
+    bu_log("PASS test_touching_triangular_holes\n");
+    return 0;
+}
+
 /* A topologically valid cap is not acceptable when it cuts through another
  * closed component.  Both available triangulations cover the same square, so
  * repair must leave the hole open and fail instead of returning an
@@ -1233,6 +1281,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_unused_vertex_compaction()  != 0) ? 1 : 0;
     failures += (test_repair2_conservative_default() != 0) ? 1 : 0;
     failures += (test_repair2_report()             != 0) ? 1 : 0;
+    failures += (test_touching_triangular_holes()   != 0) ? 1 : 0;
     failures += (test_intersecting_hole_patch_rejected() != 0) ? 1 : 0;
     failures +=
 	(test_intersecting_hole_patch_manifold_accepted() != 0) ? 1 : 0;
