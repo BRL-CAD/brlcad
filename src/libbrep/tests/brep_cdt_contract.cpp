@@ -451,23 +451,39 @@ paired_pcurve_edge_contract()
     settings.mesh.max_hole_area_percent = 100.0;
     settings.mesh.max_hole_edges = 4096;
     settings.mesh.allow_self_intersections = 1;
+    settings.mesh.require_manifold = 1;
     settings.max_surface_deviation = 20.0;
     settings.max_area_change_percent = 100.0;
     settings.allow_untrimmed_surface_match = 1;
+    repair_provenance_capture provenance;
+    settings.provenance = repair_provenance_callback;
+    settings.provenance_data = &provenance;
     struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
-    ON_Brep_CDT_Repair(state, &settings, &report);
-    valid = valid && report.fast_fallback_used_faces >= 1 &&
+    const int repair_result = ON_Brep_CDT_Repair(state, &settings, &report);
+    valid = valid && repair_result == 0 && report.mesh.solid &&
+	report.mesh.manifold_accepted &&
+	report.fast_fallback_used_faces >= 1 &&
 	report.fast_fallback_constrained_edges >= 4 &&
 	report.fast_fallback_constrained_samples > 0 &&
+	report.deviation_projection_failures == 0 &&
 	report.best_effort_faces == 0 &&
-	report.missing_rigorous_triangles == 0;
+	report.missing_rigorous_triangles == 0 && provenance.calls == 1 &&
+	provenance.tier == BREP_CDT_REPAIR_APPROX_LOCAL_MESH &&
+	!provenance.faces.empty() && !provenance.edges.empty();
     if (!valid) {
-	bu_log("paired p-curve edge contract failed: result %d stage %d, "
-	    "%d faces completed, fast %d constrained %zu/%zu: %s\n",
-	    tessellation_result, diagnostic.stage, diagnostic.completed_faces,
+	bu_log("paired p-curve edge contract failed: tess %d repair %d stage "
+	    "%d, %d faces completed, fast %d constrained %zu/%zu, "
+	    "mesh samples %zu, projection %zu, solid/Manifold %d/%d, "
+	    "provenance %d/%d/%zu/%zu: %s\n", tessellation_result,
+	    repair_result, diagnostic.stage, diagnostic.completed_faces,
 	    report.fast_fallback_used_faces,
 	    report.fast_fallback_constrained_edges,
-	    report.fast_fallback_constrained_samples, diagnostic.message);
+	    report.fast_fallback_constrained_samples,
+	    report.input_mesh_surface_samples,
+	    report.deviation_projection_failures, report.mesh.solid,
+	    report.mesh.manifold_accepted, provenance.calls, provenance.tier,
+	    provenance.faces.size(), provenance.edges.size(),
+	    diagnostic.message);
     }
     ON_Brep_CDT_Destroy(state);
     delete box;
