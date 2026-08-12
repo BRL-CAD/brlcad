@@ -496,6 +496,7 @@ extern BREP_EXPORT int cdt_test_edge_singular_pair(void);
 extern BREP_EXPORT int cdt_test_linear_edge_spacing(void);
 extern BREP_EXPORT int cdt_test_bounded_edge_midpoint(void);
 extern BREP_EXPORT int cdt_test_assembled_mesh_validation(void);
+extern BREP_EXPORT int cdt_test_assembled_shared_chords(void);
 extern BREP_EXPORT int cdt_test_repair_edge_tube(void);
 extern BREP_EXPORT int cdt_test_repair_triangle_split(void);
 extern BREP_EXPORT int cdt_test_repair_patch_limits(void);

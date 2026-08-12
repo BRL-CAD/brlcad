@@ -32,6 +32,9 @@ main(int argc, const char **UNUSED(argv))
     result = cdt_test_assembled_mesh_validation();
     if (result)
 	return result;
+    result = cdt_test_assembled_shared_chords();
+    if (result)
+	return 30 + result;
     result = cdt_test_repair_edge_tube();
     if (result)
 	return result;
