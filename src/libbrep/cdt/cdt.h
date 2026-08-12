@@ -205,6 +205,8 @@ void cdt_diagnostic_set(struct ON_Brep_CDT_State *s_cdt, int result,
 	const char *message);
 bool cdt_tri_tri_intersection(const point_t first[3],
 	const point_t second[3]);
+bool cdt_trim_pcurves_retrace(const ON_BrepTrim *first,
+	const ON_BrepTrim *second);
 
 /* debug */
 void trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_vcnt, int *valid_faces, fastf_t *valid_vertices, struct bg_trimesh_solid_errors *se);

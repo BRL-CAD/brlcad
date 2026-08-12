@@ -2290,6 +2290,29 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
     }
     const bool symbolic_pole_boundary =
 	coincident_pole_topologies.size() > 1;
+    bool selected_pole_seam = false;
+    for (int loop_index = 0; loop_index < face.LoopCount() &&
+	    !selected_pole_seam; ++loop_index) {
+	const ON_BrepLoop *loop = face.Loop(loop_index);
+	if (!loop)
+	    continue;
+	for (int trim_index = 0; trim_index < loop->TrimCount(); ++trim_index) {
+	    const ON_BrepTrim *trim = loop->Trim(trim_index);
+	    if (!trim || trim->m_type != ON_BrepTrim::seam)
+		continue;
+	    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+		const cdt_topo_vertex_id topology = trim->m_vi[endpoint];
+		if (topology == m_pole_topology_vertex ||
+			coincident_pole_topologies.find(topology) !=
+			coincident_pole_topologies.end()) {
+		    selected_pole_seam = true;
+		    break;
+		}
+	    }
+	    if (selected_pole_seam)
+		break;
+	}
+    }
     const double symbolic_pole_radius = std::min(1.0e-6,
 	0.1 * nearest_positive_radial);
     for (int point : active_points) {
@@ -2542,9 +2565,11 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 
     /* Local continuity may legitimately move a partial path from one native
      * seam bound to the other chart side.  When exact copies of the same
-     * authoritative 3-D samples exist on both bounds, however, they are the
-     * two complete sides of the cut and must remain opposite. */
-    if (m_periodic) {
+     * authoritative 3-D samples exist on both bounds and their seam reaches
+     * the selected pole, they are the two complete sides of the cut and must
+     * remain opposite.  A disconnected seam excursion can reuse the same
+     * edge in both directions without defining the face's chart cut. */
+    if (m_periodic && selected_pole_seam) {
 	std::map<const ON_3dPoint *, std::vector<std::pair<int, int>>>
 	    matching_seam_copies;
 	std::vector<bool> restored_seam(vertices.size(), false);
@@ -3130,12 +3155,13 @@ cdt_face_chart::build_polar(const ON_BrepFace &face,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices)
 {
     m_type = CDT_FACE_CHART_POLAR;
+    /* Both one- and two-pole charts measure longitude from the native
+     * periodic cut.  Initialize it before the one-pole wedge returns. */
+    m_polar_cut = m_closed_domain.Min();
     if (m_second_singular_side < 0)
 	return build_pole_wedge(face, native_points, source_outer,
 	    source_holes, source_steiner, std::vector<int>(), points_3d,
 	    topology_vertices, false);
-
-    m_polar_cut = m_closed_domain.Min();
 
     const double open_tolerance = parameter_tolerance(m_open_domain);
     std::vector<int> source_to_chart(native_points.size(), -1);

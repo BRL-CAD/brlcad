@@ -1263,6 +1263,7 @@ collapse_coincident_surface_poles(struct ON_Brep_CDT_State *s_cdt)
 		continue;
 
 	    std::set<int> face_vertices;
+	    std::map<int, std::vector<const ON_BrepTrim *>> vertex_trims;
 	    for (int loop_index = 0; loop_index < face.LoopCount();
 		    ++loop_index) {
 		const ON_BrepLoop *loop = face.Loop(loop_index);
@@ -1277,8 +1278,11 @@ collapse_coincident_surface_poles(struct ON_Brep_CDT_State *s_cdt)
 			const int vertex_index = trim->m_vi[endpoint];
 			const auto point = s_cdt->vert_pnts->find(vertex_index);
 			if (point != s_cdt->vert_pnts->end() && point->second &&
-				point->second->DistanceTo(pole) <= tolerance)
+				point->second->DistanceTo(pole) <= tolerance) {
 			    face_vertices.insert(vertex_index);
+			    if (trim->m_ei >= 0)
+				vertex_trims[vertex_index].push_back(trim);
+			}
 		    }
 		}
 	    }
@@ -1313,14 +1317,67 @@ collapse_coincident_surface_poles(struct ON_Brep_CDT_State *s_cdt)
 	    for (const pole_component &component : components) {
 		if (component.vertices.size() < 2)
 		    continue;
-		const int representative_index = *std::min_element(
-		    component.vertices.begin(), component.vertices.end());
-		ON_3dPoint *representative =
-		    (*s_cdt->vert_pnts)[representative_index];
-		for (int vertex_index : component.vertices) {
-		    ON_3dPoint *point = (*s_cdt->vert_pnts)[vertex_index];
-		    if (point != representative) {
-			if (welds.emplace(point, representative).second)
+		std::vector<int> parents(component.vertices.size(), -1);
+		const auto root = [&parents](int item) {
+		    int representative = item;
+		    while (parents[(size_t)representative] >= 0)
+			representative = parents[(size_t)representative];
+		    while (item != representative) {
+			const int next = parents[(size_t)item];
+			parents[(size_t)item] = representative;
+			item = next;
+		    }
+		    return representative;
+		};
+		for (size_t first = 0; first < component.vertices.size();
+			++first) {
+		    for (size_t second = first + 1;
+			    second < component.vertices.size(); ++second) {
+			bool retrace = false;
+			for (const ON_BrepTrim *first_trim :
+				vertex_trims[component.vertices[first]]) {
+			    for (const ON_BrepTrim *second_trim :
+				    vertex_trims[component.vertices[second]]) {
+				retrace = cdt_trim_pcurves_retrace(first_trim,
+				    second_trim);
+				if (retrace)
+				    break;
+			    }
+			    if (retrace)
+				break;
+			}
+			if (!retrace)
+			    continue;
+			int first_root = root((int)first);
+			int second_root = root((int)second);
+			if (first_root == second_root)
+			    continue;
+			if (parents[(size_t)first_root] >
+				parents[(size_t)second_root])
+			    std::swap(first_root, second_root);
+			parents[(size_t)first_root] +=
+			    parents[(size_t)second_root];
+			parents[(size_t)second_root] = first_root;
+		    }
+		}
+		std::map<int, std::vector<int>> weld_components;
+		for (size_t vertex = 0; vertex < component.vertices.size();
+			++vertex)
+		    weld_components[root((int)vertex)].push_back(
+			component.vertices[vertex]);
+		for (const auto &weld_component : weld_components) {
+		    if (weld_component.second.size() < 2)
+			continue;
+		    const int representative_index = *std::min_element(
+			weld_component.second.begin(),
+			weld_component.second.end());
+		    ON_3dPoint *representative =
+			(*s_cdt->vert_pnts)[representative_index];
+		    for (int vertex_index : weld_component.second) {
+			ON_3dPoint *point =
+			    (*s_cdt->vert_pnts)[vertex_index];
+			if (point != representative &&
+				welds.emplace(point, representative).second)
 			    welded_vertices++;
 		    }
 		}
@@ -2078,8 +2135,139 @@ refine_assembled_intersection(struct ON_Brep_CDT_State *s_cdt,
     return inserted;
 }
 
-int
-ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces)
+static bool
+brep_cdt_relaxed_topology_safe(const ON_Brep *brep, std::string *reason)
+{
+    const auto fail = [reason](const std::string &message) {
+	if (reason)
+	    *reason = message;
+	return false;
+    };
+    if (!brep || brep->m_F.Count() <= 0 || brep->m_V.Count() <= 0)
+	return fail("missing faces or vertices");
+    for (int edge_index = 0; edge_index < brep->m_E.Count(); ++edge_index) {
+	const ON_BrepEdge &edge = brep->m_E[edge_index];
+	if (edge.m_edge_index != edge_index || edge.TrimCount() != 2 ||
+		!edge.EdgeCurveOf())
+	    return fail("edge " + std::to_string(edge_index) +
+		" lacks paired trims, a curve, or stable indexing");
+	if (!edge.Vertex(0) || !edge.Vertex(1) ||
+		edge.Vertex(0)->m_vertex_index < 0 ||
+		edge.Vertex(0)->m_vertex_index >= brep->m_V.Count() ||
+		edge.Vertex(1)->m_vertex_index < 0 ||
+		edge.Vertex(1)->m_vertex_index >= brep->m_V.Count())
+	    return fail("edge " + std::to_string(edge_index) +
+		" has invalid endpoint references");
+	for (int edge_trim = 0; edge_trim < edge.TrimCount(); ++edge_trim) {
+	    const ON_BrepTrim *trim = edge.Trim(edge_trim);
+	    if (!trim || trim->m_trim_index < 0 ||
+		    trim->m_trim_index >= brep->m_T.Count() ||
+		    trim->m_ei != edge_index || !trim->TrimCurveOf())
+		return fail("edge " + std::to_string(edge_index) +
+		    " has an invalid trim reference");
+	}
+    }
+    for (int face_index = 0; face_index < brep->m_F.Count(); ++face_index) {
+	const ON_BrepFace &face = brep->m_F[face_index];
+	if (face.m_face_index != face_index)
+	    return fail("face " + std::to_string(face_index) +
+		" lacks stable indexing");
+	if (!face.SurfaceOf())
+	    return fail("face " + std::to_string(face_index) +
+		" lacks a surface");
+	if (face.LoopCount() <= 0)
+	    return fail("face " + std::to_string(face_index) +
+		" has no trim loops");
+	for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
+	    const ON_BrepLoop *loop = face.Loop(loop_index);
+	    if (!loop || loop->m_loop_index < 0 ||
+		    loop->m_loop_index >= brep->m_L.Count() ||
+		    loop->Face() != &face || loop->TrimCount() <= 0)
+		return fail("face " + std::to_string(face_index) +
+		    " has an invalid loop reference");
+	    for (int loop_trim = 0; loop_trim < loop->TrimCount(); ++loop_trim) {
+		const ON_BrepTrim *trim = loop->Trim(loop_trim);
+		if (!trim || trim->m_trim_index < 0 ||
+			trim->m_trim_index >= brep->m_T.Count() ||
+			trim->Loop() != loop || trim->Face() != &face ||
+			!trim->Vertex(0) || !trim->Vertex(1) ||
+			trim->Vertex(0)->m_vertex_index < 0 ||
+			trim->Vertex(0)->m_vertex_index >= brep->m_V.Count() ||
+			trim->Vertex(1)->m_vertex_index < 0 ||
+			trim->Vertex(1)->m_vertex_index >= brep->m_V.Count() ||
+			!trim->Domain().IsIncreasing())
+		    return fail("face " + std::to_string(face_index) +
+			" has an invalid trim or vertex reference");
+		if (trim->m_type == ON_BrepTrim::singular) {
+		    if (trim->m_ei >= 0)
+			return fail("face " + std::to_string(face_index) +
+			    " has a singular trim with an edge");
+		} else if (trim->m_ei < 0 ||
+			trim->m_ei >= brep->m_E.Count() ||
+			!trim->TrimCurveOf()) {
+		    return fail("face " + std::to_string(face_index) +
+			" has an unpaired nonsingular trim");
+		}
+	    }
+	}
+    }
+    return true;
+}
+
+static size_t
+brep_cdt_promote_missing_outer_loops(ON_Brep *brep)
+{
+    if (!brep)
+	return 0;
+    size_t promoted = 0;
+    for (int face_index = 0; face_index < brep->m_F.Count(); ++face_index) {
+	ON_BrepFace &face = brep->m_F[face_index];
+	if (face.OuterLoop() || face.LoopCount() <= 0)
+	    continue;
+	ON_BrepLoop *best_loop = NULL;
+	double best_area = -1.0;
+	for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
+	    ON_BrepLoop *loop = face.Loop(loop_index);
+	    if (!loop)
+		continue;
+	    ON_BoundingBox bounds;
+	    bool have_bounds = false;
+	    for (int trim_index = 0; trim_index < loop->TrimCount();
+		    ++trim_index) {
+		const ON_BrepTrim *trim = loop->Trim(trim_index);
+		if (!trim)
+		    continue;
+		ON_BoundingBox trim_bounds;
+		if (!trim->GetBoundingBox(trim_bounds, false))
+		    continue;
+		if (!have_bounds) {
+		    bounds = trim_bounds;
+		    have_bounds = true;
+		} else {
+		    bounds.Union(trim_bounds);
+		}
+	    }
+	    const double area = have_bounds ?
+		fabs((bounds.m_max.x - bounds.m_min.x) *
+		    (bounds.m_max.y - bounds.m_min.y)) : 0.0;
+	    if (!best_loop || area > best_area) {
+		best_loop = loop;
+		best_area = area;
+	    }
+	}
+	if (!best_loop)
+	    continue;
+	best_loop->m_type = ON_BrepLoop::outer;
+	promoted++;
+	bu_log("relaxed rigorous tessellation promoted loop %d on face %d "
+	    "to outer\n", best_loop->m_loop_index, face_index);
+    }
+    return promoted;
+}
+
+static int
+brep_cdt_tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt,
+	int *faces, bool try_invalid_brep)
 {
 
     if (!s_cdt || !s_cdt->orig_brep)
@@ -2125,11 +2313,25 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     ON_wString wonstr;
     ON_TextLog vout(wonstr);
     if (!s_cdt->orig_brep->IsValid(&vout)) {
-	bu_log("brep is NOT valid, cannot produce watertight mesh\n");
-	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INVALID_BREP,
-	    BREP_CDT_STAGE_TOPOLOGY, -1, 0, 0,
-	    "input B-Rep failed OpenNURBS validity checks");
-	return -1;
+	if (!try_invalid_brep) {
+	    bu_log("brep is NOT valid, cannot produce watertight mesh\n");
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INVALID_BREP,
+		BREP_CDT_STAGE_TOPOLOGY, -1, 0, 0,
+		"input B-Rep failed OpenNURBS validity checks");
+	    return -1;
+	}
+	std::string relaxed_failure;
+	if (!brep_cdt_relaxed_topology_safe(s_cdt->orig_brep,
+		&relaxed_failure)) {
+	    const std::string message =
+		"invalid B-Rep failed relaxed referential-safety checks: " +
+		relaxed_failure;
+	    bu_log("%s\n", message.c_str());
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INVALID_BREP,
+		BREP_CDT_STAGE_TOPOLOGY, -1, 0, 0,
+		message.c_str());
+	    return -1;
+	}
     }
     bool oriented = false;
     bool boundary = true;
@@ -2158,6 +2360,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     if (!s_cdt->brep) {
 
 	s_cdt->brep = new ON_Brep(*s_cdt->orig_brep);
+	if (try_invalid_brep)
+	    brep_cdt_promote_missing_outer_loops(s_cdt->brep);
 
 	// Attempt to minimize situations where 2D and 3D distances get out of sync
 	// by shrinking the surfaces down to the active area of the face
@@ -2536,6 +2740,13 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
 }
 
+int
+ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt,
+	int *faces)
+{
+    return brep_cdt_tessellate(s_cdt, face_cnt, faces, false);
+}
+
 typedef std::array<double, 3> repair_point_key;
 typedef std::array<repair_point_key, 3> repair_triangle_key;
 
@@ -2710,6 +2921,174 @@ struct repair_fast_face_range {
     bool present = false;
 };
 
+struct repair_fast_trim_sample {
+    fastf_t parameter;
+    fastf_t uv[2];
+    fastf_t point[3];
+};
+
+struct repair_fast_constraint_store {
+    int face_index = -1;
+    std::map<int, std::vector<repair_fast_trim_sample>> trims;
+    size_t constrained_edges = 0;
+    size_t constrained_samples = 0;
+};
+
+static size_t
+repair_fast_trim_sample_count(int face_index, int trim_index, void *data)
+{
+    const repair_fast_constraint_store *store =
+	(const repair_fast_constraint_store *)data;
+    if (!store || store->face_index != face_index)
+	return 0;
+    const auto samples = store->trims.find(trim_index);
+    return samples == store->trims.end() ? 0 : samples->second.size();
+}
+
+static int
+repair_fast_trim_sample_get(int face_index, int trim_index,
+	size_t sample_index, fastf_t *parameter, point2d_t uv, point_t point,
+	void *data)
+{
+    const repair_fast_constraint_store *store =
+	(const repair_fast_constraint_store *)data;
+    if (!store || store->face_index != face_index || !parameter || !uv ||
+	    !point)
+	return -1;
+    const auto samples = store->trims.find(trim_index);
+    if (samples == store->trims.end() ||
+	    sample_index >= samples->second.size())
+	return -1;
+    const repair_fast_trim_sample &sample =
+	samples->second[sample_index];
+    *parameter = sample.parameter;
+    V2MOVE(uv, sample.uv);
+    VMOVE(point, sample.point);
+    return 0;
+}
+
+static bool
+repair_fast_trim_sample_append(std::vector<repair_fast_trim_sample> &samples,
+	const cdt_mesh_t &mesh, const cpolyedge_t *segment, int endpoint,
+	ON_3dPoint **source_point)
+{
+    if (!segment || !segment->polygon || endpoint < 0 || endpoint > 1)
+	return false;
+    const auto native = segment->polygon->p2o.find(
+	segment->v2d[endpoint]);
+    if (native == segment->polygon->p2o.end() || native->second < 0 ||
+	    (size_t)native->second >= mesh.m_pnts_2d.size())
+	return false;
+    const auto point3d = mesh.p2d3d.find(native->second);
+    if (point3d == mesh.p2d3d.end() || point3d->second < 0 ||
+	    (size_t)point3d->second >= mesh.pnts.size() ||
+	    !mesh.pnts[(size_t)point3d->second])
+	return false;
+    ON_3dPoint *p3d = mesh.pnts[(size_t)point3d->second];
+    const std::pair<double, double> &p2d =
+	mesh.m_pnts_2d[(size_t)native->second];
+    const fastf_t parameter = endpoint ? segment->trim_end :
+	segment->trim_start;
+    if (!std::isfinite(parameter) || !std::isfinite(p2d.first) ||
+	    !std::isfinite(p2d.second) || !p3d->IsValid())
+	return false;
+    repair_fast_trim_sample sample;
+    sample.parameter = parameter;
+    V2SET(sample.uv, p2d.first, p2d.second);
+    VSET(sample.point, p3d->x, p3d->y, p3d->z);
+    samples.push_back(sample);
+    if (source_point)
+	*source_point = p3d;
+    return true;
+}
+
+static repair_fast_constraint_store
+repair_fast_face_constraints(struct ON_Brep_CDT_State *s_cdt,
+	int face_index)
+{
+    repair_fast_constraint_store store;
+    store.face_index = face_index;
+    if (!s_cdt || !s_cdt->brep || face_index < 0 ||
+	    face_index >= s_cdt->brep->m_F.Count())
+	return store;
+    const auto mesh_entry = s_cdt->fmeshes.find(face_index);
+    if (mesh_entry == s_cdt->fmeshes.end())
+	return store;
+    cdt_mesh_t &mesh = mesh_entry->second;
+    const ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+    const ON_BrepLoop *outer = face.OuterLoop();
+    if (!outer || mesh.outer_loop.poly.empty())
+	return store;
+    for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
+	const ON_BrepLoop *loop = face.Loop(loop_index);
+	if (!loop || loop == outer)
+	    continue;
+	const auto polygon = mesh.inner_loops.find(loop_index);
+	if (polygon == mesh.inner_loops.end() || !polygon->second ||
+		polygon->second->poly.empty())
+	    return store;
+    }
+    std::map<int, ON_3dPoint *> trim_last_point;
+    std::set<int> unusable_trims;
+    for (cpolyedge_t *segment : cdt_face_polyedges(s_cdt, face_index)) {
+	if (!segment || segment->trim_ind < 0 ||
+		segment->trim_ind >= s_cdt->brep->m_T.Count())
+	    continue;
+	const ON_BrepTrim &trim =
+	    s_cdt->brep->m_T[segment->trim_ind];
+	if (trim.m_ei < 0 || trim.m_ei >= s_cdt->brep->m_E.Count())
+	    continue;
+	const ON_BrepEdge &edge = s_cdt->brep->m_E[trim.m_ei];
+	bool sampled_neighbor = false;
+	for (int trim_index = 0; trim_index < edge.TrimCount(); ++trim_index) {
+	    const ON_BrepTrim *other = edge.Trim(trim_index);
+	    const ON_BrepFace *other_face = other ? other->Face() : NULL;
+	    if (!other_face || other_face->m_face_index == face_index)
+		continue;
+	    const int other_index = other_face->m_face_index;
+	    sampled_neighbor = other_index >= 0 &&
+		s_cdt->fmeshes.find(other_index) != s_cdt->fmeshes.end();
+	    if (sampled_neighbor)
+		break;
+	}
+	/* Edge subdivision is global and precedes face triangulation.  It is
+	 * therefore authoritative even when both adjacent faces later fail:
+	 * giving each local fast patch the same 3-D samples prevents repair from
+	 * having to close an artificial failed-face/failed-face seam. */
+	if (!sampled_neighbor || unusable_trims.find(segment->trim_ind) !=
+		unusable_trims.end())
+	    continue;
+	std::vector<repair_fast_trim_sample> &samples =
+	    store.trims[segment->trim_ind];
+	ON_3dPoint *start = NULL;
+	ON_3dPoint *end = NULL;
+	std::vector<repair_fast_trim_sample> additions;
+	if (!repair_fast_trim_sample_append(additions, mesh, segment, 0,
+		&start) || !repair_fast_trim_sample_append(additions, mesh,
+		segment, 1, &end) ||
+		(!samples.empty() && trim_last_point[segment->trim_ind] != start)) {
+	    store.trims.erase(segment->trim_ind);
+	    trim_last_point.erase(segment->trim_ind);
+	    unusable_trims.insert(segment->trim_ind);
+	    continue;
+	}
+	if (samples.empty())
+	    samples.push_back(additions[0]);
+	samples.push_back(additions[1]);
+	trim_last_point[segment->trim_ind] = end;
+    }
+    for (auto trim = store.trims.begin(); trim != store.trims.end();) {
+	if (trim->second.size() < 2) {
+	    trim = store.trims.erase(trim);
+	    continue;
+	}
+	store.constrained_edges++;
+	store.constrained_samples += trim->second.size();
+	++trim;
+    }
+    return store;
+}
+
 static void
 repair_fast_face_output(int face_index, size_t first_face,
 	size_t face_count, size_t first_point, size_t point_count, void *data)
@@ -2843,6 +3222,85 @@ repair_mesh_area(const fastf_t *vertices, const int *faces, int face_count)
     return area;
 }
 
+static void
+repair_added_patch_stats(struct brep_cdt_repair_report *report,
+	const fastf_t *input_vertices, const int *input_faces,
+	int input_face_count, const fastf_t *output_vertices,
+	const int *output_faces, int output_face_count)
+{
+    if (!report || !input_vertices || !input_faces || input_face_count <= 0 ||
+	    !output_vertices || !output_faces || output_face_count <= 0)
+	return;
+    std::set<repair_triangle_key> input_triangles;
+    for (int face = 0; face < input_face_count; ++face)
+	input_triangles.insert(repair_triangle_coordinates(input_vertices,
+	    &input_faces[(size_t)face * 3]));
+    std::vector<int> added_faces;
+    for (int face = 0; face < output_face_count; ++face) {
+	if (input_triangles.find(repair_triangle_coordinates(output_vertices,
+		&output_faces[(size_t)face * 3])) == input_triangles.end())
+	    added_faces.push_back(face);
+    }
+    typedef std::pair<int, int> repair_edge_key;
+    std::map<repair_edge_key, std::vector<int>> edge_faces;
+    for (size_t local_face = 0; local_face < added_faces.size();
+	    ++local_face) {
+	const int *triangle = &output_faces[
+	    (size_t)added_faces[local_face] * 3];
+	for (int corner = 0; corner < 3; ++corner) {
+	    int first = triangle[corner];
+	    int second = triangle[(corner + 1) % 3];
+	    if (second < first)
+		std::swap(first, second);
+	    edge_faces[{first, second}].push_back((int)local_face);
+	}
+    }
+    std::vector<std::vector<int>> neighbors(added_faces.size());
+    for (const auto &edge : edge_faces) {
+	for (size_t first = 0; first < edge.second.size(); ++first) {
+	    for (size_t second = first + 1; second < edge.second.size();
+		    ++second) {
+		neighbors[(size_t)edge.second[first]].push_back(
+		    edge.second[second]);
+		neighbors[(size_t)edge.second[second]].push_back(
+		    edge.second[first]);
+	    }
+	}
+    }
+    std::vector<bool> visited(added_faces.size(), false);
+    for (size_t seed = 0; seed < added_faces.size(); ++seed) {
+	if (visited[seed])
+	    continue;
+	report->added_patch_components++;
+	std::queue<int> pending;
+	pending.push((int)seed);
+	visited[seed] = true;
+	int patch_faces = 0;
+	double patch_area = 0.0;
+	while (!pending.empty()) {
+	    const int local_face = pending.front();
+	    pending.pop();
+	    const int *triangle = &output_faces[
+		(size_t)added_faces[(size_t)local_face] * 3];
+	    const ON_3dPoint a(&output_vertices[(size_t)triangle[0] * 3]);
+	    const ON_3dPoint b(&output_vertices[(size_t)triangle[1] * 3]);
+	    const ON_3dPoint c(&output_vertices[(size_t)triangle[2] * 3]);
+	    patch_area += 0.5 * ON_CrossProduct(b - a, c - a).Length();
+	    patch_faces++;
+	    for (int neighbor : neighbors[(size_t)local_face]) {
+		if (visited[(size_t)neighbor])
+		    continue;
+		visited[(size_t)neighbor] = true;
+		pending.push(neighbor);
+	    }
+	}
+	if (patch_area > report->largest_added_patch_area) {
+	    report->largest_added_patch_area = patch_area;
+	    report->largest_added_patch_faces = patch_faces;
+	}
+    }
+}
+
 static int
 brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const struct brep_cdt_repair_settings *settings,
@@ -2856,6 +3314,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     *report = local_report;
     if (!s_cdt || !s_cdt->orig_brep)
 	return -1;
+    struct brep_cdt_repair_settings default_settings =
+	BREP_CDT_REPAIR_SETTINGS_INIT;
+    if (!settings)
+	settings = &default_settings;
 
     if (!s_cdt->repair_source_valid) {
 	s_cdt->repair_source_diagnostic = s_cdt->diagnostic;
@@ -2864,7 +3326,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     report->source_diagnostic = s_cdt->repair_source_diagnostic;
     report->source_failed_faces = (int)s_cdt->failed_face_indices.size();
     if (s_cdt->status == BREP_CDT_SOLID && s_cdt->certified_faces &&
-	    s_cdt->certified_vertices) {
+	    s_cdt->certified_vertices &&
+	    !settings->mesh.require_manifold &&
+	    !settings->mesh.union_components) {
 	report->mesh.input_vertices = s_cdt->certified_vertex_count;
 	report->mesh.input_faces = s_cdt->certified_face_count;
 	report->mesh.output_vertices = s_cdt->certified_vertex_count;
@@ -2872,10 +3336,6 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	report->mesh.solid = 1;
 	return 1;
     }
-    struct brep_cdt_repair_settings default_settings =
-	BREP_CDT_REPAIR_SETTINGS_INIT;
-    if (!settings)
-	settings = &default_settings;
     if (!std::isfinite(settings->max_surface_deviation) ||
 	    settings->max_surface_deviation < 0.0 ||
 	    !std::isfinite(settings->max_area_change_percent) ||
@@ -2888,7 +3348,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    settings->poisson_scale < 1.0 ||
 	    settings->poisson_scale > 2.0)) ||
 	    ((settings->use_fast_face_fallback ||
-	    settings->use_full_fast_fallback) &&
+	    settings->use_full_fast_fallback ||
+	    settings->use_full_fast_fallback_if_needed) &&
 	    (!settings->max_fast_points || !settings->max_fast_result_bytes ||
 	    settings->max_fast_time_ms <= 0))) {
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
@@ -3484,6 +3945,14 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const int64_t fast_start = bu_gettime();
 	size_t fast_points_used = 0;
 	size_t fast_bytes_used = 0;
+	std::map<repair_point_key, int> assembled_points;
+	for (int point_index = 0; point_index < input_vertex_count;
+		++point_index) {
+	    assembled_points[repair_point_key{
+		input_vertices[(size_t)point_index * 3],
+		input_vertices[(size_t)point_index * 3 + 1],
+		input_vertices[(size_t)point_index * 3 + 2]}] = point_index;
+	}
 	for (int failed_face : failed_faces) {
 	    const int64_t elapsed_ms = (bu_gettime() - fast_start) / 1000;
 	    if (elapsed_ms >= settings->max_fast_time_ms ||
@@ -3501,6 +3970,14 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    fast_options.max_time_ms = settings->max_fast_time_ms -
 		(long)elapsed_ms;
 	    fast_options.allow_partial = 1;
+	    repair_fast_constraint_store constraints =
+		repair_fast_face_constraints(s_cdt, failed_face);
+	    if (constraints.constrained_edges) {
+		fast_options.trim_sample_count =
+		    repair_fast_trim_sample_count;
+		fast_options.trim_sample = repair_fast_trim_sample_get;
+		fast_options.trim_sample_data = &constraints;
+	    }
 	    struct brep_cdt_fast_report fast_report = {};
 	    int *fast_faces = NULL;
 	    int fast_face_count = 0;
@@ -3537,9 +4014,28 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		(fast_point_count <= INT_MAX - input_vertex_count &&
 		fast_face_count <= INT_MAX - input_face_count);
 	    if (within_limits) {
-		const int vertex_offset = input_vertex_count;
+		std::vector<int> fast_to_input((size_t)fast_point_count, -1);
+		std::vector<fastf_t> novel_vertices;
+		novel_vertices.reserve((size_t)fast_point_count * 3);
+		for (int fast_point = 0; fast_point < fast_point_count;
+			++fast_point) {
+		    const repair_point_key key = {
+			fast_points[fast_point][X], fast_points[fast_point][Y],
+			fast_points[fast_point][Z]};
+		    const auto existing = assembled_points.find(key);
+		    if (existing != assembled_points.end()) {
+			fast_to_input[(size_t)fast_point] = existing->second;
+			continue;
+		    }
+		    const int new_index = input_vertex_count +
+			(int)(novel_vertices.size() / 3);
+		    assembled_points[key] = new_index;
+		    fast_to_input[(size_t)fast_point] = new_index;
+		    novel_vertices.insert(novel_vertices.end(),
+			&fast_points[fast_point][X], &fast_points[fast_point][X] + 3);
+		}
 		const size_t new_vertex_count = (size_t)input_vertex_count +
-		    (size_t)fast_point_count;
+		    novel_vertices.size() / 3;
 		const size_t new_face_count = (size_t)input_face_count +
 		    (size_t)fast_face_count;
 		input_vertices = (fastf_t *)bu_realloc(input_vertices,
@@ -3548,15 +4044,21 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		input_faces = (int *)bu_realloc(input_faces,
 		    new_face_count * 3 * sizeof(int),
 		    "repair input faces with fast fallback");
-		memcpy(&input_vertices[(size_t)input_vertex_count * 3],
-		    fast_points, (size_t)fast_point_count * sizeof(point_t));
+		if (!novel_vertices.empty())
+		    memcpy(&input_vertices[(size_t)input_vertex_count * 3],
+			novel_vertices.data(), novel_vertices.size() *
+			sizeof(fastf_t));
 		for (int corner = 0; corner < fast_face_count * 3; ++corner)
 		    input_faces[(size_t)input_face_count * 3 + corner] =
-			fast_faces[corner] + vertex_offset;
-		input_vertex_count += fast_point_count;
+			fast_to_input[(size_t)fast_faces[corner]];
+		input_vertex_count = (int)new_vertex_count;
 		input_face_count += fast_face_count;
 		report->fast_fallback_used_faces++;
 		report->fast_fallback_triangles += fast_face_count;
+		report->fast_fallback_constrained_edges +=
+		    constraints.constrained_edges;
+		report->fast_fallback_constrained_samples +=
+		    constraints.constrained_samples;
 		fast_points_used += (size_t)fast_point_count;
 		fast_bytes_used += fast_report.result_bytes;
 	    } else {
@@ -3829,6 +4331,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     report->mesh.output_volume = bg_trimesh_volume(repaired_faces,
 	(size_t)repaired_face_count, repaired_points,
 	(size_t)repaired_vertex_count);
+    repair_added_patch_stats(report, input_vertices, input_faces,
+	input_face_count, repaired_vertices, repaired_faces,
+	repaired_face_count);
 
     const bool have_display_reference = display_reference_face_count > 0 &&
 	!display_reference_faces.empty() &&
@@ -4274,6 +4779,47 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	BREP_CDT_REPAIR_REPORT_INIT;
     struct brep_cdt_repair_report *active_report = report ? report :
 	&local_report;
+    bool relaxed_tessellation_attempted = false;
+    bool relaxed_tessellation_certified = false;
+    int relaxed_tessellation_completed_faces = 0;
+    if (s_cdt && settings && settings->try_invalid_brep &&
+	    !settings->use_full_fast_fallback && !s_cdt->brep &&
+	    s_cdt->fmeshes.empty() &&
+	    s_cdt->diagnostic.result == BREP_CDT_RESULT_INVALID_BREP &&
+	    s_cdt->diagnostic.stage == BREP_CDT_STAGE_TOPOLOGY) {
+	const struct brep_cdt_diagnostic source_diagnostic =
+	    s_cdt->diagnostic;
+	relaxed_tessellation_attempted = true;
+	const int relaxed_result = brep_cdt_tessellate(s_cdt, 0, NULL, true);
+	relaxed_tessellation_certified = relaxed_result == 0;
+	relaxed_tessellation_completed_faces =
+	    s_cdt->diagnostic.completed_faces;
+	if (!s_cdt->failed_face_indices.empty()) {
+	    std::string failures = "relaxed rigorous tessellation failed faces";
+	    for (int failed_face : s_cdt->failed_face_indices)
+		failures += " " + std::to_string(failed_face);
+	    bu_log("%s\n", failures.c_str());
+	}
+	s_cdt->repair_source_diagnostic = source_diagnostic;
+	s_cdt->repair_source_valid = true;
+    }
+    const auto run_repair_attempt = [&](const brep_cdt_repair_settings *opts,
+	    bool area_weighted, bool closure_biased, bool automatic_local) {
+	int result = brep_cdt_repair_attempt(s_cdt, opts, active_report,
+	    area_weighted, closure_biased, automatic_local);
+	active_report->relaxed_tessellation_attempted =
+	    relaxed_tessellation_attempted ? 1 : 0;
+	active_report->relaxed_tessellation_completed_faces =
+	    relaxed_tessellation_completed_faces;
+	if (relaxed_tessellation_certified && result == 1) {
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIRED,
+		BREP_CDT_STAGE_MESH_REPAIR, -1,
+		relaxed_tessellation_completed_faces, 0,
+		"relaxed rigorous tessellation certified an invalid B-Rep");
+	    result = 0;
+	}
+	return result;
+    };
     const bool valid_poisson_request = settings &&
 	settings->use_poisson_reconstruction &&
 	settings->use_full_fast_fallback && settings->poisson_depth >= 5 &&
@@ -4290,8 +4836,8 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	 * last-resort tier. */
 	struct brep_cdt_repair_settings local_settings = *settings;
 	local_settings.use_poisson_reconstruction = 0;
-	const int local_result = brep_cdt_repair_attempt(s_cdt,
-	    &local_settings, active_report, false, false, true);
+	const int local_result = run_repair_attempt(&local_settings, false,
+	    false, true);
 	if (local_result >= 0)
 	    return local_result;
     }
@@ -4301,8 +4847,50 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	!(settings->poisson_scale > 0.0) &&
 	!(settings->poisson_scale < 0.0);
     if (!automatic_scale) {
-	const int result = brep_cdt_repair_attempt(s_cdt, settings,
-	    active_report, false, false, false);
+	const bool automatic_full_fast = settings &&
+	    settings->use_full_fast_fallback_if_needed &&
+	    !settings->use_full_fast_fallback &&
+	    !settings->use_poisson_reconstruction;
+	int result = run_repair_attempt(settings, false, false, false);
+	struct brep_cdt_repair_report rigorous_report = *active_report;
+	if (automatic_full_fast) {
+	    active_report->rigorous_first_attempted = 1;
+	    active_report->rigorous_first_result = result;
+	    active_report->rigorous_first_fast_faces =
+		rigorous_report.fast_fallback_used_faces;
+	    active_report->rigorous_first_constrained_edges =
+		rigorous_report.fast_fallback_constrained_edges;
+	    active_report->rigorous_first_constrained_samples =
+		rigorous_report.fast_fallback_constrained_samples;
+	    active_report->rigorous_first_reference_area =
+		rigorous_report.reference_area;
+	    active_report->rigorous_first_output_area =
+		rigorous_report.mesh.output_area;
+	    active_report->rigorous_first_area_change_percent =
+		rigorous_report.reference_area_change_percent;
+	}
+	if (result < 0 && automatic_full_fast) {
+	    struct brep_cdt_repair_settings fallback_settings = *settings;
+	    fallback_settings.use_full_fast_fallback = 1;
+	    fallback_settings.use_full_fast_fallback_if_needed = 0;
+	    fallback_settings.try_invalid_brep = 0;
+	    result = run_repair_attempt(&fallback_settings, false, false,
+		false);
+	    active_report->rigorous_first_attempted = 1;
+	    active_report->rigorous_first_result = -1;
+	    active_report->rigorous_first_fast_faces =
+		rigorous_report.fast_fallback_used_faces;
+	    active_report->rigorous_first_constrained_edges =
+		rigorous_report.fast_fallback_constrained_edges;
+	    active_report->rigorous_first_constrained_samples =
+		rigorous_report.fast_fallback_constrained_samples;
+	    active_report->rigorous_first_reference_area =
+		rigorous_report.reference_area;
+	    active_report->rigorous_first_output_area =
+		rigorous_report.mesh.output_area;
+	    active_report->rigorous_first_area_change_percent =
+		rigorous_report.reference_area_change_percent;
+	}
 	if (active_report->poisson_reconstruction_attempted)
 	    active_report->poisson_attempts = 1;
 	return result;
@@ -4313,9 +4901,8 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
     const auto run_attempt = [&](double scale, bool area_weighted,
 	    bool closure_biased) {
 	attempt_settings.poisson_scale = scale;
-	const int attempt_result = brep_cdt_repair_attempt(s_cdt,
-	    &attempt_settings, active_report, area_weighted,
-	    closure_biased, false);
+	const int attempt_result = run_repair_attempt(&attempt_settings,
+	    area_weighted, closure_biased, false);
 	if (active_report->poisson_reconstruction_attempted)
 	    attempts++;
 	active_report->poisson_attempts = attempts;
