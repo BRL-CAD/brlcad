@@ -6009,7 +6009,8 @@ cdt_mesh_t::cdt(bool allow_general_boundary_cleanup)
     cdt_face_chart chart;
     if (!chart.build(face, m_pnts_2d, source_outer, source_holes,
 	    source_steiner, source_refinement, source_points_3d,
-	    source_topology_vertices)) {
+	    source_topology_vertices, CDT_TOPOLOGY_ID_NONE,
+	    allow_general_boundary_cleanup)) {
 	bu_log("Face %d: chart construction failed: %s\n", f_id,
 	    chart.failure().c_str());
 	struct ON_Brep_CDT_State *state =

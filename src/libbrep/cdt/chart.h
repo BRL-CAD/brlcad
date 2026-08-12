@@ -60,6 +60,16 @@ public:
 	const std::vector<const ON_3dPoint *> &points_3d,
 	const std::vector<cdt_topo_vertex_id> &topology_vertices,
 	cdt_topo_vertex_id preferred_pole = CDT_TOPOLOGY_ID_NONE);
+    bool build(const ON_BrepFace &face,
+	const std::vector<std::pair<double, double>> &native_points,
+	const std::vector<int> &outer,
+	const std::vector<std::vector<int>> &holes,
+	const std::vector<int> &steiner,
+	const std::vector<int> &refinement,
+	const std::vector<const ON_3dPoint *> &points_3d,
+	const std::vector<cdt_topo_vertex_id> &topology_vertices,
+	cdt_topo_vertex_id preferred_pole,
+	bool allow_boundary_approximation);
 
     bool native_to_chart(const ON_2dPoint &native_uv,
 	ON_2dPoint &chart_uv) const;
@@ -101,6 +111,8 @@ public:
     std::vector<std::pair<int, int>> constraints;
 
 private:
+    bool triangle_chart_image(const long native_triangle[3],
+	ON_2dPoint triangle[3]) const;
     bool build_native(const ON_BrepFace &face,
 	const std::vector<std::pair<double, double>> &native_points,
 	const std::vector<int> &source_outer,
@@ -162,6 +174,7 @@ private:
     ON_Interval m_native_domain[2];
     double m_metric_scale[2] = {1.0, 1.0};
     bool m_planar_metric = false;
+    bool m_allow_boundary_approximation = false;
     ON_Plane m_metric_plane;
     const ON_Surface *m_surface = NULL;
     ON_Cone m_cone;
