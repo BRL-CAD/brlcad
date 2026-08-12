@@ -55,7 +55,7 @@ The Object Header consists of:
 * An 8-bit Magic1 element that holds a specific magic number value used for database integrity checking.
 * A 16-bit Flags element consisting of three 8-bit fields: HFlags, AFlags, and BFlags, described later.
 * A 16-bit Object_Type element organized into two 8-bit-wide fields: the Major_Type and the Minor_Type.
-* An Object_Length element that indicates the total number of bytes required for this object, including the magic numbers.
+* An Object_Length element that stores the total size of the object, including the magic numbers, as a count of 8-byte chunks.
 * An Object_Name element that is a string holding a name unique to that object and drawn from a name space that is global to the database. Like other strings, it consists of two fields, Length and Data. In the case of the Object_Name element, these are referred to as Name_Length and Name_Data, respectively. Note: The Object_Name element is mandatory for all allocated storage in the database. Database free-space management objects are the only objects for which the Object_Name element is optional.
 
 
@@ -621,7 +621,7 @@ A Minor_Type of 2 indicates that this is a database header.
 [[Object_Length]]
 === Object Length
 
-The Object Length specifies the number of 8-byte chunks used to store an object. This includes all bytes from Magic1 through Magic2, inclusive.
+The Object_Length field stores the number of 8-byte chunks used to store the complete object, including all bytes from Magic1 through Magic2, inclusive. The total object size in bytes is `Object_Length * 8`.
 
 
 [[Object_Name]]
