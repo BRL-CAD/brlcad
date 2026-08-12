@@ -118,6 +118,11 @@ struct geom_result {
     int repair_retained_rigorous_triangles = 0;
     int repair_missing_rigorous_triangles = 0;
     int repair_subdivided_rigorous_triangles = 0;
+    int repair_replaced_rigorous_components = 0;
+    int repair_largest_replaced_rigorous_triangles = 0;
+    size_t repair_largest_replaced_boundary_edges = 0;
+    double repair_replaced_rigorous_area = 0.0;
+    double repair_largest_replaced_rigorous_area = 0.0;
     std::vector<int> repair_approximation_faces;
     std::vector<int> repair_approximation_edges;
     bool repair_full_fast_used = false;
@@ -891,6 +896,16 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.missing_rigorous_triangles;
 	result.repair_subdivided_rigorous_triangles =
 	    repair_report.subdivided_rigorous_triangles;
+	result.repair_replaced_rigorous_components =
+	    repair_report.replaced_rigorous_components;
+	result.repair_largest_replaced_rigorous_triangles =
+	    repair_report.largest_replaced_rigorous_triangles;
+	result.repair_largest_replaced_boundary_edges =
+	    repair_report.largest_replaced_boundary_edges;
+	result.repair_replaced_rigorous_area =
+	    repair_report.replaced_rigorous_area;
+	result.repair_largest_replaced_rigorous_area =
+	    repair_report.largest_replaced_rigorous_area;
 	result.repair_full_fast_used =
 	    repair_report.full_fast_fallback_used != 0;
 	result.repair_relaxed_tessellation_attempted =
@@ -1216,6 +1231,16 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.repair_missing_rigorous_triangles
 	<< ",\"subdivided_rigorous_triangles\":"
 	<< result.repair_subdivided_rigorous_triangles
+	<< ",\"replaced_rigorous_components\":"
+	<< result.repair_replaced_rigorous_components
+	<< ",\"largest_replaced_rigorous_triangles\":"
+	<< result.repair_largest_replaced_rigorous_triangles
+	<< ",\"largest_replaced_boundary_edges\":"
+	<< result.repair_largest_replaced_boundary_edges
+	<< ",\"replaced_rigorous_area\":"
+	<< result.repair_replaced_rigorous_area
+	<< ",\"largest_replaced_rigorous_area\":"
+	<< result.repair_largest_replaced_rigorous_area
 	<< ",\"approximation_faces\":";
     print_indices(result.repair_approximation_faces);
     std::cout << ",\"approximation_edges\":";
