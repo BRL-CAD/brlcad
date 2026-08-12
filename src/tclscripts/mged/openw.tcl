@@ -477,6 +477,7 @@ proc gui { args } {
     }
 
     toplevel .$id -screen $screen -menu .$id.menubar
+    wm withdraw .$id
 
     lappend mged_players $id
     set mged_gui($id,screen) $screen
@@ -499,6 +500,7 @@ proc gui { args } {
 	set mged_gui($id,dmc) $mged_gui($id,top)
 
 	toplevel $mged_gui($id,dmc) -screen $gscreen -relief sunken -borderwidth 2
+	wm withdraw $mged_gui($id,dmc)
 
 	if {[catch { openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $gscreen $dtype } result]} {
 	    gui_destroy $id
@@ -2279,6 +2281,10 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     set dbname [_mged_opendb]
     set_wm_title $id $dbname
 
+    # Finish widget layout before either toplevel is mapped so the window
+    # manager doesn't get a chance to place them before startup geometry is set.
+    update idletasks
+
     # set the size here in case the user didn't specify it in mged_default(ggeom)
     set height [expr [winfo screenheight $mged_gui($id,top)] - 70]
     set width $height
@@ -2292,16 +2298,19 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     if { $comb } {
 	if { !$mged_gui($id,show_dm) } {
-	    update
 	    set_dm_win $id
 	}
     } else {
 	wm geometry .$id $mged_default(geom)
-	update
+	update idletasks
+    }
 
-	# Prevent command window from resizing itself as labels change
-	set geometry [wm geometry .$id]
-	wm geometry .$id $geometry
+    if {!$comb && $mged_gui($id,show_dm)} {
+	wm deiconify $mged_gui($id,top)
+    }
+
+    if {$comb || $mged_gui($id,show_cmd)} {
+	wm deiconify .$id
     }
 }
 
