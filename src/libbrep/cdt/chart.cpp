@@ -43,6 +43,27 @@ cylinder_chart_coordinates(const ON_Cylinder &cylinder,
     return std::isfinite(*angular);
 }
 
+/* The analytic cylinder chart is periodic even when the source surface does
+ * not advertise a topologically closed parameter direction.  In particular,
+ * ON_RevSurface imports commonly retain a full cylindrical revolution while
+ * IsClosed() reports false.  Identify the source direction which changes the
+ * cylinder angle so an ordinary boundary path can be lifted continuously
+ * across the chart's arbitrary analytic cut. */
+static int
+cylinder_angular_direction(const ON_Surface *surface,
+	const ON_Cylinder &cylinder)
+{
+    if (!surface || !cylinder.IsValid())
+	return -1;
+    if (surface->IsClosed(0))
+	return 0;
+    if (surface->IsClosed(1))
+	return 1;
+
+    const ON_RevSurface *revolution = ON_RevSurface::Cast(surface);
+    return revolution ? (revolution->m_bTransposed ? 1 : 0) : -1;
+}
+
 static bool
 cone_chart_properties(const ON_BrepFace &face, int *closed_dir,
 	int *open_dir, int *singular_side, int *pole_vertex, bool *periodic)
@@ -1967,8 +1988,7 @@ cdt_face_chart::build_cylinder(const ON_BrepFace &face,
     m_cylinder = cylinder;
 
     const bool has_seam = cdt_face_has_seam(face);
-    m_closed_dir = surface->IsClosed(0) ? 0 :
-	(surface->IsClosed(1) ? 1 : -1);
+    m_closed_dir = cylinder_angular_direction(surface, cylinder);
     if (has_seam && m_closed_dir < 0) {
 	m_failure = "cylinder chart seam requires a closed surface";
 	return false;
