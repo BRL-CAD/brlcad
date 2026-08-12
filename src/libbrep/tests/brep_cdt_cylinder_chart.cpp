@@ -961,6 +961,96 @@ exercise_seamless_cylinder_lift()
 }
 
 static bool
+exercise_revolution_cut_lift()
+{
+    const double radius = 10.0;
+    const double height = 8.0;
+    const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, radius), height);
+    ON_RevSurface *surface = cylinder.RevSurfaceForm();
+    if (!surface)
+	return false;
+    const int angular_direction = surface->m_bTransposed ? 1 : 0;
+    const int axial_direction = 1 - angular_direction;
+    surface->SetDomain(angular_direction, 0.0, 2.0 * ON_PI * radius);
+
+    std::unique_ptr<ON_Brep> brep(new ON_Brep);
+    ON_BrepFace &face = brep->NewFace(brep->AddSurface(surface));
+    if (!cdt_face_uses_cylinder_chart(face)) {
+	std::cerr << "revolution cylinder was not classified" << std::endl;
+	return false;
+    }
+
+    const ON_Interval angular_domain = surface->Domain(angular_direction);
+    const ON_Interval axial_domain = surface->Domain(axial_direction);
+    const int path_points = 12;
+    std::vector<std::pair<double, double>> native_points;
+    std::vector<ON_3dPoint> point_storage;
+    std::vector<const ON_3dPoint *> points_3d;
+    std::vector<int> outer;
+    const auto append = [&](double turn, double axial_fraction) {
+	ON_2dPoint native;
+	native[angular_direction] = angular_domain.ParameterAt(turn);
+	native[axial_direction] = axial_domain.ParameterAt(axial_fraction);
+	outer.push_back((int)native_points.size());
+	native_points.push_back(std::make_pair(native.x, native.y));
+	point_storage.push_back(surface->PointAt(native.x, native.y));
+    };
+    /* The physical gap is narrower than the sample spacing.  A cut selected
+     * from angular point gaps alone therefore falls inside one of these long
+     * boundary paths, just as it does in the imported Drive Wheel face. */
+    for (int i = 0; i < path_points; ++i)
+	append(0.025 + 0.95 * i / (path_points - 1), 0.25);
+    for (int i = path_points - 1; i >= 0; --i)
+	append(0.025 + 0.95 * i / (path_points - 1), 0.75);
+    for (const ON_3dPoint &point : point_storage)
+	points_3d.push_back(&point);
+    outer.push_back(outer.front());
+    std::vector<cdt_topo_vertex_id> topology_vertices(
+	native_points.size(), CDT_TOPOLOGY_ID_NONE);
+
+    cdt_face_chart chart;
+    if (!chart.build(face, native_points, outer,
+	    std::vector<std::vector<int>>(), std::vector<int>(),
+	    std::vector<int>(), points_3d, topology_vertices) ||
+	    chart.type() != CDT_FACE_CHART_CYLINDER ||
+	    chart.closed_direction() != angular_direction) {
+	std::cerr << "revolution cut lift failed: " << chart.failure()
+	    << std::endl;
+	return false;
+    }
+    const double half_circumference = ON_PI * radius;
+    for (size_t i = 0; i < chart.outer.size(); ++i) {
+	const int first = chart.outer[i];
+	const int second = chart.outer[(i + 1) % chart.outer.size()];
+	if (std::fabs(chart.points[(size_t)second].first -
+		chart.points[(size_t)first].first) >= half_circumference) {
+	    std::cerr << "revolution chart retained an artificial cut chord"
+		<< std::endl;
+	    return false;
+	}
+    }
+
+    std::vector<point2d_t> chart_points(chart.points.size());
+    for (size_t i = 0; i < chart.points.size(); ++i)
+	V2SET(chart_points[i], chart.points[i].first, chart.points[i].second);
+    std::vector<int> outline(chart.outer);
+    outline.push_back(chart.outer.front());
+    int *faces = NULL;
+    int face_count = 0;
+    struct bg_triangulation_report report = {0, -1, {0}};
+    const int status = bg_nested_poly_triangulate_strict(&faces,
+	&face_count, NULL, NULL, outline.data(), outline.size(), NULL, NULL,
+	0, NULL, 0, chart_points.data(), chart_points.size(), &report);
+    bu_free(faces, "revolution cut lift triangles");
+    if (status != BRLCAD_OK || face_count <= 0) {
+	std::cerr << "revolution cut lift did not triangulate: "
+	    << report.message << std::endl;
+	return false;
+    }
+    return true;
+}
+
+static bool
 exercise_planar_nesting_repair()
 {
     std::unique_ptr<ON_Brep> brep(new ON_Brep);
@@ -1458,25 +1548,27 @@ main()
 	return 6;
     if (!exercise_offset_full_cylinder_seam())
 	return 7;
-    if (!exercise_seamless_cylinder_lift())
+    if (!exercise_revolution_cut_lift())
 	return 8;
-    if (!exercise_periodic_metric_chart())
+    if (!exercise_seamless_cylinder_lift())
 	return 9;
-    if (!exercise_planar_nesting_repair())
+    if (!exercise_periodic_metric_chart())
 	return 10;
-    if (!exercise_cylinder_nesting_repair())
+    if (!exercise_planar_nesting_repair())
 	return 11;
-    if (!exercise_curved_metric_nesting_repair())
+    if (!exercise_cylinder_nesting_repair())
 	return 12;
-    if (!exercise_metric_component_partition())
+    if (!exercise_curved_metric_nesting_repair())
 	return 13;
-    if (!exercise_toleranced_endpoint_sample_repair())
+    if (!exercise_metric_component_partition())
 	return 14;
-    if (!exercise_planar_master_curve_embedding())
+    if (!exercise_toleranced_endpoint_sample_repair())
 	return 15;
-    if (!exercise_unbounded_cylinder_axis())
+    if (!exercise_planar_master_curve_embedding())
 	return 16;
-    if (!exercise_weakly_simple_cylinder())
+    if (!exercise_unbounded_cylinder_axis())
 	return 17;
+    if (!exercise_weakly_simple_cylinder())
+	return 18;
     return 0;
 }
