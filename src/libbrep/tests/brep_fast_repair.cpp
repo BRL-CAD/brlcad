@@ -11,6 +11,8 @@
 #include "common.h"
 
 #include <cmath>
+#include <map>
+#include <set>
 #include <vector>
 
 #include "brep/cdt.h"
@@ -1817,6 +1819,127 @@ malformed_pcurve_test()
     return valid;
 }
 
+struct source_sample {
+    fastf_t parameter;
+    fastf_t uv[2];
+    fastf_t point[3];
+    int identity;
+};
+
+struct source_store {
+    std::map<int, std::vector<source_sample>> trims;
+    std::set<const void *> output;
+};
+
+static size_t
+source_sample_count(int UNUSED(face_index), int trim_index, void *data)
+{
+    source_store *store = (source_store *)data;
+    const auto trim = store->trims.find(trim_index);
+    return trim == store->trims.end() ? 0 : trim->second.size();
+}
+
+static int
+source_sample_get(int UNUSED(face_index), int trim_index,
+	size_t sample_index, fastf_t *parameter, point2d_t uv, point_t point,
+	void *data)
+{
+    source_store *store = (source_store *)data;
+    const auto trim = store->trims.find(trim_index);
+    if (trim == store->trims.end() || sample_index >= trim->second.size())
+	return -1;
+    const source_sample &sample = trim->second[sample_index];
+    *parameter = sample.parameter;
+    V2MOVE(uv, sample.uv);
+    VMOVE(point, sample.point);
+    return 0;
+}
+
+static const void *
+source_sample_identity(int UNUSED(face_index), int trim_index,
+	size_t sample_index, void *data)
+{
+    source_store *store = (source_store *)data;
+    const auto trim = store->trims.find(trim_index);
+    if (trim == store->trims.end() || sample_index >= trim->second.size())
+	return NULL;
+    return &trim->second[sample_index].identity;
+}
+
+static void
+source_point_output(int UNUSED(face_index), size_t UNUSED(point_index),
+	const void *source, void *data)
+{
+    source_store *store = (source_store *)data;
+    if (source)
+	store->output.insert(source);
+}
+
+static bool
+constrained_source_identity_test()
+{
+    ON_Brep brep;
+    const int si = brep.AddSurface(large_plane());
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_3dPoint corners[4] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 1.0, 0.0), ON_3dPoint(0.0, 1.0, 0.0)
+    };
+    int vertices[4];
+    for (int corner = 0; corner < 4; ++corner)
+	vertices[corner] = brep.NewVertex(corners[corner]).m_vertex_index;
+
+    source_store store;
+    for (int corner = 0; corner < 4; ++corner) {
+	const int next = (corner + 1) % 4;
+	ON_BrepTrim &trim = add_nurbs_trim(brep, loop, vertices[corner],
+	    vertices[next], {corners[corner], corners[next]}, 1.0e-6);
+	std::vector<source_sample> &samples = store.trims[trim.m_trim_index];
+	samples.resize(3);
+	for (int sample_index = 0; sample_index < 3; ++sample_index) {
+	    const double fraction = 0.5 * sample_index;
+	    const ON_3dPoint point = (1.0 - fraction) * corners[corner] +
+		fraction * corners[next];
+	    source_sample &sample = samples[(size_t)sample_index];
+	    sample.parameter = trim.Domain().ParameterAt(fraction);
+	    V2SET(sample.uv, point.x, point.y);
+	    VSET(sample.point, point.x, point.y, point.z);
+	    sample.identity = corner * 3 + sample_index;
+	}
+    }
+
+    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    struct brep_cdt_fast_options options;
+    brep_cdt_fast_options_default(&options);
+    options.max_workers = 1;
+    options.trim_sample_count = source_sample_count;
+    options.trim_sample = source_sample_get;
+    options.trim_sample_data = &store;
+    options.trim_sample_source = source_sample_identity;
+    options.point_source = source_point_output;
+    options.point_source_data = &store;
+    int *faces = NULL;
+    int face_count = 0;
+    vect_t *normals = NULL;
+    point_t *points = NULL;
+    int point_count = 0;
+    struct brep_cdt_fast_report report = {};
+    const int result = brep_cdt_fast_ex(&faces, &face_count, &normals,
+	&points, &point_count, &brep, -1, &ttol, &tol, &options, &report);
+    bool valid = result == BREP_CDT_FAST_OK && face_count > 0 &&
+	report.failed_faces == 0;
+    for (const auto &trim : store.trims) {
+	const void *middle = &trim.second[1].identity;
+	valid = valid && store.output.find(middle) != store.output.end();
+    }
+    bu_free(faces, "source identity faces");
+    bu_free(normals, "source identity normals");
+    bu_free(points, "source identity points");
+    return valid;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -1862,6 +1985,7 @@ main(int argc, const char **argv)
     RUN_FAST_TEST(skinny_planar_strip_test);
     RUN_FAST_TEST(near_closed_planar_loop_test);
     RUN_FAST_TEST(malformed_pcurve_test);
+    RUN_FAST_TEST(constrained_source_identity_test);
 #undef RUN_FAST_TEST
     return 0;
 }

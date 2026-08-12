@@ -210,6 +210,8 @@ struct BrepTrimPoint
     ON_2dPoint p2d = ON_2dPoint::UnsetPoint; /* 2d surface parameter space point */
     ON_3dVector normal = ON_3dVector::UnsetVector; /* normal as calculated by this trim */
 
+    const void *source_id = NULL; /* optional caller identity retained by copies */
+
     BrepTrimPoint *other_face_trim_pnt = NULL;
     int from_singular = -1;
 };}

@@ -434,6 +434,11 @@ brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, in
  * callbacks replace sampling for trims where trim_sample_count returns at
  * least two points.  Samples must be ordered in trim direction and supply
  * the trim parameter, face UV coordinate, and exact 3D boundary coordinate.
+ * trim_sample_source may associate an opaque identity with each supplied
+ * sample.  point_source reports that identity for output points derived from
+ * supplied samples, or NULL for generated points.  Its point_index is in the
+ * final, concatenated output point array.  The identity is never dereferenced
+ * by libbrep and need remain valid only until brep_cdt_fast_ex returns.
  * Callbacks may be invoked concurrently when max_workers exceeds one. */
 struct brep_cdt_fast_options {
     size_t max_workers;
@@ -450,6 +455,11 @@ struct brep_cdt_fast_options {
     int (*trim_sample)(int face_index, int trim_index, size_t sample_index,
 	fastf_t *trim_parameter, point2d_t uv, point_t point, void *data);
     void *trim_sample_data;
+    const void *(*trim_sample_source)(int face_index, int trim_index,
+	size_t sample_index, void *data);
+    void (*point_source)(int face_index, size_t point_index,
+	const void *source, void *data);
+    void *point_source_data;
 };
 
 #define BREP_CDT_FAST_FACE_COMPLETED 0
