@@ -36,5 +36,8 @@ main(int argc, const char **UNUSED(argv))
     if (result)
 	return result;
     result = cdt_test_repair_triangle_split();
-    return result ? result : cdt_test_repair_patch_limits();
+    if (result)
+	return result;
+    result = cdt_test_repair_patch_limits();
+    return result ? result : cdt_test_repair_periodic_strip();
 }
