@@ -81,41 +81,39 @@ Note that an object can now have (1) either an attribute or a body, (2) both an 
 The on-disk version of each object consists of three distinct parts: Object Header, Object Interior, and Object Footer. This is called the external format of the object.
 
 .On-Disk BRL-CAD Object Structure
-[cols="3*"]
+[cols="1,2,2"]
 |===
 |Part
 |Element
 |Comments
 
-.5+|Object Header: (not compressible) 
+.5+|Object Header (not compressible)
 |Magic1
-.3+|Required
+|Required
+
 |HFlags, AFlags, BFlags
-|Object_Type (Major_Type, Minor_Type) 
+|Required
+
+|Object_Type (Major_Type, Minor_Type)
+|Required
+
 |Object_Length
 |Required
-|Object Name:, Name_Length, Name_Data , Name_Length, Name_Data 
-|Conditional on flag bit N Required for Application Data 
-|Object Name:
-|Name_Length, Name_Data 
-|Name_Length
-|Name_Data
-.2+|Object Interior: (individually compressible) 
-|Object Attributes:, Attribute_Length, Attribute_Data , Attribute_Length, Attribute_Data 
-|Conditional on flag bit A (ZZZ compression) 
-|Object Attributes:
-|Attribute_Length, Attribute_Data 
-|Attribute_Length
-|Attribute_Data
-|Object Body:, Body_Length, Body_Data , Body_Length, Body_Data 
-|Conditional on flag bit B (ZZZ compression) 
-|Object Body:
-|Body_Length, Body_Data 
-|Body_Length
-|Body_Data
-.2+|Object Footer: (not compressible) 
+
+|Object_Name (Name_Length, Name_Data)
+|Present when NP = 1
+
+.2+|Object Interior (individually compressible)
+|Object_Attributes (Attribute_Length, Attribute_Data)
+|Present when AP = 1
+
+|Object_Body (Body_Length, Body_Data)
+|Present when BP = 1
+
+.2+|Object Footer (not compressible)
 |Padding
-|As required to maintain 8-byte object boundaries 
+|As required to maintain 8-byte object boundaries
+
 |Magic2
 |Required
 |===
