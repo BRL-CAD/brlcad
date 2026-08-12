@@ -287,6 +287,43 @@ exercise_sphere(const ON_3dPoint &center, double radius)
 	    << std::endl;
 	return false;
     }
+
+    /* A physical spherical lune needs no interior meridian samples: its two
+     * distinct sides already form a nonzero-area disk in the polar chart. */
+    std::vector<std::pair<double, double>> lune_native;
+    std::vector<int> lune_outer;
+    std::vector<const ON_3dPoint *> lune_points_3d;
+    std::vector<cdt_topo_vertex_id> lune_topology;
+    const auto add_lune_point = [&](double angular_fraction,
+	    double open_fraction, cdt_topo_vertex_id topology) {
+	ON_2dPoint uv;
+	uv[angular_dir] = angular_domain.ParameterAt(angular_fraction);
+	uv[open_dir] = open_domain.ParameterAt(open_fraction);
+	const int index = (int)lune_native.size();
+	lune_native.push_back(std::make_pair(uv.x, uv.y));
+	lune_points_3d.push_back(NULL);
+	lune_topology.push_back(topology);
+	lune_outer.push_back(index);
+    };
+    add_lune_point(0.2, 0.0, chart.pole_topology_vertex());
+    add_lune_point(0.2, 0.25, CDT_TOPOLOGY_ID_NONE);
+    add_lune_point(0.2, 0.5, CDT_TOPOLOGY_ID_NONE);
+    add_lune_point(0.2, 0.75, CDT_TOPOLOGY_ID_NONE);
+    add_lune_point(0.4, 1.0, chart.second_pole_topology_vertex());
+    add_lune_point(0.4, 0.75, CDT_TOPOLOGY_ID_NONE);
+    add_lune_point(0.4, 0.5, CDT_TOPOLOGY_ID_NONE);
+    add_lune_point(0.4, 0.25, CDT_TOPOLOGY_ID_NONE);
+    lune_outer.push_back(lune_outer.front());
+    cdt_face_chart lune_chart;
+    if (!lune_chart.build(face, lune_native, lune_outer,
+	    std::vector<std::vector<int>>(), std::vector<int>(),
+	    std::vector<int>(), lune_points_3d, lune_topology) ||
+	    lune_chart.type() != CDT_FACE_CHART_POLAR) {
+	std::cerr << "zero-interior-sample sphere lune failed: "
+	    << lune_chart.failure() << std::endl;
+	return false;
+    }
+
     int pole_count = 0;
     for (const cdt_chart_vertex &vertex : chart.vertices)
 	pole_count += vertex.singular ? 1 : 0;
