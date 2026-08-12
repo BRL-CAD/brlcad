@@ -6963,7 +6963,6 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		appended, folds);
 	}
     }
-    const int best_effort_reference_face_count = input_face_count;
     report->best_effort_faces = best_effort_face_count;
     report->best_effort_triangles = best_effort_triangle_count;
     report->best_effort_folded_triangles = (int)std::min(
@@ -8308,10 +8307,14 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	display_reference_faces.data() : input_faces;
     const fastf_t *reference_input_vertices = have_display_reference ?
 	display_reference_vertices.data() : input_vertices;
+    /* Every nonrigorous face present here entered through an explicitly
+     * enabled, provenance-tagged local fallback.  After source-surface
+     * projection fails, let a small topology repair justify its changed
+     * samples against that bounded local interpretation.  The reverse
+     * coverage and area gates below still prevent accepting a missing or
+     * wholesale replacement region. */
     const int surface_reference_face_count = have_display_reference ?
-	display_reference_face_count :
-	(report->full_fast_fallback_used ? input_face_count :
-	best_effort_reference_face_count);
+	display_reference_face_count : input_face_count;
     for (int face = 0; face < surface_reference_face_count; ++face) {
 	double minimum[3] = {
 	    std::numeric_limits<double>::infinity(),
