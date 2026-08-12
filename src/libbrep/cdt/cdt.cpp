@@ -3141,6 +3141,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt,
 
 typedef std::array<double, 3> repair_point_key;
 typedef std::array<repair_point_key, 3> repair_triangle_key;
+typedef std::array<repair_point_key, 2> repair_triangle_edge_key;
 
 static repair_triangle_key
 repair_triangle_coordinates(const fastf_t *vertices, const int *face)
@@ -3156,6 +3157,163 @@ repair_triangle_coordinates(const fastf_t *vertices, const int *face)
     }
     std::sort(key.begin(), key.end());
     return key;
+}
+
+static repair_triangle_edge_key
+repair_triangle_edge(const repair_point_key &first,
+	const repair_point_key &second)
+{
+    repair_triangle_edge_key edge = {first, second};
+    if (edge[1] < edge[0])
+	std::swap(edge[0], edge[1]);
+    return edge;
+}
+
+static double
+repair_triangle_key_area(const repair_triangle_key &triangle)
+{
+    return 0.5 * ON_CrossProduct(
+	ON_3dPoint(triangle[1].data()) - ON_3dPoint(triangle[0].data()),
+	ON_3dPoint(triangle[2].data()) - ON_3dPoint(triangle[0].data()))
+	.Length();
+}
+
+static bool
+repair_triangle_third_point(const repair_triangle_key &triangle,
+	const repair_triangle_edge_key &edge, repair_point_key *third)
+{
+    bool have_first = false;
+    bool have_second = false;
+    int third_index = -1;
+    for (int corner = 0; corner < 3; ++corner) {
+	if (!have_first && triangle[(size_t)corner] == edge[0]) {
+	    have_first = true;
+	    continue;
+	}
+	if (!have_second && triangle[(size_t)corner] == edge[1]) {
+	    have_second = true;
+	    continue;
+	}
+	third_index = corner;
+    }
+    if (!have_first || !have_second || third_index < 0)
+	return false;
+    if (third)
+	*third = triangle[(size_t)third_index];
+    return true;
+}
+
+/* Mesh repair resolves a hanging boundary sample by replacing each incident
+ * triangle with two triangles that use the same new edge point.  That is a
+ * topology refinement, not permission to discard certified surface geometry.
+ * Recognize it only when all original corners remain and the new point is
+ * strictly inside one original edge within a scale-limited chord tolerance. */
+static bool
+repair_triangle_edge_split(const repair_triangle_key &original,
+	const repair_triangle_key &first, const repair_triangle_key &second)
+{
+    for (int split_first = 0; split_first < 3; ++split_first) {
+	const int split_second = (split_first + 1) % 3;
+	const int opposite = (split_first + 2) % 3;
+	const repair_triangle_edge_key first_side = repair_triangle_edge(
+	    original[(size_t)split_first], original[(size_t)opposite]);
+	const repair_triangle_edge_key second_side = repair_triangle_edge(
+	    original[(size_t)split_second], original[(size_t)opposite]);
+	repair_point_key first_new;
+	repair_point_key second_new;
+	if (!repair_triangle_third_point(first, first_side, &first_new) ||
+		!repair_triangle_third_point(second, second_side,
+		&second_new) || first_new != second_new) {
+	    if (!repair_triangle_third_point(second, first_side, &first_new) ||
+		    !repair_triangle_third_point(first, second_side,
+		    &second_new) || first_new != second_new)
+		continue;
+	}
+	const ON_3dPoint a(original[(size_t)split_first].data());
+	const ON_3dPoint b(original[(size_t)split_second].data());
+	const ON_3dPoint p(first_new.data());
+	const ON_3dVector edge = b - a;
+	const double edge_squared = edge.LengthSquared();
+	if (!(edge_squared > 0.0) || !std::isfinite(edge_squared))
+	    continue;
+	const double parameter = ((p - a) * edge) / edge_squared;
+	if (!(parameter > 1e-12 && parameter < 1.0 - 1e-12))
+	    continue;
+	const ON_3dPoint closest = a + parameter * edge;
+	const double edge_length = std::sqrt(edge_squared);
+	double coordinate_scale = 1.0;
+	for (int corner = 0; corner < 3; ++corner) {
+	    for (int axis = 0; axis < 3; ++axis)
+		coordinate_scale = std::max(coordinate_scale,
+		    std::fabs(original[(size_t)corner][(size_t)axis]));
+	}
+	const double roundoff = 4096.0 *
+	    std::numeric_limits<double>::epsilon() * coordinate_scale;
+	const double chord_tolerance = std::min((double)BN_TOL_DIST,
+	    std::max(roundoff, 2e-6 * edge_length));
+	if (p.DistanceTo(closest) > chord_tolerance)
+	    continue;
+	const double original_area = repair_triangle_key_area(original);
+	const double split_area = repair_triangle_key_area(first) +
+	    repair_triangle_key_area(second);
+	const double area_tolerance = std::max(
+	    1e-12 * std::max(1.0, original_area),
+	    chord_tolerance * std::max(
+		a.DistanceTo(ON_3dPoint(original[(size_t)opposite].data())),
+		b.DistanceTo(ON_3dPoint(original[(size_t)opposite].data()))));
+	if (std::fabs(split_area - original_area) <= area_tolerance)
+	    return true;
+    }
+    return false;
+}
+
+int
+cdt_test_repair_triangle_split(void)
+{
+    const repair_triangle_key first_original = {{
+	{{173.37886982212009, 26.030906428894703, 247.41309997758779}},
+	{{173.38489474529828, 26.030906428894696, 247.41569829294829}},
+	{{173.45939382361800, 26.118986752580415, 247.43600234096598}}
+    }};
+    const repair_point_key split = {{
+	173.38314307677948, 26.030906428894706, 247.41494286574473}};
+    repair_triangle_key first_half = {{
+	first_original[0], split, first_original[2]}};
+    repair_triangle_key second_half = {{
+	split, first_original[1], first_original[2]}};
+    std::sort(first_half.begin(), first_half.end());
+    std::sort(second_half.begin(), second_half.end());
+    if (!repair_triangle_edge_split(first_original, first_half, second_half))
+	return 1;
+    const repair_triangle_key second_original = {{
+	{{173.38100471667130, 26.030906428894703, 247.41440728443774}},
+	{{173.38475097989038, 26.030906428894703, 247.41534557967435}},
+	{{173.43320650492041, 25.986308181821187, 247.42833899473351}}
+    }};
+    repair_triangle_key third_half = {{
+	second_original[0], split, second_original[2]}};
+    repair_triangle_key fourth_half = {{
+	split, second_original[1], second_original[2]}};
+    std::sort(third_half.begin(), third_half.end());
+    std::sort(fourth_half.begin(), fourth_half.end());
+    if (!repair_triangle_edge_split(second_original, third_half,
+	    fourth_half))
+	return 2;
+    repair_triangle_key displaced = second_half;
+    for (repair_point_key &point : displaced) {
+	if (point == split) {
+	    point[1] += 1e-3;
+	    break;
+	}
+    }
+    std::sort(displaced.begin(), displaced.end());
+    if (repair_triangle_edge_split(first_original, first_half, displaced))
+	return 3;
+    repair_triangle_key missing_corner = second_half;
+    missing_corner[0] = {{0.0, 0.0, 0.0}};
+    std::sort(missing_corner.begin(), missing_corner.end());
+    return repair_triangle_edge_split(first_original, first_half,
+	missing_corner) ? 4 : 0;
 }
 
 static double
@@ -3950,6 +4108,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	}
     }
     int rigorous_input_face_count = input_face_count;
+    const std::vector<int> rigorous_input_brep_faces =
+	s_cdt->bot_face_to_brep_face;
     std::set<int> locally_reconstructed_faces;
 
     /* Before falling back to the display triangulator, retry failed faces by
@@ -4917,18 +5077,145 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     /* A local fallback is allowed to add geometry inside failed-face
      * neighborhoods, but it may not silently simplify unrelated certified
      * faces.  Compare triangle coordinates rather than indices so harmless
-     * reindexing, reorientation, and vertex duplication remain acceptable. */
+     * reindexing, reorientation, and vertex duplication remain acceptable.
+     * A bounded edge split is also preservation: mesh repair uses it to mate
+     * a rigorous triangle to an already certified hanging boundary sample. */
     std::map<repair_triangle_key, size_t> output_triangle_counts;
-    for (int face = 0; face < repaired_face_count; ++face)
-	output_triangle_counts[repair_triangle_coordinates(repaired_vertices,
-	    &repaired_faces[(size_t)face * 3])]++;
-    size_t missing_rigorous_triangles = 0;
+    for (int face = 0; face < repaired_face_count; ++face) {
+	const repair_triangle_key key = repair_triangle_coordinates(
+	    repaired_vertices, &repaired_faces[(size_t)face * 3]);
+	output_triangle_counts[key]++;
+    }
+    std::vector<repair_triangle_key> missing_rigorous_keys;
+    std::set<repair_triangle_edge_key> missing_rigorous_edges;
     for (const auto &required : rigorous_triangle_counts) {
 	const auto found = output_triangle_counts.find(required.first);
 	const size_t available = found == output_triangle_counts.end() ? 0 :
 	    found->second;
-	if (available < required.second)
-	    missing_rigorous_triangles += required.second - available;
+	for (size_t occurrence = available; occurrence < required.second;
+		++occurrence)
+	    missing_rigorous_keys.push_back(required.first);
+	if (available >= required.second)
+	    continue;
+	for (int corner = 0; corner < 3; ++corner)
+	    missing_rigorous_edges.insert(repair_triangle_edge(
+		required.first[(size_t)corner],
+		required.first[(size_t)((corner + 1) % 3)]));
+    }
+    std::map<repair_triangle_edge_key, std::vector<int>>
+	output_faces_by_missing_edge;
+    std::vector<repair_triangle_key> output_triangle_keys;
+    if (!missing_rigorous_edges.empty()) {
+	output_triangle_keys.resize((size_t)repaired_face_count);
+	for (int face = 0; face < repaired_face_count; ++face) {
+	    output_triangle_keys[(size_t)face] =
+		repair_triangle_coordinates(repaired_vertices,
+		&repaired_faces[(size_t)face * 3]);
+	    const repair_triangle_key &triangle = output_triangle_keys[
+		(size_t)face];
+	    for (int corner = 0; corner < 3; ++corner) {
+		const repair_triangle_edge_key edge = repair_triangle_edge(
+		    triangle[(size_t)corner],
+		    triangle[(size_t)((corner + 1) % 3)]);
+		if (missing_rigorous_edges.find(edge) !=
+			missing_rigorous_edges.end())
+		    output_faces_by_missing_edge[edge].push_back(face);
+	    }
+	}
+    }
+    std::set<int> subdivision_faces_used;
+    std::set<int> reconciled_rigorous_faces;
+    std::vector<repair_triangle_key> unresolved_rigorous_keys;
+    std::map<repair_triangle_key, std::set<int>> missing_triangle_sources;
+    if (!missing_rigorous_keys.empty()) {
+	const std::set<repair_triangle_key> missing_unique(
+	    missing_rigorous_keys.begin(), missing_rigorous_keys.end());
+	for (int face = 0; face < rigorous_input_face_count; ++face) {
+	    const repair_triangle_key key = repair_triangle_coordinates(
+		input_vertices, &input_faces[(size_t)face * 3]);
+	    if (missing_unique.find(key) == missing_unique.end() ||
+		    (size_t)face >= rigorous_input_brep_faces.size())
+		continue;
+	    missing_triangle_sources[key].insert(
+		rigorous_input_brep_faces[(size_t)face]);
+	}
+    }
+    const auto collect_source_faces = [&](const repair_triangle_key &key,
+	    std::set<int> &faces) {
+	const auto source = missing_triangle_sources.find(key);
+	if (source == missing_triangle_sources.end())
+	    return;
+	faces.insert(source->second.begin(), source->second.end());
+    };
+    for (const repair_triangle_key &required : missing_rigorous_keys) {
+	std::array<repair_triangle_edge_key, 3> edges;
+	for (int corner = 0; corner < 3; ++corner)
+	    edges[(size_t)corner] = repair_triangle_edge(
+		required[(size_t)corner],
+		required[(size_t)((corner + 1) % 3)]);
+	bool subdivided = false;
+	for (int first_edge = 0; first_edge < 3 && !subdivided;
+		++first_edge) {
+	    const auto first_candidates = output_faces_by_missing_edge.find(
+		edges[(size_t)first_edge]);
+	    if (first_candidates == output_faces_by_missing_edge.end())
+		continue;
+	    for (int second_edge = first_edge + 1;
+		    second_edge < 3 && !subdivided; ++second_edge) {
+		const auto second_candidates =
+		    output_faces_by_missing_edge.find(
+		    edges[(size_t)second_edge]);
+		if (second_candidates == output_faces_by_missing_edge.end())
+		    continue;
+		for (int first_face : first_candidates->second) {
+		    if (subdivision_faces_used.find(first_face) !=
+			    subdivision_faces_used.end() ||
+			    rigorous_triangles.find(output_triangle_keys[
+			    (size_t)first_face]) != rigorous_triangles.end())
+			continue;
+		    for (int second_face : second_candidates->second) {
+			if (first_face == second_face ||
+				subdivision_faces_used.find(second_face) !=
+				subdivision_faces_used.end() ||
+				rigorous_triangles.find(output_triangle_keys[
+				(size_t)second_face]) !=
+				rigorous_triangles.end())
+			    continue;
+			if (!repair_triangle_edge_split(required,
+				output_triangle_keys[(size_t)first_face],
+				output_triangle_keys[(size_t)second_face]))
+			    continue;
+			subdivision_faces_used.insert(first_face);
+			subdivision_faces_used.insert(second_face);
+			report->subdivided_rigorous_triangles++;
+			std::set<int> source_faces;
+			collect_source_faces(required, source_faces);
+			reconciled_rigorous_faces.insert(source_faces.begin(),
+			    source_faces.end());
+			local_chart_triangle_brep_faces[
+			    output_triangle_keys[(size_t)first_face]].insert(
+			    source_faces.begin(), source_faces.end());
+			local_chart_triangle_brep_faces[
+			    output_triangle_keys[(size_t)second_face]].insert(
+			    source_faces.begin(), source_faces.end());
+			subdivided = true;
+			break;
+		    }
+		}
+	    }
+	}
+	if (!subdivided)
+	    unresolved_rigorous_keys.push_back(required);
+    }
+    approximation_faces.insert(reconciled_rigorous_faces.begin(),
+	reconciled_rigorous_faces.end());
+    const size_t missing_rigorous_triangles =
+	unresolved_rigorous_keys.size();
+    double missing_rigorous_area = 0.0;
+    std::set<int> missing_rigorous_brep_faces;
+    for (const repair_triangle_key &missing : unresolved_rigorous_keys) {
+	missing_rigorous_area += repair_triangle_key_area(missing);
+	collect_source_faces(missing, missing_rigorous_brep_faces);
     }
     report->missing_rigorous_triangles = (int)std::min(
 	missing_rigorous_triangles, (size_t)INT_MAX);
@@ -4945,7 +5232,19 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const std::string message = "local mesh repair would replace " +
 	    std::to_string(missing_rigorous_triangles) +
 	    " certified rigorous triangle" +
-	    (missing_rigorous_triangles == 1 ? "" : "s");
+	    (missing_rigorous_triangles == 1 ? "" : "s") +
+	    " with total area " + std::to_string(missing_rigorous_area) +
+	    " from B-Rep face" +
+	    (missing_rigorous_brep_faces.size() == 1 ? " " : "s ") +
+	    ([&]() {
+		std::string faces;
+		for (int face : missing_rigorous_brep_faces) {
+		    if (!faces.empty())
+			faces += ",";
+		    faces += std::to_string(face);
+		}
+		return faces;
+	    })();
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
 	    BREP_CDT_STAGE_MESH_REPAIR, -1,
 	    report->source_diagnostic.completed_faces,
@@ -5457,6 +5756,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     std::string message = "certified repaired mesh: " +
 	std::to_string(report->mesh.removed_faces) + " faces removed, " +
 	std::to_string(report->mesh.added_faces) + " added, " +
+	std::to_string(report->subdivided_rigorous_triangles) +
+	" rigorous triangles subdivided, " +
 	std::to_string(report->changed_faces) +
 	" changed triangles, sampled maximum reference deviation " +
 	std::to_string(report->max_surface_deviation);
