@@ -499,6 +499,53 @@ test_manifold_preserves_point_contact(void)
     return 0;
 }
 
+/* Two closed tetrahedra sharing one indexed point have closed edge incidence
+ * but a disconnected vertex link.  Repair should split the common index into
+ * two coincident topological vertices before any coordinate welding. */
+static int
+test_manifold_splits_pinched_vertex(void)
+{
+    static point_t points[7] = {
+	{0, 0, 0}, {1, 0, 0}, {0.5, 1, 0}, {0.5, 0.5, 1},
+	{-1, 0, 0}, {-0.5, -1, 0}, {-0.5, -0.5, -1}
+    };
+    static int faces[24] = {
+	0, 2, 1, 0, 1, 3, 1, 2, 3, 0, 3, 2,
+	0, 4, 5, 0, 6, 4, 4, 6, 5, 0, 5, 6
+    };
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.allow_self_intersections = 1;
+    settings.require_manifold = 1;
+    int *output_faces = NULL;
+    int output_face_count = 0;
+    point_t *output_points = NULL;
+    int output_point_count = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int result = bg_trimesh_repair2(&output_faces,
+	&output_face_count, &output_points, &output_point_count, faces, 8,
+	points, 7, &settings, &report);
+    const bool valid = result == 0 && output_faces && output_points &&
+	output_face_count == 8 && output_point_count == 8 && report.solid &&
+	report.manifold_accepted && !report.unmatched_edges &&
+	!report.invalid_vertex_links;
+    if (output_faces)
+	bu_free(output_faces, "pinched vertex faces");
+    if (output_points)
+	bu_free(output_points, "pinched vertex points");
+    if (!valid) {
+	bu_log("FAIL test_manifold_splits_pinched_vertex: ret=%d "
+	    "faces=%d points=%d solid=%d manifold=%d unmatched=%d "
+	    "links=%d\n", result, output_face_count, output_point_count,
+	    report.solid, report.manifold_accepted, report.unmatched_edges,
+	    report.invalid_vertex_links);
+	return -1;
+    }
+    bu_log("PASS test_manifold_splits_pinched_vertex\n");
+    return 0;
+}
+
 /* A topologically valid cap is not acceptable when it cuts through another
  * closed component.  Both available triangulations cover the same square, so
  * repair must leave the hole open and fail instead of returning an
@@ -1377,6 +1424,8 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_manifold_rejection_report()   != 0) ? 1 : 0;
     failures +=
 	(test_manifold_preserves_point_contact() != 0) ? 1 : 0;
+    failures +=
+	(test_manifold_splits_pinched_vertex() != 0) ? 1 : 0;
     failures += (test_intersecting_hole_patch_rejected() != 0) ? 1 : 0;
     failures +=
 	(test_intersecting_hole_patch_manifold_accepted() != 0) ? 1 : 0;

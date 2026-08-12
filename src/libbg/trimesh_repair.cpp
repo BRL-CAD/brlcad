@@ -1218,6 +1218,50 @@ bg_trimesh_repair2(
     if (tris.empty())
 	return -1;
 
+    /* An edge-closed mesh can fail the manifold vertex-link condition when
+     * two otherwise independent closed fans share one indexed vertex.  Split
+     * that topology before any coordinate colocation: welding first destroys
+     * the distinction and can turn a local pinch into hundreds of false
+     * seams.  The operation duplicates positions but does not move geometry.
+     * Preserve the result only when the complete indexed solid and optional
+     * Manifold postconditions accept it. */
+    size_t input_invalid_links = 0;
+    const bool input_links_valid = trimesh_gte_valid_vertex_links(tris,
+	verts.size(), &input_invalid_links);
+    struct bg_trimesh_repair_report input_topology =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    trimesh_repair_report_topology(&input_topology, verts, tris);
+    const bool input_edges_closed = !input_topology.unmatched_edges &&
+	!input_topology.excess_edges && !input_topology.misoriented_edges;
+    if (input_edges_closed && !initial_geometric_degenerate &&
+	    !input_links_valid && !settings->remove_small_components &&
+	    !settings->separate_touching_vertices &&
+	    !settings->union_components) {
+	std::vector<gte::Vector3<double>> split_vertices = verts;
+	std::vector<std::array<int32_t, 3>> split_triangles = tris;
+	std::vector<int32_t> adjacency;
+	gte::MeshRepair<double>::ConnectFacets(split_triangles, adjacency);
+	gte::MeshRepair<double>::SplitNonManifoldVertices(split_vertices,
+	    split_triangles, adjacency);
+	const bool split_valid = trimesh_gte_solid(split_vertices,
+	    split_triangles) && trimesh_gte_valid_vertex_links(
+	    split_triangles, split_vertices.size());
+	bool manifold_accepted = !settings->require_manifold;
+	if (split_valid && settings->require_manifold) {
+	    std::vector<gte::Vector3<double>> manifold_vertices =
+		split_vertices;
+	    std::vector<std::array<int32_t, 3>> manifold_triangles =
+		split_triangles;
+	    (void)trimesh_manifold_union(manifold_vertices,
+		manifold_triangles, &manifold_accepted, false);
+	}
+	if (split_valid && manifold_accepted) {
+	    report->manifold_accepted = settings->require_manifold ? 1 : 0;
+	    return trimesh_repair_export(ofaces, n_ofaces, opnts, n_opnts,
+		split_vertices, split_triangles, settings, report);
+	}
+    }
+
     /* A caller asking only for Manifold acceptance has not authorized a
      * geometric rewrite of an already valid indexed solid.  In particular,
      * coordinate welding can merge distinct topological vertices that happen
