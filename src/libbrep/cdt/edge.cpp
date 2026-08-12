@@ -2093,6 +2093,11 @@ synchronize_coincident_edge_samples(struct ON_Brep_CDT_State *s_cdt,
 	if (!root || !root->nc)
 	    return false;
 	const ON_Interval domain = root_domain(edge_index);
+	/* split_edge_seg may replace and delete the root segment.  The edge's
+	 * endpoint point objects remain authoritative throughout subdivision, so
+	 * retain those pointers before inserting any synchronized samples. */
+	ON_3dPoint *root_start = root->e_root_start;
+	ON_3dPoint *root_end = root->e_root_end;
 	for (const auto &sample : points) {
 	    ON_3dPoint *point = sample.second;
 	    bool present = false;
@@ -2125,8 +2130,6 @@ synchronize_coincident_edge_samples(struct ON_Brep_CDT_State *s_cdt,
 		weld_pair(point, nearest);
 		continue;
 	    }
-	    ON_3dPoint *root_start = root->e_root_start;
-	    ON_3dPoint *root_end = root->e_root_end;
 	    if (root_start && point->DistanceTo(*root_start) <= tolerance) {
 		weld_pair(point, root_start);
 		continue;
@@ -2184,6 +2187,26 @@ synchronize_coincident_edge_samples(struct ON_Brep_CDT_State *s_cdt,
 	    continue;
 	const int first_edge = group.second[0];
 	const int second_edge = group.second[1];
+	/* Matching 3-D curves are not sufficient: distinct edges may occupy the
+	 * same locus while following different paths in a singular face chart. */
+	bool shared_face_retrace = false;
+	const ON_BrepEdge &first_topology_edge =
+	    s_cdt->brep->m_E[first_edge];
+	const ON_BrepEdge &second_topology_edge =
+	    s_cdt->brep->m_E[second_edge];
+	for (int first_trim = 0;
+		!shared_face_retrace &&
+		first_trim < first_topology_edge.TrimCount(); ++first_trim) {
+	    for (int second_trim = 0;
+		    !shared_face_retrace &&
+		    second_trim < second_topology_edge.TrimCount();
+		    ++second_trim)
+		shared_face_retrace = cdt_trim_pcurves_retrace(
+		    first_topology_edge.Trim(first_trim),
+		    second_topology_edge.Trim(second_trim));
+	}
+	if (!shared_face_retrace)
+	    continue;
 	const bool coincident = curves_coincident(first_edge, second_edge);
 	if (!coincident)
 	    continue;
@@ -2198,6 +2221,22 @@ synchronize_coincident_edge_samples(struct ON_Brep_CDT_State *s_cdt,
 	    sample_points(first_edge);
 	const std::vector<std::pair<double, ON_3dPoint *>> second_points =
 	    sample_points(second_edge);
+	/* Corresponding refinement already provides equal geometry on both
+	 * edges.  Welding distinct topology samples would collapse a valid seam. */
+	bool already_aligned = first_points.size() == second_points.size();
+	for (size_t point_index = 0;
+		already_aligned && point_index < first_points.size();
+		++point_index) {
+	    const size_t second_index = reversed ?
+		second_points.size() - point_index - 1 : point_index;
+	    const ON_3dPoint *first_point = first_points[point_index].second;
+	    const ON_3dPoint *second_point =
+		second_points[second_index].second;
+	    already_aligned = first_point && second_point &&
+		first_point->DistanceTo(*second_point) <= tolerance;
+	}
+	if (already_aligned)
+	    continue;
 	if (!insert_samples(first_points, second_edge, reversed) ||
 		!insert_samples(second_points, first_edge, reversed))
 	    continue;
@@ -2619,6 +2658,8 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	const bool topology_chart = cdt_face_uses_topology_chart(face);
+	const bool singular_face =
+	    s_cdt->fmeshes[face_index].has_singularities;
 	//std::cout << "Face " << face_index << " of " << brep->m_F.Count()-1 << " close edge check...\n";
 
 	/*
@@ -2717,10 +2758,11 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 			 * define the requested geometric accuracy.  Do not force a
 			 * shared edge below the globally digested minimum mesh
 			 * dimension, or use this heuristic alone to create more than
-			 * approximately 256 spans along one source edge.  The later
-			 * curve and chord passes still enforce the actual
-			 * tessellation tolerances. */
-			if (!close_edge_split_worthwhile(s_cdt, b)) {
+			 * approximately 256 spans along one source edge.  Singular
+			 * charts are the exception: their pole fans need this bounded
+			 * ten-round refinement to avoid collapsed chart cells. */
+			if (!singular_face &&
+				!close_edge_split_worthwhile(s_cdt, b)) {
 			    pe->split_status = 0;
 			    continue;
 			}

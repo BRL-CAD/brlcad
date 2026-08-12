@@ -1051,6 +1051,10 @@ winding_periodic_strip_test()
     const bool valid = result->ret == BREP_CDT_FAST_OK &&
 	result->report.failed_faces == 0 && result->face_count > 0 &&
 	result->point_count > 512;
+    if (!valid)
+	bu_log("winding strip: ret=%d failed=%d faces=%d points=%d\n",
+	    result->ret, result->report.failed_faces, result->face_count,
+	    result->point_count);
     delete result;
     return valid;
 }
@@ -1820,28 +1824,44 @@ main(int argc, const char **argv)
     if (argc != 1)
 	return 2;
 
-    return thin_lens_test() && degenerate_line_test() &&
-	degenerate_collinear_loop_test() &&
-	singular_cap_test() && periodic_strip_test() &&
-	redundant_periodic_boundaries_test() &&
-	periodic_rectangle_test() && periodic_zero_area_subcycle_test() &&
-	overlapping_periodic_pcurves_test() &&
-	paired_periodic_strip_test() &&
-	split_periodic_boundary_test() &&
-	degenerate_closed_surface_slit_test() &&
-	multiple_empty_loops_test() &&
-	degenerate_inner_loop_test() &&
-	bridged_inner_loop_test() &&
-	winding_periodic_strip_test() &&
-	periodic_vertex_copy_strip_test() &&
-	doubly_periodic_winding_strip_test() &&
-	collapsed_closed_pcurve_test() &&
-	misclassified_periodic_boundaries_test() &&
-	touching_periodic_subloops_test() &&
-	inner_only_planar_loop_test() && empty_periodic_boundary_test() &&
-	full_periodic_hole_test() && periodic_singular_domain_test() &&
-	full_periodic_face_test() && untrimmed_planar_face_test() &&
-	untrimmed_curved_surface_test() &&
-	skinny_planar_strip_test() && near_closed_planar_loop_test() &&
-	malformed_pcurve_test() ? 0 : 1;
+#define RUN_FAST_TEST(_test) \
+    do { \
+	if (!(_test)()) { \
+	    bu_log("FAIL %s\n", #_test); \
+	    return 1; \
+	} \
+    } while (0)
+    RUN_FAST_TEST(thin_lens_test);
+    RUN_FAST_TEST(degenerate_line_test);
+    RUN_FAST_TEST(degenerate_collinear_loop_test);
+    RUN_FAST_TEST(singular_cap_test);
+    RUN_FAST_TEST(periodic_strip_test);
+    RUN_FAST_TEST(redundant_periodic_boundaries_test);
+    RUN_FAST_TEST(periodic_rectangle_test);
+    RUN_FAST_TEST(periodic_zero_area_subcycle_test);
+    RUN_FAST_TEST(overlapping_periodic_pcurves_test);
+    RUN_FAST_TEST(paired_periodic_strip_test);
+    RUN_FAST_TEST(split_periodic_boundary_test);
+    RUN_FAST_TEST(degenerate_closed_surface_slit_test);
+    RUN_FAST_TEST(multiple_empty_loops_test);
+    RUN_FAST_TEST(degenerate_inner_loop_test);
+    RUN_FAST_TEST(bridged_inner_loop_test);
+    RUN_FAST_TEST(winding_periodic_strip_test);
+    RUN_FAST_TEST(periodic_vertex_copy_strip_test);
+    RUN_FAST_TEST(doubly_periodic_winding_strip_test);
+    RUN_FAST_TEST(collapsed_closed_pcurve_test);
+    RUN_FAST_TEST(misclassified_periodic_boundaries_test);
+    RUN_FAST_TEST(touching_periodic_subloops_test);
+    RUN_FAST_TEST(inner_only_planar_loop_test);
+    RUN_FAST_TEST(empty_periodic_boundary_test);
+    RUN_FAST_TEST(full_periodic_hole_test);
+    RUN_FAST_TEST(periodic_singular_domain_test);
+    RUN_FAST_TEST(full_periodic_face_test);
+    RUN_FAST_TEST(untrimmed_planar_face_test);
+    RUN_FAST_TEST(untrimmed_curved_surface_test);
+    RUN_FAST_TEST(skinny_planar_strip_test);
+    RUN_FAST_TEST(near_closed_planar_loop_test);
+    RUN_FAST_TEST(malformed_pcurve_test);
+#undef RUN_FAST_TEST
+    return 0;
 }
