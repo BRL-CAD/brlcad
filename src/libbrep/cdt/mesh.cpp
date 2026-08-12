@@ -6953,7 +6953,7 @@ cdt_mesh_t::refine_collapsed_chart_triangles(size_t max_points)
 size_t
 cdt_mesh_t::split_problem_triangle_edges(
 	const std::vector<triangle_t> &triangles, size_t max_points,
-	const ON_3dPoint *near_point)
+	const ON_3dPoint *near_point, const uedge_t *required_edge)
 {
     if (!max_points || !brep || f_id < 0 || f_id >= brep->m_F.Count() ||
 	    m_face_charts.empty())
@@ -6987,6 +6987,8 @@ cdt_mesh_t::split_problem_triangle_edges(
 	for (int edge = 0; edge < 3; ++edge) {
 	    uedge_t candidate(triangle.v[edge],
 		triangle.v[(edge + 1) % 3]);
+	    if (required_edge && candidate != *required_edge)
+		continue;
 	    if (boundary_edges.find(candidate) != boundary_edges.end() ||
 		    brep_edges.find(candidate) != brep_edges.end())
 		continue;

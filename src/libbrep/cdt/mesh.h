@@ -639,7 +639,8 @@ public:
 	size_t max_points);
     size_t split_problem_triangle_edges(
 	const std::vector<triangle_t> &triangles, size_t max_points,
-	const ON_3dPoint *near_point = NULL);
+	const ON_3dPoint *near_point = NULL,
+	const uedge_t *required_edge = NULL);
     size_t refine_incorrect_normals(size_t max_points);
     size_t refine_self_intersections(size_t max_points);
     BREP_EXPORT size_t refine_collapsed_chart_triangles(size_t max_points);
