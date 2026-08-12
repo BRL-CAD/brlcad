@@ -84,6 +84,7 @@ struct fast_face_scratch {
     std::map<int, fast_trim_point_map *> trim_points;
     std::vector<ON_3dPoint *> loose_points;
     bool hit_sample_limit = false;
+    bool invalid_constraints = false;
 
     ~fast_face_scratch()
     {
@@ -1779,7 +1780,8 @@ get_loop_sample_points(
 	const struct bn_tol *tol,
 	fast_face_scratch &scratch,
 	double model_diagonal,
-	bool repair_pcurves)
+	bool repair_pcurves,
+	const struct brep_cdt_fast_options *options)
 {
     if (!loop)
 	return;
@@ -1823,6 +1825,46 @@ get_loop_sample_points(
 	    btp.e = ON_UNSET_VALUE;
 	    points->Append(btp);
 
+	    continue;
+	}
+
+	const size_t constrained_count = options &&
+	    options->trim_sample_count && options->trim_sample ?
+	    options->trim_sample_count(face.m_face_index,
+		trim->m_trim_index, options->trim_sample_data) : 0;
+	if (constrained_count >= 2) {
+	    if (constrained_count > FAST_CDT_MAX_TRIM_SAMPLES) {
+		scratch.hit_sample_limit = true;
+		return;
+	    }
+	    const size_t output_count = lti < trim_count - 1 ?
+		constrained_count - 1 : constrained_count;
+	    for (size_t sample_index = 0; sample_index < output_count;
+		    ++sample_index) {
+		fastf_t trim_parameter = ON_UNSET_VALUE;
+		point2d_t uv;
+		point_t point;
+		if (options->trim_sample(face.m_face_index,
+			trim->m_trim_index, sample_index, &trim_parameter,
+			uv, point, options->trim_sample_data) != 0 ||
+			!std::isfinite(trim_parameter) ||
+			!std::isfinite(uv[X]) || !std::isfinite(uv[Y]) ||
+			!std::isfinite(point[X]) || !std::isfinite(point[Y]) ||
+			!std::isfinite(point[Z])) {
+		    scratch.invalid_constraints = true;
+		    return;
+		}
+		BrepTrimPoint constrained;
+		constrained.trim_ind = trim->m_trim_index;
+		constrained.edge_ind = trim->m_ei;
+		constrained.p2d = ON_2dPoint(uv[X], uv[Y]);
+		constrained.p3d = scratch.make_point(ON_3dPoint(
+		    point[X], point[Y], point[Z]));
+		constrained.n3d = NULL;
+		constrained.t = trim_parameter;
+		constrained.e = ON_UNSET_VALUE;
+		points->Append(constrained);
+	    }
 	    continue;
 	}
 
@@ -4202,7 +4244,7 @@ detria_CDT(struct bu_list *vhead,
     for (int li = 0; li < loop_cnt; li++) {
 	const ON_BrepLoop *loop = face.Loop(li);
 	get_loop_sample_points(brep_loop_points[li], face, loop, max_dist,
-		ttol, tol, scratch, model_diagonal, false);
+		ttol, tol, scratch, model_diagonal, false, NULL);
     }
     if (scratch.hit_sample_limit) {
 	return;
@@ -4830,7 +4872,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	const struct bg_tess_tol *ttol,
 	const struct bn_tol *tol,
 	double model_diagonal,
-	bool repair_pcurves)
+	bool repair_pcurves,
+	const struct brep_cdt_fast_options *options)
 {
     fast_face_scratch scratch;
     fast_line_store line_store;
@@ -4860,13 +4903,13 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     for (int li = 0; li < loop_cnt; li++) {
 	const ON_BrepLoop *loop = face.Loop(li);
 	get_loop_sample_points(brep_loop_points[li], face, loop, max_dist,
-		ttol, tol, scratch, model_diagonal, repair_pcurves);
+		ttol, tol, scratch, model_diagonal, repair_pcurves, options);
     }
     if (loop_cnt == 1)
 	fast_reconstruct_untrimmed_domain_loop(s, face,
 	    *brep_loop_points[0],
 	    scratch);
-    if (scratch.hit_sample_limit) {
+    if (scratch.hit_sample_limit || scratch.invalid_constraints) {
 	return false;
     }
     if (s->IsClosed(0) || s->IsClosed(1)) {
@@ -5478,7 +5521,8 @@ static fast_face_outcome
 bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	std::vector<fastf_t> &pnts, const ON_BrepFace &face,
 	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
-	double model_diagonal)
+	double model_diagonal,
+	const struct brep_cdt_fast_options *options)
 {
     if (fast_face_is_provably_degenerate(face))
 	return FAST_FACE_SKIPPED_DEGENERATE;
@@ -5498,14 +5542,14 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	}
     }
     if (bg_CDT_attempt(faces, pnt_norms, pnts, face, ttol, tol,
-	    model_diagonal, repair_first))
+	    model_diagonal, repair_first, options))
 	return FAST_FACE_COMPLETED;
 
     faces.clear();
     pnt_norms.clear();
     pnts.clear();
     return bg_CDT_attempt(faces, pnt_norms, pnts, face, ttol, tol,
-	    model_diagonal, !repair_first) ? FAST_FACE_COMPLETED :
+	    model_diagonal, !repair_first, options) ? FAST_FACE_COMPLETED :
 	FAST_FACE_FAILED;
 }
 
@@ -5523,6 +5567,7 @@ struct fast_cdt_parallel_state {
     const ON_Brep *brep;
     const struct bg_tess_tol *ttol;
     const struct bn_tol *tol;
+    const struct brep_cdt_fast_options *options;
     double model_diagonal;
     std::vector<fast_cdt_face_result> *results;
     std::atomic<int> next_face;
@@ -5561,7 +5606,8 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	fast_face_outcome outcome = FAST_FACE_FAILED;
 	try {
 	    outcome = bg_CDT(result.faces, result.norms, result.pnts, face,
-		state->ttol, state->tol, state->model_diagonal);
+		state->ttol, state->tol, state->model_diagonal,
+		state->options);
 	} catch (const std::bad_alloc &) {
 	    state->hit_memory_limit = true;
 	    state->stop = true;
@@ -5629,6 +5675,9 @@ brep_cdt_fast_options_default(struct brep_cdt_fast_options *options)
     options->face_status_data = NULL;
     options->face_output = NULL;
     options->face_output_data = NULL;
+    options->trim_sample_count = NULL;
+    options->trim_sample = NULL;
+    options->trim_sample_data = NULL;
 }
 
 int
@@ -5671,6 +5720,9 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	options.face_status_data = user_options->face_status_data;
 	options.face_output = user_options->face_output;
 	options.face_output_data = user_options->face_output_data;
+	options.trim_sample_count = user_options->trim_sample_count;
+	options.trim_sample = user_options->trim_sample;
+	options.trim_sample_data = user_options->trim_sample_data;
     }
     options.max_workers = std::max((size_t)1,
 	std::min(options.max_workers, (size_t)brep_face_count));
@@ -5701,7 +5753,7 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	 * face order.  This avoids locking the hot CDT path, keeps output
 	 * stable across runs, and leaves the input BRep unchanged. */
 	fast_cdt_parallel_state state = {
-	    brep, ttol, tol, model_diagonal, &face_results, 0, 0, 0,
+	    brep, ttol, tol, &options, model_diagonal, &face_results, 0, 0, 0,
 	    false, false,
 	    false, false, options.max_result_bytes, options.max_points,
 	    deadline, (bool)options.allow_partial
@@ -5719,7 +5771,7 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    fast_face_outcome outcome = FAST_FACE_FAILED;
 	    try {
 		outcome = bg_CDT(result.faces, result.norms, result.pnts,
-		    brep->m_F[index], ttol, tol, model_diagonal);
+		    brep->m_F[index], ttol, tol, model_diagonal, &options);
 	    } catch (const std::bad_alloc &) {
 		hit_memory_limit = true;
 	    } catch (...) {

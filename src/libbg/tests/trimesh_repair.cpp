@@ -235,6 +235,49 @@ test_open_cube_repair(void)
     return 0;
 }
 
+/* Repair output must not retain vertices which no output triangle uses. */
+static int
+test_unused_vertex_compaction(void)
+{
+    point_t *cube_pts;
+    int cube_point_count;
+    int *faces;
+    int face_count;
+    make_open_cube(&cube_pts, &cube_point_count, &faces, &face_count);
+    point_t points[9];
+    memcpy(points, cube_pts, (size_t)cube_point_count * sizeof(point_t));
+    VSET(points[8], 99.0, 99.0, 99.0);
+
+    int *output_faces = NULL;
+    int output_face_count = 0;
+    point_t *output_points = NULL;
+    int output_point_count = 0;
+    struct bg_trimesh_repair_opts options = BG_TRIMESH_REPAIR_OPTS_DEFAULT;
+    options.max_hole_area_percent = 30.0;
+    const int result = bg_trimesh_repair(&output_faces,
+	&output_face_count, &output_points, &output_point_count, faces,
+	face_count, points, 9, &options);
+    bool retained_unused = false;
+    for (int point = 0; point < output_point_count; ++point) {
+	if (VNEAR_EQUAL(output_points[point], points[8], SMALL_FASTF)) {
+	    retained_unused = true;
+	    break;
+	}
+    }
+    const bool valid = result == 0 && output_faces && output_points &&
+	output_face_count >= face_count && !retained_unused;
+    bu_free(output_faces, "unused vertex output faces");
+    bu_free(output_points, "unused vertex output points");
+    if (!valid) {
+	bu_log("FAIL test_unused_vertex_compaction: result %d, points %d, "
+	    "unused %d\n", result, output_point_count,
+	    retained_unused ? 1 : 0);
+	return -1;
+    }
+    bu_log("PASS test_unused_vertex_compaction\n");
+    return 0;
+}
+
 /* The extended interface is conservative by default: it must not silently
  * close a hole unless the caller explicitly enables hole filling. */
 static int
@@ -1187,6 +1230,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_already_solid()             != 0) ? 1 : 0;
     failures += (test_tet_already_solid()         != 0) ? 1 : 0;
     failures += (test_open_cube_repair()          != 0) ? 1 : 0;
+    failures += (test_unused_vertex_compaction()  != 0) ? 1 : 0;
     failures += (test_repair2_conservative_default() != 0) ? 1 : 0;
     failures += (test_repair2_report()             != 0) ? 1 : 0;
     failures += (test_intersecting_hole_patch_rejected() != 0) ? 1 : 0;
