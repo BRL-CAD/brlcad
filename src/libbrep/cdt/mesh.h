@@ -654,7 +654,7 @@ public:
     bool deserialize(const char *fname);
 
     /* Triangulation related functions and data. */
-    bool cdt();
+    bool cdt(bool allow_general_boundary_cleanup = false);
     std::vector<triangle_t> tris_2d;
     std::vector<std::pair<double, double> > m_pnts_2d;
     std::vector<cdt_face_chart> m_face_charts;

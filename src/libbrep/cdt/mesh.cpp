@@ -4436,14 +4436,13 @@ cleanable_developable_chart(const ON_BrepFace &face,
 	chart.type() == CDT_FACE_CHART_CYLINDER;
 }
 
-/* Clipper can normalize weakly-simple planar loop topology, but conversion
- * quality may not invent, remove, or move a shared B-Rep boundary sample.
- * Accept its result only when every cleaned point maps back to one original
- * chart coordinate and the triangle boundary is exactly the original set of
- * nonzero constraints.  Duplicate coordinates are mergeable when their
- * globally shared 3-D point pointer proves they are one derived mesh point,
- * or when non-topological edge samples agree within the scale-aware modeling
- * tolerance. */
+/* Clipper can normalize weakly-simple planar loop topology.  The rigorous
+ * path accepts its result only when the triangle boundary is exactly the
+ * original nonzero constraint set.  An explicitly approximate repair may
+ * also omit a retraced residual when every sampled point remains within the
+ * bounded tolerance declared by an incident B-Rep edge.  Duplicate
+ * coordinates are mergeable only when shared identity or scale-aware model
+ * tolerance proves they denote the same derived mesh point. */
 static bool
 topology_preserving_clean_triangulation(int **faces, int *face_count,
 	cdt_mesh_t *mesh, const ON_BrepFace &face, cdt_face_chart &chart,
@@ -4451,7 +4450,9 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 	const int *outer, size_t outer_count, const int **holes,
 	const size_t *hole_counts, size_t hole_count, const int *steiner,
 	size_t steiner_count, const point2d_t *points,
-	std::set<int> *normalized_boundary_vertices)
+	std::set<int> *normalized_boundary_vertices,
+	std::set<std::pair<int, int>> *normalized_boundary_edges,
+	bool allow_toleranced_boundary_loss)
 {
     if (!faces || !face_count || !outer || outer_count < 4 || !points)
 	return false;
@@ -4539,8 +4540,12 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 		    candidate_3d && point_3d->DistanceTo(*candidate_3d) <=
 		    merge_tolerance;
 		if ((!point_3d || candidate_3d != point_3d) &&
-			!toleranced_match)
+			!toleranced_match) {
+		    if (cdt_failure_dumps_enabled())
+			bu_log("Face %d: chart cleanup rejected incompatible "
+			    "coincident source points\n", face.m_face_index);
 		    return false;
+		}
 	    }
 	    if (point < selected)
 		selected = point;
@@ -4566,6 +4571,9 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 	chart.points.size());
     if (clean_status != BRLCAD_OK || !clean_faces || !clean_points ||
 	    clean_face_count <= 0 || clean_point_count <= 0) {
+	if (cdt_failure_dumps_enabled())
+	    bu_log("Face %d: chart cleanup triangulation failed (%d)\n",
+		face.m_face_index, clean_status);
 	if (clean_faces)
 	    bu_free(clean_faces, "topology-preserving clean faces");
 	if (clean_points)
@@ -4574,6 +4582,11 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
     }
 
     bool valid = true;
+    size_t unmapped_clean_points = 0;
+    size_t invalid_clean_indices = 0;
+    size_t invalid_clean_edge_uses = 0;
+    size_t uncovered_input_edges = 0;
+    size_t invented_output_edges = 0;
     std::vector<int> clean_to_chart((size_t)clean_point_count, -1);
     double maximum_accepted_chart_displacement = 0.0;
     std::vector<std::pair<double, double>> verification_points =
@@ -4696,6 +4709,7 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 	}
 	if (source < 0) {
 	    valid = false;
+	    unmapped_clean_points++;
 	    break;
 	}
 	maximum_accepted_chart_displacement = std::max(
@@ -4758,6 +4772,7 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 	    if (first < 0 || second < 0 || first >= clean_point_count ||
 		    second >= clean_point_count) {
 		valid = false;
+		invalid_clean_indices++;
 		continue;
 	    }
 	    const clean_edge edge = edge_key(first, second);
@@ -4872,8 +4887,10 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
     if (mapped_faces.empty())
 	valid = false;
     for (const auto &edge : edge_uses) {
-	if (edge.second != 1 && edge.second != 2)
+	if (edge.second != 1 && edge.second != 2) {
 	    valid = false;
+	    invalid_clean_edge_uses++;
+	}
     }
     std::set<clean_edge> output_boundary;
     for (const auto &edge : edge_uses) {
@@ -4920,7 +4937,8 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 	    verification_points[(size_t)first].second) * dy) /
 	    length_squared : 0.0;
     };
-    const auto model_point_on_output_boundary = [&](const ON_3dPoint &point) {
+    const auto model_point_on_output_boundary = [&](const ON_3dPoint &point,
+	    double tolerance) {
 	for (const clean_edge &output : output_boundary) {
 	    ON_3dPoint first;
 	    ON_3dPoint second;
@@ -4932,25 +4950,99 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 	    double parameter = length_squared > DBL_EPSILON ?
 		((point - first) * segment) / length_squared : 0.0;
 	    parameter = std::max(0.0, std::min(1.0, parameter));
-	    if (point.DistanceTo(first + parameter * segment) <=
-		    merge_tolerance)
+	    if (point.DistanceTo(first + parameter * segment) <= tolerance)
 		return true;
 	}
 	return false;
     };
-    const auto model_edge_on_output_boundary = [&](const clean_edge &edge) {
+    const auto model_edge_on_output_boundary = [&](const clean_edge &edge,
+	    double tolerance) {
 	ON_3dPoint first;
 	ON_3dPoint second;
 	if (!verification_point_3d(edge.first, first) ||
 		!verification_point_3d(edge.second, second))
 	    return false;
-	for (int sample = 0; sample <= 4; ++sample) {
-	    const double parameter = 0.25 * sample;
+	for (int sample = 0; sample <= 16; ++sample) {
+	    const double parameter = (double)sample / 16.0;
 	    const ON_3dPoint point = first + parameter * (second - first);
-	    if (!model_point_on_output_boundary(point))
+	    if (!model_point_on_output_boundary(point, tolerance))
 		return false;
 	}
 	return true;
+    };
+    const auto toleranced_residual_boundary = [&](const clean_edge &edge,
+	    double covered_parameter) {
+	if (!allow_toleranced_boundary_loss || !mesh || !mesh->brep ||
+		(size_t)edge.first >= chart.vertices.size() ||
+		(size_t)edge.second >= chart.vertices.size())
+	    return false;
+	const long first_native = chart.native_point(edge.first);
+	const long second_native = chart.native_point(edge.second);
+	if (first_native < 0 || second_native < 0)
+	    return false;
+	double tolerance = merge_tolerance;
+	bool matched_edge = false;
+	const auto inspect_loop = [&](const cpolygon_t *loop) {
+	    if (!loop)
+		return;
+	    for (const cpolyedge_t *segment : loop->poly) {
+		if (!segment || segment->trim_ind < 0 ||
+			segment->trim_ind >= mesh->brep->m_T.Count())
+		    continue;
+		const auto first = loop->p2o.find(segment->v2d[0]);
+		const auto second = loop->p2o.find(segment->v2d[1]);
+		if (first == loop->p2o.end() || second == loop->p2o.end())
+		    continue;
+		const bool exact_segment =
+		    (first->second == first_native &&
+			second->second == second_native) ||
+			(first->second == second_native &&
+			second->second == first_native);
+		const bool incident_segment = exact_segment ||
+		    first->second == first_native ||
+		    first->second == second_native ||
+		    second->second == first_native ||
+		    second->second == second_native;
+		if (!incident_segment)
+		    continue;
+		matched_edge = matched_edge || exact_segment;
+		const ON_BrepEdge *brep_edge =
+		    mesh->brep->m_T[segment->trim_ind].Edge();
+		if (!brep_edge || !std::isfinite(brep_edge->m_tolerance) ||
+			brep_edge->m_tolerance <= 0.0 ||
+			NEAR_EQUAL(brep_edge->m_tolerance, ON_UNSET_VALUE,
+			ON_ZERO_TOLERANCE))
+		    continue;
+		double edge_tolerance = brep_edge->m_tolerance;
+		if (cdt_state && std::isfinite(cdt_state->absmax) &&
+			cdt_state->absmax > 0.0)
+		    edge_tolerance = std::min(edge_tolerance,
+			(double)cdt_state->absmax);
+		tolerance = std::max(tolerance, edge_tolerance);
+	    }
+	};
+	inspect_loop(&mesh->outer_loop);
+	for (const auto &inner : mesh->inner_loops)
+	    inspect_loop(inner.second);
+	ON_3dPoint first;
+	ON_3dPoint second;
+	const bool have_points = verification_point_3d(edge.first, first) &&
+	    verification_point_3d(edge.second, second);
+	const double length = have_points ? first.DistanceTo(second) : DBL_MAX;
+	const double residual_length = length * std::max(0.0,
+	    1.0 - std::min(1.0, covered_parameter));
+	const bool near_output = have_points &&
+	    model_edge_on_output_boundary(edge, tolerance);
+	const bool accepted = matched_edge && tolerance > merge_tolerance &&
+	    have_points && near_output;
+	if (!accepted && cdt_failure_dumps_enabled())
+	    bu_log("Face %d: uncovered chart edge %d-%d native %ld-%ld "
+		"matched=%d near=%d length=%.17g residual=%.17g "
+		"tolerance=%.17g\n",
+		face.m_face_index, edge.first, edge.second, first_native,
+		second_native, matched_edge ? 1 : 0, near_output ? 1 : 0, length,
+		residual_length, tolerance);
+	return accepted;
     };
     for (const clean_edge &input : input_boundary) {
 	std::vector<std::pair<double, double>> intervals;
@@ -4988,8 +5080,11 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 	 * boundary and the cleaned filled set must retain only one copy. */
 	if (covered < 1.0 - parameter_tolerance &&
 		std::abs(input_winding[input]) == 1 &&
-		!model_edge_on_output_boundary(input))
+		!model_edge_on_output_boundary(input, merge_tolerance) &&
+		!toleranced_residual_boundary(input, covered)) {
 	    valid = false;
+	    uncovered_input_edges++;
+	}
     }
     for (const clean_edge &output : output_boundary) {
 	bool backed_by_input = false;
@@ -5002,14 +5097,23 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 		break;
 	    }
 	}
-	if (!backed_by_input)
+	if (!backed_by_input) {
 	    valid = false;
+	    invented_output_edges++;
+	}
     }
 
     bu_free(clean_faces, "topology-preserving clean faces");
     bu_free(clean_points, "topology-preserving clean points");
-    if (!valid)
+    if (!valid) {
+	if (cdt_failure_dumps_enabled())
+	    bu_log("Face %d: chart cleanup rejected: unmapped=%zu, "
+		"indices=%zu, edge uses=%zu, uncovered=%zu, invented=%zu\n",
+		face.m_face_index, unmapped_clean_points,
+		invalid_clean_indices, invalid_clean_edge_uses,
+		uncovered_input_edges, invented_output_edges);
 	return false;
+    }
     for (size_t pending = 0; pending < pending_points.size(); ++pending) {
 	if (pending_points[pending].verification_index !=
 		(int)chart.points.size())
@@ -5054,6 +5158,11 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 	    normalized_boundary_vertices->insert(edge.first);
 	    normalized_boundary_vertices->insert(edge.second);
 	}
+    }
+    if (normalized_boundary_edges) {
+	normalized_boundary_edges->clear();
+	normalized_boundary_edges->insert(output_boundary.begin(),
+	    output_boundary.end());
     }
     *faces = (int *)bu_calloc(mapped_faces.size(), sizeof(int),
 	"topology-preserving chart faces");
@@ -5132,7 +5241,7 @@ cdt_test_developable_clean(void)
     const bool cleaned = topology_preserving_clean_triangulation(&faces,
 	&face_count, NULL, face, chart, points_3d, outline.data(),
 	outline.size(), NULL,
-	NULL, 0, NULL, 0, points.data(), NULL);
+	NULL, 0, NULL, 0, points.data(), NULL, NULL, false);
     if (faces)
 	bu_free(faces, "developable clean test faces");
     return cleaned && face_count > 0 ? 0 : 5;
@@ -5380,7 +5489,7 @@ install_face_chart_atlas(cdt_mesh_t *mesh, const ON_BrepFace &face,
 }
 
 bool
-cdt_mesh_t::cdt()
+cdt_mesh_t::cdt(bool allow_general_boundary_cleanup)
 {
     m_face_charts.clear();
     if (!outer_loop.closed()) {
@@ -6303,6 +6412,7 @@ cdt_mesh_t::cdt()
     }
 
     std::set<int> normalized_boundary_vertices;
+    std::set<std::pair<int, int>> normalized_boundary_edges;
     int *faces = NULL;
     int num_faces = 0;
     struct bg_triangulation_report tri_report = {0, -1, {0}};
@@ -6312,7 +6422,8 @@ cdt_mesh_t::cdt()
 	constraint_vec.empty() ? NULL : constraint_vec.data(),
 	chart.constraints.size(), bgp_2d, chart.points.size(), &tri_report);
 
-    if (!result && cleanable_developable_chart(face, chart)) {
+    if (!result && (cleanable_developable_chart(face, chart) ||
+	    allow_general_boundary_cleanup)) {
 	if (faces) {
 	    bu_free(faces, "failed strict chart faces");
 	    faces = NULL;
@@ -6320,10 +6431,18 @@ cdt_mesh_t::cdt()
 	result = topology_preserving_clean_triangulation(&faces, &num_faces,
 	    this, face, chart, source_points_3d, opoly, opoly_count,
 	    (const int **)holes_array, holes_npts, holes_cnt, steiner,
-	    steiner_cnt, bgp_2d, &normalized_boundary_vertices);
-	if (result)
-	    bu_log("Face %d: normalized weakly-simple developable chart "
-		"topology while retaining its certified constraints\n", f_id);
+	    steiner_cnt, bgp_2d, &normalized_boundary_vertices,
+	    &normalized_boundary_edges,
+	    allow_general_boundary_cleanup);
+	if (result) {
+	    if (allow_general_boundary_cleanup &&
+		    !cleanable_developable_chart(face, chart))
+		bu_log("Face %d: normalized weakly-simple chart topology "
+		    "within bounded B-Rep edge tolerances\n", f_id);
+	    else
+		bu_log("Face %d: normalized weakly-simple developable chart "
+		    "topology while retaining its certified constraints\n", f_id);
+	}
     }
 
     if (!result) {
@@ -6511,6 +6630,40 @@ cdt_mesh_t::cdt()
 		       bu_vls_cstr(&fname));
 	    }
 	    bu_vls_free(&fname);
+	}
+    }
+
+    if (result && !normalized_boundary_edges.empty()) {
+	for (const uedge_t &edge : chart_boundary_edges)
+	    brep_edges.erase(edge);
+	chart_boundary_edges.clear();
+	for (const std::pair<int, int> &chart_edge :
+		normalized_boundary_edges) {
+	    const long first_native = chart.native_point(chart_edge.first);
+	    const long second_native = chart.native_point(chart_edge.second);
+	    const auto first_3d = p2d3d.find(first_native);
+	    const auto second_3d = p2d3d.find(second_native);
+	    if (first_native < 0 || second_native < 0 ||
+		    first_3d == p2d3d.end() || second_3d == p2d3d.end() ||
+		    first_3d->second < 0 || second_3d->second < 0 ||
+		    (size_t)first_3d->second >= pnts.size() ||
+		    (size_t)second_3d->second >= pnts.size()) {
+		result = false;
+		break;
+	    }
+	    const auto first_mesh = p2ind.find(
+		pnts[(size_t)first_3d->second]);
+	    const auto second_mesh = p2ind.find(
+		pnts[(size_t)second_3d->second]);
+	    if (first_mesh == p2ind.end() || second_mesh == p2ind.end()) {
+		result = false;
+		break;
+	    }
+	    if (first_mesh->second == second_mesh->second)
+		continue;
+	    const uedge_t edge(first_mesh->second, second_mesh->second);
+	    chart_boundary_edges.insert(edge);
+	    brep_edges.insert(edge);
 	}
     }
 
