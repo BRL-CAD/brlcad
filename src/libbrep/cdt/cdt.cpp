@@ -4540,7 +4540,8 @@ repair_spherical_cap_mesh(const ON_BrepFace &face, const ON_Sphere &sphere,
 	const std::vector<repair_fast_trim_sample> &boundary,
 	size_t max_points, fastf_t allowed_deviation,
 	fastf_t recognized_surface_deviation, int64_t deadline,
-	repair_boundary_patch &patch)
+	repair_boundary_patch &patch,
+	const ON_3dVector *retained_axis_hint = NULL)
 {
     patch = repair_boundary_patch();
     const ON_Surface *surface = face.SurfaceOf();
@@ -4566,7 +4567,6 @@ repair_spherical_cap_mesh(const ON_BrepFace &face, const ON_Sphere &sphere,
     if (max_points <= segments + 1)
 	return reject("point limit smaller than boundary");
 
-    ON_3dVector oriented_area(0.0, 0.0, 0.0);
     std::vector<ON_3dPoint> boundary_points(segments);
     for (size_t point = 0; point < segments; ++point) {
 	boundary_points[point] = ON_3dPoint(boundary[point].point);
@@ -4575,50 +4575,63 @@ repair_spherical_cap_mesh(const ON_BrepFace &face, const ON_Sphere &sphere,
 		allowed_deviation - recognized_surface_deviation)
 	    return reject("boundary point misses recognized sphere");
     }
-    for (size_t point = 0; point < segments; ++point) {
-	const ON_3dVector first = boundary_points[point] - center;
-	const ON_3dVector second =
-	    boundary_points[(point + 1) % segments] - center;
-	oriented_area += ON_CrossProduct(first, second);
-    }
-    if (!oriented_area.IsValid() ||
-	    oriented_area.Length() <= ON_ZERO_TOLERANCE)
-	return reject("boundary has no stable oriented area");
-    ON_3dVector plane_normal = oriented_area;
-    plane_normal.Unitize();
-    double plane_offset = 0.0;
-    for (const ON_3dPoint &point : boundary_points)
-	plane_offset += (point - center) * plane_normal;
-    plane_offset /= (double)segments;
-    /* The plane is used to decide which side of the ring is absent.  Keep
-     * that classification tied to source-recognition accuracy rather than
-     * allowing the (potentially much larger) output chord tolerance to turn
-     * a visibly warped ring into a nominal cap. */
-    const double plane_tolerance = std::max((double)BN_TOL_DIST,
-	(double)recognized_surface_deviation);
-    if (std::fabs(plane_offset) <= plane_tolerance ||
-	    std::fabs(plane_offset) >= radius - plane_tolerance)
-	return reject("boundary plane does not define a bounded cap");
-    for (const ON_3dPoint &point : boundary_points) {
-	if (std::fabs((point - center) * plane_normal - plane_offset) >
-		plane_tolerance)
-	    return reject("boundary points are not coplanar");
-    }
 
-    /* This boundary is an inner loop on the original whole-sphere chart.
-     * Its plane-center displacement points into the omitted cap; reconstruct
-     * the complementary side.  The expression is invariant if the loop
-     * winding (and hence plane_normal) is reversed. */
-    ON_3dVector retained_axis = plane_offset > 0.0 ? -plane_normal :
-	plane_normal;
+    ON_3dVector phase_axis = ON_3dVector::UnsetVector;
+    ON_3dVector retained_axis = ON_3dVector::UnsetVector;
+    double plane_offset = std::numeric_limits<double>::quiet_NaN();
+    if (retained_axis_hint) {
+	/* The B-Rep's singular vertex selects the physical pole.  This permits
+	 * a nonplanar but star-shaped spherical boundary while avoiding any
+	 * best-fit-plane interpretation. */
+	retained_axis = *retained_axis_hint;
+	phase_axis = retained_axis;
+    } else {
+	ON_3dVector oriented_area(0.0, 0.0, 0.0);
+	for (size_t point = 0; point < segments; ++point) {
+	    const ON_3dVector first = boundary_points[point] - center;
+	    const ON_3dVector second =
+		boundary_points[(point + 1) % segments] - center;
+	    oriented_area += ON_CrossProduct(first, second);
+	}
+	if (!oriented_area.IsValid() ||
+		oriented_area.Length() <= ON_ZERO_TOLERANCE)
+	    return reject("boundary has no stable oriented area");
+	ON_3dVector plane_normal = oriented_area;
+	plane_normal.Unitize();
+	plane_offset = 0.0;
+	for (const ON_3dPoint &point : boundary_points)
+	    plane_offset += (point - center) * plane_normal;
+	plane_offset /= (double)segments;
+	/* The plane is used to decide which side of the ring is absent.  Keep
+	 * that classification tied to source-recognition accuracy rather than
+	 * allowing the (potentially much larger) output chord tolerance to turn
+	 * a visibly warped ring into a nominal cap. */
+	const double plane_tolerance = std::max((double)BN_TOL_DIST,
+	    (double)recognized_surface_deviation);
+	if (std::fabs(plane_offset) <= plane_tolerance ||
+		std::fabs(plane_offset) >= radius - plane_tolerance)
+	    return reject("boundary plane does not define a bounded cap");
+	for (const ON_3dPoint &point : boundary_points) {
+	    if (std::fabs((point - center) * plane_normal - plane_offset) >
+		    plane_tolerance)
+		return reject("boundary points are not coplanar");
+	}
+	/* An inner ring removes the cap on its plane-offset side. */
+	retained_axis = plane_offset > 0.0 ? -plane_normal : plane_normal;
+	phase_axis = plane_normal;
+    }
+    if (!retained_axis.IsValid() ||
+	    retained_axis.Length() <= ON_ZERO_TOLERANCE)
+	return reject("retained cap direction is invalid");
     retained_axis.Unitize();
+    phase_axis.Unitize();
 
     ON_3dVector phase_x = boundary_points[0] - center;
-    phase_x -= (phase_x * plane_normal) * plane_normal;
+    phase_x -= (phase_x * phase_axis) * phase_axis;
     if (phase_x.Length() <= ON_ZERO_TOLERANCE)
 	return reject("boundary phase basis is singular");
     phase_x.Unitize();
-    ON_3dVector phase_y = ON_CrossProduct(plane_normal, phase_x);
+    ON_3dVector phase_y = ON_CrossProduct(phase_axis, phase_x);
     phase_y.Unitize();
     double previous_angle = std::atan2(
 	(boundary_points[0] - center) * phase_y,
@@ -4634,8 +4647,14 @@ repair_spherical_cap_mesh(const ON_BrepFace &face, const ON_Sphere &sphere,
 	    delta += 2.0 * ON_PI;
 	while (delta > ON_PI)
 	    delta -= 2.0 * ON_PI;
-	if (std::fabs(delta) <= ON_ZERO_TOLERANCE)
-	    return reject("boundary contains a repeated phase");
+	/* A valid spherical polygon may contain a meridional boundary edge.
+	 * Its consecutive points have the same phase about the retained pole;
+	 * they still form a nondegenerate spherical chord and do not reverse the
+	 * ring's winding. */
+	if (std::fabs(delta) <= ON_ZERO_TOLERANCE) {
+	    previous_angle = angle;
+	    continue;
+	}
 	const int direction = delta > 0.0 ? 1 : -1;
 	if (winding_direction && direction != winding_direction)
 	    return reject("boundary phase order reverses");
@@ -4644,10 +4663,11 @@ repair_spherical_cap_mesh(const ON_BrepFace &face, const ON_Sphere &sphere,
 	previous_angle = angle;
     }
     if (std::fabs(std::fabs(winding) - 2.0 * ON_PI) > 0.1 * ON_PI)
-	return reject("boundary does not wind once around its plane");
+	return reject("boundary does not wind once around its selected axis");
     if (debug_cap)
-	bu_log("spherical cap: %zu boundary samples, plane offset %.17g, "
-	    "winding %.17g\n", segments, plane_offset, winding);
+	bu_log("spherical cap: %zu boundary samples, %s %.17g, winding "
+	    "%.17g\n", segments, retained_axis_hint ? "pole selected" :
+	    "plane offset", retained_axis_hint ? 1.0 : plane_offset, winding);
 
     ON_3dPoint orientation_point;
     ON_3dVector orientation_normal;
@@ -4831,37 +4851,21 @@ repair_constrained_spherical_cap(struct ON_Brep_CDT_State *s_cdt,
 	return false;
     const ON_BrepFace &face = s_cdt->brep->m_F[face_index];
     const ON_Surface *surface = face.SurfaceOf();
-    if (!surface || face.LoopCount() != 2)
+    if (!surface || (face.LoopCount() != 1 && face.LoopCount() != 2))
 	return false;
+    ON_Sphere sphere;
+    const double sphere_tolerance = std::min((double)BN_TOL_DIST,
+	0.25 * (double)allowed_deviation);
+    if (!(sphere_tolerance > ON_ZERO_TOLERANCE) ||
+	    !surface->IsSphere(&sphere, sphere_tolerance))
+	return false;
+
     const ON_BrepLoop *outer = face.OuterLoop();
-    const ON_BrepLoop *inner = NULL;
-    for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
-	const ON_BrepLoop *loop = face.Loop(loop_index);
-	if (!loop)
-	    return false;
-	if (loop == outer) {
-	    for (int trim_index = 0; trim_index < loop->TrimCount();
-		    ++trim_index) {
-		const ON_BrepTrim *trim = loop->Trim(trim_index);
-		if (!trim || trim->m_type != ON_BrepTrim::seam ||
-			constraints.trims.find(trim->m_trim_index) !=
-			constraints.trims.end())
-		    return false;
-	    }
-	    continue;
-	}
-	if (loop->m_type != ON_BrepLoop::inner || inner)
-	    return false;
-	inner = loop;
-    }
-    if (!outer || !inner || outer->TrimCount() < 2 ||
-	    inner->TrimCount() < 1 ||
-	    constraints.trims.size() != (size_t)inner->TrimCount())
+    if (!outer)
 	return false;
 
     std::vector<repair_fast_trim_sample> boundary;
-    for (int trim_index = 0; trim_index < inner->TrimCount(); ++trim_index) {
-	const ON_BrepTrim *trim = inner->Trim(trim_index);
+    const auto append_boundary_trim = [&](const ON_BrepTrim *trim) {
 	const auto samples = trim ? constraints.trims.find(
 	    trim->m_trim_index) : constraints.trims.end();
 	if (!trim || samples == constraints.trims.end() ||
@@ -4869,7 +4873,7 @@ repair_constrained_spherical_cap(struct ON_Brep_CDT_State *s_cdt,
 	    return false;
 	if (boundary.empty()) {
 	    boundary = samples->second;
-	    continue;
+	    return true;
 	}
 	const repair_point_key prior = {boundary.back().point[X],
 	    boundary.back().point[Y], boundary.back().point[Z]};
@@ -4880,6 +4884,113 @@ repair_constrained_spherical_cap(struct ON_Brep_CDT_State *s_cdt,
 	    return false;
 	boundary.insert(boundary.end(), samples->second.begin() + 1,
 	    samples->second.end());
+	return true;
+    };
+
+    ON_3dVector retained_axis_hint = ON_3dVector::UnsetVector;
+    bool have_retained_axis_hint = false;
+    if (face.LoopCount() == 2) {
+	const ON_BrepLoop *inner = NULL;
+	for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
+	    const ON_BrepLoop *loop = face.Loop(loop_index);
+	    if (!loop)
+		return false;
+	    if (loop == outer) {
+		for (int trim_index = 0; trim_index < loop->TrimCount();
+			trim_index++) {
+		    const ON_BrepTrim *trim = loop->Trim(trim_index);
+		    if (!trim || trim->m_type != ON_BrepTrim::seam ||
+			    constraints.trims.find(trim->m_trim_index) !=
+			    constraints.trims.end())
+			return false;
+		}
+		continue;
+	    }
+	    if (loop->m_type != ON_BrepLoop::inner || inner)
+		return false;
+	    inner = loop;
+	}
+	if (!inner || outer->TrimCount() < 2 || inner->TrimCount() < 1 ||
+		constraints.trims.size() != (size_t)inner->TrimCount())
+	    return false;
+	for (int trim_index = 0; trim_index < inner->TrimCount(); ++trim_index) {
+	    if (!append_boundary_trim(inner->Trim(trim_index)))
+		return false;
+	}
+	} else {
+	/* A spherical face may express a physical closed ring and then make an
+	 * artificial excursion from that ring to a pole and back.  Recognize
+	 * exactly one constrained ring followed by seam, singular, seam trims;
+	 * the singular vertex chooses which spherical cap the face represents. */
+	const int trim_count = outer->TrimCount();
+	if (trim_count < 4 || constraints.trims.size() >= (size_t)trim_count)
+	    return false;
+	int constrained_start = -1;
+	int constrained_starts = 0;
+	for (int trim_index = 0; trim_index < trim_count; ++trim_index) {
+	    const ON_BrepTrim *trim = outer->Trim(trim_index);
+	    const ON_BrepTrim *prior = outer->Trim(
+		(trim_index + trim_count - 1) % trim_count);
+	    if (!trim || !prior)
+		return false;
+	    const bool constrained = constraints.trims.find(
+		trim->m_trim_index) != constraints.trims.end();
+	    const bool prior_constrained = constraints.trims.find(
+		prior->m_trim_index) != constraints.trims.end();
+	    if (constrained && !prior_constrained) {
+		constrained_start = trim_index;
+		constrained_starts++;
+	    }
+	}
+	if (constrained_starts != 1)
+	    return false;
+	std::vector<const ON_BrepTrim *> artificial;
+	bool reached_artificial = false;
+	size_t constrained_count = 0;
+	for (int offset = 0; offset < trim_count; ++offset) {
+	    const ON_BrepTrim *trim = outer->Trim(
+		(constrained_start + offset) % trim_count);
+	    const bool constrained = trim && constraints.trims.find(
+		trim->m_trim_index) != constraints.trims.end();
+	    if (constrained) {
+		if (reached_artificial || !append_boundary_trim(trim))
+		    return false;
+		constrained_count++;
+	    } else {
+		reached_artificial = true;
+		artificial.push_back(trim);
+	    }
+	}
+	if (constrained_count != constraints.trims.size() ||
+		artificial.size() != 3 || !artificial[0] || !artificial[1] ||
+		!artificial[2] ||
+		artificial[0]->m_type != ON_BrepTrim::seam ||
+		artificial[1]->m_type != ON_BrepTrim::singular ||
+		artificial[2]->m_type != ON_BrepTrim::seam ||
+		artificial[0]->m_ei < 0 ||
+		artificial[0]->m_ei != artificial[2]->m_ei ||
+		artificial[1]->m_ei >= 0 ||
+		artificial[1]->m_vi[0] != artificial[1]->m_vi[1] ||
+		artificial[0]->m_vi[1] != artificial[1]->m_vi[0] ||
+		artificial[2]->m_vi[0] != artificial[1]->m_vi[0] ||
+		artificial[0]->m_vi[0] != artificial[2]->m_vi[1])
+	    return false;
+	const int pole_index = artificial[1]->m_vi[0];
+	if (pole_index < 0 || pole_index >= s_cdt->brep->m_V.Count())
+	    return false;
+	const ON_BrepVertex &pole_vertex = s_cdt->brep->m_V[pole_index];
+	const ON_3dPoint pole = pole_vertex.Point();
+	const double vertex_tolerance = pole_vertex.Tolerance() >= 0.0 &&
+	    std::isfinite(pole_vertex.Tolerance()) ? pole_vertex.Tolerance() :
+	    0.0;
+	const double pole_tolerance = std::min((double)allowed_deviation,
+	    std::max(sphere_tolerance, vertex_tolerance));
+	if (!pole.IsValid() ||
+		std::fabs(pole.DistanceTo(sphere.Center()) - sphere.Radius()) >
+		pole_tolerance)
+	    return false;
+	retained_axis_hint = pole - sphere.Center();
+	have_retained_axis_hint = true;
     }
     if (boundary.size() < 4)
 	return false;
@@ -4890,15 +5001,9 @@ repair_constrained_spherical_cap(struct ON_Brep_CDT_State *s_cdt,
     if (first != last)
 	return false;
     boundary.pop_back();
-
-    ON_Sphere sphere;
-    const double sphere_tolerance = std::min((double)BN_TOL_DIST,
-	0.25 * (double)allowed_deviation);
-    if (!(sphere_tolerance > ON_ZERO_TOLERANCE) ||
-	    !surface->IsSphere(&sphere, sphere_tolerance))
-	return false;
     if (!repair_spherical_cap_mesh(face, sphere, boundary, max_points,
-	    allowed_deviation, sphere_tolerance, deadline, patch))
+	    allowed_deviation, sphere_tolerance, deadline, patch,
+	    have_retained_axis_hint ? &retained_axis_hint : NULL))
 	return false;
     patch.constrained_edges = constraints.constrained_edges;
     patch.constrained_samples = constraints.constrained_samples;
@@ -5388,6 +5493,30 @@ cdt_test_repair_periodic_strip(void)
     if (!valid)
 	return 6;
 
+    std::vector<repair_fast_trim_sample> pole_boundary(32);
+    for (size_t point = 0; point < pole_boundary.size(); ++point) {
+	double phase = 2.0 * ON_PI * (double)point /
+	    (double)pole_boundary.size();
+	if (point == 8)
+	    phase = 2.0 * ON_PI * 7.0 / (double)pole_boundary.size();
+	const double polar = 0.9 + 0.12 * std::cos(3.0 * phase) +
+	    (point == 8 ? 0.08 : 0.0);
+	VSET(pole_boundary[point].point, std::sin(polar) * std::cos(phase),
+	    std::cos(polar), std::sin(polar) * std::sin(phase));
+    }
+    const ON_3dVector pole_axis(0.0, 1.0, 0.0);
+    repair_boundary_patch pole_patch;
+    const bool pole_reconstructed = repair_spherical_cap_mesh(
+	cap_brep->m_F[0], cap_sphere, pole_boundary, 4096, 0.2, 0.0, 0,
+	pole_patch, &pole_axis);
+    valid = pole_reconstructed && pole_patch.faces.size() / 3 ==
+	pole_boundary.size() && pole_patch.direct_surface_deviations.size() ==
+	pole_patch.faces.size() / 3;
+    for (double deviation : pole_patch.direct_surface_deviations)
+	valid = valid && std::isfinite(deviation) && deviation <= 0.2;
+    if (!valid)
+	return 7;
+
     ON_Circle major(ON_xy_plane, 9.0);
     ON_Torus torus(major, 2.5);
     ON_Circle minor = torus.MinorCircleRadians(0.0);
@@ -5461,7 +5590,7 @@ cdt_test_repair_periodic_strip(void)
     minor_circle_strip->m_axis.to = torus.plane.origin + torus.plane.zaxis;
     minor_circle_strip->m_bTransposed = false;
     if (!test_torus_strip(minor_circle_strip))
-	return 7;
+	return 8;
 
     ON_RevSurface *major_circle_strip = new ON_RevSurface();
     major_circle_strip->m_angle.Set(0.0, 2.0 * ON_PI);
@@ -5472,7 +5601,7 @@ cdt_test_repair_periodic_strip(void)
     major_circle_strip->m_axis.to = torus.plane.origin + torus.plane.zaxis;
     major_circle_strip->m_bTransposed = false;
     if (!test_torus_strip(major_circle_strip))
-	return 8;
+	return 9;
 
     ON_RevSurface *revolution = new ON_RevSurface();
     revolution->m_angle.Set(0.0, 2.0 * ON_PI);
@@ -5485,7 +5614,7 @@ cdt_test_repair_periodic_strip(void)
 	false, false, NULL));
     if (!torus_brep) {
 	delete revolution;
-	return 9;
+	return 10;
     }
     state = ON_Brep_CDT_Create(torus_brep.get(),
 	"doubly periodic repair contract");
@@ -5493,7 +5622,7 @@ cdt_test_repair_periodic_strip(void)
 	state->brep = new ON_Brep(*torus_brep);
     if (!state || !state->brep || state->brep->m_F.Count() != 1) {
 	ON_Brep_CDT_Destroy(state);
-	return 10;
+	return 11;
     }
     repair_boundary_patch grid;
     const bool grid_reconstructed = repair_closed_periodic_surface(state, 0,
@@ -5507,7 +5636,7 @@ cdt_test_repair_periodic_strip(void)
     for (double deviation : grid.direct_surface_deviations)
 	valid = valid && std::isfinite(deviation) && deviation <= 0.1;
     ON_Brep_CDT_Destroy(state);
-    return valid ? 0 : 11;
+    return valid ? 0 : 12;
 }
 
 static void
