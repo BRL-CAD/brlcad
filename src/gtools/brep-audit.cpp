@@ -116,6 +116,12 @@ struct geom_result {
     double repair_rigorous_first_area_change_percent = 0.0;
     int repair_approximation_tier = BREP_CDT_REPAIR_APPROX_NONE;
     int repair_retained_rigorous_triangles = 0;
+    int repair_best_effort_faces = 0;
+    int repair_best_effort_triangles = 0;
+    int repair_best_effort_folded_triangles = 0;
+    size_t repair_best_effort_reference_samples = 0;
+    size_t repair_best_effort_reference_failures = 0;
+    double repair_best_effort_max_deviation = 0.0;
     int repair_missing_rigorous_triangles = 0;
     int repair_subdivided_rigorous_triangles = 0;
     int repair_replaced_rigorous_components = 0;
@@ -897,6 +903,17 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.approximation_tier;
 	result.repair_retained_rigorous_triangles =
 	    repair_report.retained_rigorous_triangles;
+	result.repair_best_effort_faces = repair_report.best_effort_faces;
+	result.repair_best_effort_triangles =
+	    repair_report.best_effort_triangles;
+	result.repair_best_effort_folded_triangles =
+	    repair_report.best_effort_folded_triangles;
+	result.repair_best_effort_reference_samples =
+	    repair_report.best_effort_reference_samples;
+	result.repair_best_effort_reference_failures =
+	    repair_report.best_effort_reference_failures;
+	result.repair_best_effort_max_deviation =
+	    repair_report.max_best_effort_surface_deviation;
 	result.repair_missing_rigorous_triangles =
 	    repair_report.missing_rigorous_triangles;
 	result.repair_subdivided_rigorous_triangles =
@@ -1242,6 +1259,18 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.repair_approximation_tier
 	<< ",\"retained_rigorous_triangles\":"
 	<< result.repair_retained_rigorous_triangles
+	<< ",\"best_effort_faces\":"
+	<< result.repair_best_effort_faces
+	<< ",\"best_effort_triangles\":"
+	<< result.repair_best_effort_triangles
+	<< ",\"best_effort_folded_triangles\":"
+	<< result.repair_best_effort_folded_triangles
+	<< ",\"best_effort_reference_samples\":"
+	<< result.repair_best_effort_reference_samples
+	<< ",\"best_effort_reference_failures\":"
+	<< result.repair_best_effort_reference_failures
+	<< ",\"best_effort_max_surface_deviation\":"
+	<< result.repair_best_effort_max_deviation
 	<< ",\"missing_rigorous_triangles\":"
 	<< result.repair_missing_rigorous_triangles
 	<< ",\"subdivided_rigorous_triangles\":"
