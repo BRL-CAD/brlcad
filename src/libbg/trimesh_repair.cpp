@@ -814,6 +814,61 @@ trimesh_gte_solid(std::vector<gte::Vector3<double>> const& vertices,
 	points.data(), faces.data(), NULL);
 }
 
+/* Preserve actionable topology diagnostics even when a requested Manifold
+ * import rejects the candidate before the ordinary export path. */
+static void
+trimesh_repair_report_topology(
+	struct bg_trimesh_repair_report *report,
+	std::vector<gte::Vector3<double>> const& vertices,
+	std::vector<std::array<int32_t, 3>> const& triangles)
+{
+    if (!report || vertices.empty() || triangles.empty() ||
+	    vertices.size() > INT_MAX || triangles.size() > INT_MAX)
+	return;
+
+    size_t invalid_vertex_links = 0;
+    trimesh_gte_valid_vertex_links(triangles, vertices.size(),
+	&invalid_vertex_links);
+    report->invalid_vertex_links = (int)std::min(invalid_vertex_links,
+	(size_t)INT_MAX);
+    std::vector<std::array<int32_t, 3>> geometric_check = triangles;
+    report->geometric_degenerate_faces = (int)std::min(
+	trimesh_remove_geometric_degenerate(vertices, geometric_check),
+	(size_t)INT_MAX);
+    struct edge_use {
+	size_t count = 0;
+	int direction = 0;
+    };
+    typedef std::pair<int32_t, int32_t> edge_key;
+    std::map<edge_key, edge_use> edges;
+    for (std::array<int32_t, 3> const& triangle : triangles) {
+	for (int edge = 0; edge < 3; ++edge) {
+	    const int32_t first = triangle[edge];
+	    const int32_t second = triangle[(edge + 1) % 3];
+	    const edge_key key = first < second ? edge_key(first, second) :
+		edge_key(second, first);
+	    edge_use &use = edges[key];
+	    use.count++;
+	    use.direction += first < second ? 1 : -1;
+	}
+    }
+    report->unmatched_edges = 0;
+    report->excess_edges = 0;
+    report->misoriented_edges = 0;
+    for (const auto &edge : edges) {
+	const edge_use &use = edge.second;
+	if (use.count == 1)
+	    report->unmatched_edges++;
+	else if (use.count > 2)
+	    report->excess_edges++;
+	else if (use.direction != 0)
+	    report->misoriented_edges++;
+    }
+    report->solid = !report->geometric_degenerate_faces &&
+	!report->invalid_vertex_links && !report->unmatched_edges &&
+	!report->excess_edges && !report->misoriented_edges;
+}
+
 static bool
 trimesh_manifold_union(
 	std::vector<gte::Vector3<double>>& vertices,
@@ -1556,8 +1611,10 @@ bg_trimesh_repair2(
 	(void)trimesh_manifold_union(manifold_vertices, manifold_triangles,
 	    &manifold_accepted, false);
 	report->manifold_accepted = manifold_accepted;
-	if (!manifold_accepted)
+	if (!manifold_accepted) {
+	    trimesh_repair_report_topology(report, verts, tris);
 	    return -1;
+	}
     }
 
     return trimesh_repair_export(ofaces, n_ofaces, opnts, n_opnts,
