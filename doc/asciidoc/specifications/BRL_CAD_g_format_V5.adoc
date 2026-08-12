@@ -698,7 +698,7 @@ HFlags = 000xxxxx (1 byte)
 AFlags = 0000xx00 (1 byte)
 BFlags = 0000xx00 (1 byte)
 ObjType = Free (2 bytes)
-ObjLen = 8 (1 byte)
+ObjLen = 1 (1 byte; one 8-byte chunk)
 Magic2 (1 byte)
 ....
 
