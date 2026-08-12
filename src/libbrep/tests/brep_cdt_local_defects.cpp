@@ -24,5 +24,8 @@ main(int argc, const char **UNUSED(argv))
     if (result)
 	return 10 + result;
     result = cdt_test_local_defects();
-    return result ? result : cdt_test_assembled_mesh_validation();
+    if (result)
+	return result;
+    result = cdt_test_assembled_mesh_validation();
+    return result ? result : cdt_test_repair_edge_tube();
 }
