@@ -429,6 +429,52 @@ exercise_offset_full_cylinder_seam()
 	return false;
     }
 
+    std::vector<std::pair<double, double>> multi_hole_points =
+	seam_hole_points;
+    std::vector<ON_3dPoint> multi_hole_storage = seam_hole_storage;
+    std::vector<cdt_topo_vertex_id> multi_hole_topology =
+	seam_hole_topology;
+    std::vector<int> second_seam_hole;
+    const double second_open_center = open_domain.ParameterAt(0.32);
+    const double second_open_radius = 0.04 * open_domain.Length();
+    for (int i = 0; i < 16; ++i) {
+	const double angle = 2.0 * ON_PI * i / 16.0;
+	ON_2dPoint native;
+	native[closed_direction] = closed_domain.Min() +
+	    hole_closed_radius * std::sin(angle);
+	native[open_direction] = second_open_center +
+	    second_open_radius * std::cos(angle);
+	second_seam_hole.push_back((int)multi_hole_points.size());
+	multi_hole_points.push_back(std::make_pair(native.x, native.y));
+	while (native[closed_direction] < closed_domain.Min())
+	    native[closed_direction] += closed_domain.Length();
+	while (native[closed_direction] > closed_domain.Max())
+	    native[closed_direction] -= closed_domain.Length();
+	multi_hole_storage.push_back(surface->PointAt(native.x, native.y));
+	multi_hole_topology.push_back(CDT_TOPOLOGY_ID_NONE);
+    }
+    second_seam_hole.push_back(second_seam_hole.front());
+    std::vector<const ON_3dPoint *> multi_hole_3d;
+    multi_hole_3d.reserve(multi_hole_storage.size());
+    for (const ON_3dPoint &point : multi_hole_storage)
+	multi_hole_3d.push_back(&point);
+    cdt_face_chart multi_hole_chart;
+    const std::vector<std::vector<int>> two_seam_holes = {
+	seam_hole, second_seam_hole
+    };
+    if (!multi_hole_chart.build(*side, multi_hole_points, outer,
+	    two_seam_holes, std::vector<int>(), std::vector<int>(),
+	    multi_hole_3d, multi_hole_topology) ||
+	    !multi_hole_chart.holes.empty() ||
+	    multi_hole_chart.outer.size() <= seam_hole_chart.outer.size() ||
+	    !opened_hole_triangulates(multi_hole_chart,
+		seam_hole_failure)) {
+	std::cerr << "multiple cylinder seam holes did not open and "
+	    "triangulate: " << multi_hole_chart.failure() << " "
+	    << seam_hole_failure << std::endl;
+	return false;
+    }
+
     /* A physical hole edge may coincide with the artificial cut for an
      * entire sampled run.  The complementary arc still opens on the other
      * periodic side, and every point in the coincident run must survive. */
