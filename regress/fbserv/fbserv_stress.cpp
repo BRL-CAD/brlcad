@@ -114,11 +114,9 @@ static const int TOKEN_LEN = 64;
 
 static std::atomic<int> g_port_counter;
 static std::mutex g_print_mutex;
-/** Serialise the putenv(FBSERV_TOKEN) + fork + putenv-clear sequence so that
- *  concurrent workers do not race on the process-wide environment.  Each
- *  invocation of fbserv reads FBSERV_TOKEN at start-up; by holding this
- *  mutex until the child has been forked we guarantee it sees the token
- *  that *this* worker intends. */
+/** Serialize the environment update and process creation so each child
+ * inherits its worker's token.  The lock is released as soon as the child
+ * is created; server startup and all subsequent worker activity overlap. */
 static std::mutex g_token_env_mutex;
 
 /* --------------------------------------------------------------------------
@@ -228,14 +226,25 @@ struct WorkerResult {
 };
 
 static void
-run_worker(int wid, int base_port, WorkerResult &result)
+stop_worker(struct bu_process **fbserv_proc)
+{
+    if (!fbserv_proc || !*fbserv_proc)
+        return;
+
+    int fbserv_pid = bu_process_pid(*fbserv_proc);
+    if (fbserv_pid > 0 && bu_process_alive(*fbserv_proc))
+        (void)bu_pid_terminate(fbserv_pid);
+    (void)bu_process_wait_n(fbserv_proc, 0);
+}
+
+static void
+run_worker(int wid, int base_port, const char *fbserv_path, WorkerResult &result)
 {
     result.worker_id = wid;
 
     /* ------------------------------------------------------------------
-     * 1. Pick a unique port.  We combine an atomic counter with the
-     *    worker ID so that even if two workers race, they get distinct
-     *    port numbers.  We skip ports that are already in use.
+     * 1. Pick a unique port.  The atomic counter ensures concurrent workers
+     *    get distinct port numbers.  Skip ports that are already in use.
      * ------------------------------------------------------------------ */
     int port = base_port + g_port_counter.fetch_add(1);
 
@@ -263,9 +272,6 @@ run_worker(int wid, int base_port, WorkerResult &result)
      *    the -F form launches a single-frame-buffer server which stays
      *    alive until killed, which is what rtwizard uses.
      * ------------------------------------------------------------------ */
-    char fbserv_path[MAXPATHLEN];
-    bu_dir(fbserv_path, MAXPATHLEN, BU_DIR_BIN, "fbserv", BU_DIR_EXT, NULL);
-
     char port_str[16];
     snprintf(port_str, sizeof(port_str), "%d", port);
 
@@ -279,12 +285,9 @@ run_worker(int wid, int base_port, WorkerResult &result)
         NULL
     };
 
-    /* Pre-supply the token via the environment variable.
-     * Lock the mutex so that concurrent workers don't stomp on each
-     * other's FBSERV_TOKEN while the child process is being forked.
-     *
-     * setenv/unsetenv copy the string internally (unlike putenv), so
-     * there is no dangling-pointer hazard. */
+    /* Pre-supply the token via the environment variable.  Environment state
+     * is process-wide, so protect the set/create/clear sequence while still
+     * allowing the created servers to start simultaneously. */
     struct bu_process *fbserv_proc = NULL;
     {
         std::lock_guard<std::mutex> lk(g_token_env_mutex);
@@ -294,12 +297,9 @@ run_worker(int wid, int base_port, WorkerResult &result)
         /* Windows fallback: _putenv_s makes its own copy. */
         _putenv_s("FBSERV_TOKEN", token);
 #endif
-        struct bu_process *fbserv_proc_tmp = NULL;
-        bu_process_create(&fbserv_proc_tmp, argv_fbserv, BU_PROCESS_DEFAULT);
-        fbserv_proc = fbserv_proc_tmp;
+        bu_process_create(&fbserv_proc, argv_fbserv, BU_PROCESS_DEFAULT);
 
-        /* Immediately clear so that other workers (or any subsequent code
-         * in this worker) don't accidentally inherit this token. */
+        /* Immediately clear so subsequent processes do not inherit this token. */
 #if defined(HAVE_UNISTD_H) && !defined(_WIN32)
         unsetenv("FBSERV_TOKEN");
 #else
@@ -311,6 +311,7 @@ run_worker(int wid, int base_port, WorkerResult &result)
     if (fbserv_pid == -1) {
         result.message = "failed to launch fbserv";
         worker_log(wid, "ERROR: %s", result.message.c_str());
+        stop_worker(&fbserv_proc);
         return;
     }
     worker_log(wid, "fbserv launched (pid %d)", fbserv_pid);
@@ -339,7 +340,7 @@ run_worker(int wid, int base_port, WorkerResult &result)
     if (pc == PKC_ERROR) {
         result.message = "timed out connecting to fbserv";
         worker_log(wid, "ERROR: %s (tried %d times)", result.message.c_str(), attempt);
-        bu_pid_terminate(fbserv_pid);
+        stop_worker(&fbserv_proc);
         return;
     }
     worker_log(wid, "connected after %d attempt(s)", attempt);
@@ -352,7 +353,7 @@ run_worker(int wid, int base_port, WorkerResult &result)
         result.message = "failed to send MSG_FBAUTH";
         worker_log(wid, "ERROR: %s", result.message.c_str());
         pkg_close(pc);
-        bu_pid_terminate(fbserv_pid);
+        stop_worker(&fbserv_proc);
         return;
     }
 
@@ -370,7 +371,7 @@ run_worker(int wid, int base_port, WorkerResult &result)
         result.message = "failed to send MSG_FBOPEN";
         worker_log(wid, "ERROR: %s", result.message.c_str());
         pkg_close(pc);
-        bu_pid_terminate(fbserv_pid);
+        stop_worker(&fbserv_proc);
         return;
     }
 
@@ -390,7 +391,7 @@ run_worker(int wid, int base_port, WorkerResult &result)
         result.message = ss.str();
         worker_log(wid, "ERROR: %s", result.message.c_str());
         pkg_close(pc);
-        bu_pid_terminate(fbserv_pid);
+        stop_worker(&fbserv_proc);
         return;
     }
 
@@ -401,7 +402,7 @@ run_worker(int wid, int base_port, WorkerResult &result)
         result.message = ss.str();
         worker_log(wid, "ERROR: %s", result.message.c_str());
         pkg_close(pc);
-        bu_pid_terminate(fbserv_pid);
+        stop_worker(&fbserv_proc);
         return;
     }
 
@@ -413,7 +414,7 @@ run_worker(int wid, int base_port, WorkerResult &result)
      * 8. Clean up.
      * ------------------------------------------------------------------ */
     pkg_close(pc);
-    bu_pid_terminate(fbserv_pid);
+    stop_worker(&fbserv_proc);
 
     result.passed = true;
     result.message = "OK";
@@ -480,9 +481,13 @@ main(int argc, const char *argv[])
     std::vector<std::thread> threads;
     threads.reserve(num_workers);
 
-    for (int w = 0; w < num_workers; w++) {
-        threads.emplace_back(run_worker, w, base_port, std::ref(results[w]));
-    }
+    /* bu_dir consults process-global application path state.  Resolve the
+     * invariant executable location before starting concurrent workers. */
+    char fbserv_path[MAXPATHLEN];
+    bu_dir(fbserv_path, MAXPATHLEN, BU_DIR_BIN, "fbserv", BU_DIR_EXT, NULL);
+
+    for (int w = 0; w < num_workers; w++)
+        threads.emplace_back(run_worker, w, base_port, fbserv_path, std::ref(results[w]));
 
     for (auto &t : threads)
         t.join();
