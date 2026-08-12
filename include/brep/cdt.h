@@ -264,9 +264,14 @@ struct brep_cdt_repair_report {
     int boundary_strip_triangles;
     size_t boundary_strip_constrained_edges;
     size_t boundary_strip_constrained_samples;
+    /** Topological disks spanning complete authoritative shared boundaries. */
+    int topological_disk_faces;
+    int topological_disk_triangles;
+    size_t topological_disk_constrained_edges;
+    size_t topological_disk_constrained_samples;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
@@ -310,7 +315,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s, int face_cnt, int *faces);
  * are rejected unless explicitly permitted by the mesh settings.  A
  * certified triangle neighborhood may be reconstructed only when its area
  * and boundary stay within the configured hole limits; every affected B-Rep
- * face and edge is then reported as approximation provenance.
+ * face and edge is then reported as approximation provenance.  A failed
+ * single-loop face may also be spanned as a topological disk when every trim
+ * has complete authoritative shared-edge samples.  This preserves its exact
+ * boundary while explicitly reporting the interior as a local approximation.
  *
  * Returns 1 if the state already contains a certified solid, 0 if repair
  * produced a certified approximation, and -1 if repair was not possible or
