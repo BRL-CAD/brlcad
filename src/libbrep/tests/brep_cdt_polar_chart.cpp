@@ -13,6 +13,7 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
+#include <set>
 #include <vector>
 
 #include "bg/trimesh.h"
@@ -89,6 +90,80 @@ exercise_coincident_seams()
 	std::cerr << "invalid coincident-seam sphere fixture: valid="
 	    << valid_brep << " solid=" << solid_brep << " polar="
 	    << polar_face << std::endl;
+	return false;
+    }
+
+    /* Keep the paired-seam recovery independent of unrelated inner loops.
+     * Imported spherical faces can put both seam p-curves on the same
+     * periodic image while also carrying a hole elsewhere on the face. */
+    std::vector<std::pair<double, double>> native_points;
+    std::vector<const ON_3dPoint *> points_3d;
+    std::vector<cdt_topo_vertex_id> topology_vertices;
+    std::vector<ON_3dPoint> stored_points;
+    stored_points.reserve(9);
+    const auto add_chart_point = [&](const ON_2dPoint &uv,
+	    const ON_3dPoint *point, cdt_topo_vertex_id topology) {
+	const int index = (int)native_points.size();
+	native_points.push_back(std::make_pair(uv.x, uv.y));
+	points_3d.push_back(point);
+	topology_vertices.push_back(topology);
+	return index;
+    };
+    std::vector<int> outer;
+    stored_points.push_back(brep->m_V[low_vertex].Point());
+    outer.push_back(add_chart_point(low_uv, &stored_points.back(),
+	low_vertex));
+    std::vector<int> first_seam;
+    for (int sample = 1; sample < 4; ++sample) {
+	ON_2dPoint uv;
+	uv[angular_dir] = seam;
+	uv[open_dir] = open_domain.ParameterAt(0.25 * sample);
+	stored_points.push_back(surface->PointAt(uv.x, uv.y));
+	first_seam.push_back(add_chart_point(uv, &stored_points.back(),
+	    CDT_TOPOLOGY_ID_NONE));
+	outer.push_back(first_seam.back());
+    }
+    stored_points.push_back(brep->m_V[high_vertex].Point());
+    outer.push_back(add_chart_point(high_uv, &stored_points.back(),
+	high_vertex));
+    for (auto sample = first_seam.rbegin(); sample != first_seam.rend();
+	    ++sample) {
+	const int native_source = *sample;
+	const ON_2dPoint uv(native_points[(size_t)native_source].first,
+	    native_points[(size_t)native_source].second);
+	outer.push_back(add_chart_point(uv, points_3d[(size_t)native_source],
+	    CDT_TOPOLOGY_ID_NONE));
+    }
+    outer.push_back(outer.front());
+
+    std::vector<int> hole;
+    for (int corner = 0; corner < 4; ++corner) {
+	ON_2dPoint uv;
+	const double angular_fraction = corner == 0 || corner == 3 ?
+	    0.20 : 0.30;
+	const double open_fraction = corner < 2 ? 0.45 : 0.55;
+	uv[angular_dir] = angular_domain.ParameterAt(angular_fraction);
+	uv[open_dir] = open_domain.ParameterAt(open_fraction);
+	stored_points.push_back(surface->PointAt(uv.x, uv.y));
+	hole.push_back(add_chart_point(uv, &stored_points.back(),
+	    CDT_TOPOLOGY_ID_NONE));
+    }
+    hole.push_back(hole.front());
+    cdt_face_chart holed_chart;
+    const std::vector<std::vector<int>> holes = {hole};
+    if (!holed_chart.build(face, native_points, outer, holes,
+	    std::vector<int>(), std::vector<int>(), points_3d,
+	    topology_vertices) || holed_chart.type() != CDT_FACE_CHART_POLAR ||
+	    holed_chart.holes.size() != 1) {
+	std::cerr << "polar seam recovery with a hole failed: "
+	    << holed_chart.failure() << std::endl;
+	return false;
+    }
+    const std::set<std::pair<double, double>> unique_chart_points(
+	holed_chart.points.begin(), holed_chart.points.end());
+    if (unique_chart_points.size() != holed_chart.points.size()) {
+	std::cerr << "polar seam recovery with a hole retained duplicate "
+	    "chart coordinates" << std::endl;
 	return false;
     }
     struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(brep.get(),

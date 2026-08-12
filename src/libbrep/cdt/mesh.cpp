@@ -6786,7 +6786,36 @@ cdt_mesh_t::cdt(bool allow_general_boundary_cleanup)
 		    complete_boundary;
 	}
     }
-    if (result && !complete_boundary) {
+    bool refinable_collapsed_polar_cells = false;
+    if (result && !complete_boundary && chart.type() ==
+	    CDT_FACE_CHART_POLAR) {
+	for (const triangle_t &native_triangle : tris_2d) {
+	    long image[3] = {-1, -1, -1};
+	    bool mapped = true;
+	    for (int corner = 0; corner < 3; ++corner) {
+		const auto point_3d = p2d3d.find(native_triangle.v[corner]);
+		if (point_3d == p2d3d.end() || point_3d->second < 0 ||
+			(size_t)point_3d->second >= pnts.size()) {
+		    mapped = false;
+		    break;
+		}
+		const auto mesh_point = p2ind.find(
+		    pnts[(size_t)point_3d->second]);
+		if (mesh_point == p2ind.end()) {
+		    mapped = false;
+		    break;
+		}
+		image[corner] = mesh_point->second;
+	    }
+	    std::sort(image, image + 3);
+	    if (mapped && (image[0] == image[1] || image[1] == image[2])) {
+		refinable_collapsed_polar_cells = true;
+		break;
+	    }
+	}
+    }
+    if (result && !complete_boundary &&
+	    !refinable_collapsed_polar_cells) {
 	struct ON_Brep_CDT_State *state =
 	    (struct ON_Brep_CDT_State *)p_cdt;
 	if (state)
@@ -6817,6 +6846,7 @@ cdt_mesh_t::refine_collapsed_chart_triangles(size_t max_points)
      * image.  More than one chart cell in a group means a periodic quotient
      * has hidden the cells behind one coarse triangle. */
     std::map<std::array<long, 3>, std::vector<triangle_t>> images;
+    std::vector<triangle_t> collapsed_cells;
     for (const triangle_t &native_triangle : tris_2d) {
 	std::array<long, 3> image;
 	bool mapped = true;
@@ -6838,9 +6868,19 @@ cdt_mesh_t::refine_collapsed_chart_triangles(size_t max_points)
 	if (!mapped)
 	    continue;
 	std::sort(image.begin(), image.end());
-	if (image[0] == image[1] || image[1] == image[2])
+	if (image[0] == image[1] || image[1] == image[2]) {
+	    collapsed_cells.push_back(native_triangle);
 	    continue;
+	}
 	images[image].push_back(native_triangle);
+    }
+
+    std::vector<triangle_t> candidates(collapsed_cells);
+    for (const auto &image : images) {
+	if (image.second.size() < 2)
+	    continue;
+	candidates.insert(candidates.end(), image.second.begin(),
+	    image.second.end());
     }
 
     std::set<std::pair<double, double>> existing(m_pnts_2d.begin(),
@@ -6848,10 +6888,7 @@ cdt_mesh_t::refine_collapsed_chart_triangles(size_t max_points)
     struct ON_Brep_CDT_State *state =
 	(struct ON_Brep_CDT_State *)p_cdt;
     size_t inserted = 0;
-    for (const auto &image : images) {
-	if (image.second.size() < 2)
-	    continue;
-	for (const triangle_t &native_triangle : image.second) {
+    for (const triangle_t &native_triangle : candidates) {
 	    if (inserted >= max_points)
 		return inserted;
 	    ON_2dPoint sample = ON_2dPoint::UnsetPoint;
@@ -6908,7 +6945,6 @@ cdt_mesh_t::refine_collapsed_chart_triangles(size_t max_points)
 		    sample.x, sample.y);
 	    }
 	    inserted++;
-	}
     }
     return inserted;
 }
