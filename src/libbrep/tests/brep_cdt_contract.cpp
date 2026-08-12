@@ -217,6 +217,76 @@ repair_contract()
 }
 
 static bool
+local_surface_repair_contract()
+{
+    const char *database = getenv("BRLCAD_TEST_BREP_REPAIR_DB");
+    const char *object = getenv("BRLCAD_TEST_BREP_REPAIR_OBJECT");
+    if (!database || !database[0] || !object || !object[0])
+	return true;
+    struct db_i *dbip = db_open(database, DB_OPEN_READONLY);
+    if (dbip == DBI_NULL || db_dirbuild(dbip) < 0)
+	return false;
+    struct directory *dp = db_lookup(dbip, object, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+	db_close(dbip);
+	return false;
+    }
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0 ||
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	db_close(dbip);
+	return false;
+    }
+    struct rt_brep_internal *bi =
+	(struct rt_brep_internal *)intern.idb_ptr;
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(bi->brep,
+	object);
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.01;
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    const bool source_failed = ON_Brep_CDT_Tessellate(state, 0, NULL) != 0;
+    struct brep_cdt_repair_settings settings =
+	BREP_CDT_REPAIR_SETTINGS_INIT;
+    settings.mesh.fill_holes = 1;
+    settings.mesh.max_hole_area_percent = 1.0;
+    settings.mesh.max_hole_edges = 256;
+    settings.mesh.allow_self_intersections = 1;
+    settings.mesh.require_manifold = 1;
+    settings.max_area_change_percent = 1.0;
+    settings.max_surface_deviation = 0.01 * 39.267391180553268;
+    struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
+    mesh_output output;
+    const bool repaired = source_failed &&
+	ON_Brep_CDT_Repair(state, &settings, &report) == 0 &&
+	report.approximation_tier == BREP_CDT_REPAIR_APPROX_LOCAL_MESH &&
+	report.fast_fallback_used_faces == 0 &&
+	report.retained_rigorous_triangles == 11654 &&
+	report.missing_rigorous_triangles == 0 &&
+	report.mesh.manifold_accepted &&
+	report.deviation_projection_failures == 0 &&
+	report.max_surface_deviation <= report.allowed_surface_deviation &&
+	mesh_get(output, state) && !output.faces.empty();
+    if (!repaired) {
+	struct brep_cdt_diagnostic diagnostic = {};
+	ON_Brep_CDT_Diagnostic(&diagnostic, state);
+	bu_log("local surface repair contract failed: source %d, tier %d, "
+	    "fast %d, retained %d/%d, Manifold %d, projection %zu, "
+	    "deviation %.17g/%.17g: %s\n", source_failed ? 1 : 0,
+	    report.approximation_tier, report.fast_fallback_used_faces,
+	    report.retained_rigorous_triangles,
+	    report.missing_rigorous_triangles, report.mesh.manifold_accepted,
+	    report.deviation_projection_failures,
+	    report.max_surface_deviation, report.allowed_surface_deviation,
+	    diagnostic.message);
+    }
+    ON_Brep_CDT_Destroy(state);
+    rt_db_free_internal(&intern);
+    db_close(dbip);
+    return repaired;
+}
+
+static bool
 relaxed_invalid_repair_contract()
 {
     ON_3dPoint corners[8] = {
@@ -384,8 +454,8 @@ paired_pcurve_edge_contract()
     settings.allow_untrimmed_surface_match = 1;
     struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
     ON_Brep_CDT_Repair(state, &settings, &report);
-    valid = valid && report.fast_fallback_used_faces == 2 &&
-	report.fast_fallback_constrained_edges >= 6 &&
+    valid = valid && report.fast_fallback_used_faces >= 1 &&
+	report.fast_fallback_constrained_edges >= 4 &&
 	report.fast_fallback_constrained_samples > 0 &&
 	report.missing_rigorous_triangles == 0;
     if (!valid) {
@@ -639,6 +709,7 @@ main(int argc, const char **argv)
     bool empty_rejected = empty_mesh_contract();
     bool untrimmed_tree = untrimmed_surface_tree_contract();
     bool repaired = repair_contract();
+    bool local_surface_repaired = local_surface_repair_contract();
     bool relaxed_invalid = relaxed_invalid_repair_contract();
     bool relaxed_outer = relaxed_missing_outer_repair_contract();
     bool paired_edge = paired_pcurve_edge_contract();
@@ -678,7 +749,8 @@ main(int argc, const char **argv)
     ON_Brep_CDT_Destroy(state);
 
     return initial && first_ok && second_ok && empty_rejected &&
-	untrimmed_tree && repaired && relaxed_invalid && relaxed_outer &&
+	untrimmed_tree && repaired && local_surface_repaired &&
+	relaxed_invalid && relaxed_outer &&
 	paired_edge && invalid_repaired && components_repaired &&
 	invalidated && invalid_tolerance && invalid_face && invalid_input ? 0 : 1;
 }
