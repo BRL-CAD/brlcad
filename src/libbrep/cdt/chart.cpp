@@ -3246,7 +3246,7 @@ cdt_face_chart::build_polar(const ON_BrepFace &face,
      * order, they are the two sides of the chart cut.  Put them on opposite
      * polar boundaries without changing their native UV or model points. */
     bool reconstructed_paired_seam = false;
-    if (m_periodic && source_holes.empty()) {
+    if (m_periodic) {
 	std::vector<int> ring(source_outer);
 	while (ring.size() > 1 && ring.front() == ring.back())
 	    ring.pop_back();
