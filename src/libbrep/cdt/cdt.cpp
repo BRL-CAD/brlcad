@@ -4637,16 +4637,18 @@ repair_spherical_cap_mesh(const ON_BrepFace &face, const ON_Sphere &sphere,
 	 * a visibly warped ring into a nominal cap. */
 	const double plane_tolerance = std::max((double)BN_TOL_DIST,
 	    (double)recognized_surface_deviation);
-	if (std::fabs(plane_offset) <= plane_tolerance ||
-		std::fabs(plane_offset) >= radius - plane_tolerance)
+	if (std::fabs(plane_offset) >= radius - plane_tolerance)
 	    return reject("boundary plane does not define a bounded cap");
 	for (const ON_3dPoint &point : boundary_points) {
 	    if (std::fabs((point - center) * plane_normal - plane_offset) >
 		    plane_tolerance)
 		return reject("boundary points are not coplanar");
 	}
-	/* An inner ring removes the cap on its plane-offset side. */
-	retained_axis = plane_offset > 0.0 ? -plane_normal : plane_normal;
+	/* An inner ring removes the cap on its plane-offset side.  A great-circle
+	 * ring has no offset side; its exact loop orientation selects one of the
+	 * two otherwise geometrically equivalent hemispheres. */
+	retained_axis = std::fabs(plane_offset) <= plane_tolerance ?
+	    plane_normal : (plane_offset > 0.0 ? -plane_normal : plane_normal);
 	phase_axis = plane_normal;
     }
     if (!retained_axis.IsValid() ||
@@ -5159,90 +5161,122 @@ repair_constrained_spherical_cap(struct ON_Brep_CDT_State *s_cdt,
 		return false;
 	}
 	} else {
-	/* A spherical face may express a physical closed ring and then make an
-	 * artificial excursion from that ring to a pole and back.  Recognize
-	 * exactly one constrained ring followed by seam, singular, seam trims;
-	 * the singular vertex chooses which spherical cap the face represents. */
 	const int trim_count = outer->TrimCount();
-	if (trim_count < 4 || constraints.trims.size() >= (size_t)trim_count)
+	if (trim_count < 1)
 	    return false;
-	int constrained_start = -1;
-	int constrained_starts = 0;
+	bool physical_ring_with_singular_gaps = !constraints.trims.empty();
 	for (int trim_index = 0; trim_index < trim_count; ++trim_index) {
 	    const ON_BrepTrim *trim = outer->Trim(trim_index);
-	    const ON_BrepTrim *prior = outer->Trim(
-		(trim_index + trim_count - 1) % trim_count);
-	    if (!trim || !prior)
-		return false;
-	    const bool constrained = constraints.trims.find(
-		trim->m_trim_index) != constraints.trims.end();
-	    const bool prior_constrained = constraints.trims.find(
-		prior->m_trim_index) != constraints.trims.end();
-	    if (constrained && !prior_constrained) {
-		constrained_start = trim_index;
-		constrained_starts++;
-	    }
+	    if (trim && constraints.trims.find(trim->m_trim_index) !=
+		    constraints.trims.end())
+		continue;
+	    physical_ring_with_singular_gaps = trim &&
+		trim->m_type == ON_BrepTrim::singular && trim->m_ei < 0 &&
+		trim->m_vi[0] == trim->m_vi[1];
+	    if (!physical_ring_with_singular_gaps)
+		break;
 	}
-	if (constrained_starts != 1) {
-	    if (debug_cap)
-		bu_log("Face %d: spherical cap has %d constrained runs among "
-		    "%d trims (%zu constrained)\n", face_index,
-		    constrained_starts, trim_count, constraints.trims.size());
-	    return false;
-	}
-	std::vector<const ON_BrepTrim *> artificial;
-	bool reached_artificial = false;
-	size_t constrained_count = 0;
-	for (int offset = 0; offset < trim_count; ++offset) {
-	    const ON_BrepTrim *trim = outer->Trim(
-		(constrained_start + offset) % trim_count);
-	    const bool constrained = trim && constraints.trims.find(
-		trim->m_trim_index) != constraints.trims.end();
-	    if (constrained) {
-		if (reached_artificial || !append_boundary_trim(trim))
+	if (physical_ring_with_singular_gaps) {
+	    /* A wholly physical spherical boundary does not need a chart.  Some
+	     * importers insert zero-length singular trims between its real edges;
+	     * those carry no 3-D boundary geometry.  Preserve every authoritative
+	     * shared-edge sample in loop order and let the exact joined ring select
+	     * the bounded analytic cap. */
+	    for (int trim_index = 0; trim_index < trim_count; ++trim_index) {
+		const ON_BrepTrim *trim = outer->Trim(trim_index);
+		if (trim && constraints.trims.find(trim->m_trim_index) ==
+			constraints.trims.end())
+		    continue;
+		if (!append_boundary_trim(trim))
 		    return false;
-		constrained_count++;
-	    } else {
-		reached_artificial = true;
-		artificial.push_back(trim);
 	    }
+	} else {
+	    /* A spherical face may express a physical closed ring and then make
+	     * an artificial excursion from that ring to a pole and back.
+	     * Recognize exactly one constrained ring followed by seam, singular,
+	     * seam trims; the singular vertex chooses the intended cap. */
+	    if (trim_count < 4 ||
+		    constraints.trims.size() >= (size_t)trim_count)
+		return false;
+	    int constrained_start = -1;
+	    int constrained_starts = 0;
+	    for (int trim_index = 0; trim_index < trim_count; ++trim_index) {
+		const ON_BrepTrim *trim = outer->Trim(trim_index);
+		const ON_BrepTrim *prior = outer->Trim(
+		    (trim_index + trim_count - 1) % trim_count);
+		if (!trim || !prior)
+		    return false;
+		const bool constrained = constraints.trims.find(
+		    trim->m_trim_index) != constraints.trims.end();
+		const bool prior_constrained = constraints.trims.find(
+		    prior->m_trim_index) != constraints.trims.end();
+		if (constrained && !prior_constrained) {
+		    constrained_start = trim_index;
+		    constrained_starts++;
+		}
+	    }
+	    if (constrained_starts != 1) {
+		if (debug_cap)
+		    bu_log("Face %d: spherical cap has %d constrained runs among "
+			"%d trims (%zu constrained)\n", face_index,
+			constrained_starts, trim_count,
+			constraints.trims.size());
+		return false;
+	    }
+	    std::vector<const ON_BrepTrim *> artificial;
+	    bool reached_artificial = false;
+	    size_t constrained_count = 0;
+	    for (int offset = 0; offset < trim_count; ++offset) {
+		const ON_BrepTrim *trim = outer->Trim(
+		    (constrained_start + offset) % trim_count);
+		const bool constrained = trim && constraints.trims.find(
+		    trim->m_trim_index) != constraints.trims.end();
+		if (constrained) {
+		    if (reached_artificial || !append_boundary_trim(trim))
+			return false;
+		    constrained_count++;
+		} else {
+		    reached_artificial = true;
+		    artificial.push_back(trim);
+		}
+	    }
+	    if (constrained_count != constraints.trims.size() ||
+		    artificial.size() != 3 || !artificial[0] ||
+		    !artificial[1] || !artificial[2] ||
+		    artificial[0]->m_type != ON_BrepTrim::seam ||
+		    artificial[1]->m_type != ON_BrepTrim::singular ||
+		    artificial[2]->m_type != ON_BrepTrim::seam ||
+		    artificial[0]->m_ei < 0 ||
+		    artificial[0]->m_ei != artificial[2]->m_ei ||
+		    artificial[1]->m_ei >= 0 ||
+		    artificial[1]->m_vi[0] != artificial[1]->m_vi[1] ||
+		    artificial[0]->m_vi[1] != artificial[1]->m_vi[0] ||
+		    artificial[2]->m_vi[0] != artificial[1]->m_vi[0] ||
+		    artificial[0]->m_vi[0] != artificial[2]->m_vi[1]) {
+		if (debug_cap)
+		    bu_log("Face %d: spherical cap topology rejected (%zu "
+			"ring, %zu constrained, %zu artificial)\n",
+			face_index, constrained_count, constraints.trims.size(),
+			artificial.size());
+		return false;
+	    }
+	    const int pole_index = artificial[1]->m_vi[0];
+	    if (pole_index < 0 || pole_index >= s_cdt->brep->m_V.Count())
+		return false;
+	    const ON_BrepVertex &pole_vertex = s_cdt->brep->m_V[pole_index];
+	    const ON_3dPoint pole = pole_vertex.Point();
+	    const double vertex_tolerance = pole_vertex.Tolerance() >= 0.0 &&
+		std::isfinite(pole_vertex.Tolerance()) ?
+		pole_vertex.Tolerance() : 0.0;
+	    const double pole_tolerance = std::min((double)allowed_deviation,
+		std::max(sphere_tolerance, vertex_tolerance));
+	    if (!pole.IsValid() ||
+		    std::fabs(pole.DistanceTo(sphere.Center()) -
+		    sphere.Radius()) > pole_tolerance)
+		return false;
+	    retained_axis_hint = pole - sphere.Center();
+	    have_retained_axis_hint = true;
 	}
-	if (constrained_count != constraints.trims.size() ||
-		artificial.size() != 3 || !artificial[0] || !artificial[1] ||
-		!artificial[2] ||
-		artificial[0]->m_type != ON_BrepTrim::seam ||
-		artificial[1]->m_type != ON_BrepTrim::singular ||
-		artificial[2]->m_type != ON_BrepTrim::seam ||
-		artificial[0]->m_ei < 0 ||
-		artificial[0]->m_ei != artificial[2]->m_ei ||
-		artificial[1]->m_ei >= 0 ||
-		artificial[1]->m_vi[0] != artificial[1]->m_vi[1] ||
-		artificial[0]->m_vi[1] != artificial[1]->m_vi[0] ||
-		artificial[2]->m_vi[0] != artificial[1]->m_vi[0] ||
-		artificial[0]->m_vi[0] != artificial[2]->m_vi[1]) {
-	    if (debug_cap)
-		bu_log("Face %d: spherical cap topology rejected (%zu ring, "
-		    "%zu constrained, %zu artificial)\n", face_index,
-		    constrained_count, constraints.trims.size(),
-		    artificial.size());
-	    return false;
-	}
-	const int pole_index = artificial[1]->m_vi[0];
-	if (pole_index < 0 || pole_index >= s_cdt->brep->m_V.Count())
-	    return false;
-	const ON_BrepVertex &pole_vertex = s_cdt->brep->m_V[pole_index];
-	const ON_3dPoint pole = pole_vertex.Point();
-	const double vertex_tolerance = pole_vertex.Tolerance() >= 0.0 &&
-	    std::isfinite(pole_vertex.Tolerance()) ? pole_vertex.Tolerance() :
-	    0.0;
-	const double pole_tolerance = std::min((double)allowed_deviation,
-	    std::max(sphere_tolerance, vertex_tolerance));
-	if (!pole.IsValid() ||
-		std::fabs(pole.DistanceTo(sphere.Center()) - sphere.Radius()) >
-		pole_tolerance)
-	    return false;
-	retained_axis_hint = pole - sphere.Center();
-	have_retained_axis_hint = true;
     }
     if (boundary.size() < 4)
 	return false;
@@ -5786,6 +5820,19 @@ cdt_test_repair_periodic_strip(void)
 	axial_patch.direct_surface_deviations.size() ==
 	axial_patch.faces.size() / 3;
     for (double deviation : axial_patch.direct_surface_deviations)
+	valid = valid && std::isfinite(deviation) && deviation <= 0.3;
+    if (!valid)
+	return 8;
+
+    repair_boundary_patch hemisphere_patch;
+    const bool hemisphere_reconstructed = repair_spherical_cap_mesh(
+	cap_brep->m_F[0], cap_sphere, axial_boundary, 4096, 0.3, 0.0, 0,
+	hemisphere_patch);
+    valid = hemisphere_reconstructed &&
+	hemisphere_patch.faces.size() / 3 == axial_boundary.size() &&
+	hemisphere_patch.direct_surface_deviations.size() ==
+	hemisphere_patch.faces.size() / 3;
+    for (double deviation : hemisphere_patch.direct_surface_deviations)
 	valid = valid && std::isfinite(deviation) && deviation <= 0.3;
     if (!valid)
 	return 8;
