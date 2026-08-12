@@ -407,6 +407,50 @@ test_touching_triangular_holes(void)
     return 0;
 }
 
+/* A failed Manifold postcondition must still report the topology of the
+ * candidate that was rejected.  Otherwise a modest open seam is
+ * indistinguishable from an empty or catastrophically malformed mesh. */
+static int
+test_manifold_rejection_report(void)
+{
+    static point_t points[4] = {
+	{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}
+    };
+    static int faces[9] = {
+	0, 2, 1, 0, 1, 3, 1, 2, 3
+    };
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.require_manifold = 1;
+    int *output_faces = NULL;
+    int output_face_count = 0;
+    point_t *output_points = NULL;
+    int output_point_count = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int result = bg_trimesh_repair2(&output_faces,
+	&output_face_count, &output_points, &output_point_count, faces, 3,
+	points, 4, &settings, &report);
+    const bool valid = result == -1 && !output_faces && !output_points &&
+	report.unmatched_edges == 3 && !report.excess_edges &&
+	!report.misoriented_edges && report.invalid_vertex_links == 3 &&
+	!report.solid && !report.manifold_accepted;
+    if (output_faces)
+	bu_free(output_faces, "rejected Manifold faces");
+    if (output_points)
+	bu_free(output_points, "rejected Manifold points");
+    if (!valid) {
+	bu_log("FAIL test_manifold_rejection_report: ret=%d unmatched=%d "
+	    "excess=%d misoriented=%d links=%d solid=%d manifold=%d\n",
+	    result, report.unmatched_edges, report.excess_edges,
+	    report.misoriented_edges, report.invalid_vertex_links,
+	    report.solid, report.manifold_accepted);
+	return -1;
+    }
+    bu_log("PASS test_manifold_rejection_report\n");
+    return 0;
+}
+
 /* A topologically valid cap is not acceptable when it cuts through another
  * closed component.  Both available triangulations cover the same square, so
  * repair must leave the hole open and fail instead of returning an
@@ -1282,6 +1326,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_repair2_conservative_default() != 0) ? 1 : 0;
     failures += (test_repair2_report()             != 0) ? 1 : 0;
     failures += (test_touching_triangular_holes()   != 0) ? 1 : 0;
+    failures += (test_manifold_rejection_report()   != 0) ? 1 : 0;
     failures += (test_intersecting_hole_patch_rejected() != 0) ? 1 : 0;
     failures +=
 	(test_intersecting_hole_patch_manifold_accepted() != 0) ? 1 : 0;
