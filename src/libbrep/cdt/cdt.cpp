@@ -4838,6 +4838,181 @@ repair_spherical_cap_mesh(const ON_BrepFace &face, const ON_Sphere &sphere,
     return true;
 }
 
+/* Reconstruct a complete analytic sphere as two spherical caps sharing one
+ * generated equator.  This is reserved for a closed, single-face component
+ * whose only B-Rep edge is an artificial pole-to-pole seam; no neighboring
+ * face boundary is discarded. */
+static bool
+repair_full_spherical_mesh(const ON_BrepFace &face, const ON_Sphere &sphere,
+	const ON_3dVector &pole_axis, size_t max_points,
+	fastf_t allowed_deviation, fastf_t recognized_surface_deviation,
+	int64_t deadline, repair_boundary_patch &patch)
+{
+    patch = repair_boundary_patch();
+    const double radius = sphere.Radius();
+    const double available_deviation = allowed_deviation -
+	recognized_surface_deviation;
+    max_points = std::min(max_points,
+	(size_t)MAX_BOUNDARY_STRIP_REFINEMENT_POINTS);
+    if (!(radius > ON_ZERO_TOLERANCE) || !std::isfinite(radius) ||
+	    !(available_deviation > 0.0) || max_points < 18)
+	return false;
+
+    ON_3dVector axis = pole_axis;
+    if (!axis.IsValid() || axis.Length() <= ON_ZERO_TOLERANCE)
+	return false;
+    axis.Unitize();
+    ON_3dVector reference;
+    if (std::fabs(axis.x) <= std::fabs(axis.y) &&
+	    std::fabs(axis.x) <= std::fabs(axis.z))
+	reference = ON_3dVector::XAxis;
+    else if (std::fabs(axis.y) <= std::fabs(axis.z))
+	reference = ON_3dVector::YAxis;
+    else
+	reference = ON_3dVector::ZAxis;
+    ON_3dVector equator_x = ON_CrossProduct(axis, reference);
+    if (!equator_x.Unitize())
+	return false;
+    ON_3dVector equator_y = ON_CrossProduct(axis, equator_x);
+    if (!equator_y.Unitize())
+	return false;
+
+    const double target_deviation = std::min(radius,
+	0.25 * available_deviation);
+    const double half_angle = std::acos(std::max(-1.0,
+	std::min(1.0, 1.0 - target_deviation / radius)));
+    if (!(half_angle > 0.0) || !std::isfinite(half_angle))
+	return false;
+    size_t segments = std::max((size_t)8,
+	(size_t)std::ceil(ON_PI / half_angle));
+    if (segments > max_points - 2)
+	return false;
+
+    std::vector<repair_fast_trim_sample> equator(segments);
+    for (size_t point = 0; point < segments; ++point) {
+	const double angle = 2.0 * ON_PI * (double)point /
+	    (double)segments;
+	const ON_3dPoint sphere_point = sphere.Center() + radius *
+	    (std::cos(angle) * equator_x + std::sin(angle) * equator_y);
+	VSET(equator[point].point, sphere_point.x, sphere_point.y,
+	    sphere_point.z);
+	equator[point].parameter = angle;
+	V2SET(equator[point].uv, 0.0, 0.0);
+    }
+
+    const size_t cap_point_limit = (max_points + segments) / 2;
+    repair_boundary_patch first;
+    repair_boundary_patch second;
+    ON_3dVector opposite_axis = -axis;
+    if (!repair_spherical_cap_mesh(face, sphere, equator,
+	    cap_point_limit, allowed_deviation,
+	    recognized_surface_deviation, deadline, first, &axis) ||
+	    !repair_spherical_cap_mesh(face, sphere, equator,
+	    cap_point_limit, allowed_deviation,
+	    recognized_surface_deviation, deadline, second,
+	    &opposite_axis))
+	return false;
+    const size_t first_points = first.vertices.size() / 3;
+    const size_t second_points = second.vertices.size() / 3;
+    if (first_points < segments + 1 || second_points < segments + 1 ||
+	    first_points + second_points - segments > max_points)
+	return false;
+
+    const size_t interior_rows = std::max(first.strip_interior_rows,
+	second.strip_interior_rows);
+    patch = std::move(first);
+    std::vector<int> second_to_patch(second_points, -1);
+    for (size_t point = 0; point < segments; ++point)
+	second_to_patch[point] = (int)point;
+    for (size_t point = segments; point < second_points; ++point) {
+	second_to_patch[point] = (int)(patch.vertices.size() / 3);
+	patch.vertices.insert(patch.vertices.end(),
+	    second.vertices.begin() + (ptrdiff_t)(point * 3),
+	    second.vertices.begin() + (ptrdiff_t)(point * 3 + 3));
+    }
+    patch.faces.reserve(patch.faces.size() + second.faces.size());
+    for (int point : second.faces) {
+	if (point < 0 || (size_t)point >= second_to_patch.size())
+	    return false;
+	patch.faces.push_back(second_to_patch[(size_t)point]);
+    }
+    patch.direct_surface_deviations.insert(
+	patch.direct_surface_deviations.end(),
+	second.direct_surface_deviations.begin(),
+	second.direct_surface_deviations.end());
+    patch.strip_interior_rows = interior_rows;
+    return !patch.faces.empty() &&
+	patch.direct_surface_deviations.size() == patch.faces.size() / 3;
+}
+
+static bool
+repair_closed_spherical_surface(struct ON_Brep_CDT_State *s_cdt,
+	int face_index, size_t max_points, fastf_t allowed_deviation,
+	int64_t deadline, repair_boundary_patch &patch)
+{
+    patch = repair_boundary_patch();
+    if (!s_cdt || !s_cdt->brep || face_index < 0 ||
+	    face_index >= s_cdt->brep->m_F.Count() ||
+	    !(allowed_deviation > 0.0))
+	return false;
+    const ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+    const ON_Surface *surface = face.SurfaceOf();
+    const ON_BrepLoop *outer = face.OuterLoop();
+    if (!surface || face.LoopCount() != 1 || !outer ||
+	    outer->TrimCount() != 2)
+	return false;
+    const ON_BrepTrim *first = outer->Trim(0);
+    const ON_BrepTrim *second = outer->Trim(1);
+    if (!first || !second || first->m_type != ON_BrepTrim::seam ||
+	    second->m_type != ON_BrepTrim::seam || first->m_ei < 0 ||
+	    first->m_ei != second->m_ei ||
+	    first->m_vi[0] != second->m_vi[1] ||
+	    first->m_vi[1] != second->m_vi[0] ||
+	    first->m_vi[0] == first->m_vi[1])
+	return false;
+    const ON_BrepEdge *edge = first->Edge();
+    if (!edge || edge->TrimCount() != 2 || second->Edge() != edge)
+	return false;
+    for (int trim_index = 0; trim_index < edge->TrimCount(); ++trim_index) {
+	const ON_BrepTrim *trim = edge->Trim(trim_index);
+	if (!trim || trim->Face() != &face)
+	    return false;
+    }
+
+    ON_Sphere sphere;
+    const double sphere_tolerance = std::min((double)BN_TOL_DIST,
+	0.25 * (double)allowed_deviation);
+    if (!(sphere_tolerance > ON_ZERO_TOLERANCE) ||
+	    !surface->IsSphere(&sphere, sphere_tolerance))
+	return false;
+    const ON_BrepVertex *first_vertex = edge->Vertex(0);
+    const ON_BrepVertex *second_vertex = edge->Vertex(1);
+    if (!first_vertex || !second_vertex)
+	return false;
+    const ON_3dPoint first_pole = first_vertex->Point();
+    const ON_3dPoint second_pole = second_vertex->Point();
+    const double topology_tolerance = std::min((double)allowed_deviation,
+	std::max(sphere_tolerance, std::max((double)edge->m_tolerance,
+	std::max((double)first_vertex->Tolerance(),
+	(double)second_vertex->Tolerance()))));
+    if (!first_pole.IsValid() || !second_pole.IsValid() ||
+	    std::fabs(first_pole.DistanceTo(sphere.Center()) -
+	    sphere.Radius()) > topology_tolerance ||
+	    std::fabs(second_pole.DistanceTo(sphere.Center()) -
+	    sphere.Radius()) > topology_tolerance ||
+	    ((first_pole + second_pole) / 2.0).DistanceTo(sphere.Center()) >
+	    topology_tolerance)
+	return false;
+
+    const ON_3dVector pole_axis = first_pole - sphere.Center();
+    if (!repair_full_spherical_mesh(face, sphere, pole_axis, max_points,
+	    allowed_deviation, sphere_tolerance, deadline, patch))
+	return false;
+    patch.constrained_edges = 1;
+    patch.constrained_samples = 2;
+    return true;
+}
+
 static bool
 repair_constrained_spherical_cap(struct ON_Brep_CDT_State *s_cdt,
 	int face_index, const repair_fast_constraint_store &constraints,
@@ -5517,6 +5692,106 @@ cdt_test_repair_periodic_strip(void)
     if (!valid)
 	return 7;
 
+    repair_boundary_patch full_sphere_patch;
+    const bool full_sphere_reconstructed = repair_full_spherical_mesh(
+	cap_brep->m_F[0], cap_sphere, pole_axis, 4096, 0.01, 0.0, 0,
+	full_sphere_patch);
+    const int full_sphere_points =
+	(int)(full_sphere_patch.vertices.size() / 3);
+    const int full_sphere_faces = (int)(full_sphere_patch.faces.size() / 3);
+    valid = full_sphere_reconstructed && full_sphere_points > 0 &&
+	full_sphere_faces > 0 &&
+	full_sphere_patch.direct_surface_deviations.size() ==
+	(size_t)full_sphere_faces &&
+	!bg_trimesh_solid2(full_sphere_points, full_sphere_faces,
+	    full_sphere_patch.vertices.data(),
+	    full_sphere_patch.faces.data(), NULL);
+    for (double deviation : full_sphere_patch.direct_surface_deviations)
+	valid = valid && std::isfinite(deviation) && deviation <= 0.01;
+    if (!valid)
+	return 8;
+
+    ON_Surface *closed_sphere_surface =
+	cap_brep->m_S[0]->DuplicateSurface();
+    std::unique_ptr<ON_Brep> closed_sphere_brep(new ON_Brep);
+    if (!closed_sphere_surface || !closed_sphere_brep)
+	return 9;
+    ON_BrepFace &closed_sphere_face = closed_sphere_brep->NewFace(
+	closed_sphere_brep->AddSurface(closed_sphere_surface));
+    ON_BrepLoop &closed_sphere_loop = closed_sphere_brep->NewLoop(
+	ON_BrepLoop::outer, closed_sphere_face);
+    int sphere_open_direction = -1;
+    for (int singular_side = 0; singular_side < 4; ++singular_side) {
+	if (closed_sphere_surface->IsSingular(singular_side)) {
+	    sphere_open_direction = (singular_side == 0 || singular_side == 2) ?
+		1 : 0;
+	    break;
+	}
+    }
+    if (sphere_open_direction < 0)
+	return 9;
+    const int sphere_angular_direction = 1 - sphere_open_direction;
+    const ON_Interval sphere_open_domain =
+	closed_sphere_surface->Domain(sphere_open_direction);
+    const double sphere_seam = closed_sphere_surface->Domain(
+	sphere_angular_direction).Mid();
+    ON_2dPoint low_uv(0.0, 0.0);
+    ON_2dPoint high_uv(0.0, 0.0);
+    low_uv[sphere_angular_direction] = sphere_seam;
+    high_uv[sphere_angular_direction] = sphere_seam;
+    low_uv[sphere_open_direction] = sphere_open_domain.Min();
+    high_uv[sphere_open_direction] = sphere_open_domain.Max();
+    ON_BrepVertex &low_vertex = closed_sphere_brep->NewVertex(
+	closed_sphere_surface->PointAt(low_uv.x, low_uv.y), 1.0e-8);
+    ON_BrepVertex &high_vertex = closed_sphere_brep->NewVertex(
+	closed_sphere_surface->PointAt(high_uv.x, high_uv.y), 1.0e-8);
+    ON_Curve *sphere_seam_curve = closed_sphere_surface->IsoCurve(
+	sphere_open_direction, sphere_seam);
+    if (!sphere_seam_curve)
+	return 9;
+    if (sphere_seam_curve->PointAtStart().DistanceTo(low_vertex.Point()) >
+	    sphere_seam_curve->PointAtEnd().DistanceTo(low_vertex.Point()))
+	sphere_seam_curve->Reverse();
+    ON_BrepEdge &sphere_seam_edge = closed_sphere_brep->NewEdge(low_vertex,
+	high_vertex, closed_sphere_brep->AddEdgeCurve(sphere_seam_curve));
+    sphere_seam_edge.m_tolerance = 1.0e-8;
+    const auto add_sphere_seam = [&](bool reversed) {
+	const ON_2dPoint start = reversed ? high_uv : low_uv;
+	const ON_2dPoint end = reversed ? low_uv : high_uv;
+	ON_LineCurve *trim_curve = new ON_LineCurve(start, end);
+	trim_curve->SetDomain(0.0, 1.0);
+	ON_BrepTrim &trim = closed_sphere_brep->NewTrim(sphere_seam_edge,
+	    reversed, closed_sphere_loop,
+	    closed_sphere_brep->AddTrimCurve(trim_curve));
+	trim.m_type = ON_BrepTrim::seam;
+	trim.m_iso = closed_sphere_surface->IsIsoparametric(*trim_curve);
+	trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-8;
+    };
+    add_sphere_seam(false);
+    add_sphere_seam(true);
+    state = ON_Brep_CDT_Create(closed_sphere_brep.get(),
+	"closed sphere repair contract");
+    if (state)
+	state->brep = new ON_Brep(*closed_sphere_brep);
+    repair_boundary_patch closed_sphere_patch;
+    const bool closed_sphere_reconstructed = state && state->brep &&
+	repair_closed_spherical_surface(state, 0, 4096, 0.01, 0,
+	    closed_sphere_patch);
+    const int closed_sphere_points =
+	(int)(closed_sphere_patch.vertices.size() / 3);
+    const int closed_sphere_faces =
+	(int)(closed_sphere_patch.faces.size() / 3);
+    valid = closed_sphere_reconstructed &&
+	closed_sphere_patch.constrained_edges == 1 &&
+	closed_sphere_patch.constrained_samples == 2 &&
+	closed_sphere_points > 0 && closed_sphere_faces > 0 &&
+	!bg_trimesh_solid2(closed_sphere_points, closed_sphere_faces,
+	    closed_sphere_patch.vertices.data(),
+	    closed_sphere_patch.faces.data(), NULL);
+    ON_Brep_CDT_Destroy(state);
+    if (!valid)
+	return 9;
+
     ON_Circle major(ON_xy_plane, 9.0);
     ON_Torus torus(major, 2.5);
     ON_Circle minor = torus.MinorCircleRadians(0.0);
@@ -5590,7 +5865,7 @@ cdt_test_repair_periodic_strip(void)
     minor_circle_strip->m_axis.to = torus.plane.origin + torus.plane.zaxis;
     minor_circle_strip->m_bTransposed = false;
     if (!test_torus_strip(minor_circle_strip))
-	return 8;
+	return 10;
 
     ON_RevSurface *major_circle_strip = new ON_RevSurface();
     major_circle_strip->m_angle.Set(0.0, 2.0 * ON_PI);
@@ -5601,7 +5876,7 @@ cdt_test_repair_periodic_strip(void)
     major_circle_strip->m_axis.to = torus.plane.origin + torus.plane.zaxis;
     major_circle_strip->m_bTransposed = false;
     if (!test_torus_strip(major_circle_strip))
-	return 9;
+	return 11;
 
     ON_RevSurface *revolution = new ON_RevSurface();
     revolution->m_angle.Set(0.0, 2.0 * ON_PI);
@@ -5614,7 +5889,7 @@ cdt_test_repair_periodic_strip(void)
 	false, false, NULL));
     if (!torus_brep) {
 	delete revolution;
-	return 10;
+	return 12;
     }
     state = ON_Brep_CDT_Create(torus_brep.get(),
 	"doubly periodic repair contract");
@@ -5622,7 +5897,7 @@ cdt_test_repair_periodic_strip(void)
 	state->brep = new ON_Brep(*torus_brep);
     if (!state || !state->brep || state->brep->m_F.Count() != 1) {
 	ON_Brep_CDT_Destroy(state);
-	return 11;
+	return 13;
     }
     repair_boundary_patch grid;
     const bool grid_reconstructed = repair_closed_periodic_surface(state, 0,
@@ -5636,7 +5911,7 @@ cdt_test_repair_periodic_strip(void)
     for (double deviation : grid.direct_surface_deviations)
 	valid = valid && std::isfinite(deviation) && deviation <= 0.1;
     ON_Brep_CDT_Destroy(state);
-    return valid ? 0 : 12;
+    return valid ? 0 : 14;
 }
 
 static void
@@ -6416,11 +6691,17 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		repair_constrained_spherical_cap(s_cdt, failed_face,
 		    constraints, settings->max_fast_points,
 		    allowed_deviation, strip_deadline, patch);
+	    const bool full_sphere = !boundary_strip && !spherical_cap &&
+		repair_closed_spherical_surface(s_cdt, failed_face,
+		    settings->max_fast_points, allowed_deviation,
+		    strip_deadline, patch);
 	    const bool periodic_grid = !boundary_strip && !spherical_cap &&
+		!full_sphere &&
 		repair_closed_periodic_surface(s_cdt, failed_face,
 		    settings->max_fast_points, allowed_deviation,
 		    strip_deadline, patch);
-	    if (!boundary_strip && !spherical_cap && !periodic_grid)
+	    if (!boundary_strip && !spherical_cap && !full_sphere &&
+		    !periodic_grid)
 		continue;
 	    const size_t patch_points = patch.vertices.size() / 3;
 	    const size_t patch_faces = patch.faces.size() / 3;
@@ -6461,6 +6742,11 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    patch.analytic_torus_strip ? "torus-isocircle" :
 		    "periodic", appended,
 		    patch.constrained_samples, patch.strip_interior_rows);
+	    } else if (full_sphere) {
+		bu_log("Face %d: reconstructed a complete analytic sphere "
+		    "across its artificial seam with %zu interior rows "
+		    "(%d triangles)\n", failed_face,
+		    patch.strip_interior_rows, appended);
 	    } else if (spherical_cap) {
 		bu_log("Face %d: reconstructed a spherical cap from %zu "
 		    "constrained samples with %zu interior rows "
