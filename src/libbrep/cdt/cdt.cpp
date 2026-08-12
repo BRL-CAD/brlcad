@@ -3721,6 +3721,7 @@ struct repair_boundary_patch {
     size_t periodic_v_samples = 0;
     size_t strip_interior_rows = 0;
     bool analytic_torus_strip = false;
+    bool analytic_cylinder_strip = false;
 };
 
 /* A failed periodic side face may still have two authoritative closed edge
@@ -3856,7 +3857,7 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
     /* Some imported NURBS patches encode a cut explicitly with two
      * oppositely oriented trims of one edge, even though IsClosed() is
      * false.  The paired seam and two closed shared paths define a strip;
-     * the analytic torus gate below supplies a trustworthy parameterization
+     * an analytic surface gate below supplies a trustworthy parameterization
      * without relying on the malformed source p-curves. */
     const bool explicit_seam_topology = seam_boundaries.size() == 2 &&
 	seam_boundaries[0]->m_ei >= 0 &&
@@ -3946,13 +3947,21 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
     };
 
     ON_Torus strip_torus;
-    const double torus_recognition_tolerance = std::min(
+    ON_Cylinder strip_cylinder;
+    const double analytic_recognition_tolerance = std::min(
 	(double)BN_TOL_DIST, 0.25 * (double)allowed_deviation);
     const bool toroidal_seam_strip = explicit_seam_topology &&
-	torus_recognition_tolerance > ON_ZERO_TOLERANCE &&
-	surface->IsTorus(&strip_torus, torus_recognition_tolerance);
-    if (closed_direction < 0 && !toroidal_seam_strip)
-	return reject("explicit nonperiodic seam is not a recognized torus");
+	analytic_recognition_tolerance > ON_ZERO_TOLERANCE &&
+	surface->IsTorus(&strip_torus, analytic_recognition_tolerance);
+    const bool cylindrical_seam_strip = explicit_seam_topology &&
+	closed_direction < 0 &&
+	!toroidal_seam_strip &&
+	analytic_recognition_tolerance > ON_ZERO_TOLERANCE &&
+	surface->IsCylinder(&strip_cylinder, analytic_recognition_tolerance);
+    if (closed_direction < 0 && !toroidal_seam_strip &&
+	    !cylindrical_seam_strip)
+	return reject("explicit nonperiodic seam is not a recognized analytic "
+	    "surface");
 
     std::vector<double> first_major;
     std::vector<double> first_minor;
@@ -3964,6 +3973,11 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
     double torus_second_cross = 0.0;
     bool torus_phase_is_major = false;
     double torus_orientation_sign = 1.0;
+    std::vector<double> cylinder_first_phase;
+    std::vector<double> cylinder_second_phase;
+    double cylinder_first_height = 0.0;
+    double cylinder_second_height = 0.0;
+    double cylinder_orientation_sign = 1.0;
     const auto unwrap_angle = [](double angle, double prior) {
 	return angle + std::round((prior - angle) / (2.0 * ON_PI)) *
 	    (2.0 * ON_PI);
@@ -3993,12 +4007,12 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 		return false;
 	    const double miss = strip_torus.PointAt(major[point],
 		minor[point]).DistanceTo(boundary_point);
-	    if (debug_strip && miss > torus_recognition_tolerance)
+	    if (debug_strip && miss > analytic_recognition_tolerance)
 		bu_log("Face %d: torus boundary point %zu misses by %.17g "
 		    "(limit %.17g, angles %.17g %.17g)\n", face_index,
-		    point, miss, torus_recognition_tolerance, major[point],
+		    point, miss, analytic_recognition_tolerance, major[point],
 		    minor[point]);
-	    if (miss > torus_recognition_tolerance)
+	    if (miss > analytic_recognition_tolerance)
 		return false;
 	    if (point) {
 		major[point] = unwrap_angle(major[point], major[point - 1]);
@@ -4021,7 +4035,7 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	if (!sample_torus_boundaries())
 	    return reject("shared boundary misses the recognized torus");
 	const double angular_tolerance = std::max(1.0e-8,
-	    torus_recognition_tolerance /
+	    analytic_recognition_tolerance /
 	    std::max(strip_torus.MinorRadius(), ON_ZERO_TOLERANCE));
 	const auto angle_range = [](const std::vector<double> &angles) {
 	    const auto range = std::minmax_element(angles.begin(), angles.end());
@@ -4131,6 +4145,127 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 		first_winding, second_winding);
     }
 
+    const auto cylinder_coordinates = [&](const ON_3dPoint &point,
+	    double &angle, double &height) {
+	if (!strip_cylinder.IsValid() || !point.IsValid())
+	    return false;
+	const ON_3dVector offset = point -
+	    strip_cylinder.circle.plane.origin;
+	const double x = offset * strip_cylinder.circle.plane.xaxis;
+	const double y = offset * strip_cylinder.circle.plane.yaxis;
+	const double radial = std::hypot(x, y);
+	height = offset * strip_cylinder.circle.plane.zaxis;
+	if (!(radial > 0.0) || !std::isfinite(radial) ||
+		!std::isfinite(height))
+	    return false;
+	angle = std::atan2(y, x);
+	return std::isfinite(angle);
+    };
+    const auto cylinder_boundary_coordinates = [&](size_t segment_count,
+	    const auto &sample, std::vector<double> &phase,
+	    std::vector<double> &heights) {
+	phase.resize(segment_count + 1);
+	heights.resize(segment_count + 1);
+	for (size_t point = 0; point <= segment_count; ++point) {
+	    const ON_3dPoint boundary_point(sample(point).point);
+	    if (!cylinder_coordinates(boundary_point, phase[point],
+		    heights[point]))
+		return false;
+	    const double miss = strip_cylinder.PointAt(phase[point],
+		heights[point]).DistanceTo(boundary_point);
+	    if (debug_strip && miss > analytic_recognition_tolerance)
+		bu_log("Face %d: cylinder boundary point %zu misses by "
+		    "%.17g (limit %.17g)\n", face_index, point, miss,
+		    analytic_recognition_tolerance);
+	    if (miss > analytic_recognition_tolerance)
+		return false;
+	    if (point)
+		phase[point] = unwrap_angle(phase[point], phase[point - 1]);
+	}
+	return true;
+    };
+    if (cylindrical_seam_strip) {
+	std::vector<double> first_heights;
+	std::vector<double> second_heights;
+	const auto sample_cylinder_boundaries = [&]() {
+	    return cylinder_boundary_coordinates(first_segments,
+		[&](size_t phase) -> const repair_fast_trim_sample & {
+		    return first_samples[phase];
+		}, cylinder_first_phase, first_heights) &&
+		cylinder_boundary_coordinates(second_segments,
+		[&](size_t phase) -> const repair_fast_trim_sample & {
+		    return second_samples[corresponding_second(phase)];
+		}, cylinder_second_phase, second_heights);
+	};
+	const auto assign_cylinder_heights = [&]() {
+	    cylinder_first_height = std::accumulate(first_heights.begin(),
+		first_heights.end(), 0.0) / (double)first_heights.size();
+	    cylinder_second_height = std::accumulate(second_heights.begin(),
+		second_heights.end(), 0.0) / (double)second_heights.size();
+	    for (double height : first_heights) {
+		if (std::fabs(height - cylinder_first_height) >
+			analytic_recognition_tolerance)
+		    return false;
+	    }
+	    for (double height : second_heights) {
+		if (std::fabs(height - cylinder_second_height) >
+			analytic_recognition_tolerance)
+		    return false;
+	    }
+	    return true;
+	};
+	if (!sample_cylinder_boundaries() || !assign_cylinder_heights())
+	    return reject("shared boundary misses one cylinder isocircle");
+	double first_winding = cylinder_first_phase.back() -
+	    cylinder_first_phase.front();
+	double second_winding = cylinder_second_phase.back() -
+	    cylinder_second_phase.front();
+	if (first_winding * second_winding <= 0.0) {
+	    best_step = -best_step;
+	    if (!sample_cylinder_boundaries() ||
+		    !assign_cylinder_heights())
+		return reject("opposite cylinder boundary traversal is unusable");
+	    first_winding = cylinder_first_phase.back() -
+		cylinder_first_phase.front();
+	    second_winding = cylinder_second_phase.back() -
+		cylinder_second_phase.front();
+	}
+	if (std::fabs(std::fabs(first_winding) - 2.0 * ON_PI) >
+		0.1 * ON_PI || std::fabs(std::fabs(second_winding) -
+		2.0 * ON_PI) > 0.1 * ON_PI ||
+		first_winding * second_winding <= 0.0)
+	    return reject("cylinder boundary phases do not wind together");
+	if (std::fabs(cylinder_second_height - cylinder_first_height) <=
+		ON_ZERO_TOLERANCE)
+	    return reject("cylinder seam strip has no axial span");
+	ON_3dPoint orientation_point;
+	ON_3dVector orientation_normal;
+	double orientation_angle = 0.0;
+	double orientation_height = 0.0;
+	if (!surface_EvNormal(surface, surface->Domain(0).Mid(),
+		surface->Domain(1).Mid(), orientation_point,
+		orientation_normal) || !orientation_normal.IsValid() ||
+		!cylinder_coordinates(orientation_point, orientation_angle,
+		    orientation_height))
+	    return reject("cylinder seam has no stable surface orientation");
+	if (face.m_bRev)
+	    orientation_normal.Reverse();
+	const ON_3dVector cylinder_normal = std::cos(orientation_angle) *
+	    strip_cylinder.circle.plane.xaxis + std::sin(orientation_angle) *
+	    strip_cylinder.circle.plane.yaxis;
+	if (!cylinder_normal.IsValid() ||
+		std::fabs(cylinder_normal * orientation_normal) <=
+		ON_ZERO_TOLERANCE)
+	    return reject("cylinder seam orientation is tangent");
+	cylinder_orientation_sign = cylinder_normal * orientation_normal > 0.0 ?
+	    1.0 : -1.0;
+	if (debug_strip)
+	    bu_log("Face %d: analytic cylinder strip heights %.17g/%.17g, "
+		"phase windings %.17g/%.17g\n", face_index,
+		cylinder_first_height, cylinder_second_height, first_winding,
+		second_winding);
+    }
+
     const ON_Interval closed_domain = closed_direction >= 0 ?
 	surface->Domain(closed_direction) : ON_Interval(0.0, 1.0);
     const double closed_period = closed_direction >= 0 ?
@@ -4211,6 +4346,14 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	major = torus_phase_is_major ? phase_angle : cross_angle;
 	minor = torus_phase_is_major ? cross_angle : phase_angle;
     };
+    const auto cylinder_parameters = [&](double phase, double across,
+	    double &angle, double &height) {
+	angle = (1.0 - across) *
+	    boundary_angle(cylinder_first_phase, phase) + across *
+	    boundary_angle(cylinder_second_phase, phase);
+	height = (1.0 - across) * cylinder_first_height +
+	    across * cylinder_second_height;
+    };
     const auto wrapped_uv = [&](ON_2dPoint uv) {
 	if (closed_direction < 0)
 	    return uv;
@@ -4285,6 +4428,19 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 			strip_torus.PointAt(major, minor);
 		    if (!surface_point.IsValid()) {
 			strip_build_failure = "invalid analytic torus sample";
+			return false;
+		    }
+		    source_points.push_back(surface_point);
+		    continue;
+		}
+		if (cylindrical_seam_strip) {
+		    double angle = 0.0;
+		    double height = 0.0;
+		    cylinder_parameters(phase, y, angle, height);
+		    const ON_3dPoint surface_point =
+			strip_cylinder.PointAt(angle, height);
+		    if (!surface_point.IsValid()) {
+			strip_build_failure = "invalid analytic cylinder sample";
 			return false;
 		    }
 		    source_points.push_back(surface_point);
@@ -4398,6 +4554,14 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 			major, minor);
 		    surface_normal = torus_orientation_sign *
 			strip_torus.NormalAt(major, minor);
+		} else if (cylindrical_seam_strip) {
+		    double angle = 0.0;
+		    double height = 0.0;
+		    cylinder_parameters(centroid_chart.x, centroid_chart.y,
+			angle, height);
+		    surface_normal = cylinder_orientation_sign *
+			(std::cos(angle) * strip_cylinder.circle.plane.xaxis +
+			 std::sin(angle) * strip_cylinder.circle.plane.yaxis);
 		} else {
 		    ON_3dPoint normal_point;
 		    const ON_2dPoint normal_uv = wrapped_uv(centroid_uv);
@@ -4449,6 +4613,12 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 			torus_parameters(chart_sample.x, chart_sample.y,
 			    major, minor);
 			surface_point = strip_torus.PointAt(major, minor);
+		    } else if (cylindrical_seam_strip) {
+			double angle = 0.0;
+			double height = 0.0;
+			cylinder_parameters(chart_sample.x, chart_sample.y,
+			    angle, height);
+			surface_point = strip_cylinder.PointAt(angle, height);
 		    } else {
 			const ON_2dPoint native_uv = wrapped_uv(uv);
 			surface_point = surface->PointAt(native_uv.x, native_uv.y);
@@ -4459,8 +4629,8 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 			return;
 		    }
 		    double deviation = mesh_point.DistanceTo(surface_point);
-		    if (toroidal_seam_strip)
-			deviation += torus_recognition_tolerance;
+		    if (toroidal_seam_strip || cylindrical_seam_strip)
+			deviation += analytic_recognition_tolerance;
 		    triangle_deviation = std::max(triangle_deviation,
 			deviation);
 		}
@@ -4486,6 +4656,7 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	}
 	candidate.strip_interior_rows = interior_rows;
 	candidate.analytic_torus_strip = toroidal_seam_strip;
+	candidate.analytic_cylinder_strip = cylindrical_seam_strip;
 	return true;
     };
 
@@ -5724,6 +5895,30 @@ cdt_test_repair_periodic_strip(void)
 	ON_Brep_CDT_Destroy(state);
 	return 4;
     }
+    /* Model the imported case whose analytic cylinder is cut just short of
+     * its nominal full revolution.  Its paired seam topology and exact
+     * neighboring edge samples remain authoritative even though IsClosed()
+     * no longer describes the surface parameterization. */
+    const ON_Interval full_angle = barrel->m_angle;
+    barrel->m_angle.Set(full_angle.Min(), full_angle.Max() - 1.0e-6);
+    barrel->DestroyRuntimeCache(true);
+    repair_boundary_patch explicit_cylinder_patch;
+    const bool explicit_cylinder = !old_surface->IsClosed(0) &&
+	old_surface->IsCylinder(NULL, 0.0005) &&
+	repair_constrained_periodic_strip(state, side_index, constraints, 64,
+	    0.06, 0, explicit_cylinder_patch);
+    valid = explicit_cylinder &&
+	explicit_cylinder_patch.analytic_cylinder_strip &&
+	explicit_cylinder_patch.faces.size() == 18 * 3 &&
+	explicit_cylinder_patch.vertices.size() == 18 * 3 &&
+	explicit_cylinder_patch.constrained_edges == 2 &&
+	explicit_cylinder_patch.constrained_samples == 20;
+    barrel->m_angle = full_angle;
+    barrel->DestroyRuntimeCache(true);
+    if (!valid) {
+	ON_Brep_CDT_Destroy(state);
+	return 5;
+    }
     const ON_Interval height_domain = old_surface->Domain(1);
     ON_NurbsCurve *profile = ON_NurbsCurve::New(3, false, 3, 3);
     profile->MakeClampedUniformKnotVector(1.0);
@@ -5748,7 +5943,7 @@ cdt_test_repair_periodic_strip(void)
 	valid = valid && std::isfinite(deviation) && deviation <= 0.04;
     ON_Brep_CDT_Destroy(state);
     if (!valid)
-	return 5;
+	return 6;
 
     const ON_Sphere cap_sphere(ON_3dPoint::Origin, 1.0);
     std::unique_ptr<ON_Brep> cap_brep(ON_BrepSphere(cap_sphere));
@@ -6885,7 +7080,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    "local %d-triangle strip (%zu constrained samples, "
 		    "%zu interior rows)\n", failed_face,
 		    patch.analytic_torus_strip ? "torus-isocircle" :
-		    "periodic", appended,
+		    (patch.analytic_cylinder_strip ? "cylinder-isocircle" :
+		    "periodic"), appended,
 		    patch.constrained_samples, patch.strip_interior_rows);
 	    } else if (full_sphere) {
 		bu_log("Face %d: reconstructed a complete analytic sphere "
