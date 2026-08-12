@@ -30,5 +30,8 @@ main(int argc, const char **UNUSED(argv))
     if (result)
 	return result;
     result = cdt_test_repair_edge_tube();
-    return result ? result : cdt_test_repair_triangle_split();
+    if (result)
+	return result;
+    result = cdt_test_repair_triangle_split();
+    return result ? result : cdt_test_repair_patch_limits();
 }

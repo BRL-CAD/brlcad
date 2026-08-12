@@ -136,7 +136,7 @@ struct brep_cdt_diagnostic {
 #define BREP_CDT_REPAIR_APPROX_NONE 0
 /** A failed face used display triangulation with rigorous edge samples. */
 #define BREP_CDT_REPAIR_APPROX_CONSTRAINED_FACE 1
-/** Boundary-only mesh repair added geometry without replacing rigorous faces. */
+/** Bounded local mesh repair added or reconstructed a tagged neighborhood. */
 #define BREP_CDT_REPAIR_APPROX_LOCAL_MESH 2
 /** The complete B-Rep used display triangulation. */
 #define BREP_CDT_REPAIR_APPROX_FULL_FAST 3
@@ -230,13 +230,21 @@ struct brep_cdt_repair_report {
     int approximation_tier;
     int approximation_faces;
     int approximation_edges;
+    /** Triangles retained byte-for-byte from the rigorous input mesh. */
     int retained_rigorous_triangles;
+    /** Triangles replaced only inside accepted, tagged local neighborhoods. */
     int missing_rigorous_triangles;
     /** Certified triangles retained by a bounded hanging-edge subdivision. */
     int subdivided_rigorous_triangles;
+    /** Accepted local neighborhoods replacing certified triangles. */
+    int replaced_rigorous_components;
+    int largest_replaced_rigorous_triangles;
+    size_t largest_replaced_boundary_edges;
+    fastf_t replaced_rigorous_area;
+    fastf_t largest_replaced_rigorous_area;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
@@ -275,8 +283,12 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s, int face_cnt, int *faces);
  * partial or non-solid mesh.  The original failed-face diagnostics remain
  * available as repair provenance.  A repaired result is accepted only when
  * it is a closed, oriented manifold with valid vertex links, nondegenerate
- * triangles, no nonadjacent triangle intersections, bounded area change, and
- * sampled deviation from the source B-Rep within the requested tolerance.
+ * triangles, bounded area change, and sampled deviation from the source
+ * B-Rep within the requested tolerance.  Nonadjacent triangle intersections
+ * are rejected unless explicitly permitted by the mesh settings.  A
+ * certified triangle neighborhood may be reconstructed only when its area
+ * and boundary stay within the configured hole limits; every affected B-Rep
+ * face and edge is then reported as approximation provenance.
  *
  * Returns 1 if the state already contains a certified solid, 0 if repair
  * produced a certified approximation, and -1 if repair was not possible or
@@ -463,6 +475,7 @@ extern BREP_EXPORT int cdt_test_linear_edge_spacing(void);
 extern BREP_EXPORT int cdt_test_assembled_mesh_validation(void);
 extern BREP_EXPORT int cdt_test_repair_edge_tube(void);
 extern BREP_EXPORT int cdt_test_repair_triangle_split(void);
+extern BREP_EXPORT int cdt_test_repair_patch_limits(void);
 extern BREP_EXPORT int cdt_test_subtolerance_edge_collapse(void);
 extern BREP_EXPORT int cdt_test_subtolerance_ring(void);
 extern BREP_EXPORT int cdt_test_developable_clean(void);
