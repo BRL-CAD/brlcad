@@ -3730,7 +3730,7 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
     if (!s_cdt || !s_cdt->brep || face_index < 0 ||
 	    face_index >= s_cdt->brep->m_F.Count() ||
 	    constraints.face_index != face_index ||
-	    constraints.trims.size() != 2)
+	    constraints.trims.size() < 2)
 	return false;
 
     const ON_BrepFace &face = s_cdt->brep->m_F[face_index];
@@ -3749,11 +3749,36 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	return reject("not one sufficiently bounded outer loop");
 
     struct boundary_path {
-	const ON_BrepTrim *trim = NULL;
-	const std::vector<repair_fast_trim_sample> *samples = NULL;
+	std::vector<repair_fast_trim_sample> samples;
+	size_t constrained_edges = 0;
+	size_t constrained_samples = 0;
     };
     std::vector<boundary_path> boundaries;
     int seam_trims = 0;
+    bool prior_constrained = false;
+    bool first_constrained = false;
+    bool last_constrained = false;
+    const auto append_path = [&](boundary_path &path,
+	    const std::vector<repair_fast_trim_sample> &samples,
+	    size_t edge_count, size_t sample_count) {
+	if (samples.empty())
+	    return false;
+	if (path.samples.empty()) {
+	    path.samples = samples;
+	} else {
+	    const repair_point_key prior = {path.samples.back().point[X],
+		path.samples.back().point[Y], path.samples.back().point[Z]};
+	    const repair_point_key next = {samples.front().point[X],
+		samples.front().point[Y], samples.front().point[Z]};
+	    if (prior != next)
+		return false;
+	    path.samples.insert(path.samples.end(), samples.begin() + 1,
+		samples.end());
+	}
+	path.constrained_edges += edge_count;
+	path.constrained_samples += sample_count;
+	return true;
+    };
     for (int trim_index = 0; trim_index < outer->TrimCount(); ++trim_index) {
 	const ON_BrepTrim *trim = outer->Trim(trim_index);
 	if (!trim)
@@ -3761,14 +3786,32 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	const auto constrained = constraints.trims.find(trim->m_trim_index);
 	if (constrained != constraints.trims.end()) {
 	    const ON_BrepEdge *edge = trim->Edge();
-	    if (!edge || !edge->IsClosed() || constrained->second.size() < 4)
-		return reject("constrained boundary is not a sampled closed edge");
-	    boundaries.push_back(boundary_path{trim, &constrained->second});
+	    if (!edge || constrained->second.size() < 2)
+		return reject("constrained boundary edge is not fully sampled");
+	    if (!prior_constrained)
+		boundaries.push_back(boundary_path());
+	    if (!append_path(boundaries.back(), constrained->second, 1,
+		    constrained->second.size()))
+		return reject("adjacent constrained boundary edges do not meet");
+	    prior_constrained = true;
+	    first_constrained = first_constrained || trim_index == 0;
+	    last_constrained = trim_index + 1 == outer->TrimCount();
 	    continue;
 	}
 	if (trim->m_type != ON_BrepTrim::seam)
 	    return reject("unconstrained trim is not a seam");
 	seam_trims++;
+	prior_constrained = false;
+	last_constrained = false;
+    }
+    if (first_constrained && last_constrained && boundaries.size() > 1) {
+	boundary_path joined = std::move(boundaries.back());
+	if (!append_path(joined, boundaries.front().samples,
+		boundaries.front().constrained_edges,
+		boundaries.front().constrained_samples))
+	    return reject("wrapped constrained boundary edges do not meet");
+	boundaries.front() = std::move(joined);
+	boundaries.pop_back();
     }
     if (boundaries.size() != 2 || seam_trims < 2)
 	return reject("topology is not a two-boundary periodic strip");
@@ -3783,7 +3826,7 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	bool spans_period = true;
 	for (const boundary_path &boundary : boundaries) {
 	    const std::vector<repair_fast_trim_sample> &samples =
-		*boundary.samples;
+		boundary.samples;
 	    spans_period = spans_period && std::fabs(
 		samples.back().uv[direction] -
 		samples.front().uv[direction]) >= 0.5 * period;
@@ -3800,7 +3843,7 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
     std::vector<const repair_fast_trim_sample *> source_points;
     for (const boundary_path &boundary : boundaries) {
 	const std::vector<repair_fast_trim_sample> &samples =
-	    *boundary.samples;
+	    boundary.samples;
 	const repair_point_key first = {samples.front().point[X],
 	    samples.front().point[Y], samples.front().point[Z]};
 	const repair_point_key last = {samples.back().point[X],
@@ -3810,9 +3853,9 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
     }
 
     const std::vector<repair_fast_trim_sample> &first_samples =
-	*boundaries[0].samples;
+	boundaries[0].samples;
     const std::vector<repair_fast_trim_sample> &second_samples =
-	*boundaries[1].samples;
+	boundaries[1].samples;
     if (first_samples.size() < 4 || second_samples.size() < 4)
 	return reject("closed boundary sample counts are too small");
     const size_t first_segments = first_samples.size() - 1;
@@ -3981,8 +4024,10 @@ repair_constrained_periodic_strip(struct ON_Brep_CDT_State *s_cdt,
 	patch = repair_boundary_patch();
 	return reject("triangulated strip is incomplete or degenerate");
     }
-    patch.constrained_edges = boundaries.size();
-    patch.constrained_samples = source_points.size();
+    for (const boundary_path &boundary : boundaries) {
+	patch.constrained_edges += boundary.constrained_edges;
+	patch.constrained_samples += boundary.constrained_samples;
+    }
     return true;
 }
 
