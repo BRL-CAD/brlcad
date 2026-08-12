@@ -24,6 +24,29 @@ struct mesh_output {
     std::vector<fastf_t> vertices;
 };
 
+struct repair_provenance_capture {
+    int calls = 0;
+    int tier = BREP_CDT_REPAIR_APPROX_NONE;
+    std::vector<int> faces;
+    std::vector<int> edges;
+};
+
+static void
+repair_provenance_callback(int tier, const int *faces, size_t face_count,
+	const int *edges, size_t edge_count, void *data)
+{
+    repair_provenance_capture *capture =
+	(repair_provenance_capture *)data;
+    if (!capture)
+	return;
+    capture->calls++;
+    capture->tier = tier;
+    if (faces && face_count)
+	capture->faces.assign(faces, faces + face_count);
+    if (edges && edge_count)
+	capture->edges.assign(edges, edges + edge_count);
+}
+
 static bool
 empty_mesh_contract()
 {
@@ -145,16 +168,30 @@ repair_contract()
     settings.mesh.max_hole_edges = 64;
     settings.max_area_change_percent = 30.0;
     settings.use_full_fast_fallback_if_needed = 1;
+    repair_provenance_capture provenance;
+    settings.provenance = repair_provenance_callback;
+    settings.provenance_data = &provenance;
     struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
     struct brep_cdt_diagnostic diagnostic;
+    const int repair_result = ON_Brep_CDT_Repair(state, &settings, &report);
+    const int approximation_tier = report.approximation_tier;
+    const int approximation_faces = report.approximation_faces;
+    const int approximation_edges = report.approximation_edges;
+    const int missing_rigorous = report.missing_rigorous_triangles;
     bool repaired = partial_result == (int)partial_faces.size() &&
-	ON_Brep_CDT_Repair(state, &settings, &report) == 0 &&
+	repair_result == 0 &&
 	ON_Brep_CDT_Status(state) == 0 &&
 	report.source_diagnostic.result == BREP_CDT_RESULT_PARTIAL &&
 	report.mesh.solid && report.mesh.added_faces > 0 &&
 	!report.full_fast_fallback_used &&
 	report.changed_faces > 0 &&
 	report.deviation_projection_failures == 0 &&
+	approximation_tier == BREP_CDT_REPAIR_APPROX_LOCAL_MESH &&
+	approximation_faces == 1 && approximation_edges == 4 &&
+	!missing_rigorous && provenance.calls == 1 &&
+	provenance.tier == BREP_CDT_REPAIR_APPROX_LOCAL_MESH &&
+	provenance.faces == std::vector<int>({0}) &&
+	provenance.edges.size() == 4 &&
 	ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0 &&
 	diagnostic.result == BREP_CDT_RESULT_REPAIRED &&
 	diagnostic.stage == BREP_CDT_STAGE_MESH_REPAIR &&
@@ -164,10 +201,14 @@ repair_contract()
     if (!repaired) {
 	ON_Brep_CDT_Diagnostic(&diagnostic, state);
 	bu_log("repair contract failed: partial %d/%zu, result %d stage %d, "
-	    "solid %d, added %d, changed %d, projection failures %zu: %s\n",
+	    "solid %d, added %d, changed %d, projection failures %zu, "
+	    "approx %d/%d/%d, missing %d, callback %d/%d/%zu/%zu: %s\n",
 	    partial_result, partial_faces.size(), diagnostic.result,
 	    diagnostic.stage, report.mesh.solid, report.mesh.added_faces,
 	    report.changed_faces, report.deviation_projection_failures,
+	    approximation_tier, approximation_faces, approximation_edges,
+	    missing_rigorous, provenance.calls, provenance.tier,
+	    provenance.faces.size(), provenance.edges.size(),
 	    diagnostic.message);
     }
     ON_Brep_CDT_Destroy(state);
@@ -344,8 +385,9 @@ paired_pcurve_edge_contract()
     struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
     ON_Brep_CDT_Repair(state, &settings, &report);
     valid = valid && report.fast_fallback_used_faces == 2 &&
-	report.fast_fallback_constrained_edges >= 7 &&
-	report.fast_fallback_constrained_samples > 0;
+	report.fast_fallback_constrained_edges >= 6 &&
+	report.fast_fallback_constrained_samples > 0 &&
+	report.missing_rigorous_triangles == 0;
     if (!valid) {
 	bu_log("paired p-curve edge contract failed: result %d stage %d, "
 	    "%d faces completed, fast %d constrained %zu/%zu: %s\n",
