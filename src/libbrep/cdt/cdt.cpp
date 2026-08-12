@@ -2546,6 +2546,156 @@ refine_assembled_intersection(struct ON_Brep_CDT_State *s_cdt,
     return inserted;
 }
 
+typedef std::pair<int, int> assembled_edge_t;
+typedef std::pair<assembled_edge_t, std::set<int, std::greater<int>>>
+    assembled_shared_chord_t;
+
+static std::vector<assembled_shared_chord_t>
+assembled_shared_chords(int vertex_count, int face_count, const int *faces,
+	const std::vector<int> &source_faces)
+{
+    struct chord_incidence {
+	size_t count = 0;
+	std::set<int, std::greater<int>> source_faces;
+    };
+    std::vector<assembled_shared_chord_t> shared;
+    if (vertex_count <= 0 || face_count <= 0 || !faces ||
+	    source_faces.size() != (size_t)face_count)
+	return shared;
+    std::map<assembled_edge_t, chord_incidence> incidence;
+    for (int triangle = 0; triangle < face_count; ++triangle) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    int first = faces[3 * triangle + corner];
+	    int second = faces[3 * triangle + (corner + 1) % 3];
+	    if (first < 0 || second < 0 || first >= vertex_count ||
+		    second >= vertex_count || first == second)
+		continue;
+	    if (second < first)
+		std::swap(first, second);
+	    chord_incidence &entry = incidence[{first, second}];
+	    entry.count++;
+	    entry.source_faces.insert(source_faces[(size_t)triangle]);
+	}
+    }
+    for (const auto &entry : incidence) {
+	if (entry.second.count > 2 && entry.second.source_faces.size() > 1)
+	    shared.push_back({entry.first, entry.second.source_faces});
+    }
+    return shared;
+}
+
+int
+cdt_test_assembled_shared_chords(void)
+{
+    const int common_diagonal[] = {
+	0, 1, 2, 0, 2, 3,
+	2, 1, 0, 3, 2, 0
+    };
+    const std::vector<int> two_faces = {0, 0, 1, 1};
+    const std::vector<assembled_shared_chord_t> shared =
+	assembled_shared_chords(4, 4, common_diagonal, two_faces);
+    if (shared.size() != 1 || shared[0].first != assembled_edge_t(0, 2) ||
+	    shared[0].second !=
+	    std::set<int, std::greater<int>>({1, 0}))
+	return 1;
+
+    const int distinct_diagonals[] = {
+	0, 1, 2, 0, 2, 3,
+	1, 0, 3, 3, 2, 1
+    };
+    if (!assembled_shared_chords(4, 4, distinct_diagonals,
+	    two_faces).empty())
+	return 2;
+    const std::vector<int> one_face = {0, 0, 0, 0};
+    return assembled_shared_chords(4, 4, common_diagonal,
+	one_face).empty() ? 0 : 3;
+}
+
+/* Two thin faces can legitimately share all of their B-Rep boundary points.
+ * If their independent CDTs choose the same non-boundary chord, however, that
+ * chord has four incident triangles in the assembled mesh and its endpoint
+ * links cease to be disks.  Refine one incident face at the chord midpoint.
+ * The sample is evaluated on that face's source surface, leaves the
+ * authoritative B-Rep boundary untouched, and removes only the accidental
+ * cross-face chord identity. */
+static size_t
+refine_assembled_shared_chords(struct ON_Brep_CDT_State *s_cdt,
+	int vertex_count, int face_count, const int *faces,
+	size_t max_points)
+{
+    if (!s_cdt || vertex_count <= 0 || face_count <= 0 || !faces ||
+	    !max_points ||
+	    s_cdt->bot_pnt_to_on_pnt->size() != (size_t)vertex_count ||
+	    s_cdt->bot_face_to_brep_face.size() != (size_t)face_count)
+	return 0;
+    const std::vector<assembled_shared_chord_t> shared =
+	assembled_shared_chords(vertex_count, face_count, faces,
+	    s_cdt->bot_face_to_brep_face);
+
+    size_t inserted = 0;
+    std::set<int> changed_faces;
+    for (const assembled_shared_chord_t &edge_entry : shared) {
+	if (inserted >= max_points)
+	    break;
+	ON_3dPoint *first_point = (*s_cdt->bot_pnt_to_on_pnt)[
+	    (size_t)edge_entry.first.first];
+	ON_3dPoint *second_point = (*s_cdt->bot_pnt_to_on_pnt)[
+	    (size_t)edge_entry.first.second];
+	if (!first_point || !second_point)
+	    continue;
+	const ON_3dPoint midpoint = 0.5 * (*first_point + *second_point);
+	for (int face : edge_entry.second) {
+	    const auto found_mesh = s_cdt->fmeshes.find(face);
+	    if (found_mesh == s_cdt->fmeshes.end())
+		continue;
+	    cdt_mesh_t &mesh = found_mesh->second;
+	    const auto first_local = mesh.p2ind.find(first_point);
+	    const auto second_local = mesh.p2ind.find(second_point);
+	    if (first_local == mesh.p2ind.end() ||
+		    second_local == mesh.p2ind.end() ||
+		    first_local->second == second_local->second)
+		continue;
+	    const uedge_t local_edge(first_local->second,
+		second_local->second);
+	    if (mesh.brep_edges.find(local_edge) != mesh.brep_edges.end() ||
+		    mesh.chart_boundary_edges.find(local_edge) !=
+		    mesh.chart_boundary_edges.end())
+		continue;
+	    const auto local_incidence = mesh.uedges2tris.find(local_edge);
+	    if (local_incidence == mesh.uedges2tris.end() ||
+		    local_incidence->second.size() != 2)
+		continue;
+	    const size_t local_triangle = *local_incidence->second.begin();
+	    if (local_triangle >= mesh.tris_vect.size())
+		continue;
+	    const std::vector<triangle_t> target = {
+		mesh.tris_vect[local_triangle]
+	    };
+	    if (!mesh.split_problem_triangle_edges(target, 1, &midpoint,
+		    &local_edge))
+		continue;
+	    inserted++;
+	    changed_faces.insert(face);
+	    break;
+	}
+    }
+    if (!inserted)
+	return 0;
+
+    for (int face : changed_faces) {
+	cdt_mesh_t &mesh = s_cdt->fmeshes[face];
+	if (mesh.valid(0) || (mesh.repair_incorrect_normal_edges() &&
+		mesh.valid(0)))
+	    continue;
+	return 0;
+    }
+    const char *dump = getenv("BRLCAD_CDT_DUMP_FAILURES");
+    if (dump && dump[0] && !BU_STR_EQUAL(dump, "0"))
+	bu_log("Refined %zu of %zu accidental cross-face shared chords on "
+	    "%zu faces\n", inserted, shared.size(), changed_faces.size());
+    return inserted;
+}
+
 static bool
 brep_cdt_relaxed_topology_safe(const ON_Brep *brep, std::string *reason)
 {
@@ -3046,6 +3196,15 @@ brep_cdt_tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt,
 	    !mesh_validation.degenerate_faces &&
 	    !mesh_validation.invalid_vertex_links;
 	size_t inserted = 0;
+	if (mesh_validation.invalid_vertex_links &&
+		assembled_refinement_attempts <
+		MAX_ASSEMBLED_REFINEMENT_ATTEMPTS &&
+		assembled_refinement_points <
+		MAX_ASSEMBLED_REFINEMENT_POINTS) {
+	    inserted = refine_assembled_shared_chords(s_cdt, valid_vcnt,
+		valid_fcnt, valid_faces, MAX_ASSEMBLED_REFINEMENT_POINTS -
+		assembled_refinement_points);
+	}
 	if (only_intersection && assembled_refinement_attempts <
 		MAX_ASSEMBLED_REFINEMENT_ATTEMPTS &&
 		assembled_refinement_points <
