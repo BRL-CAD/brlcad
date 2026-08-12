@@ -1314,9 +1314,9 @@ int
 pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 {
 #ifdef HAVE_WRITEV
-    static struct iovec cmdvec[2];
+    struct iovec cmdvec[2];
 #endif
-    static struct pkg_header hdr;
+    struct pkg_header hdr;
     ssize_t i;
 
     PKG_CK(pc);
@@ -1483,9 +1483,9 @@ int
 pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2, struct pkg_conn *pc)
 {
 #ifdef HAVE_WRITEV
-    static struct iovec cmdvec[3];
+    struct iovec cmdvec[3];
 #endif
-    static struct pkg_header hdr;
+    struct pkg_header hdr;
     ssize_t i;
 
     PKG_CK(pc);
@@ -1671,7 +1671,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 int
 pkg_stream(int type, const char *buf, size_t len, struct pkg_conn *pc)
 {
-    static struct pkg_header hdr;
+    struct pkg_header hdr;
 
     if (_pkg_debug) {
 	_pkg_timestamp();
