@@ -1166,6 +1166,126 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     return true;
 }
 
+struct repair_toleranced_edge_tube {
+    int edge_index;
+    double tolerance;
+    std::unique_ptr<ON_NurbsCurve> curve;
+};
+
+static std::vector<repair_toleranced_edge_tube>
+repair_face_edge_tubes(const ON_BrepFace &face, double allowed)
+{
+    std::vector<repair_toleranced_edge_tube> edge_tubes;
+    std::set<int> visited_edges;
+    for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
+	const ON_BrepLoop *loop = face.Loop(loop_index);
+	if (!loop)
+	    continue;
+	for (int trim_index = 0; trim_index < loop->TrimCount();
+		++trim_index) {
+	    const ON_BrepTrim *trim = loop->Trim(trim_index);
+	    const ON_BrepEdge *edge = trim ? trim->Edge() : NULL;
+	    if (!edge || !visited_edges.insert(edge->m_edge_index).second ||
+		    !std::isfinite(edge->m_tolerance) ||
+		    edge->m_tolerance <= allowed ||
+		    NEAR_EQUAL(edge->m_tolerance, ON_UNSET_VALUE,
+			ON_ZERO_TOLERANCE))
+		continue;
+	    std::unique_ptr<ON_NurbsCurve> curve(edge->NurbsCurve());
+	    if (!curve || !curve->IsValid())
+		continue;
+	    /* Keep automatic interpretations local even when an imported edge
+	     * carries an effectively unbounded tolerance. */
+	    const double tube_limit = std::min(edge->m_tolerance,
+		4.0 * allowed);
+	    edge_tubes.push_back({edge->m_edge_index, tube_limit,
+		std::move(curve)});
+	}
+    }
+    return edge_tubes;
+}
+
+static bool
+repair_point_in_edge_tube(const repair_toleranced_edge_tube &tube,
+	const ON_3dPoint &point)
+{
+    if (!point.IsValid() || !tube.curve)
+	return false;
+    const ON_Interval domain = tube.curve->Domain();
+    double parameter = DBL_MAX;
+    if (!ON_NurbsCurve_GetClosestPoint(&parameter, tube.curve.get(), point,
+	    tube.tolerance, &domain))
+	return false;
+    const ON_3dPoint closest = tube.curve->PointAt(parameter);
+    return closest.IsValid() && closest.DistanceTo(point) <= tube.tolerance;
+}
+
+static bool
+repair_edge_tube_supports(
+	const std::vector<repair_toleranced_edge_tube> &edge_tubes,
+	double allowed, const ON_3dPoint &surface_point,
+	const ON_3dPoint &mesh_point, double deviation)
+{
+    if (deviation <= allowed)
+	return true;
+    for (const repair_toleranced_edge_tube &tube : edge_tubes) {
+	if (deviation <= tube.tolerance &&
+		repair_point_in_edge_tube(tube, surface_point) &&
+		repair_point_in_edge_tube(tube, mesh_point))
+	    return true;
+    }
+    return false;
+}
+
+int
+cdt_test_repair_edge_tube(void)
+{
+    ON_3dPoint corners[8] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(10.0, 0.0, 0.0),
+	ON_3dPoint(10.0, 10.0, 0.0), ON_3dPoint(0.0, 10.0, 0.0),
+	ON_3dPoint(0.0, 0.0, 10.0), ON_3dPoint(10.0, 0.0, 10.0),
+	ON_3dPoint(10.0, 10.0, 10.0), ON_3dPoint(0.0, 10.0, 10.0)
+    };
+    std::unique_ptr<ON_Brep> box(ON_BrepBox(corners));
+    if (!box || box->m_F.Count() < 1)
+	return 1;
+    ON_BrepFace &face = box->m_F[0];
+    ON_BrepLoop *loop = face.OuterLoop();
+    ON_BrepTrim *trim = loop && loop->TrimCount() ? loop->Trim(0) : NULL;
+    ON_BrepEdge *edge = trim ? trim->Edge() : NULL;
+    if (!edge)
+	return 2;
+    edge->m_tolerance = 5.0;
+    std::vector<repair_toleranced_edge_tube> tubes =
+	repair_face_edge_tubes(face, 2.0);
+    if (tubes.size() != 1 || !tubes[0].curve ||
+	    !NEAR_EQUAL(tubes[0].tolerance, 5.0, ON_ZERO_TOLERANCE))
+	return 3;
+    const ON_Interval domain = tubes[0].curve->Domain();
+    const ON_3dPoint first = tubes[0].curve->PointAt(domain.Min());
+    const ON_3dPoint last = tubes[0].curve->PointAt(domain.Max());
+    const ON_3dPoint middle = tubes[0].curve->PointAt(domain.Mid());
+    ON_3dVector tangent = last - first;
+    ON_3dVector axis = std::fabs(tangent.x) < 0.9 * tangent.Length() ?
+	ON_3dVector(1.0, 0.0, 0.0) : ON_3dVector(0.0, 1.0, 0.0);
+    ON_3dVector offset = ON_CrossProduct(tangent, axis);
+    if (!middle.IsValid() || !offset.Unitize())
+	return 4;
+    const ON_3dPoint surface_point = middle + 3.0 * offset;
+    const ON_3dPoint mesh_point = middle - offset;
+    if (!repair_edge_tube_supports(tubes, 2.0, surface_point,
+	    mesh_point, surface_point.DistanceTo(mesh_point)))
+	return 5;
+    const ON_3dPoint outside = middle + 6.0 * offset;
+    if (repair_edge_tube_supports(tubes, 2.0, outside, mesh_point,
+	    outside.DistanceTo(mesh_point)))
+	return 6;
+    edge->m_tolerance = 50.0;
+    tubes = repair_face_edge_tubes(face, 2.0);
+    return tubes.size() == 1 &&
+	NEAR_EQUAL(tubes[0].tolerance, 8.0, ON_ZERO_TOLERANCE) ? 0 : 7;
+}
+
 /* Repair may make a narrowly scoped interpretation of a weakly-simple trim
  * loop after the topology-preserving rigorous path has failed.  Clipper
  * cleans the filled chart set, while topology_preserving_clean_triangulation
@@ -1175,7 +1295,8 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
  * approximation with the responsible B-Rep face and edges. */
 static bool
 repair_surface_deviation_triangles(cdt_mesh_t *mesh, double allowed,
-	std::vector<triangle_t> &problematic, double *maximum_deviation)
+	std::vector<triangle_t> &problematic, double *maximum_deviation,
+	bool accept_edge_tubes)
 {
     problematic.clear();
     if (maximum_deviation)
@@ -1188,6 +1309,19 @@ repair_surface_deviation_triangles(cdt_mesh_t *mesh, double allowed,
     const ON_Surface *surface = mesh->brep->m_F[mesh->f_id].SurfaceOf();
     if (!surface)
 	return false;
+    const std::set<uedge_t> boundary_edges = mesh->get_boundary_edges();
+
+    /* A valid B-Rep may explicitly declare that an edge and an incident
+     * surface disagree by more than the requested tessellation tolerance.
+     * A locally inferred repair is allowed to bridge that discrepancy, but
+     * only inside the uncertain edge's own bounded neighborhood.  Requiring
+     * both the surface sample and its closest mesh point to lie in the same
+     * edge tube prevents a large edge tolerance from relaxing the rest of the
+     * face. */
+    const ON_BrepFace &brep_face = mesh->brep->m_F[mesh->f_id];
+    std::vector<repair_toleranced_edge_tube> edge_tubes;
+    if (accept_edge_tubes)
+	edge_tubes = repair_face_edge_tubes(brep_face, allowed);
     typedef std::array<long, 3> vertex_key;
     std::map<vertex_key, triangle_t> active;
     for (const triangle_t &triangle : mesh->tris_vect) {
@@ -1241,12 +1375,17 @@ repair_surface_deviation_triangles(cdt_mesh_t *mesh, double allowed,
 	VSET(test_point, surface_point.x, surface_point.y, surface_point.z);
 	for (int corner = 0; corner < 3; ++corner)
 	    VMOVE(corners[corner], *mesh->pnts[(size_t)mapped[corner]]);
-	const double distance = bg_tri_closest_pt(NULL, test_point,
+	point_t closest_point;
+	const double distance = bg_tri_closest_pt(&closest_point, test_point,
 	    corners[0], corners[1], corners[2]);
 	if (!std::isfinite(distance))
 	    continue;
 	evaluated = true;
 	double triangle_deviation = distance;
+	bool unsupported_deviation = accept_edge_tubes &&
+	    !repair_edge_tube_supports(edge_tubes, allowed, surface_point,
+		ON_3dPoint(closest_point), distance);
+	int maximum_edge = -1;
 	for (int edge = 0; edge < 3; ++edge) {
 	    const long native_edge[2] = {
 		native.v[edge], native.v[(edge + 1) % 3]};
@@ -1282,13 +1421,51 @@ repair_surface_deviation_triangles(cdt_mesh_t *mesh, double allowed,
 	    double parameter = chord_length_sq > DBL_EPSILON ?
 		((edge_surface - first) * chord) / chord_length_sq : 0.0;
 	    parameter = std::max(0.0, std::min(1.0, parameter));
-	    triangle_deviation = std::max(triangle_deviation,
-		edge_surface.DistanceTo(first + parameter * chord));
+	    const ON_3dPoint edge_mesh_point = first + parameter * chord;
+	    const double edge_deviation = edge_surface.DistanceTo(
+		edge_mesh_point);
+	    unsupported_deviation = unsupported_deviation ||
+		(accept_edge_tubes && !repair_edge_tube_supports(edge_tubes,
+		    allowed, edge_surface, edge_mesh_point, edge_deviation));
+	    if (edge_deviation > triangle_deviation) {
+		triangle_deviation = edge_deviation;
+		maximum_edge = edge;
+	    }
 	}
+	const bool new_maximum = maximum_deviation &&
+	    triangle_deviation > *maximum_deviation;
 	if (maximum_deviation)
 	    *maximum_deviation = std::max(*maximum_deviation,
 		triangle_deviation);
+	if (new_maximum && triangle_deviation > allowed &&
+		getenv("BRLCAD_CDT_DUMP_FAILURES") &&
+		getenv("BRLCAD_CDT_DUMP_FAILURES")[0] &&
+		!BU_STR_EQUAL(getenv("BRLCAD_CDT_DUMP_FAILURES"), "0")) {
+	    const uedge_t maximum_mesh_edge = maximum_edge >= 0 ?
+		uedge_t(mapped[maximum_edge], mapped[(maximum_edge + 1) % 3]) :
+		uedge_t(-1, -1);
+	    const bool boundary = maximum_edge >= 0 &&
+		boundary_edges.find(maximum_mesh_edge) != boundary_edges.end();
+	    const bool brep_edge = maximum_edge >= 0 &&
+		mesh->brep_edges.find(maximum_mesh_edge) !=
+		mesh->brep_edges.end();
+	    const auto segment_entry = mesh->ue2b_map.find(maximum_mesh_edge);
+	    const int brep_edge_index = segment_entry != mesh->ue2b_map.end() &&
+		segment_entry->second ? segment_entry->second->edge_ind : -1;
+	    const double brep_edge_tolerance = brep_edge_index >= 0 &&
+		brep_edge_index < mesh->brep->m_E.Count() ?
+		mesh->brep->m_E[brep_edge_index].m_tolerance : -1.0;
+	    bu_log("Face %d: local surface deviation %.17g at triangle %zu "
+		"(%ld,%ld,%ld), source=%s edge=%d boundary=%d brep=%d "
+		"brep_edge=%d tolerance=%.17g\n",
+		mesh->f_id, triangle_deviation, triangle_entry->second.ind,
+		mapped[0], mapped[1], mapped[2],
+		maximum_edge < 0 ? "interior" : "edge", maximum_edge,
+		boundary ? 1 : 0, brep_edge ? 1 : 0, brep_edge_index,
+		brep_edge_tolerance);
+	}
 	if (triangle_deviation > allowed &&
+		(!accept_edge_tubes || unsupported_deviation) &&
 		selected.insert(triangle_entry->second.ind).second)
 	    problematic.push_back(triangle_entry->second);
     }
@@ -1339,13 +1516,24 @@ repair_approximate_face_triangulation(struct ON_Brep_CDT_State *s_cdt,
 	    inserted_points < MAX_CHART_REFINEMENT_POINTS) {
 	std::vector<triangle_t> problematic;
 	if (!repair_surface_deviation_triangles(mesh, allowed_deviation,
-		problematic, &maximum_deviation) || problematic.empty())
+		problematic, &maximum_deviation, false) || problematic.empty())
 	    break;
+	const bool dump_refinement = getenv("BRLCAD_CDT_DUMP_FAILURES") &&
+	    getenv("BRLCAD_CDT_DUMP_FAILURES")[0] &&
+	    !BU_STR_EQUAL(getenv("BRLCAD_CDT_DUMP_FAILURES"), "0");
+	if (dump_refinement)
+	    bu_log("Face %d: local surface refinement round %d found %zu "
+		"triangles over %.17g (maximum %.17g)\n", face_index,
+		refinement_rounds + 1, problematic.size(),
+		allowed_deviation, maximum_deviation);
 	size_t inserted = mesh->split_problem_triangle_edges(problematic,
 	    MAX_CHART_REFINEMENT_POINTS - inserted_points);
 	if (!inserted)
 	    inserted = mesh->refine_problem_triangles(problematic,
 		MAX_CHART_REFINEMENT_POINTS - inserted_points);
+	if (dump_refinement)
+	    bu_log("Face %d: local surface refinement round %d inserted %zu "
+		"points\n", face_index, refinement_rounds + 1, inserted);
 	if (!inserted)
 	    break;
 	inserted_points += inserted;
@@ -1355,7 +1543,7 @@ repair_approximate_face_triangulation(struct ON_Brep_CDT_State *s_cdt,
     }
     std::vector<triangle_t> remaining;
     if (!repair_surface_deviation_triangles(mesh, allowed_deviation,
-	    remaining, &maximum_deviation) || !remaining.empty()) {
+	    remaining, &maximum_deviation, true) || !remaining.empty()) {
 	bu_log("Face %d: local surface refinement left %zu triangles over "
 	    "deviation %.17g after %d rounds and %zu points\n", face_index,
 	    remaining.size(), allowed_deviation, refinement_rounds,
