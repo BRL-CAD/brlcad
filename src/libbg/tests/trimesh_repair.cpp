@@ -451,6 +451,54 @@ test_manifold_rejection_report(void)
     return 0;
 }
 
+/* Manifold accepts disconnected closed components which meet at one point
+ * when their coincident vertices remain topologically distinct.  Preserve
+ * that indexed interpretation instead of welding the contact into a
+ * non-manifold vertex. */
+static int
+test_manifold_preserves_point_contact(void)
+{
+    static point_t points[8] = {
+	{0, 0, 0}, {1, 0, 0}, {0.5, 1, 0}, {0.5, 0.5, 1},
+	{0, 0, 0}, {-1, 0, 0}, {-0.5, -1, 0}, {-0.5, -0.5, -1}
+    };
+    static int faces[24] = {
+	0, 2, 1, 0, 1, 3, 1, 2, 3, 0, 3, 2,
+	4, 5, 6, 4, 7, 5, 5, 7, 6, 4, 6, 7
+    };
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.allow_self_intersections = 1;
+    settings.require_manifold = 1;
+    int *output_faces = NULL;
+    int output_face_count = 0;
+    point_t *output_points = NULL;
+    int output_point_count = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int result = bg_trimesh_repair2(&output_faces,
+	&output_face_count, &output_points, &output_point_count, faces, 8,
+	points, 8, &settings, &report);
+    const bool valid = result == 0 && output_faces && output_points &&
+	output_face_count == 8 && output_point_count == 8 && report.solid &&
+	report.manifold_accepted && !report.excess_edges &&
+	!report.invalid_vertex_links;
+    if (output_faces)
+	bu_free(output_faces, "point-contact faces");
+    if (output_points)
+	bu_free(output_points, "point-contact points");
+    if (!valid) {
+	bu_log("FAIL test_manifold_preserves_point_contact: ret=%d "
+	    "faces=%d points=%d solid=%d manifold=%d excess=%d links=%d\n",
+	    result, output_face_count, output_point_count, report.solid,
+	    report.manifold_accepted, report.excess_edges,
+	    report.invalid_vertex_links);
+	return -1;
+    }
+    bu_log("PASS test_manifold_preserves_point_contact\n");
+    return 0;
+}
+
 /* A topologically valid cap is not acceptable when it cuts through another
  * closed component.  Both available triangulations cover the same square, so
  * repair must leave the hole open and fail instead of returning an
@@ -1327,6 +1375,8 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_repair2_report()             != 0) ? 1 : 0;
     failures += (test_touching_triangular_holes()   != 0) ? 1 : 0;
     failures += (test_manifold_rejection_report()   != 0) ? 1 : 0;
+    failures +=
+	(test_manifold_preserves_point_contact() != 0) ? 1 : 0;
     failures += (test_intersecting_hole_patch_rejected() != 0) ? 1 : 0;
     failures +=
 	(test_intersecting_hole_patch_manifold_accepted() != 0) ? 1 : 0;
