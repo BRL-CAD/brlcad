@@ -132,6 +132,28 @@ struct brep_cdt_diagnostic {
  * reconstructed independently so a large component cannot erase a smaller
  * one; max_poisson_components bounds that work.
  */
+/** No approximate geometry was needed. */
+#define BREP_CDT_REPAIR_APPROX_NONE 0
+/** A failed face used display triangulation with rigorous edge samples. */
+#define BREP_CDT_REPAIR_APPROX_CONSTRAINED_FACE 1
+/** Boundary-only mesh repair added geometry without replacing rigorous faces. */
+#define BREP_CDT_REPAIR_APPROX_LOCAL_MESH 2
+/** The complete B-Rep used display triangulation. */
+#define BREP_CDT_REPAIR_APPROX_FULL_FAST 3
+/** The complete display mesh was replaced by an implicit reconstruction. */
+#define BREP_CDT_REPAIR_APPROX_POISSON 4
+
+/**
+ * Report the B-Rep topology whose interpretation required approximation.
+ * The callback is invoked only for an accepted repaired solid.  face_indices
+ * and edge_indices remain valid only for the duration of the call.  Callers
+ * producing a BoT may use these lists and approximation_tier to attach
+ * provenance attributes to the converted object.
+ */
+typedef void (*brep_cdt_repair_provenance_t)(int approximation_tier,
+	const int *face_indices, size_t face_count, const int *edge_indices,
+	size_t edge_count, void *data);
+
 struct brep_cdt_repair_settings {
     struct bg_trimesh_repair_settings mesh;
     fastf_t max_surface_deviation;
@@ -149,9 +171,11 @@ struct brep_cdt_repair_settings {
     fastf_t poisson_scale;
     int use_full_fast_fallback_if_needed;
     int try_invalid_brep;
+    brep_cdt_repair_provenance_t provenance;
+    void *provenance_data;
 };
 
-#define BREP_CDT_REPAIR_SETTINGS_INIT {BG_TRIMESH_REPAIR_SETTINGS_INIT, 0.0, 4096, 1.0, 0, 1, 0, 0, 8, 64, 1048576, 134217728, 5000, 0.0, 0, 0}
+#define BREP_CDT_REPAIR_SETTINGS_INIT {BG_TRIMESH_REPAIR_SETTINGS_INIT, 0.0, 4096, 1.0, 0, 1, 0, 0, 8, 64, 1048576, 134217728, 5000, 0.0, 0, 0, NULL, NULL}
 
 /** Provenance and quality measurements for a repair attempt. */
 struct brep_cdt_repair_report {
@@ -203,9 +227,14 @@ struct brep_cdt_repair_report {
     fastf_t rigorous_first_reference_area;
     fastf_t rigorous_first_output_area;
     fastf_t rigorous_first_area_change_percent;
+    int approximation_tier;
+    int approximation_faces;
+    int approximation_edges;
+    int retained_rigorous_triangles;
+    int missing_rigorous_triangles;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0}
 
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
