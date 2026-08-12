@@ -4119,14 +4119,17 @@ struct repair_degenerate_neighborhood_stats {
     int components = 0;
     int removed_faces = 0;
     int added_faces = 0;
+    int boundary_edges = 0;
     double max_center_offset = 0.0;
+    bool inferred_topology = false;
 };
 
-/* When a failed-face triangulation cannot reproduce the segmentation of its
- * authoritative neighbors, its own boundary is not a safe repair outline.
- * Discard only that one approximate face and recover the exact indexed ring
- * exposed by the retained rigorous prefix.  A bounded fan then closes the
- * ring without moving or welding any certified vertex. */
+/* When a failed-face triangulation cannot reproduce its authoritative
+ * neighbors, discard only that approximate face and recover the exact indexed
+ * rings exposed by the retained rigorous prefix.  Close one ring with a
+ * bounded fan.  For holes, try the source chart, topology-preserving Clipper
+ * cleanup, a bounded inferred chart, and finally a certified common plane.
+ * No path moves or welds a retained rigorous vertex. */
 static bool
 repair_failed_face_from_rigorous_boundary(
 	struct ON_Brep_CDT_State *s_cdt, int **faces, int *face_count,
@@ -4144,28 +4147,17 @@ repair_failed_face_from_rigorous_boundary(
 	return false;
 
     std::set<int> approximate_sources;
-    bool has_degenerate = false;
     for (int face = rigorous_face_count; face < *face_count; ++face) {
 	if (source_faces[(size_t)face] < 0)
 	    return false;
 	approximate_sources.insert(source_faces[(size_t)face]);
-	ON_3dPoint point[3];
 	for (int corner = 0; corner < 3; ++corner) {
 	    const int vertex = (*faces)[(size_t)face * 3 + corner];
 	    if (vertex < 0 || vertex >= *vertex_count)
 		return false;
-	    point[corner] = ON_3dPoint(&(*vertices)[(size_t)vertex * 3]);
 	}
-	const ON_3dVector first = point[1] - point[0];
-	const ON_3dVector second = point[2] - point[0];
-	const double longest_squared = std::max(first.LengthSquared(),
-	    std::max(second.LengthSquared(),
-		point[2].DistanceToSquared(point[1])));
-	has_degenerate = has_degenerate || !(longest_squared > 0.0) ||
-	    ON_CrossProduct(first, second).Length() <= 64.0 *
-	    std::numeric_limits<double>::epsilon() * longest_squared;
     }
-    if (!has_degenerate || approximate_sources.size() != 1)
+    if (approximate_sources.size() != 1)
 	return false;
     const int source_face = *approximate_sources.begin();
     if (source_face < 0 || source_face >= s_cdt->orig_brep->m_F.Count())
@@ -4214,82 +4206,896 @@ repair_failed_face_from_rigorous_boundary(
 	    return false;
     }
 
-    std::vector<int> ring;
+    std::vector<std::vector<int>> rings;
     std::vector<bool> used(boundary.size(), false);
-    int current = boundary.front().from;
-    const int start = current;
-    for (size_t count = 0; count < boundary.size(); ++count) {
-	const auto found = outgoing.find(current);
-	if (found == outgoing.end() || used[found->second])
+    for (size_t first_edge = 0; first_edge < boundary.size(); ++first_edge) {
+	if (used[first_edge])
+	    continue;
+	std::vector<int> ring;
+	int current = boundary[first_edge].from;
+	const int start = current;
+	for (size_t count = 0; count < boundary.size(); ++count) {
+	    const auto found = outgoing.find(current);
+	    if (found == outgoing.end() || used[found->second])
+		break;
+	    used[found->second] = true;
+	    ring.push_back(current);
+	    current = boundary[found->second].to;
+	    if (current == start)
+		break;
+	}
+	if (current != start || ring.size() < 3)
 	    return false;
-	used[found->second] = true;
-	ring.push_back(current);
-	current = boundary[found->second].to;
+	rings.push_back(std::move(ring));
     }
-    if (current != start ||
+    if (rings.empty() ||
 	    std::find(used.begin(), used.end(), false) != used.end())
 	return false;
 
     const fastf_t *input_vertices = *vertices;
-    ON_3dPoint average(0.0, 0.0, 0.0);
-    for (int vertex : ring)
-	average += ON_3dPoint(&input_vertices[(size_t)vertex * 3]);
-    average /= (double)ring.size();
-
-    std::vector<ON_3dPoint> center_candidates;
-    center_candidates.push_back(average);
+    double approximate_face_area = 0.0;
+    for (int face = rigorous_face_count; face < *face_count; ++face) {
+	const ON_3dPoint first(&input_vertices[(size_t)
+	    (*faces)[(size_t)face * 3] * 3]);
+	const ON_3dPoint second(&input_vertices[(size_t)
+	    (*faces)[(size_t)face * 3 + 1] * 3]);
+	const ON_3dPoint third(&input_vertices[(size_t)
+	    (*faces)[(size_t)face * 3 + 2] * 3]);
+	approximate_face_area += 0.5 *
+	    ON_CrossProduct(second - first, third - first).Length();
+    }
+    const std::vector<int> &ring = rings.front();
     const ON_BrepFace &brep_face = s_cdt->orig_brep->m_F[source_face];
     const ON_Surface *surface = brep_face.SurfaceOf();
-    if (surface) {
-	const ON_Interval u = surface->Domain(0);
-	const ON_Interval v = surface->Domain(1);
-	const double fractions[3] = {0.5, 0.25, 0.75};
-	for (double uf : fractions) {
-	    for (double vf : fractions) {
-		const ON_3dPoint point = surface->PointAt(
-		    (1.0 - uf) * u.Min() + uf * u.Max(),
-		    (1.0 - vf) * v.Min() + vf * v.Max());
-		if (point.IsValid())
-		    center_candidates.push_back(point);
+    std::vector<int> patch_faces;
+    std::vector<fastf_t> added_vertices;
+    double center_distance = 0.0;
+    bool inferred_topology = false;
+    if (rings.size() == 1) {
+	ON_3dPoint average(0.0, 0.0, 0.0);
+	for (int vertex : ring)
+	    average += ON_3dPoint(&input_vertices[(size_t)vertex * 3]);
+	average /= (double)ring.size();
+	std::vector<ON_3dPoint> center_candidates;
+	center_candidates.push_back(average);
+	if (surface) {
+	    const ON_Interval u = surface->Domain(0);
+	    const ON_Interval v = surface->Domain(1);
+	    const double fractions[3] = {0.5, 0.25, 0.75};
+	    for (double uf : fractions) {
+		for (double vf : fractions) {
+		    const ON_3dPoint point = surface->PointAt(
+			(1.0 - uf) * u.Min() + uf * u.Max(),
+			(1.0 - vf) * v.Min() + vf * v.Max());
+		    if (point.IsValid())
+			center_candidates.push_back(point);
+		}
 	    }
 	}
-    }
-    const auto valid_center = [&](const ON_3dPoint &center) {
-	if (!center.IsValid())
-	    return false;
-	for (size_t point = 0; point < ring.size(); ++point) {
-	    const ON_3dPoint first(&input_vertices[
-		(size_t)ring[point] * 3]);
-	    const ON_3dPoint second(&input_vertices[
-		(size_t)ring[(point + 1) % ring.size()] * 3]);
-	    const ON_3dVector edge = second - first;
-	    const ON_3dVector radial = center - first;
-	    const double longest_squared = std::max(edge.LengthSquared(),
-		std::max(radial.LengthSquared(),
-		    center.DistanceToSquared(second)));
-	    if (!(longest_squared > 0.0) ||
-		    ON_CrossProduct(edge, radial).Length() <= 64.0 *
-		    std::numeric_limits<double>::epsilon() * longest_squared)
+	const auto valid_center = [&](const ON_3dPoint &center) {
+	    if (!center.IsValid())
 		return false;
+	    for (size_t point = 0; point < ring.size(); ++point) {
+		const ON_3dPoint first(&input_vertices[
+		    (size_t)ring[point] * 3]);
+		const ON_3dPoint second(&input_vertices[
+		    (size_t)ring[(point + 1) % ring.size()] * 3]);
+		const ON_3dVector edge = second - first;
+		const ON_3dVector radial = center - first;
+		const double longest_squared = std::max(edge.LengthSquared(),
+		    std::max(radial.LengthSquared(),
+			center.DistanceToSquared(second)));
+		if (!(longest_squared > 0.0) ||
+			ON_CrossProduct(edge, radial).Length() <= 64.0 *
+			std::numeric_limits<double>::epsilon() *
+			longest_squared)
+		    return false;
+	    }
+	    return true;
+	};
+	ON_3dPoint center = ON_3dPoint::UnsetPoint;
+	center_distance = std::numeric_limits<double>::infinity();
+	for (const ON_3dPoint &candidate : center_candidates) {
+	    if (!valid_center(candidate))
+		continue;
+	    const double distance = candidate.DistanceTo(average);
+	    if (distance < center_distance) {
+		center = candidate;
+		center_distance = distance;
+	    }
 	}
-	return true;
-    };
-    ON_3dPoint center = ON_3dPoint::UnsetPoint;
-    double center_distance = std::numeric_limits<double>::infinity();
-    for (const ON_3dPoint &candidate : center_candidates) {
-	if (!valid_center(candidate))
-	    continue;
-	const double distance = candidate.DistanceTo(average);
-	if (distance < center_distance) {
-	    center = candidate;
-	    center_distance = distance;
+	if (!center.IsValid()) {
+	    if (debug_topology)
+		bu_log("Rigorous-boundary face repair rejected: %zu-edge "
+		    "ring has no nondegenerate interior candidate\n",
+		    ring.size());
+	    return false;
 	}
-    }
-    if (!center.IsValid()) {
+	const int center_index = *vertex_count;
+	added_vertices = {center.x, center.y, center.z};
+	for (size_t point = 0; point < ring.size(); ++point) {
+	    patch_faces.push_back(ring[point]);
+	    patch_faces.push_back(ring[(point + 1) % ring.size()]);
+	    patch_faces.push_back(center_index);
+	}
+    } else {
+	/* Every chart below is used only to choose triangle connectivity.  The
+	 * output points are always the exact 3-D vertices supplied by rigorous
+	 * neighboring faces. */
+	const auto triangulate_chart = [&](const std::vector<detria::PointD>
+		&points, const std::vector<std::vector<int>> &contours,
+		const std::vector<int> &point_vertices, bool log_chart) {
+	    if (points.size() != boundary.size() || contours.size() < 2)
+		return false;
+	    if (point_vertices.size() != points.size())
+		return false;
+	    size_t outline = 0;
+	    double largest_area = 0.0;
+	    std::vector<double> signed_areas(contours.size(), 0.0);
+	    for (size_t contour = 0; contour < contours.size(); ++contour) {
+		for (size_t point = 0; point < contours[contour].size(); ++point) {
+		    const detria::PointD &first = points[(size_t)
+			contours[contour][point]];
+		    const detria::PointD &second = points[(size_t)
+			contours[contour][(point + 1) %
+			    contours[contour].size()]];
+		    signed_areas[contour] += first.x * second.y -
+			second.x * first.y;
+		}
+		if (std::fabs(signed_areas[contour]) > largest_area) {
+		    largest_area = std::fabs(signed_areas[contour]);
+		    outline = contour;
+		}
+	    }
+	    if (!(largest_area > 0.0))
+		return false;
+	    if (debug_topology && log_chart) {
+		bu_log("Rigorous-boundary chart: %zu points in %zu rings; "
+		    "outline %zu, signed areas", points.size(), contours.size(),
+		    outline);
+		for (double area : signed_areas)
+		    bu_log(" %.17g", 0.5 * area);
+		bu_log("\n");
+	    }
+	    std::vector<std::vector<int>> oriented = contours;
+	    if (signed_areas[outline] < 0.0)
+		std::reverse(oriented[outline].begin(),
+		    oriented[outline].end());
+	    for (size_t contour = 0; contour < oriented.size(); ++contour) {
+		if (contour != outline && signed_areas[contour] > 0.0)
+		    std::reverse(oriented[contour].begin(),
+			oriented[contour].end());
+	    }
+	    detria::Triangulation<detria::PointD, int> triangulation;
+	    triangulation.setPoints(points);
+	    triangulation.addOutline(oriented[outline]);
+	    for (size_t contour = 0; contour < oriented.size(); ++contour) {
+		if (contour != outline)
+		    triangulation.addHole(oriented[contour]);
+	    }
+	    try {
+		if (!triangulation.triangulate(true)) {
+		    if (debug_topology && log_chart)
+			bu_log("Rigorous-boundary chart rejected by detria: "
+			    "%s\n", triangulation.getErrorMessage().c_str());
+		    return false;
+		}
+	    } catch (...) {
+		if (debug_topology && log_chart)
+		    bu_log("Rigorous-boundary chart raised a detria "
+			"exception\n");
+		return false;
+	    }
+	    std::vector<int> result;
+	    triangulation.forEachTriangle(
+		[&](const detria::Triangle<int> triangle) {
+		    result.push_back(point_vertices[(size_t)triangle.x]);
+		    result.push_back(point_vertices[(size_t)triangle.y]);
+		    result.push_back(point_vertices[(size_t)triangle.z]);
+		}, true);
+	    const size_t expected_faces = boundary.size() +
+		2 * (contours.size() - 1) - 2;
+	    if (result.size() / 3 != expected_faces)
+		return false;
+	    patch_faces.swap(result);
+	    return true;
+	};
+	const auto triangulate_clean_chart = [&] (
+		const std::vector<detria::PointD> &points,
+		const std::vector<std::vector<int>> &contours,
+		const std::vector<int> &point_vertices) {
+	    if (points.size() != boundary.size() || contours.size() < 2 ||
+		    point_vertices.size() != points.size())
+		return false;
+	    size_t outline = 0;
+	    double largest_area = 0.0;
+	    for (size_t contour = 0; contour < contours.size(); ++contour) {
+		double area = 0.0;
+		for (size_t point = 0; point < contours[contour].size(); ++point) {
+		    const detria::PointD &first = points[(size_t)
+			contours[contour][point]];
+		    const detria::PointD &second = points[(size_t)
+			contours[contour][(point + 1) %
+			    contours[contour].size()]];
+		    area += first.x * second.y - second.x * first.y;
+		}
+		if (std::fabs(area) > largest_area) {
+		    largest_area = std::fabs(area);
+		    outline = contour;
+		}
+	    }
+	    if (!(largest_area > 0.0))
+		return false;
+	    std::vector<const int *> hole_arrays;
+	    std::vector<size_t> hole_counts;
+	    for (size_t contour = 0; contour < contours.size(); ++contour) {
+		if (contour == outline)
+		    continue;
+		hole_arrays.push_back(contours[contour].data());
+		hole_counts.push_back(contours[contour].size());
+	    }
+	    std::vector<fastf_t> input_points(points.size() * 2);
+	    double uv_min[2] = {INFINITY, INFINITY};
+	    double uv_max[2] = {-INFINITY, -INFINITY};
+	    for (size_t point = 0; point < points.size(); ++point) {
+		input_points[2 * point] = points[point].x;
+		input_points[2 * point + 1] = points[point].y;
+		uv_min[X] = std::min(uv_min[X], points[point].x);
+		uv_min[Y] = std::min(uv_min[Y], points[point].y);
+		uv_max[X] = std::max(uv_max[X], points[point].x);
+		uv_max[Y] = std::max(uv_max[Y], points[point].y);
+	    }
+	    int *clean_faces = NULL;
+	    int clean_face_count = 0;
+	    point2d_t *clean_points = NULL;
+	    int clean_point_count = 0;
+	    std::vector<int> clean_constraints;
+	    clean_constraints.reserve(boundary.size() * 2);
+	    for (const std::vector<int> &contour : contours) {
+		for (size_t point = 0; point < contour.size(); ++point) {
+		    clean_constraints.push_back(contour[point]);
+		    clean_constraints.push_back(
+			contour[(point + 1) % contour.size()]);
+		}
+	    }
+	    const int clean_result =
+		bg_nested_poly_triangulate_clean_constraints(
+		&clean_faces, &clean_face_count, &clean_points,
+		&clean_point_count, contours[outline].data(),
+		contours[outline].size(), hole_arrays.data(),
+		hole_counts.data(), hole_arrays.size(), NULL, 0,
+		clean_constraints.data(), boundary.size(),
+		(const point2d_t *)input_points.data(), points.size());
+	    if (debug_topology)
+		bu_log("Rigorous-boundary Clipper cleanup returned %d with "
+		    "%d points and %d triangles from %zu points\n",
+		    clean_result, clean_point_count, clean_face_count,
+		    points.size());
+	    bool valid = clean_result == BRLCAD_OK && clean_faces &&
+		clean_face_count > 0 && clean_points && clean_point_count > 0;
+	    const double match_tolerance = std::max(
+		(double)BREP_SAME_POINT_TOLERANCE,
+		4.0 * std::max(uv_max[X] - uv_min[X],
+		    uv_max[Y] - uv_min[Y]) / CLIPPER_MAX);
+	    std::vector<int> clean_to_vertex((size_t)std::max(0,
+		clean_point_count), -1);
+	    for (int clean = 0; valid && clean < clean_point_count; ++clean) {
+		int match = -1;
+		for (size_t point = 0; point < points.size(); ++point) {
+		    if (!NEAR_EQUAL(clean_points[clean][X], points[point].x,
+			    match_tolerance) ||
+			!NEAR_EQUAL(clean_points[clean][Y], points[point].y,
+			    match_tolerance))
+			continue;
+		    if (match >= 0 && point_vertices[(size_t)match] !=
+			    point_vertices[point]) {
+			if (debug_topology)
+			    bu_log("Rigorous-boundary Clipper point %d at "
+				"%.17g,%.17g merges mesh vertices %d and %d\n",
+				clean, clean_points[clean][X],
+				clean_points[clean][Y],
+				point_vertices[(size_t)match],
+				point_vertices[point]);
+			valid = false;
+			break;
+		    }
+		    match = (int)point;
+		}
+		if (match < 0) {
+		    if (debug_topology)
+			bu_log("Rigorous-boundary Clipper introduced point %d "
+			    "at %.17g,%.17g\n", clean,
+			    clean_points[clean][X], clean_points[clean][Y]);
+		    valid = false;
+		    break;
+		}
+		clean_to_vertex[(size_t)clean] =
+		    point_vertices[(size_t)match];
+	    }
+	    std::vector<int> result;
+	    result.reserve(valid ? (size_t)clean_face_count * 3 : 0);
+	    for (int corner = 0; valid && corner < clean_face_count * 3;
+		    ++corner) {
+		const int point = clean_faces[corner];
+		valid = point >= 0 && point < clean_point_count &&
+		    clean_to_vertex[(size_t)point] >= 0;
+		if (valid)
+		    result.push_back(clean_to_vertex[(size_t)point]);
+	    }
+	    /* Clipper deliberately removes redundant collinear contour points.
+	     * They are not redundant to the neighboring rigorous triangles: each
+	     * is an indexed seam vertex.  Refine a cleaned boundary chord back
+	     * through every omitted original contour vertex before the 3-D solid
+	     * transaction is evaluated. */
+	    std::vector<std::vector<int>> original_contours(contours.size());
+	    for (size_t contour = 0; valid && contour < contours.size();
+		    ++contour) {
+		for (int point : contours[contour])
+		    original_contours[contour].push_back(
+			point_vertices[(size_t)point]);
+	    }
+	    typedef std::pair<int, int> chart_edge;
+	    for (size_t refinement = 0; valid && refinement < boundary.size();
+		    ++refinement) {
+		std::map<chart_edge, std::vector<std::pair<int, int>>> uses;
+		std::set<int> used_vertices;
+		for (size_t face = 0; face < result.size() / 3; ++face) {
+		    for (int corner = 0; corner < 3; ++corner) {
+			const int from = result[face * 3 + (size_t)corner];
+			const int to = result[face * 3 +
+			    (size_t)((corner + 1) % 3)];
+			uses[std::minmax(from, to)].push_back(
+			    {(int)face, corner});
+			used_vertices.insert(from);
+		    }
+		}
+		bool refined = false;
+		for (const auto &edge : uses) {
+		    if (edge.second.size() != 1 || refined)
+			continue;
+		    const int face = edge.second.front().first;
+		    const int corner = edge.second.front().second;
+		    const int from = result[(size_t)face * 3 + corner];
+		    const int to = result[(size_t)face * 3 +
+			(corner + 1) % 3];
+		    std::vector<int> selected_path;
+		    size_t candidate_paths = 0;
+		    for (const std::vector<int> &contour : original_contours) {
+			auto first = std::find(contour.begin(), contour.end(), from);
+			auto second = std::find(contour.begin(), contour.end(), to);
+			if (first == contour.end() || second == contour.end())
+			    continue;
+			const size_t first_index = first - contour.begin();
+			const size_t second_index = second - contour.begin();
+			for (int direction : {1, -1}) {
+			    std::vector<int> path(1, from);
+			    size_t point = first_index;
+			    while (point != second_index &&
+				    path.size() <= contour.size()) {
+				point = direction > 0 ?
+				    (point + 1) % contour.size() :
+				    (point + contour.size() - 1) %
+				    contour.size();
+				path.push_back(contour[point]);
+			    }
+			    if (path.size() <= 2 || path.back() != to)
+				continue;
+			    bool omitted = true;
+			    for (size_t internal = 1;
+				    internal + 1 < path.size(); ++internal)
+				omitted = omitted && used_vertices.find(
+				    path[internal]) == used_vertices.end();
+			    if (!omitted)
+				continue;
+			    selected_path = std::move(path);
+			    candidate_paths++;
+			}
+		    }
+		    if (candidate_paths != 1)
+			continue;
+		    const int third = result[(size_t)face * 3 +
+			(corner + 2) % 3];
+		    result[(size_t)face * 3] = selected_path[0];
+		    result[(size_t)face * 3 + 1] = selected_path[1];
+		    result[(size_t)face * 3 + 2] = third;
+		    for (size_t point = 1; point + 1 < selected_path.size();
+			    ++point) {
+			result.push_back(selected_path[point]);
+			result.push_back(selected_path[point + 1]);
+			result.push_back(third);
+		    }
+		    refined = true;
+		}
+		if (!refined)
+		    break;
+	    }
+	    std::map<chart_edge, size_t> final_uses;
+	    for (size_t face = 0; valid && face < result.size() / 3; ++face) {
+		for (int corner = 0; corner < 3; ++corner) {
+		    const int from = result[face * 3 + (size_t)corner];
+		    const int to = result[face * 3 +
+			(size_t)((corner + 1) % 3)];
+		    final_uses[std::minmax(from, to)]++;
+		}
+	    }
+	    size_t missing_constraints = 0;
+	    for (const std::vector<int> &contour : original_contours) {
+		for (size_t point = 0; point < contour.size(); ++point) {
+		    if (final_uses[std::minmax(contour[point],
+			    contour[(point + 1) % contour.size()])] != 1)
+			missing_constraints++;
+		}
+	    }
+	    valid = valid && !missing_constraints;
+	    if (debug_topology && missing_constraints)
+		bu_log("Rigorous-boundary Clipper result omitted %zu of %zu "
+		    "exact boundary constraints\n", missing_constraints,
+		    boundary.size());
+	    if (clean_faces)
+		bu_free(clean_faces, "rigorous-boundary clean chart faces");
+	    if (clean_points)
+		bu_free(clean_points, "rigorous-boundary clean chart points");
+	    if (!valid)
+		return false;
+	    patch_faces.swap(result);
 	if (debug_topology)
-	    bu_log("Rigorous-boundary face repair rejected: %zu-edge ring "
-		"has no nondegenerate interior candidate\n", ring.size());
-	return false;
+		bu_log("Rigorous-boundary chart accepted a Clipper-cleaned "
+		    "%zu-triangle topology without moving boundary points\n",
+		    patch_faces.size() / 3);
+	    return true;
+	};
+
+	/* A valid surface chart is preferable to any spatial projection.  It
+	 * permits nonplanar rings while retaining the exact 3-D boundary.  The
+	 * closest-point parameters are used only as a triangulation chart; all
+	 * output vertices remain the rigorous mesh vertices. */
+	std::vector<detria::PointD> surface_points;
+	std::vector<std::vector<int>> surface_rings(rings.size());
+	std::vector<int> surface_to_vertex;
+	size_t surface_outline = 0;
+	double surface_outline_area = 0.0;
+	bool surface_chart_available = false;
+	if (surface) {
+	    bool chart_valid = true;
+	    for (size_t ring_index = 0; chart_valid &&
+		    ring_index < rings.size(); ++ring_index) {
+		for (int vertex : rings[ring_index]) {
+		    const ON_3dPoint point(&input_vertices[(size_t)vertex * 3]);
+		    ON_2dPoint uv;
+		    ON_3dPoint closest;
+		    double distance = DBL_MAX;
+		    chart_valid = surface_GetClosestPoint3dFirstOrder(surface,
+			point, uv, closest, distance, 0, ON_ZERO_TOLERANCE,
+			allowed_deviation) && uv.IsValid() && closest.IsValid() &&
+			std::isfinite(distance) && distance <= allowed_deviation;
+		    if (!chart_valid)
+			break;
+		    surface_rings[ring_index].push_back(
+			(int)surface_points.size());
+		    surface_points.push_back({uv.x, uv.y});
+		    surface_to_vertex.push_back(vertex);
+		}
+	    }
+	    for (int direction = 0; chart_valid && direction < 2;
+		    ++direction) {
+		if (!surface->IsClosed(direction))
+		    continue;
+		const ON_Interval domain = surface->Domain(direction);
+		const double period = domain.Length();
+		if (!(period > 0.0)) {
+		    chart_valid = false;
+		    break;
+		}
+		for (const std::vector<int> &surface_ring : surface_rings) {
+		    for (size_t point = 1; point < surface_ring.size(); ++point) {
+			double &coordinate = direction ?
+			    surface_points[(size_t)surface_ring[point]].y :
+			    surface_points[(size_t)surface_ring[point]].x;
+			const double prior = direction ? surface_points[(size_t)
+			    surface_ring[point - 1]].y : surface_points[(size_t)
+			    surface_ring[point - 1]].x;
+			coordinate += std::round((prior - coordinate) / period) *
+			    period;
+		    }
+		}
+	    }
+	    for (size_t ring_index = 0; chart_valid &&
+		    ring_index < surface_rings.size(); ++ring_index) {
+		double area = 0.0;
+		const std::vector<int> &surface_ring =
+		    surface_rings[ring_index];
+		for (size_t point = 0; point < surface_ring.size(); ++point) {
+		    const detria::PointD &first = surface_points[(size_t)
+			surface_ring[point]];
+		    const detria::PointD &second = surface_points[(size_t)
+			surface_ring[(point + 1) % surface_ring.size()]];
+		    area += first.x * second.y - second.x * first.y;
+		}
+		if (std::fabs(area) > surface_outline_area) {
+		    surface_outline_area = std::fabs(area);
+		    surface_outline = ring_index;
+		}
+	    }
+	    for (int direction = 0; chart_valid && direction < 2;
+		    ++direction) {
+		if (!surface->IsClosed(direction))
+		    continue;
+		const double period = surface->Domain(direction).Length();
+		double outline_center = 0.0;
+		for (int point : surface_rings[surface_outline])
+		    outline_center += direction ?
+			surface_points[(size_t)point].y :
+			surface_points[(size_t)point].x;
+		outline_center /=
+		    (double)surface_rings[surface_outline].size();
+		for (size_t ring_index = 0; ring_index < surface_rings.size();
+			ring_index++) {
+		    if (ring_index == surface_outline)
+			continue;
+		    double ring_center = 0.0;
+		    for (int point : surface_rings[ring_index])
+			ring_center += direction ?
+			    surface_points[(size_t)point].y :
+			    surface_points[(size_t)point].x;
+		    ring_center /= (double)surface_rings[ring_index].size();
+		    const double shift = std::round((outline_center -
+			ring_center) / period) * period;
+		    for (int point : surface_rings[ring_index]) {
+			double &coordinate = direction ?
+			    surface_points[(size_t)point].y :
+			    surface_points[(size_t)point].x;
+			coordinate += shift;
+		    }
+		}
+	    }
+	    if (debug_topology)
+		bu_log("Rigorous-boundary surface chart projection %s "
+		    "(closed %d/%d)\n", chart_valid ? "succeeded" :
+		    "failed", surface->IsClosed(0), surface->IsClosed(1));
+	    surface_chart_available = chart_valid;
+	    if (chart_valid && !triangulate_chart(surface_points,
+		    surface_rings, surface_to_vertex, true))
+		(void)triangulate_clean_chart(surface_points, surface_rings,
+		    surface_to_vertex);
+	}
+
+	/* If the imported parameter curves cross, preserve their useful ring
+	 * placement but replace the broken metric with a simple topological
+	 * disk-with-holes chart.  Ring order and every exact 3-D boundary vertex
+	 * remain authoritative; only the interior connectivity is inferred.  The
+	 * assembled solid and surface-deviation gates below decide whether that
+	 * interpretation is geometrically defensible. */
+	if (patch_faces.empty() && surface_chart_available &&
+		surface_outline < surface_rings.size()) {
+	    std::vector<detria::PointD> topology_points(surface_points.size());
+	    std::vector<detria::PointD> centers(surface_rings.size());
+	    std::vector<double> chart_areas(surface_rings.size(), 0.0);
+	    std::vector<double> spatial_perimeters(surface_rings.size(), 0.0);
+	    for (size_t ring_index = 0; ring_index < surface_rings.size();
+		    ++ring_index) {
+		const std::vector<int> &surface_ring =
+		    surface_rings[ring_index];
+		for (int point : surface_ring) {
+		    centers[ring_index].x += surface_points[(size_t)point].x;
+		    centers[ring_index].y += surface_points[(size_t)point].y;
+		}
+		centers[ring_index].x /= (double)surface_ring.size();
+		centers[ring_index].y /= (double)surface_ring.size();
+		for (size_t point = 0; point < surface_ring.size(); ++point) {
+		    const detria::PointD &first = surface_points[(size_t)
+			surface_ring[point]];
+		    const detria::PointD &second = surface_points[(size_t)
+			surface_ring[(point + 1) % surface_ring.size()]];
+		    chart_areas[ring_index] += first.x * second.y -
+			second.x * first.y;
+		    const ON_3dPoint spatial_first(&input_vertices[(size_t)
+			surface_to_vertex[(size_t)surface_ring[point]] * 3]);
+		    const ON_3dPoint spatial_second(&input_vertices[(size_t)
+			surface_to_vertex[(size_t)surface_ring[
+			    (point + 1) % surface_ring.size()]] * 3]);
+		    spatial_perimeters[ring_index] +=
+			spatial_first.DistanceTo(spatial_second);
+		}
+		chart_areas[ring_index] =
+		    0.5 * std::fabs(chart_areas[ring_index]);
+	    }
+	    const size_t topology_outline = (size_t)std::distance(
+		spatial_perimeters.begin(), std::max_element(
+		    spatial_perimeters.begin(), spatial_perimeters.end()));
+	    double outer_span = 0.0;
+	    for (int point : surface_rings[topology_outline]) {
+		outer_span = std::max(outer_span, std::fabs(
+		    surface_points[(size_t)point].x -
+		    centers[topology_outline].x));
+		outer_span = std::max(outer_span, std::fabs(
+		    surface_points[(size_t)point].y -
+		    centers[topology_outline].y));
+	    }
+	    const double topology_area_scale = std::max(
+		chart_areas[topology_outline], outer_span * outer_span);
+	    bool topology_valid = outer_span > 0.0 &&
+		std::isfinite(outer_span) && topology_area_scale > 0.0;
+	    std::vector<double> radii(surface_rings.size(), 0.0);
+	    std::vector<detria::PointD> topology_centers(surface_rings.size());
+	    for (size_t ring_index = 0; topology_valid &&
+		    ring_index < surface_rings.size(); ++ring_index) {
+		const bool outline = ring_index == topology_outline;
+		const detria::PointD source_center = centers[ring_index];
+		double radius = outline ? 1.0 : std::max(0.02,
+		    std::min(0.18, 0.35 * std::sqrt(chart_areas[ring_index] /
+			topology_area_scale)));
+		radii[ring_index] = radius;
+		detria::PointD chart_center = {0.0, 0.0};
+		if (!outline) {
+		    chart_center.x = (centers[ring_index].x -
+			centers[topology_outline].x) / outer_span;
+		    chart_center.y = (centers[ring_index].y -
+			centers[topology_outline].y) / outer_span;
+		    const double center_length = std::hypot(chart_center.x,
+			chart_center.y);
+		    const double maximum_center = 0.78 - radius;
+		    if (center_length > maximum_center && center_length > 0.0) {
+			chart_center.x *= maximum_center / center_length;
+			chart_center.y *= maximum_center / center_length;
+		    }
+		}
+		topology_centers[ring_index] = chart_center;
+		const std::vector<int> &surface_ring =
+		    surface_rings[ring_index];
+		std::vector<double> lengths(surface_ring.size() + 1, 0.0);
+		for (size_t point = 0; point < surface_ring.size(); ++point) {
+		    const ON_3dPoint first(&input_vertices[(size_t)
+			surface_to_vertex[(size_t)surface_ring[point]] * 3]);
+		    const ON_3dPoint second(&input_vertices[(size_t)
+			surface_to_vertex[(size_t)surface_ring[
+			    (point + 1) % surface_ring.size()]] * 3]);
+		    lengths[point + 1] = lengths[point] +
+			first.DistanceTo(second);
+		}
+		if (!(lengths.back() > 0.0) || !std::isfinite(lengths.back())) {
+		    topology_valid = false;
+		    break;
+		}
+		const detria::PointD &first = surface_points[(size_t)
+		    surface_ring.front()];
+		const double phase = std::atan2(first.y -
+		    source_center.y, first.x - source_center.x);
+		const double direction = outline ? 1.0 : -1.0;
+		for (size_t point = 0; point < surface_ring.size(); ++point) {
+		    const double angle = phase + direction * 2.0 *
+			std::acos(-1.0) *
+			lengths[point] / lengths.back();
+		    topology_points[(size_t)surface_ring[point]] = {
+			chart_center.x + radius * std::cos(angle),
+			chart_center.y + radius * std::sin(angle)};
+		}
+	    }
+	    for (size_t first = 0; topology_valid &&
+		    first < surface_rings.size(); ++first) {
+		if (first == topology_outline)
+		    continue;
+		for (size_t second = first + 1; second < surface_rings.size();
+			++second) {
+		    if (second == topology_outline)
+			continue;
+		    topology_valid = std::hypot(topology_centers[first].x -
+			topology_centers[second].x,
+			topology_centers[first].y -
+			topology_centers[second].y) >
+			radii[first] + radii[second] + 0.02;
+		    if (!topology_valid)
+			break;
+		}
+	    }
+	    std::vector<size_t> hole_rings;
+	    for (size_t ring_index = 0; ring_index < surface_rings.size();
+		    ++ring_index) {
+		if (ring_index != topology_outline)
+		    hole_rings.push_back(ring_index);
+	    }
+	    const size_t chart_candidates = hole_rings.size() <= 2 ? 2049 : 1;
+	    std::vector<int> best_faces;
+	    double best_area = 0.0;
+	    double best_area_delta = std::numeric_limits<double>::infinity();
+	    for (size_t candidate = 0; topology_valid &&
+		    candidate < chart_candidates; ++candidate) {
+		std::vector<detria::PointD> rotated = topology_points;
+		std::vector<detria::PointD> candidate_centers =
+		    topology_centers;
+		std::vector<double> phase_angles(hole_rings.size(), 0.0);
+		for (size_t hole = 0; hole < hole_rings.size(); ++hole) {
+		    const size_t ring_index = hole_rings[hole];
+		    if (candidate) {
+			unsigned long long bits = (unsigned long long)candidate +
+			    0x9e3779b97f4a7c15ULL * (hole + 1);
+			bits = (bits ^ (bits >> 30)) *
+			    0xbf58476d1ce4e5b9ULL;
+			bits = (bits ^ (bits >> 27)) *
+			    0x94d049bb133111ebULL;
+			bits ^= bits >> 31;
+			const double direction = 2.0 * std::acos(-1.0) *
+			    (double)(bits & 0xffffULL) / 65536.0;
+			const double distance = 0.12 + 0.54 *
+			    (double)((bits >> 16) & 0xffffULL) / 65535.0;
+			candidate_centers[ring_index] = {
+			    distance * std::cos(direction),
+			    distance * std::sin(direction)};
+			phase_angles[hole] = 2.0 * std::acos(-1.0) *
+			    (double)((bits >> 32) & 0xffffULL) / 65536.0;
+		    }
+		}
+		bool separated = true;
+		for (size_t first = 0; separated &&
+			hole_rings.size() > 1 && first + 1 < hole_rings.size();
+			++first) {
+		    for (size_t second = first + 1;
+			    second < hole_rings.size(); ++second) {
+			const size_t first_ring = hole_rings[first];
+			const size_t second_ring = hole_rings[second];
+			separated = std::hypot(
+			    candidate_centers[first_ring].x -
+				candidate_centers[second_ring].x,
+			    candidate_centers[first_ring].y -
+				candidate_centers[second_ring].y) >
+			    radii[first_ring] + radii[second_ring] + 0.02;
+			if (!separated)
+			    break;
+		    }
+		}
+		if (!separated)
+		    continue;
+		for (size_t hole = 0; hole < hole_rings.size(); ++hole) {
+		    const size_t ring_index = hole_rings[hole];
+		    const double angle = phase_angles[hole];
+		    const double cosine = std::cos(angle);
+		    const double sine = std::sin(angle);
+		    for (int point : surface_rings[ring_index]) {
+			const double x = rotated[(size_t)point].x -
+			    topology_centers[ring_index].x;
+			const double y = rotated[(size_t)point].y -
+			    topology_centers[ring_index].y;
+			rotated[(size_t)point].x =
+			    candidate_centers[ring_index].x +
+			    cosine * x - sine * y;
+			rotated[(size_t)point].y =
+			    candidate_centers[ring_index].y +
+			    sine * x + cosine * y;
+		    }
+		}
+		patch_faces.clear();
+		if (!triangulate_chart(rotated, surface_rings,
+			surface_to_vertex, false))
+		    continue;
+		double patch_area = 0.0;
+		bool nondegenerate = true;
+		for (size_t face = 0; face < patch_faces.size() / 3; ++face) {
+		    const ON_3dPoint first(&input_vertices[(size_t)
+			patch_faces[face * 3] * 3]);
+		    const ON_3dPoint second(&input_vertices[(size_t)
+			patch_faces[face * 3 + 1] * 3]);
+		    const ON_3dPoint third(&input_vertices[(size_t)
+			patch_faces[face * 3 + 2] * 3]);
+		    const ON_3dVector first_edge = second - first;
+		    const ON_3dVector second_edge = third - first;
+		    const double longest_squared = std::max(
+			first_edge.LengthSquared(), std::max(
+			    second_edge.LengthSquared(),
+			    third.DistanceToSquared(second)));
+		    const double doubled_area =
+			ON_CrossProduct(first_edge, second_edge).Length();
+		    nondegenerate = longest_squared > 0.0 &&
+			std::isfinite(doubled_area) && doubled_area > 64.0 *
+			std::numeric_limits<double>::epsilon() * longest_squared;
+		    if (!nondegenerate)
+			break;
+		    patch_area += 0.5 * doubled_area;
+		}
+		if (!nondegenerate)
+		    continue;
+		const double area_delta =
+		    std::fabs(patch_area - approximate_face_area);
+		if (area_delta < best_area_delta) {
+		    best_faces = patch_faces;
+		    best_area = patch_area;
+		    best_area_delta = area_delta;
+		}
+	    }
+	    patch_faces.swap(best_faces);
+	    inferred_topology = !patch_faces.empty();
+	    if (!patch_faces.empty() && debug_topology)
+		bu_log("Rigorous-boundary repair inferred a disk-with-holes "
+		    "chart for %zu exact rings; selected area %.17g from "
+		    "%zu chart candidates (reference %.17g)\n", rings.size(),
+		    best_area, chart_candidates, approximate_face_area);
+	}
+
+	if (patch_faces.empty()) {
+	ON_3dPoint average(0.0, 0.0, 0.0);
+	double coordinate_scale = 1.0;
+	for (const std::vector<int> &boundary_ring : rings) {
+	    for (int vertex : boundary_ring) {
+		const ON_3dPoint point(&input_vertices[(size_t)vertex * 3]);
+		average += point;
+		for (int axis = 0; axis < 3; ++axis)
+		    coordinate_scale = std::max(coordinate_scale,
+			std::fabs(point[axis]));
+	    }
+	}
+	average /= (double)boundary.size();
+	std::vector<ON_3dVector> ring_areas(rings.size(),
+	    ON_3dVector(0.0, 0.0, 0.0));
+	size_t outer_ring = 0;
+	for (size_t ring_index = 0; ring_index < rings.size(); ++ring_index) {
+	    const std::vector<int> &boundary_ring = rings[ring_index];
+	    ON_3dPoint ring_center(0.0, 0.0, 0.0);
+	    for (int vertex : boundary_ring)
+		ring_center += ON_3dPoint(
+		    &input_vertices[(size_t)vertex * 3]);
+	    ring_center /= (double)boundary_ring.size();
+	    for (size_t point = 0; point < boundary_ring.size(); ++point) {
+		const ON_3dPoint first(&input_vertices[
+		    (size_t)boundary_ring[point] * 3]);
+		const ON_3dPoint second(&input_vertices[(size_t)boundary_ring[
+		    (point + 1) % boundary_ring.size()] * 3]);
+		ring_areas[ring_index] += ON_CrossProduct(first - ring_center,
+		    second - ring_center);
+	    }
+	    if (ring_areas[ring_index].LengthSquared() >
+		    ring_areas[outer_ring].LengthSquared())
+		outer_ring = ring_index;
+	}
+	ON_3dVector normal = ring_areas[outer_ring];
+	if (!normal.Unitize())
+	    return false;
+	ON_3dVector xaxis(0.0, 0.0, 0.0);
+	for (const std::vector<int> &boundary_ring : rings) {
+	    for (size_t point = 0; point < boundary_ring.size(); ++point) {
+		ON_3dVector edge = ON_3dPoint(&input_vertices[(size_t)
+		    boundary_ring[(point + 1) % boundary_ring.size()] * 3]) -
+		    ON_3dPoint(&input_vertices[(size_t)boundary_ring[point] * 3]);
+		edge -= (edge * normal) * normal;
+		if (edge.LengthSquared() > xaxis.LengthSquared())
+		    xaxis = edge;
+	    }
+	}
+	if (!xaxis.Unitize())
+	    return false;
+	ON_3dVector yaxis = ON_CrossProduct(normal, xaxis);
+	if (!yaxis.Unitize())
+	    return false;
+	double patch_scale = 0.0;
+	for (const std::vector<int> &boundary_ring : rings) {
+	    for (int vertex : boundary_ring)
+		patch_scale = std::max(patch_scale, average.DistanceTo(
+		    ON_3dPoint(&input_vertices[(size_t)vertex * 3])));
+	}
+	const double plane_tolerance = std::max(
+	    4096.0 * std::numeric_limits<double>::epsilon() *
+		coordinate_scale,
+	    std::min(0.05 * allowed_deviation, 1.0e-4 * patch_scale));
+	std::vector<detria::PointD> chart_points;
+	std::vector<std::vector<int>> chart_rings(rings.size());
+	std::vector<int> chart_to_vertex;
+	for (size_t ring_index = 0; ring_index < rings.size(); ++ring_index) {
+	    for (int vertex : rings[ring_index]) {
+		const ON_3dPoint point(&input_vertices[(size_t)vertex * 3]);
+		if (std::fabs((point - average) * normal) > plane_tolerance) {
+		    if (debug_topology)
+			bu_log("Rigorous-boundary face repair rejected: %zu "
+			    "rings are nonplanar beyond %.17g\n", rings.size(),
+			    plane_tolerance);
+		    return false;
+		}
+		chart_rings[ring_index].push_back((int)chart_points.size());
+		chart_points.push_back({(point - average) * xaxis,
+		    (point - average) * yaxis});
+		chart_to_vertex.push_back(vertex);
+	    }
+	}
+	if (!triangulate_chart(chart_points, chart_rings, chart_to_vertex,
+		true))
+	    return false;
+    }
     }
 
     std::vector<int> candidate_faces(
@@ -4298,16 +5104,12 @@ repair_failed_face_from_rigorous_boundary(
 	source_faces.begin() + rigorous_face_count);
     std::vector<fastf_t> candidate_vertices(*vertices,
 	*vertices + (size_t)*vertex_count * 3);
-    const int center_index = *vertex_count;
-    candidate_vertices.push_back(center.x);
-    candidate_vertices.push_back(center.y);
-    candidate_vertices.push_back(center.z);
-    for (size_t point = 0; point < ring.size(); ++point) {
-	candidate_faces.push_back(ring[point]);
-	candidate_faces.push_back(ring[(point + 1) % ring.size()]);
-	candidate_faces.push_back(center_index);
-	candidate_sources.push_back(source_face);
-    }
+    candidate_vertices.insert(candidate_vertices.end(),
+	added_vertices.begin(), added_vertices.end());
+    candidate_faces.insert(candidate_faces.end(), patch_faces.begin(),
+	patch_faces.end());
+    candidate_sources.insert(candidate_sources.end(),
+	patch_faces.size() / 3, source_face);
 
     std::vector<int> synchronized_faces(candidate_faces.size());
     if (bg_trimesh_sync(synchronized_faces.data(), candidate_faces.data(),
@@ -4332,18 +5134,25 @@ repair_failed_face_from_rigorous_boundary(
     (void)assembled_mesh_validate(compact_count,
 	(int)(candidate_faces.size() / 3), compact_vertices.data(),
 	candidate_faces.data(), &validation, false);
+    struct bg_trimesh_solid_errors solid_errors =
+	BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+    const int solid_result = bg_trimesh_solid2(compact_count,
+	(int)(candidate_faces.size() / 3), compact_vertices.data(),
+	candidate_faces.data(), &solid_errors);
     if (validation.invalid_indices || validation.nonfinite_vertices ||
 	    validation.unused_vertices || validation.degenerate_faces ||
-	    bg_trimesh_solid2(compact_count,
-		(int)(candidate_faces.size() / 3), compact_vertices.data(),
-		candidate_faces.data(), NULL)) {
+	    solid_result) {
 	if (debug_topology)
 	    bu_log("Rigorous-boundary face repair rejected after assembly: "
-		"boundary %zu, degenerate %zu, invalid links %zu\n",
+		"boundary %zu, degenerate %zu, invalid links %zu, "
+		"unmatched %d, excess %d, misoriented %d\n",
 		ring.size(), validation.degenerate_faces,
-		validation.invalid_vertex_links);
+		validation.invalid_vertex_links, solid_errors.unmatched.count,
+		solid_errors.excess.count, solid_errors.misoriented.count);
+	bg_free_trimesh_solid_errors(&solid_errors);
 	return false;
     }
+    bg_free_trimesh_solid_errors(&solid_errors);
 
     int *new_faces = (int *)bu_malloc(candidate_faces.size() * sizeof(int),
 	"rigorous-boundary repaired faces");
@@ -4358,8 +5167,10 @@ repair_failed_face_from_rigorous_boundary(
     bu_free(*vertices, "pre-rigorous-boundary repair vertices");
     stats->components = 1;
     stats->removed_faces = *face_count - rigorous_face_count;
-    stats->added_faces = (int)ring.size();
+    stats->added_faces = (int)(patch_faces.size() / 3);
+    stats->boundary_edges = (int)boundary.size();
     stats->max_center_offset = center_distance;
+    stats->inferred_topology = inferred_topology;
     *faces = new_faces;
     *face_count = (int)(candidate_faces.size() / 3);
     *vertices = new_vertices;
@@ -4369,6 +5180,98 @@ repair_failed_face_from_rigorous_boundary(
 }
 
 static int repair_near_boundary_pair_contract(void);
+
+static int
+repair_multi_ring_boundary_contract(struct ON_Brep_CDT_State *state)
+{
+    const fastf_t input_vertices[16][3] = {
+	{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
+	{1.0, 1.0, 0.0}, {0.0, 1.0, 0.0},
+	{0.0, 0.0, 1.0}, {1.0, 0.0, 1.0},
+	{1.0, 1.0, 1.0}, {0.0, 1.0, 1.0},
+	{0.3, 0.3, 0.0}, {0.7, 0.3, 0.0},
+	{0.7, 0.7, 0.0}, {0.3, 0.7, 0.0},
+	{0.3, 0.3, 1.0}, {0.7, 0.3, 1.0},
+	{0.7, 0.7, 1.0}, {0.3, 0.7, 1.0}
+    };
+    const int input_faces[25][3] = {
+	/* Bottom annulus. */
+	{0, 9, 1}, {0, 8, 9}, {1, 10, 2}, {1, 9, 10},
+	{2, 11, 3}, {2, 10, 11}, {3, 8, 0}, {3, 11, 8},
+	/* Outer sides. */
+	{0, 1, 5}, {0, 5, 4}, {1, 2, 6}, {1, 6, 5},
+	{2, 3, 7}, {2, 7, 6}, {3, 0, 4}, {3, 4, 7},
+	/* Inner sides, oriented toward the through-hole. */
+	{8, 13, 9}, {8, 12, 13}, {9, 14, 10}, {9, 13, 14},
+	{10, 15, 11}, {10, 14, 15}, {11, 12, 8}, {11, 15, 12},
+	/* Untrusted partial top face. */
+	{4, 5, 6}
+    };
+    int face_count = 25;
+    int vertex_count = 16;
+    int *faces = (int *)bu_malloc(sizeof(input_faces),
+	"multi-ring boundary test faces");
+    fastf_t *vertices = (fastf_t *)bu_malloc(sizeof(input_vertices),
+	"multi-ring boundary test vertices");
+    memcpy(faces, input_faces, sizeof(input_faces));
+    memcpy(vertices, input_vertices, sizeof(input_vertices));
+    std::vector<int> sources(25, -1);
+    sources[24] = 0;
+    repair_degenerate_neighborhood_stats stats;
+    const bool repaired = repair_failed_face_from_rigorous_boundary(state,
+	&faces, &face_count, &vertices, &vertex_count, 24, sources, 0.1,
+	16, &stats);
+    assembled_mesh_validation validation;
+    const bool valid = repaired && face_count == 32 && vertex_count == 16 &&
+	stats.removed_faces == 1 && stats.added_faces == 8 &&
+	stats.boundary_edges == 8 && !stats.inferred_topology &&
+	sources.size() == 32 &&
+	assembled_mesh_validate(vertex_count, face_count, vertices, faces,
+	    &validation, false) && !validation.degenerate_faces &&
+	!validation.invalid_vertex_links &&
+	!bg_trimesh_solid2(vertex_count, face_count, vertices, faces, NULL);
+    bu_free(faces, "multi-ring boundary test result faces");
+    bu_free(vertices, "multi-ring boundary test result vertices");
+    if (!valid)
+	return 1;
+
+    /* A nonplanar ring may cross in the source surface's projection even
+     * though its 3-D edges do not intersect.  Exercise the bounded abstract
+     * chart used when neither that projection nor a best-fit plane is a
+     * usable triangulation domain. */
+    fastf_t twisted_vertices[16][3];
+    memcpy(twisted_vertices, input_vertices, sizeof(twisted_vertices));
+    VSET(twisted_vertices[4], 0.0, 0.0, 1.0);
+    VSET(twisted_vertices[5], 1.0, 1.0, 1.0);
+    VSET(twisted_vertices[6], 0.0, 1.0, 2.0);
+    VSET(twisted_vertices[7], 1.0, 0.0, 2.0);
+    face_count = 25;
+    vertex_count = 16;
+    faces = (int *)bu_malloc(sizeof(input_faces),
+	"twisted multi-ring boundary test faces");
+    vertices = (fastf_t *)bu_malloc(sizeof(twisted_vertices),
+	"twisted multi-ring boundary test vertices");
+    memcpy(faces, input_faces, sizeof(input_faces));
+    memcpy(vertices, twisted_vertices, sizeof(twisted_vertices));
+    sources.assign(25, -1);
+    sources[24] = 5;
+    stats = repair_degenerate_neighborhood_stats();
+    const bool twisted_repaired = repair_failed_face_from_rigorous_boundary(
+	state, &faces, &face_count, &vertices, &vertex_count, 24, sources,
+	10.0, 16, &stats);
+    validation = assembled_mesh_validation();
+    const bool twisted_valid = twisted_repaired && face_count == 32 &&
+	vertex_count == 16 && stats.removed_faces == 1 &&
+	stats.added_faces == 8 && stats.boundary_edges == 8 &&
+	stats.inferred_topology && sources.size() == 32 &&
+	assembled_mesh_validate(vertex_count, face_count, vertices, faces,
+	    &validation, false) && !validation.degenerate_faces &&
+	!validation.invalid_vertex_links &&
+	!bg_trimesh_solid2(vertex_count, face_count, vertices, faces, NULL);
+    bu_free(faces, "twisted multi-ring boundary test result faces");
+    bu_free(vertices, "twisted multi-ring boundary test result vertices");
+    return twisted_valid ? 0 : 2;
+}
 
 int
 cdt_test_repair_rigorous_boundary(void)
@@ -4428,9 +5331,13 @@ cdt_test_repair_rigorous_boundary(void)
 	!bg_trimesh_solid2(vertex_count, face_count, vertices, faces, NULL);
     bu_free(faces, "rigorous boundary test result faces");
     bu_free(vertices, "rigorous boundary test result vertices");
+    const int multi_ring_result = valid ?
+	repair_multi_ring_boundary_contract(state) : 0;
     ON_Brep_CDT_Destroy(state);
     if (!valid)
 	return 3;
+    if (multi_ring_result)
+	return 4;
     const int pair_result = repair_near_boundary_pair_contract();
     return pair_result ? 10 + pair_result : 0;
 }
@@ -9750,10 +10657,12 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		locally_reconstructed_faces.insert(source);
 	    }
 	    if (rigorous_boundary_repair) {
-		bu_log("Reconstructed %d failed-face triangles from a %d-edge "
-		    "boundary supplied entirely by retained rigorous faces\n",
+		bu_log("Replaced %d failed-face triangles with %d triangles "
+		    "spanning a %d-edge boundary supplied entirely by retained "
+		    "rigorous faces\n",
 		    degenerate_neighborhood_stats.removed_faces,
-		    degenerate_neighborhood_stats.added_faces);
+		    degenerate_neighborhood_stats.added_faces,
+		    degenerate_neighborhood_stats.boundary_edges);
 	    } else {
 		bu_log("Replaced %d degenerate triangles in %d local "
 		    "neighborhoods with %d fixed-boundary triangles "
@@ -10285,7 +11194,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	report->area_change_percent =
 	    std::numeric_limits<fastf_t>::infinity();
     }
-    const fastf_t guarded_area_change = have_display_reference ?
+    const bool use_reference_area = have_display_reference ||
+	degenerate_neighborhood_stats.inferred_topology;
+    const fastf_t guarded_area_change = use_reference_area ?
 	report->reference_area_change_percent : report->area_change_percent;
     if (settings->max_area_change_percent > 0.0 &&
 	    (!(guarded_area_change <= settings->max_area_change_percent))) {
@@ -10293,7 +11204,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	bu_free(repaired_points, "certified repaired vertices");
 	bu_free(input_faces, "repair input faces");
 	bu_free(input_vertices, "repair input vertices");
-	std::string message = have_display_reference ?
+	std::string message = use_reference_area ?
 	    "repaired mesh area differs from display reference by " :
 	    "repaired mesh area changed by ";
 	message += std::to_string(guarded_area_change) +
