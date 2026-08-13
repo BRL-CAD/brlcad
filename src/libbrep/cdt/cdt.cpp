@@ -90,13 +90,22 @@ struct assembled_mesh_validation {
 
 static bool
 repair_hybrid_fallback_preflight(size_t geometric_degenerate_faces,
-	size_t invalid_vertex_links, size_t local_repair_limit)
+	size_t invalid_vertex_links, size_t face_count,
+	size_t local_repair_limit)
 {
     const size_t link_limit = geometric_degenerate_faces <= SIZE_MAX / 4 ?
 	4 * geometric_degenerate_faces : SIZE_MAX;
-    return geometric_degenerate_faces > 0 && local_repair_limit > 0 &&
+    const bool disproportionate_links = geometric_degenerate_faces > 0 &&
+	local_repair_limit > 0 &&
 	invalid_vertex_links > local_repair_limit &&
 	invalid_vertex_links > link_limit;
+    const size_t degenerate_limit = local_repair_limit <= SIZE_MAX / 8 ?
+	8 * local_repair_limit : SIZE_MAX;
+    const bool dense_degeneracy = face_count > 0 &&
+	local_repair_limit > 0 &&
+	geometric_degenerate_faces > degenerate_limit &&
+	geometric_degenerate_faces > face_count / 10;
+    return disproportionate_links || dense_degeneracy;
 }
 
 static bool
@@ -6522,14 +6531,20 @@ cdt_test_repair_rigorous_boundary(void)
     /* A few flat triangles tying together hundreds of disconnected links are
      * a poor generic hole-fill candidate regardless of the total mesh size.
      * A proportionate local defect population must remain repair-eligible. */
-    if (!repair_hybrid_fallback_preflight(23, 458, 256))
+    if (!repair_hybrid_fallback_preflight(23, 458, 4000, 256))
 	return 50;
-    if (repair_hybrid_fallback_preflight(236, 458, 256))
+    if (repair_hybrid_fallback_preflight(236, 458, 4000, 256))
 	return 51;
-    if (!repair_hybrid_fallback_preflight(136, 1044, 256))
+    if (!repair_hybrid_fallback_preflight(136, 1044, 4000, 256))
 	return 52;
-    if (repair_hybrid_fallback_preflight(23, 200, 256))
+    if (repair_hybrid_fallback_preflight(23, 200, 4000, 256))
 	return 53;
+    /* A hybrid dominated by flat triangles is also unsuitable for generic
+	 * hole filling, but a sparse flat population remains locally repairable. */
+    if (!repair_hybrid_fallback_preflight(9349, 0, 70036, 256))
+	return 54;
+    if (repair_hybrid_fallback_preflight(3414, 0, 179978, 256))
+	return 55;
     return 0;
 }
 
@@ -13100,9 +13115,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
      * artificial holes.  Give the topology-preserving, transactional local
      * reconstruction above the first opportunity to fix those defects.  If
      * it cannot, and the caller explicitly authorized a whole-display retry,
-     * avoid an unbounded sequence of generic hole triangulations when the
-     * invalid links are disproportionate both to the flat triangles and to
-     * the requested local hole budget. */
+     * avoid an unbounded sequence of generic hole triangulations when invalid
+     * links are disproportionate or flat triangles dominate the mesh. */
     if (settings->use_full_fast_fallback_if_needed &&
 	    !settings->use_full_fast_fallback &&
 	    !degenerate_neighborhood_repair) {
@@ -13123,6 +13137,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		repair_hybrid_fallback_preflight(
 		    hybrid_validation.degenerate_faces,
 		    hybrid_validation.invalid_vertex_links,
+		    (size_t)input_face_count,
 		    settings->mesh.max_hole_edges)) {
 	    const size_t degenerate_faces =
 		hybrid_validation.degenerate_faces;
@@ -13133,9 +13148,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		"disproportionate hybrid repair vertices");
 	    std::string message = "rigorous hybrid preflight declined " +
 		std::to_string(input_face_count) + " triangles: " +
-		std::to_string(degenerate_faces) + " flat triangles are " +
-		"associated with " + std::to_string(invalid_links) +
-		" invalid vertex links after bounded local reconstruction";
+		std::to_string(degenerate_faces) + " flat triangles and " +
+		std::to_string(invalid_links) + " invalid vertex links exceed " +
+		"the bounded generic repair envelope";
 	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
 		BREP_CDT_STAGE_MESH_REPAIR, -1,
 		report->source_diagnostic.completed_faces,
