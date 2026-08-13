@@ -46,6 +46,13 @@ edge_has_singular_trim(const ON_BrepTrim *trim1, const ON_BrepTrim *trim2)
 	 trim2->m_type == ON_BrepTrim::singular);
 }
 
+
+static bool
+edge_needs_curved_seed(const ON_Curve *curve, bool closed_trim)
+{
+    return curve && (closed_trim || !curve->IsLinear(BN_TOL_DIST));
+}
+
 #define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
 
@@ -1605,8 +1612,9 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, char *message,
 		return false;
 	    }
 
+	    const bool closed_trim = trim1->IsClosed() || trim2->IsClosed();
 	    // 1.  Any edges with at least 1 closed trim are split.
-	    if (trim1->IsClosed() || trim2->IsClosed()) {
+	    if (closed_trim) {
 		esegs_closed = split_edge_seg(s_cdt, e, 1, NULL, 1, NULL,
 		    true);
 		if (!esegs_closed.size()) {
@@ -1625,10 +1633,16 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, char *message,
 	    // 2.  Any edges with a non-linear edge curve are split.
 	    std::set<bedge_seg_t *> esegs_csplit;
 	    const ON_Curve* crv = edge.EdgeCurveOf();
-	    if (!crv->IsLinear(BN_TOL_DIST)) {
+	    /* A closed NURBS edge can report linear when its coincident
+	     * endpoints make the chord test degenerate.  Two half-edge chords
+	     * still form only a two-vertex loop, so always apply the curved seed
+	     * subdivision to closed trims.
+	     */
+	    if (edge_needs_curved_seed(crv, closed_trim)) {
 		std::set<bedge_seg_t *>::iterator e_it;
 		for (e_it = esegs_closed.begin(); e_it != esegs_closed.end(); e_it++) {
-		    std::set<bedge_seg_t *> efirst = split_edge_seg(s_cdt, *e_it, 1, NULL, 1);
+		    std::set<bedge_seg_t *> efirst = split_edge_seg(s_cdt,
+			*e_it, 1, NULL, 1, NULL, closed_trim);
 		    if (!efirst.size()) {
 			/* A valid topological edge can have a corrupt 3-D curve or
 			 * disagreeing p-curves which make a forced midpoint split
@@ -1643,7 +1657,8 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, char *message,
 			// one additional time
 			std::set<bedge_seg_t *>::iterator s_it;
 			for (s_it = efirst.begin(); s_it != efirst.end(); s_it++) {
-			    std::set<bedge_seg_t *> etmp = split_edge_seg(s_cdt, *s_it, 1, NULL, 1);
+			    std::set<bedge_seg_t *> etmp = split_edge_seg(s_cdt,
+				*s_it, 1, NULL, 1, NULL, closed_trim);
 			    if (!etmp.size()) {
 				// split failed??  This isn't good and shouldn't
 				// happen, but it's not fatal the way the previous two
@@ -1690,6 +1705,21 @@ cdt_test_edge_singular_pair(void)
     if (!edge_has_singular_trim(&ordinary1, &singular))
 	return 2;
     if (!edge_has_singular_trim(&singular, &ordinary2))
+	return 3;
+    return 0;
+}
+
+
+int
+cdt_test_closed_edge_seed_policy(void)
+{
+    ON_LineCurve line(ON_3dPoint(0.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 0.0, 0.0));
+    if (edge_needs_curved_seed(&line, false))
+	return 1;
+    if (!edge_needs_curved_seed(&line, true))
+	return 2;
+    if (edge_needs_curved_seed(NULL, true))
 	return 3;
     return 0;
 }
