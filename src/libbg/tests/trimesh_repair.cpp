@@ -988,9 +988,10 @@ test_steiner_hole_fan(void)
     }
     gte::MeshHoleFilling<double>::Parameters parameters;
     parameters.method = gte::MeshHoleFilling<double>::
-	TriangulationMethod::SteinerFan;
+	TriangulationMethod::PlanarProjection;
     parameters.autoFallback = false;
     parameters.maxValidatedEdges = 8;
+    parameters.steinerAboveEdges = 3;
     parameters.triangleValidator = [&](const std::array<int32_t, 3> &,
 	    const std::vector<std::array<int32_t, 3>> &) {
 	return points.size() > 8 && std::fabs(points[8][2] - 1.0) > 1.0e-12;
