@@ -30,6 +30,7 @@
 #include <array>
 #include <vector>
 #include <Mathematics/MeshHoleFilling.h>
+#include <Mathematics/MeshPreprocessing.h>
 #include <Mathematics/MeshRepair.h>
 
 #include "bu.h"
@@ -1018,6 +1019,51 @@ test_steiner_hole_fan(void)
     return 0;
 }
 
+/* Normal orientation must handle many disconnected repair fragments without
+ * rescanning the complete triangle array for every component. */
+static int
+test_component_orientation(void)
+{
+    std::vector<gte::Vector3<double>> points;
+    std::vector<std::array<int32_t, 3>> faces;
+    point_t *tet_points = NULL;
+    int tet_point_count = 0;
+    int *tet_faces = NULL;
+    int tet_face_count = 0;
+    make_tet(&tet_points, &tet_point_count, &tet_faces, &tet_face_count);
+    for (int component = 0; component < 3; ++component) {
+	const int offset = (int)points.size();
+	for (int point = 0; point < tet_point_count; ++point) {
+	    points.push_back({tet_points[point][X] + 2.0 * component,
+		tet_points[point][Y], tet_points[point][Z]});
+	}
+	for (int face = 0; face < tet_face_count; ++face) {
+	    std::array<int32_t, 3> triangle = {
+		tet_faces[(size_t)face * 3] + offset,
+		tet_faces[(size_t)face * 3 + 1] + offset,
+		tet_faces[(size_t)face * 3 + 2] + offset
+	    };
+	    if (component == 1)
+		std::swap(triangle[1], triangle[2]);
+	    faces.push_back(triangle);
+	}
+    }
+    gte::MeshPreprocessing<double>::OrientNormals(points, faces);
+    double volumes[3] = {0.0, 0.0, 0.0};
+    for (size_t face = 0; face < faces.size(); ++face) {
+	const std::array<int32_t, 3> &triangle = faces[face];
+	volumes[face / (size_t)tet_face_count] += Dot(points[triangle[0]],
+	    Cross(points[triangle[1]], points[triangle[2]])) / 6.0;
+    }
+    if (volumes[0] <= 0.0 || volumes[1] <= 0.0 || volumes[2] <= 0.0) {
+	bu_log("FAIL test_component_orientation: volumes=%g,%g,%g\n",
+	    volumes[0], volumes[1], volumes[2]);
+	return -1;
+    }
+    bu_log("PASS test_component_orientation\n");
+    return 0;
+}
+
 /* Component union is deliberately opt-in.  Two individually closed cubes
  * overlap geometrically but pass an edge-incidence solid check; the Manifold
  * pass must regularize them into one closed boundary. */
@@ -1491,6 +1537,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_concave_planar_hole()         != 0) ? 1 : 0;
     failures += (test_validated_ear_alternative()    != 0) ? 1 : 0;
     failures += (test_steiner_hole_fan()             != 0) ? 1 : 0;
+    failures += (test_component_orientation()         != 0) ? 1 : 0;
     failures += (test_overlapping_component_union() != 0) ? 1 : 0;
     failures += (test_touching_component_separation() != 0) ? 1 : 0;
     failures += (test_hanging_boundary_edge_split() != 0) ? 1 : 0;

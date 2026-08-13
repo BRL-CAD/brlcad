@@ -165,47 +165,22 @@ namespace gte
                 return;
             }
 
-            // Build adjacency information
-            std::map<std::pair<int32_t, int32_t>, std::vector<size_t>> edgeToTriangles;
+            std::vector<int32_t> componentIds;
+            int32_t numComponents = GetConnectedComponents(triangles, componentIds);
+            std::vector<Real> signedVolumes(
+                static_cast<size_t>(numComponents), static_cast<Real>(0));
+            for (size_t i = 0; i < triangles.size(); ++i)
+            {
+                signedVolumes[static_cast<size_t>(componentIds[i])] +=
+                    ComputeSignedVolume(vertices, triangles[i]);
+            }
 
             for (size_t i = 0; i < triangles.size(); ++i)
             {
-                auto const& tri = triangles[i];
-                for (int j = 0; j < 3; ++j)
+                if (signedVolumes[static_cast<size_t>(componentIds[i])] <
+                    static_cast<Real>(0))
                 {
-                    int32_t v0 = tri[j];
-                    int32_t v1 = tri[(j + 1) % 3];
-                    auto edge = std::make_pair(std::min(v0, v1), std::max(v0, v1));
-                    edgeToTriangles[edge].push_back(i);
-                }
-            }
-
-            // Process each connected component
-            std::vector<int32_t> componentIds;
-            int32_t numComponents = GetConnectedComponents(triangles, componentIds);
-
-            for (int32_t compId = 0; compId < numComponents; ++compId)
-            {
-                // Determine if component should be flipped based on signed volume
-                Real signedVolume = static_cast<Real>(0);
-                for (size_t i = 0; i < triangles.size(); ++i)
-                {
-                    if (componentIds[i] == compId)
-                    {
-                        signedVolume += ComputeSignedVolume(vertices, triangles[i]);
-                    }
-                }
-
-                // If signed volume is negative, flip all triangles in component
-                if (signedVolume < static_cast<Real>(0))
-                {
-                    for (size_t i = 0; i < triangles.size(); ++i)
-                    {
-                        if (componentIds[i] == compId)
-                        {
-                            std::swap(triangles[i][1], triangles[i][2]);
-                        }
-                    }
+                    std::swap(triangles[i][1], triangles[i][2]);
                 }
             }
         }
