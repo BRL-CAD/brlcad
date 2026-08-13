@@ -312,6 +312,14 @@ ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t);
 extern BREP_EXPORT void
 ON_Brep_CDT_Tol_Get(struct bg_tess_tol *t, const struct ON_Brep_CDT_State *s);
 
+/* Set a wall-clock limit for each rigorous face triangulation.  A positive
+ * value reports an adaptive-refinement failure when the limit is reached,
+ * allowing callers to continue with an explicitly bounded repair tier.
+ * Zero preserves the default unlimited behavior. */
+extern BREP_EXPORT void
+ON_Brep_CDT_Face_Time_Limit_Set(struct ON_Brep_CDT_State *s,
+	long max_time_ms);
+
 /* Return the ON_Brep associated with state s. */
 extern BREP_EXPORT void *
 ON_Brep_CDT_Brep(struct ON_Brep_CDT_State *s);
