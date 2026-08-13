@@ -98,6 +98,20 @@ assembled_mesh_collect_candidate(size_t triangle, void *context)
 }
 
 static bool
+assembled_mesh_triangle_degenerate(const ON_3dPoint points[3])
+{
+    const ON_3dVector ab = points[1] - points[0];
+    const ON_3dVector ac = points[2] - points[0];
+    const ON_3dVector bc = points[2] - points[1];
+    const double longest_sq = std::max(ab.LengthSquared(),
+	std::max(ac.LengthSquared(), bc.LengthSquared()));
+    const double doubled_area = ON_CrossProduct(ab, ac).Length();
+    return !(longest_sq > 0.0) || !std::isfinite(doubled_area) ||
+	doubled_area <= 64.0 * std::numeric_limits<double>::epsilon() *
+	longest_sq;
+}
+
+static bool
 assembled_mesh_validate(int vertex_count, int face_count,
 	const fastf_t *vertices, const int *faces,
 	assembled_mesh_validation *validation, bool check_intersections = true)
@@ -138,15 +152,7 @@ assembled_mesh_validate(int vertex_count, int face_count,
 		faces[3 * face + (corner + 1) % 3],
 		faces[3 * face + (corner + 2) % 3]));
 	}
-	const ON_3dVector ab = points[1] - points[0];
-	const ON_3dVector ac = points[2] - points[0];
-	const ON_3dVector bc = points[2] - points[1];
-	const double longest_sq = std::max(ab.LengthSquared(),
-	    std::max(ac.LengthSquared(), bc.LengthSquared()));
-	const double doubled_area = ON_CrossProduct(ab, ac).Length();
-	if (!(longest_sq > 0.0) || !std::isfinite(doubled_area) ||
-		doubled_area <= 64.0 *
-		std::numeric_limits<double>::epsilon() * longest_sq)
+	if (assembled_mesh_triangle_degenerate(points))
 	    validation->degenerate_faces++;
     }
 
@@ -4271,6 +4277,21 @@ struct repair_degenerate_neighborhood_stats {
     std::set<int> source_faces;
 };
 
+static bool
+repair_internal_face_seam(const ON_BrepTrim *trim,
+	const ON_BrepFace &face)
+{
+    const ON_BrepEdge *edge = trim ? trim->Edge() : NULL;
+    if (!edge || edge->TrimCount() < 2)
+	return false;
+    for (int edge_trim = 0; edge_trim < edge->TrimCount(); ++edge_trim) {
+	const ON_BrepTrim *other = edge->Trim(edge_trim);
+	if (!other || other->Face() != &face)
+	    return false;
+    }
+    return true;
+}
+
 /* When a failed-face triangulation cannot reproduce its authoritative
  * neighbors, discard only that approximate face and recover the exact indexed
  * rings exposed by the retained rigorous prefix.  Close one ring with a
@@ -4324,7 +4345,12 @@ repair_failed_face_from_rigorous_boundary(
 	int to;
     };
     std::map<mesh_edge, std::vector<edge_use>> incidence;
-    for (int face = 0; face < rigorous_face_count; ++face) {
+    const int incidence_face_count = requested_boundary ? *face_count :
+	rigorous_face_count;
+    for (int face = 0; face < incidence_face_count; ++face) {
+	if (requested_boundary && face >= rigorous_face_count &&
+		source_faces[(size_t)face] == source_face)
+	    continue;
 	for (int corner = 0; corner < 3; ++corner) {
 	    const int from = (*faces)[(size_t)face * 3 + corner];
 	    const int to = (*faces)[(size_t)face * 3 + (corner + 1) % 3];
@@ -4336,13 +4362,13 @@ repair_failed_face_from_rigorous_boundary(
     std::vector<edge_use> boundary;
     std::set<mesh_edge> selected_boundary;
     for (const auto &edge : incidence) {
+	if (requested_boundary && requested_boundary->find(edge.first) ==
+		requested_boundary->end())
+	    continue;
 	if (edge.second.size() > 2)
 	    return false;
 	if (edge.second.size() == 1) {
 	    const edge_use &retained = edge.second.front();
-	    if (requested_boundary && requested_boundary->find(edge.first) ==
-		    requested_boundary->end())
-		continue;
 	    boundary.push_back({retained.face, retained.to, retained.from});
 	    selected_boundary.insert(edge.first);
 	}
@@ -5400,9 +5426,26 @@ repair_failed_face_from_rigorous_boundary(
     const int solid_result = bg_trimesh_solid2(compact_count,
 	(int)(candidate_faces.size() / 3), compact_vertices.data(),
 	candidate_faces.data(), &solid_errors);
+    size_t deferred_degenerate_faces = 0;
+    if (!require_solid && validation.degenerate_faces) {
+	for (size_t face = 0; face < candidate_sources.size(); ++face) {
+	    if (candidate_sources[face] < 0 ||
+		    candidate_sources[face] == source_face)
+		continue;
+	    ON_3dPoint points[3];
+	    for (int corner = 0; corner < 3; ++corner) {
+		const int vertex = candidate_faces[3 * face + corner];
+		points[corner] = ON_3dPoint(
+		    &compact_vertices[(size_t)vertex * 3]);
+	    }
+	    if (assembled_mesh_triangle_degenerate(points))
+		++deferred_degenerate_faces;
+	}
+    }
     if (validation.invalid_indices || validation.nonfinite_vertices ||
-	    validation.unused_vertices || validation.degenerate_faces ||
-	    validation.invalid_vertex_links ||
+	    validation.unused_vertices ||
+	    validation.degenerate_faces > deferred_degenerate_faces ||
+	    (require_solid && validation.invalid_vertex_links) ||
 	    (require_solid && solid_result)) {
 	if (debug_topology)
 	    bu_log("Rigorous-boundary face repair rejected after assembly: "
@@ -5654,8 +5697,9 @@ repair_multi_source_boundary_contract(struct ON_Brep_CDT_State *state)
 	/* Four retained side faces. */
 	{0, 1, 5}, {0, 5, 4}, {1, 2, 6}, {1, 6, 5},
 	{2, 3, 7}, {2, 7, 6}, {3, 0, 4}, {3, 4, 7},
-	/* Two independently untrusted caps. */
-	{0, 2, 1}, {0, 3, 2}, {4, 5, 6}, {4, 6, 7}
+	/* Two independently untrusted caps.  The second retains only
+	 * degenerate placeholders until its transaction runs. */
+	{0, 2, 1}, {0, 3, 2}, {4, 5, 5}, {4, 6, 6}
     };
     int face_count = 12;
     int vertex_count = 8;
@@ -5773,6 +5817,40 @@ cdt_test_repair_rigorous_boundary(void)
 	repair_multi_ring_boundary_contract(state) : 0;
     const int multi_source_result = valid && !multi_ring_result ?
 	repair_multi_source_boundary_contract(state) : 0;
+    int seam_contract_result = 0;
+    const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, 2.0), 5.0);
+    std::unique_ptr<ON_Brep> cylinder_brep(
+	ON_BrepCylinder(cylinder, true, true));
+    bool found_internal_seam = false;
+    bool found_shared_edge = false;
+    if (!cylinder_brep) {
+	seam_contract_result = 1;
+    } else {
+	for (int face_index = 0;
+		face_index < cylinder_brep->m_F.Count(); ++face_index) {
+	    const ON_BrepFace &face = cylinder_brep->m_F[face_index];
+	    for (int loop_index = 0; loop_index < face.LoopCount();
+		    ++loop_index) {
+		const ON_BrepLoop *loop = face.Loop(loop_index);
+		for (int trim_index = 0; loop &&
+			trim_index < loop->TrimCount(); ++trim_index) {
+		    const ON_BrepTrim *trim = loop->Trim(trim_index);
+		    if (!trim || trim->m_type == ON_BrepTrim::singular)
+			continue;
+		    const bool internal = repair_internal_face_seam(trim, face);
+		    if (trim->m_type == ON_BrepTrim::seam) {
+			found_internal_seam = found_internal_seam || internal;
+			seam_contract_result = internal ? seam_contract_result : 2;
+		    } else if (trim->Edge() && trim->Edge()->TrimCount() == 2) {
+			found_shared_edge = true;
+			seam_contract_result = internal ? 3 : seam_contract_result;
+		    }
+		}
+	    }
+	}
+	if (!found_internal_seam || !found_shared_edge)
+	    seam_contract_result = 4;
+    }
     ON_Brep_CDT_Destroy(state);
     if (!valid)
 	return 3;
@@ -5780,6 +5858,8 @@ cdt_test_repair_rigorous_boundary(void)
 	return 4;
     if (multi_source_result)
 	return 5;
+    if (seam_contract_result)
+	return 6;
     const int pair_result = repair_near_boundary_pair_contract();
     if (pair_result)
 	return 10 + pair_result;
@@ -11409,6 +11489,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 			}
 			if (trim->m_type == ON_BrepTrim::singular)
 			    continue;
+			/* A seam used only by this face is a chart cut, not a shell
+			 * boundary supplied by a retained neighboring face. */
+			if (repair_internal_face_seam(trim, brep_face))
+			    continue;
 			const auto edge_segments =
 			    s_cdt->e2polysegs.find(trim->m_ei);
 			if (edge_segments == s_cdt->e2polysegs.end() ||
@@ -11534,59 +11618,76 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		std::vector<int> trial_sources = input_source_faces;
 		repair_degenerate_neighborhood_stats combined_stats;
 		bool completed = true;
-		size_t source_number = 0;
-		for (int source : approximate_sources) {
-		    repair_degenerate_neighborhood_stats source_stats;
-		    std::vector<int> remap;
-		    const bool final_source = ++source_number ==
-			approximate_sources.size();
-		    if (!repair_failed_face_from_rigorous_boundary(s_cdt,
-			    &trial_faces, &trial_face_count, &trial_vertices,
-			    &trial_vertex_count, rigorous_input_face_count,
-			    trial_sources, neighborhood_deviation,
-			    std::max(neighborhood_max_edges, (size_t)4096),
-			    &source_stats, source, &source_boundaries[source],
-			    final_source, &remap)) {
-			if (debug_repair_topology)
-			    bu_log("Face %d: independent rigorous-boundary "
-				"transaction failed (%zu indexed boundary edges)\n",
-				source, source_boundaries[source].size());
-			completed = false;
-			break;
-		    }
-		    combined_stats.components += source_stats.components;
-		    combined_stats.removed_faces += source_stats.removed_faces;
-		    combined_stats.added_faces += source_stats.added_faces;
-		    combined_stats.boundary_edges += source_stats.boundary_edges;
-		    combined_stats.max_center_offset = std::max(
-			combined_stats.max_center_offset,
-			source_stats.max_center_offset);
-		    combined_stats.inferred_topology =
-			combined_stats.inferred_topology ||
-			source_stats.inferred_topology;
-		    combined_stats.source_faces.insert(source);
-		    for (auto &source_boundary : source_boundaries) {
-			std::set<repair_mesh_edge> remapped;
-			for (const repair_mesh_edge &edge :
-				source_boundary.second) {
-			    if ((size_t)edge.first >= remap.size() ||
-				    (size_t)edge.second >= remap.size()) {
-				completed = false;
-				break;
+		std::set<int> pending_sources = approximate_sources;
+		while (!pending_sources.empty()) {
+		    bool advanced = false;
+		    for (int source : pending_sources) {
+			repair_degenerate_neighborhood_stats source_stats;
+			std::vector<int> remap;
+			const bool final_source = pending_sources.size() == 1;
+			if (!repair_failed_face_from_rigorous_boundary(s_cdt,
+				&trial_faces, &trial_face_count, &trial_vertices,
+				&trial_vertex_count, rigorous_input_face_count,
+				trial_sources, neighborhood_deviation,
+				std::max(neighborhood_max_edges, (size_t)4096),
+				&source_stats, source,
+				&source_boundaries[source], final_source, &remap)) {
+			    if (debug_repair_topology)
+				bu_log("Face %d: independent rigorous-boundary "
+				    "transaction is not currently reconstructable "
+				    "(%zu indexed boundary edges)\n", source,
+				    source_boundaries[source].size());
+			    continue;
+			}
+			combined_stats.components += source_stats.components;
+			combined_stats.removed_faces += source_stats.removed_faces;
+			combined_stats.added_faces += source_stats.added_faces;
+			combined_stats.boundary_edges += source_stats.boundary_edges;
+			combined_stats.max_center_offset = std::max(
+			    combined_stats.max_center_offset,
+			    source_stats.max_center_offset);
+			combined_stats.inferred_topology =
+			    combined_stats.inferred_topology ||
+			    source_stats.inferred_topology;
+			combined_stats.source_faces.insert(source);
+			for (auto &source_boundary : source_boundaries) {
+			    std::set<repair_mesh_edge> remapped;
+			    for (const repair_mesh_edge &edge :
+				    source_boundary.second) {
+				if ((size_t)edge.first >= remap.size() ||
+					(size_t)edge.second >= remap.size()) {
+				    completed = false;
+				    break;
+				}
+				if (remap[(size_t)edge.first] < 0 ||
+					remap[(size_t)edge.second] < 0) {
+				    completed = false;
+				    break;
+				}
+				remapped.insert(std::minmax(
+				    remap[(size_t)edge.first],
+				    remap[(size_t)edge.second]));
 			    }
-			    if (remap[(size_t)edge.first] < 0 ||
-				    remap[(size_t)edge.second] < 0)
-				continue;
-			    remapped.insert(std::minmax(
-				remap[(size_t)edge.first],
-				remap[(size_t)edge.second]));
+			    if (!completed)
+				break;
+			    source_boundary.second.swap(remapped);
 			}
 			if (!completed)
 			    break;
-			source_boundary.second.swap(remapped);
+			pending_sources.erase(source);
+			advanced = true;
+			break;
 		    }
 		    if (!completed)
 			break;
+		    if (!advanced) {
+			if (debug_repair_topology)
+			    bu_log("Multi-source rigorous-boundary repair found no "
+				"viable dependency order for %zu faces\n",
+				pending_sources.size());
+			completed = false;
+			break;
+		    }
 		}
 		if (completed) {
 		    bu_free(input_faces,
