@@ -1151,8 +1151,12 @@ EOF
     cmp_result="`eval \\\"${CMP}\\\" \\\"${PIX}/${bench_testname}.pix\\\" ${bench_testname}.pix 2>&1`"
     ret=$?
 
-    cmp_result="`echo \\\"$cmp_result\\\" | grep pixels`"
-    $ECHO "$cmp_result"
+    pixels_result="`echo \\\"$cmp_result\\\" | grep pixels`"
+    if test "x$pixels_result" = "x" ; then
+	$ECHO "$cmp_result"
+    else
+	$ECHO "$pixels_result"
+    fi
 
     if test $ret = 0 ; then
 	# perfect match
