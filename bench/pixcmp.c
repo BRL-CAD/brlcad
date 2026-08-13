@@ -160,44 +160,38 @@ compare_rgb(int r1, int g1, int b1, int r2, int g2, int b2, size_t *matching, si
 	&& (b1 == b2 && b1 != -1))
     {
 	result = MATCHING;
-	(*matching)++;
     } else if (r1 == -1 || r2 == -1 || g1 == -1 || g2 == -1 || b1 == -1 || b2 == -1) {
 	/* image sizes don't match (or other I/O error) */
 	result = MISSING;
-	(*missing)++;
-    } else if (((r1 != r2) && (g1 == g2) && (b1 == b2))
-	       || ((r1 == r2) && (g1 != g2) && (b1 == b2))
-	       || ((r1 == r2) && (g1 == g2) && (b1 != b2)))
-    {
-	/* off by one channel */
+    } else {
+	/* at least this */
+	result = OFF_BY_ONE;
+
+	/* but maybe more */
 	if (r1 != r2) {
 	    if ((r1 > r2 ? r1 - r2 : r2 - r1) > 1) {
 		result = OFF_BY_MANY;
-		(*offmany)++;
-	    } else {
-		result = OFF_BY_ONE;
-		(*off1)++;
-	    }
-	} else if (g1 != g2) {
-	    if ((g1 > g2 ? g1 - g2 : g2 - g1) > 1) {
-		result = OFF_BY_MANY;
-		(*offmany)++;
-	    } else {
-		result = OFF_BY_ONE;
-		(*off1)++;
-	    }
-	} else if (b1 != b2) {
-	    if ((b1 > b2 ? b1 - b2 : b2 - b1) > 1) {
-		result = OFF_BY_MANY;
-		(*offmany)++;
-	    } else {
-		result = OFF_BY_ONE;
-		(*off1)++;
 	    }
 	}
-    } else {
-	result = OFF_BY_MANY;
+	if (g1 != g2) {
+	    if ((g1 > g2 ? g1 - g2 : g2 - g1) > 1) {
+		result = OFF_BY_MANY;
+	    }
+	}
+	if (b1 != b2) {
+	    if ((b1 > b2 ? b1 - b2 : b2 - b1) > 1) {
+		result = OFF_BY_MANY;
+	    }
+	}
+    }
+    if (result == OFF_BY_ONE) {
+	(*off1)++;
+    } else if (result == OFF_BY_MANY) {
 	(*offmany)++;
+    } else if (result == MATCHING) {
+	(*matching)++;
+    } else {
+	(*missing)++;
     }
 
     return result;
