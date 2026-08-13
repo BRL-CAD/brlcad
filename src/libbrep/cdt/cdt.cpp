@@ -4282,7 +4282,10 @@ repair_failed_face_from_rigorous_boundary(
 	struct ON_Brep_CDT_State *s_cdt, int **faces, int *face_count,
 	fastf_t **vertices, int *vertex_count, int rigorous_face_count,
 	std::vector<int> &source_faces, double allowed_deviation,
-	size_t max_boundary_edges, repair_degenerate_neighborhood_stats *stats)
+	size_t max_boundary_edges, repair_degenerate_neighborhood_stats *stats,
+	int requested_source_face = -1,
+	const std::set<std::pair<int, int>> *requested_boundary = NULL,
+	bool require_solid = true, std::vector<int> *vertex_remap = NULL)
 {
     const bool debug_topology = getenv(
 	"BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY") != NULL;
@@ -4290,7 +4293,8 @@ repair_failed_face_from_rigorous_boundary(
 	    !vertices || !vertex_count || !*faces || !*vertices ||
 	    rigorous_face_count <= 0 || rigorous_face_count >= *face_count ||
 	    source_faces.size() != (size_t)*face_count ||
-	    !(allowed_deviation > 0.0) || !stats)
+	    !(allowed_deviation > 0.0) || !stats ||
+	    (requested_boundary && requested_source_face < 0))
 	return false;
 
     std::set<int> approximate_sources;
@@ -4304,9 +4308,12 @@ repair_failed_face_from_rigorous_boundary(
 		return false;
 	}
     }
-    if (approximate_sources.size() != 1)
+    if ((requested_source_face < 0 && approximate_sources.size() != 1) ||
+	    (requested_source_face >= 0 && approximate_sources.find(
+		requested_source_face) == approximate_sources.end()))
 	return false;
-    const int source_face = *approximate_sources.begin();
+    const int source_face = requested_source_face >= 0 ?
+	requested_source_face : *approximate_sources.begin();
     if (source_face < 0 || source_face >= s_cdt->orig_brep->m_F.Count())
 	return false;
 
@@ -4327,61 +4334,141 @@ repair_failed_face_from_rigorous_boundary(
 	}
     }
     std::vector<edge_use> boundary;
+    std::set<mesh_edge> selected_boundary;
     for (const auto &edge : incidence) {
 	if (edge.second.size() > 2)
 	    return false;
 	if (edge.second.size() == 1) {
 	    const edge_use &retained = edge.second.front();
+	    if (requested_boundary && requested_boundary->find(edge.first) ==
+		    requested_boundary->end())
+		continue;
 	    boundary.push_back({retained.face, retained.to, retained.from});
+	    selected_boundary.insert(edge.first);
 	}
     }
+    if (requested_boundary && selected_boundary != *requested_boundary) {
+	if (debug_topology)
+	    bu_log("Face %d: requested %zu rigorous boundary edges but "
+		"found %zu in mesh incidence\n", source_face,
+		requested_boundary->size(), selected_boundary.size());
+	if (debug_topology) {
+	    size_t logged = 0;
+	    for (const mesh_edge &edge : *requested_boundary) {
+		if (selected_boundary.find(edge) == selected_boundary.end() &&
+			logged++ < 8)
+		    bu_log("  requested-only boundary edge %d-%d\n",
+			edge.first, edge.second);
+	    }
+	}
+	return false;
+    }
+    if (debug_topology && requested_boundary)
+	bu_log("Face %d: selected all %zu indexed source boundary edges\n",
+	    source_face, requested_boundary->size());
     if (boundary.size() < 3 || boundary.size() > max_boundary_edges)
 	return false;
 
-    std::map<int, size_t> outgoing;
-    std::map<int, size_t> incoming;
-    for (size_t edge = 0; edge < boundary.size(); ++edge) {
-	if (!outgoing.emplace(boundary[edge].from, edge).second ||
-		!incoming.emplace(boundary[edge].to, edge).second)
-	    return false;
-    }
-    if (outgoing.size() != boundary.size() ||
-	    incoming.size() != boundary.size())
-	return false;
-    for (const auto &vertex : outgoing) {
-	if (incoming.find(vertex.first) == incoming.end())
-	    return false;
-    }
-
     std::vector<std::vector<int>> rings;
     std::vector<bool> used(boundary.size(), false);
-    for (size_t first_edge = 0; first_edge < boundary.size(); ++first_edge) {
-	if (used[first_edge])
-	    continue;
-	std::vector<int> ring;
-	int current = boundary[first_edge].from;
-	const int start = current;
-	for (size_t count = 0; count < boundary.size(); ++count) {
-	    const auto found = outgoing.find(current);
-	    if (found == outgoing.end() || used[found->second])
-		break;
-	    used[found->second] = true;
-	    ring.push_back(current);
-	    current = boundary[found->second].to;
-	    if (current == start)
-		break;
+    if (requested_boundary) {
+	std::map<int, std::vector<size_t>> adjacency;
+	for (size_t edge = 0; edge < boundary.size(); ++edge) {
+	    adjacency[boundary[edge].from].push_back(edge);
+	    adjacency[boundary[edge].to].push_back(edge);
 	}
-	if (current != start || ring.size() < 3)
+	for (const auto &vertex : adjacency) {
+	    if (vertex.second.size() != 2)
+		return false;
+	}
+	for (size_t first_edge = 0; first_edge < boundary.size(); ++first_edge) {
+	    if (used[first_edge])
+		continue;
+	    std::vector<int> ring;
+	    int current = boundary[first_edge].from;
+	    const int start = current;
+	    for (size_t count = 0; count < boundary.size(); ++count) {
+		const std::vector<size_t> &incident = adjacency[current];
+		const size_t edge = !used[incident[0]] ? incident[0] :
+		    (!used[incident[1]] ? incident[1] : boundary.size());
+		if (edge >= boundary.size())
+		    break;
+		used[edge] = true;
+		ring.push_back(current);
+		current = boundary[edge].from == current ?
+		    boundary[edge].to : boundary[edge].from;
+		if (current == start)
+		    break;
+	    }
+	    if (current != start || ring.size() < 3)
+		return false;
+	    rings.push_back(std::move(ring));
+	}
+    } else {
+	std::map<int, size_t> outgoing;
+	std::map<int, size_t> incoming;
+	for (size_t edge = 0; edge < boundary.size(); ++edge) {
+	    if (!outgoing.emplace(boundary[edge].from, edge).second ||
+		    !incoming.emplace(boundary[edge].to, edge).second)
+		return false;
+	}
+	if (outgoing.size() != boundary.size() ||
+		incoming.size() != boundary.size())
 	    return false;
-	rings.push_back(std::move(ring));
+	for (const auto &vertex : outgoing) {
+	    if (incoming.find(vertex.first) == incoming.end())
+		return false;
+	}
+	for (size_t first_edge = 0; first_edge < boundary.size(); ++first_edge) {
+	    if (used[first_edge])
+		continue;
+	    std::vector<int> ring;
+	    int current = boundary[first_edge].from;
+	    const int start = current;
+	    for (size_t count = 0; count < boundary.size(); ++count) {
+		const auto found = outgoing.find(current);
+		if (found == outgoing.end() || used[found->second])
+		    break;
+		used[found->second] = true;
+		ring.push_back(current);
+		current = boundary[found->second].to;
+		if (current == start)
+		    break;
+	    }
+	    if (current != start || ring.size() < 3)
+		return false;
+	    rings.push_back(std::move(ring));
+	}
     }
     if (rings.empty() ||
 	    std::find(used.begin(), used.end(), false) != used.end())
 	return false;
 
     const fastf_t *input_vertices = *vertices;
+    if (debug_topology && requested_boundary) {
+	for (size_t ring_index = 0; ring_index < rings.size(); ++ring_index) {
+	    double perimeter = 0.0;
+	    ON_BoundingBox bbox;
+	    for (size_t point = 0; point < rings[ring_index].size(); ++point) {
+		const ON_3dPoint first(&input_vertices[(size_t)
+		    rings[ring_index][point] * 3]);
+		const ON_3dPoint second(&input_vertices[(size_t)
+		    rings[ring_index][(point + 1) % rings[ring_index].size()] * 3]);
+		perimeter += first.DistanceTo(second);
+		bbox.Set(first, true);
+	    }
+	    bu_log("Face %d: mesh ring %zu has %zu vertices, perimeter %.17g, "
+		"bbox diagonal %.17g\n", source_face, ring_index,
+		rings[ring_index].size(), perimeter,
+		bbox.IsValid() ? bbox.Diagonal().Length() : -1.0);
+	}
+    }
     double approximate_face_area = 0.0;
+    int replaced_face_count = 0;
     for (int face = rigorous_face_count; face < *face_count; ++face) {
+	if (source_faces[(size_t)face] != source_face)
+	    continue;
+	replaced_face_count++;
 	const ON_3dPoint first(&input_vertices[(size_t)
 	    (*faces)[(size_t)face * 3] * 3]);
 	const ON_3dPoint second(&input_vertices[(size_t)
@@ -4391,6 +4478,8 @@ repair_failed_face_from_rigorous_boundary(
 	approximate_face_area += 0.5 *
 	    ON_CrossProduct(second - first, third - first).Length();
     }
+    if (!replaced_face_count)
+	return false;
     const std::vector<int> &ring = rings.front();
     const ON_BrepFace &brep_face = s_cdt->orig_brep->m_F[source_face];
     const ON_Surface *surface = brep_face.SurfaceOf();
@@ -4897,8 +4986,8 @@ repair_failed_face_from_rigorous_boundary(
 	    }
 	    if (debug_topology)
 		bu_log("Rigorous-boundary surface chart projection %s "
-		    "(closed %d/%d)\n", chart_valid ? "succeeded" :
-		    "failed", surface->IsClosed(0), surface->IsClosed(1));
+		    "(closed %d/%d)\n", chart_valid ? "succeeded" : "failed",
+		    surface->IsClosed(0), surface->IsClosed(1));
 	    surface_chart_available = chart_valid;
 	    if (chart_valid && !triangulate_chart(surface_points,
 		    surface_rings, surface_to_vertex, true))
@@ -5146,14 +5235,28 @@ repair_failed_face_from_rigorous_boundary(
 		    best_area = patch_area;
 		    best_area_delta = area_delta;
 		}
+		if (best_area_delta <= 0.01 * approximate_face_area)
+		    break;
 	    }
-	    patch_faces.swap(best_faces);
+	    const double area_scale = std::max(approximate_face_area,
+		std::numeric_limits<double>::min());
+	    const bool area_supported = std::isfinite(best_area_delta) &&
+		best_area_delta <= 0.01 * area_scale;
+	    if (area_supported)
+		patch_faces.swap(best_faces);
+	    else
+		patch_faces.clear();
 	    inferred_topology = !patch_faces.empty();
 	    if (!patch_faces.empty() && debug_topology)
 		bu_log("Rigorous-boundary repair inferred a disk-with-holes "
 		    "chart for %zu exact rings; selected area %.17g from "
 		    "%zu chart candidates (reference %.17g)\n", rings.size(),
 		    best_area, chart_candidates, approximate_face_area);
+	    else if (debug_topology && !best_faces.empty())
+		bu_log("Rigorous-boundary disk-with-holes chart rejected: "
+		    "area %.17g differs from reference %.17g by %.3f%%\n",
+		    best_area, approximate_face_area,
+		    100.0 * best_area_delta / area_scale);
 	}
 
 	if (patch_faces.empty()) {
@@ -5245,10 +5348,21 @@ repair_failed_face_from_rigorous_boundary(
     }
     }
 
-    std::vector<int> candidate_faces(
-	*faces, *faces + (size_t)rigorous_face_count * 3);
-    std::vector<int> candidate_sources(source_faces.begin(),
-	source_faces.begin() + rigorous_face_count);
+    std::vector<int> candidate_faces;
+    std::vector<int> candidate_sources;
+    candidate_faces.reserve((size_t)(*face_count - replaced_face_count) *
+	3 + patch_faces.size());
+    candidate_sources.reserve((size_t)(*face_count - replaced_face_count) +
+	patch_faces.size() / 3);
+    for (int face = 0; face < *face_count; ++face) {
+	if (face >= rigorous_face_count &&
+		source_faces[(size_t)face] == source_face)
+	    continue;
+	candidate_faces.insert(candidate_faces.end(),
+	    &(*faces)[(size_t)face * 3],
+	    &(*faces)[(size_t)face * 3] + 3);
+	candidate_sources.push_back(source_faces[(size_t)face]);
+    }
     std::vector<fastf_t> candidate_vertices(*vertices,
 	*vertices + (size_t)*vertex_count * 3);
     candidate_vertices.insert(candidate_vertices.end(),
@@ -5288,7 +5402,8 @@ repair_failed_face_from_rigorous_boundary(
 	candidate_faces.data(), &solid_errors);
     if (validation.invalid_indices || validation.nonfinite_vertices ||
 	    validation.unused_vertices || validation.degenerate_faces ||
-	    solid_result) {
+	    validation.invalid_vertex_links ||
+	    (require_solid && solid_result)) {
 	if (debug_topology)
 	    bu_log("Rigorous-boundary face repair rejected after assembly: "
 		"boundary %zu, degenerate %zu, invalid links %zu, "
@@ -5313,7 +5428,7 @@ repair_failed_face_from_rigorous_boundary(
     bu_free(*faces, "pre-rigorous-boundary repair faces");
     bu_free(*vertices, "pre-rigorous-boundary repair vertices");
     stats->components = 1;
-    stats->removed_faces = *face_count - rigorous_face_count;
+    stats->removed_faces = replaced_face_count;
     stats->added_faces = (int)(patch_faces.size() / 3);
     stats->boundary_edges = (int)boundary.size();
     stats->max_center_offset = center_distance;
@@ -5323,6 +5438,9 @@ repair_failed_face_from_rigorous_boundary(
     *vertices = new_vertices;
     *vertex_count = compact_count;
     source_faces.swap(candidate_sources);
+    stats->source_faces.insert(source_face);
+    if (vertex_remap)
+	vertex_remap->assign(remap.begin(), remap.end());
     return true;
 }
 
@@ -5483,23 +5601,35 @@ repair_multi_ring_boundary_contract(struct ON_Brep_CDT_State *state)
     VSET(twisted_vertices[5], 1.0, 1.0, 1.0);
     VSET(twisted_vertices[6], 0.0, 1.0, 2.0);
     VSET(twisted_vertices[7], 1.0, 0.0, 2.0);
-    face_count = 25;
+    const int twisted_input_faces[32][3] = {
+	{0, 9, 1}, {0, 8, 9}, {1, 10, 2}, {1, 9, 10},
+	{2, 11, 3}, {2, 10, 11}, {3, 8, 0}, {3, 11, 8},
+	{0, 1, 5}, {0, 5, 4}, {1, 2, 6}, {1, 6, 5},
+	{2, 3, 7}, {2, 7, 6}, {3, 0, 4}, {3, 4, 7},
+	{8, 13, 9}, {8, 12, 13}, {9, 14, 10}, {9, 13, 14},
+	{10, 15, 11}, {10, 14, 15}, {11, 12, 8}, {11, 15, 12},
+	/* Supply only an area reference.  The crossing spatial ring still
+	 * requires the inferred chart to choose replacement connectivity. */
+	{4, 5, 13}, {4, 13, 12}, {5, 6, 14}, {5, 14, 13},
+	{6, 7, 15}, {6, 15, 14}, {7, 4, 12}, {7, 12, 15}
+    };
+    face_count = 32;
     vertex_count = 16;
-    faces = (int *)bu_malloc(sizeof(input_faces),
+    faces = (int *)bu_malloc(sizeof(twisted_input_faces),
 	"twisted multi-ring boundary test faces");
     vertices = (fastf_t *)bu_malloc(sizeof(twisted_vertices),
 	"twisted multi-ring boundary test vertices");
-    memcpy(faces, input_faces, sizeof(input_faces));
+    memcpy(faces, twisted_input_faces, sizeof(twisted_input_faces));
     memcpy(vertices, twisted_vertices, sizeof(twisted_vertices));
-    sources.assign(25, -1);
-    sources[24] = 5;
+    sources.assign(32, -1);
+    std::fill(sources.begin() + 24, sources.end(), 5);
     stats = repair_degenerate_neighborhood_stats();
     const bool twisted_repaired = repair_failed_face_from_rigorous_boundary(
 	state, &faces, &face_count, &vertices, &vertex_count, 24, sources,
 	10.0, 16, &stats);
     validation = assembled_mesh_validation();
     const bool twisted_valid = twisted_repaired && face_count == 32 &&
-	vertex_count == 16 && stats.removed_faces == 1 &&
+	vertex_count == 16 && stats.removed_faces == 8 &&
 	stats.added_faces == 8 && stats.boundary_edges == 8 &&
 	stats.inferred_topology && sources.size() == 32 &&
 	assembled_mesh_validate(vertex_count, face_count, vertices, faces,
@@ -5509,6 +5639,76 @@ repair_multi_ring_boundary_contract(struct ON_Brep_CDT_State *state)
     bu_free(faces, "twisted multi-ring boundary test result faces");
     bu_free(vertices, "twisted multi-ring boundary test result vertices");
     return twisted_valid ? 0 : 2;
+}
+
+static int
+repair_multi_source_boundary_contract(struct ON_Brep_CDT_State *state)
+{
+    const fastf_t input_vertices[8][3] = {
+	{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
+	{1.0, 1.0, 0.0}, {0.0, 1.0, 0.0},
+	{0.0, 0.0, 1.0}, {1.0, 0.0, 1.0},
+	{1.0, 1.0, 1.0}, {0.0, 1.0, 1.0}
+    };
+    const int input_faces[12][3] = {
+	/* Four retained side faces. */
+	{0, 1, 5}, {0, 5, 4}, {1, 2, 6}, {1, 6, 5},
+	{2, 3, 7}, {2, 7, 6}, {3, 0, 4}, {3, 4, 7},
+	/* Two independently untrusted caps. */
+	{0, 2, 1}, {0, 3, 2}, {4, 5, 6}, {4, 6, 7}
+    };
+    int face_count = 12;
+    int vertex_count = 8;
+    int *faces = (int *)bu_malloc(sizeof(input_faces),
+	"multi-source boundary test faces");
+    fastf_t *vertices = (fastf_t *)bu_malloc(sizeof(input_vertices),
+	"multi-source boundary test vertices");
+    memcpy(faces, input_faces, sizeof(input_faces));
+    memcpy(vertices, input_vertices, sizeof(input_vertices));
+    std::vector<int> sources(12, -1);
+    sources[8] = sources[9] = 0;
+    sources[10] = sources[11] = 1;
+    std::set<std::pair<int, int>> first_boundary = {
+	{0, 1}, {1, 2}, {2, 3}, {0, 3}
+    };
+    std::set<std::pair<int, int>> second_boundary = {
+	{4, 5}, {5, 6}, {6, 7}, {4, 7}
+    };
+    repair_degenerate_neighborhood_stats first_stats;
+    std::vector<int> remap;
+    const bool first_repaired = repair_failed_face_from_rigorous_boundary(
+	state, &faces, &face_count, &vertices, &vertex_count, 8, sources,
+	10.0, 16, &first_stats, 0, &first_boundary, false, &remap);
+    if (first_repaired) {
+	std::set<std::pair<int, int>> mapped;
+	for (const std::pair<int, int> &edge : second_boundary) {
+	    if ((size_t)edge.first >= remap.size() ||
+		    (size_t)edge.second >= remap.size() ||
+		    remap[(size_t)edge.first] < 0 ||
+		    remap[(size_t)edge.second] < 0)
+		continue;
+	    mapped.insert(std::minmax(remap[(size_t)edge.first],
+		remap[(size_t)edge.second]));
+	}
+	second_boundary.swap(mapped);
+    }
+    repair_degenerate_neighborhood_stats second_stats;
+    const bool second_repaired = first_repaired &&
+	repair_failed_face_from_rigorous_boundary(state, &faces, &face_count,
+	    &vertices, &vertex_count, 8, sources, 10.0, 16,
+	    &second_stats, 1, &second_boundary, true, NULL);
+    assembled_mesh_validation validation;
+    const bool valid = second_repaired && face_count == 16 &&
+	vertex_count == 10 && first_stats.removed_faces == 2 &&
+	first_stats.added_faces == 4 && second_stats.removed_faces == 2 &&
+	second_stats.added_faces == 4 && sources.size() == 16 &&
+	assembled_mesh_validate(vertex_count, face_count, vertices, faces,
+	    &validation, false) && !validation.degenerate_faces &&
+	!validation.invalid_vertex_links &&
+	!bg_trimesh_solid2(vertex_count, face_count, vertices, faces, NULL);
+    bu_free(faces, "multi-source boundary test result faces");
+    bu_free(vertices, "multi-source boundary test result vertices");
+    return valid ? 0 : 1;
 }
 
 int
@@ -5571,11 +5771,15 @@ cdt_test_repair_rigorous_boundary(void)
     bu_free(vertices, "rigorous boundary test result vertices");
     const int multi_ring_result = valid ?
 	repair_multi_ring_boundary_contract(state) : 0;
+    const int multi_source_result = valid && !multi_ring_result ?
+	repair_multi_source_boundary_contract(state) : 0;
     ON_Brep_CDT_Destroy(state);
     if (!valid)
 	return 3;
     if (multi_ring_result)
 	return 4;
+    if (multi_source_result)
+	return 5;
     const int pair_result = repair_near_boundary_pair_contract();
     if (pair_result)
 	return 10 + pair_result;
@@ -9839,6 +10043,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     int rigorous_input_face_count = input_face_count;
     const std::vector<int> rigorous_input_brep_faces =
 	s_cdt->bot_face_to_brep_face;
+    std::vector<int> input_face_brep_sources = rigorous_input_brep_faces;
+    if (input_face_brep_sources.size() != (size_t)input_face_count)
+	input_face_brep_sources.assign((size_t)input_face_count, -1);
     std::set<int> locally_reconstructed_faces;
 
     std::unordered_map<ON_3dPoint *, int> approximate_source_points;
@@ -9934,6 +10141,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	}
 	input_vertex_count = (int)new_vertex_count;
 	input_face_count = (int)new_face_count;
+	input_face_brep_sources.insert(input_face_brep_sources.end(),
+	    (size_t)local_face_count, face_index);
 	return local_face_count;
     };
     const auto approximate_mesh_orientable = [&](const int *local_faces,
@@ -10872,6 +11081,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		}
 		input_vertex_count = (int)new_vertex_count;
 		input_face_count += fast_face_count;
+		input_face_brep_sources.insert(input_face_brep_sources.end(),
+		    (size_t)fast_face_count, failed_face);
 		report->fast_fallback_used_faces++;
 		report->fast_fallback_triangles += fast_face_count;
 		report->fast_fallback_constrained_edges +=
@@ -11078,9 +11289,13 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     bool rigorous_boundary_repair = false;
     if (!settings->use_full_fast_fallback &&
 	    settings->use_fast_face_fallback) {
-	std::vector<int> input_source_faces((size_t)input_face_count, -1);
+	std::vector<int> input_source_faces = input_face_brep_sources;
+	if (input_source_faces.size() != (size_t)input_face_count)
+	    input_source_faces.assign((size_t)input_face_count, -1);
 	for (int face = rigorous_input_face_count; face < input_face_count;
 		++face) {
+	    if (input_source_faces[(size_t)face] >= 0)
+		continue;
 	    const repair_triangle_key key = repair_triangle_coordinates(
 		input_vertices, &input_faces[(size_t)face * 3]);
 	    const auto local_source = local_chart_triangle_brep_faces.find(key);
@@ -11108,6 +11323,294 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		neighborhood_deviation, std::max(neighborhood_max_edges,
 		    (size_t)1024),
 		&degenerate_neighborhood_stats);
+	/* Several nonadjacent failed faces expose independent rigorous rings.
+	 * Reconstruct each source transactionally when every one of its exact
+	 * shared-edge segments is present in the rigorous prefix.  Intermediate
+	 * candidates may remain open only at the other proved source rings; the
+	 * final source must close and validate the complete mesh. */
+	if (!rigorous_boundary_repair) {
+	    std::set<int> approximate_sources;
+	    bool attributed = true;
+	    for (int face = rigorous_input_face_count;
+		    face < input_face_count; ++face) {
+		const int source = input_source_faces[(size_t)face];
+		if (source < 0) {
+		    if (getenv("BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY"))
+			bu_log("Multi-source rigorous-boundary repair lacks "
+			    "provenance for approximate triangle %d of %d\n",
+			    face - rigorous_input_face_count,
+			    input_face_count - rigorous_input_face_count);
+		    attributed = false;
+		    break;
+		}
+		approximate_sources.insert(source);
+	    }
+	    typedef std::pair<int, int> repair_mesh_edge;
+	    std::map<int, std::set<repair_mesh_edge>> source_boundaries;
+	    const bool debug_repair_topology =
+		getenv("BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY") != NULL;
+	    std::map<repair_point_key, int> exact_input_points;
+	    for (int point = 0; point < input_vertex_count; ++point) {
+		const repair_point_key key = {
+		    input_vertices[(size_t)point * 3],
+		    input_vertices[(size_t)point * 3 + 1],
+		    input_vertices[(size_t)point * 3 + 2]};
+		const auto existing = exact_input_points.find(key);
+		if (existing == exact_input_points.end())
+		    exact_input_points.emplace(key, point);
+		else if (existing->second != point)
+		    existing->second = -1;
+	    }
+	    const auto source_index = [&](ON_3dPoint *point) {
+		if (!point)
+		    return -1;
+		auto indexed = approximate_source_points.find(point);
+		if (indexed != approximate_source_points.end())
+		    return indexed->second;
+		const auto canonical = s_cdt->collapsed_edge_pnts.find(point);
+		if (canonical != s_cdt->collapsed_edge_pnts.end()) {
+		    indexed = approximate_source_points.find(canonical->second);
+		    if (indexed != approximate_source_points.end())
+			return indexed->second;
+		}
+		const repair_point_key key = {point->x, point->y, point->z};
+		const auto exact = exact_input_points.find(key);
+		return exact == exact_input_points.end() ? -1 : exact->second;
+	    };
+	    for (int source : approximate_sources) {
+		if (!attributed || source < 0 ||
+			source >= s_cdt->brep->m_F.Count()) {
+		    attributed = false;
+		    break;
+		}
+		const ON_BrepFace &brep_face = s_cdt->brep->m_F[source];
+		std::set<repair_mesh_edge> &boundary =
+		    source_boundaries[source];
+		if (debug_repair_topology)
+		    bu_log("Face %d: proving %d source loops\n", source,
+			brep_face.LoopCount());
+		for (int loop_index = 0; attributed &&
+			loop_index < brep_face.LoopCount(); ++loop_index) {
+		    const ON_BrepLoop *loop = brep_face.Loop(loop_index);
+		    if (!loop) {
+			attributed = false;
+			break;
+		    }
+		    if (debug_repair_topology)
+			bu_log("Face %d: source loop %d type %d has %d trims\n",
+			    source, loop_index, (int)loop->m_type,
+			    loop->TrimCount());
+		    for (int trim_index = 0; attributed &&
+			    trim_index < loop->TrimCount(); ++trim_index) {
+			const ON_BrepTrim *trim = loop->Trim(trim_index);
+			if (!trim) {
+			    attributed = false;
+			    break;
+			}
+			if (trim->m_type == ON_BrepTrim::singular)
+			    continue;
+			const auto edge_segments =
+			    s_cdt->e2polysegs.find(trim->m_ei);
+			if (edge_segments == s_cdt->e2polysegs.end() ||
+				edge_segments->second.empty()) {
+			    if (debug_repair_topology)
+				bu_log("Face %d: outer/hole trim %d (edge %d, "
+				    "type %d, loop %d) lacks a complete "
+				    "authoritative boundary\n", source,
+				    trim->m_trim_index, trim->m_ei,
+				    (int)trim->m_type, loop_index);
+			    attributed = false;
+			    break;
+			}
+			std::map<double, ON_3dPoint *> edge_points;
+			std::vector<std::pair<double, double>> edge_intervals;
+			ON_3dPoint *root_start = NULL;
+			ON_3dPoint *root_end = NULL;
+			for (const bedge_seg_t *segment :
+				edge_segments->second) {
+			    if (!segment || !segment->e_start ||
+				    !segment->e_end ||
+				    !segment->e_root_start ||
+				    !segment->e_root_end ||
+				    !std::isfinite(segment->edge_start) ||
+				    !std::isfinite(segment->edge_end)) {
+				attributed = false;
+				break;
+			    }
+			    if (!root_start) {
+				root_start = segment->e_root_start;
+				root_end = segment->e_root_end;
+			    } else if (root_start != segment->e_root_start ||
+				    root_end != segment->e_root_end) {
+				attributed = false;
+				break;
+			    }
+			    edge_intervals.push_back(std::minmax(
+				segment->edge_start, segment->edge_end));
+			    edge_points[segment->edge_start] = segment->e_start;
+			    edge_points[segment->edge_end] = segment->e_end;
+			}
+			if (attributed) {
+			    std::sort(edge_intervals.begin(), edge_intervals.end());
+			    const double scale = edge_intervals.empty() ? 1.0 :
+				std::max(1.0, std::max(std::fabs(
+				edge_intervals.front().first), std::fabs(
+				edge_intervals.back().second)));
+			    const double parameter_tolerance = 4096.0 *
+				std::numeric_limits<double>::epsilon() * scale;
+			    double covered = edge_intervals.empty() ? DBL_MAX :
+				edge_intervals.front().second;
+			    bool complete = !edge_intervals.empty();
+			    for (size_t interval = 1; complete &&
+				    interval < edge_intervals.size(); ++interval) {
+				complete = edge_intervals[interval].first <= covered +
+				    parameter_tolerance;
+				covered = std::max(covered,
+				    edge_intervals[interval].second);
+			    }
+			    const bool endpoints_match = !edge_points.empty() &&
+				((edge_points.begin()->second == root_start &&
+				edge_points.rbegin()->second == root_end) ||
+				(edge_points.begin()->second == root_end &&
+				edge_points.rbegin()->second == root_start));
+			    complete = complete && endpoints_match;
+			    if (!complete) {
+				if (debug_repair_topology)
+				    bu_log("Face %d: trim %d edge segments do not "
+					"form one complete authoritative chain\n",
+					source, trim->m_trim_index);
+				attributed = false;
+			    }
+			}
+			int prior_index = -1;
+			size_t indexed_points = 0;
+			for (const auto &edge_point : edge_points) {
+			    const int index = source_index(edge_point.second);
+			    if (index < 0) {
+				if (debug_repair_topology)
+				    bu_log("Face %d: trim %d has an unindexed "
+					"authoritative edge point\n", source,
+					trim->m_trim_index);
+				attributed = false;
+				break;
+			    }
+			    indexed_points++;
+			    if (prior_index >= 0 && prior_index != index)
+				boundary.insert(std::minmax(prior_index, index));
+			    prior_index = index;
+			}
+			if (attributed && indexed_points < 2) {
+			    if (debug_repair_topology)
+				bu_log("Face %d: trim %d has fewer than two "
+				    "indexed authoritative edge points\n", source,
+				    trim->m_trim_index);
+			    attributed = false;
+			}
+		    }
+		}
+		if (boundary.empty()) {
+		    if (debug_repair_topology)
+			bu_log("Face %d: authoritative boundary is empty\n",
+			    source);
+		    attributed = false;
+		}
+	    }
+	    if (debug_repair_topology && !attributed)
+		bu_log("Multi-source rigorous-boundary repair could not prove "
+		    "all approximate source boundaries\n");
+	    if (attributed && approximate_sources.size() > 1) {
+		int trial_face_count = input_face_count;
+		int trial_vertex_count = input_vertex_count;
+		int *trial_faces = (int *)bu_malloc(
+		    (size_t)trial_face_count * 3 * sizeof(int),
+		    "multi-source rigorous-boundary trial faces");
+		fastf_t *trial_vertices = (fastf_t *)bu_malloc(
+		    (size_t)trial_vertex_count * 3 * sizeof(fastf_t),
+		    "multi-source rigorous-boundary trial vertices");
+		memcpy(trial_faces, input_faces,
+		    (size_t)trial_face_count * 3 * sizeof(int));
+		memcpy(trial_vertices, input_vertices,
+		    (size_t)trial_vertex_count * 3 * sizeof(fastf_t));
+		std::vector<int> trial_sources = input_source_faces;
+		repair_degenerate_neighborhood_stats combined_stats;
+		bool completed = true;
+		size_t source_number = 0;
+		for (int source : approximate_sources) {
+		    repair_degenerate_neighborhood_stats source_stats;
+		    std::vector<int> remap;
+		    const bool final_source = ++source_number ==
+			approximate_sources.size();
+		    if (!repair_failed_face_from_rigorous_boundary(s_cdt,
+			    &trial_faces, &trial_face_count, &trial_vertices,
+			    &trial_vertex_count, rigorous_input_face_count,
+			    trial_sources, neighborhood_deviation,
+			    std::max(neighborhood_max_edges, (size_t)4096),
+			    &source_stats, source, &source_boundaries[source],
+			    final_source, &remap)) {
+			if (debug_repair_topology)
+			    bu_log("Face %d: independent rigorous-boundary "
+				"transaction failed (%zu indexed boundary edges)\n",
+				source, source_boundaries[source].size());
+			completed = false;
+			break;
+		    }
+		    combined_stats.components += source_stats.components;
+		    combined_stats.removed_faces += source_stats.removed_faces;
+		    combined_stats.added_faces += source_stats.added_faces;
+		    combined_stats.boundary_edges += source_stats.boundary_edges;
+		    combined_stats.max_center_offset = std::max(
+			combined_stats.max_center_offset,
+			source_stats.max_center_offset);
+		    combined_stats.inferred_topology =
+			combined_stats.inferred_topology ||
+			source_stats.inferred_topology;
+		    combined_stats.source_faces.insert(source);
+		    for (auto &source_boundary : source_boundaries) {
+			std::set<repair_mesh_edge> remapped;
+			for (const repair_mesh_edge &edge :
+				source_boundary.second) {
+			    if ((size_t)edge.first >= remap.size() ||
+				    (size_t)edge.second >= remap.size()) {
+				completed = false;
+				break;
+			    }
+			    if (remap[(size_t)edge.first] < 0 ||
+				    remap[(size_t)edge.second] < 0)
+				continue;
+			    remapped.insert(std::minmax(
+				remap[(size_t)edge.first],
+				remap[(size_t)edge.second]));
+			}
+			if (!completed)
+			    break;
+			source_boundary.second.swap(remapped);
+		    }
+		    if (!completed)
+			break;
+		}
+		if (completed) {
+		    bu_free(input_faces,
+			"pre-multi-source rigorous-boundary faces");
+		    bu_free(input_vertices,
+			"pre-multi-source rigorous-boundary vertices");
+		    input_faces = trial_faces;
+		    input_face_count = trial_face_count;
+		    input_vertices = trial_vertices;
+		    input_vertex_count = trial_vertex_count;
+		    input_source_faces.swap(trial_sources);
+		    degenerate_neighborhood_stats = combined_stats;
+		    rigorous_boundary_repair = true;
+		    bu_log("Reconstructed %zu failed B-Rep faces from "
+			"independent rigorous boundary rings\n",
+			approximate_sources.size());
+		} else {
+		    bu_free(trial_faces,
+			"failed multi-source rigorous-boundary faces");
+		    bu_free(trial_vertices,
+			"failed multi-source rigorous-boundary vertices");
+		}
+	    }
+	}
 	degenerate_neighborhood_repair = rigorous_boundary_repair;
 	if (!degenerate_neighborhood_repair) {
 	    size_t paired_boundary_vertices = 0;
