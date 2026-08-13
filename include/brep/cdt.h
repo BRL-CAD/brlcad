@@ -533,6 +533,7 @@ extern BREP_EXPORT int cdt_test_repair_triangle_split(void);
 extern BREP_EXPORT int cdt_test_repair_patch_limits(void);
 extern BREP_EXPORT int cdt_test_repair_periodic_strip(void);
 extern BREP_EXPORT int cdt_test_repair_rigorous_boundary(void);
+extern BREP_EXPORT int cdt_test_repair_patch_boundary(void);
 extern BREP_EXPORT int cdt_test_subtolerance_edge_collapse(void);
 extern BREP_EXPORT int cdt_test_subtolerance_ring(void);
 extern BREP_EXPORT int cdt_test_developable_clean(void);
