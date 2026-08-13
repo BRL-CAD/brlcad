@@ -57,7 +57,7 @@ main(int argc, char **argv)
     struct rt_db_internal intern;
     struct rt_metaball_internal mb = {0};
     struct bu_vls log = BU_VLS_INIT_ZERO;
-    point_t initial_point = {1.0, 2.0, 3.0};
+    const point_t initial_point = {1.0, 2.0, 3.0};
     const char *odd_args[] = {"1", "1", "1"};
     const char *invalid_args[] = {"method", "2", "thresh", "3.5", "PL", "{9 8}"};
     const char *valid_args[] = {"method", "2", "thresh", "3.5", "PL", "{9 8 7 6 5} {4 3 2 1 0.5}"};
