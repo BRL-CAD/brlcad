@@ -4315,13 +4315,27 @@ repair_failed_face_from_rigorous_boundary(
 	    rigorous_face_count <= 0 || rigorous_face_count >= *face_count ||
 	    source_faces.size() != (size_t)*face_count ||
 	    !(allowed_deviation > 0.0) || !stats ||
-	    (requested_boundary && requested_source_face < 0))
+	    (requested_boundary && requested_source_face < 0)) {
+	if (debug_topology)
+	    bu_log("Rigorous-boundary face repair unavailable: state %d, "
+		"faces %d/%d, vertices %d, sources %zu, deviation %.17g, "
+		"stats %d, requested source %d\n", s_cdt &&
+		s_cdt->orig_brep && faces && face_count && *faces ? 1 : 0,
+		rigorous_face_count, face_count ? *face_count : -1,
+		vertex_count ? *vertex_count : -1, source_faces.size(),
+		allowed_deviation, stats ? 1 : 0, requested_source_face);
 	return false;
+    }
+    const auto reject_boundary = [&](const char *reason) {
+	if (debug_topology)
+	    bu_log("Rigorous-boundary face repair rejected: %s\n", reason);
+	return false;
+    };
 
     std::set<int> approximate_sources;
     for (int face = rigorous_face_count; face < *face_count; ++face) {
 	if (source_faces[(size_t)face] < 0)
-	    return false;
+	    return reject_boundary("an approximate triangle has no source face");
 	approximate_sources.insert(source_faces[(size_t)face]);
 	for (int corner = 0; corner < 3; ++corner) {
 	    const int vertex = (*faces)[(size_t)face * 3 + corner];
@@ -4332,11 +4346,12 @@ repair_failed_face_from_rigorous_boundary(
     if ((requested_source_face < 0 && approximate_sources.size() != 1) ||
 	    (requested_source_face >= 0 && approximate_sources.find(
 		requested_source_face) == approximate_sources.end()))
-	return false;
+	return reject_boundary("the approximate suffix does not identify the "
+	    "requested source face");
     const int source_face = requested_source_face >= 0 ?
 	requested_source_face : *approximate_sources.begin();
     if (source_face < 0 || source_face >= s_cdt->orig_brep->m_F.Count())
-	return false;
+	return reject_boundary("the source face index is out of range");
 
     typedef std::pair<int, int> mesh_edge;
     struct edge_use {
@@ -4356,6 +4371,9 @@ repair_failed_face_from_rigorous_boundary(
 	    const int to = (*faces)[(size_t)face * 3 + (corner + 1) % 3];
 	    if (from == to)
 		continue;
+	    if (from < 0 || to < 0 || from >= *vertex_count ||
+		    to >= *vertex_count)
+		return reject_boundary("mesh incidence has an invalid vertex");
 	    incidence[std::minmax(from, to)].push_back({face, from, to});
 	}
     }
@@ -4365,8 +4383,36 @@ repair_failed_face_from_rigorous_boundary(
 	if (requested_boundary && requested_boundary->find(edge.first) ==
 		requested_boundary->end())
 	    continue;
-	if (edge.second.size() > 2)
-	    return false;
+	if (edge.second.size() > 2) {
+	    if (debug_topology) {
+		bu_log("Rigorous-boundary retained edge %d-%d has %zu uses:",
+		    edge.first.first, edge.first.second, edge.second.size());
+		for (const edge_use &use : edge.second)
+		    bu_log(" triangle %d/source %d [%d,%d,%d]", use.face,
+			(size_t)use.face < source_faces.size() ?
+			source_faces[(size_t)use.face] : -1,
+			(*faces)[(size_t)use.face * 3],
+			(*faces)[(size_t)use.face * 3 + 1],
+			(*faces)[(size_t)use.face * 3 + 2]);
+		bu_log("\n");
+		for (int vertex : {edge.first.first, edge.first.second}) {
+		    ON_3dPoint *point = s_cdt->bot_pnt_to_on_pnt &&
+			(size_t)vertex < s_cdt->bot_pnt_to_on_pnt->size() ?
+			(*s_cdt->bot_pnt_to_on_pnt)[(size_t)vertex] : NULL;
+		    const cdt_audit_info *audit = NULL;
+		    if (point && s_cdt->pnt_audit_info) {
+			const auto found = s_cdt->pnt_audit_info->find(point);
+			if (found != s_cdt->pnt_audit_info->end())
+			    audit = &found->second;
+		    }
+		    bu_log("  vertex %d face/trim/edge %d/%d/%d\n",
+			vertex, audit ? audit->face_index : -1,
+			audit ? audit->trim_index : -1,
+			audit ? audit->edge_index : -1);
+		}
+	    }
+	    return reject_boundary("retained mesh incidence is nonmanifold");
+	}
 	if (edge.second.size() == 1) {
 	    const edge_use &retained = edge.second.front();
 	    boundary.push_back({retained.face, retained.to, retained.from});
@@ -4387,13 +4433,13 @@ repair_failed_face_from_rigorous_boundary(
 			edge.first, edge.second);
 	    }
 	}
-	return false;
+	return reject_boundary("the requested retained boundary is incomplete");
     }
     if (debug_topology && requested_boundary)
 	bu_log("Face %d: selected all %zu indexed source boundary edges\n",
 	    source_face, requested_boundary->size());
     if (boundary.size() < 3 || boundary.size() > max_boundary_edges)
-	return false;
+	return reject_boundary("the retained boundary size is outside limits");
 
     std::vector<std::vector<int>> rings;
     std::vector<bool> used(boundary.size(), false);
@@ -4405,7 +4451,8 @@ repair_failed_face_from_rigorous_boundary(
 	}
 	for (const auto &vertex : adjacency) {
 	    if (vertex.second.size() != 2)
-		return false;
+		return reject_boundary("an undirected boundary vertex does not "
+		    "have degree two");
 	}
 	for (size_t first_edge = 0; first_edge < boundary.size(); ++first_edge) {
 	    if (used[first_edge])
@@ -4427,7 +4474,8 @@ repair_failed_face_from_rigorous_boundary(
 		    break;
 	    }
 	    if (current != start || ring.size() < 3)
-		return false;
+		return reject_boundary("an undirected boundary chain is not a "
+		    "closed ring");
 	    rings.push_back(std::move(ring));
 	}
     } else {
@@ -4436,14 +4484,15 @@ repair_failed_face_from_rigorous_boundary(
 	for (size_t edge = 0; edge < boundary.size(); ++edge) {
 	    if (!outgoing.emplace(boundary[edge].from, edge).second ||
 		    !incoming.emplace(boundary[edge].to, edge).second)
-		return false;
+		return reject_boundary("a directed boundary vertex is branched");
 	}
 	if (outgoing.size() != boundary.size() ||
 		incoming.size() != boundary.size())
-	    return false;
+	    return reject_boundary("directed boundary incidence is incomplete");
 	for (const auto &vertex : outgoing) {
 	    if (incoming.find(vertex.first) == incoming.end())
-		return false;
+		return reject_boundary("a directed boundary vertex has no "
+		    "incoming edge");
 	}
 	for (size_t first_edge = 0; first_edge < boundary.size(); ++first_edge) {
 	    if (used[first_edge])
@@ -4462,13 +4511,15 @@ repair_failed_face_from_rigorous_boundary(
 		    break;
 	    }
 	    if (current != start || ring.size() < 3)
-		return false;
+		return reject_boundary("a directed boundary chain is not a "
+		    "closed ring");
 	    rings.push_back(std::move(ring));
 	}
     }
     if (rings.empty() ||
 	    std::find(used.begin(), used.end(), false) != used.end())
-	return false;
+	return reject_boundary("not every retained boundary edge belongs to a "
+	    "closed ring");
 
     const fastf_t *input_vertices = *vertices;
     if (debug_topology && requested_boundary) {
@@ -5266,8 +5317,12 @@ repair_failed_face_from_rigorous_boundary(
 	    }
 	    const double area_scale = std::max(approximate_face_area,
 		std::numeric_limits<double>::min());
+	    /* This only bounds candidate generation.  The complete repaired mesh
+	     * must still pass the caller's area, deviation, reverse-coverage, and
+	     * solid-validation limits before it can be returned.
+	     */
 	    const bool area_supported = std::isfinite(best_area_delta) &&
-		best_area_delta <= 0.01 * area_scale;
+		best_area_delta <= area_scale;
 	    if (area_supported)
 		patch_faces.swap(best_faces);
 	    else
@@ -9848,6 +9903,144 @@ repair_missing_patch_bounded(
     return true;
 }
 
+static size_t
+repair_quarantine_duplicate_source_faces(int *faces, int face_count,
+	const fastf_t *vertices, int *rigorous_face_count,
+	std::vector<int> &sources, std::set<int> &quarantined_sources,
+	size_t *exact_duplicate_count = NULL,
+	std::map<int, std::pair<size_t, size_t>> *source_counts = NULL)
+{
+    quarantined_sources.clear();
+    if (exact_duplicate_count)
+	*exact_duplicate_count = 0;
+    if (source_counts)
+	source_counts->clear();
+    if (!faces || face_count <= 0 || !vertices || !rigorous_face_count ||
+	    *rigorous_face_count <= 0 || *rigorous_face_count > face_count ||
+	    sources.size() != (size_t)face_count)
+	return 0;
+
+    std::map<repair_triangle_key, std::vector<int>> retained_by_triangle;
+    std::map<int, size_t> source_triangle_counts;
+    std::map<int, size_t> source_duplicate_counts;
+    size_t duplicate_count = 0;
+    for (int face = 0; face < *rigorous_face_count; ++face) {
+	const repair_triangle_key key = repair_triangle_coordinates(vertices,
+	    &faces[(size_t)face * 3]);
+	const int source = sources[(size_t)face];
+	source_triangle_counts[source]++;
+	const ON_3dPoint a(&vertices[(size_t)faces[(size_t)face * 3] * 3]);
+	const ON_3dPoint b(&vertices[(size_t)faces[(size_t)face * 3 + 1] * 3]);
+	const ON_3dPoint c(&vertices[(size_t)faces[(size_t)face * 3 + 2] * 3]);
+	ON_3dVector normal = ON_CrossProduct(b - a, c - a);
+	if (!normal.Unitize()) {
+	    retained_by_triangle[key].push_back(face);
+	    continue;
+	}
+	bool duplicate = false;
+	for (int prior : retained_by_triangle[key]) {
+	    if (sources[(size_t)prior] == source)
+		continue;
+	    const ON_3dPoint pa(&vertices[(size_t)
+		faces[(size_t)prior * 3] * 3]);
+	    const ON_3dPoint pb(&vertices[(size_t)
+		faces[(size_t)prior * 3 + 1] * 3]);
+	    const ON_3dPoint pc(&vertices[(size_t)
+		faces[(size_t)prior * 3 + 2] * 3]);
+	    ON_3dVector prior_normal = ON_CrossProduct(pb - pa, pc - pa);
+	    if (prior_normal.Unitize() && prior_normal * normal >
+		    1.0 - 64.0 * std::numeric_limits<double>::epsilon()) {
+		duplicate = true;
+		break;
+	    }
+	}
+	if (duplicate) {
+	    quarantined_sources.insert(source);
+	    source_duplicate_counts[source]++;
+	    duplicate_count++;
+	} else {
+	    retained_by_triangle[key].push_back(face);
+	}
+    }
+    if (!duplicate_count)
+	return 0;
+
+    std::vector<int> reordered_faces;
+    std::vector<int> reordered_sources;
+    reordered_faces.reserve((size_t)face_count * 3);
+    reordered_sources.reserve((size_t)face_count);
+    const auto append_face = [&](int face) {
+	reordered_faces.insert(reordered_faces.end(),
+	    &faces[(size_t)face * 3], &faces[(size_t)face * 3] + 3);
+	reordered_sources.push_back(sources[(size_t)face]);
+    };
+    for (int face = 0; face < *rigorous_face_count; ++face) {
+	if (quarantined_sources.find(sources[(size_t)face]) ==
+		quarantined_sources.end())
+	    append_face(face);
+    }
+    const int retained_rigorous_count = (int)reordered_sources.size();
+    for (int face = 0; face < *rigorous_face_count; ++face) {
+	if (quarantined_sources.find(sources[(size_t)face]) !=
+		quarantined_sources.end())
+	    append_face(face);
+    }
+    for (int face = *rigorous_face_count; face < face_count; ++face)
+	append_face(face);
+    memcpy(faces, reordered_faces.data(),
+	reordered_faces.size() * sizeof(int));
+    sources.swap(reordered_sources);
+    *rigorous_face_count = retained_rigorous_count;
+    if (exact_duplicate_count)
+	*exact_duplicate_count = duplicate_count;
+    size_t quarantined_triangles = 0;
+    for (int source : quarantined_sources) {
+	quarantined_triangles += source_triangle_counts[source];
+	if (source_counts)
+	    (*source_counts)[source] = std::make_pair(
+		source_duplicate_counts[source], source_triangle_counts[source]);
+    }
+    return quarantined_triangles;
+}
+
+int
+cdt_test_repair_duplicate_quarantine(void)
+{
+    const fastf_t vertices[] = {
+	0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+	1.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+	2.0, 0.0, 0.0, 2.0, 1.0, 0.0
+    };
+    int faces[] = {
+	0, 1, 2, 0, 1, 2, 0, 2, 3, 1, 4, 5, 0, 3, 2
+    };
+    std::vector<int> sources = {0, 1, 1, 2, 9};
+    int rigorous_faces = 4;
+    std::set<int> quarantined;
+    size_t duplicates = 0;
+    std::map<int, std::pair<size_t, size_t>> counts;
+    const size_t moved = repair_quarantine_duplicate_source_faces(faces, 5,
+	vertices, &rigorous_faces, sources, quarantined, &duplicates,
+	&counts);
+    if (moved != 2 || duplicates != 1 || rigorous_faces != 2 ||
+	    quarantined != std::set<int>({1}) || sources !=
+	    std::vector<int>({0, 2, 1, 1, 9}) || counts[1].first != 1 ||
+	    counts[1].second != 2)
+	return 1;
+    if (faces[0] != 0 || faces[1] != 1 || faces[2] != 2 ||
+	    faces[3] != 1 || faces[4] != 4 || faces[5] != 5)
+	return 2;
+
+    int opposite[] = {0, 1, 2, 0, 2, 1};
+    sources = {0, 1};
+    rigorous_faces = 2;
+    if (repair_quarantine_duplicate_source_faces(opposite, 2, vertices,
+	    &rigorous_faces, sources, quarantined) != 0 ||
+	    rigorous_faces != 2 || !quarantined.empty())
+	return 3;
+    return 0;
+}
+
 int
 cdt_test_repair_patch_limits(void)
 {
@@ -10121,7 +10314,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	}
     }
     int rigorous_input_face_count = input_face_count;
-    const std::vector<int> rigorous_input_brep_faces =
+    std::vector<int> rigorous_input_brep_faces =
 	s_cdt->bot_face_to_brep_face;
     std::vector<int> input_face_brep_sources = rigorous_input_brep_faces;
     if (input_face_brep_sources.size() != (size_t)input_face_count)
@@ -11180,6 +11373,31 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	}
     }
 
+    std::set<int> duplicate_sources;
+    size_t duplicate_count = 0;
+    std::map<int, std::pair<size_t, size_t>> duplicate_source_counts;
+    const size_t quarantined_triangles =
+	repair_quarantine_duplicate_source_faces(input_faces,
+	    input_face_count, input_vertices, &rigorous_input_face_count,
+	    input_face_brep_sources, duplicate_sources, &duplicate_count,
+	    &duplicate_source_counts);
+    if (quarantined_triangles) {
+	rigorous_input_brep_faces.assign(input_face_brep_sources.begin(),
+	    input_face_brep_sources.begin() + rigorous_input_face_count);
+	approximation_faces.insert(duplicate_sources.begin(),
+	    duplicate_sources.end());
+	bu_log("Quarantined %zu triangles from %zu retained B-Rep faces "
+	    "after finding %zu exact, equally oriented duplicates\n",
+	    quarantined_triangles, duplicate_sources.size(), duplicate_count);
+	if (getenv("BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY")) {
+	    for (int source : duplicate_sources)
+		bu_log("  source face %d: %zu of %zu triangles were exact "
+		    "duplicates\n", source,
+		    duplicate_source_counts[source].first,
+		    duplicate_source_counts[source].second);
+	}
+    }
+
     /* A failed face may still supply a bounded best-effort surface mesh, a
      * cleaned local chart, or a constrained fast triangulation.  Do not reject
      * an empty rigorous prefix until each enabled local recovery path has had
@@ -12039,9 +12257,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 				&input_faces[(size_t)input_face * 3]))
 			    continue;
 			if ((size_t)input_face <
-				s_cdt->bot_face_to_brep_face.size())
+				rigorous_input_brep_faces.size())
 			    return std::string("rigorous B-Rep face ") +
-				std::to_string(s_cdt->bot_face_to_brep_face[
+				std::to_string(rigorous_input_brep_faces[
 				(size_t)input_face]);
 			break;
 		    }
