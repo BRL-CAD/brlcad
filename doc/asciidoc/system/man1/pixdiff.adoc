@@ -4,33 +4,32 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixdiff - highlight pixel colors which differ between two pix files
+pixdiff - highlight samples which differ between two pix or bw files
 
 == SYNOPSIS
 
 [source]
 ----
 pixdiff _file1.pix_ _file2.pix_ > _out.pix_
+pixdiff _file1.bw_ _file2.bw_ > _out.bw_
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixdiff* compares two color *pix*(5) format images pixel by pixel and
-writes a new *pix*(5) image to standard output that highlights where they
-differ. For each pixel, if any of the red, green, or blue channels differ,
-the differing channels are specially marked: bytes that differ by +/-1 are
-written at intensity 192, while bytes that differ by more are written at
-full intensity 255. Where a pixel matches exactly, its NTSC black-and-white
-equivalent at half intensity is written instead, providing visual context
-for locating the differences within the image.
+*pixdiff* compares two raw *pix*(5) or *bw*(5) images byte by byte and
+writes a difference image of the same size to standard output. Bytes that
+differ by +/-1 are written at intensity 192, while larger differences are
+written at full intensity 255. Matching bytes are written at half their
+original intensity, providing visual context for locating differences.
 
-Because comparison is per pixel, *pixdiff* is independent of image
-resolution. The two inputs must be the same size in bytes; otherwise the
-program reports the mismatch and exits. Either input file may be given as
+Because the comparison does not interpret pixel structure, no format option
+is needed and *pixdiff* is independent of image resolution. The two inputs
+must be the same size in bytes; otherwise the program reports the mismatch
+and exits. Either input file may be given as
 *-* to read from standard input. Output must be redirected; *pixdiff*
-refuses to write a *pix*(5) stream to a terminal.
+refuses to write a raw image stream to a terminal.
 
 Upon completion, the count of bytes that matched, that were off by 1, and
 that were off by many is reported on standard error.
@@ -56,11 +55,21 @@ regions easy to spot. The matching/off-by-1/off-by-many byte counts printed
 on standard error give a quick quantitative sense of how much changed.
 ====
 
+.Diff two grayscale images
+====
+[source,bash]
+----
+pixdiff depth_a.bw depth_b.bw > depth_diff.bw
+----
+Writes a grayscale highlight image using the same byte comparison and
+statistics as the color example; no format option is needed.
+====
+
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *bwdiff*(1), *pix-fb*(1), *pix-png*(1), *pixstat*(1), *pix*(5)
+*brlcad*(1), *bwdiff*(1), *pix-fb*(1), *pix-png*(1), *pixstat*(1), *bw*(5), *pix*(5)
 
 
 [[author]]
