@@ -29,6 +29,14 @@ if(TARGET libged)
   endif(TARGET regress_lint_raytrace)
   brlcad_regression_test(regress-ged_lint_raytrace "regress_lint_raytrace;ged_exec" EXEC regress_lint_raytrace)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/regress-ged_lint_raytrace.log")
+
+  # Bounded B-Rep geometry diagnostics used by lint -I brep:*.
+  brlcad_addexec(regress_lint_brep regress_lint_brep.cpp "libged;libwdb;librt;libbu" TEST_USESDATA)
+  if(TARGET regress_lint_brep)
+    add_dependencies(regress_lint_brep ged_plugins)
+  endif(TARGET regress_lint_brep)
+  brlcad_regression_test(regress-ged_lint_brep "regress_lint_brep;ged_exec" EXEC regress_lint_brep)
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/regress-ged_lint_brep.log")
 endif(TARGET libged)
 
 cmakefiles(
@@ -37,6 +45,7 @@ cmakefiles(
   push.cpp
   regress_facetize.cpp
   regress_lint_raytrace.cpp
+  regress_lint_brep.cpp
   d2push_tests.g
   dpush_tests.g
   dxpush_tests.g
@@ -46,6 +55,7 @@ cmakefiles(
   regress-ged_push.cmake.in
   regress-ged_facetize.cmake.in
   regress-ged_lint_raytrace.cmake.in
+  regress-ged_lint_brep.cmake.in
   rpush_tests.g
   xpush_tests.g
 )
