@@ -650,7 +650,7 @@ public:
     bool optimize(std::set<triangle_t> &seeds);
     bool optimize(std::set<triangle_t> &seeds, ON_Plane &pplane);
     void reset();
-    bool valid(int verbose);
+    bool valid(int verbose, bool check_intersections = true);
     bool serialize(const char *fname);
     bool deserialize(const char *fname);
 

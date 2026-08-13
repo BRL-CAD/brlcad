@@ -917,6 +917,20 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh,
 {
     if (!s_cdt || !fmesh) return false;
 
+    const auto time_limit_reached = [&]() {
+	if (!s_cdt->face_deadline || bu_gettime() < s_cdt->face_deadline)
+	    return false;
+	const std::string message = "rigorous face triangulation exceeded its " +
+	    std::to_string(s_cdt->max_face_time_ms) +
+	    " ms wall-clock limit during adaptive refinement";
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REFINEMENT_LIMIT,
+	    BREP_CDT_STAGE_ADAPTIVE_REFINEMENT, fmesh->f_id, 0, 1,
+	    message.c_str());
+	return true;
+    };
+    if (time_limit_reached())
+	return false;
+
     if (cnt > MAX_TRIANGULATION_ATTEMPTS) {
 	std::cerr << "Error: even after " << MAX_TRIANGULATION_ATTEMPTS << " iterations could not successfully refine triangulate face " << fmesh->f_id << " for solidity criteria\n";
 	return false;
@@ -937,9 +951,12 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh,
 
     const bool topology_chart = cdt_face_uses_topology_chart(
 	s_cdt->brep->m_F[fmesh->f_id]);
-    if (fmesh->valid(0))
-	return true;
-    if (fmesh->repair_incorrect_normal_edges() && fmesh->valid(0))
+    const auto valid_or_repair_normals = [&]() {
+	if (fmesh->valid(0, false))
+	    return fmesh->self_intersections(NULL, 1) == 0;
+	return fmesh->repair_incorrect_normal_edges() && fmesh->valid(0);
+    };
+    if (valid_or_repair_normals())
 	return true;
     if (fmesh->repair_toleranced_nonmanifold_edges())
 	return true;
@@ -950,6 +967,8 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh,
     size_t collapsed_chart_points = 0;
     for (int attempt = 0; attempt < MAX_CHART_REFINEMENT_ATTEMPTS;
 	    ++attempt) {
+	if (time_limit_reached())
+	    return false;
 	const size_t remaining = MAX_CHART_REFINEMENT_POINTS -
 	    collapsed_chart_points;
 	if (!remaining)
@@ -964,8 +983,9 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh,
 		fmesh->f_id);
 	    return false;
 	}
-	if (fmesh->valid(0) || (fmesh->repair_incorrect_normal_edges() &&
-		fmesh->valid(0))) {
+	if (time_limit_reached())
+	    return false;
+	if (valid_or_repair_normals()) {
 	    bu_log("Face %d: separated collapsed periodic chart cells after "
 		"%zu inserted points\n", fmesh->f_id,
 		collapsed_chart_points);
@@ -987,6 +1007,8 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh,
     int stagnant_attempts = 0;
     for (int attempt = 0; attempt < MAX_CHART_REFINEMENT_ATTEMPTS;
 	    ++attempt) {
+	if (time_limit_reached())
+	    return false;
 	const size_t remaining = MAX_CHART_REFINEMENT_POINTS -
 	    refinement_points;
 	if (!remaining)
@@ -1005,8 +1027,9 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh,
 		fmesh->f_id);
 	    return false;
 	}
-	if (fmesh->valid(0) || (fmesh->repair_incorrect_normal_edges() &&
-		fmesh->valid(0))) {
+	if (time_limit_reached())
+	    return false;
+	if (valid_or_repair_normals()) {
 	    bu_log("Face %d: chart refinement certified after %zu "
 		"inserted points\n", fmesh->f_id, refinement_points);
 	    return true;
@@ -1014,9 +1037,18 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh,
 	if (fmesh->repair_toleranced_nonmanifold_edges())
 	    return true;
 	const size_t current_folds = fmesh->incorrect_normal_count();
-	const size_t current_intersections = fmesh->self_intersections(NULL,
-	    MAX_CHART_REFINEMENT_POINTS);
-	const size_t current_defects = current_folds + current_intersections;
+	/* Progress only requires knowing whether the defect count improved.
+	 * Once enough intersections have been found to equal the previous best,
+	 * continuing the complete pair scan cannot change that decision. */
+	size_t current_intersections = 0;
+	size_t current_defects = best_defects;
+	if (current_folds < best_defects) {
+	    const size_t improvement_limit = best_defects - current_folds;
+	    current_intersections = fmesh->self_intersections(NULL,
+		improvement_limit);
+	    if (current_intersections < improvement_limit)
+		current_defects = current_folds + current_intersections;
+	}
 	if (current_defects < best_defects) {
 	    best_defects = current_defects;
 	    stagnant_attempts = 0;
@@ -1132,6 +1164,8 @@ static bool
 do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 {
     ON_BrepFace &face = s_cdt->brep->m_F[fi];
+    s_cdt->face_deadline = s_cdt->max_face_time_ms > 0 ?
+	bu_gettime() + (int64_t)s_cdt->max_face_time_ms * 1000 : 0;
 
     // Document the min and max segment lengths - used to guide surface sampling
     int loop_cnt = face.LoopCount();
@@ -5977,6 +6011,7 @@ repair_failed_face_from_rigorous_boundary(
 
 static int repair_near_boundary_pair_contract(void);
 static int repair_adaptive_hole_retry_contract(void);
+static int repair_weld_roundoff_contract(void);
 static bool repair_degenerate_approximate_neighborhoods(int **, int *,
     fastf_t **, int *, int, std::vector<int> &, double, size_t,
     repair_degenerate_neighborhood_stats *);
@@ -6408,17 +6443,20 @@ cdt_test_repair_rigorous_boundary(void)
     const int neighborhood_result = repair_degenerate_neighborhood_contract();
     if (neighborhood_result)
 	return 20 + neighborhood_result;
+    const int weld_result = repair_weld_roundoff_contract();
+    if (weld_result)
+	return 30 + weld_result;
     const int adaptive_hole_result = repair_adaptive_hole_retry_contract();
     if (adaptive_hole_result)
-	return 30 + adaptive_hole_result;
+	return 40 + adaptive_hole_result;
     /* MP2416 has a few flat triangles but hundreds of disconnected links.  A
      * ColdPlate-sized local defect population must remain repair-eligible. */
     if (!repair_hybrid_fallback_preflight(739865, 23, 458, 256))
-	return 40;
+	return 50;
     if (repair_hybrid_fallback_preflight(1117799, 236, 458, 256))
-	return 41;
+	return 51;
     if (repair_hybrid_fallback_preflight(262144, 23, 458, 256))
-	return 42;
+	return 52;
     return 0;
 }
 
@@ -6826,6 +6864,155 @@ repair_near_boundary_pair_contract(void)
     return bg_trimesh_solid2(12, 12, &fully_separated_vertices[0][0],
 	&fully_separated_faces[0][0], NULL) ? 6 : 0;
 }
+
+
+/* The display tessellator emits each face independently.  Shared boundary
+ * samples therefore commonly have different indices and may differ by a few
+ * floating-point ulps even when they denote the same 3-D point.  Normalize
+ * only that coordinate roundoff before indexed neighborhood analysis.  The
+ * radius is deliberately independent of the user's geometric repair
+ * tolerance, and every point maps directly to a representative within the
+ * radius so a chain cannot accumulate displacement. */
+static size_t
+repair_weld_roundoff_vertices(int *faces, int face_count,
+	const fastf_t *vertices, int vertex_count)
+{
+    if (!faces || face_count <= 0 || !vertices || vertex_count <= 0)
+	return 0;
+
+    ON_BoundingBox bounds;
+    for (int vertex = 0; vertex < vertex_count; ++vertex) {
+	const ON_3dPoint point(&vertices[(size_t)vertex * 3]);
+	if (!point.IsValid())
+	    return 0;
+	if (vertex)
+	    bounds.Set(point, true);
+	else
+	    bounds.Set(point, false);
+    }
+    if (!bounds.IsValid())
+	return 0;
+    double coordinate_scale = std::max(1.0, bounds.Diagonal().Length());
+    for (int axis = 0; axis < 3; ++axis) {
+	coordinate_scale = std::max(coordinate_scale,
+	    std::fabs(bounds.m_min[axis]));
+	coordinate_scale = std::max(coordinate_scale,
+	    std::fabs(bounds.m_max[axis]));
+    }
+    const double tolerance = 256.0 *
+	std::numeric_limits<double>::epsilon() * coordinate_scale;
+    if (!(tolerance > 0.0) || !std::isfinite(tolerance))
+	return 0;
+    const double tolerance_squared = tolerance * tolerance;
+
+    typedef std::array<int64_t, 3> weld_cell;
+    std::map<weld_cell, std::vector<int>> cells;
+    std::vector<int> remap((size_t)vertex_count, -1);
+    size_t welded = 0;
+    for (int vertex = 0; vertex < vertex_count; ++vertex) {
+	const ON_3dPoint point(&vertices[(size_t)vertex * 3]);
+	weld_cell cell;
+	for (int axis = 0; axis < 3; ++axis) {
+	    const long double offset =
+		((long double)point[axis] - bounds.m_min[axis]) / tolerance;
+	    if (!(offset >= 0.0L) ||
+		    offset > (long double)std::numeric_limits<int64_t>::max())
+		return 0;
+	    cell[(size_t)axis] = (int64_t)std::floor(offset);
+	}
+	int representative = -1;
+	double best_distance = std::numeric_limits<double>::infinity();
+	for (int dx = -1; dx <= 1; ++dx) {
+	    for (int dy = -1; dy <= 1; ++dy) {
+		for (int dz = -1; dz <= 1; ++dz) {
+		    const weld_cell neighbor = {{cell[0] + dx,
+			cell[1] + dy, cell[2] + dz}};
+		    const auto found = cells.find(neighbor);
+		    if (found == cells.end())
+			continue;
+		    for (int candidate : found->second) {
+			const ON_3dPoint prior(
+			    &vertices[(size_t)candidate * 3]);
+			const double distance = (point - prior).LengthSquared();
+			if (distance <= tolerance_squared &&
+				distance < best_distance) {
+			    representative = candidate;
+			    best_distance = distance;
+			}
+		    }
+		}
+	    }
+	}
+	if (representative < 0) {
+	    representative = vertex;
+	    cells[cell].push_back(vertex);
+	} else {
+	    welded++;
+	}
+	remap[(size_t)vertex] = representative;
+    }
+    for (int corner = 0; corner < face_count * 3; ++corner) {
+	const int vertex = faces[corner];
+	if (vertex < 0 || vertex >= vertex_count)
+	    return 0;
+	faces[corner] = remap[(size_t)vertex];
+    }
+    return welded;
+}
+
+
+static int
+repair_weld_roundoff_contract(void)
+{
+    const fastf_t corners[8][3] = {
+	{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
+	{1.0, 1.0, 0.0}, {0.0, 1.0, 0.0},
+	{0.0, 0.0, 1.0}, {1.0, 0.0, 1.0},
+	{1.0, 1.0, 1.0}, {0.0, 1.0, 1.0}
+    };
+    const int cube[12][3] = {
+	{0, 2, 1}, {0, 3, 2}, {0, 1, 5}, {0, 5, 4},
+	{1, 2, 6}, {1, 6, 5}, {2, 3, 7}, {2, 7, 6},
+	{3, 0, 4}, {3, 4, 7}, {4, 5, 6}, {4, 6, 7}
+    };
+    fastf_t vertices[36][3];
+    int faces[12][3];
+    for (int face = 0; face < 12; ++face) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int vertex = face * 3 + corner;
+	    const int source = cube[face][corner];
+	    for (int axis = 0; axis < 3; ++axis) {
+		vertices[vertex][axis] = corners[source][axis];
+		if (face && ((face + corner + axis) % 2))
+		    vertices[vertex][axis] = std::nextafter(
+			vertices[vertex][axis], 2.0);
+	    }
+	    faces[face][corner] = vertex;
+	}
+    }
+    const size_t welded = repair_weld_roundoff_vertices(&faces[0][0], 12,
+	&vertices[0][0], 36);
+    std::set<int> used;
+    for (const auto &face : faces)
+	used.insert(face, face + 3);
+    if (welded != 28 || used.size() != 8 ||
+	    bg_trimesh_solid2(36, 12, &vertices[0][0], &faces[0][0], NULL))
+	return 1;
+
+    const double tolerance = 256.0 *
+	std::numeric_limits<double>::epsilon();
+    fastf_t chain_vertices[3][3] = {
+	{0.0, 0.0, 0.0}, {0.75 * tolerance, 0.0, 0.0},
+	{1.5 * tolerance, 0.0, 0.0}
+    };
+    int chain_face[3] = {0, 1, 2};
+    if (repair_weld_roundoff_vertices(chain_face, 1,
+	    &chain_vertices[0][0], 3) != 1 || chain_face[0] != chain_face[1] ||
+	    chain_face[0] == chain_face[2])
+	return 2;
+    return 0;
+}
+
 
 /* A constrained fallback can be topologically closed while containing small
  * regions whose source face collapsed to a line.  Removing those triangles
@@ -11924,6 +12111,21 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	input_vertices = (fastf_t *)fast_points;
 	input_vertex_count = fast_point_count;
 	rigorous_input_face_count = 0;
+	input_face_brep_sources.assign((size_t)fast_face_count, -1);
+	if (!report->poisson_reconstruction_applied) {
+	    for (size_t brep_face = 0; brep_face < fast_face_ranges.size();
+		    ++brep_face) {
+		const repair_fast_face_range &range =
+		    fast_face_ranges[brep_face];
+		if (!range.present || range.first_face >
+			(size_t)fast_face_count || range.face_count >
+			(size_t)fast_face_count - range.first_face)
+		    continue;
+		for (size_t face = range.first_face;
+			face < range.first_face + range.face_count; ++face)
+		    input_face_brep_sources[face] = (int)brep_face;
+	    }
+	}
 	report->fast_fallback_used_faces = fast_report.completed_faces;
 	report->fast_fallback_failed_faces = fast_report.failed_faces;
 	if (!report->fast_fallback_triangles)
@@ -12197,6 +12399,55 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	return -1;
     }
 
+    if (settings->use_full_fast_fallback &&
+	    !report->poisson_reconstruction_applied) {
+	struct bg_trimesh_solid_errors edge_errors =
+	    BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+	(void)bg_trimesh_solid2(input_vertex_count, input_face_count,
+	    input_vertices, input_faces, &edge_errors);
+	const bool edge_closed = !edge_errors.unmatched.count &&
+	    !edge_errors.excess.count && !edge_errors.misoriented.count;
+	bg_free_trimesh_solid_errors(&edge_errors);
+	assembled_mesh_validation pre_weld_validation;
+	(void)assembled_mesh_validate(input_vertex_count, input_face_count,
+	    input_vertices, input_faces, &pre_weld_validation, false);
+	if (getenv("BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY"))
+	    bu_log("Whole-display pre-weld: edge closed %d, degenerate %zu, "
+		"invalid links %zu, triangles %d\n", (int)edge_closed,
+		pre_weld_validation.degenerate_faces,
+		pre_weld_validation.invalid_vertex_links, input_face_count);
+	std::vector<int> weld_trial;
+	size_t welded = 0;
+	if (edge_closed && pre_weld_validation.degenerate_faces &&
+		pre_weld_validation.invalid_vertex_links) {
+	    weld_trial.assign(input_faces,
+		input_faces + (size_t)input_face_count * 3);
+	    welded = repair_weld_roundoff_vertices(weld_trial.data(),
+		input_face_count, input_vertices, input_vertex_count);
+	    assembled_mesh_validation post_weld_validation;
+	    (void)assembled_mesh_validate(input_vertex_count, input_face_count,
+		input_vertices, weld_trial.data(), &post_weld_validation, false);
+	    const size_t local_link_limit = std::max((size_t)64,
+		post_weld_validation.degenerate_faces <= SIZE_MAX / 4 ?
+		4 * post_weld_validation.degenerate_faces : SIZE_MAX);
+	    if (!welded || post_weld_validation.invalid_vertex_links >
+		    local_link_limit) {
+		if (getenv("BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY"))
+		    bu_log("Whole-display roundoff normalization declined: %zu "
+			"welds leave %zu invalid links (local limit %zu)\n",
+			welded, post_weld_validation.invalid_vertex_links,
+			local_link_limit);
+		welded = 0;
+	    } else {
+		memcpy(input_faces, weld_trial.data(),
+		    weld_trial.size() * sizeof(int));
+	    }
+	}
+	if (welded)
+	    bu_log("Normalized %zu whole-display vertices separated only by "
+		"coordinate roundoff before local repair\n", welded);
+    }
+
     if (getenv("BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY")) {
 	bu_log("Repair input mesh: %d vertices, %d triangles (%d rigorous)\n",
 	    input_vertex_count, input_face_count, rigorous_input_face_count);
@@ -12283,6 +12534,12 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    degenerate_component &component = components[
 		component_root((int)local)];
 	    component.triangles.push_back(input_face);
+	    if ((size_t)input_face < input_face_brep_sources.size() &&
+		    input_face_brep_sources[(size_t)input_face] >= 0) {
+		component.source_faces.insert(
+		    input_face_brep_sources[(size_t)input_face]);
+		continue;
+	    }
 	    if (input_face < rigorous_input_face_count &&
 		    (size_t)input_face < rigorous_input_brep_faces.size()) {
 		component.source_faces.insert(
@@ -12356,8 +12613,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     repair_degenerate_neighborhood_stats degenerate_neighborhood_stats;
     bool degenerate_neighborhood_repair = false;
     bool rigorous_boundary_repair = false;
-    if (!settings->use_full_fast_fallback &&
-	    settings->use_fast_face_fallback) {
+    if (!report->poisson_reconstruction_applied &&
+	    (settings->use_fast_face_fallback ||
+	    settings->use_full_fast_fallback)) {
 	std::vector<int> input_source_faces = input_face_brep_sources;
 	if (input_source_faces.size() != (size_t)input_face_count)
 	    input_source_faces.assign((size_t)input_face_count, -1);
@@ -12385,20 +12643,23 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const size_t neighborhood_max_edges =
 	    settings->mesh.max_hole_edges > 0 ?
 	    (size_t)settings->mesh.max_hole_edges : (size_t)256;
-	rigorous_boundary_repair =
-	    repair_failed_face_from_rigorous_boundary(s_cdt, &input_faces,
-		&input_face_count, &input_vertices, &input_vertex_count,
-		rigorous_input_face_count, input_source_faces,
-		neighborhood_deviation, std::max(neighborhood_max_edges,
-		    (size_t)1024),
-		&degenerate_neighborhood_stats);
+	if (!settings->use_full_fast_fallback) {
+	    rigorous_boundary_repair =
+		repair_failed_face_from_rigorous_boundary(s_cdt, &input_faces,
+		    &input_face_count, &input_vertices, &input_vertex_count,
+		    rigorous_input_face_count, input_source_faces,
+		    neighborhood_deviation, std::max(neighborhood_max_edges,
+			(size_t)1024),
+		    &degenerate_neighborhood_stats);
+	}
 	/* Failed faces expose independent rigorous rings.  Reconstruct each
 	 * source transactionally when every one of its exact shared-edge segments
 	 * is present in the rigorous prefix.  Intermediate candidates may remain
 	 * open only at the other proved source rings; the final source must close
 	 * and validate the complete mesh.  For one failed source, this is also the
 	 * authoritative requested-boundary path. */
-	if (!rigorous_boundary_repair) {
+	if (!settings->use_full_fast_fallback &&
+		!rigorous_boundary_repair) {
 	    std::set<int> approximate_sources;
 	    bool attributed = true;
 	    for (int face = rigorous_input_face_count;
@@ -12706,7 +12967,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	degenerate_neighborhood_repair = rigorous_boundary_repair;
 	if (!degenerate_neighborhood_repair) {
 	    size_t paired_boundary_vertices = 0;
-	    if (repair_pair_near_boundary_cracks(input_faces, input_face_count,
+	    if (!settings->use_full_fast_fallback &&
+		    repair_pair_near_boundary_cracks(input_faces, input_face_count,
 		    input_vertices, input_vertex_count,
 		    rigorous_input_face_count, neighborhood_deviation,
 		    &paired_boundary_vertices))
