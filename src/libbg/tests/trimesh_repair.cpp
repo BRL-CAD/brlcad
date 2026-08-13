@@ -454,7 +454,8 @@ test_manifold_rejection_report(void)
 /* Manifold accepts disconnected closed components which meet at one point
  * when their coincident vertices remain topologically distinct.  Preserve
  * that indexed interpretation instead of welding the contact into a
- * non-manifold vertex. */
+ * non-manifold vertex.  Requesting hole filling must remain a no-op for an
+ * already closed input. */
 static int
 test_manifold_preserves_point_contact(void)
 {
@@ -469,6 +470,7 @@ test_manifold_preserves_point_contact(void)
     struct bg_trimesh_repair_settings settings =
 	BG_TRIMESH_REPAIR_SETTINGS_INIT;
     settings.allow_self_intersections = 1;
+    settings.fill_holes = 1;
     settings.require_manifold = 1;
     int *output_faces = NULL;
     int output_face_count = 0;
