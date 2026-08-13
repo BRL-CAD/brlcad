@@ -4039,6 +4039,14 @@ repair_patch_matches_source_boundary(const int *faces, int face_count,
 	    candidate_boundary == reference_boundary;
 }
 
+static bool
+repair_topological_disk_stage(int stage)
+{
+    return stage == BREP_CDT_STAGE_FACE_TRIANGULATION ||
+	stage == BREP_CDT_STAGE_PSLG_VALIDATION ||
+	stage == BREP_CDT_STAGE_CHART_CONSTRUCTION;
+}
+
 int
 cdt_test_repair_patch_boundary(void)
 {
@@ -4072,8 +4080,15 @@ cdt_test_repair_patch_boundary(void)
 	return 3;
     std::vector<ON_3dPoint *> missing_source = sources;
     missing_source[2] = NULL;
-    return repair_patch_matches_source_boundary(valid, 2, missing_source,
-	reference) ? 4 : 0;
+    if (repair_patch_matches_source_boundary(valid, 2, missing_source,
+	    reference))
+	return 4;
+    return repair_topological_disk_stage(
+	BREP_CDT_STAGE_FACE_TRIANGULATION) &&
+	repair_topological_disk_stage(BREP_CDT_STAGE_PSLG_VALIDATION) &&
+	repair_topological_disk_stage(BREP_CDT_STAGE_CHART_CONSTRUCTION) &&
+	!repair_topological_disk_stage(BREP_CDT_STAGE_ADAPTIVE_REFINEMENT) ?
+	0 : 5;
 }
 
 /* Some imported faces have a trustworthy topological disk boundary but no
@@ -10227,8 +10242,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
      * shared edge has authoritative global samples, the loop topology still
      * defines a disk.  Preserve that exact boundary and span only the missing
      * face.  This intentionally approximate interpretation is restricted to
-     * constraint-topology failures; later mesh and fidelity checks remain the
-     * acceptance gate. */
+     * pre-refinement failures with a complete one-loop authoritative
+     * boundary; later mesh and fidelity checks remain the acceptance gate. */
     if (!settings->use_full_fast_fallback &&
 	    settings->use_fast_face_fallback && !failed_faces.empty()) {
 	const int64_t disk_start = bu_gettime();
@@ -10242,8 +10257,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    const auto diagnostic =
 		s_cdt->failed_face_diagnostics.find(failed_face);
 	    if (diagnostic == s_cdt->failed_face_diagnostics.end() ||
-		    diagnostic->second.stage !=
-		    BREP_CDT_STAGE_PSLG_VALIDATION)
+		    !repair_topological_disk_stage(diagnostic->second.stage))
 		continue;
 	    const repair_fast_constraint_store constraints =
 		repair_fast_face_constraints(s_cdt, failed_face);
