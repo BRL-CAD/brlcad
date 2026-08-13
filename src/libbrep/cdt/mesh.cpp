@@ -3276,18 +3276,36 @@ cdt_mesh_t::toleranced_boundary_triangle(const triangle_t &triangle)
 	    return false;
 	const ON_3dPoint *point = pnts[(size_t)vertex];
 	double minimum_distance = DBL_MAX;
-	for (const auto &mapping : p2d3d) {
-	    if (mapping.second < 0 || (size_t)mapping.second >= pnts.size() ||
-		pnts[(size_t)mapping.second] != point || mapping.first < 0 ||
-		(size_t)mapping.first >= m_pnts_2d.size())
-		continue;
+	const auto evaluate_native_image = [&](long native_point) {
+	    if (native_point < 0 ||
+		    (size_t)native_point >= m_pnts_2d.size())
+		return;
 	    const std::pair<double, double> &uv =
-		m_pnts_2d[(size_t)mapping.first];
+		m_pnts_2d[(size_t)native_point];
 	    const ON_3dPoint surface_point = surface->PointAt(uv.first,
 		uv.second);
 	    if (surface_point.IsValid())
 		minimum_distance = std::min(minimum_distance,
 		    surface_point.DistanceTo(*point));
+	};
+	/* The reverse chart map gives the sole native image for almost every
+	 * vertex.  Walking the complete ordered 2-D map here made each folded
+	 * triangle check linear in the size of a refined face.  Retain that scan
+	 * only for vertices which genuinely have more than one native image (a
+	 * periodic seam or singularity), or if a caller has not rebuilt the
+	 * reverse map yet. */
+	const auto native = p3d2d.find(vertex);
+	if (native != p3d2d.end() &&
+		ambiguous_p3d2d.find(vertex) == ambiguous_p3d2d.end()) {
+	    evaluate_native_image(native->second);
+	} else {
+	    for (const auto &mapping : p2d3d) {
+		if (mapping.second < 0 ||
+			(size_t)mapping.second >= pnts.size() ||
+			pnts[(size_t)mapping.second] != point)
+		    continue;
+		evaluate_native_image(mapping.first);
+	    }
 	}
 	if (!std::isfinite(minimum_distance))
 	    return false;
