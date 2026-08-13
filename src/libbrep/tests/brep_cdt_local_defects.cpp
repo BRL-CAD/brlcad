@@ -20,6 +20,9 @@ main(int argc, const char **UNUSED(argv))
     int result = cdt_test_edge_singular_pair();
     if (result)
 	return result;
+    result = cdt_test_closed_edge_seed_policy();
+    if (result)
+	return 5 + result;
     result = cdt_test_linear_edge_spacing();
     if (result)
 	return 10 + result;
