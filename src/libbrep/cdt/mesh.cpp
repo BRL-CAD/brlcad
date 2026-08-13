@@ -1995,6 +1995,11 @@ cdt_test_local_defects(void)
 	seam_triangle);
     if (ON_DotProduct(recovered_normal, expected_normal) < 0.999)
 	return 9;
+    double seam_deviation = 0.0;
+    if (!periodic_mesh.surface_triangle_deviation(seam_triangle,
+	    &seam_deviation) || !std::isfinite(seam_deviation) ||
+	    seam_deviation < 0.0)
+	return 92;
     periodic_mesh.periodic_ambiguous_p3d2d.clear();
     const ON_3dVector conservative_normal = periodic_mesh.bnorm(
 	seam_triangle);
@@ -2804,6 +2809,86 @@ cdt_mesh_t::bnorm(const triangle_t &t)
     ON_3dVector anrm = avgnorm / norm_cnt;
     anrm.Unitize();
     return anrm;
+}
+
+bool
+cdt_mesh_t::surface_triangle_deviation(const triangle_t &triangle,
+	double *distance)
+{
+    if (!distance || !brep || f_id < 0 || f_id >= brep->m_F.Count())
+	return false;
+    const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
+    if (!surface)
+	return false;
+
+    ON_2dPoint uv[3];
+    ON_3dPoint points[3];
+    for (int corner = 0; corner < 3; ++corner) {
+	const long vertex = triangle.v[corner];
+	if (vertex < 0 || (size_t)vertex >= pnts.size() ||
+		(ambiguous_p3d2d.find(vertex) != ambiguous_p3d2d.end() &&
+		periodic_ambiguous_p3d2d.find(vertex) ==
+		periodic_ambiguous_p3d2d.end()))
+	    return false;
+	const auto native = p3d2d.find(vertex);
+	if (native == p3d2d.end() || native->second < 0 ||
+		(size_t)native->second >= m_pnts_2d.size())
+	    return false;
+	uv[corner] = ON_2dPoint(
+	    m_pnts_2d[(size_t)native->second].first,
+	    m_pnts_2d[(size_t)native->second].second);
+	points[corner] = *pnts[(size_t)vertex];
+    }
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!surface->IsClosed(direction))
+	    continue;
+	const double period = surface->Domain(direction).Length();
+	const double reference = uv[0][direction];
+	for (int corner = 1; corner < 3; ++corner) {
+	    if (!nearest_periodic_image(uv[corner][direction], reference,
+		    period))
+		return false;
+	}
+    }
+
+    const double weights[4][3] = {
+	{1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0},
+	{0.5, 0.5, 0.0}, {0.0, 0.5, 0.5}, {0.5, 0.0, 0.5}
+    };
+    double maximum = 0.0;
+    for (int sample = 0; sample < 4; ++sample) {
+	ON_2dPoint sample_uv(0.0, 0.0);
+	ON_3dPoint chord(0.0, 0.0, 0.0);
+	for (int corner = 0; corner < 3; ++corner) {
+	    sample_uv.x += weights[sample][corner] * uv[corner].x;
+	    sample_uv.y += weights[sample][corner] * uv[corner].y;
+	    chord.x += weights[sample][corner] * points[corner].x;
+	    chord.y += weights[sample][corner] * points[corner].y;
+	    chord.z += weights[sample][corner] * points[corner].z;
+	}
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!surface->IsClosed(direction))
+		continue;
+	    const ON_Interval domain = surface->Domain(direction);
+	    const double period = domain.Length();
+	    if (!(period > 0.0) || !std::isfinite(period))
+		return false;
+	    sample_uv[direction] = domain.Min() + std::fmod(
+		sample_uv[direction] - domain.Min(), period);
+	    if (sample_uv[direction] < domain.Min())
+		sample_uv[direction] += period;
+	}
+	const ON_3dPoint surface_point = surface->PointAt(sample_uv.x,
+	    sample_uv.y);
+	if (!surface_point.IsValid())
+	    return false;
+	const double deviation = chord.DistanceTo(surface_point);
+	if (!std::isfinite(deviation))
+	    return false;
+	maximum = std::max(maximum, deviation);
+    }
+    *distance = maximum;
+    return true;
 }
 
 ON_Plane
