@@ -6436,33 +6436,85 @@ repair_pair_near_boundary_cracks(int *faces, int face_count,
 	1024.0 * std::numeric_limits<double>::epsilon() * scale,
 	std::min(0.01 * allowed_deviation, 1.0e-4 * scale));
     std::vector<int> candidate(faces, faces + (size_t)face_count * 3);
+    std::map<mesh_edge, std::vector<directed_edge>> incidence;
+    std::set<mesh_edge> open_keys;
+    size_t non_two_edges = 0;
+    size_t excess_edges = 0;
+    auto update_incidence_status = [&](const mesh_edge &key,
+	    size_t old_uses, size_t new_uses) {
+	if (old_uses != 0 && old_uses != 2)
+	    non_two_edges--;
+	if (old_uses > 2)
+	    excess_edges--;
+	if (old_uses == 1)
+	    open_keys.erase(key);
+	if (new_uses != 0 && new_uses != 2)
+	    non_two_edges++;
+	if (new_uses > 2)
+	    excess_edges++;
+	if (new_uses == 1)
+	    open_keys.insert(key);
+    };
+    auto add_incidence = [&](const directed_edge &edge) {
+	if (edge.from == edge.to)
+	    return;
+	const mesh_edge key = std::minmax(edge.from, edge.to);
+	std::vector<directed_edge> &uses = incidence[key];
+	const size_t old_uses = uses.size();
+	uses.push_back(edge);
+	update_incidence_status(key, old_uses, uses.size());
+    };
+    auto remove_incidence = [&](const directed_edge &edge) {
+	if (edge.from == edge.to)
+	    return true;
+	const mesh_edge key = std::minmax(edge.from, edge.to);
+	auto found = incidence.find(key);
+	if (found == incidence.end())
+	    return false;
+	std::vector<directed_edge> &uses = found->second;
+	auto use = std::find_if(uses.begin(), uses.end(),
+	    [&](const directed_edge &candidate_edge) {
+		return candidate_edge.face == edge.face &&
+		    candidate_edge.from == edge.from &&
+		    candidate_edge.to == edge.to;
+	    });
+	if (use == uses.end())
+	    return false;
+	const size_t old_uses = uses.size();
+	*use = uses.back();
+	uses.pop_back();
+	update_incidence_status(key, old_uses, uses.size());
+	if (uses.empty())
+	    incidence.erase(found);
+	return true;
+    };
+    for (int face = 0; face < face_count; ++face) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int from = candidate[(size_t)face * 3 + corner];
+	    const int to = candidate[(size_t)face * 3 + (corner + 1) % 3];
+	    if (from < 0 || from >= vertex_count || to < 0 ||
+		    to >= vertex_count)
+		return false;
+	    add_incidence({face, from, to});
+	}
+    }
+    /* Only approximate faces may be reindexed.  Record their corners once so
+     * a weld can update its local star without scanning every triangle or
+     * reconstructing the full incidence map. */
+    std::vector<std::vector<size_t>> approximate_corners(
+	(size_t)vertex_count);
+    for (size_t corner = (size_t)rigorous_face_count * 3;
+	    corner < candidate.size(); ++corner)
+	approximate_corners[(size_t)candidate[corner]].push_back(corner);
+    std::vector<unsigned int> affected_generation((size_t)face_count, 0);
+    unsigned int generation = 0;
     const int maximum_pairings = std::min(face_count, 256);
     for (int iteration = 0; iteration < maximum_pairings; ++iteration) {
-	std::map<mesh_edge, std::vector<directed_edge>> incidence;
-	for (int face = 0; face < face_count; ++face) {
-	    for (int corner = 0; corner < 3; ++corner) {
-		const int from = candidate[(size_t)face * 3 + corner];
-		const int to = candidate[(size_t)face * 3 +
-		    (corner + 1) % 3];
-		if (from < 0 || from >= vertex_count || to < 0 ||
-			to >= vertex_count)
-		    return false;
-		if (from != to)
-		    incidence[std::minmax(from, to)].push_back(
-			{face, from, to});
-	    }
-	}
 	std::vector<directed_edge> open_edges;
-	bool complete = true;
-	size_t excess_edges = 0;
-	for (const auto &edge : incidence) {
-	    complete = complete && edge.second.size() == 2;
-	    if (edge.second.size() == 1)
-		open_edges.push_back(edge.second.front());
-	    else if (edge.second.size() > 2)
-		excess_edges++;
-	}
-	if (complete) {
+	open_edges.reserve(open_keys.size());
+	for (const mesh_edge &key : open_keys)
+	    open_edges.push_back(incidence.find(key)->second.front());
+	if (!non_two_edges) {
 	    std::vector<int> synchronized(candidate.size());
 	    if (bg_trimesh_sync(synchronized.data(), candidate.data(),
 		    face_count) < 0) {
@@ -6475,9 +6527,29 @@ repair_pair_near_boundary_cracks(int *faces, int face_count,
 		sizeof(int));
 	    return *welded_vertices > 0;
 	}
+	struct endpoint_order {
+	    double x;
+	    size_t edge;
+	};
+	std::vector<endpoint_order> ordered_endpoints;
+	ordered_endpoints.reserve(open_edges.size() * 2);
+	for (size_t edge = 0; edge < open_edges.size(); ++edge) {
+	    ordered_endpoints.push_back({vertices[
+		(size_t)open_edges[edge].from * 3], edge});
+	    ordered_endpoints.push_back({vertices[
+		(size_t)open_edges[edge].to * 3], edge});
+	}
+	std::sort(ordered_endpoints.begin(), ordered_endpoints.end(),
+	    [](const endpoint_order &first, const endpoint_order &second) {
+		if (first.x < second.x)
+		    return true;
+		if (second.x < first.x)
+		    return false;
+		return first.edge < second.edge;
+	    });
 	/* Indexed excess edges can balance an odd number of open edges before
-	 * the fallback-side vertex is reassigned.  Recompute incidence after
-	 * each pairing instead of assuming the initial open set is disjoint. */
+	 * the fallback-side vertex is reassigned.  Update incidence after each
+	 * pairing instead of assuming the initial open set is disjoint. */
 	if (open_edges.size() < 2) {
 	    if (debug_topology)
 		bu_log("Near-boundary pairing rejected at iteration %d: "
@@ -6494,8 +6566,36 @@ repair_pair_near_boundary_cracks(int *faces, int face_count,
 		(size_t)open_edges[first].to * 3]);
 	    pairing_candidate best;
 	    best.edge = open_edges.size();
-	    for (size_t second = first + 1; second < open_edges.size();
-		    second++) {
+	    std::vector<size_t> nearby_edges;
+	    const endpoint_order lower = {first_from.x - weld_tolerance, 0};
+	    auto endpoint_it = std::lower_bound(ordered_endpoints.begin(),
+		ordered_endpoints.end(), lower,
+		[](const endpoint_order &candidate_endpoint,
+			const endpoint_order &limit) {
+		    return candidate_endpoint.x < limit.x;
+		});
+	    for (; endpoint_it != ordered_endpoints.end() &&
+		    endpoint_it->x <= first_from.x + weld_tolerance;
+		    ++endpoint_it) {
+		const size_t second = endpoint_it->edge;
+		if (second <= first)
+		    continue;
+		const ON_3dPoint second_from(&vertices[
+		    (size_t)open_edges[second].from * 3]);
+		const ON_3dPoint second_to(&vertices[
+		    (size_t)open_edges[second].to * 3]);
+		const auto endpoint_box_match = [&](const ON_3dPoint &point) {
+		    return std::fabs(first_from.y - point.y) <= weld_tolerance &&
+			std::fabs(first_from.z - point.z) <= weld_tolerance;
+		};
+		if (endpoint_box_match(second_from) ||
+			endpoint_box_match(second_to))
+		    nearby_edges.push_back(second);
+	    }
+	    std::sort(nearby_edges.begin(), nearby_edges.end());
+	    nearby_edges.erase(std::unique(nearby_edges.begin(),
+		nearby_edges.end()), nearby_edges.end());
+	    for (size_t second : nearby_edges) {
 		if (open_edges[first].face < rigorous_face_count &&
 			open_edges[second].face < rigorous_face_count)
 		    continue;
@@ -6542,13 +6642,46 @@ repair_pair_near_boundary_cracks(int *faces, int face_count,
 		    "distance %.17g\n", iteration, approximate.from,
 		    approximate.to, approximate.face, target.to,
 		    target.from, target.face, best.distance);
-	    for (int face = rigorous_face_count; face < face_count; ++face) {
+	    std::vector<size_t> old_corners[2];
+	    old_corners[0].swap(
+		approximate_corners[(size_t)old_vertices[0]]);
+	    old_corners[1].swap(
+		approximate_corners[(size_t)old_vertices[1]]);
+	    std::vector<int> affected_faces;
+	    if (++generation == 0) {
+		std::fill(affected_generation.begin(),
+		    affected_generation.end(), 0);
+		generation = 1;
+	    }
+	    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+		for (size_t corner : old_corners[endpoint]) {
+		    const int face = (int)(corner / 3);
+		    if (affected_generation[(size_t)face] == generation)
+			continue;
+		    affected_generation[(size_t)face] = generation;
+		    affected_faces.push_back(face);
+		}
+	    }
+	    for (int face : affected_faces) {
 		for (int corner = 0; corner < 3; ++corner) {
-		    int &vertex = candidate[(size_t)face * 3 + corner];
-		    if (vertex == old_vertices[0])
-			vertex = new_vertices[0];
-		    else if (vertex == old_vertices[1])
-			vertex = new_vertices[1];
+		    const size_t index = (size_t)face * 3 + corner;
+		    if (!remove_incidence({face, candidate[index],
+			    candidate[(size_t)face * 3 + (corner + 1) % 3]}))
+			return false;
+		}
+	    }
+	    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+		for (size_t corner : old_corners[endpoint]) {
+		    candidate[corner] = new_vertices[endpoint];
+		    approximate_corners[(size_t)new_vertices[endpoint]].
+			push_back(corner);
+		}
+	    }
+	    for (int face : affected_faces) {
+		for (int corner = 0; corner < 3; ++corner) {
+		    const size_t index = (size_t)face * 3 + corner;
+		    add_incidence({face, candidate[index],
+			candidate[(size_t)face * 3 + (corner + 1) % 3]});
 		}
 	    }
 	    *welded_vertices += old_vertices[0] != new_vertices[0] ? 1 : 0;
@@ -6642,8 +6775,34 @@ repair_near_boundary_pair_contract(void)
     if (!repair_pair_near_boundary_cracks(&same_direction_faces[0][0], 12,
 	    &vertices[0][0], 10, 10, 0.1, &paired) || paired != 2)
 	return 3;
-    return bg_trimesh_solid2(10, 12, &vertices[0][0],
-	&same_direction_faces[0][0], NULL) ? 4 : 0;
+    if (bg_trimesh_solid2(10, 12, &vertices[0][0],
+	    &same_direction_faces[0][0], NULL))
+	return 4;
+
+    fastf_t fully_separated_vertices[12][3] = {
+	{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
+	{1.0, 1.0, 0.0}, {0.0, 1.0, 0.0},
+	{0.0, 0.0, 1.0}, {1.0, 0.0, 1.0},
+	{1.0, 1.0, 1.0}, {0.0, 1.0, 1.0},
+	{0.0, 0.0, 1.0}, {1.0, 0.0, 1.0},
+	{1.0, 1.0, 1.0}, {0.0, 1.0, 1.0}
+    };
+    int fully_separated_faces[12][3] = {
+	{0, 2, 1}, {0, 3, 2},
+	{0, 1, 5}, {0, 5, 4},
+	{1, 2, 6}, {1, 6, 5},
+	{2, 3, 7}, {2, 7, 6},
+	{3, 0, 4}, {3, 4, 7},
+	{8, 9, 10}, {8, 10, 11}
+    };
+    paired = 0;
+    if (!repair_pair_near_boundary_cracks(
+	    &fully_separated_faces[0][0], 12,
+	    &fully_separated_vertices[0][0], 12, 10, 0.1, &paired) ||
+	    paired != 4)
+	return 5;
+    return bg_trimesh_solid2(12, 12, &fully_separated_vertices[0][0],
+	&fully_separated_faces[0][0], NULL) ? 6 : 0;
 }
 
 /* A constrained fallback can be topologically closed while containing small
