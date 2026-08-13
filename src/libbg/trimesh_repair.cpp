@@ -869,6 +869,115 @@ trimesh_repair_report_topology(
 	!report->excess_edges && !report->misoriented_edges;
 }
 
+/* Synchronize winding only when it is the mesh's sole edge-incidence defect.
+ * Preserve the majority source winding independently in each closed connected
+ * component.  The operation changes no indices or point coordinates, and is
+ * accepted only after the complete indexed mesh passes the solid test. */
+static int
+trimesh_sync_closed_orientation(
+	std::vector<gte::Vector3<double>> const& vertices,
+	std::vector<std::array<int32_t, 3>>& triangles)
+{
+    if (vertices.size() < 4 || triangles.size() < 4 ||
+	    vertices.size() > INT_MAX || triangles.size() > INT_MAX)
+	return -1;
+
+    struct bg_trimesh_repair_report topology =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    trimesh_repair_report_topology(&topology, vertices, triangles);
+    if (topology.geometric_degenerate_faces || topology.unmatched_edges ||
+	    topology.excess_edges || !topology.misoriented_edges)
+	return -1;
+
+    std::vector<int> original(triangles.size() * 3);
+    for (size_t face = 0; face < triangles.size(); ++face) {
+	for (int corner = 0; corner < 3; ++corner)
+	    original[face * 3 + (size_t)corner] =
+		triangles[face][(size_t)corner];
+    }
+    std::vector<int> candidate(original);
+    if (bg_trimesh_sync(candidate.data(), candidate.data(),
+	    (int)triangles.size()) < 0)
+	return -1;
+
+    std::vector<int> parents(triangles.size(), -1);
+    const auto root = [&](int item) {
+	int result = item;
+	while (parents[(size_t)result] >= 0)
+	    result = parents[(size_t)result];
+	return result;
+    };
+    const auto unite = [&](int first, int second) {
+	int first_root = root(first);
+	int second_root = root(second);
+	if (first_root == second_root)
+	    return;
+	if (parents[(size_t)first_root] > parents[(size_t)second_root])
+	    std::swap(first_root, second_root);
+	parents[(size_t)first_root] += parents[(size_t)second_root];
+	parents[(size_t)second_root] = first_root;
+    };
+    typedef std::pair<int, int> edge_key;
+    std::map<edge_key, std::vector<int>> edge_faces;
+    for (size_t face = 0; face < triangles.size(); ++face) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    int first = original[face * 3 + (size_t)corner];
+	    int second = original[face * 3 + (size_t)((corner + 1) % 3)];
+	    if (second < first)
+		std::swap(first, second);
+	    edge_faces[edge_key(first, second)].push_back((int)face);
+	}
+    }
+    for (const auto &edge : edge_faces) {
+	if (edge.second.size() != 2)
+	    return -1;
+	unite(edge.second[0], edge.second[1]);
+    }
+
+    std::map<int, size_t> component_faces;
+    std::map<int, size_t> component_changes;
+    for (size_t face = 0; face < triangles.size(); ++face) {
+	const int component = root((int)face);
+	component_faces[component]++;
+	const size_t offset = face * 3;
+	if (candidate[offset] != original[offset] ||
+		candidate[offset + 1] != original[offset + 1] ||
+		candidate[offset + 2] != original[offset + 2])
+	    component_changes[component]++;
+    }
+    for (size_t face = 0; face < triangles.size(); ++face) {
+	const int component = root((int)face);
+	if (component_changes[component] * 2 >
+		component_faces[component])
+	    std::swap(candidate[face * 3], candidate[face * 3 + 1]);
+    }
+
+    std::vector<std::array<int32_t, 3>> synchronized(triangles.size());
+    for (size_t face = 0; face < triangles.size(); ++face) {
+	for (int corner = 0; corner < 3; ++corner)
+	    synchronized[face][(size_t)corner] =
+		candidate[face * 3 + (size_t)corner];
+    }
+    if (!trimesh_gte_solid(vertices, synchronized))
+	return -1;
+
+    int changed = 0;
+    for (size_t face = 0; face < triangles.size(); ++face) {
+	const size_t offset = face * 3;
+	if (candidate[offset] != original[offset] ||
+		candidate[offset + 1] != original[offset + 1] ||
+		candidate[offset + 2] != original[offset + 2])
+	    changed++;
+	for (int corner = 0; corner < 3; ++corner)
+	    triangles[face][(size_t)corner] =
+		candidate[offset + (size_t)corner];
+    }
+    return changed;
+}
+
+/* With perform_union false, round-trip an accepted Manifold input through its
+ * topology normalizer without a Boolean operation.  In both modes, publish a
+ * candidate only after libbg independently certifies its indexed topology. */
 static bool
 trimesh_manifold_union(
 	std::vector<gte::Vector3<double>>& vertices,
@@ -892,19 +1001,20 @@ trimesh_manifold_union(
 	return false;
     if (manifold_accepted)
 	*manifold_accepted = true;
-    if (!perform_union)
-	return false;
-    std::vector<manifold::Manifold> components = input.Decompose();
-    if (components.size() < 2)
-	return false;
-    manifold::Manifold united = manifold::Manifold::BatchBoolean(
-	components, manifold::OpType::Add);
-    if (united.Status() != manifold::Manifold::Error::NoError)
-	return false;
-    united = united.Simplify();
-    if (united.Status() != manifold::Manifold::Error::NoError)
-	return false;
-    manifold::MeshGL64 result = united.GetMeshGL64();
+    manifold::Manifold normalized = input;
+    if (perform_union) {
+	std::vector<manifold::Manifold> components = input.Decompose();
+	if (components.size() < 2)
+	    return false;
+	normalized = manifold::Manifold::BatchBoolean(components,
+	    manifold::OpType::Add);
+	if (normalized.Status() != manifold::Manifold::Error::NoError)
+	    return false;
+	normalized = normalized.Simplify();
+	if (normalized.Status() != manifold::Manifold::Error::NoError)
+	    return false;
+    }
+    manifold::MeshGL64 result = normalized.GetMeshGL64();
     if (result.numProp < 3 || result.vertProperties.empty() ||
 	    result.triVerts.empty() ||
 	    result.vertProperties.size() % result.numProp ||
@@ -1226,11 +1336,22 @@ bg_trimesh_repair2(
      * Preserve the result only when the complete indexed solid and optional
      * Manifold postconditions accept it. */
     size_t input_invalid_links = 0;
-    const bool input_links_valid = trimesh_gte_valid_vertex_links(tris,
+    bool input_links_valid = trimesh_gte_valid_vertex_links(tris,
 	verts.size(), &input_invalid_links);
     struct bg_trimesh_repair_report input_topology =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
     trimesh_repair_report_topology(&input_topology, verts, tris);
+    const int input_reoriented = trimesh_sync_closed_orientation(verts, tris);
+    if (input_reoriented > 0) {
+	report->reoriented_faces += input_reoriented;
+	/* The synchronized candidate has already passed the indexed solid
+	 * test.  It is authoritative over the unchanged source arrays. */
+	not_solid = 0;
+	input_invalid_links = 0;
+	input_links_valid = trimesh_gte_valid_vertex_links(tris,
+	    verts.size(), &input_invalid_links);
+	trimesh_repair_report_topology(&input_topology, verts, tris);
+    }
     const bool input_edges_closed = !input_topology.unmatched_edges &&
 	!input_topology.excess_edges && !input_topology.misoriented_edges;
     if (input_edges_closed && !initial_geometric_degenerate &&
@@ -1654,6 +1775,10 @@ bg_trimesh_repair2(
 	report->max_vertex_displacement = displacement;
     }
 
+    const int final_reoriented = trimesh_sync_closed_orientation(verts, tris);
+    if (final_reoriented > 0)
+	report->reoriented_faces += final_reoriented;
+
     if (settings->union_components) {
 	const size_t faces_before_union = tris.size();
 	bool manifold_accepted = false;
@@ -1673,8 +1798,35 @@ bg_trimesh_repair2(
 	bool manifold_accepted = false;
 	std::vector<gte::Vector3<double>> manifold_vertices = verts;
 	std::vector<std::array<int32_t, 3>> manifold_triangles = tris;
-	(void)trimesh_manifold_union(manifold_vertices, manifold_triangles,
-	    &manifold_accepted, false);
+	const size_t faces_before_normalization = tris.size();
+	if (trimesh_manifold_union(manifold_vertices, manifold_triangles,
+		&manifold_accepted, false)) {
+	    bool normalization_changed = verts.size() !=
+		manifold_vertices.size() || tris != manifold_triangles;
+	    if (!normalization_changed) {
+		for (size_t vertex = 0; vertex < verts.size() &&
+			!normalization_changed; ++vertex) {
+		    for (int axis = 0; axis < 3; ++axis) {
+			if (std::fabs(verts[vertex][axis] -
+				manifold_vertices[vertex][axis]) > 0.0) {
+			    normalization_changed = true;
+			    break;
+			}
+		    }
+		}
+	    }
+	    if (normalization_changed) {
+		report->manifold_normalization_applied = 1;
+		if (manifold_triangles.size() > faces_before_normalization)
+		    report->added_faces += (int)(manifold_triangles.size() -
+			faces_before_normalization);
+		else
+		    report->removed_faces += (int)(faces_before_normalization -
+			manifold_triangles.size());
+		verts.swap(manifold_vertices);
+		tris.swap(manifold_triangles);
+	    }
+	}
 	report->manifold_accepted = manifold_accepted;
 	if (!manifold_accepted) {
 	    trimesh_repair_report_topology(report, verts, tris);
