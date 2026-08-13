@@ -123,6 +123,8 @@ def append_repair_options(command, args):
         str(args.repair_hole_area_percent),
         "--repair-hole-edges",
         str(args.repair_hole_edges),
+        "--repair-adaptive-hole-edges",
+        str(args.repair_adaptive_hole_edges),
         "--repair-area-change-percent",
         str(args.repair_area_change_percent),
         "--repair-max-deviation",
@@ -605,6 +607,11 @@ def parse_args():
     parser.add_argument("--quality-repair", action="store_true")
     parser.add_argument("--repair-hole-area-percent", type=float, default=1.0)
     parser.add_argument("--repair-hole-edges", type=int, default=256)
+    parser.add_argument(
+        "--repair-adaptive-hole-edges", type=int, default=4096,
+        help=("second-pass edge ceiling when only bounded open holes "
+              "remain; zero disables"),
+    )
     parser.add_argument("--repair-area-change-percent", type=float, default=1.0)
     parser.add_argument("--repair-max-deviation", type=float, default=0.0)
     parser.add_argument(
@@ -655,6 +662,9 @@ def parse_args():
         parser.error("--selection-class needs --selection-jsonl")
     if args.repair_hole_area_percent <= 0.0 or \
             args.repair_hole_edges < 3 or \
+            args.repair_adaptive_hole_edges < 0 or \
+            (args.repair_adaptive_hole_edges > 0 and
+             args.repair_adaptive_hole_edges < args.repair_hole_edges) or \
             args.repair_area_change_percent < 0.0 or \
             args.repair_max_deviation < 0.0 or \
             args.repair_max_deviation_rel < 0.0 or \
