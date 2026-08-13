@@ -170,6 +170,10 @@ struct geom_result {
     size_t repair_coverage_failures = 0;
     double repair_max_coverage_deviation = 0.0;
     double repair_rms_coverage_deviation = 0.0;
+    bool repair_relaxed_fidelity_applied = false;
+    double repair_relaxed_fidelity_factor = 0.0;
+    double repair_relaxed_deviation_limit = 0.0;
+    double repair_relaxed_area_limit = 0.0;
     long long euler_characteristic = 0;
     double minimum_angle_degrees =
 	std::numeric_limits<double>::quiet_NaN();
@@ -1032,6 +1036,14 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.max_coverage_deviation;
 	result.repair_rms_coverage_deviation =
 	    repair_report.rms_coverage_deviation;
+	result.repair_relaxed_fidelity_applied =
+	    repair_report.relaxed_fidelity_applied != 0;
+	result.repair_relaxed_fidelity_factor =
+	    repair_report.relaxed_fidelity_factor;
+	result.repair_relaxed_deviation_limit =
+	    repair_report.relaxed_surface_deviation_limit;
+	result.repair_relaxed_area_limit =
+	    repair_report.relaxed_area_change_percent_limit;
 	if (repair_result == 0)
 	    result.ret = 0;
 	if (!repair_memory_exhausted &&
@@ -1418,6 +1430,14 @@ print_result(const geom_result &result, const vect_t ref_dims)
     print_num(result.repair_max_coverage_deviation);
     std::cout << ",\"rms_coverage_deviation\":";
     print_num(result.repair_rms_coverage_deviation);
+    std::cout << ",\"relaxed_fidelity_applied\":"
+	<< (result.repair_relaxed_fidelity_applied ? "true" : "false")
+	<< ",\"relaxed_fidelity_factor\":";
+    print_num(result.repair_relaxed_fidelity_factor);
+    std::cout << ",\"relaxed_surface_deviation_limit\":";
+    print_num(result.repair_relaxed_deviation_limit);
+    std::cout << ",\"relaxed_area_change_percent_limit\":";
+    print_num(result.repair_relaxed_area_limit);
     std::cout << "}"
 	<< ",\"requested_items\":" << result.requested_items
 	<< ",\"completed_items\":" << result.completed_items
@@ -1533,6 +1553,7 @@ struct audit_config {
     bool repair_allow_self_intersections;
     bool repair_require_manifold;
     bool repair_no_fast;
+    double repair_relaxed_fidelity_factor;
 };
 
 static int
@@ -1710,6 +1731,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	config.repair_require_manifold ? 1 : 0;
     repair_settings.use_fast_face_fallback =
 	config.repair_no_fast ? 0 : 1;
+    repair_settings.relaxed_fidelity_factor =
+	config.repair_relaxed_fidelity_factor;
     if (config.max_points > 0)
 	repair_settings.max_fast_points = (size_t)config.max_points;
     if (config.max_result_mib > 0)
@@ -1898,9 +1921,10 @@ main(int argc, const char **argv)
     int repair_allow_self_intersections = 0;
     int repair_require_manifold = 0;
     int repair_no_fast = 0;
+    double repair_relaxed_fidelity_factor = 0.0;
     const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[37];
+    struct bu_opt_desc d[38];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -1973,7 +1997,10 @@ main(int argc, const char **argv)
     BU_OPT(d[35], "", "repair-try-invalid", "", NULL,
 	&repair_try_invalid,
 	"Try rigorous faces of structurally safe invalid B-Reps before repair");
-    BU_OPT_NULL(d[36]);
+    BU_OPT(d[36], "", "repair-relaxed-fidelity-factor", "factor",
+	&bu_opt_fastf_t, &repair_relaxed_fidelity_factor,
+	"Accept and tag Manifold repair within 1 through 4 times strict fidelity");
+    BU_OPT_NULL(d[37]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -1987,6 +2014,11 @@ main(int argc, const char **argv)
 	    repair_area_change_percent < 0.0 || repair_max_deviation < 0.0 ||
 	    repair_max_deviation_rel < 0.0 ||
 	    (repair_max_deviation > 0.0 && repair_max_deviation_rel > 0.0) ||
+	    !std::isfinite(repair_relaxed_fidelity_factor) ||
+	    repair_relaxed_fidelity_factor < 0.0 ||
+	    (repair_relaxed_fidelity_factor > 0.0 &&
+	    (repair_relaxed_fidelity_factor < 1.0 ||
+	    repair_relaxed_fidelity_factor > 4.0)) ||
 	    repair_deviation_samples <= 0 ||
 	    repair_poisson_depth < 5 || repair_poisson_depth > 10 ||
 	    !std::isfinite(repair_poisson_scale) ||
@@ -2040,7 +2072,8 @@ main(int argc, const char **argv)
 	repair_union_components != 0,
 	repair_allow_self_intersections != 0,
 	repair_require_manifold != 0,
-	repair_no_fast != 0
+	repair_no_fast != 0,
+	repair_relaxed_fidelity_factor
     };
 
     if (batch) {
