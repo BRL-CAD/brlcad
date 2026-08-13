@@ -8159,19 +8159,12 @@ cdt_mesh_t::optimize(std::set<triangle_t> &seeds, ON_Plane &pplane)
 }
 
 bool
-cdt_mesh_t::valid(int verbose)
+cdt_mesh_t::valid(int verbose, bool check_intersections)
 {
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bool nret = true;
     bool eret = true;
     bool topret = true;
-
-    const size_t intersections = self_intersections(NULL, 1);
-    const bool iret = intersections == 0;
-    if (!iret && verbose > 0) {
-	std::cout << name << " face " << f_id
-	    << ": nonadjacent triangles intersect in mesh\n";
-    }
 
     const bool topology_chart =
 	cdt_face_uses_topology_chart(brep->m_F[f_id]);
@@ -8277,6 +8270,20 @@ cdt_mesh_t::valid(int verbose)
 	std::cout << name << " face " << f_id << ": valid\n";
     }
 #endif
+
+    bool iret = true;
+    /* Intersection testing dominates large refinement meshes.  A mesh which
+     * already fails its normals, edge, or incidence invariants cannot be
+     * valid regardless, so defer that independent geometric test until the
+     * cheaper structural checks pass.  Verbose diagnostics retain the full
+     * check even when another invariant has already failed. */
+    if (check_intersections && (verbose > 0 || (nret && eret && topret))) {
+	iret = self_intersections(NULL, 1) == 0;
+	if (!iret && verbose > 0) {
+	    std::cout << name << " face " << f_id
+		<< ": nonadjacent triangles intersect in mesh\n";
+	}
+    }
 
     return (nret && eret && topret && iret);
 }

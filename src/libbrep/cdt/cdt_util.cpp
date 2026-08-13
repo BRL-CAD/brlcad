@@ -626,6 +626,8 @@ ON_Brep_CDT_Create(void *bv, const char *objname)
     cdt->absmin = -1;
     cdt->cos_within_ang = -1;
     cdt->ovlp_max_len = -1;
+    cdt->max_face_time_ms = 0;
+    cdt->face_deadline = 0;
 
     cdt->w3dpnts = new std::vector<ON_3dPoint *>;
     cdt->w3dnorms = new std::vector<ON_3dPoint *>;
@@ -987,6 +989,16 @@ ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t)
     s->absmax = -1;
     s->absmin = -1;
     s->cos_within_ang = -1;
+}
+
+void
+ON_Brep_CDT_Face_Time_Limit_Set(struct ON_Brep_CDT_State *s,
+	long max_time_ms)
+{
+    if (!s)
+	return;
+    s->max_face_time_ms = std::max(0L, max_time_ms);
+    s->face_deadline = 0;
 }
 
 void
