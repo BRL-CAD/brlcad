@@ -1084,7 +1084,8 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
 
 std::set<bedge_seg_t *>
 split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg,
-	int force, double *t, int update_rtrees, ON_3dPoint *shared_point)
+	int force, double *t, int update_rtrees, ON_3dPoint *shared_point,
+	bool required_closed_split)
 {
     std::set<bedge_seg_t *> nedges;
 
@@ -1207,6 +1208,10 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg,
 	const double fallback_agreement = fallback_point1.IsValid() &&
 	    fallback_point2.IsValid() ?
 	    fallback_point1.DistanceTo(fallback_point2) : DBL_MAX;
+	const double fallback_edge_miss1 = fallback_point1.IsValid() ?
+	    fallback_point1.DistanceTo(edge_mid_3d) : DBL_MAX;
+	const double fallback_edge_miss2 = fallback_point2.IsValid() ?
+	    fallback_point2.DistanceTo(edge_mid_3d) : DBL_MAX;
 	const bool fallback_edge_progress = fallback_point.IsValid() &&
 	    split_point_progress(*bseg->e_start, fallback_point,
 		*bseg->e_end);
@@ -1223,6 +1228,11 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg,
 	    bounded_edge_midpoint(&fallback_point, &bounded_edge_miss,
 		fallback_point1, fallback_point2, edge_mid_3d,
 		relaxed_tolerance);
+	const bool closed_edge_has_authoritative_side =
+	    required_closed_split && fallback_trim1_parameter &&
+	    fallback_trim2_parameter && edge_mid_3d.IsValid() &&
+	    (fallback_edge_miss1 <= agreement_tolerance ||
+	    fallback_edge_miss2 <= agreement_tolerance);
 	if (fallback_trim1_parameter && fallback_trim2_parameter &&
 		(fallback_agreement <= agreement_tolerance ||
 		relaxed_edge_split) &&
@@ -1247,6 +1257,37 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg,
 		    "tessellation tolerance %.17g (surface miss %.17g)\n",
 		    edge.m_edge_index, relaxed_tolerance,
 		    bounded_edge_miss);
+	} else if (closed_edge_has_authoritative_side) {
+	    /* A closed edge cannot remain a one-segment loop.  If its 3-D
+	     * curve agrees with at least one pullback, use that curve as the
+	     * shared boundary authority and quarantine only the disagreeing
+	     * face.  Repair may reconstruct that face against the exact
+	     * boundary, subject to its independent deviation limits. */
+	    t1mid = fallback_t1;
+	    t2mid = fallback_t2;
+	    trim1_mid_2d = fallback_uv1;
+	    trim2_mid_2d = fallback_uv2;
+	    edge_mid_tan = ON_3dVector::UnsetVector;
+	    trim_progress = true;
+	    const auto quarantine = [&](ON_BrepFace *face, double miss) {
+		if (!(miss > agreement_tolerance) || !std::isfinite(miss))
+		    return;
+		const auto current = s_cdt->inconsistent_edge_faces.find(
+		    face->m_face_index);
+		if (current == s_cdt->inconsistent_edge_faces.end() ||
+			miss > current->second.second)
+		    s_cdt->inconsistent_edge_faces[face->m_face_index] =
+			std::make_pair(edge.m_edge_index, (fastf_t)miss);
+	    };
+	    quarantine(face1, fallback_edge_miss1);
+	    quarantine(face2, fallback_edge_miss2);
+	    if (getenv("BRLCAD_CDT_DUMP_FAILURES") &&
+		    getenv("BRLCAD_CDT_DUMP_FAILURES")[0] &&
+		    !BU_STR_EQUAL(getenv("BRLCAD_CDT_DUMP_FAILURES"), "0"))
+		bu_log("Closed edge %d retained its 3-D midpoint and "
+		    "quarantined pullback misses %.17g/%.17g\n",
+		    edge.m_edge_index, fallback_edge_miss1,
+		    fallback_edge_miss2);
 	} else if (getenv("BRLCAD_CDT_DUMP_FAILURES") &&
 		getenv("BRLCAD_CDT_DUMP_FAILURES")[0] &&
 		!BU_STR_EQUAL(getenv("BRLCAD_CDT_DUMP_FAILURES"), "0")) {
@@ -1566,7 +1607,8 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, char *message,
 
 	    // 1.  Any edges with at least 1 closed trim are split.
 	    if (trim1->IsClosed() || trim2->IsClosed()) {
-		esegs_closed = split_edge_seg(s_cdt, e, 1, NULL, 1);
+		esegs_closed = split_edge_seg(s_cdt, e, 1, NULL, 1, NULL,
+		    true);
 		if (!esegs_closed.size()) {
 		    // split failed??  On a closed edge this is fatal - we must split it
 		    // to work with it at all
@@ -1588,14 +1630,14 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, char *message,
 		for (e_it = esegs_closed.begin(); e_it != esegs_closed.end(); e_it++) {
 		    std::set<bedge_seg_t *> efirst = split_edge_seg(s_cdt, *e_it, 1, NULL, 1);
 		    if (!efirst.size()) {
-			// split failed??  On a curved edge we must split at least once to
-			// avoid potentially degenerate polygons (if we had to split a closed
-			// loop from step 1, for example;
-			if (message && message_size)
-			    snprintf(message, message_size,
-				"curved B-Rep edge %d could not be split",
-				edge.m_edge_index);
-			return false;
+			/* A valid topological edge can have a corrupt 3-D curve or
+			 * disagreeing p-curves which make a forced midpoint split
+			 * impossible.  Retain its authoritative shared chord so the
+			 * affected faces can fail geometric certification locally rather
+			 * than preventing every unrelated face from being triangulated.
+			 * Closed roots were already split above, so retaining one of
+			 * their children cannot restore a one-edge degenerate loop. */
+			esegs_csplit.insert(*e_it);
 		    } else {
 			// To avoid representing circles with squares, split curved segments
 			// one additional time

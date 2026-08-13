@@ -1265,10 +1265,12 @@ bg_trimesh_repair2(
     /* A caller asking only for Manifold acceptance has not authorized a
      * geometric rewrite of an already valid indexed solid.  In particular,
      * coordinate welding can merge distinct topological vertices that happen
-     * to coincide and turn a valid shell into a non-manifold one. */
+     * to coincide and turn a valid shell into a non-manifold one.  Enabling
+     * hole filling does not change this: an indexed solid has no holes, so
+     * preserve it when Manifold accepts the existing topology. */
     if (!not_solid && !initial_geometric_degenerate &&
 	    !settings->separate_touching_vertices &&
-	    !settings->remove_small_components && !settings->fill_holes &&
+	    !settings->remove_small_components &&
 	    !settings->union_components && settings->require_manifold) {
 	bool manifold_accepted = false;
 	std::vector<gte::Vector3<double>> manifold_vertices = verts;
