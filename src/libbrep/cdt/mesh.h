@@ -686,6 +686,7 @@ public:
     ON_3dPoint tcenter(const triangle_t &t);
     ON_3dVector bnorm(const triangle_t &t);
     ON_3dVector tnorm(const triangle_t &t);
+    bool surface_triangle_deviation(const triangle_t &t, double *distance);
     ON_Plane tplane(const triangle_t &t);
     ON_Plane bplane(const triangle_t &t);
     std::set<uedge_t> uedges(const triangle_t &t);
