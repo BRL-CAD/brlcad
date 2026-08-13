@@ -78,6 +78,7 @@ class lint_data {
 };
 
 extern void bot_checks(lint_data *cdata, struct directory *dp, struct rt_bot_internal *bot);
+extern void brep_checks(lint_data *ldata, struct directory *dp, struct rt_brep_internal *brep);
 extern int _ged_cyclic_check(lint_data *cdata);
 extern int _ged_invalid_shape_check(lint_data *ldata);
 extern int _ged_missing_check(lint_data *mdata);
