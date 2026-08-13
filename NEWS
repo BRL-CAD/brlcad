@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* pixdiff now calculates pixel differences on bw files - Sean Morrison
 * fixed benchmark+pixcmp correctness validation bug - Sean Morrison
 * fbhelp writes help  to stdout and rest to stderr - Sean Morrison
 * FB now supports /dev/stdout and /dev/stderr devices - Sean Morrison
