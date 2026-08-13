@@ -3587,6 +3587,34 @@ repair_surface_distance(const ON_Brep *brep,
 		repair_bbox_distance(face_bounds[(size_t)face_index], point) >
 		allowed)
 	    continue;
+	/* When an underlying-surface match is explicitly acceptable, a trimmed
+	 * SurfaceTree supplies no additional acceptance information.  Some
+	 * imported faces have extremely costly or pathological trim trees, so
+	 * project directly to the surface and conservatively report the match as
+	 * untrimmed.  The caller's distance, area, coverage, and solid gates remain
+	 * unchanged. */
+	if (allow_untrimmed) {
+	    if (!face_contexts[(size_t)face_index])
+		face_contexts[(size_t)face_index] =
+		    std::unique_ptr<brlcad::PullbackContext>(
+			new brlcad::PullbackContext());
+	    ON_2dPoint uv;
+	    ON_3dPoint projected = ON_3dPoint::UnsetPoint;
+	    double candidate_distance =
+		std::numeric_limits<double>::infinity();
+	    const bool projected_point = face_contexts[(size_t)face_index]->
+		SurfaceClosestPoint(face.SurfaceOf(), point, uv, projected,
+		    candidate_distance, 0, BREP_SAME_POINT_TOLERANCE, allowed);
+	    if (projected_point && std::isfinite(candidate_distance) &&
+		    candidate_distance <= allowed &&
+		    candidate_distance < closest_distance) {
+		closest_distance = candidate_distance;
+		closest_was_untrimmed = true;
+		closest_projection = projected;
+		closest_face_index = face_index;
+	    }
+	    continue;
+	}
 	if (!face_trees[(size_t)face_index]) {
 	    face_trees[(size_t)face_index] =
 		std::unique_ptr<brlcad::SurfaceTree>(
