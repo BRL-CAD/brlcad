@@ -5317,12 +5317,15 @@ repair_failed_face_from_rigorous_boundary(
 	    }
 	    const double area_scale = std::max(approximate_face_area,
 		std::numeric_limits<double>::min());
-	    /* This only bounds candidate generation.  The complete repaired mesh
-	     * must still pass the caller's area, deviation, reverse-coverage, and
+	    /* The approximate face may omit most of a crossed multi-ring region,
+	     * so admit exact-boundary candidates up to five times its area.  This
+	     * only bounds candidate generation: the complete repaired mesh must
+	     * still pass the caller's area, deviation, reverse-coverage, and
 	     * solid-validation limits before it can be returned.
 	     */
+	    const double candidate_area_ratio_limit = 5.0;
 	    const bool area_supported = std::isfinite(best_area_delta) &&
-		best_area_delta <= area_scale;
+		best_area_delta <= (candidate_area_ratio_limit - 1.0) * area_scale;
 	    if (area_supported)
 		patch_faces.swap(best_faces);
 	    else
