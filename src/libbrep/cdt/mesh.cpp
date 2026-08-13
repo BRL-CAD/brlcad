@@ -1843,6 +1843,8 @@ cdt_mesh_t::tri_add(triangle_t &tri)
     return true;
 }
 
+static int atlas_conditioning_merge_contract(void);
+
 int
 cdt_test_local_defects(void)
 {
@@ -1979,7 +1981,8 @@ cdt_test_local_defects(void)
     release_polygon_edges(large_polygon);
     if (large_self_intersection)
 	return 11;
-    return 0;
+    const int atlas_result = atlas_conditioning_merge_contract();
+    return atlas_result ? 12 + atlas_result : 0;
 }
 
 void cdt_mesh_t::tri_remove(triangle_t &tri)
@@ -5273,25 +5276,182 @@ triangulate_chart_component(cdt_mesh_t *mesh, const ON_BrepFace &face,
     std::vector<point2d_t> points(chart.points.size());
     for (size_t i = 0; i < chart.points.size(); ++i)
 	V2SET(points[i], chart.points[i].first, chart.points[i].second);
-    std::vector<int> outline(chart.outer.begin(), chart.outer.end());
-    outline.push_back(chart.outer.front());
-    std::vector<std::vector<int>> holes(chart.holes);
+
+    const auto mesh_vertex = [&](int chart_point) {
+	if (chart_point < 0 || (size_t)chart_point >= chart.points.size())
+	    return -1L;
+	const long native_point = chart.native_point(chart_point);
+	const auto point_3d = mesh->p2d3d.find(native_point);
+	if (point_3d == mesh->p2d3d.end() || point_3d->second < 0 ||
+		(size_t)point_3d->second >= mesh->pnts.size())
+	    return -1L;
+	const auto indexed = mesh->p2ind.find(
+	    mesh->pnts[(size_t)point_3d->second]);
+	return indexed == mesh->p2ind.end() ? -1L : indexed->second;
+    };
+    std::vector<int> canonical(chart.points.size());
+    std::iota(canonical.begin(), canonical.end(), 0);
+    std::map<int, const cdt_chart_vertex *> chart_vertices;
+    for (const cdt_chart_vertex &vertex : chart.vertices)
+	chart_vertices[(int)vertex.id] = &vertex;
+    const auto native_3d = [&](int chart_point) {
+	const long native_point = chart.native_point(chart_point);
+	const auto point_3d = mesh->p2d3d.find(native_point);
+	return point_3d != mesh->p2d3d.end() && point_3d->second >= 0 &&
+	    (size_t)point_3d->second < mesh->pnts.size() ?
+	    mesh->pnts[(size_t)point_3d->second] : (const ON_3dPoint *)NULL;
+    };
+    const struct ON_Brep_CDT_State *chart_state =
+	(const struct ON_Brep_CDT_State *)mesh->p_cdt;
+    const double merge_tolerance = chart_state &&
+	std::isfinite(chart_state->absmin) && chart_state->absmin > 0.0 ?
+	std::min((double)BN_TOL_DIST, (double)chart_state->absmin) :
+	(double)BN_TOL_DIST;
+    std::set<int> active;
+    std::vector<int> active_order;
+    const auto activate = [&](int chart_point) {
+	if (active.insert(chart_point).second)
+	    active_order.push_back(chart_point);
+    };
+    for (int chart_point : chart.outer)
+	activate(chart_point);
+    for (const std::vector<int> &hole : chart.holes) {
+	for (int chart_point : hole)
+	    activate(chart_point);
+    }
+    for (const std::pair<int, int> &constraint : chart.constraints) {
+	activate(constraint.first);
+	activate(constraint.second);
+    }
+    for (int chart_point : chart.steiner)
+	activate(chart_point);
+    double min_x = DBL_MAX;
+    double min_y = DBL_MAX;
+    double max_x = -DBL_MAX;
+    double max_y = -DBL_MAX;
+    for (int chart_point : active_order) {
+	if (chart_point < 0 || (size_t)chart_point >= chart.points.size())
+	    return false;
+	min_x = std::min(min_x, chart.points[(size_t)chart_point].first);
+	min_y = std::min(min_y, chart.points[(size_t)chart_point].second);
+	max_x = std::max(max_x, chart.points[(size_t)chart_point].first);
+	max_y = std::max(max_y, chart.points[(size_t)chart_point].second);
+    }
+    const long double center_x = ((long double)min_x + max_x) * 0.5L;
+    const long double center_y = ((long double)min_y + max_y) * 0.5L;
+    const long double span = std::max((long double)max_x - min_x,
+	(long double)max_y - min_y);
+    if (!(span > 0.0L) || !std::isfinite(span))
+	return false;
+    int exponent = 0;
+    (void)std::frexp(span, &exponent);
+    const long double coordinate_scale = std::ldexp(1.0L, -exponent);
+    const auto conditioned_coordinate = [&](int chart_point) {
+	return std::make_pair(
+	    (double)(((long double)chart.points[(size_t)chart_point].first -
+		center_x) * coordinate_scale),
+	    (double)(((long double)chart.points[(size_t)chart_point].second -
+		center_y) * coordinate_scale));
+    };
+    std::map<std::pair<double, double>, int> coordinate_owner;
+    for (int chart_point : active_order) {
+	const std::pair<double, double> coordinate =
+	    conditioned_coordinate(chart_point);
+	const auto old = coordinate_owner.find(coordinate);
+	if (old == coordinate_owner.end()) {
+	    coordinate_owner[coordinate] = chart_point;
+	    continue;
+	}
+	const long first_vertex = mesh_vertex(old->second);
+	const long second_vertex = mesh_vertex(chart_point);
+	const auto first_chart = chart_vertices.find(old->second);
+	const auto second_chart = chart_vertices.find(chart_point);
+	const cdt_topo_vertex_id first_topology =
+	    first_chart == chart_vertices.end() ? CDT_TOPOLOGY_ID_NONE :
+	    first_chart->second->topo_vertex;
+	const cdt_topo_vertex_id second_topology =
+	    second_chart == chart_vertices.end() ? CDT_TOPOLOGY_ID_NONE :
+	    second_chart->second->topo_vertex;
+	const bool compatible_topology =
+	    (first_topology == CDT_TOPOLOGY_ID_NONE &&
+	    second_topology == CDT_TOPOLOGY_ID_NONE) ||
+	    (first_topology != CDT_TOPOLOGY_ID_NONE &&
+	    first_topology == second_topology);
+	const ON_3dPoint *first_3d = native_3d(old->second);
+	const ON_3dPoint *second_3d = native_3d(chart_point);
+	const bool toleranced_match = compatible_topology && first_3d &&
+	    second_3d && first_3d->DistanceTo(*second_3d) <= merge_tolerance;
+	if ((first_vertex >= 0 && first_vertex == second_vertex) ||
+		toleranced_match)
+	    canonical[(size_t)chart_point] = old->second;
+	else if (cdt_failure_dumps_enabled())
+	    bu_log("Face %d: conditioned atlas coordinate duplicate %d/%d "
+		"maps to mesh vertices %ld/%ld, native points %ld/%ld, "
+		"and topology %ld/%ld\n",
+		mesh->f_id, old->second, chart_point, first_vertex,
+		second_vertex, chart.native_point(old->second),
+		chart.native_point(chart_point), (long)first_topology,
+		(long)second_topology);
+    }
+    const auto normalize_ring = [&](const std::vector<int> &input,
+	    std::vector<int> &output) {
+	for (int chart_point : input) {
+	    const int mapped = canonical[(size_t)chart_point];
+	    if (output.size() > 1 && output[output.size() - 2] == mapped) {
+		output.pop_back();
+		continue;
+	    }
+	    if (output.empty() || output.back() != mapped)
+		output.push_back(mapped);
+	}
+	if (output.size() > 1 && output.front() == output.back())
+	    output.pop_back();
+	return output.size() >= 3 &&
+	    std::set<int>(output.begin(), output.end()).size() == output.size();
+    };
+    std::vector<int> outline;
+    if (!normalize_ring(chart.outer, outline))
+	return false;
+    outline.push_back(outline.front());
+    std::vector<std::vector<int>> holes(chart.holes.size());
     std::vector<const int *> hole_arrays;
     std::vector<size_t> hole_counts;
-    for (std::vector<int> &hole : holes) {
+    for (size_t i = 0; i < chart.holes.size(); ++i) {
+	if (!normalize_ring(chart.holes[i], holes[i]))
+	    return false;
+	std::vector<int> &hole = holes[i];
 	hole.push_back(hole.front());
 	hole_arrays.push_back(hole.data());
 	hole_counts.push_back(hole.size());
     }
     std::vector<int> constraints;
     constraints.reserve(chart.constraints.size() * 2);
+    std::set<std::pair<int, int>> unique_constraints;
     for (const std::pair<int, int> &constraint : chart.constraints) {
-	constraints.push_back(constraint.first);
-	constraints.push_back(constraint.second);
+	const int first = canonical[(size_t)constraint.first];
+	const int second = canonical[(size_t)constraint.second];
+	if (first == second ||
+		!unique_constraints.insert(std::minmax(first, second)).second)
+	    continue;
+	constraints.push_back(first);
+	constraints.push_back(second);
     }
-    const std::vector<int> no_steiner;
-    const std::vector<int> &steiner = face.SurfaceOf()->IsPlanar(NULL,
-	ON_ZERO_TOLERANCE) ? no_steiner : chart.steiner;
+    std::vector<int> steiner;
+    if (!face.SurfaceOf()->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+	std::set<int> boundary_points(outline.begin(), outline.end());
+	for (const std::vector<int> &hole : holes)
+	    boundary_points.insert(hole.begin(), hole.end());
+	for (int constraint_point : constraints)
+	    boundary_points.insert(constraint_point);
+	std::set<int> unique_steiner;
+	for (int chart_point : chart.steiner) {
+	    const int mapped = canonical[(size_t)chart_point];
+	    if (boundary_points.find(mapped) != boundary_points.end() ||
+		    !unique_steiner.insert(mapped).second)
+		continue;
+	    steiner.push_back(mapped);
+	}
+    }
     int *faces = NULL;
     int face_count = 0;
     struct bg_triangulation_report report = {0, -1, {0}};
@@ -5301,7 +5461,7 @@ triangulate_chart_component(cdt_mesh_t *mesh, const ON_BrepFace &face,
 	hole_counts.empty() ? NULL : hole_counts.data(), hole_arrays.size(),
 	steiner.empty() ? NULL : steiner.data(), steiner.size(),
 	constraints.empty() ? NULL : constraints.data(),
-	chart.constraints.size(), points.data(), points.size(), &report);
+	constraints.size() / 2, points.data(), points.size(), &report);
     if (status != BRLCAD_OK) {
 	bu_log("Face %d: atlas component triangulation failed: %s\n",
 	    mesh->f_id, report.message);
@@ -5346,6 +5506,59 @@ triangulate_chart_component(cdt_mesh_t *mesh, const ON_BrepFace &face,
     diagnose(BREP_CDT_RESULT_CERTIFICATION_FAILED, BREP_CDT_STAGE_DETRIA,
 	"face atlas component produced no chart triangles");
     return false;
+}
+
+static int
+atlas_conditioning_merge_contract(void)
+{
+    const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, 2.0), 5.0);
+    std::unique_ptr<ON_Brep> brep(ON_BrepCylinder(cylinder, true, true));
+    if (!brep)
+	return 1;
+    const ON_BrepFace *face = NULL;
+    for (int face_index = 0; face_index < brep->m_F.Count(); ++face_index) {
+	if (!brep->m_F[face_index].SurfaceOf()->IsPlanar(NULL,
+		ON_ZERO_TOLERANCE)) {
+	    face = &brep->m_F[face_index];
+	    break;
+	}
+    }
+    if (!face)
+	return 2;
+
+    cdt_face_chart chart;
+    chart.points = {
+	{0.0, 0.0}, {1.0, 0.0}, {1.0, 1.0}, {0.0, 1.0},
+	{0.1, 0.2}, {std::nextafter(0.1, 0.0), 0.2}
+    };
+    chart.outer = {0, 1, 2, 3};
+    chart.steiner = {4, 5};
+    chart.vertices.resize(chart.points.size());
+    ON_3dPoint point_storage[6] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 1.0, 0.0), ON_3dPoint(0.0, 1.0, 0.0),
+	ON_3dPoint(0.1, 0.2, 0.0),
+	ON_3dPoint(std::nextafter(0.1, 0.0), 0.2, 0.0)
+    };
+    cdt_mesh_t mesh;
+    for (size_t point = 0; point < chart.points.size(); ++point) {
+	chart.vertices[point].id = (cdt_chart_vertex_id)point;
+	chart.vertices[point].native_point = (long)point;
+	mesh.pnts.push_back(&point_storage[point]);
+	mesh.p2d3d[(long)point] = (long)point;
+	mesh.p2ind[&point_storage[point]] = (long)point;
+    }
+    std::vector<triangle_t> triangles;
+    if (!triangulate_chart_component(&mesh, *face, chart, triangles) ||
+	    triangles.empty())
+	return 3;
+    for (const triangle_t &triangle : triangles) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    if (triangle.v[corner] == 5)
+		return 4;
+	}
+    }
+    return 0;
 }
 
 static bool
