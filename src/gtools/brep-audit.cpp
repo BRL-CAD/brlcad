@@ -85,6 +85,7 @@ struct geom_result {
     int repair_added_faces = 0;
     int repair_separated_vertices = 0;
     bool repair_component_union = false;
+    bool repair_manifold_normalization = false;
     bool repair_self_intersections_allowed = false;
     bool repair_manifold_accepted = false;
     int repair_rejected_hole_faces = 0;
@@ -93,6 +94,7 @@ struct geom_result {
     int repair_excess_edges = 0;
     int repair_misoriented_edges = 0;
     int repair_invalid_vertex_links = 0;
+    int repair_reoriented_faces = 0;
     int repair_changed_faces = 0;
     size_t repair_deviation_samples = 0;
     size_t repair_projection_failures = 0;
@@ -888,6 +890,8 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.mesh.separated_vertices;
 	result.repair_component_union =
 	    repair_report.mesh.component_union_applied != 0;
+	result.repair_manifold_normalization =
+	    repair_report.mesh.manifold_normalization_applied != 0;
 	result.repair_self_intersections_allowed =
 	    repair_report.mesh.self_intersections_allowed != 0;
 	result.repair_manifold_accepted =
@@ -901,6 +905,7 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	result.repair_misoriented_edges = repair_report.mesh.misoriented_edges;
 	result.repair_invalid_vertex_links =
 	    repair_report.mesh.invalid_vertex_links;
+	result.repair_reoriented_faces = repair_report.mesh.reoriented_faces;
 	result.repair_changed_faces = repair_report.changed_faces;
 	result.repair_deviation_samples = repair_report.deviation_samples;
 	result.repair_projection_failures =
@@ -1267,6 +1272,8 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.repair_separated_vertices
 	<< ",\"component_union_applied\":"
 	<< (result.repair_component_union ? "true" : "false")
+	<< ",\"manifold_normalization_applied\":"
+	<< (result.repair_manifold_normalization ? "true" : "false")
 	<< ",\"self_intersections_allowed\":"
 	<< (result.repair_self_intersections_allowed ? "true" : "false")
 	<< ",\"manifold_accepted\":"
@@ -1280,6 +1287,7 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< ",\"misoriented_edges\":" << result.repair_misoriented_edges
 	<< ",\"invalid_vertex_links\":"
 	<< result.repair_invalid_vertex_links
+	<< ",\"reoriented_faces\":" << result.repair_reoriented_faces
 	<< ",\"changed_faces\":" << result.repair_changed_faces
 	<< ",\"deviation_samples\":" << result.repair_deviation_samples
 	<< ",\"projection_failures\":"
