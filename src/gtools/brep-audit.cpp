@@ -22,6 +22,7 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <new>
 #include <queue>
 #include <set>
 #include <sstream>
@@ -817,11 +818,26 @@ quality_result(struct db_i *dbip, struct directory *dp,
     int selected_face = face_index;
     const int selected_count = face_index >= 0 ? 1 : 0;
     int64_t start = bu_gettime();
-    result.ret = ON_Brep_CDT_Tessellate(state, selected_count,
-	selected_count ? &selected_face : NULL);
+    bool memory_exhausted = false;
+    try {
+	result.ret = ON_Brep_CDT_Tessellate(state, selected_count,
+	    selected_count ? &selected_face : NULL);
+    } catch (const std::bad_alloc &) {
+	/* A pathological face can exhaust the allocator before the library's
+	 * point/triangle limits are reached.  Do not let that terminate a
+	 * corpus worker; retain a bounded, actionable quality failure instead. */
+	memory_exhausted = true;
+	result.ret = BREP_CDT_RESULT_REFINEMENT_LIMIT;
+	result.diagnostic_result = BREP_CDT_RESULT_REFINEMENT_LIMIT;
+	result.diagnostic_stage = BREP_CDT_STAGE_FACE_TRIANGULATION;
+	result.diagnostic_face = -1;
+	result.diagnostic_message =
+	    "rigorous tessellation exhausted available memory";
+	result.issues.push_back("resource_limit");
+    }
 
     struct brep_cdt_diagnostic diagnostic = {};
-    if (ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0) {
+    if (!memory_exhausted && ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0) {
 	result.diagnostic_result = diagnostic.result;
 	result.diagnostic_stage = diagnostic.stage;
 	result.diagnostic_face = diagnostic.face_index;
@@ -832,9 +848,11 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    capture_index(&result.failed_faces,
 		&result.omitted_failed_faces, diagnostic.face_index);
     }
-    quality_failed_faces(state, &result);
+    if (!memory_exhausted)
+	quality_failed_faces(state, &result);
 
-    if (repair_settings && face_index < 0 && result.ret != 0) {
+    if (!memory_exhausted && repair_settings && face_index < 0 &&
+	result.ret != 0) {
 	result.repair_attempted = true;
 	struct brep_cdt_repair_report repair_report =
 	    BREP_CDT_REPAIR_REPORT_INIT;
@@ -842,9 +860,21 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    *repair_settings;
 	active_repair_settings.provenance = quality_repair_provenance;
 	active_repair_settings.provenance_data = &result;
-	const int repair_result = ON_Brep_CDT_Repair(state,
-	    &active_repair_settings,
-	    &repair_report);
+	int repair_result = BREP_CDT_RESULT_REPAIR_FAILED;
+	bool repair_memory_exhausted = false;
+	try {
+	    repair_result = ON_Brep_CDT_Repair(state,
+		&active_repair_settings,
+		&repair_report);
+	} catch (const std::bad_alloc &) {
+	    repair_memory_exhausted = true;
+	    result.issues.push_back("resource_limit");
+	    result.diagnostic_result = BREP_CDT_RESULT_REFINEMENT_LIMIT;
+	    result.diagnostic_stage = BREP_CDT_STAGE_MESH_REPAIR;
+	    result.diagnostic_face = -1;
+	    result.diagnostic_message =
+		"mesh repair exhausted available memory";
+	}
 	result.repair_succeeded = repair_result == 0;
 	result.repair_source_result = repair_report.source_diagnostic.result;
 	result.repair_source_stage = repair_report.source_diagnostic.stage;
@@ -1004,7 +1034,8 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.rms_coverage_deviation;
 	if (repair_result == 0)
 	    result.ret = 0;
-	if (ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0) {
+	if (!repair_memory_exhausted &&
+	    ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0) {
 	    result.diagnostic_result = diagnostic.result;
 	    result.diagnostic_stage = diagnostic.stage;
 	    result.diagnostic_face = diagnostic.face_index;
