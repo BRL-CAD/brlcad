@@ -175,6 +175,59 @@ test_tet_already_solid(void)
     return 0;
 }
 
+/* A closed orientable mesh with inconsistent local winding needs no
+ * geometric repair.  Synchronize only triangle order, preserve the complete
+ * point and face sets, and require acceptance by both topology validators. */
+static int
+test_closed_orientation_sync(void)
+{
+    point_t *pts;
+    int n_pts;
+    int *cube_faces;
+    int n_faces;
+    make_cube(&pts, &n_pts, &cube_faces, &n_faces);
+    int faces[36];
+    memcpy(faces, cube_faces, sizeof(faces));
+    std::swap(faces[0], faces[1]);
+
+    int *ofaces = NULL;
+    int n_ofaces = 0;
+    point_t *opnts = NULL;
+    int n_opnts = 0;
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.allow_self_intersections = 1;
+    settings.require_manifold = 1;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+	&n_opnts, faces, n_faces, pts, n_pts, &settings, &report);
+    const bool valid = ret == 0 && ofaces && opnts &&
+	n_ofaces == n_faces && n_opnts == n_pts && report.solid &&
+	report.manifold_accepted && report.reoriented_faces == 1 &&
+	!report.removed_faces && !report.added_faces &&
+	!report.geometric_degenerate_faces && !report.unmatched_edges &&
+	!report.excess_edges && !report.misoriented_edges &&
+	!report.invalid_vertex_links &&
+	!bg_trimesh_solid2(n_opnts, n_ofaces, (fastf_t *)opnts, ofaces,
+	    NULL);
+    if (ofaces)
+	bu_free(ofaces, "orientation sync faces");
+    if (opnts)
+	bu_free(opnts, "orientation sync points");
+    if (!valid) {
+	bu_log("FAIL test_closed_orientation_sync: ret=%d, reoriented=%d, "
+	    "solid=%d, manifold=%d, topology=%d/%d/%d/%d\n", ret,
+	    report.reoriented_faces, report.solid,
+	    report.manifold_accepted, report.unmatched_edges,
+	    report.excess_edges, report.misoriented_edges,
+	    report.invalid_vertex_links);
+	return -1;
+    }
+    bu_log("PASS test_closed_orientation_sync\n");
+    return 0;
+}
+
 /* An open mesh (cube missing one face) should be repaired to a solid. */
 static int
 test_open_cube_repair(void)
@@ -1418,6 +1471,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_null_params()               != 0) ? 1 : 0;
     failures += (test_already_solid()             != 0) ? 1 : 0;
     failures += (test_tet_already_solid()         != 0) ? 1 : 0;
+    failures += (test_closed_orientation_sync()   != 0) ? 1 : 0;
     failures += (test_open_cube_repair()          != 0) ? 1 : 0;
     failures += (test_unused_vertex_compaction()  != 0) ? 1 : 0;
     failures += (test_repair2_conservative_default() != 0) ? 1 : 0;
