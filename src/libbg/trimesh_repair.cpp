@@ -1549,6 +1549,11 @@ bg_trimesh_repair2(
 	    gte::MeshHoleFilling<double>::Parameters fp;
 	    fp.maxArea      = hole_limit;
 	    fp.maxEdges     = settings->max_hole_edges;
+	    /* Exact ear selection is quadratic in the boundary size.  When the
+	     * caller explicitly permits crossings, very large boundaries are
+	     * better served by the bounded linear centroid fan; downstream solid,
+	     * link, and application-level fidelity checks remain mandatory. */
+	    fp.steinerAboveEdges = settings->allow_self_intersections ? 2048 : 0;
 	    fp.method = gte::MeshHoleFilling<double>::
 		TriangulationMethod::PlanarProjection;
 	    fp.autoFallback = false;

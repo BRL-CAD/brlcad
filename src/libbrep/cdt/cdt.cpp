@@ -72,6 +72,7 @@
 #define MAX_ASSEMBLED_REFINEMENT_POINTS 4096
 #define MAX_SHARED_EDGE_REFINEMENT_DISTANCE_RATIO 0.05
 #define MAX_AUTOMATIC_LOCAL_REPAIR_FACES 8192
+#define MAX_AUTOMATIC_HYBRID_REPAIR_FACES 524288
 #define MAX_BEST_EFFORT_FOLD_DIVISOR 20
 #define MAX_BOUNDARY_STRIP_CORRESPONDENCE_TESTS 16777216
 #define MAX_BOUNDARY_STRIP_REFINEMENT_POINTS 1048576
@@ -87,6 +88,17 @@ struct assembled_mesh_validation {
     bool first_intersection_point_valid = false;
     double first_intersection_point[3] = {0.0, 0.0, 0.0};
 };
+
+static bool
+repair_hybrid_fallback_preflight(size_t face_count,
+	size_t geometric_degenerate_faces, size_t invalid_vertex_links,
+	size_t local_repair_limit)
+{
+    return face_count > MAX_AUTOMATIC_HYBRID_REPAIR_FACES &&
+	geometric_degenerate_faces > 0 && local_repair_limit > 0 &&
+	invalid_vertex_links > local_repair_limit &&
+	invalid_vertex_links > 8 * geometric_degenerate_faces;
+}
 
 static bool
 assembled_mesh_collect_candidate(size_t triangle, void *context)
@@ -6397,7 +6409,17 @@ cdt_test_repair_rigorous_boundary(void)
     if (neighborhood_result)
 	return 20 + neighborhood_result;
     const int adaptive_hole_result = repair_adaptive_hole_retry_contract();
-    return adaptive_hole_result ? 30 + adaptive_hole_result : 0;
+    if (adaptive_hole_result)
+	return 30 + adaptive_hole_result;
+    /* MP2416 has a few flat triangles but hundreds of disconnected links.  A
+     * ColdPlate-sized local defect population must remain repair-eligible. */
+    if (!repair_hybrid_fallback_preflight(739865, 23, 458, 256))
+	return 40;
+    if (repair_hybrid_fallback_preflight(1117799, 236, 458, 256))
+	return 41;
+    if (repair_hybrid_fallback_preflight(262144, 23, 458, 256))
+	return 42;
+    return 0;
 }
 
 /* Pair only opposite open edges whose endpoints are locally coincident.
@@ -12121,6 +12143,46 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	return -1;
     }
 
+    /* In a very large hybrid, a few flat triangles can tie together hundreds
+     * of otherwise independent vertex fans.  Generic repair removes the flat
+     * triangles first, after which fan separation can turn those local
+     * defects into a whole-mesh seam.  When the caller explicitly requested a
+     * whole-display fallback, preflight that disproportionate topology and
+     * preserve the repair budget for the independently bounded fallback. */
+    if (settings->use_full_fast_fallback_if_needed &&
+	    !settings->use_full_fast_fallback && input_face_count >
+	    MAX_AUTOMATIC_HYBRID_REPAIR_FACES) {
+	assembled_mesh_validation hybrid_validation;
+	(void)assembled_mesh_validate(
+	    input_vertex_count, input_face_count, input_vertices, input_faces,
+	    &hybrid_validation, false);
+	const bool hybrid_storage_valid = !hybrid_validation.invalid_indices &&
+	    !hybrid_validation.nonfinite_vertices;
+	if (hybrid_storage_valid &&
+		repair_hybrid_fallback_preflight((size_t)input_face_count,
+		    hybrid_validation.degenerate_faces,
+		    hybrid_validation.invalid_vertex_links,
+		    settings->mesh.max_hole_edges)) {
+	    const size_t degenerate_faces =
+		hybrid_validation.degenerate_faces;
+	    const size_t invalid_links =
+		hybrid_validation.invalid_vertex_links;
+	    bu_free(input_faces, "disproportionate hybrid repair faces");
+	    bu_free(input_vertices,
+		"disproportionate hybrid repair vertices");
+	    std::string message = "large rigorous hybrid preflight declined " +
+		std::to_string(input_face_count) + " triangles: " +
+		std::to_string(degenerate_faces) + " flat triangles are " +
+		"associated with " + std::to_string(invalid_links) +
+		" invalid vertex links";
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+		BREP_CDT_STAGE_MESH_REPAIR, -1,
+		report->source_diagnostic.completed_faces,
+		report->source_failed_faces, message.c_str());
+	    return -1;
+	}
+    }
+
     if (automatic_local_repair && input_face_count >
 	    MAX_AUTOMATIC_LOCAL_REPAIR_FACES) {
 	bu_free(input_faces, "oversized automatic local repair faces");
@@ -12136,6 +12198,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     }
 
     if (getenv("BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY")) {
+	bu_log("Repair input mesh: %d vertices, %d triangles (%d rigorous)\n",
+	    input_vertex_count, input_face_count, rigorous_input_face_count);
 	assembled_mesh_validation input_validation;
 	const bool input_geometric = assembled_mesh_validate(input_vertex_count,
 	    input_face_count, input_vertices, input_faces, &input_validation,
