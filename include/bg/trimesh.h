@@ -85,6 +85,17 @@ BG_EXPORT extern int bg_trimesh_manifold_closed(int vcnt, int fcnt, fastf_t *v, 
 BG_EXPORT extern int bg_trimesh_oriented(int vcnt, int fcnt, fastf_t *v, int *f);
 
 /**
+ * Check whether the bundled Manifold library accepts an indexed triangle
+ * mesh and returns a topologically equivalent closed mesh.  This is a
+ * read-only certification check; it does not expose Manifold's normalized
+ * output or perform a Boolean union.
+ *
+ * @return 1 if accepted and independently validated, 0 otherwise.
+ */
+BG_EXPORT extern int bg_trimesh_manifold_accepted(int vcnt, int fcnt,
+	const fastf_t *v, const int *f);
+
+/**
  * Check if a mesh is topologically solid. Returns 1 if the mesh is NOT SOLID
  * and 0 if the mesh is SOLID. A SOLID (0) outcome indicates the mesh satisfies
  * all three criteria:  Closed, Manifold, Oriented
