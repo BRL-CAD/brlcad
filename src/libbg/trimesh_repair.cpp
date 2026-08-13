@@ -1111,6 +1111,37 @@ trimesh_manifold_union(
     return true;
 }
 
+int
+bg_trimesh_manifold_accepted(int vertex_count, int face_count,
+	const fastf_t *vertices, const int *faces)
+{
+    if (vertex_count <= 0 || face_count <= 0 || !vertices || !faces)
+	return 0;
+    std::vector<gte::Vector3<double>> manifold_vertices(
+	(size_t)vertex_count);
+    for (int vertex = 0; vertex < vertex_count; ++vertex) {
+	for (int axis = 0; axis < 3; ++axis) {
+	    const double coordinate = vertices[(size_t)vertex * 3 + axis];
+	    if (!std::isfinite(coordinate))
+		return 0;
+	    manifold_vertices[(size_t)vertex][axis] = coordinate;
+	}
+    }
+    std::vector<std::array<int32_t, 3>> manifold_faces(
+	(size_t)face_count);
+    for (int face = 0; face < face_count; ++face) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int vertex = faces[(size_t)face * 3 + corner];
+	    if (vertex < 0 || vertex >= vertex_count)
+		return 0;
+	    manifold_faces[(size_t)face][corner] = vertex;
+	}
+    }
+    bool accepted = false;
+    return trimesh_manifold_union(manifold_vertices, manifold_faces,
+	&accepted, false) && accepted ? 1 : 0;
+}
+
 static int
 trimesh_repair_export(int **ofaces, int *n_ofaces,
 	point_t **opnts, int *n_opnts,

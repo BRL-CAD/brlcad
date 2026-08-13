@@ -69,6 +69,8 @@ struct geom_result {
     std::string diagnostic_message;
     bool solid_checked = false;
     bool solid = false;
+    bool manifold_checked = false;
+    bool manifold_accepted = false;
     int degenerate_faces = 0;
     int unmatched_edges = 0;
     int excess_edges = 0;
@@ -861,8 +863,32 @@ quality_result(struct db_i *dbip, struct directory *dp,
     if (!memory_exhausted)
 	quality_failed_faces(state, &result);
 
+    bool repair_needed = result.ret != 0;
     if (!memory_exhausted && repair_settings && face_index < 0 &&
-	result.ret != 0) {
+	    result.ret == 0 && repair_settings->mesh.require_manifold) {
+	int *native_faces = NULL;
+	int native_face_count = 0;
+	fastf_t *native_vertices = NULL;
+	int native_vertex_count = 0;
+	if (ON_Brep_CDT_Mesh(&native_faces, &native_face_count,
+		&native_vertices, &native_vertex_count, NULL, NULL, NULL, NULL,
+		state, 0, NULL) == 0) {
+	    result.manifold_checked = true;
+	    result.manifold_accepted = bg_trimesh_manifold_accepted(
+		native_vertex_count, native_face_count, native_vertices,
+		native_faces) != 0;
+	    repair_needed = !result.manifold_accepted;
+	} else {
+	    repair_needed = true;
+	}
+	if (native_faces)
+	    bu_free(native_faces, "native Manifold audit faces");
+	if (native_vertices)
+	    bu_free(native_vertices, "native Manifold audit vertices");
+    }
+
+    if (!memory_exhausted && repair_settings && face_index < 0 &&
+	    repair_needed) {
 	result.repair_attempted = true;
 	struct brep_cdt_repair_report repair_report =
 	    BREP_CDT_REPAIR_REPORT_INIT;
@@ -900,6 +926,10 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.mesh.self_intersections_allowed != 0;
 	result.repair_manifold_accepted =
 	    repair_report.mesh.manifold_accepted != 0;
+	if (repair_settings->mesh.require_manifold) {
+	    result.manifold_checked = true;
+	    result.manifold_accepted = result.repair_manifold_accepted;
+	}
 	result.repair_rejected_hole_faces =
 	    repair_report.mesh.rejected_hole_faces;
 	result.repair_geometric_degenerate_faces =
@@ -1059,6 +1089,8 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.relaxed_area_change_percent_limit;
 	if (repair_result == 0)
 	    result.ret = 0;
+	else if (result.ret == 0)
+	    result.ret = BREP_CDT_RESULT_REPAIR_FAILED;
 	if (!repair_memory_exhausted &&
 	    ON_Brep_CDT_Diagnostic(&diagnostic, state) == 0) {
 	    result.diagnostic_result = diagnostic.result;
@@ -1137,6 +1169,8 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	result.issues.push_back("missing_bbox");
     if (result.solid_checked && !result.solid)
 	result.issues.push_back("non_solid_mesh");
+    if (result.manifold_checked && !result.manifold_accepted)
+	result.issues.push_back("manifold_rejected");
     if (result.solid_checked && result.invalid_vertex_links)
 	result.issues.push_back("invalid_vertex_links");
     if (result.geometric_degenerate_faces)
@@ -1283,6 +1317,10 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< ",\"solid_validation\":{\"checked\":"
 	<< (result.solid_checked ? "true" : "false")
 	<< ",\"solid\":" << (result.solid ? "true" : "false")
+	<< ",\"manifold_checked\":"
+	<< (result.manifold_checked ? "true" : "false")
+	<< ",\"manifold_accepted\":"
+	<< (result.manifold_accepted ? "true" : "false")
 	<< ",\"degenerate_faces\":" << result.degenerate_faces
 	<< ",\"unmatched_edges\":" << result.unmatched_edges
 	<< ",\"excess_edges\":" << result.excess_edges

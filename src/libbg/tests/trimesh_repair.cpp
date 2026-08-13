@@ -176,6 +176,41 @@ test_tet_already_solid(void)
     return 0;
 }
 
+/* The public acceptance check must exercise the bundled Manifold importer
+ * without repairing or normalizing the caller's arrays. */
+static int
+test_manifold_acceptance_check(void)
+{
+    point_t *closed_points;
+    int closed_point_count;
+    int *closed_faces;
+    int closed_face_count;
+    make_cube(&closed_points, &closed_point_count, &closed_faces,
+	&closed_face_count);
+    point_t *open_points;
+    int open_point_count;
+    int *open_faces;
+    int open_face_count;
+    make_open_cube(&open_points, &open_point_count, &open_faces,
+	&open_face_count);
+    int invalid_faces[36];
+    memcpy(invalid_faces, closed_faces, sizeof(invalid_faces));
+    invalid_faces[0] = closed_point_count;
+
+    const bool valid = bg_trimesh_manifold_accepted(closed_point_count,
+	closed_face_count, (fastf_t *)closed_points, closed_faces) == 1 &&
+	bg_trimesh_manifold_accepted(open_point_count, open_face_count,
+	    (fastf_t *)open_points, open_faces) == 0 &&
+	bg_trimesh_manifold_accepted(closed_point_count, closed_face_count,
+	    (fastf_t *)closed_points, invalid_faces) == 0;
+    if (!valid) {
+	bu_log("FAIL test_manifold_acceptance_check\n");
+	return -1;
+    }
+    bu_log("PASS test_manifold_acceptance_check\n");
+    return 0;
+}
+
 /* A closed orientable mesh with inconsistent local winding needs no
  * geometric repair.  Synchronize only triangle order, preserve the complete
  * point and face sets, and require acceptance by both topology validators. */
@@ -1518,6 +1553,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_null_params()               != 0) ? 1 : 0;
     failures += (test_already_solid()             != 0) ? 1 : 0;
     failures += (test_tet_already_solid()         != 0) ? 1 : 0;
+    failures += (test_manifold_acceptance_check() != 0) ? 1 : 0;
     failures += (test_closed_orientation_sync()   != 0) ? 1 : 0;
     failures += (test_open_cube_repair()          != 0) ? 1 : 0;
     failures += (test_unused_vertex_compaction()  != 0) ? 1 : 0;
