@@ -1342,6 +1342,40 @@ bg_trimesh_repair2(
 	tris[i][2] = ifaces[3*i+2];
     }
     report->input_area = trimesh_gte_area(verts, tris);
+
+    /* Preserve edge closure while separating independent fans that share one
+     * indexed vertex.  Geometric-degenerate removal can open small holes; if
+     * it happens first, those boundaries can connect thousands of otherwise
+     * independent fans and turn a topology-only split into a global repair. */
+    size_t closed_invalid_links = 0;
+    bool closed_links_valid = trimesh_gte_valid_vertex_links(tris,
+	verts.size(), &closed_invalid_links);
+    struct bg_trimesh_repair_report closed_topology =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    trimesh_repair_report_topology(&closed_topology, verts, tris);
+    const bool closed_edges = !closed_topology.unmatched_edges &&
+	!closed_topology.excess_edges && !closed_topology.misoriented_edges;
+    bool closed_links_split = false;
+    if (closed_edges && !closed_links_valid &&
+	    !settings->remove_small_components &&
+	    !settings->separate_touching_vertices &&
+	    !settings->union_components) {
+	std::vector<gte::Vector3<double>> split_vertices = verts;
+	std::vector<std::array<int32_t, 3>> split_triangles = tris;
+	std::vector<int32_t> adjacency;
+	gte::MeshRepair<double>::ConnectFacets(split_triangles, adjacency);
+	gte::MeshRepair<double>::SplitNonManifoldVertices(split_vertices,
+	    split_triangles, adjacency);
+	if (trimesh_gte_solid(split_vertices, split_triangles) &&
+		trimesh_gte_valid_vertex_links(split_triangles,
+		    split_vertices.size())) {
+	    report->separated_vertices += (int)(split_vertices.size() -
+		verts.size());
+	    verts.swap(split_vertices);
+	    tris.swap(split_triangles);
+	    closed_links_split = true;
+	}
+    }
     const size_t initial_geometric_degenerate =
 	trimesh_remove_geometric_degenerate(verts, tris);
     if (!not_solid && !initial_geometric_degenerate &&
@@ -1353,67 +1387,23 @@ bg_trimesh_repair2(
 	report->output_area = report->input_area;
 	report->output_volume = bg_trimesh_volume(ifaces,
 	    (size_t)n_ifaces, ipnts, (size_t)n_ipnts);
+	if (closed_links_split)
+	    return trimesh_repair_export(ofaces, n_ofaces, opnts, n_opnts,
+		verts, tris, settings, report);
 	return 1;
     }
     report->removed_faces += (int)initial_geometric_degenerate;
     if (tris.empty())
 	return -1;
 
-    /* An edge-closed mesh can fail the manifold vertex-link condition when
-     * two otherwise independent closed fans share one indexed vertex.  Split
-     * that topology before any coordinate colocation: welding first destroys
-     * the distinction and can turn a local pinch into hundreds of false
-     * seams.  The operation duplicates positions but does not move geometry.
-     * Preserve the result only when the complete indexed solid and optional
-     * Manifold postconditions accept it. */
-    size_t input_invalid_links = 0;
-    bool input_links_valid = trimesh_gte_valid_vertex_links(tris,
-	verts.size(), &input_invalid_links);
-    struct bg_trimesh_repair_report input_topology =
-	BG_TRIMESH_REPAIR_REPORT_INIT;
-    trimesh_repair_report_topology(&input_topology, verts, tris);
+    /* Reassess orientation after the closed-link split and flat removal. */
     const int input_reoriented = trimesh_sync_closed_orientation(verts, tris);
     if (input_reoriented > 0) {
 	report->reoriented_faces += input_reoriented;
 	/* The synchronized candidate has already passed the indexed solid
 	 * test.  It is authoritative over the unchanged source arrays. */
 	not_solid = 0;
-	input_invalid_links = 0;
-	input_links_valid = trimesh_gte_valid_vertex_links(tris,
-	    verts.size(), &input_invalid_links);
-	trimesh_repair_report_topology(&input_topology, verts, tris);
     }
-    const bool input_edges_closed = !input_topology.unmatched_edges &&
-	!input_topology.excess_edges && !input_topology.misoriented_edges;
-    if (input_edges_closed && !initial_geometric_degenerate &&
-	    !input_links_valid && !settings->remove_small_components &&
-	    !settings->separate_touching_vertices &&
-	    !settings->union_components) {
-	std::vector<gte::Vector3<double>> split_vertices = verts;
-	std::vector<std::array<int32_t, 3>> split_triangles = tris;
-	std::vector<int32_t> adjacency;
-	gte::MeshRepair<double>::ConnectFacets(split_triangles, adjacency);
-	gte::MeshRepair<double>::SplitNonManifoldVertices(split_vertices,
-	    split_triangles, adjacency);
-	const bool split_valid = trimesh_gte_solid(split_vertices,
-	    split_triangles) && trimesh_gte_valid_vertex_links(
-	    split_triangles, split_vertices.size());
-	bool manifold_accepted = !settings->require_manifold;
-	if (split_valid && settings->require_manifold) {
-	    std::vector<gte::Vector3<double>> manifold_vertices =
-		split_vertices;
-	    std::vector<std::array<int32_t, 3>> manifold_triangles =
-		split_triangles;
-	    (void)trimesh_manifold_union(manifold_vertices,
-		manifold_triangles, &manifold_accepted, false);
-	}
-	if (split_valid && manifold_accepted) {
-	    report->manifold_accepted = settings->require_manifold ? 1 : 0;
-	    return trimesh_repair_export(ofaces, n_ofaces, opnts, n_opnts,
-		split_vertices, split_triangles, settings, report);
-	}
-    }
-
     /* A caller asking only for Manifold acceptance has not authorized a
      * geometric rewrite of an already valid indexed solid.  In particular,
      * coordinate welding can merge distinct topological vertices that happen
