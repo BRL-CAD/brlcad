@@ -975,11 +975,6 @@ lookup check to ensure none are missing.
 
 * test tgf-g conversion with "ring-mode" geometry
 
-* fix metaball/adjust.. wipes out all metaball values with:
-  adjust metaball 1 1 1
-  just gives usage with:
-  adjust metaball 1 1
-
 * test for -msse3 requirement for __SSE.*__ definition
 
 * improve sse run-time detection so illegal instruction crashes are
@@ -997,11 +992,6 @@ lookup check to ensure none are missing.
   meshes.  ~72 files reference the faces/face_normals members.
   [FAN-OUT: yes -- per-file/per-converter sweep with a verification
   pass.]
-
-* pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
-  .bw input files.  cause is due to tool assuming input is rgb
-  triplets (even though output is bytes, wtf?).  should probably
-  report pixels and/or have a -b option for handling byte/bw input.
 
 * investigate why epa primitive is so sensitive to coarse absolute
   value changes (run csgbrep, tol abs=1, facetize and get 321k poly)
