@@ -1148,9 +1148,10 @@ EOF
 	ls -la *.pix*
     fi
     $VERBOSE_ECHO "DEBUG: $CMP $PIX/${bench_testname}.pix ${bench_testname}.pix"
-    cmp_result="`eval \\\"${CMP}\\\" \\\"${PIX}/${bench_testname}.pix\\\" ${bench_testname}.pix 2>&1 | grep pixels`"
+    cmp_result="`eval \\\"${CMP}\\\" \\\"${PIX}/${bench_testname}.pix\\\" ${bench_testname}.pix 2>&1`"
     ret=$?
 
+    cmp_result="`echo \\\"$cmp_result\\\" | grep pixels`"
     $ECHO "$cmp_result"
 
     if test $ret = 0 ; then
