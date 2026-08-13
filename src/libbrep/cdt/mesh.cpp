@@ -6041,8 +6041,8 @@ cdt_mesh_t::cdt(bool allow_general_boundary_cleanup)
 		continue;
 	    const ON_BrepTrim &trim = brep->m_T[start->trim_ind];
 	    const ON_BrepEdge *edge = trim.Edge();
-	    if (!edge || edge->IsClosed() ||
-		    trim.m_type == ON_BrepTrim::singular)
+	    if (!edge || trim.m_type == ON_BrepTrim::singular ||
+		    trim.m_type == ON_BrepTrim::seam)
 		continue;
 	    std::vector<int> native_path;
 	    const cpolyedge_t *segment = start;
