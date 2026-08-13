@@ -1553,7 +1553,7 @@ bg_trimesh_repair2(
 	     * caller explicitly permits crossings, very large boundaries are
 	     * better served by the bounded linear centroid fan; downstream solid,
 	     * link, and application-level fidelity checks remain mandatory. */
-	    fp.steinerAboveEdges = settings->allow_self_intersections ? 2048 : 0;
+	    fp.steinerAboveEdges = settings->allow_self_intersections ? 512 : 0;
 	    fp.method = gte::MeshHoleFilling<double>::
 		TriangulationMethod::PlanarProjection;
 	    fp.autoFallback = false;
