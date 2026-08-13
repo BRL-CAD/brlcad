@@ -6011,13 +6011,51 @@ repair_failed_face_from_rigorous_boundary(
 static int repair_near_boundary_pair_contract(void);
 static int repair_adaptive_hole_retry_contract(void);
 static int repair_weld_roundoff_contract(void);
-static bool repair_degenerate_approximate_neighborhoods(int **, int *,
+
+static bool
+repair_split_directed_euler_cycles(const std::vector<int> &circuit,
+	size_t edge_count, std::vector<std::vector<int>> &rings)
+{
+    rings.clear();
+    std::vector<int> pending_ring;
+    std::map<int, size_t> ring_position;
+    size_t ring_edges = 0;
+    for (int vertex : circuit) {
+	const auto prior = ring_position.find(vertex);
+	if (prior == ring_position.end()) {
+	    ring_position[vertex] = pending_ring.size();
+	    pending_ring.push_back(vertex);
+	    continue;
+	}
+	const size_t cycle_start = prior->second;
+	std::vector<int> ring(pending_ring.begin() + cycle_start,
+	    pending_ring.end());
+	if (ring.size() < 3)
+	    return false;
+	ring_edges += ring.size();
+	rings.push_back(std::move(ring));
+	for (size_t point = cycle_start + 1; point < pending_ring.size();
+		point++)
+	    ring_position.erase(pending_ring[point]);
+	pending_ring.resize(cycle_start + 1);
+    }
+    return pending_ring.size() == 1 && ring_edges == edge_count;
+}
+
+static bool repair_degenerate_neighborhoods(int **, int *,
     fastf_t **, int *, int, std::vector<int> &, double, size_t,
     repair_degenerate_neighborhood_stats *);
 
 static int
 repair_degenerate_neighborhood_contract(void)
 {
+    std::vector<std::vector<int>> weak_rings;
+    if (!repair_split_directed_euler_cycles({0, 1, 2, 0, 3, 4, 0}, 6,
+	    weak_rings) || weak_rings !=
+	    std::vector<std::vector<int>>({{0, 1, 2}, {0, 3, 4}}) ||
+	    repair_split_directed_euler_cycles({0, 1, 0}, 2, weak_rings))
+	return 1;
+
     const fastf_t input_vertices[8][3] = {
 	{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
 	{1.0, 1.0, 0.0}, {0.0, 1.0, 0.0},
@@ -6047,7 +6085,7 @@ repair_degenerate_neighborhood_contract(void)
     for (int face = 10; face < 14; ++face)
 	sources[(size_t)face] = 0;
     repair_degenerate_neighborhood_stats stats;
-    const bool repaired = repair_degenerate_approximate_neighborhoods(
+    const bool repaired = repair_degenerate_neighborhoods(
 	&faces, &face_count, &vertices, &vertex_count, 10, sources, 0.1,
 	16, &stats);
     assembled_mesh_validation validation;
@@ -6061,7 +6099,40 @@ repair_degenerate_neighborhood_contract(void)
     bu_free(faces, "degenerate neighborhood contract result faces");
     bu_free(vertices, "degenerate neighborhood contract result vertices");
     if (!valid)
-	return 1;
+	return 2;
+
+    /* The same independently flat island may come from the rigorous prefix.
+     * Source attribution plus geometric degeneracy is sufficient to consider
+     * it, but the complete solid gate must still approve its removal. */
+    face_count = 14;
+    vertex_count = 8;
+    faces = (int *)bu_malloc(sizeof(input_faces),
+	"rigorous degenerate neighborhood contract faces");
+    vertices = (fastf_t *)bu_malloc(sizeof(input_vertices),
+	"rigorous degenerate neighborhood contract vertices");
+    memcpy(faces, input_faces, sizeof(input_faces));
+    memcpy(vertices, input_vertices, sizeof(input_vertices));
+    sources.assign(14, -1);
+    sources[12] = 0;
+    sources[13] = 0;
+    stats = repair_degenerate_neighborhood_stats();
+    const bool rigorous_repaired =
+	repair_degenerate_neighborhoods(&faces, &face_count,
+	    &vertices, &vertex_count, 14, sources, 0.1, 16, &stats);
+    validation = assembled_mesh_validation();
+    const bool rigorous_valid = rigorous_repaired && face_count == 12 &&
+	vertex_count == 8 && stats.components == 1 &&
+	stats.removed_faces == 2 && stats.added_faces == 0 &&
+	stats.source_faces == std::set<int>({0}) && sources.size() == 12 &&
+	assembled_mesh_validate(vertex_count, face_count, vertices, faces,
+	    &validation, false) && !validation.degenerate_faces &&
+	!validation.invalid_vertex_links &&
+	!bg_trimesh_solid2(vertex_count, face_count, vertices, faces, NULL);
+    bu_free(faces, "rigorous degenerate neighborhood contract result faces");
+    bu_free(vertices,
+	"rigorous degenerate neighborhood contract result vertices");
+    if (!rigorous_valid)
+	return 3;
 
     const int growth_faces[14][3] = {
 	{0, 2, 1}, {0, 3, 2},
@@ -6086,7 +6157,7 @@ repair_degenerate_neighborhood_contract(void)
     for (int face = 10; face < 14; ++face)
 	sources[(size_t)face] = 0;
     stats = repair_degenerate_neighborhood_stats();
-    const bool grown = repair_degenerate_approximate_neighborhoods(&faces,
+    const bool grown = repair_degenerate_neighborhoods(&faces,
 	&face_count, &vertices, &vertex_count, 10, sources, 0.1, 16,
 	&stats);
     validation = assembled_mesh_validation();
@@ -6100,7 +6171,7 @@ repair_degenerate_neighborhood_contract(void)
 	!bg_trimesh_solid2(vertex_count, face_count, vertices, faces, NULL);
     bu_free(faces, "growing neighborhood contract result faces");
     bu_free(vertices, "growing neighborhood contract result vertices");
-    return grown_valid ? 0 : 2;
+    return grown_valid ? 0 : 4;
 }
 
 static int
@@ -7016,15 +7087,16 @@ repair_weld_roundoff_contract(void)
 }
 
 
-/* A constrained fallback can be topologically closed while containing small
- * regions whose source face collapsed to a line.  Removing those triangles
- * globally reopens every seam.  Instead, replace only complete edge-connected
- * degenerate neighborhoods, retaining every perimeter index.  A simple
- * boundary is spanned from its centroid when possible; if the ring itself is
- * numerically flat, move only the new interior point a bounded distance in a
- * tangent direction inferred from the retained neighboring triangles. */
+/* A rigorous or constrained fallback can be topologically closed while
+ * containing small regions whose source face collapsed to a line.  Removing
+ * those triangles globally reopens every seam.  Instead, replace only complete
+ * attributed edge-connected degenerate neighborhoods, retaining every
+ * perimeter index.  A simple boundary is spanned from its centroid when
+ * possible; if the ring itself is numerically flat, move only the new interior
+ * point a bounded distance in a tangent direction inferred from the retained
+ * neighboring triangles. */
 static bool
-repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
+repair_degenerate_neighborhoods(int **faces, int *face_count,
 	fastf_t **vertices, int *vertex_count, int rigorous_face_count,
 	std::vector<int> &source_faces, double allowed_deviation,
 	size_t max_boundary_edges, repair_degenerate_neighborhood_stats *stats)
@@ -7082,12 +7154,11 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
     for (int face = 0; face < input_face_count; ++face) {
 	degenerate[(size_t)face] = is_geometric_degenerate(face);
 	if (degenerate[(size_t)face]) {
-	    if (face < rigorous_face_count || source_faces[(size_t)face] < 0) {
+	    if (source_faces[(size_t)face] < 0) {
 		if (debug_topology)
 		    bu_log("Degenerate neighborhood repair rejected: triangle "
-			"%d is %s (rigorous prefix %d, source %d)\n", face,
-			face < rigorous_face_count ? "rigorous" :
-			"unattributed", rigorous_face_count,
+			"%d is unattributed (rigorous prefix %d, source %d)\n",
+			face, rigorous_face_count,
 			source_faces[(size_t)face]);
 		return false;
 	    }
@@ -7181,8 +7252,20 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
 	}
 	std::set<int> component_faces(component.begin(), component.end());
 	std::set<int> component_sources;
-	for (int face : component)
+	std::set<mesh_edge> component_edges;
+	const auto add_component_edges = [&](int face) {
+	    for (int corner = 0; corner < 3; ++corner) {
+		const int from = input_faces[(size_t)face * 3 + corner];
+		const int to = input_faces[(size_t)face * 3 +
+		    (corner + 1) % 3];
+		if (from != to)
+		    component_edges.insert(std::minmax(from, to));
+	    }
+	};
+	for (int face : component) {
 	    component_sources.insert(source_faces[(size_t)face]);
+	    add_component_edges(face);
+	}
 	std::vector<edge_use> boundary;
 	std::map<mesh_edge, int> retained_neighbors;
 	const size_t max_component_faces = std::max((size_t)16,
@@ -7192,7 +7275,11 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
 	    boundary.clear();
 	    retained_neighbors.clear();
 	    std::set<int> forced_grow_faces;
-	    for (const auto &edge : edge_uses) {
+	    for (const mesh_edge &edge_key : component_edges) {
+		const auto edge_iter = edge_uses.find(edge_key);
+		if (edge_iter == edge_uses.end())
+		    continue;
+		const auto &edge = *edge_iter;
 		bool component_incident = false;
 		std::vector<edge_use> retained_uses;
 		for (const edge_use &use : edge.second) {
@@ -7249,6 +7336,7 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
 		    if (component_faces.insert(face).second) {
 			component.push_back(face);
 			component_sources.insert(source_faces[(size_t)face]);
+			add_component_edges(face);
 		    }
 		}
 		continue;
@@ -7319,6 +7407,7 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
 		component.push_back(face);
 		component_faces.insert(face);
 		component_sources.insert(source_faces[(size_t)face]);
+		add_component_edges(face);
 	    }
 	}
 	for (int face : component)
@@ -7368,48 +7457,36 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
 	}
 	std::map<int, std::vector<std::pair<int, size_t>>>
 	    boundary_adjacency;
+	std::map<int, size_t> boundary_indegree;
+	std::map<int, size_t> boundary_outdegree;
 	for (size_t edge_index = 0; edge_index < boundary.size();
 		edge_index++) {
 	    const edge_use &edge = boundary[edge_index];
 	    boundary_adjacency[edge.from].push_back({edge.to, edge_index});
-	    boundary_adjacency[edge.to].push_back({edge.from, edge_index});
+	    boundary_adjacency[edge.to];
+	    boundary_outdegree[edge.from]++;
+	    boundary_indegree[edge.to]++;
 	}
 	for (const auto &vertex : boundary_adjacency) {
-	    if (vertex.second.empty() || vertex.second.size() % 2) {
-		if (debug_topology) {
-		    const ON_3dPoint point(&input_vertices[
-			(size_t)vertex.first * 3]);
-		    double nearest_distance =
-			std::numeric_limits<double>::infinity();
-		    int nearest_vertex = -1;
-		    for (const auto &candidate : boundary_adjacency) {
-			if (candidate.first == vertex.first ||
-				candidate.second.size() % 2 == 0)
-			    continue;
-			const ON_3dPoint candidate_point(&input_vertices[
-			    (size_t)candidate.first * 3]);
-			const double distance = point.DistanceTo(candidate_point);
-			if (distance < nearest_distance) {
-			    nearest_distance = distance;
-			    nearest_vertex = candidate.first;
-			}
-		    }
+	    const size_t indegree = boundary_indegree[vertex.first];
+	    const size_t outdegree = boundary_outdegree[vertex.first];
+	    if (!indegree || indegree != outdegree) {
+		if (debug_topology)
 		    bu_log("Degenerate neighborhood repair rejected: %zu-edge "
-			"boundary has odd degree %zu at vertex %d; nearest odd "
-			"vertex %d is %.17g away\n", boundary.size(),
-			vertex.second.size(), vertex.first, nearest_vertex,
-			nearest_distance);
-		}
+			"boundary has directed degree %zu in/%zu out at vertex "
+			"%d\n", boundary.size(), indegree, outdegree,
+			vertex.first);
 		return false;
 	    }
 	}
-	/* Hierholzer's construction permits weakly-simple boundaries that touch
-	 * at a vertex.  The fan may retain a pinched link there; the later
-	 * topology-only split duplicates that point without moving it. */
+	/* Directed Hierholzer traversal preserves the orientation required by the
+	 * retained neighbors while permitting weakly-simple boundaries that touch
+	 * at a vertex.  The later topology-only split can separate pinched links
+	 * without moving a point. */
 	std::vector<bool> used_boundary(boundary.size(), false);
 	std::vector<int> stack;
 	std::vector<int> circuit;
-	const int start = boundary_adjacency.begin()->first;
+	const int start = boundary.front().from;
 	stack.push_back(start);
 	while (!stack.empty()) {
 	    const int current = stack.back();
@@ -7438,8 +7515,19 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
 	    return false;
 	}
 	std::reverse(circuit.begin(), circuit.end());
-	std::vector<int> ring(circuit.begin(), circuit.end() - 1);
+	/* Split a weakly-simple Euler circuit at repeated vertices.  A separate
+	 * center for each simple cycle prevents four or more fan triangles from
+	 * sharing one center-to-boundary edge. */
+	std::vector<std::vector<int>> rings;
+	if (!repair_split_directed_euler_cycles(circuit, boundary.size(),
+		rings)) {
+	    if (debug_topology)
+		bu_log("Degenerate neighborhood repair rejected: split directed "
+		    "cycles do not cover %zu boundary edges\n", boundary.size());
+	    return false;
+	}
 
+	const auto append_ring_patch = [&](const std::vector<int> &ring) {
 	ON_3dPoint center(0.0, 0.0, 0.0);
 	ON_3dVector average_normal(0.0, 0.0, 0.0);
 	ON_3dVector average_outside(0.0, 0.0, 0.0);
@@ -7486,7 +7574,8 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
 		    "boundary has no usable scale\n", ring.size());
 	    return false;
 	}
-	if (!average_normal.Unitize()) {
+	bool normal_available = average_normal.Unitize();
+	if (!normal_available) {
 	    ON_3dVector boundary_normal(0.0, 0.0, 0.0);
 	    for (size_t point = 0; point < ring.size(); ++point) {
 		const ON_3dPoint a(&input_vertices[
@@ -7495,13 +7584,10 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
 		    (size_t)ring[(point + 1) % ring.size()] * 3]);
 		boundary_normal += ON_CrossProduct(a - center, b - center);
 	    }
-	    if (!boundary_normal.Unitize()) {
-		if (debug_topology)
-		    bu_log("Degenerate neighborhood repair rejected: %zu-edge "
-			"boundary has no retained or ring normal\n", ring.size());
-		return false;
+	    if (boundary_normal.Unitize()) {
+		average_normal = boundary_normal;
+		normal_available = true;
 	    }
-	    average_normal = boundary_normal;
 	}
 	ON_3dVector axis(0.0, 0.0, 0.0);
 	for (size_t point = 0; point < ring.size(); ++point) {
@@ -7517,12 +7603,32 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
 		    "boundary has no usable axis\n", ring.size());
 	    return false;
 	}
-	ON_3dVector tangent = ON_CrossProduct(average_normal, axis);
+	ON_3dVector tangent(0.0, 0.0, 0.0);
+	if (normal_available)
+	    tangent = ON_CrossProduct(average_normal, axis);
 	if (!tangent.Unitize()) {
-	    if (debug_topology)
-		bu_log("Degenerate neighborhood repair rejected: %zu-edge "
-		    "boundary has no usable tangent\n", ring.size());
-	    return false;
+	    /* A fully collinear neighborhood has no geometrically meaningful
+	     * normal.  Prefer the direction away from retained neighboring
+	     * vertices; if that also collapses, choose a stable perpendicular to
+	     * the longest boundary edge.  The displacement remains bounded by the
+	     * caller's deviation and the whole mesh is validated transactionally. */
+	    tangent = average_outside - (average_outside * axis) * axis;
+	}
+	if (!tangent.Unitize()) {
+	    const ON_3dVector reference =
+		std::fabs(axis.x) <= std::fabs(axis.y) &&
+		std::fabs(axis.x) <= std::fabs(axis.z) ?
+		ON_3dVector(1.0, 0.0, 0.0) :
+		(std::fabs(axis.y) <= std::fabs(axis.z) ?
+		ON_3dVector(0.0, 1.0, 0.0) :
+		ON_3dVector(0.0, 0.0, 1.0));
+	    tangent = ON_CrossProduct(axis, reference);
+	    if (!tangent.Unitize()) {
+		if (debug_topology)
+		    bu_log("Degenerate neighborhood repair rejected: %zu-edge "
+			"boundary has no usable tangent\n", ring.size());
+		return false;
+	    }
 	}
 	if (average_outside * tangent > 0.0)
 	    tangent = -tangent;
@@ -7588,6 +7694,12 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
 	    patch.faces.push_back(-1);
 	}
 	patches.push_back(std::move(patch));
+	return true;
+	};
+	for (const std::vector<int> &ring : rings) {
+	    if (!append_ring_patch(ring))
+		return false;
+	}
     }
 
     std::vector<int> candidate_faces;
@@ -7620,8 +7732,12 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
     }
 
     std::vector<int> synchronized_faces(candidate_faces.size());
-    if (bg_trimesh_sync(synchronized_faces.data(), candidate_faces.data(),
-	    (int)(candidate_faces.size() / 3)) >= 0)
+    const int sync_result = bg_trimesh_sync(synchronized_faces.data(),
+	candidate_faces.data(), (int)(candidate_faces.size() / 3));
+    if (debug_topology)
+	bu_log("Degenerate neighborhood repair orientation sync result %d\n",
+	    sync_result);
+    if (sync_result >= 0)
 	candidate_faces.swap(synchronized_faces);
 
     /* Compact unused vertices so the independent whole-mesh validation can
@@ -12938,7 +13054,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    "vertices before local neighborhood repair\n",
 		    paired_boundary_vertices);
 	    degenerate_neighborhood_repair =
-		repair_degenerate_approximate_neighborhoods(&input_faces,
+		repair_degenerate_neighborhoods(&input_faces,
 		    &input_face_count, &input_vertices, &input_vertex_count,
 		    rigorous_input_face_count, input_source_faces,
 		    neighborhood_deviation, std::max(neighborhood_max_edges,
@@ -12949,6 +13065,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    locally_reconstructed_faces.insert(
 		degenerate_neighborhood_stats.source_faces.begin(),
 		degenerate_neighborhood_stats.source_faces.end());
+	    approximation_faces.insert(
+		degenerate_neighborhood_stats.source_faces.begin(),
+		degenerate_neighborhood_stats.source_faces.end());
 	    for (int face = 0; face < input_face_count; ++face) {
 		const int source = input_source_faces[(size_t)face];
 		if (source < 0)
@@ -12956,7 +13075,6 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		const repair_triangle_key key = repair_triangle_coordinates(
 		    input_vertices, &input_faces[(size_t)face * 3]);
 		local_chart_triangle_brep_faces[key].insert(source);
-		locally_reconstructed_faces.insert(source);
 	    }
 	    if (rigorous_boundary_repair) {
 		bu_log("Replaced %d failed-face triangles with %d triangles "
