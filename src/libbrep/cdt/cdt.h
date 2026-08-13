@@ -140,6 +140,10 @@ struct ON_Brep_CDT_State {
     bool allow_bounded_edge_approximation;
     fastf_t bounded_edge_approximation_tolerance;
     std::map<int, fastf_t> approximated_edges;
+    /* A mandatory split of a closed edge may prove that one face pullback
+     * agrees with the 3-D edge while its mate does not.  Preserve the shared
+     * topology and quarantine only the inconsistent face. */
+    std::map<int, std::pair<int, fastf_t>> inconsistent_edge_faces;
     std::map<ON_3dPoint *, double> v_min_seg_len;
     std::map<int, double> l_median_len;
     std::set<cpolyedge_t *> unsplit_singular_edges;
@@ -189,7 +193,7 @@ size_t synchronize_coincident_edge_samples(
 double ang_deg(const ON_3dVector &v1, const ON_3dVector &v2);
 std::set<bedge_seg_t *> split_edge_seg(struct ON_Brep_CDT_State *s_cdt,
     bedge_seg_t *bseg, int force, double *t, int update_rtrees,
-    ON_3dPoint *shared_point = NULL);
+    ON_3dPoint *shared_point = NULL, bool required_closed_split = false);
 std::set<cpolyedge_t *> split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *ce, int update_rtree);
 std::vector<cpolyedge_t *> cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, int face_index);
 void CDT_Add3DNorm(struct ON_Brep_CDT_State *s, ON_3dPoint *norm, ON_3dPoint *vert, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);
