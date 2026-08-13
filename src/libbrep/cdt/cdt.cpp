@@ -3144,7 +3144,20 @@ brep_cdt_tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt,
     int fc = ((face_cnt == 0) || !faces) ? s_cdt->brep->m_F.Count() : face_cnt;
     for (int i = 0; i < fc; i++) {
 	int fi = ((face_cnt == 0) || !faces) ? i : faces[i];
-	if (do_triangulation(s_cdt, fi)) {
+	const auto inconsistent = s_cdt->inconsistent_edge_faces.find(fi);
+	bool face_triangulated = false;
+	if (inconsistent != s_cdt->inconsistent_edge_faces.end()) {
+	    const std::string message = "face pullback for closed B-Rep edge " +
+		std::to_string(inconsistent->second.first) +
+		" misses the authoritative shared edge by " +
+		std::to_string(inconsistent->second.second);
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_GEOMETRIC_FAILED,
+		BREP_CDT_STAGE_GEOMETRIC_VALIDATION, fi, 0, 1,
+		message.c_str());
+	} else {
+	    face_triangulated = do_triangulation(s_cdt, fi);
+	}
+	if (face_triangulated) {
 	    face_successes++;
 	} else {
 	    if (s_cdt->diagnostic.face_index != fi ||
@@ -3169,7 +3182,8 @@ brep_cdt_tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt,
 	    s_cdt->diagnostic.result == BREP_CDT_RESULT_INVALID_PSLG ||
 	    s_cdt->diagnostic.result == BREP_CDT_RESULT_DETRIA_FAILED ||
 	    s_cdt->diagnostic.result == BREP_CDT_RESULT_CERTIFICATION_FAILED ||
-	    s_cdt->diagnostic.result == BREP_CDT_RESULT_REFINEMENT_LIMIT;
+	    s_cdt->diagnostic.result == BREP_CDT_RESULT_REFINEMENT_LIMIT ||
+	    s_cdt->diagnostic.result == BREP_CDT_RESULT_GEOMETRIC_FAILED;
 	if (face_successes) {
 	    s_cdt->status = face_successes;
 	    if (specific_failure) {
@@ -9284,6 +9298,16 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	else
 	    approximation_faces.insert(face.first);
     }
+    /* The complete export path performs transactional component filtering
+     * and winding synchronization.  Passing an explicit list containing
+     * every face looks equivalent, but intentionally selects the partial
+     * export path and can reintroduce misoriented edges into repair input. */
+    const bool complete_usable_mesh = usable_faces.size() ==
+	(size_t)s_cdt->orig_brep->m_F.Count();
+    const int usable_selection_count = complete_usable_mesh ? 0 :
+	(int)usable_faces.size();
+    int *usable_selection = complete_usable_mesh ? NULL :
+	usable_faces.data();
     int *input_faces = NULL;
     int input_face_count = 0;
     fastf_t *input_vertices = NULL;
@@ -9303,7 +9327,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     if (!settings->use_full_fast_fallback && !usable_faces.empty()) {
 	if (ON_Brep_CDT_Mesh(&input_faces, &input_face_count, &input_vertices,
 	    &input_vertex_count, NULL, NULL, NULL, NULL, s_cdt,
-	    (int)usable_faces.size(), usable_faces.data()) < 0 ||
+	    usable_selection_count, usable_selection) < 0 ||
 	    input_face_count <= 0 || input_vertex_count <= 0) {
 	    if (input_faces)
 		bu_free(input_faces, "repair input faces");
@@ -9355,7 +9379,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    input_vertices = NULL;
 	    if (ON_Brep_CDT_Mesh(&input_faces, &input_face_count,
 		&input_vertices, &input_vertex_count, NULL, NULL, NULL,
-		NULL, s_cdt, (int)usable_faces.size(), usable_faces.data()) < 0 ||
+		NULL, s_cdt, usable_selection_count,
+		usable_selection) < 0 ||
 		input_face_count <= 0 || input_vertex_count <= 0) {
 		if (input_faces)
 		    bu_free(input_faces, "failed pre-repair faces");
