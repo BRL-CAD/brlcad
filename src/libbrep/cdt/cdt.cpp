@@ -5964,6 +5964,7 @@ repair_failed_face_from_rigorous_boundary(
 }
 
 static int repair_near_boundary_pair_contract(void);
+static int repair_adaptive_hole_retry_contract(void);
 static bool repair_degenerate_approximate_neighborhoods(int **, int *,
     fastf_t **, int *, int, std::vector<int> &, double, size_t,
     repair_degenerate_neighborhood_stats *);
@@ -6393,7 +6394,10 @@ cdt_test_repair_rigorous_boundary(void)
     if (pair_result)
 	return 10 + pair_result;
     const int neighborhood_result = repair_degenerate_neighborhood_contract();
-    return neighborhood_result ? 20 + neighborhood_result : 0;
+    if (neighborhood_result)
+	return 20 + neighborhood_result;
+    const int adaptive_hole_result = repair_adaptive_hole_retry_contract();
+    return adaptive_hole_result ? 30 + adaptive_hole_result : 0;
 }
 
 /* Pair only opposite open edges whose endpoints are locally coincident.
@@ -10192,6 +10196,57 @@ repair_mesh_area(const fastf_t *vertices, const int *faces, int face_count)
     return area;
 }
 
+/* Raising the normal hole-size limit before the mixed mesh is assembled also
+ * expands the much more expensive rigorous-boundary search.  Retry only the
+ * final mesh repair, and only when its remaining defects prove that the
+ * requested ceiling can cover all open edges.  Excess or misoriented edges
+ * describe non-hole topology and are deliberately ineligible. */
+static size_t
+repair_adaptive_hole_edge_budget(
+	const struct brep_cdt_repair_settings *settings,
+	const struct bg_trimesh_repair_report *mesh_report)
+{
+    if (!settings || !mesh_report || !settings->mesh.fill_holes ||
+	    settings->max_adaptive_hole_edges <=
+	    settings->mesh.max_hole_edges || mesh_report->unmatched_edges <= 0 ||
+	    (size_t)mesh_report->unmatched_edges <=
+	    settings->mesh.max_hole_edges ||
+	    (size_t)mesh_report->unmatched_edges >
+	    settings->max_adaptive_hole_edges || mesh_report->excess_edges ||
+	    mesh_report->misoriented_edges)
+	return 0;
+    return (size_t)mesh_report->unmatched_edges;
+}
+
+static int
+repair_adaptive_hole_retry_contract(void)
+{
+    struct brep_cdt_repair_settings settings =
+	BREP_CDT_REPAIR_SETTINGS_INIT;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    settings.mesh.fill_holes = 1;
+    settings.mesh.max_hole_edges = 256;
+    settings.max_adaptive_hole_edges = 4096;
+    report.unmatched_edges = 1974;
+    if (repair_adaptive_hole_edge_budget(&settings, &report) != 1974)
+	return 1;
+    report.excess_edges = 1;
+    if (repair_adaptive_hole_edge_budget(&settings, &report))
+	return 2;
+    report.excess_edges = 0;
+    report.misoriented_edges = 1;
+    if (repair_adaptive_hole_edge_budget(&settings, &report))
+	return 3;
+    report.misoriented_edges = 0;
+    report.unmatched_edges = 4097;
+    if (repair_adaptive_hole_edge_budget(&settings, &report))
+	return 4;
+    settings.max_adaptive_hole_edges = 0;
+    report.unmatched_edges = 1974;
+    return repair_adaptive_hole_edge_budget(&settings, &report) ? 5 : 0;
+}
+
 static void
 repair_added_patch_stats(struct brep_cdt_repair_report *report,
 	const fastf_t *input_vertices, const int *input_faces,
@@ -10607,6 +10662,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    (settings->relaxed_fidelity_factor > 0.0 &&
 	    (settings->relaxed_fidelity_factor < 1.0 ||
 	    settings->relaxed_fidelity_factor > 4.0)) ||
+	    (settings->max_adaptive_hole_edges > 0 &&
+	    settings->max_adaptive_hole_edges <
+	    settings->mesh.max_hole_edges) ||
 	    (settings->use_poisson_reconstruction &&
 	    (!settings->use_full_fast_fallback || settings->poisson_depth < 5 ||
 	    settings->poisson_depth > 10 ||
@@ -12516,6 +12574,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    input_faces, NULL);
     }
     int repair_result = 1;
+    size_t adaptive_hole_edges = 0;
     if (preserve_poisson) {
 	report->mesh.input_vertices = input_vertex_count;
 	report->mesh.input_faces = input_face_count;
@@ -12527,6 +12586,20 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    &repaired_face_count, &repaired_points, &repaired_vertex_count,
 	    input_faces, input_face_count, (const point_t *)input_vertices,
 	    input_vertex_count, &mesh_settings, &report->mesh);
+	adaptive_hole_edges = repair_result < 0 ?
+	    repair_adaptive_hole_edge_budget(settings, &report->mesh) : 0;
+	if (adaptive_hole_edges) {
+	    report->adaptive_hole_retry_attempted = 1;
+	    report->adaptive_hole_edges = adaptive_hole_edges;
+	    mesh_settings.max_hole_edges = adaptive_hole_edges;
+	    bu_log("Retrying final mesh repair with a bounded %zu-edge hole "
+		"ceiling\n", adaptive_hole_edges);
+	    repair_result = bg_trimesh_repair2(&repaired_faces,
+		&repaired_face_count, &repaired_points,
+		&repaired_vertex_count, input_faces, input_face_count,
+		(const point_t *)input_vertices, input_vertex_count,
+		&mesh_settings, &report->mesh);
+	}
 	/* Point-contact separation is useful for Poisson meshes with touching
 	 * shells, but can reopen a seam that tolerance welding just closed.
 	 * Preserve positions first and perturb contacts only when the caller did
@@ -13659,6 +13732,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     if (report->relaxed_fidelity_applied)
 	message += "; relaxed fidelity factor " +
 	    std::to_string(report->relaxed_fidelity_factor);
+    if (report->adaptive_hole_retry_attempted)
+	message += "; adaptive hole edge ceiling " +
+	    std::to_string(report->adaptive_hole_edges);
     cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIRED,
 	BREP_CDT_STAGE_MESH_REPAIR, -1,
 	report->source_diagnostic.completed_faces,
