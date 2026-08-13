@@ -91,7 +91,7 @@ struct assembled_mesh_validation {
 static bool
 repair_hybrid_fallback_preflight(size_t geometric_degenerate_faces,
 	size_t invalid_vertex_links, size_t face_count,
-	size_t local_repair_limit)
+	size_t unmatched_edges, size_t local_repair_limit)
 {
     const size_t link_limit = geometric_degenerate_faces <= SIZE_MAX / 4 ?
 	4 * geometric_degenerate_faces : SIZE_MAX;
@@ -105,7 +105,14 @@ repair_hybrid_fallback_preflight(size_t geometric_degenerate_faces,
 	local_repair_limit > 0 &&
 	geometric_degenerate_faces > degenerate_limit &&
 	geometric_degenerate_faces > face_count / 10;
-    return disproportionate_links || dense_degeneracy;
+    const size_t large_mesh_limit = local_repair_limit <= SIZE_MAX / 32 ?
+	32 * local_repair_limit : SIZE_MAX;
+    const bool large_flat_cracked_hybrid = unmatched_edges > 0 &&
+	local_repair_limit > 0 && unmatched_edges <= local_repair_limit &&
+	face_count > large_mesh_limit &&
+	geometric_degenerate_faces > degenerate_limit;
+    return disproportionate_links || dense_degeneracy ||
+	large_flat_cracked_hybrid;
 }
 
 static bool
@@ -6531,20 +6538,24 @@ cdt_test_repair_rigorous_boundary(void)
     /* A few flat triangles tying together hundreds of disconnected links are
      * a poor generic hole-fill candidate regardless of the total mesh size.
      * A proportionate local defect population must remain repair-eligible. */
-    if (!repair_hybrid_fallback_preflight(23, 458, 4000, 256))
+    if (!repair_hybrid_fallback_preflight(23, 458, 4000, 0, 256))
 	return 50;
-    if (repair_hybrid_fallback_preflight(236, 458, 4000, 256))
+    if (repair_hybrid_fallback_preflight(236, 458, 4000, 0, 256))
 	return 51;
-    if (!repair_hybrid_fallback_preflight(136, 1044, 4000, 256))
+    if (!repair_hybrid_fallback_preflight(136, 1044, 4000, 0, 256))
 	return 52;
-    if (repair_hybrid_fallback_preflight(23, 200, 4000, 256))
+    if (repair_hybrid_fallback_preflight(23, 200, 4000, 0, 256))
 	return 53;
     /* A hybrid dominated by flat triangles is also unsuitable for generic
 	 * hole filling, but a sparse flat population remains locally repairable. */
-    if (!repair_hybrid_fallback_preflight(9349, 0, 70036, 256))
+    if (!repair_hybrid_fallback_preflight(9349, 0, 70036, 0, 256))
 	return 54;
-    if (repair_hybrid_fallback_preflight(3414, 0, 179978, 256))
+    if (repair_hybrid_fallback_preflight(3414, 0, 179978, 0, 256))
 	return 55;
+    if (!repair_hybrid_fallback_preflight(5011, 3, 530925, 3, 256))
+	return 56;
+    if (repair_hybrid_fallback_preflight(100, 3, 530925, 3, 256))
+	return 57;
     return 0;
 }
 
@@ -13110,13 +13121,14 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	}
     }
 
-    /* Removing flat triangles from an otherwise edge-closed hybrid can turn
-     * point contacts between many independent vertex fans into a large set of
-     * artificial holes.  Give the topology-preserving, transactional local
-     * reconstruction above the first opportunity to fix those defects.  If
-     * it cannot, and the caller explicitly authorized a whole-display retry,
-     * avoid an unbounded sequence of generic hole triangulations when invalid
-     * links are disproportionate or flat triangles dominate the mesh. */
+    /* Removing flat triangles from an edge-closed or nearly closed hybrid can
+     * turn point contacts between many independent vertex fans into a large
+     * set of artificial holes.  Give the topology-preserving, transactional
+     * local reconstruction above the first opportunity to fix those defects.
+     * If it cannot, and the caller explicitly authorized a whole-display
+     * retry, avoid an unbounded sequence of generic hole triangulations when
+     * invalid links are disproportionate, flat triangles dominate, or a very
+     * large hybrid combines many flat triangles with a bounded edge crack. */
     if (settings->use_full_fast_fallback_if_needed &&
 	    !settings->use_full_fast_fallback &&
 	    !degenerate_neighborhood_repair) {
@@ -13127,17 +13139,19 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
 	(void)bg_trimesh_solid2(input_vertex_count, input_face_count,
 	    input_vertices, input_faces, &hybrid_errors);
-	const bool edge_closed = !hybrid_errors.unmatched.count &&
-	    !hybrid_errors.excess.count &&
-	    !hybrid_errors.misoriented.count;
+	const size_t unmatched_edges = hybrid_errors.unmatched.count;
+	const bool bounded_edge_defects = !hybrid_errors.excess.count &&
+	    !hybrid_errors.misoriented.count &&
+	    unmatched_edges <= settings->mesh.max_hole_edges;
 	bg_free_trimesh_solid_errors(&hybrid_errors);
 	const bool hybrid_storage_valid = !hybrid_validation.invalid_indices &&
 	    !hybrid_validation.nonfinite_vertices;
-	if (hybrid_storage_valid && edge_closed &&
+	if (hybrid_storage_valid && bounded_edge_defects &&
 		repair_hybrid_fallback_preflight(
 		    hybrid_validation.degenerate_faces,
 		    hybrid_validation.invalid_vertex_links,
 		    (size_t)input_face_count,
+		    unmatched_edges,
 		    settings->mesh.max_hole_edges)) {
 	    const size_t degenerate_faces =
 		hybrid_validation.degenerate_faces;
@@ -13909,6 +13923,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     int worst_deviation_brep_face = -1;
     const std::set<int> local_surface_faces(
 	locally_reconstructed_faces.begin(), locally_reconstructed_faces.end());
+    const bool allow_untrimmed_fidelity =
+	settings->allow_untrimmed_surface_match != 0 ||
+	settings->use_full_fast_fallback;
     for (const repair_changed_face &changed : sampled_changed_faces) {
 	const int *triangle = &repaired_faces[(size_t)changed.index * 3];
 	const ON_3dPoint a(&repaired_vertices[(size_t)triangle[0] * 3]);
@@ -13935,6 +13952,26 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    else if (changed.source_brep_face < 0 &&
 		    !local_surface_faces.empty())
 		local_filter = local_surface_faces;
+	    if (settings->use_full_fast_fallback && local_filter.empty()) {
+		const double support_limit =
+		    validation_surface_deviation <=
+		    std::numeric_limits<double>::max() / 4.0 ?
+		    4.0 * validation_surface_deviation :
+		    validation_surface_deviation;
+		double support_distance =
+		    std::numeric_limits<double>::infinity();
+		size_t support_triangle = std::numeric_limits<size_t>::max();
+		if (repair_input_mesh_distance(input_triangle_index,
+			reference_input_vertices, reference_input_faces,
+			samples[sample], support_limit, &support_distance,
+			&support_triangle) &&
+			support_triangle < display_reference_brep_faces.size()) {
+		    const int support_face = display_reference_brep_faces[
+			support_triangle];
+		    if (support_face >= 0)
+		local_filter.insert(support_face);
+		}
+	    }
 	    if (changed.direct_surface_samples) {
 		distance = changed.direct_surface_deviation;
 		used_untrimmed = true;
@@ -13948,18 +13985,31 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 			report->max_best_effort_surface_deviation,
 			(fastf_t)distance);
 		}
+	    } else if (have_display_reference &&
+		    repair_input_mesh_distance(input_triangle_index,
+			reference_input_vertices, reference_input_faces,
+			samples[sample], validation_surface_deviation,
+			&distance)) {
+		/* A whole-display fallback is already an explicitly tagged mesh
+		 * interpretation.  Its reference mesh is an accepted fidelity
+		 * witness later in this same decision chain; test it before
+		 * constructing potentially pathological trimmed-surface trees. */
+		matched_local_surface = true;
+		report->input_mesh_surface_samples++;
 	    } else if (!local_filter.empty()) {
 		matched_local_surface = repair_surface_distance(
 		    s_cdt->orig_brep, face_bounds, face_trees, face_contexts,
 		    samples[sample], validation_surface_deviation, true,
 		    &distance, &used_untrimmed, NULL, NULL, &local_filter);
 	    }
+	    bool matched_global_surface = false;
 	    if (!matched_local_surface &&
-		    !repair_surface_distance(s_cdt->orig_brep, face_bounds,
-		    face_trees, face_contexts, samples[sample],
-		    validation_surface_deviation,
-		    settings->allow_untrimmed_surface_match != 0, &distance,
-		    &used_untrimmed)) {
+		    !settings->use_full_fast_fallback)
+		matched_global_surface = repair_surface_distance(
+		    s_cdt->orig_brep, face_bounds, face_trees, face_contexts,
+		    samples[sample], validation_surface_deviation,
+		    allow_untrimmed_fidelity, &distance, &used_untrimmed);
+	    if (!matched_local_surface && !matched_global_surface) {
 		if (!repair_input_mesh_distance(input_triangle_index,
 			reference_input_vertices, reference_input_faces,
 			samples[sample], validation_surface_deviation,
@@ -13976,12 +14026,15 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    bool diagnostic_untrimmed = false;
 		    int surface_face = -1;
 		    size_t mesh_face = std::numeric_limits<size_t>::max();
-		    const bool have_surface_distance = repair_surface_distance(
-			s_cdt->orig_brep, face_bounds, face_trees, face_contexts,
-			samples[sample], diagnostic_limit,
-			settings->allow_untrimmed_surface_match != 0,
-			&surface_distance, &diagnostic_untrimmed, NULL,
-			&surface_face);
+		    const bool have_surface_distance =
+			(!settings->use_full_fast_fallback ||
+			 !local_filter.empty()) && repair_surface_distance(
+			    s_cdt->orig_brep, face_bounds, face_trees,
+			    face_contexts, samples[sample], diagnostic_limit,
+			    allow_untrimmed_fidelity, &surface_distance,
+			    &diagnostic_untrimmed, NULL, &surface_face,
+			    settings->use_full_fast_fallback ? &local_filter :
+			    NULL);
 		    const bool have_mesh_distance = repair_input_mesh_distance(
 			input_triangle_index, reference_input_vertices,
 			reference_input_faces, samples[sample], diagnostic_limit,
