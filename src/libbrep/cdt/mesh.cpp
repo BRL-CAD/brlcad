@@ -140,6 +140,37 @@ cdt_failure_dumps_enabled()
     return setting && setting[0] && !BU_STR_EQUAL(setting, "0");
 }
 
+/* Move a periodic coordinate to the image nearest a reference without
+ * iterating once per winding.  Imported p-curves may legally store an image
+ * many periods away from the surface's native domain. */
+static bool
+nearest_periodic_image(double &coordinate, double reference, double period)
+{
+    if (!std::isfinite(coordinate) || !std::isfinite(reference) ||
+	    !std::isfinite(period) || !(period > 0.0))
+	return false;
+    double delta = coordinate - reference;
+    if (std::isfinite(delta)) {
+	delta = std::fmod(delta, period);
+    } else {
+	/* Avoid overflow when two finite parameters have opposite, extreme
+	 * magnitudes. */
+	delta = std::fmod(coordinate, period) -
+	    std::fmod(reference, period);
+	if (!std::isfinite(delta))
+	    return false;
+	delta = std::fmod(delta, period);
+    }
+    if (!std::isfinite(delta))
+	return false;
+    if (delta > 0.5 * period)
+	delta -= period;
+    else if (delta < -0.5 * period)
+	delta += period;
+    coordinate = reference + delta;
+    return std::isfinite(coordinate);
+}
+
 static void
 plot_vec_3d(FILE *plot_file, ON_3dPoint *p, ON_3dVector *v, double elen)
 {
@@ -1895,6 +1926,15 @@ cdt_test_local_defects(void)
     if (!triangle.IsNull())
 	return 5;
 
+    double distant_periodic_image = 3.0 + 1000000000.0 * 8.0;
+    if (!nearest_periodic_image(distant_periodic_image, 1.0, 8.0) ||
+	    !NEAR_EQUAL(distant_periodic_image, 3.0, ON_ZERO_TOLERANCE))
+	return 90;
+    distant_periodic_image = -2.0 - 1000000000.0 * 8.0;
+    if (!nearest_periodic_image(distant_periodic_image, 1.0, 8.0) ||
+	    !NEAR_EQUAL(distant_periodic_image, -2.0, ON_ZERO_TOLERANCE))
+	return 91;
+
     const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, 2.0), 5.0);
     std::unique_ptr<ON_Brep> brep(ON_BrepCylinder(cylinder, true, true));
     if (!brep || !brep->IsValid())
@@ -2692,11 +2732,10 @@ cdt_mesh_t::bnorm(const triangle_t &t)
 		}
 		const double reference = uv[0][direction];
 		for (int corner = 1; corner < 3; ++corner) {
-		    while (uv[corner][direction] - reference > 0.5 * period) {
-			uv[corner][direction] -= period;
-		    }
-		    while (uv[corner][direction] - reference < -0.5 * period) {
-			uv[corner][direction] += period;
+		    if (!nearest_periodic_image(uv[corner][direction],
+			    reference, period)) {
+			mapped = false;
+			break;
 		    }
 		}
 	    }
@@ -7512,10 +7551,10 @@ cdt_mesh_t::refine_problem_triangles(
 	    const double reference = direction ? uv[0].y : uv[0].x;
 	    for (int corner = 1; corner < 3; ++corner) {
 		double &coordinate = direction ? uv[corner].y : uv[corner].x;
-		while (coordinate - reference > 0.5 * period)
-		    coordinate -= period;
-		while (coordinate - reference < -0.5 * period)
-		    coordinate += period;
+		if (!nearest_periodic_image(coordinate, reference, period)) {
+		    mapped = false;
+		    break;
+		}
 	    }
 	}
 	if (!mapped)
