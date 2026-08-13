@@ -798,6 +798,7 @@ quality_failed_faces(struct ON_Brep_CDT_State *state, geom_result *result)
 static geom_result
 quality_result(struct db_i *dbip, struct directory *dp,
 	const struct bg_tess_tol *ttol, int face_index,
+	long max_face_time_ms,
 	const struct brep_cdt_repair_settings *repair_settings)
 {
     geom_result result;
@@ -823,6 +824,7 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	return result;
     }
     ON_Brep_CDT_Tol_Set(state, ttol);
+    ON_Brep_CDT_Face_Time_Limit_Set(state, max_face_time_ms);
     int selected_face = face_index;
     const int selected_count = face_index >= 0 ? 1 : 0;
     int64_t start = bu_gettime();
@@ -1549,6 +1551,7 @@ struct audit_config {
     long memory_limit_mib;
     long jobs;
     long max_time_ms;
+    long quality_face_time_ms;
     long max_result_mib;
     long max_points;
     long face_index;
@@ -1773,7 +1776,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     if (run_quality && !excluded) {
 	std::cerr << "brep-audit: phase=quality" << std::endl;
 	quality = quality_result(dbip, dp, &ttol,
-	    (int)config.face_index,
+	    (int)config.face_index, config.quality_face_time_ms,
 	    config.quality_repair ? &repair_settings : NULL);
     }
     /* Invalid B-Reps can contain faces whose trimmed bounding boxes cannot be
@@ -1834,6 +1837,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	<< ",\"rel\":" << config.tess_rel << ",\"norm\":"
 	<< config.tess_norm << "}"
 	<< ",\"memory_limit_mib\":" << config.memory_limit_mib
+	<< ",\"quality_options\":{\"max_face_time_ms\":"
+	<< config.quality_face_time_ms << "}"
 	<< ",\"mode\":" << json_quote(mode_name)
 	<< ",\"face_index\":" << config.face_index
 	<< ",\"input\":{\"loaded\":" << (input_loaded ? "true" : "false")
@@ -1919,6 +1924,7 @@ main(int argc, const char **argv)
     long memory_limit_mib = 0;
     long jobs = 0;
     long max_time_ms = 0;
+    long quality_face_time_ms = 0;
     long max_result_mib = 0;
     long max_points = 0;
     long batch_start = 0;
@@ -1946,7 +1952,7 @@ main(int argc, const char **argv)
     double repair_relaxed_fidelity_factor = 0.0;
     const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[39];
+    struct bu_opt_desc d[40];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -2025,7 +2031,10 @@ main(int argc, const char **argv)
     BU_OPT(d[37], "", "repair-adaptive-hole-edges", "#", &bu_opt_long,
 	&repair_adaptive_hole_edges,
 	"Second-pass edge ceiling when only bounded open holes remain");
-    BU_OPT_NULL(d[38]);
+    BU_OPT(d[38], "", "quality-face-time-ms", "#", &bu_opt_long,
+	&quality_face_time_ms,
+	"Wall-clock limit for each rigorous quality face (zero disables)");
+    BU_OPT_NULL(d[39]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -2033,6 +2042,7 @@ main(int argc, const char **argv)
 	    (batch && ac != 1) || (!list_only && !batch && ac != 2) ||
 	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
 	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0 ||
+	    quality_face_time_ms < 0 ||
 	    jobs < 0 || max_time_ms < 0 || max_result_mib < 0 ||
 	    max_points < 0 || batch_start < 0 || face_index < -1 ||
 	    repair_hole_area_percent <= 0.0 || repair_hole_edges < 3 ||
@@ -2088,7 +2098,8 @@ main(int argc, const char **argv)
     }
     audit_config config = {
 	ratio_min, ratio_max, tess_abs, tess_rel, tess_norm,
-	memory_limit_mib, jobs, max_time_ms, max_result_mib, max_points,
+	memory_limit_mib, jobs, max_time_ms, quality_face_time_ms,
+	max_result_mib, max_points,
 	face_index, valid_solids_only != 0, quality_repair != 0,
 	repair_hole_area_percent, repair_hole_edges,
 	repair_adaptive_hole_edges,
