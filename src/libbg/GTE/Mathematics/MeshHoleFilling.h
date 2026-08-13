@@ -91,6 +91,7 @@ namespace gte
             bool requireManifold;               // Fail if output is not manifold
             bool requireNoSelfIntersections;    // Fail if output has self-intersections
             size_t maxValidatedEdges;            // 0 disables per-ear validation
+            size_t steinerAboveEdges;            // 0 disables large-hole fan dispatch
             TriangleValidator triangleValidator;// Optional geometric ear gate
 
             Parameters()
@@ -103,6 +104,7 @@ namespace gte
                 , requireManifold(false)                    // No manifold requirement by default
                 , requireNoSelfIntersections(false)         // Don't require (can be expensive)
                 , maxValidatedEdges(0)                       // Collision-aware ears are opt-in
+                , steinerAboveEdges(0)                       // Preserve requested method by default
                 , triangleValidator()
             {
             }
@@ -217,7 +219,20 @@ namespace gte
                 size_t const holeVertexStart = vertices.size();
                 bool success = false;
 
-                if (params.method == TriangulationMethod::PlanarProjection)
+                if (params.steinerAboveEdges > 0 &&
+                    hole.vertices.size() > params.steinerAboveEdges)
+                {
+                    TriangleValidator validator;
+                    if (params.triangleValidator &&
+                        params.maxValidatedEdges > 0 &&
+                        hole.vertices.size() <= params.maxValidatedEdges)
+                    {
+                        validator = params.triangleValidator;
+                    }
+                    success = TriangulateHoleSteinerFan(vertices, hole,
+                        newTriangles, validator);
+                }
+                else if (params.method == TriangulationMethod::PlanarProjection)
                 {
                     success = TriangulateHolePlanar(vertices, hole, newTriangles);
                 }
