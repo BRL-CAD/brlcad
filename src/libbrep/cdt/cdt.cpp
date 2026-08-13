@@ -3388,6 +3388,19 @@ repair_triangle_coordinates(const fastf_t *vertices, const int *face)
     return key;
 }
 
+static repair_triangle_key
+repair_triangle_coordinates(const cdt_mesh_t &mesh,
+	const triangle_t &triangle)
+{
+    repair_triangle_key key;
+    for (int corner = 0; corner < 3; ++corner) {
+	const ON_3dPoint &point = *mesh.pnts[(size_t)triangle.v[corner]];
+	key[(size_t)corner] = {point.x, point.y, point.z};
+    }
+    std::sort(key.begin(), key.end());
+    return key;
+}
+
 static repair_triangle_edge_key
 repair_triangle_edge(const repair_point_key &first,
 	const repair_point_key &second)
@@ -10691,6 +10704,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	local_chart_triangle_brep_faces;
     std::map<repair_triangle_key, double>
 	direct_surface_triangle_deviations;
+    std::map<repair_triangle_key,
+	std::vector<std::pair<int, triangle_t>>>
+	best_effort_surface_triangles;
     std::map<repair_triangle_key, std::set<int>> fast_triangle_brep_faces;
     /* Whole-B-Rep fallback replaces every rigorous face mesh.  Do not spend
      * another bounded refinement cycle assembling those faces after a stage
@@ -10998,6 +11014,19 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    const int appended = append_approximate_face(failed_face);
 	    if (!appended)
 		continue;
+	    RTree<size_t, double, 3>::Iterator active;
+	    mesh->second.tris_tree.GetFirst(active);
+	    while (!active.IsNull()) {
+		const size_t triangle_index = *active;
+		if (triangle_index < mesh->second.tris_vect.size()) {
+		    const triangle_t &triangle =
+			mesh->second.tris_vect[triangle_index];
+		    best_effort_surface_triangles[
+			repair_triangle_coordinates(mesh->second, triangle)]
+			.push_back(std::make_pair(failed_face, triangle));
+		}
+		++active;
+	    }
 	    locally_reconstructed_faces.insert(failed_face);
 	    best_effort_face_indices.insert(failed_face);
 	    best_effort_face_count++;
@@ -13092,6 +13121,41 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    sampled_changed_faces[0] = largest;
     }
 
+    /* A retained adaptive face already has authoritative chart UVs.  Its
+     * chord samples can be bounded by evaluating the corresponding surface
+     * parameters directly, avoiding a global closest-point solve.  This is a
+     * conservative proof: use it only when every coordinate-identical chart
+     * triangle agrees and the upper bound already satisfies the requested
+     * fidelity limit. */
+    for (repair_changed_face &changed : sampled_changed_faces) {
+	if (changed.direct_surface_samples)
+	    continue;
+	const repair_triangle_key key = repair_triangle_coordinates(
+	    repaired_vertices,
+	    &repaired_faces[(size_t)changed.index * 3]);
+	const auto candidates = best_effort_surface_triangles.find(key);
+	if (candidates == best_effort_surface_triangles.end() ||
+		candidates->second.empty())
+	    continue;
+	bool proved = true;
+	double maximum = 0.0;
+	for (const auto &candidate : candidates->second) {
+	    const auto mesh = s_cdt->fmeshes.find(candidate.first);
+	    double deviation = 0.0;
+	    if (mesh == s_cdt->fmeshes.end() ||
+		    !mesh->second.surface_triangle_deviation(candidate.second,
+			&deviation)) {
+		proved = false;
+		break;
+	    }
+	    maximum = std::max(maximum, deviation);
+	}
+	if (proved && maximum <= validation_surface_deviation) {
+	    changed.direct_surface_samples = true;
+	    changed.direct_surface_deviation = maximum;
+	}
+    }
+
     RTree<size_t, double, 3> input_triangle_index;
     const int *reference_input_faces = have_display_reference ?
 	display_reference_faces.data() : input_faces;
@@ -13174,6 +13238,14 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		used_untrimmed = true;
 		matched_local_surface = distance <=
 		    validation_surface_deviation;
+		if (changed.source_brep_face >= 0 &&
+			best_effort_face_indices.find(changed.source_brep_face) !=
+			best_effort_face_indices.end()) {
+		    report->best_effort_reference_samples++;
+		    report->max_best_effort_surface_deviation = std::max(
+			report->max_best_effort_surface_deviation,
+			(fastf_t)distance);
+		}
 	    } else if (!local_filter.empty()) {
 		matched_local_surface = repair_surface_distance(
 		    s_cdt->orig_brep, face_bounds, face_trees, face_contexts,
