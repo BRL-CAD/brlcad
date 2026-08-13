@@ -390,7 +390,11 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tarb:non_coplanar_face\n");
 	bu_vls_printf(gedp->ged_result_str, "\tarb:non_standard_ordering\n");
 	bu_vls_printf(gedp->ged_result_str, "\tarb:twisted\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbrep:edge_surface_mismatch\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbrep:large_tolerance\n");
 	bu_vls_printf(gedp->ged_result_str, "\tbrep:opennurbs\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbrep:singular_boundary\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbrep:trim_loop_crossing\n");
 	bu_vls_free(&filter);
 	bu_vls_free(&ofile);
 	bu_vls_free(&gname);
