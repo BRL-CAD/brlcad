@@ -44,6 +44,9 @@ main(int argc, const char **UNUSED(argv))
     result = cdt_test_repair_patch_limits();
     if (result)
 	return result;
+    result = cdt_test_repair_duplicate_quarantine();
+    if (result)
+	return 40 + result;
     result = cdt_test_repair_periodic_strip();
     if (result)
 	return result;
