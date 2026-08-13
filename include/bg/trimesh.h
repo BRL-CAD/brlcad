@@ -601,6 +601,7 @@ struct bg_trimesh_repair_report {
     int repair_iterations;
     int separated_vertices;
     int component_union_applied;
+    int manifold_normalization_applied;
     int self_intersections_allowed;
     int manifold_accepted;
     int solid;
@@ -610,13 +611,14 @@ struct bg_trimesh_repair_report {
     int excess_edges;
     int misoriented_edges;
     int invalid_vertex_links;
+    int reoriented_faces;
     fastf_t input_area;
     fastf_t output_area;
     fastf_t output_volume;
     fastf_t max_vertex_displacement;
 };
 
-#define BG_TRIMESH_REPAIR_REPORT_INIT {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0}
+#define BG_TRIMESH_REPAIR_REPORT_INIT {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0}
 
 /**
  * Attempt a bounded, explicitly configured triangle mesh repair.
