@@ -178,6 +178,10 @@ repair_contract()
     const int approximation_faces = report.approximation_faces;
     const int approximation_edges = report.approximation_edges;
     const int missing_rigorous = report.missing_rigorous_triangles;
+    const bool strict_fidelity = !report.relaxed_fidelity_applied &&
+	NEAR_ZERO(report.relaxed_fidelity_factor, SMALL_FASTF) &&
+	NEAR_ZERO(report.relaxed_surface_deviation_limit, SMALL_FASTF) &&
+	NEAR_ZERO(report.relaxed_area_change_percent_limit, SMALL_FASTF);
     bool repaired = partial_result == (int)partial_faces.size() &&
 	repair_result == 0 &&
 	ON_Brep_CDT_Status(state) == 0 &&
@@ -189,6 +193,7 @@ repair_contract()
 	report.best_effort_faces == 0 &&
 	report.best_effort_triangles == 0 &&
 	approximation_tier == BREP_CDT_REPAIR_APPROX_LOCAL_MESH &&
+	strict_fidelity &&
 	approximation_faces == 1 && approximation_edges == 4 &&
 	!missing_rigorous && provenance.calls == 1 &&
 	provenance.tier == BREP_CDT_REPAIR_APPROX_LOCAL_MESH &&
@@ -216,6 +221,114 @@ repair_contract()
     ON_Brep_CDT_Destroy(state);
     delete box;
     return repaired;
+}
+
+static bool
+relaxed_fidelity_settings_contract()
+{
+    ON_3dPoint corners[8] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 1.0, 0.0), ON_3dPoint(0.0, 1.0, 0.0),
+	ON_3dPoint(0.0, 0.0, 1.0), ON_3dPoint(1.0, 0.0, 1.0),
+	ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(0.0, 1.0, 1.0)
+    };
+    ON_Brep *box = ON_BrepBox(corners);
+    if (!box)
+	return false;
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(box,
+	"relaxed fidelity settings contract");
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.05;
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    std::vector<int> partial_faces;
+    for (int face = 1; face < box->m_F.Count(); ++face)
+	partial_faces.push_back(face);
+    const bool partial = ON_Brep_CDT_Tessellate(state,
+	(int)partial_faces.size(), partial_faces.data()) ==
+	(int)partial_faces.size();
+    struct brep_cdt_repair_settings settings =
+	BREP_CDT_REPAIR_SETTINGS_INIT;
+    settings.mesh.fill_holes = 1;
+    settings.mesh.max_hole_area_percent = 30.0;
+    settings.mesh.max_hole_edges = 64;
+    settings.max_area_change_percent = 30.0;
+    struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
+    settings.relaxed_fidelity_factor = 0.5;
+    const bool low_rejected = ON_Brep_CDT_Repair(state, &settings,
+	&report) == -1;
+    settings.relaxed_fidelity_factor = 4.01;
+    const bool high_rejected = ON_Brep_CDT_Repair(state, &settings,
+	&report) == -1;
+    settings.relaxed_fidelity_factor =
+	std::numeric_limits<fastf_t>::quiet_NaN();
+    const bool nonfinite_rejected = ON_Brep_CDT_Repair(state, &settings,
+	&report) == -1;
+    ON_Brep_CDT_Destroy(state);
+    delete box;
+    return partial && low_rejected && high_rejected && nonfinite_rejected;
+}
+
+static bool
+relaxed_fidelity_acceptance_contract()
+{
+    ON_3dPoint corners[8] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 1.0, 0.0), ON_3dPoint(0.0, 1.0, 0.0),
+	ON_3dPoint(0.0, 0.0, 1.0), ON_3dPoint(1.0, 0.0, 1.0),
+	ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(0.0, 1.0, 1.0)
+    };
+    ON_Brep *box = ON_BrepBox(corners);
+    if (!box)
+	return false;
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(box,
+	"relaxed fidelity acceptance contract");
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.05;
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    std::vector<int> partial_faces;
+    for (int face = 1; face < box->m_F.Count(); ++face)
+	partial_faces.push_back(face);
+    const bool partial = ON_Brep_CDT_Tessellate(state,
+	(int)partial_faces.size(), partial_faces.data()) ==
+	(int)partial_faces.size();
+    struct brep_cdt_repair_settings settings =
+	BREP_CDT_REPAIR_SETTINGS_INIT;
+    settings.mesh.fill_holes = 1;
+    settings.mesh.max_hole_area_percent = 30.0;
+    settings.mesh.max_hole_edges = 64;
+    settings.max_area_change_percent = 10.0;
+    repair_provenance_capture provenance;
+    settings.provenance = repair_provenance_callback;
+    settings.provenance_data = &provenance;
+    struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
+    const bool strict_rejected = ON_Brep_CDT_Repair(state, &settings,
+	&report) == -1 && !report.relaxed_fidelity_applied;
+    settings.relaxed_fidelity_factor = 2.1;
+    report = BREP_CDT_REPAIR_REPORT_INIT;
+    const bool relaxed_accepted = ON_Brep_CDT_Repair(state, &settings,
+	&report) == 0 && report.mesh.solid &&
+	report.relaxed_fidelity_applied &&
+	report.approximation_tier ==
+	    BREP_CDT_REPAIR_APPROX_RELAXED_FIDELITY &&
+	report.area_change_percent > 10.0 &&
+	report.area_change_percent <=
+	    report.relaxed_area_change_percent_limit &&
+	provenance.calls == 1 &&
+	provenance.tier == BREP_CDT_REPAIR_APPROX_RELAXED_FIDELITY &&
+	provenance.faces == std::vector<int>({0});
+    if (!relaxed_accepted) {
+	struct brep_cdt_diagnostic diagnostic = {};
+	ON_Brep_CDT_Diagnostic(&diagnostic, state);
+	bu_log("relaxed fidelity acceptance contract failed: strict %d, "
+	    "tier/applied %d/%d, area %.17g/%.17g, callback %d/%d: %s\n",
+	    strict_rejected ? 1 : 0, report.approximation_tier,
+	    report.relaxed_fidelity_applied, report.area_change_percent,
+	    report.relaxed_area_change_percent_limit, provenance.calls,
+	    provenance.tier, diagnostic.message);
+    }
+    ON_Brep_CDT_Destroy(state);
+    delete box;
+    return partial && strict_rejected && relaxed_accepted;
 }
 
 static bool
@@ -728,6 +841,9 @@ main(int argc, const char **argv)
     bool empty_rejected = empty_mesh_contract();
     bool untrimmed_tree = untrimmed_surface_tree_contract();
     bool repaired = repair_contract();
+    bool relaxed_fidelity_settings = relaxed_fidelity_settings_contract();
+    bool relaxed_fidelity_acceptance =
+	relaxed_fidelity_acceptance_contract();
     bool local_surface_repaired = local_surface_repair_contract();
     bool relaxed_invalid = relaxed_invalid_repair_contract();
     bool relaxed_outer = relaxed_missing_outer_repair_contract();
@@ -769,6 +885,7 @@ main(int argc, const char **argv)
 
     return initial && first_ok && second_ok && empty_rejected &&
 	untrimmed_tree && repaired && local_surface_repaired &&
+	relaxed_fidelity_settings && relaxed_fidelity_acceptance &&
 	relaxed_invalid && relaxed_outer &&
 	paired_edge && invalid_repaired && components_repaired &&
 	invalidated && invalid_tolerance && invalid_face && invalid_input ? 0 : 1;

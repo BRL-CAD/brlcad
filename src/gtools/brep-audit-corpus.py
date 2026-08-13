@@ -133,6 +133,8 @@ def append_repair_options(command, args):
         str(args.repair_poisson_depth),
         "--repair-poisson-scale",
         str(args.repair_poisson_scale),
+        "--repair-relaxed-fidelity-factor",
+        str(args.repair_relaxed_fidelity_factor),
     ))
     if args.repair_max_deviation_rel > 0.0:
         command.extend((
@@ -616,6 +618,13 @@ def parse_args():
     parser.add_argument("--repair-poisson", action="store_true")
     parser.add_argument("--repair-poisson-depth", type=int, default=8)
     parser.add_argument("--repair-poisson-scale", type=float, default=0.0)
+    parser.add_argument(
+        "--repair-relaxed-fidelity-factor", type=float, default=0.0,
+        help=(
+            "Accept and tag Manifold repairs within 1 through 4 times the "
+            "strict fidelity limits; zero disables"
+        ),
+    )
     parser.add_argument("--repair-union-components", action="store_true")
     parser.add_argument(
         "--repair-allow-self-intersections", action="store_true"
@@ -652,7 +661,9 @@ def parse_args():
             args.repair_deviation_samples <= 0 or \
             not 5 <= args.repair_poisson_depth <= 10 or \
             (args.repair_poisson_scale != 0.0 and
-             not 1.0 <= args.repair_poisson_scale <= 2.0):
+             not 1.0 <= args.repair_poisson_scale <= 2.0) or \
+            (args.repair_relaxed_fidelity_factor != 0.0 and
+             not 1.0 <= args.repair_relaxed_fidelity_factor <= 4.0):
         parser.error("invalid repair bounds")
     if args.repair_max_deviation > 0.0 and \
             args.repair_max_deviation_rel > 0.0:

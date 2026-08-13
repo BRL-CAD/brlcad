@@ -4136,6 +4136,7 @@ struct repair_degenerate_neighborhood_stats {
     int boundary_edges = 0;
     double max_center_offset = 0.0;
     bool inferred_topology = false;
+    std::set<int> source_faces;
 };
 
 /* When a failed-face triangulation cannot reproduce its authoritative
@@ -5194,6 +5195,97 @@ repair_failed_face_from_rigorous_boundary(
 }
 
 static int repair_near_boundary_pair_contract(void);
+static bool repair_degenerate_approximate_neighborhoods(int **, int *,
+    fastf_t **, int *, int, std::vector<int> &, double, size_t,
+    repair_degenerate_neighborhood_stats *);
+
+static int
+repair_degenerate_neighborhood_contract(void)
+{
+    const fastf_t input_vertices[8][3] = {
+	{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
+	{1.0, 1.0, 0.0}, {0.0, 1.0, 0.0},
+	{0.0, 0.0, 1.0}, {1.0, 0.0, 1.0},
+	{1.0, 1.0, 1.0}, {0.0, 1.0, 1.0}
+    };
+    const int input_faces[14][3] = {
+	{0, 2, 1}, {0, 3, 2},
+	{0, 1, 5}, {0, 5, 4},
+	{1, 2, 6}, {1, 6, 5},
+	{2, 3, 7}, {2, 7, 6},
+	{3, 0, 4}, {3, 4, 7},
+	{4, 5, 6}, {4, 6, 7},
+	/* A bad fallback can repeat the same collapsed sliver.  Its sole
+	 * surviving edge is already paired by the sound top and side faces. */
+	{4, 5, 4}, {4, 5, 4}
+    };
+    int face_count = 14;
+    int vertex_count = 8;
+    int *faces = (int *)bu_malloc(sizeof(input_faces),
+	"degenerate neighborhood contract faces");
+    fastf_t *vertices = (fastf_t *)bu_malloc(sizeof(input_vertices),
+	"degenerate neighborhood contract vertices");
+    memcpy(faces, input_faces, sizeof(input_faces));
+    memcpy(vertices, input_vertices, sizeof(input_vertices));
+    std::vector<int> sources(14, -1);
+    for (int face = 10; face < 14; ++face)
+	sources[(size_t)face] = 0;
+    repair_degenerate_neighborhood_stats stats;
+    const bool repaired = repair_degenerate_approximate_neighborhoods(
+	&faces, &face_count, &vertices, &vertex_count, 10, sources, 0.1,
+	16, &stats);
+    assembled_mesh_validation validation;
+    const bool valid = repaired && face_count == 12 && vertex_count == 8 &&
+	stats.components == 1 && stats.removed_faces == 2 &&
+	stats.added_faces == 0 && stats.source_faces == std::set<int>({0}) &&
+	sources.size() == 12 && assembled_mesh_validate(vertex_count,
+	face_count, vertices, faces, &validation, false) &&
+	!validation.degenerate_faces && !validation.invalid_vertex_links &&
+	!bg_trimesh_solid2(vertex_count, face_count, vertices, faces, NULL);
+    bu_free(faces, "degenerate neighborhood contract result faces");
+    bu_free(vertices, "degenerate neighborhood contract result vertices");
+    if (!valid)
+	return 1;
+
+    const int growth_faces[14][3] = {
+	{0, 2, 1}, {0, 3, 2},
+	{0, 1, 5}, {0, 5, 4},
+	{1, 2, 6}, {1, 6, 5},
+	{2, 3, 7}, {2, 7, 6},
+	{3, 0, 4}, {3, 4, 7},
+	{4, 5, 6}, {4, 6, 7},
+	/* The duplicate triangle makes the shared diagonal singular.  Absorb
+	 * that approximate edge star and stop at the four rigorous side edges. */
+	{4, 5, 6}, {4, 6, 4}
+    };
+    face_count = 14;
+    vertex_count = 8;
+    faces = (int *)bu_malloc(sizeof(growth_faces),
+	"growing neighborhood contract faces");
+    vertices = (fastf_t *)bu_malloc(sizeof(input_vertices),
+	"growing neighborhood contract vertices");
+    memcpy(faces, growth_faces, sizeof(growth_faces));
+    memcpy(vertices, input_vertices, sizeof(input_vertices));
+    sources.assign(14, -1);
+    for (int face = 10; face < 14; ++face)
+	sources[(size_t)face] = 0;
+    stats = repair_degenerate_neighborhood_stats();
+    const bool grown = repair_degenerate_approximate_neighborhoods(&faces,
+	&face_count, &vertices, &vertex_count, 10, sources, 0.1, 16,
+	&stats);
+    validation = assembled_mesh_validation();
+    const bool grown_valid = grown && face_count == 14 &&
+	vertex_count == 9 && stats.components == 1 &&
+	stats.removed_faces == 4 && stats.added_faces == 4 &&
+	stats.source_faces == std::set<int>({0}) && sources.size() == 14 &&
+	assembled_mesh_validate(vertex_count, face_count, vertices, faces,
+	    &validation, false) && !validation.degenerate_faces &&
+	!validation.invalid_vertex_links &&
+	!bg_trimesh_solid2(vertex_count, face_count, vertices, faces, NULL);
+    bu_free(faces, "growing neighborhood contract result faces");
+    bu_free(vertices, "growing neighborhood contract result vertices");
+    return grown_valid ? 0 : 2;
+}
 
 static int
 repair_multi_ring_boundary_contract(struct ON_Brep_CDT_State *state)
@@ -5353,7 +5445,10 @@ cdt_test_repair_rigorous_boundary(void)
     if (multi_ring_result)
 	return 4;
     const int pair_result = repair_near_boundary_pair_contract();
-    return pair_result ? 10 + pair_result : 0;
+    if (pair_result)
+	return 10 + pair_result;
+    const int neighborhood_result = repair_degenerate_neighborhood_contract();
+    return neighborhood_result ? 20 + neighborhood_result : 0;
 }
 
 /* Pair only opposite open edges whose endpoints are locally coincident.
@@ -5377,6 +5472,11 @@ repair_pair_near_boundary_cracks(int *faces, int face_count,
 	int face;
 	int from;
 	int to;
+    };
+    struct pairing_candidate {
+	size_t edge = 0;
+	double distance = std::numeric_limits<double>::infinity();
+	bool same_direction = false;
     };
     ON_BoundingBox bounds;
     for (int vertex = 0; vertex < vertex_count; ++vertex)
@@ -5414,7 +5514,16 @@ repair_pair_near_boundary_cracks(int *faces, int face_count,
 		excess_edges++;
 	}
 	if (complete) {
-	    memcpy(faces, candidate.data(), candidate.size() * sizeof(int));
+	    std::vector<int> synchronized(candidate.size());
+	    if (bg_trimesh_sync(synchronized.data(), candidate.data(),
+		    face_count) < 0) {
+		if (debug_topology)
+		    bu_log("Near-boundary pairing rejected: paired mesh is "
+			"not orientable\n");
+		return false;
+	    }
+	    memcpy(faces, synchronized.data(), synchronized.size() *
+		sizeof(int));
 	    return *welded_vertices > 0;
 	}
 	/* Indexed excess edges can balance an odd number of open edges before
@@ -5434,8 +5543,8 @@ repair_pair_near_boundary_cracks(int *faces, int face_count,
 		(size_t)open_edges[first].from * 3]);
 	    const ON_3dPoint first_to(&vertices[
 		(size_t)open_edges[first].to * 3]);
-	    double best_distance = std::numeric_limits<double>::infinity();
-	    size_t best = open_edges.size();
+	    pairing_candidate best;
+	    best.edge = open_edges.size();
 	    for (size_t second = first + 1; second < open_edges.size();
 		    second++) {
 		if (open_edges[first].face < rigorous_face_count &&
@@ -5445,34 +5554,45 @@ repair_pair_near_boundary_cracks(int *faces, int face_count,
 		    (size_t)open_edges[second].from * 3]);
 		const ON_3dPoint second_to(&vertices[
 		    (size_t)open_edges[second].to * 3]);
-		const double distance = std::max(
+		const double opposite_distance = std::max(
 		    first_from.DistanceTo(second_to),
 		    first_to.DistanceTo(second_from));
-		if (distance <= weld_tolerance && distance < best_distance) {
-		    best_distance = distance;
-		    best = second;
+		const double same_distance = std::max(
+		    first_from.DistanceTo(second_from),
+		    first_to.DistanceTo(second_to));
+		const bool same_direction =
+		    same_distance < opposite_distance;
+		const double distance = same_direction ? same_distance :
+		    opposite_distance;
+		if (distance <= weld_tolerance && distance < best.distance) {
+		    best.distance = distance;
+		    best.edge = second;
+		    best.same_direction = same_direction;
 		}
 	    }
-	    if (best == open_edges.size())
+	    if (best.edge == open_edges.size())
 		continue;
 	    const directed_edge &target =
 		open_edges[first].face < rigorous_face_count ?
-		open_edges[first] : open_edges[best];
+		open_edges[first] : open_edges[best.edge];
 	    const directed_edge &approximate =
 		open_edges[first].face < rigorous_face_count ?
-		open_edges[best] : open_edges[first];
+		open_edges[best.edge] : open_edges[first];
 	    if (approximate.face < rigorous_face_count)
 		continue;
 	    const int old_vertices[2] = {
 		approximate.from, approximate.to
 	    };
-	    const int new_vertices[2] = {target.to, target.from};
+	    const int new_vertices[2] = {
+		best.same_direction ? target.from : target.to,
+		best.same_direction ? target.to : target.from
+	    };
 	    if (debug_topology)
 		bu_log("Near-boundary pairing iteration %d: approximate "
 		    "edge %d->%d (face %d) to %d->%d (face %d), "
 		    "distance %.17g\n", iteration, approximate.from,
 		    approximate.to, approximate.face, target.to,
-		    target.from, target.face, best_distance);
+		    target.from, target.face, best.distance);
 	    for (int face = rigorous_face_count; face < face_count; ++face) {
 		for (int corner = 0; corner < 3; ++corner) {
 		    int &vertex = candidate[(size_t)face * 3 + corner];
@@ -5555,8 +5675,26 @@ repair_near_boundary_pair_contract(void)
     if (!repair_pair_near_boundary_cracks(&faces[0][0], 12,
 	    &vertices[0][0], 10, 10, 0.1, &paired) || paired != 2)
 	return 1;
-    return bg_trimesh_solid2(10, 12, &vertices[0][0], &faces[0][0],
-	NULL) ? 2 : 0;
+    if (bg_trimesh_solid2(10, 12, &vertices[0][0], &faces[0][0], NULL))
+	return 2;
+
+    /* A failed-face patch may carry the same provisional boundary winding as
+     * its rigorous neighbor.  Coordinate pairing is still unambiguous; the
+     * completed shell must be synchronized transactionally afterward. */
+    int same_direction_faces[12][3] = {
+	{0, 2, 1}, {0, 3, 2},
+	{0, 1, 5}, {0, 5, 4},
+	{1, 2, 6}, {1, 6, 5},
+	{2, 3, 7}, {2, 7, 6},
+	{3, 0, 4}, {3, 4, 7},
+	{8, 6, 9}, {8, 7, 6}
+    };
+    paired = 0;
+    if (!repair_pair_near_boundary_cracks(&same_direction_faces[0][0], 12,
+	    &vertices[0][0], 10, 10, 0.1, &paired) || paired != 2)
+	return 3;
+    return bg_trimesh_solid2(10, 12, &vertices[0][0],
+	&same_direction_faces[0][0], NULL) ? 4 : 0;
 }
 
 /* A constrained fallback can be topologically closed while containing small
@@ -5647,49 +5785,18 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
     }
     if (degenerate_faces.empty())
 	return false;
-    /* This local transaction is intentionally limited to an otherwise
-     * edge-closed input. */
+    /* Do not let an unrelated open edge suppress every recoverable local
+     * component.  The candidate is still transactional and must pass the
+     * complete indexed-solid gate below before any replacement commits. */
+    size_t irregular_edges = 0;
     for (const auto &edge : edge_uses) {
-	if (edge.second.size() != 2) {
-	    if (debug_topology)
-	    {
-		double nearest[2] = {
-		    std::numeric_limits<double>::infinity(),
-		    std::numeric_limits<double>::infinity()
-		};
-		int nearest_vertex[2] = {-1, -1};
-		const int endpoints[2] = {edge.first.first, edge.first.second};
-		for (int endpoint = 0; endpoint < 2; ++endpoint) {
-		    const ON_3dPoint point(&input_vertices[
-			(size_t)endpoints[endpoint] * 3]);
-		    for (int vertex = 0; vertex < input_vertex_count; ++vertex) {
-			if (vertex == endpoints[endpoint])
-			    continue;
-			const ON_3dPoint candidate(&input_vertices[
-			    (size_t)vertex * 3]);
-			const double distance = point.DistanceTo(candidate);
-			if (distance < nearest[endpoint]) {
-			    nearest[endpoint] = distance;
-			    nearest_vertex[endpoint] = vertex;
-			}
-		    }
-		}
-		bu_log("Degenerate neighborhood repair rejected: input edge "
-		    "%d-%d has %zu inconsistent uses (%d:%d->%d, "
-		    "%d:%d->%d); nearest duplicates %d/%.17g and "
-		    "%d/%.17g\n", edge.first.first, edge.first.second,
-		    edge.second.size(), edge.second.empty() ? -1 :
-		    edge.second[0].face, edge.second.empty() ? -1 :
-		    edge.second[0].from, edge.second.empty() ? -1 :
-		    edge.second[0].to, edge.second.size() < 2 ? -1 :
-		    edge.second[1].face, edge.second.size() < 2 ? -1 :
-		    edge.second[1].from, edge.second.size() < 2 ? -1 :
-		    edge.second[1].to, nearest_vertex[0], nearest[0],
-		    nearest_vertex[1], nearest[1]);
-	    }
-	    return false;
-	}
+	if (edge.second.size() != 2)
+	    irregular_edges++;
     }
+    if (debug_topology && irregular_edges)
+	bu_log("Degenerate neighborhood repair: retaining %zu unrelated "
+	    "irregular edges for final transactional validation\n",
+	    irregular_edges);
 
     std::vector<int> local_index((size_t)input_face_count, -1);
     for (size_t local = 0; local < degenerate_faces.size(); ++local)
@@ -5708,15 +5815,22 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
 	return root;
     };
     for (const auto &edge : edge_uses) {
-	const int first_face = edge.second[0].face;
-	const int second_face = edge.second[1].face;
-	if (!degenerate[(size_t)first_face] ||
-		!degenerate[(size_t)second_face])
-	    continue;
-	const int first = component_root(local_index[(size_t)first_face]);
-	const int second = component_root(local_index[(size_t)second_face]);
-	if (first != second)
-	    parents[(size_t)second] = first;
+	int first_local = -1;
+	std::set<int> joined_faces;
+	for (const edge_use &use : edge.second) {
+	    if (!degenerate[(size_t)use.face] ||
+		    !joined_faces.insert(use.face).second)
+		continue;
+	    const int local = local_index[(size_t)use.face];
+	    if (first_local < 0) {
+		first_local = local;
+		continue;
+	    }
+	    const int first = component_root(first_local);
+	    const int second = component_root(local);
+	    if (first != second)
+		parents[(size_t)second] = first;
+	}
     }
     std::map<int, std::vector<int>> components;
     for (size_t local = 0; local < degenerate_faces.size(); ++local)
@@ -5732,52 +5846,205 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
     std::vector<replacement_patch> patches;
     std::vector<bool> remove_face((size_t)input_face_count, false);
     for (const auto &component_entry : components) {
-	const std::vector<int> &component = component_entry.second;
-	std::set<int> component_faces(component.begin(), component.end());
-	std::set<int> component_sources;
-	for (int face : component) {
-	    remove_face[(size_t)face] = true;
-	    component_sources.insert(source_faces[(size_t)face]);
-	}
-	if (component_sources.size() != 1) {
+	std::vector<int> component = component_entry.second;
+	const size_t previously_absorbed = std::count_if(component.begin(),
+	    component.end(), [&](int face) {
+		return remove_face[(size_t)face];
+	    });
+	if (previously_absorbed == component.size())
+	    continue;
+	if (previously_absorbed) {
 	    if (debug_topology)
-		bu_log("Degenerate neighborhood repair rejected: component "
-		    "with %zu triangles has %zu source faces\n",
-		    component.size(), component_sources.size());
+		bu_log("Degenerate neighborhood repair rejected: a prior "
+		    "bounded patch absorbed %zu/%zu triangles from another "
+		    "component\n", previously_absorbed, component.size());
 	    return false;
 	}
+	std::set<int> component_faces(component.begin(), component.end());
+	std::set<int> component_sources;
+	for (int face : component)
+	    component_sources.insert(source_faces[(size_t)face]);
 	std::vector<edge_use> boundary;
 	std::map<mesh_edge, int> retained_neighbors;
-	for (const auto &edge : edge_uses) {
-	    int component_use = -1;
-	    int retained_use = -1;
-	    for (size_t use = 0; use < edge.second.size(); ++use) {
-		if (component_faces.find(edge.second[use].face) !=
-			component_faces.end())
-		    component_use = (int)use;
-		else
-		    retained_use = (int)use;
+	const size_t max_component_faces = std::max((size_t)16,
+	    max_boundary_edges <= SIZE_MAX / 4 ? 4 * max_boundary_edges :
+	    max_boundary_edges);
+	for (;;) {
+	    boundary.clear();
+	    retained_neighbors.clear();
+	    std::set<int> forced_grow_faces;
+	    for (const auto &edge : edge_uses) {
+		bool component_incident = false;
+		std::vector<edge_use> retained_uses;
+		for (const edge_use &use : edge.second) {
+		    if (component_faces.find(use.face) !=
+			    component_faces.end())
+			component_incident = true;
+		    else if (!remove_face[(size_t)use.face])
+			retained_uses.push_back(use);
+		}
+		if (!component_incident || retained_uses.empty())
+		    continue;
+		/* A collapsed triangle can traverse its only surviving edge
+		 * twice.  If two sound triangles already use that edge
+		 * oppositely, deleting the collapsed island exposes no boundary
+		 * and needs no patch. */
+		if (retained_uses.size() == 2 &&
+			retained_uses[0].from == retained_uses[1].to &&
+			retained_uses[0].to == retained_uses[1].from)
+		    continue;
+		if (retained_uses.size() != 1) {
+		    bool approximate_star = true;
+		    for (const edge_use &retained : retained_uses) {
+			if (retained.face < rigorous_face_count ||
+				retained.face >= input_face_count ||
+				source_faces[(size_t)retained.face] < 0) {
+			    approximate_star = false;
+			    break;
+			}
+			forced_grow_faces.insert(retained.face);
+		    }
+		    if (!approximate_star) {
+			if (debug_topology)
+			    bu_log("Degenerate neighborhood repair rejected: "
+				"edge %d-%d has %zu retained uses including a "
+				"rigorous triangle\n", edge.first.first,
+				edge.first.second, retained_uses.size());
+			return false;
+		    }
+		    continue;
+		}
+		const edge_use &retained = retained_uses.front();
+		boundary.push_back({component.front(), retained.to,
+		    retained.from});
+		retained_neighbors[edge.first] = retained.face;
 	    }
-	    if (component_use >= 0 && retained_use >= 0) {
-		const edge_use &retained = edge.second[(size_t)retained_use];
-		/* The replacement must use the perimeter opposite to the
-		 * retained neighbor even if the collapsed source triangle had
-		 * indeterminate winding. */
-		boundary.push_back({edge.second[(size_t)component_use].face,
-		    retained.to, retained.from});
-		retained_neighbors[edge.first] =
-		    edge.second[(size_t)retained_use].face;
+
+	    if (!forced_grow_faces.empty()) {
+		if (component.size() + forced_grow_faces.size() >
+			max_component_faces)
+		    return false;
+		for (int face : forced_grow_faces) {
+		    if (remove_face[(size_t)face])
+			return false;
+		    if (component_faces.insert(face).second) {
+			component.push_back(face);
+			component_sources.insert(source_faces[(size_t)face]);
+		    }
+		}
+		continue;
+	    }
+	    bool boundary_ready = boundary.empty() || boundary.size() >= 3;
+	    std::map<int, size_t> boundary_degree;
+	    for (const edge_use &edge : boundary) {
+		boundary_degree[edge.from]++;
+		boundary_degree[edge.to]++;
+	    }
+	    for (const auto &vertex : boundary_degree)
+		boundary_ready = boundary_ready && !(vertex.second % 2);
+	    if (boundary_ready)
+		break;
+	    if (boundary.size() > max_boundary_edges ||
+		    component.size() >= max_component_faces) {
+		if (debug_topology)
+		    bu_log("Degenerate neighborhood repair rejected: bounded "
+			"growth reached %zu triangles and %zu boundary edges\n",
+			component.size(), boundary.size());
+		return false;
+	    }
+
+	    std::set<int> grow_faces;
+	    for (const auto &neighbor : retained_neighbors) {
+		const int face = neighbor.second;
+		if (face < rigorous_face_count || face >= input_face_count ||
+			source_faces[(size_t)face] < 0 ||
+			component_faces.find(face) != component_faces.end())
+		    continue;
+		grow_faces.insert(face);
+	    }
+	    if (grow_faces.empty() || component.size() + grow_faces.size() >
+		    max_component_faces) {
+		if (debug_topology) {
+		    bu_log("Degenerate neighborhood repair rejected: %zu-edge "
+			"boundary cannot grow without changing rigorous triangles\n",
+			boundary.size());
+		    for (const auto &vertex : boundary_degree) {
+			if (!(vertex.second % 2))
+			    continue;
+			const ON_3dPoint point(&input_vertices[
+			    (size_t)vertex.first * 3]);
+			double nearest_distance =
+			    std::numeric_limits<double>::infinity();
+			int nearest_vertex = -1;
+			for (const auto &candidate : boundary_degree) {
+			    if (candidate.first == vertex.first ||
+				    !(candidate.second % 2))
+				continue;
+			    const ON_3dPoint other(&input_vertices[
+				(size_t)candidate.first * 3]);
+			    if (point.DistanceTo(other) < nearest_distance) {
+				nearest_distance = point.DistanceTo(other);
+				nearest_vertex = candidate.first;
+			    }
+			}
+			bu_log("  odd boundary vertex %d degree %zu; nearest %d "
+			    "at %.17g\n", vertex.first, vertex.second,
+			    nearest_vertex, nearest_distance);
+		    }
+		}
+		return false;
+	    }
+	    for (int face : grow_faces) {
+		if (remove_face[(size_t)face])
+		    return false;
+		component.push_back(face);
+		component_faces.insert(face);
+		component_sources.insert(source_faces[(size_t)face]);
 	    }
 	}
+	for (int face : component)
+	    remove_face[(size_t)face] = true;
+	stats->source_faces.insert(component_sources.begin(),
+	    component_sources.end());
 	/* A zero-boundary component is a closed zero-area island.  It has no
 	 * edge attachment to preserve and may be discarded transactionally. */
 	if (boundary.empty())
 	    continue;
 	if (boundary.size() < 3 || boundary.size() > max_boundary_edges) {
-	    if (debug_topology)
+	    if (debug_topology) {
 		bu_log("Degenerate neighborhood repair rejected: component "
 		    "with %zu triangles has %zu boundary edges\n",
 		    component.size(), boundary.size());
+		for (int face : component) {
+		    bu_log("  component triangle %d source %d: %d %d %d\n",
+			face, source_faces[(size_t)face],
+			input_faces[(size_t)face * 3],
+			input_faces[(size_t)face * 3 + 1],
+			input_faces[(size_t)face * 3 + 2]);
+		}
+		for (const auto &edge : edge_uses) {
+		    bool incident = false;
+		    for (const edge_use &use : edge.second) {
+			if (component_faces.find(use.face) !=
+				component_faces.end()) {
+			    incident = true;
+			    break;
+			}
+		    }
+		    if (!incident)
+			continue;
+		    std::string uses;
+		    for (const edge_use &use : edge.second) {
+			if (!uses.empty())
+			    uses += ",";
+			uses += std::to_string(use.face) + ":" +
+			    std::to_string(use.from) + "->" +
+			    std::to_string(use.to);
+		    }
+		    bu_log("  incident edge %d-%d uses %s\n",
+			edge.first.first, edge.first.second, uses.c_str());
+		}
+	    }
 	    return false;
 	}
 	std::map<int, std::vector<std::pair<int, size_t>>>
@@ -5894,11 +6161,28 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
 	    }
 	}
 	center /= (double)ring.size();
-	if (!(local_scale > 0.0) || !average_normal.Unitize()) {
+	if (!(local_scale > 0.0)) {
 	    if (debug_topology)
 		bu_log("Degenerate neighborhood repair rejected: %zu-edge "
-		    "boundary has no retained surface normal\n", ring.size());
+		    "boundary has no usable scale\n", ring.size());
 	    return false;
+	}
+	if (!average_normal.Unitize()) {
+	    ON_3dVector boundary_normal(0.0, 0.0, 0.0);
+	    for (size_t point = 0; point < ring.size(); ++point) {
+		const ON_3dPoint a(&input_vertices[
+		    (size_t)ring[point] * 3]);
+		const ON_3dPoint b(&input_vertices[
+		    (size_t)ring[(point + 1) % ring.size()] * 3]);
+		boundary_normal += ON_CrossProduct(a - center, b - center);
+	    }
+	    if (!boundary_normal.Unitize()) {
+		if (debug_topology)
+		    bu_log("Degenerate neighborhood repair rejected: %zu-edge "
+			"boundary has no retained or ring normal\n", ring.size());
+		return false;
+	    }
+	    average_normal = boundary_normal;
 	}
 	ON_3dVector axis(0.0, 0.0, 0.0);
 	for (size_t point = 0; point < ring.size(); ++point) {
@@ -5974,7 +6258,8 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
 	    }
 	}
 	replacement_patch patch;
-	patch.source_face = *component_sources.begin();
+	patch.source_face = component_sources.size() == 1 ?
+	    *component_sources.begin() : -1;
 	patch.center_offset = center_offset;
 	patch.point = {patch_center.x, patch_center.y, patch_center.z};
 	patch.faces.reserve(ring.size() * 3);
@@ -6046,19 +6331,30 @@ repair_degenerate_approximate_neighborhoods(int **faces, int *face_count,
     (void)assembled_mesh_validate(compact_count,
 	(int)(candidate_faces.size() / 3), compact_vertices.data(),
 	candidate_faces.data(), &validation, false);
+    struct bg_trimesh_solid_errors solid_errors =
+	BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+    (void)bg_trimesh_solid2(compact_count,
+	(int)(candidate_faces.size() / 3), compact_vertices.data(),
+	candidate_faces.data(), &solid_errors);
+    const bool edge_closed = !solid_errors.degenerate.count &&
+	!solid_errors.unmatched.count && !solid_errors.excess.count &&
+	!solid_errors.misoriented.count;
     if (validation.invalid_indices || validation.nonfinite_vertices ||
 	    validation.unused_vertices || validation.degenerate_faces ||
-	    bg_trimesh_solid2(compact_count,
-	    (int)(candidate_faces.size() / 3), compact_vertices.data(),
-	    candidate_faces.data(), NULL)) {
+	    !edge_closed) {
 	if (debug_topology)
 	    bu_log("Degenerate neighborhood repair rejected after assembly: "
 		"invalid %zu, nonfinite %zu, unused %zu, degenerate %zu, "
-		"invalid links %zu\n", validation.invalid_indices,
+		"invalid links %zu, unmatched %d, excess %d, misoriented "
+		"%d\n", validation.invalid_indices,
 		validation.nonfinite_vertices, validation.unused_vertices,
-		validation.degenerate_faces, validation.invalid_vertex_links);
+		validation.degenerate_faces, validation.invalid_vertex_links,
+		solid_errors.unmatched.count, solid_errors.excess.count,
+		solid_errors.misoriented.count);
+	bg_free_trimesh_solid_errors(&solid_errors);
 	return false;
     }
+    bg_free_trimesh_solid_errors(&solid_errors);
 
     int *new_faces = (int *)bu_malloc(candidate_faces.size() * sizeof(int),
 	"locally repaired degenerate faces");
@@ -9223,6 +9519,11 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    settings->max_surface_deviation < 0.0 ||
 	    !std::isfinite(settings->max_area_change_percent) ||
 	    settings->max_area_change_percent < 0.0 ||
+	    !std::isfinite(settings->relaxed_fidelity_factor) ||
+	    settings->relaxed_fidelity_factor < 0.0 ||
+	    (settings->relaxed_fidelity_factor > 0.0 &&
+	    (settings->relaxed_fidelity_factor < 1.0 ||
+	    settings->relaxed_fidelity_factor > 4.0)) ||
 	    (settings->use_poisson_reconstruction &&
 	    (!settings->use_full_fast_fallback || settings->poisson_depth < 5 ||
 	    settings->poisson_depth > 10 ||
@@ -10671,8 +10972,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		    &degenerate_neighborhood_stats);
 	}
 	if (degenerate_neighborhood_repair) {
-	    for (int face = rigorous_input_face_count; face < input_face_count;
-		    ++face) {
+	    locally_reconstructed_faces.insert(
+		degenerate_neighborhood_stats.source_faces.begin(),
+		degenerate_neighborhood_stats.source_faces.end());
+	    for (int face = 0; face < input_face_count; ++face) {
 		const int source = input_source_faces[(size_t)face];
 		if (source < 0)
 		    continue;
@@ -10812,6 +11115,37 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     if (!(report->allowed_surface_deviation > 0.0) ||
 	    !std::isfinite(report->allowed_surface_deviation))
 	report->allowed_surface_deviation = BN_TOL_DIST;
+    const bool relaxed_fidelity_enabled =
+	settings->relaxed_fidelity_factor >= 1.0;
+    const double relaxed_fidelity_factor = relaxed_fidelity_enabled ?
+	settings->relaxed_fidelity_factor : 1.0;
+    const double validation_surface_deviation =
+	report->allowed_surface_deviation * relaxed_fidelity_factor;
+    const double validation_area_change_limit =
+	settings->max_area_change_percent * relaxed_fidelity_factor;
+    if (!(validation_surface_deviation > 0.0) ||
+	    !std::isfinite(validation_surface_deviation) ||
+	    (settings->max_area_change_percent > 0.0 &&
+	    !std::isfinite(validation_area_change_limit))) {
+	bu_free(repaired_faces, "invalid-fidelity repaired faces");
+	bu_free(repaired_points, "invalid-fidelity repaired vertices");
+	bu_free(input_faces, "invalid-fidelity input faces");
+	bu_free(input_vertices, "invalid-fidelity input vertices");
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    report->source_diagnostic.completed_faces,
+	    report->source_failed_faces,
+	    "relaxed repair fidelity limit is not finite");
+	return -1;
+    }
+    report->relaxed_fidelity_factor = relaxed_fidelity_enabled ?
+	settings->relaxed_fidelity_factor : 0.0;
+    report->relaxed_surface_deviation_limit = relaxed_fidelity_enabled ?
+	validation_surface_deviation : 0.0;
+    report->relaxed_area_change_percent_limit =
+	relaxed_fidelity_enabled && settings->max_area_change_percent > 0.0 ?
+	validation_area_change_limit : 0.0;
+    bool relaxed_fidelity_applied = false;
 
     std::vector<ON_BoundingBox> face_bounds(
 	(size_t)s_cdt->orig_brep->m_F.Count());
@@ -11224,7 +11558,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     const fastf_t guarded_area_change = use_reference_area ?
 	report->reference_area_change_percent : report->area_change_percent;
     if (settings->max_area_change_percent > 0.0 &&
-	    (!(guarded_area_change <= settings->max_area_change_percent))) {
+	    (!(guarded_area_change <= validation_area_change_limit))) {
 	bu_free(repaired_faces, "certified repaired faces");
 	bu_free(repaired_points, "certified repaired vertices");
 	bu_free(input_faces, "repair input faces");
@@ -11233,14 +11567,21 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    "repaired mesh area differs from display reference by " :
 	    "repaired mesh area changed by ";
 	message += std::to_string(guarded_area_change) +
-	    "% (limit " +
-	    std::to_string(settings->max_area_change_percent) + "%)";
+	    "% (strict limit " +
+	    std::to_string(settings->max_area_change_percent);
+	if (relaxed_fidelity_enabled)
+	    message += "%, relaxed limit " +
+		std::to_string(validation_area_change_limit);
+	message += "%)";
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
 	    BREP_CDT_STAGE_MESH_REPAIR, -1,
 	    report->source_diagnostic.completed_faces,
 	    report->source_failed_faces, message.c_str());
 	return -1;
     }
+    if (settings->max_area_change_percent > 0.0 &&
+	    guarded_area_change > settings->max_area_change_percent)
+	relaxed_fidelity_applied = true;
 
     std::vector<repair_changed_face> changed_faces;
     for (int face = 0; face < repaired_face_count; ++face) {
@@ -11392,28 +11733,28 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		distance = changed.direct_surface_deviation;
 		used_untrimmed = true;
 		matched_local_surface = distance <=
-		    report->allowed_surface_deviation;
+		    validation_surface_deviation;
 	    } else if (!local_filter.empty()) {
 		matched_local_surface = repair_surface_distance(
 		    s_cdt->orig_brep, face_bounds, face_trees, face_contexts,
-		    samples[sample], report->allowed_surface_deviation, true,
+		    samples[sample], validation_surface_deviation, true,
 		    &distance, &used_untrimmed, NULL, NULL, &local_filter);
 	    }
 	    if (!matched_local_surface &&
 		    !repair_surface_distance(s_cdt->orig_brep, face_bounds,
 		    face_trees, face_contexts, samples[sample],
-		    report->allowed_surface_deviation,
+		    validation_surface_deviation,
 		    settings->allow_untrimmed_surface_match != 0, &distance,
 		    &used_untrimmed)) {
 		if (!repair_input_mesh_distance(input_triangle_index,
 			reference_input_vertices, reference_input_faces,
-			samples[sample],
-			report->allowed_surface_deviation, &distance)) {
+			samples[sample], validation_surface_deviation,
+			&distance)) {
 		    const double diagnostic_limit =
-			report->allowed_surface_deviation <=
+			validation_surface_deviation <=
 			std::numeric_limits<double>::max() / 4.0 ?
-			4.0 * report->allowed_surface_deviation :
-			report->allowed_surface_deviation;
+			4.0 * validation_surface_deviation :
+			validation_surface_deviation;
 		    double surface_distance =
 			std::numeric_limits<double>::infinity();
 		    double mesh_distance =
@@ -11509,7 +11850,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 
     if (report->deviation_projection_failures ||
 	    report->max_surface_deviation >
-	    report->allowed_surface_deviation) {
+	    validation_surface_deviation) {
 	bu_free(repaired_faces, "certified repaired faces");
 	bu_free(repaired_points, "certified repaired vertices");
 	bu_free(input_faces, "repair input faces");
@@ -11518,8 +11859,12 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    std::to_string(report->deviation_projection_failures) +
 	    " projection failures, maximum " +
 	    std::to_string(report->max_surface_deviation) +
-	    " (limit " +
-	    std::to_string(report->allowed_surface_deviation) + ")";
+	    " (strict limit " +
+	    std::to_string(report->allowed_surface_deviation);
+	if (relaxed_fidelity_enabled)
+	    message += ", relaxed limit " +
+		std::to_string(validation_surface_deviation);
+	message += ")";
 	if (worst_deviation_brep_face >= 0)
 	    message += ", nearest display B-Rep face " +
 		std::to_string(worst_deviation_brep_face);
@@ -11529,6 +11874,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    report->source_failed_faces, message.c_str());
 	return -1;
     }
+    if (report->max_surface_deviation >
+	    report->allowed_surface_deviation)
+	relaxed_fidelity_applied = true;
 
     /* Output-to-source deviation alone can accept a small reconstructed
      * subset of a much larger model, particularly when matching underlying
@@ -11605,13 +11953,13 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	report->coverage_samples++;
 	if (!repair_input_mesh_distance(repaired_triangle_index,
 		repaired_vertices, repaired_faces, sample,
-		report->allowed_surface_deviation, &distance)) {
+		validation_surface_deviation, &distance)) {
 	    report->coverage_failures++;
 	    const double diagnostic_limit =
-		report->allowed_surface_deviation <=
+		validation_surface_deviation <=
 		std::numeric_limits<double>::max() / 4.0 ?
-		4.0 * report->allowed_surface_deviation :
-		report->allowed_surface_deviation;
+		4.0 * validation_surface_deviation :
+		validation_surface_deviation;
 	    if (repair_input_mesh_distance(repaired_triangle_index,
 		    repaired_vertices, repaired_faces, sample,
 		    diagnostic_limit, &distance) && distance >
@@ -11685,7 +12033,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	report->rms_coverage_deviation = std::sqrt(
 	    coverage_squared_distance_sum / (double)covered_samples);
     if (report->coverage_failures || report->max_coverage_deviation >
-	    report->allowed_surface_deviation) {
+	    validation_surface_deviation) {
 	bu_free(repaired_faces, "certified repaired faces");
 	bu_free(repaired_points, "certified repaired vertices");
 	bu_free(input_faces, "repair input faces");
@@ -11693,8 +12041,13 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	std::string message = "repaired surface failed input coverage check: " +
 	    std::to_string(report->coverage_failures) +
 	    " coverage failures, maximum " +
-	    std::to_string(report->max_coverage_deviation) + " (limit " +
-	    std::to_string(report->allowed_surface_deviation) + ")";
+	    std::to_string(report->max_coverage_deviation) +
+	    " (strict limit " +
+	    std::to_string(report->allowed_surface_deviation);
+	if (relaxed_fidelity_enabled)
+	    message += ", relaxed limit " +
+		std::to_string(validation_surface_deviation);
+	message += ")";
 	if (worst_coverage_brep_face >= 0)
 	    message += ", worst B-Rep face " +
 		std::to_string(worst_coverage_brep_face);
@@ -11704,6 +12057,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    report->source_failed_faces, message.c_str());
 	return -1;
     }
+    if (report->max_coverage_deviation >
+	    report->allowed_surface_deviation)
+	relaxed_fidelity_applied = true;
+    report->relaxed_fidelity_applied = relaxed_fidelity_applied ? 1 : 0;
 
     bu_free(input_faces, "repair input faces");
     bu_free(input_vertices, "repair input vertices");
@@ -11725,7 +12082,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     s_cdt->certified_normal_count = 0;
     s_cdt->certified_repaired = true;
     s_cdt->status = BREP_CDT_SOLID;
-    if (report->poisson_reconstruction_applied)
+    if (report->relaxed_fidelity_applied)
+	report->approximation_tier =
+	    BREP_CDT_REPAIR_APPROX_RELAXED_FIDELITY;
+    else if (report->poisson_reconstruction_applied)
 	report->approximation_tier = BREP_CDT_REPAIR_APPROX_POISSON;
     else if (report->full_fast_fallback_used)
 	report->approximation_tier = BREP_CDT_REPAIR_APPROX_FULL_FAST;
@@ -11737,7 +12097,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     else if (report->fast_fallback_used_faces > 0)
 	report->approximation_tier =
 	    BREP_CDT_REPAIR_APPROX_CONSTRAINED_FACE;
-    if (report->approximation_tier >= BREP_CDT_REPAIR_APPROX_FULL_FAST) {
+    if (report->full_fast_fallback_used ||
+	    report->poisson_reconstruction_applied ||
+	    (report->relaxed_fidelity_applied &&
+	    approximation_faces.empty())) {
 	approximation_faces.clear();
 	for (int face = 0; face < s_cdt->orig_brep->m_F.Count(); ++face)
 	    approximation_faces.insert(face);
@@ -11776,17 +12139,14 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    settings->provenance_data);
     }
     std::string message = "certified repaired mesh: " +
-	std::to_string(report->mesh.removed_faces) + " faces removed, " +
+	std::to_string(report->mesh.removed_faces) + " removed, " +
 	std::to_string(report->mesh.added_faces) + " added, " +
-	std::to_string(report->subdivided_rigorous_triangles) +
-	" rigorous triangles subdivided, " +
-	std::to_string(report->missing_rigorous_triangles) +
-	" rigorously sampled triangles locally replaced, " +
-	std::to_string(report->best_effort_triangles) +
-	" best-effort surface triangles retained, " +
 	std::to_string(report->changed_faces) +
-	" changed triangles, sampled maximum reference deviation " +
+	" changed; maximum sampled deviation " +
 	std::to_string(report->max_surface_deviation);
+    if (report->relaxed_fidelity_applied)
+	message += "; relaxed fidelity factor " +
+	    std::to_string(report->relaxed_fidelity_factor);
     cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIRED,
 	BREP_CDT_STAGE_MESH_REPAIR, -1,
 	report->source_diagnostic.completed_faces,
