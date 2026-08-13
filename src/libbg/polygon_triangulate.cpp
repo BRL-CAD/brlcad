@@ -358,6 +358,13 @@ deduplicated_detria(int **faces, int *num_faces, point2d_t **out_pts,
 	    std::vector<int> &output) {
 	for (size_t i = 0; i < count; i++) {
 	    const int index = point_index(indices[i]);
+	    /* A weakly-simple trim may leave a zero-area A-B-A whisker.
+	     * Once exact coordinates have been deduplicated, cancel that
+	     * retrace instead of presenting detria with a repeated vertex. */
+	    if (output.size() > 1 && output[output.size() - 2] == index) {
+		output.pop_back();
+		continue;
+	    }
 	    if (output.empty() || output.back() != index)
 		output.push_back(index);
 	}

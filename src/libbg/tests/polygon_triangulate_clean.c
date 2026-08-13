@@ -198,6 +198,22 @@ main(int argc, const char **argv)
 	    return 1;
     }
 
+    {
+	/* A zero-area A-B-A whisker in a hole does not change the filled set. */
+	point2d_t points[11] = {
+	    {0.0, 0.0}, {10.0, 0.0}, {10.0, 10.0}, {0.0, 10.0},
+	    {2.0, 2.0}, {8.0, 2.0}, {8.0, 8.0}, {2.0, 8.0},
+	    {2.0, 5.0}, {1.0, 5.0}, {2.0, 5.0}
+	};
+	const int outer[4] = {0, 1, 2, 3};
+	const int hole[7] = {4, 5, 6, 7, 8, 9, 10};
+	const int *holes[1] = {hole};
+	const size_t hole_counts[1] = {7};
+	if (check_clean_triangulation((const point2d_t *)points, 11, outer,
+		4, holes, hole_counts, 1, NULL, 0, 64.0))
+	    return 1;
+    }
+
     if (check_clean_constraint())
 	return 1;
 
