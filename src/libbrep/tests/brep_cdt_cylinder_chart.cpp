@@ -402,6 +402,44 @@ exercise_offset_full_cylinder_seam()
 	return false;
     }
 
+    const std::vector<int> closed_edge_path = {0, 1, 2, 3, 4};
+    cdt_face_chart early_endpoint_chart = chart;
+    const double closed_start = early_endpoint_chart.points[0].first;
+    const double closed_finish = early_endpoint_chart.points[4].first;
+    const double closed_span = closed_finish - closed_start;
+    if (!(std::fabs(closed_span) > 0.0)) {
+	std::cerr << "closed cylinder edge has no chart winding" << std::endl;
+	return false;
+    }
+    early_endpoint_chart.points[2].first = closed_finish;
+    early_endpoint_chart.points[3].first = closed_finish +
+	0.2 * closed_span;
+    cdt_face_chart under_tolerance_chart = early_endpoint_chart;
+    if (under_tolerance_chart.repair_toleranced_edge_endpoint_samples(
+	    closed_edge_path, points_3d, 2.0) != 0) {
+	std::cerr << "premature cylinder endpoint exceeded edge tolerance"
+	    << std::endl;
+	return false;
+    }
+    if (early_endpoint_chart.repair_toleranced_edge_endpoint_samples(
+	    closed_edge_path, points_3d, 4.1) == 0) {
+	std::cerr << "premature cylinder endpoint was not redistributed"
+	    << std::endl;
+	return false;
+    }
+    const double closed_sign = closed_span > 0.0 ? 1.0 : -1.0;
+    for (size_t i = 1; i < closed_edge_path.size(); ++i) {
+	const double previous = early_endpoint_chart.points[
+	    (size_t)closed_edge_path[i - 1]].first;
+	const double current = early_endpoint_chart.points[
+	    (size_t)closed_edge_path[i]].first;
+	if ((current - previous) * closed_sign <= 0.0) {
+	    std::cerr << "redistributed cylinder edge is not monotonic"
+		<< std::endl;
+	    return false;
+	}
+    }
+
     std::vector<std::pair<double, double>> seam_hole_points = native_points;
     std::vector<ON_3dPoint> seam_hole_storage = point_storage;
     std::vector<cdt_topo_vertex_id> seam_hole_topology = topology_vertices;
