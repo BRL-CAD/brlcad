@@ -3959,6 +3959,123 @@ struct repair_boundary_patch {
     bool analytic_cylinder_strip = false;
 };
 
+typedef std::pair<ON_3dPoint *, ON_3dPoint *> repair_source_edge;
+
+static repair_source_edge
+repair_ordered_source_edge(ON_3dPoint *first, ON_3dPoint *second)
+{
+    if (std::less<ON_3dPoint *>()(second, first))
+	std::swap(first, second);
+    return repair_source_edge(first, second);
+}
+
+/* A cleaned chart must not invent a second boundary inside a face.  Compare
+ * its source-point boundary to a topology-defined disk built from the exact
+ * shared-edge samples.  Interior edges must occur once in each direction and
+ * every boundary vertex must have degree two. */
+static bool
+repair_patch_source_boundary(const int *faces, int face_count,
+	const std::vector<ON_3dPoint *> &sources,
+	std::set<repair_source_edge> &boundary)
+{
+    boundary.clear();
+    if (!faces || face_count <= 0 || sources.size() < 3)
+	return false;
+    struct edge_use {
+	int count = 0;
+	int direction = 0;
+    };
+    std::map<std::pair<int, int>, edge_use> edges;
+    for (int face = 0; face < face_count; ++face) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int from = faces[(size_t)face * 3 + corner];
+	    const int to = faces[(size_t)face * 3 + (corner + 1) % 3];
+	    if (from < 0 || to < 0 || from == to ||
+		    (size_t)from >= sources.size() ||
+		    (size_t)to >= sources.size())
+		return false;
+	    const std::pair<int, int> edge = from < to ?
+		std::make_pair(from, to) : std::make_pair(to, from);
+	    edge_use &use = edges[edge];
+	    use.count++;
+	    use.direction += from < to ? 1 : -1;
+	}
+    }
+    std::map<int, int> boundary_degree;
+    for (const auto &entry : edges) {
+	const edge_use &use = entry.second;
+	if (use.count == 2 && use.direction == 0)
+	    continue;
+	if (use.count != 1)
+	    return false;
+	ON_3dPoint *first = sources[(size_t)entry.first.first];
+	ON_3dPoint *second = sources[(size_t)entry.first.second];
+	if (!first || !second || first == second)
+	    return false;
+	boundary.insert(repair_ordered_source_edge(first, second));
+	boundary_degree[entry.first.first]++;
+	boundary_degree[entry.first.second]++;
+    }
+    if (boundary.empty())
+	return false;
+    for (const auto &entry : boundary_degree) {
+	if (entry.second != 2)
+	    return false;
+    }
+    return true;
+}
+
+static bool
+repair_patch_matches_source_boundary(const int *faces, int face_count,
+	const std::vector<ON_3dPoint *> &sources,
+	const repair_boundary_patch &reference)
+{
+    std::set<repair_source_edge> candidate_boundary;
+    std::set<repair_source_edge> reference_boundary;
+    return repair_patch_source_boundary(faces, face_count, sources,
+	    candidate_boundary) && repair_patch_source_boundary(
+	    reference.faces.data(), (int)(reference.faces.size() / 3),
+	    reference.source_points, reference_boundary) &&
+	    candidate_boundary == reference_boundary;
+}
+
+int
+cdt_test_repair_patch_boundary(void)
+{
+    ON_3dPoint points[4] = {
+	ON_3dPoint(0.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 1.0, 0.0),
+	ON_3dPoint(0.0, 1.0, 0.0)
+    };
+    repair_boundary_patch reference;
+    reference.faces = {
+	0, 1, 4, 1, 2, 4, 2, 3, 4, 3, 0, 4
+    };
+    reference.source_points = {
+	&points[0], &points[1], &points[2], &points[3], NULL
+    };
+    const std::vector<ON_3dPoint *> sources = {
+	&points[0], &points[1], &points[2], &points[3]
+    };
+    const int valid[] = {0, 1, 2, 0, 2, 3};
+    if (!repair_patch_matches_source_boundary(valid, 2, sources,
+	    reference))
+	return 1;
+    const int open[] = {0, 1, 2};
+    if (repair_patch_matches_source_boundary(open, 1, sources,
+	    reference))
+	return 2;
+    const int misoriented[] = {0, 1, 2, 0, 3, 2};
+    if (repair_patch_matches_source_boundary(misoriented, 2, sources,
+	    reference))
+	return 3;
+    std::vector<ON_3dPoint *> missing_source = sources;
+    missing_source[2] = NULL;
+    return repair_patch_matches_source_boundary(valid, 2, missing_source,
+	reference) ? 4 : 0;
+}
+
 /* Some imported faces have a trustworthy topological disk boundary but no
  * globally consistent pullback: loose incident edge curves can cross on the
  * source surface even though their authoritative 3-D samples form the local
@@ -9854,18 +9971,34 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	return bg_trimesh_sync(synchronized.data(), combined.data(),
 	    input_face_count + local_face_count) >= 0;
     };
-    const auto append_approximate_face = [&](int face_index) {
+    const auto append_approximate_face = [&](int face_index,
+	    const repair_boundary_patch *reference_boundary = NULL) {
 	int *local_faces = NULL;
 	int local_face_count = 0;
 	fastf_t *local_vertices = NULL;
 	int local_vertex_count = 0;
+	std::vector<ON_3dPoint *> local_source_points;
 	int one_face = face_index;
-	const bool assembled = ON_Brep_CDT_Mesh(&local_faces,
+	bool assembled = ON_Brep_CDT_Mesh(&local_faces,
 	    &local_face_count, &local_vertices, &local_vertex_count,
 	    NULL, NULL, NULL, NULL, s_cdt, 1, &one_face) == 0;
+	if (assembled && s_cdt->bot_pnt_to_on_pnt &&
+		s_cdt->bot_pnt_to_on_pnt->size() ==
+		(size_t)local_vertex_count)
+	    local_source_points = *s_cdt->bot_pnt_to_on_pnt;
+	if (assembled && reference_boundary &&
+		!repair_patch_matches_source_boundary(local_faces,
+		    local_face_count, local_source_points,
+		    *reference_boundary)) {
+	    if (getenv("BRLCAD_CDT_DEBUG_REPAIR_TOPOLOGY"))
+		bu_log("Face %d: rejected a cleaned chart whose open edges "
+		    "do not match its authoritative boundary\n", face_index);
+	    assembled = false;
+	}
 	const int appended = assembled ? append_approximate_mesh(face_index,
 	    local_faces, local_face_count, local_vertices,
-	    local_vertex_count) : 0;
+	    local_vertex_count, local_source_points.empty() ? NULL :
+	    &local_source_points) : 0;
 	bu_free(local_faces, "approximate face mesh faces");
 	bu_free(local_vertices, "approximate face mesh vertices");
 	return appended;
@@ -9944,8 +10077,16 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    if (!repair_approximate_face_triangulation(s_cdt, failed_face,
 		    reconstruction_deviation))
 		continue;
+	    repair_boundary_patch reference_boundary;
+	    const repair_fast_constraint_store constraints =
+		repair_fast_face_constraints(s_cdt, failed_face);
+	    const bool has_reference_boundary =
+		repair_constrained_topological_disk(s_cdt, failed_face,
+		    constraints, settings->max_fast_points,
+		    reference_boundary);
 	    const int local_face_count =
-		append_approximate_face(failed_face);
+		append_approximate_face(failed_face, has_reference_boundary ?
+		    &reference_boundary : NULL);
 	    if (!local_face_count)
 		continue;
 	    locally_reconstructed_faces.insert(failed_face);
