@@ -1259,6 +1259,109 @@ cdt_face_chart::repair_toleranced_edge_endpoint_samples(
 	return points_3d[(size_t)first_native]->DistanceTo(
 	    *points_3d[(size_t)second_native]);
     };
+    const auto repair_closed_cylinder_path = [&]() {
+	if (m_type != CDT_FACE_CHART_CYLINDER || path.size() < 4 ||
+		!m_cylinder.IsValid() || !(m_cylinder.circle.radius > 0.0))
+	    return (size_t)0;
+	const cdt_chart_vertex &first_vertex = vertices[(size_t)path.front()];
+	const cdt_chart_vertex &last_vertex = vertices[(size_t)path.back()];
+	if (first_vertex.topo_vertex == CDT_TOPOLOGY_ID_NONE ||
+		first_vertex.topo_vertex != last_vertex.topo_vertex ||
+		source_distance(0, path.size() - 1) > tolerance)
+	    return (size_t)0;
+	bool incompatible_duplicate = false;
+	for (size_t first = 0; !incompatible_duplicate &&
+		first + 1 < path.size(); ++first) {
+	    for (size_t second = first + 1; second < path.size(); ++second) {
+		if (points[(size_t)path[first]] != points[(size_t)path[second]])
+		    continue;
+		const double distance = source_distance(first, second);
+		if (distance > BREP_SAME_POINT_TOLERANCE &&
+			distance <= tolerance) {
+		    incompatible_duplicate = true;
+		    break;
+		}
+	    }
+	}
+	if (!incompatible_duplicate)
+	    return (size_t)0;
+
+	const double radius = m_cylinder.circle.radius;
+	const double period = 2.0 * ON_PI * radius;
+	std::vector<std::pair<double, double>> replacements;
+	replacements.reserve(path.size());
+	for (size_t i = 0; i < path.size(); ++i) {
+	    const ON_3dPoint &source = *points_3d[(size_t)native_path[i]];
+	    const ON_3dVector offset = source -
+		m_cylinder.circle.plane.origin;
+	    const double radial = hypot(
+		offset * m_cylinder.circle.plane.xaxis,
+		offset * m_cylinder.circle.plane.yaxis);
+	    double angular = 0.0;
+	    double height = 0.0;
+	    if (!std::isfinite(radial) || std::fabs(radial - radius) >
+		    tolerance || !cylinder_chart_coordinates(m_cylinder,
+		    source, &angular, &height))
+		return (size_t)0;
+	    double unwrapped = m_cylinder_orientation > 0 ?
+		angular - m_cylinder_cut : m_cylinder_cut - angular;
+	    while (unwrapped < 0.0)
+		unwrapped += 2.0 * ON_PI;
+	    while (unwrapped >= 2.0 * ON_PI)
+		unwrapped -= 2.0 * ON_PI;
+	    double closed = radius * unwrapped;
+	    if (!replacements.empty())
+		closed += std::nearbyint((replacements.back().first - closed) /
+		    period) * period;
+	    replacements.push_back(std::make_pair(closed, height));
+	}
+
+	const double scale = std::max(1.0, period);
+	const double progress_tolerance = 4096.0 *
+	    std::numeric_limits<double>::epsilon() * scale;
+	int direction = 0;
+	for (size_t i = 1; i < replacements.size(); ++i) {
+	    const double delta = replacements[i].first -
+		replacements[i - 1].first;
+	    if (std::fabs(delta) <= progress_tolerance)
+		return (size_t)0;
+	    const int step_direction = delta > 0.0 ? 1 : -1;
+	    if (direction && step_direction != direction)
+		return (size_t)0;
+	    direction = step_direction;
+	}
+	const double winding = (replacements.back().first -
+	    replacements.front().first) / period;
+	const double integral_winding = std::nearbyint(winding);
+	if (std::fabs(integral_winding) < 1.0 ||
+		std::fabs(winding - integral_winding) > 1.0e-6)
+	    return (size_t)0;
+
+	for (size_t i = 0; i < replacements.size(); ++i) {
+	    const std::pair<double, double> &original =
+		points[(size_t)path[i]];
+	    const double closed_delta = replacements[i].first -
+		original.first;
+	    const double open_delta = replacements[i].second -
+		original.second;
+	    const double chord = 2.0 * radius *
+		std::sin(0.5 * closed_delta / radius);
+	    if (hypot(chord, open_delta) > tolerance)
+		return (size_t)0;
+	}
+
+	size_t changed = 0;
+	for (size_t i = 0; i < replacements.size(); ++i) {
+	    if (points[(size_t)path[i]] != replacements[i]) {
+		points[(size_t)path[i]] = replacements[i];
+		changed++;
+	    }
+	}
+	return changed;
+    };
+    const size_t closed_cylinder_repair = repair_closed_cylinder_path();
+    if (closed_cylinder_repair)
+	return closed_cylinder_repair;
     const auto movable = [&](size_t first, size_t last) {
 	for (size_t i = first; i < last; ++i) {
 	    const cdt_chart_vertex &vertex = vertices[(size_t)path[i]];
@@ -1304,9 +1407,25 @@ cdt_face_chart::repair_toleranced_edge_endpoint_samples(
 		return (size_t)0;
 	    const std::pair<double, double> &original =
 		points[(size_t)path[i]];
-	    if (hypot(replacement.first - original.first,
-		    replacement.second - original.second) > tolerance)
+	    const double chart_displacement = hypot(
+		replacement.first - original.first,
+		replacement.second - original.second);
+	    bool within_tolerance = chart_displacement <= tolerance;
+	    if (!within_tolerance && m_type == CDT_FACE_CHART_CYLINDER &&
+		    m_cylinder.circle.radius > 0.0) {
+		/* The cylinder chart's closed coordinate is arc length.  Model
+		 * tolerances are spatial distances, so compare the corresponding
+		 * cylinder chord rather than rejecting a safe angular move by its
+		 * longer chart arc. */
+		const double closed_delta = replacement.first - original.first;
+		const double open_delta = replacement.second - original.second;
+		const double chord = 2.0 * m_cylinder.circle.radius *
+		    std::sin(0.5 * closed_delta / m_cylinder.circle.radius);
+		within_tolerance = hypot(chord, open_delta) <= tolerance;
+	    }
+	    if (!within_tolerance) {
 		return (size_t)0;
+	    }
 	    replacements.push_back(replacement);
 	}
 	for (size_t i = 0; i < replacements.size(); ++i) {
@@ -1345,6 +1464,26 @@ cdt_face_chart::repair_toleranced_edge_endpoint_samples(
 	    std::numeric_limits<double>::epsilon() * coordinate_scale;
 	if (std::fabs(direction) <= coordinate_tolerance)
 	    return 0;
+
+	/* A loose closed edge can reach its endpoint's periodic image at an
+	 * interior sample and then continue beyond it.  If that premature image
+	 * is spatially within the edge's declared tolerance of the real endpoint,
+	 * replace only the planar embedding of the complete path.  Its exact 3-D
+	 * samples and topology remain unchanged. */
+	const double total_progress = std::fabs(direction);
+	for (size_t i = 1; i + 1 < path.size(); ++i) {
+	    const double progress = (closed_coordinate(i) - start_coordinate) *
+		direction_sign;
+	    if (progress < total_progress - coordinate_tolerance)
+		continue;
+	    const double endpoint_miss = source_distance(i, path.size() - 1);
+	    if (!std::isfinite(endpoint_miss) || endpoint_miss > tolerance)
+		continue;
+	    const size_t redistributed = redistribute(0, path.size() - 1, 1,
+		path.size() - 1, endpoint_miss);
+	    if (redistributed)
+		return redistributed;
+	}
 
 	size_t first_distinct = 1;
 	while (first_distinct < path.size() &&
