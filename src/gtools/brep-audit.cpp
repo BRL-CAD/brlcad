@@ -1159,7 +1159,9 @@ dims(vect_t d, const point_t bmin, const point_t bmax)
 
 static void
 check_dimensions(geom_result *result, const vect_t ref_dims, double ref_diag,
-	double ratio_min, double ratio_max, const char *prefix)
+	double ratio_min, double ratio_max, const char *prefix,
+	const fastf_t *ref_min = NULL, const fastf_t *ref_max = NULL,
+	double extent_tolerance = 0.0)
 {
     if (!result->have_bbox)
 	return;
@@ -1170,7 +1172,19 @@ check_dimensions(geom_result *result, const vect_t ref_dims, double ref_diag,
 	if (ref_dims[axis] <= active_tol)
 	    continue;
 	double ratio = gdims[axis] / ref_dims[axis];
-	if (!std::isfinite(ratio) || ratio < ratio_min || ratio > ratio_max) {
+	bool bounded_shortfall = false;
+	if (std::isfinite(ratio) && ratio < ratio_min && ref_min && ref_max &&
+		extent_tolerance > 0.0 && std::isfinite(extent_tolerance)) {
+	    const double lower = std::max(0.0,
+		result->bmin[axis] - ref_min[axis]);
+	    const double upper = std::max(0.0,
+		ref_max[axis] - result->bmax[axis]);
+	    bounded_shortfall = lower <= extent_tolerance &&
+		upper <= extent_tolerance;
+	}
+	if (!std::isfinite(ratio) ||
+		(ratio < ratio_min && !bounded_shortfall) ||
+		ratio > ratio_max) {
 	    std::ostringstream issue;
 	    issue << prefix << "_bbox_axis_" << "xyz"[axis] << "_ratio_out_of_range";
 	    result->issues.push_back(issue.str());
@@ -1179,7 +1193,22 @@ check_dimensions(geom_result *result, const vect_t ref_dims, double ref_diag,
     double gdiag = MAGNITUDE(gdims);
     if (ref_diag > active_tol) {
 	double ratio = gdiag / ref_diag;
-	if (!std::isfinite(ratio) || ratio < ratio_min || ratio > ratio_max) {
+	bool bounded_shortfall = false;
+	if (std::isfinite(ratio) && ratio < ratio_min && ref_min && ref_max &&
+		extent_tolerance > 0.0 && std::isfinite(extent_tolerance)) {
+	    bounded_shortfall = true;
+	    for (int axis = 0; axis < 3; ++axis) {
+		const double lower = std::max(0.0,
+		    result->bmin[axis] - ref_min[axis]);
+		const double upper = std::max(0.0,
+		    ref_max[axis] - result->bmax[axis]);
+		bounded_shortfall = bounded_shortfall &&
+		    lower <= extent_tolerance && upper <= extent_tolerance;
+	    }
+	}
+	if (!std::isfinite(ratio) ||
+		(ratio < ratio_min && !bounded_shortfall) ||
+		ratio > ratio_max) {
 	    std::ostringstream issue;
 	    issue << prefix << "_bbox_diagonal_ratio_out_of_range";
 	    result->issues.push_back(issue.str());
@@ -1814,9 +1843,20 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	if (run_quality) {
 	    check_dimensions(&quality, ref_dims, ref_diag, 0.0,
 		config.ratio_max, "quality");
-	    if (boundary_valid)
+	    if (boundary_valid) {
+		double extent_tolerance = 0.0;
+		if (quality.repair_succeeded) {
+		    extent_tolerance = quality.repair_relaxed_fidelity_applied ?
+			quality.repair_relaxed_deviation_limit :
+			quality.repair_allowed_deviation;
+		    if (!(extent_tolerance > 0.0) ||
+			    !std::isfinite(extent_tolerance))
+			extent_tolerance = 0.0;
+		}
 		check_dimensions(&quality, boundary_dims, boundary_diag,
-		    config.ratio_min, DBL_MAX, "quality_boundary");
+		    config.ratio_min, DBL_MAX, "quality_boundary",
+		    boundary_min, boundary_max, extent_tolerance);
+	    }
 	}
     }
 
