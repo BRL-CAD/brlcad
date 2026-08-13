@@ -637,6 +637,59 @@ test_manifold_splits_pinched_vertex(void)
     return 0;
 }
 
+/* Split a closed pinched link before deleting a separate flat closed island.
+ * Deleting degenerates first must not turn a topology-only operation into an
+ * expensive global repair. */
+static int
+test_pinched_vertex_before_flat_removal(void)
+{
+    static point_t points[10] = {
+	{0, 0, 0}, {1, 0, 0}, {0.5, 1, 0}, {0.5, 0.5, 1},
+	{-1, 0, 0}, {-0.5, -1, 0}, {-0.5, -0.5, -1},
+	{10, 0, 0}, {11, 0, 0}, {12, 0, 0}
+    };
+    static int faces[30] = {
+	0, 2, 1, 0, 1, 3, 1, 2, 3, 0, 3, 2,
+	0, 4, 5, 0, 6, 4, 4, 6, 5, 0, 5, 6,
+	7, 8, 9, 7, 9, 8
+    };
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.allow_self_intersections = 1;
+    settings.fill_holes = 1;
+    settings.require_manifold = 1;
+    int *output_faces = NULL;
+    int output_face_count = 0;
+    point_t *output_points = NULL;
+    int output_point_count = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int result = bg_trimesh_repair2(&output_faces,
+	&output_face_count, &output_points, &output_point_count, faces, 10,
+	points, 10, &settings, &report);
+    const bool valid = result == 0 && output_faces && output_points &&
+	output_face_count == 8 && output_point_count == 8 && report.solid &&
+	report.manifold_accepted && report.removed_faces >= 2 &&
+	report.separated_vertices == 1 && !report.unmatched_edges &&
+	!report.invalid_vertex_links;
+    if (output_faces)
+	bu_free(output_faces, "pinched flat faces");
+    if (output_points)
+	bu_free(output_points, "pinched flat points");
+    if (!valid) {
+	bu_log("FAIL test_pinched_vertex_before_flat_removal: ret=%d "
+	    "faces=%d points=%d removed=%d separated=%d solid=%d "
+	    "manifold=%d unmatched=%d links=%d\n", result,
+	    output_face_count, output_point_count, report.removed_faces,
+	    report.separated_vertices, report.solid,
+	    report.manifold_accepted, report.unmatched_edges,
+	    report.invalid_vertex_links);
+	return -1;
+    }
+    bu_log("PASS test_pinched_vertex_before_flat_removal\n");
+    return 0;
+}
+
 /* A topologically valid cap is not acceptable when it cuts through another
  * closed component.  Both available triangulations cover the same square, so
  * repair must leave the hole open and fail instead of returning an
@@ -1565,6 +1618,8 @@ main(int UNUSED(argc), const char *argv[])
 	(test_manifold_preserves_point_contact() != 0) ? 1 : 0;
     failures +=
 	(test_manifold_splits_pinched_vertex() != 0) ? 1 : 0;
+    failures +=
+	(test_pinched_vertex_before_flat_removal() != 0) ? 1 : 0;
     failures += (test_intersecting_hole_patch_rejected() != 0) ? 1 : 0;
     failures +=
 	(test_intersecting_hole_patch_manifold_accepted() != 0) ? 1 : 0;
