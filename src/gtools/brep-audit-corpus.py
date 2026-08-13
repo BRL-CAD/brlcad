@@ -163,6 +163,14 @@ def append_repair_options(command, args):
         command.append("--repair-no-fast")
 
 
+def append_quality_options(command, args):
+    if args.quality_face_time_ms > 0:
+        command.extend((
+            "--quality-face-time-ms",
+            str(args.quality_face_time_ms),
+        ))
+
+
 def selected_objects(path, failures_only, input_class):
     selected = {}
     if path is None:
@@ -212,6 +220,7 @@ def audit_one(audit, args, run_dir, database_name, object_name, mode):
     ]
     if args.valid_solids_only:
         command.append("--valid-solids-only")
+    append_quality_options(command, args)
     append_repair_options(command, args)
     command.extend((database_name, object_name))
     start = time.monotonic()
@@ -340,6 +349,7 @@ def audit_database(audit, args, run_dir, database, start_index, sink,
         ]
         if args.valid_solids_only:
             command.append("--valid-solids-only")
+        append_quality_options(command, args)
         append_repair_options(command, args)
         if object_file is not None:
             command.extend(("--batch-object-file", str(object_file)))
@@ -559,6 +569,10 @@ def parse_args():
         help="Restart a batch between tasks after reaching this peak RSS",
     )
     parser.add_argument("--max-time-ms", type=int, default=5000)
+    parser.add_argument(
+        "--quality-face-time-ms", type=int, default=30000,
+        help="wall-clock limit for each rigorous quality face",
+    )
     parser.add_argument("--max-result-mib", type=int, default=256)
     parser.add_argument("--max-points", type=int, default=4 * 1024 * 1024)
     parser.add_argument("--memory-limit-mib", type=int, default=1024)
@@ -643,6 +657,7 @@ def parse_args():
         args.jobs,
         args.processes,
         args.max_time_ms,
+        args.quality_face_time_ms,
         args.max_result_mib,
         args.max_points,
         args.memory_limit_mib,
