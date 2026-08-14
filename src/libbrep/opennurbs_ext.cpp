@@ -34,6 +34,7 @@
 
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/datetime.h"
 #include "brep/defines.h"
 #include "brep/curvetree.h"
 #include "brep/surfacetree.h"
@@ -657,28 +658,37 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 //--------------------------------------------------------------------------------
 // CurveTree
 CurveTree::CurveTree(const ON_BrepFace* face, std::size_t max_bytes) :
-    CurveTree(face, max_bytes, 0.0)
+    CurveTree(face, max_bytes, 0.0, 0)
 {
 }
 
 
 CurveTree::CurveTree(const ON_BrepFace* face, std::size_t max_bytes,
 	double min_feature_size) :
+    CurveTree(face, max_bytes, min_feature_size, 0)
+{
+}
+
+
+CurveTree::CurveTree(const ON_BrepFace* face, std::size_t max_bytes,
+	double min_feature_size, int64_t deadline) :
     m_face(face),
     m_root(new BRNode(initialLoopBBox(*face))),
     m_max_nodes(max_bytes ? std::max((std::size_t)1,
 	max_bytes / BRNode::estimated_allocation_size()) : 0),
     m_min_feature_size(min_feature_size),
+    m_deadline(deadline),
     m_node_count(1),
     m_limit_reached(false),
+    m_time_limit_reached(false),
     m_stl(new Stl),
     m_sortedX_indices(NULL)
 {
-    for (int li = 0; li < face->LoopCount() && !m_limit_reached; li++) {
+    for (int li = 0; li < face->LoopCount() && !deadlineExpired(); li++) {
 	bool innerLoop = (li > 0) ? true : false;
 	const ON_BrepLoop* loop = face->Loop(li);
 	// for each trim
-	for (int ti = 0; ti < loop->m_ti.Count() && !m_limit_reached; ti++) {
+	for (int ti = 0; ti < loop->m_ti.Count() && !deadlineExpired(); ti++) {
 	    int adj_face_index = -1;
 	    const int trim_index = loop->m_ti[ti];
 	    const ON_BrepTrim& trim = face->Brep()->m_T[trim_index];
@@ -748,6 +758,8 @@ CurveTree::CurveTree(const ON_BrepFace* face, std::size_t max_bytes,
 		trimCurve->GetSpanVector(knots);
 		std::list<fastf_t> splitlist;
 		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
+		    if (deadlineExpired())
+			break;
 		    ON_Interval range(knots[knot_index - 1], knots[knot_index]);
 
 		    if (range.Length() > BREP_UV_DIST_FUZZ)
@@ -813,8 +825,10 @@ CurveTree::CurveTree(Deserializer &deserializer, const ON_BrepFace &face) :
     m_root(NULL),
     m_max_nodes(0),
     m_min_feature_size(0.0),
+    m_deadline(0),
     m_node_count(0),
     m_limit_reached(false),
+    m_time_limit_reached(false),
     m_stl(new Stl),
     m_sortedX_indices(NULL)
 {
@@ -992,6 +1006,8 @@ CurveTree::getLeavesRight(std::list<const BRNode*>& out_leaves, const ON_2dPoint
 bool
 CurveTree::getHVTangents(const ON_Curve* curve, const ON_Interval& t, std::list<fastf_t>& list) const
 {
+    if (deadlineExpired())
+	return false;
     double x;
     double midpoint = (t[1]+t[0])/2.0;
     ON_Interval left(t[0], midpoint);
@@ -1013,7 +1029,7 @@ CurveTree::getHVTangents(const ON_Curve* curve, const ON_Interval& t, std::list<
 	case 3: /* Horizontal and vertical tangents present - Simple midpoint split */
 	    if (left.Length() > BREP_UV_DIST_FUZZ)
 		getHVTangents(curve, left, list);
-	    if (right.Length() > BREP_UV_DIST_FUZZ)
+	    if (!deadlineExpired() && right.Length() > BREP_UV_DIST_FUZZ)
 		getHVTangents(curve, right, list);
 	    return true;
 
@@ -1023,6 +1039,17 @@ CurveTree::getHVTangents(const ON_Curve* curve, const ON_Interval& t, std::list<
     }
 
     return false;  //Should never get here
+}
+
+
+bool
+CurveTree::deadlineExpired() const
+{
+    if (!m_deadline || bu_gettime() < m_deadline)
+	return m_limit_reached;
+    m_time_limit_reached = true;
+    m_limit_reached = true;
+    return true;
 }
 
 
@@ -1068,6 +1095,8 @@ CurveTree::initialLoopBBox(const ON_BrepFace &face)
 BRNode*
 CurveTree::subdivideCurve(const ON_Curve* curve, int trim_index, int adj_face_index, double min, double max, bool innerTrim, int divDepth) const
 {
+    if (deadlineExpired())
+	return NULL;
     if (m_max_nodes && m_node_count >= m_max_nodes) {
 	m_limit_reached = true;
 	return NULL;
@@ -1244,7 +1273,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed,
 	int depthLimit, double within_distance_tol,
 	std::size_t max_curve_bytes) :
     SurfaceTree(face, removeTrimmed, depthLimit, within_distance_tol,
-	max_curve_bytes, 0.0)
+	max_curve_bytes, 0.0, 0)
 {
 }
 
@@ -1252,6 +1281,16 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed,
 SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed,
 	int depthLimit, double within_distance_tol,
 	std::size_t max_curve_bytes, double min_curve_feature_size) :
+    SurfaceTree(face, removeTrimmed, depthLimit, within_distance_tol,
+	max_curve_bytes, min_curve_feature_size, 0)
+{
+}
+
+
+SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed,
+	int depthLimit, double within_distance_tol,
+	std::size_t max_curve_bytes, double min_curve_feature_size,
+	int64_t curve_deadline) :
     m_ctree(NULL),
     m_removeTrimmed(removeTrimmed),
     m_face(face),
@@ -1285,7 +1324,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed,
     // first, build the Curve Tree
     if (removeTrimmed) {
 	m_ctree = new CurveTree(m_face, max_curve_bytes,
-	    min_curve_feature_size);
+	    min_curve_feature_size, curve_deadline);
 	if (m_ctree->limit_reached())
 	    return;
     }

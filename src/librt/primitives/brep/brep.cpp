@@ -2160,14 +2160,14 @@ brep_wire_edge_worker(int UNUSED(cpu), void *data)
     for (;;) {
 	if (state->stop.load())
 	    return;
+	const int edge_index = state->next_edge.fetch_add(1);
+	if (edge_index >= edge_count)
+	    return;
 	if (state->deadline > 0 && bu_gettime() >= state->deadline) {
 	    state->hit_time_limit = true;
 	    state->stop = true;
 	    return;
 	}
-	const int edge_index = state->next_edge.fetch_add(1);
-	if (edge_index >= edge_count)
-	    return;
 
 	brep_wire_edge_result &result = (*state->results)[(size_t)edge_index];
 	bool hit_time_limit = false;
@@ -2412,18 +2412,36 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 
     int completed_surface_cues = 0;
     int approximated_surface_cues = 0;
+    int memory_approximated_surface_cues = 0;
+    int time_approximated_surface_cues = 0;
     std::vector<int> surface_cue_status((size_t)brep->m_F.Count(),
 	RT_BREP_DRAW_ITEM_NOT_PROCESSED);
-    for (int face_index : surface_cue_faces) {
+    for (size_t cue_index = 0; cue_index < surface_cue_faces.size();
+	    ++cue_index) {
+	const int face_index = surface_cue_faces[cue_index];
 	if (hit_memory_limit || hit_point_limit)
 	    break;
-	if (deadline > 0 && bu_gettime() >= deadline) {
+	const int64_t cue_start = bu_gettime();
+	if (deadline > 0 && cue_start >= deadline) {
 	    hit_time_limit = true;
 	    break;
+	}
+	int64_t cue_deadline = 0;
+	if (deadline > 0) {
+	    const int64_t remaining_time = deadline - cue_start;
+	    const size_t remaining_cues = surface_cue_faces.size() -
+		cue_index;
+	    const int64_t fair_share = std::max((int64_t)1,
+		remaining_time / (int64_t)remaining_cues);
+	    const int64_t exact_share = fair_share - fair_share / 4;
+	    cue_deadline = std::min(deadline, cue_start +
+		std::max((int64_t)1, exact_share));
 	}
 	struct bu_list face_vhead;
 	BU_LIST_INIT(&face_vhead);
 	bool approximated = false;
+	bool time_approximated = false;
+	bool memory_approximated = false;
 	try {
 	    const ON_BrepFace &face = brep->m_F[face_index];
 	    const ON_Surface *surface = face.SurfaceOf();
@@ -2432,7 +2450,7 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 		ttol, tol);
 	    SurfaceTree tree(&face, true, tree_depth,
 		BREP_EDGE_MISS_TOLERANCE, options.max_working_bytes,
-		min_feature_size);
+		min_feature_size, cue_deadline);
 	    if (tree.Valid()) {
 		plot_face_from_surface_tree(vlfree, &face_vhead, &tree, 100, 10);
 	    } else if (tree.CurveTreeLimitReached()) {
@@ -2450,6 +2468,8 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 		plot_face_from_surface_tree(vlfree, &face_vhead, &fallback,
 		    100, 10);
 		approximated = true;
+		time_approximated = tree.CurveTreeTimeLimitReached();
+		memory_approximated = !time_approximated;
 	    } else {
 		surface_cue_status[(size_t)face_index] =
 		    RT_BREP_DRAW_ITEM_FAILED;
@@ -2483,6 +2503,8 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 	result_bytes += cue_bytes;
 	if (approximated) {
 	    approximated_surface_cues++;
+	    time_approximated_surface_cues += time_approximated ? 1 : 0;
+	    memory_approximated_surface_cues += memory_approximated ? 1 : 0;
 	    surface_cue_status[(size_t)face_index] =
 		RT_BREP_DRAW_ITEM_APPROXIMATED;
 	} else {
@@ -2506,6 +2528,10 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 	report->requested_surface_cues = (int)surface_cue_faces.size();
 	report->completed_surface_cues = completed_surface_cues;
 	report->approximated_surface_cues = approximated_surface_cues;
+	report->memory_approximated_surface_cues =
+	    memory_approximated_surface_cues;
+	report->time_approximated_surface_cues =
+	    time_approximated_surface_cues;
 	report->output_points = output_points;
 	report->result_bytes = result_bytes;
 	report->hit_time_limit = hit_time_limit;
