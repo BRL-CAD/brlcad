@@ -30,10 +30,13 @@
 
 #include <vector>
 #include <atomic>
+#include <chrono>
 #include <cmath>
+#include <condition_variable>
 #include <list>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <new>
 #include <stack>
 #include <iostream>
@@ -5671,6 +5674,181 @@ struct fast_cdt_face_result {
     bool skipped_degenerate = false;
 };
 
+static const size_t FAST_CDT_DEFAULT_WORKING_BYTES =
+    (size_t)1024 * 1024 * 1024;
+static const size_t FAST_CDT_BASE_FACE_WORKING_BYTES =
+    (size_t)16 * 1024 * 1024;
+static const size_t FAST_CDT_NURBS_CV_WORKING_BYTES =
+    (size_t)64 * 1024;
+static const size_t FAST_CDT_TRIM_SPAN_WORKING_BYTES =
+    (size_t)1024;
+
+
+static size_t
+fast_saturating_add(size_t first, size_t second, size_t limit)
+{
+    if (first >= limit || second >= limit - first)
+	return limit;
+    return first + second;
+}
+
+
+static size_t
+fast_saturating_multiply(size_t first, size_t second, size_t limit)
+{
+    if (!first || !second)
+	return 0;
+    if (first >= limit / second)
+	return limit;
+    return first * second;
+}
+
+
+static size_t
+fast_face_working_estimate(const ON_BrepFace &face, size_t limit)
+{
+    if (!limit)
+	return 0;
+    size_t estimate = std::min(FAST_CDT_BASE_FACE_WORKING_BYTES, limit);
+    const ON_NurbsSurface *nurbs = ON_NurbsSurface::Cast(face.SurfaceOf());
+    if (nurbs) {
+	ON_BoundingBox trim_box = ON_BoundingBox::EmptyBoundingBox;
+	bool have_trim_box = false;
+	bool trim_box_failed = false;
+	for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
+	    const ON_BrepLoop *loop = face.Loop(loop_index);
+	    if (!loop)
+		continue;
+	    for (int trim_index = 0; trim_index < loop->TrimCount();
+		    ++trim_index) {
+		const ON_BrepTrim *trim = loop->Trim(trim_index);
+		if (!trim || !trim->GetBoundingBox(trim_box,
+			trim_box.IsValid())) {
+		    trim_box_failed = true;
+		    continue;
+		}
+		have_trim_box = trim_box.IsValid();
+	    }
+	}
+	size_t relevant_control_points[2] = {
+	    (size_t)std::max(0, nurbs->CVCount(0)),
+	    (size_t)std::max(0, nurbs->CVCount(1))
+	};
+	if (have_trim_box && !trim_box_failed) {
+	    for (int direction = 0; direction < 2; ++direction) {
+		const int span_count = nurbs->SpanCount(direction);
+		std::vector<double> spans((size_t)std::max(0,
+		    span_count) + 1);
+		if (span_count <= 0 ||
+			!nurbs->GetSpanVector(direction, spans.data()))
+		    continue;
+		const double minimum = direction ? trim_box.Min().y :
+		    trim_box.Min().x;
+		const double maximum = direction ? trim_box.Max().y :
+		    trim_box.Max().x;
+		if (!std::isfinite(minimum) || !std::isfinite(maximum) ||
+			minimum > maximum)
+		    continue;
+		size_t overlapping_spans = 0;
+		for (int span = 0; span < span_count; ++span) {
+		    if (spans[(size_t)span + 1] >= minimum &&
+			    spans[(size_t)span] <= maximum)
+			overlapping_spans++;
+		}
+		if (overlapping_spans) {
+		    relevant_control_points[direction] = std::min(
+			relevant_control_points[direction],
+			overlapping_spans +
+			(size_t)std::max(0, nurbs->Order(direction) - 1));
+		}
+	    }
+	}
+	const size_t control_points = fast_saturating_multiply(
+	    relevant_control_points[0], relevant_control_points[1], limit);
+	estimate = fast_saturating_add(estimate,
+	    fast_saturating_multiply(control_points,
+		FAST_CDT_NURBS_CV_WORKING_BYTES, limit), limit);
+    }
+    size_t trim_spans = 0;
+    for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
+	const ON_BrepLoop *loop = face.Loop(loop_index);
+	if (!loop)
+	    continue;
+	for (int trim_index = 0; trim_index < loop->TrimCount(); ++trim_index) {
+	    const ON_BrepTrim *trim = loop->Trim(trim_index);
+	    if (!trim)
+		continue;
+	    trim_spans = fast_saturating_add(trim_spans,
+		(size_t)std::max(1, trim->SpanCount()), limit);
+	}
+    }
+    estimate = fast_saturating_add(estimate,
+	fast_saturating_multiply(trim_spans,
+	    FAST_CDT_TRIM_SPAN_WORKING_BYTES, limit), limit);
+    return std::max((size_t)1, std::min(estimate, limit));
+}
+
+
+struct fast_work_budget {
+    explicit fast_work_budget(size_t byte_limit) : limit(byte_limit) {}
+
+    bool acquire(size_t amount, std::atomic<bool> &stop,
+	    std::atomic<bool> &hit_time_limit, int64_t deadline)
+    {
+	amount = std::min(std::max((size_t)1, amount), limit);
+	std::unique_lock<std::mutex> lock(mutex);
+	while (!stop.load() && in_use > limit - amount) {
+	    if (deadline > 0 && bu_gettime() >= deadline) {
+		hit_time_limit = true;
+		stop = true;
+		condition.notify_all();
+		return false;
+	    }
+	    condition.wait_for(lock, std::chrono::milliseconds(10));
+	}
+	if (stop.load())
+	    return false;
+	in_use += amount;
+	peak = std::max(peak, in_use);
+	return true;
+    }
+
+    void release(size_t amount)
+    {
+	amount = std::min(std::max((size_t)1, amount), limit);
+	std::lock_guard<std::mutex> lock(mutex);
+	in_use = amount > in_use ? 0 : in_use - amount;
+	condition.notify_all();
+    }
+
+    size_t peak_bytes()
+    {
+	std::lock_guard<std::mutex> lock(mutex);
+	return peak;
+    }
+
+    size_t limit;
+    size_t in_use = 0;
+    size_t peak = 0;
+    std::mutex mutex;
+    std::condition_variable condition;
+};
+
+
+struct fast_work_reservation {
+    fast_work_reservation(fast_work_budget *budget, size_t amount) :
+	work_budget(budget), reserved(amount) {}
+    ~fast_work_reservation()
+    {
+	if (work_budget && reserved)
+	    work_budget->release(reserved);
+    }
+
+    fast_work_budget *work_budget;
+    size_t reserved;
+};
+
+
 struct fast_cdt_parallel_state {
     const ON_Brep *brep;
     const struct bg_tess_tol *ttol;
@@ -5689,6 +5867,7 @@ struct fast_cdt_parallel_state {
     size_t max_points;
     int64_t deadline;
     bool allow_partial;
+    fast_work_budget *work_budget;
 };
 
 static void
@@ -5700,16 +5879,23 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
     for (;;) {
 	if (state->stop.load())
 	    return;
+	const int face_index = state->next_face.fetch_add(1);
+	if (face_index >= face_cnt)
+	    return;
 	if (state->deadline > 0 && bu_gettime() >= state->deadline) {
 	    state->hit_time_limit = true;
 	    state->stop = true;
 	    return;
 	}
-	const int face_index = state->next_face.fetch_add(1);
-	if (face_index >= face_cnt)
-	    return;
 
 	const ON_BrepFace& face = state->brep->m_F[face_index];
+	const size_t working_estimate = fast_face_working_estimate(face,
+	    state->work_budget->limit);
+	if (!state->work_budget->acquire(working_estimate, state->stop,
+		state->hit_time_limit, state->deadline))
+	    return;
+	fast_work_reservation reservation(state->work_budget,
+	    working_estimate);
 	fast_cdt_face_result &result = (*state->results)[face_index];
 	fast_face_outcome outcome = FAST_FACE_FAILED;
 	try {
@@ -5794,6 +5980,7 @@ brep_cdt_fast_options_default(struct brep_cdt_fast_options *options)
     options->trim_sample_source = NULL;
     options->point_source = NULL;
     options->point_source_data = NULL;
+    options->max_working_bytes = FAST_CDT_DEFAULT_WORKING_BYTES;
 }
 
 int
@@ -5842,6 +6029,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	options.trim_sample_source = user_options->trim_sample_source;
 	options.point_source = user_options->point_source;
 	options.point_source_data = user_options->point_source_data;
+	if (user_options->max_working_bytes)
+	    options.max_working_bytes = user_options->max_working_bytes;
     }
     options.max_workers = std::max((size_t)1,
 	std::min(options.max_workers, (size_t)brep_face_count));
@@ -5850,6 +6039,9 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
     if (available > 0)
 	options.max_result_bytes = std::min(options.max_result_bytes,
 	    (size_t)available / 4);
+    if (available > 0)
+	options.max_working_bytes = std::min(options.max_working_bytes,
+	    std::max((size_t)1, (size_t)available / 4));
 
     const int64_t deadline = options.max_time_ms > 0 ?
 	bu_gettime() + (int64_t)options.max_time_ms * 1000 : 0;
@@ -5865,6 +6057,7 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
     bool hit_time_limit = false;
     bool hit_memory_limit = false;
     bool hit_point_limit = false;
+    fast_work_budget work_budget(options.max_working_bytes);
 
     if (index == -1) {
 	/* Each face produces an independent set of indices and points.  Keep
@@ -5875,7 +6068,7 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    brep, ttol, tol, &options, model_diagonal, &face_results, 0, 0, 0,
 	    false, false,
 	    false, false, options.max_result_bytes, options.max_points,
-	    deadline, (bool)options.allow_partial
+	    deadline, (bool)options.allow_partial, &work_budget
 	};
 	bu_parallel(fast_cdt_face_worker, options.max_workers, &state);
 	hit_time_limit = state.hit_time_limit.load();
@@ -5981,6 +6174,7 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	report->hit_time_limit = hit_time_limit;
 	report->hit_memory_limit = hit_memory_limit;
 	report->hit_point_limit = hit_point_limit;
+	report->peak_working_bytes = work_budget.peak_bytes();
     }
 
     const bool hit_limit = hit_time_limit || hit_memory_limit ||

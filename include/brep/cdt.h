@@ -497,6 +497,10 @@ struct brep_cdt_fast_options {
     void (*point_source)(int face_index, size_t point_index,
 	const void *source, void *data);
     void *point_source_data;
+    /* Shared estimated transient-memory allowance for concurrent face jobs.
+     * This is independent of max_result_bytes, which bounds retained output.
+     * A zero value selects an availability-calibrated library default. */
+    size_t max_working_bytes;
 };
 
 #define BREP_CDT_FAST_FACE_COMPLETED 0
@@ -516,6 +520,8 @@ struct brep_cdt_fast_report {
     int hit_point_limit;
     /* Completed faces proven to have exactly zero parametric area. */
     int skipped_degenerate_faces;
+    /* Peak sum of conservative face-work reservations. */
+    size_t peak_working_bytes;
 };
 
 #define BREP_CDT_FAST_OK 0

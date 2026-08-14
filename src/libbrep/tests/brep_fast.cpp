@@ -84,7 +84,7 @@ run_shaded(wire_output *output, struct directory *dp,
 
 static int
 run_fast(fast_output *output, const ON_Brep *brep, size_t workers,
-	size_t max_points)
+	size_t max_points, size_t max_working_bytes = 0)
 {
     int *faces = NULL;
     int face_count = 0;
@@ -97,6 +97,8 @@ run_fast(fast_output *output, const ON_Brep *brep, size_t workers,
     brep_cdt_fast_options_default(&options);
     options.max_workers = workers;
     options.max_points = max_points;
+    if (max_working_bytes)
+	options.max_working_bytes = max_working_bytes;
 
     int ret = brep_cdt_fast_ex(&faces, &face_count, &normals, &points,
 	&point_count, brep, -1, &ttol, &tol, &options, &output->report);
@@ -154,9 +156,11 @@ main(int argc, const char **argv)
 
     fast_output serial;
     fast_output parallel;
+    const size_t working_budget = (size_t)64 * 1024 * 1024;
     if (run_fast(&serial, bi->brep, 1, 16 * 1024 * 1024) !=
 	    BREP_CDT_FAST_OK ||
-	    run_fast(&parallel, bi->brep, 4, 16 * 1024 * 1024) !=
+	    run_fast(&parallel, bi->brep, 4, 16 * 1024 * 1024,
+		working_budget) !=
 	    BREP_CDT_FAST_OK) {
 	rt_db_free_internal(&intern);
 	db_close(dbip);
@@ -169,6 +173,8 @@ main(int argc, const char **argv)
 	parallel.report.failed_faces == 0 &&
 	serial.report.completed_faces == bi->brep->m_F.Count() &&
 	parallel.report.completed_faces == bi->brep->m_F.Count();
+    bool working_bounded = parallel.report.peak_working_bytes > 0 &&
+	parallel.report.peak_working_bytes <= working_budget;
 
     fast_output limited;
     int limit_ret = run_fast(&limited, bi->brep, 4, 1);
@@ -253,7 +259,8 @@ main(int argc, const char **argv)
 
     rt_db_free_internal(&intern);
     db_close(dbip);
-    return (same && complete && unchanged && limited_cleanly && wire_same &&
-	wire_limited_cleanly && wire_approximated_cleanly &&
+    return (same && complete && working_bounded && unchanged &&
+	limited_cleanly && wire_same && wire_limited_cleanly &&
+	wire_approximated_cleanly &&
 	shaded_matches_fast) ? 0 : 1;
 }
