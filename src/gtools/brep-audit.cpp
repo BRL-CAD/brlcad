@@ -201,6 +201,7 @@ struct geom_result {
     point_t bmax = VINIT_ZERO;
     double seconds = 0.0;
     size_t peak_rss_bytes = 0;
+    size_t peak_working_bytes = 0;
     std::vector<int> failed_faces;
     std::vector<face_failure> face_failures;
     std::vector<int> skipped_faces;
@@ -590,6 +591,7 @@ shaded_result(struct db_i *dbip, struct directory *dp,
     result.hit_time_limit = report.hit_time_limit;
     result.hit_memory_limit = report.hit_memory_limit;
     result.hit_point_limit = report.hit_point_limit;
+    result.peak_working_bytes = report.peak_working_bytes;
 
     if (face_cnt > 0)
 	result.primitives = (size_t)face_cnt;
@@ -1324,6 +1326,7 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< ",\"primitives\":" << result.primitives
 	<< ",\"commands\":" << result.commands
 	<< ",\"peak_rss_bytes\":" << result.peak_rss_bytes
+	<< ",\"peak_working_bytes\":" << result.peak_working_bytes
 	<< ",\"invalid_indices\":" << result.invalid_indices
 	<< ",\"diagnostic\":{\"result\":" << result.diagnostic_result
 	<< ",\"stage\":" << result.diagnostic_stage
@@ -1702,7 +1705,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	    draw_options.max_result_bytes / 4);
     }
     if (config.max_working_mib > 0)
-	draw_options.max_working_bytes =
+	fast_options.max_working_bytes = draw_options.max_working_bytes =
 	    (size_t)config.max_working_mib * 1024 * 1024;
     if (config.max_points > 0) {
 	fast_options.max_points = (size_t)config.max_points;
@@ -1967,6 +1970,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	<< ",\"fast_options\":{\"jobs\":" << fast_options.max_workers
 	<< ",\"max_time_ms\":" << fast_options.max_time_ms
 	<< ",\"max_result_bytes\":" << fast_options.max_result_bytes
+	<< ",\"max_working_bytes\":" << fast_options.max_working_bytes
 	<< ",\"max_points\":" << fast_options.max_points << "}"
 	<< ",\"wire_options\":{\"jobs\":" << draw_options.max_workers
 	<< ",\"max_time_ms\":" << draw_options.max_time_ms
@@ -2154,7 +2158,7 @@ main(int argc, const char **argv)
 	&bu_opt_fastf_t, &repair_adaptive_hole_area_percent,
 	"Final-only hole candidate area ceiling for bounded open-edge repair");
     BU_OPT(d[40], "", "max-working-mib", "#", &bu_opt_long,
-	&max_working_mib, "Maximum temporary wireframe hierarchy size");
+	&max_working_mib, "Maximum shared temporary generator memory");
     BU_OPT_NULL(d[41]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
