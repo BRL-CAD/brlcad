@@ -389,6 +389,73 @@ exercise_nurbs_span_bounding_boxes()
 }
 
 
+static bool
+exercise_collapsed_surface_bounding_boxes()
+{
+    ON_PlaneSurface surface(ON_xy_plane);
+    surface.SetDomain(0, -2.0, 3.0);
+    surface.SetDomain(1, -4.0, 5.0);
+    surface.SetExtents(0, surface.Domain(0));
+    surface.SetExtents(1, surface.Domain(1));
+
+    ON_BoundingBox line_box = ON_BoundingBox::EmptyBoundingBox;
+    if (!surface_GetBoundingBox(&surface, ON_Interval(-1.0, 2.0),
+	    ON_Interval(1.25, 1.25), line_box, false) ||
+	    !line_box.IsValid() ||
+	    line_box.Min().DistanceTo(ON_3dPoint(-1.0, 1.25, 0.0)) >
+		1.0e-12 ||
+	    line_box.Max().DistanceTo(ON_3dPoint(2.0, 1.25, 0.0)) >
+		1.0e-12)
+	return false;
+
+    ON_BoundingBox point_box = ON_BoundingBox::EmptyBoundingBox;
+    const ON_3dPoint expected_point(0.75, -0.5, 0.0);
+    if (!surface_GetBoundingBox(&surface, ON_Interval(0.75, 0.75),
+	    ON_Interval(-0.5, -0.5), point_box, false) ||
+	    !point_box.IsValid() ||
+	    point_box.Min().DistanceTo(expected_point) > 1.0e-12 ||
+	    point_box.Max().DistanceTo(expected_point) > 1.0e-12)
+	return false;
+
+    ON_Brep brep;
+    ON_PlaneSurface *face_surface = new ON_PlaneSurface(surface);
+    ON_BrepFace &face = brep.NewFace(brep.AddSurface(face_surface));
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const int first_index = brep.NewVertex(
+	ON_3dPoint(-1.0, 1.25, 0.0)).m_vertex_index;
+    const int second_index = brep.NewVertex(
+	ON_3dPoint(2.0, 1.25, 0.0)).m_vertex_index;
+    for (int direction = 0; direction < 2; ++direction) {
+	ON_BrepVertex &start = brep.m_V[direction ? second_index :
+	    first_index];
+	ON_BrepVertex &end = brep.m_V[direction ? first_index :
+	    second_index];
+	ON_LineCurve *edge_curve = new ON_LineCurve(start.Point(),
+	    end.Point());
+	const int edge_curve_index = brep.AddEdgeCurve(edge_curve);
+	ON_BrepEdge &edge = brep.NewEdge(start, end, edge_curve_index);
+	ON_NurbsCurve *trim_curve = new ON_NurbsCurve(2, false, 2, 2);
+	trim_curve->SetCV(0, ON_3dPoint(start.Point().x, 1.25, 0.0));
+	trim_curve->SetCV(1, ON_3dPoint(end.Point().x, 1.25, 0.0));
+	trim_curve->MakeClampedUniformKnotVector();
+	trim_curve->SetDomain(0.0, 1.0);
+	const int trim_curve_index = brep.AddTrimCurve(trim_curve);
+	ON_BrepTrim &trim = brep.NewTrim(edge, false, loop,
+	    trim_curve_index);
+	trim.m_type = ON_BrepTrim::boundary;
+	trim.m_iso = ON_Surface::x_iso;
+    }
+
+    ON_BoundingBox face_box = ON_BoundingBox::EmptyBoundingBox;
+    return face_GetBoundingBox(face, face_box, false) &&
+	face_box.IsValid() &&
+	face_box.Min().DistanceTo(ON_3dPoint(-1.0, 1.25, 0.0)) <=
+	    1.0e-12 &&
+	face_box.Max().DistanceTo(ON_3dPoint(2.0, 1.25, 0.0)) <=
+	    1.0e-12;
+}
+
+
 int
 main(int, const char **argv)
 {
@@ -561,6 +628,12 @@ main(int, const char **argv)
      * the complete surface for each prepared span. */
     if (!exercise_nurbs_span_bounding_boxes())
 	std::cerr << "NURBS span bounding-box check failed" << std::endl,
+	valid.store(false);
+
+    /* Degenerate but valid imported faces can have a collapsed trim-domain
+     * direction.  Their line or point image still has a finite 3-D bound. */
+    if (!exercise_collapsed_surface_bounding_boxes())
+	std::cerr << "collapsed surface bounding-box check failed" << std::endl,
 	valid.store(false);
 
     return valid.load() ? 0 : 1;
