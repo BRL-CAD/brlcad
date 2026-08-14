@@ -151,6 +151,8 @@ struct geom_result {
     int repair_bounded_edge_retry_completed_faces = 0;
     bool repair_adaptive_hole_retry_attempted = false;
     size_t repair_adaptive_hole_edges = 0;
+    bool repair_adaptive_hole_area_retry_attempted = false;
+    double repair_adaptive_hole_area_percent = 0.0;
     int repair_bounded_edge_approximation_edges = 0;
     int repair_bounded_edge_approximation_faces = 0;
     double repair_max_bounded_edge_deviation = 0.0;
@@ -1039,6 +1041,10 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.adaptive_hole_retry_attempted != 0;
 	result.repair_adaptive_hole_edges =
 	    repair_report.adaptive_hole_edges;
+	result.repair_adaptive_hole_area_retry_attempted =
+	    repair_report.adaptive_hole_area_retry_attempted != 0;
+	result.repair_adaptive_hole_area_percent =
+	    repair_report.adaptive_hole_area_percent;
 	result.repair_bounded_edge_approximation_edges =
 	    repair_report.bounded_edge_approximation_edges;
 	result.repair_bounded_edge_approximation_faces =
@@ -1470,6 +1476,11 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< (result.repair_adaptive_hole_retry_attempted ? "true" : "false")
 	<< ",\"adaptive_hole_edges\":"
 	<< result.repair_adaptive_hole_edges
+	<< ",\"adaptive_hole_area_retry_attempted\":"
+	<< (result.repair_adaptive_hole_area_retry_attempted ? "true" :
+	    "false")
+	<< ",\"adaptive_hole_area_percent\":"
+	<< result.repair_adaptive_hole_area_percent
 	<< ",\"bounded_edge_approximation_edges\":"
 	<< result.repair_bounded_edge_approximation_edges
 	<< ",\"bounded_edge_approximation_faces\":"
@@ -1627,6 +1638,7 @@ struct audit_config {
     double repair_hole_area_percent;
     long repair_hole_edges;
     long repair_adaptive_hole_edges;
+    double repair_adaptive_hole_area_percent;
     double repair_area_change_percent;
     double repair_max_deviation;
     double repair_max_deviation_rel;
@@ -1789,6 +1801,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	(size_t)config.repair_hole_edges;
     repair_settings.max_adaptive_hole_edges =
 	(size_t)config.repair_adaptive_hole_edges;
+    repair_settings.max_adaptive_hole_area_percent =
+	config.repair_adaptive_hole_area_percent;
     repair_settings.max_area_change_percent =
 	config.repair_area_change_percent;
     repair_settings.max_surface_deviation = config.repair_max_deviation;
@@ -2012,6 +2026,7 @@ main(int argc, const char **argv)
     double repair_hole_area_percent = 1.0;
     long repair_hole_edges = 256;
     long repair_adaptive_hole_edges = 4096;
+    double repair_adaptive_hole_area_percent = 0.0;
     double repair_area_change_percent = 1.0;
     double repair_max_deviation = 0.0;
     double repair_max_deviation_rel = 0.0;
@@ -2030,7 +2045,7 @@ main(int argc, const char **argv)
     double repair_relaxed_fidelity_factor = 0.0;
     const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[40];
+    struct bu_opt_desc d[41];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -2112,7 +2127,10 @@ main(int argc, const char **argv)
     BU_OPT(d[38], "", "quality-face-time-ms", "#", &bu_opt_long,
 	&quality_face_time_ms,
 	"Wall-clock limit for each rigorous quality face (zero disables)");
-    BU_OPT_NULL(d[39]);
+    BU_OPT(d[39], "", "repair-adaptive-hole-area-percent", "#",
+	&bu_opt_fastf_t, &repair_adaptive_hole_area_percent,
+	"Final-only hole candidate area ceiling for bounded open-edge repair");
+    BU_OPT_NULL(d[40]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -2127,6 +2145,9 @@ main(int argc, const char **argv)
 	    repair_adaptive_hole_edges < 0 ||
 	    (repair_adaptive_hole_edges > 0 &&
 	    repair_adaptive_hole_edges < repair_hole_edges) ||
+	    repair_adaptive_hole_area_percent < 0.0 ||
+	    (repair_adaptive_hole_area_percent > 0.0 &&
+	    repair_adaptive_hole_area_percent < repair_hole_area_percent) ||
 	    repair_area_change_percent < 0.0 || repair_max_deviation < 0.0 ||
 	    repair_max_deviation_rel < 0.0 ||
 	    (repair_max_deviation > 0.0 && repair_max_deviation_rel > 0.0) ||
@@ -2181,6 +2202,7 @@ main(int argc, const char **argv)
 	face_index, valid_solids_only != 0, quality_repair != 0,
 	repair_hole_area_percent, repair_hole_edges,
 	repair_adaptive_hole_edges,
+	repair_adaptive_hole_area_percent,
 	repair_area_change_percent, repair_max_deviation,
 	repair_max_deviation_rel,
 	repair_deviation_samples, repair_allow_untrimmed != 0,
