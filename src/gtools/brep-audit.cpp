@@ -199,6 +199,7 @@ struct geom_result {
     size_t triangle_budget = 0;
     int area_converged_faces = 0;
     int triangle_budget_limited_faces = 0;
+    int boundary_envelope_incomplete_faces = 0;
     int refinement_passes = 0;
     int memory_approximated_surface_cues = 0;
     int time_approximated_surface_cues = 0;
@@ -616,6 +617,8 @@ shaded_result(struct db_i *dbip, struct directory *dp,
     result.area_converged_faces = report.area_converged_faces;
     result.triangle_budget_limited_faces =
 	report.triangle_budget_limited_faces;
+    result.boundary_envelope_incomplete_faces =
+	report.boundary_envelope_incomplete_faces;
     result.refinement_passes = report.refinement_passes;
     result.refinement_time_limited =
 	report.refinement_time_limited != 0;
@@ -1588,6 +1591,8 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.area_converged_faces
 	<< ",\"triangle_budget_limited_faces\":"
 	<< result.triangle_budget_limited_faces
+	<< ",\"boundary_envelope_incomplete_faces\":"
+	<< result.boundary_envelope_incomplete_faces
 	<< ",\"refinement_passes\":" << result.refinement_passes
 	<< ",\"refinement_time_limited\":"
 	<< (result.refinement_time_limited ? "true" : "false") << "}"
