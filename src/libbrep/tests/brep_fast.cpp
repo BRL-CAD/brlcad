@@ -34,7 +34,7 @@ struct wire_output {
 
 static int
 run_wire(wire_output *output, struct rt_db_internal *intern, size_t workers,
-	size_t max_points)
+	size_t max_points, size_t max_working_bytes = 0)
 {
     struct bu_list vhead;
     BU_LIST_INIT(&vhead);
@@ -44,6 +44,8 @@ run_wire(wire_output *output, struct rt_db_internal *intern, size_t workers,
     rt_brep_draw_options_default(&options);
     options.max_workers = workers;
     options.max_points = max_points;
+    if (max_working_bytes)
+	options.max_working_bytes = max_working_bytes;
 
     int ret = rt_brep_plot_ex(&vhead, intern, &ttol, &tol, NULL, &options,
 	&output->report);
@@ -192,6 +194,20 @@ main(int argc, const char **argv)
 	wire_limited.report.hit_point_limit && wire_limited.commands.empty() &&
 	wire_limited.points.empty();
 
+    wire_output wire_approximated;
+    int wire_approximated_ret = run_wire(&wire_approximated, &intern, 1,
+	4 * 1024 * 1024, 1);
+    bool wire_approximated_cleanly = true;
+    if (wire_approximated.report.requested_surface_cues > 0) {
+	wire_approximated_cleanly =
+	    wire_approximated_ret == RT_BREP_DRAW_PARTIAL &&
+	    wire_approximated.report.approximated_surface_cues > 0 &&
+	    wire_approximated.report.completed_edges ==
+		wire_approximated.report.requested_edges &&
+	    !wire_approximated.report.hit_memory_limit &&
+	    !wire_approximated.commands.empty();
+    }
+
     wire_output shaded;
     int shaded_ret = run_shaded(&shaded, dp, &intern);
     std::vector<int> expected_commands;
@@ -238,5 +254,6 @@ main(int argc, const char **argv)
     rt_db_free_internal(&intern);
     db_close(dbip);
     return (same && complete && unchanged && limited_cleanly && wire_same &&
-	wire_limited_cleanly && shaded_matches_fast) ? 0 : 1;
+	wire_limited_cleanly && wire_approximated_cleanly &&
+	shaded_matches_fast) ? 0 : 1;
 }
