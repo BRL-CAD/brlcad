@@ -57,7 +57,10 @@ namespace brlcad {
      */
     class BREP_EXPORT SurfaceTree {
     public:
-	explicit SurfaceTree(const ON_BrepFace *face, bool removeTrimmed = true, int depthLimit = BREP_MAX_FT_DEPTH, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE, std::size_t max_curve_nodes = 0);
+	explicit SurfaceTree(const ON_BrepFace *face, bool removeTrimmed = true, int depthLimit = BREP_MAX_FT_DEPTH, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE, std::size_t max_curve_bytes = 0);
+	SurfaceTree(const ON_BrepFace *face, bool removeTrimmed,
+	    int depthLimit, double within_distance_tol,
+	    std::size_t max_curve_bytes, double min_curve_feature_size);
 	~SurfaceTree();
 
 	/* Report whether the tree is in a usable state */
@@ -65,6 +68,10 @@ namespace brlcad {
 	    if (!m_root)
 		return false;
 	    return true;
+	};
+
+	bool CurveTreeLimitReached() const {
+	    return m_ctree && m_ctree->limit_reached();
 	};
 
 	BBNode *getRootNode() const;

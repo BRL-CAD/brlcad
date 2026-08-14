@@ -29,6 +29,17 @@
 namespace brlcad {
 
 
+std::size_t
+BRNode::estimated_allocation_size()
+{
+    /* Each node owns a separately allocated Stl and binary hierarchy nodes
+     * normally reserve two child pointers.  Pool metadata and allocator
+     * rounding are implementation details, so retain another pointer of
+     * headroom instead of presenting sizeof(BRNode) as the true cost. */
+    return sizeof(BRNode) + sizeof(Stl) + 3 * sizeof(BRNode *);
+}
+
+
 BRNode::BRNode(
     const ON_Curve *curve,
     int trim_index,

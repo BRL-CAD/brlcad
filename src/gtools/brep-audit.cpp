@@ -189,6 +189,7 @@ struct geom_result {
 	std::numeric_limits<double>::quiet_NaN();
     int requested_items = 0;
     int completed_items = 0;
+    int approximated_items = 0;
     int failed_items = 0;
     int skipped_items = 0;
     bool hit_time_limit = false;
@@ -207,6 +208,7 @@ struct geom_result {
     std::vector<int> failed_edges;
     std::vector<int> unprocessed_edges;
     std::vector<int> failed_surface_cues;
+    std::vector<int> approximated_surface_cues;
     std::vector<int> unprocessed_surface_cues;
     size_t omitted_failed_faces = 0;
     size_t omitted_skipped_faces = 0;
@@ -214,6 +216,7 @@ struct geom_result {
     size_t omitted_failed_edges = 0;
     size_t omitted_unprocessed_edges = 0;
     size_t omitted_failed_surface_cues = 0;
+    size_t omitted_approximated_surface_cues = 0;
     size_t omitted_unprocessed_surface_cues = 0;
     std::vector<std::string> issues;
 };
@@ -258,6 +261,11 @@ wire_item_status(int item_type, int item_index, int status, void *data)
 	else
 	    capture_index(&result->unprocessed_edges,
 		&result->omitted_unprocessed_edges, item_index);
+	return;
+    }
+    if (status == RT_BREP_DRAW_ITEM_APPROXIMATED) {
+	capture_index(&result->approximated_surface_cues,
+	    &result->omitted_approximated_surface_cues, item_index);
 	return;
     }
     if (status == RT_BREP_DRAW_ITEM_FAILED)
@@ -498,9 +506,11 @@ wireframe_result(struct db_i *dbip, struct directory *dp,
     result.requested_items = report.requested_edges +
 	report.requested_surface_cues;
     result.completed_items = report.completed_edges +
-	report.completed_surface_cues;
+	report.completed_surface_cues + report.approximated_surface_cues;
+    result.approximated_items = report.approximated_surface_cues;
     result.failed_items = report.failed_edges +
-	report.requested_surface_cues - report.completed_surface_cues;
+	report.requested_surface_cues - report.completed_surface_cues -
+	report.approximated_surface_cues;
     result.hit_time_limit = report.hit_time_limit;
     result.hit_memory_limit = report.hit_memory_limit;
     result.hit_point_limit = report.hit_point_limit;
@@ -1539,6 +1549,7 @@ print_result(const geom_result &result, const vect_t ref_dims)
     std::cout << "}"
 	<< ",\"requested_items\":" << result.requested_items
 	<< ",\"completed_items\":" << result.completed_items
+	<< ",\"approximated_items\":" << result.approximated_items
 	<< ",\"failed_items\":" << result.failed_items
 	<< ",\"skipped_items\":" << result.skipped_items
 	<< ",\"failed_faces\":";
@@ -1572,6 +1583,10 @@ print_result(const geom_result &result, const vect_t ref_dims)
     print_indices(result.failed_surface_cues);
     std::cout << ",\"failed_surface_cues_omitted\":"
 	<< result.omitted_failed_surface_cues
+	<< ",\"approximated_surface_cues\":";
+    print_indices(result.approximated_surface_cues);
+    std::cout << ",\"approximated_surface_cues_omitted\":"
+	<< result.omitted_approximated_surface_cues
 	<< ",\"unprocessed_surface_cues\":";
     print_indices(result.unprocessed_surface_cues);
     std::cout << ",\"unprocessed_surface_cues_omitted\":"
@@ -1631,6 +1646,7 @@ struct audit_config {
     long max_time_ms;
     long quality_face_time_ms;
     long max_result_mib;
+    long max_working_mib;
     long max_points;
     long face_index;
     bool valid_solids_only;
@@ -1682,7 +1698,12 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	    (size_t)config.max_result_mib * 1024 * 1024;
 	draw_options.max_result_bytes =
 	    (size_t)config.max_result_mib * 1024 * 1024;
+	draw_options.max_working_bytes = std::max((size_t)1,
+	    draw_options.max_result_bytes / 4);
     }
+    if (config.max_working_mib > 0)
+	draw_options.max_working_bytes =
+	    (size_t)config.max_working_mib * 1024 * 1024;
     if (config.max_points > 0) {
 	fast_options.max_points = (size_t)config.max_points;
 	draw_options.max_points = (size_t)config.max_points;
@@ -1950,6 +1971,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	<< ",\"wire_options\":{\"jobs\":" << draw_options.max_workers
 	<< ",\"max_time_ms\":" << draw_options.max_time_ms
 	<< ",\"max_result_bytes\":" << draw_options.max_result_bytes
+	<< ",\"max_working_bytes\":" << draw_options.max_working_bytes
 	<< ",\"max_points\":" << draw_options.max_points << "}"
 	<< ",\"generators\":{\"wireframe\":\"rt_brep_plot\""
 	<< ",\"shaded\":\"brep_cdt_fast\""
@@ -2018,6 +2040,7 @@ main(int argc, const char **argv)
     long max_time_ms = 0;
     long quality_face_time_ms = 0;
     long max_result_mib = 0;
+    long max_working_mib = 0;
     long max_points = 0;
     long batch_start = 0;
     long face_index = -1;
@@ -2045,7 +2068,7 @@ main(int argc, const char **argv)
     double repair_relaxed_fidelity_factor = 0.0;
     const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[41];
+    struct bu_opt_desc d[42];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -2130,7 +2153,9 @@ main(int argc, const char **argv)
     BU_OPT(d[39], "", "repair-adaptive-hole-area-percent", "#",
 	&bu_opt_fastf_t, &repair_adaptive_hole_area_percent,
 	"Final-only hole candidate area ceiling for bounded open-edge repair");
-    BU_OPT_NULL(d[40]);
+    BU_OPT(d[40], "", "max-working-mib", "#", &bu_opt_long,
+	&max_working_mib, "Maximum temporary wireframe hierarchy size");
+    BU_OPT_NULL(d[41]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -2140,6 +2165,7 @@ main(int argc, const char **argv)
 	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0 ||
 	    quality_face_time_ms < 0 ||
 	    jobs < 0 || max_time_ms < 0 || max_result_mib < 0 ||
+	    max_working_mib < 0 ||
 	    max_points < 0 || batch_start < 0 || face_index < -1 ||
 	    repair_hole_area_percent <= 0.0 || repair_hole_edges < 3 ||
 	    repair_adaptive_hole_edges < 0 ||
@@ -2198,7 +2224,7 @@ main(int argc, const char **argv)
     audit_config config = {
 	ratio_min, ratio_max, tess_abs, tess_rel, tess_norm,
 	memory_limit_mib, jobs, max_time_ms, quality_face_time_ms,
-	max_result_mib, max_points,
+	max_result_mib, max_working_mib, max_points,
 	face_index, valid_solids_only != 0, quality_repair != 0,
 	repair_hole_area_percent, repair_hole_edges,
 	repair_adaptive_hole_edges,

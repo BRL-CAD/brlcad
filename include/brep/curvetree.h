@@ -57,7 +57,9 @@ namespace brlcad {
     class BREP_EXPORT CurveTree : public PooledObject<CurveTree> {
     public:
 	explicit CurveTree(const ON_BrepFace *face,
-	    std::size_t max_nodes = 0);
+	    std::size_t max_bytes = 0);
+	CurveTree(const ON_BrepFace *face, std::size_t max_bytes,
+	    double min_feature_size);
 	~CurveTree();
 
 	CurveTree(Deserializer &deserializer, const ON_BrepFace &face);
@@ -107,6 +109,7 @@ namespace brlcad {
 	const ON_BrepFace * const m_face;
 	BRNode *m_root;
 	const std::size_t m_max_nodes;
+	const double m_min_feature_size;
 	mutable std::size_t m_node_count;
 	mutable bool m_limit_reached;
 
