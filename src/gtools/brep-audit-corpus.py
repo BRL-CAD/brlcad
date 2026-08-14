@@ -215,8 +215,16 @@ def audit_one(audit, args, run_dir, database_name, object_name, mode):
         str(args.max_time_ms),
         "--max-result-mib",
         str(args.max_result_mib),
+        "--max-working-mib",
+        str(args.max_working_mib),
         "--max-points",
         str(args.max_points),
+        "--max-triangles",
+        str(args.max_triangles),
+        "--display-coarse-rel",
+        str(args.display_coarse_rel),
+        "--display-area-change",
+        str(args.display_area_change),
         "--memory-limit-mib",
         str(args.memory_limit_mib),
     ]
@@ -344,8 +352,16 @@ def audit_database(audit, args, run_dir, database, start_index, sink,
             str(args.max_time_ms),
             "--max-result-mib",
             str(args.max_result_mib),
+            "--max-working-mib",
+            str(args.max_working_mib),
             "--max-points",
             str(args.max_points),
+            "--max-triangles",
+            str(args.max_triangles),
+            "--display-coarse-rel",
+            str(args.display_coarse_rel),
+            "--display-area-change",
+            str(args.display_area_change),
             "--memory-limit-mib",
             str(args.memory_limit_mib),
         ]
@@ -576,7 +592,23 @@ def parse_args():
         help="wall-clock limit for each rigorous quality face",
     )
     parser.add_argument("--max-result-mib", type=int, default=256)
+    parser.add_argument(
+        "--max-working-mib", type=int, default=0,
+        help="shared temporary generator memory; zero uses the library cap",
+    )
     parser.add_argument("--max-points", type=int, default=4 * 1024 * 1024)
+    parser.add_argument(
+        "--max-triangles", type=int, default=0,
+        help="maximum adaptive shaded triangle target; zero uses the default",
+    )
+    parser.add_argument(
+        "--display-coarse-rel", type=float, default=0.0,
+        help="initial adaptive shaded relative tolerance",
+    )
+    parser.add_argument(
+        "--display-area-change", type=float, default=0.0,
+        help="per-face unsigned area convergence fraction",
+    )
     parser.add_argument("--memory-limit-mib", type=int, default=1024)
     parser.add_argument("--database-timeout", type=float, default=30.0)
     parser.add_argument("--object-timeout", type=float, default=10.0)
@@ -674,8 +706,12 @@ def parse_args():
     if any(value <= 0 for value in numeric):
         parser.error("resource limits and timeouts must be positive")
     if args.max_objects < 0 or args.max_databases < 0 or \
-            args.batch_restart_rss_mib < 0:
+            args.batch_restart_rss_mib < 0 or \
+            args.max_working_mib < 0 or args.max_triangles < 0:
         parser.error("corpus limits cannot be negative")
+    if not 0.0 <= args.display_coarse_rel <= 0.5 or \
+            not 0.0 <= args.display_area_change <= 1.0:
+        parser.error("adaptive display tolerances are outside valid ranges")
     if args.selection_jsonl and not args.selection_jsonl.is_file():
         parser.error("--selection-jsonl must name an existing file")
     if args.selection_failures_only and not args.selection_jsonl:

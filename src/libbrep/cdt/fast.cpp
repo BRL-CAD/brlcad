@@ -5682,6 +5682,10 @@ static const size_t FAST_CDT_NURBS_CV_WORKING_BYTES =
     (size_t)64 * 1024;
 static const size_t FAST_CDT_TRIM_SPAN_WORKING_BYTES =
     (size_t)1024;
+static const size_t FAST_CDT_DEFAULT_MAX_TRIANGLES =
+    (size_t)256 * 1024;
+static const double FAST_CDT_DEFAULT_COARSE_RELATIVE_TOLERANCE = 0.5;
+static const double FAST_CDT_DEFAULT_AREA_CHANGE_TOLERANCE = 0.0025;
 
 
 static size_t
@@ -5852,10 +5856,12 @@ struct fast_work_reservation {
 struct fast_cdt_parallel_state {
     const ON_Brep *brep;
     const struct bg_tess_tol *ttol;
+    const struct bg_tess_tol *planar_ttol;
     const struct bn_tol *tol;
     const struct brep_cdt_fast_options *options;
     double model_diagonal;
     std::vector<fast_cdt_face_result> *results;
+    const std::vector<size_t> *working_estimates;
     std::atomic<int> next_face;
     std::atomic<size_t> result_bytes;
     std::atomic<size_t> result_points;
@@ -5889,8 +5895,14 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	}
 
 	const ON_BrepFace& face = state->brep->m_F[face_index];
-	const size_t working_estimate = fast_face_working_estimate(face,
-	    state->work_budget->limit);
+	const struct bg_tess_tol *face_ttol = state->ttol;
+	const ON_Surface *surface = face.SurfaceOf();
+	if (state->planar_ttol && surface &&
+		surface->IsPlanar(NULL, state->tol->dist))
+	    face_ttol = state->planar_ttol;
+	const size_t working_estimate = state->working_estimates ?
+	    (*state->working_estimates)[(size_t)face_index] :
+	    fast_face_working_estimate(face, state->work_budget->limit);
 	if (!state->work_budget->acquire(working_estimate, state->stop,
 		state->hit_time_limit, state->deadline))
 	    return;
@@ -5901,7 +5913,7 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	try {
 	    outcome = bg_CDT(result.faces, result.norms, result.pnts,
 		result.point_sources, face,
-		state->ttol, state->tol, state->model_diagonal,
+		face_ttol, state->tol, state->model_diagonal,
 		state->options);
 	} catch (const std::bad_alloc &) {
 	    state->hit_memory_limit = true;
@@ -5958,6 +5970,290 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
     }
 }
 
+
+static double
+fast_face_mesh_area(const fast_cdt_face_result &result)
+{
+    double area = 0.0;
+    for (size_t triangle = 0; triangle + 2 < result.faces.size();
+	    triangle += 3) {
+	ON_3dPoint points[3];
+	bool valid = true;
+	for (size_t corner = 0; corner < 3; ++corner) {
+	    const int index = result.faces[triangle + corner];
+	    if (index < 0 || (size_t)index * 3 + 2 >= result.pnts.size()) {
+		valid = false;
+		break;
+	    }
+	    points[corner] = ON_3dPoint(result.pnts[(size_t)index * 3],
+		result.pnts[(size_t)index * 3 + 1],
+		result.pnts[(size_t)index * 3 + 2]);
+	}
+	if (!valid)
+	    continue;
+	const double triangle_area = 0.5 * ON_CrossProduct(
+	    points[1] - points[0], points[2] - points[0]).Length();
+	if (std::isfinite(triangle_area))
+	    area += triangle_area;
+    }
+    return area;
+}
+
+
+static size_t
+fast_face_result_bytes(const fast_cdt_face_result &result)
+{
+    return result.faces.size() * sizeof(int) +
+	(result.norms.size() + result.pnts.size()) * sizeof(fastf_t) +
+	result.point_sources.size() * sizeof(const void *);
+}
+
+
+static bool
+fast_replace_reservation(std::atomic<size_t> &retained, size_t old_amount,
+	size_t new_amount, size_t limit)
+{
+    if (new_amount <= old_amount) {
+	retained.fetch_sub(old_amount - new_amount);
+	return true;
+    }
+    const size_t increase = new_amount - old_amount;
+    size_t current = retained.load();
+    for (;;) {
+	if (current > limit || increase > limit - current)
+	    return false;
+	if (retained.compare_exchange_weak(current, current + increase))
+	    return true;
+    }
+}
+
+
+static struct bg_tess_tol
+fast_scaled_tolerance(const struct bg_tess_tol *requested,
+    double relative_tolerance)
+{
+    struct bg_tess_tol scaled = *requested;
+    const double requested_relative = requested->rel > ON_ZERO_TOLERANCE ?
+	requested->rel : 0.01;
+    relative_tolerance = std::max(requested_relative,
+	std::min(0.5, relative_tolerance));
+    if (requested->rel > ON_ZERO_TOLERANCE ||
+	    requested->abs <= ON_ZERO_TOLERANCE)
+	scaled.rel = relative_tolerance;
+    else
+	scaled.abs = requested->abs * relative_tolerance /
+	    requested_relative;
+    if (requested->norm > ON_ZERO_TOLERANCE)
+	scaled.norm = std::min(ON_PI / 2.0, requested->norm *
+	    relative_tolerance / requested_relative);
+    return scaled;
+}
+
+
+static size_t
+fast_object_triangle_budget(const ON_Brep *brep,
+    const struct brep_cdt_fast_options &options)
+{
+    const size_t hard_by_bytes = std::max((size_t)1,
+	options.max_result_bytes / 96);
+    const size_t hard_limit = std::max((size_t)1,
+	std::min(options.max_triangles, hard_by_bytes));
+    size_t target = std::min((size_t)4096, hard_limit);
+    target = fast_saturating_add(target,
+	fast_saturating_multiply((size_t)brep->m_F.Count(), 32,
+	    hard_limit), hard_limit);
+    target = fast_saturating_add(target,
+	fast_saturating_multiply((size_t)brep->m_E.Count(), 4,
+	    hard_limit), hard_limit);
+    return std::max((size_t)1, std::min(target, hard_limit));
+}
+
+
+static std::vector<size_t>
+fast_face_triangle_budgets(const std::vector<size_t> &working_estimates,
+    size_t object_budget)
+{
+    const size_t face_count = working_estimates.size();
+    std::vector<size_t> budgets(face_count, 1);
+    if (!face_count)
+	return budgets;
+    const size_t minimum = std::max((size_t)1,
+	std::min((size_t)16, object_budget / face_count));
+    const size_t reserved = std::min(object_budget, minimum * face_count);
+    const size_t distributable = object_budget - reserved;
+    std::vector<double> weights(face_count, 1.0);
+    double weight_sum = 0.0;
+    for (size_t face_index = 0; face_index < face_count; ++face_index) {
+	weights[face_index] = std::sqrt(1.0 +
+	    (double)working_estimates[face_index] /
+	    (1024.0 * 1024.0));
+	weight_sum += weights[face_index];
+    }
+    size_t assigned = 0;
+    for (size_t face_index = 0; face_index < face_count; ++face_index) {
+	const size_t share = weight_sum > 0.0 ? (size_t)std::floor(
+	    distributable * weights[face_index] / weight_sum) : 0;
+	budgets[face_index] = minimum + share;
+	assigned += budgets[face_index];
+    }
+    for (size_t face_index = 0; assigned < object_budget; ++assigned)
+	budgets[face_index++ % face_count]++;
+    return budgets;
+}
+
+
+struct fast_face_refinement {
+    double area = 0.0;
+    double accepted_relative_tolerance = 0.0;
+    int stable_passes = 0;
+    bool area_converged = false;
+    bool budget_limited = false;
+};
+
+
+struct fast_cdt_refine_state {
+    const ON_Brep *brep;
+    const struct bg_tess_tol *ttol;
+    const struct bn_tol *tol;
+    const struct brep_cdt_fast_options *options;
+    double model_diagonal;
+    double relative_tolerance;
+    double area_change_tolerance;
+    std::vector<fast_cdt_face_result> *results;
+    std::vector<fast_face_refinement> *refinement;
+    const std::vector<size_t> *triangle_budgets;
+    const std::vector<size_t> *working_estimates;
+    std::atomic<int> next_face;
+    std::atomic<bool> stop;
+    std::atomic<bool> time_limited;
+    std::atomic<int> accepted;
+    std::atomic<size_t> *retained_bytes;
+    std::atomic<size_t> *retained_points;
+    size_t max_result_bytes;
+    size_t max_points;
+    bool coarsening;
+    int64_t deadline;
+    fast_work_budget *work_budget;
+};
+
+
+static void
+fast_cdt_refine_worker(int UNUSED(cpu), void *data)
+{
+    fast_cdt_refine_state *state = (fast_cdt_refine_state *)data;
+    const int face_count = state->brep->m_F.Count();
+    for (;;) {
+	if (state->stop.load())
+	    return;
+	const int face_index = state->next_face.fetch_add(1);
+	if (face_index >= face_count)
+	    return;
+	if (state->deadline > 0 && bu_gettime() >= state->deadline) {
+	    state->time_limited = true;
+	    state->stop = true;
+	    return;
+	}
+
+	fast_face_refinement &quality =
+	    (*state->refinement)[(size_t)face_index];
+	fast_cdt_face_result &current =
+	    (*state->results)[(size_t)face_index];
+	if (current.skipped_degenerate ||
+		(state->coarsening && (!quality.budget_limited ||
+		quality.area_converged)) ||
+		(!state->coarsening &&
+		(quality.area_converged || quality.budget_limited)))
+	    continue;
+
+	const ON_BrepFace &face = state->brep->m_F[face_index];
+	const size_t working_estimate =
+	    (*state->working_estimates)[(size_t)face_index];
+	std::atomic<bool> hard_time_limit(false);
+	if (!state->work_budget->acquire(working_estimate, state->stop,
+		hard_time_limit, state->deadline)) {
+	    if (hard_time_limit.load())
+		state->time_limited = true;
+	    return;
+	}
+	fast_work_reservation reservation(state->work_budget,
+	    working_estimate);
+
+	fast_cdt_face_result candidate;
+	fast_face_outcome outcome = FAST_FACE_FAILED;
+	try {
+	    outcome = bg_CDT(candidate.faces, candidate.norms,
+		candidate.pnts, candidate.point_sources, face, state->ttol,
+		state->tol, state->model_diagonal, state->options);
+	} catch (...) {
+	    outcome = FAST_FACE_FAILED;
+	}
+	if (outcome == FAST_FACE_SKIPPED_DEGENERATE) {
+	    if (!current.completed) {
+		current = std::move(candidate);
+		current.completed = true;
+		current.failed = false;
+		current.skipped_degenerate = true;
+	    }
+	    continue;
+	}
+	if (outcome != FAST_FACE_COMPLETED)
+	    continue;
+
+	const size_t triangles = candidate.faces.size() / 3;
+	const size_t triangle_budget =
+	    (*state->triangle_budgets)[(size_t)face_index];
+	if (state->coarsening) {
+	    if (!current.completed ||
+		triangles >= current.faces.size() / 3)
+		continue;
+	} else if (current.completed && triangles > triangle_budget) {
+	    quality.budget_limited = true;
+	    continue;
+	}
+
+	const size_t old_bytes = current.completed ?
+	    fast_face_result_bytes(current) : 0;
+	const size_t new_bytes = fast_face_result_bytes(candidate);
+	const size_t old_points = current.completed ?
+	    current.pnts.size() / 3 : 0;
+	const size_t new_points = candidate.pnts.size() / 3;
+	if (!fast_replace_reservation(*state->retained_bytes, old_bytes,
+		new_bytes, state->max_result_bytes)) {
+	    quality.budget_limited = true;
+	    continue;
+	}
+	if (!fast_replace_reservation(*state->retained_points, old_points,
+		new_points, state->max_points)) {
+	    fast_replace_reservation(*state->retained_bytes, new_bytes,
+		old_bytes, state->max_result_bytes);
+	    quality.budget_limited = true;
+	    continue;
+	}
+	const double area = fast_face_mesh_area(candidate);
+	if (!state->coarsening && current.completed &&
+		!current.skipped_degenerate &&
+		quality.area > ON_ZERO_TOLERANCE && area > 0.0) {
+	    const double change = fabs(area - quality.area) /
+		std::max(area, quality.area);
+	    quality.stable_passes =
+		change <= state->area_change_tolerance ?
+		quality.stable_passes + 1 : 0;
+	    quality.area_converged = quality.stable_passes >= 2;
+	}
+	candidate.completed = true;
+	candidate.failed = false;
+	current = std::move(candidate);
+	quality.area = area;
+	quality.accepted_relative_tolerance = state->relative_tolerance;
+	quality.budget_limited = triangles > triangle_budget;
+	if (state->coarsening) {
+	    quality.stable_passes = 0;
+	    quality.area_converged = false;
+	}
+	state->accepted.fetch_add(1);
+    }
+}
+
 void
 brep_cdt_fast_options_default(struct brep_cdt_fast_options *options)
 {
@@ -5981,6 +6277,12 @@ brep_cdt_fast_options_default(struct brep_cdt_fast_options *options)
     options->point_source = NULL;
     options->point_source_data = NULL;
     options->max_working_bytes = FAST_CDT_DEFAULT_WORKING_BYTES;
+    options->max_triangles = FAST_CDT_DEFAULT_MAX_TRIANGLES;
+    options->adaptive_quality = 1;
+    options->coarse_relative_tolerance =
+	FAST_CDT_DEFAULT_COARSE_RELATIVE_TOLERANCE;
+    options->area_change_tolerance =
+	FAST_CDT_DEFAULT_AREA_CHANGE_TOLERANCE;
 }
 
 int
@@ -6031,6 +6333,17 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	options.point_source_data = user_options->point_source_data;
 	if (user_options->max_working_bytes)
 	    options.max_working_bytes = user_options->max_working_bytes;
+	if (user_options->max_triangles)
+	    options.max_triangles = user_options->max_triangles;
+	options.adaptive_quality = user_options->adaptive_quality;
+	if (std::isfinite(user_options->coarse_relative_tolerance) &&
+		user_options->coarse_relative_tolerance > 0.0)
+	    options.coarse_relative_tolerance =
+		user_options->coarse_relative_tolerance;
+	if (std::isfinite(user_options->area_change_tolerance) &&
+		user_options->area_change_tolerance > 0.0)
+	    options.area_change_tolerance =
+		user_options->area_change_tolerance;
     }
     options.max_workers = std::max((size_t)1,
 	std::min(options.max_workers, (size_t)brep_face_count));
@@ -6043,9 +6356,19 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	options.max_working_bytes = std::min(options.max_working_bytes,
 	    std::max((size_t)1, (size_t)available / 4));
 
+    const int64_t start_time = bu_gettime();
     const int64_t deadline = options.max_time_ms > 0 ?
-	bu_gettime() + (int64_t)options.max_time_ms * 1000 : 0;
+	start_time + (int64_t)options.max_time_ms * 1000 : 0;
     const double model_diagonal = fast_brep_diagonal(brep);
+    const double requested_relative = ttol->rel > ON_ZERO_TOLERANCE ?
+	ttol->rel : 0.01;
+    const bool adaptive_quality = index == -1 &&
+	options.adaptive_quality != 0;
+    const double coarse_relative = adaptive_quality ?
+	std::max(requested_relative, options.coarse_relative_tolerance) :
+	requested_relative;
+    struct bg_tess_tol initial_tolerance = adaptive_quality ?
+	fast_scaled_tolerance(ttol, coarse_relative) : *ttol;
 
     std::vector<int> all_faces;
     std::vector<fastf_t> all_norms;
@@ -6058,6 +6381,20 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
     bool hit_memory_limit = false;
     bool hit_point_limit = false;
     fast_work_budget work_budget(options.max_working_bytes);
+    const size_t triangle_budget = adaptive_quality ?
+	fast_object_triangle_budget(brep, options) : options.max_triangles;
+    std::vector<size_t> face_working_estimates((size_t)brep_face_count, 0);
+    if (adaptive_quality) {
+	for (int face_index = 0; face_index < brep_face_count; ++face_index)
+	    face_working_estimates[(size_t)face_index] =
+		fast_face_working_estimate(brep->m_F[face_index],
+		    options.max_working_bytes);
+    }
+    std::vector<size_t> face_triangle_budgets = adaptive_quality ?
+	fast_face_triangle_budgets(face_working_estimates, triangle_budget) :
+	std::vector<size_t>((size_t)brep_face_count, options.max_triangles);
+    std::vector<fast_face_refinement> refinement(
+	(size_t)brep_face_count);
 
     if (index == -1) {
 	/* Each face produces an independent set of indices and points.  Keep
@@ -6065,7 +6402,10 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	 * face order.  This avoids locking the hot CDT path, keeps output
 	 * stable across runs, and leaves the input BRep unchanged. */
 	fast_cdt_parallel_state state = {
-	    brep, ttol, tol, &options, model_diagonal, &face_results, 0, 0, 0,
+	    brep, &initial_tolerance, adaptive_quality ? ttol : NULL,
+	    tol, &options, model_diagonal,
+	    &face_results, adaptive_quality ? &face_working_estimates : NULL,
+	    0, 0, 0,
 	    false, false,
 	    false, false, options.max_result_bytes, options.max_points,
 	    deadline, (bool)options.allow_partial, &work_budget
@@ -6118,9 +6458,128 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	}
     }
 
+    int refinement_passes = 0;
+    bool refinement_time_limited = false;
+    if (adaptive_quality && !hit_time_limit && !hit_memory_limit &&
+	    !hit_point_limit) {
+	size_t retained_byte_count = 0;
+	size_t retained_point_count = 0;
+	for (int face_index = 0; face_index < brep_face_count;
+		face_index++) {
+	    fast_cdt_face_result &result =
+		face_results[(size_t)face_index];
+	    if (!result.completed || result.skipped_degenerate)
+		continue;
+	    retained_byte_count = fast_saturating_add(retained_byte_count,
+		fast_face_result_bytes(result), options.max_result_bytes);
+	    retained_point_count = fast_saturating_add(
+		retained_point_count, result.pnts.size() / 3,
+		options.max_points);
+	    fast_face_refinement &quality =
+		refinement[(size_t)face_index];
+	    quality.area = fast_face_mesh_area(result);
+	    const ON_Surface *surface =
+		brep->m_F[face_index].SurfaceOf();
+	    const bool planar = surface &&
+		surface->IsPlanar(NULL, tol->dist);
+	    quality.accepted_relative_tolerance = planar ?
+		requested_relative : coarse_relative;
+	    quality.area_converged = planar;
+	    quality.budget_limited = result.faces.size() / 3 >
+		face_triangle_budgets[(size_t)face_index];
+	}
+	std::atomic<size_t> retained_bytes(retained_byte_count);
+	std::atomic<size_t> retained_points(retained_point_count);
+	const int64_t initial_elapsed = std::max((int64_t)1,
+	    bu_gettime() - start_time);
+	int64_t previous_pass_elapsed = initial_elapsed;
+
+	auto run_refinement_pass = [&](double relative, bool coarsening) {
+	    const int64_t now = bu_gettime();
+	    const int64_t expected = std::max(initial_elapsed,
+		previous_pass_elapsed);
+	    if (deadline > 0 && (now >= deadline ||
+		expected >= deadline - now)) {
+		refinement_time_limited = true;
+		return false;
+	    }
+	    const int64_t pass_start = now;
+	    struct bg_tess_tol pass_tolerance =
+		fast_scaled_tolerance(ttol, relative);
+	    fast_cdt_refine_state state = {
+		brep, &pass_tolerance, tol, &options, model_diagonal,
+		relative, options.area_change_tolerance, &face_results,
+		&refinement, &face_triangle_budgets,
+		&face_working_estimates, 0, false, false, 0,
+		&retained_bytes, &retained_points, options.max_result_bytes,
+		options.max_points, coarsening, deadline, &work_budget
+	    };
+	    bu_parallel(fast_cdt_refine_worker, options.max_workers,
+		&state);
+	    refinement_passes++;
+	    previous_pass_elapsed = std::max((int64_t)1,
+		bu_gettime() - pass_start);
+	    if (state.time_limited.load())
+		refinement_time_limited = true;
+	    return !refinement_time_limited;
+	};
+
+	/* A topology-derived share is a target, not permission to discard
+	 * a valid boundary.  First try progressively coarser surface samples
+	 * for oversized faces; an irreducible trim boundary remains tagged. */
+	for (double relative = std::min(0.5, coarse_relative * 2.0);
+		!refinement_time_limited &&
+		relative > coarse_relative * (1.0 + 1.0e-12);
+		relative = std::min(0.5, relative * 2.0)) {
+	    bool have_oversized_face = false;
+	    for (const fast_face_refinement &quality : refinement)
+		have_oversized_face = have_oversized_face ||
+		    (quality.budget_limited && !quality.area_converged);
+	    if (!have_oversized_face)
+		break;
+	    if (!run_refinement_pass(relative, true))
+		break;
+	    if (relative >= 0.5)
+		break;
+	}
+
+	/* Walk toward the requested quality.  A face stops after two
+	 * consecutive stable unsigned-area measurements, or when its
+	 * preallocated triangle share would be exceeded. */
+	double relative = coarse_relative * 0.5;
+	for (int pass = 0; !refinement_time_limited && pass < 12; ++pass) {
+	    bool have_refinable_face = false;
+	    for (int face_index = 0; face_index < brep_face_count;
+		    ++face_index) {
+		const fast_cdt_face_result &result =
+		    face_results[(size_t)face_index];
+		const fast_face_refinement &quality =
+		    refinement[(size_t)face_index];
+		have_refinable_face = have_refinable_face ||
+		    (!result.skipped_degenerate &&
+		    (!result.completed || (!quality.area_converged &&
+		    !quality.budget_limited)));
+	    }
+	    if (!have_refinable_face)
+		break;
+	    relative = std::max(requested_relative, relative);
+	    if (relative >= coarse_relative * (1.0 - 1.0e-12))
+		break;
+	    if (!run_refinement_pass(relative, false))
+		break;
+	    if (relative <= requested_relative * (1.0 + 1.0e-12))
+		break;
+	    relative *= 0.5;
+	}
+    }
+
     int completed_faces = 0;
     int failed_faces = 0;
     int skipped_degenerate_faces = 0;
+    int approximated_faces = 0;
+    int area_converged_faces = 0;
+    int triangle_budget_limited_faces = 0;
+
     for (int fi = first_face; fi < end_face; fi++) {
 	fast_cdt_face_result &result = face_results[(size_t)fi];
 	if (!result.completed) {
@@ -6141,8 +6600,21 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 		    options.face_status_data);
 	    continue;
 	}
+	const fast_face_refinement &quality = refinement[(size_t)fi];
+	const bool approximated = adaptive_quality &&
+	    (quality.budget_limited ||
+	    quality.accepted_relative_tolerance >
+	    requested_relative * (1.0 + 1.0e-12));
+	if (approximated)
+	    approximated_faces++;
+	if (quality.area_converged)
+	    area_converged_faces++;
+	if (quality.budget_limited)
+	    triangle_budget_limited_faces++;
 	if (options.face_status)
-	    options.face_status(fi, BREP_CDT_FAST_FACE_COMPLETED,
+	    options.face_status(fi, approximated ?
+		BREP_CDT_FAST_FACE_APPROXIMATED :
+		BREP_CDT_FAST_FACE_COMPLETED,
 		options.face_status_data);
 	const size_t point_offset = all_pnts.size() / 3;
 	if (options.face_output)
@@ -6175,6 +6647,13 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	report->hit_memory_limit = hit_memory_limit;
 	report->hit_point_limit = hit_point_limit;
 	report->peak_working_bytes = work_budget.peak_bytes();
+	report->triangle_budget = triangle_budget;
+	report->approximated_faces = approximated_faces;
+	report->area_converged_faces = area_converged_faces;
+	report->triangle_budget_limited_faces =
+	    triangle_budget_limited_faces;
+	report->refinement_passes = refinement_passes;
+	report->refinement_time_limited = refinement_time_limited;
     }
 
     const bool hit_limit = hit_time_limit || hit_memory_limit ||
