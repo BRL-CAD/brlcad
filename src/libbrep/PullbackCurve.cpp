@@ -493,6 +493,77 @@ struct PullbackSurfaceScratch {
 
 static thread_local PullbackSurfaceScratch pullback_surface_scratch;
 
+
+static bool
+surface_collapsed_interval_bounding_box(const ON_Surface *surface,
+    const ON_Interval &u_interval, const ON_Interval &v_interval,
+    ON_BoundingBox &bbox, bool grow)
+{
+    if (!surface)
+	return false;
+
+    const ON_Interval intervals[2] = {u_interval, v_interval};
+    bool increasing[2] = {false, false};
+    bool collapsed[2] = {false, false};
+    for (int direction = 0; direction < 2; ++direction) {
+	const double first = intervals[direction].m_t[0];
+	const double second = intervals[direction].m_t[1];
+	if (!std::isfinite(first) || !std::isfinite(second) || first > second)
+	    return false;
+	increasing[direction] = first < second;
+	collapsed[direction] = !increasing[direction];
+    }
+    if (increasing[0] && increasing[1])
+	return false;
+    if ((!increasing[0] && !collapsed[0]) ||
+	    (!increasing[1] && !collapsed[1]))
+	return false;
+
+    ON_BoundingBox local_box = ON_BoundingBox::EmptyBoundingBox;
+    if (collapsed[0] && collapsed[1]) {
+	const ON_3dPoint point = surface->PointAt(u_interval.m_t[0],
+	    v_interval.m_t[0]);
+	if (!point.IsValid())
+	    return false;
+	local_box = ON_BoundingBox(point, point);
+    } else {
+	const int varying_direction = increasing[0] ? 0 : 1;
+	const int constant_direction = 1 - varying_direction;
+	const double constant = intervals[constant_direction].m_t[0];
+	std::unique_ptr<ON_Curve> isocurve(surface->IsoCurve(
+	    varying_direction, constant));
+	if (!isocurve)
+	    return false;
+	const ON_Interval requested = intervals[varying_direction];
+	const ON_Interval curve_domain = isocurve->Domain();
+	const double parameter_scale = std::max(1.0,
+	    std::max(fabs(curve_domain.Min()), fabs(curve_domain.Max())));
+	const double parameter_tolerance = 128.0 * DBL_EPSILON *
+	    parameter_scale;
+	if (requested.Min() < curve_domain.Min() - parameter_tolerance ||
+		requested.Max() > curve_domain.Max() + parameter_tolerance)
+	    return false;
+	const ON_Interval bounded(std::max(requested.Min(),
+	    curve_domain.Min()), std::min(requested.Max(),
+	    curve_domain.Max()));
+	if (!bounded.IsIncreasing())
+	    return false;
+	if ((bounded.Min() > curve_domain.Min() ||
+		bounded.Max() < curve_domain.Max()) &&
+		!isocurve->Trim(bounded))
+	    return false;
+	if (!isocurve->GetBoundingBox(local_box, false) ||
+		!local_box.IsValid())
+	    return false;
+    }
+
+    if (grow && bbox.IsValid())
+	bbox.Union(local_box);
+    else
+	bbox = local_box;
+    return bbox.IsValid();
+}
+
 /* Return the raw ON_NurbsSurface span containing an interior parameter.  The
  * public span vector removes repeated knots, while ConvertSpanToBezier expects
  * an index into the raw knot vector. */
@@ -616,6 +687,10 @@ surface_GetBoundingBox(
     bool bGrowBox
     )
 {
+    if (surface_collapsed_interval_bounding_box(surf, u_interval,
+	    v_interval, bbox, bGrowBox))
+	return true;
+
     const ON_NurbsSurface *nurbs =
 	dynamic_cast<const ON_NurbsSurface *>(surf);
     if (nurbs && nurbs_single_span_bounding_box(nurbs, u_interval,
@@ -711,6 +786,9 @@ face_GetBoundingBox(
 {
     const ON_Surface *surf = face.SurfaceOf();
 
+    if (!surf)
+	return false;
+
     // may be a smaller trimmed subset of surface so worth getting
     // face boundary
     bool growcurrent = bGrowBox != 0;
@@ -718,21 +796,43 @@ face_GetBoundingBox(
     // empty, which is what we want for the initial calculation
     ON_3dPoint min(DBL_MAX, DBL_MAX, DBL_MAX);
     ON_3dPoint max(-DBL_MAX, -DBL_MAX, -DBL_MAX);
+    bool have_trim_box = false;
+    bool trim_box_failed = false;
     for (int li = 0; li < face.LoopCount(); li++) {
 	for (int ti = 0; ti < face.Loop(li)->TrimCount(); ti++) {
 	    ON_BrepTrim *trim = face.Loop(li)->Trim(ti);
-	    trim->GetBoundingBox(min, max, growcurrent);
-	    growcurrent = true;
+	    if (!trim || !trim->GetBoundingBox(min, max,
+		    have_trim_box ? true : growcurrent)) {
+		trim_box_failed = true;
+		continue;
+	    }
+	    have_trim_box = true;
 	}
     }
 
-    ON_Interval u_interval(min.x, max.x);
-    ON_Interval v_interval(min.y, max.y);
-    if (!surface_GetBoundingBox(surf, u_interval, v_interval, bbox, growcurrent)) {
-	return false;
+
+    if (have_trim_box && !trim_box_failed) {
+	const ON_Interval u_interval(min.x, max.x);
+	const ON_Interval v_interval(min.y, max.y);
+	if (surface_GetBoundingBox(surf, u_interval, v_interval, bbox,
+		growcurrent))
+	    return true;
     }
 
-    return true;
+    /* A valid B-Rep can contain a zero-area or otherwise degenerate face.
+     * If its trim envelope cannot bound a two-dimensional surface region,
+     * retain a conservative bound from the complete supporting surface.
+     * This is intentionally an upper bound: callers use this routine for
+     * spatial rejection and must never receive an undersized box. */
+    ON_BoundingBox surface_box = ON_BoundingBox::EmptyBoundingBox;
+    if (!surf->GetBoundingBox(surface_box, false) ||
+	    !surface_box.IsValid())
+	return false;
+    if (bGrowBox && bbox.IsValid())
+	bbox.Union(surface_box);
+    else
+	bbox = surface_box;
+    return bbox.IsValid();
 }
 
 
