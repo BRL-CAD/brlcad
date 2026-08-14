@@ -6000,6 +6000,155 @@ fast_face_mesh_area(const fast_cdt_face_result &result)
 }
 
 
+static void
+fast_bbox_include(ON_BoundingBox &bbox, const ON_3dPoint &point)
+{
+    if (!point.IsValid() || !std::isfinite(point.x) ||
+	    !std::isfinite(point.y) || !std::isfinite(point.z))
+	return;
+    if (bbox.IsValid())
+	bbox.Set(point, true);
+    else
+	bbox = ON_BoundingBox(point, point);
+}
+
+
+static ON_BoundingBox
+fast_edge_boundary_box(const ON_BrepEdge &edge, double tolerance)
+{
+    ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
+    const ON_Interval domain = edge.Domain();
+    if (!domain.IsIncreasing())
+	return bbox;
+
+    /* Lines need only their endpoints.  Curved proxy edges are sampled in
+     * their native spans so extrema represented by the actual curve, rather
+     * than potentially remote NURBS control points, define the guard. */
+    if (edge.IsLinear(tolerance)) {
+	fast_bbox_include(bbox, edge.PointAt(domain.Min()));
+	fast_bbox_include(bbox, edge.PointAt(domain.Max()));
+	return bbox;
+    }
+
+    int span_count = edge.SpanCount();
+    std::vector<double> spans;
+    if (span_count > 0 && span_count <= 4096) {
+	spans.resize((size_t)span_count + 1);
+	if (!edge.GetSpanVector(spans.data()))
+	    spans.clear();
+    }
+    if (spans.empty()) {
+	span_count = 1;
+	spans.push_back(domain.Min());
+	spans.push_back(domain.Max());
+    }
+    const int samples_per_span = std::max(1,
+	std::min(8, 256 / span_count));
+    for (int span = 0; span < span_count; ++span) {
+	const ON_Interval interval(spans[(size_t)span],
+	    spans[(size_t)span + 1]);
+	for (int sample = 0; sample <= samples_per_span; ++sample)
+	    fast_bbox_include(bbox, edge.PointAt(interval.ParameterAt(
+		(double)sample / (double)samples_per_span)));
+    }
+    return bbox;
+}
+
+
+static std::vector<ON_BoundingBox>
+fast_face_boundary_boxes(const ON_Brep *brep, double tolerance)
+{
+    std::vector<ON_BoundingBox> edge_boxes((size_t)brep->m_E.Count(),
+	ON_BoundingBox::EmptyBoundingBox);
+    for (int edge_index = 0; edge_index < brep->m_E.Count(); ++edge_index)
+	edge_boxes[(size_t)edge_index] = fast_edge_boundary_box(
+	    brep->m_E[edge_index], tolerance);
+
+    std::vector<ON_BoundingBox> face_boxes((size_t)brep->m_F.Count(),
+	ON_BoundingBox::EmptyBoundingBox);
+    for (int face_index = 0; face_index < brep->m_F.Count(); ++face_index) {
+	ON_BoundingBox &bbox = face_boxes[(size_t)face_index];
+	const ON_BrepFace &face = brep->m_F[face_index];
+	for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
+	    const ON_BrepLoop *loop = face.Loop(loop_index);
+	    if (!loop)
+		continue;
+	    for (int trim_index = 0; trim_index < loop->TrimCount();
+		    ++trim_index) {
+		const ON_BrepTrim *trim = loop->Trim(trim_index);
+		if (!trim)
+		    continue;
+		const ON_BrepVertex *first = trim->Vertex(0);
+		const ON_BrepVertex *second = trim->Vertex(1);
+		if (first)
+		    fast_bbox_include(bbox, first->Point());
+		if (second)
+		    fast_bbox_include(bbox, second->Point());
+		if (trim->m_ei < 0 ||
+			trim->m_ei >= (int)edge_boxes.size())
+		    continue;
+		const ON_BoundingBox &edge_box =
+		    edge_boxes[(size_t)trim->m_ei];
+		if (!edge_box.IsValid())
+		    continue;
+		if (bbox.IsValid())
+		    bbox.Union(edge_box);
+		else
+		    bbox = edge_box;
+	    }
+	}
+    }
+    return face_boxes;
+}
+
+
+struct fast_boundary_coverage {
+    double fraction = 1.0;
+    bool covered = true;
+};
+
+
+static fast_boundary_coverage
+fast_face_boundary_coverage(const fast_cdt_face_result &result,
+	const ON_BoundingBox &reference, double tolerance)
+{
+    fast_boundary_coverage coverage;
+    if (!reference.IsValid())
+	return coverage;
+
+    ON_BoundingBox mesh = ON_BoundingBox::EmptyBoundingBox;
+    for (int index : result.faces) {
+	if (index < 0 || (size_t)index * 3 + 2 >= result.pnts.size())
+	    continue;
+	fast_bbox_include(mesh, ON_3dPoint(result.pnts[(size_t)index * 3],
+	    result.pnts[(size_t)index * 3 + 1],
+	    result.pnts[(size_t)index * 3 + 2]));
+    }
+    if (!mesh.IsValid()) {
+	coverage.fraction = 0.0;
+	coverage.covered = false;
+	return coverage;
+    }
+
+    coverage.fraction = 1.0;
+    for (int axis = 0; axis < 3; ++axis) {
+	const double extent = reference.m_max[axis] -
+	    reference.m_min[axis];
+	if (!std::isfinite(extent) || extent <= 2.0 * tolerance)
+	    continue;
+	const double low = std::max(0.0, mesh.m_min[axis] -
+	    reference.m_min[axis] - tolerance);
+	const double high = std::max(0.0, reference.m_max[axis] -
+	    mesh.m_max[axis] - tolerance);
+	const double missing = low + high;
+	coverage.fraction = std::min(coverage.fraction,
+	    std::max(0.0, 1.0 - missing / extent));
+	coverage.covered = coverage.covered && missing <= 0.0;
+    }
+    return coverage;
+}
+
+
 static size_t
 fast_face_result_bytes(const fast_cdt_face_result &result)
 {
@@ -6104,8 +6253,10 @@ fast_face_triangle_budgets(const std::vector<size_t> &working_estimates,
 
 struct fast_face_refinement {
     double area = 0.0;
+    double boundary_coverage = 1.0;
     double accepted_relative_tolerance = 0.0;
     int stable_passes = 0;
+    bool boundary_covered = true;
     bool area_converged = false;
     bool budget_limited = false;
 };
@@ -6121,6 +6272,8 @@ struct fast_cdt_refine_state {
     double area_change_tolerance;
     std::vector<fast_cdt_face_result> *results;
     std::vector<fast_face_refinement> *refinement;
+    const std::vector<ON_BoundingBox> *boundary_boxes;
+    const std::vector<double> *boundary_tolerances;
     const std::vector<size_t> *triangle_budgets;
     const std::vector<size_t> *working_estimates;
     std::atomic<int> next_face;
@@ -6160,9 +6313,14 @@ fast_cdt_refine_worker(int UNUSED(cpu), void *data)
 	    (*state->results)[(size_t)face_index];
 	if (current.skipped_degenerate ||
 		(state->coarsening && (!quality.budget_limited ||
-		quality.area_converged)) ||
+		quality.area_converged || !quality.boundary_covered)) ||
 		(!state->coarsening &&
-		(quality.area_converged || quality.budget_limited)))
+		(quality.area_converged || quality.budget_limited) &&
+		quality.boundary_covered))
+	    continue;
+	if (!state->coarsening && current.completed &&
+		state->relative_tolerance >=
+		quality.accepted_relative_tolerance * (1.0 - 1.0e-12))
 	    continue;
 
 	const ON_BrepFace &face = state->brep->m_F[face_index];
@@ -6202,13 +6360,26 @@ fast_cdt_refine_worker(int UNUSED(cpu), void *data)
 	const size_t triangles = candidate.faces.size() / 3;
 	const size_t triangle_budget =
 	    (*state->triangle_budgets)[(size_t)face_index];
+	const fast_boundary_coverage candidate_coverage =
+	    fast_face_boundary_coverage(candidate,
+		(*state->boundary_boxes)[(size_t)face_index],
+		(*state->boundary_tolerances)[(size_t)face_index]);
 	if (state->coarsening) {
-	    if (!current.completed ||
+	    if (!candidate_coverage.covered || !current.completed ||
 		triangles >= current.faces.size() / 3)
 		continue;
-	} else if (current.completed && triangles > triangle_budget) {
-	    quality.budget_limited = true;
-	    continue;
+	} else if (current.completed) {
+	    if (quality.boundary_covered && !candidate_coverage.covered)
+		continue;
+	    if (!quality.boundary_covered &&
+		    !candidate_coverage.covered &&
+		    candidate_coverage.fraction <=
+		    quality.boundary_coverage + 1.0e-12)
+		continue;
+	    if (quality.boundary_covered && triangles > triangle_budget) {
+		quality.budget_limited = true;
+		continue;
+	    }
 	}
 
 	const size_t old_bytes = current.completed ?
@@ -6230,7 +6401,8 @@ fast_cdt_refine_worker(int UNUSED(cpu), void *data)
 	    continue;
 	}
 	const double area = fast_face_mesh_area(candidate);
-	if (!state->coarsening && current.completed &&
+	if (!state->coarsening && candidate_coverage.covered &&
+		current.completed &&
 		!current.skipped_degenerate &&
 		quality.area > ON_ZERO_TOLERANCE && area > 0.0) {
 	    const double change = fabs(area - quality.area) /
@@ -6239,11 +6411,16 @@ fast_cdt_refine_worker(int UNUSED(cpu), void *data)
 		change <= state->area_change_tolerance ?
 		quality.stable_passes + 1 : 0;
 	    quality.area_converged = quality.stable_passes >= 2;
+	} else if (!candidate_coverage.covered) {
+	    quality.stable_passes = 0;
+	    quality.area_converged = false;
 	}
 	candidate.completed = true;
 	candidate.failed = false;
 	current = std::move(candidate);
 	quality.area = area;
+	quality.boundary_coverage = candidate_coverage.fraction;
+	quality.boundary_covered = candidate_coverage.covered;
 	quality.accepted_relative_tolerance = state->relative_tolerance;
 	quality.budget_limited = triangles > triangle_budget;
 	if (state->coarsening) {
@@ -6393,6 +6570,27 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
     std::vector<size_t> face_triangle_budgets = adaptive_quality ?
 	fast_face_triangle_budgets(face_working_estimates, triangle_budget) :
 	std::vector<size_t>((size_t)brep_face_count, options.max_triangles);
+    std::vector<ON_BoundingBox> face_boundary_boxes = adaptive_quality ?
+	fast_face_boundary_boxes(brep, tol->dist) :
+	std::vector<ON_BoundingBox>((size_t)brep_face_count,
+	    ON_BoundingBox::EmptyBoundingBox);
+    std::vector<double> face_boundary_tolerances(
+	(size_t)brep_face_count, tol->dist);
+    if (adaptive_quality) {
+	for (int face_index = 0; face_index < brep_face_count; ++face_index) {
+	    const ON_BoundingBox &bbox =
+		face_boundary_boxes[(size_t)face_index];
+	    if (!bbox.IsValid())
+		continue;
+	    double allowance = tol->dist;
+	    if (ttol->abs > ON_ZERO_TOLERANCE)
+		allowance = std::max(allowance, ttol->abs);
+	    if (ttol->rel > ON_ZERO_TOLERANCE)
+		allowance = std::max(allowance,
+		    ttol->rel * bbox.Diagonal().Length());
+	    face_boundary_tolerances[(size_t)face_index] = allowance;
+	}
+    }
     std::vector<fast_face_refinement> refinement(
 	(size_t)brep_face_count);
 
@@ -6478,13 +6676,19 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    fast_face_refinement &quality =
 		refinement[(size_t)face_index];
 	    quality.area = fast_face_mesh_area(result);
+	    const fast_boundary_coverage coverage =
+		fast_face_boundary_coverage(result,
+		    face_boundary_boxes[(size_t)face_index],
+		    face_boundary_tolerances[(size_t)face_index]);
+	    quality.boundary_coverage = coverage.fraction;
+	    quality.boundary_covered = coverage.covered;
 	    const ON_Surface *surface =
 		brep->m_F[face_index].SurfaceOf();
 	    const bool planar = surface &&
 		surface->IsPlanar(NULL, tol->dist);
 	    quality.accepted_relative_tolerance = planar ?
 		requested_relative : coarse_relative;
-	    quality.area_converged = planar;
+	    quality.area_converged = planar && coverage.covered;
 	    quality.budget_limited = result.faces.size() / 3 >
 		face_triangle_budgets[(size_t)face_index];
 	}
@@ -6509,7 +6713,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    fast_cdt_refine_state state = {
 		brep, &pass_tolerance, tol, &options, model_diagonal,
 		relative, options.area_change_tolerance, &face_results,
-		&refinement, &face_triangle_budgets,
+		&refinement, &face_boundary_boxes,
+		&face_boundary_tolerances, &face_triangle_budgets,
 		&face_working_estimates, 0, false, false, 0,
 		&retained_bytes, &retained_points, options.max_result_bytes,
 		options.max_points, coarsening, deadline, &work_budget
@@ -6534,7 +6739,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    bool have_oversized_face = false;
 	    for (const fast_face_refinement &quality : refinement)
 		have_oversized_face = have_oversized_face ||
-		    (quality.budget_limited && !quality.area_converged);
+		    (quality.budget_limited && !quality.area_converged &&
+		    quality.boundary_covered);
 	    if (!have_oversized_face)
 		break;
 	    if (!run_refinement_pass(relative, true))
@@ -6543,9 +6749,9 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 		break;
 	}
 
-	/* Walk toward the requested quality.  A face stops after two
-	 * consecutive stable unsigned-area measurements, or when its
-	 * preallocated triangle share would be exceeded. */
+	/* Walk toward the requested quality.  Area stability and the soft
+	 * triangle share may stop a face only after its realized triangles
+	 * cover the independently sampled authoritative boundary envelope. */
 	double relative = coarse_relative * 0.5;
 	for (int pass = 0; !refinement_time_limited && pass < 12; ++pass) {
 	    bool have_refinable_face = false;
@@ -6558,7 +6764,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 		have_refinable_face = have_refinable_face ||
 		    (!result.skipped_degenerate &&
 		    (!result.completed || (!quality.area_converged &&
-		    !quality.budget_limited)));
+		    (!quality.budget_limited ||
+		    !quality.boundary_covered))));
 	    }
 	    if (!have_refinable_face)
 		break;
@@ -6579,6 +6786,7 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
     int approximated_faces = 0;
     int area_converged_faces = 0;
     int triangle_budget_limited_faces = 0;
+    int boundary_envelope_incomplete_faces = 0;
 
     for (int fi = first_face; fi < end_face; fi++) {
 	fast_cdt_face_result &result = face_results[(size_t)fi];
@@ -6603,6 +6811,7 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	const fast_face_refinement &quality = refinement[(size_t)fi];
 	const bool approximated = adaptive_quality &&
 	    (quality.budget_limited ||
+	    !quality.boundary_covered ||
 	    quality.accepted_relative_tolerance >
 	    requested_relative * (1.0 + 1.0e-12));
 	if (approximated)
@@ -6611,6 +6820,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    area_converged_faces++;
 	if (quality.budget_limited)
 	    triangle_budget_limited_faces++;
+	if (!quality.boundary_covered)
+	    boundary_envelope_incomplete_faces++;
 	if (options.face_status)
 	    options.face_status(fi, approximated ?
 		BREP_CDT_FAST_FACE_APPROXIMATED :
@@ -6652,6 +6863,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	report->area_converged_faces = area_converged_faces;
 	report->triangle_budget_limited_faces =
 	    triangle_budget_limited_faces;
+	report->boundary_envelope_incomplete_faces =
+	    boundary_envelope_incomplete_faces;
 	report->refinement_passes = refinement_passes;
 	report->refinement_time_limited = refinement_time_limited;
     }

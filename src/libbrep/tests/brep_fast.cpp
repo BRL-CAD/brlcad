@@ -183,7 +183,9 @@ main(int argc, const char **argv)
 	serial.report.triangle_budget <= (size_t)256 * 1024 &&
 	serial.report.refinement_passes == parallel.report.refinement_passes &&
 	serial.report.approximated_faces ==
-	parallel.report.approximated_faces;
+	parallel.report.approximated_faces &&
+	serial.report.boundary_envelope_incomplete_faces == 0 &&
+	parallel.report.boundary_envelope_incomplete_faces == 0;
 
     fast_output limited;
     int limit_ret = run_fast(&limited, bi->brep, 4, 1);
@@ -198,6 +200,7 @@ main(int argc, const char **argv)
 	triangle_target_ret == BREP_CDT_FAST_OK &&
 	triangle_targeted.report.triangle_budget == 1 &&
 	triangle_targeted.report.triangle_budget_limited_faces > 0 &&
+	triangle_targeted.report.boundary_envelope_incomplete_faces == 0 &&
 	!triangle_targeted.faces.empty();
 
     wire_output wire_serial;
