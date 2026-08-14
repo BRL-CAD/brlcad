@@ -1759,6 +1759,13 @@ endfunction()
   foreach(ef ${TP_NOINST_FILES})
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BRLCAD_EXT_NOINSTALL_DIR}/${ef})
   endforeach(ef ${TP_NOINST_FILES})
+
+  # We got these from brlcad_ext_setup, but they're now scoped to our
+  # function.  Let the parent context know as well.
+  set(BRLCAD_EXT_DIR "${BRLCAD_EXT_DIR}" PARENT_SCOPE)
+  set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_INSTALL_DIR}" PARENT_SCOPE)
+  set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_NOINSTALL_DIR}" PARENT_SCOPE)
+
 endfunction(brlcad_bext_process)
 
 #####################################################################
