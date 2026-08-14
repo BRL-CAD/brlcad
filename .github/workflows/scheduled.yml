@@ -36,7 +36,7 @@ jobs:
         with:
           path: |
             /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/scheduled.yml') }}
 
       # Install system dependencies
       - name: Install apt dependencies
