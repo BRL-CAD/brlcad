@@ -656,10 +656,19 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 
 //--------------------------------------------------------------------------------
 // CurveTree
-CurveTree::CurveTree(const ON_BrepFace* face, std::size_t max_nodes) :
+CurveTree::CurveTree(const ON_BrepFace* face, std::size_t max_bytes) :
+    CurveTree(face, max_bytes, 0.0)
+{
+}
+
+
+CurveTree::CurveTree(const ON_BrepFace* face, std::size_t max_bytes,
+	double min_feature_size) :
     m_face(face),
     m_root(new BRNode(initialLoopBBox(*face))),
-    m_max_nodes(max_nodes),
+    m_max_nodes(max_bytes ? std::max((std::size_t)1,
+	max_bytes / BRNode::estimated_allocation_size()) : 0),
+    m_min_feature_size(min_feature_size),
     m_node_count(1),
     m_limit_reached(false),
     m_stl(new Stl),
@@ -803,6 +812,7 @@ CurveTree::CurveTree(Deserializer &deserializer, const ON_BrepFace &face) :
     m_face(&face),
     m_root(NULL),
     m_max_nodes(0),
+    m_min_feature_size(0.0),
     m_node_count(0),
     m_limit_reached(false),
     m_stl(new Stl),
@@ -1076,9 +1086,59 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int trim_index, int adj_face_in
     ON_BoundingBox bb(points[0], points[1]);
 
     ON_Interval t(min, max);
-    const bool force_leaf = m_max_nodes && m_node_count + 3 > m_max_nodes;
-    if (isLinear(curve, min, max) || divDepth >= BREP_MAX_LN_DEPTH ||
-	    force_leaf) {
+    const double mid = min + (max - min) * 0.5;
+    const bool midpoint_stagnant = !std::isfinite(mid) ||
+	!(mid > min) || !(mid < max);
+    const bool linear = isLinear(curve, min, max);
+
+    /* The trim curve lives in UV space, whose units and scale are arbitrary.
+     * For display callers that supplied a model-space feature tolerance,
+     * stop when the entire sampled surface-space interval is too small to
+     * affect the requested picture.  Sampling five points avoids mistaking
+     * a closed or strongly bowed interval for a zero-length feature. */
+    bool small_feature = false;
+    bool uv_collapsed = false;
+    if (!linear && !midpoint_stagnant && m_min_feature_size > 0.0) {
+	const ON_Surface *surface = m_face ? m_face->SurfaceOf() : NULL;
+	ON_BoundingBox uv_box = ON_BoundingBox::EmptyBoundingBox;
+	ON_BoundingBox model_box = ON_BoundingBox::EmptyBoundingBox;
+	bool valid_uv = true;
+	bool valid_model = surface && m_min_feature_size > 0.0;
+	for (int sample = 0; sample < 5; sample++) {
+	    const double parameter = min + (max - min) *
+		(double)sample / 4.0;
+	    const ON_3dPoint uv = curve->PointAt(parameter);
+	    if (!uv.IsValid()) {
+		valid_uv = false;
+		valid_model = false;
+		break;
+	    }
+	    if (uv_box.IsValid())
+		uv_box.Set(uv, true);
+	    else
+		uv_box = ON_BoundingBox(uv, uv);
+	    if (valid_model) {
+		const ON_3dPoint model = surface->PointAt(uv.x, uv.y);
+		if (!model.IsValid()) {
+		    valid_model = false;
+		} else if (model_box.IsValid()) {
+		    model_box.Set(model, true);
+		} else {
+		    model_box = ON_BoundingBox(model, model);
+		}
+	    }
+	}
+	uv_collapsed = valid_uv && uv_box.IsValid() &&
+	    uv_box.Diagonal().Length() <= BREP_UV_DIST_FUZZ;
+	small_feature = valid_model && model_box.IsValid() &&
+	    model_box.Diagonal().Length() <= m_min_feature_size;
+    }
+
+    const bool natural_leaf = linear || divDepth >= BREP_MAX_LN_DEPTH ||
+	midpoint_stagnant || uv_collapsed || small_feature;
+    const bool force_leaf = !natural_leaf && m_max_nodes &&
+	m_node_count + 3 > m_max_nodes;
+    if (natural_leaf || force_leaf) {
 	if (force_leaf)
 	    m_limit_reached = true;
 	++m_node_count;
@@ -1107,7 +1167,6 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int trim_index, int adj_face_in
     // else subdivide
     ++m_node_count;
     BRNode* parent = curveBBox(curve, trim_index, adj_face_index, t, false, innerTrim, bb);
-    double mid = (max+min)/2.0;
     BRNode* l = subdivideCurve(curve, trim_index, adj_face_index, min, mid, innerTrim, divDepth+1);
 	if (l)
 	    parent->addChild(l);
@@ -1181,7 +1240,18 @@ struct SurfaceSplitCache {
 };
 
 
-SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthLimit, double within_distance_tol, std::size_t max_curve_nodes) :
+SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed,
+	int depthLimit, double within_distance_tol,
+	std::size_t max_curve_bytes) :
+    SurfaceTree(face, removeTrimmed, depthLimit, within_distance_tol,
+	max_curve_bytes, 0.0)
+{
+}
+
+
+SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed,
+	int depthLimit, double within_distance_tol,
+	std::size_t max_curve_bytes, double min_curve_feature_size) :
     m_ctree(NULL),
     m_removeTrimmed(removeTrimmed),
     m_face(face),
@@ -1214,7 +1284,8 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
 
     // first, build the Curve Tree
     if (removeTrimmed) {
-	m_ctree = new CurveTree(m_face, max_curve_nodes);
+	m_ctree = new CurveTree(m_face, max_curve_bytes,
+	    min_curve_feature_size);
 	if (m_ctree->limit_reached())
 	    return;
     }

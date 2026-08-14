@@ -44,7 +44,10 @@ RT_EXPORT extern int rt_brep_plot(struct bu_list                *vhead,
  * surface cue during serial result assembly. */
 struct rt_brep_draw_options {
     size_t max_workers;
+    /* Retained output and temporary curve-tree storage are independent peak
+     * memory controls.  A zero user value selects the library default. */
     size_t max_result_bytes;
+    size_t max_working_bytes;
     size_t max_points;
     long max_time_ms;
     int include_surface_cues;
@@ -58,6 +61,7 @@ struct rt_brep_draw_options {
 #define RT_BREP_DRAW_ITEM_COMPLETED 0
 #define RT_BREP_DRAW_ITEM_FAILED 1
 #define RT_BREP_DRAW_ITEM_NOT_PROCESSED 2
+#define RT_BREP_DRAW_ITEM_APPROXIMATED 3
 
 struct rt_brep_draw_report {
     int requested_edges;
@@ -65,6 +69,9 @@ struct rt_brep_draw_report {
     int failed_edges;
     int requested_surface_cues;
     int completed_surface_cues;
+    /* Cues drawn from the bounded untrimmed surface envelope after exact
+     * trim hierarchy construction exceeded max_working_bytes. */
+    int approximated_surface_cues;
     size_t output_points;
     size_t result_bytes;
     int hit_time_limit;

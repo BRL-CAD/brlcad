@@ -2222,10 +2222,60 @@ brep_wire_vlist_points(const struct bu_list *head)
     return count;
 }
 
-/* Surface cues are optional display aids.  Unlike edge sampling, their
- * trimming tree can grow exponentially for malformed p-curves.  Bound that
- * auxiliary tree independently so it can be dropped while retaining edges. */
-static const size_t BREP_WIRE_MAX_CUE_TREE_NODES = 131072;
+/* Surface cues are optional display aids.  Their trimming hierarchy is
+ * temporary working state, so give it a peak-memory policy independent of
+ * retained line output.  CurveTree translates this byte budget using its
+ * actual node representation rather than exposing an arbitrary node count. */
+static const size_t BREP_WIRE_DEFAULT_WORKING_BYTES =
+    (size_t)64 * 1024 * 1024;
+
+static double
+brep_wire_face_feature_size(const ON_BrepFace &face,
+	const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+{
+    ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
+    std::set<const ON_BrepEdge *> sampled_edges;
+    for (int loop_index = 0; loop_index < face.LoopCount(); loop_index++) {
+	const ON_BrepLoop *loop = face.Loop(loop_index);
+	if (!loop)
+	    continue;
+	for (int trim_index = 0; trim_index < loop->TrimCount(); trim_index++) {
+	    const ON_BrepTrim *trim = loop->Trim(trim_index);
+	    const ON_BrepEdge *edge = trim ? trim->Edge() : NULL;
+	    if (!edge || !sampled_edges.insert(edge).second)
+		continue;
+	    const ON_Interval domain = edge->Domain();
+	    const int samples = std::max(8,
+		std::min(256, edge->SpanCount() * 2));
+	    for (int sample = 0; sample <= samples; sample++) {
+		const ON_3dPoint point = edge->PointAt(domain.ParameterAt(
+		    (double)sample / (double)samples));
+		if (!point.IsValid())
+		    continue;
+		if (bbox.IsValid())
+		    bbox.Set(point, true);
+		else
+		    bbox = ON_BoundingBox(point, point);
+	    }
+	}
+    }
+
+    double scale = 0.0;
+    if (!bbox.IsValid())
+	face.GetBoundingBox(bbox, false);
+    if (bbox.IsValid())
+	scale = bbox.Diagonal().Length();
+
+    double feature_size = tol->dist;
+    if (ttol->abs > 0.0)
+	feature_size = std::max(feature_size, ttol->abs);
+    if (ttol->rel > 0.0 && scale > ON_ZERO_TOLERANCE &&
+	    std::isfinite(scale))
+	feature_size = std::max(feature_size, ttol->rel * scale);
+    if (!(feature_size > 0.0) || !std::isfinite(feature_size))
+	feature_size = BN_TOL_DIST;
+    return feature_size;
+}
 
 void
 rt_brep_draw_options_default(struct rt_brep_draw_options *options)
@@ -2236,6 +2286,7 @@ rt_brep_draw_options_default(struct rt_brep_draw_options *options)
     if (!options->max_workers)
 	options->max_workers = 1;
     options->max_result_bytes = (size_t)256 * 1024 * 1024;
+    options->max_working_bytes = BREP_WIRE_DEFAULT_WORKING_BYTES;
     options->max_points = (size_t)4 * 1024 * 1024;
     options->max_time_ms = 0;
     options->include_surface_cues = 1;
@@ -2287,6 +2338,8 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 	    options.max_workers = user_options->max_workers;
 	if (user_options->max_result_bytes)
 	    options.max_result_bytes = user_options->max_result_bytes;
+	if (user_options->max_working_bytes)
+	    options.max_working_bytes = user_options->max_working_bytes;
 	if (user_options->max_points)
 	    options.max_points = user_options->max_points;
 	options.max_time_ms = user_options->max_time_ms;
@@ -2358,6 +2411,7 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
     }
 
     int completed_surface_cues = 0;
+    int approximated_surface_cues = 0;
     std::vector<int> surface_cue_status((size_t)brep->m_F.Count(),
 	RT_BREP_DRAW_ITEM_NOT_PROCESSED);
     for (int face_index : surface_cue_faces) {
@@ -2369,29 +2423,37 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 	}
 	struct bu_list face_vhead;
 	BU_LIST_INIT(&face_vhead);
+	bool approximated = false;
 	try {
 	    const ON_BrepFace &face = brep->m_F[face_index];
 	    const ON_Surface *surface = face.SurfaceOf();
-	    if (ON_SumSurface::Cast(surface)) {
-		SurfaceTree tree(&face, true, 2, BREP_EDGE_MISS_TOLERANCE,
-		    BREP_WIRE_MAX_CUE_TREE_NODES);
-		if (!tree.Valid()) {
-		    hit_memory_limit = true;
+	    const int tree_depth = ON_SumSurface::Cast(surface) ? 2 : 0;
+	    const double min_feature_size = brep_wire_face_feature_size(face,
+		ttol, tol);
+	    SurfaceTree tree(&face, true, tree_depth,
+		BREP_EDGE_MISS_TOLERANCE, options.max_working_bytes,
+		min_feature_size);
+	    if (tree.Valid()) {
+		plot_face_from_surface_tree(vlfree, &face_vhead, &tree, 100, 10);
+	    } else if (tree.CurveTreeLimitReached()) {
+		/* Preserve exact B-Rep edges and retain a bounded surface cue
+		 * over the face's trim-parameter envelope.  This deliberately
+		 * omits unreliable hole/outer-loop classification and is tagged
+		 * as an approximation for callers that need provenance. */
+		SurfaceTree fallback(&face, false, tree_depth,
+		    BREP_EDGE_MISS_TOLERANCE);
+		if (!fallback.Valid()) {
 		    surface_cue_status[(size_t)face_index] =
 			RT_BREP_DRAW_ITEM_FAILED;
-		    break;
+		    continue;
 		}
-		plot_face_from_surface_tree(vlfree, &face_vhead, &tree, 100, 10);
+		plot_face_from_surface_tree(vlfree, &face_vhead, &fallback,
+		    100, 10);
+		approximated = true;
 	    } else {
-		SurfaceTree tree(&face, true, 0, BREP_EDGE_MISS_TOLERANCE,
-		    BREP_WIRE_MAX_CUE_TREE_NODES);
-		if (!tree.Valid()) {
-		    hit_memory_limit = true;
-		    surface_cue_status[(size_t)face_index] =
-			RT_BREP_DRAW_ITEM_FAILED;
-		    break;
-		}
-		plot_face_from_surface_tree(vlfree, &face_vhead, &tree, 100, 10);
+		surface_cue_status[(size_t)face_index] =
+		    RT_BREP_DRAW_ITEM_FAILED;
+		continue;
 	    }
 	} catch (...) {
 	    BV_FREE_VLIST(vlfree, &face_vhead);
@@ -2419,9 +2481,15 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 	BU_LIST_APPEND_LIST(vhead, &face_vhead);
 	output_points += cue_points;
 	result_bytes += cue_bytes;
-	completed_surface_cues++;
-	surface_cue_status[(size_t)face_index] =
-	    RT_BREP_DRAW_ITEM_COMPLETED;
+	if (approximated) {
+	    approximated_surface_cues++;
+	    surface_cue_status[(size_t)face_index] =
+		RT_BREP_DRAW_ITEM_APPROXIMATED;
+	} else {
+	    completed_surface_cues++;
+	    surface_cue_status[(size_t)face_index] =
+		RT_BREP_DRAW_ITEM_COMPLETED;
+	}
     }
 
     if (options.item_status) {
@@ -2437,6 +2505,7 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 	report->failed_edges = edge_count - completed_edges;
 	report->requested_surface_cues = (int)surface_cue_faces.size();
 	report->completed_surface_cues = completed_surface_cues;
+	report->approximated_surface_cues = approximated_surface_cues;
 	report->output_points = output_points;
 	report->result_bytes = result_bytes;
 	report->hit_time_limit = hit_time_limit;
