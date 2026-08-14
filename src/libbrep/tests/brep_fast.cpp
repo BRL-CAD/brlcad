@@ -84,7 +84,8 @@ run_shaded(wire_output *output, struct directory *dp,
 
 static int
 run_fast(fast_output *output, const ON_Brep *brep, size_t workers,
-	size_t max_points, size_t max_working_bytes = 0)
+	size_t max_points, size_t max_working_bytes = 0,
+	size_t max_triangles = 0, bool adaptive_quality = true)
 {
     int *faces = NULL;
     int face_count = 0;
@@ -99,6 +100,9 @@ run_fast(fast_output *output, const ON_Brep *brep, size_t workers,
     options.max_points = max_points;
     if (max_working_bytes)
 	options.max_working_bytes = max_working_bytes;
+    if (max_triangles)
+	options.max_triangles = max_triangles;
+    options.adaptive_quality = adaptive_quality ? 1 : 0;
 
     int ret = brep_cdt_fast_ex(&faces, &face_count, &normals, &points,
 	&point_count, brep, -1, &ttol, &tol, &options, &output->report);
@@ -175,12 +179,26 @@ main(int argc, const char **argv)
 	parallel.report.completed_faces == bi->brep->m_F.Count();
     bool working_bounded = parallel.report.peak_working_bytes > 0 &&
 	parallel.report.peak_working_bytes <= working_budget;
+    bool adaptive_reported = serial.report.triangle_budget > 0 &&
+	serial.report.triangle_budget <= (size_t)256 * 1024 &&
+	serial.report.refinement_passes == parallel.report.refinement_passes &&
+	serial.report.approximated_faces ==
+	parallel.report.approximated_faces;
 
     fast_output limited;
     int limit_ret = run_fast(&limited, bi->brep, 4, 1);
     bool limited_cleanly = limit_ret == BREP_CDT_FAST_LIMIT &&
 	limited.report.hit_point_limit && limited.faces.empty() &&
 	limited.normals.empty() && limited.points.empty();
+
+    fast_output triangle_targeted;
+    int triangle_target_ret = run_fast(&triangle_targeted, bi->brep, 4,
+	16 * 1024 * 1024, 0, 1);
+    bool authoritative_boundaries_retained =
+	triangle_target_ret == BREP_CDT_FAST_OK &&
+	triangle_targeted.report.triangle_budget == 1 &&
+	triangle_targeted.report.triangle_budget_limited_faces > 0 &&
+	!triangle_targeted.faces.empty();
 
     wire_output wire_serial;
     wire_output wire_parallel;
@@ -259,8 +277,9 @@ main(int argc, const char **argv)
 
     rt_db_free_internal(&intern);
     db_close(dbip);
-    return (same && complete && working_bounded && unchanged &&
-	limited_cleanly && wire_same && wire_limited_cleanly &&
+    return (same && complete && working_bounded && adaptive_reported &&
+	unchanged && limited_cleanly && authoritative_boundaries_retained &&
+	wire_same && wire_limited_cleanly &&
 	wire_approximated_cleanly &&
 	shaded_matches_fast) ? 0 : 1;
 }

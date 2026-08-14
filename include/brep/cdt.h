@@ -461,8 +461,9 @@ extern BREP_EXPORT int
 brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, int *pntcnt,
 	const ON_Brep *brep, int index, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
-/* Resource controls and diagnostics for display-quality tessellation.  A
- * zero option value selects the library default.  max_time_ms is checked
+/* Resource controls and diagnostics for display-quality tessellation.  Zero
+ * resource and tolerance values select library defaults; adaptive_quality is
+ * a boolean switch.  max_time_ms is checked
  * between faces; the per-face samplers also have fixed progress and recursion
  * guards to prevent non-terminating refinement.  face_status, when non-NULL,
  * is called exactly once per requested face during serial result assembly.
@@ -501,12 +502,25 @@ struct brep_cdt_fast_options {
      * This is independent of max_result_bytes, which bounds retained output.
      * A zero value selects an availability-calibrated library default. */
     size_t max_working_bytes;
+    /* Display triangle target.  Adaptive whole-object budgeting may select a
+     * lower target according to B-Rep topology.  Authoritative trim
+     * boundaries are retained and may make the final count exceed it. */
+    size_t max_triangles;
+    /* Generate a complete coarse mesh before refining toward the requested
+     * tolerance.  Intended for visual display; rigorous callers may disable
+     * it to request the specified tolerance directly. */
+    int adaptive_quality;
+    /* Initial relative display tolerance and per-face unsigned area-change
+     * convergence threshold.  Zero values select library defaults. */
+    double coarse_relative_tolerance;
+    double area_change_tolerance;
 };
 
 #define BREP_CDT_FAST_FACE_COMPLETED 0
 #define BREP_CDT_FAST_FACE_FAILED 1
 #define BREP_CDT_FAST_FACE_SKIPPED_DEGENERATE 2
 #define BREP_CDT_FAST_FACE_NOT_PROCESSED 3
+#define BREP_CDT_FAST_FACE_APPROXIMATED 4
 
 /* completed_faces includes faces proven to have no drawable area;
  * skipped_degenerate_faces reports that subset explicitly. */
@@ -522,6 +536,13 @@ struct brep_cdt_fast_report {
     int skipped_degenerate_faces;
     /* Peak sum of conservative face-work reservations. */
     size_t peak_working_bytes;
+    /* Adaptive display-quality provenance. */
+    size_t triangle_budget;
+    int approximated_faces;
+    int area_converged_faces;
+    int triangle_budget_limited_faces;
+    int refinement_passes;
+    int refinement_time_limited;
 };
 
 #define BREP_CDT_FAST_OK 0

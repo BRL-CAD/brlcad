@@ -11885,6 +11885,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	struct brep_cdt_fast_options fast_options;
 	brep_cdt_fast_options_default(&fast_options);
 	fast_options.max_workers = 1;
+	fast_options.adaptive_quality = 0;
 	fast_options.max_points = settings->max_fast_points;
 	fast_options.max_result_bytes = settings->max_fast_result_bytes;
 	fast_options.max_time_ms = settings->max_fast_time_ms;
@@ -12340,6 +12341,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    struct brep_cdt_fast_options fast_options;
 	    brep_cdt_fast_options_default(&fast_options);
 	    fast_options.max_workers = 1;
+	    fast_options.adaptive_quality = 0;
 	    fast_options.max_points = settings->max_fast_points -
 		fast_points_used;
 	    fast_options.max_result_bytes = settings->max_fast_result_bytes -
