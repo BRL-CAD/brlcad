@@ -6014,22 +6014,18 @@ fast_bbox_include(ON_BoundingBox &bbox, const ON_3dPoint &point)
 
 
 static ON_BoundingBox
-fast_edge_boundary_box(const ON_BrepEdge &edge, double tolerance)
+fast_edge_boundary_box(const ON_BrepEdge &edge)
 {
     ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
     const ON_Interval domain = edge.Domain();
     if (!domain.IsIncreasing())
 	return bbox;
 
-    /* Lines need only their endpoints.  Curved proxy edges are sampled in
-     * their native spans so extrema represented by the actual curve, rather
-     * than potentially remote NURBS control points, define the guard. */
-    if (edge.IsLinear(tolerance)) {
-	fast_bbox_include(bbox, edge.PointAt(domain.Min()));
-	fast_bbox_include(bbox, edge.PointAt(domain.Max()));
-	return bbox;
-    }
-
+    /* Proxy edges are sampled in their native spans so extrema represented
+     * by the actual curve, rather than potentially remote NURBS control
+     * points, define the guard.  Degree-one spans need only their endpoints;
+     * avoid a separate IsLinear query because it may be more expensive than
+     * the bounded sampling itself on large imported models. */
     int span_count = edge.SpanCount();
     std::vector<double> spans;
     if (span_count > 0 && span_count <= 4096) {
@@ -6042,8 +6038,8 @@ fast_edge_boundary_box(const ON_BrepEdge &edge, double tolerance)
 	spans.push_back(domain.Min());
 	spans.push_back(domain.Max());
     }
-    const int samples_per_span = std::max(1,
-	std::min(8, 256 / span_count));
+    const int samples_per_span = edge.Degree() <= 1 ? 1 :
+	std::max(1, std::min(4, 128 / span_count));
     for (int span = 0; span < span_count; ++span) {
 	const ON_Interval interval(spans[(size_t)span],
 	    spans[(size_t)span + 1]);
@@ -6056,13 +6052,13 @@ fast_edge_boundary_box(const ON_BrepEdge &edge, double tolerance)
 
 
 static std::vector<ON_BoundingBox>
-fast_face_boundary_boxes(const ON_Brep *brep, double tolerance)
+fast_face_boundary_boxes(const ON_Brep *brep)
 {
     std::vector<ON_BoundingBox> edge_boxes((size_t)brep->m_E.Count(),
 	ON_BoundingBox::EmptyBoundingBox);
     for (int edge_index = 0; edge_index < brep->m_E.Count(); ++edge_index)
 	edge_boxes[(size_t)edge_index] = fast_edge_boundary_box(
-	    brep->m_E[edge_index], tolerance);
+	    brep->m_E[edge_index]);
 
     std::vector<ON_BoundingBox> face_boxes((size_t)brep->m_F.Count(),
 	ON_BoundingBox::EmptyBoundingBox);
@@ -6117,13 +6113,12 @@ fast_face_boundary_coverage(const fast_cdt_face_result &result,
 	return coverage;
 
     ON_BoundingBox mesh = ON_BoundingBox::EmptyBoundingBox;
-    for (int index : result.faces) {
-	if (index < 0 || (size_t)index * 3 + 2 >= result.pnts.size())
-	    continue;
-	fast_bbox_include(mesh, ON_3dPoint(result.pnts[(size_t)index * 3],
-	    result.pnts[(size_t)index * 3 + 1],
-	    result.pnts[(size_t)index * 3 + 2]));
-    }
+    /* Output construction emits only triangle vertices, so scanning the
+     * compact point array avoids revisiting shared vertices for every face
+     * corner on large meshes. */
+    for (size_t point = 0; point + 2 < result.pnts.size(); point += 3)
+	fast_bbox_include(mesh, ON_3dPoint(result.pnts[point],
+	    result.pnts[point + 1], result.pnts[point + 2]));
     if (!mesh.IsValid()) {
 	coverage.fraction = 0.0;
 	coverage.covered = false;
@@ -6571,7 +6566,7 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	fast_face_triangle_budgets(face_working_estimates, triangle_budget) :
 	std::vector<size_t>((size_t)brep_face_count, options.max_triangles);
     std::vector<ON_BoundingBox> face_boundary_boxes = adaptive_quality ?
-	fast_face_boundary_boxes(brep, tol->dist) :
+	fast_face_boundary_boxes(brep) :
 	std::vector<ON_BoundingBox>((size_t)brep_face_count,
 	    ON_BoundingBox::EmptyBoundingBox);
     std::vector<double> face_boundary_tolerances(
