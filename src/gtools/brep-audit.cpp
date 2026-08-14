@@ -195,6 +195,11 @@ struct geom_result {
     bool hit_time_limit = false;
     bool hit_memory_limit = false;
     bool hit_point_limit = false;
+    bool refinement_time_limited = false;
+    size_t triangle_budget = 0;
+    int area_converged_faces = 0;
+    int triangle_budget_limited_faces = 0;
+    int refinement_passes = 0;
     bool finite = true;
     bool have_bbox = false;
     point_t bmin = VINIT_ZERO;
@@ -205,6 +210,7 @@ struct geom_result {
     std::vector<int> failed_faces;
     std::vector<face_failure> face_failures;
     std::vector<int> skipped_faces;
+    std::vector<int> approximated_faces;
     std::vector<int> unprocessed_faces;
     std::vector<int> failed_edges;
     std::vector<int> unprocessed_edges;
@@ -213,6 +219,7 @@ struct geom_result {
     std::vector<int> unprocessed_surface_cues;
     size_t omitted_failed_faces = 0;
     size_t omitted_skipped_faces = 0;
+    size_t omitted_approximated_faces = 0;
     size_t omitted_unprocessed_faces = 0;
     size_t omitted_failed_edges = 0;
     size_t omitted_unprocessed_edges = 0;
@@ -289,6 +296,10 @@ shaded_face_status(int face_index, int status, void *data)
 	case BREP_CDT_FAST_FACE_SKIPPED_DEGENERATE:
 	    capture_index(&result->skipped_faces,
 		&result->omitted_skipped_faces, face_index);
+	    break;
+	case BREP_CDT_FAST_FACE_APPROXIMATED:
+	    capture_index(&result->approximated_faces,
+		&result->omitted_approximated_faces, face_index);
 	    break;
 	case BREP_CDT_FAST_FACE_NOT_PROCESSED:
 	    capture_index(&result->unprocessed_faces,
@@ -586,12 +597,20 @@ shaded_result(struct db_i *dbip, struct directory *dp,
     result.peak_rss_bytes = peak_rss_bytes();
     result.requested_items = report.requested_faces;
     result.completed_items = report.completed_faces;
+    result.approximated_items = report.approximated_faces;
     result.failed_items = report.failed_faces;
     result.skipped_items = report.skipped_degenerate_faces;
     result.hit_time_limit = report.hit_time_limit;
     result.hit_memory_limit = report.hit_memory_limit;
     result.hit_point_limit = report.hit_point_limit;
     result.peak_working_bytes = report.peak_working_bytes;
+    result.triangle_budget = report.triangle_budget;
+    result.area_converged_faces = report.area_converged_faces;
+    result.triangle_budget_limited_faces =
+	report.triangle_budget_limited_faces;
+    result.refinement_passes = report.refinement_passes;
+    result.refinement_time_limited =
+	report.refinement_time_limited != 0;
 
     if (face_cnt > 0)
 	result.primitives = (size_t)face_cnt;
@@ -1555,6 +1574,15 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< ",\"approximated_items\":" << result.approximated_items
 	<< ",\"failed_items\":" << result.failed_items
 	<< ",\"skipped_items\":" << result.skipped_items
+	<< ",\"adaptive_quality\":{\"triangle_budget\":"
+	<< result.triangle_budget
+	<< ",\"area_converged_faces\":"
+	<< result.area_converged_faces
+	<< ",\"triangle_budget_limited_faces\":"
+	<< result.triangle_budget_limited_faces
+	<< ",\"refinement_passes\":" << result.refinement_passes
+	<< ",\"refinement_time_limited\":"
+	<< (result.refinement_time_limited ? "true" : "false") << "}"
 	<< ",\"failed_faces\":";
     print_indices(result.failed_faces);
     std::cout << ",\"failed_faces_omitted\":"
@@ -1572,7 +1600,10 @@ print_result(const geom_result &result, const vect_t ref_dims)
     std::cout << "],\"skipped_faces\":";
     print_indices(result.skipped_faces);
     std::cout << ",\"skipped_faces_omitted\":"
-	<< result.omitted_skipped_faces << ",\"unprocessed_faces\":";
+	<< result.omitted_skipped_faces << ",\"approximated_faces\":";
+    print_indices(result.approximated_faces);
+    std::cout << ",\"approximated_faces_omitted\":"
+	<< result.omitted_approximated_faces << ",\"unprocessed_faces\":";
     print_indices(result.unprocessed_faces);
     std::cout << ",\"unprocessed_faces_omitted\":"
 	<< result.omitted_unprocessed_faces << ",\"failed_edges\":";
@@ -1651,6 +1682,9 @@ struct audit_config {
     long max_result_mib;
     long max_working_mib;
     long max_points;
+    long max_triangles;
+    double display_coarse_rel;
+    double display_area_change;
     long face_index;
     bool valid_solids_only;
     bool quality_repair;
@@ -1711,6 +1745,14 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	fast_options.max_points = (size_t)config.max_points;
 	draw_options.max_points = (size_t)config.max_points;
     }
+    if (config.max_triangles > 0)
+	fast_options.max_triangles = (size_t)config.max_triangles;
+    if (config.display_coarse_rel > 0.0)
+	fast_options.coarse_relative_tolerance =
+	    config.display_coarse_rel;
+    if (config.display_area_change > 0.0)
+	fast_options.area_change_tolerance =
+	    config.display_area_change;
 
     std::cerr << "brep-audit: phase=reference" << std::endl;
     point_t ref_min = VINIT_ZERO;
@@ -1971,7 +2013,14 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	<< ",\"max_time_ms\":" << fast_options.max_time_ms
 	<< ",\"max_result_bytes\":" << fast_options.max_result_bytes
 	<< ",\"max_working_bytes\":" << fast_options.max_working_bytes
-	<< ",\"max_points\":" << fast_options.max_points << "}"
+	<< ",\"max_points\":" << fast_options.max_points
+	<< ",\"max_triangles\":" << fast_options.max_triangles
+	<< ",\"adaptive_quality\":"
+	<< (fast_options.adaptive_quality ? "true" : "false")
+	<< ",\"coarse_relative_tolerance\":"
+	<< fast_options.coarse_relative_tolerance
+	<< ",\"area_change_tolerance\":"
+	<< fast_options.area_change_tolerance << "}"
 	<< ",\"wire_options\":{\"jobs\":" << draw_options.max_workers
 	<< ",\"max_time_ms\":" << draw_options.max_time_ms
 	<< ",\"max_result_bytes\":" << draw_options.max_result_bytes
@@ -2046,6 +2095,9 @@ main(int argc, const char **argv)
     long max_result_mib = 0;
     long max_working_mib = 0;
     long max_points = 0;
+    long max_triangles = 0;
+    double display_coarse_rel = 0.0;
+    double display_area_change = 0.0;
     long batch_start = 0;
     long face_index = -1;
     int valid_solids_only = 0;
@@ -2072,7 +2124,7 @@ main(int argc, const char **argv)
     double repair_relaxed_fidelity_factor = 0.0;
     const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[42];
+    struct bu_opt_desc d[45];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -2159,7 +2211,15 @@ main(int argc, const char **argv)
 	"Final-only hole candidate area ceiling for bounded open-edge repair");
     BU_OPT(d[40], "", "max-working-mib", "#", &bu_opt_long,
 	&max_working_mib, "Maximum shared temporary generator memory");
-    BU_OPT_NULL(d[41]);
+    BU_OPT(d[41], "", "max-triangles", "#", &bu_opt_long,
+	&max_triangles, "Maximum adaptive shaded triangle target");
+    BU_OPT(d[42], "", "display-coarse-rel", "fraction",
+	&bu_opt_fastf_t, &display_coarse_rel,
+	"Initial relative tolerance for adaptive shaded display");
+    BU_OPT(d[43], "", "display-area-change", "fraction",
+	&bu_opt_fastf_t, &display_area_change,
+	"Per-face unsigned area convergence threshold");
+    BU_OPT_NULL(d[44]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -2170,7 +2230,12 @@ main(int argc, const char **argv)
 	    quality_face_time_ms < 0 ||
 	    jobs < 0 || max_time_ms < 0 || max_result_mib < 0 ||
 	    max_working_mib < 0 ||
-	    max_points < 0 || batch_start < 0 || face_index < -1 ||
+	    max_points < 0 || max_triangles < 0 ||
+	    !std::isfinite(display_coarse_rel) ||
+	    display_coarse_rel < 0.0 || display_coarse_rel > 0.5 ||
+	    !std::isfinite(display_area_change) ||
+	    display_area_change < 0.0 || display_area_change > 1.0 ||
+	    batch_start < 0 || face_index < -1 ||
 	    repair_hole_area_percent <= 0.0 || repair_hole_edges < 3 ||
 	    repair_adaptive_hole_edges < 0 ||
 	    (repair_adaptive_hole_edges > 0 &&
@@ -2228,7 +2293,8 @@ main(int argc, const char **argv)
     audit_config config = {
 	ratio_min, ratio_max, tess_abs, tess_rel, tess_norm,
 	memory_limit_mib, jobs, max_time_ms, quality_face_time_ms,
-	max_result_mib, max_working_mib, max_points,
+	max_result_mib, max_working_mib, max_points, max_triangles,
+	display_coarse_rel, display_area_change,
 	face_index, valid_solids_only != 0, quality_repair != 0,
 	repair_hole_area_percent, repair_hole_edges,
 	repair_adaptive_hole_edges,
