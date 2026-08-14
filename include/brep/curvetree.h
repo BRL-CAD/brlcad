@@ -56,7 +56,8 @@ namespace brlcad {
      */
     class BREP_EXPORT CurveTree : public PooledObject<CurveTree> {
     public:
-	explicit CurveTree(const ON_BrepFace *face);
+	explicit CurveTree(const ON_BrepFace *face,
+	    std::size_t max_nodes = 0);
 	~CurveTree();
 
 	CurveTree(Deserializer &deserializer, const ON_BrepFace &face);
@@ -64,6 +65,10 @@ namespace brlcad {
 	std::vector<std::size_t> serialize_get_leaves_keys(const std::list<const BRNode *> &leaves) const;
 	std::list<const BRNode *> serialize_get_leaves(const std::size_t *keys, std::size_t num_keys) const;
 	void serialize_cleanup() const;
+
+	/* A nonzero construction limit is used by best-effort display paths.
+	 * A limited tree must not be used for geometric queries. */
+	bool limit_reached() const { return m_limit_reached; }
 
 	/**
 	 * Return just the leaves of the surface tree
@@ -101,6 +106,9 @@ namespace brlcad {
 
 	const ON_BrepFace * const m_face;
 	BRNode *m_root;
+	const std::size_t m_max_nodes;
+	mutable std::size_t m_node_count;
+	mutable bool m_limit_reached;
 
 
 	struct Stl : public PooledObject<Stl> {
