@@ -60,6 +60,8 @@ namespace brlcad {
 	    std::size_t max_bytes = 0);
 	CurveTree(const ON_BrepFace *face, std::size_t max_bytes,
 	    double min_feature_size);
+	CurveTree(const ON_BrepFace *face, std::size_t max_bytes,
+	    double min_feature_size, int64_t deadline);
 	~CurveTree();
 
 	CurveTree(Deserializer &deserializer, const ON_BrepFace &face);
@@ -71,6 +73,7 @@ namespace brlcad {
 	/* A nonzero construction limit is used by best-effort display paths.
 	 * A limited tree must not be used for geometric queries. */
 	bool limit_reached() const { return m_limit_reached; }
+	bool time_limit_reached() const { return m_time_limit_reached; }
 
 	/**
 	 * Return just the leaves of the surface tree
@@ -102,6 +105,7 @@ namespace brlcad {
 
 	bool getHVTangents(const ON_Curve *curve, const ON_Interval &t, std::list<fastf_t> &list) const;
 	bool isLinear(const ON_Curve *curve, double min, double max) const;
+	bool deadlineExpired() const;
 	BRNode *subdivideCurve(const ON_Curve *curve, int trim_index, int adj_face_index, double min, double max, bool innerTrim, int depth) const;
 	BRNode *curveBBox(const ON_Curve *curve, int trim_index, int adj_face_index, const ON_Interval &t, bool isLeaf, bool innerTrim, const ON_BoundingBox &bb) const;
 	static ON_BoundingBox initialLoopBBox(const ON_BrepFace &face);
@@ -110,8 +114,10 @@ namespace brlcad {
 	BRNode *m_root;
 	const std::size_t m_max_nodes;
 	const double m_min_feature_size;
+	const int64_t m_deadline;
 	mutable std::size_t m_node_count;
 	mutable bool m_limit_reached;
+	mutable bool m_time_limit_reached;
 
 
 	struct Stl : public PooledObject<Stl> {

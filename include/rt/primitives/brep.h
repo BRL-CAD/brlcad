@@ -70,8 +70,10 @@ struct rt_brep_draw_report {
     int requested_surface_cues;
     int completed_surface_cues;
     /* Cues drawn from the bounded untrimmed surface envelope after exact
-     * trim hierarchy construction exceeded max_working_bytes. */
+     * trim hierarchy construction exceeded its memory or time share. */
     int approximated_surface_cues;
+    int memory_approximated_surface_cues;
+    int time_approximated_surface_cues;
     size_t output_points;
     size_t result_bytes;
     int hit_time_limit;
