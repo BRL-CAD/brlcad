@@ -2000,6 +2000,15 @@ TrimLoopToSinglePeriod(const ON_Surface *s,
 	    points[count - 1].p2d, tolerance))
 	return false;
 
+    /* ON_NurbsSurface::IsClosed compares entire control-point rows.  This
+     * search is quadratic in the loop sample count, so asking IsClosed for
+     * every candidate pair can turn a cheap chart normalization into seconds
+     * of repeated control-net scans.  Surface periodicity and domains are
+     * immutable throughout the search. */
+    const bool closed[2] = {s->IsClosed(0), s->IsClosed(1)};
+    const ON_Interval domains[2] = {s->Domain(0), s->Domain(1)};
+    const double periods[2] = {domains[0].Length(), domains[1].Length()};
+
     int best_begin = -1;
     int best_end = -1;
     long double best_area = 0.0L;
@@ -2010,12 +2019,12 @@ TrimLoopToSinglePeriod(const ON_Surface *s,
 	    for (int dir = 0; dir < 2; dir++) {
 		const double delta = points[end].p2d[dir] -
 		    points[begin].p2d[dir];
-		if (!s->IsClosed(dir)) {
+		if (!closed[dir]) {
 		    if (fabs(delta) > tolerance)
 			equivalent = false;
 		    continue;
 		}
-		const double period = s->Domain(dir).Length();
+		const double period = periods[dir];
 		if (!(period > ON_ZERO_TOLERANCE) || !std::isfinite(period)) {
 		    equivalent = false;
 		    continue;
@@ -2058,10 +2067,10 @@ TrimLoopToSinglePeriod(const ON_Surface *s,
     points.Append(trimmed.Count(), trimmed.Array());
 
     for (int dir = 0; dir < 2; dir++) {
-	if (!s->IsClosed(dir))
+	if (!closed[dir])
 	    continue;
-	const ON_Interval domain = s->Domain(dir);
-	const double period = domain.Length();
+	const ON_Interval &domain = domains[dir];
+	const double period = periods[dir];
 	double min_coord = INFINITY;
 	double max_coord = -INFINITY;
 	for (int i = 0; i < points.Count(); i++) {
@@ -5280,26 +5289,86 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 
     std::map<int, size_t> singular_pind_map;
     std::vector<std::pair<ON_3dPoint, size_t>> seam_pind_map;
+    struct fast_realized_vertex {
+	ON_2dPoint uv;
+	ON_3dPoint point;
+	ON_3dVector normal;
+	int singular_side = -1;
+	bool seam_point = false;
+	bool evaluated = false;
+	bool valid = false;
+    };
+    std::vector<fast_realized_vertex> realized_vertices(tpnts.size());
+    const bool surface_closed[2] = {s->IsClosed(0), s->IsClosed(1)};
+    const ON_Interval surface_domains[2] = {s->Domain(0), s->Domain(1)};
+    const double surface_periods[2] = {
+	surface_domains[0].Length(), surface_domains[1].Length()
+    };
+    const auto unwrap_surface_point = [&](const ON_2dPoint &point) {
+	ON_2dPoint unwrapped = point;
+	for (int dir = 0; dir < 2; ++dir) {
+	    if (!surface_closed[dir] ||
+		    !(surface_periods[dir] > ON_ZERO_TOLERANCE))
+		continue;
+	    const double minimum = surface_domains[dir].Min() -
+		ON_ZERO_TOLERANCE;
+	    const double maximum = surface_domains[dir].Max() +
+		ON_ZERO_TOLERANCE;
+	    if (unwrapped[dir] < surface_domains[dir].m_t[0] -
+		    BREP_SAME_POINT_TOLERANCE) {
+		const int domains_away = (int)((minimum - unwrapped[dir]) /
+		    surface_periods[dir] + 1.0);
+		unwrapped[dir] += surface_periods[dir] * domains_away;
+	    } else if (unwrapped[dir] >= surface_domains[dir].m_t[1] +
+		    BREP_SAME_POINT_TOLERANCE) {
+		const int domains_away = (int)((unwrapped[dir] - maximum) /
+		    surface_periods[dir] + 1.0);
+		unwrapped[dir] -= surface_periods[dir] * domains_away;
+	    }
+	}
+	return unwrapped;
+    };
+    const auto point_is_on_seam = [&](const ON_2dPoint &point) {
+	for (int dir = 0; dir < 2; ++dir) {
+	    if (surface_closed[dir] &&
+		    (NEAR_EQUAL(point[dir], surface_domains[dir][0],
+			BREP_SAME_POINT_TOLERANCE) ||
+		     NEAR_EQUAL(point[dir], surface_domains[dir][1],
+			BREP_SAME_POINT_TOLERANCE)))
+		return true;
+	}
+	return false;
+    };
     auto emit_triangle = [&](int t0, int t1, int t2) {
 	const int tris[3] = {t0, t1, t2};
 	ON_3dPoint triangle_points[3];
 	ON_3dVector triangle_normals[3];
-	ON_2dPoint triangle_uvs[3];
 	for (size_t j = 0; j < 3; j++) {
-	    std::unordered_map<int, BrepTrimPoint *>::const_iterator bt_it =
-		pointmap.find(tris[j]);
-	    triangle_uvs[j] = UnwrapUVPoint(s,
-		ON_2dPoint(tpnts[tris[j]].x, tpnts[tris[j]].y),
-		BREP_SAME_POINT_TOLERANCE);
-	    if (!surface_EvNormal(s, triangle_uvs[j].x, triangle_uvs[j].y,
-		    triangle_points[j], triangle_normals[j])) {
-		if (bt_it == pointmap.end() || !bt_it->second->p3d ||
-			bt_it->second->from_singular < 0 ||
-			!bt_it->second->normal.IsValid())
-		    return;
-		triangle_points[j] = *bt_it->second->p3d;
-		triangle_normals[j] = bt_it->second->normal;
+	    fast_realized_vertex &realized = realized_vertices[tris[j]];
+	    if (!realized.evaluated) {
+		realized.evaluated = true;
+		realized.uv = unwrap_surface_point(ON_2dPoint(
+		    tpnts[tris[j]].x, tpnts[tris[j]].y));
+		std::unordered_map<int, BrepTrimPoint *>::const_iterator bt_it =
+		    pointmap.find(tris[j]);
+		if (!surface_EvNormal(s, realized.uv.x, realized.uv.y,
+			realized.point, realized.normal)) {
+		    if (bt_it == pointmap.end() || !bt_it->second->p3d ||
+			    bt_it->second->from_singular < 0 ||
+			    !bt_it->second->normal.IsValid())
+			return;
+		    realized.point = *bt_it->second->p3d;
+		    realized.normal = bt_it->second->normal;
+		}
+		realized.singular_side = IsAtSingularity(s, realized.uv.x,
+		    realized.uv.y, BREP_SAME_POINT_TOLERANCE);
+		realized.seam_point = point_is_on_seam(realized.uv);
+		realized.valid = true;
 	    }
+	    if (!realized.valid)
+		return;
+	    triangle_points[j] = realized.point;
+	    triangle_normals[j] = realized.normal;
 	}
 	const ON_3dVector cross = ON_CrossProduct(
 	    triangle_points[1] - triangle_points[0],
@@ -5310,10 +5379,9 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    return;
 
 	for (size_t j = 0; j < 3; j++) {
-	    const int singular_side = IsAtSingularity(s, triangle_uvs[j],
-		BREP_SAME_POINT_TOLERANCE);
-	    const bool seam_point = IsAtSeam(s, triangle_uvs[j],
-		BREP_SAME_POINT_TOLERANCE) > 0;
+	    const fast_realized_vertex &realized = realized_vertices[tris[j]];
+	    const int singular_side = realized.singular_side;
+	    const bool seam_point = realized.seam_point;
 	    std::unordered_map<int, size_t>::const_iterator existing =
 		pind_map.find(tris[j]);
 	    std::map<int, size_t>::const_iterator singular =
