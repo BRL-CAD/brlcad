@@ -200,6 +200,8 @@ struct geom_result {
     int area_converged_faces = 0;
     int triangle_budget_limited_faces = 0;
     int refinement_passes = 0;
+    int memory_approximated_surface_cues = 0;
+    int time_approximated_surface_cues = 0;
     bool finite = true;
     bool have_bbox = false;
     point_t bmin = VINIT_ZERO;
@@ -520,6 +522,10 @@ wireframe_result(struct db_i *dbip, struct directory *dp,
     result.completed_items = report.completed_edges +
 	report.completed_surface_cues + report.approximated_surface_cues;
     result.approximated_items = report.approximated_surface_cues;
+    result.memory_approximated_surface_cues =
+	report.memory_approximated_surface_cues;
+    result.time_approximated_surface_cues =
+	report.time_approximated_surface_cues;
     result.failed_items = report.failed_edges +
 	report.requested_surface_cues - report.completed_surface_cues -
 	report.approximated_surface_cues;
@@ -548,12 +554,14 @@ wireframe_result(struct db_i *dbip, struct directory *dp,
 	}
     }
 
-    if (result.ret == RT_BREP_DRAW_PARTIAL)
-	result.issues.push_back("partial_geometry");
-    else if (result.ret == RT_BREP_DRAW_LIMIT)
+    if (result.ret == RT_BREP_DRAW_PARTIAL) {
+	if (result.failed_items > 0)
+	    result.issues.push_back("partial_geometry");
+    } else if (result.ret == RT_BREP_DRAW_LIMIT) {
 	result.issues.push_back("resource_limit");
-    else if (result.ret != RT_BREP_DRAW_OK)
+    } else if (result.ret != RT_BREP_DRAW_OK) {
 	result.issues.push_back("generation_failed");
+    }
     if (!result.vertices || !result.primitives)
 	result.issues.push_back("empty_geometry");
     if (!result.finite)
@@ -1583,6 +1591,10 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< ",\"refinement_passes\":" << result.refinement_passes
 	<< ",\"refinement_time_limited\":"
 	<< (result.refinement_time_limited ? "true" : "false") << "}"
+	<< ",\"wire_approximation\":{\"memory_surface_cues\":"
+	<< result.memory_approximated_surface_cues
+	<< ",\"time_surface_cues\":"
+	<< result.time_approximated_surface_cues << "}"
 	<< ",\"failed_faces\":";
     print_indices(result.failed_faces);
     std::cout << ",\"failed_faces_omitted\":"
