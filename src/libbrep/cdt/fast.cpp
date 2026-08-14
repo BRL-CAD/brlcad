@@ -6280,6 +6280,7 @@ struct fast_cdt_refine_state {
     size_t max_result_bytes;
     size_t max_points;
     bool coarsening;
+    bool incomplete_only;
     int64_t deadline;
     fast_work_budget *work_budget;
 };
@@ -6306,6 +6307,8 @@ fast_cdt_refine_worker(int UNUSED(cpu), void *data)
 	    (*state->refinement)[(size_t)face_index];
 	fast_cdt_face_result &current =
 	    (*state->results)[(size_t)face_index];
+	if (state->incomplete_only && current.completed)
+	    continue;
 	if (current.skipped_degenerate ||
 		(state->coarsening && (!quality.budget_limited ||
 		quality.area_converged || !quality.boundary_covered)) ||
@@ -6693,10 +6696,14 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    bu_gettime() - start_time);
 	int64_t previous_pass_elapsed = initial_elapsed;
 
-	auto run_refinement_pass = [&](double relative, bool coarsening) {
+	auto run_refinement_pass = [&](double relative, bool coarsening,
+		bool incomplete_only = false) {
 	    const int64_t now = bu_gettime();
-	    const int64_t expected = std::max(initial_elapsed,
-		previous_pass_elapsed);
+	    /* A recovery pass schedules only missing faces, so a full-object
+	     * elapsed-time estimate would prevent the retry it is meant to make.
+	     * Its workers still honor the absolute deadline before each face. */
+	    const int64_t expected = incomplete_only ? 1 :
+		std::max(initial_elapsed, previous_pass_elapsed);
 	    if (deadline > 0 && (now >= deadline ||
 		expected >= deadline - now)) {
 		refinement_time_limited = true;
@@ -6712,7 +6719,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 		&face_boundary_tolerances, &face_triangle_budgets,
 		&face_working_estimates, 0, false, false, 0,
 		&retained_bytes, &retained_points, options.max_result_bytes,
-		options.max_points, coarsening, deadline, &work_budget
+		options.max_points, coarsening, incomplete_only, deadline,
+		&work_budget
 	    };
 	    bu_parallel(fast_cdt_refine_worker, options.max_workers,
 		&state);
@@ -6723,6 +6731,18 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 		refinement_time_limited = true;
 	    return !refinement_time_limited;
 	};
+
+	/* A coarse face attempt can fail transiently on difficult inputs even
+	 * when neighboring faces complete.  Retry only those missing faces before
+	 * spending time refining accepted geometry. */
+	bool have_incomplete_face = false;
+	for (const fast_cdt_face_result &result : face_results)
+	    have_incomplete_face = have_incomplete_face || !result.completed;
+	if (have_incomplete_face) {
+	    const double recovery_relative = std::max(requested_relative,
+		coarse_relative * 0.5);
+	    run_refinement_pass(recovery_relative, false, true);
+	}
 
 	/* A topology-derived share is a target, not permission to discard
 	 * a valid boundary.  First try progressively coarser surface samples
