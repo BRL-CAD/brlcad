@@ -10730,6 +10730,29 @@ repair_adaptive_hole_edge_budget(
     return (size_t)mesh_report->unmatched_edges;
 }
 
+static fastf_t
+repair_adaptive_hole_area_budget(
+	const struct brep_cdt_repair_settings *settings,
+	const struct bg_trimesh_repair_settings *mesh_settings,
+	const struct bg_trimesh_repair_report *mesh_report)
+{
+    /* The percentage here limits which holes may be proposed by the final
+     * triangle repair.  It does not relax the later aggregate comparison to
+     * the B-Rep: area change and sampled surface deviation still determine
+     * whether the candidate is accepted. */
+    if (!settings || !mesh_settings || !mesh_report ||
+	    !mesh_settings->fill_holes ||
+	    !(settings->max_adaptive_hole_area_percent >
+		mesh_settings->max_hole_area_percent) ||
+	    mesh_report->unmatched_edges < 3 ||
+	    (size_t)mesh_report->unmatched_edges >
+		mesh_settings->max_hole_edges ||
+	    (size_t)mesh_report->excess_edges >
+		mesh_settings->max_hole_edges || mesh_report->misoriented_edges)
+	return 0.0;
+    return settings->max_adaptive_hole_area_percent;
+}
+
 static int
 repair_adaptive_hole_retry_contract(void)
 {
@@ -10756,7 +10779,24 @@ repair_adaptive_hole_retry_contract(void)
 	return 4;
     settings.max_adaptive_hole_edges = 0;
     report.unmatched_edges = 1974;
-    return repair_adaptive_hole_edge_budget(&settings, &report) ? 5 : 0;
+    if (repair_adaptive_hole_edge_budget(&settings, &report))
+	return 5;
+    settings.mesh.max_hole_area_percent = 1.0;
+    settings.max_adaptive_hole_area_percent = 4.0;
+    settings.mesh.max_hole_edges = 256;
+    report.unmatched_edges = 23;
+    if (!NEAR_EQUAL(repair_adaptive_hole_area_budget(&settings,
+	    &settings.mesh, &report), 4.0, SMALL_FASTF))
+	return 6;
+    report.excess_edges = 2;
+    if (!NEAR_EQUAL(repair_adaptive_hole_area_budget(&settings,
+	    &settings.mesh, &report), 4.0, SMALL_FASTF))
+	return 7;
+    report.excess_edges = 257;
+    if (!NEAR_ZERO(repair_adaptive_hole_area_budget(&settings,
+	    &settings.mesh, &report), SMALL_FASTF))
+	return 8;
+    return 0;
 }
 
 static void
@@ -11177,6 +11217,11 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    (settings->max_adaptive_hole_edges > 0 &&
 	    settings->max_adaptive_hole_edges <
 	    settings->mesh.max_hole_edges) ||
+	    !std::isfinite(settings->max_adaptive_hole_area_percent) ||
+	    settings->max_adaptive_hole_area_percent < 0.0 ||
+	    (settings->max_adaptive_hole_area_percent > 0.0 &&
+	    settings->max_adaptive_hole_area_percent <
+	    settings->mesh.max_hole_area_percent) ||
 	    (settings->use_poisson_reconstruction &&
 	    (!settings->use_full_fast_fallback || settings->poisson_depth < 5 ||
 	    settings->poisson_depth > 10 ||
@@ -13243,6 +13288,21 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		(const point_t *)input_vertices, input_vertex_count,
 		&mesh_settings, &report->mesh);
 	}
+	const fastf_t adaptive_hole_area = repair_result < 0 ?
+	    repair_adaptive_hole_area_budget(settings, &mesh_settings,
+		&report->mesh) : 0.0;
+	if (adaptive_hole_area > 0.0) {
+	    report->adaptive_hole_area_retry_attempted = 1;
+	    report->adaptive_hole_area_percent = adaptive_hole_area;
+	    mesh_settings.max_hole_area_percent = adaptive_hole_area;
+	    bu_log("Retrying final mesh repair with a bounded %.6g%% hole "
+		"area ceiling\n", adaptive_hole_area);
+	    repair_result = bg_trimesh_repair2(&repaired_faces,
+		&repaired_face_count, &repaired_points,
+		&repaired_vertex_count, input_faces, input_face_count,
+		(const point_t *)input_vertices, input_vertex_count,
+		&mesh_settings, &report->mesh);
+	}
 	/* Point-contact separation is useful for Poisson meshes with touching
 	 * shells, but can reopen a seam that tolerance welding just closed.
 	 * Preserve positions first and perturb contacts only when the caller did
@@ -14417,6 +14477,9 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     if (report->adaptive_hole_retry_attempted)
 	message += "; adaptive hole edge ceiling " +
 	    std::to_string(report->adaptive_hole_edges);
+    if (report->adaptive_hole_area_retry_attempted)
+	message += "; adaptive hole area ceiling " +
+	    std::to_string(report->adaptive_hole_area_percent) + "%";
     cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIRED,
 	BREP_CDT_STAGE_MESH_REPAIR, -1,
 	report->source_diagnostic.completed_faces,

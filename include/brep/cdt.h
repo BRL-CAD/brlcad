@@ -190,9 +190,15 @@ struct brep_cdt_repair_settings {
      * Earlier rigorous-boundary reconstruction keeps its original budget.
      */
     size_t max_adaptive_hole_edges;
+    /**
+     * Final-repair-only hole candidate ceiling for a bounded open-edge
+     * residue.  The independent aggregate area-change and surface-deviation
+     * limits remain authoritative for accepting the resulting solid.
+     */
+    fastf_t max_adaptive_hole_area_percent;
 };
 
-#define BREP_CDT_REPAIR_SETTINGS_INIT {BG_TRIMESH_REPAIR_SETTINGS_INIT, 0.0, 4096, 1.0, 0, 1, 0, 0, 8, 64, 1048576, 134217728, 5000, 0.0, 0, 0, NULL, NULL, 0.0, 0}
+#define BREP_CDT_REPAIR_SETTINGS_INIT {BG_TRIMESH_REPAIR_SETTINGS_INIT, 0.0, 4096, 1.0, 0, 1, 0, 0, 8, 64, 1048576, 134217728, 5000, 0.0, 0, 0, NULL, NULL, 0.0, 0, 0.0}
 
 /** Provenance and quality measurements for a repair attempt. */
 struct brep_cdt_repair_report {
@@ -290,9 +296,11 @@ struct brep_cdt_repair_report {
     fastf_t relaxed_area_change_percent_limit;
     int adaptive_hole_retry_attempted;
     size_t adaptive_hole_edges;
+    int adaptive_hole_area_retry_attempted;
+    fastf_t adaptive_hole_area_percent;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, 0, 0.0}
 
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
