@@ -543,6 +543,9 @@ struct brep_cdt_fast_report {
     int triangle_budget_limited_faces;
     int refinement_passes;
     int refinement_time_limited;
+    /* Faces whose realized triangles do not cover the sampled B-Rep edge
+     * envelope within the requested display tolerance. */
+    int boundary_envelope_incomplete_faces;
 };
 
 #define BREP_CDT_FAST_OK 0
