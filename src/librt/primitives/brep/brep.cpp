@@ -2222,6 +2222,11 @@ brep_wire_vlist_points(const struct bu_list *head)
     return count;
 }
 
+/* Surface cues are optional display aids.  Unlike edge sampling, their
+ * trimming tree can grow exponentially for malformed p-curves.  Bound that
+ * auxiliary tree independently so it can be dropped while retaining edges. */
+static const size_t BREP_WIRE_MAX_CUE_TREE_NODES = 131072;
+
 void
 rt_brep_draw_options_default(struct rt_brep_draw_options *options)
 {
@@ -2368,10 +2373,24 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 	    const ON_BrepFace &face = brep->m_F[face_index];
 	    const ON_Surface *surface = face.SurfaceOf();
 	    if (ON_SumSurface::Cast(surface)) {
-		SurfaceTree tree(&face, true, 2);
+		SurfaceTree tree(&face, true, 2, BREP_EDGE_MISS_TOLERANCE,
+		    BREP_WIRE_MAX_CUE_TREE_NODES);
+		if (!tree.Valid()) {
+		    hit_memory_limit = true;
+		    surface_cue_status[(size_t)face_index] =
+			RT_BREP_DRAW_ITEM_FAILED;
+		    break;
+		}
 		plot_face_from_surface_tree(vlfree, &face_vhead, &tree, 100, 10);
 	    } else {
-		SurfaceTree tree(&face, true, 0);
+		SurfaceTree tree(&face, true, 0, BREP_EDGE_MISS_TOLERANCE,
+		    BREP_WIRE_MAX_CUE_TREE_NODES);
+		if (!tree.Valid()) {
+		    hit_memory_limit = true;
+		    surface_cue_status[(size_t)face_index] =
+			RT_BREP_DRAW_ITEM_FAILED;
+		    break;
+		}
 		plot_face_from_surface_tree(vlfree, &face_vhead, &tree, 100, 10);
 	    }
 	} catch (...) {

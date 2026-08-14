@@ -656,17 +656,20 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 
 //--------------------------------------------------------------------------------
 // CurveTree
-CurveTree::CurveTree(const ON_BrepFace* face) :
+CurveTree::CurveTree(const ON_BrepFace* face, std::size_t max_nodes) :
     m_face(face),
     m_root(new BRNode(initialLoopBBox(*face))),
+    m_max_nodes(max_nodes),
+    m_node_count(1),
+    m_limit_reached(false),
     m_stl(new Stl),
     m_sortedX_indices(NULL)
 {
-    for (int li = 0; li < face->LoopCount(); li++) {
+    for (int li = 0; li < face->LoopCount() && !m_limit_reached; li++) {
 	bool innerLoop = (li > 0) ? true : false;
 	const ON_BrepLoop* loop = face->Loop(li);
 	// for each trim
-	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	for (int ti = 0; ti < loop->m_ti.Count() && !m_limit_reached; ti++) {
 	    int adj_face_index = -1;
 	    const int trim_index = loop->m_ti[ti];
 	    const ON_BrepTrim& trim = face->Brep()->m_T[trim_index];
@@ -741,10 +744,13 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 		    if (range.Length() > BREP_UV_DIST_FUZZ)
 			getHVTangents(trimCurve, range, splitlist);
 		}
-		for (std::list<fastf_t>::const_iterator l = splitlist.begin(); l != splitlist.end(); l++) {
+		for (std::list<fastf_t>::const_iterator l = splitlist.begin(); l != splitlist.end() && !m_limit_reached; l++) {
 		    double xmax = *l;
 		    if (!NEAR_EQUAL(xmax, min, BREP_UV_DIST_FUZZ)) {
-			m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, xmax, innerLoop, 0));
+			BRNode *child = subdivideCurve(trimCurve, trim_index,
+			    adj_face_index, min, xmax, innerLoop, 0);
+			if (child)
+			    m_root->addChild(child);
 		    }
 		    min = xmax;
 		}
@@ -754,18 +760,24 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 		double *knots = new double[knotcnt + 1];
 
 		trimCurve->GetSpanVector(knots);
-		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
+		for (int knot_index = 1; knot_index <= knotcnt && !m_limit_reached; knot_index++) {
 		    double xmax = knots[knot_index];
 		    if (!NEAR_EQUAL(xmax, min, BREP_UV_DIST_FUZZ)) {
-			m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, xmax, innerLoop, 0));
+			BRNode *child = subdivideCurve(trimCurve, trim_index,
+			    adj_face_index, min, xmax, innerLoop, 0);
+			if (child)
+			    m_root->addChild(child);
 		    }
 		    min = xmax;
 		}
 		delete [] knots;
 	    }
 
-	    if (!NEAR_EQUAL(max, min, BREP_UV_DIST_FUZZ)) {
-		m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, max, innerLoop, 0));
+	    if (!m_limit_reached && !NEAR_EQUAL(max, min, BREP_UV_DIST_FUZZ)) {
+		BRNode *child = subdivideCurve(trimCurve, trim_index,
+		    adj_face_index, min, max, innerLoop, 0);
+		if (child)
+		    m_root->addChild(child);
 	    }
 	}
     }
@@ -790,6 +802,9 @@ CurveTree::~CurveTree()
 CurveTree::CurveTree(Deserializer &deserializer, const ON_BrepFace &face) :
     m_face(&face),
     m_root(NULL),
+    m_max_nodes(0),
+    m_node_count(0),
+    m_limit_reached(false),
     m_stl(new Stl),
     m_sortedX_indices(NULL)
 {
@@ -1043,6 +1058,11 @@ CurveTree::initialLoopBBox(const ON_BrepFace &face)
 BRNode*
 CurveTree::subdivideCurve(const ON_Curve* curve, int trim_index, int adj_face_index, double min, double max, bool innerTrim, int divDepth) const
 {
+    if (m_max_nodes && m_node_count >= m_max_nodes) {
+	m_limit_reached = true;
+	return NULL;
+    }
+
     ON_3dPoint points[2];
     points[0] = curve->PointAt(min);
     points[1] = curve->PointAt(max);
@@ -1056,7 +1076,12 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int trim_index, int adj_face_in
     ON_BoundingBox bb(points[0], points[1]);
 
     ON_Interval t(min, max);
-    if (isLinear(curve, min, max) || divDepth >= BREP_MAX_LN_DEPTH) {
+    const bool force_leaf = m_max_nodes && m_node_count + 3 > m_max_nodes;
+    if (isLinear(curve, min, max) || divDepth >= BREP_MAX_LN_DEPTH ||
+	    force_leaf) {
+	if (force_leaf)
+	    m_limit_reached = true;
+	++m_node_count;
 	double delta = (max - min)/(BREP_BB_CRV_PNT_CNT-1);
 	point_t pnts[BREP_BB_CRV_PNT_CNT];
 	ON_3dPoint pnt;
@@ -1080,12 +1105,18 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int trim_index, int adj_face_in
     }
 
     // else subdivide
+    ++m_node_count;
     BRNode* parent = curveBBox(curve, trim_index, adj_face_index, t, false, innerTrim, bb);
     double mid = (max+min)/2.0;
     BRNode* l = subdivideCurve(curve, trim_index, adj_face_index, min, mid, innerTrim, divDepth+1);
-    BRNode* r = subdivideCurve(curve, trim_index, adj_face_index, mid, max, innerTrim, divDepth+1);
-    parent->addChild(l);
-    parent->addChild(r);
+	if (l)
+	    parent->addChild(l);
+	if (!m_limit_reached) {
+	    BRNode* r = subdivideCurve(curve, trim_index, adj_face_index,
+		mid, max, innerTrim, divDepth+1);
+	    if (r)
+		parent->addChild(r);
+	}
     return parent;
 }
 
@@ -1150,7 +1181,7 @@ struct SurfaceSplitCache {
 };
 
 
-SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthLimit, double within_distance_tol) :
+SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthLimit, double within_distance_tol, std::size_t max_curve_nodes) :
     m_ctree(NULL),
     m_removeTrimmed(removeTrimmed),
     m_face(face),
@@ -1182,8 +1213,11 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     }
 
     // first, build the Curve Tree
-    if (removeTrimmed)
-	m_ctree = new CurveTree(m_face);
+    if (removeTrimmed) {
+	m_ctree = new CurveTree(m_face, max_curve_nodes);
+	if (m_ctree->limit_reached())
+	    return;
+    }
     else
 	m_ctree = NULL;
 
