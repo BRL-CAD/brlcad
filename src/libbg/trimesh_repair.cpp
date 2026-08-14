@@ -57,6 +57,10 @@
  * but operating on bare GTE types rather than rt_bot_internal).
  * -------------------------------------------------------------------------- */
 
+static size_t
+trimesh_topology_defect_score(
+	std::vector<std::array<int32_t, 3>> const&, size_t);
+
 static double
 trimesh_gte_bbox_diag(std::vector<gte::Vector3<double>> const& verts)
 {
@@ -386,6 +390,237 @@ trimesh_split_hanging_boundary_edges(
     if (added)
 	triangles.swap(output);
     return added;
+}
+
+/* Independently successful hole-fill methods can overlap when a boundary is
+ * not a collection of disjoint simple cycles.  Accept only complete added
+ * edge-connected components that strictly improve edge incidence and vertex
+ * links.  Original triangles are immutable, each trial is bounded by the
+ * number of added triangles, and callers still require complete solid/link
+ * validation. */
+static size_t
+trimesh_reject_invalid_added_faces(
+	std::vector<std::array<int32_t, 3>>& triangles,
+	size_t first_added_face)
+{
+    if (first_added_face >= triangles.size())
+	return 0;
+    typedef std::pair<int32_t, int32_t> edge_key;
+    struct edge_use {
+	size_t count = 0;
+	int direction = 0;
+    };
+    const auto key = [](int32_t first, int32_t second) {
+	return first < second ? edge_key(first, second) :
+	    edge_key(second, first);
+    };
+    std::map<edge_key, edge_use> edges;
+    std::vector<std::array<int32_t, 3>> accepted(triangles.begin(),
+	triangles.begin() + (ptrdiff_t)first_added_face);
+    for (const std::array<int32_t, 3> &triangle : accepted) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int32_t first = triangle[corner];
+	    const int32_t second = triangle[(corner + 1) % 3];
+	    edge_use &use = edges[key(first, second)];
+	    use.count++;
+	    use.direction += first < second ? 1 : -1;
+	}
+    }
+    size_t rejected = 0;
+    for (size_t face = first_added_face; face < triangles.size(); ++face) {
+	const std::array<int32_t, 3> &triangle = triangles[face];
+	bool valid = true;
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int32_t first = triangle[corner];
+	    const int32_t second = triangle[(corner + 1) % 3];
+	    const edge_use &use = edges[key(first, second)];
+	    const int direction = first < second ? 1 : -1;
+	    if (use.count >= 2 || (use.count == 1 &&
+		    use.direction == direction)) {
+		valid = false;
+		break;
+	    }
+	}
+	if (!valid) {
+	    rejected++;
+	    continue;
+	}
+	accepted.push_back(triangle);
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int32_t first = triangle[corner];
+	    const int32_t second = triangle[(corner + 1) % 3];
+	    edge_use &use = edges[key(first, second)];
+	    use.count++;
+	    use.direction += first < second ? 1 : -1;
+	}
+    }
+    if (rejected)
+	triangles.swap(accepted);
+    return rejected;
+}
+
+static size_t
+trimesh_reject_nonimproving_added_components(
+	std::vector<std::array<int32_t, 3>>& triangles,
+	size_t first_added_face, size_t vertex_count)
+{
+    if (first_added_face >= triangles.size())
+	return 0;
+
+    typedef std::pair<int32_t, int32_t> edge_key;
+    const auto key = [](int32_t first, int32_t second) {
+	return first < second ? edge_key(first, second) :
+	    edge_key(second, first);
+    };
+    std::map<edge_key, std::vector<size_t>> added_edge_faces;
+    for (size_t face = first_added_face; face < triangles.size(); ++face) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    added_edge_faces[key(triangles[face][corner],
+		triangles[face][(corner + 1) % 3])].push_back(face);
+	}
+    }
+    std::vector<int> parents(triangles.size() - first_added_face, -1);
+    const auto root = [&parents](int item) {
+	int result = item;
+	while (parents[(size_t)result] >= 0)
+	    result = parents[(size_t)result];
+	return result;
+    };
+    const auto unite = [&parents, &root](int first, int second) {
+	int first_root = root(first);
+	int second_root = root(second);
+	if (first_root == second_root)
+	    return;
+	if (parents[(size_t)first_root] > parents[(size_t)second_root])
+	    std::swap(first_root, second_root);
+	parents[(size_t)first_root] += parents[(size_t)second_root];
+	parents[(size_t)second_root] = first_root;
+    };
+    for (const auto &entry : added_edge_faces) {
+	const std::vector<size_t> &faces = entry.second;
+	for (size_t index = 1; index < faces.size(); ++index)
+	    unite((int)(faces[0] - first_added_face),
+		(int)(faces[index] - first_added_face));
+    }
+    std::map<int, std::vector<size_t>> components;
+    for (size_t face = first_added_face; face < triangles.size(); ++face)
+	components[root((int)(face - first_added_face))].push_back(face);
+
+    std::vector<std::array<int32_t, 3>> accepted(triangles.begin(),
+	triangles.begin() + (ptrdiff_t)first_added_face);
+    size_t current_score = trimesh_topology_defect_score(accepted,
+	vertex_count);
+    size_t rejected = 0;
+    for (const auto &component : components) {
+	std::vector<std::array<int32_t, 3>> trial = accepted;
+	for (size_t face : component.second)
+	    trial.push_back(triangles[face]);
+	const size_t trial_score = trimesh_topology_defect_score(trial,
+	    vertex_count);
+	if (trial_score >= current_score) {
+	    rejected += component.second.size();
+	    continue;
+	}
+	current_score = trial_score;
+	accepted.swap(trial);
+    }
+    if (rejected)
+	triangles.swap(accepted);
+    return rejected;
+}
+
+/* A pair of four-edge holes can touch at one boundary vertex.  The generic
+ * tracer then sees a figure eight rather than two simple polygons.  Enumerate
+ * exact directed four-cycles and cap each with the only two-triangle fan from
+ * its first vertex.  The collision gate and later topology checks remain the
+ * authority on whether the local interpretation is usable. */
+static size_t
+trimesh_fill_boundary_quads(
+	std::vector<gte::Vector3<double>> const& vertices,
+	std::vector<std::array<int32_t, 3>>& triangles,
+	double max_area, bool allow_self_intersections, size_t *rejected_faces)
+{
+    if (rejected_faces)
+	*rejected_faces = 0;
+    typedef std::pair<int32_t, int32_t> edge_key;
+    const auto key = [](int32_t first, int32_t second) {
+	return first < second ? edge_key(first, second) :
+	    edge_key(second, first);
+    };
+    std::map<edge_key, size_t> counts;
+    std::map<int32_t, std::vector<int32_t>> outgoing;
+    for (const auto &triangle : triangles) {
+	for (int corner = 0; corner < 3; ++corner)
+	    counts[key(triangle[corner], triangle[(corner + 1) % 3])]++;
+    }
+    for (const auto &triangle : triangles) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int32_t first = triangle[corner];
+	    const int32_t second = triangle[(corner + 1) % 3];
+	    if (counts[key(first, second)] == 1)
+		outgoing[first].push_back(second);
+	}
+    }
+    std::set<edge_key> used;
+    std::vector<std::array<int32_t, 3>> caps;
+    for (const auto &start : outgoing) {
+	const int32_t a = start.first;
+	for (int32_t b : start.second) {
+	    const edge_key ab = key(a, b);
+	    if (used.count(ab))
+		continue;
+	    const auto b_next = outgoing.find(b);
+	    if (b_next == outgoing.end())
+		continue;
+	    for (int32_t c : b_next->second) {
+		if (c == a)
+		    continue;
+		const auto c_next = outgoing.find(c);
+		if (c_next == outgoing.end())
+		    continue;
+		for (int32_t d : c_next->second) {
+		    if (d == a || d == b || d == c)
+			continue;
+		    const auto d_next = outgoing.find(d);
+		    if (d_next == outgoing.end() ||
+			    std::find(d_next->second.begin(), d_next->second.end(),
+				a) == d_next->second.end())
+			continue;
+		    const edge_key bc = key(b, c);
+		    const edge_key cd = key(c, d);
+		    const edge_key da = key(d, a);
+		    if (used.count(bc) || used.count(cd) || used.count(da))
+			continue;
+		    const std::array<int32_t, 3> first = {a, c, b};
+		    const std::array<int32_t, 3> second = {a, d, c};
+		    const double area = 0.5 * gte::Length(gte::Cross(
+			vertices[(size_t)c] - vertices[(size_t)a],
+			vertices[(size_t)b] - vertices[(size_t)a])) +
+			0.5 * gte::Length(gte::Cross(
+			vertices[(size_t)d] - vertices[(size_t)a],
+			vertices[(size_t)c] - vertices[(size_t)a]));
+		    if (!(area > 0.0) || !std::isfinite(area) ||
+			    (max_area > 0.0 && area > max_area))
+			continue;
+		    caps.push_back(first);
+		    caps.push_back(second);
+		    used.insert(ab);
+		    used.insert(bc);
+		    used.insert(cd);
+		    used.insert(da);
+		}
+	    }
+	}
+    }
+    if (caps.empty())
+	return 0;
+    const size_t first_added = triangles.size();
+    triangles.insert(triangles.end(), caps.begin(), caps.end());
+    const size_t rejected = trimesh_reject_intersecting_new_components(
+	vertices, triangles, first_added, allow_self_intersections);
+    if (rejected_faces)
+	*rejected_faces = rejected;
+    return triangles.size() - first_added;
 }
 
 /* Fill the smallest unambiguous boundary components before general hole
@@ -1532,6 +1767,11 @@ bg_trimesh_repair2(
 		    hole_limit,
 		    settings->allow_self_intersections != 0, &rejected);
 	    report->rejected_hole_faces += (int)rejected;
+	    rejected = 0;
+	    report->added_faces += (int)trimesh_fill_boundary_quads(verts,
+		tris, hole_limit,
+		settings->allow_self_intersections != 0, &rejected);
+	    report->rejected_hole_faces += (int)rejected;
 	}
 
 	gte::MeshRepair<double>::ConnectFacets(tris, adj);
@@ -1587,6 +1827,11 @@ bg_trimesh_repair2(
 		trimesh_reject_intersecting_new_components(verts, tris,
 		    nf_before, settings->allow_self_intersections != 0);
 	    report->rejected_hole_faces += (int)planar_rejected;
+	    report->rejected_hole_faces +=
+		(int)trimesh_reject_invalid_added_faces(tris, nf_before);
+	    report->rejected_hole_faces += (int)
+		trimesh_reject_nonimproving_added_components(tris, nf_before,
+		    verts.size());
 	    if (planar_rejected && tris.size() == nf_before)
 		verts.resize(vertex_count_before_fill);
 
@@ -1601,6 +1846,12 @@ bg_trimesh_repair2(
 		    lscm_face_start,
 		    settings->allow_self_intersections != 0);
 	    report->rejected_hole_faces += (int)lscm_rejected;
+	    report->rejected_hole_faces +=
+		(int)trimesh_reject_invalid_added_faces(tris,
+		    lscm_face_start);
+	    report->rejected_hole_faces += (int)
+		trimesh_reject_nonimproving_added_components(tris,
+		    lscm_face_start, verts.size());
 	    if (lscm_rejected && tris.size() == lscm_face_start)
 		verts.resize(lscm_vertex_start);
 
@@ -1698,6 +1949,12 @@ bg_trimesh_repair2(
 		trimesh_reject_intersecting_new_components(verts, tris,
 		    ear_face_start, settings->allow_self_intersections != 0);
 	    report->rejected_hole_faces += (int)ear_rejected;
+	    report->rejected_hole_faces +=
+		(int)trimesh_reject_invalid_added_faces(tris,
+		    ear_face_start);
+	    report->rejected_hole_faces += (int)
+		trimesh_reject_nonimproving_added_components(tris,
+		    ear_face_start, verts.size());
 	    if (ear_rejected && tris.size() == ear_face_start)
 		verts.resize(ear_vertex_start);
 
@@ -1718,6 +1975,12 @@ bg_trimesh_repair2(
 		    steiner_face_start,
 		    settings->allow_self_intersections != 0);
 	    report->rejected_hole_faces += (int)steiner_rejected;
+	    report->rejected_hole_faces +=
+		(int)trimesh_reject_invalid_added_faces(tris,
+		    steiner_face_start);
+	    report->rejected_hole_faces += (int)
+		trimesh_reject_nonimproving_added_components(tris,
+		    steiner_face_start, verts.size());
 	    if (steiner_rejected && tris.size() == steiner_face_start)
 		verts.resize(steiner_vertex_start);
 	    if (tris.size() == nf_before)
@@ -1737,8 +2000,19 @@ bg_trimesh_repair2(
 	    std::vector<int32_t> adj;
 	    gte::MeshRepair<double>::ConnectFacets(tris, adj);
 	    gte::MeshRepair<double>::ReorientFacetsAntiMoebius(verts, tris, adj);
-	    gte::MeshRepair<double>::ConnectFacets(tris, adj);
-	    gte::MeshRepair<double>::SplitNonManifoldVertices(verts, tris, adj);
+	    const size_t unsplit_score = trimesh_topology_defect_score(tris,
+		verts.size());
+	    std::vector<gte::Vector3<double>> split_vertices = verts;
+	    std::vector<std::array<int32_t, 3>> split_triangles = tris;
+	    gte::MeshRepair<double>::ConnectFacets(split_triangles, adj);
+	    gte::MeshRepair<double>::SplitNonManifoldVertices(split_vertices,
+		split_triangles, adj);
+	    const size_t split_score = trimesh_topology_defect_score(
+		split_triangles, split_vertices.size());
+	    if (split_score < unsplit_score) {
+		verts.swap(split_vertices);
+		tris.swap(split_triangles);
+	    }
 	}
 	gte::MeshPreprocessing<double>::OrientNormals(verts, tris);
 	bool welded_progress = false;
@@ -1791,6 +2065,63 @@ bg_trimesh_repair2(
 		    (int)(tris.size() - welded_triangles.size());
 	    verts.swap(welded_vertices);
 	    tris.swap(welded_triangles);
+	}
+    }
+
+    /* Transactional split decisions above can expose a final small simple
+     * boundary after the main fill loop has converged.  Give only that bounded
+     * residue one last topology-guarded 3-D fill; the helper rejects any
+     * triangle that would overuse or misorient an existing edge. */
+    if (settings->fill_holes) {
+	struct bg_trimesh_repair_report residue =
+	    BG_TRIMESH_REPAIR_REPORT_INIT;
+	trimesh_repair_report_topology(&residue, verts, tris);
+	if (residue.unmatched_edges >= 3 &&
+		(size_t)residue.unmatched_edges <= settings->max_hole_edges &&
+		!residue.excess_edges && !residue.misoriented_edges) {
+	    const size_t first_added = tris.size();
+	    size_t triangular_rejected = 0;
+	    (void)trimesh_fill_triangular_boundary_cycles(verts, tris, 1e30,
+		settings->allow_self_intersections != 0,
+		&triangular_rejected);
+	    report->rejected_hole_faces += (int)triangular_rejected;
+	    size_t quad_rejected = 0;
+	    (void)trimesh_fill_boundary_quads(verts, tris, 1e30,
+		settings->allow_self_intersections != 0, &quad_rejected);
+	    report->rejected_hole_faces += (int)quad_rejected;
+	    gte::MeshHoleFilling<double>::Parameters parameters;
+	    parameters.maxEdges = settings->max_hole_edges;
+	    parameters.maxArea = settings->max_hole_area > SMALL_FASTF ?
+		settings->max_hole_area : (settings->max_hole_area_percent >
+		SMALL_FASTF ? trimesh_gte_area(verts, tris) *
+		settings->max_hole_area_percent / 100.0 : 1e30);
+	    if (tris.size() == first_added) {
+		parameters.method = gte::MeshHoleFilling<double>::
+		    TriangulationMethod::PlanarProjection;
+		parameters.autoFallback = false;
+		gte::MeshHoleFilling<double>::FillHoles(verts, tris,
+		    parameters);
+	    }
+	    if (tris.size() == first_added) {
+		parameters.method = gte::MeshHoleFilling<double>::
+		    TriangulationMethod::LSCM;
+		gte::MeshHoleFilling<double>::FillHoles(verts, tris,
+		    parameters);
+	    }
+	    if (tris.size() == first_added) {
+		parameters.method = gte::MeshHoleFilling<double>::
+		    TriangulationMethod::EarClipping3D;
+		gte::MeshHoleFilling<double>::FillHoles(verts, tris,
+		    parameters);
+	    }
+	    report->rejected_hole_faces += (int)
+		trimesh_reject_intersecting_new_components(verts, tris,
+		    first_added,
+		    settings->allow_self_intersections != 0);
+	    const size_t rejected = trimesh_reject_invalid_added_faces(tris,
+		first_added);
+	    report->rejected_hole_faces += (int)rejected;
+	    report->added_faces += (int)(tris.size() - first_added);
 	}
     }
 

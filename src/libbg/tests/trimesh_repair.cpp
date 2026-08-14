@@ -496,6 +496,64 @@ test_touching_triangular_holes(void)
     return 0;
 }
 
+/* Two open boxes can likewise have four-edge holes which share one indexed
+ * boundary vertex.  They are two exact cycles, not one self-touching polygon;
+ * close both and then split the point contact into valid vertex links. */
+static int
+test_touching_quadrilateral_holes(void)
+{
+    static point_t points[15] = {
+	{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
+	{0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1},
+	{2, 1, 1}, {2, 2, 1}, {1, 2, 1},
+	{1, 1, 2}, {2, 1, 2}, {2, 2, 2}, {1, 2, 2}
+    };
+    static int faces[60] = {
+	0, 2, 1, 0, 3, 2,
+	0, 1, 5, 0, 5, 4,
+	1, 2, 6, 1, 6, 5,
+	2, 3, 7, 2, 7, 6,
+	3, 0, 4, 3, 4, 7,
+	11, 12, 13, 11, 13, 14,
+	6, 8, 12, 6, 12, 11,
+	8, 9, 13, 8, 13, 12,
+	9, 10, 14, 9, 14, 13,
+	10, 6, 11, 10, 11, 14
+    };
+    struct bg_trimesh_repair_settings settings =
+	BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.fill_holes = 1;
+    settings.max_hole_area_percent = 100.0;
+    settings.max_hole_edges = 4;
+    settings.require_manifold = 1;
+    int *output_faces = NULL;
+    int output_face_count = 0;
+    point_t *output_points = NULL;
+    int output_point_count = 0;
+    struct bg_trimesh_repair_report report =
+	BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int result = bg_trimesh_repair2(&output_faces,
+	&output_face_count, &output_points, &output_point_count, faces, 20,
+	points, 15, &settings, &report);
+    const bool valid = result == 0 && report.solid &&
+	report.manifold_accepted && report.added_faces == 4 &&
+	output_face_count == 24 && !bg_trimesh_solid2(output_point_count,
+	output_face_count, (fastf_t *)output_points, output_faces, NULL);
+    if (output_faces)
+	bu_free(output_faces, "touching quadrilateral hole faces");
+    if (output_points)
+	bu_free(output_points, "touching quadrilateral hole points");
+    if (!valid) {
+	bu_log("FAIL test_touching_quadrilateral_holes: ret=%d solid=%d "
+	    "manifold=%d added=%d faces=%d links=%d\n", result,
+	    report.solid, report.manifold_accepted, report.added_faces,
+	    output_face_count, report.invalid_vertex_links);
+	return -1;
+    }
+    bu_log("PASS test_touching_quadrilateral_holes\n");
+    return 0;
+}
+
 /* A failed Manifold postcondition must still report the topology of the
  * candidate that was rejected.  Otherwise a modest open seam is
  * indistinguishable from an empty or catastrophically malformed mesh. */
@@ -1613,6 +1671,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_repair2_conservative_default() != 0) ? 1 : 0;
     failures += (test_repair2_report()             != 0) ? 1 : 0;
     failures += (test_touching_triangular_holes()   != 0) ? 1 : 0;
+    failures += (test_touching_quadrilateral_holes() != 0) ? 1 : 0;
     failures += (test_manifold_rejection_report()   != 0) ? 1 : 0;
     failures +=
 	(test_manifold_preserves_point_contact() != 0) ? 1 : 0;
