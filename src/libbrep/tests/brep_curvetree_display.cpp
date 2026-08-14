@@ -69,5 +69,12 @@ main()
     /* The same deliberately tight budget is insufficient when subdivision
      * has no model-space display tolerance. */
     brlcad::CurveTree untoleranced_tree(&face, budget);
-    return untoleranced_tree.limit_reached() ? 0 : 1;
+    if (!untoleranced_tree.limit_reached())
+	return 1;
+
+    /* Display callers may assign each exact trim hierarchy a time share and
+     * fall back to a bounded untrimmed cue when it is exhausted. */
+    brlcad::CurveTree timed_tree(&face, 0, 0.0, 1);
+    return timed_tree.limit_reached() && timed_tree.time_limit_reached() ?
+	0 : 1;
 }
