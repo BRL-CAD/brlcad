@@ -125,6 +125,7 @@ cmakefiles(
   moss.g
   moss.png
   rook.g
+  test_opts.h
   util.cpp
   ${basic_view_test_ctrls}
   ${annotate_test_ctrls}

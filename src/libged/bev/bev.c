@@ -29,15 +29,62 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
 #include "bu/parallel.h"
-#include "bu/getopt.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
+#include "ged/commands.h"
 
 
 static union tree *bev_facetize_tree;
 static struct model *bev_nmg_model;
+
+struct bev_args {
+    int triangulate;
+};
+
+static const struct bu_cmd_option bev_schema_options[] = {
+    BU_CMD_FLAG("t", NULL, struct bev_args, triangulate, "Triangulate the result"),
+    BU_CMD_OPTION_NULL
+};
+static const char * const bev_op_keywords[] = {"u", "-", "+", NULL};
+
+static int
+bev_op_validate(struct bu_vls *msg, const char *arg)
+{
+    if (db_str2op(arg) != DB_OP_NULL)
+	return 0;
+    if (msg)
+	bu_vls_printf(msg, "invalid Boolean operation: %s\n", arg ? arg : "");
+    return -1;
+}
+
+static const struct bu_cmd_operand bev_schema_operands[] = {
+    BU_CMD_OPERAND("output_object", BU_CMD_VALUE_STRING, 1, 1,
+	"New evaluated object", NULL),
+    GED_CMD_OPERAND_DB_OBJECT("input_object", 1, 1,
+	"First input object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand bev_expression_roles[] = {
+    BU_CMD_OPERAND_KEYWORDS_VALIDATE("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+	bev_op_validate, "Boolean operation", NULL, bev_op_keywords),
+    GED_CMD_OPERAND_DB_OBJECT("input_object", 1, 1,
+	"Additional input object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand_group bev_schema_groups[] = {
+    BU_CMD_OPERAND_GROUP("boolean_expression", bev_expression_roles, 0,
+	BU_CMD_COUNT_UNLIMITED, "Additional operation/object pairs"),
+    BU_CMD_OPERAND_GROUP_NULL
+};
+
+static const struct bu_cmd_schema bev_cmd_schema = {
+    "bev", "Evaluate a boolean expression into an NMG object", bev_schema_options,
+	bev_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+	BU_CMD_SCHEMA_GROUPS(NULL, NULL, bev_schema_groups)
+};
 
 
 static union tree *
@@ -80,11 +127,11 @@ bev_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
 int
 ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "[-t] new_obj obj1 op obj2 op obj3 ...";
 
     int i;
-    int c;
     int ncpu;
+    int operand_index;
+    struct bev_args args = {0};
     const char *cmdname;
     char *newname;
     struct rt_db_internal intern;
@@ -106,37 +153,23 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
-    }
-
-    if (argc < 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
     }
 
     cmdname = argv[0];
 
     /* Initial values for options, must be reset each time */
     ncpu = 1;
-    triangulate = 0;
-
-    /* Parse options. */
-    bu_optind = 1;		/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "t")) != -1) {
-	switch (c) {
-	    case 't':
-		triangulate = 1;
-		break;
-	    default: {
-		bu_vls_printf(gedp->ged_result_str, "%s: option '%c' unknown\n", cmdname, c);
-	    }
-
-		break;
-	}
+    operand_index = bu_cmd_schema_parse_complete(&bev_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	ged_cmd_help_append(gedp->ged_result_str, cmdname, cmdname);
+	return BRLCAD_ERROR;
     }
-    argc -= bu_optind;
-    argv += bu_optind;
+    triangulate = args.triangulate;
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
     newname = (char *)argv[0];
     argv++;
@@ -306,10 +339,10 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_BEV_COMMANDS(X, XID) \
-    X(bev, ged_bev_core, GED_CMD_DEFAULT) \
+    X(bev, ged_bev_core, GED_CMD_DEFAULT, &bev_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_BEV_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_bev", 1, GED_BEV_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_BEV_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_bev", 1, GED_BEV_COMMANDS)
 
 /*
  * Local Variables:

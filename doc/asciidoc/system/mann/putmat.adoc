@@ -10,14 +10,19 @@ putmat - Replaces the existing transformation matrix in the combination specifie
 
 [source]
 ----
-putmat {comb_name/member_name} {[I] | [m0 m1 m2 m3 ... m16]}
+putmat comb_name/member_name [I | m0 m1 m2 m3 ... m15]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Replaces the existing transformation matrix in the combination specified that corresponds to the member specified. The transformation matrix may be specified with an I to indicate the identity matrix, or it may be specified as 16 elements listed row-by-row. The *copymat* command allows the user to copy an existing transformation matrix.
+Without a replacement matrix, reports the transformation matrix for the member
+arc.  With a replacement, replaces the existing transformation matrix in the
+specified combination.  The replacement may be *I* for the identity matrix, a
+single quoted string containing 16 finite numbers, or 16 finite numbers listed
+row-by-row. The *copymat* command allows the user to copy an existing
+transformation matrix.
 
 
 [[examples]]

@@ -10,7 +10,7 @@ brep plot - Plot specific components of brep objects in a 3D scene.
 
 [source]
 ----
-brep {obj}plot [C2|C3|E|F|F2d|FSBB|FSBB2d|FTBB|FTBB2d|FTD|I|L|L2d|S|SCV|SK|SK2d|SN|SUV|SUVP|T|T2d|V|CDT|CDT2d|CDTw] [arguments]
+brep {obj} plot [C2|C3|E|F|F2d|FSBB|FSBB2d|FTBB|FTBB2d|FTD|I|L|L2d|S|SCV|SK|SK2d|SN|SUV|SUVP|T|T2d|V|CDT|CDT2d|CDTm2d|CDTp2d|CDTw|CDTn|CDTn2d|CDTnw] [indices ...]
 ----
 
 
@@ -20,6 +20,22 @@ brep {obj}plot [C2|C3|E|F|F2d|FSBB|FSBB2d|FTBB|FTBB2d|FTD|I|L|L2d|S|SCV|SK|SK2d|
 If _obj_ is not a brep object, then report that fact and exit. Otherwise, generate 3D scene visuals of the specified _obj_ brep data. Note that the user may need to use *autoview* to center the view on the plotted data; the command does not automatically do so, in order to allow for debugging scenarios where it is desirable to maintain a fixed view.
 
 This command has quite a few subcommands, as it is the primary means in BRL-CAD for visually inspecting properties of BRep objects:
+
+The optional index arguments select components of the collection associated
+with the operation.  A single index, a comma/slash/semicolon-separated list,
+or an inclusive range (using `-` or `:`) may be supplied.  The component
+collection is operation-specific: `C2` and `C3` select geometric curves, `E`
+selects edges, `L` and `L2d` select loops, `S` and its surface diagnostic
+variants select surfaces, `T` and `T2d` select trims, `V` selects vertices, and
+the face operations (`F*`, `I`, and `CDT*`) select faces.  Omitting indices
+plots the complete collection.
+
+MGED, QGED, and gsh use the selected BRep while completing an index: after a
+plot mode and a space, completion offers only indices present in that
+collection.  A completed numeric index, list element, or range endpoint that
+is outside the selected collection is rejected before plotting.  This check
+is intentionally performed by the `brep` command rather than by a global
+completion rule, so it remains accurate for each object and plot mode.
 
 
 Plot one or more 2D parametric space geometric curves.

@@ -66,10 +66,11 @@ plugin_log(int, const char *message)
 void
 usage(const struct bu_opt_desc *options)
 {
-    char *description = bu_opt_describe(options, NULL);
-    bu_log("Usage: g-step [--schema AP] -o output.step input.g [objects ...]\n%s",
-	   description);
-    bu_free(description, "option description");
+    char *help = bu_opt_help(options, "g-step", "input.g [objects ...]",
+	"Export BRL-CAD geometry as STEP");
+    if (help)
+	bu_log("%s", help);
+    bu_free(help, "option description");
 }
 
 } // namespace

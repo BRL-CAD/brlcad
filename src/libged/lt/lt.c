@@ -27,9 +27,56 @@
 
 #include <string.h>
 
-#include "bu/getopt.h"
-#include "bu/cmd.h"
+#include "bu/opt.h"
 #include "../ged_private.h"
+
+
+struct lt_args {
+    char separator;
+};
+
+static int
+lt_separator_parse(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage)
+{
+    char *separator = (char *)storage;
+
+    if (argc && argv && argv[0] && argv[0][0] && !argv[0][1]) {
+	if (separator)
+	    *separator = argv[0][0];
+	return 1;
+    }
+    if (msg)
+	bu_vls_printf(msg, "separator must be one character\n");
+    return -1;
+}
+
+static int
+lt_separator_validate(const struct bu_opt_desc *UNUSED(option), size_t argc,
+	const char **argv, size_t cursor_arg, void *UNUSED(context),
+	void *UNUSED(data), struct bu_opt_validate_result *result)
+{
+    if (!argv || cursor_arg >= argc || !argv[cursor_arg] ||
+	!argv[cursor_arg][0] || argv[cursor_arg][1]) {
+	result->state = BU_OPT_VALIDATE_INVALID;
+	result->hint = "one-character separator";
+    }
+    return 0;
+}
+
+#define LT_OPTIONS(args) \
+    BU_OPT_CUSTOM(args, "c", NULL, separator, "separator", lt_separator_parse, \
+	"Output separator character"),
+
+BU_OPT_DESC_BUILDER(lt_options, struct lt_args, LT_OPTIONS);
+static const ged_opt_rule lt_opt_rules[] = {
+    GED_RULE_VALUE_VALIDATE("c", BU_OPT_VALUE_CHAR, "one-character separator",
+	lt_separator_validate, NULL),
+    GED_RULE_NULL
+};
+static const ged_opt_spec lt_opt_spec =
+    GED_OPT_WITH("lt", "List combination children", lt_options,
+	"options-first object:object", lt_opt_rules);
 
 
 static int
@@ -118,10 +165,10 @@ int
 ged_lt_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    static const char *usage = "[-c sep_char] object";
-    int opt;
+    struct lt_args args = {0};
     int c_sep = -1;
     const char *cmd_name = argv[0];
+    int operand_count = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -131,32 +178,23 @@ ged_lt_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+	ged_cmd_help_append(gedp->ged_result_str, cmd_name, cmd_name);
 	return GED_HELP;
     }
 
-    bu_optind = 1;      /* re-init bu_getopt() */
-    while ((opt = bu_getopt(argc, (char * const *)argv, "c:")) != -1) {
-	switch (opt) {
-	    case 'c':
-		c_sep = (int)bu_optarg[0];
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", opt);
-		return BRLCAD_ERROR;
-	}
-    }
-
-    argc -= bu_optind - 1;
-    argv += bu_optind - 1;
-
-    if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+    argc--; argv++;
+    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+	argc, argv, lt_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
+    if (operand_count != 1) {
+	ged_cmd_help_append(gedp->ged_result_str, cmd_name, cmd_name);
 	return BRLCAD_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+    if (args.separator)
+	c_sep = (int)args.separator;
+
+    if ((dp = db_lookup(gedp->dbip, argv[0], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	ged_cmd_help_append(gedp->ged_result_str, cmd_name, cmd_name);
 	return BRLCAD_ERROR;
     }
 
@@ -166,10 +204,10 @@ ged_lt_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_LT_COMMANDS(X, XID) \
-    X(lt, ged_lt_core, GED_CMD_DEFAULT) \
+    X(lt, ged_lt_core, GED_CMD_DEFAULT, &lt_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_LT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_lt", 1, GED_LT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_LT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_lt", 1, GED_LT_COMMANDS)
 
 /*
  * Local Variables:

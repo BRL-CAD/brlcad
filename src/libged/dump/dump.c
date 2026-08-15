@@ -75,11 +75,13 @@ ged_dump_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_DUMP_COMMANDS(X, XID) \
-    X(dump, ged_dump_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(dump, "dump", "Write the database to a file", "output_file", BU_CMD_VALUE_FILE, 1, 1, "Output database file");
 
-GED_DECLARE_COMMAND_SET(GED_DUMP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_dump", 1, GED_DUMP_COMMANDS)
+#define GED_DUMP_COMMANDS(X, XID) \
+    X(dump, ged_dump_core, GED_CMD_DEFAULT, &dump_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_DUMP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_dump", 1, GED_DUMP_COMMANDS)
 
 /*
  * Local Variables:

@@ -10,14 +10,14 @@ bev - Performs the operations indicated in the __Boolean_formula__ and stores th
 
 [source]
 ----
-bev [-t] [-P#] {new_obj} {Boolean_formula}
+bev [-t] {new_obj} {Boolean_formula}
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Performs the operations indicated in the __Boolean_formula__ and stores the result in __new_obj__. The __new_obj__ will be stored as an NMG shape (it may be converted to a polysolid by using the *nmg_simplify* command). If the -t option is specified, then the resulting object will consist entirely of triangular facets. The default is to allow facets of any complexity, including holes. The _-P_ option specifies the number of CPUs to use for the calculation (however, this is currently ignored). Only simple __Boolean_formulas__ are allowed. No parentheses are allowed and the operations are performed from left to right with no precedence. More complex expressions must be expressed as BRL-CAD objects using the *r*, *g*, or *c* commands and evaluated using the *facetize* or *ev* commands.
+Performs the operations indicated in the __Boolean_formula__ and stores the result in __new_obj__. The __new_obj__ will be stored as an NMG shape (it may be converted to a polysolid by using the *nmg_simplify* command). If the -t option is specified, then the resulting object will consist entirely of triangular facets. The default is to allow facets of any complexity, including holes. Only simple __Boolean_formulas__ are allowed. No parentheses are allowed and the operations are performed from left to right with no precedence. More complex expressions must be expressed as BRL-CAD objects using the *r*, *g*, or *c* commands and evaluated using the *facetize* or *ev* commands.
 
 
 [[examples]]

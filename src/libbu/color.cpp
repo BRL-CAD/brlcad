@@ -648,6 +648,118 @@ bu_color_from_rgb_floats(struct bu_color *cp, const fastf_t *rgb)
 }
 
 
+static const char *
+bu_rgb_skip_space(const char *str)
+{
+    while (str && *str && isspace((unsigned char)*str))
+	str++;
+    return str;
+}
+
+
+static int
+bu_rgb_parse_channel(const char **str, unsigned char *channel)
+{
+    char *end = NULL;
+    long value;
+    const char *start;
+
+    if (!str || !*str || !channel)
+	return 0;
+    start = bu_rgb_skip_space(*str);
+    if (!start || !*start)
+	return 0;
+    errno = 0;
+    value = strtol(start, &end, 10);
+    if (end == start || errno == ERANGE || value < 0 || value > 255)
+	return 0;
+    *channel = (unsigned char)value;
+    *str = end;
+    return 1;
+}
+
+
+static int
+bu_rgb_parse_packed(unsigned char *rgb, const char *arg)
+{
+    const char *str = arg;
+    const char *after_red = NULL;
+    unsigned char parsed[3] = {0, 0, 0};
+    char separator = '\0';
+
+    if (!rgb || !arg || !bu_rgb_parse_channel(&str, &parsed[RED]))
+	return 0;
+    after_red = str;
+    str = bu_rgb_skip_space(str);
+
+    if (*str == '/' || *str == ',' || *str == ';') {
+	separator = *str++;
+	if (!bu_rgb_parse_channel(&str, &parsed[GRN]))
+	    return 0;
+	str = bu_rgb_skip_space(str);
+	if (*str != separator)
+	    return 0;
+	str++;
+	if (!bu_rgb_parse_channel(&str, &parsed[BLU]))
+	    return 0;
+    } else {
+	/* The whitespace-only form needs a real separator after each channel. */
+	if (after_red == str)
+	    return 0;
+	if (!bu_rgb_parse_channel(&str, &parsed[GRN]))
+	    return 0;
+	after_red = str;
+	str = bu_rgb_skip_space(str);
+	if (after_red == str)
+	    return 0;
+	if (!bu_rgb_parse_channel(&str, &parsed[BLU]))
+	    return 0;
+    }
+
+    if (*bu_rgb_skip_space(str) != '\0')
+	return 0;
+    VMOVE(rgb, parsed);
+    return 1;
+}
+
+
+int
+bu_rgb_channel_validate(struct bu_vls *msg, const char *arg)
+{
+    const char *str = arg;
+    unsigned char channel = 0;
+
+    if (bu_rgb_parse_channel(&str, &channel) && *bu_rgb_skip_space(str) == '\0')
+	return 0;
+    if (msg)
+	bu_vls_printf(msg, "RGB channel must be a base-ten integer from 0 through 255");
+    return -1;
+}
+
+
+int
+bu_rgb_from_argv(unsigned char *rgb, size_t argc, const char * const *argv)
+{
+    unsigned char parsed[3] = {0, 0, 0};
+
+    if (!rgb || !argv || !argc || !argv[0])
+	return 0;
+    if (bu_rgb_parse_packed(parsed, argv[0])) {
+	VMOVE(rgb, parsed);
+	return 1;
+    }
+    if (argc < 3 || !argv[1] || !argv[2])
+	return 0;
+    for (size_t i = 0; i < 3; i++) {
+	const char *str = argv[i];
+	if (!bu_rgb_parse_channel(&str, &parsed[i]) || *bu_rgb_skip_space(str) != '\0')
+	    return 0;
+    }
+    VMOVE(rgb, parsed);
+    return 3;
+}
+
+
 struct bu_color_components {
     double value[4];
     int percent[4];

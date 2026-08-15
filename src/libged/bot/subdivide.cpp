@@ -28,6 +28,8 @@
 #include <vector>
 
 #include "vmath.h"
+#include "bu/cmdschema.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 #include "rt/db5.h"
 #include "rt/db_internal.h"
@@ -108,14 +110,40 @@ bot_subd(struct ged *gedp, struct rt_bot_internal *input_bot, int alg, int level
     return obot;
 }
 
+struct bot_subd_args {
+    int print_help;
+    int algorithm;
+    int level;
+};
+
+static const struct bu_cmd_option bot_subd_options[] = {
+    BU_CMD_FLAG("h", "help", struct bot_subd_args, print_help,
+	"Print command help"),
+    BU_CMD_INTEGER_RANGE("A", "algorithm", struct bot_subd_args, algorithm,
+	1, 5, "number", "Subdivision algorithm (1 through 5)"),
+    BU_CMD_INTEGER_MIN("l", "level", struct bot_subd_args, level, 1,
+	"count", "Subdivision refinement iterations"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand bot_subd_operands[] = {
+    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Input BoT object", "ged.db_object"),
+    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+	"Optional output BoT name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+extern "C" const struct bu_cmd_schema ged_bot_subd_subcommand_schema = {
+    "subd", "Subdivide a BoT", bot_subd_options, bot_subd_operands,
+    BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+};
+
 static void
-subd_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
-    char *option_help = bu_opt_describe(d, NULL);
-    bu_vls_sprintf(str, "Usage: %s [options] input_bot [output_name]\n", cmd);
-    if (option_help) {
-	bu_vls_printf(str, "Options:\n%s\n", option_help);
-	bu_free(option_help, "help str");
-    }
+subd_usage(struct bu_vls *str, const char *cmd)
+{
+    bu_vls_trunc(str, 0);
+    (void)bu_cmd_schema_help_append(str, &ged_bot_subd_subcommand_schema, cmd);
+    bu_vls_putc(str, '\n');
     bu_vls_printf(str, "Available subdivision algorithm types are:\n");
     bu_vls_printf(str, "    1 (Loop - default)\n");
     bu_vls_printf(str, "    2 (Sqrt3)\n");
@@ -138,37 +166,40 @@ _bot_cmd_subd(void* bs, int argc, const char** argv)
 	return BRLCAD_OK;
     }
 
-    int alg_id = 0;
-    int print_help = 0;
-    int level = 2;
-
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",       "",         NULL,  &print_help, "Print help");
-    BU_OPT(d[1], "A", "algorithm", "#",  &bu_opt_int,  &alg_id,     "Subdivision algorithm to use");
-    BU_OPT(d[2], "l", "level",     "#",  &bu_opt_int,  &level,      "# of subdivision refinement iterations");
-    BU_OPT_NULL(d[3]);
+    struct bot_subd_args args = {0, 1, 2};
+    int operand_count;
+    int operand_index;
+    const char **operands;
 
     // We know we're the subd command - start processing args
     argc--; argv++;
 
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    argc = ac;
-
-    if (print_help || !argc) {
-	subd_usage(gedp->ged_result_str, "bot subd", d);
+	if (!argc) {
+	subd_usage(gedp->ged_result_str, "bot subd");
 	return GED_HELP;
     }
 
+    operand_index = bu_cmd_schema_parse_complete(&ged_bot_subd_subcommand_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0)
+	return BRLCAD_ERROR;
+    operand_count = argc - operand_index;
+    operands = argv + operand_index;
+    if (args.print_help) {
+	subd_usage(gedp->ged_result_str, "bot subd");
+	return GED_HELP;
+	}
+
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
-    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+    if (_bot_obj_setup(gb, operands[0]) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
     }
 
     const char* input_bot_name = gb->dp->d_namep;
     struct bu_vls output_bot_name = BU_VLS_INIT_ZERO;
-    if (argc > 1) {
-	bu_vls_sprintf(&output_bot_name, "%s", argv[1]);
+    if (operand_count > 1) {
+	bu_vls_sprintf(&output_bot_name, "%s", operands[1]);
     } else {
 	bu_vls_sprintf(&output_bot_name, "%s-out_subd.bot", input_bot_name);
     }
@@ -180,7 +211,8 @@ _bot_cmd_subd(void* bs, int argc, const char** argv)
 
     bu_log("INPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);
 
-    struct rt_bot_internal *output_bot = bot_subd(gedp, input_bot, alg_id, level);
+    struct rt_bot_internal *output_bot = bot_subd(gedp, input_bot,
+	args.algorithm, args.level);
     if (!output_bot) {
 	bu_vls_free(&output_bot_name);
 	return BRLCAD_ERROR;
@@ -220,4 +252,3 @@ _bot_cmd_subd(void* bs, int argc, const char** argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

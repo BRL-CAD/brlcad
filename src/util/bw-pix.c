@@ -112,7 +112,10 @@ main(int argc, char **argv)
 
     if (need_help) {
 	bu_vls_free(&out_fname);
-	bu_exit(EXIT_SUCCESS, "%s", usage);
+	char *help = bu_opt_help(d, "bw-pix",
+	    "[file.bw [file_green.bw file_blue.bw]]",
+	    "Convert one or three grayscale images to PIX RGB data");
+	bu_exit(EXIT_SUCCESS, "%s", help ? help : "");
     }
 
     switch (uac) {

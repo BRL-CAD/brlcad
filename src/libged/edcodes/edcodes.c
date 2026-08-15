@@ -30,15 +30,44 @@
 #include <string.h>
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/file.h"
-#include "bu/getopt.h"
 #include "bu/sort.h"
+#include "bu/str.h"
 #include "../ged_private.h"
 
 
 #define EDCODES_OK BRLCAD_OK
 #define EDCODES_NOTOK BRLCAD_ERROR
 #define EDCODES_HALT -99
+
+
+struct edcodes_args {
+    const char *editor;
+    int sort_by_ident;
+    int name_mode;
+    int sort_by_region;
+};
+
+
+#include "../include/plugin.h"
+
+#define EDCODES_OPTIONS(a) \
+    BU_OPT_STR(a, "E", NULL, editor, "editor", "Editor command"), \
+    BU_OPT_FLAG(a, "i", NULL, sort_by_ident, "Sort by identifier"), \
+    BU_OPT_FLAG(a, "n", NULL, name_mode, "List region names without editing"), \
+    BU_OPT_FLAG(a, "r", NULL, sort_by_region, "Sort by region"),
+BU_OPT_DESC_BUILDER(edcodes_options, struct edcodes_args, EDCODES_OPTIONS);
+
+static const ged_opt_rule edcodes_opt_rules[] = {
+    GED_RULE_OPTIONS("i n r", 0, 1, "-i, -n, and -r are mutually exclusive"),
+    GED_RULE_OPERANDS(BU_CMD_CONDITION_NO_OPTION_PRESENT, "n", 1,
+	BU_CMD_COUNT_UNLIMITED, "object required for region-code editing"),
+    GED_RULE_NULL
+};
+static const ged_opt_spec edcodes_opt_spec =
+    GED_OPT_WITH("edcodes", "Edit region codes", edcodes_options,
+	"options-first objects:object*", edcodes_opt_rules);
 
 
 static int
@@ -143,17 +172,14 @@ int
 ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
-    int nflag = 0;
     int status;
-    int sort_by_ident=0;
-    int sort_by_region=0;
-    int c;
     char **av;
     FILE *fp = NULL;
     char tmpfil[MAXPATHLEN] = {0};
-    const char *editstring = NULL;
-
-    static const char *usage = "[-i|-n|-r|-E editor] object(s)";
+    struct edcodes_args args = {NULL, 0, 0, 0};
+    int object_count = 0;
+    const char **objects = NULL;
+    const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -164,46 +190,32 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return GED_HELP;
     }
 
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "E:inr")) != -1) {
-	switch (c) {
-	    case 'E' :
-		editstring = bu_optarg;
-		break;
-	    case 'i':
-		sort_by_ident = 1;
-		break;
-	    case 'n':
-		nflag = 1;
-		break;
-	    case 'r':
-		sort_by_region = 1;
-		break;
-	}
-    }
-
-    if ((nflag + sort_by_ident + sort_by_region) > 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    argc--; argv++;
+    object_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+	argc, argv, edcodes_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
+    if (object_count < 0 ||
+	(args.sort_by_ident + args.name_mode + args.sort_by_region) > 1 ||
+	(!args.name_mode && object_count < 1)) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
 
-    argc -= bu_optind - 1;
-    argv += bu_optind - 1;
+    objects = argv;
 
-    if (nflag) {
+    if (args.name_mode) {
 	struct directory *dp;
 
-	for (i = 1; i < argc; ++i) {
-	    if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
+	for (i = 0; i < object_count; ++i) {
+	    if ((dp = db_lookup(gedp->dbip, objects[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 		status = edcodes_collect_regnames(gedp, dp, 0);
 
 		if (status != EDCODES_OK) {
 		    if (status == EDCODES_HALT)
-			bu_vls_printf(gedp->ged_result_str, "%s: nesting is too deep\n", argv[0]);
+			bu_vls_printf(gedp->ged_result_str, "%s: nesting is too deep\n", command);
 
 		    return BRLCAD_ERROR;
 		}
@@ -217,23 +229,23 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
     if (!fp)
 	return BRLCAD_ERROR;
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "ged_edcodes_core av");
+    av = (char **)bu_malloc(sizeof(char *) * (object_count + 3), "ged_edcodes_core av");
     av[0] = "wcodes";
     av[1] = tmpfil;
-    for (i = 2; i < argc + 1; ++i)
-	av[i] = (char *)argv[i-1];
+    for (i = 0; i < object_count; ++i)
+	av[i + 2] = (char *)objects[i];
 
-    av[i] = NULL;
+    av[object_count + 2] = NULL;
 
     (void)fclose(fp);
 
-    if (ged_exec_wcodes(gedp, argc + 1, (const char **)av) & BRLCAD_ERROR) {
+    if (ged_exec_wcodes(gedp, object_count + 2, (const char **)av) & BRLCAD_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((void *)av, "ged_edcodes_core av");
 	return BRLCAD_ERROR;
     }
 
-    if (sort_by_ident || sort_by_region) {
+    if (args.sort_by_ident || args.sort_by_region) {
 	char **line_array;
 	char aline[RT_MAXLINE];
 	FILE *f_srt;
@@ -242,7 +254,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 
 	f_srt = fopen(tmpfil, "r+");
 	if (f_srt == NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: Failed to open temp file for sorting\n", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: Failed to open temp file for sorting\n", command);
 	    bu_file_delete(tmpfil);
 	    return BRLCAD_ERROR;
 	}
@@ -264,7 +276,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* sort the array of lines */
-	if (sort_by_ident) {
+	if (args.sort_by_ident) {
 	    bu_sort((void *)line_array, line_count, sizeof(char *), edcodes_id_compare, NULL);
 	} else {
 	    bu_sort((void *)line_array, line_count, sizeof(char *), edcodes_reg_compare, NULL);
@@ -280,7 +292,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 	fclose(f_srt);
     }
 
-    if (_ged_editit(gedp, editstring, tmpfil)) {
+    if (_ged_editit(gedp, args.editor, tmpfil)) {
 	av[0] = "rcodes";
 	av[2] = NULL;
 	status = ged_exec_rcodes(gedp, 2, (const char **)av);
@@ -293,13 +305,11 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#include "../include/plugin.h"
-
 #define GED_EDCODES_COMMANDS(X, XID) \
-    X(edcodes, ged_edcodes_core, GED_CMD_DEFAULT) \
+    X(edcodes, ged_edcodes_core, GED_CMD_DEFAULT, &edcodes_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_EDCODES_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_edcodes", 1, GED_EDCODES_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_EDCODES_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_edcodes", 1, GED_EDCODES_COMMANDS)
 
 /*
  * Local Variables:

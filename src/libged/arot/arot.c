@@ -47,11 +47,13 @@ ged_arot_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_AROT_COMMANDS(X, XID) \
-    X(arot, ged_arot_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(arot, "arot", "Rotate about an arbitrary axis", "axis_and_angle", BU_CMD_VALUE_NUMBER, 4, 4, "Axis X Y Z and angle");
 
-GED_DECLARE_COMMAND_SET(GED_AROT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_arot", 1, GED_AROT_COMMANDS)
+#define GED_AROT_COMMANDS(X, XID) \
+    X(arot, ged_arot_core, GED_CMD_DEFAULT, &arot_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_AROT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_arot", 1, GED_AROT_COMMANDS)
 
 /*
  * Local Variables:

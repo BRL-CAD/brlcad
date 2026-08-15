@@ -29,12 +29,16 @@
  */
 #include "common.h"
 
+#include "bu/cmdschema.h"
 #include "../ged_private.h"
+
+static const struct bu_cmd_schema *importfg4_schema(void);
 
 int
 ged_importFg4Section_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "obj section";
+    int operand_index;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -45,12 +49,15 @@ ged_importFg4Section_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
     }
 
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    operand_index = bu_cmd_schema_parse_complete(importfg4_schema(),
+	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -62,11 +69,27 @@ ged_importFg4Section_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_IMPORTFG4SECTION_COMMANDS(X, XID) \
-    X(importFg4Section, ged_importFg4Section_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand importfg4_schema_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_STRING, 1, 1, "Imported object name", NULL),
+    BU_CMD_OPERAND("section", BU_CMD_VALUE_INTEGER, 1, 1, "FASTGEN4 section", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema importfg4_cmd_schema = {
+    "importFg4Section", "Import a FASTGEN4 section", NULL,
+    importfg4_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
-GED_DECLARE_COMMAND_SET(GED_IMPORTFG4SECTION_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_importFg4Section", 1, GED_IMPORTFG4SECTION_COMMANDS)
+static const struct bu_cmd_schema *
+importfg4_schema(void)
+{
+    return &importfg4_cmd_schema;
+}
+
+#define GED_IMPORTFG4SECTION_COMMANDS(X, XID) \
+    X(importFg4Section, ged_importFg4Section_core, GED_CMD_DEFAULT, &importfg4_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_IMPORTFG4SECTION_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_importFg4Section", 1, GED_IMPORTFG4SECTION_COMMANDS)
 
 /*
  * Local Variables:

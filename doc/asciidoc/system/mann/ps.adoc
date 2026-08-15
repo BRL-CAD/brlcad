@@ -20,6 +20,9 @@ ps [-a author] [-b] [-c r/g/b] [-f font] [-s size] [-t title] [-x offset] [-y of
 The *ps* command shares its core implementation with *postscript*.
 It writes the current display to a PostScript output file.
 
+The *-c* border color accepts 8-bit RGB channels in _r/g/b_, _r,g,b_, or
+_r;g;b_ form, or as three separate arguments (_r g b_).
+
 See *postscript* for the detailed behavior and option meanings.
 
 

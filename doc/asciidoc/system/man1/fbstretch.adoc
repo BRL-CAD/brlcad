@@ -76,7 +76,7 @@ Outputs to the specified framebuffer instead of the one specified
 by the `FB_FILE` environment variable. If this is the last option,
 the *-F* prefix is optional.
 
-*-h, -?*::
+*-h*, *-?*::
 Print a usage message and exit.
 
 

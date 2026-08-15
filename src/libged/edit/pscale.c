@@ -36,6 +36,14 @@
 #include "./ged_edit.h"
 
 int
+_ged_pscale_factor_parse(fastf_t *factor, const char *arg)
+{
+    return bu_opt_fastf_t(NULL, 1, &arg, factor) == 1 &&
+	isfinite(*factor) && *factor > SQRT_SMALL_FASTF;
+}
+
+
+int
 ged_pscale_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
@@ -78,8 +86,7 @@ ged_pscale_core(struct ged *gedp, int argc, const char *argv[])
     } else
 	rflag = 0;
 
-    if (bu_opt_fastf_t(NULL, 1, &argv[3], &sf) != 1 || !isfinite(sf) ||
-	sf <= SQRT_SMALL_FASTF) {
+    if (!_ged_pscale_factor_parse(&sf, argv[3])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad scale factor - %s", argv[0], argv[3]);
 	return BRLCAD_ERROR;
     }

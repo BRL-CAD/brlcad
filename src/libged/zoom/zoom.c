@@ -68,11 +68,13 @@ ged_zoom_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_ZOOM_COMMANDS(X, XID) \
-    X(zoom, ged_zoom_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(zoom, "zoom", "Scale the current view", "scale_factor", BU_CMD_VALUE_NUMBER, 1, 1, "Positive view scale factor");
 
-GED_DECLARE_COMMAND_SET(GED_ZOOM_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_zoom", 1, GED_ZOOM_COMMANDS)
+#define GED_ZOOM_COMMANDS(X, XID) \
+    X(zoom, ged_zoom_core, GED_CMD_DEFAULT, &zoom_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_ZOOM_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_zoom", 1, GED_ZOOM_COMMANDS)
 
 /*
  * Local Variables:

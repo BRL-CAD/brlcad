@@ -10,14 +10,34 @@ voxelize - Takes as input a primitive or a collection of primitives, __old_obj__
 
 [source]
 ----
-voxelize [[-d] | {n}] [[-s] | {"%s %s %s"}] [[-t] | {f}] {new_obj old_obj} [old_obj1 old_obj2 ...]
+voxelize [-s dx/dy/dz] [-d level] [-t fraction] new_obj old_obj [old_obj ...]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Takes as input a primitive or a collection of primitives ,__old_obj__, and creates a region __new_obj__ which is the collection of voxels(RPPs) approximating the __old_obj__. The _-d_ option specifies the level of detail (precision in approximation of volume) required (default is 1). An argument of n means that n * n rays will be shot through each row, and an approximation of volume filled in each voxel region is reached averaging these n * n values. The _-s_ option lets the user specify the voxel size in each direction (default is 1, 1, 1 in current units). Note that setting the voxel size too small can increase the filesize exponentially. The _-t_ option specifies the threshold volume to decide if voxel is to be included in the voxelized output (default is .5). The threshold should always be a value between 0 and 1.
+Takes one or more existing geometry objects and creates __new_obj__, a region
+containing the RPP voxels that approximate their volume.  The output name must
+not already exist.
+
+== OPTIONS
+
+*-s* _dx/dy/dz_::
+Set positive voxel dimensions in current units.  The value may be written as
+`dx/dy/dz`, `dx,dy,dz`, `dx;dy;dz`, a quoted `"dx dy dz"` argument, or three
+separate numeric arguments.  The default is `1 1 1`.
+
+*-d* _level_::
+Set a positive ray-sampling detail level; the command shoots _level_ squared
+rays through each voxel row.  The default is `1`.
+
+*-t* _fraction_::
+Set the inclusive 0 through 1 fill fraction required for a voxel to be kept.
+The default is `0.5`.
+
+Very small positive voxel dimensions can increase the output size
+exponentially.
 
 
 [[examples]]

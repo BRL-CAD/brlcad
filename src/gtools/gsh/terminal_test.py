@@ -41,25 +41,30 @@ def read_until(master, token):
 
 
 def drain(master):
+    data = b""
     while select.select([master], [], [], 0.1)[0]:
-        os.read(master, 65536)
+        data += os.read(master, 65536)
+    return data
 
 
 def resize(slave, columns):
     fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, columns, 0, 0))
 
 
-def main():
+def check_resize(highlight):
     master, slave = pty.openpty()
     resize(slave, 80)
     process = subprocess.Popen(
-        [sys.argv[1]], stdin=slave, stdout=slave, stderr=slave,
+        [sys.argv[1]] + (["highlight"] if highlight else []),
+        stdin=slave, stdout=slave, stderr=slave,
         env={**os.environ, "TERM": "xterm"})
     try:
         read_until(master, b"test> ")
         command = ("alpha_café_" + "x" * 140 + "_omega").encode()
         os.write(master, command)
-        drain(master)
+        display = drain(master)
+        if highlight and b"\x1b[36m" not in display:
+            raise RuntimeError("Highlighted input did not use the valid-token style")
         # No keystrokes accompany these resizes: the idle editor must repaint.
         for columns in (20, 2, 120):
             resize(slave, columns)
@@ -77,4 +82,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    for highlight in (False, True):
+        check_resize(highlight)

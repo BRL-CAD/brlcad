@@ -72,8 +72,8 @@ tess_default_methods()
 }
 
 
-int _tess_active_methods(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
-int _tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+int tess_active_methods_from_str(struct bu_vls *msg, const char *arg, void *storage);
+int tess_method_opts_from_str(struct bu_vls *msg, const char *arg, void *storage);
 
 class method_opts {
     public:
@@ -153,7 +153,7 @@ class spsr_opts : public sample_opts {
 
 #if defined(TESS_OPTS_IMPLEMENTATION)
 
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 
 method_options_t::method_options_t()
 {
@@ -223,69 +223,78 @@ method_options_t::method_optstr(std::string &method, struct db_i *dbip)
 }
 
 int
-_tess_active_methods(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+tess_active_methods_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
-    method_options_t *m = (method_options_t *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "_tess_active_methods");
+    std::vector<std::string> methods;
+    std::stringstream astream(arg ? arg : "");
+    std::string method;
 
-    std::string av0 = std::string(argv[0]);
-    std::stringstream astream(av0);
-    std::string s;
-    while (std::getline(astream, s, ',')) {
-	m->methods.push_back(s);
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_strcat(msg, "--methods requires one or more comma-separated methods\n");
+	return -1;
     }
-    return 1;
+    while (std::getline(astream, method, ',')) {
+	if (method.empty()) {
+	    if (msg)
+		bu_vls_strcat(msg, "--methods does not allow an empty method name\n");
+	    return -1;
+	}
+	methods.push_back(method);
+    }
+    if (storage) {
+	method_options_t *m = *((method_options_t **)storage);
+	if (!m)
+	    return -1;
+	m->methods.insert(m->methods.end(), methods.begin(), methods.end());
+    }
+    return 0;
 }
 
 int
-_tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+tess_method_opts_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
-    method_options_t *m = (method_options_t *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "_tess_method_opts");
+    std::stringstream astream(arg ? arg : "");
+    std::vector<std::string> words;
+    std::vector<std::pair<std::string, std::string>> settings;
+    std::string word;
 
-    std::string av0 = std::string(argv[0]);
-    std::stringstream astream(av0);
-    std::string s;
-    std::vector<std::string> opts;
-    while (std::getline(astream, s, ' ')) {
-	if (s.length())
-	    opts.push_back(s);
+    while (astream >> word)
+	words.push_back(word);
+    if (words.size() < 2) {
+	if (msg)
+	    bu_vls_strcat(msg, "--method-opts requires METHOD followed by one or more key=value settings\n");
+	return -1;
     }
-
-    for (size_t i = 1; i < opts.size(); i++) {
-	std::string wopt = opts[i];
-	std::stringstream ostream(wopt);
-	std::string optstr;
-	std::vector<std::string> key_val;
-	while (std::getline(ostream, optstr, '=')) {
-	    key_val.push_back(optstr);
+    for (size_t i = 1; i < words.size(); i++) {
+	const std::string &setting = words[i];
+	std::string::size_type equal = setting.find('=');
+	if (equal == std::string::npos || equal == 0 || setting.find('=', equal + 1) != std::string::npos) {
+	    if (msg)
+		bu_vls_printf(msg, "invalid --method-opts setting: %s\n", setting.c_str());
+	    return -1;
 	}
-	if (key_val.size() != 2) {
-	    bu_log("method options error!\n");
-	    continue;
-	}
-	m->options_map[opts[0]][key_val[0]] = key_val[1];
-	if (key_val[0] == std::string("max_time")) {
-	    int max_time_val = 0;
-	    const char *cstr[2];
-	    cstr[0] = key_val[1].c_str();
-	    cstr[1] = NULL;
-	    if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time_val) < 0)
-		continue;
-	    m->max_time[opts[0]] = max_time_val;
-	}
-	if (key_val[0] == std::string("plate_max_time")) {
-	    int max_time_val = 0;
-	    const char *cstr[2];
-	    cstr[0] = key_val[1].c_str();
-	    cstr[1] = NULL;
-	    if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time_val) < 0)
-		continue;
-	    m->plate_max_time = max_time_val;
-	}
-
+	settings.push_back(std::make_pair(setting.substr(0, equal), setting.substr(equal + 1)));
     }
-    return 1;
+    if (storage) {
+	method_options_t *m = *((method_options_t **)storage);
+	if (!m)
+	    return -1;
+	for (const auto &setting : settings) {
+	    m->options_map[words[0]][setting.first] = setting.second;
+	    if (setting.first == "max_time") {
+		int max_time = 0;
+		if (bu_cmd_integer_from_str(&max_time, setting.second.c_str()))
+		    m->max_time[words[0]] = max_time;
+	    }
+	    if (setting.first == "plate_max_time") {
+		int max_time = 0;
+		if (bu_cmd_integer_from_str(&max_time, setting.second.c_str()))
+		    m->plate_max_time = max_time;
+	    }
+	}
+    }
+    return 0;
 }
 
 std::string
@@ -311,12 +320,11 @@ sample_opts::set_var(const std::string &key, const std::string &val)
     if (key.empty())
 	return BRLCAD_ERROR;
 
-    const char *value[2] = {val.c_str(), NULL};
     if (key == "feature_scale" || key == "feature_size" ||
 	key == "d_feature_size") {
 	fastf_t parsed = 0.0;
 	if ((!val.empty() &&
-		bu_opt_fastf_t(NULL, 1, value, &parsed) < 0) ||
+		!bu_cmd_number_from_str(&parsed, val.c_str())) ||
 		parsed < 0.0)
 	    return BRLCAD_ERROR;
 	if (key == "feature_scale")
@@ -330,7 +338,8 @@ sample_opts::set_var(const std::string &key, const std::string &val)
 
     if (key == "max_sample_time" || key == "max_pnts") {
 	int parsed = 0;
-	if ((!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0) ||
+	if ((!val.empty() &&
+		!bu_cmd_integer_from_str(&parsed, val.c_str())) ||
 		parsed < 0)
 	    return BRLCAD_ERROR;
 	if (key == "max_sample_time")
@@ -403,11 +412,10 @@ mdc_opts::set_var(const std::string &key, const std::string &val)
     if (key.empty())
 	return BRLCAD_ERROR;
 
-    const char *value[2] = {val.c_str(), NULL};
     if (key == "feature_size") {
 	fastf_t parsed = 0.0;
 	if ((!val.empty() &&
-		bu_opt_fastf_t(NULL, 1, value, &parsed) < 0) ||
+		!bu_cmd_number_from_str(&parsed, val.c_str())) ||
 		parsed < 0.0)
 	    return BRLCAD_ERROR;
 	feature_size = parsed;
@@ -416,7 +424,8 @@ mdc_opts::set_var(const std::string &key, const std::string &val)
 
     if (key == "max_rays" || key == "minimum_free_mem") {
 	long parsed = 0;
-	if ((!val.empty() && bu_opt_long(NULL, 1, value, &parsed) < 0) ||
+	if ((!val.empty() &&
+		!bu_cmd_long_from_str(&parsed, val.c_str())) ||
 		parsed < 0)
 	    return BRLCAD_ERROR;
 	if (key == "max_rays")
@@ -427,7 +436,7 @@ mdc_opts::set_var(const std::string &key, const std::string &val)
     }
 
     int parsed = 0;
-    if (!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0)
+    if (!val.empty() && !bu_cmd_integer_from_str(&parsed, val.c_str()))
 	return BRLCAD_ERROR;
     if (key == "min_depth") {
 	if (parsed < 1 || parsed > ANALYZE_MDC_MAX_DEPTH)
@@ -501,16 +510,12 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
     if (key.length() == 0)
 	return BRLCAD_ERROR;
 
-    const char *cstr[2];
-    cstr[0] = val.c_str();
-    cstr[1] = NULL;
-
     if (key == std::string("tol_rel")) {
 	if (!val.length()) {
 	    ttol.rel = 0.0;
 	    return BRLCAD_OK;
 	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&ttol.rel) < 0)
+	if (!bu_cmd_number_from_str(&ttol.rel, val.c_str()))
 	    return BRLCAD_ERROR;
     }
     if (key == std::string("tol_abs")) {
@@ -518,7 +523,7 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    ttol.abs = 0.0;
 	    return BRLCAD_OK;
 	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&ttol.abs) < 0)
+	if (!bu_cmd_number_from_str(&ttol.abs, val.c_str()))
 	    return BRLCAD_ERROR;
     }
     if (key == std::string("tol_norm")) {
@@ -526,7 +531,7 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    ttol.norm = 0.0;
 	    return BRLCAD_OK;
 	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&ttol.norm) < 0)
+	if (!bu_cmd_number_from_str(&ttol.norm, val.c_str()))
 	    return BRLCAD_ERROR;
     }
     if (key == std::string("nmg_debug")) {
@@ -535,7 +540,7 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    return BRLCAD_OK;
 	}
 	long ndebug = 0;
-	if (bu_opt_long(NULL, 1, (const char **)cstr, (void *)&ndebug) < 0)
+	if (!bu_cmd_long_from_str(&ndebug, val.c_str()))
 	    return BRLCAD_ERROR;
 	nmg_debug = ndebug;
     }
@@ -545,7 +550,7 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    max_time = 0;
 	    return BRLCAD_OK;
 	}
-	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time) < 0)
+	if (!bu_cmd_integer_from_str(&max_time, val.c_str()))
 	    return BRLCAD_ERROR;
     }
 
@@ -554,7 +559,7 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    plate_max_time = 0;
 	    return BRLCAD_OK;
 	}
-	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time) < 0)
+	if (!bu_cmd_integer_from_str(&plate_max_time, val.c_str()))
 	    return BRLCAD_ERROR;
     }
 
@@ -605,10 +610,10 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     if (key.empty())
 	return BRLCAD_ERROR;
 
-    const char *value[2] = {val.c_str(), NULL};
     if (key == "depth") {
 	int parsed = BG_3D_SPSR_DEFAULT_DEPTH;
-	if ((!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0) ||
+	if ((!val.empty() &&
+		!bu_cmd_integer_from_str(&parsed, val.c_str())) ||
 		parsed < 1)
 	    return BRLCAD_ERROR;
 	s_opts.depth = parsed;
@@ -617,7 +622,7 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     if (key == "interpolate") {
 	fastf_t parsed = BG_3D_SPSR_DEFAULT_POINT_WEIGHT;
 	if ((!val.empty() &&
-		bu_opt_fastf_t(NULL, 1, value, &parsed) < 0) ||
+		!bu_cmd_number_from_str(&parsed, val.c_str())) ||
 		parsed < 0.0)
 	    return BRLCAD_ERROR;
 	s_opts.point_weight = parsed;
@@ -626,7 +631,7 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     if (key == "samples_per_node") {
 	fastf_t parsed = BG_3D_SPSR_DEFAULT_SAMPLES_PER_NODE;
 	if ((!val.empty() &&
-		bu_opt_fastf_t(NULL, 1, value, &parsed) < 0) ||
+		!bu_cmd_number_from_str(&parsed, val.c_str())) ||
 		parsed <= 0.0)
 	    return BRLCAD_ERROR;
 	s_opts.samples_per_node = parsed;
@@ -634,7 +639,8 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     }
     if (key == "refinement_passes") {
 	int parsed = BG_3D_SPSR_DEFAULT_REFINEMENT_PASSES;
-	if ((!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0) ||
+	if ((!val.empty() &&
+		!bu_cmd_integer_from_str(&parsed, val.c_str())) ||
 		parsed < 0)
 	    return BRLCAD_ERROR;
 	refinement_passes = parsed;
@@ -642,13 +648,15 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     }
     if (key == "max_time") {
 	int parsed = 600;
-	if ((!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0) ||
+	if ((!val.empty() &&
+		!bu_cmd_integer_from_str(&parsed, val.c_str())) ||
 		parsed < 0)
 	    return BRLCAD_ERROR;
 	max_time = parsed;
 	return BRLCAD_OK;
     }
 
+    // If it's not a SPSR setting directly, it may be for sampling
     return sample_opts::set_var(key, val);
 }
 

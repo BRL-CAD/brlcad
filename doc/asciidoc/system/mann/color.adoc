@@ -19,6 +19,10 @@ color [-e] [low high r g b]
 
 Creates an entry in the database that functions as part of a color lookup table for displayed regions. The ident number for the region is used to find the appropriate color from the lookup table. The _low_ and _high_ values are the limits of region ident numbers to have the indicated _rgb_ color (0-255) applied. The current list of color table entries may be displayed with the *prcolor* command, and the entire color table may be edited using the _-e_ option and/or using the *edcolor* command. If a color lookup table exists, its entries will override any color assigned using the *mater* command.
 
+The numeric form requires exactly `low high red green blue`.  The color channels
+are decimal integers from 0 through 255.  The `-e` editing form cannot be
+combined with numeric color-record values.
+
 
 [[examples]]
 == EXAMPLES

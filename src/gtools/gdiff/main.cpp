@@ -246,13 +246,12 @@ pdisplay_type(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 static void
 gdiff_usage(const char *cmd, struct bu_opt_desc *d) {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    char *option_help = bu_opt_describe(d, NULL);
-    bu_vls_sprintf(&str, "Usage: %s [options] left.g [ancestor.g] right.g\n", cmd);
-    bu_vls_printf(&str,  "Usage: %s -G [options] [pattern1 pattern2 ...]\n", cmd);
-    if (option_help) {
-        bu_vls_printf(&str, "Options:\n%s\n", option_help);
-        bu_free(option_help, "help str");
-    }
+    char *help = bu_opt_help(d, cmd,
+	"left.g [ancestor.g] right.g\n       gdiff -G [options] [pattern1 pattern2 ...]",
+	"Compare BRL-CAD geometry databases");
+    bu_vls_sprintf(&str, "%s", help ? help : "");
+    if (help)
+	bu_free(help, "help str");
     bu_vls_printf(&str, "\nWhen in grouping (-G) mode, by default both object names and\n");
     bu_vls_printf(&str, "object geometry are used unless an option is explicitly specified\n");
     bu_vls_printf(&str, "to enable one of them - in that case, only what is specified is used.\n");

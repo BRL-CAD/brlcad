@@ -66,11 +66,13 @@ ged_rmat_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_RMAT_COMMANDS(X, XID) \
-    X(rmat, ged_rmat_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(rmat, "rmat", "Query or set the view rotation matrix", "matrix", BU_CMD_VALUE_MATRIX, 0, 1, "Optional packed 4x4 matrix");
 
-GED_DECLARE_COMMAND_SET(GED_RMAT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_rmat", 1, GED_RMAT_COMMANDS)
+#define GED_RMAT_COMMANDS(X, XID) \
+    X(rmat, ged_rmat_core, GED_CMD_DEFAULT, &rmat_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_RMAT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_rmat", 1, GED_RMAT_COMMANDS)
 
 /*
  * Local Variables:

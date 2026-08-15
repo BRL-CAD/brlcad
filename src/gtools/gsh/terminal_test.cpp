@@ -18,14 +18,24 @@
  */
 
 #include "common.h"
+
+#include <cstring>
+
 #include "bu/app.h"
 #include "linenoise.hpp"
 
 int
-main(int, char **argv)
+main(int argc, char **argv)
 {
     bu_setprogname(argv[0]);
     linenoise::linenoiseState terminal("test> ", 0, 1);
+    if (argc > 1) {
+	terminal.SetColorMode(linenoise::COLOR_ALWAYS);
+	terminal.SetHighlightCallback([](const char *input,
+		std::vector<linenoise::HighlightSpan> &spans) {
+	    spans.push_back({0, std::strlen(input), linenoise::HIGHLIGHT_VALID});
+	});
+    }
     std::string line;
     if (terminal.Readline(line)) return EXIT_FAILURE;
     std::cout << "RESULT:" << line << std::endl;

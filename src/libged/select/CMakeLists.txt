@@ -3,6 +3,7 @@ set(PLUGIN_LIBS libged libbu)
 set(SELECT_SRCS
   select.c
   select2.cpp
+  select_completion.cpp
 )
 
 ged_plugin_library(ged-select

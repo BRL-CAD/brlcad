@@ -48,11 +48,6 @@
 #include "bu/opt.h"
 
 
-static char usage[] = "\
-Usage: asc2dsp file.asc file.dsp\n\n\
-Convert an ASCII DSP file to DSP binary form\n\
-";
-
 #define BUFSZ 6
 
 
@@ -130,11 +125,16 @@ main(int argc, char **argv)
     argc = uac;
 
     if (need_help) {
-	bu_exit(EXIT_SUCCESS, "%s", usage);
+	char *help = bu_opt_help(d, "asc2dsp", "file.asc file.dsp",
+	    "Convert an ASCII DSP file to DSP binary form");
+	bu_exit(EXIT_SUCCESS, "%s", help ? help : "");
     }
 
-    if (argc != 2)
-	bu_exit(1, "%s", usage);
+    if (argc != 2) {
+	char *help = bu_opt_help(d, "asc2dsp", "file.asc file.dsp",
+	    "Convert an ASCII DSP file to DSP binary form");
+	bu_exit(EXIT_FAILURE, "%s", help ? help : "");
+    }
 
     fpi = fopen(argv[0], "r");
     if (!fpi)

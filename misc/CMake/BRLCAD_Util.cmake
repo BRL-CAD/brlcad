@@ -434,14 +434,14 @@ int main(int argc, const char **argv) {
   if (strncmp(argv[1], \"final\", 5) == 0) {
     if (argc < 4) return 1;
     printf(\"Done.\\n\\nBRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE}\\n\\nElapsed compilation time: \");
-    infp = fopen(argv[2], \"r\"); if (!fscanf(infp, \"%ld\", &start_time)) return 1; fclose(infp); printtime(((long)t) - start_time);
+    infp = fopen(argv[2], \"r\"); if (!infp) { fprintf(stderr, \"Unable to read timestamp %s\\n\", argv[2]); return 1; } if (fscanf(infp, \"%ld\", &start_time) != 1) { fclose(infp); return 1; } fclose(infp); printtime(((long)t) - start_time);
     printf(\"\\nElapsed time since configuration: \");
-    infp = fopen(argv[3], \"r\"); if (!fscanf(infp, \"%ld\", &start_time)) return 1; fclose(infp); printtime(((long)t) - start_time);
+    infp = fopen(argv[3], \"r\"); if (!infp) { fprintf(stderr, \"Unable to read timestamp %s\\n\", argv[3]); return 1; } if (fscanf(infp, \"%ld\", &start_time) != 1) { fclose(infp); return 1; } fclose(infp); printtime(((long)t) - start_time);
     printf(\"\\n---\\n${INSTALL_LINE}\\n${BENCHMARK_LINE}\\n\\n\");
     return 0;
   }
   printf(\"%s\", argv[1]);
-  infp = fopen(argv[2], \"r\"); if (!fscanf(infp, \"%ld\", &start_time)) return 1; ; fclose(infp); printtime(((long)t) - start_time);
+  infp = fopen(argv[2], \"r\"); if (!infp) { fprintf(stderr, \"Unable to read timestamp %s\\n\", argv[2]); return 1; } if (fscanf(infp, \"%ld\", &start_time) != 1) { fclose(infp); return 1; } fclose(infp); printtime(((long)t) - start_time);
   printf(\"\\n\");
   return 0;
 }

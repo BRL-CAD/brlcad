@@ -24,8 +24,9 @@ regions, and non-region combinations in the current database.
 
 The historical single-token letters `p`, `r`, and `g` remain supported
 for reporting primitives, regions, and/or groups. They may be
-concatenated to request combinged listing(s) of primitive names,
+concatenated to request combined listing(s) of primitive names,
 region names, and combination names respectively.
+The selector is mutually exclusive with an object name or *--obj*.
 
 Modern usage can also summarize one specific database object either by
 naming it directly as the lone argument or by supplying *-o* or

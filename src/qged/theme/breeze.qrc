@@ -1,5 +1,6 @@
 <RCC>
   <qresource>
+    <file alias="fonts/Inconsolata.otf">../fonts/Inconsolata.otf</file>
     <file>dark/branch_closed.svg</file>
     <file>dark/branch_closed_hover.svg</file>
     <file>dark/branch_end.svg</file>
@@ -89,4 +90,3 @@
     <file>dark.qss</file>
   </qresource>
 </RCC>
-

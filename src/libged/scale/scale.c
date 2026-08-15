@@ -68,12 +68,15 @@ ged_scale_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_SCALE_COMMANDS(X, XID) \
-    X(scale, ged_scale_core, GED_CMD_DEFAULT) \
-    X(sca, ged_scale_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(scale, "scale", "Scale the current view", "scale_factor", BU_CMD_VALUE_NUMBER, 1, 1, "Positive scale factor");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(sca, "sca", "Scale the current view", "scale_factor", BU_CMD_VALUE_NUMBER, 1, 1, "Positive scale factor");
 
-GED_DECLARE_COMMAND_SET(GED_SCALE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_scale", 1, GED_SCALE_COMMANDS)
+#define GED_SCALE_COMMANDS(X, XID) \
+    X(scale, ged_scale_core, GED_CMD_DEFAULT, &scale_cmd_schema) \
+    X(sca, ged_scale_core, GED_CMD_DEFAULT, &sca_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_SCALE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_scale", 1, GED_SCALE_COMMANDS)
 
 /*
  * Local Variables:

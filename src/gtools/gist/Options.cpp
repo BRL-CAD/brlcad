@@ -139,13 +139,14 @@ bool Options::readParameters(int argc, const char **argv) {
 	return false;
     }
     if (print_help) {
-	char *options_help = bu_opt_describe(options, NULL);
+	char *help = bu_opt_help(options, cmd_progname, usage,
+	    "Generate a geometry information summary report");
 
-        bu_log("\nUsage:  %s %s\n", cmd_progname, usage);
-        bu_log("\nOptions:\n%s\n", options_help);
+        if (help)
+	    bu_log("%s", help);
 
 	bu_vls_free(&msg);
-        bu_free(options_help, "options help str");
+        bu_free(help, "options help str");
 	return false;
     }
 

@@ -33,7 +33,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "wdb.h"
 
 #include "../edit_private.h"
@@ -1740,7 +1740,6 @@ rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
 {
     struct rt_bot_internal *bot;
     struct rt_bot_repair_info settings = RT_BOT_REPAIR_INFO_INIT;
-    int print_help = 0;
     (void)tol;
     
     RT_CK_DB_INTERNAL(ip);
@@ -1752,18 +1751,32 @@ rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
         return -1;
     }
 
-    struct bu_opt_desc d[5];
-    int options_json = 0;
-    BU_OPT(d[0], "h",  "help",                "",             NULL,                     &print_help,  "Print help");
-    BU_OPT(d[1], "p",  "max-hole-percent",   "#",   bu_opt_fastf_t, &settings.max_hole_area_percent,  "Maximum hole area to repair (percentage of mesh surface area)");
-    BU_OPT(d[2], "a",  "max-hole-area",     " #",   bu_opt_fastf_t,         &settings.max_hole_area,  "Maximum hole area to repair in mm (overrides -p option)");
-    BU_OPT(d[3], "",   "options-json",        "",             NULL,                   &options_json,  "Return JSON of supported options");
-    BU_OPT_NULL(d[4]);
+    struct bot_repair_args {
+	int print_help;
+	int options_json;
+	struct rt_bot_repair_info settings;
+    } args = {0, 0, settings};
+    static const struct bu_cmd_option options[] = {
+	BU_CMD_FLAG("h", "help", struct bot_repair_args, print_help, "Print help"),
+	BU_CMD_NUMBER_RANGE("p", "max-hole-percent", struct bot_repair_args,
+	    settings.max_hole_area_percent, 0.0, 100.0, "percent",
+	    "Maximum hole area as a percentage of mesh area"),
+	BU_CMD_NONNEGATIVE_NUMBER("a", "max-hole-area", struct bot_repair_args,
+	    settings.max_hole_area, "area", "Maximum hole area in mm"),
+	BU_CMD_FLAG(NULL, "options-json", struct bot_repair_args, options_json,
+	    "Return JSON of supported options"),
+	BU_CMD_OPTION_NULL
+    };
+    static const struct bu_cmd_schema schema = {
+	"bot repair", "Repair manifold BoT geometry", options, NULL,
+	BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    };
 
-    if (edit_repair_parse_options(log_str, argc, argv, d) != BRLCAD_OK)
-        return -1;
+    if (edit_repair_parse_options(log_str, argc, argv, &schema, &args) != BRLCAD_OK)
+	return -1;
+    settings = args.settings;
 
-    if (options_json) {
+    if (args.options_json) {
         if (log_str) {
             bu_vls_printf(log_str, "{\"options\":[");
             bu_vls_printf(log_str, "{\"name\":\"max-hole-percent\",\"type\":\"float\",\"description\":\"Maximum hole area to repair (percentage of mesh surface area)\"},");
@@ -1773,11 +1786,13 @@ rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
         return 1;
     }
 
-    if (print_help) {
+    if (args.print_help) {
         if (log_str) {
-            char *option_help = bu_opt_describe(d, NULL);
-            bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
-            if (option_help) bu_free(option_help, "help str");
+	    char *help = bu_cmd_schema_help(&schema, NULL);
+	    bu_vls_strcat(log_str, "{\"status\":\"help\",\"message\":");
+	    bu_cmd_json_string(log_str, help);
+	    bu_vls_putc(log_str, '}');
+	    if (help) bu_free(help, "BoT repair help");
         }
         return -1;
     }
