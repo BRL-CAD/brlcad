@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -43,8 +44,8 @@
 #include <locale>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bu/color.h"
-#include "bu/opt.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -60,6 +61,57 @@ extern "C" {
 RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 }
 
+
+struct brep_convert_args {
+    int no_evaluation;
+    struct bu_vls suffix;
+};
+
+static const struct bu_cmd_option brep_convert_options[] = {
+    BU_CMD_FLAG(NULL, "no-evaluation", struct brep_convert_args, no_evaluation,
+	"For a combination, create a CSG BREP tree without evaluating booleans"),
+    BU_CMD_VLS_APPEND(NULL, "suffix", struct brep_convert_args, suffix, "suffix",
+	"Suffix used for no-evaluation object names"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand brep_convert_operands[] = {
+    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+	"Output BREP object name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema brep_convert_schema = {
+    "brep", "Generate a BREP representation of the selected object",
+    brep_convert_options, brep_convert_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+struct brep_split_args {
+    fastf_t thickness;
+    struct bu_vls output_object;
+    int object_per_face;
+};
+
+static const struct bu_cmd_option brep_split_options[] = {
+    BU_CMD_NUMBER("t", "thickness", struct brep_split_args, thickness, "thickness",
+	"Default plate-mode thickness"),
+    BU_CMD_VLS_APPEND("o", "output-object", struct brep_split_args, output_object,
+	"name", "Output-object root name"),
+    BU_CMD_FLAG("O", "object-per-face", struct brep_split_args, object_per_face,
+	"Create one BREP object per face"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand brep_split_operands[] = {
+    BU_CMD_OPERAND("face_indices", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Face indices, ranges, or lists", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema brep_split_schema = {
+    "split", "Convert a BREP object into plate-mode BREP objects",
+    brep_split_options, brep_split_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 // Indices are specified for info and plot commands - parsing logic is common to both
 int
 _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char **argv) {
@@ -72,23 +124,15 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 	    // May have a range - find out
 	    std::string s2 = s1.substr(0, pos_dash);
 	    s1.erase(0, pos_dash + 1);
-	    char *n1 = bu_strdup(s1.c_str());
-	    char *n2 = bu_strdup(s2.c_str());
 	    int val1, val2, vtmp;
-	    if (bu_opt_int(NULL, 1, (const char **)&n1, &val1) < 0) {
-		bu_vls_printf(vls, "Invalid index specification: %s\n", n1);
-		bu_free(n1, "n1");
-		bu_free(n2, "n2");
+	    if (!bu_cmd_integer_from_str(&val1, s1.c_str())) {
+		bu_vls_printf(vls, "Invalid index specification: %s\n", s1.c_str());
 		return BRLCAD_ERROR;
 	    } 
-	    if (bu_opt_int(NULL, 1, (const char **)&n2, &val2) < 0) {
-		bu_vls_printf(vls, "Invalid index specification: %s\n", n2);
-		bu_free(n1, "n1");
-		bu_free(n2, "n2");
+	    if (!bu_cmd_integer_from_str(&val2, s2.c_str())) {
+		bu_vls_printf(vls, "Invalid index specification: %s\n", s2.c_str());
 		return BRLCAD_ERROR;
 	    }
-	    bu_free(n1, "n1");
-	    bu_free(n2, "n2");
 	    if (val1 > val2) {
 		vtmp = val2;
 		val2 = val1;
@@ -103,11 +147,9 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 	    // May have a set - find out
 	    while (pos_comma != std::string::npos) {
 		std::string ss = s1.substr(0, pos_comma);
-		char *n1 = bu_strdup(ss.c_str());
 		int val1;
-		if (bu_opt_int(NULL, 1, (const char **)&n1, &val1) < 0) {
-		    bu_vls_printf(vls, "Invalid index specification: %s\n", n1);
-		    bu_free(n1, "n1");
+		if (!bu_cmd_integer_from_str(&val1, ss.c_str())) {
+		    bu_vls_printf(vls, "Invalid index specification: %s\n", ss.c_str());
 		    return BRLCAD_ERROR;
 		} else {
 		    elements.insert(val1);
@@ -116,11 +158,9 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 		pos_comma = s1.find_first_of(",/;", 0);
 	    }
 	    if (s1.length()) {
-		char *n1 = bu_strdup(s1.c_str());
 		int val1;
-		if (bu_opt_int(NULL, 1, (const char **)&n1, &val1) < 0) {
-		    bu_vls_printf(vls, "Invalid index specification: %s\n", n1);
-		    bu_free(n1, "n1");
+		if (!bu_cmd_integer_from_str(&val1, s1.c_str())) {
+		    bu_vls_printf(vls, "Invalid index specification: %s\n", s1.c_str());
 		    return BRLCAD_ERROR;
 		} 
 		elements.insert(val1);
@@ -130,7 +170,7 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 
 	// Nothing fancy looking - see if its a number
 	int val = 0;
-	if (bu_opt_int(NULL, 1, &argv[i], &val) >= 0) {
+	if (bu_cmd_integer_from_str(&val, argv[i])) {
 	    elements.insert(val);
 	} else {
 	    bu_vls_printf(vls, "Invalid index specification: %s\n", argv[i]);
@@ -423,7 +463,6 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> brep [opts] [output_name]";
     const char *purpose_string = "generate a BRep representation of the specified object";
-    // TODO - this needs a better help output - it has actual options per bu_opt_desc...
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
@@ -432,32 +471,34 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 
     argc--;argv++;
 
-    int no_evaluation = 0;
+    struct brep_convert_args args = {0, BU_VLS_INIT_ZERO};
     struct bu_vls bname = BU_VLS_INIT_ZERO;
-    struct bu_vls suffix = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&suffix, ".brep");
-
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "", "no-evaluation", "",         NULL,        &no_evaluation, "if converting a comb object, create a CSG brep tree rather than evaluating booleans");
-    BU_OPT(d[1], "", "suffix",        "str",      &bu_opt_vls, &suffix,        "suffix for use in no-evalution object naming");
-    BU_OPT_NULL(d[2]);
+    bu_vls_sprintf(&args.suffix, ".brep");
 
     struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is already a brep\n", gb->solid_name.c_str());
+	bu_vls_free(&args.suffix);
 	return BRLCAD_ERROR;
     }
 
-    bu_opt_parse(NULL, argc, argv, d);
+    int operand_index = bu_cmd_schema_parse_complete(&brep_convert_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	bu_vls_free(&args.suffix);
+	return BRLCAD_ERROR;
+    }
+    argc -= operand_index;
+    argv += operand_index;
 
-    if (no_evaluation && gb->intern.idb_type == ID_COMBINATION) {
+    if (args.no_evaluation && gb->intern.idb_type == ID_COMBINATION) {
 	struct bu_vls bname_suffix;
 	bu_vls_init(&bname_suffix);
-	bu_vls_sprintf(&bname_suffix, "%s%s", gb->solid_name.c_str(), bu_vls_cstr(&suffix));
+	bu_vls_sprintf(&bname_suffix, "%s%s", gb->solid_name.c_str(), bu_vls_cstr(&args.suffix));
 	if (db_lookup(gedp->dbip, bu_vls_cstr(&bname_suffix), LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_cstr(&bname_suffix));
 	    bu_vls_free(&bname);
-	    bu_vls_free(&suffix);
+	    bu_vls_free(&args.suffix);
 	    bu_vls_free(&bname_suffix);
 	    return BRLCAD_OK;
 	}
@@ -469,15 +510,15 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	RT_CK_DB_INTERNAL(&intern);
 
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-	brep_conversion_comb(&intern, bu_vls_cstr(&bname_suffix), bu_vls_cstr(&suffix), wdbp, mk_conv2mm);
+	brep_conversion_comb(&intern, bu_vls_cstr(&bname_suffix), bu_vls_cstr(&args.suffix), wdbp, mk_conv2mm);
 	bu_vls_free(&bname_suffix);
 	bu_vls_free(&bname);
-	bu_vls_free(&suffix);
+	bu_vls_free(&args.suffix);
 	return BRLCAD_OK;
     }
 
     // Won't need the suffix if we've gotten this far
-    bu_vls_free(&suffix);
+    bu_vls_free(&args.suffix);
 
     if (argc == 0) {
 	/* brep obj */
@@ -747,10 +788,12 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
     }
 
     int i, j;
-    if (bu_opt_int(gedp->ged_result_str, 1, &argv[2], (void *)&i) < 0) {
+    if (!bu_cmd_integer_from_str(&i, argv[2])) {
+	bu_vls_printf(gedp->ged_result_str, "invalid integer: %s\n", argv[2]);
 	return BRLCAD_ERROR;
     }
-    if (bu_opt_int(gedp->ged_result_str, 1, &argv[3], (void *)&j) < 0) {
+    if (!bu_cmd_integer_from_str(&j, argv[3])) {
+	bu_vls_printf(gedp->ged_result_str, "invalid integer: %s\n", argv[3]);
 	return BRLCAD_ERROR;
     }
 
@@ -1181,34 +1224,37 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 
     argc--; argv++;
 
-    int object_per_face = 0;
-    double thickness = 0.0;
-    struct bu_vls ocomb = BU_VLS_INIT_ZERO;
+    struct brep_split_args args = {0.0, BU_VLS_INIT_ZERO, 0};
+    int operand_index = bu_cmd_schema_parse_complete(&brep_split_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	bu_vls_free(&args.output_object);
+	return BRLCAD_ERROR;
+    }
+    argc -= operand_index;
+    argv += operand_index;
 
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "t", "thickness", "#", &bu_opt_fastf_t, &thickness , "default plate mode thickness");
-    BU_OPT(d[1], "o", "output-object", "<name>", &bu_opt_vls, &ocomb, "specify an output object root name");
-    BU_OPT(d[2], "O", "object-per-face", "", NULL, &object_per_face, "create one brep object per face");
-    BU_OPT_NULL(d[3]);
-    argc = bu_opt_parse(NULL, argc, argv, d);
+    const int object_per_face = args.object_per_face;
+    const fastf_t thickness = args.thickness;
+    struct bu_vls &ocomb = args.output_object;
 
-    if (!bu_vls_strlen(&ocomb)) {
+	if (!bu_vls_strlen(&args.output_object)) {
 	// If the caller didn't provide a name, generate one
-	bu_vls_sprintf(&ocomb, "%s.plates", gb->solid_name.c_str());
+	bu_vls_sprintf(&args.output_object, "%s.plates", gb->solid_name.c_str());
     }
 
     // If we have anything left, it should be indices
     std::set<int> elements;
     if (argc) {
 	if (_brep_indices(elements, gb->gedp->ged_result_str, argc, argv) != BRLCAD_OK) {
-	    bu_vls_free(&ocomb);
+	    bu_vls_free(&args.output_object);
 	    return BRLCAD_ERROR;
 	}
     }
 
-    if (db_lookup(gedp->dbip, bu_vls_cstr(&ocomb), LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, ": %s already exists.", bu_vls_cstr(&ocomb));
-	bu_vls_free(&ocomb);
+    if (db_lookup(gedp->dbip, bu_vls_cstr(&args.output_object), LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, ": %s already exists.", bu_vls_cstr(&args.output_object));
+	bu_vls_free(&args.output_object);
 	return BRLCAD_ERROR;
     }
 
@@ -1320,6 +1366,7 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	ret = mk_lcomb(wdbp, bu_vls_cstr(&ocomb), &wcomb, 0, NULL, NULL, NULL, 0);
     }
 
+    bu_vls_free(&ocomb);
     return ret;
 }
 
@@ -1449,158 +1496,673 @@ const struct bu_cmdtab _brep_cmds[] = {
 };
 
 
+struct brep_root_args {
+    int help;
+    struct bu_color color;
+    int verbosity;
+    int plotres;
+};
+
+static const struct bu_cmd_option brep_root_options[] = {
+    BU_CMD_FLAG("h", "help", struct brep_root_args, help, "Print command help"),
+    BU_CMD_COLOR_COMPAT("C", "color", struct brep_root_args, color, "color",
+	"Color used by plotted or highlighted output"),
+    BU_CMD_FLAG("v", "verbose", struct brep_root_args, verbosity,
+	"Enable additional diagnostic output"),
+    BU_CMD_POSITIVE_INTEGER(NULL, "plotres", struct brep_root_args, plotres,
+	"resolution", "Plot sampling resolution"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand brep_root_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"BREP or convertible database object", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema brep_root_schema = {
+    "brep", "Inspect, convert, plot, and repair BREP objects", brep_root_options,
+    brep_root_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static const struct bu_cmd_operand brep_raw_operands[] = {
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Operation-specific arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+#define BREP_RAW_SCHEMA(_id, _name, _help) \
+    static const struct bu_cmd_schema _id = { \
+	_name, _help, NULL, brep_raw_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, \
+	BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
+    }
+BREP_RAW_SCHEMA(brep_boolean_schema, "bool", "Evaluate a BREP boolean");
+BREP_RAW_SCHEMA(brep_bots_schema, "bots", "Convert BREP faces to BOTs");
+BREP_RAW_SCHEMA(brep_csg_schema, "csg", "Convert a BREP to CSG");
+BREP_RAW_SCHEMA(brep_dump_schema, "dump", "Dump BREP data");
+BREP_RAW_SCHEMA(brep_flip_schema, "flip", "Reverse BREP orientation");
+BREP_RAW_SCHEMA(brep_geo_schema, "geo", "Inspect or edit BREP geometry");
+BREP_RAW_SCHEMA(brep_info_schema, "info", "Report BREP information");
+BREP_RAW_SCHEMA(brep_pick_schema, "pick", "Pick BREP elements");
+BREP_RAW_SCHEMA(brep_plate_mode_schema, "plate_mode", "Query or set plate-mode properties");
+static const char * const brep_plot_modes[] = {
+    "C2", "C3", "E", "F", "F2d", "FSBB", "FSBB2d", "FTBB", "FTBB2d",
+    "FTD", "I", "L", "L2d", "S", "SCV", "SK", "SK2d", "SN", "SUV",
+    "SUVP", "T", "T2d", "V", "CDT", "CDT2d", "CDTm2d", "CDTp2d", "CDTw",
+    "CDTn", "CDTn2d", "CDTnw", NULL
+};
+static const struct bu_cmd_operand brep_plot_operands[] = {
+    BU_CMD_OPERAND_KEYWORDS("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Plot operation", NULL, brep_plot_modes),
+    BU_CMD_OPERAND("indices", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Optional component indices or ranges", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema brep_plot_schema = {
+    "plot", "Plot BREP diagnostics", NULL, brep_plot_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+BREP_RAW_SCHEMA(brep_repair_schema, "repair", "Repair BREP topology");
+BREP_RAW_SCHEMA(brep_selection_schema, "selection", "Manage BREP selections");
+BREP_RAW_SCHEMA(brep_solid_schema, "solid", "Convert plate mode to solid");
+BREP_RAW_SCHEMA(brep_shrink_schema, "shrink_surfaces", "Shrink BREP surfaces");
+BREP_RAW_SCHEMA(brep_valid_schema, "valid", "Validate BREP topology");
+BREP_RAW_SCHEMA(brep_topo_schema, "topo", "Inspect or edit BREP topology");
+#undef BREP_RAW_SCHEMA
+
+static const struct bu_cmd_operand brep_bot_operands[] = {
+    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+	"Output BOT object name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema brep_bot_schema = {
+    "bot", "Generate a triangle mesh from a BREP object", NULL, brep_bot_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const char * const brep_intersect_modes[] = {
+    "PP", "PC", "PS", "CC", "CS", "SS", NULL
+};
+static const struct bu_cmd_operand brep_intersect_operands[] = {
+    BU_CMD_OPERAND("other_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Second BREP object", "ged.db_object"),
+    BU_CMD_OPERAND("first_index", BU_CMD_VALUE_INTEGER, 1, 1,
+	"Component index in the selected object", NULL),
+    BU_CMD_OPERAND("second_index", BU_CMD_VALUE_INTEGER, 1, 1,
+	"Component index in the second object", NULL),
+    BU_CMD_OPERAND_KEYWORDS("mode", BU_CMD_VALUE_KEYWORD, 0, 1,
+	"Intersection mode (default SS)", NULL, brep_intersect_modes),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema brep_intersect_schema = {
+    "intersect", "Calculate BREP component intersections", NULL,
+    brep_intersect_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_operand brep_tikz_operands[] = {
+    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1,
+	"TikZ output file", "ged.file_path"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema brep_tikz_schema = {
+    "tikz", "Export a BREP plot as TikZ", NULL, brep_tikz_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static int brep_tree_execute(void *context, int argc, const char *argv[]);
+static const struct bu_cmd_tree_node brep_subcommands[] = {
+    BU_CMD_TREE_NODE(&brep_boolean_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_bot_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_bots_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_convert_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_csg_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_dump_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_flip_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_geo_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_info_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_intersect_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_pick_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_plate_mode_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_plot_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_repair_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_selection_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_solid_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_split_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_shrink_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_tikz_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_valid_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE(&brep_topo_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree brep_tree = {
+    &brep_root_schema, brep_subcommands, BU_CMD_TREE_CHILD_AFTER_FIXED_OPERANDS
+};
+
+struct brep_completion_line {
+    char *copy;
+    char **argv;
+    size_t argc;
+    size_t cursor_arg;
+};
+
 static int
-_ged_brep_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
+brep_completion_line_parse(struct brep_completion_line *line, const char *input,
+	size_t cursor_pos)
 {
-    struct bu_color **set_color = (struct bu_color **)set_c;
-    BU_GET(*set_color, struct bu_color);
-    return bu_opt_color(msg, argc, argv, (void *)(*set_color));
+    size_t input_len;
+    size_t p;
+    int in_token = 0;
+    int in_quote = 0;
+    int escaped = 0;
+
+    if (!line || !input)
+	return -1;
+    memset(line, 0, sizeof(*line));
+    input_len = strlen(input);
+    if (cursor_pos > input_len)
+	cursor_pos = input_len;
+    line->copy = bu_strdup(input);
+    while (input_len > 0 && isspace((unsigned char)line->copy[input_len - 1]))
+	line->copy[--input_len] = '\0';
+    line->argv = (char **)bu_calloc(input_len + 2, sizeof(char *),
+	"brep completion argv");
+    line->argc = bu_argv_from_string(line->argv, input_len + 1, line->copy);
+
+	for (p = 0; p < cursor_pos && input[p]; p++) {
+	unsigned char c = (unsigned char)input[p];
+	if (escaped) {
+	    escaped = 0;
+	    in_token = 1;
+	    continue;
+	}
+	if (c == '\\') {
+	    escaped = 1;
+	    in_token = 1;
+	    continue;
+	}
+	if (c == '"') {
+	    in_quote = !in_quote;
+	    in_token = 1;
+	    continue;
+	}
+	if (!in_quote && isspace(c)) {
+	    if (in_token) {
+		line->cursor_arg++;
+		in_token = 0;
+	    }
+	} else {
+	    in_token = 1;
+	}
+    }
+    if (line->cursor_arg > line->argc)
+	line->cursor_arg = line->argc;
+    return 0;
+}
+
+static void
+brep_completion_line_free(struct brep_completion_line *line)
+{
+    if (!line)
+	return;
+    if (line->argv)
+	bu_free(line->argv, "brep completion argv");
+    if (line->copy)
+	bu_free(line->copy, "brep completion input");
+    memset(line, 0, sizeof(*line));
+}
+
+static int
+brep_plot_component_count(const struct rt_brep_internal *bip, const char *mode)
+{
+    const ON_Brep *brep = bip ? bip->brep : NULL;
+    if (!brep || !mode)
+	return 0;
+    if (BU_STR_EQUAL(mode, "C2")) return brep->m_C2.Count();
+    if (BU_STR_EQUAL(mode, "C3")) return brep->m_C3.Count();
+    if (BU_STR_EQUAL(mode, "E")) return brep->m_E.Count();
+    if (BU_STR_EQUAL(mode, "L") || BU_STR_EQUAL(mode, "L2d")) return brep->m_L.Count();
+    if (BU_STR_EQUAL(mode, "S") || BU_STR_EQUAL(mode, "SCV") ||
+	BU_STR_EQUAL(mode, "SK") || BU_STR_EQUAL(mode, "SK2d") ||
+	BU_STR_EQUAL(mode, "SN") || BU_STR_EQUAL(mode, "SUV") ||
+	BU_STR_EQUAL(mode, "SUVP")) return brep->m_S.Count();
+    if (BU_STR_EQUAL(mode, "T") || BU_STR_EQUAL(mode, "T2d")) return brep->m_T.Count();
+    if (BU_STR_EQUAL(mode, "V")) return brep->m_V.Count();
+    if (BU_STR_EQUAL(mode, "F") || BU_STR_EQUAL(mode, "F2d") ||
+	BU_STR_EQUAL(mode, "FSBB") || BU_STR_EQUAL(mode, "FSBB2d") ||
+	BU_STR_EQUAL(mode, "FTBB") || BU_STR_EQUAL(mode, "FTBB2d") ||
+	BU_STR_EQUAL(mode, "FTD") || BU_STR_EQUAL(mode, "I") ||
+	BU_STR_EQUAL(mode, "CDT") || BU_STR_EQUAL(mode, "CDT2d") ||
+	BU_STR_EQUAL(mode, "CDTm2d") || BU_STR_EQUAL(mode, "CDTp2d") ||
+	BU_STR_EQUAL(mode, "CDTw") || BU_STR_EQUAL(mode, "CDTn") ||
+	BU_STR_EQUAL(mode, "CDTn2d") || BU_STR_EQUAL(mode, "CDTnw")) return brep->m_F.Count();
+    return 0;
+}
+
+static int
+brep_plot_index_value(int *value, const char *text, int limit)
+{
+    if (!value || !text || !text[0] || limit <= 0 ||
+	!bu_cmd_integer_from_str(value, text) || *value < 0 || *value >= limit)
+	return 0;
+    return 1;
+}
+
+static int
+brep_plot_index_token_valid(const char *token, int limit)
+{
+    std::string text = token ? token : "";
+    size_t start = 0;
+    while (start <= text.size()) {
+	size_t end = text.find_first_of(",/;", start);
+	std::string part = text.substr(start, end == std::string::npos ?
+	    std::string::npos : end - start);
+	if (part.empty())
+	    return 0;
+	size_t range = part.find_first_of("-:");
+	if (range == std::string::npos) {
+	    int value = 0;
+	    if (!brep_plot_index_value(&value, part.c_str(), limit))
+		return 0;
+	} else {
+	    int first = 0, last = 0;
+	    std::string first_text = part.substr(0, range);
+	    std::string last_text = part.substr(range + 1);
+	    if (!brep_plot_index_value(&first, first_text.c_str(), limit) ||
+		!brep_plot_index_value(&last, last_text.c_str(), limit))
+		return 0;
+	}
+	if (end == std::string::npos)
+	    break;
+	start = end + 1;
+    }
+    return 1;
+}
+
+static int
+brep_plot_index_token_prefix(const char *token)
+{
+    if (!token)
+	return 0;
+    for (const char *p = token; *p; p++) {
+	if (!isdigit((unsigned char)*p) && *p != '-' && *p != ':' &&
+	    *p != ',' && *p != '/' && *p != ';')
+	    return 0;
+    }
+    return 1;
+}
+
+/* Validate the plot arguments against the selected BREP.  The generic
+ * command schema deliberately treats the index operand as raw text so it can
+ * represent the historical list/range syntax; this command-owned layer adds
+ * the geometry-dependent bounds check. */
+static int
+brep_plot_indices_valid(const struct rt_brep_internal *bip, const char *mode,
+	int argc, const char * const *indices)
+{
+    int component_count = brep_plot_component_count(bip, mode);
+    if (!bip || !bip->brep || !mode || component_count <= 0)
+	return argc == 0;
+    for (int i = 0; i < argc; i++) {
+	if (!brep_plot_index_token_valid(indices[i], component_count))
+	    return 0;
+    }
+    return 1;
+}
+
+static void
+brep_plot_context_complete(struct ged *gedp, const char *input, size_t cursor_pos,
+	const struct ged_cmd_completion_request *request,
+	struct ged_cmd_validate_result *result, int enumerate)
+{
+    struct brep_completion_line line;
+    size_t plot_index = (size_t)-1;
+    size_t mode_index = (size_t)-1;
+    const char *object_name = NULL;
+    struct directory *dp = RT_DIR_NULL;
+    struct rt_db_internal intern;
+    int component_count;
+
+    if (!gedp || !gedp->dbip || !input || !result ||
+	brep_completion_line_parse(&line, input, cursor_pos) != 0)
+	return;
+
+    for (size_t i = 1; i + 1 < line.argc; i++) {
+	if (!BU_STR_EQUAL(line.argv[i], "plot"))
+	    continue;
+	for (size_t m = 0; brep_plot_modes[m]; m++) {
+	    if (BU_STR_EQUAL(line.argv[i + 1], brep_plot_modes[m])) {
+		plot_index = i;
+		mode_index = i + 1;
+		break;
+	    }
+	}
+	if (mode_index != (size_t)-1)
+	    break;
+    }
+    if (mode_index == (size_t)-1 || line.cursor_arg <= mode_index || plot_index <= 1) {
+	brep_completion_line_free(&line);
+	return;
+    }
+
+    object_name = line.argv[plot_index - 1];
+    dp = db_lookup(gedp->dbip, object_name, LOOKUP_QUIET);
+    RT_DB_INTERNAL_INIT(&intern);
+    if (dp == RT_DIR_NULL || rt_db_get_internal(&intern, dp, gedp->dbip, NULL) < 0) {
+	brep_completion_line_free(&line);
+	return;
+    }
+    if (intern.idb_type != ID_BREP) {
+	rt_db_free_internal(&intern);
+	brep_completion_line_free(&line);
+	return;
+    }
+    component_count = brep_plot_component_count((struct rt_brep_internal *)intern.idb_ptr,
+	line.argv[mode_index]);
+    if (line.argc == mode_index + 2 &&
+	(BU_STR_EQUAL(line.argv[mode_index + 1], HELPFLAG) ||
+	 BU_STR_EQUAL(line.argv[mode_index + 1], PURPOSEFLAG))) {
+	rt_db_free_internal(&intern);
+	brep_completion_line_free(&line);
+	return;
+    }
+
+    /* Validate completed index tokens against the selected BREP.  A partial
+     * current token remains editable; complete numeric values and ranges must
+     * be in bounds before execution is allowed to proceed. */
+    for (size_t i = mode_index + 1; i < line.argc; i++) {
+	if (!brep_plot_index_token_valid(line.argv[i], component_count)) {
+	    int current = (i == line.cursor_arg);
+	    int numeric = line.argv[i][0] &&
+		strspn(line.argv[i], "0123456789") == strlen(line.argv[i]);
+	    if (!current || numeric || !brep_plot_index_token_prefix(line.argv[i]) ||
+		line.cursor_arg >= line.argc) {
+		result->state = BU_CMD_VALIDATE_INVALID;
+		result->hint = "BREP plot component index is out of range or malformed";
+		if (result->completion_candidates) {
+		    bu_argv_free(result->completion_count,
+			(char **)result->completion_candidates);
+		    result->completion_candidates = NULL;
+		}
+		result->completion_count = 0;
+		rt_db_free_internal(&intern);
+		brep_completion_line_free(&line);
+		return;
+	    }
+	}
+    }
+
+    if (enumerate && line.cursor_arg > mode_index) {
+	const char *seed = line.cursor_arg < line.argc ? line.argv[line.cursor_arg] : "";
+	if (!seed[0] || strspn(seed, "0123456789") == strlen(seed)) {
+	    const size_t materialize_limit = request ? request->max_candidates : 0;
+	    std::vector<std::string> candidates;
+	    std::string common;
+	    size_t total = 0;
+	    candidates.reserve(materialize_limit ?
+		std::min((size_t)std::max(0, component_count), materialize_limit) :
+		(size_t)std::max(0, component_count));
+	    for (int i = 0; i < component_count; i++) {
+		char value[32] = {0};
+		snprintf(value, sizeof(value), "%d", i);
+		if (seed[0] && bu_strncmp(value, seed, strlen(seed)))
+		    continue;
+		if (!total) {
+		    common = value;
+		} else {
+		    size_t ci = 0;
+		    while (ci < common.size() && value[ci] && common[ci] == value[ci])
+			ci++;
+		    common.resize(ci);
+		}
+		total++;
+		if (!materialize_limit || candidates.size() < materialize_limit)
+		    candidates.push_back(value);
+	    }
+	    if (result->completion_candidates)
+		bu_argv_free(result->completion_count,
+		    (char **)result->completion_candidates);
+	    if (result->completion_common_prefix)
+		bu_free(result->completion_common_prefix,
+		    "previous BREP completion common prefix");
+	    result->completion_candidates = NULL;
+	    result->completion_common_prefix = NULL;
+	    result->completion_count = candidates.size();
+	    result->completion_total = total;
+	    result->completion_truncated = total > candidates.size();
+	    if (!candidates.empty()) {
+		result->completion_candidates = (const char **)bu_calloc(
+		    candidates.size() + 1, sizeof(char *),
+		    "BREP plot index completions");
+		for (size_t i = 0; i < candidates.size(); i++)
+		    result->completion_candidates[i] = bu_strdup(candidates[i].c_str());
+	    }
+	    if (total)
+		result->completion_common_prefix = bu_strdup(common.c_str());
+	    result->completion_type = BU_CMD_VALUE_INTEGER;
+	}
+    }
+
+    rt_db_free_internal(&intern);
+    brep_completion_line_free(&line);
+}
+
+static void
+brep_show_help(struct ged *gedp)
+{
+    char *help = bu_cmd_tree_help(&brep_tree, "brep");
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "brep native tree help");
+    }
+}
+
+static int
+brep_tree_execute(void *context, int argc, const char *argv[])
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)context;
+    const struct bu_cmd_tree_node *node = bu_cmd_tree_find_subcommand(&brep_tree, argv[0]);
+    struct bu_cmd_validate_result validation = BU_CMD_VALIDATE_RESULT_NULL;
+    int ret = BRLCAD_ERROR;
+
+    if (!node)
+	return BRLCAD_ERROR;
+    /* Existing operation handlers own their concise purpose/usage responses. */
+    if (!(argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG))) {
+	if (bu_cmd_schema_validate(node->schema, (size_t)(argc - 1), argv + 1,
+		(size_t)(argc - 1), &validation) != 0 ||
+		validation.state != BU_CMD_VALIDATE_VALID) {
+	    if (validation.hint)
+		bu_vls_printf(gb->gedp->ged_result_str, "%s\n", validation.hint);
+	    bu_cmd_validate_result_clear(&validation);
+	    return BRLCAD_ERROR;
+	}
+	bu_cmd_validate_result_clear(&validation);
+    }
+
+	if (node->schema == &brep_plot_schema && argc > 1 &&
+	    gb->intern.idb_type == ID_BREP &&
+	    !(argc == 3 && (BU_STR_EQUAL(argv[2], HELPFLAG) ||
+		BU_STR_EQUAL(argv[2], PURPOSEFLAG))) &&
+	    !brep_plot_indices_valid((const struct rt_brep_internal *)gb->intern.idb_ptr,
+		argv[1], argc - 2, argv + 2)) {
+	bu_vls_printf(gb->gedp->ged_result_str,
+	    "BREP plot component index is out of range or malformed\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (bu_cmd(_brep_cmds, argc, argv, 0, context, &ret) != BRLCAD_OK) {
+	bu_vls_printf(gb->gedp->ged_result_str, "subcommand %s not defined", argv[0]);
+	return BRLCAD_ERROR;
+    }
+    return ret;
 }
 
 extern "C" int
 ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 {
-    // Sanity
-    if (UNLIKELY(!gedp || !argc || !argv)) {
-	return BRLCAD_ERROR;
-    }
-
-    int help = 0;
-    struct bu_color *color = NULL;
-    int plotres = 100;
-    struct bu_list *vlfree = &rt_vlfree;
+    struct brep_root_args args = {0, BU_COLOR_INIT_ZERO, 0, 100};
     struct _ged_brep_info gb;
-    gb.verbosity = 0;
-    gb.gedp = gedp;
+    struct bu_color *color = NULL;
+    struct bu_list *vlfree = &rt_vlfree;
+    int object_index;
+    int command_index;
+    int ret = BRLCAD_ERROR;
 
-    // Clear results
+    if (UNLIKELY(!gedp || !argc || !argv))
+	return BRLCAD_ERROR;
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    // We know we're the brep command - start processing args
-    argc--; argv++;
-
-    // See if we have any high level options set
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",    "",      NULL,                 &help,         "Print help");
-    BU_OPT(d[1], "C", "color",   "r/g/b", &_ged_brep_opt_color, &color,        "Set color");
-    BU_OPT(d[2], "v", "verbose", "",      NULL,                 &gb.verbosity, "Verbose output");
-    BU_OPT(d[3], "",  "plotres", "#",     &bu_opt_int,          &plotres,      "Plotting resolution");
-    BU_OPT_NULL(d[3]);
-
-    gb.gopts = d;
-
-
-    const char *bargs_help = "[options] <objname> subcommand [args]";
-    struct bu_opt_desc *bdesc = (struct bu_opt_desc *)d;
-    const struct bu_cmdtab *bcmds = (const struct bu_cmdtab *)_brep_cmds;
-
+    argc--;
+    argv++;
     if (!argc) {
-	_ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, 0, NULL);
+	brep_show_help(gedp);
 	return BRLCAD_OK;
     }
 
-
-    // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_brep_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
-	    break;
-	}
+    object_index = bu_cmd_schema_parse(&brep_root_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (object_index < 0) {
+	brep_show_help(gedp);
+	return BRLCAD_ERROR;
     }
 
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-
-    int opt_ret = bu_opt_parse(NULL, acnt, argv, d);
-
-    if (help) {
-	if (cmd_pos >= 0) {
-	    argc = argc - cmd_pos;
-	    argv = &argv[cmd_pos];
-	    _ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, argc, argv);
+    if (args.help) {
+	command_index = object_index + 1;
+	if (command_index < argc && bu_cmd_tree_find_subcommand(&brep_tree, argv[command_index])) {
+	    const char *child_help[] = {argv[command_index], HELPFLAG};
+	    gb.gedp = gedp;
+	    (void)brep_tree_execute(&gb, 2, child_help);
 	} else {
-	    _ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, 0, NULL);
+	    brep_show_help(gedp);
 	}
 	return BRLCAD_OK;
     }
 
-    // Must have a subcommand
-    if (cmd_pos == -1) {
-	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
-	_ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, 0, NULL);
+    if (object_index >= argc) {
+	bu_vls_printf(gedp->ged_result_str, "object and subcommand required\n");
+	brep_show_help(gedp);
+	return BRLCAD_ERROR;
+    }
+    command_index = object_index + 1;
+    if (command_index >= argc || !bu_cmd_tree_find_subcommand(&brep_tree, argv[command_index])) {
+	bu_vls_printf(gedp->ged_result_str, "no valid subcommand specified\n");
+	brep_show_help(gedp);
 	return BRLCAD_ERROR;
     }
 
-
-    if (opt_ret != 1) {
-	bu_vls_printf(gedp->ged_result_str, ": no object specified before subcommand\n");
-	bu_vls_printf(gedp->ged_result_str, "brep [options] <objname> subcommand [args]\n");
-	if (color) {
-	    BU_PUT(color, struct bu_color);
-	}
+    struct bu_cmd_validate_result root_validation = BU_CMD_VALIDATE_RESULT_NULL;
+    if (bu_cmd_schema_validate(&brep_root_schema, (size_t)(object_index + 1), argv,
+	    (size_t)(object_index + 1), &root_validation) != 0 ||
+	root_validation.state != BU_CMD_VALIDATE_VALID) {
+	if (root_validation.hint)
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", root_validation.hint);
+	bu_cmd_validate_result_clear(&root_validation);
 	return BRLCAD_ERROR;
     }
+    bu_cmd_validate_result_clear(&root_validation);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
     gb.gedp = gedp;
+    gb.verbosity = args.verbosity;
+    gb.plotres = args.plotres;
     gb.wdbp = wdb_dbopen(gb.gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     gb.cmds = _brep_cmds;
-    gb.solid_name = std::string(argv[0]);
+    gb.solid_name = argv[object_index];
     gb.dp = db_lookup(gedp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY);
     if (gb.dp == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", gb.solid_name.c_str());
-	if (color) {
-	    BU_PUT(color, struct bu_color);
-	}
+	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database",
+	    gb.solid_name.c_str());
 	return BRLCAD_ERROR;
-    } else {
-	int real_flag = (gb.dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
-	if (!real_flag) {
-	    /* solid doesn't exist */
-	    bu_vls_printf(gedp->ged_result_str, ": %s is not a real solid", gb.solid_name.c_str());
-	    if (color) {
-		BU_PUT(color, struct bu_color);
-	    }
-	    return BRLCAD_ERROR;
-	}
+    }
+    if (gb.dp->d_addr == RT_DIR_PHONY_ADDR) {
+	bu_vls_printf(gedp->ged_result_str, ": %s is not a real solid", gb.solid_name.c_str());
+	return BRLCAD_ERROR;
     }
 
     GED_DB_GET_INTERN(gedp, &gb.intern, gb.dp, bn_mat_identity, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&gb.intern);
-
     gb.vbp = bv_vlblock_init(vlfree, 32);
-    gb.color = color;
-    gb.plotres = plotres;
-
-    // Jump the processing past any options specified
-    argc = argc - cmd_pos;
-    argv = &argv[cmd_pos];
-
-    int ret;
-    if (bu_cmd(_brep_cmds, argc, argv, 0, (void *)&gb, &ret) == BRLCAD_OK) {
-	rt_db_free_internal(&gb.intern);
-	return ret;
-    } else {
-	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
+    if (bu_cmd_schema_option_present(&brep_root_schema, (size_t)(object_index + 1),
+	argv, "color")) {
+	BU_GET(color, struct bu_color);
+	*color = args.color;
     }
+    gb.color = color;
 
+    if (bu_cmd_tree_dispatch(&brep_tree, &gb, argc, argv, &ret) != 0)
+	ret = BRLCAD_ERROR;
     bv_vlblock_free(gb.vbp);
-    gb.vbp = (struct bv_vlblock *)NULL;
     rt_db_free_internal(&gb.intern);
-    return BRLCAD_ERROR;
+    if (color)
+	BU_PUT(color, struct bu_color);
+    return ret;
 }
 
 #include "../include/plugin.h"
 
-#define GED_BREP_COMMANDS(X, XID) \
-    X(brep,   ged_brep_core,   GED_CMD_DEFAULT) \
-    X(dplot,  ged_dplot_core,  GED_CMD_DEFAULT)
+static const char * const dplot_modes[] = {"ssx", "isocsx", "fcurves", "lcurves", "faces", NULL};
+static const struct bu_cmd_operand dplot_operands[] = {
+    BU_CMD_OPERAND("logfile", BU_CMD_VALUE_FILE, 1, 1,
+	"BREP diagnostic log", "ged.file_path"),
+    BU_CMD_OPERAND_KEYWORDS("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Diagnostic plot operation", NULL, dplot_modes),
+    BU_CMD_OPERAND("indices", BU_CMD_VALUE_INTEGER, 0, 2,
+	"Optional surface and isocurve pair indices", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema dplot_cmd_schema = {
+    "dplot", "Display BREP diagnostic plot data", NULL, dplot_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
-GED_DECLARE_COMMAND_SET(GED_BREP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_brep", 1, GED_BREP_COMMANDS)
+static int
+ged_brep_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    int ret = ged_cmd_tree_validate(gedp, &brep_tree, input, cursor_pos, result);
+    if (ret == 0)
+	brep_plot_context_complete(gedp, input, cursor_pos, NULL, result, 0);
+    return ret;
+}
+
+static int
+ged_brep_grammar_complete(struct ged *gedp, const char *input, size_t cursor_pos,
+	const struct ged_cmd_completion_request *request,
+	struct ged_cmd_validate_result *result)
+{
+    brep_plot_context_complete(gedp, input, cursor_pos, request, result, 1);
+    return 0;
+}
+
+static int
+ged_brep_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_tree_analyze(gedp, &brep_tree, input, analysis);
+}
+
+static char *
+ged_brep_grammar_json(void)
+{
+    return bu_cmd_tree_describe_json(&brep_tree);
+}
+
+static int
+ged_brep_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_cmd_tree_lint(&brep_tree, msgs);
+}
+GED_CMD_TREE_HELP(ged_brep_grammar_help, brep_tree)
+
+static const struct ged_cmd_grammar ged_brep_grammar = {
+    "brep", "Inspect, convert, plot, and repair BREP objects", ged_brep_grammar_validate,
+    ged_brep_grammar_analyze, ged_brep_grammar_json, ged_brep_grammar_lint,
+    ged_brep_grammar_complete, ged_brep_grammar_help
+};
+
+#define GED_BREP_COMMANDS(X, XID, N, NID, G, GID) \
+    G(brep, ged_brep_core, GED_CMD_DEFAULT, &ged_brep_grammar) \
+    N(dplot, ged_dplot_core, GED_CMD_DEFAULT, &dplot_cmd_schema)
+
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_BREP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_brep", 1, GED_BREP_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -1610,4 +2172,3 @@ GED_DECLARE_PLUGIN_MANIFEST("libged_brep", 1, GED_BREP_COMMANDS)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

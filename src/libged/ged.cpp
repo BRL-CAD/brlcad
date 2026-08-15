@@ -98,6 +98,8 @@ ged_close(struct ged *gedp)
      * resources or the database they reference are dismantled. */
     ged_subprocesses_terminate(gedp);
 
+    _ged_cmd_completion_cache_clear(gedp);
+
     if (gedp->dbip) {
 	db_close(gedp->dbip);
 	gedp->dbip = NULL;
@@ -218,6 +220,8 @@ ged_free(struct ged *gedp)
 {
     if (!gedp)
 	return;
+
+    _ged_cmd_completion_cache_clear(gedp);
 
     bu_vls_free(&gedp->go_name);
 
@@ -521,7 +525,7 @@ ged_clbk_set(struct ged *gedp, const char *cmd_str, int mode, bu_clbk_t f, void 
 
     /* Resolve command by name via registry */
     ged_ensure_initialized();
-    bu_plugin_cmd_impl cmd = bu_plugin_cmd_get(cmd_str);
+    ged_func_ptr cmd = _ged_cmd_func(cmd_str);
     if (!cmd)
 	return (BRLCAD_ERROR | GED_UNKNOWN);
 
@@ -550,7 +554,7 @@ ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd_str, int 
 
     /* Resolve command by name via registry */
     ged_ensure_initialized();
-    bu_plugin_cmd_impl cmd = bu_plugin_cmd_get(cmd_str);
+    ged_func_ptr cmd = _ged_cmd_func(cmd_str);
     if (!cmd)
         return (BRLCAD_ERROR | GED_UNKNOWN);
 

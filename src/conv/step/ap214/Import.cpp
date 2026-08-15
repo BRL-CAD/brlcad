@@ -232,27 +232,18 @@ parse_entity_ids(struct bu_vls *message, size_t argc, const char **argv, void *s
 }
 
 void
-usage(const char *program)
+usage(const char *program, const struct bu_opt_desc *options)
 {
-    std::cerr << "Usage: " << program << " [options] -o output.g input.stp\n"
-	<< "       " << program << " [options] -O output.g input.stp\n"
-	<< "       " << program << " [options] -D input.stp\n\n"
-	<< "  -D                  validate without writing a database\n"
-	<< "  -v                  report entity-level diagnostics\n"
-	<< "  -S FILE             write per-instance conversion status CSV\n"
-	<< "  -e, --entity IDS    convert only listed representation-item IDs (repeatable)\n"
-	<< "  -j, --jobs N        bounded geometry worker count (default: up to 8 CPUs)\n"
-	<< "      --abs-tol MM    override output-space tolerance\n"
-	<< "      --budget-scale FACTOR  manual machine-speed scale (default calibrated)\n"
-	<< "      --item-budget SEC      override ordinary per-item CPU-work budget\n"
-	<< "      --no-item-budget       disable CPU budgets; retain stall detection\n"
-	<< "      --stall-timeout SEC    override the no-progress cancellation interval\n"
-	<< "      --repair MODE   none or safe (default safe)\n"
-	<< "      --exact         strictly enforce the declared model tolerance\n"
-	<< "      --strict        reject a partial import\n"
-	<< "      --reject-invalid-objs  reject B-reps which fail validation\n"
-	<< "      --skip-open-shells     exclude standalone open-shell surfaces\n"
-	<< "      --report FILE   write a structured JSON report\n";
+    char *help = bu_opt_help(options, program, "input.stp",
+	"Import STEP AP214 geometry");
+    if (help) {
+	std::cerr << help;
+	bu_free(help, "AP214 import help");
+    }
+    std::cerr << "\nModes:\n"
+	<< "  -o FILE   write a new output database\n"
+	<< "  -O FILE   overwrite the output database\n"
+	<< "  -D        validate without writing a database\n";
 }
 
 std::string
@@ -831,13 +822,13 @@ step_ap214_import_cli(int argc, const char *argv[])
     if (bu_vls_strlen(&messages)) bu_log("%s\n", bu_vls_cstr(&messages));
     bu_vls_free(&messages);
     if (help) {
-	usage(program);
+	usage(program, options);
 	return 0;
     }
     if (argc != 1 || (!dry_run && BU_STR_EMPTY(output.filename)) || jobs < 1 ||
 	    absolute_tolerance < 0.0 || budget_scale < 0.0 ||
 	    item_budget_seconds < 0.0 || stall_timeout_seconds < 0.0) {
-	usage(program);
+	usage(program, options);
 	return 2;
     }
 

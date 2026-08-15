@@ -30,11 +30,55 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/units.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
+
+
+struct bb_args {
+    const char *bb_name;
+    int print_dim;
+    int print_midpt;
+    int print_rpp;
+    int quiet;
+    int exclude_air;
+    int print_vol;
+    int oriented;
+};
+
+#define BB_OPTIONS(args) \
+    BU_OPT_STR(args, "c", NULL, bb_name, "name", "Create a bounding-box object with this name"), \
+    BU_OPT_FLAG(args, "d", NULL, print_dim, "Print dimensions"), \
+    BU_OPT_FLAG(args, "m", NULL, print_midpt, "Print midpoint"), \
+    BU_OPT_FLAG(args, "e", NULL, print_rpp, "Print extents"), \
+    BU_OPT_FLAG(args, "q", NULL, quiet, "Suppress the header"), \
+    BU_OPT_FLAG(args, "u", NULL, exclude_air, "Exclude air regions"), \
+    BU_OPT_FLAG(args, "v", NULL, print_vol, "Print volume"), \
+    BU_OPT_FLAG(args, "o", NULL, oriented, "Compute an oriented bounding box"),
+
+BU_OPT_DESC_BUILDER(bb_options, struct bb_args, BB_OPTIONS);
+
+static const ged_opt_rule bb_opt_rules[] = {
+    GED_RULE_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT, "o", 1, 1,
+	"-o requires exactly one BoT object"),
+    GED_RULE_NULL
+};
+static const ged_opt_spec bb_opt_spec =
+    GED_OPT_WITH("bb", "Report or create object bounds", bb_options,
+	"interspersed objects:object+", bb_opt_rules);
+
+static void
+bb_show_help(struct ged *gedp, const char *command)
+{
+    char *help = ged_cmd_help(command, command);
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "bb standard help");
+    }
+}
 
 
 int
@@ -42,7 +86,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 {
     point_t rpp_min, rpp_max;
     point_t obj_min, obj_max;
-    int c;
+    int object_count;
     int use_air = 1;
     int print_header = 1;
     int print_rpp = 0;
@@ -52,14 +96,14 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     int make_bb = 0;
     int oriented_bb = 0;
     int i;
-    static const char *usage = "[options] object1 [object2 object3 ...]";
+    struct bb_args args = {NULL, 0, 0, 0, 0, 0, 0, 0};
     const char *str;
     double xlen;
     double ylen;
     double zlen;
     double vol;
     double oriented_bbox_tol = BN_TOL_DIST;
-    char bbname[64];
+    const char *bbname = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -68,46 +112,26 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bb_show_help(gedp, argv[0]);
 	return GED_HELP;
     }
 
-    bu_optind = 1;      /* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "c:dmequvo")) != -1) {
-	switch (c) {
-	    case 'c':
-		make_bb = 1;
-		memset(bbname, 0, 64);
-		bu_strlcpy(bbname, bu_optarg, 64);
-		break;
-	    case 'd':
-		print_dim = 1;
-		break;
-	    case 'm':
-		print_midpt = 1;
-		break;
-	    case 'e':
-		print_rpp = 1;
-		break;
-	    case 'q':
-		print_header = 0;
-		break;
-	    case 'u':
-		use_air = 0;
-		break;
-	    case 'v':
-		print_vol = 1;
-		break;
-	    case 'o':
-		oriented_bb = 1;
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
-		return BRLCAD_ERROR;
-	}
+    object_count = bu_opt_parse_build(gedp->ged_result_str, argc - 1,
+	argv + 1, bb_options, &args);
+    if (object_count < 0) {
+	bb_show_help(gedp, argv[0]);
+	return BRLCAD_ERROR;
     }
+    make_bb = args.bb_name != NULL;
+    bbname = args.bb_name;
+    print_dim = args.print_dim;
+    print_midpt = args.print_midpt;
+    print_rpp = args.print_rpp;
+    print_header = !args.quiet;
+    use_air = !args.exclude_air;
+    print_vol = args.print_vol;
+    oriented_bb = args.oriented;
 
     /* Don't want to print NO info, so default to dim and vol printout if nothing specified. */
     if (print_rpp == 0 && print_vol == 0 && print_dim == 0 && print_midpt == 0) {
@@ -115,15 +139,12 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	print_vol = 1;
     }
 
-    /* skip options processed plus command name, should just leave object names */
-    argc -= bu_optind;
-    argv += bu_optind;
-
-    /* must be wanting help */
-    if (argc == 0) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: bb %s", usage);
-	return GED_HELP;
+    if (!object_count || (oriented_bb && object_count != 1)) {
+	bb_show_help(gedp, argv[0]);
+	return object_count ? BRLCAD_ERROR : GED_HELP;
     }
+    argc = object_count;
+    argv += 1;
 
     if (!oriented_bb) {
 
@@ -325,10 +346,10 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_BB_COMMANDS(X, XID) \
-    X(bb, ged_bb_core, GED_CMD_DEFAULT) \
+    X(bb, ged_bb_core, GED_CMD_DEFAULT, &bb_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_BB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_bb", 1, GED_BB_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_BB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_bb", 1, GED_BB_COMMANDS)
 
 /*
  * Local Variables:

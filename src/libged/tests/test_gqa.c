@@ -62,7 +62,8 @@ main(int ac, char *av[]) {
     struct display_list *gdlp;
     struct bv_scene_obj *vdata = NULL;
     for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp))) {
-	if (!BU_STR_EQUAL(bu_vls_cstr(&gdlp->dl_path), "OVERLAPSffff00"))
+	/* Display-list paths use the canonical, round-trippable spelling. */
+	if (!BU_STR_EQUAL(bu_vls_cstr(&gdlp->dl_path), "/OVERLAPSffff00"))
 	    continue;
 	printf("found %s;\n", bu_vls_cstr(&gdlp->dl_path));
 	vdata = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);

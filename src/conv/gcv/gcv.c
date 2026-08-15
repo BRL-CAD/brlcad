@@ -425,9 +425,10 @@ do_conversion(
 
 void
 usage(const struct bu_opt_desc *opts) {
-    char *help = bu_opt_describe(opts, NULL);
+    char *help = bu_opt_help(opts, "gcv", "[input [output]]",
+	"Convert geometry between supported model formats");
     if (help) {
-	bu_log("%s\n", help);
+	bu_log("%s", help);
 	bu_free(help, "help str");
     }
 }

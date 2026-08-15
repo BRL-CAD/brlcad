@@ -28,11 +28,23 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bv/lod.h"
 
 #include "../ged_private.h"
 #include "../dbi.h"
 
+static const struct bu_cmd_schema close_cmd_schema = {
+    "close", "Close the current geometry database", NULL, NULL,
+    BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static const struct bu_cmd_schema closedb_cmd_schema = {
+    "closedb", "Close the current geometry database", NULL, NULL,
+    BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 extern "C" int
 ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
@@ -51,6 +63,7 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     ged_exec_zap(gedp, 1, (const char **)av);
 
     /* close current database */
+    _ged_cmd_completion_cache_clear(gedp);
     if (gedp->dbip)
 	db_close(gedp->dbip);
     gedp->dbip = NULL;
@@ -86,11 +99,11 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 #include "../include/plugin.h"
 
 #define GED_CLOSE_COMMANDS(X, XID) \
-    X(closedb, ged_close_core, GED_CMD_DEFAULT) \
-    X(close, ged_close_core, GED_CMD_DEFAULT) \
+    X(closedb, ged_close_core, GED_CMD_DEFAULT, &closedb_cmd_schema) \
+    X(close, ged_close_core, GED_CMD_DEFAULT, &close_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_CLOSE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_close", 1, GED_CLOSE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_CLOSE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_close", 1, GED_CLOSE_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

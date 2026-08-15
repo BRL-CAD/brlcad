@@ -35,8 +35,8 @@ extern "C" {
 
 extern "C" {
 #include "bu/cmd.h"
-#include "bu/opt.h"
 }
+#include "bu/cmdschema.h"
 #include "./ged_analyze.h"
 #include "../ged_private.h"
 
@@ -50,7 +50,6 @@ extern "C" {
 struct _ged_analyze_info {
     struct ged *gedp = NULL;
     const struct bu_cmdtab *cmds = NULL;
-    struct bu_opt_desc *gopts = NULL;
     int verbosity = 0;
     std::map<std::pair<int, int>, op_func_ptr> *union_map;
     std::map<std::pair<int, int>, op_func_ptr> *isect_map;
@@ -184,16 +183,123 @@ _analyze_find_processor(struct _ged_analyze_info *s, db_op_t op, int t1, int t2)
     return NULL;
 }
 
-static int
-_analyze_cmd_msgs(void *cs, int argc, const char **argv, const char *us, const char *ps)
+struct analyze_root_args {
+    int print_help;
+    int verbosity;
+};
+
+struct analyze_child_args {
+    int print_help;
+};
+
+struct analyze_boolean_args {
+    int print_help;
+    struct bu_vls output;
+};
+
+
+static const struct bu_cmd_option analyze_root_options[] = {
+    BU_CMD_FLAG("h", "help", struct analyze_root_args, print_help,
+	"Print command help"),
+    BU_CMD_FLAG("v", "verbose", struct analyze_root_args, verbosity,
+	"Increase reporting detail"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_option analyze_child_help_options[] = {
+    BU_CMD_FLAG("h", "help", struct analyze_child_args, print_help,
+	"Print subcommand help"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_option analyze_boolean_options[] = {
+    BU_CMD_FLAG("h", "help", struct analyze_boolean_args, print_help,
+	"Print subcommand help"),
+    BU_CMD_VLS_APPEND("o", "output", struct analyze_boolean_args, output,
+	"name", "Specify output object"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand analyze_object_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+	"Objects to analyze", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand analyze_inside_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Object to test", "ged.db_object"),
+    BU_CMD_OPERAND_SHAPED("point", BU_CMD_VALUE_VECTOR, 1, 3, NULL,
+	"Packed XYZ point or three coordinates", "ged.vector_group",
+	&bu_cmd_vector3_arg_shape),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand analyze_boolean_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 2, BU_CMD_COUNT_UNLIMITED,
+	"Objects to combine", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema analyze_root_schema = {
+    "analyze", "Analyze primitives and Boolean combinations", analyze_root_options,
+    NULL, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+};
+static const struct bu_cmd_schema analyze_implicit_summary_schema = {
+    "analyze", "Summarize object properties", analyze_root_options,
+    analyze_object_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+};
+static const struct bu_cmd_schema analyze_summarize_schema = {
+    "summarize", "Summarize object properties", analyze_child_help_options,
+    analyze_object_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+};
+static const struct bu_cmd_schema analyze_inside_schema = {
+    "inside", "Test whether a point is inside an object", analyze_child_help_options,
+    analyze_inside_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+};
+static const struct bu_cmd_schema analyze_intersect_schema = {
+    "intersect", "Intersect objects", analyze_boolean_options,
+    analyze_boolean_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+};
+static const struct bu_cmd_schema analyze_subtract_schema = {
+    "subtract", "Subtract objects", analyze_boolean_options,
+    analyze_boolean_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+};
+
+static void
+analyze_schema_help(struct ged *gedp, const struct bu_cmd_schema *schema)
 {
-    struct _ged_analyze_info *gc = (struct _ged_analyze_info *)cs;
-    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	bu_vls_printf(gc->gedp->ged_result_str, "%s\n%s\n", us, ps);
+    struct bu_vls invocation = BU_VLS_INIT_ZERO;
+    char *help;
+
+    if (!gedp || !schema)
+	return;
+    bu_vls_strcat(&invocation, "analyze");
+    if (!BU_STR_EQUAL(schema->name, "analyze"))
+	bu_vls_printf(&invocation, " %s", schema->name);
+    help = bu_cmd_schema_help(schema, bu_vls_cstr(&invocation));
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "analyze schema help");
+    }
+    bu_vls_free(&invocation);
+}
+
+static int
+analyze_cmd_msgs(void *context, int argc, const char **argv,
+	const struct bu_cmd_schema *schema)
+{
+    struct _ged_analyze_info *gc = (struct _ged_analyze_info *)context;
+
+    if (!gc || argc != 2 || !argv)
+	return 0;
+    if (BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	analyze_schema_help(gc->gedp, schema);
 	return 1;
     }
-    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
-	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", ps);
+    if (BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gc->gedp->ged_result_str, "%s\n",
+	    schema && schema->help ? schema->help : "");
 	return 1;
     }
     return 0;
@@ -297,31 +403,46 @@ analyze_do_summary(struct ged *gedp, const struct rt_db_internal *ip)
 extern "C" int
 _analyze_cmd_summarize(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "analyze [options] summarize obj1 <obj2 ...>";
-    const char *purpose_string = "Summary of analytical information about listed objects";
-    if (_analyze_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+    if (analyze_cmd_msgs(bs, argc, argv, &analyze_summarize_schema)) {
 	return BRLCAD_OK;
     }
 
     struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
     struct ged *gedp = gc->gedp;
     struct rt_db_internal intern;
+    struct analyze_child_args args = {0};
+    int operand_index;
+    int operand_count;
+    const char **operands;
 
     argc--; argv++;
     if (!argc) {
-	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+	analyze_schema_help(gc->gedp, &analyze_summarize_schema);
 	return BRLCAD_ERROR;
     }
 
+    operand_index = bu_cmd_schema_parse_complete(&analyze_summarize_schema,
+	&args, gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	analyze_schema_help(gedp, &analyze_summarize_schema);
+	return BRLCAD_ERROR;
+    }
+    if (args.print_help) {
+	analyze_schema_help(gedp, &analyze_summarize_schema);
+	return GED_HELP;
+    }
+    operand_count = argc - operand_index;
+    operands = argv + operand_index;
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, operand_count, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* use the names that were input */
-    for (int i = 0; i < argc; i++) {
-	struct directory *ndp = db_lookup(gedp->dbip,  argv[i], LOOKUP_NOISY);
+    for (int i = 0; i < operand_count; i++) {
+	struct directory *ndp = db_lookup(gedp->dbip,  operands[i], LOOKUP_NOISY);
 	if (ndp == RT_DIR_NULL)
 	    continue;
 
@@ -338,48 +459,58 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
 extern "C" int
 _analyze_cmd_inside(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "analyze [options] inside obj x y z ";
-    const char *purpose_string = "Determine if the point x,y,z is inside the object obj";
-    if (_analyze_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+    if (analyze_cmd_msgs(bs, argc, argv, &analyze_inside_schema)) {
 	return BRLCAD_OK;
     }
 
     struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
     struct ged *gedp = gc->gedp;
+    struct analyze_child_args args = {0};
+    int operand_index;
+    int operand_count;
+    const char **operands;
 
     argc--; argv++;
     if (!argc) {
-	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+	analyze_schema_help(gc->gedp, &analyze_inside_schema);
 	return BRLCAD_ERROR;
     }
 
+    operand_index = bu_cmd_schema_parse_complete(&analyze_inside_schema,
+	&args, gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	analyze_schema_help(gedp, &analyze_inside_schema);
+	return BRLCAD_ERROR;
+    }
+    if (args.print_help) {
+	analyze_schema_help(gedp, &analyze_inside_schema);
+	return GED_HELP;
+    }
+    operand_count = argc - operand_index;
+    operands = argv + operand_index;
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, operand_count, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc != 2 && argc != 4) {
-	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+    if (operand_count != 2 && operand_count != 4) {
+	analyze_schema_help(gc->gedp, &analyze_inside_schema);
 	return GED_HELP;
     }
 
-    struct directory *dp = db_lookup(gedp->dbip, argv[0], LOOKUP_QUIET);
+    struct directory *dp = db_lookup(gedp->dbip, operands[0], LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
-	bu_vls_sprintf(gedp->ged_result_str, "specified object %s not found.\n", argv[0]);
+	bu_vls_sprintf(gedp->ged_result_str, "specified object %s not found.\n", operands[0]);
 	return BRLCAD_ERROR;
     }
-
-    argc--; argv++;
 
     point_t p;
-    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
-    if (bu_opt_vect_t(&opt_msg, argc, argv, (void *)&p) == -1) {
-	bu_vls_sprintf(gedp->ged_result_str, "invalid point specification:\n%s\n", bu_vls_cstr(&opt_msg));
-	bu_vls_free(&opt_msg);
+	if (!bu_cmd_vector3_from_argv(p, (size_t)(operand_count - 1), operands + 1)) {
+	bu_vls_sprintf(gedp->ged_result_str, "invalid point specification\n");
 	return BRLCAD_ERROR;
     }
-    bu_vls_free(&opt_msg);
 
     int ret = pnt_inside_vol(gedp, &p, dp);
     if (ret < 0) {
@@ -419,45 +550,46 @@ mv_obj(struct ged *gedp, const char *n1, const char *n2)
 extern "C" int
 _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "analyze [options] intersect [-o out_obj] obj1 obj2 <...>";
-    const char *purpose_string = "Intersect obj1 with obj2 and any subsequent objs";
-    if (_analyze_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+    if (analyze_cmd_msgs(bs, argc, argv, &analyze_intersect_schema)) {
 	return BRLCAD_OK;
     }
 
     struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
     struct ged *gedp = gc->gedp;
+    struct analyze_boolean_args args = {0, BU_VLS_INIT_ZERO};
+    int operand_index;
+    int operand_count;
+    const char **operands;
 
     argc--; argv++;
     if (!argc) {
-	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+	analyze_schema_help(gc->gedp, &analyze_intersect_schema);
 	return BRLCAD_ERROR;
     }
+
+    operand_index = bu_cmd_schema_parse_complete(&analyze_intersect_schema,
+	&args, gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	bu_vls_free(&args.output);
+	analyze_schema_help(gedp, &analyze_intersect_schema);
+	return BRLCAD_ERROR;
+    }
+    if (args.print_help) {
+	bu_vls_free(&args.output);
+	analyze_schema_help(gedp, &analyze_intersect_schema);
+	return GED_HELP;
+    }
+    operand_count = argc - operand_index;
+    operands = argv + operand_index;
+    struct bu_vls oname = args.output;
+    argc = operand_count;
+    argv = operands;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    // See if we are going to output an object
-    int help = 0;
-    struct bu_vls oname = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",    "",      NULL,        &help,  "Print help");
-    BU_OPT(d[1], "o", "output",  "name",  &bu_opt_vls, &oname, "Specify output object");
-    BU_OPT_NULL(d[2]);
-
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    if (help) {
-	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return GED_HELP;
-    }
-    if (ac < 2) {
-	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return GED_HELP;
-    }
-    argc = ac;
 
     if (bu_vls_strlen(&oname)) {
 	struct directory *dp_out = db_lookup(gedp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
@@ -537,45 +669,46 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 extern "C" int
 _analyze_cmd_subtract(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "analyze [options] subtract [-o out_obj] obj1 obj2 <...>";
-    const char *purpose_string = "Subtract obj2 (and any subsequent objects) from obj1";
-    if (_analyze_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+    if (analyze_cmd_msgs(bs, argc, argv, &analyze_subtract_schema)) {
 	return BRLCAD_OK;
     }
 
     struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
     struct ged *gedp = gc->gedp;
+    struct analyze_boolean_args args = {0, BU_VLS_INIT_ZERO};
+    int operand_index;
+    int operand_count;
+    const char **operands;
 
     argc--; argv++;
     if (!argc) {
-	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+	analyze_schema_help(gc->gedp, &analyze_subtract_schema);
 	return BRLCAD_ERROR;
     }
+
+    operand_index = bu_cmd_schema_parse_complete(&analyze_subtract_schema,
+	&args, gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	bu_vls_free(&args.output);
+	analyze_schema_help(gedp, &analyze_subtract_schema);
+	return BRLCAD_ERROR;
+    }
+    if (args.print_help) {
+	bu_vls_free(&args.output);
+	analyze_schema_help(gedp, &analyze_subtract_schema);
+	return GED_HELP;
+    }
+    operand_count = argc - operand_index;
+    operands = argv + operand_index;
+    struct bu_vls oname = args.output;
+    argc = operand_count;
+    argv = operands;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    // See if we are going to output an object
-    int help = 0;
-    struct bu_vls oname = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",    "",      NULL,        &help,  "Print help");
-    BU_OPT(d[1], "o", "output",  "name",  &bu_opt_vls, &oname, "Specify output object");
-    BU_OPT_NULL(d[2]);
-
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    if (help) {
-	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return GED_HELP;
-    }
-    if (ac < 2) {
-	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return GED_HELP;
-    }
-    argc = ac;
 
     if (bu_vls_strlen(&oname)) {
 	struct directory *dp_out = db_lookup(gedp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
@@ -652,54 +785,6 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" int
-_analyze_cmd_help(void *bs, int argc, const char **argv)
-{
-    struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
-    if (!argc || !argv || BU_STR_EQUAL(argv[0], "help")) {
-	bu_vls_printf(gc->gedp->ged_result_str, "analyze [options] subcommand [args]\n");
-	if (gc->gopts) {
-	    char *option_help = bu_opt_describe(gc->gopts, NULL);
-	    if (option_help) {
-		bu_vls_printf(gc->gedp->ged_result_str, "Options:\n%s\n", option_help);
-		bu_free(option_help, "help str");
-	    }
-	}
-	bu_vls_printf(gc->gedp->ged_result_str, "Available subcommands:\n");
-	const struct bu_cmdtab *ctp = NULL;
-	int ret;
-	const char *helpflag[2];
-	helpflag[1] = PURPOSEFLAG;
-	size_t maxcmdlen = 0;
-	for (ctp = gc->cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	    maxcmdlen = (maxcmdlen > strlen(ctp->ct_name)) ? maxcmdlen : strlen(ctp->ct_name);
-	}
-	for (ctp = gc->cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	    bu_vls_printf(gc->gedp->ged_result_str, "  %s%*s", ctp->ct_name, (int)(maxcmdlen - strlen(ctp->ct_name)) +   2, " ");
-	    if (!BU_STR_EQUAL(ctp->ct_name, "help")) {
-		helpflag[0] = ctp->ct_name;
-		bu_cmd(gc->cmds, 2, helpflag, 0, (void *)gc, &ret);
-	    } else {
-		bu_vls_printf(gc->gedp->ged_result_str, "print help and exit\n");
-	    }
-	}
-    } else {
-	int ret;
-	const char **helpargv = (const char **)bu_calloc(argc+1, sizeof(char *), "help argv");
-	helpargv[0] = argv[0];
-	helpargv[1] = HELPFLAG;
-	for (int i = 1; i < argc; i++) {
-	    helpargv[i+1] = argv[i];
-	}
-	bu_cmd(gc->cmds, argc+1, helpargv, 0, (void *)gc, &ret);
-	bu_free(helpargv, "help argv");
-	return ret;
-    }
-
-    return BRLCAD_OK;
-}
-
-
 const struct bu_cmdtab _analyze_cmds[] = {
     { "summarize",           _analyze_cmd_summarize},
     { "inside",              _analyze_cmd_inside},
@@ -709,30 +794,141 @@ const struct bu_cmdtab _analyze_cmds[] = {
 };
 
 
+static int
+analyze_tree_execute(void *data, int argc, const char *argv[])
+{
+    struct _ged_analyze_info *gc = (struct _ged_analyze_info *)data;
+    int child_result = BRLCAD_ERROR;
+
+    if (!gc || bu_cmd(_analyze_cmds, argc, argv, 0, gc, &child_result) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    return child_result;
+}
+
+
+static const struct bu_cmd_tree_node analyze_subcommands[] = {
+    BU_CMD_TREE_NODE(&analyze_summarize_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, analyze_tree_execute),
+    BU_CMD_TREE_NODE(&analyze_inside_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, analyze_tree_execute),
+    BU_CMD_TREE_NODE(&analyze_intersect_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, analyze_tree_execute),
+    BU_CMD_TREE_NODE(&analyze_subtract_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, analyze_tree_execute),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree ged_analyze_tree = {
+    &analyze_root_schema, analyze_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+static const struct bu_cmd_form analyze_native_forms[] = {
+    BU_CMD_FORM_TREE("subcommands", "Explicit analysis subcommand",
+	&ged_analyze_tree),
+    BU_CMD_FORM_SCHEMA("implicit_summary", "Summarize objects without a subcommand",
+	&analyze_implicit_summary_schema),
+    BU_CMD_FORM_NULL
+};
+
+
+static const struct bu_cmd_form *
+analyze_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
+	const char * const *argv, void *UNUSED(context))
+{
+    size_t i = 1;
+    const char *word = "";
+    size_t word_len;
+
+    while (i < argc) {
+	int option_span = bu_cmd_schema_option_span(&analyze_root_schema, argc - i,
+	    (const char **)argv + i);
+	if (option_span > 0) {
+	    i += (size_t)option_span;
+	    continue;
+	}
+	/* Give malformed root options to the explicit tree, which reports the
+	 * option diagnostic rather than treating them as object names. */
+	if (option_span < 0)
+	    return &forms->forms[0];
+	word = argv[i] ? argv[i] : "";
+	break;
+    }
+    word_len = strlen(word);
+    if (!word_len)
+	return &forms->forms[0];
+    for (size_t ni = 0; analyze_subcommands[ni].schema; ni++) {
+	const char *name = analyze_subcommands[ni].schema->name;
+	if (!bu_strncmp(name, word, word_len))
+	    return &forms->forms[0];
+    }
+    return &forms->forms[1];
+}
+
+static const struct bu_cmd_forms analyze_forms =
+    BU_CMD_FORMS("analyze", "Analyze primitives and Boolean combinations",
+	analyze_native_forms, analyze_select_native_form);
+
+
+static void
+analyze_tree_show_help(struct ged *gedp)
+{
+    char *help = bu_cmd_tree_help(&ged_analyze_tree, "analyze");
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "analyze native tree help");
+    }
+}
+
+
+static int
+_analyze_cmd_help(void *bs, int argc, const char **argv)
+{
+    struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
+    const struct bu_cmd_tree_node *node;
+    const char **help_argv;
+    int result = BRLCAD_ERROR;
+
+    if (!gc)
+	return BRLCAD_ERROR;
+    if (!argc || !argv) {
+	analyze_tree_show_help(gc->gedp);
+	return BRLCAD_OK;
+    }
+    node = bu_cmd_tree_find_subcommand(&ged_analyze_tree, argv[0]);
+    if (!node)
+	return BRLCAD_ERROR;
+    help_argv = (const char **)bu_calloc((size_t)argc + 1, sizeof(const char *),
+	"analyze subcommand help argv");
+    help_argv[0] = node->schema->name;
+    help_argv[1] = HELPFLAG;
+    for (int i = 1; i < argc; i++)
+	help_argv[i + 1] = argv[i];
+    (void)bu_cmd(_analyze_cmds, argc + 1, help_argv, 0, gc, &result);
+    bu_free((void *)help_argv, "analyze subcommand help argv");
+    return result;
+}
+
+
 extern "C" int
 ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int help = 0;
-    struct _ged_analyze_info *gc = _analyze_info_create();
-    gc->gedp = gedp;
-    gc->cmds = _analyze_cmds;
+    struct analyze_root_args args = {0, 0};
+    struct _ged_analyze_info *gc;
+    int option_index;
+    int remaining;
+    const char **rest;
+    int ret = BRLCAD_ERROR;
 
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {
-	_analyze_info_destroy(gc);
 	return BRLCAD_ERROR;
     }
 
+    gc = _analyze_info_create();
+    gc->gedp = gedp;
+    gc->cmds = _analyze_cmds;
+
     // Clear results
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    // See if we have any high level options set
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",    "",  NULL, &help,          "Print help");
-    BU_OPT(d[1], "v", "verbose", "",  NULL, &gc->verbosity, "Verbose output");
-    BU_OPT_NULL(d[2]);
-
-    gc->gopts = d;
 
     if (argc == 1) {
 	_analyze_cmd_help(gc, 0, NULL);
@@ -740,64 +936,103 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
-    for (int i = 1; i < argc; i++) {
-	if (bu_cmd_valid(_analyze_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
-	    break;
-	}
+    option_index = bu_cmd_schema_parse(&analyze_root_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (option_index < 0) {
+	_analyze_info_destroy(gc);
+	return BRLCAD_ERROR;
     }
+    gc->verbosity = args.verbosity;
+    remaining = argc - 1 - option_index;
+    rest = argv + 1 + option_index;
 
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-
-    bu_opt_parse(NULL, acnt, argv, d);
-
-    if (help) {
-	if (cmd_pos >= 0) {
-	    argc = argc - cmd_pos;
-	    argv = &argv[cmd_pos];
-	    _analyze_cmd_help(gc, argc, argv);
-	} else {
+    if (args.print_help) {
+	if (remaining && bu_cmd_tree_find_subcommand(&ged_analyze_tree, rest[0]))
+	    ret = _analyze_cmd_help(gc, remaining, rest);
+	else {
 	    _analyze_cmd_help(gc, 0, NULL);
+	    ret = BRLCAD_OK;
 	}
+	_analyze_info_destroy(gc);
+	return ret;
+    }
+    if (!remaining) {
+	_analyze_cmd_help(gc, 0, NULL);
 	_analyze_info_destroy(gc);
 	return BRLCAD_OK;
     }
 
-
-    // Jump the processing past any options specified. If we don't have a
-    // subcommand, assume all args are geometry objects and the command mode is
-    // summarize. This will get us the old behavior, except in the case where
-    // we happen to have an object with a name that matches a subcommand of
-    // analyze.  In that case, the full "analyze summarize objname" is needed.
-    const char *scmd = "summarize";
-    if (cmd_pos != -1) {
-	argc = argc - cmd_pos;
-	argv = &argv[cmd_pos];
+    // If no explicit subcommand is present, preserve analyze's established
+    // shorthand: every remaining word is an object for summarize.
+    if (bu_cmd_tree_find_subcommand(&ged_analyze_tree, rest[0])) {
+	if (bu_cmd_tree_dispatch(&ged_analyze_tree, gc, remaining, rest, &ret) != 0)
+	    ret = BRLCAD_ERROR;
     } else {
-	argv[0] = scmd;
-    }
-
-    int ret;
-    if (bu_cmd(_analyze_cmds, argc, argv, 0, (void *)gc, &ret) == BRLCAD_OK) {
-	_analyze_info_destroy(gc);
-	return ret;
-    } else {
-	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
+	const char **summary_argv = (const char **)bu_calloc((size_t)remaining + 1,
+	    sizeof(const char *), "analyze implicit summarize argv");
+	summary_argv[0] = "summarize";
+	for (int i = 0; i < remaining; i++)
+	    summary_argv[i + 1] = rest[i];
+	if (bu_cmd(_analyze_cmds, remaining + 1, summary_argv, 0, gc, &ret) != BRLCAD_OK)
+	    ret = BRLCAD_ERROR;
+	bu_free((void *)summary_argv, "analyze implicit summarize argv");
     }
 
     _analyze_info_destroy(gc);
-    return BRLCAD_ERROR;
+    return ret;
 }
 
 #include "../include/plugin.h"
+static int
+ged_analyze_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_native_forms_validate(gedp, &analyze_forms, input,
+	cursor_pos, result);
+}
+
+
+static int
+ged_analyze_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_native_forms_analyze(gedp, &analyze_forms, input,
+	analysis);
+}
+
+
+static char *
+ged_analyze_grammar_json(void)
+{
+    return ged_cmd_native_forms_describe_json(&analyze_forms);
+}
+
+
+static int
+ged_analyze_grammar_lint(struct bu_vls *msgs)
+{
+    return ged_cmd_native_forms_lint(&analyze_forms, msgs);
+}
+
+static char *
+ged_analyze_grammar_help(const char *invocation)
+{
+    return ged_cmd_native_forms_help(&analyze_forms, invocation);
+}
+
+
+static const struct ged_cmd_grammar ged_analyze_grammar = {
+    "analyze", "Analyze primitives and Boolean combinations",
+    ged_analyze_grammar_validate, ged_analyze_grammar_analyze,
+    ged_analyze_grammar_json, ged_analyze_grammar_lint, NULL,
+    ged_analyze_grammar_help
+};
 
 #define GED_ANALYZE_COMMANDS(X, XID) \
-    X(analyze,  ged_analyze_core,   GED_CMD_DEFAULT)
+    X(analyze, ged_analyze_core, GED_CMD_DEFAULT, &ged_analyze_grammar)
 
-GED_DECLARE_COMMAND_SET(GED_ANALYZE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_analyze", 1, GED_ANALYZE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_ANALYZE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_analyze", 1, GED_ANALYZE_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

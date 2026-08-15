@@ -52,6 +52,10 @@ proc distribute_text { w cmd str } {
     foreach id $mged_players {
 	set _w .$id.t
 	if [winfo exists $_w] {
+	    set repaint_completion [mged_completion_display_active $_w]
+	    if {$repaint_completion} {
+		mged_completion_display_erase $_w
+	    }
 	    if {$w != $_w} {
 		set _promptBegin [$_w index {end - 1 l}]
 		$_w mark set curr insert
@@ -78,6 +82,9 @@ proc distribute_text { w cmd str } {
 	    set nlines [expr int([$_w index end])]
 	    if {$nlines > $mged_default(max_text_lines)} {
 		$_w delete 1.0 [expr $nlines - $mged_default(max_text_lines)].end
+	    }
+	    if {$repaint_completion} {
+		mged_completion_display_repaint $_w
 	    }
 	}
     }
@@ -1693,6 +1700,10 @@ proc mged_print_prompt { w str } {
     $w mark gravity promptEnd left
 }
 
+proc mged_print_error { w str } {
+    mged_print_tag $w $str error_result
+}
+
 proc mged_print_tag { w str tag } {
     set first [$w index insert]
     $w insert insert "$str"
@@ -1734,8 +1745,424 @@ proc get_longest_common_string { matches } {
     return $name
 }
 
+# Return MGED's command completion presentation policy.  A value explicitly
+# set in .mgedrc takes precedence over the MGED-specific and global environment
+# variables.  Keep the accepted names synchronized with brlcad-completion(5).
+proc mged_completion_mode {} {
+    global env
+    global mged_default
+
+    set valid_modes {filter cycle prefix legacy off}
+    if {[info exists mged_default(completion_mode)]} {
+	set mode [string tolower $mged_default(completion_mode)]
+	if {[lsearch -exact $valid_modes $mode] >= 0} {
+	    return $mode
+	}
+    }
+
+    foreach env_name {BRLCAD_MGED_COMPLETION_MODE BRLCAD_COMPLETION_MODE} {
+	if {[info exists env($env_name)]} {
+	    set mode [string tolower $env($env_name)]
+	    if {[lsearch -exact $valid_modes $mode] >= 0} {
+		set mged_default(completion_mode) $mode
+		return $mode
+	    }
+	}
+    }
+
+    set mged_default(completion_mode) filter
+    return filter
+}
+
+proc mged_completion_display_active {w} {
+    global mged_completion_display_state
+    return [info exists mged_completion_display_state($w,candidates)]
+}
+
+# Use rows already visible below the command without restriction.  If the
+# display must scroll, reserve one third of the viewport for prior output and
+# account for every wrapped row occupied by the active input.
+proc mged_completion_display_max_rows {w} {
+    set line_height 1
+    catch {set line_height [font metrics [$w cget -font] -linespace]}
+    if {$line_height < 1} {set line_height 1}
+    set total_rows [expr {int([winfo height $w] / $line_height)}]
+    if {$total_rows < 1} {set total_rows 1}
+    set prior_rows [expr {int(($total_rows + 2) / 3)}]
+    set input_rows 1
+    catch {
+	set input_rows [expr {1 + [$w count -displaylines promptEnd \
+	    [mged_completion_command_end $w]]}]
+	if {$input_rows < 1} {set input_rows 1}
+    }
+    set scroll_rows [expr {$total_rows - $prior_rows - $input_rows}]
+    if {$scroll_rows < 1} {set scroll_rows 1}
+
+    set rows_below 0
+    catch {
+	set command_bbox [$w bbox [mged_completion_command_end $w]]
+	if {[llength $command_bbox] == 4} {
+	    set command_bottom [expr {[lindex $command_bbox 1] + [lindex $command_bbox 3]}]
+	    set rows_below [expr {int(([winfo height $w] - $command_bottom) / $line_height)}]
+	    if {$rows_below < 0} {set rows_below 0}
+	}
+    }
+    return [expr {max($rows_below, $scroll_rows)}]
+}
+
+proc mged_completion_display_columns {w} {
+    set columns [$w cget -width]
+    catch {
+	set char_width [font measure [$w cget -font] 0]
+	if {$char_width > 0 && [winfo width $w] > 1} {
+	    set columns [expr {int([winfo width $w] / $char_width)}]
+	}
+    }
+    if {$columns < 1} {set columns 80}
+    return $columns
+}
+
+proc mged_completion_candidate_budget {w} {
+    set columns [mged_completion_display_columns $w]
+    set rows [mged_completion_display_max_rows $w]
+    set budget [expr {$rows * int(($columns + 2) / 3)}]
+    if {$budget < 2} {set budget 2}
+    if {$budget > 65536} {set budget 65536}
+    return $budget
+}
+
+# Remove only the rendered candidate text.  The saved candidate set remains
+# available for a resize or asynchronous-output repaint.
+proc mged_completion_display_erase {w} {
+    if {![winfo exists $w]} {return}
+    set marks [$w mark names]
+    if {[lsearch -exact $marks completion_display_start] >= 0 &&
+	[lsearch -exact $marks completion_display_end] >= 0} {
+	$w delete completion_display_start completion_display_end
+    }
+    catch {$w mark unset completion_display_start}
+    catch {$w mark unset completion_display_end}
+    catch {$w mark unset completion_command_end}
+}
+
+proc mged_completion_display_clear {w} {
+    global mged_completion_display_state
+    if {[info exists mged_completion_display_state($w,repaint)]} {
+	after cancel $mged_completion_display_state($w,repaint)
+    }
+    mged_completion_display_erase $w
+    foreach field {candidates total budget repaint} {
+	catch {unset mged_completion_display_state($w,$field)}
+    }
+}
+
+proc mged_completion_command_end {w} {
+    if {[lsearch -exact [$w mark names] completion_command_end] >= 0} {
+	return completion_command_end
+    }
+    return {end - 2c}
+}
+
+# Render candidates inside the Text widget after its input sentinel.  They are
+# ordinary tagged console text, but marks keep them out of the editable command
+# and allow exact removal before execution, history navigation, or output.
+proc mged_completion_display_render {w candidates {total ""}} {
+    if {[llength $candidates] < 2 ||
+	![llength [info commands _mged_cmd_complete_layout]] || ![winfo exists $w]} {
+	return
+    }
+
+    set columns [mged_completion_display_columns $w]
+    set max_rows [mged_completion_display_max_rows $w]
+    if {$total == "" || $total < [llength $candidates]} {
+	set total [llength $candidates]
+    }
+    set truncated [expr {$total > [llength $candidates]}]
+    set display_lines {}
+    if {$truncated && $max_rows <= 1} {
+	set display_lines [list "... ($total matches)"]
+    } else {
+	if {$truncated} {incr max_rows -1}
+	if {[catch {_mged_cmd_complete_layout $candidates $columns $max_rows} layout] ||
+	    [llength [lindex $layout 1]] == 0} {
+	    return
+	}
+	set display_lines [lindex $layout 1]
+	if {$truncated} {
+	    lappend display_lines "... ([expr {$total - [llength $candidates]}] more matches)"
+	}
+    }
+
+    # end-2c is MGED's sentinel space.  completion_command_end tracks the end
+    # of editable input while candidates extend the Text widget beyond it.
+    $w mark set completion_command_end {end - 2c}
+    $w mark gravity completion_command_end right
+    set display_start [$w index {end - 1c}]
+    $w mark set completion_display_start $display_start
+    $w mark gravity completion_display_start left
+    $w insert $display_start "\n[join $display_lines "\n"]" completion_candidates
+    $w mark set completion_display_end {end - 1c}
+    $w mark gravity completion_display_end right
+    $w tag configure completion_candidates -foreground [mged_completion_dim_color $w]
+
+    # Seeing the end scrolls only when necessary.  Since max_rows preserves a
+    # third of the viewport and accounts for the prompt row, the input remains
+    # visible while as much prior output as possible stays above it.
+    $w see completion_display_end
+}
+
+proc mged_completion_display {w candidates {total ""}} {
+    global mged_completion_display_state
+    if {$total == ""} {set total [llength $candidates]}
+    if {[mged_completion_display_active $w] &&
+	$mged_completion_display_state($w,candidates) eq $candidates &&
+	$mged_completion_display_state($w,total) == $total &&
+	[lsearch -exact [$w mark names] completion_display_start] >= 0} {
+	return
+    }
+    mged_completion_display_erase $w
+    set mged_completion_display_state($w,candidates) $candidates
+    set mged_completion_display_state($w,total) $total
+    set mged_completion_display_state($w,budget) \
+	[mged_completion_candidate_budget $w]
+    mged_completion_display_render $w $candidates $total
+}
+
+proc mged_completion_display_repaint {w} {
+    global mged_completion_display_state
+    global mged_tab_completion_state
+    catch {unset mged_completion_display_state($w,repaint)}
+    if {![mged_completion_display_active $w] || ![winfo exists $w]} {return}
+    set candidates $mged_completion_display_state($w,candidates)
+    set total $mged_completion_display_state($w,total)
+    set budget [mged_completion_candidate_budget $w]
+    set previous_budget 0
+    if {[info exists mged_completion_display_state($w,budget)]} {
+	set previous_budget $mged_completion_display_state($w,budget)
+    }
+    set completion_key [list $w tab]
+    if {$total > [llength $candidates] && $budget != $previous_budget &&
+	[info exists mged_tab_completion_state($completion_key,base_line)] &&
+	[info exists mged_tab_completion_state($completion_key,base_cursor)]} {
+	set base_line $mged_tab_completion_state($completion_key,base_line)
+	set base_cursor $mged_tab_completion_state($completion_key,base_cursor)
+	if {![catch {tab_expansion $base_line $base_cursor 0 $budget} results] &&
+	    [lindex $results 2] > 0} {
+	    set candidates [lindex $results 1]
+	    set candidate_count [lindex $results 2]
+	    set refreshed_total [lindex $results 4]
+	    if {$refreshed_total != "" && $refreshed_total >= $candidate_count} {
+		set total $refreshed_total
+	    }
+	    set mged_completion_display_state($w,candidates) $candidates
+	    set mged_completion_display_state($w,total) $total
+	    set mged_tab_completion_state($completion_key,count) $candidate_count
+	}
+    }
+    set mged_completion_display_state($w,budget) $budget
+    mged_completion_display_erase $w
+    mged_completion_display_render $w $candidates $total
+}
+
+proc mged_completion_display_schedule_repaint {w} {
+    global mged_completion_display_state
+    if {![mged_completion_display_active $w]} {return}
+    if {[info exists mged_completion_display_state($w,repaint)]} {
+	after cancel $mged_completion_display_state($w,repaint)
+    }
+    set mged_completion_display_state($w,repaint) \
+	[after idle [list mged_completion_display_repaint $w]]
+}
+
+proc mged_completion_modifier_key {keysym} {
+    return [expr {[lsearch -exact {
+	Shift_L Shift_R Control_L Control_R Alt_L Alt_R Meta_L Meta_R
+	Super_L Super_R Caps_Lock Num_Lock Scroll_Lock
+    } $keysym] >= 0}]
+}
+
+proc mged_completion_display_keypress {w keysym} {
+    if {$keysym != "Tab" && $keysym != "ISO_Left_Tab" &&
+	![mged_completion_modifier_key $keysym]} {
+	mged_completion_display_erase $w
+    }
+}
+
+proc mged_completion_state_clear {w} {
+    global mged_tab_completion_state
+    set completion_key [list $w tab]
+    foreach field {base_line base_cursor last_line last_cursor index count} {
+	catch {unset mged_tab_completion_state($completion_key,$field)}
+    }
+    catch {$w tag remove completion_preview promptEnd end}
+    mged_completion_display_clear $w
+}
+
+proc mged_lineedit_overrides {} {
+    global mged_lineedit_palette
+
+    if {[info exists mged_lineedit_palette]} {
+	return $mged_lineedit_palette
+    }
+
+    set mged_lineedit_palette {}
+    if {[llength [info commands _mged_lineedit_colors]]} {
+	catch {set mged_lineedit_palette [_mged_lineedit_colors]}
+    }
+    return $mged_lineedit_palette
+}
+
+proc mged_lineedit_color {role fallback} {
+    set overrides [mged_lineedit_overrides]
+    if {[dict exists $overrides $role color]} {
+	return [dict get $overrides $role color]
+    }
+    return $fallback
+}
+
+proc mged_lineedit_dim {role fallback} {
+    set overrides [mged_lineedit_overrides]
+    if {[dict exists $overrides $role dim]} {
+	return [dict get $overrides $role dim]
+    }
+    return $fallback
+}
+
+proc mged_lineedit_resolve_color {w role fallback default_dim} {
+    set foreground [mged_lineedit_color $role $fallback]
+    if {![mged_lineedit_dim $role $default_dim]} {
+	return $foreground
+    }
+    foreach {fr fg fb} [winfo rgb $w $foreground] break
+    foreach {br bg bb} [winfo rgb $w [$w cget -background]] break
+    set r [expr {int((0.55 * $fr + 0.45 * $br) / 257.0)}]
+    set g [expr {int((0.55 * $fg + 0.45 * $bg) / 257.0)}]
+    set b [expr {int((0.55 * $fb + 0.45 * $bb) / 257.0)}]
+    return [format "#%02x%02x%02x" $r $g $b]
+}
+
+proc mged_completion_dim_color {w} {
+    return [mged_lineedit_resolve_color $w completion-preview [$w cget -foreground] 1]
+}
+
+proc mged_semantic_colors {w} {
+    foreach {br bg bb} [winfo rgb $w [$w cget -background]] break
+    set dark [expr {(0.299 * $br + 0.587 * $bg + 0.114 * $bb) < 32768}]
+    if {$dark} {
+	set defaults [list command #5adc6e option #ebcd4b valid #46d7dc invalid #ff6969 incomplete #e178e1]
+    } else {
+	set defaults [list command #007d19 option #9b6900 valid #007d87 invalid #be1919 incomplete #962d96]
+    }
+
+    set colors {}
+    foreach {style color} $defaults {
+	lappend colors $style [mged_lineedit_resolve_color $w $style $color 0]
+    }
+    return $colors
+}
+
+proc mged_semantic_refresh {w} {
+    foreach style {command option valid invalid incomplete} {
+	catch {$w tag remove semantic_$style promptEnd end}
+    }
+    if {![llength [info commands _mged_cmd_analyze]] || ![winfo exists $w]} {
+	return
+    }
+
+    set line [$w get -- promptEnd {promptEnd lineend -1c}]
+    if {$line == "" || [catch {_mged_cmd_analyze $line} tokens]} {
+	return
+    }
+    foreach token $tokens {
+	set start [lindex $token 0]
+	set finish [lindex $token 1]
+	set style [lindex $token 6]
+	if {$style == "none" || $finish <= $start} {
+	    continue
+	}
+	$w tag add semantic_$style "promptEnd + ${start}c" "promptEnd + ${finish}c"
+    }
+    catch {$w tag raise completion_preview}
+}
+
+# Filtering mode previews a candidate without making it the editing buffer.
+# On a subsequent edit, rebuild from the original seed before applying the key.
+proc mged_completion_filter_keyrelease {w char keysym} {
+    global mged_tab_completion_state
+
+    if {[mged_completion_modifier_key $keysym]} {
+	return
+    }
+
+    set mode [mged_completion_mode]
+    if {$mode != "filter"} {
+	if {$keysym != "Tab" && $keysym != "ISO_Left_Tab"} {
+	    mged_completion_state_clear $w
+	}
+	return
+    }
+
+    set completion_key [list $w tab]
+    if {![info exists mged_tab_completion_state($completion_key,base_line)] ||
+	![info exists mged_tab_completion_state($completion_key,base_cursor)]} {
+	return
+    }
+
+    # Tk invokes this handler after applying the edit.  Retain the displayed
+    # candidate for accepting keys and for single-character deletion; slash
+    # accepts the selected database object and starts the next path component.
+    if {$keysym == "space" || $keysym == "Return" || $keysym == "KP_Enter" ||
+	$keysym == "BackSpace" || $keysym == "Delete" || $char == "/"} {
+	mged_completion_state_clear $w
+	return
+    }
+
+    set base_line $mged_tab_completion_state($completion_key,base_line)
+    set base_cursor $mged_tab_completion_state($completion_key,base_cursor)
+    set new_line $base_line
+    set new_cursor $base_cursor
+
+    if {$char != "" && [string is print -strict $char]} {
+	set preview_edit_line [$w get -- promptEnd {promptEnd lineend -1c}]
+	set preview_edit_cursor [string length [$w get -- promptEnd insert]]
+	# string replace does not reliably express insertion at a cursor just past
+	# the final character.  Build the line explicitly so typing after a
+	# zero-width completion (for example, "search /" followed by "c") keeps
+	# the character.
+	set new_line "[string range $base_line 0 [expr {$base_cursor - 1}]]$char[string range $base_line $base_cursor end]"
+	incr new_cursor [string length $char]
+
+	# Match gsh's filtering fallback: prefer refining the original seed, but
+	# when that has no candidates and editing the visible preview does, accept
+	# the preview and continue from the edited form.
+	set completion_budget [mged_completion_candidate_budget $w]
+	if {![catch {tab_expansion $new_line $new_cursor 0 $completion_budget} original_results] &&
+	    [lindex $original_results 2] == 0 &&
+	    ![catch {tab_expansion $preview_edit_line $preview_edit_cursor 0 $completion_budget} preview_results] &&
+	    [lindex $preview_results 2] > 0} {
+	    set new_line $preview_edit_line
+	    set new_cursor $preview_edit_cursor
+	}
+    } else {
+	# Cursor movement and other non-text edits invalidate the preview.  Leaving
+	# it active makes the next printable character get replayed at the stale
+	# completion cursor instead of the user's current insertion point.
+	if {$keysym != "Tab" && $keysym != "ISO_Left_Tab"} {
+	    mged_completion_state_clear $w
+	}
+	return
+    }
+
+    $w delete promptEnd {end - 2c}
+    $w mark set insert promptEnd
+    $w insert insert $new_line
+    $w mark set insert "promptEnd + ${new_cursor}c"
+    $w see insert
+    mged_completion_state_clear $w
+}
+
 # do tab expansion
-proc tab_expansion { line } {
+proc tab_expansion { line {cursor_pos ""} {cycle_index ""} {max_candidates ""} } {
     # list of mged commands
     global mged_cmds
 
@@ -1744,16 +2171,37 @@ proc tab_expansion { line } {
     }
     set matches {}
 
-    set len [llength $line]
+    # An unfinished quoted or braced word is normal while editing, but it is
+    # not necessarily a valid Tcl list yet.  Let _mged_cmd_complete's Tcl
+    # parser decide whether the input is complete enough to analyze.
+    if {[catch {llength $line} len]} {
+	set len [expr {[regexp {[[:space:]]} $line] ? 2 : 1}]
+    }
+    if { $cursor_pos == "" } {
+	set cursor_pos [string length $line]
+    }
+    if {$max_candidates == "" || $max_candidates < 2} {
+	set max_candidates 512
+    }
+
+    if {($len > 1 || [regexp {[[:space:]]$} $line]) && [llength [info commands _mged_cmd_complete]]} {
+	set query_index [expr {$cycle_index == "" ? -1 : $cycle_index}]
+	set ged_status [catch {_mged_cmd_complete $line $cursor_pos $query_index $max_candidates} ged_results]
+	if {!$ged_status} {
+	    if {[lindex $ged_results 0]} {
+		return [list [lindex $ged_results 1] [lindex $ged_results 2] [lindex $ged_results 3] [lindex $ged_results 4] [lindex $ged_results 5]]
+	    }
+	}
+    }
 
     if { $len > 1 } {
 	# already have complete command, so do object expansion
 
-	# The libged db dispatcher exists even when no database is open, so test
-	# an operation that requires a database rather than command existence.
-	if {[catch {db version}]} {
-	    # no open database means object expansion is unavailable
-	    return [list $line {}]
+	# check if we have an open db
+	set dbCommand [info command db]
+	if { [string length $dbCommand] == 0 } {
+	    # no db command means no db is open, cannot expand
+	    return [list $line {} 0 $cursor_pos]
 	}
 
 	# get last word on command line
@@ -1782,7 +2230,7 @@ proc tab_expansion { line } {
 		set element [lindex $path $index]
 		if { ! [ exists $element ] } {
 		    # the current path element is invalid, just return
-		    return [list $line {}]
+		    return [list $line {} 0 $cursor_pos]
 		}
 	    }
 	}
@@ -1882,7 +2330,7 @@ proc tab_expansion { line } {
 		}
 		set newCommand [lreplace $line end end $name]
 	    } else {
-		return [list $line {}]
+		return [list $line {} 0 $cursor_pos]
 	    }
 	}
     } else {
@@ -1895,6 +2343,12 @@ proc tab_expansion { line } {
 	if { $numMatches == 0  } {
 	    # no matches
 	    set newCommand $line
+	} elseif {$cycle_index != ""} {
+	    # The GUI passes a cycle index for filter and cycle modes.  Command
+	    # names use mged_cmds rather than the GED schema completion path, so
+	    # honor that index here as well.  Without this, repeated Tabs only
+	    # redisplay the command list and never advance the selected command.
+	    set newCommand [lindex $matches [expr {$cycle_index % $numMatches}]]
 	} elseif { $numMatches > 1 } {
 	    # get longest match
 	    set newCommand [get_longest_common_string $matches]
@@ -1904,7 +2358,7 @@ proc tab_expansion { line } {
 	}
     }
 
-    return [list $newCommand $matches]
+    return [list $newCommand $matches [llength $matches] [string length $newCommand]]
 }
 
 proc do_windows_copy {_w} {
@@ -1919,6 +2373,21 @@ proc set_text_key_bindings { id } {
     global tcl_platform
 
     set w .$id.t
+    set completion_bindtag MgedCompletionDisplay
+    if {[lsearch -exact [bindtags $w] $completion_bindtag] < 0} {
+	bindtags $w [linsert [bindtags $w] 0 $completion_bindtag]
+    }
+    bind $completion_bindtag <KeyPress> {
+	mged_completion_display_keypress %W %K
+    }
+    bind $completion_bindtag <ButtonPress> {
+	mged_completion_state_clear %W
+    }
+    bind $w <Configure> +[list mged_completion_display_schedule_repaint %W]
+    $w tag configure completion_preview -foreground [mged_completion_dim_color $w]
+    foreach {style color} [mged_semantic_colors $w] {
+	$w tag configure semantic_$style -foreground $color
+    }
     switch $mged_gui($id,edit_style) {
 	vi {
 	    vi_insert_mode $w
@@ -2117,24 +2586,131 @@ proc set_text_key_bindings { id } {
     }
 
     bind $w <Tab> {
+	global mged_tab_completion_state
+	set completion_direction 1
+	if {[info exists ::mged_completion_direction]} {
+	    set completion_direction $::mged_completion_direction
+	    unset ::mged_completion_direction
+	}
+	set completion_mode [mged_completion_mode]
+	if {$completion_mode == "off"} {
+	    break
+	}
 	set line [%W get -- promptEnd {promptEnd lineend -1c}]
-	set results [tab_expansion $line]
+	set cursor_pos [string length [%W get -- promptEnd insert]]
+	set completion_key [list %W tab]
+	set completion_index ""
+	set initial_reverse 0
+	set request_line $line
+	set request_cursor $cursor_pos
+	if {$completion_mode == "filter" || $completion_mode == "cycle"} {
+	    set completion_index 0
+	    if {$completion_direction < 0} {
+		set initial_reverse 1
+	    }
+	}
+
+	if {[info exists mged_tab_completion_state($completion_key,last_line)] &&
+	    [info exists mged_tab_completion_state($completion_key,last_cursor)] &&
+	    [info exists mged_tab_completion_state($completion_key,count)] &&
+	    ($mged_tab_completion_state($completion_key,count) > 1 ||
+	     (($completion_mode == "filter" || $completion_mode == "cycle") &&
+	      $mged_tab_completion_state($completion_key,count) > 0)) &&
+	    $line == $mged_tab_completion_state($completion_key,last_line) &&
+	    $cursor_pos == $mged_tab_completion_state($completion_key,last_cursor)} {
+	    set request_line $mged_tab_completion_state($completion_key,base_line)
+	    set request_cursor $mged_tab_completion_state($completion_key,base_cursor)
+	    set completion_index [expr {$mged_tab_completion_state($completion_key,index) + $completion_direction}]
+	    set stored_count $mged_tab_completion_state($completion_key,count)
+	    if {$completion_index < 0} {
+		set completion_index [expr {$stored_count - 1}]
+	    } elseif {$completion_index >= $stored_count} {
+		set completion_index 0
+	    }
+	    set initial_reverse 0
+	}
+
+	set completion_budget [mged_completion_candidate_budget %W]
+	set results [tab_expansion $request_line $request_cursor $completion_index $completion_budget]
+	if {$initial_reverse && [lindex $results 2] > 0} {
+	    set completion_index [expr {[lindex $results 2] - 1}]
+	    set results [tab_expansion $request_line $request_cursor $completion_index $completion_budget]
+	}
 
 	set expansions [lindex $results 1]
-	if { [llength $expansions] > 1 } {
-	    # show the possible matches
-	    %W delete {insert linestart} {end-2c}
-	    %W insert insert "\n${expansions}\n"
-	    mged_print_prompt %W "mged> "
+	set completion_count [lindex $results 2]
+	set result_cursor [lindex $results 3]
+	set completion_total [lindex $results 4]
+	if {$completion_count == ""} {
+	    set completion_count [llength $expansions]
+	}
+	if {$completion_total == "" || $completion_total < $completion_count} {
+	    set completion_total $completion_count
+	}
+	if {$result_cursor == ""} {
+	    set result_cursor [string length [lindex $results 0]]
+	}
+	if {$result_cursor > [string length [lindex $results 0]]} {
+	    set result_cursor [string length [lindex $results 0]]
 	}
 
 	# display the expanded line
-	%W delete promptEnd {end - 2c}
+	set command_end [mged_completion_command_end %W]
+	%W delete promptEnd $command_end
 	%W mark set insert promptEnd
 	%W insert insert [lindex $results 0]
+	%W mark set insert "promptEnd + ${result_cursor}c"
 	%W see insert
+	%W tag remove completion_preview promptEnd end
+	if {($completion_mode == "filter" || $completion_mode == "cycle") &&
+	    $result_cursor > $request_cursor} {
+	    %W tag add completion_preview "promptEnd + ${request_cursor}c" "promptEnd + ${result_cursor}c"
+	}
+
+	if {($completion_mode != "prefix" && $completion_count > 1) ||
+	    (($completion_mode == "filter" || $completion_mode == "cycle") && $completion_count > 0)} {
+	    set mged_tab_completion_state($completion_key,base_line) $request_line
+	    set mged_tab_completion_state($completion_key,base_cursor) $request_cursor
+	    set mged_tab_completion_state($completion_key,last_line) [lindex $results 0]
+	    set mged_tab_completion_state($completion_key,last_cursor) $result_cursor
+	    set mged_tab_completion_state($completion_key,index) [expr {$completion_index == "" ? -1 : $completion_index}]
+	    set mged_tab_completion_state($completion_key,count) $completion_count
+	} else {
+	    mged_completion_state_clear %W
+	}
+	mged_semantic_refresh %W
+	if {$completion_mode != "prefix" && $completion_count > 1} {
+	    mged_completion_display %W $expansions $completion_total
+	}
 
 	break
+    }
+
+    bind $w <ISO_Left_Tab> {
+	set ::mged_completion_direction -1
+	event generate %W <Tab>
+	break
+    }
+
+    bind $w <KeyRelease> {
+	mged_completion_filter_keyrelease %W %A %K
+	mged_semantic_refresh %W
+    }
+
+    bind $w <KeyRelease-Escape> {
+	global mged_tab_completion_state
+	set completion_key [list %W tab]
+	if {[info exists mged_tab_completion_state($completion_key,base_line)]} {
+	    set base_line $mged_tab_completion_state($completion_key,base_line)
+	    set base_cursor $mged_tab_completion_state($completion_key,base_cursor)
+	    %W delete promptEnd {end - 2c}
+	    %W mark set insert promptEnd
+	    %W insert insert $base_line
+	    %W mark set insert "promptEnd + ${base_cursor}c"
+	    %W see insert
+	}
+	mged_completion_state_clear %W
+	mged_semantic_refresh %W
     }
 
     # must override the Text bindings that move the cursor via

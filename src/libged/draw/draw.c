@@ -29,13 +29,104 @@
 #include <string.h>
 
 
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
+#include "bu/opt.h"
 #include "bu/parallel.h"
 #include "bu/datetime.h"
 #include "raytrace.h"
 
 #include "../ged_private.h"
 #include "./ged_draw.h"
+
+GED_DEFINE_TYPED_OPERAND_SCHEMA_POLICY_PROVIDER(ev_native, "ev",
+    "Draw evaluated NMG polygon database objects", "paths", BU_CMD_VALUE_DB_PATH,
+    1, BU_CMD_COUNT_UNLIMITED, "Database object paths to draw as NMG polygons",
+    BU_CMD_PARSE_INTERSPERSED, "ged.db_path");
+
+struct legacy_draw_args {
+    int *shaded_mode_override;
+    int draw_nmg_only;
+    int fastpath;
+    int draw_normals;
+    int quiet;
+    int solid_lines;
+    int tnurbs;
+    int edge_uses;
+    int vertex_normals;
+    int fast_wireframe;
+    fastf_t transparency;
+    const char *color;
+    int no_surfaces;
+    int no_triangulate;
+    int cpus;
+    int add_mode;
+    int overlay_mode;
+    int no_autoview;
+    int bot_threshold;
+};
+
+static int
+legacy_draw_hidden(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
+	const char **UNUSED(argv), void *set_var)
+{
+    struct legacy_draw_args *args = (struct legacy_draw_args *)set_var;
+    if (!args)
+	return 0;
+    *args->shaded_mode_override = _GED_HIDDEN_LINE;
+    return 0;
+}
+
+static int
+legacy_draw_mode(struct bu_vls *msg, size_t argc, const char **argv,
+	void *set_var)
+{
+    struct legacy_draw_args *args = (struct legacy_draw_args *)set_var;
+    int mode = -1;
+    int ret = bu_opt_int(msg, argc, argv, &mode);
+    if (ret < 0)
+	return ret;
+    if (mode < 0 || mode > 5) {
+	if (msg)
+	    bu_vls_printf(msg,
+		"Invalid draw mode '%d' (expected an integer from 0 through 5)\n",
+		mode);
+	return -1;
+    }
+    if (!args)
+	return ret;
+    switch (mode) {
+	case 0: *args->shaded_mode_override = _GED_WIREFRAME; break;
+	case 1: *args->shaded_mode_override = _GED_SHADED_MODE_BOTS; break;
+	case 2: *args->shaded_mode_override = _GED_SHADED_MODE_ALL; break;
+	case 3: *args->shaded_mode_override = _GED_SHADED_MODE_EVAL; break;
+	case 4: *args->shaded_mode_override = _GED_HIDDEN_LINE; break;
+	case 5: *args->shaded_mode_override = _GED_WIREFRAME_EVAL; break;
+    }
+    return ret;
+}
+
+#define LEGACY_DRAW_OPTIONS(a) \
+    BU_OPT_FLAG(a, "d", NULL, draw_nmg_only, "Draw NMG objects only"), \
+    BU_OPT_FLAG(a, "f", NULL, fastpath, "Enable the fast path"), \
+    {"h", NULL, NULL, legacy_draw_hidden, a, "Use hidden-line drawing"}, \
+    {"m", NULL, "mode", legacy_draw_mode, a, "Set drawing mode (0 through 5)"}, \
+    BU_OPT_FLAG(a, "n", NULL, draw_normals, "Draw surface normals"), \
+    BU_OPT_FLAG(a, "q", NULL, quiet, "Do not draw NMG solids while debugging"), \
+    BU_OPT_FLAG(a, "s", NULL, solid_lines, "Draw solid lines only"), \
+    BU_OPT_FLAG(a, "t", NULL, tnurbs, "Use trimmed NURBS"), \
+    BU_OPT_FLAG(a, "u", NULL, edge_uses, "Draw edge uses"), \
+    BU_OPT_FLAG(a, "v", NULL, vertex_normals, "Shade per-vertex normals"), \
+    BU_OPT_FLAG(a, "w", NULL, fast_wireframe, "Use fast NMG wireframes"), \
+    BU_OPT_NUM(a, "x", NULL, transparency, "level", "Set transparency"), \
+    BU_OPT_STR(a, "C", NULL, color, "r/g/b", "Override object color"), \
+    BU_OPT_FLAG(a, "S", NULL, no_surfaces, "Do not draw surfaces or subtraction solids"), \
+    BU_OPT_FLAG(a, "T", NULL, no_triangulate, "Do not triangulate NMGs"), \
+    BU_OPT_INT(a, "P", NULL, cpus, "cpus", "Set processor count"), \
+    BU_OPT_FLAG(a, "A", NULL, add_mode, "Use add mode"), \
+    BU_OPT_FLAG(a, "o", NULL, overlay_mode, "Use overlay mode"), \
+    BU_OPT_FLAG(a, "R", NULL, no_autoview, "Disable autoview"), \
+    BU_OPT_INT(a, "L", NULL, bot_threshold, "count", "Set BoT threshold"),
+BU_OPT_DESC_BUILDER(legacy_draw_options, struct legacy_draw_args, LEGACY_DRAW_OPTIONS);
 
 /* declare our callbacks used by _ged_drawtrees() */
 static int drawtrees_depth = 0;
@@ -942,7 +1033,6 @@ int
 _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct _ged_client_data *_dgcdp)
 {
     int ret = 0;
-    int c;
     int ncpu = 1;
     int nmg_use_tnurbs = 0;
     int enable_fastpath = 0;
@@ -1006,151 +1096,72 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	enable_fastpath = 0;
 
-	/* Parse options. */
-	bu_optind = 0;		/* re-init bu_getopt() */
-	while ((c = bu_getopt(argc, (char * const *)argv, "dfhm:nqstuvwx:C:STP:A:oRL:M")) != -1) {
-	    switch (c) {
-		case 'u':
-		    dgcdp.draw_edge_uses = 1;
-		    break;
-		case 's':
-		    dgcdp.vs.draw_solid_lines_only = 1;
-		    break;
-		case 't':
-		    nmg_use_tnurbs = 1;
-		    break;
-		case 'v':
-		    dgcdp.shade_per_vertex_normals = 1;
-		    break;
-		case 'w':
-		    dgcdp.nmg_fast_wireframe_draw = 1;
-		    break;
-		case 'S':
-		    dgcdp.draw_no_surfaces = 1;
-		    dgcdp.vs.draw_non_subtract_only = 1;
-		    break;
-		case 'T':
-		    dgcdp.nmg_triangulate = 0;
-		    break;
-		case 'n':
-		    dgcdp.draw_normals = 1;
-		    break;
-		case 'P':
-		    ncpu = atoi(bu_optarg);
-		    break;
-		case 'q':
-		    dgcdp.do_not_draw_nmg_solids_during_debugging = 1;
-		    break;
-		case 'd':
-		    dgcdp.draw_nmg_only = 1;
-		    break;
-		case 'f':
-		    enable_fastpath = 1;
-		    break;
-		case 'C':
-		    {
-			int r, g, b;
-			char *cp = bu_optarg;
+	/* ged_draw_guts has already removed the command name. */
+	{
+	    struct legacy_draw_args args = {0};
+	    args.shaded_mode_override = &shaded_mode_override;
+	    args.transparency = 1.0;
+	    args.cpus = 1;
 
-			r = atoi(cp);
-			while ((*cp >= '0' && *cp <= '9')) cp++;
-			while (*cp && (*cp < '0' || *cp > '9')) cp++;
-			g = atoi(cp);
-			while ((*cp >= '0' && *cp <= '9')) cp++;
-			while (*cp && (*cp < '0' || *cp > '9')) cp++;
-			b = atoi(cp);
-
-			if (r < 0 || r > 255) r = 255;
-			if (g < 0 || g > 255) g = 255;
-			if (b < 0 || b > 255) b = 255;
-
-			dgcdp.vs.color_override = 1;
-			dgcdp.vs.color[0] = r;
-			dgcdp.vs.color[1] = g;
-			dgcdp.vs.color[2] = b;
-		    }
-		    break;
-		case 'h':
-		    shaded_mode_override = _GED_HIDDEN_LINE;
-		    break;
-		case 'm':
-		    shaded_mode_override = atoi(bu_optarg);
-
-		    switch (shaded_mode_override) {
-			case 0:
-			    shaded_mode_override = _GED_WIREFRAME;
-			    break;
-			case 1:
-			    shaded_mode_override = _GED_SHADED_MODE_BOTS;
-			    break;
-			case 2:
-			    shaded_mode_override = _GED_SHADED_MODE_ALL;
-			    break;
-			case 3:
-			    shaded_mode_override = _GED_SHADED_MODE_EVAL;
-			    break;
-			case 4:
-			    shaded_mode_override = _GED_HIDDEN_LINE;
-			    break;
-			case 5:
-			    shaded_mode_override = _GED_WIREFRAME_EVAL;
-			    break;
-			default:
-			    if (shaded_mode_override < 0) {
-				shaded_mode_override = _GED_SHADED_MODE_UNSET;
-			    } else {
-				shaded_mode_override = _GED_SHADED_MODE_ALL;
-			    }
-		    }
-		    break;
-		case 'x':
-		    dgcdp.vs.transparency = atof(bu_optarg);
-
-		    /* clamp it to [0, 1] */
-		    if (dgcdp.vs.transparency < 0.0)
-			dgcdp.vs.transparency = 0.0;
-
-		    if (1.0 < dgcdp.vs.transparency)
-			dgcdp.vs.transparency = 1.0;
-
-		    break;
-		case 'R':
-		    dgcdp.autoview = 0;
-		    break;
-		case 'L':
-		    {
-			int t = 0;
-			char *cp = bu_optarg;
-			if (cp) {
-			    t = atoi(cp);
-			    if (t >= 0) {
-				bot_threshold = (size_t)t;
-			    } else {
-				bu_vls_printf(gedp->ged_result_str, "invalid -L argument: %s\n", cp);
-				--drawtrees_depth;
-				return BRLCAD_ERROR;
-			    }
-			} else {
-			    bu_vls_printf(gedp->ged_result_str, "-L requires an option\n");
-			    --drawtrees_depth;
-			    return BRLCAD_ERROR;
-			}
-		    }
-		    break;
-		case 'A':
-		case 'o':
-		    /* nothing to do, handled by edit_com wrapper on the front-end */
-		    break;
-		default:
-		    {
-			bu_vls_printf(gedp->ged_result_str, "unrecognized option - %c\n", c);
-			--drawtrees_depth;
-			return BRLCAD_ERROR;
-		    }
+	    argc = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+		(size_t)argc, argv, legacy_draw_options, &args,
+		BU_OPT_PARSE_OPTIONS_FIRST);
+	    if (argc < 0) {
+		--drawtrees_depth;
+		return BRLCAD_ERROR;
 	    }
+
+	    dgcdp.draw_edge_uses = args.edge_uses;
+	    dgcdp.vs.draw_solid_lines_only = args.solid_lines;
+	    nmg_use_tnurbs = args.tnurbs;
+	    dgcdp.shade_per_vertex_normals = args.vertex_normals;
+	    dgcdp.nmg_fast_wireframe_draw = args.fast_wireframe;
+	    if (args.no_surfaces) {
+		dgcdp.draw_no_surfaces = 1;
+		dgcdp.vs.draw_non_subtract_only = 1;
+	    }
+	    if (args.no_triangulate)
+		dgcdp.nmg_triangulate = 0;
+	    dgcdp.draw_normals = args.draw_normals;
+	    ncpu = args.cpus;
+	    dgcdp.do_not_draw_nmg_solids_during_debugging = args.quiet;
+	    dgcdp.draw_nmg_only = args.draw_nmg_only;
+	    enable_fastpath = args.fastpath;
+
+	    if (args.color) {
+		int r, g, b;
+		const char *cp = args.color;
+		r = atoi(cp);
+		while (*cp >= '0' && *cp <= '9') cp++;
+		while (*cp && (*cp < '0' || *cp > '9')) cp++;
+		g = atoi(cp);
+		while (*cp >= '0' && *cp <= '9') cp++;
+		while (*cp && (*cp < '0' || *cp > '9')) cp++;
+		b = atoi(cp);
+		if (r < 0 || r > 255) r = 255;
+		if (g < 0 || g > 255) g = 255;
+		if (b < 0 || b > 255) b = 255;
+		dgcdp.vs.color_override = 1;
+		dgcdp.vs.color[0] = r;
+		dgcdp.vs.color[1] = g;
+		dgcdp.vs.color[2] = b;
+	    }
+
+	    dgcdp.vs.transparency = args.transparency;
+	    if (dgcdp.vs.transparency < 0.0)
+		dgcdp.vs.transparency = 0.0;
+	    if (dgcdp.vs.transparency > 1.0)
+		dgcdp.vs.transparency = 1.0;
+	    if (args.no_autoview)
+		dgcdp.autoview = 0;
+	    if (args.bot_threshold < 0) {
+		bu_vls_printf(gedp->ged_result_str,
+		    "invalid -L argument: %d\n", args.bot_threshold);
+		--drawtrees_depth;
+		return BRLCAD_ERROR;
+	    }
+	    bot_threshold = args.bot_threshold;
 	}
-	argc -= bu_optind;
-	argv += bu_optind;
 
 	switch (kind) {
 	    case _GED_DRAW_WIREFRAME:
@@ -1624,7 +1635,31 @@ ged_draw_core(struct ged *gedp, int argc, const char *argv[])
     if (gedp->new_cmd_forms)
 	return ged_draw2_core(gedp, argc, argv);
 
-    return ged_draw_guts(gedp, argc, argv, _GED_DRAW_WIREFRAME);
+    /* The command schema is shared by all frontends and advertises the long
+     * --mode spelling.  Normalize that spelling for the legacy getopt parser
+     * so GSH accepts the same separate and equals forms as newer frontends. */
+    const char **legacy_argv = (const char **)bu_calloc((size_t)argc, sizeof(char *), "legacy draw argv");
+    char **owned_argv = (char **)bu_calloc((size_t)argc, sizeof(char *), "owned legacy draw argv");
+    for (int i = 0; i < argc; i++) {
+	legacy_argv[i] = argv[i];
+	if (BU_STR_EQUAL(argv[i], "--mode")) {
+	    legacy_argv[i] = "-m";
+	} else if (bu_strncmp(argv[i], "--mode=", 7) == 0) {
+	    size_t mode_len = strlen(argv[i] + 7);
+	    owned_argv[i] = (char *)bu_malloc(mode_len + 3, "legacy draw mode option");
+	    snprintf(owned_argv[i], mode_len + 3, "-m%s", argv[i] + 7);
+	    legacy_argv[i] = owned_argv[i];
+	}
+    }
+
+    int ret = ged_draw_guts(gedp, argc, legacy_argv, _GED_DRAW_WIREFRAME);
+    for (int i = 0; i < argc; i++) {
+	if (owned_argv[i])
+	    bu_free(owned_argv[i], "legacy draw mode option");
+    }
+    bu_free(owned_argv, "owned legacy draw argv");
+    bu_free(legacy_argv, "legacy draw argv");
+    return ret;
 }
 
 
@@ -1663,11 +1698,17 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 	}
     } else {
 	int i, found_path;
-	struct db_full_path obj_path, dl_path;
+	struct db_full_path obj_path = DB_FULL_PATH_INIT_ZERO;
+	struct db_full_path dl_path = DB_FULL_PATH_INIT_ZERO;
 
 	/* redraw the specified paths */
 	for (i = 1; i < argc; ++i) {
-	    ret = db_string_to_path(&obj_path, gedp->dbip, argv[i]);
+	    ret = db_full_path_decode(&obj_path, gedp->dbip, argv[i]);
+	    if (ret != DB_FULL_PATH_OK) {
+		db_free_full_path(&obj_path);
+		db_full_path_init(&obj_path);
+		ret = db_string_to_path(&obj_path, gedp->dbip, argv[i]);
+	    }
 	    if (ret < 0) {
 		bu_vls_printf(gedp->ged_result_str,
 			"%s: %s is not a valid path\n", argv[0], argv[i]);
@@ -1677,8 +1718,14 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 	    found_path = 0;
 	    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay))
 	    {
-		ret = db_string_to_path(&dl_path, gedp->dbip,
+		ret = db_full_path_decode(&dl_path, gedp->dbip,
 			bu_vls_addr(&gdlp->dl_path));
+		if (ret != DB_FULL_PATH_OK) {
+		    db_free_full_path(&dl_path);
+		    db_full_path_init(&dl_path);
+		    ret = db_string_to_path(&dl_path, gedp->dbip,
+			    bu_vls_addr(&gdlp->dl_path));
+		}
 		if (ret < 0) {
 		    bu_vls_printf(gedp->ged_result_str,
 			    "%s: %s is not a valid path\n", argv[0],
@@ -1718,16 +1765,16 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_DRAW_COMMANDS(X, XID) \
-    X(draw, ged_draw_core, GED_CMD_DEFAULT) \
-    X(E, ged_E_core, GED_CMD_DEFAULT) \
-    X(e, ged_draw_core, GED_CMD_DEFAULT) \
-    X(ev, ged_ev_core, GED_CMD_DEFAULT) \
-    X(redraw, ged_redraw_core, GED_CMD_DEFAULT) \
-    X(loadview, ged_loadview_core, GED_CMD_DEFAULT) \
-    X(preview, ged_preview_core, GED_CMD_DEFAULT)
+    X(draw, ged_draw_core, GED_CMD_DEFAULT, &ged_draw_native_schema) \
+    X(E, ged_E_core, GED_CMD_DEFAULT, &ged_bigE_native_schema) \
+    X(e, ged_draw_core, GED_CMD_DEFAULT, &ged_draw_alias_native_schema) \
+    X(ev, ged_ev_core, GED_CMD_DEFAULT, &ev_native_cmd_schema) \
+    X(redraw, ged_redraw_core, GED_CMD_DEFAULT, &ged_redraw_native_schema) \
+    X(loadview, ged_loadview_core, GED_CMD_DEFAULT, &ged_loadview_native_schema) \
+    X(preview, ged_preview_core, GED_CMD_DEFAULT, &ged_preview_native_schema)
 
-GED_DECLARE_COMMAND_SET(GED_DRAW_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_draw", 1, GED_DRAW_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_DRAW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_draw", 1, GED_DRAW_COMMANDS)
 
 /*
  * Local Variables:
@@ -1738,4 +1785,3 @@ GED_DECLARE_PLUGIN_MANIFEST("libged_draw", 1, GED_DRAW_COMMANDS)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

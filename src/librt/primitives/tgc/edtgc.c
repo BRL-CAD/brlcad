@@ -28,7 +28,7 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "bu/opt.h"
+#include "../repair.h"
 #include "raytrace.h"
 #include "rt/db4.h"
 #include "rt/geom.h"
@@ -1262,33 +1262,9 @@ rt_edit_tgc_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
     struct rt_tgc_internal *tip;
     fastf_t mag_a, mag_b, mag_c, mag_d;
     int repaired = 0;
-    int options_json = 0;
-    int print_help = 0;
-
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
-    BU_OPT(d[1], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
-    BU_OPT_NULL(d[2]);
-
-    if (argc > 0 && argv) {
-        bu_opt_parse(NULL, argc, argv, d);
-    }
-
-    if (options_json) {
-        if (log_str) {
-            bu_vls_printf(log_str, "{\"options\":[]}");
-        }
-        return 1;
-    }
-
-    if (print_help) {
-        if (log_str) {
-            char *option_help = bu_opt_describe(d, NULL);
-            bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
-            if (option_help) bu_free(option_help, "help str");
-        }
-        return -1;
-    }
+    int option_ret = rt_repair_common_options(log_str, argc, argv);
+    if (option_ret)
+	return option_ret;
 
     RT_CK_DB_INTERNAL(ip);
     tip = (struct rt_tgc_internal *)ip->idb_ptr;

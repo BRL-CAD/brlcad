@@ -54,6 +54,89 @@ if(TARGET ged_test_gqa)
 endif(TARGET ged_test_gqa)
 distclean(${CMAKE_CURRENT_BINARY_DIR}/gqa_ovlps.plot3)
 
+brlcad_addexec(ged_test_cmd_analysis test_cmd_analysis.cpp libged TEST)
+if(TARGET ged_test_cmd_analysis)
+  add_dependencies(ged_test_cmd_analysis ged_plugins)
+  if(TARGET m35.g)
+    add_dependencies(ged_test_cmd_analysis m35.g)
+  endif(TARGET m35.g)
+endif(TARGET ged_test_cmd_analysis)
+set(GED_CMD_ANALYSIS_RUNNER "${CMAKE_CURRENT_SOURCE_DIR}/run_cmd_analysis.cmake")
+brlcad_add_test(
+  NAME ged_test_cmd_analysis
+  COMMAND ${CMAKE_COMMAND}
+  "-DTEST_EXECUTABLE=$<TARGET_FILE:ged_test_cmd_analysis>"
+  "-DSOURCE_DB=${CMAKE_CURRENT_SOURCE_DIR}/draw/moss.g"
+  "-DWORK_DB=${CMAKE_CURRENT_BINARY_DIR}/cmd_analysis_data/moss.g"
+  -P "${GED_CMD_ANALYSIS_RUNNER}"
+)
+brlcad_add_test(
+  NAME ged_test_cmd_analysis_m35
+  COMMAND ${CMAKE_COMMAND}
+  "-DTEST_EXECUTABLE=$<TARGET_FILE:ged_test_cmd_analysis>"
+  "-DSOURCE_DB=${CMAKE_CURRENT_SOURCE_DIR}/draw/moss.g"
+  "-DWORK_DB=${CMAKE_CURRENT_BINARY_DIR}/cmd_analysis_m35_data/moss.g"
+  "-DEXTRA_DB=${CMAKE_BINARY_DIR}/share/db/m35.g"
+  -P "${GED_CMD_ANALYSIS_RUNNER}"
+)
+if(TARGET ged_test_cmd_analysis)
+  set_property(TEST ged_test_cmd_analysis APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+  set_property(TEST ged_test_cmd_analysis_m35 APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_cmd_analysis)
+distclean(
+  ${CMAKE_CURRENT_BINARY_DIR}/cmd_analysis_data/moss.g
+  ${CMAKE_CURRENT_BINARY_DIR}/cmd_analysis_m35_data/moss.g
+)
+
+set(GED_REGISTRY_FIXTURE_ROOT "${CMAKE_CURRENT_BINARY_DIR}/registry_fixture_root")
+add_library(ged_invalid_manifest_fixture MODULE invalid_manifest_plugin.cpp)
+target_include_directories(ged_invalid_manifest_fixture PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
+target_link_libraries(ged_invalid_manifest_fixture PRIVATE libged)
+target_compile_definitions(ged_invalid_manifest_fixture PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+set_target_properties(
+  ged_invalid_manifest_fixture
+  PROPERTIES
+    FOLDER "BRL-CAD Tests/libged"
+    PREFIX "libged-"
+    OUTPUT_NAME "invalid-manifest-fixture"
+    LIBRARY_OUTPUT_DIRECTORY "${GED_REGISTRY_FIXTURE_ROOT}/libexec/ged"
+)
+
+brlcad_addexec(ged_test_registry_lifecycle test_registry_lifecycle.cpp "libged;Threads::Threads" TEST)
+if(TARGET ged_test_registry_lifecycle)
+  add_dependencies(ged_test_registry_lifecycle ged_plugins ged_invalid_manifest_fixture)
+endif(TARGET ged_test_registry_lifecycle)
+brlcad_add_test(NAME ged_test_registry_lifecycle COMMAND ged_test_registry_lifecycle)
+if(TARGET ged_test_registry_lifecycle)
+  set_property(TEST ged_test_registry_lifecycle APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${GED_REGISTRY_FIXTURE_ROOT})
+endif(TARGET ged_test_registry_lifecycle)
+distclean(${GED_REGISTRY_FIXTURE_ROOT})
+
+brlcad_addexec(ged_test_completion_scale test_completion_scale.cpp libged TEST)
+if(TARGET ged_test_completion_scale)
+  add_dependencies(ged_test_completion_scale ged_plugins)
+endif(TARGET ged_test_completion_scale)
+brlcad_add_test(
+  NAME ged_test_completion_scale
+  COMMAND ged_test_completion_scale "${CMAKE_CURRENT_BINARY_DIR}/ged_completion_scale.g"
+)
+if(TARGET ged_test_completion_scale)
+  set_property(TEST ged_test_completion_scale APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_completion_scale)
+distclean(${CMAKE_CURRENT_BINARY_DIR}/ged_completion_scale.g)
+
+brlcad_addexec(ged_test_completion_corpus test_completion_corpus.cpp libged TEST)
+if(TARGET ged_test_completion_corpus)
+  add_dependencies(ged_test_completion_corpus ged_plugins)
+endif(TARGET ged_test_completion_corpus)
+brlcad_add_test(
+  NAME ged_test_completion_corpus
+  COMMAND ged_test_completion_corpus "${CMAKE_SOURCE_DIR}/doc/asciidoc" "${CMAKE_CURRENT_SOURCE_DIR}/draw/moss.g"
+)
+if(TARGET ged_test_completion_corpus)
+  set_property(TEST ged_test_completion_corpus APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_completion_corpus)
+
 brlcad_addexec(ged_test_plugins plugins.cpp libged TEST)
 if(TARGET ged_test_plugins)
   add_dependencies(ged_test_plugins ged_plugins)
@@ -94,6 +177,12 @@ brlcad_add_test(NAME ged_test_prim_cmds_exist COMMAND ged_check_prim_cmds)
 
 brlcad_addexec(ged_test_mann_docs check_mann_docs.cpp "" TEST)
 brlcad_add_test(NAME ged_test_mann_docs COMMAND ged_test_mann_docs "${CMAKE_SOURCE_DIR}")
+brlcad_add_test(
+  NAME ged_test_native_schema_sources
+  COMMAND ${CMAKE_COMMAND}
+  "-DSOURCE_DIR=${CMAKE_SOURCE_DIR}"
+  -P "${CMAKE_CURRENT_SOURCE_DIR}/check_native_schema_sources.cmake"
+)
 
 add_subdirectory(bot)
 add_subdirectory(create)
@@ -110,6 +199,8 @@ cmakefiles(
   obb_tests.g
   ged_tests.g
   pnts_in_out.g
+  check_native_schema_sources.cmake
+  run_cmd_analysis.cmake
 )
 
 cmakefiles(CMakeLists.txt)

@@ -10,42 +10,42 @@ pnts - Creates/writes/generates a "pnts" (i.e. point cloud) primitive.
 
 [source]
 ----
-pnts {subcommand} {subcommand arguments}
+pnts {read|write|gen|tri} {subcommand arguments}
 ----
 
 
 
 [source]
 ----
-read [-f [xyzijksrgb]] [-u unit] [--size #] {input_file} {pnts_obj}
+pnts read [-f [xyzijksrgb]] [-u unit] [--size #] {input_file} {pnts_obj}
 ----
 
 
 
 [source]
 ----
-write [-p #] [--ply] {pnts_obj} {output_filepnts}
+pnts write [-p #] [--ply] {pnts_obj} {output_file}
 ----
 
 
 
 [source]
 ----
-gen [-t #] [--surface] [--grid] [--rand] [--sobol] [--max-pnts] [--max-time] {obj} {output_pnts}
+pnts gen [-t #] [--surface] [--grid] [--rand] [--sobol] [--max-pnts #] [--max-time #] {obj} {output_pnts}
 ----
 
 
 
 [source]
 ----
-tri [unit] [-s #]
+pnts tri [unit] [-s #] {input_pnts} {output_bot}
 ----
 
 
 
 [source]
 ----
-tri spsr
+pnts tri spsr [options] {input_pnts} {output_bot}
 ----
 
 
@@ -60,6 +60,12 @@ Allows the user to create/write/generate "pnts" primitives. See also the
 Most *pnts* subcommands accept *-h* or *--help* to print subcommand-specific
 usage details.
 
+The *tri* subcommand has three reconstruction methods: *unit*, *ballpivot*,
+and *spsr*.  For compatibility, the method may be omitted when using the
+*unit* method: `pnts tri input_pnts output_bot` is equivalent to
+`pnts tri unit input_pnts output_bot`.  Interactive completion presents the
+explicit method names, while the omitted form remains accepted.
+
 
 [[subcommands]]
 == SUBCOMMANDS
@@ -69,15 +75,15 @@ usage details.
 Reads point data from an input file.
 +
 
-*-f [xyzijksrgb]*::
+*-f* [_xyzijksrgb_]::
 Specifies the format of input data
 
 
-*-u unit*::
+*-u* _unit_::
 Sepcifies the units - either a named unit (e.g. in), number, or a unit expression (.15mm). Assumes millemeters by default.
 
 
-*--size #*::
+*--size* _size_::
 Sets the default size for each point (default is 0).
 
 
@@ -87,7 +93,7 @@ Sets the default size for each point (default is 0).
 Writes point data to an output file.
 +
 
-*-p #*::
+*-p* _digits_::
 Specifies the number of significant digits (defualt 17).
 
 
@@ -101,7 +107,7 @@ Writes output in PLY format.
 Generates a point set from the object and stores the set in a "pnts" primitive.
 +
 
-*-t #*::
+*-t* _distance_::
 Specifies the sampling grid spacing (in mm)
 
 
@@ -121,11 +127,11 @@ Samples using a random Marsaglia ray pattern on the bounding sphere.
 Samples using a Sobol pseudo-random Marsaglia ray pattern on the bounding sphere.
 
 
-*--max-pnts*::
+*--max-pnts* _number_::
 Specifies the maximum number of pnts to return per non-grid sampling method.
 
 
-*--max-time*::
+*--max-time* _seconds_::
 Specifies the maximum time to spend per method (in seconds) when using non-grid sampling.
 
 
@@ -135,7 +141,7 @@ Specifies the maximum time to spend per method (in seconds) when using non-grid 
 Generates unit or scaled triangles for each pnt in a point set. If no normal information is present, uses origin at avg of all set points to make normals.
 +
 
-*-s #*::
+*-s* _scale_::
 Specifies the scale factor to apply to unit triangles - scales the triangle to size with the triangle centered on the original point.
 
 
@@ -143,6 +149,13 @@ Specifies the scale factor to apply to unit triangles - scales the triangle to s
 
 *tri spsr*::
 Apply the Screened Poisson Surface Reconstruction methodology to generate a mesh from the point cloud. See the *-h* option for the various controls available for this methodology.
+
+
+
+*tri ballpivot*::
+Apply ball-pivoting surface reconstruction to oriented points.  The optional
+*-r*/*--radius* option may be repeated; *--radii* accepts a comma-separated
+radius list.  This method is primarily intended for algorithm experimentation.
 
 
 

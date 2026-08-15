@@ -282,7 +282,6 @@ process_mesh(struct rt_wdb *outfp, const tinygltf::Model &model, const tinygltf:
 
 int main(int argc, char **argv)
 {
-    const char * const usage = "Usage: gltf-g [options] input_file [output_file.g]\n";
     int verbosity = 0;
     int print_help = 0;
     int extensions = 0;
@@ -304,12 +303,14 @@ int main(int argc, char **argv)
     int opt_ret = bu_opt_parse(NULL, argc, (const char**)argv, d);
 
     if (print_help) {
-	char* help = bu_opt_describe(d, NULL);
-	bu_log("%s\nOptions:\n%s", usage, help);
+	char *help = bu_opt_help(d, "gltf-g", "input_file [output_file.g]",
+	    "Convert glTF geometry to a BRL-CAD database");
+	if (help)
+	    bu_log("%s", help);
 	if (help)
 	    bu_free(help, "help str");
 	bu_vls_free(&output_path);
-	return 1;
+	return 0;
     }
 
     /* See what is left */

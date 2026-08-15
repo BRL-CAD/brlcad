@@ -26,6 +26,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -34,10 +35,119 @@
 
 #include "../ged_private.h"
 
+
+struct edbot_help_args {
+    int print_help;
+};
+
+static const struct bu_cmd_option edbot_help_options[] = {
+    BU_CMD_FLAG("h", "help", struct edbot_help_args, print_help,
+	"Print command help"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand get_bot_edges_operands[] = {
+    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"BoT object or path", "ged.db_path"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand find_bot_operands[] = {
+    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"BoT object or path", "ged.db_path"),
+    BU_CMD_OPERAND("view_xyz", BU_CMD_VALUE_VECTOR, 1, 1,
+	"Packed view-space XYZ coordinate", "ged.vector"),
+    BU_CMD_OPERAND_NULL
+};
+const struct bu_cmd_schema ged_get_bot_edges_schema = {
+    "get_bot_edges", "List BoT edges", edbot_help_options,
+    get_bot_edges_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+};
+const struct bu_cmd_schema ged_find_bot_edge_schema = {
+    "find_bot_edge", "Find the nearest BoT edge", edbot_help_options,
+    find_bot_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+};
+const struct bu_cmd_schema ged_find_bot_pnt_schema = {
+    "find_bot_pnt", "Find the nearest BoT vertex", edbot_help_options,
+    find_bot_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+};
+
+struct edbot_move_args {
+    int relative;
+};
+
+static const struct bu_cmd_option edbot_move_options[] = {
+    BU_CMD_FLAG("r", NULL, struct edbot_move_args, relative,
+	"Interpret the point as a relative displacement"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand bot_edge_split_operands[] = {
+    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"BoT object or path", "ged.db_path"),
+    BU_CMD_OPERAND("edge", BU_CMD_VALUE_STRING, 1, 1,
+	"Packed pair of vertex indices", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand bot_face_split_operands[] = {
+    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"BoT object or path", "ged.db_path"),
+    BU_CMD_OPERAND("face", BU_CMD_VALUE_INTEGER, 1, 1,
+	"Face index", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand bot_move_pnt_operands[] = {
+    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"BoT object or path", "ged.db_path"),
+    BU_CMD_OPERAND("vertex", BU_CMD_VALUE_INTEGER, 1, 1,
+	"Vertex index", NULL),
+    BU_CMD_OPERAND("point", BU_CMD_VALUE_VECTOR, 1, 1,
+	"Packed XYZ point", "ged.vector"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand bot_move_pnts_operands[] = {
+    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"BoT object or path", "ged.db_path"),
+    BU_CMD_OPERAND("vector", BU_CMD_VALUE_VECTOR, 1, 1,
+	"Packed XYZ displacement", "ged.vector"),
+    BU_CMD_OPERAND("vertices", BU_CMD_VALUE_INTEGER, 1, BU_CMD_COUNT_UNLIMITED,
+	"Vertex indices", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema bot_edge_split_schema = {
+    "bot_edge_split", "Split a BoT edge", NULL, bot_edge_split_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema bot_face_split_schema = {
+    "bot_face_split", "Split a BoT face", NULL, bot_face_split_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema bot_move_pnt_schema = {
+    "bot_move_pnt", "Move one BoT vertex", edbot_move_options,
+    bot_move_pnt_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema bot_move_pnts_schema = {
+    "bot_move_pnts", "Move one or more BoT vertices", NULL,
+    bot_move_pnts_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static void
+edbot_schema_usage(struct bu_vls *result, const struct bu_cmd_schema *schema,
+	const char *cmd, const char *UNUSED(syntax))
+{
+    char *help = bu_cmd_schema_help(schema, cmd);
+
+    if (help) {
+	bu_vls_sprintf(result, "%s", help);
+	bu_free(help, "help str");
+    }
+}
+
 int
 ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "bot edge";
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_bot_internal *botip;
@@ -59,12 +169,14 @@ ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	edbot_schema_usage(gedp->ged_result_str, &bot_edge_split_schema,
+	    argv[0], NULL);
 	return GED_HELP;
     }
 
     if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	edbot_schema_usage(gedp->ged_result_str, &bot_edge_split_schema,
+	    argv[0], NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -182,7 +294,6 @@ ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[])
 int
 ged_bot_face_split(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "bot face";
     struct directory *dp;
     static fastf_t sf = 1.0 / 3.0;
     struct rt_db_internal intern;
@@ -202,12 +313,14 @@ ged_bot_face_split(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	edbot_schema_usage(gedp->ged_result_str, &bot_face_split_schema,
+	    argv[0], NULL);
 	return GED_HELP;
     }
 
     if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	edbot_schema_usage(gedp->ged_result_str, &bot_face_split_schema,
+	    argv[0], NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -294,33 +407,45 @@ ged_bot_face_split(struct ged *gedp, int argc, const char *argv[])
 int
 ged_get_bot_edges_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "bot";
     struct rt_db_internal intern;
     struct rt_bot_internal *botip;
     mat_t mat;
     size_t edge_count;
     size_t *edge_list;
+    struct edbot_help_args args = {0};
+    const char *cmd;
+    int operand_index;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    cmd = argv[0];
+    argc--; argv++;
+    if (!argc) {
+	edbot_schema_usage(gedp->ged_result_str, &ged_get_bot_edges_schema, cmd, "bot");
 	return GED_HELP;
     }
 
-    if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    operand_index = bu_cmd_schema_parse_complete(&ged_get_bot_edges_schema,
+	&args, gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	edbot_schema_usage(gedp->ged_result_str, &ged_get_bot_edges_schema, cmd, "bot");
 	return BRLCAD_ERROR;
     }
+    if (args.print_help) {
+	edbot_schema_usage(gedp->ged_result_str, &ged_get_bot_edges_schema, cmd, "bot");
+	return GED_HELP;
+    }
+    argc -= operand_index;
+    argv += operand_index;
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) == BRLCAD_ERROR) {
-	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[0], wdbp, mat) == BRLCAD_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -350,7 +475,6 @@ ged_get_bot_edges_core(struct ged *gedp, int argc, const char *argv[])
 int
 ged_bot_move_pnt(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "[-r] bot vertex_i pt";
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_bot_internal *botip;
@@ -370,18 +494,21 @@ ged_bot_move_pnt(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	edbot_schema_usage(gedp->ged_result_str, &bot_move_pnt_schema,
+	    argv[0], NULL);
 	return GED_HELP;
     }
 
     if (argc < 4 || 5 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	edbot_schema_usage(gedp->ged_result_str, &bot_move_pnt_schema,
+	    argv[0], NULL);
 	return BRLCAD_ERROR;
     }
 
     if (argc == 5) {
 	if (argv[1][0] != '-' || argv[1][1] != 'r' || argv[1][2] != '\0') {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    edbot_schema_usage(gedp->ged_result_str, &bot_move_pnt_schema,
+		argv[0], NULL);
 	    return BRLCAD_ERROR;
 	}
 
@@ -468,7 +595,6 @@ ged_bot_move_pnt(struct ged *gedp, int argc, const char *argv[])
 int
 ged_bot_move_pnts(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "bot vec vertex_1 [vertex_2 ... vertex_n]";
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_bot_internal *botip;
@@ -488,12 +614,14 @@ ged_bot_move_pnts(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	edbot_schema_usage(gedp->ged_result_str, &bot_move_pnts_schema,
+	    argv[0], NULL);
 	return GED_HELP;
     }
 
     if (argc < 4) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	edbot_schema_usage(gedp->ged_result_str, &bot_move_pnts_schema,
+	    argv[0], NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -572,43 +700,51 @@ ged_bot_move_pnts(struct ged *gedp, int argc, const char *argv[])
 int
 ged_find_bot_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "bot view_xyz";
     struct rt_db_internal intern;
     struct rt_bot_internal *botip;
     mat_t mat;
     int vi1, vi2;
     vect_t view;
+    struct edbot_help_args args = {0};
+    const char *cmd;
+    int operand_index;
 
-    /* must be double for scanf */
-    double scan[ELEMENTS_PER_VECT];
-
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    cmd = argv[0];
+    argc--; argv++;
+    if (!argc) {
+	edbot_schema_usage(gedp->ged_result_str, &ged_find_bot_edge_schema, cmd,
+	    "bot \"view_x view_y view_z\"");
 	return GED_HELP;
     }
 
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    operand_index = bu_cmd_schema_parse_complete(&ged_find_bot_edge_schema,
+	&args, gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	edbot_schema_usage(gedp->ged_result_str, &ged_find_bot_edge_schema, cmd,
+	    "bot \"view_x view_y view_z\"");
 	return BRLCAD_ERROR;
     }
+    if (args.print_help) {
+	edbot_schema_usage(gedp->ged_result_str, &ged_find_bot_edge_schema, cmd,
+	    "bot \"view_x view_y view_z\"");
+	return GED_HELP;
+    }
+    argc -= operand_index;
+    argv += operand_index;
 
-    if (bu_sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad view location - %s", argv[0], argv[2]);
-	return BRLCAD_ERROR;
-    }
-    VMOVE(view, scan); /* convert double to fastf_t */
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+
+    bu_cmd_vector3_from_argv(view, 1, argv + 1);
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) == BRLCAD_ERROR) {
-	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[0], wdbp, mat) == BRLCAD_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -631,42 +767,49 @@ ged_find_bot_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 int
 ged_find_bot_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "bot view_xyz";
     struct rt_db_internal intern;
     struct rt_bot_internal *botip;
     mat_t mat;
     int nearest_pt;
     vect_t view;
+    struct edbot_help_args args = {0};
+    const char *cmd;
+    int operand_index;
 
-    /* must be double for scanf */
-    double scan[ELEMENTS_PER_VECT];
-
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    cmd = argv[0];
+    argc--; argv++;
+    if (!argc) {
+	edbot_schema_usage(gedp->ged_result_str, &ged_find_bot_pnt_schema, cmd,
+	    "bot \"view_x view_y view_z\"");
 	return GED_HELP;
     }
 
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    operand_index = bu_cmd_schema_parse_complete(&ged_find_bot_pnt_schema,
+	&args, gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	edbot_schema_usage(gedp->ged_result_str, &ged_find_bot_pnt_schema, cmd,
+	    "bot \"view_x view_y view_z\"");
 	return BRLCAD_ERROR;
     }
+    if (args.print_help) {
+	edbot_schema_usage(gedp->ged_result_str, &ged_find_bot_pnt_schema, cmd,
+	    "bot \"view_x view_y view_z\"");
+	return GED_HELP;
+    }
+    argc -= operand_index;
+    argv += operand_index;
 
-    if (bu_sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad view location - %s", argv[0], argv[2]);
-	return BRLCAD_ERROR;
-    }
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) == BRLCAD_ERROR) {
-	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[0], wdbp, mat) == BRLCAD_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -679,7 +822,7 @@ ged_find_bot_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[]
     }
 
     botip = (struct rt_bot_internal *)intern.idb_ptr;
-    VMOVE(view, scan); /* convert double to fastf_t */
+    bu_cmd_vector3_from_argv(view, 1, argv + 1);
 
     nearest_pt = rt_bot_find_v_nearest_pt2(botip, view, gedp->ged_gvp->gv_model2view);
     bu_vls_printf(gedp->ged_result_str, "%d", nearest_pt);

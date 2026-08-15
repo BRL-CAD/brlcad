@@ -32,6 +32,38 @@
 
 extern "C" void libged_init(void);
 
+namespace {
+
+class ged_command_reference {
+    public:
+	explicit ged_command_reference(const char *name) : func(_ged_cmd_acquire(name)) {}
+	~ged_command_reference() { if (func) _ged_cmd_release(); }
+	ged_func_ptr get() const { return func; }
+
+    private:
+	ged_func_ptr func;
+};
+
+class ged_execution_frame {
+    public:
+	ged_execution_frame(Ged_Internal *internal, const std::string &name) : gedip(internal), cmdname(name)
+	{
+	    gedip->exec_stack.push(cmdname);
+	    gedip->cmd_recursion_depth_cnt[cmdname]++;
+	}
+	~ged_execution_frame()
+	{
+	    gedip->cmd_recursion_depth_cnt[cmdname]--;
+	    gedip->exec_stack.pop();
+	}
+
+    private:
+	Ged_Internal *gedip;
+	std::string cmdname;
+};
+
+}
+
 extern "C" int
 ged_exec(struct ged *gedp, int argc, const char *argv[])
 {
@@ -73,7 +105,8 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&cmdvls);
 
     /* Lookup command via generalized registry */
-    bu_plugin_cmd_impl fn = bu_plugin_cmd_get(cmdname.c_str());
+    ged_command_reference command(cmdname.c_str());
+    ged_func_ptr fn = command.get();
     if (!fn) {
         bu_vls_printf(gedp->ged_result_str, "unknown command: %s", cmdname.c_str());
 	gedp->ged_results->ret = (BRLCAD_ERROR | GED_UNKNOWN);
@@ -82,8 +115,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 
     GED_CK_MAGIC(gedp);
     Ged_Internal *gedip = gedp->i->i;
-    gedip->exec_stack.push(cmdname);
-    gedip->cmd_recursion_depth_cnt[cmdname]++;
+    ged_execution_frame frame(gedip, cmdname);
 
     if (gedip->cmd_recursion_depth_cnt[cmdname] > GED_CMD_RECURSION_LIMIT) {
 	bu_vls_printf(gedp->ged_result_str, "Recursion limit %d exceeded for command %s - aborted.  ged_exec call stack:\n", GED_CMD_RECURSION_LIMIT, cmdname.c_str());
@@ -133,8 +165,6 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     if (tstr)
 	bu_log("%s time: %g\n", cmdname.c_str(), (bu_gettime() - start)/1e6);
 
-    gedip->cmd_recursion_depth_cnt[cmdname]--;
-    gedip->exec_stack.pop();
     return gedp->ged_results->ret;
 }
 

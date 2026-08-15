@@ -28,6 +28,8 @@
 #include "bu/defines.h"
 #include "bu/magic.h"
 
+struct bu_vls;
+
 __BEGIN_DECLS
 
 /** @addtogroup bu_color
@@ -213,6 +215,31 @@ BU_EXPORT extern int bu_hsv_to_rgb(const fastf_t *hsv, unsigned char *rgb);
  */
 BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, const fastf_t *rgb);
 BU_EXPORT extern int bu_color_from_rgb_chars(struct bu_color *cp, const unsigned char *rgb);
+
+/**
+ * Parse one RGB channel as a base-ten integer in the inclusive range
+ * 0 through 255.  Returns 0 on success and -1 otherwise.  If msg is not
+ * NULL, a concise diagnostic is appended on failure.
+ */
+BU_EXPORT extern int bu_rgb_channel_validate(struct bu_vls *msg, const char *arg);
+
+/**
+ * Parse an 8-bit RGB color from command argument tokens.
+ *
+ * The first argument may be one packed integer triple in r/g/b, r,g,b,
+ * r;g;b, or r g b form.  Alternatively, the first three arguments may be
+ * individual integer channels: r g b.  Whitespace around a packed delimiter
+ * is accepted.  Channels are base-ten integers in the inclusive range
+ * 0 through 255.
+ *
+ * On success rgb is filled and the return value is the number of tokens
+ * consumed (one for a packed triple or three for separate channels).  On
+ * failure it returns 0 and does not modify rgb.  Additional arguments are
+ * not examined after a successful one- or three-token match.
+ */
+BU_EXPORT extern int bu_rgb_from_argv(unsigned char *rgb, size_t argc,
+	const char * const *argv);
+
 BU_EXPORT extern int bu_color_from_str(struct bu_color *cp, const char *str);
 /* UNIMPLEMENTED: BU_EXPORT extern int bu_color_from_hsv_floats(struct bu_color *cp, fastf_t *hsv); */
 

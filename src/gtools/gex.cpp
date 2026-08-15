@@ -255,8 +255,6 @@ hexdump(const unsigned char *from, const unsigned char *to)
 int
 main(int argc, char** argv)
 {
-    static const char usage[] = "Example: %s [...options] input.g [output.g]\n";
-
     // db pointers
     FILE *in = NULL;
     FILE *out = NULL;
@@ -294,11 +292,19 @@ main(int argc, char** argv)
     }
     bu_vls_free(&str);
 
+    if (has_help) {
+	char *help = bu_opt_help(d, argv0, "input.g [output.g]",
+	    "Inspect, copy, compress, or dump a BRL-CAD database");
+	bu_exit(EXIT_SUCCESS, "%s", help ? help : "");
+    }
+
     /* If the input and output files weren't specified from args, get them
      * from the bu_opt leftovers */
     if (!argc) {
 	bu_log("ERROR: input geometry file not specified\n");
-	bu_exit(EXIT_FAILURE, usage, argv0);
+	char *help = bu_opt_help(d, argv0, "input.g [output.g]",
+	    "Inspect, copy, compress, or dump a BRL-CAD database");
+	bu_exit(EXIT_FAILURE, "%s", help ? help : "");
     }
     bu_vls_sprintf(&db_fname, "%s", argv[0]);
     argv++; argc--;
@@ -310,14 +316,6 @@ main(int argc, char** argv)
     }
 
     // take appropriate action...
-
-    // note this exit is SUCCESS because it is expected
-    // behavior--important for good auto-man-page handling
-    if (has_help) {
-	bu_vls_free(&db_fname);
-	bu_vls_free(&db2_fname);
-        bu_exit(EXIT_SUCCESS, usage, argv0);
-    }
 
     if (has_compress && bu_vls_strlen(&db2_fname) == 0) {
 	bu_vls_sprintf(&db2_fname, "%s%s", bu_vls_addr(&db_fname), DBSUF);
@@ -577,4 +575,3 @@ main(int argc, char** argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

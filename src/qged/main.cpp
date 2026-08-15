@@ -43,15 +43,10 @@
 
 static void
 qged_usage(const char *cmd, struct bu_opt_desc *d) {
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    char *option_help = bu_opt_describe(d, NULL);
-    bu_vls_sprintf(&str, "Usage: %s [options] [file.g]\n", cmd);
-    if (option_help) {
-	bu_vls_printf(&str, "Options:\n%s\n", option_help);
-    }
-    bu_free(option_help, "help str");
-    bu_log("%s", bu_vls_cstr(&str));
-    bu_vls_free(&str);
+    char *help = bu_opt_help(d, cmd, "[file.g]", "Start the Qt geometry editor");
+    if (help)
+	bu_log("%s", help);
+    bu_free(help, "help str");
 }
 
 #ifdef HAVE_WINDOWS_H

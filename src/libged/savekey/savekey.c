@@ -29,7 +29,10 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
 #include "../ged_private.h"
+
+static const struct bu_cmd_schema *savekey_schema(void);
 
 
 /**
@@ -63,7 +66,8 @@ ged_savekey_core(struct ged *gedp, int argc, const char *argv[])
     fastf_t timearg;
     vect_t eye_model;
     vect_t temp;
-    static const char *usage = "file [time]";
+    int operand_index;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -74,12 +78,15 @@ ged_savekey_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
     }
 
-    if (argc < 2 || 3 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    operand_index = bu_cmd_schema_parse_complete(savekey_schema(),
+	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -89,7 +96,7 @@ ged_savekey_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
     if (argc > 2) {
-	timearg = atof(argv[2]);
+	timearg = (fastf_t)strtod(argv[2], NULL);
 	fprintf(fp, "%f\n", timearg);
     }
     /*
@@ -106,11 +113,27 @@ ged_savekey_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_SAVEKEY_COMMANDS(X, XID) \
-    X(savekey, ged_savekey_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand savekey_schema_operands[] = {
+    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1, "Keyframe output file", "ged.file_path"),
+    BU_CMD_OPERAND("time", BU_CMD_VALUE_NUMBER, 0, 1, "Optional keyframe time", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema savekey_cmd_schema = {
+    "savekey", "Save the current view as a keyframe", NULL,
+    savekey_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
-GED_DECLARE_COMMAND_SET(GED_SAVEKEY_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_savekey", 1, GED_SAVEKEY_COMMANDS)
+static const struct bu_cmd_schema *
+savekey_schema(void)
+{
+    return &savekey_cmd_schema;
+}
+
+#define GED_SAVEKEY_COMMANDS(X, XID) \
+    X(savekey, ged_savekey_core, GED_CMD_DEFAULT, &savekey_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_SAVEKEY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_savekey", 1, GED_SAVEKEY_COMMANDS)
 
 /*
  * Local Variables:

@@ -78,12 +78,13 @@ ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
 
 
 #include "../include/plugin.h"
+GED_DEFINE_NO_ARG_SCHEMA(rtabort, "rtabort", "Abort active raytrace processes");
 
 #define GED_RTABORT_COMMANDS(X, XID) \
-    X(rtabort, ged_rtabort_core, GED_CMD_DEFAULT) \
+    X(rtabort, ged_rtabort_core, GED_CMD_DEFAULT, &rtabort_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_RTABORT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_rtabort", 1, GED_RTABORT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_RTABORT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_rtabort", 1, GED_RTABORT_COMMANDS)
 
 /*
  * Local Variables:

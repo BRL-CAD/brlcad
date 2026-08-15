@@ -1,0 +1,116 @@
+= VIEW_OBJ_POLYGON(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+
+view obj polygon - create and edit a view-space polygon object
+
+== SYNOPSIS
+
+[source]
+----
+view obj _name_ polygon create _x y_ [_circ_|_ell_|_rect_|_sq_]
+view obj _name_ polygon select [_contour_] _x y_
+view obj _name_ polygon append [_contour_] _x y_
+view obj _name_ polygon move _x y_
+view obj _name_ polygon {clear|close [_contour_]|open [_contour_]|area}
+view obj _name_ polygon overlap _other_
+view obj _name_ polygon {import|export} _sketch_
+view obj _name_ polygon fill {0|_dx dy spacing_}
+view obj _name_ polygon fill_color [_color_]
+view obj _name_ polygon csg {_u_|- |+} _other_
+----
+
+== DESCRIPTION
+
+The `view obj name polygon` family manages a polygon stored in the current
+view.  The _name_ identifies a view object, not a database object.  Polygon
+subcommands, their help, syntax validation, completion, and execution share
+one native command tree.  Thus an incomplete coordinate or color is reported
+before an existing view object is changed.
+
+`-h` or `--help`, when placed before the subcommand, prints the generated
+native help.  `-s` is accepted for historical script compatibility; it does
+not currently select behavior distinct from the ordinary polygon form.
+
+Screen coordinates and contour indices are nonnegative base-ten integers.
+The shape keywords `circ`, `ell`, `rect`, and `sq` also accept their long
+forms `circle`, `ellipse`, `rectangle`, and `square`.
+
+== SUBCOMMANDS
+
+*create* _x y_ [_shape_]::
+Create a general polygon at the screen point, or a constrained circle,
+ellipse, rectangle, or square.  The view-object name must not already exist.
+
+*select* [_contour_] _x y_::
+Select the closest point of a general polygon.  If omitted, _contour_ is
+zero.
+
+*append* [_contour_] _x y_::
+Append a point to a general polygon.  If omitted, _contour_ is zero.
+
+*move* _x y_::
+Move the selected point of a general polygon to a screen point.
+
+*clear*::
+Clear the polygon point-selection state.
+
+*close* [_contour_]::
+Close every contour, or the selected nonnegative contour index, in a general
+polygon.
+
+*open* [_contour_]::
+Open every contour, or the selected nonnegative contour index, in a general
+polygon.  Constrained shapes are always closed.
+
+*area*::
+Report the polygon area in the current local units.
+
+*overlap* _other_::
+Report whether this polygon overlaps another named view polygon.
+
+*import* _sketch_::
+Create this view polygon from a database sketch.
+
+*export* _sketch_::
+Write this view polygon to a database sketch.
+
+*fill* `0` | _dx dy spacing_::
+Disable interior fill lines with `0`, or set their direction and spacing with
+three finite numeric values.
+
+*fill_color* [_color_]::
+Without an argument, report the fill-line color.  With an argument, set it
+using a BRL-CAD compatibility color spelling, including packed `r/g/b`,
+`r,g,b`, or `r;g;b` values, normalized or hexadecimal forms, or three
+separate RGB words.
+
+*csg* _u_|- |+ _other_::
+Replace this polygon with the union (`u`), difference (`-`), or intersection
+(`+`) against another named view polygon.
+
+== EXAMPLES
+
+.Create a rectangle, set its fill color, and query it.
+[example]
+====
+mged> *view obj selection polygon create 100 100 rect*
+mged> *view obj selection polygon fill_color 255/200/0*
+mged> *view obj selection polygon fill_color*
+255/200/0
+====
+
+== SEE ALSO
+
+*view*(nged), *view_obj_axes*(nged), *data_lines*(nged), *sdata_lines*(nged)
+
+== AUTHOR
+
+BRL-CAD Team
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

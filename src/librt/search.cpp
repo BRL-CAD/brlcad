@@ -88,6 +88,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
+#include <set>
 #include <vector>
 #include <deque>
 
@@ -144,39 +145,171 @@ static void find_execute_plans(struct db_i *dbip, struct bu_ptbl *results, struc
 static int find_execute_nested_plans(struct db_i *dbip, struct bu_ptbl *results, struct db_node_t *db_node, struct db_plan_t *plan);
 
 
-/* NB: the following table must be sorted lexically. */
+/*
+ * NB: these rows must remain sorted lexically.  The parser and the public
+ * completion/highlighting vocabulary are deliberately expanded from this one
+ * list so an interactive client cannot silently drift from db_search.
+ */
+#define DB_SEARCH_PLAN_TERMS(X) \
+    X("!", N_NOT, c_not, O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"Negate the following expression") \
+    X("(", N_OPENPAREN, c_openparen, O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"Begin a grouped expression") \
+    X(")", N_CLOSEPAREN, c_closeparen, O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"End a grouped expression") \
+    X("-a", N_AND, NULL, O_NONE, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"Combine expressions with logical AND") \
+    X("-ab", N_ABOVE, c_above, O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"Select ancestors of matching objects") \
+    X("-above", N_ABOVE, c_above, O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"Select ancestors of matching objects") \
+    X("-and", N_AND, NULL, O_NONE, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"Combine expressions with logical AND") \
+    X("-attr", N_ATTR, c_attr, O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT, \
+	"Match an object attribute expression") \
+    X("-below", N_BELOW, c_below, O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"Select descendants of matching objects") \
+    X("-bl", N_BELOW, c_below, O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"Select descendants of matching objects") \
+    X("-bool", N_BOOL, c_bool, O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT, \
+	"Match a Boolean operation") \
+    X("-depth", N_DEPTH, c_depth, O_ARGV, DB_SEARCH_SYNTAX_INTEGER_ARGUMENT, \
+	"Match an exact path depth") \
+    X("-exec", N_EXEC, c_exec, O_ARGVP, DB_SEARCH_SYNTAX_EXEC_ARGUMENTS, \
+	"Execute a GED command for each match; terminate with ;") \
+    X("-iname", N_INAME, c_iname, O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT, \
+	"Match a name glob without case sensitivity") \
+    X("-iregex", N_IREGEX, c_iregex, O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT, \
+	"Match a name regular expression without case sensitivity") \
+    X("-matrix", N_MATRIX, c_matrix, O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT, \
+	"Match a path transformation matrix") \
+    X("-maxdepth", N_MAXDEPTH, c_maxdepth, O_ARGV, DB_SEARCH_SYNTAX_INTEGER_ARGUMENT, \
+	"Limit traversal to a maximum path depth") \
+    X("-mindepth", N_MINDEPTH, c_mindepth, O_ARGV, DB_SEARCH_SYNTAX_INTEGER_ARGUMENT, \
+	"Require a minimum path depth") \
+    X("-name", N_NAME, c_name, O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT, \
+	"Match an object-name glob") \
+    X("-nnodes", N_NNODES, c_nnodes, O_ARGV, DB_SEARCH_SYNTAX_INTEGER_ARGUMENT, \
+	"Match a combination tree node count") \
+    X("-not", N_NOT, c_not, O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"Negate the following expression") \
+    X("-o", N_OR, c_or, O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"Combine expressions with logical OR") \
+    X("-or", N_OR, c_or, O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"Combine expressions with logical OR") \
+    X("-param", N_PARAM, c_objparam, O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT, \
+	"Match a primitive parameter expression") \
+    X("-path", N_PATH, c_path, O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT, \
+	"Match a full database-path glob") \
+    X("-print", N_PRINT, c_print, O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"Print each matching path") \
+    X("-regex", N_REGEX, c_regex, O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT, \
+	"Match a name regular expression") \
+    X("-size", N_SIZE, c_size, O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT, \
+	"Match an object-size expression") \
+    X("-stdattr", N_STDATTR, c_stdattr, O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT, \
+	"Match objects using standard attributes") \
+    X("-type", N_TYPE, c_type, O_ARGV, DB_SEARCH_SYNTAX_TYPE_ARGUMENT, \
+	"Match a database object type")
+
+#define DB_SEARCH_OPTION_ROW(name, node, compile, option_kind, argument, help) \
+    {name, node, compile, option_kind},
 static OPTION options[] = {
-    { "!",          N_NOT,          c_not,          O_ZERO },
-    { "(",          N_OPENPAREN,    c_openparen,    O_ZERO },
-    { ")",          N_CLOSEPAREN,   c_closeparen,   O_ZERO },
-    { "-a",         N_AND,          NULL,           O_NONE },
-    { "-ab",        N_ABOVE,        c_above,        O_ZERO },
-    { "-above",     N_ABOVE,        c_above,        O_ZERO },
-    { "-and",       N_AND,          NULL,           O_NONE },
-    { "-attr",	    N_ATTR,	    c_attr,	    O_ARGV },
-    { "-below",     N_BELOW,        c_below,        O_ZERO },
-    { "-bl",        N_BELOW,        c_below,        O_ZERO },
-    { "-bool",      N_BOOL,         c_bool,	    O_ARGV },
-    { "-depth",     N_DEPTH,        c_depth,        O_ARGV },
-    { "-exec",      N_EXEC,         c_exec,         O_ARGVP},
-    { "-iname",     N_INAME,        c_iname,        O_ARGV },
-    { "-iregex",    N_IREGEX,       c_iregex,       O_ARGV },
-    { "-matrix",    N_MATRIX,       c_matrix,       O_ARGV },
-    { "-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV },
-    { "-mindepth",  N_MINDEPTH,     c_mindepth,     O_ARGV },
-    { "-name",      N_NAME,         c_name,         O_ARGV },
-    { "-nnodes",    N_NNODES,       c_nnodes,       O_ARGV },
-    { "-not",       N_NOT,          c_not,          O_ZERO },
-    { "-o",         N_OR,           c_or,	    O_ZERO },
-    { "-or", 	    N_OR, 	    c_or, 	    O_ZERO },
-    { "-param",	    N_PARAM,	    c_objparam,	    O_ARGV },
-    { "-path",      N_PATH,         c_path,         O_ARGV },
-    { "-print",     N_PRINT,        c_print,        O_ZERO },
-    { "-regex",     N_REGEX,        c_regex,        O_ARGV },
-    { "-size",      N_SIZE,         c_size,         O_ARGV },
-    { "-stdattr",   N_STDATTR,      c_stdattr,      O_ZERO },
-    { "-type",      N_TYPE,         c_type,	    O_ARGV },
+    DB_SEARCH_PLAN_TERMS(DB_SEARCH_OPTION_ROW)
 };
+#undef DB_SEARCH_OPTION_ROW
+
+#define DB_SEARCH_SYNTAX_ROW(name, node, compile, option_kind, argument, help) \
+    {name, argument, help},
+static const struct db_search_syntax_term search_syntax_terms[] = {
+    DB_SEARCH_PLAN_TERMS(DB_SEARCH_SYNTAX_ROW)
+};
+#undef DB_SEARCH_SYNTAX_ROW
+
+extern "C" const struct db_search_syntax_term *
+db_search_syntax_terms(size_t *count)
+{
+    if (count)
+	*count = sizeof(search_syntax_terms) / sizeof(search_syntax_terms[0]);
+    return search_syntax_terms;
+}
+
+extern "C" int
+db_search_syntax_plan_start(const char *word)
+{
+    if (!word)
+	return 0;
+    return (word[0] == '-' || word[0] == '!' || word[0] == '(');
+}
+
+extern "C" int
+db_search_syntax_exec_substitution(const char *word)
+{
+    return (word && strstr(word, "{}")) ? 1 : 0;
+}
+
+struct db_search_type_vocabulary {
+    std::vector<std::string> canonical;
+    std::vector<std::string> accepted;
+    std::vector<const char *> canonical_view;
+    std::vector<const char *> accepted_view;
+
+    db_search_type_vocabulary()
+    {
+	std::set<std::string> canonical_set;
+	const char *abstract_types[] = {
+	    "arb4", "arb5", "arb6", "arb7", "arb8", "combination", "plate",
+	    "region", "shape", "sphere", "volume", NULL
+	};
+	const char *aliases[] = {"c", "comb", "r", "reg", "sph", NULL};
+	for (size_t i = 0; abstract_types[i]; i++)
+	    canonical_set.insert(abstract_types[i]);
+	for (int i = 1; i <= ID_MAX_SOLID; i++)
+	    if (i != ID_UNUSED1 && i != ID_UNUSED2 && OBJ[i].ft_label[0] &&
+		    !BU_STR_EQUAL(OBJ[i].ft_label, "ID_NULL") &&
+		    OBJ[i].ft_label[0] != '>')
+		canonical_set.insert(OBJ[i].ft_label);
+	canonical.assign(canonical_set.begin(), canonical_set.end());
+	std::set<std::string> accepted_set = canonical_set;
+	for (size_t i = 0; aliases[i]; i++)
+	    accepted_set.insert(aliases[i]);
+	accepted.assign(accepted_set.begin(), accepted_set.end());
+	for (const std::string &term : canonical)
+	    canonical_view.push_back(term.c_str());
+	for (const std::string &term : accepted)
+	    accepted_view.push_back(term.c_str());
+    }
+};
+
+static const struct db_search_type_vocabulary &
+db_search_types()
+{
+    static const struct db_search_type_vocabulary vocabulary;
+    return vocabulary;
+}
+
+extern "C" const char * const *
+db_search_type_terms(int include_aliases, size_t *count)
+{
+    const struct db_search_type_vocabulary &vocabulary = db_search_types();
+    const std::vector<const char *> &view = include_aliases ?
+	vocabulary.accepted_view : vocabulary.canonical_view;
+    if (count)
+	*count = view.size();
+    return view.data();
+}
+
+extern "C" int
+db_search_type_term_exists(const char *word)
+{
+    if (BU_STR_EMPTY(word))
+	return 0;
+    const struct db_search_type_vocabulary &vocabulary = db_search_types();
+    return std::binary_search(vocabulary.accepted.begin(),
+	vocabulary.accepted.end(), std::string(word)) ? 1 : 0;
+}
+
+#undef DB_SEARCH_PLAN_TERMS
 
 
 /* Search client data container */

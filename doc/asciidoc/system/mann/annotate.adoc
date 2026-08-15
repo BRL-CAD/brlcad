@@ -34,10 +34,10 @@ Annotations can be aligned to the view (always facing the screen) or to the mode
 
 === Options
 
-*-n name*::
+*-n* _name_::
 Assign the specified `name` to the new annotation object instead of using an automatically generated name.
 
-*-p x y z*::
+*-p* _x_ _y_ _z_::
 Place the annotation at model coordinates `(x, y, z)`.
 
 [[examples]]

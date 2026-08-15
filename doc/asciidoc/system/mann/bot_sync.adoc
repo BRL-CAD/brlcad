@@ -10,7 +10,7 @@ bot_sync - Synchronizes the normals of all facets within a BOT primitive so they
 
 [source]
 ----
-bot_sync {bot} [bot2 bot3]...
+bot_sync [--help] bot [bot2 ...]
 ----
 
 
@@ -18,6 +18,11 @@ bot_sync {bot} [bot2 bot3]...
 == DESCRIPTION
 
 Synchronizes the normals of all facets within a BOT primitive so they are all in the same direction. When viewing a BOT with the MGED 'e -m1' or 'draw -m1' command, if some of the exterior facets are black and some shaded (red by default), this indicates the black facets have their normal in the wrong direction. To correct this, it is recommended to first run the commands 'bot_vertex_fuse' then 'bot_face_fuse' followed by 'bot_sync'. If the result is all exterior facets are black, then use the MGED 'bot_flip' command to reverse (i.e. flip) all the BOT facet normals. The result should be all exterior facets become shaded.
+
+=== Options
+
+*-h*, *--help*::
+Print command help without requiring an open database.
 
 [[examples]]
 == EXAMPLES

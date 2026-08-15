@@ -29,6 +29,24 @@
 
 #include "ged.h"
 
+static const struct bu_cmd_value_keyword log_action_keywords[] = {
+    {"get", NULL, "Copy the current log buffer to the command result"},
+    {"start", NULL, "Begin collecting bu_log output"},
+    {"stop", NULL, "Stop collecting bu_log output"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_cmd_operand log_operands[] = {
+	BU_CMD_OPERAND_KEYWORD_VALUES("action", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Log action", NULL, log_action_keywords),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema log_cmd_schema = {
+    "log", "Manage the libged log buffer", NULL, log_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 
 /**
  * Get the output from bu_log and append it to clientdata vls.
@@ -52,8 +70,6 @@ log_hook(void *clientdata,
 int
 ged_log_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static char *usage = "get|start|stop";
-
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -63,12 +79,12 @@ ged_log_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -87,7 +103,7 @@ ged_log_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    bu_log("Usage: %s %s ", argv[0], usage);
+    ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
     return BRLCAD_ERROR;
 }
 
@@ -95,10 +111,10 @@ ged_log_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_LOG_COMMANDS(X, XID) \
-    X(log, ged_log_core, GED_CMD_DEFAULT) \
+    X(log, ged_log_core, GED_CMD_DEFAULT, &log_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_LOG_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_log", 1, GED_LOG_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_LOG_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_log", 1, GED_LOG_COMMANDS)
 
 /*
  * Local Variables:

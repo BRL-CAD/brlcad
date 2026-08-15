@@ -84,6 +84,10 @@ if(TARGET osifont_osifont-lgpl3fe_ttf_cp)
 endif()
 brlcad_add_test(NAME rt_datum_annot_semantics COMMAND rt_datum_annot_semantics)
 
+# escaped full-path syntax
+brlcad_addexec(rt_fullpath fullpath.cpp "libged;libwdb;librt;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_fullpath COMMAND rt_fullpath)
+
 # perturb testing
 #BRLCAD_ADDEXEC(rt_perturb rt_perturb.c "librt;libwdb" TEST)
 #BRLCAD_ADD_TEST(NAME rt_perturb_basic COMMAND rt_perturb)
@@ -181,6 +185,7 @@ set(
   brep_boolean_tests.g
   cyclic_tests.g
   extreme_ssi_test.g
+  fullpath.cpp
   invalid_inmem.c
   lcomb_large.c
   matrix_tests.g

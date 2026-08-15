@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "colors": {
+    "command": "#123456",
+    "option": { "color": "#abc", "style": "dim" },
+    "completion_preview": { "color": "#445566", "style": "normal" }
+  }
+}

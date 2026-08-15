@@ -10,7 +10,7 @@ dbot_dump - export currently displayed BOT objects to a mesh file format
 
 [source]
 ----
-dbot_dump [-b] [-n|--normals] [-F|--full-precision]
+dbot_dump [--help] [-b] [-n|--normals] [-F|--full-precision]
           [-m|--output-directory dir] [-o|--output-file file]
           [-t dxf|glb|gltf|obj|sat|stl] [-u unit]
           [--no-materials]
@@ -34,6 +34,9 @@ All other options are identical to *bot_dump*, including `--no-materials` to exp
 
 === Options
 
+*-h*, *--help*::
+Print command help without requiring a display manager.
+
 *-b*::
 Write output in binary format where supported.
 
@@ -43,16 +46,16 @@ Write per-vertex normals if the output format supports them.
 *-F*, *--full-precision*::
 Write full floating-point precision for coordinate values.
 
-*-m dir*, *--output-directory dir*::
+*-m*, *--output-directory* _dir_::
 Write each BOT to a separate file in the specified directory `dir`. Mutually exclusive with `-o`.
 
-*-o file*, *--output-file file*::
+*-o*, *--output-file* _file_::
 Write all output to the single specified `file`. Mutually exclusive with `-m`.
 
-*-t fmt*::
+*-t* _fmt_::
 Specify the output format type: `dxf`, `glb`, `gltf`, `obj`, `sat`, or `stl` (default: `stl`).
 
-*-u unit*::
+*-u* _unit_::
 Output coordinate units (e.g., `mm`, `cm`, `in`, `ft`).
 
 [[examples]]

@@ -811,6 +811,18 @@ desc_2(int test_num)
 	    av[0] = "-C0/0/50";
 	    EXPECT_SUCCESS_COLOR("color", color, 0, 0, 50);
 	    break;
+	case 17:
+	    ac = 2;
+	    av[0] = "-C";
+	    av[1] = "200;10;30";
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
+	    break;
+	case 18:
+	    ac = 2;
+	    av[0] = "-C";
+	    av[1] = "200,10,30";
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
+	    break;
     }
 
     if (ret > 0) {
@@ -907,6 +919,660 @@ desc_3(int test_num)
 }
 
 
+static int
+completion_has(const struct bu_opt_validate_result *result, const char *value)
+{
+    if (!result || !value)
+	return 0;
+    for (size_t i = 0; i < result->completion_count; i++)
+	if (result->completion_candidates[i] &&
+	    BU_STR_EQUAL(result->completion_candidates[i], value))
+	    return 1;
+    return 0;
+}
+
+
+static int
+opt_sidecar_validate(const struct bu_opt_desc *option, size_t argc,
+	const char **argv, size_t cursor_arg, void *context, void *data,
+	struct bu_opt_validate_result *result)
+{
+    int *calls = (int *)data;
+
+    if (!option || !argc || !argv || cursor_arg >= argc || context != data ||
+	!result)
+	return -1;
+    (*calls)++;
+    return 0;
+}
+
+
+static int
+opt_attached_sidecar_validate(const struct bu_opt_desc *option, size_t argc,
+	const char **argv, size_t cursor_arg, void *context, void *data,
+	struct bu_opt_validate_result *result)
+{
+    int *calls = (int *)data;
+
+    if (!option || !argv || cursor_arg >= argc || context != data || !result ||
+	    !BU_STR_EQUAL(argv[cursor_arg], "fast"))
+	return -1;
+    (*calls)++;
+    result->state = BU_OPT_VALIDATE_VALID;
+    return 0;
+}
+
+
+static int
+opt_failing_sidecar_validate(const struct bu_opt_desc *UNUSED(option),
+	size_t UNUSED(argc), const char **UNUSED(argv),
+	size_t UNUSED(cursor_arg), void *UNUSED(context), void *UNUSED(data),
+	struct bu_opt_validate_result *result)
+{
+    result->completion_candidates = (const char **)bu_calloc(2,
+	sizeof(char *), "failing option validation candidates");
+    result->completion_candidates[0] = bu_strdup("discard-me");
+    result->completion_count = 1;
+    result->hint = "discard this partial result";
+    return -1;
+}
+
+
+static int
+opt_pair(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(data))
+{
+    if (argc < 2 || !argv || !argv[0] || !argv[1]) {
+	if (msg)
+	    bu_vls_printf(msg, "two values required\n");
+	return -1;
+    }
+    return 2;
+}
+
+
+static int
+opt_custom_flag(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
+	const char **UNUSED(argv), void *data)
+{
+    int *value = (int *)data;
+
+    if (value)
+	*value = 1;
+    return 0;
+}
+
+
+struct opt_callback_state {
+    int calls;
+    const char *value;
+};
+
+
+static int
+opt_attached_once(struct bu_vls *UNUSED(msg), size_t argc, const char **argv,
+	void *data)
+{
+    struct opt_callback_state *state = (struct opt_callback_state *)data;
+
+    /* Legacy callbacks are allowed to require their descriptor storage. */
+    state->calls++;
+    if (!argc || !argv || !argv[0])
+	return -1;
+    state->value = argv[0];
+    return 1;
+}
+
+
+static int
+opt_flag_once(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
+	const char **UNUSED(argv), void *data)
+{
+    struct opt_callback_state *state = (struct opt_callback_state *)data;
+
+    state->calls++;
+    return 0;
+}
+
+
+struct opt_builder_args {
+    int help;
+    int number;
+};
+
+
+#define OPT_VALIDATION_OPTIONS(args) \
+    {"h", "help", "", NULL, args ? &args->help : NULL, "Print help"}, \
+    {"n", "number", "integer", bu_opt_int, args ? &args->number : NULL, \
+	"Set an integer"},
+
+BU_OPT_DESC_BUILDER(opt_validation_builder, struct opt_builder_args,
+    OPT_VALIDATION_OPTIONS);
+
+
+static size_t
+opt_overflow_builder(struct bu_opt_desc *UNUSED(descs),
+	size_t UNUSED(capacity), void *UNUSED(storage))
+{
+    return (size_t)-1;
+}
+
+
+static int
+desc_validation(int test_num)
+{
+    static int opt_custom_calls = 0;
+    int flag = 0;
+    int boolean = 0;
+    int integer = 0;
+    long long_value = 0;
+    fastf_t number = 0.0;
+    char character = '\0';
+    const char *string = NULL;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+    vect_t vector = VINIT_ZERO;
+    const char *opaque = NULL;
+    struct bu_opt_desc descs[] = {
+	{"h", "help", "", NULL, &flag, "Print help"},
+	{"n", "number", "integer", bu_opt_int, &integer, "Set an integer"},
+	{"C", "color", "color", bu_opt_color, &color, "Set a color"},
+	{NULL, "custom", "value", d1_verb, &opaque, "Opaque custom value"},
+	{"b", "bool", "boolean", bu_opt_bool, &boolean, "Set a boolean"},
+	{"l", "long", "integer", bu_opt_long, &long_value, "Set a long"},
+	{"X", "hex", "hexadecimal", bu_opt_long_hex, &long_value, "Set a hexadecimal long"},
+	{"f", "fastf", "number", bu_opt_fastf_t, &number, "Set a number"},
+	{"c", "char", "character", bu_opt_char, &character, "Set a character"},
+	{"s", "string", "text", bu_opt_str, &string, "Set a string"},
+	{"v", "vls", "text", bu_opt_vls, &vls, "Append text"},
+	{"V", "vector", "x/y/z", bu_opt_vect_t, &vector, "Set a vector"},
+	{"I", "increment", "", bu_opt_incr_long, &long_value, "Increment a counter"},
+	{"L", "language", "code", bu_opt_lang, &vls, "Set a language"},
+	{"M", "man-section", "section", bu_opt_man_section, &character, "Set a manual section"},
+	{"P", "pair", "first second", opt_pair, &opaque, "Set a custom pair"},
+	BU_OPT_DESC_NULL
+    };
+    const char *mode_candidates[] = {"fast", "thorough", NULL};
+    struct bu_opt_value_spec specs[] = {
+	{"custom", NULL, BU_OPT_VALUE_STRING, 1, 1, NULL, "mode", mode_candidates,
+	    opt_sidecar_validate,
+	    &opt_custom_calls},
+	{"pair", NULL, BU_OPT_VALUE_STRING, 2, 2, NULL, "two values", NULL, NULL, NULL},
+	BU_OPT_VALUE_SPEC_NULL
+    };
+    struct bu_opt_validate_result result = BU_OPT_VALIDATE_RESULT_NULL;
+    const char *dash[] = {"--"};
+    const char *number_bad[] = {"--number", "abc"};
+    const char *number_good[] = {"--number", "42"};
+    const char *color_partial[] = {"--color", "10", "20"};
+    const char *color_good[] = {"--color", "10", "20", "30"};
+    const char *custom[] = {"--custom", "f"};
+    const char *custom_missing[] = {"--custom"};
+    const char *custom_option_seed[] = {"--cu"};
+    const char *custom_done[] = {"--custom", "fast", "operand"};
+    const char *built_parse[] = {"--number", "7"};
+    const char *built_options_first[] = {"--number", "7", "operand", "--help"};
+    const char *built_options_unknown[] = {"--unknown", "operand"};
+    const char *built_options_marker[] = {"--number", "7", "--", "--help"};
+    const char *built_complete[] = {"--n"};
+    const char *bool_good[] = {"--bool", "true"};
+    const char *bool_seed[] = {"--bool", "t"};
+    const char *bool_bad[] = {"--bool", "perhaps"};
+    const char *bool_empty[] = {"--bool", ""};
+    const char *long_good[] = {"--long", "123"};
+    const char *long_bad[] = {"--long", "12x"};
+    const char *hex_good[] = {"--hex", "ff"};
+    const char *hex_bad[] = {"--hex", "not-hex"};
+    const char *fast_good[] = {"--fastf", "1.5"};
+    const char *fast_bad[] = {"--fastf", "1.5x"};
+    const char *char_good[] = {"--char", "word"};
+    const char *string_good[] = {"--string", "text"};
+    const char *vls_good[] = {"--vls", "text"};
+    const char *vector_good[] = {"--vector", "1/2/3"};
+    const char *vector_bad[] = {"--vector", "1/two/3"};
+    const char *increment_good[] = {"--increment"};
+    const char *language_good[] = {"--language", "en"};
+    const char *language_bad[] = {"--language", "zz"};
+    const char *man_good[] = {"--man-section", "3"};
+    const char *man_seed[] = {"--man-section", ""};
+    const char *man_bad[] = {"--man-section", "2"};
+    const char *pair_partial[] = {"--pair", "one"};
+    const char *pair_good[] = {"--pair", "one", "two"};
+    struct opt_builder_args built_args = {0, 0};
+    int ret = 1;
+
+    switch (test_num) {
+	case 0:
+	    ret = bu_opt_desc_value_type(&descs[0]) != BU_OPT_VALUE_FLAG ||
+		bu_opt_desc_value_type(&descs[1]) != BU_OPT_VALUE_INTEGER ||
+		bu_opt_desc_value_type(&descs[2]) != BU_OPT_VALUE_COLOR ||
+		bu_opt_desc_value_type(&descs[3]) != BU_OPT_VALUE_UNKNOWN ||
+		bu_opt_desc_value_type(&descs[4]) != BU_OPT_VALUE_BOOL ||
+		bu_opt_desc_value_type(&descs[5]) != BU_OPT_VALUE_LONG ||
+		bu_opt_desc_value_type(&descs[6]) != BU_OPT_VALUE_HEX_LONG ||
+		bu_opt_desc_value_type(&descs[7]) != BU_OPT_VALUE_NUMBER ||
+		bu_opt_desc_value_type(&descs[8]) != BU_OPT_VALUE_CHAR ||
+		bu_opt_desc_value_type(&descs[9]) != BU_OPT_VALUE_STRING ||
+		bu_opt_desc_value_type(&descs[10]) != BU_OPT_VALUE_VLS ||
+		bu_opt_desc_value_type(&descs[11]) != BU_OPT_VALUE_VECTOR ||
+		bu_opt_desc_value_type(&descs[12]) != BU_OPT_VALUE_INCREMENT ||
+		bu_opt_desc_value_type(&descs[13]) != BU_OPT_VALUE_LANGUAGE ||
+		bu_opt_desc_value_type(&descs[14]) != BU_OPT_VALUE_MAN_SECTION ||
+		bu_opt_desc_value_type(&descs[15]) != BU_OPT_VALUE_UNKNOWN;
+	    break;
+	case 1:
+	    ret = bu_opt_desc_validate(descs, NULL, 0, NULL, 0, NULL, &result) ||
+		!completion_has(&result, "--help") ||
+		!completion_has(&result, "--number");
+	    break;
+	case 2:
+	    ret = bu_opt_desc_validate(descs, NULL, 1, dash, 0, NULL, &result) ||
+		!completion_has(&result, "--color");
+	    break;
+	case 3:
+	    ret = bu_opt_desc_validate(descs, NULL, 2, number_bad, 1, NULL, &result) ||
+		result.state != BU_OPT_VALIDATE_INVALID ||
+		result.value_type != BU_OPT_VALUE_INTEGER;
+	    break;
+	case 4:
+	    ret = bu_opt_desc_validate(descs, NULL, 2, number_good, 1, NULL, &result) ||
+		result.state != BU_OPT_VALIDATE_VALID;
+	    break;
+	case 5:
+	    ret = bu_opt_desc_validate(descs, NULL, 3, color_partial, 2, NULL, &result) ||
+		result.state != BU_OPT_VALIDATE_INCOMPLETE;
+	    break;
+	case 6:
+	    ret = bu_opt_desc_validate(descs, NULL, 4, color_good, 3, NULL, &result) ||
+		result.state != BU_OPT_VALIDATE_VALID;
+	    break;
+	case 7:
+	    ret = bu_opt_desc_validate(descs, specs, 2, custom, 1,
+		&opt_custom_calls, &result) ||
+		result.value_type != BU_OPT_VALUE_STRING ||
+		!completion_has(&result, "fast") || opt_custom_calls != 1;
+	    break;
+	case 8:
+	    ret = bu_opt_parse_build(NULL, 2, built_parse, opt_validation_builder,
+		&built_args) != 0 || built_args.number != 7;
+	    break;
+	case 9:
+	    ret = bu_opt_validate_build(opt_validation_builder, NULL, 1,
+		built_complete, 0, NULL, &result) ||
+		!completion_has(&result, "--number") || result.option != NULL;
+	    break;
+	case 10:
+#define CHECK_STANDARD(_argv, _argc, _cursor, _state) do { \
+	    if (bu_opt_desc_validate(descs, NULL, _argc, _argv, _cursor, NULL, &result) || \
+		result.state != _state) \
+		ret = 1; \
+	    bu_opt_validate_result_clear(&result); \
+	} while (0)
+	    ret = 0;
+	    CHECK_STANDARD(bool_good, 2, 1, BU_OPT_VALIDATE_VALID);
+	    CHECK_STANDARD(bool_bad, 2, 1, BU_OPT_VALIDATE_INVALID);
+	    CHECK_STANDARD(bool_empty, 2, 1, BU_OPT_VALIDATE_INVALID);
+	    CHECK_STANDARD(long_good, 2, 1, BU_OPT_VALIDATE_VALID);
+	    CHECK_STANDARD(long_bad, 2, 1, BU_OPT_VALIDATE_INVALID);
+	    CHECK_STANDARD(hex_good, 2, 1, BU_OPT_VALIDATE_VALID);
+	    CHECK_STANDARD(hex_bad, 2, 1, BU_OPT_VALIDATE_INVALID);
+	    CHECK_STANDARD(fast_good, 2, 1, BU_OPT_VALIDATE_VALID);
+	    CHECK_STANDARD(fast_bad, 2, 1, BU_OPT_VALIDATE_INVALID);
+	    CHECK_STANDARD(char_good, 2, 1, BU_OPT_VALIDATE_VALID);
+	    CHECK_STANDARD(string_good, 2, 1, BU_OPT_VALIDATE_VALID);
+	    CHECK_STANDARD(vls_good, 2, 1, BU_OPT_VALIDATE_VALID);
+	    CHECK_STANDARD(vector_good, 2, 1, BU_OPT_VALIDATE_VALID);
+	    CHECK_STANDARD(vector_bad, 2, 1, BU_OPT_VALIDATE_INVALID);
+	    CHECK_STANDARD(increment_good, 1, 0, BU_OPT_VALIDATE_VALID);
+	    CHECK_STANDARD(language_good, 2, 1, BU_OPT_VALIDATE_VALID);
+	    CHECK_STANDARD(language_bad, 2, 1, BU_OPT_VALIDATE_INVALID);
+	    CHECK_STANDARD(man_good, 2, 1, BU_OPT_VALIDATE_VALID);
+	    CHECK_STANDARD(man_bad, 2, 1, BU_OPT_VALIDATE_INVALID);
+#undef CHECK_STANDARD
+	    break;
+	case 11:
+#define CHECK_MISSING(_index) do { \
+	    const char *missing[] = {descs[_index].longopt}; \
+	    struct bu_vls spelling = BU_VLS_INIT_ZERO; \
+	    bu_vls_sprintf(&spelling, "--%s", missing[0]); \
+	    missing[0] = bu_vls_addr(&spelling); \
+	    if (bu_opt_desc_validate(descs, NULL, 1, missing, 1, NULL, &result) || \
+		result.state != BU_OPT_VALIDATE_INCOMPLETE || \
+		!(result.expected & BU_OPT_EXPECT_OPTION_ARG)) \
+		ret = 1; \
+	    bu_opt_validate_result_clear(&result); \
+	    bu_vls_free(&spelling); \
+	} while (0)
+	    ret = 0;
+	    CHECK_MISSING(1);
+	    CHECK_MISSING(2);
+	    CHECK_MISSING(4);
+	    CHECK_MISSING(5);
+	    CHECK_MISSING(6);
+	    CHECK_MISSING(7);
+	    CHECK_MISSING(8);
+	    CHECK_MISSING(9);
+	    CHECK_MISSING(10);
+	    CHECK_MISSING(11);
+	    CHECK_MISSING(13);
+	    CHECK_MISSING(14);
+#undef CHECK_MISSING
+	    break;
+	case 12:
+	    ret = bu_opt_desc_validate(descs, specs, 3, custom_done, 2,
+		&opt_custom_calls, &result) || opt_custom_calls != 0 ||
+		result.option_name != NULL;
+	    break;
+	case 13:
+	    ret = bu_opt_desc_validate(descs, specs, 2, pair_partial, 2, NULL,
+		&result) || result.state != BU_OPT_VALIDATE_INCOMPLETE ||
+		!(result.expected & BU_OPT_EXPECT_OPTION_ARG);
+	    bu_opt_validate_result_clear(&result);
+	    ret |= bu_opt_desc_validate(descs, specs, 3, pair_good, 2, NULL,
+		&result) || result.state != BU_OPT_VALIDATE_VALID ||
+		result.value_type != BU_OPT_VALUE_STRING;
+	    break;
+	case 14:
+	    ret = bu_opt_desc_validate(descs, NULL, 2, bool_seed, 1, NULL,
+		&result) || !completion_has(&result, "true") ||
+		completion_has(&result, "false");
+	    bu_opt_validate_result_clear(&result);
+	    ret |= bu_opt_desc_validate(descs, NULL, 2, man_seed, 1, NULL,
+		&result) || !completion_has(&result, "1") ||
+		!completion_has(&result, "n");
+	    break;
+	case 15:
+	{
+	    const struct bu_opt_value_spec invalid[] = {
+		{"missing", NULL, BU_OPT_VALUE_STRING, 1, 1, NULL, NULL,
+		    NULL, NULL, NULL},
+		BU_OPT_VALUE_SPEC_NULL
+	    };
+	    ret = bu_opt_desc_validate(descs, invalid, 0, NULL, 0, NULL,
+		&result) != -1;
+	    break;
+	}
+	case 16:
+	    opt_custom_calls = 0;
+	    ret = bu_opt_desc_validate(descs, specs, 1, custom_option_seed, 0,
+		&opt_custom_calls, &result) || opt_custom_calls != 0 ||
+		!completion_has(&result, "--custom");
+	    break;
+	case 17:
+	    opt_custom_calls = 0;
+	    ret = bu_opt_desc_validate(descs, specs, 1, custom_missing, 0,
+		&opt_custom_calls, &result) || opt_custom_calls != 0 ||
+		result.state != BU_OPT_VALIDATE_INCOMPLETE ||
+		!(result.expected & BU_OPT_EXPECT_OPTION_ARG);
+	    break;
+	case 18:
+	    ret = bu_opt_parse_build_with_policy(NULL, 4, built_options_first,
+		opt_validation_builder, &built_args,
+		BU_OPT_PARSE_OPTIONS_FIRST) != 2 || built_args.number != 7 ||
+		built_args.help != 0 ||
+		!BU_STR_EQUAL(built_options_first[0], "operand") ||
+		!BU_STR_EQUAL(built_options_first[1], "--help");
+	    break;
+	case 19:
+	{
+	    int custom_flag = 0;
+	    struct bu_opt_desc flag_descs[] = {
+		{"q", "custom-flag", "", opt_custom_flag, &custom_flag,
+		    "Set a custom flag"},
+		BU_OPT_DESC_NULL
+	    };
+	    const struct bu_opt_value_spec flag_specs[] = {
+		{"custom-flag", NULL, BU_OPT_VALUE_FLAG, 0, 0, NULL,
+		    "custom flag", NULL, NULL, NULL},
+		BU_OPT_VALUE_SPEC_NULL
+	    };
+	    const char *flag_argv[] = {"--custom-flag"};
+	    ret = bu_opt_desc_validate(flag_descs, flag_specs, 1, flag_argv, 0,
+		NULL, &result) || result.state != BU_OPT_VALIDATE_VALID ||
+		(result.expected & BU_OPT_EXPECT_OPTION_ARG);
+	    bu_opt_validate_result_clear(&result);
+	    ret |= bu_opt_parse(NULL, 1, flag_argv, flag_descs) != 0 ||
+		custom_flag != 1;
+	    break;
+	}
+	case 20:
+	{
+	    long increments = 0;
+	    struct bu_opt_desc increment_descs[] = {
+		{"v", NULL, "", bu_opt_incr_long, &increments, "Be verbose"},
+		BU_OPT_DESC_NULL
+	    };
+	    const char *increment_argv[] = {"-vv"};
+	    ret = bu_opt_parse(NULL, 1, increment_argv, increment_descs) != 0 ||
+		increments != 2;
+	    break;
+	}
+	case 21:
+	    ret = bu_opt_parse_build_with_policy(NULL, 2, built_options_unknown,
+		opt_validation_builder, &built_args,
+		BU_OPT_PARSE_OPTIONS_FIRST) != -1;
+	    break;
+	case 22:
+	    ret = bu_opt_parse_build_with_policy(NULL, 4, built_options_marker,
+		opt_validation_builder, &built_args,
+		BU_OPT_PARSE_OPTIONS_FIRST) != 1 || built_args.number != 7 ||
+		built_args.help != 0 ||
+		!BU_STR_EQUAL(built_options_marker[0], "--help");
+	    break;
+	case 23:
+	{
+	    size_t count = 1;
+	    const char *no_args[] = {NULL};
+	    struct bu_opt_desc *empty = bu_opt_desc_build(
+		bu_opt_desc_empty_builder, NULL, &count);
+	    ret = !empty || count != 0 || empty[0].shortopt || empty[0].longopt ||
+		bu_opt_parse_build(NULL, 0, no_args, bu_opt_desc_empty_builder, NULL) != 0;
+	    bu_free(empty, "empty bu_opt descriptor table");
+	    break;
+	}
+	case 24:
+	{
+	    fastf_t plus = 0.0;
+	    fastf_t star = 0.0;
+	    int bang = 0;
+	    struct bu_opt_desc punctuation_descs[] = {
+		{"+", NULL, "number", bu_opt_fastf_t, &plus,
+		    "Set a plus value"},
+		{"*", NULL, "number", bu_opt_fastf_t, &star,
+		    "Set a star value"},
+		{"!", NULL, "", NULL, &bang, "Set a flag"},
+		BU_OPT_DESC_NULL
+	    };
+	    const char *punctuation_argv[] = {"-+2.5", "-*", "3.5", "-!"};
+	    ret = bu_opt_parse(NULL, 4, punctuation_argv,
+		punctuation_descs) != 0 || !NEAR_EQUAL(plus, 2.5, SMALL_FASTF) ||
+		!NEAR_EQUAL(star, 3.5, SMALL_FASTF) || bang != 1;
+	    break;
+	}
+	case 25:
+	{
+	    int calls = 0;
+	    struct bu_opt_desc wide_descs[] = {
+		{"z", "six-values", "a b c d e f", opt_pair, NULL,
+		    "Set six custom values"},
+		BU_OPT_DESC_NULL
+	    };
+	    const struct bu_opt_value_spec wide_specs[] = {
+		{"six-values", NULL, BU_OPT_VALUE_STRING, 6, 6, NULL,
+		    "six values", NULL, opt_sidecar_validate, &calls},
+		BU_OPT_VALUE_SPEC_NULL
+	    };
+	    const char *wide_argv[] = {
+		"--six-values", "one", "two", "three", "four", "five", "six"
+	    };
+	    ret = bu_opt_desc_validate(wide_descs, wide_specs, 7, wide_argv, 6,
+		&calls, &result) || calls != 1 ||
+		result.state != BU_OPT_VALIDATE_VALID ||
+		result.option != &wide_descs[0];
+	    break;
+	}
+	case 26:
+	{
+	    ret = bu_opt_desc_build(opt_overflow_builder, NULL, NULL) != NULL;
+	    break;
+	}
+	case 27:
+	{
+	    struct opt_callback_state attached = {0, NULL};
+	    struct opt_callback_state clustered = {0, NULL};
+	    int plain_flag = 0;
+	    struct bu_opt_desc callback_descs[] = {
+		{"x", "value", "text", opt_attached_once, &attached,
+		    "Set an attached value"},
+		{"f", "callback-flag", "", opt_flag_once, &clustered,
+		    "Set a callback flag"},
+		{"q", "plain-flag", "", NULL, &plain_flag, "Set a plain flag"},
+		BU_OPT_DESC_NULL
+	    };
+	    const char *attached_argv[] = {"-xvalue"};
+	    const char *cluster_argv[] = {"-fq"};
+
+	    ret = bu_opt_parse(NULL, 1, attached_argv, callback_descs) != 0 ||
+		attached.calls != 1 || !attached.value ||
+		!BU_STR_EQUAL(attached.value, "value");
+	    ret |= bu_opt_parse(NULL, 1, cluster_argv, callback_descs) != 0 ||
+		clustered.calls != 1 || plain_flag != 1;
+	    break;
+	}
+	case 28:
+	{
+	    int calls = 0;
+	    const char *attached_argv[] = {"--custom=fast"};
+	    struct bu_opt_value_spec attached_specs[] = {
+		{"custom", NULL, BU_OPT_VALUE_STRING, 1, 1, NULL, "mode", NULL,
+		    opt_attached_sidecar_validate, &calls},
+		BU_OPT_VALUE_SPEC_NULL
+	    };
+	    ret = bu_opt_desc_validate(descs, attached_specs, 1, attached_argv, 0,
+		&calls, &result) || calls != 1 ||
+		result.state != BU_OPT_VALIDATE_VALID;
+	    break;
+	}
+	case 29:
+	{
+	    const char *modes[] = {"fast", "safe", NULL};
+	    const char *value = NULL;
+	    struct bu_opt_desc alias_descs[] = {
+		{"m", "mode", "mode", d1_verb, &value, "Select a mode"},
+		{"M", NULL, "mode", d1_verb, &value, "Mode compatibility alias"},
+		BU_OPT_DESC_NULL
+	    };
+	    const struct bu_opt_value_spec alias_specs[] = {
+		BU_OPT_VALUE_CANDIDATES("mode", BU_OPT_VALUE_STRING, "mode", modes),
+		BU_OPT_VALUE_ALIAS("M", "mode"),
+		BU_OPT_VALUE_SPEC_NULL
+	    };
+	    const struct bu_opt_value_spec bad_target[] = {
+		BU_OPT_VALUE_ALIAS("M", "missing"),
+		BU_OPT_VALUE_SPEC_NULL
+	    };
+	    const struct bu_opt_value_spec alias_cycle[] = {
+		BU_OPT_VALUE_ALIAS("mode", "M"),
+		BU_OPT_VALUE_ALIAS("M", "mode"),
+		BU_OPT_VALUE_SPEC_NULL
+	    };
+	    struct bu_opt_cmd cmd = BU_OPT_CMD_INIT_ZERO;
+	    ret = bu_opt_cmd_create(&cmd, alias_descs, alias_specs) ||
+		cmd.option_count != 2 ||
+		cmd.options[1].value_type != cmd.options[0].value_type ||
+		cmd.options[1].arg_requirement != cmd.options[0].arg_requirement ||
+		cmd.options[1].value_keywords != cmd.options[0].value_keywords ||
+		!BU_STR_EQUAL(bu_cmd_option_canonical(&cmd.options[1]), "mode");
+	    if (!ret) {
+		cmd.options[0].semantic_provider = "test.mode";
+		cmd.options[0].argument = "canonical mode";
+		ret = bu_opt_cmd_aliases(&cmd) ||
+		    !BU_STR_EQUAL(cmd.options[1].semantic_provider, "test.mode") ||
+		    !BU_STR_EQUAL(cmd.options[1].argument, "canonical mode");
+	    }
+	    bu_opt_cmd_clear(&cmd);
+	    ret |= bu_opt_cmd_create(&cmd, alias_descs, bad_target) != -1;
+	    bu_opt_cmd_clear(&cmd);
+	    ret |= bu_opt_cmd_create(&cmd, alias_descs, alias_cycle) != -1;
+	    bu_opt_cmd_clear(&cmd);
+	    break;
+	}
+	case 30:
+	{
+	    const char *custom_value[] = {"--custom", "value"};
+	    struct bu_opt_value_spec failing_specs[] = {
+		{"custom", NULL, BU_OPT_VALUE_STRING, 1, 1, NULL, "mode", NULL,
+		    opt_failing_sidecar_validate, NULL},
+		BU_OPT_VALUE_SPEC_NULL
+	    };
+
+	    ret = bu_opt_desc_validate(descs, NULL, 0, NULL, 0, NULL, &result) ||
+		!result.completion_count ||
+		bu_opt_desc_validate(descs, failing_specs, 2, custom_value, 1,
+		    NULL, &result) != -1 || result.state != BU_OPT_VALIDATE_UNKNOWN ||
+		result.completion_candidates || result.completion_count ||
+		result.hint || result.option || result.option_name;
+	    if (!ret) {
+		ret = bu_opt_desc_validate(descs, NULL, 0, NULL, 0, NULL,
+		    &result) || !result.completion_count ||
+		    bu_opt_desc_validate(NULL, NULL, 0, NULL, 0, NULL,
+			&result) != -1 || result.completion_candidates ||
+		    result.completion_count || result.hint || result.option;
+	    }
+	    if (!ret) {
+		ret = bu_opt_desc_validate(descs, NULL, 0, NULL, 0, NULL,
+		    &result) || !result.completion_count ||
+		    bu_opt_validate_build(opt_overflow_builder, NULL, 0, NULL, 0,
+			NULL, &result) != -1 || result.completion_candidates ||
+		    result.completion_count || result.hint || result.option;
+	    }
+	    if (!ret)
+		ret = bu_opt_validate_build(opt_validation_builder, NULL, 0,
+		    NULL, 0, NULL, NULL) != -1;
+	    break;
+	}
+	default:
+	    break;
+    }
+    bu_opt_validate_result_clear(&result);
+    bu_vls_free(&vls);
+    return ret;
+}
+
+
+static int
+desc_help(void)
+{
+    int help_flag = 0;
+    int count = 0;
+    const struct bu_opt_desc descs[] = {
+	{"h", "help", "", NULL, &help_flag, "Print help and exit"},
+	{"n", "count", "count", bu_opt_int, &count, "Set the item count"},
+	BU_OPT_DESC_NULL
+    };
+    char *usage = bu_opt_usage(descs, "sample", "input [output]");
+    char *help = bu_opt_help(descs, "sample", "input [output]",
+	"Process a sample input");
+    struct bu_opt_desc_opts filter = BU_OPT_DESC_OPTS_INIT_ZERO;
+    filter.accept = "help";
+    char *filtered = bu_opt_describe(descs, &filter);
+    int ret = !usage || !help ||
+	!BU_STR_EQUAL(usage, "Usage: sample [options] input [output]\n") ||
+	!strstr(help, "Usage: sample [options] input [output]\n") ||
+	!strstr(help, "\nProcess a sample input\n") ||
+	!strstr(help, "\nOptions:\n") ||
+	!strstr(help, "-h, --help") || !strstr(help, "-n count, --count count") ||
+	!filtered || !strstr(filtered, "-h, --help") || strstr(filtered, "--count");
+
+    if (usage)
+	bu_free(usage, "bu_opt usage test");
+    if (help)
+	bu_free(help, "bu_opt help test");
+    if (filtered)
+	bu_free(filtered, "filtered bu_opt help test");
+    return ret;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -952,6 +1618,12 @@ main(int argc, char *argv[])
 	    break;
 	case 3:
 	    return desc_3(test_num);
+	    break;
+	case 4:
+	    return desc_validation(test_num);
+	    break;
+	case 5:
+	    return desc_help();
 	    break;
     }
 

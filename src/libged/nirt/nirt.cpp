@@ -46,7 +46,7 @@
 
 #include "bn.h"
 #include "bu/app.h"
-#include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bu/file.h"
 #include "bu/interrupt.h"
 #include "bu/snooze.h"
@@ -248,10 +248,9 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	int have_xyz = 1;
 
 	// First, see if they are all numbers
-	const char *xyz_str[2] = {NULL};
 	for (int i = 0; i < 3; i++) {
-	    xyz_str[0] = argv[i];
-	    if (bu_opt_fastf_t(NULL, 1, (const char **)xyz_str, NULL) != 1) {
+	    fastf_t value;
+	    if (!bu_cmd_number_from_str(&value, argv[i])) {
 		have_xyz = 0;
 		break;
 	    }
@@ -262,8 +261,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_log("WARNING: Specifying center with 'x y z' at the end of the nirt command is deprecated - use the --xyz option instead\n");
 	    for (int i = 0; i < 3; i++) {
 		fastf_t val;
-		xyz_str[0] = argv[i];
-		bu_opt_fastf_t(NULL, 1, (const char **)xyz_str, &val);
+		bu_cmd_number_from_str(&val, argv[i]);
 		nv.center_model[i] = val;
 	    }
 
@@ -297,34 +295,19 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     rgbc[BLU] = gedp->i->ged_gdp->gd_qray_overlap_color.b;
     bu_color_from_rgb_chars(&nv.color_ovlp, rgbc);
 
-    /* Do a nirt option parse to set nv values based on command line args. */
+    /* The shared native schema is the sole source for nirt option parsing,
+     * validation, help, and GED completion metadata. */
     if (argc > 0) {
-	struct bu_opt_desc *d = nirt_opt_desc(&nv);
 	struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-	int ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
-	if (ac < 0) {
-	    bu_free(d, "nirt opt desc");
+	int operand_start = bu_cmd_schema_parse(nirt_opt_schema(), &nv, &optparse_msg, argc, argv);
+	if (operand_start < 0) {
 	    nirt_opt_vals_free(&nv);
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: option parsing failed: %s.\n", bu_vls_cstr(&optparse_msg));
 	    bu_vls_free(&optparse_msg);
 	    return BRLCAD_ERROR;
-	} else if (ac > 0) {
-	    size_t badopts = 0;
-	    for (int i=0; i < ac; i++) {
-		if (argv[i][0] == '-') {
-		    bu_log("ERROR: unrecognized option %s\n", argv[i]);
-		    badopts++;
-		}
-	    }
-	    if (badopts) {
-		bu_free(d, "nirt opt desc");
-		nirt_opt_vals_free(&nv);
-		bu_vls_free(&optparse_msg);
-		return BRLCAD_ERROR;
-	    }
 	}
-	argc = ac;
-	bu_free(d, "bu_opt_desc");
+	argc -= operand_start;
+	argv += operand_start;
 	bu_vls_free(&optparse_msg);
     }
 
@@ -735,13 +718,13 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_NIRT_COMMANDS(X, XID) \
-    X(nirt, ged_nirt_core, GED_CMD_DEFAULT) \
-    X(query_ray, ged_nirt_core, GED_CMD_DEFAULT) \
-    X(vnirt, ged_vnirt_core, GED_CMD_DEFAULT) \
-    X(vquery_ray, ged_vnirt_core, GED_CMD_DEFAULT) \
+    X(nirt, ged_nirt_core, GED_CMD_DEFAULT, &nirt_command_schema) \
+    X(query_ray, ged_nirt_core, GED_CMD_DEFAULT, &nirt_command_schema) \
+    X(vnirt, ged_vnirt_core, GED_CMD_DEFAULT, &nirt_command_schema) \
+    X(vquery_ray, ged_vnirt_core, GED_CMD_DEFAULT, &nirt_command_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_NIRT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_nirt", 1, GED_NIRT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_NIRT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_nirt", 1, GED_NIRT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

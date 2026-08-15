@@ -10,7 +10,7 @@ find - find all references to objects
 
 [source]
 ----
-find [-a] <objects>
+find [-a] object [object ...]
 ----
 
 [[description]]

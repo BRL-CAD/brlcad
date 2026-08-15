@@ -68,6 +68,7 @@
 
 #include "tcl.h"
 #include "bu/parallel.h"
+#include "bu/lineedit.h"
 #include "bu/list.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -244,6 +245,25 @@ struct mged_state {
     struct bu_vls input_str_prefix;
     struct bu_vls scratchline;
     struct bu_vls mged_prompt;
+
+    /* Classic-console completion is a transient preview, not committed input.
+     * Keep its seed and presentation state separate from input_str so filtering
+     * edits and Escape can recover the exact text the user typed. */
+    struct bu_vls completion_base_line;
+    struct bu_vls completion_last_line;
+    size_t completion_base_cursor;
+    size_t completion_last_cursor;
+    size_t completion_display_rows;
+    int completion_last_index;
+    int completion_last_count;
+    bu_cmd_completion_mode_t completion_active_mode;
+    Tcl_TimerToken completion_escape_timer;
+    Tcl_Obj *completion_display_candidates;
+    int completion_display_columns;
+    int completion_display_terminal_rows;
+    size_t completion_display_candidate_limit;
+    size_t completion_display_total;
+    Tcl_TimerToken completion_resize_timer;
 
     /* Display related */
     struct mged_dm *mged_curr_dm;

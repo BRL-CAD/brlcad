@@ -32,7 +32,7 @@
 #include <string>
 #include <time.h>
 
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bv/plot3.h"
 #include "bu/color.h"
 #include "rt/db4.h"
@@ -55,7 +55,6 @@ struct _ged_bot_info {
     int visualize;
     std::string solid_name;
     const struct bu_cmdtab *cmds = NULL;
-    struct bu_opt_desc *gopts = NULL;
     struct bu_list *vlfree = NULL;
 };
 
@@ -63,27 +62,54 @@ int _bot_obj_setup(struct _ged_bot_info *gb, const char *name);
 
 int _bot_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps);
 
-int _bot_face_specifiers(std::set<int> &elements, struct bu_vls *vls, int argc, const char **argv);
+int _bot_face_specifiers(std::set<int> &elements, struct bu_vls *vls, int argc,
+	const char * const *argv);
 
 
 extern int ged_bot_condense_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_condense_schema;
+extern const struct bu_cmd_schema ged_bot_check_subcommand_schema;
 extern int ged_bot_decimate_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_decimate_schema;
+extern const struct bu_cmd_schema ged_bot_decimate_subcommand_schema;
 extern int ged_bot_dump_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_dump_schema;
+extern const struct bu_cmd_schema ged_bot_dump_subcommand_schema;
+extern const struct bu_cmd_schema ged_dbot_dump_schema;
 extern int ged_bot_exterior(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_exterior_schema;
+extern const struct bu_cmd_schema ged_bot_exterior_subcommand_schema;
 extern int ged_bot_extrude(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_extrude_subcommand_schema;
 extern int ged_bot_face_fuse_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_face_fuse_schema;
 extern int ged_bot_face_sort_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_face_sort_schema;
 extern int ged_bot_flip_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_flip_schema;
 extern int ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_fuse_schema;
 extern int ged_bot_merge_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_merge_schema;
 extern int ged_bot_smooth_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_smooth_schema;
+extern const struct bu_cmd_schema ged_bot_smooth_subcommand_schema;
 extern int ged_bot_split_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_split_schema;
 extern int ged_bot_sync_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_sync_schema;
 extern int ged_bot_vertex_fuse_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_vertex_fuse_schema;
 extern int ged_find_bot_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[]);
+extern const struct bu_cmd_schema ged_find_bot_pnt_schema;
 extern int ged_find_bot_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[]);
+extern const struct bu_cmd_schema ged_find_bot_edge_schema;
 extern int ged_get_bot_edges_core(struct ged *gedp, int argc, const char *argv[]);
+extern const struct bu_cmd_schema ged_get_bot_edges_schema;
 extern int ged_dbot_dump_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_remesh_subcommand_schema;
+extern const struct bu_cmd_schema ged_bot_repair_subcommand_schema;
+extern const struct bu_cmd_schema ged_bot_subd_subcommand_schema;
 
 
 extern int _bot_cmd_decimate(void* bs, int argc, const char** argv);

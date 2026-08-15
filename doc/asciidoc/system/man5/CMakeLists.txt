@@ -2,6 +2,7 @@ if(BRLCAD_EXTRADOCS)
   add_asciidoc("MAN5" STEP.adoc            man5 "" REQUIRED "step-g")
   add_asciidoc("MAN5" attributes.adoc      man5 "" REQUIRED "librt")
   add_asciidoc("MAN5" benchmark.adoc       man5 "" REQUIRED "benchmark")
+  add_asciidoc("MAN5" brlcad-completion.adoc man5 "" REQUIRED "libged")
   add_asciidoc("MAN5" bw.adoc              man5 "" REQUIRED "libicv")
   add_asciidoc("MAN5" cmap.adoc            man5 "" REQUIRED "libdm")
   add_asciidoc("MAN5" dsp.adoc             man5 "" REQUIRED "librt")
@@ -16,6 +17,7 @@ cmakefiles(
   STEP.adoc
   attributes.adoc
   benchmark.adoc
+  brlcad-completion.adoc
   bw.adoc
   cmap.adoc
   dsp.adoc

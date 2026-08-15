@@ -27,10 +27,56 @@
 
 #include <stdlib.h>
 
-
 #include "../ged_private.h"
+#include "zap.h"
 
 extern int ged_zap2_core(struct ged *gedp, int argc, const char *argv[]);
+
+static const struct bu_cmd_option zap_schema_options[] = {
+    BU_CMD_FLAG("h", "help", struct zap_args, print_help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    {"V", "view", "view", "name", "Specify view to clear", BU_CMD_VALUE_STRING,
+	offsetof(struct zap_args, view), NULL, NULL, "ged.view", NULL, 0, 0, NULL,
+	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE},
+    BU_CMD_FLAG("S", "shared", struct zap_args, shared_only, "Clear shared view objects"),
+    BU_CMD_FLAG("v", "view-objs", struct zap_args, clear_view_objs,
+	"Clear view-local objects"),
+    BU_CMD_FLAG("g", "solid-objs", struct zap_args, clear_solid_objs,
+	"Clear database solid objects"),
+    BU_CMD_FLAG(NULL, "all", struct zap_args, clear_all_views, "Clear all scene objects"),
+    BU_CMD_OPTION_NULL
+};
+
+const struct bu_cmd_schema ged_Z_cmd_schema = {
+    "Z", "Clear displayed geometry", zap_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+const struct bu_cmd_schema ged_zap_cmd_schema = {
+    "zap", "Clear displayed geometry", zap_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+GED_DEFINE_NO_ARG_SCHEMA_NAMED(zap_compatibility_schema, "zap",
+    "Clear all displayed geometry", BU_CMD_PARSE_OPTIONS_FIRST);
+static const struct bu_cmd_form ged_zap_native_forms[] = {
+    BU_CMD_FORM_SCHEMA("compatibility", "Legacy no-argument behavior",
+	&zap_compatibility_schema),
+    BU_CMD_FORM_SCHEMA("current", "Selective scene clearing options",
+	&ged_zap_cmd_schema),
+    BU_CMD_FORM_NULL
+};
+
+static const struct bu_cmd_form *
+ged_zap_select_native_form(const struct bu_cmd_forms *forms,
+	size_t UNUSED(argc), const char * const *UNUSED(argv), void *context)
+{
+    const struct ged *gedp = (const struct ged *)context;
+    return gedp && gedp->new_cmd_forms ? &forms->forms[1] :
+	&forms->forms[0];
+}
+
+static const struct bu_cmd_forms ged_zap_forms =
+    BU_CMD_FORMS("zap", "Clear displayed geometry", ged_zap_native_forms,
+	ged_zap_select_native_form);
 
 #define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
 #define FREE_BV_SCENE_OBJ(p, fp) { \
@@ -109,7 +155,11 @@ ged_zap_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
+	char *help = bu_cmd_schema_help(&zap_compatibility_schema, argv[0]);
+	if (help) {
+	    bu_vls_strcat(gedp->ged_result_str, help);
+	    bu_free(help, "zap compatibility help");
+	}
 	return BRLCAD_ERROR;
     }
 
@@ -121,12 +171,52 @@ ged_zap_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_ZAP_COMMANDS(X, XID) \
-    X(Z, ged_zap_core, GED_CMD_DEFAULT) \
-    X(zap, ged_zap_core, GED_CMD_DEFAULT) \
+static int
+ged_zap_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_native_forms_validate(gedp, &ged_zap_forms, input,
+	cursor_pos, result);
+}
 
-GED_DECLARE_COMMAND_SET(GED_ZAP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_zap", 1, GED_ZAP_COMMANDS)
+static int
+ged_zap_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_native_forms_analyze(gedp, &ged_zap_forms, input,
+	analysis);
+}
+
+static char *
+ged_zap_grammar_json(void)
+{
+    return ged_cmd_native_forms_describe_json(&ged_zap_forms);
+}
+
+static int
+ged_zap_grammar_lint(struct bu_vls *msgs)
+{
+    return ged_cmd_native_forms_lint(&ged_zap_forms, msgs);
+}
+
+static char *
+ged_zap_grammar_help(const char *invocation)
+{
+    return ged_cmd_native_forms_help(&ged_zap_forms, invocation);
+}
+
+static const struct ged_cmd_grammar ged_zap_grammar = {
+    "zap", "Clear displayed geometry", ged_zap_grammar_validate,
+    ged_zap_grammar_analyze, ged_zap_grammar_json, ged_zap_grammar_lint, NULL,
+    ged_zap_grammar_help
+};
+
+#define GED_ZAP_COMMANDS(X, XID, N, NID, G, GID) \
+    G(Z, ged_zap_core, GED_CMD_DEFAULT, &ged_zap_grammar) \
+    G(zap, ged_zap_core, GED_CMD_DEFAULT, &ged_zap_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_ZAP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_zap", 1, GED_ZAP_COMMANDS)
 
 /*
  * Local Variables:

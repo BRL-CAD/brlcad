@@ -528,7 +528,7 @@ Halt push operations at the hierarchy level above regions. See <<npush_region_pu
 Halt push operations at the hierarchy level above solids.
 
 
-*-d max_depth*, *--max-depth max_depth*::
+*-d*, *--max-depth* _max_depth_::
 Halt push operations at the hierarchy level specified by __max_depth__. See <<npush_depth_properties,the depth limited push section>> for a description of the properties of depth-limited push that are worth understanding before using this option.
 
 
@@ -580,4 +580,3 @@ BRL-CAD Team
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
-

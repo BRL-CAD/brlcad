@@ -50,6 +50,48 @@ To obtain a report of CPU usage for a portion or portions of your program, frame
 
 __bu_bomb__ can be used to exit your program with _msg_ printed on the standard error output.
 
+== DATABASE PATH ENCODING
+
+`db_full_path_encode()` and `db_full_path_decode()` convert between a
+`struct db_full_path` and its unambiguous, variable-length text representation.
+They are the appropriate APIs for text that will be saved, passed between
+components, or interpreted again as a database path.  `db_full_path_encode()`
+replaces a caller-supplied `bu_vls` only after successful encoding;
+`db_full_path_decode()` similarly replaces an initialized `db_full_path` only
+after successful parsing and database validation.  A failed call leaves its
+output unchanged and returns a `db_full_path_status_t` error code without
+logging a diagnostic for malformed user input.
+
+The canonical representation begins with `/`.  Unescaped `/` separates
+directory entries; literal `/`, `\`, and `@` bytes in an entry name are written
+as `\/`, `\\`, and `\@`, respectively.  A non-root combination member with a
+nonzero instance number is written as an unescaped zero-based `@N` suffix.  For
+example:
+
+[source,text]
+----
+/assembly/bolt.s
+/name\/with\/slashes
+/assembly/member\@name
+/repeat.c/bolt.s@1
+----
+
+`/all.g/child.s` is therefore a hierarchy, whereas `/all.g\/` is the
+single root-level object named `all.g/`.  Empty interior components, a trailing
+unescaped slash, dangling or unsupported escapes, and malformed instance
+suffixes are rejected.  Decoding also verifies that every entry exists and
+that each child is actually a member of the preceding combination.  Boolean
+operation values are reconstructed from the combination tree; they are not
+part of the textual representation.
+
+The older `db_path_to_string()`, `db_path_to_vls()`, and
+`db_string_to_path()` functions retain the historical raw slash-separated
+presentation for API compatibility.  They cannot faithfully distinguish a
+literal slash, backslash, or instance-like `@` suffix from path syntax, and
+new code needing a round trip must use `db_full_path_encode()` and
+`db_full_path_decode()` instead.  Use the legacy functions only at deliberate
+compatibility boundaries where their established raw presentation is required.
+
 
 [[warning]]
 == WARNING

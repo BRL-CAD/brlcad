@@ -314,6 +314,8 @@ set(
   LIBGED_SOURCES
   ${GED_CMD_SRC}
   ${GED_STATIC_REGISTRATION_CPP}
+  command_input.cpp
+  completion_index.cpp
   edit_buf.cpp
   exec.cpp
   ged_init.cpp
@@ -332,6 +334,8 @@ set(
   points_eval.c
   polyclip.cpp
   qray.cpp
+  erase_syntax.c
+  search_syntax.c
   tab_complete.cpp
   trace.c
   vers.c

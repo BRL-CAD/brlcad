@@ -10,14 +10,14 @@ bot - Perform operations on a Bag of Triangles (BoT) primitive.
 
 [source]
 ----
-bot [-v] [-V] [-C [0-255|0-255|0-255]] {subcommand} {subcommand arguments}
+bot [-h] [-v] [-V] [-C r/g/b] {subcommand} {subcommand arguments}
 ----
 
 
 
 [source]
 ----
-check {degen_faces | extra_edges | flipped_edges | open_edges | solid} {objname}
+check [{degen_faces | extra_edges | flipped_edges | manifold | open_edges | solid}] {objname}
 ----
 
 
@@ -31,14 +31,21 @@ chull {input_bot} {output_bot}
 
 [source]
 ----
-decimate [-f #] [-e #] {input_bot} {output_bot}
+decimate [--help] [-c error] [-n error] [-e length] [-f size] [-t tolerance] {input_bot} [output_bot]
 ----
 
 
 
 [source]
 ----
-extrude {input_bot} {output_bot}
+dump [--help] [-b] [-n] [-F] [-m directory | -o file] [-t dxf|glb|gltf|obj|sat|stl] [-u units] [--materials | --no-materials] [{input_bot} ...]
+----
+
+
+
+[source]
+----
+extrude [--help] [-q] [-R] [-F] [-i | -C] [--max-area-delta ratio] [--min-tri-delta ratio] {input_bot} [output_name]
 ----
 
 
@@ -52,7 +59,7 @@ flip {objname}
 
 [source]
 ----
-get {faces | minEdge | maxEdge | orientation | type | vertices} {objname}
+get {faces | minEdge | maxEdge | orientation | type | thickness | vertices} {objname}
 ----
 
 
@@ -66,21 +73,42 @@ isect {objname} {objname2}
 
 [source]
 ----
-remesh {input_bot} {output_bot}
+info {objname} [F | V] [index_or_range ...]
 ----
 
 
 
 [source]
 ----
-set {orientation | type} {objname} {value}
+pick {objname} {E | F | V} [--first] [px py pz dx dy dz]
 ----
 
 
 
 [source]
 ----
-smooth [-c [0|1|2]] [-d [0|1|2]] [-e #] [-E #] [-I #] {input_bot} {output_bot}
+remesh [--help] [--vdb] [-o output_name] {input_bot} [output_name]
+----
+
+
+
+[source]
+----
+repair [--help] [-p percent] [-a area] [-o output_name] {input_bot} [{input_bot} ...]
+----
+
+
+
+[source]
+----
+set {orientation | type | thickness} {objname} {value}
+----
+
+
+
+[source]
+----
+smooth [--help] [-c [0|1|2]] [-d [0|1|2]] [-e error] [-E error] [-I positive_integer] {input_bot} [output_bot]
 ----
 
 
@@ -101,7 +129,7 @@ stat {objname}
 
 [source]
 ----
-subd [-A [1|2|3|4|5]] [-l #] {input_bot} {output_bot}
+subd [--help] [-A [1|2|3|4|5]] [-l positive_integer] {input_bot} [output_bot]
 ----
 
 
@@ -134,6 +162,8 @@ Visualize results when supported by the selected subcommand.
 
 *-C* _r/g/b_, *--color* _r/g/b_::
 Set the RGB plotting color used by visualization-oriented subcommands.
+The color may be written as _r/g/b_, _r,g,b_, _r;g;b_, or as three separate
+values (_r g b_).
 
 
 [[subcommands]]
@@ -141,7 +171,10 @@ Set the RGB plotting color used by visualization-oriented subcommands.
 
 
 *check*::
-Performs the requested check on the provided solid. Checks are __degen_faces__, __extra_edges__, __flipped_edges__, __open_edges__, or _solid_. The command will return a 1 (if the specified check finds an issue) or 0.
+Performs a topology or geometry check on the provided BoT. With only an object
+name, *solid* is the default check. The available checks are *degen_faces*,
+*extra_edges*, *flipped_edges*, *manifold*, *open_edges*, and *solid*. The
+command returns 1 when the selected check finds an issue and 0 otherwise.
 
 
 *chull*::
@@ -149,21 +182,47 @@ Generates the BoT's convex hull and store it in an object.
 
 
 *decimate*::
-Decimates the BoT. The default error metric is Quadric.
+Reduces the BoT triangle count. With no method option it uses GCT with its
+default feature size. Use exactly one method family: GCT (`-f`), classical
+decimation (`-c`, `-n`, and/or `-e`), or simple vertex merging (`-t`).
 +
 
-*-f #*::
-Specifies the features size (implies use of GCT decimater)
+*-c* _error_, *--max-cord-error* _error_::
+Specifies the maximum chord error for classical decimation.
+
+*-n* _error_, *--max-normal-error* _error_::
+Specifies the maximum normal error for classical decimation.
+
+*-e* _length_, *--min-edge-length* _length_::
+Specifies the minimum edge length for classical decimation.
+
+*-f* _size_, *--feature-size* _size_::
+Specifies the GCT feature size.
+
+*-t* _tolerance_, *--merge-tol* _tolerance_::
+Specifies the simple-decimator vertex merge tolerance.
 
 
-*-e #*::
-Specifies the maximum allowed error introduced by decimation (OpenMesh).
 
+
+*dump*::
+Exports one or more BoTs to an external mesh file. With no object operands it
+exports all BoTs in the database. Choose at most one of `-m`/`--output-directory`
+and `-o`/`--output-file`, and at most one of `--materials` and
+`--no-materials`. `-t` selects `dxf`, `glb`, `gltf`, `obj`, `sat`, or `stl`;
+the format otherwise follows the output-file extension or defaults to STL.
+`-u` accepts a BRL-CAD unit expression such as `mm`, `cm`, `in`, or `25cm`.
+See *bot_dump*(nged) for format-specific details.
 
 
 
 *extrude*::
-Generates an ARB6 representation of the specified plate mode BoT object
+Generates a volumetric BoT or, with `-C`/`--comb`, a CSG tree from the specified
+plate-mode BoT. Normal volumetric output requires an output name unless
+`-i`/`--in-place` is used. CSG output may omit its name and defaults to an
+`_extrusion.r_` combination. `--in-place` and `--comb` are mutually exclusive.
+The simplification ratios accepted by `--max-area-delta` and `--min-tri-delta`
+are in the inclusive range 0 through 1.
 
 
 *flip*::
@@ -171,7 +230,22 @@ Flips the BoT triangle normal directions (turns the BoT "inside out"). This will
 
 
 *get*::
-Returns the requested parameter of the provided BoT solid. Valid parameters are _faces_, _minEdge_, _maxEdge_, _orientation_, _type_, or _vertices_.
+Returns the requested parameter of the provided BoT solid. Valid parameters are
+_faces_, _minEdge_, _maxEdge_, _orientation_, _type_, _thickness_, or
+_vertices_.
+
+
+*info*::
+Reports BoT summary counts when used with only an object name. Add `F` for face
+information or `V` for vertex information, optionally followed by integer
+indexes, ranges (`first-last` or `first:last`), or separated index lists.
+
+
+*pick*::
+Identifies the BoT edge (`E`), face (`F`), or vertex (`V`) nearest to the
+current viewport ray, or to the explicit six-coordinate ray `px py pz dx dy
+dz`. `--first` chooses the first comparable edge or vertex along the ray; it
+is not valid with face picks.
 
 
 *isect*::
@@ -179,35 +253,56 @@ Tests if the two provided BoTs intersect (work in progress).
 
 
 *remesh*::
-Creates a new meshed version of the provided object.
+Creates a remeshed version of the provided BoT. If no output name is supplied,
+the input BoT is replaced. Supply the output name either positionally or with
+`-o`/`--output`, but not both. `--vdb` selects the OpenVDB implementation when
+that optional build support is available.
+
+
+*repair*::
+Attempts to repair solid BoTs into manifold geometry. With no output option,
+each input is repaired in place. `-o`/`--output-name` writes a repaired copy
+and consequently requires exactly one input. `-p`/`--max-hole-percent` accepts
+a percentage from 0 through 100; `-a`/`--max-hole-area` supplies a nonnegative
+absolute limit in millimetres.
 
 
 *set*::
-Sets the specified property of the provided bot. Properties that can be set are _orientation_ and _type_. Potential values for _orientation_ are none (no), ccw (rh), or cw (lh). Potential values for _type_ are surface, solid, plate, or plate_nocos.
+Sets the specified property of the provided BoT. Properties that can be set are
+_orientation_, _type_, and _thickness_. Potential values for _orientation_ are
+none (no), ccw (rh), or cw (lh). Potential values for _type_ are surface
+(surf), solid (sol), plate, or plate_nocos; _mode_ is accepted as a
+compatibility alias for _type_. Thickness applies only to plate-mode BoTs. Its
+value is either one finite number for every face, or `face_index:number` to set
+one face.
 
 
 *smooth*::
-Smooths the BoT using OpenMesh's Jacobi Laplace smoother.
+Smooths the BoT using the Jacobi-Laplace smoother.
 +
 
-*-c [0|1|2]*::
-Specifies the continuity. The default value is 0, meaning shape is continuous, but not the tangent. A value of 1 means the shape and tangent are continuous, and a value of 2 preserves curvature.
+*-c* _[0|1|2]_, *--continuity* _[0|1|2]_::
+Specifies continuity. The default is 1 (C1), where shape and tangent are
+continuous. A value of 0 selects C0, and 2 selects C2 (which preserves the
+input positions).
 
 
-*-d [0|1|2]*::
-Specifies the direction. The default is 0,smoothing in tangential direction. A value of 1 smooths in normal direction, and a value of 2 smooths in both tangential and normal directions.
+*-d* _[0|1|2]_, *--direction* _[0|1|2]_::
+Specifies the component direction. The default is 0, smoothing in the
+tangential direction. A value of 1 smooths in the normal direction, and 2
+smooths in both directions.
 
 
-*-e #*::
+*-e* _error_, *--max-local-error* _error_::
 Specifies the max local error.
 
 
-*-E #*::
+*-E* _error_, *--max-abs-error* _error_::
 Specifies the max absolute error.
 
 
-*-I #*::
-Specifies the iterations for smoothing.
+*-I* _positive_integer_, *--iterations* _positive_integer_::
+Specifies the positive number of smoothing iterations.
 
 
 
@@ -224,11 +319,13 @@ Returns information about the provided BoT.
 Subdivides the provided BoT.
 +
 
-*-A [1|2|3|4|5]*::
-Specifies the algorithm used to subdivide the BoT. The default is 1 which specifies the loop algorithm. A value of 2 specfies the sqrt3 algorithm, a value of 3 specifies the sqrt3 interpolating algorithm, a value of 4 specifies modified the butterfly algorithm, and a value of 5 specifies the midpoint alorithm.
+*-A* _[1|2|3|4|5]_, *--algorithm* _[1|2|3|4|5]_::
+Specifies the algorithm used to subdivide the BoT. The default is 1, the Loop
+algorithm. A value of 2 selects Sqrt3, 3 selects interpolating Sqrt3, 4
+selects modified Butterfly, and 5 selects Midpoint.
 
 
-*-l #*::
+*-l* _positive_integer_, *--level* _positive_integer_::
 Specifies the level of subdivision refinement iterations. Note that the number of triangles generated grows _very_ rapidly with increasing iteration counts - it is recommended that users start with small refinements on the target bot to get a feel for the tradeoff between triangle count and smoothness.
 
 

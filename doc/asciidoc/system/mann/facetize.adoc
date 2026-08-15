@@ -10,7 +10,7 @@ facetize - Creates __new_object__ using __old_object__ as a guide, creating an e
 
 [source]
 ----
-facetize [-h] [-v] [-q] [-n] [-r] [-s suffix] [-p prefix] [--in-place] [--max-time #] [--max-pnts #] [--resume] [--methods m1,m2,...] [--method-opts METHOD opt1=val opt2=val...] [--no-empty] [--log-file filename] [--nmg-booleval] [--disable-fixup] [--perturb] [--no-perturb] [--perturb-sa-tol #] [--perturb-vol-tol #] [--tolerate-failures] [-B -t threshold] {old_object new_object}
+facetize [-h] [-v] [-q] [-n] [-r] [-s suffix] [-p prefix] [--in-place] [--max-time #] [--max-pnts #] [--resume] [--methods m1,m2,...] [--method-opts "METHOD opt1=val opt2=val..."] [--no-empty] [--log-file filename] [--nmg-booleval] [--disable-fixup] [--perturb] [--no-perturb] [--perturb-sa-tol #] [--perturb-vol-tol #] [--tolerate-failures] [-B -t threshold] {old_object new_object}
 ----
 
 
@@ -60,31 +60,31 @@ Different tolerance settings will create finer or coarser meshes. See the *tol* 
 == Options
 
 
-*-h, --help*::
+*-h*, *--help*::
 Print help and exit.
 
 
-*-v[v..], --verbose*::
+*-v*, *--verbose*::
 Prints extra (verbose) information in results. May be overridden by the *--quiet* flag.
 
 
-*-q, --quiet*::
+*-q*, *--quiet*::
 Suppress all output (overrides verbosity flag.)
 
 
-*-n, --nmg-output*::
+*-n*, *--nmg-output*::
 Instructs *facetize* to produce NMG solids rather than BoT solids.
 
 
-*-r, --regions*::
+*-r*, *--regions*::
 Rather than converting all specified inputs to one top level object, walk specified trees and individually convert regions to facetized objects. This mode is useful when wanting to display models in shaded mode while preserving color and region ID properties. If no regions are present a normal conversion is performed instead.
 
 
-*-s, --suffix*::
+*-s*, *--suffix* _suffix_::
 User specified suffix to use avoiding naming conflicts (naming conflict avoidance is needed when creating objects in *-r* mode.)
 
 
-*-p, --prefix*::
+*-p*, *--prefix* _prefix_::
 User specified prefix to use avoiding naming conflicts (naming conflict avoidance is needed when creating objects in *-r* mode.)
 
 
@@ -92,11 +92,11 @@ User specified prefix to use avoiding naming conflicts (naming conflict avoidanc
 Replace the specified object(s) with their facetizations. (WARNING: this option is destructive and will change pre-existing geometry!)
 
 
-*--max-time #*::
+*--max-time* _seconds_::
 Maximum time to spend per object (in seconds). Default is method specific. Note that specifying shorter times may cut off conversions (particularly using sampling methods) that could succeed with longer runtimes. Per-method time limits can also be adjusted to allow longer runtimes on slower methods.
 
 
-*--max-pnts #*::
+*--max-pnts* _count_::
 Maximum number of pnts per object to use when applying ray sampling methods.
 
 
@@ -104,19 +104,19 @@ Maximum number of pnts per object to use when applying ray sampling methods.
 Resume an incomplete facetization process (will utilize cached data from a previous run rather than starting from scratch.) Re-running without this option will clear any old data and start from the beginning.
 
 
-*--methods*::
+*--methods* _method[,method...]_::
 Accepts a comma separated list of one or more facetization methods to use. The default is to try all algorithms available as needed, but if a user knows they want to try a specific methodology they can call it out using this option.
 
 
-*--method-opts*::
-This option can be used to pass parameter values to specific facetize methods. The argument format is "METHOD opt1=val1 opt2=val2 ...". See the *--help* output for which methods and parameters are supported by *facetize*.
+*--method-opts* _"METHOD option=value ..."_::
+This option can be used to pass parameter values to specific facetize methods. Its complete argument must be quoted: *--method-opts "METHOD opt1=val1 opt2=val2 ..."*. Each setting is a *key=value* pair. See the *--help* output for which methods and parameters are supported by *facetize*.
 
 
 *--no-empty*::
 Do not write out empty BoT objects when a Boolean evaluation results in an empty mesh.
 
 
-*--log-file*::
+*--log-file* _file_::
 Specify a log file in which to store the full verbose output of a facetization process. This is recommended for large or long running facetize runs to allow users to better understand what steps were taken and what problems might have arisen.
 
 
@@ -134,10 +134,10 @@ Enable the coplanarity-avoidance perturbation step. In per-region mode this beha
 *--no-perturb*::
 Disable the coplanarity-avoidance perturbation retry machinery in BoT Manifold Boolean evaluation. This option conflicts with *--perturb*.
 
-*--perturb-sa-tol #*::
+*--perturb-sa-tol* _percent_::
 Surface-area percentage threshold (0–100) that triggers the coplanarity-avoidance perturb retry when the per-region Crofton-sampled CSG surface area differs from the initial facetized BoT surface area by more than this amount. Default is 10 (percent).
 
-*--perturb-vol-tol #*::
+*--perturb-vol-tol* _percent_::
 Volume percentage threshold (0–100) that triggers the coplanarity-avoidance perturb retry when the per-region Crofton-sampled CSG volume differs from the initial facetized BoT volume by more than this amount. Default is 10 (percent).
 
 *--tolerate-failures*::

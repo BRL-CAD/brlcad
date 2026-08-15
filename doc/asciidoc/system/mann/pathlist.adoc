@@ -10,14 +10,17 @@ pathlist - Lists all existing paths that start from the specified combinations a
 
 [source]
 ----
-pathlist {combinations}
+pathlist [-n|--noleaf] combination
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Lists all existing paths that start from the specified combinations and end at a primitive shape.
+Lists all existing paths that start from the specified combination and end at a
+primitive shape.  The *-n* or *--noleaf* option omits the leaf object from
+each reported path.  The historical *-noleaf* spelling remains accepted for
+compatibility.
 
 
 [[examples]]
@@ -28,9 +31,9 @@ The example shows the use of the *pathlist* command to list all paths that start
 .List all paths that start from given combinations and end at a primitive shape.
 [example]
 ====
-mged>**pathlist group1 region2**
+mged>**pathlist group1**
 
-Lists all existing paths that start from the _combinations group1_ and _region2_ and end at primitive shapes.
+Lists all existing paths that start from _group1_ and end at primitive shapes.
 
 ====
 

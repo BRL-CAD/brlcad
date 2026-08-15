@@ -20,7 +20,6 @@ libged commands
 
 	find, dbfind -> db find
 	version, dbversion -> db version
-	[deprecated 7.44]
 
 include/icv/io.h
 

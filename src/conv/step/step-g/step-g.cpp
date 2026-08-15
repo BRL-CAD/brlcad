@@ -560,12 +560,12 @@ write_report(const std::string &path, const std::string &input,
 void
 usage(const struct bu_opt_desc *options)
 {
-    char *description = bu_opt_describe(options, NULL);
-    bu_log("Usage: step-g [options] input.stp output.g\n"
-	"       step-g [options] -o output.g input.stp\n"
-	"       step-g -D [options] input.stp\n\nOptions:\n%s",
-	description ? description : "");
-    if (description) bu_free(description, "step-g option description");
+    char *help = bu_opt_help(options, "step-g",
+	"input.stp [output.g]\n       step-g [options] -o output.g input.stp\n       step-g -D [options] input.stp",
+	"Convert STEP geometry to a BRL-CAD database");
+    if (help)
+	bu_log("%s", help);
+    if (help) bu_free(help, "step-g option description");
 }
 
 struct OutputFile {

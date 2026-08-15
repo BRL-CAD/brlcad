@@ -10,44 +10,59 @@ material - Used to create, change, retrieve, assign, import, or view materials a
 
 [source]
 ----
-material assign {object_name_pattern} {material_name}
+material assign {object_name} {material_name}
 ----
-
 
 [source]
 ----
-material create {object_name_pattern} {material_name}
+material create {object_name} {material_name}
 ----
-
 
 [source]
 ----
-material import [--id | --name] {file_name}
+material destroy {material_object}
 ----
-
 
 [source]
 ----
-material get {object_name_pattern} [property_group_name] {property_name}
+material get {material_object} {name | parent | source}
 ----
-
 
 [source]
 ----
-material remove {object_name_pattern} [property_group_name] {property_name}
+material get {material_object} {physical | mechanical | optical | thermal} {property_name}
 ----
-
 
 [source]
 ----
-material set {object_name_pattern} [property_group_name] {property_name} {property_value}
+material set {material_object} {name | parent | source} {property_value}
+----
+
+[source]
+----
+material set {material_object} {physical | mechanical | optical | thermal} {property_name} {property_value}
+----
+
+[source]
+----
+material remove {material_object} {name | parent | source}
+----
+
+[source]
+----
+material remove {material_object} {physical | mechanical | optical | thermal} {property_name}
+----
+
+[source]
+----
+material import (--id | --name) {file_name}
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Used to create, change, retrieve, assign, import, or view materials and their properties. Note that properties and property materials are cases sensitive and should not contain whitespace.
+Used to create, change, retrieve, assign, import, or view materials and their properties. Property, property-group, and material-object names are case-sensitive and should not contain whitespace.
 
 A newly formed material will have a minimum of the following data set on creation:
 
@@ -56,9 +71,7 @@ A newly formed material will have a minimum of the following data set on creatio
 
 * name
 
-
-
-Material objects are made up of a name (seperate from the object name), parent value, and source value. All of which are variable length strings.
+Material objects have a name (separate from the database object name), parent value, and source value. All three are variable-length strings.
 
 In addition to the three variable length string properties, material objects also contain four key-value lists used for storing additional material information:
 
@@ -80,7 +93,7 @@ Set the material_name property of the specified object to the specified material
 
 
 *create*::
-Initalize a new material and sets the name property to the value specified.
+Initialize a new material and set its name property to the specified value.
 
 
 *destroy*::
@@ -88,19 +101,19 @@ Destroy the material object.
 
 
 *get*::
-Retrieve a property of the material, optionally from one of the material's four material groups.
+Retrieve a direct property (name, parent, or source), or a named property from one of the four material property groups.
 
 
 *import*::
-Import a density file's entries into material objects. --id denotes the material object names will be the id of the entry in the density table, --name the name of the entry in the density file.
+Import a density file's entries into material objects. Exactly one naming mode is required: --id creates database object names from the density-table IDs (prefixed with `matl`), while --name uses the density-table material names.
 
 
 *remove*::
-Remove a material property from the object. (In the case of name, parent, and source this merely sets those values to NULL).
+Remove a material property from the object. For name, parent, and source this clears the direct property.
 
 
 *set*::
-Set a material property on the object, optionally from one of the material's four material groups.
+Set a direct property or a property in one of the material's four material groups.
 
 
 

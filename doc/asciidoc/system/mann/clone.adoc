@@ -35,6 +35,12 @@ object hierarchy and placing the copies in a regular spatial pattern.
 It can produce a simple linear series, a rectangular grid, or radial
 layouts on spherical and cylindrical coordinate systems.
 
+Where an option takes an XYZ vector, it accepts either three separate
+numbers or one packed value using _x/y/z_, _x,y,z_, or _x;y;z_ notation.
+A quoted _"x y z"_ value is also accepted for Tcl-compatible command
+input.  This applies to *--origin*, *--pivot*, *--dir*, *--translate*,
+*--rotate*, *--atrans*, and *--arot*.
+
 == AXIS-AWARE OPTIONS
 
 Each pattern publishes a fixed list of axes that any of the four
@@ -52,26 +58,26 @@ becomes the default for every axis whose attribute is otherwise unset)
 or an *AXIS=value* form (which binds to that axis only). All four are
 repeatable; later occurrences override earlier ones.
 
-*-n, --copies _N_ | _AXIS=N_*::
+*-n*, *--copies* _N_ \| _AXIS=N_::
 Number of copies along the named axis (or every axis when bare).
 
-*-d, --delta _D_ | _AXIS=D_*::
+*-d*, *--delta* _D_ \| _AXIS=D_::
 Step size between copies along the axis. Degrees for _az_ and _el_;
 model-space distance otherwise.
 
-*--start _V_ | _AXIS=V_*::
+*--start* _V_ \| _AXIS=V_::
 Starting value for the named axis. Defaults to 0 for non-angular
 axes; defaults to -90° for the _el_ axis (south pole) so that a single
 elevation produces a layer at the equator only when explicitly set.
 
-*--list _AXIS=v1 v2..._*::
+*--list* _AXIS=v1,v2,..._::
 Provide an explicit list of values for the named axis. Overrides
 *-n*, *-d*, and *--start* for that axis. Only the *AXIS=* form is
 accepted.
 
 == SPATIAL & ORIENTATION OPTIONS
 
-*-O, --origin _x y z_*::
+*-O*, *--origin* _x y z_::
 Pattern origin in model space. Per-pattern interpretation:
 +
 *lin*: starting position offset (no-op when 0,0,0). +
@@ -79,13 +85,13 @@ Pattern origin in model space. Per-pattern interpretation:
 *sph*: centre of the sphere. +
 *cyl*: centre of the cylinder base.
 
-*-p, --pivot _x y z_*::
+*-p*, *--pivot* _x y z_::
 Pivot point baked into each copy when any rotation is applied — that
 is *-r* in *lin*, or *--align* in *sph*/*cyl*. Defaults to the model
 origin (0,0,0). In *lin* mode, this option doubles as the legacy
 rotation centre for *-r* (formerly *--rpoint*).
 
-*--align _KEYS_*::
+*--align* _KEYS_::
 Comma-separated list of orientation keys. Each copy is rotated so
 that the listed direction(s) follow its position. Valid keys per
 pattern:
@@ -94,7 +100,7 @@ pattern:
 *cyl*: *az* (yaw — also accepts the alias *tan*). +
 *lin*, *rect*: not applicable.
 
-*--dir _AXIS x y z_*::
+*--dir* _AXIS x y z_::
 Direction vector for the named axis. Defaults:
 +
 *rect*: x → (1,0,0), y → (0,1,0), z → (0,0,1). +
@@ -104,22 +110,25 @@ Direction vector for the named axis. Defaults:
 
 == HOUSEKEEPING OPTIONS
 
-*-h, --help*::
+*-h*, *--help*::
 Display help and exit.
 
-*-i, --increment _#_*::
+*-i*, *--increment* _number_::
 Increment used when generating copy names. The first numeric run found
 in each source name is incremented by this value; if no number is
 present the increment is appended. Default 100.
 
-*-c, --second-number*::
+*-c*, *--second-number*::
 Move the naming cursor to the _next_ numeric run in object names. May
 be repeated for the third, fourth, etc. number.
 
-*--depth top|regions|primitives*::
+*--depth* _top_\|_regions_\|_primitives_::
 Controls how deeply the copy hierarchy is constructed. Default is
 *top* for any pattern that produces more than one copy, *primitives*
 for the single-copy linear case.
+
+The short spellings *reg* and *prim* are accepted aliases for
+*regions* and *primitives*, respectively.
 +
 *top* — wrapper combination, source geometry shared. +
 *regions* — every combination down to (and including) the first region
@@ -130,11 +139,11 @@ copied; primitives shared. +
 Before producing the final clone, flatten any matrices that hang
 above the combination members of the source object.
 
-*-g, --group _name_*::
+*-g*, *--group* _name_::
 Collect the produced clones into a top-level combination called
 _name_.
 
-*-s, --subs _sstr_ _rstr_*::
+*-s*, *--subs* _sstr rstr_::
 Substitute the first occurrence of _sstr_ with _rstr_ in every
 generated object name.
 
@@ -143,22 +152,22 @@ generated object name.
 The compact short forms below are accepted only in *lin* mode. They
 exist so that any rel-7-42-2 invocation continues to parse identically:
 
-*-t, --translate _x y z_*::
+*-t*, *--translate* _x y z_::
 Per-copy translation vector. Equivalent to *--dir step _x y z_ -d step
 |x y z|*.
 
-*-r, --rotate _x y z_*::
+*-r*, *--rotate* _x y z_::
 Per-copy rotation in degrees about the X, Y, Z axes (in that order).
 Replaced by *--align* in pattern modes.
 
-*-a, --atrans _n x y z_*::
+*-a*, *--atrans* _n x y z_::
 Total translation _x y z_, split over _n_ copies. Equivalent to *-n n
 -t x/n y/n z/n*.
 
-*-b, --arot _n x y z_*::
+*-b*, *--arot* _n x y z_::
 Total rotation _x y z_ in degrees, split over _n_ copies.
 
-*-m, --mirror _axis_ _d_*::
+*-m*, *--mirror* _axis d_::
 Mirror the source about the plane perpendicular to _axis_ (x, y, or z)
 at distance _d_.
 

@@ -1,0 +1,37 @@
+= GET_BOT_EDGES(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+
+get_bot_edges - list the edges of a BOT primitive
+
+== SYNOPSIS
+
+[source]
+----
+get_bot_edges [--help] bot
+----
+
+== DESCRIPTION
+
+The *get_bot_edges* command lists the unique edges of a BOT (Bag-of-Triangles)
+primitive. Each edge is written as a pair of vertex indices.
+
+=== Options
+
+*-h*, *--help*::
+Print command help without requiring an open database.
+
+== SEE ALSO
+
+*find_bot_edge*(nged), *find_bot_pnt*(nged)
+
+== AUTHOR
+
+BRL-CAD Team
+
+== BUG REPORTS
+
+Report bugs and problems to devs@brlcad.org.

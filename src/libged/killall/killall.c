@@ -27,17 +27,32 @@
 
 #include <string.h>
 
-#include "bu/cmd.h"
+#include "bu/opt.h"
 
 #include "../ged_private.h"
+
+struct killall_args {
+    int print;
+};
+
+#define KILLALL_OPTIONS(args) \
+    BU_OPT_FLAG(args, "n", NULL, print, \
+	"Report affected objects without changing the database"),
+
+BU_OPT_DESC_BUILDER(killall_options, struct killall_args, KILLALL_OPTIONS);
+static const ged_opt_spec killall_opt_spec =
+    GED_OPT("killall", "Delete objects and all references to them",
+	killall_options, "options-first objects:object+");
 
 
 int
 ged_killall_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int nflag;
+    struct killall_args args = {0};
+    const char *command = argv[0];
+    const char **refs_argv = NULL;
+    int object_count;
     int ret;
-    static const char *usage = "[-n] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -49,33 +64,46 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return GED_HELP;
     }
 
-    /* Process the -n option */
-    if (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'n' && argv[1][2] == '\0') {
-	int i;
-	nflag = 1;
+    argc--; argv++;
+    object_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+	argc, argv, killall_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
+    if (object_count < 1) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
+	return BRLCAD_ERROR;
+    }
 
+
+    if (args.print) {
 	/* Objects that would be killed are in the first sublist */
 	bu_vls_printf(gedp->ged_result_str, "{");
-	for (i = 2; i < argc; i++)
+	for (int i = 0; i < object_count; i++)
 	    bu_vls_printf(gedp->ged_result_str, "%s ", argv[i]);
 	bu_vls_printf(gedp->ged_result_str, "} {");
-    } else
-	nflag = 0;
+    }
 
     gedp->ged_internal_call = 1;
-    argv[0] = "killrefs";
-    if ((ret = ged_exec_killrefs(gedp, argc, argv)) != BRLCAD_OK) {
+    refs_argv = (const char **)bu_calloc((size_t)object_count + 2,
+	sizeof(char *), "killall killrefs argv");
+    refs_argv[0] = "killrefs";
+    if (args.print)
+	refs_argv[1] = "-n";
+    for (int i = 0; i < object_count; i++)
+	refs_argv[i + (args.print ? 2 : 1)] = argv[i];
+    if ((ret = ged_exec_killrefs(gedp,
+	object_count + (args.print ? 2 : 1), refs_argv)) != BRLCAD_OK) {
 	gedp->ged_internal_call = 0;
+	bu_free((void *)refs_argv, "killall killrefs argv");
 	bu_vls_printf(gedp->ged_result_str, "KILL skipped because of earlier errors.\n");
 	return ret;
     }
     gedp->ged_internal_call = 0;
+    bu_free((void *)refs_argv, "killall killrefs argv");
 
-    if (nflag) {
+    if (args.print) {
 	/* Close the sublist of objects that reference the would-be killed objects. */
 	bu_vls_printf(gedp->ged_result_str, "}");
 	return BRLCAD_OK;
@@ -88,15 +116,16 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
      * unchanged. */
     {
 	int i;
-	const char **kill_argv = (const char **)bu_calloc(argc + 2, sizeof(char *), "killall kill_argv");
+	const char **kill_argv = (const char **)bu_calloc((size_t)object_count + 3,
+	    sizeof(char *), "killall kill_argv");
 
 	kill_argv[0] = "kill";
 	kill_argv[1] = "-q";
-	for (i = 1; i < argc; i++)
-	    kill_argv[i + 1] = argv[i];
-	kill_argv[argc + 1] = NULL;
+	for (i = 0; i < object_count; i++)
+	    kill_argv[i + 2] = argv[i];
+	kill_argv[object_count + 2] = NULL;
 
-	ret = ged_exec_kill(gedp, argc + 1, kill_argv);
+	ret = ged_exec_kill(gedp, object_count + 2, kill_argv);
 
 	bu_free((void *)kill_argv, "killall kill_argv");
     }
@@ -107,10 +136,10 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_KILLALL_COMMANDS(X, XID) \
-    X(killall, ged_killall_core, GED_CMD_DEFAULT) \
+    X(killall, ged_killall_core, GED_CMD_DEFAULT, &killall_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_KILLALL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_killall", 1, GED_KILLALL_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_KILLALL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_killall", 1, GED_KILLALL_COMMANDS)
 
 /*
  * Local Variables:
