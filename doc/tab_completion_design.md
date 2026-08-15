@@ -67,6 +67,55 @@ rejects a libged command that has only a `bu_opt` parser but no corresponding
 GED metadata: parsing alone does not communicate positional syntax or runtime
 completion policy.
 
+## Current command-description survey
+
+The following is a snapshot of the built-in registry in this branch.  It is
+included to help an author find a comparable command before choosing a
+representation.  The registry contains **353 published command descriptions**.
+Those are command spellings, so aliases and compatibility entry points count
+separately when they deliberately publish separate syntax.
+
+| Published description kind | Count | Commands or command families |
+| --- | ---: | --- |
+| Flat native | 313 | The conventional majority.  This is the common output for both compact `ged_opt_spec` declarations and direct flat `bu_cmd_schema` declarations. |
+| Native forms | 13 | `analyze`, `arb`, `comb`, `env`, `erase`, `mater`, `nmg`, `rselect`, `select`, `who`, and `zap`; some appear more than once because independently registered compatibility spellings select the same named form family. |
+| Native tree | 22 | `adc`, `attr`, `bot`, `brep`, `check`, `constraint`, `data_lines`, `dm`, `dsp`, `edarb`, `grid`, `joint`, `material`, `pnts`, `process`, `qray`, `rect`, `sdata_lines`, `vdraw`, `view`, `view2`, and `view_func`. |
+| Grammar adapter | 1 | `search`, whose parser owns its expression language. |
+| Native action grammar | 1 | `lod`. |
+| Edit-specific composite description | 1 | `edit`. |
+| Delegated grammar | 2 | `blast` and its `B` compatibility spelling, both delegating their draw arguments to `draw`. |
+
+The `native` publication kind intentionally does not distinguish a compact
+option specification from an explicit flat schema: consumers need the same
+normalized grammar in either case.  At the source-registration level there
+are **35** `GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC` declaration sets, **157**
+`...WITH_NATIVE_SCHEMA` sets, **15** `...WITH_GRAMMAR` sets, **19** mixed
+sets, and one currently metadata-free command set (`shrinkwrap`).  A mixed set
+contains more than one of the preceding representations, which is why these
+source counts must not be added to derive the published-command count.
+
+The compact option-specification command spellings are: `ae2dir`, `bb`,
+`color`, `concat`, `dbconcat`, `dir2ae`, `edcodes`, `edcolor`, `editit`,
+`edmater`, `garbage_collect`, `gdiff`, `get_autoview`, `gqa`, `how`, `human`,
+`keep`, `kill`, `killall`, `killrefs`, `killtree`, `l`, `list`, `ls`, `lt`,
+`make`, `man`, `overlay`, `pathlist`, `postscript`, `ps`, `pull`, `push`,
+`shaded_mode`, `showmats`, `summary`, `t`, `tops`, `which`, `which_shader`,
+`whichair`, and `whichid`.  This list includes registered aliases such as
+`l`/`list` and `t`/`ls` where their command spelling needs a distinct
+description.
+
+Regenerate the published-kind portion after changing registrations with:
+
+```sh
+BRLCAD_ROOT="$PWD/.build" .build/bin/gsh --command-schema all |
+  jq -r 'group_by(.kind)[] | "\(.[0].kind) \(length)"'
+```
+
+The source-registration counts can be checked by searching
+`src/libged` for `GED_DECLARE_COMMAND_SET_WITH_`.  Do not use a raw source
+macro count as a substitute for the registry query: one plugin macro may
+register several commands, aliases, or different metadata kinds.
+
 ## Completion query contract
 
 `ged_cmd_validate()` is the lightweight, non-enumerating operation.  It parses
