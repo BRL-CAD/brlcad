@@ -1,0 +1,630 @@
+buopt production-readiness checklist
+====================================
+
+This checklist records the issues found during the post-rebase review of the
+buopt branch.  An item is complete only when the implementation and relevant
+tests are both in place.
+
+[x] Make libged command schema/grammar registries safe during static
+    initialization and concurrent registration/lookup.
+[x] Make semantic-provider initialization and access thread-safe.
+[x] Separate semantic candidate values from command-line insertion encoding
+    and transient-display escaping.  Cover whitespace, quoting characters,
+    Tcl metacharacters, newlines, and terminal control bytes.
+[x] Add schema-selectable database-object completion filters.  Ordinary
+    geometry roles should exclude _GLOBAL; metadata-aware and binary-object
+    commands should explicitly request the broader or specialized sets they
+    support.
+[x] Make a bare Escape cancel gsh completion without blocking for subsequent
+    input bytes.
+[x] Honor the completion layout API's character-cell contract for UTF-8,
+    including wide and combining characters.
+[x] Make MGED terminal cursor positioning safe for wrapped input, and account
+    for wrapped input rows in the Tk one-third-prior-output policy.
+[x] Repaint gsh transient completion displays when a Windows console resize
+    event is received.
+[x] Define and enforce safe initialization/lifetime contracts for public
+    completion and validation result objects.
+[x] Allow qged/libqtcad command completion at an empty prompt.
+[x] Reject negative argc in bu_cmd_schema_parse_complete before size_t casts.
+[x] Audit and either eliminate or explicitly constrain libged unbound schema
+    rows so execution and completion grammars cannot silently drift.
+[x] Pass BRL-CAD's repository regression: portable string/file APIs,
+    bu_setprogname in test mains, required source headers, and editor footers.
+[x] Keep public libbu schema declarations C-only; do not expose C++
+    constructors in public C data structures.
+[x] Preserve attached short-option arguments (for example, draw -m3) across
+    native parsing, validation, option-presence checks, operand counting, and
+    option-span analysis.
+[x] Preserve draw's established transparency and line-width defaults when
+    native options are absent.
+[x] Update the GQA plotting test for canonical encoded display-list paths.
+[x] Keep non-command database-attribute readers on the supported bu_opt API
+    and limit the native-schema source audit to actual command parsers.
+[x] Keep independently launched fbserv stress suites from racing for
+    overlapping ports while preserving simultaneous worker/server startup;
+    report closed-peer writes as failures instead of terminating on SIGPIPE.
+[x] Correct MGED's appended Configure binding so GUI initialization does not
+    execute a stray closing brace, and exercise GUI binding installation in a
+    display-independent Tcl regression test.
+[x] Remove the quadratic candidate-validation path from empty database-object
+    completion, keep option spellings out of object listings, recognize an
+    editable `--` as a long-option prefix, and avoid sorting every possible
+    summary refinement during large completion layouts.
+[x] Add regression coverage for all corrected behavior and run the full build,
+    bu_opt compatibility tests, schema/completion tests, frontend PTY tests,
+    available Qt tests, and regress-repository.
+[x] Keep bu_opt as the approachable option-authoring API while exposing
+    side-effect-free completion and validation inferred from every standard
+    bu_opt reader.
+[x] Add an ABI-safe per-option sidecar for aliases, custom value types,
+    candidates, hints, variable token counts, and context-aware validators.
+[x] Add a reentrant builder macro so commands declare familiar option rows
+    once and use them for parsing, help, completion, and schema publication.
+[x] Add a compact GED option specification for positional roles and command
+    constraints, retaining full native schemas and parser-owned grammars only
+    for cases that need their additional expressiveness.
+[x] Convert representative ordinary, constrained, and context-sensitive GED
+    commands (bb, kill, and ls) to the compact facade and preserve hidden,
+    type-filtered, alias, and _GLOBAL completion behavior.
+[x] Add and registration-time lint a compact positional DSL for ordinary
+    option specifications.  Cover cardinalities, GED semantic providers,
+    inline keyword vocabularies, inclusive numeric domains, common positive
+    and nonnegative domains, and standard color/vector/pattern token shapes.
+[x] Survey the remaining full schemas for repeated declarative patterns.
+    Keep keyword metadata with aliases/descriptions, command-specific
+    validation, heterogeneous repeated groups, subcommand trees, and
+    parser-owned languages in native C definitions rather than growing the
+    textual facade into a second programming language.
+[x] Preserve and test punctuation short options used by legacy commands, and
+    make runtime-generated compact schemas own their command names rather than
+    relying on registration-call pointer lifetimes.
+[x] Identify custom multi-token option values from the parser's structural
+    result rather than a fixed backward-search window; cover values wider than
+    the built-in color/vector forms.
+[x] Reject overflowing option-builder row counts before allocating the
+    required terminal descriptor.
+
+Deep tab-completion API and scaling review (2026-08-13)
+-------------------------------------------------------
+
+[x] Separate syntax/semantic validation from candidate generation.  A
+    validation-only query must not enumerate candidates, and one completion
+    request must invoke its selected semantic completer at most once.  The
+    public `ged_cmd_validate` API now has that direct behavior; the redundant
+    completion-free validation alias was removed.
+[x] Remove generic per-candidate reconstruction and whole-command validation.
+    Select context-dependent providers once from parsed command state; expose
+    an explicit lightweight candidate predicate only for the rare rules whose
+    legality actually depends on the proposed value.
+[x] Make cursor handling correct in the middle of command, option, quoted,
+    escaped, UTF-8, object, and database-path tokens.  Track the full token,
+    decoded prefix through the cursor, raw prefix/suffix spans, and the exact
+    replacement range separately.
+[x] Add deterministic provider-call-count and mid-line replacement tests, plus
+    scaling tests which prevent broad object/path completion from regressing
+    to quadratic behavior.
+[x] Filter database directory entries by type and prefix before sorting,
+    encode each matching name once, and avoid a second whole-database search
+    for ordinary unescaped hierarchy paths.
+[x] Add a database completion index with reliable mutation invalidation so
+    root-object prefixes are O(log N + matches), while retaining command-
+    selected hidden, _GLOBAL, binary, primitive, combination, and region
+    policies.
+[x] Add a request-oriented completion API with a candidate budget, total and
+    returned counts, truncation state, and independently computed common
+    prefix.  Keep a compatibility wrapper for existing callers.
+[x] Bound transient-layout work independently of terminal dimensions.  Limit
+    materialized candidates and summary-frontier size, precompute UTF-8 widths
+    within each layout, retain the candidate set for resize-only repaints, and
+    debounce Qt resize rendering.  A 10,000-candidate/100-row regression test
+    guards the layout path.
+[x] Reuse the cursor parse throughout one completion request, avoid growing-
+    prefix revalidation in native schema analysis, and replace recursive
+    "copy schema and clear custom_validate" patterns with the explicit
+    bu_cmd_schema_validate_syntax API.
+[x] Improve experimental API ownership and clarity: const provider data,
+    status separate from count, explicit byte-offset terminology, documented
+    token-grammar candidate ownership, and removal of result fields duplicated
+    by `expected` or `hint`.
+[x] Convert the last potentially large composite database provider
+    (geometry-or-primitive) and filesystem provider to bounded query
+    interfaces, including full-set total/common-prefix metadata.  File
+    completion now scans a directory once and retains O(K) rather than O(N)
+    candidate storage for a K-entry request.
+[x] Keep parser-owned grammar adapters on the same classify-then-enumerate
+    path as flat schemas.  Native tree/form adapters and delegated commands
+    now use syntax-only validation, search publishes its context-selected
+    object provider instead of scanning directly, and custom BREP component
+    indices honor the caller's materialization budget while reporting
+    full-set count, truncation, and common-prefix metadata.
+[x] Keep the compatibility fallback for metadata-free commands on that same
+    path: syntax-only validation classifies the object/path role without a
+    database scan, and the outer request performs one bounded query.
+[x] Keep custom final-value predicates from breaking filesystem navigation or
+    bounded extension filtering.  Directory candidates remain available as
+    intermediate paths, while graph's SVG role selects an extension-aware
+    provider before applying its final-value validator.
+[x] Release the allocated NULL-only argv returned by empty command and
+    database queries; repeated no-match completion must not leak.
+[x] Re-run the full targeted completion/schema/frontend suite, repository
+    regression, and measured large-database/layout benchmarks before declaring
+    this section complete.
+
+Post-squash review and follow-up (2026-08-13)
+---------------------------------------------
+
+[x] Preserve bu_opt callback parsing without speculative NULL-storage calls.
+    Standard flags are classified from descriptor metadata, opaque callbacks
+    are invoked exactly once with their actual storage, and partially known
+    compact flag words remain untouched pass-through operands.
+[x] Apply command candidate predicates inside bounded semantic providers before
+    the materialization limit.  Report total, truncation, and common prefix for
+    the full valid set rather than for a filtered prefix of that set.
+[x] Keep hierarchical completion proportional to the selected subtree.  Slash
+    paths query only direct children of the decoded parent, and pathsum, paths,
+    and listeval now combine their space-separated path components before
+    selecting that parent.
+[x] Reduce completion-index memory by storing stable directory-entry iterators
+    in the reverse map instead of a second copy of every database object name.
+[x] Generate standard command help from schema data.  libbu now emits a
+    POSIX-style synopsis plus description, options (including aliases),
+    operands, repeated groups, and constraint hints; libged exposes the same
+    output by registered command name.  rm, list/l, and the straightforward BoT
+    command family now use generated help rather than duplicated option text.
+[x] Remove rm's growing-prefix custom-validator cost.  Its force-sensitive
+    hidden/global completion policy is selected once by a request-aware
+    semantic provider, keeping analysis of arbitrarily long rm commands linear.
+[x] Replace the gsh, MGED, and QgConsole fixed candidate limits with a shared
+    viewport-derived budget.  Truncated MGED and QgConsole displays requery
+    after resize so a larger console can expose more candidates; all frontends
+    retain the one-third-prior-output/two-thirds-completion policy.
+[x] Rename private "legacy" parser symbols that actually implement the
+    supported bu_opt descriptor callback contract.  Genuine compatibility
+    aliases remain documented as such, but bu_opt is no longer described as a
+    retirement shim.
+[x] Compile and run qgconsole_completion_modes in the shared Qt-enabled build
+    after the viewport-budget API change.  The test now declares its ProFont
+    data dependency and tells Qt's offscreen backend where build-tree fonts
+    are staged.
+[x] Restore qged's intended Inconsolata console font.  The font survived the
+    earlier console/resource refactors in the source tree, but its resource
+    entry and selection logic did not; qged once again embeds and selects it.
+Standard help and documentation audit (2026-08-13)
+--------------------------------------------------
+
+[x] Add standard synopsis/help builders for bu_opt descriptors, native flat
+    schemas, native trees, and registered GED commands.  Generated schema help
+    now includes aliases, operands, repeated groups, constraints, keyword
+    values (with aliases and descriptions), and numeric domains.
+[x] Make a shaped multi-token operand appear once in a synopsis.  For example,
+    a packed point or three XYZ words is one semantic `point`, not three
+    independently optional point values.
+[x] Audit production bu_opt users which printed a literal Usage string.  Every
+    such command/program now obtains its option list from bu_opt_help or
+    bu_opt_usage; the only metadata-free match left by the source audit is an
+    internal libbv test program.
+[x] Convert schema-backed help sites to the standard generators wherever the
+    metadata describes the executable syntax.  The pass touched 197 libged
+    implementation modules (229 help-producing source sites) and 22 executable
+    entry points, in addition to shared frontend support modules.
+[x] Correct option-definition styling in 35 AsciiDoc man pages.  Short and long
+    spellings are separate bold spans, argument metavariables are italic rather
+    than part of the option name, and definition-list punctuation is uniform.
+    All changed pages convert successfully with asciiquack's manpage backend.
+[x] Correct the metaball point metadata uncovered by the help audit.  Its
+    execution parser once again accepts both the packed and three-coordinate
+    forms, including the relative move option, and completion does not
+    revalidate an individual coordinate as a complete vector.
+
+[x] Add a first-class alternative-form abstraction to libbu.  A form should
+    have a label/description and a complete schema or tree; one form set must
+    drive validation, parsing, help, JSON, lint, and completion.  The private
+    libged native-form adapter used by who and zap is a useful prototype, but
+    keeping this concept outside the common metadata leaves commands such as
+    make_name unable to publish `template` versus `-s [number]` as exclusive
+    standard synopses.  Public form sets now drive selection, validation,
+    parsing/dispatch, help, JSON, lint, and GED completion adapters; ambiguous
+    partial forms remain incomplete and merge compatible candidates rather
+    than becoming prematurely invalid.
+[x] Add a declarative grouped-value/form facility for non-vector alternatives,
+    notably orient's packed quaternion versus four scalar components.  The
+    vector3 shape now documents ordinary packed-or-XYZ points correctly, but a
+    command-specific count validator remains opaque to help and JSON.  Named
+    argument variants now publish each accepted spelling and token width, and
+    the standard color, RGB, vector, counted-vector, optional-scalar, orient,
+    edit, faceplate, and other custom shapes use them.
+[x] Complete metadata for parser-owned and dynamically assembled command
+    families.  Search needs human descriptions on its shared term vocabulary;
+    edit, joint, faceplate, and vdraw need inspectable command/form records;
+    env needs its list/get/set forms represented rather than a raw root tail.
+    Search terms now carry shared descriptions; edit publishes its generic
+    operation tree; joint, faceplate, and vdraw expose their command records;
+    and env publishes distinct list/get/set forms.
+[x] Replace the remaining exact syntax prose in 20 production schema-bearing
+    libged modules.  Most are incomplete nested leaves or mode-dependent
+    grammars (db, comb, arb/edbot, view objects/polygons, nmg, pnts, qray,
+    facetize, and related helpers), not simple missed calls to the generator.
+    Do not delete these strings until their schemas can generate equivalent
+    output; doing so would make help less correct while concealing missing
+    specifications.  The nested db, comb, arb/BoT, view object/polygon/
+    faceplate, NMG, pnts, qray, analyze, and facetize paths now generate their
+    structural help from schemas or form/tree metadata.
+
+[x] Correct executor/metadata mismatches found while replacing the remaining
+    faceplate help.  Rectangle backgrounds are colors, the executable axes
+    spelling is `axes_color`, Boolean values are limited to zero or one,
+    positive/nonnegative numeric domains are shared by validation and help,
+    parameter setters read the supplied value rather than the subcommand name,
+    and invalid colors/font sizes no longer use uninitialized storage.
+[x] Add concise one-sided integer and number range initializers and option/
+    operand macros so common positive, nonnegative, ceiling, and floor domains
+    do not need artificial maximum values or custom validators.
+[x] Treat generated help metadata as the executable contract rather than
+    reproducing known defects in historical prose.  Correct stale MGED help
+    exit-status expectations and make invalid hierarchical completion parents
+    return zero candidates instead of a positive error code that could be
+    mistaken for a materialized result.
+
+Lower-priority follow-up opportunities
+---------------------------------------
+
+These are not recommended as merge blockers.  They are deliberately deferred
+because the current measured paths are bounded and the additional abstraction
+would be a substantially larger API change without a demonstrated caller need.
+
+* Continue opportunistically migrating schema-backed commands that still
+  assemble usage/options prose by hand.  The generator is now the normative
+  path; command-specific examples, caveats, and extended explanations should
+  be appended after its output rather than restating syntax.  This is ongoing
+  maintenance rather than a finite merge-readiness defect.
+* A public parsed-command/scan object could share work across separate calls to
+  analysis, validation, option-presence, and completion.  Within an individual
+  completion request the parse is already shared; most callers make only one of
+  these queries, so a public lifetime-bearing object would currently add more
+  ownership complexity than saved work.
+* Structured candidate records could carry distinct insertion and display
+  strings.  Providers currently return values in their declared token grammar
+  and frontends own shell/Tcl display encoding.  Introduce records only if a
+  provider needs genuinely different insertion and display values; doing it
+  speculatively would make every simple provider more verbose.
+* Parser-owned languages such as search may eventually expose one inspect tree
+  for execution, validation, completion, and JSON.  They are intentionally
+  retained as parser-owned grammars today: forcing them into the ordinary
+  option schema would duplicate their language or turn the compact schema DSL
+  into a general parser generator.
+
+Deep post-rebase review follow-up (2026-08-14)
+----------------------------------------------
+
+[x] Make every BU_CMD_VALUE_CUSTOM parser honor NULL storage as a
+    side-effect-free validation request.  Correct the pnts radius, radii, and
+    thread-count consumers and test all three through schema validation.
+[x] Fully initialize transient bu_cmd_schema records built by the bu_opt
+    adapters, including cases and terminal-action metadata.  Exercise them
+    with poisoned stack storage in parsing and validation tests.
+[x] Release ged_cmd_analysis storage on every completion path, including the
+    public context result, and add a repeated completion ownership regression.
+[x] Make QgConsole completion rows genuinely transient: displaying, resizing,
+    and removing candidates must never evict or alter permanent console
+    history, even when the document is at its maximum block count.
+[x] Pass QgConsole's complete editable command and cursor byte offset to GED
+    completion so mid-token and mid-line replacement preserves the suffix.
+    Apply the same rule to preview filtering.
+[x] Recompute MGED wrapped-input erase geometry using the current terminal
+    width after resize.  Cover both narrowing and widening long input.
+[x] Separate executable form selection from interactive continuation so a
+    valid short form does not hide candidates from a viable longer form.
+[x] Make command-tree/form dispatch honor the root schema and all child-phase
+    policies, including root options, fixed operands, aliases, and nesting.
+[x] Replace the O(candidate_count * row_count) full-layout search with a
+    bounded or incremental algorithm and test the narrow/tall maximum-budget
+    case.
+[x] Replace compact bu_opt's repeated prefix validations with one structural
+    analysis and one custom validation per actual option value.
+[x] Bound the database completion cache by retained bytes/candidates, use a
+    useful eviction policy, and avoid retaining very large materialized query
+    vectors.
+[x] Apply filesystem candidate predicates during the directory scan rather
+    than materializing an unbounded pre-filter result.
+[x] On gsh resize, rebuild both the displayed and selectable completion state
+    while preserving the selected value when possible.
+[x] Avoid repeated DSR timeout delays and preserve non-DSR input bytes when a
+    terminal does not answer cursor-position queries.
+[x] Add one authoritative completion-result merger which preserves limits,
+    full-set totals, truncation, common prefixes, and deduplication when static
+    and semantic candidates are combined.
+[x] Unify libbu and GED schema linting and run it transactionally on the exact
+    schema being registered.  Diagnose unknown semantic providers without
+    emitting pre-main log output.
+[x] Make rich keyword linting reject every canonical/alias collision,
+    including a later canonical matching an earlier alias and duplicate
+    aliases within one row.
+[x] Use the shared Boolean reader for syntax validation so validation and
+    execution agree for empty and malformed attached values.
+[x] Define a portable C++ binding policy for schema storage.  Keep byte-offset
+    bindings limited to standard-layout records and provide an explicit
+    alternative for non-standard-layout command state.
+[x] Reuse QgConsole's completion model rather than accumulating parented
+    QStringListModel objects over repeated updates.
+[x] Extend the focused and stress suites to cover every defect above, then run
+    the all-target Ninja build, completion/schema/frontend suites, repository
+    regression, and git diff checks.
+
+Post-squash deep review follow-up (2026-08-14)
+-----------------------------------------------
+
+[x] Preserve an explicit decoded-byte-to-raw-byte boundary map while MGED
+    normalizes Tcl words for completion.  Use that map for replacement and
+    cursor offsets so quoting and backslash substitution cannot corrupt the
+    original command.  Cover quoted words, escaped spaces, escaped slashes and
+    backslashes, UTF-8, and mid-token suffixes; the current m35.g reproducer
+    turns `draw component\/suspension/r2` into
+    `draw component\/suspensionr22`.
+[x] Make dynamic command and schema loading one retained, transactional
+    operation.  Never register schema pointers from the temporary inspection
+    handle when the generalized plugin load failed, and do not publish an
+    executable command if its metadata is malformed.  Add a plugin fixture
+    with a rejected generic manifest and an otherwise readable schema
+    manifest to guard against dangling registry pointers.
+[x] Publish each command implementation, compatibility alias, and exactly one
+    metadata kind atomically.  Treat duplicate metadata as part of the same
+    first-wins decision, roll back on failure, serialize initialization
+    diagnostics, and stress simultaneous duplicate registration to prove that
+    an implementation cannot be paired with another declaration's schema.
+[x] Make built-in semantic-provider ownership independent of call order.
+    Install built-ins before accepting public registrations, reserve the
+    `ged.*` namespace (or require an explicit override policy), and test an
+    attempted built-in-name registration before the first lookup.
+[x] Give semantic providers a complete C-facing contract.  Publish their
+    result value type and capability flags in the provider record rather than
+    classifying built-ins with string comparisons, document candidate/result
+    ownership, and keep the implementation free to own registration records
+    with C++17 RAII.  Ensure shutdown removes custom provider data before its
+    documented lifetime ends.
+[x] Define and test libged lifecycle semantics.  Either make shutdown a
+    synchronized terminal state which rejects every later registry operation,
+    or make initialization and teardown repeatable; do not leave command,
+    schema, or semantic-provider registries in different generations.  Clear
+    metadata before unloading the modules which own its callback and string
+    pointers.
+[x] Compute every full-set common prefix on a valid UTF-8 boundary in the
+    shared completion layer rather than repairing it in individual
+    frontends.  Make QgConsole's command, candidate, and source-offset
+    conversions explicitly UTF-8 instead of locale-dependent local-8-bit
+    conversions, and cover candidates whose first differing code points share
+    an initial UTF-8 byte.
+[x] At an empty search path/expression position, merge bounded database-path
+    candidates with the valid static search options and expression terms.
+    Preserve hidden-object policy and exact total/truncation/common-prefix
+    metadata while ensuring `_GLOBAL` remains excluded from ordinary search
+    path completion.
+[x] Validate and normalize semantic-provider output at the registry boundary:
+    candidate pointer/count consistency, total count no smaller than the
+    materialized count, truncation consistency, bounded materialization, and a
+    valid full-set common prefix.  Clamp frontend summary arithmetic as a
+    defensive fallback and add malformed-provider tests.
+[x] Reduce compact GED declaration boilerplate without inferring semantic
+    aliases from storage or help text.  One typed GED_RULE_* table now holds
+    aliases, forms, database roles/type cases, semantic refinements,
+    constraints, and validators and is normalized into owned schema storage
+    once at registration.  All 17 production sources which formerly needed
+    compact metadata sidecars use the table, identical metadata can name
+    multiple options in one row, and all 40 BU_OPT_DESC_BUILDER definitions
+    use the concise BU_OPT_* field-binding rows wherever the callback binds an
+    ordinary argument field.  The remaining raw rows intentionally pass the
+    whole argument record to custom readers.  Explicit compatibility aliases
+    are covered by registry JSON tests rather than guessed from shared
+    storage; the source audit prevents a return to per-kind sidecars or raw
+    conditional field bindings.
+[x] Consolidate the duplicated bu_opt-to-native-schema adapter logic in libbu
+    and libged so type, arity, optional-value, shaped-value, alias, validator,
+    and standard-candidate inference have one implementation.  Likewise share
+    and cache search's immutable type vocabulary instead of rebuilding and
+    maintaining it in both the generic provider and parser-owned grammar.
+[x] Resolve aliases during the shared adapter build.  An alias inherits the
+    canonical option's type, shape, cardinality, candidates, validator,
+    semantic role, and argument requirement unless it explicitly overrides
+    presentation metadata.  Reject unknown targets and cycles, remove the
+    typed-alias workaround, and verify parse/help/JSON/completion equivalence
+    for standard and opaque option readers.
+[x] Make flat-rule declarations counted.  Add a rule count to ged_opt_spec,
+    derive it in declaration macros, and stop reading caller memory in search
+    of a missing sentinel.  Preserve GED_RULE_NULL as an optional readability
+    marker only if doing so cannot conceal an incorrect count.
+[x] Make the first broad root completion scale as well as repeated queries.
+    Add a genuinely cold 100k-object test, then replace the per-entry map build
+    and full matching-range scan for built-in policies with a prefix-oriented
+    index carrying aggregate count/common-prefix metadata and bounded ordered
+    materialization.  Retain a scan fallback for arbitrary candidate filters
+    and verify database mutation invalidation.
+[x] Debounce QgConsole semantic highlighting so ordinary edits do not
+    synchronously reparse the entire command on every keystroke.  Split the
+    largest new implementation and test files by responsibility after the API
+    behavior is settled, preserving the existing focused and scaling
+    coverage.
+[x] Modularize the corrected implementation along useful ownership boundaries.
+    Database completion generations and command-input parsing now have focused
+    C++17 modules; the immutable search vocabulary belongs to librt; registry
+    lifecycle/plugin transactions and scaling have independent tests; MGED and
+    QgConsole retain their frontend-offset suites.  Keep the public libbu and
+    libged boundaries C-only and document the new public adapter functions.
+
+Steady-state review follow-up (2026-08-14)
+------------------------------------------
+
+[x] Extend the libged activity lease beyond command execution.  Help, JSON,
+    lint, validation, analysis, completion, form/tree adapters, and semantic
+    provider callbacks must remain valid while shutdown waits; registrations
+    attempted during teardown must be rejected deterministically.
+[x] Enforce one metadata representation across every registration entry point,
+    reject malformed or reserved command names before normalization can split
+    implementation and metadata keys, and cover direct-API collisions.
+[x] Preserve natural candidate ordering for bounded broad-prefix index queries.
+    Replace the lexical fast-path with a range-minimum natural-rank index so a
+    100,000-match query remains O(log N + K log N) without changing behavior.
+[x] Reject truncated semantic-provider results that cannot prove a valid UTF-8
+    common prefix for the complete filtered set, and add a malformed bounded
+    provider regression.
+[x] Give ged_cmd_lookup a stable documented result lifetime and omit synthetic
+    `_mged_` aliases; its current pointer refers to a destroyed foreach
+    snapshot as soon as the function returns.
+[x] Propagate parser, grammar, and semantic-provider failures through the
+    bounded completion API; reject inconsistent truncated materializations,
+    distinguish a valid empty common prefix from missing metadata, and remove
+    the arbitrary 65,536-entry ceiling from explicitly unbounded queries.
+[x] Make outward-facing validation, analysis, and completion metadata strings
+    result-owned before releasing the registry lease.  Fix the command-name
+    completion snapshot leak, retain repeated analysis strings in one
+    deduplicated allocation instead of two allocations per token, and verify
+    retained results remain valid across shutdown and repeated clear
+    operations.
+[x] Remove quadratic compact-schema highlighting.  Resolve option-selected DB
+    providers once per complete argv with a private analysis plan, apply later
+    context options consistently to earlier operands, and cover a 5,000-value
+    `ls ... -a` analysis workload.
+[x] Finish the completion-index and metadata ownership cleanup.  Build policy,
+    natural-order, and range-minimum views only when requested; share the DB
+    path encoder and object-policy predicate rather than maintaining parallel
+    copies; make command-list snapshots explicitly owned/NULL-terminated; and
+    require every parser-owned grammar to provide generated help.  Give the
+    analysis result the same explicit initializer/reusable-result contract as
+    validation and completion results.
+[x] Release the temporary argv used by filtered bu_opt help generation; the
+    richer standard-help path makes repeated filtered descriptions a normal
+    API use rather than a one-shot process-lifetime allocation.
+[x] Release gsh's owned command-list snapshot after `--command-schema all`;
+    the newly explicit ged_cmd_list ownership contract applies to early-exit
+    introspection paths as well as interactive completion.  Update the schema
+    round-trip and plugin-enumeration tests to follow the same contract.
+[x] Make natural completion ordering a total order.  Numerically equivalent
+    spellings such as `1` and `01` must have a deterministic lexical tiebreak
+    so bounded index queries, heaps, and full-result normalization agree; use
+    relational comparison rather than overflowing unsigned subtraction for
+    maximum-width numeric suffixes.
+[x] Enforce exact truncated-result metadata at the final completion boundary,
+    not only for named semantic providers.  Parser-owned grammar callbacks
+    must supply a full-set total and allocated (possibly empty) common prefix;
+    never derive insertion text from an arbitrary displayed subset.  Apply
+    the same UTF-8, prefix, uniqueness, filter, budget, and natural-order
+    normalization to grammar materializations as to named providers.
+[x] Make every reusable public validation, analysis, and completion result
+    transactional on failure.  Clear old contents before argument/lifecycle
+    checks and clear partially populated grammar/tree/form callback output on
+    error, so frontends never retain stale metadata or need callback-specific
+    failure cleanup.  Exercise deliberately failing grammar callbacks and an
+    invalid bounded-completion request with previously populated results.
+[x] Clamp cursor offsets once at the shared command-input parser boundary so
+    validation adapters cannot publish source spans beyond the supplied input
+    when an editor reports a stale or oversized cursor position.
+[x] Make natural ordering independent of machine integer width and C numeric
+    syntax.  Compare arbitrary-length decimal digit runs directly, retain a
+    deterministic lexical tiebreak for equivalent zero-padded spellings, and
+    cover values beyond ULONG_MAX in bounded and unbounded indexed queries.
+[x] Enforce the counted flat-rule contract.  A retained GED_RULE_NULL visual
+    terminator is valid only as the final counted row; reject a premature END
+    rather than silently hiding subsequent author declarations.
+[x] Apply the reusable-result transaction contract uniformly at the libbu
+    boundary.  Descriptor, builder, schema, shaped-value, tree, and form
+    validation now release stale and partially callback-populated candidates
+    on every failure.  An empty command-schema result reports an unknown role
+    rather than misleadingly defaulting to string; focused tests reuse seeded
+    results across invalid arguments, builder failures, and failing callbacks.
+[x] Bound the database index's policy-view cache, not only its returned
+    candidate vectors.  Ignore unsupported flag bits when selecting a view
+    and evict least-recently-used O(database-size) policy arrays after a fixed
+    limit; exercise normalization and eviction against the 100,000-object
+    database.
+[x] Document borrowed registration lifetimes consistently for command,
+    native-schema, compact-schema, grammar, and semantic-provider metadata,
+    including the transactional failure rule for parser-owned callbacks.
+[x] Re-run the all-target build, focused 100,000-object and lifecycle races,
+    exhaustive completion corpus, frontend tests, repository/license checks,
+    and final diff audit after these fixes.
+
+Verification notes
+------------------
+
+* The final steady-state pass completes warnings-as-errors all-target rebuilds
+  after the result-ownership and bounded policy-cache fixes (1,168 actions for
+  the consistent rebuild and 154 actions after the last source audit).  All
+  126 selected libbu, schema, lifecycle, 100,000-object, exhaustive corpus,
+  Qt, gsh, MGED GUI/PTY, native-source, repository, license, and change-policy
+  tests pass in 14.19 seconds.  The cold scale test, including 64 policy-cache
+  probes, finishes in 6.90 seconds.  Focused Memcheck runs report no definite
+  leaks or invalid accesses for command schemas, failing bu_opt callbacks, or
+  registry/plugin shutdown.  git diff --check is clean.
+
+* The final post-squash implementation completes a 1,607-action all-target
+  Ninja rebuild.  The 125-test focused selection passes in full after the new
+  lifecycle test was brought into repository-policy compliance: all bu_opt
+  and command-schema tests, both command-analysis datasets, the exhaustive
+  completion corpus, the cold 100,000-object scale test, registry/plugin
+  lifecycle transactions, Qt console behavior, gsh and MGED terminal/GUI
+  paths, native-schema source audit, license and change-policy checks, and
+  regress-repository.  The scale test takes 5.12 seconds including database
+  construction, and the completion corpus takes 11.88 seconds.
+
+* The post-squash follow-up adds a cold 100,000-object root benchmark, a
+  rejected-manifest plugin fixture, concurrent command/schema publication,
+  repeatable shutdown/provider cleanup, counted-rule, alias-chain, malformed
+  provider, UTF-8, Tcl quoting/backslash, Qt debounce, and search-union
+  regressions.  The focused completion-scale test finishes in under four
+  seconds in the unoptimized warnings-as-errors build; warm broad-prefix
+  materialization is required to remain below 250 ms.
+
+* The compact-rule and option-row cleanup completes an all-target Ninja build
+  and passes all 135 focused libbu option/schema/help, GED command/completion,
+  Qt console, gsh, MGED, source-audit, repository, license, and change-policy
+  tests.  Runtime schema checks cover every compact command alias declaration,
+  and git diff --check is clean.
+* The 2026-08-14 post-rebase follow-up completes an all-target Ninja build and
+  passes all 118 focused bu_opt, schema, file, line-editor, command-analysis,
+  completion-corpus, Qt console, gsh, MGED, and source-audit tests.  The
+  repository and license regressions pass, and git diff --check is clean.
+* The post-review all-target Ninja rebuild completes successfully.  The final
+  focused pass covers all 100 libbu schema/bu_opt/line-editor tests, both
+  libged command-analysis suites, seven gsh/MGED terminal completion tests,
+  the MGED completion bridge, and the repository and license regressions.
+  git diff --check is clean.
+* The final help/form follow-up completes a 1,762-action all-target Ninja
+  rebuild and passes 118 focused schema, bu_opt, completion-corpus, Qt console,
+  gsh, MGED, and license tests, plus regress-repository.
+* The Ninja build completes successfully.
+* The schema, command-analysis, completion-corpus, gsh PTY, MGED PTY/bridge,
+  bu_opt compatibility, BoT, license, and repository regression tests pass.
+* The gsh resize/cursor PTY test passes repeatedly to exercise its timing path.
+* The shared Qt-enabled Debug build compiles qged and libqtcad with warnings as
+  errors and passes qgconsole_completion_modes using its declared build-tree
+  font dependency.
+* A post-rebase full 1,277-test CTest run completed with 1,274 passes.  One
+  failure is the intentional test-target sentinel.  The native-schema source
+  audit exposed an over-broad policy check and now passes after limiting the
+  bu_opt exemption to a non-command scalar-reader source.  slow-bigdb_5gb was
+  killed under the eight-way full-suite memory load and passed alone in 70.6
+  seconds.  All other tests, including bu_process_all, both fbserv stress
+  tests, changes-rules, GQA, and all drawing tests, passed in the full run.
+* The fbserv quick and heavy stress suites pass ten consecutive runs with both
+  suites launched concurrently after assigning automatic invocations disjoint
+  bounded port slots.
+* The MGED GUI binding test and all MGED CLI/completion tests pass after the
+  Configure binding correction; repository and license regressions also pass.
+* All 97 bu_opt tests and both command-analysis suites, including the m35.g
+  completion corpus, pass with the compact positional DSL enabled.
+* On m35.g in the Debug build, `ls ` completion generation drops from about
+  5.15 seconds to 11 milliseconds.  A 100-column, 30-row summary drops from
+  about 486 to 315 milliseconds; the normal two-row GUI budget takes about 14
+  milliseconds.  Empty `ls ` completion contains objects only, while `ls --`
+  offers all ten long options.
+* The deep-review final tree completes the all-target Ninja build, passes
+  git diff --check and regress-repository, and passes all 118 targeted libbu,
+  schema, command-analysis, completion-corpus, gsh, and MGED tests.  The
+  100,000-object analysis/scaling test, including the broad empty-prefix
+  `ls /` case, `draw /`, composite geometry-or-primitive queries, and cache
+  mutation checks, finishes in about 2.9 seconds.  The 10,000-candidate/100-row
+  layout test finishes as part of a 0.27-second line-editor test.
+* A focused Memcheck replay of the delegated `blast` grammar passes after
+  correcting its transferred common-prefix ownership.  The exhaustive native
+  completion corpus passes in 11.4 seconds; its optional whole-corpus Memcheck
+  run was stopped after more than twelve CPU-bound minutes with stable memory
+  and no diagnostics.
