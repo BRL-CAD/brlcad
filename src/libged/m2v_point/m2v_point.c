@@ -92,11 +92,13 @@ ged_m2v_point_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_M2V_POINT_COMMANDS(X, XID) \
-    X(m2v_point, ged_m2v_point_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(m2v_point, "m2v_point", "Convert a model point to view coordinates", "point", BU_CMD_VALUE_NUMBER, 3, 3, "X Y Z point");
 
-GED_DECLARE_COMMAND_SET(GED_M2V_POINT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_m2v_point", 1, GED_M2V_POINT_COMMANDS)
+#define GED_M2V_POINT_COMMANDS(X, XID) \
+    X(m2v_point, ged_m2v_point_core, GED_CMD_DEFAULT, &m2v_point_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_M2V_POINT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_m2v_point", 1, GED_M2V_POINT_COMMANDS)
 
 /*
  * Local Variables:

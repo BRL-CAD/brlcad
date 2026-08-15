@@ -82,7 +82,16 @@ check_command(struct ged *gedp, const char **args, int expected, const char *mes
 
     while (args[argc])
 	argc++;
+    const char **original = (const char **)bu_malloc((size_t)argc * sizeof(*original),
+	"repair argument snapshot");
+    memcpy(original, args, (size_t)argc * sizeof(*original));
     ret = ged_exec_repair(gedp, argc, args);
+    int reordered = memcmp(original, args, (size_t)argc * sizeof(*original)) != 0;
+    bu_free(original, "repair argument snapshot");
+    if (reordered) {
+	bu_log("FAIL: repair reordered the caller's arguments\n");
+	return 1;
+    }
     if (ret != expected || !strstr(bu_vls_cstr(gedp->ged_result_str), message)) {
 	bu_log("FAIL: %s returned %d: %s\n", args[0], ret,
 		bu_vls_cstr(gedp->ged_result_str));
@@ -114,6 +123,10 @@ main(int argc, char **argv)
 	    BRLCAD_OK, "success", "with_tol.s"},
 	{{"repair", "blastsectionD", "--output-name=long_option.s", NULL},
 	    BRLCAD_OK, "success", "long_option.s"},
+	{{"repair", "blastsectionD", "-t0.01", "-oattached.s", NULL},
+	    BRLCAD_OK, "success", "attached.s"},
+	{{"repair", "-o", "delimited.s", "--", "blastsectionD", NULL},
+	    BRLCAD_OK, "success", "delimited.s"},
 	{{"repair", "--options-json", "-o", "query.s", "blastsectionD", NULL},
 	    BRLCAD_OK, "options", NULL},
 	{{"repair", "-o", "rejected.s", "--invalid-option", "blastsectionD", NULL},
@@ -122,9 +135,11 @@ main(int argc, char **argv)
 	    BRLCAD_ERROR, "Invalid repair options", NULL},
 	{{"repair", "-o", "rejected.s", "-t", "bad", "blastsectionD", NULL},
 	    BRLCAD_ERROR, "Invalid repair options", NULL},
+	{{"repair", "-o", "rejected.s", "-p", "5", "blastsectionD", NULL},
+	    BRLCAD_ERROR, "Invalid repair options", NULL},
 	{{"repair", "-o", "arbfixed.s", "blastsectionD", NULL},
 	    BRLCAD_ERROR, "already exists", NULL},
-	{{"repair", "-o", NULL}, BRLCAD_ERROR, "missing", NULL},
+	{{"repair", "-o", NULL}, BRLCAD_ERROR, "Invalid repair options", NULL},
 	{{"repair", "missing.s", NULL}, BRLCAD_ERROR, "No valid object", NULL},
 	{{"repair", "-h", NULL}, GED_HELP, "Usage:", NULL},
 	{{"repair", NULL}, GED_HELP, "Usage:", NULL}

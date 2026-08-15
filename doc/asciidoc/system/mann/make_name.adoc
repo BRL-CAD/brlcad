@@ -29,7 +29,7 @@ The counter is shared across all calls within the same session and persists unti
 [[options]]
 == OPTIONS
 
-*-s [num]*::
+*-s* [_num_]::
 Set the internal counter to `num`. If `num` is omitted, the counter is reset to 0.
 
 [[examples]]

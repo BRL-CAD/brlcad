@@ -93,11 +93,13 @@ ged_setview_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_SETVIEW_COMMANDS(X, XID) \
-    X(setview, ged_setview_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(setview, "setview", "Set view rotation angles", "angles", BU_CMD_VALUE_NUMBER, 3, 3, "X Y Z angles in degrees");
 
-GED_DECLARE_COMMAND_SET(GED_SETVIEW_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_setview", 1, GED_SETVIEW_COMMANDS)
+#define GED_SETVIEW_COMMANDS(X, XID) \
+    X(setview, ged_setview_core, GED_CMD_DEFAULT, &setview_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_SETVIEW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_setview", 1, GED_SETVIEW_COMMANDS)
 
 /*
  * Local Variables:

@@ -103,11 +103,13 @@ ged_fbclear_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_FBCLEAR_COMMANDS(X, XID) \
-    X(fbclear, ged_fbclear_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(fbclear, "fbclear", "Clear the framebuffer", "color", BU_CMD_VALUE_COLOR, 0, 1, "Optional packed RGB color");
 
-GED_DECLARE_COMMAND_SET(GED_FBCLEAR_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_fbclear", 1, GED_FBCLEAR_COMMANDS)
+#define GED_FBCLEAR_COMMANDS(X, XID) \
+    X(fbclear, ged_fbclear_core, GED_CMD_DEFAULT, &fbclear_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_FBCLEAR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_fbclear", 1, GED_FBCLEAR_COMMANDS)
 
 /*
  * Local Variables:

@@ -189,7 +189,6 @@ ged_solids_on_ray_core(struct ged *gedp, int argc, const char *argv[])
     vect_t ray_dir;
     point_t extremum[2];
     vect_t unit_H, unit_V;
-    static const char *usage = "[h v]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -200,21 +199,15 @@ ged_solids_on_ray_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
     if (argc != 1 && argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
 
     if (argc == 3 &&
 	(sscanf(argv[1], "%d", &h) != 1 ||
 	 sscanf(argv[2], "%d", &v) != 1)) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -293,11 +286,18 @@ ged_solids_on_ray_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_SOLIDS_ON_RAY_COMMANDS(X, XID) \
-    X(solids_on_ray, ged_solids_on_ray_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand solids_on_ray_schema_operands[] = {
+    BU_CMD_OPERAND("screen_coordinates", BU_CMD_VALUE_INTEGER, 0, 2, "Optional horizontal and vertical screen coordinates", NULL),
+    BU_CMD_OPERAND_NULL
+};
+GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(solids_on_ray, 0, 2, GED_SCHEMA_COUNT_NONE)
+static const struct bu_cmd_schema solids_on_ray_cmd_schema = {"solids_on_ray", "List displayed solids intersected by a view ray", NULL, solids_on_ray_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(solids_on_ray_schema_validate, NULL)};
 
-GED_DECLARE_COMMAND_SET(GED_SOLIDS_ON_RAY_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_solids_on_ray", 1, GED_SOLIDS_ON_RAY_COMMANDS)
+#define GED_SOLIDS_ON_RAY_COMMANDS(X, XID) \
+    X(solids_on_ray, ged_solids_on_ray_core, GED_CMD_DEFAULT, &solids_on_ray_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_SOLIDS_ON_RAY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_solids_on_ray", 1, GED_SOLIDS_ON_RAY_COMMANDS)
 
 /*
  * Local Variables:

@@ -40,8 +40,10 @@ This copy has been simplified down to the essential sorting comparison of C stri
 */
 
 #include "common.h"
-#include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
+
+#include "bu/str.h"
 
 /**
   compare l and r with C string comparison semantics, but using
@@ -57,6 +59,8 @@ This copy has been simplified down to the essential sorting comparison of C stri
 static int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
 {
     enum alphanum_mode_t { STRING, NUMBER } mode=STRING;
+    const char *original_l = l;
+    const char *original_r = r;
 
     while(*l && *r)
     {
@@ -94,29 +98,28 @@ static int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
 	}
 	else // mode==NUMBER
 	{
-	    // try to get the numbers
-	    char *lend, *rend;
-	    unsigned long l_int=strtoul(l, &lend, 0);
-	    unsigned long r_int=strtoul(r, &rend, 0);
+	    const char *lend = l;
+	    const char *rend = r;
+	    const char *lsig = l;
+	    const char *rsig = r;
+	    while (isdigit((unsigned char)*lend)) lend++;
+	    while (isdigit((unsigned char)*rend)) rend++;
+	    while (lsig < lend && *lsig == '0') lsig++;
+	    while (rsig < rend && *rsig == '0') rsig++;
 
-	    if (lend == l || rend == r) {
-		// One or more of the numerical conversions failed.  Fall back
-		// on char comparison
-		char l_char=*l;
-		char r_char=*r;
-		const int diff = l_char - r_char;
-		if(diff != 0) return diff;
-		++l;
-		++r;
-	    } else {
-		// Numerical conversion successful - proceed
-		l=lend;
-		r=rend;
-		// if the difference is not equal to zero, we have a comparison result
-		const long diff=l_int-r_int;
-		if(diff != 0)
-		    return diff;
+	    /* Compare decimal digit runs directly.  Conversion through a machine
+	     * integer misorders values beyond ULONG_MAX and base-zero conversion
+	     * gives leading zeroes unintended octal semantics. */
+	    size_t llen = (size_t)(lend - lsig);
+	    size_t rlen = (size_t)(rend - rsig);
+	    if (llen < rlen) return -1;
+	    if (llen > rlen) return 1;
+	    if (llen) {
+		int diff = memcmp(lsig, rsig, llen);
+		if (diff) return diff;
 	    }
+	    l=lend;
+	    r=rend;
 
 	    // otherwise we process the next substring in STRING mode
 	    mode=STRING;
@@ -125,7 +128,11 @@ static int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
 
     if(*r) return -1;
     if(*l) return +1;
-    return 0;
+    /* Numerically equivalent runs may have different spellings (for example,
+     * "1" and "01").  A lexical tiebreak makes this a total order, keeps
+     * bounded heaps and full sorts consistent, and fulfills the documented
+     * zero-only-for-equal contract. */
+    return bu_strcmp(original_l, original_r);
 }
 #endif //ALPHANUM_H
 

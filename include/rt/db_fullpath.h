@@ -113,6 +113,77 @@ RT_EXPORT extern void db_dup_path_tail(struct db_full_path *newp,
 
 
 /**
+ * Status values returned by db_full_path_decode() and
+ * db_full_path_encode().  The legacy db_path_to_*() and
+ * db_string_to_path() APIs predate this syntax and do not return these
+ * detailed errors.
+ */
+typedef enum {
+    DB_FULL_PATH_OK = 0,
+    DB_FULL_PATH_INVALID = -1,  /**< Invalid API argument or path structure. */
+    DB_FULL_PATH_SYNTAX = -2,   /**< Malformed escaped path text. */
+    DB_FULL_PATH_LOOKUP = -3,   /**< A named directory entry was not found. */
+    DB_FULL_PATH_RELATION = -4, /**< Consecutive entries are not parent/child. */
+    DB_FULL_PATH_INSTANCE = -5  /**< Invalid or unavailable combination instance. */
+} db_full_path_status_t;
+
+
+/**
+ * Encode a db_full_path using the unambiguous database-path syntax.
+ *
+ * This function replaces the contents of @p out on success and leaves it
+ * unchanged on failure.  @p out must be an initialized, valid bu_vls; the
+ * function does not initialize or free an uninitialized output object.  It
+ * does not impose a fixed path-length limit.
+ * Canonical output begins with '/', separates hierarchy components with '/',
+ * and escapes literal '\\', '/', and '@' bytes in directory-entry names with
+ * a preceding '\\'.  A nonzero fp_cinst value is emitted as an unescaped,
+ * zero-based @N suffix on a non-root component.
+ *
+ * The encoded text preserves path identity (directory entries and combination
+ * instance indices), but not fp_bool.  Boolean values are relationship
+ * metadata and are re-derived by db_full_path_decode().  The text is a
+ * database-path syntax, not shell, Tcl, or argv quoting.
+ *
+ * Use this routine whenever text will later be interpreted as a database
+ * path, including command completion, saved path references, and command
+ * results intended for re-input.  The legacy db_path_to_string() and
+ * db_path_to_vls() routines intentionally retain their raw slash-separated
+ * presentation behavior for compatibility.  They cannot distinguish a name
+ * containing '/' from multiple hierarchy components and must not be used for
+ * new round-trippable path text.
+ */
+RT_EXPORT extern int db_full_path_encode(struct bu_vls *out,
+				 const struct db_full_path *path);
+
+
+/**
+ * Decode the unambiguous database-path syntax emitted by
+ * db_full_path_encode().
+ *
+ * @p out must be an initialized db_full_path.  On success its previous
+ * contents are released and replaced.  On failure it is left unchanged.  The
+ * parser accepts an optional leading '/' for command-input convenience, while
+ * db_full_path_encode() always emits one.  Empty interior components, a
+ * trailing unescaped '/', malformed escapes, and unescaped '@' characters
+ * that are not a zero-based decimal instance suffix are rejected.
+ *
+ * Every decoded component is resolved in @p dbip, and each adjacent pair must
+ * be a real combination/member relationship.  The resulting directory
+ * pointers therefore remain valid only while @p dbip remains open and
+ * unchanged.  Parsing is quiet: callers receive a db_full_path_status_t value
+ * and no diagnostic is logged for invalid user input.
+ *
+ * This routine is the inverse of db_full_path_encode().  It is deliberately
+ * separate from legacy db_string_to_path(), whose raw slash syntax is
+ * ambiguous for directory-entry names containing '/'.
+ */
+RT_EXPORT extern int db_full_path_decode(struct db_full_path *out,
+				 const struct db_i *dbip,
+				 const char *pathstr);
+
+
+/**
  * Unlike rt_path_str(), this version can be used in parallel.
  * Caller is responsible for freeing the returned buffer.
  */
@@ -144,7 +215,11 @@ RT_EXPORT extern void db_pr_full_path(const char *msg,
 
 
 /**
- * Reverse the effects of db_path_to_string().
+ * Parse the legacy raw slash-separated path presentation used by
+ * db_path_to_string().  This format is retained for compatibility, but it is
+ * ambiguous when directory-entry names contain '/', '\\', or instance-like
+ * '@' suffixes.  New code requiring round-trippable path text should use
+ * db_full_path_decode() and db_full_path_encode().
  *
  * The db_full_path structure will be initialized.  If it was already
  * in use, user should call db_free_full_path() first.

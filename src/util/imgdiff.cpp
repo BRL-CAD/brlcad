@@ -103,7 +103,6 @@ main(int ac, const char **av)
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     struct bu_vls slog = BU_VLS_INIT_ZERO;
 
-    const char *diff_usage = "imgdiff [options] img1 img2";
     struct bu_opt_desc icv_opt_desc[] = {
 	{"h", "help",             "",           NULL,         &need_help,             "Print help and exit."                      },
 	{"?", "",                 "",           NULL,         &need_help,             "",                                         },
@@ -133,9 +132,10 @@ main(int ac, const char **av)
     /* First, see if help was requested or needed */
     if (uac < 2 || uac > 3 || need_help) {
 	/* Print help */
-	char *help = bu_opt_describe(icv_opt_desc, NULL);
-	bu_log("%s\nOptions:\n", diff_usage);
-	bu_log("%s\n", help);
+	char *help = bu_opt_help(icv_opt_desc, "imgdiff", "img1 img2 [output]",
+	    "Compare two images and report their differences");
+	if (help)
+	    bu_log("%s", help);
 	bu_free(help, "help str");
 	goto cleanup;
     }
@@ -319,4 +319,3 @@ cleanup:
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

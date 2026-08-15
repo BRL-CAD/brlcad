@@ -27,9 +27,8 @@
 
 #include <string.h>
 
-#include "bu/cmd.h"
-#include "bu/getopt.h"
 #include "bu/hash.h"
+#include "bu/opt.h"
 
 #include "../ged_private.h"
 
@@ -52,6 +51,29 @@ struct killtree_data {
     struct bu_hash_tbl *queued;
     struct bu_hash_tbl *visited;
 };
+
+
+struct killtree_args {
+    int killrefs;
+    int force;
+    int print;
+};
+
+
+#include "../include/plugin.h"
+
+#define KILLTREE_OPTIONS(args) \
+    BU_OPT_FLAG(args, "a", NULL, killrefs, \
+	"Remove references from outside the deleted trees"), \
+    BU_OPT_FLAG(args, "f", NULL, force, \
+	"Force deletion of protected global data"), \
+    BU_OPT_FLAG(args, "n", NULL, print, \
+	"Report changes without modifying the database"),
+
+BU_OPT_DESC_BUILDER(killtree_options, struct killtree_args, KILLTREE_OPTIONS);
+static const ged_opt_spec killtree_opt_spec =
+    GED_OPT("killtree", "Delete database object trees",
+	killtree_options, "options-first objects:object+");
 
 
 /* this finds references to 'obj' that are not within the 'topobj'
@@ -192,9 +214,11 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int i;
-    int c;
     struct killtree_data gktd;
-    static const char *usage = "[-a|-f|-n] object(s)";
+    struct killtree_args args = {0, 0, 0};
+    int object_count = 0;
+    const char **objects = NULL;
+    const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -205,14 +229,24 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return GED_HELP;
     }
 
+    argc--; argv++;
+    object_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+	argc, argv, killtree_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
+    if (object_count < 1) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
+	return BRLCAD_ERROR;
+    }
+
+    objects = argv;
+
     gktd.gedp = gedp;
-    gktd.killrefs = 0;
-    gktd.print = 0;
-    gktd.force = 0;
+    gktd.killrefs = args.killrefs;
+    gktd.print = args.print;
+    gktd.force = args.force;
     gktd.ac = 1;
     gktd.top = NULL;
     gktd.pending_ac = 0;
@@ -226,50 +260,27 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     gktd.av[0] = "killrefs";
     gktd.av[1] = (char *)0;
 
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "afn")) != -1) {
-	switch (c) {
-	    case 'a':
-		gktd.killrefs = 1;
-		break;
-	    case 'n':
-		gktd.print = 1;
-		gktd.av[gktd.ac++] = bu_strdup("-n");
-		gktd.av[gktd.ac] = (char *)0;
-		break;
-	    case 'f':
-		gktd.force = 1;
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		bu_free(gktd.av, "free av (error)");
-		gktd.av = NULL;
-		bu_free(gktd.pending, "free pending names (error)");
-		gktd.pending = NULL;
-		bu_hash_destroy(gktd.visited);
-		gktd.visited = NULL;
-		return BRLCAD_ERROR;
-	}
+    if (gktd.print) {
+	gktd.av[gktd.ac++] = bu_strdup("-n");
+	gktd.av[gktd.ac] = (char *)0;
     }
-
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
 
 
     /* Update references once before we start all of this - db_search
      * needs nref to be current to work correctly. */
     db_update_nref(gedp->dbip);
 
+
     /* Objects that would be killed are in the first sublist */
     if (gktd.print)
 	bu_vls_printf(gedp->ged_result_str, "{");
 
-    for (i = 1; i < argc; i++) {
-	dp = db_lookup(gedp->dbip, argv[i], LOOKUP_QUIET);
+    for (i = 0; i < object_count; i++) {
+	dp = db_lookup(gedp->dbip, objects[i], LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL) {
-	    size_t name_len = strlen(argv[i]);
-	    if (!bu_hash_get(gktd.visited, (const uint8_t *)argv[i], name_len))
-		(void)db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY);
+	    size_t name_len = strlen(objects[i]);
+	    if (!bu_hash_get(gktd.visited, (const uint8_t *)objects[i], name_len))
+		(void)db_lookup(gedp->dbip, objects[i], LOOKUP_NOISY);
 	    continue;
 	}
 
@@ -278,7 +289,7 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 
 	/* stash the what's killed so we can find refs elsewhere */
-	gktd.top = argv[i];
+	gktd.top = objects[i];
 
 	gktd.queued = bu_hash_create(0);
 	db_treewalk_basic(gedp->dbip, dp,
@@ -330,13 +341,11 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-#include "../include/plugin.h"
-
 #define GED_KILLTREE_COMMANDS(X, XID) \
-    X(killtree, ged_killtree_core, GED_CMD_DEFAULT) \
+    X(killtree, ged_killtree_core, GED_CMD_DEFAULT, &killtree_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_KILLTREE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_killtree", 1, GED_KILLTREE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_KILLTREE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_killtree", 1, GED_KILLTREE_COMMANDS)
 
 /*
  * Local Variables:

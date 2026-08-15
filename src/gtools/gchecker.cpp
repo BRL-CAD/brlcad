@@ -50,20 +50,13 @@
 #include "ged.h"
 
 static void
-_cmd_help(const char *usage, struct bu_opt_desc *d)
+_cmd_help(struct bu_opt_desc *d)
 {
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    char *option_help;
-
-    bu_vls_sprintf(&str, "%s", usage);
-
-    if ((option_help = bu_opt_describe(d, NULL))) {
-        bu_vls_printf(&str, "Options:\n%s\n", option_help);
-        bu_free(option_help, "help str");
-    }
-
-    bu_log("%s", bu_vls_cstr(&str));
-    bu_vls_free(&str);
+    char *help = bu_opt_help(d, bu_getprogname(), "file.g [objects ...]",
+	"Check geometry using staged ray tracing");
+    if (help)
+	bu_log("%s", help);
+    bu_free(help, "help str");
 }
 
 
@@ -74,7 +67,6 @@ main(int argc, const char **argv)
     int dry_run = 0;
     int verbose = 0;
     int force = 0;
-    const char *usage = "Usage: gchecker [options] file.g  [objects ...]\n\n";
     struct bu_opt_desc d[5];
     BU_OPT(d[0], "d", "dry-run", "",  NULL, &dry_run,     "Step through the checker stages, but don't raytrace");
     BU_OPT(d[1], "v", "verbose", "",  NULL, &verbose,     "Print verbose information about result processing");
@@ -93,7 +85,7 @@ main(int argc, const char **argv)
 
        /* must be wanting help */
     if (argc < 1) {
-        _cmd_help(usage, d);
+        _cmd_help(d);
         return 0;
     }
 
@@ -101,7 +93,7 @@ main(int argc, const char **argv)
     int opt_ret = bu_opt_parse(NULL, argc, argv, d);
 
     if (print_help) {
-        _cmd_help(usage, d);
+        _cmd_help(d);
         return 0;
     }
 
@@ -109,7 +101,7 @@ main(int argc, const char **argv)
     argc = opt_ret;
 
     if (argc < 1) {
-	_cmd_help(usage, d);
+	_cmd_help(d);
 	return 1;
     }
 

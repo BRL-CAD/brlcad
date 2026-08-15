@@ -20,6 +20,6 @@ regression_check_vector [view quat] $expected_quat $view_tolerance "restored ori
 set projected_center [m2v_point {*}$expected_center]
 regression_check_vector [lrange $projected_center 0 1] {0 0} $view_tolerance "restored projected center"
 regression_check_vector [size] $expected_size $view_tolerance "restored size"
-regression_assert {[lsearch -exact [who] saveview_sph.s] >= 0} "loadview did not restore the displayed object"
+regression_assert {[lsearch -exact [who] /saveview_sph.s] >= 0} "loadview did not restore the displayed object"
 
 puts "*** 'loadview' testing completed ***"
