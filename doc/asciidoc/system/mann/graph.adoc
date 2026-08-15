@@ -4,57 +4,77 @@
 :manmanual: BRL-CAD MGED Commands
 
 == NAME
-graph - Used to query and manipulate properties of the graph that corresponds to the currently opened .g database.
+
+graph - generate a database hierarchy graph
 
 == SYNOPSIS
 
 [source]
 ----
-graph [show] [positions]
+graph [options] output.svg
+graph --igraph [show|positions]
 ----
 
-
-[[description]]
 == DESCRIPTION
 
-Used to query and manipulate properties of the graph that corresponds to the currently opened .g database. The "show" subcommand displays a list of names and types of the objects from the database along with the positions within the graph of their corresponding nodes and their connection edges. The "positions" subcommand displays for each object in the geometric database its name, type, and node and positions within the graph.
+The *graph* command creates a diagram of the currently open database's
+hierarchy.  Its normal form writes an SVG document to _output.svg_.  The
+output filename must use the `.svg` suffix.
 
+The `--igraph` form retains the textual graph operations used by older
+GraphEditor/igraph scripts.  It takes exactly one operation: `show` reports
+nodes and connections, and `positions` reports object-node positions.
 
-[[examples]]
+The command requires the Adaptagrams support library.  Builds without that
+library register the command but report that graph generation is unavailable.
+
+== OPTIONS
+
+*-h*, *--help*::
+Print command usage.
+
+*--tree*::
+Collapse the diagram to a spanning tree, limiting each node to at most one
+incoming graph edge.
+
+*--skip-routing*::
+Write nodes without calculating connector routes.
+
+*--depth* _depth_::
+Limit hierarchy traversal to a non-negative depth.
+
+*--root-obj* _object_::
+Use _object_ as a traversal root.  This option may be repeated to draw several
+rooted subgraphs.
+
+*--igraph*::
+Select the legacy textual mode.  Follow it with `show` or `positions` rather
+than an SVG filename.
+
 == EXAMPLES
 
-The examples demonstrate the use of the *graph* command and subcommands to access information about the representation of the objects of a database.
-
-.Displays a list with the name and type of the objects along with the nodes' and edges' positions.
+.Write an SVG of the complete hierarchy
 [example]
 ====
-
-mged> **graph show**::
-Displays a list with the name and type of the objects along with the nodes' and edges' positions.
-
-
-
+mged> *graph hierarchy.svg*
 ====
 
-.Lists the names, types, positions of the corresponding nodes within the graph for the objects in the .g database.
+.Write a depth-limited graph rooted at an assembly
 [example]
 ====
-
-mged> **graph positions**::
-Lists the names, types, positions of the corresponding nodes within the graph for the objects in the currently opened .g database.
-
-
-
+mged> *graph --root-obj all.g --depth 3 assembly.svg*
 ====
 
+.Use the legacy textual position report
+[example]
+====
+mged> *graph --igraph positions*
+====
 
-[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
-[[bug_reports]]
 == BUG REPORTS
 
-Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+Report problems to devs@brlcad.org.

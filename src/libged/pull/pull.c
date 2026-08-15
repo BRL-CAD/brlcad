@@ -30,11 +30,23 @@
 #include <string.h>
 
 
-#include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "bn.h"
 
 #include "../ged_private.h"
+
+
+struct pull_args {
+    int debug;
+};
+
+#define PULL_OPTIONS(a) \
+    BU_OPT_FLAG(a, "d", NULL, debug, "Enable tree-walk debugging"),
+BU_OPT_DESC_BUILDER(pull_options, struct pull_args, PULL_OPTIONS);
+
+static const ged_opt_spec pull_opt_spec =
+    GED_OPT("pull", "Pull transformations up an object tree",
+	pull_options, "options-first object:object");
 
 
 void
@@ -212,8 +224,10 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     mat_t mat;
-    int c;
-    static const char *usage = "object";
+    struct pull_args args = {0};
+    int operand_count = 0;
+    const char *object = NULL;
+    const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -224,37 +238,30 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return GED_HELP;
     }
 
-    if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    argc--; argv++;
+    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+	argc, argv, pull_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
+    if (operand_count != 1) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
 
+    if (args.debug)
+	rt_debug |= RT_DEBUG_TREEWALK;
+    object = argv[0];
+
     /* get directory pointer for arg */
-    if ((dp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((dp = db_lookup(gedp->dbip, object, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return BRLCAD_ERROR;
 
     /* Checks whether the object is a primitive.*/
     if (dp->d_flags & RT_DIR_SOLID) {
 	bu_log("Attempt to pull primitive, aborting.\n");
 	return BRLCAD_ERROR;
-    }
-
-    /* Parse options */
-    bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "d")) != -1) {
-	switch (c) {
-	   case 'd':
-		rt_debug |= RT_DEBUG_TREEWALK;
-		break;
-	  case '?':
-	  default:
-		bu_vls_printf(gedp->ged_result_str, "ged_pull_core: usage pull [-d] root \n");
-		break;
-	}
     }
 
     /*
@@ -275,10 +282,10 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_PULL_COMMANDS(X, XID) \
-    X(pull, ged_pull_core, GED_CMD_DEFAULT) \
+    X(pull, ged_pull_core, GED_CMD_DEFAULT, &pull_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_PULL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_pull", 1, GED_PULL_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_PULL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_pull", 1, GED_PULL_COMMANDS)
 
 /*
  * Local Variables:

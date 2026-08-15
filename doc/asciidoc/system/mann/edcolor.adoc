@@ -10,7 +10,7 @@ edcolor - Puts the user into an editor to edit a file that has been filled with 
 
 [source]
 ----
-edcolor [] []
+edcolor [-E editor]
 ----
 
 
@@ -18,6 +18,9 @@ edcolor [] []
 == DESCRIPTION
 
 Puts the user into an editor to edit a file that has been filled with the ident-based color lookup table. The entire table may be seen with the *prcolor* command, and entries may be added using the color command. The editor used is whatever the user has set in the environment variable _EDITOR_. If _EDITOR_ is not set, then _/bin/ed_ is used.
+
+The optional *-E editor* argument selects a specific editor command instead of
+the default.  With no options, *edcolor* opens the default editor.
 
 
 [[examples]]

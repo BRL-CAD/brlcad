@@ -1106,12 +1106,11 @@ BRLMAN_MAIN(
 
     /* If we want help, print help */
     if (print_help) {
-	char *option_help = bu_opt_describe(d, NULL);
-	bu_log("Usage: brlman [options] [man_page]\n");
-	if (option_help) {
-	    bu_log("Options:\n%s\n", option_help);
-	}
-	bu_free(option_help, "help str");
+	char *help = bu_opt_help(d, "brlman", "[man_page]",
+	    "Display BRL-CAD manual pages");
+	if (help)
+	    bu_log("%s", help);
+	bu_free(help, "help str");
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 

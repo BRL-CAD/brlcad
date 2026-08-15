@@ -186,7 +186,7 @@ The "jitter" flag is a bit vector. If one (-J1), it randomizes the point from wh
 Sets the "use_air" value. The default is 1, meaning "air" solids (i.e. regions with a non-zero aircode attribute value) will be retained. If this value is zero, "air" solids in the model will be ignored.
 
 
-*-c "set cc=1"*::
+*-c* _"set cc=1"_::
 Compute and report area centers. The default is off.
 
 

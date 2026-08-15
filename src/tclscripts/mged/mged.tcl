@@ -489,7 +489,7 @@ proc ia_invoke { w } {
 		return
 	    }
 	    .$id.t tag add oldcmd promptEnd insert
-	    mged_print_tag $w "Error: $ia_msg\n" result
+	    mged_print_error $w "Error: $ia_msg\n"
 	} else {
 	    .$id.t tag add oldcmd promptEnd insert
 

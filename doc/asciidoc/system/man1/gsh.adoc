@@ -56,6 +56,27 @@ display window of its own.
   update logic instead of the traditional command set. Primarily of use for
   development and testing of the next-generation command behavior.
 
+*--completion-mode=mode*::
+  Select the interactive completion policy.  Supported values are *filter*,
+  *cycle*, *prefix*, *legacy*, and *off*.  See *brlcad-completion*(5).
+
+*--command-schema=command|all*::
+  Print the registered static command grammar as JSON and exit.  A command
+  name prints one grammar; *all* prints a JSON array for the full discoverable
+  LIBGED registry.  Runtime-dependent semantic providers are identified by
+  name, allowing external syntax highlighters and ANTLR grammar adapters to
+  consume the static command structure without opening a database.
+
+[[environment]]
+== ENVIRONMENT
+
+*BRLCAD_GSH_COMPLETION_MODE*::
+  Sets GSH's completion mode when *--completion-mode* is not specified.
+
+*BRLCAD_COMPLETION_MODE*::
+  Sets the shared BRL-CAD completion mode when no GSH-specific setting is
+  present.  See *brlcad-completion*(5) for mode behavior and precedence.
+
 [[examples]]
 == EXAMPLES
 
@@ -81,6 +102,18 @@ not a terminal, *gsh* executes each line in turn with no prompt, reporting the
 database title, an object listing, and a summary of the contents of `moss.g`.
 ====
 
+.Publish command grammars for an external tool
+====
+[source,bash]
+----
+gsh --command-schema draw > draw-schema.json
+gsh --command-schema all > ged-schemas.json
+----
+The first form emits one flat command schema.  The second emits every flat,
+nested, context-selected, and parser-owned static grammar registered by
+LIBGED.
+====
+
 .Inspect and modify geometry interactively
 ====
 [source,bash]
@@ -100,7 +133,7 @@ LIBGED commands available here are shared with *mged*(1) and *archer*(1).
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *mged*(1), *archer*(1), *btclsh*(1)
+*brlcad*(1), *mged*(1), *archer*(1), *btclsh*(1), *brlcad-completion*(5)
 
 [[author]]
 == AUTHOR

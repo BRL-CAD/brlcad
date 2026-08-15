@@ -81,7 +81,6 @@ ged_nmg_kill_f_core(struct ged* gedp, int argc, const char* argv[])
     const char* name;
     long int fid;
 
-    static const char *usage = "kill F id";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -93,7 +92,7 @@ ged_nmg_kill_f_core(struct ged* gedp, int argc, const char* argv[])
 
     /* must be wanting help */
     if (argc < 4) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
     }
 

@@ -11,29 +11,42 @@ lod - configure Level of Detail (LOD) drawing
 [source]
 ----
 lod
-lod (on|off|enabled)
-lod scale (points|curves) [factor]
+lod [--help]
+lod [0|1]
+lod csg|mesh [0|1]
+lod cache [clear [all_files]|exists]
+lod scale|point_scale|curve_scale [factor]
+lod bot_threshold [face_count]
+view lod [same arguments]
 ----
 
 [[description]]
 == DESCRIPTION
 
-The *lod* command configures the Level of Detail (LoD) drawing behavior for the current view. When LoD drawing is enabled, BRL-CAD adapts the rendering complexity of wireframe geometry based on view conditions, improving performance for complex models.
+The *lod* command configures the Level of Detail (LoD) drawing behavior for the current view. *view lod* is an equivalent spelling. When LoD drawing is enabled, BRL-CAD adapts the rendering complexity of wireframe geometry based on view conditions, improving performance for complex models.
 
 When called with no arguments, *lod* prints the current LoD configuration, including:
 
-* Whether adaptive LoD drawing is currently enabled or disabled.
-* The current *point scale* factor.
-* The current *curve scale* factor.
-* The current *BoT face threshold* (the number of faces at which a BoT switches to simplified display).
+* Whether mesh and CSG adaptive LoD drawing are enabled.
+* The current overall, point, and curve scale factors.
+* The current BoT face threshold (the number of faces at which a BoT switches to simplified display).
 
 === Subcommands
 
-* *on* : Enable adaptive LoD drawing.
-* *off* : Disable adaptive LoD drawing.
-* *enabled* : Print `1` if LoD is currently enabled, `0` if disabled. Suitable for scripting.
-* *scale points [factor]* : If `factor` is given, sets the point density scale. If omitted, prints the current point scale value.
-* *scale curves [factor]* : If `factor` is given, sets the curve complexity scale. If omitted, prints the current curve scale value.
+* *1* : Enable both mesh and CSG adaptive LoD drawing.
+* *0* : Disable both mesh and CSG adaptive LoD drawing.
+* *csg [0|1]* : Query or set CSG adaptive LoD drawing.
+* *mesh [0|1]* : Query or set mesh adaptive LoD drawing.
+* *scale [factor]* : Query or set the overall LoD scale.
+* *point_scale [factor]* : Query or set the point-density scale.
+* *curve_scale [factor]* : Query or set the curve-complexity scale.
+* *bot_threshold [face_count]* : Query or set the nonnegative BoT face threshold.
+* *cache* : Build the current database's mesh LoD cache.
+* *cache clear* : Clear the in-memory cache.
+* *cache clear all_files* : Clear cache data for all files.
+* *cache exists* : Test whether all BoT and BRep entries have cached LoD data.
+
+All scale values must be finite numbers. The command rejects an unknown action, an invalid binary setting, a negative threshold, or extra action arguments before changing view state.
 
 [[examples]]
 == EXAMPLES
@@ -44,10 +57,11 @@ When called with no arguments, *lod* prints the current LoD configuration, inclu
 mged> **lod**
 
 ----
-LoD drawing: enabled
-Point scale: 1.000000
-Curve scale: 1.000000
-BoT face threshold: 32768
+enabled(mesh/csg): 1/1
+scale: 1
+point_scale: 1
+curve_scale: 1
+bot_threshold: 32768
 ----
 
 Prints the current LoD configuration.
@@ -56,18 +70,18 @@ Prints the current LoD configuration.
 .Enable LoD and reduce curve complexity
 [example]
 ====
-mged> **lod on**
-mged> **lod scale curves 0.5**
+mged> **view lod 1**
+mged> **view lod curve_scale 0.5**
 
 Enables LoD drawing and halves the curve complexity scale, reducing the number of line segments used to approximate curves.
 ====
 
-.Check LoD status for scripting
+.Query a single LoD setting
 [example]
 ====
-mged> **lod enabled**
+mged> **lod mesh**
 
-Returns `1` if LoD is enabled, `0` if disabled. Useful in scripts or Tcl procedures.
+Returns `1` if mesh LoD drawing is enabled and `0` otherwise. Useful in scripts or Tcl procedures.
 ====
 
 [[author]]

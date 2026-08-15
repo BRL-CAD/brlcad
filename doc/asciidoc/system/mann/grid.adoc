@@ -10,7 +10,7 @@ grid - control the display grid and snap-to-grid behavior
 
 [source]
 ----
-grid vname parameter [value]
+grid parameter [value ...]
 ----
 
 
@@ -19,7 +19,10 @@ grid vname parameter [value]
 
 The *grid* command controls the view grid: a regular overlay of horizontal and vertical lines drawn on the display to aid in alignment and measurement. It also controls snap-to-grid behavior, which constrains view center movement to the nearest grid intersection.
 
-The first argument `vname` is the name of the view to configure. The second argument `parameter` specifies which grid attribute to get or set. If a value is provided it sets the attribute; if omitted the current value is returned.
+The `parameter` selects a grid attribute or action for the current view. If a
+value is provided it sets that attribute; if omitted the current value is
+returned. `help` prints the command syntax and `vars` prints every current
+grid value.
 
 === Parameters
 
@@ -28,8 +31,12 @@ The first argument `vname` is the name of the view to configure. The second argu
 |Parameter |Value |Description
 
 |`color`
-|`r g b`
+|`r/g/b`, `r,g,b`, `r;g;b`, or `r g b`
 |Get or set the grid line color as three integers (0–255). With no value, returns current color.
+
+|`anchor`
+|`x/y/z`, `x,y,z`, `x;y;z`, or `x y z`
+|Get or set the grid anchor in current working units. With no value, returns the current anchor.
 
 |`draw`
 |`0` or `1`
@@ -59,6 +66,14 @@ The first argument `vname` is the name of the view to configure. The second argu
 |(none)
 |Snap the current view center to the nearest grid intersection. Takes no value argument.
 
+|`vars`
+|(none)
+|Print all current grid values.
+
+|`help`
+|(none)
+|Print grid command syntax.
+
 |===
 
 [[examples]]
@@ -67,16 +82,16 @@ The first argument `vname` is the name of the view to configure. The second argu
 .Enable the grid
 [example]
 ====
-mged> **grid default draw 1**
+mged> **grid draw 1**
 
-Turns on grid display for the view named `default`.
+Turns on grid display for the current view.
 ====
 
 .Set grid spacing to 10 mm
 [example]
 ====
-mged> **grid default rh 10**
-mged> **grid default rv 10**
+mged> **grid rh 10**
+mged> **grid rv 10**
 
 Sets horizontal and vertical grid spacing to 10 units in the current working units.
 ====
@@ -84,15 +99,15 @@ Sets horizontal and vertical grid spacing to 10 units in the current working uni
 .Enable snap-to-grid
 [example]
 ====
-mged> **grid default snap 1**
+mged> **grid snap 1**
 
-Enables snap-to-grid for the `default` view. The view center will snap to the nearest grid point during interactive navigation.
+Enables snap-to-grid for the current view. The view center will snap to the nearest grid point during interactive navigation.
 ====
 
 .Set grid color to green
 [example]
 ====
-mged> **grid default color 0 200 0**
+mged> **grid color 0;200;0**
 
 Sets the grid line color to green (R=0, G=200, B=0).
 ====
@@ -100,7 +115,7 @@ Sets the grid line color to green (R=0, G=200, B=0).
 .Get the current horizontal resolution
 [example]
 ====
-mged> **grid default rh**
+mged> **grid rh**
 
 Returns the current horizontal grid resolution in working units, for example: `10`.
 ====
@@ -108,7 +123,7 @@ Returns the current horizontal grid resolution in working units, for example: `1
 .Snap view center to nearest grid point
 [example]
 ====
-mged> **grid default vsnap**
+mged> **grid vsnap**
 
 Moves the view center to the nearest grid intersection.
 ====

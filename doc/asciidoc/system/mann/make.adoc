@@ -10,18 +10,35 @@ make - Creates a __new_shape__ of the indicated type.
 
 [source]
 ----
-make [-h] [-t] [-o "x y z"] [-s scale] new_shape type
+make [-o x/y/z] [-s scale] new_shape type
+make -t
+make -h
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Creates a __new_shape__ of the indicated type. The __new_shape__ is sized according to the current view size and is dependent on the _type_. The possible values for _type_ are:
+Creates a __new_shape__ of the indicated type. The __new_shape__ is sized according to the current view size and is dependent on the _type_.
 
-The *-h* option prints usage help. The *-o* option specifies the origin for the
-new primitive and the *-s* option sets the initial size scale used when
-building the primitive.
+== OPTIONS
+
+*-o* _x/y/z_::
+Set the primitive origin.  A finite three-component value may be written as
+`x/y/z`, `x,y,z`, `x;y;z`, a quoted `"x y z"` argument, or three separate
+numeric arguments.  The default origin is `0 0 0`.
+
+*-s* _scale_::
+Set the initial size scale.  The default is `1`.
+
+*-t*::
+List the primitive types supported by *make*.  This mode does not accept a
+new-shape name or primitive type.
+
+*-h*, *-H*, *-?*::
+Print usage help.
+
+The possible values for _type_ are:
 
 
 * arb8 -- ARB (eight vertices)

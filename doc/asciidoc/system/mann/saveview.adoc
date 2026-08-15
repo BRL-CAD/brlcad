@@ -20,6 +20,8 @@ saveview [-e command] [-i input.g] [-l logfile] [-o output] filename [args]
 The *saveview* command writes a shell script describing the current MGED view and the objects currently displayed. The generated script runs a command in *-M* mode, feeding it the saved viewing parameters on standard input.
 
 By default, the generated script runs *rt -M*. If perspective is enabled in the current view, the script also adds the matching *-p* option. Any additional _args_ supplied after _filename_ are copied into the generated command line unchanged.
+The *saveview* options must precede _filename_; this leaves later
+dash-prefixed words available to the selected raytrace command.
 
 The script is opened in append mode. If _filename_ already exists, the new script block is appended to the existing file. The file is also marked executable.
 

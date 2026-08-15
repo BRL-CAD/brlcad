@@ -10,14 +10,15 @@ ls - The command with no _object_ argument lists the name of every object in the
 
 [source]
 ----
-ls [-A -o -a -c -r -s -p -l -q -H -S] [objects]
+ls [-a -c -r -s -p -l -q -H -S] [objects]
+ls --attributes [--or] [-a -c -r -s -p -l -q -H -S] attribute value [attribute value ...]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-The command with no _object_ argument lists the name of every object in the database (in alphabetical order) except for those marked as hidden with the *hide* command. If the _object_ argument is supplied, only those _objects_ are listed. The _object_ argument may include regular expressions. If the _-A_ option is used, then the arguments are expected to be a list of attribute name/value pairs, and objects having attributes that match the provided list are listed. By default, an object must match all the specified attributes in order to be listed; however, the _-o_ flag indicates that an object matching at least one attribute name/value pair should be listed. See the *attr* command for information on how to set or get attributes. Regular expressions are not supported for attributes. The following options are also allowed:
+The command with no _object_ argument lists the name of every object in the database (in alphabetical order) except for those marked as hidden with the *hide* command. If the _object_ argument is supplied, only those _objects_ are listed. The _object_ argument may include regular expressions. If the _-A_ option is used, the operands are attribute name/value pairs (one or more complete pairs are required), and objects having attributes that match the provided list are listed. By default, an object must match all the specified attributes in order to be listed; however, the _-o_ flag indicates that an object matching at least one attribute name/value pair should be listed. See the *attr* command for information on how to set or get attributes. Regular expressions are not supported for attributes. The following options are also allowed:
 
 
 * `-h`, `--help` -- Print help and exit.
@@ -91,7 +92,7 @@ Lists all combinations with names beginning with "suspension."
 .List all regions having particular attributes.
 [example]
 ====
-mged>**ls -A -o -r Comment{First comment} Comment{Second comment}**
+mged>**ls -A -o -r Comment {First comment} Comment {Second comment}**
 
 Lists all regions that have a "Comment" attribute that is set to either "First comment" or "Second comment."
 

@@ -84,10 +84,12 @@ parse_entity_ids(struct bu_vls *error, size_t argc, const char **argv, void *dat
 void
 usage(const struct bu_opt_desc *options)
 {
-    char *description = bu_opt_describe(options, NULL);
-    bu_log("Usage: step-g [options] input.step [output.g]\n"
-	   "       step-g [options] -o output.g input.step\n%s", description);
-    bu_free(description, "option description");
+    char *help = bu_opt_help(options, "step-g",
+	"input.step [output.g]\n       step-g [options] -o output.g input.step",
+	"Convert STEP geometry to a BRL-CAD database");
+    if (help)
+	bu_log("%s", help);
+    bu_free(help, "option description");
 }
 
 bool

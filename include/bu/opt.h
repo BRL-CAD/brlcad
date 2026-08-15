@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "bu/defines.h"
+#include "bu/cmdschema.h"
 #include "bu/ptbl.h"
 #include "bu/vls.h"
 
@@ -47,6 +48,12 @@ __BEGIN_DECLS
  * description) structures is defined and terminated with a
  * BU_OPT_DESC_NULL entry.  This array is then used by @link
  * bu_opt_parse @endlink to process an argv array.
+ *
+ * bu_opt is the succinct option interface to libbu's command parsing engine.
+ * It can infer basic validation and completion from its standard readers.
+ * Commands that also need typed operands, declarative constraints or ranges,
+ * linting, or JSON publication can combine these rows with higher-level
+ * command metadata or use the full bu_cmd_schema API in bu/cmdschema.h.
  *
  * When defining a bu_opt_desc entry, the type of the set_var
  * assignment variable needed is determined by the arg_process
@@ -177,6 +184,15 @@ struct bu_opt_desc {
 };
 
 
+/** Option scanning policy.  The legacy bu_opt_parse behavior is
+ * BU_OPT_PARSE_INTERSPERSED.  OPTIONS_FIRST matches traditional getopt:
+ * scanning stops at the first operand, or after a standalone -- marker. */
+typedef enum {
+    BU_OPT_PARSE_INTERSPERSED = 0,
+    BU_OPT_PARSE_OPTIONS_FIRST
+} bu_opt_parse_policy_t;
+
+
 /** Convenience initializer for NULL bu_opt_desc array terminator */
 #define BU_OPT_DESC_NULL {NULL, NULL, NULL, NULL, NULL, NULL}
 
@@ -224,6 +240,323 @@ struct bu_opt_desc {
  * @param[in] ds       option structure
  */
 BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, size_t ac, const char **argv, const struct bu_opt_desc *ds);
+
+/** Parse with an explicit scanning policy.  Unused arguments are moved to the
+ * beginning of argv and their count is returned, as for bu_opt_parse. */
+BU_EXPORT extern int bu_opt_parse_with_policy(struct bu_vls *msgs, size_t ac,
+	const char **argv, const struct bu_opt_desc *ds,
+	bu_opt_parse_policy_t policy);
+
+
+/**
+ * Value classes inferred from standard bu_opt argument processors.  These are
+ * intentionally independent of the command-schema implementation: option
+ * users can request lightweight validation and completion without adopting a
+ * second option-description API.
+ */
+typedef enum {
+    BU_OPT_VALUE_UNKNOWN = 0,
+    BU_OPT_VALUE_FLAG,
+    BU_OPT_VALUE_BOOL,
+    BU_OPT_VALUE_INTEGER,
+    BU_OPT_VALUE_LONG,
+    BU_OPT_VALUE_HEX_LONG,
+    BU_OPT_VALUE_INCREMENT,
+    BU_OPT_VALUE_NUMBER,
+    BU_OPT_VALUE_CHAR,
+    BU_OPT_VALUE_STRING,
+    BU_OPT_VALUE_VLS,
+    BU_OPT_VALUE_COLOR,
+    BU_OPT_VALUE_VECTOR,
+    BU_OPT_VALUE_LANGUAGE,
+    BU_OPT_VALUE_MAN_SECTION
+} bu_opt_value_t;
+
+
+typedef enum {
+    BU_OPT_VALIDATE_UNKNOWN = 0,
+    BU_OPT_VALIDATE_VALID,
+    BU_OPT_VALIDATE_INVALID,
+    BU_OPT_VALIDATE_INCOMPLETE
+} bu_opt_validate_state_t;
+
+
+typedef enum {
+    BU_OPT_EXPECT_NONE = 0,
+    BU_OPT_EXPECT_OPTION = 1,
+    BU_OPT_EXPECT_OPTION_ARG = 2
+} bu_opt_expected_t;
+
+
+struct bu_opt_validate_result;
+struct bu_opt_desc_opts;
+
+
+/**
+ * Optional side-effect-free validation/completion for one option argument.
+ * The callback receives the full option argv and cursor position so values
+ * may depend on sibling options.  @p context is supplied by the command-level
+ * caller; @p data comes from the matching bu_opt_value_spec.  A callback may
+ * refine the initialized result and allocate a NULL-terminated candidate
+ * array with bu_calloc/bu_strdup.  It must never alter command state.
+ * Returning nonzero rejects the validation and discards every result field,
+ * including candidates allocated by the callback.
+ */
+typedef int (*bu_opt_value_validate_t)(const struct bu_opt_desc *option,
+	size_t argc, const char **argv, size_t cursor_arg, void *context,
+	void *data, struct bu_opt_validate_result *result);
+
+/**
+ * Select how many following argv words belong to a variable-width option
+ * value.  @p available has already been limited to max_args.  Returning a
+ * value greater than @p available rejects the selection.  The callback must
+ * be side-effect free.
+ */
+typedef size_t (*bu_opt_arg_count_t)(size_t available, const char **argv);
+
+
+/**
+ * Optional metadata for a bu_opt_desc row.  @p option names the row by its
+ * long spelling when available and otherwise by its short spelling, without
+ * leading dashes.  @p alias_of names another row's canonical spelling when a
+ * separate short or long row is an alias; most rows leave it NULL.  A NULL
+ * option terminates the array.  Zero min/max values retain the cardinality
+ * inferred from the standard argument processor.
+ */
+struct bu_opt_value_spec {
+    const char *option;
+    const char *alias_of;
+    bu_opt_value_t value_type;
+    size_t min_args;
+    size_t max_args;
+    bu_opt_arg_count_t arg_count;
+    const char *hint;
+    const char * const *candidates;
+    bu_opt_value_validate_t validate;
+    void *data;
+};
+
+
+struct bu_opt_validate_result {
+    bu_opt_validate_state_t state;
+    size_t token_start;
+    size_t token_end;
+    unsigned int expected;
+    bu_opt_value_t value_type;
+    const char *hint;
+    const struct bu_opt_desc *option;
+    const char *option_name;
+    size_t completion_count;
+    const char **completion_candidates;
+};
+
+
+/**
+ * Reentrant option-table builder.  A NULL @p descs asks only for the number of
+ * non-terminal rows.  Otherwise @p capacity includes room for the terminal
+ * BU_OPT_DESC_NULL row and @p storage is the invocation-local argument record
+ * whose fields are assigned to set_var by ordinary BU_OPT calls.  Passing a
+ * NULL storage pointer builds an unbound table for help and completion.
+ */
+typedef size_t (*bu_opt_desc_builder_t)(struct bu_opt_desc *descs,
+	size_t capacity, void *storage);
+
+/** Reentrant builder for commands that have no options. */
+BU_EXPORT extern size_t bu_opt_desc_empty_builder(struct bu_opt_desc *descs,
+	size_t capacity, void *storage);
+
+
+/**
+ * Define a file-local reentrant builder from an initializer-row macro.  The
+ * row macro is invoked with a pointer named by its argument and must expand
+ * to ordinary comma-terminated bu_opt_desc initializer rows.  For example:
+ *
+ * @code
+ * #define APP_OPTIONS(a) \
+ *     BU_OPT_INT(a, "n", "number", number, "#", "Number"),
+ * BU_OPT_DESC_BUILDER(app_options, struct app_args, APP_OPTIONS);
+ * @endcode
+ *
+ * The generated builder is file-local, derives its row count from the array,
+ * and binds no storage when called for description or completion metadata.
+ */
+#define BU_OPT_DESC_BUILDER_JOIN_(_a, _b) _a##_b
+#define BU_OPT_DESC_BUILDER_JOIN(_a, _b) BU_OPT_DESC_BUILDER_JOIN_(_a, _b)
+#define BU_OPT_DESC_BUILDER(_name, _record_type, _rows) \
+    static size_t _name(struct bu_opt_desc *descs, size_t capacity, void *storage) \
+    { \
+	_record_type *args = (_record_type *)storage; \
+	struct bu_opt_desc local[] = { \
+	    _rows(args) \
+	    BU_OPT_DESC_NULL \
+	}; \
+	return bu_opt_desc_copy(descs, capacity, local); \
+    } \
+    enum { BU_OPT_DESC_BUILDER_JOIN(_name, _builder_defined) = 1 }
+
+/* Concise field-binding rows for use inside a BU_OPT_DESC_BUILDER row list.
+ * Custom readers retain the ordinary six-field form, or use BU_OPT_CUSTOM. */
+#define BU_OPT_FLAG(_a, _short, _long, _field, _help) \
+    {_short, _long, "", NULL, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_STR(_a, _short, _long, _field, _arg, _help) \
+    {_short, _long, _arg, bu_opt_str, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_INT(_a, _short, _long, _field, _arg, _help) \
+    {_short, _long, _arg, bu_opt_int, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_LONG(_a, _short, _long, _field, _arg, _help) \
+    {_short, _long, _arg, bu_opt_long, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_HEX_LONG(_a, _short, _long, _field, _arg, _help) \
+    {_short, _long, _arg, bu_opt_long_hex, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_CHAR(_a, _short, _long, _field, _arg, _help) \
+    {_short, _long, _arg, bu_opt_char, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_NUM(_a, _short, _long, _field, _arg, _help) \
+    {_short, _long, _arg, bu_opt_fastf_t, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_VLS(_a, _short, _long, _field, _arg, _help) \
+    {_short, _long, _arg, bu_opt_vls, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_BOOL(_a, _short, _long, _field, _arg, _help) \
+    {_short, _long, _arg, bu_opt_bool, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_COLOR(_a, _short, _long, _field, _arg, _help) \
+    {_short, _long, _arg, bu_opt_color, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_VEC(_a, _short, _long, _field, _arg, _help) \
+    {_short, _long, _arg, bu_opt_vect_t, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_INC(_a, _short, _long, _field, _help) \
+    {_short, _long, "", bu_opt_incr_long, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_LANG(_a, _short, _long, _field, _arg, _help) \
+    {_short, _long, _arg, bu_opt_lang, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_SECTION(_a, _short, _long, _field, _arg, _help) \
+    {_short, _long, _arg, bu_opt_man_section, _a ? &(_a)->_field : NULL, _help}
+#define BU_OPT_CUSTOM(_a, _short, _long, _field, _arg, _reader, _help) \
+    {_short, _long, _arg, _reader, _a ? &(_a)->_field : NULL, _help}
+
+#define BU_OPT_VALUE_SPEC_NULL {NULL, NULL, BU_OPT_VALUE_UNKNOWN, 0, 0, NULL, NULL, NULL, NULL, NULL}
+/** Describe an opaque reader's scalar type while retaining inferred arity. */
+#define BU_OPT_VALUE_TYPE(_option, _type, _hint) \
+    {_option, NULL, _type, 0, 0, NULL, _hint, NULL, NULL, NULL}
+/** Describe an opaque reader and publish its fixed completion candidates. */
+#define BU_OPT_VALUE_CANDIDATES(_option, _type, _hint, _candidates) \
+    {_option, NULL, _type, 0, 0, NULL, _hint, _candidates, NULL, NULL}
+/** Describe an opaque reader with side-effect-free value validation. */
+#define BU_OPT_VALUE_VALIDATE(_option, _type, _hint, _validate, _data) \
+    {_option, NULL, _type, 0, 0, NULL, _hint, NULL, _validate, _data}
+/** Describe a fixed-width opaque reader. */
+#define BU_OPT_VALUE_CARDINALITY(_option, _type, _min, _max, _hint) \
+    {_option, NULL, _type, _min, _max, NULL, _hint, NULL, NULL, NULL}
+/** Describe a variable-width opaque reader whose callback selects its argv span. */
+#define BU_OPT_VALUE_SELECT(_option, _type, _min, _max, _select, _hint) \
+    {_option, NULL, _type, _min, _max, _select, _hint, NULL, NULL, NULL}
+#define BU_OPT_VALUE_ALIAS(_option, _canonical) \
+    {_option, _canonical, BU_OPT_VALUE_UNKNOWN, 0, 0, NULL, NULL, NULL, NULL, NULL}
+#define BU_OPT_VALUES(_name, ...) \
+    static const struct bu_opt_value_spec _name[] = { __VA_ARGS__ BU_OPT_VALUE_SPEC_NULL }
+#define BU_OPT_VALIDATE_RESULT_NULL {BU_OPT_VALIDATE_UNKNOWN, 0, 0, BU_OPT_EXPECT_NONE, BU_OPT_VALUE_UNKNOWN, NULL, NULL, NULL, 0, NULL}
+
+
+/** Return the value class implied by a standard bu_opt argument processor. */
+BU_EXPORT extern bu_opt_value_t bu_opt_desc_value_type(const struct bu_opt_desc *desc);
+
+/** Return canonical value candidates known for a standard reader, if any. */
+BU_EXPORT extern const char * const *bu_opt_desc_candidates(const struct bu_opt_desc *desc);
+
+/** Map a compact bu_opt value class to its command-schema representation. */
+BU_EXPORT extern bu_cmd_value_t bu_opt_cmd_type(bu_opt_value_t type);
+
+/**
+ * Owned command-schema option metadata derived from a bu_opt declaration.
+ * This adapter is useful to registries and other consumers that need the
+ * richer, read-only command representation without duplicating bu_opt's
+ * reader, cardinality, candidate, and alias inference.  Descriptor and
+ * sidecar strings remain borrowed; the option and argument-shape arrays are
+ * owned by this object.
+ */
+struct bu_opt_cmd {
+    size_t option_count;
+    struct bu_cmd_option *options;
+    struct bu_cmd_arg_shape *shapes;
+};
+
+#define BU_OPT_CMD_INIT_ZERO {0, NULL, NULL}
+
+/**
+ * Build command-schema option metadata from a terminated bu_opt table.
+ * Initialize @p cmd with BU_OPT_CMD_INIT_ZERO before the first call.  On
+ * success, release its owned arrays with bu_opt_cmd_clear().  On failure,
+ * @p cmd is unchanged and remains safe to clear.
+ */
+BU_EXPORT extern int bu_opt_cmd_create(struct bu_opt_cmd *cmd,
+	const struct bu_opt_desc *descs, const struct bu_opt_value_spec *specs);
+
+/**
+ * Resolve alias chains and inherit all canonical argument semantics.  This
+ * may be called again after a host decorates canonical options with richer
+ * semantic metadata.  Alias spelling, help, and storage identity are kept.
+ */
+BU_EXPORT extern int bu_opt_cmd_aliases(struct bu_opt_cmd *cmd);
+
+/**
+ * Release arrays owned by a bu_opt command adapter and restore its
+ * BU_OPT_CMD_INIT_ZERO state.  @p cmd must have been zero-initialized or
+ * produced by bu_opt_cmd_create().
+ */
+BU_EXPORT extern void bu_opt_cmd_clear(struct bu_opt_cmd *cmd);
+
+
+/**
+ * Incrementally validate options and produce option/value completions.  This
+ * operation never invokes bu_opt_desc::arg_process.  Standard bu_opt handlers
+ * are recognized directly; an unrecognized custom handler is treated as an
+ * opaque value unless a sidecar supplies more information.  @p result must be
+ * initialized with BU_OPT_VALIDATE_RESULT_NULL or
+ * bu_opt_validate_result_init().  Each call replaces its previous contents;
+ * success supplies the new result and failure leaves it initialized and empty.
+ */
+BU_EXPORT extern int bu_opt_desc_validate(const struct bu_opt_desc *descs,
+	const struct bu_opt_value_spec *specs, size_t argc, const char **argv,
+	size_t cursor_arg, void *context, struct bu_opt_validate_result *result);
+
+
+/** Initialize or release a lightweight option-validation result.  Clear may
+ * be called repeatedly, but must not receive uninitialized storage. */
+BU_EXPORT extern void bu_opt_validate_result_init(struct bu_opt_validate_result *result);
+BU_EXPORT extern void bu_opt_validate_result_clear(struct bu_opt_validate_result *result);
+
+
+/** Build a transient option table.  The caller releases it with bu_free. */
+BU_EXPORT extern struct bu_opt_desc *bu_opt_desc_build(bu_opt_desc_builder_t builder,
+	void *storage, size_t *count);
+
+/**
+ * Copy a terminated local option table into builder output.  This is the
+ * usual final statement of a bu_opt_desc_builder_t implementation.  A NULL
+ * @p output returns the number of non-terminal rows; otherwise @p capacity
+ * must also accommodate the terminal row.
+ */
+BU_EXPORT extern size_t bu_opt_desc_copy(struct bu_opt_desc *output,
+	size_t capacity, const struct bu_opt_desc *local);
+
+/** Parse, describe, or validate the table emitted by a reentrant builder. */
+BU_EXPORT extern int bu_opt_parse_build(struct bu_vls *msgs, size_t argc,
+	const char **argv, bu_opt_desc_builder_t builder, void *storage);
+BU_EXPORT extern int bu_opt_parse_build_with_policy(struct bu_vls *msgs,
+	size_t argc, const char **argv, bu_opt_desc_builder_t builder,
+	void *storage, bu_opt_parse_policy_t policy);
+BU_EXPORT extern char *bu_opt_describe_build(bu_opt_desc_builder_t builder,
+	struct bu_opt_desc_opts *settings);
+/** Build a standard one-line synopsis for an option-only declaration.  The
+ * caller supplies the program or command spelling and any positional operand
+ * synopsis because bu_opt_desc intentionally describes options only.  The
+ * returned string begins with "Usage:" and ends with a newline. */
+BU_EXPORT extern char *bu_opt_usage(const struct bu_opt_desc *descs,
+	const char *invocation, const char *operands);
+/** Build standard user-facing help from a bu_opt declaration.  The result
+ * contains the generated synopsis, optional summary, and an Options section.
+ * The caller owns the returned string. */
+BU_EXPORT extern char *bu_opt_help(const struct bu_opt_desc *descs,
+	const char *invocation, const char *operands, const char *summary);
+/** Reentrant-builder form of bu_opt_help. */
+BU_EXPORT extern char *bu_opt_help_build(bu_opt_desc_builder_t builder,
+	const char *invocation, const char *operands, const char *summary);
+BU_EXPORT extern int bu_opt_validate_build(bu_opt_desc_builder_t builder,
+	const struct bu_opt_value_spec *specs, size_t argc, const char **argv,
+	size_t cursor_arg, void *context, struct bu_opt_validate_result *result);
 
 
 /** Output format options for bu_opt documentation generation */
@@ -415,7 +748,8 @@ BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, size_t argc, const char **ar
 BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
- * Process 1 or 3 arguments to set a bu_color
+ * Process one packed color or three separate arguments to set a bu_color.
+ * Packed integer RGB accepts slash, comma, and semicolon separators.
  */
 BU_EXPORT extern int bu_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 

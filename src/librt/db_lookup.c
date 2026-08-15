@@ -194,8 +194,15 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
      * somehow - maybe have db_lookup take an optional parameter for a full
      * path, and always return the directory pointer?
      */
-    while(*pc != '\0' && !is_path) {
-	is_path = (*pc == '/');
+    while (*pc != '\0' && !is_path) {
+	if (*pc == '/') {
+	    is_path = 1;
+	} else if (*pc == '\\' && (pc[1] == '/' || pc[1] == '@' || pc[1] == '\\')) {
+	    /* A recognized escape may encode a root-level name which cannot be
+	     * found by the literal hash lookup above (for example, "foo\\@bar"). */
+	    is_path = 1;
+	    pc++;
+	}
 	pc++;
     }
 
@@ -206,9 +213,16 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 	struct db_full_path fp;
 	dp = RT_DIR_NULL;
 
-	/* db_string_to_path does the hard work */
+	/* Prefer the unambiguous escaped spelling.  Retain the legacy parser as
+	 * a fallback so existing raw slash-separated callers keep their behavior. */
 	db_full_path_init(&fp);
-	if (!db_string_to_path(&fp, dbip, name)) {
+	if (db_full_path_decode(&fp, dbip, name) == DB_FULL_PATH_OK) {
+	    dp = DB_FULL_PATH_CUR_DIR(&fp);
+	} else {
+	    db_free_full_path(&fp);
+	    db_full_path_init(&fp);
+	}
+	if (dp == RT_DIR_NULL && !db_string_to_path(&fp, dbip, name)) {
 	    dp = DB_FULL_PATH_CUR_DIR(&fp);
 	}
 	db_free_full_path(&fp);

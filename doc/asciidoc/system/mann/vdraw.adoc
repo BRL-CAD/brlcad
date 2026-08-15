@@ -10,7 +10,9 @@ vdraw - Allows drawing of lines and polygons (optionally with per vertex normals
 
 [source]
 ----
-vdraw {command} [args]
+vdraw {write|insert|delete|read|send|params|open|vlist} [args]
+vdraw vlist list
+vdraw vlist delete list_name
 ----
 
 
@@ -85,7 +87,14 @@ The *vdraw* commands are as follows:
 -- with an argument of __delete list_name__, delete the specified command list.
 
 
-All textual arguments may be abbreviated by their first letter.
+All textual command words may be abbreviated by their first letter.  Thus
+`vdraw d a` is equivalent to `vdraw delete all`, and `vdraw v d name` is
+equivalent to `vdraw vlist delete name`.
+
+The command vocabulary, including the nested `vlist` operations, is declared
+as a command tree.  Interactive command lines can therefore complete and
+validate each level independently: after `vdraw vlist`, Tab offers `list` and
+`delete`; after `vdraw vlist delete`, it expects the list name.
 
 
 [[examples]]

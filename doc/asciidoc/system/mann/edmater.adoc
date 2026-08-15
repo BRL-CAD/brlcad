@@ -10,14 +10,19 @@ edmater - Places the user in an editor ready to edit a file filled with shader a
 
 [source]
 ----
-edmater {combinations} []
+edmater [-E editor] {combination} ...
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Places the user in an editor ready to edit a file filled with shader arguments for the combinations listed on the command line. The arguments placed in the file for editing are the _shader_ name and its own arguments, RGB color,__RGB_valid__ flag, and the inheritance flag. The editor used is whatever the user has set in the environment variable _EDITOR_. If _EDITOR_ is not set, then _/bin/ed_ is used.
+Places the user in an editor ready to edit a file filled with shader arguments
+for the combinations listed on the command line. The arguments placed in the
+file for editing are the _shader_ name and its own arguments, RGB color,
+_RGB_valid_ flag, and the inheritance flag. By default the editor is selected
+by the environment variable _EDITOR_, or _/bin/ed_ when it is unset. The
+optional `-E editor` argument supplies the editor command for this invocation.
 
 
 [[examples]]

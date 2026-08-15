@@ -42,7 +42,8 @@
 
 
 #include "bu/parallel.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
+#include "bu/opt.h"
 #include "vmath.h"
 #include "bn/mat.h"
 #include "raytrace.h"
@@ -54,9 +55,6 @@
 struct analyze_densities *_gd_densities;
 char *_gd_densities_source;
 
-/* bu_getopt() options */
-const char *options = "A:a:de:f:g:Gn:N:p:P:qrS:s:t:U:u:vV:W:h?";
-const char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p plotPrefix] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
 #define ANALYSIS_VOLUMES          1
 #define ANALYSIS_WEIGHTS          2
@@ -107,6 +105,58 @@ static int num_views;
 static int verbose;
 static int quiet_missed_report;
 
+struct gqa_args {
+    const char *analyses;
+    const char *azimuth;
+    int debug;
+    const char *elevation;
+    const char *density_file;
+    const char *grid_spacing;
+    int overlap_assemblies;
+    int required_hits;
+    int views;
+    const char *plot_prefix;
+    int cpus;
+    int quiet;
+    int region_stats;
+    fastf_t samples;
+    const char *overlap_tolerance;
+    int use_air;
+    const char *report_units;
+    int verbose;
+    const char *volume_tolerance;
+    const char *weight_tolerance;
+    int help;
+};
+
+#define GQA_OPTIONS(a) \
+    BU_OPT_STR(a, "A", NULL, analyses, "types", "Select analyses"), \
+    BU_OPT_STR(a, "a", NULL, azimuth, "azimuth", "Set azimuth angle"), \
+    BU_OPT_FLAG(a, "d", NULL, debug, "Enable debug output"), \
+    BU_OPT_STR(a, "e", NULL, elevation, "elevation", "Set elevation angle"), \
+    BU_OPT_STR(a, "f", NULL, density_file, "file", "Read densities from file"), \
+    BU_OPT_STR(a, "g", NULL, grid_spacing, "spacing", "Set grid spacing or range"), \
+    BU_OPT_FLAG(a, "G", NULL, overlap_assemblies, "Create overlap assemblies (not implemented)"), \
+    BU_OPT_INT(a, "n", NULL, required_hits, "hits", "Set required hits per region"), \
+    BU_OPT_INT(a, "N", NULL, views, "views", "Set number of views"), \
+    BU_OPT_STR(a, "p", NULL, plot_prefix, "prefix", "Set plot file prefix"), \
+    BU_OPT_INT(a, "P", NULL, cpus, "cpus", "Set processor count"), \
+    BU_OPT_FLAG(a, "q", NULL, quiet, "Suppress not-hit reporting"), \
+    BU_OPT_FLAG(a, "r", NULL, region_stats, "Print per-region statistics"), \
+    BU_OPT_NUM(a, "S", NULL, samples, "samples", "Set minimum samples per model axis"), \
+    BU_OPT_STR(a, "t", NULL, overlap_tolerance, "tolerance", "Set overlap tolerance"), \
+    BU_OPT_BOOL(a, "U", NULL, use_air, "use_air", "Include air regions"), \
+    BU_OPT_STR(a, "u", NULL, report_units, "units", "Set reporting units"), \
+    BU_OPT_FLAG(a, "v", NULL, verbose, "Enable verbose output"), \
+    BU_OPT_STR(a, "V", NULL, volume_tolerance, "tolerance", "Set volume tolerance"), \
+    BU_OPT_STR(a, "W", NULL, weight_tolerance, "tolerance", "Set weight tolerance"), \
+    BU_OPT_FLAG(a, "h", NULL, help, "Print command help"), \
+    BU_OPT_FLAG(a, "?", NULL, help, "Print command help"),
+BU_OPT_DESC_BUILDER(gqa_options, struct gqa_args, GQA_OPTIONS);
+
+static const char * const gqa_analysis_candidates[] = {
+    "A", "a", "b", "c", "e", "g", "m", "o", "p", "v", "w", NULL
+};
 static const char *plot_prefix = NULL; /* non-NULL means produce plot files */
 static FILE *plot_weight;
 static FILE *plot_volume;
@@ -430,7 +480,7 @@ static const struct cvt_tab *units[3] = {
  * 0 Success
  */
 int
-_gqa_read_units_double(struct ged *gedp, double *val, char *buf, const struct cvt_tab *cvt)
+_gqa_read_units_double(struct ged *gedp, double *val, const char *buf, const struct cvt_tab *cvt)
 {
     double a;
 #define UNITS_STRING_SZ 256
@@ -475,112 +525,36 @@ _gqa_read_units_double(struct ged *gedp, double *val, char *buf, const struct cv
  * Parse through command line flags
  */
 static int
-parse_args(struct ged *gedp, int ac, char *av[])
+parse_args(struct ged *gedp, int ac, const char **av)
 {
-    int c;
+    struct gqa_args args = {};
     int i;
-    double a;
-    char *p;
+    int object_count;
 
-    /* Turn off getopt's error messages */
-    bu_opterr = 0;
-    bu_optind = 1;
+    args.required_hits = (int)require_num_hits;
+    args.views = INT_MIN;
+    args.cpus = ncpu;
+    args.samples = NAN;
+    args.use_air = use_air;
 
-    /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1) {
-	switch (c) {
-	    case 'A':
-		{
-		    analysis_flags = 0;
-		    multiple_analyses = 0;
-		    for (p = bu_optarg; *p; p++) {
-			switch (*p) {
-			    case 'A' :
-				multiple_analyses = 1;
-				analysis_flags = analysis_flags \
-				| ANALYSIS_ADJ_AIR \
-				| ANALYSIS_BBOX \
-				| ANALYSIS_CENTROIDS \
-				| ANALYSIS_EXP_AIR \
-				| ANALYSIS_GAPS \
-				| ANALYSIS_MOMENTS \
-				| ANALYSIS_OVERLAPS \
-				| ANALYSIS_VOLUMES \
-				| ANALYSIS_WEIGHTS;
-				break;
-			    case 'a' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
+    object_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+	(size_t)ac, av, gqa_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
+    if (object_count < 0 || args.help)
+	return -1;
 
-				analysis_flags |= ANALYSIS_ADJ_AIR;
-
-				break;
-			    case 'b' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_BBOX;
-
-				break;
-			    case 'c' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_WEIGHTS;
-				analysis_flags |= ANALYSIS_CENTROIDS;
-
-				break;
-			    case 'e' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_EXP_AIR;
-				break;
-			    case 'g' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_GAPS;
-				break;
-			    case 'm' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_WEIGHTS;
-				analysis_flags |= ANALYSIS_CENTROIDS;
-				analysis_flags |= ANALYSIS_MOMENTS;
-
-				break;
-			    case 'o' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_OVERLAPS;
-				break;
-			    case 'p' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_OVERLAPS;
-				analysis_flags |= ANALYSIS_PLOT_OVERLAPS;
-				break;
-			    case 'v' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_VOLUMES;
-				break;
-			    case 'w' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_WEIGHTS;
-				break;
-			    default:
-				bu_vls_printf(gedp->ged_result_str, "Unknown analysis type \"%c\" requested.\n", *p);
-				return -1;
-			}
-		    }
+    if (args.analyses) {
+	const char *p;
+	analysis_flags = 0;
+	multiple_analyses = 0;
+	for (p = args.analyses; *p; p++) {
+	    int new_flags = 0;
+	    switch (*p) {
+		case 'A':
+		    multiple_analyses = 1;
+		    new_flags = ANALYSIS_ADJ_AIR | ANALYSIS_BBOX |
+			ANALYSIS_CENTROIDS | ANALYSIS_EXP_AIR | ANALYSIS_GAPS |
+			ANALYSIS_MOMENTS | ANALYSIS_OVERLAPS | ANALYSIS_VOLUMES |
+			ANALYSIS_WEIGHTS;
 		    break;
 		}
 	    case 'a':
@@ -767,7 +741,140 @@ parse_args(struct ged *gedp, int ac, char *av[])
 	}
     }
 
-    return bu_optind;
+    if (args.azimuth) {
+	bu_vls_printf(gedp->ged_result_str, "azimuth not implemented\n");
+	if (bn_decode_angle(&azimuth_deg, args.azimuth) == 0) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"error parsing azimuth \"%s\"\n", args.azimuth);
+	    return -1;
+	}
+    }
+    if (args.elevation) {
+	bu_vls_printf(gedp->ged_result_str, "elevation not implemented\n");
+	if (bn_decode_angle(&elevation_deg, args.elevation) == 0) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"error parsing elevation \"%s\"\n", args.elevation);
+	    return -1;
+	}
+    }
+    debug = args.debug;
+    if (args.density_file)
+	densityFileName = (char *)args.density_file;
+
+    if (args.grid_spacing) {
+	char *grid_arg = bu_strdup(args.grid_spacing);
+	char *limit_arg = strchr(grid_arg, COMMA);
+	double value1, value2;
+	if (limit_arg)
+	    *limit_arg++ = '\0';
+	else {
+	    limit_arg = strchr(grid_arg, '-');
+	    if (limit_arg)
+		*limit_arg++ = '\0';
+	}
+	if (_gqa_read_units_double(gedp, &value1, grid_arg, units_tab[0])) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"error parsing grid spacing value \"%s\"\n", grid_arg);
+	    bu_free(grid_arg, "gqa grid argument");
+	    return -1;
+	}
+	if (limit_arg) {
+	    if (_gqa_read_units_double(gedp, &value2, limit_arg, units_tab[0])) {
+		bu_vls_printf(gedp->ged_result_str,
+		    "error parsing grid spacing limit value \"%s\"\n", limit_arg);
+		bu_free(grid_arg, "gqa grid argument");
+		return -1;
+	    }
+	    gridSpacing = value1;
+	    gridSpacingLimit = value2;
+	} else {
+	    gridSpacing = 0.0;
+	    gridSpacingLimit = value1;
+	}
+	bu_free(grid_arg, "gqa grid argument");
+    }
+
+    if (args.overlap_assemblies) {
+	makeOverlapAssemblies = 1;
+	bu_vls_printf(gedp->ged_result_str, "-G option unimplemented\n");
+	return -1;
+    }
+    if (args.required_hits < 0) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "num_hits must be integer value >= 0, not \"%d\"\n", args.required_hits);
+	return -1;
+    }
+    require_num_hits = (size_t)args.required_hits;
+    if (args.views != INT_MIN)
+	num_views = args.views;
+    if (args.plot_prefix)
+	plot_prefix = args.plot_prefix;
+    if (args.cpus > 0 && args.cpus <= max_cpus)
+	ncpu = args.cpus;
+    quiet_missed_report = args.quiet;
+    print_per_region_stats = args.region_stats;
+    if (!isnan(args.samples)) {
+	if (args.samples <= 1.0) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"error in specifying minimum samples per model axis: \"%g\"\n",
+		args.samples);
+	    return -1;
+	}
+	Samples_per_model_axis = args.samples + 1.0;
+    }
+    if (args.overlap_tolerance &&
+	_gqa_read_units_double(gedp, &overlap_tolerance,
+	    args.overlap_tolerance, units_tab[0])) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "error in overlap tolerance distance \"%s\"\n", args.overlap_tolerance);
+	return -1;
+    }
+    verbose = args.verbose;
+    if (args.volume_tolerance &&
+	_gqa_read_units_double(gedp, &volume_tolerance,
+	    args.volume_tolerance, units_tab[1])) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "error in volume tolerance \"%s\"\n", args.volume_tolerance);
+	return -1;
+    }
+    if (args.weight_tolerance &&
+	_gqa_read_units_double(gedp, &weight_tolerance,
+	    args.weight_tolerance, units_tab[2])) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "error in weight tolerance \"%s\"\n", args.weight_tolerance);
+	return -1;
+    }
+    use_air = args.use_air;
+
+    if (args.report_units) {
+	char *units_arg = bu_strdup(args.report_units);
+	char *unit = strtok(units_arg, CPP_XSTR(COMMA));
+	static const char *dim[3] = {"length", "volume", "weight"};
+	for (i = 0; i < 3 && unit; i++, unit = strtok(NULL, CPP_XSTR(COMMA))) {
+	    const struct cvt_tab *cv;
+	    int found_unit = 0;
+	    for (cv = &units_tab[i][0]; cv->name[0] != '\0'; cv++) {
+		if (BU_STR_EQUAL(cv->name, unit)) {
+		    units[i] = cv;
+		    found_unit = 1;
+		    break;
+		}
+	    }
+	    if (!found_unit) {
+		bu_vls_printf(gedp->ged_result_str,
+		    "Units \"%s\" not found in conversion table\n", unit);
+		bu_free(units_arg, "gqa units argument");
+		return -1;
+	    }
+	}
+	bu_free(units_arg, "gqa units argument");
+	bu_vls_printf(gedp->ged_result_str, "Units: ");
+	for (i = 0; i < 3; i++)
+	    bu_vls_printf(gedp->ged_result_str, " %s: %s", dim[i], units[i]->name);
+	bu_vls_printf(gedp->ged_result_str, "\n");
+    }
+
+    return object_count;
 }
 
 /**
@@ -2605,9 +2712,9 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     struct cstate state;
     state.gedp = gedp;
     int start_objs; /* index in command line args where geom object list starts */
+    const char *command;
     struct region_pair *rp;
     struct region *regp;
-    static const char *usage = "object [object ...]";
     struct resource resp[MAX_PSW];	/* memory resources for multi-cpu processing */
     struct bu_list *vlfree = &rt_vlfree;
 
@@ -2620,9 +2727,10 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], options_str, usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
     }
+    command = argv[0];
 
     analysis_flags = ANALYSIS_VOLUMES | ANALYSIS_OVERLAPS | ANALYSIS_WEIGHTS |
     ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAPS | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS;
@@ -2668,11 +2776,13 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     plot_expair = (FILE *)0;
     debug = 0;
 
-    /* parse command line arguments */
-    arg_count = parse_args(gedp, argc, (char **)argv);
+    /* Parse options after the command name.  bu_opt leaves the object
+     * operands at the beginning of this subarray. */
+    argc--; argv++;
+    arg_count = parse_args(gedp, argc, argv);
 
-    if (arg_count < 0 || (argc-arg_count) < 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], options_str, usage);
+    if (arg_count < 1) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
 
@@ -2716,8 +2826,8 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     rtip = rt_i_create(gedp->dbip);
     rtip->useair = use_air;
 
-    start_objs = arg_count;
-    num_objects = argc - arg_count;
+    start_objs = 0;
+    num_objects = arg_count;
 
     /* Initialize all the per-CPU memory resources.  The number of
      * processors can change at runtime, init them all.
@@ -2731,7 +2841,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     /* Walk trees.  Here we identify any object trees in the database
      * that the user wants included in the ray trace.
      */
-    for (; arg_count < argc; arg_count++) {
+    for (arg_count = 0; arg_count < num_objects; arg_count++) {
 	if (rt_gettree(rtip, argv[arg_count]) < 0) {
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[arg_count]);
 	    return BRLCAD_ERROR;
@@ -2799,7 +2909,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     state.rtip = rtip;
     state.first = 1;
     state.have_previous_estimates = 0;
-    allocate_per_region_data(gedp, &state, start_objs, argc, argv);
+    allocate_per_region_data(gedp, &state, start_objs, num_objects, argv);
 
     /* compute */
     do {
@@ -2975,11 +3085,22 @@ aborted:
 
 #include "../include/plugin.h"
 
-#define GED_GQA_COMMANDS(X, XID) \
-    X(gqa, ged_gqa_core, GED_CMD_DEFAULT) \
+static const ged_opt_rule gqa_opt_rules[] = {
+    GED_RULE_ALIAS("?", "h"),
+    GED_RULE_CANDIDATES("A", BU_OPT_VALUE_STRING, "analysis types",
+	gqa_analysis_candidates),
+    GED_RULE_SEMANTIC("f", BU_CMD_VALUE_FILE, "ged.file_path", "density file"),
+    GED_RULE_NULL
+};
+static const ged_opt_spec gqa_opt_spec =
+    GED_OPT_WITH("gqa", "Analyze geometric overlaps, gaps, volume, and mass",
+	gqa_options, "options-first objects:path+", gqa_opt_rules);
 
-GED_DECLARE_COMMAND_SET(GED_GQA_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_gqa", 1, GED_GQA_COMMANDS)
+#define GED_GQA_COMMANDS(X, XID) \
+    X(gqa, ged_gqa_core, GED_CMD_DEFAULT, &gqa_opt_spec) \
+
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_GQA_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_gqa", 1, GED_GQA_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

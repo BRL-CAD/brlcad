@@ -25,10 +25,10 @@ With member arguments, it sets the transformation for each listed member, constr
 
 === Options
 
-*-i type*::
+*-i* _type_::
 Set the input format type for interpreting transformation data. Affects how the `az el tw x y z sa sx sy sz` parameters are parsed and assembled into a matrix.
 
-*-r type*::
+*-r* _type_::
 Set the representation type for matrix output when reading.
 
 === Member specification

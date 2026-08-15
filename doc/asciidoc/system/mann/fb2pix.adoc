@@ -22,9 +22,9 @@ The available options are:
 
 * *-c* : Crunch the colormap (apply colormap to pixel values).
 * *-i* : Inverse mapping (draws the image upside down).
-* *-s squaresize* : Sets both the output width and height to the specified `squaresize`.
-* *-w width* : Sets the output width.
-* *-n height* : Sets the output height.
+* *-s squaresize* : Sets both the output width and height to the specified positive `squaresize`.
+* *-w width* : Sets the output width to a positive value.
+* *-n height* : Sets the output height to a positive value.
 * *-h* or *-?* : Prints the command usage and exits.
 
 If size parameters are omitted, it defaults to capturing a 512x512 region.

@@ -28,14 +28,21 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
+
+GED_DEFINE_TYPED_OPERAND_SCHEMA_PROVIDER(get_type, "get_type",
+    "Report a database object's primitive type", "object", BU_CMD_VALUE_DB_PATH,
+    1, 1, "Database object or path", "ged.db_path");
 
 
 int
 ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal intern;
+    int parse_dummy = 0;
+    int operand_index = 0;
     int type;
     static const char *usage = "object";
 
@@ -51,13 +58,15 @@ ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc != 2) {
+	operand_index = bu_cmd_schema_parse_complete(&get_type_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0 || argc - 1 - operand_index != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1], wdbp) & BRLCAD_ERROR) {
+    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1 + operand_index], wdbp) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
     }
 
@@ -214,10 +223,10 @@ ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_GET_TYPE_COMMANDS(X, XID) \
-    X(get_type, ged_get_type_core, GED_CMD_DEFAULT) \
+    X(get_type, ged_get_type_core, GED_CMD_DEFAULT, &get_type_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_GET_TYPE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_get_type", 1, GED_GET_TYPE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GET_TYPE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_get_type", 1, GED_GET_TYPE_COMMANDS)
 
 /*
  * Local Variables:

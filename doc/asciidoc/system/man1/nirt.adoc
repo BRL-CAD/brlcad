@@ -96,6 +96,11 @@ When standard input is not a terminal (for example, when it is redirected from a
 *-B*::
   Deprecated and no longer used; accepted but ignored.
 
+For each color option, the three channels may be supplied as one packed
+_r/g/b_, _r,g,b_, or _r;g;b_ argument, or as three separate _r g b_
+arguments.  The packed compatibility color forms historically accepted by
+*nirt* continue to work as well.
+
 *nirt* also checks for a `.nirtrc` start-up file, first in the current directory and then in the user's home directory. If found, it is read before interaction begins and may contain any *nirt* commands, which is useful for loading predefined states or output formats.
 
 

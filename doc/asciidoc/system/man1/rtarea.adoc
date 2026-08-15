@@ -126,7 +126,7 @@ WARNING: The terminology and output format of *rtarea* may change in future rele
 *-X* _#_::
   Set *rt* program/optical debug flags as a hexadecimal bit vector.
 
-*-? or -h*::
+*-?*, *-h*::
   Print a usage summary and exit.
 
 [[examples]]

@@ -28,8 +28,14 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
+
+GED_DEFINE_TYPED_OPERAND_SCHEMA_PROVIDER(unhide, "unhide",
+    "Reveal hidden database objects", "objects", BU_CMD_VALUE_STRING, 1,
+    BU_CMD_COUNT_UNLIMITED, "Hidden database objects to reveal",
+    "ged.db_object_hidden");
 
 
 int
@@ -41,6 +47,8 @@ ged_unhide_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_external tmp;
     struct db5_raw_internal raw;
     int i;
+    int operand_index;
+    int parse_dummy = 0;
     static const char *usage = "object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -56,6 +64,15 @@ ged_unhide_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
+    operand_index = bu_cmd_schema_parse_complete(&unhide_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
+
     dbip = gedp->dbip;
 
     if (db_version(dbip) < 5) {
@@ -63,7 +80,7 @@ ged_unhide_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    for (i = 1; i < argc; i++) {
+    for (i = 0; i < argc; i++) {
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    continue;
 	}
@@ -111,10 +128,10 @@ ged_unhide_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_UNHIDE_COMMANDS(X, XID) \
-    X(unhide, ged_unhide_core, GED_CMD_DEFAULT) \
+    X(unhide, ged_unhide_core, GED_CMD_DEFAULT, &unhide_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_UNHIDE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_unhide", 1, GED_UNHIDE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_UNHIDE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_unhide", 1, GED_UNHIDE_COMMANDS)
 
 /*
  * Local Variables:

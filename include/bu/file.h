@@ -160,6 +160,48 @@ BU_EXPORT extern int bu_file_delete(const char *path);
  */
 BU_EXPORT extern size_t bu_file_list(const char *path, const char *pattern, char ***files);
 
+/** Include dot-prefixed entries in bu_file_complete results. */
+#define BU_FILE_COMPLETE_HIDDEN      0x1
+/** Return directories only. */
+#define BU_FILE_COMPLETE_DIRS_ONLY   0x2
+/** Append the input path separator to directory candidates. */
+#define BU_FILE_COMPLETE_APPEND_SLASH 0x4
+
+/**
+ * Complete a partially typed filesystem path.
+ *
+ * Results preserve the directory prefix spelling supplied in seed.  Hidden
+ * entries are omitted unless seed's basename begins with '.' or
+ * BU_FILE_COMPLETE_HIDDEN is set.  If extensions is non-NULL, regular files
+ * must end in one of the NULL-terminated suffix strings (with or without a
+ * leading '.'); directories are retained for continued traversal.
+ *
+ * The returned argv-style array is sorted and must be released with
+ * bu_argv_free().
+ */
+BU_EXPORT extern size_t bu_file_complete(const char *seed, int flags, const char * const *extensions, char ***matches);
+
+/**
+ * Bounded form of bu_file_complete.  A zero max_matches requests all
+ * candidates.  total_matches and common_prefix, when non-NULL, describe the
+ * full matching set independently of the returned candidate budget.  The
+ * caller initializes and frees common_prefix; matches follows the ownership
+ * rules of bu_file_complete.
+ */
+BU_EXPORT extern size_t bu_file_complete_query(const char *seed, int flags, const char * const *extensions,
+	size_t max_matches, char ***matches, size_t *total_matches, struct bu_vls *common_prefix);
+
+/** Optional side-effect-free filter for a completed filesystem candidate.
+ * Return zero to retain the candidate. */
+typedef int (*bu_file_complete_filter_t)(const char *candidate, const void *data);
+
+/** Predicate-aware bounded completion.  Filtering is performed during the
+ * directory scan, before candidate materialization and full-set metadata. */
+BU_EXPORT extern size_t bu_file_complete_query_filtered(const char *seed, int flags,
+	const char * const *extensions, size_t max_matches,
+	bu_file_complete_filter_t filter, const void *filter_data,
+	char ***matches, size_t *total_matches, struct bu_vls *common_prefix);
+
 
 /**
  * This routine expands a path to a resolved canonical full path.

@@ -45,7 +45,6 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
     size_t count;
     fastf_t tol_coll;
     fastf_t min_angle;
-    static const char *usage = "nmg_prim new_prim max_err_dist [min_angle]";
     struct bu_list *vlfree = &rt_vlfree;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -58,12 +57,12 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
     }
 
     if (argc < 4) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
 

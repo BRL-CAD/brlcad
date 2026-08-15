@@ -10,14 +10,21 @@ bot_vertex_fuse - Used to eliminate duplicate vertices from a BOT solid.
 
 [source]
 ----
-bot_vertex_fuse {new_bot_solid} {old_bot_primitive>}
+bot_vertex_fuse [--help] new_bot_solid old_bot_primitive
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Used to eliminate duplicate vertices from a BOT solid. It returns the number of vertices eliminated. No tolerance is used, so the vertices must match exactly to be considered duplicates.
+Used to eliminate duplicate vertices from a BOT solid. It returns the number of
+vertices eliminated. Vertices within the database tolerance are considered
+duplicates.
+
+=== Options
+
+*-h*, *--help*::
+Print command help without requiring an open database.
 
 
 [[examples]]

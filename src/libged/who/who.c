@@ -24,9 +24,148 @@
  */
 
 #include "ged.h"
+#include "bu/cmdschema.h"
+
+#include "../ged_private.h"
+#include "who_solids.h"
 
 extern int ged_who2_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_who_solids_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_who_new_schema;
+
+struct who_legacy_args {
+    int print_help;
+};
+
+static const char * const who_real_aliases[] = {"r", NULL};
+static const char * const who_phony_aliases[] = {"p", NULL};
+static const char * const who_both_aliases[] = {"b", NULL};
+static const struct bu_cmd_value_keyword who_display_kinds[] = {
+    {"real", who_real_aliases, "List real database objects"},
+    {"phony", who_phony_aliases, "List phony display objects"},
+    {"both", who_both_aliases, "List real and phony objects"},
+    {NULL, NULL, NULL}
+};
+static const struct bu_cmd_option who_legacy_options[] = {
+    BU_CMD_FLAG("h", "help", struct who_legacy_args, print_help,
+	"Print command help"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand who_legacy_operands[] = {
+    BU_CMD_OPERAND_KEYWORD_VALUES("display_kind", BU_CMD_VALUE_KEYWORD, 0, 1,
+	"real, phony, or both", NULL, who_display_kinds),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand who_solids_operands[] = {
+    BU_CMD_OPERAND("detail_level", BU_CMD_VALUE_INTEGER, 0, 1,
+	"Report detail level", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_option who_legacy_solids_options[] = {
+    BU_CMD_FLAG("h", "help", struct ged_solid_report_args, print_help,
+	"Print command help"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema who_legacy_schema = {
+    "who", "List top-level displayed objects", who_legacy_options,
+    who_legacy_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema who_legacy_solids_schema = {
+    "solids", "Report displayed solid internals", who_legacy_solids_options,
+    who_solids_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+GED_DEFINE_NO_ARG_SCHEMA_NAMED(who_tree_root_schema, "who",
+    "List objects currently displayed", BU_CMD_PARSE_OPTIONS_FIRST);
+static const char * const who_report_aliases[] = {"report", NULL};
+static const struct bu_cmd_tree_node who_legacy_subcommands[] = {
+    BU_CMD_TREE_NODE(&who_legacy_solids_schema, who_report_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree_node who_new_subcommands[] = {
+    BU_CMD_TREE_NODE(&ged_who_solids_schema, who_report_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree who_legacy_tree = {
+    &who_tree_root_schema, who_legacy_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+static const struct bu_cmd_tree who_new_tree = {
+    &who_tree_root_schema, who_new_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+static const struct bu_cmd_form ged_who_native_forms[] = {
+    BU_CMD_FORM_SCHEMA("legacy", "Legacy object listing", &who_legacy_schema),
+    BU_CMD_FORM_TREE("legacy_solids", "Legacy detailed solid report",
+	&who_legacy_tree),
+    BU_CMD_FORM_SCHEMA("current", "Current object listing", &ged_who_new_schema),
+    BU_CMD_FORM_TREE("current_solids", "Current detailed solid report",
+	&who_new_tree),
+    BU_CMD_FORM_NULL
+};
+
+char *
+ged_who_help_for_mode(int new_form, int solids, const char *invocation)
+{
+    if (solids)
+	return bu_cmd_schema_help(new_form ? &ged_who_solids_schema :
+	    &who_legacy_solids_schema, invocation);
+
+    const struct bu_cmd_form legacy_form_rows[] = {
+	BU_CMD_FORM_SCHEMA("objects", "List displayed objects", &who_legacy_schema),
+	BU_CMD_FORM_TREE("solid details", "Report displayed solid details", &who_legacy_tree),
+	BU_CMD_FORM_NULL
+    };
+    const struct bu_cmd_form new_form_rows[] = {
+	BU_CMD_FORM_SCHEMA("objects", "List displayed objects", &ged_who_new_schema),
+	BU_CMD_FORM_TREE("solid details", "Report displayed solid details", &who_new_tree),
+	BU_CMD_FORM_NULL
+    };
+    const struct bu_cmd_forms legacy_forms = BU_CMD_FORMS("who",
+	"List objects currently displayed", legacy_form_rows, NULL);
+    const struct bu_cmd_forms new_forms = BU_CMD_FORMS("who",
+	"List objects currently displayed", new_form_rows, NULL);
+    return bu_cmd_forms_help(new_form ? &new_forms : &legacy_forms, invocation);
+}
+
+static int
+who_solids_input(size_t argc, const char * const *argv)
+{
+    const char *arg;
+    size_t len;
+
+    if (argc < 2 || !argv || !argv[1])
+	return 0;
+    arg = argv[1];
+    if (BU_STR_EQUAL(arg, "solids") || BU_STR_EQUAL(arg, "report"))
+	return 1;
+    len = strlen(arg);
+    if (!len)
+	return 0;
+    if (arg[0] == 's' && bu_strncmp("solids", arg, len) == 0)
+	return 1;
+    return len > 1 && bu_strncmp("report", arg, len) == 0;
+}
+
+static const struct bu_cmd_form *
+ged_who_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
+	const char * const *argv, void *context)
+{
+    int solids = who_solids_input(argc, argv);
+    const struct ged *gedp = (const struct ged *)context;
+    int new_form = gedp && gedp->new_cmd_forms;
+
+    if (new_form)
+	return solids ? &forms->forms[3] : &forms->forms[2];
+    return solids ? &forms->forms[1] : &forms->forms[0];
+}
+
+static const struct bu_cmd_forms ged_who_forms =
+    BU_CMD_FORMS("who", "List objects currently displayed",
+	ged_who_native_forms, ged_who_select_native_form);
 
 /*
  * List the objects currently prepped for drawing
@@ -39,10 +178,10 @@ extern int ged_who_solids_core(struct ged *gedp, int argc, const char **argv);
 int
 ged_who_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage =
-	"Usage:\n"
-	"  who [real|phony|both]\n"
-	"  who solids [level]";
+    struct who_legacy_args args = {0};
+    int operand_index;
+
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if (argc > 1 && (BU_STR_EQUAL(argv[1], "solids") || BU_STR_EQUAL(argv[1], "report")))
 	return ged_who_solids_core(gedp, argc, argv);
@@ -53,21 +192,29 @@ ged_who_core(struct ged *gedp, int argc, const char *argv[])
     struct display_list *gdlp;
     int skip_real, skip_phony;
 
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc == 2 && (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "--help") || BU_STR_EQUAL(argv[1], "-?"))) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+    operand_index = bu_cmd_schema_parse_complete(&who_legacy_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	char *help = ged_who_help_for_mode(0, 0, argv[0]);
+	if (help) {
+	    bu_vls_strcat(gedp->ged_result_str, help);
+	    bu_free(help, "who compatibility help");
+	}
+	return BRLCAD_ERROR;
+    }
+    if (args.print_help) {
+	char *help = ged_who_help_for_mode(0, 0, argv[0]);
+	if (help) {
+	    bu_vls_strcat(gedp->ged_result_str, help);
+	    bu_free(help, "who compatibility help");
+	}
 	return GED_HELP;
     }
 
-    if (2 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return BRLCAD_ERROR;
-    }
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
 
     skip_real = 0;
     skip_phony = 1;
@@ -86,7 +233,13 @@ ged_who_core(struct ged *gedp, int argc, const char *argv[])
 		skip_phony = 1;
 		break;
 	    default:
-		bu_vls_printf(gedp->ged_result_str, "%s", usage);
+		{
+		    char *help = ged_who_help_for_mode(0, 0, argv[0]);
+		    if (help) {
+			bu_vls_strcat(gedp->ged_result_str, help);
+			bu_free(help, "who compatibility help");
+		    }
+		}
 		return BRLCAD_ERROR;
 	}
     }
@@ -107,11 +260,51 @@ ged_who_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_WHO_COMMANDS(X, XID) \
-    X(who, ged_who_core, GED_CMD_DEFAULT) \
+static int
+ged_who_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_native_forms_validate(gedp, &ged_who_forms, input,
+	cursor_pos, result);
+}
 
-GED_DECLARE_COMMAND_SET(GED_WHO_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_who", 1, GED_WHO_COMMANDS)
+static int
+ged_who_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_native_forms_analyze(gedp, &ged_who_forms, input,
+	analysis);
+}
+
+static char *
+ged_who_grammar_json(void)
+{
+    return ged_cmd_native_forms_describe_json(&ged_who_forms);
+}
+
+static int
+ged_who_grammar_lint(struct bu_vls *msgs)
+{
+    return ged_cmd_native_forms_lint(&ged_who_forms, msgs);
+}
+
+static char *
+ged_who_grammar_help(const char *invocation)
+{
+    return ged_cmd_native_forms_help(&ged_who_forms, invocation);
+}
+
+static const struct ged_cmd_grammar ged_who_grammar = {
+    "who", "List objects currently displayed", ged_who_grammar_validate,
+    ged_who_grammar_analyze, ged_who_grammar_json, ged_who_grammar_lint, NULL,
+    ged_who_grammar_help
+};
+
+#define GED_WHO_COMMANDS(X, XID, N, NID, G, GID) \
+    G(who, ged_who_core, GED_CMD_DEFAULT, &ged_who_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_WHO_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_who", 1, GED_WHO_COMMANDS)
 
 /*
  * Local Variables:

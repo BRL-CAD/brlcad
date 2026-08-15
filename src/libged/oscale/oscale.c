@@ -49,7 +49,6 @@ ged_oscale_core(struct ged *gedp, int argc, const char *argv[])
     /* intentionally double for scan */
     double sf;
 
-    static const char *usage = "obj sf [kX kY kZ]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -60,12 +59,12 @@ ged_oscale_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
     }
 
     if (argc != 3 && argc != 6) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -132,11 +131,20 @@ ged_oscale_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_OSCALE_COMMANDS(X, XID) \
-    X(oscale, ged_oscale_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand oscale_schema_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 1, 1, "Object path", NULL),
+    BU_CMD_OPERAND("scale_factor", BU_CMD_VALUE_NUMBER, 1, 1, "Scale factor", NULL),
+    BU_CMD_OPERAND("keypoint", BU_CMD_VALUE_NUMBER, 0, 3, "Optional X Y Z keypoint", NULL),
+    BU_CMD_OPERAND_NULL
+};
+GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(oscale, 2, 5, GED_SCHEMA_COUNT_NONE)
+static const struct bu_cmd_schema oscale_cmd_schema = {"oscale", "Scale an object about a keypoint", NULL, oscale_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(oscale_schema_validate, NULL)};
 
-GED_DECLARE_COMMAND_SET(GED_OSCALE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_oscale", 1, GED_OSCALE_COMMANDS)
+#define GED_OSCALE_COMMANDS(X, XID) \
+    X(oscale, ged_oscale_core, GED_CMD_DEFAULT, &oscale_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_OSCALE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_oscale", 1, GED_OSCALE_COMMANDS)
 
 /*
  * Local Variables:

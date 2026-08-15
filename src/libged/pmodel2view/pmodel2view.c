@@ -54,11 +54,14 @@ ged_pmodel2view_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_PMODEL2VIEW_COMMANDS(X, XID) \
-    X(pmodel2view, ged_pmodel2view_core, GED_CMD_DEFAULT) \
+GED_DEFINE_NO_ARG_SCHEMA(pmodel2view, "pmodel2view",
+    "Report the perspective model-to-view matrix");
 
-GED_DECLARE_COMMAND_SET(GED_PMODEL2VIEW_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_pmodel2view", 1, GED_PMODEL2VIEW_COMMANDS)
+#define GED_PMODEL2VIEW_COMMANDS(X, XID) \
+    X(pmodel2view, ged_pmodel2view_core, GED_CMD_DEFAULT, &pmodel2view_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PMODEL2VIEW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_pmodel2view", 1, GED_PMODEL2VIEW_COMMANDS)
 
 /*
  * Local Variables:

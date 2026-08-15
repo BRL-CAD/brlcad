@@ -74,6 +74,17 @@ cleanup(const char *dir, int file_cnt)
 }
 
 
+static int
+completion_filter(const char *candidate, const void *data)
+{
+    int *calls = (int *)data;
+
+    (*calls)++;
+    return !(BU_STR_EQUAL(candidate, "bu_file_test_dir/bu_file_1") ||
+	BU_STR_EQUAL(candidate, "bu_file_test_dir/bu_file_10"));
+}
+
+
 int
 main(int ac, char *av[])
 {
@@ -226,6 +237,70 @@ main(int ac, char *av[])
 	}
 	if (lfiles) {
 	    bu_argv_free(count, lfiles);
+	}
+    }
+
+    /* platform-neutral path completion */
+    {
+	char **matches = NULL;
+	size_t count = bu_file_complete("bu_file_test_dir/bu_file_10", 0, NULL, &matches);
+	int found = 0;
+	for (size_t i = 0; i < count; i++)
+	    if (BU_STR_EQUAL(matches[i], "bu_file_test_dir/bu_file_10")) found = 1;
+	if (!found)
+	    bu_exit(1, "%s [FAIL] bu_file_complete did not preserve and complete a directory prefix\n", av[0]);
+	if (matches) bu_argv_free(count, matches);
+
+	matches = NULL;
+	count = bu_file_complete("bu_file_test", BU_FILE_COMPLETE_DIRS_ONLY | BU_FILE_COMPLETE_APPEND_SLASH, NULL, &matches);
+	found = 0;
+	for (size_t i = 0; i < count; i++)
+	    if (BU_STR_EQUAL(matches[i], "bu_file_test_dir/")) found = 1;
+	if (!found)
+	    bu_exit(1, "%s [FAIL] directory-only completion did not append a path separator\n", av[0]);
+	if (matches) bu_argv_free(count, matches);
+
+	const char *extensions[] = {".g", NULL};
+	matches = NULL;
+	count = bu_file_complete("bu_file_test_dir/bu_file_", 0, extensions, &matches);
+	if (count)
+	    bu_exit(1, "%s [FAIL] extension filtering returned non-.g files\n", av[0]);
+	if (matches) bu_argv_free(count, matches);
+
+	{
+	    struct bu_vls common = BU_VLS_INIT_ZERO;
+	    size_t total = 0;
+	    matches = NULL;
+	    count = bu_file_complete_query("bu_file_test_dir/bu_file_", 0, NULL,
+		3, &matches, &total, &common);
+	    if (count != 3 || total != (size_t)file_cnt ||
+		    !BU_STR_EQUAL(bu_vls_cstr(&common), "bu_file_test_dir/bu_file_"))
+		bu_exit(1, "%s [FAIL] bounded file completion returned inconsistent full-set metadata\n", av[0]);
+	    if (bu_strcmp(matches[0], matches[1]) >= 0 ||
+		    bu_strcmp(matches[1], matches[2]) >= 0)
+		bu_exit(1, "%s [FAIL] bounded file completion is not sorted\n", av[0]);
+	    if (!BU_STR_EQUAL(matches[0], "bu_file_test_dir/bu_file_1") ||
+		    !BU_STR_EQUAL(matches[1], "bu_file_test_dir/bu_file_10") ||
+		    !BU_STR_EQUAL(matches[2], "bu_file_test_dir/bu_file_100"))
+		bu_exit(1, "%s [FAIL] bounded file completion did not retain the lexical first matches\n", av[0]);
+	    if (matches) bu_argv_free(count, matches);
+	    bu_vls_free(&common);
+	}
+
+	{
+	    struct bu_vls common = BU_VLS_INIT_ZERO;
+	    size_t total = 0;
+	    int filter_calls = 0;
+	    matches = NULL;
+	    count = bu_file_complete_query_filtered("bu_file_test_dir/bu_file_", 0, NULL,
+		1, completion_filter, &filter_calls, &matches, &total, &common);
+	    if (count != 1 || total != 2 || filter_calls != file_cnt ||
+		    !BU_STR_EQUAL(bu_vls_cstr(&common), "bu_file_test_dir/bu_file_1"))
+		bu_exit(1, "%s [FAIL] filtered file completion returned inconsistent full-set metadata\n", av[0]);
+	    if (!BU_STR_EQUAL(matches[0], "bu_file_test_dir/bu_file_1"))
+		bu_exit(1, "%s [FAIL] filtered file completion did not retain the lexical first match\n", av[0]);
+	    if (matches) bu_argv_free(count, matches);
+	    bu_vls_free(&common);
 	}
     }
 

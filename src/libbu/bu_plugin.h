@@ -552,6 +552,13 @@ extern "C" {
      */
     BU_PLUGIN_API void bu_plugin_set_path_allow(bu_plugin_path_allow_cb cb);
 
+    /**
+     * Report whether the configured host policy permits @p path.  Hosts which
+     * need to inspect additional manifests before publishing a module must use
+     * this query rather than bypassing the policy with a direct dlopen.
+     */
+    BU_PLUGIN_API int bu_plugin_path_allowed(const char *path);
+
     /*
      * Type definitions for plugin commands.
      * Applications can define BU_PLUGIN_CMD_RET and BU_PLUGIN_CMD_ARGS before
@@ -640,6 +647,21 @@ extern "C" {
      *   - Returns -1 for null/empty name or null impl
      */
     BU_PLUGIN_API int bu_plugin_cmd_register(const char *name, bu_plugin_cmd_impl impl);
+
+    /**
+     * Atomically register a command table.  The complete table is validated
+     * and checked for internal and registry collisions before any entry is
+     * published.  Returns 0 on success, 1 if any spelling already exists, and
+     * -1 for an invalid table.
+     */
+    BU_PLUGIN_API int bu_plugin_cmd_register_batch(const bu_plugin_cmd *commands,
+	    size_t command_count);
+
+    /** Remove an atomically registered command table when every spelling is
+     * still paired with the supplied implementation.  This is intended for a
+     * host transaction rollback, not general command replacement. */
+    BU_PLUGIN_API int bu_plugin_cmd_unregister_batch(const bu_plugin_cmd *commands,
+	    size_t command_count);
 
     /**
      * bu_plugin_cmd_exists - Check if a command is registered.
@@ -982,6 +1004,12 @@ extern "C" {
 	bu_plugin_impl::get_path_allow() = cb;
     }
 
+    BU_PLUGIN_API int bu_plugin_path_allowed(const char *path) {
+	if (!path || !path[0]) return 0;
+	bu_plugin_path_allow_cb path_allow = bu_plugin_impl::get_path_allow();
+	return (!path_allow || path_allow(path)) ? 1 : 0;
+    }
+
     BU_PLUGIN_API int bu_plugin_cmd_register(const char *name, bu_plugin_cmd_impl impl) {
 	if (!name || !impl) return -1;
 
@@ -1001,6 +1029,52 @@ extern "C" {
 	    return 1; /* Duplicate - first wins */
 	}
 	reg[trimmed] = impl;
+	return 0;
+    }
+
+    BU_PLUGIN_API int bu_plugin_cmd_register_batch(const bu_plugin_cmd *commands,
+	    size_t command_count) {
+	if (!commands || !command_count) return -1;
+
+	std::vector<std::pair<std::string, bu_plugin_cmd_impl>> prepared;
+	std::unordered_set<std::string> names;
+	prepared.reserve(command_count);
+	for (size_t i = 0; i < command_count; i++) {
+	    if (!commands[i].name || !commands[i].impl) return -1;
+	    std::string name = bu_plugin_impl::trim_whitespace(commands[i].name);
+	    if (name.empty() || !names.insert(name).second) return -1;
+	    prepared.emplace_back(std::move(name), commands[i].impl);
+	}
+
+	std::lock_guard<std::mutex> lock(bu_plugin_impl::get_mutex());
+	auto& reg = bu_plugin_impl::get_registry();
+	for (const auto& command : prepared)
+	    if (reg.find(command.first) != reg.end()) return 1;
+	for (const auto& command : prepared)
+	    reg.emplace(command.first, command.second);
+	return 0;
+    }
+
+    BU_PLUGIN_API int bu_plugin_cmd_unregister_batch(const bu_plugin_cmd *commands,
+	    size_t command_count) {
+	if (!commands || !command_count) return -1;
+	std::vector<std::pair<std::string, bu_plugin_cmd_impl>> prepared;
+	prepared.reserve(command_count);
+	for (size_t i = 0; i < command_count; i++) {
+	    if (!commands[i].name || !commands[i].impl) return -1;
+	    std::string name = bu_plugin_impl::trim_whitespace(commands[i].name);
+	    if (name.empty()) return -1;
+	    prepared.emplace_back(std::move(name), commands[i].impl);
+	}
+
+	std::lock_guard<std::mutex> lock(bu_plugin_impl::get_mutex());
+	auto& reg = bu_plugin_impl::get_registry();
+	for (const auto& command : prepared) {
+	    auto found = reg.find(command.first);
+	    if (found == reg.end() || found->second != command.second) return 1;
+	}
+	for (const auto& command : prepared)
+	    reg.erase(command.first);
 	return 0;
     }
 
@@ -1100,8 +1174,7 @@ extern "C" {
 	}
 
 	/* Enforce path allow policy */
-	bu_plugin_path_allow_cb path_allow = bu_plugin_impl::get_path_allow();
-	if (path_allow && !path_allow(path)) {
+	if (!bu_plugin_path_allowed(path)) {
 	    bu_plugin_logf(BU_LOG_ERR, "Plugin path '%s' not allowed by policy", path);
 	    return -1;
 	}

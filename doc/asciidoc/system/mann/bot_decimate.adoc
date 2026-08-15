@@ -10,14 +10,14 @@ bot_decimate - Reduces the number of triangles in the __old_bot_primitive__ and 
 
 [source]
 ----
-bot_decimate [-f feature_size] [-c maximum_chord_error] [-n maximum_normal_error] [-e minimum_edge_length] {new_bot_primitive} {old_bot_primitive}
+bot_decimate [--help] [-f feature_size | [-c maximum_chord_error] [-n maximum_normal_error] [-e minimum_edge_length]] {new_bot_primitive} {old_bot_primitive}
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Reduces the number of triangles in the __old_bot_primitive__ and saves the results to the __new_bot_primitive__. The reduction is accomplished through an edge decimation algorithm. Only changes that do not violate the specified constraints are performed. Specifying the __feature_size__ parameter will result in use of the new GCT decimator (this parameter is mutually exclusive with the other tolerances). The __maximum_chord_error__ parameter specifies the maximum distance allowed between the original surface and the surface of the new BOT primitive in the current editing units. The __maximum_normal_error__ specifies the maximum change in surface normal (degrees) between the old and new surfaces. The __minimum_edge_length__ specifies the length of the longest edge that will be decimated. At least one constraint must be supplied. If more than one constraint is specified, then only operations that satisfy all the constraints are performed.
+Reduces the number of triangles in the __old_bot_primitive__ and saves the results to the __new_bot_primitive__. The reduction is accomplished through an edge decimation algorithm. Only changes that do not violate the specified constraints are performed. Specifying the __feature_size__ parameter selects the GCT decimator and is mutually exclusive with the other tolerances. Alternatively, specify one or more of __maximum_chord_error__, __maximum_normal_error__, and __minimum_edge_length__ to select the classical decimator. The chord-error parameter specifies the maximum distance allowed between the original surface and the surface of the new BOT primitive in the current editing units. The normal-error parameter specifies the maximum change in surface normal (degrees) between the old and new surfaces. The minimum-edge-length parameter specifies the length of the longest edge that will be decimated.
 
 
 [[examples]]

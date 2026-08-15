@@ -60,9 +60,9 @@
 #include <vector>
 
 #include "vmath.h"
+#include "bu/cmdschema.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
 #include "bu/parallel.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -97,6 +97,65 @@ struct bot_exterior_opts {
 				    * 0.0 = no limit (rely solely on convergence) */
     int    verbose;                /* 0 = default output; 1 = extra metrics
 				    * (elapsed time, flip-time stats) */
+};
+
+struct bot_exterior_args {
+    int print_help;
+    int in_place;
+    fastf_t visibility_threshold;
+    fastf_t convergence_threshold;
+    fastf_t per_face_budget;
+    int verbose;
+    int flood_fill;
+    fastf_t voxel_size;
+};
+
+static const struct bu_cmd_option bot_exterior_options[] = {
+    BU_CMD_FLAG("h", "help", struct bot_exterior_args, print_help,
+	"Print command help"),
+    BU_CMD_FLAG("i", "in-place", struct bot_exterior_args, in_place,
+	"Overwrite the input BoT"),
+    BU_CMD_NUMBER_RANGE(NULL, "visibility-threshold", struct bot_exterior_args,
+	visibility_threshold, 0.0, 1.0, "ratio",
+	"Minimum visible-ray fraction"),
+    BU_CMD_POSITIVE_NUMBER("c", "convergence-threshold", struct bot_exterior_args,
+	convergence_threshold, "percent", "Cauchy-Crofton convergence threshold"),
+    BU_CMD_NONNEGATIVE_NUMBER(NULL, "per-face-budget", struct bot_exterior_args,
+	per_face_budget, "seconds", "Per-face sampling time limit"),
+    BU_CMD_FLAG("v", "verbose", struct bot_exterior_args, verbose,
+	"Print extra metrics"),
+    BU_CMD_FLAG("f", "flood-fill", struct bot_exterior_args, flood_fill,
+	"Use voxel flood-fill when available"),
+    BU_CMD_NUMBER(NULL, "voxel-size", struct bot_exterior_args, voxel_size,
+	"size", "Flood-fill voxel edge length"),
+    BU_CMD_OPTION_NULL
+};
+static const char * const bot_exterior_in_place_option[] = {"in-place", NULL};
+static const struct bu_cmd_constraint bot_exterior_constraints[] = {
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT,
+	bot_exterior_in_place_option, 1, 1,
+	"--in-place requires exactly one input BoT"),
+    BU_CMD_CONSTRAINT_NULL
+};
+static const struct bu_cmd_operand bot_exterior_operands[] = {
+    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Input BoT object", "ged.db_object"),
+    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+	"Optional new BoT name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+extern "C" const struct bu_cmd_schema ged_bot_exterior_schema = {
+    "bot_exterior", "Extract exterior BoT faces", bot_exterior_options,
+    bot_exterior_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_META_HELP(NULL, bot_exterior_constraints, NULL, NULL, NULL)
+};
+/* The direct command retains its public `bot_exterior` spelling.  The parent
+ * tree reuses the same options, operands, and validation through this
+ * canonical child-name view rather than duplicating a completion-only table. */
+extern "C" const struct bu_cmd_schema ged_bot_exterior_subcommand_schema = {
+    "exterior", "Extract exterior BoT faces", bot_exterior_options,
+    bot_exterior_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_META_HELP(NULL, bot_exterior_constraints, NULL, NULL, NULL)
 };
 
 
@@ -712,13 +771,12 @@ bot_apply_exterior_mask(struct rt_bot_internal *bot,
  * ====================================================================== */
 
 static void
-exterior_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d)
+exterior_usage(struct bu_vls *str, const char *cmd)
 {
-    char *option_help = bu_opt_describe(d, NULL);
-    bu_vls_sprintf(str, "Usage: %s [options] input_bot [output_name]\n", cmd);
-    if (option_help) {
-	bu_vls_printf(str, "Options:\n%s\n", option_help);
-	bu_free(option_help, "help str");
+    char *help = bu_cmd_schema_help(&ged_bot_exterior_schema, cmd);
+    if (help) {
+	bu_vls_sprintf(str, "%s\n", help);
+	bu_free(help, "help str");
     }
     bu_vls_printf(str,
 	"If output_name is omitted, the result is written to input_bot_exterior.\n"
@@ -746,92 +804,41 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
     /* Consume the subcommand name token. */
     argc--; argv++;
 
-    int       print_help  = 0;
-    int       in_place    = 0;
-    int       flood_fill  = 0;
-    int       verbose     = 0;
-    fastf_t   voxel_size  = 0.0;
-    fastf_t   vis_threshold       = 0.0;
-    fastf_t   convergence_threshold = 1.0;
-    fastf_t   per_face_budget     = 0.0;
+    struct bot_exterior_args args = {0, 0, 0.0, 1.0, 0.0, 0, 0, 0.0};
+    int operand_index;
+    int operand_count;
+    const char **operands;
 
-    struct bu_opt_desc d[9];
-    BU_OPT(d[0], "h",       "help",                    "",      NULL,            &print_help,
-	   "Print help");
-    BU_OPT(d[1], "i",   "in-place",                    "",      NULL,            &in_place,
-	   "Overwrite input BoT in-place (no output_name needed)");
-    BU_OPT(d[2], "",  "visibility-threshold",       "ratio",  &bu_opt_fastf_t, &vis_threshold,
-	   "Minimum fraction [0,1] of fired rays that must see a face to include it "
-	   "(default 0 = disabled; enabling this is slower.  no-op with -f)");
-    BU_OPT(d[3], "c", "convergence-threshold",    "percent",  &bu_opt_fastf_t, &convergence_threshold,
-	   "SA convergence threshold (%%): do not declare a face interior until the "
-	   "per-face Cauchy-Crofton estimate is stable to within this percentage over "
-	   "two successive ray batches (default 1.0; lower = try harder, more rays)");
-    BU_OPT(d[4], "",  "per-face-budget",              "sec",  &bu_opt_fastf_t, &per_face_budget,
-	   "Hard wall-time ceiling per face in seconds (default 0 = no limit; "
-	   "rely solely on convergence)");
-    BU_OPT(d[5], "v",    "verbose",                    "",      NULL,            &verbose,
-	   "Print extra metrics: elapsed time, flip-time stats");
-    BU_OPT(d[6], "f", "flood-fill",                    "",      NULL,            &flood_fill,
-	   "Use voxel flood-fill / water-filling method (requires OpenVDB)");
-    BU_OPT(d[7], "",  "voxel-size",                "size", &bu_opt_fastf_t,  &voxel_size,
-	   "Voxel edge length for flood-fill (default: auto-computed)");
-    BU_OPT_NULL(d[8]);
-
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    argc = ac;
-
-    if (print_help || !argc) {
-	exterior_usage(gb->gedp->ged_result_str, "bot exterior", d);
+    if (!argc) {
+	exterior_usage(gb->gedp->ged_result_str, "bot exterior");
 	return GED_HELP;
     }
 
-    if (in_place && argc != 1) {
-	bu_vls_printf(gb->gedp->ged_result_str,
-		      "--in-place requires exactly one object name\n%s\n",
-		      usage_string);
+    operand_index = bu_cmd_schema_parse_complete(&ged_bot_exterior_schema,
+	&args, gb->gedp->ged_result_str, argc, argv);
+    if (operand_index < 0)
 	return BRLCAD_ERROR;
+    operand_count = argc - operand_index;
+    operands = argv + operand_index;
+    if (args.print_help) {
+	exterior_usage(gb->gedp->ged_result_str, "bot exterior");
+	return GED_HELP;
     }
 
-    if (argc > 2) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_ERROR;
-    }
-
-    /* Validate option values. */
-    if (vis_threshold < 0.0 || vis_threshold > 1.0) {
-	bu_vls_printf(gb->gedp->ged_result_str,
-		      "--visibility-threshold must be in [0,1] (got %g)\n",
-		      (double)vis_threshold);
-	return BRLCAD_ERROR;
-    }
-    if (convergence_threshold <= 0.0) {
-	bu_vls_printf(gb->gedp->ged_result_str,
-		      "--convergence-threshold must be > 0 (got %g)\n",
-		      (double)convergence_threshold);
-	return BRLCAD_ERROR;
-    }
-    if (per_face_budget < 0.0) {
-	bu_vls_printf(gb->gedp->ged_result_str,
-		      "--per-face-budget must be >= 0 (got %g)\n",
-		      (double)per_face_budget);
-	return BRLCAD_ERROR;
-    }
-
-    const char *input_name = argv[0];
+    const char *input_name = operands[0];
 
     /* Determine output name. */
     struct bu_vls output_name = BU_VLS_INIT_ZERO;
-    if (in_place) {
+	if (args.in_place) {
 	bu_vls_sprintf(&output_name, "%s", input_name);
-    } else if (argc == 2) {
-	bu_vls_sprintf(&output_name, "%s", argv[1]);
+    } else if (operand_count == 2) {
+	bu_vls_sprintf(&output_name, "%s", operands[1]);
     } else {
 	bu_vls_sprintf(&output_name, "%s_exterior", input_name);
     }
 
     /* For non-in-place writes, verify the output name is free. */
-    if (!in_place &&
+	if (!args.in_place &&
 	db_lookup(gb->gedp->dbip, bu_vls_cstr(&output_name), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gb->gedp->ged_result_str,
 		      "Object %s already exists\n", bu_vls_cstr(&output_name));
@@ -874,20 +881,20 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
      * Classify faces.
      * ---------------------------------------------------------------- */
     struct bot_exterior_opts opts;
-    opts.vis_threshold          = (double)vis_threshold;
-    opts.convergence_threshold  = (double)convergence_threshold;
-    opts.per_face_budget_sec    = (double)per_face_budget;
-    opts.verbose                = verbose;
+    opts.vis_threshold          = (double)args.visibility_threshold;
+    opts.convergence_threshold  = (double)args.convergence_threshold;
+    opts.per_face_budget_sec    = (double)args.per_face_budget;
+    opts.verbose                = args.verbose;
 
     int *face_exterior = NULL;
     int  n_ext;
 
-    if (flood_fill) {
+	if (args.flood_fill) {
 #ifdef HAVE_OPENVDB_BOT_EXTERIOR
 	bu_log("bot exterior: using flood-fill (water-filling) method\n");
 	face_exterior = (int *)bu_calloc(bot->num_faces, sizeof(int), "face_exterior");
 	n_ext = bot_flood_exterior_classify(ap.a_rt_i, bot, face_exterior,
-					    (double)voxel_size);
+				    (double)args.voxel_size);
 	if (n_ext < 0) {
 	    bu_free(face_exterior, "face_exterior");
 	    rt_i_destroy(ap.a_rt_i);
@@ -960,7 +967,7 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
      * ---------------------------------------------------------------- */
     int ret = BRLCAD_OK;
 
-    if (in_place) {
+	if (args.in_place) {
 	if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern) < 0) {
 	    bu_vls_printf(gb->gedp->ged_result_str,
 			  "Failed to write %s\n", input_name);
@@ -1010,7 +1017,6 @@ ged_bot_exterior(struct ged *gedp, int argc, const char *argv[])
     gb.visualize = 0;
     gb.vlfree    = &rt_vlfree;
     gb.cmds      = NULL;
-    gb.gopts     = NULL;
 
     return _bot_cmd_exterior(&gb, argc, argv);
 }

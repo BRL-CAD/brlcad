@@ -10,14 +10,24 @@ red - Creates a file describing the specified combination and starts an editor f
 
 [source]
 ----
-red {combination}
+red [-f] [-E editor] combination
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Creates a file describing the specified combination and starts an editor for the user to modify the combination. The environment _EDITOR_ variable will be used to select the editor. If _EDITOR_ is not set, then _/bin/ed_ will be used. All the attributes of BRL-CAD regions and _combinations_ may be edited in this way. The region-specific attributes will be ignored if the _combination_ is not a region and is not set to be a _region_ during editing. It is not necessary to be in an editing mode to run this command. The *rm, r, comb, c,* and *g* commands provide some basic combination editing capabilities.
+Creates a file describing the specified combination and starts an editor for
+the user to modify the combination. The environment _EDITOR_ variable selects
+the editor, or _/bin/ed_ is used when it is unset. `-E editor` overrides that
+selection for this invocation. `-f` permits replacing an existing combination
+if the edited text renames it to an already occupied name.
+
+All the attributes of BRL-CAD regions and _combinations_ may be edited in this
+way. The region-specific attributes will be ignored if the _combination_ is
+not a region and is not set to be a _region_ during editing. It is not
+necessary to be in an editing mode to run this command. The *rm, r, comb, c,*
+and *g* commands provide some basic combination editing capabilities.
 
 
 [[examples]]

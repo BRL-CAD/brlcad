@@ -82,8 +82,10 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <limits.h>
 
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
+#include "bu/opt.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -1508,48 +1510,6 @@ Manual(struct human_data_t *dude)
 
 
 /**
- * Help message printed when -h/-? option is supplied
- */
-static void
-show_help(const char *name, const char *optstr)
-{
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    const char *cp = optstr;
-
-    while (cp && *cp != '\0') {
-	if (*cp == ':' || *cp == 'h' || *cp == '?') {
-	    cp++;
-	    continue;
-	}
-	bu_vls_strncat(&str, cp, 1);
-	cp++;
-    }
-
-    bu_log("Usage: %s [%s]\n", name, bu_vls_addr(&str));
-    bu_log("options ('Set' means 1 argument required unless otherwise noted):\n");
-    bu_log("\t-A\t\tAutoMake defaults\n");
-    bu_log("\t-m\t\tManual sizing mode\n");
-    bu_log("\t-H\t\tSet height (inches)\n");
-    bu_log("\t-L or -l\tSet center point (inches), at body's feet (default 0 0 0; interactive input)\n");
-    /* bu_log("\t-o\t\tSet output file name\n" */
-    bu_log("\t-b\t\tShow bounding Boxes\n");
-    bu_log("\t-n\t\tSet bounding region name (default Body.c )\n");
-    bu_log("\t-N\t\tSet number to make (input will be squared by the program)\n");
-    bu_log("\t-s\t\tSet stance to take; 0-Stand 1-Sit 2-Drive 3-Arms out 4-Letterman 5-Captain 999-Custom\n");
-    bu_log("\t-p\t\tSet percentile (not implemented yet) 1-99\n");
-    bu_log("\t-t\t\tSave bounding box information to file [stats.txt]\n");
-    bu_log("\t-T\t\tRead bounding box information from file [stats.txt]\n");
-    bu_log("\t-v\t\tSave verbose output of all data used to build human model, to file [verbose.txt]\n");
-    bu_log("\t-V\t\tRead verbose input of all data used to build human model, from file [verbose.txt]\n");
-    bu_log("\t 1 - 9, 0, =, and succeeding characters are used for wizard purposes, ignore them.\n");
-    bu_log("\t Last word on command line is also top level object. No argument needed!\n");
-
-    bu_vls_free(&str);
-    return;
-}
-
-
-/**
  * User inputs the XYZ coordinates of the center point of the human model.
  */
 static void
@@ -1578,286 +1538,287 @@ getLocation(fastf_t *location)
 }
 
 
+struct human_args {
+    char *top_level;
+    struct human_data_t *dude;
+    fastf_t *percentile;
+    fastf_t *location;
+    int *stance;
+    int *troops;
+    int *show_boxes;
+    int have_name;
+    int soldiers;
+    int percent;
+    int pose;
+    int help;
+};
+
+static int
+human_opt_auto(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
+	const char **UNUSED(argv), void *set_var)
+{
+    struct human_args *args = (struct human_args *)set_var;
+    if (!args)
+	return 0;
+    bu_log("AutoMode, making 50 percentile man\n");
+    *args->percentile = 50;
+    Auto(args->dude);
+    return 0;
+}
+
+static int
+human_opt_boxes(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
+	const char **UNUSED(argv), void *set_var)
+{
+    struct human_args *args = (struct human_args *)set_var;
+    if (!args)
+	return 0;
+    *args->show_boxes = 1;
+    bu_log("Drawing bounding boxes\n");
+    return 0;
+}
+
+static int
+human_opt_height(struct bu_vls *msg, size_t argc, const char **argv,
+	void *set_var)
+{
+    struct human_args *args = (struct human_args *)set_var;
+    fastf_t height = 0.0;
+    int ret = bu_opt_fastf_t(msg, argc, argv, &height);
+    if (ret < 0 || !args)
+	return ret;
+    if (height < 1.0) {
+	bu_log("Impossible height, setting default height!\n");
+	height = DEFAULT_HEIGHT_INCHES;
+    }
+    args->dude->height = height;
+    bu_log("%.2f = height in inches\n", height);
+    Auto(args->dude);
+    return ret;
+}
+
+static int
+human_opt_location(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
+	const char **UNUSED(argv), void *set_var)
+{
+    struct human_args *args = (struct human_args *)set_var;
+    if (!args)
+	return 0;
+    bu_log("Location\n");
+    getLocation(args->location);
+    return 0;
+}
+
+static int
+human_opt_manual(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
+	const char **UNUSED(argv), void *set_var)
+{
+    struct human_args *args = (struct human_args *)set_var;
+    if (!args)
+	return 0;
+    bu_log("Manual Mode\n");
+    Manual(args->dude);
+    return 0;
+}
+
+static int
+human_opt_name(struct bu_vls *msg, size_t argc, const char **argv,
+	void *set_var)
+{
+    struct human_args *args = (struct human_args *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "name");
+    if (!args)
+	return 1;
+    memset(humanName, 0, MAXLENGTH);
+    bu_strlcpy(humanName, argv[0], MAXLENGTH);
+    bu_strlcpy(args->top_level, humanName, MAXLENGTH);
+    args->have_name = 1;
+    return 1;
+}
+
+static int
+human_opt_inches(struct bu_vls *msg, size_t argc, const char **argv,
+	void *set_var)
+{
+    fastf_t value = 0.0;
+    int ret = bu_opt_fastf_t(msg, argc, argv, &value);
+    if (ret > 0 && set_var)
+	*(fastf_t *)set_var = value * IN2MM;
+    return ret;
+}
+
+static int
+human_opt_low_torso(struct bu_vls *msg, size_t argc, const char **argv,
+	void *set_var)
+{
+    struct human_args *args = (struct human_args *)set_var;
+    fastf_t value = 0.0;
+    int ret = bu_opt_fastf_t(msg, argc, argv, &value);
+    if (ret < 0 || !args)
+	return ret;
+    args->dude->torso.lowTorsoLength = value * IN2MM;
+    args->dude->torso.torsoLength = args->dude->torso.topTorsoLength +
+	args->dude->torso.lowTorsoLength;
+    return ret;
+}
+
+static int
+human_opt_hand_length(struct bu_vls *msg, size_t argc, const char **argv,
+	void *set_var)
+{
+    struct human_args *args = (struct human_args *)set_var;
+    fastf_t value = 0.0;
+    int ret = bu_opt_fastf_t(msg, argc, argv, &value);
+    if (ret < 0 || !args)
+	return ret;
+    args->dude->arms.handLength = value * IN2MM;
+    args->dude->arms.armLength = args->dude->arms.upperArmLength +
+	args->dude->arms.lowerArmLength + args->dude->arms.handLength;
+    return ret;
+}
+
+static int
+human_opt_calf_length(struct bu_vls *msg, size_t argc, const char **argv,
+	void *set_var)
+{
+    struct human_args *args = (struct human_args *)set_var;
+    fastf_t value = 0.0;
+    int ret = bu_opt_fastf_t(msg, argc, argv, &value);
+    if (ret < 0 || !args)
+	return ret;
+    args->dude->legs.calfLength = value * IN2MM;
+    args->dude->legs.legLength = args->dude->legs.thighLength +
+	args->dude->legs.calfLength;
+    return ret;
+}
+
+#define HUMAN_OPTIONS(a) \
+    {"A", NULL, NULL, human_opt_auto, a, "Use automatic default dimensions"}, \
+    {"b", NULL, NULL, human_opt_boxes, a, "Draw bounding boxes"}, \
+    {"H", NULL, "inches", human_opt_height, a, "Set total height"}, \
+    {"L", NULL, NULL, human_opt_location, a, "Set location interactively"}, \
+    {"l", NULL, NULL, human_opt_location, a, "Set location interactively"}, \
+    {"m", NULL, NULL, human_opt_manual, a, "Use interactive manual sizing"}, \
+    {"n", NULL, "name", human_opt_name, a, "Set top-level object name"}, \
+    BU_OPT_INT(a, "N", NULL, soldiers, "count", "Set squared troop formation size"), \
+    BU_OPT_INT(a, "p", NULL, percent, "percent", "Set percentile (1 through 99)"), \
+    BU_OPT_INT(a, "s", NULL, pose, "pose", "Set stance"), \
+    BU_OPT_FLAG(a, "t", NULL, dude->textwrite, "Write bounding-box dimensions"), \
+    BU_OPT_FLAG(a, "T", NULL, dude->textread, "Read bounding-box dimensions"), \
+    BU_OPT_FLAG(a, "v", NULL, dude->verbwrite, "Write all human measurements"), \
+    BU_OPT_FLAG(a, "V", NULL, dude->verbread, "Read all human measurements"), \
+    BU_OPT_CUSTOM(a, "1", NULL, dude->head.headSize, "inches", human_opt_inches, "Set head size"), \
+    BU_OPT_CUSTOM(a, "2", NULL, dude->head.neckLength, "inches", human_opt_inches, "Set neck length"), \
+    BU_OPT_CUSTOM(a, "3", NULL, dude->head.neckWidth, "inches", human_opt_inches, "Set neck width"), \
+    BU_OPT_CUSTOM(a, "4", NULL, dude->torso.topTorsoLength, "inches", human_opt_inches, "Set upper torso length"), \
+    {"5", NULL, "inches", human_opt_low_torso, a, "Set lower torso length"}, \
+    BU_OPT_CUSTOM(a, "6", NULL, dude->torso.shoulderWidth, "inches", human_opt_inches, "Set shoulder width"), \
+    BU_OPT_CUSTOM(a, "7", NULL, dude->torso.abWidth, "inches", human_opt_inches, "Set abdomen width"), \
+    BU_OPT_CUSTOM(a, "8", NULL, dude->torso.pelvisWidth, "inches", human_opt_inches, "Set pelvis width"), \
+    BU_OPT_CUSTOM(a, "9", NULL, dude->arms.upperArmWidth, "inches", human_opt_inches, "Set upper arm width"), \
+    BU_OPT_CUSTOM(a, "0", NULL, dude->arms.upperArmLength, "inches", human_opt_inches, "Set upper arm length"), \
+    BU_OPT_CUSTOM(a, "=", NULL, dude->arms.lowerArmLength, "inches", human_opt_inches, "Set lower arm length"), \
+    BU_OPT_CUSTOM(a, "+", NULL, dude->arms.elbowWidth, "inches", human_opt_inches, "Set elbow width"), \
+    BU_OPT_CUSTOM(a, "_", NULL, dude->arms.wristWidth, "inches", human_opt_inches, "Set wrist width"), \
+    {"Q", NULL, "inches", human_opt_hand_length, a, "Set hand length"}, \
+    BU_OPT_CUSTOM(a, "~", NULL, dude->arms.handWidth, "inches", human_opt_inches, "Set hand width"), \
+    BU_OPT_CUSTOM(a, "*", NULL, dude->legs.thighLength, "inches", human_opt_inches, "Set thigh length"), \
+    BU_OPT_CUSTOM(a, "!", NULL, dude->legs.thighWidth, "inches", human_opt_inches, "Set thigh width"), \
+    {"^", NULL, "inches", human_opt_calf_length, a, "Set calf length"}, \
+    BU_OPT_CUSTOM(a, "%", NULL, dude->legs.kneeWidth, "inches", human_opt_inches, "Set knee width"), \
+    BU_OPT_CUSTOM(a, "$", NULL, dude->legs.footLength, "inches", human_opt_inches, "Set foot length"), \
+    BU_OPT_CUSTOM(a, "#", NULL, dude->legs.ankleWidth, "inches", human_opt_inches, "Set ankle width"), \
+    BU_OPT_CUSTOM(a, "@", NULL, dude->legs.toeWidth, "inches", human_opt_inches, "Set toe width"), \
+    BU_OPT_CUSTOM(a, "Z", NULL, dude->torso.shoulderDepth, "inches", human_opt_inches, "Set shoulder depth"), \
+    BU_OPT_CUSTOM(a, "Y", NULL, dude->torso.abDepth, "inches", human_opt_inches, "Set abdomen depth"), \
+    BU_OPT_CUSTOM(a, "W", NULL, dude->torso.pelvisDepth, "inches", human_opt_inches, "Set pelvis depth"), \
+    BU_OPT_FLAG(a, "h", NULL, help, "Print command help"), \
+    BU_OPT_FLAG(a, "?", NULL, help, "Print command help"),
+BU_OPT_DESC_BUILDER(human_options, struct human_args, HUMAN_OPTIONS);
+
+static const ged_opt_rule human_opt_rules[] = {
+    GED_RULE_ALIAS("?", "h"),
+    GED_RULE_ALIAS("l", "L"),
+    GED_RULE_TYPE("A b L m", BU_OPT_VALUE_FLAG, NULL),
+    GED_RULE_TYPE("n", BU_OPT_VALUE_STRING, "name"),
+    GED_RULE_TYPE("H 1 2 3 4 5 6 7 8 9 0 = + _ Q ~ * ! ^ % $ # @ Z Y W",
+	BU_OPT_VALUE_NUMBER, "inches"),
+    GED_RULE_NULL
+};
+
 /* Process command line arguments, all 43 of them */
 static int
-read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, int *stance, int *troops, int *showBoxes)
+read_args(struct ged *gedp, int argc, const char **argv, char *topLevel,
+	struct human_data_t *dude, fastf_t *percentile, fastf_t *location,
+	int *stance, int *troops, int *showBoxes)
 {
-    int c;
-    float height = 0;
-    int soldiers = 0;
-    int pose = 0;
-    int percent = 50;
-    double x = 0; /* for stashing user input */
-    int have_name = 0;
-/*  char *options = "AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:W:h?"; */
-    char *options = "AbH:Llmn:N:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:W:h?";
+    struct human_args args = {0};
+    const char *command;
+    int operand_count;
 
-    /* don't report errors (this is before bu_opterr was changed to 1 immed. below) */
-    bu_opterr = 1;
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, options)) != -1) {
-	/*bu_log("%c \n", c); Testing to see if args are getting read */
-	switch (c) {
-	    case 'A':
-		bu_log("AutoMode, making 50 percentile man\n");
-		*percentile = 50;
-		Auto(dude);
-		fflush(stdin);
-		break;
+    if (argc < 1)
+	return BRLCAD_ERROR;
+    command = argv[0];
+    args.top_level = topLevel;
+    args.dude = dude;
+    args.percentile = percentile;
+    args.location = location;
+    args.stance = stance;
+    args.troops = troops;
+    args.show_boxes = showBoxes;
+    args.soldiers = INT_MIN;
+    args.percent = INT_MIN;
+    args.pose = INT_MIN;
 
-	    case 'b':
-		*showBoxes = 1;
-		bu_log("Drawing bounding boxes\n");
-		fflush(stdin);
-		break;
-
-	    case 'H':
-		sscanf(bu_optarg, "%f", &height);
-		if (height < 1) {
-		    bu_log("Impossible height, setting default height!\n");
-		    height = DEFAULT_HEIGHT_INCHES;
-		}
-		dude->height = height;
-		bu_log("%.2f = height in inches\n", height);
-		Auto(dude);
-		fflush(stdin);
-		break;
-
-	    case 'L':
-	    case 'l':
-		bu_log("Location\n");
-		getLocation(location);
-		fflush(stdin);
-		break;
-
-	    case 'm':
-		bu_log("Manual Mode\n");
-		Manual(dude);
-		break;
-
-	    case 'n':
-		memset(humanName, 0, MAXLENGTH);
-		bu_strlcpy(humanName, bu_optarg, MAXLENGTH);
-		bu_strlcpy(topLevel, humanName, MAXLENGTH);
-		have_name = 1;
-		fflush(stdin);
-		break;
-
-	    case 'N':
-		sscanf(bu_optarg, "%d", &soldiers);
-		if (soldiers <= 1) {
-		    bu_log("Only 1 person. Making 16\n");
-		    soldiers = 4;
-		}
-		bu_log("Auto %d (squared) troop formation\n", soldiers);
-		*troops = (float)soldiers;
-		fflush(stdin);
-		break;
-/*
- *	    case 'o':
- *	    case 'O':
- *		memset(filename, 0, MAXLENGTH);
- *		bu_strlcpy(filename, bu_optarg, MAXLENGTH);
- *		fflush(stdin);
- *		have_name = 1;
- *		break;
- */
-	    case 'p':
-		sscanf(bu_optarg, "%d", &percent);
-		if (percent < 1)
-		    percent = 1;
-		else if (percent > 99)
-		    percent = 99;
-		*percentile = percent;
-		fflush(stdin);
-		break;
-
-	    case 's':
-		sscanf(bu_optarg, "%d", &pose);
-		if (pose < 0)
-		    pose = 0;
-		*stance = (float)pose;
-		fflush(stdin);
-		break;
-
-		/*Output a text file with height x width x depth sizes for bounding boxes. */
-	    case 't':
-		dude->textwrite = 1;
-		break;
-
-		/*Input a text file with height x width x depth sizes for bounding boxes. */
-	    case 'T':
-		dude->textread = 1;
-		break;
-
-		/*Output a text file with all measurements of the human model */
-	    case 'v':
-		dude->verbwrite = 1;
-		break;
-
-		/*Input a text file with all measurements for a human model */
-	    case 'V':
-		dude->verbread = 1;
-		break;
-
-		/* These following arguments are for the wizard program, allowing easy access to each variable.
-		 * as they will only be callable by using a number (e.g. 1 = head, 2 = neck width, 3 = neck height etc.)
-		 * and should not be called otherwise
-		 */
-	    case '1':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->head.headSize = x;
-		break;
-	    case '2':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->head.neckLength = x;
-		break;
-	    case '3':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->head.neckWidth = x;
-		break;
-	    case '4':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->torso.topTorsoLength = x;
-		break;
-	    case '5':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->torso.lowTorsoLength = x;
-		dude->torso.torsoLength = dude->torso.topTorsoLength + dude->torso.lowTorsoLength;
-		break;
-	    case '6':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->torso.shoulderWidth = x;
-		break;
-	    case '7':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->torso.abWidth = x;
-		break;
-	    case '8':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->torso.pelvisWidth = x;
-		break;
-	    case '9':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->arms.upperArmWidth = x;
-		break;
-	    case '0':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->arms.upperArmLength = x;
-		break;
-	    case '=':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->arms.lowerArmLength = x;
-		break;
-	    case '+':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->arms.elbowWidth = x;
-		break;
-	    case '_':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->arms.wristWidth = x;
-		break;
-	    case 'Q':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->arms.handLength = x;
-		dude->arms.armLength = dude->arms.upperArmLength + dude->arms.lowerArmLength + dude->arms.handLength;
-		break;
-	    case '~':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->arms.handWidth = x;
-		break;
-	    case '*':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->legs.thighLength = x;
-		break;
-	    case '!':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->legs.thighWidth = x;
-		break;
-	    case '^':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->legs.calfLength = x;
-		dude->legs.legLength = dude->legs.thighLength + dude->legs.calfLength;
-		break;
-	    case '%':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->legs.kneeWidth = x;
-		break;
-	    case '$':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->legs.footLength = x;
-		break;
-	    case '#':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->legs.ankleWidth = x;
-		break;
-	    case '@':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->legs.toeWidth = x;
-		break;
-	    case 'Z':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->torso.shoulderDepth = x;
-		break;
-	    case 'Y':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->torso.abDepth = x;
-		break;
-	    case 'W':
-		sscanf(bu_optarg, "%lf", &x);
-		x *= IN2MM;
-		dude->torso.pelvisDepth = x;
-		break;
-
-	    default:
-		show_help(*argv, options);
-		bu_exit(EXIT_SUCCESS, NULL);
-		fflush(stdin);
-		break;
-	}
+    argc--; argv++;
+    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+	(size_t)argc, argv, human_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
+    if (operand_count < 0)
+	return BRLCAD_ERROR;
+    if (args.help) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
+	return GED_HELP;
     }
-    dude->height = (dude->legs.legLength + dude->torso.torsoLength + dude->head.headSize) / IN2MM;
+    if (operand_count > 1) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "%s accepts at most one top-level object name\n", command);
+	return BRLCAD_ERROR;
+    }
 
-    if ((argc - bu_optind) == 1) {
-	/* Yes, there is a top-level name at the end of this argument
-	 * chain, let's dump it into the file.
-	 */
-	have_name = 1;
+    if (args.soldiers != INT_MIN) {
+	if (args.soldiers <= 1) {
+	    bu_log("Only 1 person. Making 16\n");
+	    args.soldiers = 4;
+	}
+	bu_log("Auto %d (squared) troop formation\n", args.soldiers);
+	*troops = args.soldiers;
+    }
+    if (args.percent != INT_MIN) {
+	if (args.percent < 1)
+	    args.percent = 1;
+	else if (args.percent > 99)
+	    args.percent = 99;
+	*percentile = args.percent;
+    }
+    if (args.pose != INT_MIN) {
+	if (args.pose < 0)
+	    args.pose = 0;
+	*stance = args.pose;
+    }
+
+    dude->height = (dude->legs.legLength + dude->torso.torsoLength +
+	dude->head.headSize) / IN2MM;
+
+    if (operand_count == 1) {
+	args.have_name = 1;
 	memset(humanName, 0, MAXLENGTH);
 	memset(topLevel, 0, MAXLENGTH);
-	bu_strlcpy(topLevel, argv[bu_optind], MAXLENGTH);
+	bu_strlcpy(topLevel, argv[0], MAXLENGTH);
 	bu_strlcpy(humanName, topLevel, MAXLENGTH);
 	bu_log("First top-level object name: %s\n", topLevel);
 	bu_log("Second top-level object name: %s\n", humanName);
     }
-    if (!have_name) {
-	/* If there is no top level name at the end, go with the
-	 * default.
-	 */
+    if (!args.have_name) {
 	bu_log("Setting default top-level object name: %s\n", DEFAULT_HUMANNAME);
 	memset(humanName, 0, MAXLENGTH);
 	memset(topLevel, 0, MAXLENGTH);
@@ -1865,9 +1826,8 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 	bu_strlcpy(topLevel, DEFAULT_HUMANNAME, MAXLENGTH);
     }
     fflush(stdout);
-    return bu_optind;
+    return BRLCAD_OK;
 }
-
 
 /**
  * The text function takes the dimensions of each region on the body,
@@ -2207,7 +2167,12 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* Process command line arguments */
-    read_args(ac, av, topLevel, &human_data, &percentile, location, &stance, &troops, &showBoxes);
+    {
+	int parse_ret = read_args(gedp, ac, av, topLevel, &human_data,
+	    &percentile, location, &stance, &troops, &showBoxes);
+	if (parse_ret != BRLCAD_OK)
+	    return parse_ret;
+    }
 
     GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, BRLCAD_ERROR);
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -2491,12 +2456,15 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 }
 
 #include "../include/plugin.h"
+static const ged_opt_spec human_opt_spec =
+    GED_OPT_WITH("human", "Generate a parameterized human model", human_options,
+	"options-first top-level-name:string?", human_opt_rules);
 
 #define GED_HUMAN_COMMANDS(X, XID) \
-    X(human, ged_human_core, GED_CMD_DEFAULT) \
+    X(human, ged_human_core, GED_CMD_DEFAULT, &human_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_HUMAN_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_human", 1, GED_HUMAN_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_HUMAN_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_human", 1, GED_HUMAN_COMMANDS)
 
 /*
  * Local Variables:

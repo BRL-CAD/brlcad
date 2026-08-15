@@ -8,9 +8,18 @@ select - Returns displayed items or BOT vertices within a specified screen-space
 
 == SYNOPSIS
 
+Legacy screen-space form:
+
 [source]
 ----
 select [-b bot] [-p] [-z vminz] vx vy {vr | vw vh}
+----
+
+Selection-set form (when the GED new command form is enabled):
+
+[source]
+----
+select [-h|--help] [-S|--set name] {add|clear|collapse|expand|list|rm} [args]
 ----
 
 
@@ -24,6 +33,27 @@ The implementation supports the following options:
 * *-b bot* - Return BOT vertex indices from the specified BOT instead of displayed object paths.
 * *-p* - Use partial-overlap selection instead of requiring full containment.
 * *-z vminz* - Ignore candidates with view-space Z values below _vminz_.
+
+=== Selection-set command form
+
+When GED's new command form is enabled, *select* manages named selection sets
+instead of performing the screen-space query described above.  Its root
+options are *-h*/*--help* and *-S*/*--set* _name_; the latter selects the set
+used by operations that do not name a set directly.
+
+The available subcommands are:
+
+* *add* _path..._ - add one or more database paths to the selected set;
+* *rm* _path..._ - remove one or more paths from the selected set;
+* *clear* [_set_name_pattern_] - clear matching sets;
+* *list* [_set_name_pattern_] - list sets, or paths in matching sets;
+* *collapse* [_set_name_pattern_] - replace complete child selections with
+  their parent paths; and
+* *expand* [_set_name_pattern_] - replace selected combinations with their
+  selected leaf paths.
+
+The screen-space and selection-set forms are context-selected by the GED
+frontend; their option vocabularies are intentionally not interchangeable.
 
 
 [[examples]]

@@ -14,17 +14,51 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bu/vls.h"
-#include "bu/opt.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
 #include "../ged_private.h"
 #include "rt/functab.h"
 
-static void repair_usage(struct bu_vls *log_str, const char *cmd) {
-    bu_vls_printf(log_str, "Usage: %s [-h] [-o output] object\n", cmd);
+struct repair_args {
+    int print_help;
+    struct bu_vls out_name;
+    fastf_t tolerance;
+    fastf_t max_hole_area_percent;
+    fastf_t max_hole_area;
+};
+
+static const struct bu_cmd_option repair_options[] = {
+    BU_CMD_FLAG("h", "help", struct repair_args, print_help,
+	"Print command help"),
+    BU_CMD_VLS_APPEND("o", "output-name", struct repair_args, out_name, "name",
+	"Write the repaired object to a new object"),
+    BU_CMD_NUMBER("t", "tol", struct repair_args, tolerance, "distance",
+	"Distance tolerance for primitives that support vertex snapping"),
+    BU_CMD_NUMBER_RANGE("p", "max-hole-percent", struct repair_args,
+	max_hole_area_percent, 0.0, 100.0, "percent",
+	"Maximum hole area as a percentage of mesh area"),
+    BU_CMD_NONNEGATIVE_NUMBER("a", "max-hole-area", struct repair_args, max_hole_area,
+	"area", "Maximum hole area in mm"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand repair_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Object to repair", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema ged_repair_schema = {
+    "repair", "Repair an object using its primitive-specific repair routine",
+    repair_options, repair_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+};
+
+static void
+repair_usage(struct bu_vls *log_str, const char *cmd)
+{
+    (void)bu_cmd_schema_help_append(log_str, &ged_repair_schema, cmd);
 }
 
 extern "C" int
@@ -32,55 +66,53 @@ ged_repair(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal intern;
     struct directory *dp = RT_DIR_NULL;
-    const char *objname = NULL;
     struct bu_vls log_str = BU_VLS_INIT_ZERO;
-    struct bu_vls out_name = BU_VLS_INIT_ZERO;
-    int print_help = 0;
-
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
-    BU_OPT(d[1], "o", "output-name", "<name>", bu_opt_vls, &out_name, "Output object name");
-    BU_OPT_NULL(d[2]);
+    struct bu_vls parse_msg = BU_VLS_INIT_ZERO;
+    struct repair_args args = {0, BU_VLS_INIT_ZERO, -1.0, 5.0, 0.0};
+    int operand_index;
 
     int original_argc = argc;
     const char **original_argv = (const char **)bu_calloc(argc + 1, sizeof(char *), "argv copy");
     for (int i = 0; i < argc; i++) original_argv[i] = argv[i];
 
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    argc = ac;
+    operand_index = bu_cmd_schema_parse_complete(&ged_repair_schema, &args,
+	&parse_msg, argc - 1, argv + 1);
 
-    if (print_help || argc < 2) {
+    if (operand_index < 0) {
+	if (bu_vls_strlen(&parse_msg))
+	    bu_vls_vlscat(gedp->ged_result_str, &parse_msg);
+	bu_vls_free(&parse_msg);
+	bu_free(original_argv, "argv copy");
+	bu_vls_free(&args.out_name);
+	return BRLCAD_ERROR;
+    }
+    bu_vls_free(&parse_msg);
+
+    if (args.print_help) {
         repair_usage(gedp->ged_result_str, original_argv[0]);
         bu_free(original_argv, "argv copy");
-        bu_vls_free(&out_name);
+	bu_vls_free(&args.out_name);
         return GED_HELP;
     }
 
-    for (int i = 1; i < argc; i++) {
-        if (argv[i][0] == '-') continue;
-        dp = db_lookup(gedp->dbip, argv[i], LOOKUP_QUIET);
-        if (dp != RT_DIR_NULL) {
-            objname = argv[i];
-            break;
-        }
-    }
+    const char *objname = argv[operand_index + 1];
+    dp = db_lookup(gedp->dbip, objname, LOOKUP_QUIET);
 
-    if (!objname || dp == RT_DIR_NULL) {
+
+    if (dp == RT_DIR_NULL) {
         bu_vls_printf(gedp->ged_result_str, "{\"status\":\"error\",\"message\":\"No valid object specified for repair\"}");
         bu_free(original_argv, "argv copy");
-        bu_vls_free(&out_name);
+	bu_vls_free(&args.out_name);
         return BRLCAD_ERROR;
     }
 
-    int in_place_repair = 1;
-    if (bu_vls_strlen(&out_name))
-        in_place_repair = 0;
+    int in_place_repair = !bu_vls_strlen(&args.out_name);
 
     if (!in_place_repair) {
-        if (db_lookup(gedp->dbip, bu_vls_cstr(&out_name), LOOKUP_QUIET) != RT_DIR_NULL) {
-            bu_vls_printf(gedp->ged_result_str, "{\"status\":\"error\",\"message\":\"Object %s already exists!\"}", bu_vls_cstr(&out_name));
+        if (db_lookup(gedp->dbip, bu_vls_cstr(&args.out_name), LOOKUP_QUIET) != RT_DIR_NULL) {
+            bu_vls_printf(gedp->ged_result_str, "{\"status\":\"error\",\"message\":\"Object %s already exists!\"}", bu_vls_cstr(&args.out_name));
             bu_free(original_argv, "argv copy");
-            bu_vls_free(&out_name);
+	    bu_vls_free(&args.out_name);
             return BRLCAD_ERROR;
         }
     }
@@ -89,7 +121,7 @@ ged_repair(struct ged *gedp, int argc, const char *argv[])
     if (rt_db_get_internal(&intern, dp, gedp->dbip, bn_mat_identity) < 0) {
         bu_vls_printf(gedp->ged_result_str, "{\"status\":\"error\",\"message\":\"Failed to get object\"}");
         bu_free(original_argv, "argv copy");
-        bu_vls_free(&out_name);
+	bu_vls_free(&args.out_name);
         return BRLCAD_ERROR;
     }
 
@@ -97,7 +129,7 @@ ged_repair(struct ged *gedp, int argc, const char *argv[])
         bu_vls_printf(gedp->ged_result_str, "{\"status\":\"error\",\"message\":\"Repair operation not supported for this object type\"}");
         rt_db_free_internal(&intern);
         bu_free(original_argv, "argv copy");
-        bu_vls_free(&out_name);
+	bu_vls_free(&args.out_name);
         return BRLCAD_ERROR;
     }
 
@@ -107,14 +139,14 @@ ged_repair(struct ged *gedp, int argc, const char *argv[])
         struct directory *out_dp = dp;
         const char *rname = objname;
         if (!in_place_repair) {
-            rname = bu_vls_cstr(&out_name);
+            rname = bu_vls_cstr(&args.out_name);
             out_dp = db_diradd(gedp->dbip, rname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
             if (out_dp == RT_DIR_NULL) {
                 bu_vls_printf(gedp->ged_result_str, "{\"status\":\"error\",\"message\":\"Failed to add new directory entry\"}");
                 bu_vls_free(&log_str);
                 rt_db_free_internal(&intern);
                 bu_free(original_argv, "argv copy");
-                bu_vls_free(&out_name);
+		bu_vls_free(&args.out_name);
                 return BRLCAD_ERROR;
             }
         }
@@ -124,7 +156,7 @@ ged_repair(struct ged *gedp, int argc, const char *argv[])
             bu_vls_free(&log_str);
             rt_db_free_internal(&intern);
             bu_free(original_argv, "argv copy");
-            bu_vls_free(&out_name);
+	    bu_vls_free(&args.out_name);
             return BRLCAD_ERROR;
         }
     }
@@ -140,18 +172,18 @@ ged_repair(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&log_str);
     rt_db_free_internal(&intern);
     bu_free(original_argv, "argv copy");
-    bu_vls_free(&out_name);
+    bu_vls_free(&args.out_name);
 
     return (ret == 0 || ret == 1) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 #include "../include/plugin.h"
 
-#define GED_REPAIR_COMMANDS(X, XID) \
-    X(repair, ged_repair, GED_CMD_DEFAULT)
+#define GED_REPAIR_COMMANDS(X, XID, XS, XIDS, XG, XIDG) \
+    XS(repair, ged_repair, GED_CMD_DEFAULT, &ged_repair_schema)
 
-GED_DECLARE_COMMAND_SET(GED_REPAIR_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_repair", 1, GED_REPAIR_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_REPAIR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_repair", 1, GED_REPAIR_COMMANDS)
 
 /*
  * Local Variables:

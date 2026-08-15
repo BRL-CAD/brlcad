@@ -32,7 +32,7 @@ Number of rays to fire in X and Y directions (square grid). Default is 512 (512x
 Distance between rays in the X and Y directions in millimeters. Conflicts with *-s*
 
 
-*-d file*::
+*-d* _file_::
 Read density information from the specified file.
 
 
@@ -44,7 +44,7 @@ Disable overlap reporting.
 Enable overlap reporting (on by default).
 
 
-*-o file*::
+*-o* _file_::
 Send the output to a specified file.
 
 

@@ -27,10 +27,27 @@
 
 #include <string.h>
 
-#include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/opt.h"
 
 #include "../ged_private.h"
+
+struct tops_args {
+    int all;
+    int hidden;
+    int no_decorate;
+    int phony;
+};
+
+#define TOPS_OPTIONS(args) \
+    BU_OPT_FLAG(args, "a", NULL, all, "Include all top-level objects"), \
+    BU_OPT_FLAG(args, "h", NULL, hidden, "Include hidden top-level objects"), \
+    BU_OPT_FLAG(args, "n", NULL, no_decorate, "Do not decorate object names"), \
+    BU_OPT_FLAG(args, "p", NULL, phony, "Include phony top-level objects"),
+
+BU_OPT_DESC_BUILDER(tops_options, struct tops_args, TOPS_OPTIONS);
+static const ged_opt_spec tops_opt_spec =
+    GED_OPT("tops", "List top-level database objects", tops_options,
+	"options-first");
 
 
 int
@@ -39,12 +56,8 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
-    int c;
-
-    int no_decorate = 0;
-    int aflag = 0;
-    int hflag = 0;
-    int pflag = 0;
+    struct tops_args args = {0, 0, 0, 0};
+    int operand_count = 0;
 
     /* static const char *usage = "[-a|-h|-n|-p]"; */
 
@@ -54,25 +67,12 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* process any options */
-    bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "ahnp")) != -1) {
-	switch (c) {
-	    case 'a':
-		aflag = 1;
-		break;
-	    case 'h':
-		hflag = 1;
-		break;
-	    case 'n':
-		no_decorate = 1;
-		break;
-	    case 'p':
-		pflag = 1;
-		break;
-	    default:
-		break;
-	}
+    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+	argc - 1, argv + 1, tops_options, &args,
+	BU_OPT_PARSE_OPTIONS_FIRST);
+    if (operand_count != 0) {
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
+	return BRLCAD_ERROR;
     }
 
     /* Can this be executed only sometimes?
@@ -97,14 +97,14 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 		    continue;
 		}
 
-		if ((aflag) ||
-		    (hflag && (dp->d_flags & RT_DIR_HIDDEN)) ||
-		    (pflag && dp->d_addr == RT_DIR_PHONY_ADDR)) {
+		if ((args.all) ||
+		    (args.hidden && (dp->d_flags & RT_DIR_HIDDEN)) ||
+		    (args.phony && dp->d_addr == RT_DIR_PHONY_ADDR)) {
 
 		    /* add object because it matches an option */
 		    *dirp++ = dp;
 
-		} else if (!aflag && !hflag && !pflag &&
+		} else if (!args.all && !args.hidden && !args.phony &&
 			   !(dp->d_flags & RT_DIR_HIDDEN) &&
 			   (dp->d_addr != RT_DIR_PHONY_ADDR)) {
 
@@ -115,7 +115,7 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 	    FOR_ALL_DIRECTORY_END;
     }
 
-    _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), no_decorate, 0);
+    _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), args.no_decorate, 0);
     bu_free((void *)dirp0, "wdb_tops_cmd: wdb_dir_getspace");
 
     return BRLCAD_OK;
@@ -125,10 +125,10 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_TOPS_COMMANDS(X, XID) \
-    X(tops, ged_tops_core, GED_CMD_DEFAULT) \
+    X(tops, ged_tops_core, GED_CMD_DEFAULT, &tops_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_TOPS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_tops", 1, GED_TOPS_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_TOPS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_tops", 1, GED_TOPS_COMMANDS)
 
 /*
  * Local Variables:

@@ -131,13 +131,20 @@ int main(int argc, const char *argv[])
      *     X(token, fn, opts) \
      *     XID(symbol, "cmdname", fn, opts)
      *
+     * Native and grammar-only lists use the same X/XID shape with an
+     * additional schema argument.  Mixed transitional lists have six macro
+     * parameters (the spellings are command-family-local); all three entry
+     * pairs contribute a registered command and an exec wrapper.  Do not
+     * couple the scanner to particular formal parameter names: those names
+     * have no semantic significance to the preprocessor expansion.
+     *
      * Notes:
      * - We intentionally parse *raw source*, not preprocessed output.
      * - Therefore, the list must be written literally in the TU.
      */
-    std::regex reg_list_begin(R"(^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(\s*X\s*,\s*XID\s*\)\s*\\\s*$)");
-    std::regex reg_list_x_entry(R"(\bX\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*([^\)]*)\)\s*\\?\s*$)");
-    std::regex reg_list_xid_entry(R"(\bXID\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*\"((?:\\.|[^\"\\])*)\"\s*,\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*([^\)]*)\)\s*\\?\s*$)");
+    std::regex reg_list_begin(R"(^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(\s*[A-Za-z_][A-Za-z0-9_]*\s*,\s*[A-Za-z_][A-Za-z0-9_]*(?:\s*,\s*[A-Za-z_][A-Za-z0-9_]*\s*,\s*[A-Za-z_][A-Za-z0-9_]*\s*,\s*[A-Za-z_][A-Za-z0-9_]*\s*,\s*[A-Za-z_][A-Za-z0-9_]*)?\s*\)\s*\\\s*$)");
+    std::regex reg_list_x_entry(R"(\b[A-Za-z_][A-Za-z0-9_]*\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*([^\)]*)\)\s*\\?\s*$)");
+    std::regex reg_list_xid_entry(R"(\b[A-Za-z_][A-Za-z0-9_]*\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*\"((?:\\.|[^\"\\])*)\"\s*,\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*([^\)]*)\)\s*\\?\s*$)");
 
     /* Phase 5 parsing pass */
     for (const auto &fname : input_files) {

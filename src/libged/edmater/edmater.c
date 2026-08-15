@@ -32,72 +32,79 @@
 #endif
 
 #include "bu/app.h"
+#include "bu/opt.h"
 #include "bu/file.h"
-#include "bu/getopt.h"
 #include "../ged_private.h"
+
+struct edmater_args {
+    const char *editor;
+};
+
+#define EDMATER_OPTIONS(args) \
+    BU_OPT_STR(args, "E", NULL, editor, "editor", "Editor command"),
+
+BU_OPT_DESC_BUILDER(edmater_options, struct edmater_args, EDMATER_OPTIONS);
+static const ged_opt_spec edmater_opt_spec =
+    GED_OPT("edmater", "Edit combination material properties",
+	edmater_options, "options-first combinations:object+");
 
 
 int
 ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
-    int i, c;
+    int i;
     int status;
     const char **av;
-    static const char *usage = "comb(s)";
     char tmpfil[MAXPATHLEN];
-    const char *editstring = NULL;
+    struct edmater_args args = {0};
+    int operand_count;
+    const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    bu_optind = 1;
-    /* First, grab the editstring off of the argv list */
-    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
-	switch (c) {
-	    case 'E' :
-		editstring = bu_optarg;
-		break;
-	    default :
-		break;
-	}
-    }
-
-    argc -= bu_optind - 1;
-    argv += bu_optind - 1;
-
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return GED_HELP;
     }
+
+    argc--; argv++;
+    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+	argc, argv, edmater_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
+    if (operand_count < 1) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
+	return BRLCAD_ERROR;
+    }
+    argc = operand_count;
 
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
     if (!fp)
 	return BRLCAD_ERROR;
 
-    av = (const char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
+    av = (const char **)bu_malloc(sizeof(char *) * ((size_t)argc + 3),
+	"f_edmater: av");
     av[0] = "wmater";
     av[1] = tmpfil;
-    for (i = 2; i < argc + 1; ++i)
-	av[i] = argv[i-1];
+    for (i = 0; i < argc; ++i)
+	av[i + 2] = argv[i];
 
-    av[i] = NULL;
+    av[argc + 2] = NULL;
 
     (void)fclose(fp);
 
-    if (ged_exec_wmater(gedp, argc, av) & BRLCAD_ERROR) {
+    if (ged_exec_wmater(gedp, argc + 2, av) & BRLCAD_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((void *)av, "f_edmater: av");
 	return BRLCAD_ERROR;
     }
 
-    if (_ged_editit(gedp, editstring, tmpfil)) {
+    if (_ged_editit(gedp, args.editor, tmpfil)) {
 	av[0] = "rmater";
 	av[2] = NULL;
 	status = ged_exec_rmater(gedp, 2, av);
@@ -114,10 +121,10 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_EDMATER_COMMANDS(X, XID) \
-    X(edmater, ged_edmater_core, GED_CMD_DEFAULT) \
+    X(edmater, ged_edmater_core, GED_CMD_DEFAULT, &edmater_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_EDMATER_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_edmater", 1, GED_EDMATER_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_EDMATER_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_edmater", 1, GED_EDMATER_COMMANDS)
 
 /*
  * Local Variables:

@@ -36,75 +36,107 @@
 #include "bresource.h"
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/file.h"
 #include "bu/path.h"
 #include "ged.h"
 #include "../ged_private.h"
+
+struct editit_args {
+    int print_help;
+    const char *editstring;
+    const char *filename;
+};
+
+#define EDITIT_OPTIONS(args) \
+    BU_OPT_FLAG(args, "h", "help", print_help, "Print help and exit"), \
+    BU_OPT_FLAG(args, "?", NULL, print_help, ""), \
+    BU_OPT_STR(args, "e", NULL, editstring, "editstring", \
+	"Specify edit string (deprecated)"), \
+    BU_OPT_STR(args, "f", NULL, filename, "file", "Specify file to edit"),
+
+BU_OPT_DESC_BUILDER(editit_options, struct editit_args, EDITIT_OPTIONS);
+
+static const ged_opt_rule editit_opt_rules[] = {
+    GED_RULE_ALIAS("?", "help"),
+    GED_RULE_SEMANTIC("f", BU_CMD_VALUE_FILE, "ged.file_path", "file"),
+    GED_RULE_WHEN_HELP("help", "Display command help", "file:file?"),
+    GED_RULE_WHEN_HELP("f", "Take the file from the -f option", ""),
+    GED_RULE_OTHERWISE_HELP("Take the file from the positional operand", "file:file"),
+    GED_RULE_NULL
+};
+
+static const ged_opt_spec editit_opt_spec =
+    GED_OPT_FORMS("editit", "Edit a file with the configured editor",
+	editit_options, editit_opt_rules);
+
+static void
+editit_show_help(struct ged *gedp, const char *UNUSED(usage))
+{
+    char *help = ged_cmd_help("editit", "editit");
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "editit standard help");
+    }
+}
 
 
 int
 ged_editit_core(struct ged *gedp, int argc, const char *argv[])
 {
     const char *usage = "editit [opts] <filename>";
+    struct editit_args args = {0, NULL, NULL};
+    const char *filename;
+    int operand_count;
     int ret = 0;
-    int print_help = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    struct bu_vls editstring = BU_VLS_INIT_ZERO;
-    struct bu_vls filename = BU_VLS_INIT_ZERO;
 
-    struct bu_opt_desc d[5];
-    BU_OPT(d[0], "h", "help",   "",              NULL,        &print_help, "Print help and exit");
-    BU_OPT(d[1], "?", "",       "",              NULL,        &print_help, "");
-    BU_OPT(d[0], "e",  "",      "<editstring>",  &bu_opt_vls, &editstring, "Specify edit string (deprecated)");
-    BU_OPT(d[1], "f",  "",      "<file>",        &bu_opt_vls, &filename,   "Specify file to edit");
-    BU_OPT_NULL(d[2]);
-
-    argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
-
-    if (!argc) {
+    if (argc == 1) {
 	/* must be wanting help */
-	_ged_cmd_help(gedp, usage, d);
+	editit_show_help(gedp, usage);
 	return GED_HELP;
     }
 
-    /* parse standard options */
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
 
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, d);
-	return BRLCAD_OK;
-    }
-
-    /* adjust argc to match the leftovers of the options parsing */
-    argc = opt_ret;
-
-    /* Only one specifier for a filename */
-    if (argc && bu_vls_strlen(&filename)) {
-	_ged_cmd_help(gedp, usage, d);
+    argc--; argv++;
+    operand_count = bu_opt_parse_build(gedp->ged_result_str, argc, argv,
+	editit_options, &args);
+    if (operand_count < 0) {
+	editit_show_help(gedp, usage);
 	return BRLCAD_ERROR;
     }
 
-    /* If we got a filename without -f, populate it now */
-    if (argc)
-	bu_vls_sprintf(&filename, "%s", argv[0]);
+    if (args.print_help) {
+	if (operand_count > 1) {
+	    editit_show_help(gedp, usage);
+	    return BRLCAD_ERROR;
+	}
+	editit_show_help(gedp, usage);
+	return BRLCAD_OK;
+    }
 
+    if ((args.filename && operand_count) || (!args.filename && operand_count != 1)) {
+	bu_vls_printf(gedp->ged_result_str, "file required exactly once\n");
+	editit_show_help(gedp, usage);
+	return BRLCAD_ERROR;
+    }
+    filename = args.filename ? args.filename : argv[0];
 
-    ret = _ged_editit(gedp, bu_vls_cstr(&editstring), bu_vls_cstr(&filename));
-    bu_vls_free(&editstring);
-    bu_vls_free(&filename);
+    ret = _ged_editit(gedp, args.editstring, filename);
     return ret;
 }
 
 #include "../include/plugin.h"
 
 #define GED_EDITIT_COMMANDS(X, XID) \
-    X(editit, ged_editit_core, GED_CMD_DEFAULT) \
+    X(editit, ged_editit_core, GED_CMD_DEFAULT, &editit_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_EDITIT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_editit", 1, GED_EDITIT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_EDITIT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_editit", 1, GED_EDITIT_COMMANDS)
 
 /*
  * Local Variables:

@@ -1,0 +1,170 @@
+cmd_complete {draw all.g/t rest} 12
+cmd_complete {draw all.g/t rest} 12 0
+set glob_compat_mode 0
+cp tor.r tör.r
+cp tor.r {space name.r}
+cp tor.r {back\slash.r}
+puts "utf8-path:[cmd_complete {draw tö} 7]"
+proc test_escaped_path_completion {} {
+    set line [format "draw all.g%c/t rest" 92]
+    return [cmd_complete $line 13]
+}
+puts "escaped-path:[test_escaped_path_completion]"
+proc test_quoted_escaped_path_completion {} {
+    set line [format "draw %call.g%c/t%c rest" 34 92 34]
+    return [cmd_complete $line 15]
+}
+puts "quoted-escaped-path:[test_quoted_escaped_path_completion]"
+proc test_escaped_space_completion {} {
+    set line [format "draw space%c n rest" 92]
+    set expected [format "draw space%c name.r rest" 92]
+    set result [cmd_complete $line 13]
+    return [expr {[lindex $result 0] == 1 && [lindex $result 1] eq $expected &&
+	[lindex $result 4] == 18}]
+}
+puts "escaped-space:[test_escaped_space_completion]"
+proc test_quoted_escaped_space_completion {} {
+    set line [format "draw %cspace%c n%c rest" 34 92 34]
+    set expected [format "draw %cspace%c name.r%c rest" 34 92 34]
+    set result [cmd_complete $line 14]
+    return [expr {[lindex $result 0] == 1 && [lindex $result 1] eq $expected &&
+	[lindex $result 4] == 19}]
+}
+puts "quoted-escaped-space:[test_quoted_escaped_space_completion]"
+proc test_escaped_backslash_completion {} {
+    set line [format "draw back%c%cs rest" 92 92]
+    set expected [format "draw back%c%c%c%cslash.r rest" 92 92 92 92]
+    set result [cmd_complete $line 12]
+    return [expr {[lindex $result 0] == 1 && [lindex $result 1] eq $expected &&
+	[lindex $result 4] == 20}]
+}
+puts "escaped-backslash:[test_escaped_backslash_completion]"
+proc test_mid_token_suffix_completion {} {
+    set result [cmd_complete {draw all.g/t2 rest} 12]
+    return [expr {[lindex $result 0] == 1 &&
+	[lindex $result 1] eq {draw all.g/tor.r2 rest} && [lindex $result 4] == 16}]
+}
+puts "mid-token-suffix:[test_mid_token_suffix_completion]"
+cmd_complete {search -exec dr} 15
+cmd_complete {search -exec draw "a"} 21
+cmd_complete {search -exec draw {}} 20
+cmd_complete {search -exec draw "{}" ;} 24
+set mged_default(completion_mode) filter
+puts "completion-mode:[mged_completion_mode]"
+set analysis [cmd_analyze {search -exec draw "{}" ";"}]
+set styles {}
+foreach token $analysis {lappend styles [lindex $token 6]}
+puts "analysis-count:[llength $analysis]"
+puts "analysis-styles:$styles"
+set analysis [cmd_analyze {search -exec draw {} ";"}]
+puts "analysis-empty-style:[lindex [lindex $analysis 3] 6]"
+set analysis [cmd_analyze {search -exec draw "{}" ;}]
+puts "analysis-bare-semicolon:[lindex [lindex $analysis 3] 6]"
+set analysis [cmd_analyze {search -exec $cmd "{}" ";"}]
+puts "analysis-dynamic-command:[lindex [lindex $analysis 2] 6]"
+proc local_search_exec {args} {return 1}
+set analysis [cmd_analyze {search -exec local_search_exec "{}" ";"}]
+puts "analysis-tcl-command:[lindex [lindex $analysis 2] 6]"
+proc test_glob_analysis {} {
+    global glob_compat_mode
+    set glob_compat_mode 1
+    set result [cmd_analyze {search -name *.s}]
+    set glob_compat_mode 0
+    return [lindex [lindex $result 2] 6]
+}
+puts "analysis-glob-style:[test_glob_analysis]"
+set layout_candidates {}
+for {set i 0} {$i < 3} {incr i} {lappend layout_candidates [format "aab%d" $i]}
+for {set i 0} {$i < 20} {incr i} {lappend layout_candidates [format "aac%02d" $i]}
+for {set i 0} {$i < 300} {incr i} {lappend layout_candidates [format "d5m%03d" $i]}
+set completion_layout [cmd_complete_layout $layout_candidates 52 1]
+puts "layout-summary:[lindex $completion_layout 0]"
+puts "layout-lines:[join [lindex $completion_layout 1] |]"
+set completion_multiline [cmd_complete_layout $layout_candidates 52 5]
+set multiline_ok [expr {[llength [lindex $completion_multiline 1]] > 1 &&
+    [llength [lindex $completion_multiline 1]] <= 5}]
+foreach layout_line [lindex $completion_multiline 1] {
+    if {[string length $layout_line] > 52 || [string first "more)" $layout_line] >= 0} {
+	set multiline_ok 0
+    }
+}
+puts "layout-multiline:$multiline_ok"
+
+# Classic-mode tests do not load Tk.  Supply a minimal Text widget and geometry
+# shim to verify that candidates are inserted into the console and repainted
+# with a new row budget when its viewport height changes.
+set ::completion_marks {}
+set ::completion_inserts {}
+set ::completion_deletes 0
+set ::completion_height 360
+proc .completion_test.t {subcommand args} {
+    switch -- $subcommand {
+	cget {
+	    switch -- [lindex $args 0] {
+		-width {return 80}
+		-font {return fixed}
+		-background {return black}
+		-foreground {return white}
+	    }
+	}
+	mark {
+	    set operation [lindex $args 0]
+	    set name [lindex $args 1]
+	    if {$operation == "names"} {return $::completion_marks}
+	    if {$operation == "set" && [lsearch -exact $::completion_marks $name] < 0} {
+		lappend ::completion_marks $name
+	    }
+	    if {$operation == "unset"} {
+		set at [lsearch -exact $::completion_marks $name]
+		if {$at >= 0} {set ::completion_marks [lreplace $::completion_marks $at $at]}
+	    }
+	}
+	index {return mock-index}
+	insert {lappend ::completion_inserts [list [lindex $args 1] [lindex $args 2]]}
+	delete {incr ::completion_deletes}
+	tag {return}
+	see {set ::completion_seen [lindex $args 0]}
+	default {return}
+	}
+    return
+}
+proc winfo {subcommand args} {
+    switch -- $subcommand {
+	exists {return 1}
+	width {return 640}
+	height {return $::completion_height}
+	rgb {
+	    if {[lindex $args 1] == "black"} {return {0 0 0}}
+	    return {65535 65535 65535}
+	}
+    }
+    return
+}
+proc font {subcommand args} {
+    if {$subcommand == "measure"} {return 8}
+    if {$subcommand == "metrics"} {return 12}
+    return 0
+}
+rename _mged_cmd_complete_layout _mged_cmd_complete_layout_real
+proc _mged_cmd_complete_layout {candidates width max_rows} {
+    lappend ::completion_layout_calls [list $width $max_rows]
+    return [list 0 [list "alpha  beta" "gamma"]]
+}
+set gui_inline_status [catch {mged_completion_display .completion_test.t {alpha beta gamma}}]
+set gui_modifier_status [catch {
+    mged_completion_display_keypress .completion_test.t Shift_L
+    mged_completion_filter_keyrelease .completion_test.t {} Shift_L
+}]
+set ::completion_height 180
+set gui_repaint_status [catch {mged_completion_display_repaint .completion_test.t}]
+set gui_inline_ok [expr {!$gui_inline_status && !$gui_modifier_status &&
+    !$gui_repaint_status &&
+    [lindex [lindex $::completion_layout_calls 0] 0] == 80 &&
+    [lindex [lindex $::completion_layout_calls 0] 1] == 19 &&
+    [lindex [lindex $::completion_layout_calls 1] 1] == 9 &&
+    [llength $::completion_inserts] == 2 &&
+    [string index [lindex [lindex $::completion_inserts 0] 0] 0] == "\n" &&
+    [lindex [lindex $::completion_inserts 0] 1] == "completion_candidates" &&
+    $::completion_deletes == 1 && $::completion_seen == "completion_display_end"}]
+puts "gui-completion-inline-resize:$gui_inline_ok"
+quit
