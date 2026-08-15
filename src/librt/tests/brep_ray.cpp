@@ -6235,6 +6235,11 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	    trace.surface_coefficient_expansion_failures;
 	const bool coefficient_expansions_deferred =
 	    trace.surface_coefficient_expansion_avoided > 0;
+	const bool expansion_restrictions_accounted =
+	    trace.surface_expansion_restriction_attempts >=
+		trace.surface_expansion_restriction_available &&
+	    trace.surface_expansion_restriction_available >=
+		trace.surface_expansion_endpoint_restrictions;
 	const bool graph_intervals_accounted =
 	    trace.surface_fold_corridor_graph_interval_attempts ==
 	    trace.surface_fold_corridor_graph_interval_signed +
@@ -6242,6 +6247,13 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	    trace.surface_fold_corridor_graph_exact_fallbacks;
 	const bool contact_graph_intervals = family_index != contact_index ||
 	    trace.surface_fold_corridor_graph_interval_attempts > 0;
+	const bool contact_graph_parent_restrictions =
+	    family_index != contact_index ||
+	    (trace.surface_fold_corridor_graph_exact_fallbacks > 0 &&
+	     trace.surface_fold_corridor_graph_parent_restrictions + 1 ==
+		trace.surface_fold_corridor_graph_exact_fallbacks &&
+	     trace.surface_expansion_endpoint_restrictions >=
+		2 * trace.surface_fold_corridor_graph_exact_fallbacks);
 	const bool strip_builds_accounted =
 	    trace.surface_fold_strip_build_attempts >=
 	    trace.surface_fold_strip_build_available;
@@ -6313,12 +6325,15 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	if (!contraction_accounted || !contact_contracts ||
 		!coefficient_expansions_accounted ||
 		!coefficient_expansions_deferred ||
+		!expansion_restrictions_accounted ||
 		!graph_intervals_accounted || !contact_graph_intervals ||
+		!contact_graph_parent_restrictions ||
 		!strip_builds_accounted || !contact_strip_deferred) {
 	    std::printf("FAIL: Cobb production-throughput fold contraction %s "
 		"attempt/contract/exclude/fallback=%zu/%zu/%zu/%zu "
 		"coefficient-expansion=%zu/%zu/%zu/%zu "
-		"graph-interval=%zu/%zu/%zu/%zu/%zu "
+		"restriction=%zu/%zu/%zu "
+		"graph-interval=%zu/%zu/%zu/%zu/%zu parent=%zu "
 		"strip-build=%zu/%zu/%zu\n",
 		test.name, trace.surface_fold_interval_contract_attempts,
 		trace.surface_fold_interval_contractions,
@@ -6328,11 +6343,15 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 		trace.surface_coefficient_expansion_available,
 		trace.surface_coefficient_expansion_failures,
 		trace.surface_coefficient_expansion_avoided,
+		trace.surface_expansion_restriction_attempts,
+		trace.surface_expansion_restriction_available,
+		trace.surface_expansion_endpoint_restrictions,
 		trace.surface_fold_corridor_graph_interval_attempts,
 		trace.surface_fold_corridor_graph_interval_signed,
 		trace.surface_fold_corridor_graph_interval_excluded,
 		trace.surface_fold_corridor_graph_interval_contractions,
 		trace.surface_fold_corridor_graph_exact_fallbacks,
+		trace.surface_fold_corridor_graph_parent_restrictions,
 		trace.surface_fold_strip_build_attempts,
 		trace.surface_fold_strip_build_available,
 		trace.surface_fold_strip_build_avoided);
@@ -6373,11 +6392,12 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	    "us/ray=%.3f cpu-us/ray=%.3f "
 	    "segment-sink=%zu prepared=%zu fallback=%d "
 	    "spans=%zu/%zu coefficient-expansion=%zu/%zu/%zu/%zu "
+	    "restriction=%zu/%zu/%zu "
 	    "boxes=%zu isolated/krawczyk=%zu/%zu "
 	    "terminal-expansion="
 	    "%zu/%zu/%zu fold-expansion=%zu/%zu/%zu high-water=%zu/%zu "
 	    "fold-contract=%zu/%zu/%zu/%zu "
-	    "graph-interval=%zu/%zu/%zu/%zu/%zu "
+	    "graph-interval=%zu/%zu/%zu/%zu/%zu parent=%zu "
 	    "corridor=%zu/%zu/%zu graph=%zu/%zu/%zu "
 	    "boundary=%zu/%zu/%zu strip-build=%zu/%zu/%zu "
 	    "strip=%zu/%zu/%zu "
@@ -6394,6 +6414,9 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	    trace.surface_coefficient_expansion_available,
 	    trace.surface_coefficient_expansion_failures,
 	    trace.surface_coefficient_expansion_avoided,
+	    trace.surface_expansion_restriction_attempts,
+	    trace.surface_expansion_restriction_available,
+	    trace.surface_expansion_endpoint_restrictions,
 	    trace.surface_subdivision_boxes, trace.surface_isolated_boxes,
 	    trace.surface_krawczyk_boxes,
 	    trace.surface_terminal_expansion_attempts,
@@ -6413,6 +6436,7 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	    trace.surface_fold_corridor_graph_interval_excluded,
 	    trace.surface_fold_corridor_graph_interval_contractions,
 	    trace.surface_fold_corridor_graph_exact_fallbacks,
+	    trace.surface_fold_corridor_graph_parent_restrictions,
 	    trace.surface_fold_corridor_attempts,
 	    trace.surface_fold_corridor_unique,
 	    trace.surface_fold_complete,

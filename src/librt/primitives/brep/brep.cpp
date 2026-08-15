@@ -5887,8 +5887,10 @@ static bool
 brep_expansion_surface_restrict(const brep_interval *input, int u_order,
     int v_order, double u_minimum, double u_maximum, double v_minimum,
     double v_maximum, bool normalized_output, brep_interval *output,
-    size_t &high_water)
+    size_t &high_water, struct rt_brep_shot_trace *trace = NULL)
 {
+    if (trace)
+	trace->surface_expansion_restriction_attempts++;
     if (!input || !output || u_order < 2 || v_order < 2 ||
 	    u_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
 	    v_order > BREP_DIRECT_BEZIER_MAX_ORDER ||
@@ -5957,6 +5959,10 @@ brep_expansion_surface_restrict(const brep_interval *input, int u_order,
 		    return false;
 	    }
 	}
+	if (trace) {
+	    trace->surface_expansion_restriction_available++;
+	    trace->surface_expansion_endpoint_restrictions++;
+	}
 	return true;
     }
     if (complete_u && v_endpoint) {
@@ -5976,6 +5982,10 @@ brep_expansion_surface_restrict(const brep_interval *input, int u_order,
 			normalized_output, output[output_index]))
 		    return false;
 	    }
+	}
+	if (trace) {
+	    trace->surface_expansion_restriction_available++;
+	    trace->surface_expansion_endpoint_restrictions++;
 	}
 	return true;
     }
@@ -6016,6 +6026,8 @@ brep_expansion_surface_restrict(const brep_interval *input, int u_order,
 		return false;
 	}
     }
+    if (trace)
+	trace->surface_expansion_restriction_available++;
     return true;
 }
 
@@ -8966,7 +8978,8 @@ brep_fold_regular_graph_step(
     const brep_interval current[2][BREP_DIRECT_BEZIER_MAX_CVS],
     const int order[2], int regular_direction, bool exact,
     brep_interval next[2][BREP_DIRECT_BEZIER_MAX_CVS],
-    brep_interval &range, size_t &high_water)
+    brep_interval &range, size_t &high_water,
+    struct rt_brep_shot_trace *trace)
 {
     brep_interval center_value;
     brep_interval derivative;
@@ -9001,7 +9014,7 @@ brep_fold_regular_graph_step(
 	const bool restricted = exact ?
 	    brep_expansion_surface_restrict(current[equation], order[0],
 		order[1], minimum[0], maximum[0], minimum[1], maximum[1],
-		true, next[equation], high_water) :
+		true, next[equation], high_water, trace) :
 	    brep_interval_surface_restrict(current[equation], order[0],
 		order[1], minimum[0], maximum[0], minimum[1], maximum[1],
 		next[equation]);
@@ -9039,7 +9052,7 @@ brep_fold_regular_graph_contract(
 	if (trace)
 	    trace->surface_fold_interval_contract_attempts++;
 	brep_fold_contract_status status = brep_fold_regular_graph_step(current,
-	    order, regular_direction, false, next, range, high_water);
+	    order, regular_direction, false, next, range, high_water, trace);
 	if (status == BREP_FOLD_CONTRACT_EXCLUDED) {
 	    if (trace)
 		trace->surface_fold_interval_exclusions++;
@@ -9052,7 +9065,7 @@ brep_fold_regular_graph_contract(
 	    if (trace)
 		trace->surface_fold_exact_contract_fallbacks++;
 	    status = brep_fold_regular_graph_step(current, order,
-		regular_direction, true, next, range, high_water);
+		regular_direction, true, next, range, high_water, trace);
 	    if (status == BREP_FOLD_CONTRACT_EXCLUDED) {
 		excluded = true;
 		return true;
@@ -9138,7 +9151,7 @@ brep_fold_strip_excluded(
 	for (int equation = 0; equation < 2; ++equation) {
 	    if (!brep_expansion_surface_restrict(input[equation], order[0],
 		    order[1], minimum[0], maximum[0], minimum[1], maximum[1],
-		    true, current[equation], high_water)) {
+		    true, current[equation], high_water, trace)) {
 		trace->surface_fold_strip_restriction_failures++;
 		return false;
 	    }
@@ -9204,14 +9217,19 @@ brep_fold_graph_determinant_signed(
 	double minimum;
 	double maximum;
 	int depth;
+	int parent_side;
     };
     static const size_t graph_stack_capacity = 16;
     static const size_t graph_box_capacity = 511;
     static const int graph_maximum_depth = 8;
     brep_fold_graph_box pending[graph_stack_capacity];
+    /* LIFO subdivision is depth first, so one immutable exact slab per
+     * active depth retains every parent needed by either child. */
+    brep_interval exact_path[graph_maximum_depth + 1]
+	[2][BREP_DIRECT_BEZIER_MAX_CVS];
     size_t pending_count = 1;
     size_t visited = 0;
-    pending[0] = {0.0, 1.0, 0};
+    pending[0] = {0.0, 1.0, 0, 0};
     determinant_sign = 0;
     const int weak_direction = 1 - regular_direction;
     while (pending_count) {
@@ -9288,14 +9306,34 @@ brep_fold_graph_determinant_signed(
 	if (!box_sign) {
 	    trace->surface_fold_corridor_graph_exact_fallbacks++;
 	    brep_interval current[2][BREP_DIRECT_BEZIER_MAX_CVS];
+	    double local_minimum[2] = {minimum[0], minimum[1]};
+	    double local_maximum[2] = {maximum[0], maximum[1]};
+	    const bool parent_restriction = box.depth > 0;
+	    if (parent_restriction) {
+		local_minimum[0] = local_minimum[1] = 0.0;
+		local_maximum[0] = local_maximum[1] = 1.0;
+		local_minimum[weak_direction] = box.parent_side < 0 ? 0.0 : 0.5;
+		local_maximum[weak_direction] = box.parent_side < 0 ? 0.5 : 1.0;
+	    }
 	    for (int equation = 0; equation < 2; ++equation) {
-		if (!brep_expansion_surface_restrict(input[equation], order[0],
-			order[1], minimum[0], maximum[0], minimum[1],
-			maximum[1], true, current[equation], high_water)) {
+		const brep_interval *exact_source = parent_restriction ?
+		    exact_path[box.depth - 1][equation] : input[equation];
+		if (!brep_expansion_surface_restrict(exact_source, order[0],
+			order[1], local_minimum[0], local_maximum[0],
+			local_minimum[1], local_maximum[1], true,
+			exact_path[box.depth][equation], high_water,
+			trace)) {
 		    trace->surface_fold_corridor_graph_restriction_failures++;
 		    return false;
 		}
+		for (size_t coefficient = 0;
+			coefficient < (size_t)order[0] * order[1];
+			++coefficient)
+		    current[equation][coefficient] =
+			exact_path[box.depth][equation][coefficient];
 	    }
+	    trace->surface_fold_corridor_graph_parent_restrictions +=
+		parent_restriction ? 1 : 0;
 	    brep_interval determinant[
 		RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
 	    int determinant_order[2];
@@ -9360,8 +9398,8 @@ brep_fold_graph_determinant_signed(
 	const double middle = 0.5 * box.minimum + 0.5 * box.maximum;
 	if (!(middle > box.minimum) || !(middle < box.maximum))
 	    return false;
-	pending[pending_count++] = {middle, box.maximum, box.depth + 1};
-	pending[pending_count++] = {box.minimum, middle, box.depth + 1};
+	pending[pending_count++] = {middle, box.maximum, box.depth + 1, 1};
+	pending[pending_count++] = {box.minimum, middle, box.depth + 1, -1};
     }
     return determinant_sign != 0;
 }
@@ -9899,7 +9937,7 @@ brep_trace_localize_fold_root(struct rt_brep_shot_trace *trace,
 	    if (!brep_expansion_surface_restrict(corridor_values[equation],
 		    order[0], order[1], minimum[0], maximum[0],
 		    minimum[1], maximum[1], true, restricted[equation],
-		    high_water)) {
+		    high_water, trace)) {
 		restriction_available = false;
 		break;
 	    }
@@ -10083,7 +10121,7 @@ brep_trace_expansion_krawczyk_contractions(
 		    coefficients.value_expansion_interval[equation],
 		    coefficients.order[0], coefficients.order[1],
 		    minimum[0], maximum[0], minimum[1], maximum[1], true,
-		    values[equation], high_water)) {
+		    values[equation], high_water, trace)) {
 		restricted = false;
 		break;
 	    }
@@ -10373,7 +10411,8 @@ brep_trace_fold_certificates(struct rt_brep_shot_trace *trace,
 			    coefficients.order[0], coefficients.order[1],
 			    corridor_minimum[0], corridor_maximum[0],
 			    corridor_minimum[1], corridor_maximum[1], false,
-			    corridor_source[equation], corridor_high_water)) {
+			    corridor_source[equation], corridor_high_water,
+			    trace)) {
 		    restriction_available = false;
 		    break;
 		}
@@ -10470,7 +10509,8 @@ brep_trace_fold_certificates(struct rt_brep_shot_trace *trace,
 			    coefficients.order[0], coefficients.order[1],
 			    strip_minimum[0], strip_maximum[0],
 			    strip_minimum[1], strip_maximum[1], false,
-			    strip_source[equation], corridor_high_water)) {
+			    strip_source[equation], corridor_high_water,
+			    trace)) {
 			strip_available = false;
 			break;
 		    }
@@ -10943,7 +10983,8 @@ brep_trace_surface_isolation(struct rt_brep_shot_trace *trace,
 		    coefficients.value_expansion_interval[equation],
 		    coefficients.order[0], coefficients.order[1],
 		    box.minimum[0], box.maximum[0], box.minimum[1],
-		    box.maximum[1], true, exact_values[equation], high_water);
+		    box.maximum[1], true, exact_values[equation], high_water,
+		    trace);
 	    }
 	    trace->surface_terminal_expansion_high_water = std::max(
 		trace->surface_terminal_expansion_high_water, high_water);

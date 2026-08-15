@@ -751,6 +751,9 @@ struct rt_brep_shot_trace {
     size_t surface_coefficient_expansion_available;
     size_t surface_coefficient_expansion_failures;
     size_t surface_coefficient_expansion_avoided;
+    size_t surface_expansion_restriction_attempts;
+    size_t surface_expansion_restriction_available;
+    size_t surface_expansion_endpoint_restrictions;
     size_t surface_subdivision_boxes;
     size_t surface_rotated_hull_attempts;
     size_t surface_rotated_hull_exclusions;
@@ -820,6 +823,7 @@ struct rt_brep_shot_trace {
     size_t surface_fold_corridor_graph_interval_excluded;
     size_t surface_fold_corridor_graph_interval_contractions;
     size_t surface_fold_corridor_graph_exact_fallbacks;
+    size_t surface_fold_corridor_graph_parent_restrictions;
     size_t surface_fold_interval_contract_attempts;
     size_t surface_fold_interval_contractions;
     size_t surface_fold_interval_exclusions;
