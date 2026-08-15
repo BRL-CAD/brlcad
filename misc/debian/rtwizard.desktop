@@ -4,5 +4,5 @@ Name=RtWizard
 Exec=bash -c "cd /usr/brlcad/bin/ && /usr/brlcad/bin/rtwizard %f"
 Icon=rtwizard
 Type=Application
-Categories=BRL-CAD;
+Categories=X-BRL-CAD;
 MimeType=application/brlcad-v4;application/brlcad-v5;
