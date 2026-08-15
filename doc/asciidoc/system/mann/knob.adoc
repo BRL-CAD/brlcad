@@ -10,14 +10,16 @@ knob - Provides a method for simulating knob input. With no options, it will dis
 
 [source]
 ----
-knob [-e -i -m -v] [[-o] | [v] | [m] | [e] | [k]] [[zap] | [zero] | [id [val]]]
+knob [--help] [--incr] [--view-coords | --model-coords] [--origin v|m|e|k] [action [value] ...]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*The *knob* command is used internally by MGED in the processing of knob input devices and is not recommended for users.* The *knob* command provides a method for simulating knob input. With no options, it will display the current values for the knobs. With the *zap or zero* command provided, all the knob values will be reset to zero. If an _id_ and _value_ are provided, the specified knob setting will be simulated. If the _-i_ option is specified, then the value provided will be used as an increment to be applied to the indicated knob. The knobs have different functions depending on the current mode. For example, if in primitive or matrix edit mode and a rotation or translation function is selected, the knob effects are applied to the edited object by default. However, the _-v_ (view coordinates) and _-m_ (model coordinates) options may be used to adjust the view without modifying primitives or matrices. The _-e_ option allows the knob effects to be applied to the edited object when they would normally be applied to the view. The _-o_ option allows the origin of rotation to be specified with _v, m, e,_ and _k_, indicating view, model, eye, and keypoint, respectively. The units for _value_ are degrees for rotation and local units for translation. The available _knob ids_ are:
+*The *knob* command is used internally by MGED in the processing of knob input devices and is not recommended for users.* The *knob* command provides a method for simulating knob input. With no options, it displays the current knob values. It accepts a sequence of actions: *zap*, *zero*, *clear*, *stop*, and *calibrate* take no value; every knob identifier takes one finite numeric value. *zap*, *zero*, *clear*, and *stop* reset the rate-based values. *calibrate* resets the absolute translation baselines.
+
+If the _-i_ / _--incr_ option is specified, each numeric value is applied as an increment. The _-v_ / _--view-coords_ and _-m_ / _--model-coords_ options select the coordinate system and cannot be combined; if neither is given, the current view coordinate setting is used. The _-o_ / _--origin_ option selects the rotation origin: _v_ (view, the default), _m_ (model), _e_ (eye), or _k_ (the current keypoint). Rotation values are in degrees and translation values are in local units. The available knob identifiers are:
 
 
 * *x* -- rate-based rotation about horizontal axis.
@@ -34,11 +36,8 @@ knob [-e -i -m -v] [[-o] | [v] | [m] | [e] | [k]] [[zap] | [zero] | [id [val]]]
 * *aY* -- absolute translation in vertical direction.
 * *aZ* -- absolute translation in direction normal to screen.
 * *aS* -- absolute Scale or Zoom.
-* *xadc* -- absolute translation of adc in horizontal direction (screen coordinates -2048 to +2048).
-* *yadc* -- absolute translation of adc in vertical direction (screen coordinates -2048 to +2048).
-* *ang1* -- absolute rotation of adc angle1 (degrees).
-* *ang2* -- absolute rotation of adc angle2 (degrees).
-* *distadc* -- distance setting of the adc (screen coordinates -2048 to +2048).
+
+The command rejects unknown identifiers, missing values, nonnumeric values, and a mixture of view and model coordinate options before modifying the view.
 
 
 [[examples]]

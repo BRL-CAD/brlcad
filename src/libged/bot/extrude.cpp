@@ -50,6 +50,7 @@
 extern "C" {
 #include "vmath.h"
 #include "bu/datetime.h"
+#include "bu/cmdschema.h"
 #include "bg/trimesh.h"
 #include "brep.h"
 #include "rt/primitives/bot.h"
@@ -88,14 +89,90 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
     return true;
 }
 
+struct bot_extrude_args {
+    int print_help;
+    int quiet_mode;
+    int in_place;
+    int round_edges;
+    int comb_tree;
+    int force_mode;
+    fastf_t max_area_delta;
+    fastf_t min_tri_delta;
+};
+
+static const struct bu_cmd_option bot_extrude_options[] = {
+    BU_CMD_FLAG("h", "help", struct bot_extrude_args, print_help,
+	"Print command help"),
+    BU_CMD_FLAG("q", "quiet", struct bot_extrude_args, quiet_mode,
+	"Suppress output messages"),
+    BU_CMD_FLAG("i", "in-place", struct bot_extrude_args, in_place,
+	"Overwrite the input BoT"),
+    BU_CMD_FLAG("R", "round-edges", struct bot_extrude_args, round_edges,
+	"Apply rounding to outer BoT edges"),
+    BU_CMD_FLAG("C", "comb", struct bot_extrude_args, comb_tree,
+	"Write a CSG tree rather than a volumetric BoT"),
+    BU_CMD_FLAG("F", "force", struct bot_extrude_args, force_mode,
+	"Allow conversion of view-dependent source geometry"),
+    BU_CMD_NUMBER_RANGE(NULL, "max-area-delta", struct bot_extrude_args,
+	max_area_delta, 0.0, 1.0, "ratio",
+	"Maximum surface-area change while simplifying"),
+    BU_CMD_NUMBER_RANGE(NULL, "min-tri-delta", struct bot_extrude_args,
+	min_tri_delta, 0.0, 1.0, "ratio",
+	"Minimum triangle-count reduction while simplifying"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand bot_extrude_operands[] = {
+    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Input plate-mode BoT", "ged.db_object"),
+    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+	"Optional output BoT or combination name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand bot_extrude_normal_operands[] = {
+    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Input plate-mode BoT", "ged.db_object"),
+    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 1, 1,
+	"Output volumetric BoT name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand bot_extrude_in_place_operands[] = {
+    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Input plate-mode BoT to overwrite", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const char * const bot_extrude_in_place_option[] = {"in-place", NULL};
+static const char * const bot_extrude_comb_option[] = {"comb", NULL};
+static const char * const bot_extrude_conflicting_options[] = {
+    "in-place", "comb", NULL
+};
+static const struct bu_cmd_schema_case bot_extrude_cases[] = {
+    BU_CMD_SCHEMA_CASE("in-place", "Overwrite the input BoT",
+	BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, bot_extrude_in_place_option,
+	bot_extrude_in_place_operands, NULL),
+    BU_CMD_SCHEMA_CASE("combination", "Write a CSG tree",
+	BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, bot_extrude_comb_option,
+	bot_extrude_operands, NULL),
+    BU_CMD_SCHEMA_CASE_DEFAULT("volumetric", "Write a volumetric BoT",
+	bot_extrude_normal_operands, NULL),
+    BU_CMD_SCHEMA_CASE_NULL
+};
+static const struct bu_cmd_constraint bot_extrude_constraints[] = {
+    BU_CMD_CONSTRAINT_CONFLICTS(bot_extrude_conflicting_options,
+	"--in-place cannot be used with --comb"),
+    BU_CMD_CONSTRAINT_NULL
+};
+extern "C" const struct bu_cmd_schema ged_bot_extrude_subcommand_schema = {
+    "extrude", "Extrude a plate-mode BoT", bot_extrude_options,
+    NULL, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_META_HELP(NULL, bot_extrude_constraints, NULL, NULL,
+	bot_extrude_cases)
+};
+
 static void
-extrude_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
-    char *option_help = bu_opt_describe(d, NULL);
-    bu_vls_sprintf(str, "Usage: %s [options] input_bot [output_name]\n", cmd);
-    if (option_help) {
-	bu_vls_printf(str, "Options:\n%s\n", option_help);
-	bu_free(option_help, "help str");
-    }
+extrude_usage(struct bu_vls *str, const char *cmd)
+{
+    bu_vls_trunc(str, 0);
+    (void)bu_cmd_schema_help_append(str, &ged_bot_extrude_subcommand_schema, cmd);
 }
 
 extern "C" int
@@ -111,50 +188,34 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
     argc--; argv++;
 
-    int print_help = 0;
-    int extrude_in_place = 0;
-    int round_edges = 0;
-    int comb_tree = 0;
-    int quiet_mode = 0;
-    int force_mode = 0;
-    fastf_t max_area_delta = -1.0;
-    fastf_t min_tri_delta = -1.0;
+	struct bot_extrude_args args = {0, 0, 0, 0, 0, 0, -1.0, -1.0};
+	int operand_count;
+	int operand_index;
+	const char **operands;
 
-    struct bu_opt_desc d[9];
-    BU_OPT(d[0], "h",           "help",     "",            NULL, &print_help,       "Print help");
-    BU_OPT(d[1], "q",          "quiet",     "",            NULL, &quiet_mode,       "Suppress output messages");
-    BU_OPT(d[2], "i",       "in-place",     "",            NULL, &extrude_in_place, "Overwrite input BoT");
-    BU_OPT(d[3], "R",    "round-edges",     "",            NULL, &round_edges,      "Apply rounding to outer BoT edges");
-    BU_OPT(d[4], "C",           "comb",     "",            NULL, &comb_tree,        "Write out a CSG tree rather than a volumetric BoT");
-    BU_OPT(d[5], "F",          "force",     "",            NULL, &force_mode,       "Generate output even if source bot is view dependent.");
-    BU_OPT(d[6], "",  "max-area-delta",     "", &bu_opt_fastf_t, &max_area_delta,   "Maximum surface area percent change allowed when simplifying (scale 0 to 1).  0 == no change allowed, 1 = any change allowed");
-    BU_OPT(d[7], "",   "min-tri-delta",     "", &bu_opt_fastf_t, &min_tri_delta,    "Minimum percentage of triangles that need to be removed (scale 0 to 1) before simplified mesh is used. 0 = any triangle count change is accepted, 1 = no change allowed");
-    BU_OPT_NULL(d[8]);
-
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    argc = ac;
-
-    if (print_help || !argc) {
-	extrude_usage(gb->gedp->ged_result_str, "bot extrude", d);
+	if (!argc) {
+	extrude_usage(gb->gedp->ged_result_str, "bot extrude");
 	return GED_HELP;
     }
 
-    if (extrude_in_place && argc != 1) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+    operand_index = bu_cmd_schema_parse_complete(&ged_bot_extrude_subcommand_schema, &args,
+	gb->gedp->ged_result_str, argc, argv);
+    if (operand_index < 0)
+	return BRLCAD_ERROR;
+    operand_count = argc - operand_index;
+    operands = argv + operand_index;
+    if (args.print_help) {
+	extrude_usage(gb->gedp->ged_result_str, "bot extrude");
+	return GED_HELP;
+	}
+
+    if (!args.in_place && !args.comb_tree &&
+	db_lookup(gb->gedp->dbip, operands[1], LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", operands[1]);
 	return BRLCAD_ERROR;
     }
 
-    if (!extrude_in_place && argc != 2) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
-	return BRLCAD_ERROR;
-    }
-
-    if (!extrude_in_place && db_lookup(gb->gedp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+    if (_bot_obj_setup(gb, operands[0]) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
     }
 
@@ -165,12 +226,12 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     }
 
     if (bot->mode == RT_BOT_PLATE_NOCOS) {
-	if (!force_mode) {
-	    if (!quiet_mode)
+	if (!args.force_mode) {
+	    if (!args.quiet_mode)
 		bu_vls_printf(gb->gedp->ged_result_str, "bot %s is using RT_BOT_PLATE_NOCOS mode.\n\nCannot be accurately represented as a volume.  To force volumetric BoT generation, use the -F flag.\n", gb->solid_name.c_str());
 	    return BRLCAD_ERROR;
 	} else {
-	    if (!quiet_mode)
+	    if (!args.quiet_mode)
 		bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s is using RT_BOT_PLATE_NOCOS mode\n\nConversion will report different thicknesses depending on incoming ray directions.\n", gb->solid_name.c_str());
 	}
     }
@@ -184,12 +245,12 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	    }
 	}
 	if (view_dependent) {
-	    if (!force_mode) {
-		if (!quiet_mode)
+	    if (!args.force_mode) {
+		if (!args.quiet_mode)
 		    bu_vls_printf(gb->gedp->ged_result_str, "bot %s has face_mode set (i.e. it exhibits view-dependent shotline behavior).\n\nCannot be accurately represented as a volume.  To force volumetric BoT generation, use the -F flag.\n", gb->solid_name.c_str());
 		return BRLCAD_ERROR;
 	    } else {
-		if (!quiet_mode)
+		if (!args.quiet_mode)
 		    bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s has one or more faces with face_mode set.\n\nVolumetric BoT will report different in/out hit points than the original.\n", gb->solid_name.c_str());
 	    }
 	}
@@ -203,29 +264,30 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	}
     }
     if (!have_solid) {
-	if (!quiet_mode)
+	if (!args.quiet_mode)
 	    bu_vls_printf(gb->gedp->ged_result_str, "bot %s does not have any non-degenerate face thicknesses\n", gb->solid_name.c_str());
 	return BRLCAD_OK;
     }
 
-    if (!comb_tree) {
-	if (!quiet_mode)
+    if (!args.comb_tree) {
+	if (!args.quiet_mode)
 	    bu_log("Processing %s\n", gb->solid_name.c_str());
 
 	int64_t start = bu_gettime();
 
 	struct rt_bot_internal *obot = NULL;
 	// Default to maximum area change of 1% of the bot surface area
-	if (max_area_delta < 0 || max_area_delta > 1) {
+	if (args.max_area_delta < 0) {
 	    fastf_t bot_area = bg_trimesh_area(bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices);
-	    max_area_delta = MAX_AREA_DELTA_PERCENT*bot_area;
+	    args.max_area_delta = MAX_AREA_DELTA_PERCENT*bot_area;
 	}
-	if (min_tri_delta < 0 || min_tri_delta > 1)
-	    min_tri_delta = MIN_TRICNT_REMOVAL_THRESHOLD;
+	if (args.min_tri_delta < 0)
+	    args.min_tri_delta = MIN_TRICNT_REMOVAL_THRESHOLD;
 
-	int ret = rt_bot_plate_to_vol(&obot, bot, round_edges, quiet_mode, max_area_delta, min_tri_delta);
+	int ret = rt_bot_plate_to_vol(&obot, bot, args.round_edges, args.quiet_mode,
+	    args.max_area_delta, args.min_tri_delta);
 	if (ret != BRLCAD_OK || !obot) {
-	    if (!quiet_mode)
+	    if (!args.quiet_mode)
 		bu_vls_printf(gb->gedp->ged_result_str, "Volumetric conversion failed");
 	    return BRLCAD_ERROR;
 	}
@@ -242,21 +304,21 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
 	const char *rname;
 	struct directory *dp;
-	if (extrude_in_place) {
+	if (args.in_place) {
 	    rname = gb->dp->d_namep;
 	    dp = gb->dp;
 	} else {
-	    rname = argv[1];
+	    rname = operands[1];
 	    dp = db_diradd(gb->gedp->dbip, rname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
 	    if (dp == RT_DIR_NULL) {
-		if (!quiet_mode)
+		if (!args.quiet_mode)
 		    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
 		return BRLCAD_ERROR;
 	    }
 	}
 
 	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern) < 0) {
-	    if (!quiet_mode)
+	    if (!args.quiet_mode)
 		bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
 	    return BRLCAD_ERROR;
 	}
@@ -268,14 +330,14 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     // Make a comb to hold the union of the new solid primitives
     struct wmember wcomb;
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
-    if (argc > 1) {
-	bu_vls_sprintf(&comb_name, "%s", argv[1]);
+    if (operand_count > 1) {
+	bu_vls_sprintf(&comb_name, "%s", operands[1]);
     } else {
 	bu_vls_sprintf(&comb_name, "%s_extrusion.r", gb->dp->d_namep);
     }
 
     if (db_lookup(gb->gedp->dbip, bu_vls_cstr(&comb_name), LOOKUP_QUIET) != RT_DIR_NULL) {
-	if (!quiet_mode)
+	if (!args.quiet_mode)
 	    bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&comb_name));
 	bu_vls_free(&comb_name);
 	return BRLCAD_ERROR;
@@ -342,7 +404,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
     std::set<int>::iterator v_it;
     for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
-	if (!round_edges) {
+	if (!args.round_edges) {
 	    if (exterior_verts.find(*v_it) != exterior_verts.end())
 		continue;
 	}
@@ -357,7 +419,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     }
 
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
-	if (!round_edges) {
+	if (!args.round_edges) {
 	    if (edges_fcnt[*e_it] == 1)
 		continue;
 	}

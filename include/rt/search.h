@@ -39,6 +39,46 @@
 __BEGIN_DECLS
 
 /**
+ * Public, read-only vocabulary of the find-style search expression language.
+ *
+ * db_search_syntax_terms is intentionally a syntax view rather than a second
+ * parser.  Interactive clients use it for completion and highlighting while
+ * librt continues to own parsing and execution of the expression itself.
+ */
+typedef enum {
+    DB_SEARCH_SYNTAX_NO_ARGUMENT = 0,
+    DB_SEARCH_SYNTAX_STRING_ARGUMENT,
+    DB_SEARCH_SYNTAX_INTEGER_ARGUMENT,
+    DB_SEARCH_SYNTAX_TYPE_ARGUMENT,
+    DB_SEARCH_SYNTAX_EXEC_ARGUMENTS
+} db_search_syntax_arg_t;
+
+struct db_search_syntax_term {
+    const char *name;
+    db_search_syntax_arg_t argument;
+    /** Concise user-facing explanation shared by help and rich clients. */
+    const char *help;
+};
+
+/** Return the canonical, parser-owned search expression terms. */
+RT_EXPORT extern const struct db_search_syntax_term *db_search_syntax_terms(size_t *count);
+
+/** Return non-zero if a word starts the search expression portion of a command. */
+RT_EXPORT extern int db_search_syntax_plan_start(const char *word);
+
+/** Return non-zero if an -exec word contains a db_search {} substitution. */
+RT_EXPORT extern int db_search_syntax_exec_substitution(const char *word);
+
+/** Return the cached canonical values accepted by search's -type argument.
+ * If @p include_aliases is non-zero, accepted compatibility aliases are also
+ * included.  The returned strings and array are immutable and process-lived. */
+RT_EXPORT extern const char * const *db_search_type_terms(int include_aliases,
+	size_t *count);
+
+/** Return non-zero if @p word is a canonical or compatibility -type value. */
+RT_EXPORT extern int db_search_type_term_exists(const char *word);
+
+/**
  * @brief Search for objects in a geometry database using filters
  *
  * The db_search function is a programmatic find-style interface that

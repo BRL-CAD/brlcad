@@ -97,7 +97,10 @@ main(int argc, char **argv)
 
     const char *find_help_av[] = {"db", "-h", "find"};
     int ret = ged_exec(gedp, 3, find_help_av);
-    if (ret != GED_HELP || !strstr(bu_vls_cstr(gedp->ged_result_str), "db find [-a] <objects>")) {
+    if (ret != GED_HELP ||
+	!strstr(bu_vls_cstr(gedp->ged_result_str),
+	    "Usage: db find [options] object [object ...]") ||
+	!strstr(bu_vls_cstr(gedp->ged_result_str), "Operands:")) {
 	bu_log("db find targeted help failed: ret %d, result [%s]\n", ret, bu_vls_cstr(gedp->ged_result_str));
 	ged_close(gedp);
 	return BRLCAD_ERROR;

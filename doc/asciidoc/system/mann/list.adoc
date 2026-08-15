@@ -10,8 +10,8 @@ list, l - list the attributes and parameters of database objects
 
 [source]
 ----
-list [-r] [-t] [-v] object(s)
-l [-r] [-t] [-v] object(s)
+list [-r] [-t] [-v ...] object [object ...]
+l [-r] [-t] [-v ...] object [object ...]
 ----
 
 

@@ -863,7 +863,19 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
 
     db_full_path_init(&new_path);
 
-    if (db_string_to_path(&new_path, tsp->ts_dbip, orig_str) < 0) {
+    /* Preserve the raw legacy parser for existing callers, but recognize the
+     * explicit escaped spelling produced by db_full_path_encode(). */
+    int has_path_escape = 0;
+    for (const char *c = orig_str; *c; c++) {
+	if (*c == '\\' && (c[1] == '\\' || c[1] == '/' || c[1] == '@')) {
+	    has_path_escape = 1;
+	    break;
+	}
+    }
+    int parse_ret = has_path_escape ?
+	db_full_path_decode(&new_path, tsp->ts_dbip, orig_str) :
+	db_string_to_path(&new_path, tsp->ts_dbip, orig_str);
+    if (parse_ret < 0) {
 	db_free_full_path(&new_path);
 	return -1;
     }

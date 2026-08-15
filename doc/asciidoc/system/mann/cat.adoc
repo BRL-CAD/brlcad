@@ -10,7 +10,7 @@ cat - Displays a brief description of each item in the list of _objects_.
 
 [source]
 ----
-cat {objects}
+cat object [object ...]
 ----
 
 

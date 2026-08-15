@@ -13,6 +13,7 @@
 
 #include "common.h"
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "rt/db4.h"
 #include "ged.h"
 
@@ -20,11 +21,12 @@ __BEGIN_DECLS
 
 struct _ged_arb_info {
     struct ged *gedp;
-    const struct bu_cmdtab *cmds;
 };
 
 extern int _arb_cmd_create(void *bs, int argc, const char *argv[]);
 extern int _arb_cmd_repair(void *bs, int argc, const char *argv[]);
+extern const struct bu_cmd_schema ged_arb_repair_schema;
+extern const struct bu_cmd_schema ged_rotate_arb_face_schema;
 
 __END_DECLS
 

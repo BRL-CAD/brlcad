@@ -107,7 +107,7 @@ also honored; see that manual page for the complete list.
 *-X* _#_::
   Set *rt* program/optical debug flags as a hexadecimal bit vector.
 
-*-? or -h*::
+*-?*, *-h*::
   Print a usage summary and exit.
 
 See *rt*(1) for the remaining shared options (e.g. *-g*/*-G* grid cell

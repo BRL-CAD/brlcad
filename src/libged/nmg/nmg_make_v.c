@@ -52,7 +52,6 @@ ged_nmg_make_v_core(struct ged *gedp, int argc, const char *argv[])
     struct bn_tol tol;
     int idx;
     int num_verts;
-    static const char *usage = "make V x0 y0 z0 ... xn yn zn";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -62,7 +61,7 @@ ged_nmg_make_v_core(struct ged *gedp, int argc, const char *argv[])
 
     /* check for less than three vertices or incomplete vertex coordinates */
     if (argc < ELEMENTS_PER_POINT + 3 || (argc - 3) % 3 != 0) {
-       bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+       ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
        return GED_HELP;
     }
 

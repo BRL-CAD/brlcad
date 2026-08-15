@@ -47,7 +47,7 @@ Set the output width in pixels.
 *-n* _height_::
 Set the output height in pixels.
 
-*-h, -?*::
+*-h*, *-?*::
 Print a usage message and exit.
 
 [[examples]]

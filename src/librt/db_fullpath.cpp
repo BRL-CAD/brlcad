@@ -30,6 +30,10 @@
 #include <limits.h>
 #include <math.h>
 #include <string.h>
+
+#include <string>
+#include <vector>
+
 #include "bio.h"
 
 #include "vmath.h"
@@ -459,6 +463,166 @@ dp_instance(int *comb_instance_index, const struct db_i *dbip, const char *cp)
     return dp;
 }
 
+
+struct db_full_path_text_component {
+    std::string name;
+    int cinst = 0;
+};
+
+
+/*
+ * Decode one textual component.  This is deliberately stricter than the
+ * general-purpose bu_str_unescape() helpers: only the escapes defined by the
+ * full-path grammar are accepted, so misspelled paths are not silently
+ * redirected to another database object.
+ */
+static int
+db_full_path_decode_component(std::vector<db_full_path_text_component> &components,
+			      const char *&cursor)
+{
+    db_full_path_text_component component;
+    bool has_instance = false;
+
+    while (*cursor && *cursor != '/') {
+	char c = *cursor++;
+	if (c == '\\') {
+	    c = *cursor++;
+	    if (c != '\\' && c != '/' && c != '@')
+		return DB_FULL_PATH_SYNTAX;
+	    component.name.push_back(c);
+	    continue;
+	}
+
+	if (c != '@') {
+	    component.name.push_back(c);
+	    continue;
+	}
+
+	if (has_instance || component.name.empty() || *cursor < '0' || *cursor > '9')
+	    return DB_FULL_PATH_SYNTAX;
+
+	has_instance = true;
+	unsigned int value = 0;
+	while (*cursor >= '0' && *cursor <= '9') {
+	    unsigned int digit = (unsigned int)(*cursor - '0');
+	    if (value > ((unsigned int)INT_MAX - digit) / 10)
+		return DB_FULL_PATH_SYNTAX;
+	    value = value * 10 + digit;
+	    cursor++;
+	}
+	if (*cursor && *cursor != '/')
+	    return DB_FULL_PATH_SYNTAX;
+	component.cinst = (int)value;
+	break;
+    }
+
+    if (component.name.empty())
+	return DB_FULL_PATH_SYNTAX;
+
+    components.push_back(component);
+    return DB_FULL_PATH_OK;
+}
+
+
+int
+db_full_path_encode(struct bu_vls *out, const struct db_full_path *path)
+{
+    if (!out || !path || path->magic != DB_FULL_PATH_MAGIC)
+	return DB_FULL_PATH_INVALID;
+    if (path->fp_len > path->fp_maxlen)
+	return DB_FULL_PATH_INVALID;
+    if (path->fp_len && (!path->fp_names || !path->fp_cinst))
+	return DB_FULL_PATH_INVALID;
+
+    struct bu_vls encoded = BU_VLS_INIT_ZERO;
+    bu_vls_putc(&encoded, '/');
+    for (size_t i = 0; i < path->fp_len; i++) {
+	const struct directory *dp = path->fp_names[i];
+	if (!dp || !dp->d_namep || !dp->d_namep[0] || path->fp_cinst[i] < 0 ||
+	    (i == 0 && path->fp_cinst[i] != 0)) {
+	    bu_vls_free(&encoded);
+	    return DB_FULL_PATH_INVALID;
+	}
+	if (i)
+	    bu_vls_putc(&encoded, '/');
+	for (const char *c = dp->d_namep; *c; c++) {
+	    if (*c == '\\' || *c == '/' || *c == '@')
+		bu_vls_putc(&encoded, '\\');
+	    bu_vls_putc(&encoded, *c);
+	}
+	if (i && path->fp_cinst[i])
+	    bu_vls_printf(&encoded, "@%d", path->fp_cinst[i]);
+    }
+
+    bu_vls_sprintf(out, "%s", bu_vls_cstr(&encoded));
+    bu_vls_free(&encoded);
+    return DB_FULL_PATH_OK;
+}
+
+
+int
+db_full_path_decode(struct db_full_path *out, const struct db_i *dbip, const char *pathstr)
+{
+    if (!out || !dbip || !pathstr || out->magic != DB_FULL_PATH_MAGIC)
+	return DB_FULL_PATH_INVALID;
+    if (!pathstr[0])
+	return DB_FULL_PATH_SYNTAX;
+
+    RT_CK_DBI(dbip);
+
+    const char *cursor = pathstr;
+    if (*cursor == '/')
+	cursor++;
+
+    std::vector<db_full_path_text_component> components;
+    if (*cursor) {
+	while (*cursor) {
+	    int ret = db_full_path_decode_component(components, cursor);
+	    if (ret != DB_FULL_PATH_OK)
+		return ret;
+	    if (!*cursor)
+		break;
+	    cursor++;
+	    if (!*cursor)
+		return DB_FULL_PATH_SYNTAX;
+	}
+    }
+
+    struct db_full_path decoded = DB_FULL_PATH_INIT_ZERO;
+    for (size_t i = 0; i < components.size(); i++) {
+	const db_full_path_text_component &component = components[i];
+	struct directory *dp = db_lookup(dbip, component.name.c_str(), LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
+	    db_free_full_path(&decoded);
+	    return DB_FULL_PATH_LOOKUP;
+	}
+
+	int bool_op = OP_UNION;
+	if (i) {
+	    struct directory *parent = DB_FULL_PATH_CUR_DIR(&decoded);
+	    if (component.cinst && !dbip->i->dbi_use_comb_instance_ids) {
+		db_free_full_path(&decoded);
+		return DB_FULL_PATH_INSTANCE;
+	    }
+	    if (!db_comb_has_instance(&bool_op, dbip, parent, dp, component.cinst)) {
+		db_free_full_path(&decoded);
+		return component.cinst ? DB_FULL_PATH_INSTANCE : DB_FULL_PATH_RELATION;
+	    }
+	} else if (component.cinst) {
+	    db_free_full_path(&decoded);
+	    return DB_FULL_PATH_INSTANCE;
+	}
+
+	db_add_node_to_full_path(&decoded, dp);
+	DB_FULL_PATH_SET_CUR_BOOL(&decoded, bool_op);
+	DB_FULL_PATH_SET_CUR_COMB_INST(&decoded, component.cinst);
+    }
+
+    db_free_full_path(out);
+    *out = decoded;
+    return DB_FULL_PATH_OK;
+}
+
 int
 db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str)
 {
@@ -639,9 +803,11 @@ db_free_full_path(struct db_full_path *pp)
 	    bu_free((char *)pp->fp_bool, "db_full_path bool array");
 	if (pp->fp_cinst)
 	    bu_free((char *)pp->fp_cinst, "db_full_path cinst array");
-	pp->fp_maxlen = pp->fp_len = 0;
-	pp->fp_names = (struct directory **)0;
     }
+    pp->fp_maxlen = pp->fp_len = 0;
+    pp->fp_names = (struct directory **)0;
+    pp->fp_bool = (int *)0;
+    pp->fp_cinst = (int *)0;
 }
 
 

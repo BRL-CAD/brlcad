@@ -27,9 +27,25 @@
 
 #include <string.h>
 
-#include "bu/cmd.h"
+#include "bu/opt.h"
 
 #include "../ged_private.h"
+
+
+struct which_shader_args {
+    int script_output;
+};
+
+#define WHICH_SHADER_OPTIONS(args) \
+    BU_OPT_FLAG(args, "s", NULL, script_output, \
+	"Use script-oriented output"),
+
+BU_OPT_DESC_BUILDER(which_shader_options, struct which_shader_args,
+    WHICH_SHADER_OPTIONS);
+static const ged_opt_spec which_shader_opt_spec =
+    GED_OPT("which_shader",
+	"Find combinations using matching shaders", which_shader_options,
+	"options-first shader_patterns:string+");
 
 
 int
@@ -39,10 +55,9 @@ ged_which_shader_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    int sflag;
-    int myArgc;
-    char **myArgv;
-    static const char *usage = "[-s] args";
+    int operand_count;
+    struct which_shader_args args = {0};
+    const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -51,29 +66,24 @@ ged_which_shader_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return GED_HELP;
     }
 
-    myArgc = argc;
-    myArgv = (char **)argv;
-    sflag = 0;
 
-    if (myArgc > 1 && BU_STR_EQUAL(myArgv[1], "-s")) {
-	--myArgc;
-	++myArgv;
-	sflag = 1;
-    }
-
-    if (myArgc < 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    argc--; argv++;
+    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+	argc, argv, which_shader_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
+    if (operand_count < 1) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
+    argc = operand_count;
 
-    for (j = 1; j < myArgc; j++) {
+    for (j = 0; j < argc; j++) {
 
-	if (!sflag)
-	    bu_vls_printf(gedp->ged_result_str, "Combination[s] with shader %s:\n", myArgv[j]);
+	if (!args.script_output)
+	    bu_vls_printf(gedp->ged_result_str, "Combination[s] with shader %s:\n", argv[j]);
 
 	/* Examine all COMB nodes */
 	FOR_ALL_DIRECTORY_START(dp, gedp->dbip) {
@@ -86,10 +96,10 @@ ged_which_shader_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-	    if (!strstr(bu_vls_addr(&comb->shader), myArgv[j]))
+	    if (!strstr(bu_vls_addr(&comb->shader), argv[j]))
 		continue;
 
-	    if (sflag)
+	    if (args.script_output)
 		bu_vls_printf(gedp->ged_result_str, " %s", dp->d_namep);
 	    else
 		bu_vls_printf(gedp->ged_result_str, "   %s\n", dp->d_namep);
@@ -104,10 +114,10 @@ ged_which_shader_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_WHICH_SHADER_COMMANDS(X, XID) \
-    X(which_shader, ged_which_shader_core, GED_CMD_DEFAULT) \
+    X(which_shader, ged_which_shader_core, GED_CMD_DEFAULT, &which_shader_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_WHICH_SHADER_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_which_shader", 1, GED_WHICH_SHADER_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_WHICH_SHADER_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_which_shader", 1, GED_WHICH_SHADER_COMMANDS)
 
 /*
  * Local Variables:

@@ -29,7 +29,12 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
+
 #include "../ged_private.h"
+
+GED_DEFINE_NO_ARG_SCHEMA_POLICY(sync, "sync",
+    "Synchronize the current database to disk", BU_CMD_PARSE_INTERSPERSED);
 
 
 int
@@ -55,10 +60,10 @@ ged_sync_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_SYNC_COMMANDS(X, XID) \
-    X(sync, ged_sync_core, GED_CMD_DEFAULT) \
+    X(sync, ged_sync_core, GED_CMD_DEFAULT, &sync_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_SYNC_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_sync", 1, GED_SYNC_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_SYNC_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_sync", 1, GED_SYNC_COMMANDS)
 
 /*
  * Local Variables:

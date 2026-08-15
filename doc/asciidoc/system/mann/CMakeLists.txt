@@ -141,6 +141,7 @@ set(
   garbage_collect.adoc
   gdiff.adoc
   get.adoc
+  get_bot_edges.adoc
   glob.adoc
   gqa.adoc
   gr.adoc
@@ -306,6 +307,7 @@ set(
   reid.adoc
   release.adoc
   relos.adoc
+  reopen.adoc
   remat.adoc
   repair.adoc
   rfarb.adoc
@@ -381,6 +383,8 @@ set(
   view2model_lu.adoc
   view2model_vec.adoc
   view_func.adoc
+  view_obj_axes.adoc
+  view_obj_polygon.adoc
   viewdir.adoc
   viewsize.adoc
   vnirt.adoc

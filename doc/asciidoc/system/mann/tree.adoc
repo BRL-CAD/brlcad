@@ -10,7 +10,7 @@ tree - Lists the contents of the specified _objects_ in a tree-like format that 
 
 [source]
 ----
-tree {objects(s)} [-a] [-c] [-d#] [-i#] [-ooutfile]
+tree [-a] [-c] [-v ...] [-d depth] [-i spaces] [-o file] [object ...]
 ----
 
 
@@ -28,16 +28,20 @@ The _-a_ option adds a list of all attributes for each object. Attributes are sh
 If _-c_ is given, only combinations will be printed (i.e., not primitive shapes).
 
 
-*-d #*::
+*-d* _depth_::
 The _-d #_ option prints out the hierarchy to a specified depth.
 
 
-*-i #*::
+*-i* _spaces_::
 The _-i #_ option allows the user to set the number of spaces to indent.
 
 
-*-o filename*::
+*-o* _filename_::
 The _-o_ option prints results to the specified _filename_.
+
+
+*-v*::
+The _-v_ option increases output verbosity.  It may be specified more than once.
 
 
 

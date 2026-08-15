@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/str.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -144,13 +144,12 @@ edit_param_read_fields(const char *input, const struct edit_param_field *fields,
 }
 
 int
-edit_repair_parse_options(struct bu_vls *log_str, int argc,
-			  const char **argv, const struct bu_opt_desc *options)
+edit_repair_parse_options(struct bu_vls *log_str, int argc, const char **argv,
+	const struct bu_cmd_schema *schema, void *data)
 {
-    if (argc < 0 || (argc > 0 &&
-	(!argv || bu_opt_parse(NULL, argc, argv, options) != 0))) {
+    if (bu_cmd_schema_parse_complete(schema, data, NULL, argc, argv) < 0) {
 	if (log_str)
-	    bu_vls_printf(log_str,
+	    bu_vls_strcat(log_str,
 		"{\"status\":\"error\",\"message\":\"Invalid repair options\"}");
 	return BRLCAD_ERROR;
     }

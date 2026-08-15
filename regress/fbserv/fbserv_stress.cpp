@@ -108,6 +108,14 @@ static const int RETRY_MAX_MS = 500;
 /** Length (in hex chars) of the authentication token. */
 static const int TOKEN_LEN = 64;
 
+/** Automatic port allocations occupy disjoint slots for adjacent PIDs. */
+static const int AUTO_PORT_MIN = 10000;
+static const int AUTO_PORT_SLOT_WIDTH = 320;
+static const int AUTO_PORT_SLOT_COUNT = 62;
+
+/** Maximum occupied ports each worker will skip before giving up. */
+static const int MAX_PORT_PROBES = 200;
+
 /* --------------------------------------------------------------------------
  * Global state
  * -------------------------------------------------------------------------- */
@@ -238,7 +246,7 @@ stop_worker(struct bu_process **fbserv_proc)
 }
 
 static void
-run_worker(int wid, int base_port, const char *fbserv_path, WorkerResult &result)
+run_worker(int wid, int base_port, int port_limit, const char *fbserv_path, WorkerResult &result)
 {
     result.worker_id = wid;
 
@@ -246,11 +254,26 @@ run_worker(int wid, int base_port, const char *fbserv_path, WorkerResult &result
      * 1. Pick a unique port.  The atomic counter ensures concurrent workers
      *    get distinct port numbers.  Skip ports that are already in use.
      * ------------------------------------------------------------------ */
-    int port = base_port + g_port_counter.fetch_add(1);
+    int port = -1;
 
-    /* Scan forward until we find a free port (max 200 attempts). */
-    for (int tries = 0; tries < 200 && port_in_use(port); tries++, port = base_port + g_port_counter.fetch_add(1))
-        ;
+    /* Scan forward until we find a free port.  Do not leave this
+     * invocation's allocation while doing so: adjacent simultaneous test
+     * processes are deliberately assigned non-overlapping slots. */
+    for (int tries = 0; tries < MAX_PORT_PROBES; tries++) {
+	int candidate = base_port + g_port_counter.fetch_add(1);
+	if (candidate > port_limit)
+	    break;
+	if (!port_in_use(candidate)) {
+	    port = candidate;
+	    break;
+	}
+    }
+
+    if (port < 0) {
+	result.message = "no unused port available in the allocated range";
+	worker_log(wid, "ERROR: %s", result.message.c_str());
+	return;
+    }
 
     worker_log(wid, "using port %d", port);
 
@@ -431,7 +454,7 @@ print_usage(const char *prog)
     fprintf(stderr,
         "Usage: %s [options]\n"
         "  --workers N      number of parallel workers (default: 8)\n"
-        "  --base-port P    first port to try (default: 5600)\n"
+        "  --base-port P    first port to try (default: automatic)\n"
         "  --timeout T      seconds to wait for fbserv to become ready (default: 15)\n"
         "  --help           show this help\n",
         prog);
@@ -442,19 +465,21 @@ main(int argc, const char *argv[])
 {
     bu_setprogname(argv[0]);
 
+#ifdef SIGPIPE
+    /* A peer exiting during a stress run must not terminate the harness. */
+    (void)signal(SIGPIPE, SIG_IGN);
+#endif
+
     int num_workers = 8;
-    /* Default base port: derive a per-invocation offset from the PID so that
-     * two concurrent or rapidly sequential test runs don't collide on the same
-     * port range.  Stays in the 10000-19999 range (well above reserved ports
-     * and away from the typical ephemeral-port range). */
-    int pid_offset = (bu_pid() % 1000) * 10;
-    int base_port  = 10000 + pid_offset;
+    int base_port = -1;
+    bool automatic_port = true;
 
     for (int i = 1; i < argc; i++) {
         if (BU_STR_EQUAL(argv[i], "--workers") && i + 1 < argc) {
             num_workers = atoi(argv[++i]);
         } else if (BU_STR_EQUAL(argv[i], "--base-port") && i + 1 < argc) {
             base_port = atoi(argv[++i]);
+	    automatic_port = false;
         } else if (BU_STR_EQUAL(argv[i], "--timeout") && i + 1 < argc) {
             g_connect_timeout_sec = atoi(argv[++i]);
         } else if (BU_STR_EQUAL(argv[i], "--help") || BU_STR_EQUAL(argv[i], "-h")) {
@@ -472,6 +497,22 @@ main(int argc, const char *argv[])
         return 1;
     }
 
+    int port_limit = 65535;
+    if (automatic_port) {
+	/* A ten-port PID stride was insufficient when quick and heavy stress
+	 * tests started together.  A slot accommodates the maximum worker count
+	 * plus room to skip occupied ports, while remaining below the typical
+	 * ephemeral range. */
+	int port_slot = bu_pid() % AUTO_PORT_SLOT_COUNT;
+	base_port = AUTO_PORT_MIN + port_slot * AUTO_PORT_SLOT_WIDTH;
+	port_limit = base_port + AUTO_PORT_SLOT_WIDTH - 1;
+    }
+
+    if (base_port < 1 || base_port > 65535 || base_port + num_workers - 1 > port_limit) {
+	fprintf(stderr, "base port does not leave room for %d workers\n", num_workers);
+	return 1;
+    }
+
     g_port_counter.store(0);
 
     fprintf(stderr, "fbserv_stress: launching %d parallel workers (base-port %d)\n",
@@ -487,7 +528,8 @@ main(int argc, const char *argv[])
     bu_dir(fbserv_path, MAXPATHLEN, BU_DIR_BIN, "fbserv", BU_DIR_EXT, NULL);
 
     for (int w = 0; w < num_workers; w++)
-        threads.emplace_back(run_worker, w, base_port, fbserv_path, std::ref(results[w]));
+	threads.emplace_back(run_worker, w, base_port, port_limit, fbserv_path,
+		std::ref(results[w]));
 
     for (auto &t : threads)
         t.join();

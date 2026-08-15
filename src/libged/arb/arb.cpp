@@ -29,9 +29,11 @@
 #include <string.h>
 
 #include "rt/geom.h"
-#include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "../ged_private.h"
 #include "ged_arb.h"
+
+static void arb_create_help(struct ged *gedp);
 
 extern "C" int
 _arb_cmd_create(void *bs, int argc, const char *argv[])
@@ -44,23 +46,22 @@ _arb_cmd_create(void *bs, int argc, const char *argv[])
     int i, j;
     double rota, fb_a;
     vect_t norm1, norm2, norm3;
-    static const char *usage = "name rot fb";
 
     if (argc != 4) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	arb_create_help(gedp);
 	return BRLCAD_ERROR;
     }
 
     GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, BRLCAD_ERROR);
 
     /* get rotation angle */
-    if (sscanf(argv[2], "%lf", &rota) != 1) {
+    if (!bu_cmd_number_from_str(&rota, argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad rotation angle - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
 
     /* get fallback angle */
-    if (sscanf(argv[3], "%lf", &fb_a) != 1) {
+    if (!bu_cmd_number_from_str(&fb_a, argv[3])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad fallback angle - %s", argv[0], argv[3]);
 	return BRLCAD_ERROR;
     }
@@ -110,71 +111,214 @@ _arb_cmd_create(void *bs, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-const struct bu_cmdtab _arb_cmds[] = {
-    { "create", _arb_cmd_create },
-    { "repair", _arb_cmd_repair },
-    { NULL, NULL }
+static const struct bu_cmd_operand arb_create_operands[] = {
+    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1,
+	"New ARB object name", NULL),
+    BU_CMD_OPERAND("rotation", BU_CMD_VALUE_NUMBER, 1, 1,
+	"Rotation angle in degrees", NULL),
+    BU_CMD_OPERAND("fallback", BU_CMD_VALUE_NUMBER, 1, 1,
+	"Fallback angle in degrees", NULL),
+    BU_CMD_OPERAND_NULL
 };
+static const struct bu_cmd_schema arb_create_schema = {
+    "create", "Create an ARB from rotation and fallback angles", NULL,
+    arb_create_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema arb_legacy_schema = {
+    "arb", "Create an ARB using the deprecated positional syntax", NULL,
+    arb_create_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema arb_root_schema = {
+    "arb", "Create or repair ARB objects", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+static int
+arb_schema_preflight(struct ged *gedp, const struct bu_cmd_schema *schema,
+	int argc, const char *argv[])
+{
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int ret = BRLCAD_ERROR;
+
+    if (bu_cmd_schema_parse_complete(schema, NULL, &msg, argc, argv) >= 0) {
+	ret = BRLCAD_OK;
+    } else if (bu_vls_strlen(&msg)) {
+	bu_vls_vlscat(gedp->ged_result_str, &msg);
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "Invalid arb %s arguments.", schema->name);
+    }
+    bu_vls_free(&msg);
+    return ret;
+}
+
+
+static int
+arb_tree_create(void *data, int argc, const char *argv[])
+{
+    struct _ged_arb_info info = {(struct ged *)data};
+
+    if (arb_schema_preflight(info.gedp, &arb_create_schema, argc - 1, argv + 1) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    return _arb_cmd_create(&info, argc, argv);
+}
+
+
+static int
+arb_tree_repair(void *data, int argc, const char *argv[])
+{
+    struct _ged_arb_info info = {(struct ged *)data};
+
+    return _arb_cmd_repair(&info, argc, argv);
+}
+
+
+static const struct bu_cmd_tree_node arb_subcommands[] = {
+    BU_CMD_TREE_NODE(&arb_create_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, arb_tree_create),
+    BU_CMD_TREE_NODE(&ged_arb_repair_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, arb_tree_repair),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree ged_arb_tree = {
+    &arb_root_schema, arb_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+
+static void
+arb_create_help(struct ged *gedp)
+{
+    const char *path[] = {"create"};
+    char *help = bu_cmd_tree_help_path(&ged_arb_tree, "arb", 1, path);
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "ARB create schema help");
+    }
+}
+
+
+static void
+arb_native_help(struct ged *gedp)
+{
+    char *help = bu_cmd_tree_help(&ged_arb_tree, "arb");
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "ARB native tree help");
+    }
+    bu_vls_strcat(gedp->ged_result_str,
+	"\nDeprecated form: arb name rotation fallback\n");
+}
+
 
 extern "C" int
 ged_arb_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret = BRLCAD_ERROR;
+    struct _ged_arb_info info = {gedp};
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s <subcommand> [args]\n", argv[0]);
-	bu_vls_printf(gedp->ged_result_str, "Subcommands: create, repair\n");
-	bu_vls_printf(gedp->ged_result_str, "Legacy Usage: %s name rot fb\n", argv[0]);
+	arb_native_help(gedp);
 	return GED_HELP;
     }
+    if (bu_cmd_tree_dispatch(&ged_arb_tree, gedp, argc - 1, argv + 1, &ret) == 0)
+	return ret;
 
-    if (bu_cmd_valid(_arb_cmds, argv[1]) == BRLCAD_OK) {
-	int cmd_argc = argc - 1;
-	const char **cmd_argv = &argv[1];
-
-	struct _ged_arb_info gb;
-	gb.gedp = gedp;
-	gb.cmds = _arb_cmds;
-
-	if (bu_cmd(_arb_cmds, cmd_argc, cmd_argv, 0, (void *)&gb, &ret) == BRLCAD_OK) {
-	    return ret;
-	}
+    if (arb_schema_preflight(gedp, &arb_legacy_schema, argc - 1, argv + 1) != BRLCAD_OK) {
+	arb_native_help(gedp);
+	return BRLCAD_ERROR;
     }
-
-    if (argc == 4) {
-	bu_log("WARNING: The 'arb name rot fb' syntax is deprecated and will be removed in a future release.\n");
-	bu_log("         Please use 'arb create name rot fb' instead.\n");
-
-	struct _ged_arb_info gb;
-	gb.gedp = gedp;
-	gb.cmds = _arb_cmds;
-
-	return _arb_cmd_create((void *)&gb, argc, argv);
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "Usage: %s <subcommand> [args]\n", argv[0]);
-    bu_vls_printf(gedp->ged_result_str, "Subcommands: create, repair\n");
-    return BRLCAD_ERROR;
+    bu_log("WARNING: The 'arb name rot fb' syntax is deprecated and will be removed in a future release.\n");
+    bu_log("         Please use 'arb create name rot fb' instead.\n");
+    return _arb_cmd_create(&info, argc, argv);
 }
 
 #include "../include/plugin.h"
 
 extern "C" int ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[]);
 
-#define GED_ARB_COMMANDS(X, XID) \
-    X(arb, ged_arb_core, GED_CMD_DEFAULT) \
-    X(rotate_arb_face, ged_rotate_arb_face_core, GED_CMD_DEFAULT)
+static const struct bu_cmd_form arb_native_forms[] = {
+    BU_CMD_FORM_TREE("subcommands", "Named ARB create and repair operations",
+	&ged_arb_tree),
+    BU_CMD_FORM_SCHEMA("deprecated_create", "Deprecated positional create syntax",
+	&arb_legacy_schema),
+    BU_CMD_FORM_NULL
+};
 
-GED_DECLARE_COMMAND_SET(GED_ARB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_arb", 1, GED_ARB_COMMANDS)
+
+static const struct bu_cmd_form *
+arb_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
+	const char * const *argv, void *UNUSED(context))
+{
+    const char *word = argc > 1 ? argv[1] : "";
+    size_t length = word ? strlen(word) : 0;
+
+    if (!length || !bu_strncmp("create", word, length) || !bu_strncmp("repair", word, length))
+	return &forms->forms[0];
+    return &forms->forms[1];
+}
+
+static const struct bu_cmd_forms arb_forms =
+    BU_CMD_FORMS("arb", "Create or repair ARB objects", arb_native_forms,
+	arb_select_native_form);
+
+
+static int
+ged_arb_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_native_forms_validate(gedp, &arb_forms, input, cursor_pos,
+	result);
+}
+
+
+static int
+ged_arb_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_native_forms_analyze(gedp, &arb_forms, input, analysis);
+}
+
+
+static char *
+ged_arb_grammar_json(void)
+{
+    return ged_cmd_native_forms_describe_json(&arb_forms);
+}
+
+
+static int
+ged_arb_grammar_lint(struct bu_vls *msgs)
+{
+    return ged_cmd_native_forms_lint(&arb_forms, msgs);
+}
+
+static char *
+ged_arb_grammar_help(const char *invocation)
+{
+    return ged_cmd_native_forms_help(&arb_forms, invocation);
+}
+
+
+static const struct ged_cmd_grammar ged_arb_grammar = {
+    "arb", "Create or repair ARB objects", ged_arb_grammar_validate,
+    ged_arb_grammar_analyze, ged_arb_grammar_json, ged_arb_grammar_lint, NULL,
+    ged_arb_grammar_help
+};
+
+#define GED_ARB_COMMANDS(X, XID, N, NID, G, GID) \
+    G(arb, ged_arb_core, GED_CMD_DEFAULT, &ged_arb_grammar) \
+    N(rotate_arb_face, ged_rotate_arb_face_core, GED_CMD_DEFAULT, &ged_rotate_arb_face_schema)
+
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_ARB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_arb", 1, GED_ARB_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

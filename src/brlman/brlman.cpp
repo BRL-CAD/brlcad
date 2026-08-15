@@ -1067,7 +1067,8 @@ main(int argc, char **argv_input)
 
     /* Skip first arg */
     argv++; argc--;
-    uac = bu_opt_parse(&optparse_msg, argc, argv, d);
+    uac = bu_opt_parse_with_policy(&optparse_msg, argc, argv, d,
+	BU_OPT_PARSE_INTERSPERSED_END_MARKER);
     if (uac == -1) {
 	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
     }
@@ -1075,12 +1076,11 @@ main(int argc, char **argv_input)
 
     /* If we want help, print help */
     if (print_help) {
-	char *option_help = bu_opt_describe(d, NULL);
-	bu_log("Usage: brlman [options] [man_page]\n");
-	if (option_help) {
-	    bu_log("Options:\n%s\n", option_help);
-	}
-	bu_free(option_help, "help str");
+	char *help = bu_opt_help(d, "brlman", "[man_page]",
+	    "Display BRL-CAD manual pages");
+	if (help)
+	    bu_log("%s", help);
+	bu_free(help, "help str");
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 

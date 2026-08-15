@@ -32,7 +32,6 @@
 #include <string>
 #include <time.h>
 
-#include "bu/opt.h"
 #include "bv/plot3.h"
 #include "bu/color.h"
 #include "rt/db4.h"
@@ -88,7 +87,6 @@ struct _ged_brep_info {
     int plotres;
     std::string solid_name;
     const struct bu_cmdtab *cmds = NULL;
-    struct bu_opt_desc *gopts = NULL;
 };
 
 int
