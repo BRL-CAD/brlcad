@@ -64,11 +64,6 @@ void	strsol_dump(void);
 
 union record	record;		/* GED database record */
 
-static const char usage[] = "\
-Usage: g2asc file.g file.asc\n\
- Convert a binary BRL-CAD database to machine-independent ASCII form\n\
-";
-
 FILE	*ifp;
 FILE	*ofp;
 const char	*iname = "-";
@@ -139,11 +134,15 @@ main(int argc, char **argv)
     argc = uac;
 
     if (need_help) {
-	bu_exit(EXIT_SUCCESS, "%s", usage);
+	char *help = bu_opt_help(d, "g2asc", "file.g file.asc",
+	    "Convert a binary BRL-CAD database to machine-independent ASCII form");
+	bu_exit(EXIT_SUCCESS, "%s", help ? help : "");
     }
 
     if (argc != 2) {
-	bu_exit(1, "%s", usage);
+	char *help = bu_opt_help(d, "g2asc", "file.g file.asc",
+	    "Convert a binary BRL-CAD database to machine-independent ASCII form");
+	bu_exit(EXIT_FAILURE, "%s", help ? help : "");
     }
 
     setmode(fileno(stdin), O_BINARY);
@@ -188,7 +187,7 @@ main(int argc, char **argv)
     }
 
     if (isatty(fileno(ifp))) {
-	bu_exit(1, "%s", usage);
+	bu_exit(1, "Usage: g2asc [options] file.g file.asc\n");
     }
 
     /* First, determine what version database this is */

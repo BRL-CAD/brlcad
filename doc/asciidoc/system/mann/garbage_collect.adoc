@@ -44,7 +44,7 @@ The example shows the use of the *garbage_collect* command to delete unused spac
 [example]
 ====
 
-mged> **garbage_collect**:: -c
+mged> **garbage_collect -c**
 Cleans out unused space in the database.
 
 

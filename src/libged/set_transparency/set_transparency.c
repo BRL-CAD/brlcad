@@ -25,8 +25,22 @@
 
 #include "common.h"
 
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
+
+
+static const struct bu_cmd_operand set_transparency_operands[] = {
+    BU_CMD_OPERAND("node", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"Displayed database path", "ged.db_path"),
+    BU_CMD_OPERAND("transparency", BU_CMD_VALUE_NUMBER, 1, 1,
+	"Transparency value", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema set_transparency_cmd_schema = {
+    "set_transparency", "Set displayed-object transparency", NULL,
+    set_transparency_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 void
 dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparency)
@@ -84,8 +98,10 @@ ged_set_transparency_core(struct ged *gedp, int argc, const char *argv[])
 
     /* intentionally double for scan */
     double transparency;
-
-    static const char *usage = "node tval";
+    int operand_index = 0;
+    int parse_dummy = 0;
+    const char *node = NULL;
+    const char *transparency_arg = NULL;
 
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -95,22 +111,27 @@ ged_set_transparency_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
 
 
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	operand_index = bu_cmd_schema_parse_complete(&set_transparency_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0 || argc - 1 - operand_index != 2) {
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &transparency) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "dgo_set_transparency: bad transparency - %s\n", argv[2]);
+    node = argv[1 + operand_index];
+    transparency_arg = argv[2 + operand_index];
+
+	if (sscanf(transparency_arg, "%lf", &transparency) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "dgo_set_transparency: bad transparency - %s\n", transparency_arg);
 	return BRLCAD_ERROR;
     }
 
-    if ((dpp = _ged_build_dpp(gedp, argv[1])) == NULL) {
+	if ((dpp = _ged_build_dpp(gedp, node)) == NULL) {
 	return BRLCAD_OK;
     }
 
@@ -126,10 +147,10 @@ ged_set_transparency_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_SET_TRANSPARENCY_COMMANDS(X, XID) \
-    X(set_transparency, ged_set_transparency_core, GED_CMD_DEFAULT) \
+    X(set_transparency, ged_set_transparency_core, GED_CMD_DEFAULT, &set_transparency_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_SET_TRANSPARENCY_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_set_transparency", 1, GED_SET_TRANSPARENCY_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_SET_TRANSPARENCY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_set_transparency", 1, GED_SET_TRANSPARENCY_COMMANDS)
 
 /*
  * Local Variables:

@@ -69,11 +69,13 @@ ged_form_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_FORM_COMMANDS(X, XID) \
-    X(form, ged_form_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(form, "form", "Primitive type", "primitive_type", BU_CMD_VALUE_STRING, 1, 1, "Primitive type");
 
-GED_DECLARE_COMMAND_SET(GED_FORM_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_form", 1, GED_FORM_COMMANDS)
+#define GED_FORM_COMMANDS(X, XID) \
+    X(form, ged_form_core, GED_CMD_DEFAULT, &form_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_FORM_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_form", 1, GED_FORM_COMMANDS)
 
 /*
  * Local Variables:

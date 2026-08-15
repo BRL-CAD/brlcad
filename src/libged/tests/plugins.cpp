@@ -417,6 +417,10 @@ main(int ac, char *av[]) {
 	for (size_t i = 0; i < cmds_cnt; i++) {
 	    cmd_set.insert(std::string(cmds[i]));
 	}
+	if (cmds) {
+	    bu_argv_free(cmds_cnt, (char **)cmds);
+	    cmds = NULL;
+	}
 
 	std::set<std::string>::iterator cs_it;
 	std::map<std::string, std::set<std::string>> alias_sets;
@@ -461,5 +465,4 @@ main(int ac, char *av[]) {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
 

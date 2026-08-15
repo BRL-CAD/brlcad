@@ -3,6 +3,7 @@ set(PLUGIN_LIBS libged libbu)
 set(ERASE_SRCS
   erase.c
   erase2.cpp
+  erase_completion.cpp
   )
 
 ged_plugin_library(ged-erase

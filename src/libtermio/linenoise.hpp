@@ -124,6 +124,7 @@
 #define LINENOISE_HPP
 
 #ifndef _WIN32
+#include <poll.h>
 #include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -146,6 +147,7 @@
 #pragma warning(disable : 4996)
 #endif
 #include <algorithm>
+#include <chrono>
 #include <cctype>
 #include <errno.h>
 #include <fstream>
@@ -207,8 +209,54 @@ namespace linenoise
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
 #define LINENOISE_MAX_LINE 4096
+#define LINENOISE_HISTORY_NEXT 0
+#define LINENOISE_HISTORY_PREV 1
 
 typedef std::function<void (const char*, std::vector<std::string>&)> CompletionCallback;
+
+enum ColorMode {
+    COLOR_AUTO = 0,
+    COLOR_NEVER,
+    COLOR_ALWAYS
+};
+
+enum HighlightStyle {
+    HIGHLIGHT_NORMAL = 0,
+    HIGHLIGHT_COMMAND,
+    HIGHLIGHT_OPTION,
+    HIGHLIGHT_VALID,
+    HIGHLIGHT_INVALID,
+    HIGHLIGHT_INCOMPLETE,
+    HIGHLIGHT_DIM
+};
+
+enum CompletionMode {
+    COMPLETION_FILTER = 0,
+    COMPLETION_CYCLE,
+    COMPLETION_PREFIX,
+    COMPLETION_LEGACY,
+    COMPLETION_DISABLED
+};
+
+struct CompletionResult {
+    std::vector<std::string> candidates;
+    std::vector<std::string> display_lines;
+    std::string common_prefix;
+    bool common_prefix_known = false;
+    size_t replacement_start = 0;
+    size_t replacement_end = 0;
+    size_t display_columns = 80;
+    size_t display_rows = 5;
+};
+
+struct HighlightSpan {
+    size_t start = 0;
+    size_t end = 0;
+    HighlightStyle style = HIGHLIGHT_NORMAL;
+};
+
+typedef std::function<void (const char*, size_t, CompletionResult&)> StructuredCompletionCallback;
+typedef std::function<void (const char*, std::vector<HighlightSpan>&)> HighlightCallback;
 
 /* The linenoiseState structure represents the state during line editing, and
  * provides methods by which user programs can act on that state. */
@@ -245,6 +293,40 @@ public:
 	completionCallback = fn;
     };
 
+    void SetCompletionCallback(StructuredCompletionCallback fn)
+    {
+	structuredCompletionCallback = fn;
+    };
+
+    void SetHighlightCallback(HighlightCallback fn)
+    {
+	highlightCallback = fn;
+    };
+
+    /**
+     * Override the ANSI SGR sequence used for one semantic highlight role.
+     * An empty sequence restores the built-in terminal default for @p style.
+     */
+    void SetHighlightStyleSequence(HighlightStyle style, const std::string &sequence)
+    {
+	if (style < HIGHLIGHT_NORMAL || style > HIGHLIGHT_DIM)
+	    return;
+	if (highlightStyleSequences_.size() <= (size_t)style)
+	    highlightStyleSequences_.resize((size_t)HIGHLIGHT_DIM + 1);
+	highlightStyleSequences_[(size_t)style] = sequence;
+    };
+
+    void SetCompletionMode(CompletionMode mode)
+    {
+	completionMode_ = mode;
+    };
+
+    void SetColorMode(ColorMode mode)
+    {
+	colorMode_ = mode;
+	colorEnabled_ = -1;
+    };
+
 private:
     std::string Readline(bool &quit);
     std::string Readline();
@@ -263,8 +345,18 @@ private:
     void refreshSingleLine();
     void refreshMultiLine();
     int completeLine(char *cbuf, int *c);
+    int completeStructuredLine(char *cbuf, int *c);
+    void setLineBuffer(const std::string &line, size_t cursor_pos);
+    void showCompletionDisplay(const std::vector<std::string> &lines);
+    void clearCompletionDisplay();
+    bool colorEnabled();
+    void appendHighlightedBuffer(std::string &ab);
+    const char *highlightStyleSequence(HighlightStyle style) const;
 
     CompletionCallback completionCallback;
+    StructuredCompletionCallback structuredCompletionCallback;
+    HighlightCallback highlightCallback;
+    std::vector<std::string> highlightStyleSequences_;
 
     int ifd_ = STDIN_FILENO;          /* Terminal stdin file descriptor. */
     int ofd_ = STDOUT_FILENO;         /* Terminal stdout file descriptor. */
@@ -278,6 +370,19 @@ private:
     long int history_index_ = -INT_MAX; /* The history index we are currently editing. */
     char wbuf_[LINENOISE_MAX_LINE] = {'\0'};
     bool mlmode_ = false;  /* Multi line mode. Default is single line. */
+    ColorMode colorMode_ = COLOR_AUTO;
+    int colorEnabled_ = -1;
+    bool colorDiagnosticPrinted_ = false;
+    CompletionMode completionMode_ = COMPLETION_LEGACY;
+    bool completionPreview_ = false;
+    size_t completionPreviewStart_ = 0;
+    size_t completionPreviewEnd_ = 0;
+    size_t completionDisplayRows_ = 0;
+    int screenCursorColumn_ = 0;
+    int screenCursorRowsToEnd_ = 0;
+    int screenInputRows_ = 1;
+    int cursorCoordinateSupport_ = 0; /* 0 unknown, 1 supported, -1 unavailable */
+    std::string pendingInput_; /* input observed while awaiting a terminal reply */
     std::mutex mutex_;
     std::string prompt_ = std::string("> "); /* Prompt to display. */
 
@@ -1083,7 +1188,7 @@ HANDLE hOut;
 HANDLE hIn;
 DWORD consolemodeIn = 0;
 
-inline int win32readW(WCHAR *c)
+inline int win32readW(WCHAR *c, bool *resized = nullptr)
 {
     DWORD foo;
     INPUT_RECORD b;
@@ -1093,6 +1198,11 @@ inline int win32readW(WCHAR *c)
     while (1) {
 	if (!ReadConsoleInputW(hIn, &b, 1, &foo)) return 0;
 	if (!foo) return 0;
+
+	if (b.EventType == WINDOW_BUFFER_SIZE_EVENT && resized) {
+	    *resized = true;
+	    return 0;
+	}
 
 	if (b.EventType == KEY_EVENT && b.Event.KeyEvent.bKeyDown) {
 
@@ -1188,11 +1298,11 @@ inline int win32readW(WCHAR *c)
     return -1; /* Makes compiler happy */
 }
 
-inline int win32read(char *buf, int *c)
+inline int win32read(char *buf, int *c, bool *resized = nullptr)
 {
     WCHAR wideChars[2];
     int wideCharCount;
-    if (win32readW(wideChars) != 1) {
+    if (win32readW(wideChars, resized) != 1) {
 	return 0;
     }
 
@@ -1201,7 +1311,7 @@ inline int win32read(char *buf, int *c)
 	*c = wideChars[0];
 	wideCharCount = 1;
     } else {
-	if (win32readW(wideChars + 1) != 1) {
+	if (win32readW(wideChars + 1, resized) != 1) {
 	    return 0;
 	}
 
@@ -1730,9 +1840,27 @@ inline int unicodeColumnPosForMultiLine(char* buf, int buf_len, int pos, int col
 
 /* Read UTF8 character from file.
 */
-inline int unicodeReadUTF8Char(int fd, char* buf, int* cp)
+inline int unicodeReadUTF8Char(int fd, char* buf, int* cp,
+	std::string *pending = NULL)
 {
-    int nread = read(fd, &buf[0],1);
+    auto read_bytes = [fd, pending](char *out, size_t count) -> int {
+	size_t have = 0;
+	while (pending && have < count && !pending->empty()) {
+	    out[have++] = (*pending)[0];
+	    pending->erase(0, 1);
+	}
+	while (have < count) {
+	    ssize_t got = read(fd, out + have, count - have);
+	    if (got < 0 && errno == EINTR)
+		continue;
+	    if (got <= 0)
+		return have ? -1 : (int)got;
+	    have += (size_t)got;
+	}
+	return (int)have;
+    };
+
+    int nread = read_bytes(&buf[0], 1);
 
     if (nread <= 0) {
 	return nread;
@@ -1743,17 +1871,17 @@ inline int unicodeReadUTF8Char(int fd, char* buf, int* cp)
     if ((byte & 0x80) == 0) {
 	;
     } else if ((byte & 0xE0) == 0xC0) {
-	nread = read(fd, &buf[1],1);
+	nread = read_bytes(&buf[1], 1);
 	if (nread <= 0) {
 	    return nread;
 	}
     } else if ((byte & 0xF0) == 0xE0) {
-	nread = read(fd, &buf[1],2);
+	nread = read_bytes(&buf[1], 2);
 	if (nread <= 0) {
 	    return nread;
 	}
     } else if ((byte & 0xF8) == 0xF0) {
-	nread = read(fd, &buf[1],3);
+	nread = read_bytes(&buf[1], 3);
 	if (nread <= 0) {
 	    return nread;
 	}
@@ -1763,6 +1891,21 @@ inline int unicodeReadUTF8Char(int fd, char* buf, int* cp)
 
     return unicodeUTF8CharToCodePoint(buf, 4, cp);
 }
+
+#ifndef _WIN32
+inline bool readByteWithTimeout(int fd, char *value, int timeout_ms)
+{
+    if (!value)
+	return false;
+    while (true) {
+	struct pollfd descriptor = {fd, POLLIN, 0};
+	int ready = poll(&descriptor, 1, timeout_ms);
+	if (ready < 0 && errno == EINTR)
+	    continue;
+	return ready > 0 && read(fd, value, 1) == 1;
+    }
+}
+#endif
 
 /* ======================= Low level terminal handling ====================== */
 
@@ -1858,7 +2001,7 @@ inline bool enableRawMode(int fd)
 
     GetConsoleMode(hIn, &consolemodeIn);
     /* Enable raw mode */
-    SetConsoleMode(hIn, consolemodeIn & ~ENABLE_PROCESSED_INPUT);
+    SetConsoleMode(hIn, (consolemodeIn & ~ENABLE_PROCESSED_INPUT) | ENABLE_WINDOW_INPUT);
 
     rawmode = true;
 #endif
@@ -1915,6 +2058,69 @@ inline int getCursorPosition(int ifd, int ofd)
     return cols;
 }
 
+/* Query the cursor relative to the visible terminal window.  A short timeout
+ * prevents terminals which do not implement DSR from stalling completion. */
+inline bool getCursorCoordinates(int ifd, int ofd, int *row, int *column,
+	std::string *pending_input = NULL, bool *queried = NULL)
+{
+#ifdef _WIN32
+    CONSOLE_SCREEN_BUFFER_INFO b;
+
+    (void)ifd;
+    (void)ofd;
+    if (queried)
+	*queried = true;
+    if (!row || !column || !GetConsoleScreenBufferInfo(hOut, &b))
+	return false;
+    *row = b.dwCursorPosition.Y - b.srWindow.Top + 1;
+    *column = b.dwCursorPosition.X - b.srWindow.Left + 1;
+    return true;
+#else
+    char buf[32] = {0};
+    unsigned int i = 0;
+    int queued = 0;
+
+    if (queried)
+	*queried = false;
+
+    /* Never send a query while user input is already queued: a DSR reader and
+     * ordinary editing share the same tty stream. */
+    if (!row || !column ||
+	(ioctl(ifd, FIONREAD, &queued) == 0 && queued > 0))
+	return false;
+    if (queried)
+	*queried = true;
+    if (write(ofd, "\x1b[6n", 4) != 4)
+	return false;
+    auto deadline = std::chrono::steady_clock::now() +
+	std::chrono::milliseconds(40);
+    while (i < sizeof(buf) - 1) {
+	struct pollfd descriptor = {ifd, POLLIN, 0};
+	auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(
+	    deadline - std::chrono::steady_clock::now()).count();
+	if (remaining <= 0)
+	    break;
+	int ready = poll(&descriptor, 1, (int)remaining);
+	if (ready < 0 && errno == EINTR)
+	    continue;
+	if (ready <= 0 || read(ifd, buf + i, 1) != 1)
+	    break;
+	if (buf[i++] == 'R')
+	    break;
+    }
+    if (i && (buf[i - 1] != 'R' || buf[0] != ESC || buf[1] != '[')) {
+	/* A terminal reply and ordinary keyboard bytes use the same stream.
+	 * Retain anything that is not a DSR response for the editor. */
+	if (pending_input)
+	    pending_input->append(buf, i);
+	return false;
+    }
+    if (!i || sscanf(buf + 2, "%d;%d", row, column) != 2)
+	return false;
+    return true;
+#endif
+}
+
 /* Try to get the number of columns in the current terminal, or assume 80
  * if it fails. */
 inline int getColumns(int ifd, int ofd)
@@ -1927,7 +2133,7 @@ inline int getColumns(int ifd, int ofd)
 #else
     struct winsize ws;
 
-    if (ioctl(1, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
+    if (ioctl(ofd, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
 	/* ioctl() failed. Try to query the terminal itself. */
 	int start, cols;
 
@@ -1956,6 +2162,39 @@ inline int getColumns(int ifd, int ofd)
 failed:
     return 80;
 #endif
+}
+
+/* Try to get the number of visible terminal rows, or assume 24 if it fails. */
+inline int getRows(int ofd)
+{
+#ifdef _WIN32
+    CONSOLE_SCREEN_BUFFER_INFO b;
+
+    if (!GetConsoleScreenBufferInfo(hOut, &b)) return 24;
+    return (b.srWindow.Bottom - b.srWindow.Top) + 1;
+#else
+    struct winsize ws;
+    if (ioctl(ofd, TIOCGWINSZ, &ws) == -1 || ws.ws_row == 0)
+	return 24;
+    return ws.ws_row;
+#endif
+}
+
+inline size_t completionDisplayBudget(int terminal_rows, int cursor_row = -1,
+	int input_rows = 1, int input_rows_below_cursor = 0)
+{
+    if (terminal_rows < 1)
+	terminal_rows = 24;
+    if (input_rows < 1)
+	input_rows = 1;
+    int prior_rows = (terminal_rows + 2) / 3;
+    int completion_rows = terminal_rows - prior_rows - input_rows;
+    if (cursor_row > 0) {
+	int free_rows = terminal_rows - cursor_row - input_rows_below_cursor;
+	if (free_rows > completion_rows)
+	    completion_rows = free_rows;
+    }
+    return (size_t)((completion_rows > 0) ? completion_rows : 1);
 }
 
 /* Clear the screen. Used to handle ctrl+l */
@@ -1990,7 +2229,486 @@ inline void linenoiseBeep(void)
     fflush(stderr);
 }
 
+inline bool linenoiseEnvSet(const char *name)
+{
+    const char *v = getenv(name);
+    return v && v[0] != '\0';
+}
+
+inline bool linenoiseTermIsDumb()
+{
+    const char *term = getenv("TERM");
+    if (!term || term[0] == '\0')
+	return true;
+
+    std::string sterm(term);
+    std::transform(sterm.begin(), sterm.end(), sterm.begin(), [](unsigned char c) {
+	return std::tolower(c);
+    });
+    return sterm == "dumb";
+}
+
+inline bool linenoiseTermSuggestsColor()
+{
+    if (linenoiseEnvSet("COLORTERM"))
+	return true;
+
+    const char *term = getenv("TERM");
+    if (!term)
+	return false;
+
+    std::string sterm(term);
+    std::transform(sterm.begin(), sterm.end(), sterm.begin(), [](unsigned char c) {
+	return std::tolower(c);
+    });
+
+    static const char *color_terms[] = {
+	"color", "ansi", "xterm", "screen", "tmux", "rxvt", "linux",
+	"cygwin", "konsole", "putty", "vt100-color", NULL
+    };
+    for (int i = 0; color_terms[i]; i++) {
+	if (sterm.find(color_terms[i]) != std::string::npos)
+	    return true;
+    }
+
+    return false;
+}
+
+inline const char *linenoiseDefaultStyleSequence(HighlightStyle style)
+{
+    switch (style) {
+	case HIGHLIGHT_COMMAND:
+	    return "\x1b[32m";
+	case HIGHLIGHT_OPTION:
+	    return "\x1b[33m";
+	case HIGHLIGHT_VALID:
+	    return "\x1b[36m";
+	case HIGHLIGHT_INVALID:
+	    return "\x1b[31m";
+	case HIGHLIGHT_INCOMPLETE:
+	    return "\x1b[35m";
+	case HIGHLIGHT_DIM:
+	    return "\x1b[2m";
+	case HIGHLIGHT_NORMAL:
+	default:
+	    return "\x1b[0m";
+    }
+}
+
+inline const char *
+linenoiseState::highlightStyleSequence(HighlightStyle style) const
+{
+    if (style >= HIGHLIGHT_NORMAL && style <= HIGHLIGHT_DIM &&
+	highlightStyleSequences_.size() > (size_t)style &&
+	!highlightStyleSequences_[(size_t)style].empty())
+	return highlightStyleSequences_[(size_t)style].c_str();
+
+    return linenoiseDefaultStyleSequence(style);
+}
+
 /* ============================== Completion ================================ */
+
+inline void
+linenoiseState::setLineBuffer(const std::string &line, size_t cursor_pos)
+{
+    size_t copy_len = line.size();
+    if (copy_len >= (size_t)buf_len_)
+	copy_len = (size_t)buf_len_ - 1;
+
+    memcpy(wbuf_, line.c_str(), copy_len);
+    wbuf_[copy_len] = '\0';
+    buf_ = wbuf_;
+    len_ = (int)copy_len;
+    pos_ = (cursor_pos > copy_len) ? (int)copy_len : (int)cursor_pos;
+}
+
+inline void
+linenoiseState::showCompletionDisplay(const std::vector<std::string> &lines)
+{
+    if (lines.empty())
+	return;
+
+    /* The display is allocated only once.  In particular, do not erase and
+     * append it again between Tab presses: at the terminal's bottom margin
+     * that would scroll one row into scrollback on every cycle. */
+    if (completionDisplayRows_)
+	return;
+
+    std::string output;
+    char seq[64];
+    if (screenCursorRowsToEnd_ > 0) {
+	snprintf(seq, sizeof(seq), "\x1b[%dB", screenCursorRowsToEnd_);
+	output += seq;
+    }
+    for (size_t i = 0; i < lines.size(); i++) {
+	output += "\r\n\x1b[2K";
+	output += lines[i];
+    }
+
+    int rows_up = screenCursorRowsToEnd_ + static_cast<int>(lines.size());
+    snprintf(seq, sizeof(seq), "\x1b[%dA\r", rows_up);
+    output += seq;
+    if (screenCursorColumn_ > 0) {
+	snprintf(seq, sizeof(seq), "\x1b[%dC", screenCursorColumn_);
+	output += seq;
+    }
+    std::lock_guard<std::mutex> guard(mutex_);
+    if (write(ofd_, output.c_str(), static_cast<int>(output.size())) == -1) {}
+    completionDisplayRows_ = lines.size();
+}
+
+inline void
+linenoiseState::clearCompletionDisplay()
+{
+    if (!completionDisplayRows_)
+	return;
+
+    /* Single-line mode can redraw the input and erase everything below it.
+     * That remains correct after a width change has reflowed the old display.
+     * Retain the row-walking fallback for multiline users, where erasing from
+     * the input cursor could remove lower rows of the input itself. */
+    if (!mlmode_) {
+	RefreshLine();
+	std::lock_guard<std::mutex> guard(mutex_);
+	if (write(ofd_, "\x1b[J", 3) == -1) {}
+	completionDisplayRows_ = 0;
+	return;
+    }
+
+    std::string output;
+    char seq[64];
+    int first_row = screenCursorRowsToEnd_ + 1;
+    snprintf(seq, sizeof(seq), "\x1b[%dB\r", first_row);
+    output += seq;
+    for (size_t i = 0; i < completionDisplayRows_; i++) {
+	output += "\x1b[2K";
+	if (i + 1 < completionDisplayRows_)
+	    output += "\x1b[1B\r";
+    }
+
+    int rows_up = screenCursorRowsToEnd_ + static_cast<int>(completionDisplayRows_);
+    snprintf(seq, sizeof(seq), "\x1b[%dA\r", rows_up);
+    output += seq;
+    if (screenCursorColumn_ > 0) {
+	snprintf(seq, sizeof(seq), "\x1b[%dC", screenCursorColumn_);
+	output += seq;
+    }
+    std::lock_guard<std::mutex> guard(mutex_);
+    if (write(ofd_, output.c_str(), static_cast<int>(output.size())) == -1) {}
+    completionDisplayRows_ = 0;
+}
+
+inline int
+linenoiseState::completeStructuredLine(char *cbuf, int *c)
+{
+    CompletionResult result;
+    int nread = 0;
+    int terminal_rows = getRows(ofd_);
+    int cursor_row = -1;
+    int cursor_column = -1;
+    *c = 0;
+
+    cols_ = getColumns(ifd_, ofd_);
+    result.display_columns = (cols_ > 0) ? (size_t)cols_ : 80;
+    if (cursorCoordinateSupport_ >= 0) {
+	bool queried = false;
+	bool supported = getCursorCoordinates(ifd_, ofd_, &cursor_row, &cursor_column,
+		&pendingInput_, &queried);
+	if (queried)
+	    cursorCoordinateSupport_ = supported ? 1 : -1;
+    }
+    result.display_rows = completionDisplayBudget(terminal_rows, cursor_row,
+	    screenInputRows_, screenCursorRowsToEnd_);
+    result.replacement_start = (size_t)pos_;
+    result.replacement_end = (size_t)pos_;
+    structuredCompletionCallback(buf_, (size_t)pos_, result);
+
+    if (result.candidates.empty()) {
+	linenoiseBeep();
+	return nread;
+    }
+
+    if (result.replacement_start > (size_t)len_)
+	result.replacement_start = (size_t)len_;
+    if (result.replacement_end > (size_t)len_)
+	result.replacement_end = (size_t)len_;
+    if (result.replacement_end < result.replacement_start)
+	result.replacement_end = result.replacement_start;
+
+    std::string current(buf_, len_);
+    size_t current_cursor = (size_t)pos_;
+    std::vector<std::string> lines;
+    std::vector<size_t> cursor_positions;
+    std::vector<size_t> preview_starts;
+    std::vector<size_t> preview_ends;
+    auto rebuild_previews = [&]() {
+	lines.clear();
+	cursor_positions.clear();
+	preview_starts.clear();
+	preview_ends.clear();
+	if (result.replacement_start > current.size())
+	    result.replacement_start = current.size();
+	if (result.replacement_end > current.size())
+	    result.replacement_end = current.size();
+	if (result.replacement_end < result.replacement_start)
+	    result.replacement_end = result.replacement_start;
+	std::string typed = current.substr(result.replacement_start,
+		result.replacement_end - result.replacement_start);
+	for (size_t ci = 0; ci < result.candidates.size(); ci++) {
+	    std::string candidate_line = current;
+	    candidate_line.replace(result.replacement_start,
+		    result.replacement_end - result.replacement_start,
+		    result.candidates[ci]);
+	    lines.push_back(candidate_line);
+	    cursor_positions.push_back(result.replacement_start + result.candidates[ci].size());
+	    size_t confirmed = 0;
+	    while (confirmed < typed.size() && confirmed < result.candidates[ci].size() &&
+		    typed[confirmed] == result.candidates[ci][confirmed])
+		confirmed++;
+	    preview_starts.push_back(result.replacement_start + confirmed);
+	    preview_ends.push_back(result.replacement_start + result.candidates[ci].size());
+	}
+    };
+    rebuild_previews();
+
+    if (completionMode_ == COMPLETION_PREFIX) {
+	std::string common = result.common_prefix_known ? result.common_prefix :
+	    result.candidates[0];
+	for (size_t i = result.common_prefix_known ? result.candidates.size() : 1;
+		i < result.candidates.size() && !common.empty(); i++) {
+	    size_t j = 0;
+	    while (j < common.size() && j < result.candidates[i].size() && common[j] == result.candidates[i][j])
+		j++;
+	    common.erase(j);
+	}
+	if (!common.empty()) {
+	    current.replace(result.replacement_start,
+		    result.replacement_end - result.replacement_start, common);
+	    setLineBuffer(current, result.replacement_start + common.size());
+	    RefreshLine();
+	} else {
+	    linenoiseBeep();
+	}
+	return nread;
+    }
+
+    if (lines.size() == 1 && completionMode_ == COMPLETION_LEGACY) {
+	setLineBuffer(lines[0], cursor_positions[0]);
+	RefreshLine();
+	return nread;
+    }
+
+    int stop = 0;
+    int i = 0;
+    while (!stop) {
+	int display_columns = getColumns(ifd_, ofd_);
+	int display_terminal_rows = getRows(ofd_);
+	if (display_columns < 1)
+	    display_columns = 80;
+	if ((size_t)display_columns != result.display_columns ||
+		display_terminal_rows != terminal_rows) {
+	    cols_ = display_columns;
+	    clearCompletionDisplay();
+	    RefreshLine();
+	    cursor_row = -1;
+	    cursor_column = -1;
+	    if (cursorCoordinateSupport_ >= 0) {
+		bool queried = false;
+		bool supported = getCursorCoordinates(ifd_, ofd_, &cursor_row, &cursor_column,
+			&pendingInput_, &queried);
+		if (queried)
+		    cursorCoordinateSupport_ = supported ? 1 : -1;
+	    }
+	    size_t display_rows = completionDisplayBudget(display_terminal_rows,
+		    cursor_row, screenInputRows_, screenCursorRowsToEnd_);
+	    std::string selected = (i >= 0 && i < (int)result.candidates.size()) ?
+		result.candidates[(size_t)i] : std::string();
+	    CompletionResult resized;
+	    resized.display_columns = (size_t)display_columns;
+	    resized.display_rows = display_rows;
+	    resized.replacement_start = current_cursor;
+	    resized.replacement_end = current_cursor;
+	    structuredCompletionCallback(current.c_str(), current_cursor, resized);
+	    result = std::move(resized);
+	    rebuild_previews();
+	    if (!selected.empty()) {
+		auto selected_it = std::find(result.candidates.begin(),
+		    result.candidates.end(), selected);
+		if (selected_it != result.candidates.end())
+		    i = (int)std::distance(result.candidates.begin(), selected_it);
+		else if (i >= (int)result.candidates.size())
+		    i = result.candidates.empty() ? 0 : (int)result.candidates.size() - 1;
+	    }
+	    terminal_rows = display_terminal_rows;
+	}
+	if (i < static_cast<int>(lines.size())) {
+	    int old_len = len_;
+	    int old_pos = pos_;
+	    char *old_buf = buf_;
+	    len_ = static_cast<int>(lines[i].size());
+	    pos_ = (cursor_positions[i] > lines[i].size()) ? len_ : (int)cursor_positions[i];
+	    buf_ = &lines[i][0];
+	    completionPreview_ = preview_ends[i] > preview_starts[i];
+	    completionPreviewStart_ = preview_starts[i];
+	    completionPreviewEnd_ = preview_ends[i];
+	    RefreshLine();
+	    completionPreview_ = false;
+	    len_ = old_len;
+	    pos_ = old_pos;
+	    buf_ = old_buf;
+	} else {
+	    completionPreview_ = false;
+	    RefreshLine();
+	}
+	showCompletionDisplay(result.display_lines);
+
+#ifdef _WIN32
+	bool resize_pending = false;
+	nread = win32read(cbuf, c, &resize_pending);
+	if (resize_pending)
+	    continue;
+#else
+	bool resize_pending = false;
+	while (true) {
+	    struct pollfd descriptor = {ifd_, POLLIN, 0};
+	    int ready = poll(&descriptor, 1, 100);
+	    if (ready < 0 && errno == EINTR)
+		continue;
+	    if (ready < 0) {
+		nread = -1;
+		break;
+	    }
+	    if (ready == 0) {
+		int pending_columns = getColumns(ifd_, ofd_);
+		int pending_rows = getRows(ofd_);
+		if (pending_columns < 1)
+		    pending_columns = 80;
+		if ((size_t)pending_columns != result.display_columns ||
+			pending_rows != terminal_rows) {
+		    resize_pending = true;
+		    nread = 0;
+		    break;
+		}
+		continue;
+	    }
+	    nread = unicodeReadUTF8Char(ifd_,cbuf,c, &pendingInput_);
+	    break;
+	}
+	if (resize_pending)
+	    continue;
+#endif
+	if (nread <= 0) {
+	    clearCompletionDisplay();
+	    *c = -1;
+	    return nread;
+	}
+
+	switch (*c) {
+	    case 9:
+		if (completionMode_ == COMPLETION_FILTER || completionMode_ == COMPLETION_CYCLE) {
+		    i = (i+1) % lines.size();
+		} else {
+		    i = (i+1) % (lines.size()+1);
+		    if (i == static_cast<int>(lines.size())) linenoiseBeep();
+		}
+		break;
+	    case 27:
+		#ifndef _WIN32
+		{
+		    char seq[2] = {0, 0};
+		    bool have_sequence = readByteWithTimeout(ifd_, seq, 40) &&
+			    readByteWithTimeout(ifd_, seq + 1, 40);
+		    if (have_sequence && seq[0] == '[' && seq[1] == 'Z') {
+			i = (i + static_cast<int>(lines.size()) - 1) % static_cast<int>(lines.size());
+			break;
+		    }
+
+		    clearCompletionDisplay();
+		    setLineBuffer(current, current_cursor);
+		    if (have_sequence && seq[0] == '[') {
+			if (seq[1] == '3') {
+			    char terminator = 0;
+			    if (readByteWithTimeout(ifd_, &terminator, 40) && terminator == '~')
+				EditDelete();
+			    else
+				RefreshLine();
+			} else {
+			switch (seq[1]) {
+			    case 'A': EditHistoryNext(LINENOISE_HISTORY_PREV); break;
+			    case 'B': EditHistoryNext(LINENOISE_HISTORY_NEXT); break;
+			    case 'C': EditMoveRight(); break;
+			    case 'D': EditMoveLeft(); break;
+			    case 'H': EditMoveHome(); break;
+			    case 'F': EditMoveEnd(); break;
+			    default: RefreshLine(); break;
+			}
+			}
+		    } else {
+			RefreshLine();
+		    }
+		    *c = 0;
+		    stop = 1;
+		    break;
+		}
+		#else
+		clearCompletionDisplay();
+		setLineBuffer(current, current_cursor);
+		RefreshLine();
+		*c = 0;
+		stop = 1;
+		#endif
+		break;
+	    default:
+		clearCompletionDisplay();
+		if (completionMode_ == COMPLETION_FILTER && *c != ' ' && *c != '/' &&
+			*c != 127 && *c != 8 &&
+			*c != '\r' && *c != '\n') {
+		/* A filtering edit normally applies to the original seed.  If that
+		 * interpretation has no completions but extending the displayed
+		 * candidate does, promote the candidate to editable text.  This
+		 * preserves predictable filtering while permitting, for example,
+		 * an extra character to turn a completed object name into another
+		 * valid object name. */
+		bool extend_preview = false;
+		if (*c >= 32 && nread > 0 && i < static_cast<int>(lines.size())) {
+		    std::string edit(cbuf, (size_t)nread);
+		    std::string original_edit = current;
+		    original_edit.insert(current_cursor, edit);
+		    CompletionResult original_result;
+		    original_result.replacement_start = current_cursor + edit.size();
+		    original_result.replacement_end = original_result.replacement_start;
+		    structuredCompletionCallback(original_edit.c_str(),
+			    current_cursor + edit.size(), original_result);
+
+		    if (original_result.candidates.empty()) {
+			std::string preview_edit = lines[i];
+			preview_edit.insert(cursor_positions[i], edit);
+			CompletionResult preview_result;
+			preview_result.replacement_start = cursor_positions[i] + edit.size();
+			preview_result.replacement_end = preview_result.replacement_start;
+			structuredCompletionCallback(preview_edit.c_str(),
+				cursor_positions[i] + edit.size(), preview_result);
+			extend_preview = !preview_result.candidates.empty();
+		    }
+		}
+		if (extend_preview)
+		    setLineBuffer(lines[i], cursor_positions[i]);
+		else
+		    setLineBuffer(current, current_cursor);
+		} else if (i < static_cast<int>(lines.size())) {
+		    setLineBuffer(lines[i], cursor_positions[i]);
+		}
+		/* The preview was drawn from temporary state.  Restore the newly
+		 * selected editing buffer before Edit() handles this key; otherwise
+		 * its fast single-character path can leave preview text on screen. */
+		RefreshLine();
+		stop = 1;
+		break;
+	}
+    }
+
+    return nread;
+}
 
 /* This is an helper function for Edit() and is called when the
  * user types the <tab> key in order to complete the string currently in the
@@ -2003,6 +2721,9 @@ inline int linenoiseState::completeLine(char *cbuf, int *c)
     std::vector<std::string> lc;
     int nread = 0, nwritten;
     *c = 0;
+
+    if (structuredCompletionCallback != NULL)
+	return completeStructuredLine(cbuf, c);
 
     completionCallback(buf_,lc);
     if (lc.empty()) {
@@ -2030,7 +2751,7 @@ inline int linenoiseState::completeLine(char *cbuf, int *c)
 #ifdef _WIN32
 	    nread = win32read(cbuf, c);
 #else
-	    nread = unicodeReadUTF8Char(ifd_,cbuf,c);
+	    nread = unicodeReadUTF8Char(ifd_,cbuf,c, &pendingInput_);
 #endif
 	    if (nread <= 0) {
 		*c = -1;
@@ -2060,6 +2781,124 @@ inline int linenoiseState::completeLine(char *cbuf, int *c)
     }
 
     return nread;
+}
+
+inline bool
+linenoiseState::colorEnabled()
+{
+    if (colorMode_ == COLOR_NEVER)
+	return false;
+    if (colorMode_ == COLOR_ALWAYS)
+	return true;
+    if (colorEnabled_ >= 0)
+	return colorEnabled_ ? true : false;
+
+    bool enabled = false;
+    bool no_color = linenoiseEnvSet("NO_COLOR");
+    bool dumb_term = linenoiseTermIsDumb();
+    int tty_out = isatty(ofd_);
+    bool term_color = linenoiseTermSuggestsColor();
+    if (!no_color && !dumb_term && tty_out) {
+#ifdef _WIN32
+	HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
+	enabled = ln_win32_is_console_handle(hout) || term_color;
+#else
+	enabled = term_color;
+#endif
+    }
+
+    colorEnabled_ = enabled ? 1 : 0;
+    if (!colorDiagnosticPrinted_ && linenoiseEnvSet("LINENOISE_COLOR_DIAGNOSTICS")) {
+	const char *term = getenv("TERM");
+	const char *colorterm = getenv("COLORTERM");
+	fprintf(stderr,
+		"linenoise color diagnostics: mode=auto enabled=%d isatty(stdout)=%d NO_COLOR=%d TERM=%s COLORTERM=%s term_dumb=%d term_suggests_color=%d\n",
+		enabled ? 1 : 0,
+		tty_out ? 1 : 0,
+		no_color ? 1 : 0,
+		(term && term[0]) ? term : "(unset)",
+		(colorterm && colorterm[0]) ? colorterm : "(unset)",
+		dumb_term ? 1 : 0,
+		term_color ? 1 : 0);
+	colorDiagnosticPrinted_ = true;
+    }
+    return enabled;
+}
+
+inline void
+linenoiseState::appendHighlightedBuffer(std::string &ab)
+{
+    if ((highlightCallback == NULL && !completionPreview_) || !colorEnabled()) {
+	ab.append(buf_, len_);
+	return;
+    }
+
+    std::vector<HighlightSpan> spans;
+    std::string line(buf_, len_);
+    if (highlightCallback != NULL)
+	highlightCallback(line.c_str(), spans);
+
+    if (completionPreview_) {
+	std::vector<HighlightSpan> adjusted;
+	for (size_t i = 0; i < spans.size(); i++) {
+	    if (spans[i].end <= completionPreviewStart_ || spans[i].start >= completionPreviewEnd_) {
+		adjusted.push_back(spans[i]);
+		continue;
+	    }
+	    if (spans[i].start < completionPreviewStart_)
+		adjusted.push_back({spans[i].start, completionPreviewStart_, spans[i].style});
+	    if (spans[i].end > completionPreviewEnd_)
+		adjusted.push_back({completionPreviewEnd_, spans[i].end, spans[i].style});
+	}
+	adjusted.push_back({completionPreviewStart_, completionPreviewEnd_, HIGHLIGHT_DIM});
+	spans.swap(adjusted);
+    }
+    if (linenoiseEnvSet("LINENOISE_COLOR_DIAGNOSTICS")) {
+	fprintf(stderr,
+		"linenoise highlight diagnostics: line=\"%s\" spans=%zu\n",
+		line.c_str(),
+		spans.size());
+    }
+
+    if (spans.empty()) {
+	ab.append(buf_, len_);
+	return;
+    }
+
+    std::sort(spans.begin(), spans.end(), [](const HighlightSpan &a, const HighlightSpan &b) {
+	return a.start < b.start;
+    });
+
+    size_t pos = 0;
+    bool styled = false;
+    for (size_t i = 0; i < spans.size(); i++) {
+	size_t start = spans[i].start;
+	size_t end = spans[i].end;
+
+	if (start > (size_t)len_)
+	    start = (size_t)len_;
+	if (end > (size_t)len_)
+	    end = (size_t)len_;
+	if (end <= start || start < pos)
+	    continue;
+
+	if (start > pos)
+	    ab.append(buf_ + pos, start - pos);
+
+	if (spans[i].style != HIGHLIGHT_NORMAL) {
+	    ab += highlightStyleSequence(spans[i].style);
+	    styled = true;
+	}
+	ab.append(buf_ + start, end - start);
+	if (spans[i].style != HIGHLIGHT_NORMAL)
+	    ab += highlightStyleSequence(HIGHLIGHT_NORMAL);
+	pos = end;
+    }
+
+    if (pos < (size_t)len_)
+	ab.append(buf_ + pos, (size_t)len_ - pos);
+    if (styled)
+	ab += highlightStyleSequence(HIGHLIGHT_NORMAL);
 }
 
 /* =========================== Line editing ================================= */
@@ -2093,13 +2932,16 @@ inline void linenoiseState::refreshSingleLine()
     ab += seq;
     /* Write the prompt and the current buffer content */
     ab += prompt_;
-    ab.append(buf_, len_);
+    appendHighlightedBuffer(ab);
     /* Erase to right */
     snprintf(seq,64,"\x1b[0K");
     ab += seq;
     /* Move cursor to original position. */
     snprintf(seq,64,"\r\x1b[%dC", (int)(unicodeColumnPos(buf_, pos_)+pcolwid));
     ab += seq;
+    screenCursorColumn_ = unicodeColumnPos(buf_, pos_) + pcolwid;
+    screenCursorRowsToEnd_ = 0;
+    screenInputRows_ = 1;
     if (write(fd,ab.c_str(), static_cast<int>(ab.length())) == -1) {} /* Can't recover from write error. */
 }
 
@@ -2146,7 +2988,7 @@ inline void linenoiseState::refreshMultiLine()
 
     /* Write the prompt and the current buffer content */
     ab += prompt_;
-    ab.append(buf_, len_);
+    appendHighlightedBuffer(ab);
 
     /* Get text width to cursor position */
     colpos2 = unicodeColumnPosForMultiLine(buf_, len_, pos_, cols_, pcolwid);
@@ -2181,6 +3023,9 @@ inline void linenoiseState::refreshMultiLine()
     ab += seq;
 
     oldcolpos_ = colpos2;
+    screenCursorColumn_ = col;
+    screenCursorRowsToEnd_ = rows - rpos2;
+    screenInputRows_ = rows;
 
     if (write(fd,ab.c_str(), static_cast<int>(ab.length())) == -1) {} /* Can't recover from write error. */
 }
@@ -2227,7 +3072,8 @@ inline int linenoiseState::EditInsert(const char* cbuf, int clen)
 	    pos_+=clen;
 	    len_+=clen;;
 	    buf_[len_] = '\0';
-	    if ((!mlmode_ && unicodeColumnPos(prompt_.c_str(), static_cast<int>(prompt_.length()))+unicodeColumnPos(buf_,len_) < cols_) /* || mlmode_ */) {
+	    bool can_fast_insert = (highlightCallback == NULL || !colorEnabled());
+	    if (can_fast_insert && (!mlmode_ && unicodeColumnPos(prompt_.c_str(), static_cast<int>(prompt_.length()))+unicodeColumnPos(buf_,len_) < cols_) /* || mlmode_ */) {
 		/* Avoid a full update of the line in the
 		 * trivial case. */
 		if (write(ofd_,cbuf,clen) == -1) return -1;
@@ -2284,8 +3130,6 @@ inline void linenoiseState::EditMoveEnd()
 
 /* Substitute the currently edited line with the next or previous history
  * entry as specified by 'dir'. */
-#define LINENOISE_HISTORY_NEXT 0
-#define LINENOISE_HISTORY_PREV 1
 inline void linenoiseState::EditHistoryNext(int dir)
 {
     long int index_cnt = static_cast<long int>(history_.size());
@@ -2392,14 +3236,15 @@ inline int linenoiseState::Edit()
 #ifdef _WIN32
 	nread = win32read(cbuf, &c);
 #else
-	nread = unicodeReadUTF8Char(ifd_,cbuf, &c);
+	nread = unicodeReadUTF8Char(ifd_,cbuf, &c, &pendingInput_);
 #endif
 	if (nread <= 0) return (int)len_;
 
 	/* Only autocomplete when the callback is set. It returns < 0 when
 	 * there was an error reading from fd. Otherwise it will return the
 	 * character that should be handled next. */
-	if (c == 9 && completionCallback != NULL) {
+	if (c == 9 && completionMode_ != COMPLETION_DISABLED &&
+		(completionCallback != NULL || structuredCompletionCallback != NULL)) {
 	    nread = completeLine(cbuf, &c);
 	    /* Return on errors */
 	    if (c < 0) return len_;
@@ -2409,7 +3254,14 @@ inline int linenoiseState::Edit()
 
 	switch (c) {
 	    case ENTER:    /* enter */
-		if (mlmode_) EditMoveEnd();
+		/* A completion preview is transient.  Redraw the accepted line
+		 * without its dim suffix before leaving raw editing mode so the
+		 * command retained in the terminal has its normal highlighting. */
+		completionPreview_ = false;
+		if (mlmode_)
+		    EditMoveEnd();
+		else
+		    RefreshLine();
 		return (int)len_;
 	    case CTRL_C:     /* ctrl-c */
 		errno = EAGAIN;

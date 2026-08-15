@@ -42,8 +42,8 @@ Check for full paths that are cyclic - i.e. a situation where a high level objec
 Check for references to objects or files that are missing (not present in the database or on the file system.) Primarily this is a check for comb objects referring to missing objects, but it will also check for and report invalid object and file references in extrude and dsp primitives.
 
 
-*-I*, *--invalid-shape* [check [check ...]]::
-Check for shapes in the database that do not satisfy one or more properties required for them to be valid definitions, where correcting the problem requires a change to the object's definition. (As of this writing the only implemented check is for BoT object solidity, but many more are possible and planned.) (Objects invalid due to missing objects are potentially valid without the necessity of changing the object's own definition - e.g. the missing object/file can be added. That category of error can be searched for with the *-M* check.)
+*-I*, *--invalid-shape* [_primitive:technique_ [ ... ]]::
+Check for shapes in the database that do not satisfy one or more properties required for them to be valid definitions, where correcting the problem requires a change to the object's definition. (As of this writing the only implemented check is for BoT object solidity, but many more are possible and planned.) (Objects invalid due to missing objects are potentially valid without the necessity of changing the object's own definition - e.g. the missing object/file can be added. That category of error can be searched for with the *-M* check.) The optional selector is consumed only when it contains a colon, so `lint -I object.g` checks `object.g`, while `lint -I bot:empty object.g` selects the `bot:empty` technique before checking `object.g`. Multiple selectors may be supplied as one quoted argument.
 
 
 *-F*, *--filter*::

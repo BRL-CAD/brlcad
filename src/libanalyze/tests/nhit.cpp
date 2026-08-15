@@ -123,9 +123,11 @@ main(int argc, const char **argv)
     /* If we've been asked to print help or don't know what to do, print help
      * and exit */
     if (print_help || argc < 7) {
-	char *help = bu_opt_describe(d, NULL);
+	char *help = bu_opt_help(d, "nhit", "model.g object X Y Z AZ EL",
+	    "Report NIRT hit information for a ray");
 	ret = (argc < 2) ? EXIT_FAILURE : EXIT_SUCCESS;
-	bu_log("Usage: 'nhit [options] model.g obj X Y Z AZ EL'\n\nOptions:\n%s\n", help);
+	if (help)
+	    bu_log("%s", help);
 	if (help)
 	    bu_free(help, "help str");
 	goto done;

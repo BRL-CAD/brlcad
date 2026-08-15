@@ -25,35 +25,40 @@ All dimensional parameters are in the current working units unless otherwise not
 
 === Options
 
-*-d mean_outer_diameter*::
+*-d* _mean_outer_diameter_::
 Mean outer diameter of the coil. Defaults to 10× the wire diameter if unspecified. If both are zero, defaults to 1000 (with wire diameter defaulting to 100).
 
-*-w wire_diameter*::
+*-w* _wire_diameter_::
 Diameter of the coil wire. Defaults to 1/10 of the mean outer diameter if unspecified.
 
-*-H helix_angle*::
+*-H* _helix_angle_::
 Helix angle of the coil in degrees. Affects the pitch of the winding relative to the axis. (Unsupported when `-l` is used.)
 
-*-p pitch*::
+*-p* _pitch_::
 Distance between adjacent turns along the coil axis. Must be ≥ wire diameter; if smaller, it is automatically set to the wire diameter.
 
-*-n number_of_turns*::
+*-n* _number_of_turns_::
 Number of full coil turns.
 
-*-s start_cap_type*::
-End cap style at the start of the coil: `0` = open (no cap), `1` = squared, `2` = squared and ground.
+*-s* _start_cap_type_::
+End cap style at the start of the coil: `0` = open (no cap), `1` = squared,
+`2` = ground, or `3` = squared and ground.
 
-*-e end_cap_type*::
+*-e* _end_cap_type_::
 End cap style at the end of the coil. Same values as `-s`.
 
-*-l overall_length*::
+*-l* _overall_length_::
 Constrain the coil to a total axial length. When set, pitch and/or number of turns are adjusted automatically to fit. Caps are forced to open (0) and helix angles are ignored.
 
 *-L*::
 Use left-hand winding (default is right-hand).
 
-*-S coil_data_structure*::
-Advanced: provide an explicit section data structure to override the automatic coil generation.
+*-S* _coil_data_structure_::
+Advanced: provide one explicit section as
+`turns,outer_diameter,wire_diameter,helix_angle,pitch,handedness`. Multiple
+`-S` options stack sections in the coil. `handedness` is `1` for right-handed
+and `0` for left-handed winding. This form overrides automatic single-section
+generation.
 
 [[examples]]
 == EXAMPLES

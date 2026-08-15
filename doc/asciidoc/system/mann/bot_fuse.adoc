@@ -10,7 +10,7 @@ bot_fuse - fuse duplicate vertices and faces in a BOT mesh
 
 [source]
 ----
-bot_fuse [-s|-p] new_bot old_bot
+bot_fuse [--help] [-s | -p] new_bot old_bot
 ----
 
 
@@ -25,13 +25,17 @@ After fusing, open edges (edges shared by only one face) may be detected. The op
 
 === Options
 
+*-h*, *--help*::
+Print command help without requiring an open database.
+
 *-s*::
 Show open edges by drawing them in the display as colored lines after the operation.
 
 *-p*::
 Plot open edges to a temporary plot file for subsequent inspection.
 
-Without either flag, open edge detection runs silently and results are not visualized.
+The `-s` and `-p` modes are mutually exclusive.  Without either flag, open
+edge detection runs silently and results are not visualized.
 
 [[examples]]
 == EXAMPLES

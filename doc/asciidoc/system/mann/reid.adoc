@@ -24,7 +24,7 @@ The 'reid' command sequentially assigns the 'region_id' attribute value for all 
 == OPTIONS
 
 
-*-n num*::
+*-n* _num_::
 Increment to use between consecutive region identifiers. The default is 1.
 
 

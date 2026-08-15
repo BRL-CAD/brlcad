@@ -1265,8 +1265,11 @@ rtwizard_help(struct bu_opt_desc *d)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls filtered = BU_VLS_INIT_ZERO;
     char *option_help;
+    char *usage = bu_opt_usage(d, "rtwizard", NULL);
 
-    bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
+    bu_vls_sprintf(&str, "%s\n", usage ? usage : "");
+    if (usage)
+	bu_free(usage, "rtwizard usage");
 
     /* I/O options */
     bu_vls_sprintf(&filtered, "h help-dev i o s w n cut-steps cut-direction animation-fps");
@@ -1327,9 +1330,12 @@ rtwizard_help_dev(struct bu_opt_desc *d)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls filtered = BU_VLS_INIT_ZERO;
     char *option_help = NULL;
+    char *usage = bu_opt_usage(d, "rtwizard", NULL);
     const char *devopts = "benchmark cpu-count pid-file log-file";
 
-    bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
+    bu_vls_sprintf(&str, "%s\n", usage ? usage : "");
+    if (usage)
+	bu_free(usage, "rtwizard developer usage");
 
     bu_vls_sprintf(&filtered, "%s", devopts);
     settings.accept = bu_vls_addr(&filtered);

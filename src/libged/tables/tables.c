@@ -38,6 +38,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/sort.h"
 #include "bu/units.h"
 #include "../ged_private.h"
@@ -464,7 +465,6 @@ tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *ge
 int
 ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "file object(s)";
 
     FILE *ftabvls = NULL;
     FILE *test_f = NULL;
@@ -491,12 +491,12 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
     }
 
     if (argc < 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -651,14 +651,27 @@ end:
 
 #include "../include/plugin.h"
 
-#define GED_TABLES_COMMANDS(X, XID) \
-    X(idents, ged_tables_core, GED_CMD_DEFAULT) \
-    X(regions, ged_tables_core, GED_CMD_DEFAULT) \
-    X(solids, ged_tables_core, GED_CMD_DEFAULT) \
-    X(tables, ged_tables_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand tables_schema_operands[] = {
+    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1,
+	"Table output file", NULL),
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1,
+	BU_CMD_COUNT_UNLIMITED, "Objects to tabulate", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+#define TABLES_SCHEMA(id, name) static const struct bu_cmd_schema id##_cmd_schema = {name, "Write geometry tables", NULL, tables_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)}
+TABLES_SCHEMA(idents, "idents");
+TABLES_SCHEMA(regions, "regions");
+TABLES_SCHEMA(solids, "solids");
+TABLES_SCHEMA(tables, "tables");
 
-GED_DECLARE_COMMAND_SET(GED_TABLES_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_tables", 1, GED_TABLES_COMMANDS)
+#define GED_TABLES_COMMANDS(X, XID) \
+    X(idents, ged_tables_core, GED_CMD_DEFAULT, &idents_cmd_schema) \
+    X(regions, ged_tables_core, GED_CMD_DEFAULT, &regions_cmd_schema) \
+    X(solids, ged_tables_core, GED_CMD_DEFAULT, &solids_cmd_schema) \
+    X(tables, ged_tables_core, GED_CMD_DEFAULT, &tables_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_TABLES_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_tables", 1, GED_TABLES_COMMANDS)
 
 /*
  * Local Variables:

@@ -36,19 +36,19 @@ Set or get the type of _effects_ that will occur when firing a query ray. The ef
 Sets or gets the value of _echo_. If set to 1, the actual *nirt* command used will be echoed to the screen.
 
 
-*oddcolor* [_r g b_]::
+*oddcolor* [_r/g/b_|_r,g,b_|_r;g;b_|_r g b_]::
 Sets or gets the color of odd partitions.
 
 
-*evencolor* [_r g b_]::
+*evencolor* [_r/g/b_|_r,g,b_|_r;g;b_|_r g b_]::
 Sets or gets the color of even partitions.
 
 
-*voidcolor* [_r g b_]::
+*voidcolor* [_r/g/b_|_r,g,b_|_r;g;b_|_r g b_]::
 Sets or gets the color of areas where the ray passes through nothing.
 
 
-*overlapcolor* [_r g b_]::
+*overlapcolor* [_r/g/b_|_r,g,b_|_r;g;b_|_r g b_]::
 Sets or gets the color of areas that overlap.
 
 

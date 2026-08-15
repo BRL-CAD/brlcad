@@ -23,11 +23,43 @@
 #include <stdlib.h>
 
 #include "bu/malloc.h"
+#include "bu/cmdschema.h"
 #include "bu/path.h"
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
 #include "wdb.h"
 #include "../ged_private.h"
+
+struct bot_split_args {
+    int print_help;
+};
+
+static const struct bu_cmd_option bot_split_options[] = {
+    BU_CMD_FLAG("h", "help", struct bot_split_args, print_help,
+	"Print command help"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand bot_split_operands[] = {
+    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+	"BoT object to split", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+const struct bu_cmd_schema ged_bot_split_schema = {
+    "bot_split", "Split disconnected BoT components", bot_split_options,
+    bot_split_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+};
+
+static void
+bot_split_usage(struct bu_vls *result, const char *cmd)
+{
+    char *help = bu_cmd_schema_help(&ged_bot_split_schema, cmd);
+
+    if (help) {
+	bu_vls_sprintf(result, "%s", help);
+	bu_free(help, "command schema help");
+    }
+}
 
 
 static void

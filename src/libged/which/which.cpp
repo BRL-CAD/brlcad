@@ -25,6 +25,9 @@
 
 #include "common.h"
 
+#include <cerrno>
+#include <climits>
+#include <cstdlib>
 #include <string>
 #include <set>
 #include <map>
@@ -32,7 +35,7 @@
 #include <iterator>
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/vls.h"
 
 #include "../alphanum.h"
@@ -43,6 +46,111 @@ alphanum_cmp(const std::string& a, const std::string& b) {
     return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
 }
 
+struct which_args {
+    int print_help;
+    int script;
+    int all_active;
+    int unused;
+    const char *root;
+};
+
+
+static int
+which_parse_range(struct bu_vls *msg, const char *arg, int *start_out, int *end_out)
+{
+    char *end = NULL;
+    long start = 0;
+    long finish = 0;
+
+    if (!arg || !arg[0])
+	goto invalid;
+    errno = 0;
+    start = std::strtol(arg, &end, 10);
+    if (errno == ERANGE || !end || end == arg || start < INT_MIN || start > INT_MAX)
+	goto invalid;
+    if (!end[0]) {
+	finish = start;
+	} else {
+	if (*end != '-' && *end != ':')
+	    goto invalid;
+	const char *range_end = end + 1;
+	char *tail = NULL;
+	errno = 0;
+	finish = std::strtol(range_end, &tail, 10);
+	if (errno == ERANGE || !tail || tail == range_end || *tail ||
+		finish < INT_MIN || finish > INT_MAX)
+	    goto invalid;
+	}
+    if (start_out)
+	*start_out = (int)start;
+    if (end_out)
+	*end_out = (int)finish;
+    return 0;
+
+invalid:
+    if (msg)
+	bu_vls_printf(msg, "invalid integer or inclusive integer range: %s\n", arg ? arg : "");
+    return -1;
+}
+
+
+static int
+which_range_validate(struct bu_vls *msg, const char *arg)
+{
+    return which_parse_range(msg, arg, NULL, NULL);
+}
+
+
+#define WHICH_OPTIONS(args) \
+    BU_OPT_FLAG(args, "h", "help", print_help, "Print help and exit"), \
+    BU_OPT_FLAG(args, "?", NULL, print_help, ""), \
+    BU_OPT_FLAG(args, "s", "script", script, "Use script-oriented output"), \
+    BU_OPT_FLAG(args, "V", NULL, all_active, \
+	"List requested active IDs even without matching regions"), \
+    BU_OPT_FLAG(args, "U", "unused", unused, \
+	"Report unused IDs in the requested ranges"), \
+    BU_OPT_STR(args, NULL, "root", root, "object", \
+	"Restrict the search below a database object"),
+
+BU_OPT_DESC_BUILDER(which_options, struct which_args, WHICH_OPTIONS);
+
+static const ged_opt_rule which_opt_rules[] = {
+    GED_RULE_ALIAS("?", "help"),
+    GED_RULE_SEMANTIC("root", BU_CMD_VALUE_DB_OBJECT, NULL, "database object"),
+    GED_RULE_NULL
+};
+static const struct bu_cmd_arg_shape which_range_shape =
+    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_RANGE_PATTERN, 1, 1,
+	"Integer or inclusive integer range (start-end or start:end)");
+static const struct bu_cmd_operand which_operands[] = {
+    BU_CMD_OPERAND_SHAPED("id_range", BU_CMD_VALUE_STRING, 1,
+	BU_CMD_COUNT_UNLIMITED, which_range_validate,
+	"Region ID or air-code, or inclusive start-end/start:end range", NULL,
+	&which_range_shape),
+    BU_CMD_OPERAND_NULL
+};
+static const ged_opt_spec which_opt_spec =
+    GED_OPT_NATIVE("which", "Find regions with specified region IDs",
+	which_options, which_operands, BU_CMD_PARSE_INTERSPERSED, which_opt_rules);
+static const ged_opt_spec whichid_opt_spec =
+    GED_OPT_NATIVE("whichid", "Find regions with specified region IDs",
+	which_options, which_operands, BU_CMD_PARSE_INTERSPERSED, which_opt_rules);
+static const ged_opt_spec whichair_opt_spec =
+    GED_OPT_NATIVE("whichair", "Find regions with specified air codes",
+	which_options, which_operands, BU_CMD_PARSE_INTERSPERSED, which_opt_rules);
+
+
+static void
+which_show_help(struct ged *gedp, const char *command)
+{
+    char *help = ged_cmd_help(command, command);
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "which standard help");
+    }
+}
+
 extern "C" int
 ged_which_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -50,24 +158,9 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     int isAir;
-    int sflag = 0;
-    int eflag = 0;
-    int print_help = 0;
-    int unused = 0;
-    struct bu_vls root = BU_VLS_INIT_ZERO;
-    struct bu_vls usage = BU_VLS_INIT_ZERO;
-    const char *usageAir = "[options] code(s)";
-    const char *usageIds = "[options] region_id(s)";
+    struct which_args options = {};
+    int operand_count = 0;
     std::map<int, std::set<std::string>> id2names;
-
-    struct bu_opt_desc d[7];
-    BU_OPT(d[0], "h", "help",      "",             NULL,        &print_help,   "Print help and exit");
-    BU_OPT(d[1], "?", "",           "",            NULL,        &print_help,    "");
-    BU_OPT(d[2], "s", "script",    "",             NULL,        &sflag,        "Different output formatting for scripting");
-    BU_OPT(d[3], "V", "",          "",             NULL,        &eflag,        "List all active ids, even if no associated regions are found");
-    BU_OPT(d[4], "U", "unused",    "",             NULL,        &unused,       "Report unused ids in the specified range");
-    BU_OPT(d[5], "",  "root",      "<root_name>",  &bu_opt_vls, &root,         "Search only in the tree below 'root_name'");
-    BU_OPT_NULL(d[6]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -79,84 +172,58 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
      * which with an option... */
     /* Key off of the command name to set the air option */
     isAir = (BU_STR_EQUAL(argv[0], "whichair")) ? 1 : 0;
-    bu_vls_sprintf(&usage, "Usage: %s %s", argv[0], ((BU_STR_EQUAL(argv[0], "whichair")) ? usageAir : usageIds));
 
-    argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
-
-    if (!argc) {
+    if (argc == 1) {
 	/* must be wanting help */
-	_ged_cmd_help(gedp, bu_vls_cstr(&usage), d);
-	bu_vls_free(&usage);
-	bu_vls_free(&root);
+	which_show_help(gedp, argv[0]);
 	return GED_HELP;
     }
 
-    /* parse standard options */
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
-
-    if (print_help) {
-	_ged_cmd_help(gedp, bu_vls_cstr(&usage), d);
-	bu_vls_free(&usage);
-	bu_vls_free(&root);
-	return BRLCAD_OK;
-    }
-
-    /* adjust argc to match the leftovers of the options parsing */
-    argc = opt_ret;
-
-
-    if (!argc) {
-	_ged_cmd_help(gedp, bu_vls_cstr(&usage), d);
-	bu_vls_free(&usage);
-	bu_vls_free(&root);
+    const char *command = argv[0];
+    argc--; argv++;
+    operand_count = bu_opt_parse_build(gedp->ged_result_str, argc, argv,
+	which_options, &options);
+    if (operand_count < 0) {
+	which_show_help(gedp, command);
 	return BRLCAD_ERROR;
     }
 
-    bu_vls_free(&usage);
+
+    if (options.print_help) {
+	which_show_help(gedp, command);
+	return BRLCAD_OK;
+    }
+
+
+    if (operand_count < 1) {
+	which_show_help(gedp, command);
+	return BRLCAD_ERROR;
+    }
+    argc = operand_count;
 
     std::set<int> ids;
 
     /* Build set of ids */
     for (int j = 0; j < argc; j++) {
-	int n;
 	int start, end;
-	int range;
-	int k;
 
-	n = sscanf(argv[j], "%d%*[:-]%d", &start, &end);
-	switch (n) {
-	    case 1:
-		ids.insert(start);
-		break;
-	    case 2:
-		if (start < end)
-		    range = end - start + 1;
-		else if (end < start) {
-		    range = start - end + 1;
-		    start = end;
-		} else {
-		    ids.insert(start);
-		    break;
-		}
-		for (k = 0; k < range; ++k) {
-		    ids.insert(start + k);
-		}
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Error: invalid range specification \"%s\"", argv[j]);
-		bu_vls_free(&root);
-		return BRLCAD_ERROR;
+	if (which_parse_range(NULL, argv[j], &start, &end) != 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Error: invalid range specification \"%s\"", argv[j]);
+	    return BRLCAD_ERROR;
 	}
+	if (start > end)
+	    std::swap(start, end);
+	for (long long id = start; id <= end; id++)
+	    ids.insert((int)id);
     }
 
     /* Examine all region nodes */
-    if (bu_vls_strlen(&root)) {
+    if (options.root) {
 	// Find all regions in the specified root
 	const char *sstring = "-type region";
-	struct directory *sdp = db_lookup(gedp->dbip, bu_vls_cstr(&root), LOOKUP_QUIET);
+	struct directory *sdp = db_lookup(gedp->dbip, options.root, LOOKUP_QUIET);
 	if (sdp == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "Error: no object named %s in database.", bu_vls_cstr(&root));
-	    bu_vls_free(&root);
+	    bu_vls_printf(gedp->ged_result_str, "Error: no object named %s in database.", options.root);
 	    return BRLCAD_ERROR;
 	}
 	struct bu_ptbl comb_objs = BU_PTBL_INIT_ZERO;
@@ -166,7 +233,6 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-		bu_vls_free(&root);
 		return BRLCAD_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -186,7 +252,6 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-		bu_vls_free(&root);
 		return BRLCAD_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -201,7 +266,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* report results */
-    if (unused) {
+    if (options.unused) {
 	std::set<int> unused_ids;
 	std::set<int>::iterator i_it;
 	for (i_it = ids.begin(); i_it != ids.end(); i_it++) {
@@ -210,16 +275,15 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    unused_ids.insert(*i_it);
 	}
-	if (!sflag) {
+	if (!options.script) {
 	    if (unused_ids.size()) {
 		bu_vls_printf(gedp->ged_result_str, "Unused %s:\n", isAir ? "air codes" : "idents");
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "No unused %s found\n", isAir ? "air codes" : "idents");
-		bu_vls_free(&root);
 		return BRLCAD_OK;
 	    }
 	}
-	if (sflag) {
+	if (options.script) {
 	    for (i_it = unused_ids.begin(); i_it != unused_ids.end(); i_it++) {
 		bu_vls_printf(gedp->ged_result_str, "   %d", *i_it);
 	    }
@@ -261,14 +325,13 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "   %d\n", rstart);
 	    }
 	}
-	bu_vls_free(&root);
 	return BRLCAD_OK;
     }
 
     std::set<int>::iterator i_it;
     for (i_it = ids.begin(); i_it != ids.end(); i_it++) {
 	std::map<int, std::set<std::string>>::iterator idn_it = id2names.find(*i_it);
-	if ((eflag || (idn_it != id2names.end() && id2names[*i_it].size())) && !sflag) {
+	if ((options.all_active || (idn_it != id2names.end() && id2names[*i_it].size())) && !options.script) {
 	    bu_vls_printf(gedp->ged_result_str, "Region[s] with %s %d:\n", isAir ? "air code" : "ident", *i_it);
 	}
 	if (idn_it == id2names.end()) {
@@ -278,7 +341,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	std::copy(idn_it->second.begin(), idn_it->second.end(), std::back_inserter(nsorted));
 	std::sort(nsorted.begin(), nsorted.end(), alphanum_cmp);
 	for (size_t i = 0; i < nsorted.size(); i++) {
-	    if (sflag) {
+	    if (options.script) {
 		bu_vls_printf(gedp->ged_result_str, " %s", nsorted[i].c_str());
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "   %s\n", nsorted[i].c_str());
@@ -286,7 +349,6 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    bu_vls_free(&root);
     return BRLCAD_OK;
 }
 
@@ -294,12 +356,12 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_WHICH_COMMANDS(X, XID) \
-    X(which, ged_which_core, GED_CMD_DEFAULT) \
-    X(whichair, ged_which_core, GED_CMD_DEFAULT) \
-    X(whichid, ged_which_core, GED_CMD_DEFAULT) \
+    X(which, ged_which_core, GED_CMD_DEFAULT, &which_opt_spec) \
+    X(whichair, ged_which_core, GED_CMD_DEFAULT, &whichair_opt_spec) \
+    X(whichid, ged_which_core, GED_CMD_DEFAULT, &whichid_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_WHICH_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_which", 1, GED_WHICH_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_WHICH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_which", 1, GED_WHICH_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -309,4 +371,3 @@ GED_DECLARE_PLUGIN_MANIFEST("libged_which", 1, GED_WHICH_COMMANDS)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

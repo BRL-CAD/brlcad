@@ -29,6 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
+
 #include "../ged_private.h"
 
 
@@ -43,6 +45,20 @@
 #define PATH_STEP 256
 static struct directory **path = NULL;
 static size_t path_capacity = 0;
+
+
+static const struct bu_cmd_operand wcodes_operands[] = {
+    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1,
+	"Region-code output file", "ged.file_path"),
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+	"Objects to write", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema wcodes_cmd_schema = {
+    "wcodes", "Write region codes", NULL, wcodes_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 
 static int wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathpos);
@@ -130,10 +146,11 @@ int
 ged_wcodes_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
-    int status;
+    int ret = BRLCAD_OK;
+    int operand_index = 0;
+    int parse_dummy = 0;
     FILE *fp;
     struct directory *dp;
-    static const char *usage = "filename object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -142,50 +159,54 @@ ged_wcodes_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
-    if (argc < 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	if (argc == 1)
-	    return GED_HELP;
+    if (argc == 1) {
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
+	return GED_HELP;
+    }
+
+    operand_index = bu_cmd_schema_parse_complete(&wcodes_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
 
-    fp = fopen(argv[1], "w");
+    fp = fopen(argv[1 + operand_index], "w");
     if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Failed to open file - %s",
-		      argv[0], argv[1]);
+		      argv[0], argv[1 + operand_index]);
 	return BRLCAD_ERROR;
     }
 
     path = (struct directory **)bu_calloc(PATH_STEP, sizeof(struct directory *), "alloc initial path");
     path_capacity = PATH_STEP;
 
-    for (i = 2; i < argc; ++i) {
+    for (i = 2 + operand_index; i < argc; ++i) {
 	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
-	    status = wcodes_printcodes(gedp, fp, dp, 0);
+	    ret = wcodes_printcodes(gedp, fp, dp, 0);
 
-	    if (status & BRLCAD_ERROR) {
-		(void)fclose(fp);
-		return BRLCAD_ERROR;
-	    }
+	    if (ret & BRLCAD_ERROR)
+		goto cleanup;
 	}
     }
 
+cleanup:
     (void)fclose(fp);
     bu_free(path, "dealloc path");
     path = NULL;
     path_capacity = 0;
 
-    return BRLCAD_OK;
+    return ret;
 }
 
 
 #include "../include/plugin.h"
 
 #define GED_WCODES_COMMANDS(X, XID) \
-    X(wcodes, ged_wcodes_core, GED_CMD_DEFAULT) \
+    X(wcodes, ged_wcodes_core, GED_CMD_DEFAULT, &wcodes_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_WCODES_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_wcodes", 1, GED_WCODES_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_WCODES_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_wcodes", 1, GED_WCODES_COMMANDS)
 
 /*
  * Local Variables:

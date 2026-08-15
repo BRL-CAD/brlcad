@@ -10,7 +10,7 @@ bot_face_sort - Sorts the list of triangles that constitutes the BOT primitive t
 
 [source]
 ----
-bot_face_sort {triangles_per_piece} {bot_primitive1} [bot_primitive2 bot_primitive3]...
+bot_face_sort [--help] triangles_per_piece bot_primitive1 [bot_primitive2 ...]
 ----
 
 
@@ -18,6 +18,13 @@ bot_face_sort {triangles_per_piece} {bot_primitive1} [bot_primitive2 bot_primiti
 == DESCRIPTION
 
 Used to sort the list of triangles that constitutes the BOT primitive to optimize it for raytracing with the specified number of triangles per piece. Most BRL-CAD primitives are treated as a single object when a model is being prepared for raytracing, but BOT primitives are normally broken into "pieces" to improve performance. The raytracer normally uses four triangles per piece.
+
+`triangles_per_piece` must be a positive integer.
+
+=== Options
+
+*-h*, *--help*::
+Print command help without requiring an open database.
 
 
 [[examples]]

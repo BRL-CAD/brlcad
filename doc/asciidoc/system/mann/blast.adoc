@@ -26,7 +26,7 @@ At least one object name must be provided.
 
 === Options
 
-*-C r/g/b*::
+*-C* _r/g/b_::
 Override the display color for all drawn objects using the specified RGB triple (each 0–255), separated by `/`. This overrides any color assigned to the objects in the database.
 
 [[examples]]

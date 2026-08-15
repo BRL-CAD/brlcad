@@ -14,6 +14,7 @@ erase object [object ...]
 erase -r object [object ...]
 erase -A attr value [attr value ...]
 erase -o -A attr value [attr value ...]
+erase [--view name] [--mode number] object [object ...]
 ----
 
 
@@ -32,6 +33,11 @@ arguments are interpreted as attribute name/value pairs and all matching
 objects are erased from the display. By default all specified pairs must match;
 the *-o* option changes attribute mode so that matching any one of the supplied
 pairs is sufficient.
+
+In the new command form used by QGED and other view-aware clients, *--view*
+selects an independent view and *--mode* limits erasure to a drawing mode.
+Those options are not available in the legacy command form; conversely, the
+legacy *-r*, *-A*, and *-o* modes are not available in the new command form.
 
 
 [[examples]]

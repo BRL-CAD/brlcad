@@ -10,10 +10,9 @@ man - Opens the graphical man page viewer.
 
 [source]
 ----
-man [cmdname]
-man [-g | --gui] [cmdname]
-man [--no-gui] [-L language] [-S section] [cmdname]
-man [-k|-K] keyword
+man [manual_page [section]]
+man [-g | --gui] [manual_page [section]]
+man [--no-gui] [-L language] [-S section] [manual_page [section]]
 man [-h | --help]
 ----
 
@@ -25,11 +24,8 @@ Launches the BRL-CAD manual page viewer for the specified command name.
 
 By default, *man* starts the GUI viewer when possible. It can also force GUI or
 non-GUI mode and can select a manual language or manual section before
-launching `brlman`.
-
-The *-k* and *-K* options search manual pages instead of opening a named page.
-The *-k* option searches names, synopses, and brief descriptions; *-K*
-searches the full manual page text.
+launching `brlman`.  A trailing section argument is accepted for compatibility
+with `man view 3`; the explicit *-S* option is preferred.
 
 
 [[options]]
@@ -48,13 +44,7 @@ Force command-line viewer mode.
 Select the manual language to request from `brlman`.
 
 *-S*, *--section* _section_::
-Select the manual section to request from `brlman`.
-
-*-k* _keyword_::
-Search manual page names, synopses, and brief descriptions.
-
-*-K* _keyword_::
-Search the full manual page text.
+Select manual section `1`, `3`, `5`, or `n` to request from `brlman`.
 
 
 [[examples]]
@@ -77,16 +67,6 @@ mged> **man --no-gui -S 1 rt**
 Launches `brlman` in non-GUI mode and requests section `1` for `rt`.
 
 ====
-
-.Search command manual pages.
-[example]
-====
-mged> **man -K "boolean operations"**
-
-Opens the graphical manual page viewer with ranked full-text results.
-
-====
-
 
 [[author]]
 == AUTHOR

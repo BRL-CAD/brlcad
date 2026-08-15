@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "bu/cmd.h"
+#include "bu/opt.h"
 
 #include "../ged_private.h"
 
@@ -38,6 +38,23 @@ struct showmats_data {
     char *smd_child;
     mat_t smd_mat;
 };
+
+
+struct showmats_args {
+    int all_occurrences;
+};
+
+
+#define SHOWMATS_OPTIONS(args) \
+    BU_OPT_FLAG(args, "a", NULL, all_occurrences, \
+	"Show matrices for every arc in the path"),
+
+BU_OPT_DESC_BUILDER(showmats_options, struct showmats_args, SHOWMATS_OPTIONS);
+
+static const ged_opt_spec showmats_opt_spec =
+    GED_OPT("showmats",
+	"Show accumulated matrices along a database path", showmats_options,
+	"options-first path:path");
 
 
 static void
@@ -153,8 +170,11 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 int
 ged_showmats_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int aflag = 0;
-    static const char *usage = "[-a] path";
+    struct showmats_args args = {0};
+    char *path = NULL;
+    int operand_count = 0;
+    int ret = BRLCAD_ERROR;
+    const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -163,30 +183,35 @@ ged_showmats_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
-    if (argc == 1 || (argc == 2 && argv[1][0] == '-')) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (argc == 1) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return GED_HELP;
     }
 
-    if (argc == 3 && argv[1][0] == '-' && argv[1][1] == 'a' && argv[1][2] == '\0') {
-	aflag = 1;
-	++argv;
-    } else if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    argc--; argv++;
+    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+	argc, argv, showmats_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
+    if (operand_count != 1) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
 
-    return Run_showmats(gedp, argv[1], aflag);
+    /* Run_showmats tokenizes the path, so preserve the caller's argv storage. */
+    path = bu_strdup(argv[0]);
+    ret = Run_showmats(gedp, path, args.all_occurrences);
+    bu_free(path, "showmats path copy");
+
+    return ret;
 }
 
 
 #include "../include/plugin.h"
 
 #define GED_SHOWMATS_COMMANDS(X, XID) \
-    X(showmats, ged_showmats_core, GED_CMD_DEFAULT) \
+    X(showmats, ged_showmats_core, GED_CMD_DEFAULT, &showmats_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_SHOWMATS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_showmats", 1, GED_SHOWMATS_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_SHOWMATS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_showmats", 1, GED_SHOWMATS_COMMANDS)
 
 /*
  * Local Variables:

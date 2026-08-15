@@ -11,15 +11,17 @@ bot_exterior - Reduce a BoT solid to only its exterior (outward-facing) faces.
 [source]
 ----
 bot exterior [options] {input_bot} [output_name]
+bot_exterior [options] {input_bot} [output_name]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*bot exterior* analyses a closed solid, non-plate-mode BoT (Bag of Triangles)
-mesh and removes every face that is not classified as exterior, retaining only
-those triangles that belong to the exterior shell.
+*bot exterior* (also available as the standalone *bot_exterior* command)
+analyses a closed solid, non-plate-mode BoT (Bag of Triangles) mesh and
+removes every face that is not classified as exterior, retaining only those
+triangles that belong to the exterior shell.
 
 === Methods
 

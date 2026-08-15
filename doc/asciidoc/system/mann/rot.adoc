@@ -10,14 +10,15 @@ rot - Rotates the view or an object by _xyz_ degrees.
 
 [source]
 ----
-rot {x y z}
+rot [-m|-v] {x y z}
+rot [-m|-v] "x y z"
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Rotates the view or an object by _xyz_ degrees. Exactly what and how it is rotated are dependent on MGEDs state as well as the state of the display manager. See *arot* for a similar capability.
+Rotates the view or an object by _xyz_ degrees. Exactly what and how it is rotated are dependent on MGEDs state as well as the state of the display manager. The three angles may be supplied as separate finite numbers or as one quoted three-value vector. The optional *-m* and *-v* flags select model or view coordinates, respectively, and cannot be combined. See *arot* for a similar capability.
 
 
 [[examples]]

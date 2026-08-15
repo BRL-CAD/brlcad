@@ -56,7 +56,6 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
     size_t i;
     struct bu_list *vlfree = &rt_vlfree;
 
-    static const char *usage = "[arb|tgc|poly] new_prim nmg_prim";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -68,7 +67,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 1) {
 	/* must be wanting help */
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	ret = GED_HELP;
 	goto out3;
     } else if (argc == 3) {
@@ -89,14 +88,14 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    bu_vls_printf(gedp->ged_result_str,
 			  "%s is unknown or simplification is not yet supported\n", argv[1]);
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	    ret = BRLCAD_ERROR;
 	    goto out3;
 	}
 	new_name = (char *)argv[2];
 	nmg_name = (char *)argv[3];
     } else {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	ret = BRLCAD_ERROR;
 	goto out3;
     }

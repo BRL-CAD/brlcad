@@ -229,12 +229,13 @@ cmd_diff(int ac, const char **av)
     bu_vls_free(&parse_msgs);
 
     if (need_help || uac < 2) {
-	char *help = bu_opt_describe(diff_opt_desc, NULL);
-	bu_log("Usage: icv diff [options] img1 img2\n\n"
+	char *help = bu_opt_help(diff_opt_desc, "icv diff", "img1 img2",
 	       "Compare two images and report pixel differences.  With no -o option the\n"
 	       "difference image is written as raw PIX data to stdout (compatible with\n"
 	       "pixdiff).  Use -o to write the diff image to a named file; the output\n"
-	       "format is inferred from the file extension.\n\nOptions:\n%s\n", help);
+	       "format is inferred from the file extension.");
+	if (help)
+	    bu_log("%s", help);
 	bu_free(help, "help str");
 	return need_help ? 0 : 1;
     }
@@ -540,9 +541,14 @@ main(int ac, const char **av)
 
     /* First, see if help was requested or needed */
     if (need_help) {
-	char *help = bu_opt_describe(icv_opt_desc, NULL);
-	print_usage();
-	bu_log("Conversion options:\n%s\n", help);
+	char *help = bu_opt_help(icv_opt_desc, "icv", "input output",
+	    "Convert images between supported formats");
+	if (help)
+	    bu_log("%s", help);
+	bu_log("\nSubcommands:\n"
+	       "  info                               Report image information\n"
+	       "  diff [options] img1 img2           Compare two images\n"
+	       "  anim action anim_file [args ...]   Manage animation files\n");
 	bu_free(help, "help str");
 	goto cleanup;
     }

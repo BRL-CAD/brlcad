@@ -238,11 +238,11 @@ struct options {
 static void
 usage(const char *argv0, struct bu_opt_desc *d)
 {
-    bu_log("Usage: %s [options]\n\n", argv0);
-    char *option_help = bu_opt_describe(d, NULL);
-    if (option_help) {
-	bu_log("%s", option_help);
-	bu_free(option_help, "option help");
+    char *help = bu_opt_help(d, argv0, NULL,
+	"Generate NACA four-, five-, and six-series airfoils");
+    if (help) {
+	bu_log("%s", help);
+	bu_free(help, "option help");
     }
 }
 

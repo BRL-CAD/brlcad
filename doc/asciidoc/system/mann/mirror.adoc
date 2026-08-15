@@ -10,7 +10,7 @@ mirror - Mirrors a shape or combination across a given axis.
 
 [source]
 ----
-mirror [-p "point"] [-d "dir"] [-x|-y-|-z] [-o offset] {from_object to_object}
+mirror [-p x/y/z] [-d x/y/z] [-x|-y|-z] [-o offset] from_object to_object [axis]
 ----
 
 
@@ -22,10 +22,34 @@ If __from_object__ is a shape, then it is copied to a new shape named
 __to_object__ that is mirrored across the given axis. If __from_object__ is a
 combination, then a new combination is created that contains exactly the same
 members named __to_object__. Transformation matrices are added to mirror it
-across the requested axis. The _-x, -y, & -z_ options tell the command which
-axis to mirror the object. The _-p_ can be used to specify a point to mirror
-about, and the _-d_ can be used to specify a direction vector to mirror about.
-The *-h* option prints usage help.
+across the requested axis.
+
+== OPTIONS
+
+*-x*, *-y*, *-z*::
+Select the X, Y, or Z mirror-plane normal.  Options are processed in command
+order, so a later axis option or *-d* value replaces an earlier one.
+
+*-p* _x/y/z_::
+Set a point on the mirror plane.
+
+*-d* _x/y/z_::
+Set a nonzero mirror-plane normal.
+
+For *-p* and *-d*, a finite three-component vector may be written as
+`x/y/z`, `x,y,z`, `x;y;z`, a quoted `"x y z"` argument, or three separate
+numeric arguments.
+
+*-o* _offset_::
+Offset the selected plane normal from the specified point in current units.
+
+_axis_::
+The optional trailing `x`, `y`, or `z` selector is accepted for compatibility
+and overrides an earlier axis choice.  Prefer *-x*, *-y*, or *-z* in new
+commands.
+
+*-h*, *-H*, *-?*::
+Print usage help.
 
 
 [[examples]]

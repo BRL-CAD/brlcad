@@ -49,14 +49,12 @@
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-static char usage[] =
-    "[-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol][-P #_of_CPUs]\n"
-    "[-e error_file_name ][-D dist_calc_tol][-o output_file_name ] brlcad_db.g object(s)\n";
-
 static void
-print_usage(const char *progname)
+print_usage(const char *progname, const struct bu_opt_desc *options, int status)
 {
-    bu_exit(1, "Usage: %s %s", progname, usage);
+    char *help = bu_opt_help(options, progname, "brlcad_db.g object [object ...]",
+	"Export BRL-CAD geometry as Wavefront OBJ");
+    bu_exit(status, "%s", help ? help : "");
 }
 
 
@@ -504,7 +502,7 @@ main(int argc, const char **argv)
 	bu_log("%s\n", bu_vls_cstr(&parse_msgs));
     }
     if (argc < 2 || print_help) {
-	print_usage(prog_name);
+	print_usage(prog_name, options, print_help ? EXIT_SUCCESS : EXIT_FAILURE);
     }
 
     if (!output_file)

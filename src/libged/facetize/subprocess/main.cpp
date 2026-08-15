@@ -37,9 +37,9 @@
 #include <stdlib.h>
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/env.h"
 #include "bu/file.h"
-#include "bu/opt.h"
 #include "bg/trimesh.h"
 #include "rt/primitives/bot.h"
 #include "ged.h"
@@ -93,6 +93,37 @@ facetize_test_fault(const char *stage, const char *object_name)
 
     bu_exit(BRLCAD_ERROR, "FACETIZE: injected test fault at %s for %s\n",
 	    stage, object_name);
+}
+
+struct facetize_process_args {
+    int print_help = 0;
+    int list_methods = 0;
+    int overwrite = 0;
+    method_options_t *method_options = NULL;
+    int max_time = 0;
+    int max_pnts = 0;
+    const char *cache_dir = NULL;
+    int server_mode = 0;
+    int worker_threads = 0;
+    const char *result_file = NULL;
+    int writer_mode = 0;
+    int validation_server_mode = 0;
+    int region_server_mode = 0;
+    int nmg_server_mode = 0;
+};
+
+static const struct bu_cmd_schema *facetize_process_schema(void);
+
+static void
+facetize_process_print_help(void)
+{
+    char *help = bu_cmd_schema_help(facetize_process_schema(),
+	"ged_exec facetize_process");
+    if (!help)
+	return;
+
+    bu_log("%s\n", help);
+    bu_free(help, "facetize process help");
 }
 
 static void
@@ -816,99 +847,68 @@ facetize_process(int argc, const char **argv)
     // Done with prog name
     argc--; argv++;
 
-    static const char *usage = "Usage: ged_exec facetize_process [options] file.g input_obj [input_object_2 ...]\n";
-    int print_help = 0;
     struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
-    tess_opts s;
-
-    int list_methods = 0;
-    int server_mode = 0;
-    int writer_mode = 0;
-    int validation_server_mode = 0;
-    int region_server_mode = 0;
-    int nmg_server_mode = 0;
-    int max_time = 0;
-    int max_pnts = 0;
-    int worker_threads = 0;
     struct bu_vls result_file = BU_VLS_INIT_ZERO;
-
-    struct bu_opt_desc d[16];
-    BU_OPT(d[ 0],  "h",         "help",                         "",                  NULL,           &print_help, "Print help and exit");
-    BU_OPT(d[ 1],   "", "list-methods",                         "",                  NULL,         &list_methods, "List available tessellation methods.  When used with -h, print an informational summary of each method.");
-    BU_OPT(d[ 2],  "O",    "overwrite",                         "",                  NULL,    &(s.overwrite_obj), "Replace original object with BoT");
-    BU_OPT(d[ 3],   "",      "methods",                "m1 m2 ...", &_tess_active_methods,        &s.method_opts, "List of active methods to use for this tessellation attempt");
-    BU_OPT(d[ 4],   "",  "method-opts",  "M opt1=val opt2=val ...",    &_tess_method_opts,        &s.method_opts, "Set options for method M.  If specified just a method M and the -h option, print documentation about method options.");
-    BU_OPT(d[ 5],   "",     "max-time",                        "#",           &bu_opt_int,             &max_time, "Maximum number of seconds to allow for runtime (not supported by all methods).");
-    BU_OPT(d[ 6],   "",     "max-pnts",                        "#",           &bu_opt_int,             &max_pnts, "Maximum number of pnts to use when applying ray sampling methods.");
-    BU_OPT(d[ 7],   "",     "cache-dir",                     "dir",           &bu_opt_vls,            &cache_dir, "Directory to use for cached outputs (default is libbu cache directory).");
-    BU_OPT(d[ 8],   "",          "server",                        "",                  NULL,          &server_mode, "Run as a persistent worker.");
-    BU_OPT(d[ 9],   "",         "threads",                       "#",           &bu_opt_int,       &worker_threads, "Maximum CPU threads available to this process.");
-    BU_OPT(d[10],   "",     "result-file",                  "file.g",           &bu_opt_vls,          &result_file, "Write server results to a staging database.");
-    BU_OPT(d[11],   "",          "writer",                        "",                  NULL,          &writer_mode, "Run as a persistent staged-result writer.");
-    BU_OPT(d[12],   "", "validation-server",                        "",                  NULL, &validation_server_mode, "Run as a persistent CSG validation worker.");
-    BU_OPT(d[13],   "",     "region-server",                        "",                  NULL,     &region_server_mode, "Run as a persistent region Boolean worker.");
-    BU_OPT(d[14],   "",        "nmg-server",                        "",                  NULL,        &nmg_server_mode, "Run one isolated NMG Boolean request.");
-    BU_OPT_NULL(d[15]);
+    tess_opts s;
+    struct facetize_process_args args;
+    args.method_options = &s.method_opts;
 
     /* parse options */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
-    argc = bu_opt_parse(&omsg, argc, argv, d);
-    if (argc < 0) {
+    int operand_start = bu_cmd_schema_parse(facetize_process_schema(), &args, &omsg, argc, argv);
+    if (operand_start < 0) {
 	bu_log("Option parsing error: %s\n", bu_vls_cstr(&omsg));
 	bu_vls_free(&omsg);
 	bu_exit(BRLCAD_ERROR, "%s failed", bu_getprogname());
     }
     bu_vls_free(&omsg);
+    argc -= operand_start;
+    argv += operand_start;
+    s.overwrite_obj = args.overwrite;
+    if (args.cache_dir)
+	bu_vls_strcpy(&cache_dir, args.cache_dir);
+    if (args.result_file)
+	bu_vls_strcpy(&result_file, args.result_file);
 
-    if (worker_threads < 0 || worker_threads > MAX_PSW) {
+    if (args.worker_threads < 0 || args.worker_threads > MAX_PSW) {
 	bu_vls_free(&cache_dir);
 	bu_vls_free(&result_file);
 	return BRLCAD_ERROR;
     }
-    if (worker_threads)
-	bu_avail_cpus_set((size_t)worker_threads);
+    if (args.worker_threads)
+	bu_avail_cpus_set((size_t)args.worker_threads);
 
-    int worker_mode_count = server_mode + writer_mode +
-	validation_server_mode + region_server_mode + nmg_server_mode;
+    int worker_mode_count = args.server_mode + args.writer_mode +
+	args.validation_server_mode + args.region_server_mode +
+	args.nmg_server_mode;
     if (worker_mode_count > 1) {
 	bu_vls_free(&cache_dir);
 	bu_vls_free(&result_file);
 	return BRLCAD_ERROR;
     }
 
-    if (list_methods && print_help) {
+    if (args.list_methods && args.print_help) {
 	print_methods_info();
 	bu_vls_free(&cache_dir);
 	bu_vls_free(&result_file);
 	return BRLCAD_OK;
     }
 
-    if (list_methods) {
+    if (args.list_methods) {
 	print_tess_methods();
 	bu_vls_free(&cache_dir);
 	bu_vls_free(&result_file);
 	return BRLCAD_OK;
     }
 
-    if (print_help) {
-	struct bu_vls str = BU_VLS_INIT_ZERO;
-	char *option_help;
-
-	bu_vls_sprintf(&str, "%s", usage);
-
-	if ((option_help = bu_opt_describe(d, NULL))) {
-	    bu_vls_printf(&str, "Options:\n%s\n", option_help);
-	    bu_free(option_help, "help str");
-	}
-
-	bu_log("%s\n", bu_vls_cstr(&str));
-	bu_vls_free(&str);
+    if (args.print_help) {
+	facetize_process_print_help();
 	bu_vls_free(&cache_dir);
 	bu_vls_free(&result_file);
         return BRLCAD_OK;
     }
 
-    if (writer_mode) {
+    if (args.writer_mode) {
 	int ret = (argc == 1 && !bu_vls_strlen(&result_file)) ?
 	    facetize_writer(argv[0]) : BRLCAD_ERROR;
 	bu_vls_free(&cache_dir);
@@ -916,7 +916,7 @@ facetize_process(int argc, const char **argv)
 	return ret;
     }
 
-    if (validation_server_mode) {
+    if (args.validation_server_mode) {
 	int ret = (argc == 1 && !bu_vls_strlen(&result_file)) ?
 	    facetize_validation_server(argv[0]) : BRLCAD_ERROR;
 	bu_vls_free(&cache_dir);
@@ -924,7 +924,7 @@ facetize_process(int argc, const char **argv)
 	return ret;
     }
 
-    if (region_server_mode) {
+    if (args.region_server_mode) {
 	int ret = (argc == 2 && bu_vls_strlen(&result_file)) ?
 	    facetize_region_server(argv[0], argv[1],
 		    bu_vls_cstr(&result_file)) : BRLCAD_ERROR;
@@ -933,7 +933,7 @@ facetize_process(int argc, const char **argv)
 	return ret;
     }
 
-    if (nmg_server_mode) {
+    if (args.nmg_server_mode) {
 	int ret = (argc == 1 && bu_vls_strlen(&result_file)) ?
 	    facetize_nmg_server(argv[0], bu_vls_cstr(&result_file)) :
 	    BRLCAD_ERROR;
@@ -942,7 +942,7 @@ facetize_process(int argc, const char **argv)
 	return ret;
     }
 
-    if (server_mode) {
+    if (args.server_mode) {
 	int ret = (argc == 1) ?
 	    facetize_server(argv[0], bu_vls_strlen(&result_file) ?
 		    bu_vls_cstr(&result_file) : NULL) :
@@ -964,7 +964,7 @@ facetize_process(int argc, const char **argv)
     method_setup(&s);
 
     if (argc < 2) {
-	bu_log("%s", usage);
+	facetize_process_print_help();
 	bu_vls_free(&cache_dir);
 	bu_vls_free(&result_file);
 	return BRLCAD_ERROR;
@@ -1042,6 +1042,69 @@ facetize_process(int argc, const char **argv)
     bu_vls_free(&result_file);
 
     return process_ret;
+}
+
+static const struct bu_cmd_option facetize_process_options[] = {
+    BU_CMD_FLAG("h", "help", facetize_process_args, print_help, "Print help and exit"),
+    BU_CMD_FLAG(NULL, "list-methods", facetize_process_args, list_methods,
+	"List available tessellation methods"),
+    BU_CMD_FLAG("O", "overwrite", facetize_process_args, overwrite,
+	"Replace the original object with a BoT"),
+    BU_CMD_CUSTOM(NULL, "methods", facetize_process_args, method_options,
+	tess_active_methods_from_str, "method[,method...]", "Active tessellation methods"),
+    BU_CMD_CUSTOM(NULL, "method-opts", facetize_process_args, method_options,
+	tess_method_opts_from_str, "\"METHOD option=value ...\"", "Method-specific options"),
+    BU_CMD_INTEGER(NULL, "max-time", facetize_process_args, max_time, "seconds",
+	"Maximum process runtime"),
+    BU_CMD_INTEGER(NULL, "max-pnts", facetize_process_args, max_pnts, "count",
+	"Maximum sampling points"),
+    BU_CMD_FILE(NULL, "cache-dir", facetize_process_args, cache_dir, "directory",
+	"Cache directory"),
+    BU_CMD_FLAG(NULL, "server", facetize_process_args, server_mode,
+	"Run as a persistent tessellation worker"),
+    BU_CMD_INTEGER_RANGE(NULL, "threads", facetize_process_args, worker_threads,
+	0, MAX_PSW, "count", "Maximum CPU threads available to this process"),
+    BU_CMD_FILE(NULL, "result-file", facetize_process_args, result_file, "file.g",
+	"Write worker results to a staging database"),
+    BU_CMD_FLAG(NULL, "writer", facetize_process_args, writer_mode,
+	"Run as a persistent staged-result writer"),
+    BU_CMD_FLAG(NULL, "validation-server", facetize_process_args,
+	validation_server_mode, "Run as a persistent CSG validation worker"),
+    BU_CMD_FLAG(NULL, "region-server", facetize_process_args, region_server_mode,
+	"Run as a persistent region Boolean worker"),
+    BU_CMD_FLAG(NULL, "nmg-server", facetize_process_args, nmg_server_mode,
+	"Run one isolated NMG Boolean request"),
+    BU_CMD_OPTION_NULL
+};
+
+static const char * const facetize_process_mode_options[] = {
+    "server", "writer", "validation-server", "region-server", "nmg-server", NULL
+};
+
+static const struct bu_cmd_constraint facetize_process_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(facetize_process_mode_options, 0, 1,
+	"worker process modes are mutually exclusive"),
+    BU_CMD_CONSTRAINT_NULL
+};
+
+static const struct bu_cmd_operand facetize_process_operands[] = {
+    BU_CMD_OPERAND("database", BU_CMD_VALUE_FILE, 1, 1, "Input .g database", "ged.file_path"),
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+	"Objects to tessellate", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema facetize_process_cmd_schema = {
+    "facetize_process", "Tessellate geometry in a worker process",
+    facetize_process_options, facetize_process_operands,
+    BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, facetize_process_constraints)
+};
+
+static const struct bu_cmd_schema *
+facetize_process_schema(void)
+{
+    return &facetize_process_cmd_schema;
 }
 
 #include "../../include/plugin.h"

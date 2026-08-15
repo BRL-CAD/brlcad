@@ -10,7 +10,7 @@ get - Retrieves parameter values of database objects.
 
 [source]
 ----
-get {object_name_pattern} [param_name]
+get object_or_path [property]
 ----
 
 

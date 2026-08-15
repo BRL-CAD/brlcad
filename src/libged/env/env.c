@@ -32,6 +32,7 @@
 #include <string.h>
 
 #include "bu/env.h"
+#include "bu/cmdschema.h"
 #include "bu/path.h"
 #include "../ged_private.h"
 
@@ -40,7 +41,6 @@
 
 
 extern int env_cmd(struct bu_vls *s_out, int argc, const char **argv);
-
 
 /**
  * Reports on and manipulates environment variables relevant to BRL-CAD.
@@ -67,11 +67,50 @@ ged_env_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_ENV_COMMANDS(X, XID) \
-    X(env,              ged_env_core,                      GED_CMD_DEFAULT)
+static int
+ged_env_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_native_forms_validate(gedp, &env_cmd_forms, input,
+	cursor_pos, result);
+}
 
-GED_DECLARE_COMMAND_SET(GED_ENV_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_env", 1, GED_ENV_COMMANDS)
+static int
+ged_env_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_native_forms_analyze(gedp, &env_cmd_forms, input, analysis);
+}
+
+static char *
+ged_env_grammar_json(void)
+{
+    return ged_cmd_native_forms_describe_json(&env_cmd_forms);
+}
+
+static int
+ged_env_grammar_lint(struct bu_vls *msgs)
+{
+    return ged_cmd_native_forms_lint(&env_cmd_forms, msgs);
+}
+
+static char *
+ged_env_grammar_help(const char *invocation)
+{
+    return ged_cmd_native_forms_help(&env_cmd_forms, invocation);
+}
+
+static const struct ged_cmd_grammar ged_env_grammar = {
+    "env", "Report or manage BRL-CAD environment settings",
+    ged_env_grammar_validate, ged_env_grammar_analyze, ged_env_grammar_json,
+    ged_env_grammar_lint, NULL, ged_env_grammar_help
+};
+
+#define GED_ENV_COMMANDS(X, XID) \
+    X(env,              ged_env_core,                      GED_CMD_DEFAULT, &ged_env_grammar)
+
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_ENV_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_env", 1, GED_ENV_COMMANDS)
 
 /*
  * Local Variables:

@@ -28,9 +28,12 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "../../librt/librt_private.h"
 
 #include "../ged_private.h"
+
+static const struct bu_cmd_schema *dup_schema(void);
 
 static struct directory **
 _ged_getspace(struct db_i *dbip,
@@ -165,7 +168,8 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
     struct db_i *newdbp = DBI_NULL;
     struct directory **dirp0 = (struct directory **)NULL;
     struct dir_check_stuff dcs;
-    static const char *usage = "file.g prefix";
+    int operand_index;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -175,12 +179,15 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
     }
 
-    if (argc > 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    operand_index = bu_cmd_schema_parse_complete(dup_schema(),
+	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -254,11 +261,28 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_DUP_COMMANDS(X, XID) \
-    XID(dupcmd, "dup", ged_dup_core,  GED_CMD_DEFAULT)
+static const struct bu_cmd_operand dup_schema_operands[] = {
+    BU_CMD_OPERAND("database_file", BU_CMD_VALUE_FILE, 1, 1,
+	"Database file to inspect", "ged.file_path"),
+    BU_CMD_OPERAND("prefix", BU_CMD_VALUE_STRING, 0, 1, "Optional name prefix", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema dup_cmd_schema = {
+    "dup", "Report duplicate names", NULL, dup_schema_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
-GED_DECLARE_COMMAND_SET(GED_DUP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_dup", 1, GED_DUP_COMMANDS)
+static const struct bu_cmd_schema *
+dup_schema(void)
+{
+    return &dup_cmd_schema;
+}
+
+#define GED_DUP_COMMANDS(X, XID) \
+    XID(dupcmd, "dup", ged_dup_core, GED_CMD_DEFAULT, &dup_cmd_schema)
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_DUP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_dup", 1, GED_DUP_COMMANDS)
 
 /*
  * Local Variables:

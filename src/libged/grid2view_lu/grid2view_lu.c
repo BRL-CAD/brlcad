@@ -72,11 +72,13 @@ bad:
 
 #include "../include/plugin.h"
 
-#define GED_GRID2VIEW_LU_COMMANDS(X, XID) \
-    X(grid2view_lu, ged_grid2view_lu_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(grid2view_lu, "grid2view_lu", "Convert grid coordinates to view coordinates", "grid_coordinates", BU_CMD_VALUE_NUMBER, 2, 2, "U V coordinates");
 
-GED_DECLARE_COMMAND_SET(GED_GRID2VIEW_LU_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_grid2view_lu", 1, GED_GRID2VIEW_LU_COMMANDS)
+#define GED_GRID2VIEW_LU_COMMANDS(X, XID) \
+    X(grid2view_lu, ged_grid2view_lu_core, GED_CMD_DEFAULT, &grid2view_lu_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GRID2VIEW_LU_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_grid2view_lu", 1, GED_GRID2VIEW_LU_COMMANDS)
 
 /*
  * Local Variables:

@@ -3,6 +3,26 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 set(QGMODEL_SRCS qgmodel.cpp)
 set(QGVIEW_SRCS qgview.cpp)
 set(QSKETCH_SRCS qsketch.cpp)
+set(QGCONSOLE_COMPLETION_SRCS qgconsole_completion.cpp)
+
+if(TARGET Qt6::Test)
+  add_executable(qgconsole_completion ${QGCONSOLE_COMPLETION_SRCS})
+  target_link_libraries(qgconsole_completion libqtcad libged libbu Qt6::Widgets Qt6::Test)
+elseif(TARGET Qt5::Test)
+  add_executable(qgconsole_completion ${QGCONSOLE_COMPLETION_SRCS})
+  target_link_libraries(qgconsole_completion libqtcad libged libbu Qt5::Widgets Qt5::Test)
+endif()
+if(TARGET qgconsole_completion)
+  target_compile_definitions(qgconsole_completion PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+  if(TARGET profont_ProFont_ttf_cp)
+    add_dependencies(qgconsole_completion profont_ProFont_ttf_cp)
+  endif()
+  add_test(NAME qgconsole_completion_modes COMMAND qgconsole_completion ${CMAKE_SOURCE_DIR}/src/libged/tests/draw/moss.g)
+  set_tests_properties(
+    qgconsole_completion_modes
+    PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_FONTDIR=${CMAKE_BINARY_DIR}/${DATA_DIR}/fonts"
+  )
+endif()
 
 if(TARGET Qt6::Test)
   add_executable(qgmodel qgmodel.cpp)
@@ -100,6 +120,7 @@ cmakefiles(
   ${QGMODEL_SRCS}
   ${QGVIEW_SRCS}
   ${QSKETCH_SRCS}
+  ${QGCONSOLE_COMPLETION_SRCS}
 )
 
 # Local Variables:
@@ -108,4 +129,3 @@ cmakefiles(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

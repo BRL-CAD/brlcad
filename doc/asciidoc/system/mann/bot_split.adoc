@@ -10,7 +10,7 @@ bot_split - Split a single BOT primitive, containing disjoint groups of facets, 
 
 [source]
 ----
-bot_split {bot} [bot2 bot3]...
+bot_split [--help] bot [bot2 ...]
 ----
 
 
@@ -32,6 +32,11 @@ flags, plate thickness and face mode, normals, and texture UV data. Their names
 are based on the original BOT name with an available sequential suffix. Object
 attributes are copied to every result, and the result names are listed when
 the command completes.
+
+=== Options
+
+*-h*, *--help*::
+Print command help without requiring an open database.
 
 [[examples]]
 == EXAMPLES

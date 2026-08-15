@@ -2,7 +2,6 @@ set(PLUGIN_LIBS libged libbu)
 
 set(LOD_SRCS
   lod.c
-  lod2.cpp
   )
 
 ged_plugin_library(ged-lod

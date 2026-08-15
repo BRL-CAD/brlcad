@@ -136,11 +136,13 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_SHELLS_COMMANDS(X, XID) \
-    X(shells, ged_shells_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(shells, "shells", "NMG model", "nmg_model", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG model");
 
-GED_DECLARE_COMMAND_SET(GED_SHELLS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_shells", 1, GED_SHELLS_COMMANDS)
+#define GED_SHELLS_COMMANDS(X, XID) \
+    X(shells, ged_shells_core, GED_CMD_DEFAULT, &shells_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_SHELLS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_shells", 1, GED_SHELLS_COMMANDS)
 
 /*
  * Local Variables:

@@ -27,8 +27,7 @@
 
 #include <string.h>
 
-#include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/opt.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
@@ -38,6 +37,23 @@ struct keep_node_data {
     struct rt_wdb *wdbp;
     struct ged *gedp;
 };
+
+
+struct keep_args {
+    int named_objects_only;
+};
+
+
+#include "../include/plugin.h"
+
+#define KEEP_OPTIONS(args) \
+    BU_OPT_FLAG(args, "R", NULL, named_objects_only, \
+	"Keep only named objects, without descendants"),
+
+BU_OPT_DESC_BUILDER(keep_options, struct keep_args, KEEP_OPTIONS);
+static const ged_opt_spec keep_opt_spec =
+    GED_OPT("keep", "Copy selected objects into another database",
+	keep_options, "options-first file:file objects:object+");
 
 
 /*
@@ -115,10 +131,10 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls title = BU_VLS_INIT_ZERO;
     struct db_i *new_dbip;
     const char *cmd = argv[0];
-    static const char *usage = "[-R] file object(s)";
-
-    int c;
-    int flag_R = 0;
+    struct keep_args args = {0};
+    int operand_count = 0;
+    const char *file = NULL;
+    const char **objects = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -128,32 +144,21 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	ged_cmd_help_append(gedp->ged_result_str, cmd, cmd);
 	return GED_HELP;
     }
 
-    /* check for options */
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "R")) != -1) {
-	switch (c) {
-	    case 'R':
-		/* not recursively */
-		flag_R = 1;
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
-		return BRLCAD_ERROR;
-	}
-    }
-    /* skip options processed plus command name */
-    argc -= bu_optind;
-    argv += bu_optind;
-
-    if (argc < 2) {
+    argc--; argv++;
+    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+	argc, argv, keep_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
+    if (operand_count < 2) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: missing file or object names\n");
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	ged_cmd_help_append(gedp->ged_result_str, cmd, cmd);
 	return BRLCAD_ERROR;
     }
+
+    file = argv[0];
+    objects = argv + 1;
 
     /* First, clear any existing counts */
     FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
@@ -162,31 +167,31 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Alert user if named file already exists */
 
-    new_dbip = db_open(argv[0], DB_OPEN_READWRITE);
+    new_dbip = db_open(file, DB_OPEN_READWRITE);
 
     if (new_dbip != DBI_NULL) {
 	if (db_version(new_dbip) != db_version(gedp->dbip)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: File format mismatch between '%s' and '%s'\n",
-			  cmd, argv[0], gedp->dbip->dbi_filename);
+		  cmd, file, gedp->dbip->dbi_filename);
 	    return BRLCAD_ERROR;
 	}
 
 	keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK);
 	if (keepfp == NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "%s:  Error opening '%s'\n", cmd, argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s:  Error opening '%s'\n", cmd, file);
 	    return BRLCAD_ERROR;
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, "%s:  Appending to '%s'\n", cmd, argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s:  Appending to '%s'\n", cmd, file);
 
 	    /* --- Scan geometry database and build in-memory directory --- */
 	    db_dirbuild(new_dbip);
 	}
     } else {
 	/* Create a new database */
-	keepfp = wdb_fopen_v(argv[0], db_version(gedp->dbip));
+	keepfp = wdb_fopen_v(file, db_version(gedp->dbip));
 
 	if (keepfp == NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "%s command was unable to create file '%s'\n", cmd, argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s command was unable to create file '%s'\n", cmd, file);
 	    return BRLCAD_ERROR;
 	}
     }
@@ -213,11 +218,12 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     }
     bu_vls_free(&title);
 
-    for (i = 1; i < argc; i++) {
-	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+
+    for (i = 0; i < operand_count - 1; i++) {
+	if ((dp = db_lookup(gedp->dbip, objects[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
-	if (!flag_R) {
+	if (!args.named_objects_only) {
 	    /* recursively keep objects */
 	    db_treewalk_basic(gedp->dbip, dp, node_write, node_write, (void *)&knd);
 	} else {
@@ -231,13 +237,11 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-#include "../include/plugin.h"
-
 #define GED_KEEP_COMMANDS(X, XID) \
-    X(keep, ged_keep_core, GED_CMD_DEFAULT) \
+    X(keep, ged_keep_core, GED_CMD_DEFAULT, &keep_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_KEEP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_keep", 1, GED_KEEP_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_KEEP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_keep", 1, GED_KEEP_COMMANDS)
 
 /*
  * Local Variables:

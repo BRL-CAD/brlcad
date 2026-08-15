@@ -91,7 +91,7 @@ options most relevant to overlap checking are listed below.
   Whether *librt*(3) retains air-coded regions (0 = discard air, the
   default; 1 = keep air).
 
-*-+ t*::
+*-+* _t_::
   Emit the plot data in ASCII text format rather than the default binary
   *plot3*(5) encoding.
 

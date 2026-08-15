@@ -1,0 +1,53 @@
+= REOPEN(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+reopen - Open an existing BRL-CAD database and make it current.
+
+== SYNOPSIS
+
+[source]
+----
+reopen
+reopen filename
+----
+
+[[description]]
+== DESCRIPTION
+
+With no argument, *reopen* reports the current database path, or reports that
+no database is open.
+
+With a _filename_, *reopen* closes any current database and opens the named
+existing database. Unlike *opendb*, it never creates a missing file. Use
+*opendb* when creation, explicit existing-file selection, or endian-flip
+options are needed.
+
+[[examples]]
+== EXAMPLES
+
+.Reopen an existing model.
+[example]
+====
+mged> **reopen model.g**
+
+Closes the current database, if any, and opens the existing _model.g_ file.
+
+====
+
+[[see_also]]
+== SEE ALSO
+
+*open*(nged), *opendb*(nged), *closedb*(nged)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

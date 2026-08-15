@@ -46,7 +46,6 @@ ged_nmg_fix_normals_core(struct ged *gedp, int argc, const char *argv[])
     struct bn_tol tol;
     struct bu_list *vlfree = &rt_vlfree;
 
-    static const char *usage = "nmg_prim";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -60,7 +59,7 @@ ged_nmg_fix_normals_core(struct ged *gedp, int argc, const char *argv[])
     tol.para = 0.999;
 
     if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
     }
 

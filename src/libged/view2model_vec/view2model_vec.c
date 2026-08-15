@@ -72,11 +72,13 @@ bad:
 
 #include "../include/plugin.h"
 
-#define GED_VIEW2MODEL_VEC_COMMANDS(X, XID) \
-    X(view2model_vec, ged_view2model_vec_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(view2model_vec, "view2model_vec", "Convert a view vector to model coordinates", "vector", BU_CMD_VALUE_VECTOR, 3, 3, "X Y Z vector");
 
-GED_DECLARE_COMMAND_SET(GED_VIEW2MODEL_VEC_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_view2model_vec", 1, GED_VIEW2MODEL_VEC_COMMANDS)
+#define GED_VIEW2MODEL_VEC_COMMANDS(X, XID) \
+    X(view2model_vec, ged_view2model_vec_core, GED_CMD_DEFAULT, &view2model_vec_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_VIEW2MODEL_VEC_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_view2model_vec", 1, GED_VIEW2MODEL_VEC_COMMANDS)
 
 /*
  * Local Variables:

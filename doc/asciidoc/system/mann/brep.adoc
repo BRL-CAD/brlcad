@@ -10,7 +10,7 @@ brep - The *brep* command is the primary means in BRL-CAD for working with NURBS
 
 [source]
 ----
-brep {obj} [bool | bot | bots | brep | csg | flip | info | intersect | pick | plate_mode | plot | selection | solid | split | shrink_surfaces | tikz | valid] [arguments]
+brep [options] {obj} {bool | bot | bots | brep | csg | dump | flip | geo | info | intersect | pick | plate_mode | plot | repair | selection | solid | split | shrink_surfaces | tikz | topo | valid} [arguments]
 ----
 
 
@@ -71,6 +71,10 @@ Generates plotting output for the object using the TikZ plotting language. The o
 *valid*::
 Report if the BRep object is topologically valid.
 
+*topo*::
+Inspect or edit low-level BRep topology.  This is primarily an advanced
+diagnostic and construction interface.
+
 == OPTIONS
 
 *-h*, *--help*::
@@ -79,11 +83,30 @@ Print help for the selected *brep* subcommand.
 *-v*, *--verbose*::
 Increase reporting verbosity for subcommands that support additional diagnostic output.
 
-*-C*, *--color* _r/g/b_::
+*-C*, *--color* _color_::
 Set the color used by subcommands that create plotted or highlighted output.
+The value accepts the normal BRL-CAD color spellings, including packed
+_r/g/b_, _r,g,b_, or _r;g;b_ values, three separate _r g b_ channel words,
+and other scalar color forms accepted by `bu_color_from_str`.
 
 *--plotres* _#_::
-Set plotting resolution for subcommands that sample curves or surfaces for display output.
+Set a positive plotting resolution for subcommands that sample curves or
+surfaces for display output.
+
+== SUBCOMMAND OPTIONS
+
+*brep* _[--no-evaluation] [--suffix suffix] [output_name]_::
+Convert the selected object to BRep form.  `--no-evaluation` preserves a
+combination as a CSG BRep tree instead of evaluating its booleans; `--suffix`
+sets the naming suffix used for that form.
+
+*split* _[-t thickness] [-o output_object] [-O] [face_indices...]_::
+Create plate-mode BRep output.  Face indices may be individual values, ranges,
+or comma-, slash-, or semicolon-separated lists.  `-O` writes one BRep object
+per face; otherwise `-o` selects the combined output-object root.
+
+*intersect* _other_object first_index second_index [PP|PC|PS|CC|CS|SS]_::
+Calculate the requested component intersection.  `SS` is the default mode.
 
 == EXAMPLES
 

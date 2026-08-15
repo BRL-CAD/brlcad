@@ -65,13 +65,13 @@ results suitable for programmatic processing.
 
 == OPTIONS
 
-*-scope path*::
+*-scope* _path_::
 Restrict the search to regions under the given path. The path may be a
 single object path (for example "/world/room") or a Tcl list of paths.
 If omitted the default scope is the model root "/". Paths that do not
 begin with "/" are normalized by prepending "/".
 
-*-ray_spacing distance|"auto"*::
+*-ray_spacing* _distance_\|*auto*::
 Spacing between sample rays (in the current local units, or with explicit
 unit suffix). A smaller spacing produces a denser ray sampling and may
 improve accuracy at increased cost. The special value *auto* lets the
@@ -79,12 +79,12 @@ command pick a spacing based on the geometry: it uses the diagonal of
 the combined bounding box of the pair being sampled divided by 100. The
 command reports the spacing values actually used when presenting results.
 
-*-max_samples n*::
+*-max_samples* _n_::
 Maximum number of sample points along any sampled axis. The command
 computes a sampling grid and clamps the number of samples to this value
 to avoid excessive work. Must be a positive integer. Default is 100.
 
-*-quiet 0|1*::
+*-quiet* _0_\|_1_::
 When 0 (default), the command prints a human-readable report. When 1 the
 command returns a Tcl list of result records and prints nothing. Use
 quiet mode for scripting and further post-processing.

@@ -37,9 +37,6 @@
 int
 main(int argc, char **argv)
 {
-    const char * const usage =
-	"Usage: 3dm-g [-r] [-v] [-o output_file.g] [-h] input_file.3dm output_file.g\n";
-
     const struct gcv_filter *out_filter;
     const struct gcv_filter *in_filter;
 
@@ -66,10 +63,12 @@ main(int argc, char **argv)
 
     /* requested help or bad usage */
     if (print_help || (opt_ret == 1 && !output_path) || (opt_ret == 2 && output_path) || opt_ret < 1 || opt_ret > 2) {
-	char* help = bu_opt_describe(d, NULL);
-	bu_log("%s\nOptions:\n%s", usage, help);
+	char *help = bu_opt_help(d, "3dm-g", "input_file.3dm [output_file.g]",
+	    "Convert Rhino 3DM geometry to a BRL-CAD database");
+	if (help)
+	    bu_log("%s", help);
 	if (help) bu_free(help, "help str");
-	return 1;
+	return print_help ? 0 : 1;
     }
 
     input_path = argv[0];

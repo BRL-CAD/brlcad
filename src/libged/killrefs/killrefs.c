@@ -27,9 +27,22 @@
 
 #include <string.h>
 
-#include "bu/cmd.h"
+#include "bu/opt.h"
 
 #include "../ged_private.h"
+
+struct killrefs_args {
+    int print;
+};
+
+#define KILLREFS_OPTIONS(args) \
+    BU_OPT_FLAG(args, "n", NULL, print, \
+	"Report references without removing them"),
+
+BU_OPT_DESC_BUILDER(killrefs_options, struct killrefs_args, KILLREFS_OPTIONS);
+static const ged_opt_spec killrefs_opt_spec =
+    GED_OPT("killrefs", "Remove references to database objects",
+	killrefs_options, "options-first objects:object+");
 
 
 int
@@ -39,9 +52,10 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    int nflag;
+    struct killrefs_args args = {0};
+    int object_count;
     int ret;
-    static const char *usage = "[-n] object(s)";
+    const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -55,20 +69,21 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return GED_HELP;
     }
 
-    /* Process the -n option */
-    if (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'n' && argv[1][2] == '\0') {
-	nflag = 1;
-	--argc;
-	++argv;
-    } else
-	nflag = 0;
+    argc--; argv++;
+    object_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
+	argc, argv, killrefs_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
+    if (object_count < 1) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
+	return BRLCAD_ERROR;
+    }
 
-    if (!nflag && !gedp->ged_internal_call) {
-	for (k = 1; k < argc; k++)
+
+    if (!args.print && !gedp->ged_internal_call) {
+	for (k = 0; k < object_count; k++)
 	    _dl_eraseAllNamesFromDisplay(gedp, argv[k], 1);
     }
 
@@ -86,10 +101,10 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
-	for (k = 1; k < argc; k++) {
+	for (k = 0; k < object_count; k++) {
 	    int code;
 
-	    code = db_tree_rm_dbleaf(&(comb->tree), argv[k], nflag);
+	    code = db_tree_rm_dbleaf(&(comb->tree), argv[k], args.print);
 	    if (code == -1)
 		continue;	/* not found */
 	    if (code == -2)
@@ -98,7 +113,7 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[k]);
 		ret = BRLCAD_ERROR;
 	    } else {
-		if (nflag)
+		if (args.print)
 		    bu_vls_printf(gedp->ged_result_str, "%s ", dp->d_namep);
 		else
 		    bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[k]);
@@ -121,10 +136,10 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_KILLREFS_COMMANDS(X, XID) \
-    X(killrefs, ged_killrefs_core, GED_CMD_DEFAULT) \
+    X(killrefs, ged_killrefs_core, GED_CMD_DEFAULT, &killrefs_opt_spec) \
 
-GED_DECLARE_COMMAND_SET(GED_KILLREFS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_killrefs", 1, GED_KILLREFS_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_KILLREFS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_killrefs", 1, GED_KILLREFS_COMMANDS)
 
 /*
  * Local Variables:

@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
 #include "bu/debug.h"
 #include "rt/debug.h"
 #include "nmg/debug.h"
@@ -56,12 +57,21 @@ ged_debug_core(struct ged *gedp, int argc, const char **argv)
 }
 
 #include "../include/plugin.h"
+static const struct bu_cmd_operand debug_operands[] = {
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Debug subsystem and operation arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema debug_schema = {
+    "debug", "Inspect and configure debugging state", NULL, debug_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 #define GED_DEBUG_COMMANDS(X, XID) \
-    X(debug, ged_debug_core, GED_CMD_DEFAULT) \
+    X(debug, ged_debug_core, GED_CMD_DEFAULT, &debug_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_DEBUG_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_debug", 1, GED_DEBUG_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_DEBUG_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_debug", 1, GED_DEBUG_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
