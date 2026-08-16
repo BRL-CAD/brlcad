@@ -38,6 +38,7 @@
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/log.h"
+#include "bu/num.h"
 #include "bu/str.h"
 #include "bu/cv.h"
 #include "bu/snooze.h"
@@ -195,7 +196,6 @@ main (int argc, char **argv)
     int l_per_b;	/* buffer size (in output lines) */
     int line_nm;	/* number of current line */
     int num;		/* number of bytes read */
-    int i;
     int row, col;	/* coords within input stream */
 
     bu_setprogname(argv[0]);
@@ -237,9 +237,8 @@ main (int argc, char **argv)
 		printf("%d %d", col, row);
 	    bu_cv_ntohd((unsigned char *)value, bp, d_per_l);
 	    bp += d_per_l * 8;
-	    for (i = 0; i < d_per_l; ++i)
-		printf(format, value[i]);
-	    printf("\n");
+	    bu_num_print(value, (size_t)d_per_l, (size_t)d_per_l,
+			 NULL, NULL, format, "", NULL, "\n");
 	    if (++col % file_width == 0) {
 		col = 0;
 		++row;
