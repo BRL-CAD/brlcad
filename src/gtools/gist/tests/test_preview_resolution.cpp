@@ -1,4 +1,4 @@
-/*              G I S T _ P R E V I E W _ T E S T . C P P
+/*           T E S T _ P R E V I E W _ R E S O L U T I O N . C P P
  * BRL-CAD
  *
  * Copyright (c) 2026 United States Government as represented by
@@ -17,6 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @file gtools/gist/tests/test_preview_resolution.cpp
+ *
+ * Verify that gist preview dimensions preserve the canonical report aspect
+ * ratio and that IFPainter produces the same pixels as a reference resize.
+ */
 
 #include "pch.h"
 
@@ -34,6 +39,21 @@ sameImage(const cv::Mat &left, const cv::Mat &right)
     return cv::countNonZero(difference.reshape(1)) == 0;
 }
 
+bool
+removeImages(const std::filesystem::path &fullPath, const std::filesystem::path &previewPath)
+{
+    bool success = true;
+    for (const std::filesystem::path &path : {fullPath, previewPath}) {
+	std::error_code removeError;
+	std::filesystem::remove(path, removeError);
+	if (removeError) {
+	    std::cerr << "Could not remove " << path << ": " << removeError.message() << "\n";
+	    success = false;
+	}
+    }
+    return success;
+}
+
 } // namespace
 
 int
@@ -44,10 +64,19 @@ main(int argc, const char **argv)
 	return 1;
     }
 
+    const std::filesystem::path outputDirectory(argv[1]);
+    const std::filesystem::path fullPath = outputDirectory / "gist-preview-resolution-full.bmp";
+    const std::filesystem::path previewPath = outputDirectory / "gist-preview-resolution-preview.bmp";
+    if (!removeImages(fullPath, previewPath)) {
+	return 1;
+    }
+
     Options options;
     if (options.getWidth() != Options::CANONICAL_REPORT_WIDTH ||
 	options.getLength() != Options::CANONICAL_REPORT_LENGTH) {
-	std::cerr << "Default report dimensions do not match the layout canvas\n";
+	std::cerr << "Default report dimensions were " << options.getWidth() << "x" << options.getLength()
+		  << ", expected " << Options::CANONICAL_REPORT_WIDTH << "x"
+		  << Options::CANONICAL_REPORT_LENGTH << "\n";
 	return 1;
     }
 
@@ -60,13 +89,10 @@ main(int argc, const char **argv)
 	static_cast<double>(Options::CANONICAL_REPORT_LENGTH) * previewPpi /
 	Options::DEFAULT_REPORT_PPI));
     if (options.getWidth() != expectedWidth || options.getLength() != expectedHeight) {
-	std::cerr << "Preview dimensions do not preserve the canonical aspect ratio\n";
+	std::cerr << "Preview dimensions were " << options.getWidth() << "x" << options.getLength()
+		  << ", expected " << expectedWidth << "x" << expectedHeight << "\n";
 	return 1;
     }
-
-    const std::filesystem::path outputDirectory(argv[1]);
-    const std::filesystem::path fullPath = outputDirectory / "gist_preview_test_full.bmp";
-    const std::filesystem::path previewPath = outputDirectory / "gist_preview_test_low.bmp";
 
     constexpr int pageMargin = 23;
     constexpr int bannerBottom = 122;
@@ -103,24 +129,24 @@ main(int argc, const char **argv)
     cv::Mat expectedPreview;
     cv::resize(fullImage, expectedPreview, previewImage.size(), 0.0, 0.0, cv::INTER_AREA);
 
-    std::error_code removeError;
-    std::filesystem::remove(fullPath, removeError);
-    if (removeError) {
-	std::cerr << "Could not remove " << fullPath << ": " << removeError.message() << "\n";
+    if (fullImage.cols != Options::CANONICAL_REPORT_WIDTH ||
+	fullImage.rows != Options::CANONICAL_REPORT_LENGTH) {
+	std::cerr << "Full image dimensions were " << fullImage.cols << "x" << fullImage.rows
+		  << ", expected " << Options::CANONICAL_REPORT_WIDTH << "x"
+		  << Options::CANONICAL_REPORT_LENGTH << "\n";
 	return 1;
     }
-    std::filesystem::remove(previewPath, removeError);
-    if (removeError) {
-	std::cerr << "Could not remove " << previewPath << ": " << removeError.message() << "\n";
-	return 1;
-    }
-
     if (previewImage.cols != expectedWidth || previewImage.rows != expectedHeight) {
-	std::cerr << "Preview image has incorrect dimensions\n";
+	std::cerr << "Preview image dimensions were " << previewImage.cols << "x" << previewImage.rows
+		  << ", expected " << expectedWidth << "x" << expectedHeight << "\n";
 	return 1;
     }
     if (!sameImage(expectedPreview, previewImage)) {
 	std::cerr << "Preview image differs from the scaled full-resolution layout\n";
+	return 1;
+    }
+
+    if (!removeImages(fullPath, previewPath)) {
 	return 1;
     }
 
