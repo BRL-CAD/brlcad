@@ -77,6 +77,7 @@ brlcad_manage_files(subprocess.txt             ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(tcl_code.txt               ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(tcllib.txt                 ${DOC_DIR}/legal/embedded TRIGGER libtclcad)
 brlcad_manage_files(tiny_gltf.txt              ${DOC_DIR}/legal/embedded TRIGGER libgcv)
+brlcad_manage_files(tinycolor.txt              ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(tinythread.txt             ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(tlsh.txt                   ${DOC_DIR}/legal/embedded TRIGGER gdiff)
 brlcad_manage_files(tkcon.txt                  ${DOC_DIR}/legal/embedded TRIGGER libtclcad)
