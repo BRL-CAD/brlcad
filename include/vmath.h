@@ -573,18 +573,23 @@ typedef enum vmath_matrix_component_ {
 /** @brief Compute distance from a point to a plane. */
 #define DIST_PNT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[W])
 
-/** @brief Compute distance between two points. */
+/** @brief Compute squared distance between two 3D points. */
 #define DIST_PNT_PNT_SQ(_a, _b) \
-	((_a)[X]-(_b)[X])*((_a)[X]-(_b)[X]) + \
-	((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y]) + \
-	((_a)[Z]-(_b)[Z])*((_a)[Z]-(_b)[Z])
+	(((_a)[X]-(_b)[X])*((_a)[X]-(_b)[X]) + \
+	 ((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y]) + \
+	 ((_a)[Z]-(_b)[Z])*((_a)[Z]-(_b)[Z]))
+
+/** @brief Compute distance between two 3D points. */
 #define DIST_PNT_PNT(_a, _b) sqrt(DIST_PNT_PNT_SQ(_a, _b))
 
-/** @brief Compute distance between two 2D points. */
+/** @brief Compute squared distance between two 2D points. */
 #define DIST_PNT2_PNT2_SQ(_a, _b) \
-	((_a)[X]-(_b)[X])*((_a)[X]-(_b)[X]) + \
-	((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y])
+	(((_a)[X]-(_b)[X])*((_a)[X]-(_b)[X]) + \
+	 ((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y]))
+
+/** @brief Compute distance between two 2D poitns. */
 #define DIST_PNT2_PNT2(_a, _b) sqrt(DIST_PNT2_PNT2_SQ(_a, _b))
+
 
 /** @brief set translation values of 4x4 matrix with x, y, z values. */
 #define MAT_DELTAS(_m, _x, _y, _z) do { \
