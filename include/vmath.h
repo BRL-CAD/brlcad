@@ -1448,9 +1448,22 @@ typedef enum vmath_matrix_component_ {
 #define V2CROSS(a, b) ((a)[X] * (b)[Y] - (a)[Y] * (b)[X])
 
 /**
- * TODO: implement me
+ * @brief Store the cross product of homogeneous 3D vectors at `a' and
+ * `b' in the ordinary 3D vector at `o'.
+ *
+ * The inputs are dehomogenized before computing the cross product:
+ *
+ *     o = (a[X,Y,Z] / a[W]) x (b[X,Y,Z] / b[W])
+ *
+ * The homogeneous coordinates a[W] and b[W] must be non-zero.
  */
-#define HCROSS(a, b, c)
+#define HCROSS(o, a, b) do { \
+	vect_t _hcross_a; \
+	vect_t _hcross_b; \
+	HDIVIDE(_hcross_a, (a)); \
+	HDIVIDE(_hcross_b, (b)); \
+	VCROSS((o), _hcross_a, _hcross_b); \
+    } while (0)
 
 
 /** @brief Compute dot product of vectors at `a' and `b'. */
