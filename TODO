@@ -495,8 +495,6 @@ lookup check to ensure none are missing.
 
 * add unit tests for primitive callback routines (e.g., bbox).
 
-* put bu_num_print() to use
-
 * use bu_gettime() in rt -l8 heatgraph visualization mode
 
 * fully implement analyze for all geometry objects
@@ -635,8 +633,6 @@ lookup check to ensure none are missing.
 
 * closing the graphics window brings down X11 on Mac due to a bad
   context.  fix or revert recent close window behavior.
-
-* V&V bwcrop, pixembed are behaving correctly, as documented
 
 * implement unit tests for bu dirent / stat API
 
@@ -1747,12 +1743,6 @@ ATTRIBUTES
 * implement an option to "attr upgrade" for reading upgrade/downgrade
   plugins/instructions from an external file for 3rd party use.
 
-* prevent nirt from outputting a trailing space after values when
-  there are no attributes to be displayed.  the problem is in the nirt
-  format strings where they use " %s" for displaying any attributes.
-  need to left-pad a space conditionally, perhaps by supporting %*s
-  and sizeof(var).
-
 * add additional support for user-specified sorting for the attr
   command when new attribute attributes are added (e.g., creation
   date)
@@ -2589,10 +2579,6 @@ DOCUMENTATION
   various image formats like png just by specifying an output file
   extension.
 
-* document gqa centroid and moments of inertia options
-
-* document the new NURBS/BREP primitive, capabilities and limitations
-
 
   Need to revisit utility of spherical mapping, used by sh_spm and
   sh_points, used for environment mapping (e.g., stars):
@@ -2631,13 +2617,6 @@ DOCUMENTATION
     step-g
     tgf-g
 
-
-* write up some documentation on other build tools besides make -
-  CMake supports other generators, wouldn't hurt to detail how to
-  trigger builds in them (MSVC is partially covered, make sure to
-  coverage is complete - others include Eclipse, XCode once we get the
-  kinks ironed out there, CodeBlocks.  Ninja build tool and its
-  CMake support are worth documenting too.
 
 * all of the rt* tracers share common code and common options, but do
   not share common documentation.  refactor documentation to use
