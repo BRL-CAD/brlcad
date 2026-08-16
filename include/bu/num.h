@@ -35,6 +35,24 @@ __BEGIN_DECLS
  * Values are emitted left-to-right in rows of @p cols entries. Optional
  * strings control the table and row delimiters, number format, and column
  * separator. A NULL number format uses %.17g.
+ *
+ * Print one space-separated row using the defaults:
+ * @code
+ * const double vals[] = {1.0, 2.0, 3.0};
+ * bu_num_print(vals, 3, 3, NULL, NULL, NULL, NULL, NULL, "\n");
+ * // Prints: 1 2 3
+ * @endcode
+ *
+ * Print the values as a bracketed 2-by-2 matrix:
+ * @code
+ * const double vals[] = {1.0, 2.0, 3.0, 4.0};
+ * bu_num_print(vals, 4, 2, "[\n", "  [", "%.0f", ", ", "]\n", "]\n]\n");
+ * // Prints:
+ * // [
+ * //   [1, 2]
+ * //   [3, 4]
+ * // ]
+ * @endcode
  */
 BU_EXPORT extern void bu_num_print(const double *vals,
 				   size_t nvals,
