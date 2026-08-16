@@ -467,6 +467,11 @@ brlcad_add_test(NAME bu_str_to_rgb_12 COMMAND bu_test test_color 3 "#C4D" 204,68
 
 brlcad_add_test(NAME bu_color_to_rgb_floats_1 COMMAND bu_test test_color 4 192,78,214)
 
+# New consolidated color API tests.
+brlcad_add_test(NAME bu_color_parse COMMAND bu_test test_color 8)
+brlcad_add_test(NAME bu_color_format COMMAND bu_test test_color 9)
+brlcad_add_test(NAME bu_color_convert COMMAND bu_test test_color 10)
+
 #
 # ************ test_str.c tests ************
 #
