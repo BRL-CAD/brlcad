@@ -1779,10 +1779,40 @@ typedef enum vmath_matrix_component_ {
 	V2MIN((min), (pt)); V2MAX((max), (pt)); \
     } while (0)
 
+
 /**
- * clamp a value to a low/high number.
+ * @brief clamp a value to a low/high number.
  */
-#define CLAMP(_v, _l, _h) V_MAX((_v), (_l)); else V_MIN((_v), (_h))
+#define CLAMP(_v, _l, _h) do { \
+	V_MAX((_v), (_l)); else V_MIN((_v), (_h)); \
+    } while (0)
+
+/**
+ * @brief clamp a vector to a low/high number.
+ */
+#define VCLAMP(_v, _l, _h) do { \
+	CLAMP(_v[X], _l, _h); \
+	CLAMP(_v[Y], _l, _h); \
+	CLAMP(_v[Z], _l, _h); \
+    } while (0)
+
+/**
+ * @brief clamp a 2D vector to a low/high number.
+ */
+#define V2CLAMP(_v, _l, _h) do { \
+	CLAMP(_v[X], _l, _h); \
+	CLAMP(_v[Y], _l, _h); \
+    } while (0)
+
+/**
+ * @brief clamp a 4D vector to a low/high number.
+ */
+#define HCLAMP(_v, _l, _h) do { \
+	CLAMP(_v[X], _l, _h); \
+	CLAMP(_v[Y], _l, _h); \
+	CLAMP(_v[Z], _l, _h); \
+	CLAMP(_v[W], _l, _h); \
+    } while (0)
 
 
 /**
