@@ -271,7 +271,6 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
 
     double cell_mm   = cell_m * M2MM;
     double cell_z_mm = cell_z_m * M2MM;
-    double min_exag  = raw_min_m * exag;
     
     /* Z_base is chosen deep enough to intersect the water sphere
      * cleanly and to bound the valid region from the origin.
@@ -341,7 +340,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
             if (r_sq >= R_m * R_m) {
                 z_val = z_base_m;
             } else {
-                double R_elev = R_m + h * exag - min_exag;
+                double R_elev = R_m + h * exag;
                 double under_sqrt = R_elev * R_elev - r_sq;
                 if (under_sqrt < 0.0) under_sqrt = 0.0;
                 z_val = sqrt(under_sqrt);
@@ -518,9 +517,8 @@ main(int ac, char *av[])
     /* Z quantization: we map the range from R/sqrt(3) to the max
      * exaggerated mountain peak into uint16.
      */
-    double max_elev_m = raw_max * exag - raw_min * exag;
     double z_base_m = EARTH_R_M / sqrt(3.0);
-    double z_max_m = EARTH_R_M + max_elev_m;
+    double z_max_m = EARTH_R_M + raw_max * exag;
     double span_z_m = z_max_m - z_base_m;
     
     cell_z_m = span_z_m / (double)U16MAX;
