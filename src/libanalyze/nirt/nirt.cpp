@@ -1335,10 +1335,10 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    const char *key = (*a_it).c_str();
 	    const char *val = bu_avs_get(&part->pt_regionp->attr_values, key);
 	    if (val != NULL) {
+		s->attributes.append(" ");
 		s->attributes.append(key);
 		s->attributes.append("=");
 		s->attributes.append(val);
-		s->attributes.append(" ");
 	    }
 	}
 
