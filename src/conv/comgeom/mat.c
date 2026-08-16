@@ -28,7 +28,6 @@
  * mat_mul(&o, &i1, &i2)		Multiply i1 by i2 and store in o
  * vecXmat(&ov, &iv, &m)		Multiply vector iv by m and store in ov
  * matXvec(&ov, &m, &iv)		Multiply m by vector iv and store in ov
- * mat_print(&m)			Print out the 4x4 matrix - calls printf
  * mat_hscale(&m, hscale)	        Homogeneous scale of input matrix
  * mat_inv(&om, &im)		Invert matrix im and store result in om
  *
@@ -167,20 +166,6 @@ matXvec(vectp_t ov, matp_t im, vectp_t iv)
 
 	for (ei = 0; ei < 4; ei++)
 	    ov[eo] += im[em++] * iv[ei];
-    }
-}
-
-
-/*
- * Print out the 4x4 matrix addressed by "m".
- */
-void
-mat_print(matp_t m)
-{
-    int i;
-
-    for (i = 0; i < 16; i++) {
-	printf("%f%c", m[i], ((i+1)%4) ? '\t' : '\n');
     }
 }
 
