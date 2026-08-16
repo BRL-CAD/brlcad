@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "bu/num.h"
+
 
 static size_t
 char_length(int64_t num)
