@@ -2150,7 +2150,7 @@ typedef enum vmath_matrix_component_ {
  * VSETALLN(hvect_t,val,2) but as an initializer array declaration
  * instead of as a statement.
  */
-#define V2INITALL(_v) {(_v), (_v), (_v)}
+#define V2INITALL(_v) {(_v), (_v)}
 
 /**
  * 4D homogeneous vector macro suitable for declaration statement
