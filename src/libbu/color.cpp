@@ -127,7 +127,7 @@ static const struct bu_color_name _bu_color_names[] = {
     {"gold", 0xffd700},
     {"goldenrod", 0xdaa520},
     {"gray", 0x808080},
-    {"green", 0x008000},
+    {"green", 0x008000}, /* ugh */
     {"greenyellow", 0xadff2f},
     {"grey", 0x808080},
     {"honeydew", 0xf0fff0},
@@ -155,7 +155,7 @@ static const struct bu_color_name _bu_color_names[] = {
     {"lightslategrey", 0x778899},
     {"lightsteelblue", 0xb0c4de},
     {"lightyellow", 0xffffe0},
-    {"lime", 0x00ff00},
+    {"lime", 0x00ff00}, /* ugh */
     {"limegreen", 0x32cd32},
     {"linen", 0xfaf0e6},
     {"magenta", 0xff00ff},
