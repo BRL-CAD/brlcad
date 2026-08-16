@@ -1254,27 +1254,27 @@ typedef enum vmath_matrix_component_ {
 
 /**
  * Compose 3D vector at `o' of:
- * vector at `a' plus
- * scalar `sb' times vector at `b'
+ * vector at `va' plus
+ * scalar `sb' times vector at `vb'
  *
  * This is basically a shorthand for VSCALE();VADD2();.
  */
-#define VJOIN1(o, a, sb, b) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y]; \
-	(o)[Z] = (a)[Z] + (sb) * (b)[Z]; \
+#define VJOIN1(o, va, sb, vb) do { \
+	(o)[X] = (va)[X] + (sb) * (vb)[X]; \
+	(o)[Y] = (va)[Y] + (sb) * (vb)[Y]; \
+	(o)[Z] = (va)[Z] + (sb) * (vb)[Z]; \
     } while (0)
 
 /**
  * Compose 2D vector at `o' of:
- * vector at `a' plus
- * scalar `sb' times vector at `b'
+ * vector at `va' plus
+ * scalar `sb' times vector at `vb'
  *
  * This is basically a shorthand for V2SCALE();V2ADD2();.
  */
-#define V2JOIN1(o, a, sb, b) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y]; \
+#define V2JOIN1(o, va, sb, vb) do { \
+	(o)[X] = (va)[X] + (sb) * (vb)[X]; \
+	(o)[Y] = (va)[Y] + (sb) * (vb)[Y]; \
     } while (0)
 
 /**
@@ -1284,58 +1284,58 @@ typedef enum vmath_matrix_component_ {
  *
  * This is basically a shorthand for HSCALE();HADD2();.
  */
-#define HJOIN1(o, a, sb, b) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y]; \
-	(o)[Z] = (a)[Z] + (sb) * (b)[Z]; \
-	(o)[W] = (a)[W] + (sb) * (b)[W]; \
+#define HJOIN1(o, va, sb, vb) do { \
+	(o)[X] = (va)[X] + (sb) * (vb)[X]; \
+	(o)[Y] = (va)[Y] + (sb) * (vb)[Y]; \
+	(o)[Z] = (va)[Z] + (sb) * (vb)[Z]; \
+	(o)[W] = (va)[W] + (sb) * (vb)[W]; \
     } while (0)
 
 /**
  * Compose `n'-D vector at `o' of:
- * vector at `a' plus
- * scalar `sb' times vector at `b'
+ * vector at `va' plus
+ * scalar `sb' times vector at `vb'
  *
  * This is basically a shorthand for VSCALEN();VADD2N();.
  */
-#define VJOIN1N(o, a, sb, b, n) do { \
+#define VJOIN1N(o, va, sb, vb, n) do { \
 	size_t _vjoin1; \
 	for (_vjoin1 = 0; \
 	     _vjoin1 < (size_t)(n); \
 	     _vjoin1++) { \
-	    (o)[_vjoin1] = (a)[_vjoin1] + (sb) * (b)[_vjoin1]; \
+	    (o)[_vjoin1] = (va)[_vjoin1] + (sb) * (vb)[_vjoin1]; \
 	} \
     } while (0)
 
 
 /**
  * @brief Compose 3D vector at `o' of:
- * Vector at `a' plus
- * scalar `sb' times vector at `b' plus
- * scalar `sc' times vector at `c'
+ * Vector at `va' plus
+ * scalar `sb' times vector at `vb' plus
+ * scalar `sc' times vector at `vc'
  */
-#define VJOIN2(o, a, sb, b, sc, c) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X] + (sc) * (c)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y] + (sc) * (c)[Y]; \
-	(o)[Z] = (a)[Z] + (sb) * (b)[Z] + (sc) * (c)[Z]; \
+#define VJOIN2(o, va, sb, vb, sc, vc) do { \
+	(o)[X] = (va)[X] + (sb) * (vb)[X] + (sc) * (vc)[X]; \
+	(o)[Y] = (va)[Y] + (sb) * (vb)[Y] + (sc) * (vc)[Y]; \
+	(o)[Z] = (va)[Z] + (sb) * (vb)[Z] + (sc) * (vc)[Z]; \
     } while (0)
 
 /**
  * @brief Compose 2D vector at `o' of:
- * Vector at `a' plus
- * scalar `sb' times vector at `b' plus
- * scalar `sc' times vector at `c'
+ * Vector at `va' plus
+ * scalar `sb' times vector at `vb' plus
+ * scalar `sc' times vector at `vc'
  */
-#define V2JOIN2(o, a, sb, b, sc, c) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X] + (sc) * (c)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y] + (sc) * (c)[Y]; \
+#define V2JOIN2(o, va, sb, vb, sc, vc) do { \
+	(o)[X] = (va)[X] + (sb) * (vb)[X] + (sc) * (vc)[X]; \
+	(o)[Y] = (va)[Y] + (sb) * (vb)[Y] + (sc) * (vc)[Y]; \
     } while (0)
 
 /**
  * @brief Compose 4D vector at `o' of:
- * Vector at `a' plus
- * scalar `sb' times vector at `b' plus
- * scalar `sc' times vector at `c'
+ * Vector at `va' plus
+ * scalar `sb' times vector at `vb' plus
+ * scalar `sc' times vector at `vc'
  */
 #define HJOIN2(o, a, sb, b, sc, c) do { \
 	(o)[X] = (a)[X] + (sb) * (b)[X] + (sc) * (c)[X]; \
@@ -1344,12 +1344,12 @@ typedef enum vmath_matrix_component_ {
 	(o)[W] = (a)[W] + (sb) * (b)[W] + (sc) * (c)[W]; \
     } while (0)
 
-#define VJOIN2N(o, a, sb, b, sc, c, n) do { \
+#define VJOIN2N(o, va, sb, vb, sc, vc, n) do { \
 	size_t _vjoin2; \
 	for (_vjoin2 = 0; \
 	     _vjoin2 < (size_t)(n); \
 	     _vjoin2++) { \
-	    (o)[_vjoin2] = (a)[_vjoin2] + (sb) * (b)[_vjoin2] + (sc) * (c)[_vjoin2]; \
+	    (o)[_vjoin2] = (va)[_vjoin2] + (sb) * (vb)[_vjoin2] + (sc) * (vc)[_vjoin2]; \
 	} \
     } while (0)
 
@@ -1357,10 +1357,10 @@ typedef enum vmath_matrix_component_ {
 /**
  * Join three scaled vectors to a base `a', storing the result in `o'.
  */
-#define VJOIN3(o, a, sb, b, sc, c, sd, d) do { \
-	(o)[X] = (a)[X] + (sb)*(b)[X] + (sc)*(c)[X] + (sd)*(d)[X]; \
-	(o)[Y] = (a)[Y] + (sb)*(b)[Y] + (sc)*(c)[Y] + (sd)*(d)[Y]; \
-	(o)[Z] = (a)[Z] + (sb)*(b)[Z] + (sc)*(c)[Z] + (sd)*(d)[Z]; \
+#define VJOIN3(o, va, sb, vb, sc, vc, sd, vd) do { \
+	(o)[X] = (va)[X] + (sb)*(vb)[X] + (sc)*(vc)[X] + (sd)*(vd)[X]; \
+	(o)[Y] = (va)[Y] + (sb)*(vb)[Y] + (sc)*(vc)[Y] + (sd)*(vd)[Y]; \
+	(o)[Z] = (va)[Z] + (sb)*(vb)[Z] + (sc)*(vc)[Z] + (sd)*(vd)[Z]; \
     } while (0)
 
 
@@ -1369,23 +1369,23 @@ typedef enum vmath_matrix_component_ {
  * scalar `sa' times vector at `a' plus
  * scalar `sb' times vector at `b'
  */
-#define VBLEND2(o, sa, a, sb, b) do { \
-	(o)[X] = (sa) * (a)[X] + (sb) * (b)[X]; \
-	(o)[Y] = (sa) * (a)[Y] + (sb) * (b)[Y]; \
-	(o)[Z] = (sa) * (a)[Z] + (sb) * (b)[Z]; \
+#define VBLEND2(o, sa, va, sb, vb) do { \
+	(o)[X] = (sa) * (va)[X] + (sb) * (vb)[X]; \
+	(o)[Y] = (sa) * (va)[Y] + (sb) * (vb)[Y]; \
+	(o)[Z] = (sa) * (va)[Z] + (sb) * (vb)[Z]; \
     } while (0)
 
 /**
  * @brief Blend into vector `o'
- * scalar `sa' times vector at `a' plus
- * scalar `sb' times vector at `b'
+ * scalar `sa' times vector at `va' plus
+ * scalar `sb' times vector at `vb'
  */
-#define VBLEND2N(o, sa, a, sb, b, n) do { \
+#define VBLEND2N(o, sa, va, sb, vb, n) do { \
 	size_t _vblend2; \
 	for (_vblend2 = 0; \
 	     _vblend2 < (size_t)(n); \
 	     _vblend2++) { \
-	    (b)[_vblend2] = (sa) * (a)[_vblend2] + (sb) * (b)[_vblend2]; \
+	    (o)[_vblend2] = (sa) * (va)[_vblend2] + (sb) * (vb)[_vblend2]; \
 	} \
     } while (0)
 
