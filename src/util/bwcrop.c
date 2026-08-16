@@ -48,10 +48,12 @@
 
 #define round(x) ((int)(x+0.5))
 #define MAXBUFBYTES BU_PAGE_SIZE*BU_PAGE_SIZE	/* max bytes to malloc in buffer space */
+#define SINGLE_SAMPLE_FRACTION 0.5
 
 unsigned char *buffer;
 ssize_t scanlen;			/* length of infile scanlines */
 ssize_t buflines;		/* Number of lines held in buffer */
+ssize_t bufloaded;		/* Number of valid lines currently in buffer */
 b_off_t buf_start = -1000;	/* First line in buffer */
 
 unsigned long xnum, ynum;	/* Number of pixels in new file */
@@ -161,8 +163,12 @@ fill_buffer(int y)
 
     bu_fseek(ifp, buf_start * scanlen, 0);
     ret = fread(buffer, scanlen, buflines, ifp);
-    if (ret == 0)
-	perror("fread");
+    bufloaded = (ssize_t)ret;
+    if (ret == 0) {
+	if (ferror(ifp))
+	    perror("bwcrop fread");
+	bu_exit(5, "bwcrop: input does not contain scanline %d\n", y);
+    }
 }
 
 
@@ -170,7 +176,9 @@ int
 main(int argc, char **argv)
 {
     float bx1, by1, bx2, by2, bx, by;
+    fastf_t row_fraction, col_fraction;
     size_t row, col;
+    ssize_t sample_y;
     ssize_t yindex;
     char value;
     size_t ret;
@@ -266,25 +274,32 @@ main(int argc, char **argv)
 
     /* Move all points */
     for (row = 0; row < ynum; row++) {
+	row_fraction = (ynum > 1) ? (fastf_t)row / (fastf_t)(ynum - 1) : SINGLE_SAMPLE_FRACTION;
+
 	/* calculate left point of row */
-	bx1 = ((ulx-llx)/(fastf_t)(ynum-1)) * (fastf_t)row + llx;
-	by1 = ((uly-lly)/(fastf_t)(ynum-1)) * (fastf_t)row + lly;
+	bx1 = (ulx - llx) * row_fraction + llx;
+	by1 = (uly - lly) * row_fraction + lly;
 	/* calculate right point of row */
-	bx2 = ((urx-lrx)/(fastf_t)(ynum-1)) * (fastf_t)row + lrx;
-	by2 = ((ury-lry)/(fastf_t)(ynum-1)) * (fastf_t)row + lry;
+	bx2 = (urx - lrx) * row_fraction + lrx;
+	by2 = (ury - lry) * row_fraction + lry;
 
 	for (col = 0; col < xnum; col++) {
+	    col_fraction = (xnum > 1) ? (fastf_t)col / (fastf_t)(xnum - 1) : SINGLE_SAMPLE_FRACTION;
+
 	    /* calculate point along row */
-	    bx = ((bx2-bx1)/(fastf_t)(xnum-1)) * (fastf_t)col + bx1;
-	    by = ((by2-by1)/(fastf_t)(xnum-1)) * (fastf_t)col + by1;
+	    bx = (bx2 - bx1) * col_fraction + bx1;
+	    by = (by2 - by1) * col_fraction + by1;
+
+	    if (round(bx) < 0 || round(bx) >= scanlen || round(by) < 0)
+		bu_exit(5, "bwcrop: sample coordinate (%g, %g) is outside the input image\n", bx, by);
 
 	    /* Make sure we are in the buffer */
-	    yindex = round(by) - buf_start;
-	    if (yindex >= buflines) {
-		fill_buffer(round(by));
-		yindex = round(by) - buf_start;
-	    }
-	    yindex = yindex + buf_start;
+	    sample_y = round(by);
+	    if (sample_y < buf_start || sample_y >= buf_start + bufloaded)
+		fill_buffer(sample_y);
+	    yindex = sample_y - buf_start;
+	    if (yindex >= bufloaded)
+		bu_exit(5, "bwcrop: input does not contain scanline %zd\n", sample_y);
 
 	    value = buffer[ yindex * scanlen + round(bx) ];
 	    ret = fwrite(&value, sizeof(value), 1, ofp);
