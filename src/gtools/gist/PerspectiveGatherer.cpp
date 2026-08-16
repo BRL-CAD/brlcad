@@ -104,14 +104,24 @@ static std::string createOutputBase(std::string inFile, std::string workingDir, 
 std::string
 renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost)
 {
+    constexpr const char *fullRenderSize = "1024";
+    constexpr const char *previewRenderSize = "256";
+    constexpr const char *previewDetailedRenderSize = "512";
+    constexpr const char *fullAmbientSettings = "set ambSamples=8";
+    constexpr const char *previewAmbientSettings = "set ambSamples=1";
+
     std::string pathToInput = opt.getInFile();
     std::string outputname = createOutputBase(opt.getInFile(), opt.getWorkingDir(), component);
+    if (opt.getPreviewMode()) {
+	outputname += "_preview";
+    }
 
     std::string render;
     std::string cmd;
     std::string ncpu(std::to_string(opt.getNCPU()));
-    const char* renderSize = opt.getPreviewMode() ? "128" : "1024";
-    const char* ambient = opt.getPreviewMode() ? "set ambSamples=1" : "set ambSamples=8";
+    const char* renderSize = opt.getPreviewMode() ? previewRenderSize : fullRenderSize;
+    const char* detailedRenderSize = opt.getPreviewMode() ? previewDetailedRenderSize : fullRenderSize;
+    const char* ambient = opt.getPreviewMode() ? previewAmbientSettings : fullAmbientSettings;
 
     // setup av for rtedge since that's the majority of our work. The outliers (rt / rtwizard) will
     // reset the av to their needs
@@ -208,7 +218,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             outputname += "_detailed.png";
 
             av[0] = cmd.c_str();
-            av[1] = "-s"; av[2] = renderSize;
+            av[1] = "-s"; av[2] = detailedRenderSize;
             av[3] = "-W";
             av[4] = "-R";
             av[5] = "-a";  av[6] = "45";

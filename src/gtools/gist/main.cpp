@@ -36,8 +36,12 @@ statusPrint(std::string msg, int verbosePrinting)
 void
 generateReport(Options opt)
 {
-    // create image frame
-    IFPainter img(opt.getLength(), opt.getWidth());
+    // Compose in one stable coordinate system.  Scaling the completed page
+    // keeps low- and high-PPI reports visually identical and avoids leaking
+    // output resolution into fixed-pixel drawing details.
+    const int layoutWidth = Options::CANONICAL_REPORT_WIDTH;
+    const int layoutLength = Options::CANONICAL_REPORT_LENGTH;
+    IFPainter img(layoutLength, layoutWidth);
 
     // create information gatherer
     InformationGatherer info(&opt);
@@ -61,29 +65,21 @@ generateReport(Options opt)
     info.checkScientificNotation();
 
     // Define commonly used ratio variables
-    int margin = opt.getWidth() / 150;
-    int header_footer_height = opt.getLength() / 25;
-    int padding = opt.getLength() / 250;
-    int vvHeight = (opt.getLength() - 2*header_footer_height - 2*margin) / 3;
+    int margin = layoutWidth / 150;
+    int header_footer_height = layoutLength / 25;
+    int padding = layoutLength / 250;
+    int vvHeight = (layoutLength - 2*header_footer_height - 2*margin) / 3;
 
     // Has same height and width as V&V Checks, offset X by V&V checks width
     // makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight, opt);
 
     // define the position of all sections in the report
-    Position imagePosition(0, 0, opt.getWidth(), opt.getLength());
+    Position imagePosition(0, 0, layoutWidth, layoutLength);
     Position topSection(margin, margin, imagePosition.width() - 2*margin, header_footer_height);
     Position bottomSection(margin, imagePosition.bottom() - header_footer_height - margin, imagePosition.width() - 2*margin, header_footer_height);
     Position hierarchySection(imagePosition.right() - imagePosition.width()/3.5 - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.width()/3.5, vvHeight);
     Position fileSection(imagePosition.right() - imagePosition.sixthWidth() - margin, topSection.bottom() + padding, imagePosition.sixthWidth(), hierarchySection.top() - topSection.bottom() - padding);
     Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
-
-    // Scale formerly fixed 300-PPI artwork coordinates with the requested
-    // page resolution.  Without this, low-PPI reports draw outside the image
-    // bounds and OpenCV aborts while composing the standard gist sheet.
-    const double pageScale = static_cast<double>(opt.getWidth()) / 3508.0;
-    const auto scaled = [pageScale](int value) {
-        return std::max(1, static_cast<int>(std::lround(value * pageScale)));
-    };
 
     // draw all sections
     statusPrint("*Creating report sections", opt.verbosePrinting());
@@ -101,15 +97,15 @@ generateReport(Options opt)
     statusPrint("    *Drawing Logos", opt.verbosePrinting());
     //brl-cad logo
     std::string model_logo_path = info.getModelLogoPath();
-    img.drawTransparentImage(scaled(3250), scaled(10), scaled(200), scaled(200), model_logo_path, scaled(250));
+    img.drawTransparentImage(3250, 10, 200, 200, model_logo_path, 250);
     //branding logo
     if (opt.getLogopath() != ""){
-        img.drawTransparentImage(scaled(3250), scaled(2280), scaled(200), scaled(200), opt.getLogopath(), scaled(250));
+        img.drawTransparentImage(3250, 2280, 200, 200, opt.getLogopath(), 250);
     }
     statusPrint("    ...Finished logos", opt.verbosePrinting());
     statusPrint(opt.getOpenGUI() ? "...Finished report" : std::string("...Finished report: " + opt.getOutFile()), opt.verbosePrinting());
 
-    // paint renderings
+    img.scaleTo(opt.getWidth(), opt.getLength());
 
     // optionally, display the scene
     if (opt.getOpenGUI()) {

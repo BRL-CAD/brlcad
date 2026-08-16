@@ -31,6 +31,10 @@
 class Options
 {
 public:
+    static constexpr int DEFAULT_REPORT_PPI = 300;
+    static constexpr int CANONICAL_REPORT_WIDTH = 3508;
+    static constexpr int CANONICAL_REPORT_LENGTH = 2480;
+
     Options();
     ~Options();
 
@@ -155,8 +159,8 @@ private:
     // string path to density file (lexically normalized)
     std::string densityFile;
 
-    // Fast report mode: retain the standard sheet but omit costly numerical
-    // verification passes (rtarea/gqa).
+    // Fast report mode: use lower-resolution renders and omit costly
+    // numerical verification passes (rtarea/gqa).
     int previewMode;
 
     // print verbose status messages

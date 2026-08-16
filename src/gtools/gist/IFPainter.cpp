@@ -730,6 +730,19 @@ IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
 // }
 
 void
+IFPainter::scaleTo(int width, int height)
+{
+    if (width <= 0 || height <= 0 || (width == img.cols && height == img.rows)) {
+	return;
+    }
+
+    cv::Mat scaled;
+    const int interpolation = (width < img.cols || height < img.rows) ? cv::INTER_AREA : cv::INTER_CUBIC;
+    cv::resize(img, scaled, cv::Size(width, height), 0.0, 0.0, interpolation);
+    img = scaled;
+}
+
+void
 IFPainter::openInGUI()
 {
     cv::String win_name("Report Preview");

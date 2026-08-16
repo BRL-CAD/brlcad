@@ -46,6 +46,18 @@ brlcad_addexec(gist "${GIST_SRCS}"  "libbu;librt;libged;${OpenCV_LIBRARIES};")
 target_include_directories(gist BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(gist SYSTEM PRIVATE ${OpenCV_INCLUDE_DIRS})
 
+if(BUILD_TESTING)
+  brlcad_addexec(
+    gist_preview_test
+    "tests/gist_preview_test.cpp;IFPainter.cpp;Options.cpp"
+    "libbu;librt;${OpenCV_LIBRARIES}"
+    NO_INSTALL
+  )
+  target_include_directories(gist_preview_test BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  target_include_directories(gist_preview_test SYSTEM PRIVATE ${OpenCV_INCLUDE_DIRS})
+  brlcad_add_test(NAME gist_preview_resolution COMMAND gist_preview_test ${CMAKE_CURRENT_BINARY_DIR})
+endif(BUILD_TESTING)
+
 if(CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
   add_custom_command(
     TARGET gist
@@ -56,6 +68,8 @@ if(CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
 endif(CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
 
 brlcad_adddata(assets/brlLogo-nobg.png images)
+
+cmakefiles(tests/gist_preview_test.cpp)
 
 # Local Variables:
 # tab-width: 8
