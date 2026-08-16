@@ -367,7 +367,7 @@ bu_color_convert(const double in[4], bu_color_space_t in_space,
 
     switch (in_space) {
 	case BU_COLOR_SPACE_RGB:
-	    HMOVE(rgv, in);
+	    HMOVE(rgb, in);
 	    break;
 	case BU_COLOR_SPACE_HSL:
 	    _bu_color_hsl_to_rgb(in, rgb);
