@@ -49,6 +49,14 @@ brlcad_addexec(lattice lattice.c "${PROC_DB_WDB_LIBS}" NO_STRICT NO_INSTALL)
 brlcad_addexec(loftwing loftwing.c "${PROC_DB_WDB_LIBS}" NO_STRICT NO_INSTALL)
 brlcad_addexec(specimen specimen.c "${PROC_DB_WDB_LIBS}" NO_STRICT NO_INSTALL)
 brlcad_addexec(terragen terragen.c "${PROC_DB_WDB_LIBS}" NO_STRICT NO_INSTALL)
+if(BRLCAD_ENABLE_GDAL)
+  set(CMAKE_FIND_FRAMEWORK LAST) # bundled first
+  brlcad_find_package(GDAL)
+endif(BRLCAD_ENABLE_GDAL)
+if(GDAL_LIBRARY AND GDAL_INCLUDE_DIR)
+  include_directories(SYSTEM ${GDAL_INCLUDE_DIR})
+  brlcad_addexec(earthgen earthgen.c "libwdb;${GDAL_LIBRARIES};${M_LIBRARY}" NO_STRICT NO_INSTALL)
+endif(GDAL_LIBRARY AND GDAL_INCLUDE_DIR)
 brlcad_addexec(voxelize voxelize.c "${PROC_DB_WDB_LIBS}" NO_STRICT NO_INSTALL)
 brlcad_addexec(cchannel cchannel.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 brlcad_addexec(clutter "clutter.c;common.c" "libwdb;${M_LIBRARY}" NO_INSTALL)
@@ -80,6 +88,7 @@ set(proc-db_ignore_files
   3NN4.pdb
   CMakeLists.txt
   caffeine.pdb
+  earthgen.c
   metaballs.pl
   mkbuilding.h
   mol-cube.dat
