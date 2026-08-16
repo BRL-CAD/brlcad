@@ -99,6 +99,12 @@ brlcad_add_test(
 )
 brlcad_addexec(pixelswap pixelswap.c libbu FOLDER Util)
 brlcad_addexec(pixembed pixembed.c libbu FOLDER Util)
+brlcad_add_test(
+  NAME util_bwcrop_pixembed
+  COMMAND
+    ${CMAKE_COMMAND} "-DBWCROP=$<TARGET_FILE:bwcrop>" "-DPIXEMBED=$<TARGET_FILE:pixembed>"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}" -P "${CMAKE_CURRENT_SOURCE_DIR}/crop_embed_test.cmake"
+)
 brlcad_addexec(pixfade pixfade.c "libicv;libbu" FOLDER Util)
 brlcad_addexec(pixfilter pixfilter.c libbu FOLDER Util)
 brlcad_addexec(pixhalve pixhalve.c "libdm;libbu" FOLDER Util)
@@ -145,7 +151,7 @@ install(PROGRAMS morphedit.tcl DESTINATION bin)
 brlcad_addexec(roots_example roots_example.c "libbu;librt" NO_INSTALL)
 brlcad_adddata(roots_example.c sample_applications)
 
-cmakefiles(bombardier.h morphedit.tcl pixdiff_test.cmake)
+cmakefiles(bombardier.h crop_embed_test.cmake morphedit.tcl pixdiff_test.cmake)
 cmakefiles(CMakeLists.txt)
 
 # Local Variables:
