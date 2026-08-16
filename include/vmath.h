@@ -1219,7 +1219,7 @@ typedef enum vmath_matrix_component_ {
  * @brief Combine together 2 vectors of length `n', both scaled by
  * scalars.
  */
-#define VCOMB2N(o, sa, a, sb, b, n) do { \
+#define VCOMB2N(o, sa, va, sb, vb, n) do { \
 	size_t _vcomb2; \
 	for (_vcomb2 = 0; \
 	     _vcomb2 < (size_t)(n); \
@@ -1242,7 +1242,7 @@ typedef enum vmath_matrix_component_ {
  * @brief Combine together 3 vectors of length `n', both scaled by
  * scalars.
  */
-#define VCOMB3N(o, sa, a, sb, b, sc, c, n) do { \
+#define VCOMB3N(o, sa, va, sb, vb, sc, vc, n) do { \
 	size_t _vcomb3; \
 	for (_vcomb3 = 0; \
 	     _vcomb3 < (size_t)(n); \
