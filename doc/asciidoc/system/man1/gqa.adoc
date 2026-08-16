@@ -176,6 +176,38 @@ Only those reports requested will be provided. The default is *-A A*, to produce
 *Volume (v):* Computes the volume of the _objects_ specified on the command line.
 +
 *Weight (w):* Computes the weight of the _objects_ specified on the command line.
++
+*Centroids (c):* Computes the mass-weighted centroid of each specified object
+and of all specified objects together. Centroid analysis also enables weight
+analysis and therefore requires valid density information for every region.
+Coordinates are reported in millimeters in model coordinates.
++
+*Moments of inertia (m):* Computes the mass moments and products of inertia
+about each object's centroid and about the combined centroid of all specified
+objects. The report is a symmetric matrix: the diagonal entries are moments
+about the X, Y, and Z axes, and the off-diagonal entries are products of
+inertia. Values are reported in gram-square millimeters. This analysis also
+enables weight and centroid analysis.
++
+Centroids and moments are estimated from the same progressively refined,
+axis-aligned ray grids used for weight calculations. Results from the computed
+views are averaged, so the grid controls described under *-g*, *-n*, and *-N*
+also control their accuracy. Geometry overlaps or missing/incorrect density
+assignments invalidate the results.
++
+For example, the following reports weight and centroids for two objects:
++
+[source]
+----
+gqa -Ac model.g object1 object2
+----
++
+To include their moments and products of inertia, use:
++
+[source]
+----
+gqa -Am model.g object1 object2
+----
 
 
 *-a* __azimuth_deg__::
