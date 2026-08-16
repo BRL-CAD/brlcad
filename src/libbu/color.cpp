@@ -367,7 +367,7 @@ bu_color_convert(const double in[4], bu_color_space_t in_space,
 
     switch (in_space) {
 	case BU_COLOR_SPACE_RGB:
-	    memcpy(rgb, in, sizeof(rgb));
+	    HMOVE(rgv, in);
 	    break;
 	case BU_COLOR_SPACE_HSL:
 	    _bu_color_hsl_to_rgb(in, rgb);
@@ -381,7 +381,7 @@ bu_color_convert(const double in[4], bu_color_space_t in_space,
 
     switch (out_space) {
 	case BU_COLOR_SPACE_RGB:
-	    memcpy(result, rgb, sizeof(result));
+	    HMOVE(result, rgb);
 	    break;
 	case BU_COLOR_SPACE_HSL:
 	    _bu_color_rgb_to_hsl(rgb, result);
@@ -393,7 +393,7 @@ bu_color_convert(const double in[4], bu_color_space_t in_space,
 	    return 0;
     }
 
-    memcpy(out, result, sizeof(result));
+    HMOVE(out, result);
     return 1;
 }
 
