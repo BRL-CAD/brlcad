@@ -454,10 +454,10 @@ typedef enum vmath_matrix_component_ {
  * concerted effort to coordinate prior to a release.  first step is
  * to evaluate impact on performance and behavior of our tests.
  */
-#  define NEAR_ZERO(val, epsilon)	(!(((val) < -epsilon) || ((val) > epsilon)))
-#  define NEAR_ZERO(val, epsilon)	(!(((val) < -epsilon)) && !(((val) > epsilon)))
+#  define NEAR_ZERO(val, epsilon)	(!(((val) < -(epsilon)) || ((val) > (epsilon))))
+#  define NEAR_ZERO(val, epsilon)	(!(((val) < -(epsilon))) && !(((val) > (epsilon))))
 #else
-#  define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
+#  define NEAR_ZERO(val, epsilon)	(((val) > -(epsilon)) && ((val) < (epsilon)))
 #endif
 
 /**
@@ -465,9 +465,9 @@ typedef enum vmath_matrix_component_ {
  * a specified epsilon distance from zero.
  */
 #define VNEAR_ZERO(v, tol) \
-	(NEAR_ZERO(v[X], tol) \
-	 && NEAR_ZERO(v[Y], tol) \
-	 && NEAR_ZERO(v[Z], tol))
+	(NEAR_ZERO(v[X], (tol)) \
+	 && NEAR_ZERO(v[Y], (tol)) \
+	 && NEAR_ZERO(v[Z], (tol)))
 
 /**
  * Test for all elements of `v' being smaller than `tol'.
@@ -480,10 +480,10 @@ typedef enum vmath_matrix_component_ {
  * Version for homogeneous 4D vectors.
  */
 #define HNEAR_ZERO(v, tol) \
-    (NEAR_ZERO(v[X], tol) \
-     && NEAR_ZERO(v[Y], tol) \
-     && NEAR_ZERO(v[Z], tol) \
-     && NEAR_ZERO(v[W], tol))
+    (NEAR_ZERO(v[X], (tol)) \
+     && NEAR_ZERO(v[Y], (tol)) \
+     && NEAR_ZERO(v[Z], (tol)) \
+     && NEAR_ZERO(v[W], (tol)))
 
 
 /**
