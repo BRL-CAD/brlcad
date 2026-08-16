@@ -767,6 +767,21 @@ image::objtype_brep.png[brep,align=center]
 |===
 |Creation |`brep _oldobj_ brep _newname_` converts an existing primitive to a
 BREP.  BREPs are also produced directly by importers.
+|Structure |A BREP records vertices, 3D edge curves, trimming curves, loops,
+faces, and their topology. Each face references an underlying parametric
+surface and uses one or more trimming loops to define the portion belonging to
+the boundary.
+|Capabilities |BRL-CAD can ray trace BREP objects directly, draw their
+wireframes and shaded surfaces, inspect their topology and NURBS data, and
+convert supported CSG primitives to BREP form. The `brep` command also
+provides validity checks, plotting tools, experimental Boolean evaluation,
+mesh generation, and attempts to recover CSG representations.
+|Limitations |A closed, consistently oriented, topologically valid boundary is
+required for dependable solid ray tracing. Open or invalid models may still be
+useful as surfaces but do not define an unambiguous volume. General
+component-level editing, BREP Boolean evaluation, CSG recovery, and production
+mesh generation remain limited or experimental; difficult imported models may
+need repair in their source CAD system.
 |===
 
 === poly and bspline -- Legacy surface types
