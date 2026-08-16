@@ -332,7 +332,7 @@ test_bu_color_format(int argc, char *argv[])
     if (check_color_format("rgba(255, 0, 0, 0.5)", BU_COLOR_FORMAT_RGBA,
 			   "prefix:rgba(255, 0, 0, 0.5)"))
 	return 1;
-    if (check_color_format("rgba(255, 0, 0, 0.5)", BU_COLOR_FORMAT_HEX_ALPHA,
+    if (check_color_format("rgba(255, 0, 0, 0.5)", BU_COLOR_FORMAT_HEXA,
 			   "prefix:#ff000080"))
 	return 1;
     if (check_color_format("red", BU_COLOR_FORMAT_HEX,
