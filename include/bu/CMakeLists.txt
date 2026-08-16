@@ -28,6 +28,7 @@ set(
   malloc.h
   mapped_file.h
   mime.h
+  num.h
   observer.h
   opt.h
   parallel.h
