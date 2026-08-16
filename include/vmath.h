@@ -1228,58 +1228,26 @@ typedef enum vmath_matrix_component_ {
 	} \
     } while (0)
 
-/**
- * Join three scaled vectors to a base `a', storing the result in `o'.
- */
-#define VJOIN3(o, a, sb, b, sc, c, sd, d) do { \
-	(o)[X] = (a)[X] + (sb)*(b)[X] + (sc)*(c)[X] + (sd)*(d)[X]; \
-	(o)[Y] = (a)[Y] + (sb)*(b)[Y] + (sc)*(c)[Y] + (sd)*(d)[Y]; \
-	(o)[Z] = (a)[Z] + (sb)*(b)[Z] + (sc)*(c)[Z] + (sd)*(d)[Z]; \
-    } while (0)
-
 
 /**
- * @brief Compose 3D vector at `o' of:
- * Vector at `a' plus
- * scalar `sb' times vector at `b' plus
- * scalar `sc' times vector at `c'
+ * @brief Combine together 3 vectors, scaled by scalars.
  */
-#define VJOIN2(o, a, sb, b, sc, c) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X] + (sc) * (c)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y] + (sc) * (c)[Y]; \
-	(o)[Z] = (a)[Z] + (sb) * (b)[Z] + (sc) * (c)[Z]; \
+#define VCOMB3(o, sa, va, sb, vb, sc, vc) do { \
+	(o)[X] = (sa) * (va)[X] + (sb) * (vb)[X] + (sc) * (vc)[X]; \
+	(o)[Y] = (sa) * (va)[Y] + (sb) * (vb)[Y] + (sc) * (vc)[Y]; \
+	(o)[Z] = (sa) * (va)[Z] + (sb) * (vb)[Z] + (sc) * (vc)[Z]; \
     } while (0)
 
 /**
- * @brief Compose 2D vector at `o' of:
- * Vector at `a' plus
- * scalar `sb' times vector at `b' plus
- * scalar `sc' times vector at `c'
+ * @brief Combine together 3 vectors of length `n', both scaled by
+ * scalars.
  */
-#define V2JOIN2(o, a, sb, b, sc, c) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X] + (sc) * (c)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y] + (sc) * (c)[Y]; \
-    } while (0)
-
-/**
- * @brief Compose 4D vector at `o' of:
- * Vector at `a' plus
- * scalar `sb' times vector at `b' plus
- * scalar `sc' times vector at `c'
- */
-#define HJOIN2(o, a, sb, b, sc, c) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X] + (sc) * (c)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y] + (sc) * (c)[Y]; \
-	(o)[Z] = (a)[Z] + (sb) * (b)[Z] + (sc) * (c)[Z]; \
-	(o)[W] = (a)[W] + (sb) * (b)[W] + (sc) * (c)[W]; \
-    } while (0)
-
-#define VJOIN2N(o, a, sb, b, sc, c, n) do { \
-	size_t _vjoin2; \
-	for (_vjoin2 = 0; \
-	     _vjoin2 < (size_t)(n); \
-	     _vjoin2++) { \
-	    (o)[_vjoin2] = (a)[_vjoin2] + (sb) * (b)[_vjoin2] + (sc) * (c)[_vjoin2]; \
+#define VCOMB3N(o, sa, a, sb, b, sc, c, n) do { \
+	size_t _vcomb3; \
+	for (_vcomb3 = 0; \
+	     _vcomb3 < (size_t)(n); \
+	     _vcomb3++) { \
+	    (o)[_vcomb3] = (sa) * (va)[_vcomb3] + (sb) * (vb)[_vcomb3] + (sc) * (vc)[_vcomb3]; \
 	} \
     } while (0)
 
@@ -1337,6 +1305,62 @@ typedef enum vmath_matrix_component_ {
 	     _vjoin1++) { \
 	    (o)[_vjoin1] = (a)[_vjoin1] + (sb) * (b)[_vjoin1]; \
 	} \
+    } while (0)
+
+
+/**
+ * @brief Compose 3D vector at `o' of:
+ * Vector at `a' plus
+ * scalar `sb' times vector at `b' plus
+ * scalar `sc' times vector at `c'
+ */
+#define VJOIN2(o, a, sb, b, sc, c) do { \
+	(o)[X] = (a)[X] + (sb) * (b)[X] + (sc) * (c)[X]; \
+	(o)[Y] = (a)[Y] + (sb) * (b)[Y] + (sc) * (c)[Y]; \
+	(o)[Z] = (a)[Z] + (sb) * (b)[Z] + (sc) * (c)[Z]; \
+    } while (0)
+
+/**
+ * @brief Compose 2D vector at `o' of:
+ * Vector at `a' plus
+ * scalar `sb' times vector at `b' plus
+ * scalar `sc' times vector at `c'
+ */
+#define V2JOIN2(o, a, sb, b, sc, c) do { \
+	(o)[X] = (a)[X] + (sb) * (b)[X] + (sc) * (c)[X]; \
+	(o)[Y] = (a)[Y] + (sb) * (b)[Y] + (sc) * (c)[Y]; \
+    } while (0)
+
+/**
+ * @brief Compose 4D vector at `o' of:
+ * Vector at `a' plus
+ * scalar `sb' times vector at `b' plus
+ * scalar `sc' times vector at `c'
+ */
+#define HJOIN2(o, a, sb, b, sc, c) do { \
+	(o)[X] = (a)[X] + (sb) * (b)[X] + (sc) * (c)[X]; \
+	(o)[Y] = (a)[Y] + (sb) * (b)[Y] + (sc) * (c)[Y]; \
+	(o)[Z] = (a)[Z] + (sb) * (b)[Z] + (sc) * (c)[Z]; \
+	(o)[W] = (a)[W] + (sb) * (b)[W] + (sc) * (c)[W]; \
+    } while (0)
+
+#define VJOIN2N(o, a, sb, b, sc, c, n) do { \
+	size_t _vjoin2; \
+	for (_vjoin2 = 0; \
+	     _vjoin2 < (size_t)(n); \
+	     _vjoin2++) { \
+	    (o)[_vjoin2] = (a)[_vjoin2] + (sb) * (b)[_vjoin2] + (sc) * (c)[_vjoin2]; \
+	} \
+    } while (0)
+
+
+/**
+ * Join three scaled vectors to a base `a', storing the result in `o'.
+ */
+#define VJOIN3(o, a, sb, b, sc, c, sd, d) do { \
+	(o)[X] = (a)[X] + (sb)*(b)[X] + (sc)*(c)[X] + (sd)*(d)[X]; \
+	(o)[Y] = (a)[Y] + (sb)*(b)[Y] + (sc)*(c)[Y] + (sd)*(d)[Y]; \
+	(o)[Z] = (a)[Z] + (sb)*(b)[Z] + (sc)*(c)[Z] + (sd)*(d)[Z]; \
     } while (0)
 
 
