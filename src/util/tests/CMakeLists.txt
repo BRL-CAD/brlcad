@@ -1,21 +1,29 @@
 brlcad_add_test(
-  NAME util_pixdiff_bytes
+  NAME util_bwcrop_single_axis
   COMMAND
-    ${CMAKE_COMMAND} "-DPIXDIFF=$<TARGET_FILE:pixdiff>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
-    -P "${CMAKE_CURRENT_SOURCE_DIR}/pixdiff_test.cmake"
+    "${CMAKE_COMMAND}" "-DBWCROP=$<TARGET_FILE:bwcrop>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_bwcrop_single_axis.cmake"
 )
 
 brlcad_add_test(
-  NAME util_bwcrop_pixembed
+  NAME util_pixdiff_bytes
   COMMAND
-    ${CMAKE_COMMAND} "-DBWCROP=$<TARGET_FILE:bwcrop>" "-DPIXEMBED=$<TARGET_FILE:pixembed>"
-    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}" -P "${CMAKE_CURRENT_SOURCE_DIR}/crop_embed_test.cmake"
+    "${CMAKE_COMMAND}" "-DPIXDIFF=$<TARGET_FILE:pixdiff>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_pixdiff_bytes.cmake"
+)
+
+brlcad_add_test(
+  NAME util_pixembed_edge_replication
+  COMMAND
+    "${CMAKE_COMMAND}" "-DPIXEMBED=$<TARGET_FILE:pixembed>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_pixembed_edge_replication.cmake"
 )
 
 cmakefiles(
   CMakeLists.txt
-  crop_embed_test.cmake
-  pixdiff_test.cmake
+  test_bwcrop_single_axis.cmake
+  test_pixdiff_bytes.cmake
+  test_pixembed_edge_replication.cmake
 )
 
 # Local Variables:
