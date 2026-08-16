@@ -22,8 +22,8 @@ brlcad_add_test(
   COMMAND test_fontstash ${CMAKE_SOURCE_DIR}/misc/osifont/osifont-lgpl3fe.ttf
 )
 
-#brlcad_addexec(test_fb_standard_stream test_fb_standard_stream.c "libdm;libbu" TEST)
-#brlcad_add_test(NAME dm_fb_standard_stream COMMAND test_fb_standard_stream)
+brlcad_addexec(test_fb_standard_stream test_fb_standard_stream.c "libdm;libbu" TEST)
+brlcad_add_test(NAME dm_fb_standard_stream COMMAND test_fb_standard_stream)
 
 cmakefiles(CMakeLists.txt)
 cmakefiles(
