@@ -29,6 +29,9 @@ If only the input and output files are provided, *bwcrop* will prompt the user i
 
 Alternatively, all parameters can be provided on the command line for use in scripts. The coordinate names refer to the input file, in clockwise order starting from the upper-left corner. The nearest input pixel is selected for each output pixel; no interpolation is performed.
 
+If an output dimension is one pixel, *bwcrop* samples the midpoint of the
+quadrilateral along that axis.
+
 [[arguments]]
 == ARGUMENTS
 
