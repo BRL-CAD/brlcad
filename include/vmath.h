@@ -1622,8 +1622,9 @@ typedef enum vmath_matrix_component_ {
     } while (0)
 
 /**
- * @brief Given a direction vector, compute the inverses of each element.
- * When division by zero would have occurred, mark inverse as INFINITY.
+ * @brief Given a direction vector, compute the inverses of each
+ * element.  When division by near-zero would have occurred, inverse
+ * is set to INFINITY and input direction vector is clamped to zero.
  */
 #define VINVDIR(_inv, _dir) do { \
 	if ((_dir)[X] < -SQRT_SMALL_FASTF || (_dir)[X] > SQRT_SMALL_FASTF) { \
