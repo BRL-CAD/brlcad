@@ -317,6 +317,9 @@ extern "C" {
 /** @brief number of fastf_t's per plane_t */
 #define ELEMENTS_PER_PLANE	4
 
+/** @brief number of fastf_t's per quat_t */
+#define ELEMENTS_PER_QUAT	4
+
 /** @brief number of fastf_t's per mat_t */
 #define ELEMENTS_PER_MAT	(ELEMENTS_PER_PLANE*ELEMENTS_PER_PLANE)
 
