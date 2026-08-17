@@ -80,7 +80,7 @@
  * invisible at globe scale.  40x keeps the exaggerated range within
  * the uint16 budget at dim=900 while making features clearly visible.
  */
-#define DEFAULT_EXAG 40.0
+#define DEFAULT_EXAG 1.0
 
 /* Default samples per cube-face edge. */
 #define DEFAULT_DIM 900
@@ -244,9 +244,6 @@ warp_face(GDALDatasetH src, double lat_0, double lon_0,
  *
  * @param src          Open GDAL source dataset (global DEM)
  * @param wdbp         Open BRL-CAD database handle
- * @param face         Cube face definition
- * @param dim          Samples per face edge
- * @param raw_min_m    Global raw elevation minimum (metres)
  * @param exag         Vertical exaggeration factor
  * @param cell_m       Uniform cell spacing (metres, same for all axes)
  * @param radius_mm    Earth radius in mm
@@ -256,7 +253,7 @@ warp_face(GDALDatasetH src, double lat_0, double lon_0,
 static int
 process_face(GDALDatasetH src, struct rt_wdb *wdbp,
 	     const struct cube_face *face, unsigned int dim,
-	     double raw_min_m, double exag,
+	     double exag,
 	     double cell_m, double cell_z_m, double radius_mm)
 {
     char name_data[64], name_solid[64], name_pyr[64], name_comb[64];
@@ -267,7 +264,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
     double *elev;
     unsigned short *grid;
     size_t count;
-    unsigned int row, col;
+    unsigned int row;
 
     double cell_mm   = cell_m * M2MM;
     double cell_z_mm = cell_z_m * M2MM;
@@ -277,7 +274,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
      * For an inscribed cube wedge, the minimum Z is R/sqrt(3).
      */
     double R_m = radius_mm / M2MM;
-    double z_base_m  = R_m / sqrt(3.0);
+    double z_base_m  = 3000.0; /* Deep inside the Earth */
     double z_base_mm = z_base_m * M2MM;
 
     struct rt_dsp_internal *dsp;
@@ -293,6 +290,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
     /* ---- Warp source data to orthographic for this face. ---- */
     /* extent_m is R / sqrt(2) which is computed in main() as cell_m * (dim-1) / 2 */
     double extent_m = cell_m * (dim - 1) * 0.5;
+    float min_h = 1e9, max_h = -1e9;
     warped = warp_face(src, face->lat_0, face->lon_0,
 		       (int)dim, extent_m);
     if (!warped) {
@@ -324,15 +322,22 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
     GDALClose(warped);
 
     /* ---- Compute radial displacement and quantize. ---- */
-    for (row = 0; row < dim; row++) {
-        double y = -extent_m + row * cell_m;
-        for (col = 0; col < dim; col++) {
-            double x = -extent_m + col * cell_m;
-            size_t k = (size_t)row * dim + col;
-            double h = elev[k];
+    unsigned int gy, gx;
+    for (gy = 0; gy < dim; gy++) {
+        double y = extent_m - gy * cell_m;
+        unsigned int dy = dim - 1 - gy;
+        for (gx = 0; gx < dim; gx++) {
+            double x = -extent_m + gx * cell_m;
+            unsigned int dx = gx;
+            size_t k_elev = (size_t)gy * dim + gx;
+            size_t k_grid = (size_t)dy * dim + dx;
+            double h = elev[k_elev];
             double z_val, z_dsp;
             long v;
             double r_sq = x*x + y*y;
+
+            if (h < min_h) min_h = (float)h;
+            if (h > max_h) max_h = (float)h;
 
             if (has_nodata && NEAR_EQUAL(h, nodata_val, 1.0))
                 h = 0.0;
@@ -340,7 +345,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
             if (r_sq >= R_m * R_m) {
                 z_val = z_base_m;
             } else {
-                double R_elev = R_m + h * exag;
+                double R_elev = R_m + (h / 1000.0) * exag;
                 double under_sqrt = R_elev * R_elev - r_sq;
                 if (under_sqrt < 0.0) under_sqrt = 0.0;
                 z_val = sqrt(under_sqrt);
@@ -353,9 +358,10 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
 
             if (v < 0)      v = 0;
             if (v > U16MAX) v = U16MAX;
-            grid[k] = (unsigned short)v;
+            grid[k_grid] = (unsigned short)v;
         }
     }
+    printf("Face %s: elevation min=%f, max=%f\n", face->tag, min_h, max_h);
     bu_free(elev, "elevation");
 
     /* Convert to network (big-endian) byte order. */
@@ -397,15 +403,16 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
     {
         point_t pts[5];
         vect_t e, n, u;
-        double D = 2.0 * radius_mm; /* Far outside */
+        double D = 2.0 * radius_mm; // Far outside
+        double overlap = 1.0; // Exact partition
         
         geo_frame(face->lat_0, face->lon_0, e, n, u);
         
         /* Base vertices (CCW from outside looking in to origin) */
-        VSET(pts[0], D * (u[X] + e[X] + n[X]), D * (u[Y] + e[Y] + n[Y]), D * (u[Z] + e[Z] + n[Z]));
-        VSET(pts[1], D * (u[X] - e[X] + n[X]), D * (u[Y] - e[Y] + n[Y]), D * (u[Z] - e[Z] + n[Z]));
-        VSET(pts[2], D * (u[X] - e[X] - n[X]), D * (u[Y] - e[Y] - n[Y]), D * (u[Z] - e[Z] - n[Z]));
-        VSET(pts[3], D * (u[X] + e[X] - n[X]), D * (u[Y] + e[Y] - n[Y]), D * (u[Z] + e[Z] - n[Z]));
+        VSET(pts[0], D * (u[X] + overlap*e[X] + overlap*n[X]), D * (u[Y] + overlap*e[Y] + overlap*n[Y]), D * (u[Z] + overlap*e[Z] + overlap*n[Z]));
+        VSET(pts[1], D * (u[X] - overlap*e[X] + overlap*n[X]), D * (u[Y] - overlap*e[Y] + overlap*n[Y]), D * (u[Z] - overlap*e[Z] + overlap*n[Z]));
+        VSET(pts[2], D * (u[X] - overlap*e[X] - overlap*n[X]), D * (u[Y] - overlap*e[Y] - overlap*n[Y]), D * (u[Z] - overlap*e[Z] - overlap*n[Z]));
+        VSET(pts[3], D * (u[X] + overlap*e[X] - overlap*n[X]), D * (u[Y] + overlap*e[Y] - overlap*n[Y]), D * (u[Z] + overlap*e[Z] - overlap*n[Z]));
         /* Apex */
         VSET(pts[4], 0.0, 0.0, 0.0);
         
@@ -511,14 +518,14 @@ main(int ac, char *av[])
     /* Uniform cell spacing: the orthographic face spans +/- R/sqrt(2) on the
      * tangent plane.
      */
-    double extent_m = EARTH_R_M * M_SQRT1_2;
+    double extent_m = EARTH_R_M; // Cover the full hemisphere
     cell_m = 2.0 * extent_m / (dim - 1);
 
     /* Z quantization: we map the range from R/sqrt(3) to the max
      * exaggerated mountain peak into uint16.
      */
-    double z_base_m = EARTH_R_M / sqrt(3.0);
-    double z_max_m = EARTH_R_M + raw_max * exag;
+    double z_base_m = 3000.0; /* Deep inside the Earth */
+    double z_max_m = EARTH_R_M + (raw_max / 1000.0) * exag;
     double span_z_m = z_max_m - z_base_m;
     
     cell_z_m = span_z_m / (double)U16MAX;
@@ -537,7 +544,7 @@ main(int ac, char *av[])
     /* ---- Process each cube face. ---- */
     for (i = 0; i < NFACES; i++) {
 	if (process_face(src, wdbp, &faces[i], dim,
-			 raw_min, exag,
+			 exag,
 			 cell_m, cell_z_m, radius_mm) != 0) {
 	    bu_log("earthgen: WARNING - face %s failed\n",
 		   faces[i].tag);
