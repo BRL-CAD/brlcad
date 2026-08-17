@@ -1403,8 +1403,13 @@ typedef enum vmath_matrix_component_ {
  * FIXME: consistency, the result should come first
  */
 #define VPROJECT(a, b, c, d) do { \
-    VSCALE(c, b, VDOT(a, b) / VDOT(b, b)); \
-    VSUB2(d, a, c); \
+	double _dot = VDOT((b), (b)); \
+	if (_dot > SQRT_SMALL_FASTF) { \
+	    VSCALE((c), (b), VDOT((a), (b)) / _dot); \
+	} else { \
+	    VSCALE((c), (b), 0.0); \
+	} \
+	VSUB2((d), (a), (c)); \
     } while (0)
 
 /** @brief Return scalar magnitude squared of vector at `v' */
