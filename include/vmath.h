@@ -2214,11 +2214,11 @@ typedef enum vmath_matrix_component_ {
 #define HINIT_ZERO {0.0, 0.0, 0.0, 0.0}
 
 /**
- * matrix macro suitable for declaration statement initialization.
- * this sets up an identity matrix similar to calling MAT_IDN but as
- * an initializer array declaration instead of as a statement.
+ * 4D homogeneous vector macro suitable for identityt declaration
+ * statement initialization.  this sets all vector elements to zero
+ * except for W, set to 1.0, suitable for init declaration.
  */
-#define MAT_INIT_IDN {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}
+#define HINIT_IDN {0.0, 0.0, 0.0, 1.0}
 
 /**
  * matrix macro suitable for declaration statement initialization.
@@ -2226,6 +2226,13 @@ typedef enum vmath_matrix_component_ {
  * initializer array declaration instead of as a statement.
  */
 #define MAT_INIT_ZERO {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+
+/**
+ * matrix macro suitable for declaration statement initialization.
+ * this sets up an identity matrix similar to calling MAT_IDN but as
+ * an initializer array declaration instead of as a statement.
+ */
+#define MAT_INIT_IDN {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}
 
 
 #ifdef __cplusplus
