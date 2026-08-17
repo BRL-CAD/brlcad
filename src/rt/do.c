@@ -73,12 +73,24 @@ extern int finalframe;		/* frame to halt at */
 
 int def_tree(register struct rt_i *rtip, const char **first_obj);
 void do_ae(double azim, double elev);
+void do_view_finalize(double azim, double elev);
 void res_pr(void);
 void memory_summary(void);
 extern void worker(int cpu, void *arg);
 
 extern struct icv_image *bif;
 unsigned char *pixmap = NULL; /**< Pixel Map for rerendering of black pixels */
+
+enum view_command_flag {
+    VIEW_COMMAND_EYE_SET = 1u << 0,
+    VIEW_COMMAND_ORIENTATION_SET = 1u << 1
+};
+
+/* Camera commands are processed before the database is available.  Record
+ * which parts of the view they supplied so finalization fills in only the
+ * missing defaults once model bounds are known.
+ */
+static unsigned int view_command_flags = 0;
 
 
 /**
@@ -231,6 +243,7 @@ int cm_eyept(const int argc, const char **argv)
 
     for (i = 0; i < 3; i++)
 	eye_model[i] = atof(argv[i+1]);
+    view_command_flags |= VIEW_COMMAND_EYE_SET;
     return 0;
 }
 
@@ -264,6 +277,7 @@ int cm_lookat_pt(const int argc, const char **argv)
 	bn_mat_lookat(Viewrotscale, dir, yflip);
     }
 
+    view_command_flags |= VIEW_COMMAND_ORIENTATION_SET;
     return 0;
 }
 
@@ -277,6 +291,7 @@ int cm_vrot(const int argc, const char **argv)
 
     for (i = 0; i < 16; i++)
 	Viewrotscale[i] = atof(argv[i+1]);
+    view_command_flags |= VIEW_COMMAND_ORIENTATION_SET;
     return 0;
 }
 
@@ -292,7 +307,7 @@ int cm_orientation(const int argc, const char **argv)
     for (i = 0; i < 4; i++)
 	quat[i] = atof(argv[i+1]);
     quat_quat2mat(Viewrotscale, quat);
-    orientflag = 1;
+    view_command_flags |= VIEW_COMMAND_ORIENTATION_SET;
     return 0;
 }
 
@@ -305,9 +320,7 @@ int cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 	return -1;
     }
 
-    /* If no matrix or az/el specified yet, use params from cmd line */
-    if (Viewrotscale[15] <= 0.0)
-	do_ae(azimuth, elevation);
+    do_view_finalize(azimuth, elevation);
 
     if (do_frame(curframe) < 0)
 	return -1;
@@ -574,6 +587,7 @@ int cm_ae(const int argc, const char **argv)
 
     azimuth = atof(argv[1]);	/* set elevation and azimuth */
     elevation = atof(argv[2]);
+    view_command_flags = 0;
     do_ae(azimuth, elevation);
 
     return 0;
@@ -1382,11 +1396,9 @@ autoviewsize(point_t viewmin, point_t viewmax, double aspectratio)
  * A positive elevation represents rotating the *eye* around the
  * X axis, or, rotating the *model* in -X.
  */
-void
-do_ae(double azim, double elev)
+static void
+do_ae_internal(double azim, double elev, int center_eye)
 {
-    vect_t temp;
-    mat_t toEye;
     struct rt_i *rtip = APP.a_rt_i;
     point_t view_min, view_max;
 
@@ -1441,20 +1453,44 @@ do_ae(double azim, double elev)
     MAT_IDN(Viewrotscale);
     bn_mat_angles(Viewrotscale, 270.0+elev, 0.0, 270.0-azim);
 
-    /* Look at the center of the (sub)view bounding box */
-    MAT_IDN(toEye);
-    toEye[MDX] = -((view_max[X]+view_min[X])/2.0);
-    toEye[MDY] = -((view_max[Y]+view_min[Y])/2.0);
-    toEye[MDZ] = -((view_max[Z]+view_min[Z])/2.0);
-
     /* determine global viewsize based on the (sub)view bounding box */
     viewsize = autoviewsize(view_min, view_max, aspect);
 
     Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
-    bn_mat_mul(model2view, Viewrotscale, toEye);
-    bn_mat_inv(view2model, model2view);
-    VSET(temp, 0, 0, eye_backoff);
-    MAT4X3PNT(eye_model, view2model, temp);
+
+    if (center_eye) {
+	vect_t temp;
+	mat_t to_eye;
+
+	/* Look at the center of the (sub)view bounding box */
+	MAT_IDN(to_eye);
+	to_eye[MDX] = -((view_max[X]+view_min[X])/2.0);
+	to_eye[MDY] = -((view_max[Y]+view_min[Y])/2.0);
+	to_eye[MDZ] = -((view_max[Z]+view_min[Z])/2.0);
+
+	bn_mat_mul(model2view, Viewrotscale, to_eye);
+	bn_mat_inv(view2model, model2view);
+	VSET(temp, 0, 0, eye_backoff);
+	MAT4X3PNT(eye_model, view2model, temp);
+    }
+}
+
+
+void
+do_ae(double azim, double elev)
+{
+    do_ae_internal(azim, elev, 1);
+}
+
+
+void
+do_view_finalize(double azim, double elev)
+{
+    if (view_command_flags & VIEW_COMMAND_ORIENTATION_SET)
+	return;
+
+    do_ae_internal(azim, elev,
+	!(view_command_flags & VIEW_COMMAND_EYE_SET));
 }
 
 

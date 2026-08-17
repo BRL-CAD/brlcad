@@ -620,9 +620,7 @@ int main(int argc, char *argv[])
 	    }
 	}
 
-	/* orientation command has not been used */
-	if (!orientflag)
-	    do_ae(azimuth, elevation);
+	do_view_finalize(azimuth, elevation);
 
 	if (need_fb != 0 && !fbp) {
 	    int fb_status = fb_setup();

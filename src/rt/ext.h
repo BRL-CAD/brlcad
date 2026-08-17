@@ -173,7 +173,6 @@ extern int curframe;			/* current frame number */
 extern int desiredframe;		/* frame to start at */
 extern int finalframe;			/* frame to halt at */
 extern int matflag;			/* read matrix from stdin */
-extern int orientflag;			/* 1 means orientation has been set */
 extern int pix_end;			/* pixel to end at */
 extern int pix_start;			/* pixel to start at */
 /***** end variables shared with do.c *****/
@@ -193,6 +192,7 @@ extern int def_tree(struct rt_i *rtip, const char **first_obj);
 extern void do_prep(struct rt_i *rtip);
 extern void do_run(int a, int b);
 extern void do_ae(double azim, double elev);
+extern void do_view_finalize(double azim, double elev);
 extern int old_way(FILE *fp);
 extern int do_frame(int framenumber);
 
