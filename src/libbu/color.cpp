@@ -935,9 +935,9 @@ _bu_color_format_name(const double rgba[4])
     unsigned int value;
     size_t i;
 
-    if (rgba[3] == 0.0 && rgba[0] == 0.0 && rgba[1] == 0.0 && rgba[2] == 0.0)
+    if (HNEAR_ZERO(rgba))
 	return "transparent";
-    if (rgba[3] != 1.0)
+    if (!EQUAL(rgba[3], 1.0))
 	return NULL;
 
     value = (_bu_color_byte(rgba[0]) << 16)
