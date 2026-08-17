@@ -1137,7 +1137,11 @@ typedef enum vmath_matrix_component_ {
 	} \
     } while (0)
 
-/** @brief Normalize vector `v' to be a unit vector. */
+/**
+ * @brief Normalize vector `v' to be a unit vector.
+ *
+ * If input is near a zero-vector, we clamp to zero for stability.
+ */
 #define VUNITIZE(v) do { \
 	double _f = MAGSQ(v); \
 	if (! NEAR_EQUAL(_f, 1.0, VUNITIZE_TOL)) { \
@@ -1151,7 +1155,11 @@ typedef enum vmath_matrix_component_ {
 	} \
     } while (0)
 
-/** @brief Normalize 2D vector `v' to be a unit vector. */
+/**
+ * @brief Normalize 2D vector `v' to be a unit vector.
+ *
+ * If input is near a zero-vector, we clamp to zero for stability.
+ */
 #define V2UNITIZE(v) do { \
 	double _f = MAG2SQ(v); \
 	if (! NEAR_EQUAL(_f, 1.0, VUNITIZE_TOL)) { \
@@ -1939,8 +1947,7 @@ typedef enum vmath_matrix_component_ {
     } while (0)
 
 /**
- * @brief Scale quaternion at `b' by scalar `c', store result at
- * `a'.
+ * @brief Scale quaternion at `b' by scalar `c', result at `a'.
  */
 #define QSCALE(a, b, c) do { \
 	(a)[X] = (b)[X] * (c); \
@@ -1949,7 +1956,9 @@ typedef enum vmath_matrix_component_ {
 	(a)[W] = (b)[W] * (c); \
     } while (0)
 
-/** @brief Normalize quaternion 'a' to be a unit quaternion. */
+/**
+ * @brief Normalize quaternion 'a' to be a unit quaternion.
+ */
 #define QUNITIZE(a) do { \
 	double _f; \
 	_f = QMAGNITUDE(a); \
@@ -1992,7 +2001,9 @@ typedef enum vmath_matrix_component_ {
 	(a)[W] =  (b)[W]; \
     } while (0)
 
-/** @brief Multiplicative inverse quaternion */
+/**
+ * @brief Multiplicative inverse quaternion
+ */
 #define QINVERSE(a, b) do { \
 	double _f = QMAGSQ(b); \
 	if (_f < VDIVIDE_TOL) _f = 0.0; else _f = 1.0/_f; \
