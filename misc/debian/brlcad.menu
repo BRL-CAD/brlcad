@@ -4,17 +4,20 @@
 <Menu>
 	<Name>Applications</Name>
 	<Menu>
-		<Name>brlcad</Name>
-		<Directory>brlcad.directory</Directory>
-		<Include>
-			<Category>BRL-CAD</Category>
-		</Include>
+		<Name>Graphics</Name>
 		<Menu>
-			<Name>brlcad-doc</Name>
-			<Directory>brlcad-doc.directory</Directory>
+			<Name>brlcad</Name>
+			<Directory>brlcad.directory</Directory>
 			<Include>
-				<Category>BRL-CAD-doc</Category>
+				<Category>BRL-CAD</Category>
 			</Include>
+			<Menu>
+				<Name>brlcad-doc</Name>
+				<Directory>brlcad-doc.directory</Directory>
+				<Include>
+					<Category>BRL-CAD-doc</Category>
+				</Include>
+			</Menu>
 		</Menu>
 	</Menu>
 </Menu>
