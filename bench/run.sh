@@ -750,9 +750,9 @@ run ( ) {
 	\"${DB}/${run_geomname}.g\" ${run_geometry} 1>&2 <<EOF
 $run_view
 EOF
-    retval=$?
-    $VERBOSE_ECHO "DEBUG: Running $RT returned $retval"
-    return $retval
+    run_retval=$?
+    $VERBOSE_ECHO "DEBUG: Running $RT returned $run_retval"
+    return $run_retval
 }
 
 
@@ -986,6 +986,7 @@ bench ( ) {
     bench_frame=0
     bench_rtfms=""
     bench_percent=100
+    bench_retval=0
     bench_start_time="`date '+%H %M %S'`"
     bench_overall_elapsed=-1
 
@@ -1009,7 +1010,10 @@ $bench_view
 start $bench_frame;
 end;
 EOF
-	    retval=$?
+	    bench_raytrace_retval=$?
+	    if test $bench_raytrace_retval != 0 ; then
+		bench_retval=$bench_raytrace_retval
+	    fi
 
 	    if test $bench_frame -ne 0 ; then
 		if test -f ${bench_testname}.pix.$bench_frame ; then
@@ -1083,7 +1087,7 @@ EOF
 	    fi
 
 	    # did we fail?
-	    if test $retval != 0 ; then
+	    if test $bench_raytrace_retval != 0 ; then
 		$ECHO "RAYTRACE ERROR"
 		break
 	    fi
@@ -1149,7 +1153,7 @@ EOF
     fi
     $VERBOSE_ECHO "DEBUG: $CMP $PIX/${bench_testname}.pix ${bench_testname}.pix"
     cmp_result="`eval \\\"${CMP}\\\" \\\"${PIX}/${bench_testname}.pix\\\" ${bench_testname}.pix 2>&1`"
-    ret=$?
+    bench_cmp_retval=$?
 
     pixels_result="`echo \\\"$cmp_result\\\" | grep pixels`"
     if test "x$pixels_result" = "x" ; then
@@ -1158,22 +1162,24 @@ EOF
 	$ECHO "$pixels_result"
     fi
 
-    if test $ret = 0 ; then
+    if test $bench_cmp_retval = 0 ; then
 	# perfect match
 	$ECHO ${bench_testname}.pix:  answers are RIGHT
-    elif test $ret = 1 ; then
+    elif test $bench_cmp_retval = 1 ; then
 	# off by one, acceptable
 	$ECHO ${bench_testname}.pix:  answers are RIGHT
-    elif test $ret = 2 ; then
+    elif test $bench_cmp_retval = 2 ; then
 	# off by many, unacceptable
 	$ECHO ${bench_testname}.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
+	bench_retval=$bench_cmp_retval
     else
 	# some other failure
 	$ECHO ${bench_testname}.pix:  BENCHMARK COMPARISON FAILURE
+	bench_retval=$bench_cmp_retval
     fi
 
     $VERBOSE_ECHO "DEBUG: Done benchmark testing on $bench_testname"
-    return $retval
+    return $bench_retval
 }
 
 
@@ -1321,7 +1327,7 @@ perf ( ) {
 start="`date '+%H %M %S'`"
 $ECHO "Running the BRL-CAD Benchmark tests... please wait ..."
 $ECHO
-ret=0
+benchmark_retval=0
 
 bench moss all.g $RTARGS << EOF
 viewsize 1.572026215e+02;
@@ -1331,7 +1337,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
 	7.424039245e-01 5.198368430e-01 4.226182699e-01 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
-ret=`expr $ret + $?`
+benchmark_retval=`expr $benchmark_retval + $?`
 
 bench world all.g $RTARGS << EOF
 viewsize 1.572026215e+02;
@@ -1341,7 +1347,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
 	7.424039245e-01 5.198368430e-01 4.226182699e-01 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
-ret=`expr $ret + $?`
+benchmark_retval=`expr $benchmark_retval + $?`
 
 bench star all $RTARGS << EOF
 viewsize 2.500000000e+05;
@@ -1351,7 +1357,7 @@ viewrot -6.733560560e-01 6.130643360e-01 4.132114880e-01 0.000000000e+00
 	4.896120540e-01 7.885590550e-01 -3.720948210e-01 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
-ret=`expr $ret + $?`
+benchmark_retval=`expr $benchmark_retval + $?`
 
 bench bldg391 all.g $RTARGS << EOF
 viewsize 1.800000000e+03;
@@ -1361,7 +1367,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
 	7.424039245e-01 5.198368430e-01 4.226182699e-01 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00;
 EOF
-ret=`expr $ret + $?`
+benchmark_retval=`expr $benchmark_retval + $?`
 
 bench m35 all.g $RTARGS <<EOF
 viewsize 6.787387985e+03;
@@ -1371,14 +1377,14 @@ viewrot -5.527838919e-01 8.332423558e-01 1.171090926e-02 0.000000000e+00
 	6.800964482e-01 4.429747496e-01 5.841593895e-01 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
-ret=`expr $ret + $?`
+benchmark_retval=`expr $benchmark_retval + $?`
 
 bench sphflake scene.r $RTARGS <<EOF
 viewsize 2.556283261452611e+04;
 orientation 4.406810841785839e-01 4.005093234738861e-01 5.226451688385938e-01 6.101102288499644e-01;
 eye_pt 2.418500583758302e+04 -3.328563644344796e+03 8.489926952850350e+03;
 EOF
-ret=`expr $ret + $?`
+benchmark_retval=`expr $benchmark_retval + $?`
 
 $ECHO
 $ECHO "... Done."
@@ -1386,7 +1392,7 @@ $ECHO
 $ECHO "Total testing time elapsed: `eval \\\"$ELP\\\" $start`"
 
 # see if we fail
-if test ! "x$ret" = "x0" ; then
+if test ! "x$benchmark_retval" = "x0" ; then
     $ECHO
     $ECHO "THE BENCHMARK ANALYSIS DID NOT COMPLETE SUCCESSFULLY."
     $ECHO
