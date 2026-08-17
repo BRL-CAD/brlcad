@@ -35,24 +35,26 @@ test_hcross(void)
     hvect_t scaled_y = {0.0, -3.0, 0.0, -3.0};
     hvect_t a = {2.0, 4.0, 6.0, 2.0};
     hvect_t b = {-8.0, 4.0, -12.0, 4.0};
-    vect_t expected = {0.0, 0.0, 1.0};
-    vect_t expected_general = {-9.0, -3.0, 5.0};
-    vect_t out = VINIT_ZERO;
+    hvect_t expected = {0.0, 0.0, 1.0, 1.0};
+    hvect_t expected_raw = {0.0, 0.0, -6.0, -6.0};
+    hvect_t expected_general = {-9.0, -3.0, 5.0, 1.0};
+    hvect_t out = HINIT_ZERO;
 
     HCROSS(out, x, y);
-    if (!vect_close(out, expected, tolerance)) {
+    if (!hvect_close(out, expected, tolerance)) {
 	report_failure(test, "HCROSS disagrees with VCROSS for unit homogeneous coordinates");
 	failures++;
     }
 
     HCROSS(out, scaled_x, scaled_y);
-    if (!vect_close(out, expected, tolerance)) {
+    if (!hvect_close(out, expected_raw, tolerance)) {
 	report_failure(test, "HCROSS did not dehomogenize scaled inputs");
 	failures++;
     }
 
     HCROSS(out, a, b);
-    if (!vect_close(out, expected_general, tolerance)) {
+    HDIVIDE(out, out);
+    if (!hvect_close(out, expected_general, tolerance)) {
 	report_failure(test, "HCROSS failed the general homogeneous-coordinate case");
 	failures++;
     }
