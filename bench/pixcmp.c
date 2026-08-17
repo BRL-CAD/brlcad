@@ -340,7 +340,7 @@ main(int argc, char *argv[])
 	bu_log("Warning - f2 fstat failed: %s\n", strerror(errno));
     }
 
-    bu_log("FILE1_size(%zu) FILE1_skip(%zu) FILE2_size(%zu) FILE2_skip(%zu)\n", (size_t)sf1.st_size, f1_skip, (size_t)sf2.st_size, f2_skip);
+    /* bu_log("FILE1_size(%zu) FILE1_skip(%zu) FILE2_size(%zu) FILE2_skip(%zu)\n", (size_t)sf1.st_size, f1_skip, (size_t)sf2.st_size, f2_skip); */
 
     if (!quiet && ((sf1.st_size - f1_skip) != (sf2.st_size - f2_skip))) {
 	bu_log("WARNING: Different image sizes detected\n");
