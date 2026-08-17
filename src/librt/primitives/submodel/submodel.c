@@ -422,9 +422,9 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 	up_segp->seg_stp = up_stp;
 
 	/* Adjust for scale difference */
-	MAT4XSCALOR(up_segp->seg_in.hit_dist, submodel->subm2m, inseg->seg_in.hit_dist);
+	MAT4XSCALAR(up_segp->seg_in.hit_dist, submodel->subm2m, inseg->seg_in.hit_dist);
 	up_segp->seg_in.hit_dist -= gp->delta;
-	MAT4XSCALOR(up_segp->seg_out.hit_dist, submodel->subm2m, outseg->seg_out.hit_dist);
+	MAT4XSCALAR(up_segp->seg_out.hit_dist, submodel->subm2m, outseg->seg_out.hit_dist);
 	up_segp->seg_out.hit_dist -= gp->delta;
 
 	BU_ASSERT(up_segp->seg_in.hit_dist <= up_segp->seg_out.hit_dist);

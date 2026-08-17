@@ -1742,7 +1742,7 @@ typedef enum vmath_matrix_component_ {
 	(o)[Z] = ((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z]) * _f; \
     } while (0)
 
-#define MAT4XSCALOR(o, m, i) do { \
+#define MAT4XSCALAR(o, m, i) do { \
 	(o) = (i) / (m)[15]; \
     } while (0)
 
