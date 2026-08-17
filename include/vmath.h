@@ -1404,10 +1404,10 @@ typedef enum vmath_matrix_component_ {
  */
 #define VPROJECT(a, b, c, d) do { \
 	double _dot = VDOT((b), (b)); \
-	if (_dot > SQRT_SMALL_FASTF) { \
-	    VSCALE((c), (b), VDOT((a), (b)) / _dot); \
-	} else { \
+	if (NEAR_ZERO(_dot, SQRT_SMALL_FASTF)) { \
 	    VSCALE((c), (b), 0.0); \
+	} else { \
+	    VSCALE((c), (b), VDOT((a), (b)) / _dot); \
 	} \
 	VSUB2((d), (a), (c)); \
     } while (0)
@@ -1632,23 +1632,23 @@ typedef enum vmath_matrix_component_ {
  * is set to INFINITY and input direction vector is clamped to zero.
  */
 #define VINVDIR(_inv, _dir) do { \
-	if ((_dir)[X] < -SQRT_SMALL_FASTF || (_dir)[X] > SQRT_SMALL_FASTF) { \
-		(_inv)[X]=1.0/(_dir)[X]; \
-	} else { \
+	if (NEAR_ZERO((_dir)[X], SQRT_SMALL_FASTF)) { \
 		(_dir)[X] = 0.0; \
 		(_inv)[X] = INFINITY; \
-	} \
-	if ((_dir)[Y] < -SQRT_SMALL_FASTF || (_dir)[Y] > SQRT_SMALL_FASTF) { \
-		(_inv)[Y]=1.0/(_dir)[Y]; \
 	} else { \
+		(_inv)[X]=1.0/(_dir)[X]; \
+	} \
+	if (NEAR_ZERO((_dir)[Y], SQRT_SMALL_FASTF)) { \
 		(_dir)[Y] = 0.0; \
 		(_inv)[Y] = INFINITY; \
-	} \
-	if ((_dir)[Z] < -SQRT_SMALL_FASTF || (_dir)[Z] > SQRT_SMALL_FASTF) { \
-		(_inv)[Z]=1.0/(_dir)[Z]; \
 	} else { \
+		(_inv)[Y]=1.0/(_dir)[Y]; \
+	} \
+	if (NEAR_ZERO((_dir)[Z], SQRT_SMALL_FASTF)) { \
 		(_dir)[Z] = 0.0; \
 		(_inv)[Z] = INFINITY; \
+	} else { \
+		(_inv)[Z]=1.0/(_dir)[Z]; \
 	} \
     } while (0)
 
@@ -1844,9 +1844,13 @@ typedef enum vmath_matrix_component_ {
  * vect_t.
  */
 #define HDIVIDE(o, v) do { \
-	(o)[X] = (v)[X] / (v)[W]; \
-	(o)[Y] = (v)[Y] / (v)[W]; \
-	(o)[Z] = (v)[Z] / (v)[W]; \
+	if (NEAR_ZERO((v)[W], SMALL_FASTF)) { \
+	    VSETALL((o), 0.0); \
+	} else { \
+	    (o)[X] = (v)[X] / (v)[W]; \
+	    (o)[Y] = (v)[Y] / (v)[W]; \
+	    (o)[Z] = (v)[Z] / (v)[W]; \
+	} \
     } while (0)
 
 /**
