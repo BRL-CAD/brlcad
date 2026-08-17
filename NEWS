@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed gist -Q quick preview option - Sean Morrison
 * rt preserves eye_pt setting in command scripts - Sean Morrison
 * documented gqa centroid & moments of inertia options - Sean Morrison
 * pixdiff now calculates pixel differences on bw files - Sean Morrison
