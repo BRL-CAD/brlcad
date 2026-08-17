@@ -1859,11 +1859,12 @@ typedef enum vmath_matrix_component_ {
  */
 #define HDIVIDE(o, v) do { \
 	if (NEAR_ZERO((v)[W], SMALL_FASTF)) { \
-	    VSETALL((o), 0.0); \
+	    HSETALL((o), 0.0); \
 	} else { \
 	    (o)[X] = (v)[X] / (v)[W]; \
 	    (o)[Y] = (v)[Y] / (v)[W]; \
 	    (o)[Z] = (v)[Z] / (v)[W]; \
+	    (o)[W] = 1.0; \
 	} \
     } while (0)
 
