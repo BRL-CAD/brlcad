@@ -46,6 +46,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* reconcile VCOMB2, VBLEND2, and VADD2SCALE along with corresponding
+  3d/4d api consistency in vmath.h
+
 * make sph sph
   clone -i 1 -t 1000 0 0 -n 100 sph
   kill sph
