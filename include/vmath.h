@@ -1470,20 +1470,23 @@ typedef enum vmath_matrix_component_ {
 
 /**
  * @brief Store the cross product of homogeneous 3D vectors at `a' and
- * `b' in the ordinary 3D vector at `o'.
+ * `b' at `o'.
  *
- * The inputs are dehomogenized before computing the cross product:
+ * XYZ components contain cross product of the homogeneous numerators,
+ * while W contains product of the input homogeneous coordinates:
  *
- *     o = (a[X,Y,Z] / a[W]) x (b[X,Y,Z] / b[W])
+ *     o[X,Y,Z] = a[X,Y,Z] x b[X,Y,Z]
+ *     o[W] = a[W] * b[W]
  *
- * The homogeneous coordinates a[W] and b[W] must be non-zero.
+ * Consequently, when a[W] and b[W] are non-zero, dividing out o[W]
+ * produces the cross product of the dehomogenized inputs. Zero-input
+ * W produces a zero-output W, representing a direction at infininty.
+ *
+ * Callers needing vect_t can use HDIVIDE().
  */
 #define HCROSS(o, a, b) do { \
-	vect_t _hcross_a; \
-	vect_t _hcross_b; \
-	HDIVIDE(_hcross_a, (a)); \
-	HDIVIDE(_hcross_b, (b)); \
-	VCROSS((o), _hcross_a, _hcross_b); \
+	VCROSS((o), (a), (b)); \
+	(o)[W] = (a)[W] * (b)[W]; \
     } while (0)
 
 
