@@ -3243,7 +3243,8 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
     /* March around the fu's loop assigning uv parameter values */
 
     nmg_nurb_s_eval(fg, 0.0, 0.0, hvect);
-    HDIVIDE(point, hvect);
+    HDIVIDE(hvect, hvect);
+    VMOVE(point, hvect);
     nmg_vertex_gv(eu->vu_p->v_p, point);	/* 0, 0 vertex */
 
     VSET(uvw, 0, 0, 0);
@@ -3264,7 +3265,8 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
     nmg_vertexuse_a_cnurb(eu->eumate_p->vu_p, uvw);
 
     nmg_nurb_s_eval(fg, 1., 1., hvect);
-    HDIVIDE(point, hvect);
+    HDIVIDE(hvect, hvect);
+    VMOVE(point, hvect);
     nmg_vertex_gv(eu->vu_p->v_p, point);		/* 4, 1 vertex */
 
     eu = BU_LIST_NEXT(edgeuse, &eu->l);
