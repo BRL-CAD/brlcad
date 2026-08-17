@@ -17,6 +17,7 @@ set(
   test_tabdata.c
   test_ulp.c
   test_version.c
+  test_vmath.c
   test_wavelet.c
 )
 
@@ -37,6 +38,7 @@ endif(TARGET test_eigen)
 brlcad_add_test(NAME test_version COMMAND test_version)
 brlcad_add_test(NAME test_str COMMAND test_str)
 brlcad_add_test(NAME test_ulp COMMAND test_ulp)
+brlcad_add_test(NAME test_vmath COMMAND test_vmath)
 brlcad_add_test(NAME test_noise COMMAND test_noise)
 brlcad_add_test(NAME test_complex COMMAND test_complex)
 brlcad_add_test(NAME test_eigen COMMAND test_eigen)
