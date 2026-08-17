@@ -122,9 +122,20 @@ brlcad_add_test(
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rt_unbuffered_background.cmake"
 )
 
+brlcad_add_test(
+  NAME rt_command_view
+  COMMAND
+    "${CMAKE_COMMAND}"
+    "-DRT=$<TARGET_FILE:rt>"
+    "-DDB=${RT_TEST_DB}"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rt_command_view.cmake"
+)
+
 # Housekeeping
 cmakefiles(
   CMakeLists.txt
+  test_rt_command_view.cmake
   test_rt_disk_framebuffer_size.cmake
   test_rt_unbuffered_background.cmake
   test_rt_opt.c
