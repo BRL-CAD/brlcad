@@ -2,7 +2,7 @@
  *                        S H I M . C P P
  * BRL-CAD
  *
- * Published in 2023 by the United States Government.
+ * Published in 2024 by the United States Government.
  * This work is in the public domain.
  *
  */
@@ -21,7 +21,7 @@
 /* Functions */
 extern "C" int ProArrayAlloc(int,int,int,void**) {return 0;}
 extern "C" int ProArrayFree(void**) {return 0;}
-extern "C" int ProArrayObjectAdd(ProArray *, int, int, void*) {return 0;}
+extern "C" int ProArrayObjectAdd(ProArray*,int,int,void*) {return 0;}
 extern "C" int ProArraySizeGet(ProArray,int*) {return 0;}
 extern "C" int ProAsmcompMdlGet(ProFeature*,void**) {return 0;}
 extern "C" int ProAsmcompMdlMdlnameGet(ProFeature*,int*,wchar_t*) {return 0;}
@@ -32,6 +32,7 @@ extern "C" int ProBsplinesrfdataGet(void**,int[2],double**,double**,double**,Pro
 extern "C" int ProCmdActionAdd(const char*,int(*)(int,int*,void*),int,int(*)(int),int,int,int*) {return 0;}
 extern "C" int ProDimensionTypeGet(void**,int*) {return 0;}
 extern "C" int ProDimensionValueGet(void**,double *) {return 0;}
+extern "C" int ProDirectoryCurrentGet(void*) {return 0;}
 extern "C" int ProElementDoubleGet(void*,void*,double*) {return 0;}
 extern "C" int ProElementFree(void**) {return 0;}
 extern "C" int ProElementIdGet(void*,int*) {return 0;}
@@ -39,6 +40,7 @@ extern "C" int ProElementIntegerGet(void*,void*,int*) {return 0;}
 extern "C" int ProElementValueGet(void*,void**) {return 0;}
 extern "C" int ProElementValuetypeGet(void*,int*) {return 0;}
 extern "C" int ProElemtreeElementVisit(void*,void*,int (*)(void*,void*,void*,void*),int (*)(void*,void*,void*,void*),void*) {return 0;}
+extern "C" int ProFeatureChildrenGet(void*,int**,int*) {return 0;}
 extern "C" int ProFeatureDimensionVisit(ProFeature *,int (*)(void* *,int ,void*),int (*)(void**,void*),void*) {return 0;}
 extern "C" int ProFeatureElemtreeCreate(ProFeature *,void**) {return 0;}
 extern "C" int ProFeatureElemtreeExtract(ProFeature *,void*,int,void**) {return 0;}
@@ -63,7 +65,7 @@ extern "C" int ProMessageDisplay(wchar_t *,const char *,const char *) {return 0;
 extern "C" int ProParameterInit(void *,wchar_t *,void *) {return 0;}
 extern "C" int ProParameterValueGet(ProParameter *,void *) {return 0;}
 extern "C" int ProParameterValueWithUnitsGet(ProParameter *,void *,void *) {return 0;}
-extern "C" int ProParameterVisit (void **, void*, int (*)(ProParameter*,int,void*),void *) {return 0;}
+extern "C" int ProParameterVisit(void **, void*, int (*)(ProParameter*, int, void*), void *) {return 0;}
 extern "C" int ProParamvalueTypeGet(void **,void *) {return 0;}
 extern "C" int ProParamvalueValueGet(void **,int,void *) {return 0;}
 extern "C" int ProPartDensityGet(void*,double*) {return 0;}
@@ -75,9 +77,14 @@ extern "C" int ProSolidMassPropertyGet(void*,void*,ProMassProperty*) {return 0;}
 extern "C" int ProSolidOutlineGet(void*, Pro3dPnt*) {return 0;}
 extern "C" int ProStringVerstampGet(void*, void**) {return 0;}
 extern "C" int ProStringarrayFree(char**,int) {return 0;}
+extern "C" int ProSurfaceAreaEval(void*,double*) {return 0;}
 extern "C" int ProSurfaceSideAppearancepropsGet(void**,int,ProSurfaceAppearanceProps*) {return 0;}
 extern "C" int ProUICheckbuttonActivateActionSet(const char*,const char*,void(*)(char*,char*,void*),void*) {return 0;}
+extern "C" int ProUICheckbuttonDisable(const char*,const char*) {return 0;}
+extern "C" int ProUICheckbuttonEnable(const char*,const char*) {return 0;}
 extern "C" int ProUICheckbuttonGetState(const char*,const char*,int*) {return 0;}
+extern "C" int ProUICheckbuttonSet(const char*,const char*) {return 0;}
+extern "C" int ProUICheckbuttonUnset(const char*,const char*) {return 0;}
 extern "C" int ProUIDialogActivate(const char*, int*) {return 0;}
 extern "C" int ProUIDialogCreate(const char *,const char *) {return 0;}
 extern "C" int ProUIDialogDestroy(const char *) {return 0;}
@@ -88,9 +95,11 @@ extern "C" int ProUIInputpanelValueSet(const char *,const char *,wchar_t*) {retu
 extern "C" int ProUILabelTextSet(const char *,const char *,wchar_t *) {return 0;}
 extern "C" int ProUIPushbuttonActivateActionSet(const char *,const char *,void (*)(char*,char *,void*),void*) {return 0;}
 extern "C" int ProUIRadiogroupSelectednamesGet(const char*,const char*,int*,char***) {return 0;}
+extern "C" int ProUIRadiogroupSelectednamesSet(const char*,const char*,int ,char** ) {return 0;}
 extern "C" int ProUITextareaValueSet(const char *,const char *,wchar_t*) {return 0;}
-extern "C" int ProUnitConversionCalculate(void**,void**,ProUnitConversion*) {return 0;}
-extern "C" int ProUnitsystemUnitGet(void**,int,void**) {return 0;}
+extern "C" int ProUnitConversionCalculate(ProUnititem*,ProUnititem*,ProUnitConversion*) {return 0;}
+extern "C" int ProUnitsystemTypeGet(void**,ProUnitsystemType*) {return 0;}
+extern "C" int ProUnitsystemUnitGet(void**,int,ProUnititem*) {return 0;}
 extern "C" int ProUtilCollectParameters(void**,void**) {return 0;}
 extern "C" int ProValueDataGet(void*,ProValueData*) {return 0;}
 extern "C" int ProVerstampEqual(void*, void*) {return 0;}
@@ -105,15 +114,15 @@ extern "C" void ProContourTraversalGet(void*,int*) {}
 extern "C" void ProMdlIsSkeleton(void*, int*) {}
 extern "C" void ProMessageClear() {}
 extern "C" void ProPartTessellationFree(ProSurfaceTessellationData**) {}
-extern "C" void ProStringToWstring(wchar_t*,const char*) {}
+extern "C" void ProStringToWstring(wchar_t*, char*) {}
 extern "C" void ProSurfaceContourVisit(void*,int(*)(void*,int,void*),int(*)(void*,void*), void*) {}
 extern "C" void ProSurfaceIdGet(void*,int*) {}
 extern "C" void ProSurfaceToNURBS(void*,void***) {}
 extern "C" void ProSurfacedataGet(void*,int*,double*,double*,int*,void**,int*) {}
 extern "C" void ProUIInputpanelMaxlenSet(const char*,const char*,int) {}
 extern "C" void ProUIMessageDialogDisplay(int,const wchar_t *,const wchar_t *,ProUIMessageButton*,int,ProUIMessageButton*) {}
-extern "C" void ProUnitInit(void*,const wchar_t *,void**) {}
-extern "C" void ProWstringToString(char*,wchar_t*) {}
+extern "C" void ProUnitInit(void*,const wchar_t *,ProUnititem*) {}
+extern "C" void ProWstringToString(char*, wchar_t*) {}
 extern "C" void** PRO_CURVE_DATA(void*) {return NULL;}
 
 // Local Variables:
