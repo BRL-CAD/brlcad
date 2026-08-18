@@ -117,6 +117,7 @@ int arb6 = 0;				/* flag: convert plate-mode objects to arb6s */
 const char *patchfile = NULL;
 char *labelfile = NULL;
 char *matfile = NULL;
+char *jtypefile = NULL;
 
 struct patches *list = NULL;
 fastf_t *XVAL = NULL;
@@ -128,6 +129,10 @@ size_t nthicks;				/* number of unique plate thicknesses
 					   for a single plate mode solid */
 fastf_t *RADIUS = NULL;
 fastf_t *thk = NULL;
+
+fastf_t *jtype = NULL;			/* per-component-code plate thickness
+					   override (mm), indexed by cc; from
+					   JTYPE file via -j */
 
 int *mirror = NULL;
 
