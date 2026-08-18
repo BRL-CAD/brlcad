@@ -25,12 +25,16 @@ brlcad_add_test(
 brlcad_addexec(test_fb_standard_stream test_fb_standard_stream.c "libdm;libbu" TEST)
 brlcad_add_test(NAME dm_fb_standard_stream COMMAND test_fb_standard_stream)
 
+brlcad_addexec(test_fb_disk_fd test_fb_disk_fd.c "libdm;libbu" TEST)
+brlcad_add_test(NAME dm_fb_disk_fd COMMAND test_fb_disk_fd)
+
 cmakefiles(CMakeLists.txt)
 cmakefiles(
   dm_test.c
   fontstash_test.c
   test_dlist_sensor.c
   #test_fb_standard_stream.c
+  test_fb_disk_fd.c
 )
 
 # Local Variables:
