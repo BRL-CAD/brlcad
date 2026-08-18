@@ -23,6 +23,12 @@ add_target_deps(fbcmap dm_plugins)
 brlcad_addexec(fbcolor fbcolor.c "libdm" FOLDER Fb)
 target_include_directories(fbcolor BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
 add_target_deps(fbcolor dm_plugins)
+brlcad_add_test(
+  NAME fbcolor_full_ramp
+  COMMAND
+    "${CMAKE_COMMAND}" "-DFBCOLOR=$<TARGET_FILE:fbcolor>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_fbcolor_full_ramp.cmake"
+)
 brlcad_addexec(fbfade "fbfade.c;ioutil.c" libdm FOLDER Fb)
 add_target_deps(fbfade dm_plugins)
 brlcad_addexec(fbframe fbframe.c libdm FOLDER Fb)
@@ -73,6 +79,7 @@ cmakefiles(
   fbcolor.c
   fbpoint.c
   fbzoom.c
+  test_fbcolor_full_ramp.cmake
   test_fbhelp_output.cmake
 )
 
