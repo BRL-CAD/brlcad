@@ -19,9 +19,17 @@ brlcad_add_test(
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_pixembed_edge_replication.cmake"
 )
 
+brlcad_add_test(
+  NAME util_bwstat_statistics
+  COMMAND
+    "${CMAKE_COMMAND}" "-DBWSTAT=$<TARGET_FILE:bwstat>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_bwstat_statistics.cmake"
+)
+
 cmakefiles(
   CMakeLists.txt
   test_bwcrop_single_axis.cmake
+  test_bwstat_statistics.cmake
   test_pixdiff_bytes.cmake
   test_pixembed_edge_replication.cmake
 )
