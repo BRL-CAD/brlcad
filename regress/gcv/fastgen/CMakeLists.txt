@@ -4,6 +4,9 @@ brlcad_regression_test(regress-fastgen "fast4-g;gdiff" EXEC fast4-g)
 # file) under a bounded timeout and verify a non-empty .g is produced.
 brlcad_regression_test(regress-fastgen-faa "fast4-g" EXEC fast4-g)
 
+# Make sure we depend on the input target
+add_dependencies(regress-fastgen-faa Business_Jet.g)
+
 distclean(
   "${CMAKE_CURRENT_BINARY_DIR}/fastgen.log"
   "${CMAKE_CURRENT_BINARY_DIR}/fastgen.fast4"
