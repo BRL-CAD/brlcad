@@ -3061,8 +3061,7 @@ include(BRLCAD_CPack)
 
 # Some files to ignore for distcheck.  The files and directories prefixed with
 # a "." character are "hidden" and may not be present, so check for them first.
-set(
-  hidden_files
+set(hidden_files
   .github/workflows/distcheck.yml
   .github/workflows/linux_interactive.yml
   .github/workflows/push.yml
@@ -3076,8 +3075,8 @@ foreach(hf ${hidden_files})
   endif(EXISTS ${CMAKE_SOURCE_DIR}/${hf})
 endforeach(hf ${hidden_files})
 
-set(
-  toplevel_ignore_files
+set(toplevel_ignore_files
+  AGENTS.md
   BUGS
   CMakeLists.txt
   ChangeLog
