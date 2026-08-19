@@ -672,6 +672,9 @@ make_unique_name(struct f4g_state *s, struct bu_vls *name)
 	s->name_count++;
     }
 
+    bu_log("WARNING: component name \"%s\" already in use, renamed to \"%s\"\n",
+	   bu_vls_cstr(name), bu_vls_cstr(&vls));
+
     bu_vls_sprintf(name, "%s", bu_vls_cstr(&vls));
     bu_vls_free(&vls);
 }
@@ -941,6 +944,7 @@ f4_do_name(struct f4g_state *s)
     int g_id;
     int c_id;
     struct bu_vls comp_name = BU_VLS_INIT_ZERO;
+    struct bu_vls orig_name = BU_VLS_INIT_ZERO;
 
     if (s->pass)
 	return;
@@ -954,6 +958,8 @@ f4_do_name(struct f4g_state *s)
     if (g_id != s->group_id) {
 	bu_log("$NAME card for group %d in section for group %d ignored\n", g_id, s->group_id);
 	bu_log("%s\n", s->line);
+	bu_vls_free(&comp_name);
+	bu_vls_free(&orig_name);
 	return;
     }
 
@@ -963,6 +969,8 @@ f4_do_name(struct f4g_state *s)
     if (c_id != s->comp_id) {
 	bu_log("$NAME card for component %d in section for component %d ignored\n", c_id, s->comp_id);
 	bu_log("%s\n", s->line);
+	bu_vls_free(&comp_name);
+	bu_vls_free(&orig_name);
 	return;
     }
 
@@ -971,11 +979,22 @@ f4_do_name(struct f4g_state *s)
     bu_vls_trimspace(&comp_name);
     if (!bu_vls_strlen(&comp_name)) {
 	bu_vls_free(&comp_name);
+	bu_vls_free(&orig_name);
 	return;
     }
 
+    /* Preserve the original (trimmed) name so we can warn the user if the
+     * simplify step below alters it.
+     */
+    bu_vls_sprintf(&orig_name, "%s", bu_vls_cstr(&comp_name));
+
     /* Simplify */
     bu_vls_simplify(&comp_name, NULL, NULL, NULL);
+
+    if (!BU_STR_EQUAL(bu_vls_cstr(&orig_name), bu_vls_cstr(&comp_name))) {
+	bu_log("WARNING: component name \"%s\" changed to \"%s\" (invalid characters simplified)\n",
+	       bu_vls_cstr(&orig_name), bu_vls_cstr(&comp_name));
+    }
 
     /* reserve this name for group name */
     Search_ident(name_root, s->region_id, &foundr);
@@ -990,6 +1009,7 @@ f4_do_name(struct f4g_state *s)
     s->name_count = 0;
 
     bu_vls_free(&comp_name);
+    bu_vls_free(&orig_name);
 }
 
 
