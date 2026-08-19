@@ -60,8 +60,8 @@ The following table lists all known standard (core) BRL-CAD attributes and alias
 |Air Code
 |aircode
 |0
-|an integer (application defined)
-|'0', '1', or '-2'
+|zero or positive integer (application defined)
+|'0', '1', or '2'
 |air
 |Line of Sight Thickness Equivalence
 |los
