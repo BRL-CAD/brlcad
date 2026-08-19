@@ -24,7 +24,7 @@
  * Reads a global elevation raster (ETOPO 2022 GeoTIFF or any
  * GDAL-readable DEM) and constructs a cubed-sphere globe from six
  * DSP (displacement-map) height-field primitives.  Each face is
- * reprojected via a gnomonic projection centered on the face,
+ * reprojected via an orthographic projection centered on the face,
  * creating a tangent-plane tile positioned on the sphere.  A water
  * sphere at sea-level radius is boolean-subtracted from the terrain
  * to create distinct ocean geometry.
@@ -38,8 +38,38 @@
  * Usage:
  *   earthgen input.tif output.g [--dim N] [--exaggeration F]
  *
- * Example:
- *   earthgen ETOPO_2022_v1_60s_N90W180_surface.tif earth.g
+ * ======================================================================
+ * OBTAINING TERRAIN DATASETS (Low / Medium / High Fidelity)
+ * ======================================================================
+ *
+ * Public Domain Global Relief Datasets from NOAA NCEI (ETOPO 2022):
+ *
+ * 1. LOW FIDELITY (Fast preview / testing, ~20 MB downsampled raster, dim 256):
+ *    Download the 60s global GeoTIFF and downsample it with GDAL:
+ *      curl -L -o /tmp/ETOPO_2022_v1_60s_N90W180_surface.tif \
+ *        "https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2022/data/60s/60s_surface_elev_gtif/ETOPO_2022_v1_60s_N90W180_surface.tif"
+ *      gdal_translate -outsize 25% 25% -r bilinear \
+ *        /tmp/ETOPO_2022_v1_60s_N90W180_surface.tif /tmp/earth_low.tif
+ *      earthgen /tmp/earth_low.tif earth_low.g --dim 256 --exaggeration 40
+ *
+ * 2. MEDIUM FIDELITY (Standard production globe, ~444 MB GeoTIFF, dim 600-900):
+ *    Full 60 arc-second (~1.85 km) global relief grid:
+ *      curl -L -o /tmp/ETOPO_2022_v1_60s_N90W180_surface.tif \
+ *        "https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2022/data/60s/60s_surface_elev_gtif/ETOPO_2022_v1_60s_N90W180_surface.tif"
+ *      earthgen /tmp/ETOPO_2022_v1_60s_N90W180_surface.tif earth_med.g --dim 600 --exaggeration 40
+ *
+ * 3. HIGH FIDELITY (High detail topography & bathymetry, ~1.5 GB GeoTIFF, dim 1200-2048):
+ *    Full 30 arc-second (~900 m) global relief grid:
+ *      curl -L -o /tmp/ETOPO_2022_v1_30s_N90W180_surface.tif \
+ *        "https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2022/data/30s/30s_surface_elev_gtif/ETOPO_2022_v1_30s_N90W180_surface.tif"
+ *      earthgen /tmp/ETOPO_2022_v1_30s_N90W180_surface.tif earth_high.g --dim 1200 --exaggeration 40
+ *
+ *    Alternatively, 15 arc-second (~450 m) regional tiles can be downloaded
+ *    from https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2022/data/15s/15s_surface_elev_gtif/
+ *    and combined into a seamless GDAL Virtual Dataset (.vrt):
+ *      gdalbuildvrt /tmp/etopo_15s.vrt /tmp/ETOPO_2022_v1_15s_*.tif
+ *      earthgen /tmp/etopo_15s.vrt earth_15s.g --dim 1200 --exaggeration 40
+ * ======================================================================
  */
 
 #include "common.h"
@@ -186,7 +216,7 @@ build_stom(double lat_deg, double lon_deg, unsigned int dim,
 
 
 /**
- * Warp the source raster to a gnomonic projection centred on a cube
+ * Warp the source raster to an orthographic projection centred on a cube
  * face.  The output covers +/- extent_m on the tangent plane,
  * resampled to dim x dim pixels.
  *
