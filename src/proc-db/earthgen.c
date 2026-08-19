@@ -345,7 +345,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
             if (r_sq >= R_m * R_m) {
                 z_val = z_base_m;
             } else {
-                double R_elev = R_m + (h / 1000.0) * exag;
+                double R_elev = R_m + h * exag;
                 double under_sqrt = R_elev * R_elev - r_sq;
                 if (under_sqrt < 0.0) under_sqrt = 0.0;
                 z_val = sqrt(under_sqrt);
@@ -514,7 +514,7 @@ main(int ac, char *av[])
      * exaggerated mountain peak into uint16.
      */
     double z_base_m = 3000.0; /* Deep inside the Earth */
-    double z_max_m = EARTH_R_M + (raw_max / 1000.0) * exag;
+    double z_max_m = EARTH_R_M + raw_max * exag;
     double span_z_m = z_max_m - z_base_m;
     
     cell_z_m = span_z_m / (double)U16MAX;
