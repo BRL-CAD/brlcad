@@ -1,0 +1,86 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(LOGFILE "${CBDIR}/fastgen-faa.log")
+
+file(WRITE "${LOGFILE}" "Starting real-model FASTGEN v4 conversion run\n")
+
+# The executable locations aren't known at CMake configure time, so one of them
+# is passed in via the EXEC variable at runtime.  De-quote it and assign it to
+# the appropriate variable.
+string(REPLACE "\\" "" FAST4G "${EXEC}")
+if(NOT EXISTS "${FAST4G}")
+  file(WRITE "${LOGFILE}" "fast4-g not found at location \"${FAST4G}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find fast4-g, aborting.\nSee ${LOGFILE} for more details.")
+endif(NOT EXISTS "${FAST4G}")
+
+# Real-world FASTGEN v4 model shipped in the tree.  The Business_Jet model (~50
+# KB) keeps the test fast; the much larger 13 MB Generic_Twin model is
+# intentionally left opt-in.
+set(FG4_INPUT "@BRLCAD_SOURCE_DIR@/db/faa/Business_Jet.fg4")
+set(G_OUTPUT "${CBDIR}/Business_Jet.g")
+
+if(NOT EXISTS "${FG4_INPUT}")
+  file(APPEND "${LOGFILE}" "FASTGEN v4 input model not found at \"${FG4_INPUT}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find ${FG4_INPUT}, aborting.\nSee ${LOGFILE} for more details.")
+endif(NOT EXISTS "${FG4_INPUT}")
+
+# Clean up in case we've run before
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${G_OUTPUT}")
+
+# Convert the real model with a bounded process timeout.
+file(APPEND "${LOGFILE}" "Converting ${FG4_INPUT} (bounded, TIMEOUT 300s):\n")
+execute_process(
+  COMMAND "${FAST4G}" "${FG4_INPUT}" "${G_OUTPUT}"
+  RESULT_VARIABLE fastgen_result
+  OUTPUT_VARIABLE fastgen_log
+  ERROR_VARIABLE fastgen_log
+  TIMEOUT 300
+)
+file(APPEND "${LOGFILE}" "${fastgen_log}")
+set(fastgen_log)
+
+# execute_process reports a timeout as a non-numeric RESULT_VARIABLE string
+# (e.g. "Process terminated due to timeout").  A clean success is the integer 0.
+if(NOT "${fastgen_result}" STREQUAL "0")
+  file(APPEND "${LOGFILE}" "\nFailure: fast4-g returned \"${fastgen_result}\" (non-zero or timeout)\n")
+  message(
+    FATAL_ERROR
+    "[fast4-g] fast4-g did not complete cleanly converting ${FG4_INPUT} (result: ${fastgen_result}).\nSee ${LOGFILE} for more details."
+  )
+endif(NOT "${fastgen_result}" STREQUAL "0")
+
+# The conversion must have produced an output database.
+if(NOT EXISTS "${G_OUTPUT}")
+  file(APPEND "${LOGFILE}" "\nFailure: expected output ${G_OUTPUT} was not created\n")
+  message(
+    FATAL_ERROR
+    "[fast4-g] fast4-g reported success but produced no ${G_OUTPUT}.\nSee ${LOGFILE} for more details."
+  )
+endif(NOT EXISTS "${G_OUTPUT}")
+
+# The output database must be non-trivial.  A valid .g for a 50 KB FASTGEN model
+# is well over 32 KB; a suspiciously tiny file indicates a converter that bailed
+# early or wrote only a header.
+file(SIZE "${G_OUTPUT}" G_SIZE)
+set(G_SIZE_FLOOR 32768)
+file(APPEND "${LOGFILE}" "\nProduced ${G_OUTPUT} (${G_SIZE} bytes; floor ${G_SIZE_FLOOR}).\n")
+if(G_SIZE LESS G_SIZE_FLOOR)
+  file(APPEND "${LOGFILE}" "\nFailure: ${G_OUTPUT} is only ${G_SIZE} bytes (< ${G_SIZE_FLOOR})\n")
+  message(
+    FATAL_ERROR
+    "[fast4-g] ${G_OUTPUT} is only ${G_SIZE} bytes (below ${G_SIZE_FLOOR} floor) - conversion produced no meaningful geometry.\nSee ${LOGFILE} for more details."
+  )
+endif(G_SIZE LESS G_SIZE_FLOOR)
+
+file(APPEND "${LOGFILE}" "\nSuccess: real-model FASTGEN v4 conversion completed.\n")
+
+# Success - clean up
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${G_OUTPUT}")
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

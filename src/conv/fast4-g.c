@@ -1814,8 +1814,8 @@ f4_do_hole_wall(struct f4g_state *s, int type)
 
     /* eliminate trailing blanks */
     s_len = strlen(s->line);
-    while (isspace((int)s->line[--s_len]))
-	s->line[s_len] = '\0';
+    while (s_len > 0 && isspace((int)s->line[s_len-1]))
+	s->line[--s_len] = '\0';
 
     s_len = strlen(s->line);
     V_MIN(s_len, 80);
