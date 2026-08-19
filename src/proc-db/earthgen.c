@@ -264,7 +264,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
     double *elev;
     unsigned short *grid;
     size_t count;
-    unsigned int row;
+    unsigned int dx, dy;
 
     double cell_mm   = cell_m * M2MM;
     double cell_z_mm = cell_z_m * M2MM;
@@ -306,32 +306,28 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
     band = GDALGetRasterBand(warped, 1);
     nodata_val = GDALGetRasterNoDataValue(band, &has_nodata);
 
-    /* Read elevation row-by-row, flipping Y axis.
-     * GDAL: y=0 is top (north).  DSP: y=0 is bottom (south). */
-    for (row = 0; row < dim; row++) {
+    /* Read elevation row-by-row, flipping Y axis so dy=0 is South and dy=dim-1 is North.
+     * GDAL: row=0 is North, row=dim-1 is South. */
+    for (dy = 0; dy < dim; dy++) {
 	if (GDALRasterIO(band, GF_Read,
-			 0, (int)(dim - 1 - row),
+			 0, (int)(dim - 1 - dy),
 			 (int)dim, 1,
-			 &elev[(size_t)row * dim],
+			 &elev[(size_t)dy * dim],
 			 (int)dim, 1,
 			 GDT_Float64, 0, 0) != CE_None) {
 	    bu_log("earthgen: read error face %s row %u\n",
-		   face->tag, row);
+		   face->tag, dy);
 	}
     }
     GDALClose(warped);
 
     /* ---- Compute radial displacement and quantize. ---- */
-    unsigned int gy, gx;
-    for (gy = 0; gy < dim; gy++) {
-        double y = extent_m - gy * cell_m;
-        unsigned int dy = dim - 1 - gy;
-        for (gx = 0; gx < dim; gx++) {
-            double x = -extent_m + gx * cell_m;
-            unsigned int dx = gx;
-            size_t k_elev = (size_t)gy * dim + gx;
-            size_t k_grid = (size_t)dy * dim + dx;
-            double h = elev[k_elev];
+    for (dy = 0; dy < dim; dy++) {
+        double y = -extent_m + dy * cell_m;
+        for (dx = 0; dx < dim; dx++) {
+            double x = -extent_m + dx * cell_m;
+            size_t k = (size_t)dy * dim + dx;
+            double h = elev[k];
             double z_val, z_dsp;
             long v;
             double r_sq = x*x + y*y;
@@ -340,7 +336,11 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
             if (h > max_h) max_h = (float)h;
 
             if (has_nodata && NEAR_EQUAL(h, nodata_val, 1.0))
-                h = 0.0;
+                h = -100.0;
+
+            if (h <= 0.0) {
+                h = -100.0;
+            }
 
             if (r_sq >= R_m * R_m) {
                 z_val = z_base_m;
@@ -358,24 +358,13 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
 
             if (v < 0)      v = 0;
             if (v > U16MAX) v = U16MAX;
-            grid[k_grid] = (unsigned short)v;
+            grid[k] = (unsigned short)v;
         }
     }
     printf("Face %s: elevation min=%f, max=%f\n", face->tag, min_h, max_h);
     bu_free(elev, "elevation");
 
-    /* Convert to network (big-endian) byte order. */
-    {
-	int in_c  = bu_cv_cookie("hus");
-	int out_c = bu_cv_cookie("nus");
-	if (bu_cv_optimize(in_c) != bu_cv_optimize(out_c)) {
-	    bu_cv_w_cookie(grid, out_c,
-			   count * sizeof(unsigned short),
-			   grid, in_c, count);
-	}
-    }
-
-    /* Write the height data as a BINUNIF object in the .g. */
+    /* Write the height data as a BINUNIF object in the .g (host endian, mk_binunif handles network byte order). */
     mk_binunif(wdbp, name_data, (void *)grid, WDB_BINUNIF_UINT16, count);
     bu_free(grid, "dsp grid");
 
