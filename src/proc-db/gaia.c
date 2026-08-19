@@ -1,4 +1,4 @@
-/*                      E A R T H G E N . C
+/*                         G A I A . C
  * BRL-CAD
  *
  * Copyright (c) 2026 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file proc-db/earthgen.c
+/** @file proc-db/gaia.c
  *
  * Generate a BRL-CAD .g model of Earth from real elevation data.
  *
@@ -36,7 +36,7 @@
  * All coordinates are millimeters (BRL-CAD convention).
  *
  * Usage:
- *   earthgen input.tif output.g [--dim N] [--exaggeration F]
+ *   gaia input.tif output.g [--dim N] [--exaggeration F]
  *
  * ======================================================================
  * OBTAINING TERRAIN DATASETS (Low / Medium / High Fidelity)
@@ -50,25 +50,25 @@
  *        "https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2022/data/60s/60s_surface_elev_gtif/ETOPO_2022_v1_60s_N90W180_surface.tif"
  *      gdal_translate -outsize 25% 25% -r bilinear \
  *        /tmp/ETOPO_2022_v1_60s_N90W180_surface.tif /tmp/earth_low.tif
- *      earthgen /tmp/earth_low.tif earth_low.g --dim 256 --exaggeration 40
+ *      gaia /tmp/earth_low.tif earth_low.g --dim 256 --exaggeration 40
  *
  * 2. MEDIUM FIDELITY (Standard production globe, ~444 MB GeoTIFF, dim 600-900):
  *    Full 60 arc-second (~1.85 km) global relief grid:
  *      curl -L -o /tmp/ETOPO_2022_v1_60s_N90W180_surface.tif \
  *        "https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2022/data/60s/60s_surface_elev_gtif/ETOPO_2022_v1_60s_N90W180_surface.tif"
- *      earthgen /tmp/ETOPO_2022_v1_60s_N90W180_surface.tif earth_med.g --dim 600 --exaggeration 40
+ *      gaia /tmp/ETOPO_2022_v1_60s_N90W180_surface.tif earth_med.g --dim 600 --exaggeration 40
  *
  * 3. HIGH FIDELITY (High detail topography & bathymetry, ~1.5 GB GeoTIFF, dim 1200-2048):
  *    Full 30 arc-second (~900 m) global relief grid:
  *      curl -L -o /tmp/ETOPO_2022_v1_30s_N90W180_surface.tif \
  *        "https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2022/data/30s/30s_surface_elev_gtif/ETOPO_2022_v1_30s_N90W180_surface.tif"
- *      earthgen /tmp/ETOPO_2022_v1_30s_N90W180_surface.tif earth_high.g --dim 1200 --exaggeration 40
+ *      gaia /tmp/ETOPO_2022_v1_30s_N90W180_surface.tif earth_high.g --dim 1200 --exaggeration 40
  *
  *    Alternatively, 15 arc-second (~450 m) regional tiles can be downloaded
  *    from https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2022/data/15s/15s_surface_elev_gtif/
  *    and combined into a seamless GDAL Virtual Dataset (.vrt):
  *      gdalbuildvrt /tmp/etopo_15s.vrt /tmp/ETOPO_2022_v1_15s_*.tif
- *      earthgen /tmp/etopo_15s.vrt earth_15s.g --dim 1200 --exaggeration 40
+ *      gaia /tmp/etopo_15s.vrt earth_15s.g --dim 1200 --exaggeration 40
  * ======================================================================
  */
 
@@ -298,7 +298,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
 
     double cell_mm   = cell_m * M2MM;
     double cell_z_mm = cell_z_m * M2MM;
-    
+
     /* Z_base is chosen deep enough to intersect the water sphere
      * cleanly and to bound the valid region from the origin.
      * For an inscribed cube wedge, the minimum Z is R/sqrt(3).
@@ -314,7 +314,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
     snprintf(name_pyr,   sizeof(name_pyr),   "pyr_%s.s",     face->tag);
     snprintf(name_comb,  sizeof(name_comb),  "face_%s.c",    face->tag);
 
-    bu_log("earthgen: face %s  center (%.1f, %.1f) ...\n",
+    bu_log("gaia: face %s  center (%.1f, %.1f) ...\n",
 	   face->tag, face->lat_0, face->lon_0);
 
     /* ---- Warp source data to orthographic for this face. ---- */
@@ -324,7 +324,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
     warped = warp_face(src, face->lat_0, face->lon_0,
 		       (int)dim, extent_m);
     if (!warped) {
-	bu_log("earthgen: warp failed for face %s\n", face->tag);
+	bu_log("gaia: warp failed for face %s\n", face->tag);
 	return -1;
     }
 
@@ -345,7 +345,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
 			 &elev[(size_t)dy * dim],
 			 (int)dim, 1,
 			 GDT_Float64, 0, 0) != CE_None) {
-	    bu_log("earthgen: read error face %s row %u\n",
+	    bu_log("gaia: read error face %s row %u\n",
 		   face->tag, dy);
 	}
     }
@@ -382,7 +382,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
             }
 
             if (z_val < z_base_m) z_val = z_base_m;
-            
+
             z_dsp = z_val - z_base_m;
             v = (long)(z_dsp / cell_z_m + 0.5);
 
@@ -424,9 +424,9 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
         vect_t e, n, u;
         double D = 2.0 * radius_mm; // Far outside
         double overlap = 1.0; // Exact partition
-        
+
         geo_frame(face->lat_0, face->lon_0, e, n, u);
-        
+
         /* Base vertices (CCW from outside looking in to origin) */
         VSET(pts[0], D * (u[X] + overlap*e[X] + overlap*n[X]), D * (u[Y] + overlap*e[Y] + overlap*n[Y]), D * (u[Z] + overlap*e[Z] + overlap*n[Z]));
         VSET(pts[1], D * (u[X] - overlap*e[X] + overlap*n[X]), D * (u[Y] - overlap*e[Y] + overlap*n[Y]), D * (u[Z] - overlap*e[Z] + overlap*n[Z]));
@@ -434,7 +434,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
         VSET(pts[3], D * (u[X] + overlap*e[X] - overlap*n[X]), D * (u[Y] + overlap*e[Y] - overlap*n[Y]), D * (u[Z] + overlap*e[Z] - overlap*n[Z]));
         /* Apex */
         VSET(pts[4], 0.0, 0.0, 0.0);
-        
+
         mk_arb5(wdbp, name_pyr, (const fastf_t *)pts);
     }
 
@@ -447,7 +447,7 @@ process_face(GDALDatasetH src, struct rt_wdb *wdbp,
         mk_lcomb(wdbp, name_comb, &comb_hd, 0, NULL, NULL, NULL, 0);
     }
 
-    bu_log("earthgen: face %s  %ux%u  cell %.1f km\n",
+    bu_log("gaia: face %s  %ux%u  cell %.1f km\n",
 	   face->tag, dim, dim, cell_m / 1000.0);
     return 0;
 }
@@ -517,7 +517,7 @@ main(int ac, char *av[])
 		     | GDAL_OF_VERBOSE_ERROR,
 		     NULL, NULL, NULL);
     if (!src)
-	bu_exit(2, "earthgen: cannot open '%s'\n", input_path);
+	bu_exit(2, "gaia: cannot open '%s'\n", input_path);
 
     /* Query the global elevation range from band statistics. */
     band = GDALGetRasterBand(src, 1);
@@ -531,7 +531,7 @@ main(int ac, char *av[])
     raw_range = raw_max - raw_min;
     if (raw_range < 1.0) raw_range = 1.0;
 
-    bu_log("earthgen: elevation %.1f .. %.1f m   (x%.0f)\n",
+    bu_log("gaia: elevation %.1f .. %.1f m   (x%.0f)\n",
 	   raw_min, raw_max, exag);
 
     /* Uniform cell spacing: the orthographic face spans +/- R/sqrt(2) on the
@@ -546,17 +546,17 @@ main(int ac, char *av[])
     double z_base_m = 3000.0; /* Deep inside the Earth */
     double z_max_m = EARTH_R_M + raw_max * exag;
     double span_z_m = z_max_m - z_base_m;
-    
+
     cell_z_m = span_z_m / (double)U16MAX;
 
-    bu_log("earthgen: dim=%u  cell_xy=%.1f km  cell_z=%.1f m  exag=%.0fx\n",
+    bu_log("gaia: dim=%u  cell_xy=%.1f km  cell_z=%.1f m  exag=%.0fx\n",
 	   dim, cell_m / 1000.0, cell_z_m, exag);
 
     /* ---- Open the output .g database. ---- */
     wdbp = wdb_fopen(output_path);
     if (!wdbp) {
 	GDALClose(src);
-	bu_exit(3, "earthgen: cannot create '%s'\n", output_path);
+	bu_exit(3, "gaia: cannot create '%s'\n", output_path);
     }
     mk_id_units(wdbp, "Earth Terrain Model", "mm");
 
@@ -565,7 +565,7 @@ main(int ac, char *av[])
 	if (process_face(src, wdbp, &faces[i], dim,
 			 exag,
 			 cell_m, cell_z_m, radius_mm) != 0) {
-	    bu_log("earthgen: WARNING - face %s failed\n",
+	    bu_log("gaia: WARNING - face %s failed\n",
 		   faces[i].tag);
 	}
     }
@@ -606,7 +606,7 @@ main(int ac, char *av[])
     (void)mk_addmember("water.r",   &all_hd.l, NULL, WMOP_UNION);
     mk_lcomb(wdbp, "earth.all", &all_hd, 0, NULL, NULL, NULL, 0);
 
-    bu_log("earthgen: wrote %s  (top-level: 'earth.all')\n",
+    bu_log("gaia: wrote %s  (top-level: 'earth.all')\n",
 	   output_path);
 
     db_close(wdbp->dbip);
