@@ -169,6 +169,7 @@ dup_bot(struct rt_bot_internal *bot_in)
     RT_BOT_CK_MAGIC(bot_in);
 
     BU_ALLOC(bot, struct rt_bot_internal);
+    bot->face_mode = NULL;
 
     bot->magic = bot_in->magic;
     bot->mode = bot_in->mode;
