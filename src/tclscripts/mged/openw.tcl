@@ -1774,6 +1774,17 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	characteristics can be set by the user." }
 	    { see_also "rset" } }
     .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
+	-variable mged_gui($id,model_tick_enable) -label "Model Axes Ticks" -underline 6\
+	-command "mged_apply $id \"rset ax model_tick_enable \$mged_gui($id,model_tick_enable)\""
+    hoc_register_menu_data "Axes" "Model Axes Ticks" "Model Axes Ticks"\
+	{ { summary "Toggle display of a ticked scale along the model
+	axes. The tick spacing is controlled by
+	'rset ax model_tick_interval' (in mm), with a major
+	tick every 'rset ax model_ticks_per_major' ticks. This
+	provides a measurable scale in the target coordinate
+	system." }
+	    { see_also "rset" } }
+    .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_gui($id,edit_draw) -label "Edit" -underline 0\
 	-command "mged_apply $id \"rset ax edit_draw \$mged_gui($id,edit_draw)\""
     hoc_register_menu_data "Axes" "Edit" "Edit Axes"\
@@ -2428,6 +2439,7 @@ proc update_mged_vars { id } {
 	set mged_gui($id,adc_draw) $result
     }
     set mged_gui($id,model_draw) [rset ax model_draw]
+    set mged_gui($id,model_tick_enable) [rset ax model_tick_enable]
     set mged_gui($id,view_draw) [rset ax view_draw]
     set mged_gui($id,edit_draw) [rset ax edit_draw]
     set mged($id,use_air) $use_air

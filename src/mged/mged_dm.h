@@ -168,6 +168,12 @@ struct _axes_state {
     int		ax_edit_size2;
     int		ax_edit_linewidth1;
     int		ax_edit_linewidth2;
+    int		ax_model_tick_enable;		/* ticked scale on model axes */
+    fastf_t	ax_model_tick_interval;		/* tick spacing, mm */
+    int		ax_model_ticks_per_major;
+    int		ax_model_tick_length;		/* pixels */
+    int		ax_model_tick_major_length;	/* pixels */
+    int		ax_model_tick_threshold;
 };
 
 

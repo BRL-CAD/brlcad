@@ -50,7 +50,13 @@ struct _axes_state default_axes_state = {
     /* ax_edit_size1 */		500,
     /* ax_edit_size2 */		500,
     /* ax_edit_linewidth1 */	1,
-    /* ax_edit_linewidth2 */	1
+    /* ax_edit_linewidth2 */	1,
+    /* ax_model_tick_enable */		0,
+    /* ax_model_tick_interval */	100.0,
+    /* ax_model_ticks_per_major */	10,
+    /* ax_model_tick_length */		4,
+    /* ax_model_tick_major_length */	8,
+    /* ax_model_tick_threshold */	8
 };
 
 
@@ -60,6 +66,12 @@ struct bu_structparse axes_vparse[] = {
     {"%d", 1, "model_size",	AX_O(ax_model_size),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "model_linewidth",AX_O(ax_model_linewidth),	ax_set_dirty_flag, NULL, NULL },
     {"%f", 3, "model_pos",	AX_O(ax_model_pos),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "model_tick_enable",	AX_O(ax_model_tick_enable),		ax_set_dirty_flag, NULL, NULL },
+    {"%f", 1, "model_tick_interval",	AX_O(ax_model_tick_interval),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "model_ticks_per_major",	AX_O(ax_model_ticks_per_major),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "model_tick_length",	AX_O(ax_model_tick_length),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "model_tick_major_length",AX_O(ax_model_tick_major_length),	ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "model_tick_threshold",	AX_O(ax_model_tick_threshold),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "view_draw",	AX_O(ax_view_draw),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "view_size",	AX_O(ax_view_size),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "view_linewidth",	AX_O(ax_view_linewidth),	ax_set_dirty_flag, NULL, NULL },
@@ -152,6 +164,18 @@ draw_m_axes(struct mged_state *s)
     VMOVE(gas.axes_color, color_scheme->cs_model_axes);
     VMOVE(gas.label_color, color_scheme->cs_model_axes_label);
     gas.line_width = axes_state->ax_model_linewidth;
+
+    /* Ticked scale along the model axes.  The rendering support
+     * already exists in dm_draw_hud_axes; here we surface it through the
+     * classic MGED "rset ax model_tick_*" controls. */
+    gas.tick_enabled = axes_state->ax_model_tick_enable;
+    gas.tick_interval = axes_state->ax_model_tick_interval;
+    gas.ticks_per_major = axes_state->ax_model_ticks_per_major;
+    gas.tick_length = axes_state->ax_model_tick_length;
+    gas.tick_major_length = axes_state->ax_model_tick_major_length;
+    gas.tick_threshold = axes_state->ax_model_tick_threshold;
+    VMOVE(gas.tick_color, color_scheme->cs_model_axes);
+    VMOVE(gas.tick_major_color, color_scheme->cs_model_axes_label);
 
     dm_draw_hud_axes(DMP, view_state->vs_gvp->gv_size, view_state->vs_gvp->gv_rotation, &gas);
 }

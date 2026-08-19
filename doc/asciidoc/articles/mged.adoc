@@ -6429,11 +6429,17 @@ mged *rset r draw 1* – Draw rubber band.
 
 mged *rset ax*
 
-Axes model_draw=0 model_size=500 model_linewidth=1 model_pos=0,0,0 view_draw=0 view_size=500 view_linewidth=1 view_pos=0,0 edit_draw=0 edit_size1=500 edit_size2=500 edit_linewidth1=1 edit_linewidth2=1.
+Axes model_draw=0 model_size=500 model_linewidth=1 model_pos=0,0,0 model_tick_enable=0 model_tick_interval=100 model_ticks_per_major=10 model_tick_length=4 model_tick_major_length=8 model_tick_threshold=8 view_draw=0 view_size=500 view_linewidth=1 view_pos=0,0 edit_draw=0 edit_size1=500 edit_size2=500 edit_linewidth1=1 edit_linewidth2=1.
 
 –Prints the values of the axes
 
 mged *rset ax model_size* – Get size of model axes 500.
+
+mged *rset ax model_tick_enable* – Enable (1) or disable (0) a ticked scale
+along the model axes. The tick spacing is set with *rset ax
+model_tick_interval* (in mm), with a major tick every *rset ax
+model_ticks_per_major* ticks. This gives a measurable scale in the target
+coordinate system.
 
 **
 
