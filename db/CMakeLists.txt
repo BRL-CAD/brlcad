@@ -209,6 +209,7 @@ set(
   demo.asc
   die.asc
   earth.asc
+  gaia.asc
   galileo.asc
   goliath.asc
   havoc.asc
