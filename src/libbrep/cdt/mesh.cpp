@@ -32,6 +32,8 @@
 
 #include "common.h"
 
+#include "cdt/test_api.h"
+
 #include "bu/color.h"
 #include "bu/log.h"
 #include "bu/sort.h"

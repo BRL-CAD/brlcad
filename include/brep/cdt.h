@@ -302,25 +302,26 @@ struct brep_cdt_repair_report {
 
 #define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, 0, 0.0}
 
-/* Create and initialize a CDT state with default tolerances.  bv
+/** Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
 extern BREP_EXPORT struct ON_Brep_CDT_State *
 ON_Brep_CDT_Create(void *bv, const char *objname);
 
-/* Destroy a CDT state */
+/** Destroy a CDT state. */
 extern BREP_EXPORT void
 ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s);
 
+/** Return the diagnostic object name associated with a CDT state. */
 extern BREP_EXPORT const char *
 ON_Brep_CDT_ObjName(struct ON_Brep_CDT_State *s);
 
-/* Set/get the CDT tolerances. */
+/** Set the CDT tolerances. */
 extern BREP_EXPORT void
 ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t);
 extern BREP_EXPORT void
 ON_Brep_CDT_Tol_Get(struct bg_tess_tol *t, const struct ON_Brep_CDT_State *s);
 
-/* Set a wall-clock limit for each rigorous face triangulation.  A positive
+/** Set a wall-clock limit for each rigorous face triangulation.  A positive
  * value reports an adaptive-refinement failure when the limit is reached,
  * allowing callers to continue with an explicitly bounded repair tier.
  * Zero preserves the default unlimited behavior. */
@@ -328,11 +329,11 @@ extern BREP_EXPORT void
 ON_Brep_CDT_Face_Time_Limit_Set(struct ON_Brep_CDT_State *s,
 	long max_time_ms);
 
-/* Return the ON_Brep associated with state s. */
+/** Return the ON_Brep associated with state s. */
 extern BREP_EXPORT void *
 ON_Brep_CDT_Brep(struct ON_Brep_CDT_State *s);
 
-/* Given a state, produce a triangulation.  Returns 0 if a solid, valid
+/** Given a state, produce a triangulation.  Returns 0 if a solid, valid
  * triangulation was produced, 1 if a triangulation was produced but it
  * isn't solid, and -1 if no triangulation could be produced. If faces is
  * non-null, the triangulation will only attempt to triangulate the
@@ -366,7 +367,7 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s,
 	const struct brep_cdt_repair_settings *settings,
 	struct brep_cdt_repair_report *report);
 
-/* Given a state, report the status of its triangulation. -3 indicates a
+/** Given a state, report the status of its triangulation. -3 indicates a
  * failed attempt to tessellate, -2 indicates a non-solid tessellation is
  * present after an attempt to tessellate all faces, -1 is a state which
  * has had no tessellation attempt made, 0 indicates a solid, valid full
@@ -375,26 +376,26 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s,
 extern BREP_EXPORT int
 ON_Brep_CDT_Status(struct ON_Brep_CDT_State *s);
 
-/* Retrieve structured information about the most recent tessellation attempt.
+/** Retrieve structured information about the most recent tessellation attempt.
  * Returns 0 on success and -1 for invalid arguments. */
 extern BREP_EXPORT int
 ON_Brep_CDT_Diagnostic(struct brep_cdt_diagnostic *diagnostic,
 	const struct ON_Brep_CDT_State *s);
 
-/* Return the number of faces which failed in the most recent tessellation.
+/** Return the number of faces which failed in the most recent tessellation.
  * If faces is non-NULL, copy at most capacity stable face indices. */
 extern BREP_EXPORT int
 ON_Brep_CDT_Failed_Faces(int *faces, int capacity,
 	const struct ON_Brep_CDT_State *s);
 
-/* Copy the diagnostic recorded for a failed face in the most recent
+/** Copy the diagnostic recorded for a failed face in the most recent
  * tessellation.  Returns zero on success and -1 if no failure was recorded
  * for face_index. */
 extern BREP_EXPORT int
 ON_Brep_CDT_Face_Diagnostic(struct brep_cdt_diagnostic *diagnostic,
 	int face_index, const struct ON_Brep_CDT_State *s);
 
-/* Construct a vlist plot from the tessellation.  Modes are:
+/** Construct a vlist plot from the tessellation.  Modes are:
  *
  * 0 - shaded 3D triangles
  * 1 - 3D triangle wireframe
@@ -410,7 +411,7 @@ ON_Brep_CDT_VList(
     int mode,
     struct ON_Brep_CDT_State *s);
 
-/* Given two or more triangulation states, refine them to clear any face
+/** Given two or more triangulation states, refine them to clear any face
  * overlaps introduced by the triangulation.  If any of the states are
  * un-tessellated, first perform the tessellation indicated by the state
  * settings and then proceed to resolve after all states have an initial
@@ -431,7 +432,7 @@ extern BREP_EXPORT int
 ON_Brep_CDT_UnResolvable_Ovlps(std::vector<struct ON_Brep_CDT_State *> *ovlps, struct ON_Brep_CDT_State *s);
 #endif
 
-/* Retrieve the face, vertex and normal information from a tessellation state
+/** Retrieve the face, vertex and normal information from a tessellation state
  * in the form of integer and fastf_t arrays. */
 /* TODO - need to allow optional specification of specific faces here -
  * have already hit one scenario where I want triangle information from
@@ -563,36 +564,6 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	const struct brep_cdt_fast_options *options,
 	struct brep_cdt_fast_report *report);
 #endif
-
-/* PImpl exposure of some mesh operations for use in tests - not to be considered public API */
-struct cdt_bmesh_impl;
-struct cdt_bmesh {
-    struct cdt_bmesh_impl *i;
-};
-extern BREP_EXPORT int cdt_bmesh_create(struct cdt_bmesh **m);
-extern BREP_EXPORT void cdt_bmesh_destroy(struct cdt_bmesh *m);
-extern BREP_EXPORT int cdt_bmesh_deserialize(const char *fname, struct cdt_bmesh *m);
-extern BREP_EXPORT int cdt_bmesh_repair(struct cdt_bmesh *m);
-extern BREP_EXPORT int cdt_test_boundary_start(void);
-extern BREP_EXPORT int cdt_test_boundary_steiner_filter(void);
-extern BREP_EXPORT int cdt_test_spurious_components(void);
-extern BREP_EXPORT int cdt_test_local_defects(void);
-extern BREP_EXPORT int cdt_test_edge_singular_pair(void);
-extern BREP_EXPORT int cdt_test_closed_edge_seed_policy(void);
-extern BREP_EXPORT int cdt_test_linear_edge_spacing(void);
-extern BREP_EXPORT int cdt_test_bounded_edge_midpoint(void);
-extern BREP_EXPORT int cdt_test_assembled_mesh_validation(void);
-extern BREP_EXPORT int cdt_test_assembled_shared_chords(void);
-extern BREP_EXPORT int cdt_test_repair_edge_tube(void);
-extern BREP_EXPORT int cdt_test_repair_triangle_split(void);
-extern BREP_EXPORT int cdt_test_repair_patch_limits(void);
-extern BREP_EXPORT int cdt_test_repair_duplicate_quarantine(void);
-extern BREP_EXPORT int cdt_test_repair_periodic_strip(void);
-extern BREP_EXPORT int cdt_test_repair_rigorous_boundary(void);
-extern BREP_EXPORT int cdt_test_repair_patch_boundary(void);
-extern BREP_EXPORT int cdt_test_subtolerance_edge_collapse(void);
-extern BREP_EXPORT int cdt_test_subtolerance_ring(void);
-extern BREP_EXPORT int cdt_test_developable_clean(void);
 
 __END_DECLS
 

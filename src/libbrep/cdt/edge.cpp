@@ -26,6 +26,8 @@
  */
 
 #include "common.h"
+
+#include "cdt/test_api.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>

@@ -19,6 +19,7 @@
 #include "bg/polygon.h"
 #include "bg/trimesh.h"
 #include "brep/cdt.h"
+#include "cdt/test_api.h"
 #include "../cdt/chart.h"
 #include "../cdt/mesh.h"
 
@@ -686,3 +687,13 @@ main()
     }
     return 0;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C++
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

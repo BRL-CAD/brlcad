@@ -890,3 +890,13 @@ main(int argc, const char **argv)
 	paired_edge && invalid_repaired && components_repaired &&
 	invalidated && invalid_tolerance && invalid_face && invalid_input ? 0 : 1;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C++
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
